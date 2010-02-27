@@ -24,7 +24,7 @@
 --
 --
 
--- $Id: reg2w4r.vhd,v 1.3 2008/04/23 09:52:27 marko Exp $
+-- $Id$
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;

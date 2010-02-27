@@ -24,7 +24,7 @@
 --
 --
 
--- $Id: mult.vhd,v 1.6 2008/05/21 23:33:20 marko Exp $
+-- $Id$
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;

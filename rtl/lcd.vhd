@@ -23,7 +23,7 @@
 -- SUCH DAMAGE.
 --
 
--- $Id: lcd.vhd,v 1.7 2010/02/21 23:33:44 marko Exp $
+-- $Id$
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;

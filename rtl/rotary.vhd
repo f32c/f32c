@@ -24,7 +24,7 @@
 --
 --
 
--- $Id: rotary.vhd,v 1.2 2008/04/07 17:22:56 marko Exp $
+-- $Id$
 
 -- Provides buffered output from input keys, in order to minimize transient
 -- noise.  Transform rot_a and rot_b direct input from the rotary key into

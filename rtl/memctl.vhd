@@ -24,7 +24,7 @@
 --
 --
 
--- $Id: memctl.vhd,v 1.5 2008/04/18 13:55:24 marko Exp $
+-- $Id$
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
