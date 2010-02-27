@@ -1,0 +1,30 @@
+Pipeline stages:
+
+IF - instruction fetch
+ID - instruction decode
+EX - execute
+MEM - memory acces
+WB - register writeback
+
+
+
+MEM stage stall causes:
+
+- write not acknowledged from RAM
+- data not ready from RAM
+- must shift data received from RAM
+- must shift data to be sent to RAM
+
+
+EX stage stall causes:
+
+- MEM stage stall
+- branch in EX, but next instruction not yet in ID
+
+
+ID stage stall causes:
+
+- EX stage stall
+- load-use hazard: operand target of LD in EX stage
+	- must insert bubble in EX
+
