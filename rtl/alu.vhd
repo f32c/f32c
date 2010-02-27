@@ -24,7 +24,7 @@
 --
 --
 
--- $Id: alu.vhd,v 1.5 2008/04/27 01:21:05 marko Exp $
+-- $Id: $
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
