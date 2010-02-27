@@ -24,7 +24,7 @@
 --
 --
 
--- $Id: shift.vhd,v 1.3 2008/04/25 21:24:15 marko Exp $
+-- $Id$
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;

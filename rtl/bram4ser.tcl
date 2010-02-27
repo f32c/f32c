@@ -24,7 +24,7 @@
 # SUCH DAMAGE.
 #
 
-# $Id: bram4ser.tcl,v 1.3 2010/02/24 20:43:40 marko Exp $
+# $Id$
 
 # Move cursor to home position (0,0)
 set prog "\033\[H"

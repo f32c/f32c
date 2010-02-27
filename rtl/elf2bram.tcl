@@ -24,7 +24,7 @@
 # SUCH DAMAGE.
 #
 
-# $Id: elf2bram.tcl,v 1.4 2010/02/24 21:43:26 marko Exp $
+# $Id$
 
 
 if {$argc == 0} {

@@ -24,7 +24,7 @@
 --
 --
 
--- $Id: bram.vhd,v 1.25 2010/02/14 17:54:32 marko Exp $
+-- $Id$
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
