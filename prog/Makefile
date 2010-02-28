@@ -13,7 +13,6 @@ CFLAGS += -c -s -n -nostdlib
 CFLAGS += -O -std=c99 -Wall -Werror -g
 CFLAGS += -G 32768
 # Other interesting options:
-# -G
 # -no-shared
 # -fPIC -fpic
 # -membedded-data
