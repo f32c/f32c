@@ -15,7 +15,7 @@ char lcdbuf[2][16] = {"   Hello, world!", "  f32c          "};
 			state = (state & 0xf0) | (v);		\
 		else						\
 			state = (state & 0x0f) | ((v) << 4);	\
-       		OUTW(IO_LCD_DATA, state);			\
+       		OUTW(IO_LED, state);				\
 	} while (0);
 
 #define	sleep(ms)	DELAY((ms) * 50000)
@@ -30,8 +30,6 @@ void
 platform_start() {
 	int i;
 
-/* XXX compiling this in wreaks havoc? */
-#if 0
 	if (a == b) {
 		/* Pocetno stanje */
 		for (i = 0; i < 10; i++) {
@@ -46,7 +44,6 @@ platform_start() {
        		sem(1, RED);
 		sleep(3000);
 	}
-#endif
 
 	/* Zamijeni a / b */
 	a = ~a;
