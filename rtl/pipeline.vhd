@@ -212,12 +212,14 @@ begin
 	
 	process(clk)
 	begin
-		if rising_edge(clk) and ID_running then
+		if rising_edge(clk) and (ID_running or MEM_take_branch)
 			IF_ID_PC <= IF_PC_next;
 			IF_ID_PC_4 <= IF_PC_next + 1;
 			if ID_predict_taken and not MEM_take_branch then
 				IF_ID_PC_next <= ID_branch_target;
 			else
+				-- XXX what if MEM_take_branch was true, but we couldn't
+				-- fetch the instruction in a single cycle? REVISIT!!!
 				IF_ID_PC_next <= IF_PC_next + 1;
 			end if;
 			IF_ID_instruction <= imem_data_in;
