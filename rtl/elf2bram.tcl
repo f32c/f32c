@@ -48,15 +48,16 @@ while {[eof $elffile] == 0} {
     if {[lrange $line 0 2] == "Contents of section"} {
 	set section [string trim [lindex $line 3] :]
     } elseif {[string index $line 0] == " " &&
-	[lsearch ".text .rodata .data" $section] != -1} {
+	[lsearch ".text .rodata .data .sdata" $section] != -1} {
 	set line_addr [expr 0x[lindex $line 0]]
 	if {$addr != $line_addr} {
 	    puts "Bad address $line_addr (expected $addr) at line $linenum"
 	    exit 1
 	}
 	puts -nonewline "$addr:	"
+	set l1 [string range $line 0 40]
 	for { set i 1 } { $i <= 4} { incr i } {
-	    set word [lindex $line $i]
+	    set word [lindex $l1 $i]
 	    if {$word == ""} {
 		set word 00000000
 	    }
@@ -68,7 +69,7 @@ while {[eof $elffile] == 0} {
 	    puts -nonewline "$word "
 	    incr addr 4
 	}
-	puts [lrange $line 5 end]
+	puts [string range $line 42 end]
     } elseif {[lrange $line 1 end] == "file format elf32-littlemips"} {
 	set endian little
     }
