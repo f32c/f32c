@@ -39,19 +39,23 @@ if {$argc == 0} {
 set elffile [open "| mips-rtems-objdump -s [lindex $argv 0]"]
 set linenum 0
 set section undefined
-set endian big
+set endian none
 set addr 0
 
 while {[eof $elffile] == 0} {
     gets $elffile line
     incr linenum
-    if {[lrange $line 0 2] == "Contents of section"} {
+    if {[string range $line 0 18] == "Contents of section"} {
 	set section [string trim [lindex $line 3] :]
     } elseif {[string index $line 0] == " " &&
 	[lsearch ".text .rodata .data .sdata" $section] != -1} {
 	set line_addr [expr 0x[lindex $line 0]]
 	if {$addr != $line_addr} {
 	    puts "Bad address $line_addr (expected $addr) at line $linenum"
+	    exit 1
+	}
+	if {$endian == "none"} {
+	    puts "Undefined endianess at line $linenum"
 	    exit 1
 	}
 	puts -nonewline "$addr:	"
@@ -70,8 +74,13 @@ while {[eof $elffile] == 0} {
 	    incr addr 4
 	}
 	puts [string range $line 42 end]
-    } elseif {[lrange $line 1 end] == "file format elf32-littlemips"} {
-	set endian little
+    } elseif {$endian == "none" &&
+	[lrange $line 1 2] == "file format"} {
+	if {[lindex $line 3] == "elf32-littlemips"} {
+	    set endian little
+	} elseif {[lindex $line 3] == "elf32-bigmips"} {
+	    set endian big
+        }
     }
 }
 close $elffile
