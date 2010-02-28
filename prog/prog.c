@@ -32,7 +32,7 @@ platform_start() {
 
 	if (a == b) {
 		/* Pocetno stanje */
-		for (i = 0; i < 10; i++) {
+		for (i = 0; i < 16; i++) {
         		sem(0, BLACK);
         		sem(1, BLACK);
 			sleep(500);
