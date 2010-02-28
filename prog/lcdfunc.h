@@ -2,12 +2,23 @@
 /* LCD manipulation functions are cheaper inlined the otherwise */
 
 inline void lcd_cr(int i) {
+   int cmd;
 
-	if (i) {
-		OUTW(IO_LCD_DATA, 0xc0);	/* line 0, char 0 */
-	} else {
-		OUTW(IO_LCD_DATA, 0x80);	/* line 1, char 0 */
+	switch (i) {
+		case 0:
+			cmd = 0x80;
+			break;
+		case 1:
+			cmd = 0xc0;
+			break;
+		case 2:
+			cmd = 0x94;
+			break;
+		case 3:
+			cmd = 0xd4;
+			break;
 	}
+	OUTW(IO_LCD_DATA, cmd);
 	OUTW(IO_LCD_CTRL, LCD_CTRL_E);	/* control sequence, clock high */
 	DELAY(LCD_DELAY);
 	OUTW(IO_LCD_CTRL, 0);		/* clock low */
