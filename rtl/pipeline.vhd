@@ -212,7 +212,7 @@ begin
 	
 	process(clk)
 	begin
-		if rising_edge(clk) and (ID_running or MEM_take_branch)
+		if rising_edge(clk) and ID_running then
 			IF_ID_PC <= IF_PC_next;
 			IF_ID_PC_4 <= IF_PC_next + 1;
 			if ID_predict_taken and not MEM_take_branch then
@@ -274,13 +274,13 @@ begin
 	--		A) EX stage is stalled;
 	--		B)	execute-use or load-use data hazard is detected;
 	--
-	ID_running <= EX_running and
+	ID_running <= MEM_take_branch or (EX_running and
 		(ID_reg1_zero or
 		ID_reg1_addr /= ID_EX_writeback_addr or ID_EX_latency = '0') and
 		(ID_reg2_zero or ID_ignore_reg2 or
 		ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = '0') and
 		not (ID_EX_mem_cycle = '1' and ID_EX_mem_size /= "11" and
-		ID_EX_mem_write = '0');
+		ID_EX_mem_write = '0'));
 	
 	-- forward result from writeback stage if needed
 	ID_eff_reg1 <= WB_writeback_data when ID_reg1_addr = MEM_WB_writeback_addr and
