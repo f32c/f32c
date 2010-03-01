@@ -123,7 +123,13 @@ begin
 		end if;
 	end process;
 
-	io_to_cpu <= tsc;
+	io_to_cpu <= x"00000" &
+		rs232_dce_rxd &
+		rot_a & rot_b & rot_center &
+		btn_south & btn_north & btn_east & btn_west &
+		sw when dmem_addr(3 downto 2) = "00"
+		else tsc;
+
 	final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = "1110"
 		else dmem_to_cpu;
 	
