@@ -50,6 +50,15 @@ platform_start() {
 		lcdbuf[3][19] = j;
 	}
 
+	/* Occassionally swap 1st and 4th line */
+	if ((alive & 0x1ff) == 0) {
+		for (i = 0; i < 20; i++) {
+			j = lcdbuf[0][i];
+			lcdbuf[0][i] = lcdbuf[3][i];
+			lcdbuf[3][i] = j;
+		}
+	}
+
 	/* Read TSC, and dump it in hex in lcdbuf */
 	INW(tsc, IO_TSC);
 	for (i = 15; i >= 8; i--) {
