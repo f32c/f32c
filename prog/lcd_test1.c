@@ -22,16 +22,16 @@ platform_start() {
 		for (i = 0; i < 3; i++) {
 			OUTW(IO_LCD_DATA, 0x38);	/* 8-bit, 2-line mode */
 			OUTW(IO_LCD_CTRL, LCD_CTRL_E);	/* ctrl sequence */
-			DELAY(LCD_DELAY << 8);
+			DELAY(LCD_DELAY << 10);
 			OUTW(IO_LCD_CTRL, 0);		/* clock low */
-			DELAY(LCD_DELAY << 8);
+			DELAY(LCD_DELAY << 10);
 		}
 
 		OUTW(IO_LCD_DATA, 0x0c);	/* display on */
 		OUTW(IO_LCD_CTRL, LCD_CTRL_E);	/* ctrl sequence */
-		DELAY(LCD_DELAY << 4);
+		DELAY(LCD_DELAY << 8);
 		OUTW(IO_LCD_CTRL, 0);		/* clock low */
-		DELAY(LCD_DELAY << 4);
+		DELAY(LCD_DELAY << 8);
 	}
 
 	/* Occassionally scroll the 1st line left */
