@@ -14,10 +14,27 @@
 static struct sem_colors {
 	int	mask;
 	char	*name;
-} sem_colors[] = {
-	{ RED, "CRVENO" },
-	{ GREEN, "ZELENO" },
-	{ YELLOW, "ZUTO  " },
+} sem_colors[4][3] = {
+	{
+		{ RED, "CRVENO" },
+		{ GREEN, "ZELENO" },
+		{ YELLOW, "ZUTO  " },
+	},
+	{
+		{ RED, "crveno" },
+		{ GREEN, "zeleno" },
+		{ YELLOW, "zuto  " },
+	},
+	{
+		{ RED, "RED   " },
+		{ GREEN, "GREEN " },
+		{ YELLOW, "YELLOW" },
+	},
+	{
+		{ RED, "red   " },
+		{ GREEN, "green " },
+		{ YELLOW, "yellow" },
+	}
 };
 
 static int led_state;
@@ -25,7 +42,7 @@ static int led_state;
 static void sem(int s, int v)
 {
 	char *c;
-	int i, len;
+	int i, len, sel;
 
 	if (s)
 		led_state = (led_state & 0xf0) | (v);
@@ -36,12 +53,16 @@ static void sem(int s, int v)
 	c = &lcdbuf[s + 2][0];
 	memset(c, ' ', 20);
 
+	/* sw3 & sw2 select language & upper / lower case */
+	INW(sel, IO_LED);
+	sel = (sel >> 2) & 0x3;
+
 	for (i = 0; i < 3; i++) {
-		if (v & sem_colors[i].mask) {
+		if (v & sem_colors[sel][i].mask) {
 			/* XXX strlen broken??? Why? Revisit !!! */
-			//len = strlen(sem_colors[i].name);
+			//len = strlen(sem_colors[sel][i].name);
 			len = 6;
-			bcopy(sem_colors[i].name, c, len);
+			bcopy(sem_colors[sel][i].name, c, len);
 			c += len;
 			if (i < 2)
 				*c++ = ' ';
