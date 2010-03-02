@@ -1,5 +1,6 @@
 
 #include "io.h"
+#include "lcdfunc.h"
 #include "libc.h"
 
 int newkey;
@@ -8,7 +9,6 @@ int oldkey;
 int msleep(int ms)
 {
 	int ticks, start, current;
-	int debounce = 0;
 
 	/* approximately ticks = ms * 50000 */
 	ticks = (ms << 15) + (ms << 14) + (ms << 9) + (ms << 8);
@@ -16,15 +16,15 @@ int msleep(int ms)
 	INW(start, IO_TSC);
 	do {
 		INW(newkey, IO_LED);
-		newkey &= 0x0100;
-		if (newkey != oldkey)
-			debounce++;
-		if (debounce > 10000) {
+		newkey &= 0x0100; 	/* Rotary knob press-button */
+		if (newkey != oldkey) {
 			if (newkey)
 				return (1);		/* Button pressed */
 			else
 				oldkey = newkey;	/* Button released */
 		}
+
+		lcd_redraw();
 
 		INW(current, IO_TSC);
 	} while (current - start < (ticks));

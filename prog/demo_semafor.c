@@ -9,35 +9,26 @@
 #define YELLOW	4
 #define	RED	8
 
-#define	MSLEEP(t)	if (msleep(t)) return;
-
 static struct sem_colors {
 	int	mask;
 	char	*name;
-} sem_colors[4][3] = {
-	{
-		{ RED, "CRVENO" },
-		{ GREEN, "ZELENO" },
-		{ YELLOW, "ZUTO  " },
-	},
+} sem_colors[2][3] = {
 	{
 		{ RED, "crveno" },
+		{ YELLOW, " zuto " },
 		{ GREEN, "zeleno" },
-		{ YELLOW, "zuto  " },
 	},
 	{
-		{ RED, "RED   " },
-		{ GREEN, "GREEN " },
-		{ YELLOW, "YELLOW" },
-	},
-	{
-		{ RED, "red   " },
-		{ GREEN, "green " },
+		{ RED, "  red " },
 		{ YELLOW, "yellow" },
+		{ GREEN, "green " },
 	}
 };
 
 static int led_state;
+
+#define	MSLEEP(t)	if (msleep(t)) return;
+
 
 static void sem(int s, int v)
 {
@@ -51,31 +42,26 @@ static void sem(int s, int v)
        	OUTW(IO_LED, led_state);
 
 	c = &lcdbuf[s + 2][0];
-	memset(c, ' ', 20);
 
-	/* sw3 & sw2 select language & upper / lower case */
+	/* sw2 selects language */
 	INW(sel, IO_LED);
-	sel = (sel >> 2) & 0x3;
+	sel = (sel >> 2) & 0x1;
+	len = 6;
 
 	for (i = 0; i < 3; i++) {
-		if (v & sem_colors[sel][i].mask) {
-			/* XXX strlen broken??? Why? Revisit !!! */
-			//len = strlen(sem_colors[sel][i].name);
-			len = 6;
+		if (v & sem_colors[sel][i].mask)
 			bcopy(sem_colors[sel][i].name, c, len);
-			c += len;
-			if (i < 2)
-				*c++ = ' ';
-		}
+		else
+			memset(c, ' ', len);
+		c += len;
+		if (i < 2)
+			*c++ = ' ';
 	}
-
-	lcd_redraw();
 }
 
 void demo_semafor(int prog) {
 	static int a;
 	static int b;
-	static int cnt;
 	int i;
 
 	switch (prog) {
@@ -87,16 +73,16 @@ void demo_semafor(int prog) {
 		break;
 	case DEMO_POLUDJELI_SEMAFOR:
 		bcopy(" Poludjeli semafor  ", &lcdbuf[0][0], 20);
-       		sem(0, (cnt >> 4) & 0xf);
-       		sem(1, cnt & 0xf);
-		cnt++;
-		MSLEEP(100);
+       		sem(0, (a >> 3) & 0xe);
+       		sem(1, a & 0xe);
+		a++;
+		MSLEEP(250);
 		return;
 	}
 
 	if (a == b || prog == DEMO_POKVARENI_SEMAFOR) {
 		/* Pocetno stanje */
-		for (i = 0; i < 16; i++) {
+		for (i = 0; i < 12; i++) {
         		sem(0, BLACK);
         		sem(1, BLACK);
 			MSLEEP(500);
@@ -119,7 +105,7 @@ void demo_semafor(int prog) {
 
        	sem(a, RED);
        	sem(b, RED);
-	MSLEEP(1000);
+	MSLEEP(1500);
 
        	sem(a, RED | YELLOW);
 	MSLEEP(1500);
