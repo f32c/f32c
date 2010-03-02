@@ -6,12 +6,17 @@ LOADADDR = 0x00000000
 
 ENDIANFLAGS = -EL
 
-CFLAGS = -mips3 ${ENDIANFLAGS}
-CFLAGS += -mno-mips16 -mno-branch-likely -mno-dsp -mno-mips3d
-CFLAGS += -mno-mdmx -msoft-float
+CFLAGS = -march=mips3 ${ENDIANFLAGS}
+CFLAGS += -mno-branch-likely
+CFLAGS += -mno-mips16 -mno-dsp -mno-mips3d -mno-mdmx -msoft-float
 CFLAGS += -c -s -n -nostdlib -fno-builtin
-CFLAGS += -O -std=c99 -Wall -Werror -g
+CFLAGS += -std=c99 -Wall -Werror -g
 CFLAGS += -G 32768
+# Optimization options
+CFLAGS += -O2
+#CFLAGS += -freorder-blocks-and-partition
+#CFLAGS += -web -frename-registers
+
 # Other interesting options:
 # -no-shared
 # -fPIC -fpic
