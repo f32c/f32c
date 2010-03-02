@@ -49,7 +49,6 @@
                         : "=r" (data)			/* outputs */	   \
                         : "i" (port));			/* inputs */
 
-#if 1 /* 50 MHz clock */
 #define DELAY(ticks)							\
 	do {								\
 		int start, current;					\
@@ -58,9 +57,6 @@
 			INW(current, IO_TSC);				\
 		} while (current - start < (ticks));			\
 	} while (0);
-#else /* slow clock */
-#define	DELAY(ticks)
-#endif
 
 #endif /* !_IO_H_ */
 

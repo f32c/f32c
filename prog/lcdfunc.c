@@ -14,9 +14,6 @@ char lcdbuf[LCD_ROWS][LCD_COLUMNS] = {
 
 static int lcd_initialized = 0;
 
-static int alive;
-static int old_key;
-
 static void lcd_cr(int i)
 {
 	int cmd;
@@ -87,6 +84,7 @@ void lcd_redraw(void)
 	}
 }
 
+#if 0
 void
 platform_start() {
 	int tsc;
@@ -141,3 +139,4 @@ platform_start() {
 	
 	return;
 }
+#endif
