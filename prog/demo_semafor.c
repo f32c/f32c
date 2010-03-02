@@ -1,4 +1,5 @@
 
+#include "demo.h"
 #include "io.h"
 #include "lcdfunc.h"
 #include "libc.h"
@@ -7,6 +8,8 @@
 #define	GREEN	2
 #define YELLOW	4
 #define	RED	8
+
+#define	MSLEEP(t)	if (msleep(t)) return;
 
 static struct sem_colors {
 	int	mask;
@@ -51,23 +54,42 @@ static void sem(int s, int v)
 void demo_semafor(int prog) {
 	static int a;
 	static int b;
+	static int cnt;
 	int i;
 
-	bcopy(" Automatski semafor ", &lcdbuf[0][0], 20);
+	switch (prog) {
+	case DEMO_AUTOMATSKI_SEMAFOR:
+		bcopy(" Automatski semafor ", &lcdbuf[0][0], 20);
+		break;
+	case DEMO_POKVARENI_SEMAFOR:
+		bcopy(" Pokvareni semafor  ", &lcdbuf[0][0], 20);
+		break;
+	case DEMO_POLUDJELI_SEMAFOR:
+		bcopy(" Poludjeli semafor  ", &lcdbuf[0][0], 20);
+       		sem(0, (cnt >> 4) & 0xf);
+       		sem(1, cnt & 0xf);
+		cnt++;
+		MSLEEP(100);
+		return;
+	}
 
-	if (a == b) {
+	if (a == b || prog == DEMO_POKVARENI_SEMAFOR) {
 		/* Pocetno stanje */
 		for (i = 0; i < 16; i++) {
         		sem(0, BLACK);
         		sem(1, BLACK);
-			msleep(500);
+			MSLEEP(500);
         		sem(0, YELLOW);
         		sem(1, YELLOW);
-			msleep(500);
+			MSLEEP(500);
 		}
+
+		if (prog == DEMO_POKVARENI_SEMAFOR)
+			return;
+
        		sem(0, RED);
        		sem(1, RED);
-		msleep(3000);
+		MSLEEP(3000);
 	}
 
 	/* Zamijeni a / b */
@@ -76,23 +98,23 @@ void demo_semafor(int prog) {
 
        	sem(a, RED);
        	sem(b, RED);
-	msleep(1000);
+	MSLEEP(1000);
 
        	sem(a, RED | YELLOW);
-	msleep(1500);
+	MSLEEP(1500);
 
        	sem(a, GREEN);
-	msleep(8000);
+	MSLEEP(8000);
 
 	for (i = 0; i < 4; i++) {
         	sem(a, BLACK);
-		msleep(500);
+		MSLEEP(500);
         	sem(a, GREEN);
-		msleep(500);
+		MSLEEP(500);
 	}
 
        	sem(a, YELLOW);
-	msleep(3000);
+	MSLEEP(3000);
 
 	return;
 }

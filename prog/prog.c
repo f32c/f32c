@@ -1,10 +1,13 @@
 
+#include "demo.h"
 #include "io.h"
 #include "lcdfunc.h"
 #include "libc.h"
 
 /* Forward declarations for demo functions */
 void demo_semafor(int);
+
+static int prog = 0;
 
 void
 platform_start() {
@@ -14,5 +17,16 @@ platform_start() {
 	for (i = 0; i < 3; i++)
 		memset(&lcdbuf[i][0], ' ', 20);
 
-	demo_semafor(i);
+	if (newkey != oldkey)
+		prog++;
+	oldkey = newkey;
+	if (prog > DEMO_MAX)
+		prog = 0;
+
+	switch (prog) {
+	case DEMO_AUTOMATSKI_SEMAFOR:
+	case DEMO_POKVARENI_SEMAFOR:
+	case DEMO_POLUDJELI_SEMAFOR:
+		demo_semafor(prog);
+	}
 }
