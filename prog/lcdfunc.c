@@ -5,13 +5,7 @@
 #include "lcdfunc.h"
 
 
-char lcdbuf[LCD_ROWS][LCD_COLUMNS] = {
-	"   Hello, world!    ",
-	"  f32c              ",
-	"01234567890123456789",
-	"Evo zore, evo dana! ",
-};
-
+char lcdbuf[LCD_ROWS][LCD_COLUMNS];
 static int lcd_initialized = 0;
 
 static void lcd_cr(int i)
@@ -72,15 +66,24 @@ static void lcd_init(void)
 
 void lcd_redraw(void)
 {
-	int i, j;
+	int i, j, uc;
+	char c;
 
 	if (!lcd_initialized)
 		lcd_init();
 
+        /* sw3 selects lower / upper case letters */
+        INW(uc, IO_LED);
+        uc = (uc >> 3) & 0x1;
+
 	for (j = 0; j < LCD_ROWS; j++) {
 		lcd_cr(j);
-		for (i = 0; i < LCD_COLUMNS; i++)
-			lcd_putchar(lcdbuf[j][i]);
+		for (i = 0; i < LCD_COLUMNS; i++) {
+			c = lcdbuf[j][i];
+			if (uc && c >= 'a' && c <= 'z')
+				c -= ('a' - 'A');
+			lcd_putchar(c);
+		}
 	}
 }
 
@@ -90,8 +93,6 @@ platform_start() {
 	int tsc;
 	int key;
 	int i, j;
-
-	lcd_redraw();
 
 	/* Occassionally scroll the 1st line left */
 	if ((alive & 0x3f) == 0) {
