@@ -49,7 +49,7 @@ while {[eof $elffile] == 0} {
 	set section [string trim [lindex $line 3] :]
     } elseif {[string index $line 0] == " " &&
 	[lsearch ".text .rodata .data .sdata" $section] != -1} {
-	set line_addr [expr 0x[lindex $line 0]]
+	set line_addr [expr 0x[lindex [string range $line 0 10] 0]]
 	if {$addr != $line_addr} {
 	    puts "Bad address $line_addr (expected $addr) at line $linenum"
 	    exit 1
