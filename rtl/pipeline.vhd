@@ -324,7 +324,6 @@ begin
 				ID_EX_PC_4 <= IF_ID_PC_4;
 				ID_EX_PC_8 <= IF_ID_PC_4 + 1;
 				ID_EX_branch_target <= ID_branch_target;
-				ID_EX_predict_taken <= ID_predict_taken and not MEM_take_branch;
 				ID_EX_latency <= ID_latency;
 				ID_EX_cop0 <= ID_cop0;
 				-- insert a bubble if branching or ID stage is stalled
@@ -333,6 +332,7 @@ begin
 					ID_EX_mem_cycle <= '0';
 					ID_EX_branch_cycle <= false;
 					ID_EX_jump_cycle <= false;
+					ID_EX_predict_taken <= false;
 					ID_EX_op_major <= "00";
 					ID_EX_instruction <= x"00000000"; -- XXX debugging only
 				else
@@ -340,10 +340,15 @@ begin
 					ID_EX_mem_cycle <= ID_mem_cycle;
 					ID_EX_branch_cycle <= ID_branch_cycle;
 					ID_EX_jump_cycle <= ID_jump_cycle;
+					ID_EX_predict_taken <= ID_predict_taken;
 					ID_EX_op_major <= ID_op_major;
 					ID_EX_instruction <= IF_ID_instruction; -- XXX debugging only
 					ID_EX_PC <= IF_ID_PC; -- XXX debugging only
 				end if;
+			else
+				-- Be conservative with branch prediction if pipeline is stalled
+				-- XXX revisit!
+				ID_EX_predict_taken <= false;
 			end if;
 			-- result forwarding schedule must be revised every clock cycle
 			ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
