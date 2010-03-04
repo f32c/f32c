@@ -15,14 +15,20 @@ static struct sem_colors {
 } sem_colors[2][3] = {
 	{
 		{ RED, "crveno" },
-		{ YELLOW, " zuto " },
+		{ YELLOW, " zuto" },
 		{ GREEN, "zeleno" },
 	},
 	{
-		{ RED, "  red " },
+		{ RED, "  red" },
 		{ YELLOW, "yellow" },
-		{ GREEN, "green " },
+		{ GREEN, "green" },
 	}
+};
+
+static char *prog_names[3] = {
+	"Automatski semafor",
+	"Pokvareni semafor",
+	"Poludjeli semafor",
 };
 
 static int led_state;
@@ -32,8 +38,8 @@ static int led_state;
 
 static void sem(int s, int v)
 {
+	int i, sel;
 	char *c;
-	int i, len, sel;
 
 	if (s)
 		led_state = (led_state & 0xf0) | (v);
@@ -42,20 +48,17 @@ static void sem(int s, int v)
        	OUTW(IO_LED, led_state);
 
 	c = &lcdbuf[s + 2][0];
+	memset(c, ' ', 20);
 
 	/* sw2 selects language */
 	INW(sel, IO_LED);
 	sel = (sel >> 2) & 0x1;
-	len = 6;
 
 	for (i = 0; i < 3; i++) {
 		if (v & sem_colors[sel][i].mask)
-			bcopy(sem_colors[sel][i].name, c, len);
-		else
-			memset(c, ' ', len);
-		c += len;
-		if (i < 2)
-			*c++ = ' ';
+			bcopy(sem_colors[sel][i].name, c,
+			    strlen(sem_colors[sel][i].name));
+		c += 7;
 	}
 }
 
@@ -64,15 +67,9 @@ void demo_semafor(int prog) {
 	static int b;
 	int i;
 
-	switch (prog) {
-	case DEMO_AUTOMATSKI_SEMAFOR:
-		bcopy(" Automatski semafor ", &lcdbuf[0][0], 20);
-		break;
-	case DEMO_POKVARENI_SEMAFOR:
-		bcopy(" Pokvareni semafor  ", &lcdbuf[0][0], 20);
-		break;
-	case DEMO_POLUDJELI_SEMAFOR:
-		bcopy(" Poludjeli semafor  ", &lcdbuf[0][0], 20);
+	bcopy(prog_names[prog], &lcdbuf[0][1], strlen(prog_names[prog]));
+
+	if (prog == DEMO_POLUDJELI_SEMAFOR) {
        		sem(0, (a >> 3) & 0xe);
        		sem(1, a & 0xe);
 		a++;
@@ -82,7 +79,7 @@ void demo_semafor(int prog) {
 
 	if (a == b || prog == DEMO_POKVARENI_SEMAFOR) {
 		/* Pocetno stanje */
-		for (i = 0; i < 12; i++) {
+		for (i = 0; i < 8; i++) {
         		sem(0, BLACK);
         		sem(1, BLACK);
 			MSLEEP(500);

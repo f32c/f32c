@@ -23,10 +23,5 @@ platform_start() {
 	if (prog > DEMO_MAX)
 		prog = 0;
 
-	switch (prog) {
-	case DEMO_AUTOMATSKI_SEMAFOR:
-	case DEMO_POKVARENI_SEMAFOR:
-	case DEMO_POLUDJELI_SEMAFOR:
-		demo_semafor(prog);
-	}
+	demo_semafor(prog);
 }
