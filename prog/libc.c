@@ -54,3 +54,40 @@ int strlen(const char *c)
 
 	return (len);
 }
+
+unsigned int mul(unsigned int a, unsigned int b)
+{
+	unsigned int t1 = a;
+	unsigned int t2 = b;
+	unsigned int res = 0;
+
+	while(t1) {
+		if(t2 & 1)
+			res += t1;
+		t1 <<= 1;
+		t2 >>= 1;
+	}
+	return (res);
+}
+
+unsigned int div(unsigned int a, unsigned int b, unsigned int *mod)
+{
+	unsigned int t1 = b << 31;
+	unsigned int t2 = b;
+	unsigned int hi = a, lo = 0;
+	int i;
+
+	for (i = 0; i < 32; ++i) {
+		lo = lo << 1;
+		if (hi >= t1 && t1 && t2 < 2) {
+			hi = hi - t1;
+			lo |= 1;
+		}
+		t1 = ((t2 & 2) << 30) | (t1 >> 1);
+		t2 = t2 >> 1;
+	}
+	if(mod)
+		*mod = hi;
+	return (lo);
+}
+
