@@ -10,8 +10,10 @@ CFLAGS = -march=mips3 ${ENDIANFLAGS}
 CFLAGS += -mno-branch-likely
 CFLAGS += -mno-mips16 -mno-dsp -mno-mips3d -mno-mdmx -msoft-float
 CFLAGS += -c -s -n -nostdlib -fno-builtin
-CFLAGS += -std=c99 -Wall -Werror -g
+CFLAGS += -std=c99 -Wall -Werror
 CFLAGS += -G 32768
+# Debugging options
+CFLAGS += -g
 # Optimization options
 CFLAGS += -O2
 #CFLAGS += -freorder-blocks-and-partition
