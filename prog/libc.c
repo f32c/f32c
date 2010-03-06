@@ -125,3 +125,39 @@ random()
 	randseed = t;
 	return (t);
 }
+
+char *
+itoa(int x, char *buf)
+{
+	register char *buf1, *buf2;
+	register int hi;
+	unsigned int lo;
+	char c;
+
+	if (x < 0) {
+		*buf++ = '-';
+		x = ~x + 1;
+	}
+
+	buf1 = buf;
+	hi = x;
+
+	do {
+#ifdef NOTYET
+		hi = hi / 10;
+		lo = hi % 10;
+#else
+		hi = div(hi, 10, &lo);
+#endif
+		*buf1++ = '0' + lo;
+	} while (hi);
+
+	/* Reverse characters */
+	for (buf2 = --buf1; buf2 > buf;) {
+		c = *buf;
+		*buf++ = *buf2;
+		*buf2-- = c;
+	}
+	
+	return (buf1);
+}
