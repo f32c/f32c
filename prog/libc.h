@@ -7,6 +7,8 @@ int msleep(int);
 unsigned int mul(unsigned int, unsigned int);
 unsigned int div(unsigned int, unsigned int, unsigned int *);
 unsigned int random();
+char *itoa(int, char *);
+
 
 extern int keymask;
 extern int newkey;

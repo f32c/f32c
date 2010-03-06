@@ -32,6 +32,8 @@ static char *prog_names[3] = {
 };
 
 static int led_state;
+static int sem_a;
+static int sem_b;
 
 #define	MSLEEP(t)	if (msleep(t)) return;
 
@@ -63,21 +65,22 @@ static void sem(int s, int v)
 }
 
 void demo_semafor(int prog) {
-	static int a;
-	static int b;
 	int i;
 
 	bcopy(prog_names[prog], &lcdbuf[0][1], strlen(prog_names[prog]));
 
+	itoa(sem_a, &lcdbuf[1][0]);
+	itoa(-sem_a, &lcdbuf[1][10]);
+
 	if (prog == DEMO_POLUDJELI_SEMAFOR) {
-		a = random();
-       		sem(0, (a >> 3) & 0xe);
-       		sem(1, a & 0xe);
-		MSLEEP(a & 0x1ff);
+		sem_a = random();
+       		sem(0, (sem_a >> 3) & 0xe);
+       		sem(1, sem_a & 0xe);
+		MSLEEP(sem_a & 0x1ff);
 		return;
 	}
 
-	if (a == b || prog == DEMO_POKVARENI_SEMAFOR) {
+	if (sem_a == sem_b || prog == DEMO_POKVARENI_SEMAFOR) {
 		/* Pocetno stanje */
 		for (i = 0; i < 8; i++) {
         		sem(0, BLACK);
@@ -88,8 +91,10 @@ void demo_semafor(int prog) {
 			MSLEEP(500);
 		}
 
-		if (prog == DEMO_POKVARENI_SEMAFOR)
+		if (prog == DEMO_POKVARENI_SEMAFOR) {
+			sem_a--;
 			return;
+		}
 
        		sem(0, RED);
        		sem(1, RED);
@@ -97,27 +102,27 @@ void demo_semafor(int prog) {
 	}
 
 	/* Zamijeni a / b */
-	a = !a;
-	b = !a;
+	sem_a = !sem_a;
+	sem_b = !sem_a;
 
-       	sem(a, RED);
-       	sem(b, RED);
+       	sem(sem_a, RED);
+       	sem(sem_b, RED);
 	MSLEEP(1500);
 
-       	sem(a, RED | YELLOW);
+       	sem(sem_a, RED | YELLOW);
 	MSLEEP(1500);
 
-       	sem(a, GREEN);
+       	sem(sem_a, GREEN);
 	MSLEEP(8000);
 
 	for (i = 0; i < 4; i++) {
-        	sem(a, BLACK);
+        	sem(sem_a, BLACK);
 		MSLEEP(500);
-        	sem(a, GREEN);
+        	sem(sem_a, GREEN);
 		MSLEEP(500);
 	}
 
-       	sem(a, YELLOW);
+       	sem(sem_a, YELLOW);
 	MSLEEP(3000);
 
 	return;
