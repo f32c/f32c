@@ -70,10 +70,10 @@ void demo_semafor(int prog) {
 	bcopy(prog_names[prog], &lcdbuf[0][1], strlen(prog_names[prog]));
 
 	if (prog == DEMO_POLUDJELI_SEMAFOR) {
+		a = random();
        		sem(0, (a >> 3) & 0xe);
        		sem(1, a & 0xe);
-		a++;
-		MSLEEP(250);
+		MSLEEP(a & 0x1ff);
 		return;
 	}
 

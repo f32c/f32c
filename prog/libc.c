@@ -5,13 +5,14 @@
 
 int newkey;
 int oldkey;
+int randseed;
 
-int msleep(int ms)
+int
+msleep(int ms)
 {
 	int ticks, start, current;
 
-	/* approximately ticks = ms * 50000 */
-	ticks = (ms << 15) + (ms << 14) + (ms << 9) + (ms << 8);
+	ticks = mul(ms, 50000);
 
 	INW(start, IO_TSC);
 	do {
@@ -32,34 +33,38 @@ int msleep(int ms)
 	return (0);
 }
 
-void bcopy(const char *src, char *dst, int len)
+void
+bcopy(const char *src, char *dst, int len)
 {
 
 	for (; len > 0; len--)
 		*dst++ = *src++;
 }
 
-void memset(char *dst, int c, int len)
+void
+memset(char *dst, int c, int len)
 {
 
 	for (; len > 0; len--)
 		*dst++ = c;
 }
 
-int strlen(const char *c)
+int
+strlen(const char *c)
 {
-	int len;
+	register int len;
 
 	for (len = 0; *c != 0; c++, len++) {}
 
 	return (len);
 }
 
-unsigned int mul(unsigned int a, unsigned int b)
+unsigned int
+mul(unsigned int a, unsigned int b)
 {
-	unsigned int t1 = a;
-	unsigned int t2 = b;
-	unsigned int res = 0;
+	register unsigned int t1 = a;
+	register unsigned int t2 = b;
+	register unsigned int res = 0;
 
 	while(t1) {
 		if(t2 & 1)
@@ -70,12 +75,13 @@ unsigned int mul(unsigned int a, unsigned int b)
 	return (res);
 }
 
-unsigned int div(unsigned int a, unsigned int b, unsigned int *mod)
+unsigned int
+div(unsigned int a, unsigned int b, unsigned int *mod)
 {
-	unsigned int t1 = b << 31;
-	unsigned int t2 = b;
-	unsigned int hi = a, lo = 0;
-	int i;
+	register unsigned int t1 = b << 31;
+	register unsigned int t2 = b;
+	register unsigned int hi = a, lo = 0;
+	register int i;
 
 	for (i = 0; i < 32; ++i) {
 		lo = lo << 1;
@@ -91,3 +97,31 @@ unsigned int div(unsigned int a, unsigned int b, unsigned int *mod)
 	return (lo);
 }
 
+unsigned int
+random()
+{
+	register int x, t;
+	register int hi;
+	unsigned int lo;
+
+	/*
+	 * Compute x[n + 1] = (7^5 * x[n]) mod (2^31 - 1).
+	 * From "Random number generators: good ones are hard to find",
+	 * Park and Miller, Communications of the ACM, vol. 31, no. 10,
+	 * October 1988, p. 1195.
+	 */
+	/* Can't be initialized with 0, so use another value. */
+	if ((x = randseed) == 0)
+		x = 123459876;
+#ifdef NOTYET
+	hi = x / 127773;
+	lo = x % 127773;
+#else
+	hi = div(x, 127773, &lo);
+#endif
+	t = 16807 * lo - 2836 * hi;
+	if (t < 0)
+		t += 0x7fffffff;
+	randseed = t;
+	return (t);
+}
