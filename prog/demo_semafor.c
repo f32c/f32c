@@ -28,9 +28,9 @@ static struct sem_colors {
 static char *prog_names[] = {
 	"Automatski semafor",
 	"Pokvareni semafor",
-	"Poludjeli semafor",
 	"  Rucni semafor",
-	"      Noise",
+	"Poludjeli semafor",
+	"Bezvezni semafor",
 };
 
 static int led_state;
@@ -71,12 +71,20 @@ void demo_semafor(int prog) {
 
 	bcopy(prog_names[prog], &lcdbuf[0][1], strlen(prog_names[prog]));
 
-	if (prog == DEMO_NOISE) {
+	if ( prog == DEMO_POKVARENI_SEMAFOR) {
+        	sem(0, BLACK);
+        	sem(1, BLACK);
+		MSLEEP(rotpos << 2);
+        	sem(0, YELLOW);
+        	sem(1, YELLOW);
+		MSLEEP(rotpos << 2);
+		return;
+	}
+
+	if (prog == DEMO_RUCNI_SEMAFOR) {
 		do {
-			sem_a = random() & 3;
-			div(random(), 20, (unsigned int *) &sem_b);
-			div(random(), 95, (unsigned int *) &i);
-			lcdbuf[sem_a][sem_b] = ' ' + i;
+       			sem(0, (rotpos >> 2) & 0xe);
+       			sem(1, (rotpos << 1) & 0xe);
 			MSLEEP(10);
 		} while (1);
 	}
@@ -89,25 +97,14 @@ void demo_semafor(int prog) {
 		return;
 	}
 
-	if (sem_a == sem_b || prog == DEMO_POKVARENI_SEMAFOR) {
-		/* Pocetno stanje */
-		for (i = 0; i < 8; i++) {
-        		sem(0, BLACK);
-        		sem(1, BLACK);
-			MSLEEP(500);
-        		sem(0, YELLOW);
-        		sem(1, YELLOW);
-			MSLEEP(500);
-		}
-
-		if (prog == DEMO_POKVARENI_SEMAFOR) {
-			sem_a--;
-			return;
-		}
-
-       		sem(0, RED);
-       		sem(1, RED);
-		MSLEEP(3000);
+	if (prog == DEMO_NOISE) {
+		do {
+			sem_a = random() & 3;
+			div(random(), 20, (unsigned int *) &sem_b);
+			div(random(), 95, (unsigned int *) &i);
+			lcdbuf[sem_a][sem_b] = ' ' + i;
+			MSLEEP(rotpos);
+		} while (1);
 	}
 
 	/* Zamijeni a / b */

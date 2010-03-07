@@ -8,9 +8,11 @@ unsigned int mul(unsigned int, unsigned int);
 unsigned int div(unsigned int, unsigned int, unsigned int *);
 unsigned int random();
 char *itoa(int, char *);
+void itox(int, char *);
 
 
 extern int keymask;
 extern int newkey;
 extern int oldkey;
+extern int rotpos;
 
