@@ -25,10 +25,12 @@ static struct sem_colors {
 	}
 };
 
-static char *prog_names[3] = {
+static char *prog_names[] = {
 	"Automatski semafor",
 	"Pokvareni semafor",
 	"Poludjeli semafor",
+	"  Rucni semafor",
+	"      Noise",
 };
 
 static int led_state;
@@ -69,8 +71,15 @@ void demo_semafor(int prog) {
 
 	bcopy(prog_names[prog], &lcdbuf[0][1], strlen(prog_names[prog]));
 
-	itoa(sem_a, &lcdbuf[1][0]);
-	itoa(-sem_a, &lcdbuf[1][10]);
+	if (prog == DEMO_NOISE) {
+		do {
+			sem_a = random() & 3;
+			div(random(), 20, (unsigned int *) &sem_b);
+			div(random(), 95, (unsigned int *) &i);
+			lcdbuf[sem_a][sem_b] = ' ' + i;
+			MSLEEP(10);
+		} while (1);
+	}
 
 	if (prog == DEMO_POLUDJELI_SEMAFOR) {
 		sem_a = random();
