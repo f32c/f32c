@@ -3,6 +3,7 @@
 #include "regdef.h"
 #include "io.h"
 #include "lcdfunc.h"
+#include "libc.h"
 
 
 char lcdbuf[LCD_ROWS][LCD_COLUMNS];
@@ -35,6 +36,16 @@ static void lcd_cr(int i)
 
 static void lcd_putchar(int c)
 {
+
+	/* Rescan the rotary key and update position */
+	INW(newkey, IO_LED);
+	if ((newkey & 0x600) == 0x600) {
+		if ((oldkey & 0x600) == 0x400 && rotpos < 254)
+			rotpos++;
+		else if ((oldkey & 0x600) == 0x200 && rotpos > 0)
+			rotpos--;
+	}
+	oldkey = (oldkey & ~0x600) | (newkey & 0x600);
 
 	OUTW(IO_LCD_DATA, c);		/* char to send */
 	OUTW(IO_LCD_CTRL, LCD_CTRL_E | LCD_CTRL_RS); /* data sqn, clock high */

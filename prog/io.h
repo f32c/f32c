@@ -1,9 +1,11 @@
 
 
 #ifndef _IO_H_
-#define _IO_H_
+#define	_IO_H_
 
-#define IO_BASE		0xe0000000
+#define	CPU_FREQ	50000000
+
+#define	IO_BASE		0xe0000000
 
 #define	IO_LED		0x0
 #define	IO_TSC		0x4
@@ -12,7 +14,7 @@
 
 #define	LCD_CTRL_RS	0x01
 #define	LCD_CTRL_E	0x02
-#define LCD_DELAY	5000		/* In clock ticks, OK up to 200 MHz */
+#define	LCD_DELAY	5000		/* In clock ticks, OK up to 200 MHz */
 
 /* In the default design the clock ticks at 50 MHz */
 #define	TSC_FREQ	50000000
@@ -49,7 +51,7 @@
                         : "=r" (data)			/* outputs */	   \
                         : "i" (port));			/* inputs */
 
-#define DELAY(ticks)							\
+#define	DELAY(ticks)							\
 	do {								\
 		int start, current;					\
 		INW(start, IO_TSC); 					\

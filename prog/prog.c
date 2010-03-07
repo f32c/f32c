@@ -17,11 +17,13 @@ platform_start() {
 	for (i = 0; i < 3; i++)
 		memset(&lcdbuf[i][0], ' ', 20);
 
-	if (newkey != oldkey)
+	if ((newkey & keymask) != (oldkey & keymask)) {
 		prog++;
+		if (prog > DEMO_MAX)
+			prog = 0;
+		rotpos = 128;
+	}
 	oldkey = newkey;
-	if (prog > DEMO_MAX)
-		prog = 0;
 
 	demo_semafor(prog);
 }

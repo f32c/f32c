@@ -5,6 +5,8 @@
 
 int newkey;
 int oldkey;
+int keymask = 0x0100;		/* Rotary knob press-button */
+int rotpos = 128;
 int randseed;
 
 int
@@ -12,17 +14,15 @@ msleep(int ms)
 {
 	int ticks, start, current;
 
-	ticks = mul(ms, 50000);
+	ticks = mul(ms, CPU_FREQ / 1000);
 
 	INW(start, IO_TSC);
 	do {
 		INW(newkey, IO_LED);
-		newkey &= 0x0100; 	/* Rotary knob press-button */
-		if (newkey != oldkey) {
-			if (newkey)
-				return (1);		/* Button pressed */
-			else
-				oldkey = newkey;	/* Button released */
+		if ((newkey & keymask) != (oldkey & keymask)) {
+			if (newkey & keymask)
+				return (1);
+			oldkey = newkey;
 		}
 
 		lcd_redraw();
@@ -160,4 +160,19 @@ itoa(int x, char *buf)
 	}
 	
 	return (buf1);
+}
+
+void
+itox(int x, char *buf)
+{
+	int i, j;
+
+	for (i = 0; i < 8; i++) {
+		j = (x >> 28) & 0x0f;
+		x = x << 4;
+		if (j > 9)
+			*buf++ = 'W' + j;
+		else
+			*buf++ = '0' + j;
+	}
 }
