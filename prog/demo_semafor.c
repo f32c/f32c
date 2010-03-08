@@ -25,12 +25,26 @@ static struct sem_colors {
 	}
 };
 
+static struct gradovi {
+	char	*name;
+	int	km;
+} gradovi[] = {
+		{ "Vukovar", -294 },
+		{ "Slavonski Brod", -192 },
+		{ "Zagreb", 0 },
+		{ "Karlovac", 55 },
+		{ "Gospic", 201 },
+		{ "Zadar", 287 },
+		{ "Split", 410 },
+		{ "Dubrovnik", 637 },
+};
+
 static char *prog_names[] = {
 	"Automatski semafor",
 	"Pokvareni semafor",
 	"  Rucni semafor",
 	"Poludjeli semafor",
-	" Bezvezni semafor",
+	" Naplatne kucice",
 };
 
 static int led_state;
@@ -67,7 +81,8 @@ static void sem(int s, int v)
 }
 
 void demo_semafor(int prog) {
-	int i;
+	int i, s, d;
+	char *c;
 
 	bcopy(prog_names[prog], &lcdbuf[0][1], strlen(prog_names[prog]));
 
@@ -97,13 +112,32 @@ void demo_semafor(int prog) {
 		return;
 	}
 
-	if (prog == DEMO_NOISE) {
+	if (prog == DEMO_GRADOVI) {
 		do {
-			sem_a = random() & 3;
-			div(random(), 20, (unsigned int *) &sem_b);
-			div(random(), 95, (unsigned int *) &i);
-			lcdbuf[sem_a][sem_b] = ' ' + i;
-			MSLEEP(64 - rotpos);
+			for (i = 1; i < 4; i++)
+				memset(&lcdbuf[i][0], ' ', 20);
+
+			s = (rotpos >> 3) & 0x7;
+			d = rotpos & 0x7;
+			i = strlen(gradovi[s].name);
+			bcopy(gradovi[s].name, &lcdbuf[1][(20 - i) >> 1], i);
+			i = strlen(gradovi[d].name);
+			bcopy(gradovi[d].name, &lcdbuf[2][(20 - i) >> 1], i);
+			i = gradovi[s].km - gradovi[d].km;
+			if (i < 0)
+				i = -i;
+			c = itoa(i, &lcdbuf[3][7]);
+			bcopy(" km", c, 3);
+
+			INW(i, IO_TSC);
+			i = div(i, CPU_FREQ / 2, (void *) 0);
+			if (i & 0x1) {
+       		OUTW(IO_LED, 0x44);
+			} else {
+       		OUTW(IO_LED, 0);
+			}
+
+			MSLEEP(10);
 		} while (1);
 	}
 

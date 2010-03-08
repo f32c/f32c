@@ -159,7 +159,7 @@ itoa(int x, char *buf)
 		*buf2-- = c;
 	}
 	
-	return (buf1);
+	return (++buf1);
 }
 
 void

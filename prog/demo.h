@@ -3,6 +3,6 @@
 #define	DEMO_POKVARENI_SEMAFOR		1
 #define	DEMO_RUCNI_SEMAFOR		2
 #define	DEMO_POLUDJELI_SEMAFOR		3
-#define	DEMO_NOISE			4
+#define	DEMO_GRADOVI			4
 
 #define	DEMO_MAX			4
