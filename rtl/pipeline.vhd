@@ -108,6 +108,7 @@ architecture Behavioral of pipeline is
 	signal ID_EX_cop0: std_logic;
 	signal ID_EX_instruction: std_logic_vector(31 downto 0); -- XXX debugging only
 	signal ID_EX_PC: std_logic_vector(31 downto 2); -- XXX debugging only
+	signal ID_EX_sign_extend_debug: std_logic; -- XXX debugging only
 	
 	-- pipeline stage 3: execute
 	signal EX_running: boolean;
@@ -249,6 +250,7 @@ begin
 			branch_condition => ID_branch_condition,
 			predict_taken => ID_predict_taken,
 			jump_register => ID_jump_register,
+			sign_extend => ID_sign_extend,
 			mem_write => ID_mem_write,	mem_size => ID_mem_size,
 			mem_read_sign_extend => ID_mem_read_sign_extend,
 			latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
@@ -314,7 +316,7 @@ begin
 				ID_EX_reg1_addr <= ID_reg1_addr;
 				ID_EX_reg2_addr <= ID_reg2_addr;
 				ID_EX_immediate <= ID_immediate;
-				ID_EX_sign_extend <= ID_EX_sign_extend;
+				ID_EX_sign_extend <= ID_sign_extend;
 				ID_EX_op_minor <= ID_op_minor;
 				ID_EX_mem_write <= ID_mem_write;
 				ID_EX_mem_size <= ID_mem_size;
@@ -383,7 +385,7 @@ begin
 	
 	-- instantiate the ALU
    alu: entity alu
-		port map(x => EX_eff_reg1, y => EX_eff_alu_op2, sign_extend => ID_EX_sign_extend,
+		port map(x => EX_eff_reg1, y => EX_eff_alu_op2,
 			addsubx => EX_from_alu_addsubx, logic => EX_from_alu_logic,
 			funct => ID_EX_op_minor(1 downto 0), equal => EX_from_alu_equal);
 
@@ -498,7 +500,14 @@ begin
 					ID_EX_op_major = "11" or ID_EX_op_major = "01" then
 					EX_MEM_logic_cycle <= '1';
 					if pipelined_slt /= "true" and ID_EX_op_major = "01" then
-						EX_MEM_writeback_logic <= x"0000000" & "000" & EX_from_alu_addsubx(32);
+						-- SLT / SLTU / SLTI / SLTIU
+						EX_MEM_writeback_logic(31 downto 1) <= x"0000000" & "000";
+						if ID_EX_sign_extend then
+							EX_MEM_writeback_logic(0) <= EX_from_alu_addsubx(32) xor
+								(EX_eff_reg1(31) xor EX_eff_alu_op2(31));
+						else
+							EX_MEM_writeback_logic(0) <= EX_from_alu_addsubx(32);
+						end if;
 					else
 						EX_MEM_writeback_logic <= EX_from_alt;
 					end if;
@@ -623,6 +632,9 @@ begin
 	with_trace_mux:
 	if bus_trace = "true" generate
 	begin
+
+	ID_EX_sign_extend_debug <= '1' when ID_EX_sign_extend else '0';
+
 	process(clk)
 	begin
 		if trace_addr(5) = '0' then
@@ -644,6 +656,8 @@ begin
 				when x"0c" => trace_data <= EX_eff_alu_op2;
 				when x"0d" => trace_data <= EX_MEM_writeback_addsubx(31 downto 0);
 				when x"0e" => trace_data <= EX_MEM_writeback_logic;
+				when x"0f" => trace_data <= x"0000000" & "000" &
+					ID_EX_sign_extend_debug;
 				--
 				when x"1a" => trace_data <= LO;
 				when x"1b" => trace_data <= HI;

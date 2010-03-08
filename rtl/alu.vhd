@@ -35,7 +35,6 @@ entity alu is
    port(
 		x, y: in STD_LOGIC_VECTOR(31 downto 0);
 		funct: in std_logic_vector(1 downto 0);
-		sign_extend: in boolean;
 		addsubx: out std_logic_vector(32 downto 0);
 		logic: out std_logic_vector(31 downto 0);
 		equal: out boolean
@@ -46,9 +45,8 @@ architecture Behavioral of alu is
 	signal ex, ey: std_logic_vector(32 downto 0);
 begin
 
-	-- sign extenstion used only for SLT/SLTI/SLTU/SLTIU
-	ex <= x(31) & x when sign_extend	else '0' & x;
-	ey <= y(31) & y when sign_extend else '0' & y;
+	ex <= '0' & x;
+	ey <= '0' & y;
 	
 	process(x, y, funct)
 	begin
