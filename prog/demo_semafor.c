@@ -29,14 +29,14 @@ static struct gradovi {
 	char	*name;
 	int	km;
 } gradovi[] = {
-		{ "Vukovar", -294 },
-		{ "Slavonski Brod", -192 },
-		{ "Zagreb", 0 },
-		{ "Karlovac", 55 },
-		{ "Gospic", 201 },
-		{ "Zadar", 287 },
-		{ "Split", 410 },
-		{ "Dubrovnik", 637 },
+	{ "Vukovar", -294 },
+	{ "Slavonski Brod", -192 },
+	{ "Zagreb", 0 },
+	{ "Karlovac", 55 },
+	{ "Gospic", 201 },
+	{ "Zadar", 287 },
+	{ "Split", 410 },
+	{ "Dubrovnik", 637 },
 };
 
 static char *prog_names[] = {
