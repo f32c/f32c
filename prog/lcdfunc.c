@@ -40,9 +40,9 @@ static void lcd_putchar(int c)
 	/* Rescan the rotary key and update position */
 	INW(newkey, IO_LED);
 	if ((newkey & 0x600) == 0x600) {
-		if ((oldkey & 0x600) == 0x400 && rotpos < 254)
+		if ((oldkey & 0x600) == 0x400 && rotpos < 63)
 			rotpos++;
-		else if ((oldkey & 0x600) == 0x200 && rotpos > 0)
+		else if ((oldkey & 0x600) == 0x200 && rotpos > -64)
 			rotpos--;
 	}
 	oldkey = (oldkey & ~0x600) | (newkey & 0x600);

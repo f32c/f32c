@@ -14,14 +14,14 @@ platform_start() {
 	int i;
 
 	/* Clear screen */
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 4; i++)
 		memset(&lcdbuf[i][0], ' ', 20);
 
 	if ((newkey & keymask) != (oldkey & keymask)) {
 		prog++;
 		if (prog > DEMO_MAX)
 			prog = 0;
-		rotpos = 128;
+		rotpos = 0;
 	}
 	oldkey = newkey;
 

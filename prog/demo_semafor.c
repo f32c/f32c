@@ -30,7 +30,7 @@ static char *prog_names[] = {
 	"Pokvareni semafor",
 	"  Rucni semafor",
 	"Poludjeli semafor",
-	"Bezvezni semafor",
+	" Bezvezni semafor",
 };
 
 static int led_state;
@@ -71,13 +71,13 @@ void demo_semafor(int prog) {
 
 	bcopy(prog_names[prog], &lcdbuf[0][1], strlen(prog_names[prog]));
 
-	if ( prog == DEMO_POKVARENI_SEMAFOR) {
+	if (prog == DEMO_POKVARENI_SEMAFOR) {
         	sem(0, BLACK);
         	sem(1, BLACK);
-		MSLEEP(rotpos << 2);
+		MSLEEP(500 - (rotpos << 3));
         	sem(0, YELLOW);
         	sem(1, YELLOW);
-		MSLEEP(rotpos << 2);
+		MSLEEP(500 - (rotpos << 3));
 		return;
 	}
 
@@ -93,7 +93,7 @@ void demo_semafor(int prog) {
 		sem_a = random();
        		sem(0, (sem_a >> 3) & 0xe);
        		sem(1, sem_a & 0xe);
-		MSLEEP(sem_a & 0x1ff);
+		MSLEEP((sem_a & 0x1ff) - (rotpos << 3));
 		return;
 	}
 
@@ -103,7 +103,7 @@ void demo_semafor(int prog) {
 			div(random(), 20, (unsigned int *) &sem_b);
 			div(random(), 95, (unsigned int *) &i);
 			lcdbuf[sem_a][sem_b] = ' ' + i;
-			MSLEEP(rotpos);
+			MSLEEP(64 - rotpos);
 		} while (1);
 	}
 
