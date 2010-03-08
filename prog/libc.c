@@ -6,7 +6,7 @@
 int newkey;
 int oldkey;
 int keymask = 0x0100;		/* Rotary knob press-button */
-int rotpos = 128;
+int rotpos;
 int randseed;
 
 int
