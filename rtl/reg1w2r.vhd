@@ -148,22 +148,22 @@ begin
 			rdd_data <= rdd_tmp;
 		end if;
 	end process;
-	
+
 	end generate; -- xilinx_ram32x1s
-	
-	
+
+
 	xilinx_ramb16:
 	--
 	-- OK up to 120 MHz on Spartan3A
 	--
 	if register_technology = "xilinx_ramb16" generate
 	begin
-	
+
 		r1_xaddr <= "0000" & rd1_addr;
 		r2_xaddr <= "0000" & rd2_addr;
 		rd_xaddr <= "0000" & rdd_addr;
 		wr_xaddr <= "0000" & wr_addr;
-	
+
 		reg_set_1: RAMB16_S36_S36
 		port map(
 			DIA => wr_data, DIB => x"00000000",	DOA => open, DOB => rd1_data,
@@ -185,7 +185,7 @@ begin
 			CLKA => clk, CLKB => not clk, ENA => '1', ENB => '1', SSRA => '0',
 			SSRB => '0', WEA => wr_enable, WEB => '0', DIPA => "0000", DIPB => "0000"
 		);
-	
+
 	end generate; -- xilinx_ramb16
 	
 end Behavioral;
