@@ -166,24 +166,24 @@ begin
 
 		reg_set_1: RAMB16_S36_S36
 		port map(
-			DIA => wr_data, DIB => x"00000000",	DOA => open, DOB => rd1_data,
+			DIA => wr_data, DIB => x"ffffffff",	DOA => open, DOB => rd1_data,
 			ADDRA => wr_xaddr, ADDRB => r1_xaddr,
 			CLKA => clk, CLKB => not clk, ENA => '1', ENB => '1', SSRA => '0',
-			SSRB => '0', WEA => wr_enable, WEB => '0', DIPA => "0000", DIPB => "0000"
+			SSRB => '0', WEA => wr_enable, WEB => '0', DIPA => x"f", DIPB => x"f"
 		);
 		reg_set_2: RAMB16_S36_S36
 		port map(
-			DIA => wr_data, DIB => x"00000000",	DOA => open, DOB => rd2_data,
+			DIA => wr_data, DIB => x"ffffffff",	DOA => open, DOB => rd2_data,
 			ADDRA => wr_xaddr, ADDRB => r2_xaddr,
 			CLKA => clk, CLKB => not clk, ENA => '1', ENB => '1', SSRA => '0',
-			SSRB => '0', WEA => wr_enable, WEB => '0', DIPA => "0000", DIPB => "0000"
+			SSRB => '0', WEA => wr_enable, WEB => '0', DIPA => x"f", DIPB => x"f"
 		);
 		reg_set_d: RAMB16_S36_S36
 		port map(
-			DIA => wr_data, DIB => x"00000000",	DOA => open, DOB => rdd_data,
+			DIA => wr_data, DIB => x"ffffffff",	DOA => open, DOB => rdd_data,
 			ADDRA => wr_xaddr, ADDRB => rd_xaddr,
 			CLKA => clk, CLKB => not clk, ENA => '1', ENB => '1', SSRA => '0',
-			SSRB => '0', WEA => wr_enable, WEB => '0', DIPA => "0000", DIPB => "0000"
+			SSRB => '0', WEA => wr_enable, WEB => '0', DIPA => x"f", DIPB => x"f"
 		);
 
 	end generate; -- xilinx_ramb16
