@@ -114,11 +114,11 @@ architecture Behavioral of pipeline is
 	signal EX_running: boolean;
 	signal EX_eff_reg1, EX_eff_reg2, EX_eff_alu_op2: std_logic_vector(31 downto 0);
 	signal EX_shamt: std_logic_vector(4 downto 0);
+	signal EX_shift_funct_8_16: std_logic_vector(1 downto 0);
 	signal EX_from_shift: std_logic_vector(31 downto 0);
 	signal EX_from_alu_addsubx: std_logic_vector(32 downto 0);
 	signal EX_from_alu_logic, EX_from_alt: std_logic_vector(31 downto 0);
 	signal EX_from_alu_equal: boolean;
-	signal EX_mem_data_out: std_logic_vector(31 downto 0);
 	signal EX_branch_target: std_logic_vector(29 downto 0);
 	signal EX_mem_byte_we: std_logic_vector(3 downto 0);
 	signal EX_take_branch: boolean;
@@ -389,33 +389,24 @@ begin
 			addsubx => EX_from_alu_addsubx, logic => EX_from_alu_logic,
 			funct => ID_EX_op_minor(1 downto 0), equal => EX_from_alu_equal);
 
-	-- compute the shift amount
-	EX_shamt <= EX_eff_reg1(4 downto 0) when ID_EX_immediate(2) = '1' -- shift variable
+	-- compute shift amount and function
+	EX_shamt <=
+		EX_from_alu_addsubx(1 downto 0) & "000" when ID_EX_mem_cycle = '1' else
+		EX_eff_reg1(4 downto 0) when ID_EX_immediate(2) = '1' -- shift variable
 		else ID_EX_immediate(10 downto 6); -- shift immediate
+
+	EX_shift_funct_8_16 <=
+		"00" when ID_EX_mem_cycle = '1' -- shift left logical
+		else ID_EX_immediate(1 downto 0);
 
 	-- instantiate the barrel shifter
 	shift: entity shift
 		port map(
-			shamt_8_16 => EX_shamt(4 downto 3),
-			funct_8_16 => ID_EX_immediate(1 downto 0),
+			shamt_8_16 => EX_shamt(4 downto 3), funct_8_16 => EX_shift_funct_8_16,
 			shamt_1_2_4 => EX_MEM_shamt_1_2_4, funct_1_2_4 => EX_MEM_shift_funct,
 			stage8_in => EX_eff_reg2, stage16_out => EX_from_shift,
 			stage1_in => EX_MEM_to_shift, stage4_out => MEM_from_shift
 		);
-
-	-- byte / half word memory writes need a bit of shifting
-	-- XXX revisit: could we reuse the barrel shifter for handling this?
-	EX_mem_data_out(7 downto 0) <= EX_eff_reg2(7 downto 0);
-	EX_mem_data_out(15 downto 8) <=
-		EX_eff_reg2(7 downto 0) when EX_from_alu_addsubx(0) = '1' else
-		EX_eff_reg2(15 downto 8);
-	EX_mem_data_out(23 downto 16) <=
-		EX_eff_reg2(7 downto 0) when EX_from_alu_addsubx(1) = '1' else
-		EX_eff_reg2(23 downto 16);
-	EX_mem_data_out(31 downto 24) <=
-		EX_eff_reg2(7 downto 0) when EX_from_alu_addsubx(1 downto 0) = "11" else
-		EX_eff_reg2(15 downto 8) when EX_from_alu_addsubx(1 downto 0) = "10" else
-		EX_eff_reg2(31 downto 24);
 	
 	-- compute byte select lines for memory writes
 	EX_mem_byte_we(0) <= ID_EX_mem_write when
@@ -477,7 +468,7 @@ begin
 	begin
 		if rising_edge(clk) then
 			if MEM_running and EX_running then
-				EX_MEM_mem_data_out <= EX_mem_data_out;
+				EX_MEM_mem_data_out <= EX_from_shift;
 				EX_MEM_writeback_addsubx <= EX_from_alu_addsubx;
 				EX_MEM_mem_write <= ID_EX_mem_write;
 				EX_MEM_mem_size <= ID_EX_mem_size;
