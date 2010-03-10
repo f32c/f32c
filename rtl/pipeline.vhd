@@ -162,7 +162,8 @@ architecture Behavioral of pipeline is
 	signal WB_writeback_data: std_logic_vector(31 downto 0);
 
 	-- global state
-	signal HI, LO: std_logic_vector(31 downto 0);
+	signal LO: std_logic_vector(31 downto 0) := x"01234567";
+	signal HI: std_logic_vector(31 downto 0) := x"89abcdef";
 	signal HILO_timer: std_logic_vector(1 downto 0);
 	
 	-- misc signals
@@ -281,8 +282,8 @@ begin
 		ID_reg1_addr /= ID_EX_writeback_addr or ID_EX_latency = '0') and
 		(ID_reg2_zero or ID_ignore_reg2 or
 		ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = '0') and
-		not (ID_EX_mem_cycle = '1' and ID_EX_mem_size /= "11" and
-		ID_EX_mem_write = '0'));
+		not (ID_EX_mem_cycle = '1' and ID_EX_mem_size(1) = '0' and
+		ID_EX_mem_write = '0')); -- XXX revisit byte / half word mem read stalling
 	
 	-- forward result from writeback stage if needed
 	ID_eff_reg1 <= WB_writeback_data when ID_reg1_addr = MEM_WB_writeback_addr and
@@ -309,27 +310,29 @@ begin
 	process(clk)
 	begin
 		if rising_edge(clk) then
+			-- result forwarding schedule must be revised every clock cycle
+			-- XXX REVISIT THIS -> wrong if inserting synthetic shift cycles!
+			ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
+			ID_EX_fwd_ex_reg2 <= ID_fwd_ex_reg2;
+			ID_EX_fwd_ex_alu_op2 <= ID_fwd_ex_alu_op2;
+			ID_EX_fwd_mem_reg1 <= ID_fwd_mem_reg1;
+			ID_EX_fwd_mem_reg2 <= ID_fwd_mem_reg2;
+			ID_EX_fwd_mem_alu_op2 <= ID_fwd_mem_alu_op2;
 			if EX_running then
-				ID_EX_reg1_data <= ID_eff_reg1;
-				ID_EX_reg2_data <= ID_eff_reg2;
-				ID_EX_alu_op2 <= ID_alu_op2;
-				ID_EX_reg1_addr <= ID_reg1_addr;
-				ID_EX_reg2_addr <= ID_reg2_addr;
-				ID_EX_immediate <= ID_immediate;
-				ID_EX_sign_extend <= ID_sign_extend;
-				ID_EX_op_minor <= ID_op_minor;
-				ID_EX_mem_write <= ID_mem_write;
-				ID_EX_mem_size <= ID_mem_size;
-				ID_EX_mem_read_sign_extend <= ID_mem_read_sign_extend;
-				ID_EX_jump_register <= ID_jump_register;
-				ID_EX_branch_condition <= ID_branch_condition;
-				ID_EX_PC_4 <= IF_ID_PC_4;
-				ID_EX_PC_8 <= IF_ID_PC_4 + 1;
-				ID_EX_branch_target <= ID_branch_target;
-				ID_EX_latency <= ID_latency;
-				ID_EX_cop0 <= ID_cop0;
-				-- insert a bubble if branching or ID stage is stalled
+--				if ID_EX_mem_cycle = '1' and ID_EX_mem_write = '0' and
+--					ID_EX_mem_size(1) = '0' then
+--					-- byte / half word load, insert an arithm shift right cycle
+--					-- XXX must stall the ID stage!!!
+--					ID_EX_mem_cycle <= '0';
+--					ID_EX_op_major <= "10"; -- shift
+--					ID_EX_immediate(10 downto 6) <=
+--						EX_from_alu_addsubx(5 downto 4) & "000"; -- shift amount
+--					ID_EX_immediate(2) <= '0'; -- shift immediate
+--					ID_EX_immediate(1 downto 0) <= "11"; -- shift right arithm
+--					ID_EX_instruction <= x"ffffffff"; -- XXX debugging only
+--				elsif MEM_take_branch or not ID_running then
 				if MEM_take_branch or not ID_running then
+					-- insert a bubble if branching or ID stage is stalled
 					ID_EX_writeback_addr <= "00000"; -- NOP
 					ID_EX_mem_cycle <= '0';
 					ID_EX_branch_cycle <= false;
@@ -338,27 +341,39 @@ begin
 					ID_EX_op_major <= "00";
 					ID_EX_instruction <= x"00000000"; -- XXX debugging only
 				else
+					-- propagate next instruction from ID to EX stage
+					ID_EX_reg1_data <= ID_eff_reg1;
+					ID_EX_reg2_data <= ID_eff_reg2;
+					ID_EX_alu_op2 <= ID_alu_op2;
+					ID_EX_reg1_addr <= ID_reg1_addr;
+					ID_EX_reg2_addr <= ID_reg2_addr;
+					ID_EX_immediate <= ID_immediate;
+					ID_EX_sign_extend <= ID_sign_extend;
+					ID_EX_op_minor <= ID_op_minor;
+					ID_EX_mem_write <= ID_mem_write;
+					ID_EX_mem_size <= ID_mem_size;
+					ID_EX_mem_read_sign_extend <= ID_mem_read_sign_extend;
+					ID_EX_jump_register <= ID_jump_register;
+					ID_EX_branch_condition <= ID_branch_condition;
+					ID_EX_PC_4 <= IF_ID_PC_4;
+					ID_EX_PC_8 <= IF_ID_PC_4 + 1;
+					ID_EX_branch_target <= ID_branch_target;
+					ID_EX_cop0 <= ID_cop0;
 					ID_EX_writeback_addr <= ID_writeback_addr;
 					ID_EX_mem_cycle <= ID_mem_cycle;
 					ID_EX_branch_cycle <= ID_branch_cycle;
 					ID_EX_jump_cycle <= ID_jump_cycle;
 					ID_EX_predict_taken <= ID_predict_taken;
 					ID_EX_op_major <= ID_op_major;
+					ID_EX_latency <= ID_latency;
 					ID_EX_instruction <= IF_ID_instruction; -- XXX debugging only
 					ID_EX_PC <= IF_ID_PC; -- XXX debugging only
 				end if;
 			else
 				-- Be conservative with branch prediction if pipeline is stalled
-				-- XXX revisit!
-				ID_EX_predict_taken <= false;
+				-- XXX revisit - mos probably unnecessary!
+				-- ID_EX_predict_taken <= false;
 			end if;
-			-- result forwarding schedule must be revised every clock cycle
-			ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
-			ID_EX_fwd_ex_reg2 <= ID_fwd_ex_reg2;
-			ID_EX_fwd_ex_alu_op2 <= ID_fwd_ex_alu_op2;
-			ID_EX_fwd_mem_reg1 <= ID_fwd_mem_reg1;
-			ID_EX_fwd_mem_reg2 <= ID_fwd_mem_reg2;
-			ID_EX_fwd_mem_alu_op2 <= ID_fwd_mem_alu_op2;
 		end if;
 	end process;
 
