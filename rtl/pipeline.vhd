@@ -121,12 +121,13 @@ architecture Behavioral of pipeline is
 	signal EX_from_alu_logic, EX_from_alt: std_logic_vector(31 downto 0);
 	signal EX_from_alu_equal: boolean;
 	signal EX_branch_target: std_logic_vector(29 downto 0);
+	signal EX_2bit_add: std_logic_vector(1 downto 0);
 	signal EX_mem_byte_we: std_logic_vector(3 downto 0);
 	signal EX_take_branch: boolean;
 	signal EX_muldiv_busy: boolean;
 	-- boundary to stage 4
 	signal EX_MEM_writeback_addr: std_logic_vector(4 downto 0);
-	signal EX_MEM_writeback_addsubx: std_logic_vector(32 downto 0);
+	signal EX_MEM_writeback_addsub: std_logic_vector(31 downto 0);
 	signal EX_MEM_writeback_logic: std_logic_vector(31 downto 0);
 	signal EX_MEM_mem_data_out: std_logic_vector(31 downto 0);
 	signal EX_MEM_branch_target: std_logic_vector(29 downto 0) := init_PC(31 downto 2);
@@ -310,14 +311,6 @@ begin
 	process(clk)
 	begin
 		if rising_edge(clk) then
-			-- result forwarding schedule must be revised every clock cycle
-			ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
-			ID_EX_fwd_ex_reg2 <= ID_fwd_ex_reg2;
-			ID_EX_fwd_ex_alu_op2 <= ID_fwd_ex_alu_op2;
-			ID_EX_fwd_mem_reg1 <= ID_fwd_mem_reg1;
-			ID_EX_fwd_mem_reg2 <= ID_fwd_mem_reg2;
-			ID_EX_fwd_mem_alu_op2 <= ID_fwd_mem_alu_op2;
-
 			if EX_running then
 				if ID_EX_partial_load then
 					-- byte / half word load, insert an arithm shift right cycle
@@ -328,8 +321,8 @@ begin
 					ID_EX_immediate(2) <= '0'; -- shift immediate
 					ID_EX_immediate(1 downto 0) <= "10"; -- shift right logical
 					if not EX_MEM_partial_load then
-						ID_EX_immediate(10 downto 6) <=
-							EX_from_alu_addsubx(1 downto 0) & "000"; -- shift amount
+						-- shift amount
+						ID_EX_immediate(10 downto 6) <= EX_2bit_add & "000";
 					end if;
 					ID_EX_instruction <= x"00000001"; -- XXX debugging only
 					-- schedule forwarding of the result of memory read operation
@@ -378,6 +371,13 @@ begin
 					ID_EX_latency <= ID_latency;
 					ID_EX_instruction <= IF_ID_instruction; -- XXX debugging only
 					ID_EX_PC <= IF_ID_PC; -- XXX debugging only
+					-- schedule result forwarding
+					ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
+					ID_EX_fwd_ex_reg2 <= ID_fwd_ex_reg2;
+					ID_EX_fwd_ex_alu_op2 <= ID_fwd_ex_alu_op2;
+					ID_EX_fwd_mem_reg1 <= ID_fwd_mem_reg1;
+					ID_EX_fwd_mem_reg2 <= ID_fwd_mem_reg2;
+					ID_EX_fwd_mem_alu_op2 <= ID_fwd_mem_alu_op2;
 				end if;
 			else
 				-- Be conservative with branch prediction if pipeline is stalled
@@ -414,9 +414,9 @@ begin
 			funct => ID_EX_op_minor(1 downto 0), equal => EX_from_alu_equal);
 
 	-- compute shift amount and function
+	EX_2bit_add <= EX_eff_reg1(1 downto 0) + ID_EX_immediate(1 downto 0);
 	EX_shamt <=
-		(EX_eff_reg1(1 downto 0) + ID_EX_immediate(1 downto 0)) & "000"
-		when ID_EX_mem_cycle = '1' else
+		EX_2bit_add & "000" when ID_EX_mem_cycle = '1' else
 		EX_eff_reg1(4 downto 0) when ID_EX_immediate(2) = '1' -- shift variable
 		else ID_EX_immediate(10 downto 6); -- shift immediate
 
@@ -438,17 +438,17 @@ begin
 	
 	-- compute byte select lines for memory writes
 	EX_mem_byte_we(0) <= ID_EX_mem_write when
-		EX_from_alu_addsubx(1 downto 0) = "00" or ID_EX_mem_size(1) = '1' or
-		(ID_EX_mem_size(0) = '1' and EX_from_alu_addsubx(1) = '0') else '0';
+		EX_2bit_add = "00" or ID_EX_mem_size(1) = '1' or
+		(ID_EX_mem_size(0) = '1' and EX_2bit_add(1) = '0') else '0';
 	EX_mem_byte_we(1) <= ID_EX_mem_write when
-		EX_from_alu_addsubx(1 downto 0) = "01" or ID_EX_mem_size(1) = '1' or
-		(ID_EX_mem_size(0) = '1' and EX_from_alu_addsubx(1) = '0') else '0';
+		EX_2bit_add = "01" or ID_EX_mem_size(1) = '1' or
+		(ID_EX_mem_size(0) = '1' and EX_2bit_add(1) = '0') else '0';
 	EX_mem_byte_we(2) <= ID_EX_mem_write when
-		EX_from_alu_addsubx(1 downto 0) = "10" or ID_EX_mem_size(1) = '1' or
-		(ID_EX_mem_size(0) = '1' and EX_from_alu_addsubx(1) = '1') else '0';
+		EX_2bit_add = "10" or ID_EX_mem_size(1) = '1' or
+		(ID_EX_mem_size(0) = '1' and EX_2bit_add(1) = '1') else '0';
 	EX_mem_byte_we(3) <= ID_EX_mem_write when
-		EX_from_alu_addsubx(1 downto 0) = "11" or ID_EX_mem_size(1) = '1' or
-		(ID_EX_mem_size(0) = '1' and EX_from_alu_addsubx(1) = '1') else '0';		
+		EX_2bit_add = "11" or ID_EX_mem_size(1) = '1' or
+		(ID_EX_mem_size(0) = '1' and EX_2bit_add(1) = '1') else '0';		
 
 	-- MFHI, MFLO, link PC+8 -- XXX what about MFC0 / MFC1?
 	EX_from_alt <=
@@ -497,7 +497,7 @@ begin
 		if rising_edge(clk) then
 			if MEM_running and EX_running then
 				EX_MEM_mem_data_out <= EX_from_shift;
-				EX_MEM_writeback_addsubx <= EX_from_alu_addsubx;
+				EX_MEM_writeback_addsub <= EX_from_alu_addsubx(31 downto 0);
 				EX_MEM_mem_write <= ID_EX_mem_write;
 				EX_MEM_mem_size <= ID_EX_mem_size;
 				EX_MEM_partial_load <= ID_EX_partial_load;
@@ -561,12 +561,12 @@ begin
 	MEM_running <= EX_MEM_mem_cycle = '0' or dmem_data_ready = '1';
 	
 	MEM_writeback_data <= EX_MEM_writeback_logic when EX_MEM_logic_cycle = '1'
-		else EX_MEM_writeback_addsubx(31 downto 0);
+		else EX_MEM_writeback_addsub;
 	
 	MEM_take_branch <= EX_MEM_take_branch xor EX_MEM_branch_taken;
 	
 	-- connect outbound signals for memory access
-	dmem_addr <= EX_MEM_writeback_addsubx(31 downto 2);
+	dmem_addr <= EX_MEM_writeback_addsub(31 downto 2);
 	dmem_data_out <= EX_MEM_mem_data_out;
 	dmem_addr_strobe <= EX_MEM_mem_cycle;
 	dmem_byte_we <= EX_MEM_mem_byte_we;
@@ -651,7 +651,7 @@ begin
 				when x"0a" => trace_data <= EX_eff_reg1;
 				when x"0b" => trace_data <= EX_eff_reg2;
 				when x"0c" => trace_data <= EX_eff_alu_op2;
-				when x"0d" => trace_data <= EX_MEM_writeback_addsubx(31 downto 0);
+				when x"0d" => trace_data <= EX_MEM_writeback_addsub;
 				when x"0e" => trace_data <= EX_MEM_writeback_logic;
 				when x"0f" => trace_data <= x"000000" & "000" & EX_shamt;
 				--
