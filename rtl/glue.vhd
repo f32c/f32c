@@ -40,26 +40,10 @@ entity glue is
 		reg_trace: string := "true";
 		bus_trace: string := "true" -- XXX reduce clock rate if bus_trace enabled!
 --
--- byte / half word loads shifting and padding in MEM stage
--- ========================================================
--- Number of Slice Flip Flops:           843 out of  11,776    7%
--- Number of 4 input LUTs:             2,542 out of  11,776   21%
--- Number of occupied Slices:          1,479 out of   5,888   25%
--- Total Number of 4 input LUTs:       2,678 out of  11,776   22%
---
--- byte / half word loads shifting and padding in EX stage
--- =======================================================
--- Number of Slice Flip Flops:           825 out of  11,776    7%
--- Number of 4 input LUTs:             2,456 out of  11,776   20%
--- Number of occupied Slices:          1,424 out of   5,888   24%
--- Total Number of 4 input LUTs:       2,589 out of  11,776   21%
--- 
--- use MEM_WB_write_enable, not ID_regX_zero, to decide on WB -> ID forwarding
--- ===========================================================================
--- Number of Slice Flip Flops:           820 out of  11,776    6%
--- Number of 4 input LUTs:             2,426 out of  11,776   20%
--- Number of occupied Slices:          1,405 out of   5,888   23%
--- Total Number of 4 input LUTs:       2,562 out of  11,776   21%
+-- Number of Slice Flip Flops:           826 out of  11,776    7%
+-- Number of 4 input LUTs:             2,425 out of  11,776   20%
+-- Number of occupied Slices:          1,403 out of   5,888   23%
+-- Total Number of 4 input LUTs:       2,565 out of  11,776   21%
 --
 	);
 	port (
