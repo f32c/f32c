@@ -35,7 +35,6 @@ entity pipeline is
 	generic(
 		mult_enable: string := "true";
 		branch_prediction: string := "static";
-		pipelined_slt: string := "false";
 		register_technology: string := "xilinx_ram16x1d";
 		init_PC: std_logic_vector := x"00000000";
 		-- debugging options
@@ -235,8 +234,7 @@ begin
 	-- instruction decoder
 	idecode: entity idecode
 		generic map(
-			branch_prediction => branch_prediction,
-			pipelined_slt => pipelined_slt
+			branch_prediction => branch_prediction
 		)
 		port map(
 			instruction => IF_ID_instruction,
@@ -520,7 +518,7 @@ begin
 				if ID_EX_jump_cycle or ID_EX_branch_cycle or
 					ID_EX_op_major = "11" or ID_EX_op_major = "01" then
 					EX_MEM_logic_cycle <= '1';
-					if pipelined_slt /= "true" and ID_EX_op_major = "01" then
+					if ID_EX_op_major = "01" then
 						-- SLT / SLTU / SLTI / SLTIU
 						EX_MEM_writeback_logic(31 downto 1) <= x"0000000" & "000";
 						if ID_EX_sign_extend then
@@ -591,8 +589,6 @@ begin
 				end if;
 				if EX_MEM_op_major = "10" then -- shift
 					MEM_WB_ex_data <= MEM_from_shift;
-				elsif pipelined_slt = "true" and EX_MEM_op_major = "01" then -- SLT
-					MEM_WB_ex_data <= x"0000000" & "000" & EX_MEM_writeback_addsubx(32);
 				else
 					MEM_WB_ex_data <= MEM_writeback_data;
 				end if;
