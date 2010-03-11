@@ -35,8 +35,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity idecode is
 	generic(
 		-- NO defaults for compile-time options!
-		branch_prediction: string;
-		pipelined_slt: string
+		branch_prediction: string
 	);
 	port(
 		instruction: in STD_LOGIC_VECTOR(31 downto 0);
@@ -153,9 +152,6 @@ begin
 				if fncode(0) = '1' then
 					do_sign_extend <= false; -- SLTU
 				end if;
-				if pipelined_slt = "true" then
-					latency <= '1';
-				end if;
 			end if;
 			if fncode(5 downto 3) = "000" then -- shift
 				op_major <= "10"; -- shift
@@ -176,9 +172,6 @@ begin
 			end if;
 			if opcode(2 downto 1) = "01" then
 				op_major <= "01"; -- SLTI / SLTIU
-				if pipelined_slt = "true" then
-					latency <= '1';
-				end if;
 			end if;
 		end if;
 
