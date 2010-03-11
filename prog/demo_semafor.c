@@ -87,27 +87,27 @@ void demo_semafor(int prog) {
 	bcopy(prog_names[prog], &lcdbuf[0][1], strlen(prog_names[prog]));
 
 	if (prog == DEMO_POKVARENI_SEMAFOR) {
-        	sem(0, BLACK);
-        	sem(1, BLACK);
+		sem(0, BLACK);
+		sem(1, BLACK);
 		MSLEEP(500 - (rotpos << 3));
-        	sem(0, YELLOW);
-        	sem(1, YELLOW);
+		sem(0, YELLOW);
+		sem(1, YELLOW);
 		MSLEEP(500 - (rotpos << 3));
 		return;
 	}
 
 	if (prog == DEMO_RUCNI_SEMAFOR) {
 		do {
-       			sem(0, (rotpos >> 2) & 0xe);
-       			sem(1, (rotpos << 1) & 0xe);
+			sem(0, (rotpos >> 2) & 0xe);
+			sem(1, (rotpos << 1) & 0xe);
 			MSLEEP(10);
 		} while (1);
 	}
 
 	if (prog == DEMO_POLUDJELI_SEMAFOR) {
 		sem_a = random();
-       		sem(0, (sem_a >> 3) & 0xe);
-       		sem(1, sem_a & 0xe);
+		sem(0, (sem_a >> 3) & 0xe);
+		sem(1, sem_a & 0xe);
 		MSLEEP((sem_a & 0x1ff) - (rotpos << 3));
 		return;
 	}
@@ -136,7 +136,6 @@ void demo_semafor(int prog) {
 			} else {
        		OUTW(IO_LED, 0);
 			}
-
 			MSLEEP(10);
 		} while (1);
 	}
@@ -145,24 +144,24 @@ void demo_semafor(int prog) {
 	sem_a = !sem_a;
 	sem_b = !sem_a;
 
-       	sem(sem_a, RED);
-       	sem(sem_b, RED);
+	sem(sem_a, RED);
+	sem(sem_b, RED);
 	MSLEEP(1500);
 
-       	sem(sem_a, RED | YELLOW);
+	sem(sem_a, RED | YELLOW);
 	MSLEEP(1500);
 
-       	sem(sem_a, GREEN);
+	sem(sem_a, GREEN);
 	MSLEEP(8000);
 
 	for (i = 0; i < 4; i++) {
-        	sem(sem_a, BLACK);
+		sem(sem_a, BLACK);
 		MSLEEP(500);
-        	sem(sem_a, GREEN);
+		sem(sem_a, GREEN);
 		MSLEEP(500);
 	}
 
-       	sem(sem_a, YELLOW);
+	sem(sem_a, YELLOW);
 	MSLEEP(3000);
 
 	return;
