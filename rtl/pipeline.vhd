@@ -104,6 +104,7 @@ architecture Behavioral of pipeline is
 	signal ID_EX_mem_cycle, ID_EX_mem_write: std_logic;
 	signal ID_EX_mem_size: std_logic_vector(1 downto 0);
 	signal ID_EX_mem_read_sign_extend: std_logic;
+	signal ID_EX_partial_load: boolean;
 	signal ID_EX_latency: std_logic;
 	signal ID_EX_cop0: std_logic;
 	signal ID_EX_instruction: std_logic_vector(31 downto 0); -- XXX debugging only
@@ -137,7 +138,7 @@ architecture Behavioral of pipeline is
 	signal EX_MEM_to_shift: std_logic_vector(31 downto 0);
 	signal EX_MEM_mem_write: std_logic;
 	signal EX_MEM_mem_size: std_logic_vector(1 downto 0);
-	signal EX_MEM_mem_read_sign_extend: std_logic;
+	signal EX_MEM_partial_load: boolean;
 	signal EX_MEM_mem_byte_we: std_logic_vector(3 downto 0);
 	signal EX_MEM_op_major: std_logic_vector(1 downto 0);
 	signal EX_MEM_instruction: std_logic_vector(31 downto 0); -- XXX debugging only
@@ -150,12 +151,10 @@ architecture Behavioral of pipeline is
 	-- boundary to stage 5
 	signal MEM_WB_mem_cycle: std_logic;
 	signal MEM_WB_wait_cycle: boolean;
-	signal MEM_WB_mem_align_wait: std_logic;
 	signal MEM_WB_writeback_addr: std_logic_vector(4 downto 0);
 	signal MEM_WB_write_enable: std_logic;
 	signal MEM_WB_ex_data, MEM_WB_mem_data: std_logic_vector(31 downto 0);
 	signal MEM_WB_mem_size: std_logic; -- byte or half word
-	signal MEM_WB_mem_read_sign_extend: std_logic;
 	signal MEM_WB_instruction: std_logic_vector(31 downto 0); -- XXX debugging only
 	
 	-- pipeline stage 5: register writeback
@@ -282,13 +281,14 @@ begin
 		ID_reg1_addr /= ID_EX_writeback_addr or ID_EX_latency = '0') and
 		(ID_reg2_zero or ID_ignore_reg2 or
 		ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = '0') and
-		not (ID_EX_mem_cycle = '1' and ID_EX_mem_size(1) = '0' and
-		ID_EX_mem_write = '0')); -- XXX revisit byte / half word mem read stalling
+		not ID_EX_partial_load);
 	
 	-- forward result from writeback stage if needed
-	ID_eff_reg1 <= WB_writeback_data when ID_reg1_addr = MEM_WB_writeback_addr and
+	ID_eff_reg1 <=
+		WB_writeback_data when ID_reg1_addr = MEM_WB_writeback_addr and
 		not ID_reg1_zero else ID_reg1_data;
-	ID_eff_reg2 <= WB_writeback_data when ID_reg2_addr = MEM_WB_writeback_addr and
+	ID_eff_reg2 <=
+		WB_writeback_data when ID_reg2_addr = MEM_WB_writeback_addr and
 		not ID_reg2_zero else ID_reg2_data;
 		
 	ID_alu_op2 <= ID_immediate when ID_use_immediate else ID_eff_reg2;
@@ -303,7 +303,8 @@ begin
 	ID_fwd_mem_alu_op2 <= ID_fwd_mem_reg2 and not ID_use_immediate;
 	
 	-- compute branch target
-	ID_branch_target <= (ID_sign_extension(13 downto 0) & IF_ID_instruction(15 downto 0))
+	ID_branch_target <=
+		(ID_sign_extension(13 downto 0) & IF_ID_instruction(15 downto 0))
 		+ IF_ID_PC_4 when ID_branch_cycle
 		else IF_ID_PC_4(29 downto 24) & IF_ID_instruction(23 downto 0);
 
@@ -311,27 +312,35 @@ begin
 	begin
 		if rising_edge(clk) then
 			-- result forwarding schedule must be revised every clock cycle
-			-- XXX REVISIT THIS -> wrong if inserting synthetic shift cycles!
 			ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
 			ID_EX_fwd_ex_reg2 <= ID_fwd_ex_reg2;
 			ID_EX_fwd_ex_alu_op2 <= ID_fwd_ex_alu_op2;
 			ID_EX_fwd_mem_reg1 <= ID_fwd_mem_reg1;
 			ID_EX_fwd_mem_reg2 <= ID_fwd_mem_reg2;
 			ID_EX_fwd_mem_alu_op2 <= ID_fwd_mem_alu_op2;
+
 			if EX_running then
---				if ID_EX_mem_cycle = '1' and ID_EX_mem_write = '0' and
---					ID_EX_mem_size(1) = '0' then
---					-- byte / half word load, insert an arithm shift right cycle
---					-- XXX must stall the ID stage!!!
---					ID_EX_mem_cycle <= '0';
---					ID_EX_op_major <= "10"; -- shift
---					ID_EX_immediate(10 downto 6) <=
---						EX_from_alu_addsubx(5 downto 4) & "000"; -- shift amount
---					ID_EX_immediate(2) <= '0'; -- shift immediate
---					ID_EX_immediate(1 downto 0) <= "11"; -- shift right arithm
---					ID_EX_instruction <= x"ffffffff"; -- XXX debugging only
---				elsif MEM_take_branch or not ID_running then
-				if MEM_take_branch or not ID_running then
+				if ID_EX_partial_load then
+					-- byte / half word load, insert an arithm shift right cycle
+					-- XXX must stall the ID stage - revisit!!!
+					ID_EX_partial_load <= not EX_MEM_partial_load;
+					ID_EX_mem_cycle <= '0';
+					ID_EX_op_major <= "10"; -- shift
+					ID_EX_immediate(2) <= '0'; -- shift immediate
+					ID_EX_immediate(1 downto 0) <= "10"; -- shift right logical
+					if not EX_MEM_partial_load then
+						ID_EX_immediate(10 downto 6) <=
+							EX_from_alu_addsubx(1 downto 0) & "000"; -- shift amount
+					end if;
+					ID_EX_instruction <= x"00000001"; -- XXX debugging only
+					-- schedule forwarding of the result of memory read operation
+					ID_EX_fwd_ex_reg1 <= false;
+					ID_EX_fwd_ex_reg2 <= false;
+					ID_EX_fwd_ex_alu_op2 <= false;
+					ID_EX_fwd_mem_reg1 <= false;
+					ID_EX_fwd_mem_reg2 <= true;
+					ID_EX_fwd_mem_alu_op2 <= false;
+				elsif MEM_take_branch or not ID_running then
 					-- insert a bubble if branching or ID stage is stalled
 					ID_EX_writeback_addr <= "00000"; -- NOP
 					ID_EX_mem_cycle <= '0';
@@ -352,6 +361,8 @@ begin
 					ID_EX_op_minor <= ID_op_minor;
 					ID_EX_mem_write <= ID_mem_write;
 					ID_EX_mem_size <= ID_mem_size;
+					ID_EX_partial_load <= ID_mem_cycle = '1' and ID_mem_write = '0'
+						and ID_mem_size(1) = '0';
 					ID_EX_mem_read_sign_extend <= ID_mem_read_sign_extend;
 					ID_EX_jump_register <= ID_jump_register;
 					ID_EX_branch_condition <= ID_branch_condition;
@@ -383,8 +394,7 @@ begin
 	-- =========================
 	--
 	
-	EX_running <= MEM_running and not MEM_sched_wait_cycle
-		and not EX_muldiv_busy; -- XXX revisit
+	EX_running <= MEM_running and not EX_muldiv_busy; -- XXX revisit
 	
 	-- forward the results from later stages
 	EX_eff_reg1 <= MEM_writeback_data when ID_EX_fwd_ex_reg1	else
@@ -406,12 +416,13 @@ begin
 
 	-- compute shift amount and function
 	EX_shamt <=
-		EX_from_alu_addsubx(1 downto 0) & "000" when ID_EX_mem_cycle = '1' else
+		(EX_eff_reg1(1 downto 0) + ID_EX_immediate(1 downto 0)) & "000"
+		when ID_EX_mem_cycle = '1' else
 		EX_eff_reg1(4 downto 0) when ID_EX_immediate(2) = '1' -- shift variable
 		else ID_EX_immediate(10 downto 6); -- shift immediate
 
-	EX_shift_funct_8_16 <=
-		"00" when ID_EX_mem_cycle = '1' -- shift left logical
+	EX_shift_funct_8_16 <= "00" -- shift left logical
+		when ID_EX_mem_cycle = '1' and ID_EX_mem_write = '1'
 		else ID_EX_immediate(1 downto 0);
 
 	-- instantiate the barrel shifter
@@ -420,6 +431,9 @@ begin
 			shamt_8_16 => EX_shamt(4 downto 3), funct_8_16 => EX_shift_funct_8_16,
 			shamt_1_2_4 => EX_MEM_shamt_1_2_4, funct_1_2_4 => EX_MEM_shift_funct,
 			stage8_in => EX_eff_reg2, stage16_out => EX_from_shift,
+			mem_partial_load => EX_MEM_partial_load,
+			mem_read_sign_extend => ID_EX_mem_read_sign_extend,
+			mem_size => ID_EX_mem_size(0),
 			stage1_in => EX_MEM_to_shift, stage4_out => MEM_from_shift
 		);
 	
@@ -487,7 +501,7 @@ begin
 				EX_MEM_writeback_addsubx <= EX_from_alu_addsubx;
 				EX_MEM_mem_write <= ID_EX_mem_write;
 				EX_MEM_mem_size <= ID_EX_mem_size;
-				EX_MEM_mem_read_sign_extend <= ID_EX_mem_read_sign_extend;
+				EX_MEM_partial_load <= ID_EX_partial_load;
 				EX_MEM_mem_byte_we <= EX_mem_byte_we;
 				EX_MEM_shamt_1_2_4 <= EX_shamt(2 downto 0);
 				EX_MEM_shift_funct <= ID_EX_immediate(1 downto 0);
@@ -545,11 +559,7 @@ begin
 	-- ===============================
 	--
 
-	MEM_running <= (EX_MEM_mem_cycle = '0' or dmem_data_ready = '1') and
-		not MEM_WB_wait_cycle;
-	
-	MEM_sched_wait_cycle <= EX_MEM_mem_cycle = '1' and EX_MEM_mem_size /= "11" and
-		not MEM_WB_wait_cycle and EX_MEM_mem_write = '0';
+	MEM_running <= EX_MEM_mem_cycle = '0' or dmem_data_ready = '1';
 	
 	MEM_writeback_data <= EX_MEM_writeback_logic when EX_MEM_logic_cycle = '1'
 		else EX_MEM_writeback_addsubx(31 downto 0);
@@ -562,18 +572,9 @@ begin
 	dmem_addr_strobe <= EX_MEM_mem_cycle;
 	dmem_byte_we <= EX_MEM_mem_byte_we;
 	
-	memctl: entity memctl
-		port map(
-			mem_size => MEM_WB_mem_size,
-			mem_offset => MEM_WB_ex_data(1 downto 0), -- XXX is this safe?
-			mem_data => MEM_WB_mem_data,
-			mem_read_sign_extend => MEM_WB_mem_read_sign_extend,
-			data_in_shifted => MEM_mem_data_shifted
-		);
-
 	-- memory output must be externally registered (it is with internal BRAM)
-	-- MEM_WB_mem_data <= dmem_data_in;
-	
+	-- i.e. dmem_data_in??? XXX what is the meaning of this - revisit!
+
 	process(clk)
 	begin
 		if rising_edge(clk) then
@@ -583,8 +584,6 @@ begin
 				MEM_WB_mem_cycle <= EX_MEM_mem_cycle;
 				MEM_WB_writeback_addr <= EX_MEM_writeback_addr;
 				MEM_WB_mem_size <= EX_MEM_mem_size(0);
-				MEM_WB_mem_read_sign_extend <= EX_MEM_mem_read_sign_extend;
-				MEM_WB_wait_cycle <= MEM_sched_wait_cycle;
 				if EX_MEM_writeback_addr = "00000" then
 					MEM_WB_write_enable <= '0';
 				else
@@ -596,12 +595,6 @@ begin
 					MEM_WB_ex_data <= x"0000000" & "000" & EX_MEM_writeback_addsubx(32);
 				else
 					MEM_WB_ex_data <= MEM_writeback_data;
-				end if;
-			else
-				if dmem_data_ready = '1' then
-					MEM_WB_wait_cycle <= false;
-					MEM_WB_mem_cycle <= '0';
-					MEM_WB_ex_data <= MEM_mem_data_shifted;
 				end if;
 			end if;
 		end if;
@@ -663,8 +656,7 @@ begin
 				when x"0c" => trace_data <= EX_eff_alu_op2;
 				when x"0d" => trace_data <= EX_MEM_writeback_addsubx(31 downto 0);
 				when x"0e" => trace_data <= EX_MEM_writeback_logic;
-				when x"0f" => trace_data <= x"0000000" & "000" &
-					ID_EX_sign_extend_debug;
+				when x"0f" => trace_data <= x"000000" & "000" & EX_shamt;
 				--
 				when x"1a" => trace_data <= LO;
 				when x"1b" => trace_data <= HI;

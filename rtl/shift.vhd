@@ -38,12 +38,15 @@ entity shift is
 		shamt_1_2_4: in std_logic_vector(2 downto 0);
 		funct_8_16, funct_1_2_4: in std_logic_vector(1 downto 0);
 		stage8_in, stage1_in: in std_logic_vector(31 downto 0);
+		mem_partial_load: in boolean;
+		mem_read_sign_extend: in std_logic;
+		mem_size:in std_logic;
 		stage16_out, stage4_out: out std_logic_vector(31 downto 0)
 	);
 end shift;
 
 architecture Behavioral of shift is
-	signal stage1, stage2, stage8: std_logic_vector(31 downto 0);
+	signal stage1, stage2, stage8, stage16: std_logic_vector(31 downto 0);
 	signal sel16, sel8, sel4, sel2, sel1: std_logic_vector(1 downto 0);
 begin
 	-- shift by 8 and 16 occurs in EX stage; shift by 1, 2 and 4 is in MEM stage
@@ -65,7 +68,7 @@ begin
 			stage8_in when others;
 
 	with sel16 select
-		stage16_out <= stage8(15 downto 0) & x"0000" when "00",
+		stage16 <= stage8(15 downto 0) & x"0000" when "00",
 			x"0000" & stage8(31 downto 16) when "10",
 			stage8(31) & stage8(31) & stage8(31) & stage8(31) &
 			stage8(31) & stage8(31) & stage8(31) & stage8(31) &
@@ -74,6 +77,35 @@ begin
 			stage8(31 downto 16) when "11",
 			stage8 when others;
 	
+	process(stage16, mem_partial_load, mem_read_sign_extend, mem_size)
+	begin
+		if mem_partial_load then
+			if mem_size = '0' then -- byte load
+				if mem_read_sign_extend = '1' then
+					if stage16(7) = '1' then
+						stage16_out <= x"ffffff" & stage16(7 downto 0);
+					else
+						stage16_out <= x"000000" & stage16(7 downto 0);
+					end if;
+				else
+					stage16_out <= x"000000" & stage16(7 downto 0);
+				end if;
+			else -- half word load
+				if mem_read_sign_extend = '1' then
+					if stage16(15) = '1' then
+						stage16_out <= x"ffff" & stage16(15 downto 0);
+					else
+						stage16_out <= x"0000" & stage16(15 downto 0);
+					end if;
+				else
+					stage16_out <= x"0000" & stage16(15 downto 0);
+				end if;
+			end if;
+		else
+			stage16_out <= stage16;
+		end if;
+	end process;
+
 	-- the bottom part is separated from the upper by a register
 	-- on EX to MEM boundary.
 
