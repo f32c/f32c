@@ -83,9 +83,9 @@ void lcd_redraw(void)
 	if (!lcd_initialized)
 		lcd_init();
 
-        /* sw3 selects lower / upper case letters */
-        INW(uc, IO_LED);
-        uc = (uc >> 3) & 0x1;
+	/* sw3 selects lower / upper case letters */
+	INW(uc, IO_LED);
+	uc = (uc >> 3) & 0x1;
 
 	for (j = 0; j < LCD_ROWS; j++) {
 		lcd_cr(j);
