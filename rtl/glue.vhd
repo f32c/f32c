@@ -32,7 +32,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity glue is
 	generic(
-		clk_multiplier: integer := 5; -- base clk is 10.00 MHz
+		clk_mhz: integer := 50; -- must be a multiple of 5
 		mult_enable: string := "false";
 		branch_prediction: string := "static"; -- none, static
 		register_technology: string := "xilinx_ram16x1d";
@@ -178,7 +178,7 @@ begin
 	-- a DLL clock synthesizer
    clkgen: entity clkgen
 		generic map(
-			clk_multiplier => clk_multiplier
+			clk_mhz => clk_mhz
 		)
 		port map(
 			clk_in => clk_50m, clk_out => clk,
