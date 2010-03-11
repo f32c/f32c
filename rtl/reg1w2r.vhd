@@ -107,7 +107,7 @@ begin
 		rd1_data(i) <= rd1_lower(i) when rd1_addr(4) = '0' else rd1_upper(i);
 		rd2_data(i) <= rd2_lower(i) when rd2_addr(4) = '0' else rd2_upper(i);
 		rdd_data(i) <= rdd_lower(i) when rdd_addr(4) = '0' else rdd_upper(i);
-   end generate;
+	end generate;
 	
 	end generate; -- xilinx_ram16x1d
 	
