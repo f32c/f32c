@@ -35,6 +35,7 @@ entity pipeline is
 	generic(
 		mult_enable: string := "true";
 		branch_prediction: string := "static";
+		no_result_forwarding: boolean := true;
 		register_technology: string := "xilinx_ram16x1d";
 		init_PC: std_logic_vector := x"00000000";
 		-- debugging options
@@ -284,10 +285,10 @@ begin
 	-- forward result from writeback stage if needed
 	ID_eff_reg1 <=
 		WB_writeback_data when ID_reg1_addr = MEM_WB_writeback_addr and
-		not ID_reg1_zero else ID_reg1_data;
+		MEM_WB_write_enable = '1' else ID_reg1_data;
 	ID_eff_reg2 <=
 		WB_writeback_data when ID_reg2_addr = MEM_WB_writeback_addr and
-		not ID_reg2_zero else ID_reg2_data;
+		MEM_WB_write_enable = '1' else ID_reg2_data;
 		
 	ID_alu_op2 <= ID_immediate when ID_use_immediate else ID_eff_reg2;
 	

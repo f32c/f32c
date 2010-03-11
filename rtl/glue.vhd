@@ -53,6 +53,14 @@ entity glue is
 -- Number of 4 input LUTs:             2,456 out of  11,776   20%
 -- Number of occupied Slices:          1,424 out of   5,888   24%
 -- Total Number of 4 input LUTs:       2,589 out of  11,776   21%
+-- 
+-- use MEM_WB_write_enable, not ID_regX_zero, to decide on WB -> ID forwarding
+-- ===========================================================================
+-- Number of Slice Flip Flops:           820 out of  11,776    6%
+-- Number of 4 input LUTs:             2,426 out of  11,776   20%
+-- Number of occupied Slices:          1,405 out of   5,888   23%
+-- Total Number of 4 input LUTs:       2,562 out of  11,776   21%
+--
 	);
 	port (
 		clk_50m: in std_logic;
