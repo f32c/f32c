@@ -83,6 +83,12 @@ void lcd_redraw(void)
 	if (!lcd_initialized)
 		lcd_init();
 
+	/* Throw some debugging data into 1st line */
+	INW(i, IO_TSC);
+	itox(i, &lcdbuf[1][0]);
+	i = (oldkey << 16) | (newkey & 0xffff);
+	itox(i, &lcdbuf[1][10]);
+
 	/* sw3 selects lower / upper case letters */
 	INW(uc, IO_LED);
 	uc = (uc >> 3) & 0x1;
