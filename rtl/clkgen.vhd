@@ -42,7 +42,7 @@ entity clkgen is
 		clk_in: in std_logic; -- 50 MHz signal expected here
 		key: in std_logic; -- one-step clocking
 		sel: in std_logic_vector(1 downto 0);
-		clk_out, clk_out_gated, clk_out_slow: out std_logic;
+		clk_out, clk_out_slow: out std_logic;
 		gate_out: out std_logic
 	);
 end clkgen;
@@ -102,12 +102,19 @@ begin
 	-- "00" single-stepping - one tick on each key press
 	--
 	
-	gatedclk_bufg: BUFGMUX
-		port map (I0 => '0', I1 => clkfx, S => gate, O => clk_out_gated);
+	fixed_clock:
+	if (clk_mhz >= 100) generate
+	begin
+		clk_out <= clkfx;
+	end generate;
 
-	stdclk_bufg: BUFG
-		port map (I => clkfx, O => clk_out);
-	
+	modulated_clock:
+	if (clk_mhz < 100) generate
+	begin
+
+	gatedclk_bufg: BUFGMUX
+		port map (I0 => '0', I1 => clkfx, S => gate, O => clk_out);
+
 	slowclk_bufg: BUFG
 		port map (I => slowcnt(11), O => clk_out_slow);
 
@@ -145,6 +152,8 @@ begin
 			end if;
 		end if;
 	end process;
+
+	end generate; -- clk_mhz < 100 MHz
 	
 end Behavioral;
 

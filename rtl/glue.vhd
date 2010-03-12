@@ -60,7 +60,7 @@ entity glue is
 end glue;
 
 architecture Behavioral of glue is
-	signal clk, gated_clk, slowclk: std_logic;
+	signal clk, slowclk: std_logic;
 	signal imem_addr: std_logic_vector(31 downto 2);
 	signal imem_data_read: std_logic_vector(31 downto 0);
 	signal imem_addr_strobe, imem_data_ready: std_logic;
@@ -92,7 +92,7 @@ begin
 			reg_trace => reg_trace, bus_trace => bus_trace
 		)
 		port map(
-			clk => gated_clk, reset => '0',
+			clk => clk, reset => '0',
 			imem_addr => imem_addr,	imem_data_in => imem_data_read,
 			imem_addr_strobe => imem_addr_strobe, imem_data_ready => '1',
 			dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
@@ -111,9 +111,9 @@ begin
 	-- 0xe******8:	(1B, WR) LCD data
 	-- 0xe******c:	(1B, WR) LCD ctrl
 	-- I/O write access:
-	process(gated_clk)
+	process(clk)
 	begin
-		if rising_edge(gated_clk) then
+		if rising_edge(clk) then
 			tsc <= tsc + 1;
 			if dmem_addr(31 downto 28) = "1110" and dmem_addr_strobe = '1' then
 				if dmem_byte_we /= "0000" then
@@ -145,7 +145,7 @@ begin
 	lcd_e <= lcd_ctrl(1);
 	lcd_rw <= '0';
 
-	-- mirror led to J1 / J2 pins
+	-- mirror leds to J1 / J2 pins
 	j1 <= led_reg(3 downto 0);
 	j2 <= led_reg(7 downto 4);
 	
@@ -165,8 +165,7 @@ begin
 			clk_mhz => clk_mhz
 		)
 		port map(
-			clk_in => clk_50m, clk_out => clk,
-			clk_out_gated => gated_clk, clk_out_slow => slowclk,
+			clk_in => clk_50m, clk_out => clk, clk_out_slow => slowclk,
 			key => clk_key, sel => sw(1 downto 0)
 		);
 	
