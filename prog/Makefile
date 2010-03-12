@@ -40,4 +40,4 @@ build:
 	    boot.o libc.o lcdfunc.o demo_semafor.o prog.o
 
 clean:
-	rm boot.o libc.o lcdfunc.o demo_semafor.o prog.o img.elf
+	rm -f boot.o libc.o lcdfunc.o demo_semafor.o prog.o img.elf
