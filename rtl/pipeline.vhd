@@ -210,21 +210,25 @@ begin
 		else IF_ID_PC_next;
 	
 	imem_addr <= IF_PC_next;
-	imem_addr_strobe <= '1'; -- when ID_running else '0';
+	imem_addr_strobe <= '1';
 	
 	process(clk)
 	begin
-		if rising_edge(clk) and ID_running then
-			IF_ID_PC <= IF_PC_next;
-			IF_ID_PC_4 <= IF_PC_next + 1;
-			if ID_predict_taken and not MEM_take_branch then
-				IF_ID_PC_next <= ID_branch_target;
-			else
-				-- XXX what if MEM_take_branch was true, but we couldn't
-				-- fetch the instruction in a single cycle? REVISIT!!!
-				IF_ID_PC_next <= IF_PC_next + 1;
+		if rising_edge(clk) then
+			if ID_running or MEM_take_branch then
+				if ID_predict_taken and not MEM_take_branch then
+					IF_ID_PC_next <= ID_branch_target;
+				else
+					-- XXX what if MEM_take_branch was true, but we couldn't
+					-- fetch the instruction in a single cycle? REVISIT!!!
+					IF_ID_PC_next <= IF_PC_next + 1;
+				end if;
 			end if;
-			IF_ID_instruction <= imem_data_in;
+			if ID_running or MEM_take_branch then
+				IF_ID_PC <= IF_PC_next;
+				IF_ID_PC_4 <= IF_PC_next + 1;
+				IF_ID_instruction <= imem_data_in;
+			end if;
 		end if;
 	end process;
 	
@@ -276,12 +280,12 @@ begin
 	--		A) EX stage is stalled;
 	--		B)	execute-use or load-use data hazard is detected;
 	--
-	ID_running <= MEM_take_branch or (EX_running and
+	ID_running <= EX_running and
 		(ID_reg1_zero or
 		ID_reg1_addr /= ID_EX_writeback_addr or ID_EX_latency = '0') and
 		(ID_reg2_zero or ID_ignore_reg2 or
 		ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = '0') and
-		not ID_EX_partial_load);
+		not ID_EX_partial_load;
 	
 	-- forward result from writeback stage if needed
 	ID_eff_reg1 <=
