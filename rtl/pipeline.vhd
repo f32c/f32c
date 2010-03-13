@@ -37,7 +37,7 @@ entity pipeline is
 		branch_prediction: string := "static";
 		no_result_forwarding: boolean := true;
 		register_technology: string := "xilinx_ram16x1d";
-		init_PC: std_logic_vector := x"00000000";
+		init_PC: std_logic_vector := x"80000000";
 		-- debugging options
 		reg_trace: string := "false";
 		bus_trace: string := "false"
@@ -62,9 +62,12 @@ end pipeline;
 
 architecture Behavioral of pipeline is
 
+	signal debug_XXX: std_logic_vector(31 downto 0);
+
 	-- pipeline stage 1: instruction fetch
 	signal IF_from_imem: std_logic_vector(31 downto 0);
-	signal IF_PC_next: std_logic_vector(31 downto 2);
+	signal IF_PC, IF_PC_next: std_logic_vector(31 downto 2);
+	signal IF_PC_incr: std_logic;
 	signal IF_ID_instruction: std_logic_vector(31 downto 0);
 	signal IF_ID_PC, IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
 	
@@ -205,33 +208,41 @@ begin
 	-- ===================================
 	--
 
-	-- compute the new program counter
-	IF_PC_next <= EX_MEM_branch_target when MEM_take_branch
-		else IF_ID_PC_next;
+	-- compute current and next program counter
+	-- XXX revisit: make IF_PC a register, not an output from a mux.
+	IF_PC <= EX_MEM_branch_target when MEM_take_branch else IF_ID_PC_next;
+	IF_PC_incr <= '1' when ID_running else '0';
+	IF_PC_next <= IF_PC + IF_PC_incr;
 	
-	imem_addr <= IF_PC_next;
+	imem_addr <= IF_PC;
 	imem_addr_strobe <= '1';
 	
 	process(clk)
 	begin
 		if rising_edge(clk) then
-			if ID_running or MEM_take_branch then
-				if ID_predict_taken and not MEM_take_branch then
+			if MEM_take_branch then
+				IF_ID_PC_next <= IF_PC_next;
+			elsif ID_running then
+				if ID_predict_taken then
 					IF_ID_PC_next <= ID_branch_target;
 				else
-					-- XXX what if MEM_take_branch was true, but we couldn't
-					-- fetch the instruction in a single cycle? REVISIT!!!
-					IF_ID_PC_next <= IF_PC_next + 1;
+					IF_ID_PC_next <= IF_PC_next;
 				end if;
 			end if;
-			if ID_running or MEM_take_branch then
-				IF_ID_PC <= IF_PC_next;
-				IF_ID_PC_4 <= IF_PC_next + 1;
+			if ID_running then
+				IF_ID_PC <= IF_PC;
+				IF_ID_PC_4 <= IF_PC_next;
 				IF_ID_instruction <= imem_data_in;
 			end if;
 		end if;
 	end process;
 	
+	-- debugging only
+	debug_XXX(12) <= '1' when ID_running else '0';
+	debug_XXX(8) <= '1' when EX_running else '0';
+	debug_XXX(4) <= '1' when ID_predict_taken else '0';
+	debug_XXX(0) <= '1' when MEM_take_branch else '0';
+
 	--
 	-- Pipeline stage 2: instruction decode and register fetch
 	-- =======================================================
@@ -642,7 +653,7 @@ begin
 			trace_data <= reg_trace_data;
 		else
 			case "000" & trace_addr(4 downto 0) is
-				when x"00" => trace_data <= IF_PC_next & "00";
+				when x"00" => trace_data <= IF_PC & "00";
 				when x"01" => trace_data <= IF_ID_PC & "00";
 				when x"02" => trace_data <= ID_EX_PC & "00";
 				when x"03" => trace_data <= EX_MEM_PC & "00";
@@ -658,6 +669,8 @@ begin
 				when x"0d" => trace_data <= EX_MEM_writeback_addsub;
 				when x"0e" => trace_data <= EX_MEM_writeback_logic;
 				when x"0f" => trace_data <= x"000000" & "000" & EX_shamt;
+--				when x"0f" => trace_data <= debug_XXX;
+
 				--
 				when x"1a" => trace_data <= LO;
 				when x"1b" => trace_data <= HI;

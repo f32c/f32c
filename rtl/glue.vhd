@@ -40,10 +40,10 @@ entity glue is
 		reg_trace: string := "true";
 		bus_trace: string := "true" -- XXX reduce clock rate if bus_trace enabled!
 --
--- Number of Slice Flip Flops:           825 out of  11,776    7%
--- Number of 4 input LUTs:             2,427 out of  11,776   20%
--- Number of occupied Slices:          1,405 out of   5,888   23%
--- Total Number of 4 input LUTs:       2,562 out of  11,776   21%
+-- Number of Slice Flip Flops:           824 out of  11,776    6%
+-- Number of 4 input LUTs:             2,363 out of  11,776   20%
+-- Number of occupied Slices:          1,410 out of   5,888   23%
+-- Total Number of 4 input LUTs:       2,492 out of  11,776   21%
 --
 	);
 	port (
