@@ -235,7 +235,11 @@ begin
 			if ID_running then
 				IF_ID_PC <= IF_PC;
 				IF_ID_PC_4 <= IF_PC_next;
-				IF_ID_instruction <= imem_data_in;
+				if reset = '1' then
+					IF_ID_instruction <= x"00000000";
+				else
+					IF_ID_instruction <= imem_data_in;
+				end if;
 				IF_ID_branch_delay_slot <= ID_branch_cycle or ID_jump_cycle;
 			end if;
 		end if;
@@ -551,7 +555,16 @@ begin
 	process(clk)
 	begin
 		if rising_edge(clk) then
-			if MEM_running and EX_running then
+			if reset = '1' then
+				-- insert a bubble in the MEM stage
+				EX_MEM_op_major <= "00"; -- XXX revisit do we need this?
+				EX_MEM_branch_taken <= false;
+				EX_MEM_take_branch <= true;
+				EX_MEM_branch_target <= C_init_PC;
+				EX_MEM_writeback_addr <= "00000";
+				EX_MEM_mem_cycle <= '0';
+				EX_MEM_instruction <= x"00000000"; -- XXX debugging only
+			elsif MEM_running and EX_running then
 				EX_MEM_mem_data_out <= EX_from_shift;
 				EX_MEM_writeback_addsub <= EX_from_alu_addsubx(31 downto 0);
 				EX_MEM_mem_write <= ID_EX_mem_write;
