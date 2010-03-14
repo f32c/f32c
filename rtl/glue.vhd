@@ -35,6 +35,7 @@ entity glue is
 		C_clk_mhz: integer := 50; -- must be a multiple of 5
 		C_mult_enable: boolean := false;
 		C_branch_prediction: boolean := true;
+		C_result_forwarding: boolean := true;
 		C_register_technology: string := "xilinx_ram16x1d";
 		-- debugging
 		C_serial_trace: boolean := true
@@ -87,6 +88,7 @@ begin
 		generic map(
 			C_mult_enable => C_mult_enable,
 			C_branch_prediction => C_branch_prediction,
+			C_result_forwarding => C_result_forwarding,
 			C_register_technology => C_register_technology,
 			-- debugging only
 			C_serial_trace => C_serial_trace
