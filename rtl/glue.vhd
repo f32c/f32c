@@ -40,9 +40,9 @@ entity glue is
 		C_serial_trace: boolean := true
 --
 -- Number of Slice Flip Flops:           848 out of  11,776    7%
--- Number of 4 input LUTs:             2,370 out of  11,776   20%
--- Number of occupied Slices:          1,415 out of   5,888   24%
--- Total Number of 4 input LUTs:       2,504 out of  11,776   21%
+-- Number of 4 input LUTs:             2,402 out of  11,776   20%
+-- Number of occupied Slices:          1,414 out of   5,888   24%
+-- Total Number of 4 input LUTs:       2,536 out of  11,776   21%
 --
 	);
 	port (
