@@ -85,7 +85,8 @@ architecture Behavioral of pipeline is
 	signal ID_sign_extension: std_logic_vector(15 downto 0);
 	signal ID_sign_extend: boolean;
 	signal ID_use_immediate, ID_ignore_reg2: boolean;
-	signal ID_branch_cycle, ID_jump_cycle, ID_jump_register, ID_predict_taken: boolean;
+	signal ID_branch_cycle, ID_jump_cycle, ID_jump_register: boolean;
+	signal ID_predict_taken: boolean;
 	signal ID_branch_target: std_logic_vector(31 downto 2);
 	signal ID_branch_condition: std_logic_vector(2 downto 0);
 	signal ID_mem_cycle, ID_mem_write: std_logic;
@@ -224,7 +225,7 @@ begin
 			if MEM_take_branch then
 				IF_ID_PC_next <= IF_PC_next;
 			elsif ID_running then
-				if ID_predict_taken then
+				if ID_predict_taken and not ID_EX_cancel_next then
 					IF_ID_PC_next <= ID_branch_target;
 				else
 					IF_ID_PC_next <= IF_PC_next;
