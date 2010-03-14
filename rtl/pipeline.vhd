@@ -69,6 +69,7 @@ architecture Behavioral of pipeline is
 	signal IF_PC, IF_PC_next: std_logic_vector(31 downto 2);
 	signal IF_PC_incr: std_logic;
 	signal IF_ID_instruction: std_logic_vector(31 downto 0);
+	signal IF_ID_branch_delay_slot: boolean;
 	signal IF_ID_PC, IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
 	
 	-- pipeline stage 2: instruction decode and register fetch
@@ -235,6 +236,7 @@ begin
 				IF_ID_PC <= IF_PC;
 				IF_ID_PC_4 <= IF_PC_next;
 				IF_ID_instruction <= imem_data_in;
+				IF_ID_branch_delay_slot <= ID_branch_cycle or ID_jump_cycle;
 			end if;
 		end if;
 	end process;
@@ -364,7 +366,8 @@ begin
 					ID_EX_fwd_mem_reg1 <= false;
 					ID_EX_fwd_mem_reg2 <= true;
 					ID_EX_fwd_mem_alu_op2 <= false;
-				elsif MEM_take_branch or not ID_running or ID_EX_cancel_next then
+				elsif not ID_running or (not IF_ID_branch_delay_slot and
+					(MEM_take_branch or ID_EX_cancel_next)) then
 					-- insert a bubble if branching or ID stage is stalled
 					ID_EX_writeback_addr <= "00000"; -- NOP
 					ID_EX_mem_cycle <= '0';
