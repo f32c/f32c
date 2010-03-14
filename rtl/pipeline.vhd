@@ -33,14 +33,13 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity pipeline is
 	generic(
-		mult_enable: string := "true";
-		branch_prediction: string := "static";
-		result_forwarding: boolean := true;
-		register_technology: string := "xilinx_ram16x1d";
-		init_PC: std_logic_vector := x"00000000";
+		C_mult_enable: boolean := true;
+		C_branch_prediction: boolean := true;
+		C_result_forwarding: boolean := true;
+		C_register_technology: string := "xilinx_ram16x1d";
+		C_init_PC: std_logic_vector := x"00000000";
 		-- debugging options
-		reg_trace: string := "false";
-		bus_trace: string := "false"
+		C_serial_trace: boolean := false
 	);
 	port(
 		clk, reset: in std_logic;
@@ -136,8 +135,9 @@ architecture Behavioral of pipeline is
 	signal EX_MEM_writeback_addsub: std_logic_vector(31 downto 0);
 	signal EX_MEM_writeback_logic: std_logic_vector(31 downto 0);
 	signal EX_MEM_mem_data_out: std_logic_vector(31 downto 0);
-	signal EX_MEM_branch_target: std_logic_vector(29 downto 0) := init_PC(31 downto 2);
-	signal EX_MEM_take_branch: boolean := true; -- XXX jump to init_PC addr
+	signal EX_MEM_branch_target: std_logic_vector(29 downto 0) :=
+		C_init_PC(31 downto 2);
+	signal EX_MEM_take_branch: boolean := true; -- XXX jump to C_init_PC addr
 	signal EX_MEM_branch_taken: boolean;
 	signal EX_MEM_mem_cycle, EX_MEM_logic_cycle: std_logic;
 	signal EX_MEM_shamt_1_2_4: std_logic_vector(2 downto 0);
@@ -257,7 +257,7 @@ begin
 	-- instruction decoder
 	idecode: entity idecode
 		generic map(
-			branch_prediction => branch_prediction
+			C_branch_prediction => C_branch_prediction
 		)
 		port map(
 			instruction => IF_ID_instruction,
@@ -281,7 +281,7 @@ begin
    -- three- or four-ported register file: async read, sync write
    regfile: entity reg1w2r
 		generic map(
-			register_technology => register_technology
+			C_register_technology => C_register_technology
 		)
 		port map(
 			rd1_addr => ID_reg1_addr, rd2_addr => ID_reg2_addr,
@@ -298,7 +298,7 @@ begin
 	--		B)	execute-use or load-use data hazard is detected;
 	--
 	G_ID_forwarding:
-	if result_forwarding generate
+	if C_result_forwarding generate
 	begin
 	ID_running <= ID_EX_cancel_next or
 		(EX_running and not ID_EX_partial_load and
@@ -309,7 +309,7 @@ begin
 	end generate;
 
 	G_ID_no_forwarding:
-	if not result_forwarding generate
+	if not C_result_forwarding generate
 	begin
 	ID_running <= ID_EX_cancel_next or
 		(EX_running and not ID_EX_partial_load and
@@ -440,7 +440,7 @@ begin
 	
 	-- forward the results from later stages
 	G_EX_forwarding:
-	if result_forwarding generate
+	if C_result_forwarding generate
 	begin
 	EX_eff_reg1 <= MEM_writeback_data when ID_EX_fwd_ex_reg1	else
 		WB_writeback_data when ID_EX_fwd_mem_reg1 else ID_EX_reg1_data;
@@ -451,7 +451,7 @@ begin
 	end generate; -- result_forwarding
 	
 	G_EX_no_forwarding:
-	if not result_forwarding generate
+	if not C_result_forwarding generate
 	begin
 	EX_eff_reg1 <= ID_EX_reg1_data;
 	EX_eff_reg2 <= WB_writeback_data when ID_EX_fwd_mem_reg2
@@ -665,7 +665,8 @@ begin
 	--
 	-- Multiplier
 	--
-	multiplier: if mult_enable = "true" generate
+	G_multiplier:
+	if C_mult_enable generate
 	begin
 		mult: entity mult
 			port map(
@@ -677,13 +678,11 @@ begin
 
 	HI <= MULT_res(63 downto 32);
 	LO <= MULT_res(31 downto 0);
-
 	end generate; -- multiplier
 
-
 	-- mux for debugging probes
-	with_trace_mux:
-	if bus_trace = "true" generate
+	G_with_trace_mux:
+	if C_serial_trace generate
 	begin
 
 	ID_EX_sign_extend_debug <= '1' when ID_EX_sign_extend else '0';
@@ -723,19 +722,5 @@ begin
 		end if;
 	end process;
 	end generate;
-	
-	without_trace_mux:
-	if bus_trace /= "true" and reg_trace = "true" generate
-	begin
-	process(trace_addr, reg_trace_data)
-		begin
-		if trace_addr(5) = '0' then	
-			trace_data <= reg_trace_data;
-		else
-			trace_data <= x"00000000";
-		end if;
-	end process;
-	end generate;
-	
 end Behavioral;
 

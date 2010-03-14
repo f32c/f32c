@@ -35,7 +35,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity idecode is
 	generic(
 		-- NO defaults for compile-time options!
-		branch_prediction: string
+		C_branch_prediction: boolean
 	);
 	port(
 		instruction: in STD_LOGIC_VECTOR(31 downto 0);
@@ -207,8 +207,9 @@ begin
 		else "01" & instruction(16) when branch_cycle_0 -- bgez, bltz
 		else "001" when jump_cycle_0
 		else "000";
-	predict_taken <= false when branch_prediction /= "static" else
-		(branch_cycle_0 and (instruction(15) = '1' or (reg1_zero_0 and reg2_zero_0))) or
+	predict_taken <= false when not C_branch_prediction else
+		(branch_cycle_0 and (instruction(15) = '1' or
+		(reg1_zero_0 and reg2_zero_0))) or
 		(jump_cycle_0 and not jump_register_0);
 
 	-- J / JAL / JR / JALR decoding
