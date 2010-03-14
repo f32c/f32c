@@ -300,21 +300,21 @@ begin
 	G_ID_forwarding:
 	if result_forwarding generate
 	begin
-	ID_running <= ID_EX_cancel_next or (EX_running and
+	ID_running <= ID_EX_cancel_next or
+		(EX_running and not ID_EX_partial_load and
 		(ID_reg1_zero or
 		ID_reg1_addr /= ID_EX_writeback_addr or ID_EX_latency = '0') and
 		(ID_reg2_zero or ID_ignore_reg2 or
-		ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = '0') and
-		not ID_EX_partial_load);
+		ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = '0'));
 	end generate;
 
 	G_ID_no_forwarding:
 	if not result_forwarding generate
 	begin
-	ID_running <= ID_EX_cancel_next or (EX_running and
-		not ID_fwd_ex_reg1 and not ID_fwd_ex_reg2 and
-		not ID_fwd_mem_reg1 and not ID_fwd_mem_reg2 and
-		not ID_EX_partial_load);
+	ID_running <= ID_EX_cancel_next or
+		(EX_running and not ID_EX_partial_load and
+		not (ID_fwd_ex_reg1 or ID_fwd_mem_reg1) and
+		(ID_ignore_reg2 or not (ID_fwd_ex_reg2 or ID_fwd_mem_reg2)));
 	end generate;
 	
 	-- forward result from writeback stage if needed
