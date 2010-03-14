@@ -36,7 +36,7 @@ use UNISIM.VComponents.all;
 
 entity reg1w2r is
 	generic(
-		register_technology: string := "xilinx_ram16x1d"
+		C_register_technology: string := "xilinx_ram16x1d"
 	);
    port(
 		rd1_addr, rd2_addr, rdd_addr, wr_addr: in STD_LOGIC_VECTOR(4 downto 0);
@@ -60,13 +60,12 @@ architecture Behavioral of reg1w2r is
 	signal r1_xaddr, r2_xaddr, rd_xaddr, wr_xaddr: std_logic_vector(8 downto 0);
 begin
 
-	xilinx_ram16x1d:
 	--
 	-- The fastest achievable, hence the default register file implementation.
 	--
-	if register_technology = "xilinx_ram16x1d" generate
+	G_xilinx_ram16x1d:
+	if C_register_technology = "xilinx_ram16x1d" generate
 	begin
-	
 	we_lower <= wr_enable and not wr_addr(4);
 	we_upper <= wr_enable and wr_addr(4);
 
@@ -112,12 +111,12 @@ begin
 	end generate; -- xilinx_ram16x1d
 	
 	
-	xilinx_ram32x1s:
 	--
 	-- Consumes 61 slices / 182 LUTs less than an xilinx_ram16x1d implementation
-	-- while limiting Fmax to 100 MHz on Spartan3A.
+	-- while limiting Fmax to around 110 MHz on Spartan3A.
 	--
-	if register_technology = "xilinx_ram32x1s" generate
+	G_xilinx_ram32x1s:
+	if C_register_technology = "xilinx_ram32x1s" generate
 	begin
 	
 	r1_eaddr <= rd1_addr when clk = '1' else wr_addr;
@@ -152,11 +151,11 @@ begin
 	end generate; -- xilinx_ram32x1s
 
 
-	xilinx_ramb16:
 	--
 	-- OK up to 120 MHz on Spartan3A
 	--
-	if register_technology = "xilinx_ramb16" generate
+	xilinx_ramb16:
+	if C_register_technology = "xilinx_ramb16" generate
 	begin
 
 		r1_xaddr <= "0000" & rd1_addr;

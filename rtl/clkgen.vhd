@@ -36,7 +36,7 @@ use UNISIM.VComponents.all;
 
 entity clkgen is
 	generic(
-		clk_mhz: integer := 50
+		C_clk_mhz: integer := 50
 	);
 	port(
 		clk_in: in std_logic; -- 50 MHz signal expected here
@@ -60,7 +60,7 @@ begin
 				-- Divide by: 1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0,6.5
 				-- 7.0,7.5,8.0,9.0,10.0,11.0,12.0,13.0,14.0,15.0 or 16.0
 			CLKFX_DIVIDE => 10, -- Can be any integer from 1 to 32
-			CLKFX_MULTIPLY => (clk_mhz / 5), -- from 2 to 32
+			CLKFX_MULTIPLY => (C_clk_mhz / 5), -- from 2 to 32
 			CLKIN_DIVIDE_BY_2 => false, -- TRUE/FALSE to enable CLKIN divide by two feature
 			CLKIN_PERIOD => 20.0, -- Specify period of input clock
 			CLKOUT_PHASE_SHIFT => "NONE", -- Specify phase shift of NONE, FIXED or VARIABLE
@@ -103,13 +103,13 @@ begin
 	--
 	
 	fixed_clock:
-	if (clk_mhz >= 100) generate
+	if (C_clk_mhz >= 100) generate
 	begin
 		clk_out <= clkfx;
 	end generate;
 
 	modulated_clock:
-	if (clk_mhz < 100) generate
+	if (C_clk_mhz < 100) generate
 	begin
 
 	gatedclk_bufg: BUFGMUX
@@ -153,7 +153,7 @@ begin
 		end if;
 	end process;
 
-	end generate; -- clk_mhz < 100 MHz
+	end generate; -- C_clk_mhz < 100 MHz
 	
 end Behavioral;
 

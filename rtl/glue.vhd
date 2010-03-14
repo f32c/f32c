@@ -32,13 +32,12 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity glue is
 	generic(
-		clk_mhz: integer := 50; -- must be a multiple of 5
-		mult_enable: string := "false";
-		branch_prediction: string := "static"; -- none, static
-		register_technology: string := "xilinx_ram16x1d";
+		C_clk_mhz: integer := 50; -- must be a multiple of 5
+		C_mult_enable: boolean := false;
+		C_branch_prediction: boolean := true;
+		C_register_technology: string := "xilinx_ram16x1d";
 		-- debugging
-		reg_trace: string := "true";
-		bus_trace: string := "true" -- XXX reduce clock rate if bus_trace enabled!
+		C_serial_trace: boolean := true
 --
 -- Number of Slice Flip Flops:           836 out of  11,776    7%
 -- Number of 4 input LUTs:             2,370 out of  11,776   20%
@@ -85,11 +84,11 @@ begin
 	-- the RISC core
 	pipeline: entity pipeline
 		generic map(
-			mult_enable => mult_enable,
-			branch_prediction => branch_prediction,
-			register_technology => register_technology,
+			C_mult_enable => C_mult_enable,
+			C_branch_prediction => C_branch_prediction,
+			C_register_technology => C_register_technology,
 			-- debugging only
-			reg_trace => reg_trace, bus_trace => bus_trace
+			C_serial_trace => C_serial_trace
 		)
 		port map(
 			clk => clk, reset => '0',
@@ -162,7 +161,7 @@ begin
 	-- a DLL clock synthesizer
    clkgen: entity clkgen
 		generic map(
-			clk_mhz => clk_mhz
+			C_clk_mhz => C_clk_mhz
 		)
 		port map(
 			clk_in => clk_50m, clk_out => clk, clk_out_slow => slowclk,
@@ -171,7 +170,7 @@ begin
 	
 	-- debugging design instance - serial port + control knob / buttons
 	debug_serial:
-	if reg_trace = "true" or bus_trace = "true" generate
+	if C_serial_trace generate
 	begin
 		clk_key <= btn_south;
 	
@@ -185,7 +184,7 @@ begin
 	end generate; -- serial_debug
 	
 	nodebug:
-	if not (reg_trace = "true" or bus_trace = "true") generate
+	if not C_serial_trace generate
 	begin
 		clk_key <= '1'; -- clk selector
 		rs232_dce_txd <= '1'; -- appease XST
