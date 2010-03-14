@@ -36,16 +36,17 @@ static void lcd_cr(int i)
 
 static void lcd_putchar(int c)
 {
+	int key;
 
 	/* Rescan the rotary key and update position */
-	INW(newkey, IO_LED);
-	if ((newkey & 0x600) == 0x600) {
+	INW(key, IO_LED);
+	if ((key & 0x600) == 0x600) {
 		if ((oldkey & 0x600) == 0x400 && rotpos < 63)
 			rotpos++;
 		else if ((oldkey & 0x600) == 0x200 && rotpos > -64)
 			rotpos--;
 	}
-	oldkey = (oldkey & ~0x600) | (newkey & 0x600);
+	oldkey = (oldkey & ~0x600) | (key & 0x600);
 
 	OUTW(IO_LCD_DATA, c);		/* char to send */
 	OUTW(IO_LCD_CTRL, LCD_CTRL_E | LCD_CTRL_RS); /* data sqn, clock high */
@@ -83,12 +84,6 @@ void lcd_redraw(void)
 	if (!lcd_initialized)
 		lcd_init();
 
-	/* Throw some debugging data into 1st line */
-	INW(i, IO_TSC);
-	itox(i, &lcdbuf[1][0]);
-	i = (oldkey << 16) | (newkey & 0xffff);
-	itox(i, &lcdbuf[1][10]);
-
 	/* sw3 selects lower / upper case letters */
 	INW(uc, IO_LED);
 	uc = (uc >> 3) & 0x1;
@@ -103,58 +98,3 @@ void lcd_redraw(void)
 		}
 	}
 }
-
-#if 0
-void
-platform_start() {
-	int tsc;
-	int key;
-	int i, j;
-
-	/* Occassionally scroll the 1st line left */
-	if ((alive & 0x3f) == 0) {
-		j = lcdbuf[0][0];
-		for (i = 0; i < LCD_COLUMNS; i++)
-			lcdbuf[0][i] = lcdbuf[0][i + 1];
-		lcdbuf[0][LCD_COLUMNS - 1] = j;
-	}
-
-	/* Occassionally scroll the 4rd line left */
-	if ((alive & 0x1f) == 0) {
-		j = lcdbuf[3][0];
-		for (i = 0; i < 20; i++)
-			lcdbuf[3][i] = lcdbuf[3][i + 1];
-		lcdbuf[3][19] = j;
-	}
-
-	/* Occassionally swap 1st and 4th line */
-	INW(key, IO_LED);	/* effectively IO_LED = IO_KEY */
-	if ((key & 0x100) && !(old_key & 0x100)) {
-		for (i = 0; i < 20; i++) {
-			j = lcdbuf[0][i];
-			lcdbuf[0][i] = lcdbuf[3][i];
-			lcdbuf[3][i] = j;
-		}
-	}
-	old_key = key;
-
-	/* Read TSC, and dump it in hex in lcdbuf */
-	INW(tsc, IO_TSC);
-	for (i = 15; i >= 8; i--) {
-		j = (tsc & 0xf) + '0';
-		if (j > '9')
-			j += 'a' - ':';
-		lcdbuf[1][i] = j;
-		tsc = tsc >> 4;
-	}
-
-	INW(tsc, IO_TSC);
-	__asm __volatile ("addu $26,$0,%1"	/* k1 = IO_BASE */
-		: "=r" (tsc)			/* outputs */     
-		: "r" (tsc));			/* inputs */
-
-	OUTW(IO_LED, ++alive);	/* blink LEDs */
-	
-	return;
-}
-#endif

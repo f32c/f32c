@@ -3,8 +3,6 @@
 #ifndef _IO_H_
 #define	_IO_H_
 
-#define	CPU_FREQ	50000000
-
 #define	IO_BASE		0xe0000000
 
 #define	IO_LED		0x0
@@ -17,7 +15,7 @@
 #define	LCD_DELAY	5000		/* In clock ticks, OK up to 200 MHz */
 
 /* In the default design the clock ticks at 50 MHz */
-#define	TSC_FREQ	50000000
+#define	CPU_FREQ	50000000
 
 /* I/O macros */
 
@@ -38,18 +36,18 @@
 
 #define	INB(data, port)							   \
 	__asm __volatile ("lb %0, %1($27)"		/* k1 = IO_BASE */ \
-                        : "=r" (data)			/* outputs */	   \
-                        : "i" (port));			/* inputs */
+			: "=r" (data)			/* outputs */	   \
+			: "i" (port));			/* inputs */
 
 #define	INH(data, port)							   \
 	__asm __volatile ("lh %0, %1($27)"		/* k1 = IO_BASE */ \
-                        : "=r" (data)			/* outputs */	   \
-                        : "i" (port));			/* inputs */
+			: "=r" (data)			/* outputs */	   \
+			: "i" (port));			/* inputs */
 
 #define	INW(data, port)							   \
 	__asm __volatile ("lw %0, %1($27)"		/* k1 = IO_BASE */ \
-                        : "=r" (data)			/* outputs */	   \
-                        : "i" (port));			/* inputs */
+			: "=r" (data)			/* outputs */	   \
+			: "i" (port));			/* inputs */
 
 #define	DELAY(ticks)							\
 	do {								\

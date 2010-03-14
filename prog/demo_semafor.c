@@ -6,7 +6,7 @@
 
 #define	BLACK	0
 #define	GREEN	2
-#define YELLOW	4
+#define	YELLOW	4
 #define	RED	8
 
 static struct sem_colors {
@@ -63,7 +63,7 @@ static void sem(int s, int v)
 		led_state = (led_state & 0xf0) | (v);
 	else
 		led_state = (led_state & 0x0f) | ((v) << 4);
-       	OUTW(IO_LED, led_state);
+		OUTW(IO_LED, led_state);
 
 	c = &lcdbuf[s + 2][0];
 	memset(c, ' ', 20);
@@ -97,11 +97,10 @@ void demo_semafor(int prog) {
 	}
 
 	if (prog == DEMO_RUCNI_SEMAFOR) {
-		do {
-			sem(0, (rotpos >> 2) & 0xe);
-			sem(1, (rotpos << 1) & 0xe);
-			MSLEEP(10);
-		} while (1);
+		sem(0, (rotpos >> 2) & 0xe);
+		sem(1, (rotpos << 1) & 0xe);
+		MSLEEP(100);
+		return;
 	}
 
 	if (prog == DEMO_POLUDJELI_SEMAFOR) {
@@ -113,31 +112,30 @@ void demo_semafor(int prog) {
 	}
 
 	if (prog == DEMO_GRADOVI) {
-		do {
-			for (i = 1; i < 4; i++)
-				memset(&lcdbuf[i][0], ' ', 20);
+		for (i = 1; i < 4; i++)
+			memset(&lcdbuf[i][0], ' ', 20);
 
-			s = (rotpos >> 3) & 0x7;
-			d = rotpos & 0x7;
-			i = strlen(gradovi[s].name);
-			bcopy(gradovi[s].name, &lcdbuf[1][(20 - i) >> 1], i);
-			i = strlen(gradovi[d].name);
-			bcopy(gradovi[d].name, &lcdbuf[2][(20 - i) >> 1], i);
-			i = gradovi[s].km - gradovi[d].km;
-			if (i < 0)
-				i = -i;
-			c = itoa(i, &lcdbuf[3][7]);
-			bcopy(" km", c, 3);
+		s = (rotpos >> 3) & 0x7;
+		d = rotpos & 0x7;
+		i = strlen(gradovi[s].name);
+		bcopy(gradovi[s].name, &lcdbuf[1][(20 - i) >> 1], i);
+		i = strlen(gradovi[d].name);
+		bcopy(gradovi[d].name, &lcdbuf[2][(20 - i) >> 1], i);
+		i = gradovi[s].km - gradovi[d].km;
+		if (i < 0)
+			i = -i;
+		c = itoa(i, &lcdbuf[3][7]);
+		bcopy(" km", c, 3);
 
-			INW(i, IO_TSC);
-			i = div(i, CPU_FREQ / 2, (void *) 0);
-			if (i & 0x1) {
-       		OUTW(IO_LED, 0x44);
-			} else {
-       		OUTW(IO_LED, 0);
-			}
-			MSLEEP(10);
-		} while (1);
+		INW(i, IO_TSC);
+		i = div(i, CPU_FREQ / 2, (void *) 0);
+		if (i & 0x1) {
+			OUTW(IO_LED, 0x44);
+		} else {
+			OUTW(IO_LED, 0);
+		}
+		MSLEEP(100);
+		return;
 	}
 
 	/* Zamijeni a / b */

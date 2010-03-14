@@ -22,7 +22,8 @@ msleep(int ms)
 		if ((newkey & keymask) != (oldkey & keymask)) {
 			if (newkey & keymask)
 				return (1);
-			oldkey = newkey;
+			else
+				oldkey = newkey;
 		}
 
 		lcd_redraw();
