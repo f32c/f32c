@@ -439,12 +439,25 @@ begin
 	EX_running <= MEM_running and not EX_muldiv_busy; -- XXX revisit
 	
 	-- forward the results from later stages
+	G_EX_forwarding:
+	if result_forwarding generate
+	begin
 	EX_eff_reg1 <= MEM_writeback_data when ID_EX_fwd_ex_reg1	else
 		WB_writeback_data when ID_EX_fwd_mem_reg1 else ID_EX_reg1_data;
 	EX_eff_reg2 <= MEM_writeback_data when ID_EX_fwd_ex_reg2	else
 		WB_writeback_data when ID_EX_fwd_mem_reg2 else ID_EX_reg2_data;
 	EX_eff_alu_op2 <= MEM_writeback_data when ID_EX_fwd_ex_alu_op2 else
 		WB_writeback_data when ID_EX_fwd_mem_alu_op2 else ID_EX_alu_op2;
+	end generate; -- result_forwarding
+	
+	G_EX_no_forwarding:
+	if not result_forwarding generate
+	begin
+	EX_eff_reg1 <= ID_EX_reg1_data;
+	EX_eff_reg2 <= WB_writeback_data when ID_EX_fwd_mem_reg2
+		else ID_EX_reg2_data;
+	EX_eff_alu_op2 <= ID_EX_alu_op2;
+	end generate; -- no result_forwarding
 	
 	-- prepare for potential branch / jump
 	EX_branch_target <= EX_eff_reg1(31 downto 2) when ID_EX_jump_register
