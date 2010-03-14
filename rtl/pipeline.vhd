@@ -35,9 +35,9 @@ entity pipeline is
 	generic(
 		mult_enable: string := "true";
 		branch_prediction: string := "static";
-		no_result_forwarding: boolean := true;
+		result_forwarding: boolean := true;
 		register_technology: string := "xilinx_ram16x1d";
-		init_PC: std_logic_vector := x"80000000";
+		init_PC: std_logic_vector := x"00000000";
 		-- debugging options
 		reg_trace: string := "false";
 		bus_trace: string := "false"
@@ -99,7 +99,8 @@ architecture Behavioral of pipeline is
 	signal ID_EX_fwd_ex_reg1, ID_EX_fwd_ex_reg2, ID_EX_fwd_ex_alu_op2: boolean;
 	signal ID_EX_fwd_mem_reg1, ID_EX_fwd_mem_reg2, ID_EX_fwd_mem_alu_op2: boolean;
 	signal ID_EX_sign_extend: boolean;
-	signal ID_EX_branch_cycle, ID_EX_jump_cycle, ID_EX_jump_register, ID_EX_predict_taken: boolean;
+	signal ID_EX_branch_cycle, ID_EX_jump_cycle, ID_EX_jump_register: boolean;
+	signal ID_EX_cancel_next, ID_EX_predict_taken: boolean;
 	signal ID_EX_branch_target: std_logic_vector(31 downto 2);
 	signal ID_EX_branch_condition: std_logic_vector(2 downto 0);
 	signal ID_EX_op_major: std_logic_vector(1 downto 0);
@@ -107,7 +108,7 @@ architecture Behavioral of pipeline is
 	signal ID_EX_mem_cycle, ID_EX_mem_write: std_logic;
 	signal ID_EX_mem_size: std_logic_vector(1 downto 0);
 	signal ID_EX_mem_read_sign_extend: std_logic;
-	signal ID_EX_partial_load: boolean;
+	signal ID_EX_partial_load: boolean := true; -- XXX bootstrapping
 	signal ID_EX_latency: std_logic;
 	signal ID_EX_cop0: std_logic;
 	signal ID_EX_instruction: std_logic_vector(31 downto 0); -- XXX debugging only
@@ -238,6 +239,8 @@ begin
 	end process;
 	
 	-- debugging only
+	debug_XXX(28 downto 24) <= EX_shamt;
+	debug_XXX(16) <= '1' when ID_EX_cancel_next else '0';
 	debug_XXX(12) <= '1' when ID_running else '0';
 	debug_XXX(8) <= '1' when EX_running else '0';
 	debug_XXX(4) <= '1' when ID_predict_taken else '0';
@@ -291,12 +294,25 @@ begin
 	--		A) EX stage is stalled;
 	--		B)	execute-use or load-use data hazard is detected;
 	--
-	ID_running <= EX_running and
+	G_ID_forwarding:
+	if result_forwarding generate
+	begin
+	ID_running <= ID_EX_cancel_next or (EX_running and
 		(ID_reg1_zero or
 		ID_reg1_addr /= ID_EX_writeback_addr or ID_EX_latency = '0') and
 		(ID_reg2_zero or ID_ignore_reg2 or
 		ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = '0') and
-		not ID_EX_partial_load;
+		not ID_EX_partial_load);
+	end generate;
+
+	G_ID_no_forwarding:
+	if not result_forwarding generate
+	begin
+	ID_running <= ID_EX_cancel_next or (EX_running and
+		not ID_fwd_ex_reg1 and not ID_fwd_ex_reg2 and
+		not ID_fwd_mem_reg1 and not ID_fwd_mem_reg2 and
+		not ID_EX_partial_load);
+	end generate;
 	
 	-- forward result from writeback stage if needed
 	ID_eff_reg1 <=
@@ -347,15 +363,23 @@ begin
 					ID_EX_fwd_mem_reg1 <= false;
 					ID_EX_fwd_mem_reg2 <= true;
 					ID_EX_fwd_mem_alu_op2 <= false;
-				elsif MEM_take_branch or not ID_running then
+				elsif MEM_take_branch or not ID_running or ID_EX_cancel_next then
 					-- insert a bubble if branching or ID stage is stalled
 					ID_EX_writeback_addr <= "00000"; -- NOP
 					ID_EX_mem_cycle <= '0';
+					ID_EX_mem_write <= '0';	-- XXX do we need this?
+					ID_EX_mem_size <= "00"; -- XXX do we need this?
 					ID_EX_branch_cycle <= false;
 					ID_EX_jump_cycle <= false;
 					ID_EX_predict_taken <= false;
 					ID_EX_op_major <= "00";
 					ID_EX_instruction <= x"00000000"; -- XXX debugging only
+					if MEM_take_branch and not ID_running then
+						ID_EX_cancel_next <= true;
+					end if;
+					if ID_running then
+						ID_EX_cancel_next <= false;
+					end if;
 				else
 					-- propagate next instruction from ID to EX stage
 					ID_EX_reg1_data <= ID_eff_reg1;
@@ -395,9 +419,9 @@ begin
 					ID_EX_fwd_mem_alu_op2 <= ID_fwd_mem_alu_op2;
 				end if;
 			else
-				-- Be conservative with branch prediction if pipeline is stalled
-				-- XXX revisit - mos probably unnecessary!
-				-- ID_EX_predict_taken <= false;
+				if ID_running then
+					ID_EX_cancel_next <= false;
+				end if;
 			end if;
 		end if;
 	end process;
@@ -668,8 +692,7 @@ begin
 				when x"0c" => trace_data <= EX_eff_alu_op2;
 				when x"0d" => trace_data <= EX_MEM_writeback_addsub;
 				when x"0e" => trace_data <= EX_MEM_writeback_logic;
-				when x"0f" => trace_data <= x"000000" & "000" & EX_shamt;
---				when x"0f" => trace_data <= debug_XXX;
+				when x"0f" => trace_data <= debug_XXX;
 
 				--
 				when x"1a" => trace_data <= LO;
