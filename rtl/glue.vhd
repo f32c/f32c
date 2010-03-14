@@ -39,9 +39,9 @@ entity glue is
 		-- debugging
 		C_serial_trace: boolean := true
 --
--- Number of Slice Flip Flops:           836 out of  11,776    7%
+-- Number of Slice Flip Flops:           848 out of  11,776    7%
 -- Number of 4 input LUTs:             2,370 out of  11,776   20%
--- Number of occupied Slices:          1,409 out of   5,888   23%
+-- Number of occupied Slices:          1,415 out of   5,888   24%
 -- Total Number of 4 input LUTs:       2,504 out of  11,776   21%
 --
 	);
@@ -74,6 +74,7 @@ architecture Behavioral of glue is
 	signal lcd_data: std_logic_vector(7 downto 0);
 	signal lcd_ctrl: std_logic_vector(1 downto 0);
 	signal tsc: std_logic_vector(31 downto 0);
+	signal input: std_logic_vector(31 downto 0);
 
 	-- debugging only
 	signal clk_key: std_logic;
@@ -91,7 +92,7 @@ begin
 			C_serial_trace => C_serial_trace
 		)
 		port map(
-			clk => clk, reset => '0',
+			clk => clk, reset => btn_north,
 			imem_addr => imem_addr,	imem_data_in => imem_data_read,
 			imem_addr_strobe => imem_addr_strobe, imem_data_ready => '1',
 			dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
@@ -128,11 +129,18 @@ begin
 		end if;
 	end process;
 
-	io_to_cpu <= x"00000" &
-		rs232_dce_rxd &
-		rot_a & rot_b & rot_center &
-		btn_south & btn_north & btn_east & btn_west &
-		sw when dmem_addr(3 downto 2) = "00"
+	process(clk)
+	begin
+		if rising_edge(clk) then
+			input <= x"00000" &
+				rs232_dce_rxd &
+				rot_a & rot_b & rot_center &
+				btn_south & btn_north & btn_east & btn_west &
+				sw;
+		end if;
+	end process;
+
+	io_to_cpu <= input when dmem_addr(3 downto 2) = "00"
 		else tsc;
 
 	final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = "1110"
