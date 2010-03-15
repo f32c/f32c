@@ -40,6 +40,20 @@ entity glue is
 		-- debugging
 		C_serial_trace: boolean := true
 --
+-- Preliminary CPI stats (DEMO_POLUDJELI_SEMAFOR, rotary = 63):
+--
+-- C_branch_prediction + C_result_forwarding:
+-- cyc 10000cb09  ins d6cfff32  CPI: 1.19
+--
+-- C_result_forwarding:
+-- cyc 1003b5f4e  ins ca3ca4e8  CPI: 1.27
+--
+-- C_branch_prediction:
+-- cyc 10005edd5  ins 95b68d9a  CPI: 1.71
+--
+-- (both off):
+-- cyc 1002384e9  ins 9241ac73  CPI: 1.75
+--
 -- Number of Slice Flip Flops:           848 out of  11,776    7%
 -- Number of 4 input LUTs:             2,402 out of  11,776   20%
 -- Number of occupied Slices:          1,414 out of   5,888   24%
