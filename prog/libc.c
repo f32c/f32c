@@ -6,7 +6,7 @@
 int newkey;
 int oldkey;
 int keymask = 0x0100;		/* Rotary knob press-button */
-int rotpos;
+int rotpos = 63;
 int randseed;
 
 int
@@ -37,7 +37,18 @@ msleep(int ms)
 void
 bcopy(const char *src, char *dst, int len)
 {
+	int *wsrc = (int *) src;
+	int *wdst = (int *) dst;
 
+	/* Check if src and dst are word aligned */
+	if (len >= 4 && (((int) src | (int) wdst) & 0x3) == 0) {
+		do {
+			*wdst++ = *wsrc++;
+			len -= 4;
+		} while (len >= 4);
+		src = (char *) wsrc;
+		dst = (char *) wdst;
+	}
 	for (; len > 0; len--)
 		*dst++ = *src++;
 }
@@ -45,7 +56,19 @@ bcopy(const char *src, char *dst, int len)
 void
 memset(char *dst, int c, int len)
 {
+	int *wdst = (int *) dst;
+	int wc;
 
+	/* Check if dst is word aligned */
+	if (len >= 4 && (((int) dst) & 0x3) == 0) {
+		wc = (c << 8) + c;
+		wc = (wc << 16) + wc;
+		do {
+			*wdst++ = wc;
+			len -= 4;
+		} while (len >= 4);
+		dst = (char *) wdst;
+	}
 	for (; len > 0; len--)
 		*dst++ = c;
 }
@@ -53,19 +76,37 @@ memset(char *dst, int c, int len)
 int
 strlen(const char *c)
 {
-	register int len;
+	int *wcp = (int *) c;
+	int len = 0;
+	int wc = 0; 	/* Appease gcc warnings */
 
-	for (len = 0; *c != 0; c++, len++) {}
-
-	return (len);
+	/* Check if c is word aligned */
+	if ((((int) c) & 0x3) == 0) {
+		do {
+			if ((len & 0x3) == 0)
+				wc = *wcp++;
+			else
+				wc = wc >> 8;
+			if ((wc & 0xff) == 0)
+				return (len);
+			len++;
+		} while (1);
+	} else {
+		do {
+			if (*c == 0)
+				return (len);
+			len++;
+			c++;
+		} while (1);
+	}
 }
 
 unsigned int
 mul(unsigned int a, unsigned int b)
 {
-	register unsigned int t1 = a;
-	register unsigned int t2 = b;
-	register unsigned int res = 0;
+	unsigned int t1 = a;
+	unsigned int t2 = b;
+	unsigned int res = 0;
 
 	while(t1) {
 		if(t2 & 1)
@@ -79,10 +120,10 @@ mul(unsigned int a, unsigned int b)
 unsigned int
 div(unsigned int a, unsigned int b, unsigned int *mod)
 {
-	register unsigned int t1 = b << 31;
-	register unsigned int t2 = b;
-	register unsigned int hi = a, lo = 0;
-	register int i;
+	unsigned int t1 = b << 31;
+	unsigned int t2 = b;
+	unsigned int hi = a, lo = 0;
+	int i;
 
 	for (i = 0; i < 32; ++i) {
 		lo = lo << 1;
@@ -101,8 +142,8 @@ div(unsigned int a, unsigned int b, unsigned int *mod)
 unsigned int
 random()
 {
-	register int x, t;
-	register int hi;
+	int x, t;
+	int hi;
 	unsigned int lo;
 
 	/*

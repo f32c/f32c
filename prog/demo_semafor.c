@@ -40,11 +40,11 @@ static struct gradovi {
 };
 
 static char *prog_names[] = {
-	"Automatski semafor",
-	"Pokvareni semafor",
-	"  Rucni semafor",
-	"Poludjeli semafor",
-	" Naplatne kucice",
+	" Automatski semafor",
+	" Pokvareni semafor",
+	"   Rucni semafor",
+	" Poludjeli semafor",
+	"  Naplatne kucice",
 };
 
 static int led_state;
@@ -84,7 +84,7 @@ void demo_semafor(int prog) {
 	int i, s, d;
 	char *c;
 
-	bcopy(prog_names[prog], &lcdbuf[0][1], strlen(prog_names[prog]));
+	bcopy(prog_names[prog], &lcdbuf[0][0], strlen(prog_names[prog]));
 
 	if (prog == DEMO_POKVARENI_SEMAFOR) {
 		sem(0, BLACK);

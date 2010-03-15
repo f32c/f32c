@@ -7,16 +7,12 @@
 /* Forward declarations for demo functions */
 void demo_semafor(int);
 
-static int prog;
+static int prog = DEMO_POLUDJELI_SEMAFOR;
 
 void
 platform_start() {
 	int i;
 
-	/* Check out whether reset works */
-	prog = 0;
-
-again:
 	/* Clear screen */
 	for (i = 0; i < 4; i++)
 		memset(&lcdbuf[i][0], ' ', 20);
@@ -30,6 +26,4 @@ again:
 	oldkey = newkey;
 
 	demo_semafor(prog);
-
-	goto again;
 }
