@@ -209,8 +209,7 @@ begin
 		else "000";
 	predict_taken <= false when not C_branch_prediction else
 		(branch_cycle_0 and (instruction(15) = '1' or
-		(reg1_zero_0 and reg2_zero_0))) or
-		(jump_cycle_0 and not jump_register_0);
+		(reg1_zero_0 and reg2_zero_0)));
 
 	-- J / JAL / JR / JALR decoding
 	process(opcode, fncode)

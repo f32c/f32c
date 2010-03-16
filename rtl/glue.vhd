@@ -34,7 +34,7 @@ entity glue is
 	generic(
 		C_clk_mhz: integer := 50; -- must be a multiple of 5
 		C_mult_enable: boolean := false;
-		C_branch_prediction: boolean := true;
+		C_branch_prediction: boolean := false;
 		C_result_forwarding: boolean := true;
 		C_register_technology: string := "xilinx_ram16x1d";
 		-- debugging
@@ -42,22 +42,35 @@ entity glue is
 --
 -- Preliminary CPI stats (DEMO_POLUDJELI_SEMAFOR, rotary = 63):
 --
+-- Area usage at svn revision 77:
+--
 -- C_branch_prediction + C_result_forwarding:
--- cyc 10000cb09  ins d6cfff32  CPI: 1.19
---
--- C_result_forwarding:
--- cyc 1003b5f4e  ins ca3ca4e8  CPI: 1.27
---
--- C_branch_prediction:
--- cyc 10005edd5  ins 95b68d9a  CPI: 1.71
---
--- (both off):
--- cyc 1002384e9  ins 9241ac73  CPI: 1.75
---
 -- Number of Slice Flip Flops:           848 out of  11,776    7%
 -- Number of 4 input LUTs:             2,402 out of  11,776   20%
 -- Number of occupied Slices:          1,414 out of   5,888   24%
 -- Total Number of 4 input LUTs:       2,536 out of  11,776   21%
+--
+-- C_result_forwarding:
+-- Number of Slice Flip Flops:           842 out of  11,776    7%
+-- Number of 4 input LUTs:             2,401 out of  11,776   20%
+-- Number of occupied Slices:          1,383 out of   5,888   23%
+-- Total Number of 4 input LUTs:       2,515 out of  11,776   21%
+-- 
+-- Area usage at svn revision 78:
+-- 
+-- C_result_forwarding:
+-- Number of Slice Flip Flops:           839 out of  11,776    7%
+-- Number of 4 input LUTs:             2,368 out of  11,776   20%
+-- Number of occupied Slices:          1,351 out of   5,888   22%
+-- Total Number of 4 input LUTs:       2,467 out of  11,776   20%
+-- 
+-- Area usage at svn revision 79:
+--
+-- C_result_forwarding:
+-- Number of Slice Flip Flops:           833 out of  11,776    7%
+-- Number of 4 input LUTs:             2,344 out of  11,776   19%
+-- Number of occupied Slices:          1,353 out of   5,888   22%
+-- Total Number of 4 input LUTs:       2,451 out of  11,776   20%
 --
 	);
 	port (
