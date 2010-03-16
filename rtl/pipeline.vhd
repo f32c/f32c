@@ -87,7 +87,7 @@ architecture Behavioral of pipeline is
 	signal ID_use_immediate, ID_ignore_reg2: boolean;
 	signal ID_branch_cycle, ID_jump_cycle, ID_jump_register: boolean;
 	signal ID_predict_taken: boolean;
-	signal ID_branch_target: std_logic_vector(31 downto 2);
+	signal ID_branch_target, ID_jump_target: std_logic_vector(31 downto 2);
 	signal ID_branch_condition: std_logic_vector(2 downto 0);
 	signal ID_mem_cycle, ID_mem_write: std_logic;
 	signal ID_mem_size: std_logic_vector(1 downto 0);
@@ -226,8 +226,10 @@ begin
 			if MEM_take_branch then
 				IF_ID_PC_next <= IF_PC_next;
 			elsif ID_running then
-				if ID_predict_taken and not ID_EX_cancel_next then
-					IF_ID_PC_next <= ID_branch_target;
+				-- XXX was: if ID_predict_taken and not ID_EX_cancel_next then
+				if ID_jump_cycle and not ID_jump_register
+					and not ID_EX_cancel_next then
+					IF_ID_PC_next <= ID_jump_target;
 				else
 					IF_ID_PC_next <= IF_PC_next;
 				end if;
@@ -341,10 +343,12 @@ begin
 	ID_fwd_mem_alu_op2 <= ID_fwd_mem_reg2 and not ID_use_immediate;
 	
 	-- compute branch target
-	ID_branch_target <=
-		(ID_sign_extension(13 downto 0) & IF_ID_instruction(15 downto 0))
-		+ IF_ID_PC_4 when ID_branch_cycle
-		else IF_ID_PC_4(29 downto 24) & IF_ID_instruction(23 downto 0);
+	ID_branch_target <= IF_ID_PC_4 +
+		(ID_sign_extension(13 downto 0) & IF_ID_instruction(15 downto 0));
+
+	-- compute jump target
+	ID_jump_target <=
+		IF_ID_PC_4(29 downto 24) & IF_ID_instruction(23 downto 0);
 
 	process(clk)
 	begin
@@ -575,7 +579,8 @@ begin
 				EX_MEM_shift_funct <= ID_EX_immediate(1 downto 0);
 				EX_MEM_to_shift <= EX_from_shift;
 				EX_MEM_op_major <= ID_EX_op_major;
-				if ID_EX_jump_cycle or ID_EX_branch_cycle then
+				if (ID_EX_jump_cycle and ID_EX_jump_register)
+					or ID_EX_branch_cycle then
 					EX_MEM_take_branch <= EX_take_branch;
 					if ID_EX_predict_taken then
 						EX_MEM_branch_target <= ID_EX_PC_8;
