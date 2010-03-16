@@ -100,7 +100,7 @@ architecture Behavioral of pipeline is
 	signal ID_EX_fwd_ex_reg1, ID_EX_fwd_ex_reg2, ID_EX_fwd_ex_alu_op2: boolean;
 	signal ID_EX_fwd_mem_reg1, ID_EX_fwd_mem_reg2, ID_EX_fwd_mem_alu_op2: boolean;
 	signal ID_EX_sign_extend: boolean;
-	signal ID_EX_branch_cycle, ID_EX_jump_cycle, ID_EX_jump_register: boolean;
+	signal ID_EX_branch_cycle, ID_EX_jump_cycle: boolean;
 	signal ID_EX_cancel_next, ID_EX_predict_taken: boolean;
 	signal ID_EX_branch_target: std_logic_vector(31 downto 2);
 	signal ID_EX_branch_condition: std_logic_vector(2 downto 0);
@@ -227,8 +227,7 @@ begin
 				IF_ID_PC_next <= IF_PC_next;
 			elsif ID_running then
 				-- XXX was: if ID_predict_taken and not ID_EX_cancel_next then
-				if ID_jump_cycle and not ID_jump_register
-					and not ID_EX_cancel_next then
+				if ID_jump_cycle and not ID_EX_cancel_next then
 					IF_ID_PC_next <= ID_jump_target;
 				else
 					IF_ID_PC_next <= IF_PC_next;
@@ -308,8 +307,9 @@ begin
 	begin
 	ID_running <= ID_EX_cancel_next or
 		(EX_running and not ID_EX_partial_load and
-		(ID_reg1_zero or
-		ID_reg1_addr /= ID_EX_writeback_addr or ID_EX_latency = '0') and
+		(not ID_jump_register or ID_reg1_addr /= EX_MEM_writeback_addr) and
+		(ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
+		(ID_EX_latency = '0' and not ID_jump_register)) and
 		(ID_reg2_zero or ID_ignore_reg2 or
 		ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = '0'));
 	end generate;
@@ -347,8 +347,9 @@ begin
 		(ID_sign_extension(13 downto 0) & IF_ID_instruction(15 downto 0));
 
 	-- compute jump target
-	ID_jump_target <=
-		IF_ID_PC_4(29 downto 24) & IF_ID_instruction(23 downto 0);
+	-- XXX should we take the 4 MS bits from IF_ID_PC or from IF_ID_PC_4?
+	ID_jump_target <= ID_eff_reg1(31 downto 2) when ID_jump_register else
+		IF_ID_PC(29 downto 24) & IF_ID_instruction(23 downto 0);
 
 	process(clk)
 	begin
@@ -407,7 +408,6 @@ begin
 					ID_EX_partial_load <= ID_mem_cycle = '1' and ID_mem_write = '0'
 						and ID_mem_size(1) = '0';
 					ID_EX_mem_read_sign_extend <= ID_mem_read_sign_extend;
-					ID_EX_jump_register <= ID_jump_register;
 					ID_EX_branch_condition <= ID_branch_condition;
 					ID_EX_PC_4 <= IF_ID_PC_4;
 					ID_EX_PC_8 <= IF_ID_PC_4 + 1;
@@ -468,8 +468,7 @@ begin
 	end generate; -- no result_forwarding
 	
 	-- prepare for potential branch / jump
-	EX_branch_target <= EX_eff_reg1(31 downto 2) when ID_EX_jump_register
-		else ID_EX_branch_target;
+	EX_branch_target <= ID_EX_branch_target;
 	
 	-- instantiate the ALU
    alu: entity alu
@@ -521,13 +520,11 @@ begin
 		ID_EX_PC_8 & "00";
 
 	-- jump / branch or not?
-	process(ID_EX_jump_cycle, ID_EX_branch_cycle, ID_EX_branch_condition,
-		EX_from_alu_equal, EX_eff_reg1)
+	process(ID_EX_branch_cycle, ID_EX_branch_condition, EX_from_alu_equal,
+		EX_eff_reg1)
 	begin
 		EX_take_branch <= false;
 		case ID_EX_branch_condition is
-			when "001"	=> -- jump cycle
-				EX_take_branch <= true;
 			when "010"	=> -- bltz
 				if EX_eff_reg1(31) = '1' then
 					EX_take_branch <= true;
@@ -579,8 +576,7 @@ begin
 				EX_MEM_shift_funct <= ID_EX_immediate(1 downto 0);
 				EX_MEM_to_shift <= EX_from_shift;
 				EX_MEM_op_major <= ID_EX_op_major;
-				if (ID_EX_jump_cycle and ID_EX_jump_register)
-					or ID_EX_branch_cycle then
+				if ID_EX_branch_cycle then
 					EX_MEM_take_branch <= EX_take_branch;
 					if ID_EX_predict_taken then
 						EX_MEM_branch_target <= ID_EX_PC_8;
