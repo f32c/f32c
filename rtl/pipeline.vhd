@@ -31,6 +31,10 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+-- Xilinx libraries
+library UNISIM;
+use UNISIM.VComponents.all;
+
 entity pipeline is
 	generic(
 		C_mult_enable: boolean := true;
@@ -67,7 +71,9 @@ architecture Behavioral of pipeline is
 	signal IF_from_imem: std_logic_vector(31 downto 0);
 	signal IF_PC, IF_PC_next: std_logic_vector(31 downto 2);
 	signal IF_PC_incr: std_logic;
+	signal IF_bpredict_score: std_logic_vector(1 downto 0);
 	signal IF_ID_instruction: std_logic_vector(31 downto 0);
+	signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
 	signal IF_ID_branch_delay_slot: boolean;
 	signal IF_ID_PC, IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
 	
@@ -95,6 +101,7 @@ architecture Behavioral of pipeline is
 	signal ID_latency: std_logic;
 	signal ID_cop0: std_logic;
 	signal ID_EX_PC_4, ID_EX_PC_8: std_logic_vector(31 downto 2);
+	signal ID_EX_bpredict_score: std_logic_vector(1 downto 0);
 	signal ID_EX_reg1_addr, ID_EX_reg2_addr, ID_EX_writeback_addr: std_logic_vector(4 downto 0);
 	signal ID_EX_reg1_data, ID_EX_reg2_data, ID_EX_immediate, ID_EX_alu_op2: std_logic_vector(31 downto 0);
 	signal ID_EX_fwd_ex_reg1, ID_EX_fwd_ex_reg2, ID_EX_fwd_ex_alu_op2: boolean;
@@ -138,7 +145,8 @@ architecture Behavioral of pipeline is
 	signal EX_MEM_branch_target: std_logic_vector(29 downto 0) :=
 		C_init_PC(31 downto 2);
 	signal EX_MEM_take_branch: boolean := true; -- XXX jump to C_init_PC addr
-	signal EX_MEM_branch_taken: boolean;
+	signal EX_MEM_branch_cycle, EX_MEM_branch_taken: boolean;
+	signal EX_MEM_bpredict_score: std_logic_vector(1 downto 0);
 	signal EX_MEM_mem_cycle, EX_MEM_logic_cycle: std_logic;
 	signal EX_MEM_shamt_1_2_4: std_logic_vector(2 downto 0);
 	signal EX_MEM_shift_funct: std_logic_vector(1 downto 0);
@@ -153,6 +161,8 @@ architecture Behavioral of pipeline is
 	
 	-- pipeline stage 4: memory access
 	signal MEM_running, MEM_sched_wait_cycle, MEM_take_branch: boolean;
+	signal MEM_bpredict_score: std_logic_vector(1 downto 0);
+	signal MEM_bpredict_we: std_logic;
 	signal MEM_writeback_data, MEM_mem_data_shifted: std_logic_vector(31 downto 0);
 	signal MEM_data_in, MEM_from_shift: std_logic_vector(31 downto 0);
 	-- boundary to stage 5
@@ -177,7 +187,7 @@ architecture Behavioral of pipeline is
 
 	-- signals used for debugging only
 	signal reg_trace_data: std_logic_vector(31 downto 0);
-	signal D_tsc, D_instructs, D_jumps, D_branches: std_logic_vector(31 downto 0);
+	signal D_tsc, D_instr, D_b_instr, D_b_taken: std_logic_vector(31 downto 0);
 begin
 
 	--
@@ -199,7 +209,6 @@ begin
 	-- XXX missing:
 	--		sort out the endianess story
 	--		revisit latency of byte and half loads
-	--		dynamic branch prediction?
 	--		0-latency 8 / 16 / 24 bit shifts?
 	--		less LUT-hungry reset?
 	--		jalr instruction?
@@ -228,15 +237,12 @@ begin
 	process(clk)
 	begin
 		if rising_edge(clk) then
-			D_tsc <= D_tsc + 1; -- XXX debugging only
 			if MEM_take_branch then
 				IF_ID_PC_next <= IF_PC_next;
-				D_branches <= D_branches + 1; -- XXX debugging only
 			elsif ID_running then
 				if (ID_jump_cycle or ID_predict_taken)
 					and not ID_EX_cancel_next then
 					IF_ID_PC_next <= ID_jump_target;
-					D_jumps <= D_jumps + 1; -- XXX debugging only
 				else
 					IF_ID_PC_next <= IF_PC_next;
 				end if;
@@ -248,12 +254,26 @@ begin
 					IF_ID_instruction <= x"00000000";
 				else
 					IF_ID_instruction <= imem_data_in;
+					IF_ID_bpredict_score <= IF_bpredict_score;
 				end if;
 				IF_ID_branch_delay_slot <= ID_branch_cycle or ID_jump_cycle;
 			end if;
 		end if;
 	end process;
 	
+	G_bp_scoretable:
+	if C_branch_prediction generate
+	begin
+	bpredictor_0: RAMB16_S2_S2
+	port map(
+		DIA => "11", DIB => MEM_bpredict_score,
+		DOA => IF_bpredict_score, -- DOB => xxx,
+		ADDRA => IF_PC(14 downto 2), ADDRB => EX_MEM_PC(14 downto 2),
+		CLKA => not clk, CLKB => clk, ENA => '1', ENB => MEM_bpredict_we,
+		SSRA => '0', SSRB => '0', WEA => '0', WEB => '1'
+	);
+	end generate;
+
 	-- debugging only
 	debug_XXX(28 downto 24) <= EX_shamt;
 	debug_XXX(16) <= '1' when ID_EX_cancel_next else '0';
@@ -269,9 +289,6 @@ begin
 	
 	-- instruction decoder
 	idecode: entity idecode
-		generic map(
-			C_branch_prediction => C_branch_prediction
-		)
 		port map(
 			instruction => IF_ID_instruction,
          reg1_addr => ID_reg1_addr, reg2_addr => ID_reg2_addr,
@@ -282,7 +299,6 @@ begin
 			op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
 			branch_cycle => ID_branch_cycle, jump_cycle => ID_jump_cycle,
 			branch_condition => ID_branch_condition,
-			predict_taken => ID_predict_taken,
 			jump_register => ID_jump_register,
 			sign_extend => ID_sign_extend,
 			mem_write => ID_mem_write,	mem_size => ID_mem_size,
@@ -353,6 +369,10 @@ begin
 	-- compute branch target
 	ID_branch_target <= IF_ID_PC_4 +
 		(ID_sign_extension(13 downto 0) & IF_ID_instruction(15 downto 0));
+
+	-- branch prediction
+	ID_predict_taken <= C_branch_prediction and
+		ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
 
 	-- compute jump target
 	-- XXX should we take the 4 MS bits from IF_ID_PC or from IF_ID_PC_4?
@@ -428,11 +448,12 @@ begin
 					ID_EX_branch_cycle <= ID_branch_cycle;
 					ID_EX_jump_cycle <= ID_jump_cycle;
 					ID_EX_predict_taken <= ID_predict_taken;
+					ID_EX_bpredict_score <= IF_ID_bpredict_score;
 					ID_EX_op_major <= ID_op_major;
 					ID_EX_latency <= ID_latency;
 					ID_EX_instruction <= IF_ID_instruction; -- XXX debugging only
 					ID_EX_PC <= IF_ID_PC; -- XXX debugging only
-					D_instructs <= D_instructs + 1; -- XXX debugging only
+					D_instr <= D_instr + 1; -- XXX debugging only
 					-- schedule result forwarding
 					ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
 					ID_EX_fwd_ex_reg2 <= ID_fwd_ex_reg2;
@@ -587,7 +608,9 @@ begin
 				EX_MEM_shift_funct <= ID_EX_immediate(1 downto 0);
 				EX_MEM_to_shift <= EX_from_shift;
 				EX_MEM_op_major <= ID_EX_op_major;
+				EX_MEM_branch_cycle <= ID_EX_branch_cycle;
 				if ID_EX_branch_cycle then
+					EX_MEM_bpredict_score <= ID_EX_bpredict_score;
 					EX_MEM_take_branch <= EX_take_branch;
 					if ID_EX_predict_taken then
 						EX_MEM_branch_target <= ID_EX_PC_8;
@@ -646,6 +669,40 @@ begin
 	
 	MEM_take_branch <= EX_MEM_take_branch xor EX_MEM_branch_taken;
 	
+	-- branch prediction
+	G_bp_update_score:
+	if C_branch_prediction generate
+	begin
+		MEM_bpredict_score <=
+			"01" when EX_MEM_bpredict_score = "00" and EX_MEM_take_branch else
+			"00" when EX_MEM_bpredict_score = "00" and not EX_MEM_take_branch else
+			"10" when EX_MEM_bpredict_score = "01" and EX_MEM_take_branch else
+			"00" when EX_MEM_bpredict_score = "01" and not EX_MEM_take_branch else
+			"11" when EX_MEM_bpredict_score = "10" and EX_MEM_take_branch else
+			"01" when EX_MEM_bpredict_score = "10" and not EX_MEM_take_branch else
+			"11" when EX_MEM_bpredict_score = "11" and EX_MEM_take_branch else
+			"10" when EX_MEM_bpredict_score = "11" and not EX_MEM_take_branch;
+		MEM_bpredict_we <= '1' when EX_MEM_branch_cycle else '0';
+	end generate;
+
+	-- XXX performance counters
+	G_perf_cnt:
+	if C_serial_trace generate
+	begin
+	process(clk)
+	begin
+		if rising_edge(clk) then
+			D_tsc <= D_tsc + 1;
+			if EX_MEM_branch_cycle then
+				D_b_instr <= D_b_instr + 1;
+			end if;
+			if MEM_take_branch then
+				D_b_taken <= D_b_taken + 1;
+			end if;
+		end if;
+	end process;
+	end generate;
+
 	-- connect outbound signals for memory access
 	dmem_addr <= EX_MEM_writeback_addsub(31 downto 2);
 	dmem_data_out <= EX_MEM_mem_data_out;
@@ -735,9 +792,9 @@ begin
 				when x"0e" => trace_data <= EX_MEM_writeback_logic;
 
 				when x"10" => trace_data <= D_tsc;
-				when x"11" => trace_data <= D_instructs;
-				when x"12" => trace_data <= D_jumps;
-				when x"13" => trace_data <= D_branches;
+				when x"11" => trace_data <= D_instr;
+				when x"12" => trace_data <= D_b_instr;
+				when x"13" => trace_data <= D_b_taken;
 				--
 				when x"1a" => trace_data <= LO;
 				when x"1b" => trace_data <= HI;

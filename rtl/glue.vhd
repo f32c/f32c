@@ -40,21 +40,22 @@ entity glue is
 		-- debugging
 		C_serial_trace: boolean := true
 --
--- Preliminary CPI stats (DEMO_POLUDJELI_SEMAFOR, rotary = 63):
+-- Dynamic branch prediction (Spartan3A, trace off):
+--  Total Number Slice Registers:         647 out of  11,776    5%
+--    Number used as Flip Flops:          645
+--    Number used as Latches:               2
+--  Number of 4 input LUTs:             1,629 out of  11,776   13%
+--  Number of occupied Slices:            920 out of   5,888   15%
 --
--- C_result_forwarding:
--- Cycles: ff3ab151  Instruct: b67b20b7     Jumps: 0003996e  Branches: 245d0e78
--- Number of Slice Flip Flops:           960 out of  11,776    8%
--- Number of 4 input LUTs:             2,493 out of  11,776   21%
--- Number of occupied Slices:          1,505 out of   5,888   25%
--- Total Number of 4 input LUTs:       2,723 out of  11,776   23%
+-- Static branch prediction (Spartan3A, trace off):
+--  Number of Slice Flip Flops:           599 out of  11,776    5%
+--  Number of 4 input LUTs:             1,616 out of  11,776   13%
+--  Number of occupied Slices:            895 out of   5,888   15%
 --
--- C_branch_prediction + C_result_forwarding:
--- Cycles: fffe4bad  Instruct: d551b8cb     Jumps: 2a91aa21  Branches: 001eb3a4
--- Number of Slice Flip Flops:           964 out of  11,776    8%
--- Number of 4 input LUTs:             2,558 out of  11,776   21%
--- Number of occupied Slices:          1,526 out of   5,888   25%
--- Total Number of 4 input LUTs:       2,788 out of  11,776   23%
+-- No branch prediction (Spartan3A, trace off):
+--  Number of Slice Flip Flops:           595 out of  11,776    5%
+--  Number of 4 input LUTs:             1,552 out of  11,776   13%
+--  Number of occupied Slices:            877 out of   5,888   14%
 --
 	);
 	port (

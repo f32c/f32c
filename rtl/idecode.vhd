@@ -33,10 +33,6 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 
 entity idecode is
-	generic(
-		-- NO defaults for compile-time options!
-		C_branch_prediction: boolean
-	);
 	port(
 		instruction: in STD_LOGIC_VECTOR(31 downto 0);
 		reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
@@ -47,7 +43,7 @@ entity idecode is
 		op_major: out std_logic_vector(1 downto 0);
 		op_minor: out std_logic_vector(2 downto 0);
 		use_immediate, ignore_reg2: out boolean;
-		branch_cycle, jump_cycle, jump_register, predict_taken: out boolean;
+		branch_cycle, jump_cycle, jump_register: out boolean;
 		branch_condition: out std_logic_vector(2 downto 0);
 		mem_cycle: out std_logic;
 		mem_write: out std_logic;
@@ -207,9 +203,6 @@ begin
 		else "01" & instruction(16) when branch_cycle_0 -- bgez, bltz
 		else "001" when jump_cycle_0
 		else "000";
-	predict_taken <= false when not C_branch_prediction else
-		(branch_cycle_0 and (instruction(15) = '1' or
-		(reg1_zero_0 and reg2_zero_0)));
 
 	-- J / JAL / JR / JALR decoding
 	process(opcode, fncode)
