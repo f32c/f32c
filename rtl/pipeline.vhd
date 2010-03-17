@@ -177,6 +177,7 @@ architecture Behavioral of pipeline is
 
 	-- signals used for debugging only
 	signal reg_trace_data: std_logic_vector(31 downto 0);
+	signal D_tsc, D_instructs, D_jumps, D_branches: std_logic_vector(31 downto 0);
 begin
 
 	--
@@ -199,6 +200,10 @@ begin
 	--		sort out the endianess story
 	--		revisit latency of byte and half loads
 	--		dynamic branch prediction?
+	--		0-latency 8 / 16 / 24 bit shifts?
+	--		less LUT-hungry reset?
+	--		jalr instruction?
+	--		unaligned load / store instructions?
 	--		block on MFHI/MFLO if result not ready
 	--		don't branch until branch delay slot fetched!!!
 	--		MTHI/MTLO/MFC0/MTC0
@@ -223,12 +228,15 @@ begin
 	process(clk)
 	begin
 		if rising_edge(clk) then
+			D_tsc <= D_tsc + 1; -- XXX debugging only
 			if MEM_take_branch then
 				IF_ID_PC_next <= IF_PC_next;
+				D_branches <= D_branches + 1; -- XXX debugging only
 			elsif ID_running then
 				if (ID_jump_cycle or ID_predict_taken)
 					and not ID_EX_cancel_next then
 					IF_ID_PC_next <= ID_jump_target;
+					D_jumps <= D_jumps + 1; -- XXX debugging only
 				else
 					IF_ID_PC_next <= IF_PC_next;
 				end if;
@@ -424,6 +432,7 @@ begin
 					ID_EX_latency <= ID_latency;
 					ID_EX_instruction <= IF_ID_instruction; -- XXX debugging only
 					ID_EX_PC <= IF_ID_PC; -- XXX debugging only
+					D_instructs <= D_instructs + 1; -- XXX debugging only
 					-- schedule result forwarding
 					ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
 					ID_EX_fwd_ex_reg2 <= ID_fwd_ex_reg2;
@@ -724,8 +733,11 @@ begin
 				when x"0c" => trace_data <= EX_eff_alu_op2;
 				when x"0d" => trace_data <= EX_MEM_writeback_addsub;
 				when x"0e" => trace_data <= EX_MEM_writeback_logic;
-				when x"0f" => trace_data <= debug_XXX;
 
+				when x"10" => trace_data <= D_tsc;
+				when x"11" => trace_data <= D_instructs;
+				when x"12" => trace_data <= D_jumps;
+				when x"13" => trace_data <= D_branches;
 				--
 				when x"1a" => trace_data <= LO;
 				when x"1b" => trace_data <= HI;
