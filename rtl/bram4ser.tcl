@@ -54,7 +54,7 @@ set prog "[set prog]                    eff_reg2: ______41  eff_reg2: ______43  
 set prog "[set prog]                                        eff_alu2: ______44\033\[K\r\n"
 set prog "[set prog]\033\[K\r\n"
 set prog "[set prog]\033\[K\r\n"
-set prog "[set prog]  Cycles: ______48  Instruct: ______49     Jumps: ______50  Branches: ______51\033\[K\r\n"
+set prog "[set prog]  Cycles: ______48  Instruct: ______49  Branches: ______50     Taken: ______51\033\[K\r\n"
 
 # Invisible cursor, clear to end of screen
 set prog "[set prog]\033\[?25l\033\[J"
