@@ -226,8 +226,8 @@ begin
 			if MEM_take_branch then
 				IF_ID_PC_next <= IF_PC_next;
 			elsif ID_running then
-				-- XXX was: if ID_predict_taken and not ID_EX_cancel_next then
-				if ID_jump_cycle and not ID_EX_cancel_next then
+				if (ID_jump_cycle or ID_predict_taken)
+					and not ID_EX_cancel_next then
 					IF_ID_PC_next <= ID_jump_target;
 				else
 					IF_ID_PC_next <= IF_PC_next;
@@ -348,7 +348,9 @@ begin
 
 	-- compute jump target
 	-- XXX should we take the 4 MS bits from IF_ID_PC or from IF_ID_PC_4?
-	ID_jump_target <= ID_eff_reg1(31 downto 2) when ID_jump_register else
+	ID_jump_target <=
+		ID_branch_target when ID_predict_taken else
+		ID_eff_reg1(31 downto 2) when ID_jump_register else
 		IF_ID_PC(29 downto 24) & IF_ID_instruction(23 downto 0);
 
 	process(clk)
