@@ -34,7 +34,7 @@ entity glue is
 	generic(
 		C_clk_mhz: integer := 50; -- must be a multiple of 5
 		C_mult_enable: boolean := false;
-		C_branch_prediction: boolean := false;
+		C_branch_prediction: boolean := true;
 		C_result_forwarding: boolean := true;
 		C_register_technology: string := "xilinx_ram16x1d";
 		-- debugging
@@ -71,6 +71,14 @@ entity glue is
 -- Number of 4 input LUTs:             2,344 out of  11,776   19%
 -- Number of occupied Slices:          1,353 out of   5,888   22%
 -- Total Number of 4 input LUTs:       2,451 out of  11,776   20%
+--
+-- Area usage at svn revision 80:
+--
+-- C_branch_prediction + C_result_forwarding:
+-- Number of Slice Flip Flops:           844 out of  11,776    7%
+-- Number of 4 input LUTs:             2,410 out of  11,776   20%
+-- Number of occupied Slices:          1,378 out of   5,888   23%
+-- Total Number of 4 input LUTs:       2,517 out of  11,776   21%
 --
 	);
 	port (
