@@ -52,7 +52,9 @@ set prog "[set prog]instruct: ______36  instruct: ______37  instruct: ______38  
 set prog "[set prog]                    eff_reg1: ______40  eff_reg1: ______42   addsubx: ______45\033\[K\r\n"
 set prog "[set prog]                    eff_reg2: ______41  eff_reg2: ______43     logic: ______46\033\[K\r\n"
 set prog "[set prog]                                        eff_alu2: ______44\033\[K\r\n"
-set prog "[set prog]                                        sign_ext: ______47\033\[K\r\n"
+set prog "[set prog]\033\[K\r\n"
+set prog "[set prog]\033\[K\r\n"
+set prog "[set prog]  Cycles: ______48  Instruct: ______49     Jumps: ______50  Branches: ______51\033\[K\r\n"
 
 # Invisible cursor, clear to end of screen
 set prog "[set prog]\033\[?25l\033\[J"

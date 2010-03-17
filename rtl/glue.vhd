@@ -42,43 +42,19 @@ entity glue is
 --
 -- Preliminary CPI stats (DEMO_POLUDJELI_SEMAFOR, rotary = 63):
 --
--- Area usage at svn revision 77:
+-- C_result_forwarding:
+-- Cycles: ff3ab151  Instruct: b67b20b7     Jumps: 0003996e  Branches: 245d0e78
+-- Number of Slice Flip Flops:           960 out of  11,776    8%
+-- Number of 4 input LUTs:             2,493 out of  11,776   21%
+-- Number of occupied Slices:          1,505 out of   5,888   25%
+-- Total Number of 4 input LUTs:       2,723 out of  11,776   23%
 --
 -- C_branch_prediction + C_result_forwarding:
--- Number of Slice Flip Flops:           848 out of  11,776    7%
--- Number of 4 input LUTs:             2,402 out of  11,776   20%
--- Number of occupied Slices:          1,414 out of   5,888   24%
--- Total Number of 4 input LUTs:       2,536 out of  11,776   21%
---
--- C_result_forwarding:
--- Number of Slice Flip Flops:           842 out of  11,776    7%
--- Number of 4 input LUTs:             2,401 out of  11,776   20%
--- Number of occupied Slices:          1,383 out of   5,888   23%
--- Total Number of 4 input LUTs:       2,515 out of  11,776   21%
--- 
--- Area usage at svn revision 78:
--- 
--- C_result_forwarding:
--- Number of Slice Flip Flops:           839 out of  11,776    7%
--- Number of 4 input LUTs:             2,368 out of  11,776   20%
--- Number of occupied Slices:          1,351 out of   5,888   22%
--- Total Number of 4 input LUTs:       2,467 out of  11,776   20%
--- 
--- Area usage at svn revision 79:
---
--- C_result_forwarding:
--- Number of Slice Flip Flops:           833 out of  11,776    7%
--- Number of 4 input LUTs:             2,344 out of  11,776   19%
--- Number of occupied Slices:          1,353 out of   5,888   22%
--- Total Number of 4 input LUTs:       2,451 out of  11,776   20%
---
--- Area usage at svn revision 80:
---
--- C_branch_prediction + C_result_forwarding:
--- Number of Slice Flip Flops:           844 out of  11,776    7%
--- Number of 4 input LUTs:             2,410 out of  11,776   20%
--- Number of occupied Slices:          1,378 out of   5,888   23%
--- Total Number of 4 input LUTs:       2,517 out of  11,776   21%
+-- Cycles: fffe4bad  Instruct: d551b8cb     Jumps: 2a91aa21  Branches: 001eb3a4
+-- Number of Slice Flip Flops:           964 out of  11,776    8%
+-- Number of 4 input LUTs:             2,558 out of  11,776   21%
+-- Number of occupied Slices:          1,526 out of   5,888   25%
+-- Total Number of 4 input LUTs:       2,788 out of  11,776   23%
 --
 	);
 	port (
