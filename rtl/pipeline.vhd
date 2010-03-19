@@ -71,8 +71,8 @@ architecture Behavioral of pipeline is
 	signal IF_from_imem: std_logic_vector(31 downto 0);
 	signal IF_PC, IF_PC_next: std_logic_vector(31 downto 2);
 	signal IF_PC_incr: std_logic;
-	signal IF_bpredict_score: std_logic_vector(1 downto 0);
 	signal IF_bpredict_index: std_logic_vector(12 downto 0);
+	signal IF_bpredict_re: std_logic;
 	signal IF_ID_instruction: std_logic_vector(31 downto 0);
 	signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
 	signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
@@ -259,7 +259,6 @@ begin
 					IF_ID_instruction <= x"00000000";
 				else
 					IF_ID_instruction <= imem_data_in;
-					IF_ID_bpredict_score <= IF_bpredict_score;
 					IF_ID_bpredict_index <= IF_bpredict_index;
 				end if;
 				IF_ID_branch_delay_slot <= ID_branch_cycle or ID_jump_cycle;
@@ -271,12 +270,14 @@ begin
 	if C_branch_prediction generate
 	begin
 	IF_bpredict_index <= EX_MEM_branch_hist xor IF_PC(14 downto 2);
+	IF_bpredict_re <= '1' when ID_running else '0';
 	bpredictor_0: RAMB16_S2_S2
 	port map(
 		DIA => "11", DIB => MEM_bpredict_score,
-		DOA => IF_bpredict_score, -- DOB => xxx,
+		DOA => IF_ID_bpredict_score, -- DOB => xxx,
 		ADDRA => IF_bpredict_index, ADDRB => EX_MEM_bpredict_index,
-		CLKA => not clk, CLKB => clk, ENA => '1', ENB => MEM_bpredict_we,
+		CLKA => clk, CLKB => clk,
+		ENA => IF_bpredict_re, ENB => MEM_bpredict_we,
 		SSRA => '0', SSRB => '0', WEA => '0', WEB => '1'
 	);
 	end generate;
