@@ -72,8 +72,10 @@ architecture Behavioral of pipeline is
 	signal IF_PC, IF_PC_next: std_logic_vector(31 downto 2);
 	signal IF_PC_incr: std_logic;
 	signal IF_bpredict_score: std_logic_vector(1 downto 0);
+	signal IF_bpredict_index: std_logic_vector(12 downto 0);
 	signal IF_ID_instruction: std_logic_vector(31 downto 0);
 	signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
+	signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
 	signal IF_ID_branch_delay_slot: boolean;
 	signal IF_ID_PC, IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
 	
@@ -109,6 +111,7 @@ architecture Behavioral of pipeline is
 	signal ID_EX_sign_extend: boolean;
 	signal ID_EX_branch_cycle, ID_EX_jump_cycle: boolean;
 	signal ID_EX_cancel_next, ID_EX_predict_taken: boolean;
+	signal ID_EX_bpredict_index: std_logic_vector(12 downto 0);
 	signal ID_EX_branch_target: std_logic_vector(31 downto 2);
 	signal ID_EX_branch_condition: std_logic_vector(2 downto 0);
 	signal ID_EX_op_major: std_logic_vector(1 downto 0);
@@ -147,6 +150,8 @@ architecture Behavioral of pipeline is
 	signal EX_MEM_take_branch: boolean := true; -- XXX jump to C_init_PC addr
 	signal EX_MEM_branch_cycle, EX_MEM_branch_taken: boolean;
 	signal EX_MEM_bpredict_score: std_logic_vector(1 downto 0);
+	signal EX_MEM_branch_hist: std_logic_vector(12 downto 0);
+	signal EX_MEM_bpredict_index: std_logic_vector(12 downto 0);
 	signal EX_MEM_mem_cycle, EX_MEM_logic_cycle: std_logic;
 	signal EX_MEM_shamt_1_2_4: std_logic_vector(2 downto 0);
 	signal EX_MEM_shift_funct: std_logic_vector(1 downto 0);
@@ -255,6 +260,7 @@ begin
 				else
 					IF_ID_instruction <= imem_data_in;
 					IF_ID_bpredict_score <= IF_bpredict_score;
+					IF_ID_bpredict_index <= IF_bpredict_index;
 				end if;
 				IF_ID_branch_delay_slot <= ID_branch_cycle or ID_jump_cycle;
 			end if;
@@ -264,11 +270,12 @@ begin
 	G_bp_scoretable:
 	if C_branch_prediction generate
 	begin
+	IF_bpredict_index <= EX_MEM_branch_hist xor IF_PC(14 downto 2);
 	bpredictor_0: RAMB16_S2_S2
 	port map(
 		DIA => "11", DIB => MEM_bpredict_score,
 		DOA => IF_bpredict_score, -- DOB => xxx,
-		ADDRA => IF_PC(14 downto 2), ADDRB => EX_MEM_PC(14 downto 2),
+		ADDRA => IF_bpredict_index, ADDRB => EX_MEM_bpredict_index,
 		CLKA => not clk, CLKB => clk, ENA => '1', ENB => MEM_bpredict_we,
 		SSRA => '0', SSRB => '0', WEA => '0', WEB => '1'
 	);
@@ -449,6 +456,7 @@ begin
 					ID_EX_jump_cycle <= ID_jump_cycle;
 					ID_EX_predict_taken <= ID_predict_taken;
 					ID_EX_bpredict_score <= IF_ID_bpredict_score;
+					ID_EX_bpredict_index <= IF_ID_bpredict_index;
 					ID_EX_op_major <= ID_op_major;
 					ID_EX_latency <= ID_latency;
 					ID_EX_instruction <= IF_ID_instruction; -- XXX debugging only
@@ -611,6 +619,7 @@ begin
 				EX_MEM_branch_cycle <= ID_EX_branch_cycle;
 				if ID_EX_branch_cycle then
 					EX_MEM_bpredict_score <= ID_EX_bpredict_score;
+					EX_MEM_bpredict_index <= ID_EX_bpredict_index;
 					EX_MEM_take_branch <= EX_take_branch;
 					if ID_EX_predict_taken then
 						EX_MEM_branch_target <= ID_EX_PC_8;
@@ -673,16 +682,30 @@ begin
 	G_bp_update_score:
 	if C_branch_prediction generate
 	begin
-		MEM_bpredict_score <=
-			"01" when EX_MEM_bpredict_score = "00" and EX_MEM_take_branch else
-			"00" when EX_MEM_bpredict_score = "00" and not EX_MEM_take_branch else
-			"10" when EX_MEM_bpredict_score = "01" and EX_MEM_take_branch else
-			"00" when EX_MEM_bpredict_score = "01" and not EX_MEM_take_branch else
-			"11" when EX_MEM_bpredict_score = "10" and EX_MEM_take_branch else
-			"01" when EX_MEM_bpredict_score = "10" and not EX_MEM_take_branch else
-			"11" when EX_MEM_bpredict_score = "11" and EX_MEM_take_branch else
-			"10" when EX_MEM_bpredict_score = "11" and not EX_MEM_take_branch;
-		MEM_bpredict_we <= '1' when EX_MEM_branch_cycle else '0';
+	MEM_bpredict_score <=
+		"01" when EX_MEM_bpredict_score = "00" and EX_MEM_take_branch else
+		"00" when EX_MEM_bpredict_score = "00" and not EX_MEM_take_branch else
+		"10" when EX_MEM_bpredict_score = "01" and EX_MEM_take_branch else
+		"00" when EX_MEM_bpredict_score = "01" and not EX_MEM_take_branch else
+		"11" when EX_MEM_bpredict_score = "10" and EX_MEM_take_branch else
+		"01" when EX_MEM_bpredict_score = "10" and not EX_MEM_take_branch else
+		"11" when EX_MEM_bpredict_score = "11" and EX_MEM_take_branch else
+		"10" when EX_MEM_bpredict_score = "11" and not EX_MEM_take_branch;
+	MEM_bpredict_we <= '1' when EX_MEM_branch_cycle else '0';
+
+	process(clk)
+	begin
+		if rising_edge(clk) then
+			if EX_MEM_branch_cycle then
+				EX_MEM_branch_hist(11 downto 0) <= EX_MEM_branch_hist(12 downto 1);
+				if EX_MEM_take_branch then
+					EX_MEM_branch_hist(12) <= '1';
+				else
+					EX_MEM_branch_hist(12) <= '0';
+				end if;
+			end if;
+		end if;
+	end process;
 	end generate;
 
 	-- XXX performance counters
