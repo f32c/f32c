@@ -91,14 +91,6 @@ void lcd_redraw(void)
 
 	for (j = 0; j < LCD_ROWS; j++) {
 		lcd_cr(j);
-#if 0
-		for (i = 0; i < LCD_COLUMNS; i++) {
-			c = lcdbuf[j][i];
-			if (uc && c >= 'a' && c <= 'z')
-				c -= ('a' - 'A');
-			lcd_putchar(c);
-		}
-#else
 		for (wp = (int *) &lcdbuf[j][0];
 		    wp < (int *) &lcdbuf[j][LCD_COLUMNS]; wp++)
 			for (i = 0, w = *wp; i < 4; i++) {
@@ -108,6 +100,5 @@ void lcd_redraw(void)
 					c -= ('a' - 'A');
 				lcd_putchar(c);
 			}
-#endif
 	}
 }
