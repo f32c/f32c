@@ -36,7 +36,6 @@ entity idecode is
 	port(
 		instruction: in STD_LOGIC_VECTOR(31 downto 0);
 		reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
-		reg1_zero, reg2_zero: out boolean;
 		immediate_value: out STD_LOGIC_VECTOR(31 downto 0);
 		sign_extension: out std_logic_vector(15 downto 0);
 		sign_extend: out boolean;
@@ -60,17 +59,12 @@ architecture Behavioral of idecode is
 	signal imm_extension: std_logic_vector(15 downto 0);
 	signal do_sign_extend, branch_cycle_0: boolean;
 	signal jump_cycle_0, jump_register_0: boolean;
-	signal reg1_zero_0, reg2_zero_0: boolean;
 begin
 
 	opcode <= instruction(31 downto 26);
 	fncode <= instruction(5 downto 0);
 	reg1_addr <= instruction(25 downto 21);
 	reg2_addr <= instruction(20 downto 16);
-	reg1_zero_0 <= instruction(25 downto 21) = "00000";
-	reg2_zero_0 <= instruction(20 downto 16) = "00000";
-	reg1_zero <= reg1_zero_0;
-	reg2_zero <= reg2_zero_0;
 	mem_read_sign_extend <= not opcode(2);
 
 	-- type_code for target register address calculation

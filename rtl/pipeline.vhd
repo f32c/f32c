@@ -74,6 +74,7 @@ architecture Behavioral of pipeline is
 	signal IF_bpredict_index: std_logic_vector(12 downto 0);
 	signal IF_bpredict_re: std_logic;
 	signal IF_ID_instruction: std_logic_vector(31 downto 0);
+	signal IF_ID_reg1_zero, IF_ID_reg2_zero: boolean;
 	signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
 	signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
 	signal IF_ID_branch_delay_slot: boolean;
@@ -82,7 +83,6 @@ architecture Behavioral of pipeline is
 	-- pipeline stage 2: instruction decode and register fetch
 	signal ID_running: boolean;
 	signal ID_reg1_addr, ID_reg2_addr, ID_writeback_addr: std_logic_vector(4 downto 0);
-	signal ID_reg1_zero, ID_reg2_zero: boolean;
 	signal ID_reg1_data, ID_reg2_data: std_logic_vector(31 downto 0);
 	signal ID_eff_reg1, ID_eff_reg2, ID_alu_op2: std_logic_vector(31 downto 0);
 	signal ID_fwd_ex_reg1, ID_fwd_ex_reg2, ID_fwd_ex_alu_op2: boolean;
@@ -259,6 +259,8 @@ begin
 					IF_ID_instruction <= x"00000000";
 				else
 					IF_ID_instruction <= imem_data_in;
+					IF_ID_reg1_zero <= imem_data_in(25 downto 21) = "00000";
+					IF_ID_reg2_zero <= imem_data_in(20 downto 16) = "00000";
 					IF_ID_bpredict_index <= IF_bpredict_index;
 				end if;
 				IF_ID_branch_delay_slot <= ID_branch_cycle or ID_jump_cycle;
@@ -300,7 +302,6 @@ begin
 		port map(
 			instruction => IF_ID_instruction,
          reg1_addr => ID_reg1_addr, reg2_addr => ID_reg2_addr,
-			reg1_zero => ID_reg1_zero, reg2_zero => ID_reg2_zero,
          immediate_value => ID_immediate, use_immediate => ID_use_immediate,
 			sign_extension => ID_sign_extension,
 			target_addr => ID_writeback_addr, op_major => ID_op_major,
@@ -340,9 +341,9 @@ begin
 	ID_running <= ID_EX_cancel_next or
 		(EX_running and not ID_EX_partial_load and
 		(not ID_jump_register or ID_reg1_addr /= EX_MEM_writeback_addr) and
-		(ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
+		(IF_ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
 		(ID_EX_latency = '0' and not ID_jump_register)) and
-		(ID_reg2_zero or ID_ignore_reg2 or
+		(IF_ID_reg2_zero or ID_ignore_reg2 or
 		ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = '0'));
 	end generate;
 
@@ -366,12 +367,16 @@ begin
 	ID_alu_op2 <= ID_immediate when ID_use_immediate else ID_eff_reg2;
 	
 	-- schedule forwarding of results from the EX stage
-	ID_fwd_ex_reg1 <= not ID_reg1_zero and ID_reg1_addr = ID_EX_writeback_addr;
-	ID_fwd_ex_reg2 <= not ID_reg2_zero and ID_reg2_addr = ID_EX_writeback_addr;
+	ID_fwd_ex_reg1 <=
+		not IF_ID_reg1_zero and ID_reg1_addr = ID_EX_writeback_addr;
+	ID_fwd_ex_reg2 <=
+		not IF_ID_reg2_zero and ID_reg2_addr = ID_EX_writeback_addr;
 	ID_fwd_ex_alu_op2 <= ID_fwd_ex_reg2 and not ID_use_immediate;
 	-- schedule forwarding of results from the MEM stage
-	ID_fwd_mem_reg1 <= not ID_reg1_zero and ID_reg1_addr = EX_MEM_writeback_addr;
-	ID_fwd_mem_reg2 <= not ID_reg2_zero and ID_reg2_addr = EX_MEM_writeback_addr;
+	ID_fwd_mem_reg1 <=
+		not IF_ID_reg1_zero and ID_reg1_addr = EX_MEM_writeback_addr;
+	ID_fwd_mem_reg2 <=
+		not IF_ID_reg2_zero and ID_reg2_addr = EX_MEM_writeback_addr;
 	ID_fwd_mem_alu_op2 <= ID_fwd_mem_reg2 and not ID_use_immediate;
 	
 	-- compute branch target
