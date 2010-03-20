@@ -75,6 +75,7 @@ architecture Behavioral of pipeline is
 	signal IF_bpredict_re: std_logic;
 	signal IF_ID_instruction: std_logic_vector(31 downto 0);
 	signal IF_ID_reg1_zero, IF_ID_reg2_zero: boolean;
+	signal IF_ID_branch_cycle, IF_ID_jump_cycle, IF_ID_jump_register: boolean;
 	signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
 	signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
 	signal IF_ID_branch_delay_slot: boolean;
@@ -93,7 +94,6 @@ architecture Behavioral of pipeline is
 	signal ID_sign_extension: std_logic_vector(15 downto 0);
 	signal ID_sign_extend: boolean;
 	signal ID_use_immediate, ID_ignore_reg2: boolean;
-	signal ID_branch_cycle, ID_jump_cycle, ID_jump_register: boolean;
 	signal ID_predict_taken: boolean;
 	signal ID_branch_target, ID_jump_target: std_logic_vector(31 downto 2);
 	signal ID_branch_condition: std_logic_vector(2 downto 0);
@@ -245,7 +245,7 @@ begin
 			if MEM_take_branch then
 				IF_ID_PC_next <= IF_PC_next;
 			elsif ID_running then
-				if (ID_jump_cycle or ID_predict_taken)
+				if (IF_ID_jump_cycle or ID_predict_taken)
 					and not ID_EX_cancel_next then
 					IF_ID_PC_next <= ID_jump_target;
 				else
@@ -255,15 +255,18 @@ begin
 			if ID_running then
 				IF_ID_PC <= IF_PC;
 				IF_ID_PC_4 <= IF_PC_next;
-				if reset = '1' then
-					IF_ID_instruction <= x"00000000";
-				else
-					IF_ID_instruction <= imem_data_in;
-					IF_ID_reg1_zero <= imem_data_in(25 downto 21) = "00000";
-					IF_ID_reg2_zero <= imem_data_in(20 downto 16) = "00000";
-					IF_ID_bpredict_index <= IF_bpredict_index;
-				end if;
-				IF_ID_branch_delay_slot <= ID_branch_cycle or ID_jump_cycle;
+				IF_ID_branch_delay_slot <= IF_ID_branch_cycle or IF_ID_jump_cycle;
+				IF_ID_reg1_zero <= imem_data_in(25 downto 21) = "00000";
+				IF_ID_reg2_zero <= imem_data_in(20 downto 16) = "00000";
+				IF_ID_branch_cycle <= imem_data_in(31 downto 28) = "0001" or
+					imem_data_in(31 downto 26) = "000001";
+				IF_ID_jump_cycle <= imem_data_in(31 downto 27) = "00001" or
+					(imem_data_in(31 downto 26) = "000000" and
+					imem_data_in(5 downto 1) = "00100");
+				IF_ID_jump_register <= imem_data_in(31 downto 26) = "000000" and
+					imem_data_in(5 downto 1) = "00100";
+				IF_ID_bpredict_index <= IF_bpredict_index;
+				IF_ID_instruction <= imem_data_in; -- XXX only debugging?
 			end if;
 		end if;
 	end process;
@@ -306,9 +309,7 @@ begin
 			sign_extension => ID_sign_extension,
 			target_addr => ID_writeback_addr, op_major => ID_op_major,
 			op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
-			branch_cycle => ID_branch_cycle, jump_cycle => ID_jump_cycle,
 			branch_condition => ID_branch_condition,
-			jump_register => ID_jump_register,
 			sign_extend => ID_sign_extend,
 			mem_write => ID_mem_write,	mem_size => ID_mem_size,
 			mem_read_sign_extend => ID_mem_read_sign_extend,
@@ -340,9 +341,9 @@ begin
 	begin
 	ID_running <= ID_EX_cancel_next or
 		(EX_running and not ID_EX_partial_load and
-		(not ID_jump_register or ID_reg1_addr /= EX_MEM_writeback_addr) and
+		(not IF_ID_jump_register or ID_reg1_addr /= EX_MEM_writeback_addr) and
 		(IF_ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
-		(ID_EX_latency = '0' and not ID_jump_register)) and
+		(ID_EX_latency = '0' and not IF_ID_jump_register)) and
 		(IF_ID_reg2_zero or ID_ignore_reg2 or
 		ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = '0'));
 	end generate;
@@ -385,13 +386,13 @@ begin
 
 	-- branch prediction
 	ID_predict_taken <= C_branch_prediction and
-		ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
+		IF_ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
 
 	-- compute jump target
 	-- XXX should we take the 4 MS bits from IF_ID_PC or from IF_ID_PC_4?
 	ID_jump_target <=
 		ID_branch_target when ID_predict_taken else
-		ID_eff_reg1(31 downto 2) when ID_jump_register else
+		ID_eff_reg1(31 downto 2) when IF_ID_jump_register else
 		IF_ID_PC(29 downto 24) & IF_ID_instruction(23 downto 0);
 
 	process(clk)
@@ -458,8 +459,8 @@ begin
 					ID_EX_cop0 <= ID_cop0;
 					ID_EX_writeback_addr <= ID_writeback_addr;
 					ID_EX_mem_cycle <= ID_mem_cycle;
-					ID_EX_branch_cycle <= ID_branch_cycle;
-					ID_EX_jump_cycle <= ID_jump_cycle;
+					ID_EX_branch_cycle <= IF_ID_branch_cycle;
+					ID_EX_jump_cycle <= IF_ID_jump_cycle;
 					ID_EX_predict_taken <= ID_predict_taken;
 					ID_EX_bpredict_score <= IF_ID_bpredict_score;
 					ID_EX_bpredict_index <= IF_ID_bpredict_index;
