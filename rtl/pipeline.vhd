@@ -109,7 +109,7 @@ architecture Behavioral of pipeline is
 	signal ID_EX_fwd_ex_reg1, ID_EX_fwd_ex_reg2, ID_EX_fwd_ex_alu_op2: boolean;
 	signal ID_EX_fwd_mem_reg1, ID_EX_fwd_mem_reg2, ID_EX_fwd_mem_alu_op2: boolean;
 	signal ID_EX_sign_extend: boolean;
-	signal ID_EX_branch_cycle, ID_EX_jump_cycle: boolean;
+	signal ID_EX_branch_cycle, ID_EX_jump_cycle, ID_EX_jump_register: boolean;
 	signal ID_EX_cancel_next, ID_EX_predict_taken: boolean;
 	signal ID_EX_bpredict_index: std_logic_vector(12 downto 0);
 	signal ID_EX_branch_target: std_logic_vector(31 downto 2);
@@ -343,9 +343,8 @@ begin
 	begin
 	ID_running <= ID_EX_cancel_next or
 		(EX_running and not ID_EX_partial_load and
-		(not IF_ID_jump_register or ID_reg1_addr /= EX_MEM_writeback_addr) and
 		(IF_ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
-		(ID_EX_latency = '0' and not IF_ID_jump_register)) and
+		ID_EX_latency = '0') and
 		(IF_ID_reg2_zero or ID_ignore_reg2 or
 		ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = '0'));
 	end generate;
@@ -391,10 +390,8 @@ begin
 		IF_ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
 
 	-- compute jump target
-	-- XXX should we take the 4 MS bits from IF_ID_PC or from IF_ID_PC_4?
 	ID_jump_target <=
 		ID_branch_target when ID_predict_taken else
-		ID_eff_reg1(31 downto 2) when IF_ID_jump_register else
 		IF_ID_PC(29 downto 24) & IF_ID_instruction(23 downto 0);
 
 	process(clk)
@@ -430,6 +427,7 @@ begin
 					ID_EX_mem_size <= "00"; -- XXX do we need this?
 					ID_EX_branch_cycle <= false;
 					ID_EX_jump_cycle <= false;
+					ID_EX_jump_register <= false;
 					ID_EX_predict_taken <= false;
 					ID_EX_op_major <= "00";
 					ID_EX_instruction <= x"00000000"; -- XXX debugging only
@@ -463,6 +461,7 @@ begin
 					ID_EX_mem_cycle <= ID_mem_cycle;
 					ID_EX_branch_cycle <= IF_ID_branch_cycle;
 					ID_EX_jump_cycle <= IF_ID_jump_cycle;
+					ID_EX_jump_register <= IF_ID_jump_register;
 					ID_EX_predict_taken <= ID_predict_taken;
 					ID_EX_bpredict_score <= IF_ID_bpredict_score;
 					ID_EX_bpredict_index <= IF_ID_bpredict_index;
@@ -515,9 +514,6 @@ begin
 		else ID_EX_reg2_data;
 	EX_eff_alu_op2 <= ID_EX_alu_op2;
 	end generate; -- no result_forwarding
-	
-	-- prepare for potential branch / jump
-	EX_branch_target <= ID_EX_branch_target;
 	
 	-- instantiate the ALU
    alu: entity alu
@@ -617,14 +613,16 @@ begin
 				EX_MEM_to_shift <= EX_from_shift;
 				EX_MEM_op_major <= ID_EX_op_major;
 				EX_MEM_branch_cycle <= ID_EX_branch_cycle;
-				if ID_EX_branch_cycle then
+				if ID_EX_branch_cycle or ID_EX_jump_register then
 					EX_MEM_bpredict_score <= ID_EX_bpredict_score;
 					EX_MEM_bpredict_index <= ID_EX_bpredict_index;
-					EX_MEM_take_branch <= EX_take_branch;
+					EX_MEM_take_branch <= EX_take_branch or ID_EX_jump_register;
 					if ID_EX_predict_taken then
 						EX_MEM_branch_target <= ID_EX_PC_8;
+					elsif ID_EX_branch_cycle then
+						EX_MEM_branch_target <= ID_EX_branch_target;
 					else
-						EX_MEM_branch_target <= EX_branch_target;
+						EX_MEM_branch_target <= EX_eff_reg1(31 downto 2);
 					end if;
 				else
 					EX_MEM_take_branch <= false;
