@@ -256,14 +256,13 @@ begin
 			if ID_running then
 				IF_ID_PC <= IF_PC;
 				IF_ID_PC_4 <= IF_PC_next;
-				IF_ID_branch_delay_slot <= IF_ID_branch_cycle or IF_ID_jump_cycle;
+				IF_ID_branch_delay_slot <=
+					IF_ID_branch_cycle or IF_ID_jump_cycle or IF_ID_jump_register;
 				IF_ID_reg1_zero <= imem_data_in(25 downto 21) = "00000";
 				IF_ID_reg2_zero <= imem_data_in(20 downto 16) = "00000";
 				IF_ID_branch_cycle <= imem_data_in(31 downto 28) = "0001" or
 					imem_data_in(31 downto 26) = "000001";
-				IF_ID_jump_cycle <= imem_data_in(31 downto 27) = "00001" or
-					(imem_data_in(31 downto 26) = "000000" and
-					imem_data_in(5 downto 1) = "00100");
+				IF_ID_jump_cycle <= imem_data_in(31 downto 27) = "00001";
 				IF_ID_jump_register <= imem_data_in(31 downto 26) = "000000" and
 					imem_data_in(5 downto 1) = "00100";
 				IF_ID_bpredict_index <= IF_bpredict_index;
@@ -632,7 +631,7 @@ begin
 				else
 					EX_MEM_take_branch <= false;
 				end if;
-				if ID_EX_jump_cycle or ID_EX_branch_cycle or
+				if ID_EX_jump_cycle or ID_EX_jump_register or ID_EX_branch_cycle or
 					ID_EX_op_major = "11" or ID_EX_op_major = "01" then
 					EX_MEM_logic_cycle <= '1';
 					if ID_EX_op_major = "01" then
