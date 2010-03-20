@@ -177,10 +177,6 @@ begin
 	process(opcode, instruction, imm_extension)
 	begin
 		case opcode is
-			when "000010" => -- jump
-				immediate_value <= instruction;
-			when "000011" => -- jump and link
-				immediate_value <= instruction;
 			when "001111" => -- lui
 				immediate_value <= instruction(15 downto 0) & x"0000";
 			when others =>
