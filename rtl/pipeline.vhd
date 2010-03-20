@@ -74,7 +74,8 @@ architecture Behavioral of pipeline is
 	signal IF_bpredict_index: std_logic_vector(12 downto 0);
 	signal IF_bpredict_re: std_logic;
 	signal IF_ID_instruction: std_logic_vector(31 downto 0);
-	signal IF_ID_reg1_zero, IF_ID_reg2_zero: boolean;
+	signal IF_ID_reg1_zero: boolean := true; -- XXX bootstrapping;
+	signal IF_ID_reg2_zero: boolean := true; -- XXX bootstrapping;
 	signal IF_ID_branch_cycle, IF_ID_jump_cycle, IF_ID_jump_register: boolean;
 	signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
 	signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
@@ -288,8 +289,12 @@ begin
 	end generate;
 
 	-- debugging only
-	debug_XXX(28 downto 24) <= EX_shamt;
-	debug_XXX(16) <= '1' when ID_EX_cancel_next else '0';
+	--debug_XXX(28 downto 24) <= EX_shamt;
+	--debug_XXX(16) <= '1' when ID_EX_cancel_next else '0';
+	debug_XXX(28) <= '1' when ID_fwd_mem_reg1 else '0';
+	debug_XXX(24) <= '1' when ID_fwd_mem_reg2 else '0';
+	debug_XXX(20) <= '1' when ID_fwd_ex_reg1 else '0';
+	debug_XXX(16) <= '1' when ID_fwd_ex_reg2 else '0';
 	debug_XXX(12) <= '1' when ID_running else '0';
 	debug_XXX(8) <= '1' when EX_running else '0';
 	debug_XXX(4) <= '1' when ID_predict_taken else '0';
