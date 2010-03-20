@@ -42,7 +42,7 @@ entity idecode is
 		op_major: out std_logic_vector(1 downto 0);
 		op_minor: out std_logic_vector(2 downto 0);
 		use_immediate, ignore_reg2: out boolean;
-		branch_cycle, jump_cycle, jump_register: out boolean;
+		branch_cycle, jump_cycle: in boolean;
 		branch_condition: out std_logic_vector(2 downto 0);
 		mem_cycle: out std_logic;
 		mem_write: out std_logic;
@@ -57,8 +57,7 @@ architecture Behavioral of idecode is
 	signal opcode, fncode: std_logic_vector(5 downto 0);
 	signal type_code: std_logic_vector(1 downto 0);
 	signal imm_extension: std_logic_vector(15 downto 0);
-	signal do_sign_extend, branch_cycle_0: boolean;
-	signal jump_cycle_0, jump_register_0: boolean;
+	signal do_sign_extend: boolean;
 begin
 
 	opcode <= instruction(31 downto 26);
@@ -189,32 +188,12 @@ begin
 		end case;
 	end process;
 		
-	branch_cycle_0 <= true when opcode(5 downto 2) = "0001" or opcode = "000001"
-		else false;
-	branch_cycle <= branch_cycle_0;
 	branch_condition <=
-		'1' & opcode(1 downto 0) when branch_cycle_0 and opcode(5 downto 2) = "0001" -- beq, bne, blez, bgtz
-		else "01" & instruction(16) when branch_cycle_0 -- bgez, bltz
-		else "001" when jump_cycle_0
+		'1' & opcode(1 downto 0) when branch_cycle and opcode(5 downto 2) = "0001" -- beq, bne, blez, bgtz
+		else "01" & instruction(16) when branch_cycle -- bgez, bltz
+		else "001" when jump_cycle -- XXX revisit
 		else "000";
 
-	-- J / JAL / JR / JALR decoding
-	process(opcode, fncode)
-	begin
-		if opcode(5 downto 1) = "00001" then -- j / jal
-			jump_cycle_0 <= true;
-			jump_register_0 <= false;
-		elsif opcode = "000000" and fncode(5 downto 1) = "00100" then -- jr / jalr
-			jump_cycle_0 <= true;
-			jump_register_0 <= true;
-		else
-			jump_cycle_0 <= false;
-			jump_register_0 <= false;
-		end if;
-	end process;
-	jump_cycle <= jump_cycle_0;
-	jump_register <= jump_register_0;
-	
 	mem_write <= opcode(3);
 	mem_size <= opcode(1 downto 0);
 	

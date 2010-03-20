@@ -309,6 +309,8 @@ begin
 			sign_extension => ID_sign_extension,
 			target_addr => ID_writeback_addr, op_major => ID_op_major,
 			op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
+			branch_cycle => IF_ID_branch_cycle,
+			jump_cycle => IF_ID_jump_cycle,
 			branch_condition => ID_branch_condition,
 			sign_extend => ID_sign_extend,
 			mem_write => ID_mem_write,	mem_size => ID_mem_size,
