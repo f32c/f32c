@@ -40,6 +40,7 @@ entity pipeline is
 		C_mult_enable: boolean := true;
 		C_branch_prediction: boolean := true;
 		C_result_forwarding: boolean := true;
+		C_fast_ID: boolean := true;
 		C_register_technology: string := "xilinx_ram16x1d";
 		C_init_PC: std_logic_vector := x"00000000";
 		-- debugging options
@@ -76,7 +77,8 @@ architecture Behavioral of pipeline is
 	signal IF_ID_instruction: std_logic_vector(31 downto 0);
 	signal IF_ID_reg1_zero: boolean := true; -- XXX bootstrapping;
 	signal IF_ID_reg2_zero: boolean := true; -- XXX bootstrapping;
-	signal IF_ID_branch_cycle, IF_ID_jump_cycle, IF_ID_jump_register: boolean;
+	signal IF_ID_special: boolean;
+	signal IF_ID_branch_cycle, IF_ID_jump_cycle: boolean;
 	signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
 	signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
 	signal IF_ID_branch_delay_slot: boolean;
@@ -89,6 +91,7 @@ architecture Behavioral of pipeline is
 	signal ID_eff_reg1, ID_eff_reg2, ID_alu_op2: std_logic_vector(31 downto 0);
 	signal ID_fwd_ex_reg1, ID_fwd_ex_reg2, ID_fwd_ex_alu_op2: boolean;
 	signal ID_fwd_mem_reg1, ID_fwd_mem_reg2, ID_fwd_mem_alu_op2: boolean;
+	signal ID_jump_register: boolean;
 	signal ID_op_major: std_logic_vector(1 downto 0);
 	signal ID_op_minor: std_logic_vector(2 downto 0);
 	signal ID_immediate: std_logic_vector(31 downto 0);
@@ -234,8 +237,17 @@ begin
 	-- compute current and next program counter
 	-- XXX revisit: make IF_PC a register, not an output from a mux.
 	IF_PC <= EX_MEM_branch_target when MEM_take_branch else IF_ID_PC_next;
+
+	G_fast_ID:
+	if C_fast_ID generate
+	IF_PC_next <= IF_PC + 1 when ID_running else IF_PC;
+	end generate;
+
+	G_not_fast_ID:
+	if not C_fast_ID generate
 	IF_PC_incr <= '1' when ID_running else '0';
 	IF_PC_next <= IF_PC + IF_PC_incr;
+	end generate;
 	
 	imem_addr <= IF_PC;
 	imem_addr_strobe <= '1';
@@ -257,14 +269,13 @@ begin
 				IF_ID_PC <= IF_PC;
 				IF_ID_PC_4 <= IF_PC_next;
 				IF_ID_branch_delay_slot <=
-					IF_ID_branch_cycle or IF_ID_jump_cycle or IF_ID_jump_register;
+					IF_ID_branch_cycle or IF_ID_jump_cycle or ID_jump_register;
 				IF_ID_reg1_zero <= imem_data_in(25 downto 21) = "00000";
 				IF_ID_reg2_zero <= imem_data_in(20 downto 16) = "00000";
 				IF_ID_branch_cycle <= imem_data_in(31 downto 28) = "0001" or
 					imem_data_in(31 downto 26) = "000001";
 				IF_ID_jump_cycle <= imem_data_in(31 downto 27) = "00001";
-				IF_ID_jump_register <= imem_data_in(31 downto 26) = "000000" and
-					imem_data_in(5 downto 1) = "00100";
+				IF_ID_special <= imem_data_in(31 downto 26) = "000000";
 				IF_ID_bpredict_index <= IF_bpredict_index;
 				IF_ID_instruction <= imem_data_in; -- XXX only debugging?
 			end if;
@@ -308,6 +319,7 @@ begin
 	idecode: entity idecode
 		port map(
 			instruction => IF_ID_instruction,
+			special => IF_ID_special,
          reg1_addr => ID_reg1_addr, reg2_addr => ID_reg2_addr,
          immediate_value => ID_immediate, use_immediate => ID_use_immediate,
 			sign_extension => ID_sign_extension,
@@ -371,6 +383,8 @@ begin
 		MEM_WB_write_enable = '1' else ID_reg2_data;
 		
 	ID_alu_op2 <= ID_immediate when ID_use_immediate else ID_eff_reg2;
+	ID_jump_register <=
+		IF_ID_special and IF_ID_instruction(5 downto 1) = "00100";
 	
 	-- schedule forwarding of results from the EX stage
 	ID_fwd_ex_reg1 <=
@@ -465,7 +479,7 @@ begin
 					ID_EX_mem_cycle <= ID_mem_cycle;
 					ID_EX_branch_cycle <= IF_ID_branch_cycle;
 					ID_EX_jump_cycle <= IF_ID_jump_cycle;
-					ID_EX_jump_register <= IF_ID_jump_register;
+					ID_EX_jump_register <= ID_jump_register;
 					ID_EX_predict_taken <= ID_predict_taken;
 					ID_EX_bpredict_score <= IF_ID_bpredict_score;
 					ID_EX_bpredict_index <= IF_ID_bpredict_index;
