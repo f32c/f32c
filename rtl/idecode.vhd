@@ -35,6 +35,8 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity idecode is
 	port(
 		instruction: in STD_LOGIC_VECTOR(31 downto 0);
+		branch_cycle, jump_cycle: in boolean;
+		special: in boolean;
 		reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
 		immediate_value: out STD_LOGIC_VECTOR(31 downto 0);
 		sign_extension: out std_logic_vector(15 downto 0);
@@ -42,7 +44,6 @@ entity idecode is
 		op_major: out std_logic_vector(1 downto 0);
 		op_minor: out std_logic_vector(2 downto 0);
 		use_immediate, ignore_reg2: out boolean;
-		branch_cycle, jump_cycle: in boolean;
 		branch_condition: out std_logic_vector(2 downto 0);
 		mem_cycle: out std_logic;
 		mem_write: out std_logic;
@@ -126,7 +127,7 @@ begin
 		type_code(0) /= '0' else false;
 	
 	-- op_major: 00 ALU, 01 SLT, 10 shift, 11 mul_et_al
-	process(opcode, fncode)
+	process(special, opcode, fncode)
 	begin
 		op_major <= "00"; -- ALU
 		op_minor <= "000"; -- ADD
@@ -134,7 +135,7 @@ begin
 		latency <= '0'; -- result available immediately after EX stage
 		do_sign_extend <= true;
 		
-		if opcode = "000000" then -- "special"
+		if special then
 			op_minor <= fncode(2 downto 0);
 			if fncode(5 downto 3) = "101" then -- SLT / SLTU
 				op_major <= "01";
