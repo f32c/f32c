@@ -157,6 +157,7 @@ architecture Behavioral of pipeline is
 	signal EX_MEM_branch_hist: std_logic_vector(12 downto 0);
 	signal EX_MEM_bpredict_index: std_logic_vector(12 downto 0);
 	signal EX_MEM_mem_cycle, EX_MEM_logic_cycle: std_logic;
+	signal EX_MEM_mem_read_sign_extend: std_logic;
 	signal EX_MEM_shamt_1_2_4: std_logic_vector(2 downto 0);
 	signal EX_MEM_shift_funct: std_logic_vector(1 downto 0);
 	signal EX_MEM_to_shift: std_logic_vector(31 downto 0);
@@ -181,6 +182,7 @@ architecture Behavioral of pipeline is
 	signal MEM_WB_write_enable: std_logic;
 	signal MEM_WB_ex_data, MEM_WB_mem_data: std_logic_vector(31 downto 0);
 	signal MEM_WB_mem_size: std_logic; -- byte or half word
+	signal MEM_WB_partial_load: boolean;
 	signal MEM_WB_instruction: std_logic_vector(31 downto 0); -- XXX debugging only
 	
 	-- pipeline stage 5: register writeback
@@ -556,9 +558,9 @@ begin
 			shamt_8_16 => EX_shamt(4 downto 3), funct_8_16 => EX_shift_funct_8_16,
 			shamt_1_2_4 => EX_MEM_shamt_1_2_4, funct_1_2_4 => EX_MEM_shift_funct,
 			stage8_in => EX_eff_reg2, stage16_out => EX_from_shift,
-			mem_partial_load => EX_MEM_partial_load,
-			mem_read_sign_extend => ID_EX_mem_read_sign_extend,
-			mem_size => ID_EX_mem_size(0),
+			mem_partial_load => MEM_WB_partial_load,
+			mem_read_sign_extend => EX_MEM_mem_read_sign_extend,
+			mem_size => EX_MEM_mem_size(0),
 			stage1_in => EX_MEM_to_shift, stage4_out => MEM_from_shift
 		);
 	
@@ -666,6 +668,7 @@ begin
 				end if;
 				EX_MEM_writeback_addr <= ID_EX_writeback_addr;
 				EX_MEM_mem_cycle <= ID_EX_mem_cycle;
+				EX_MEM_mem_read_sign_extend <= ID_EX_mem_read_sign_extend;
 				EX_MEM_branch_taken <= ID_EX_predict_taken;
 				EX_MEM_instruction <= ID_EX_instruction; -- XXX debugging only
 				EX_MEM_PC <= ID_EX_PC; -- XXX debugging only
@@ -760,6 +763,7 @@ begin
 				MEM_WB_mem_cycle <= EX_MEM_mem_cycle;
 				MEM_WB_writeback_addr <= EX_MEM_writeback_addr;
 				MEM_WB_mem_size <= EX_MEM_mem_size(0);
+				MEM_WB_partial_load <= EX_MEM_partial_load;
 				if EX_MEM_writeback_addr = "00000" then
 					MEM_WB_write_enable <= '0';
 				else
