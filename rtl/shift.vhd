@@ -46,7 +46,8 @@ entity shift is
 end shift;
 
 architecture Behavioral of shift is
-	signal stage1, stage2, stage8, stage16: std_logic_vector(31 downto 0);
+	signal stage1, stage2, stage4, stage8, stage16:
+		std_logic_vector(31 downto 0);
 	signal sel16, sel8, sel4, sel2, sel1: std_logic_vector(1 downto 0);
 begin
 	-- shift by 8 and 16 occurs in EX stage; shift by 1, 2 and 4 is in MEM stage
@@ -77,34 +78,7 @@ begin
 			stage8(31 downto 16) when "11",
 			stage8 when others;
 	
-	process(stage16, mem_partial_load, mem_read_sign_extend, mem_size)
-	begin
-		if mem_partial_load then
-			if mem_size = '0' then -- byte load
-				if mem_read_sign_extend = '1' then
-					if stage16(7) = '1' then
-						stage16_out <= x"ffffff" & stage16(7 downto 0);
-					else
-						stage16_out <= x"000000" & stage16(7 downto 0);
-					end if;
-				else
-					stage16_out <= x"000000" & stage16(7 downto 0);
-				end if;
-			else -- half word load
-				if mem_read_sign_extend = '1' then
-					if stage16(15) = '1' then
-						stage16_out <= x"ffff" & stage16(15 downto 0);
-					else
-						stage16_out <= x"0000" & stage16(15 downto 0);
-					end if;
-				else
-					stage16_out <= x"0000" & stage16(15 downto 0);
-				end if;
-			end if;
-		else
-			stage16_out <= stage16;
-		end if;
-	end process;
+	stage16_out <= stage16;
 
 	-- the bottom part is separated from the upper by a register
 	-- on EX to MEM boundary.
@@ -122,11 +96,40 @@ begin
 			stage1 when others;
 
 	with sel4 select
-		stage4_out <= stage2(27 downto 0) & x"0" when "00",
+		stage4 <= stage2(27 downto 0) & x"0" when "00",
 			x"0" & stage2(31 downto 4) when "10",
 			stage2(31) & stage2(31) & stage2(31) & stage2(31) &
 			stage2(31 downto 4) when "11",
 			stage2 when others;
    	
+	process(stage4, mem_partial_load, mem_read_sign_extend, mem_size)
+	begin
+		if mem_partial_load then
+			if mem_size = '0' then -- byte load
+				if mem_read_sign_extend = '1' then
+					if stage4(7) = '1' then
+						stage4_out <= x"ffffff" & stage4(7 downto 0);
+					else
+						stage4_out <= x"000000" & stage4(7 downto 0);
+					end if;
+				else
+					stage4_out <= x"000000" & stage4(7 downto 0);
+				end if;
+			else -- half word load
+				if mem_read_sign_extend = '1' then
+					if stage4(15) = '1' then
+						stage4_out <= x"ffff" & stage4(15 downto 0);
+					else
+						stage4_out <= x"0000" & stage4(15 downto 0);
+					end if;
+				else
+					stage4_out <= x"0000" & stage4(15 downto 0);
+				end if;
+			end if;
+		else
+			stage4_out <= stage4;
+		end if;
+	end process;
+
 end Behavioral;
 
