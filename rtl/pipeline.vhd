@@ -590,30 +590,18 @@ begin
 	begin
 		EX_take_branch <= false;
 		case ID_EX_branch_condition is
-			when "010"	=> -- bltz
-				if EX_eff_reg1(31) = '1' then
-					EX_take_branch <= true;
-				end if;
-			when "011"	=> -- bgez
-				if EX_eff_reg1(31) = '0' then
-					EX_take_branch <= true;
-				end if;
-			when "100"	=> -- beq
-				if EX_from_alu_equal then
-					EX_take_branch <= true;
-				end if;
-			when "101"	=> -- bne
-				if not EX_from_alu_equal then
-					EX_take_branch <= true;
-				end if;
-			when "110"	=> -- blez
-				if EX_eff_reg1(31) = '1' or EX_from_alu_equal then
-					EX_take_branch <= true;
-				end if;
 			when "111"	=> -- bgtz
-				if EX_eff_reg1(31) = '0' and not EX_from_alu_equal then
-					EX_take_branch <= true;
-				end if;
+				EX_take_branch <= EX_eff_reg1(31) = '0' and not EX_from_alu_equal;
+			when "110"	=> -- blez
+				EX_take_branch <= EX_eff_reg1(31) = '1' or EX_from_alu_equal;
+			when "100"	=> -- beq
+				EX_take_branch <= EX_from_alu_equal;
+			when "101"	=> -- bne
+				EX_take_branch <= not EX_from_alu_equal;
+			when "010"	=> -- bltz
+				EX_take_branch <= EX_eff_reg1(31) = '1';
+			when "011"	=> -- bgez
+				EX_take_branch <= EX_eff_reg1(31) = '0';
 			when others => -- unreachable
 		end case;
 	end process;
