@@ -635,21 +635,20 @@ begin
 				else
 					EX_MEM_take_branch <= false;
 				end if;
-				if ID_EX_jump_cycle or ID_EX_jump_register or ID_EX_branch_cycle or
-					ID_EX_op_major = "11" or ID_EX_op_major = "01" then
+				if ID_EX_op_major = "01" then
 					EX_MEM_logic_cycle <= '1';
-					if ID_EX_op_major = "01" then
-						-- SLT / SLTU / SLTI / SLTIU
-						EX_MEM_writeback_logic(31 downto 1) <= x"0000000" & "000";
-						if ID_EX_sign_extend then
-							EX_MEM_writeback_logic(0) <= EX_from_alu_addsubx(32) xor
-								(EX_eff_reg1(31) xor EX_eff_alu_op2(31));
-						else
-							EX_MEM_writeback_logic(0) <= EX_from_alu_addsubx(32);
-						end if;
+					-- SLT / SLTU / SLTI / SLTIU
+					EX_MEM_writeback_logic(31 downto 1) <= x"0000000" & "000";
+					if ID_EX_sign_extend then
+						EX_MEM_writeback_logic(0) <= EX_from_alu_addsubx(32) xor
+							(EX_eff_reg1(31) xor EX_eff_alu_op2(31));
 					else
-						EX_MEM_writeback_logic <= EX_from_alt;
+						EX_MEM_writeback_logic(0) <= EX_from_alu_addsubx(32);
 					end if;
+				elsif ID_EX_jump_cycle or ID_EX_jump_register or
+					ID_EX_branch_cycle or ID_EX_op_major = "11" then
+					EX_MEM_logic_cycle <= '1';
+					EX_MEM_writeback_logic <= EX_from_alt;
 				else
 					EX_MEM_logic_cycle <= ID_EX_op_minor(2);
 					EX_MEM_writeback_logic <= EX_from_alu_logic;
