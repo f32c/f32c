@@ -218,3 +218,51 @@ itox(int x, char *buf)
 			*buf++ = '0' + j;
 	}
 }
+
+int
+printf(const char *fmt, ...)
+{
+#define	PCHAR(c)	{retval++;}
+	int retval = 0;
+	int c, n;
+	char *cp;
+	va_list ap;
+	//char buf[16];	/* XXX not to small, not too large - revisit */
+ 
+	va_start(ap, fmt);
+	while (true) {
+		while ((c = (u_char)*fmt++) != '%') {
+			if (c == '\0') {
+				va_end(ap);
+				return (retval);
+			}
+                        PCHAR(c);
+                }
+		switch (c = (u_char)*fmt++) {
+		case '%':
+			PCHAR(c);
+			break;
+		case 'd':
+		case 'i':
+			break;
+		case 'u':
+			break;
+		case 'o':
+			break;
+		case 'x':
+		case 'X':
+			break;
+		case 'p':
+			break;
+		case 'c':
+			PCHAR(va_arg(ap, int));
+			break;
+		case 's':
+			cp = va_arg(ap, char *);
+			n = strlen(cp);
+			while (n--)
+				PCHAR(*p++);
+			break;
+		}
+	}
+}
