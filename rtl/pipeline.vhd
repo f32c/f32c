@@ -218,9 +218,11 @@ begin
 	--
 	
 	-- XXX missing:
+	--		branch likely as optional instructions
+	--		result forwarding: muxes instead of priority encoders
+	--		0-latency 8 / 16 / 24 bit shifts
 	--		sort out the endianess story
-	--		revisit latency of byte and half loads
-	--		0-latency 8 / 16 / 24 bit shifts?
+	--		low latency byte / half word loads
 	--		jalr instruction?
 	--		reset?
 	--		unaligned load / store instructions?
