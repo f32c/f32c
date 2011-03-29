@@ -98,7 +98,8 @@ begin
 	clk <= clk_25m;
 
 -- XXX testing only!
-imem_data_read <= tsc;
+imem_data_read <= tsc xor ("00" & imem_addr) xor (trace_addr & trace_addr & trace_addr & trace_addr & x"00");
+final_to_cpu <= imem_data_read xor ("00" & dmem_addr);
 dmem_data_ready <= '1';
 
         -- I/O port map:
