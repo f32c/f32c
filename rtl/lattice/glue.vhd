@@ -74,6 +74,57 @@ architecture Behavioral of glue is
 	signal trace_data: std_logic_vector(31 downto 0);
 begin
 
+
+	-- the RISC core
+	pipeline: entity pipeline
+	generic map(
+		C_mult_enable => C_mult_enable,
+		C_branch_prediction => C_branch_prediction,
+		C_result_forwarding => C_result_forwarding,
+		C_register_technology => C_register_technology,
+		-- debugging only
+		C_serial_trace => C_serial_trace
+	)
+	port map(
+		clk => clk, reset => btn_up,
+		imem_addr => imem_addr, imem_data_in => imem_data_read,
+		imem_addr_strobe => imem_addr_strobe, imem_data_ready => '1',
+		dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
+		dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
+		dmem_addr_strobe => dmem_addr_strobe, dmem_data_ready => dmem_data_ready,
+		trace_addr => trace_addr, trace_data => trace_data
+	);
+
+	clk <= clk_25m;
+
+-- XXX testing only!
+imem_data_read <= tsc;
+dmem_data_ready <= '1';
+
+        -- I/O port map:
+        -- 0xe******0:  (1B, WR) LED
+        -- 0xe******4:  (4B, RD) TSC
+        -- 0xe******8:  (1B, WR) LCD data
+        -- 0xe******c:  (1B, WR) LCD ctrl
+        -- I/O write access:
+        process(clk)
+        begin
+                if rising_edge(clk) then
+                        tsc <= tsc + 1;
+                        if dmem_addr(31 downto 28) = "1110" and dmem_addr_strobe = '1' then
+                                if dmem_byte_we /= "0000" then
+                                        if dmem_addr(3 downto 2) = "00" then
+                                                led_reg <= cpu_to_dmem(7 downto 0);
+                                        elsif dmem_addr(3 downto 2) = "10" then
+                                                lcd_data <= cpu_to_dmem(7 downto 0);
+                                        elsif dmem_addr(3 downto 2) = "11" then
+                                                lcd_ctrl <= cpu_to_dmem(1 downto 0);
+                                        end if;
+                                end if;
+                        end if;
+                end if;
+        end process;
+
 	-- debugging design instance - serial port + control knob / buttons
 	debug_serial:
 	if C_serial_trace generate
