@@ -139,8 +139,17 @@ begin
 			);
 				
 		rd1_data(i) <= rd1_lower(i) when rd1_addr(4) = '0' else rd1_upper(i);
+		rd1_data(i + 8) <= rd1_lower(i + 8) when rd1_addr(4) = '0' else rd1_upper(i + 8);
+		rd1_data(i + 16) <= rd1_lower(i + 16) when rd1_addr(4) = '0' else rd1_upper(i + 16);
+		rd1_data(i + 24) <= rd1_lower(i + 24) when rd1_addr(4) = '0' else rd1_upper(i + 24);
 		rd2_data(i) <= rd2_lower(i) when rd2_addr(4) = '0' else rd2_upper(i);
+		rd2_data(i + 8) <= rd2_lower(i + 8) when rd2_addr(4) = '0' else rd2_upper(i + 8);
+		rd2_data(i + 16) <= rd2_lower(i + 16) when rd2_addr(4) = '0' else rd2_upper(i + 16);
+		rd2_data(i + 24) <= rd2_lower(i + 24) when rd2_addr(4) = '0' else rd2_upper(i + 24);
 		rdd_data(i) <= rdd_lower(i) when rdd_addr(4) = '0' else rdd_upper(i);
+		rdd_data(i + 8) <= rdd_lower(i + 8) when rdd_addr(4) = '0' else rdd_upper(i + 8);
+		rdd_data(i + 16) <= rdd_lower(i + 16) when rdd_addr(4) = '0' else rdd_upper(i + 16);
+		rdd_data(i + 24) <= rdd_lower(i + 24) when rdd_addr(4) = '0' else rdd_upper(i + 24);
 	end generate;
 	
 end Behavioral;
