@@ -7,7 +7,8 @@
 /* Forward declarations for demo functions */
 void demo_semafor(int);
 
-static int prog = DEMO_POLUDJELI_SEMAFOR;
+//static int prog = DEMO_POLUDJELI_SEMAFOR;
+static int prog = DEMO_AUTOMATSKI_SEMAFOR;
 
 void
 platform_start() {
