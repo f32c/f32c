@@ -1,0 +1,204 @@
+--- gcc/config/mips/mips.c	2010-04-07 04:11:30.000000000 +0200
++++ gcc/config/mips/mips.c	2010-04-07 04:25:48.000000000 +0200
+@@ -10048,6 +10048,20 @@ mips_scalar_mode_supported_p (enum machi
+ static void
+ mips_init_libfuncs (void)
+ {
++  if (TARGET_SWDIV) {
++    set_optab_libfunc (sdiv_optab, SImode, "__divsi3");
++    set_optab_libfunc (udiv_optab, SImode, "__udivsi3");
++    set_optab_libfunc (smod_optab, SImode, "__modsi3");
++    set_optab_libfunc (umod_optab, SImode, "__umodsi3");
++    set_optab_libfunc (sdivmod_optab, SImode, "__idivmodsi3");
++    set_optab_libfunc (udivmod_optab, SImode, "__uidivmodsi3");
++  }
++
++  if (TARGET_SWMUL) {
++    set_optab_libfunc (smul_optab, SImode, "__mulsi3");
++    set_optab_libfunc (smul_optab, DImode, "__muldi3");
++  }
++
+   if (TARGET_FIX_VR4120)
+     {
+       /* Register the special divsi3 and modsi3 functions needed to work
+--- gcc/config/mips/mips.md	2009-02-20 16:20:38.000000000 +0100
++++ gcc/config/mips/mips.md	2010-04-07 04:05:21.000000000 +0200
+@@ -1376,7 +1376,7 @@
+   [(set (match_operand:GPR 0 "register_operand")
+ 	(mult:GPR (match_operand:GPR 1 "register_operand")
+ 		  (match_operand:GPR 2 "register_operand")))]
+-  ""
++  "!TARGET_SWMUL"
+ {
+   if (TARGET_LOONGSON_2EF)
+     emit_insn (gen_mul<mode>3_mul3_ls2ef (operands[0], operands[1],
+@@ -1395,7 +1395,7 @@
+   [(set (match_operand:GPR 0 "register_operand" "=d")
+         (mult:GPR (match_operand:GPR 1 "register_operand" "d")
+                   (match_operand:GPR 2 "register_operand" "d")))]
+-  "TARGET_LOONGSON_2EF"
++  "!TARGET_SWMUL && TARGET_LOONGSON_2EF"
+   "<d>multu.g\t%0,%1,%2"
+   [(set_attr "type" "imul3nc")
+    (set_attr "mode" "<MODE>")])
+@@ -1405,7 +1405,7 @@
+ 	(mult:GPR (match_operand:GPR 1 "register_operand" "d,d")
+ 		  (match_operand:GPR 2 "register_operand" "d,d")))
+    (clobber (match_scratch:GPR 3 "=l,X"))]
+-  "ISA_HAS_<D>MUL3"
++  "!TARGET_SWMUL && ISA_HAS_<D>MUL3"
+ {
+   if (which_alternative == 1)
+     return "<d>mult\t%1,%2";
+@@ -1443,7 +1443,7 @@
+   [(set (match_operand:GPR 0 "register_operand" "=l")
+ 	(mult:GPR (match_operand:GPR 1 "register_operand" "d")
+ 		  (match_operand:GPR 2 "register_operand" "d")))]
+-  "!TARGET_FIX_R4000"
++  "!TARGET_SWMUL && !TARGET_FIX_R4000"
+   "<d>mult\t%1,%2"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "<MODE>")])
+@@ -1453,7 +1453,7 @@
+ 	(mult:GPR (match_operand:GPR 1 "register_operand" "d")
+ 		  (match_operand:GPR 2 "register_operand" "d")))
+    (clobber (match_scratch:GPR 3 "=l"))]
+-  "TARGET_FIX_R4000"
++  "!TARGET_SWMUL && TARGET_FIX_R4000"
+   "<d>mult\t%1,%2\;mflo\t%0"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "<MODE>")
+@@ -1779,7 +1779,7 @@
+   [(set (match_operand:DI 0 "register_operand")
+ 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+ 		 (any_extend:DI (match_operand:SI 2 "register_operand"))))]
+-  "!TARGET_64BIT || !TARGET_FIX_R4000"
++  "!TARGET_SWMUL && (!TARGET_64BIT || !TARGET_FIX_R4000)"
+ {
+   if (TARGET_64BIT)
+     emit_insn (gen_<u>mulsidi3_64bit (operands[0], operands[1], operands[2]));
+@@ -1795,7 +1795,7 @@
+   [(set (match_operand:DI 0 "register_operand" "=x")
+ 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 		 (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))]
+-  "!TARGET_64BIT && !TARGET_FIX_R4000 && !ISA_HAS_DSPR2"
++  "!TARGET_SWMUL && !TARGET_64BIT && !TARGET_FIX_R4000 && !ISA_HAS_DSPR2"
+   "mult<u>\t%1,%2"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "SI")])
+@@ -1805,7 +1805,7 @@
+ 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 		 (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))
+    (clobber (match_scratch:DI 3 "=x"))]
+-  "!TARGET_64BIT && TARGET_FIX_R4000"
++  "!TARGET_SWMUL && !TARGET_64BIT && TARGET_FIX_R4000"
+   "mult<u>\t%1,%2\;mflo\t%L0\;mfhi\t%M0"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "SI")
+@@ -1817,7 +1817,7 @@
+ 		 (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))
+    (clobber (match_scratch:TI 3 "=x"))
+    (clobber (match_scratch:DI 4 "=d"))]
+-  "TARGET_64BIT && !TARGET_FIX_R4000"
++  "!TARGET_SWMUL && TARGET_64BIT && !TARGET_FIX_R4000"
+   "#"
+   "&& reload_completed"
+   [(set (match_dup 3)
+@@ -1858,7 +1858,7 @@
+ 	     (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 	     (any_extend:DI (match_operand:SI 2 "register_operand" "d")))]
+ 	  UNSPEC_SET_HILO))]
+-  "TARGET_64BIT && !TARGET_FIX_R4000"
++  "!TARGET_SWMUL && TARGET_64BIT && !TARGET_FIX_R4000"
+   "mult<u>\t%1,%2"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "SI")])
+@@ -1903,7 +1903,7 @@
+ 	  (mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+ 		   (any_extend:DI (match_operand:SI 2 "register_operand")))
+ 	  (const_int 32))))]
+-  ""
++  "!TARGET_SWMUL"
+ {
+   if (ISA_HAS_MULHI)
+     emit_insn (gen_<su>mulsi3_highpart_mulhi_internal (operands[0],
+@@ -1923,7 +1923,7 @@
+ 		   (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
+ 	  (const_int 32))))
+    (clobber (match_scratch:SI 3 "=l"))]
+-  "!ISA_HAS_MULHI"
++  "!TARGET_SWMUL && !ISA_HAS_MULHI"
+   { return TARGET_FIX_R4000 ? "mult<u>\t%1,%2\n\tmfhi\t%0" : "#"; }
+   "&& reload_completed && !TARGET_FIX_R4000"
+   [(const_int 0)]
+@@ -1957,7 +1957,7 @@
+ 	   (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
+ 	  (const_int 32))))
+    (clobber (match_scratch:SI 3 "=l"))]
+-  "ISA_HAS_MULHI"
++  "!TARGET_SWMUL && ISA_HAS_MULHI"
+   "mulhi<u>\t%0,%1,%2"
+   [(set_attr "type" "imul3")
+    (set_attr "mode" "SI")])
+@@ -1972,7 +1972,7 @@
+ 	    (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))
+ 	  (const_int 32))))
+    (clobber (match_scratch:SI 3 "=l"))]
+-  "ISA_HAS_MULHI"
++  "!TARGET_SWMUL && ISA_HAS_MULHI"
+   "mulshi<u>\t%0,%1,%2"
+   [(set_attr "type" "imul3")
+    (set_attr "mode" "SI")])
+@@ -2062,7 +2062,7 @@
+ 		  (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
+ 	 (match_operand:DI 3 "register_operand" "0")))]
+   "(TARGET_MAD || ISA_HAS_MACC || GENERATE_MADD_MSUB || ISA_HAS_DSPR2)
+-   && !TARGET_64BIT"
++   && !TARGET_64BIT && !TARGET_SWMUL"
+ {
+   if (TARGET_MAD)
+     return "mad<u>\t%1,%2";
+@@ -2307,7 +2307,7 @@
+    (set (match_operand:GPR 3 "register_operand" "=d")
+ 	(mod:GPR (match_dup 1)
+ 		 (match_dup 2)))]
+-  "!TARGET_FIX_VR4120"
++  "!TARGET_SWDIV && !TARGET_FIX_VR4120"
+   "#"
+   "&& reload_completed"
+   [(const_int 0)]
+@@ -2339,7 +2339,7 @@
+    (set (match_operand:GPR 3 "register_operand" "=d")
+ 	(umod:GPR (match_dup 1)
+ 		  (match_dup 2)))]
+-  ""
++  "!TARGET_SWDIV"
+   "#"
+   "reload_completed"
+   [(const_int 0)]
+@@ -2370,7 +2370,7 @@
+ 	  [(any_div:GPR (match_operand:GPR 1 "register_operand" "d")
+ 			(match_operand:GPR 2 "register_operand" "d"))]
+ 	  UNSPEC_SET_HILO))]
+-  ""
++  "!TARGET_SWDIV"
+   { return mips_output_division ("<GPR:d>div<u>\t%.,%1,%2", operands); }
+   [(set_attr "type" "idiv")
+    (set_attr "mode" "<GPR:MODE>")])
+--- gcc/config/mips/mips.opt	2009-02-20 16:20:38.000000000 +0100
++++ gcc/config/mips/mips.opt	2010-04-07 04:00:53.000000000 +0200
+@@ -70,6 +70,14 @@ mdouble-float
+ Target Report RejectNegative InverseMask(SINGLE_FLOAT, DOUBLE_FLOAT)
+ Allow hardware floating-point instructions to cover both 32-bit and 64-bit operations
+ 
++msoft-mul
++Target Report Mask(SWMUL)
++Do not use integer mul instructions
++
++msoft-div
++Target Report Mask(SWDIV)
++Do not use integer div instructions
++
+ mdsp
+ Target Report Mask(DSP)
+ Use MIPS-DSP instructions
