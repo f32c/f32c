@@ -31,20 +31,17 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
--- Xilinx libraries
-library UNISIM;
-use UNISIM.VComponents.all;
 
 entity pipeline is
 	generic(
-		C_mult_enable: boolean := true;
-		C_branch_prediction: boolean := true;
+		C_mult_enable: boolean := false; -- XXX untested, Xilinx specific
+		C_branch_prediction: boolean := false; -- XXX needs a BRAM
 		C_result_forwarding: boolean := true;
 		C_fast_ID: boolean := true;
-		C_register_technology: string := "xilinx_ram16x1d";
+		C_register_technology: string;
 		C_init_PC: std_logic_vector := x"00000000";
 		-- debugging options
-		C_serial_trace: boolean := false
+		C_serial_trace: boolean := true
 	);
 	port(
 		clk, reset: in std_logic;
@@ -149,8 +146,7 @@ architecture Behavioral of pipeline is
 	signal EX_MEM_writeback_addsub: std_logic_vector(31 downto 0);
 	signal EX_MEM_writeback_logic: std_logic_vector(31 downto 0);
 	signal EX_MEM_mem_data_out: std_logic_vector(31 downto 0);
-	signal EX_MEM_branch_target: std_logic_vector(29 downto 0) :=
-		C_init_PC(31 downto 2);
+	signal EX_MEM_branch_target: std_logic_vector(29 downto 0); -- XXX := C_init_PC(31 downto 2);
 	signal EX_MEM_take_branch: boolean := true; -- XXX jump to C_init_PC addr
 	signal EX_MEM_branch_cycle, EX_MEM_branch_taken: boolean;
 	signal EX_MEM_bpredict_score: std_logic_vector(1 downto 0);
@@ -291,15 +287,15 @@ begin
 	begin
 	IF_bpredict_index <= EX_MEM_branch_hist xor IF_PC(14 downto 2);
 	IF_bpredict_re <= '1' when ID_running else '0';
-	bpredictor_0: RAMB16_S2_S2
-	port map(
-		DIA => "11", DIB => MEM_bpredict_score,
-		DOA => IF_ID_bpredict_score, -- DOB => xxx,
-		ADDRA => IF_bpredict_index, ADDRB => EX_MEM_bpredict_index,
-		CLKA => clk, CLKB => clk,
-		ENA => IF_bpredict_re, ENB => MEM_bpredict_we,
-		SSRA => '0', SSRB => '0', WEA => '0', WEB => '1'
-	);
+--	bpredictor_0: RAMB16_S2_S2
+--	port map(
+--		DIA => "11", DIB => MEM_bpredict_score,
+--		DOA => IF_ID_bpredict_score, -- DOB => xxx,
+--		ADDRA => IF_bpredict_index, ADDRB => EX_MEM_bpredict_index,
+--		CLKA => clk, CLKB => clk,
+--		ENA => IF_bpredict_re, ENB => MEM_bpredict_we,
+--		SSRA => '0', SSRB => '0', WEA => '0', WEB => '1'
+--	);
 	end generate;
 
 	-- debugging only
@@ -782,13 +778,13 @@ begin
 	G_multiplier:
 	if C_mult_enable generate
 	begin
-		mult: entity mult
-			port map(
-				reg1 => EX_eff_reg1, reg2 => EX_eff_reg2,
-				hilo_out => MULT_res, op_major => ID_EX_op_major, 
-				funct => ID_EX_immediate(5 downto 0),
-				busy => EX_muldiv_busy,	clk => clk
-			);
+--		mult: entity mult
+--			port map(
+--				reg1 => EX_eff_reg1, reg2 => EX_eff_reg2,
+--				hilo_out => MULT_res, op_major => ID_EX_op_major, 
+--				funct => ID_EX_immediate(5 downto 0),
+--				busy => EX_muldiv_busy,	clk => clk
+--			);
 
 	HI <= MULT_res(63 downto 32);
 	LO <= MULT_res(31 downto 0);
