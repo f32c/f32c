@@ -74,6 +74,7 @@ architecture Behavioral of glue is
 	signal trace_data: std_logic_vector(31 downto 0);
 begin
 
+	clk <= clk_25m;
 
 	-- the RISC core
 	pipeline: entity pipeline
@@ -95,38 +96,65 @@ begin
 		trace_addr => trace_addr, trace_data => trace_data
 	);
 
-	clk <= clk_25m;
+	-- instruction / data BRAMs
+	dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31 downto 28) /= "1110"
+		else '0';
 
--- XXX testing only!
-imem_data_read <= tsc xor ("00" & imem_addr) xor (trace_addr & trace_addr & trace_addr & trace_addr & x"00");
-final_to_cpu <= imem_data_read xor ("00" & dmem_addr);
-dmem_data_ready <= '1';
+	-- I/O port map:
+	-- 0xe******0:  (1B, WR) LED
+	-- 0xe******4:  (4B, RD) TSC
+	-- 0xe******8:  (1B, WR) LCD data
+	-- 0xe******c:  (1B, WR) LCD ctrl
+	-- I/O write access:
+	process(clk)
+	begin
+		if rising_edge(clk) then
+			tsc <= tsc + 1;
+			if dmem_addr(31 downto 28) = "1110" and dmem_addr_strobe = '1' then
+				if dmem_byte_we /= "0000" then
+					if dmem_addr(3 downto 2) = "00" then
+						led_reg <= cpu_to_dmem(7 downto 0);
+					elsif dmem_addr(3 downto 2) = "10" then
+						lcd_data <= cpu_to_dmem(7 downto 0);
+					elsif dmem_addr(3 downto 2) = "11" then
+						lcd_ctrl <= cpu_to_dmem(1 downto 0);
+					end if;
+				end if;
+			end if;
+		end if;
+	end process;
 
-        -- I/O port map:
-        -- 0xe******0:  (1B, WR) LED
-        -- 0xe******4:  (4B, RD) TSC
-        -- 0xe******8:  (1B, WR) LCD data
-        -- 0xe******c:  (1B, WR) LCD ctrl
-        -- I/O write access:
-        process(clk)
-        begin
-                if rising_edge(clk) then
-                        tsc <= tsc + 1;
-                        if dmem_addr(31 downto 28) = "1110" and dmem_addr_strobe = '1' then
-                                if dmem_byte_we /= "0000" then
-                                        if dmem_addr(3 downto 2) = "00" then
-                                                led_reg <= cpu_to_dmem(7 downto 0);
-                                        elsif dmem_addr(3 downto 2) = "10" then
-                                                lcd_data <= cpu_to_dmem(7 downto 0);
-                                        elsif dmem_addr(3 downto 2) = "11" then
-                                                lcd_ctrl <= cpu_to_dmem(1 downto 0);
-                                        end if;
-                                end if;
-                        end if;
-                end if;
-        end process;
+	process(clk)
+	begin
+		if rising_edge(clk) then
+			input <= x"0000" & "000" & rs232_rx & x"0" &
+				btn_up & btn_down & btn_left & btn_right & sw;
+		end if;
+	end process;
+
+	io_to_cpu <= input when dmem_addr(3 downto 2) = "00"
+		else tsc;
+
+	final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = "1110"
+		else dmem_to_cpu;
 
 	led <= led_reg;
+--	lcd_db <= lcd_data;
+--	lcd_rs <= lcd_ctrl(0);
+--	lcd_e <= lcd_ctrl(1);
+--	lcd_rw <= '0';
+
+
+	-- Block RAM
+	bram: entity bram
+	port map(
+		clk => clk, imem_addr_strobe => imem_addr_strobe,
+		imem_addr => imem_addr, imem_data_out => imem_data_read,
+		dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
+		dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem,
+		dmem_addr_strobe => dmem_bram_enable, dmem_data_ready => dmem_data_ready
+	);
+
 
 	-- debugging design instance - serial port + control knob / buttons
 	debug_serial:
