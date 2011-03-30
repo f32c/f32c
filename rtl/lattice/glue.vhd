@@ -126,6 +126,8 @@ dmem_data_ready <= '1';
                 end if;
         end process;
 
+	led <= led_reg;
+
 	-- debugging design instance - serial port + control knob / buttons
 	debug_serial:
 	if C_serial_trace generate
@@ -148,6 +150,5 @@ dmem_data_ready <= '1';
 		rs232_tx <= '1'; -- appease tools
 	end generate; -- nodebug
 	
-	led <= "00" & trace_addr;
 end Behavioral;
 
