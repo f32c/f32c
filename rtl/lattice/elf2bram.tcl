@@ -133,13 +133,14 @@ while {[eof $bramfile] == 0} {
 	    for {set i $startaddr} {$i < $endaddr} {incr i 4} {
 		set t [expr ($i / $mod) * $mod + ($mod - 4 - $i) % $mod] 
 		set hex [string range $mem($t) $cfrom $cto]
-		incr bitpos
-		if {$bitpos == 2} {
+		if {$bitpos == 0} {
 		    scan $hex "%02x" val
 		    set hex "[format %01X [expr $val / 128]][format %02X [expr ($val * 2) % 256]]"
+		    set bitpos 1
+		} else {
 		    set bitpos 0
 		}
-		set buf "$hex[set buf]"
+		set buf "[set buf]$hex"
 		if {[expr ($mod - 4 - $i) % $mod] == 0} {
 		    set entry "		INITVAL_"
 		    set entry "$entry[format %02X $tmp_seqn] => \"0x$buf\""
