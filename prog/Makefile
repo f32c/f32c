@@ -12,6 +12,8 @@ CFLAGS += -mno-mips16 -mno-dsp -mno-mips3d -mno-mdmx -msoft-float
 CFLAGS += -c -s -n -nostdlib -fno-builtin
 CFLAGS += -std=c99 -Wall -Werror
 CFLAGS += -G 32768
+# f32c specific flags
+CFLAGS += -msoft-mul -msoft-div
 # Debugging options
 CFLAGS += -g
 # Optimization options
