@@ -38,6 +38,7 @@ entity pipeline is
 		C_branch_prediction: boolean := false; -- XXX needs a BRAM
 		C_result_forwarding: boolean := true;
 		C_fast_ID: boolean := true;
+		C_predecode_in_IF: boolean := false; -- helps on Xilinx, hurts on Lattice
 		C_register_technology: string;
 		C_init_PC: std_logic_vector := x"00000000";
 		-- debugging options
@@ -200,7 +201,7 @@ begin
 	--
 	-- Five stage pipeline with result forwarding and hazard detection:
 	--
-   -- IF:  instruction fetch
+	-- IF:  instruction fetch
 	-- ID:  instruction decode and register fetch
 	-- EX:  execute
 	-- MEM: memory access
@@ -270,13 +271,15 @@ begin
 				IF_ID_PC_4 <= IF_PC_next;
 				IF_ID_branch_delay_slot <=
 					IF_ID_branch_cycle or IF_ID_jump_cycle or ID_jump_register;
-				IF_ID_reg1_zero <= imem_data_in(25 downto 21) = "00000";
-				IF_ID_reg2_zero <= imem_data_in(20 downto 16) = "00000";
-				IF_ID_branch_cycle <= imem_data_in(31 downto 28) = "0001" or
-					imem_data_in(31 downto 26) = "000001";
-				IF_ID_jump_cycle <= imem_data_in(31 downto 27) = "00001";
-				IF_ID_special <= imem_data_in(31 downto 26) = "000000";
 				IF_ID_bpredict_index <= IF_bpredict_index;
+				if (C_predecode_in_IF) then
+					IF_ID_reg1_zero <= imem_data_in(25 downto 21) = "00000";
+					IF_ID_reg2_zero <= imem_data_in(20 downto 16) = "00000";
+					IF_ID_branch_cycle <= imem_data_in(31 downto 28) = "0001" or
+						imem_data_in(31 downto 26) = "000001";
+					IF_ID_jump_cycle <= imem_data_in(31 downto 27) = "00001";
+					IF_ID_special <= imem_data_in(31 downto 26) = "000000";
+				end if;
 				IF_ID_instruction <= imem_data_in; -- XXX only debugging?
 			end if;
 		end if;
@@ -315,13 +318,24 @@ begin
 	-- =======================================================
 	--
 	
+	G_no_predecode_in_IF:
+	if not C_predecode_in_IF generate
+	begin
+	IF_ID_reg1_zero <= IF_ID_instruction(25 downto 21) = "00000";
+	IF_ID_reg2_zero <= IF_ID_instruction(20 downto 16) = "00000";
+	IF_ID_branch_cycle <= IF_ID_instruction(31 downto 28) = "0001" or
+		IF_ID_instruction(31 downto 26) = "000001";
+	IF_ID_jump_cycle <= IF_ID_instruction(31 downto 27) = "00001";
+	IF_ID_special <= IF_ID_instructioN(31 downto 26) = "000000";
+	end generate;
+
 	-- instruction decoder
 	idecode: entity idecode
 		port map(
 			instruction => IF_ID_instruction,
 			special => IF_ID_special,
-         reg1_addr => ID_reg1_addr, reg2_addr => ID_reg2_addr,
-         immediate_value => ID_immediate, use_immediate => ID_use_immediate,
+			reg1_addr => ID_reg1_addr, reg2_addr => ID_reg2_addr,
+			immediate_value => ID_immediate, use_immediate => ID_use_immediate,
 			sign_extension => ID_sign_extension,
 			target_addr => ID_writeback_addr, op_major => ID_op_major,
 			op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
@@ -335,8 +349,8 @@ begin
 			cop0 => ID_cop0
 		);
 
-   -- three- or four-ported register file: async read, sync write
-   regfile: entity reg1w2r
+	-- three- or four-ported register file: async read, sync write
+	regfile: entity reg1w2r
 		generic map(
 			C_register_technology => C_register_technology
 		)
@@ -534,7 +548,7 @@ begin
 	end generate; -- no result_forwarding
 	
 	-- instantiate the ALU
-   alu: entity alu
+	alu: entity alu
 		port map(x => EX_eff_reg1, y => EX_eff_alu_op2,
 			addsubx => EX_from_alu_addsubx, logic => EX_from_alu_logic,
 			funct => ID_EX_op_minor(1 downto 0), equal => EX_from_alu_equal);
