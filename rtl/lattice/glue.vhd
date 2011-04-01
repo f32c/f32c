@@ -38,7 +38,7 @@ entity glue is
 		C_result_forwarding: boolean := true;
 		C_register_technology: string := "lattice";
 		-- debugging
-		C_serial_trace: boolean := true
+		C_serial_trace: boolean := false
 	);
 	port (
 		clk_25m: in std_logic;
