@@ -63,6 +63,10 @@ architecture Behavioral of serial_debug is
 	signal bram_out: std_logic_vector(7 downto 0);
 	signal bram_addr: std_logic_vector(10 downto 0);
 
+	-- #Paths to register_c are ignored
+	-- define_false_path -to register_c
+	-- define_false_path -to trace_word
+
 begin
 
 	rs232_txd <= txd;
