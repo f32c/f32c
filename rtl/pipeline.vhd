@@ -42,7 +42,7 @@ entity pipeline is
 		C_register_technology: string;
 		C_init_PC: std_logic_vector := x"00000000";
 		-- debugging options
-		C_serial_trace: boolean := true
+		C_debug: boolean := true
 	);
 	port(
 		clk, reset: in std_logic;
@@ -728,7 +728,7 @@ begin
 
 	-- XXX performance counters
 	G_perf_cnt:
-	if C_serial_trace generate
+	if C_debug generate
 	begin
 	process(clk)
 	begin
@@ -806,7 +806,7 @@ begin
 
 	-- mux for debugging probes
 	G_with_trace_mux:
-	if C_serial_trace generate
+	if C_debug generate
 	begin
 
 	ID_EX_sign_extend_debug <= '1' when ID_EX_sign_extend else '0';
