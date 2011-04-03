@@ -30,22 +30,25 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+library synplify;
+use synplify.attributes.all;
+
 entity glue is
 	generic(
-		C_clk_mhz: integer := 25; -- must be a multiple of 5
+		C_clk_mhz: integer := 50; -- must be a multiple of 5
 		C_mult_enable: boolean := false;
 		C_branch_prediction: boolean := false;
 		C_result_forwarding: boolean := true;
 		C_register_technology: string := "lattice";
 		-- debugging
-		C_serial_trace: boolean := false
+		C_debug: boolean := true
 	);
 	port (
 		clk_25m: in std_logic;
 		rs232_tx: out std_logic;
 		rs232_rx: in std_logic;
 		led: out std_logic_vector(7 downto 0);
-		btn_left, btn_right, btn_up, btn_down: in std_logic;
+		btn_left, btn_right, btn_up, btn_down, btn_center: in std_logic;
 		sw: in std_logic_vector(3 downto 0)
 	);
 end glue;
@@ -60,8 +63,9 @@ architecture Behavioral of glue is
 	signal dmem_byte_we: std_logic_vector(3 downto 0);
 	signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
 	signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
+	signal pll_lock: std_logic;
 
-   -- I/O
+	-- I/O
 	signal led_reg: std_logic_vector(7 downto 0);
 	signal lcd_data: std_logic_vector(7 downto 0);
 	signal lcd_ctrl: std_logic_vector(1 downto 0);
@@ -72,9 +76,21 @@ architecture Behavioral of glue is
 	signal clk_key: std_logic;
 	signal trace_addr: std_logic_vector(5 downto 0);
 	signal trace_data: std_logic_vector(31 downto 0);
+
+	-- multicycle timing attributes, so far completely useless...
+	attribute syn_black_box: boolean;
+	attribute syn_black_box of trace_data : signal is true;
+	attribute syn_tsu1: string;
+	attribute syn_tsu1 of trace_data : signal is "clk -> trace_data = 0.1";
+	attribute syn_tsu2: string;
+	attribute syn_tsu2 of trace_data : signal is "clk_25m -> trace_data = 0.1";
 begin
 
-	clk <= clk_25m;
+	-- clock synthesizer
+	clkgen: entity clkgen
+	port map (
+		clk_25m => clk_25m, clk => clk, sel => sw(3), key => btn_down
+	);
 
 	-- the RISC core
 	pipeline: entity pipeline
@@ -84,7 +100,7 @@ begin
 		C_result_forwarding => C_result_forwarding,
 		C_register_technology => C_register_technology,
 		-- debugging only
-		C_serial_trace => C_serial_trace
+		C_debug => C_debug
 	)
 	port map(
 		clk => clk, reset => btn_up,
@@ -139,11 +155,6 @@ begin
 		else dmem_to_cpu;
 
 	led <= led_reg;
---	lcd_db <= lcd_data;
---	lcd_rs <= lcd_ctrl(0);
---	lcd_e <= lcd_ctrl(1);
---	lcd_rw <= '0';
-
 
 	-- Block RAM
 	bram: entity bram
@@ -156,15 +167,15 @@ begin
 	);
 
 
-	-- debugging design instance - serial port + control knob / buttons
+	-- debugging design instance
 	debug_serial:
-	if C_serial_trace generate
+	if C_debug generate
 	begin
 		clk_key <= btn_down;
 	
 		debug_serial: entity serial_debug
 		port map(
-			clk => clk_25m,
+			clk => clk,
 			rs232_txd => rs232_tx,
 			trace_addr => trace_addr,
 			trace_data => trace_data
@@ -172,7 +183,7 @@ begin
 	end generate; -- serial_debug
 	
 	nodebug:
-	if not C_serial_trace generate
+	if not C_debug generate
 	begin
 		clk_key <= '1'; -- clk selector
 		rs232_tx <= '1'; -- appease tools
