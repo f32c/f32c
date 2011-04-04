@@ -30,12 +30,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-library synplify;
-use synplify.attributes.all;
-
 entity glue is
 	generic(
-		C_clk_mhz: integer := 50; -- must be a multiple of 5
 		C_mult_enable: boolean := false;
 		C_branch_prediction: boolean := false;
 		C_result_forwarding: boolean := true;
@@ -54,7 +50,7 @@ entity glue is
 end glue;
 
 architecture Behavioral of glue is
-	signal clk, slowclk: std_logic;
+	signal clk: std_logic;
 	signal imem_addr: std_logic_vector(31 downto 2);
 	signal imem_data_read: std_logic_vector(31 downto 0);
 	signal imem_addr_strobe, imem_data_ready: std_logic;
@@ -73,21 +69,15 @@ architecture Behavioral of glue is
 	signal input: std_logic_vector(31 downto 0);
 
 	-- debugging only
-	signal clk_key: std_logic;
 	signal trace_addr: std_logic_vector(5 downto 0);
-	signal trace_data: std_logic_vector(31 downto 0);
-
-	-- multicycle timing attributes, so far completely useless...
-	attribute syn_black_box: boolean;
-	attribute syn_black_box of trace_data : signal is true;
-	attribute syn_tsu1: string;
-	attribute syn_tsu1 of trace_data : signal is "clk -> trace_data = 0.1";
-	attribute syn_tsu2: string;
-	attribute syn_tsu2 of trace_data : signal is "clk_25m -> trace_data = 0.1";
+	signal trace_data, trace_data_r: std_logic_vector(31 downto 0);
 begin
 
 	-- clock synthesizer
 	clkgen: entity clkgen
+	generic map (
+		C_debug => C_debug
+	)
 	port map (
 		clk_25m => clk_25m, clk => clk, sel => sw(3), key => btn_down
 	);
@@ -171,21 +161,24 @@ begin
 	debug_serial:
 	if C_debug generate
 	begin
-		clk_key <= btn_down;
-	
-		debug_serial: entity serial_debug
-		port map(
-			clk => clk,
-			rs232_txd => rs232_tx,
-			trace_addr => trace_addr,
-			trace_data => trace_data
-		);
+	process(clk_25m)
+	begin
+		if (rising_edge(clk_25m)) then
+			trace_data_r <= trace_data;
+		end if;
+	end process;
+	debug_serial: entity serial_debug
+	port map(
+		clk => clk_25m,
+		rs232_txd => rs232_tx,
+		trace_addr => trace_addr,
+		trace_data => trace_data_r
+	);
 	end generate; -- serial_debug
 	
 	nodebug:
 	if not C_debug generate
 	begin
-		clk_key <= '1'; -- clk selector
 		rs232_tx <= '1'; -- appease tools
 	end generate; -- nodebug
 	

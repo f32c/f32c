@@ -36,7 +36,7 @@ use xp2.components.all;
 
 entity clkgen is
 	generic (
-		C_debug: boolean := true
+		C_debug: boolean
 	);
 	port (
 		clk_25m: in std_logic;
@@ -49,6 +49,9 @@ end clkgen;
 architecture Behavioral of clkgen is
 	signal pll_clkout: std_logic;
 	signal pll_lock: std_logic;
+	signal key_d: std_logic_vector(19 downto 0) := x"00000";
+	signal key_r: std_logic := '0';
+	signal sel_r: std_logic := '0';
 begin
 
 	-- PLL generator
@@ -57,14 +60,40 @@ begin
         	CLK => clk_25m, CLKOP => pll_clkout, LOCK => pll_lock
 	);
 
+	G_nodebug:
+	if not C_debug generate
+	begin
+	clk <= pll_clkout and pll_lock;
+	end generate;
+
+	G_debug:
+	if C_debug generate
+	begin
+	-- key debuncer
+	process(clk_25m)
+	begin
+		if (rising_edge(clk_25m)) then
+			if (key_d = x"fffff") then
+				if (key /= key_r) then
+					key_d <= x"00000";
+				end if;
+				key_r <= key;
+			else
+				key_d <= key_d + 1;
+			end if;
+			sel_r <= sel or not pll_lock;
+		end if;
+	end process;
+
 	-- Clock selector
 	DCS_0: DCS
 	generic map (
 		dcsmode => "POS"
 	)
 	port map (
-		sel => not pll_lock, clk0 => pll_clkout, clk1 => '0', dcsout => clk
+		sel => sel_r, clk0 => pll_clkout, clk1 => key_r, dcsout => clk
 	);
+	end generate;
 	
 end Behavioral;
 
