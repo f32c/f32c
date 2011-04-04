@@ -47,28 +47,32 @@ entity clkgen is
 end clkgen;
 
 architecture Behavioral of clkgen is
-	signal pll_clkout: std_logic;
+	signal pll_clk: std_logic; -- 75 MHz
 	signal pll_lock: std_logic;
 	signal key_d: std_logic_vector(19 downto 0) := x"00000";
 	signal key_r: std_logic := '0';
 	signal sel_r: std_logic := '0';
 begin
 
-	-- PLL generator
-	PLL: entity pll
-	port map (
-        	CLK => clk_25m, CLKOP => pll_clkout, LOCK => pll_lock
-	);
-
 	G_nodebug:
 	if not C_debug generate
 	begin
-	clk <= pll_clkout and pll_lock;
+
+	-- PLL generator
+	PLL: entity pll
+	port map (
+        	CLK => clk_25m, LOCK => pll_lock, CLKOP => pll_clk
+	);
+
+	clk <= pll_clk and pll_lock;
+
 	end generate;
+
 
 	G_debug:
 	if C_debug generate
 	begin
+
 	-- key debuncer
 	process(clk_25m)
 	begin
@@ -81,7 +85,7 @@ begin
 			else
 				key_d <= key_d + 1;
 			end if;
-			sel_r <= sel or not pll_lock;
+			sel_r <= sel;
 		end if;
 	end process;
 
@@ -91,8 +95,9 @@ begin
 		dcsmode => "POS"
 	)
 	port map (
-		sel => sel_r, clk0 => pll_clkout, clk1 => key_r, dcsout => clk
+		sel => sel_r, clk0 => clk_25m, clk1 => key_r, dcsout => clk
 	);
+
 	end generate;
 	
 end Behavioral;
