@@ -70,7 +70,7 @@ architecture Behavioral of glue is
 
 	-- debugging only
 	signal trace_addr: std_logic_vector(5 downto 0);
-	signal trace_data, trace_data_r: std_logic_vector(31 downto 0);
+	signal trace_data: std_logic_vector(31 downto 0);
 begin
 
 	-- clock synthesizer
@@ -79,7 +79,8 @@ begin
 		C_debug => C_debug
 	)
 	port map (
-		clk_25m => clk_25m, clk => clk, sel => sw(3), key => btn_down
+		clk_25m => clk_25m, clk => clk,
+		sel => sw(3), key => btn_down
 	);
 
 	-- the RISC core
@@ -161,18 +162,12 @@ begin
 	debug_serial:
 	if C_debug generate
 	begin
-	process(clk_25m)
-	begin
-		if (rising_edge(clk_25m)) then
-			trace_data_r <= trace_data;
-		end if;
-	end process;
 	debug_serial: entity serial_debug
 	port map(
 		clk => clk_25m,
 		rs232_txd => rs232_tx,
 		trace_addr => trace_addr,
-		trace_data => trace_data_r
+		trace_data => trace_data
 	);
 	end generate; -- serial_debug
 	
