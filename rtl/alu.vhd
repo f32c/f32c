@@ -32,8 +32,8 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity alu is
-   port(
-		x, y: in STD_LOGIC_VECTOR(31 downto 0);
+	port(
+		x, y: in std_logic_vector(31 downto 0);
 		funct: in std_logic_vector(1 downto 0);
 		addsubx: out std_logic_vector(32 downto 0);
 		logic: out std_logic_vector(31 downto 0);
@@ -48,14 +48,7 @@ begin
 	ex <= '0' & x;
 	ey <= '0' & y;
 	
-	process(x, y, funct)
-	begin
-		case funct(1) is
-			when '0' =>	addsubx <= ex + ey;
-			when '1' =>	addsubx <= ex - ey;
-			when others =>
-		end case;
-	end process;
+	addsubx <= ex + ey when funct(1) = '0' else ex - ey;
 	
 	process(x, y, funct)
 	begin
