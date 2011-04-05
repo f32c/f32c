@@ -589,10 +589,8 @@ begin
 		ID_EX_PC_8 & "00";
 
 	-- jump / branch or not?
-	process(ID_EX_branch_cycle, ID_EX_branch_condition, EX_from_alu_equal,
-		EX_eff_reg1)
+	process(ID_EX_branch_condition, EX_from_alu_equal, EX_eff_reg1)
 	begin
-		EX_take_branch <= false;
 		case ID_EX_branch_condition is
 			when "111"	=> -- bgtz
 				EX_take_branch <= EX_eff_reg1(31) = '0' and not EX_from_alu_equal;
@@ -606,7 +604,8 @@ begin
 				EX_take_branch <= EX_eff_reg1(31) = '1';
 			when "011"	=> -- bgez
 				EX_take_branch <= EX_eff_reg1(31) = '0';
-			when others => -- unreachable
+			when others =>
+				EX_take_branch <= false;
 		end case;
 	end process;
 	
