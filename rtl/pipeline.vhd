@@ -158,7 +158,6 @@ architecture Behavioral of pipeline is
 	signal EX_MEM_shamt_1_2_4: std_logic_vector(2 downto 0);
 	signal EX_MEM_shift_funct: std_logic_vector(1 downto 0);
 	signal EX_MEM_to_shift: std_logic_vector(31 downto 0);
-	signal EX_MEM_mem_write: std_logic;
 	signal EX_MEM_mem_size: std_logic_vector(1 downto 0);
 	signal EX_MEM_partial_load: boolean;
 	signal EX_MEM_mem_byte_we: std_logic_vector(3 downto 0);
@@ -178,7 +177,6 @@ architecture Behavioral of pipeline is
 	signal MEM_WB_writeback_addr: std_logic_vector(4 downto 0);
 	signal MEM_WB_write_enable: std_logic;
 	signal MEM_WB_ex_data, MEM_WB_mem_data: std_logic_vector(31 downto 0);
-	signal MEM_WB_mem_size: std_logic; -- byte or half word
 	signal MEM_WB_partial_load: boolean;
 	signal MEM_WB_instruction: std_logic_vector(31 downto 0); -- XXX debugging only
 	
@@ -624,7 +622,6 @@ begin
 			if MEM_running and EX_running then
 				EX_MEM_mem_data_out <= EX_from_shift;
 				EX_MEM_writeback_addsub <= EX_from_alu_addsubx(31 downto 0);
-				EX_MEM_mem_write <= ID_EX_mem_write;
 				EX_MEM_mem_size <= ID_EX_mem_size;
 				EX_MEM_partial_load <= ID_EX_partial_load;
 				EX_MEM_mem_byte_we <= EX_mem_byte_we;
@@ -761,7 +758,6 @@ begin
 				MEM_WB_instruction <= EX_MEM_instruction; -- XXX debugging only
 				MEM_WB_mem_cycle <= EX_MEM_mem_cycle;
 				MEM_WB_writeback_addr <= EX_MEM_writeback_addr;
-				MEM_WB_mem_size <= EX_MEM_mem_size(0);
 				MEM_WB_partial_load <= EX_MEM_partial_load;
 				if EX_MEM_writeback_addr = "00000" then
 					MEM_WB_write_enable <= '0';
