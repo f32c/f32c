@@ -807,7 +807,7 @@ begin
 
 	ID_EX_sign_extend_debug <= '1' when ID_EX_sign_extend else '0';
 
-	process(clk)
+	process(trace_addr)
 	begin
 		if trace_addr(5) = '0' then
 			trace_data <= reg_trace_data;
