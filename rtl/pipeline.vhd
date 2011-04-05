@@ -67,7 +67,6 @@ architecture Behavioral of pipeline is
 	signal debug_XXX: std_logic_vector(31 downto 0);
 
 	-- pipeline stage 1: instruction fetch
-	signal IF_from_imem: std_logic_vector(31 downto 0);
 	signal IF_PC, IF_PC_next: std_logic_vector(31 downto 2);
 	signal IF_PC_incr: std_logic;
 	signal IF_bpredict_index: std_logic_vector(12 downto 0);
@@ -104,9 +103,9 @@ architecture Behavioral of pipeline is
 	signal ID_mem_read_sign_extend: std_logic;
 	signal ID_latency: std_logic;
 	signal ID_cop0: std_logic;
-	signal ID_EX_PC_4, ID_EX_PC_8: std_logic_vector(31 downto 2);
+	signal ID_EX_PC_8: std_logic_vector(31 downto 2);
 	signal ID_EX_bpredict_score: std_logic_vector(1 downto 0);
-	signal ID_EX_reg1_addr, ID_EX_reg2_addr, ID_EX_writeback_addr: std_logic_vector(4 downto 0);
+	signal ID_EX_writeback_addr: std_logic_vector(4 downto 0);
 	signal ID_EX_reg1_data, ID_EX_reg2_data, ID_EX_immediate, ID_EX_alu_op2: std_logic_vector(31 downto 0);
 	signal ID_EX_fwd_ex_reg1, ID_EX_fwd_ex_reg2, ID_EX_fwd_ex_alu_op2: boolean;
 	signal ID_EX_fwd_mem_reg1, ID_EX_fwd_mem_reg2, ID_EX_fwd_mem_alu_op2: boolean;
@@ -137,7 +136,6 @@ architecture Behavioral of pipeline is
 	signal EX_from_alu_addsubx: std_logic_vector(32 downto 0);
 	signal EX_from_alu_logic, EX_from_alt: std_logic_vector(31 downto 0);
 	signal EX_from_alu_equal: boolean;
-	signal EX_branch_target: std_logic_vector(29 downto 0);
 	signal EX_2bit_add: std_logic_vector(1 downto 0);
 	signal EX_mem_byte_we: std_logic_vector(3 downto 0);
 	signal EX_take_branch: boolean;
@@ -166,14 +164,13 @@ architecture Behavioral of pipeline is
 	signal EX_MEM_PC: std_logic_vector(31 downto 2); -- XXX debugging only
 	
 	-- pipeline stage 4: memory access
-	signal MEM_running, MEM_sched_wait_cycle, MEM_take_branch: boolean;
+	signal MEM_running, MEM_take_branch: boolean;
 	signal MEM_bpredict_score: std_logic_vector(1 downto 0);
 	signal MEM_bpredict_we: std_logic;
-	signal MEM_writeback_data, MEM_mem_data_shifted: std_logic_vector(31 downto 0);
+	signal MEM_writeback_data: std_logic_vector(31 downto 0);
 	signal MEM_data_in, MEM_from_shift: std_logic_vector(31 downto 0);
 	-- boundary to stage 5
 	signal MEM_WB_mem_cycle: std_logic;
-	signal MEM_WB_wait_cycle: boolean;
 	signal MEM_WB_writeback_addr: std_logic_vector(4 downto 0);
 	signal MEM_WB_write_enable: std_logic;
 	signal MEM_WB_ex_data, MEM_WB_mem_data: std_logic_vector(31 downto 0);
@@ -472,8 +469,6 @@ begin
 					ID_EX_reg1_data <= ID_eff_reg1;
 					ID_EX_reg2_data <= ID_eff_reg2;
 					ID_EX_alu_op2 <= ID_alu_op2;
-					ID_EX_reg1_addr <= ID_reg1_addr;
-					ID_EX_reg2_addr <= ID_reg2_addr;
 					ID_EX_immediate <= ID_immediate;
 					ID_EX_sign_extend <= ID_sign_extend;
 					ID_EX_op_minor <= ID_op_minor;
@@ -483,7 +478,6 @@ begin
 						and ID_mem_size(1) = '0';
 					ID_EX_mem_read_sign_extend <= ID_mem_read_sign_extend;
 					ID_EX_branch_condition <= ID_branch_condition;
-					ID_EX_PC_4 <= IF_ID_PC_4;
 					ID_EX_PC_8 <= IF_ID_PC_4 + 1;
 					ID_EX_branch_target <= ID_branch_target;
 					ID_EX_cop0 <= ID_cop0;
