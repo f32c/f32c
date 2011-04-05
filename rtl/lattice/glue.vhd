@@ -70,7 +70,6 @@ architecture Behavioral of glue is
 	signal dmem_byte_we: std_logic_vector(3 downto 0);
 	signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
 	signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
-	signal pll_lock: std_logic;
 
 	-- I/O
 	signal led_reg: std_logic_vector(7 downto 0);
