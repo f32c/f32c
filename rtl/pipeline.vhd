@@ -39,10 +39,10 @@ entity pipeline is
 		C_result_forwarding: boolean := true;
 		C_fast_ID: boolean := true;
 		C_predecode_in_IF: boolean := false; -- helps on Xilinx, hurts on Lattice
-		C_register_technology: string;
+		C_register_technology: string := "unknown";
 		C_init_PC: std_logic_vector := x"00000000";
 		-- debugging options
-		C_debug: boolean := true
+		C_debug: boolean := false
 	);
 	port(
 		clk, reset: in std_logic;
