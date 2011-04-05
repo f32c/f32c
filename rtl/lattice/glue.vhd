@@ -32,12 +32,23 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity glue is
 	generic(
+		-- CPU core configuration options
+		C_register_technology: string := "lattice";
 		C_mult_enable: boolean := false;
 		C_branch_prediction: boolean := false;
-		C_result_forwarding: boolean := true;
-		C_register_technology: string := "lattice";
-		-- debugging
-		C_debug: boolean := true
+		C_result_forwarding: boolean := true; -- true: +103 LUT4
+		C_fast_ID: boolean := true; -- false: +37 LUT4
+		C_predecode_in_IF: boolean := false; -- true: +55 LUT4
+		-- SoC configuration options
+		C_tsc: boolean := true; -- true: +74 LUT4
+		-- debugging options
+		C_debug: boolean := false -- true: +907 LUT4
+		--
+		-- XP2-5E-5 default synthesis
+		--
+		-- C_res_fwd 1, C_fast_id 1, C_predecode 0, C_tsc 1
+		-- Tot LUT4 1645 (Log 1271, RAM 192, ripple 182)
+		--
 	);
 	port (
 		clk_25m: in std_logic;
@@ -89,6 +100,8 @@ begin
 		C_mult_enable => C_mult_enable,
 		C_branch_prediction => C_branch_prediction,
 		C_result_forwarding => C_result_forwarding,
+		C_fast_ID => C_fast_ID,
+		C_predecode_in_IF => C_predecode_in_IF,
 		C_register_technology => C_register_technology,
 		-- debugging only
 		C_debug => C_debug
@@ -116,7 +129,9 @@ begin
 	process(clk)
 	begin
 		if rising_edge(clk) then
-			tsc <= tsc + 1;
+			if (C_tsc) then
+				tsc <= tsc + 1;
+			end if;
 			if dmem_addr(31 downto 28) = "1110" and dmem_addr_strobe = '1' then
 				if dmem_byte_we /= "0000" then
 					if dmem_addr(3 downto 2) = "00" then
@@ -134,12 +149,12 @@ begin
 	process(clk)
 	begin
 		if rising_edge(clk) then
-			input <= x"0000" & "000" & rs232_rx & x"0" &
-				btn_up & btn_down & btn_left & btn_right & sw;
+			input <= x"0000" & "000" & rs232_rx & sw &
+			    "000" & btn_center & btn_up & btn_down & btn_left & btn_right;
 		end if;
 	end process;
 
-	io_to_cpu <= input when dmem_addr(3 downto 2) = "00"
+	io_to_cpu <= input when dmem_addr(3 downto 2) = "00" or C_tsc = false
 		else tsc;
 
 	final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = "1110"
