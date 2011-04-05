@@ -522,9 +522,9 @@ begin
 	G_EX_forwarding:
 	if C_result_forwarding generate
 	begin
-	EX_eff_reg1 <= MEM_writeback_data when ID_EX_fwd_ex_reg1	else
+	EX_eff_reg1 <= MEM_writeback_data when ID_EX_fwd_ex_reg1 else
 		WB_writeback_data when ID_EX_fwd_mem_reg1 else ID_EX_reg1_data;
-	EX_eff_reg2 <= MEM_writeback_data when ID_EX_fwd_ex_reg2	else
+	EX_eff_reg2 <= MEM_writeback_data when ID_EX_fwd_ex_reg2 else
 		WB_writeback_data when ID_EX_fwd_mem_reg2 else ID_EX_reg2_data;
 	EX_eff_alu_op2 <= MEM_writeback_data when ID_EX_fwd_ex_alu_op2 else
 		WB_writeback_data when ID_EX_fwd_mem_alu_op2 else ID_EX_alu_op2;
@@ -690,6 +690,7 @@ begin
 	G_bp_update_score:
 	if C_branch_prediction generate
 	begin
+	-- XXX priority encoder is not warranted here, replace with balanced "case" logic.
 	MEM_bpredict_score <=
 		"01" when EX_MEM_bpredict_score = "00" and EX_MEM_take_branch else
 		"00" when EX_MEM_bpredict_score = "00" and not EX_MEM_take_branch else
