@@ -632,9 +632,9 @@ begin
 				EX_MEM_to_shift <= EX_from_shift;
 				EX_MEM_op_major <= ID_EX_op_major;
 				EX_MEM_branch_cycle <= ID_EX_branch_cycle;
+				EX_MEM_bpredict_score <= ID_EX_bpredict_score;
+				EX_MEM_bpredict_index <= ID_EX_bpredict_index;
 				if ID_EX_branch_cycle or ID_EX_jump_register then
-					EX_MEM_bpredict_score <= ID_EX_bpredict_score;
-					EX_MEM_bpredict_index <= ID_EX_bpredict_index;
 					EX_MEM_take_branch <= EX_take_branch or ID_EX_jump_register;
 					if ID_EX_predict_taken then
 						EX_MEM_branch_target <= ID_EX_PC_8;
