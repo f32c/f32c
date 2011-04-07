@@ -35,7 +35,7 @@ entity glue is
 		-- CPU core configuration options
 		C_register_technology: string := "lattice";
 		C_mult_enable: boolean := false;
-		C_branch_prediction: boolean := true; -- true: +148 LUT4
+		C_branch_prediction: boolean := true; -- true: +135 LUT4
 		C_result_forwarding: boolean := true; -- true: +103 LUT4
 		C_fast_ID: boolean := true; -- false: +37 LUT4
 		C_predecode_in_IF: boolean := false; -- true: +55 LUT4
