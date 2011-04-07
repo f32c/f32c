@@ -1,5 +1,5 @@
 --
--- Copyright 2008, 2010 University of Zagreb, Croatia.
+-- Copyright 2008,2010,2011 University of Zagreb, Croatia.
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity pipeline is
 	generic(
 		C_mult_enable: boolean := false; -- XXX untested, Xilinx specific
-		C_branch_prediction: boolean := false; -- XXX needs a BRAM
+		C_branch_prediction: boolean := true;
 		C_result_forwarding: boolean := true;
 		C_fast_ID: boolean := true;
 		C_predecode_in_IF: boolean := false; -- helps on Xilinx, hurts on Lattice
@@ -294,6 +294,15 @@ begin
 --		ENA => IF_bpredict_re, ENB => MEM_bpredict_we,
 --		SSRA => '0', SSRB => '0', WEA => '0', WEB => '1'
 --	);
+	bptrace: entity bptrace
+	port map (
+		DataInA => "11", DataInB => MEM_bpredict_score,
+		QA => IF_ID_bpredict_score, QB => open,
+		AddressA => IF_bpredict_index, AddressB => EX_MEM_bpredict_index,
+		ClockA => clk, ClockB => clk,
+		ClockEnA => IF_bpredict_re, ClockEnB => MEM_bpredict_we,
+		ResetA => '0', ResetB => '0', WrA => '0', WrB => '1'
+	);
 	end generate;
 
 	-- debugging only
