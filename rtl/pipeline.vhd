@@ -296,12 +296,12 @@ begin
 --	);
 	bptrace: entity bptrace
 	port map (
-		DataInA => "11", DataInB => MEM_bpredict_score,
-		QA => IF_ID_bpredict_score, QB => open,
-		AddressA => IF_bpredict_index, AddressB => EX_MEM_bpredict_index,
-		ClockA => clk, ClockB => clk,
-		ClockEnA => IF_bpredict_re, ClockEnB => MEM_bpredict_we,
-		ResetA => '0', ResetB => '0', WrA => '0', WrB => '1'
+		din => MEM_bpredict_score,
+		dout => IF_ID_bpredict_score,
+		rdaddr => IF_bpredict_index,
+		wraddr => EX_MEM_bpredict_index,
+		clk => clk,
+		ClockEnA => IF_bpredict_re, ClockEnB => MEM_bpredict_we
 	);
 	end generate;
 
