@@ -638,10 +638,10 @@ begin
 					EX_MEM_take_branch <= EX_take_branch or ID_EX_jump_register;
 					if ID_EX_predict_taken then
 						EX_MEM_branch_target <= ID_EX_PC_8;
-					elsif ID_EX_branch_cycle then
-						EX_MEM_branch_target <= ID_EX_branch_target;
-					else
+					elsif not ID_EX_branch_cycle then
 						EX_MEM_branch_target <= EX_eff_reg1(31 downto 2);
+					else
+						EX_MEM_branch_target <= ID_EX_branch_target;
 					end if;
 				else
 					EX_MEM_take_branch <= false;
