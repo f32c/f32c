@@ -12,29 +12,34 @@ entity bptrace is
 	port (
 		din: in std_logic_vector(1 downto 0); 
 		dout: out std_logic_vector(1 downto 0);
-		rdaddr: in std_logic_vector(12 downto 0); 
-		wraddr: in std_logic_vector(12 downto 0); 
-		clk: in std_logic; 
-		ClockEnA: in std_logic; 
-		ClockEnB: in std_logic 
+		rdaddr, wraddr: in std_logic_vector(12 downto 0); 
+		re, we, clk: in std_logic
 	);
 end bptrace;
 
 architecture Structure of bptrace is
+	signal do_a, outreg: std_logic_vector(1 downto 0);
 
 begin
 
 	G_bptrace_dpr:
 	if not C_bptrace_ebram generate
 	begin
-	bptrace_dpr: DPR16X4B
+	bptrace_dpr_a: DPR16X4A
 	port map (
 		DI0 => din(0), DI1 => din(1), DI2 => '0', DI3 => '0',
-		DO0 => dout(0), DO1 => dout(1), DO2 => open, DO3 => open,
+		DO0 => do_a(0), DO1 => do_a(1), DO2 => open, DO3 => open,
 		WAD0 => wraddr(0), WAD1 => wraddr(1), WAD2 => wraddr(2), WAD3 => wraddr(3),
 		RAD0 => rdaddr(0), RAD1 => rdaddr(1), RAD2 => rdaddr(2), RAD3 => rdaddr(3),
-		WCK => clk, WRE => ClockEnB
+		WCK => clk, WRE => we
 	);
+	process(clk)
+	begin
+		if (rising_edge(clk) and re = '1') then
+			outreg <= do_a;
+		end if;
+	end process;
+	dout <= outreg;
 	end generate;
 
 	G_bptrace_dpr:
@@ -58,7 +63,7 @@ begin
 		ADA4 => rdaddr(3), ADA5 => rdaddr(4), ADA6 => rdaddr(5), ADA7 => rdaddr(6),
 		ADA8 => rdaddr(7), ADA9 => rdaddr(8), ADA10 => rdaddr(9), ADA11 => rdaddr(10), 
 		ADA12 => rdaddr(11), ADA13 => rdaddr(12),
-		CEA => ClockEnA, CLKA => clk, WEA => '0',
+		CEA => re, CLKA => clk, WEA => '0',
 		CSA0 => '0', CSA1 => '0', CSA2 => '0', RSTA => '0',
 		DIB0 => '0', DIB1 => din(1), DIB2 => '0', DIB3 => '0', 
 		DIB4 => '0', DIB5 => '0', DIB6 => '0', DIB7 => '0',
@@ -69,7 +74,7 @@ begin
 		ADB4 => wraddr(3), ADB5 => wraddr(4), ADB6 => wraddr(5), ADB7 => wraddr(6),
 		ADB8 => wraddr(7), ADB9 => wraddr(8), ADB10 => wraddr(9), ADB11 => wraddr(10),
 		ADB12 => wraddr(11), ADB13 => wraddr(12),
-		CEB => ClockEnB, CLKB => clk, WEB => '1', 
+		CEB => we, CLKB => clk, WEB => '1', 
 		CSB0 => '0', CSB1 => '0', CSB2 => '0', RSTB => '0', 
 		DOA0 => dout(0), DOA1 => dout(1), DOA2=> open, DOA3 => open,
 		DOA4 => open, DOA5 => open, DOA6 => open, DOA7 => open, 
