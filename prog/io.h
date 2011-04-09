@@ -14,9 +14,8 @@
 #define	LCD_CTRL_E	0x02
 #define	LCD_DELAY	5000		/* In clock ticks, OK up to 200 MHz */
 
-/* In the default design the clock ticks at 50 MHz */
-//#define	CPU_FREQ	50000000
-#define	CPU_FREQ	25000000
+/* In the default design the clock ticks at 75 MHz */
+#define	CPU_FREQ	75000000
 
 /* I/O macros */
 

@@ -144,15 +144,15 @@ void demo_semafor(int prog) {
 
 	sem(sem_a, RED);
 	sem(sem_b, RED);
-	MSLEEP(1500);
+	MSLEEP(1000);
 
 	sem(sem_a, RED | YELLOW);
 	MSLEEP(1500);
 
 	sem(sem_a, GREEN);
-	MSLEEP(8000);
+	MSLEEP(5000);
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 3; i++) {
 		sem(sem_a, BLACK);
 		MSLEEP(500);
 		sem(sem_a, GREEN);
@@ -160,7 +160,7 @@ void demo_semafor(int prog) {
 	}
 
 	sem(sem_a, YELLOW);
-	MSLEEP(3000);
+	MSLEEP(2500);
 
 	return;
 }
