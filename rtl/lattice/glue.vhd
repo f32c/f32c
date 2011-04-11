@@ -72,15 +72,16 @@ architecture Behavioral of glue is
 	signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
 
 	-- I/O
+	signal from_sio: std_logic_vector(31 downto 0);
+	signal sio_txd, sio_rxd, sio_ce: std_logic;
 	signal led_reg: std_logic_vector(7 downto 0);
-	signal lcd_data: std_logic_vector(7 downto 0);
-	signal lcd_ctrl: std_logic_vector(1 downto 0);
 	signal tsc: std_logic_vector(31 downto 0);
 	signal input: std_logic_vector(31 downto 0);
 
 	-- debugging only
 	signal trace_addr: std_logic_vector(5 downto 0);
 	signal trace_data: std_logic_vector(31 downto 0);
+	signal debug_txd: std_logic;
 begin
 
 	-- clock synthesizer
@@ -119,11 +120,25 @@ begin
 	dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31 downto 28) /= "1110"
 		else '0';
 
+	-- RS232 sio
+	sio: entity sio
+	generic map (
+		C_debug => C_debug
+	)
+	port map (
+		clk => clk, ce => sio_ce,
+		txd => sio_txd, rxd => sio_rxd,
+		byte_we => dmem_byte_we,
+		bus_in => cpu_to_dmem,
+		bus_out => from_sio
+	);
+	sio_ce <= '0' when dmem_addr(31 downto 28) /= "1110" or dmem_addr(3 downto 2) /= "01"
+		else dmem_addr_strobe;
+
 	-- I/O port map:
 	-- 0xe******0:  (1B, WR) LED
-	-- 0xe******4:  (4B, RD) TSC
-	-- 0xe******8:  (1B, WR) LCD data
-	-- 0xe******c:  (1B, WR) LCD ctrl
+	-- 0xe******4:  (4B, WR) SIO
+	-- 0xe******8:  (4B, RD) TSC
 	-- I/O write access:
 	process(clk)
 	begin
@@ -131,16 +146,9 @@ begin
 			if (C_tsc) then
 				tsc <= tsc + 1;
 			end if;
-			if dmem_addr(31 downto 28) = "1110" and dmem_addr_strobe = '1' then
-				if dmem_byte_we /= "0000" then
-					if dmem_addr(3 downto 2) = "00" then
-						led_reg <= cpu_to_dmem(7 downto 0);
-					elsif dmem_addr(3 downto 2) = "10" then
-						lcd_data <= cpu_to_dmem(7 downto 0);
-					elsif dmem_addr(3 downto 2) = "11" then
-						lcd_ctrl <= cpu_to_dmem(1 downto 0);
-					end if;
-				end if;
+			if dmem_addr(31 downto 28) = "1110" and dmem_addr(3 downto 2) = "00"
+			    and dmem_addr_strobe = '1' and dmem_byte_we /= "0000" then
+				led_reg <= cpu_to_dmem(7 downto 0);
 			end if;
 		end if;
 	end process;
@@ -148,12 +156,14 @@ begin
 	process(clk)
 	begin
 		if rising_edge(clk) then
-			input <= x"0000" & "000" & rs232_rx & sw &
+			input <= x"0000" & "0000" & sw &
 			    "000" & btn_center & btn_up & btn_down & btn_left & btn_right;
 		end if;
 	end process;
 
-	io_to_cpu <= input when dmem_addr(3 downto 2) = "00" or C_tsc = false
+	-- XXX replace with a balanced multiplexer
+	io_to_cpu <= input when dmem_addr(3 downto 2) = "00"
+		else from_sio when dmem_addr(3 downto 2) = "01"
 		else tsc;
 
 	final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = "1110"
@@ -179,17 +189,13 @@ begin
 	debug_serial: entity serial_debug
 	port map(
 		clk => clk_25m,
-		rs232_txd => rs232_tx,
+		rs232_txd => debug_txd,
 		trace_addr => trace_addr,
 		trace_data => trace_data
 	);
 	end generate; -- serial_debug
 	
-	nodebug:
-	if not C_debug generate
-	begin
-		rs232_tx <= '1'; -- appease tools
-	end generate; -- nodebug
+	rs232_tx <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
 	
 end Behavioral;
 
