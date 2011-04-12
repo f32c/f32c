@@ -73,7 +73,7 @@ architecture Behavioral of glue is
 
 	-- I/O
 	signal from_sio: std_logic_vector(31 downto 0);
-	signal sio_txd, sio_rxd, sio_ce: std_logic;
+	signal sio_txd, sio_ce: std_logic;
 	signal led_reg: std_logic_vector(7 downto 0);
 	signal tsc: std_logic_vector(31 downto 0);
 	signal input: std_logic_vector(31 downto 0);
@@ -127,7 +127,7 @@ begin
 	)
 	port map (
 		clk => clk, ce => sio_ce,
-		txd => sio_txd, rxd => sio_rxd,
+		txd => sio_txd, rxd => rs232_rx,
 		byte_we => dmem_byte_we,
 		bus_in => cpu_to_dmem,
 		bus_out => from_sio
@@ -169,7 +169,8 @@ begin
 	final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = "1110"
 		else dmem_to_cpu;
 
-	led <= led_reg;
+	--led <= led_reg;
+	led <= from_sio(15 downto 8);
 
 	-- Block RAM
 	bram: entity bram
