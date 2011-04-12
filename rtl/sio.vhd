@@ -66,9 +66,10 @@ architecture Behavioral of sio is
 	signal clkdiv: std_logic_vector(15 downto 0);
 	signal tx_clkcnt, rx_clkcnt: std_logic_vector(15 downto 0);
 	signal tx_running, rx_running: std_logic;
-	signal tx_ser, rx_des: std_logic_vector(8 downto 0);
+	signal tx_ser: std_logic_vector(8 downto 0);
+	signal rx_des: std_logic_vector(7 downto 0);
 	signal tx_phase, rx_phase: std_logic_vector(3 downto 0);
-	signal rx_fifo: std_logic_vector(23 downto 0);
+	signal rx_fifo: std_logic_vector(7 downto 0);
 	signal rx_cnt: std_logic_vector(1 downto 0);
 	signal rx_overruns: std_logic;
 begin
@@ -88,10 +89,11 @@ begin
 	end generate;
 
 	-- XXX only 25 MHz and 75 MHz CPU freq encodings are supported ATM
-	bus_out <= rx_fifo & "0000" & tx_running & rx_overruns & rx_cnt when C_debug
-		else rx_fifo & "0010" & tx_running & rx_overruns & rx_cnt;
-	txd <= tx_ser(0);
 	tx_running <= '0' when tx_phase = "0000" else '1';
+	bus_out(5 downto 0) <= "00" & tx_running & rx_overruns & rx_cnt when C_debug
+		else "10" & tx_running & rx_overruns & rx_cnt;
+	bus_out(15 downto 8) <= rx_fifo;
+	txd <= tx_ser(0);
 
 	process(clk)
 	begin
@@ -119,7 +121,7 @@ begin
 					tx_clkcnt <= x"0000";
 					tx_ser <= '1' & tx_ser(8 downto 1);
 					tx_phase <= tx_phase + 1;
-					if (tx_phase = "1011") then
+					if (tx_phase = "1001") then
 						tx_phase <= "0000";
 					end if;
 				end if;
@@ -128,22 +130,21 @@ begin
 			-- rx logic
 			if (rx_phase = "0000") then
 				if (rxd = '0') then
-					-- start bit, delay sampling for 1.5 T
+					-- start bit, delay further sampling for 0.5 T
 					rx_phase <= rx_phase + 1;
-					--rx_clkcnt <= x"ffff" xor ('0' & clkdiv(15 downto 1));
-					--rx_clkcnt <= x"0000";
+					rx_clkcnt <= '0' & clkdiv(15 downto 1);
 				end if;
 			else
 				rx_clkcnt <= rx_clkcnt + 1;
 				if (rx_clkcnt = clkdiv) then
 					rx_clkcnt <= x"0000";
-					rx_des <= rxd & rx_des(8 downto 1);
+					rx_des <= rxd & rx_des(7 downto 1);
 					rx_phase <= rx_phase + 1;
-					if (rx_phase = "1011") then
+					if (rx_phase = "1010") then
 						rx_phase <= "0000";
 						rx_cnt <= rx_cnt + 1;
 						rx_fifo(7 downto 0) <= rx_des(7 downto 0);
-						-- XXX detect fifo overrun
+						-- XXX properly detect fifo overruns
 					end if;
 				end if;
 			end if;
