@@ -57,7 +57,7 @@ while {[eof $elffile] == 0} {
 	    puts "Undefined endianess at line $linenum"
 	    exit 1
 	}
-	puts -nonewline "[format %08X $addr]: "
+	puts -nonewline "[format %08x $addr]: "
 	set l1 [string range $line 0 40]
 	for { set i 1 } { $i <= 4} { incr i } {
 	    set word [lindex $l1 $i]
