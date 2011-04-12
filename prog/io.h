@@ -6,13 +6,15 @@
 #define	IO_BASE		0xe0000000
 
 #define	IO_LED		0x0
-#define	IO_TSC		0x4
-#define	IO_LCD_DATA	0x8
+#define	IO_SIO		0x4
+#define	IO_TSC		0x8
+#define	IO_LCD_DATA	0xc	/* XXX dummy addr */
 #define	IO_LCD_CTRL	0xc
 
 #define	LCD_CTRL_RS	0x01
 #define	LCD_CTRL_E	0x02
-#define	LCD_DELAY	5000		/* In clock ticks, OK up to 200 MHz */
+//#define	LCD_DELAY	5000		/* In clock ticks, OK up to 200 MHz */
+#define	LCD_DELAY	5
 
 /* In the default design the clock ticks at 75 MHz */
 #define	CPU_FREQ	75000000
