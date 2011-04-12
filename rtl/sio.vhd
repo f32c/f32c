@@ -72,6 +72,14 @@ architecture Behavioral of sio is
 	signal rx_cnt: std_logic_vector(1 downto 0);
 	signal rx_overruns: std_logic;
 begin
+	--
+	--    rx / tx phases:
+	--	"0000" idle
+	--	"0001" start bit
+	--	"0010".."1001" data bits
+	--	"1010" stop bit
+	--
+
 	fixed_baudrate:
 	if C_fixed_baudrate generate
 	begin
@@ -94,8 +102,10 @@ begin
 					clkdiv <= bus_in(31 downto 16);
 				end if;
 				if (byte_we(0) = '1') then
-					tx_phase <= "0001";
-					tx_ser <= bus_in(7 downto 0) & '0';
+					if (tx_phase = "0000") then
+						tx_phase <= tx_phase + 1;
+						tx_ser <= bus_in(7 downto 0) & '0';
+					end if;
 				else
 					rx_cnt <= "00";
 					rx_overruns <= '0';
@@ -103,12 +113,6 @@ begin
 			end if;
 
 			-- tx logic
-			--    tx phases:
-			--	"0000" idle
-			--	"0001" start bit
-			--	"0010".."1001" data bits
-			--	"1010" stop bit
-			--
 			if (tx_phase /= "0000") then
 				tx_clkcnt <= tx_clkcnt + 1;
 				if (tx_clkcnt = clkdiv) then
@@ -117,6 +121,29 @@ begin
 					tx_phase <= tx_phase + 1;
 					if (tx_phase = "1011") then
 						tx_phase <= "0000";
+					end if;
+				end if;
+			end if;
+
+			-- rx logic
+			if (rx_phase = "0000") then
+				if (rxd = '0') then
+					-- start bit, delay sampling for 1.5 T
+					rx_phase <= rx_phase + 1;
+					--rx_clkcnt <= x"ffff" xor ('0' & clkdiv(15 downto 1));
+					--rx_clkcnt <= x"0000";
+				end if;
+			else
+				rx_clkcnt <= rx_clkcnt + 1;
+				if (rx_clkcnt = clkdiv) then
+					rx_clkcnt <= x"0000";
+					rx_des <= rxd & rx_des(8 downto 1);
+					rx_phase <= rx_phase + 1;
+					if (rx_phase = "1011") then
+						rx_phase <= "0000";
+						rx_cnt <= rx_cnt + 1;
+						rx_fifo(7 downto 0) <= rx_des(7 downto 0);
+						-- XXX detect fifo overrun
 					end if;
 				end if;
 			end if;
