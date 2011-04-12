@@ -41,9 +41,13 @@ main(void)
 			continue;
 		}
 
-		if ((c >= '0' && c <= '9') || (c >= 'a'  && c <= 'f')) {
-			if (c >= 'a')
-				c = c - 'a' + 10;
+		/* Normalize to capital letters */
+		if (c >= 'a')
+			c -= 32;
+
+		if ((c >= '0' && c <= '9') || (c >= 'A'  && c <= 'F')) {
+			if (c >= 'A')
+				c = c - 'A' + 10;
 			else
 				c = c - '0';
 			cur_word = (cur_word << 4) | (c & 0x0f);
