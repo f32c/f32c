@@ -16,5 +16,3 @@ ASM_ENTRY(_start)
 	lui	sp, 0x0001
 	jal	_C_LABEL(main)
 	lui	k1, (IO_BASE >> 16)
-	b	1b
-	nop
