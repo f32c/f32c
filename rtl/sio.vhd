@@ -121,7 +121,7 @@ begin
 					tx_clkcnt <= x"0000";
 					tx_ser <= '1' & tx_ser(8 downto 1);
 					tx_phase <= tx_phase + 1;
-					if (tx_phase = "1001") then
+					if (tx_phase = "1010") then
 						tx_phase <= "0000";
 					end if;
 				end if;
