@@ -1,6 +1,6 @@
 
 #LOADADDR = 0x80100100
-LOADADDR = 0x00000000
+LOADADDR = 0x00000180
 
 # -EB big-endian (default); -EL little-endian
 
@@ -36,10 +36,11 @@ CC = mips-rtems-gcc ${CFLAGS}
 LD = mips-rtems-ld ${LDFLAGS}
 
 build:
-	$(AS) -o boot.o boot.S
-	$(CC) -o loader.o loader.c
+	$(CC) -o test1.o test1.c
+	$(AS) -o start.o ../lib/start.S
+	$(CC) -o sio.o ../lib/sio.c
 	$(LD) -o img.elf \
-	    boot.o loader.o
+	    start.o sio.o test1.o
 
 clean:
-	rm -f boot.o loader.o img.elf
+	rm -f test1.o start.o sio.o img.elf
