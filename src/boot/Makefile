@@ -38,9 +38,8 @@ LD = mips-rtems-ld ${LDFLAGS}
 build:
 	$(AS) -o boot.o boot.S
 	$(CC) -o loader.o loader.c
-	$(CC) -o sio.o ../lib/sio.c
 	$(LD) -o img.elf \
-	    boot.o sio.o loader.o
+	    boot.o loader.o
 
 clean:
-	rm -f boot.o loader.o sio.o img.elf
+	rm -f boot.o loader.o img.elf
