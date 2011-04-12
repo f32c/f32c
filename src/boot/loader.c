@@ -46,7 +46,7 @@ main(void)
 				c = c - 'a' + 10;
 			else
 				c = c - '0';
-			cur_word = (cur_word << 4) | (c ^ 0x0f);
+			cur_word = (cur_word << 4) | (c & 0x0f);
 			cur_bits += 4;
 			if (cur_bits == 32) {
 				cur_bits = 0;
@@ -55,9 +55,8 @@ main(void)
 					if (bootaddr == NULL)
 						bootaddr =
 						    (mainfn_t *) loadaddr;
-				} else {
+				} else
 					*loadaddr++ = cur_word;
-				}
 			}
 		}
 	} while (1);
