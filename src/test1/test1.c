@@ -2,24 +2,18 @@
 #ifndef XXX
 #include <io.h>
 #include <sio.h>
-#include <stdio.h>
 #include <types.h>
-#else
-#include <stdio.h>
-#define sio_getchar() getchar()
-#define sio_putchar(c) putchar(c)
 #endif
+#include <stdio.h>
 
 
 int
 main(void)
 {
 	int cnt = 0;
-	int c;
+	int c = '\n';
 	
 	do {
-		c = sio_getchar();
-
 		if (c == '\r' || c == '\n') {
 			printf("\n");
 			printf("Hello, world!\n");
@@ -38,10 +32,15 @@ main(void)
 			printf("  o: cnt = %o (neg %o)\n", cnt, -cnt);
 			printf("  b: cnt = %b (neg %b)\n", cnt, -cnt);
 			cnt++;
-			continue;
 		}
 
-		sio_putchar(c);
+		c = getchar();
+
+		/* Exit to bootloader on CTRL+C */
+		if (c == 3)
+			return(0);
+
+		putchar(c);
 	} while (cnt < 100);
 }
 
