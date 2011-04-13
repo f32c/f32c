@@ -15,3 +15,4 @@ typedef	long long		__int64_t;
 typedef	unsigned long long	__uint64_t;
 
 typedef	__uint8_t		u_char;
+typedef	__uint32_t		u_int;
