@@ -42,6 +42,7 @@ entity clkgen is
 		clk_25m: in std_logic;
 		sel: in std_logic;
 		key: in std_logic; -- one-step clocking
+		res: in std_logic; -- only when C_debug is enabled
 		clk: out std_logic
 	);
 end clkgen;
@@ -52,6 +53,7 @@ architecture Behavioral of clkgen is
 	signal key_d: std_logic_vector(19 downto 0) := x"00000";
 	signal key_r: std_logic := '0';
 	signal sel_r: std_logic := '0';
+	signal resl: std_logic;
 begin
 
 	-- PLL generator
@@ -60,10 +62,12 @@ begin
         	CLK => clk_25m, LOCK => pll_lock, CLKOP => pll_clk
 	);
 
+	resl <= not res and pll_lock when C_debug else pll_lock;
+
 	-- reset
 	gsr_inst: GSR
 	port map (
-		gsr => pll_lock
+		gsr => resl
 	);
 
 	G_nodebug:
