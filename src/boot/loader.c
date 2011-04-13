@@ -5,7 +5,7 @@
 
 typedef int mainfn_t(void);
 
-static char *msg = "\nulxp2> ";
+static char *msg = "\r\nulxp2> ";
 
 int
 main(void)
@@ -23,13 +23,17 @@ main(void)
 		} while ((c & SIO_RX_BYTES) == 0);
 		c = (c >> 8) & 0xff;
 
-		OUTB(IO_SIO, c);
+		if (bootaddr == NULL && loadaddr == NULL)
+			OUTB(IO_SIO, c);
 
 		if (c == '\r') {
 			if (loadaddr == NULL) {
-				if (bootaddr != NULL)
+				if (bootaddr != NULL) {
+					/* Start with a clean stack */
+					__asm __volatile__(" lui $29, 0x0001");
 					bootaddr();
-				else
+					__asm __volatile__(" j _start");
+				} else
 					for (cp = msg; *cp != 0; cp++) {
 						do {
 							INW(c, IO_SIO);
@@ -62,7 +66,8 @@ main(void)
 				} else
 					*loadaddr++ = cur_word;
 			}
-		}
+		} else
+			cur_bits = 0;
 	} while (1);
 }
 
