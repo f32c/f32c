@@ -13,7 +13,7 @@ static int sio_rxbuf_tail = 1;
 static int
 sio_probe_rx(void)
 {
-	register int c;
+	int c;
 
 	INW(c, IO_SIO);
 	if (c & SIO_RX_BYTES) {
@@ -25,28 +25,42 @@ sio_probe_rx(void)
 
 
 int
-sio_getchar(void)
+sio_getchar(int blocking)
 {
-	register int c;
+	int c;
+	int busy;
 
 	/* Any new characters received from RS-232? */
 	do {
 		sio_probe_rx();
-	} while (sio_rxbuf_head == sio_rxbuf_tail);
+		busy = (sio_rxbuf_head == sio_rxbuf_tail);
+	} while (blocking && busy);
 
-	c = sio_rxbuf[sio_rxbuf_tail++];
-	sio_rxbuf_tail &= SIO_RXBUFMASK;
-	return (c);
+	if (busy)
+		return (-1);
+	else {
+		c = sio_rxbuf[sio_rxbuf_tail++];
+		sio_rxbuf_tail &= SIO_RXBUFMASK;
+		return (c);
+	}
 }
 
 
-void
-sio_putchar(int c)
+int
+sio_putchar(int c, int blocking)
 {
-	register int in;
+	int in;
+	int busy;
 
 	do {
 		in = sio_probe_rx();
-	} while (in & SIO_TX_BUSY);
-	OUTB(IO_SIO, c);
+		busy = (in & SIO_TX_BUSY);
+	} while (blocking && busy);
+
+	if (busy)
+		return (-1);
+	else {
+		OUTB(IO_SIO, c);
+		return (0);
+	}
 }
