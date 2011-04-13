@@ -39,7 +39,7 @@
 #include <types.h>
 
 
-#define PCHAR(c) {sio_putchar(c);}
+#define PCHAR(c) {sio_putchar(c, 1);}
 #define	MAXNBUF	32
 
 

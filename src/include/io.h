@@ -53,5 +53,14 @@
 		} while (current - start < (ticks));			\
 	} while (0);
 
+
+inline int
+rdtsc(void) {
+	register int tsc;
+
+	INW(tsc, IO_TSC);
+	return (tsc);
+}
+
 #endif /* !_IO_H_ */
 

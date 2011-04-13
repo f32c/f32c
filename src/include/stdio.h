@@ -2,6 +2,12 @@
 #ifndef _STDIO_H_
 #define _STDIO_H_
 
-int      printf(const char * __restrict, ...);
+#include <sio.h>
+
+
+#define	getchar()	sio_getchar(1)
+#define	putchar(c)	sio_putchar(c, 1)
+
+int	printf(const char * __restrict, ...);
 
 #endif /* !_STDIO_H_ */
