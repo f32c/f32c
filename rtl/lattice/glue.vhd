@@ -197,7 +197,7 @@ begin
 	);
 	end generate; -- serial_debug
 	
-	rs232_tx <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
+	rs232_tx <= debug_txd when C_debug and sw(2) = '1' else sio_txd;
 	
 end Behavioral;
 
