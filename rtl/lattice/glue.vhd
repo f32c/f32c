@@ -42,7 +42,7 @@ entity glue is
 		-- SoC configuration options
 		C_tsc: boolean := true; -- true: +74 LUT4
 		-- debugging options
-		C_debug: boolean := false -- true: +907 LUT4
+		C_debug: boolean := true -- true: +907 LUT4
 		--
 		-- XP2-5E-5 default synthesis
 		--
@@ -91,7 +91,8 @@ begin
 	)
 	port map (
 		clk_25m => clk_25m, clk => clk,
-		sel => sw(3), key => btn_down
+		sel => sw(3), key => btn_down,
+		res => btn_up
 	);
 
 	-- the RISC core
