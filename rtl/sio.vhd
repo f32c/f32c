@@ -68,7 +68,8 @@ architecture Behavioral of sio is
 	signal tx_running, rx_running: std_logic;
 	signal tx_ser: std_logic_vector(8 downto 0);
 	signal rx_des: std_logic_vector(7 downto 0);
-	signal tx_phase, rx_phase: std_logic_vector(3 downto 0);
+	signal tx_phase: std_logic_vector(3 downto 0) := "0001";
+	signal rx_phase: std_logic_vector(3 downto 0);
 	signal rx_fifo: std_logic_vector(7 downto 0);
 	signal rx_cnt: std_logic_vector(1 downto 0);
 	signal rx_overruns: std_logic;
@@ -105,7 +106,7 @@ begin
 				end if;
 				if (byte_we(0) = '1') then
 					if (tx_phase = "0000") then
-						tx_phase <= tx_phase + 1;
+						tx_phase <= "0001";
 						tx_ser <= bus_in(7 downto 0) & '0';
 					end if;
 				else
@@ -131,7 +132,7 @@ begin
 			if (rx_phase = "0000") then
 				if (rxd = '0') then
 					-- start bit, delay further sampling for 0.5 T
-					rx_phase <= rx_phase + 1;
+					rx_phase <= "0001";
 					rx_clkcnt <= '0' & clkdiv(15 downto 1);
 				end if;
 			else
