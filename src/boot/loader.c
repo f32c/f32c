@@ -6,8 +6,8 @@
 typedef int mainfn_t(void);
 
 
-int
-main(void)
+void
+_start(void)
 {
 	mainfn_t *bootaddr;
 	int *loadaddr;
@@ -24,17 +24,29 @@ main(void)
 		} while ((c & SIO_RX_BYTES) == 0);
 		c = (c >> 8) & 0xff;
 
-		if ((void *) bootaddr == loadaddr)
+		if (bootaddr == NULL && loadaddr == NULL)
 			OUTB(IO_SIO, c);
 
 		if (c == '\r') {
 			if (loadaddr == NULL) {
 				if (bootaddr != NULL) {
-					/* Start with a clean stack */
-					__asm __volatile__(" lui $29, 0x0001");
-					bootaddr();
+					/* Start main() with a clean stack */
+					__asm __volatile__(
+						".set noreorder;"
+						"li $29, (0x80000000);"
+						"jr %1;"
+						"li %0, (0)"
+						: "=r" (bootaddr)
+						: "r" (bootaddr)
+					);
 				}
 start:
+				/* Set up IO base address */
+				__asm __volatile__(
+					"li $27, %0"
+					:
+					: "i" (IO_BASE)
+				);
 				bootaddr = NULL;
 				for (cp = "\r\nulxp2> "; *cp != 0; cp++) {
 					do {
@@ -61,9 +73,9 @@ start:
 			cur_word = (cur_word << 4) | (c & 0x0f);
 			cur_bits = (cur_bits + 4) & 0x1f;
 			if (cur_bits == 0) {
-				if (loadaddr == NULL)
+				if (loadaddr == NULL) {
 					loadaddr = (int *) cur_word;
-				else {
+				} else {
 					if (bootaddr == NULL)
 						bootaddr = (void *) loadaddr;
 					*loadaddr++ = cur_word;

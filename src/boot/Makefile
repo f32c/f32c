@@ -4,11 +4,12 @@
 # Bootloader uses a non-default loadaddr
 LOADADDR = 0x00000000
 
+# Do not use GP-relative addressing
+CFLAGS += -G 0
+
 build:
-	$(AS) -o boot.o boot.S
 	$(CC) -o loader.o loader.c
-	$(LD) -o img.elf \
-	    boot.o loader.o
+	$(LD) -o img.elf loader.o
 
 clean:
-	rm -f boot.o loader.o img.elf
+	rm -f loader.o img.elf
