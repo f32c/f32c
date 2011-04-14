@@ -20,6 +20,8 @@ _start(void)
 
 	do {
 		do {
+			INW(c, IO_TSC);
+			OUTB(IO_LED, c >> 24);
 			INW(c, IO_SIO);
 		} while ((c & SIO_RX_BYTES) == 0);
 		c = (c >> 8) & 0xff;
