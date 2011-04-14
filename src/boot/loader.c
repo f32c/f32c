@@ -30,13 +30,16 @@ _start(void)
 		if (c == '\r') {
 			if (loadaddr == NULL) {
 				if (bootaddr != NULL) {
-					/* Start main() with a clean stack */
+					/*
+					 * Start main() with a clean stack,
+					 * and return address set to 0.
+					 */
 					__asm __volatile__(
 						".set noreorder;"
 						"li $29, (0x80000000);"
-						"jr %1;"
-						"li %0, (0)"
-						: "=r" (bootaddr)
+						"jr %0;"
+						"li $31, (0)"
+						:
 						: "r" (bootaddr)
 					);
 				}
