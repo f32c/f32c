@@ -42,7 +42,7 @@ entity glue is
 		-- SoC configuration options
 		C_tsc: boolean := true; -- true: +74 LUT4
 		-- debugging options
-		C_debug: boolean := true -- true: +907 LUT4
+		C_debug: boolean := false -- true: +907 LUT4
 		--
 		-- XP2-5E-5 default synthesis
 		--
@@ -54,6 +54,8 @@ entity glue is
 		clk_25m: in std_logic;
 		rs232_tx: out std_logic;
 		rs232_rx: in std_logic;
+		spi_so: in std_logic;
+		spi_cen, spi_sck, spi_si: out std_logic;
 		led: out std_logic_vector(7 downto 0);
 		btn_left, btn_right, btn_up, btn_down, btn_center: in std_logic;
 		sw: in std_logic_vector(3 downto 0)
@@ -74,6 +76,7 @@ architecture Behavioral of glue is
 	-- I/O
 	signal from_sio: std_logic_vector(31 downto 0);
 	signal sio_txd, sio_ce: std_logic;
+	signal spi_cen_reg, spi_sck_reg, spi_si_reg: std_logic;
 	signal led_reg: std_logic_vector(7 downto 0);
 	signal tsc: std_logic_vector(31 downto 0);
 	signal input: std_logic_vector(31 downto 0);
@@ -137,9 +140,10 @@ begin
 		else dmem_addr_strobe;
 
 	-- I/O port map:
-	-- 0xe******0:  (1B, WR) LED
-	-- 0xe******4:  (4B, WR) SIO
+	-- 0xe******0:  (4B, RW) GPIO (SPI, LED)
+	-- 0xe******4:  (4B, RW) SIO
 	-- 0xe******8:  (4B, RD) TSC
+	-- 0xe******c:  (4B, WR) PCM (not yet)
 	-- I/O write access:
 	process(clk)
 	begin
@@ -147,9 +151,17 @@ begin
 			if (C_tsc) then
 				tsc <= tsc + 1;
 			end if;
-			if dmem_addr(31 downto 28) = "1110" and dmem_addr(3 downto 2) = "00"
-			    and dmem_addr_strobe = '1' and dmem_byte_we /= "0000" then
-				led_reg <= cpu_to_dmem(7 downto 0);
+			if dmem_addr(31 downto 28) = "1110"
+			    and dmem_addr(3 downto 2) = "00"
+			    and dmem_addr_strobe = '1' then
+				if dmem_byte_we(0) = '1' then
+					led_reg <= cpu_to_dmem(7 downto 0);
+				end if;
+				if dmem_byte_we(3) = '1' then
+					spi_si_reg <= cpu_to_dmem(31);
+					spi_sck_reg <= cpu_to_dmem(30);
+					spi_cen_reg <= cpu_to_dmem(29);
+				end if;
 			end if;
 		end if;
 	end process;
@@ -157,8 +169,9 @@ begin
 	process(clk)
 	begin
 		if rising_edge(clk) then
-			input <= x"0000" & "0000" & sw &
-			    "000" & btn_center & btn_up & btn_down & btn_left & btn_right;
+			input <= spi_so & "000" & x"0000" & sw &
+			    "000" & btn_center &
+			    btn_up & btn_down & btn_left & btn_right;
 		end if;
 	end process;
 
@@ -170,8 +183,10 @@ begin
 	final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = "1110"
 		else dmem_to_cpu;
 
-	--led <= led_reg;
-	led <= from_sio(15 downto 8);
+	led <= led_reg;
+	spi_si <= spi_si_reg;
+	spi_sck <= spi_sck_reg;
+	spi_cen <= spi_cen_reg;
 
 	-- Block RAM
 	bram: entity bram
