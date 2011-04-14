@@ -5,25 +5,26 @@
 
 typedef int mainfn_t(void);
 
-static char *msg = "\r\nulxp2> ";
 
 int
 main(void)
 {
-	mainfn_t *bootaddr = NULL;
-	int *loadaddr = NULL;
-	int cur_bits = 0;
-	int cur_word = 0;	/* Appease gcc -Wall */
+	mainfn_t *bootaddr;
+	int *loadaddr;
+	int cur_bits;
+	int cur_word;
 	int c;
 	char *cp;
 	
+	goto start;
+
 	do {
 		do {
 			INW(c, IO_SIO);
 		} while ((c & SIO_RX_BYTES) == 0);
 		c = (c >> 8) & 0xff;
 
-		if (bootaddr == NULL && loadaddr == NULL)
+		if ((void *) bootaddr == loadaddr)
 			OUTB(IO_SIO, c);
 
 		if (c == '\r') {
@@ -32,17 +33,20 @@ main(void)
 					/* Start with a clean stack */
 					__asm __volatile__(" lui $29, 0x0001");
 					bootaddr();
-					__asm __volatile__(" j _start");
-				} else
-					for (cp = msg; *cp != 0; cp++) {
-						do {
-							INW(c, IO_SIO);
-						} while (c & SIO_TX_BUSY);
-						OUTB(IO_SIO, *cp);
-					}
-			} else
-				loadaddr = NULL;
-			continue;
+				}
+start:
+				bootaddr = NULL;
+				for (cp = "\r\nulxp2> "; *cp != 0; cp++) {
+					do {
+						INW(c, IO_SIO);
+					} while (c & SIO_TX_BUSY);
+					OUTB(IO_SIO, *cp);
+				}
+			}
+			loadaddr = NULL;
+			cur_bits = 0;
+			cur_word = 0;
+			c = 0;
 		}
 
 		/* Normalize to capital letters */
@@ -55,16 +59,15 @@ main(void)
 			else
 				c = c - '0';
 			cur_word = (cur_word << 4) | (c & 0x0f);
-			cur_bits += 4;
-			if (cur_bits == 32) {
-				cur_bits = 0;
-				if (loadaddr == NULL) {
+			cur_bits = (cur_bits + 4) & 0x1f;
+			if (cur_bits == 0) {
+				if (loadaddr == NULL)
 					loadaddr = (int *) cur_word;
+				else {
 					if (bootaddr == NULL)
-						bootaddr =
-						    (mainfn_t *) loadaddr;
-				} else
+						bootaddr = (void *) loadaddr;
 					*loadaddr++ = cur_word;
+				}
 			}
 		} else
 			cur_bits = 0;
