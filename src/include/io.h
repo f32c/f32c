@@ -4,13 +4,22 @@
 
 #define	IO_BASE		0xe0000000
 
-#define	IO_LED		0x0
-#define	IO_SIO		0x4
-#define	IO_TSC		0x8
+#define	IO_LED		0x0	/* byte, WR */
+#define	IO_SPI		0x3	/* byte, RW */
+#define	IO_SIO		0x4	/* word, RW */
+#define	IO_TSC		0x8	/* word, RD */
+#define	IO_PCM		0xx	/* word, WR */
 
+/* SIO bitmask */
 #define	SIO_TX_BUSY	0x8
 #define	SIO_RX_BYTES	0x3
 
+/* SPI bitmask: outputs */
+#define	SPI_SI		0x80
+#define	SPI_SCK		0x40
+#define	SPI_CEN		0x20
+/* SPI bitmask: input */
+#define	SPI_SO		0x80
 
 /* I/O macros */
 
@@ -53,6 +62,14 @@
 		} while (current - start < (ticks));			\
 	} while (0);
 
+
+/*
+ * Declaration of misc. IO functions.
+ */
+
+int spi_byte(int);
+void spi_start_transaction(void);
+void spi_stop_transaction(void);
 
 inline int
 rdtsc(void) {
