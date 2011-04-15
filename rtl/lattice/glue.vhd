@@ -56,6 +56,8 @@ entity glue is
 		rs232_rx: in std_logic;
 		spi_so: in std_logic;
 		spi_cen, spi_sck, spi_si: out std_logic;
+		p_ring: out std_logic;
+		p_tip: out std_logic_vector(3 downto 0);
 		led: out std_logic_vector(7 downto 0);
 		btn_left, btn_right, btn_up, btn_down, btn_center: in std_logic;
 		sw: in std_logic_vector(3 downto 0)
@@ -80,6 +82,8 @@ architecture Behavioral of glue is
 	signal led_reg: std_logic_vector(7 downto 0);
 	signal tsc: std_logic_vector(31 downto 0);
 	signal input: std_logic_vector(31 downto 0);
+	signal dac_in_l, dac_in_r: std_logic_vector(15 downto 0);
+	signal dac_acc_l, dac_acc_r: std_logic_vector(17 downto 0);
 
 	-- debugging only
 	signal trace_addr: std_logic_vector(5 downto 0);
@@ -136,8 +140,23 @@ begin
 		bus_in => cpu_to_dmem,
 		bus_out => from_sio
 	);
-	sio_ce <= '0' when dmem_addr(31 downto 28) /= "1110" or dmem_addr(3 downto 2) /= "01"
-		else dmem_addr_strobe;
+	sio_ce <= '0' when dmem_addr(31 downto 28) /= "1110" or
+	    dmem_addr(3 downto 2) /= "01" else dmem_addr_strobe;
+
+	-- PCM stereo 1-bit DAC
+	process(clk)
+	begin
+		if rising_edge(clk) then
+			dac_acc_l <=
+			    (dac_acc_l(17) & dac_acc_l(17) & dac_in_l)
+			    + dac_acc_l;
+			dac_acc_r <=
+			    (dac_acc_r(17) & dac_acc_r(17) & dac_in_r)
+			    + dac_acc_r;
+		end if;
+	end process;
+	p_ring <= dac_acc_l(17);
+	p_tip <= dac_acc_r(17) & dac_acc_r(17) & dac_acc_r(17) & dac_acc_r(17);
 
 	-- I/O port map:
 	-- 0xe******0:  (4B, RW) GPIO (SPI, LED)
@@ -161,6 +180,16 @@ begin
 					spi_si_reg <= cpu_to_dmem(31);
 					spi_sck_reg <= cpu_to_dmem(30);
 					spi_cen_reg <= cpu_to_dmem(29);
+				end if;
+			end if;
+			if dmem_addr(31 downto 28) = "1110"
+			    and dmem_addr(3 downto 2) = "00"
+			    and dmem_addr_strobe = '1' then
+				if dmem_byte_we(2) = '1' then
+					dac_in_l <= cpu_to_dmem(31 downto 16);
+				end if;
+				if dmem_byte_we(0) = '1' then
+					dac_in_r <= cpu_to_dmem(15 downto 0);
 				end if;
 			end if;
 		end if;
