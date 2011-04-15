@@ -155,8 +155,11 @@ begin
 			    + dac_acc_r;
 		end if;
 	end process;
-	p_ring <= dac_acc_l(17);
-	p_tip <= dac_acc_r(17) & dac_acc_r(17) & dac_acc_r(17) & dac_acc_r(17);
+	p_tip(3) <= dac_acc_l(17) when clk = '1' else '0';
+	p_tip(2) <= dac_acc_l(17) when clk = '1' else '0';
+	p_tip(1) <= dac_acc_l(17) when clk = '1' else '0';
+	p_tip(0) <= dac_acc_l(17) when clk = '1' else '0';
+	p_ring <= dac_acc_r(17) when clk = '1' else '0';
 
 	-- I/O port map:
 	-- 0xe******0:  (4B, RW) GPIO (SPI, LED)
@@ -183,7 +186,7 @@ begin
 				end if;
 			end if;
 			if dmem_addr(31 downto 28) = "1110"
-			    and dmem_addr(3 downto 2) = "00"
+			    and dmem_addr(3 downto 2) = "11"
 			    and dmem_addr_strobe = '1' then
 				if dmem_byte_we(2) = '1' then
 					dac_in_l <= cpu_to_dmem(31 downto 16);
