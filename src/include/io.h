@@ -8,7 +8,7 @@
 #define	IO_SPI		0x3	/* byte, RW */
 #define	IO_SIO		0x4	/* word, RW */
 #define	IO_TSC		0x8	/* word, RD */
-#define	IO_PCM		0xx	/* word, WR */
+#define	IO_PCM		0xc	/* word, WR */
 
 /* SIO bitmask */
 #define	SIO_TX_BUSY	0x8
