@@ -82,8 +82,9 @@ architecture Behavioral of glue is
 	signal led_reg: std_logic_vector(7 downto 0);
 	signal tsc: std_logic_vector(31 downto 0);
 	signal input: std_logic_vector(31 downto 0);
-	signal dac_in_l, dac_in_r: std_logic_vector(15 downto 0);
-	signal dac_acc_l, dac_acc_r: std_logic_vector(17 downto 0);
+	signal dac_in_l, dac_in_r: std_logic_vector(15 downto 3);
+	signal dac_acc_l, dac_acc_r: std_logic_vector(16 downto 3);
+	signal dac_clk: std_logic;
 
 	-- debugging only
 	signal trace_addr: std_logic_vector(5 downto 0);
@@ -144,22 +145,22 @@ begin
 	    dmem_addr(3 downto 2) /= "01" else dmem_addr_strobe;
 
 	-- PCM stereo 1-bit DAC
-	process(clk)
+        PCM_PLL: entity pcm_pll
+        port map (
+                CLK => clk_25m, LOCK => open, CLKOP => dac_clk
+        );
+	process(dac_clk)
 	begin
-		if rising_edge(clk) then
-			dac_acc_l <=
-			    (dac_acc_l(17) & dac_acc_l(17) & dac_in_l)
-			    + dac_acc_l;
-			dac_acc_r <=
-			    (dac_acc_r(17) & dac_acc_r(17) & dac_in_r)
-			    + dac_acc_r;
+		if rising_edge(dac_clk) then
+			dac_acc_l <= (dac_acc_l(16) & dac_in_l) + dac_acc_l;
+			dac_acc_r <= (dac_acc_r(16) & dac_in_r) + dac_acc_r;
 		end if;
 	end process;
-	p_tip(3) <= dac_acc_l(17) when clk = '1' else '0';
-	p_tip(2) <= dac_acc_l(17) when clk = '1' else '0';
-	p_tip(1) <= dac_acc_l(17) when clk = '1' else '0';
-	p_tip(0) <= dac_acc_l(17) when clk = '1' else '0';
-	p_ring <= dac_acc_r(17) when clk = '1' else '0';
+	p_tip(3) <= dac_acc_l(16) when dac_clk = '1' else '0';
+	p_tip(2) <= dac_acc_l(16) when dac_clk = '1' else '0';
+	p_tip(1) <= dac_acc_l(16) when dac_clk = '1' else '0';
+	p_tip(0) <= dac_acc_l(16) when dac_clk = '1' else '0';
+	p_ring <= dac_acc_r(16) when dac_clk = '1' else '0';
 
 	-- I/O port map:
 	-- 0xe******0:  (4B, RW) GPIO (SPI, LED)
@@ -189,10 +190,10 @@ begin
 			    and dmem_addr(3 downto 2) = "11"
 			    and dmem_addr_strobe = '1' then
 				if dmem_byte_we(2) = '1' then
-					dac_in_l <= cpu_to_dmem(31 downto 16);
+					dac_in_l <= cpu_to_dmem(31 downto 19);
 				end if;
 				if dmem_byte_we(0) = '1' then
-					dac_in_r <= cpu_to_dmem(15 downto 0);
+					dac_in_r <= cpu_to_dmem(15 downto 3);
 				end if;
 			end if;
 		end if;
