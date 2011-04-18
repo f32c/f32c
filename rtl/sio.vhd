@@ -89,10 +89,8 @@ begin
 	clkdiv <= x"00d9" when C_debug else x"028b";
 	end generate;
 
-	-- XXX only 25 MHz and 75 MHz CPU freq encodings are supported ATM
 	tx_running <= '0' when tx_phase = "0000" else '1';
-	bus_out(5 downto 0) <= "00" & tx_running & rx_overruns & rx_cnt when C_debug
-		else "10" & tx_running & rx_overruns & rx_cnt;
+	bus_out(3 downto 0) <= tx_running & rx_overruns & rx_cnt;
 	bus_out(15 downto 8) <= rx_fifo;
 	txd <= tx_ser(0);
 
