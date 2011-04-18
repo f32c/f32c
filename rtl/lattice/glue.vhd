@@ -171,9 +171,6 @@ begin
 	process(clk)
 	begin
 		if rising_edge(clk) then
-			if (C_tsc) then
-				tsc <= tsc + 1;
-			end if;
 			if dmem_addr(31 downto 28) = "1110"
 			    and dmem_addr(3 downto 2) = "00"
 			    and dmem_addr_strobe = '1' then
@@ -205,6 +202,15 @@ begin
 			input <= spi_so & "000" & x"0000" & sw &
 			    "000" & btn_center &
 			    btn_up & btn_down & btn_left & btn_right;
+		end if;
+	end process;
+
+	process(clk_25m)
+	begin
+		if rising_edge(clk_25m) then
+			if (C_tsc) then
+				tsc <= tsc + 1;
+			end if;
 		end if;
 	end process;
 
