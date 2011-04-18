@@ -10,13 +10,24 @@
 int
 main(void)
 {
+#if 0
 	int wav_stream_locked = 0;
-	int cnt = 0;
 	int pcm_out = 0;
-	int c = '\n';
+#endif
 	int i = 0;
+	int c, cnt, led = 0x69;
 	
-	printf("\n");
+	cnt = rdtsc();
+
+	for (i = 0; i < 100000; i++)
+		c = rdtsc();
+
+	c -= cnt;
+	if (c < 0)
+		c = -c;
+	printf("\n\n f32c CPU running at %d MHz\n", i * 1005 / c / 40);
+
+#if 0
 	OUTB(IO_LED, 0xf0);
 	spi_stop_transaction();
 	/* SPI: Read JEDEC ID */
@@ -117,9 +128,10 @@ main(void)
 
 	return (0);
 }
+#endif
 
-#if 0
-		continue;
+#if 1
+	for (cnt = 0, c = '\r'; cnt < 100; cnt++) {
 
 		if (c == '\r' || c == '\n') {
 			printf("\n");
@@ -138,9 +150,9 @@ main(void)
 			printf("  p: cnt = %p (neg %p)\n", cnt, -cnt);
 			printf("  o: cnt = %o (neg %o)\n", cnt, -cnt);
 			printf("  b: cnt = %b (neg %b)\n", cnt, -cnt);
-			cnt++;
 		}
 
+#if 0
 		vol = 100;
 		pcm_out = 0x4000;
 		for (c = 0; c < 30000; c++) {
@@ -165,14 +177,25 @@ main(void)
 		}
 continue;
 		printf("Done.\n");
+#endif
 
-		c = getchar();
+		do {
+			c = i - rdtsc();
+			if (c < 0)
+				c = -c;
+			if (c > 1000000) {
+				led ^= 0xff;
+				OUTB(IO_LED, led);
+				i = rdtsc();
+			}
+			c = sio_getchar(0);
+		} while (c < 0);
 
 		/* Exit to bootloader on CTRL+C */
 		if (c == 3)
 			return(0);
 
 		putchar(c);
-	} while (cnt < 100);
-
+	}
+}
 #endif
