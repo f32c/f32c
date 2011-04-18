@@ -80,7 +80,7 @@ architecture Behavioral of glue is
 	signal sio_txd, sio_ce: std_logic;
 	signal spi_cen_reg, spi_sck_reg, spi_si_reg: std_logic;
 	signal led_reg: std_logic_vector(7 downto 0);
-	signal tsc: std_logic_vector(31 downto 0);
+	signal tsc: std_logic_vector(34 downto 0);
 	signal input: std_logic_vector(31 downto 0);
 	signal dac_in_l, dac_in_r: std_logic_vector(15 downto 3);
 	signal dac_acc_l, dac_acc_r: std_logic_vector(16 downto 3);
@@ -217,7 +217,7 @@ begin
 	-- XXX replace with a balanced multiplexer
 	io_to_cpu <= input when dmem_addr(3 downto 2) = "00"
 		else from_sio when dmem_addr(3 downto 2) = "01"
-		else tsc;
+		else tsc(34 downto 3);
 
 	final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = "1110"
 		else dmem_to_cpu;
