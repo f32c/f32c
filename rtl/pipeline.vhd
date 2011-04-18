@@ -85,7 +85,7 @@ architecture Behavioral of pipeline is
 	signal ID_running: boolean;
 	signal ID_reg1_addr, ID_reg2_addr, ID_writeback_addr: std_logic_vector(4 downto 0);
 	signal ID_reg1_data, ID_reg2_data: std_logic_vector(31 downto 0);
-	signal ID_eff_reg1, ID_eff_reg2, ID_alu_op2: std_logic_vector(31 downto 0);
+	signal ID_alu_op2: std_logic_vector(31 downto 0);
 	signal ID_fwd_ex_reg1, ID_fwd_ex_reg2, ID_fwd_ex_alu_op2: boolean;
 	signal ID_fwd_mem_reg1, ID_fwd_mem_reg2, ID_fwd_mem_alu_op2: boolean;
 	signal ID_jump_register: boolean;
@@ -350,7 +350,7 @@ begin
 			cop0 => ID_cop0
 		);
 
-	-- three- or four-ported register file: async read, sync write
+	-- three- or four-ported register file: 2(3) async reads, 1 sync write
 	regfile: entity reg1w2r
 		generic map(
 			C_register_technology => C_register_technology
@@ -361,7 +361,7 @@ begin
 			wr_addr => MEM_WB_writeback_addr,
 			rd1_data => ID_reg1_data, rd2_data => ID_reg2_data,
 			rdd_data => reg_trace_data, wr_data => WB_writeback_data,
-			wr_enable => MEM_WB_write_enable, clk => clk
+			wr_enable => MEM_WB_write_enable, clk => not clk
 		);
 	
 	-- stall the IF and ID stages if any of the following conditions hold:
@@ -389,15 +389,7 @@ begin
 		(ID_ignore_reg2 or not (ID_fwd_ex_reg2 or ID_fwd_mem_reg2)));
 	end generate;
 	
-	-- forward result from writeback stage if needed
-	ID_eff_reg1 <=
-		WB_writeback_data when ID_reg1_addr = MEM_WB_writeback_addr and
-		MEM_WB_write_enable = '1' else ID_reg1_data;
-	ID_eff_reg2 <=
-		WB_writeback_data when ID_reg2_addr = MEM_WB_writeback_addr and
-		MEM_WB_write_enable = '1' else ID_reg2_data;
-		
-	ID_alu_op2 <= ID_immediate when ID_use_immediate else ID_eff_reg2;
+	ID_alu_op2 <= ID_immediate when ID_use_immediate else ID_reg2_data;
 	ID_jump_register <=
 		IF_ID_special and IF_ID_instruction(5 downto 1) = "00100";
 	
@@ -472,8 +464,8 @@ begin
 					end if;
 				else
 					-- propagate next instruction from ID to EX stage
-					ID_EX_reg1_data <= ID_eff_reg1;
-					ID_EX_reg2_data <= ID_eff_reg2;
+					ID_EX_reg1_data <= ID_reg1_data;
+					ID_EX_reg2_data <= ID_reg2_data;
 					ID_EX_alu_op2 <= ID_alu_op2;
 					ID_EX_immediate <= ID_immediate;
 					ID_EX_sign_extend <= ID_sign_extend;
@@ -821,8 +813,8 @@ begin
 				when x"05" => trace_data <= IF_ID_instruction;
 				when x"06" => trace_data <= ID_EX_instruction;
 				when x"07" => trace_data <= EX_MEM_instruction;
-				when x"08" => trace_data <= ID_eff_reg1;
-				when x"09" => trace_data <= ID_eff_reg2;
+				when x"08" => trace_data <= ID_reg1_data;
+				when x"09" => trace_data <= ID_reg2_data;
 				when x"0a" => trace_data <= EX_eff_reg1;
 				when x"0b" => trace_data <= EX_eff_reg2;
 				when x"0c" => trace_data <= EX_eff_alu_op2;
