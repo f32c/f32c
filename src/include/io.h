@@ -71,12 +71,21 @@ int spi_byte(int);
 void spi_start_transaction(void);
 void spi_stop_transaction(void);
 
+/*
+ * Fetch the current timestamp counter value.  Given that CPU and TSC
+ * clocks are not guaranteed to be in sync, we need to read the TSC
+ * register twice, and repeat the process until we have obtained two
+ * consistent readings.
+ */
 inline int
 rdtsc(void) {
-	register int tsc;
+	register int tsc1, tsc2;
 
-	INW(tsc, IO_TSC);
-	return (tsc);
+	do {
+		INW(tsc1, IO_TSC);
+		INW(tsc2, IO_TSC);
+	} while (tsc2 != tsc1);
+	return (tsc2);
 }
 
 #endif /* !_IO_H_ */
