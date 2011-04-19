@@ -15,17 +15,32 @@ main(void)
 	int pcm_out = 0;
 #endif
 	int i = 0;
-	int c, cnt, led = 0x69;
+	int c, cnt;
 	
-	cnt = rdtsc();
-
-	for (i = 0; i < 100000; i++)
-		c = rdtsc();
-
-	c -= cnt;
+	c = 0;
+	for (i = 0; i <= 100; i++) {
+		putchar('\r');
+		if (i == 2 || i == 100)
+			c = rdtsc() - c;
+	}
 	if (c < 0)
 		c = -c;
-	printf("\n\n f32c CPU running at %d MHz\n", i * 1005 / c / 40);
+	/*
+	 * 150.0 MHz c = 13358	div = 1302
+	 * 133.3 MHz c = 15026  div = 1157
+	 *  75.0 MHz c = 26713  div = 651
+	 *  66.7 MHz c = 30056  div = 579
+	 *  25.0 MHz c = 80151  div = 217
+	 *  12.5 MHz c = xxxxx  div = 109
+	 */
+	for (i = 0, cnt = 0; i < 82074624; i += c)
+		cnt += 217;
+
+	printf("\nc = %d\n", c);
+	printf("cnt = %d\n", cnt);
+	printf("div = %d\n", cnt >> 10);
+
+	printf("\n\n f32c CPU running at %d MHz\n", 2003550000 / c);
 
 #if 0
 	OUTB(IO_LED, 0xf0);
@@ -180,14 +195,7 @@ continue;
 #endif
 
 		do {
-			c = i - rdtsc();
-			if (c < 0)
-				c = -c;
-			if (c > 1000000) {
-				led ^= 0xff;
-				OUTB(IO_LED, led);
-				i = rdtsc();
-			}
+			OUTB(IO_LED, rdtsc() / (3125000 / 16));
 			c = sio_getchar(0);
 		} while (c < 0);
 
