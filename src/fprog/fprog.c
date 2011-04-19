@@ -53,6 +53,8 @@ rxbyte(void)
 	
 	do {
 		res = read(sioid, &b, 1);
+		if (res == 0)
+			usleep(10000);
 	} while (res != 1);
 	return(b);
 }
@@ -149,6 +151,39 @@ tx_frame(void)
 
 
 #ifndef X
+static void
+dispatch(void)
+{
+	fph_t *fphp = (fph_t *) buf;
+	int error = 0;
+	int i;
+	char *cp;
+
+	/* Just in case we got here w/o proper SPI init */
+	spi_stop_transaction();
+
+	switch (fphp->fp_cmd) {
+	case FP_CMD_READID:
+		/* SPI: Read JEDEC ID */
+		spi_start_transaction();
+		spi_byte(0x9f); /* JEDEC Read-ID */
+		for (i = 0, cp = &buf[sizeof(*fphp)]; i < 3; i++)
+			*cp++ = spi_byte(0);
+		spi_stop_transaction();
+		fphp->payload_len = 3;
+		break;
+
+	default:
+		error = -1;
+		fphp->payload_len = 0;
+		break;
+	}
+
+	fphp->fp_res = error;
+	tx_frame();
+}
+
+
 int
 main(void)
 {
@@ -166,12 +201,14 @@ main(void)
 
 	do {
 		error = rx_frame();
+		if (error) {
+			fphp->fp_res = error;
+			fphp->payload_len = 0;
+			tx_frame();
+			continue;
+		}
 
-		fphp->fp_cmd = 123;
-		fphp->fp_res = error;
-		fphp->payload_len = 0;
-		tx_frame();
-		OUTB(IO_LED, rdtsc());
+		dispatch();
 	} while (1);
 
 	return (0);
@@ -184,8 +221,10 @@ main(void)
 {
 	int i, j, error;
 	fph_t *fphp = (fph_t *) buf;
+	char *cp;
 
-	error = system("stty -f /dev/cuaU0.init cs8 raw speed 460800");
+	/* XXX replace with cfmakeraw() and tcsetattr() */
+	error = system("stty -f /dev/cuaU0.init cs8 raw speed 460800 >/dev/null");
         if (error < 0)
                 return (error);
 	sioid = open("/dev/cuaU0", O_RDWR|O_NONBLOCK|O_DIRECT|O_TTY_INIT);
@@ -194,7 +233,6 @@ main(void)
 
 	fphp->fp_cmd = FP_CMD_READID;
 	fphp->fp_addr = 0;
-do {
 	fphp->fp_addr++;
 	fphp->payload_len = 0;
 	tx_frame();
@@ -204,11 +242,16 @@ do {
 		fprintf(stderr, "rx_frame() failed\n");
 		return(1);
 	}
+#if 0
 	printf("fp_cmd: %d\n", fphp->fp_cmd);
 	printf("fp_res: %d\n", fphp->fp_res);
 	printf("fp_addr: %d\n", fphp->fp_addr);
-} while (fphp->fp_res == 0);
-
+#endif
+	cp = &buf[sizeof(*fphp)];
+	printf("JEDEC ID:");
+	for (i = 0; i < fphp->payload_len; i++)
+		printf(" %02x", *cp++ & 0xff);
+	printf("\n");
 
 	return (0);
 }
