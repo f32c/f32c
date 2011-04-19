@@ -32,10 +32,6 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity sio is
-	generic (
-		C_fixed_baudrate: boolean := true;
-		C_debug: boolean
-	);
 	port (
 		ce, clk: in std_logic;
 		byte_we: in std_logic_vector(3 downto 0);
@@ -63,7 +59,7 @@ end sio;
 --  7..0   tx char
 --
 architecture Behavioral of sio is
-	signal clkdiv: std_logic_vector(15 downto 0);
+	signal clkdiv: std_logic_vector(15 downto 0) := x"0278";
 	signal tx_clkcnt, rx_clkcnt: std_logic_vector(15 downto 0);
 	signal tx_running, rx_running: std_logic;
 	signal tx_ser: std_logic_vector(8 downto 0);
@@ -82,13 +78,6 @@ begin
 	--	"1010" stop bit
 	--
 
-	fixed_baudrate:
-	if C_fixed_baudrate generate
-	begin
-	-- 115200 bps with 25 MHz or 75 MHz system clock
-	clkdiv <= x"00d9" when C_debug else x"028b";
-	end generate;
-
 	tx_running <= '0' when tx_phase = "0000" else '1';
 	bus_out(3 downto 0) <= tx_running & rx_overruns & rx_cnt;
 	bus_out(15 downto 8) <= rx_fifo;
@@ -99,7 +88,7 @@ begin
 		if (rising_edge(clk)) then
 			-- bus interface logic
 			if (ce = '1') then
-				if (not C_fixed_baudrate and byte_we(3 downto 2) = "11") then
+				if byte_we(3 downto 2) = "11" then
 					clkdiv <= bus_in(31 downto 16);
 				end if;
 				if (byte_we(0) = '1') then
