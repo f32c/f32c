@@ -15,11 +15,13 @@
 #define	FP_CMD_READ_SECTOR	2
 #define	FP_CMD_CSUM_SECTOR	3
 #define	FP_CMD_CSUM_CHIP	4
-#define	FP_CMD_ERASE_CHIP	5
-#define	FP_CMD_ERASE_SECTOR	6
-#define	FP_CMD_WRITE_SECTOR	7
-#define	FP_CMD_SET_BAUD		8
-#define	FP_CMD_DONE		9
+#define	FP_CMD_ENABLE_WRITE	5
+#define	FP_CMD_DISABLE_WRITE	6
+#define	FP_CMD_ERASE_CHIP	7
+#define	FP_CMD_ERASE_SECTOR	8
+#define	FP_CMD_WRITE_SECTOR	9
+#define	FP_CMD_SET_BAUD		10
+#define	FP_CMD_DONE		11
 
 #define	FP_START_MARK		0x817e
 
@@ -159,7 +161,13 @@ dispatch(void)
 	int i;
 	char *cp;
 
-	/* Just in case we got here w/o proper SPI init */
+	/* Check that the device is idle before issuing next command */
+	spi_stop_transaction();
+	spi_start_transaction();
+	spi_byte(0x9f); /* RDSR */
+	do {
+		i = spi_byte(0);
+	} while (i & 1);
 	spi_stop_transaction();
 
 	switch (fphp->fp_cmd) {
@@ -171,6 +179,68 @@ dispatch(void)
 			*cp++ = spi_byte(0);
 		spi_stop_transaction();
 		fphp->payload_len = 3;
+		break;
+
+	case FP_CMD_ENABLE_WRITE:
+		spi_start_transaction();
+		spi_byte(0x50); /* EWSR */
+		spi_stop_transaction();
+
+		spi_start_transaction();
+		spi_byte(0x01); /* WRSR */
+		spi_byte(0);	/* Clear write-protect bits */
+		spi_stop_transaction();
+
+		spi_start_transaction();
+		spi_byte(0x06); /* WREN */
+		spi_stop_transaction();
+
+		fphp->payload_len = 0;
+		break;
+
+	case FP_CMD_DISABLE_WRITE:
+		spi_start_transaction();
+		spi_byte(0x04); /* WRDI */
+		spi_stop_transaction();
+
+		spi_start_transaction();
+		spi_byte(0x50); /* EWSR */
+		spi_stop_transaction();
+
+		spi_start_transaction();
+		spi_byte(0x01); /* WRSR */
+		spi_byte(0x1c);	/* Set write-protect bits */
+		spi_stop_transaction();
+
+		fphp->payload_len = 0;
+		break;
+
+	case FP_CMD_WRITE_SECTOR:
+		if (fphp->payload_len != FP_PAGESIZE) {
+			fphp->payload_len = 0;
+			error = -1;
+			break;
+		};
+		cp = &buf[sizeof(*fphp)];
+
+		spi_start_transaction();
+		spi_byte(0xad); /* AAI write mode */
+		spi_byte(fphp->fp_addr >> 16);
+		spi_byte(fphp->fp_addr >> 8);
+		spi_byte(fphp->fp_addr);
+		spi_byte(*cp++);
+		spi_byte(*cp++);
+		spi_stop_transaction();
+
+		for (i = 2; i < FP_PAGESIZE; i++) {
+			spi_start_transaction();
+			spi_byte(0xad); /* AAI write mode */
+			spi_byte(*cp++);
+			spi_byte(*cp++);
+			spi_stop_transaction();
+		}
+
+		fphp->payload_len = 0;
 		break;
 
 	default:
@@ -233,25 +303,49 @@ main(void)
 
 	fphp->fp_cmd = FP_CMD_READID;
 	fphp->fp_addr = 0;
-	fphp->fp_addr++;
 	fphp->payload_len = 0;
 	tx_frame();
-
-	error = rx_frame();
-	if (error) {
-		fprintf(stderr, "rx_frame() failed\n");
+	if (rx_frame()) {
+		fprintf(stderr, "FP_CMD_READID: rx_frame() failed\n");
 		return(1);
 	}
-#if 0
-	printf("fp_cmd: %d\n", fphp->fp_cmd);
-	printf("fp_res: %d\n", fphp->fp_res);
-	printf("fp_addr: %d\n", fphp->fp_addr);
-#endif
+	if (fphp->fp_res) {
+		fprintf(stderr, "FP_CMD_READID failed\n");
+		return(1);
+	}
 	cp = &buf[sizeof(*fphp)];
 	printf("JEDEC ID:");
 	for (i = 0; i < fphp->payload_len; i++)
 		printf(" %02x", *cp++ & 0xff);
 	printf("\n");
+
+	fphp->fp_cmd = FP_CMD_ENABLE_WRITE;
+	fphp->fp_addr = 0;
+	fphp->payload_len = 0;
+	tx_frame();
+	if (rx_frame()) {
+		fprintf(stderr, "FP_CMD_ENABLE_WRITE: rx_frame() failed\n");
+		return(1);
+	}
+	if (fphp->fp_res) {
+		fprintf(stderr, "FP_CMD_ENABLE_WRITE failed\n");
+		return(1);
+	}
+	printf("Write mode enabled\n");
+
+	fphp->fp_cmd = FP_CMD_DISABLE_WRITE;
+	fphp->fp_addr = 0;
+	fphp->payload_len = 0;
+	tx_frame();
+	if (rx_frame()) {
+		fprintf(stderr, "FP_CMD_DISABLE_WRITE: rx_frame() failed\n");
+		return(1);
+	}
+	if (fphp->fp_res) {
+		fprintf(stderr, "FP_CMD_DISABLE_WRITE failed\n");
+		return(1);
+	}
+	printf("Write mode disabled\n");
 
 	return (0);
 }
