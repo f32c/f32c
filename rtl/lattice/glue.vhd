@@ -131,9 +131,6 @@ begin
 
 	-- RS232 sio
 	sio: entity sio
-	generic map (
-		C_debug => C_debug
-	)
 	port map (
 		clk => clk, ce => sio_ce,
 		txd => sio_txd, rxd => rs232_rx,
