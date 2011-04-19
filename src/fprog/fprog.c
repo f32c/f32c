@@ -5,7 +5,6 @@
 #include <types.h>
 #else
 #include <sys/types.h>
-#include <ftdi.h>
 #include <fcntl.h>
 #endif
 #include <stdio.h>
@@ -13,12 +12,14 @@
 
 /* Host -> board commands */
 #define	FP_CMD_READID		1
-#define	FP_CMD_ERASE_CHIP	2
-#define	FP_CMD_ERASE_SECTORS	3
-#define	FP_CMD_READ_SECTOR	4
-#define	FP_CMD_WRITE_SECTOR	5
-#define	FP_CMD_SET_BAUD		6
-#define	FP_CMD_DONE		7
+#define	FP_CMD_READ_SECTOR	2
+#define	FP_CMD_CSUM_SECTOR	3
+#define	FP_CMD_CSUM_CHIP	4
+#define	FP_CMD_ERASE_CHIP	5
+#define	FP_CMD_ERASE_SECTOR	6
+#define	FP_CMD_WRITE_SECTOR	7
+#define	FP_CMD_SET_BAUD		8
+#define	FP_CMD_DONE		9
 
 #define	FP_START_MARK		0x817e
 
@@ -45,19 +46,6 @@ static char buf[FP_MAX_BLOCKSIZE + 8];
 #define	txbyte(x)	putchar(x)
 #else
 static int sioid;
-#ifdef FTDI
-static struct ftdi_context fc;  /* USB port handle */
-static int
-rxbyte(void)
-{
-	char b, res;
-	
-	do {
-		res = ftdi_read_data(&fc, &b, 1);
-	} while (res != 1);
-	return(b);
-}
-#else
 static int
 rxbyte(void)
 {
@@ -68,7 +56,6 @@ rxbyte(void)
 	} while (res != 1);
 	return(b);
 }
-#endif
 #endif
 
 
@@ -132,10 +119,6 @@ tx_frame(void)
 	int csum, len;
 	int i;
 
-#ifdef FTDI
-	ftdi_usb_purge_buffers(&fc);
-#endif
-
 	fphp->start_mark = FP_START_MARK;
 
 	/* Compute payload checksum */
@@ -159,11 +142,7 @@ tx_frame(void)
 	for (cp = buf; cp < &buf[len]; cp++)
 		txbyte(*cp);
 #else
-#ifdef FTDI
-	ftdi_write_data(&fc, buf, len);
-#else
 	write(sioid, buf, len);
-#endif
 #endif
 
 }
@@ -176,22 +155,23 @@ main(void)
 	int error;
 	fph_t *fphp = (fph_t *) buf;
 
-	/* Set baudrate */
-//	OUTW(IO_SIO + 2, 632); /* 115200 */
-//	OUTW(IO_SIO + 2, 316); /* 230400 */
-	OUTW(IO_SIO + 2, 158); /* 460800 */
-//	OUTW(IO_SIO + 2, 79); /* 921600 */
-//	OUTW(IO_SIO + 2, 47); /* 1500000 */
-//	OUTW(IO_SIO + 2, 23); /* 3000000 */
+	/* Set baudrate - divisors valid for 75 MHz main clock */
+//	OUTW(IO_SIO + 2, 632);	/*  115200 */
+//	OUTW(IO_SIO + 2, 316);	/*  230400 */
+	OUTW(IO_SIO + 2, 158);	/*  460800 */
+//	OUTW(IO_SIO + 2, 78);	/*  921600 */
+//	OUTW(IO_SIO + 2, 47);	/* 1500000 */
+//	OUTW(IO_SIO + 2, 35);	/* 2000000 */
+//	OUTW(IO_SIO + 2, 23);	/* 3000000 */
 
 	do {
 		error = rx_frame();
-		OUTB(IO_LED, error);
 
 		fphp->fp_cmd = 123;
 		fphp->fp_res = error;
-		fphp->payload_len = 4;
+		fphp->payload_len = 0;
 		tx_frame();
+		OUTB(IO_LED, rdtsc());
 	} while (1);
 
 	return (0);
@@ -203,52 +183,32 @@ int
 main(void)
 {
 	int i, j, error;
-	int *ip;
 	fph_t *fphp = (fph_t *) buf;
 
-	error = system("stty -f /dev/cuaU0.init cs8 -parenb speed 115200 -crtscts clocal -cstopb -onlcr -opost -inlcr -igncr -icrnl -ixon -ixoff -echo -echoe -echoke -echoctl");
+	error = system("stty -f /dev/cuaU0.init cs8 raw speed 460800");
         if (error < 0)
                 return (error);
 	sioid = open("/dev/cuaU0", O_RDWR|O_NONBLOCK|O_DIRECT|O_TTY_INIT);
         if (sioid < 0)
                 return (sioid);
-#ifdef FTDI
-	close(sioid);
-	ftdi_init(&fc);
-        error = ftdi_usb_open_desc(&fc, 0x0403, 0x6001,
-            "FER ULXP2 board JTAG / UART", NULL);
-        if (error < 0)
-                return (error);
-	ftdi_set_baudrate(&fc, 460800);
-	ftdi_set_line_property(&fc, BITS_8, STOP_BIT_2, NONE);
-	ftdi_set_latency_timer(&fc, 1);
-#endif
 
-	i = 0;
-	do {
-		ip = (int *) &buf[(sizeof *fphp)];
-		for (j = 0; j < 1024; j++)
-			*ip++ = random();
-		ip = (int *) &buf[(sizeof *fphp)];
-		*ip = i + 10000;
+	fphp->fp_cmd = FP_CMD_READID;
+	fphp->fp_addr = 0;
+do {
+	fphp->fp_addr++;
+	fphp->payload_len = 0;
+	tx_frame();
 
-		fphp->fp_cmd = FP_CMD_READID;
-		fphp->fp_addr = i++;
-		fphp->payload_len = 4096;
-		tx_frame();
-		*ip = 0;
+	error = rx_frame();
+	if (error) {
+		fprintf(stderr, "rx_frame() failed\n");
+		return(1);
+	}
+	printf("fp_cmd: %d\n", fphp->fp_cmd);
+	printf("fp_res: %d\n", fphp->fp_res);
+	printf("fp_addr: %d\n", fphp->fp_addr);
+} while (fphp->fp_res == 0);
 
-		error = rx_frame();
-		if (error) {
-			fprintf(stderr, "rx_frame() failed\n");
-			return(1);
-		}
-		ip = (int *) &buf[(sizeof *fphp)];
-		printf("fp_cmd: %d\n", fphp->fp_cmd);
-		printf("fp_res: %d\n", fphp->fp_res);
-		printf("fp_addr: %d\n", fphp->fp_addr);
-		printf("seq: %d\n", *ip);
-	} while (fphp->fp_res == 0);
 
 	return (0);
 }
