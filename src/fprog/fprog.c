@@ -164,11 +164,10 @@ dispatch(void)
 	/* Check that the device is idle before issuing next command */
 	spi_stop_transaction();
 	spi_start_transaction();
-	spi_byte(0x9f); /* RDSR */
-	do {
-		i = spi_byte(0);
-	} while (i & 1);
+	spi_byte(0x05); /* RDSR */
+	do {} while (spi_byte(0x05) & 1);
 	spi_stop_transaction();
+	OUTB(IO_LED, rdtsc());
 
 	switch (fphp->fp_cmd) {
 	case FP_CMD_READID:
@@ -191,18 +190,10 @@ dispatch(void)
 		spi_byte(0);	/* Clear write-protect bits */
 		spi_stop_transaction();
 
-		spi_start_transaction();
-		spi_byte(0x06); /* WREN */
-		spi_stop_transaction();
-
 		fphp->payload_len = 0;
 		break;
 
 	case FP_CMD_DISABLE_WRITE:
-		spi_start_transaction();
-		spi_byte(0x04); /* WRDI */
-		spi_stop_transaction();
-
 		spi_start_transaction();
 		spi_byte(0x50); /* EWSR */
 		spi_stop_transaction();
@@ -215,7 +206,29 @@ dispatch(void)
 		fphp->payload_len = 0;
 		break;
 
+	case FP_CMD_ERASE_CHIP:
+		spi_start_transaction();
+		spi_byte(0x06); /* WREN */
+		spi_stop_transaction();
+
+		spi_start_transaction();
+		spi_byte(0x60); /* Chip-erase */
+		spi_stop_transaction();
+
+		spi_start_transaction();
+		spi_byte(0x05); /* RDSR */
+		do {} while (spi_byte(0x05) & 1);
+		spi_stop_transaction();
+
+		spi_start_transaction();
+		spi_byte(0x04); /* WRDI */
+		spi_stop_transaction();
+
+		fphp->payload_len = 0;
+		break;
+
 	case FP_CMD_WRITE_SECTOR:
+
 		if (fphp->payload_len != FP_PAGESIZE) {
 			fphp->payload_len = 0;
 			error = -1;
@@ -223,6 +236,27 @@ dispatch(void)
 		};
 		cp = &buf[sizeof(*fphp)];
 
+		spi_start_transaction();
+		spi_byte(0x06); /* WREN */
+		spi_stop_transaction();
+
+		spi_start_transaction();
+		spi_byte(0x20); /* Sector erase */
+		spi_byte(fphp->fp_addr >> 16);
+		spi_byte(fphp->fp_addr >> 8);
+		spi_byte(fphp->fp_addr);
+		spi_stop_transaction();
+
+		spi_start_transaction();
+		spi_byte(0x05); /* RDSR */
+		do {} while (spi_byte(0x05) & 1);
+		spi_stop_transaction();
+
+		spi_start_transaction();
+		spi_byte(0x06); /* WREN */
+		spi_stop_transaction();
+
+#if 1
 		spi_start_transaction();
 		spi_byte(0xad); /* AAI write mode */
 		spi_byte(fphp->fp_addr >> 16);
@@ -233,12 +267,60 @@ dispatch(void)
 		spi_stop_transaction();
 
 		for (i = 2; i < FP_PAGESIZE; i++) {
+
+			spi_start_transaction();
+			spi_byte(0x05); /* RDSR */
+			do {} while (spi_byte(0x05) & 1);
+			spi_stop_transaction();
+
 			spi_start_transaction();
 			spi_byte(0xad); /* AAI write mode */
 			spi_byte(*cp++);
 			spi_byte(*cp++);
 			spi_stop_transaction();
 		}
+#else
+		int j;
+		for (i = 0; i < FP_PAGESIZE; i++) {
+			spi_start_transaction();
+			spi_byte(0x02); /* Byte program */
+			j = fphp->fp_addr + i;
+			spi_byte(j >> 16);
+			spi_byte(j >> 8);
+			spi_byte(j);
+			spi_byte(*cp++);
+			spi_stop_transaction();
+		}
+#endif
+
+		spi_start_transaction();
+		spi_byte(0x05); /* RDSR */
+		do {} while (spi_byte(0x05) & 1);
+		spi_stop_transaction();
+
+		spi_start_transaction();
+		spi_byte(0x04); /* WRDI */
+		spi_stop_transaction();
+
+		spi_start_transaction();
+		spi_byte(0x05); /* RDSR */
+		do {} while (spi_byte(0x05) & 1);
+		spi_stop_transaction();
+
+		spi_start_transaction();
+		spi_byte(0x0b); /* High-speed read */
+		spi_byte(0);
+		spi_byte(0);
+		spi_byte(0);
+		spi_byte(0);
+		spi_byte(0);
+		spi_byte(0);
+		spi_byte(0);
+		spi_byte(0);
+		spi_byte(0);
+		spi_byte(0);
+		spi_byte(0);
+		spi_stop_transaction();
 
 		fphp->payload_len = 0;
 		break;
@@ -287,11 +369,12 @@ main(void)
 
 #ifdef X
 int
-main(void)
+main(int argc, char *argv[])
 {
-	int i, j, error;
+	int i, j, error, maxpages = 0;
 	fph_t *fphp = (fph_t *) buf;
 	char *cp;
+	int f;
 
 	/* XXX replace with cfmakeraw() and tcsetattr() */
 	error = system("stty -f /dev/cuaU0.init cs8 raw speed 460800 >/dev/null");
@@ -300,6 +383,16 @@ main(void)
 	sioid = open("/dev/cuaU0", O_RDWR|O_NONBLOCK|O_DIRECT|O_TTY_INIT);
         if (sioid < 0)
                 return (sioid);
+
+	if (argc < 2) {
+		fprintf(stderr, "Must provide file name\n");
+		return(1);
+	}
+	f = open(argv[1], O_RDONLY);
+	if (f < 0) {
+		fprintf(stderr, "cannot open file %s\n", argv[1]);
+		return(1);
+	}
 
 	fphp->fp_cmd = FP_CMD_READID;
 	fphp->fp_addr = 0;
@@ -318,6 +411,11 @@ main(void)
 	for (i = 0; i < fphp->payload_len; i++)
 		printf(" %02x", *cp++ & 0xff);
 	printf("\n");
+	if ((*--cp & 0xff) == 0x4a)
+		maxpages = 1024;
+	else
+		maxpages = 512;
+maxpages = 1024;
 
 	fphp->fp_cmd = FP_CMD_ENABLE_WRITE;
 	fphp->fp_addr = 0;
@@ -332,6 +430,30 @@ main(void)
 		return(1);
 	}
 	printf("Write mode enabled\n");
+
+	for (i = 0; i < maxpages; i++) {
+		fphp->fp_cmd = FP_CMD_WRITE_SECTOR;
+		fphp->fp_addr = i * FP_PAGESIZE;
+		fphp->payload_len = FP_PAGESIZE;
+
+		j = read(f, &buf[sizeof(*fphp)], FP_PAGESIZE);
+		if (j != FP_PAGESIZE)
+			break;
+
+		printf("Writing page %d\n", i);
+
+		tx_frame();
+		if (rx_frame()) {
+			fprintf(stderr,
+			    "FP_CMD_WRITE_SECTOR: rx_frame() failed\n");
+			return(1);
+		}
+		if (fphp->fp_res) {
+			fprintf(stderr, "FP_CMD_WRITE_SECTOR failed\n");
+			return(1);
+		}
+	}
+	printf("Wrote %d pages\n", i);
 
 	fphp->fp_cmd = FP_CMD_DISABLE_WRITE;
 	fphp->fp_addr = 0;
