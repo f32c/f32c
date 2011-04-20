@@ -4,11 +4,12 @@
 
 #define	IO_BASE		0xe0000000
 
-#define	IO_LED		0x0	/* byte, WR */
-#define	IO_SPI		0x3	/* byte, RW */
-#define	IO_SIO		0x4	/* word, RW */
-#define	IO_TSC		0x8	/* word, RD */
-#define	IO_PCM		0xc	/* word, WR */
+#define	IO_LED		0x00	/* byte, WR */
+#define	IO_SPI		0x03	/* byte, RW */
+#define	IO_SIO		0x04	/* word, RW */
+#define	IO_TSC		0x08	/* word, RD */
+#define	IO_PCM_OUT	0x10	/* word, WR */
+#define	IO_PCM_VOL	0x14	/* word, WR */
 
 /* SIO bitmask */
 #define	SIO_TX_BUSY	0x8
