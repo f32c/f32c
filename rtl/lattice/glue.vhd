@@ -153,11 +153,11 @@ begin
 			dac_acc_r <= (dac_acc_r(16) & dac_in_r) + dac_acc_r;
 		end if;
 	end process;
-	p_tip(3) <= dac_acc_l(16) when dac_clk = '1' else '0';
-	p_tip(2) <= dac_acc_l(16) when dac_clk = '1' else '0';
-	p_tip(1) <= dac_acc_l(16) when dac_clk = '1' else '0';
-	p_tip(0) <= dac_acc_l(16) when dac_clk = '1' else '0';
-	p_ring <= dac_acc_r(16) when dac_clk = '1' else '0';
+	p_tip(3) <= dac_acc_l(16);
+	p_tip(2) <= dac_acc_l(16);
+	p_tip(1) <= dac_acc_l(16);
+	p_tip(0) <= dac_acc_l(16);
+	p_ring <= dac_acc_r(16);
 
 	-- I/O port map:
 	-- 0xe******0:  (4B, RW) GPIO (SPI, LED)
