@@ -44,10 +44,10 @@ entity glue is
 		-- debugging options
 		C_debug: boolean := false -- true: +907 LUT4
 		--
-		-- XP2-5E-5 default synthesis
+		-- XP2-8E-5 default synthesis
 		--
-		-- C_res_fwd 1, C_fast_id 1, C_predecode 0, C_tsc 1
-		-- Tot LUT4 1645 (Log 1271, RAM 192, ripple 182)
+		-- C_bp 1, C_res_fwd 1, C_fast_id 1, C_predecode 0, C_tsc 1
+		-- Tot LUT4 1841
 		--
 	);
 	port (
@@ -83,6 +83,8 @@ architecture Behavioral of glue is
 	signal tsc: std_logic_vector(34 downto 0);
 	signal input: std_logic_vector(31 downto 0);
 	signal dac_in_l, dac_in_r: std_logic_vector(15 downto 3);
+	signal dac_vol_l, dac_vol_r: std_logic_vector(15 downto 3);
+	signal dac_eff_l, dac_eff_r: std_logic_vector(15 downto 3);
 	signal dac_acc_l, dac_acc_r: std_logic_vector(16 downto 3);
 	signal dac_clk: std_logic;
 
@@ -146,11 +148,13 @@ begin
         port map (
                 CLK => clk_25m, LOCK => open, CLKOP => dac_clk
         );
+	dac_eff_l <= dac_in_l;
+	dac_eff_r <= dac_in_r;
 	process(dac_clk)
 	begin
 		if rising_edge(dac_clk) then
-			dac_acc_l <= (dac_acc_l(16) & dac_in_l) + dac_acc_l;
-			dac_acc_r <= (dac_acc_r(16) & dac_in_r) + dac_acc_r;
+			dac_acc_l <= (dac_acc_l(16) & dac_eff_l) + dac_acc_l;
+			dac_acc_r <= (dac_acc_r(16) & dac_eff_r) + dac_acc_r;
 		end if;
 	end process;
 	p_tip(3) <= dac_acc_l(16);
@@ -160,16 +164,17 @@ begin
 	p_ring <= dac_acc_r(16);
 
 	-- I/O port map:
-	-- 0xe******0:  (4B, RW) GPIO (SPI, LED)
-	-- 0xe******4:  (4B, RW) SIO
-	-- 0xe******8:  (4B, RD) TSC
-	-- 0xe******c:  (4B, WR) PCM (not yet)
+	-- 0xe*****00:  (4B, RW) GPIO (SPI, LED)
+	-- 0xe*****04:  (4B, RW) SIO
+	-- 0xe*****08:  (4B, RD) TSC
+	-- 0xe*****10:  (4B, WR) PCM signal
+	-- 0xe*****14:  (4B, WR) PCM volume
 	-- I/O write access:
 	process(clk)
 	begin
 		if rising_edge(clk) then
 			if dmem_addr(31 downto 28) = "1110"
-			    and dmem_addr(3 downto 2) = "00"
+			    and dmem_addr(4 downto 2) = "000"
 			    and dmem_addr_strobe = '1' then
 				if dmem_byte_we(0) = '1' then
 					led_reg <= cpu_to_dmem(7 downto 0);
@@ -181,13 +186,23 @@ begin
 				end if;
 			end if;
 			if dmem_addr(31 downto 28) = "1110"
-			    and dmem_addr(3 downto 2) = "11"
+			    and dmem_addr(4 downto 2) = "100"
 			    and dmem_addr_strobe = '1' then
 				if dmem_byte_we(2) = '1' then
 					dac_in_l <= cpu_to_dmem(31 downto 19);
 				end if;
 				if dmem_byte_we(0) = '1' then
 					dac_in_r <= cpu_to_dmem(15 downto 3);
+				end if;
+			end if;
+			if dmem_addr(31 downto 28) = "1110"
+			    and dmem_addr(4 downto 2) = "101"
+			    and dmem_addr_strobe = '1' then
+				if dmem_byte_we(2) = '1' then
+					dac_vol_l <= cpu_to_dmem(31 downto 19);
+				end if;
+				if dmem_byte_we(0) = '1' then
+					dac_vol_r <= cpu_to_dmem(15 downto 3);
 				end if;
 			end if;
 		end if;
@@ -212,8 +227,8 @@ begin
 	end process;
 
 	-- XXX replace with a balanced multiplexer
-	io_to_cpu <= input when dmem_addr(3 downto 2) = "00"
-		else from_sio when dmem_addr(3 downto 2) = "01"
+	io_to_cpu <= input when dmem_addr(4 downto 2) = "000"
+		else from_sio when dmem_addr(4 downto 2) = "001"
 		else tsc(34 downto 3);
 
 	final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = "1110"
