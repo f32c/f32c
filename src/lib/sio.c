@@ -1,10 +1,12 @@
 
 #include <io.h>
 #include <sio.h>
+#include <types.h>
 
 #define	SIO_RXBUFSIZE	16
 #define	SIO_RXBUFMASK	0x0f
 
+void (*sio_idle_fn)(void) = NULL;
 static char sio_rxbuf[SIO_RXBUFSIZE];
 static int sio_rxbuf_head = 1;
 static int sio_rxbuf_tail = 1;
@@ -34,6 +36,8 @@ sio_getchar(int blocking)
 	do {
 		sio_probe_rx();
 		busy = (sio_rxbuf_head == sio_rxbuf_tail);
+		if (busy && sio_idle_fn != NULL)
+			(*sio_idle_fn)();
 	} while (blocking && busy);
 
 	if (busy)
@@ -55,6 +59,8 @@ sio_putchar(int c, int blocking)
 	do {
 		in = sio_probe_rx();
 		busy = (in & SIO_TX_BUSY);
+		if (busy && sio_idle_fn != NULL)
+			(*sio_idle_fn)();
 	} while (blocking && busy);
 
 	if (busy)
