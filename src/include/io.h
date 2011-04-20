@@ -20,7 +20,8 @@
 #define	SPI_SCK		0x40
 #define	SPI_CEN		0x20
 /* SPI bitmask: input */
-#define	SPI_SO		0x80
+#define	SPI_SO_BITPOS	7
+#define	SPI_SO		(1 << SPI_SO_BITPOS)
 
 /* I/O macros */
 
