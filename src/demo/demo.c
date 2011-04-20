@@ -42,7 +42,7 @@ pcm_cnt ++;
 
 	/* Read a sample from SPI flash */
 	for (i = 0; i < 2; i++) {
-		c = spi_byte(0) | (spi_byte(0) << 8);
+		c = spi_byte_in() | (spi_byte_in() << 8);
 		pcm_out[i] = c ^ 0x8000;
 		if (c & 0x8000)
 			c ^= 0xffff;
@@ -52,7 +52,6 @@ pcm_cnt ++;
 
 	/* Apply volume setting */
 	for (i = 0; i < 2; i++) {
-
 //		pcm_out[i] = (pcm_out[i] << pcm_vol) >> 12;
 		pcm_out[i] = (pcm_out[i] * (pcm_evol[i] >> 4)) >> 12;
 	}
@@ -91,7 +90,7 @@ pcm_cnt ++;
 		spi_byte(pcm_addr >> 16);
 		spi_byte(pcm_addr >> 8);
 		spi_byte(pcm_addr);
-		spi_byte(0x0);
+		spi_byte_in();
 	}
 
 #if 0
