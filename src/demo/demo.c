@@ -14,6 +14,7 @@ static int pcm_addr = PCM_END;
 static int pcm_vol = 8;
 static int pcm_avg[2];
 static int pcm_evol[2];
+static int pcm_vu[2];
 static int pcm_tsc;
 
 static int pcm_tsc_len;
@@ -35,7 +36,7 @@ pcm_play(void)
 pcm_tsc_len += c;
 		return;
 	}
-	if (c > PCM_TSC_CYCLES * 4) {
+	if (c > PCM_TSC_CYCLES << 4) {
 pcm_cnt ++;
 		pcm_tsc = rdtsc();
 	}
@@ -57,27 +58,33 @@ pcm_cnt ++;
 	}
 	OUTW(IO_PCM_OUT, (pcm_out[0] << 16) | pcm_out[1]);
 	
-	/* Update VU meter */
+	/* Update volume and VU meter */
 	if ((pcm_addr & 0xfff) == 0) {
 		vu = 0;
 		for (i = 0; i < 2; i++) {
-			if (pcm_avg[i] > 0x6000)
+			/* Volume */
+			pcm_evol[i] = (((pcm_evol[i] << 4) - pcm_evol[i]) +
+			    (0x10 << pcm_vol) + 0xf) >> 4;
+
+			/* VU meter */
+			if (pcm_avg[i] >= pcm_vu[i])
+				pcm_vu[i] = pcm_avg[i];
+			else
+				pcm_vu[i] =
+				    ((pcm_vu[i] << 4) - pcm_vu[i]) >> 4 ;
+			if (pcm_vu[i] > 0x6800)
 				c = 0xf;
-			else if (pcm_avg[i] > 0x4000)
+			else if (pcm_vu[i] > 0x5400)
 				c = 0x7;
-			else if (pcm_avg[i] > 0x2000)
+			else if (pcm_vu[i] > 0x3800)
 				c = 0x3;
-			else if (pcm_avg[i] > 0x1000)
+			else if (pcm_vu[i] > 0x2000)
 				c = 0x1;
 			else
 				c = 0;
-			vu |= (c << (i * 4));
+			vu |= (c << (i << 2));
 		}
 		OUTB(IO_LED, vu);
-		for (i = 0; i < 2; i++) {
-			pcm_evol[i] = (((pcm_evol[i] << 4) - pcm_evol[i]) +
-			    (0x10 << pcm_vol) + 0xf) >> 4;
-		}
 	}
 
 	/* End of file, rewind SPI flash read position */
