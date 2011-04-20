@@ -69,8 +69,22 @@
  */
 
 int spi_byte(int);
-void spi_start_transaction(void);
-void spi_stop_transaction(void);
+int spi_byte_in(void);
+
+void inline
+spi_start_transaction(void)
+{
+
+	OUTB(IO_SPI, 0);
+}
+
+void inline
+spi_stop_transaction(void)
+{
+
+	OUTB(IO_SPI, SPI_CEN);
+}
+
 
 /*
  * Fetch the current timestamp counter value.  Given that CPU and TSC
