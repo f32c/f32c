@@ -5,6 +5,8 @@
 #define	IO_BASE		0xe0000000
 
 #define	IO_LED		0x00	/* byte, WR */
+#define	IO_PUSHBTN	0x00	/* byte, RD */
+#define	IO_DIPSW	0x01	/* byte, RD */
 #define	IO_SPI		0x03	/* byte, RW */
 #define	IO_SIO		0x04	/* word, RW */
 #define	IO_TSC		0x08	/* word, RD */
@@ -22,6 +24,13 @@
 /* SPI bitmask: input */
 #define	SPI_SO_BITPOS	7
 #define	SPI_SO		(1 << SPI_SO_BITPOS)
+
+/* Pushbutton bitmask */
+#define	BTN_CENTER	0x10
+#define	BTN_UP		0x08
+#define	BTN_DOWN	0x04
+#define	BTN_LEFT	0x02
+#define	BTN_RIGHT	0x01
 
 /* I/O macros */
 
