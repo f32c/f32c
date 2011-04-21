@@ -52,7 +52,7 @@ pcm_play(void)
 		pcm_avg[i] = ((pcm_avg[i] << 6) - pcm_avg[i] + (c << 2)) >> 6;
 
 		/* Apply volume setting */
-		vu |= ((pcm_out * pcm_evol[i]) >> 16) & 0xffff;
+		vu |= (pcm_out * (pcm_evol[i] >> 5)) >> 11;
 	}
 	OUTW(IO_PCM_OUT, vu);
 	
@@ -68,8 +68,8 @@ pcm_play(void)
 			if (c > 0)
 				c = 0;
 			c += pcm_vol;
-			if (pcm_mute)
-				c = 0;
+			if (pcm_mute || c <= 1)
+				c = -4;
 			pcm_evol[i] =
 			    (((pcm_evol[i] << 4) - (pcm_evol[i] << pcm_mute))
 			    + (0x10 << c) + 0xf) >> 4;
