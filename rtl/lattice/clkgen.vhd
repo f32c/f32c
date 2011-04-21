@@ -49,6 +49,7 @@ end clkgen;
 
 architecture Behavioral of clkgen is
 	signal pll_clk: std_logic; -- 75 MHz
+	signal deb_clk: std_logic;
 	signal pll_lock: std_logic;
 	signal key_d: std_logic_vector(19 downto 0) := x"00000";
 	signal key_r: std_logic := '0';
@@ -80,9 +81,10 @@ begin
 	if C_debug generate
 	begin
 	-- key debuncer
-	process(clk_25m)
+	process(pll_clk)
 	begin
-		if (rising_edge(clk_25m)) then
+		if (rising_edge(pll_clk)) then
+			deb_clk <= not deb_clk;
 			if (key_d = x"fffff") then
 				if (key /= key_r) then
 					key_d <= x"00000";
@@ -101,7 +103,7 @@ begin
 		dcsmode => "POS"
 	)
 	port map (
-		sel => sel_r, clk0 => clk_25m, clk1 => key_r, dcsout => clk
+		sel => sel_r, clk0 => deb_clk, clk1 => key_r, dcsout => clk
 	);
 	end generate;
 	
