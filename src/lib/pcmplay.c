@@ -52,8 +52,7 @@ pcm_play(void)
 		pcm_avg[i] = ((pcm_avg[i] << 6) - pcm_avg[i] + (c << 2)) >> 6;
 
 		/* Apply volume setting */
-//		vu |= pcm_out >> (12 - pcm_vol);
-		vu |= (pcm_out * pcm_evol[i]) >> 16;
+		vu |= ((pcm_out * pcm_evol[i]) >> 16) & 0xffff;
 	}
 	OUTW(IO_PCM_OUT, vu);
 	
