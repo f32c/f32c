@@ -4,14 +4,11 @@
 u_int
 __mulsi3(u_int a, u_int b)
 {
-	u_int res = 0;
+	u_int res;
 
-	while (b) {
+	for (res = 0; b != 0; b >>= 1, a <<= 1)
 		if (b & 1)
 			res += a;
-		a <<= 1;
-		b >>= 1;
-	}
 	return (res);
 }
  
