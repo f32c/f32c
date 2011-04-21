@@ -35,34 +35,46 @@
 /* I/O macros */
 
 #define	OUTB(port, data)						   \
-	__asm __volatile ("sb %0, %1($27)"		/* k1 = IO_BASE */ \
+	do {								   \
+		__asm __volatile ("sb %0, %1($27)"	/* k1 = IO_BASE */ \
 			:				/* outputs */	   \
-			: "r" (data), "i" (port));	/* inputs */
+			: "r" (data), "i" (port));	/* inputs */	   \
+	} while (0)
 
 #define	OUTH(port, data)						   \
-	__asm __volatile ("sh %0, %1($27)"		/* k1 = IO_BASE */ \
+	do {								   \
+		__asm __volatile ("sh %0, %1($27)"	/* k1 = IO_BASE */ \
 			:				/* outputs */	   \
-			: "r" (data), "i" (port));	/* inputs */
+			: "r" (data), "i" (port));	/* inputs */	   \
+	} while (0)
 
 #define	OUTW(port, data)						   \
-	__asm __volatile ("sw %0, %1($27)"		/* k1 = IO_BASE */ \
+	do {								   \
+		__asm __volatile ("sw %0, %1($27)"	/* k1 = IO_BASE */ \
 			:				/* outputs */	   \
-			: "r" (data), "i" (port));	/* inputs */
+			: "r" (data), "i" (port));	/* inputs */	   \
+	} while (0)
 
 #define	INB(data, port)							   \
-	__asm __volatile ("lb %0, %1($27)"		/* k1 = IO_BASE */ \
+	do {								   \
+		__asm __volatile ("lb %0, %1($27)"	/* k1 = IO_BASE */ \
 			: "=r" (data)			/* outputs */	   \
-			: "i" (port));			/* inputs */
+			: "i" (port));			/* inputs */	   \
+	} while (0)
 
 #define	INH(data, port)							   \
-	__asm __volatile ("lh %0, %1($27)"		/* k1 = IO_BASE */ \
+	do {								   \
+		__asm __volatile ("lh %0, %1($27)"	/* k1 = IO_BASE */ \
 			: "=r" (data)			/* outputs */	   \
-			: "i" (port));			/* inputs */
+			: "i" (port));			/* inputs */	   \
+	} while (0)
 
 #define	INW(data, port)							   \
-	__asm __volatile ("lw %0, %1($27)"		/* k1 = IO_BASE */ \
+	do {								   \
+		__asm __volatile ("lw %0, %1($27)"	/* k1 = IO_BASE */ \
 			: "=r" (data)			/* outputs */	   \
-			: "i" (port));			/* inputs */
+			: "i" (port));			/* inputs */	   \
+	} while (0)
 
 #define	DELAY_TICKS(ticks)						\
 	do {								\
