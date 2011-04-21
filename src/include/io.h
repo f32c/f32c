@@ -93,14 +93,14 @@
 int spi_byte(int);
 int spi_byte_in(void);
 
-void inline
+inline void
 spi_start_transaction(void)
 {
 
 	OUTB(IO_SPI, 0);
 }
 
-void inline
+inline void
 spi_stop_transaction(void)
 {
 
@@ -116,7 +116,7 @@ spi_stop_transaction(void)
  */
 inline int
 rdtsc(void) {
-	register int tsc1, tsc2;
+	int tsc1, tsc2;
 
 	do {
 		INW(tsc1, IO_TSC);
