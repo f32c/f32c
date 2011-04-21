@@ -84,7 +84,6 @@ architecture Behavioral of glue is
 	signal input: std_logic_vector(31 downto 0);
 	signal dac_in_l, dac_in_r: std_logic_vector(15 downto 3);
 	signal dac_vol_l, dac_vol_r: std_logic_vector(15 downto 3);
-	signal dac_eff_l, dac_eff_r: std_logic_vector(15 downto 3);
 	signal dac_acc_l, dac_acc_r: std_logic_vector(16 downto 3);
 	signal dac_clk: std_logic;
 
@@ -92,6 +91,7 @@ architecture Behavioral of glue is
 	signal trace_addr: std_logic_vector(5 downto 0);
 	signal trace_data: std_logic_vector(31 downto 0);
 	signal debug_txd: std_logic;
+	signal debug_res: std_logic;
 begin
 
 	-- clock synthesizer
@@ -101,9 +101,10 @@ begin
 	)
 	port map (
 		clk_25m => clk_25m, clk => clk,
-		sel => sw(3), key => btn_down,
-		res => btn_up
+		sel => sw(2), key => btn_down,
+		res => debug_res
 	);
+	debug_res <= btn_up and sw(0);
 
 	-- the RISC core
 	pipeline: entity pipeline
@@ -148,13 +149,11 @@ begin
         port map (
                 CLK => clk_25m, LOCK => open, CLKOP => dac_clk
         );
-	dac_eff_l <= dac_in_l;
-	dac_eff_r <= dac_in_r;
 	process(dac_clk)
 	begin
 		if rising_edge(dac_clk) then
-			dac_acc_l <= (dac_acc_l(16) & dac_eff_l) + dac_acc_l;
-			dac_acc_r <= (dac_acc_r(16) & dac_eff_r) + dac_acc_r;
+			dac_acc_l <= (dac_acc_l(16) & dac_in_l) + dac_acc_l;
+			dac_acc_r <= (dac_acc_r(16) & dac_in_r) + dac_acc_r;
 		end if;
 	end process;
 	p_tip(3) <= dac_acc_l(16);
@@ -263,7 +262,7 @@ begin
 	);
 	end generate; -- serial_debug
 	
-	rs232_tx <= debug_txd when C_debug and sw(2) = '1' else sio_txd;
+	rs232_tx <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
 	
 end Behavioral;
 
