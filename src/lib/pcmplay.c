@@ -14,50 +14,48 @@
 
 
 static int pcm_addr = PCM_END;
-static int pcm_vol = 8;
+static int pcm_vol = PCM_VOL_MAX * 2 / 3;
 static int pcm_bal;
 static int pcm_mute;
 static int pcm_avg[2];
 static int pcm_vu[2];
 static int pcm_evol[2];
-static int pcm_tsc;
+static int pcm_next_tsc;
+static int pcm_period = PCM_TSC_CYCLES;
 static int pcm_pushbtn_old;
 
 
 void
 pcm_play(void)
 {
-	int pcm_out[2];
-	int i;
-	int c;
-	int vu;
+	int pcm_out;
+	int i, c, vu = 0;
 	
-	c = rdtsc() - pcm_tsc;
+	c = rdtsc() - pcm_next_tsc;
 	if (c < 0)
 		c = -c;
-	if (c < PCM_TSC_CYCLES)
+	if (c < pcm_period)
 		return;
-	if (c > PCM_TSC_CYCLES << 4)
-		pcm_tsc = rdtsc();
-	pcm_tsc += PCM_TSC_CYCLES;
+	if (c > pcm_period << 4)
+		pcm_next_tsc = rdtsc();
+	else
+		pcm_next_tsc += pcm_period;
 
 	/* Read a sample from SPI flash */
 	for (i = 0; i < 2; i++) {
+		vu <<= 16;
 		c = spi_byte_in() | (spi_byte_in() << 8);
-		pcm_out[i] = c ^ 0x8000;
+		pcm_out = c ^ 0x8000;
 		if (c & 0x8000)
 			c ^= 0xffff;
 		/* Update signal running average before changing the volume */
 		pcm_avg[i] = ((pcm_avg[i] << 6) - pcm_avg[i] + (c << 2)) >> 6;
-	}
 
-	/* Apply volume setting */
-	for (i = 0; i < 2; i++) {
-//		pcm_out[i] = (pcm_out[i] << pcm_vol) >> 12;
-		pcm_out[i] = (pcm_out[i] * (pcm_evol[i] >> 4)) >> 12;
+		/* Apply volume setting */
+//		vu |= pcm_out >> (12 - pcm_vol);
+		vu |= (pcm_out * pcm_evol[i]) >> 16;
 	}
-	OUTH(IO_PCM_OUT + 2, pcm_out[0]);
-	OUTH(IO_PCM_OUT, pcm_out[1]);
+	OUTW(IO_PCM_OUT, vu);
 	
 	/* Update volume and VU meter */
 	if ((pcm_addr & 0xfff) == 0) {
