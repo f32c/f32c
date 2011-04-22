@@ -6,31 +6,45 @@ LOADADDR = 0x00000180
 ENDIANFLAGS = -EL
 
 # Includes
-CFLAGS = -I../include
+CFLAGS = -nostdinc -I../include
 
 # MIPS-specific flags
 CFLAGS += -march=mips3 ${ENDIANFLAGS}
-CFLAGS += -mno-branch-likely
+CFLAGS += -mtune=mips32 -mno-branch-likely
 CFLAGS += -mno-mips16 -mno-dsp -mno-mips3d -mno-mdmx -msoft-float
-CFLAGS += -c -s -n -nostdlib -fno-builtin
-CFLAGS += -std=c99 -Wall -Werror
 CFLAGS += -G 32768
 
 # f32c-specific flags
 CFLAGS += -msoft-mul -msoft-div
+
+# Language flags
+CFLAGS += -std=c99 -Wall -Werror
+CFLAGS += -Wextra -Wsystem-headers -Wshadow -Wpadded -Winline
+CFLAGS += -c
+#CFLAGS += -s -n -nostdlib -fno-builtin
+CFLAGS += -ffreestanding
 
 # Debugging options
 CFLAGS += -g
 
 # Optimization options
 CFLAGS += -Os
-#CFLAGS += -freorder-blocks-and-partition
-#CFLAGS += -web -frename-registers
+CFLAGS += -finline-limit=16 -fmerge-all-constants
+CFLAGS += -falign-functions=4 -falign-labels=4
+CFLAGS += -falign-jumps=4 -falign-loops=4
+CFLAGS += -fweb -frename-registers
+CFLAGS += -freorder-blocks
+#CFLAGS += -funsafe-loop-optimizations -Wunsafe-loop-optimizations
+#CFLAGS += --param max-delay-slot-insn-search=16
+#CFLAGS += --param max-delay-slot-live-search=16
+
+# No zero-filled BSS
+#CFLAGS += -fno-zero-initialized-in-bss
 
 # Other interesting options:
-# -no-shared
-# -fPIC -fpic
+# CFLAGS += -fPIC -fpic
 # -membedded-data
+# -no-shared
 
 LDFLAGS += -Ttext ${LOADADDR} -N ${ENDIANFLAGS}
 
