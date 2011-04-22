@@ -35,19 +35,34 @@ entity glue is
 		-- CPU core configuration options
 		C_register_technology: string := "lattice";
 		C_mult_enable: boolean := false;
-		C_branch_prediction: boolean := true; -- true: +85 LUT4
-		C_result_forwarding: boolean := true; -- true: +103 LUT4
-		C_fast_ID: boolean := true; -- false: +37 LUT4
-		C_predecode_in_IF: boolean := false; -- true: +55 LUT4
+		C_branch_prediction: boolean := true; -- true: +70 LUT4
+		C_result_forwarding: boolean := true; -- true: +171 LUT4
+		-- Do not change those two:
+		C_fast_ID: boolean := true; -- false: +3 LUT4, lower fMax
+		C_predecode_in_IF: boolean := false; -- true: -3 LUT4, lower fMax
 		-- SoC configuration options
-		C_tsc: boolean := true; -- true: +74 LUT4
+		C_tsc: boolean := true; -- true: +63 LUT4
+		C_sio: boolean := true; -- true: +133 LUT;
+		C_pcmdac: boolean := true; -- true: +27 LUT;
 		-- debugging options
-		C_debug: boolean := false -- true: +907 LUT4
+		C_debug: boolean := false -- true: +871 LUT4, lower fMax
 		--
-		-- XP2-8E-5 default synthesis
+		-- XP2-8E-7 area optimized synthesis:
 		--
-		-- C_bp 1, C_res_fwd 1, C_fast_id 1, C_predecode 0, C_tsc 1
-		-- Tot LUT4 1841
+		-- C_bp 1, C_res_fwd 1, C_fast_id 1, C_predecode 0, C_debug 0
+		-- C_tsc 1, C_sio 1, C_pcmdac 1
+		-- Total number of LUT4s: 1665  Fmax: 122.5 MHz (works @ 150 MHz)
+		--
+		-- C_bp 0, C_res_fwd 0, C_fast_id 1, C_predecode 0, C_debug 0
+		-- C_tsc 1, C_sio 1, C_pcmdac 1
+		-- Total number of LUT4s: 1424  Fmax: 117.5 MHz (works @ 150 MHz)
+		--
+		-- C_bp 0, C_res_fwd 0, C_fast_id 1, C_predecode 1, C_debug 0
+		-- C_tsc 0, C_sio 0, C_pcmdac 0
+		-- Total number of LUT4s: 1187
+		--
+		-- Synthesis options worth playing with:
+		--    Synplify Pro: Area (False->True)
 		--
 	);
 	port (
@@ -131,6 +146,9 @@ begin
 		else '0';
 
 	-- RS232 sio
+	sio:
+	if C_sio generate
+	begin
 	sio: entity sio
 	port map (
 		clk => clk, ce => sio_ce,
@@ -141,8 +159,12 @@ begin
 	);
 	sio_ce <= '0' when dmem_addr(31 downto 28) /= "1110" or
 	    dmem_addr(3 downto 2) /= "01" else dmem_addr_strobe;
+	end generate;
 
 	-- PCM stereo 1-bit DAC
+	pcmdac:
+	if C_pcmdac generate
+	begin
 	process(clk)
 	begin
 		if rising_edge(clk) then
@@ -155,13 +177,13 @@ begin
 	p_tip(1) <= dac_acc_l(16);
 	p_tip(0) <= dac_acc_l(16);
 	p_ring <= dac_acc_r(16);
+	end generate;
 
 	-- I/O port map:
 	-- 0xe*****00:  (4B, RW) GPIO (SPI, LED)
 	-- 0xe*****04:  (4B, RW) SIO
 	-- 0xe*****08:  (4B, RD) TSC
 	-- 0xe*****10:  (4B, WR) PCM signal
-	-- 0xe*****14:  (4B, WR) PCM volume
 	-- I/O write access:
 	process(clk)
 	begin
@@ -178,7 +200,7 @@ begin
 					spi_cen_reg <= cpu_to_dmem(29);
 				end if;
 			end if;
-			if dmem_addr(31 downto 28) = "1110"
+			if C_pcmdac and dmem_addr(31 downto 28) = "1110"
 			    and dmem_addr(4 downto 2) = "100"
 			    and dmem_addr_strobe = '1' then
 				if dmem_byte_we(2) = '1' then
@@ -211,7 +233,7 @@ begin
 
 	-- XXX replace with a balanced multiplexer
 	io_to_cpu <= input when dmem_addr(4 downto 2) = "000"
-		else from_sio when dmem_addr(4 downto 2) = "001"
+		else from_sio when C_sio and dmem_addr(4 downto 2) = "001"
 		else tsc(34 downto 3);
 
 	final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = "1110"
