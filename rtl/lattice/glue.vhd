@@ -52,10 +52,17 @@ entity glue is
 		-- C_bp 1, C_res_fwd 1, C_fast_id 1, C_predecode 0, C_debug 0
 		-- C_tsc 1, C_sio 1, C_pcmdac 1
 		-- Total number of LUT4s: 1665  Fmax: 122.5 MHz (works @ 150 MHz)
+		-- CPI: 1.21
+		--
+		-- C_bp 0, C_res_fwd 1, C_fast_id 1, C_predecode 0, C_debug 0
+		-- C_tsc 1, C_sio 1, C_pcmdac 1
+		-- Total number of LUT4s: 1595  Fmax: 122.5 MHz (works @ 150 MHz)
+		-- CPI: 1.28
 		--
 		-- C_bp 0, C_res_fwd 0, C_fast_id 1, C_predecode 0, C_debug 0
 		-- C_tsc 1, C_sio 1, C_pcmdac 1
-		-- Total number of LUT4s: 1424  Fmax: 117.5 MHz (works @ 150 MHz)
+		-- Total number of LUT4s: 1424  Fmax: 119.4 MHz (works @ 150 MHz)
+		-- CPI: 1.75
 		--
 		-- C_bp 0, C_res_fwd 0, C_fast_id 1, C_predecode 1, C_debug 0
 		-- C_tsc 0, C_sio 0, C_pcmdac 0
