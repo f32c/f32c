@@ -83,9 +83,7 @@ architecture Behavioral of glue is
 	signal tsc: std_logic_vector(34 downto 0);
 	signal input: std_logic_vector(31 downto 0);
 	signal dac_in_l, dac_in_r: std_logic_vector(15 downto 2);
-	signal dac_reg_l, dac_reg_r: std_logic_vector(15 downto 2);
 	signal dac_acc_l, dac_acc_r: std_logic_vector(16 downto 2);
-	signal dac_clk: std_logic;
 
 	-- debugging only
 	signal trace_addr: std_logic_vector(5 downto 0);
@@ -145,17 +143,11 @@ begin
 	    dmem_addr(3 downto 2) /= "01" else dmem_addr_strobe;
 
 	-- PCM stereo 1-bit DAC
-        PCM_PLL: entity pcm_pll
-        port map (
-                CLK => clk_25m, LOCK => open, CLKOP => dac_clk
-        );
-	process(dac_clk)
+	process(clk)
 	begin
-		if rising_edge(dac_clk) then
-			dac_reg_l <= dac_in_l;
-			dac_reg_r <= dac_in_r;
-			dac_acc_l <= (dac_acc_l(16) & dac_reg_l) + dac_acc_l;
-			dac_acc_r <= (dac_acc_r(16) & dac_reg_r) + dac_acc_r;
+		if rising_edge(clk) then
+			dac_acc_l <= (dac_acc_l(16) & dac_in_l) + dac_acc_l;
+			dac_acc_r <= (dac_acc_r(16) & dac_in_r) + dac_acc_r;
 		end if;
 	end process;
 	p_tip(3) <= dac_acc_l(16);
