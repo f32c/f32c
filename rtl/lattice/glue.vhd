@@ -182,7 +182,7 @@ begin
 	p_tip(3) <= dac_acc_l(16);
 	p_tip(2) <= dac_acc_l(16);
 	p_tip(1) <= dac_acc_l(16);
-	p_tip(0) <= dac_acc_l(16);
+	p_tip(0) <= 'Z';
 	p_ring <= dac_acc_r(16);
 	end generate;
 
