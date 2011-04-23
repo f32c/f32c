@@ -43,13 +43,14 @@ pcm_play(void)
 
 	/* Read a sample from SPI flash */
 	for (i = 0; i < 2; i++) {
+		/* Fetch a 16-bit PCM sample from SPI Flash */
 		c = spi_byte_in() | (spi_byte_in() << 8);
 
 		/* Apply volume setting */
 		pcm_out = (pcm_out << 16) |
 		    ((c ^ 0x8000) * (pcm_evol[i] >> 5)) >> 11;
 
-		/* Update signal running average before changing the volume */
+		/* Update signal running average */
 		if (c & 0x8000)
 			c ^= 0xffff;
 		pcm_avg[i] = ((pcm_avg[i] << 6) - pcm_avg[i] + (c << 2)) >> 6;
@@ -68,7 +69,7 @@ pcm_play(void)
 			if (c > 0)
 				c = 0;
 			c += pcm_vol;
-			if (pcm_mute || c <= 1)
+			if (pcm_mute || c <= PCM_VOL_MIN)
 				c = -4;
 			pcm_evol[i] =
 			    (((pcm_evol[i] << 4) - (pcm_evol[i] << pcm_mute))
