@@ -10,7 +10,7 @@
 #define	PCM_TSC_CYCLES	71	/* 3.125 MHz / 44.1 kHz = 71 TSC cycles */
 
 #define	PCM_VOL_MAX	12
-#define	PCM_VOL_MIN	1
+#define	PCM_VOL_MIN	0
 #define	PCM_VOL_MUTE	0x80000000
 
 
@@ -58,8 +58,7 @@ pcm_play(void)
 	
 	/* Update volume and VU meter */
 	if ((pcm_addr & 0xfff) == 0) {
-		vu = 0;
-		for (i = 0; i < 2; i++) {
+		for (i = 0, vu = 0; i < 2; i++) {
 			/* Volume */
 			if (i)
 				c = pcm_bal;
@@ -68,10 +67,13 @@ pcm_play(void)
 			if (c > 0)
 				c = 0;
 			c += pcm_vol;
-			if (c <= PCM_VOL_MIN)
-				c = -4;
-			pcm_evol[i] = (((pcm_evol[i] << 4) - pcm_evol[i])
-			    + (0x10 << c) + 0xf) >> 4;
+			if (c < PCM_VOL_MIN) {
+				pcm_evol[i] =
+				    ((pcm_evol[i] << 3) - pcm_evol[i]) >> 3;
+			} else
+				pcm_evol[i] =
+				    (((pcm_evol[i] << 4) - pcm_evol[i]) +
+				    (0x10 << c) + 0xf) >> 4;
 
 			/* VU meter */
 			pcm_vu[i] = pcm_vu[i] - 0x0400;
