@@ -18,5 +18,6 @@ main(void)
 
 	do {
 		c = getchar();
+		putchar(c);
 	} while (1);
 }
