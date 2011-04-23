@@ -11,12 +11,12 @@
 
 #define	PCM_VOL_MAX	12
 #define	PCM_VOL_MIN	1
+#define	PCM_VOL_MUTE	0x80000000
 
 
 static int pcm_addr = PCM_END;
 static int pcm_vol = PCM_VOL_MAX * 2 / 3;
 static int pcm_bal;
-static int pcm_mute;
 static int pcm_avg[2];
 static int pcm_vu[2];
 static int pcm_evol[2];
@@ -28,8 +28,7 @@ static int pcm_pushbtn_old;
 void
 pcm_play(void)
 {
-	int pcm_out = 0;
-	int i, c, vu;
+	int pcm_out, i, c, vu;
 	
 	c = rdtsc() - pcm_next_tsc;
 	if (c < 0)
@@ -42,7 +41,7 @@ pcm_play(void)
 		pcm_next_tsc += pcm_period;
 
 	/* Read a sample from SPI flash */
-	for (i = 0; i < 2; i++) {
+	for (i = 0, pcm_out = 0; i < 2; i++) {
 		/* Fetch a 16-bit PCM sample from SPI Flash */
 		c = spi_byte_in() | (spi_byte_in() << 8);
 
@@ -69,10 +68,9 @@ pcm_play(void)
 			if (c > 0)
 				c = 0;
 			c += pcm_vol;
-			if (pcm_mute || c <= PCM_VOL_MIN)
+			if (c <= PCM_VOL_MIN)
 				c = -4;
-			pcm_evol[i] =
-			    (((pcm_evol[i] << 4) - (pcm_evol[i] << pcm_mute))
+			pcm_evol[i] = (((pcm_evol[i] << 4) - pcm_evol[i])
 			    + (0x10 << c) + 0xf) >> 4;
 
 			/* VU meter */
@@ -95,16 +93,20 @@ pcm_play(void)
 
 		INB(vu, IO_PUSHBTN);
 		if (vu != pcm_pushbtn_old) {
-			if ((vu & BTN_UP) && pcm_vol < PCM_VOL_MAX)
-				pcm_vol++;
-			if ((vu & BTN_DOWN) && pcm_vol > PCM_VOL_MIN)
-				pcm_vol--;
-			if ((vu & BTN_LEFT) && pcm_bal > -PCM_VOL_MAX >> 1)
-				pcm_bal--;
-			if ((vu & BTN_RIGHT) && pcm_bal < PCM_VOL_MAX >> 1)
-				pcm_bal++;
+			if ((pcm_vol & PCM_VOL_MUTE) == 0) {
+				pcm_vol +=
+				    ((vu & BTN_UP) && pcm_vol < PCM_VOL_MAX);
+				pcm_vol -=
+				    ((vu & BTN_DOWN) && pcm_vol > PCM_VOL_MIN);
+				pcm_bal -=
+				    ((vu & BTN_LEFT) &&
+				    pcm_bal > -PCM_VOL_MAX >> 1);
+				pcm_bal +=
+				    ((vu & BTN_RIGHT) &&
+				    pcm_bal < PCM_VOL_MAX >> 1);
+			}
 			if (vu & BTN_CENTER)
-				pcm_mute ^= 1;
+				pcm_vol ^= PCM_VOL_MUTE;
 		}
 		pcm_pushbtn_old = vu;
 	}
