@@ -1,6 +1,7 @@
 
 #include <asm.h>
 #include <regdef.h>
+#include <io.h>
 
 	.set noreorder
 	.text
@@ -16,5 +17,4 @@ ASM_ENTRY(_start)
 	lui	gp, (_gp >> 16)
 	ori	gp, _gp
 	j	_C_LABEL(main)
-	nop
-
+	lui	k1, (IO_BASE >> 16)

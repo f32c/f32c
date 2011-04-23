@@ -32,6 +32,8 @@
 #define	BTN_LEFT	0x02
 #define	BTN_RIGHT	0x01
 
+#if !defined(__ASSEMBLER__)
+
 /* I/O macros */
 
 #define	OUTB(port, data)						   \
@@ -124,6 +126,8 @@ rdtsc(void) {
 	} while (tsc2 != tsc1);
 	return (tsc2);
 }
+
+#endif /* __ASSEMBLER__ */
 
 #endif /* !_IO_H_ */
 
