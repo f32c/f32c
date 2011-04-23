@@ -28,8 +28,8 @@ static int pcm_pushbtn_old;
 void
 pcm_play(void)
 {
-	int pcm_out;
-	int i, c, vu = 0;
+	int pcm_out = 0;
+	int i, c, vu;
 	
 	c = rdtsc() - pcm_next_tsc;
 	if (c < 0)
@@ -43,18 +43,18 @@ pcm_play(void)
 
 	/* Read a sample from SPI flash */
 	for (i = 0; i < 2; i++) {
-		vu <<= 16;
 		c = spi_byte_in() | (spi_byte_in() << 8);
-		pcm_out = c ^ 0x8000;
-		if (c & 0x8000)
-			c ^= 0xffff;
-		/* Update signal running average before changing the volume */
-		pcm_avg[i] = ((pcm_avg[i] << 6) - pcm_avg[i] + (c << 2)) >> 6;
 
 		/* Apply volume setting */
-		vu |= (pcm_out * (pcm_evol[i] >> 5)) >> 11;
+		pcm_out = (pcm_out << 16) |
+		    ((c ^ 0x8000) * (pcm_evol[i] >> 5)) >> 11;
+
+		/* Update signal running average before changing the volume */
+		if (c & 0x8000)
+			c ^= 0xffff;
+		pcm_avg[i] = ((pcm_avg[i] << 6) - pcm_avg[i] + (c << 2)) >> 6;
 	}
-	OUTW(IO_PCM_OUT, vu);
+	OUTW(IO_PCM_OUT, pcm_out);
 	
 	/* Update volume and VU meter */
 	if ((pcm_addr & 0xfff) == 0) {
