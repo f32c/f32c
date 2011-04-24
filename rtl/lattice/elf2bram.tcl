@@ -51,8 +51,11 @@ while {[eof $elffile] == 0} {
 	[lsearch ".text .rodata .data .sdata" $section] != -1} {
 	set line_addr [expr 0x[lindex [string range $line 0 10] 0]]
 	if {$addr != $line_addr} {
-	    puts "Bad address $line_addr (expected $addr) at line $linenum"
-	    exit 1
+	    puts "WARNING: bad address $line_addr (expected $addr) at line $linenum"
+	    while {$addr < $line_addr} {
+		set mem($addr) 00000000
+		incr addr 4
+	    }
 	}
 	if {$endian == "none"} {
 	    puts "Undefined endianess at line $linenum"
