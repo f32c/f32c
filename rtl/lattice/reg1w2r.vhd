@@ -41,11 +41,11 @@ entity reg1w2r is
 		C_debug: boolean := false
 	);
 	port(
-		rd1_addr, rd2_addr, rdd_addr, wr_addr: in STD_LOGIC_VECTOR(4 downto 0);
-		rd1_data, rd2_data, rdd_data: out STD_LOGIC_VECTOR(31 downto 0);
-		wr_data: in STD_LOGIC_VECTOR(31 downto 0);
+		rd1_addr, rd2_addr, rdd_addr, wr_addr: in std_logic_vector(4 downto 0);
+		rd1_data, rd2_data, rdd_data: out std_logic_vector(31 downto 0);
+		wr_data: in std_logic_vector(31 downto 0);
 		wr_enable: in std_logic;
-		clk: in STD_LOGIC
+		clk: in std_logic
 	);
 end reg1w2r;
 
@@ -59,14 +59,18 @@ begin
 	we_lower <= wr_enable and not wr_addr(4);
 	we_upper <= wr_enable and wr_addr(4);
 
-	iter: for i in 0 to 7 generate
+	iter: for i in 0 to 3 generate
 	begin
-		reg_set_upper_1: DPR16X4A
+		reg_set_upper_1a: DPR16X4A
 			port map (
-				DI0 => wr_data(i), DI1 => wr_data(i + 8),
-				DI2 => wr_data(i + 16), DI3 => wr_data(i + 24),
-				DO0 => rd1_upper(i), DO1 => rd1_upper(i + 8),
-				DO2 => rd1_upper(i + 16), DO3 => rd1_upper(i + 24),
+				DI0 => wr_data(i * 8 + 0),
+				DI1 => wr_data(i * 8 + 1),
+				DI2 => wr_data(i * 8 + 2),
+				DI3 => wr_data(i * 8 + 3),
+				DO0 => rd1_upper(i * 8 + 0),
+				DO1 => rd1_upper(i * 8 + 1),
+				DO2 => rd1_upper(i * 8 + 2),
+				DO3 => rd1_upper(i * 8 + 3),
 				WAD0 => wr_addr(0), WAD1 => wr_addr(1),
 				WAD2 => wr_addr(2), WAD3 => wr_addr(3),
 				RAD0 => rd1_addr(0), RAD1 => rd1_addr(1),
@@ -74,25 +78,33 @@ begin
 				WCK => clk, WRE => we_upper
 			);
 				
-		reg_set_upper_2: DPR16X4A
+		reg_set_upper_1b: DPR16X4B
 			port map (
-				DI0 => wr_data(i), DI1 => wr_data(i + 8),
-				DI2 => wr_data(i + 16), DI3 => wr_data(i + 24),
-				DO0 => rd2_upper(i), DO1 => rd2_upper(i + 8),
-				DO2 => rd2_upper(i + 16), DO3 => rd2_upper(i + 24),
+				DI0 => wr_data(i * 8 + 4),
+				DI1 => wr_data(i * 8 + 5),
+				DI2 => wr_data(i * 8 + 6),
+				DI3 => wr_data(i * 8 + 7),
+				DO0 => rd1_upper(i * 8 + 4),
+				DO1 => rd1_upper(i * 8 + 5),
+				DO2 => rd1_upper(i * 8 + 6),
+				DO3 => rd1_upper(i * 8 + 7),
 				WAD0 => wr_addr(0), WAD1 => wr_addr(1),
 				WAD2 => wr_addr(2), WAD3 => wr_addr(3),
-				RAD0 => rd2_addr(0), RAD1 => rd2_addr(1),
-				RAD2 => rd2_addr(2), RAD3 => rd2_addr(3),
+				RAD0 => rd1_addr(0), RAD1 => rd1_addr(1),
+				RAD2 => rd1_addr(2), RAD3 => rd1_addr(3),
 				WCK => clk, WRE => we_upper
 			);
 				
-		reg_set_lower_1: DPR16X4B
+		reg_set_lower_1a: DPR16X4A
 			port map (
-				DI0 => wr_data(i), DI1 => wr_data(i + 8),
-				DI2 => wr_data(i + 16), DI3 => wr_data(i + 24),
-				DO0 => rd1_lower(i), DO1 => rd1_lower(i + 8),
-				DO2 => rd1_lower(i + 16), DO3 => rd1_lower(i + 24),
+				DI0 => wr_data(i * 8 + 0),
+				DI1 => wr_data(i * 8 + 1),
+				DI2 => wr_data(i * 8 + 2),
+				DI3 => wr_data(i * 8 + 3),
+				DO0 => rd1_lower(i * 8 + 0),
+				DO1 => rd1_lower(i * 8 + 1),
+				DO2 => rd1_lower(i * 8 + 2),
+				DO3 => rd1_lower(i * 8 + 3),
 				WAD0 => wr_addr(0), WAD1 => wr_addr(1),
 				WAD2 => wr_addr(2), WAD3 => wr_addr(3),
 				RAD0 => rd1_addr(0), RAD1 => rd1_addr(1),
@@ -100,53 +112,191 @@ begin
 				WCK => clk, WRE => we_lower
 			);
 				
-		reg_set_lower_2: DPR16X4B
+		reg_set_lower_1b: DPR16X4B
 			port map (
-				DI0 => wr_data(i), DI1 => wr_data(i + 8),
-				DI2 => wr_data(i + 16), DI3 => wr_data(i + 24),
-				DO0 => rd2_lower(i), DO1 => rd2_lower(i + 8),
-				DO2 => rd2_lower(i + 16), DO3 => rd2_lower(i + 24),
+				DI0 => wr_data(i * 8 + 4),
+				DI1 => wr_data(i * 8 + 5),
+				DI2 => wr_data(i * 8 + 6),
+				DI3 => wr_data(i * 8 + 7),
+				DO0 => rd1_lower(i * 8 + 4),
+				DO1 => rd1_lower(i * 8 + 5),
+				DO2 => rd1_lower(i * 8 + 6),
+				DO3 => rd1_lower(i * 8 + 7),
 				WAD0 => wr_addr(0), WAD1 => wr_addr(1),
 				WAD2 => wr_addr(2), WAD3 => wr_addr(3),
-				RAD0 => rd2_addr(0), RAD1 => rd2_addr(1),
-				RAD2 => rd2_addr(2), RAD3 => rd2_addr(3),
+				RAD0 => rd1_addr(0), RAD1 => rd1_addr(1),
+				RAD2 => rd1_addr(2), RAD3 => rd1_addr(3),
 				WCK => clk, WRE => we_lower
 			);
 				
-		rd1_data(i) <= rd1_lower(i) when rd1_addr(4) = '0' else rd1_upper(i);
-		rd1_data(i + 8) <= rd1_lower(i + 8) when rd1_addr(4) = '0' else rd1_upper(i + 8);
-		rd1_data(i + 16) <= rd1_lower(i + 16) when rd1_addr(4) = '0' else rd1_upper(i + 16);
-		rd1_data(i + 24) <= rd1_lower(i + 24) when rd1_addr(4) = '0' else rd1_upper(i + 24);
-		rd2_data(i) <= rd2_lower(i) when rd2_addr(4) = '0' else rd2_upper(i);
-		rd2_data(i + 8) <= rd2_lower(i + 8) when rd2_addr(4) = '0' else rd2_upper(i + 8);
-		rd2_data(i + 16) <= rd2_lower(i + 16) when rd2_addr(4) = '0' else rd2_upper(i + 16);
-		rd2_data(i + 24) <= rd2_lower(i + 24) when rd2_addr(4) = '0' else rd2_upper(i + 24);
+		rd1_data(i * 8 + 0) <=	
+		    rd1_lower(i * 8 + 0) when rd1_addr(4) = '0'
+		    else rd1_upper(i * 8 + 0);
+		rd1_data(i * 8 + 1) <=
+		    rd1_lower(i * 8 + 1) when rd1_addr(4) = '0'
+		    else rd1_upper(i * 8 + 1);
+		rd1_data(i * 8 + 2) <=
+		    rd1_lower(i * 8 + 2) when rd1_addr(4) = '0'
+		    else rd1_upper(i * 8 + 2);
+		rd1_data(i * 8 + 3) <=
+		    rd1_lower(i * 8 + 3) when rd1_addr(4) = '0'
+		    else rd1_upper(i * 8 + 3);
+		rd1_data(i * 8 + 4) <=
+		    rd1_lower(i * 8 + 4) when rd1_addr(4) = '0'
+		    else rd1_upper(i * 8 + 4);
+		rd1_data(i * 8 + 5) <=
+		    rd1_lower(i * 8 + 5) when rd1_addr(4) = '0'
+		    else rd1_upper(i * 8 + 5);
+		rd1_data(i * 8 + 6) <=
+		    rd1_lower(i * 8 + 6) when rd1_addr(4) = '0'
+		    else rd1_upper(i * 8 + 6);
+		rd1_data(i * 8 + 7) <=
+		    rd1_lower(i * 8 + 7) when rd1_addr(4) = '0'
+		    else rd1_upper(i * 8 + 7);
 	end generate;
-	
-	G_debug:
-	if C_debug generate
-	begin
-	iter: for i in 0 to 7 generate
-	begin
-		reg_set_upper_d: DPR16X4A
-			port map (
-				DI0 => wr_data(i), DI1 => wr_data(i + 8),
-				DI2 => wr_data(i + 16), DI3 => wr_data(i + 24),
-				DO0 => rdd_upper(i), DO1 => rdd_upper(i + 8),
-				DO2 => rdd_upper(i + 16), DO3 => rdd_upper(i + 24),
-				WAD0 => wr_addr(0), WAD1 => wr_addr(1),
-				WAD2 => wr_addr(2), WAD3 => wr_addr(3),
-				RAD0 => rdd_addr(0), RAD1 => rdd_addr(1),
-				RAD2 => rdd_addr(2), RAD3 => rdd_addr(3),
-				WCK => clk, WRE => we_upper
-			);
 
-		reg_set_lower_d: DPR16X4B
+	iter: for i in 0 to 3 generate
+	begin
+		reg_set_upper_2a: DPR16X4A
 			port map (
-				DI0 => wr_data(i), DI1 => wr_data(i + 8),
-				DI2 => wr_data(i + 16), DI3 => wr_data(i + 24),
-				DO0 => rdd_lower(i), DO1 => rdd_lower(i + 8),
-				DO2 => rdd_lower(i + 16), DO3 => rdd_lower(i + 24),
+				DI0 => wr_data(i * 8 + 0),
+				DI1 => wr_data(i * 8 + 1),
+				DI2 => wr_data(i * 8 + 2),
+				DI3 => wr_data(i * 8 + 3),
+				DO0 => rd2_upper(i * 8 + 0),
+				DO1 => rd2_upper(i * 8 + 1),
+				DO2 => rd2_upper(i * 8 + 2),
+				DO3 => rd2_upper(i * 8 + 3),
+				WAD0 => wr_addr(0), WAD1 => wr_addr(1),
+				WAD2 => wr_addr(2), WAD3 => wr_addr(3),
+				RAD0 => rd2_addr(0), RAD1 => rd2_addr(1),
+				RAD2 => rd2_addr(2), RAD3 => rd2_addr(3),
+				WCK => clk, WRE => we_upper
+			);
+				
+		reg_set_upper_2b: DPR16X4B
+			port map (
+				DI0 => wr_data(i * 8 + 4),
+				DI1 => wr_data(i * 8 + 5),
+				DI2 => wr_data(i * 8 + 6),
+				DI3 => wr_data(i * 8 + 7),
+				DO0 => rd2_upper(i * 8 + 4),
+				DO1 => rd2_upper(i * 8 + 5),
+				DO2 => rd2_upper(i * 8 + 6),
+				DO3 => rd2_upper(i * 8 + 7),
+				WAD0 => wr_addr(0), WAD1 => wr_addr(1),
+				WAD2 => wr_addr(2), WAD3 => wr_addr(3),
+				RAD0 => rd2_addr(0), RAD1 => rd2_addr(1),
+				RAD2 => rd2_addr(2), RAD3 => rd2_addr(3),
+				WCK => clk, WRE => we_upper
+			);
+				
+		reg_set_lower_2a: DPR16X4A
+			port map (
+				DI0 => wr_data(i * 8 + 0),
+				DI1 => wr_data(i * 8 + 1),
+				DI2 => wr_data(i * 8 + 2),
+				DI3 => wr_data(i * 8 + 3),
+				DO0 => rd2_lower(i * 8 + 0),
+				DO1 => rd2_lower(i * 8 + 1),
+				DO2 => rd2_lower(i * 8 + 2),
+				DO3 => rd2_lower(i * 8 + 3),
+				WAD0 => wr_addr(0), WAD1 => wr_addr(1),
+				WAD2 => wr_addr(2), WAD3 => wr_addr(3),
+				RAD0 => rd2_addr(0), RAD1 => rd2_addr(1),
+				RAD2 => rd2_addr(2), RAD3 => rd2_addr(3),
+				WCK => clk, WRE => we_lower
+			);
+				
+		reg_set_lower_2b: DPR16X4B
+			port map (
+				DI0 => wr_data(i * 8 + 4),
+				DI1 => wr_data(i * 8 + 5),
+				DI2 => wr_data(i * 8 + 6),
+				DI3 => wr_data(i * 8 + 7),
+				DO0 => rd2_lower(i * 8 + 4),
+				DO1 => rd2_lower(i * 8 + 5),
+				DO2 => rd2_lower(i * 8 + 6),
+				DO3 => rd2_lower(i * 8 + 7),
+				WAD0 => wr_addr(0), WAD1 => wr_addr(1),
+				WAD2 => wr_addr(2), WAD3 => wr_addr(3),
+				RAD0 => rd2_addr(0), RAD1 => rd2_addr(1),
+				RAD2 => rd2_addr(2), RAD3 => rd2_addr(3),
+				WCK => clk, WRE => we_lower
+			);
+				
+		rd2_data(i * 8 + 0) <=
+		    rd2_lower(i * 8 + 0) when rd2_addr(4) = '0'
+		    else rd2_upper(i * 8 + 0);
+		rd2_data(i * 8 + 1) <=
+		    rd2_lower(i * 8 + 1) when rd2_addr(4) = '0'
+		    else rd2_upper(i * 8 + 1);
+		rd2_data(i * 8 + 2) <=
+		    rd2_lower(i * 8 + 2) when rd2_addr(4) = '0'
+		    else rd2_upper(i * 8 + 2);
+		rd2_data(i * 8 + 3) <=
+		    rd2_lower(i * 8 + 3) when rd2_addr(4) = '0'
+		    else rd2_upper(i * 8 + 3);
+		rd2_data(i * 8 + 4) <=
+		    rd2_lower(i * 8 + 4) when rd2_addr(4) = '0'
+		    else rd2_upper(i * 8 + 4);
+		rd2_data(i * 8 + 5) <=
+		    rd2_lower(i * 8 + 5) when rd2_addr(4) = '0'
+		    else rd2_upper(i * 8 + 5);
+		rd2_data(i * 8 + 6) <=
+		    rd2_lower(i * 8 + 6) when rd2_addr(4) = '0'
+		    else rd2_upper(i * 8 + 6);
+		rd2_data(i * 8 + 7) <=
+		    rd2_lower(i * 8 + 7) when rd2_addr(4) = '0'
+		    else rd2_upper(i * 8 + 7);
+	end generate;
+
+	iter: for i in 0 to 3 generate
+	begin
+		reg_set_upper_da: DPR16X4A
+			port map (
+				DI0 => wr_data(i * 8 + 0),
+				DI1 => wr_data(i * 8 + 1),
+				DI2 => wr_data(i * 8 + 2),
+				DI3 => wr_data(i * 8 + 3),
+				DO0 => rdd_upper(i * 8 + 0),
+				DO1 => rdd_upper(i * 8 + 1),
+				DO2 => rdd_upper(i * 8 + 2),
+				DO3 => rdd_upper(i * 8 + 3),
+				WAD0 => wr_addr(0), WAD1 => wr_addr(1),
+				WAD2 => wr_addr(2), WAD3 => wr_addr(3),
+				RAD0 => rdd_addr(0), RAD1 => rdd_addr(1),
+				RAD2 => rdd_addr(2), RAD3 => rdd_addr(3),
+				WCK => clk, WRE => we_upper
+			);
+				
+		reg_set_upper_db: DPR16X4B
+			port map (
+				DI0 => wr_data(i * 8 + 4),
+				DI1 => wr_data(i * 8 + 5),
+				DI2 => wr_data(i * 8 + 6),
+				DI3 => wr_data(i * 8 + 7),
+				DO0 => rdd_upper(i * 8 + 4),
+				DO1 => rdd_upper(i * 8 + 5),
+				DO2 => rdd_upper(i * 8 + 6),
+				DO3 => rdd_upper(i * 8 + 7),
+				WAD0 => wr_addr(0), WAD1 => wr_addr(1),
+				WAD2 => wr_addr(2), WAD3 => wr_addr(3),
+				RAD0 => rdd_addr(0), RAD1 => rdd_addr(1),
+				RAD2 => rdd_addr(2), RAD3 => rdd_addr(3),
+				WCK => clk, WRE => we_upper
+			);
+				
+		reg_set_lower_da: DPR16X4A
+			port map (
+				DI0 => wr_data(i * 8 + 0),
+				DI1 => wr_data(i * 8 + 1),
+				DI2 => wr_data(i * 8 + 2),
+				DI3 => wr_data(i * 8 + 3),
+				DO0 => rdd_lower(i * 8 + 0),
+				DO1 => rdd_lower(i * 8 + 1),
+				DO2 => rdd_lower(i * 8 + 2),
+				DO3 => rdd_lower(i * 8 + 3),
 				WAD0 => wr_addr(0), WAD1 => wr_addr(1),
 				WAD2 => wr_addr(2), WAD3 => wr_addr(3),
 				RAD0 => rdd_addr(0), RAD1 => rdd_addr(1),
@@ -154,11 +304,47 @@ begin
 				WCK => clk, WRE => we_lower
 			);
 				
-		rdd_data(i) <= rdd_lower(i) when rdd_addr(4) = '0' else rdd_upper(i);
-		rdd_data(i + 8) <= rdd_lower(i + 8) when rdd_addr(4) = '0' else rdd_upper(i + 8);
-		rdd_data(i + 16) <= rdd_lower(i + 16) when rdd_addr(4) = '0' else rdd_upper(i + 16);
-		rdd_data(i + 24) <= rdd_lower(i + 24) when rdd_addr(4) = '0' else rdd_upper(i + 24);
-	end generate;
+		reg_set_lower_db: DPR16X4B
+			port map (
+				DI0 => wr_data(i * 8 + 4),
+				DI1 => wr_data(i * 8 + 5),
+				DI2 => wr_data(i * 8 + 6),
+				DI3 => wr_data(i * 8 + 7),
+				DO0 => rdd_lower(i * 8 + 4),
+				DO1 => rdd_lower(i * 8 + 5),
+				DO2 => rdd_lower(i * 8 + 6),
+				DO3 => rdd_lower(i * 8 + 7),
+				WAD0 => wr_addr(0), WAD1 => wr_addr(1),
+				WAD2 => wr_addr(2), WAD3 => wr_addr(3),
+				RAD0 => rdd_addr(0), RAD1 => rdd_addr(1),
+				RAD2 => rdd_addr(2), RAD3 => rdd_addr(3),
+				WCK => clk, WRE => we_lower
+			);
+				
+		rdd_data(i * 8 + 0) <=
+		    rdd_lower(i * 8 + 0) when rdd_addr(4) = '0'
+		    else rdd_upper(i * 8 + 0);
+		rdd_data(i * 8 + 1) <=
+		    rdd_lower(i * 8 + 1) when rdd_addr(4) = '0'
+		    else rdd_upper(i * 8 + 1);
+		rdd_data(i * 8 + 2) <=
+		    rdd_lower(i * 8 + 2) when rdd_addr(4) = '0'
+		    else rdd_upper(i * 8 + 2);
+		rdd_data(i * 8 + 3) <=
+		    rdd_lower(i * 8 + 3) when rdd_addr(4) = '0'
+		    else rdd_upper(i * 8 + 3);
+		rdd_data(i * 8 + 4) <=
+		    rdd_lower(i * 8 + 4) when rdd_addr(4) = '0'
+		    else rdd_upper(i * 8 + 4);
+		rdd_data(i * 8 + 5) <=
+		    rdd_lower(i * 8 + 5) when rdd_addr(4) = '0'
+		    else rdd_upper(i * 8 + 5);
+		rdd_data(i * 8 + 6) <=
+		    rdd_lower(i * 8 + 6) when rdd_addr(4) = '0'
+		    else rdd_upper(i * 8 + 6);
+		rdd_data(i * 8 + 7) <=
+		    rdd_lower(i * 8 + 7) when rdd_addr(4) = '0'
+		    else rdd_upper(i * 8 + 7);
 	end generate;
 
 end Behavioral;
