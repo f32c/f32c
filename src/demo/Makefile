@@ -7,8 +7,8 @@ CFILES = demo.c \
 
 ASFILES = ../lib/start.S
 
-OBJS += ${CFILES:T:.c=.o}
 OBJS += ${ASFILES:T:.S=.o}
+OBJS += ${CFILES:T:.c=.o}
 
 img.elf: ${OBJS}
 	$(LD) -o img.elf ${OBJS}
