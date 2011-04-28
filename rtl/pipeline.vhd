@@ -344,7 +344,7 @@ begin
 			jump_cycle => IF_ID_jump_cycle,
 			branch_condition => ID_branch_condition,
 			sign_extend => ID_sign_extend,
-			mem_write => ID_mem_write,	mem_size => ID_mem_size,
+			mem_write => ID_mem_write, mem_size => ID_mem_size,
 			mem_read_sign_extend => ID_mem_read_sign_extend,
 			latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
 			cop0 => ID_cop0
@@ -353,7 +353,8 @@ begin
 	-- three- or four-ported register file: 2(3) async reads, 1 sync write
 	regfile: entity reg1w2r
 		generic map(
-			C_register_technology => C_register_technology
+			C_register_technology => C_register_technology,
+			C_debug => C_debug
 		)
 		port map(
 			rd1_addr => ID_reg1_addr, rd2_addr => ID_reg2_addr,
