@@ -1,16 +1,11 @@
 
+PROG = test1
+
+CFILES = test1.c \
+	../lib/sio.c ../lib/spi.c ../lib/div.c ../lib/mul.c \
+	../lib/printf.c ../lib/pcmplay.c
+
+ASFILES = ../lib/start.S
+
 .include "../conf/f32c.mk"
 
-build:
-	$(CC) test1.c
-	$(AS) ../lib/start.S
-	$(CC) ../lib/sio.c
-	$(CC) ../lib/spi.c
-	$(CC) ../lib/div.c
-	$(CC) ../lib/mul.c
-	$(CC) ../lib/printf.c
-	$(LD) -o img.elf \
-	    start.o sio.o spi.o printf.o div.o mul.o test1.o
-
-clean:
-	rm -f test1.o start.o sio.o spi.o printf.o div.o mul.o img.elf

@@ -6,12 +6,18 @@
 #include <stdio.h>
 
 
+extern void pcm_play(void);
+
+
 int
 main(void)
 {
 	int i = 0;
 	int c, cnt;
 	
+	/* Register PCM output function as idle loop handler */
+	sio_idle_fn = pcm_play;
+
 	c = 0;
 	for (i = 0; i <= 100; i++) {
 		putchar('\r');
@@ -28,7 +34,7 @@ main(void)
 	 *  25.0 MHz c = 80151  div = 217
 	 *  12.5 MHz c = xxxxx  div = 109
 	 */
-	for (i = 0, cnt = 0; i < 82074624; i += c)
+	for (i = 0, cnt = 0; i < 100; i += c)
 		cnt += 217;
 
 	printf("\nc = %d\n", c);
@@ -66,4 +72,6 @@ main(void)
 
 		putchar(c);
 	}
+
+	return (0);
 }
