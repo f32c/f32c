@@ -1,7 +1,7 @@
 
 # Default load offset - bootloader is at 0x00000000
 .if !(defined(LOADADDR))
-LOADADDR = 0x00000180
+LOADADDR = 0x00000200
 .endif
 
 # -EB big-endian (default); -EL little-endian
