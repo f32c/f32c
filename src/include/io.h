@@ -8,7 +8,8 @@
 #define	IO_PUSHBTN	0x00	/* byte, RD */
 #define	IO_DIPSW	0x01	/* byte, RD */
 #define	IO_SPI		0x03	/* byte, RW */
-#define	IO_SIO		0x04	/* word, RW */
+#define	IO_SIO		0x04	/* half, RW */
+#define	IO_SIO_BAUD	0x06	/* half, WR */
 #define	IO_TSC		0x08	/* word, RD */
 #define	IO_PCM_OUT	0x10	/* word, WR */
 #define	IO_PCM_VOL	0x14	/* word, WR */

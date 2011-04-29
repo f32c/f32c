@@ -3,7 +3,12 @@
 #include <io.h>
 #include <sio.h>
 
+
 typedef int mainfn_t(void);
+
+
+#define CPUFREQ_ADDR	0x000001fc
+#define DEF_BOOTADDR	0x00000200
 
 
 void
@@ -13,15 +18,49 @@ _start(void)
 	int *loadaddr;
 	int cur_bits;
 	int cur_word;
-	int c;
+	int c, cnt, tsc;
 	char *cp;
 	
+	/* Set up IO base address */
+	__asm __volatile__(
+		"li $27, %0"
+		:
+		: "i" (IO_BASE)
+	);
+
+	/* Determine CPU clock rate, set SIO baud rate to 115200 */
+        OUTH(IO_SIO_BAUD, 25000);
+        do {
+                INW(c, IO_SIO);
+        } while (c & SIO_TX_BUSY);
+        tsc = rdtsc();
+        OUTB(IO_SIO, c);
+        do {
+                INW(c, IO_SIO);
+        } while (c & SIO_TX_BUSY);
+        tsc -= rdtsc();
+        if (tsc < 0)
+                tsc = -tsc;
+        for (cnt = 0, c = 0; cnt < 62000; cnt += tsc)
+                c += 108;
+        OUTH(IO_SIO_BAUD, c); 
+
+	loadaddr = (void *) CPUFREQ_ADDR;
+	c = *loadaddr;
+	*loadaddr = tsc;
+	if (c)
+		bootaddr = NULL;
+	else {
+defaultboot:
+		bootaddr = (void *) DEF_BOOTADDR;
+	}
+
 	goto start;
 
 	do {
 		do {
 			INW(c, IO_TSC);
-			OUTB(IO_LED, c >> 24);
+			OUTB(IO_LED, c >> 20);
 			INW(c, IO_SIO);
 		} while ((c & SIO_RX_BYTES) == 0);
 		c = (c >> 8) & 0xff;
@@ -31,6 +70,7 @@ _start(void)
 
 		if (c == '\r') {
 			if (loadaddr == NULL) {
+start:
 				if (bootaddr != NULL) {
 					/*
 					 * Start main() with a clean stack,
@@ -45,14 +85,6 @@ _start(void)
 						: "r" (bootaddr)
 					);
 				}
-start:
-				/* Set up IO base address */
-				__asm __volatile__(
-					"li $27, %0"
-					:
-					: "i" (IO_BASE)
-				);
-				bootaddr = NULL;
 				for (cp = "\r\nulxp2> "; *cp != 0; cp++) {
 					do {
 						INW(c, IO_SIO);
@@ -86,8 +118,12 @@ start:
 					*loadaddr++ = cur_word;
 				}
 			}
-		} else
-			cur_bits = 0;
+			continue;
+		}
+
+		cur_bits = 0;
+		if (c == 'X')
+			goto defaultboot;
 	} while (1);
 }
 

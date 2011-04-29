@@ -12,42 +12,28 @@ extern void pcm_play(void);
 int
 main(void)
 {
-	int i = 0;
 	int c, cnt;
+	int *tsc = (int *) 0x000001fc;
 	
 	/* Register PCM output function as idle loop handler */
 	sio_idle_fn = pcm_play;
 
-	c = 0;
-	for (i = 0; i <= 100; i++) {
-		putchar('\r');
-		if (i == 2 || i == 100)
-			c = rdtsc() - c;
-	}
-	if (c < 0)
-		c = -c;
+
 	/*
-	 * 150.0 MHz c = 13358	div = 1302
-	 * 133.3 MHz c = 15026  div = 1157
-	 *  75.0 MHz c = 26713  div = 651
-	 *  66.7 MHz c = 30056  div = 579
-	 *  25.0 MHz c = 80151  div = 217
-	 *  12.5 MHz c = xxxxx  div = 109
+	 *  12.5 MHz tsc = 62508 div =  106
+	 *  25.0 MHz tsc = 31254 div =  211
+	 *  75.0 MHz tsc = 10418 div =  632
+	 * 150.0 MHz tsc =  5209 div = 1264
 	 */
-	for (i = 0, cnt = 0; i < 100; i += c)
-		cnt += 217;
 
-	printf("\nc = %d\n", c);
-	printf("cnt = %d\n", cnt);
-	printf("div = %d\n", cnt >> 10);
-
-	printf("\n\n f32c CPU running at %d MHz\n", 2003550000 / c);
-
-	for (cnt = 0, c = '\r'; cnt < 100; cnt++) {
-
+	for (cnt = 0, c = '\r'; cnt < 100000; cnt++) {
 		if (c == '\r' || c == '\n') {
+
 			printf("\n");
 			printf("Hello, world!\n");
+			printf("\n\n f32c CPU running at %d Hz\n",
+			    (75000000 / *tsc) * 10418);
+			printf("\n\n tsc = %d\n", *tsc);
 			printf("  %%\n");
 			printf("  s: %s (null %s)\n", "Hello, world!", NULL);
 			printf("  c: %c\n", '0' + (cnt & 0x3f));
