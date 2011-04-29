@@ -43,7 +43,7 @@ MK_CFLAGS += -freorder-blocks
 #MK_CFLAGS += --param max-delay-slot-live-search=16
 
 # No zero-filled BSS
-#MK_CFLAGS += -fno-zero-initialized-in-bss
+MK_CFLAGS += -fno-zero-initialized-in-bss
 
 # Other interesting options:
 # MK_CFLAGS += -fPIC -fpic
