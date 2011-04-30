@@ -1,5 +1,6 @@
 
 #include <io.h>
+#include <types.h>
 
 
 int
@@ -24,15 +25,13 @@ spi_byte(int out)
 	int i, io, in = 0;
 
 	for (i = 8; i > 0; i--) {
-		if (out & 0x80)
-			io = SPI_SI;
-		else
-			io = 0;
+		/* XXX SPI_SI must be 0x80! */
+		io = out & SPI_SI;
 		OUTB(IO_SPI, io);
 		out <<= 1;
 		OUTB(IO_SPI, io | SPI_SCK);
-		in <<= 1;
 		INB(io, IO_SPI);
+		in <<= 1;
 		in |= (io & SPI_SO);
 	}
 	OUTB(IO_SPI, 0);
