@@ -11,8 +11,8 @@ spi_byte_in(void)
 		OUTB(IO_SPI, SPI_SCK);
 		in <<= 1;
 		INB(io, IO_SPI);
-		in |= (io & SPI_SO);
 		OUTB(IO_SPI, 0);
+		in |= (io & SPI_SO);
 	}
 	return (in >> SPI_SO_BITPOS);
 }
