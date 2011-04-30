@@ -123,6 +123,6 @@ pcm_play(void)
 		spi_byte(pcm_addr >> 16);
 		spi_byte(pcm_addr >> 8);
 		spi_byte(pcm_addr);
-		spi_byte(0); /* dummy byte, ignored */
+		spi_byte_in(); /* dummy byte, ignored */
 	}
 }
