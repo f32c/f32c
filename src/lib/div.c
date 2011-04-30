@@ -2,38 +2,38 @@
 #include <types.h>
  
 
-static u_int
-divmod(u_int a, u_int b, int mod)
+static uint32_t
+divmod(uint32_t hi, uint32_t b, int do_mod)
 {
-	u_int hi = a, lo = 0;
+	uint32_t a = b << 31;
+	uint32_t lo = 0;
 	int i;
-	a = b << 31;
 
-	for (i = 0; i < 32; ++i) {
-		lo = lo << 1;
-		if (hi >= a && a && b < 2) {
-			hi = hi - a;
+	for (i = 0; i < 32; i++) {
+		lo <<= 1;
+		if (a != 0 && hi >= a && b < 2) {
+			hi -= a;
 			lo |= 1;
 		}
-		a = ((b & 2) << 30) | (a >> 1);
-		b = b >> 1;
+		a = (a >> 1) | ((b & 2) << 30);
+		b >>= 1;
 	}
-	if (!mod)
-		return (lo);
-	return (hi);
+	if (do_mod)
+		return (hi);
+	return (lo);
 }
  
  
-u_int
-__udivsi3(u_int a, u_int b)
+uint32_t
+__udivsi3(uint32_t a, uint32_t b)
 {
 
 	return (divmod(a, b, 0));
 }
  
 
-int
-__divsi3(int a, int b)
+int32_t
+__divsi3(int32_t a, int32_t b)
 {
 	int res, neg = 0;
 
@@ -52,15 +52,15 @@ __divsi3(int a, int b)
 }
  
  
-u_int
-__umodsi3(u_int a, u_int b)
+uint32_t
+__umodsi3(uint32_t a, uint32_t b)
 {
 
 	return (divmod(a, b, 1));
 }
 
-int
-__modsi3(int a, int b)
+uint32_t
+__modsi3(int32_t a, int32_t b)
 {
 
 	return (divmod(a, b, 1));

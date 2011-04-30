@@ -1,10 +1,10 @@
 
 #include <types.h>
 
-u_int
-__mulsi3(u_int a, u_int b)
+uint32_t
+__mulsi3(uint32_t a, uint32_t b)
 {
-	u_int res;
+	uint32_t res;
 
 	for (res = 0; b != 0; b >>= 1, a <<= 1)
 		if (b & 1)
