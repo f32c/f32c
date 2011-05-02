@@ -66,7 +66,7 @@ ELF2HEX = ../tools/elf2hex.tcl
 # Autogenerate targets
 #
 
-OBJS = $(CFILES:.c=.o) $(ASFILES:.S=.o)
+OBJS = $(ASFILES:.S=.o) $(CFILES:.c=.o)
 
 HEX = ${PROG}.hex
 
