@@ -7,5 +7,5 @@ CFILES = demo.c \
 
 ASFILES = ../lib/start.S
 
-.include "../conf/f32c.mk"
+include ../conf/f32c.mk
 
