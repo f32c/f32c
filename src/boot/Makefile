@@ -9,5 +9,5 @@ PROG = loader
 
 CFILES = loader.c
 
-.include "../conf/f32c.mk"
+include ../conf/f32c.mk
 

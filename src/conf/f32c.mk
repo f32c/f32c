@@ -1,13 +1,13 @@
 
 # Default load offset - bootloader is at 0x00000000
-.if !(defined(LOADADDR))
+ifndef LOADADDR
 LOADADDR = 0x00000200
-.endif
+endif
 
 # -EB big-endian (default); -EL little-endian
-.if !(defined(ENDIANFLAGS))
+ifndef ENDIANFLAGS
 ENDIANFLAGS = -EL
-.endif
+endif
 
 # Includes
 MK_CFLAGS = -nostdinc -I../include -I.
@@ -53,11 +53,10 @@ MK_CFLAGS += -fno-zero-initialized-in-bss
 MK_LDFLAGS += -Ttext ${LOADADDR} -N ${ENDIANFLAGS}
 
 # Sweep CFLAGS from leading "-O2 -pipe" noise, inserted by sys.mk
-.if (defined(CFLAGS))
+ifdef CFLAGS
 ECFLAGS = ${CFLAGS:S/^-O2//:S/^-pipe//}
-.endif
+endif
 
-AS = mips-elf-gcc ${MK_CFLAGS} ${ASFLAGS}
 CC = mips-elf-gcc ${MK_CFLAGS} ${ECFLAGS}
 LD = mips-elf-ld ${MK_LDFLAGS} ${LDFLAGS}
 ELF2HEX = ../tools/elf2hex.tcl
@@ -67,8 +66,7 @@ ELF2HEX = ../tools/elf2hex.tcl
 # Autogenerate targets
 #
 
-OBJS += ${ASFILES:T:.S=.o}
-OBJS += ${CFILES:T:.c=.o}
+OBJS = $(CFILES:.c=.o) $(ASFILES:.S=.o)
 
 HEX = ${PROG}.hex
 
@@ -77,16 +75,6 @@ ${HEX}: ${PROG}
 
 ${PROG}: ${OBJS}
 	${LD} -o ${PROG} ${OBJS}
-
-.for _src in ${CFILES}
-${_src:T:.c=.o}: ${_src}
-	${CC} ${.IMPSRC}
-.endfor
-
-.for _src in ${ASFILES}
-${_src:T:.S=.o}: ${_src}
-	${AS} ${.IMPSRC}
-.endfor
 
 clean:
 	rm -f ${OBJS} ${PROG} ${HEX}

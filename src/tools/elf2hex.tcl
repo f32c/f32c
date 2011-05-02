@@ -32,7 +32,7 @@ if {$argc != 1} {
     exit 1
 }
 
-set elffile [open "| mips-rtems-objdump -s [lindex $argv 0]"]
+set elffile [open "| mips-elf-objdump -s [lindex $argv 0]"]
 set linenum 0
 set section undefined
 set endian none
