@@ -57,9 +57,9 @@ MK_LDFLAGS += -Ttext ${LOADADDR} -N ${ENDIANFLAGS}
 ECFLAGS = ${CFLAGS:S/^-O2//:S/^-pipe//}
 .endif
 
-AS = mips-rtems-gcc ${MK_CFLAGS} ${ASFLAGS}
-CC = mips-rtems-gcc ${MK_CFLAGS} ${ECFLAGS}
-LD = mips-rtems-ld ${MK_LDFLAGS} ${LDFLAGS}
+AS = mips-elf-gcc ${MK_CFLAGS} ${ASFLAGS}
+CC = mips-elf-gcc ${MK_CFLAGS} ${ECFLAGS}
+LD = mips-elf-ld ${MK_LDFLAGS} ${LDFLAGS}
 ELF2HEX = ../tools/elf2hex.tcl
 
 
