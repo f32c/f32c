@@ -39,7 +39,6 @@ entity glue is
 		C_result_forwarding: boolean := true; -- true: +171 LUT4
 		-- Do not change those two:
 		C_fast_ID: boolean := true; -- false: +3 LUT4, lower fMax
-		C_predecode_in_IF: boolean := false; -- true: -3 LUT4, lower fMax
 		-- SoC configuration options
 		C_tsc: boolean := true; -- true: +63 LUT4
 		C_sio: boolean := true; -- true: +133 LUT;
@@ -49,22 +48,22 @@ entity glue is
 		--
 		-- XP2-8E-7 area optimized synthesis:
 		--
-		-- C_bp 1, C_res_fwd 1, C_fast_id 1, C_predecode 0, C_debug 0
+		-- C_bp 1, C_res_fwd 1, C_fast_id 1, C_debug 0
 		-- C_tsc 1, C_sio 1, C_pcmdac 1
 		-- Total number of LUT4s: 1665  Fmax: 122.5 MHz (works @ 150 MHz)
 		-- CPI: 1.21
 		--
-		-- C_bp 0, C_res_fwd 1, C_fast_id 1, C_predecode 0, C_debug 0
+		-- C_bp 0, C_res_fwd 1, C_fast_id 1, C_debug 0
 		-- C_tsc 1, C_sio 1, C_pcmdac 1
 		-- Total number of LUT4s: 1595  Fmax: 122.5 MHz (works @ 150 MHz)
 		-- CPI: 1.28
 		--
-		-- C_bp 0, C_res_fwd 0, C_fast_id 1, C_predecode 0, C_debug 0
+		-- C_bp 0, C_res_fwd 0, C_fast_id 1, C_debug 0
 		-- C_tsc 1, C_sio 1, C_pcmdac 1
 		-- Total number of LUT4s: 1424  Fmax: 119.4 MHz (works @ 150 MHz)
 		-- CPI: 1.75
 		--
-		-- C_bp 0, C_res_fwd 0, C_fast_id 1, C_predecode 1, C_debug 0
+		-- C_bp 0, C_res_fwd 0, C_fast_id 1, C_debug 0
 		-- C_tsc 0, C_sio 0, C_pcmdac 0
 		-- Total number of LUT4s: 1187
 		--
@@ -133,7 +132,6 @@ begin
 		C_branch_prediction => C_branch_prediction,
 		C_result_forwarding => C_result_forwarding,
 		C_fast_ID => C_fast_ID,
-		C_predecode_in_IF => C_predecode_in_IF,
 		C_register_technology => C_register_technology,
 		-- debugging only
 		C_debug => C_debug

@@ -38,7 +38,6 @@ entity pipeline is
 		C_branch_prediction: boolean := true;
 		C_result_forwarding: boolean := true;
 		C_fast_ID: boolean := true;
-		C_predecode_in_IF: boolean := false; -- helps on Xilinx, hurts on Lattice
 		C_register_technology: string := "unknown";
 		C_init_PC: std_logic_vector := x"00000000";
 		-- debugging options
@@ -267,14 +266,6 @@ begin
 				IF_ID_branch_delay_slot <=
 					IF_ID_branch_cycle or IF_ID_jump_cycle or ID_jump_register;
 				IF_ID_bpredict_index <= IF_bpredict_index;
-				if (C_predecode_in_IF) then
-					IF_ID_reg1_zero <= imem_data_in(25 downto 21) = "00000";
-					IF_ID_reg2_zero <= imem_data_in(20 downto 16) = "00000";
-					IF_ID_branch_cycle <= imem_data_in(31 downto 28) = "0001" or
-						imem_data_in(31 downto 26) = "000001";
-					IF_ID_jump_cycle <= imem_data_in(31 downto 27) = "00001";
-					IF_ID_special <= imem_data_in(31 downto 26) = "000000";
-				end if;
 				IF_ID_instruction <= imem_data_in; -- XXX only debugging?
 			end if;
 		end if;
@@ -319,16 +310,12 @@ begin
 	-- =======================================================
 	--
 	
-	G_no_predecode_in_IF:
-	if not C_predecode_in_IF generate
-	begin
 	IF_ID_reg1_zero <= IF_ID_instruction(25 downto 21) = "00000";
 	IF_ID_reg2_zero <= IF_ID_instruction(20 downto 16) = "00000";
 	IF_ID_branch_cycle <= IF_ID_instruction(31 downto 28) = "0001" or
 		IF_ID_instruction(31 downto 26) = "000001";
 	IF_ID_jump_cycle <= IF_ID_instruction(31 downto 27) = "00001";
 	IF_ID_special <= IF_ID_instructioN(31 downto 26) = "000000";
-	end generate;
 
 	-- instruction decoder
 	idecode: entity idecode
