@@ -264,7 +264,7 @@ begin
 				IF_ID_branch_delay_slot <=
 					ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 				IF_ID_bpredict_index <= IF_bpredict_index;
-				IF_ID_instruction <= imem_data_in; -- XXX only debugging?
+				IF_ID_instruction <= imem_data_in;
 			end if;
 		end if;
 	end process;
@@ -320,7 +320,7 @@ begin
 			target_addr => ID_writeback_addr, op_major => ID_op_major,
 			op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
 			branch_cycle => ID_branch_cycle,
-			jump_cycle => ID_jump_cycle,
+			jump_cycle => ID_jump_cycle, jump_register => ID_jump_register,
 			branch_condition => ID_branch_condition,
 			sign_extend => ID_sign_extend,
 			mem_write => ID_mem_write, mem_size => ID_mem_size,
@@ -370,8 +370,6 @@ begin
 	end generate;
 	
 	ID_alu_op2 <= ID_immediate when ID_use_immediate else ID_reg2_data;
-	ID_jump_register <=
-		ID_special and IF_ID_instruction(5 downto 1) = "00100";
 	
 	-- schedule forwarding of results from the EX stage
 	ID_fwd_ex_reg1 <=

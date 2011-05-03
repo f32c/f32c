@@ -68,13 +68,13 @@ begin
 	reg2_addr <= instruction(20 downto 16);
 	mem_read_sign_extend <= not opcode(2);
 
-	reg1_zero <= reg1_addr = "00000";
-	reg2_zero <= reg2_addr = "00000";
-	branch_cycle <= instruction(31 downto 28) = "0001" or
-	    instruction(31 downto 26) = "000001";
-	jump_cycle <= instruction(31 downto 27) = "00001";
 	x_special <= opcode = "000000";
 	special <= x_special;
+	reg1_zero <= reg1_addr = "00000";
+	reg2_zero <= reg2_addr = "00000";
+	branch_cycle <= opcode(5 downto 2) = "0001" or opcode = "000001";
+	jump_cycle <= opcode(5 downto 1) = "00001";
+	jump_register <= x_special and fncode(5 downto 1) = "00100";
 
 	-- type_code for target register address calculation
 	process(opcode)
