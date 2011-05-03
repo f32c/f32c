@@ -35,7 +35,7 @@ entity glue is
 		-- CPU core configuration options
 		C_register_technology: string := "lattice";
 		C_mult_enable: boolean := false;
-		C_branch_prediction: boolean := true; -- true: +70 LUT4
+		C_branch_prediction: boolean := false; -- true: +70 LUT4
 		C_result_forwarding: boolean := true; -- true: +171 LUT4
 		-- Do not change those two:
 		C_fast_ID: boolean := true; -- false: +3 LUT4, lower fMax
@@ -44,7 +44,7 @@ entity glue is
 		C_sio: boolean := true; -- true: +133 LUT;
 		C_pcmdac: boolean := true; -- true: +27 LUT;
 		-- debugging options
-		C_debug: boolean := false -- true: +871 LUT4, lower fMax
+		C_debug: boolean := true -- true: +871 LUT4, lower fMax
 		--
 		-- XP2-8E-7 area optimized synthesis:
 		--

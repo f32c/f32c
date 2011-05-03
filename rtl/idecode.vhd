@@ -94,6 +94,10 @@ begin
 			when "000101" => type_code <= "01"; -- J-type - bne
 			when "000110" => type_code <= "01"; -- J-type - blez
 			when "000111" => type_code <= "01"; -- J-type - bgtz
+			when "010100" => type_code <= "01"; -- J-type - beql
+			when "010101" => type_code <= "01"; -- J-type - bnel
+			when "010110" => type_code <= "01"; -- J-type - blezl
+			when "010111" => type_code <= "01"; -- J-type - bgtzl
 			when "101000" => type_code <= "10"; -- S-type - sb
 			when "101001" => type_code <= "10"; -- S-type - sh
 			when "101010" => type_code <= "10"; -- S-type - unimplemented
