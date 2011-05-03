@@ -35,7 +35,8 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity idecode is
 	port(
 		instruction: in STD_LOGIC_VECTOR(31 downto 0);
-		branch_cycle, jump_cycle, jump_register: out boolean;
+		branch_cycle, branch_likely: out boolean;
+		jump_cycle, jump_register: out boolean;
 		special: out boolean;
 		reg1_zero, reg2_zero: out boolean;
 		reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
@@ -72,7 +73,8 @@ begin
 	special <= x_special;
 	reg1_zero <= reg1_addr = "00000";
 	reg2_zero <= reg2_addr = "00000";
-	branch_cycle <= opcode(5 downto 2) = "0001" or opcode = "000001";
+	branch_cycle <= opcode = "000001" or
+	    (opcode(5) = '0' and opcode(3 downto 2) = "01");
 	jump_cycle <= opcode(5 downto 1) = "00001";
 	jump_register <= x_special and fncode(5 downto 1) = "00100";
 
