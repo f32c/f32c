@@ -61,6 +61,7 @@ architecture Behavioral of idecode is
 	signal type_code: std_logic_vector(1 downto 0);
 	signal imm_extension: std_logic_vector(15 downto 0);
 	signal x_special, do_sign_extend: boolean;
+	signal x_branch1, x_branch2: boolean;
 begin
 
 	opcode <= instruction(31 downto 26);
@@ -73,8 +74,11 @@ begin
 	special <= x_special;
 	reg1_zero <= reg1_addr = "00000";
 	reg2_zero <= reg2_addr = "00000";
-	branch_cycle <= opcode = "000001" or
-	    (opcode(5) = '0' and opcode(3 downto 2) = "01");
+	x_branch1 <= opcode(5) = '0' and opcode(3 downto 2) = "01";
+	x_branch2 <= opcode = "000001";
+	branch_cycle <= x_branch1 or x_branch2;
+	branch_likely <= (x_branch1 and opcode(4) = '1') or
+	    (x_branch2 and instruction(17) = '1');
 	jump_cycle <= opcode(5 downto 1) = "00001";
 	jump_register <= x_special and fncode(5 downto 1) = "00100";
 
