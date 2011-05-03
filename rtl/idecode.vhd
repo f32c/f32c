@@ -35,8 +35,9 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity idecode is
 	port(
 		instruction: in STD_LOGIC_VECTOR(31 downto 0);
-		branch_cycle, jump_cycle: in boolean;
-		special: in boolean;
+		branch_cycle, jump_cycle, jump_register: out boolean;
+		special: out boolean;
+		reg1_zero, reg2_zero: out boolean;
 		reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
 		immediate_value: out STD_LOGIC_VECTOR(31 downto 0);
 		sign_extension: out std_logic_vector(15 downto 0);
@@ -58,7 +59,7 @@ architecture Behavioral of idecode is
 	signal opcode, fncode: std_logic_vector(5 downto 0);
 	signal type_code: std_logic_vector(1 downto 0);
 	signal imm_extension: std_logic_vector(15 downto 0);
-	signal do_sign_extend: boolean;
+	signal x_special, do_sign_extend: boolean;
 begin
 
 	opcode <= instruction(31 downto 26);
@@ -67,23 +68,31 @@ begin
 	reg2_addr <= instruction(20 downto 16);
 	mem_read_sign_extend <= not opcode(2);
 
+	reg1_zero <= reg1_addr = "00000";
+	reg2_zero <= reg2_addr = "00000";
+	branch_cycle <= instruction(31 downto 28) = "0001" or
+	    instruction(31 downto 26) = "000001";
+	jump_cycle <= instruction(31 downto 27) = "00001";
+	x_special <= opcode = "000000";
+	special <= x_special;
+
 	-- type_code for target register address calculation
 	process(opcode)
 	begin
 		case opcode is
-			when "000000"	=> type_code <= "00"; -- R-type - special
-			when "000001"  => type_code <= "01"; -- J-type - bgez, bgezal, bltz, bltzal
-			when "000010"	=> type_code <= "01"; -- J-type - j
-			when "000011"	=> type_code <= "01"; -- J-type - jal
-			when "000100"  => type_code <= "01"; -- J-type - beq
-			when "000101"  => type_code <= "01"; -- J-type - bne
-			when "000110"  => type_code <= "01"; -- J-type - blez
-			when "000111"  => type_code <= "01"; -- J-type - bgtz
-			when "101000"	=> type_code <= "10"; -- S-type - sb
-			when "101001"	=> type_code <= "10"; -- S-type - sh
-			when "101010"	=> type_code <= "10"; -- S-type - unimplemented
-			when "101011"	=> type_code <= "10"; -- S-type - sw
-			when others		=> type_code <= "11"; -- I-type
+			when "000000" => type_code <= "00"; -- R-type - special
+			when "000001" => type_code <= "01"; -- J-type - bgez, bgezal, bltz, bltzal
+			when "000010" => type_code <= "01"; -- J-type - j
+			when "000011" => type_code <= "01"; -- J-type - jal
+			when "000100" => type_code <= "01"; -- J-type - beq
+			when "000101" => type_code <= "01"; -- J-type - bne
+			when "000110" => type_code <= "01"; -- J-type - blez
+			when "000111" => type_code <= "01"; -- J-type - bgtz
+			when "101000" => type_code <= "10"; -- S-type - sb
+			when "101001" => type_code <= "10"; -- S-type - sh
+			when "101010" => type_code <= "10"; -- S-type - unimplemented
+			when "101011" => type_code <= "10"; -- S-type - sw
+			when others   => type_code <= "11"; -- I-type
 		end case;
 	end process;
 	
@@ -127,7 +136,7 @@ begin
 		type_code(0) /= '0' else false;
 	
 	-- op_major: 00 ALU, 01 SLT, 10 shift, 11 mul_et_al
-	process(special, opcode, fncode)
+	process(x_special, opcode, fncode)
 	begin
 		op_major <= "00"; -- ALU
 		op_minor <= "000"; -- ADD
@@ -135,7 +144,7 @@ begin
 		latency <= '0'; -- result available immediately after EX stage
 		do_sign_extend <= true;
 		
-		if special then
+		if x_special then
 			op_minor <= fncode(2 downto 0);
 			if fncode(5 downto 3) = "101" then -- SLT / SLTU
 				op_major <= "01";

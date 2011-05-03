@@ -308,19 +308,13 @@ begin
 	-- =======================================================
 	--
 	
-	ID_reg1_zero <= IF_ID_instruction(25 downto 21) = "00000";
-	ID_reg2_zero <= IF_ID_instruction(20 downto 16) = "00000";
-	ID_branch_cycle <= IF_ID_instruction(31 downto 28) = "0001" or
-		IF_ID_instruction(31 downto 26) = "000001";
-	ID_jump_cycle <= IF_ID_instruction(31 downto 27) = "00001";
-	ID_special <= IF_ID_instructioN(31 downto 26) = "000000";
-
 	-- instruction decoder
 	idecode: entity idecode
 		port map(
 			instruction => IF_ID_instruction,
 			special => ID_special,
 			reg1_addr => ID_reg1_addr, reg2_addr => ID_reg2_addr,
+			reg1_zero => ID_reg1_zero, reg2_zero => ID_reg2_zero,
 			immediate_value => ID_immediate, use_immediate => ID_use_immediate,
 			sign_extension => ID_sign_extension,
 			target_addr => ID_writeback_addr, op_major => ID_op_major,
