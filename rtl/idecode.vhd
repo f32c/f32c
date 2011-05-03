@@ -74,8 +74,8 @@ begin
 	special <= x_special;
 	reg1_zero <= reg1_addr = "00000";
 	reg2_zero <= reg2_addr = "00000";
-	x_branch1 <= opcode(5) = '0' and opcode(3 downto 2) = "01";
-	x_branch2 <= opcode = "000001";
+	x_branch1 <= opcode(5) = '0' and opcode(3 downto 2) = "01"; -- beq, bne, blez, bgtz
+	x_branch2 <= opcode = "000001"; -- bgez, bltz
 	branch_cycle <= x_branch1 or x_branch2;
 	branch_likely <= (x_branch1 and opcode(4) = '1') or
 	    (x_branch2 and instruction(17) = '1');
@@ -201,8 +201,8 @@ begin
 	end process;
 		
 	branch_condition <=
-		'1' & opcode(1 downto 0) when branch_cycle and opcode(5 downto 2) = "0001" -- beq, bne, blez, bgtz
-		else "01" & instruction(16) when branch_cycle -- bgez, bltz
+		'1' & opcode(1 downto 0) when x_branch1 -- beq, bne, blez, bgtz
+		else "01" & instruction(16) when x_branch2 -- bgez, bltz
 		else "001" when jump_cycle -- XXX revisit
 		else "000";
 
