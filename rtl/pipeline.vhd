@@ -71,10 +71,6 @@ architecture Behavioral of pipeline is
 	signal IF_bpredict_index: std_logic_vector(12 downto 0);
 	signal IF_bpredict_re: std_logic;
 	signal IF_ID_instruction: std_logic_vector(31 downto 0);
-	signal IF_ID_reg1_zero: boolean := true; -- XXX bootstrapping;
-	signal IF_ID_reg2_zero: boolean := true; -- XXX bootstrapping;
-	signal IF_ID_special: boolean;
-	signal IF_ID_branch_cycle, IF_ID_jump_cycle: boolean;
 	signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
 	signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
 	signal IF_ID_branch_delay_slot: boolean;
@@ -82,6 +78,8 @@ architecture Behavioral of pipeline is
 	
 	-- pipeline stage 2: instruction decode and register fetch
 	signal ID_running: boolean;
+	signal ID_reg1_zero, ID_reg2_zero: boolean;
+	signal ID_special, ID_branch_cycle, ID_jump_cycle: boolean;
 	signal ID_reg1_addr, ID_reg2_addr, ID_writeback_addr: std_logic_vector(4 downto 0);
 	signal ID_reg1_data, ID_reg2_data: std_logic_vector(31 downto 0);
 	signal ID_alu_op2: std_logic_vector(31 downto 0);
@@ -253,7 +251,7 @@ begin
 			if MEM_take_branch then
 				IF_ID_PC_next <= IF_PC_next;
 			elsif ID_running then
-				if (IF_ID_jump_cycle or ID_predict_taken)
+				if (ID_jump_cycle or ID_predict_taken)
 					and not ID_EX_cancel_next then
 					IF_ID_PC_next <= ID_jump_target;
 				else
@@ -264,7 +262,7 @@ begin
 				IF_ID_PC <= IF_PC;
 				IF_ID_PC_4 <= IF_PC_next;
 				IF_ID_branch_delay_slot <=
-					IF_ID_branch_cycle or IF_ID_jump_cycle or ID_jump_register;
+					ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 				IF_ID_bpredict_index <= IF_bpredict_index;
 				IF_ID_instruction <= imem_data_in; -- XXX only debugging?
 			end if;
@@ -310,25 +308,25 @@ begin
 	-- =======================================================
 	--
 	
-	IF_ID_reg1_zero <= IF_ID_instruction(25 downto 21) = "00000";
-	IF_ID_reg2_zero <= IF_ID_instruction(20 downto 16) = "00000";
-	IF_ID_branch_cycle <= IF_ID_instruction(31 downto 28) = "0001" or
+	ID_reg1_zero <= IF_ID_instruction(25 downto 21) = "00000";
+	ID_reg2_zero <= IF_ID_instruction(20 downto 16) = "00000";
+	ID_branch_cycle <= IF_ID_instruction(31 downto 28) = "0001" or
 		IF_ID_instruction(31 downto 26) = "000001";
-	IF_ID_jump_cycle <= IF_ID_instruction(31 downto 27) = "00001";
-	IF_ID_special <= IF_ID_instructioN(31 downto 26) = "000000";
+	ID_jump_cycle <= IF_ID_instruction(31 downto 27) = "00001";
+	ID_special <= IF_ID_instructioN(31 downto 26) = "000000";
 
 	-- instruction decoder
 	idecode: entity idecode
 		port map(
 			instruction => IF_ID_instruction,
-			special => IF_ID_special,
+			special => ID_special,
 			reg1_addr => ID_reg1_addr, reg2_addr => ID_reg2_addr,
 			immediate_value => ID_immediate, use_immediate => ID_use_immediate,
 			sign_extension => ID_sign_extension,
 			target_addr => ID_writeback_addr, op_major => ID_op_major,
 			op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
-			branch_cycle => IF_ID_branch_cycle,
-			jump_cycle => IF_ID_jump_cycle,
+			branch_cycle => ID_branch_cycle,
+			jump_cycle => ID_jump_cycle,
 			branch_condition => ID_branch_condition,
 			sign_extend => ID_sign_extend,
 			mem_write => ID_mem_write, mem_size => ID_mem_size,
@@ -362,9 +360,9 @@ begin
 	begin
 	ID_running <= ID_EX_cancel_next or
 		(EX_running and not ID_EX_partial_load and
-		(IF_ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
+		(ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
 		ID_EX_latency = '0') and
-		(IF_ID_reg2_zero or ID_ignore_reg2 or
+		(ID_reg2_zero or ID_ignore_reg2 or
 		ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = '0'));
 	end generate;
 
@@ -379,19 +377,19 @@ begin
 	
 	ID_alu_op2 <= ID_immediate when ID_use_immediate else ID_reg2_data;
 	ID_jump_register <=
-		IF_ID_special and IF_ID_instruction(5 downto 1) = "00100";
+		ID_special and IF_ID_instruction(5 downto 1) = "00100";
 	
 	-- schedule forwarding of results from the EX stage
 	ID_fwd_ex_reg1 <=
-		not IF_ID_reg1_zero and ID_reg1_addr = ID_EX_writeback_addr;
+		not ID_reg1_zero and ID_reg1_addr = ID_EX_writeback_addr;
 	ID_fwd_ex_reg2 <=
-		not IF_ID_reg2_zero and ID_reg2_addr = ID_EX_writeback_addr;
+		not ID_reg2_zero and ID_reg2_addr = ID_EX_writeback_addr;
 	ID_fwd_ex_alu_op2 <= ID_fwd_ex_reg2 and not ID_use_immediate;
 	-- schedule forwarding of results from the MEM stage
 	ID_fwd_mem_reg1 <=
-		not IF_ID_reg1_zero and ID_reg1_addr = EX_MEM_writeback_addr;
+		not ID_reg1_zero and ID_reg1_addr = EX_MEM_writeback_addr;
 	ID_fwd_mem_reg2 <=
-		not IF_ID_reg2_zero and ID_reg2_addr = EX_MEM_writeback_addr;
+		not ID_reg2_zero and ID_reg2_addr = EX_MEM_writeback_addr;
 	ID_fwd_mem_alu_op2 <= ID_fwd_mem_reg2 and not ID_use_immediate;
 	
 	-- compute branch target
@@ -400,7 +398,7 @@ begin
 
 	-- branch prediction
 	ID_predict_taken <= C_branch_prediction and
-		IF_ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
+		ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
 
 	-- compute jump target
 	ID_jump_target <=
@@ -469,8 +467,8 @@ begin
 					ID_EX_cop0 <= ID_cop0;
 					ID_EX_writeback_addr <= ID_writeback_addr;
 					ID_EX_mem_cycle <= ID_mem_cycle;
-					ID_EX_branch_cycle <= IF_ID_branch_cycle;
-					ID_EX_jump_cycle <= IF_ID_jump_cycle;
+					ID_EX_branch_cycle <= ID_branch_cycle;
+					ID_EX_jump_cycle <= ID_jump_cycle;
 					ID_EX_jump_register <= ID_jump_register;
 					ID_EX_predict_taken <= ID_predict_taken;
 					ID_EX_bpredict_score <= IF_ID_bpredict_score;
