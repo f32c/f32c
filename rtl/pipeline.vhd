@@ -63,7 +63,7 @@ end pipeline;
 
 architecture Behavioral of pipeline is
 
-	signal debug_XXX: std_logic_vector(31 downto 0);
+	signal debug_XXX: std_logic_vector(31 downto 0) := x"00000000";
 
 	-- pipeline stage 1: instruction fetch
 	signal IF_PC, IF_PC_next: std_logic_vector(31 downto 2);
@@ -79,7 +79,7 @@ architecture Behavioral of pipeline is
 	-- pipeline stage 2: instruction decode and register fetch
 	signal ID_running: boolean;
 	signal ID_reg1_zero, ID_reg2_zero: boolean;
-	signal ID_special, ID_branch_cycle, ID_jump_cycle: boolean;
+	signal ID_special, ID_branch_cycle, ID_branch_likely, ID_jump_cycle: boolean;
 	signal ID_reg1_addr, ID_reg2_addr, ID_writeback_addr: std_logic_vector(4 downto 0);
 	signal ID_reg1_data, ID_reg2_data: std_logic_vector(31 downto 0);
 	signal ID_alu_op2: std_logic_vector(31 downto 0);
@@ -107,7 +107,8 @@ architecture Behavioral of pipeline is
 	signal ID_EX_fwd_ex_reg1, ID_EX_fwd_ex_reg2, ID_EX_fwd_ex_alu_op2: boolean;
 	signal ID_EX_fwd_mem_reg1, ID_EX_fwd_mem_reg2, ID_EX_fwd_mem_alu_op2: boolean;
 	signal ID_EX_sign_extend: boolean;
-	signal ID_EX_branch_cycle, ID_EX_jump_cycle, ID_EX_jump_register: boolean;
+	signal ID_EX_branch_cycle, ID_EX_branch_likely: boolean;
+	signal ID_EX_jump_cycle, ID_EX_jump_register: boolean;
 	signal ID_EX_cancel_next, ID_EX_predict_taken: boolean;
 	signal ID_EX_bpredict_index: std_logic_vector(12 downto 0);
 	signal ID_EX_branch_target: std_logic_vector(31 downto 2);
@@ -136,6 +137,7 @@ architecture Behavioral of pipeline is
 	signal EX_2bit_add: std_logic_vector(1 downto 0);
 	signal EX_mem_byte_we: std_logic_vector(3 downto 0);
 	signal EX_take_branch: boolean;
+	signal EX_cancel_next: boolean;
 	signal EX_muldiv_busy: boolean;
 	-- boundary to stage 4
 	signal EX_MEM_writeback_addr: std_logic_vector(4 downto 0);
@@ -261,8 +263,9 @@ begin
 			if ID_running then
 				IF_ID_PC <= IF_PC;
 				IF_ID_PC_4 <= IF_PC_next;
+				-- XXX revisit: does ID_jump_cycle imply ID_jump_register?
 				IF_ID_branch_delay_slot <=
-					ID_branch_cycle or ID_jump_cycle or ID_jump_register;
+				    ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 				IF_ID_bpredict_index <= IF_bpredict_index;
 				IF_ID_instruction <= imem_data_in;
 			end if;
@@ -292,16 +295,24 @@ begin
 	end generate;
 
 	-- debugging only
-	--debug_XXX(28 downto 24) <= EX_shamt;
-	--debug_XXX(16) <= '1' when ID_EX_cancel_next else '0';
-	debug_XXX(28) <= '1' when ID_fwd_mem_reg1 else '0';
-	debug_XXX(24) <= '1' when ID_fwd_mem_reg2 else '0';
-	debug_XXX(20) <= '1' when ID_fwd_ex_reg1 else '0';
-	debug_XXX(16) <= '1' when ID_fwd_ex_reg2 else '0';
-	debug_XXX(12) <= '1' when ID_running else '0';
-	debug_XXX(8) <= '1' when EX_running else '0';
-	debug_XXX(4) <= '1' when ID_predict_taken else '0';
-	debug_XXX(0) <= '1' when MEM_take_branch else '0';
+	debug_XXX(31 downto 29) <= "000";
+	debug_XXX(28) <= '1' when ID_branch_cycle else '0';
+	debug_XXX(27 downto 25) <= "000";
+	debug_XXX(24) <= '1' when ID_branch_likely else '0';
+	debug_XXX(23 downto 21) <= "000";
+	debug_XXX(20) <= '1' when ID_EX_branch_cycle else '0';
+	debug_XXX(19 downto 17) <= "000";
+	debug_XXX(16) <= '1' when ID_EX_branch_likely else '0';
+	debug_XXX(15 downto 13) <= "000";
+	debug_XXX(12) <= '1' when EX_take_branch else '0';
+	debug_XXX(11 downto 9) <= "000";
+	debug_XXX(8) <= '1' when EX_cancel_next else '0';
+	--debug_XXX(7 downto 5) <= "000";
+	--debug_XXX(4) <= '1' when IF_ID_branch_delay_slot else '0';
+	--debug_XXX(3 downto 1) <= "000";
+	--debug_XXX(0) <= '1' when MEM_take_branch else '0';
+	debug_XXX(7 downto 4) <= '0' & ID_branch_condition;
+	debug_XXX(3 downto 0) <= '0' & ID_EX_branch_condition;
 
 	--
 	-- Pipeline stage 2: instruction decode and register fetch
@@ -319,7 +330,7 @@ begin
 			sign_extension => ID_sign_extension,
 			target_addr => ID_writeback_addr, op_major => ID_op_major,
 			op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
-			branch_cycle => ID_branch_cycle,
+			branch_cycle => ID_branch_cycle, branch_likely => ID_branch_likely,
 			jump_cycle => ID_jump_cycle, jump_register => ID_jump_register,
 			branch_condition => ID_branch_condition,
 			sign_extend => ID_sign_extend,
@@ -429,6 +440,7 @@ begin
 					ID_EX_mem_write <= '0';	-- XXX do we need this?
 					ID_EX_mem_size <= "00"; -- XXX do we need this?
 					ID_EX_branch_cycle <= false;
+					ID_EX_branch_likely <= false;
 					ID_EX_jump_cycle <= false;
 					ID_EX_jump_register <= false;
 					ID_EX_predict_taken <= false;
@@ -450,8 +462,8 @@ begin
 					ID_EX_op_minor <= ID_op_minor;
 					ID_EX_mem_write <= ID_mem_write;
 					ID_EX_mem_size <= ID_mem_size;
-					ID_EX_partial_load <= ID_mem_cycle = '1' and ID_mem_write = '0'
-						and ID_mem_size(1) = '0';
+					ID_EX_partial_load <= ID_mem_cycle = '1' and
+					    ID_mem_write = '0' and ID_mem_size(1) = '0';
 					ID_EX_mem_read_sign_extend <= ID_mem_read_sign_extend;
 					ID_EX_branch_condition <= ID_branch_condition;
 					ID_EX_PC_8 <= IF_ID_PC_4 + 1;
@@ -460,6 +472,7 @@ begin
 					ID_EX_writeback_addr <= ID_writeback_addr;
 					ID_EX_mem_cycle <= ID_mem_cycle;
 					ID_EX_branch_cycle <= ID_branch_cycle;
+					ID_EX_branch_likely <= ID_branch_likely;
 					ID_EX_jump_cycle <= ID_jump_cycle;
 					ID_EX_jump_register <= ID_jump_register;
 					ID_EX_predict_taken <= ID_predict_taken;
@@ -584,6 +597,7 @@ begin
 				EX_take_branch <= false;
 		end case;
 	end process;
+	EX_cancel_next <= ID_EX_branch_likely and not EX_take_branch;
 	
 	process(clk)
 	begin
@@ -805,7 +819,8 @@ begin
 				when x"13" => trace_data <= D_b_taken;
 				--
 				when x"1a" => trace_data <= LO;
-				when x"1b" => trace_data <= HI;
+				--when x"1b" => trace_data <= HI;
+				when x"1b" => trace_data <= debug_XXX;
 				-- when x"1c" => trace_data <= BadVAddr;
 				-- when x"1d" => trace_data <= EPC;
 				-- when x"1e" => trace_data <= Status;
