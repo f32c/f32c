@@ -14,7 +14,7 @@ MK_CFLAGS = -nostdinc -I../include -I.
 
 # MIPS-specific flags
 MK_CFLAGS += -march=mips3 ${ENDIANFLAGS}
-MK_CFLAGS += -mtune=mips32 -mno-branch-likely
+MK_CFLAGS += -mtune=mips32
 MK_CFLAGS += -mno-mips16 -mno-dsp -mno-mips3d -mno-mdmx -msoft-float
 MK_CFLAGS += -G 32768
 
@@ -38,6 +38,7 @@ MK_CFLAGS += -falign-functions=4 -falign-labels=4
 MK_CFLAGS += -falign-jumps=4 -falign-loops=4
 MK_CFLAGS += -fweb -frename-registers
 MK_CFLAGS += -freorder-blocks
+MK_CFLAGS += -mno-shared
 #MK_CFLAGS += -funsafe-loop-optimizations -Wunsafe-loop-optimizations
 #MK_CFLAGS += --param max-delay-slot-insn-search=16
 #MK_CFLAGS += --param max-delay-slot-live-search=16
@@ -48,7 +49,6 @@ MK_CFLAGS += -fno-zero-initialized-in-bss
 # Other interesting options:
 # MK_CFLAGS += -fPIC -fpic
 # -membedded-data
-# -no-shared
 
 MK_LDFLAGS += -Ttext ${LOADADDR} -N ${ENDIANFLAGS}
 
