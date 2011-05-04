@@ -432,8 +432,9 @@ begin
 					ID_EX_fwd_mem_reg1 <= false;
 					ID_EX_fwd_mem_reg2 <= true;
 					ID_EX_fwd_mem_alu_op2 <= false;
-				elsif not ID_running or (not IF_ID_branch_delay_slot and
-					(MEM_take_branch or ID_EX_cancel_next)) then
+				elsif not ID_running or EX_cancel_next or
+				    (not IF_ID_branch_delay_slot and
+				    (MEM_take_branch or ID_EX_cancel_next)) then
 					-- insert a bubble if branching or ID stage is stalled
 					ID_EX_writeback_addr <= "00000"; -- NOP
 					ID_EX_mem_cycle <= '0';
