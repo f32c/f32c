@@ -487,7 +487,9 @@ begin
 					ID_EX_latency <= ID_latency;
 					ID_EX_instruction <= IF_ID_instruction; -- XXX debugging only
 					ID_EX_PC <= IF_ID_PC; -- XXX debugging only
-					D_instr <= D_instr + 1; -- XXX debugging only
+					if (IF_ID_instruction /= x"00000000") then
+						D_instr <= D_instr + 1; -- XXX debugging only
+					end if;
 					-- schedule result forwarding
 					ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
 					ID_EX_fwd_ex_reg2 <= ID_fwd_ex_reg2;
