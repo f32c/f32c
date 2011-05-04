@@ -296,23 +296,21 @@ begin
 
 	-- debugging only
 	debug_XXX(31 downto 29) <= "000";
-	debug_XXX(28) <= '1' when ID_branch_cycle else '0';
+	debug_XXX(28) <= '1' when ID_running else '0';
 	debug_XXX(27 downto 25) <= "000";
-	debug_XXX(24) <= '1' when ID_branch_likely else '0';
+	debug_XXX(24) <= '1' when EX_running else '0';
 	debug_XXX(23 downto 21) <= "000";
-	debug_XXX(20) <= '1' when ID_EX_branch_cycle else '0';
+	debug_XXX(20) <= '1' when MEM_running else '0';
 	debug_XXX(19 downto 17) <= "000";
-	debug_XXX(16) <= '1' when ID_EX_branch_likely else '0';
+	debug_XXX(16) <= '1' when ID_EX_partial_load else '0';
 	debug_XXX(15 downto 13) <= "000";
-	debug_XXX(12) <= '1' when EX_take_branch else '0';
+	debug_XXX(12) <= '1' when EX_MEM_partial_load else '0';
 	debug_XXX(11 downto 9) <= "000";
-	debug_XXX(8) <= '1' when EX_cancel_next else '0';
-	--debug_XXX(7 downto 5) <= "000";
-	--debug_XXX(4) <= '1' when IF_ID_branch_delay_slot else '0';
-	--debug_XXX(3 downto 1) <= "000";
-	--debug_XXX(0) <= '1' when MEM_take_branch else '0';
-	debug_XXX(7 downto 4) <= '0' & ID_branch_condition;
-	debug_XXX(3 downto 0) <= '0' & ID_EX_branch_condition;
+	debug_XXX(8) <= '1' when ID_EX_cancel_next else '0';
+	debug_XXX(7 downto 5) <= "000";
+	debug_XXX(4) <= '1' when IF_ID_branch_delay_slot else '0';
+	debug_XXX(3 downto 1) <= "000";
+	debug_XXX(0) <= '1' when MEM_take_branch else '0';
 
 	--
 	-- Pipeline stage 2: instruction decode and register fetch
@@ -424,6 +422,12 @@ begin
 						-- shift amount
 						ID_EX_immediate(10 downto 6) <= EX_2bit_add & "000";
 					end if;
+					if MEM_take_branch and not ID_running then
+						ID_EX_cancel_next <= true;
+					end if;
+					if ID_running then
+						ID_EX_cancel_next <= false;
+					end if;
 					ID_EX_instruction <= x"00000001"; -- XXX debugging only
 					-- schedule forwarding of the result of memory read operation
 					ID_EX_fwd_ex_reg1 <= false;
@@ -446,13 +450,13 @@ begin
 					ID_EX_jump_register <= false;
 					ID_EX_predict_taken <= false;
 					ID_EX_op_major <= "00";
-					ID_EX_instruction <= x"00000000"; -- XXX debugging only
 					if MEM_take_branch and not ID_running then
 						ID_EX_cancel_next <= true;
 					end if;
 					if ID_running then
 						ID_EX_cancel_next <= false;
 					end if;
+					ID_EX_instruction <= x"00000000"; -- XXX debugging only
 				else
 					-- propagate next instruction from ID to EX stage
 					ID_EX_reg1_data <= ID_reg1_data;
