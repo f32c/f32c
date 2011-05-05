@@ -35,19 +35,20 @@ main(void)
 			    (75000000 / *tsc) * 10418);
 			printf("\n\n tsc = %d\n", *tsc);
 			printf("  %%\n");
-			printf("  s: %s (null %s)\n", "Hello, world!", NULL);
+			c = 0;
+			printf("  s: %s (null %s)\n", "Hello, world!",
+			    (char *) c);
 			printf("  c: %c\n", '0' + (cnt & 0x3f));
 			printf("  d: cnt = %d (neg %d)\n", cnt, -cnt);
 			printf(" 8d: cnt = %8d (neg %8d)\n", cnt, -cnt);
 			printf("08d: cnt = %08d (neg %08d)\n", cnt, -cnt);
 			printf("  u: cnt = %u (neg %u)\n", cnt, -cnt);
-			printf("  y: cnt = %y (neg %y)\n", cnt, -cnt);
 			printf("  x: cnt = %x (neg %x)\n", cnt, -cnt);
 			printf(" 8x: cnt = %8x (neg %8x)\n", cnt, -cnt);
 			printf("08x: cnt = %08x (neg %08x)\n", cnt, -cnt);
-			printf("  p: cnt = %p (neg %p)\n", cnt, -cnt);
+			printf("  p: cnt = %p (neg %p)\n", (void *) cnt,
+			    (void *) -cnt);
 			printf("  o: cnt = %o (neg %o)\n", cnt, -cnt);
-			printf("  b: cnt = %b (neg %b)\n", cnt, -cnt);
 		}
 
 		c = getchar();
@@ -57,6 +58,10 @@ main(void)
 			return(0);
 
 		putchar(c);
+
+		if (c == 'r')
+			for (c = 0; c < 10000; c++)
+				putchar('.');
 	}
 
 	return (0);
