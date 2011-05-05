@@ -78,15 +78,6 @@
 			: "i" (port));			/* inputs */	   \
 	} while (0)
 
-#define	DELAY_TICKS(ticks)						\
-	do {								\
-		register int start, current;				\
-		INW(start, IO_TSC); 					\
-		do {							\
-			INW(current, IO_TSC);				\
-		} while (current - start < (ticks));			\
-	} while (0);
-
 
 /*
  * Declaration of misc. IO functions.
@@ -110,21 +101,12 @@ spi_stop_transaction(void)
 }
 
 
-/*
- * Fetch the current timestamp counter value.  Given that CPU and TSC
- * clocks are not guaranteed to be in sync, we need to read the TSC
- * register twice, and repeat the process until we have obtained two
- * consistent readings.
- */
 inline int
 rdtsc(void) {
-	int tsc1, tsc2;
+	int tsc;
 
-	do {
-		INW(tsc1, IO_TSC);
-		INW(tsc2, IO_TSC);
-	} while (tsc2 != tsc1);
-	return (tsc2);
+	INW(tsc, IO_TSC);
+	return (tsc);
 }
 
 #endif /* __ASSEMBLER__ */
