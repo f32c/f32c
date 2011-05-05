@@ -33,6 +33,9 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 
 entity idecode is
+	generic(
+		C_branch_likely: boolean
+	);
 	port(
 		instruction: in STD_LOGIC_VECTOR(31 downto 0);
 		branch_cycle, branch_likely: out boolean;
@@ -77,8 +80,8 @@ begin
 	x_branch1 <= opcode(5) = '0' and opcode(3 downto 2) = "01"; -- beq, bne, blez, bgtz
 	x_branch2 <= opcode = "000001"; -- bgez, bltz
 	branch_cycle <= x_branch1 or x_branch2;
-	branch_likely <= (x_branch1 and opcode(4) = '1') or
-	    (x_branch2 and instruction(17) = '1');
+	branch_likely <= ((x_branch1 and opcode(4) = '1') or
+	    (x_branch2 and instruction(17) = '1')) and C_branch_likely;
 	jump_cycle <= opcode(5 downto 1) = "00001";
 	jump_register <= x_special and fncode(5 downto 1) = "00100";
 

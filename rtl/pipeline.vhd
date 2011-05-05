@@ -212,7 +212,6 @@ begin
 	--
 	
 	-- XXX missing:
-	--		branch likely as optional instructions
 	--		result forwarding: muxes instead of priority encoders
 	--		0-latency 8 / 16 / 24 bit shifts
 	--		sort out the endianess story
@@ -322,6 +321,9 @@ begin
 	
 	-- instruction decoder
 	idecode: entity idecode
+		generic map(
+			C_branch_likely => C_branch_likely
+		)
 		port map(
 			instruction => IF_ID_instruction,
 			special => ID_special,
