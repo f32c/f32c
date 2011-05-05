@@ -34,7 +34,10 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity pipeline is
 	generic(
+		-- ISA options
 		C_mult_enable: boolean := false; -- XXX untested, Xilinx specific
+		C_branch_likely: boolean := false;
+		-- optimization options
 		C_branch_prediction: boolean := true;
 		C_result_forwarding: boolean := true;
 		C_fast_ID: boolean := true;
@@ -477,7 +480,7 @@ begin
 					ID_EX_writeback_addr <= ID_writeback_addr;
 					ID_EX_mem_cycle <= ID_mem_cycle;
 					ID_EX_branch_cycle <= ID_branch_cycle;
-					ID_EX_branch_likely <= ID_branch_likely;
+					ID_EX_branch_likely <= C_branch_likely and ID_branch_likely;
 					ID_EX_jump_cycle <= ID_jump_cycle;
 					ID_EX_jump_register <= ID_jump_register;
 					ID_EX_predict_taken <= ID_predict_taken;
@@ -604,7 +607,7 @@ begin
 				EX_take_branch <= false;
 		end case;
 	end process;
-	EX_cancel_next <= ID_EX_branch_likely and not EX_take_branch;
+	EX_cancel_next <= C_branch_likely and ID_EX_branch_likely and not EX_take_branch;
 	
 	process(clk)
 	begin
