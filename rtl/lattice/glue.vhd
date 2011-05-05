@@ -35,37 +35,38 @@ entity glue is
 		-- CPU core configuration options
 		C_register_technology: string := "lattice";
 		C_mult_enable: boolean := false;
-		C_branch_prediction: boolean := true; -- true: +70 LUT4
-		C_result_forwarding: boolean := true; -- true: +171 LUT4
+		C_branch_prediction: boolean := true; -- true: +76 LUT4
+		C_result_forwarding: boolean := true; -- true: +167 LUT4
 		-- Do not change those two:
-		C_fast_ID: boolean := true; -- false: +3 LUT4, lower fMax
+		C_branch_likely: boolean := false; -- true: +12 LUT4, -Fmax
+		C_fast_ID: boolean := true; -- false: +1 LUT4, -Fmax
+		-- debugging options
+		C_debug: boolean := false; -- true: +883 LUT4, -Fmax
 		-- SoC configuration options
 		C_tsc: boolean := true; -- true: +63 LUT4
 		C_sio: boolean := true; -- true: +133 LUT;
-		C_pcmdac: boolean := true; -- true: +27 LUT;
-		-- debugging options
-		C_debug: boolean := false -- true: +871 LUT4, lower fMax
+		C_pcmdac: boolean := true -- true: +43 LUT;
 		--
 		-- XP2-8E-7 area optimized synthesis:
 		--
-		-- C_bp 1, C_res_fwd 1, C_fast_id 1, C_debug 0
+		-- C_bp 1, C_bl 0, C_res_fwd 1, C_fast_id 1, C_debug 0
 		-- C_tsc 1, C_sio 1, C_pcmdac 1
-		-- Total number of LUT4s: 1665  Fmax: 122.5 MHz (works @ 150 MHz)
-		-- CPI: 1.21
+		-- Total number of LUT4s: 1668  Fmax: 122.5 MHz (works @ 150 MHz)
+		-- CPI: 1.13
 		--
-		-- C_bp 0, C_res_fwd 1, C_fast_id 1, C_debug 0
+		-- C_bp 0, C_bl 0, C_res_fwd 1, C_fast_id 1, C_debug 0
 		-- C_tsc 1, C_sio 1, C_pcmdac 1
-		-- Total number of LUT4s: 1595  Fmax: 122.5 MHz (works @ 150 MHz)
-		-- CPI: 1.28
+		-- Total number of LUT4s: 1592  Fmax: 122.5 MHz (works @ 150 MHz)
+		-- CPI: 1.25
 		--
-		-- C_bp 0, C_res_fwd 0, C_fast_id 1, C_debug 0
+		-- C_bp 0, C_bl 0, C_res_fwd 0, C_fast_id 1, C_debug 0
 		-- C_tsc 1, C_sio 1, C_pcmdac 1
-		-- Total number of LUT4s: 1424  Fmax: 119.4 MHz (works @ 150 MHz)
-		-- CPI: 1.75
+		-- Total number of LUT4s: 1425  Fmax: 119.4 MHz (works @ 150 MHz)
+		-- CPI: 1.61
 		--
-		-- C_bp 0, C_res_fwd 0, C_fast_id 1, C_debug 0
+		-- C_bp 0, C_bl 0, C_res_fwd 0, C_fast_id 1, C_debug 0
 		-- C_tsc 0, C_sio 0, C_pcmdac 0
-		-- Total number of LUT4s: 1187
+		-- Total number of LUT4s: 1184
 		--
 		-- Synthesis options worth playing with:
 		--    Synplify Pro: Area (False->True)
@@ -101,7 +102,8 @@ architecture Behavioral of glue is
 	signal sio_txd, sio_ce: std_logic;
 	signal spi_cen_reg, spi_sck_reg, spi_si_reg: std_logic;
 	signal led_reg: std_logic_vector(7 downto 0);
-	signal tsc: std_logic_vector(34 downto 0);
+	signal tsc_25m: std_logic_vector(34 downto 0);
+	signal tsc: std_logic_vector(31 downto 0);
 	signal from_gpio: std_logic_vector(31 downto 0);
 	signal dac_in_l, dac_in_r: std_logic_vector(15 downto 2);
 	signal dac_acc_l, dac_acc_r: std_logic_vector(16 downto 2);
@@ -123,12 +125,13 @@ begin
 		sel => sw(2), key => btn_down,
 		res => debug_res
 	);
-	debug_res <= btn_up and sw(0);
+	debug_res <= btn_up and sw(0) when C_debug else '0';
 
 	-- the RISC core
 	pipeline: entity pipeline
 	generic map(
 		C_mult_enable => C_mult_enable,
+		C_branch_likely => C_branch_likely,
 		C_branch_prediction => C_branch_prediction,
 		C_result_forwarding => C_result_forwarding,
 		C_fast_ID => C_fast_ID,
@@ -147,11 +150,11 @@ begin
 	);
 
 	-- instruction / data BRAMs
-	dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31 downto 28) /= "1110"
-		else '0';
+	dmem_bram_enable <=
+	    dmem_addr_strobe when dmem_addr(31 downto 28) /= "1110" else '0';
 
 	-- RS232 sio
-	sio:
+	G_sio:
 	if C_sio generate
 	begin
 	sio: entity sio
@@ -167,7 +170,7 @@ begin
 	end generate;
 
 	-- PCM stereo 1-bit DAC
-	pcmdac:
+	G_pcmdac:
 	if C_pcmdac generate
 	begin
 	process(clk)
@@ -235,29 +238,33 @@ begin
 		end if;
 	end process;
 
+	G_tsc:
+	if C_tsc generate
+	begin
 	process(clk_25m)
 	begin
 		if rising_edge(clk_25m) then
-			if (C_tsc) then
-				tsc <= tsc + 1;
-			end if;
+			tsc_25m <= tsc_25m + 1;
 		end if;
 	end process;
+	-- Safely move upper bits of tsc_25m over clock domain boundary
+	process(clk)
+	begin
+		if rising_edge(clk) and tsc_25m(2 downto 1) = "10" then
+			tsc <= tsc_25m(34 downto 3);
+		end if;
+	end process;
+	end generate;
 
 	-- XXX replace with a balanced multiplexer
 	process(dmem_addr, from_gpio, from_sio, tsc, spi_so)
 	begin
 		case dmem_addr(4 downto 2) is
-		when "000" =>
-			io_to_cpu <= from_gpio;
-		when "001" =>
-			io_to_cpu <= from_sio;
-		when "010" =>
-			io_to_cpu <= tsc(34 downto 3);
-		when "100" =>
-			io_to_cpu <= x"0000000" & "000" & spi_so;
-		when others =>
-			io_to_cpu <= x"00000000";
+		when "000"  => io_to_cpu <= from_gpio;
+		when "001"  => io_to_cpu <= from_sio;
+		when "010"  => io_to_cpu <= tsc;
+		when "100"  => io_to_cpu <= x"0000000" & "000" & spi_so;
+		when others => io_to_cpu <= x"00000000";
 		end case;
 	end process;
 
@@ -276,17 +283,17 @@ begin
 
 
 	-- debugging design instance
-	debug_serial:
+	G_debug:
 	if C_debug generate
 	begin
-	debug_serial: entity serial_debug
+	debug: entity serial_debug
 	port map(
 		clk => clk_25m,
 		rs232_txd => debug_txd,
 		trace_addr => trace_addr,
 		trace_data => trace_data
 	);
-	end generate; -- serial_debug
+	end generate;
 	
 	rs232_tx <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
 	
