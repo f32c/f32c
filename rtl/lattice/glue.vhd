@@ -102,7 +102,7 @@ architecture Behavioral of glue is
 	signal spi_cen_reg, spi_sck_reg, spi_si_reg: std_logic;
 	signal led_reg: std_logic_vector(7 downto 0);
 	signal tsc: std_logic_vector(34 downto 0);
-	signal input: std_logic_vector(31 downto 0);
+	signal from_gpio: std_logic_vector(31 downto 0);
 	signal dac_in_l, dac_in_r: std_logic_vector(15 downto 2);
 	signal dac_acc_l, dac_acc_r: std_logic_vector(16 downto 2);
 
@@ -162,8 +162,8 @@ begin
 		bus_in => cpu_to_dmem,
 		bus_out => from_sio
 	);
-	sio_ce <= '0' when dmem_addr(31 downto 28) /= "1110" or
-	    dmem_addr(3 downto 2) /= "01" else dmem_addr_strobe;
+	sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = "1110" and
+	    dmem_addr(3 downto 2) = "01" else '0';
 	end generate;
 
 	-- PCM stereo 1-bit DAC
@@ -185,29 +185,25 @@ begin
 	end generate;
 
 	-- I/O port map:
-	-- 0xe*****00:  (4B, RW) GPIO (SPI, LED)
+	-- 0xe*****00:  (4B, RW) GPIO (LED, switches/buttons, edge conn.)
 	-- 0xe*****04:  (4B, RW) SIO
 	-- 0xe*****08:  (4B, RD) TSC
-	-- 0xe*****10:  (4B, WR) PCM signal
+	-- 0xe*****0c:  (4B, WR) PCM signal
+	-- 0xe*****10:  (1B, RW) SPI Flash
+	-- 0xe*****14:  (1B, RW) SPI MicsoSD
 	-- I/O write access:
 	process(clk)
 	begin
-		if rising_edge(clk) then
-			if dmem_addr(31 downto 28) = "1110"
-			    and dmem_addr(4 downto 2) = "000"
-			    and dmem_addr_strobe = '1' then
+		if rising_edge(clk) and dmem_addr_strobe = '1'
+		   and dmem_addr(31 downto 28) = "1110" then
+			-- GPIO
+			if dmem_addr(4 downto 2) = "000" then
 				if dmem_byte_we(0) = '1' then
 					led_reg <= cpu_to_dmem(7 downto 0);
 				end if;
-				if dmem_byte_we(3) = '1' then
-					spi_si_reg <= cpu_to_dmem(31);
-					spi_sck_reg <= cpu_to_dmem(30);
-					spi_cen_reg <= cpu_to_dmem(29);
-				end if;
 			end if;
-			if C_pcmdac and dmem_addr(31 downto 28) = "1110"
-			    and dmem_addr(4 downto 2) = "100"
-			    and dmem_addr_strobe = '1' then
+			-- PCMDAC
+			if dmem_addr(4 downto 2) = "011" and C_pcmdac then
 				if dmem_byte_we(2) = '1' then
 					dac_in_l <= cpu_to_dmem(31 downto 18);
 				end if;
@@ -215,15 +211,27 @@ begin
 					dac_in_r <= cpu_to_dmem(15 downto 2);
 				end if;
 			end if;
+			-- SPI
+			if dmem_addr(4 downto 2) = "100" then
+				if dmem_byte_we(0) = '1' then
+					spi_si_reg <= cpu_to_dmem(7);
+					spi_sck_reg <= cpu_to_dmem(6);
+					spi_cen_reg <= cpu_to_dmem(5);
+				end if;
+			end if;
 		end if;
 	end process;
+	led <= led_reg;
+	spi_si <= spi_si_reg;
+	spi_sck <= spi_sck_reg;
+	spi_cen <= spi_cen_reg;
 
 	process(clk)
 	begin
 		if rising_edge(clk) then
-			input <= spi_so & "000" & x"0000" & sw &
-			    "000" & btn_center &
+			from_gpio(4 downto 0) <= btn_center &
 			    btn_up & btn_down & btn_left & btn_right;
+			from_gpio(11 downto 8) <= sw;
 		end if;
 	end process;
 
@@ -237,17 +245,24 @@ begin
 	end process;
 
 	-- XXX replace with a balanced multiplexer
-	io_to_cpu <= input when dmem_addr(4 downto 2) = "000"
-		else from_sio when C_sio and dmem_addr(4 downto 2) = "001"
-		else tsc(34 downto 3);
+	process(dmem_addr, from_gpio, from_sio, tsc, spi_so)
+	begin
+		case dmem_addr(4 downto 2) is
+		when "000" =>
+			io_to_cpu <= from_gpio;
+		when "001" =>
+			io_to_cpu <= from_sio;
+		when "010" =>
+			io_to_cpu <= tsc(34 downto 3);
+		when "100" =>
+			io_to_cpu <= x"0000000" & "000" & spi_so;
+		when others =>
+			io_to_cpu <= x"00000000";
+		end case;
+	end process;
 
 	final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = "1110"
 		else dmem_to_cpu;
-
-	led <= led_reg;
-	spi_si <= spi_si_reg;
-	spi_sck <= spi_sck_reg;
-	spi_cen <= spi_cen_reg;
 
 	-- Block RAM
 	bram: entity bram

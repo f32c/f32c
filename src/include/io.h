@@ -7,12 +7,11 @@
 #define	IO_LED		0x00	/* byte, WR */
 #define	IO_PUSHBTN	0x00	/* byte, RD */
 #define	IO_DIPSW	0x01	/* byte, RD */
-#define	IO_SPI		0x03	/* byte, RW */
 #define	IO_SIO		0x04	/* half, RW */
 #define	IO_SIO_BAUD	0x06	/* half, WR */
 #define	IO_TSC		0x08	/* word, RD */
-#define	IO_PCM_OUT	0x10	/* word, WR */
-#define	IO_PCM_VOL	0x14	/* word, WR */
+#define	IO_PCM_OUT	0x0c	/* word, WR */
+#define	IO_SPI		0x10	/* byte, RW */
 
 /* SIO bitmask */
 #define	SIO_TX_BUSY	0x8
@@ -23,7 +22,7 @@
 #define	SPI_SCK		0x40
 #define	SPI_CEN		0x20
 /* SPI bitmask: input */
-#define	SPI_SO_BITPOS	7
+#define	SPI_SO_BITPOS	0
 #define	SPI_SO		(1 << SPI_SO_BITPOS)
 
 /* Pushbutton bitmask */
