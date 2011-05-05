@@ -1,8 +1,9 @@
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
- * Copyright (c) 2011 University of Zagreb
  * (c) UNIX System Laboratories, Inc.
+ * Copyright (c) 2011 University of Zagreb
+ *
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
  * Co. or Unix System Laboratories, Inc. and are reproduced herein with
@@ -101,7 +102,7 @@ reswitch:
 			cp = va_arg(ap, char *);
 			if (cp == NULL)
 				cp = "(null)";
-			for (;(ch = *cp++);)
+			while((ch = *cp++))
 				PCHAR(ch);
 			break;
 		case 'c':
@@ -110,9 +111,6 @@ reswitch:
 		case 'd':
 		case 'i':
 			goto handle_sign;
-		case 'b':
-			base = 2;
-			goto handle_nosign;
 		case 'o':
 			base = 8;
 			goto handle_nosign;
@@ -125,10 +123,6 @@ reswitch:
 			PCHAR('x');
 		case 'x':
 			base = 16;
-			goto handle_nosign;
-		case 'y':
-			base = 16;
-			goto handle_sign;
 handle_nosign:
 			num = va_arg(ap, u_int);
 			goto number;
