@@ -3,6 +3,14 @@
 #include <types.h>
 
 
+#if (SPI_SI != 0x80)
+#error SPI_SI must be 0x80!
+#endif
+#if (SPI_SO_BITPOS != 0)
+#error SPI_SO_BITPOS must be 0!
+#endif
+
+
 int
 spi_byte_in(void)
 {
@@ -11,11 +19,11 @@ spi_byte_in(void)
 	for (i = 8; i > 0; i--) {
 		OUTB(IO_SPI, SPI_SCK);
 		in <<= 1;
-		INB(io, IO_SPI);
+		INW(io, IO_SPI);
 		OUTB(IO_SPI, 0);
-		in |= (io & SPI_SO);
+		in |= io;
 	}
-	return (in >> SPI_SO_BITPOS);
+	return (in);
 }
 
 
@@ -25,16 +33,15 @@ spi_byte(int out)
 	int i, io, in = 0;
 
 	for (i = 8; i > 0; i--) {
-		/* XXX SPI_SI must be 0x80! */
 		io = out & SPI_SI;
 		OUTB(IO_SPI, io);
 		out <<= 1;
 		OUTB(IO_SPI, io | SPI_SCK);
-		INB(io, IO_SPI);
+		INW(io, IO_SPI);
 		in <<= 1;
-		in |= (io & SPI_SO);
+		in |= io;
 	}
 	OUTB(IO_SPI, 0);
-	return (in >> SPI_SO_BITPOS);
+	return (in);
 }
 
