@@ -34,10 +34,10 @@ sio_getchar(int blocking)
 
 	/* Any new characters received from RS-232? */
 	do {
+		if (sio_idle_fn != NULL)
+			(*sio_idle_fn)();
 		sio_probe_rx();
 		busy = (sio_rxbuf_head == sio_rxbuf_tail);
-		if (busy && sio_idle_fn != NULL)
-			(*sio_idle_fn)();
 	} while (blocking && busy);
 
 	if (busy)
@@ -57,10 +57,10 @@ sio_putchar(int c, int blocking)
 	int busy;
 
 	do {
+		if (sio_idle_fn != NULL)
+			(*sio_idle_fn)();
 		in = sio_probe_rx();
 		busy = (in & SIO_TX_BUSY);
-		if (busy && sio_idle_fn != NULL)
-			(*sio_idle_fn)();
 	} while (blocking && busy);
 
 	if (busy)
