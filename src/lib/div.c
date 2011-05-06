@@ -3,7 +3,7 @@
  
 
 static uint32_t
-divmod(uint32_t hi, uint32_t b, int do_mod)
+udivmod(uint32_t hi, uint32_t b, int do_mod)
 {
 	uint32_t a = b << 31;
 	uint32_t lo = 0;
@@ -28,7 +28,7 @@ uint32_t
 __udivsi3(uint32_t a, uint32_t b)
 {
 
-	return (divmod(a, b, 0));
+	return (udivmod(a, b, 0));
 }
  
 
@@ -45,7 +45,7 @@ __divsi3(int32_t a, int32_t b)
 		b = -b;
 		neg = !neg;
 	}
-	res = divmod(a, b, 0);
+	res = udivmod(a, b, 0);
 	if (neg)
 		res = -res;
 	return (res);
@@ -56,12 +56,5 @@ uint32_t
 __umodsi3(uint32_t a, uint32_t b)
 {
 
-	return (divmod(a, b, 1));
-}
-
-uint32_t
-__modsi3(int32_t a, int32_t b)
-{
-
-	return (divmod(a, b, 1));
+	return (udivmod(a, b, 1));
 }
