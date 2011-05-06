@@ -2,6 +2,8 @@
 #ifndef XXX
 #include <io.h>
 #include <types.h>
+#else
+#include <sys/types.h>
 #endif
 #include <stdio.h>
 
@@ -13,11 +15,16 @@ int
 main(void)
 {
 	int c, cnt;
-	int *tsc = (int *) 0x000001fc;
+	int *tsc;
 	
+#ifndef XXX
 	/* Register PCM output function as idle loop handler */
 	sio_idle_fn = pcm_play;
-
+	tsc = (int *) 0x000001fc;
+#else
+	system("stty -echo -icanon -iexten");
+	tsc = &c;
+#endif
 
 	/*
 	 *  12.5 MHz tsc = 62508 div =  106
@@ -31,13 +38,11 @@ main(void)
 
 			printf("\n");
 			printf("Hello, world!\n");
-			printf("\n\n f32c CPU running at %d Hz\n",
+			printf("\n f32c CPU running at %d Hz\n",
 			    (75000000 / *tsc) * 10418);
-			printf("\n\n tsc = %d\n", *tsc);
+			printf("\n tsc = %d\n", *tsc);
 			printf("  %%\n");
-			c = 0;
-			printf("  s: %s (null %s)\n", "Hello, world!",
-			    (char *) c);
+			printf("  s: %s\n", "Hello, world!");
 			printf("  c: %c\n", '0' + (cnt & 0x3f));
 			printf("  d: cnt = %d (neg %d)\n", cnt, -cnt);
 			printf(" 8d: cnt = %8d (neg %8d)\n", cnt, -cnt);
@@ -46,9 +51,8 @@ main(void)
 			printf("  x: cnt = %x (neg %x)\n", cnt, -cnt);
 			printf(" 8x: cnt = %8x (neg %8x)\n", cnt, -cnt);
 			printf("08x: cnt = %08x (neg %08x)\n", cnt, -cnt);
-			printf("  p: cnt = %p (neg %p)\n", (void *) cnt,
-			    (void *) -cnt);
 			printf("  o: cnt = %o (neg %o)\n", cnt, -cnt);
+			printf("  p: cnt = %p\n", &cnt);
 		}
 
 		c = getchar();
