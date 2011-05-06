@@ -1,5 +1,5 @@
 --
--- Copyright 2008, 2010 University of Zagreb, Croatia.
+-- Copyright 2008, 2010, 2011 University of Zagreb, Croatia.
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@ use xp2.components.all;
 
 entity bram is
 	generic(
-		mem_type: string := "big"
+		C_mem_size: string := "8k"
 	);
 	port(
 		clk: in std_logic;
@@ -67,6 +67,8 @@ begin
 	dmem_write_out <= dmem_data_in;
 	dmem_bram_cs <= dmem_addr_strobe;
 
+	G_8k:
+	if C_mem_size = "8k" generate
 	ram_0: DP16KB
 	generic map (
 		-- CSDECODE_B => "000", CSDECODE_A => "000",
@@ -306,5 +308,6 @@ begin
 		CEB => '1', CLKB => not clk, WEB => '0', 
 		CSB0 => '0', CSB1 => '0', CSB2 => '0', RSTB => '0'
 	);
+	end generate; -- 8k
 
 end Behavioral;

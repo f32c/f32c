@@ -43,6 +43,7 @@ entity glue is
 		-- debugging options
 		C_debug: boolean := false; -- true: +883 LUT4, -Fmax
 		-- SoC configuration options
+		C_mem_size: string := "8k";
 		C_tsc: boolean := true; -- true: +63 LUT4
 		C_sio: boolean := true; -- true: +133 LUT;
 		C_pcmdac: boolean := true -- true: +43 LUT;
@@ -156,7 +157,6 @@ begin
 	-- RS232 sio
 	G_sio:
 	if C_sio generate
-	begin
 	sio: entity sio
 	port map (
 		clk => clk, ce => sio_ce,
@@ -172,7 +172,6 @@ begin
 	-- PCM stereo 1-bit DAC
 	G_pcmdac:
 	if C_pcmdac generate
-	begin
 	process(clk)
 	begin
 		if rising_edge(clk) then
@@ -240,7 +239,6 @@ begin
 
 	G_tsc:
 	if C_tsc generate
-	begin
 	process(clk_25m)
 	begin
 		if rising_edge(clk_25m) then
@@ -273,6 +271,9 @@ begin
 
 	-- Block RAM
 	bram: entity bram
+	generic map(
+		C_mem_size => C_mem_size
+	)
 	port map(
 		clk => clk, imem_addr_strobe => imem_addr_strobe,
 		imem_addr => imem_addr, imem_data_out => imem_data_read,
@@ -285,7 +286,6 @@ begin
 	-- debugging design instance
 	G_debug:
 	if C_debug generate
-	begin
 	debug: entity serial_debug
 	port map(
 		clk => clk_25m,
