@@ -584,52 +584,62 @@ begin
 		LO when ID_EX_op_major = "11" and ID_EX_op_minor(1) = '1' else
 		ID_EX_PC_8 & "00";
 
-	-- jump / branch or not?
+	-- branch or not?
 	process(ID_EX_branch_condition, EX_from_alu_equal, EX_eff_reg1)
 	begin
 		case ID_EX_branch_condition is
-			when "111"	=> -- bgtz
-				EX_take_branch <= EX_eff_reg1(31) = '0' and not EX_from_alu_equal;
-			when "110"	=> -- blez
-				EX_take_branch <= EX_eff_reg1(31) = '1' or EX_from_alu_equal;
-			when "100"	=> -- beq
-				EX_take_branch <= EX_from_alu_equal;
-			when "101"	=> -- bne
-				EX_take_branch <= not EX_from_alu_equal;
-			when "010"	=> -- bltz
+			when "010"  => -- bltz
 				EX_take_branch <= EX_eff_reg1(31) = '1';
-			when "011"	=> -- bgez
+			when "011"  => -- bgez
 				EX_take_branch <= EX_eff_reg1(31) = '0';
+			when "100"  => -- beq
+				EX_take_branch <= EX_from_alu_equal;
+			when "101"  => -- bne
+				EX_take_branch <= not EX_from_alu_equal;
+			when "110"  => -- blez
+				EX_take_branch <= EX_eff_reg1(31) = '1' or
+				    EX_from_alu_equal;
+			when "111"  => -- bgtz
+				EX_take_branch <= EX_eff_reg1(31) = '0' and
+				    not EX_from_alu_equal;
 			when others =>
 				EX_take_branch <= false;
 		end case;
 	end process;
-	EX_cancel_next <= C_branch_likely and ID_EX_branch_likely and not EX_take_branch;
+	EX_cancel_next <= C_branch_likely and
+	    ID_EX_branch_likely and not EX_take_branch;
 	
 	process(clk)
 	begin
 		if rising_edge(clk) then
 			if MEM_running and EX_running then
 				EX_MEM_mem_data_out <= EX_from_shift;
-				EX_MEM_writeback_addsub <= EX_from_alu_addsubx(31 downto 0);
+				EX_MEM_writeback_addsub <=
+				    EX_from_alu_addsubx(31 downto 0);
 				EX_MEM_mem_size <= ID_EX_mem_size;
 				EX_MEM_partial_load <= ID_EX_partial_load;
 				EX_MEM_mem_byte_we <= EX_mem_byte_we;
 				EX_MEM_shamt_1_2_4 <= EX_shamt(2 downto 0);
-				EX_MEM_shift_funct <= ID_EX_immediate(1 downto 0);
+				EX_MEM_shift_funct <=
+				    ID_EX_immediate(1 downto 0);
 				EX_MEM_to_shift <= EX_from_shift;
 				EX_MEM_op_major <= ID_EX_op_major;
 				EX_MEM_branch_cycle <= ID_EX_branch_cycle;
 				EX_MEM_bpredict_score <= ID_EX_bpredict_score;
 				EX_MEM_bpredict_index <= ID_EX_bpredict_index;
-				if ID_EX_branch_cycle or ID_EX_jump_register then
-					EX_MEM_take_branch <= EX_take_branch or ID_EX_jump_register;
+				if ID_EX_branch_cycle or
+				    ID_EX_jump_register then
+					EX_MEM_take_branch <= EX_take_branch or
+					    ID_EX_jump_register;
 					if ID_EX_predict_taken then
-						EX_MEM_branch_target <= ID_EX_PC_8;
+						EX_MEM_branch_target <=
+						    ID_EX_PC_8;
 					elsif not ID_EX_branch_cycle then
-						EX_MEM_branch_target <= EX_eff_reg1(31 downto 2);
+						EX_MEM_branch_target <=
+						    EX_eff_reg1(31 downto 2);
 					else
-						EX_MEM_branch_target <= ID_EX_branch_target;
+						EX_MEM_branch_target <=
+						    ID_EX_branch_target;
 					end if;
 				else
 					EX_MEM_take_branch <= false;
@@ -637,35 +647,45 @@ begin
 				if ID_EX_op_major = "01" then
 					EX_MEM_logic_cycle <= '1';
 					-- SLT / SLTU / SLTI / SLTIU
-					EX_MEM_writeback_logic(31 downto 1) <= x"0000000" & "000";
+					EX_MEM_writeback_logic(31 downto 1) <=
+					    x"0000000" & "000";
 					if ID_EX_sign_extend then
-						EX_MEM_writeback_logic(0) <= EX_from_alu_addsubx(32) xor
-							(EX_eff_reg1(31) xor EX_eff_alu_op2(31));
+						EX_MEM_writeback_logic(0) <=
+						    EX_from_alu_addsubx(32) xor
+						    (EX_eff_reg1(31) xor
+						    EX_eff_alu_op2(31));
 					else
-						EX_MEM_writeback_logic(0) <= EX_from_alu_addsubx(32);
+						EX_MEM_writeback_logic(0) <=
+						    EX_from_alu_addsubx(32);
 					end if;
-				elsif ID_EX_jump_cycle or ID_EX_jump_register or
-					ID_EX_branch_cycle or ID_EX_op_major = "11" then
+				elsif ID_EX_jump_cycle or
+				    ID_EX_jump_register or
+				    ID_EX_branch_cycle or
+				    ID_EX_op_major = "11" then
 					EX_MEM_logic_cycle <= '1';
 					EX_MEM_writeback_logic <= EX_from_alt;
 				else
 					EX_MEM_logic_cycle <= ID_EX_op_minor(2);
-					EX_MEM_writeback_logic <= EX_from_alu_logic;
+					EX_MEM_writeback_logic <=
+					    EX_from_alu_logic;
 				end if;
 				EX_MEM_writeback_addr <= ID_EX_writeback_addr;
 				EX_MEM_mem_cycle <= ID_EX_mem_cycle;
-				EX_MEM_mem_read_sign_extend <= ID_EX_mem_read_sign_extend;
+				EX_MEM_mem_read_sign_extend <=
+				    ID_EX_mem_read_sign_extend;
 				EX_MEM_branch_taken <= ID_EX_predict_taken;
-				EX_MEM_instruction <= ID_EX_instruction; -- XXX debugging only
-				EX_MEM_PC <= ID_EX_PC; -- XXX debugging only
+				-- XXX debugging only
+				EX_MEM_instruction <= ID_EX_instruction;
+				EX_MEM_PC <= ID_EX_PC;
 			elsif MEM_running and not EX_running then
 				-- insert a bubble in the MEM stage
-				EX_MEM_op_major <= "00"; -- XXX revisit do we need this?
+				EX_MEM_op_major <= "00"; -- XXX do we need this?
 				EX_MEM_take_branch <= false;
 				EX_MEM_branch_taken <= false;
 				EX_MEM_writeback_addr <= "00000";
 				EX_MEM_mem_cycle <= '0';
-				EX_MEM_instruction <= x"00000000"; -- XXX debugging only
+				-- XXX debugging only
+				EX_MEM_instruction <= x"00000000";
 			end if;
 		end if;
 	end process;

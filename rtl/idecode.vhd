@@ -210,7 +210,6 @@ begin
 	branch_condition <=
 		'1' & opcode(1 downto 0) when x_branch1 -- beq, bne, blez, bgtz
 		else "01" & instruction(16) when x_branch2 -- bgez, bltz
-		else "001" when jump_cycle -- XXX revisit
 		else "000";
 
 	mem_write <= opcode(3);
