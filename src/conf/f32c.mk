@@ -24,9 +24,7 @@ MK_CFLAGS += -msoft-mul -msoft-div
 # Language flags
 MK_CFLAGS += -std=c99 -Wall -Werror
 MK_CFLAGS += -Wextra -Wsystem-headers -Wshadow -Wpadded -Winline
-MK_CFLAGS += -c
 MK_CFLAGS += -ffreestanding
-#MK_CFLAGS += -s -n -nostdlib -fno-builtin
 
 # Debugging options
 MK_CFLAGS += -g
@@ -52,10 +50,6 @@ MK_CFLAGS += -fno-zero-initialized-in-bss
 
 MK_LDFLAGS += -Ttext ${LOADADDR} -N ${ENDIANFLAGS}
 
-# Sweep CFLAGS from leading "-O2 -pipe" noise, inserted by sys.mk
-ifdef CFLAGS
-ECFLAGS = ${CFLAGS:S/^-O2//:S/^-pipe//}
-endif
 
 CC = mips-elf-gcc ${MK_CFLAGS} ${ECFLAGS}
 LD = mips-elf-ld ${MK_LDFLAGS} ${LDFLAGS}
