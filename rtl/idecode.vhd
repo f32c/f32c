@@ -63,20 +63,24 @@ architecture Behavioral of idecode is
 	signal opcode, fncode: std_logic_vector(5 downto 0);
 	signal type_code: std_logic_vector(1 downto 0);
 	signal imm_extension: std_logic_vector(15 downto 0);
-	signal x_special, do_sign_extend: boolean;
+	signal x_reg1_addr, x_reg2_addr: std_logic_vector(4 downto 0);
+	signal x_reg2_zero, x_special, do_sign_extend: boolean;
 	signal x_branch1, x_branch2: boolean;
 begin
 
 	opcode <= instruction(31 downto 26);
 	fncode <= instruction(5 downto 0);
-	reg1_addr <= instruction(25 downto 21);
-	reg2_addr <= instruction(20 downto 16);
+	x_reg1_addr <= instruction(25 downto 21);
+	reg1_addr <= x_reg1_addr;
+	x_reg2_addr <= instruction(20 downto 16);
+	reg2_addr <= x_reg2_addr;
 	mem_read_sign_extend <= not opcode(2);
 
 	x_special <= opcode = "000000";
 	special <= x_special;
-	reg1_zero <= reg1_addr = "00000";
-	reg2_zero <= reg2_addr = "00000";
+	reg1_zero <= x_reg1_addr = "00000";
+	x_reg2_zero <= x_reg2_addr = "00000";
+	reg2_zero <= x_reg2_zero;
 	x_branch1 <= opcode(5) = '0' and opcode(3 downto 2) = "01"; -- beq, bne, blez, bgtz
 	x_branch2 <= opcode = "000001"; -- bgez, bltz
 	branch_cycle <= x_branch1 or x_branch2;
@@ -146,7 +150,7 @@ begin
 	
 	-- reg2 relevant for load-use or produce-use hazard checking or not?
 	ignore_reg2 <= true when opcode(5) /= '0' and opcode(3 downto 1) /= "010" and
-		type_code(0) /= '0' else reg2_zero;
+		type_code(0) /= '0' else x_reg2_zero;
 	
 	-- op_major: 00 ALU, 01 SLT, 10 shift, 11 mul_et_al
 	process(x_special, opcode, fncode)
