@@ -276,7 +276,6 @@ begin
 	
 	G_bp_scoretable:
 	if C_branch_prediction generate
-	begin
 	IF_bpredict_index <= EX_MEM_branch_hist xor IF_PC(14 downto 2);
 	IF_bpredict_re <= '1' when ID_running else '0';
 --	bpredictor_0: RAMB16_S2_S2
@@ -365,7 +364,6 @@ begin
 	--
 	G_ID_forwarding:
 	if C_result_forwarding generate
-	begin
 	ID_running <= ID_EX_cancel_next or
 		(EX_running and not ID_EX_partial_load and
 		(ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
@@ -376,7 +374,6 @@ begin
 
 	G_ID_no_forwarding:
 	if not C_result_forwarding generate
-	begin
 	ID_running <= ID_EX_cancel_next or
 		(EX_running and not ID_EX_partial_load and
 		not (ID_fwd_ex_reg1 or ID_fwd_mem_reg1) and
@@ -522,7 +519,6 @@ begin
 	-- forward the results from later stages
 	G_EX_forwarding:
 	if C_result_forwarding generate
-	begin
 	EX_eff_reg1 <= MEM_writeback_data when ID_EX_fwd_ex_reg1 else
 		WB_writeback_data when ID_EX_fwd_mem_reg1 else ID_EX_reg1_data;
 	EX_eff_reg2 <= MEM_writeback_data when ID_EX_fwd_ex_reg2 else
@@ -533,7 +529,6 @@ begin
 	
 	G_EX_no_forwarding:
 	if not C_result_forwarding generate
-	begin
 	EX_eff_reg1 <= ID_EX_reg1_data;
 	EX_eff_reg2 <= WB_writeback_data when ID_EX_fwd_mem_reg2
 		else ID_EX_reg2_data;
@@ -691,7 +686,6 @@ begin
 	-- branch prediction
 	G_bp_update_score:
 	if C_branch_prediction generate
-	begin
 	-- XXX priority encoder is not warranted here, replace with balanced "case" logic.
 	MEM_bpredict_score <=
 		"01" when EX_MEM_bpredict_score = "00" and EX_MEM_take_branch else
@@ -722,7 +716,6 @@ begin
 	-- XXX performance counters
 	G_perf_cnt:
 	if C_debug generate
-	begin
 	process(clk)
 	begin
 		if rising_edge(clk) then
@@ -783,7 +776,6 @@ begin
 	--
 	G_multiplier:
 	if C_mult_enable generate
-	begin
 --		mult: entity mult
 --			port map(
 --				reg1 => EX_eff_reg1, reg2 => EX_eff_reg2,
@@ -799,8 +791,6 @@ begin
 	-- mux for debugging probes
 	G_with_trace_mux:
 	if C_debug generate
-	begin
-
 	ID_EX_sign_extend_debug <= '1' when ID_EX_sign_extend else '0';
 
 	process(trace_addr)
