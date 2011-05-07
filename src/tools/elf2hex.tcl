@@ -53,9 +53,8 @@ while {[eof $elffile] == 0} {
 	    puts "Undefined endianess at line $linenum"
 	    exit 1
 	}
-	puts -nonewline "[format %08x $addr]: "
 	set l1 [string range $line 0 40]
-	for { set i 1 } { $i <= 4} { incr i } {
+	for {set i 1} {$i <= 4} {incr i} {
 	    set word [lindex $l1 $i]
 	    if {$word == ""} {
 		set word 00000000
@@ -65,10 +64,8 @@ while {[eof $elffile] == 0} {
 		set word "[string range $word 6 7][string range $word 4 5][string range $word 2 3][string range $word 0 1]"
 	    }
 	    set mem($addr) $word
-	    puts -nonewline "$word "
 	    incr addr 4
 	}
-	puts ""
     } elseif {$endian == "none" &&
 	[lrange $line 1 2] == "file format"} {
 	if {[lindex $line 3] == "elf32-littlemips"} {
@@ -79,4 +76,19 @@ while {[eof $elffile] == 0} {
     }
 }
 close $elffile
+
+foreach addr [lsort -integer [array names mem]] {
+    if {$addr % 16 == 0} {
+	puts -nonewline "[format %08x $addr]: "
+    }
+    if {$addr % 16 == 12} {
+	puts "$mem($addr)"
+    } else {
+	puts -nonewline "$mem($addr) "
+    }
+}
+
+if {$addr % 16 == 12} {
+    puts ""
+}
 puts ""
