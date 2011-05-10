@@ -117,8 +117,8 @@ architecture Behavioral of glue is
 	signal debug_res: std_logic;
 
 	-- FM TX DDS
-	signal clk_300m: std_logic;
-	signal dds_cnt, dds_div: std_logic_vector(23 downto 0);
+	signal clk_dds, dds_out: std_logic;
+	signal dds_cnt, dds_div, dds_div1: std_logic_vector(21 downto 0);
 begin
 
 	-- clock synthesizer
@@ -230,7 +230,7 @@ begin
 			-- DDS
 			if dmem_addr(4 downto 2) = "111" then
 				if dmem_byte_we(0) = '1' then
-					dds_div <= cpu_to_dmem(23 downto 0);
+					dds_div <= cpu_to_dmem(21 downto 0);
 				end if;
 			end if;
 		end if;
@@ -312,23 +312,25 @@ begin
 	-- DDS FM transmitter
         FMTXPLL: entity pll_300m
         port map (
-                CLK => clk_25m, LOCK => open, CLKOP => clk_300m
+                CLK => clk_25m, LOCK => open, CLKOP => clk_dds
         );
-	process(clk_300m)
+	process(clk_dds)
 	begin
-		if (rising_edge(clk_300m)) then
-			dds_cnt <= dds_cnt + dds_div;
+		if (rising_edge(clk_dds)) then
+			dds_div1 <= dds_div; -- Cross clock domain
+			dds_cnt <= dds_cnt + dds_div1;
 		end if;
 	end process;
 	-- make a dipole?
-	edge(0) <= dds_cnt(23);
-	edge(1) <= dds_cnt(23);
-	edge(2) <= dds_cnt(23);
-	edge(3) <= dds_cnt(23);
-	edge(5) <= not dds_cnt(23);
-	edge(6) <= not dds_cnt(23);
-	edge(7) <= not dds_cnt(23);
-	edge(8) <= not dds_cnt(23);
+	dds_out <= dds_cnt(21);
+	edge(0) <= dds_out;
+	edge(1) <= dds_out;
+	edge(2) <= dds_out;
+	edge(3) <= dds_out;
+	edge(5) <= not dds_out;
+	edge(6) <= not dds_out;
+	edge(7) <= not dds_out;
+	edge(8) <= not dds_out;
 
 end Behavioral;
 
