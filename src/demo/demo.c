@@ -33,25 +33,20 @@ main(void)
 				break;
 		}
 		printf("\n\n");
-		if (freq == 0)
-			continue;
-		if (freq > 255) {
-			printf("Frequency must be below 255 MHz.\n");
-			continue;
-		}
-		if (freq > 108 && freq < 137) {
-			printf("Oops, don't TX in AIR band!\n");
-			continue;
-		}
 		printf("Using %d MHz as DDS frequency, ", freq);
 		if (freq >= 76 && freq <= 108) {
 			printf("wide modulation.");
-			fm_mode = 0;
+			fm_mode = 4;
 		} else {
 			printf("narrow modulation.");
-			fm_mode = 1;
+			if (freq > 255)
+				fm_mode = 10;
+			else
+				fm_mode = 8;
 		}
 		printf("\n\n");
-		dds_base = (freq << 24) / 300;
+		dds_base = (freq << 22) / 300;
+		if (fm_mode == 10)
+			dds_base /= 3;
 	} while (1);
 }
