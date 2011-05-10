@@ -24,8 +24,8 @@ static int pcm_next_tsc;
 static int pcm_period = PCM_TSC_CYCLES;
 static int pcm_pushbtn_old;
 
-int dds_base = 5983874;		/* 107 MHz */
-int fm_mode = 0;		/* wide modulation */
+int dds_base;			/* 0 MHz - don't TX anything by default */
+int fm_mode;			/* modulation depth */
 
 
 void
@@ -64,10 +64,7 @@ pcm_play(void)
 	}
 	OUTW(IO_PCM_OUT, pcm_out);
 	
-	if (fm_mode)
-		dds_out = dds_base + (dds_out >> 7);
-	else
-		dds_out = dds_base + (dds_out >> 2);
+	dds_out = dds_base + (dds_out >> fm_mode);
 	OUTW(IO_DDS, dds_out);
 
 	/* Update volume and VU meter */
