@@ -83,7 +83,8 @@ entity glue is
 		p_tip: out std_logic_vector(3 downto 0);
 		led: out std_logic_vector(7 downto 0);
 		btn_left, btn_right, btn_up, btn_down, btn_center: in std_logic;
-		sw: in std_logic_vector(3 downto 0)
+		sw: in std_logic_vector(3 downto 0);
+		edge: out std_logic_vector(8 downto 0)
 	);
 end glue;
 
@@ -114,6 +115,10 @@ architecture Behavioral of glue is
 	signal trace_data: std_logic_vector(31 downto 0);
 	signal debug_txd: std_logic;
 	signal debug_res: std_logic;
+
+	-- FM TX DDS
+	signal clk_300m: std_logic;
+	signal dds_cnt, dds_div: std_logic_vector(23 downto 0);
 begin
 
 	-- clock synthesizer
@@ -193,6 +198,7 @@ begin
 	-- 0xe*****0c:  (4B, WR) PCM signal
 	-- 0xe*****10:  (1B, RW) SPI Flash
 	-- 0xe*****14:  (1B, RW) SPI MicsoSD
+	-- 0xe*****1c:	(4B, WR) DDS register
 	-- I/O write access:
 	process(clk)
 	begin
@@ -219,6 +225,12 @@ begin
 					spi_si_reg <= cpu_to_dmem(7);
 					spi_sck_reg <= cpu_to_dmem(6);
 					spi_cen_reg <= cpu_to_dmem(5);
+				end if;
+			end if;
+			-- DDS
+			if dmem_addr(4 downto 2) = "111" then
+				if dmem_byte_we(0) = '1' then
+					dds_div <= cpu_to_dmem(23 downto 0);
 				end if;
 			end if;
 		end if;
@@ -297,5 +309,26 @@ begin
 	
 	rs232_tx <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
 	
+	-- DDS FM transmitter
+        FMTXPLL: entity pll_300m
+        port map (
+                CLK => clk_25m, LOCK => open, CLKOP => clk_300m
+        );
+	process(clk_300m)
+	begin
+		if (rising_edge(clk_300m)) then
+			dds_cnt <= dds_cnt + dds_div;
+		end if;
+	end process;
+	-- make a dipole?
+	edge(0) <= dds_cnt(23);
+	edge(1) <= dds_cnt(23);
+	edge(2) <= dds_cnt(23);
+	edge(3) <= dds_cnt(23);
+	edge(5) <= not dds_cnt(23);
+	edge(6) <= not dds_cnt(23);
+	edge(7) <= not dds_cnt(23);
+	edge(8) <= not dds_cnt(23);
+
 end Behavioral;
 
