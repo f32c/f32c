@@ -24,11 +24,14 @@ static int pcm_next_tsc;
 static int pcm_period = PCM_TSC_CYCLES;
 static int pcm_pushbtn_old;
 
+int dds_base = 5983874;		/* 107 MHz */
+int fm_mode = 0;		/* wide modulation */
+
 
 void
 pcm_play(void)
 {
-	int pcm_out, i, c, vu;
+	int pcm_out, dds_out, i, c, vu;
 	
 	c = rdtsc() - pcm_next_tsc;
 	if (c < 0)
@@ -41,13 +44,18 @@ pcm_play(void)
 		pcm_next_tsc += pcm_period;
 
 	/* Read a sample from SPI flash */
-	for (i = 0, pcm_out = 0; i < 2; i++) {
+	for (i = 0, pcm_out = 0, dds_out = 0; i < 2; i++) {
 		/* Fetch a 16-bit PCM sample from SPI Flash */
 		c = spi_byte_in() | (spi_byte_in() << 8);
 
 		/* Apply volume setting */
 		pcm_out = (pcm_out << 16) |
 		    ((c ^ 0x8000) * (pcm_evol[i] >> 5)) >> 11;
+
+		/* Mix L & R channels for DDS synthesis */
+		dds_out += c;
+		if (c & 0x8000)
+			dds_out += 0xffff0000;
 
 		/* Update signal running average */
 		if (c & 0x8000)
@@ -56,6 +64,12 @@ pcm_play(void)
 	}
 	OUTW(IO_PCM_OUT, pcm_out);
 	
+	if (fm_mode)
+		dds_out = dds_base + (dds_out >> 7);
+	else
+		dds_out = dds_base + (dds_out >> 2);
+	OUTW(IO_DDS, dds_out);
+
 	/* Update volume and VU meter */
 	if ((pcm_addr & 0xfff) == 0) {
 		for (i = 0, vu = 0; i < 2; i++) {
