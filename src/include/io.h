@@ -12,6 +12,7 @@
 #define	IO_TSC		0x08	/* word, RD */
 #define	IO_PCM_OUT	0x0c	/* word, WR */
 #define	IO_SPI		0x10	/* byte, RW */
+#define	IO_DDS		0x1c	/* word, WR */
 
 /* SIO bitmask */
 #define	SIO_TX_BUSY	0x8
