@@ -30,7 +30,7 @@ main(void)
 			putchar(c);
 			if (c >= '0' && c <= '9') {
 				if (f_c >= 0) {
-					if (f_d == 100000)
+					if (f_d == 10000)
 						continue;
 					freq_f = freq_f * 10 + c - '0';
 					f_d *= 10;
@@ -67,7 +67,7 @@ main(void)
 		printf("\n\n");
 		dds_base = freq_i << 22;
 		if (f_d > 1)
-			dds_base += (1 << 22) / f_d * freq_f;
+			dds_base += ((1 << 16) * freq_f / f_d) << 6;
 		dds_base /= 300;
 		if (fm_mode == 10)
 			dds_base /= 3;
