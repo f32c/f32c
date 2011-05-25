@@ -4,6 +4,7 @@
 
 #include <types.h>
 
+
 uint32_t random(void);
 
-#endif /* !_STDIO_H_ */
+#endif /* !_STDLIB_H_ */
