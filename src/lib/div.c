@@ -58,3 +58,15 @@ __umodsi3(uint32_t a, uint32_t b)
 
 	return (udivmod(a, b, 1));
 }
+ 
+ 
+uint32_t
+__modsi3(int32_t a, int32_t b)
+{
+
+	if (a < 0)
+		a = -a;
+	if (b < 0)
+		b = -b;
+	return (udivmod(a, b, 1));
+}
