@@ -2,7 +2,7 @@
 #include <types.h>
 
 
-int randseed;
+static int randseed;
 
 
 uint32_t
