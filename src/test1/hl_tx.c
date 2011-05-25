@@ -1,19 +1,12 @@
 
-#ifndef XXX
 #include <io.h>
 #include <types.h>
-#else
-#include <sys/types.h>
-#endif
+#include <stdlib.h>
 #include <stdio.h>
 
 
-extern void pcm_play(void);
-
-int outw;
-
-
-static int dds_base = 378816; /* 27.095 MHz */
+static int outw;
+static int dds_base;
 
 
 static void
@@ -79,46 +72,37 @@ fm_tx(void)
 int
 main(void)
 {
-	int old_c = 0;
-	int t, last_break = 0;
-	int c;
-	// int i;
-	
 	int fwd_rev, left_right, turr_left, turr_right, gun_elev, gun_bullet;
-	int mg_sound, gun_sound, engine_key, csum;
-
-	// sio_idle_fn = fm_tx;
-
-	fwd_rev = 16;
-	left_right = 16;
+	int mg_sound, gun_sound, engine_key, speed, csum, c;
 
 	do {
-		do {
-			fm_tx();
-			INW(c, IO_PUSHBTN);
+		fm_tx();
 
-			t = rdtsc() - last_break;
-			if (t < 0)
-				t = -t;
-			if ((c & BTN_CENTER) && t > 1000000) {
-				last_break = rdtsc();
-				if (fwd_rev > 24)
-					fwd_rev--;
-				if (fwd_rev > 16)
-					fwd_rev--;
-				if (fwd_rev < 8)
-					fwd_rev++;
-				if (fwd_rev < 16)
-					fwd_rev++;
-				if (left_right > 16)
-					left_right--;
-				if (left_right < 16)
-					left_right++;
-				break;
-			}
-		} while (c == old_c);
-		old_c = c;
+		/* Bail out to bootloader on CTRL+C */
+		c = sio_getchar(0);
+		if (c == 3)
+			return (0);
+		c = random() >> 8;
+		OUTB(IO_LED, c);
 
+		INW(c, IO_PUSHBTN);
+
+		/* Select speed */
+		speed = (c & 0xf00) >> 10;
+
+		/* Select carrier frequency */
+		switch ((c & 0x300) >> 8) {
+		case 0:
+			dds_base = 378816; /* 27.095 MHz */
+			break;
+		case 1:
+			dds_base = 379515; /* 27.145 MHz */
+			break;
+		default:
+			dds_base = 0; /* Do not transmit */
+			break;
+		}
+		
 		turr_left = 1;
 		turr_right = 1;
 		gun_elev = 1;
@@ -126,50 +110,59 @@ main(void)
 		mg_sound = 1;
 		gun_sound = 1;
 		engine_key = 1;
+		fwd_rev = 16;
+		left_right = 16;
 
-		if (c & BTN_CENTER) {
-			if ((c & BTN_LEFT) && !(c & BTN_RIGHT))
-				turr_left ^= 1;
-			if ((c & BTN_RIGHT) && !(c & BTN_LEFT))
-				turr_right ^= 1;
-			if ((c & BTN_UP) && !(c & BTN_DOWN))
-				gun_sound ^= 1;
-			if ((c & BTN_DOWN) && !(c & BTN_UP))
-				gun_elev ^= 1;
-			if ((c & BTN_UP) && (c & BTN_DOWN))
-				mg_sound ^= 1;
-			if ((c & BTN_LEFT) && (c & BTN_RIGHT))
-				engine_key ^= 1;
-
-		} else {
-			if ((c & BTN_UP)  && fwd_rev < 31) {
-				if (fwd_rev == 16)
-					fwd_rev = 19;
-				else
-					fwd_rev++;
-			}
-			if ((c & BTN_DOWN) && fwd_rev > 1) {
-				if (fwd_rev == 16)
-					fwd_rev = 13;
-				else
-					fwd_rev--;
-			}
-			if ((c & BTN_LEFT) && left_right < 31) {
-				if (left_right == 16)
-					left_right = 19;
-				else if (left_right == 13)
-					left_right = 16;
-				else
-					left_right++;
-			}
-			if ((c & BTN_RIGHT) && left_right > 1) {
-				if (left_right == 16 )
-					left_right = 13;
-				else if (left_right == 19 )
-					left_right = 16;
-				else
-					left_right--;
-			}
+		c &= BTN_CENTER | BTN_UP | BTN_DOWN | BTN_LEFT | BTN_RIGHT;
+		switch (c) {
+		case BTN_LEFT | BTN_CENTER | BTN_RIGHT:
+			engine_key = 0;
+			break;
+		case BTN_UP | BTN_DOWN:
+			mg_sound = 0;
+			break;
+		case BTN_CENTER | BTN_UP:
+			gun_sound = 0;
+			break;
+		case BTN_CENTER | BTN_DOWN:
+			gun_elev = 0;
+			break;
+		case BTN_CENTER | BTN_LEFT:
+			turr_left = 0;
+			break;
+		case BTN_CENTER | BTN_RIGHT:
+			turr_right = 0;
+			break;
+		case BTN_UP:
+			fwd_rev = 19 + speed;
+			break;
+		case BTN_UP | BTN_LEFT:
+			fwd_rev = 20 + speed;
+			left_right = 19;
+			break;
+		case BTN_UP | BTN_RIGHT:
+			fwd_rev = 20 + speed;
+			left_right = 13;
+			break;
+		case BTN_DOWN:
+			fwd_rev = 13 - speed;
+			break;
+		case BTN_DOWN | BTN_LEFT:
+			fwd_rev = 12 - speed;
+			left_right = 19;
+			break;
+		case BTN_DOWN | BTN_RIGHT:
+			fwd_rev = 12 - speed;
+			left_right = 13;
+			break;
+		case BTN_LEFT:
+			left_right = 23 + speed;
+			break;
+		case BTN_RIGHT:
+			left_right = 9 - speed;
+			break;
+		default:
+			break;
 		}
 
 		csum = 4;
@@ -186,33 +179,6 @@ main(void)
 		csum ^= (left_right >> 4);
 		csum &= 0xf;
 
-#if 0
-		printf("fwd_rev:    %d\n", fwd_rev);
-		printf("left_right: %d\n", left_right);
-		printf("turr_left:  %d\n", turr_left);
-		printf("turr_right: %d\n", turr_right);
-		printf("gun_elev:   %d\n", gun_elev);
-		printf("gun_bullet: %d\n", gun_bullet);
-		printf("mg_sound:   %d\n", mg_sound);
-		printf("gun_sound:  %d\n", gun_sound);
-		printf("engine_key: %d\n", engine_key);
-		printf("csum:       %d\n", csum);
-		printf("\n");
-#endif
-
-#if 0
-		printf("fr: %d ", fwd_rev);
-		printf("lr: %d ", left_right);
-		printf("tl: %d ", turr_left);
-		printf("tr: %d ", turr_right);
-		printf("ge: %d ", gun_elev);
-		printf("gb: %d ", gun_bullet);
-		printf("ms: %d ", mg_sound);
-		printf("gs: %d ", gun_sound);
-		printf("ek: %d ", engine_key);
-		printf("\n");
-#endif
-
 		outw = 0x7;
 		outw |= 0x3 << 24;
 		outw |= fwd_rev << 19;
@@ -226,16 +192,5 @@ main(void)
 		outw |= engine_key << (31 - 23);
 		outw |= csum << 3;
 
-#if 0
-		printf("0123456789abcdef0123456789abcdef\n");
-		for (c = outw, i = 0; i < 32; i++) {
-			if (c & 0x80000000)
-				printf("1");
-			else
-				printf("0");
-			c <<= 1;
-		}
-		printf("\n");
-#endif
 	} while (1);
 }
