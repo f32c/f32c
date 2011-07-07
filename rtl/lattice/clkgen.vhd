@@ -1,5 +1,5 @@
 --
--- Copyright 2011 University of Zagreb, Croatia.
+-- Copyright 2011 University of Zagreb.
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -43,12 +43,13 @@ entity clkgen is
 		sel: in std_logic;
 		key: in std_logic; -- one-step clocking
 		res: in std_logic; -- only when C_debug is enabled
-		clk: out std_logic
+		clk, clk_325m: out std_logic
 	);
 end clkgen;
 
 architecture Behavioral of clkgen is
-	signal pll_clk: std_logic; -- 75 MHz
+	signal pll_clk: std_logic; -- 81.25 MHz
+	signal pll_clk_325m: std_logic; -- 325 MHz
 	signal pll_lock: std_logic;
 	signal key_d: std_logic_vector(19 downto 0) := x"00000";
 	signal key_r: std_logic := '0';
@@ -59,9 +60,11 @@ begin
 	-- PLL generator
 	PLL: entity pll
 	port map (
-        	clk => clk_25m, lock => pll_lock, clkok => pll_clk
+        	clk => clk_25m, lock => pll_lock, clkok => pll_clk,
+		clkop => pll_clk_325m
 	);
 
+	clk_325m <= pll_clk_325m;
 	resl <= not res and pll_lock when C_debug else pll_lock;
 
 	-- reset
