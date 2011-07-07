@@ -59,7 +59,7 @@ begin
 	-- PLL generator
 	PLL: entity pll
 	port map (
-        	CLK => clk_25m, LOCK => pll_lock, CLKOP => pll_clk
+        	clk => clk_25m, lock => pll_lock, clkok => pll_clk
 	);
 
 	resl <= not res and pll_lock when C_debug else pll_lock;
