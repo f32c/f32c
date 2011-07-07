@@ -127,9 +127,8 @@ begin
 		C_debug => C_debug
 	)
 	port map (
-		clk_25m => clk_25m, clk => clk,
-		sel => sw(2), key => btn_down,
-		res => debug_res
+		clk_25m => clk_25m, clk => clk, clk_325m => clk_dds,
+		sel => sw(2), key => btn_down, res => debug_res
 	);
 	debug_res <= btn_up and sw(0) when C_debug else '0';
 
@@ -310,10 +309,6 @@ begin
 	rs232_tx <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
 	
 	-- DDS FM transmitter
-        FMTXPLL: entity pll_300m
-        port map (
-                CLK => clk_25m, LOCK => open, CLKOP => clk_dds
-        );
 	process(clk_dds)
 	begin
 		if (rising_edge(clk_dds)) then
