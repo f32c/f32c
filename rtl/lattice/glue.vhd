@@ -46,7 +46,9 @@ entity glue is
 		C_mem_size: string := "8k";
 		C_tsc: boolean := true; -- true: +63 LUT4
 		C_sio: boolean := true; -- true: +133 LUT;
-		C_pcmdac: boolean := true -- true: +43 LUT;
+		C_pcmdac: boolean := true; -- true: +43 LUT;
+		C_ddsfm: boolean := false
+
 		--
 		-- XP2-8E-7 area optimized synthesis:
 		--
@@ -227,7 +229,7 @@ begin
 				end if;
 			end if;
 			-- DDS
-			if dmem_addr(4 downto 2) = "111" then
+			if C_ddsfm and dmem_addr(4 downto 2) = "111" then
 				if dmem_byte_we(0) = '1' then
 					dds_div <= cpu_to_dmem(21 downto 0);
 				end if;
@@ -309,6 +311,8 @@ begin
 	rs232_tx <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
 	
 	-- DDS FM transmitter
+	G_ddsfm:
+	if C_ddsfm generate
 	process(clk_dds)
 	begin
 		if (rising_edge(clk_dds)) then
@@ -316,16 +320,18 @@ begin
 			dds_cnt <= dds_cnt + dds_div1;
 		end if;
 	end process;
-	-- make a dipole?
 	dds_out <= dds_cnt(21);
-	edge(0) <= dds_out;
-	edge(1) <= dds_out;
-	edge(2) <= dds_out;
-	edge(3) <= dds_out;
-	edge(5) <= not dds_out;
-	edge(6) <= not dds_out;
-	edge(7) <= not dds_out;
-	edge(8) <= not dds_out;
+	end generate;
+
+	-- make a dipole?
+	edge(0) <= dds_out when C_ddsfm else 'Z';
+	edge(1) <= dds_out when C_ddsfm else 'Z';
+	edge(2) <= dds_out when C_ddsfm else 'Z';
+	edge(3) <= dds_out when C_ddsfm else 'Z';
+	edge(5) <= not dds_out when C_ddsfm else 'Z';
+	edge(6) <= not dds_out when C_ddsfm else 'Z';
+	edge(7) <= not dds_out when C_ddsfm else 'Z';
+	edge(8) <= not dds_out when C_ddsfm else 'Z';
 
 end Behavioral;
 
