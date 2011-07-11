@@ -68,7 +68,7 @@ main(void)
 		dds_base = freq_i << 22;
 		if (f_d > 1)
 			dds_base += ((1 << 16) * freq_f / f_d) << 6;
-		dds_base /= 300;
+		dds_base /= 325;
 		if (fm_mode == 10)
 			dds_base /= 3;
 	} while (1);
