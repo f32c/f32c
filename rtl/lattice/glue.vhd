@@ -46,6 +46,8 @@ entity glue is
 		C_mem_size: string := "8k";
 		C_tsc: boolean := true; -- true: +63 LUT4
 		C_sio: boolean := true; -- true: +133 LUT;
+		C_gpio: boolean := true;
+		C_spi: boolean := true;
 		C_pcmdac: boolean := true; -- true: +43 LUT;
 		C_ddsfm: boolean := false
 
@@ -206,13 +208,13 @@ begin
 		if rising_edge(clk) and dmem_addr_strobe = '1'
 		   and dmem_addr(31 downto 28) = "1110" then
 			-- GPIO
-			if dmem_addr(4 downto 2) = "000" then
+			if C_gpio and dmem_addr(4 downto 2) = "000" then
 				if dmem_byte_we(0) = '1' then
 					led_reg <= cpu_to_dmem(7 downto 0);
 				end if;
 			end if;
 			-- PCMDAC
-			if dmem_addr(4 downto 2) = "011" and C_pcmdac then
+			if C_pcmdac and dmem_addr(4 downto 2) = "011" then
 				if dmem_byte_we(2) = '1' then
 					dac_in_l <= cpu_to_dmem(31 downto 18);
 				end if;
@@ -221,7 +223,7 @@ begin
 				end if;
 			end if;
 			-- SPI
-			if dmem_addr(4 downto 2) = "100" then
+			if C_spi and dmem_addr(4 downto 2) = "100" then
 				if dmem_byte_we(0) = '1' then
 					spi_si_reg <= cpu_to_dmem(7);
 					spi_sck_reg <= cpu_to_dmem(6);
@@ -236,14 +238,14 @@ begin
 			end if;
 		end if;
 	end process;
-	led <= led_reg;
-	spi_si <= spi_si_reg;
-	spi_sck <= spi_sck_reg;
-	spi_cen <= spi_cen_reg;
+	led <= led_reg when C_gpio else "ZZZZZZZZ";
+	spi_si <= spi_si_reg when C_spi else 'Z';
+	spi_sck <= spi_sck_reg when C_spi else 'Z';
+	spi_cen <= spi_cen_reg when C_spi else 'Z';
 
 	process(clk)
 	begin
-		if rising_edge(clk) then
+		if C_gpio and rising_edge(clk) then
 			from_gpio(4 downto 0) <= btn_center &
 			    btn_up & btn_down & btn_left & btn_right;
 			from_gpio(11 downto 8) <= sw;
@@ -274,7 +276,12 @@ begin
 		when "000"  => io_to_cpu <= from_gpio;
 		when "001"  => io_to_cpu <= from_sio;
 		when "010"  => io_to_cpu <= tsc;
-		when "100"  => io_to_cpu <= x"0000000" & "000" & spi_so;
+		when "100"  =>
+			if C_spi then
+				io_to_cpu <= x"0000000" & "000" & spi_so;
+			else
+				io_to_cpu <= x"00000000";
+			end if;
 		when others => io_to_cpu <= x"00000000";
 		end case;
 	end process;
