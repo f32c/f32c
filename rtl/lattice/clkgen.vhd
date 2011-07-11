@@ -58,26 +58,24 @@ architecture Behavioral of clkgen is
 begin
 
 	-- PLL generator
+	G_nodebug:
+	if not C_debug generate
 	PLL: entity pll
 	port map (
         	clk => clk_25m, lock => pll_lock, clkok => pll_clk_81m,
 		clkok2 => pll_clk_108m, clkop => pll_clk_325m
 	);
-
 	clk_325m <= pll_clk_325m;
-	resl <= not res and pll_lock when C_debug else pll_lock;
+	clk <= pll_clk_108m when C_fast_clk else pll_clk_81m;
+	end generate;
+
+	resl <= not res when C_debug else pll_lock;
 
 	-- reset
 	gsr_inst: GSR
 	port map (
 		gsr => resl
 	);
-
-	G_nodebug:
-	if not C_debug generate
-	begin
-	clk <= pll_clk_108m when C_fast_clk else pll_clk_81m;
-	end generate;
 
 	G_debug:
 	if C_debug generate
