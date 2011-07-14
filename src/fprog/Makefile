@@ -7,7 +7,6 @@ build:
 	$(CC) ../lib/sio.c
 	$(CC) ../lib/spi.c
 	$(CC) ../lib/div.c
-	$(CC) ../lib/mul.c
 	$(CC) ../lib/printf.c
 	$(LD) -o img.elf \
 	    start.o sio.o spi.o printf.o div.o mul.o fprog.o
