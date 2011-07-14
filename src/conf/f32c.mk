@@ -19,7 +19,8 @@ MK_CFLAGS += -mno-mips16 -mno-dsp -mno-mips3d -mno-mdmx -msoft-float
 MK_CFLAGS += -G 32768
 
 # f32c-specific flags
-MK_CFLAGS += -msoft-mul -msoft-div
+#MK_CFLAGS += -msoft-mul
+MK_CFLAGS += -msoft-div
 
 # Language flags
 MK_CFLAGS += -std=c99 -Wall -Werror
