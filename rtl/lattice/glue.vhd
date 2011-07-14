@@ -1,5 +1,5 @@
 --
--- Copyright 2011 University of Zagreb, Croatia.
+-- Copyright 2011 University of Zagreb.
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -34,7 +34,7 @@ entity glue is
 	generic(
 		-- CPU core configuration options
 		C_register_technology: string := "lattice";
-		C_mult_enable: boolean := false;
+		C_mult_enable: boolean := true;
 		C_branch_prediction: boolean := true; -- true: +76 LUT4
 		C_result_forwarding: boolean := true; -- true: +167 LUT4
 		-- Do not change those two:
