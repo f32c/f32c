@@ -1,5 +1,5 @@
 --
--- Copyright 2008 University of Zagreb, Croatia.
+-- Copyright 2008, 2011 University of Zagreb.
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -37,13 +37,13 @@ entity idecode is
 		C_branch_likely: boolean
 	);
 	port(
-		instruction: in STD_LOGIC_VECTOR(31 downto 0);
+		instruction: in std_logic_vector(31 downto 0);
 		branch_cycle, branch_likely: out boolean;
 		jump_cycle, jump_register: out boolean;
 		special: out boolean;
 		reg1_zero, reg2_zero: out boolean;
 		reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
-		immediate_value: out STD_LOGIC_VECTOR(31 downto 0);
+		immediate_value: out std_logic_vector(31 downto 0);
 		sign_extension: out std_logic_vector(15 downto 0);
 		sign_extend: out boolean;
 		op_major: out std_logic_vector(1 downto 0);

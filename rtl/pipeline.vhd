@@ -35,7 +35,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity pipeline is
 	generic(
 		-- ISA options
-		C_mult_enable: boolean := false;
+		C_mult_enable: boolean := true;
 		C_branch_likely: boolean := false;
 		-- optimization options
 		C_branch_prediction: boolean := true;
@@ -790,22 +790,30 @@ begin
 	
 	
 	--
-	-- Multiplier
+	-- Multiplier unit, as a separate pipeline
 	--
 	G_multiplier:
 	if C_mult_enable generate
---		mult: entity mult
---			port map(
---				reg1 => EX_eff_reg1, reg2 => EX_eff_reg2,
---				hilo_out => MULT_res, op_major => ID_EX_op_major, 
---				funct => ID_EX_immediate(5 downto 0),
---				busy => EX_muldiv_busy,	clk => clk
---			);
---	HI <= MULT_res(63 downto 32);
---	LO <= MULT_res(31 downto 0);
+	mul_res <= mul_a * mul_b; -- infer asynchronous signed multiplier
 	process (clk)
 	begin
 	    if falling_edge(clk) then
+		-- XXX revisit instruction decoding
+		if (ID_EX_op_major = "11" and
+		    ID_EX_instruction(5 downto 1) = "01100") then
+		    if (ID_EX_instruction(0) = '0') then
+			-- signed
+			mul_a <= EX_eff_reg1(31) & EX_eff_reg1;
+			mul_b <= EX_eff_reg2(31) & EX_eff_reg2;
+		    else
+			-- unsigned
+			mul_a <= '0' & EX_eff_reg1;
+			mul_b <= '0' & EX_eff_reg2;
+		    end if;
+		end if;
+		-- XXX revisit hi_lo write enable
+		-- XXX don't update hi_lo if exception pending
+		hi_lo <= mul_res(63 downto 0);
 	    end if;
 	end process;
 	end generate; -- multiplier
