@@ -1,5 +1,5 @@
 --
--- Copyright 2008,2010,2011 University of Zagreb, Croatia.
+-- Copyright 2008,2010,2011 University of Zagreb.
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity pipeline is
 	generic(
 		-- ISA options
-		C_mult_enable: boolean := false; -- XXX untested, Xilinx specific
+		C_mult_enable: boolean := false;
 		C_branch_likely: boolean := false;
 		-- optimization options
 		C_branch_prediction: boolean := true;
@@ -141,7 +141,6 @@ architecture Behavioral of pipeline is
 	signal EX_mem_byte_we: std_logic_vector(3 downto 0);
 	signal EX_take_branch: boolean;
 	signal EX_cancel_next: boolean;
-	signal EX_muldiv_busy: boolean;
 	-- boundary to stage 4
 	signal EX_MEM_writeback_addr: std_logic_vector(4 downto 0);
 	signal EX_MEM_writeback_addsub: std_logic_vector(31 downto 0);
@@ -182,13 +181,10 @@ architecture Behavioral of pipeline is
 	-- pipeline stage 5: register writeback
 	signal WB_writeback_data: std_logic_vector(31 downto 0);
 
-	-- global state
-	signal LO: std_logic_vector(31 downto 0) := x"01234567";
-	signal HI: std_logic_vector(31 downto 0) := x"89abcdef";
-	signal HILO_timer: std_logic_vector(1 downto 0);
-	
-	-- misc signals
-	signal MULT_res: std_logic_vector(63 downto 0);
+	-- multiplication unit
+	signal mul_a, mul_b: std_logic_vector(32 downto 0);
+	signal mul_res: std_logic_vector(65 downto 0);
+	signal hi_lo: std_logic_vector(63 downto 0);
 
 	-- signals used for debugging only
 	signal reg_trace_data: std_logic_vector(31 downto 0);
@@ -514,7 +510,7 @@ begin
 	-- =========================
 	--
 	
-	EX_running <= MEM_running and not EX_muldiv_busy; -- XXX revisit
+	EX_running <= MEM_running; -- XXX revisit
 	
 	-- forward the results from later stages
 	G_EX_forwarding:
@@ -580,8 +576,10 @@ begin
 
 	-- MFHI, MFLO, link PC+8 -- XXX what about MFC0 / MFC1?
 	EX_from_alt <=
-		HI when ID_EX_op_major = "11" and ID_EX_op_minor(1) = '0' else
-		LO when ID_EX_op_major = "11" and ID_EX_op_minor(1) = '1' else
+		hi_lo(63 downto 32) when C_mult_enable and
+		    ID_EX_op_major = "11" and ID_EX_op_minor(1) = '0' else
+		hi_lo(31 downto 0) when C_mult_enable and
+		    ID_EX_op_major = "11" and ID_EX_op_minor(1) = '1' else
 		ID_EX_PC_8 & "00";
 
 	-- branch or not?
@@ -803,9 +801,13 @@ begin
 --				funct => ID_EX_immediate(5 downto 0),
 --				busy => EX_muldiv_busy,	clk => clk
 --			);
-
-	HI <= MULT_res(63 downto 32);
-	LO <= MULT_res(31 downto 0);
+--	HI <= MULT_res(63 downto 32);
+--	LO <= MULT_res(31 downto 0);
+	process (clk)
+	begin
+	    if falling_edge(clk) then
+	    end if;
+	end process;
 	end generate; -- multiplier
 
 	-- mux for debugging probes
@@ -840,9 +842,9 @@ begin
 				when x"12" => trace_data <= D_b_instr;
 				when x"13" => trace_data <= D_b_taken;
 				--
-				when x"1a" => trace_data <= LO;
-				--when x"1b" => trace_data <= HI;
-				when x"1b" => trace_data <= debug_XXX;
+				when x"1a" => trace_data <= hi_lo(63 downto 32);
+				when x"1b" => trace_data <= hi_lo(31 downto 0);
+				-- when x"1b" => trace_data <= debug_XXX;
 				-- when x"1c" => trace_data <= BadVAddr;
 				-- when x"1d" => trace_data <= EPC;
 				-- when x"1e" => trace_data <= Status;
