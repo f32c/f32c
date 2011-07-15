@@ -53,45 +53,12 @@ architecture Structure of pll_81_325 is
             CLKOS: out std_logic; CLKOK: out std_logic; CLKOK2: out std_logic; 
             LOCK: out std_logic; CLKINTFB: out std_logic);
     end component;
-    attribute CLKOK_BYPASS : string; 
-    attribute CLKOS_BYPASS : string; 
     attribute FREQUENCY_PIN_CLKOP : string; 
-    attribute CLKOP_BYPASS : string; 
-    attribute CLKOS_TRIM_DELAY : string; 
-    attribute CLKOS_TRIM_POL : string; 
-    attribute CLKOP_TRIM_DELAY : string; 
-    attribute CLKOP_TRIM_POL : string; 
-    attribute PHASE_CNTL : string; 
-    attribute DUTY : string; 
-    attribute PHASEADJ : string; 
     attribute FREQUENCY_PIN_CLKI : string; 
     attribute FREQUENCY_PIN_CLKOK : string; 
-    attribute CLKOK_DIV : string; 
-    attribute CLKOP_DIV : string; 
-    attribute CLKFB_DIV : string; 
-    attribute CLKI_DIV : string; 
-    attribute FIN : string; 
-    attribute CLKOK_BYPASS of PLLInst_0 : label is "DISABLED";
-    attribute CLKOS_BYPASS of PLLInst_0 : label is "DISABLED";
     attribute FREQUENCY_PIN_CLKOP of PLLInst_0 : label is "325.000000";
-    attribute CLKOP_BYPASS of PLLInst_0 : label is "DISABLED";
-    attribute CLKOS_TRIM_DELAY of PLLInst_0 : label is "0";
-    attribute CLKOS_TRIM_POL of PLLInst_0 : label is "RISING";
-    attribute CLKOP_TRIM_DELAY of PLLInst_0 : label is "0";
-    attribute CLKOP_TRIM_POL of PLLInst_0 : label is "FALLING";
-    attribute PHASE_CNTL of PLLInst_0 : label is "STATIC";
-    attribute DUTY of PLLInst_0 : label is "8";
-    attribute PHASEADJ of PLLInst_0 : label is "0.0";
     attribute FREQUENCY_PIN_CLKI of PLLInst_0 : label is "25.000000";
     attribute FREQUENCY_PIN_CLKOK of PLLInst_0 : label is "81.250000";
-    attribute CLKOK_DIV of PLLInst_0 : label is "4";
-    attribute CLKOP_DIV of PLLInst_0 : label is "2";
-    attribute CLKFB_DIV of PLLInst_0 : label is "13";
-    attribute CLKI_DIV of PLLInst_0 : label is "1";
-    attribute FIN of PLLInst_0 : label is "25.000000";
-    attribute syn_keep : boolean;
-    attribute syn_noprune : boolean;
-    attribute syn_noprune of Structure : architecture is true;
 
 begin
     -- component instantiation statements
