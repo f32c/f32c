@@ -11,7 +11,7 @@ library xp2;
 use xp2.components.all;
 -- synopsys translate_on
 
-entity pll is
+entity pll_81_325 is
     port (
         CLK: in std_logic; 
         CLKOP: out std_logic; 
@@ -19,10 +19,10 @@ entity pll is
         CLKOK2: out std_logic; 
         LOCK: out std_logic);
  attribute dont_touch : boolean;
- attribute dont_touch of pll : entity is true;
-end pll;
+ attribute dont_touch of pll_81_325 : entity is true;
+end pll_81_325;
 
-architecture Structure of pll is
+architecture Structure of pll_81_325 is
 
     -- internal signal declarations
     signal CLKOP_t: std_logic;
@@ -119,7 +119,7 @@ end Structure;
 
 -- synopsys translate_off
 library xp2;
-configuration Structure_CON of pll is
+configuration Structure_CON of pll_81_325 is
     for Structure
         for all:VLO use entity xp2.VLO(V); end for;
         for all:EHXPLLE1 use entity xp2.EHXPLLE1(V); end for;
