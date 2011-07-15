@@ -49,7 +49,7 @@ entity clkgen is
 end clkgen;
 
 architecture Behavioral of clkgen is
-	signal pll_clk_81m, pll_clk_108m, pll_clk_325m: std_logic;
+	signal pll_clk_81m, pll_clk_325m: std_logic;
 	signal pll_lock: std_logic;
 	signal key_d: std_logic_vector(19 downto 0) := x"00000";
 	signal key_r: std_logic := '0';
@@ -60,13 +60,13 @@ begin
 	-- PLL generator
 	G_nodebug:
 	if not C_debug generate
-	PLL: entity pll
+	PLL_81_325: entity pll_81_325
 	port map (
         	clk => clk_25m, lock => pll_lock, clkok => pll_clk_81m,
-		clkok2 => pll_clk_108m, clkop => pll_clk_325m
+		clkok2 => open, clkop => pll_clk_325m
 	);
 	clk_325m <= pll_clk_325m;
-	clk <= pll_clk_108m when C_fast_clk else pll_clk_81m;
+	clk <= pll_clk_81m;
 	end generate;
 
 	resl <= not res when C_debug else pll_lock;
