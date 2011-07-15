@@ -34,14 +34,17 @@ entity glue is
 	generic(
 		-- CPU core configuration options
 		C_register_technology: string := "lattice";
-		C_mult_enable: boolean := true;
+		C_mult_enable: boolean := true; -- true: +6 LUT4
 		C_branch_prediction: boolean := true; -- true: +76 LUT4
 		C_result_forwarding: boolean := true; -- true: +167 LUT4
+
 		-- Do not change those two:
 		C_branch_likely: boolean := false; -- true: +12 LUT4, -Fmax
 		C_fast_ID: boolean := true; -- false: +1 LUT4, -Fmax
+
 		-- debugging options
 		C_debug: boolean := false; -- true: +883 LUT4, -Fmax
+
 		-- SoC configuration options
 		C_mem_size: string := "8k";
 		C_tsc: boolean := true; -- true: +63 LUT4
