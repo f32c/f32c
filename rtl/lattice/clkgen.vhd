@@ -60,10 +60,10 @@ begin
 	-- PLL generator
 	G_nodebug:
 	if C_pll_freq = 81 and not C_debug generate
-	PLL_81_325: entity pll_81_325
+	PLL: entity pll
 	port map (
         	clk => clk_25m, lock => pll_lock, clkok => pll_clk,
-		clkok2 => open, clkop => pll_clk_325m
+		clkop => pll_clk_325m
 	);
 	clk_325m <= pll_clk_325m;
 	clk <= pll_clk;
