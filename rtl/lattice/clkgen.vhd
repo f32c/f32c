@@ -37,7 +37,7 @@ use xp2.components.all;
 entity clkgen is
 	generic (
 		C_debug: boolean;
-		C_fast_clk: boolean := false
+		C_pll_freq: integer
 	);
 	port (
 		clk_25m: in std_logic;
@@ -49,7 +49,7 @@ entity clkgen is
 end clkgen;
 
 architecture Behavioral of clkgen is
-	signal pll_clk_81m, pll_clk_325m: std_logic;
+	signal pll_clk, pll_clk_325m: std_logic;
 	signal pll_lock: std_logic;
 	signal key_d: std_logic_vector(19 downto 0) := x"00000";
 	signal key_r: std_logic := '0';
@@ -59,14 +59,14 @@ begin
 
 	-- PLL generator
 	G_nodebug:
-	if not C_debug generate
+	if C_pll_freq = 81 and not C_debug generate
 	PLL_81_325: entity pll_81_325
 	port map (
-        	clk => clk_25m, lock => pll_lock, clkok => pll_clk_81m,
+        	clk => clk_25m, lock => pll_lock, clkok => pll_clk,
 		clkok2 => open, clkop => pll_clk_325m
 	);
 	clk_325m <= pll_clk_325m;
-	clk <= pll_clk_81m;
+	clk <= pll_clk;
 	end generate;
 
 	resl <= not res when C_debug else pll_lock;
