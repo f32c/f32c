@@ -32,8 +32,10 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity glue is
 	generic(
+		-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
+		C_clk_freq: integer := 81;
+
 		-- CPU core configuration options
-		C_pll_freq: integer := 62;
 		C_register_technology: string := "lattice";
 		C_mult_enable: boolean := true; -- true: +6 LUT4
 		C_branch_prediction: boolean := true; -- true: +76 LUT4
@@ -132,7 +134,7 @@ begin
 	-- clock synthesizer
 	clkgen: entity clkgen
 	generic map (
-		C_pll_freq => C_pll_freq,
+		C_clk_freq => C_clk_freq,
 		C_debug => C_debug
 	)
 	port map (
