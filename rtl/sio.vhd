@@ -30,8 +30,12 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.numeric_std.ALL;
 
 entity sio is
+	generic (
+		C_clk_freq: integer
+	);
 	port (
 		ce, clk: in std_logic;
 		byte_we: in std_logic_vector(3 downto 0);
@@ -44,11 +48,9 @@ end sio;
 
 --
 -- SIO -> CPU data word:
--- 31..24  rx_fifo_byte_2 (or unused)
--- 23..16  rx_fifo_byte_1 (or unused)
+-- 31..16  unused
 -- 15..8   rx_fifo_byte_0
---  7..6   reserved (unused)
---  5..4   CPU freq MHz code (00:25, 01:50, 10:75, 11:100)
+--  7..4   reserved (unused)
 --     3   set if tx busy
 --     2   set if rx fifo overrun occured, reset on read
 --  1..0   # of bytes in rx fifo, reset to 0 on read
@@ -59,7 +61,10 @@ end sio;
 --  7..0   tx char
 --
 architecture Behavioral of sio is
-	signal clkdiv: std_logic_vector(15 downto 0) := x"0278";
+	constant DEF_BAUD: integer := 115200;
+
+	signal clkdiv: std_logic_vector(15 downto 0) :=
+	    std_logic_vector(to_unsigned(C_clk_freq * 1000000 / DEF_BAUD, 16));
 	signal tx_clkcnt, rx_clkcnt: std_logic_vector(15 downto 0);
 	signal tx_running, rx_running: std_logic;
 	signal tx_ser: std_logic_vector(8 downto 0);
@@ -89,7 +94,8 @@ begin
 			-- bus interface logic
 			if (ce = '1') then
 				if byte_we(3 downto 2) = "11" then
-					clkdiv <= bus_in(31 downto 16);
+					-- XXX temporarily disabled - revisit!
+					-- clkdiv <= bus_in(31 downto 16);
 				end if;
 				if (byte_we(0) = '1') then
 					if (tx_phase = "0000") then

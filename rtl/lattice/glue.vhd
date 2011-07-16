@@ -173,6 +173,9 @@ begin
 	G_sio:
 	if C_sio generate
 	sio: entity sio
+	generic map (
+		C_clk_freq => C_clk_freq
+	)
 	port map (
 		clk => clk, ce => sio_ce,
 		txd => sio_txd, rxd => rs232_rx,
