@@ -69,7 +69,7 @@ rx_frame(void)
 	char *cp;
 	char c;
 	fph_t *fphp = (fph_t *) buf;
-	int csum;
+	uint32_t csum;
 
 	cp = buf;
 	fphp->start_mark = FP_START_MARK;
