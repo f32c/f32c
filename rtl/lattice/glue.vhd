@@ -33,7 +33,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity glue is
 	generic(
 		-- CPU core configuration options
-		C_pll_freq: integer := 81; -- 81, 150
+		C_pll_freq: integer := 62;
 		C_register_technology: string := "lattice";
 		C_mult_enable: boolean := true; -- true: +6 LUT4
 		C_branch_prediction: boolean := true; -- true: +76 LUT4
