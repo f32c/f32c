@@ -7,8 +7,8 @@
 
 extern void pcm_play(void);
 
-extern int dds_base;
-extern int fm_mode;
+extern int fm_freq;
+
 
 #define BUFSIZE 80
 
@@ -19,7 +19,7 @@ int
 main(void)
 {
 	char *c;
-	int freq_i, freq_f, f_c, f_d;
+	int f_c, f_d, freq_i, freq_f;
 
 	/* Register PCM output function as idle loop handler */
 	sio_idle_fn = pcm_play;
@@ -49,27 +49,18 @@ main(void)
 			    " 512 MHz\n\n");
 			continue;
 		}
-		printf("Using %d.", freq_i);
-		while (f_c > 0) {
-			f_c--;
-			printf("0");
+		if (freq_i) {
+			printf("Using %d.", freq_i);
+			while (f_c > 0) {
+				f_c--;
+				printf("0");
+			}
+			printf("%d MHz as DDS frequency\n", freq_f);
+			while (f_d != 10000) {
+				f_d *= 10;
+				freq_f *= 10;
+			}
+			fm_freq = freq_i * 1000000 + freq_f * 100;
 		}
-		printf("%d MHz as DDS frequency, ", freq_f);
-		if (freq_i >= 76 && freq_i < 108) {
-			printf("wide modulation.\n");
-			fm_mode = 4;
-		} else {
-			printf("narrow modulation.\n");
-			if (freq_i >= 174)
-				fm_mode = 10;
-			else
-				fm_mode = 8;
-		}
-		dds_base = freq_i << 22;
-		if (f_d > 1)
-			dds_base += ((1 << 16) * freq_f / f_d) << 6;
-		dds_base /= 325;
-		if (fm_mode == 10)
-			dds_base /= 3;
 	} while (1);
 }
