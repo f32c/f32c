@@ -16,10 +16,10 @@
 
 static int pcm_addr = PCM_END;
 static int pcm_vol = PCM_VOL_MAX * 2 / 3;
-static int pcm_bal;
-static int pcm_avg[2];
-static int pcm_vu[2];
-static int pcm_evol[2];
+static int pcm_bal = 0;
+static int pcm_avg[2] = {0, 0};
+static int pcm_vu[2] = {0, 0};
+static int pcm_evol[2] = {0, 0};
 static int pcm_next_tsc;
 static int pcm_period = PCM_TSC_CYCLES;
 static int pcm_pushbtn_old;
