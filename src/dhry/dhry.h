@@ -348,7 +348,7 @@
 
 #ifndef TIME
 #undef TIMES
-#define TIMES
+//#define TIMES
 #endif
                 /* Use times(2) time function unless    */
                 /* explicitly defined otherwise         */
