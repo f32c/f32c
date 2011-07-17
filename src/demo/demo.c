@@ -13,6 +13,41 @@ extern int fm_freq;
 #define BUFSIZE 80
 
 char buf[BUFSIZE];
+static int idle_active = 0;
+static int idle_tsc;
+static int idle_cnt = 0;
+static char idle_msg[] =
+    "FER ULXP2 board                                                 ";
+
+
+void
+demo_idle()
+{
+	int c;
+
+	pcm_play();
+	if (idle_active)
+		return;
+	c = rdtsc() - idle_tsc;
+	if (c < 0)
+		c = -c;
+
+	/* Execute every second */
+	if (c < 3125000 / 4)
+		return;
+
+	idle_tsc += c;
+	idle_active++;
+	idle_cnt++;
+
+	/* Store cursor, print something, restore cursor */
+	printf("7[1A\r");
+	for (c = 0; c < 64; c++)
+		putchar(idle_msg[(c + idle_cnt) & 0x3f]);
+	printf("8");
+
+	idle_active--;
+}
 
 
 int
@@ -22,7 +57,7 @@ main(void)
 	int f_c, f_d, freq_i, freq_f;
 
 	/* Register PCM output function as idle loop handler */
-	sio_idle_fn = pcm_play;
+	sio_idle_fn = demo_idle;
 
 	do {
 		printf("\nEnter DDS frequency: ");
