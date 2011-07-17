@@ -6,9 +6,10 @@
 
 typedef int mainfn_t(void);
 
+#define DEF_BOOTADDR	0x00000180
 
-#define CPUFREQ_ADDR	0x000001fc
-#define DEF_BOOTADDR	0x00000200
+int coldboot = 1;	/* don't staticize or GCC will ignore this! */
+static char *prompt = "\r\n\nFER ULXP2 SoC bootloader\r\n> ";
 
 
 void
@@ -18,7 +19,7 @@ _start(void)
 	int *loadaddr;
 	int cur_bits;
 	int cur_word;
-	int c, cnt, tsc;
+	int c;
 	char *cp;
 	
 	/* Set up IO base address */
@@ -28,36 +29,16 @@ _start(void)
 		: "i" (IO_BASE)
 	);
 
-	/* Determine CPU clock rate, set SIO baud rate to 115200 */
-        OUTH(IO_SIO_BAUD, 25000);
-        do {
-                INW(c, IO_SIO);
-        } while (c & SIO_TX_BUSY);
-        tsc = rdtsc();
-        OUTB(IO_SIO, c);
-        do {
-                INW(c, IO_SIO);
-        } while (c & SIO_TX_BUSY);
-        tsc -= rdtsc();
-        if (tsc < 0)
-                tsc = -tsc;
-        for (cnt = 0, c = 0; cnt < 62000; cnt += tsc)
-                c += 108;
-        OUTH(IO_SIO_BAUD, c); 
-
-	loadaddr = (void *) CPUFREQ_ADDR;
-	c = *loadaddr;
-	*loadaddr = tsc;
-	if (c)
-		bootaddr = NULL;
-	else {
+	if (coldboot) {
 defaultboot:
 		bootaddr = (void *) DEF_BOOTADDR;
-	}
-
+	} else
+		bootaddr = NULL;
+	coldboot = 0;
 	goto start;
 
 	do {
+		/* Blink LEDs while waiting for serial input */
 		do {
 			INW(c, IO_TSC);
 			OUTB(IO_LED, c >> 20);
@@ -65,6 +46,7 @@ defaultboot:
 		} while ((c & SIO_RX_BYTES) == 0);
 		c = (c >> 8) & 0xff;
 
+		/* Echo character back to the serial port */
 		if (bootaddr == NULL && loadaddr == NULL)
 			OUTB(IO_SIO, c);
 
@@ -85,7 +67,7 @@ start:
 						: "r" (bootaddr)
 					);
 				}
-				for (cp = "\r\nulxp2> "; *cp != 0; cp++) {
+				for (cp = prompt; *cp != 0; cp++) {
 					do {
 						INW(c, IO_SIO);
 					} while (c & SIO_TX_BUSY);
