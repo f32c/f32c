@@ -23,6 +23,7 @@ static int pcm_evol[2] = {0, 0};
 static int pcm_next_tsc;
 static int pcm_period = PCM_TSC_CYCLES;
 static int pcm_pushbtn_old;
+static int dds_dipsw_old;
 static int dds_base;		/* 0 MHz - don't TX anything by default */
 static int fm_mode;		/* Modulation depth */
 static int fm_efreq;		/* Actual TX frequency, in Hz */
@@ -147,8 +148,15 @@ pcm_play(void)
 				pcm_vol ^= PCM_VOL_MUTE;
 		}
 		pcm_pushbtn_old = vu;
-	} else if (fm_freq != fm_efreq)
-		update_dds_freq();
+	} else {
+		INB(i, IO_DIPSW);
+		if (i != dds_dipsw_old) {
+			dds_dipsw_old = i;
+			fm_freq = 100000000 + i * 500000;
+		}
+		if (fm_freq != fm_efreq)
+			update_dds_freq();
+	}
 
 	/* End of file, rewind SPI flash read position */
 	pcm_addr += 4;
