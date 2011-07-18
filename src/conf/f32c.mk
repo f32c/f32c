@@ -9,6 +9,16 @@ ifndef ENDIANFLAGS
 ENDIANFLAGS = -EL
 endif
 
+# C flavor: K&R or ANSI (C99)
+ifndef CSTD
+CSTD = ANSI
+endif
+
+# Default is to warn and abort on all errors
+ifndef WARNS
+WARNS = 2
+endif
+
 # Includes
 MK_CFLAGS = -nostdinc -I../include -I.
 
@@ -23,7 +33,18 @@ MK_CFLAGS += -G 32768
 MK_CFLAGS += -msoft-div
 
 # Language flags
-MK_CFLAGS += -std=c99 -Wall -Werror
+ifeq ($(CSTD), ANSI)
+MK_CFLAGS += -std=c99
+endif
+
+# Warning flags
+ifneq ($(WARNS), 0)
+MK_CFLAGS += -Wall
+endif
+ifeq ($(WARNS), 2)
+MK_CFLAGS += -Werror
+endif
+
 MK_CFLAGS += -Wextra -Wsystem-headers -Wshadow -Wpadded -Winline
 MK_CFLAGS += -ffreestanding
 
