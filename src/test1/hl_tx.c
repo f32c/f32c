@@ -93,10 +93,10 @@ main(void)
 		/* Select carrier frequency */
 		switch ((c & 0x300) >> 8) {
 		case 0:
-			dds_base = 378816; /* 27.095 MHz */
+			dds_base = 349676; /* 325 MHz PLL, 27.095 MHz */
 			break;
 		case 1:
-			dds_base = 379515; /* 27.145 MHz */
+			dds_base = 350321; /* 325 MHz PLL, 27.145 MHz */
 			break;
 		default:
 			dds_base = 0; /* Do not transmit */
