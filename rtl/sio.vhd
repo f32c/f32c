@@ -94,8 +94,7 @@ begin
 			-- bus interface logic
 			if (ce = '1') then
 				if byte_we(3 downto 2) = "11" then
-					-- XXX temporarily disabled - revisit!
-					-- clkdiv <= bus_in(31 downto 16);
+					clkdiv <= bus_in(31 downto 16);
 				end if;
 				if (byte_we(0) = '1') then
 					if (tx_phase = "0000") then
