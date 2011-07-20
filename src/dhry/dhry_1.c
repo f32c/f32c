@@ -28,6 +28,11 @@ char            Ch_1_Glob,
 int             Arr_1_Glob [50];
 int             Arr_2_Glob [50] [50];
 
+const char *some_string = "DHRYSTONE PROGRAM, SOME STRING";
+const char *first_string = "DHRYSTONE PROGRAM, 1'ST STRING";
+const char *second_string = "DHRYSTONE PROGRAM, 2'ND STRING";
+const char *third_string = "DHRYSTONE PROGRAM, 3'RD STRING";
+
 extern char     *malloc ();
 Enumeration     Func_1 ();
   /* forward declaration necessary since Enumeration may not simply be int */
@@ -95,9 +100,8 @@ main ()
   Ptr_Glob->Discr                       = Ident_1;
   Ptr_Glob->variant.var_1.Enum_Comp     = Ident_3;
   Ptr_Glob->variant.var_1.Int_Comp      = 40;
-  strcpy (Ptr_Glob->variant.var_1.Str_Comp, 
-          "DHRYSTONE PROGRAM, SOME STRING");
-  strcpy (Str_1_Loc, "DHRYSTONE PROGRAM, 1'ST STRING");
+  strcpy (Ptr_Glob->variant.var_1.Str_Comp, some_string);
+  strcpy (Str_1_Loc, first_string);
 
   Arr_2_Glob [8][7] = 10;
         /* Was missing in published program. Without this statement,    */
@@ -155,7 +159,7 @@ main ()
       /* Ch_1_Glob == 'A', Ch_2_Glob == 'B', Bool_Glob == true */
     Int_1_Loc = 2;
     Int_2_Loc = 3;
-    strcpy (Str_2_Loc, "DHRYSTONE PROGRAM, 2'ND STRING");
+    strcpy (Str_2_Loc, second_string);
     Enum_Loc = Ident_2;
     Bool_Glob = ! Func_2 (Str_1_Loc, Str_2_Loc);
       /* Bool_Glob == 1 */
@@ -178,7 +182,7 @@ main ()
           /* then, not executed */
         {
         Proc_6 (Ident_1, &Enum_Loc);
-        strcpy (Str_2_Loc, "DHRYSTONE PROGRAM, 3'RD STRING");
+        strcpy (Str_2_Loc, third_string);
         Int_2_Loc = Run_Index;
         Int_Glob = Run_Index;
         }
@@ -214,53 +218,34 @@ main ()
   printf ("Final values of the variables used in the benchmark:\n");
   printf ("\n");
 #endif /* NOTYET */
-  printf ("Int_Glob:	%d\n", Int_Glob);
-  printf ("		%d\n", 5);
-  printf ("Bool_Glob:	%d\n", Bool_Glob);
-  printf ("		%d\n", 1);
-  printf ("Ch_1_Glob:	%c\n", Ch_1_Glob);
-  printf ("		%c\n", 'A');
-  printf ("Ch_2_Glob:	%c\n", Ch_2_Glob);
-  printf ("		%c\n", 'B');
-  printf ("Arr_1_Glob[8]:	%d\n", Arr_1_Glob[8]);
-  printf ("			%d\n", 7);
-  printf ("Arr_2_Glob[8][7]:	%d\n", Arr_2_Glob[8][7]);
-  printf ("			Number_Of_Runs + 10\n");
+  printf ("Int_Glob	%d (5)\n", Int_Glob);
+  printf ("Bool_Glob	%d (1)\n", Bool_Glob);
+  printf ("Ch_1_Glob	%c (A)\n", Ch_1_Glob);
+  printf ("Ch_2_Glob	%c (B)\n", Ch_2_Glob);
+  printf ("Arr_1_Glob[8]	%d (7)\n", Arr_1_Glob[8]);
+  printf ("Arr_2_Glob[8][7]	%d (Number_Of_Runs + 10)\n", Arr_2_Glob[8][7]);
   printf ("Ptr_Glob->\n");
-  printf (" Ptr_Comp:	%d\n", (int) Ptr_Glob->Ptr_Comp);
-  printf ("		(implementation-dependent)\n");
-  printf (" Discr:	%d\n", Ptr_Glob->Discr);
-  printf ("		%d\n", 0);
-  printf (" Enum_Comp:	%d\n", Ptr_Glob->variant.var_1.Enum_Comp);
-  printf ("		%d\n", 2);
-  printf (" Int_Comp:	%d\n", Ptr_Glob->variant.var_1.Int_Comp);
-  printf ("		%d\n", 17);
-  printf (" Str_Comp:	%s\n", Ptr_Glob->variant.var_1.Str_Comp);
-  printf ("		DHRYSTONE PROGRAM, SOME STRING\n");
+  printf (" Ptr_Comp	%d (impl-dep)\n",
+	(int) Ptr_Glob->Ptr_Comp);
+  printf (" Discr	%d (0)\n", Ptr_Glob->Discr);
+  printf (" Enum_Comp	%d (2)\n", Ptr_Glob->variant.var_1.Enum_Comp);
+  printf (" Int_Comp	%d (17)\n", Ptr_Glob->variant.var_1.Int_Comp);
+  printf (" Str_Comp	%s (%s)\n", Ptr_Glob->variant.var_1.Str_Comp,
+	some_string);
   printf ("Next_Ptr_Glob->\n");
-  printf (" Ptr_Comp:	%d\n", (int) Next_Ptr_Glob->Ptr_Comp);
-  printf ("		(implementation-dependent), same as above\n");
-  printf (" Discr:	%d\n", Next_Ptr_Glob->Discr);
-  printf ("		%d\n", 0);
-  printf (" Enum_Comp:	%d\n", Next_Ptr_Glob->variant.var_1.Enum_Comp);
-  printf ("		%d\n", 1);
-  printf (" Int_Comp:	%d\n", Next_Ptr_Glob->variant.var_1.Int_Comp);
-  printf ("		%d\n", 18);
-  printf (" Str_Comp:	%s\n", Next_Ptr_Glob->variant.var_1.Str_Comp);
-  printf ("		DHRYSTONE PROGRAM, SOME STRING\n");
-  printf ("Int_1_Loc:	%d\n", Int_1_Loc);
-  printf ("		%d\n", 5);
-  printf ("Int_2_Loc:	%d\n", Int_2_Loc);
-  printf ("		%d\n", 13);
-  printf ("Int_3_Loc:	%d\n", Int_3_Loc);
-  printf ("		%d\n", 7);
-  printf ("Enum_Loc:	%d\n", Enum_Loc);
-  printf ("		%d\n", 1);
-  printf ("Str_1_Loc:	%s\n", Str_1_Loc);
-  printf ("		DHRYSTONE PROGRAM, 1'ST STRING\n");
-  printf ("Str_2_Loc:	%s\n", Str_2_Loc);
-  printf ("		DHRYSTONE PROGRAM, 2'ND STRING\n");
-  printf ("\n");
+  printf (" Ptr_Comp	%d\n", (int) Next_Ptr_Glob->Ptr_Comp);
+  printf ("		(impl-dep), same as above\n");
+  printf (" Discr	%d (0)\n", Next_Ptr_Glob->Discr);
+  printf (" Enum_Comp	%d (1)\n", Next_Ptr_Glob->variant.var_1.Enum_Comp);
+  printf (" Int_Comp	%d (18)\n", Next_Ptr_Glob->variant.var_1.Int_Comp);
+  printf (" Str_Comp	%s (%s)\n", Next_Ptr_Glob->variant.var_1.Str_Comp,
+	some_string);
+  printf ("Int_1_Loc	%d (5)\n", Int_1_Loc);
+  printf ("Int_2_Loc	%d (13)\n", Int_2_Loc);
+  printf ("Int_3_Loc	%d (7)\n", Int_3_Loc);
+  printf ("Enum_Loc	%d (1)\n", Enum_Loc);
+  printf ("Str_1_Loc	%s (%s)\n", Str_1_Loc, first_string);
+  printf ("Str_2_Loc	%s (%s)\n", Str_2_Loc, second_string);
 
   User_Time = End_Time - Begin_Time;
 
@@ -398,5 +383,4 @@ register int    l;
         while (l--) *d++ = *s++;
 }
 #endif
-
 
