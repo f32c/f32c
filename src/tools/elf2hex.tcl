@@ -1,6 +1,6 @@
-#!/usr/local/bin/tclsh8.4
+#!/usr/local/bin/tclsh8.6
 #
-# Copyright 2010,2011 University of Zagreb, Croatia.
+# Copyright 2010,2011 University of Zagreb.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
