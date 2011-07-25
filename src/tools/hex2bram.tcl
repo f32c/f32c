@@ -108,9 +108,32 @@ while {[eof $bramfile] == 0} {
 	    # Construct and dump INITVAL_xx lines!
 	    set addrstep [expr $section * 16]
 	    for {set addr 0} {$addr < $endaddr} {incr addr $addrstep} {
+puts "$section $seqn"
 		for {set i 0} {$i < 32} {incr i} {
-		    set byte_addr [expr $addr + $seqn + $i * 4]
-		    set ivbuf($i) [peek $byte_addr]
+		    switch $section {
+		    8 {
+			set byte_addr [expr $addr + $seqn + $i * 4]
+			set ivbuf($i) [peek $byte_addr]
+		    }
+		    16 {
+			set byte_addr [expr $addr + $seqn / 2 + $i * 8]
+			if {[expr $seqn % 2] == 0} {
+			    set ivbuf($i) [expr [peek $byte_addr] % 16]
+			} else {
+			    set ivbuf($i) [expr [peek $byte_addr] / 16]
+			}
+			set byte_addr [expr $addr + $seqn / 2 + $i * 8 + 4]
+			if {[expr $seqn % 2] == 0} {
+			    incr ivbuf($i) [expr ([peek $byte_addr] % 16) * 16]
+			} else {
+			    incr ivbuf($i) [expr ([peek $byte_addr] / 16) * 16]
+			}
+		    }
+		    default {
+			puts "Unsuported memory configuration: $section"
+			exit 1
+		    }
+		    }
 		}
 		set hex ""
 		for {set i 0} {$i < 32} {incr i} {
