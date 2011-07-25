@@ -49,11 +49,11 @@ strcpy(char *dst, const char *src)
 	if ((((int)src | (int)dst) & 3) == 0) {
 		do {
 			c = *((int *)src);
-			if ((c & 0xff) == 0)
+			if ((c & 0x00ff0000) == 0)
 				break;
-			if ((c & 0xff00) == 0)
+			if ((c & 0x0000ff00) == 0)
 				break;
-			if ((c & 0xff0000) == 0)
+			if ((c & 0x000000ff) == 0)
 				break;
 			*((int *)dst) = c;
 			if ((c & 0xff000000) == 0)
