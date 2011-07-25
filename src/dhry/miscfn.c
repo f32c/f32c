@@ -3,13 +3,19 @@
 #include <stdlib.h>
 
 
+static char malloc_pool[128];
+static int malloc_i = 0;
+
+/* XXX this simplified malloc hack only works for dhrystone benchmark! */
 void *
 malloc(int size)
 {
+	void *addr;
 
-	printf("malloc: %d\n\n", size);
-	exit(0);
-	return(NULL); /* XXX unreached */
+	addr = &malloc_pool[malloc_i * 64];
+	malloc_i ^= 1;
+
+	return(addr);
 }
 
 
