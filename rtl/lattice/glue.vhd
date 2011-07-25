@@ -49,7 +49,7 @@ entity glue is
 		C_debug: boolean := false; -- true: +883 LUT4, -Fmax
 
 		-- SoC configuration options
-		C_mem_size: string := "8k";
+		C_mem_size: string := "16k";
 		C_tsc: boolean := true; -- true: +63 LUT4
 		C_sio: boolean := true; -- true: +133 LUT;
 		C_gpio: boolean := true;
