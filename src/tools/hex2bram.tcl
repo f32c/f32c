@@ -67,6 +67,7 @@ while {[expr $addr % 512] != 0} {
     set mem($addr) 00000000
     incr addr 4
 }
+set endaddr $addr
 
 set bramfile [open $ofile]
 set linenum 0
@@ -74,6 +75,15 @@ set section undefined
 set generic 0
 set buf ""
 set filebuf ""
+
+
+proc peek {byte_addr} {
+    global mem
+
+    set entry $mem([expr ($byte_addr / 4) * 4])
+    set i [expr 6 - ($byte_addr % 4) * 2]
+    return [scan [string range $entry $i [expr $i + 1]] %02x]
+}
 
 
 while {[eof $bramfile] == 0} {
@@ -89,48 +99,32 @@ while {[eof $bramfile] == 0} {
 	set key [string trim $line]
 	if {$section != "undefined" &&
 	  [string first "generic map" $key] == 0} {
+	    # Beginning of generic section detected
 	    set generic 1
 	} elseif {$generic == 1 && [string first INITVAL_ $key] == 0} {
+	    # Prune old INITVAL_ lines
 	    continue
 	} elseif {$key == ")"} {
 	    # Construct and dump INITVAL_xx lines!
-	    set eseqn [expr $seqn / (32 / $width)]
-	    set startaddr [expr $eseqn * 65536 / $width]
-	    set endaddr [expr ($eseqn + 1) * 65536 / $width]
-	    if {$endaddr > $addr} {
-		set endaddr $addr
-	    }
-	    set mod [expr 1024 / $width]
-	    set eindex [expr $seqn % (32 / $width)]
-	    set cwidth [expr $width / 4]
-	    set cfrom [expr 8 - $cwidth * ($eindex + 1)]
-	    set cto [expr 7 - $cwidth * $eindex]
-	    #
-	    set tmp_seqn 0
-	    set bitpos 0
-	    for {set i $startaddr} {$i < $endaddr} {incr i 4} {
-		set t [expr ($i / $mod) * $mod + ($mod - 4 - $i) % $mod] 
-		set hex [string range $mem($t) $cfrom $cto]
-		if {$bitpos == 0} {
-		    scan $hex "%02x" val
-		    set hex "[format %01X [expr $val / 128]][format %02X [expr ($val * 2) % 256]]"
-		    set bitpos 1
-		} else {
-		    set bitpos 0
+	    set addrstep [expr $section * 16]
+	    for {set addr 0} {$addr < $endaddr} {incr addr $addrstep} {
+		for {set i 0} {$i < 32} {incr i} {
+		    set byte_addr [expr $addr + $seqn + $i * 4]
+		    set ivbuf($i) [peek $byte_addr]
 		}
-		set buf "[set buf]$hex"
-		if {[expr ($mod - 4 - $i) % $mod] == 0} {
-		    set entry "		INITVAL_"
-		    set entry "$entry[format %02X $tmp_seqn] => \"0x$buf\""
-		    if {[expr $i + 4] < $endaddr} {
-			lappend filebuf "[set entry],"
+		set hex ""
+		for {set i 0} {$i < 32} {incr i} {
+		    if {[expr $i % 2] == 0} {
+			set hex "[format %02X $ivbuf($i)][set hex]"
 		    } else {
-			lappend filebuf $entry
-			set section undefined
+			set hex "[format %03X [expr $ivbuf($i) * 2]][set hex]"
 		    }
-		    set buf ""
-		    incr tmp_seqn
-		    set bitpos 0
+		}
+		set prefix "INITVAL_[format %02d [expr $addr / $addrstep]] =>"
+		if {$addr < [expr $endaddr - $addrstep]} {
+		    lappend filebuf "		$prefix \"0x[set hex]\","
+		} else {
+		    lappend filebuf "		$prefix \"0x[set hex]\""
 		}
 	    }
 	    #
