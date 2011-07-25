@@ -29,10 +29,12 @@ strcmp(const char *s1, const char *s2)
 void
 strcpy(char *dst, const char *src)
 {
+	char c;
  
 	do {
-		*dst++ = *src++;
-	} while (*dst);
+		c = *src++;
+		*dst++ = c;
+	} while (c != 0);
 }
 
 
