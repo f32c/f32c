@@ -75,17 +75,15 @@ set generic 0
 set buf ""
 set filebuf ""
 
-set width(8) 8
-set width(16) 4
 
 while {[eof $bramfile] == 0} {
     gets $bramfile line
     incr linenum
     if {$section == "undefined"} {
 	if {[string first ": DP16KB" $line] != -1} {
-	    # set section [lindex [string trim $line] end]
 	    set section [lindex [split [string trim $line] _:] 1]
 	    set seqn [lindex [split [string trim $line] _:] 2]
+	    set width [expr 64 / $section]
 	}
     } else {
 	set key [string trim $line]
@@ -96,15 +94,15 @@ while {[eof $bramfile] == 0} {
 	    continue
 	} elseif {$key == ")"} {
 	    # Construct and dump INITVAL_xx lines!
-	    set eseqn [expr $seqn / (32 / $width($section))]
-	    set startaddr [expr $eseqn * 65536 / $width($section)]
-	    set endaddr [expr ($eseqn + 1) * 65536 / $width($section)]
+	    set eseqn [expr $seqn / (32 / $width)]
+	    set startaddr [expr $eseqn * 65536 / $width]
+	    set endaddr [expr ($eseqn + 1) * 65536 / $width]
 	    if {$endaddr > $addr} {
 		set endaddr $addr
 	    }
-	    set mod [expr 1024 / $width($section)]
-	    set eindex [expr $seqn % (32 / $width($section))]
-	    set cwidth [expr $width($section) / 4]
+	    set mod [expr 1024 / $width]
+	    set eindex [expr $seqn % (32 / $width)]
+	    set cwidth [expr $width / 4]
 	    set cfrom [expr 8 - $cwidth * ($eindex + 1)]
 	    set cto [expr 7 - $cwidth * $eindex]
 	    #
