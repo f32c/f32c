@@ -24,6 +24,14 @@ strcmp(const char *s1, const char *s2)
 {
 	char c1, c2;
  
+	/* Check for aligned pointers for faster operation */
+	if ((((int)s1 | (int)s2) & 3) == 0) {
+		for (; *((int *)s1) == *((int *)s2);) {
+			s1 += 4;
+			s2 += 4;
+		}
+	}
+
 	do {
 		c1 = *s1++;
 		c2 = *s2++;
@@ -51,4 +59,3 @@ memcpy(char *dst, const char *src, int len)
 	while (len--)
 		*dst++ = *src++;
 }
-
