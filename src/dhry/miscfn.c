@@ -6,7 +6,7 @@
 static char malloc_pool[128];
 static int malloc_i = 0;
 
-/* XXX this simplified malloc hack only works for dhrystone benchmark! */
+/* XXX this simplified malloc hack only works for the dhrystone benchmark! */
 void *
 malloc(int size)
 {
@@ -22,7 +22,7 @@ malloc(int size)
 int
 strcmp(const char *s1, const char *s2)
 {
-	char c1, c2;
+	int c1, c2;
  
 	/* Check for aligned pointers for faster operation */
 	if ((((int)s1 | (int)s2) & 3) == 0) {
@@ -43,8 +43,26 @@ strcmp(const char *s1, const char *s2)
 void
 strcpy(char *dst, const char *src)
 {
-	char c;
+	int c;
  
+	/* Check for aligned pointers for faster operation */
+	if ((((int)src | (int)dst) & 3) == 0) {
+		do {
+			c = *((int *)src);
+			if ((c & 0xff) == 0)
+				break;
+			if ((c & 0xff00) == 0)
+				break;
+			if ((c & 0xff0000) == 0)
+				break;
+			*((int *)dst) = c;
+			if ((c & 0xff000000) == 0)
+				return;
+			src += 4;
+			dst += 4;
+		} while (1);
+	}
+
 	do {
 		c = *src++;
 		*dst++ = c;
@@ -52,6 +70,7 @@ strcpy(char *dst, const char *src)
 }
 
 
+/* memcpy() is likely to become builtin-inlined for anything but -Os */
 void
 memcpy(char *dst, const char *src, int len)
 {
