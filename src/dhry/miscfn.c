@@ -27,15 +27,23 @@ strcmp(const char *s1, const char *s2)
  
 	/* Check for aligned pointers for faster operation */
 	if ((((int)s1 | (int)s2) & 3) == 0) {
-		for (; *((int *)s1) == *((int *)s2);) {
+		for (; (c1 = *((int *)s1)) == *((int *)s2);) {
+			if ((c1 & 0x00ff0000) == 0)
+				return(0);
+			if ((c1 & 0x0000ff00) == 0)
+				return(0);
+			if ((c1 & 0x000000ff) == 0)
+				return(0);
+			if ((c1 & 0xff000000) == 0)
+				return(0);
 			s1 += 4;
 			s2 += 4;
 		}
 	}
 
 	do {
-		c1 = *s1++;
-		c2 = *s2++;
+		c1 = *(const unsigned char *)s1++;
+		c2 = *(const unsigned char *)s2++;
 	} while (c1 != 0 && c1 == c2);
 	return (c1 - c2);
 }
