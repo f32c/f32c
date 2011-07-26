@@ -129,13 +129,14 @@ main ()
     scanf ("%d", &n);
     Number_Of_Runs = n;
   }
-#else
-    Number_Of_Runs = 500000; /* XXX hardcoded */
-#endif /* NOTYET */
 
   printf ("\n");
 
   printf ("Execution starts, %d runs through Dhrystone\n", Number_Of_Runs);
+#else
+  Number_Of_Runs = 500000; /* XXX hardcoded */
+  printf ("\n\nDhrystone start: %d runs\n\n", Number_Of_Runs);
+#endif /* NOTYET */
 
   /***************/
   /* Start timer */
@@ -221,33 +222,28 @@ main ()
   printf ("Final values of the variables used in the benchmark:\n");
   printf ("\n");
 #endif /* NOTYET */
-  printf ("Int_Glob	%d (5)\n", Int_Glob);
-  printf ("Bool_Glob	%d (1)\n", Bool_Glob);
-  printf ("Ch_1_Glob	%c (A)\n", Ch_1_Glob);
-  printf ("Ch_2_Glob	%c (B)\n", Ch_2_Glob);
-  printf ("Arr_1_Glob[8]	%d (7)\n", Arr_1_Glob[8]);
-  printf ("Arr_2_Glob[8][7]	%d (Number_Of_Runs + 10)\n", Arr_2_Glob[8][7]);
-  printf ("Ptr_Glob->\n");
-  printf (" Ptr_Comp	%d (impl-dep)\n", (int) Ptr_Glob->Ptr_Comp);
-  printf (" Discr	%d (0)\n", Ptr_Glob->Discr);
-  printf (" Enum_Comp	%d (2)\n", Ptr_Glob->variant.var_1.Enum_Comp);
-  printf (" Int_Comp	%d (17)\n", Ptr_Glob->variant.var_1.Int_Comp);
-  printf (" Str_Comp	%s (%s)\n", Ptr_Glob->variant.var_1.Str_Comp,
-	some_string);
-  printf ("Next_Ptr_Glob->\n");
-  printf (" Ptr_Comp	%d (impl-dep), same as above\n",
-	(int) Next_Ptr_Glob->Ptr_Comp);
-  printf (" Discr	%d (0)\n", Next_Ptr_Glob->Discr);
-  printf (" Enum_Comp	%d (1)\n", Next_Ptr_Glob->variant.var_1.Enum_Comp);
-  printf (" Int_Comp	%d (18)\n", Next_Ptr_Glob->variant.var_1.Int_Comp);
-  printf (" Str_Comp	%s (%s)\n", Next_Ptr_Glob->variant.var_1.Str_Comp,
-	some_string);
-  printf ("Int_1_Loc	%d (5)\n", Int_1_Loc);
-  printf ("Int_2_Loc	%d (13)\n", Int_2_Loc);
-  printf ("Int_3_Loc	%d (7)\n", Int_3_Loc);
-  printf ("Enum_Loc	%d (1)\n", Enum_Loc);
-  printf ("Str_1_Loc	%s (%s)\n", Str_1_Loc, first_string);
-  printf ("Str_2_Loc	%s (%s)\n", Str_2_Loc, second_string);
+  printf ("1	%d (5)\n", Int_Glob);
+  printf ("2	%d (1)\n", Bool_Glob);
+  printf ("3	%c (A)\n", Ch_1_Glob);
+  printf ("4	%c (B)\n", Ch_2_Glob);
+  printf ("5	%d (7)\n", Arr_1_Glob[8]);
+  printf ("6	%d (Number_Of_Runs + 10)\n", Arr_2_Glob[8][7]);
+  printf ("7.a	%d (impl-dep)\n", (int) Ptr_Glob->Ptr_Comp);
+  printf ("7.b	%d (0)\n", Ptr_Glob->Discr);
+  printf ("7.c	%d (2)\n", Ptr_Glob->variant.var_1.Enum_Comp);
+  printf ("7.d	%d (17)\n", Ptr_Glob->variant.var_1.Int_Comp);
+  printf ("7.e	%s (%s)\n", Ptr_Glob->variant.var_1.Str_Comp, some_string);
+  printf ("8.a	%d (impl-dep), same as above\n", (int) Next_Ptr_Glob->Ptr_Comp);
+  printf ("8.b	%d (0)\n", Next_Ptr_Glob->Discr);
+  printf ("8.c	%d (1)\n", Next_Ptr_Glob->variant.var_1.Enum_Comp);
+  printf ("8.d	%d (18)\n", Next_Ptr_Glob->variant.var_1.Int_Comp);
+  printf ("8.e	%s (%s)\n", Next_Ptr_Glob->variant.var_1.Str_Comp, some_string);
+  printf ("9	%d (5)\n", Int_1_Loc);
+  printf ("10	%d (13)\n", Int_2_Loc);
+  printf ("11	%d (7)\n", Int_3_Loc);
+  printf ("12	%d (1)\n", Enum_Loc);
+  printf ("13	%s (%s)\n", Str_1_Loc, first_string);
+  printf ("14	%s (%s)\n", Str_2_Loc, second_string);
 
   User_Time = End_Time - Begin_Time;
 
@@ -280,7 +276,7 @@ main ()
 #define TSC_TICKS_PER_MS 3125	/* f32c TSC freq = 3.125 MHz */
     if (User_Time < 0)
 	User_Time = -User_Time;
-    printf ("ms tot: %d\n", User_Time / TSC_TICKS_PER_MS);
+    printf ("\nms tot: %d\n", User_Time / TSC_TICKS_PER_MS);
     Run_Index =  Number_Of_Runs * 1000 / (User_Time / TSC_TICKS_PER_MS);
     printf ("dhry/s: %d\n", Run_Index);
     printf ("VAX dhry/s: %d.", Run_Index / 1757);
