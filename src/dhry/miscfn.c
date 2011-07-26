@@ -9,7 +9,7 @@ static int malloc_i = 0;
 
 /* XXX this simplified malloc hack only works for the dhrystone benchmark! */
 void *
-malloc(int size)
+malloc(int size __attribute__((unused)))
 {
 	void *addr;
 
