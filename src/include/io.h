@@ -84,23 +84,11 @@
  * Declaration of misc. IO functions.
  */
 
+#define	spi_start_transaction()	OUTB(IO_SPI, 0);
+#define	spi_stop_transaction()	OUTB(IO_SPI, SPI_CEN);
+
 int spi_byte(int);
 int spi_byte_in(void);
-
-inline void
-spi_start_transaction(void)
-{
-
-	OUTB(IO_SPI, 0);
-}
-
-inline void
-spi_stop_transaction(void)
-{
-
-	OUTB(IO_SPI, SPI_CEN);
-}
-
 
 inline int
 rdtsc(void) {
