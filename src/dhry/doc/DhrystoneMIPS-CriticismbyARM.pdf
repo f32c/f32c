@@ -1,0 +1,603 @@
+%PDF-1.2 
+%‚„œ”
+ 
+14 0 obj
+<<
+/Length 15 0 R
+>>
+stream
+BT90 747  TD0 0 0 rg /F0 9.75  Tf0.0693  Tc 0.0368  Tw (ARM White Paper                                           ) Tj200.25 0  TD -0.0022  Tc 0.0704  Tw (                                                            March 2002) Tj218.25 0  TD 0  Tc 0.2895  Tw ( ) Tj-234 -708.75  TD /F1 9.75  Tf0.1365  Tc -0.324  Tw (Page ) Tj21.75 0  TD 0.375  Tc 0  Tw (1) Tj4.5 0  TD 0.4391  Tc -0.2516  Tw ( of ) Tj13.5 0  TD 0.375  Tc 0  Tw (7) Tj5.25 0  TD 0.2349  Tc -0.1765  Tw (                                                            \251 ARM2002) Tj202.5 0  TD 0  Tc -0.1875  Tw ( ) Tj-342.75 649.5  TD /F2 15.75  Tf0.093  Tc -0.0305  Tw (Benchmarking in context: Dhrystone) Tj252.75 0  TD 0  Tc -0.1875  Tw ( ) Tj-199.5 -21  TD /F2 12  Tf-0.1546  Tc 0.5296  Tw (By Richard York, ARM Ltd.) Tj147 0  TD 0  Tc 0  Tw ( ) Tj-289.5 -13.5  TD /F1 12  Tf( ) Tj0 -17.25  TD /F3 12  Tf0.0103  Tc -0.0103  Tw ( \223And of course, the very success of a benchmark program is a danger in that people may ) Tj0 -14.25  TD 0.0043  Tc -0.0043  Tw (tune their compilers and/or hardware to it, and with this action make it less useful.\224) Tj405 0  TD 0  Tc 0  Tw ( ) Tj-405 -16.5  TD /F1 9.75  Tf0.2126  Tc -0.4001  Tw (Reinhold P. Weicker) Tj83.25 0  TD 0.1001  Tc 0.1624  Tw (, Siemens AG, April 1989 [1]) Tj118.5 0  TD 0  Tc -0.1875  Tw ( ) Tj-201.75 -11.25  TD 0.1647  Tc -0.3522  Tw (Author of the Dhrystone Benchmark) Tj146.25 0  TD /F1 12  Tf0  Tc 0  Tw ( ) Tj-146.25 -12.75  TD ( ) Tj0 -14.25  TD ( ) Tj0 -13.5  TD -0.0449  Tc 0.9355  Tw (The Dhrystone benchmark was first published in Ada, as long ago as 1984 [2]. Now the ) Tj0 -14.25  TD -0.089  Tc 3.1962  Tw (C version of Dhrystone is the one mainly used in industry. The original Dhrystone ) Tj0 -13.5  TD -0.1164  Tc 0.4914  Tw (benchmark is still used ) Tj113.25 0  TD -0.059  Tc 0.2465  Tw (to measure CPU performance today.) Tj174.75 0  TD 0  Tc 0  Tw ( ) Tj-288 -13.5  TD ( ) Tj0 -14.25  TD -0.0108  Tc 1.6715  Tw (The original intent with Dhrystone was to create a short benchmark program that was ) Tj0 -13.5  TD -0.0696  Tc 2.3196  Tw (representative of system \(integer\) programming. The Dhrystone code is dominated by ) Tj0 -14.25  TD -0.0811  Tc 4.8311  Tw (simple integer arithmetic, string operations, logic de) Tj275.25 0  TD -0.0322  Tc 4.7822  Tw (cisions, and memory accesses) Tj0  Tc 0.75  Tw ( ) Tj-275.25 -13.5  TD -0.0195  Tc 1.707  Tw (intended to reflect the CPU activities in most general purpose computing applications. ) Tj0 -13.5  TD -0.0926  Tc 1.6997  Tw (The Dhrystone result is determined by measuring the average time a processor takes to ) Tj0 -14.25  TD -0.0733  Tc 0.99  Tw (perform many iterations of a single loop containing a ) Tj264.75 0  TD -0.061  Tc 1.111  Tw (fixed sequence of instructions that ) Tj-264.75 -13.5  TD 0.0046  Tc 0.3168  Tw (make up the benchmark. When Dhrystone is referenced, it is usually quoted as \221DMIPS\222, ) Tj0 -14.25  TD -0.0621  Tc 0.0621  Tw (or Dhrystone MIPS/MHz.) Tj124.5 0  TD 0  Tc 0  Tw ( ) Tj-124.5 -13.5  TD ( ) Tj0 -13.5  TD -0.0203  Tc 0.1036  Tw (Two important questions should be asked of any benchmarking activity:) Tj346.5 0  TD 0  Tc 0  Tw ( ) Tj-292.5 -14.25  TD /F4 12  Tf0.3  Tc (o) Tj7.5 0  TD 0  Tc 0.3  Tw ( ) Tj10.5 0  TD /F1 12  Tf-0.0386  Tc 0.1886  Tw (How accurately does the benchmark predic) Tj207 0  TD 0.0852  Tc 0.6648  Tw (t real) Tj24 0  TD -0.246  Tc 0  Tw (-) Tj4.5 0  TD -0.0124  Tc 0.0124  Tw (world performance?) Tj96.75 0  TD 0  Tc 0  Tw ( ) Tj-350.25 -13.5  TD /F4 12  Tf0.3  Tc (o) Tj7.5 0  TD 0  Tc 0.3  Tw ( ) Tj10.5 0  TD /F1 12  Tf-0.0287  Tc 0.112  Tw (How reliably can a comparison between competing processors be made?) Tj348 0  TD 0  Tc 0  Tw ( ) Tj-420 -32.25  TD /F2 12  Tf-0.032  Tc 0.032  Tw (Dhrystone Fundamentals) Tj129.75 0  TD 0  Tc 0  Tw ( ) Tj-129.75 -19.5  TD /F1 12  Tf-0.0369  Tc 0.4316  Tw (Dhrystone has a number of attributes that have led to it being widely used in the past as a ) Tj0 -13.5  TD -0.019  Tc 0.019  Tw (measure of CPU performance. ) Tj148.5 0  TD 0  Tc 0  Tw ( ) Tj-148.5 -14.25  TD ( ) Tj0 -13.5  TD -0.0469  Tc 1.5469  Tw (Foremost, Dhrysto) Tj91.5 0  TD -0.0471  Tc 1.7346  Tw (ne is compact, widely available in the public domain, and simple to ) Tj-91.5 -14.25  TD -0.0814  Tc 0.9468  Tw (run. Significantly, there are no lengthy certification processes to go through before citing ) Tj0 -13.5  TD -0.0921  Tc 0.8421  Tw (Dhrystone figures.) Tj88.5 0  TD 0  Tc 0  Tw ( ) Tj-88.5 -13.5  TD ( ) Tj0 -14.25  TD 0.017  Tc 2.383  Tw (Dhrystone compares the performance of the processor under benchmark to that) Tj405 0  TD 0.392  Tc 1.358  Tw ( of a ) Tj-405 -13.5  TD -0.054  Tc 2.554  Tw (reference machine. This is an advantage over quoting \221straight\222 MIPS numbers since ) Tj0 -14.25  TD -0.0838  Tc 3.2883  Tw (using a reference machine effectively compensates for differences in the richness of) Tj0  Tc 0  Tw ( ) Tj0 -13.5  TD -0.0697  Tc 6.2197  Tw (competing instruction sets. For example, literal comparison of the \221millions of) Tj0  Tc 0  Tw ( ) TjT* -0.168  Tc (in) Tj9 0  TD -0.0394  Tc 1.1108  Tw (structions per second\222 numbers for a RISC architecture and a CISC architecture is not ) Tj-9 -14.25  TD -0.06  Tc 0  Tw (meaningful.) Tj57 0  TD 0  Tc ( ) Tj-57 -13.5  TD ( ) Tj0 -14.25  TD -0.087  Tc 1.737  Tw (The industry has adopted the VAX 11/780 as the reference 1 MIP machine. The VAX ) Tj0 -13.5  TD -0.0063  Tc 2.5563  Tw (11/780 achieves 1757 Dhrystones per second. The Dhrystone figure is calculate) Tj408 0  TD 0.25  Tc 0.875  Tw (d by ) TjETendstream
+endobj
+15 0 obj
+5680
+endobj
+4 0 obj
+<<
+/Type /Page
+/Parent 5 0 R
+/Resources <<
+/Font <<
+/F0 6 0 R 
+/F1 8 0 R 
+/F2 10 0 R 
+/F3 12 0 R 
+/F4 16 0 R 
+>>
+/ProcSet 2 0 R
+>>
+/Contents 14 0 R
+>>
+endobj
+19 0 obj
+<<
+/Length 20 0 R
+>>
+stream
+BT90 747  TD0 0 0 rg /F0 9.75  Tf0.0693  Tc 0.0368  Tw (ARM White Paper                                           ) Tj200.25 0  TD -0.0022  Tc 0.0704  Tw (                                                            March 2002) Tj218.25 0  TD 0  Tc 0.2895  Tw ( ) Tj-234 -708.75  TD /F1 9.75  Tf0.1365  Tc -0.324  Tw (Page ) Tj21.75 0  TD 0.375  Tc 0  Tw (2) Tj4.5 0  TD 0.4391  Tc -0.2516  Tw ( of ) Tj13.5 0  TD 0.375  Tc 0  Tw (7) Tj5.25 0  TD 0.2349  Tc -0.1765  Tw (                                                            \251 ARM2002) Tj202.5 0  TD 0  Tc -0.1875  Tw ( ) Tj-432 653.25  TD /F1 12  Tf-0.0898  Tc 2.3934  Tw (measuring the number of Dhrystones per second for the system, and dividing that by ) Tj0 -13.5  TD -0.0947  Tc 1.9697  Tw (1757. So "80 MIPS" means "80 Dhrystone VAX MIPS", which means 80 times faster ) Tj0 -14.25  TD -0.074  Tc 2.4394  Tw (than a VAX 11/780. A DMIPS/MHz rating takes this normalization process one step ) Tj0 -13.5  TD -0.0533  Tc 0.0533  Tw (further, e) Tj44.25 0  TD -0.0326  Tc 0.1263  Tw (nabling comparison of processor performance at different clock rates.) Tj333 0  TD 0  Tc 0  Tw ( ) Tj-377.25 -14.25  TD ( ) Tj0 -13.5  TD -0.0835  Tc 2.4335  Tw (For all of these reasons, in the past, Dhrystone has been a widely quoted benchmark ) TjT* -0.0658  Tc 2.9504  Tw (figure. In theory, Dhrystone should provide a basis for the comparison of processor ) Tj0 -14.25  TD -0.0618  Tc 0  Tw (performances.) Tj67.5 0  TD 0  Tc ( ) Tj-67.5 -13.5  TD ( ) Tj0 -14.25  TD -0.582  Tc (Ho) Tj14.25 0  TD -0.0251  Tc 0.8376  Tw (wever, some of the apparent advantages of Dhrystone are also significant weaknesses ) Tj-14.25 -13.5  TD -0.0718  Tc 0.8794  Tw (of the benchmark. Dhrystone numbers actually reflect the performance of the C compiler ) Tj0 -13.5  TD -0.0139  Tc 0.3601  Tw (and libraries, probably more so than the performance of the processor itself. Also, l) Tj402 0  TD 0.0696  Tc -0.0696  Tw (ack of ) Tj-402 -14.25  TD -0.0709  Tc 2.3209  Tw (independent certification means that customers are dependent on processor vendors to ) Tj0 -13.5  TD -0.0402  Tc 0.1902  Tw (quote accurate and meaningful Dhrystone data.) Tj225.75 0  TD 0  Tc 0  Tw ( ) Tj-225.75 -32.25  TD /F2 12  Tf(Dhrystone and Real) Tj102 0  TD -0.246  Tc (-) Tj4.5 0  TD -0.1871  Tc 0.9371  Tw (world Applications) Tj96.75 0  TD 0  Tc 0  Tw ( ) Tj-203.25 -19.5  TD /F1 12  Tf-0.0935  Tc 4.7089  Tw (It is unlikely that a single benchmark can be representative of the diversity an) Tj425.25 0  TD 0.75  Tc 0  Tw (d ) Tj-425.25 -13.5  TD -0.0294  Tc 1.0472  Tw (complexity in today\222s applications. As well as satisfying the needs of a growing variety ) Tj0 -14.25  TD -0.0137  Tc 2.3319  Tw (of embedded applications, many applications require that the processor also provides ) Tj0 -13.5  TD -0.0233  Tc 0.2278  Tw (support for a suitable operating system \(OS\). Modern RISC architectures, such as) Tj392.25 0  TD 0  Tc 0.75  Tw ( ARM\222s ) Tj-392.25 -14.25  TD -0.017  Tc 3.9545  Tw (new v6 architecture, are optimized for efficient OS support, as well as providing) Tj0  Tc 0  Tw ( ) Tj0 -13.5  TD -0.051  Tc 0.301  Tw (acceleration for DSP, multimedia operations and Java byte code execution.) Tj360 0  TD 0  Tc 0  Tw ( ) Tj-360 -13.5  TD ( ) Tj0 -14.25  TD -0.0589  Tc 3.1214  Tw (More recent benchmark initiatives, such as those offered by EEMBC [3], provide a) Tj0  Tc 0  Tw ( ) Tj0 -13.5  TD -0.0633  Tc 4.5633  Tw (variety of) Tj0  Tc -0.75  Tw ( ) Tj57.75 0  TD -0.0107  Tc 4.7357  Tw (benchmarks designed to test a range of application domains, such as) Tj0  Tc 0.75  Tw ( ) Tj-57.75 -14.25  TD -0.0475  Tc 0.9129  Tw (networking and consumer. They have been developed in close cooperation with both the ) Tj0 -13.5  TD -0.0298  Tc 0.5753  Tw (microprocessor vendors, and more importantly the embedded system developers who use ) TjT* -0.3  Tc 0  Tw (them.) Tj26.25 0  TD 0  Tc ( ) Tj-26.25 -14.25  TD ( ) Tj0 -13.5  TD -0.0518  Tc 1.5518  Tw (Dhrystone co) Tj65.25 0  TD -0.0785  Tc 1.7831  Tw (de is very compact, being of the order of around 100 high) Tj291 0  TD -0.246  Tc 0  Tw (-) Tj5.25 0  TD -0.1075  Tc 1.6075  Tw (level language ) Tj-361.5 -14.25  TD -0.099  Tc 3.2865  Tw (statements and occupying just ) Tj3  Tc 0  Tw (1) Tj163.5 0  TD -0.246  Tc (-) Tj4.5 0  TD -0.0906  Tc 3.0072  Tw (1.5kB of compiled code. Because of its small size, ) Tj-168 -13.5  TD -0.062  Tc 3.4029  Tw (memory access beyond the cache is not exercised. Effectively, Dhrystone is simply) Tj0  Tc 0  Tw ( ) Tj0 -13.5  TD -0.0146  Tc 0.7646  Tw (testing the perfor) Tj84 0  TD -0.0276  Tc 1.1526  Tw (mance of the integer core. In the vast majority of today\222s applications, ) Tj-84 -14.25  TD -0.0468  Tc 0.9843  Tw (processor cores are embedded with cache memories. The overall memory hierarchy, and ) Tj0 -13.5  TD -0.0786  Tc 1.2036  Tw (the way that the memory is managed heavily affect system design and performance. For ) Tj0 -14.25  TD 0.0914  Tc 1.4086  Tw (example, enhan) Tj76.5 0  TD -0.002  Tc 1.752  Tw (cements to the ARMv6 architecture memory management system have ) Tj-76.5 -13.5  TD -0.08  Tc 1.6425  Tw (boosted overall system performance by much as 30% for applications running complex ) Tj0 -13.5  TD 0.0645  Tc 0  Tw (user) Tj19.5 0  TD -0.246  Tc (-) Tj4.5 0  TD 0.0213  Tc 4.6454  Tw (interface driven operating systems. Dhrystone will clearly not measure such) Tj0  Tc 0  Tw ( ) Tj-24 -14.25  TD -0.0318  Tc (improvements.) Tj71.25 0  TD 0  Tc ( ) Tj-53.25 -13.5  TD ( ) Tj-18 -14.25  TD -0.0475  Tc 1.5475  Tw (Dhrystone con) Tj71.25 0  TD -0.0733  Tc 1.5733  Tw (tains two statements where the programming language and its translation ) Tj-71.25 -13.5  TD -0.0823  Tc 0.4573  Tw (play a major part in the benchmark execution time.) Tj244.5 0  TD 0  Tc 0  Tw ( ) Tj-244.5 -13.5  TD ( ) Tj72 -14.25  TD -0.0726  Tc 0.3538  Tw ( o String assignment \(in procedure Proc_0 / main\)) Tj239.25 0  TD 0  Tc 0  Tw ( ) TjETendstream
+endobj
+20 0 obj
+6060
+endobj
+18 0 obj
+<<
+/Type /Page
+/Parent 5 0 R
+/Resources <<
+/Font <<
+/F0 6 0 R 
+/F1 8 0 R 
+/F2 10 0 R 
+>>
+/ProcSet 2 0 R
+>>
+/Contents 19 0 R
+>>
+endobj
+22 0 obj
+<<
+/Length 23 0 R
+>>
+stream
+BT90 747  TD0 0 0 rg /F0 9.75  Tf0.0693  Tc 0.0368  Tw (ARM White Paper                                           ) Tj200.25 0  TD -0.0022  Tc 0.0704  Tw (                                                            March 2002) Tj218.25 0  TD 0  Tc 0.2895  Tw ( ) Tj-234 -708.75  TD /F1 9.75  Tf0.1365  Tc -0.324  Tw (Page ) Tj21.75 0  TD 0.375  Tc 0  Tw (3) Tj4.5 0  TD 0.4391  Tc -0.2516  Tw ( of ) Tj13.5 0  TD 0.375  Tc 0  Tw (7) Tj5.25 0  TD 0.2349  Tc -0.1765  Tw (                                                            \251 ARM2002) Tj202.5 0  TD 0  Tc -0.1875  Tw ( ) Tj-360 653.25  TD /F1 12  Tf-0.0473  Tc 0.1723  Tw ( o String comparison \(in function Func_2\)) Tj201.75 0  TD 0  Tc 0  Tw ( ) Tj-201.75 -13.5  TD ( ) Tj-72 -14.25  TD -0.0041  Tc 3.0041  Tw (The C version of Dhrystone spends a rel) Tj213.75 0  TD -0.0803  Tc 3.174  Tw (atively large amount of time in these two ) Tj-213.75 -13.5  TD -0.0499  Tc 3.9249  Tw (functions.  Measurements made on a VAX 11/785 with the Berkeley UNIX \(4.2\)) Tj0  Tc 0.75  Tw ( ) Tj0 -14.25  TD -0.0753  Tc 0.4503  Tw (compilers demonstrated that 23% of the time was spent in the string functions.) Tj376.5 0  TD 0  Tc 0  Tw ( ) Tj-376.5 -13.5  TD ( ) Tj0 -13.5  TD -0.0984  Tc 0.7802  Tw (On good RISC machines \(where less time is spent in the proc) Tj297.75 0  TD 0.0225  Tc 0.165  Tw (edure calling sequence than ) Tj-297.75 -14.25  TD -0.0707  Tc 1.8207  Tw (on a VAX\) and with better optimizing compilers, the percentage is higher. In fact, the ) Tj0 -13.5  TD 0.001  Tc 0.3115  Tw (ARM9E measurements presented below demonstrate that between 21% and 65% is spent ) Tj0 -14.25  TD -0.0585  Tc 3.996  Tw (processing these specific string functions. As this data rev) Tj305.25 0  TD -0.066  Tc 4.0035  Tw (eals, Dhrystone is not a) Tj0  Tc 0  Tw ( ) Tj-305.25 -13.5  TD 0.0146  Tc 0.1585  Tw (particularly representative sample of the kinds of instruction sequences that are typical of ) Tj0 -13.5  TD -0.0712  Tc 2.4942  Tw (today\222s applications. The majority of embedded applications make little use of the C ) Tj0 -14.25  TD -0.0605  Tc 2.0962  Tw (libraries for example, and even desktop applications ) Tj267 0  TD -0.1304  Tc 2.3804  Tw (are unlikely to have such a high ) Tj-267 -13.5  TD -0.0523  Tc 0.3857  Tw (weighting of a very small number of specific library calls.) Tj278.25 0  TD 0  Tc 0  Tw ( ) Tj-278.25 -32.25  TD /F2 12  Tf-0.114  Tc 0.114  Tw ( \221Optimizing) Tj64.5 0  TD -0.246  Tc 0  Tw (\222) Tj3.75 0  TD 0.017  Tc -0.017  Tw ( Dhrystone for Competitive Purposes) Tj191.25 0  TD 0  Tc 0  Tw ( ) Tj-259.5 -19.5  TD /F1 12  Tf-0.0268  Tc 0.3482  Tw (As previously stated, a quoted DMIPS figure is susceptible to many other factors, besides ) Tj0 -13.5  TD -0.0603  Tc 3.0603  Tw (the true performance of) Tj0  Tc -0.75  Tw ( ) Tj126.75 0  TD -0.0876  Tc 3.0194  Tw (the CPU. Often, the variation in performance is due to the ) Tj-126.75 -14.25  TD -0.055  Tc 0.2425  Tw (efficiency of the C compiler, or one of the other factors described below.) Tj349.5 0  TD 0  Tc 0  Tw ( ) Tj-349.5 -24  TD /F2 9.75  Tf0.0702  Tc 0.4923  Tw (Compiler Efficiency) Tj84.75 0  TD 0  Tc -0.1875  Tw ( ) Tj-84.75 -16.5  TD /F1 12  Tf-0.027  Tc 1.0984  Tw (The key issue with Dhrystone is its dependency on the compiler and library technology ) Tj0 -13.5  TD -0.0615  Tc 0.8115  Tw (used ) Tj28.5 0  TD 0  Tc 0  Tw (\226) Tj6 0  TD -0.0405  Tc 4.5405  Tw ( much more) Tj65.25 0  TD -0.0075  Tc 4.0075  Tw ( so than any other benchmark. ARM has measured significant) Tj0  Tc 0.75  Tw ( ) Tj-99.75 -13.5  TD -0.0373  Tc 4.3123  Tw (differences in Dhrystone results by using alternative compilers targeting the same) Tj0  Tc 0.75  Tw ( ) Tj0 -14.25  TD -0.0325  Tc 0.0325  Tw (architecture ) Tj59.25 0  TD 0  Tc 0  Tw (\226) Tj6 0  TD -0.055  Tc 0.2216  Tw ( with performance varying by as much as 100%. ) Tj234.75 0  TD 0  Tc 0  Tw ( ) Tj-300 -24  TD /F2 9.75  Tf0.089  Tc -0.2765  Tw (Dhrystone Version) Tj79.5 0  TD 0  Tc -0.1875  Tw ( ) Tj-79.5 -15.75  TD /F1 12  Tf0.0262  Tc 0.8738  Tw (Version 1 of the Dhrystone Benchmar) Tj187.5 0  TD -0.0447  Tc 1.1697  Tw (k is no longer recommended, since compilers can ) Tj-187.5 -14.25  TD -0.0537  Tc 1.7144  Tw (now eliminate too much 'dead code' from the benchmark. Dhrystone version 2.1 is the ) Tj0 -13.5  TD -0.0893  Tc 1.5893  Tw (most recent release of the benchmark, and the version that ARM uses in benchmarking ) Tj0 -14.25  TD -0.0492  Tc 0.0492  Tw (Dhrystone. ) Tj55.5 0  TD 0  Tc 0  Tw ( ) Tj-55.5 -24  TD /F2 9.75  Tf0.0836  Tc 0.4789  Tw (ANSI C) Tj33 0  TD 0  Tc -0.1875  Tw ( ) Tj-33 -15.75  TD /F1 12  Tf-0.0776  Tc 1.3901  Tw (Instead of using the ) Tj102.75 0  TD -0.0352  Tc 1.6185  Tw (normal Kernighan & Ritchie \(K&R\) format, the Dhrystone source ) Tj-102.75 -14.25  TD -0.028  Tc 1.7959  Tw (code is sometimes altered to obey ANSI format and prototypes. This change can give ) Tj0 -13.5  TD -0.0526  Tc 0.3338  Tw (compilers more information, so that better optimization is possible.) Tj321.75 0  TD 0  Tc 0  Tw ( ) Tj-321.75 -24.75  TD /F2 9.75  Tf0.0975  Tc 0.09  Tw (Combining Source Files) Tj102.75 0  TD 0  Tc -0.1875  Tw ( ) Tj-102.75 -15.75  TD /F1 12  Tf-0.0784  Tc 3.0784  Tw (Combining the two ) Tj3.336  Tc 0  Tw (D) Tj112.5 0  TD -0.105  Tc 3.18  Tw (hrystone source files into one module enables the compiler to ) Tj-112.5 -13.5  TD -0.0083  Tc 0.9833  Tw (perform additional optimizations on all functions simultaneously. Dhrystone version 1.1 ) Tj0 -14.25  TD -0.0545  Tc 2.3045  Tw (contains the benchmark in a single source file ) Tj240.75 0  TD 0  Tc 0  Tw (\226) Tj6 0  TD -0.0332  Tc 2.3665  Tw ( other than that it is very similar to ) Tj-246.75 -13.5  TD -0.0378  Tc 0.0378  Tw (Dhrystone 2.1.) Tj70.5 0  TD 0  Tc 0  Tw ( ) TjETendstream
+endobj
+23 0 obj
+5894
+endobj
+21 0 obj
+<<
+/Type /Page
+/Parent 5 0 R
+/Resources <<
+/Font <<
+/F0 6 0 R 
+/F1 8 0 R 
+/F2 10 0 R 
+>>
+/ProcSet 2 0 R
+>>
+/Contents 22 0 R
+>>
+endobj
+25 0 obj
+<<
+/Length 26 0 R
+>>
+stream
+BT90 747  TD0 0 0 rg /F0 9.75  Tf0.0693  Tc 0.0368  Tw (ARM White Paper                                           ) Tj200.25 0  TD -0.0022  Tc 0.0704  Tw (                                                            March 2002) Tj218.25 0  TD 0  Tc 0.2895  Tw ( ) Tj-234 -708.75  TD /F1 9.75  Tf0.1365  Tc -0.324  Tw (Page ) Tj21.75 0  TD 0.375  Tc 0  Tw (4) Tj4.5 0  TD 0.4391  Tc -0.2516  Tw ( of ) Tj13.5 0  TD 0.375  Tc 0  Tw (7) Tj5.25 0  TD 0.2349  Tc -0.1765  Tw (                                                            \251 ARM2002) Tj202.5 0  TD 0  Tc -0.1875  Tw ( ) Tj-432 654.75  TD /F2 9.75  Tf0.0214  Tc 0  Tw (Code) Tj21.75 0  TD -0.0078  Tc 0.5703  Tw ( Inlining) Tj36.75 0  TD 0  Tc -0.1875  Tw ( ) Tj-58.5 -15.75  TD /F1 12  Tf-0.008  Tc 1.508  Tw (Enabling inlining of procedures can enhance performance. The availability of ANSI C ) Tj0 -14.25  TD -0.029  Tc 2.3259  Tw (has created a new situation, compared with the older K&R C. In the original C, the ) Tj0 -13.5  TD -0.0411  Tc 0.5411  Tw (definition of the string function was not part of the language. Now it is, and ) Tj370.5 0  TD -0.054  Tc 0.304  Tw (inlining of C ) Tj-370.5 -14.25  TD -0.089  Tc 2.5265  Tw (library functions is explicitly allowed. The Dhrystone rule "No procedure inlining for ) Tj0 -13.5  TD -0.1277  Tc 0.6902  Tw (Dhrystone" refers to the user) Tj137.25 0  TD -0.246  Tc 0  Tw (-) Tj5.25 0  TD -0.0878  Tc 0.4628  Tw (level procedures only, and not to the library routines.) Tj253.5 0  TD 0  Tc 0  Tw ( ) Tj-396 -24  TD /F2 9.75  Tf0.1664  Tc -0.1039  Tw (Adapting the C Library) Tj101.25 0  TD 0  Tc -0.1875  Tw ( ) Tj-101.25 -16.5  TD /F1 12  Tf-0.0654  Tc 1.1904  Tw (Adapting the C library to accelerate Dhrystone) Tj229.5 0  TD -0.0031  Tc 0.9674  Tw ( code can drastically alter the benchmark ) Tj-229.5 -13.5  TD -0.0514  Tc 0.2764  Tw (results, but this can negatively impact the performance of typical code.) Tj339 0  TD 0  Tc 0  Tw ( ) Tj-339 -13.5  TD ( ) Tj0 -14.25  TD -0.0772  Tc 1.6397  Tw (Measuring Dhrystone performance for the same processor and compiler yields a spread ) Tj0 -13.5  TD -0.0559  Tc 4.6496  Tw (of around three times between the \221unoptimized\222 case and) Tj312.75 0  TD -0.0459  Tc 4.7334  Tw ( a case where several) Tj0  Tc 0  Tw ( ) Tj-312.75 -14.25  TD -0.0494  Tc 1.1456  Tw (optimizations are applied together \(Figure 1\). This test demonstrates how important it is ) Tj0 -13.5  TD -0.0626  Tc 0.4793  Tw (to be extremely careful when interpreting standalone Dhrystone DMIPS figures.) Tj384.75 0  TD 0  Tc 0  Tw ( ) Tj-384.75 -13.5  TD ( ) TjET1 1 1 rg 93.75 249 424.5 228.75 re f0.502 0.502 0.502 rg 167.25 292.5 m 183 304.5 l 500.25 304.5 l 484.5 292.5 l 167.25 292.5 l f*0.7529 0.7529 0.7529 rg 167.25 292.5 m 167.25 457.5 l 183 469.5 l 183 304.5 l 167.25 292.5 l f*183 304.5 317.25 165 re f0.75 w 1 J 1 j 0 0 0 RG 167.25 292.5 m 183 304.5 l 500.25 304.5 l S 167.25 313.5 m 183 324.75 l 500.25 324.75 l S 167.25 333.75 m 183 345.75 l 500.25 345.75 l S 167.25 354.75 m 183 366 l 500.25 366 l S 167.25 375 m 183 387 l 500.25 387 l S 167.25 396 m 183 407.25 l 500.25 407.25 l S 167.25 416.25 m 183 428.25 l 500.25 428.25 l S 167.25 437.25 m 183 448.5 l 500.25 448.5 l S 167.25 457.5 m 183 469.5 l 500.25 469.5 l S 500.25 304.5 m 484.5 292.5 l 167.25 292.5 l 183 304.5 l 500.25 304.5 l S 0.502 0.502 0.502 RG 167.25 292.5 m 167.25 457.5 l 183 469.5 l 183 304.5 l 167.25 292.5 l S 183 304.5 317.25 165 re S 0 0 0 RG 0.302 0.302 0.502 rg 204 296.25 m 204 348.75 l 210 353.25 l 210 300.75 l 204 296.25 l b*0.6 0.6 1 rg 186 296.25 18 52.5 re b0.451 0.451 0.749 rg 204 348.75 m 210 353.25 l 192 353.25 l 186 348.75 l 204 348.75 l b*0.302 0.302 0.502 rg 249 296.25 m 249 369 l 255.75 373.5 l 255.75 300.75 l 249 296.25 l b*0.6 0.6 1 rg 231 296.25 18 72.75 re b0.451 0.451 0.749 rg 249 369 m 255.75 373.5 l 237 373.5 l 231 369 l 249 369 l b*0.302 0.302 0.502 rg 294.75 296.25 m 294.75 395.25 l 300.75 400.5 l 300.75 300.75 l 294.75 296.25 l b*0.6 0.6 1 rg 276 296.25 18.75 99 re b0.451 0.451 0.749 rg 294.75 395.25 m 300.75 400.5 l 282.75 400.5 l 276 395.25 l 294.75 395.25 l b*0.302 0.302 0.502 rg 339.75 296.25 m 339.75 412.5 l 345.75 417 l 345.75 300.75 l 339.75 296.25 l b*0.6 0.6 1 rg 321.75 296.25 18 116.25 re b0.451 0.451 0.749 rg 339.75 412.5 m 345.75 417 l 327.75 417 l 321.75 412.5 l 339.75 412.5 l b*0.302 0.302 0.502 rg 384.75 296.25 m 384.75 417 l 391.5 422.25 l 391.5 300.75 l 384.75 296.25 l b*0.6 0.6 1 rg 366.75 296.25 18 120.75 re b0.451 0.451 0.749 rg 384.75 417 m 391.5 422.25 l 373.5 422.25 l 366.75 417 l 384.75 417 l b*0.502 0 0 rg 430.5 296.25 m 430.5 435 l 436.5 440.25 l 436.5 300.75 l 430.5 296.25 l b*1 0 0 rg 412.5 296.25 18 138.75 re b0.749 0 0 rg 430.5 435 m 436.5 440.25 l 418.5 440.25 l 412.5 435 l 430.5 435 l b*0.502 0 0 rg 475.5 296.25 m 475.5 457.5 l 482.25 462 l 482.25 300.75 l 475.5 296.25 l b*1 0 0 rg 457.5 296.25 18 161.25 re b0.749 0 0 rg 475.5 457.5 m 482.25 462 l 463.5 462 l 457.5 457.5 l 475.5 457.5 l b*167.25 292.5 m 167.25 457.5 l S 167.25 292.5 m 164.25 292.5 l S 167.25 313.5 m 164.25 313.5 l S 167.25 333.75 m 164.25 333.75 l S 167.25 354.75 m 164.25 354.75 l S 167.25 375 m 164.25 375 l S 167.25 396 m 164.25 396 l S 167.25 416.25 m 164.25 416.25 l S 167.25 437.25 m 164.25 437.25 l S 167.25 457.5 m 164.25 457.5 l S BT156.75 288.75  TD0 0 0 rg /F0 11.25  Tf-0.255  Tc (0) Tj-9 20.25  TD -0.2125  Tc (0.2) Tj0 21  TD (0.4) Tj0 20.25  TD (0.6) Tj0 21  TD (0.8) Tj9 20.25  TD -0.255  Tc (1) Tj-9 21  TD -0.2125  Tc (1.2) Tj0 20.25  TD (1.4) Tj0 21  TD (1.6) Tj-34.5 -81.75  TD /F5 9  Tf-0  Tc (DMIPS) TjET167.25 292.5 m 484.5 292.5 l S 167.25 292.5 m 167.25 289.5 l S 213 292.5 m 213 289.5 l S 258 292.5 m 258 289.5 l S 303.75 292.5 m 303.75 289.5 l S 348.75 292.5 m 348.75 289.5 l S 393.75 292.5 m 393.75 289.5 l S 439.5 292.5 m 439.5 289.5 l S 484.5 292.5 m 484.5 289.5 l S BT187.5 279  TD/F0 8.25  Tf-0.2527  Tc (A) Tj45.75 0  TD (B) Tj45 0  TD 0.0435  Tc (C) Tj45 0  TD (D) Tj45.75 0  TD -0.2527  Tc (E) Tj45 0  TD 0.2092  Tc (F) Tj45 0  TD 0.3315  Tc (G) Tj-165 -14.25  TD /F5 9  Tf0.051  Tc ("Optimization") Tj228 -19.5  TD /F1 12  Tf0  Tc ( ) Tj-370.5 -8.25  TD /F5 9.75  Tf0.0828  Tc 0.2067  Tw (Figure 1. Affecting Dhrystone Perfor) Tj171.75 0  TD 0.1558  Tc 0.1337  Tw (mance through Optimization) Tj136.5 0  TD 0  Tc 0.2895  Tw ( ) Tj-369.75 -13.5  TD /F1 12  Tf0  Tw ( ) Tj0 -13.5  TD ( ) Tj0 -14.25  TD 0.0052  Tc -0.0052  Tw (Benchmark optimization conditions:) Tj174.75 0  TD 0  Tc 0  Tw ( ) Tj-174.75 -13.5  TD ( ) Tj0 -13.5  TD -0.0213  Tc 0.0213  Tw (ARM C compiler options: ) Tj128.25 0  TD -0.246  Tc 0  Tw (-) Tj4.5 0  TD -0.2183  Tc 0.2183  Tw (cpu ARM9E ) Tj63 0  TD 0  Tc 0  Tw (\226) Tj6 0  TD (Otime ) Tj33 0  TD (\226) Tj6.75 0  TD -0.123  Tc 0.123  Tw (fy ) Tj12.75 0  TD 0  Tc 0  Tw (\226) Tj6 0  TD (Onoinline ) Tj51 0  TD (\226) Tj6 0  TD 0.1074  Tc -0.1074  Tw ( DMSC_CLOCK) Tj84.75 0  TD 0  Tc 0  Tw ( ) Tj-402 -14.25  TD ( ) Tj18 -13.5  TD /F4 12  Tf0.3  Tc (o) Tj7.5 0  TD 0  Tc 0.3  Tw ( ) Tj10.5 0  TD /F2 12  Tf-0.33  Tc 0  Tw (A:) Tj12 0  TD /F1 12  Tf0.0314  Tc 0.0936  Tw ( No memcpy, strcpy or strcmp optimization) Tj210 0  TD 0  Tc 0  Tw ( ) Tj-240 -14.25  TD /F4 12  Tf0.3  Tc (o) Tj7.5 0  TD 0  Tc 0.3  Tw ( ) Tj10.5 0  TD /F2 12  Tf0.375  Tc 0  Tw (B:) Tj12 0  TD /F1 12  Tf-0.0828  Tc 0.0828  Tw ( Optimized memcpy ) Tj100.5 0  TD 0  Tc 0  Tw ( ) Tj-130.5 -13.5  TD /F4 12  Tf0.3  Tc (o) Tj7.5 0  TD 0  Tc 0.3  Tw ( ) Tj10.5 0  TD /F2 12  Tf-0.33  Tc 0  Tw (C:) Tj12 0  TD /F1 12  Tf-0.041  Tc 0.041  Tw ( Optimized strcmp and strcpy ) Tj144.75 0  TD 0  Tc 0  Tw ( ) Tj-174.75 -13.5  TD /F4 12  Tf0.3  Tc (o) Tj7.5 0  TD 0  Tc 0.3  Tw ( ) Tj10.5 0  TD /F2 12  Tf0.42  Tc 0  Tw (D:) Tj12.75 0  TD /F1 12  Tf-0.1054  Tc 0.1054  Tw ( Default) Tj38.25 0  TD 0  Tc 0  Tw ( ) Tj-69 -14.25  TD /F4 12  Tf0.3  Tc (o) Tj7.5 0  TD 0  Tc 0.3  Tw ( ) Tj10.5 0  TD /F2 12  Tf-0.375  Tc 0  Tw (E:) Tj11.25 0  TD /F1 12  Tf0.1207  Tc -0.1207  Tw ( Optimized) Tj54 0  TD -0.054  Tc 0.304  Tw ( division and strcmp) Tj97.5 0  TD 0  Tc 0  Tw ( ) TjETendstream
+endobj
+26 0 obj
+8458
+endobj
+24 0 obj
+<<
+/Type /Page
+/Parent 5 0 R
+/Resources <<
+/Font <<
+/F0 6 0 R 
+/F1 8 0 R 
+/F2 10 0 R 
+/F4 16 0 R 
+/F5 27 0 R 
+>>
+/ProcSet 2 0 R
+>>
+/Contents 25 0 R
+>>
+endobj
+30 0 obj
+<<
+/Length 31 0 R
+>>
+stream
+BT90 747  TD0 0 0 rg /F0 9.75  Tf0.0693  Tc 0.0368  Tw (ARM White Paper                                           ) Tj200.25 0  TD -0.0022  Tc 0.0704  Tw (                                                            March 2002) Tj218.25 0  TD 0  Tc 0.2895  Tw ( ) Tj-234 -708.75  TD /F1 9.75  Tf0.1365  Tc -0.324  Tw (Page ) Tj21.75 0  TD 0.375  Tc 0  Tw (5) Tj4.5 0  TD 0.4391  Tc -0.2516  Tw ( of ) Tj13.5 0  TD 0.375  Tc 0  Tw (7) Tj5.25 0  TD 0.2349  Tc -0.1765  Tw (                                                            \251 ARM2002) Tj202.5 0  TD 0  Tc -0.1875  Tw ( ) Tj-414 653.25  TD /F4 12  Tf0.3  Tc 0  Tw (o) Tj7.5 0  TD 0  Tc 0.3  Tw ( ) Tj10.5 0  TD /F2 12  Tf-0.414  Tc 0  Tw (F:) Tj10.5 0  TD /F1 12  Tf-0.0571  Tc 0.3785  Tw ( Automatic inlining of user routines enabled \() Tj219 0  TD -0.246  Tc 0  Tw (-) Tj4.5 0  TD -0.0259  Tc 0.0259  Tw (Oinline\) \(not permitted\)) Tj114.75 0  TD 0  Tc 0  Tw ( ) Tj-366.75 -13.5  TD /F4 12  Tf0.3  Tc (o) Tj7.5 0  TD 0  Tc 0.3  Tw ( ) Tj10.5 0  TD /F2 12  Tf-0.291  Tc 0  Tw (G:) Tj12.75 0  TD /F1 12  Tf-0.0289  Tc 0.2789  Tw ( File merging, \223ANSI) Tj104.25 0  TD -0.246  Tc 0  Tw (-) Tj4.5 0  TD -0.0443  Tc 0.3657  Tw (fied\224 headers, similar to Dhrystone 1.1 \(not permitted\)) Tj261 0  TD 0  Tc 0  Tw ( ) Tj-418.5 -14.25  TD ( ) Tj0 -13.5  TD -0.0979  Tc 3.0979  Tw (Benchmarks A to C have inlining of the string and memory functions disabled, but ) Tj0 -14.25  TD 0.0206  Tc 0.1669  Tw (instead use an optimized byte) Tj142.5 0  TD -0.246  Tc 0  Tw (-) Tj4.5 0  TD -0.0407  Tc 0.4907  Tw (oriented version of the routine. Benchmark D is the default ) Tj-147 -13.5  TD -0.0388  Tc 0.4479  Tw (benchmark with ADS1.2 \(ARM Development System\), and includes inlining of memcpy, ) Tj0 -13.5  TD -0.0335  Tc 2.4335  Tw (strcpy and an optimized strcmp routine. Benchmark E has the C) Tj327 0  TD -0.246  Tc 0  Tw (-) Tj4.5 0  TD -0.1131  Tc 2.3631  Tw (library functions for ) Tj-331.5 -14.25  TD 0  Tc 0  Tw (d) Tj6 0  TD 0.0009  Tc 1.7134  Tw (ivision and strcmp optimized for speed at the expense of code size. The resulting C) Tj421.5 0  TD -0.246  Tc 0  Tw (-) Tj-427.5 -13.5  TD -0.0912  Tc 0.5198  Tw (library is slightly faster on many benchmarks ) Tj219.75 0  TD 0  Tc 0  Tw (\226) Tj6 0  TD -0.1422  Tc 0.8922  Tw ( not just Dhrystone.) Tj94.5 0  TD 0  Tc 0  Tw ( ) Tj-320.25 -14.25  TD ( ) Tj0 -13.5  TD -0.0858  Tc 1.0233  Tw (Benchmark F enables the auto) Tj147 0  TD -0.246  Tc 0  Tw (-) Tj5.25 0  TD -0.0863  Tc 1.0863  Tw (inlining of user functions, and G combines the Dhrystone ) Tj-152.25 -13.5  TD -0.1104  Tc 3.1104  Tw (source files into) Tj81 0  TD -0.0103  Tc 2.318  Tw ( one module. Note that the F and G optimizations are not permitted ) Tj-81 -14.25  TD -0.0409  Tc 0.2909  Tw (within the constraints of the Dhrystone benchmark.) Tj246 0  TD 0  Tc 0  Tw ( ) Tj-246 -13.5  TD ( ) Tj0 -14.25  TD -0.0464  Tc 0.3464  Tw (The Dhrystone performance is calculated from:) Tj227.25 0  TD 0  Tc 0  Tw ( ) Tj-209.25 -12  TD /F4 11.25  Tf(o) Tj6.75 0  TD ( ) Tj11.25 0  TD /F1 11.25  Tf-0.1142  Tc 0.3017  Tw (Dhrystone Iterations per second =) Tj149.25 0  TD 0  Tc 0.1875  Tw ( ) Tj-167.25 -14.25  TD /F1 12  Tf0  Tw ( ) Tj0 -13.5  TD /F4 12  Tf0.3  Tc (o) Tj7.5 0  TD 0  Tc 0.3  Tw ( ) Tj10.5 0  TD /F1 12  Tf-0.1008  Tc 1.6008  Tw (For th) Tj29.25 0  TD -0.0906  Tc 1.6906  Tw (e result to be valid, the Dhrystone code must be executed for at least two ) Tj-29.25 -14.25  TD -0.0615  Tc 0  Tw (seconds.) Tj40.5 0  TD 0  Tc ( ) Tj-76.5 -13.5  TD ( ) Tj0 -13.5  TD -0.0256  Tc 0.7131  Tw (The default benchmark D spends approximately 21% of the benchmark cycles executing ) Tj0 -14.25  TD -0.0599  Tc 0.4599  Tw (memcpy, strcpy and strcmp instructions. For benchmark A, this rises to 65%, and for G it) Tj432 0  TD 0  Tc 0  Tw ( ) Tj-432 -13.5  TD -0.125  Tc 0.125  Tw (is 30%.) Tj35.25 0  TD 0  Tc 0  Tw ( ) Tj-35.25 -14.25  TD ( ) Tj0 -13.5  TD /F2 12  Tf0  Tc -0  Tw (Competitive Comparison) Tj128.25 0  TD 0  Tc 0  Tw ( ) Tj-128.25 -18.75  TD /F3 12  Tf-0.0393  Tc 1.9612  Tw ("It's very easy to say Dhrystone is not the best benchmark in the world but everyone ) Tj0 -13.5  TD 0.0604  Tc -0.2104  Tw (knows the same tricks and does the same things and that makes it fair again." ) Tj376.5 0  TD 0  Tc 0  Tw ( ) Tj-376.5 -12.75  TD /F1 9.75  Tf0.1248  Tc -0.2185  Tw (Ian Walsh, technical director for MIPS Technologies Europe ) Tj245.25 0  TD -0.0395  Tc 0  Tw ([4]) Tj11.25 0  TD 0  Tc -0.1875  Tw ( ) Tj-256.5 -12.75  TD /F1 12  Tf0  Tw ( ) Tj0 -14.25  TD 0.0048  Tc 1.726  Tw (Whilst many vendors do understand which \221tricks\222 can be used to enhance Dhrystone ) Tj0 -13.5  TD -0.1108  Tc 1.9322  Tw (performance, it is not the case that all vendors apply these techniques when measuring ) TjT* -0.0241  Tc 2.3991  Tw (Dhrystone. ARM quotes Dhrystone 2.1 figures with strict adherence to the letter an) Tj425.25 0  TD 0.75  Tc 0  Tw (d ) Tj-425.25 -14.25  TD -0.0829  Tc 0.3329  Tw (spirit of the rules.) Tj84 0  TD 0  Tc 0  Tw ( ) Tj-84 -13.5  TD ( ) Tj0 -14.25  TD -0.0678  Tc 4.1639  Tw (If Dhrystone data must be used for comparison purposes, it is important that the) Tj0  Tc 0.75  Tw ( ) Tj0 -13.5  TD -0.0538  Tc 20.7323  Tw (conditions of the benchmark are well understood, including:) Tj432 0  TD 0  Tc 0  Tw ( ) Tj-432 -13.5  TD ( ) Tj54 -14.25  TD (1.) Tj9 0  TD ( ) Tj9 0  TD -0.0964  Tc 0.6589  Tw (Which Dhrystone version was used?) Tj174.75 0  TD 0  Tc 0  Tw ( ) Tj-192.75 -13.5  TD (2.) Tj9 0  TD ( ) Tj9 0  TD -0.0699  Tc 0.4449  Tw (Which Dhrystone source code was used \(ANSI, unmodified K) Tj299.25 0  TD -0.1035  Tc 0  Tw (&R\)?) Tj26.25 0  TD 0  Tc ( ) Tj-343.5 -14.25  TD (3.) Tj9 0  TD ( ) Tj9 0  TD -0.1059  Tc 1.8104  Tw (How many compilation modules were used \(one merged or two separate ) Tj0 -13.5  TD -0.0547  Tc 0  Tw (modules\)?) Tj49.5 0  TD 0  Tc ( ) Tj-67.5 -13.5  TD (4.) Tj9 0  TD ( ) Tj9 0  TD -0.0958  Tc 0.6583  Tw (Which inlining settings are applied?) Tj172.5 0  TD 0  Tc 0  Tw ( ) Tj-190.5 -14.25  TD (5.) Tj9 0  TD ( ) Tj9 0  TD -0.089  Tc 0.464  Tw (Which C libraries are used?) Tj132.75 0  TD 0  Tc 0  Tw ( ) Tj-150.75 -13.5  TD (6.) Tj9 0  TD ( ) Tj9 0  TD -0.0779  Tc 0.5466  Tw (Which tool chain \(compiler version, options, linker\) was used?) Tj301.5 0  TD 0  Tc 0  Tw ( ) Tj-319.5 -13.5  TD (7.) Tj9 0  TD ( ) Tj9 0  TD -0.1123  Tc 0.5623  Tw (What is the CPU\222s clock speed?) Tj153.75 0  TD 0  Tc 0  Tw ( ) TjETq 285.75 468.75 186 26.25 re W n BT300.75 486  TD/F1 11.25  Tf-0.1707  Tc 0.3582  Tw (Processor Clock x Number of Runs) TjETQ 300.75 483.75 156.75 0.75 re fq 285.75 468.75 186 26.25 re W n BT457.5 486  TD/F1 11.25  Tf0.1875  Tw ( ) TjETQ BT343.5 473.25  TD/F1 11.25  Tf-0.2013  Tc 0.3888  Tw (Execution Time) Tj70.5 0  TD 0  Tc 0.1875  Tw ( ) TjETendstream
+endobj
+31 0 obj
+6974
+endobj
+29 0 obj
+<<
+/Type /Page
+/Parent 5 0 R
+/Resources <<
+/Font <<
+/F0 6 0 R 
+/F1 8 0 R 
+/F2 10 0 R 
+/F3 12 0 R 
+/F4 16 0 R 
+>>
+/ProcSet 2 0 R
+>>
+/Contents 30 0 R
+>>
+endobj
+33 0 obj
+<<
+/Length 34 0 R
+>>
+stream
+BT90 747  TD0 0 0 rg /F0 9.75  Tf0.0693  Tc 0.0368  Tw (ARM White Paper                                           ) Tj200.25 0  TD -0.0022  Tc 0.0704  Tw (                                                            March 2002) Tj218.25 0  TD 0  Tc 0.2895  Tw ( ) Tj-234 -708.75  TD /F1 9.75  Tf0.1365  Tc -0.324  Tw (Page ) Tj21.75 0  TD 0.375  Tc 0  Tw (6) Tj4.5 0  TD 0.4391  Tc -0.2516  Tw ( of ) Tj13.5 0  TD 0.375  Tc 0  Tw (7) Tj5.25 0  TD 0.2349  Tc -0.1765  Tw (                                                            \251 ARM2002) Tj202.5 0  TD 0  Tc -0.1875  Tw ( ) Tj-378 653.25  TD /F1 12  Tf0  Tw (8.) Tj9 0  TD ( ) Tj9 0  TD -0.0438  Tc 0.0438  Tw (Which platform ) Tj78.75 0  TD -0.045  Tc 0.42  Tw (was used \(simulator, real hardware\)?) Tj177 0  TD 0  Tc 0  Tw ( ) Tj-273.75 -13.5  TD (9.) Tj9 0  TD ( ) Tj9 0  TD -0.0655  Tc 0.2798  Tw (Which reference number \(if other than VAX 11) Tj228 0  TD -0.246  Tc 0  Tw (-) Tj4.5 0  TD -0.1175  Tc 0.4925  Tw (780 = 1757\) was used?) Tj110.25 0  TD 0  Tc 0  Tw ( ) Tj-414.75 -14.25  TD ( ) Tj0 -13.5  TD -0.0579  Tc 0.5267  Tw (ARM\222s Dhrystone measurements are made under the following conditions:) Tj360.75 0  TD 0  Tc 0  Tw ( ) Tj-324.75 -15  TD /F6 12  Tf-0.27  Tc (\267) Tj5.25 0  TD 0  Tc ( ) Tj12.75 0  TD /F1 12  Tf-0.0695  Tc 0.4445  Tw (Dhrystone version 2.1) Tj105.75 0  TD 0  Tc 0  Tw ( ) Tj-123.75 -14.25  TD /F6 12  Tf-0.27  Tc (\267) Tj5.25 0  TD 0  Tc ( ) Tj12.75 0  TD /F1 12  Tf-0.0653  Tc 0.5653  Tw (Source code: Unmodified K&R) Tj151.5 0  TD 0  Tc 0  Tw ( ) Tj-169.5 -15  TD /F6 12  Tf-0.27  Tc (\267) Tj5.25 0  TD 0  Tc ( ) Tj12.75 0  TD /F1 12  Tf-0.0916  Tc 0.4666  Tw (Compilation modules: two) Tj127.5 0  TD 0  Tc 0  Tw ( ) Tj-145.5 -14.25  TD /F6 12  Tf-0.27  Tc (\267) Tj5.25 0  TD 0  Tc ( ) Tj12.75 0  TD /F1 12  Tf0.041  Tc (Inlini) Tj25.5 0  TD -0.0235  Tc -0.3515  Tw (ng settings: ) Tj57.75 0  TD -0.246  Tc 0  Tw (-) Tj4.5 0  TD -0.066  Tc 0.441  Tw (Onoinline option set.) Tj100.5 0  TD 0  Tc 0  Tw ( ) Tj-206.25 -15  TD /F6 12  Tf-0.27  Tc (\267) Tj5.25 0  TD 0  Tc ( ) Tj12.75 0  TD /F1 12  Tf-0.0655  Tc 0.3869  Tw (C libraries: unmodified C libraries supplied with ADS.) Tj262.5 0  TD 0  Tc 0  Tw ( ) Tj-280.5 -14.25  TD /F6 12  Tf-0.27  Tc (\267) Tj5.25 0  TD 0  Tc ( ) Tj12.75 0  TD /F1 12  Tf-0.1091  Tc 0.3591  Tw (Tool chain: ADS 1.2) Tj99 0  TD 0  Tc 0  Tw ( ) Tj-117 -15  TD /F6 12  Tf-0.27  Tc (\267) Tj5.25 0  TD 0  Tc ( ) Tj12.75 0  TD /F1 12  Tf0  Tc 1.4995  Tw (Platform: ARMulator cycle) Tj135 0  TD -0.246  Tc 0  Tw (-) Tj4.5 0  TD 0.0201  Tc 1.4799  Tw (accurate instruction set simulator that is part of ) Tj-139.5 -13.5  TD -0.1875  Tc 0  Tw (ADS.) Tj26.25 0  TD 0  Tc ( ) Tj-80.25 -14.25  TD ( ) Tj0 -31.5  TD /F2 12  Tf-0.0591  Tc (Summary) Tj50.25 0  TD 0  Tc ( ) Tj-50.25 -20.25  TD /F1 12  Tf-0.0664  Tc 0.6914  Tw (When first released, the Dhrystone benchmark fulfilled) Tj265.5 0  TD -0.0768  Tc 0.2643  Tw ( a useful function ) Tj87 0  TD 0  Tc 0  Tw (\226) Tj6.75 0  TD -0.1145  Tc 0.7145  Tw ( at least it gave ) Tj-359.25 -13.5  TD -0.077  Tc 1.827  Tw (an alternative indicator to vendors\222 literal MIPS ratings. However, almost twenty years ) Tj0 -13.5  TD -0.0008  Tc 4.8342  Tw (later, there are undoubtedly better benchmarks available for measuring processor) Tj0  Tc 0.75  Tw ( ) Tj0 -14.25  TD -0.053  Tc 0  Tw (performance.) Tj63 0  TD 0  Tc ( ) Tj-63 -13.5  TD ( ) Tj0 -14.25  TD -0.0426  Tc 1.5426  Tw (Code profiling demonstrates that Dh) Tj179.25 0  TD -0.0709  Tc 1.8522  Tw (rystone is not a particularly good predictor of real) Tj248.25 0  TD -0.246  Tc 0  Tw (-) Tj-427.5 -13.5  TD -0.0098  Tc 5.3535  Tw (world performance, especially for complex embedded systems. The benchmark\222s) Tj0  Tc 0.75  Tw ( ) Tj0 -13.5  TD -0.0071  Tc 1.7571  Tw (susceptibility to being optimized, yielding large variations in results, is a considerable ) Tj0 -14.25  TD -0.1057  Tc 2.8914  Tw (weakness if the intent is to use the) Tj181.5 0  TD -0.0055  Tc 2.2555  Tw ( numbers for comparative purposes. ARM\222s own ) Tj-181.5 -13.5  TD -0.0145  Tc 4.7645  Tw (measurements, presented here, demonstrate that each method of optimization can) Tj0  Tc 0  Tw ( ) Tj0 -14.25  TD -0.0009  Tc 1.5691  Tw (increase the apparent DMIPS/MHz performance, and when combined can improve the ) Tj0 -13.5  TD -0.061  Tc 0.311  Tw (Dhrystone score by up to three times.) Tj179.25 0  TD 0  Tc 0  Tw ( ) Tj-179.25 -13.5  TD ( ) Tj0 -14.25  TD -0.0378  Tc 2.2878  Tw (ARM\222s customer) Tj84.75 0  TD -0.0074  Tc 2.3199  Tw (s still occasionally ask for Dhrystone MIPS data, and so ARM will ) Tj-84.75 -13.5  TD -0.0372  Tc 0.8497  Tw (continue to provide these numbers. However, ARM does not recommend that Dhrystone ) Tj0 -14.25  TD -0.0752  Tc 1.5752  Tw (results be used as part of any embedded processor evaluation exercise, due to its many ) Tj0 -13.5  TD 0.0761  Tc 2.1739  Tw (noted deficiencies. W) Tj108.75 0  TD -0.0226  Tc 2.3976  Tw (here ARM provides a Dhrystone figure, it will be based on its ) Tj-108.75 -13.5  TD -0.0614  Tc 3.1239  Tw (standard tool suite under the conditions outlined above, and will therefore be 100%) Tj0  Tc 0  Tw ( ) Tj0 -14.25  TD -0.0825  Tc 0.8325  Tw (publicly and independently reproducible.) Tj196.5 0  TD 0  Tc 0  Tw ( ) Tj-196.5 -13.5  TD ( ) Tj0 -14.25  TD -0.1085  Tc 1.0631  Tw (In general, more representative data will be obtained by using a sui) Tj326.25 0  TD -0.026  Tc 0.776  Tw (te of benchmark data. ) Tj-326.25 -13.5  TD -0.0054  Tc 0.1929  Tw (First, this enables benchmarks to reflect the requirements of specific application domains. ) Tj0 -13.5  TD -0.087  Tc 0.987  Tw (Second, the effects of any one optimization will be mitigated by the benchmark having a ) Tj0 -14.25  TD -0.0141  Tc 0.2016  Tw (wide spread of algorithms and coding styles. Results b) Tj262.5 0  TD 0.03  Tc 0.1843  Tw (ased on such an approach are more ) Tj-262.5 -13.5  TD -0.0277  Tc 4.664  Tw (likely to be representative of processor performance than compiler or tool chain) Tj0  Tc 0  Tw ( ) Tj0 -14.25  TD -0.053  Tc (performance.) Tj63 0  TD 0  Tc ( ) Tj-63 -11.25  TD /F4 9.75  Tf0.15  Tw ( ) Tj0 -13.5  TD /F1 12  Tf-0.0726  Tc 3.959  Tw (ARM fully supports and actively participates in the EEMBC process [3]. EEMBC) Tj0  Tc 0  Tw ( ) TjT* -0.0826  Tc 3.1763  Tw (consists of a set of five application suites targe) Tj246 0  TD 0  Tc 2.25  Tw (ting automotive/industrial, consumer, ) TjETendstream
+endobj
+34 0 obj
+6587
+endobj
+32 0 obj
+<<
+/Type /Page
+/Parent 5 0 R
+/Resources <<
+/Font <<
+/F0 6 0 R 
+/F1 8 0 R 
+/F2 10 0 R 
+/F4 16 0 R 
+/F6 35 0 R 
+>>
+/ProcSet 2 0 R
+>>
+/Contents 33 0 R
+>>
+endobj
+39 0 obj
+<<
+/Length 40 0 R
+>>
+stream
+BT90 747  TD0 0 0 rg /F0 9.75  Tf0.0693  Tc 0.0368  Tw (ARM White Paper                                           ) Tj200.25 0  TD -0.0022  Tc 0.0704  Tw (                                                            March 2002) Tj218.25 0  TD 0  Tc 0.2895  Tw ( ) Tj-234 -708.75  TD /F1 9.75  Tf0.1365  Tc -0.324  Tw (Page ) Tj21.75 0  TD 0.375  Tc 0  Tw (7) Tj4.5 0  TD 0.4391  Tc -0.2516  Tw ( of ) Tj13.5 0  TD 0.375  Tc 0  Tw (7) Tj5.25 0  TD 0.2349  Tc -0.1765  Tw (                                                            \251 ARM2002) Tj202.5 0  TD 0  Tc -0.1875  Tw ( ) Tj-432 653.25  TD /F1 12  Tf-0.0344  Tc 2.1344  Tw (networking, office automation and telecommunications. The results of any benchmark ) Tj0 -13.5  TD -0.0609  Tc 3.1186  Tw (must be officially certified before they can be published, ensuring a high degree of) Tj0  Tc 0  Tw ( ) Tj0 -14.25  TD -0.0674  Tc 3.6031  Tw (consistency and reliability in the results. In fut) Tj245.25 0  TD -0.0086  Tc 2.7086  Tw (ure, more diverse and representative ) Tj-245.25 -13.5  TD -0.0491  Tc 4.14  Tw (benchmarks such as EEMBC will better help customers in their product selection) Tj0  Tc 0  Tw ( ) Tj0 -14.25  TD -0.0984  Tc (processes.) Tj48 0  TD 0  Tc ( ) Tj-48 -13.5  TD ( ) Tj0 -13.5  TD -0.0091  Tc 3.2399  Tw (ARM is driving its processor roadmap based on the real needs of applications, by) Tj0  Tc 0  Tw ( ) Tj0 -14.25  TD -0.0241  Tc 0.7741  Tw (balancing performance needs with the requiremen) Tj242.25 0  TD -0.0902  Tc 0.9339  Tw (t to deliver low power and gate counts. ) Tj-242.25 -13.5  TD -0.0477  Tc 1.8811  Tw (Recent architectural enhancements in ARMv6 include improved memory management, ) Tj0 -14.25  TD -0.0406  Tc 1.6656  Tw (acceleration of DSP and multimedia operations, and in direct Java bytecode execution. ) Tj0 -13.5  TD -0.0033  Tc 2.789  Tw (To provide useful and meaningful information, in th) Tj268.5 0  TD 0.0253  Tc 1.8497  Tw (e future, standard benchmarking ) Tj-268.5 -13.5  TD -0.1072  Tc 0.5572  Tw (suites will have to keep up with innovations in processor design.) Tj309 0  TD 0  Tc 0  Tw ( ) Tj-309 -14.25  TD ( ) Tj0 -31.5  TD /F2 12  Tf0.1032  Tc (References) Tj57 0  TD 0  Tc ( ) Tj-57 -20.25  TD /F1 12  Tf-0.0536  Tc 0.5036  Tw ([1] \223Understanding Variations in Dhrystone Performance\224) Tj280.5 0  TD 0  Tc 0  Tw ( ) Tj-280.5 -13.5  TD -0.0029  Tc 0.0863  Tw (By Reinhold P. Weicker, Siemens AG, AUT E 51, Erlangen) Tj288.75 0  TD 0  Tc 0  Tw ( ) Tj-288.75 -13.5  TD -0.0476  Tc 0.2351  Tw (April 1989 Microprocessor Report, M) Tj182.25 0  TD -0.0197  Tc 0.1447  Tw (ay 1989 \(Editor: M. Slater\), pp. 16) Tj166.5 0  TD -0.246  Tc 0  Tw (-) Tj4.5 0  TD 0  Tc (17) Tj12 0  TD ( ) Tj-365.25 -14.25  TD ( ) Tj0 -13.5  TD -0.0225  Tc 0.1059  Tw ([2] Reinhold P. Weicker: Dhrystone: A Synthetic Systems Programming Benchmark.) Tj409.5 0  TD 0  Tc 0  Tw ( ) Tj-409.5 -14.25  TD -0.0256  Tc 0.1193  Tw (Communications of the ACM 27, 10 \(Oct. 1984\), 1013) Tj264 0  TD -0.246  Tc 0  Tw (-) Tj4.5 0  TD 0  Tc (1030) Tj24 0  TD ( ) Tj-292.5 -13.5  TD ( ) Tj0 -13.5  TD -0.0078  Tc 0.0078  Tw ([3] EEMBC benchmarking consortium) Tj186 0  TD 0  Tc 0  Tw ( ) Tj-186 -14.25  TD 0.0725  Tc (www.eembc.org) Tj78.75 0  TD 0  Tc ( ) Tj-78.75 -13.5  TD ( ) Tj0 -14.25  TD -0.0874  Tc 0.3374  Tw ([4] \223Figure fight\224 ) Tj87 0  TD 0  Tc 0  Tw ( ) Tj-87 -13.5  TD -0.1853  Tc 0.1853  Tw (By Nick Fla) Tj58.5 0  TD 0.168  Tc 0  Tw (herty) Tj24 0  TD 0  Tc ( ) Tj-82.5 -13.5  TD (16) Tj12 5.25  TD /F1 8.25  Tf-0.2093  Tc (th) Tj6.75 -5.25  TD /F1 12  Tf-0.1567  Tc 0.1567  Tw ( July 2001 ) Tj52.5 0  TD 0.502 0 0.502 rg -0.1242  Tc 0.1242  Tw (EETimes, UK) TjET161.25 306.75 67.5 0.75 re fBT228.75 309  TD0 0 0 rg 0  Tc 0  Tw ( ) Tj-138.75 -14.25  TD 0 0 1 rg -0.0153  Tc (http://www.electronicstimes.com/story/OEG20010711S0003) TjET90 292.5 292.5 0.75 re fBT382.5 294.75  TD0 0 0 rg 0  Tc ( ) Tj-292.5 -13.5  TD ( ) TjETendstream
+endobj
+40 0 obj
+4019
+endobj
+37 0 obj
+<<
+/Type /Page
+/Parent 38 0 R
+/Resources <<
+/Font <<
+/F0 6 0 R 
+/F1 8 0 R 
+/F2 10 0 R 
+>>
+/ProcSet 2 0 R
+>>
+/Contents 39 0 R
+>>
+endobj
+6 0 obj
+<<
+/Type /Font
+/Subtype /TrueType
+/Name /F0
+/BaseFont /Arial
+/FirstChar 31
+/LastChar 255
+/Widths [ 750 278 278 355 556 556 889 667 191 333 333 389 584 278 333 278 
+278 556 556 556 556 556 556 556 556 556 556 278 278 584 584 584 
+556 1015 667 667 722 722 667 611 778 722 278 500 667 556 833 722 
+778 667 778 722 667 611 722 667 944 667 667 611 278 278 278 469 
+556 333 556 556 500 556 556 278 556 556 222 222 500 222 833 556 
+556 556 556 333 500 278 556 500 722 500 500 500 334 260 334 584 
+750 556 750 222 556 333 1000 556 556 333 1000 667 333 667 611 611 
+611 750 222 222 333 333 350 556 1000 333 1000 500 333 500 375 500 
+500 278 333 333 556 556 667 260 556 333 737 667 556 584 333 737 
+611 400 549 333 222 333 576 537 278 333 556 500 556 556 333 292 
+500 722 667 667 667 667 556 722 722 722 667 667 667 667 278 278 
+722 722 722 722 778 778 778 778 584 722 722 722 722 722 667 611 
+611 333 556 556 556 556 222 500 500 500 556 556 556 556 278 278 
+615 556 556 556 556 556 556 556 549 333 556 556 556 556 500 278 
+333 ]
+/Encoding /WinAnsiEncoding
+/FontDescriptor 7 0 R
+>>
+endobj
+7 0 obj
+<<
+/Type /FontDescriptor
+/FontName /Arial
+/Flags 32
+/FontBBox [ -250 -231 1292 1000 ]
+/MissingWidth 769
+/StemV 84
+/StemH 84
+/ItalicAngle 0
+/CapHeight 1000
+/XHeight 700
+/Ascent 1000
+/Descent -231
+/Leading 231
+/MaxWidth 1077
+/AvgWidth 462
+>>
+endobj
+8 0 obj
+<<
+/Type /Font
+/Subtype /TrueType
+/Name /F1
+/BaseFont /TimesNewRoman
+/FirstChar 31
+/LastChar 255
+/Widths [ 778 250 333 408 500 500 833 778 180 333 333 500 564 250 333 250 
+278 500 500 500 500 500 500 500 500 500 500 278 278 564 564 564 
+444 921 722 667 667 722 611 556 722 722 333 389 722 611 889 722 
+722 556 722 667 556 611 722 722 944 722 722 611 333 278 333 469 
+500 333 444 500 444 500 444 333 500 500 278 278 500 278 778 500 
+500 500 500 333 389 278 500 500 722 500 500 444 480 200 480 541 
+778 500 778 333 500 444 1000 500 500 333 1000 556 333 556 611 611 
+611 778 333 333 444 444 350 500 1000 333 980 389 333 389 427 444 
+444 250 333 333 611 500 722 200 500 333 760 556 500 564 333 760 
+611 400 549 333 278 333 576 453 250 333 444 389 500 611 333 406 
+444 667 722 722 722 722 611 667 667 667 611 611 611 611 333 333 
+722 722 722 722 722 722 722 722 564 667 722 722 722 722 722 611 
+500 333 444 444 444 444 278 444 444 444 444 444 444 444 278 278 
+646 500 500 500 500 500 500 500 549 333 500 500 500 500 500 278 
+333 ]
+/Encoding /WinAnsiEncoding
+/FontDescriptor 9 0 R
+>>
+endobj
+9 0 obj
+<<
+/Type /FontDescriptor
+/FontName /TimesNewRoman
+/Flags 34
+/FontBBox [ -250 -231 1292 923 ]
+/MissingWidth 769
+/StemV 70
+/StemH 70
+/ItalicAngle 0
+/CapHeight 923
+/XHeight 646
+/Ascent 923
+/Descent -231
+/Leading 231
+/MaxWidth 1077
+/AvgWidth 385
+>>
+endobj
+10 0 obj
+<<
+/Type /Font
+/Subtype /TrueType
+/Name /F2
+/BaseFont /TimesNewRoman,Bold
+/FirstChar 31
+/LastChar 255
+/Widths [ 778 250 333 555 500 500 1000 833 278 333 333 500 570 250 333 250 
+278 500 500 500 500 500 500 500 500 500 500 333 333 570 570 570 
+500 930 722 667 722 722 667 611 778 778 389 500 778 667 944 722 
+778 611 778 722 556 667 722 722 1000 722 722 667 333 278 333 581 
+500 333 500 556 444 556 444 333 500 556 278 333 556 278 833 556 
+500 556 556 444 389 333 556 500 722 500 500 444 394 220 394 520 
+778 500 778 333 500 500 1000 500 500 333 1000 556 333 556 667 667 
+667 778 333 333 500 500 350 500 1000 333 1000 389 333 389 521 444 
+444 250 333 333 667 500 722 220 500 333 747 556 500 570 333 747 
+667 400 549 333 278 333 576 540 250 333 500 389 500 667 333 469 
+444 722 722 722 722 722 667 722 722 722 667 667 667 667 389 389 
+722 722 722 722 778 778 778 778 570 722 722 722 722 722 722 667 
+556 444 500 500 500 500 278 444 444 444 444 444 444 444 278 278 
+733 556 556 556 500 500 500 500 549 444 556 556 556 556 500 333 
+333 ]
+/Encoding /WinAnsiEncoding
+/FontDescriptor 11 0 R
+>>
+endobj
+11 0 obj
+<<
+/Type /FontDescriptor
+/FontName /TimesNewRoman,Bold
+/Flags 16418
+/FontBBox [ -250 -238 1200 905 ]
+/MissingWidth 762
+/StemV 136
+/StemH 136
+/ItalicAngle 0
+/CapHeight 905
+/XHeight 633
+/Ascent 905
+/Descent -238
+/Leading 191
+/MaxWidth 1000
+/AvgWidth 429
+>>
+endobj
+12 0 obj
+<<
+/Type /Font
+/Subtype /TrueType
+/Name /F3
+/BaseFont /TimesNewRoman,Italic
+/FirstChar 31
+/LastChar 255
+/Widths [ 778 250 333 420 500 500 833 778 214 333 333 500 675 250 333 250 
+278 500 500 500 500 500 500 500 500 500 500 333 333 675 675 675 
+500 920 611 611 667 722 611 611 722 722 333 444 667 556 833 667 
+722 611 722 611 500 556 722 611 833 611 556 556 389 278 389 422 
+500 333 500 500 444 500 444 278 500 500 278 278 444 278 722 500 
+500 500 500 389 389 278 500 444 667 444 444 389 400 275 400 541 
+778 500 778 333 500 556 889 500 500 333 1000 500 333 500 556 556 
+556 778 333 333 556 556 350 500 889 333 980 389 333 389 364 389 
+389 250 333 333 556 500 611 275 500 333 760 500 500 675 333 760 
+556 400 549 333 278 333 576 523 250 333 500 389 500 556 333 364 
+389 611 611 611 611 611 556 667 667 667 611 611 611 611 333 333 
+722 722 667 667 722 722 722 722 675 611 722 722 722 722 556 556 
+500 389 500 500 500 500 278 444 444 444 444 444 444 444 278 278 
+608 500 500 500 500 500 500 500 549 389 500 500 500 500 444 278 
+333 ]
+/Encoding /WinAnsiEncoding
+/FontDescriptor 13 0 R
+>>
+endobj
+13 0 obj
+<<
+/Type /FontDescriptor
+/FontName /TimesNewRoman,Italic
+/Flags 98
+/FontBBox [ -250 -250 1200 938 ]
+/MissingWidth 750
+/StemV 68
+/StemH 68
+/ItalicAngle -11
+/CapHeight 938
+/XHeight 656
+/Ascent 938
+/Descent -250
+/Leading 251
+/MaxWidth 1000
+/AvgWidth 375
+>>
+endobj
+16 0 obj
+<<
+/Type /Font
+/Subtype /TrueType
+/Name /F4
+/BaseFont /CourierNew
+/FirstChar 31
+/LastChar 255
+/Widths [ 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 ]
+/Encoding /WinAnsiEncoding
+/FontDescriptor 17 0 R
+>>
+endobj
+17 0 obj
+<<
+/Type /FontDescriptor
+/FontName /CourierNew
+/Flags 35
+/FontBBox [ -250 -250 750 875 ]
+/MissingWidth 625
+/StemV 113
+/StemH 113
+/ItalicAngle 0
+/CapHeight 875
+/XHeight 612
+/Ascent 875
+/Descent -250
+/Leading 125
+/MaxWidth 625
+/AvgWidth 625
+>>
+endobj
+27 0 obj
+<<
+/Type /Font
+/Subtype /TrueType
+/Name /F5
+/BaseFont /Arial,Bold
+/FirstChar 31
+/LastChar 255
+/Widths [ 750 278 333 474 556 556 889 722 238 333 333 389 584 278 333 278 
+278 556 556 556 556 556 556 556 556 556 556 333 333 584 584 584 
+611 975 722 722 722 722 667 611 778 722 278 556 722 611 833 722 
+778 667 778 722 667 611 722 667 944 667 667 611 333 278 333 584 
+556 333 556 611 556 611 556 333 611 611 278 278 556 278 889 611 
+611 611 611 389 556 333 611 556 778 556 556 500 389 280 389 584 
+750 556 750 278 556 500 1000 556 556 333 1000 667 333 1000 750 750 
+750 750 278 278 500 500 350 556 1000 333 1000 556 333 944 750 750 
+667 278 333 556 556 556 556 280 556 333 737 370 556 584 333 737 
+552 400 549 333 333 333 576 556 278 333 333 365 556 834 834 834 
+611 722 722 722 722 722 722 1000 722 667 667 667 667 278 278 278 
+278 722 722 778 778 778 778 778 584 778 722 722 722 722 667 667 
+611 556 556 556 556 556 556 889 556 556 556 556 556 278 278 278 
+278 611 611 611 611 611 611 611 549 611 611 611 611 611 556 611 
+556 ]
+/Encoding /WinAnsiEncoding
+/FontDescriptor 28 0 R
+>>
+endobj
+28 0 obj
+<<
+/Type /FontDescriptor
+/FontName /Arial,Bold
+/Flags 16416
+/FontBBox [ -250 -250 1300 1000 ]
+/MissingWidth 750
+/StemV 159
+/StemH 159
+/ItalicAngle 0
+/CapHeight 1000
+/XHeight 700
+/Ascent 1000
+/Descent -250
+/Leading 250
+/MaxWidth 1083
+/AvgWidth 500
+>>
+endobj
+35 0 obj
+<<
+/Type /Font
+/Subtype /TrueType
+/Name /F6
+/BaseFont /Symbol
+/FirstChar 31
+/LastChar 255
+/Widths [ 600 250 333 713 500 549 833 778 439 333 333 500 549 250 549 250 
+278 500 500 500 500 500 500 500 500 500 500 278 278 549 549 549 
+444 549 722 667 722 612 611 763 603 722 333 631 722 686 889 722 
+722 768 741 556 592 611 690 439 768 645 795 611 333 863 333 658 
+500 500 631 549 549 494 439 521 411 603 329 603 549 549 576 521 
+549 549 521 549 603 439 576 713 686 493 686 494 480 200 480 549 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 600 
+600 600 620 247 549 167 713 500 753 753 753 753 1042 987 603 987 
+603 400 549 411 549 549 713 494 460 549 549 549 549 1000 603 1000 
+658 823 686 795 987 768 768 823 768 768 713 713 713 713 713 713 
+713 768 713 790 790 890 823 549 250 713 603 603 1042 987 603 987 
+603 494 329 790 790 786 713 384 384 384 384 384 384 494 494 494 
+494 600 329 274 686 686 686 384 384 384 384 384 384 494 494 494 
+600 ]
+/FontDescriptor 36 0 R
+>>
+endobj
+36 0 obj
+<<
+/Type /FontDescriptor
+/FontName /Symbol
+/Flags 6
+/FontBBox [ -250 -250 1276 1000 ]
+/MissingWidth 625
+/StemV 113
+/StemH 113
+/ItalicAngle 0
+/CapHeight 1000
+/XHeight 700
+/Ascent 1000
+/Descent -250
+/Leading 250
+/MaxWidth 1063
+/AvgWidth 625
+>>
+endobj
+2 0 obj
+[ /PDF /Text  ]
+endobj
+5 0 obj
+<<
+/Kids [4 0 R 18 0 R 21 0 R 24 0 R 29 0 R 32 0 R ]
+/Count 6
+/Type /Pages
+/Parent 41 0 R
+>>
+endobj
+38 0 obj
+<<
+/Kids [37 0 R ]
+/Count 1
+/Type /Pages
+/Parent 41 0 R
+>>
+endobj
+41 0 obj
+<<
+/Kids [5 0 R 38 0 R ]
+/Count 7
+/Type /Pages
+/MediaBox [ 0 0 612 792 ]
+>>
+endobj
+1 0 obj
+<<
+/Creator <FEFF004D006900630072006F0073006F0066007400200057006F007200640020>
+/CreationDate (D:20020313114656)
+/Title <FEFF004400680072007900730074006F006E006500460075006C006C005400650078007400760031002E0035002E0064006F0063>
+/Author <FEFF00640065006600610075006C0074>
+/Producer (Acrobat PDFWriter 4.05 for Windows)
+>>
+endobj
+3 0 obj
+<<
+/Pages 41 0 R
+/Type /Catalog
+>>
+endobj
+xref
+0 42
+0000000000 65535 f
+0000055619 00000 n
+0000055286 00000 n
+0000055962 00000 n
+0000005786 00000 n
+0000055320 00000 n
+0000045498 00000 n
+0000046612 00000 n
+0000046886 00000 n
+0000048006 00000 n
+0000048285 00000 n
+0000049415 00000 n
+0000049705 00000 n
+0000050832 00000 n
+0000000021 00000 n
+0000005762 00000 n
+0000051121 00000 n
+0000052237 00000 n
+0000012114 00000 n
+0000005969 00000 n
+0000012090 00000 n
+0000018251 00000 n
+0000012272 00000 n
+0000018227 00000 n
+0000026952 00000 n
+0000018409 00000 n
+0000026928 00000 n
+0000052514 00000 n
+0000053636 00000 n
+0000034195 00000 n
+0000027136 00000 n
+0000034171 00000 n
+0000041051 00000 n
+0000034379 00000 n
+0000041027 00000 n
+0000053921 00000 n
+0000055009 00000 n
+0000045339 00000 n
+0000055436 00000 n
+0000041235 00000 n
+0000045315 00000 n
+0000055519 00000 n
+trailer
+<<
+/Size 42
+/Root 3 0 R
+/Info 1 0 R
+/ID [<d417f1d8ec1fe483bce0b4dd3427a5a2><d417f1d8ec1fe483bce0b4dd3427a5a2>]
+>>
+startxref
+56018
+%%EOF
