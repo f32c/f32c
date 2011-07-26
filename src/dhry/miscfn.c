@@ -6,6 +6,7 @@
 static char malloc_pool[128];
 static int malloc_i = 0;
 
+
 /* XXX this simplified malloc hack only works for the dhrystone benchmark! */
 void *
 malloc(int size)
@@ -74,6 +75,15 @@ strcpy(char *dst, const char *src)
 void
 memcpy(char *dst, const char *src, int len)
 {
+
+	/* Check for aligned pointers for faster operation */
+	if ((((int)src | (int)dst) & 3) == 0) {
+		for (; len > 3; len -= 4) {
+			*((int *)dst) = *((int *)src);
+			src += 4;
+			dst += 4;
+		}
+	}
 
 	while (len--)
 		*dst++ = *src++;
