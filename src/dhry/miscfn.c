@@ -23,6 +23,7 @@ malloc(int size __attribute__((unused)))
 int
 strcmp(const char *s1, const char *s2)
 {
+#if 0
 	int c1, c2;
  
 	/* Check for aligned pointers for faster operation */
@@ -46,6 +47,28 @@ strcmp(const char *s1, const char *s2)
 		c2 = *(const unsigned char *)s2++;
 	} while (c1 != 0 && c1 == c2);
 	return (c1 - c2);
+#else
+	int res;
+
+	__asm (
+		".set noreorder			\n"
+		"1:				\n"
+		"	lbu	$2, 0($4)	\n"
+		"	lbu	$3, 0($5)	\n"
+		"	beqz	$2, 2f		\n"
+		"	addiu	$4, $4, 1	\n"
+		"	beq	$2, $3, 1b	\n"
+		"	addiu	$5, $5, 1	\n"
+		"2:				\n"
+		"	jr	$31		\n"
+		"	subu	$2, $2, $3	\n"
+		: "=r" (res)
+		: "r" (s1), "r" (s2)
+	);
+
+	/* XXX revisit return - missing a nop after jr ra */
+	return(res);
+#endif
 }
 
 
