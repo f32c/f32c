@@ -44,6 +44,7 @@ strcmp(const char *s1, const char *s2)
 void
 strcpy(char *dst, const char *src)
 {
+#if 0
 	int c;
  
 	/* Check for aligned pointers for faster operation */
@@ -68,6 +69,19 @@ strcpy(char *dst, const char *src)
 		c = *src++;
 		*dst++ = c;
 	} while (c != 0);
+#else
+	__asm (
+		".set noreorder			\n"
+		"byte_loop:			\n"
+		"	lb	$2, 0($5)	\n"
+		"	addiu	$5, $5, 1	\n"
+		"	addiu	$4, $4, 1	\n"
+		"	bnez	$2, byte_loop	\n"
+		"	sb	$2, -1($4)	\n"
+		:
+		: "r" (dst), "r" (src)
+	);
+#endif
 }
 
 
