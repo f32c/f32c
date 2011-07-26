@@ -54,7 +54,7 @@ strcmp(const char *s1, const char *s2)
 		".set noreorder			\n"
 		"	or	$2, $4, $5	\n"
 		"	andi	$2, $2, 0x3	\n"
-		"	bnez	$2, 2f		\n"
+		"	bnez	$2, 3f		\n"
 		"	lui	$6, 0x00ff	\n"
 		"	lui	$7, 0xff00	\n"
 		"	lw	$2, 0($4)	\n"
