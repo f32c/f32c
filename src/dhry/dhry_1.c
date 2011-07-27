@@ -95,7 +95,8 @@ main ()
   Ptr_Glob->Discr                       = Ident_1;
   Ptr_Glob->variant.var_1.Enum_Comp     = Ident_3;
   Ptr_Glob->variant.var_1.Int_Comp      = 40;
-  strcpy (Ptr_Glob->variant.var_1.Str_Comp, "DHRYSTONE PROGRAM, SOME STRING");
+  strcpy (Ptr_Glob->variant.var_1.Str_Comp, 
+          "DHRYSTONE PROGRAM, SOME STRING");
   strcpy (Str_1_Loc, "DHRYSTONE PROGRAM, 1'ST STRING");
 
   Arr_2_Glob [8][7] = 10;
@@ -124,7 +125,6 @@ main ()
     scanf ("%d", &n);
     Number_Of_Runs = n;
   }
-
   printf ("\n");
 
   printf ("Execution starts, %d runs through Dhrystone\n", Number_Of_Runs);
@@ -269,6 +269,7 @@ main ()
     printf ("%6.1f \n", Dhrystones_Per_Second);
     printf ("\n");
   }
+  
 #endif /* NOTYET */
 #define TSC_TICKS_PER_MS 3125	/* f32c TSC freq = 3.125 MHz */
     if (User_Time < 0)
@@ -385,4 +386,5 @@ register int    l;
         while (l--) *d++ = *s++;
 }
 #endif
+
 
