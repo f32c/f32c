@@ -227,14 +227,14 @@ main ()
   printf ("7.b	%d (0)\n", Ptr_Glob->Discr);
   printf ("7.c	%d (2)\n", Ptr_Glob->variant.var_1.Enum_Comp);
   printf ("7.d	%d (17)\n", Ptr_Glob->variant.var_1.Int_Comp);
-  printf ("7.e	%s (DHRYSTONE PROGRAM, SOME STRING)\n",
-    Ptr_Glob->variant.var_1.Str_Comp);
+  printf ("7.e	%s (%s)\n", Ptr_Glob->variant.var_1.Str_Comp,
+    "DHRYSTONE PROGRAM, SOME STRING");
   printf ("8.a	%d (impl-dep), same as above\n", (int) Next_Ptr_Glob->Ptr_Comp);
   printf ("8.b	%d (0)\n", Next_Ptr_Glob->Discr);
   printf ("8.c	%d (1)\n", Next_Ptr_Glob->variant.var_1.Enum_Comp);
   printf ("8.d	%d (18)\n", Next_Ptr_Glob->variant.var_1.Int_Comp);
-  printf ("8.e	%s (DHRYSTONE PROGRAM, SOME STRING)\n",
-    Next_Ptr_Glob->variant.var_1.Str_Comp);
+  printf ("8.e	%s (%s)\n", Next_Ptr_Glob->variant.var_1.Str_Comp,
+    "DHRYSTONE PROGRAM, SOME STRING");
   printf ("9	%d (5)\n", Int_1_Loc);
   printf ("10	%d (13)\n", Int_2_Loc);
   printf ("11	%d (7)\n", Int_3_Loc);
