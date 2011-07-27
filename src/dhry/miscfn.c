@@ -1,11 +1,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
+void _strcpy(char *, const char *);
 
 static char malloc_pool[128];
 static int malloc_i = 0;
-
 
 /* XXX this simplified malloc hack only works for the dhrystone benchmark! */
 void *
@@ -99,7 +100,7 @@ strcmp(const char *s1, const char *s2)
 
 
 void
-strcpy(char *dst, const char *src)
+_strcpy(char *dst, const char *src)
 {
 #if 0
 	int c;
@@ -156,6 +157,7 @@ strcpy(char *dst, const char *src)
 		"	bnez	$2, 2b		\n"
 		"	sb	$2, -1($4)	\n"
 		"3:				\n"
+		".set reorder			\n"
 		:
 		: "r" (dst), "r" (src)
 	);
