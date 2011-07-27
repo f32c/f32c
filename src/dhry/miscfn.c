@@ -188,7 +188,7 @@ memcpy(char *dst, const char *src, int len)
 		".set noat			\n"
 		"	or	$2, $4, $5	\n"
 		"	andi	$2, $2, 0x3	\n"
-		"	bnez	$2, 2f		\n"
+		"	bnez	$2, 3f		\n"
 		"1:				\n"
 		"	slti	$2, $6, 12	\n"
 		"	bnez	$2, 2f		\n"
