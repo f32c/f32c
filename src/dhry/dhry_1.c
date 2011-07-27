@@ -28,11 +28,6 @@ char            Ch_1_Glob,
 int             Arr_1_Glob [50];
 int             Arr_2_Glob [50] [50];
 
-const char *some_string = "DHRYSTONE PROGRAM, SOME STRING";
-const char *first_string = "DHRYSTONE PROGRAM, 1'ST STRING";
-const char *second_string = "DHRYSTONE PROGRAM, 2'ND STRING";
-const char *third_string = "DHRYSTONE PROGRAM, 3'RD STRING";
-
 extern char     *malloc ();
 Enumeration     Func_1 ();
   /* forward declaration necessary since Enumeration may not simply be int */
@@ -100,8 +95,8 @@ main ()
   Ptr_Glob->Discr                       = Ident_1;
   Ptr_Glob->variant.var_1.Enum_Comp     = Ident_3;
   Ptr_Glob->variant.var_1.Int_Comp      = 40;
-  strcpy (Ptr_Glob->variant.var_1.Str_Comp, some_string);
-  strcpy (Str_1_Loc, first_string);
+  strcpy (Ptr_Glob->variant.var_1.Str_Comp, "DHRYSTONE PROGRAM, SOME STRING");
+  strcpy (Str_1_Loc, "DHRYSTONE PROGRAM, 1'ST STRING");
 
   Arr_2_Glob [8][7] = 10;
         /* Was missing in published program. Without this statement,    */
@@ -162,7 +157,7 @@ main ()
       /* Ch_1_Glob == 'A', Ch_2_Glob == 'B', Bool_Glob == true */
     Int_1_Loc = 2;
     Int_2_Loc = 3;
-    strcpy (Str_2_Loc, second_string);
+    strcpy (Str_2_Loc, "DHRYSTONE PROGRAM, 2'ND STRING");
     Enum_Loc = Ident_2;
     Bool_Glob = ! Func_2 (Str_1_Loc, Str_2_Loc);
       /* Bool_Glob == 1 */
@@ -185,7 +180,7 @@ main ()
           /* then, not executed */
         {
         Proc_6 (Ident_1, &Enum_Loc);
-        strcpy (Str_2_Loc, third_string);
+        strcpy (Str_2_Loc, "DHRYSTONE PROGRAM, 3'RD STRING");
         Int_2_Loc = Run_Index;
         Int_Glob = Run_Index;
         }
@@ -232,18 +227,20 @@ main ()
   printf ("7.b	%d (0)\n", Ptr_Glob->Discr);
   printf ("7.c	%d (2)\n", Ptr_Glob->variant.var_1.Enum_Comp);
   printf ("7.d	%d (17)\n", Ptr_Glob->variant.var_1.Int_Comp);
-  printf ("7.e	%s (%s)\n", Ptr_Glob->variant.var_1.Str_Comp, some_string);
+  printf ("7.e	%s (DHRYSTONE PROGRAM, SOME STRING)\n",
+    Ptr_Glob->variant.var_1.Str_Comp);
   printf ("8.a	%d (impl-dep), same as above\n", (int) Next_Ptr_Glob->Ptr_Comp);
   printf ("8.b	%d (0)\n", Next_Ptr_Glob->Discr);
   printf ("8.c	%d (1)\n", Next_Ptr_Glob->variant.var_1.Enum_Comp);
   printf ("8.d	%d (18)\n", Next_Ptr_Glob->variant.var_1.Int_Comp);
-  printf ("8.e	%s (%s)\n", Next_Ptr_Glob->variant.var_1.Str_Comp, some_string);
+  printf ("8.e	%s (DHRYSTONE PROGRAM, SOME STRING)\n",
+    Next_Ptr_Glob->variant.var_1.Str_Comp);
   printf ("9	%d (5)\n", Int_1_Loc);
   printf ("10	%d (13)\n", Int_2_Loc);
   printf ("11	%d (7)\n", Int_3_Loc);
   printf ("12	%d (1)\n", Enum_Loc);
-  printf ("13	%s (%s)\n", Str_1_Loc, first_string);
-  printf ("14	%s (%s)\n", Str_2_Loc, second_string);
+  printf ("13	%s (%s)\n", Str_1_Loc, "DHRYSTONE PROGRAM, 1'ST STRING");
+  printf ("14	%s (%s)\n", Str_2_Loc, "DHRYSTONE PROGRAM, 2'ND STRING");
 
   User_Time = End_Time - Begin_Time;
 
