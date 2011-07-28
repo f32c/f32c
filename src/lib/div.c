@@ -5,8 +5,9 @@
 static uint32_t
 udivmod(uint32_t hi, uint32_t b, int do_mod)
 {
-	uint32_t a = b << 31;
 	uint32_t lo = 0;
+#if 0
+	uint32_t a = b << 31;
 	int i;
 
 	for (i = 0; i < 32; i++) {
@@ -18,6 +19,22 @@ udivmod(uint32_t hi, uint32_t b, int do_mod)
 		a = (a >> 1) | ((b & 2) << 30);
 		b >>= 1;
 	}
+#else
+	uint32_t bit = 1;
+
+	while (b < hi && bit && !(b & 0x80000000)) {
+		b <<= 1;
+		bit <<= 1;
+	}
+	while (bit) {
+		if (hi >= b) {
+			hi -= b;
+			lo |= bit;
+		}
+		bit >>= 1;
+		b >>= 1;
+	}
+#endif
 	if (do_mod)
 		return (hi);
 	return (lo);

@@ -129,7 +129,7 @@ main ()
 
   printf ("Execution starts, %d runs through Dhrystone\n", Number_Of_Runs);
 #else
-  Number_Of_Runs = 500000; /* XXX hardcoded */
+  Number_Of_Runs = 1000000; /* XXX hardcoded */
   printf ("\n\nDhrystone start: %d runs\n\n", Number_Of_Runs);
 #endif /* NOTYET */
 
