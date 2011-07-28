@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-void _strcpy(char *, const char *);
 
 static char malloc_pool[128];
 static int malloc_i = 0;
@@ -99,131 +98,14 @@ strcmp(const char *s1, const char *s2)
 }
 
 
-void
-_strcpy(char *dst, const char *src)
-{
-#if 0
-	int c;
- 
-	/* Check for aligned pointers for faster operation */
-	if ((((int)src | (int)dst) & 3) == 0) {
-		do {
-			c = *((int *)src);
-			if ((c & 0x00ff0000) == 0)
-				break;
-			if ((c & 0x0000ff00) == 0)
-				break;
-			if ((c & 0x000000ff) == 0)
-				break;
-			*((int *)dst) = c;
-			if ((c & 0xff000000) == 0)
-				return;
-			src += 4;
-			dst += 4;
-		} while (1);
-	}
-
-	do {
-		c = *src++;
-		*dst++ = c;
-	} while (c != 0);
-#else
-	__asm (
-		".set noreorder			\n"
-		"	or	$2, $4, $5	\n"
-		"	andi	$2, $2, 0x3	\n"
-		"	bnez	$2, 2f		\n"
-		"	lui	$6, 0x00ff	\n"
-		"	lw	$2, 0($5)	\n"
-		"	lui	$7, 0xff00	\n"
-		"1:				\n"
-		"	and	$3, $2, $6	\n"
-		"	beqz	$3, 2f		\n"
-		"	andi	$3, $2, 0xff00	\n"
-		"	beqz	$3, 2f		\n"
-		"	andi	$3, $2, 0x00ff	\n"
-		"	beqz	$3, 2f		\n"
-		"	sw	$2, 0($4)	\n"
-		"	and	$3, $2, $7	\n"
-		"	beqz	$3, 3f		\n"
-		"	addiu	$5, $5, 4	\n"
-		"	addiu	$4, $4, 4	\n"
-		"	b	1b		\n"
-		"	lw	$2, 0($5)	\n"
-		"2:				\n"
-		"	lb	$2, 0($5)	\n"
-		"	addiu	$5, $5, 1	\n"
-		"	addiu	$4, $4, 1	\n"
-		"	bnez	$2, 2b		\n"
-		"	sb	$2, -1($4)	\n"
-		"3:				\n"
-		".set reorder			\n"
-		:
-		: "r" (dst), "r" (src)
-	);
+/* memcpy() is required for -Os builds */
+#ifdef memcpy
+#undef memcpy
 #endif
-}
-
-
-/* memcpy() is likely to become builtin-inlined for anything but -Os */
 void
 memcpy(char *dst, const char *src, int len)
 {
 
-#if 0
-	/* Check for aligned pointers for faster operation */
-	if ((((int)src | (int)dst) & 3) == 0) {
-		for (; len > 3; len -= 4) {
-			*((int *)dst) = *((int *)src);
-			src += 4;
-			dst += 4;
-		}
-	}
-
-	while (len--)
-		*dst++ = *src++;
-#else
-	__asm (
-		".set noreorder			\n"
-		".set noat			\n"
-		"	or	$2, $4, $5	\n"
-		"	andi	$2, $2, 0x3	\n"
-		"	bnez	$2, 3f		\n"
-		"1:				\n"
-		"	slti	$2, $6, 12	\n"
-		"	bnez	$2, 2f		\n"
-		"	lw	$2, 0($5)	\n"
-		"	lw	$3, 4($5)	\n"
-		"	lw	$at, 8($5)	\n"
-		"	addiu	$5, $5, 12	\n"
-		"	addiu	$4, $4, 12	\n"
-		"	sw	$2, -12($4)	\n"
-		"	sw	$3, -8($4)	\n"
-		"	sw	$at, -4($4)	\n"
-		"	b	1b		\n"
-		"	addiu	$6, $6, -12	\n"
-		"2:				\n"
-		"	slti	$2, $6, 4	\n"
-		"	bnez	$2, 3f		\n"
-		"	lw	$2, 0($5)	\n"
-		"	addiu	$5, $5, 4	\n"
-		"	addiu	$4, $4, 4	\n"
-		"	sw	$2, -4($4)	\n"
-		"	b	2b		\n"
-		"	addiu	$6, $6, -4	\n"
-		"3:				\n"
-		"	beqz	$6, 4f		\n"
-		"	addiu	$6, $6, -1	\n"
-		"	lb	$2, 0($5)	\n"
-		"	addiu	$5, $5, 1	\n"
-		"	addiu	$4, $4, 1	\n"
-		"	b	3b		\n"
-		"	sb	$2, -1($4)	\n"
-		"4:				\n"
-		".set reorder			\n"
-		".set at			\n"
-		:
-		: "r" (dst), "r" (src), "r" (len)
-	);
-#endif
+	_memcpy(dst, src, len);
 }
+
