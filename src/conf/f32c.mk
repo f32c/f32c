@@ -59,6 +59,7 @@ MK_CFLAGS += -falign-jumps=4 -falign-loops=4
 MK_CFLAGS += -fweb -frename-registers
 MK_CFLAGS += -freorder-blocks
 MK_CFLAGS += -mno-shared
+MK_CFLAGS += -fgcse-sm -fgcse-las
 #MK_CFLAGS += -funsafe-loop-optimizations -Wunsafe-loop-optimizations
 #MK_CFLAGS += --param max-delay-slot-insn-search=16
 #MK_CFLAGS += --param max-delay-slot-live-search=16
