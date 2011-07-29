@@ -15,8 +15,8 @@ include ../conf/f32c.mk
 
 # Specialized build options for dhry_*.c files
 
-dhry_1.o:	Makefile dhry.h
+dhry_1.o:	Makefile dhry.h dhry_1.c
 	${CC} ${DHRY_CFLAGS} -c -o dhry_1.o dhry_1.c
 
-dhry_2.o:	Makefile dhry.h
+dhry_2.o:	Makefile dhry.h dhry_2.c
 	${CC} ${DHRY_CFLAGS} -c -o dhry_2.o dhry_2.c
