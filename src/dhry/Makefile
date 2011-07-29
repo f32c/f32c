@@ -4,10 +4,10 @@ PROG = dhry
 CSTD = KnR
 WARNS = 1
 
-DHRY_CFLAGS += -O3 -fpeel-loops
+DHRY_CFLAGS += -Os -fpeel-loops
 
 CFILES = dhry_1.c dhry_2.c miscfn.c \
-	../lib/sio.c ../lib/div.c ../lib/printf.c
+	../lib/strcmp.c ../lib/div.c ../lib/printf.c ../lib/sio.c
 
 ASFILES = ../lib/start.S
 
