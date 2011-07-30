@@ -18,15 +18,16 @@ static inline int
 strcmp(const char *s1, const char *s2)
 {
 	int c1, c2;
+	const uint32_t t0 = 0x01010101;
+	const uint32_t t1 = 0x80808080;
 
 	/* Check for aligned pointers for faster operation on 32-bit words */
 	if ((((int)s1 | (int)s2) & 3) == 0) {
 		/* Loop until words do not match */
 		for (; (c1 = *((int *)s1)) == *((int *)s2);) {
 			/* Check if the word contains any zero bytes */
-			if (((((uint32_t)c1) - 0x01010101) &
-			    (~((uint32_t)c1)) & 0x80808080))
-				break;
+			if (((((uint32_t)c1) - t0) & (~((uint32_t)c1)) & t1))
+				return(0);
 			s1 += 4;
 			s2 += 4;
 		}
