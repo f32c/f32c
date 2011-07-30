@@ -36,6 +36,7 @@ entity pipeline is
     generic (
 	-- ISA options
 	C_mult_enable: boolean := true;
+	C_has_mfhi: boolean := true; -- false saves 5 LUTs
 	C_branch_likely: boolean := false;
 
 	-- optimization options
@@ -189,9 +190,9 @@ architecture Behavioral of pipeline is
     signal WB_writeback_data: std_logic_vector(31 downto 0);
 
     -- multiplication unit
-    signal mul_a, mul_b: std_logic_vector(32 downto 0);
     signal mul_res: std_logic_vector(65 downto 0);
-    signal hi_lo: std_logic_vector(63 downto 0);
+    signal R_mul_a, R_mul_b: std_logic_vector(32 downto 0);
+    signal R_hi_lo: std_logic_vector(63 downto 0);
 
     -- signals used for debugging only
     signal reg_trace_data: std_logic_vector(31 downto 0);
@@ -553,10 +554,10 @@ begin
 
     -- MFHI, MFLO, link PC+8 -- XXX what about MFC0 / MFC1?
     EX_from_alt <=
-      hi_lo(63 downto 32) when C_mult_enable and
+      R_hi_lo(63 downto 32) when C_mult_enable and C_has_mfhi and
       ID_EX_op_major = "11" and ID_EX_op_minor(1) = '0' else
-      hi_lo(31 downto 0) when C_mult_enable and
-      ID_EX_op_major = "11" and ID_EX_op_minor(1) = '1' else
+      R_hi_lo(31 downto 0) when C_mult_enable and ID_EX_op_major = "11"
+      and (ID_EX_op_minor(1) = '1' or not C_has_mfhi) else
       ID_EX_PC_8 & "00";
 
     -- branch or not?
@@ -737,7 +738,7 @@ begin
     --
     G_multiplier:
     if C_mult_enable generate
-    mul_res <= mul_a * mul_b; -- infer asynchronous signed multiplier
+    mul_res <= R_mul_a * R_mul_b; -- infer asynchronous signed multiplier
     process (clk)
     begin
 	if falling_edge(clk) then
@@ -746,17 +747,20 @@ begin
 	      ID_EX_instruction(5 downto 1) = "01100") then
 		if (ID_EX_instruction(0) = '0') then
 		    -- signed
-		    mul_a <= EX_eff_reg1(31) & EX_eff_reg1;
-		    mul_b <= EX_eff_reg2(31) & EX_eff_reg2;
+		    R_mul_a <= EX_eff_reg1(31) & EX_eff_reg1;
+		    R_mul_b <= EX_eff_reg2(31) & EX_eff_reg2;
 		else
 		    -- unsigned
-		    mul_a <= '0' & EX_eff_reg1;
-		    mul_b <= '0' & EX_eff_reg2;
+		    R_mul_a <= '0' & EX_eff_reg1;
+		    R_mul_b <= '0' & EX_eff_reg2;
 		end if;
 	    end if;
-	    -- XXX revisit hi_lo write enable
-	    -- XXX don't update hi_lo if exception pending
-	    hi_lo <= mul_res(63 downto 0);
+	    -- XXX revisit R_hi_lo write enable
+	    -- XXX don't update R_hi_lo if exception pending
+	    if (C_has_mfhi) then
+		R_hi_lo(63 downto 32) <= mul_res(63 downto 32);
+	    end if;
+	    R_hi_lo(31 downto 0) <= mul_res(31 downto 0);
 	end if;
     end process;
     end generate; -- multiplier
@@ -826,8 +830,8 @@ begin
 	    when x"12" => trace_data <= D_b_instr;
 	    when x"13" => trace_data <= D_b_taken;
 	    --
-	    when x"1a" => trace_data <= hi_lo(63 downto 32);
-	    when x"1b" => trace_data <= hi_lo(31 downto 0);
+	    when x"1a" => trace_data <= R_hi_lo(63 downto 32);
+	    when x"1b" => trace_data <= R_hi_lo(31 downto 0);
 	    -- when x"1b" => trace_data <= debug_XXX;
 	    -- when x"1c" => trace_data <= BadVAddr;
 	    -- when x"1d" => trace_data <= EPC;
