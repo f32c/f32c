@@ -57,19 +57,12 @@ MK_CFLAGS += -finline-limit=16 -fmerge-all-constants
 MK_CFLAGS += -falign-functions=4 -falign-labels=4
 MK_CFLAGS += -falign-jumps=4 -falign-loops=4
 MK_CFLAGS += -fweb -frename-registers
-MK_CFLAGS += -freorder-blocks
-MK_CFLAGS += -mno-shared
+MK_CFLAGS += -freorder-blocks -fpeel-loops
 MK_CFLAGS += -fgcse-sm -fgcse-las
-#MK_CFLAGS += -funsafe-loop-optimizations -Wunsafe-loop-optimizations
-#MK_CFLAGS += --param max-delay-slot-insn-search=16
-#MK_CFLAGS += --param max-delay-slot-live-search=16
+MK_CFLAGS += -mno-shared
 
 # No zero-filled BSS
 MK_CFLAGS += -fno-zero-initialized-in-bss
-
-# Other interesting options:
-# MK_CFLAGS += -fPIC -fpic
-# -membedded-data
 
 MK_LDFLAGS += -Ttext ${LOADADDR} -N ${ENDIANFLAGS}
 
