@@ -32,36 +32,35 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity alu is
-	port(
-		x, y: in std_logic_vector(31 downto 0);
-		funct: in std_logic_vector(1 downto 0);
-		addsubx: out std_logic_vector(32 downto 0);
-		logic: out std_logic_vector(31 downto 0);
-		equal: out boolean
-	);
+    port(
+	x, y: in std_logic_vector(31 downto 0);
+	funct: in std_logic_vector(1 downto 0);
+	addsubx: out std_logic_vector(32 downto 0);
+	logic: out std_logic_vector(31 downto 0);
+	equal: out boolean
+    );
 end alu;
 
 architecture Behavioral of alu is
-	signal ex, ey: std_logic_vector(32 downto 0);
+    signal ex, ey: std_logic_vector(32 downto 0);
 begin
 
-	ex <= '0' & x;
-	ey <= '0' & y;
+    ex <= '0' & x;
+    ey <= '0' & y;
 	
-	addsubx <= ex + ey when funct(1) = '0' else ex - ey;
+    addsubx <= ex + ey when funct(1) = '0' else ex - ey;
 	
-	process(x, y, funct)
-	begin
-		case funct is
-			when "00" =>	logic <= x and y;
-			when "01" =>	logic <= x or y;
-			when "10" =>	logic <= x xor y;
-			when "11" =>	logic <= not(x or y);
-			when others =>
-		end case;
-	end process;
+    process(x, y, funct)
+    begin
+	case funct is
+	when "00" =>	logic <= x and y;
+	when "01" =>	logic <= x or y;
+	when "10" =>	logic <= x xor y;
+	when others => 	logic <= not(x or y);
+	end case;
+    end process;
 	
-	equal <= x = y;
+    equal <= x = y;
 	
 end Behavioral;
 
