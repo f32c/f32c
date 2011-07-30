@@ -34,7 +34,8 @@ use IEEE.numeric_std.ALL;
 
 entity sio is
     generic (
-	C_clk_freq: integer
+	C_clk_freq: integer;
+	C_tx_only: boolean := false
     );
     port (
 	ce, clk: in std_logic;
@@ -49,7 +50,7 @@ end sio;
 --
 -- SIO -> CPU data word:
 -- 31..16  unused
--- 15..8   rx_fifo_byte_0
+-- 15..8   rx_byte
 --  7..4   reserved (unused)
 --     3   set if tx busy
 --     2   set if rx fifo overrun occured, reset on read
@@ -84,8 +85,9 @@ begin
     --
 
     tx_running <= '0' when tx_phase = "0000" else '1';
-    bus_out(3 downto 0) <= tx_running & rx_overruns & rx_cnt;
-    bus_out(15 downto 8) <= rx_fifo;
+    bus_out(3) <= tx_running;
+    bus_out(2 downto 0) <= rx_overruns & rx_cnt when not C_tx_only else "000";
+    bus_out(15 downto 8) <= rx_fifo when not C_tx_only else x"00";
     txd <= tx_ser(0);
 
     process(clk)
@@ -121,23 +123,25 @@ begin
 	    end if;
 
 	    -- rx logic
-	    if (rx_phase = "0000") then
-		if (rxd = '0') then
-		    -- start bit, delay further sampling for 0.5 T
-		    rx_phase <= "0001";
-		    rx_clkcnt <= '0' & clkdiv(15 downto 1);
-		end if;
-	    else
-		rx_clkcnt <= rx_clkcnt + 1;
-		if (rx_clkcnt = clkdiv) then
-		    rx_clkcnt <= x"0000";
-		    rx_des <= rxd & rx_des(7 downto 1);
-		    rx_phase <= rx_phase + 1;
-		    if (rx_phase = "1010") then
-			rx_phase <= "0000";
-			rx_cnt <= rx_cnt + 1;
-			rx_fifo(7 downto 0) <= rx_des(7 downto 0);
-			-- XXX properly detect fifo overruns
+	    if (not C_tx_only) then
+		if (rx_phase = "0000") then
+		    if (rxd = '0') then
+			-- start bit, delay further sampling for 0.5 T
+			rx_phase <= "0001";
+			rx_clkcnt <= '0' & clkdiv(15 downto 1);
+		    end if;
+		else
+		    rx_clkcnt <= rx_clkcnt + 1;
+		    if (rx_clkcnt = clkdiv) then
+			rx_clkcnt <= x"0000";
+			rx_des <= rxd & rx_des(7 downto 1);
+			rx_phase <= rx_phase + 1;
+			if (rx_phase = "1010") then
+			    rx_phase <= "0000";
+			    rx_cnt <= rx_cnt + 1;
+			    rx_fifo(7 downto 0) <= rx_des(7 downto 0);
+			    -- XXX properly detect fifo overruns
+			end if;
 		    end if;
 		end if;
 	    end if;
