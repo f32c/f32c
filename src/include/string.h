@@ -2,18 +2,42 @@
 #ifndef _STRING_H_
 #define _STRING_H_
 
+#include <types.h>
 
-int strcmp(const char *, const char *);
 
-
-#define memcpy(dst, src, len) _memcpy(dst, src, len)
-
+#define	memcpy(dst, src, len) _memcpy(dst, src, len)
 
 #define	strcpy(dst, src)					\
 	if (sizeof(src) != sizeof(void *))			\
 		_memcpy((dst), (src), sizeof(src));		\
 	else							\
 		_strcpy(dst, src);
+
+
+static inline int
+strcmp(const char *s1, const char *s2)
+{
+	int c1, c2;
+
+	/* Check for aligned pointers for faster operation on 32-bit words */
+	if ((((int)s1 | (int)s2) & 3) == 0) {
+		/* Loop until words do not match */
+		for (; (c1 = *((int *)s1)) == *((int *)s2);) {
+			/* Check if the word contains any zero bytes */
+			if (((((uint32_t)c1) - 0x01010101) &
+			    (~((uint32_t)c1)) & 0x80808080))
+				break;
+			s1 += 4;
+			s2 += 4;
+		}
+	}
+
+	do {
+		c1 = *(const unsigned char *)s1++;
+		c2 = *(const unsigned char *)s2++;
+	} while (c1 != 0 && c1 == c2);
+	return (c1 - c2);
+}
 
 
 static inline void
