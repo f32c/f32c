@@ -28,3 +28,19 @@ ID stage stall causes:
 - load-use hazard: operand target of LD in EX stage
 	- must insert bubble in EX
 
+
+Area optimized synthesis @ r459, Lattice XP2-8E-7, 81.25 MHz:
+  Number of registers:    808
+      PFU registers:    785
+      PIO registers:    23
+   Number of SLICEs:          1072 out of  4176 (26%)
+      SLICEs(logic/ROM):       976 out of  3420 (29%)
+      SLICEs(logic/ROM/RAM):    96 out of   756 (13%)
+          As RAM:           96 out of   756 (13%)
+          As Logic/ROM:      0 out of   756 (0%)
+   Number of logic LUT4s:     1241
+   Number of distributed RAM:  96 (192 LUT4s)
+   Number of ripple logic:    136 (272 LUT4s)
+   Number of shift registers:   0
+   Total number of LUT4s:     1705
+
