@@ -101,7 +101,7 @@ architecture Behavioral of pipeline is
 	signal ID_mem_cycle, ID_mem_write: std_logic;
 	signal ID_mem_size: std_logic_vector(1 downto 0);
 	signal ID_mem_read_sign_extend: std_logic;
-	signal ID_latency: std_logic;
+	signal ID_latency: std_logic_vector(1 downto 0);
 	signal ID_cop0: std_logic;
 	signal ID_EX_PC_8: std_logic_vector(31 downto 2);
 	signal ID_EX_bpredict_score: std_logic_vector(1 downto 0);
@@ -122,7 +122,7 @@ architecture Behavioral of pipeline is
 	signal ID_EX_mem_size: std_logic_vector(1 downto 0);
 	signal ID_EX_mem_read_sign_extend: std_logic;
 	signal ID_EX_partial_load: boolean := true; -- XXX bootstrapping
-	signal ID_EX_latency: std_logic;
+	signal ID_EX_latency: std_logic_vector(1 downto 0);
 	signal ID_EX_cop0: std_logic;
 	signal ID_EX_instruction: std_logic_vector(31 downto 0); -- XXX debugging only
 	signal ID_EX_PC: std_logic_vector(31 downto 2); -- XXX debugging only
@@ -363,9 +363,9 @@ begin
 	ID_running <= ID_EX_cancel_next or
 		(EX_running and not ID_EX_partial_load and
 		(ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
-		ID_EX_latency = '0') and
+		ID_EX_latency = "00") and
 		(ID_reg2_zero or ID_ignore_reg2 or
-		ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = '0'));
+		ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = "00"));
 	end generate;
 
 	G_ID_no_forwarding:

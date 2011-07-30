@@ -54,7 +54,7 @@ entity idecode is
 		mem_write: out std_logic;
 		mem_size: out std_logic_vector(1 downto 0);
 		mem_read_sign_extend: out std_logic;
-		latency: out std_logic;
+		latency: out std_logic_vector(1 downto 0);
 		cop0, cop1: out std_logic
 	);  
 end idecode;
@@ -158,7 +158,7 @@ begin
 		op_major <= "00"; -- ALU
 		op_minor <= "000"; -- ADD
 		mem_cycle <= '0'; -- not a memory operation
-		latency <= '0'; -- result available immediately after EX stage
+		latency <= "00"; -- result available immediately after EX stage
 		do_sign_extend <= true;
 		
 		if x_special then
@@ -171,7 +171,7 @@ begin
 			end if;
 			if fncode(5 downto 3) = "000" then -- shift
 				op_major <= "10"; -- shift
-				latency <= '1';
+				latency <= "01";
 			end if;
 			if fncode(5 downto 4) = "01" then -- MUL/DIV/MFHI/MFLO/MTHI/MTLO
 				op_major <= "11"; -- mul_et_al
@@ -193,7 +193,7 @@ begin
 
 		if opcode(5 downto 4) = "10" then
 			mem_cycle <= '1';
-			latency <= '1'; -- load-use hazard prevention
+			latency <= "01"; -- resolve load-use hazard
 		end if;
 	end process;
 	
