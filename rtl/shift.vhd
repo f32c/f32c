@@ -41,10 +41,14 @@ entity shift is
 	shamt_1_2_4: in std_logic_vector(2 downto 0);
 	funct_8_16, funct_1_2_4: in std_logic_vector(1 downto 0);
 	stage8_in, stage1_in: in std_logic_vector(31 downto 0);
+	stage16_out, stage4_out: out std_logic_vector(31 downto 0);
 	mem_multicycle_lh_lb: in boolean;
-	mem_read_sign_extend: in std_logic;
-	mem_size:in std_logic;
-	stage16_out, stage4_out: out std_logic_vector(31 downto 0)
+	mem_read_sign_extend_multicycle: in std_logic;
+	mem_size_multicycle: in std_logic;
+	mem_read_sign_extend_pipelined: in std_logic;
+	mem_size_pipelined: in std_logic_vector(1 downto 0);
+        mem_lh_lb_align_in: in std_logic_vector(31 downto 0);
+        mem_lh_lb_align_out: out std_logic_vector(31 downto 0)
     );
 end shift;
 
@@ -105,11 +109,12 @@ begin
 	stage2(31 downto 4) when "11",
 	stage2 when others;
    	
-    process(stage4, mem_multicycle_lh_lb, mem_read_sign_extend, mem_size)
+    process(stage4, mem_multicycle_lh_lb, mem_read_sign_extend_multicycle,
+      mem_size_multicycle)
     begin
 	if C_multicycle_lh_lb and mem_multicycle_lh_lb then
-	    if mem_size = '0' then -- byte load
-		if mem_read_sign_extend = '1' then
+	    if mem_size_multicycle = '0' then -- byte load
+		if mem_read_sign_extend_multicycle = '1' then
 		    if stage4(7) = '1' then
 			stage4_out <= x"ffffff" & stage4(7 downto 0);
 		    else
@@ -119,7 +124,7 @@ begin
 		    stage4_out <= x"000000" & stage4(7 downto 0);
 		end if;
 	    else -- half word load
-		if mem_read_sign_extend = '1' then
+		if mem_read_sign_extend_multicycle = '1' then
 		    if stage4(15) = '1' then
 			stage4_out <= x"ffff" & stage4(15 downto 0);
 		    else
@@ -134,5 +139,14 @@ begin
 	end if;
     end process;
 
+    process(mem_lh_lb_align_in, mem_read_sign_extend_pipelined,
+      mem_size_pipelined)
+    begin
+	if C_multicycle_lh_lb then
+	    mem_lh_lb_align_out <= mem_lh_lb_align_in;
+	else
+	    mem_lh_lb_align_out <= mem_lh_lb_align_in;
+	end if;
+    end process;
 end Behavioral;
 
