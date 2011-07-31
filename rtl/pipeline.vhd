@@ -40,6 +40,7 @@ entity pipeline is
 	C_branch_likely: boolean := false;
 
 	-- optimization options
+	C_multicycle_lh_lb: boolean := true;
 	C_branch_prediction: boolean := true;
 	C_result_forwarding: boolean := true;
 	C_fast_ID: boolean := true;
@@ -128,7 +129,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_mem_cycle, ID_EX_mem_write: std_logic;
     signal ID_EX_mem_size: std_logic_vector(1 downto 0);
     signal ID_EX_mem_read_sign_extend: std_logic;
-    signal ID_EX_partial_load: boolean := true; -- XXX bootstrapping
+    signal ID_EX_multicycle_lh_lb: boolean := false;
     signal ID_EX_latency: std_logic_vector(1 downto 0);
     signal ID_EX_cop0: std_logic;
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
@@ -166,7 +167,7 @@ architecture Behavioral of pipeline is
     signal EX_MEM_shift_funct: std_logic_vector(1 downto 0);
     signal EX_MEM_to_shift: std_logic_vector(31 downto 0);
     signal EX_MEM_mem_size: std_logic_vector(1 downto 0);
-    signal EX_MEM_partial_load: boolean;
+    signal EX_MEM_multicycle_lh_lb: boolean := false;
     signal EX_MEM_mem_byte_we: std_logic_vector(3 downto 0);
     signal EX_MEM_op_major: std_logic_vector(1 downto 0);
     signal EX_MEM_instruction: std_logic_vector(31 downto 0); -- debugging only
@@ -183,7 +184,7 @@ architecture Behavioral of pipeline is
     signal MEM_WB_writeback_addr: std_logic_vector(4 downto 0);
     signal MEM_WB_write_enable: std_logic;
     signal MEM_WB_ex_data, MEM_WB_mem_data: std_logic_vector(31 downto 0);
-    signal MEM_WB_partial_load: boolean;
+    signal MEM_WB_multicycle_lh_lb: boolean := false;
     signal MEM_WB_instruction: std_logic_vector(31 downto 0); -- debugging only
 	
     -- pipeline stage 5: register writeback
@@ -340,7 +341,7 @@ begin
     G_ID_forwarding:
     if C_result_forwarding generate
     ID_running <= ID_EX_cancel_next or
-      (EX_running and not ID_EX_partial_load and
+      (EX_running and not ID_EX_multicycle_lh_lb and
       (ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
       ID_EX_latency = "00") and (ID_reg2_zero or ID_ignore_reg2 or
       ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = "00"));
@@ -349,7 +350,7 @@ begin
     G_ID_no_forwarding:
     if not C_result_forwarding generate
     ID_running <= ID_EX_cancel_next or
-      (EX_running and not ID_EX_partial_load and
+      (EX_running and not ID_EX_multicycle_lh_lb and
       not (ID_fwd_ex_reg1 or ID_fwd_mem_reg1) and
       (ID_ignore_reg2 or not (ID_fwd_ex_reg2 or ID_fwd_mem_reg2)));
     end generate;
@@ -385,15 +386,15 @@ begin
     begin
 	if rising_edge(clk) then
 	    if EX_running then
-		if ID_EX_partial_load then
+		if C_multicycle_lh_lb and ID_EX_multicycle_lh_lb then
 		    -- byte / half word load, insert an arithm shift right cycle
 		    -- XXX must stall the ID stage - revisit!!!
-		    ID_EX_partial_load <= not EX_MEM_partial_load;
+		    ID_EX_multicycle_lh_lb <= not EX_MEM_multicycle_lh_lb;
 		    ID_EX_mem_cycle <= '0';
 		    ID_EX_op_major <= "10"; -- shift
 		    ID_EX_immediate(2) <= '0'; -- shift immediate
 		    ID_EX_immediate(1 downto 0) <= "10"; -- shift right logical
-		    if not EX_MEM_partial_load then
+		    if not EX_MEM_multicycle_lh_lb then
 			-- shift amount
 			ID_EX_immediate(10 downto 6) <= EX_2bit_add & "000";
 		    end if;
@@ -442,8 +443,9 @@ begin
 		    ID_EX_op_minor <= ID_op_minor;
 		    ID_EX_mem_write <= ID_mem_write;
 		    ID_EX_mem_size <= ID_mem_size;
-		    ID_EX_partial_load <= ID_mem_cycle = '1' and
-		    ID_mem_write = '0' and ID_mem_size(1) = '0';
+		    ID_EX_multicycle_lh_lb <=
+		      C_multicycle_lh_lb and ID_mem_cycle = '1' and
+		      ID_mem_write = '0' and ID_mem_size(1) = '0';
 		    ID_EX_mem_read_sign_extend <= ID_mem_read_sign_extend;
 		    ID_EX_branch_condition <= ID_branch_condition;
 		    ID_EX_PC_8 <= IF_ID_PC_4 + 1;
@@ -528,11 +530,14 @@ begin
 
     -- instantiate the barrel shifter
     shift: entity shift
+    generic map (
+	C_multicycle_lh_lb => C_multicycle_lh_lb
+    )
     port map (
 	shamt_8_16 => EX_shamt(4 downto 3), funct_8_16 => EX_shift_funct_8_16,
 	shamt_1_2_4 => EX_MEM_shamt_1_2_4, funct_1_2_4 => EX_MEM_shift_funct,
 	stage8_in => EX_eff_reg2, stage16_out => EX_from_shift,
-	mem_partial_load => MEM_WB_partial_load,
+	mem_multicycle_lh_lb => MEM_WB_multicycle_lh_lb,
 	mem_read_sign_extend => EX_MEM_mem_read_sign_extend,
 	mem_size => EX_MEM_mem_size(0),
 	stage1_in => EX_MEM_to_shift, stage4_out => MEM_from_shift
@@ -590,7 +595,8 @@ begin
 		EX_MEM_mem_data_out <= EX_from_shift;
 		EX_MEM_writeback_addsub <= EX_from_alu_addsubx(31 downto 0);
 		EX_MEM_mem_size <= ID_EX_mem_size;
-		EX_MEM_partial_load <= ID_EX_partial_load;
+		EX_MEM_multicycle_lh_lb <=
+		  C_multicycle_lh_lb and ID_EX_multicycle_lh_lb;
 		EX_MEM_mem_byte_we <= EX_mem_byte_we;
 		EX_MEM_shamt_1_2_4 <= EX_shamt(2 downto 0);
 		EX_MEM_shift_funct <= ID_EX_immediate(1 downto 0);
@@ -709,7 +715,8 @@ begin
 		MEM_WB_instruction <= EX_MEM_instruction; -- debugging only
 		MEM_WB_mem_cycle <= EX_MEM_mem_cycle;
 		MEM_WB_writeback_addr <= EX_MEM_writeback_addr;
-		MEM_WB_partial_load <= EX_MEM_partial_load;
+		MEM_WB_multicycle_lh_lb <=
+		  C_multicycle_lh_lb and EX_MEM_multicycle_lh_lb;
 		if EX_MEM_writeback_addr = "00000" then
 		    MEM_WB_write_enable <= '0';
 		else
@@ -794,9 +801,9 @@ begin
     debug_XXX(23 downto 21) <= "000";
     debug_XXX(20) <= '1' when MEM_running else '0';
     debug_XXX(19 downto 17) <= "000";
-    debug_XXX(16) <= '1' when ID_EX_partial_load else '0';
+    debug_XXX(16) <= '1' when ID_EX_multicycle_lh_lb else '0';
     debug_XXX(15 downto 13) <= "000";
-    debug_XXX(12) <= '1' when EX_MEM_partial_load else '0';
+    debug_XXX(12) <= '1' when EX_MEM_multicycle_lh_lb else '0';
     debug_XXX(11 downto 9) <= "000";
     debug_XXX(8) <= '1' when ID_EX_cancel_next else '0';
     debug_XXX(7 downto 5) <= "000";
