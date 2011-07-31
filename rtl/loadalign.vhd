@@ -40,8 +40,8 @@ entity loadalign is
 	mem_read_sign_extend_pipelined: in std_logic;
 	mem_addr_offset: in std_logic_vector(1 downto 0);
 	mem_size_pipelined: in std_logic_vector(1 downto 0);
-        mem_align_in: in std_logic_vector(31 downto 0);
-        mem_align_out: out std_logic_vector(31 downto 0)
+	mem_align_in: in std_logic_vector(31 downto 0);
+	mem_align_out: out std_logic_vector(31 downto 0)
     );
 end loadalign;
 
