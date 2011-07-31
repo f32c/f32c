@@ -33,12 +33,15 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 
 entity shift is
-    port(
+    generic (
+	C_multicycle_lh_lb: boolean
+    );
+    port (
 	shamt_8_16: in std_logic_vector(1 downto 0);
 	shamt_1_2_4: in std_logic_vector(2 downto 0);
 	funct_8_16, funct_1_2_4: in std_logic_vector(1 downto 0);
 	stage8_in, stage1_in: in std_logic_vector(31 downto 0);
-	mem_partial_load: in boolean;
+	mem_multicycle_lh_lb: in boolean;
 	mem_read_sign_extend: in std_logic;
 	mem_size:in std_logic;
 	stage16_out, stage4_out: out std_logic_vector(31 downto 0)
@@ -102,9 +105,9 @@ begin
 	stage2(31 downto 4) when "11",
 	stage2 when others;
    	
-    process(stage4, mem_partial_load, mem_read_sign_extend, mem_size)
+    process(stage4, mem_multicycle_lh_lb, mem_read_sign_extend, mem_size)
     begin
-	if mem_partial_load then
+	if C_multicycle_lh_lb and mem_multicycle_lh_lb then
 	    if mem_size = '0' then -- byte load
 		if mem_read_sign_extend = '1' then
 		    if stage4(7) = '1' then
