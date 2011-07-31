@@ -152,8 +152,8 @@ architecture Behavioral of pipeline is
     signal EX_cancel_next: boolean;
     -- boundary to stage 4
     signal EX_MEM_writeback_addr: std_logic_vector(4 downto 0);
-    signal EX_MEM_writeback_addsub: std_logic_vector(31 downto 0);
-    signal EX_MEM_writeback_logic: std_logic_vector(31 downto 0);
+    signal EX_MEM_addsub_data: std_logic_vector(31 downto 0);
+    signal EX_MEM_logic_data: std_logic_vector(31 downto 0);
     signal EX_MEM_mem_data_out: std_logic_vector(31 downto 0);
     signal EX_MEM_branch_target: std_logic_vector(29 downto 0); -- XXX := C_init_PC(31 downto 2);
     signal EX_MEM_take_branch: boolean := true; -- XXX jump to C_init_PC addr
@@ -177,10 +177,12 @@ architecture Behavioral of pipeline is
     signal MEM_running, MEM_take_branch: boolean;
     signal MEM_bpredict_score: std_logic_vector(1 downto 0);
     signal MEM_bpredict_we: std_logic;
-    signal MEM_writeback_data: std_logic_vector(31 downto 0);
+    signal MEM_eff_data: std_logic_vector(31 downto 0);
     signal MEM_data_in, MEM_from_shift: std_logic_vector(31 downto 0);
     -- boundary to stage 5
     signal MEM_WB_mem_cycle: std_logic;
+    signal MEM_WB_mem_read_sign_extend: std_logic;
+    signal MEM_WB_mem_size: std_logic_vector(1 downto 0);
     signal MEM_WB_writeback_addr: std_logic_vector(4 downto 0);
     signal MEM_WB_write_enable: std_logic;
     signal MEM_WB_ex_data, MEM_WB_mem_data: std_logic_vector(31 downto 0);
@@ -188,7 +190,9 @@ architecture Behavioral of pipeline is
     signal MEM_WB_instruction: std_logic_vector(31 downto 0); -- debugging only
 	
     -- pipeline stage 5: register writeback
+    signal WB_eff_data: std_logic_vector(31 downto 0);
     signal WB_writeback_data: std_logic_vector(31 downto 0);
+    signal WB_mem_data_aligned: std_logic_vector(31 downto 0);
 
     -- multiplication unit
     signal mul_res: std_logic_vector(65 downto 0);
@@ -329,7 +333,7 @@ begin
 	rd1_addr => ID_reg1_addr, rd2_addr => ID_reg2_addr,
 	rdd_addr => trace_addr(4 downto 0), wr_addr => MEM_WB_writeback_addr,
 	rd1_data => ID_reg1_data, rd2_data => ID_reg2_data,
-	rdd_data => reg_trace_data, wr_data => WB_writeback_data,
+	rdd_data => reg_trace_data, wr_data => WB_eff_data,
 	wr_enable => MEM_WB_write_enable, clk => not clk
     );
 	
@@ -494,18 +498,18 @@ begin
     -- forward the results from later stages
     G_EX_forwarding:
     if C_result_forwarding generate
-    EX_eff_reg1 <= MEM_writeback_data when ID_EX_fwd_ex_reg1 else
-      WB_writeback_data when ID_EX_fwd_mem_reg1 else ID_EX_reg1_data;
-    EX_eff_reg2 <= MEM_writeback_data when ID_EX_fwd_ex_reg2 else
-      WB_writeback_data when ID_EX_fwd_mem_reg2 else ID_EX_reg2_data;
-    EX_eff_alu_op2 <= MEM_writeback_data when ID_EX_fwd_ex_alu_op2 else
-      WB_writeback_data when ID_EX_fwd_mem_alu_op2 else ID_EX_alu_op2;
+    EX_eff_reg1 <= MEM_eff_data when ID_EX_fwd_ex_reg1 else
+      WB_eff_data when ID_EX_fwd_mem_reg1 else ID_EX_reg1_data;
+    EX_eff_reg2 <= MEM_eff_data when ID_EX_fwd_ex_reg2 else
+      WB_eff_data when ID_EX_fwd_mem_reg2 else ID_EX_reg2_data;
+    EX_eff_alu_op2 <= MEM_eff_data when ID_EX_fwd_ex_alu_op2 else
+      WB_eff_data when ID_EX_fwd_mem_alu_op2 else ID_EX_alu_op2;
     end generate; -- result_forwarding
 
     G_EX_no_forwarding:
     if not C_result_forwarding generate
     EX_eff_reg1 <= ID_EX_reg1_data;
-    EX_eff_reg2 <= WB_writeback_data when -- XXX revisit for C_multicycle_lh_lb!
+    EX_eff_reg2 <= WB_eff_data when -- XXX revisit for C_multicycle_lh_lb!
       C_multicycle_lh_lb and ID_EX_fwd_mem_reg2 else ID_EX_reg2_data;
     EX_eff_alu_op2 <= ID_EX_alu_op2;
     end generate; -- no result_forwarding
@@ -536,11 +540,15 @@ begin
     port map (
 	shamt_8_16 => EX_shamt(4 downto 3), funct_8_16 => EX_shift_funct_8_16,
 	shamt_1_2_4 => EX_MEM_shamt_1_2_4, funct_1_2_4 => EX_MEM_shift_funct,
+	stage1_in => EX_MEM_to_shift, stage4_out => MEM_from_shift,
 	stage8_in => EX_eff_reg2, stage16_out => EX_from_shift,
 	mem_multicycle_lh_lb => MEM_WB_multicycle_lh_lb,
-	mem_read_sign_extend => EX_MEM_mem_read_sign_extend,
-	mem_size => EX_MEM_mem_size(0),
-	stage1_in => EX_MEM_to_shift, stage4_out => MEM_from_shift
+	mem_read_sign_extend_multicycle => EX_MEM_mem_read_sign_extend,
+	mem_size_multicycle => EX_MEM_mem_size(0),
+	mem_read_sign_extend_pipelined => MEM_WB_mem_read_sign_extend,
+	mem_size_pipelined => MEM_WB_mem_size,
+	mem_lh_lb_align_in => MEM_WB_mem_data,
+	mem_lh_lb_align_out => WB_mem_data_aligned
     );
 	
     -- compute byte select lines for memory writes
@@ -593,7 +601,7 @@ begin
 	if rising_edge(clk) then
 	    if MEM_running and EX_running then
 		EX_MEM_mem_data_out <= EX_from_shift;
-		EX_MEM_writeback_addsub <= EX_from_alu_addsubx(31 downto 0);
+		EX_MEM_addsub_data <= EX_from_alu_addsubx(31 downto 0);
 		EX_MEM_mem_size <= ID_EX_mem_size;
 		EX_MEM_multicycle_lh_lb <=
 		  C_multicycle_lh_lb and ID_EX_multicycle_lh_lb;
@@ -620,20 +628,20 @@ begin
 		if ID_EX_op_major = "01" then
 		    EX_MEM_logic_cycle <= '1';
 		    -- SLT / SLTU / SLTI / SLTIU
-		    EX_MEM_writeback_logic(31 downto 1) <= x"0000000" & "000";
+		    EX_MEM_logic_data(31 downto 1) <= x"0000000" & "000";
 		    if ID_EX_sign_extend then
-			EX_MEM_writeback_logic(0) <= EX_from_alu_addsubx(32)
+			EX_MEM_logic_data(0) <= EX_from_alu_addsubx(32)
 			  xor (EX_eff_reg1(31) xor EX_eff_alu_op2(31));
 		    else
-			EX_MEM_writeback_logic(0) <= EX_from_alu_addsubx(32);
+			EX_MEM_logic_data(0) <= EX_from_alu_addsubx(32);
 		    end if;
 		elsif ID_EX_jump_cycle or ID_EX_jump_register or
 		  ID_EX_branch_cycle or ID_EX_op_major = "11" then
 		    EX_MEM_logic_cycle <= '1';
-		    EX_MEM_writeback_logic <= EX_from_alt;
+		    EX_MEM_logic_data <= EX_from_alt;
 		else
 		    EX_MEM_logic_cycle <= ID_EX_op_minor(2);
-		    EX_MEM_writeback_logic <= EX_from_alu_logic;
+		    EX_MEM_logic_data <= EX_from_alu_logic;
 		end if;
 		EX_MEM_writeback_addr <= ID_EX_writeback_addr;
 		EX_MEM_mem_cycle <= ID_EX_mem_cycle;
@@ -663,8 +671,8 @@ begin
 
     MEM_running <= EX_MEM_mem_cycle = '0' or dmem_data_ready = '1';
 
-    MEM_writeback_data <= EX_MEM_writeback_logic when EX_MEM_logic_cycle = '1'
-      else EX_MEM_writeback_addsub;
+    MEM_eff_data <= EX_MEM_logic_data when EX_MEM_logic_cycle = '1'
+      else EX_MEM_addsub_data;
 
     MEM_take_branch <= EX_MEM_take_branch xor EX_MEM_branch_taken;
 
@@ -699,7 +707,7 @@ begin
     end generate;
 
     -- connect outbound signals for memory access
-    dmem_addr <= EX_MEM_writeback_addsub(31 downto 2);
+    dmem_addr <= EX_MEM_addsub_data(31 downto 2);
     dmem_data_out <= EX_MEM_mem_data_out;
     dmem_addr_strobe <= EX_MEM_mem_cycle;
     dmem_byte_we <= EX_MEM_mem_byte_we;
@@ -714,6 +722,8 @@ begin
 	    if MEM_running then
 		MEM_WB_instruction <= EX_MEM_instruction; -- debugging only
 		MEM_WB_mem_cycle <= EX_MEM_mem_cycle;
+		MEM_WB_mem_read_sign_extend <= EX_MEM_mem_read_sign_extend;
+		MEM_WB_mem_size <= EX_MEM_mem_size;
 		MEM_WB_writeback_addr <= EX_MEM_writeback_addr;
 		MEM_WB_multicycle_lh_lb <=
 		  C_multicycle_lh_lb and EX_MEM_multicycle_lh_lb;
@@ -725,7 +735,7 @@ begin
 		if EX_MEM_op_major = "10" then -- shift
 		    MEM_WB_ex_data <= MEM_from_shift;
 		else
-		    MEM_WB_ex_data <= MEM_writeback_data;
+		    MEM_WB_ex_data <= MEM_eff_data;
 		end if;
 	    end if;
 	end if;
@@ -736,7 +746,7 @@ begin
     -- ====================================
     --
 
-    WB_writeback_data <= MEM_WB_mem_data when MEM_WB_mem_cycle = '1'
+    WB_eff_data <= MEM_WB_mem_data when MEM_WB_mem_cycle = '1'
       else MEM_WB_ex_data;
 
 
@@ -830,8 +840,8 @@ begin
 	    when x"0a" => trace_data <= EX_eff_reg1;
 	    when x"0b" => trace_data <= EX_eff_reg2;
 	    when x"0c" => trace_data <= EX_eff_alu_op2;
-	    when x"0d" => trace_data <= EX_MEM_writeback_addsub;
-	    when x"0e" => trace_data <= EX_MEM_writeback_logic;
+	    when x"0d" => trace_data <= EX_MEM_addsub_data;
+	    when x"0e" => trace_data <= EX_MEM_logic_data;
 	    when x"10" => trace_data <= D_tsc;
 	    when x"11" => trace_data <= D_instr;
 	    when x"12" => trace_data <= D_b_instr;
