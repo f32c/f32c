@@ -187,6 +187,7 @@ architecture Behavioral of pipeline is
     signal MEM_WB_write_enable: std_logic;
     signal MEM_WB_ex_data, MEM_WB_mem_data: std_logic_vector(31 downto 0);
     signal MEM_WB_multicycle_lh_lb: boolean;
+    signal MEM_WB_mem_addr_offset: std_logic_vector(1 downto 0);
     signal MEM_WB_instruction: std_logic_vector(31 downto 0); -- debugging only
 	
     -- pipeline stage 5: register writeback
@@ -544,11 +545,7 @@ begin
 	stage8_in => EX_eff_reg2, stage16_out => EX_from_shift,
 	mem_multicycle_lh_lb => MEM_WB_multicycle_lh_lb,
 	mem_read_sign_extend_multicycle => EX_MEM_mem_read_sign_extend,
-	mem_size_multicycle => EX_MEM_mem_size(0),
-	mem_read_sign_extend_pipelined => MEM_WB_mem_read_sign_extend,
-	mem_size_pipelined => MEM_WB_mem_size,
-	mem_lh_lb_align_in => MEM_WB_mem_data,
-	mem_lh_lb_align_out => WB_mem_data_aligned
+	mem_size_multicycle => EX_MEM_mem_size(0)
     );
 	
     -- compute byte select lines for memory writes
@@ -723,6 +720,7 @@ begin
 		MEM_WB_instruction <= EX_MEM_instruction; -- debugging only
 		MEM_WB_mem_cycle <= EX_MEM_mem_cycle;
 		MEM_WB_mem_read_sign_extend <= EX_MEM_mem_read_sign_extend;
+		MEM_WB_mem_addr_offset <= EX_MEM_addsub_data(1 downto 0);
 		MEM_WB_mem_size <= EX_MEM_mem_size;
 		MEM_WB_writeback_addr <= EX_MEM_writeback_addr;
 		MEM_WB_multicycle_lh_lb <=
@@ -754,6 +752,18 @@ begin
     WB_writeback_data <= WB_mem_data_aligned when MEM_WB_mem_cycle = '1'
       else MEM_WB_ex_data;
 
+    -- instantiate memory load aligner
+    loadalign: entity loadalign
+    generic map (
+	C_multicycle_lh_lb => C_multicycle_lh_lb
+    )
+    port map (
+	mem_read_sign_extend_pipelined => MEM_WB_mem_read_sign_extend,
+	mem_size_pipelined => MEM_WB_mem_size,
+	mem_addr_offset => MEM_WB_mem_addr_offset,
+	mem_align_in => MEM_WB_mem_data, mem_align_out => WB_mem_data_aligned
+    );
+	
     --
     -- Multiplier unit, as a separate pipeline
     --

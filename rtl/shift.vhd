@@ -44,11 +44,7 @@ entity shift is
 	stage16_out, stage4_out: out std_logic_vector(31 downto 0);
 	mem_multicycle_lh_lb: in boolean;
 	mem_read_sign_extend_multicycle: in std_logic;
-	mem_size_multicycle: in std_logic;
-	mem_read_sign_extend_pipelined: in std_logic;
-	mem_size_pipelined: in std_logic_vector(1 downto 0);
-        mem_lh_lb_align_in: in std_logic_vector(31 downto 0);
-        mem_lh_lb_align_out: out std_logic_vector(31 downto 0)
+	mem_size_multicycle: in std_logic
     );
 end shift;
 
@@ -136,16 +132,6 @@ begin
 	    end if;
 	else
 	    stage4_out <= stage4;
-	end if;
-    end process;
-
-    process(mem_lh_lb_align_in, mem_read_sign_extend_pipelined,
-      mem_size_pipelined)
-    begin
-	if C_multicycle_lh_lb then
-	    mem_lh_lb_align_out <= mem_lh_lb_align_in;
-	else
-	    mem_lh_lb_align_out <= mem_lh_lb_align_in;
 	end if;
     end process;
 end Behavioral;
