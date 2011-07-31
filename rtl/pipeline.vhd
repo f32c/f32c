@@ -129,7 +129,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_mem_cycle, ID_EX_mem_write: std_logic;
     signal ID_EX_mem_size: std_logic_vector(1 downto 0);
     signal ID_EX_mem_read_sign_extend: std_logic;
-    signal ID_EX_multicycle_lh_lb: boolean := false;
+    signal ID_EX_multicycle_lh_lb: boolean := C_multicycle_lh_lb; -- bootstrap
     signal ID_EX_latency: std_logic_vector(1 downto 0);
     signal ID_EX_cop0: std_logic;
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
@@ -167,7 +167,7 @@ architecture Behavioral of pipeline is
     signal EX_MEM_shift_funct: std_logic_vector(1 downto 0);
     signal EX_MEM_to_shift: std_logic_vector(31 downto 0);
     signal EX_MEM_mem_size: std_logic_vector(1 downto 0);
-    signal EX_MEM_multicycle_lh_lb: boolean := false;
+    signal EX_MEM_multicycle_lh_lb: boolean;
     signal EX_MEM_mem_byte_we: std_logic_vector(3 downto 0);
     signal EX_MEM_op_major: std_logic_vector(1 downto 0);
     signal EX_MEM_instruction: std_logic_vector(31 downto 0); -- debugging only
@@ -184,7 +184,7 @@ architecture Behavioral of pipeline is
     signal MEM_WB_writeback_addr: std_logic_vector(4 downto 0);
     signal MEM_WB_write_enable: std_logic;
     signal MEM_WB_ex_data, MEM_WB_mem_data: std_logic_vector(31 downto 0);
-    signal MEM_WB_multicycle_lh_lb: boolean := false;
+    signal MEM_WB_multicycle_lh_lb: boolean;
     signal MEM_WB_instruction: std_logic_vector(31 downto 0); -- debugging only
 	
     -- pipeline stage 5: register writeback
