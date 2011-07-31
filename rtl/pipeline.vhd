@@ -505,8 +505,8 @@ begin
     G_EX_no_forwarding:
     if not C_result_forwarding generate
     EX_eff_reg1 <= ID_EX_reg1_data;
-    EX_eff_reg2 <= WB_writeback_data when ID_EX_fwd_mem_reg2
-      else ID_EX_reg2_data;
+    EX_eff_reg2 <= WB_writeback_data when -- XXX revisit for C_multicycle_lh_lb!
+      C_multicycle_lh_lb and ID_EX_fwd_mem_reg2 else ID_EX_reg2_data;
     EX_eff_alu_op2 <= ID_EX_alu_op2;
     end generate; -- no result_forwarding
 
