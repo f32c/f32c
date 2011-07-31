@@ -40,7 +40,7 @@ entity pipeline is
 	C_branch_likely: boolean := false;
 
 	-- optimization options
-	C_multicycle_lh_lb: boolean := true;
+	C_multicycle_lh_lb: boolean := false;
 	C_branch_prediction: boolean := true;
 	C_result_forwarding: boolean := true;
 	C_fast_ID: boolean := true;
@@ -91,6 +91,7 @@ architecture Behavioral of pipeline is
     signal ID_reg1_addr, ID_reg2_addr: std_logic_vector(4 downto 0);
     signal ID_writeback_addr: std_logic_vector(4 downto 0);
     signal ID_reg1_data, ID_reg2_data: std_logic_vector(31 downto 0);
+    signal ID_reg1_eff_data, ID_reg2_eff_data: std_logic_vector(31 downto 0);
     signal ID_alu_op2: std_logic_vector(31 downto 0);
     signal ID_fwd_ex_reg1, ID_fwd_ex_reg2, ID_fwd_ex_alu_op2: boolean;
     signal ID_fwd_mem_reg1, ID_fwd_mem_reg2, ID_fwd_mem_alu_op2: boolean;
@@ -194,6 +195,7 @@ architecture Behavioral of pipeline is
     signal WB_eff_data: std_logic_vector(31 downto 0);
     signal WB_writeback_data: std_logic_vector(31 downto 0);
     signal WB_mem_data_aligned: std_logic_vector(31 downto 0);
+    signal WB_clk: std_logic;
 
     -- multiplication unit
     signal mul_res: std_logic_vector(65 downto 0);
@@ -335,9 +337,22 @@ begin
 	rdd_addr => trace_addr(4 downto 0), wr_addr => MEM_WB_writeback_addr,
 	rd1_data => ID_reg1_data, rd2_data => ID_reg2_data,
 	rdd_data => reg_trace_data, wr_data => WB_writeback_data,
-	wr_enable => MEM_WB_write_enable, clk => not clk
+	wr_enable => MEM_WB_write_enable, clk => WB_clk
     );
 	
+    --
+    -- WB_writeback_data overrides register reads with pipelined load aligner.
+    -- With multicycle aligner WB_writeback_data is written to the regfile
+    -- at the half of the clk cycle, in which case no bypass logic is required.
+    --
+    WB_clk <= not clk when C_multicycle_lh_lb else clk;
+    ID_reg1_eff_data <= ID_reg1_data when C_multicycle_lh_lb or
+      ID_reg1_zero or ID_reg1_addr /= MEM_WB_writeback_addr else
+      WB_writeback_data;
+    ID_reg2_eff_data <= ID_reg2_data when C_multicycle_lh_lb or
+      ID_reg2_zero or ID_reg2_addr /= MEM_WB_writeback_addr else
+      WB_writeback_data;
+
     -- stall the IF and ID stages if any of the following conditions hold:
     --
     --	A) EX stage is stalled;
@@ -360,7 +375,7 @@ begin
       (ID_ignore_reg2 or not (ID_fwd_ex_reg2 or ID_fwd_mem_reg2)));
     end generate;
 	
-    ID_alu_op2 <= ID_immediate when ID_use_immediate else ID_reg2_data;
+    ID_alu_op2 <= ID_immediate when ID_use_immediate else ID_reg2_eff_data;
 	
     -- schedule forwarding of results from the EX stage
     ID_fwd_ex_reg1 <=
@@ -440,8 +455,8 @@ begin
 		    ID_EX_instruction <= x"00000000"; -- XXX debugging only
 		else
 		    -- propagate next instruction from ID to EX stage
-		    ID_EX_reg1_data <= ID_reg1_data;
-		    ID_EX_reg2_data <= ID_reg2_data;
+		    ID_EX_reg1_data <= ID_reg1_eff_data;
+		    ID_EX_reg2_data <= ID_reg2_eff_data;
 		    ID_EX_alu_op2 <= ID_alu_op2;
 		    ID_EX_immediate <= ID_immediate;
 		    ID_EX_sign_extend <= ID_sign_extend;
@@ -764,7 +779,8 @@ begin
 	mem_align_in => MEM_WB_mem_data, mem_align_out => WB_mem_data_aligned
     );
     end generate;
-	
+
+
     --
     -- Multiplier unit, as a separate pipeline
     --
@@ -850,8 +866,8 @@ begin
 	    when x"05" => trace_data <= IF_ID_instruction;
 	    when x"06" => trace_data <= ID_EX_instruction;
 	    when x"07" => trace_data <= EX_MEM_instruction;
-	    when x"08" => trace_data <= ID_reg1_data;
-	    when x"09" => trace_data <= ID_reg2_data;
+	    when x"08" => trace_data <= ID_reg1_eff_data;
+	    when x"09" => trace_data <= ID_reg2_eff_data;
 	    when x"0a" => trace_data <= EX_eff_reg1;
 	    when x"0b" => trace_data <= EX_eff_reg2;
 	    when x"0c" => trace_data <= EX_eff_alu_op2;
