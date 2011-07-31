@@ -749,20 +749,21 @@ begin
       else MEM_WB_ex_data;
 
     -- WB_writeback_data goes directly into register file's write port
-    WB_writeback_data <= WB_mem_data_aligned when MEM_WB_mem_cycle = '1'
+    WB_writeback_data <= WB_eff_data when C_multicycle_lh_lb
+      else WB_mem_data_aligned when MEM_WB_mem_cycle = '1'
       else MEM_WB_ex_data;
 
     -- instantiate memory load aligner
+    G_pipelined_loadalign:
+    if (not C_multicycle_lh_lb) generate
     loadalign: entity loadalign
-    generic map (
-	C_multicycle_lh_lb => C_multicycle_lh_lb
-    )
     port map (
 	mem_read_sign_extend_pipelined => MEM_WB_mem_read_sign_extend,
 	mem_size_pipelined => MEM_WB_mem_size,
 	mem_addr_offset => MEM_WB_mem_addr_offset,
 	mem_align_in => MEM_WB_mem_data, mem_align_out => WB_mem_data_aligned
     );
+    end generate;
 	
     --
     -- Multiplier unit, as a separate pipeline

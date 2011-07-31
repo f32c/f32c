@@ -33,9 +33,6 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 
 entity loadalign is
-    generic (
-	C_multicycle_lh_lb: boolean
-    );
     port (
 	mem_read_sign_extend_pipelined: in std_logic;
 	mem_addr_offset: in std_logic_vector(1 downto 0);
@@ -53,7 +50,7 @@ begin
     process(mem_align_in, mem_read_sign_extend_pipelined,
       mem_addr_offset, mem_size_pipelined)
     begin
-	if C_multicycle_lh_lb or mem_size_pipelined(1) = '1' then
+	if mem_size_pipelined(1) = '1' then
 	    mem_align_out <= mem_align_in;
 	else
 	    if mem_size_pipelined(0) = '0' then -- byte load
