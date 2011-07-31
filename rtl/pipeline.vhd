@@ -333,7 +333,7 @@ begin
 	rd1_addr => ID_reg1_addr, rd2_addr => ID_reg2_addr,
 	rdd_addr => trace_addr(4 downto 0), wr_addr => MEM_WB_writeback_addr,
 	rd1_data => ID_reg1_data, rd2_data => ID_reg2_data,
-	rdd_data => reg_trace_data, wr_data => WB_eff_data,
+	rdd_data => reg_trace_data, wr_data => WB_writeback_data,
 	wr_enable => MEM_WB_write_enable, clk => not clk
     );
 	
@@ -746,9 +746,13 @@ begin
     -- ====================================
     --
 
+    -- WB_eff_data goes into bypass / forwarding muxes back to the EX stage
     WB_eff_data <= MEM_WB_mem_data when MEM_WB_mem_cycle = '1'
       else MEM_WB_ex_data;
 
+    -- WB_writeback_data goes directly into register file's write port
+    WB_writeback_data <= WB_mem_data_aligned when MEM_WB_mem_cycle = '1'
+      else MEM_WB_ex_data;
 
     --
     -- Multiplier unit, as a separate pipeline
