@@ -379,7 +379,8 @@ begin
     G_ID_no_forwarding:
     if not C_result_forwarding generate
     ID_running <= ID_EX_cancel_next or
-      (EX_running and not ID_EX_multicycle_lh_lb and
+      (not ID_pipelined_load_align_hazard and
+      EX_running and not ID_EX_multicycle_lh_lb and
       not (ID_fwd_ex_reg1 or ID_fwd_mem_reg1) and
       (ID_ignore_reg2 or not (ID_fwd_ex_reg2 or ID_fwd_mem_reg2)));
     end generate;
