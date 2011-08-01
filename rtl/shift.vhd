@@ -34,7 +34,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity shift is
     generic (
-	C_multicycle_lh_lb: boolean
+	C_load_aligner: boolean
     );
     port (
 	shamt_8_16: in std_logic_vector(1 downto 0);
@@ -108,7 +108,7 @@ begin
     process(stage4, mem_multicycle_lh_lb, mem_read_sign_extend_multicycle,
       mem_size_multicycle)
     begin
-	if C_multicycle_lh_lb and mem_multicycle_lh_lb then
+	if not C_load_aligner and mem_multicycle_lh_lb then
 	    if mem_size_multicycle = '0' then -- byte load
 		if mem_read_sign_extend_multicycle = '1' then
 		    if stage4(7) = '1' then
