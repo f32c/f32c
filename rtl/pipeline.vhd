@@ -361,7 +361,10 @@ begin
     --	B) execute-use or load-use data hazard is detected;
     --
     ID_pipelined_load_align_hazard <= not C_multicycle_lh_lb and
-	EX_MEM_latency = '1';
+      EX_MEM_latency = '1' and
+      ((not ID_reg1_zero and ID_reg1_addr = EX_MEM_writeback_addr) or
+      (not ID_reg1_zero and not ID_ignore_reg2 and
+      ID_reg2_addr = EX_MEM_writeback_addr));
 
     G_ID_forwarding:
     if C_result_forwarding generate
