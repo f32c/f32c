@@ -131,7 +131,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_mem_cycle, ID_EX_mem_write: std_logic;
     signal ID_EX_mem_size: std_logic_vector(1 downto 0);
     signal ID_EX_mem_read_sign_extend: std_logic;
-    signal ID_EX_multicycle_lh_lb: boolean := not C_load_aligner; -- bootstrap
+    signal ID_EX_multicycle_lh_lb: boolean;
     signal ID_EX_latency: std_logic_vector(1 downto 0);
     signal ID_EX_cop0: std_logic;
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
