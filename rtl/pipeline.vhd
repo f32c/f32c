@@ -40,7 +40,7 @@ entity pipeline is
 	C_branch_likely: boolean := false;
 
 	-- optimization options
-	C_multicycle_lh_lb: boolean := false;
+	C_load_aligner: boolean := true;
 	C_branch_prediction: boolean := true;
 	C_result_forwarding: boolean := true;
 	C_fast_ID: boolean := true;
@@ -131,7 +131,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_mem_cycle, ID_EX_mem_write: std_logic;
     signal ID_EX_mem_size: std_logic_vector(1 downto 0);
     signal ID_EX_mem_read_sign_extend: std_logic;
-    signal ID_EX_multicycle_lh_lb: boolean := C_multicycle_lh_lb; -- bootstrap
+    signal ID_EX_multicycle_lh_lb: boolean := not C_load_aligner; -- bootstrap
     signal ID_EX_latency: std_logic_vector(1 downto 0);
     signal ID_EX_cop0: std_logic;
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
@@ -347,11 +347,11 @@ begin
     -- With multicycle aligner WB_writeback_data is written to the regfile
     -- at the half of the clk cycle, in which case no bypass logic is required.
     --
-    WB_clk <= not clk when C_multicycle_lh_lb else clk;
-    ID_reg1_eff_data <= ID_reg1_data when C_multicycle_lh_lb or
+    WB_clk <= clk when C_load_aligner else not clk;
+    ID_reg1_eff_data <= ID_reg1_data when not C_load_aligner or
       ID_reg1_zero or ID_reg1_addr /= MEM_WB_writeback_addr else
       WB_writeback_data;
-    ID_reg2_eff_data <= ID_reg2_data when C_multicycle_lh_lb or
+    ID_reg2_eff_data <= ID_reg2_data when not C_load_aligner or
       ID_reg2_zero or ID_reg2_addr /= MEM_WB_writeback_addr else
       WB_writeback_data;
 
@@ -360,9 +360,8 @@ begin
     --	A) EX stage is stalled;
     --	B) execute-use or load-use data hazard is detected;
     --
-    ID_pipelined_load_align_hazard <= not C_multicycle_lh_lb and
-      EX_MEM_latency = '1' and
-      ((not ID_reg1_zero and ID_reg1_addr = EX_MEM_writeback_addr) or
+    ID_pipelined_load_align_hazard <= C_load_aligner and EX_MEM_latency = '1'
+      and ((not ID_reg1_zero and ID_reg1_addr = EX_MEM_writeback_addr) or
       (not ID_reg1_zero and not ID_ignore_reg2 and
       ID_reg2_addr = EX_MEM_writeback_addr));
 
@@ -416,7 +415,8 @@ begin
     begin
 	if rising_edge(clk) then
 	    if EX_running then
-		if C_multicycle_lh_lb and ID_EX_multicycle_lh_lb then
+		if not C_load_aligner and ID_EX_multicycle_lh_lb then
+		    -- multicycle load aligner
 		    -- byte / half word load, insert an arithm shift right cycle
 		    -- XXX must stall the ID stage - revisit!!!
 		    ID_EX_multicycle_lh_lb <= not EX_MEM_multicycle_lh_lb;
@@ -475,7 +475,7 @@ begin
 		    ID_EX_mem_write <= ID_mem_write;
 		    ID_EX_mem_size <= ID_mem_size;
 		    ID_EX_multicycle_lh_lb <=
-		      C_multicycle_lh_lb and ID_mem_cycle = '1' and
+		      not C_load_aligner and ID_mem_cycle = '1' and
 		      ID_mem_write = '0' and ID_mem_size(1) = '0';
 		    ID_EX_mem_read_sign_extend <= ID_mem_read_sign_extend;
 		    ID_EX_branch_condition <= ID_branch_condition;
@@ -536,8 +536,8 @@ begin
     G_EX_no_forwarding:
     if not C_result_forwarding generate
     EX_eff_reg1 <= ID_EX_reg1_data;
-    EX_eff_reg2 <= WB_eff_data when -- XXX revisit for C_multicycle_lh_lb!
-      C_multicycle_lh_lb and ID_EX_fwd_mem_reg2 else ID_EX_reg2_data;
+    EX_eff_reg2 <= WB_eff_data when -- XXX revisit for C_load_aligner = false!
+      not C_load_aligner and ID_EX_fwd_mem_reg2 else ID_EX_reg2_data;
     EX_eff_alu_op2 <= ID_EX_alu_op2;
     end generate; -- no result_forwarding
 
@@ -562,7 +562,7 @@ begin
     -- instantiate the barrel shifter
     shift: entity shift
     generic map (
-	C_multicycle_lh_lb => C_multicycle_lh_lb
+	C_load_aligner => C_load_aligner
     )
     port map (
 	shamt_8_16 => EX_shamt(4 downto 3), funct_8_16 => EX_shift_funct_8_16,
@@ -626,8 +626,8 @@ begin
 		EX_MEM_mem_data_out <= EX_from_shift;
 		EX_MEM_addsub_data <= EX_from_alu_addsubx(31 downto 0);
 		EX_MEM_mem_size <= ID_EX_mem_size;
-		EX_MEM_multicycle_lh_lb <=
-		  C_multicycle_lh_lb and ID_EX_multicycle_lh_lb;
+		EX_MEM_multicycle_lh_lb <= not C_load_aligner
+		  and ID_EX_multicycle_lh_lb;
 		EX_MEM_mem_byte_we <= EX_mem_byte_we;
 		EX_MEM_shamt_1_2_4 <= EX_shamt(2 downto 0);
 		EX_MEM_shift_funct <= ID_EX_immediate(1 downto 0);
@@ -751,8 +751,8 @@ begin
 		MEM_WB_mem_addr_offset <= EX_MEM_addsub_data(1 downto 0);
 		MEM_WB_mem_size <= EX_MEM_mem_size;
 		MEM_WB_writeback_addr <= EX_MEM_writeback_addr;
-		MEM_WB_multicycle_lh_lb <=
-		  C_multicycle_lh_lb and EX_MEM_multicycle_lh_lb;
+		MEM_WB_multicycle_lh_lb <= not C_load_aligner
+		  and EX_MEM_multicycle_lh_lb;
 		if EX_MEM_writeback_addr = "00000" then
 		    MEM_WB_write_enable <= '0';
 		else
@@ -777,13 +777,13 @@ begin
       else MEM_WB_ex_data;
 
     -- WB_writeback_data goes directly into register file's write port
-    WB_writeback_data <= WB_eff_data when C_multicycle_lh_lb
+    WB_writeback_data <= WB_eff_data when not C_load_aligner
       else WB_mem_data_aligned when MEM_WB_mem_cycle = '1'
       else MEM_WB_ex_data;
 
     -- instantiate memory load aligner
-    G_pipelined_loadalign:
-    if (not C_multicycle_lh_lb) generate
+    G_pipelined_load_aligner:
+    if C_load_aligner generate
     loadalign: entity loadalign
     port map (
 	mem_read_sign_extend_pipelined => MEM_WB_mem_read_sign_extend,
