@@ -109,6 +109,7 @@ architecture Behavioral of pipeline is
     signal ID_mem_size: std_logic_vector(1 downto 0);
     signal ID_mem_read_sign_extend: std_logic;
     signal ID_latency: std_logic_vector(1 downto 0);
+    signal ID_pipelined_load_align_hazard: boolean;
     signal ID_cop0: std_logic;
     -- boundary to stage 3
     signal ID_EX_PC_8: std_logic_vector(31 downto 2);
@@ -162,6 +163,7 @@ architecture Behavioral of pipeline is
     signal EX_MEM_bpredict_score: std_logic_vector(1 downto 0);
     signal EX_MEM_branch_hist: std_logic_vector(12 downto 0);
     signal EX_MEM_bpredict_index: std_logic_vector(12 downto 0);
+    signal EX_MEM_latency: std_logic;
     signal EX_MEM_mem_cycle, EX_MEM_logic_cycle: std_logic;
     signal EX_MEM_mem_read_sign_extend: std_logic;
     signal EX_MEM_shamt_1_2_4: std_logic_vector(2 downto 0);
@@ -358,13 +360,17 @@ begin
     --	A) EX stage is stalled;
     --	B) execute-use or load-use data hazard is detected;
     --
+    ID_pipelined_load_align_hazard <= not C_multicycle_lh_lb and
+	EX_MEM_latency = '1';
+
     G_ID_forwarding:
     if C_result_forwarding generate
     ID_running <= ID_EX_cancel_next or
       (EX_running and not ID_EX_multicycle_lh_lb and
+      not ID_pipelined_load_align_hazard and
       (ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
-      ID_EX_latency = "00") and (ID_reg2_zero or ID_ignore_reg2 or
-      ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency = "00"));
+      ID_EX_latency(0) = '0') and (ID_reg2_zero or ID_ignore_reg2 or
+      ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency(0) = '0'));
     end generate;
 
     G_ID_no_forwarding:
@@ -440,6 +446,7 @@ begin
 		    ID_EX_mem_cycle <= '0';
 		    ID_EX_mem_write <= '0';	-- XXX do we need this?
 		    ID_EX_mem_size <= "00"; -- XXX do we need this?
+		    ID_EX_latency <= "00";
 		    ID_EX_branch_cycle <= false;
 		    ID_EX_branch_likely <= false;
 		    ID_EX_jump_cycle <= false;
@@ -657,6 +664,7 @@ begin
 		end if;
 		EX_MEM_writeback_addr <= ID_EX_writeback_addr;
 		EX_MEM_mem_cycle <= ID_EX_mem_cycle;
+		EX_MEM_latency <= ID_EX_latency(1);
 		EX_MEM_mem_read_sign_extend <= ID_EX_mem_read_sign_extend;
 		EX_MEM_branch_taken <= ID_EX_predict_taken;
 		-- XXX debugging only
@@ -669,6 +677,7 @@ begin
 		EX_MEM_branch_taken <= false;
 		EX_MEM_writeback_addr <= "00000";
 		EX_MEM_mem_cycle <= '0';
+		EX_MEM_latency <= '0';
 		-- XXX debugging only
 		EX_MEM_instruction <= x"00000000";
 	    end if;
