@@ -195,7 +195,8 @@ begin
 
 	if opcode(5 downto 4) = "10" then
 	    mem_cycle <= '1';
-	    latency <= "01"; -- resolve load-use hazard
+	    latency(0) <= '1'; -- resolve load-use hazard
+	    latency(1) <= not mem_size(1); -- resolve load aligner hazard
 	end if;
     end process;
 	
