@@ -25,7 +25,27 @@ strcmp(const char *s1, const char *s2)
 	/* Check for aligned pointers for faster operation on 32-bit words */
 	if ((((int)s1 | (int)s2) & 3) == 0) {
 		/* Loop until words do not match */
-		for (; (c1 = *((int *)s1)) == *((int *)s2);) {
+		for (;;) {
+			/* Check whether words are equal */
+			c1 = *((int *)s1);
+			c2 = *((int *)s2);
+			if (c1 != c2) {
+				c1 &= 0xff;
+				c2 &= 0xff;
+				if (c1 == 0 || c1 != c2)
+					return (c1 - c2);
+				c1 = *(const unsigned char *)(s1 + 1);
+				c2 = *(const unsigned char *)(s2 + 1);
+				if (c1 == 0 || c1 != c2)
+					return (c1 - c2);
+				c1 = *(const unsigned char *)(s1 + 2);
+				c2 = *(const unsigned char *)(s2 + 2);
+				if (c1 == 0 || c1 != c2)
+					return (c1 - c2);
+				c1 = *(const unsigned char *)(s1 + 3);
+				c2 = *(const unsigned char *)(s2 + 3);
+				return (c1 - c2);
+			}
 			/* Check if the word contains any zero bytes */
 			v0 = (((uint32_t)c1) - t0) & t1;
 			if (v0) {
@@ -36,13 +56,13 @@ strcmp(const char *s1, const char *s2)
 			s1 += 4;
 			s2 += 4;
 		}
+	} else {
+		do {
+			c1 = *(const unsigned char *)s1++;
+			c2 = *(const unsigned char *)s2++;
+		} while (c1 != 0 && c1 == c2);
+		return (c1 - c2);
 	}
-
-	do {
-		c1 = *(const unsigned char *)s1++;
-		c2 = *(const unsigned char *)s2++;
-	} while (c1 != 0 && c1 == c2);
-	return (c1 - c2);
 }
 
 
