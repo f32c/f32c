@@ -3,8 +3,6 @@
 #include <regdef.h>
 #include <io.h>
 
-	.set noreorder
-	.text
 
 /*
  * Setup the global pointer register and jump into main().
@@ -12,8 +10,12 @@
  * We assume that the stack pointer and the k1 register have been
  * already properly set up for us by the bootloader here.
  */
-GLOBAL(btext)
-ASM_ENTRY(_start)
+	.section .text.startup
+	.globl _start
+	.type _start,@function
+
+_start:
+	.set noreorder
 	lui	gp, (_gp >> 16)
 	ori	gp, _gp
 	j	_C_LABEL(main)
