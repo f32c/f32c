@@ -39,7 +39,7 @@ entity glue is
 		C_register_technology: string := "lattice";
 		C_mult_enable: boolean := true; -- true: +6 LUT4
 		C_result_forwarding: boolean := true; -- true: +167 LUT4
-		C_load_aligner: boolean := false; -- true: +172 LUT4
+		C_load_aligner: boolean := true; -- true: +152 LUT4
 		C_branch_prediction: boolean := true; -- true: +76 LUT4
 
 		-- Do not change those two:
