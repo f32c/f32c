@@ -54,6 +54,7 @@ MK_CFLAGS += -g
 
 # Optimization options
 MK_CFLAGS += -Os
+MK_CFLAGS += -fselective-scheduling
 MK_CFLAGS += -finline-limit=16 -fmerge-all-constants
 MK_CFLAGS += -falign-functions=4 -falign-labels=4
 MK_CFLAGS += -falign-jumps=4 -falign-loops=4
