@@ -13,6 +13,11 @@ ASFILES = ../lib/start.S
 
 include ../conf/f32c.mk
 
+# gcc 4.6.1 produces fastest __divsi3() implementation using -O2, not -O3!
+
+../lib/div.o:	Makefile ../lib/div.c
+	${CC} -O2 -c -o ../lib/div.o ../lib/div.c
+
 # Specialized build options for dhry_*.c files
 
 dhry_1.o:	Makefile dhry.h ../include/string.h dhry_1.c
