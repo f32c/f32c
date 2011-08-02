@@ -109,7 +109,8 @@ architecture Behavioral of pipeline is
     signal ID_mem_size: std_logic_vector(1 downto 0);
     signal ID_mem_read_sign_extend: std_logic;
     signal ID_latency: std_logic_vector(1 downto 0);
-    signal ID_pipelined_load_align_hazard: boolean;
+    signal ID_load_align_hazard: boolean;
+    signal ID_jump_register_hazard: boolean;
     signal ID_cop0: std_logic;
     -- boundary to stage 3
     signal ID_EX_PC_8: std_logic_vector(31 downto 2);
@@ -270,7 +271,7 @@ begin
 	    if MEM_take_branch then
 		IF_ID_PC_next <= IF_PC_next;
 	    elsif ID_running then
-		if (ID_jump_cycle or ID_predict_taken)
+		if (ID_jump_cycle or ID_jump_register or ID_predict_taken)
 		  and not ID_EX_cancel_next then
 		    IF_ID_PC_next <= ID_jump_target;
 		else
@@ -281,7 +282,7 @@ begin
 		IF_ID_PC <= IF_PC;
 		IF_ID_PC_4 <= IF_PC_next;
 		IF_ID_branch_delay_slot <=
-		    ID_branch_cycle or ID_jump_cycle or ID_jump_register;
+		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 		IF_ID_bpredict_index <= IF_bpredict_index;
 		IF_ID_instruction <= imem_data_in;
 	    end if;
@@ -360,16 +361,19 @@ begin
     --	A) EX stage is stalled;
     --	B) execute-use or load-use data hazard is detected;
     --
-    ID_pipelined_load_align_hazard <= C_load_aligner and EX_MEM_latency = '1'
+    ID_load_align_hazard <= C_load_aligner and EX_MEM_latency = '1'
       and ((not ID_reg1_zero and ID_reg1_addr = EX_MEM_writeback_addr) or
-      (not ID_reg1_zero and not ID_ignore_reg2 and
+      (not ID_reg2_zero and not ID_ignore_reg2 and
       ID_reg2_addr = EX_MEM_writeback_addr));
+    ID_jump_register_hazard <= ID_jump_register and not ID_reg1_zero and
+      (ID_reg1_addr = ID_EX_writeback_addr or
+      ID_reg1_addr = EX_MEM_writeback_addr);
 
     G_ID_forwarding:
     if C_result_forwarding generate
     ID_running <= ID_EX_cancel_next or
       (EX_running and not ID_EX_multicycle_lh_lb and
-      not ID_pipelined_load_align_hazard and
+      not ID_load_align_hazard and not ID_jump_register_hazard and
       (ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
       ID_EX_latency(0) = '0') and (ID_reg2_zero or ID_ignore_reg2 or
       ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency(0) = '0'));
@@ -378,10 +382,10 @@ begin
     G_ID_no_forwarding:
     if not C_result_forwarding generate
     ID_running <= ID_EX_cancel_next or
-      (not ID_pipelined_load_align_hazard and
-      EX_running and not ID_EX_multicycle_lh_lb and
-      not (ID_fwd_ex_reg1 or ID_fwd_mem_reg1) and
-      (ID_ignore_reg2 or not (ID_fwd_ex_reg2 or ID_fwd_mem_reg2)));
+      (EX_running and not ID_EX_multicycle_lh_lb and
+      not ID_load_align_hazard and not ID_jump_register_hazard and
+      not (ID_fwd_ex_reg1 or ID_fwd_mem_reg1)
+      and (ID_ignore_reg2 or not (ID_fwd_ex_reg2 or ID_fwd_mem_reg2)));
     end generate;
 	
     ID_alu_op2 <= ID_immediate when ID_use_immediate else ID_reg2_eff_data;
@@ -409,6 +413,7 @@ begin
 
     -- compute jump target
     ID_jump_target <= ID_branch_target when ID_predict_taken else
+      ID_reg1_eff_data(31 downto 2) when ID_jump_register else
       IF_ID_PC(29 downto 24) & IF_ID_instruction(23 downto 0);
 
     process(clk)
@@ -588,7 +593,7 @@ begin
       EX_2bit_add = "11" or ID_EX_mem_size(1) = '1' or
       (ID_EX_mem_size(0) = '1' and EX_2bit_add(1) = '1') else '0';		
 
-    -- MFHI, MFLO, link PC+8 -- XXX what about MFC0 / MFC1?
+    -- MFHI, MFLO, link PC + 8 -- XXX what about MFC0 / MFC1?
     EX_from_alt <=
       R_hi_lo(63 downto 32) when C_mult_enable and C_has_mfhi and
       ID_EX_op_major = "11" and ID_EX_op_minor(1) = '0' else
@@ -636,12 +641,10 @@ begin
 		EX_MEM_branch_cycle <= ID_EX_branch_cycle;
 		EX_MEM_bpredict_score <= ID_EX_bpredict_score;
 		EX_MEM_bpredict_index <= ID_EX_bpredict_index;
-		if ID_EX_branch_cycle or ID_EX_jump_register then
-		    EX_MEM_take_branch <= EX_take_branch or ID_EX_jump_register;
+		if ID_EX_branch_cycle then
+		    EX_MEM_take_branch <= EX_take_branch;
 		    if ID_EX_predict_taken then
 			EX_MEM_branch_target <= ID_EX_PC_8;
-		    elsif not ID_EX_branch_cycle then
-			EX_MEM_branch_target <= EX_eff_reg1(31 downto 2);
 		    else
 			EX_MEM_branch_target <= ID_EX_branch_target;
 		    end if;
@@ -660,6 +663,7 @@ begin
 		    end if;
 		elsif ID_EX_jump_cycle or ID_EX_jump_register or
 		  ID_EX_branch_cycle or ID_EX_op_major = "11" then
+		    -- Store (link) PC + 8 address
 		    EX_MEM_logic_cycle <= '1';
 		    EX_MEM_logic_data <= EX_from_alt;
 		else
