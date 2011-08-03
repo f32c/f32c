@@ -24,29 +24,30 @@ strcmp(const char *s1, const char *s2)
 
 	/* Check for aligned pointers for faster operation on 32-bit words */
 	if ((((int)s1 | (int)s2) & 3) == 0) {
-		/* Loop until words do not match */
 		for (;;) {
 			/* Check whether words are equal */
 			c1 = *((int *)s1);
 			c2 = *((int *)s2);
 			if (c1 != c2) {
-				b1 = c1 & 0xff;
-				b2 = c2 & 0xff;
-				if (b1 == 0 || b1 != b2)
+				if ((c1 & 0xffff) != (c2 & 0xffff)) {
+					b1 = c1 & 0xff;
+					b2 = c2 & 0xff;
+					if (b1 == 0 || b1 != b2)
+						return (b1 - b2);
+					b1 = c1 & 0xff00;
+					b2 = c2 & 0xff00;
 					return (b1 - b2);
-				b1 = c1 & 0xff00;
-				b2 = c2 & 0xff00;
-				if (b1 == 0 || b1 != b2)
+				} else {
+					b1 = c1 & 0xff0000;
+					b2 = c2 & 0xff0000;
+					if (b1 == 0 || b1 != b2)
+						return (b1 - b2);
+					c1 >>= 24;
+					c2 >>= 24;
+					b1 = c1 & 0xff;
+					b2 = c2 & 0xff;
 					return (b1 - b2);
-				c1 >>= 16;
-				c2 >>= 16;
-				b1 = c1 & 0xff;
-				b2 = c2 & 0xff;
-				if (b1 == 0 || b1 != b2)
-					return (b1 - b2);
-				b1 = c1 & 0xff00;
-				b2 = c2 & 0xff00;
-				return (b1 - b2);
+				}
 			}
 			/* Check if the word contains any zero bytes */
 			v0 = (((uint32_t)c1) - t0) & t1;
