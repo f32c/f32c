@@ -5,6 +5,7 @@ LOADADDR = 0x00000180
 endif
 
 # -EB big-endian (default); -EL little-endian
+# f32c currently can execute only little-endian code
 ifndef ENDIANFLAGS
 ENDIANFLAGS = -EL
 endif
@@ -23,10 +24,11 @@ endif
 MK_CFLAGS = -nostdinc -I../include -I.
 
 # MIPS-specific flags
-MK_CFLAGS += -march=mips3 ${ENDIANFLAGS}
+MK_CFLAGS += -march=f32c
 MK_CFLAGS += -mtune=mips64
+MK_CFLAGS += ${ENDIANFLAGS}
 MK_CFLAGS += -mno-branch-likely
-MK_CFLAGS += -mno-mips16 -mno-dsp -mno-mips3d -mno-mdmx -msoft-float
+#MK_CFLAGS += -mno-mips16 -mno-dsp -mno-mips3d -mno-mdmx -msoft-float
 MK_CFLAGS += -G 32768
 
 # f32c-specific flags
