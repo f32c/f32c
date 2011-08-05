@@ -1,20 +1,97 @@
-diff -drup ../org/gcc-4.6.1/configure ./configure
---- ../org/gcc-4.6.1/configure	2011-03-16 19:27:36.000000000 +0100
-+++ ./configure	2011-08-02 21:23:50.000000000 +0200
-@@ -2731,6 +2731,10 @@ target_libraries="target-libgcc \
- #
- target_tools="target-examples target-groff target-gperf target-rda"
- 
-+# Disable building of target libraries and / or tools
-+target_libraries=""
-+target_tools=""
+diff -drup ../org/gcc-4.6.1/gcc/config/mips/f32c.md gcc/config/mips/f32c.md
+--- ../org/gcc-4.6.1/gcc/config/mips/f32c.md	2011-08-05 03:26:14.000000000 +0200
++++ gcc/config/mips/f32c.md	2011-08-05 03:22:03.000000000 +0200
+@@ -0,0 +1,87 @@
++;;
++;; f32c pipeline description
++;;
++;; GCC is free software; you can redistribute it and/or modify it
++;; under the terms of the GNU General Public License as published
++;; by the Free Software Foundation; either version 3, or (at your
++;; option) any later version.
 +
- ################################################################################
- 
- ## All tools belong in one of the four categories, and are assigned above
-diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.c ./gcc/config/mips/mips.c
++;; GCC is distributed in the hope that it will be useful, but WITHOUT
++;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
++;; or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
++;; License for more details.
++
++;; You should have received a copy of the GNU General Public License
++;; along with GCC; see the file COPYING3.  If not see
++;; <http://www.gnu.org/licenses/>.
++
++(define_automaton "f32c_cpu, f32c_mdu")
++
++;; Integer execution unit.
++(define_cpu_unit "f32c_ixu_arith"       "f32c_cpu")
++(define_cpu_unit "f32c_ixu_mpydiv"      "f32c_mdu")
++
++(define_insn_reservation "f32c_int_load" 3
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "load"))
++  "f32c_ixu_arith")
++
++(define_insn_reservation "f32c_int_store" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "store"))
++  "f32c_ixu_arith")
++
++(define_insn_reservation "f32c_int_mult" 1
++  (and (eq_attr "cpu" "f32c")
++       (and (eq_attr "type" "imul,imadd")
++	    (eq_attr "mode" "SI")))
++  "f32c_ixu_arith+(f32c_ixu_mpydiv*2)")
++
++(define_insn_reservation "f32c_int_divsi" 34
++  (and (eq_attr "cpu" "f32c")
++       (and (eq_attr "type" "idiv")
++	    (eq_attr "mode" "!DI")))
++ "f32c_ixu_arith+(f32c_ixu_mpydiv*34)")
++
++(define_insn_reservation "f32c_int_mfhilo" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "mfhilo"))
++  "f32c_ixu_arith+f32c_ixu_mpydiv")
++
++(define_insn_reservation "f32c_int_shift" 2
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "shift"))
++  "f32c_ixu_arith")
++
++;; All other integer insns.
++(define_insn_reservation "f32c_int_alu" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "arith,condmove,const,logical,move,nop,signext,slt"))
++  "f32c_ixu_arith")
++
++(define_insn_reservation "f32c_int_branch" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "branch"))
++  "f32c_ixu_arith")
++
++;; JR/JALR.
++(define_insn_reservation "f32c_int_jump" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "jump,call"))
++  "f32c_ixu_arith")
++
++;; Any    -> JR/JALR (without dependency) : 1 clock issue delay
++;; Load   -> JR/JALR (with dependency)    : 3 clock issue delay
++;; Shift  -> JR/JALR (with dependency)    : 3 clock issue delay
++;; Any    -> JR/JALR (with dependency)    : 2 clock issue delay
++(define_bypass 3 "f32c_int_load"   "f32c_int_jump")
++(define_bypass 3 "f32c_int_shift"  "f32c_int_jump")
++(define_bypass 2 "f32c_int_alu"    "f32c_int_jump")
++(define_bypass 2 "f32c_int_mfhilo" "f32c_int_jump")
++
++;; Unknown 
++(define_insn_reservation "f32c_int_unknown" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "unknown,multi"))
++  "f32c_ixu_arith+f32c_ixu_mpydiv")
++
+diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.c gcc/config/mips/mips.c
 --- ../org/gcc-4.6.1/gcc/config/mips/mips.c	2011-05-29 19:48:14.000000000 +0200
-+++ ./gcc/config/mips/mips.c	2011-08-04 00:06:15.000000000 +0200
++++ gcc/config/mips/mips.c	2011-08-05 02:24:54.000000000 +0200
 @@ -706,6 +706,7 @@ static const struct mips_cpu_info mips_c
    /* ST Loongson 2E/2F processors.  */
    { "loongson2e", PROCESSOR_LOONGSON_2E, 3, PTF_AVOID_BRANCHLIKELY },
@@ -23,9 +100,27 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.c ./gcc/config/mips/mips.c
  
    /* MIPS IV processors. */
    { "r8000", PROCESSOR_R8000, 4, 0 },
-diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.h ./gcc/config/mips/mips.h
+@@ -1183,7 +1184,16 @@ static const struct mips_rtx_cost_data
+     COSTS_N_INSNS (72),           /* int_div_di */
+ 		     1,           /* branch_cost */
+ 		     4            /* memory_latency */
+-  }
++  },
++  { /* F32C */
++    SOFT_FP_COSTS,
++    COSTS_N_INSNS (3),            /* int_mult_si */
++    COSTS_N_INSNS (3),            /* int_mult_di */
++    COSTS_N_INSNS (36),           /* int_div_si */
++    COSTS_N_INSNS (68),           /* int_div_di */
++		     1,           /* branch_cost */
++		     3            /* memory_latency */
++  },
+ };
+ 
+ static rtx mips_find_pic_call_symbol (rtx, rtx, bool);
+diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.h gcc/config/mips/mips.h
 --- ../org/gcc-4.6.1/gcc/config/mips/mips.h	2011-03-08 21:51:11.000000000 +0100
-+++ ./gcc/config/mips/mips.h	2011-08-04 00:50:52.000000000 +0200
++++ gcc/config/mips/mips.h	2011-08-05 02:27:08.000000000 +0200
 @@ -219,6 +219,7 @@ enum mips_code_readable_setting {
  #define TARGET_LOONGSON_2F          (mips_arch == PROCESSOR_LOONGSON_2F)
  #define TARGET_LOONGSON_2EF         (TARGET_LOONGSON_2E || TARGET_LOONGSON_2F)
@@ -61,9 +156,9 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.h ./gcc/config/mips/mips.h
       march=*: -mhard-float}"
  
  /* A spec condition that matches 32-bit options.  It only works if
-diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.md ./gcc/config/mips/mips.md
+diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
 --- ../org/gcc-4.6.1/gcc/config/mips/mips.md	2011-03-03 22:56:58.000000000 +0100
-+++ ./gcc/config/mips/mips.md	2011-08-03 23:38:33.000000000 +0200
++++ gcc/config/mips/mips.md	2011-08-05 01:29:14.000000000 +0200
 @@ -63,6 +63,7 @@
    sb1a
    sr71000
@@ -72,7 +167,15 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.md ./gcc/config/mips/mips.md
  ])
  
  (define_c_enum "unspec" [
-@@ -1323,7 +1324,7 @@
+@@ -913,6 +914,7 @@
+ (include "sb1.md")
+ (include "sr71k.md")
+ (include "xlr.md")
++(include "f32c.md")
+ (include "generic.md")
+ 
+ ;;
+@@ -1323,7 +1325,7 @@
    [(set (match_operand:GPR 0 "register_operand")
  	(mult:GPR (match_operand:GPR 1 "register_operand")
  		  (match_operand:GPR 2 "register_operand")))]
@@ -81,7 +184,7 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.md ./gcc/config/mips/mips.md
  {
    if (TARGET_LOONGSON_2EF || TARGET_LOONGSON_3A)
      emit_insn (gen_mul<mode>3_mul3_loongson (operands[0], operands[1],
-@@ -1731,7 +1732,7 @@
+@@ -1731,7 +1733,7 @@
    [(set (match_operand:DI 0 "register_operand")
  	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
  		 (any_extend:DI (match_operand:SI 2 "register_operand"))))]
@@ -90,7 +193,7 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.md ./gcc/config/mips/mips.md
  {
    mulsidi3_gen_fn fn = mips_mulsidi3_gen_fn (<CODE>);
    emit_insn (fn (operands[0], operands[1], operands[2]));
-@@ -1906,7 +1907,7 @@
+@@ -1906,7 +1908,7 @@
  	  (mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
  		   (any_extend:DI (match_operand:SI 2 "register_operand")))
  	  (const_int 32))))]
@@ -99,7 +202,7 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.md ./gcc/config/mips/mips.md
  {
    if (ISA_HAS_MULHI)
      emit_insn (gen_<su>mulsi3_highpart_mulhi_internal (operands[0],
-@@ -1926,7 +1927,7 @@
+@@ -1926,7 +1928,7 @@
  		   (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
  	  (const_int 32))))
     (clobber (match_scratch:SI 3 "=l"))]
@@ -108,7 +211,7 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.md ./gcc/config/mips/mips.md
    { return TARGET_FIX_R4000 ? "mult<u>\t%1,%2\n\tmfhi\t%0" : "#"; }
    "&& reload_completed && !TARGET_FIX_R4000"
    [(const_int 0)]
-@@ -2250,7 +2251,9 @@
+@@ -2250,7 +2252,9 @@
  		  (match_operand:ANYF 2 "register_operand")))]
    "<divide_condition>"
  {
@@ -119,7 +222,7 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.md ./gcc/config/mips/mips.md
      if (!(<recip_condition> && flag_unsafe_math_optimizations))
        operands[1] = force_reg (<MODE>mode, operands[1]);
  })
-@@ -2312,7 +2315,7 @@
+@@ -2312,7 +2316,7 @@
     (set (match_operand:GPR 3 "register_operand" "=d")
  	(mod:GPR (match_dup 1)
  		 (match_dup 2)))]
@@ -128,7 +231,7 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.md ./gcc/config/mips/mips.md
    "#"
    "&& reload_completed"
    [(const_int 0)]
-@@ -2344,7 +2347,7 @@
+@@ -2344,7 +2348,7 @@
     (set (match_operand:GPR 3 "register_operand" "=d")
  	(umod:GPR (match_dup 1)
  		  (match_dup 2)))]
@@ -137,7 +240,7 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.md ./gcc/config/mips/mips.md
    "#"
    "reload_completed"
    [(const_int 0)]
-@@ -2375,7 +2378,7 @@
+@@ -2375,7 +2379,7 @@
  	  [(any_div:GPR (match_operand:GPR 1 "register_operand" "d")
  			(match_operand:GPR 2 "register_operand" "d"))]
  	  UNSPEC_SET_HILO))]
@@ -146,9 +249,9 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.md ./gcc/config/mips/mips.md
    { return mips_output_division ("<GPR:d>div<u>\t%.,%1,%2", operands); }
    [(set_attr "type" "idiv")
     (set_attr "mode" "<GPR:MODE>")])
-diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.opt ./gcc/config/mips/mips.opt
+diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
 --- ../org/gcc-4.6.1/gcc/config/mips/mips.opt	2011-02-17 02:59:04.000000000 +0100
-+++ ./gcc/config/mips/mips.opt	2011-08-02 21:23:50.000000000 +0200
++++ gcc/config/mips/mips.opt	2011-08-04 23:56:59.000000000 +0200
 @@ -76,6 +76,14 @@ mdouble-float
  Target Report RejectNegative InverseMask(SINGLE_FLOAT, DOUBLE_FLOAT)
  Allow hardware floating-point instructions to cover both 32-bit and 64-bit operations
