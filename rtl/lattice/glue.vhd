@@ -37,13 +37,13 @@ entity glue is
 
 		-- CPU core configuration options
 		C_register_technology: string := "lattice";
-		C_mult_enable: boolean := true; -- true: +6 LUT4
-		C_result_forwarding: boolean := true; -- true: +167 LUT4
-		C_load_aligner: boolean := true; -- true: +152 LUT4
-		C_branch_prediction: boolean := true; -- true: +76 LUT4
+		C_mult_enable: boolean := true; -- true: +27 LUT4
+		C_result_forwarding: boolean := true; -- true: +181 LUT4
+		C_load_aligner: boolean := true; -- true: +168 LUT4
+		C_branch_prediction: boolean := true; -- true: +77 LUT4
 
 		-- Do not change those two:
-		C_branch_likely: boolean := false; -- true: +12 LUT4, -Fmax
+		C_branch_likely: boolean := false; -- true: -2 LUT4, -Fmax
 		C_fast_ID: boolean := true; -- false: +1 LUT4, -Fmax
 
 		-- debugging options
@@ -51,37 +51,43 @@ entity glue is
 
 		-- SoC configuration options
 		C_mem_size: string := "16k";
-		C_tsc: boolean := true; -- true: +63 LUT4
-		C_sio: boolean := true; -- true: +133 LUT;
-		C_gpio: boolean := true;
-		C_spi: boolean := true;
-		C_pcmdac: boolean := true; -- true: +43 LUT;
-		C_ddsfm: boolean := false
+		C_tsc: boolean := true; -- true: +68 LUT4
+		C_sio: boolean := true; -- true: +137 LUT4
+		C_gpio: boolean := true; -- true: +13 LUT4
+		C_spi: boolean := true; -- true: +10 LUT4
+		C_pcmdac: boolean := true; -- true: +32 LUT4
+		C_ddsfm: boolean := false -- true: +23 LUT4
 
 		--
-		-- XP2-8E-7 area optimized synthesis:
+		-- XP2-8E-7 area optimized synthesis @ 81.25 MHz:
 		--
-		-- C_bp 1, C_bl 0, C_res_fwd 1, C_fast_id 1, C_debug 0
-		-- C_tsc 1, C_sio 1, C_pcmdac 1
-		-- Total number of LUT4s: 1668  Fmax: 122.5 MHz (works @ 150 MHz)
-		-- CPI: 1.13
+		-- Global config:
+		--   C_tsc 1, C_sio 1, C_gpio 0, C_spi 0, C_pcmdac 0, C_ddsfm 0
 		--
-		-- C_bp 0, C_bl 0, C_res_fwd 1, C_fast_id 1, C_debug 0
-		-- C_tsc 1, C_sio 1, C_pcmdac 1
-		-- Total number of LUT4s: 1592  Fmax: 122.5 MHz (works @ 150 MHz)
-		-- CPI: 1.25
+		-- Config #1:
+		--   C_mult_enable 1, C_res_fwd 1, C_load_aligner 1, C_bpred 1
+		--   regs 736 slices 919 logic LUT4 1401 total LUT4 1833
+		--   DMIPS/MHz 1.402  DMIPS/MHz/kLUT4 0.765
 		--
-		-- C_bp 0, C_bl 0, C_res_fwd 0, C_fast_id 1, C_debug 0
-		-- C_tsc 1, C_sio 1, C_pcmdac 1
-		-- Total number of LUT4s: 1425  Fmax: 119.4 MHz (works @ 150 MHz)
-		-- CPI: 1.61
+		-- Config #2:
+		--   C_mult_enable 1, C_res_fwd 1, C_load_aligner 1, C_bpred 0
+		--   regs 677 slices 880 logic LUT4 1324 total LUT4 1756
+		--   DMIPS/MHz 1.339  DMIPS/MHz/kLUT4 0.763
 		--
-		-- C_bp 0, C_bl 0, C_res_fwd 0, C_fast_id 1, C_debug 0
-		-- C_tsc 0, C_sio 0, C_pcmdac 0
-		-- Total number of LUT4s: 1184
+		-- Config #3:
+		--   C_mult_enable 1, C_res_fwd 1, C_load_aligner 0, C_bpred 0
+		--   regs 671 slices 796 logic LUT4 1156 total LUT4 1588
+		--   DMIPS/MHz 1.288  DMIPS/MHz/kLUT4 0.811
 		--
-		-- Synthesis options worth playing with:
-		--    Synplify Pro: Area (False->True)
+		-- Config #4:
+		--   C_mult_enable 1, C_res_fwd 0, C_load_aligner 0, C_bpred 0
+		--   regs 664 slices 705 logic LUT4 975 total LUT4 1407
+		--   DMIPS/MHz 0.981  DMIPS/MHz/kLUT4 0.697
+		--
+		-- Config #5:
+		--   C_mult_enable 0, C_res_fwd 0, C_load_aligner 0, C_bpred 0
+		--   regs 658 slices 692 logic LUT4 948 total LUT4 1380
+		--   DMIPS/MHz 0.800  DMIPS/MHz/kLUT4 0.580
 		--
 	);
 	port (
