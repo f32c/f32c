@@ -1,6 +1,6 @@
 diff -drup ../org/gcc-4.6.1/gcc/config/mips/f32c.md gcc/config/mips/f32c.md
 --- ../org/gcc-4.6.1/gcc/config/mips/f32c.md	2011-08-05 03:26:14.000000000 +0200
-+++ gcc/config/mips/f32c.md	2011-08-05 03:22:03.000000000 +0200
++++ gcc/config/mips/f32c.md	2011-08-05 18:49:49.000000000 +0200
 @@ -0,0 +1,87 @@
 +;;
 +;; f32c pipeline description
@@ -91,7 +91,7 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/f32c.md gcc/config/mips/f32c.md
 +
 diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.c gcc/config/mips/mips.c
 --- ../org/gcc-4.6.1/gcc/config/mips/mips.c	2011-05-29 19:48:14.000000000 +0200
-+++ gcc/config/mips/mips.c	2011-08-05 02:24:54.000000000 +0200
++++ gcc/config/mips/mips.c	2011-08-05 18:49:49.000000000 +0200
 @@ -706,6 +706,7 @@ static const struct mips_cpu_info mips_c
    /* ST Loongson 2E/2F processors.  */
    { "loongson2e", PROCESSOR_LOONGSON_2E, 3, PTF_AVOID_BRANCHLIKELY },
@@ -120,7 +120,7 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.c gcc/config/mips/mips.c
  static rtx mips_find_pic_call_symbol (rtx, rtx, bool);
 diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.h gcc/config/mips/mips.h
 --- ../org/gcc-4.6.1/gcc/config/mips/mips.h	2011-03-08 21:51:11.000000000 +0100
-+++ gcc/config/mips/mips.h	2011-08-05 02:27:08.000000000 +0200
++++ gcc/config/mips/mips.h	2011-08-05 18:49:49.000000000 +0200
 @@ -219,6 +219,7 @@ enum mips_code_readable_setting {
  #define TARGET_LOONGSON_2F          (mips_arch == PROCESSOR_LOONGSON_2F)
  #define TARGET_LOONGSON_2EF         (TARGET_LOONGSON_2E || TARGET_LOONGSON_2F)
@@ -158,7 +158,7 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.h gcc/config/mips/mips.h
  /* A spec condition that matches 32-bit options.  It only works if
 diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
 --- ../org/gcc-4.6.1/gcc/config/mips/mips.md	2011-03-03 22:56:58.000000000 +0100
-+++ gcc/config/mips/mips.md	2011-08-05 01:29:14.000000000 +0200
++++ gcc/config/mips/mips.md	2011-08-05 18:49:49.000000000 +0200
 @@ -63,6 +63,7 @@
    sb1a
    sr71000
@@ -251,7 +251,7 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
     (set_attr "mode" "<GPR:MODE>")])
 diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
 --- ../org/gcc-4.6.1/gcc/config/mips/mips.opt	2011-02-17 02:59:04.000000000 +0100
-+++ gcc/config/mips/mips.opt	2011-08-04 23:56:59.000000000 +0200
++++ gcc/config/mips/mips.opt	2011-08-05 18:49:49.000000000 +0200
 @@ -76,6 +76,14 @@ mdouble-float
  Target Report RejectNegative InverseMask(SINGLE_FLOAT, DOUBLE_FLOAT)
  Allow hardware floating-point instructions to cover both 32-bit and 64-bit operations
@@ -267,3 +267,48 @@ diff -drup ../org/gcc-4.6.1/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
  mdsp
  Target Report Mask(DSP)
  Use MIPS-DSP instructions
+diff -drup ../org/gcc-4.6.1/gcc/doc/g++.1 gcc/doc/g++.1
+--- ../org/gcc-4.6.1/gcc/doc/g++.1	2011-06-27 12:49:31.000000000 +0200
++++ gcc/doc/g++.1	2011-08-05 19:19:07.000000000 +0200
+@@ -13122,6 +13122,7 @@ The processor names are:
+ \&\fB34kc\fR, \fB34kf2_1\fR, \fB34kf1_1\fR,
+ \&\fB74kc\fR, \fB74kf2_1\fR, \fB74kf1_1\fR, \fB74kf3_2\fR,
+ \&\fB1004kc\fR, \fB1004kf2_1\fR, \fB1004kf1_1\fR,
++\&\fBf32c\fR,
+ \&\fBloongson2e\fR, \fBloongson2f\fR, \fBloongson3a\fR,
+ \&\fBm4k\fR,
+ \&\fBocteon\fR,
+diff -drup ../org/gcc-4.6.1/gcc/doc/gcc.1 gcc/doc/gcc.1
+--- ../org/gcc-4.6.1/gcc/doc/gcc.1	2011-06-27 12:49:31.000000000 +0200
++++ gcc/doc/gcc.1	2011-08-05 19:19:29.000000000 +0200
+@@ -13122,6 +13122,7 @@ The processor names are:
+ \&\fB34kc\fR, \fB34kf2_1\fR, \fB34kf1_1\fR,
+ \&\fB74kc\fR, \fB74kf2_1\fR, \fB74kf1_1\fR, \fB74kf3_2\fR,
+ \&\fB1004kc\fR, \fB1004kf2_1\fR, \fB1004kf1_1\fR,
++\&\fBf32c\fR,
+ \&\fBloongson2e\fR, \fBloongson2f\fR, \fBloongson3a\fR,
+ \&\fBm4k\fR,
+ \&\fBocteon\fR,
+diff -drup ../org/gcc-4.6.1/gcc/doc/gcc.info gcc/doc/gcc.info
+--- ../org/gcc-4.6.1/gcc/doc/gcc.info	2011-06-27 12:49:27.000000000 +0200
++++ gcc/doc/gcc.info	2011-08-05 19:19:56.000000000 +0200
+@@ -13577,7 +13577,7 @@ File: gcc.info,  Node: MIPS Options,  Ne
+      `5kc', `5kf', `20kc', `24kc', `24kf2_1', `24kf1_1', `24kec',
+      `24kef2_1', `24kef1_1', `34kc', `34kf2_1', `34kf1_1', `74kc',
+      `74kf2_1', `74kf1_1', `74kf3_2', `1004kc', `1004kf2_1',
+-     `1004kf1_1', `loongson2e', `loongson2f', `loongson3a', `m4k',
++     `1004kf1_1', `f32c', `loongson2e', `loongson2f', `loongson3a', `m4k',
+      `octeon', `orion', `r2000', `r3000', `r3900', `r4000', `r4400',
+      `r4600', `r4650', `r6000', `r8000', `rm7000', `rm9000', `r10000',
+      `r12000', `r14000', `r16000', `sb1', `sr71000', `vr4100',
+diff -drup ../org/gcc-4.6.1/gcc/doc/invoke.texi gcc/doc/invoke.texi
+--- ../org/gcc-4.6.1/gcc/doc/invoke.texi	2011-03-29 16:24:42.000000000 +0200
++++ gcc/doc/invoke.texi	2011-08-05 19:26:29.000000000 +0200
+@@ -14197,6 +14197,7 @@ The processor names are:
+ @samp{34kc}, @samp{34kf2_1}, @samp{34kf1_1},
+ @samp{74kc}, @samp{74kf2_1}, @samp{74kf1_1}, @samp{74kf3_2},
+ @samp{1004kc}, @samp{1004kf2_1}, @samp{1004kf1_1},
++@samp{f32c},
+ @samp{loongson2e}, @samp{loongson2f}, @samp{loongson3a},
+ @samp{m4k},
+ @samp{octeon},
