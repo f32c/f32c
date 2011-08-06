@@ -114,7 +114,7 @@ begin
 	when others   => type_code <= "11"; -- I-type
 	end case;
     end process;
-	
+
     process(type_code, opcode, instruction)
     begin
 	use_immediate <= false;
@@ -149,11 +149,11 @@ begin
 	    target_addr <= instruction(15 downto 11);
 	end case;
     end process;
-	
+
     -- reg2 relevant for load-use or produce-use hazard checking or not?
     ignore_reg2 <= true when opcode(5) /= '0' and opcode(3 downto 1) /= "010"
       and type_code(0) /= '0' else x_reg2_zero;
-	
+
     -- op_major: 00 ALU, 01 SLT, 10 shift, 11 mul_et_al
     process(x_special, opcode, fncode)
     begin
@@ -162,7 +162,7 @@ begin
 	mem_cycle <= '0'; -- not a memory operation
 	latency <= "00"; -- result available immediately after EX stage
 	do_sign_extend <= true;
-		
+
 	if x_special then
 	    op_minor <= fncode(2 downto 0);
 	    if fncode(5 downto 3) = "101" then -- SLT / SLTU
@@ -201,7 +201,7 @@ begin
 	    latency(1) <= not mem_size(1); -- resolve load aligner hazard
 	end if;
     end process;
-	
+
     imm_extension <= x"ffff" when do_sign_extend and instruction(15) = '1'
       else x"0000";
     sign_extension <= imm_extension;
@@ -215,7 +215,7 @@ begin
 	    immediate_value <= imm_extension & instruction(15 downto 0);
 	end case;
     end process;
-		
+
     branch_condition <=
       '1' & opcode(1 downto 0) when x_branch1 -- beq, bne, blez, bgtz
       else "01" & instruction(16) when x_branch2 -- bgez, bltz
@@ -223,7 +223,7 @@ begin
 
     mem_write <= opcode(3);
     mem_size <= opcode(1 downto 0);
-	
+
     sign_extend <= do_sign_extend; -- for the SLT family
 end Behavioral;
 

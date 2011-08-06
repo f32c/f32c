@@ -363,8 +363,7 @@ begin
     --
     ID_load_align_hazard <= C_load_aligner and EX_MEM_latency = '1'
       and ((not ID_reg1_zero and ID_reg1_addr = EX_MEM_writeback_addr) or
-      (not ID_reg2_zero and not ID_ignore_reg2 and
-      ID_reg2_addr = EX_MEM_writeback_addr));
+      (not ID_ignore_reg2 and ID_reg2_addr = EX_MEM_writeback_addr));
     ID_jump_register_hazard <= ID_jump_register and not ID_reg1_zero and
       (ID_reg1_addr = ID_EX_writeback_addr or
       ID_reg1_addr = EX_MEM_writeback_addr);
@@ -375,7 +374,7 @@ begin
       (EX_running and not ID_EX_multicycle_lh_lb and
       not ID_load_align_hazard and not ID_jump_register_hazard and
       (ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
-      ID_EX_latency(0) = '0') and (ID_reg2_zero or ID_ignore_reg2 or
+      ID_EX_latency(0) = '0') and (ID_ignore_reg2 or
       ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency(0) = '0'));
     end generate;
 
