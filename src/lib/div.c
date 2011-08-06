@@ -2,8 +2,8 @@
 #include <types.h>
  
 
-static uint32_t udivmod(uint32_t, uint32_t, int);
-
+#define UDIVMOD_SIGNED	0x1
+#define UDIVMOD_DO_MOD	0x2
 
 #define	UDIVMOD_BODY()							\
 	uint32_t lo = 0;						\
@@ -23,75 +23,77 @@ static uint32_t udivmod(uint32_t, uint32_t, int);
 	}
 
 
+static uint32_t
+__udivmodsi3(uint32_t a, uint32_t b, int flags)
+{
+	int neg = 0;
+
+	if (flags & UDIVMOD_SIGNED) {
+		if ((int)b < 0) {
+			b = -(int)b;
+			neg = 1;
+		}
+		if ((int)a < 0) {
+			a = -(int)a;
+			neg = !neg;
+		}
+	}
+
+	UDIVMOD_BODY();
+
+	if (flags & UDIVMOD_DO_MOD)
+		lo = a;
+	if (neg)
+		lo = -lo;
+	return (lo);
+}
+
+
 int32_t
 __divsi3(int32_t a, int32_t b)
 {
+#ifdef OPTIMIZED_DIVSI3
 	int neg = 0;
 
 	if (a < 0) {
 		a = -a;
-		neg = !neg;
+		neg = 1;
 	}
 	if (b < 0) {
 		b = -b;
 		neg = !neg;
 	}
 
-#ifdef OPTIMIZED_DIVSI3
 	UDIVMOD_BODY();
-#else
-	int lo = udivmod(a, b, 0);
-#endif
 
 	if (neg)
 		lo = -lo;
 	return (lo);
+#else
+	return (__udivmodsi3(a, b, UDIVMOD_SIGNED));
+#endif
 }
  
  
 uint32_t
 __modsi3(int32_t a, int32_t b)
 {
-	int res, neg = 0;
 
-	if (b < 0)
-		b = -b;
-	if (a < 0) {
-		a = -a;
-		neg = !neg;
-	}
-
-	res = udivmod(a, b, 1);
-
-	if (neg)
-		res = -res;
-	return (res);
+	return (__udivmodsi3(a, b, UDIVMOD_SIGNED | UDIVMOD_DO_MOD));
 }
  
  
-uint32_t
-__umodsi3(uint32_t a, uint32_t b)
-{
-
-	return (udivmod(a, b, 1));
-}
-
-
 uint32_t
 __udivsi3(uint32_t a, uint32_t b)
 {
 
-	return (udivmod(a, b, 0));
+	return (__udivmodsi3(a, b, 0));
 }
  
 
-static uint32_t
-udivmod(uint32_t a, uint32_t b, int do_mod)
+uint32_t
+__umodsi3(uint32_t a, uint32_t b)
 {
 
-	UDIVMOD_BODY();
-
-	if (do_mod)
-		return (a);
-	return (lo);
+	return (__udivmodsi3(a, b, UDIVMOD_DO_MOD));
 }
