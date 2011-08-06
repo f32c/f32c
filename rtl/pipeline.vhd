@@ -1,5 +1,5 @@
 --
--- Copyright 2008,2010,2011 University of Zagreb.
+-- Copyright 2008, 2010, 2011 University of Zagreb.
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -86,8 +86,8 @@ architecture Behavioral of pipeline is
     -- pipeline stage 2: instruction decode and register fetch
     signal ID_running: boolean;
     signal ID_reg1_zero, ID_reg2_zero: boolean;
-    signal ID_cond_move, ID_branch_cycle: boolean;
-    signal ID_branch_likely, ID_jump_cycle: boolean;
+    signal ID_branch_cycle, ID_branch_likely, ID_jump_cycle: boolean;
+    signal ID_cmov_cycle, ID_cmov_condition: boolean;
     signal ID_reg1_addr, ID_reg2_addr: std_logic_vector(4 downto 0);
     signal ID_writeback_addr: std_logic_vector(4 downto 0);
     signal ID_reg1_data, ID_reg2_data: std_logic_vector(31 downto 0);
@@ -121,6 +121,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_fwd_ex_reg1, ID_EX_fwd_ex_reg2, ID_EX_fwd_ex_alu_op2: boolean;
     signal ID_EX_fwd_mem_reg1, ID_EX_fwd_mem_reg2: boolean;
     signal ID_EX_fwd_mem_alu_op2, ID_EX_sign_extend: boolean;
+    signal ID_EX_cmov_cycle, ID_EX_cmov_condition: boolean;
     signal ID_EX_branch_cycle, ID_EX_branch_likely: boolean;
     signal ID_EX_jump_cycle, ID_EX_jump_register: boolean;
     signal ID_EX_cancel_next, ID_EX_predict_taken: boolean;
@@ -313,10 +314,11 @@ begin
 	C_branch_likely => C_branch_likely
     )
     port map (
-	instruction => IF_ID_instruction, cond_move => ID_cond_move,
+	instruction => IF_ID_instruction,
 	reg1_addr => ID_reg1_addr, reg2_addr => ID_reg2_addr,
 	reg1_zero => ID_reg1_zero, reg2_zero => ID_reg2_zero,
 	immediate_value => ID_immediate, use_immediate => ID_use_immediate,
+	cmov_cycle => ID_cmov_cycle, cmov_condition => ID_cmov_condition,
 	sign_extension => ID_sign_extension,
 	target_addr => ID_writeback_addr, op_major => ID_op_major,
 	op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
@@ -402,7 +404,7 @@ begin
       not ID_reg2_zero and ID_reg2_addr = EX_MEM_writeback_addr;
     ID_fwd_mem_alu_op2 <= ID_fwd_mem_reg2 and not ID_use_immediate;
 
-    -- compute branch target
+    -- compute branch target - XXX revisit: perhaps use ID_immediate here?
     ID_branch_target <= IF_ID_PC_4 +
       (ID_sign_extension(13 downto 0) & IF_ID_instruction(15 downto 0));
 
@@ -476,6 +478,8 @@ begin
 		    ID_EX_immediate <= ID_immediate;
 		    ID_EX_sign_extend <= ID_sign_extend;
 		    ID_EX_op_minor <= ID_op_minor;
+		    ID_EX_cmov_cycle <= ID_cmov_cycle;
+		    ID_EX_cmov_condition <= ID_cmov_condition;
 		    ID_EX_mem_write <= ID_mem_write;
 		    ID_EX_mem_size <= ID_mem_size;
 		    ID_EX_multicycle_lh_lb <=
@@ -669,7 +673,15 @@ begin
 		    EX_MEM_logic_cycle <= ID_EX_op_minor(2);
 		    EX_MEM_logic_data <= EX_from_alu_logic;
 		end if;
-		EX_MEM_writeback_addr <= ID_EX_writeback_addr;
+		if (ID_EX_cmov_cycle) then
+		    if EX_from_alu_equal = ID_EX_cmov_condition then
+			EX_MEM_writeback_addr <= ID_EX_writeback_addr;
+		    else
+			EX_MEM_writeback_addr <= "00000";
+		    end if;
+		else
+		    EX_MEM_writeback_addr <= ID_EX_writeback_addr;
+		end if;
 		EX_MEM_mem_cycle <= ID_EX_mem_cycle;
 		EX_MEM_latency <= ID_EX_latency(1);
 		EX_MEM_mem_read_sign_extend <= ID_EX_mem_read_sign_extend;
