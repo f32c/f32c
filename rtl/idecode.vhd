@@ -34,6 +34,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity idecode is
     generic(
+	C_movn_movz: boolean;
 	C_branch_likely: boolean
     );
     port(
@@ -73,9 +74,9 @@ begin
     fncode <= instruction(5 downto 0);
     mem_read_sign_extend <= not opcode(2);
 
-    x_reg1_addr <= instruction(20 downto 16) when cond_move
+    x_reg1_addr <= instruction(20 downto 16) when C_movn_movz and cond_move
       else instruction(25 downto 21);
-    x_reg2_addr <= instruction(25 downto 21) when cond_move
+    x_reg2_addr <= instruction(25 downto 21) when C_movn_movz and cond_move
       else instruction(20 downto 16);
     reg1_addr <= x_reg1_addr;
     reg2_addr <= x_reg2_addr;
@@ -89,7 +90,7 @@ begin
     -- bgez, bltz
     x_branch2 <= opcode = "000001";
     x_special <= opcode = "000000";
-    cmov_cycle <= cond_move;
+    cmov_cycle <= C_movn_movz and cond_move;
     cmov_condition <= (instruction(0) = '0');
     branch_cycle <= x_branch1 or x_branch2;
     branch_likely <= ((x_branch1 and opcode(4) = '1') or
@@ -153,7 +154,7 @@ begin
 	    end if;
 	when others =>	-- R-type
 	    target_addr <= instruction(15 downto 11);
-	    if (cond_move) then
+	    if (C_movn_movz and cond_move) then
 		use_immediate <= true;	
 	    end if;
 	end case;
@@ -175,9 +176,9 @@ begin
 
 	if x_special then
 	    op_minor <= fncode(2 downto 0);
-	    if fncode(5 downto 1) = "00101" then -- MOVN / MOVZ
-		cond_move <= true;
-		op_major <= "10"; -- shift
+	    if C_movn_movz and fncode(5 downto 1) = "00101" then
+		cond_move <= true; -- MOVN / MOVZ
+		op_major <= "10"; -- route register through shifter logic
 		latency <= "01";
 	    end if;
 	    if fncode(5 downto 3) = "101" then -- SLT / SLTU
@@ -225,7 +226,7 @@ begin
     begin
 	case opcode is
 	when "000000" => -- special (for MOVN / MOVZ)
-	    if (cond_move) then
+	    if (C_movn_movz and cond_move) then
 		immediate_value <= x"00000000";
 	    else
 		immediate_value <= imm_extension & instruction(15 downto 0);

@@ -35,9 +35,10 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity pipeline is
     generic (
 	-- ISA options
-	C_mult_enable: boolean := true;
-	C_has_mfhi: boolean := true; -- false saves 5 LUTs
-	C_branch_likely: boolean := false;
+	C_mult_enable: boolean;
+	C_has_mfhi: boolean;
+	C_movn_movz: boolean;
+	C_branch_likely: boolean;
 
 	-- optimization options
 	C_load_aligner: boolean := true;
@@ -311,6 +312,7 @@ begin
     -- instruction decoder
     idecode: entity idecode
     generic map (
+	C_movn_movz => C_movn_movz,
 	C_branch_likely => C_branch_likely
     )
     port map (
@@ -478,8 +480,8 @@ begin
 		    ID_EX_immediate <= ID_immediate;
 		    ID_EX_sign_extend <= ID_sign_extend;
 		    ID_EX_op_minor <= ID_op_minor;
-		    ID_EX_cmov_cycle <= ID_cmov_cycle;
-		    ID_EX_cmov_condition <= ID_cmov_condition;
+		    ID_EX_cmov_cycle <= C_movn_movz and ID_cmov_cycle;
+		    ID_EX_cmov_condition <= C_movn_movz and ID_cmov_condition;
 		    ID_EX_mem_write <= ID_mem_write;
 		    ID_EX_mem_size <= ID_mem_size;
 		    ID_EX_multicycle_lh_lb <=
@@ -673,7 +675,7 @@ begin
 		    EX_MEM_logic_cycle <= ID_EX_op_minor(2);
 		    EX_MEM_logic_data <= EX_from_alu_logic;
 		end if;
-		if (ID_EX_cmov_cycle) then
+		if (C_movn_movz and ID_EX_cmov_cycle) then
 		    if EX_from_alu_equal = ID_EX_cmov_condition then
 			EX_MEM_writeback_addr <= ID_EX_writeback_addr;
 		    else
