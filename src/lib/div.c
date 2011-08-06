@@ -4,34 +4,22 @@
 
 static uint32_t udivmod(uint32_t, uint32_t, int);
 
-static inline
-uint32_t _mul_by_2_using_add(uint32_t val)
-{
 
-	/*
-	 * Multiplying by two using "val <<= 1;" is slower then using
-	 * "val += val;", so force the compiler to use the later method.
-	 */
-	__asm ("addu %0, %1, %1" : "=r" (val) : "r" (val));
-	return (val);
-}
-
-
-#define	UDIVMOD_BODY()						\
-	uint32_t lo = 0;					\
-	uint32_t bit = 1;					\
-								\
-	while (b < a && (b & 0x80000000) == 0 && bit) {		\
-		b = _mul_by_2_using_add(b);			\
-		bit = _mul_by_2_using_add(bit);			\
-	}							\
-	while (bit) {						\
-		if (a >= b) {					\
-			lo |= bit;				\
-			a -= b;					\
-		}						\
-		bit >>= 1;					\
-		b >>= 1;					\
+#define	UDIVMOD_BODY()							\
+	uint32_t lo = 0;						\
+	uint32_t bit = 1;						\
+									\
+	while (b < a && (b & 0x80000000) == 0 && bit) {			\
+		__asm ("addu %0, %1, %1" : "=r" (b) : "r" (b)); 	\
+		__asm ("addu %0, %1, %1" : "=r" (bit) : "r" (bit));	\
+	}								\
+	while (bit) {							\
+		if (a >= b) {						\
+			lo |= bit;					\
+			a -= b;						\
+		}							\
+		bit >>= 1;						\
+		b >>= 1;						\
 	}
 
 
@@ -49,7 +37,11 @@ __divsi3(int32_t a, int32_t b)
 		neg = !neg;
 	}
 
+#ifdef OPTIMIZED_DIVSI3
 	UDIVMOD_BODY();
+#else
+	int lo = udivmod(a, b, 0);
+#endif
 
 	if (neg)
 		lo = -lo;
