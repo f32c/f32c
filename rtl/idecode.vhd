@@ -66,15 +66,17 @@ architecture Behavioral of idecode is
     signal x_reg1_addr, x_reg2_addr: std_logic_vector(4 downto 0);
     signal x_reg2_zero, x_special, do_sign_extend: boolean;
     signal x_branch1, x_branch2: boolean;
+    signal x_cond_move: boolean;
 begin
 
     opcode <= instruction(31 downto 26);
     fncode <= instruction(5 downto 0);
-    x_reg1_addr <= instruction(25 downto 21);
-    reg1_addr <= x_reg1_addr;
-    x_reg2_addr <= instruction(20 downto 16);
-    reg2_addr <= x_reg2_addr;
     mem_read_sign_extend <= not opcode(2);
+
+    x_reg1_addr <= instruction(25 downto 21);
+    x_reg2_addr <= instruction(20 downto 16);
+    reg1_addr <= x_reg1_addr;
+    reg2_addr <= x_reg2_addr;
 
     x_special <= opcode = "000000";
     special <= x_special;
@@ -162,9 +164,14 @@ begin
 	mem_cycle <= '0'; -- not a memory operation
 	latency <= "00"; -- result available immediately after EX stage
 	do_sign_extend <= true;
+	x_cond_move <= false;
 
 	if x_special then
 	    op_minor <= fncode(2 downto 0);
+	    if fncode(5 downto 3) = "001" then -- MOVN / MOVZ
+		do_sign_extend <= false; -- reduces LUT4 count?
+		x_cond_move <= true;
+	    end if;
 	    if fncode(5 downto 3) = "101" then -- SLT / SLTU
 		op_major <= "01";
 		if fncode(0) = '1' then
@@ -206,9 +213,15 @@ begin
       else x"0000";
     sign_extension <= imm_extension;
 
-    process(opcode, instruction, imm_extension)
+    process(opcode, instruction, imm_extension, x_cond_move)
     begin
 	case opcode is
+	when "000000" => -- special (for MOVN / MOVZ)
+	    if (x_cond_move) then
+		immediate_value <= x"00000000";
+	    else
+		immediate_value <= imm_extension & instruction(15 downto 0);
+	    end if;
 	when "001111" => -- lui
 	    immediate_value <= instruction(15 downto 0) & x"0000";
 	when others =>
