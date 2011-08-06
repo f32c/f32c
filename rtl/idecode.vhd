@@ -121,7 +121,7 @@ begin
 	end case;
     end process;
 
-    process(type_code, opcode, instruction)
+    process(type_code, opcode, instruction, cond_move)
     begin
 	use_immediate <= false;
 	cop0 <= '0';
@@ -153,6 +153,9 @@ begin
 	    end if;
 	when others =>	-- R-type
 	    target_addr <= instruction(15 downto 11);
+	    if (cond_move) then
+		use_immediate <= true;	
+	    end if;
 	end case;
     end process;
 
