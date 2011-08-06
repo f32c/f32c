@@ -65,7 +65,7 @@ architecture Behavioral of idecode is
     signal imm_extension: std_logic_vector(15 downto 0);
     signal cond_move: boolean;
     signal x_reg1_addr, x_reg2_addr: std_logic_vector(4 downto 0);
-    signal x_reg2_zero, x_special, do_sign_extend: boolean;
+    signal x_reg2_zero, x_special, sign_extend_imm: boolean;
     signal x_branch1, x_branch2: boolean;
 begin
 
@@ -167,7 +167,7 @@ begin
 	op_minor <= "000"; -- ADD
 	mem_cycle <= '0'; -- not a memory operation
 	latency <= "00"; -- result available immediately after EX stage
-	do_sign_extend <= true;
+	sign_extend_imm <= true;
 	cond_move <= false;
 
 	if x_special then
@@ -180,7 +180,7 @@ begin
 	    if fncode(5 downto 3) = "101" then -- SLT / SLTU
 		op_major <= "01";
 		if fncode(0) = '1' then
-		    do_sign_extend <= false; -- SLTU
+		    sign_extend_imm <= false; -- SLTU
 		end if;
 	    end if;
 	    if fncode(5 downto 3) = "000" then -- shift
@@ -195,7 +195,7 @@ begin
 	if opcode(5 downto 3) = "001" then
 	    op_minor <= opcode(2 downto 0);
 	    if opcode(2) = '1' or opcode(1 downto 0) = "11" then
-		do_sign_extend <= false; -- for logic and SLTIU
+		sign_extend_imm <= false; -- for logic and SLTIU
 	    end if;
 	    if opcode(2 downto 0) = "111" then -- LUI
 		op_minor <= "000"; -- ADD
@@ -214,7 +214,7 @@ begin
 	end if;
     end process;
 
-    imm_extension <= x"ffff" when do_sign_extend and instruction(15) = '1'
+    imm_extension <= x"ffff" when sign_extend_imm and instruction(15) = '1'
       else x"0000";
     sign_extension <= imm_extension;
 
@@ -242,6 +242,6 @@ begin
     mem_write <= opcode(3);
     mem_size <= opcode(1 downto 0);
 
-    sign_extend <= do_sign_extend; -- for the SLT family
+    sign_extend <= sign_extend_imm; -- for the SLT family
 end Behavioral;
 
