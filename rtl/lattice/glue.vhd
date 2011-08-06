@@ -39,14 +39,14 @@ entity glue is
 		C_register_technology: string := "lattice";
 		C_mult_enable: boolean := true; -- true: +27 LUT4
 		C_has_mfhi: boolean := true; -- true: +5 LUT4
-		C_movn_movz: boolean := true; -- true: +19 LUTs
 		C_result_forwarding: boolean := true; -- true: +181 LUT4
 		C_load_aligner: boolean := true; -- true: +168 LUT4
 		C_branch_prediction: boolean := true; -- true: +77 LUT4
+		C_movn_movz: boolean := false; -- true: +5 LUT4
 
-		-- Do not change those two:
+		-- Those may negatively influence timing closure:
 		C_branch_likely: boolean := false; -- true: +3 LUT4, -Fmax
-		C_fast_ID: boolean := true; -- false: +1 LUT4, -Fmax
+		C_fast_ID: boolean := true; -- false: +7 LUT4, -Fmax
 
 		-- debugging options
 		C_debug: boolean := false; -- true: +883 LUT4, -Fmax

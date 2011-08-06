@@ -74,10 +74,8 @@ begin
     fncode <= instruction(5 downto 0);
     mem_read_sign_extend <= not opcode(2);
 
-    x_reg1_addr <= instruction(20 downto 16) when C_movn_movz and cond_move
-      else instruction(25 downto 21);
-    x_reg2_addr <= instruction(25 downto 21) when C_movn_movz and cond_move
-      else instruction(20 downto 16);
+    x_reg1_addr <= instruction(25 downto 21);
+    x_reg2_addr <= instruction(20 downto 16);
     reg1_addr <= x_reg1_addr;
     reg2_addr <= x_reg2_addr;
 
