@@ -40,7 +40,6 @@ entity idecode is
 	instruction: in std_logic_vector(31 downto 0);
 	branch_cycle, branch_likely: out boolean;
 	jump_cycle, jump_register: out boolean;
-	special: out boolean;
 	reg1_zero, reg2_zero: out boolean;
 	reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
 	immediate_value: out std_logic_vector(31 downto 0);
@@ -49,6 +48,7 @@ entity idecode is
 	op_major: out std_logic_vector(1 downto 0);
 	op_minor: out std_logic_vector(2 downto 0);
 	use_immediate, ignore_reg2: out boolean;
+	cond_move: out boolean;
 	branch_condition: out std_logic_vector(2 downto 0);
 	mem_cycle: out std_logic;
 	mem_write: out std_logic;
@@ -73,20 +73,23 @@ begin
     fncode <= instruction(5 downto 0);
     mem_read_sign_extend <= not opcode(2);
 
-    x_reg1_addr <= instruction(25 downto 21);
-    x_reg2_addr <= instruction(20 downto 16);
+    x_reg1_addr <= instruction(20 downto 16) when x_cond_move
+      else instruction(25 downto 21);
+    x_reg2_addr <= instruction(25 downto 21) when x_cond_move
+      else instruction(20 downto 16);
     reg1_addr <= x_reg1_addr;
     reg2_addr <= x_reg2_addr;
 
-    x_special <= opcode = "000000";
-    special <= x_special;
     reg1_zero <= x_reg1_addr = "00000";
     x_reg2_zero <= x_reg2_addr = "00000";
     reg2_zero <= x_reg2_zero;
+
     -- beq, bne, blez, bgtz
     x_branch1 <= opcode(5) = '0' and opcode(3 downto 2) = "01";
     -- bgez, bltz
     x_branch2 <= opcode = "000001";
+    x_special <= opcode = "000000";
+    cond_move <= x_cond_move;
     branch_cycle <= x_branch1 or x_branch2;
     branch_likely <= ((x_branch1 and opcode(4) = '1') or
       (x_branch2 and instruction(17) = '1')) and C_branch_likely;
@@ -168,9 +171,10 @@ begin
 
 	if x_special then
 	    op_minor <= fncode(2 downto 0);
-	    if fncode(5 downto 3) = "001" then -- MOVN / MOVZ
-		do_sign_extend <= false; -- reduces LUT4 count?
+	    if fncode(5 downto 1) = "00101" then -- MOVN / MOVZ
 		x_cond_move <= true;
+		op_major <= "10"; -- shift
+		latency <= "01";
 	    end if;
 	    if fncode(5 downto 3) = "101" then -- SLT / SLTU
 		op_major <= "01";

@@ -86,7 +86,7 @@ architecture Behavioral of pipeline is
     -- pipeline stage 2: instruction decode and register fetch
     signal ID_running: boolean;
     signal ID_reg1_zero, ID_reg2_zero: boolean;
-    signal ID_special, ID_branch_cycle: boolean;
+    signal ID_cond_move, ID_branch_cycle: boolean;
     signal ID_branch_likely, ID_jump_cycle: boolean;
     signal ID_reg1_addr, ID_reg2_addr: std_logic_vector(4 downto 0);
     signal ID_writeback_addr: std_logic_vector(4 downto 0);
@@ -313,7 +313,7 @@ begin
 	C_branch_likely => C_branch_likely
     )
     port map (
-	instruction => IF_ID_instruction, special => ID_special,
+	instruction => IF_ID_instruction, cond_move => ID_cond_move,
 	reg1_addr => ID_reg1_addr, reg2_addr => ID_reg2_addr,
 	reg1_zero => ID_reg1_zero, reg2_zero => ID_reg2_zero,
 	immediate_value => ID_immediate, use_immediate => ID_use_immediate,
