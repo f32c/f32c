@@ -48,7 +48,7 @@ entity idecode is
 	op_major: out std_logic_vector(1 downto 0);
 	op_minor: out std_logic_vector(2 downto 0);
 	use_immediate, ignore_reg2: out boolean;
-	cond_move: out boolean;
+	cmov_cycle, cmov_condition: out boolean;
 	branch_condition: out std_logic_vector(2 downto 0);
 	mem_cycle: out std_logic;
 	mem_write: out std_logic;
@@ -63,19 +63,19 @@ architecture Behavioral of idecode is
     signal opcode, fncode: std_logic_vector(5 downto 0);
     signal type_code: std_logic_vector(1 downto 0);
     signal imm_extension: std_logic_vector(15 downto 0);
+    signal cond_move: boolean;
     signal x_reg1_addr, x_reg2_addr: std_logic_vector(4 downto 0);
     signal x_reg2_zero, x_special, do_sign_extend: boolean;
     signal x_branch1, x_branch2: boolean;
-    signal x_cond_move: boolean;
 begin
 
     opcode <= instruction(31 downto 26);
     fncode <= instruction(5 downto 0);
     mem_read_sign_extend <= not opcode(2);
 
-    x_reg1_addr <= instruction(20 downto 16) when x_cond_move
+    x_reg1_addr <= instruction(20 downto 16) when cond_move
       else instruction(25 downto 21);
-    x_reg2_addr <= instruction(25 downto 21) when x_cond_move
+    x_reg2_addr <= instruction(25 downto 21) when cond_move
       else instruction(20 downto 16);
     reg1_addr <= x_reg1_addr;
     reg2_addr <= x_reg2_addr;
@@ -89,7 +89,8 @@ begin
     -- bgez, bltz
     x_branch2 <= opcode = "000001";
     x_special <= opcode = "000000";
-    cond_move <= x_cond_move;
+    cmov_cycle <= cond_move;
+    cmov_condition <= (instruction(0) = '0');
     branch_cycle <= x_branch1 or x_branch2;
     branch_likely <= ((x_branch1 and opcode(4) = '1') or
       (x_branch2 and instruction(17) = '1')) and C_branch_likely;
@@ -167,12 +168,12 @@ begin
 	mem_cycle <= '0'; -- not a memory operation
 	latency <= "00"; -- result available immediately after EX stage
 	do_sign_extend <= true;
-	x_cond_move <= false;
+	cond_move <= false;
 
 	if x_special then
 	    op_minor <= fncode(2 downto 0);
 	    if fncode(5 downto 1) = "00101" then -- MOVN / MOVZ
-		x_cond_move <= true;
+		cond_move <= true;
 		op_major <= "10"; -- shift
 		latency <= "01";
 	    end if;
@@ -217,11 +218,11 @@ begin
       else x"0000";
     sign_extension <= imm_extension;
 
-    process(opcode, instruction, imm_extension, x_cond_move)
+    process(opcode, instruction, imm_extension, cond_move)
     begin
 	case opcode is
 	when "000000" => -- special (for MOVN / MOVZ)
-	    if (x_cond_move) then
+	    if (cond_move) then
 		immediate_value <= x"00000000";
 	    else
 		immediate_value <= imm_extension & instruction(15 downto 0);
