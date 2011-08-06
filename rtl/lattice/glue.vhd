@@ -38,12 +38,14 @@ entity glue is
 		-- CPU core configuration options
 		C_register_technology: string := "lattice";
 		C_mult_enable: boolean := true; -- true: +27 LUT4
+		C_has_mfhi: boolean := true; -- true: +5 LUT4
+		C_movn_movz: boolean := true; -- true: +19 LUTs
 		C_result_forwarding: boolean := true; -- true: +181 LUT4
 		C_load_aligner: boolean := true; -- true: +168 LUT4
 		C_branch_prediction: boolean := true; -- true: +77 LUT4
 
 		-- Do not change those two:
-		C_branch_likely: boolean := false; -- true: -2 LUT4, -Fmax
+		C_branch_likely: boolean := false; -- true: +3 LUT4, -Fmax
 		C_fast_ID: boolean := true; -- false: +1 LUT4, -Fmax
 
 		-- debugging options
@@ -154,6 +156,8 @@ begin
 	pipeline: entity pipeline
 	generic map(
 		C_mult_enable => C_mult_enable,
+		C_has_mfhi => C_has_mfhi,
+		C_movn_movz => C_movn_movz,
 		C_branch_likely => C_branch_likely,
 		C_branch_prediction => C_branch_prediction,
 		C_result_forwarding => C_result_forwarding,
