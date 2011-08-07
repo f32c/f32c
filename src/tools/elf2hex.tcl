@@ -129,7 +129,7 @@ if {$tabcnt != 0} {
     puts ""
 }
 
-set base_isa_set "beq sltu bgez srl xor xori lui sw lbu and slt lw andi slti blez nop bne li sra addu nor negu subu bnez jalr or sltiu ori j beqz sll bltz jr sb lb move addiu jal"
+set base_isa_set "lh bgtz sllv srav beq sltu bgez srl xor xori lui sw lbu and slt lw andi slti blez nop bne li sra addu nor negu subu bnez jalr or sltiu ori j beqz sll bltz jr sb lb move addiu jal"
 set mul1_isa_set "$base_isa_set mult multu mflo mfhi"
 set m32r1_isa_set "$mul1_isa_set movn movz mul"
 set m32r2_isa_set "$m32r1_isa_set seb seh"
