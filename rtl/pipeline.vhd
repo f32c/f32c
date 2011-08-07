@@ -42,6 +42,7 @@ entity pipeline is
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
 
 	-- optimization options
+	C_split_shift: boolean := true; -- true: +35 LUT4
 	C_load_aligner: boolean := true;
 	C_branch_prediction: boolean := true;
 	C_result_forwarding: boolean := true;
@@ -172,7 +173,6 @@ architecture Behavioral of pipeline is
     signal EX_MEM_mem_read_sign_extend: std_logic;
     signal EX_MEM_shamt_1_2_4: std_logic_vector(2 downto 0);
     signal EX_MEM_shift_funct: std_logic_vector(1 downto 0);
-    signal EX_MEM_to_shift: std_logic_vector(31 downto 0);
     signal EX_MEM_mem_size: std_logic_vector(1 downto 0);
     signal EX_MEM_multicycle_lh_lb: boolean;
     signal EX_MEM_mem_byte_we: std_logic_vector(3 downto 0);
@@ -417,8 +417,9 @@ begin
       ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
 
     -- compute jump target
-    ID_jump_target <= ID_branch_target when ID_predict_taken else
+    ID_jump_target <=
       ID_reg1_eff_data(31 downto 2) when ID_jump_register else
+      ID_branch_target when ID_predict_taken else
       IF_ID_PC(29 downto 24) & IF_ID_instruction(23 downto 0);
 
     process(clk)
@@ -432,6 +433,9 @@ begin
 		    ID_EX_multicycle_lh_lb <= not EX_MEM_multicycle_lh_lb;
 		    ID_EX_mem_cycle <= '0';
 		    ID_EX_op_major <= "10"; -- shift
+		    if C_split_shift then
+			ID_EX_latency <= "00";
+		    end if;
 		    ID_EX_immediate(2) <= '0'; -- shift immediate
 		    ID_EX_immediate(1 downto 0) <= "10"; -- shift right logical
 		    if not EX_MEM_multicycle_lh_lb then
@@ -579,7 +583,7 @@ begin
     port map (
 	shamt_8_16 => EX_shamt(4 downto 3), funct_8_16 => EX_shift_funct_8_16,
 	shamt_1_2_4 => EX_MEM_shamt_1_2_4, funct_1_2_4 => EX_MEM_shift_funct,
-	stage1_in => EX_MEM_to_shift, stage4_out => MEM_from_shift,
+	stage1_in => EX_MEM_mem_data_out, stage4_out => MEM_from_shift,
 	stage8_in => EX_eff_reg2, stage16_out => EX_from_shift,
 	mem_multicycle_lh_lb => MEM_WB_multicycle_lh_lb,
 	mem_read_sign_extend_multicycle => EX_MEM_mem_read_sign_extend,
@@ -642,7 +646,6 @@ begin
 		EX_MEM_mem_byte_we <= EX_mem_byte_we;
 		EX_MEM_shamt_1_2_4 <= EX_shamt(2 downto 0);
 		EX_MEM_shift_funct <= ID_EX_immediate(1 downto 0);
-		EX_MEM_to_shift <= EX_from_shift;
 		EX_MEM_op_major <= ID_EX_op_major;
 		EX_MEM_branch_cycle <= ID_EX_branch_cycle;
 		EX_MEM_bpredict_score <= ID_EX_bpredict_score;
@@ -667,14 +670,18 @@ begin
 		    else
 			EX_MEM_logic_data(0) <= EX_from_alu_addsubx(32);
 		    end if;
+		elsif C_split_shift and ID_EX_op_major = "10" then
+		    -- shift, cmov, multicycle load align
+		    EX_MEM_logic_data <= EX_from_shift;
+		    EX_MEM_logic_cycle <= '1';
 		elsif ID_EX_jump_cycle or ID_EX_jump_register or
 		  ID_EX_branch_cycle or ID_EX_op_major = "11" then
 		    -- Store (link) PC + 8 address
 		    EX_MEM_logic_cycle <= '1';
 		    EX_MEM_logic_data <= EX_from_alt;
 		else
-		    EX_MEM_logic_cycle <= ID_EX_op_minor(2);
 		    EX_MEM_logic_data <= EX_from_alu_logic;
+		    EX_MEM_logic_cycle <= ID_EX_op_minor(2);
 		end if;
 		if (C_movn_movz and ID_EX_cmov_cycle) then
 		    if EX_from_alu_equal = ID_EX_cmov_condition then
