@@ -37,8 +37,9 @@ entity pipeline is
 	-- ISA options
 	C_mult_enable: boolean;
 	C_has_mfhi: boolean;
-	C_movn_movz: boolean;
 	C_branch_likely: boolean;
+	C_movn_movz: boolean;
+	C_mips32_movn_movz: boolean;
 
 	-- optimization options
 	C_load_aligner: boolean := true;
@@ -312,8 +313,9 @@ begin
     -- instruction decoder
     idecode: entity idecode
     generic map (
+	C_branch_likely => C_branch_likely,
 	C_movn_movz => C_movn_movz,
-	C_branch_likely => C_branch_likely
+	C_mips32_movn_movz => C_mips32_movn_movz
     )
     port map (
 	instruction => IF_ID_instruction,
