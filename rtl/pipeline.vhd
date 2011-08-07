@@ -36,10 +36,10 @@ entity pipeline is
     generic (
 	-- ISA options
 	C_mult_enable: boolean;
-	C_has_mfhi: boolean;
 	C_branch_likely: boolean;
 	C_movn_movz: boolean;
 	C_mips32_movn_movz: boolean;
+	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
 
 	-- optimization options
 	C_load_aligner: boolean := true;
@@ -47,7 +47,6 @@ entity pipeline is
 	C_result_forwarding: boolean := true;
 	C_fast_ID: boolean := true;
 	C_register_technology: string := "unknown";
-	C_init_PC: std_logic_vector := x"00000000";
 
 	-- debugging options
 	C_debug: boolean := false
@@ -161,8 +160,9 @@ architecture Behavioral of pipeline is
     signal EX_MEM_addsub_data: std_logic_vector(31 downto 0);
     signal EX_MEM_logic_data: std_logic_vector(31 downto 0);
     signal EX_MEM_mem_data_out: std_logic_vector(31 downto 0);
-    signal EX_MEM_branch_target: std_logic_vector(29 downto 0); -- XXX := C_init_PC(31 downto 2);
-    signal EX_MEM_take_branch: boolean := true; -- XXX jump to C_init_PC addr
+    signal EX_MEM_branch_target: std_logic_vector(29 downto 0) :=
+      C_init_PC(31 downto 2);
+    signal EX_MEM_take_branch: boolean := true; -- jump to C_init_PC addr
     signal EX_MEM_branch_cycle, EX_MEM_branch_taken: boolean;
     signal EX_MEM_bpredict_score: std_logic_vector(1 downto 0);
     signal EX_MEM_branch_hist: std_logic_vector(12 downto 0);
@@ -602,11 +602,10 @@ begin
 
     -- MFHI, MFLO, link PC + 8 -- XXX what about MFC0 / MFC1?
     EX_from_alt <=
-      R_hi_lo(63 downto 32) when C_mult_enable and C_has_mfhi and
+      R_hi_lo(63 downto 32) when C_mult_enable and
       ID_EX_op_major = "11" and ID_EX_op_minor(1) = '0' else
       R_hi_lo(31 downto 0) when C_mult_enable and ID_EX_op_major = "11"
-      and (ID_EX_op_minor(1) = '1' or not C_has_mfhi) else
-      ID_EX_PC_8 & "00";
+      and ID_EX_op_minor(1) = '1' else ID_EX_PC_8 & "00";
 
     -- branch or not?
     process(ID_EX_branch_condition, EX_from_alu_equal, EX_eff_reg1)
@@ -837,9 +836,7 @@ begin
 	    end if;
 	    -- XXX revisit R_hi_lo write enable
 	    -- XXX don't update R_hi_lo if exception pending
-	    if (C_has_mfhi) then
-		R_hi_lo(63 downto 32) <= mul_res(63 downto 32);
-	    end if;
+	    R_hi_lo(63 downto 32) <= mul_res(63 downto 32);
 	    R_hi_lo(31 downto 0) <= mul_res(31 downto 0);
 	end if;
     end process;
