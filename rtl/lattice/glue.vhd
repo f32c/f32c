@@ -31,67 +31,70 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity glue is
-	generic(
-		-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-		C_clk_freq: integer := 81;
+    generic(
+	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
+	C_clk_freq: integer := 81;
 
-		-- CPU core configuration options
-		C_register_technology: string := "lattice";
-		C_mult_enable: boolean := true; -- true: +27 LUT4
-		C_has_mfhi: boolean := true; -- true: +5 LUT4
-		C_result_forwarding: boolean := true; -- true: +181 LUT4
-		C_load_aligner: boolean := true; -- true: +168 LUT4
-		C_branch_prediction: boolean := true; -- true: +77 LUT4
-		C_movn_movz: boolean := false; -- true: +5 LUT4
+	-- CPU core configuration options
+	C_register_technology: string := "lattice";
+	C_mult_enable: boolean := true; -- true: +27 LUT4
+	C_has_mfhi: boolean := true; -- true: +5 LUT4
+	C_result_forwarding: boolean := true; -- true: +181 LUT4
+	C_load_aligner: boolean := false; -- true: +168 LUT4
+	C_branch_prediction: boolean := false; -- true: +77 LUT4
+	C_movn_movz: boolean := false; -- true: +5 LUT4
 
-		-- Those may negatively influence timing closure:
-		C_branch_likely: boolean := false; -- true: +3 LUT4, -Fmax
-		C_fast_ID: boolean := true; -- false: +7 LUT4, -Fmax
+	-- These may negatively influence timing closure:
+	C_branch_likely: boolean := false; -- true: +3 LUT4, -Fmax
+	C_fast_ID: boolean := true; -- false: +7 LUT4, -Fmax
 
-		-- debugging options
-		C_debug: boolean := false; -- true: +883 LUT4, -Fmax
+	-- This changes movn_movz calling convenction (swaps rs / rt)
+	C_mips32_movn_movz: boolean := false; -- true: +12 LUT4, -Fmax
 
-		-- SoC configuration options
-		C_mem_size: string := "16k";
-		C_tsc: boolean := true; -- true: +68 LUT4
-		C_sio: boolean := true; -- true: +137 LUT4
-		C_gpio: boolean := true; -- true: +13 LUT4
-		C_spi: boolean := true; -- true: +10 LUT4
-		C_pcmdac: boolean := true; -- true: +32 LUT4
-		C_ddsfm: boolean := false -- true: +23 LUT4
+	-- debugging options
+	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
 
-		--
-		-- XP2-8E-7 area optimized synthesis @ 81.25 MHz:
-		--
-		-- Global config:
-		--   C_tsc 1, C_sio 1, C_gpio 0, C_spi 0, C_pcmdac 0, C_ddsfm 0
-		--
-		-- Config #1:
-		--   C_mult_enable 1, C_res_fwd 1, C_load_aligner 1, C_bpred 1
-		--   regs 736 slices 919 logic LUT4 1401 total LUT4 1833
-		--   DMIPS/MHz 1.402  DMIPS/MHz/kLUT4 0.765
-		--
-		-- Config #2:
-		--   C_mult_enable 1, C_res_fwd 1, C_load_aligner 1, C_bpred 0
-		--   regs 677 slices 880 logic LUT4 1324 total LUT4 1756
-		--   DMIPS/MHz 1.339  DMIPS/MHz/kLUT4 0.763
-		--
-		-- Config #3:
-		--   C_mult_enable 1, C_res_fwd 1, C_load_aligner 0, C_bpred 0
-		--   regs 671 slices 796 logic LUT4 1156 total LUT4 1588
-		--   DMIPS/MHz 1.288  DMIPS/MHz/kLUT4 0.811
-		--
-		-- Config #4:
-		--   C_mult_enable 1, C_res_fwd 0, C_load_aligner 0, C_bpred 0
-		--   regs 664 slices 705 logic LUT4 975 total LUT4 1407
-		--   DMIPS/MHz 0.981  DMIPS/MHz/kLUT4 0.697
-		--
-		-- Config #5:
-		--   C_mult_enable 0, C_res_fwd 0, C_load_aligner 0, C_bpred 0
-		--   regs 658 slices 692 logic LUT4 948 total LUT4 1380
-		--   DMIPS/MHz 0.800  DMIPS/MHz/kLUT4 0.580
-		--
-	);
+	-- SoC configuration options
+	C_mem_size: string := "16k";
+	C_tsc: boolean := true; -- true: +68 LUT4
+	C_sio: boolean := true; -- true: +137 LUT4
+	C_gpio: boolean := false; -- true: +13 LUT4
+	C_spi: boolean := false; -- true: +10 LUT4
+	C_pcmdac: boolean := false; -- true: +32 LUT4
+	C_ddsfm: boolean := false -- true: +23 LUT4
+
+	--
+	-- XP2-8E-7 area optimized synthesis @ 81.25 MHz:
+	--
+	-- Global config:
+	--   C_tsc 1, C_sio 1, C_gpio 0, C_spi 0, C_pcmdac 0, C_ddsfm 0
+	--
+	-- Config #1:
+	--   C_mult_enable 1, C_res_fwd 1, C_load_aligner 1, C_bpred 1
+	--   regs 736 slices 919 logic LUT4 1401 total LUT4 1833
+	--   DMIPS/MHz 1.402  DMIPS/MHz/kLUT4 0.765
+	--
+	-- Config #2:
+	--   C_mult_enable 1, C_res_fwd 1, C_load_aligner 1, C_bpred 0
+	--   regs 677 slices 880 logic LUT4 1324 total LUT4 1756
+	--   DMIPS/MHz 1.339  DMIPS/MHz/kLUT4 0.763
+	--
+	-- Config #3:
+	--   C_mult_enable 1, C_res_fwd 1, C_load_aligner 0, C_bpred 0
+	--   regs 671 slices 796 logic LUT4 1156 total LUT4 1588
+	--   DMIPS/MHz 1.288  DMIPS/MHz/kLUT4 0.811
+	--
+	-- Config #4:
+	--   C_mult_enable 1, C_res_fwd 0, C_load_aligner 0, C_bpred 0
+	--   regs 664 slices 705 logic LUT4 975 total LUT4 1407
+	--   DMIPS/MHz 0.981  DMIPS/MHz/kLUT4 0.697
+	--
+	-- Config #5:
+	--   C_mult_enable 0, C_res_fwd 0, C_load_aligner 0, C_bpred 0
+	--   regs 658 slices 692 logic LUT4 948 total LUT4 1380
+	--   DMIPS/MHz 0.800  DMIPS/MHz/kLUT4 0.580
+	--
+);
 	port (
 		clk_25m: in std_logic;
 		rs232_tx: out std_logic;
@@ -158,6 +161,7 @@ begin
 		C_mult_enable => C_mult_enable,
 		C_has_mfhi => C_has_mfhi,
 		C_movn_movz => C_movn_movz,
+		C_mips32_movn_movz => C_mips32_movn_movz,
 		C_branch_likely => C_branch_likely,
 		C_branch_prediction => C_branch_prediction,
 		C_result_forwarding => C_result_forwarding,
