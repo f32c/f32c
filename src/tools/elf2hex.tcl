@@ -27,8 +27,8 @@
 # $Id: $
 
 
-if {$argc != 1} {
-    puts "Usage: elf2hex.tcl ifile"
+if {$argc != 2} {
+    puts "Usage: elf2hex.tcl ifile ofile"
     exit 1
 }
 
@@ -77,18 +77,91 @@ while {[eof $elffile] == 0} {
 }
 close $elffile
 
+set hexfile [open [lindex $argv 1] w]
 foreach addr [lsort -integer [array names mem]] {
     if {$addr % 16 == 0} {
-	puts -nonewline "[format %08x $addr]: "
+	puts -nonewline $hexfile "[format %08x $addr]: "
     }
     if {$addr % 16 == 12} {
-	puts "$mem($addr)"
+	puts $hexfile "$mem($addr)"
     } else {
-	puts -nonewline "$mem($addr) "
+	puts -nonewline $hexfile "$mem($addr) "
     }
 }
+if {$addr % 16 != 12} {
+    puts $hexfile ""
+}
+puts $hexfile ""
+close $hexfile
 
-if {$addr % 16 == 12} {
+array set instr_map ""
+set elffile [open "| mips-elf-objdump -d [lindex $argv 0]"]
+while {[eof $elffile] == 0} {
+    gets $elffile line
+    if {[string first ":	" $line] < 0} {
+	continue
+    }
+    set instr [lindex [split [string trim $line]] 3]
+    if {[array get instr_map $instr] != ""} {
+	incr instr_map($instr) 1
+    } else {
+	set instr_map($instr) 1
+    }
+}
+close $elffile
+
+set instr_list ""
+foreach instr [array names instr_map] {
+    lappend instr_list "$instr $instr_map($instr)"
+}
+
+set tabcnt 0
+puts "Instruction frequencies:"
+foreach entry [lsort -integer -decreasing -index 1 $instr_list] {
+    puts -nonewline "[format %8s [lindex $entry 0]]: [lindex $entry 1]	"
+    incr tabcnt 1
+    if {$tabcnt == 4} {
+	set tabcnt 0
+	puts ""
+    }
+}
+if {$tabcnt != 0} {
     puts ""
+}
+
+set base_isa_set "beq sltu bgez srl xor xori lui sw lbu and slt lw andi slti blez nop bne li sra addu nor negu subu bnez jalr or sltiu ori j beqz sll bltz jr sb lb move addiu jal"
+set mul1_isa_set "$base_isa_set mult multu mflo mfhi"
+set m32r1_isa_set "$mul1_isa_set movn movz mul"
+set m32r2_isa_set "$m32r1_isa_set seb seh"
+
+puts -nonewline "Not in base ISA: "
+foreach instr [array names instr_map] {
+    if {[lsearch $base_isa_set $instr] < 0} {
+	puts -nonewline "$instr "
+    }
+}
+puts ""
+
+puts -nonewline "Not in mul1 ISA: "
+foreach instr [array names instr_map] {
+    if {[lsearch $mul1_isa_set $instr] < 0} {
+	puts -nonewline "$instr "
+    }
+}
+puts ""
+
+puts -nonewline "Not in 32r1 ISA: "
+foreach instr [array names instr_map] {
+    if {[lsearch $m32r1_isa_set $instr] < 0} {
+	puts -nonewline "$instr "
+    }
+}
+puts ""
+
+puts -nonewline "Not in 32r2 ISA: "
+foreach instr [array names instr_map] {
+    if {[lsearch $m32r2_isa_set $instr] < 0} {
+	puts -nonewline "$instr "
+    }
 }
 puts ""
