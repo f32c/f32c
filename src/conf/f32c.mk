@@ -24,7 +24,8 @@ endif
 MK_CFLAGS = -nostdinc -I../include -I.
 
 # MIPS-specific flags
-MK_CFLAGS += -march=f32c
+#MK_CFLAGS += -march=f32c
+MK_CFLAGS += -march=mips3 -mtune=f32c
 MK_CFLAGS += ${ENDIANFLAGS}
 MK_CFLAGS += -mno-branch-likely
 #MK_CFLAGS += -mno-mips16 -mno-dsp -mno-mips3d -mno-mdmx -msoft-float
@@ -84,7 +85,7 @@ OBJS = $(ASFILES:.S=.o) $(CFILES:.c=.o)
 HEX = ${PROG}.hex
 
 ${HEX}: ${PROG}
-	${ELF2HEX} ${PROG} > ${HEX}
+	${ELF2HEX} ${PROG} ${HEX}
 
 ${PROG}: ${OBJS}
 	${LD} -o ${PROG} ${OBJS}
