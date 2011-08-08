@@ -42,10 +42,10 @@ entity pipeline is
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
 
 	-- optimization options
-	C_split_shift: boolean := true; -- true: +35 LUT4
-	C_load_aligner: boolean := true;
-	C_branch_prediction: boolean := true;
 	C_result_forwarding: boolean := true;
+	C_branch_prediction: boolean := true;
+	C_load_aligner: boolean := true;
+	C_split_shift: boolean := false; -- true: +35 LUT4
 	C_fast_ID: boolean := true;
 	C_register_technology: string := "unknown";
 
@@ -315,6 +315,7 @@ begin
     generic map (
 	C_branch_likely => C_branch_likely,
 	C_movn_movz => C_movn_movz,
+	C_split_shift => C_split_shift,
 	C_mips32_movn_movz => C_mips32_movn_movz
     )
     port map (

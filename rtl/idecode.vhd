@@ -35,6 +35,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity idecode is
     generic(
 	C_movn_movz: boolean;
+	C_split_shift: boolean;
 	C_mips32_movn_movz: boolean;
 	C_branch_likely: boolean
     );
@@ -166,7 +167,7 @@ begin
       and type_code(0) /= '0' else x_reg2_zero;
 
     -- op_major: 00 ALU, 01 SLT, 10 shift, 11 mul_et_al
-    process(x_special, opcode, fncode)
+    process(x_special, opcode, fncode, instruction)
     begin
 	op_major <= "00"; -- ALU
 	op_minor <= "000"; -- ADD
@@ -190,7 +191,12 @@ begin
 	    end if;
 	    if fncode(5 downto 3) = "000" then -- shift
 		op_major <= "10"; -- shift
-		latency <= "01";
+		if C_split_shift and fncode(2) = '0' and 
+		  instruction(8 downto 6) = "000" then
+		    latency <= "00"; -- fixed shift by 8 and / or 16 bits
+		else
+		    latency <= "01";
+		end if;
 	    end if;
 	    if fncode(5 downto 4) = "01" then -- MUL/DIV/MFHI/MFLO/MTHI/MTLO
 		op_major <= "11"; -- mul_et_al
