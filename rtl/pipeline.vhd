@@ -464,15 +464,12 @@ begin
 		    -- insert a bubble if branching or ID stage is stalled
 		    ID_EX_writeback_addr <= "00000"; -- NOP
 		    ID_EX_mem_cycle <= '0';
-		    ID_EX_mem_write <= '0';	-- XXX do we need this?
-		    ID_EX_mem_size <= "00"; -- XXX do we need this?
-		    ID_EX_latency <= "00";
+		    ID_EX_mem_write <= '0'; -- XXX do we need this?
 		    ID_EX_branch_cycle <= false;
 		    ID_EX_branch_likely <= false;
 		    ID_EX_jump_cycle <= false;
 		    ID_EX_jump_register <= false;
 		    ID_EX_predict_taken <= false;
-		    ID_EX_op_major <= "00";
 		    if MEM_take_branch and not ID_running then
 			ID_EX_cancel_next <= true;
 		    end if;
@@ -574,8 +571,7 @@ begin
       else ID_EX_immediate(10 downto 6); -- shift immediate
 
     EX_shift_funct_8_16 <= "00" -- shift left logical
-      when ID_EX_mem_cycle = '1' and ID_EX_mem_write = '1'
-      else ID_EX_immediate(1 downto 0);
+      when ID_EX_mem_cycle = '1' else ID_EX_immediate(1 downto 0);
 
     -- instantiate the barrel shifter
     shift: entity shift
@@ -703,7 +699,6 @@ begin
 		EX_MEM_PC <= ID_EX_PC;
 	    elsif MEM_running and not EX_running then
 		-- insert a bubble in the MEM stage
-		EX_MEM_op_major <= "00"; -- XXX do we need this?
 		EX_MEM_take_branch <= false;
 		EX_MEM_branch_taken <= false;
 		EX_MEM_writeback_addr <= "00000";
