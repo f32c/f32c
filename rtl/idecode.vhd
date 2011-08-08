@@ -163,8 +163,13 @@ begin
     end process;
 
     -- reg2 relevant for load-use or produce-use hazard checking or not?
-    ignore_reg2 <= true when opcode(5) /= '0' and opcode(3 downto 1) /= "010"
-      and type_code(0) /= '0' else x_reg2_zero;
+    ignore_reg2 <= x_reg2_zero or
+      -- immediate instructions
+      opcode(5 downto 3) = "001" or
+      -- load instructions
+      (opcode(5) = '1' and opcode(3) = '0') or
+      -- j, jal, blez, bgtz
+      (opcode(5 downto 3) = "000" and opcode(1) = '1'); 
 
     -- op_major: 00 ALU, 01 SLT, 10 shift, 11 mul_et_al
     process(x_special, opcode, fncode, instruction)
