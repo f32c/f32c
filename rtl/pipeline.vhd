@@ -373,7 +373,8 @@ begin
       (not ID_ignore_reg2 and ID_reg2_addr = EX_MEM_writeback_addr));
     ID_jump_register_hazard <= ID_jump_register and not ID_reg1_zero and
       (ID_reg1_addr = ID_EX_writeback_addr or
-      ID_reg1_addr = EX_MEM_writeback_addr);
+      ID_reg1_addr = EX_MEM_writeback_addr or
+      (C_load_aligner and ID_reg1_addr = MEM_WB_writeback_addr));
 
     G_ID_forwarding:
     if C_result_forwarding generate
@@ -419,7 +420,7 @@ begin
 
     -- compute jump target
     ID_jump_target <=
-      ID_reg1_eff_data(31 downto 2) when ID_jump_register else
+      ID_reg1_data(31 downto 2) when ID_jump_register else
       ID_branch_target when ID_predict_taken else
       IF_ID_PC(29 downto 24) & IF_ID_instruction(23 downto 0);
 
