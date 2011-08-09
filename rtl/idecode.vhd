@@ -58,7 +58,7 @@ entity idecode is
 	mem_size: out std_logic_vector(1 downto 0);
 	mem_read_sign_extend: out std_logic;
 	latency: out std_logic_vector(1 downto 0);
-	cop0, cop1: out std_logic
+	seb_cycle: out boolean
     );  
 end idecode;
 
@@ -68,7 +68,7 @@ architecture Behavioral of idecode is
     signal imm_extension: std_logic_vector(15 downto 0);
     signal cond_move: boolean;
     signal x_reg1_addr, x_reg2_addr: std_logic_vector(4 downto 0);
-    signal x_reg2_zero, x_special, sign_extend_imm: boolean;
+    signal x_reg2_zero, x_special, x_special3, sign_extend_imm: boolean;
     signal x_branch1, x_branch2: boolean;
 begin
 
@@ -92,6 +92,9 @@ begin
     -- bgez, bltz
     x_branch2 <= opcode = "000001";
     x_special <= opcode = "000000";
+    x_special3 <= opcode(5 downto 3) = "011" and opcode(0) = '1';
+
+    seb_cycle <= x_special3;
     cmov_cycle <= C_movn_movz and cond_move;
     cmov_condition <= (instruction(0) = '0');
     branch_cycle <= x_branch1 or x_branch2;
@@ -105,6 +108,7 @@ begin
     begin
 	case opcode is
 	when "000000" => type_code <= "00"; -- R-type - special
+	when "011111" => type_code <= "00"; -- R-type - special3
 	when "000001" => type_code <= "01"; -- J-t - bgez, bgezal, bltz, bltzal
 	when "000010" => type_code <= "01"; -- J-type - j
 	when "000011" => type_code <= "01"; -- J-type - jal
@@ -129,8 +133,6 @@ begin
 
     process(type_code, opcode, instruction)
     begin
-	cop0 <= '0';
-	cop1 <= '0';
 	case type_code is
 	when "01" =>	-- J-type
 	    if (opcode = "000001" and instruction(20) = '1') or
@@ -143,17 +145,6 @@ begin
 	    target_addr <= "00000";
 	when "11" =>	-- I-type
 	    target_addr <= instruction(20 downto 16);
-	    if opcode(5 downto 2) = "0100" then -- coprocessor instructions
-		if instruction(23) = '0' then -- move to coprocessor
-		    target_addr <= "00000";
-		end if;
-		case opcode(1 downto 0) is
-		when "00" => cop0 <= '1';
-		when "01" => cop1 <= '1';
-		when others => cop0 <= '0'; cop1 <= '0';
-		end case;
-	    else
-	    end if;
 	when others =>	-- R-type
 	    target_addr <= instruction(15 downto 11);
 	end case;
@@ -169,7 +160,7 @@ begin
       (opcode(5 downto 3) = "000" and opcode(1) = '1'); 
 
     -- op_major: 00 ALU, 01 SLT, 10 shift, 11 mul_et_al
-    process(x_special, opcode, fncode, instruction)
+    process(x_special, x_special3, opcode, fncode, instruction)
     begin
 	op_major <= "00"; -- ALU
 	op_minor <= "000"; -- ADD
@@ -177,6 +168,10 @@ begin
 	latency <= "00"; -- result available immediately after EX stage
 	sign_extend_imm <= true;
 	cond_move <= false;
+
+	if x_special3 then
+	    op_minor <= "101"; -- logic or cycle, for seb
+	end if;
 
 	if x_special then
 	    op_minor <= fncode(2 downto 0);
