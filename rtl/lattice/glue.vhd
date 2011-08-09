@@ -90,8 +90,8 @@ entity glue is
 	--
 	-- Config #5:
 	--   C_mult_enable 0, C_res_fwd 0, C_bpred 0, C_load_aligner 0
-	--   regs 658 slices 692 logic LUT4 948 total LUT4 1380
-	--   DMIPS/MHz 0.800  DMIPS/MHz/kLUT4 0.580
+	--   regs 658 slices 697 logic LUT4 961 total LUT4 1393
+	--   DMIPS/MHz 0.803  DMIPS/MHz/kLUT4 0.576
 	--
     );
     port (
