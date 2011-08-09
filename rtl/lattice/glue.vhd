@@ -43,8 +43,8 @@ entity glue is
 	C_register_technology: string := "lattice";
 
 	-- These may negatively influence timing closure:
-	C_branch_likely: boolean := false; -- true: +3 LUT4, -Fmax
-	C_movn_movz: boolean := false; -- true: +5 LUT4
+	C_branch_likely: boolean := true; -- true: +10 LUT4, -Fmax
+	C_movn_movz: boolean := false; -- true: +5 LUT4, -DMIPS
 	C_fast_ID: boolean := true; -- false: +7 LUT4, -Fmax
 
 	-- This changes movn_movz calling convenction (swaps rs / rt)
