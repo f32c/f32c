@@ -231,6 +231,8 @@ begin
     --
 	
     -- XXX TODO:
+    --	revisit MULT / MFHI / MFLO decoding (now done in EX stage!!!)
+    --	revisit target_addr computation in idecode.vhd
     --	don't branch until branch delay slot fetched!!!
     --	sort out the endianess story
     --	reset?
@@ -446,7 +448,9 @@ begin
 		    if ID_running then
 			ID_EX_cancel_next <= false;
 		    end if;
-		    ID_EX_instruction <= x"00000001"; -- XXX debugging only
+		    if C_debug then
+			ID_EX_instruction <= x"00000001"; -- debugging only
+		    end if;
 		    -- schedule forwarding of memory read
 		    ID_EX_fwd_ex_reg1 <= false;
 		    ID_EX_fwd_ex_reg2 <= false;
@@ -472,7 +476,9 @@ begin
 		    if ID_running then
 			ID_EX_cancel_next <= false;
 		    end if;
-		    ID_EX_instruction <= x"00000000"; -- XXX debugging only
+		    if C_debug then
+			ID_EX_instruction <= x"00000000"; -- debugging only
+		    end if;
 		else
 		    -- propagate next instruction from ID to EX stage
 		    ID_EX_reg1_data <= ID_reg1_eff_data;
@@ -504,11 +510,6 @@ begin
 		    ID_EX_bpredict_index <= IF_ID_bpredict_index;
 		    ID_EX_op_major <= ID_op_major;
 		    ID_EX_latency <= ID_latency;
-		    ID_EX_instruction <= IF_ID_instruction; -- debugging only
-		    ID_EX_PC <= IF_ID_PC; -- debugging only
-		    if (IF_ID_instruction /= x"00000000") then
-			D_instr <= D_instr + 1; -- debugging only
-		    end if;
 		    -- schedule result forwarding
 		    ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
 		    ID_EX_fwd_ex_reg2 <= ID_fwd_ex_reg2;
@@ -516,6 +517,16 @@ begin
 		    ID_EX_fwd_mem_reg1 <= ID_fwd_mem_reg1;
 		    ID_EX_fwd_mem_reg2 <= ID_fwd_mem_reg2;
 		    ID_EX_fwd_mem_alu_op2 <= ID_fwd_mem_alu_op2;
+		    -- debugging only
+		    if C_debug then
+			ID_EX_instruction <= IF_ID_instruction;
+			ID_EX_PC <= IF_ID_PC;
+			if (IF_ID_instruction /= x"00000000") then
+			    D_instr <= D_instr + 1;
+		        end if;
+		    else
+			ID_EX_instruction <= IF_ID_instruction; -- XXX MULT!!!
+		    end if;
 		end if;
 	    else
 		if ID_running then
@@ -690,9 +701,11 @@ begin
 		EX_MEM_latency <= ID_EX_latency(1);
 		EX_MEM_mem_read_sign_extend <= ID_EX_mem_read_sign_extend;
 		EX_MEM_branch_taken <= ID_EX_predict_taken;
-		-- XXX debugging only
-		EX_MEM_instruction <= ID_EX_instruction;
-		EX_MEM_PC <= ID_EX_PC;
+		-- debugging only
+		if C_debug then
+		    EX_MEM_instruction <= ID_EX_instruction;
+		    EX_MEM_PC <= ID_EX_PC;
+		end if;
 	    elsif MEM_running and not EX_running then
 		-- insert a bubble in the MEM stage
 		EX_MEM_take_branch <= false;
@@ -700,8 +713,10 @@ begin
 		EX_MEM_writeback_addr <= "00000";
 		EX_MEM_mem_cycle <= '0';
 		EX_MEM_latency <= '0';
-		-- XXX debugging only
-		EX_MEM_instruction <= x"00000000";
+		-- debugging only
+		if C_debug then
+		    EX_MEM_instruction <= x"00000000";
+		end if;
 	    end if;
 	end if;
     end process;
@@ -763,7 +778,6 @@ begin
 	if rising_edge(clk) then
 	    MEM_WB_mem_data <= dmem_data_in;
 	    if MEM_running then
-		MEM_WB_instruction <= EX_MEM_instruction; -- debugging only
 		MEM_WB_mem_cycle <= EX_MEM_mem_cycle;
 		MEM_WB_mem_read_sign_extend <= EX_MEM_mem_read_sign_extend;
 		MEM_WB_mem_addr_offset <= EX_MEM_addsub_data(1 downto 0);
@@ -780,6 +794,9 @@ begin
 		    MEM_WB_ex_data <= MEM_from_shift;
 		else
 		    MEM_WB_ex_data <= MEM_eff_data;
+		end if;
+		if C_debug then
+		    MEM_WB_instruction <= EX_MEM_instruction; -- debugging only
 		end if;
 	    end if;
 	end if;
