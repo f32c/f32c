@@ -95,10 +95,10 @@ begin
     cmov_cycle <= C_movn_movz and cond_move;
     cmov_condition <= (instruction(0) = '0');
     branch_cycle <= x_branch1 or x_branch2;
-    branch_likely <= ((x_branch1 and opcode(4) = '1') or
-      (x_branch2 and instruction(17) = '1')) and C_branch_likely;
+    branch_likely <= C_branch_likely and ((x_branch1 and opcode(4) = '1') or
+      (x_branch2 and instruction(17) = '1'));
     jump_cycle <= opcode(5 downto 1) = "00001";
-    jump_register <= x_special and fncode(5 downto 1) = "00100";
+    jump_register <= x_special and fncode(4 downto 1) = "0100";
 
     -- type_code for target register address calculation
     process(opcode)
@@ -127,7 +127,7 @@ begin
     use_immediate <= opcode(5 downto 3) = "001" or opcode(5) = '1' or
 	(C_movn_movz and cond_move);
 
-    process(type_code, opcode, instruction, cond_move)
+    process(type_code, opcode, instruction)
     begin
 	cop0 <= '0';
 	cop1 <= '0';
