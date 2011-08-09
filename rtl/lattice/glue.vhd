@@ -33,7 +33,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity glue is
     generic (
 	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-	C_clk_freq: integer := 81;
+	C_clk_freq: integer := 150;
 
 	-- CPU core configuration options
 	C_mult_enable: boolean := true; -- true: +27 LUT4

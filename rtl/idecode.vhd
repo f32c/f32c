@@ -124,9 +124,11 @@ begin
 	end case;
     end process;
 
+    use_immediate <= opcode(5 downto 3) = "001" or opcode(5) = '1' or
+	(C_movn_movz and cond_move);
+
     process(type_code, opcode, instruction, cond_move)
     begin
-	use_immediate <= false;
 	cop0 <= '0';
 	cop1 <= '0';
 	case type_code is
@@ -139,7 +141,6 @@ begin
 	    end if;
 	when "10" =>	-- S-type
 	    target_addr <= "00000";
-	    use_immediate <= true;	
 	when "11" =>	-- I-type
 	    target_addr <= instruction(20 downto 16);
 	    if opcode(5 downto 2) = "0100" then -- coprocessor instructions
@@ -152,13 +153,9 @@ begin
 		when others => cop0 <= '0'; cop1 <= '0';
 		end case;
 	    else
-		use_immediate <= true;
 	    end if;
 	when others =>	-- R-type
 	    target_addr <= instruction(15 downto 11);
-	    if (C_movn_movz and cond_move) then
-		use_immediate <= true;	
-	    end if;
 	end case;
     end process;
 
