@@ -230,19 +230,15 @@ begin
     -- IF_, ID_, EX_, MEM_ or WB_.  XXX update / fix this convention!!!
     --
 	
-    -- XXX missing:
-    --		result forwarding: muxes instead of priority encoders
-    --		0-latency 8 / 16 / 24 bit shifts
-    --		sort out the endianess story
-    --		low latency byte / half word loads
-    --		jalr instruction?
-    --		reset?
-    --		unaligned load / store instructions?
-    --		block on MFHI/MFLO if result not ready
-    --		don't branch until branch delay slot fetched!!!
-    --		MTHI/MTLO/MFC0/MTC0
-    --		division
-    --		exceptions/interrupts
+    -- XXX TODO:
+    --	don't branch until branch delay slot fetched!!!
+    --	sort out the endianess story
+    --	reset?
+    --	MTHI/MTLO/MFC0/MTC0?
+    --	division? - block on MFHI/MFLO if result not ready
+    --	unaligned load / store instructions?
+    --	result forwarding: muxes instead of priority encoders?
+    --	exceptions/interrupts
 
 
     --
