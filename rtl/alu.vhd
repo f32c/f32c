@@ -1,5 +1,5 @@
 --
--- Copyright 2008 University of Zagreb, Croatia.
+-- Copyright 2008, 2011 University of Zagreb, Croatia
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -35,6 +35,7 @@ entity alu is
     port(
 	x, y: in std_logic_vector(31 downto 0);
 	funct: in std_logic_vector(1 downto 0);
+	seb: in boolean;
 	addsubx: out std_logic_vector(32 downto 0);
 	logic: out std_logic_vector(31 downto 0);
 	equal: out boolean
@@ -43,24 +44,38 @@ end alu;
 
 architecture Behavioral of alu is
     signal ex, ey: std_logic_vector(32 downto 0);
+    signal x_logic: std_logic_vector(31 downto 0);
 begin
 
     ex <= '0' & x;
     ey <= '0' & y;
-	
+
     addsubx <= ex + ey when funct(1) = '0' else ex - ey;
-	
-    process(x, y, funct)
+
+    process(x, y, funct, seb)
     begin
 	case funct is
-	when "00" =>	logic <= x and y;
-	when "01" =>	logic <= x or y;
-	when "10" =>	logic <= x xor y;
-	when others => 	logic <= not(x or y);
+	when "00" =>	x_logic <= x and y;
+	when "01" =>	x_logic <= x or y;
+	when "10" =>	x_logic <= x xor y;
+	when others => 	x_logic <= not(x or y);
 	end case;
+
+	logic(7 downto 0) <= x_logic(7 downto 0);
+	if seb then
+	    logic(31 downto 8) <=
+	      x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
+	      x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
+	      x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
+	      x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
+	      x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
+	      x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7);
+	else
+	    logic(31 downto 8) <= x_logic(31 downto 8);
+	end if;
     end process;
-	
+
     equal <= x = y;
-	
+
 end Behavioral;
 
