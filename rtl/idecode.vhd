@@ -100,35 +100,24 @@ begin
     jump_cycle <= opcode(5 downto 1) = "00001";
     jump_register <= x_special and fncode(5 downto 1) = "00100";
 
-    -- type_code for target register address calculation
-    process(opcode)
-    begin
-	case opcode is
-	when "000000" => type_code <= "00"; -- R-type - special
-	when "000001" => type_code <= "01"; -- J-t - bgez, bgezal, bltz, bltzal
-	when "000010" => type_code <= "01"; -- J-type - j
-	when "000011" => type_code <= "01"; -- J-type - jal
-	when "000100" => type_code <= "01"; -- J-type - beq
-	when "000101" => type_code <= "01"; -- J-type - bne
-	when "000110" => type_code <= "01"; -- J-type - blez
-	when "000111" => type_code <= "01"; -- J-type - bgtz
-	when "010100" => type_code <= "01"; -- J-type - beql
-	when "010101" => type_code <= "01"; -- J-type - bnel
-	when "010110" => type_code <= "01"; -- J-type - blezl
-	when "010111" => type_code <= "01"; -- J-type - bgtzl
-	when "101000" => type_code <= "10"; -- S-type - sb
-	when "101001" => type_code <= "10"; -- S-type - sh
-	when "101010" => type_code <= "10"; -- S-type - unimplemented
-	when "101011" => type_code <= "10"; -- S-type - sw
-	when others   => type_code <= "11"; -- I-type
-	end case;
-    end process;
-
-    process(type_code, opcode, instruction, cond_move)
+    process(opcode, instruction, cond_move)
     begin
 	use_immediate <= false;
 	cop0 <= '0';
 	cop1 <= '0';
+
+	if x_special then
+	    type_code <= "00"; -- R-type
+	elsif opcode(5 downto 3) = "000" then
+	    type_code <= "01"; -- J-type - j, jal, branch
+	elsif C_branch_likely and opcode(5) = '0' and opcode(3) = '0' then
+	    type_code <= "01"; -- J-type - branch likely
+	elsif opcode(5 downto 3) = "101" then
+	    type_code <= "10"; -- S-type - sb, sh, sw
+	else
+	    type_code <= "11"; -- I-type is default
+	end if;
+
 	case type_code is
 	when "01" =>	-- J-type
 	    if (opcode = "000001" and instruction(20) = '1') or
