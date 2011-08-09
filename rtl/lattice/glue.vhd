@@ -43,7 +43,7 @@ entity glue is
 	C_register_technology: string := "lattice";
 
 	-- These may negatively influence timing closure:
-	C_branch_likely: boolean := true; -- true: +10 LUT4, -Fmax
+	C_branch_likely: boolean := false; -- true: +10 LUT4, -Fmax
 	C_movn_movz: boolean := false; -- true: +5 LUT4, -DMIPS
 	C_fast_ID: boolean := true; -- false: +7 LUT4, -Fmax
 
@@ -80,7 +80,7 @@ entity glue is
 	--
 	-- Config #3:
 	--   C_mult_enable 1, C_res_fwd 1, C_bpred 0, C_load_aligner 0
-	--   regs 671 slices 796 logic LUT4 1156 total LUT4 1576
+	--   regs 671 slices 790 logic LUT4 1144 total LUT4 1576
 	--   DMIPS/MHz 1.296  DMIPS/MHz/kLUT4 0.823
 	--
 	-- Config #4:
