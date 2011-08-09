@@ -69,27 +69,27 @@ entity glue is
 	--   C_tsc 1, C_sio 1, C_gpio 0, C_spi 0, C_pcmdac 0, C_ddsfm 0
 	--
 	-- Config #1:
-	--   C_mult_enable 1, C_res_fwd 1, C_load_aligner 1, C_bpred 1
-	--   regs 736 slices 919 logic LUT4 1401 total LUT4 1833
-	--   DMIPS/MHz 1.402  DMIPS/MHz/kLUT4 0.765
+	--   C_mult_enable 1, C_res_fwd 1, C_bpred 1, C_load_aligner 1
+	--   regs 736 slices 919 logic LUT4 1391 total LUT4 1823
+	--   DMIPS/MHz 1.416  DMIPS/MHz/kLUT4 0.777
 	--
 	-- Config #2:
-	--   C_mult_enable 1, C_res_fwd 1, C_load_aligner 1, C_bpred 0
-	--   regs 677 slices 880 logic LUT4 1324 total LUT4 1756
-	--   DMIPS/MHz 1.339  DMIPS/MHz/kLUT4 0.763
+	--   C_mult_enable 1, C_res_fwd 1, C_bpred 1, C_load_aligner 0
+	--   regs 730 slices 880 logic LUT4 1221 total LUT4 1653
+	--   DMIPS/MHz 1.359  DMIPS/MHz/kLUT4 0.821
 	--
 	-- Config #3:
-	--   C_mult_enable 1, C_res_fwd 1, C_load_aligner 0, C_bpred 0
-	--   regs 671 slices 796 logic LUT4 1156 total LUT4 1588
-	--   DMIPS/MHz 1.288  DMIPS/MHz/kLUT4 0.811
+	--   C_mult_enable 1, C_res_fwd 1, C_bpred 0, C_load_aligner 0
+	--   regs 671 slices 796 logic LUT4 1156 total LUT4 1576
+	--   DMIPS/MHz 1.296  DMIPS/MHz/kLUT4 0.823
 	--
 	-- Config #4:
-	--   C_mult_enable 1, C_res_fwd 0, C_load_aligner 0, C_bpred 0
-	--   regs 664 slices 705 logic LUT4 975 total LUT4 1407
-	--   DMIPS/MHz 0.981  DMIPS/MHz/kLUT4 0.697
+	--   C_mult_enable 1, C_res_fwd 0, C_bpred 0, C_load_aligner 0
+	--   regs 662 slices 699 logic LUT4 962 total LUT4 1394
+	--   DMIPS/MHz 0.984  DMIPS/MHz/kLUT4 0.706
 	--
 	-- Config #5:
-	--   C_mult_enable 0, C_res_fwd 0, C_load_aligner 0, C_bpred 0
+	--   C_mult_enable 0, C_res_fwd 0, C_bpred 0, C_load_aligner 0
 	--   regs 658 slices 692 logic LUT4 948 total LUT4 1380
 	--   DMIPS/MHz 0.800  DMIPS/MHz/kLUT4 0.580
 	--
