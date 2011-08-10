@@ -169,10 +169,6 @@ begin
 	sign_extend_imm <= true;
 	cond_move <= false;
 
-	if x_special3 then
-	    op_minor <= "101"; -- logic or cycle, for seb
-	end if;
-
 	if x_special then
 	    op_minor <= fncode(2 downto 0);
 	    if C_movn_movz and fncode(5 downto 1) = "00101" then
@@ -198,6 +194,8 @@ begin
 	    if fncode(5 downto 4) = "01" then -- MUL/DIV/MFHI/MFLO/MTHI/MTLO
 		op_major <= "11"; -- mul_et_al
 	    end if;
+	elsif x_special3 then
+	    op_minor <= "110"; -- logic, xor cycle, for seb
 	end if;
 
 	if opcode(5 downto 3) = "001" then
