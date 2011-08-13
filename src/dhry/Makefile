@@ -6,12 +6,17 @@ WARNS = 1
 
 DHRY_CFLAGS += -O3
 
+# Inlining library functions boosts performance from 1.44 to 1.58 DMIPS/MHz
+DHRY_CFLAGS += -finline-limit=64
+
+
 CFILES = dhry_1.c dhry_2.c miscfn.c \
 	../lib/div.c ../lib/printf.c ../lib/sio.c
 
 ASFILES = ../lib/start.S
 
 include ../conf/f32c.mk
+
 
 # gcc 4.6.1 produces fastest __divsi3() implementation using -O2, not -O3!
 
