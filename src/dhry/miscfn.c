@@ -32,3 +32,4 @@ memcpy(char *dst, const char *src, int len)
 	_memcpy(dst, src, len);
 }
 
+int memcpy_cnt;
