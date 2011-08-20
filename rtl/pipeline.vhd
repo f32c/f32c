@@ -239,11 +239,11 @@ begin
     -- ...
     --
     -- Little endian (C_big_endian = false; gcc -EL):
-    --   memory:   |byte 3||byte 2||byte 1||byte 0|
-    --   register: |byte 3||byte 2||byte 1||byte 0|
+    --   register: |byte A||byte B||byte C||byte D|
+    --   memory:   |byte A||byte B||byte C||byte D|
     -- Big endian (C_big_endian = true; gcc -EB):
-    --   memory:   |byte 3||byte 2||byte 1||byte 0|
-    --   register: |byte 0||byte 1||byte 2||byte 3|
+    --   register: |byte A||byte B||byte C||byte D|
+    --   memory:   |byte D||byte C||byte B||byte A|
     --
 
     -- XXX TODO:
