@@ -19,7 +19,11 @@ spi_byte_in(void)
 	for (i = 8; i > 0; i--) {
 		OUTB(IO_SPI, SPI_SCK);
 		in <<= 1;
-		INW(io, IO_SPI);
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+		INW(io, IO_SPI);	/* Speed optimization */
+#else
+		INB(io, IO_SPI);
+#endif
 		OUTB(IO_SPI, 0);
 		in |= io;
 	}
@@ -37,7 +41,11 @@ spi_byte(int out)
 		OUTB(IO_SPI, io);
 		out <<= 1;
 		OUTB(IO_SPI, io | SPI_SCK);
-		INW(io, IO_SPI);
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+		INW(io, IO_SPI);	/* Speed optimization */
+#else
+		INB(io, IO_SPI);
+#endif
 		in <<= 1;
 		in |= io;
 	}

@@ -7,16 +7,18 @@
 #define	IO_LED		0x00	/* byte, WR */
 #define	IO_PUSHBTN	0x00	/* byte, RD */
 #define	IO_DIPSW	0x01	/* byte, RD */
-#define	IO_SIO		0x04	/* half, RW */
+#define	IO_SIO_BYTE	0x04	/* byte, RW */
+#define	IO_SIO_STATUS	0x05	/* byte, RD */
 #define	IO_SIO_BAUD	0x06	/* half, WR */
 #define	IO_TSC		0x08	/* word, RD */
 #define	IO_PCM_OUT	0x0c	/* word, WR */
 #define	IO_SPI		0x10	/* byte, RW */
 #define	IO_DDS		0x1c	/* word, WR */
 
-/* SIO bitmask */
-#define	SIO_TX_BUSY	0x8
-#define	SIO_RX_BYTES	0x3
+/* SIO status bitmask */
+#define	SIO_TX_BUSY	0x4
+#define	SIO_RX_OVERRUN	0x2
+#define	SIO_RX_FULL	0x1
 
 /* SPI bitmask: outputs */
 #define	SPI_SI		0x80
