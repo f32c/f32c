@@ -1,10 +1,6 @@
 
-#ifndef XXX
 #include <io.h>
 #include <types.h>
-#else
-#include <sys/types.h>
-#endif
 #include <stdio.h>
 
 
@@ -15,32 +11,25 @@ int
 main(void)
 {
 	int c, cnt;
-	int *tsc;
+	int tsc;
 	
-#ifndef XXX
 	/* Register PCM output function as idle loop handler */
 	sio_idle_fn = pcm_play;
-	tsc = (int *) 0x000001fc;
-#else
-	system("stty -echo -icanon -iexten");
-	tsc = &c;
-#endif
-
-	/*
-	 *  12.5 MHz tsc = 62508 div =  106
-	 *  25.0 MHz tsc = 31254 div =  211
-	 *  75.0 MHz tsc = 10418 div =  632
-	 * 150.0 MHz tsc =  5209 div = 1264
-	 */
 
 	for (cnt = 0, c = '\r'; cnt < 100000; cnt++) {
 		if (c == '\r' || c == '\n') {
 
-			printf("\n");
-			printf("Hello, world!\n");
-			printf("\n f32c CPU running at %d Hz\n",
-			    (75000000 / *tsc) * 10418);
-			printf("\n tsc = %d\n", *tsc);
+			tsc = rdtsc();
+			printf("\nHello, world!\n");
+			printf("\n f32c CPU running at ");
+			tsc = rdtsc() - tsc;
+			if (tsc < 0)
+				tsc = -tsc;
+
+			/* XXX constant derived from 115200 bps */
+			printf("%d Hz\n", 920237 / tsc);
+
+			printf("\n tsc = %d\n", tsc);
 			printf("  %%\n");
 			printf("  s: %s\n", "Hello, world!");
 			printf("  c: %c\n", '0' + (cnt & 0x3f));
