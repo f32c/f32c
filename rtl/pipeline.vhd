@@ -35,6 +35,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity pipeline is
     generic (
 	-- ISA options
+	C_big_endian: boolean := false;
 	C_mult_enable: boolean;
 	C_branch_likely: boolean;
 	C_movn_movz: boolean;
@@ -229,13 +230,20 @@ begin
     -- Combinatiorial signals used locally in each stage must be prefixed by
     -- IF_, ID_, EX_, MEM_ or WB_.  XXX update / fix this convention!!!
     --
-    -- Memory organization and ordering (regardless of endianess config):
+    -- Memory organization, regardless of endianess config:
     -- imem_data_in / dmem_data_in / dmem_data_out (31 downto 0):
-    --      10987654321098765432109876543210
-    -- 0x0: |byte 3||byte 2||byte 1||byte 0|
-    -- 0x4: |byte 7||byte 6||byte 5||byte 4|
-    -- 0x8: |byte b||byte a||byte 9||byte 8|
+    --             10987654321098765432109876543210
+    -- 0x00000000: |byte 3||byte 2||byte 1||byte 0|
+    -- 0x00000004: |byte 7||byte 6||byte 5||byte 4|
+    -- 0x00000008: |byte b||byte a||byte 9||byte 8|
     -- ...
+    --
+    -- Little endian (C_big_endian = false; gcc -EL):
+    --   memory:   |byte 3||byte 2||byte 1||byte 0|
+    --   register: |byte 3||byte 2||byte 1||byte 0|
+    -- Big endian (C_big_endian = true; gcc -EB):
+    --   memory:   |byte 3||byte 2||byte 1||byte 0|
+    --   register: |byte 0||byte 1||byte 2||byte 3|
     --
 
     -- XXX TODO:
@@ -294,7 +302,13 @@ begin
 		IF_ID_branch_delay_slot <=
 		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 		IF_ID_bpredict_index <= IF_bpredict_index;
-		IF_ID_instruction <= imem_data_in;
+		if C_big_endian then
+		    IF_ID_instruction <=
+		      imem_data_in(7 downto 0) & imem_data_in(15 downto 8) &
+		      imem_data_in(23 downto 16) & imem_data_in(31 downto 24);
+		else
+		    IF_ID_instruction <= imem_data_in;
+		end if;
 	    end if;
 	end if;
     end process;
