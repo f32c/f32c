@@ -229,7 +229,15 @@ begin
     -- Combinatiorial signals used locally in each stage must be prefixed by
     -- IF_, ID_, EX_, MEM_ or WB_.  XXX update / fix this convention!!!
     --
-	
+    -- Memory organization and ordering (regardless of endianess config):
+    -- imem_data_in / dmem_data_in / dmem_data_out (31 downto 0):
+    --      10987654321098765432109876543210
+    -- 0x0: |byte 3||byte 2||byte 1||byte 0|
+    -- 0x4: |byte 7||byte 6||byte 5||byte 4|
+    -- 0x8: |byte b||byte a||byte 9||byte 8|
+    -- ...
+    --
+
     -- XXX TODO:
     --	revisit movz / movn: use ALU (and / or) instead of (slow) shifter!
     --	revisit MULT / MFHI / MFLO decoding (now done in EX stage!!!)
