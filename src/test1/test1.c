@@ -6,6 +6,8 @@
 
 extern void pcm_play(void);
 
+int val = 0x12345678;
+
 
 int
 main(void)
@@ -30,6 +32,7 @@ main(void)
 			printf("%d Hz\n", 920237 / tsc);
 
 			printf("\n tsc = %d\n", tsc);
+			printf("val = %08x\n", val);
 			printf("  %%\n");
 			printf("  s: %s\n", "Hello, world!");
 			printf("  c: %c\n", '0' + (cnt & 0x3f));
