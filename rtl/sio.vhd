@@ -49,17 +49,16 @@ end sio;
 
 --
 -- SIO -> CPU data word:
--- 31..16  unused
--- 15..8   rx_byte
---  7..4   reserved (unused)
---     3   set if tx busy
---     2   set if rx fifo overrun occured, reset on read
---  1..0   # of bytes in rx fifo, reset to 0 on read
+-- 31..11  unused
+--     10  set if tx busy
+--      9  set if rx overrun occured, reset on read
+--      8  set if rx_byte is unread, reset on read
+--   7..0  rx_byte
 --
 -- CPU -> SIO data word:
 -- 31..16  clock divisor (or unused)
--- 15..8   reserved (unused)
---  7..0   tx char
+--  15..8  unused
+--   7..0  tx_byte
 --
 architecture Behavioral of sio is
     constant DEF_BAUD: integer := 115200;
@@ -72,8 +71,8 @@ architecture Behavioral of sio is
     signal rx_des: std_logic_vector(7 downto 0);
     signal tx_phase: std_logic_vector(3 downto 0) := "0001";
     signal rx_phase: std_logic_vector(3 downto 0);
-    signal rx_fifo: std_logic_vector(7 downto 0);
-    signal rx_cnt: std_logic_vector(1 downto 0);
+    signal rx_byte: std_logic_vector(7 downto 0);
+    signal rx_full: std_logic;
     signal rx_overruns: std_logic;
 begin
     --
@@ -85,9 +84,9 @@ begin
     --
 
     tx_running <= '0' when tx_phase = "0000" else '1';
-    bus_out(3) <= tx_running;
-    bus_out(2 downto 0) <= rx_overruns & rx_cnt when not C_tx_only else "000";
-    bus_out(15 downto 8) <= rx_fifo when not C_tx_only else x"00";
+    bus_out(10) <= tx_running;
+    bus_out(9 downto 8) <= rx_overruns & rx_full when not C_tx_only else "00";
+    bus_out(7 downto 0) <= rx_byte when not C_tx_only else x"00";
     txd <= tx_ser(0);
 
     process(clk)
@@ -95,7 +94,7 @@ begin
 	if (rising_edge(clk)) then
 	    -- bus interface logic
 	    if (ce = '1') then
-		if byte_we(3 downto 2) = "11" then
+		if byte_we(2) = '1' then
 		    clkdiv <= bus_in(31 downto 16);
 		end if;
 		if (byte_we(0) = '1') then
@@ -104,7 +103,7 @@ begin
 			tx_ser <= bus_in(7 downto 0) & '0';
 		    end if;
 		else
-		    rx_cnt <= "00";
+		    rx_full <= '0';
 		    rx_overruns <= '0';
 		end if;
 	    end if;
@@ -138,9 +137,9 @@ begin
 			rx_phase <= rx_phase + 1;
 			if (rx_phase = "1010") then
 			    rx_phase <= "0000";
-			    rx_cnt <= rx_cnt + 1;
-			    rx_fifo(7 downto 0) <= rx_des(7 downto 0);
-			    -- XXX properly detect fifo overruns
+			    rx_full <= '1';
+			    rx_byte <= rx_des;
+			    -- XXX properly detect rx overruns
 			end if;
 		    end if;
 		end if;
