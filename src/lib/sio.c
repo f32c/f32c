@@ -16,14 +16,15 @@ static int sio_rxbuf_tail = 1;
 static int
 sio_probe_rx(void)
 {
-	int c;
+	int c, s;
 
-	INW(c, IO_SIO);
-	if (c & SIO_RX_BYTES) {
-		sio_rxbuf[sio_rxbuf_head++] = c >> 8;
+	INB(s, IO_SIO_STATUS);
+	if (s & SIO_RX_FULL) {
+		INB(c, IO_SIO_BYTE);
+		sio_rxbuf[sio_rxbuf_head++] = c;
 		sio_rxbuf_head &= SIO_RXBUFMASK;
 	}
-	return(c);
+	return(s);
 }
 
 
@@ -67,7 +68,7 @@ sio_putchar(int c, int blocking)
 	if (busy)
 		return (-1);
 	else {
-		OUTB(IO_SIO, c);
+		OUTB(IO_SIO_BYTE, c);
 		return (0);
 	}
 }

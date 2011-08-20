@@ -9,7 +9,7 @@ typedef int mainfn_t(void);
 #define DEF_BOOTADDR	0x00000180
 
 int coldboot = 1;	/* don't staticize or GCC will ignore this! */
-static char *prompt = "\r\n\nFER ULXP2 SoC bootloader\r\n> ";
+static char *prompt = "\r\n\nf32c SoC bootloader\r\n> ";
 
 
 void
@@ -42,13 +42,13 @@ defaultboot:
 		do {
 			INW(c, IO_TSC);
 			OUTB(IO_LED, c >> 20);
-			INW(c, IO_SIO);
-		} while ((c & SIO_RX_BYTES) == 0);
-		c = (c >> 8) & 0xff;
+			INB(c, IO_SIO_STATUS);
+		} while ((c & SIO_RX_FULL) == 0);
+		INB(c, IO_SIO_BYTE);
 
 		/* Echo character back to the serial port */
 		if (bootaddr == NULL && loadaddr == NULL)
-			OUTB(IO_SIO, c);
+			OUTB(IO_SIO_BYTE, c);
 
 		if (c == '\r') {
 			if (loadaddr == NULL) {
@@ -69,9 +69,9 @@ start:
 				}
 				for (cp = prompt; *cp != 0; cp++) {
 					do {
-						INW(c, IO_SIO);
+						INB(c, IO_SIO_STATUS);
 					} while (c & SIO_TX_BUSY);
-					OUTB(IO_SIO, *cp);
+					OUTB(IO_SIO_BYTE, *cp);
 				}
 			}
 			loadaddr = NULL;
