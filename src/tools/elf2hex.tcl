@@ -59,10 +59,8 @@ while {[eof $elffile] == 0} {
 	    if {$word == ""} {
 		set word 00000000
 	    }
-	    if {$section == ".text" || $endian == "little"} {
-		# Switch endianess
-		set word "[string range $word 6 7][string range $word 4 5][string range $word 2 3][string range $word 0 1]"
-	    }
+	    # Reorder bytes - send MSB (byte 3) first, LSB (byte 0) last
+	    set word "[string range $word 6 7][string range $word 4 5][string range $word 2 3][string range $word 0 1]"
 	    set mem($addr) $word
 	    incr addr 4
 	}
