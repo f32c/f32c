@@ -21,15 +21,16 @@ main(void)
 	for (cnt = 0, c = '\r'; cnt < 100000; cnt++) {
 		if (c == '\r' || c == '\n') {
 
+			printf("\n");
 			tsc = rdtsc();
-			printf("\nHello, world!\n");
+			printf("Hello, world!\n");
 			printf("\n f32c CPU running at ");
 			tsc = rdtsc() - tsc;
 			if (tsc < 0)
 				tsc = -tsc;
 
 			/* XXX constant derived from 115200 bps */
-			printf("%d Hz\n", 920237 / tsc);
+			printf("%d Hz\n", 876444 / tsc);
 
 			printf("\n tsc = %d\n", tsc);
 			printf("val = %08x\n", val);
