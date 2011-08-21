@@ -155,7 +155,6 @@ architecture Behavioral of pipeline is
     signal EX_2bit_add: std_logic_vector(1 downto 0);
     signal EX_mem_byte_we: std_logic_vector(3 downto 0);
     signal EX_take_branch: boolean;
-    signal EX_cancel_next: boolean;
     -- boundary to stage 4
     signal EX_MEM_writeback_addr: std_logic_vector(4 downto 0);
     signal EX_MEM_addsub_data: std_logic_vector(31 downto 0);
@@ -165,6 +164,7 @@ architecture Behavioral of pipeline is
       C_init_PC(31 downto 2);
     signal EX_MEM_take_branch: boolean := true; -- jump to C_init_PC addr
     signal EX_MEM_branch_cycle, EX_MEM_branch_taken: boolean;
+    signal EX_MEM_branch_likely: boolean;
     signal EX_MEM_bpredict_score: std_logic_vector(1 downto 0);
     signal EX_MEM_branch_hist: std_logic_vector(12 downto 0);
     signal EX_MEM_bpredict_index: std_logic_vector(12 downto 0);
@@ -182,6 +182,7 @@ architecture Behavioral of pipeline is
 	
     -- pipeline stage 4: memory access
     signal MEM_running, MEM_take_branch: boolean;
+    signal MEM_cancel_EX: boolean;
     signal MEM_bpredict_score: std_logic_vector(1 downto 0);
     signal MEM_bpredict_we: std_logic;
     signal MEM_eff_data: std_logic_vector(31 downto 0);
@@ -417,11 +418,12 @@ begin
     ID_alu_op2 <= ID_immediate when ID_use_immediate else ID_reg2_eff_data;
 	
     -- schedule forwarding of results from the EX stage
-    ID_fwd_ex_reg1 <=
+    ID_fwd_ex_reg1 <= not MEM_cancel_EX and
       not ID_reg1_zero and ID_reg1_addr = ID_EX_writeback_addr;
-    ID_fwd_ex_reg2 <=
+    ID_fwd_ex_reg2 <= not MEM_cancel_EX and
       not ID_reg2_zero and ID_reg2_addr = ID_EX_writeback_addr;
-    ID_fwd_ex_alu_op2 <= ID_fwd_ex_reg2 and not ID_use_immediate;
+    ID_fwd_ex_alu_op2 <= not MEM_cancel_EX and
+      ID_fwd_ex_reg2 and not ID_use_immediate;
     -- schedule forwarding of results from the MEM stage
     ID_fwd_mem_reg1 <=
       not ID_reg1_zero and ID_reg1_addr = EX_MEM_writeback_addr;
@@ -476,8 +478,7 @@ begin
 		    ID_EX_fwd_mem_reg1 <= false;
 		    ID_EX_fwd_mem_reg2 <= true;
 		    ID_EX_fwd_mem_alu_op2 <= false;
-		elsif not ID_running or EX_cancel_next or
-		  (not IF_ID_branch_delay_slot and
+		elsif not ID_running or (not IF_ID_branch_delay_slot and
 		  (MEM_take_branch or ID_EX_cancel_next)) then
 		    -- insert a bubble if branching or ID stage is stalled
 		    ID_EX_writeback_addr <= "00000"; -- NOP
@@ -520,7 +521,7 @@ begin
 		    ID_EX_writeback_addr <= ID_writeback_addr;
 		    ID_EX_mem_cycle <= ID_mem_cycle;
 		    ID_EX_branch_cycle <= ID_branch_cycle;
-		    ID_EX_branch_likely <= C_branch_likely and ID_branch_likely;
+		    ID_EX_branch_likely <= ID_branch_likely;
 		    ID_EX_jump_cycle <= ID_jump_cycle;
 		    ID_EX_jump_register <= ID_jump_register;
 		    ID_EX_predict_taken <= ID_predict_taken;
@@ -529,10 +530,9 @@ begin
 		    ID_EX_op_major <= ID_op_major;
 		    ID_EX_latency <= ID_latency;
 		    -- schedule result forwarding
-		    ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1 and not EX_cancel_next;
-		    ID_EX_fwd_ex_reg2 <= ID_fwd_ex_reg2 and not EX_cancel_next;
-		    ID_EX_fwd_ex_alu_op2 <=
-		      ID_fwd_ex_alu_op2 and not EX_cancel_next;
+		    ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
+		    ID_EX_fwd_ex_reg2 <= ID_fwd_ex_reg2;
+		    ID_EX_fwd_ex_alu_op2 <= ID_fwd_ex_alu_op2;
 		    ID_EX_fwd_mem_reg1 <= ID_fwd_mem_reg1;
 		    ID_EX_fwd_mem_reg2 <= ID_fwd_mem_reg2;
 		    ID_EX_fwd_mem_alu_op2 <= ID_fwd_mem_alu_op2;
@@ -655,13 +655,11 @@ begin
 	    EX_take_branch <= false;
 	end case;
     end process;
-    EX_cancel_next <= C_branch_likely and
-      ID_EX_branch_likely and not EX_take_branch;
 
     process(clk)
     begin
 	if rising_edge(clk) then
-	    if MEM_running and EX_running then
+	    if MEM_running and EX_running and not MEM_cancel_EX then
 		EX_MEM_mem_data_out <= EX_from_shift;
 		EX_MEM_addsub_data <= EX_from_alu_addsubx(31 downto 0);
 		EX_MEM_mem_size <= ID_EX_mem_size;
@@ -672,6 +670,7 @@ begin
 		EX_MEM_shift_funct <= ID_EX_immediate(1 downto 0);
 		EX_MEM_op_major <= ID_EX_op_major;
 		EX_MEM_branch_cycle <= ID_EX_branch_cycle;
+		EX_MEM_branch_likely <= ID_EX_branch_likely;
 		EX_MEM_bpredict_score <= ID_EX_bpredict_score;
 		EX_MEM_bpredict_index <= ID_EX_bpredict_index;
 		if ID_EX_branch_cycle then
@@ -721,10 +720,11 @@ begin
 		    EX_MEM_instruction <= ID_EX_instruction;
 		    EX_MEM_PC <= ID_EX_PC;
 		end if;
-	    elsif MEM_running and not EX_running then
+	    elsif MEM_running and (MEM_cancel_EX or not EX_running) then
 		-- insert a bubble in the MEM stage
 		EX_MEM_take_branch <= false;
 		EX_MEM_branch_taken <= false;
+		EX_MEM_branch_likely <= false;
 		EX_MEM_writeback_addr <= "00000";
 		EX_MEM_mem_cycle <= '0';
 		EX_MEM_latency <= '0';
@@ -748,6 +748,8 @@ begin
       else EX_MEM_addsub_data;
 
     MEM_take_branch <= EX_MEM_take_branch xor EX_MEM_branch_taken;
+    MEM_cancel_EX <= C_branch_likely and EX_MEM_branch_likely and
+      not EX_MEM_take_branch;
 
     -- branch prediction
     G_bp_update_score:
