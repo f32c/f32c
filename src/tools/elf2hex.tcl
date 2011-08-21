@@ -116,11 +116,13 @@ foreach instr [array names instr_map] {
 set tabcnt 0
 puts "Instruction frequencies:"
 foreach entry [lsort -integer -decreasing -index 1 $instr_list] {
-    puts -nonewline "[format %8s [lindex $entry 0]]: [lindex $entry 1]	"
+    puts -nonewline "[format %6s [lindex $entry 0]]:[format %5d [lindex $entry 1]]"
     incr tabcnt 1
-    if {$tabcnt == 4} {
+    if {$tabcnt == 5} {
 	set tabcnt 0
 	puts ""
+    } else {
+	puts -nonewline "    "
     }
 }
 if {$tabcnt != 0} {
@@ -128,37 +130,55 @@ if {$tabcnt != 0} {
 }
 
 set base_isa_set "sh lhu lh bgtz sllv srav beq sltu bgez srl xor xori lui sw lbu and slt lw andi slti blez nop bne li sra addu nor negu subu bnez jalr or sltiu ori j beqz sll bltz jr sb lb move addiu jal"
-set mul1_isa_set "$base_isa_set mult multu mflo mfhi"
-set m32r1_isa_set "$mul1_isa_set movn movz mul"
-set m32r2_isa_set "$m32r1_isa_set seb seh"
+set branch_likely_set "bnezl bltzl bnel beql beqzl"
+set mul_set "mult multu mflo mfhi"
+set unaligned_store_set "swl swr"
+set unaligned_load_set "lwl lwr"
+set sign_extend_set "seb"
 
-puts -nonewline "Not in base ISA: "
-foreach instr [array names instr_map] {
-    if {[lsearch $base_isa_set $instr] < 0} {
+puts -nonewline "Branch likely instructions: "
+foreach instr [lsort [array names instr_map]] {
+    if {[lsearch $branch_likely_set $instr] >= 0} {
 	puts -nonewline "$instr "
     }
 }
 puts ""
 
-puts -nonewline "Not in mul1 ISA: "
-foreach instr [array names instr_map] {
-    if {[lsearch $mul1_isa_set $instr] < 0} {
+puts -nonewline "Multiplication instructions: "
+foreach instr [lsort [array names instr_map]] {
+    if {[lsearch $mul_set $instr] >= 0} {
 	puts -nonewline "$instr "
     }
 }
 puts ""
 
-puts -nonewline "Not in 32r1 ISA: "
-foreach instr [array names instr_map] {
-    if {[lsearch $m32r1_isa_set $instr] < 0} {
+puts -nonewline "Unaligned store instructions: "
+foreach instr [lsort [array names instr_map]] {
+    if {[lsearch $unaligned_store_set $instr] >= 0} {
 	puts -nonewline "$instr "
     }
 }
 puts ""
 
-puts -nonewline "Not in 32r2 ISA: "
-foreach instr [array names instr_map] {
-    if {[lsearch $m32r2_isa_set $instr] < 0} {
+puts -nonewline "Unaligned load instructions: "
+foreach instr [lsort [array names instr_map]] {
+    if {[lsearch $unaligned_load_set $instr] >= 0} {
+	puts -nonewline "$instr "
+    }
+}
+puts ""
+
+puts -nonewline "Sign extend instructions: "
+foreach instr [lsort [array names instr_map]] {
+    if {[lsearch $sign_extend_set $instr] >= 0} {
+	puts -nonewline "$instr "
+    }
+}
+puts ""
+
+puts -nonewline "Unsupported instructions: "
+foreach instr [lsort [array names instr_map]] {
+    if {[lsearch "$base_isa_set $mul_set $unaligned_load_set $unaligned_store_set $branch_likely_set $sign_extend_set" $instr] < 0} {
 	puts -nonewline "$instr "
     }
 }
