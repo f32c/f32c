@@ -46,7 +46,6 @@ entity pipeline is
 	C_result_forwarding: boolean := true;
 	C_branch_prediction: boolean := true;
 	C_load_aligner: boolean := true;
-	C_split_shift: boolean := false; -- true: +35 LUT4
 	C_fast_ID: boolean := true;
 	C_register_technology: string := "unknown";
 
@@ -336,7 +335,6 @@ begin
     generic map (
 	C_branch_likely => C_branch_likely,
 	C_movn_movz => C_movn_movz,
-	C_split_shift => C_split_shift,
 	C_mips32_movn_movz => C_mips32_movn_movz
     )
     port map (
@@ -456,9 +454,6 @@ begin
 		    ID_EX_multicycle_lh_lb <= not EX_MEM_multicycle_lh_lb;
 		    ID_EX_mem_cycle <= '0';
 		    ID_EX_op_major <= "10"; -- shift
-		    if C_split_shift then
-			ID_EX_latency <= "00";
-		    end if;
 		    ID_EX_immediate(2) <= '0'; -- shift immediate
 		    ID_EX_immediate(1 downto 0) <= "10"; -- shift right logical
 		    if not EX_MEM_multicycle_lh_lb then
@@ -698,10 +693,6 @@ begin
 		    else
 			EX_MEM_logic_data(0) <= EX_from_alu_addsubx(32);
 		    end if;
-		elsif C_split_shift and ID_EX_op_major = "10" then
-		    -- shift, cmov, multicycle load align
-		    EX_MEM_logic_data <= EX_from_shift;
-		    EX_MEM_logic_cycle <= '1';
 		elsif ID_EX_jump_cycle or ID_EX_jump_register or
 		  ID_EX_branch_cycle or ID_EX_op_major = "11" then
 		    -- Store (link) PC + 8 address
