@@ -1,0 +1,6 @@
+diff -drup ../org/gcc-4.6.1/gcc/config/mips gcc/config/mips | fgrep -v "Only in gcc/config/mips:"
+diff -dup /dev/null gcc/config/mips/f32c.md
+diff -dup ../org/gcc-4.6.1/configure configure
+diff -dup ../org/gcc-4.6.1/gcc/doc/g++.1 gcc/doc/g++.1
+diff -dup ../org/gcc-4.6.1/gcc/doc/gcc.1 gcc/doc/gcc.1
+diff -dup ../org/gcc-4.6.1/gcc/doc/invoke.texi gcc/doc/invoke.texi
