@@ -529,9 +529,10 @@ begin
 		    ID_EX_op_major <= ID_op_major;
 		    ID_EX_latency <= ID_latency;
 		    -- schedule result forwarding
-		    ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
-		    ID_EX_fwd_ex_reg2 <= ID_fwd_ex_reg2;
-		    ID_EX_fwd_ex_alu_op2 <= ID_fwd_ex_alu_op2;
+		    ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1 and not EX_cancel_next;
+		    ID_EX_fwd_ex_reg2 <= ID_fwd_ex_reg2 and not EX_cancel_next;
+		    ID_EX_fwd_ex_alu_op2 <=
+		      ID_fwd_ex_alu_op2 and not EX_cancel_next;
 		    ID_EX_fwd_mem_reg1 <= ID_fwd_mem_reg1;
 		    ID_EX_fwd_mem_reg2 <= ID_fwd_mem_reg2;
 		    ID_EX_fwd_mem_alu_op2 <= ID_fwd_mem_alu_op2;
@@ -612,7 +613,7 @@ begin
 	mem_read_sign_extend_multicycle => EX_MEM_mem_read_sign_extend,
 	mem_size_multicycle => EX_MEM_mem_size(0)
     );
-	
+
     -- compute byte select lines for memory writes
     EX_mem_byte_we(0) <= ID_EX_mem_write when
       EX_2bit_add = "00" or ID_EX_mem_size(1) = '1' or
@@ -656,7 +657,7 @@ begin
     end process;
     EX_cancel_next <= C_branch_likely and
       ID_EX_branch_likely and not EX_take_branch;
-	
+
     process(clk)
     begin
 	if rising_edge(clk) then
@@ -815,7 +816,7 @@ begin
 	    end if;
 	end if;
     end process;
-	
+
     --
     -- Pipeline stage 5: register writeback
     -- ====================================
