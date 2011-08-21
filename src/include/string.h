@@ -7,11 +7,15 @@
 
 #define	memcpy(dst, src, len) _memcpy(dst, src, len)
 
+#if 1
+#define	strcpy(dst, src) __builtin_strcpy((dst), (src))
+#else
 #define	strcpy(dst, src)					\
 	if (sizeof(src) != sizeof(void *))			\
 		_memcpy((dst), (src), sizeof(src));		\
 	else							\
 		_strcpy(dst, src);
+#endif
 
 
 static inline int
