@@ -468,7 +468,7 @@ begin
 		    if ID_running then
 			ID_EX_cancel_next <= false;
 		    end if;
-		    if C_debug then
+		    if true or C_debug then -- XXX mult depends on C_debug!!!
 			ID_EX_instruction <= x"00000001"; -- debugging only
 		    end if;
 		    -- schedule forwarding of memory read
@@ -495,7 +495,7 @@ begin
 		    if ID_running then
 			ID_EX_cancel_next <= false;
 		    end if;
-		    if C_debug then
+		    if true or C_debug then -- XXX mult depends on C_debug!!!
 			ID_EX_instruction <= x"00000000"; -- debugging only
 		    end if;
 		else
