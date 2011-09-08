@@ -58,7 +58,7 @@ entity glue is
 	C_tsc: boolean := true; -- true: +68 LUT4
 	C_sio: boolean := true; -- true: +137 LUT4
 	C_gpio: boolean := true; -- true: +13 LUT4
-	C_spi: boolean := true; -- true: +10 LUT4
+	C_flash: boolean := true; -- true: +10 LUT4
 	C_pcmdac: boolean := true; -- true: +32 LUT4
 	C_ddsfm: boolean := false -- true: +23 LUT4
 
@@ -66,7 +66,7 @@ entity glue is
 	-- XP2-8E-7 area optimized synthesis @ 81.25 MHz:
 	--
 	-- Global config:
-	--   C_tsc 1, C_sio 1, C_gpio 0, C_spi 0, C_pcmdac 0, C_ddsfm 0
+	--   C_tsc 1, C_sio 1, C_gpio 0, C_flash 0, C_pcmdac 0, C_ddsfm 0
 	--
 	-- Config #1:
 	--   C_mult_enable 1, C_res_fwd 1, C_bpred 1, C_load_aligner 1
@@ -98,8 +98,8 @@ entity glue is
 	clk_25m: in std_logic;
 	rs232_tx: out std_logic;
 	rs232_rx: in std_logic;
-	spi_so: in std_logic;
-	spi_cen, spi_sck, spi_si: out std_logic;
+	flash_so: in std_logic;
+	flash_cen, flash_sck, flash_si: out std_logic;
 	p_ring: out std_logic;
 	p_tip: out std_logic_vector(3 downto 0);
 	led: out std_logic_vector(7 downto 0);
@@ -123,7 +123,7 @@ architecture Behavioral of glue is
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_txd, sio_ce: std_logic;
-    signal spi_cen_reg, spi_sck_reg, spi_si_reg: std_logic;
+    signal flash_cen_reg, flash_sck_reg, flash_si_reg: std_logic;
     signal led_reg: std_logic_vector(7 downto 0);
     signal tsc_25m: std_logic_vector(34 downto 0);
     signal tsc: std_logic_vector(31 downto 0);
@@ -247,11 +247,11 @@ begin
 		end if;
 	    end if;
 	    -- SPI
-	    if C_spi and dmem_addr(4 downto 2) = "100" then
+	    if C_flash and dmem_addr(4 downto 2) = "100" then
 		if dmem_byte_we(0) = '1' then
-		    spi_si_reg <= cpu_to_dmem(7);
-		    spi_sck_reg <= cpu_to_dmem(6);
-		    spi_cen_reg <= cpu_to_dmem(5);
+		    flash_si_reg <= cpu_to_dmem(7);
+		    flash_sck_reg <= cpu_to_dmem(6);
+		    flash_cen_reg <= cpu_to_dmem(5);
 		end if;
 	    end if;
 	    -- DDS
@@ -263,9 +263,9 @@ begin
 	end if;
     end process;
     led <= led_reg when C_gpio else "ZZZZZZZZ";
-    spi_si <= spi_si_reg when C_spi else 'Z';
-    spi_sck <= spi_sck_reg when C_spi else 'Z';
-    spi_cen <= spi_cen_reg when C_spi else 'Z';
+    flash_si <= flash_si_reg when C_flash else 'Z';
+    flash_sck <= flash_sck_reg when C_flash else 'Z';
+    flash_cen <= flash_cen_reg when C_flash else 'Z';
 
     process(clk)
     begin
@@ -294,15 +294,15 @@ begin
     end generate;
 
     -- XXX replace with a balanced multiplexer
-    process(dmem_addr, from_gpio, from_sio, tsc, spi_so)
+    process(dmem_addr, from_gpio, from_sio, tsc, flash_so)
     begin
 	case dmem_addr(4 downto 2) is
 	when "000"  => io_to_cpu <= from_gpio;
 	when "001"  => io_to_cpu <= from_sio;
 	when "010"  => io_to_cpu <= tsc;
 	when "100"  =>
-	    if C_spi then
-		io_to_cpu <= x"0000000" & "000" & spi_so;
+	    if C_flash then
+		io_to_cpu <= x"0000000" & "000" & flash_so;
 	    else
 		io_to_cpu <= x"00000000";
 	    end if;
