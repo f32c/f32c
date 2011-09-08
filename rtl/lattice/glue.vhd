@@ -60,7 +60,7 @@ entity glue is
 	C_gpio: boolean := true; -- true: +13 LUT4
 	C_flash: boolean := true; -- true: +10 LUT4
 	C_pcmdac: boolean := true; -- true: +32 LUT4
-	C_ddsfm: boolean := false -- true: +23 LUT4
+	C_ddsfm: boolean := true -- true: +23 LUT4
 
 	--
 	-- XP2-8E-7 area optimized synthesis @ 81.25 MHz:
@@ -105,7 +105,7 @@ entity glue is
 	led: out std_logic_vector(7 downto 0);
 	btn_left, btn_right, btn_up, btn_down, btn_center: in std_logic;
 	sw: in std_logic_vector(3 downto 0);
-	edge: out std_logic_vector(8 downto 0)
+	dil: out std_logic_vector(48 downto 1)
     );
 end glue;
 
@@ -354,13 +354,13 @@ begin
     end generate;
 
     -- make a dipole?
-    edge(0) <= dds_out when C_ddsfm else 'Z';
-    edge(1) <= dds_out when C_ddsfm else 'Z';
-    edge(2) <= dds_out when C_ddsfm else 'Z';
-    edge(3) <= dds_out when C_ddsfm else 'Z';
-    edge(5) <= not dds_out when C_ddsfm else 'Z';
-    edge(6) <= not dds_out when C_ddsfm else 'Z';
-    edge(7) <= not dds_out when C_ddsfm else 'Z';
-    edge(8) <= not dds_out when C_ddsfm else 'Z';
+    dil(20) <= dds_out when C_ddsfm else 'Z';
+    dil(21) <= dds_out when C_ddsfm else 'Z';
+    dil(22) <= dds_out when C_ddsfm else 'Z';
+    dil(23) <= dds_out when C_ddsfm else 'Z';
+    dil(26) <= not dds_out when C_ddsfm else 'Z';
+    dil(27) <= not dds_out when C_ddsfm else 'Z';
+    dil(28) <= not dds_out when C_ddsfm else 'Z';
+    dil(29) <= not dds_out when C_ddsfm else 'Z';
 
 end Behavioral;
