@@ -192,7 +192,7 @@ begin
 
     -- instruction / data BRAMs
     dmem_bram_enable <=
-      dmem_addr_strobe when dmem_addr(31 downto 28) /= x"e" else '0';
+      dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
 
     -- RS232 sio
     G_sio:
