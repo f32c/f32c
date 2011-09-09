@@ -64,9 +64,11 @@ int atoi(const char *buf)
 
 
 #define BUFSIZE 64
+#define	MEMSIZE 5000
+#define MEM_OFFSET 333333
 
 char buf[BUFSIZE];
-int ibuf[1024];
+uint16_t ibuf[MEMSIZE];
 
 
 int
@@ -74,16 +76,16 @@ main(void)
 {
 	int i, j;
 	
-	for (i = 0; i < 1024; i++) {
-		sram_wr(i, random());
+	for (i = 0; i < MEMSIZE; i++) {
+		sram_wr(i + MEM_OFFSET, random());
 	}
-	for (i = 0; i < 1024; i++) {
-		sram_wr(i, i);
+	for (i = 0; i < MEMSIZE; i++) {
+		sram_wr(i + MEM_OFFSET, i);
 	}
-	for (i = 0; i < 1024; i++) {
-		ibuf[i] = sram_rd(i);
+	for (i = 0; i < MEMSIZE; i++) {
+		ibuf[i] = sram_rd(i + MEM_OFFSET);
 	}
-	for (i = 0; i < 1024; i++) {
+	for (i = 0; i < MEMSIZE; i++) {
 		if (ibuf[i] != i)
 			printf("%d: %d\n", i, ibuf[i]);
 	}
