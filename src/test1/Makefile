@@ -2,7 +2,7 @@
 PROG = test1
 
 CFILES = test1.c \
-	../lib/sio.c ../lib/spi.c ../lib/div.c \
+	../lib/sio.c ../lib/spi.c ../lib/div.c ../lib/gets.c \
 	../lib/printf.c ../lib/pcmplay.c ../lib/random.c
 
 ASFILES = ../lib/start.S
