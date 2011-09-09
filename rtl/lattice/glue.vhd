@@ -55,12 +55,13 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: string := "16k";
+	C_sram: boolean := true;
 	C_tsc: boolean := true; -- true: +68 LUT4
 	C_sio: boolean := true; -- true: +137 LUT4
 	C_gpio: boolean := true; -- true: +13 LUT4
 	C_flash: boolean := true; -- true: +10 LUT4
 	C_pcmdac: boolean := true; -- true: +32 LUT4
-	C_ddsfm: boolean := true -- true: +23 LUT4
+	C_ddsfm: boolean := false -- true: +23 LUT4
 
 	--
 	-- XP2-8E-7 area optimized synthesis @ 81.25 MHz:
@@ -105,7 +106,10 @@ entity glue is
 	led: out std_logic_vector(7 downto 0);
 	btn_left, btn_right, btn_up, btn_down, btn_center: in std_logic;
 	sw: in std_logic_vector(3 downto 0);
-	dil: out std_logic_vector(48 downto 1)
+	dil: out std_logic_vector(29 downto 20);
+	sram_a: out std_logic_vector(18 downto 0);
+	sram_d: inout std_logic_vector(15 downto 0);
+	sram_wel, sram_lbl, sram_ubl: out std_logic
     );
 end glue;
 
@@ -119,6 +123,11 @@ architecture Behavioral of glue is
     signal dmem_byte_we: std_logic_vector(3 downto 0);
     signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
+
+    -- SRAM
+    signal R_sram_a: std_logic_vector(18 downto 0);
+    signal R_sram_d: std_logic_vector(15 downto 0);
+    signal R_sram_wel, R_sram_lbl, R_sram_ubl: std_logic;
 
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
@@ -183,7 +192,7 @@ begin
 
     -- instruction / data BRAMs
     dmem_bram_enable <=
-      dmem_addr_strobe when dmem_addr(31 downto 28) /= "1110" else '0';
+      dmem_addr_strobe when dmem_addr(31 downto 28) /= x"e" else '0';
 
     -- RS232 sio
     G_sio:
@@ -197,7 +206,7 @@ begin
 	byte_we => dmem_byte_we, bus_in => cpu_to_dmem,
 	bus_out => from_sio
     );
-    sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = "1110" and
+    sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"e" and
       dmem_addr(3 downto 2) = "01" else '0';
     end generate;
 
@@ -219,18 +228,32 @@ begin
     end generate;
 
     -- I/O port map:
-    -- 0xe*****00: (4B, RW) GPIO (LED, switches/buttons, edge conn.)
+    -- 0x8*******: SRAM
+    -- 0xe*****00: (4B, RW) GPIO (LED, switches/buttons)
     -- 0xe*****04: (4B, RW) SIO
     -- 0xe*****08: (4B, RD) TSC
     -- 0xe*****0c: (4B, WR) PCM signal
     -- 0xe*****10: (1B, RW) SPI Flash
     -- 0xe*****14: (1B, RW) SPI MicsoSD
-    -- 0xe*****1c: (4B, WR) DDS register
+    -- 0xe*****1c: (4B, WR) FM DDS register
     -- I/O write access:
     process(clk)
     begin
+	if C_sram and falling_edge(clk) then
+	    if dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = "1000" then
+		R_sram_a <= dmem_addr(20 downto 2);
+		R_sram_d <= cpu_to_dmem(15 downto 0);
+		R_sram_wel <= not dmem_byte_we(0);
+		R_sram_lbl <= '0';
+		R_sram_ubl <= '0';
+	    else
+		R_sram_wel <= '1';
+		R_sram_lbl <= '1';
+		R_sram_ubl <= '1';
+	    end if;
+	end if;
 	if rising_edge(clk) and dmem_addr_strobe = '1'
-	  and dmem_addr(31 downto 28) = "1110" then
+	  and dmem_addr(31 downto 28) = x"e" then
 	    -- GPIO
 	    if C_gpio and dmem_addr(4 downto 2) = "000" then
 		if dmem_byte_we(0) = '1' then
@@ -266,6 +289,11 @@ begin
     flash_si <= flash_si_reg when C_flash else 'Z';
     flash_sck <= flash_sck_reg when C_flash else 'Z';
     flash_cen <= flash_cen_reg when C_flash else 'Z';
+    sram_d <= R_sram_d when C_sram and R_sram_wel = '0' else "ZZZZZZZZZZZZZZZZ";
+    sram_a <= R_sram_a;
+    sram_wel <= R_sram_wel when C_sram else '1';
+    sram_lbl <= R_sram_lbl when C_sram else '1';
+    sram_ubl <= R_sram_ubl when C_sram else '1';
 
     process(clk)
     begin
@@ -310,7 +338,8 @@ begin
 	end case;
     end process;
 
-    final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = "1110"
+    final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = x"e"
+      else x"0000" & sram_d when C_sram and dmem_addr(31 downto 28) = x"8"
       else dmem_to_cpu;
 
     -- Block RAM
