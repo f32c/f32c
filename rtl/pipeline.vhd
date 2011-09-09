@@ -247,15 +247,17 @@ begin
     --
 
     -- XXX TODO:
-    --	revisit movz / movn: use ALU (and / or) instead of (slow) shifter!
     --	revisit MULT / MFHI / MFLO decoding (now done in EX stage!!!)
+    --  commit MULT result in MEM stage (branch likely must cancel commit)!
+    --  reintroduce area-optimized branch likely support as an option
+    --	sort out the endianess story
+    --	unaligned load / store instructions?
+    --	revisit movz / movn: use ALU (and / or) instead of (slow) shifter!
     --	revisit target_addr computation in idecode.vhd
     --	don't branch until branch delay slot fetched!!!
-    --	sort out the endianess story
     --	reset?
     --	MTHI/MTLO/MFC0/MTC0?
     --	division? - block on MFHI/MFLO if result not ready
-    --	unaligned load / store instructions?
     --	result forwarding: muxes instead of priority encoders?
     --	exceptions/interrupts
 
