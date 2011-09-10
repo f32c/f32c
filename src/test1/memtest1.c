@@ -17,6 +17,7 @@ void sram_wr(int a, int d)
 		"sw %0, 0($3)\n"
 		"sw %0, 0($3)\n"
 		"sw %0, 0($3)\n"
+		"sw %0, 0($3)\n"
 		".set reorder\n"
 		:
 		: "r" (d), "r" (a)
@@ -34,6 +35,8 @@ int sram_rd(int a)
 		".set noreorder\n"
 		"lui	$3, 0x8000\n"
 		"addu	$3, $3, %1\n"
+		"lw %0, 0($3)\n"
+		"lw %0, 0($3)\n"
 		"lw %0, 0($3)\n"
 		"lw %0, 0($3)\n"
 		"lw %0, 0($3)\n"
