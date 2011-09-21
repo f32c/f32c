@@ -346,14 +346,10 @@ main(void)
 	int error;
 	fph_t *fphp = (fph_t *) buf;
 
-	/* Set baudrate - divisors valid for 75 MHz main clock */
-//	OUTW(IO_SIO + 2, 632);	/*  115200 */
-//	OUTW(IO_SIO + 2, 316);	/*  230400 */
-//	OUTW(IO_SIO + 2, 158);	/*  460800 */
-//	OUTW(IO_SIO + 2, 78);	/*  921600 */
-//	OUTW(IO_SIO + 2, 47);	/* 1500000 */
-//	OUTW(IO_SIO + 2, 35);	/* 2000000 */
-//	OUTW(IO_SIO + 2, 23);	/* 3000000 */
+	printf("\n\nfprog ready, switching baudrate...\n");
+
+	/* Set baudrate */
+	OUTW(IO_SIO_BAUD, 81250000 / 460800);
 
 	printf("\n\nfprog ready...\n");
 
@@ -383,7 +379,7 @@ main(int argc, char *argv[])
 	int f;
 
 	/* XXX replace with cfmakeraw() and tcsetattr() */
-	error = system("stty -f /dev/cuaU0.init cs8 raw speed 115200 >/dev/null");
+	error = system("stty -f /dev/cuaU0.init cs8 raw speed 460800 >/dev/null");
         if (error < 0)
                 return (error);
 	sioid = open("/dev/cuaU0", O_RDWR|O_NONBLOCK|O_DIRECT|O_TTY_INIT);
