@@ -30,6 +30,23 @@ char buf[BUFSIZE];
 static int idle_active = 0;
 
 
+static int
+atoi(const char *b)
+{
+	int i = 0;
+	const char *c;
+
+	for (c = b; *c != '\0'; c++) {
+		if (*c >= '0' && *c <= '9') {
+			i = i * 10 + (*c - '0');
+		} else
+			break;
+	}
+
+	return (i);
+}
+
+
 static void
 redraw_display()
 {
@@ -46,7 +63,7 @@ redraw_display()
 	printf("2: Glasnoca: %d\n", pcm_vol & ~PCM_VOL_MUTE);
 	printf("3: Balans (L/D): %d\n", pcm_bal);
 	printf("4: Brzina reprodukcije: %d%%\n",
-	    (pcm_period * 100) / PCM_TSC_CYCLES);
+	    PCM_TSC_CYCLES * 100 / pcm_period);
 	printf("5: Frekvencija odasiljanja FM signala: %d.%04d MHz\n",
 	    fm_freq / 1000000, (fm_freq % 1000000) / 100);
 	printf("\n");
@@ -127,13 +144,14 @@ update_fm_freq()
 int
 main(void)
 {
-	int res;
+	int i, res;
 	char c;
 
 	/* Register PCM output function as idle loop handler */
 	sio_idle_fn = demo_idle;
 
 	do {
+		redraw_display();
 		c = getchar();
 		switch (c) {
 		case 3: /* CTRL + C */
@@ -142,11 +160,34 @@ main(void)
 		case '1':
 			pcm_vol ^= PCM_VOL_MUTE;
 			break;
+		case '2':
+			printf("\nUnesite glasnocu (0 do 12): ");
+			if (gets(buf, BUFSIZE) != 0)
+				return (0);	/* Got CTRL + C */
+			i = atoi(buf);
+			if (i >= 0 && i <= 12)
+				pcm_vol = i;
+			break;
+		case '3':
+			printf("\nUnesite balans (-6 do 6): ");
+			if (gets(buf, BUFSIZE) != 0)
+				return (0);	/* Got CTRL + C */
+			i = atoi(buf);
+			if (i >= -6 && i <= 6)
+				pcm_bal = i;
+			break;
+		case '4':
+			printf("\nUnesite brzinu reprodukcije"
+			    " (50%% do 200%%): ");
+			if (gets(buf, BUFSIZE) != 0)
+				return (0);	/* Got CTRL + C */
+			i = atoi(buf);
+			if (i >= 50 && i <= 200)
+				pcm_period = PCM_TSC_CYCLES * 100 / i;
+			break;
 		case '5':
 			res = update_fm_freq();
 			break;
-		default:
-			redraw_display();
 		}
 	} while (res == 0);
 
