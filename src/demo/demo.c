@@ -1,8 +1,9 @@
 
 #include <io.h>
+#include <types.h>
 #include <sio.h>
 #include <stdio.h>
-#include <types.h>
+#include <stdlib.h>
 
 
 /* From lib/pcmplay.c */
@@ -24,9 +25,13 @@ extern int pcm_period;
 static int old_fm_freq, old_pcm_vol, old_pcm_bal, old_pcm_period;
 
 
-#define BUFSIZE 80
+#define BUFSIZE 64
+#define	MEMSIZE 5000
+#define MEM_OFFSET 333333
 
 char buf[BUFSIZE];
+uint16_t ibuf[MEMSIZE];
+
 static int idle_active = 0;
 
 
@@ -47,6 +52,101 @@ atoi(const char *b)
 }
 
 
+void sram_wr(int a, int d)
+{
+
+	a <<= 2;
+
+	__asm(
+		".set noreorder\n"
+		"lui	$3, 0x8000\n"
+		"addu	$3, $3, %1\n"
+		"sw %0, 0($3)\n"
+		"sw %0, 0($3)\n"
+		"sw %0, 0($3)\n"
+		"sw %0, 0($3)\n"
+		".set reorder\n"
+		:
+		: "r" (d), "r" (a)
+	);
+}
+
+
+int sram_rd(int a)
+{
+	int r;
+
+	a <<= 2;
+
+	__asm(
+		".set noreorder\n"
+		"lui	$3, 0x8000\n"
+		"addu	$3, $3, %1\n"
+		"lw %0, 0($3)\n"
+		"lw %0, 0($3)\n"
+		"lw %0, 0($3)\n"
+		"lw %0, 0($3)\n"
+		"lw %0, 0($3)\n"
+		"lw %0, 0($3)\n"
+		".set reorder\n"
+		: "=r" (r)
+		: "r" (a)
+	);
+
+	return (r);
+}
+
+
+static void
+sram_test(void)
+{
+	int i, j, mem_offset;
+	
+	printf("\nSRAM self-test u tijeku...\n");
+	for (j = 0; j < 100; j++) {
+		do {
+			mem_offset = random() & 0x7ffff;
+		} while (mem_offset > 512*1024 - MEMSIZE);
+		for (i = 0; i < MEMSIZE; i++) {
+			sram_wr(i + mem_offset, random());
+		}
+		for (i = 0; i < MEMSIZE; i++) {
+			sram_wr(i + mem_offset, i);
+		}
+		for (i = 0; i < MEMSIZE; i++) {
+			ibuf[i] = sram_rd(i + mem_offset);
+		}
+		for (i = 0; i < MEMSIZE; i++) {
+			if (ibuf[i] != i) {
+				printf("\nGreska: neispravan SRAM!\n");
+				return;
+			}
+		}
+	}
+	printf("\nSRAM OK\n");
+	printf("\n");
+
+#if 0
+	do {
+		printf("Enter RD addr: ");
+		if (gets(buf, BUFSIZE) != 0)
+			return (0);	/* Got CTRL + C */
+		i = atoi(buf);
+		printf("sram(%06d): %08x\n", i, sram_rd(i));
+
+		printf("Enter WR addr: ");
+		if (gets(buf, BUFSIZE) != 0)
+			return (0);	/* Got CTRL + C */
+		i = atoi(buf);
+		printf("Enter WR data: ");
+		if (gets(buf, BUFSIZE) != 0)
+			return (0);	/* Got CTRL + C */
+		j = atoi(buf);
+		sram_wr(i, j);
+	} while (0);
+#endif
+}
+
 static void
 redraw_display()
 {
@@ -66,6 +166,7 @@ redraw_display()
 	    PCM_TSC_CYCLES * 100 / pcm_period);
 	printf("5: Frekvencija odasiljanja FM signala: %d.%04d MHz\n",
 	    fm_freq / 1000000, (fm_freq % 1000000) / 100);
+	printf("6: SRAM self-test\n");
 	printf("\n");
 	printf("CTRL+C: izlaz u MIPS bootloader\n");
 	printf("\n");
@@ -187,6 +288,9 @@ main(void)
 			break;
 		case '5':
 			res = update_fm_freq();
+			break;
+		case '6':
+			sram_test();
 			break;
 		}
 	} while (res == 0);
