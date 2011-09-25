@@ -42,12 +42,15 @@ redraw_display()
 	printf("\n");
 	printf("Glavni izbornik:\n");
 	printf("\n");
-	printf("(1) Zvuk ukljucen: %d\n", (pcm_vol & PCM_VOL_MUTE) == 0);
-	printf("(2) Glasnoca: %d\n", pcm_vol & ~PCM_VOL_MUTE);
-	printf("(3) Balans (L/D): %d\n", pcm_bal);
-	printf("(4) Brzina reprodukcije: %d%%\n",
+	printf("1: Zvuk ukljucen: %d\n", (pcm_vol & PCM_VOL_MUTE) == 0);
+	printf("2: Glasnoca: %d\n", pcm_vol & ~PCM_VOL_MUTE);
+	printf("3: Balans (L/D): %d\n", pcm_bal);
+	printf("4: Brzina reprodukcije: %d%%\n",
 	    (pcm_period * 100) / PCM_TSC_CYCLES);
-	printf("(5) Frekvencija odasiljanja FM signala: %d Hz\n", fm_freq);
+	printf("5: Frekvencija odasiljanja FM signala: %d.%04d MHz\n",
+	    fm_freq / 1000000, (fm_freq % 1000000) / 100);
+	printf("\n");
+	printf("CTRL+C: izlaz u MIPS bootloader\n");
 	printf("\n");
 }
 
@@ -82,6 +85,10 @@ update_fm_freq()
 	printf("\nUnesite zeljenu frekvenciju u MHz: ");
 	if (gets(buf, BUFSIZE) != 0)
 		return (-1);	/* Got CTRL + C */
+	if (*buf == '0') {
+		fm_freq = 0;
+		return (0);
+	}
 	for (c = buf, freq_i = 0, freq_f = 0, f_c = -1, f_d = 1;
 	    *c != '\0'; c++) {
 		if (*c >= '0' && *c <= '9') {
@@ -99,8 +106,9 @@ update_fm_freq()
 			f_c = 0;
 	}
 	if (freq_i >= 512) {
-		printf("Moguce je sintetizirati samo FM signal frekvencije"
-		    " do 512 MHz\n\n");
+		printf("\nGreska: moguce je sintetizirati samo FM signal"
+		    " frekvencije do 512 MHz.\n\n");
+		return (0);
 	}
 	if (freq_i) {
 		while (f_c > 0) {
@@ -142,6 +150,7 @@ main(void)
 		}
 	} while (res == 0);
 
+	printf("Pritisnite 'x' za povratak u glavni izbornik.\n");
 	return (0);
 }
 
