@@ -143,7 +143,7 @@ puts "$section $seqn"
 			set hex "[format %03X [expr $ivbuf($i) * 2]][set hex]"
 		    }
 		}
-		set prefix "INITVAL_[format %02d [expr $addr / $addrstep]] =>"
+		set prefix "INITVAL_[format %02x [expr $addr / $addrstep]] =>"
 		if {$addr < [expr $endaddr - $addrstep]} {
 		    lappend filebuf "		$prefix \"0x[set hex]\","
 		} else {
