@@ -14,21 +14,20 @@
 #define	PCM_VOL_MUTE	0x80000000
 
 
+int pcm_vol = PCM_VOL_MAX * 2 / 3;
+int pcm_bal = 0;
+int pcm_period = PCM_TSC_CYCLES;
+int fm_freq = 0;		/* Pending TX frequency, in Hz */
+
 static int pcm_addr = PCM_END;
-static int pcm_vol = PCM_VOL_MAX * 2 / 3;
-static int pcm_bal = 0;
 static int pcm_avg[2] = {0, 0};
 static int pcm_vu[2] = {0, 0};
 static int pcm_evol[2] = {0, 0};
 static int pcm_next_tsc;
-static int pcm_period = PCM_TSC_CYCLES;
 static int pcm_pushbtn_old;
-static int dds_dipsw_old;
 static int dds_base;		/* 0 MHz - don't TX anything by default */
 static int fm_mode;		/* Modulation depth */
 static int fm_efreq;		/* Actual TX frequency, in Hz */
-
-int fm_freq;			/* Pending TX frequency, in Hz */
 
 
 static void
@@ -149,11 +148,6 @@ pcm_play(void)
 		}
 		pcm_pushbtn_old = vu;
 	} else {
-		INB(i, IO_DIPSW);
-		if (i != dds_dipsw_old) {
-			dds_dipsw_old = i;
-			fm_freq = 100000000 + i * 500000;
-		}
 		if (fm_freq != fm_efreq)
 			update_dds_freq();
 	}
