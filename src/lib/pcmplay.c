@@ -18,6 +18,8 @@ int pcm_vol = PCM_VOL_MAX * 2 / 3;
 int pcm_bal = 0;
 int pcm_period = PCM_TSC_CYCLES;
 int fm_freq = 0;		/* Pending TX frequency, in Hz */
+int led_mode = 0;
+int led_byte = 0;
 
 static int pcm_addr = PCM_END;
 static int pcm_avg[2] = {0, 0};
@@ -127,7 +129,11 @@ pcm_play(void)
 				c = 0;
 			vu |= (c << (i << 2));
 		}
-		OUTB(IO_LED, vu);
+		if (led_mode) {
+			OUTB(IO_LED, led_byte);
+		} else {
+			OUTB(IO_LED, vu);
+		}
 
 		INB(vu, IO_PUSHBTN);
 		if (vu != pcm_pushbtn_old) {
