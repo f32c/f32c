@@ -20,13 +20,15 @@ extern int fm_freq;
 extern int pcm_vol;
 extern int pcm_bal;
 extern int pcm_period;
+extern int led_mode;
+extern int led_byte;
 
 
 static int old_fm_freq, old_pcm_vol, old_pcm_bal, old_pcm_period;
 
 
 #define BUFSIZE 64
-#define	MEMSIZE 5000
+#define	MEMSIZE 4000
 #define MEM_OFFSET 333333
 
 char buf[BUFSIZE];
@@ -154,8 +156,8 @@ redraw_display()
 	printf("\n");
 	printf("FER - Digitalna logika 2011/2012\n");
 	printf("\n");
-	printf("ULX2S plocica - demonstracijski / dijagnosticki FPGA bitstream"
-	    " v 0.01\n");
+	printf("ULX2S FPGA plocica - demonstracijsko-dijagnosticki program\n");
+	printf("v 0.02 27/09/2011\n");
 	printf("\n");
 	printf("Glavni izbornik:\n");
 	printf("\n");
@@ -166,9 +168,9 @@ redraw_display()
 	    PCM_TSC_CYCLES * 100 / pcm_period);
 	printf("5: Frekvencija odasiljanja FM signala: %d.%04d MHz\n",
 	    fm_freq / 1000000, (fm_freq % 1000000) / 100);
-	printf("6: SRAM self-test\n");
-	printf("\n");
-	printf("CTRL+C: izlaz u MIPS bootloader\n");
+	printf("6: LED indikatori (0: VU-metar, 1: byte): %d\n", led_mode);
+	printf("7: LED byte: %d\n", led_byte);
+	printf("8: SRAM self-test\n");
 	printf("\n");
 }
 
@@ -266,7 +268,7 @@ main(void)
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
 			i = atoi(buf);
-			if (i >= 0 && i <= 12)
+			if (buf[0] != 0 && i >= 0 && i <= 12)
 				pcm_vol = i;
 			break;
 		case '3':
@@ -290,6 +292,17 @@ main(void)
 			res = update_fm_freq();
 			break;
 		case '6':
+			led_mode ^= 1;
+			break;
+		case '7':
+			printf("\nUnesite vrijednost za LED byte (0 do 255): ");
+			if (gets(buf, BUFSIZE) != 0)
+				return (0);	/* Got CTRL + C */
+			i = atoi(buf);
+			if (buf[0] != 0 && i >= 0 && i <= 255)
+				led_byte = i;
+			break;
+		case '8':
 			sram_test();
 			break;
 		}
