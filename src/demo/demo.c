@@ -167,17 +167,17 @@ redraw_display()
 	printf("\n");
 	printf("Glavni izbornik:\n");
 	printf("\n");
-	printf("1: Zvuk ukljucen: %d\n", (pcm_vol & PCM_VOL_MUTE) == 0);
-	printf("2: Glasnoca: %d\n", pcm_vol & ~PCM_VOL_MUTE);
-	printf("3: Balans (L/D): %d\n", pcm_bal);
-	printf("4: Brzina reprodukcije: %d%%\n",
+	printf(" 1: Zvuk ukljucen: %d\n", (pcm_vol & PCM_VOL_MUTE) == 0);
+	printf(" 2: Glasnoca: %d\n", pcm_vol & ~PCM_VOL_MUTE);
+	printf(" 3: Balans (L/D): %d\n", pcm_bal);
+	printf(" 4: Brzina reprodukcije: %d%%\n",
 	    PCM_TSC_CYCLES * 100 / pcm_period);
-	printf("5: Frekvencija odasiljanja FM signala: %d.%04d MHz\n",
+	printf(" 5: Frekvencija odasiljanja FM signala: %d.%04d MHz\n",
 	    fm_freq / 1000000, (fm_freq % 1000000) / 100);
-	printf("6: LED indikatori (0: VU-metar, 1: byte): %d\n", led_mode);
-	printf("7: LED byte: %d\n", led_byte);
-	printf("8: USB UART (RS-232) baud rate: %d bps\n", bauds);
-	printf("9: SRAM self-test\n");
+	printf(" 6: LED indikatori (0: VU-metar, 1: byte): %d\n", led_mode);
+	printf(" 7: LED byte: %d\n", led_byte);
+	printf(" 8: USB UART (RS-232) baud rate: %d bps\n", bauds);
+	printf(" 9: SRAM self-test\n");
 	printf("\n");
 	OUTW(IO_SIO_BAUD, 81250000 / bauds);
 }
