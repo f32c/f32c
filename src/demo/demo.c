@@ -314,12 +314,12 @@ main(void)
 			break;
 		case '8':
 			printf("Unesite zeljeni baud rate"
-			    " (1200 do 230400 bps): ");
+			    " (2400 do 230400 bps): ");
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
 			i = atoi(buf);
-			if (buf[0] != 0 && i >= 9600 && i <= 230400)
-				bauds = (i / 9600) * 9600;
+			if (buf[0] != 0 && i >= 2400 && i <= 230400)
+				bauds = (i / 2400) * 2400;
 			break;
 		case '9':
 			sram_test();
