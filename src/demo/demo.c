@@ -88,7 +88,7 @@ sram_test(void)
 {
 	int i, j, mem_offset;
 	
-	printf("\nSRAM self-test u tijeku...\n");
+	printf("SRAM self-test u tijeku...  ");
 	for (j = 0; j < 100; j++) {
 		do {
 			mem_offset = random() & 0x7ffff;
@@ -104,13 +104,12 @@ sram_test(void)
 		}
 		for (i = 0; i < MEMSIZE; i++) {
 			if (ibuf[i] != i) {
-				printf("\nGreska: neispravan SRAM!\n");
+				printf("Greska: neispravan SRAM!\n");
 				return;
 			}
 		}
 	}
-	printf("\nSRAM OK\n");
-	printf("\n");
+	printf("SRAM OK!\n");
 
 #if 0
 	do {
@@ -145,7 +144,8 @@ redraw_display()
 	printf("\n");
 	printf("Glavni izbornik:\n");
 	printf("\n");
-	printf(" 1: Zvuk ukljucen: %d\n", (pcm_vol & PCM_VOL_MUTE) == 0);
+	printf(" 1: Audio izlaz ukljucen: %d\n",
+	    (pcm_vol & PCM_VOL_MUTE) == 0);
 	printf(" 2: Glasnoca: %d\n", pcm_vol & ~PCM_VOL_MUTE);
 	printf(" 3: Balans (L/D): %d\n", pcm_bal);
 	printf(" 4: Brzina reprodukcije: %d%%\n",
