@@ -6,6 +6,7 @@
 
 
 uint32_t random(void);
+int atoi(const char *);
 
 #define exit(x)								\
 	do {								\

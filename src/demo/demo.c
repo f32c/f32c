@@ -38,28 +38,6 @@ uint16_t ibuf[MEMSIZE];
 static int idle_active = 0;
 
 
-static int
-atoi(const char *b)
-{
-	int i = 0;
-	int sign = 1;
-	const char *c = b;
-
-	if (*c == '-') {
-		sign = -1;
-		c++;
-	}
-	for (; *c != '\0'; c++) {
-		if (*c >= '0' && *c <= '9') {
-			i = i * 10 + (*c - '0');
-		} else
-			break;
-	}
-
-	return (sign * i);
-}
-
-
 void sram_wr(int a, int d)
 {
 
