@@ -42,16 +42,21 @@ static int
 atoi(const char *b)
 {
 	int i = 0;
-	const char *c;
+	int sign = 1;
+	const char *c = b;
 
-	for (c = b; *c != '\0'; c++) {
+	if (*c == '-') {
+		sign = -1;
+		c++;
+	}
+	for (; *c != '\0'; c++) {
 		if (*c >= '0' && *c <= '9') {
 			i = i * 10 + (*c - '0');
 		} else
 			break;
 	}
 
-	return (i);
+	return (sign * i);
 }
 
 
@@ -265,7 +270,7 @@ main(void)
 			pcm_vol ^= PCM_VOL_MUTE;
 			break;
 		case '2':
-			printf("\nUnesite glasnocu (0 do 12): ");
+			printf("Unesite glasnocu (0 do 12): ");
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
 			i = atoi(buf);
@@ -275,7 +280,7 @@ main(void)
 			}
 			break;
 		case '3':
-			printf("\nUnesite balans (-6 do 6): ");
+			printf("Unesite balans (-6 do 6): ");
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
 			i = atoi(buf);
@@ -285,7 +290,7 @@ main(void)
 			}
 			break;
 		case '4':
-			printf("\nUnesite brzinu reprodukcije"
+			printf("Unesite brzinu reprodukcije"
 			    " (50%% do 200%%): ");
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
@@ -300,7 +305,7 @@ main(void)
 			led_mode ^= 1;
 			break;
 		case '7':
-			printf("\nUnesite vrijednost za LED byte (0 do 255): ");
+			printf("Unesite vrijednost za LED byte (0 do 255): ");
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
 			i = atoi(buf);
@@ -308,7 +313,7 @@ main(void)
 				led_byte = i;
 			break;
 		case '8':
-			printf("\nUnesite zeljeni baud rate"
+			printf("Unesite zeljeni baud rate"
 			    " (1200 do 230400 bps): ");
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
