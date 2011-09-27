@@ -24,7 +24,7 @@ extern int led_mode;
 extern int led_byte;
 
 
-static int old_fm_freq, old_pcm_vol, old_pcm_bal, old_pcm_period;
+static int old_pcm_vol, old_pcm_bal;
 
 
 #define BUFSIZE 64
@@ -184,14 +184,12 @@ demo_idle()
 		return;
 	idle_active++;
 
-	if (old_fm_freq != fm_freq || old_pcm_vol != pcm_vol ||
-	    old_pcm_bal != pcm_bal || old_pcm_period != pcm_period) {
-		old_fm_freq = fm_freq;
+	if (old_pcm_vol != pcm_vol || old_pcm_bal != pcm_bal) {
 		old_pcm_vol = pcm_vol;
 		old_pcm_bal = pcm_bal;
-		old_pcm_period = pcm_period;
 		redraw_display();
 	}
+
 	idle_active--;
 }
 
