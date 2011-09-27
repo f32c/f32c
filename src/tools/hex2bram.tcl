@@ -108,7 +108,6 @@ while {[eof $bramfile] == 0} {
 	    # Construct and dump INITVAL_xx lines!
 	    set addrstep [expr $section * 16]
 	    for {set addr 0} {$addr < $endaddr} {incr addr $addrstep} {
-puts "$section $seqn"
 		for {set i 0} {$i < 32} {incr i} {
 		    switch $section {
 		    8 {
