@@ -25,6 +25,7 @@ extern int led_byte;
 
 
 static int old_pcm_vol, old_pcm_bal;
+static int bauds = 115200;
 
 
 #define BUFSIZE 64
@@ -170,8 +171,10 @@ redraw_display()
 	    fm_freq / 1000000, (fm_freq % 1000000) / 100);
 	printf("6: LED indikatori (0: VU-metar, 1: byte): %d\n", led_mode);
 	printf("7: LED byte: %d\n", led_byte);
-	printf("8: SRAM self-test\n");
+	printf("8: USB UART (RS-232) baud rate: %d bps\n", bauds);
+	printf("9: SRAM self-test\n");
 	printf("\n");
+	OUTW(IO_SIO_BAUD, 81250000 / bauds);
 }
 
 
@@ -266,16 +269,20 @@ main(void)
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
 			i = atoi(buf);
-			if (buf[0] != 0 && i >= 0 && i <= 12)
+			if (buf[0] != 0 && i >= 0 && i <= 12) {
 				pcm_vol = i;
+				old_pcm_vol = i;
+			}
 			break;
 		case '3':
 			printf("\nUnesite balans (-6 do 6): ");
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
 			i = atoi(buf);
-			if (i >= -6 && i <= 6)
+			if (i >= -6 && i <= 6) {
 				pcm_bal = i;
+				old_pcm_bal = i;
+			}
 			break;
 		case '4':
 			printf("\nUnesite brzinu reprodukcije"
@@ -301,6 +308,15 @@ main(void)
 				led_byte = i;
 			break;
 		case '8':
+			printf("\nUnesite zeljeni baud rate"
+			    " (1200 do 230400 bps): ");
+			if (gets(buf, BUFSIZE) != 0)
+				return (0);	/* Got CTRL + C */
+			i = atoi(buf);
+			if (buf[0] != 0 && i >= 9600 && i <= 230400)
+				bauds = (i / 9600) * 9600;
+			break;
+		case '9':
 			sram_test();
 			break;
 		}
