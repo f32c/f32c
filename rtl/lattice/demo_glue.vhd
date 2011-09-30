@@ -152,6 +152,7 @@ architecture Behavioral of glue is
 
     -- Breakout game
     signal breakout_video: std_logic_vector(3 downto 0);
+    signal breakout_audio: std_logic;
 
 begin
 
@@ -227,7 +228,7 @@ begin
     p_tip(2) <= dac_acc_l(16) when sw(3) = '0' else breakout_video(2);
     p_tip(1) <= dac_acc_l(16) when sw(3) = '0' else breakout_video(1);
     p_tip(0) <= '0' when sw(3) = '0' else breakout_video(0);
-    p_ring <= dac_acc_r(16);
+    p_ring <= dac_acc_r(16) when sw(3) = '0' else breakout_audio;
     end generate;
 
     -- I/O port map:
@@ -399,9 +400,9 @@ begin
     breakout: entity breakout
     port map (
 	clk => clk, clk_dac => clk_dds,
-	sw => sw, btn_left => btn_left, btn_right => btn_right,
+	sw => x"f", btn_left => btn_left, btn_right => btn_right,
 	btn_up => btn_up, btn_down => btn_down, btn_center => btn_center,
-	led => open, p_tip => breakout_video
+	led => open, p_tip => breakout_video, p_ring => breakout_audio
     );
 
 end Behavioral;
