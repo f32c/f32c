@@ -22,13 +22,6 @@ _start(void)
 	int c;
 	char *cp;
 	
-	/* Set up IO base address */
-	__asm __volatile__(
-		"li $27, %0"
-		:
-		: "i" (IO_BASE)
-	);
-
 	if (coldboot) {
 defaultboot:
 		bootaddr = (void *) DEF_BOOTADDR;

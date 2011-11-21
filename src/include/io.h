@@ -2,18 +2,21 @@
 #ifndef _IO_H_
 #define	_IO_H_
 
-#define	IO_BASE		0xe0000000
+#define IO_BASE		-32768
 
-#define	IO_LED		0x00	/* byte, WR */
-#define	IO_PUSHBTN	0x00	/* byte, RD */
-#define	IO_DIPSW	0x01	/* byte, RD */
-#define	IO_SIO_BYTE	0x04	/* byte, RW */
-#define	IO_SIO_STATUS	0x05	/* byte, RD */
-#define	IO_SIO_BAUD	0x06	/* half, WR */
-#define	IO_TSC		0x08	/* word, RD */
-#define	IO_PCM_OUT	0x0c	/* word, WR */
-#define	IO_SPI		0x10	/* byte, RW */
-#define	IO_DDS		0x1c	/* word, WR */
+#define	IO_ADDR(a)	(IO_BASE + (a))
+
+#define	IO_LED		IO_ADDR(0x00)	/* byte, WR */
+#define	IO_PUSHBTN	IO_ADDR(0x00)	/* byte, RD */
+#define	IO_DIPSW	IO_ADDR(0x01)	/* byte, RD */
+#define	IO_SIO_BYTE	IO_ADDR(0x04)	/* byte, RW */
+#define	IO_SIO_STATUS	IO_ADDR(0x05)	/* byte, RD */
+#define	IO_SIO_BAUD	IO_ADDR(0x06)	/* half, WR */
+#define	IO_TSC		IO_ADDR(0x08)	/* word, RD */
+#define	IO_PCM_OUT	IO_ADDR(0x0c)	/* word, WR */
+#define	IO_SPI_FLASH	IO_ADDR(0x10)	/* byte, RW */
+#define	IO_SPI_MICROSD	IO_ADDR(0x14)	/* byte, RW */
+#define	IO_DDS_FREQ	IO_ADDR(0x1c)	/* word, WR */
 
 /* SIO status bitmask */
 #define	SIO_TX_BUSY	0x4
@@ -41,42 +44,42 @@
 
 #define	OUTB(port, data)						   \
 	do {								   \
-		__asm __volatile ("sb %0, %1($27)"	/* k1 = IO_BASE */ \
+		__asm __volatile ("sb %0, %1($0)"	/* IO_BASE = 0xf* */ \
 			:				/* outputs */	   \
 			: "r" (data), "i" (port));	/* inputs */	   \
 	} while (0)
 
 #define	OUTH(port, data)						   \
 	do {								   \
-		__asm __volatile ("sh %0, %1($27)"	/* k1 = IO_BASE */ \
+		__asm __volatile ("sh %0, %1($0)"	/* IO_BASE = 0xf* */ \
 			:				/* outputs */	   \
 			: "r" (data), "i" (port));	/* inputs */	   \
 	} while (0)
 
 #define	OUTW(port, data)						   \
 	do {								   \
-		__asm __volatile ("sw %0, %1($27)"	/* k1 = IO_BASE */ \
+		__asm __volatile ("sw %0, %1($0)"	/* IO_BASE = 0xf* */ \
 			:				/* outputs */	   \
 			: "r" (data), "i" (port));	/* inputs */	   \
 	} while (0)
 
 #define	INB(data, port)							   \
 	do {								   \
-		__asm __volatile ("lb %0, %1($27)"	/* k1 = IO_BASE */ \
+		__asm __volatile ("lb %0, %1($0)"	/* IO_BASE = 0xf* */ \
 			: "=r" (data)			/* outputs */	   \
 			: "i" (port));			/* inputs */	   \
 	} while (0)
 
 #define	INH(data, port)							   \
 	do {								   \
-		__asm __volatile ("lh %0, %1($27)"	/* k1 = IO_BASE */ \
+		__asm __volatile ("lh %0, %1($0)"	/* IO_BASE = 0xf* */ \
 			: "=r" (data)			/* outputs */	   \
 			: "i" (port));			/* inputs */	   \
 	} while (0)
 
 #define	INW(data, port)							   \
 	do {								   \
-		__asm __volatile ("lw %0, %1($27)"	/* k1 = IO_BASE */ \
+		__asm __volatile ("lw %0, %1($0)"	/* IO_BASE = 0xf* */ \
 			: "=r" (data)			/* outputs */	   \
 			: "i" (port));			/* inputs */	   \
 	} while (0)
