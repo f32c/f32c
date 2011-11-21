@@ -63,7 +63,7 @@ begin
 	end case;
 
 	if mem_size_pipelined(1) = '1' then
-	    mem_align_out <= mem_align_in;
+	    mem_align_out <= mem_align_in(31 downto 8) & mem_align_tmp_b;
 	else
 	    if mem_size_pipelined(0) = '0' then -- byte load
 		if mem_read_sign_extend_pipelined = '1' then
