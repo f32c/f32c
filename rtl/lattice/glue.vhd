@@ -61,11 +61,7 @@ entity glue is
 	C_gpio: boolean := true; -- true: +13 LUT4
 	C_flash: boolean := true; -- true: +10 LUT4
 	C_pcmdac: boolean := true; -- true: +32 LUT4
-	C_ddsfm: boolean := true;
-
-	-- Don't touch those
-	C_dds_acclen: integer := 28;
-	C_dds_freq: real := 325.0
+	C_ddsfm: boolean := false
 
 	--
 	-- XP2-8E-7 area optimized synthesis @ 81.25 MHz:
@@ -118,9 +114,6 @@ entity glue is
 end glue;
 
 architecture Behavioral of glue is
-    constant C_dds_div: std_logic_vector(31 downto 0) :=
-	std_logic_vector(conv_signed(integer(2**30 / C_dds_freq * 2**28), 32));
-
     signal clk: std_logic;
     signal imem_addr: std_logic_vector(31 downto 2);
     signal imem_data_read: std_logic_vector(31 downto 0);
@@ -155,10 +148,7 @@ architecture Behavioral of glue is
 
     -- FM TX DDS
     signal clk_dds, dds_out: std_logic;
-    signal R_dds_freq: std_logic_vector(31 downto 0);
-    signal R_dds_mul_res: std_logic_vector(63 downto 0);
-    signal R_dds_acc, R_dds_inc0, R_dds_inc1:
-	std_logic_vector((C_dds_acclen - 1) downto 0);
+    signal dds_cnt, dds_div, dds_div1: std_logic_vector(21 downto 0);
 
 begin
 
@@ -290,12 +280,12 @@ begin
 	    -- DDS
 	    if C_ddsfm and dmem_addr(4 downto 2) = "111" then
 		if dmem_byte_we(0) = '1' then
-		    R_dds_freq <= cpu_to_dmem;
+		    dds_div <= cpu_to_dmem(21 downto 0);
 		end if;
 	    end if;
 	end if;
     end process;
-    --led <= led_reg when C_gpio else "ZZZZZZZZ";
+    led <= led_reg when C_gpio else "ZZZZZZZZ";
     flash_si <= flash_si_reg when C_flash else 'Z';
     flash_sck <= flash_sck_reg when C_flash else 'Z';
     flash_cen <= flash_cen_reg when C_flash else 'Z';
@@ -382,25 +372,14 @@ begin
     -- DDS FM transmitter
     G_ddsfm:
     if C_ddsfm generate
-    begin
-    process(clk)
-    begin
-	if (rising_edge(clk)) then
-	    R_dds_mul_res <= R_dds_freq * C_dds_div;
-	    R_dds_inc0 <= R_dds_mul_res(57 downto (58 - C_dds_acclen));
-	end if;
-    end process;
-
-    led <= R_dds_inc0((C_dds_acclen - 1) downto (C_dds_acclen - 8));
-
     process(clk_dds)
     begin
 	if (rising_edge(clk_dds)) then
-	    R_dds_inc1 <= R_dds_inc0; -- Cross clock domains
-	    R_dds_acc <= R_dds_acc + R_dds_inc1;
+	    dds_div1 <= dds_div; -- Cross clock domain
+	    dds_cnt <= dds_cnt + dds_div1;
 	end if;
     end process;
-    dds_out <= R_dds_acc((C_dds_acclen - 1));
+    dds_out <= dds_cnt(21);
     end generate;
 
     -- make a dipole?

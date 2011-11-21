@@ -209,6 +209,11 @@ update_fm_freq()
 		if (*c == '.')
 			f_c = 0;
 	}
+	if (freq_i >= 512) {
+		printf("\nGreska: moguce je sintetizirati samo FM signal"
+		    " frekvencije do 512 MHz.\n\n");
+		return (0);
+	}
 	if (freq_i) {
 		while (f_c > 0) {
 			f_c--;
@@ -219,7 +224,6 @@ update_fm_freq()
 		}
 		fm_freq = freq_i * 1000000 + freq_f * 100;
 	}
-printf("XXX FM_FREQ: %d\n", fm_freq);
 	return (0);
 }
 
