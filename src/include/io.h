@@ -89,8 +89,8 @@
  * Declaration of misc. IO functions.
  */
 
-#define	spi_start_transaction()	OUTB(IO_SPI, 0);
-#define	spi_stop_transaction()	OUTB(IO_SPI, SPI_CEN);
+#define	spi_start_transaction()	OUTB(IO_SPI_FLASH, 0);
+#define	spi_stop_transaction()	OUTB(IO_SPI_FLASH, SPI_CEN);
 
 int spi_byte(int);
 int spi_byte_in(void);
