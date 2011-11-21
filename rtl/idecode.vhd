@@ -177,16 +177,19 @@ begin
 	    end if;
 	    if fncode(5 downto 3) = "101" then -- SLT / SLTU
 		op_major <= "01";
+		op_minor <= "---";
 		if fncode(0) = '1' then
 		    sign_extend_imm <= false; -- SLTU
 		end if;
 	    end if;
 	    if fncode(5 downto 3) = "000" then -- shift
 		op_major <= "10"; -- shift
+		op_minor <= "---";
 		latency <= "01";
 	    end if;
 	    if fncode(5 downto 4) = "01" then -- MUL/DIV/MFHI/MFLO/MTHI/MTLO
 		op_major <= "11"; -- mul_et_al
+		op_minor <= "---";
 	    end if;
 	elsif x_special3 then
 	    op_minor <= "110"; -- logic, xor cycle, for seb
