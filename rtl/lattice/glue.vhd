@@ -61,7 +61,7 @@ entity glue is
 	C_gpio: boolean := true; -- true: +13 LUT4
 	C_flash: boolean := true; -- true: +10 LUT4
 	C_pcmdac: boolean := true; -- true: +32 LUT4
-	C_ddsfm: boolean := false -- true: +23 LUT4
+	C_ddsfm: boolean := false
 
 	--
 	-- XP2-8E-7 area optimized synthesis @ 81.25 MHz:
@@ -206,8 +206,8 @@ begin
 	byte_we => dmem_byte_we, bus_in => cpu_to_dmem,
 	bus_out => from_sio
     );
-    sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"e" and
-      dmem_addr(3 downto 2) = "01" else '0';
+    sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
+      dmem_addr(4 downto 2) = "001" else '0';
     end generate;
 
     -- PCM stereo 1-bit DAC
@@ -229,18 +229,18 @@ begin
 
     -- I/O port map:
     -- 0x8*******: SRAM
-    -- 0xe*****00: (4B, RW) GPIO (LED, switches/buttons)
-    -- 0xe*****04: (4B, RW) SIO
-    -- 0xe*****08: (4B, RD) TSC
-    -- 0xe*****0c: (4B, WR) PCM signal
-    -- 0xe*****10: (1B, RW) SPI Flash
-    -- 0xe*****14: (1B, RW) SPI MicsoSD
-    -- 0xe*****1c: (4B, WR) FM DDS register
+    -- 0xf*****00: (4B, RW) GPIO (LED, switches/buttons)
+    -- 0xf*****04: (4B, RW) SIO
+    -- 0xf*****08: (4B, RD) TSC
+    -- 0xf*****0c: (4B, WR) PCM signal
+    -- 0xf*****10: (1B, RW) SPI Flash
+    -- 0xf*****14: (1B, RW) SPI MicroSD
+    -- 0xf*****1c: (4B, WR) FM DDS register
     -- I/O write access:
     process(clk)
     begin
 	if C_sram and falling_edge(clk) then
-	    if dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = "1000" then
+	    if dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
 		R_sram_a <= dmem_addr(20 downto 2);
 		R_sram_d <= cpu_to_dmem(15 downto 0);
 		R_sram_wel <= not dmem_byte_we(0);
@@ -253,7 +253,7 @@ begin
 	    end if;
 	end if;
 	if rising_edge(clk) and dmem_addr_strobe = '1'
-	  and dmem_addr(31 downto 28) = x"e" then
+	  and dmem_addr(31 downto 28) = x"f" then
 	    -- GPIO
 	    if C_gpio and dmem_addr(4 downto 2) = "000" then
 		if dmem_byte_we(0) = '1' then
@@ -269,7 +269,7 @@ begin
 		    dac_in_r <= cpu_to_dmem(15 downto 2);
 		end if;
 	    end if;
-	    -- SPI
+	    -- SPI Flash
 	    if C_flash and dmem_addr(4 downto 2) = "100" then
 		if dmem_byte_we(0) = '1' then
 		    flash_si_reg <= cpu_to_dmem(7);
@@ -338,7 +338,7 @@ begin
 	end case;
     end process;
 
-    final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = x"e"
+    final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = x"f"
       else x"0000" & sram_d when C_sram and dmem_addr(31 downto 28) = x"8"
       else dmem_to_cpu;
 
