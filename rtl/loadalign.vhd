@@ -50,18 +50,22 @@ begin
     process(mem_align_in, mem_read_sign_extend_pipelined,
       mem_addr_offset, mem_size_pipelined)
     begin
-	mem_align_tmp_b <= mem_align_in(7 downto 0); -- don't infer a latch
-	mem_align_tmp_h <= mem_align_in(15 downto 0); -- don't infer a latch
+	case mem_addr_offset is
+	    when "00" => mem_align_tmp_b <= mem_align_in(7 downto 0);
+	    when "01" => mem_align_tmp_b <= mem_align_in(15 downto 8);
+	    when "10" => mem_align_tmp_b <= mem_align_in(23 downto 16);
+	    when "11" => mem_align_tmp_b <= mem_align_in(31 downto 24);
+	end case;
+
+	case mem_addr_offset(1) is
+	    when '0' => mem_align_tmp_h <= mem_align_in(15 downto 0);
+	    when '1' => mem_align_tmp_h <= mem_align_in(31 downto 16);
+	end case;
+
 	if mem_size_pipelined(1) = '1' then
 	    mem_align_out <= mem_align_in;
 	else
 	    if mem_size_pipelined(0) = '0' then -- byte load
-		case mem_addr_offset is
-		when "00" => mem_align_tmp_b <= mem_align_in(7 downto 0);
-		when "01" => mem_align_tmp_b <= mem_align_in(15 downto 8);
-		when "10" => mem_align_tmp_b <= mem_align_in(23 downto 16);
-		when "11" => mem_align_tmp_b <= mem_align_in(31 downto 24);
-		end case;
 		if mem_read_sign_extend_pipelined = '1' then
 		    if mem_align_tmp_b(7) = '1' then
 			mem_align_out <=
@@ -75,10 +79,6 @@ begin
 		      x"000000" & mem_align_tmp_b(7 downto 0);
 		end if;
 	    else -- half word load
-		case mem_addr_offset(1) is
-		when '0' => mem_align_tmp_h <= mem_align_in(15 downto 0);
-		when '1' => mem_align_tmp_h <= mem_align_in(31 downto 16);
-		end case;
 		if mem_read_sign_extend_pipelined = '1' then
 		    if mem_align_tmp_h(15) = '1' then
 			mem_align_out <=

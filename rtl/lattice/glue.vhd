@@ -61,7 +61,7 @@ entity glue is
 	C_gpio: boolean := true; -- true: +13 LUT4
 	C_flash: boolean := true; -- true: +10 LUT4
 	C_pcmdac: boolean := true; -- true: +32 LUT4
-	C_ddsfm: boolean := false
+	C_ddsfm: boolean := true
 
 	--
 	-- XP2-8E-7 area optimized synthesis @ 81.25 MHz:
