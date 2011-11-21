@@ -61,7 +61,7 @@ entity glue is
 	C_gpio: boolean := true; -- true: +13 LUT4
 	C_flash: boolean := true; -- true: +10 LUT4
 	C_pcmdac: boolean := true; -- true: +32 LUT4
-	C_ddsfm: boolean := true
+	C_ddsfm: boolean := false -- true: +17 LUT4
 
 	--
 	-- XP2-8E-7 area optimized synthesis @ 81.25 MHz:
@@ -133,10 +133,11 @@ architecture Behavioral of glue is
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_txd, sio_ce: std_logic;
     signal flash_cen_reg, flash_sck_reg, flash_si_reg: std_logic;
-    signal led_reg: std_logic_vector(7 downto 0);
+    signal R_led: std_logic_vector(7 downto 0);
     signal tsc_25m: std_logic_vector(34 downto 0);
     signal tsc: std_logic_vector(31 downto 0);
-    signal from_gpio: std_logic_vector(31 downto 0);
+    signal R_sw: std_logic_vector(3 downto 0);
+    signal R_btns: std_logic_vector(4 downto 0);
     signal dac_in_l, dac_in_r: std_logic_vector(15 downto 2);
     signal dac_acc_l, dac_acc_r: std_logic_vector(16 downto 2);
 
@@ -257,7 +258,7 @@ begin
 	    -- GPIO
 	    if C_gpio and dmem_addr(4 downto 2) = "000" then
 		if dmem_byte_we(0) = '1' then
-		    led_reg <= cpu_to_dmem(7 downto 0);
+		    R_led <= cpu_to_dmem(7 downto 0);
 		end if;
 	    end if;
 	    -- PCMDAC
@@ -285,7 +286,7 @@ begin
 	    end if;
 	end if;
     end process;
-    led <= led_reg when C_gpio else "ZZZZZZZZ";
+    led <= R_led when C_gpio else "--------";
     flash_si <= flash_si_reg when C_flash else 'Z';
     flash_sck <= flash_sck_reg when C_flash else 'Z';
     flash_cen <= flash_cen_reg when C_flash else 'Z';
@@ -298,9 +299,8 @@ begin
     process(clk)
     begin
 	if C_gpio and rising_edge(clk) then
-	    from_gpio(4 downto 0) <= btn_center &
-	      btn_up & btn_down & btn_left & btn_right;
-	    from_gpio(11 downto 8) <= sw;
+	    R_sw <= sw;
+	    R_btns <= btn_center & btn_up & btn_down & btn_left & btn_right;
 	end if;
     end process;
 
@@ -313,7 +313,7 @@ begin
 	end if;
     end process;
     -- Safely move upper bits of tsc_25m over clock domain boundary
-    process(clk)
+    process(clk, tsc_25m)
     begin
 	if rising_edge(clk) and tsc_25m(2 downto 1) = "10" then
 	    tsc <= tsc_25m(34 downto 3);
@@ -322,19 +322,21 @@ begin
     end generate;
 
     -- XXX replace with a balanced multiplexer
-    process(dmem_addr, from_gpio, from_sio, tsc, flash_so)
+    process(dmem_addr, R_sw, R_btns, from_sio, tsc, flash_so)
     begin
 	case dmem_addr(4 downto 2) is
-	when "000"  => io_to_cpu <= from_gpio;
+	when "000"  =>
+	    io_to_cpu <="----------------" & "----" & R_sw & "---" & R_btns;
 	when "001"  => io_to_cpu <= from_sio;
 	when "010"  => io_to_cpu <= tsc;
 	when "100"  =>
 	    if C_flash then
-		io_to_cpu <= x"0000000" & "000" & flash_so;
+		io_to_cpu <= "------------------------" & "0000000" & flash_so;
 	    else
-		io_to_cpu <= x"00000000";
+		io_to_cpu <= "--------------------------------";
 	    end if;
-	when others => io_to_cpu <= x"00000000";
+	when others =>
+	    io_to_cpu <= "--------------------------------";
 	end case;
     end process;
 
