@@ -500,13 +500,28 @@ begin
 		    if true or C_debug then -- XXX mult depends on C_debug!!!
 			ID_EX_instruction <= x"00000000"; -- debugging only
 		    end if;
+		    -- Don't care bits (optimization hints)
+		    ID_EX_reg1_data <= "--------------------------------";
+		    ID_EX_reg2_data <= "--------------------------------";
+		    ID_EX_alu_op2 <= "--------------------------------";
+		    ID_EX_immediate <= "--------------------------------";
+		    ID_EX_op_major <= "--";
+		    ID_EX_op_minor <= "---";
+		    ID_EX_mem_size <= "--";
+		    -- ID_EX_branch_condition <= "---";
+		    -- ID_EX_PC_8 <= "------------------------------";
+		    -- ID_EX_branch_target <= "------------------------------";
+		    ID_EX_bpredict_score <= "--";
+		    ID_EX_bpredict_index <= "-------------";
+		    ID_EX_latency <= "--";
 		else
-		    -- propagate next instruction from ID to EX stage
+		    -- propagate the next instruction from ID to EX stage
 		    ID_EX_reg1_data <= ID_reg1_eff_data;
 		    ID_EX_reg2_data <= ID_reg2_eff_data;
 		    ID_EX_alu_op2 <= ID_alu_op2;
 		    ID_EX_immediate <= ID_immediate;
 		    ID_EX_sign_extend <= ID_sign_extend;
+		    ID_EX_op_major <= ID_op_major;
 		    ID_EX_op_minor <= ID_op_minor;
 		    ID_EX_cmov_cycle <= C_movn_movz and ID_cmov_cycle;
 		    ID_EX_cmov_condition <= C_movn_movz and ID_cmov_condition;
@@ -529,7 +544,6 @@ begin
 		    ID_EX_predict_taken <= ID_predict_taken;
 		    ID_EX_bpredict_score <= IF_ID_bpredict_score;
 		    ID_EX_bpredict_index <= IF_ID_bpredict_index;
-		    ID_EX_op_major <= ID_op_major;
 		    ID_EX_latency <= ID_latency;
 		    -- schedule result forwarding
 		    ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
