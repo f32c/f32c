@@ -27,7 +27,6 @@ static int pcm_vu[2] = {0, 0};
 static int pcm_evol[2] = {0, 0};
 static int pcm_next_tsc;
 static int pcm_pushbtn_old;
-static int dds_base;		/* 0 MHz - don't TX anything by default */
 static int fm_mode;		/* Modulation depth */
 static int fm_efreq;		/* Actual TX frequency, in Hz */
 
@@ -45,13 +44,6 @@ update_dds_freq(void)
 		else
 			fm_mode = 8;
 	}
-
-	dds_base = (fm_freq / 100) << 7;
-	dds_base = (dds_base / 100) << 7;
-	dds_base = (dds_base / 100) << 8;
-	dds_base /= 325;
-	if (fm_mode == 10)
-		dds_base /= 3;
 }
 
 
@@ -91,8 +83,8 @@ pcm_play(void)
 	}
 	OUTW(IO_PCM_OUT, pcm_out);
 	
-	dds_out = dds_base + (dds_out >> fm_mode);
-	OUTW(IO_DDS, dds_out);
+	dds_out = fm_efreq + (dds_out >> fm_mode);
+	OUTW(IO_DDS_FREQ, dds_out);
 
 	/* Update volume and VU meter */
 	if ((pcm_addr & 0xfff) == 0) {
