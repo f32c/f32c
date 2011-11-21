@@ -50,6 +50,8 @@ begin
     process(mem_align_in, mem_read_sign_extend_pipelined,
       mem_addr_offset, mem_size_pipelined)
     begin
+	mem_align_tmp_b <= mem_align_in(7 downto 0); -- don't infer a latch
+	mem_align_tmp_h <= mem_align_in(15 downto 0); -- don't infer a latch
 	if mem_size_pipelined(1) = '1' then
 	    mem_align_out <= mem_align_in;
 	else
