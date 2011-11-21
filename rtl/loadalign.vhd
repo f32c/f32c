@@ -63,7 +63,11 @@ begin
 	end case;
 
 	if mem_size_pipelined(1) = '1' then
-	    mem_align_out <= mem_align_in(31 downto 8) & mem_align_tmp_b;
+	    if mem_addr_offset /= "00" then
+		mem_align_out <= "--------------------------------";
+	    else
+		mem_align_out <= mem_align_in(31 downto 8) & mem_align_tmp_b;
+	    end if;
 	else
 	    if mem_size_pipelined(0) = '0' then -- byte load
 		if mem_read_sign_extend_pipelined = '1' then
@@ -79,7 +83,9 @@ begin
 		      x"000000" & mem_align_tmp_b(7 downto 0);
 		end if;
 	    else -- half word load
-		if mem_read_sign_extend_pipelined = '1' then
+		if mem_addr_offset(0) = '1' then
+		    mem_align_out <= "--------------------------------";
+		elsif mem_read_sign_extend_pipelined = '1' then
 		    if mem_align_tmp_h(15) = '1' then
 			mem_align_out <=
 			  x"ffff" & mem_align_tmp_h(15 downto 0);
