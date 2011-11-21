@@ -17,6 +17,5 @@
 _start:
 	.set noreorder
 	lui	gp, (_gp >> 16)
-	ori	gp, _gp
 	j	_C_LABEL(main)
-	lui	k1, (IO_BASE >> 16)
+	ori	gp, _gp
