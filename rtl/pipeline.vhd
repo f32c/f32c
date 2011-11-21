@@ -956,5 +956,9 @@ begin
     end process;
     end generate;
 
+    G_without_trace_mux:
+    if not C_debug generate
+	trace_data <= x"00000000";
+    end generate;
 end Behavioral;
 
