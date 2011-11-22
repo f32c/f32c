@@ -230,7 +230,7 @@ begin
 	    else
 		immediate_value <= imm_extension & instruction(15 downto 0);
 	    end if;
-	when "001111" => -- lui
+	when "001111" => -- lui, XXX revisit: use barrel shifter?
 	    immediate_value <= instruction(15 downto 0) & x"0000";
 	when others =>
 	    immediate_value <= imm_extension & instruction(15 downto 0);
