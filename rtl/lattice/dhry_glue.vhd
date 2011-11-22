@@ -50,21 +50,16 @@ entity glue is
 	-- This changes movn_movz calling convenction (swaps rs / rt)
 	C_mips32_movn_movz: boolean := false; -- true: +12 LUT4, -Fmax
 
-	-- debugging options
-	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
-
 	-- SoC configuration options
 	C_mem_size: string := "16k";
-	C_tsc: boolean := true; -- true: +68 LUT4
-	C_sio: boolean := true; -- true: +137 LUT4
-	C_gpio: boolean := true -- true: +13 LUT4
+	C_tsc: boolean := true;
+	C_sio: boolean := true
 
     );
     port (
 	clk_25m: in std_logic;
 	rs232_tx: out std_logic;
-	rs232_rx: in std_logic;
-	led: out std_logic_vector(7 downto 0)
+	rs232_rx: in std_logic
     );
 end glue;
 
@@ -82,15 +77,8 @@ architecture Behavioral of glue is
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_txd, sio_ce: std_logic;
-    signal R_led: std_logic_vector(7 downto 0);
     signal tsc_25m: std_logic_vector(34 downto 0);
     signal tsc: std_logic_vector(31 downto 0);
-
-    -- debugging only
-    signal trace_addr: std_logic_vector(5 downto 0);
-    signal trace_data: std_logic_vector(31 downto 0);
-    signal debug_txd: std_logic;
-    signal debug_res: std_logic;
 
 begin
 
@@ -98,7 +86,7 @@ begin
     clkgen: entity clkgen
     generic map (
 	C_clk_freq => C_clk_freq,
-	C_debug => C_debug
+	C_debug => false
     )
     port map (
 	clk_25m => clk_25m, clk => clk, clk_325m => open,
@@ -118,7 +106,7 @@ begin
 	C_fast_ID => C_fast_ID,
 	C_register_technology => C_register_technology,
 	-- debugging only
-	C_debug => C_debug
+	C_debug => false
     )
     port map (
 	clk => clk, reset => '0',
@@ -128,7 +116,7 @@ begin
 	dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
 	dmem_addr_strobe => dmem_addr_strobe,
 	dmem_data_ready => dmem_data_ready,
-	trace_addr => trace_addr, trace_data => trace_data
+	trace_addr => "000000", trace_data => open
     );
 
     -- instruction / data BRAMs
@@ -159,20 +147,6 @@ begin
     -- 0xf*****10: (1B, RW) SPI Flash
     -- 0xf*****14: (1B, RW) SPI MicroSD
     -- 0xf*****1c: (4B, WR) FM DDS register
-    -- I/O write access:
-    process(clk)
-    begin
-	if rising_edge(clk) and dmem_addr_strobe = '1'
-	  and dmem_addr(31 downto 28) = x"f" then
-	    -- GPIO
-	    if C_gpio and dmem_addr(4 downto 2) = "000" then
-		if dmem_byte_we(0) = '1' then
-		    R_led <= cpu_to_dmem(7 downto 0);
-		end if;
-	    end if;
-	end if;
-    end process;
-    led <= R_led when C_gpio else "--------";
 
     G_tsc:
     if C_tsc generate
@@ -219,17 +193,6 @@ begin
 	dmem_data_ready => dmem_data_ready
     );
 
-
-    -- debugging design instance
-    G_debug:
-    if C_debug generate
-    debug: entity serial_debug
-    port map (
-	clk => clk_25m, rs232_txd => debug_txd,
-	trace_addr => trace_addr, trace_data => trace_data
-    );
-    end generate;
-	
     rs232_tx <= sio_txd;
 	
 end Behavioral;
