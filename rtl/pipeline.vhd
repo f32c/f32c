@@ -40,6 +40,7 @@ entity pipeline is
 	C_branch_likely: boolean;
 	C_movn_movz: boolean;
 	C_mips32_movn_movz: boolean;
+	C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff";
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
 
 	-- optimization options
@@ -291,18 +292,18 @@ begin
     begin
 	if rising_edge(clk) then
 	    if MEM_take_branch then
-		IF_ID_PC_next <= IF_PC_next;
+		IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
 	    elsif ID_running then
 		if (ID_jump_cycle or ID_jump_register or ID_predict_taken)
 		  and not ID_EX_cancel_next then
-		    IF_ID_PC_next <= ID_jump_target;
+		    IF_ID_PC_next <= ID_jump_target and C_PC_mask(31 downto 2);
 		else
-		    IF_ID_PC_next <= IF_PC_next;
+		    IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
 		end if;
 	    end if;
 	    if ID_running then
-		IF_ID_PC <= IF_PC;
-		IF_ID_PC_4 <= IF_PC_next;
+		IF_ID_PC <= IF_PC and C_PC_mask(31 downto 2);
+		IF_ID_PC_4 <= IF_PC_next and C_PC_mask(31 downto 2);
 		IF_ID_branch_delay_slot <=
 		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 		IF_ID_bpredict_index <= IF_bpredict_index;
@@ -537,7 +538,7 @@ begin
 		      ID_mem_write = '0' and ID_mem_size(1) = '0';
 		    ID_EX_mem_read_sign_extend <= ID_mem_read_sign_extend;
 		    ID_EX_branch_condition <= ID_branch_condition;
-		    ID_EX_PC_8 <= IF_ID_PC_4 + 1;
+		    ID_EX_PC_8 <= (IF_ID_PC_4 + 1) and C_PC_mask(31 downto 2);
 		    ID_EX_branch_target <= ID_branch_target;
 		    ID_EX_seb_cycle <= ID_seb_cycle;
 		    ID_EX_writeback_addr <= ID_writeback_addr;
@@ -699,7 +700,8 @@ begin
 		    if ID_EX_predict_taken then
 			EX_MEM_branch_target <= ID_EX_PC_8;
 		    else
-			EX_MEM_branch_target <= ID_EX_branch_target;
+			EX_MEM_branch_target <=
+			  ID_EX_branch_target and C_PC_mask(31 downto 2);
 		    end if;
 		else
 		    EX_MEM_take_branch <= false;
