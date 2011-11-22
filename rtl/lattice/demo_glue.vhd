@@ -42,6 +42,7 @@ entity glue is
 	C_load_aligner: boolean := true; -- true: +168 LUT4
 	C_branch_likely: boolean := true; -- true: +46 LUT4
 	C_register_technology: string := "lattice";
+	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
 
 	-- These may negatively influence timing closure:
 	C_movn_movz: boolean := false; -- true: +5 LUT4, -DMIPS
@@ -171,6 +172,7 @@ begin
     -- f32c core
     pipeline: entity pipeline
     generic map (
+	C_PC_mask => C_PC_mask,
 	C_mult_enable => C_mult_enable,
 	C_movn_movz => C_movn_movz,
 	C_mips32_movn_movz => C_mips32_movn_movz,
