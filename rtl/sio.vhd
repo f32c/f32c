@@ -34,6 +34,7 @@ use IEEE.numeric_std.ALL;
 
 entity sio is
     generic (
+	C_bypass: boolean := false;
 	C_clk_freq: integer;
 	C_tx_only: boolean := false
     );
@@ -75,6 +76,24 @@ architecture Behavioral of sio is
     signal rx_full: std_logic;
     signal rx_overruns: std_logic;
 begin
+
+    G_bypass:
+    if C_bypass generate
+    process(clk)
+    begin
+	if (rising_edge(clk)) then
+	    rx_running <= rxd;
+	    if (ce = '1' and byte_we(0) = '1') then
+		tx_running <= bus_in(0);
+	    end if;
+	end if;
+    end process;
+    bus_out <= "-------------------------------" & rx_running;
+    txd <= tx_running;
+    end generate;
+
+    G_sio:
+    if not C_bypass generate
     --
     -- rx / tx phases:
     --	"0000" idle
@@ -147,5 +166,6 @@ begin
 	    end if;
 	end if;
     end process;
+    end generate;
 end Behavioral;
 
