@@ -69,7 +69,7 @@ architecture Behavioral of sio is
     signal tx_running, rx_running: std_logic;
     signal tx_ser: std_logic_vector(8 downto 0);
     signal rx_des: std_logic_vector(7 downto 0);
-    signal tx_phase: std_logic_vector(3 downto 0) := "0001";
+    signal tx_phase: std_logic_vector(3 downto 0);
     signal rx_phase: std_logic_vector(3 downto 0);
     signal rx_byte: std_logic_vector(7 downto 0);
     signal rx_full: std_logic;
@@ -84,9 +84,10 @@ begin
     --
 
     tx_running <= '0' when tx_phase = "0000" else '1';
+    bus_out(31 downto 11) <= "---------------------";
     bus_out(10) <= tx_running;
-    bus_out(9 downto 8) <= rx_overruns & rx_full when not C_tx_only else "00";
-    bus_out(7 downto 0) <= rx_byte when not C_tx_only else x"00";
+    bus_out(9 downto 8) <= rx_overruns & rx_full when not C_tx_only else "--";
+    bus_out(7 downto 0) <= rx_byte when not C_tx_only else "--------";
     txd <= tx_ser(0);
 
     process(clk)
