@@ -53,7 +53,8 @@ entity glue is
 	-- SoC configuration options
 	C_mem_size: string := "16k";
 	C_tsc: boolean := true; -- true: +60 LUTs
-	C_sio: boolean := true
+	C_sio: boolean := true;
+	C_sio_bypass: boolean := false
 
     );
     port (
@@ -128,7 +129,8 @@ begin
     if C_sio generate
     sio: entity sio
     generic map (
-	C_clk_freq => C_clk_freq
+	C_clk_freq => C_clk_freq,
+	C_bypass => C_sio_bypass
     )
     port map (
 	clk => clk, ce => sio_ce, txd => sio_txd, rxd => rs232_rx,
