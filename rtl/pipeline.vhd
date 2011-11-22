@@ -45,6 +45,7 @@ entity pipeline is
 	-- optimization options
 	C_result_forwarding: boolean := true;
 	C_branch_prediction: boolean := true;
+	C_bp_global_depth: integer := 6; -- range 2 to 12
 	C_load_aligner: boolean := true;
 	C_fast_ID: boolean := true;
 	C_register_technology: string := "unknown";
@@ -166,7 +167,8 @@ architecture Behavioral of pipeline is
     signal EX_MEM_branch_cycle, EX_MEM_branch_taken: boolean;
     signal EX_MEM_branch_likely: boolean;
     signal EX_MEM_bpredict_score: std_logic_vector(1 downto 0);
-    signal EX_MEM_branch_hist: std_logic_vector(12 downto 0);
+    signal EX_MEM_branch_hist:
+      std_logic_vector((C_bp_global_depth - 1) downto 0);
     signal EX_MEM_bpredict_index: std_logic_vector(12 downto 0);
     signal EX_MEM_latency: std_logic;
     signal EX_MEM_mem_cycle, EX_MEM_logic_cycle: std_logic;
@@ -317,7 +319,10 @@ begin
 	
     G_bp_scoretable:
     if C_branch_prediction generate
-    IF_bpredict_index <= EX_MEM_branch_hist xor IF_PC(14 downto 2);
+    IF_bpredict_index(12 downto (13 - C_bp_global_depth)) <=
+      EX_MEM_branch_hist xor IF_PC(14 downto (15 - C_bp_global_depth));
+    IF_bpredict_index((12 - C_bp_global_depth) downto 0) <=
+      IF_PC((14 - C_bp_global_depth) downto 2);
     IF_bpredict_re <= '1' when ID_running else '0';
 
     bptrace: entity bptrace
@@ -785,12 +790,12 @@ begin
     begin
 	if rising_edge(clk) then
 	    if EX_MEM_branch_cycle then
-		EX_MEM_branch_hist(11 downto 0) <=
-		  EX_MEM_branch_hist(12 downto 1);
+		EX_MEM_branch_hist((C_bp_global_depth - 2) downto 0) <=
+		  EX_MEM_branch_hist((C_bp_global_depth - 1) downto 1);
 		if EX_MEM_take_branch then
-		    EX_MEM_branch_hist(12) <= '1';
+		    EX_MEM_branch_hist(C_bp_global_depth - 1) <= '1';
 		else
-		    EX_MEM_branch_hist(12) <= '0';
+		    EX_MEM_branch_hist(C_bp_global_depth - 1) <= '0';
 		end if;
 	    end if;
 	end if;
