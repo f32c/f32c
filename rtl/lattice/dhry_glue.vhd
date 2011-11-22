@@ -36,11 +36,11 @@ entity glue is
 	C_clk_freq: integer := 81;
 
 	-- CPU core configuration options
-	C_mult_enable: boolean := true; -- true: +27 LUT4
-	C_result_forwarding: boolean := true; -- true: +181 LUT4
-	C_branch_prediction: boolean := true; -- true: +77 LUT4
-	C_load_aligner: boolean := true; -- true: +168 LUT4
-	C_branch_likely: boolean := true; -- true: +46 LUT4
+	C_mult_enable: boolean := true; -- true: +22 LUT4
+	C_result_forwarding: boolean := true; -- true: +176 LUT4
+	C_branch_prediction: boolean := true; -- true: +73 LUT4
+	C_load_aligner: boolean := true; -- true: +19 LUT4
+	C_branch_likely: boolean := true; -- true: -12 LUT4 ???
 	C_register_technology: string := "lattice";
 
 	-- These may negatively influence timing closure:
@@ -52,7 +52,7 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: string := "16k";
-	C_tsc: boolean := true;
+	C_tsc: boolean := true; -- true: +60 LUTs
 	C_sio: boolean := true
 
     );
