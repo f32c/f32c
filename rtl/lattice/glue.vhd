@@ -36,11 +36,11 @@ entity glue is
 	C_clk_freq: integer := 81;
 
 	-- CPU core configuration options
-	C_mult_enable: boolean := true; -- true: +27 LUT4
-	C_result_forwarding: boolean := true; -- true: +181 LUT4
-	C_branch_prediction: boolean := true; -- true: +77 LUT4
-	C_load_aligner: boolean := true; -- true: +168 LUT4
-	C_branch_likely: boolean := true; -- true: +46 LUT4
+	C_mult_enable: boolean := true;
+	C_result_forwarding: boolean := true;
+	C_branch_prediction: boolean := true;
+	C_load_aligner: boolean := true;
+	C_branch_likely: boolean := true;
 	C_register_technology: string := "lattice";
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
 
@@ -56,45 +56,13 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: string := "16k";
-	C_sram: boolean := true;
-	C_tsc: boolean := true; -- true: +68 LUT4
-	C_sio: boolean := true; -- true: +137 LUT4
-	C_gpio: boolean := true; -- true: +13 LUT4
-	C_flash: boolean := true; -- true: +10 LUT4
-	C_pcmdac: boolean := true; -- true: +32 LUT4
-	C_ddsfm: boolean := false -- true: +17 LUT4
-
-	--
-	-- XP2-8E-7 area optimized synthesis @ 81.25 MHz:
-	--
-	-- Global config:
-	--   C_tsc 1, C_sio 1, C_gpio 0, C_flash 0, C_pcmdac 0, C_ddsfm 0
-	--
-	-- Config #1:
-	--   C_mult_enable 1, C_res_fwd 1, C_bpred 1, C_load_aligner 1
-	--   regs 736 slices 919 logic LUT4 1391 total LUT4 1823
-	--   DMIPS/MHz 1.416  DMIPS/MHz/kLUT4 0.777
-	--
-	-- Config #2:
-	--   C_mult_enable 1, C_res_fwd 1, C_bpred 1, C_load_aligner 0
-	--   regs 730 slices 880 logic LUT4 1221 total LUT4 1653
-	--   DMIPS/MHz 1.359  DMIPS/MHz/kLUT4 0.821
-	--
-	-- Config #3:
-	--   C_mult_enable 1, C_res_fwd 1, C_bpred 0, C_load_aligner 0
-	--   regs 671 slices 790 logic LUT4 1144 total LUT4 1576
-	--   DMIPS/MHz 1.296  DMIPS/MHz/kLUT4 0.823
-	--
-	-- Config #4:
-	--   C_mult_enable 1, C_res_fwd 0, C_bpred 0, C_load_aligner 0
-	--   regs 662 slices 699 logic LUT4 962 total LUT4 1394
-	--   DMIPS/MHz 0.984  DMIPS/MHz/kLUT4 0.706
-	--
-	-- Config #5:
-	--   C_mult_enable 0, C_res_fwd 0, C_bpred 0, C_load_aligner 0
-	--   regs 658 slices 697 logic LUT4 961 total LUT4 1393
-	--   DMIPS/MHz 0.803  DMIPS/MHz/kLUT4 0.576
-	--
+	C_sram: boolean := true; -- true: +12 LUT4
+	C_tsc: boolean := true; -- true: +54 LUT4
+	C_sio: boolean := true; -- true: +101 LUT4
+	C_gpio: boolean := true; -- true: -6 LUT4 (?)
+	C_flash: boolean := true; -- true: -1 LUT4 (?)
+	C_pcmdac: boolean := true; -- true: +34 LUT4
+	C_ddsfm: boolean := true -- true: +28 LUT4
     );
     port (
 	clk_25m: in std_logic;
