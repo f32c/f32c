@@ -36,13 +36,17 @@ entity glue is
 	C_clk_freq: integer := 81;
 
 	-- CPU core configuration options
-	C_mult_enable: boolean := true; -- true: +22 LUT4
-	C_result_forwarding: boolean := true; -- true: +176 LUT4
-	C_branch_prediction: boolean := true; -- true: +73 LUT4
-	C_load_aligner: boolean := true; -- true: +19 LUT4
-	C_branch_likely: boolean := true; -- true: -12 LUT4 ???
-	C_register_technology: string := "lattice";
+	C_result_forwarding: boolean := true; -- true: +217 LUT4
+	C_branch_prediction: boolean := true; -- true: +30 LUT4, +1 BRAM
+	C_load_aligner: boolean := true; -- true: +68 LUT4
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00001fff";
+
+	-- ISA options
+	C_mult_enable: boolean := true; -- true: +25 LUT4, +22% DMIPS
+	C_branch_likely: boolean := true; -- true: +1 LUT4, +1% DMIPS
+
+	-- Vendor-specific option
+	C_register_technology: string := "lattice";
 
 	-- These may negatively influence timing closure:
 	C_movn_movz: boolean := false; -- true: +5 LUT4, -DMIPS
@@ -53,11 +57,38 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: string := "16k";
-	C_tsc: boolean := true; -- true: +60 LUTs
-	C_sio: boolean := true;
+	C_tsc: boolean := true; -- true: +54 LUTs
+	C_sio: boolean := true; -- true: +101 LUTs
 	C_fixed_baudrate: boolean := true;
 	C_sio_bypass: boolean := false
 
+	--
+	-- XP2-5E-7, 81.25 MHz, pushbutton Area optimization
+	--
+	-- C_res_fw 1, C_bp 1, C_load_align 1
+	-- slices: 803 LUTs: 1590 DMIPS: 138.8 DMIPS/MHz: 1.71
+	-- DMIPS/MHz/LUTs (Soc): 1.07 DMIPS/MHz/LUTs (core): 1.18
+	--
+	-- C_res_fw 1, C_bp 1, C_load_align 0
+	-- slices: 770 LUTs: 1522 DMIPS: 132.1 DMIPS/MHz: 1.63
+	-- DMIPS/MHz/LUTs (Soc): 1.07 DMIPS/MHz/LUTs (core): 1.19
+	--
+	-- C_res_fw 1, C_bp 0, C_load_align 1
+	-- slices: 785 LUTs: 1560 DMIPS: 130.6 DMIPS/MHz: 1.61
+	-- DMIPS/MHz/LUTs (Soc): 1.03 DMIPS/MHz/LUTs (core): 1.14
+	--
+	-- C_res_fw 1, C_bp 0, C_load_align 0
+	-- slices: 741 LUTs: 1475 DMIPS: 124.6 DMIPS/MHz: 1.53
+	-- DMIPS/MHz/LUTs (Soc): 1.04 DMIPS/MHz/LUTs (core): 1.16
+	--
+	-- C_res_fw 0, C_bp 1, C_load_align 1	XXX broken branch likely!!!
+	-- slices: 692 LUTs: 1373 DMIPS: 103.6 DMIPS/MHz: 1.28
+	-- DMIPS/MHz/LUTs (Soc): 0.93 DMIPS/MHz/LUTs (core): 1.04
+	--
+	-- C_res_fw 0, C_bp 0, C_load_align 0
+	-- slices: 674 LUTs: 1337 DMIPS:  96.1 DMIPS/MHz: 1.18
+	-- DMIPS/MHz/LUTs (Soc): 0.88 DMIPS/MHz/LUTs (core): 1.00
+	--
     );
     port (
 	clk_25m: in std_logic;
