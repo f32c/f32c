@@ -26,7 +26,7 @@ MK_CFLAGS = -nostdinc -I../include -I.
 # MIPS-specific flags
 MK_CFLAGS += -march=f32c
 MK_CFLAGS += ${ENDIANFLAGS}
-MK_CFLAGS += -mno-branch-likely
+#MK_CFLAGS += -mno-branch-likely
 MK_CFLAGS += -G 32768
 
 # f32c-specific flags
