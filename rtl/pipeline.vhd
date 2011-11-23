@@ -514,8 +514,8 @@ begin
 		    ID_EX_op_major <= "--";
 		    ID_EX_op_minor <= "---";
 		    ID_EX_mem_size <= "--";
-		    -- ID_EX_branch_condition <= "---";
-		    -- ID_EX_PC_8 <= "------------------------------";
+		    ID_EX_branch_condition <= "---";
+		    ID_EX_PC_8 <= "------------------------------";
 		    -- ID_EX_branch_target <= "------------------------------";
 		    ID_EX_bpredict_score <= "--";
 		    ID_EX_bpredict_index <= "-------------";
