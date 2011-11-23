@@ -78,7 +78,7 @@ architecture Behavioral of glue is
 
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
-    signal sio_txd, sio_ce: std_logic;
+    signal sio_ce: std_logic;
     signal tsc_25m: std_logic_vector(34 downto 0);
     signal tsc: std_logic_vector(31 downto 0);
 
@@ -123,8 +123,7 @@ begin
     );
 
     -- instruction / data BRAMs
-    dmem_bram_enable <=
-      dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
+    dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
 
     -- RS232 sio
     G_sio:
@@ -135,14 +134,15 @@ begin
 	C_bypass => C_sio_bypass
     )
     port map (
-	clk => clk, ce => sio_ce, txd => sio_txd, rxd => rs232_rx,
+	clk => clk, ce => sio_ce, txd => rs232_tx, rxd => rs232_rx,
 	byte_we => dmem_byte_we, bus_in => cpu_to_dmem,
 	bus_out => from_sio
     );
-    sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
+    sio_ce <= dmem_addr_strobe when dmem_addr(31) = '1' and
       dmem_addr(4 downto 2) = "001" else '0';
     end generate;
 
+    --
     -- I/O port map:
     -- 0xf*****00: (4B, RW) GPIO (LED, switches/buttons)
     -- 0xf*****04: (4B, RW) SIO
@@ -151,6 +151,9 @@ begin
     -- 0xf*****10: (1B, RW) SPI Flash
     -- 0xf*****14: (1B, RW) SPI MicroSD
     -- 0xf*****1c: (4B, WR) FM DDS register
+    --
+    io_to_cpu <= from_sio when dmem_addr(3) = '0' else tsc;
+    final_to_cpu <= io_to_cpu when dmem_addr(31) = '1' else dmem_to_cpu;
 
     G_tsc:
     if C_tsc generate
@@ -169,20 +172,6 @@ begin
     end process;
     end generate;
 
-    -- XXX replace with a balanced multiplexer
-    process(dmem_addr, from_sio, tsc)
-    begin
-	case dmem_addr(4 downto 2) is
-	when "001"  => io_to_cpu <= from_sio;
-	when "010"  => io_to_cpu <= tsc;
-	when others =>
-	    io_to_cpu <= "--------------------------------";
-	end case;
-    end process;
-
-    final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = x"f"
-      else dmem_to_cpu;
-
     -- Block RAM
     bram: entity bram
     generic map (
@@ -196,7 +185,5 @@ begin
 	dmem_addr_strobe => dmem_bram_enable,
 	dmem_data_ready => dmem_data_ready
     );
-
-    rs232_tx <= sio_txd;
 	
 end Behavioral;
