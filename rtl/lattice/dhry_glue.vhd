@@ -55,6 +55,7 @@ entity glue is
 	C_mem_size: string := "16k";
 	C_tsc: boolean := true; -- true: +60 LUTs
 	C_sio: boolean := true;
+	C_fixed_baudrate: boolean := true;
 	C_sio_bypass: boolean := false
 
     );
@@ -131,6 +132,7 @@ begin
     sio: entity sio
     generic map (
 	C_clk_freq => C_clk_freq,
+	C_fixed_baudrate => C_fixed_baudrate,
 	C_bypass => C_sio_bypass
     )
     port map (

@@ -34,9 +34,11 @@ use IEEE.numeric_std.ALL;
 
 entity sio is
     generic (
-	C_bypass: boolean := false;
 	C_clk_freq: integer;
-	C_tx_only: boolean := false
+	C_init_baudrate: integer := 115200;
+	C_fixed_baudrate: boolean := false;
+	C_tx_only: boolean := false;
+	C_bypass: boolean := false
     );
     port (
 	ce, clk: in std_logic;
@@ -62,10 +64,8 @@ end sio;
 --   7..0  tx_byte
 --
 architecture Behavioral of sio is
-    constant DEF_BAUD: integer := 115200;
-
     signal clkdiv: std_logic_vector(15 downto 0) :=
-      std_logic_vector(to_unsigned(C_clk_freq * 1000000 / DEF_BAUD, 16));
+      std_logic_vector(to_unsigned(C_clk_freq * 1000000 / C_init_baudrate, 16));
     signal tx_clkcnt, rx_clkcnt: std_logic_vector(15 downto 0);
     signal tx_running, rx_running: std_logic;
     signal tx_ser: std_logic_vector(8 downto 0);
@@ -114,7 +114,7 @@ begin
 	if (rising_edge(clk)) then
 	    -- bus interface logic
 	    if (ce = '1') then
-		if byte_we(2) = '1' then
+		if not C_fixed_baudrate and byte_we(2) = '1' then
 		    clkdiv <= bus_in(31 downto 16);
 		end if;
 		if (byte_we(0) = '1') then
