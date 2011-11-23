@@ -67,27 +67,27 @@ entity glue is
 	--
 	-- C_res_fw 1, C_bp 1, C_load_align 1
 	-- slices: 803 LUTs: 1590 DMIPS: 138.8 DMIPS/MHz: 1.71
-	-- DMIPS/MHz/LUTs (Soc): 1.07 DMIPS/MHz/LUTs (core): 1.18
+	-- DMIPS/MHz/kLUTs (Soc): 1.07 DMIPS/MHz/kLUTs (core): 1.18
 	--
 	-- C_res_fw 1, C_bp 1, C_load_align 0
 	-- slices: 770 LUTs: 1522 DMIPS: 132.1 DMIPS/MHz: 1.63
-	-- DMIPS/MHz/LUTs (Soc): 1.07 DMIPS/MHz/LUTs (core): 1.19
+	-- DMIPS/MHz/kLUTs (Soc): 1.07 DMIPS/MHz/kLUTs (core): 1.19
 	--
 	-- C_res_fw 1, C_bp 0, C_load_align 1
 	-- slices: 785 LUTs: 1560 DMIPS: 130.6 DMIPS/MHz: 1.61
-	-- DMIPS/MHz/LUTs (Soc): 1.03 DMIPS/MHz/LUTs (core): 1.14
+	-- DMIPS/MHz/kLUTs (Soc): 1.03 DMIPS/MHz/kLUTs (core): 1.14
 	--
 	-- C_res_fw 1, C_bp 0, C_load_align 0
 	-- slices: 741 LUTs: 1475 DMIPS: 124.6 DMIPS/MHz: 1.53
-	-- DMIPS/MHz/LUTs (Soc): 1.04 DMIPS/MHz/LUTs (core): 1.16
+	-- DMIPS/MHz/kLUTs (Soc): 1.04 DMIPS/MHz/kLUTs (core): 1.16
 	--
 	-- C_res_fw 0, C_bp 1, C_load_align 1	XXX broken branch likely!!!
 	-- slices: 692 LUTs: 1373 DMIPS: 103.6 DMIPS/MHz: 1.28
-	-- DMIPS/MHz/LUTs (Soc): 0.93 DMIPS/MHz/LUTs (core): 1.04
+	-- DMIPS/MHz/kLUTs (Soc): 0.93 DMIPS/MHz/kLUTs (core): 1.04
 	--
 	-- C_res_fw 0, C_bp 0, C_load_align 0
 	-- slices: 674 LUTs: 1337 DMIPS:  96.1 DMIPS/MHz: 1.18
-	-- DMIPS/MHz/LUTs (Soc): 0.88 DMIPS/MHz/LUTs (core): 1.00
+	-- DMIPS/MHz/kLUTs (Soc): 0.88 DMIPS/MHz/kLUTs (core): 1.00
 	--
     );
     port (
