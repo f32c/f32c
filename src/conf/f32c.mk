@@ -21,7 +21,7 @@ WARNS = 2
 endif
 
 # Includes
-MK_CFLAGS = -nostdinc -I../include -I.
+MK_INCLUDES = -nostdinc -I../include -I.
 
 # MIPS-specific flags
 MK_CFLAGS += -march=f32c
@@ -69,8 +69,9 @@ MK_CFLAGS += -fno-zero-initialized-in-bss
 MK_LDFLAGS += -Ttext ${LOADADDR} -N ${ENDIANFLAGS}
 
 
-CC = mips-elf-gcc ${MK_CFLAGS} ${ECFLAGS}
+CC = mips-elf-gcc ${MK_INCLUDES} ${MK_CFLAGS} ${ECFLAGS}
 LD = mips-elf-ld ${MK_LDFLAGS} ${LDFLAGS}
+OBJCOPY = mips-elf-objcopy -O ihex
 ELF2HEX = ../tools/elf2hex.tcl
 
 
@@ -81,13 +82,27 @@ ELF2HEX = ../tools/elf2hex.tcl
 OBJS = $(ASFILES:.S=.o) $(CFILES:.c=.o)
 
 HEX = ${PROG}.hex
+IHEX = ${PROG}.ihex
 
-${HEX}: ${PROG}
+${HEX}: ${PROG} Makefile
 	${ELF2HEX} ${PROG} ${HEX}
+	${OBJCOPY} ${PROG} ${IHEX}
 
-${PROG}: ${OBJS}
+${PROG}: ${OBJS} Makefile
 	${LD} -o ${PROG} ${OBJS}
 
+depend:
+	echo ${MK_INCLUDES} ${CFILES}
+	mkdep ${MK_INCLUDES} ${CFILES}
+
 clean:
-	rm -f ${OBJS} ${PROG} ${HEX}
+	rm -f ${OBJS} ${PROG} ${HEX} ${IHEX}
+
+cleandepend:
+	rm -f .depend
+
+#
+# Dependencies
+#
+#include .depend
 
