@@ -139,7 +139,7 @@ sram_test(void)
  * Empirijske konstante i funkcije za konverziju granicnih frekvencija u
  * konstante audiofrekvencijskih IIR digitalnih filtara 1. reda, i obratno.
  */
-#define FC1	65600
+#define FC1	65700
 #define FC2	11000
 #define FC3	32768
 
@@ -149,10 +149,10 @@ ctof(int c)
 	int f;
 
 	f = ((FC1 - c) * FC2) / (FC3 + c);
-	if (f > 22000)
-		f = 22000;
-	if (f < 10)
-		f = 10;
+	if (f > 20000)
+		f = 20000;
+	if (f < 20)
+		f = 20;
 	return(f);
 }
 
@@ -306,7 +306,7 @@ main(void)
 			break;
 		case '4':
 			printf("Unesite frekvencijski raspon u Hz"
-			    " (10 do 22000): ");
+			    " (20 do 20000): ");
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
 			lo = atoi(buf);
@@ -322,7 +322,7 @@ main(void)
 				if (lo == 0) {
 					pcm_lo = 0;
 					pcm_hi = 65530;
-				} else if (lo >= 10 && lo <= 22000)
+				} else if (lo >= 20 && lo <= 20000)
 					pcm_hi = pcm_lo = ftoc(lo);
 				break;
 			}
@@ -330,7 +330,7 @@ main(void)
 			for (; buf[i] != 'k' && buf[i] != 0; i++) {};
 			if (buf[i] == 'k')
 				hi *= 1000;
-			if (lo >= 10 && hi <= 22000 && lo <= hi) {
+			if (lo >= 20 && hi <= 20000 && lo <= hi) {
 				pcm_hi = ftoc(lo);
 				pcm_lo = ftoc(hi);
 			}
