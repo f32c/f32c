@@ -316,7 +316,8 @@ main(void)
 				if (lo == 0) {
 					pcm_lo = 0;
 					pcm_hi = 65530;
-				}
+				} else if (lo >= 10 && lo <= 22000)
+					pcm_hi = pcm_lo = ftoc(lo);
 				break;
 			}
 			if (buf[i++] == 'k') {
