@@ -312,19 +312,20 @@ main(void)
 			lo = atoi(buf);
 			for (i = 0; buf[i] != ' ' && buf[i] != '-' &&
 			    buf[i] != 'k' && buf[i] != 0; i++) {};
-			if (buf[i] == 'k') {
-				lo *= 1000;
-				i++;
-			}
-			if (buf[i++] == 0) {
+			if (buf[i] == 0) {
 				if (lo == 0) {
 					pcm_lo = 0;
 					pcm_hi = 65530;
 				}
 				break;
 			}
+			if (buf[i++] == 'k') {
+				lo *= 1000;
+				if (buf[i++] == 0)
+					break;
+			}
 			hi = atoi(&buf[i]);
-			for (i = 0; buf[i] != 'k' && buf[i] != 0; i++) {};
+			for (; buf[i] != 'k' && buf[i] != 0; i++) {};
 			if (buf[i] == 'k')
 				hi *= 1000;
 			if (lo >= 10 && hi <= 22000 && lo <= hi) {
