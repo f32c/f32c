@@ -312,6 +312,8 @@ main(void)
 			lo = atoi(buf);
 			for (i = 0; buf[i] != ' ' && buf[i] != '-' &&
 			    buf[i] != 'k' && buf[i] != 0; i++) {};
+			if (i == 0)
+				break;
 			if (buf[i] == 'k') {
 				lo *= 1000;
 				i++;
