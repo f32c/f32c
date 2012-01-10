@@ -16,12 +16,16 @@
 
 int pcm_vol = PCM_VOL_MAX * 2 / 3;
 int pcm_bal = 0;
+int pcm_hi = 65530;
+int pcm_lo = 0;
 int pcm_period = PCM_TSC_CYCLES;
 int fm_freq = 0;		/* Pending TX frequency, in Hz */
 int led_mode = 0;
 int led_byte = 0;
 
 static int pcm_addr = PCM_END;
+static int pcm_lo_acc[2] = {0, 0};
+static int pcm_hi_acc[2] = {0, 0};
 static int pcm_avg[2] = {0, 0};
 static int pcm_vu[2] = {0, 0};
 static int pcm_evol[2] = {0, 0};
@@ -75,6 +79,27 @@ pcm_play(void)
 		/* Fetch a 16-bit PCM sample from SPI Flash */
 		c = spi_byte_in() | (spi_byte_in() << 8);
 
+		/* Sign extend 16 -> 32 bit & update signal running average */
+		if (c & 0x8000) {
+			pcm_avg[i] =
+			    ((pcm_avg[i] << 6) - pcm_avg[i] +
+			    ((c ^ 0xffff) << 2)) >> 6;
+			c += 0xffff0000;
+		} else
+			pcm_avg[i] =
+			    ((pcm_avg[i] << 6) - pcm_avg[i] + (c << 2)) >> 6;
+
+		/* Low pass filter */
+		pcm_lo_acc[i] = c - (((c - pcm_lo_acc[i]) * pcm_lo) >> 16);
+		c = pcm_lo_acc[i];
+
+		/* High pass filter */
+		pcm_hi_acc[i] = c - (((c - pcm_hi_acc[i]) * pcm_hi) >> 16);
+		c = c - pcm_hi_acc[i];
+
+		/* 32 -> 16 bit */
+		c &= 0xffff;
+
 		/* Apply volume setting */
 		pcm_out = (pcm_out << 16) |
 		    ((c ^ 0x8000) * (pcm_evol[i] >> 5)) >> 11;
@@ -83,11 +108,6 @@ pcm_play(void)
 		dds_out += c;
 		if (c & 0x8000)
 			dds_out += 0xffff0000;
-
-		/* Update signal running average */
-		if (c & 0x8000)
-			c ^= 0xffff;
-		pcm_avg[i] = ((pcm_avg[i] << 6) - pcm_avg[i] + (c << 2)) >> 6;
 	}
 	OUTW(IO_PCM_OUT, pcm_out);
 	

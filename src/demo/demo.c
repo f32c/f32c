@@ -19,6 +19,8 @@ extern void pcm_play(void);
 extern int fm_freq;
 extern int pcm_vol;
 extern int pcm_bal;
+extern int pcm_hi;
+extern int pcm_lo;
 extern int pcm_period;
 extern int led_mode;
 extern int led_byte;
@@ -132,6 +134,39 @@ sram_test(void)
 #endif
 }
 
+
+/*
+ * Empirijske konstante i funkcije za konverziju granicnih frekvencija u
+ * konstante audiofrekvencijskih IIR digitalnih filtara 1. reda, i obratno.
+ */
+#define FC1	65600
+#define FC2	11000
+#define FC3	32768
+
+static int
+ctof(int c)
+{
+	int f;
+
+	f = ((FC1 - c) * FC2) / (FC3 + c);
+	if (f > 22000)
+		f = 22000;
+	if (f < 10)
+		f = 10;
+	return(f);
+}
+
+
+static int
+ftoc(int f)
+{
+	int c;
+
+	c = (FC1 * FC2 - FC3 * f) / (FC2 + f);
+	return(c);
+}
+
+
 static void
 redraw_display()
 {
@@ -148,14 +183,16 @@ redraw_display()
 	    (pcm_vol & PCM_VOL_MUTE) == 0);
 	printf(" 2: Glasnoca: %d\n", pcm_vol & ~PCM_VOL_MUTE);
 	printf(" 3: Balans (L/D): %d\n", pcm_bal);
-	printf(" 4: Brzina reprodukcije: %d%%\n",
+	printf(" 4: Audiofrekvencijski pojas (-3 dB): %d-%d Hz\n",
+	    ctof(pcm_hi), ctof(pcm_lo));
+	printf(" 5: Brzina reprodukcije: %d%%\n",
 	    PCM_TSC_CYCLES * 100 / pcm_period);
-	printf(" 5: Frekvencija odasiljanja FM signala: %d.%04d MHz\n",
+	printf(" 6: Frekvencija odasiljanja FM signala: %d.%04d MHz\n",
 	    fm_freq / 1000000, (fm_freq % 1000000) / 100);
-	printf(" 6: LED indikatori (0: VU-metar, 1: byte): %d\n", led_mode);
-	printf(" 7: LED byte: %d\n", led_byte);
-	printf(" 8: USB UART (RS-232) baud rate: %d bps\n", bauds);
-	printf(" 9: SRAM self-test\n");
+	printf(" 7: LED indikatori (0: VU-metar, 1: byte): %d\n", led_mode);
+	printf(" 8: LED byte: %d\n", led_byte);
+	printf(" 9: USB UART (RS-232) baud rate: %d bps\n", bauds);
+	printf(" 0: SRAM self-test\n");
 	printf("\n");
 	OUTW(IO_SIO_BAUD, 81250000 / bauds);
 }
@@ -231,7 +268,7 @@ update_fm_freq()
 int
 main(void)
 {
-	int i, res;
+	int i, hi, lo, res;
 	char c;
 
 	/* Register PCM output function as idle loop handler */
@@ -268,6 +305,34 @@ main(void)
 			}
 			break;
 		case '4':
+			printf("Unesite frekvencijski raspon u Hz"
+			    " (10 do 22000): ");
+			if (gets(buf, BUFSIZE) != 0)
+				return (0);	/* Got CTRL + C */
+			lo = atoi(buf);
+			for (i = 0; buf[i] != ' ' && buf[i] != '-' &&
+			    buf[i] != 'k' && buf[i] != 0; i++) {};
+			if (buf[i] == 'k') {
+				lo *= 1000;
+				i++;
+			}
+			if (buf[i++] == 0) {
+				if (lo == 0) {
+					pcm_lo = 0;
+					pcm_hi = 65530;
+				}
+				break;
+			}
+			hi = atoi(&buf[i]);
+			for (i = 0; buf[i] != 'k' && buf[i] != 0; i++) {};
+			if (buf[i] == 'k')
+				hi *= 1000;
+			if (lo >= 10 && hi <= 22000 && lo <= hi) {
+				pcm_hi = ftoc(lo);
+				pcm_lo = ftoc(hi);
+			}
+			break;
+		case '5':
 			printf("Unesite brzinu reprodukcije"
 			    " (50%% do 200%%): ");
 			if (gets(buf, BUFSIZE) != 0)
@@ -276,13 +341,13 @@ main(void)
 			if (i >= 50 && i <= 200)
 				pcm_period = PCM_TSC_CYCLES * 100 / i;
 			break;
-		case '5':
+		case '6':
 			res = update_fm_freq();
 			break;
-		case '6':
+		case '7':
 			led_mode ^= 1;
 			break;
-		case '7':
+		case '8':
 			printf("Unesite vrijednost za LED byte (0 do 255): ");
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
@@ -290,7 +355,7 @@ main(void)
 			if (buf[0] != 0 && i >= 0 && i <= 255)
 				led_byte = i;
 			break;
-		case '8':
+		case '9':
 			printf("Unesite zeljeni baud rate"
 			    " (2400 do 230400 bps): ");
 			if (gets(buf, BUFSIZE) != 0)
@@ -299,7 +364,7 @@ main(void)
 			if (buf[0] != 0 && i >= 2400 && i <= 230400)
 				bauds = (i / 2400) * 2400;
 			break;
-		case '9':
+		case '0':
 			sram_test();
 			break;
 		}
