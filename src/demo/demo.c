@@ -175,7 +175,7 @@ redraw_display()
 	printf("FER - Digitalna logika 2011/2012\n");
 	printf("\n");
 	printf("ULX2S FPGA plocica - demonstracijsko-dijagnosticki program\n");
-	printf("v 0.02 27/09/2011\n");
+	printf("v 0.91 10/01/2012\n");
 	printf("\n");
 	printf("Glavni izbornik:\n");
 	printf("\n");
