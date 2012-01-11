@@ -36,7 +36,8 @@ entity idecode is
     generic(
 	C_movn_movz: boolean;
 	C_mips32_movn_movz: boolean;
-	C_branch_likely: boolean
+	C_branch_likely: boolean;
+	C_sign_extend: boolean
     );
     port(
 	instruction: in std_logic_vector(31 downto 0);
@@ -57,7 +58,8 @@ entity idecode is
 	mem_size: out std_logic_vector(1 downto 0);
 	mem_read_sign_extend: out std_logic;
 	latency: out std_logic_vector(1 downto 0);
-	seb_cycle: out boolean
+	seb_seh_cycle: out boolean;
+	seb_seh_select: out std_logic
     );  
 end idecode;
 
@@ -93,7 +95,8 @@ begin
     x_special <= opcode = "000000";
     x_special3 <= opcode(5 downto 3) = "011" and opcode(0) = '1';
 
-    seb_cycle <= x_special3;
+    seb_seh_cycle <= C_sign_extend and x_special3;
+    seb_seh_select <= instruction(9) when C_sign_extend else '0';
     cmov_cycle <= C_movn_movz and cond_move;
     cmov_condition <= (instruction(0) = '0');
     branch_cycle <= x_branch1 or x_branch2;
