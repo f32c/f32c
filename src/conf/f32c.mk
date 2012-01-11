@@ -24,8 +24,7 @@ endif
 MK_INCLUDES = -nostdinc -I../include -I.
 
 # MIPS-specific flags
-#MK_CFLAGS += -march=f32c
-MK_CFLAGS += -march=mips2 -mtune=f32c
+MK_CFLAGS += -march=f32c
 MK_CFLAGS += ${ENDIANFLAGS}
 #MK_CFLAGS += -mno-branch-likely
 MK_CFLAGS += -G 32768

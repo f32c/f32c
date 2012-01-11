@@ -94,6 +94,7 @@ close $hexfile
 
 array set instr_map ""
 set elffile [open "| mips-elf-objdump -d [lindex $argv 0]"]
+set tot 0
 while {[eof $elffile] == 0} {
     gets $elffile line
     if {[string first ":	" $line] < 0} {
@@ -101,10 +102,11 @@ while {[eof $elffile] == 0} {
     }
     set instr [lindex [split [string trim $line]] 3]
     if {[array get instr_map $instr] != ""} {
-	incr instr_map($instr) 1
+	incr instr_map($instr)
     } else {
 	set instr_map($instr) 1
     }
+    incr tot
 }
 close $elffile
 
@@ -114,10 +116,12 @@ foreach instr [array names instr_map] {
 }
 
 set tabcnt 0
-puts "Instruction frequencies:"
+puts -nonewline "First word @ [lindex [lsort -integer [array names mem]] 0], "
+puts "last word @ [lindex [lsort -integer [array names mem]] end]."
+puts "Instruction frequencies (total $tot):"
 foreach entry [lsort -integer -decreasing -index 1 $instr_list] {
     puts -nonewline "[format %6s [lindex $entry 0]]:[format %5d [lindex $entry 1]]"
-    incr tabcnt 1
+    incr tabcnt
     if {$tabcnt == 5} {
 	set tabcnt 0
 	puts ""
@@ -134,7 +138,7 @@ set branch_likely_set "bnezl bltzl bnel beql beqzl bgezl"
 set mul_set "mult multu mflo mfhi"
 set unaligned_store_set "swl swr"
 set unaligned_load_set "lwl lwr"
-set sign_extend_set "seb"
+set sign_extend_set "seb seh"
 
 puts -nonewline "Branch likely instructions: "
 foreach instr [lsort [array names instr_map]] {
