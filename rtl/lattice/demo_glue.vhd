@@ -35,14 +35,17 @@ entity glue is
 	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
 	C_clk_freq: integer := 81;
 
-	-- CPU core configuration options
-	C_mult_enable: boolean := true; -- true: +27 LUT4
-	C_result_forwarding: boolean := true; -- true: +181 LUT4
-	C_branch_prediction: boolean := true; -- true: +77 LUT4
-	C_load_aligner: boolean := true; -- true: +168 LUT4
-	C_branch_likely: boolean := true; -- true: +46 LUT4
-	C_register_technology: string := "lattice";
+	-- ISA options
+	C_mult_enable: boolean := true;
+	C_branch_likely: boolean := true;
+	C_sign_extend: boolean := true;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
+
+	-- CPU core configuration options
+	C_branch_prediction: boolean := true; -- true: +77 LUT4
+	C_result_forwarding: boolean := true; -- true: +181 LUT4
+	C_load_aligner: boolean := true; -- true: +168 LUT4
+	C_register_technology: string := "lattice";
 
 	-- These may negatively influence timing closure:
 	C_movn_movz: boolean := false; -- true: +5 LUT4, -DMIPS
@@ -174,6 +177,7 @@ begin
     generic map (
 	C_PC_mask => C_PC_mask,
 	C_mult_enable => C_mult_enable,
+	C_sign_extend => C_sign_extend,
 	C_movn_movz => C_movn_movz,
 	C_mips32_movn_movz => C_mips32_movn_movz,
 	C_branch_likely => C_branch_likely,

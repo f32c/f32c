@@ -32,10 +32,14 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity alu is
+    generic (
+	C_sign_extend: boolean
+    );
     port(
 	x, y: in std_logic_vector(31 downto 0);
 	funct: in std_logic_vector(1 downto 0);
-	seb: in boolean;
+	seb_seh_cycle: in boolean;
+	seb_seh_select: in std_logic;
 	addsubx: out std_logic_vector(32 downto 0);
 	logic: out std_logic_vector(31 downto 0);
 	equal: out boolean
@@ -52,7 +56,7 @@ begin
 
     addsubx <= ex + ey when funct(1) = '0' else ex - ey;
 
-    process(x, y, funct, seb)
+    process(x, y, funct, seb_seh_cycle, seb_seh_select)
     begin
 	case funct is
 	when "00" =>	x_logic <= x and y;
@@ -61,17 +65,26 @@ begin
 	when others => 	x_logic <= not(x or y);
 	end case;
 
-	logic(7 downto 0) <= x_logic(7 downto 0);
-	if seb then
-	    logic(31 downto 8) <=
-	      x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
-	      x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
-	      x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
-	      x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
-	      x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
-	      x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7);
+	if C_sign_extend and seb_seh_cycle then
+	    if seb_seh_select = '1' then
+		logic <=
+		  x_logic(15) & x_logic(15) & x_logic(15) & x_logic(15) & 
+		  x_logic(15) & x_logic(15) & x_logic(15) & x_logic(15) & 
+		  x_logic(15) & x_logic(15) & x_logic(15) & x_logic(15) & 
+		  x_logic(15) & x_logic(15) & x_logic(15) & x_logic(15) &
+		  x_logic(15 downto 0);
+	    else
+		logic <=
+		  x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
+		  x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
+		  x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
+		  x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
+		  x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
+		  x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) &
+		  x_logic(7 downto 0);
+	    end if;
 	else
-	    logic(31 downto 8) <= x_logic(31 downto 8);
+	    logic <= x_logic;
 	end if;
     end process;
 

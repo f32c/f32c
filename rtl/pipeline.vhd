@@ -38,6 +38,7 @@ entity pipeline is
 	C_big_endian: boolean := false;
 	C_mult_enable: boolean;
 	C_branch_likely: boolean;
+	C_sign_extend: boolean;
 	C_movn_movz: boolean;
 	C_mips32_movn_movz: boolean;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff";
@@ -115,7 +116,8 @@ architecture Behavioral of pipeline is
     signal ID_latency: std_logic_vector(1 downto 0);
     signal ID_load_align_hazard: boolean;
     signal ID_jump_register_hazard: boolean;
-    signal ID_seb_cycle: boolean;
+    signal ID_seb_seh_cycle: boolean;
+    signal ID_seb_seh_select: std_logic;
     -- boundary to stage 3
     signal ID_EX_PC_8: std_logic_vector(31 downto 2);
     signal ID_EX_bpredict_score: std_logic_vector(1 downto 0);
@@ -139,7 +141,8 @@ architecture Behavioral of pipeline is
     signal ID_EX_mem_read_sign_extend: std_logic;
     signal ID_EX_multicycle_lh_lb: boolean;
     signal ID_EX_latency: std_logic_vector(1 downto 0);
-    signal ID_EX_seb_cycle: boolean;
+    signal ID_EX_seb_seh_cycle: boolean;
+    signal ID_EX_seb_seh_select: std_logic;
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal ID_EX_PC: std_logic_vector(31 downto 2); -- debugging only
     signal ID_EX_sign_extend_debug: std_logic; -- debugging only
@@ -343,6 +346,7 @@ begin
     idecode: entity idecode
     generic map (
 	C_branch_likely => C_branch_likely,
+	C_sign_extend => C_sign_extend,
 	C_movn_movz => C_movn_movz,
 	C_mips32_movn_movz => C_mips32_movn_movz
     )
@@ -361,7 +365,8 @@ begin
 	mem_write => ID_mem_write, mem_size => ID_mem_size,
 	mem_read_sign_extend => ID_mem_read_sign_extend,
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
-	seb_cycle => ID_seb_cycle
+	seb_seh_cycle => ID_seb_seh_cycle,
+	seb_seh_select => ID_seb_seh_select
     );
 
     -- three- or four-ported register file: 2(3) async reads, 1 sync write
@@ -540,7 +545,8 @@ begin
 		    ID_EX_branch_condition <= ID_branch_condition;
 		    ID_EX_PC_8 <= (IF_ID_PC_4 + 1) and C_PC_mask(31 downto 2);
 		    ID_EX_branch_target <= ID_branch_target;
-		    ID_EX_seb_cycle <= ID_seb_cycle;
+		    ID_EX_seb_seh_cycle <= ID_seb_seh_cycle;
+		    ID_EX_seb_seh_select <= ID_seb_seh_select;
 		    ID_EX_writeback_addr <= ID_writeback_addr;
 		    ID_EX_mem_cycle <= ID_mem_cycle;
 		    ID_EX_branch_cycle <= ID_branch_cycle;
@@ -606,8 +612,13 @@ begin
 
     -- instantiate the ALU
     alu: entity alu
+    generic map (
+	C_sign_extend => C_sign_extend
+    )
     port map (
-	x => EX_eff_reg1, y => EX_eff_alu_op2, seb => ID_EX_seb_cycle,
+	x => EX_eff_reg1, y => EX_eff_alu_op2,
+	seb_seh_cycle => ID_EX_seb_seh_cycle,
+	seb_seh_select => ID_EX_seb_seh_select,
 	addsubx => EX_from_alu_addsubx, logic => EX_from_alu_logic,
 	funct => ID_EX_op_minor(1 downto 0), equal => EX_from_alu_equal
     );
