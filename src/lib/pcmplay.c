@@ -115,7 +115,7 @@ pcm_play(void)
 	OUTW(IO_DDS, dds_out);
 
 	/* Update volume and VU meter */
-	if ((pcm_addr & 0xfff) == 0) {
+	if ((pcm_addr & 0x3ff) == 0) {
 		for (i = 0, vu = 0; i < 2; i++) {
 			/* Volume */
 			if (i)
@@ -125,16 +125,13 @@ pcm_play(void)
 			if (c > 0)
 				c = 0;
 			c += pcm_vol;
-			if (c < PCM_VOL_MIN) {
-				pcm_evol[i] =
-				    ((pcm_evol[i] << 3) - pcm_evol[i]) >> 3;
-			} else
-				pcm_evol[i] =
-				    (((pcm_evol[i] << 4) - pcm_evol[i]) +
-				    (0x10 << c) + 0xf) >> 4;
+			if (c < PCM_VOL_MIN)
+				c = PCM_VOL_MIN;
+			c = 0x10 << c;
+			pcm_evol[i] = c - (c - pcm_evol[i]) * 31 / 32;
 
 			/* VU meter */
-			pcm_vu[i] = pcm_vu[i] - 0x0400;
+			pcm_vu[i] = (pcm_vu[i] - 0x0180) & 0xffff;
 			if (pcm_avg[i] >= pcm_vu[i])
 				pcm_vu[i] = pcm_avg[i];
 			if (pcm_vu[i] > 0x6800)
