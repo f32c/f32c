@@ -18,6 +18,7 @@ int pcm_vol = PCM_VOL_MAX * 2 / 3;
 int pcm_bal = 0;
 int pcm_hi = 65530;
 int pcm_lo = 0;
+int pcm_reverb = 0;
 int pcm_period = PCM_TSC_CYCLES;
 int fm_freq = 0;		/* Pending TX frequency, in Hz */
 int led_mode = 0;
@@ -34,6 +35,11 @@ static int pcm_pushbtn_old;
 static int dds_base;		/* 0 MHz - don't TX anything by default */
 static int fm_mode;		/* Modulation depth */
 static int fm_efreq;		/* Actual TX frequency, in Hz */
+
+static int delay_idx = 0;
+
+extern void sram_wr(int, int);
+extern int sram_rd(int);
 
 
 static void
@@ -62,7 +68,7 @@ update_dds_freq(void)
 void
 pcm_play(void)
 {
-	int pcm_out, dds_out, i, c, vu;
+	int pcm_out, dds_out, i, c, t, vu;
 	
 	c = rdtsc() - pcm_next_tsc;
 	if (c < 0)
@@ -97,6 +103,18 @@ pcm_play(void)
 		pcm_hi_acc[i] = c - (((c - pcm_hi_acc[i]) * pcm_hi) >> 16);
 		c = c - pcm_hi_acc[i];
 
+		/* Reverb */
+		t = c - (short)sram_rd(delay_idx - 4786) +
+		    (short)sram_rd(delay_idx - 6916) -
+		    (short)sram_rd(delay_idx - 10722);
+		sram_wr(delay_idx++, t >> 2);
+		if (t > 32767)
+			t = 32767;
+		if (t < -32768)
+			t = -32768;
+		if (pcm_reverb)
+			c = t;
+		
 		/* 32 -> 16 bit */
 		c &= 0xffff;
 
@@ -104,12 +122,14 @@ pcm_play(void)
 		pcm_out = (pcm_out << 16) |
 		    ((c ^ 0x8000) * (pcm_evol[i] >> 5)) >> 11;
 
-		/* Mix L & R channels for DDS synthesis */
+		/* Mix L & R channels for FM signal DDS */
 		dds_out += c;
 		if (c & 0x8000)
 			dds_out += 0xffff0000;
 	}
 	OUTW(IO_PCM_OUT, pcm_out);
+	delay_idx &= 0x0fffff;
+	delay_idx |= 0x100000;
 	
 	dds_out = dds_base + (dds_out >> fm_mode);
 	OUTW(IO_DDS, dds_out);

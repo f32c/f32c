@@ -21,6 +21,7 @@ extern int pcm_vol;
 extern int pcm_bal;
 extern int pcm_hi;
 extern int pcm_lo;
+extern int pcm_reverb;
 extern int pcm_period;
 extern int led_mode;
 extern int led_byte;
@@ -175,14 +176,21 @@ redraw_display()
 	printf("FER - Digitalna logika 2011/2012\n");
 	printf("\n");
 	printf("ULX2S FPGA plocica - demonstracijsko-dijagnosticki program\n");
-	printf("v 0.91 10/01/2012\n");
+	printf("v 0.92 11/01/2012\n");
 	printf("\n");
 	printf("Glavni izbornik:\n");
 	printf("\n");
-	printf(" 1: Audio izlaz ukljucen: %d\n",
-	    (pcm_vol & PCM_VOL_MUTE) == 0);
-	printf(" 2: Glasnoca: %d\n", pcm_vol & ~PCM_VOL_MUTE);
-	printf(" 3: Balans (L/D): %d\n", pcm_bal);
+	printf(" 1: Glasnoca: %d (audio izlaz ", pcm_vol & ~PCM_VOL_MUTE);
+	if (pcm_vol & PCM_VOL_MUTE)
+		printf("iskljucen)\n");
+	else
+		printf("ukljucen)\n");
+	printf(" 2: Balans (L/D): %d\n", pcm_bal);
+	printf(" 3: Reverb ");
+	if (pcm_reverb)
+		printf("ukljucen\n");
+	else
+		printf("iskljucen\n");
 	printf(" 4: Audiofrekvencijski pojas (-3 dB): %d-%d Hz\n",
 	    ctof(pcm_hi), ctof(pcm_lo));
 	printf(" 5: Brzina reprodukcije: %d%%\n",
@@ -282,19 +290,17 @@ main(void)
 			res = -1;
 			break;
 		case '1':
-			pcm_vol ^= PCM_VOL_MUTE;
-			break;
-		case '2':
 			printf("Unesite glasnocu (0 do 12): ");
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
 			i = atoi(buf);
-			if (buf[0] != 0 && i >= 0 && i <= 12) {
+			if (buf[0] != 0 && i >= PCM_VOL_MIN &&
+			    i <= PCM_VOL_MAX) {
 				pcm_vol = i;
 				old_pcm_vol = i;
 			}
 			break;
-		case '3':
+		case '2':
 			printf("Unesite balans (-6 do 6): ");
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
@@ -303,6 +309,9 @@ main(void)
 				pcm_bal = i;
 				old_pcm_bal = i;
 			}
+			break;
+		case '3':
+			pcm_reverb ^= 1;
 			break;
 		case '4':
 			printf("Unesite frekvencijski raspon u Hz"
