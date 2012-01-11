@@ -38,15 +38,15 @@ entity glue is
 	-- ISA options
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
-	C_sign_extend: boolean := true;
-	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
+	C_sign_extend: boolean := true; -- +31 LUT4
+	C_PC_mask: std_logic_vector(31 downto 0) := x"00001fff"; -- 8 LUT4/bit
 
 	-- CPU core configuration options
-	C_branch_prediction: boolean := true; -- true: +30 LUT4, +1 BRAM
-	C_result_forwarding: boolean := true; -- true: +217 LUT4
-	C_load_aligner: boolean := true; -- true: +68 LUT4
+	C_branch_prediction: boolean := true; -- true: +37 LUT4, +1 BRAM
+	C_result_forwarding: boolean := true; -- true: +244 LUT4
+	C_load_aligner: boolean := true; -- true: +82 LUT4
 
-	-- Vendor-specific option
+	-- FPGA platform-specific options
 	C_register_technology: string := "lattice";
 
 	-- These may negatively influence timing closure:
@@ -65,13 +65,14 @@ entity glue is
 
 	--
 	-- XP2-5E-7, 81.25 MHz, pushbutton Area optimization
+	-- XXX: 125 MHz gives lower LUT footprint?
 	--
 	-- C_res_fw 1, C_bp 1, C_load_align 1
-	-- slices: 803 LUTs: 1590 DMIPS: 138.8 DMIPS/MHz: 1.71
+	-- slices: 803 LUTs: 1592 DMIPS: 138.8 DMIPS/MHz: 1.71
 	-- DMIPS/MHz/kLUTs (Soc): 1.07 DMIPS/MHz/kLUTs (core): 1.18
 	--
 	-- C_res_fw 1, C_bp 1, C_load_align 0
-	-- slices: 770 LUTs: 1522 DMIPS: 132.1 DMIPS/MHz: 1.63
+	-- slices: 770 LUTs: 1510 DMIPS: 132.1 DMIPS/MHz: 1.63
 	-- DMIPS/MHz/kLUTs (Soc): 1.07 DMIPS/MHz/kLUTs (core): 1.19
 	--
 	-- C_res_fw 1, C_bp 0, C_load_align 1
@@ -87,8 +88,8 @@ entity glue is
 	-- DMIPS/MHz/kLUTs (Soc): 0.93 DMIPS/MHz/kLUTs (core): 1.04
 	--
 	-- C_res_fw 0, C_bp 0, C_load_align 0
-	-- slices: 674 LUTs: 1337 DMIPS:  96.1 DMIPS/MHz: 1.18
-	-- DMIPS/MHz/kLUTs (Soc): 0.88 DMIPS/MHz/kLUTs (core): 1.00
+	-- slices: 644 LUTs: 1273 DMIPS:  96.1 DMIPS/MHz: 1.18
+	-- DMIPS/MHz/kLUTs (Soc): 0.93 DMIPS/MHz/kLUTs (core): 1.00
 	--
     );
     port (
