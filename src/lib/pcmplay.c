@@ -27,6 +27,9 @@ int led_byte = 0;
 static int pcm_addr = PCM_END;
 static int pcm_lo_acc[2] = {0, 0};
 static int pcm_hi_acc[2] = {0, 0};
+static int pcm_rv1_acc[2] = {0, 0};
+static int pcm_rv2_acc[2] = {0, 0};
+static int pcm_rv3_acc[2] = {0, 0};
 static int pcm_avg[2] = {0, 0};
 static int pcm_vu[2] = {0, 0};
 static int pcm_evol[2] = {0, 0};
@@ -104,16 +107,28 @@ pcm_play(void)
 		c = c - pcm_hi_acc[i];
 
 		/* Reverb */
-		t = c - (short)sram_rd(delay_idx - 4786) +
-		    (short)sram_rd(delay_idx - 6916) -
-		    (short)sram_rd(delay_idx - 10722);
-		sram_wr(delay_idx++, t >> 2);
-		if (t > 32767)
-			t = 32767;
-		if (t < -32768)
-			t = -32768;
-		if (pcm_reverb)
-			c = t;
+		t = c
+		    + (short)sram_rd(delay_idx - 3110)
+		    - (short)sram_rd(delay_idx - 7110)
+		    + 2 * (short)sram_rd(delay_idx - 11110)
+		    - (short)sram_rd(delay_idx - 15110)
+		    - 2 * (short)sram_rd(delay_idx - 17122)
+		    + (short)sram_rd(delay_idx - 23110);
+		pcm_rv1_acc[i] = t - (((t - pcm_rv1_acc[i]) * 2800) >> 12);
+		t = pcm_rv1_acc[i];
+		pcm_rv2_acc[i] = t - (((t - pcm_rv2_acc[i]) * 3500) >> 12);
+		t = t - pcm_rv2_acc[i];
+		sram_wr(delay_idx++, (t * 7) >> 5);
+		t = (short)sram_rd(delay_idx - 13101) * 9;
+		pcm_rv3_acc[i] = t - (((t - pcm_rv3_acc[i]) * 3200) >> 12);
+		t = pcm_rv3_acc[i];
+		if (pcm_reverb) {
+			c -= t;
+			if (c > 32767)
+				c = 32767;
+			if (c < -32768)
+				c = -32768;
+		}
 		
 		/* 32 -> 16 bit */
 		c &= 0xffff;
