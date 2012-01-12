@@ -89,24 +89,22 @@ int sram_rd(int a)
 static void
 sram_test(void)
 {
-	int i, j, mem_offset;
+	int i, j, r, mem_offset;
 	
 	printf("SRAM self-test u tijeku...  ");
-	for (j = 0; j < 100; j++) {
+	for (j = 0; j < 500; j++) {
 		do {
 			mem_offset = random() & 0x7ffff;
 		} while (mem_offset > 512*1024 - MEMSIZE);
+		r = random();
 		for (i = 0; i < MEMSIZE; i++) {
-			sram_wr(i + mem_offset, random());
-		}
-		for (i = 0; i < MEMSIZE; i++) {
-			sram_wr(i + mem_offset, i);
+			sram_wr(i + mem_offset, (i - (i << 9)) ^ r);
 		}
 		for (i = 0; i < MEMSIZE; i++) {
 			ibuf[i] = sram_rd(i + mem_offset);
 		}
 		for (i = 0; i < MEMSIZE; i++) {
-			if (ibuf[i] != i) {
+			if (ibuf[i] != (((i - (i << 9)) ^ r) & 0xffff)) {
 				printf("Greska: neispravan SRAM!\n");
 				return;
 			}
@@ -176,7 +174,7 @@ redraw_display()
 	printf("FER - Digitalna logika 2011/2012\n");
 	printf("\n");
 	printf("ULX2S FPGA plocica - demonstracijsko-dijagnosticki program\n");
-	printf("v 0.92 11/01/2012\n");
+	printf("v 0.93 12/01/2012\n");
 	printf("\n");
 	printf("Glavni izbornik:\n");
 	printf("\n");
@@ -186,11 +184,11 @@ redraw_display()
 	else
 		printf("ukljucen)\n");
 	printf(" 2: Balans (L/D): %d\n", pcm_bal);
-	printf(" 3: Reverb ");
+	printf(" 3: Jeka ");
 	if (pcm_reverb)
-		printf("ukljucen\n");
+		printf("ukljucena\n");
 	else
-		printf("iskljucen\n");
+		printf("iskljucena\n");
 	printf(" 4: Audiofrekvencijski pojas (-3 dB): %d-%d Hz\n",
 	    ctof(pcm_hi), ctof(pcm_lo));
 	printf(" 5: Brzina reprodukcije: %d%%\n",
@@ -288,6 +286,17 @@ main(void)
 		switch (c) {
 		case 3: /* CTRL + C */
 			res = -1;
+			break;
+		case '+':
+			if ((pcm_vol & ~PCM_VOL_MUTE) < PCM_VOL_MAX)
+				pcm_vol++;
+			break;
+		case '-':
+			if ((pcm_vol & ~PCM_VOL_MUTE) > PCM_VOL_MIN)
+				pcm_vol--;
+			break;
+		case ' ':
+			pcm_vol ^= PCM_VOL_MUTE;
 			break;
 		case '1':
 			printf("Unesite glasnocu (0 do 12): ");
