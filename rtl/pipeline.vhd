@@ -735,7 +735,7 @@ begin
 		    EX_MEM_logic_cycle <= ID_EX_op_minor(2);
 		end if;
 		if (C_movn_movz and ID_EX_cmov_cycle) then
-		    if EX_from_alu_equal = ID_EX_cmov_condition then
+		    if (EX_eff_reg2 = x"00000000") = ID_EX_cmov_condition then
 			EX_MEM_writeback_addr <= ID_EX_writeback_addr;
 		    else
 			EX_MEM_writeback_addr <= "00000";
