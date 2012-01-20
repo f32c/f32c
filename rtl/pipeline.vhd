@@ -40,7 +40,6 @@ entity pipeline is
 	C_branch_likely: boolean;
 	C_sign_extend: boolean;
 	C_movn_movz: boolean;
-	C_mips32_movn_movz: boolean;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff";
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
 
@@ -347,8 +346,7 @@ begin
     generic map (
 	C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend,
-	C_movn_movz => C_movn_movz,
-	C_mips32_movn_movz => C_mips32_movn_movz
+	C_movn_movz => C_movn_movz
     )
     port map (
 	instruction => IF_ID_instruction,

@@ -51,9 +51,6 @@ entity glue is
 	C_movn_movz: boolean := false; -- true: +5 LUT4, -DMIPS
 	C_fast_ID: boolean := true; -- false: +7 LUT4, -Fmax
 
-	-- This changes movn_movz calling convenction (swaps rs / rt)
-	C_mips32_movn_movz: boolean := false; -- true: +12 LUT4, -Fmax
-
 	-- debugging options
 	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
 
@@ -140,12 +137,11 @@ begin
     -- f32c core
     pipeline: entity pipeline
     generic map (
-	C_PC_mask => C_PC_mask,
-	C_mult_enable => C_mult_enable,
+	C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend,
 	C_movn_movz => C_movn_movz,
-	C_mips32_movn_movz => C_mips32_movn_movz,
-	C_branch_likely => C_branch_likely,
+	C_mult_enable => C_mult_enable,
+	C_PC_mask => C_PC_mask,
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,

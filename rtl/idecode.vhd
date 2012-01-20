@@ -34,10 +34,9 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity idecode is
     generic(
-	C_movn_movz: boolean;
-	C_mips32_movn_movz: boolean;
 	C_branch_likely: boolean;
-	C_sign_extend: boolean
+	C_sign_extend: boolean;
+	C_movn_movz: boolean
     );
     port(
 	instruction: in std_logic_vector(31 downto 0);
@@ -68,7 +67,6 @@ architecture Behavioral of idecode is
     signal type_code: std_logic_vector(1 downto 0);
     signal imm_extension: std_logic_vector(15 downto 0);
     signal cond_move: boolean;
-    signal x_reg1_addr, x_reg2_addr: std_logic_vector(4 downto 0);
     signal x_reg2_zero, x_special, x_special3, sign_extend_imm: boolean;
     signal x_branch1, x_branch2: boolean;
 begin
@@ -77,15 +75,11 @@ begin
     fncode <= instruction(5 downto 0);
     mem_read_sign_extend <= not opcode(2);
 
-    x_reg1_addr <= instruction(20 downto 16) when C_mips32_movn_movz and
-      C_movn_movz and cond_move else instruction(25 downto 21);
-    x_reg2_addr <= instruction(25 downto 21) when C_mips32_movn_movz and
-      C_movn_movz and cond_move else instruction(20 downto 16);
-    reg1_addr <= x_reg1_addr;
-    reg2_addr <= x_reg2_addr;
+    reg1_addr <= instruction(25 downto 21);
+    reg2_addr <= instruction(20 downto 16);
 
-    reg1_zero <= x_reg1_addr = "00000";
-    x_reg2_zero <= x_reg2_addr = "00000";
+    reg1_zero <= reg1_addr = "00000";
+    x_reg2_zero <= reg2_addr = "00000";
     reg2_zero <= x_reg2_zero;
 
     -- beq, bne, blez, bgtz
