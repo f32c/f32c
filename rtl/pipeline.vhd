@@ -252,6 +252,7 @@ begin
     --
 
     -- XXX TODO:
+    --  revisit / simplify register file write-enable setting
     --	revisit MULT / MFHI / MFLO decoding (now done in EX stage!!!)
     --  commit MULT result in MEM stage (branch likely must cancel commit)!
     --  reintroduce area-optimized branch likely support as an option
@@ -587,7 +588,13 @@ begin
     -- =========================
     --
 
-    EX_running <= MEM_running; -- XXX revisit
+    -- When result forwarding muxes are not configured, stall the pipeline
+    -- until the results from all instructions preceding a branch or a jump
+    -- instruction are flushed or stored in the register file.
+    -- XXX revisit!
+    EX_running <= MEM_running and
+      (C_result_forwarding or not (ID_EX_branch_cycle or ID_EX_jump_cycle)
+      or EX_MEM_writeback_addr = "00000");
 
     -- forward the results from later stages
     G_EX_forwarding:
