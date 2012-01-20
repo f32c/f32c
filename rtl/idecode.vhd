@@ -169,8 +169,7 @@ begin
 	    op_minor <= fncode(2 downto 0);
 	    if C_movn_movz and fncode(5 downto 1) = "00101" then
 		cond_move <= true; -- MOVN / MOVZ
-		op_major <= "10"; -- route register through shifter logic
-		latency <= "01";
+		op_minor <= "000"; -- ADD
 	    end if;
 	    if fncode(5 downto 3) = "101" then -- SLT / SLTU
 		op_major <= "01";

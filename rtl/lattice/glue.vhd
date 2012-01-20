@@ -48,7 +48,7 @@ entity glue is
 	C_register_technology: string := "lattice";
 
 	-- These may negatively influence timing closure:
-	C_movn_movz: boolean := false; -- true: +5 LUT4, -DMIPS
+	C_movn_movz: boolean := false; -- true: +16 LUT4, -DMIPS, incomplete
 	C_fast_ID: boolean := true; -- false: +7 LUT4, -Fmax
 
 	-- debugging options
