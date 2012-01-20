@@ -83,7 +83,7 @@ entity glue is
 	-- slices: 741 LUTs: 1475 DMIPS: 124.6 DMIPS/MHz: 1.53
 	-- DMIPS/MHz/kLUTs (Soc): 1.04 DMIPS/MHz/kLUTs (core): 1.16
 	--
-	-- C_res_fw 0, C_bp 1, C_load_align 1	XXX broken branch likely!!!
+	-- C_res_fw 0, C_bp 1, C_load_align 1
 	-- slices: 692 LUTs: 1373 DMIPS: 103.6 DMIPS/MHz: 1.28
 	-- DMIPS/MHz/kLUTs (Soc): 0.93 DMIPS/MHz/kLUTs (core): 1.04
 	--
