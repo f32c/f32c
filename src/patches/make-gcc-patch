@@ -1,6 +1,10 @@
-diff -drup ../org/gcc-4.6.1/gcc/config/mips gcc/config/mips | fgrep -v "Only in gcc/config/mips:"
+#!/bin/sh
+
+GCC_VER="gcc-4.6.2"
+
+diff -drup ../org/$GCC_VER/gcc/config/mips gcc/config/mips | fgrep -v "Only in gcc/config/mips:"
 diff -dup /dev/null gcc/config/mips/f32c.md
-diff -dup ../org/gcc-4.6.1/configure configure
-diff -dup ../org/gcc-4.6.1/gcc/doc/g++.1 gcc/doc/g++.1
-diff -dup ../org/gcc-4.6.1/gcc/doc/gcc.1 gcc/doc/gcc.1
-diff -dup ../org/gcc-4.6.1/gcc/doc/invoke.texi gcc/doc/invoke.texi
+diff -dup ../org/$GCC_VER/configure configure
+diff -dup ../org/$GCC_VER/gcc/doc/g++.1 gcc/doc/g++.1
+diff -dup ../org/$GCC_VER/gcc/doc/gcc.1 gcc/doc/gcc.1
+diff -dup ../org/$GCC_VER/gcc/doc/invoke.texi gcc/doc/invoke.texi
