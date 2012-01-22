@@ -1,104 +1,106 @@
 
 #include <types.h>
 #include <io.h>
-#include <sio.h>
 
 
-typedef int mainfn_t(void);
-
-#define DEF_BOOTADDR	0x00000180
-
-int coldboot = 1;	/* don't staticize or GCC will ignore this! */
-static char *prompt = "\r\n\nf32c SoC bootloader\r\n> ";
+#define BOOTADDR	0x00000180
 
 
-void
+static char *prompt = "\r\nf32c> ";
+int cold_boot = 1;
+
+
+__attribute__((noreturn)) void
 _start(void)
 {
-	mainfn_t *bootaddr;
-	int *loadaddr;
-	int cur_bits;
-	int cur_word;
-	int c;
+	int c, pos, val, len;
 	char *cp;
-	
-	if (coldboot) {
-defaultboot:
-		bootaddr = (void *) DEF_BOOTADDR;
-	} else
-		bootaddr = NULL;
-	coldboot = 0;
-	goto start;
 
+	if (cold_boot) {
+boot:
+		cold_boot = 0;
+		__asm __volatile__(
+			".set noreorder;"
+			"li $29, (0x80000000);"
+			"j %0;"
+			"move $31, $0;"
+			".set reorder;"
+			:
+			: "i" (BOOTADDR)
+		);
+	}
+loop:
+	/* Blink LEDs while waiting for serial input */
 	do {
-		/* Blink LEDs while waiting for serial input */
+		INW(val, IO_TSC);
+		INB(c, IO_SIO_STATUS);
+		OUTB(IO_LED, val >> 20);
+	} while ((c & SIO_RX_FULL) == 0);
+	INB(c, IO_SIO_BYTE);
+
+	/* X ? */
+	if (c == 'x')
+		goto boot;
+
+	/* CR ? */
+	if (c == '\r') {
+		for (cp = prompt; *cp != 0; cp++) {
+			do {
+				INB(val, IO_SIO_STATUS);
+			} while (val & SIO_TX_BUSY);
+			OUTB(IO_SIO_BYTE, *cp);
+		}
+		goto loop;
+	}
+
+	if (c != ':') {
+		/* Echo char */
 		do {
-			INW(c, IO_TSC);
-			OUTB(IO_LED, c >> 20);
+			INB(val, IO_SIO_STATUS);
+		} while (val & SIO_TX_BUSY);
+		OUTB(IO_SIO_BYTE, c);
+		goto loop;
+	}
+
+	pos = 0;
+	cp = 0;
+	len = 0;
+	do {
+		/* Wait for serial input */
+		do {
 			INB(c, IO_SIO_STATUS);
 		} while ((c & SIO_RX_FULL) == 0);
 		INB(c, IO_SIO_BYTE);
 
-		/* Echo character back to the serial port */
-		if (bootaddr == NULL && loadaddr == NULL)
-			OUTB(IO_SIO_BYTE, c);
+		if (c == '\r')
+			goto loop;
 
-		if (c == '\r') {
-			if (loadaddr == NULL) {
-start:
-				if (bootaddr != NULL) {
-					/*
-					 * Start main() with a clean stack,
-					 * and return address set to 0.
-					 */
-					__asm __volatile__(
-						".set noreorder;"
-						"li $29, (0x80000000);"
-						"jr %0;"
-						"li $31, (0)"
-						:
-						: "r" (bootaddr)
-					);
-				}
-				for (cp = prompt; *cp != 0; cp++) {
-					do {
-						INB(c, IO_SIO_STATUS);
-					} while (c & SIO_TX_BUSY);
-					OUTB(IO_SIO_BYTE, *cp);
-				}
-			}
-			loadaddr = NULL;
-			cur_bits = 0;
-			cur_word = 0;
-			c = 0;
-		}
-
-		/* Normalize to capital letters */
+		val <<= 4;
 		if (c >= 'a')
 			c -= 32;
+		if (c >= 'A')
+			val |= c - 'A' + 10;
+		else
+			val |= c - '0';
 
-		if ((c >= '0' && c <= '9') || (c >= 'A'  && c <= 'F')) {
-			if (c >= 'A')
-				c = c - 'A' + 10;
-			else
-				c = c - '0';
-			cur_word = (cur_word << 4) | (c & 0x0f);
-			cur_bits = (cur_bits + 4) & 0x1f;
-			if (cur_bits == 0) {
-				if (loadaddr == NULL) {
-					loadaddr = (int *) cur_word;
-				} else {
-					if (bootaddr == NULL)
-						bootaddr = (void *) loadaddr;
-					*loadaddr++ = cur_word;
-				}
-			}
-			continue;
-		}
+		/* Byte count */
+		if (pos == 1)
+			len = ((val & 0xff) << 1) + 8;
 
-		cur_bits = 0;
-		if (c == 'X')
-			goto defaultboot;
+		/* Address */
+		if (pos == 5)
+			cp = (char *) (val & 0xffff);
+
+		/* Record type - only type 0 contains valid data */
+		if (pos == 7 && (val & 0xff) == 1)
+			goto boot;
+
+		/* Data */
+		if ((pos & 1) && pos > 8 && pos < len)
+			*cp++ = val;
+
+		pos++;
 	} while (1);
-}
 
+	/* Unreached */
+}
