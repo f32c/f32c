@@ -3,7 +3,7 @@
 #include <io.h>
 
 
-#define BOOTADDR	0x00000180
+#define BOOTADDR	0x000001a0
 
 
 static char *prompt = "\r\nf32c> ";
@@ -29,6 +29,15 @@ boot:
 			: "i" (BOOTADDR)
 		);
 	}
+
+prompt:
+	for (cp = prompt; *cp != 0; cp++) {
+		do {
+			INB(val, IO_SIO_STATUS);
+		} while (val & SIO_TX_BUSY);
+		OUTB(IO_SIO_BYTE, *cp);
+	}
+
 loop:
 	/* Blink LEDs while waiting for serial input */
 	do {
@@ -43,15 +52,8 @@ loop:
 		goto boot;
 
 	/* CR ? */
-	if (c == '\r') {
-		for (cp = prompt; *cp != 0; cp++) {
-			do {
-				INB(val, IO_SIO_STATUS);
-			} while (val & SIO_TX_BUSY);
-			OUTB(IO_SIO_BYTE, *cp);
-		}
-		goto loop;
-	}
+	if (c == '\r')
+		goto prompt;
 
 	if (c != ':') {
 		/* Echo char */
