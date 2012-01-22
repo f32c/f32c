@@ -1,7 +1,7 @@
 
 # Default load offset - bootloader is at 0x00000000
 ifndef LOADADDR
-LOADADDR = 0x00000180
+LOADADDR = 0x000001a0
 endif
 
 # -EB big-endian (default); -EL little-endian
@@ -72,7 +72,6 @@ MK_LDFLAGS += -Ttext ${LOADADDR} -N ${ENDIANFLAGS}
 CC = mips-elf-gcc ${MK_INCLUDES} ${MK_CFLAGS} ${ECFLAGS}
 LD = mips-elf-ld ${MK_LDFLAGS} ${LDFLAGS}
 OBJCOPY = mips-elf-objcopy -O ihex
-ELF2HEX = ../tools/elf2hex.tcl
 
 
 #
@@ -85,8 +84,7 @@ HEX = ${PROG}.hex
 IHEX = ${PROG}.ihex
 
 ${HEX}: ${PROG} Makefile
-	${ELF2HEX} ${PROG} ${HEX}
-	${OBJCOPY} ${PROG} ${IHEX}
+	${OBJCOPY} ${PROG} ${HEX}
 
 ${PROG}: ${OBJS} Makefile
 	${LD} -o ${PROG} ${OBJS}
@@ -96,7 +94,7 @@ depend:
 	mkdep ${MK_INCLUDES} ${CFILES}
 
 clean:
-	rm -f ${OBJS} ${PROG} ${HEX} ${IHEX}
+	rm -f ${OBJS} ${PROG} ${HEX}
 
 cleandepend:
 	rm -f .depend
