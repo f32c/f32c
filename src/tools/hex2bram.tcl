@@ -43,11 +43,15 @@ set addr 0
 while {[eof $hexfile] == 0} {
     gets $hexfile line
     set line [string trim $line]
-    # Does the line begin with a valid label?
-    if {[string index [lindex $line 0] end] != ":"} {
-	continue;
+    if {[string index $line 0] != ":"} {
+	continue
     }
-    set line_addr [expr 0x[string trim [lindex $line 0] :]]
+    set byte_cnt [expr 0x[string range $line 1 2]]
+    set line_addr [expr 0x[string range $line 3 6]]
+    set record_type [expr 0x[string range $line 7 8]]
+    if {$record_type != 0} {
+	continue
+    }
     if {$addr != $line_addr} {
 	puts "WARNING: bad address $line_addr (expected $addr) at line $linenum"
 	while {$addr < $line_addr} {
@@ -55,8 +59,12 @@ while {[eof $hexfile] == 0} {
 	    incr addr 4
 	}
     }
-    foreach entry [lrange $line 1 end] {
-	set mem($addr) $entry
+    for {set i 0} {$i < [expr $byte_cnt * 2]} {incr i 8} {
+	set w "[string range $line [expr $i + 9] [expr $i + 10]]"
+	set w "[string range $line [expr $i + 11] [expr $i + 12]]$w"
+	set w "[string range $line [expr $i + 13] [expr $i + 14]]$w"
+	set w "[string range $line [expr $i + 15] [expr $i + 16]]$w"
+	set mem($addr) $w
 	incr addr 4
     }
 }
