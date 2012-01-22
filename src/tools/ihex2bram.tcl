@@ -31,9 +31,12 @@ while {[eof $hexfile] == 0} {
     }
     set line [string range $line 1 end]
     set len [scan [string range $line 0 1] %02x]
-    set baddr [scan [string range $line 2 5] %04x]
+    set block_addr [scan [string range $line 2 5] %04x]
     set type [scan [string range $line 6 7] %02x]
-    while {$addr < $baddr} {
+    if {$type != 0} {
+	continue
+    }
+    while {$addr < $block_addr} {
 	set mem($addr) 0
 	incr addr
     }
