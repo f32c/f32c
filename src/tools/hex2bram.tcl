@@ -1,34 +1,11 @@
 #!/usr/local/bin/tclsh8.6
 #
-# Copyright 2011 University of Zagreb.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
-#
 
 # $Id: $
 
 
 if {$argc == 0} {
-    puts "Usage: ./hex2bram.tcl ifile \[ofile\]"
+    puts "Usage: ./ihex2bram.tcl ifile \[ofile\]"
     exit 1
 } elseif {$argc == 1} {
     set ofile bram.vhd
@@ -42,44 +19,45 @@ set addr 0
 
 while {[eof $hexfile] == 0} {
     gets $hexfile line
+    incr linenum
     set line [string trim $line]
+    # Does the line begin with a valid label?
     if {[string index $line 0] != ":"} {
-	continue
-    }
-    set byte_cnt [expr 0x[string range $line 1 2]]
-    set line_addr [expr 0x[string range $line 3 6]]
-    set record_type [expr 0x[string range $line 7 8]]
-    if {$record_type != 0} {
-	continue
-    }
-    if {$addr != $line_addr} {
-	puts "WARNING: bad address $line_addr (expected $addr) at line $linenum"
-	while {$addr < $line_addr} {
-	    set mem($addr) 00000000
-	    incr addr 4
+	if {$line == ""} {
+	    continue;
 	}
+	puts "Invalid input file format at line $linenum"
+	exit 1
     }
-    for {set i 0} {$i < [expr $byte_cnt * 2]} {incr i 8} {
-	set w "[string range $line [expr $i + 9] [expr $i + 10]]"
-	set w "[string range $line [expr $i + 11] [expr $i + 12]]$w"
-	set w "[string range $line [expr $i + 13] [expr $i + 14]]$w"
-	set w "[string range $line [expr $i + 15] [expr $i + 16]]$w"
-	set mem($addr) $w
-	incr addr 4
+    set len [scan [string range $line 1 2] %02x]
+    set block_addr [scan [string range $line 3 6] %04x]
+    set type [scan [string range $line 7 8] %02x]
+    if {$type != 0} {
+	continue
+    }
+    while {$addr < $block_addr} {
+	set mem($addr) 0
+	incr addr
+    }
+    for {set i 0} {$i < [expr $len * 2]} {incr i 2} {
+	set val [scan [string range $line [expr 9 + $i] [expr 10 + $i]] %x]
+	set mem($addr) $val
+	incr addr
     }
 }
 close $hexfile
 
 # Pad mem to 512 byte-block boundary
 while {[expr $addr % 512] != 0} {
-    set mem($addr) 00000000
-    incr addr 4
+    set mem($addr) 0
+    incr addr
 }
 set endaddr $addr
 
 set bramfile [open $ofile]
 set linenum 0
 set section undefined
+set lattice 0
 set generic 0
 set buf ""
 set filebuf ""
@@ -88,9 +66,7 @@ set filebuf ""
 proc peek {byte_addr} {
     global mem
 
-    set entry $mem([expr ($byte_addr / 4) * 4])
-    set i [expr 6 - ($byte_addr % 4) * 2]
-    return [scan [string range $entry $i [expr $i + 1]] %02x]
+    return $mem($byte_addr)
 }
 
 
@@ -98,6 +74,13 @@ while {[eof $bramfile] == 0} {
     gets $bramfile line
     incr linenum
     if {$section == "undefined"} {
+	# Detect beginning of generic 8-bit wide bram block
+	if {[string first ": bram_type := (" $line] != -1} {
+	    set generic 1
+	    set section [lindex [split [string trim $line] _:] 1]
+	}
+    } elseif {$section == "undefined"} {
+	# Detect beginning of lattice DP16KB block
 	if {[string first ": DP16KB" $line] != -1} {
 	    set section [lindex [split [string trim $line] _:] 1]
 	    set seqn [lindex [split [string trim $line] _:] 2]
@@ -107,13 +90,29 @@ while {[eof $bramfile] == 0} {
 	set key [string trim $line]
 	if {$section != "undefined" &&
 	  [string first "generic map" $key] == 0} {
-	    # Beginning of generic section detected
-	    set generic 1
-	} elseif {$generic == 1 && [string first INITVAL_ $key] == 0} {
+	    # Beginning of lattice generic section detected
+	    set lattice 1
+	} elseif {($generic == 1 && $key != ");") ||
+	  ($lattice == 1 && [string first INITVAL_ $key] == 0)} {
 	    # Prune old INITVAL_ lines
 	    continue
-	} elseif {$key == ")"} {
-	    # Construct and dump INITVAL_xx lines!
+	} elseif {$generic == 1 && $key == ");"} {
+	    # Generic 8-bit wide BRAM block: construct and dump mem contents
+	    for {set addr 0} {$addr < $endaddr} {incr addr 32} {
+		set line "\t"
+		for {set i $section} {$i < 32} {incr i 4} {
+		    set line \
+		      "[set line]x\"[format %02x [peek [expr $addr + $i]]]\", "
+		}
+		lappend filebuf $line
+	    }
+	    lappend filebuf "\tothers => (others => '0')"
+	    lappend filebuf "    );"
+	    set section undefined
+	    set generic 0
+	    continue
+	} elseif {$lattice == 1 && $key == ")"} {
+	    # Lattice BRAM: construct and dump INITVAL_xx lines!
 	    set addrstep [expr $section * 16]
 	    for {set addr 0} {$addr < $endaddr} {incr addr $addrstep} {
 		for {set i 0} {$i < 32} {incr i} {
@@ -159,7 +158,7 @@ while {[eof $bramfile] == 0} {
 	    }
 	    #
 	    set section undefined
-	    set generic 0
+	    set lattice 0
 	}
     }
     lappend filebuf $line
