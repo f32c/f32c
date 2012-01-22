@@ -29,10 +29,9 @@ while {[eof $hexfile] == 0} {
 	puts "Invalid input file format at line $linenum"
 	exit 1
     }
-    set line [string range $line 1 end]
-    set len [scan [string range $line 0 1] %02x]
-    set block_addr [scan [string range $line 2 5] %04x]
-    set type [scan [string range $line 6 7] %02x]
+    set len [scan [string range $line 1 2] %02x]
+    set block_addr [scan [string range $line 3 6] %04x]
+    set type [scan [string range $line 7 8] %02x]
     if {$type != 0} {
 	continue
     }
@@ -40,9 +39,8 @@ while {[eof $hexfile] == 0} {
 	set mem($addr) 0
 	incr addr
     }
-    for {set i 0} {$i < $len} {incr i} {
-	set val \
-	  [scan [string range $line [expr 8 + $i * 2] [expr 9 + $i * 2]] %x]
+    for {set i 0} {$i < [expr $len * 2]} {incr i 2} {
+	set val [scan [string range $line [expr 9 + $i] [expr 10 + $i]] %x]
 	set mem($addr) $val
 	incr addr
     }
