@@ -35,7 +35,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity pipeline is
     generic (
 	-- ISA options
-	C_big_endian: boolean := false;
+	C_big_endian: boolean;
 	C_mult_enable: boolean;
 	C_branch_likely: boolean;
 	C_sign_extend: boolean;
@@ -81,6 +81,7 @@ architecture Behavioral of pipeline is
     signal IF_PC_incr: std_logic;
     signal IF_bpredict_index: std_logic_vector(12 downto 0);
     signal IF_bpredict_re: std_logic;
+    signal IF_instruction: std_logic_vector(31 downto 0);
     signal IF_ID_instruction: std_logic_vector(31 downto 0);
     signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
     signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
@@ -288,6 +289,12 @@ begin
     IF_PC_next <= IF_PC + IF_PC_incr;
     end generate;
 
+    -- instruction word: big / little endian
+    IF_instruction <=
+      imem_data_in(7 downto 0) & imem_data_in(15 downto 8) &
+      imem_data_in(23 downto 16) & imem_data_in(31 downto 24) when C_big_endian
+      else imem_data_in;
+
     imem_addr <= IF_PC;
     imem_addr_strobe <= '1';
 
@@ -310,13 +317,7 @@ begin
 		IF_ID_branch_delay_slot <=
 		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 		IF_ID_bpredict_index <= IF_bpredict_index;
-		if C_big_endian then
-		    IF_ID_instruction <=
-		      imem_data_in(7 downto 0) & imem_data_in(15 downto 8) &
-		      imem_data_in(23 downto 16) & imem_data_in(31 downto 24);
-		else
-		    IF_ID_instruction <= imem_data_in;
-		end if;
+		IF_ID_instruction <= IF_instruction;
 	    end if;
 	end if;
     end process;
@@ -850,10 +851,15 @@ begin
     -- memory output must be externally registered (it is with internal BRAM)
     -- i.e. dmem_data_in??? XXX what is the meaning of this - revisit!
 
+    -- inbound data word: big / little endian
+    MEM_data_in <= dmem_data_in(7 downto 0) & dmem_data_in(15 downto 8) &
+      dmem_data_in(23 downto 16) & dmem_data_in(31 downto 24) when C_big_endian
+      else dmem_data_in;
+
     process(clk)
     begin
 	if rising_edge(clk) then
-	    MEM_WB_mem_data <= dmem_data_in;
+	    MEM_WB_mem_data <= MEM_data_in;
 	    if MEM_running then
 		MEM_WB_mem_cycle <= EX_MEM_mem_cycle;
 		MEM_WB_mem_read_sign_extend <= EX_MEM_mem_read_sign_extend;

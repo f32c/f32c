@@ -36,6 +36,7 @@ entity glue is
 	C_clk_freq: integer := 81;
 
 	-- ISA options
+	C_big_endian: boolean := false;
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
@@ -137,6 +138,7 @@ begin
     -- f32c core
     pipeline: entity pipeline
     generic map (
+	C_big_endian => C_big_endian,
 	C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend,
 	C_movn_movz => C_movn_movz,
@@ -174,7 +176,7 @@ begin
     )
     port map (
 	clk => clk, ce => sio_ce, txd => sio_txd, rxd => rs232_rx,
-	byte_we => dmem_byte_we, bus_in => cpu_to_dmem,
+	byte_we => dmem_byte_we, bus_in => cpu_to_dmem, -- XXX revisit endian
 	bus_out => from_sio
     );
     sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
@@ -234,10 +236,20 @@ begin
 	    -- PCMDAC
 	    if C_pcmdac and dmem_addr(4 downto 2) = "011" then
 		if dmem_byte_we(2) = '1' then
-		    dac_in_l <= cpu_to_dmem(31 downto 18);
+		    if C_big_endian then
+			dac_in_l <= cpu_to_dmem(23 downto 16) &
+			  cpu_to_dmem(31 downto 26);
+		    else
+			dac_in_l <= cpu_to_dmem(31 downto 18);
+		    end if;
 		end if;
 		if dmem_byte_we(0) = '1' then
-		    dac_in_r <= cpu_to_dmem(15 downto 2);
+		    if C_big_endian then
+			dac_in_r <= cpu_to_dmem(7 downto 0) &
+			  cpu_to_dmem(15 downto 10);
+		    else
+		        dac_in_r <= cpu_to_dmem(15 downto 2);
+		    end if;
 		end if;
 	    end if;
 	    -- SPI Flash
@@ -251,7 +263,12 @@ begin
 	    -- DDS
 	    if C_ddsfm and dmem_addr(4 downto 2) = "111" then
 		if dmem_byte_we(0) = '1' then
-		    dds_div <= cpu_to_dmem(21 downto 0);
+		    if C_big_endian then
+			dds_div <= cpu_to_dmem(15 downto 10) & 
+			  cpu_to_dmem(23 downto 16) & cpu_to_dmem(31 downto 24);
+		    else
+			dds_div <= cpu_to_dmem(21 downto 0);
+		    end if;
 		end if;
 	    end if;
 	end if;
@@ -286,7 +303,12 @@ begin
     process(clk, tsc_25m)
     begin
 	if rising_edge(clk) and tsc_25m(2 downto 1) = "10" then
-	    tsc <= tsc_25m(34 downto 3);
+	    if C_big_endian then
+		tsc <= tsc_25m(10 downto 3) & tsc_25m(18 downto 11) &
+		  tsc_25m(26 downto 19) & tsc_25m(34 downto 27);
+	    else
+		tsc <= tsc_25m(34 downto 3);
+	    end if;
 	end if;
     end process;
     end generate;
@@ -338,9 +360,9 @@ begin
 	trace_addr => trace_addr, trace_data => trace_data
     );
     end generate;
-	
+
     rs232_tx <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
-	
+
     -- DDS FM transmitter
     G_ddsfm:
     if C_ddsfm generate

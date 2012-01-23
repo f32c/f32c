@@ -54,20 +54,27 @@ begin
       mem_addr_offset, mem_size_pipelined)
     begin
 	-- byte
-	case mem_addr_offset is
-	    when "00" => mem_align_tmp_b <= mem_align_in(7 downto 0);
-	    when "01" => mem_align_tmp_b <= mem_align_in(15 downto 8);
-	    when "10" => mem_align_tmp_b <= mem_align_in(23 downto 16);
-	    when "11" => mem_align_tmp_b <= mem_align_in(31 downto 24);
-	end case;
+	if C_big_endian then
+	    case mem_addr_offset is
+		when "11" => mem_align_tmp_b <= mem_align_in(7 downto 0);
+		when "10" => mem_align_tmp_b <= mem_align_in(15 downto 8);
+		when "01" => mem_align_tmp_b <= mem_align_in(23 downto 16);
+		when "00" => mem_align_tmp_b <= mem_align_in(31 downto 24);
+	    end case;
+	else
+	    case mem_addr_offset is
+		when "00" => mem_align_tmp_b <= mem_align_in(7 downto 0);
+		when "01" => mem_align_tmp_b <= mem_align_in(15 downto 8);
+		when "10" => mem_align_tmp_b <= mem_align_in(23 downto 16);
+		when "11" => mem_align_tmp_b <= mem_align_in(31 downto 24);
+	    end case;
+	end if;
 
 	-- half-word
 	if C_big_endian then
 	    case mem_addr_offset is
-		when "00" => mem_align_tmp_h <=
-		  mem_align_in(7 downto 0) & mem_align_in(15 downto 8);
-		when "10" => mem_align_tmp_h <=
-		  mem_align_in(23 downto 16) & mem_align_in(31 downto 24);
+		when "10" => mem_align_tmp_h <= mem_align_in(15 downto 0);
+		when "00" => mem_align_tmp_h <= mem_align_in(31 downto 16);
 		when others => mem_align_tmp_h <= "----------------";
 	    end case;
 	else
@@ -80,17 +87,10 @@ begin
 
 	if mem_size_pipelined(1) = '1' then
 	    -- word load
-	    if mem_addr_offset /= "00" then
-		mem_align_out <= "--------------------------------";
+	    if mem_addr_offset = "00" then
+		mem_align_out <= mem_align_in;
 	    else
-		if C_big_endian then
-		    mem_align_out <=
-		      mem_align_in(7 downto 0) & mem_align_in(15 downto 8) &
-		      mem_align_in(23 downto 16) & mem_align_in(31 downto 24);
-		else
-		    mem_align_out <=
-		      mem_align_in(31 downto 8) & mem_align_tmp_b;
-		end if;
+		mem_align_out <= "--------------------------------";
 	    end if;
 	else
 	    if mem_size_pipelined(0) = '0' then
