@@ -47,10 +47,6 @@ loop:
 	} while ((c & SIO_RX_FULL) == 0);
 	INB(c, IO_SIO_BYTE);
 
-	/* X ? */
-	if (c == 'x')
-		goto boot;
-
 	/* CR ? */
 	if (c == '\r')
 		goto prompt;
@@ -61,6 +57,11 @@ loop:
 			INB(val, IO_SIO_STATUS);
 		} while (val & SIO_TX_BUSY);
 		OUTB(IO_SIO_BYTE, c);
+
+		/* X ? */
+		if (c == 'x')
+			goto boot;
+
 		goto loop;
 	}
 
