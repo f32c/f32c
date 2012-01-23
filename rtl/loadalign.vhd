@@ -33,6 +33,9 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 
 entity loadalign is
+    generic (
+	C_big_endian: boolean
+    );
     port (
 	mem_read_sign_extend_pipelined: in std_logic;
 	mem_addr_offset: in std_logic_vector(1 downto 0);
@@ -50,6 +53,7 @@ begin
     process(mem_align_in, mem_read_sign_extend_pipelined,
       mem_addr_offset, mem_size_pipelined)
     begin
+	-- byte
 	case mem_addr_offset is
 	    when "00" => mem_align_tmp_b <= mem_align_in(7 downto 0);
 	    when "01" => mem_align_tmp_b <= mem_align_in(15 downto 8);
@@ -57,19 +61,40 @@ begin
 	    when "11" => mem_align_tmp_b <= mem_align_in(31 downto 24);
 	end case;
 
-	case mem_addr_offset(1) is
-	    when '0' => mem_align_tmp_h <= mem_align_in(15 downto 0);
-	    when '1' => mem_align_tmp_h <= mem_align_in(31 downto 16);
-	end case;
+	-- half-word
+	if C_big_endian then
+	    case mem_addr_offset is
+		when "00" => mem_align_tmp_h <=
+		  mem_align_in(7 downto 0) & mem_align_in(15 downto 8);
+		when "10" => mem_align_tmp_h <=
+		  mem_align_in(23 downto 16) & mem_align_in(31 downto 24);
+		when others => mem_align_tmp_h <= "----------------";
+	    end case;
+	else
+	    case mem_addr_offset is
+		when "00" => mem_align_tmp_h <= mem_align_in(15 downto 0);
+		when "10" => mem_align_tmp_h <= mem_align_in(31 downto 16);
+		when others => mem_align_tmp_h <= "----------------";
+	    end case;
+	end if;
 
 	if mem_size_pipelined(1) = '1' then
+	    -- word load
 	    if mem_addr_offset /= "00" then
 		mem_align_out <= "--------------------------------";
 	    else
-		mem_align_out <= mem_align_in(31 downto 8) & mem_align_tmp_b;
+		if C_big_endian then
+		    mem_align_out <=
+		      mem_align_in(7 downto 0) & mem_align_in(15 downto 8) &
+		      mem_align_in(23 downto 16) & mem_align_in(31 downto 24);
+		else
+		    mem_align_out <=
+		      mem_align_in(31 downto 8) & mem_align_tmp_b;
+		end if;
 	    end if;
 	else
-	    if mem_size_pipelined(0) = '0' then -- byte load
+	    if mem_size_pipelined(0) = '0' then
+		-- byte load
 		if mem_read_sign_extend_pipelined = '1' then
 		    if mem_align_tmp_b(7) = '1' then
 			mem_align_out <=
@@ -82,7 +107,8 @@ begin
 		    mem_align_out <=
 		      x"000000" & mem_align_tmp_b(7 downto 0);
 		end if;
-	    else -- half word load
+	    else
+		-- half word load
 		if mem_addr_offset(0) = '1' then
 		    mem_align_out <= "--------------------------------";
 		elsif mem_read_sign_extend_pipelined = '1' then
