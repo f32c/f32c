@@ -8,9 +8,9 @@
 
 
 #if _BYTE_ORDER == _BIG_ENDIAN
-static char *prompt = "\r\nf32c_be> ";
+static char *prompt = "\r\nf32c/be> ";
 #elif _BYTE_ORDER == _LITTLE_ENDIAN
-static char *prompt = "\r\nf32c_le> ";
+static char *prompt = "\r\nf32c/le> ";
 #else
 #error "Unsupported byte order."
 #endif

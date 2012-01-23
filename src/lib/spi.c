@@ -1,6 +1,7 @@
 
-#include <io.h>
 #include <types.h>
+#include <endian.h>
+#include <io.h>
 
 
 #if (SPI_SI != 0x80)
