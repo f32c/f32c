@@ -7,7 +7,7 @@ endif
 # -EB big-endian (default); -EL little-endian
 # f32c currently can execute only little-endian code
 ifndef ENDIANFLAGS
-ENDIANFLAGS = -EL
+ENDIANFLAGS = -EB
 endif
 
 # C flavor: K&R or ANSI (C99)

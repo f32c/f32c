@@ -3,11 +3,13 @@
 #define _STRING_H_
 
 #include <types.h>
+#include <endian.h>
 
 
 #define	memcpy(dst, src, len) _memcpy(dst, src, len)
 
-#if 1
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+/* XXX this works on pure SWL / SWR luck (unimplemented instructions!) */
 #define	strcpy(dst, src) __builtin_strcpy((dst), (src))
 #else
 #define	strcpy(dst, src)					\
@@ -33,6 +35,7 @@ strcmp(const char *s1, const char *s2)
 			c1 = *((int *)s1);
 			c2 = *((int *)s2);
 			if (c1 != c2) {
+#if _BYTE_ORDER == _LITTLE_ENDIAN
 				if ((c1 & 0xffff) != (c2 & 0xffff)) {
 					b1 = c1 & 0xff;
 					b2 = c2 & 0xff;
@@ -52,6 +55,29 @@ strcmp(const char *s1, const char *s2)
 					b2 = c2 & 0xff;
 					return (b1 - b2);
 				}
+#elif _BYTE_ORDER == _BIG_ENDIAN
+				if ((c1 & 0xffff0000) != (c2 & 0xffff0000)) {
+					c1 >>= 16;
+					c2 >>= 16;
+					b1 = c1 & 0xff00;
+					b2 = c2 & 0xff00;
+					if (b1 == 0 || b1 != b2)
+						return (b1 - b2);
+					b1 = c1 & 0xff;
+					b2 = c2 & 0xff;
+					return (b1 - b2);
+				} else {
+					b1 = c1 & 0xff00;
+					b2 = c2 & 0xff00;
+					if (b1 == 0 || b1 != b2)
+						return (b1 - b2);
+					b1 = c1 & 0xff;
+					b2 = c2 & 0xff;
+					return (b1 - b2);
+				}
+#else
+#error "Unsupported byte order."
+#endif
 			}
 			/* Check if the word contains any zero bytes */
 			v0 = (((uint32_t)c1) - t0) & t1;
