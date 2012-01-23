@@ -53,9 +53,6 @@ entity glue is
 	C_movn_movz: boolean := false; -- true: +5 LUT4, -DMIPS
 	C_fast_ID: boolean := true; -- false: +7 LUT4, -Fmax
 
-	-- This changes movn_movz calling convenction (swaps rs / rt)
-	C_mips32_movn_movz: boolean := false; -- true: +12 LUT4, -Fmax
-
 	-- SoC configuration options
 	C_mem_size: string := "16k";
 	C_tsc: boolean := true; -- true: +54 LUTs
@@ -136,7 +133,6 @@ begin
 	C_mult_enable => C_mult_enable,
 	C_sign_extend => C_sign_extend,
 	C_movn_movz => C_movn_movz,
-	C_mips32_movn_movz => C_mips32_movn_movz,
 	C_branch_likely => C_branch_likely,
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
