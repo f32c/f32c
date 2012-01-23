@@ -172,12 +172,12 @@ begin
     if C_sio generate
     sio: entity sio
     generic map (
+	C_big_endian => C_big_endian,
 	C_clk_freq => C_clk_freq
     )
     port map (
 	clk => clk, ce => sio_ce, txd => sio_txd, rxd => rs232_rx,
-	byte_we => dmem_byte_we, bus_in => cpu_to_dmem, -- XXX revisit endian
-	bus_out => from_sio
+	byte_we => dmem_byte_we, bus_in => cpu_to_dmem, bus_out => from_sio
     );
     sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
       dmem_addr(4 downto 2) = "001" else '0';
