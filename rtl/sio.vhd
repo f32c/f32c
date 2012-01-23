@@ -34,6 +34,7 @@ use IEEE.numeric_std.ALL;
 
 entity sio is
     generic (
+	C_big_endian: boolean;
 	C_clk_freq: integer;
 	C_init_baudrate: integer := 115200;
 	C_fixed_baudrate: boolean := false;
@@ -115,7 +116,11 @@ begin
 	    -- bus interface logic
 	    if (ce = '1') then
 		if not C_fixed_baudrate and byte_we(2) = '1' then
-		    clkdiv <= bus_in(31 downto 16);
+		    if C_big_endian then
+			clkdiv <= bus_in(23 downto 16) & bus_in(31 downto 24);
+		    else
+			clkdiv <= bus_in(31 downto 16);
+		    end if;
 		end if;
 		if (byte_we(0) = '1') then
 		    if (tx_phase = "0000") then
