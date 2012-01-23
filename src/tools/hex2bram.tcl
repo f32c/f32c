@@ -79,7 +79,6 @@ while {[eof $bramfile] == 0} {
 	    set generic 1
 	    set section [lindex [split [string trim $line] _:] 1]
 	}
-    } elseif {$section == "undefined"} {
 	# Detect beginning of lattice DP16KB block
 	if {[string first ": DP16KB" $line] != -1} {
 	    set section [lindex [split [string trim $line] _:] 1]
