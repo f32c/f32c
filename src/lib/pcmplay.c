@@ -1,8 +1,6 @@
 
-#include <io.h>
-#include <sio.h>
-#include <stdio.h>
 #include <types.h>
+#include <io.h>
 
 
 #define	PCM_SKIP 	25000
@@ -142,7 +140,8 @@ pcm_play(void)
 		if (c & 0x8000)
 			dds_out += 0xffff0000;
 	}
-	OUTW(IO_PCM_OUT, pcm_out);
+	OUTH(IO_PCM_OUT, pcm_out);
+	OUTH(IO_PCM_OUT + 2, pcm_out >> 16);
 	delay_idx &= 0x0fffff;
 	delay_idx |= 0x100000;
 	
