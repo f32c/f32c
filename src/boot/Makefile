@@ -6,7 +6,7 @@ LOADADDR = 0x00000000
 CFLAGS += -G 0
 
 # No branch likely instructions in the loader
-CFLAGS += -mno-branch-likely -march=mips2 -mtune=f32c
+CFLAGS += -mno-branch-likely
 
 PROG = loader
 
