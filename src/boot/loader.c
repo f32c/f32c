@@ -74,8 +74,12 @@ loop:
 		} while ((c & SIO_RX_FULL) == 0);
 		INB(c, IO_SIO_BYTE);
 
-		if (c == '\r')
-			goto loop;
+		if (c == '\r') {
+			if (len < 0)
+				goto boot;
+			else
+				goto loop;
+		}
 
 		val <<= 4;
 		if (c >= 'a')
@@ -94,8 +98,12 @@ loop:
 			cp = (char *) (val & 0xffff);
 
 		/* Record type - only type 0 contains valid data */
-		if (pos == 7 && (val & 0xff) == 1)
-			goto boot;
+		if (pos == 7 && (val & 0xff) != 0) {
+			if ((val & 0xff) == 1) /* EOF marker */
+				len = -1; /* boot after receiving a CR char */
+			else
+				len = 0;
+		}
 
 		/* Data */
 		if ((pos & 1) && pos > 8 && pos < len)
