@@ -1,12 +1,20 @@
 
 #include <types.h>
+#include <endian.h>
 #include <io.h>
 
 
 #define BOOTADDR	0x000001a0
 
 
-static char *prompt = "\r\nf32c> ";
+#if _BYTE_ORDER == _BIG_ENDIAN
+static char *prompt = "\r\nf32c_be> ";
+#elif _BYTE_ORDER == _LITTLE_ENDIAN
+static char *prompt = "\r\nf32c_le> ";
+#else
+#error "Unsupported byte order."
+#endif
+
 int cold_boot = 1;
 
 
