@@ -698,7 +698,28 @@ begin
     begin
 	if rising_edge(clk) then
 	    if MEM_running and EX_running and not MEM_cancel_EX then
-		EX_MEM_mem_data_out <= EX_from_shift;
+		if C_big_endian then
+		    if ID_EX_mem_size(1) = '1' then
+			-- word write
+			EX_MEM_mem_data_out <=
+			  EX_from_shift(7 downto 0) &
+			  EX_from_shift(15 downto 8) &
+			  EX_from_shift(23 downto 16) &
+			  EX_from_shift(31 downto 24);
+		    elsif ID_EX_mem_size(0) = '1' then
+			-- half-word write
+			EX_MEM_mem_data_out <=
+			  EX_from_shift(23 downto 16) &
+			  EX_from_shift(31 downto 24) &
+			  EX_from_shift(7 downto 0) &
+			  EX_from_shift(15 downto 8);
+		    else
+			-- byte write
+			EX_MEM_mem_data_out <= EX_from_shift;
+		    end if;
+		else
+		    EX_MEM_mem_data_out <= EX_from_shift;
+		end if;
 		EX_MEM_addsub_data <= EX_from_alu_addsubx(31 downto 0);
 		EX_MEM_mem_size <= ID_EX_mem_size;
 		EX_MEM_multicycle_lh_lb <= not C_load_aligner
@@ -876,6 +897,9 @@ begin
     G_pipelined_load_aligner:
     if C_load_aligner generate
     loadalign: entity loadalign
+    generic map (
+	C_big_endian => C_big_endian
+    )
     port map (
 	mem_read_sign_extend_pipelined => MEM_WB_mem_read_sign_extend,
 	mem_size_pipelined => MEM_WB_mem_size,
