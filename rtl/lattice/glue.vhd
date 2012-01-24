@@ -163,10 +163,6 @@ begin
 	trace_addr => trace_addr, trace_data => trace_data
     );
 
-    -- instruction / data BRAMs
-    dmem_bram_enable <=
-      dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
-
     -- RS232 sio
     G_sio:
     if C_sio generate
@@ -337,6 +333,7 @@ begin
       else dmem_to_cpu;
 
     -- Block RAM
+    dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
     bram: entity bram
     generic map (
 	C_mem_size => C_mem_size
