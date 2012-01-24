@@ -1,6 +1,7 @@
 
-#include <io.h>
 #include <types.h>
+#include <endian.h>
+#include <io.h>
 #include <sio.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,6 +51,9 @@ void sram_wr(int a, int d)
 		".set noreorder\n"
 		"lui	$3, 0x8000\n"
 		"addu	$3, $3, %1\n"
+#if _BYTE_ORDER == _BIG_ENDIAN
+		"sll %0, 16\n"
+#endif
 		"sw %0, 0($3)\n"
 		"sw %0, 0($3)\n"
 		"sw %0, 0($3)\n"
@@ -77,6 +81,9 @@ int sram_rd(int a)
 		"lw %0, 0($3)\n"
 		"lw %0, 0($3)\n"
 		"lw %0, 0($3)\n"
+#if _BYTE_ORDER == _BIG_ENDIAN
+		"srl %0, 16\n"
+#endif
 		".set reorder\n"
 		: "=r" (r)
 		: "r" (a)
