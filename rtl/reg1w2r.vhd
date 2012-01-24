@@ -25,14 +25,14 @@ architecture Behavioral of reg1w2r is
     type reg_type is array(0 to 31) of std_logic_vector(31 downto 0);
     signal R1, R2, RD: reg_type;
 begin
-    R1(to_integer(unsigned(wr_addr))) <= wr_data when
+    R1(conv_integer(wr_addr)) <= wr_data when
 	rising_edge(clk) and wr_enable = '1';
-    R2(to_integer(unsigned(wr_addr))) <= wr_data when
+    R2(conv_integer(wr_addr)) <= wr_data when
 	rising_edge(clk) and wr_enable = '1';
-    RD(to_integer(unsigned(wr_addr))) <= wr_data when
+    RD(conv_integer(wr_addr)) <= wr_data when
 	rising_edge(clk) and wr_enable = '1' and C_debug;
 
-    rd1_data <= R1(to_integer(unsigned(rd1_addr)));
-    rd2_data <= R2(to_integer(unsigned(rd2_addr)));
-    rdd_data <= RD(to_integer(unsigned(rdd_addr))) when C_debug;
+    rd1_data <= R1(conv_integer(rd1_addr));
+    rd2_data <= R2(conv_integer(rd2_addr));
+    rdd_data <= RD(conv_integer(rdd_addr)) when C_debug;
 end Behavioral;

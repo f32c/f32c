@@ -59,14 +59,14 @@ begin
 		when "11" => mem_align_tmp_b <= mem_align_in(7 downto 0);
 		when "10" => mem_align_tmp_b <= mem_align_in(15 downto 8);
 		when "01" => mem_align_tmp_b <= mem_align_in(23 downto 16);
-		when "00" => mem_align_tmp_b <= mem_align_in(31 downto 24);
+		when others => mem_align_tmp_b <= mem_align_in(31 downto 24);
 	    end case;
 	else
 	    case mem_addr_offset is
 		when "00" => mem_align_tmp_b <= mem_align_in(7 downto 0);
 		when "01" => mem_align_tmp_b <= mem_align_in(15 downto 8);
 		when "10" => mem_align_tmp_b <= mem_align_in(23 downto 16);
-		when "11" => mem_align_tmp_b <= mem_align_in(31 downto 24);
+		when others => mem_align_tmp_b <= mem_align_in(31 downto 24);
 	    end case;
 	end if;
 

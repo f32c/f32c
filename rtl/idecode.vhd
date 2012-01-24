@@ -78,8 +78,8 @@ begin
     reg1_addr <= instruction(25 downto 21);
     reg2_addr <= instruction(20 downto 16);
 
-    reg1_zero <= reg1_addr = "00000";
-    x_reg2_zero <= reg2_addr = "00000";
+    reg1_zero <= instruction(25 downto 21) = "00000";
+    x_reg2_zero <= instruction(20 downto 16) = "00000";
     reg2_zero <= x_reg2_zero;
 
     -- beq, bne, blez, bgtz
@@ -209,7 +209,7 @@ begin
 	    -- There's no need set latency only for loads, because for saves
 	    -- the target register is $0 (zero), so latency is ignored
 	    latency(0) <= '1'; -- resolve load-use hazard
-	    latency(1) <= not mem_size(1); -- resolve load aligner hazard
+	    latency(1) <= not opcode(1); -- resolve load aligner hazard
 	end if;
     end process;
 
