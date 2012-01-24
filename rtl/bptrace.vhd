@@ -18,6 +18,10 @@ end bptrace;
 architecture Structure of bptrace is
     type bptrace_type is array(0 to 8191) of std_logic_vector(1 downto 0);
     signal bptrace: bptrace_type;
+
+    attribute syn_ramstyle: string;
+    attribute syn_ramstyle of bptrace: signal is "no_rw_check";
+
 begin
     bptrace(to_integer(unsigned(wraddr))) <= din when
 	rising_edge(clk) and we = '1';
