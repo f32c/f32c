@@ -23,8 +23,6 @@ architecture Structure of bptrace is
     attribute syn_ramstyle of bptrace: signal is "no_rw_check";
 
 begin
-    bptrace(to_integer(unsigned(wraddr))) <= din when
-	rising_edge(clk) and we = '1';
-    dout <= bptrace(to_integer(unsigned(rdaddr))) when
-	rising_edge(clk) and re = '1';
+    bptrace(conv_integer(wraddr)) <= din when rising_edge(clk) and we = '1';
+    dout <= bptrace(conv_integer(rdaddr)) when rising_edge(clk) and re = '1';
 end Structure;
