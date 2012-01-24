@@ -77,9 +77,8 @@ architecture Behavioral of sio is
     signal tx_running: std_logic;
     signal tx_ser: std_logic_vector(8 downto 0);
 
-    signal clkdiv: std_logic_vector(15 downto 0) :=
-      std_logic_vector(to_unsigned(C_clk_freq * 1000000 / C_init_baudrate, 16));
-    signal rx_clkcnt: std_logic_vector(15 downto 0);
+    -- receive logic
+    signal rx_tickcnt: std_logic_vector(3 downto 0);
     signal rx_running: std_logic;
     signal rx_des: std_logic_vector(7 downto 0);
     signal rx_phase: std_logic_vector(3 downto 0);
@@ -127,9 +126,10 @@ begin
 	    if (ce = '1') then
 		if not C_fixed_baudrate and byte_we(2) = '1' then
 		    if C_big_endian then
-			clkdiv <= bus_in(23 downto 16) & bus_in(31 downto 24);
+			R_baudrate <=
+			  bus_in(23 downto 16) & bus_in(31 downto 24);
 		    else
-			clkdiv <= bus_in(31 downto 16);
+			R_baudrate <= bus_in(31 downto 16);
 		    end if;
 		end if;
 		if (byte_we(0) = '1') then
@@ -159,21 +159,26 @@ begin
 	    end if;
 
 	    -- rx logic
-	    if (not C_tx_only) then
-		if (rx_phase = "0000") then
+	    if (R_baudgen(16) = '1' and not C_tx_only) then
+		if (rx_phase = x"0") then
 		    if (rxd = '0') then
-			-- start bit, delay further sampling for 0.5 T
-			rx_phase <= "0001";
-			rx_clkcnt <= '0' & clkdiv(15 downto 1);
+			-- start bit, delay further sampling for ~0.5 T
+			if (rx_tickcnt = x"6") then
+			    rx_phase <= rx_phase + 1;
+			    rx_tickcnt <= x"0";
+			else
+			    rx_tickcnt <= rx_tickcnt + 1;
+			end if;
+		    else
+			rx_tickcnt <= x"0";
 		    end if;
 		else
-		    rx_clkcnt <= rx_clkcnt + 1;
-		    if (rx_clkcnt = clkdiv) then
-			rx_clkcnt <= x"0000";
+		    rx_tickcnt <= rx_tickcnt + 1;
+		    if (rx_tickcnt = x"f") then
 			rx_des <= rxd & rx_des(7 downto 1);
 			rx_phase <= rx_phase + 1;
-			if (rx_phase = "1010") then
-			    rx_phase <= "0000";
+			if (rx_phase = x"9") then
+			    rx_phase <= x"0";
 			    rx_full <= '1';
 			    rx_byte <= rx_des;
 			    -- XXX properly detect rx overruns
