@@ -67,8 +67,8 @@ end sio;
 architecture Behavioral of sio is
     -- baud * 16 impulse generator
     signal R_baudrate: std_logic_vector(15 downto 0) :=
-      std_logic_vector(to_unsigned(1487, 16)); -- 115200 @ 81.25 MHz
-      --std_logic_vector(to_unsigned(C_init_baudrate * (2**16) / C_clk_freq, 16));
+      std_logic_vector(to_unsigned(
+	C_init_baudrate * 2**10 / 1000 * 2**10 / 1000 / C_clk_freq, 16));
     signal R_baudgen: std_logic_vector(16 downto 0);
 
     -- transmit logic
@@ -163,7 +163,7 @@ begin
 		if (rx_phase = x"0") then
 		    if (rxd = '0') then
 			-- start bit, delay further sampling for ~0.5 T
-			if (rx_tickcnt = x"6") then
+			if (rx_tickcnt = x"8") then
 			    rx_phase <= rx_phase + 1;
 			    rx_tickcnt <= x"0";
 			else
