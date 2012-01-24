@@ -632,8 +632,8 @@ begin
 
     -- compute shift amount and function
     EX_2bit_add <= EX_eff_reg1(1 downto 0) + ID_EX_immediate(1 downto 0);
-    EX_mem_align_shamt <= EX_2bit_add when not C_big_endian else
-      "00" when ID_EX_mem_size(1) = '1' else
+    EX_mem_align_shamt <= "00" when ID_EX_mem_size(1) = '1' else
+      EX_2bit_add when not C_big_endian else
       not(EX_2bit_add(1)) & '0' when ID_EX_mem_size = "01" else
       "00" when EX_2bit_add = "11" else
       "01" when EX_2bit_add = "10" else
