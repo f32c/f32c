@@ -65,13 +65,23 @@ end sio;
 --   7..0  tx_byte
 --
 architecture Behavioral of sio is
+    -- baud * 16 impulse generator
+    signal R_baudrate: std_logic_vector(15 downto 0) :=
+      std_logic_vector(to_unsigned(1487, 16)); -- 115200 @ 81.25 MHz
+      --std_logic_vector(to_unsigned(C_init_baudrate * (2**16) / C_clk_freq, 16));
+    signal R_baudgen: std_logic_vector(16 downto 0);
+
+    -- transmit logic
+    signal tx_tickcnt: std_logic_vector(3 downto 0);
+    signal tx_phase: std_logic_vector(3 downto 0);
+    signal tx_running: std_logic;
+    signal tx_ser: std_logic_vector(8 downto 0);
+
     signal clkdiv: std_logic_vector(15 downto 0) :=
       std_logic_vector(to_unsigned(C_clk_freq * 1000000 / C_init_baudrate, 16));
-    signal tx_clkcnt, rx_clkcnt: std_logic_vector(15 downto 0);
-    signal tx_running, rx_running: std_logic;
-    signal tx_ser: std_logic_vector(8 downto 0);
+    signal rx_clkcnt: std_logic_vector(15 downto 0);
+    signal rx_running: std_logic;
     signal rx_des: std_logic_vector(7 downto 0);
-    signal tx_phase: std_logic_vector(3 downto 0);
     signal rx_phase: std_logic_vector(3 downto 0);
     signal rx_byte: std_logic_vector(7 downto 0);
     signal rx_full: std_logic;
@@ -103,7 +113,7 @@ begin
     --	"1010" stop bit
     --
 
-    tx_running <= '0' when tx_phase = "0000" else '1';
+    tx_running <= '1' when tx_phase /= x"0" else '0';
     bus_out(31 downto 11) <= "---------------------";
     bus_out(10) <= tx_running;
     bus_out(9 downto 8) <= rx_overruns & rx_full when not C_tx_only else "--";
@@ -123,8 +133,8 @@ begin
 		    end if;
 		end if;
 		if (byte_we(0) = '1') then
-		    if (tx_phase = "0000") then
-			tx_phase <= "0001";
+		    if (tx_phase = x"0") then
+			tx_phase <= x"1";
 			tx_ser <= bus_in(7 downto 0) & '0';
 		    end if;
 		else
@@ -133,15 +143,17 @@ begin
 		end if;
 	    end if;
 
+	    -- baud generator
+	    R_baudgen <= ('0' & R_baudgen(15 downto 0)) + ('0' & R_baudrate);
+
 	    -- tx logic
-	    if (tx_phase /= "0000") then
-		tx_clkcnt <= tx_clkcnt + 1;
-		if (tx_clkcnt = clkdiv) then
-		    tx_clkcnt <= x"0000";
+	    if (tx_phase /= x"0" and R_baudgen(16) = '1') then
+		tx_tickcnt <= tx_tickcnt + 1;
+		if (tx_tickcnt = x"f") then
 		    tx_ser <= '1' & tx_ser(8 downto 1);
 		    tx_phase <= tx_phase + 1;
-		    if (tx_phase = "1010") then
-			tx_phase <= "0000";
+		    if (tx_phase = x"a") then
+			tx_phase <= x"0";
 		    end if;
 		end if;
 	    end if;
