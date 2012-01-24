@@ -158,6 +158,7 @@ architecture Behavioral of pipeline is
     signal EX_from_alu_logic, EX_from_alt: std_logic_vector(31 downto 0);
     signal EX_from_alu_equal: boolean;
     signal EX_2bit_add: std_logic_vector(1 downto 0);
+    signal EX_mem_align_shamt: std_logic_vector(1 downto 0);
     signal EX_mem_byte_we: std_logic_vector(3 downto 0);
     signal EX_take_branch: boolean;
     -- boundary to stage 4
@@ -631,12 +632,19 @@ begin
 
     -- compute shift amount and function
     EX_2bit_add <= EX_eff_reg1(1 downto 0) + ID_EX_immediate(1 downto 0);
-    EX_shamt <= EX_2bit_add & "000" when ID_EX_mem_cycle = '1' else
+    EX_mem_align_shamt <= EX_2bit_add when not C_big_endian else
+      "00" when ID_EX_mem_size(1) = '1' else
+      not(EX_2bit_add(1)) & '0' when ID_EX_mem_size = "01" else
+      "00" when EX_2bit_add = "11" else
+      "01" when EX_2bit_add = "10" else
+      "10" when EX_2bit_add = "01" else
+      "11" when EX_2bit_add = "00";
+    EX_shamt <= EX_mem_align_shamt & "---" when ID_EX_mem_cycle = '1' else
       EX_eff_reg1(4 downto 0) when ID_EX_immediate(2) = '1' -- shift variable
       else ID_EX_immediate(10 downto 6); -- shift immediate
 
-    EX_shift_funct_8_16 <= "00" -- shift left logical
-      when ID_EX_mem_cycle = '1' else ID_EX_immediate(1 downto 0);
+    EX_shift_funct_8_16 <= "00" when ID_EX_mem_cycle = '1' -- sll
+      else ID_EX_immediate(1 downto 0);
 
     -- instantiate the barrel shifter
     shift: entity shift
@@ -699,28 +707,7 @@ begin
     begin
 	if rising_edge(clk) then
 	    if MEM_running and EX_running and not MEM_cancel_EX then
-		if C_big_endian then
-		    if ID_EX_mem_size(1) = '1' then
-			-- word write
-			EX_MEM_mem_data_out <=
-			  EX_from_shift(7 downto 0) &
-			  EX_from_shift(15 downto 8) &
-			  EX_from_shift(23 downto 16) &
-			  EX_from_shift(31 downto 24);
-		    elsif ID_EX_mem_size(0) = '1' then
-			-- half-word write
-			EX_MEM_mem_data_out <=
-			  EX_from_shift(23 downto 16) &
-			  EX_from_shift(31 downto 24) &
-			  EX_from_shift(7 downto 0) &
-			  EX_from_shift(15 downto 8);
-		    else
-			-- byte write
-			EX_MEM_mem_data_out <= EX_from_shift;
-		    end if;
-		else
-		    EX_MEM_mem_data_out <= EX_from_shift;
-		end if;
+		EX_MEM_mem_data_out <= EX_from_shift;
 		EX_MEM_addsub_data <= EX_from_alu_addsubx(31 downto 0);
 		EX_MEM_mem_size <= ID_EX_mem_size;
 		EX_MEM_multicycle_lh_lb <= not C_load_aligner
@@ -843,14 +830,15 @@ begin
     end generate;
 
     -- connect outbound signals for memory access
-    dmem_addr <= EX_MEM_addsub_data(31 downto 2);
-    dmem_data_out <= EX_MEM_mem_data_out;
-    dmem_addr_strobe <= EX_MEM_mem_cycle;
+    dmem_data_out <= EX_MEM_mem_data_out(7 downto 0) &
+      EX_MEM_mem_data_out(15 downto 8) & EX_MEM_mem_data_out(23 downto 16) &
+      EX_MEM_mem_data_out(31 downto 24) when C_big_endian
+      else EX_MEM_mem_data_out;
     dmem_byte_we <= EX_MEM_mem_byte_we;
+    dmem_addr <= EX_MEM_addsub_data(31 downto 2);
+    dmem_addr_strobe <= EX_MEM_mem_cycle;
 
     -- memory output must be externally registered (it is with internal BRAM)
-    -- i.e. dmem_data_in??? XXX what is the meaning of this - revisit!
-
     -- inbound data word: big / little endian
     MEM_data_in <= dmem_data_in(7 downto 0) & dmem_data_in(15 downto 8) &
       dmem_data_in(23 downto 16) & dmem_data_in(31 downto 24) when C_big_endian
