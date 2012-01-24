@@ -7,7 +7,7 @@ NET btn_north           LOC=V4   |IOSTANDARD=LVTTL |PULLDOWN;
 NET btn_south           LOC=K17  |IOSTANDARD=LVTTL |PULLDOWN;  # is also reset
 NET btn_west            LOC=D18  |IOSTANDARD=LVTTL |PULLDOWN;
 
-NET clk_50m		LOC=C9   |IOSTANDARD=LVCMOS33;
+NET clk_50m		LOC=C9   |IOSTANDARD=LVCMOS33 |CLOCK_DEDICATED_ROUTE=FALSE;
 NET clk_50m PERIOD=20.0ns HIGH 40%;
 
 # ==== Character LCD (LCD) ====
