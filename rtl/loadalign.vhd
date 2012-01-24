@@ -88,7 +88,12 @@ begin
 	if mem_size_pipelined(1) = '1' then
 	    -- word load
 	    if mem_addr_offset = "00" then
-		mem_align_out <= mem_align_in;
+		if C_big_endian then
+		    mem_align_out <= mem_align_in;
+		else
+		    mem_align_out <=
+		      mem_align_in(31 downto 8) & mem_align_tmp_b;
+		end if;
 	    else
 		mem_align_out <= "--------------------------------";
 	    end if;
