@@ -27,8 +27,8 @@
 # $Id: $
 
 
-if {$argc != 2} {
-    puts "Usage: elf2hex.tcl ifile ofile"
+if {$argc != 1} {
+    puts "Usage: isa_check.tcl ifile"
     exit 1
 }
 
@@ -75,23 +75,6 @@ while {[eof $elffile] == 0} {
 }
 close $elffile
 
-set hexfile [open [lindex $argv 1] w]
-foreach addr [lsort -integer [array names mem]] {
-    if {$addr % 16 == 0} {
-	puts -nonewline $hexfile "[format %08x $addr]: "
-    }
-    if {$addr % 16 == 12} {
-	puts $hexfile "$mem($addr)"
-    } else {
-	puts -nonewline $hexfile "$mem($addr) "
-    }
-}
-if {$addr % 16 != 12} {
-    puts $hexfile ""
-}
-puts $hexfile ""
-close $hexfile
-
 array set instr_map ""
 set elffile [open "| mips-elf-objdump -d [lindex $argv 0]"]
 set tot 0
@@ -116,8 +99,11 @@ foreach instr [array names instr_map] {
 }
 
 set tabcnt 0
-puts -nonewline "First word @ [lindex [lsort -integer [array names mem]] 0], "
-puts "last word @ [lindex [lsort -integer [array names mem]] end]."
+set start [lindex [lsort -integer [array names mem]] 0]
+set end [lindex [lsort -integer [array names mem]] end]
+puts -nonewline "First word @ $start, "
+puts -nonewline "last word @ $end, "
+puts "$endian endian."
 puts "Instruction frequencies (total $tot):"
 foreach entry [lsort -integer -decreasing -index 1 $instr_list] {
     puts -nonewline "[format %6s [lindex $entry 0]]:[format %5d [lindex $entry 1]]"
