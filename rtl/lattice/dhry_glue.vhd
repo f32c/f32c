@@ -36,6 +36,7 @@ entity glue is
 	C_clk_freq: integer := 81;
 
 	-- ISA options
+	C_big_endian: boolean := false;
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true; -- +31 LUT4
@@ -129,11 +130,12 @@ begin
     -- f32c core
     pipeline: entity pipeline
     generic map (
-	C_PC_mask => C_PC_mask,
-	C_mult_enable => C_mult_enable,
+	C_big_endian => C_big_endian,
+	C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend,
 	C_movn_movz => C_movn_movz,
-	C_branch_likely => C_branch_likely,
+	C_mult_enable => C_mult_enable,
+	C_PC_mask => C_PC_mask,
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
@@ -153,8 +155,6 @@ begin
 	trace_addr => "000000", trace_data => open
     );
 
-    -- instruction / data BRAMs
-    dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
 
     -- RS232 sio
     G_sio:
@@ -162,13 +162,13 @@ begin
     sio: entity sio
     generic map (
 	C_clk_freq => C_clk_freq,
+	C_big_endian => C_big_endian,
 	C_fixed_baudrate => C_fixed_baudrate,
 	C_bypass => C_sio_bypass
     )
     port map (
 	clk => clk, ce => sio_ce, txd => rs232_tx, rxd => rs232_rx,
-	byte_we => dmem_byte_we, bus_in => cpu_to_dmem,
-	bus_out => from_sio
+	byte_we => dmem_byte_we, bus_in => cpu_to_dmem, bus_out => from_sio
     );
     sio_ce <= dmem_addr_strobe when dmem_addr(31) = '1' and
       dmem_addr(4 downto 2) = "001" else '0';
@@ -176,13 +176,8 @@ begin
 
     --
     -- I/O port map:
-    -- 0xf*****00: (4B, RW) GPIO (LED, switches/buttons)
     -- 0xf*****04: (4B, RW) SIO
     -- 0xf*****08: (4B, RD) TSC
-    -- 0xf*****0c: (4B, WR) PCM signal
-    -- 0xf*****10: (1B, RW) SPI Flash
-    -- 0xf*****14: (1B, RW) SPI MicroSD
-    -- 0xf*****1c: (4B, WR) FM DDS register
     --
     io_to_cpu <= from_sio when dmem_addr(3) = '0' else tsc;
     final_to_cpu <= io_to_cpu when dmem_addr(31) = '1' else dmem_to_cpu;
@@ -199,12 +194,18 @@ begin
     process(clk, tsc_25m)
     begin
 	if rising_edge(clk) and tsc_25m(2 downto 1) = "10" then
-	    tsc <= tsc_25m(34 downto 3);
+	    if C_big_endian then
+		tsc <= tsc_25m(10 downto 3) & tsc_25m(18 downto 11) &
+		  tsc_25m(26 downto 19) & tsc_25m(34 downto 27);
+	    else
+		tsc <= tsc_25m(34 downto 3);
+	    end if;
 	end if;
     end process;
     end generate;
 
     -- Block RAM
+    dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
     bram: entity bram
     generic map (
 	C_mem_size => C_mem_size
