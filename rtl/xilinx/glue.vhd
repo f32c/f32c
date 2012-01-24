@@ -31,44 +31,51 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity glue is
-	generic(
-		C_clk_mhz: integer := 50; -- must be a multiple of 5
-		C_mult_enable: boolean := false;
-		C_branch_prediction: boolean := true;
-		C_result_forwarding: boolean := true;
-		C_register_technology: string := "xilinx_ram16x1d";
-		-- debugging
-		C_serial_trace: boolean := true
---
--- Dynamic branch prediction (Spartan3A, trace off):
---  Total Number Slice Registers:         647 out of  11,776    5%
---    Number used as Flip Flops:          645
---    Number used as Latches:               2
---  Number of 4 input LUTs:             1,629 out of  11,776   13%
---  Number of occupied Slices:            920 out of   5,888   15%
---
--- Static branch prediction (Spartan3A, trace off):
---  Number of Slice Flip Flops:           599 out of  11,776    5%
---  Number of 4 input LUTs:             1,616 out of  11,776   13%
---  Number of occupied Slices:            895 out of   5,888   15%
---
--- No branch prediction (Spartan3A, trace off):
---  Number of Slice Flip Flops:           595 out of  11,776    5%
---  Number of 4 input LUTs:             1,552 out of  11,776   13%
---  Number of occupied Slices:            877 out of   5,888   14%
---
-	);
-	port (
-		clk_50m: in std_logic;
-		rs232_dce_txd: out std_logic;
-		rs232_dce_rxd: in std_logic;
-		lcd_db: out std_logic_vector(7 downto 0);
-		lcd_e, lcd_rs, lcd_rw: out std_logic;
-		led: out std_logic_vector(7 downto 0);
-		rot_a, rot_b, rot_center, btn_south, btn_north, btn_east, btn_west: in std_logic;
-		sw: in std_logic_vector(3 downto 0);
-		j1, j2: out std_logic_vector(3 downto 0)
-	);
+    generic(
+	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
+	C_clk_freq: integer := 81;
+
+	-- ISA options
+	C_big_endian: boolean := true;
+	C_mult_enable: boolean := true;
+	C_branch_likely: boolean := true;
+	C_sign_extend: boolean := true;
+	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
+    
+	-- CPU core configuration options
+	C_branch_prediction: boolean := true;
+	C_result_forwarding: boolean := true;
+	C_load_aligner: boolean := true;
+	C_register_technology: string := "xilinx_ram16x1d";
+
+	-- These may negatively influence timing closure:
+	C_movn_movz: boolean := false; -- true: +16 LUT4, -DMIPS, incomplete
+	C_fast_ID: boolean := true; -- false: +7 LUT4, -Fmax
+
+	-- debugging options
+	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
+
+	-- SoC configuration options
+	C_mem_size: string := "16k";
+	C_tsc: boolean := true; -- true: +54 LUT4
+	C_sio: boolean := true; -- true: +101 LUT4
+	C_gpio: boolean := true; -- true: -6 LUT4 (?)
+	C_flash: boolean := true; -- true: -1 LUT4 (?)
+	C_pcmdac: boolean := true; -- true: +34 LUT4
+	C_ddsfm: boolean := true -- true: +28 LUT4
+    );
+    port (
+	clk_50m: in std_logic;
+	rs232_dce_txd: out std_logic;
+	rs232_dce_rxd: in std_logic;
+	lcd_db: out std_logic_vector(7 downto 0);
+	lcd_e, lcd_rs, lcd_rw: out std_logic;
+	led: out std_logic_vector(7 downto 0);
+	rot_a, rot_b, rot_center: std_logic;
+	btn_south, btn_north, btn_east, btn_west: in std_logic;
+	sw: in std_logic_vector(3 downto 0);
+	j1, j2: out std_logic_vector(3 downto 0)
+    );
 end glue;
 
 architecture Behavioral of glue is
@@ -95,122 +102,126 @@ architecture Behavioral of glue is
 	signal trace_data: std_logic_vector(31 downto 0);
 begin
 
-	-- the RISC core
-	pipeline: entity pipeline
-		generic map(
-			C_mult_enable => C_mult_enable,
-			C_branch_prediction => C_branch_prediction,
-			C_result_forwarding => C_result_forwarding,
-			C_register_technology => C_register_technology,
-			-- debugging only
-			C_serial_trace => C_serial_trace
-		)
-		port map(
-			clk => clk, reset => btn_north,
-			imem_addr => imem_addr,	imem_data_in => imem_data_read,
-			imem_addr_strobe => imem_addr_strobe, imem_data_ready => '1',
-			dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
-			dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
-			dmem_addr_strobe => dmem_addr_strobe, dmem_data_ready => dmem_data_ready,
-			trace_addr => trace_addr, trace_data => trace_data
-		);
+    -- f32c core
+    pipeline: entity pipeline
+    generic map (
+	C_big_endian => C_big_endian,
+	C_branch_likely => C_branch_likely,
+	C_sign_extend => C_sign_extend,
+	C_movn_movz => C_movn_movz,
+	C_mult_enable => C_mult_enable,
+	C_PC_mask => C_PC_mask,
+	C_branch_prediction => C_branch_prediction,
+	C_result_forwarding => C_result_forwarding,
+	C_load_aligner => C_load_aligner,
+	C_fast_ID => C_fast_ID,
+	C_register_technology => C_register_technology,
+	-- debugging only
+	C_debug => C_debug
+    )
+    port map (
+	clk => clk, reset => '0',
+	imem_addr => imem_addr, imem_data_in => imem_data_read,
+	imem_addr_strobe => imem_addr_strobe, imem_data_ready => '1',
+	dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
+	dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
+	dmem_addr_strobe => dmem_addr_strobe,
+	dmem_data_ready => dmem_data_ready,
+	trace_addr => trace_addr, trace_data => trace_data
+    );
 
-	-- instruction / data BRAMs
-	dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31 downto 28) /= "1110"
-		else '0';
 
-	-- I/O port map:
-	-- 0xe******0:	(1B, WR) LED
-	-- 0xe******4:	(4B, RD) TSC
-	-- 0xe******8:	(1B, WR) LCD data
-	-- 0xe******c:	(1B, WR) LCD ctrl
-	-- I/O write access:
-	process(clk)
-	begin
-		if rising_edge(clk) then
-			tsc <= tsc + 1;
-			if dmem_addr(31 downto 28) = "1110" and dmem_addr_strobe = '1' then
-				if dmem_byte_we /= "0000" then
-					if dmem_addr(3 downto 2) = "00" then
-						led_reg <= cpu_to_dmem(7 downto 0);
-					elsif dmem_addr(3 downto 2) = "10" then
-						lcd_data <= cpu_to_dmem(7 downto 0);
-					elsif dmem_addr(3 downto 2) = "11" then
-						lcd_ctrl <= cpu_to_dmem(1 downto 0);
-					end if;
-				end if;
-			end if;
+    -- I/O port map:
+    -- 0xe******0:	(1B, WR) LED
+    -- 0xe******4:	(4B, RD) TSC
+    -- 0xe******8:	(1B, WR) LCD data
+    -- 0xe******c:	(1B, WR) LCD ctrl
+    -- I/O write access:
+    process(clk)
+    begin
+	if rising_edge(clk) then
+	    tsc <= tsc + 1;
+	    if dmem_addr(31 downto 28) = "1110" and dmem_addr_strobe = '1' then
+		if dmem_byte_we /= "0000" then
+		    if dmem_addr(3 downto 2) = "00" then
+			led_reg <= cpu_to_dmem(7 downto 0);
+		    elsif dmem_addr(3 downto 2) = "10" then
+			lcd_data <= cpu_to_dmem(7 downto 0);
+		    elsif dmem_addr(3 downto 2) = "11" then
+			lcd_ctrl <= cpu_to_dmem(1 downto 0);
+		    end if;
 		end if;
-	end process;
+	   end if;
+	end if;
+    end process;
 
-	process(clk)
-	begin
-		if rising_edge(clk) then
-			input <= x"00000" &
-				rs232_dce_rxd &
-				rot_a & rot_b & rot_center &
-				btn_south & btn_north & btn_east & btn_west &
-				sw;
-		end if;
-	end process;
+    process(clk)
+    begin
+	if rising_edge(clk) then
+	    input <= x"00000" &
+	      rs232_dce_rxd & rot_a & rot_b & rot_center &
+	      btn_south & btn_north & btn_east & btn_west & sw;
+	end if;
+    end process;
 
-	io_to_cpu <= input when dmem_addr(3 downto 2) = "00"
-		else tsc;
+    io_to_cpu <= input when dmem_addr(3 downto 2) = "00" else tsc;
 
-	final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = "1110"
-		else dmem_to_cpu;
+    final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = "1110"
+      else dmem_to_cpu;
 	
-	led <= led_reg;
-	lcd_db <= lcd_data;
-	lcd_rs <= lcd_ctrl(0);
-	lcd_e <= lcd_ctrl(1);
-	lcd_rw <= '0';
+    led <= led_reg;
+    lcd_db <= lcd_data;
+    lcd_rs <= lcd_ctrl(0);
+    lcd_e <= lcd_ctrl(1);
+    lcd_rw <= '0';
 
-	-- mirror leds to J1 / J2 pins
-	j1 <= led_reg(3 downto 0);
-	j2 <= led_reg(7 downto 4);
+    -- mirror leds to J1 / J2 pins
+    j1 <= led_reg(3 downto 0);
+    j2 <= led_reg(7 downto 4);
 	
-	-- Block RAM
-	bram: entity bram
-		port map(
-			clk => clk, imem_addr_strobe => imem_addr_strobe,
-			imem_addr => imem_addr,	imem_data_out => imem_data_read,
-			dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
-			dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem,
-			dmem_addr_strobe => dmem_bram_enable, dmem_data_ready => dmem_data_ready
-		);
+    -- a DLL clock synthesizer
+    clkgen: entity clkgen
+    generic map(
+	C_clk_mhz => 50 -- XXX hardcoded!
+    )
+    port map(
+	clk_in => clk_50m, clk_out => clk, clk_out_slow => slowclk,
+	key => clk_key, sel => sw(1 downto 0)
+    );
 	
-	-- a DLL clock synthesizer
-   clkgen: entity clkgen
-		generic map(
-			C_clk_mhz => C_clk_mhz
-		)
-		port map(
-			clk_in => clk_50m, clk_out => clk, clk_out_slow => slowclk,
-			key => clk_key, sel => sw(1 downto 0)
-		);
+    -- Block RAM
+    dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
+    bram: entity bram
+    generic map (
+	C_mem_size => C_mem_size
+    )
+    port map (
+	clk => clk, imem_addr_strobe => imem_addr_strobe,
+	imem_addr => imem_addr, imem_data_out => imem_data_read,
+	dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
+	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem,
+	dmem_addr_strobe => dmem_bram_enable,
+	dmem_data_ready => dmem_data_ready
+    );
+
+    -- debugging design instance - serial port + control knob / buttons
+    G_debug:
+    if C_debug generate
+    clk_key <= btn_south;
+    debug_serial: entity serial_debug
+    port map(
+	clk_50m => clk_50m,
+	rs232_txd => rs232_dce_txd,
+	trace_addr => trace_addr,
+	trace_data => trace_data
+    );
+    end generate; -- serial_debug
 	
-	-- debugging design instance - serial port + control knob / buttons
-	debug_serial:
-	if C_serial_trace generate
-	begin
-		clk_key <= btn_south;
-	
-		debug_serial: entity serial_debug
-		port map(
-			clk_50m => clk_50m,
-			rs232_txd => rs232_dce_txd,
-			trace_addr => trace_addr,
-			trace_data => trace_data
-		);
-	end generate; -- serial_debug
-	
-	nodebug:
-	if not C_serial_trace generate
-	begin
-		clk_key <= '1'; -- clk selector
-		rs232_dce_txd <= '1'; -- appease XST
-	end generate; -- nodebug
+    G_nodebug:
+    if not C_debug generate
+    clk_key <= '1'; -- clk selector
+    rs232_dce_txd <= '1'; -- appease XST
+    end generate; -- nodebug
 	
 end Behavioral;
 
