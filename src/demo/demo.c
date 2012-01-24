@@ -176,6 +176,7 @@ ftoc(int f)
 static void
 redraw_display()
 {
+	int val;
 
 	printf("\n");
 	printf("FER - Digitalna logika 2011/2012\n");
@@ -185,7 +186,7 @@ redraw_display()
 	printf("\n");
 	printf("Glavni izbornik:\n");
 	printf("\n");
-	printf(" 1: Glasnoca: %d (audio izlaz ", pcm_vol & ~PCM_VOL_MUTE);
+	printf(" 1: Glasnoca: %d (zvucni izlaz", pcm_vol & ~PCM_VOL_MUTE);
 	if (pcm_vol & PCM_VOL_MUTE)
 		printf("iskljucen)\n");
 	else
@@ -196,7 +197,7 @@ redraw_display()
 		printf("ukljucena\n");
 	else
 		printf("iskljucena\n");
-	printf(" 4: Audiofrekvencijski pojas (-3 dB): %d-%d Hz\n",
+	printf(" 4: Tonfrekvencijski pojas (-3 dB): %d-%d Hz\n",
 	    ctof(pcm_hi), ctof(pcm_lo));
 	printf(" 5: Brzina reprodukcije: %d%%\n",
 	    PCM_TSC_CYCLES * 100 / pcm_period);
@@ -207,7 +208,10 @@ redraw_display()
 	printf(" 9: USB UART (RS-232) baud rate: %d bps\n", bauds);
 	printf(" 0: SRAM self-test\n");
 	printf("\n");
-	OUTW(IO_SIO_BAUD, 81250000 / bauds);
+
+	/* Recompute and set baudrate */
+	val = bauds * 1024 / 1000 * 1024 / 81250 + 1;
+	OUTW(IO_SIO_BAUD, val);
 }
 
 
@@ -385,12 +389,12 @@ main(void)
 			break;
 		case '9':
 			printf("Unesite zeljeni baud rate"
-			    " (2400 do 230400 bps): ");
+			    " (300 do 460800 bps): ");
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
 			i = atoi(buf);
-			if (buf[0] != 0 && i >= 2400 && i <= 230400)
-				bauds = (i / 2400) * 2400;
+			if (buf[0] != 0 && i >= 300 && i <= 460800)
+				bauds = i;
 			break;
 		case '0':
 			sram_test();
