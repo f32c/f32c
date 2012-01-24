@@ -36,19 +36,20 @@ entity glue is
 	C_clk_freq: integer := 81;
 
 	-- ISA options
+	C_big_endian: boolean := false;
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
 
 	-- CPU core configuration options
-	C_branch_prediction: boolean := true; -- true: +77 LUT4
-	C_result_forwarding: boolean := true; -- true: +181 LUT4
-	C_load_aligner: boolean := true; -- true: +168 LUT4
+	C_branch_prediction: boolean := true;
+	C_result_forwarding: boolean := true;
+	C_load_aligner: boolean := true;
 	C_register_technology: string := "lattice";
 
 	-- These may negatively influence timing closure:
-	C_movn_movz: boolean := false; -- true: +5 LUT4, -DMIPS
+	C_movn_movz: boolean := false; -- true: +16 LUT4, -DMIPS, incomplete
 	C_fast_ID: boolean := true; -- false: +7 LUT4, -Fmax
 
 	-- debugging options
@@ -56,45 +57,13 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: string := "16k";
-	C_sram: boolean := true;
-	C_tsc: boolean := true; -- true: +68 LUT4
-	C_sio: boolean := true; -- true: +137 LUT4
-	C_gpio: boolean := true; -- true: +13 LUT4
-	C_flash: boolean := true; -- true: +10 LUT4
-	C_pcmdac: boolean := true; -- true: +32 LUT4
-	C_ddsfm: boolean := true
-
-	--
-	-- XP2-8E-7 area optimized synthesis @ 81.25 MHz:
-	--
-	-- Global config:
-	--   C_tsc 1, C_sio 1, C_gpio 0, C_flash 0, C_pcmdac 0, C_ddsfm 0
-	--
-	-- Config #1:
-	--   C_mult_enable 1, C_res_fwd 1, C_bpred 1, C_load_aligner 1
-	--   regs 736 slices 919 logic LUT4 1391 total LUT4 1823
-	--   DMIPS/MHz 1.416  DMIPS/MHz/kLUT4 0.777
-	--
-	-- Config #2:
-	--   C_mult_enable 1, C_res_fwd 1, C_bpred 1, C_load_aligner 0
-	--   regs 730 slices 880 logic LUT4 1221 total LUT4 1653
-	--   DMIPS/MHz 1.359  DMIPS/MHz/kLUT4 0.821
-	--
-	-- Config #3:
-	--   C_mult_enable 1, C_res_fwd 1, C_bpred 0, C_load_aligner 0
-	--   regs 671 slices 790 logic LUT4 1144 total LUT4 1576
-	--   DMIPS/MHz 1.296  DMIPS/MHz/kLUT4 0.823
-	--
-	-- Config #4:
-	--   C_mult_enable 1, C_res_fwd 0, C_bpred 0, C_load_aligner 0
-	--   regs 662 slices 699 logic LUT4 962 total LUT4 1394
-	--   DMIPS/MHz 0.984  DMIPS/MHz/kLUT4 0.706
-	--
-	-- Config #5:
-	--   C_mult_enable 0, C_res_fwd 0, C_bpred 0, C_load_aligner 0
-	--   regs 658 slices 697 logic LUT4 961 total LUT4 1393
-	--   DMIPS/MHz 0.803  DMIPS/MHz/kLUT4 0.576
-	--
+	C_sram: boolean := true; -- true: +12 LUT4
+	C_tsc: boolean := true; -- true: +54 LUT4
+	C_sio: boolean := true; -- true: +101 LUT4
+	C_gpio: boolean := true; -- true: -6 LUT4 (?)
+	C_flash: boolean := true; -- true: -1 LUT4 (?)
+	C_pcmdac: boolean := true; -- true: +34 LUT4
+	C_ddsfm: boolean := true -- true: +28 LUT4
     );
     port (
 	clk_25m: in std_logic;
@@ -134,10 +103,11 @@ architecture Behavioral of glue is
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_txd, sio_ce: std_logic;
     signal flash_cen_reg, flash_sck_reg, flash_si_reg: std_logic;
-    signal led_reg: std_logic_vector(7 downto 0);
+    signal R_led: std_logic_vector(7 downto 0);
     signal tsc_25m: std_logic_vector(34 downto 0);
     signal tsc: std_logic_vector(31 downto 0);
-    signal from_gpio: std_logic_vector(31 downto 0);
+    signal R_sw: std_logic_vector(3 downto 0);
+    signal R_btns: std_logic_vector(4 downto 0);
     signal dac_in_l, dac_in_r: std_logic_vector(15 downto 2);
     signal dac_acc_l, dac_acc_r: std_logic_vector(16 downto 2);
 
@@ -172,11 +142,12 @@ begin
     -- f32c core
     pipeline: entity pipeline
     generic map (
-	C_PC_mask => C_PC_mask,
-	C_mult_enable => C_mult_enable,
+	C_big_endian => C_big_endian,
+	C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend,
 	C_movn_movz => C_movn_movz,
-	C_branch_likely => C_branch_likely,
+	C_mult_enable => C_mult_enable,
+	C_PC_mask => C_PC_mask,
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
@@ -205,12 +176,12 @@ begin
     if C_sio generate
     sio: entity sio
     generic map (
+	C_big_endian => C_big_endian,
 	C_clk_freq => C_clk_freq
     )
     port map (
 	clk => clk, ce => sio_ce, txd => sio_txd, rxd => rs232_rx,
-	byte_we => dmem_byte_we, bus_in => cpu_to_dmem,
-	bus_out => from_sio
+	byte_we => dmem_byte_we, bus_in => cpu_to_dmem, bus_out => from_sio
     );
     sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
       dmem_addr(4 downto 2) = "001" else '0';
@@ -263,16 +234,26 @@ begin
 	    -- GPIO
 	    if C_gpio and dmem_addr(4 downto 2) = "000" then
 		if dmem_byte_we(0) = '1' then
-		    led_reg <= cpu_to_dmem(7 downto 0);
+		    R_led <= cpu_to_dmem(7 downto 0);
 		end if;
 	    end if;
 	    -- PCMDAC
 	    if C_pcmdac and dmem_addr(4 downto 2) = "011" then
 		if dmem_byte_we(2) = '1' then
-		    dac_in_l <= cpu_to_dmem(31 downto 18);
+		    if C_big_endian then
+			dac_in_l <= cpu_to_dmem(23 downto 16) &
+			  cpu_to_dmem(31 downto 26);
+		    else
+			dac_in_l <= cpu_to_dmem(31 downto 18);
+		    end if;
 		end if;
 		if dmem_byte_we(0) = '1' then
-		    dac_in_r <= cpu_to_dmem(15 downto 2);
+		    if C_big_endian then
+			dac_in_r <= cpu_to_dmem(7 downto 0) &
+			  cpu_to_dmem(15 downto 10);
+		    else
+		        dac_in_r <= cpu_to_dmem(15 downto 2);
+		    end if;
 		end if;
 	    end if;
 	    -- SPI Flash
@@ -286,12 +267,17 @@ begin
 	    -- DDS
 	    if C_ddsfm and dmem_addr(4 downto 2) = "111" then
 		if dmem_byte_we(0) = '1' then
-		    dds_div <= cpu_to_dmem(21 downto 0);
+		    if C_big_endian then
+			dds_div <= cpu_to_dmem(15 downto 10) & 
+			  cpu_to_dmem(23 downto 16) & cpu_to_dmem(31 downto 24);
+		    else
+			dds_div <= cpu_to_dmem(21 downto 0);
+		    end if;
 		end if;
 	    end if;
 	end if;
     end process;
-    led <= led_reg when C_gpio else "ZZZZZZZZ";
+    led <= R_led when C_gpio else "--------";
     flash_si <= flash_si_reg when C_flash else 'Z';
     flash_sck <= flash_sck_reg when C_flash else 'Z';
     flash_cen <= flash_cen_reg when C_flash else 'Z';
@@ -304,9 +290,8 @@ begin
     process(clk)
     begin
 	if C_gpio and rising_edge(clk) then
-	    from_gpio(4 downto 0) <= btn_center &
-	      btn_up & btn_down & btn_left & btn_right;
-	    from_gpio(11 downto 8) <= sw;
+	    R_sw <= sw;
+	    R_btns <= btn_center & btn_up & btn_down & btn_left & btn_right;
 	end if;
     end process;
 
@@ -319,28 +304,35 @@ begin
 	end if;
     end process;
     -- Safely move upper bits of tsc_25m over clock domain boundary
-    process(clk)
+    process(clk, tsc_25m)
     begin
 	if rising_edge(clk) and tsc_25m(2 downto 1) = "10" then
-	    tsc <= tsc_25m(34 downto 3);
+	    if C_big_endian then
+		tsc <= tsc_25m(10 downto 3) & tsc_25m(18 downto 11) &
+		  tsc_25m(26 downto 19) & tsc_25m(34 downto 27);
+	    else
+		tsc <= tsc_25m(34 downto 3);
+	    end if;
 	end if;
     end process;
     end generate;
 
     -- XXX replace with a balanced multiplexer
-    process(dmem_addr, from_gpio, from_sio, tsc, flash_so)
+    process(dmem_addr, R_sw, R_btns, from_sio, tsc, flash_so)
     begin
 	case dmem_addr(4 downto 2) is
-	when "000"  => io_to_cpu <= from_gpio;
+	when "000"  =>
+	    io_to_cpu <="----------------" & "----" & R_sw & "---" & R_btns;
 	when "001"  => io_to_cpu <= from_sio;
 	when "010"  => io_to_cpu <= tsc;
 	when "100"  =>
 	    if C_flash then
-		io_to_cpu <= x"0000000" & "000" & flash_so;
+		io_to_cpu <= "------------------------" & "0000000" & flash_so;
 	    else
-		io_to_cpu <= x"00000000";
+		io_to_cpu <= "--------------------------------";
 	    end if;
-	when others => io_to_cpu <= x"00000000";
+	when others =>
+	    io_to_cpu <= "--------------------------------";
 	end case;
     end process;
 
@@ -372,9 +364,9 @@ begin
 	trace_addr => trace_addr, trace_data => trace_data
     );
     end generate;
-	
+
     rs232_tx <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
-	
+
     -- DDS FM transmitter
     G_ddsfm:
     if C_ddsfm generate
