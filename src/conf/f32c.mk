@@ -4,8 +4,7 @@ ifndef LOADADDR
 LOADADDR = 0x000001a0
 endif
 
-# -EB big-endian (default); -EL little-endian
-# f32c currently can execute only little-endian code
+# -EB big-endian (gcc default); -EL little-endian
 ifndef ENDIANFLAGS
 ENDIANFLAGS = -EB
 endif

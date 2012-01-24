@@ -8,7 +8,7 @@
 
 #define	memcpy(dst, src, len) _memcpy(dst, src, len)
 
-#if _BYTE_ORDER == _LITTLE_ENDIAN
+#if 1
 /* XXX this works on pure SWL / SWR luck (unimplemented instructions!) */
 #define	strcpy(dst, src) __builtin_strcpy((dst), (src))
 #else
