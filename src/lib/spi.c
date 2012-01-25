@@ -13,19 +13,19 @@
 
 
 int
-spi_byte_in(void)
+spi_byte_in(int port)
 {
 	int i, io, in = 0;
 
 	for (i = 8; i > 0; i--) {
-		OUTB(IO_SPI_FLASH, SPI_SCK);
+		SB(SPI_SCK, IO_SPI_FLASH, port);
 		in <<= 1;
 #if _BYTE_ORDER == _LITTLE_ENDIAN
-		INW(io, IO_SPI_FLASH);	/* Speed optimization */
+		LW(io, IO_SPI_FLASH, port);	/* Speed optimization */
 #else
-		INB(io, IO_SPI_FLASH);
+		LB(io, IO_SPI_FLASH, port);
 #endif
-		OUTB(IO_SPI_FLASH, 0);
+		SB(0, IO_SPI_FLASH, port);
 		in |= io;
 	}
 	return (in);
@@ -33,24 +33,24 @@ spi_byte_in(void)
 
 
 int
-spi_byte(int out)
+spi_byte(int port, int out)
 {
 	int i, io, in = 0;
 
 	for (i = 8; i > 0; i--) {
 		io = out & SPI_SI;
-		OUTB(IO_SPI_FLASH, io);
+		SB(io, IO_SPI_FLASH, port);
 		out <<= 1;
-		OUTB(IO_SPI_FLASH, io | SPI_SCK);
+		SB(io | SPI_SCK, IO_SPI_FLASH, port);
 #if _BYTE_ORDER == _LITTLE_ENDIAN
-		INW(io, IO_SPI_FLASH);	/* Speed optimization */
+		LW(io, IO_SPI_FLASH, port);	/* Speed optimization */
 #else
-		INB(io, IO_SPI_FLASH);
+		LB(io, IO_SPI_FLASH, port);
 #endif
 		in <<= 1;
 		in |= io;
 	}
-	OUTB(IO_SPI_FLASH, 0);
+	SB(0, IO_SPI_FLASH, port);
 	return (in);
 }
 

@@ -182,11 +182,11 @@ redraw_display()
 	printf("FER - Digitalna logika 2011/2012\n");
 	printf("\n");
 	printf("ULX2S FPGA plocica - demonstracijsko-dijagnosticki program\n");
-	printf("v 0.93 12/01/2012\n");
+	printf("v 0.94 25/01/2012\n");
 	printf("\n");
 	printf("Glavni izbornik:\n");
 	printf("\n");
-	printf(" 1: Glasnoca: %d (zvucni izlaz", pcm_vol & ~PCM_VOL_MUTE);
+	printf(" 1: Glasnoca: %d (zvucni izlaz ", pcm_vol & ~PCM_VOL_MUTE);
 	if (pcm_vol & PCM_VOL_MUTE)
 		printf("iskljucen)\n");
 	else
