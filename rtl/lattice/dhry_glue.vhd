@@ -58,8 +58,6 @@ entity glue is
 	C_mem_size: string := "16k";
 	C_tsc: boolean := true; -- true: +54 LUTs
 	C_sio: boolean := true; -- true: +101 LUTs
-	C_fixed_baudrate: boolean := true;
-	C_sio_bypass: boolean := false
 
 	--
 	-- XP2-5E-7, 81.25 MHz, pushbutton Area optimization
@@ -162,24 +160,39 @@ begin
     sio: entity sio
     generic map (
 	C_clk_freq => C_clk_freq,
-	C_big_endian => C_big_endian,
-	C_fixed_baudrate => C_fixed_baudrate,
-	C_bypass => C_sio_bypass
+	C_big_endian => C_big_endian
     )
     port map (
 	clk => clk, ce => sio_ce, txd => rs232_tx, rxd => rs232_rx,
 	byte_we => dmem_byte_we, bus_in => cpu_to_dmem, bus_out => from_sio
     );
-    sio_ce <= dmem_addr_strobe when dmem_addr(31) = '1' and
+    sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
       dmem_addr(4 downto 2) = "001" else '0';
     end generate;
 
     --
     -- I/O port map:
-    -- 0xf*****04: (4B, RW) SIO
-    -- 0xf*****08: (4B, RD) TSC
+    -- 0x8*******: (2B, RW)   SRAM
+    -- 0xf*****00: (4B, RW)   GPIO (LED, switches/buttons)
+    -- 0xf*****04: (4B, RW) * SIO
+    -- 0xf*****08: (4B, RD) * TSC
+    -- 0xf*****0c: (4B, WR)   PCM signal
+    -- 0xf*****10: (1B, RW)   SPI Flash
+    -- 0xf*****14: (1B, RW)   SPI MicroSD
+    -- 0xf*****1c: (4B, WR)   FM DDS register
     --
-    io_to_cpu <= from_sio when dmem_addr(3) = '0' else tsc;
+    process(dmem_addr, from_sio, tsc)
+    begin
+        case dmem_addr(4 downto 2) is
+        when "000"  =>
+            io_to_cpu <="----------------" & "--------" & "---00000";
+        when "001"  => io_to_cpu <= from_sio;
+        when "010"  => io_to_cpu <= tsc;
+        when others =>
+            io_to_cpu <= "--------------------------------";
+        end case;
+    end process;
+
     final_to_cpu <= io_to_cpu when dmem_addr(31) = '1' else dmem_to_cpu;
 
     G_tsc:
