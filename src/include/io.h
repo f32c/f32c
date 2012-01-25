@@ -141,6 +141,21 @@ rdtsc(void) {
 	return (tsc);
 }
 
+#define	DELAY(ticks) 						\
+	do {							\
+		__asm __volatile__ (				\
+			".set noreorder;"			\
+			".set noat;"				\
+			"	li	$1, -2;"		\
+			"	and	$1, $1, %0;"		\
+			"1:	bnez	$1, 1b;"		\
+			"	addiu	$1, $1, -2;"		\
+			".set at;"				\
+			".set reorder;"				\
+			:					\
+			: "r" (ticks)				\
+		);						\
+	} while (0);
 #endif /* __ASSEMBLER__ */
 
 #endif /* !_IO_H_ */
