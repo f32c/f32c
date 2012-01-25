@@ -56,8 +56,8 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: string := "16k";
-	C_tsc: boolean := true; -- true: +54 LUTs
-	C_sio: boolean := true; -- true: +101 LUTs
+	C_tsc: boolean := true;
+	C_sio: boolean := true
 
 	--
 	-- XP2-5E-7, 81.25 MHz, pushbutton Area optimization
