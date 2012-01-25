@@ -1,6 +1,7 @@
 
 #include <types.h>
 #include <io.h>
+#include <spi.h>
 
 
 #define	PCM_SKIP 	25000
@@ -84,7 +85,8 @@ pcm_play(void)
 	/* Read a sample from SPI flash */
 	for (i = 0, pcm_out = 0, dds_out = 0; i < 2; i++) {
 		/* Fetch a 16-bit PCM sample from SPI Flash */
-		c = spi_byte_in() | (spi_byte_in() << 8);
+		c = spi_byte_in(SPI_PORT_FLASH) |
+		    (spi_byte_in(SPI_PORT_FLASH) << 8);
 
 		/* Sign extend 16 -> 32 bit & update signal running average */
 		if (c & 0x8000) {
@@ -213,12 +215,12 @@ pcm_play(void)
 	pcm_addr += 4;
 	if (pcm_addr >= PCM_END) {
 		pcm_addr = PCM_SKIP;
-		spi_stop_transaction();
-		spi_start_transaction();
-		spi_byte(0x0b);	/* High-speed read */
-		spi_byte(pcm_addr >> 16);
-		spi_byte(pcm_addr >> 8);
-		spi_byte(pcm_addr);
-		spi_byte_in(); /* dummy byte, ignored */
+		spi_stop_transaction(SPI_PORT_FLASH);
+		spi_start_transaction(SPI_PORT_FLASH);
+		spi_byte(SPI_PORT_FLASH, 0x0b);	/* High-speed read */
+		spi_byte(SPI_PORT_FLASH, pcm_addr >> 16);
+		spi_byte(SPI_PORT_FLASH, pcm_addr >> 8);
+		spi_byte(SPI_PORT_FLASH, pcm_addr);
+		spi_byte_in(SPI_PORT_FLASH); /* dummy byte, ignored */
 	}
 }
