@@ -261,7 +261,7 @@ begin
 		end if;
 	    end if;
 	    -- SPI MicroSD
-	    if C_sdcard and dmem_addr(4 downto 2) = "100" then
+	    if C_sdcard and dmem_addr(4 downto 2) = "101" then
 		if dmem_byte_we(0) = '1' then
 		    R_sdcard_si <= cpu_to_dmem(7);
 		    R_sdcard_sck <= cpu_to_dmem(6);
