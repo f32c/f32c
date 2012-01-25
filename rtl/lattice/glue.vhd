@@ -57,13 +57,14 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: string := "16k";
-	C_sram: boolean := true; -- true: +12 LUT4
-	C_tsc: boolean := true; -- true: +54 LUT4
-	C_sio: boolean := true; -- true: +101 LUT4
-	C_gpio: boolean := true; -- true: -6 LUT4 (?)
-	C_flash: boolean := true; -- true: -1 LUT4 (?)
-	C_pcmdac: boolean := true; -- true: +34 LUT4
-	C_ddsfm: boolean := true -- true: +28 LUT4
+	C_sram: boolean := true;
+	C_tsc: boolean := true;
+	C_sio: boolean := true;
+	C_gpio: boolean := true;
+	C_flash: boolean := true;
+	C_sdcard: boolean := true;
+	C_pcmdac: boolean := true;
+	C_ddsfm: boolean := true
     );
     port (
 	clk_25m: in std_logic;
@@ -71,6 +72,8 @@ entity glue is
 	rs232_rx: in std_logic;
 	flash_so: in std_logic;
 	flash_cen, flash_sck, flash_si: out std_logic;
+	sdcard_so: in std_logic;
+	sdcard_cen, sdcard_sck, sdcard_si: out std_logic;
 	p_ring: out std_logic;
 	p_tip: out std_logic_vector(3 downto 0);
 	led: out std_logic_vector(7 downto 0);
@@ -102,14 +105,15 @@ architecture Behavioral of glue is
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_txd, sio_ce: std_logic;
-    signal flash_cen_reg, flash_sck_reg, flash_si_reg: std_logic;
+    signal R_flash_cen, R_flash_sck, R_flash_si: std_logic;
+    signal R_sdcard_cen, R_sdcard_sck, R_sdcard_si: std_logic;
     signal R_led: std_logic_vector(7 downto 0);
-    signal tsc_25m: std_logic_vector(34 downto 0);
-    signal tsc: std_logic_vector(31 downto 0);
+    signal R_tsc_25m: std_logic_vector(34 downto 0);
+    signal R_tsc: std_logic_vector(31 downto 0);
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
-    signal dac_in_l, dac_in_r: std_logic_vector(15 downto 2);
-    signal dac_acc_l, dac_acc_r: std_logic_vector(16 downto 2);
+    signal R_dac_in_l, R_dac_in_r: std_logic_vector(15 downto 2);
+    signal R_dac_acc_l, R_dac_acc_r: std_logic_vector(16 downto 2);
 
     -- debugging only
     signal trace_addr: std_logic_vector(5 downto 0);
@@ -119,7 +123,7 @@ architecture Behavioral of glue is
 
     -- FM TX DDS
     signal clk_dds, dds_out: std_logic;
-    signal dds_cnt, dds_div, dds_div1: std_logic_vector(21 downto 0);
+    signal R_dds_cnt, R_dds_div, R_dds_div1: std_logic_vector(21 downto 0);
 
 begin
 
@@ -185,15 +189,15 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) then
-	    dac_acc_l <= (dac_acc_l(16) & dac_in_l) + dac_acc_l;
-	    dac_acc_r <= (dac_acc_r(16) & dac_in_r) + dac_acc_r;
+	    R_dac_acc_l <= (R_dac_acc_l(16) & R_dac_in_l) + R_dac_acc_l;
+	    R_dac_acc_r <= (R_dac_acc_r(16) & R_dac_in_r) + R_dac_acc_r;
 	end if;
     end process;
-    p_tip(3) <= dac_acc_l(16);
-    p_tip(2) <= dac_acc_l(16);
-    p_tip(1) <= dac_acc_l(16);
-    p_tip(0) <= 'Z';
-    p_ring <= dac_acc_r(16);
+    p_tip(3) <= R_dac_acc_l(16);
+    p_tip(2) <= R_dac_acc_l(16);
+    p_tip(1) <= R_dac_acc_l(16);
+    p_tip(0) <= '0';
+    p_ring <= R_dac_acc_r(16);
     end generate;
 
     -- I/O port map:
@@ -203,7 +207,7 @@ begin
     -- 0xf*****08: (4B, RD) * TSC
     -- 0xf*****0c: (4B, WR) * PCM signal
     -- 0xf*****10: (1B, RW) * SPI Flash
-    -- 0xf*****14: (1B, RW)   SPI MicroSD
+    -- 0xf*****14: (1B, RW) * SPI MicroSD
     -- 0xf*****1c: (4B, WR) * FM DDS register
     -- I/O write access:
     process(clk)
@@ -233,46 +237,57 @@ begin
 	    if C_pcmdac and dmem_addr(4 downto 2) = "011" then
 		if dmem_byte_we(2) = '1' then
 		    if C_big_endian then
-			dac_in_l <= cpu_to_dmem(23 downto 16) &
+			R_dac_in_l <= cpu_to_dmem(23 downto 16) &
 			  cpu_to_dmem(31 downto 26);
 		    else
-			dac_in_l <= cpu_to_dmem(31 downto 18);
+			R_dac_in_l <= cpu_to_dmem(31 downto 18);
 		    end if;
 		end if;
 		if dmem_byte_we(0) = '1' then
 		    if C_big_endian then
-			dac_in_r <= cpu_to_dmem(7 downto 0) &
+			R_dac_in_r <= cpu_to_dmem(7 downto 0) &
 			  cpu_to_dmem(15 downto 10);
 		    else
-		        dac_in_r <= cpu_to_dmem(15 downto 2);
+		        R_dac_in_r <= cpu_to_dmem(15 downto 2);
 		    end if;
 		end if;
 	    end if;
 	    -- SPI Flash
 	    if C_flash and dmem_addr(4 downto 2) = "100" then
 		if dmem_byte_we(0) = '1' then
-		    flash_si_reg <= cpu_to_dmem(7);
-		    flash_sck_reg <= cpu_to_dmem(6);
-		    flash_cen_reg <= cpu_to_dmem(5);
+		    R_flash_si <= cpu_to_dmem(7);
+		    R_flash_sck <= cpu_to_dmem(6);
+		    R_flash_cen <= cpu_to_dmem(5);
+		end if;
+	    end if;
+	    -- SPI MicroSD
+	    if C_sdcard and dmem_addr(4 downto 2) = "100" then
+		if dmem_byte_we(0) = '1' then
+		    R_sdcard_si <= cpu_to_dmem(7);
+		    R_sdcard_sck <= cpu_to_dmem(6);
+		    R_sdcard_cen <= cpu_to_dmem(5);
 		end if;
 	    end if;
 	    -- DDS
 	    if C_ddsfm and dmem_addr(4 downto 2) = "111" then
 		if dmem_byte_we(0) = '1' then
 		    if C_big_endian then
-			dds_div <= cpu_to_dmem(15 downto 10) & 
+			R_dds_div <= cpu_to_dmem(15 downto 10) & 
 			  cpu_to_dmem(23 downto 16) & cpu_to_dmem(31 downto 24);
 		    else
-			dds_div <= cpu_to_dmem(21 downto 0);
+			R_dds_div <= cpu_to_dmem(21 downto 0);
 		    end if;
 		end if;
 	    end if;
 	end if;
     end process;
     led <= R_led when C_gpio else "--------";
-    flash_si <= flash_si_reg when C_flash else 'Z';
-    flash_sck <= flash_sck_reg when C_flash else 'Z';
-    flash_cen <= flash_cen_reg when C_flash else 'Z';
+    flash_si <= R_flash_si when C_flash else 'Z';
+    flash_sck <= R_flash_sck when C_flash else 'Z';
+    flash_cen <= R_flash_cen when C_flash else 'Z';
+    sdcard_si <= R_sdcard_si when C_sdcard else 'Z';
+    sdcard_sck <= R_sdcard_sck when C_sdcard else 'Z';
+    sdcard_cen <= R_sdcard_cen when C_sdcard else 'Z';
     sram_d <= R_sram_d when C_sram and R_sram_wel = '0' else "ZZZZZZZZZZZZZZZZ";
     sram_a <= R_sram_a;
     sram_wel <= R_sram_wel when C_sram else '1';
@@ -292,34 +307,40 @@ begin
     process(clk_25m)
     begin
 	if rising_edge(clk_25m) then
-	    tsc_25m <= tsc_25m + 1;
+	    R_tsc_25m <= R_tsc_25m + 1;
 	end if;
     end process;
     -- Safely move upper bits of tsc_25m over clock domain boundary
-    process(clk, tsc_25m)
+    process(clk, R_tsc_25m)
     begin
-	if rising_edge(clk) and tsc_25m(2 downto 1) = "10" then
+	if rising_edge(clk) and R_tsc_25m(2 downto 1) = "10" then
 	    if C_big_endian then
-		tsc <= tsc_25m(10 downto 3) & tsc_25m(18 downto 11) &
-		  tsc_25m(26 downto 19) & tsc_25m(34 downto 27);
+		R_tsc <= R_tsc_25m(10 downto 3) & R_tsc_25m(18 downto 11) &
+		  R_tsc_25m(26 downto 19) & R_tsc_25m(34 downto 27);
 	    else
-		tsc <= tsc_25m(34 downto 3);
+		R_tsc <= R_tsc_25m(34 downto 3);
 	    end if;
 	end if;
     end process;
     end generate;
 
     -- XXX replace with a balanced multiplexer
-    process(dmem_addr, R_sw, R_btns, from_sio, tsc, flash_so)
+    process(dmem_addr, R_sw, R_btns, R_tsc, from_sio, flash_so, sdcard_so)
     begin
 	case dmem_addr(4 downto 2) is
 	when "000"  =>
 	    io_to_cpu <="----------------" & "----" & R_sw & "---" & R_btns;
 	when "001"  => io_to_cpu <= from_sio;
-	when "010"  => io_to_cpu <= tsc;
+	when "010"  => io_to_cpu <= R_tsc;
 	when "100"  =>
 	    if C_flash then
 		io_to_cpu <= "------------------------" & "0000000" & flash_so;
+	    else
+		io_to_cpu <= "--------------------------------";
+	    end if;
+	when "101"  =>
+	    if C_sdcard then
+		io_to_cpu <= "------------------------" & "0000000" & sdcard_so;
 	    else
 		io_to_cpu <= "--------------------------------";
 	    end if;
@@ -366,11 +387,11 @@ begin
     process(clk_dds)
     begin
 	if (rising_edge(clk_dds)) then
-	    dds_div1 <= dds_div; -- Cross clock domain
-	    dds_cnt <= dds_cnt + dds_div1;
+	    R_dds_div1 <= R_dds_div; -- Cross clock domain
+	    R_dds_cnt <= R_dds_cnt + R_dds_div1;
 	end if;
     end process;
-    dds_out <= dds_cnt(21);
+    dds_out <= R_dds_cnt(21);
     end generate;
 
     -- make a dipole?
