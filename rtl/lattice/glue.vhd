@@ -197,14 +197,14 @@ begin
     end generate;
 
     -- I/O port map:
-    -- 0x8*******: SRAM
-    -- 0xf*****00: (4B, RW) GPIO (LED, switches/buttons)
-    -- 0xf*****04: (4B, RW) SIO
-    -- 0xf*****08: (4B, RD) TSC
-    -- 0xf*****0c: (4B, WR) PCM signal
-    -- 0xf*****10: (1B, RW) SPI Flash
-    -- 0xf*****14: (1B, RW) SPI MicroSD
-    -- 0xf*****1c: (4B, WR) FM DDS register
+    -- 0x8*******: (2B, RW) * SRAM
+    -- 0xf*****00: (4B, RW) * GPIO (LED, switches/buttons)
+    -- 0xf*****04: (4B, RW) * SIO
+    -- 0xf*****08: (4B, RD) * TSC
+    -- 0xf*****0c: (4B, WR) * PCM signal
+    -- 0xf*****10: (1B, RW) * SPI Flash
+    -- 0xf*****14: (1B, RW)   SPI MicroSD
+    -- 0xf*****1c: (4B, WR) * FM DDS register
     -- I/O write access:
     process(clk)
     begin
