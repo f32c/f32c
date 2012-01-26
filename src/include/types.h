@@ -1,6 +1,6 @@
 
-#ifndef _TYPES_H_
-#define _TYPES_H_
+#ifndef	_TYPES_H_
+#define	_TYPES_H_
 
 /* types and consts */
 #define	NULL		((void *) 0)

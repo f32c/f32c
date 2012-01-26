@@ -48,7 +48,7 @@
 #ifdef __MIPSEB__
 #define	_BYTE_ORDER	_BIG_ENDIAN
 #else
-#define _BYTE_ORDER	_LITTLE_ENDIAN
+#define	_BYTE_ORDER	_LITTLE_ENDIAN
 #endif /* __MIBSEB__ */
 
 #ifndef __ASSEMBLER__
@@ -110,15 +110,15 @@ __bswap64_var(__uint64_t _x)
 /*
  * XXXMIPS: Additional parentheses to make gcc more happy.
  */
-#define _QUAD_HIGHWORD 0
-#define _QUAD_LOWWORD 1
+#define	_QUAD_HIGHWORD 0
+#define	_QUAD_LOWWORD 1
 #else
-#define _QUAD_HIGHWORD  1
-#define _QUAD_LOWWORD 0
-#define __ntohl(x)	(__bswap32((x)))
-#define __ntohs(x)	(__bswap16((x)))
-#define __htonl(x)	(__bswap32((x)))
-#define __htons(x)	(__bswap16((x)))
+#define	_QUAD_HIGHWORD  1
+#define	_QUAD_LOWWORD 0
+#define	__ntohl(x)	(__bswap32((x)))
+#define	__ntohs(x)	(__bswap16((x)))
+#define	__htonl(x)	(__bswap32((x)))
+#define	__htons(x)	(__bswap16((x)))
 #endif /* _MIPSEB */
 
 #endif /* _ASSEMBLER_ */
