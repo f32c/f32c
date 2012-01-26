@@ -215,7 +215,6 @@ pcm_play(void)
 	pcm_addr += 4;
 	if (pcm_addr >= PCM_END) {
 		pcm_addr = PCM_SKIP;
-		spi_stop_transaction(SPI_PORT_FLASH);
 		spi_start_transaction(SPI_PORT_FLASH);
 		spi_byte(SPI_PORT_FLASH, 0x0b);	/* High-speed read */
 		spi_byte(SPI_PORT_FLASH, pcm_addr >> 16);
