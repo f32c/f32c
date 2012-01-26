@@ -15,7 +15,7 @@
 #define	IO_TSC		IO_ADDR(0x08)	/* word, RD */
 #define	IO_PCM_OUT	IO_ADDR(0x0c)	/* word, WR */
 #define	IO_SPI_FLASH	IO_ADDR(0x10)	/* byte, RW */
-#define	IO_SPI_MICROSD	IO_ADDR(0x14)	/* byte, RW */
+#define	IO_SPI_SDCARD	IO_ADDR(0x14)	/* byte, RW */
 #define	IO_DDS		IO_ADDR(0x1c)	/* word, WR */
 
 /* SIO status bitmask */

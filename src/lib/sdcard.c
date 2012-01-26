@@ -9,6 +9,7 @@ sdcard_cmd(int cmd, uint32_t arg)
 	int i, res;
 
 	/* Hold MOSI signal high for a few cycles */
+//	spi_start_transaction(SPI_PORT_SDCARD);
 	spi_byte_in(SPI_PORT_SDCARD);
 
 	/* Command */
@@ -39,7 +40,7 @@ sdcard_idle(void)
 {
 
 	/* Preamble for entering SPI mode */
-	sdcard_cmd(0xff, 0xffffffff);
+//	sdcard_cmd(0xff, 0xffffffff);
 
 	/* Enter idle mode */
 	return(sdcard_cmd(0, 0) - 1);
