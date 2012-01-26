@@ -2,7 +2,7 @@
 #ifndef _IO_H_
 #define	_IO_H_
 
-#define IO_BASE		-32768
+#define	IO_BASE		-32768
 
 #define	IO_ADDR(a)	(IO_BASE + (a))
 
