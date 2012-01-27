@@ -20,8 +20,7 @@ int pcm_lo = 0;
 int pcm_reverb = 0;
 int pcm_period = PCM_TSC_CYCLES;
 int fm_freq = 0;		/* Pending TX frequency, in Hz */
-int led_mode = 0;
-int led_byte = 0;
+int led_byte = -1;
 
 static int pcm_addr = PCM_END;
 static int pcm_lo_acc[2] = {0, 0};
@@ -182,7 +181,7 @@ pcm_play(void)
 				c = 0;
 			vu |= (c << (i << 2));
 		}
-		if (led_mode) {
+		if (led_byte >= 0) {
 			OUTB(IO_LED, led_byte);
 		} else {
 			OUTB(IO_LED, vu);
