@@ -33,9 +33,8 @@ sdcard_cmd(int cmd, uint32_t arg)
 	spi_byte(SPI_PORT_SDCARD, arg >> 8);
 	spi_byte(SPI_PORT_SDCARD, arg);
 
-
-	/* CRC, hardcoded for CMD 0 */
-	spi_byte(SPI_PORT_SDCARD, 0x95);
+	/* Hack: CRC hidden in command bits 15..8 */
+	spi_byte(SPI_PORT_SDCARD, cmd >> 8);
 	
 	/* Wait for a valid response byte, up to 8 cycles */
 	for (i = 0; i < 8; i++) {
@@ -87,13 +86,18 @@ sdcard_init(void)
 {
 	int i, res;
 
-	res = sdcard_cmd(SDCARD_CMD_GO_IDLE_STATE, 0) ^ 0x01;
+	res = sdcard_cmd(SDCARD_CMD_GO_IDLE_STATE | 0x9500, 0) & 0xfe;
+	if (res)
+		return (res);
+
+	res = sdcard_cmd(SDCARD_CMD_SEND_IF_COND | 0x8700, 0x01aa) & 0xfe;
 	if (res)
 		return (res);
 
 	/* Initiate initialization process, loop until done */
 	for (i = 0; i < (1 << 16); i++) {
-		res = sdcard_cmd(SDCARD_CMD_SEND_OP_COND, 0);
+		sdcard_cmd(SDCARD_CMD_APP_CMD, 0);
+		res = sdcard_cmd(SDCARD_CMD_APP_SEND_OP_COND, 1 << 30);
 		if (res == 0)
 			break;
 	}
