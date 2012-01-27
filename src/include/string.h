@@ -119,4 +119,24 @@ _strcpy(char *dst, const char *src)
 	} while (c != 0);
 }
 
+
+static inline void
+bzero(void *dst, int len)
+{
+	char *cp = (char *) dst;
+
+	while (len--)
+		*cp++ = 0;
+}
+
+
+static inline int
+strlen(const char *str)
+{
+	const char *cp;
+
+	for (cp = str; *cp; cp++);
+
+	return(cp - str);
+}
 #endif /* !_STRING_H_ */
