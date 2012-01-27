@@ -3,65 +3,80 @@
 #include <sdcard.h>
 #include <spi.h>
 #include <stdio.h>
+#include <string.h>
+
+#include <fatfs/ff.h>
+
+
+FATFS fh;
+
+
+FRESULT
+scan_files(char* path)
+{
+    FRESULT res;
+    FILINFO fno;
+    DIR dir;
+    int i;
+    char *fn;   /* This function is assuming non-Unicode cfg. */
+#if _USE_LFN
+    static char lfn[_MAX_LFN + 1];
+    fno.lfname = lfn;
+    fno.lfsize = sizeof(lfn);
+#endif
+    char *cp;
+
+
+    res = f_opendir(&dir, path);	/* Open the directory */
+    if (res == FR_OK) {
+        i = strlen(path);
+        for (;;) {
+            res = f_readdir(&dir, &fno); /* Read a directory item */
+            if (res != FR_OK || fno.fname[0] == 0) break;  /* Break on error or end of dir */
+            if (fno.fname[0] == '.') continue;	/* Ignore dot entry */
+#if _USE_LFN
+            fn = *fno.lfname ? fno.lfname : fno.fname;
+#else
+            fn = fno.fname;
+#endif
+            if (fno.fattrib & AM_DIR) {	/* It is a directory */
+#if 1
+		cp = &path[i];
+		*cp++ = '/';
+		do {
+			*cp++ = *fn;
+		} while (*fn++ != 0);
+#else
+                sprintf(&path[i], "/%s", fn);
+#endif
+                res = scan_files(path);
+                if (res != FR_OK) break;
+                path[i] = 0;
+            } else {	/* It is a file. */
+                printf("%s/%s\n", path, fn);
+            }
+        }
+    }
+
+    return res;
+}
 
 
 int
 main(void)
 {
-	int i, j, res;
-	char buf[SDCARD_BLOCK_SIZE];
+	char pathbuf[64];
 
 	printf("\n");
 
-	printf("sdcard_init()\n");
-	res = sdcard_init();
-	if (res) {
-		printf("sdcard_init() returned %d\n", res);
-		return (1);
-	}
+	if (f_mount(0, &fh))
+		printf("f_mount() failed\n");
 
-	res = sdcard_cmd(SDCARD_CMD_SEND_CSD, 0);
-	if (res) {
-		printf("sdcard_cmd(9, 0) returned %d\n", res);
-		return (1);
-	}
-	printf("CMD9: %d\n", sdcard_read(buf, 32));
+	pathbuf[0] = 0;
+	scan_files(pathbuf);
 
-	res = sdcard_cmd(SDCARD_CMD_SEND_CID, 0);
-	if (res) {
-		printf("sdcard_cmd(10, 0) returned %d\n", res);
-		return (1);
-	}
-	printf("CMD10: %d\n", sdcard_read(buf, 32));
-
-	printf("CMD16:\n");
-	res = sdcard_cmd(SDCARD_CMD_SET_BLOCKLEN, SDCARD_BLOCK_SIZE);
-	if (res) {
-		printf("sdcard_cmd(16, %d) returned %d\n", SDCARD_BLOCK_SIZE, res);
-		return (1);
-	}
-
-	for (i = 0; i < 2047 * (1 << 20); i += SDCARD_BLOCK_SIZE) {
-		res = sdcard_cmd(SDCARD_CMD_READ_BLOCK, i);
-		if (res) {
-			printf("sdcard_cmd(17, %d) returned %d\n", i, res);
-			return (1);
-		}
-		sdcard_read(buf, 512);
-#if 1
-		for (j = 0; j < SDCARD_BLOCK_SIZE; j++)
-			if (buf[j] >= 32 && buf[j] < 127)
-				putchar(buf[j]);
-#else
-		if ((i & 0xffe00) == 0)
-			printf("CMD17 %08x\n", i);
-#endif
-		j = sio_getchar(0);
-		if (j == 3)
-			break;
-		if (j == ' ')
-			do {} while (sio_getchar(0) != ' ');
-	}
+	if (f_mount(0, NULL))
+		printf("f_mount() failed\n");
 
 	printf("Done\n");
 

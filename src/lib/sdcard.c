@@ -3,6 +3,8 @@
 #include <sdcard.h>
 #include <spi.h>
 
+#include <fatfs/diskio.h>
+
 
 /*
  * Sends a command with a 32-bit argument to the card, and returns
@@ -83,4 +85,44 @@ sdcard_init(void)
 	}
 
 	return (res);
+}
+
+
+DSTATUS
+disk_initialize(BYTE drive)
+{
+
+	if (drive || sdcard_init())
+		return(STA_NOINIT);
+	else
+		return (0);
+}
+
+
+DSTATUS
+disk_status(BYTE drive)
+{
+
+	if (drive)
+		return(STA_NOINIT);
+	else
+		return (0);
+}
+
+
+DRESULT
+disk_read (BYTE Drive, BYTE* Buffer, DWORD SectorNumber, BYTE SectorCount)
+{
+
+	if (Drive)
+		return (RES_NOTRDY);
+
+	for (; SectorCount > 0; SectorCount--) {
+		if (sdcard_cmd(SDCARD_CMD_READ_BLOCK,
+		    SectorNumber * SDCARD_BLOCK_SIZE))
+			return(RES_ERROR);
+		if (sdcard_read((char *) Buffer, SDCARD_BLOCK_SIZE))
+			return(RES_ERROR);
+	}
+	return (RES_OK);
 }
