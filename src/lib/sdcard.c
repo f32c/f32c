@@ -2,8 +2,12 @@
 #include <types.h>
 #include <sdcard.h>
 #include <spi.h>
+#include <sio.h>
 
 #include <fatfs/diskio.h>
+
+
+#define	SDCARD_IDLE_MASK 0x00
 
 
 /*
@@ -24,8 +28,11 @@ sdcard_cmd(int cmd, uint32_t arg)
 	/* Argument */
 	spi_byte(SPI_PORT_SDCARD, arg >> 24);
 	spi_byte(SPI_PORT_SDCARD, arg >> 16);
+	if (sio_idle_fn != NULL)
+		(*sio_idle_fn)();
 	spi_byte(SPI_PORT_SDCARD, arg >> 8);
 	spi_byte(SPI_PORT_SDCARD, arg);
+
 
 	/* CRC, hardcoded for CMD 0 */
 	spi_byte(SPI_PORT_SDCARD, 0x95);
@@ -35,6 +42,8 @@ sdcard_cmd(int cmd, uint32_t arg)
 		res = spi_byte_in(SPI_PORT_SDCARD);
 		if ((res & 0x80) == 0)
 			break;
+		if (sio_idle_fn != NULL)
+			(*sio_idle_fn)();
 	}
 
 	return (res);
@@ -52,13 +61,18 @@ sdcard_read(char *buf, int n)
 
 	/* Wait for data start token */
 	for (i = 10000; spi_byte_in(SPI_PORT_SDCARD) != 0xfe; i--) {
+		if (sio_idle_fn != NULL && (i & SDCARD_IDLE_MASK) == 0)
+			(*sio_idle_fn)();
 		if (i == 0)
 			return (-1);
 	}
 
 	/* Fetch data */
-	for (; n > 0; n--)
+	for (; n > 0; n--) {
+		if (sio_idle_fn != NULL && (i & SDCARD_IDLE_MASK) == 0)
+			(*sio_idle_fn)();
 		*buf++ = spi_byte_in(SPI_PORT_SDCARD);
+	}
         
 	/* CRC - ignored */
 	spi_byte_in(SPI_PORT_SDCARD);
