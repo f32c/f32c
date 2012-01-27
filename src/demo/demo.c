@@ -6,6 +6,9 @@
 #include <sio.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include <fatfs/ff.h>
 
 
 /* From lib/pcmplay.c */
@@ -33,48 +36,87 @@ static int old_bauds = 115200;
 static int new_bauds = 115200;
 
 
-#define	BUFSIZE 64
+#define	BUFSIZE 256
+char buf[BUFSIZE];
+
 #define	MEMSIZE 3000
 #define	MEM_OFFSET 333333
-
-char buf[BUFSIZE];
-uint16_t ibuf[MEMSIZE];
+//uint16_t ibuf[MEMSIZE];
 
 static int idle_active = 0;
+
+FATFS fh;
+
+
+FRESULT
+scan_files(char* path)
+{
+    FRESULT res;
+    FILINFO fno;
+    DIR dir;
+    int i;
+    char *fn;
+    char *cp;
+
+    res = f_opendir(&dir, path);	/* Open the directory */
+    if (res == FR_OK) {
+        i = strlen(path);
+        for (;;) {
+            res = f_readdir(&dir, &fno); /* Read a directory item */
+            if (res != FR_OK || fno.fname[0] == 0) break;
+            if (fno.fname[0] == '.') continue;	/* Ignore dot entry */
+            fn = fno.fname;
+            if (fno.fattrib & AM_DIR) {	/* It is a directory */
+		cp = &path[i];
+		*cp++ = '/';
+		do {
+			*cp++ = *fn;
+		} while (*fn++ != 0);
+                res = scan_files(path);
+                if (res != FR_OK) break;
+                path[i] = 0;
+            } else {	/* It is a file. */
+                printf("%s/%s\n", path, fn);
+            }
+        }
+    }
+
+    return res;
+}
 
 
 static void
 sdcard_test(void)
 {
-	uint8_t sd_buf[16];
-	int c_size, i;
+	int i;
+
+	if (f_mount(0, &fh))
+		printf("f_mount() failed\n");
+
+	buf[0] = 0;
+	scan_files(buf);
+
+	if (f_mount(0, NULL))
+		printf("f_mount() failed\n");
 
 	if (sdcard_init()) {
 		printf("Nije detektirana MicroSD kartica.\n");
 		return;
 	}
 
-	if (sdcard_cmd(SDCARD_CMD_SEND_CID, 0) ||
-	    sdcard_read((char *) sd_buf, 16))
+	if (sdcard_cmd(SDCARD_CMD_SEND_CID, 0) || sdcard_read((char *) buf, 16))
 		goto sdcard_error;
 
-	printf("MicroSD kartica: ");
+	printf("\nMicroSD kartica: ");
 	for (i = 1; i < 8; i++)
-		putchar(sd_buf[i]);
+		putchar(buf[i]);
 
-	printf(" rev %d", (sd_buf[8] >> 4) * 10 + (sd_buf[8] & 0xf));
+	printf(" rev %d", ((u_char) buf[8] >> 4) * 10 + (buf[8] & 0xf));
 
 	printf(" S/N ");
 	for (i = 9; i < 13; i++)
-		printf("%02x", sd_buf[i]);
-
-	if (sdcard_cmd(SDCARD_CMD_SEND_CSD, 0) ||
-	    sdcard_read((char *) sd_buf, 16))
-		goto sdcard_error;
-
-	c_size = ((sd_buf[6] & 0x3) << 10) + (sd_buf[7] << 2) +
-	    (sd_buf[8] >> 6);
-	printf(" size %d MB\n", c_size / 2);
+		printf("%02x", (u_char) buf[i]);
+	printf("\n");
 
 	return;
 
@@ -137,6 +179,7 @@ int sram_rd(int a)
 static void
 sram_test(void)
 {
+#if 0
 	int i, j, r, mem_offset;
 	
 	printf("Ispitivanje SRAMa u tijeku...  ");
@@ -160,7 +203,6 @@ sram_test(void)
 	}
 	printf("SRAM OK!\n");
 
-#if 0
 	do {
 		printf("Enter RD addr: ");
 		if (gets(buf, BUFSIZE) != 0)
