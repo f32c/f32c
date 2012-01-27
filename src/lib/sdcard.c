@@ -1,15 +1,20 @@
 
 #include <types.h>
+#include <sdcard.h>
 #include <spi.h>
 
 
+/*
+ * Sends a command with 32-bit argument to the card, and waits for data
+ * start token if command returns a data stream.  Returns 0 on succes,
+ * non-zero otherwise.
+ */
 int
 sdcard_cmd(int cmd, uint32_t arg)
 {
 	int i, res;
 
-	/* Hold MOSI signal high for a few cycles */
-//	spi_start_transaction(SPI_PORT_SDCARD);
+	/* Preamble */
 	spi_byte_in(SPI_PORT_SDCARD);
 
 	/* Command */
@@ -36,15 +41,28 @@ sdcard_cmd(int cmd, uint32_t arg)
 
 
 int
-sdcard_idle(void)
+sdcard_read(char *buf, int n)
 {
+	int i;
 
-	/* Preamble for entering SPI mode */
-//	sdcard_cmd(0xff, 0xffffffff);
+	/* Wait for data start token */
+	for (i = 10000; spi_byte_in(SPI_PORT_SDCARD) != 0xfe; i--) {
+		if (i == 0)
+			return (-1);
+	}
 
-	/* Enter idle mode */
-	return(sdcard_cmd(0, 0) - 1);
+	/* Fetch data */
+	for (; n > 0; n--)
+		*buf++ = spi_byte_in(SPI_PORT_SDCARD);
+        
+	/* CRC - ignored */
+	spi_byte_in(SPI_PORT_SDCARD);
+	spi_byte_in(SPI_PORT_SDCARD);
+
+	return (0);
 }
+                 
+                
 
 
 int
@@ -52,13 +70,13 @@ sdcard_init(void)
 {
 	int i, res;
 
-	res = sdcard_idle();
+	res = sdcard_cmd(SDCARD_CMD_GO_IDLE_STATE, 0) ^ 0x01;
 	if (res)
 		return (res);
 
 	/* Initiate initialization process, loop until done */
 	for (i = 0; i < (1 << 16); i++) {
-		res = sdcard_cmd(1, 0);
+		res = sdcard_cmd(SDCARD_CMD_SEND_OP_COND, 0);
 		if (res == 0)
 			break;
 	}
