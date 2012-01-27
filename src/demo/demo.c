@@ -29,7 +29,8 @@ extern int led_byte;
 
 
 static int old_pcm_vol, old_pcm_bal;
-static int bauds = 115200;
+static int old_bauds = 115200;
+static int new_bauds = 115200;
 
 
 #define	BUFSIZE 64
@@ -248,14 +249,17 @@ redraw_display()
 		printf("VU-metar\n");
 	else
 		printf("0x%02x (%d)\n", led_byte, led_byte);
-	printf(" 8: USB UART (RS-232) baud rate: %d bps\n", bauds);
+	printf(" 8: USB UART (RS-232) baud rate: %d bps\n", new_bauds);
 	printf(" 9: Ispitaj SRAM\n");
 	printf(" 0: Detektiraj MicroSD karticu\n");
 	printf("\n");
 
 	/* Recompute and set baudrate */
-	val = bauds * 1024 / 1000 * 1024 / 81250 + 1;
-	OUTW(IO_SIO_BAUD, val);
+	if (old_bauds != new_bauds) {
+		old_bauds = new_bauds;
+		val = new_bauds * 1024 / 1000 * 1024 / 81250 + 1;
+		OUTW(IO_SIO_BAUD, val);
+	}
 }
 
 
@@ -436,7 +440,7 @@ main(void)
 				return (0);	/* Got CTRL + C */
 			i = atoi(buf);
 			if (buf[0] != 0 && i >= 300 && i <= 460800)
-				bauds = i;
+				new_bauds = i;
 			break;
 		case '9':
 			sram_test();
