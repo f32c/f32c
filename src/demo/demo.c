@@ -2,6 +2,7 @@
 #include <types.h>
 #include <endian.h>
 #include <io.h>
+#include <sdcard.h>
 #include <sio.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,7 +25,6 @@ extern int pcm_hi;
 extern int pcm_lo;
 extern int pcm_reverb;
 extern int pcm_period;
-extern int led_mode;
 extern int led_byte;
 
 
@@ -32,14 +32,54 @@ static int old_pcm_vol, old_pcm_bal;
 static int bauds = 115200;
 
 
-#define BUFSIZE 64
-#define	MEMSIZE 4000
-#define MEM_OFFSET 333333
+#define	BUFSIZE 64
+#define	MEMSIZE 3000
+#define	MEM_OFFSET 333333
 
 char buf[BUFSIZE];
 uint16_t ibuf[MEMSIZE];
 
 static int idle_active = 0;
+
+
+static void
+sdcard_test(void)
+{
+	uint8_t sd_buf[16];
+	int c_size, i;
+
+	if (sdcard_init()) {
+		printf("Nije detektirana MicroSD kartica.\n");
+		return;
+	}
+
+	if (sdcard_cmd(SDCARD_CMD_SEND_CID, 0) ||
+	    sdcard_read((char *) sd_buf, 16))
+		goto sdcard_error;
+
+	printf("MicroSD kartica: ");
+	for (i = 1; i < 8; i++)
+		putchar(sd_buf[i]);
+
+	printf(" rev %d", (sd_buf[8] >> 4) * 10 + (sd_buf[8] & 0xf));
+
+	printf(" S/N ");
+	for (i = 9; i < 13; i++)
+		printf("%02x", sd_buf[i]);
+
+	if (sdcard_cmd(SDCARD_CMD_SEND_CSD, 0) ||
+	    sdcard_read((char *) sd_buf, 16))
+		goto sdcard_error;
+
+	c_size = ((sd_buf[6] & 0x3) << 10) + (sd_buf[7] << 2) +
+	    (sd_buf[8] >> 6);
+	printf(" size %d MB\n", c_size / 2);
+
+	return;
+
+sdcard_error:
+	printf("Greska u komunikaciji s MicroSD karticom.\n");
+}
 
 
 void sram_wr(int a, int d)
@@ -98,7 +138,7 @@ sram_test(void)
 {
 	int i, j, r, mem_offset;
 	
-	printf("SRAM self-test u tijeku...  ");
+	printf("Ispitivanje SRAMa u tijeku...  ");
 	for (j = 0; j < 500; j++) {
 		do {
 			mem_offset = random() & 0x7ffff;
@@ -145,9 +185,9 @@ sram_test(void)
  * Empirijske konstante i funkcije za konverziju granicnih frekvencija u
  * konstante audiofrekvencijskih IIR digitalnih filtara 1. reda, i obratno.
  */
-#define FC1	65700
-#define FC2	11000
-#define FC3	32768
+#define	FC1	65700
+#define	FC2	11000
+#define	FC3	32768
 
 static int
 ctof(int c)
@@ -182,7 +222,7 @@ redraw_display()
 	printf("FER - Digitalna logika 2011/2012\n");
 	printf("\n");
 	printf("ULX2S FPGA plocica - demonstracijsko-dijagnosticki program\n");
-	printf("v 0.94 25/01/2012\n");
+	printf("v 0.95 27/01/2012\n");
 	printf("\n");
 	printf("Glavni izbornik:\n");
 	printf("\n");
@@ -203,10 +243,14 @@ redraw_display()
 	    PCM_TSC_CYCLES * 100 / pcm_period);
 	printf(" 6: Frekvencija odasiljanja FM signala: %d.%04d MHz\n",
 	    fm_freq / 1000000, (fm_freq % 1000000) / 100);
-	printf(" 7: LED indikatori (0: VU-metar, 1: byte): %d\n", led_mode);
-	printf(" 8: LED byte: %d\n", led_byte);
-	printf(" 9: USB UART (RS-232) baud rate: %d bps\n", bauds);
-	printf(" 0: SRAM self-test\n");
+	printf(" 7: LED indikatori: ");
+	if (led_byte < 0)
+		printf("VU-metar\n");
+	else
+		printf("0x%02x (%d)\n", led_byte, led_byte);
+	printf(" 8: USB UART (RS-232) baud rate: %d bps\n", bauds);
+	printf(" 9: Ispitaj SRAM\n");
+	printf(" 0: Detektiraj MicroSD karticu\n");
 	printf("\n");
 
 	/* Recompute and set baudrate */
@@ -292,7 +336,6 @@ main(void)
 	sio_idle_fn = demo_idle;
 
 	do {
-		redraw_display();
 		c = getchar();
 		switch (c) {
 		case 3: /* CTRL + C */
@@ -377,17 +420,16 @@ main(void)
 			res = update_fm_freq();
 			break;
 		case '7':
-			led_mode ^= 1;
-			break;
-		case '8':
 			printf("Unesite vrijednost za LED byte (0 do 255): ");
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
 			i = atoi(buf);
 			if (buf[0] != 0 && i >= 0 && i <= 255)
 				led_byte = i;
+			else
+				led_byte = -1;
 			break;
-		case '9':
+		case '8':
 			printf("Unesite zeljeni baud rate"
 			    " (300 do 460800 bps): ");
 			if (gets(buf, BUFSIZE) != 0)
@@ -396,10 +438,14 @@ main(void)
 			if (buf[0] != 0 && i >= 300 && i <= 460800)
 				bauds = i;
 			break;
-		case '0':
+		case '9':
 			sram_test();
-			break;
+			continue;
+		case '0':
+			sdcard_test();
+			continue;
 		}
+		redraw_display();
 	} while (res == 0);
 
 	printf("Pritisnite 'x' za povratak u glavni izbornik.\n");
