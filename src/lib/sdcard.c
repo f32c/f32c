@@ -5,9 +5,8 @@
 
 
 /*
- * Sends a command with 32-bit argument to the card, and waits for data
- * start token if command returns a data stream.  Returns 0 on succes,
- * non-zero otherwise.
+ * Sends a command with a 32-bit argument to the card, and returns
+ * a single byte received as a response from the card.
  */
 int
 sdcard_cmd(int cmd, uint32_t arg)
@@ -40,6 +39,10 @@ sdcard_cmd(int cmd, uint32_t arg)
 };
 
 
+/*
+ * Reads a data block of n bytes from the card and stores it in a buffer
+ * pointed to by the buf argument.  Returns 0 on success, -1 on failure.
+ */
 int
 sdcard_read(char *buf, int n)
 {
@@ -61,8 +64,6 @@ sdcard_read(char *buf, int n)
 
 	return (0);
 }
-                 
-                
 
 
 int
