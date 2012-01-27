@@ -120,7 +120,7 @@ if {$tabcnt != 0} {
 }
 
 set base_isa_set "sh lhu lh bgtz sllv srav beq sltu bgez srl xor xori lui sw lbu and slt lw andi slti blez nop bne li sra addu nor negu subu bnez jalr or sltiu ori j beqz sll bltz jr sb lb move addiu jal"
-set branch_likely_set "bnezl bltzl bnel beql beqzl bgezl"
+set branch_likely_set "bnezl bltzl bnel beql beqzl bgezl bgtzl"
 set mul_set "mult multu mflo mfhi"
 set unaligned_store_set "swl swr"
 set unaligned_load_set "lwl lwr"
