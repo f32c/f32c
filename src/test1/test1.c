@@ -75,9 +75,9 @@ main(void)
 		return(1);
 	}
 
-	if (sdcard_cmd(SDCARD_CMD_SEND_CID, 0) ||
+	if (sdcard_cmd(SD_CMD_SEND_CID, 0) ||
 	    sdcard_read((char *) pathbuf, 16)) {
-		printf("SDCARD_CMD_SEND_CID failed.\n");
+		printf("SD_CMD_SEND_CID failed.\n");
 		return(1);
 	}
 
