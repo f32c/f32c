@@ -7,7 +7,10 @@
 #include <fatfs/diskio.h>
 
 
-#define	SDCARD_IDLE_MASK 0x00
+#define	SD_IDLE_MASK 		0x00
+
+
+static int sdcard_addr_shift;	
 
 
 /*
@@ -60,7 +63,7 @@ sdcard_read(char *buf, int n)
 
 	/* Wait for data start token */
 	for (i = 10000; spi_byte_in(SPI_PORT_SDCARD) != 0xfe; i--) {
-		if (sio_idle_fn != NULL && (i & SDCARD_IDLE_MASK) == 0)
+		if (sio_idle_fn != NULL && (i & SD_IDLE_MASK) == 0)
 			(*sio_idle_fn)();
 		if (i == 0)
 			return (-1);
@@ -68,7 +71,7 @@ sdcard_read(char *buf, int n)
 
 	/* Fetch data */
 	for (; n > 0; n--) {
-		if (sio_idle_fn != NULL && (i & SDCARD_IDLE_MASK) == 0)
+		if (sio_idle_fn != NULL && (i & SD_IDLE_MASK) == 0)
 			(*sio_idle_fn)();
 		*buf++ = spi_byte_in(SPI_PORT_SDCARD);
 	}
@@ -86,31 +89,59 @@ sdcard_init(void)
 {
 	int i, res;
 
-	res = sdcard_cmd(SDCARD_CMD_GO_IDLE_STATE | 0x9500, 0) & 0xfe;
+	/* Mark card as uninitialized */
+	sdcard_addr_shift = -1;
+	
+	/* CRC embedded in bits 15..8 of command word */
+	res = sdcard_cmd(SD_CMD_GO_IDLE_STATE | 0x9500, 0) & 0xfe;
 	if (res)
 		return (res);
 
-	res = sdcard_cmd(SDCARD_CMD_SEND_IF_COND | 0x8700, 0x01aa) & 0xfe;
+	/* CRC embedded in bits 15..8 of command word */
+	res = sdcard_cmd(SD_CMD_SEND_IF_COND | 0x8700, 0x01aa) & 0xfe;
 	if (res)
 		return (res);
 
 	/* Initiate initialization process, loop until done */
 	for (i = 0; i < (1 << 16); i++) {
-		sdcard_cmd(SDCARD_CMD_APP_CMD, 0);
-		res = sdcard_cmd(SDCARD_CMD_APP_SEND_OP_COND, 1 << 30);
+		sdcard_cmd(SD_CMD_APP_CMD, 0);
+		res = sdcard_cmd(SD_CMD_APP_SEND_OP_COND, 1 << 30);
 		if (res == 0)
 			break;
 	}
+	if (res)
+		return (res);
 
-	return (res);
+	/* Default: byte addressing = block * 512 */
+	sdcard_addr_shift = 9;
+
+	/* Set block size to 512 */
+	res = sdcard_cmd(SD_CMD_SET_BLOCKLEN, SD_BLOCKLEN);
+	if (res)
+		return (res);
+
+	/* READ_OCR: SD or SDHC? */
+	if (sdcard_cmd(SD_CMD_READ_OCR, 1 << 30))
+		return (0);
+
+	/* byte #1, bit 6 of response determines card type */
+	if (spi_byte_in(SPI_PORT_SDCARD) & (1 << 6))
+		sdcard_addr_shift = 0;	/* block addressing */
+	/* Flush the remaining response bytes */
+	for (i = 0; i < 3; i++)
+		spi_byte_in(SPI_PORT_SDCARD);
+
+	return (0);
 }
 
 
+#define	__unused	__attribute__((__unused__))
+
 DSTATUS
-disk_initialize(BYTE drive)
+disk_initialize(BYTE drive __unused)
 {
 
-	if (drive || sdcard_init())
+	if (sdcard_init())
 		return(STA_NOINIT);
 	else
 		return (0);
@@ -118,10 +149,10 @@ disk_initialize(BYTE drive)
 
 
 DSTATUS
-disk_status(BYTE drive)
+disk_status(BYTE drive __unused)
 {
 
-	if (drive)
+	if (sdcard_addr_shift < 0)
 		return(STA_NOINIT);
 	else
 		return (0);
@@ -129,18 +160,24 @@ disk_status(BYTE drive)
 
 
 DRESULT
-disk_read (BYTE Drive, BYTE* Buffer, DWORD SectorNumber, BYTE SectorCount)
+disk_read (BYTE Drive __unused, BYTE* Buffer, DWORD SectorNumber,
+    BYTE SectorCount)
 {
 
-	if (Drive)
-		return (RES_NOTRDY);
+	if (sdcard_addr_shift < 0)
+		goto error;
 
 	for (; SectorCount > 0; SectorCount--) {
-		if (sdcard_cmd(SDCARD_CMD_READ_BLOCK,
-		    SectorNumber * SDCARD_BLOCK_SIZE))
-			return(RES_ERROR);
-		if (sdcard_read((char *) Buffer, SDCARD_BLOCK_SIZE))
-			return(RES_ERROR);
+		if (sdcard_cmd(SD_CMD_READ_BLOCK,
+		    SectorNumber << sdcard_addr_shift))
+			goto error;
+		if (sdcard_read((char *) Buffer, SD_BLOCKLEN))
+			goto error;
 	}
 	return (RES_OK);
+
+error:
+	/* Mark the card as dead */
+	sdcard_addr_shift = -1;
+	return(RES_ERROR);
 }
