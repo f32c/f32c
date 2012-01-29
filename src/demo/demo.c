@@ -39,7 +39,6 @@ static int new_bauds = 115200;
 #define	BUFSIZE 256
 char buf[BUFSIZE];
 
-#define	MEM_OFFSET 333333
 #define	MEMSIZE (BUFSIZE / 2)
 
 static int idle_active = 0;
@@ -59,51 +58,60 @@ scan_files(char* path)
 	char *fn;
 	char *cp;
 
-	res = f_opendir(&dir, path);	/* Open the directory */
-	if (res == FR_OK) {
-		i = strlen(path);
-		for (;;) {
-			/* Read a directory item */
-			res = f_readdir(&dir, &fno);
-			if (res != FR_OK || fno.fname[0] == 0)
+	/* Open the directory */
+	res = f_opendir(&dir, path);
+	if (res != FR_OK)
+		return (res);
+
+	i = strlen(path);
+	do {
+		/* Read a directory item */
+		res = f_readdir(&dir, &fno);
+		if (res != FR_OK || fno.fname[0] == 0)
+			break;
+
+		/* Ignore dot entry */
+		if (fno.fname[0] == '.')
+			continue;
+
+		fn = fno.fname;
+		if (sd_scan_stop) {
+			if (fno.fattrib & AM_DIR)
+				c = 'd';
+			else
+				c = ' ';
+			printf("%10d %c %s/%s\n", (int) fno.fsize, c,
+			    path, fn);
+		} else
+			break;
+
+		/* Pager */
+		if (sd_scan_line++ == sd_scan_stop) {
+			printf("--More-- (line %d)", sd_scan_line);
+			c = getchar();
+			printf("\r                      \r");
+			if (c == 3 || c == 'q') {
+				sd_scan_stop = 0;
 				break;
-			/* Ignore dot entry */
-			if (fno.fname[0] == '.')
-				continue;
-			fn = fno.fname;
-			if (fno.fattrib & AM_DIR) {
-				/* It is a directory */
-				cp = &path[i];
-				*cp++ = '/';
-				do {
-					*cp++ = *fn;
-				} while (*fn++ != 0);
-				res = scan_files(path);
-				if (res != FR_OK)
-					break;
-				path[i] = 0;
-			} else {
-				/* It is a file. */
-				if (sd_scan_stop)
-					printf("%s/%s\n", path, fn);
-				else
-					break;
-				if (sd_scan_line++ == sd_scan_stop) {
-					printf("--More-- (line %d)",
-					    sd_scan_line);
-					c = getchar();
-					printf("\r                      \r");
-					if (c == 3 || c == 'q') {
-						sd_scan_stop = 0;
-						break;
-					}
-					sd_scan_stop = sd_scan_line;
-					if (c == ' ')
-						sd_scan_stop += 21;
-				}
 			}
+			sd_scan_stop = sd_scan_line;
+			if (c == ' ')
+				sd_scan_stop += 21;
 		}
-	}
+
+		/* Recursively scan subdirectories */
+		if (fno.fattrib & AM_DIR) {
+			cp = &path[i];
+			*cp++ = '/';
+			do {
+				*cp++ = *fn;
+			} while (*fn++ != 0);
+			res = scan_files(path);
+			if (res != FR_OK)
+				break;
+			path[i] = 0;
+		}
+	} while (1);
 
 	return (res);
 }
