@@ -39,11 +39,12 @@ static int new_bauds = 115200;
 #define	BUFSIZE 256
 char buf[BUFSIZE];
 
-#define	MEMSIZE 3000
 #define	MEM_OFFSET 333333
-//uint16_t ibuf[MEMSIZE];
+#define	MEMSIZE (BUFSIZE / 2)
 
 static int idle_active = 0;
+static int sd_scan_line;
+static int sd_scan_stop;
 
 FATFS fh;
 
@@ -51,37 +52,60 @@ FATFS fh;
 FRESULT
 scan_files(char* path)
 {
-    FRESULT res;
-    FILINFO fno;
-    DIR dir;
-    int i;
-    char *fn;
-    char *cp;
+	FRESULT res;
+	FILINFO fno;
+	DIR dir;
+	int i, c;
+	char *fn;
+	char *cp;
 
-    res = f_opendir(&dir, path);	/* Open the directory */
-    if (res == FR_OK) {
-        i = strlen(path);
-        for (;;) {
-            res = f_readdir(&dir, &fno); /* Read a directory item */
-            if (res != FR_OK || fno.fname[0] == 0) break;
-            if (fno.fname[0] == '.') continue;	/* Ignore dot entry */
-            fn = fno.fname;
-            if (fno.fattrib & AM_DIR) {	/* It is a directory */
-		cp = &path[i];
-		*cp++ = '/';
-		do {
-			*cp++ = *fn;
-		} while (*fn++ != 0);
-                res = scan_files(path);
-                if (res != FR_OK) break;
-                path[i] = 0;
-            } else {	/* It is a file. */
-                printf("%s/%s\n", path, fn);
-            }
-        }
-    }
+	res = f_opendir(&dir, path);	/* Open the directory */
+	if (res == FR_OK) {
+		i = strlen(path);
+		for (;;) {
+			/* Read a directory item */
+			res = f_readdir(&dir, &fno);
+			if (res != FR_OK || fno.fname[0] == 0)
+				break;
+			/* Ignore dot entry */
+			if (fno.fname[0] == '.')
+				continue;
+			fn = fno.fname;
+			if (fno.fattrib & AM_DIR) {
+				/* It is a directory */
+				cp = &path[i];
+				*cp++ = '/';
+				do {
+					*cp++ = *fn;
+				} while (*fn++ != 0);
+				res = scan_files(path);
+				if (res != FR_OK)
+					break;
+				path[i] = 0;
+			} else {
+				/* It is a file. */
+				if (sd_scan_stop)
+					printf("%s/%s\n", path, fn);
+				else
+					break;
+				if (sd_scan_line++ == sd_scan_stop) {
+					printf("--More-- (line %d)",
+					    sd_scan_line);
+					c = getchar();
+					printf("\r                      \r");
+					if (c == 3 || c == 'q') {
+						sd_scan_stop = 0;
+						break;
+					}
+					sd_scan_stop = sd_scan_line;
+					if (c == ' ')
+						sd_scan_stop += 21;
+				}
+			}
+		}
+	}
 
-    return res;
+	return (res);
 }
 
 
@@ -90,24 +114,13 @@ sdcard_test(void)
 {
 	int i;
 
-	if (f_mount(0, &fh))
-		printf("f_mount() failed\n");
-
-	buf[0] = 0;
-	scan_files(buf);
-
-	if (f_mount(0, NULL))
-		printf("f_mount() failed\n");
-
-	if (sdcard_init()) {
-		printf("Nije detektirana MicroSD kartica.\n");
+	if (sdcard_init() || sdcard_cmd(SD_CMD_SEND_CID, 0) ||
+	    sdcard_read((char *) buf, 16)) {
+		printf("Nije pronadjena MicroSD kartica.\n\n");
 		return;
 	}
 
-	if (sdcard_cmd(SDCARD_CMD_SEND_CID, 0) || sdcard_read((char *) buf, 16))
-		goto sdcard_error;
-
-	printf("\nMicroSD kartica: ");
+	printf("MicroSD kartica: ");
 	for (i = 1; i < 8; i++)
 		putchar(buf[i]);
 
@@ -116,12 +129,15 @@ sdcard_test(void)
 	printf(" S/N ");
 	for (i = 9; i < 13; i++)
 		printf("%02x", (u_char) buf[i]);
+	printf("\n\n");
+
+	f_mount(0, &fh);
+	buf[0] = 0;
+	sd_scan_line = 0;
+	sd_scan_stop = 19;
+	scan_files(buf);
+
 	printf("\n");
-
-	return;
-
-sdcard_error:
-	printf("Greska u komunikaciji s MicroSD karticom.\n");
 }
 
 
@@ -179,11 +195,11 @@ int sram_rd(int a)
 static void
 sram_test(void)
 {
-#if 0
 	int i, j, r, mem_offset;
+	uint16_t *membuf = (uint16_t *) buf;
 	
 	printf("Ispitivanje SRAMa u tijeku...  ");
-	for (j = 0; j < 500; j++) {
+	for (j = 0; j < 4096; j++) {
 		do {
 			mem_offset = random() & 0x7ffff;
 		} while (mem_offset > 512*1024 - MEMSIZE);
@@ -192,35 +208,16 @@ sram_test(void)
 			sram_wr(i + mem_offset, (i - (i << 9)) ^ r);
 		}
 		for (i = 0; i < MEMSIZE; i++) {
-			ibuf[i] = sram_rd(i + mem_offset);
+			membuf[i] = sram_rd(i + mem_offset);
 		}
 		for (i = 0; i < MEMSIZE; i++) {
-			if (ibuf[i] != (((i - (i << 9)) ^ r) & 0xffff)) {
+			if (membuf[i] != (((i - (i << 9)) ^ r) & 0xffff)) {
 				printf("Greska: neispravan SRAM!\n");
 				return;
 			}
 		}
 	}
 	printf("SRAM OK!\n");
-
-	do {
-		printf("Enter RD addr: ");
-		if (gets(buf, BUFSIZE) != 0)
-			return (0);	/* Got CTRL + C */
-		i = atoi(buf);
-		printf("sram(%06d): %08x\n", i, sram_rd(i));
-
-		printf("Enter WR addr: ");
-		if (gets(buf, BUFSIZE) != 0)
-			return (0);	/* Got CTRL + C */
-		i = atoi(buf);
-		printf("Enter WR data: ");
-		if (gets(buf, BUFSIZE) != 0)
-			return (0);	/* Got CTRL + C */
-		j = atoi(buf);
-		sram_wr(i, j);
-	} while (0);
-#endif
 }
 
 
@@ -265,7 +262,7 @@ redraw_display()
 	printf("FER - Digitalna logika 2011/2012\n");
 	printf("\n");
 	printf("ULX2S FPGA plocica - demonstracijsko-dijagnosticki program\n");
-	printf("v 0.95 27/01/2012\n");
+	printf("v 0.96 29/01/2012\n");
 	printf("\n");
 	printf("Glavni izbornik:\n");
 	printf("\n");
@@ -293,7 +290,7 @@ redraw_display()
 		printf("0x%02x (%d)\n", led_byte, led_byte);
 	printf(" 8: USB UART (RS-232) baud rate: %d bps\n", new_bauds);
 	printf(" 9: Ispitaj SRAM\n");
-	printf(" 0: Detektiraj MicroSD karticu\n");
+	printf(" 0: Ispisi sadrzaj kazala MicroSD kartice\n");
 	printf("\n");
 
 	/* Recompute and set baudrate */
