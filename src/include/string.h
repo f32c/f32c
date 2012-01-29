@@ -83,7 +83,7 @@ strcmp(const char *s1, const char *s2)
 			v0 = (((uint32_t)c1) - t0) & t1;
 			if (v0) {
 				/* Maybe */           
-				if (v0 & ~((uint32_t)c1)) 
+				if (__predict_false(v0 & ~((uint32_t)c1))) 
 					return(0);
 			}
 			s1 += 4;
