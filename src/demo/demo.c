@@ -100,7 +100,8 @@ scan_files(char* path)
 
 		/* Recursively scan subdirectories */
 		if (fno.fattrib & AM_DIR) {
-			sprintf(&path[i], "/%s", fn);
+			path[i] = '/';
+			strcpy(&path[i+1], fn);
 			res = scan_files(path);
 			if (res != FR_OK)
 				break;
@@ -127,9 +128,8 @@ sdcard_test(void)
 	for (i = 1; i < 8; i++)
 		putchar(buf[i]);
 
-	printf(" rev %d", ((u_char) buf[8] >> 4) * 10 + (buf[8] & 0xf));
+	printf(" rev %d S/N ", ((u_char) buf[8] >> 4) * 10 + (buf[8] & 0xf));
 
-	printf(" S/N ");
 	for (i = 9; i < 13; i++)
 		printf("%02x", (u_char) buf[i]);
 	printf("\n\n");
@@ -261,21 +261,18 @@ redraw_display()
 {
 	int val;
 
-	printf("\n");
-	printf("FER - Digitalna logika 2011/2012\n");
-	printf("\n");
-	printf("ULX2S FPGA plocica - demonstracijsko-dijagnosticki program\n");
-	printf("v 0.96 29/01/2012\n");
-	printf("\n");
-	printf("Glavni izbornik:\n");
-	printf("\n");
-	printf(" 1: Glasnoca: %d (zvucni izlaz ", pcm_vol & ~PCM_VOL_MUTE);
+	printf(
+	    "\nFER - Digitalna logika 2011/2012\n\n"
+	    "ULX2S FPGA plocica - demonstracijsko-dijagnosticki program\n"
+	    "v 0.96 29/01/2012\n\n"
+	    "Glavni izbornik:\n\n"
+	    " 1: Glasnoca: %d (zvucni izlaz ", pcm_vol & ~PCM_VOL_MUTE
+	);
 	if (pcm_vol & PCM_VOL_MUTE)
 		printf("iskljucen)\n");
 	else
 		printf("ukljucen)\n");
-	printf(" 2: Balans (L/D): %d\n", pcm_bal);
-	printf(" 3: Jeka ");
+	printf(" 2: Balans (L/D): %d 3: Jeka ", pcm_bal);
 	if (pcm_reverb)
 		printf("ukljucena\n");
 	else
@@ -291,10 +288,12 @@ redraw_display()
 		printf("VU-metar\n");
 	else
 		printf("0x%02x (%d)\n", led_byte, led_byte);
-	printf(" 8: USB UART (RS-232) baud rate: %d bps\n", new_bauds);
-	printf(" 9: Ispitaj SRAM\n");
-	printf(" 0: Ispisi sadrzaj kazala MicroSD kartice\n");
-	printf("\n");
+	printf(
+	    " 8: USB UART (RS-232) baud rate: %d bps\n"
+	    " 9: Ispitaj SRAM\n"
+	    " 0: Ispisi sadrzaj kazala MicroSD kartice\n\n"
+	    , new_bauds
+	);
 
 	/* Recompute and set baudrate */
 	if (old_bauds != new_bauds) {
