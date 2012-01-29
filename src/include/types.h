@@ -2,6 +2,9 @@
 #ifndef	_TYPES_H_
 #define	_TYPES_H_
 
+#include <cdefs.h>
+
+
 /* types and consts */
 #define	NULL		((void *) 0)
 #define	true		1
@@ -36,11 +39,7 @@ typedef	__uint64_t		uint64_t;
 typedef	__intptr_t		intptr_t;
 typedef	__uintptr_t		uintptr_t;
 
-/* Byteorder manipulation null-macros */
-#define	htonl(x)		(x)
-#define	htons(x)		(x)
-#define	ntohl(x)		(x)
-#define	ntohs(x)		(x)
+typedef	__uint32_t		__size_t;
+typedef	__size_t		size_t;
 
 #endif /* !_TYPES_H_ */
-

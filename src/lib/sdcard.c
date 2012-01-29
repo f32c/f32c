@@ -135,8 +135,6 @@ sdcard_init(void)
 }
 
 
-#define	__unused	__attribute__((__unused__))
-
 DSTATUS
 disk_initialize(BYTE drive __unused)
 {
