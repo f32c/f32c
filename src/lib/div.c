@@ -15,7 +15,7 @@
 		__asm ("addu %0, %1, %1" : "=r" (b) : "r" (b)); 	\
 		__asm ("addu %0, %1, %1" : "=r" (bit) : "r" (bit));	\
 	}								\
-	while (bit) {							\
+	while (__predict_true(bit)) {					\
 		if (a >= b) {						\
 			lo |= bit;					\
 			a -= b;						\
