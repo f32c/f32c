@@ -103,9 +103,7 @@ scan_files(char* path)
 		if (fno.fattrib & AM_DIR) {
 			cp = &path[i];
 			*cp++ = '/';
-			do {
-				*cp++ = *fn;
-			} while (*fn++ != 0);
+			strcpy(cp, fn);
 			res = scan_files(path);
 			if (res != FR_OK)
 				break;
