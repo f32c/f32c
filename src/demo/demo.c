@@ -56,7 +56,6 @@ scan_files(char* path)
 	DIR dir;
 	int i, c;
 	char *fn;
-	char *cp;
 
 	/* Open the directory */
 	res = f_opendir(&dir, path);
@@ -101,9 +100,7 @@ scan_files(char* path)
 
 		/* Recursively scan subdirectories */
 		if (fno.fattrib & AM_DIR) {
-			cp = &path[i];
-			*cp++ = '/';
-			strcpy(cp, fn);
+			sprintf(&path[i], "/%s", fn);
 			res = scan_files(path);
 			if (res != FR_OK)
 				break;
