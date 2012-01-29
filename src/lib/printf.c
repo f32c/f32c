@@ -40,12 +40,19 @@
 #include <types.h>
 
 
-#define PCHAR(c) {sio_putchar(c, 1);}
 #define	MAXNBUF	32
+
+#define	PCHAR(c) {(*func)(c, arg); retval++;}
+
+
+struct snprintf_arg {
+	char    *str;
+	size_t  remain;
+};
 
 
 static int
-vprintf(char const *fmt, va_list ap)
+xvprintf(char const *fmt, void(*func)(int, void *), void *arg, va_list ap)
 {
 	char nbuf[MAXNBUF];
 	char *cp;
@@ -59,9 +66,6 @@ vprintf(char const *fmt, va_list ap)
 		while ((ch = (u_char)*fmt++) != '%') {
 			if (ch == 0)
 				return (retval);
-			/* Translate CR -> CR + LF */
-			if (ch == '\n')
-				PCHAR('\r');
 			PCHAR(ch);
 		}
 
@@ -167,6 +171,33 @@ number:
 }
 
 
+static void
+sio_pchar(int c, void *arg __unused)
+{
+
+	/* Translate CR -> CR + LF */
+	if (c == '\n')
+		sio_putchar('\r', 1);
+	sio_putchar(c, 1);
+}
+
+
+static void
+snprintf_pchar(int c, void *arg)
+{
+	struct snprintf_arg *const info = arg;
+
+	if (info->remain != 1)
+		*info->str++ = c;
+	if (info->remain >= 2)
+		info->remain--;
+}
+
+
+/*
+ * Externally visible functions: printf(), sprintf() and snprintf().
+ */
+
 int
 printf(const char *fmt, ...)
 {
@@ -174,9 +205,49 @@ printf(const char *fmt, ...)
 	int retval;
  
 	va_start(ap, fmt);
-	retval = vprintf(fmt, ap);
+	retval = xvprintf(fmt, sio_pchar, NULL, ap);
 	va_end(ap);
  
 	return (retval);
 }
 
+
+int
+sprintf(char * restrict str, const char *fmt, ...)
+{
+	va_list ap;
+	struct snprintf_arg info;
+	int retval;
+ 
+	info.str = str;
+	info.remain = 0;
+
+	va_start(ap, fmt);
+	retval = xvprintf(fmt, snprintf_pchar, &info, ap);
+	va_end(ap);
+ 
+	*info.str = 0;
+	return (retval);
+}
+
+
+int
+snprintf(char * restrict str, size_t size, const char *fmt, ...)
+{
+	va_list ap;
+	struct snprintf_arg info;
+	int retval;
+ 
+	if (size == 0)
+		return (0);
+
+	info.str = str;
+	info.remain = size;
+
+	va_start(ap, fmt);
+	retval = xvprintf(fmt, snprintf_pchar, &info, ap);
+	va_end(ap);
+ 
+	*info.str = 0;
+	return (retval);
+}
