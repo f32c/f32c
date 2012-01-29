@@ -213,7 +213,7 @@ printf(const char *fmt, ...)
 
 
 int
-sprintf(char * restrict str, const char *fmt, ...)
+sprintf(char *str, const char *fmt, ...)
 {
 	va_list ap;
 	struct snprintf_arg info;
@@ -232,7 +232,7 @@ sprintf(char * restrict str, const char *fmt, ...)
 
 
 int
-snprintf(char * restrict str, size_t size, const char *fmt, ...)
+snprintf(char *str, size_t size, const char *fmt, ...)
 {
 	va_list ap;
 	struct snprintf_arg info;
