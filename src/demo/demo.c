@@ -272,7 +272,7 @@ redraw_display()
 		printf("iskljucen)\n");
 	else
 		printf("ukljucen)\n");
-	printf(" 2: Balans (L/D): %d 3: Jeka ", pcm_bal);
+	printf(" 2: Balans (L/D): %d\n 3: Jeka ", pcm_bal);
 	if (pcm_reverb)
 		printf("ukljucena\n");
 	else
