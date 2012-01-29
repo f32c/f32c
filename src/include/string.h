@@ -8,7 +8,7 @@
 
 #define	memcpy(dst, src, len) _memcpy(dst, src, len)
 
-#if 1
+#ifdef USE_BUILTIN_STRCPY
 /* XXX this works on pure SWL / SWR luck (unimplemented instructions!) */
 #define	strcpy(dst, src) __builtin_strcpy((dst), (src))
 #else

@@ -7,7 +7,7 @@ WARNS = 1
 DHRY_CFLAGS += -O3
 
 # Inlining library functions boosts performance from 1.44 to 1.58 DMIPS/MHz
-DHRY_CFLAGS += -finline-limit=64
+DHRY_CFLAGS += -finline-limit=64 -DUSE_BUILTIN_STRCPY
 
 
 CFILES = dhry_1.c dhry_2.c miscfn.c \
