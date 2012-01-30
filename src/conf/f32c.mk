@@ -60,6 +60,7 @@ MK_CFLAGS += -falign-jumps=4 -falign-loops=4
 MK_CFLAGS += -fweb -frename-registers
 MK_CFLAGS += -freorder-blocks -fpeel-loops
 MK_CFLAGS += -fgcse-sm -fgcse-las
+MK_CFLAGS += -fira-algorithm=priority
 MK_CFLAGS += -mno-shared
 
 # No zero-filled BSS
