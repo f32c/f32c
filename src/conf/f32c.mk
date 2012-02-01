@@ -6,7 +6,7 @@ endif
 
 # -EB big-endian (gcc default); -EL little-endian
 ifndef ENDIANFLAGS
-ENDIANFLAGS = -EB
+ENDIANFLAGS = -EL
 endif
 
 # C flavor: K&R or ANSI (C99)

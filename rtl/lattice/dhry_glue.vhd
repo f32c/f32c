@@ -36,10 +36,10 @@ entity glue is
 	C_clk_freq: integer := 81;
 
 	-- ISA options
-	C_big_endian: boolean := true;
-	C_mult_enable: boolean := true;
-	C_branch_likely: boolean := true;
-	C_sign_extend: boolean := true; -- +31 LUT4
+	C_big_endian: boolean := false; -- true: +7 LUT4
+	C_mult_enable: boolean := true; -- true: +16 LUT4
+	C_branch_likely: boolean := true; -- true: +2 LUT4
+	C_sign_extend: boolean := true; -- +24 LUT4
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00001fff"; -- 8 LUT4/bit
 
 	-- CPU core configuration options
