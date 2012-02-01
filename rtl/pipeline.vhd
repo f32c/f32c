@@ -474,12 +474,8 @@ begin
 		    ID_EX_immediate(1 downto 0) <= "10"; -- shift right logical
 		    if not EX_MEM_multicycle_lh_lb then
 			-- shift amount
-			if C_big_endian then
-			    ID_EX_immediate(10 downto 6) <=
-			      (EX_2bit_add xor "11") & "000";
-			else
-			    ID_EX_immediate(10 downto 6) <= EX_2bit_add & "000";
-			end if;
+			ID_EX_immediate(10 downto 6) <=
+			  EX_mem_align_shamt & "000";
 		    end if;
 		    if MEM_take_branch and not ID_running then
 			ID_EX_cancel_next <= true;
