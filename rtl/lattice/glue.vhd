@@ -159,7 +159,8 @@ begin
     port map (
 	clk => clk, reset => btn_up,
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
-	imem_addr_strobe => imem_addr_strobe, imem_data_ready => '1',
+	imem_addr_strobe => imem_addr_strobe,
+	imem_data_ready => imem_data_ready,
 	dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
 	dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
 	dmem_addr_strobe => dmem_addr_strobe,
@@ -355,6 +356,8 @@ begin
 
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
+    imem_data_ready <= '1';
+    dmem_data_ready <= '1';
     bram: entity bram
     generic map (
 	C_mem_size => C_mem_size
@@ -364,8 +367,7 @@ begin
 	imem_addr => imem_addr, imem_data_out => imem_data_read,
 	dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
 	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem,
-	dmem_addr_strobe => dmem_bram_enable,
-	dmem_data_ready => dmem_data_ready
+	dmem_addr_strobe => dmem_bram_enable
     );
 
 

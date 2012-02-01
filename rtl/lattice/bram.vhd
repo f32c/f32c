@@ -44,13 +44,11 @@ entity bram is
 		imem_addr: in std_logic_vector(31 downto 2);
 		imem_data_out: out std_logic_vector(31 downto 0);
 		imem_addr_strobe: in std_logic;
-		imem_data_ready: out std_logic;
 		dmem_addr: in std_logic_vector(31 downto 2);
 		dmem_data_in: in std_logic_vector(31 downto 0);
 		dmem_data_out: out std_logic_vector(31 downto 0);
 		dmem_byte_we: in std_logic_vector(3 downto 0);
-		dmem_addr_strobe: in std_logic;
-		dmem_data_ready: out std_logic
+		dmem_addr_strobe: in std_logic
 	);
 end bram;
 
@@ -60,10 +58,7 @@ architecture Behavioral of bram is
 	signal dmem_bram_cs: std_logic;
 begin
 	
-	imem_data_ready <= '1';
 	dmem_data_out <= dmem_data_read; -- shut up compiler errors
-	
-	dmem_data_ready <= '1';
 	dmem_write_out <= dmem_data_in;
 	dmem_bram_cs <= dmem_addr_strobe;
 
