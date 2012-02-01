@@ -36,7 +36,7 @@ entity glue is
 	C_clk_freq: integer := 81;
 
 	-- ISA options
-	C_big_endian: boolean := true;
+	C_big_endian: boolean := false;
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
