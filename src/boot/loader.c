@@ -4,7 +4,13 @@
 #include <io.h>
 
 
-#define BOOTADDR	0x000001a0
+#define MONITOR
+
+#ifdef MONITOR
+#define BOOTADDR        0x00000400
+#else
+#define BOOTADDR        0x000001a0
+#endif
 
 
 #if _BYTE_ORDER == _BIG_ENDIAN
@@ -29,11 +35,30 @@ int cold_boot = 1;
 	} while (0)
 
 
+#define	phex(c)								\
+	do {								\
+									\
+		hc = (((c) >> 4) & 0xf) + '0';				\
+		if (hc > '9')						\
+			hc += 'a' - '9' - 1;				\
+		pchar(hc);						\
+		hc = ((c) & 0xf) + '0';					\
+		if (hc > '9')						\
+			hc += 'a' - '9' - 1;				\
+		pchar(hc);						\
+	} while (0)
+
+
 __attribute__((noreturn)) void
 _start(void)
 {
 	int c, pos, val, len;
 	char *cp;
+#ifdef MONITOR
+	int hc;
+	int dumpmode = 0;
+	void *dumpaddr = NULL;
+#endif
 
 	__asm __volatile__(
 		".set noreorder;"
@@ -56,6 +81,39 @@ boot:
 	}
 
 prompt:
+#ifdef MONITOR
+        for (dumpmode = 16; dumpmode > 0; dumpmode--) {
+                pchar('\r');
+                pchar('\n');
+
+                /* addr */
+                val = (int) dumpaddr++;
+                for (pos = 0; pos < 4; pos++) {
+                        phex(val >> 24);
+                        val <<= 8;
+                }
+
+#if 0
+                /* hex */
+                for (pos = 0; pos < 15; pos++) {
+                        if ((pos & 0x7) == 0)
+                                pchar(' ');
+                        pchar(' ');
+                        phex(dumpaddr[pos]);
+                }
+
+                /* ASCII */
+                pchar(' ');
+                for (pos = 0; pos < 15; pos++) {
+                        val = *dumpaddr++;
+                        if (val < 32 || val > 126)
+                                val = '.';
+                        pchar(val);
+                }
+#endif
+        }
+#endif
+
 	for (cp = prompt; *cp != 0; cp++)
 		pchar(*cp);
 
@@ -76,8 +134,7 @@ loop:
 		/* Echo char */
 		pchar(c);
 
-		/* X ? */
-		if (c == 'x')
+		if (c == 's')
 			goto boot;
 
 		goto loop;
