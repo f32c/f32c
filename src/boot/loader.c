@@ -49,7 +49,7 @@ int cold_boot = 1;
 	} while (0)
 
 
-__attribute__((noreturn)) void
+__dead void
 _start(void)
 {
 	int c, pos, val, len;
@@ -57,7 +57,7 @@ _start(void)
 #ifdef MONITOR
 	int hc;
 	int dumpmode = 0;
-	void *dumpaddr = NULL;
+	uint8_t *dumpaddr = NULL;
 #endif
 
 	__asm __volatile__(
@@ -82,35 +82,34 @@ boot:
 
 prompt:
 #ifdef MONITOR
-        for (dumpmode = 16; dumpmode > 0; dumpmode--) {
+        for (dumpmode &= 0xff; dumpmode > 0; dumpmode--) {
                 pchar('\r');
                 pchar('\n');
 
                 /* addr */
-                val = (int) dumpaddr++;
-                for (pos = 0; pos < 4; pos++) {
+                val = (int) dumpaddr;
+                for (pos = 4; pos; pos--) {
                         phex(val >> 24);
                         val <<= 8;
                 }
 
-#if 0
                 /* hex */
-                for (pos = 0; pos < 15; pos++) {
+                for (pos = 0;; pos++) {
                         if ((pos & 0x7) == 0)
                                 pchar(' ');
                         pchar(' ');
+			if (pos == 16)
+				break;
                         phex(dumpaddr[pos]);
                 }
 
                 /* ASCII */
-                pchar(' ');
-                for (pos = 0; pos < 15; pos++) {
+                for (pos = 16; pos; pos--) {
                         val = *dumpaddr++;
                         if (val < 32 || val > 126)
                                 val = '.';
                         pchar(val);
                 }
-#endif
         }
 #endif
 
@@ -136,6 +135,26 @@ loop:
 
 		if (c == 's')
 			goto boot;
+
+		if (c == 'X') {
+			dumpmode = 0x100 + 16;
+			goto prompt;
+		}
+
+		if (c == 'x')
+			dumpmode = 0x100 + 16;
+
+		if (dumpmode &&
+		    ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) {
+			if (dumpmode & 0x100)
+				dumpaddr = NULL;
+			dumpmode &= 0xff;
+			if (c & 0x40)
+				val = c - 'a' + 10;
+			else
+				val = c - '0';
+			dumpaddr = (void *) (((int) dumpaddr << 4) | val);
+		}
 
 		goto loop;
 	}
