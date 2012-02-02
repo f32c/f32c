@@ -18,18 +18,35 @@ static char *prompt = "\r\nf32c/le> ";
 int cold_boot = 1;
 
 
+#define	pchar(c)							\
+	do {								\
+		int s;							\
+									\
+		do {							\
+			INB(s, IO_SIO_STATUS);				\
+		} while (s & SIO_TX_BUSY);				\
+		OUTB(IO_SIO_BYTE, (c));					\
+	} while (0)
+
+
 __attribute__((noreturn)) void
 _start(void)
 {
 	int c, pos, val, len;
 	char *cp;
 
+	__asm __volatile__(
+		".set noreorder;"
+		"nop;"
+		"li $29, (0x80000000);"
+		".set reorder;"
+	);
+
 	if (cold_boot) {
 boot:
 		cold_boot = 0;
 		__asm __volatile__(
 			".set noreorder;"
-			"li $29, (0x80000000);"
 			"j %0;"
 			"move $31, $0;"
 			".set reorder;"
@@ -39,12 +56,8 @@ boot:
 	}
 
 prompt:
-	for (cp = prompt; *cp != 0; cp++) {
-		do {
-			INB(val, IO_SIO_STATUS);
-		} while (val & SIO_TX_BUSY);
-		OUTB(IO_SIO_BYTE, *cp);
-	}
+	for (cp = prompt; *cp != 0; cp++)
+		pchar(*cp);
 
 loop:
 	/* Blink LEDs while waiting for serial input */
@@ -61,10 +74,7 @@ loop:
 
 	if (c != ':') {
 		/* Echo char */
-		do {
-			INB(val, IO_SIO_STATUS);
-		} while (val & SIO_TX_BUSY);
-		OUTB(IO_SIO_BYTE, c);
+		pchar(c);
 
 		/* X ? */
 		if (c == 'x')
