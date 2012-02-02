@@ -7,9 +7,9 @@
 #define MONITOR
 
 #ifdef MONITOR
-#define BOOTADDR        0x00000400
+#define BOOTADDR	0x00000400
 #else
-#define BOOTADDR        0x000001a0
+#define BOOTADDR	0x000001a0
 #endif
 
 
@@ -82,35 +82,35 @@ boot:
 
 prompt:
 #ifdef MONITOR
-        for (dumpmode &= 0xff; dumpmode > 0; dumpmode--) {
-                pchar('\r');
-                pchar('\n');
+	for (dumpmode &= 0xff; dumpmode > 0; dumpmode--) {
+		pchar('\r');
+		pchar('\n');
 
-                /* addr */
-                val = (int) dumpaddr;
-                for (pos = 4; pos; pos--) {
-                        phex(val >> 24);
-                        val <<= 8;
-                }
+		/* addr */
+		val = (int) dumpaddr;
+		for (pos = 4; pos; pos--) {
+			phex(val >> 24);
+			val <<= 8;
+		}
 
-                /* hex */
-                for (pos = 0;; pos++) {
-                        if ((pos & 0x7) == 0)
-                                pchar(' ');
-                        pchar(' ');
+		/* hex */
+		for (pos = 0;; pos++) {
+			if ((pos & 0x7) == 0)
+				pchar(' ');
+			pchar(' ');
 			if (pos == 16)
 				break;
-                        phex(dumpaddr[pos]);
-                }
+			phex(dumpaddr[pos]);
+		}
 
-                /* ASCII */
-                for (pos = 16; pos; pos--) {
-                        val = *dumpaddr++;
-                        if (val < 32 || val > 126)
-                                val = '.';
-                        pchar(val);
-                }
-        }
+		/* ASCII */
+		for (pos = 16; pos; pos--) {
+			val = *dumpaddr++;
+			if (val < 32 || val > 126)
+				val = '.';
+			pchar(val);
+		}
+	}
 #endif
 
 	for (cp = prompt; *cp != 0; cp++)
