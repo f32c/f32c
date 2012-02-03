@@ -2,11 +2,12 @@
 # Default load offset - bootloader is at 0x00000000
 ifndef LOADADDR
 LOADADDR = 0x000001a0
+#LOADADDR = 0x00000400
 endif
 
 # -EB big-endian (gcc default); -EL little-endian
 ifndef ENDIANFLAGS
-ENDIANFLAGS = -EL
+ENDIANFLAGS = -EB
 endif
 
 # C flavor: K&R or ANSI (C99)
@@ -24,6 +25,7 @@ MK_INCLUDES = -nostdinc -I../include -I.
 
 # MIPS-specific flags
 MK_CFLAGS += -march=f32c
+#MK_CFLAGS += -march=mips2 -mtune=f32c
 MK_CFLAGS += ${ENDIANFLAGS}
 #MK_CFLAGS += -mno-branch-likely
 MK_CFLAGS += -G 32768
@@ -57,7 +59,7 @@ MK_CFLAGS += -fselective-scheduling
 MK_CFLAGS += -finline-limit=16 -fmerge-all-constants
 MK_CFLAGS += -falign-functions=4 -falign-labels=4
 MK_CFLAGS += -falign-jumps=4 -falign-loops=4
-MK_CFLAGS += -fweb -frename-registers
+MK_CFLAGS += -fsched2-use-superblocks
 MK_CFLAGS += -freorder-blocks -fpeel-loops
 MK_CFLAGS += -fgcse-sm -fgcse-las
 MK_CFLAGS += -fira-algorithm=priority

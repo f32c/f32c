@@ -4,10 +4,14 @@ PROG = dhry
 CSTD = KnR
 WARNS = 1
 
-DHRY_CFLAGS += -O3
+# Override -Os
+DHRY_CFLAGS += -Ofast
 
-# Inlining library functions boosts performance from 1.44 to 1.58 DMIPS/MHz
-DHRY_CFLAGS += -finline-limit=64 -DUSE_BUILTIN_STRCPY
+# Inlining functions is not permitted per Dhrystone rules!
+DHRY_CFLAGS += -finline-limit=0
+
+# builtin_strcpy is faster than handcrafted version but requires swr/swl
+DHRY_CFLAGS += -DUSE_BUILTIN_STRCPY
 
 
 CFILES = dhry_1.c dhry_2.c miscfn.c \
