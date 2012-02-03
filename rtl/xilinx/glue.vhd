@@ -32,11 +32,11 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity glue is
     generic(
-	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
+	-- Main clock: N * 10 MHz
 	C_clk_freq: integer := 50;
 
 	-- ISA options
-	C_big_endian: boolean := true;
+	C_big_endian: boolean := false;
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
@@ -124,7 +124,8 @@ begin
     port map (
 	clk => clk, reset => '0',
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
-	imem_addr_strobe => imem_addr_strobe, imem_data_ready => '1',
+	imem_addr_strobe => imem_addr_strobe,
+	imem_data_ready => imem_data_ready,
 	dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
 	dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
 	dmem_addr_strobe => dmem_addr_strobe,
@@ -241,6 +242,8 @@ begin
 	
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
+    imem_data_ready <= '1';
+    dmem_data_ready <= '1';
     bram: entity bram
     generic map (
 	C_mem_size => C_mem_size
@@ -250,8 +253,7 @@ begin
 	imem_addr => imem_addr, imem_data_out => imem_data_read,
 	dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
 	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem,
-	dmem_addr_strobe => dmem_bram_enable,
-	dmem_data_ready => dmem_data_ready
+	dmem_addr_strobe => dmem_bram_enable
     );
 
     -- debugging design instance - serial port + control knob / buttons
