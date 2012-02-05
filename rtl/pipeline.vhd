@@ -848,7 +848,6 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) then
-	    MEM_WB_mem_data <= MEM_data_in;
 	    if MEM_running then
 		MEM_WB_mem_cycle <= EX_MEM_mem_cycle;
 		MEM_WB_mem_read_sign_extend <= EX_MEM_mem_read_sign_extend;
@@ -862,6 +861,7 @@ begin
 		else
 		    MEM_WB_write_enable <= '1';
 		end if;
+		MEM_WB_mem_data <= MEM_data_in;
 		if EX_MEM_op_major = "10" then -- shift
 		    MEM_WB_ex_data <= MEM_from_shift;
 		else
@@ -870,6 +870,8 @@ begin
 		if C_debug then
 		    MEM_WB_instruction <= EX_MEM_instruction; -- debugging only
 		end if;
+	    else
+		MEM_WB_write_enable <= '0';
 	    end if;
 	end if;
     end process;
@@ -963,15 +965,14 @@ begin
     debug_XXX(23 downto 21) <= "000";
     debug_XXX(20) <= '1' when MEM_running else '0';
     debug_XXX(19 downto 17) <= "000";
-    debug_XXX(16) <= '1' when ID_EX_multicycle_lh_lb else '0';
+    debug_XXX(16) <= imem_data_ready;
     debug_XXX(15 downto 13) <= "000";
-    debug_XXX(12) <= '1' when EX_MEM_multicycle_lh_lb else '0';
+    debug_XXX(12) <= dmem_data_ready;
     debug_XXX(11 downto 9) <= "000";
-    debug_XXX(8) <= '1' when ID_EX_cancel_next else '0';
-    debug_XXX(7 downto 5) <= "000";
-    debug_XXX(4) <= '1' when IF_ID_branch_delay_slot else '0';
+    debug_XXX(8) <= EX_MEM_mem_cycle;
+    debug_XXX(7 downto 4) <= EX_MEM_mem_byte_we;
     debug_XXX(3 downto 1) <= "000";
-    debug_XXX(0) <= '1' when MEM_take_branch else '0';
+    debug_XXX(0) <= MEM_WB_write_enable;
 
     process(trace_addr)
     begin
@@ -994,14 +995,18 @@ begin
 	    when x"0c" => trace_data <= EX_eff_alu_op2;
 	    when x"0d" => trace_data <= EX_MEM_addsub_data;
 	    when x"0e" => trace_data <= EX_MEM_logic_data;
-	    when x"10" => trace_data <= D_tsc;
-	    when x"11" => trace_data <= D_instr;
-	    when x"12" => trace_data <= D_b_instr;
-	    when x"13" => trace_data <= D_b_taken;
+	    when x"0f" => trace_data <= dmem_data_out;
+	    when x"10" => trace_data <= dmem_data_in;
+	    --
+	    when x"14" => trace_data <= D_tsc;
+	    when x"15" => trace_data <= D_instr;
+	    when x"16" => trace_data <= D_b_instr;
+	    when x"17" => trace_data <= D_b_taken;
+	    --
+	    when x"19" => trace_data <= debug_XXX;
 	    --
 	    when x"1a" => trace_data <= R_hi_lo(63 downto 32);
 	    when x"1b" => trace_data <= R_hi_lo(31 downto 0);
-	    -- when x"1b" => trace_data <= debug_XXX;
 	    -- when x"1c" => trace_data <= BadVAddr;
 	    -- when x"1d" => trace_data <= EPC;
 	    -- when x"1e" => trace_data <= Status;
