@@ -10,14 +10,15 @@ entity bram is
     );
     port(
 	clk: in std_logic;
+	imem_addr_strobe: in std_logic;
 	imem_addr: in std_logic_vector(31 downto 2);
 	imem_data_out: out std_logic_vector(31 downto 0);
-	imem_addr_strobe: in std_logic;
+	dmem_addr_strobe: in std_logic;
+	dmem_write: in std_logic;
+	dmem_byte_sel: in std_logic_vector(3 downto 0);
 	dmem_addr: in std_logic_vector(31 downto 2);
 	dmem_data_in: in std_logic_vector(31 downto 0);
-	dmem_data_out: out std_logic_vector(31 downto 0);
-	dmem_byte_we: in std_logic_vector(3 downto 0);
-	dmem_addr_strobe: in std_logic
+	dmem_data_out: out std_logic_vector(31 downto 0)
     );
 end bram;
 
@@ -126,9 +127,10 @@ begin
 
     process(clk)
     begin
-	if falling_edge(clk) and dmem_addr_strobe = '1' then
+	if falling_edge(clk) and dmem_addr_strobe = '1' and
+	  dmem_byte_sel(0) = '1' then
 	    dbram_0 <= bram_0(conv_integer(dmem_addr));
-	    if dmem_byte_we(0) = '1' then
+	    if dmem_write = '1' then
 		bram_0(conv_integer(dmem_addr)) <= dmem_data_in(7 downto 0);
 	    end if;
 	end if;
@@ -136,9 +138,10 @@ begin
 
     process(clk)
     begin
-	if falling_edge(clk) and dmem_addr_strobe = '1' then
+	if falling_edge(clk) and dmem_addr_strobe = '1' and
+	  dmem_byte_sel(1) = '1' then
 	    dbram_1 <= bram_1(conv_integer(dmem_addr));
-	    if dmem_byte_we(1) = '1' then
+	    if dmem_write = '1' then
 		bram_1(conv_integer(dmem_addr)) <= dmem_data_in(15 downto 8);
 	    end if;
 	end if;
@@ -146,9 +149,10 @@ begin
 
     process(clk)
     begin
-	if falling_edge(clk) and dmem_addr_strobe = '1' then
+	if falling_edge(clk) and dmem_addr_strobe = '1' and
+	  dmem_byte_sel(2) = '1' then
 	    dbram_2 <= bram_2(conv_integer(dmem_addr));
-	    if dmem_byte_we(2) = '1' then
+	    if dmem_write = '1' then
 		bram_2(conv_integer(dmem_addr)) <= dmem_data_in(23 downto 16);
 	    end if;
 	end if;
@@ -156,9 +160,10 @@ begin
 
     process(clk)
     begin
-	if falling_edge(clk) and dmem_addr_strobe = '1' then
+	if falling_edge(clk) and dmem_addr_strobe = '1' and
+	  dmem_byte_sel(3) = '1' then
 	    dbram_3 <= bram_3(conv_integer(dmem_addr));
-	    if dmem_byte_we(3) = '1' then
+	    if dmem_write = '1' then
 		bram_3(conv_integer(dmem_addr)) <= dmem_data_in(31 downto 24);
 	    end if;
 	end if;

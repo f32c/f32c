@@ -33,7 +33,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity glue is
     generic (
 	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-	C_clk_freq: integer := 81;
+	C_clk_freq: integer := 100;
 
 	-- ISA options
 	C_big_endian: boolean := false; -- true: +7 LUT4
@@ -101,8 +101,9 @@ architecture Behavioral of glue is
     signal imem_data_read: std_logic_vector(31 downto 0);
     signal imem_addr_strobe, imem_data_ready: std_logic;
     signal dmem_addr: std_logic_vector(31 downto 2);
-    signal dmem_addr_strobe, dmem_bram_enable, dmem_data_ready: std_logic;
-    signal dmem_byte_we: std_logic_vector(3 downto 0);
+    signal dmem_addr_strobe, dmem_write: std_logic;
+    signal dmem_bram_enable, dmem_data_ready: std_logic;
+    signal dmem_byte_sel: std_logic_vector(3 downto 0);
     signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
 
@@ -145,10 +146,11 @@ begin
     port map (
 	clk => clk, reset => '0',
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
-	imem_addr_strobe => imem_addr_strobe, imem_data_ready => '1',
-	dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
+	imem_addr_strobe => imem_addr_strobe,
+	imem_data_ready => imem_data_ready,
+	dmem_addr_strobe => dmem_addr_strobe, dmem_addr => dmem_addr,
+	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
 	dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
-	dmem_addr_strobe => dmem_addr_strobe,
 	dmem_data_ready => dmem_data_ready,
 	trace_addr => "000000", trace_data => open
     );
@@ -160,11 +162,13 @@ begin
     sio: entity sio
     generic map (
 	C_clk_freq => C_clk_freq,
+	C_fixed_baudrate => true,
 	C_big_endian => C_big_endian
     )
     port map (
 	clk => clk, ce => sio_ce, txd => rs232_tx, rxd => rs232_rx,
-	byte_we => dmem_byte_we, bus_in => cpu_to_dmem, bus_out => from_sio
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_sio
     );
     sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
       dmem_addr(4 downto 2) = "001" else '0';
@@ -219,6 +223,8 @@ begin
 
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
+    imem_data_ready <= '1';
+    dmem_data_ready <= '1';
     bram: entity bram
     generic map (
 	C_mem_size => C_mem_size
@@ -226,10 +232,9 @@ begin
     port map (
 	clk => clk, imem_addr_strobe => imem_addr_strobe,
 	imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem,
-	dmem_addr_strobe => dmem_bram_enable,
-	dmem_data_ready => dmem_data_ready
+	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write,
+	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
     );
 	
 end Behavioral;

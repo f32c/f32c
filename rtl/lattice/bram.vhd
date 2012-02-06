@@ -41,19 +41,19 @@ entity bram is
 	);
 	port(
 		clk: in std_logic;
+		imem_addr_strobe: in std_logic;
 		imem_addr: in std_logic_vector(31 downto 2);
 		imem_data_out: out std_logic_vector(31 downto 0);
-		imem_addr_strobe: in std_logic;
+		dmem_addr_strobe: in std_logic;
+		dmem_write: in std_logic;
+		dmem_byte_sel: in std_logic_vector(3 downto 0);
 		dmem_addr: in std_logic_vector(31 downto 2);
 		dmem_data_in: in std_logic_vector(31 downto 0);
-		dmem_data_out: out std_logic_vector(31 downto 0);
-		dmem_byte_we: in std_logic_vector(3 downto 0);
-		dmem_addr_strobe: in std_logic
+		dmem_data_out: out std_logic_vector(31 downto 0)
 	);
 end bram;
 
 architecture Behavioral of bram is
-	signal dmem_wait_cycle, dmem_must_wait, dmem_we: std_logic;
 	signal dmem_data_read, dmem_write_out: std_logic_vector(31 downto 0);
 	signal dmem_bram_cs: std_logic;
 begin
@@ -98,8 +98,9 @@ begin
 		ADA9 => dmem_addr(8), ADA10 => dmem_addr(9),
 		ADA11 => dmem_addr(10), ADA12 => dmem_addr(11),
 		ADA13 => dmem_addr(12),
-		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_byte_we(0),
-		CSA0 => '0', CSA1 => '0', CSA2 => '0', RSTA => '0',
+		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_write,
+		CSA0 => not dmem_byte_sel(0), CSA1 => '0', CSA2 => '0',
+		RSTA => '0',
 
 		DIB0 => '0', DIB1 => '0', DIB2 => '0', DIB3 => '0', 
 		DIB4 => '0', DIB5 => '0', DIB6 => '0', DIB7 => '0', 
@@ -158,8 +159,9 @@ begin
 		ADA9 => dmem_addr(8), ADA10 => dmem_addr(9),
 		ADA11 => dmem_addr(10), ADA12 => dmem_addr(11),
 		ADA13 => dmem_addr(12),
-		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_byte_we(1),
-		CSA0 => '0', CSA1 => '0', CSA2 => '0', RSTA => '0',
+		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_write,
+		CSA0 => not dmem_byte_sel(1), CSA1 => '0', CSA2 => '0',
+		RSTA => '0',
 
 		DIB0 => '0', DIB1 => '0', DIB2 => '0', DIB3 => '0', 
 		DIB4 => '0', DIB5 => '0', DIB6 => '0', DIB7 => '0', 
@@ -218,8 +220,9 @@ begin
 		ADA9 => dmem_addr(8), ADA10 => dmem_addr(9),
 		ADA11 => dmem_addr(10), ADA12 => dmem_addr(11),
 		ADA13 => dmem_addr(12),
-		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_byte_we(2),
-		CSA0 => '0', CSA1 => '0', CSA2 => '0', RSTA => '0',
+		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_write,
+		CSA0 => not dmem_byte_sel(2), CSA1 => '0', CSA2 => '0',
+		RSTA => '0',
 
 		DIB0 => '0', DIB1 => '0', DIB2 => '0', DIB3 => '0', 
 		DIB4 => '0', DIB5 => '0', DIB6 => '0', DIB7 => '0', 
@@ -278,8 +281,9 @@ begin
 		ADA9 => dmem_addr(8), ADA10 => dmem_addr(9),
 		ADA11 => dmem_addr(10), ADA12 => dmem_addr(11),
 		ADA13 => dmem_addr(12),
-		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_byte_we(3),
-		CSA0 => '0', CSA1 => '0', CSA2 => '0', RSTA => '0',
+		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_write,
+		CSA0 => not dmem_byte_sel(3), CSA1 => '0', CSA2 => '0',
+		RSTA => '0',
 
 		DIB0 => '0', DIB1 => '0', DIB2 => '0', DIB3 => '0', 
 		DIB4 => '0', DIB5 => '0', DIB6 => '0', DIB7 => '0', 
@@ -337,8 +341,9 @@ begin
 		ADA8 => dmem_addr(8), ADA9 => dmem_addr(9),
 		ADA10 => dmem_addr(10), ADA11 => dmem_addr(11),
 		ADA12 => dmem_addr(12), ADA13 => dmem_addr(13),
-		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_byte_we(0),
-		CSA0 => '0', CSA1 => '0', CSA2 => '0', RSTA => '0',
+		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_write,
+		CSA0 => not dmem_byte_sel(0), CSA1 => '0', CSA2 => '0',
+		RSTA => '0',
 
 		DIB0 => '0', DIB1 => '0', DIB2 => '0', DIB3 => '0', 
 		DIB4 => '0', DIB5 => '0', DIB6 => '0', DIB7 => '0', 
@@ -392,8 +397,9 @@ begin
 		ADA8 => dmem_addr(8), ADA9 => dmem_addr(9),
 		ADA10 => dmem_addr(10), ADA11 => dmem_addr(11),
 		ADA12 => dmem_addr(12), ADA13 => dmem_addr(13),
-		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_byte_we(0),
-		CSA0 => '0', CSA1 => '0', CSA2 => '0', RSTA => '0',
+		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_write,
+		CSA0 => not dmem_byte_sel(0), CSA1 => '0', CSA2 => '0',
+		RSTA => '0',
 
 		DIB0 => '0', DIB1 => '0', DIB2 => '0', DIB3 => '0', 
 		DIB4 => '0', DIB5 => '0', DIB6 => '0', DIB7 => '0', 
@@ -447,8 +453,9 @@ begin
 		ADA8 => dmem_addr(8), ADA9 => dmem_addr(9),
 		ADA10 => dmem_addr(10), ADA11 => dmem_addr(11),
 		ADA12 => dmem_addr(12), ADA13 => dmem_addr(13),
-		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_byte_we(1),
-		CSA0 => '0', CSA1 => '0', CSA2 => '0', RSTA => '0',
+		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_write,
+		CSA0 => not dmem_byte_sel(1), CSA1 => '0', CSA2 => '0',
+		RSTA => '0',
 
 		DIB0 => '0', DIB1 => '0', DIB2 => '0', DIB3 => '0', 
 		DIB4 => '0', DIB5 => '0', DIB6 => '0', DIB7 => '0', 
@@ -502,8 +509,9 @@ begin
 		ADA8 => dmem_addr(8), ADA9 => dmem_addr(9),
 		ADA10 => dmem_addr(10), ADA11 => dmem_addr(11),
 		ADA12 => dmem_addr(12), ADA13 => dmem_addr(13),
-		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_byte_we(1),
-		CSA0 => '0', CSA1 => '0', CSA2 => '0', RSTA => '0',
+		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_write,
+		CSA0 => not dmem_byte_sel(1), CSA1 => '0', CSA2 => '0',
+		RSTA => '0',
 
 		DIB0 => '0', DIB1 => '0', DIB2 => '0', DIB3 => '0', 
 		DIB4 => '0', DIB5 => '0', DIB6 => '0', DIB7 => '0', 
@@ -557,8 +565,9 @@ begin
 		ADA8 => dmem_addr(8), ADA9 => dmem_addr(9),
 		ADA10 => dmem_addr(10), ADA11 => dmem_addr(11),
 		ADA12 => dmem_addr(12), ADA13 => dmem_addr(13),
-		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_byte_we(2),
-		CSA0 => '0', CSA1 => '0', CSA2 => '0', RSTA => '0',
+		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_write,
+		CSA0 => not dmem_byte_sel(2), CSA1 => '0', CSA2 => '0',
+		RSTA => '0',
 
 		DIB0 => '0', DIB1 => '0', DIB2 => '0', DIB3 => '0', 
 		DIB4 => '0', DIB5 => '0', DIB6 => '0', DIB7 => '0', 
@@ -612,8 +621,9 @@ begin
 		ADA8 => dmem_addr(8), ADA9 => dmem_addr(9),
 		ADA10 => dmem_addr(10), ADA11 => dmem_addr(11),
 		ADA12 => dmem_addr(12), ADA13 => dmem_addr(13),
-		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_byte_we(2),
-		CSA0 => '0', CSA1 => '0', CSA2 => '0', RSTA => '0',
+		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_write,
+		CSA0 => not dmem_byte_sel(2), CSA1 => '0', CSA2 => '0',
+		RSTA => '0',
 
 		DIB0 => '0', DIB1 => '0', DIB2 => '0', DIB3 => '0', 
 		DIB4 => '0', DIB5 => '0', DIB6 => '0', DIB7 => '0', 
@@ -667,8 +677,9 @@ begin
 		ADA8 => dmem_addr(8), ADA9 => dmem_addr(9),
 		ADA10 => dmem_addr(10), ADA11 => dmem_addr(11),
 		ADA12 => dmem_addr(12), ADA13 => dmem_addr(13),
-		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_byte_we(3),
-		CSA0 => '0', CSA1 => '0', CSA2 => '0', RSTA => '0',
+		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_write,
+		CSA0 => not dmem_byte_sel(3), CSA1 => '0', CSA2 => '0',
+		RSTA => '0',
 
 		DIB0 => '0', DIB1 => '0', DIB2 => '0', DIB3 => '0', 
 		DIB4 => '0', DIB5 => '0', DIB6 => '0', DIB7 => '0', 
@@ -722,8 +733,9 @@ begin
 		ADA8 => dmem_addr(8), ADA9 => dmem_addr(9),
 		ADA10 => dmem_addr(10), ADA11 => dmem_addr(11),
 		ADA12 => dmem_addr(12), ADA13 => dmem_addr(13),
-		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_byte_we(3),
-		CSA0 => '0', CSA1 => '0', CSA2 => '0', RSTA => '0',
+		CEA => dmem_bram_cs, CLKA => not clk, WEA => dmem_write,
+		CSA0 => not dmem_byte_sel(3), CSA1 => '0', CSA2 => '0',
+		RSTA => '0',
 
 		DIB0 => '0', DIB1 => '0', DIB2 => '0', DIB3 => '0', 
 		DIB4 => '0', DIB5 => '0', DIB6 => '0', DIB7 => '0', 
