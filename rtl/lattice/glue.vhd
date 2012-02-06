@@ -99,9 +99,12 @@ architecture Behavioral of glue is
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
 
     -- SRAM
+    signal R_sram_delay: std_logic_vector(3 downto 0);
+    signal R_sram_data: std_logic_vector(31 downto 0);
     signal R_sram_a: std_logic_vector(18 downto 0);
     signal R_sram_d: std_logic_vector(15 downto 0);
     signal R_sram_wel, R_sram_lbl, R_sram_ubl: std_logic;
+    signal sram_ready: std_logic;
 
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
@@ -203,6 +206,10 @@ begin
     p_ring <= R_dac_acc_r(16);
     end generate;
 
+    sram_ready <= '1' when not C_sram or R_sram_delay = x"0" else '0';
+    dmem_data_ready <= '1' when dmem_addr(31 downto 28) /= x"8" else
+      sram_ready;
+
     -- I/O port map:
     -- 0x8*******: (2B, RW) * SRAM
     -- 0xf*****00: (4B, RW) * GPIO (LED, switches/buttons)
@@ -215,19 +222,29 @@ begin
     -- I/O write access:
     process(clk)
     begin
+	if C_sram and rising_edge(clk) then
+	    if dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
+		R_sram_delay <= R_sram_delay - 1;
+	    else
+		R_sram_delay <= x"4"; -- # of wait cycles, must be >= 1!
+	    end if;
+	end if;
+
 	if C_sram and falling_edge(clk) then
 	    if dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
 		R_sram_a <= dmem_addr(20 downto 2);
 		R_sram_d <= cpu_to_dmem(15 downto 0);
-		R_sram_wel <= not dmem_write;
+		R_sram_wel <= not dmem_write; -- XXX and not sram_ready?
 		R_sram_lbl <= '0';
 		R_sram_ubl <= '0';
+		R_sram_data <= x"0000" & sram_d;
 	    else
 		R_sram_wel <= '1';
 		R_sram_lbl <= '1';
 		R_sram_ubl <= '1';
 	    end if;
 	end if;
+
 	if rising_edge(clk) and dmem_addr_strobe = '1'
 	  and dmem_write = '1' and dmem_addr(31 downto 28) = x"f" then
 	    -- GPIO
@@ -345,13 +362,12 @@ begin
     end process;
 
     final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = x"f"
-      else x"0000" & sram_d when C_sram and dmem_addr(31 downto 28) = x"8"
+      else R_sram_data when C_sram and dmem_addr(31 downto 28) = x"8"
       else dmem_to_cpu;
 
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
     imem_data_ready <= '1';
-    dmem_data_ready <= '1';
     bram: entity bram
     generic map (
 	C_mem_size => C_mem_size
