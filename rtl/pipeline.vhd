@@ -56,15 +56,16 @@ entity pipeline is
     );
     port (
 	clk, reset: in std_logic;
+	imem_addr_strobe: out std_logic;
 	imem_addr: out std_logic_vector(31 downto 2);
 	imem_data_in: in std_logic_vector(31 downto 0);
-	imem_addr_strobe: out std_logic;
 	imem_data_ready: in std_logic;
+	dmem_addr_strobe: out std_logic;
+	dmem_write: out std_logic;
+	dmem_byte_sel: out std_logic_vector(3 downto 0);
 	dmem_addr: out std_logic_vector(31 downto 2);
-	dmem_byte_we: out std_logic_vector(3 downto 0);
 	dmem_data_in: in std_logic_vector(31 downto 0);
 	dmem_data_out: out std_logic_vector(31 downto 0);
-	dmem_addr_strobe: out std_logic;
 	dmem_data_ready: in std_logic;
 	-- debugging only
 	trace_addr: in std_logic_vector(5 downto 0);
@@ -159,7 +160,7 @@ architecture Behavioral of pipeline is
     signal EX_from_alu_equal: boolean;
     signal EX_2bit_add: std_logic_vector(1 downto 0);
     signal EX_mem_align_shamt: std_logic_vector(1 downto 0);
-    signal EX_mem_byte_we: std_logic_vector(3 downto 0);
+    signal EX_mem_byte_sel: std_logic_vector(3 downto 0);
     signal EX_take_branch: boolean;
     -- boundary to stage 4
     signal EX_MEM_writeback_addr: std_logic_vector(4 downto 0);
@@ -182,7 +183,8 @@ architecture Behavioral of pipeline is
     signal EX_MEM_shift_funct: std_logic_vector(1 downto 0);
     signal EX_MEM_mem_size: std_logic_vector(1 downto 0);
     signal EX_MEM_multicycle_lh_lb: boolean;
-    signal EX_MEM_mem_byte_we: std_logic_vector(3 downto 0);
+    signal EX_MEM_mem_write: std_logic;
+    signal EX_MEM_mem_byte_sel: std_logic_vector(3 downto 0);
     signal EX_MEM_op_major: std_logic_vector(1 downto 0);
     signal EX_MEM_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal EX_MEM_PC: std_logic_vector(31 downto 2); -- debugging only
@@ -662,17 +664,17 @@ begin
 	mem_size_multicycle => EX_MEM_mem_size(0)
     );
 
-    -- compute byte select lines for memory writes
-    EX_mem_byte_we(0) <= ID_EX_mem_write when
+    -- compute byte select lines
+    EX_mem_byte_sel(0) <= '1' when
       EX_2bit_add = "00" or ID_EX_mem_size(1) = '1' or
       (ID_EX_mem_size(0) = '1' and EX_2bit_add(1) = '0') else '0';
-    EX_mem_byte_we(1) <= ID_EX_mem_write when
+    EX_mem_byte_sel(1) <= '1' when
       EX_2bit_add = "01" or ID_EX_mem_size(1) = '1' or
       (ID_EX_mem_size(0) = '1' and EX_2bit_add(1) = '0') else '0';
-    EX_mem_byte_we(2) <= ID_EX_mem_write when
+    EX_mem_byte_sel(2) <= '1' when
       EX_2bit_add = "10" or ID_EX_mem_size(1) = '1' or
       (ID_EX_mem_size(0) = '1' and EX_2bit_add(1) = '1') else '0';
-    EX_mem_byte_we(3) <= ID_EX_mem_write when
+    EX_mem_byte_sel(3) <= '1' when
       EX_2bit_add = "11" or ID_EX_mem_size(1) = '1' or
       (ID_EX_mem_size(0) = '1' and EX_2bit_add(1) = '1') else '0';		
 
@@ -713,7 +715,8 @@ begin
 		EX_MEM_mem_size <= ID_EX_mem_size;
 		EX_MEM_multicycle_lh_lb <= not C_load_aligner
 		  and ID_EX_multicycle_lh_lb;
-		EX_MEM_mem_byte_we <= EX_mem_byte_we;
+		EX_MEM_mem_write <= ID_EX_mem_write;
+		EX_MEM_mem_byte_sel <= EX_mem_byte_sel;
 		EX_MEM_shamt_1_2_4 <= EX_shamt(2 downto 0);
 		EX_MEM_shift_funct <= ID_EX_immediate(1 downto 0);
 		EX_MEM_op_major <= ID_EX_op_major;
@@ -831,13 +834,14 @@ begin
     end generate;
 
     -- connect outbound signals for memory access
+    dmem_addr_strobe <= EX_MEM_mem_cycle;
+    dmem_write <= EX_MEM_mem_write;
+    dmem_byte_sel <= EX_MEM_mem_byte_sel;
+    dmem_addr <= EX_MEM_addsub_data(31 downto 2);
     dmem_data_out <= EX_MEM_mem_data_out(7 downto 0) &
       EX_MEM_mem_data_out(15 downto 8) & EX_MEM_mem_data_out(23 downto 16) &
       EX_MEM_mem_data_out(31 downto 24) when C_big_endian
       else EX_MEM_mem_data_out;
-    dmem_byte_we <= EX_MEM_mem_byte_we;
-    dmem_addr <= EX_MEM_addsub_data(31 downto 2);
-    dmem_addr_strobe <= EX_MEM_mem_cycle;
 
     -- memory output must be externally registered (it is with internal BRAM)
     -- inbound data word: big / little endian
@@ -970,7 +974,7 @@ begin
     debug_XXX(12) <= dmem_data_ready;
     debug_XXX(11 downto 9) <= "000";
     debug_XXX(8) <= EX_MEM_mem_cycle;
-    debug_XXX(7 downto 4) <= EX_MEM_mem_byte_we;
+    debug_XXX(7 downto 4) <= EX_MEM_mem_byte_sel;
     debug_XXX(3 downto 1) <= "000";
     debug_XXX(0) <= MEM_WB_write_enable;
 

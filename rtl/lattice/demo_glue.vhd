@@ -92,8 +92,9 @@ architecture Behavioral of glue is
     signal imem_data_read: std_logic_vector(31 downto 0);
     signal imem_addr_strobe, imem_data_ready: std_logic;
     signal dmem_addr: std_logic_vector(31 downto 2);
-    signal dmem_addr_strobe, dmem_bram_enable, dmem_data_ready: std_logic;
-    signal dmem_byte_we: std_logic_vector(3 downto 0);
+    signal dmem_addr_strobe, dmem_write: std_logic;
+    signal dmem_bram_enable, dmem_data_ready: std_logic;
+    signal dmem_byte_sel: std_logic_vector(3 downto 0);
     signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
 
@@ -163,10 +164,11 @@ begin
     port map (
 	clk => clk, reset => btn_up,
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
-	imem_addr_strobe => imem_addr_strobe, imem_data_ready => '1',
-	dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
+	imem_addr_strobe => imem_addr_strobe,
+	imem_data_ready => imem_data_ready,
+	dmem_addr_strobe => dmem_addr_strobe, dmem_addr => dmem_addr,
+	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
 	dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
-	dmem_addr_strobe => dmem_addr_strobe,
 	dmem_data_ready => dmem_data_ready,
 	trace_addr => trace_addr, trace_data => trace_data
     );
@@ -181,7 +183,8 @@ begin
     )
     port map (
 	clk => clk, ce => sio_ce, txd => sio_txd, rxd => rs232_rx,
-	byte_we => dmem_byte_we, bus_in => cpu_to_dmem, bus_out => from_sio
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_sio
     );
     sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
       dmem_addr(4 downto 2) = "001" else '0';
@@ -220,7 +223,7 @@ begin
 	    if dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
 		R_sram_a <= dmem_addr(20 downto 2);
 		R_sram_d <= cpu_to_dmem(15 downto 0);
-		R_sram_wel <= not dmem_byte_we(0);
+		R_sram_wel <= not dmem_write;
 		R_sram_lbl <= '0';
 		R_sram_ubl <= '0';
 	    else
@@ -230,16 +233,14 @@ begin
 	    end if;
 	end if;
 	if rising_edge(clk) and dmem_addr_strobe = '1'
-	  and dmem_addr(31 downto 28) = x"f" then
+	  and dmem_write = '1' and dmem_addr(31 downto 28) = x"f" then
 	    -- GPIO
 	    if C_gpio and dmem_addr(4 downto 2) = "000" then
-		if dmem_byte_we(0) = '1' then
-		    R_led <= cpu_to_dmem(7 downto 0);
-		end if;
+		R_led <= cpu_to_dmem(7 downto 0);
 	    end if;
 	    -- PCMDAC
 	    if C_pcmdac and dmem_addr(4 downto 2) = "011" then
-		if dmem_byte_we(2) = '1' then
+		if dmem_byte_sel(2) = '1' then
 		    if C_big_endian then
 			R_dac_in_l <= cpu_to_dmem(23 downto 16) &
 			  cpu_to_dmem(31 downto 26);
@@ -247,40 +248,34 @@ begin
 			R_dac_in_l <= cpu_to_dmem(31 downto 18);
 		    end if;
 		end if;
-		if dmem_byte_we(0) = '1' then
+		if dmem_byte_sel(0) = '1' then
 		    if C_big_endian then
 			R_dac_in_r <= cpu_to_dmem(7 downto 0) &
 			  cpu_to_dmem(15 downto 10);
 		    else
-		        R_dac_in_r <= cpu_to_dmem(15 downto 2);
+			R_dac_in_r <= cpu_to_dmem(15 downto 2);
 		    end if;
 		end if;
 	    end if;
 	    -- SPI Flash
 	    if C_flash and dmem_addr(4 downto 2) = "100" then
-		if dmem_byte_we(0) = '1' then
-		    R_flash_si <= cpu_to_dmem(7);
-		    R_flash_sck <= cpu_to_dmem(6);
-		    R_flash_cen <= cpu_to_dmem(5);
-		end if;
+		R_flash_si <= cpu_to_dmem(7);
+		R_flash_sck <= cpu_to_dmem(6);
+		R_flash_cen <= cpu_to_dmem(5);
 	    end if;
 	    -- SPI MicroSD
 	    if C_sdcard and dmem_addr(4 downto 2) = "101" then
-		if dmem_byte_we(0) = '1' then
-		    R_sdcard_si <= cpu_to_dmem(7);
-		    R_sdcard_sck <= cpu_to_dmem(6);
-		    R_sdcard_cen <= cpu_to_dmem(5);
-		end if;
+		R_sdcard_si <= cpu_to_dmem(7);
+		R_sdcard_sck <= cpu_to_dmem(6);
+		R_sdcard_cen <= cpu_to_dmem(5);
 	    end if;
 	    -- DDS
 	    if C_ddsfm and dmem_addr(4 downto 2) = "111" then
-		if dmem_byte_we(0) = '1' then
-		    if C_big_endian then
-			R_dds_div <= cpu_to_dmem(15 downto 10) & 
-			  cpu_to_dmem(23 downto 16) & cpu_to_dmem(31 downto 24);
-		    else
-			R_dds_div <= cpu_to_dmem(21 downto 0);
-		    end if;
+		if C_big_endian then
+		    R_dds_div <= cpu_to_dmem(15 downto 10) & 
+		      cpu_to_dmem(23 downto 16) & cpu_to_dmem(31 downto 24);
+		else
+		    R_dds_div <= cpu_to_dmem(21 downto 0);
 		end if;
 	    end if;
 	end if;
@@ -359,6 +354,8 @@ begin
 
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
+    imem_data_ready <= '1';
+    dmem_data_ready <= '1';
     bram: entity bram
     generic map (
 	C_mem_size => C_mem_size
@@ -366,10 +363,9 @@ begin
     port map (
 	clk => clk, imem_addr_strobe => imem_addr_strobe,
 	imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem,
-	dmem_addr_strobe => dmem_bram_enable,
-	dmem_data_ready => dmem_data_ready
+	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write,
+	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
     );
 
 

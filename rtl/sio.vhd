@@ -43,7 +43,8 @@ entity sio is
     );
     port (
 	ce, clk: in std_logic;
-	byte_we: in std_logic_vector(3 downto 0);
+	bus_write: in std_logic;
+	byte_sel: in std_logic_vector(3 downto 0);
 	bus_in: in std_logic_vector(31 downto 0);
 	bus_out: out std_logic_vector(31 downto 0);
 	rxd: in std_logic;
@@ -93,7 +94,7 @@ begin
     begin
 	if (rising_edge(clk)) then
 	    rx_running <= rxd;
-	    if (ce = '1' and byte_we(0) = '1') then
+	    if (ce = '1' and bus_write = '1' and byte_sel(0) = '1') then
 		tx_running <= bus_in(0);
 	    end if;
 	end if;
@@ -124,7 +125,8 @@ begin
 	if (rising_edge(clk)) then
 	    -- bus interface logic
 	    if (ce = '1') then
-		if not C_fixed_baudrate and byte_we(2) = '1' then
+		if not C_fixed_baudrate and bus_write = '1' and
+		  byte_sel(2) = '1' then
 		    if C_big_endian then
 			R_baudrate <=
 			  bus_in(23 downto 16) & bus_in(31 downto 24);
@@ -132,7 +134,7 @@ begin
 			R_baudrate <= bus_in(31 downto 16);
 		    end if;
 		end if;
-		if (byte_we(0) = '1') then
+		if (bus_write = '1' and byte_sel(0) = '1') then
 		    if (tx_phase = x"0") then
 			tx_phase <= x"1";
 			tx_ser <= bus_in(7 downto 0) & '0';
