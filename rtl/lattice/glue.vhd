@@ -58,6 +58,7 @@ entity glue is
 	-- SoC configuration options
 	C_mem_size: string := "16k";
 	C_sram: boolean := true;
+	C_sram_wait_cycles: std_logic_vector := x"5";
 	C_tsc: boolean := true;
 	C_sio: boolean := true;
 	C_gpio: boolean := true;
@@ -99,6 +100,7 @@ architecture Behavioral of glue is
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
 
     -- SRAM
+    signal R_sram_phase: std_logic;
     signal R_sram_delay: std_logic_vector(3 downto 0);
     signal R_sram_data: std_logic_vector(31 downto 0);
     signal R_sram_a: std_logic_vector(18 downto 0);
@@ -206,7 +208,8 @@ begin
     p_ring <= R_dac_acc_r(16);
     end generate;
 
-    sram_ready <= '1' when not C_sram or R_sram_delay = x"0" else '0';
+    sram_ready <='1' when not C_sram or
+      (R_sram_delay = x"0" and R_sram_phase = '0') else '0';
     dmem_data_ready <= '1' when dmem_addr(31 downto 28) /= x"8" else
       sram_ready;
 
@@ -224,20 +227,33 @@ begin
     begin
 	if C_sram and rising_edge(clk) then
 	    if dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
-		R_sram_delay <= R_sram_delay - 1;
+		if R_sram_delay = "000" & R_sram_phase then
+		    R_sram_delay <= C_sram_wait_cycles;
+		    R_sram_phase <= not R_sram_phase;
+		else
+		    R_sram_delay <= R_sram_delay - 1;
+		end if;
 	    else
-		R_sram_delay <= x"4"; -- # of wait cycles, must be >= 1!
+		R_sram_delay <= C_sram_wait_cycles;
+		R_sram_phase <= '1';
 	    end if;
 	end if;
 
 	if C_sram and falling_edge(clk) then
 	    if dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
-		R_sram_a <= dmem_addr(20 downto 2);
-		R_sram_d <= cpu_to_dmem(15 downto 0);
-		R_sram_wel <= not dmem_write; -- XXX and not sram_ready?
-		R_sram_lbl <= '0';
-		R_sram_ubl <= '0';
-		R_sram_data <= x"0000" & sram_d;
+		R_sram_a <= dmem_addr(19 downto 2) & R_sram_phase;
+		R_sram_wel <= not dmem_write;
+		if R_sram_phase = '1' then
+		    R_sram_d <= cpu_to_dmem(31 downto 16);
+		    R_sram_data(31 downto 16) <= sram_d;
+		    R_sram_ubl <= not dmem_byte_sel(3);
+		    R_sram_lbl <= not dmem_byte_sel(2);
+		else
+		    R_sram_d <= cpu_to_dmem(15 downto 0);
+		    R_sram_data(15 downto 0) <= sram_d;
+		    R_sram_ubl <= not dmem_byte_sel(1);
+		    R_sram_lbl <= not dmem_byte_sel(0);
+		end if;
 	    else
 		R_sram_wel <= '1';
 		R_sram_lbl <= '1';
@@ -293,7 +309,10 @@ begin
 	    end if;
 	end if;
     end process;
-    led <= R_led when C_gpio else "--------";
+    --led <= R_led when C_gpio else "--------";
+    led(3 downto 0) <= R_led(3 downto 0);
+    led(7) <= R_sram_phase;
+    led(6 downto 4) <= R_sram_delay(2 downto 0);
     flash_si <= R_flash_si when C_flash else 'Z';
     flash_sck <= R_flash_sck when C_flash else 'Z';
     flash_cen <= R_flash_cen when C_flash else 'Z';
