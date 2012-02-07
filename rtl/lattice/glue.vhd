@@ -106,11 +106,7 @@ architecture Behavioral of glue is
     signal R_sram_a: std_logic_vector(18 downto 0);
     signal R_sram_d: std_logic_vector(15 downto 0);
     signal R_sram_wel, R_sram_lbl, R_sram_ubl: std_logic;
-    signal sram_ready: std_logic;
-    attribute syn_keep: boolean;
-    attribute syn_keep of R_sram_wel : signal is true;
-    attribute syn_keep of R_sram_ubl : signal is true;
-    attribute syn_keep of R_sram_lbl : signal is true;
+    signal sram_halfword, sram_ready: std_logic;
 
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
@@ -227,6 +223,8 @@ begin
     -- 0xf*****14: (1B, RW) * SPI MicroSD
     -- 0xf*****1c: (4B, WR) * FM DDS register
     -- I/O write access:
+    sram_halfword <= '0' when dmem_byte_sel(3 downto 2) = "00" else
+      '1' when dmem_byte_sel(1 downto 0) = "00" else not R_sram_phase;
     process(clk)
     begin
 	if C_sram and rising_edge(clk) then
@@ -236,6 +234,10 @@ begin
 		    R_sram_phase <= not R_sram_phase;
 		else
 		    R_sram_delay <= R_sram_delay - 1;
+		    if dmem_byte_sel(3 downto 2) = "00" or
+		      dmem_byte_sel(1 downto 0) = "00" then
+			R_sram_phase <= '0';
+		    end if;
 		end if;
 	    else
 		R_sram_delay <= C_sram_wait_cycles;
@@ -246,9 +248,9 @@ begin
 	if falling_edge(clk) then
 	    if C_sram and
 	      dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
-		R_sram_a <= dmem_addr(19 downto 2) & R_sram_phase;
+		R_sram_a <= dmem_addr(19 downto 2) & sram_halfword;
 		R_sram_wel <= not dmem_write;
-		if R_sram_phase = '1' then
+		if sram_halfword = '1' then
 		    if dmem_write = '1' then
 			R_sram_d <= cpu_to_dmem(31 downto 16);
 		    else
