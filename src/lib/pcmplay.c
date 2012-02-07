@@ -39,9 +39,6 @@ static int fm_efreq;		/* Actual TX frequency, in Hz */
 
 static int delay_idx = 0;
 
-extern void sram_wr(int, int);
-extern int sram_rd(int);
-
 
 static void
 update_dds_freq(void)
@@ -70,6 +67,7 @@ void
 pcm_play(void)
 {
 	int pcm_out, dds_out, i, c, t, vu;
+	short *sram = (short *) 0x88000000;
 	
 	c = rdtsc() - pcm_next_tsc;
 	if (c < 0)
@@ -107,18 +105,18 @@ pcm_play(void)
 
 		/* Reverb */
 		t = c
-		    + (short)sram_rd(delay_idx - 3110)
-		    - (short)sram_rd(delay_idx - 7110)
-		    + 2 * (short)sram_rd(delay_idx - 11110)
-		    - (short)sram_rd(delay_idx - 15110)
-		    - 2 * (short)sram_rd(delay_idx - 17122)
-		    + (short)sram_rd(delay_idx - 23110);
+		    + sram[delay_idx - 3110]
+		    - sram[delay_idx - 7110]
+		    + 2 * sram[delay_idx - 11110]
+		    - sram[delay_idx - 15110]
+		    - 2 * sram[delay_idx - 17122]
+		    + sram[delay_idx - 23110];
 		pcm_rv1_acc[i] = t - (((t - pcm_rv1_acc[i]) * 2800) >> 12);
 		t = pcm_rv1_acc[i];
 		pcm_rv2_acc[i] = t - (((t - pcm_rv2_acc[i]) * 3500) >> 12);
 		t = t - pcm_rv2_acc[i];
-		sram_wr(delay_idx++, (t * 7) >> 5);
-		t = (short)sram_rd(delay_idx - 13101) * 9;
+		sram[delay_idx++] = (t * 7) >> 5;
+		t = sram[delay_idx - 13101] * 9;
 		pcm_rv3_acc[i] = t - (((t - pcm_rv3_acc[i]) * 3200) >> 12);
 		t = pcm_rv3_acc[i];
 		if (pcm_reverb) {
