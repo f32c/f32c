@@ -58,7 +58,7 @@ entity glue is
 	-- SoC configuration options
 	C_mem_size: string := "16k";
 	C_sram: boolean := true;
-	C_sram_wait_cycles: std_logic_vector := x"5";
+	C_sram_wait_cycles: std_logic_vector := x"4"; -- OK do 87.5 MHz
 	C_tsc: boolean := true;
 	C_sio: boolean := true;
 	C_gpio: boolean := true;
@@ -107,6 +107,10 @@ architecture Behavioral of glue is
     signal R_sram_d: std_logic_vector(15 downto 0);
     signal R_sram_wel, R_sram_lbl, R_sram_ubl: std_logic;
     signal sram_ready: std_logic;
+    attribute syn_keep: boolean;
+    attribute syn_keep of R_sram_wel : signal is true;
+    attribute syn_keep of R_sram_ubl : signal is true;
+    attribute syn_keep of R_sram_lbl : signal is true;
 
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
@@ -239,25 +243,35 @@ begin
 	    end if;
 	end if;
 
-	if C_sram and falling_edge(clk) then
-	    if dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
+	if falling_edge(clk) then
+	    if C_sram and
+	      dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
 		R_sram_a <= dmem_addr(19 downto 2) & R_sram_phase;
 		R_sram_wel <= not dmem_write;
 		if R_sram_phase = '1' then
-		    R_sram_d <= cpu_to_dmem(31 downto 16);
+		    if dmem_write = '1' then
+			R_sram_d <= cpu_to_dmem(31 downto 16);
+		    else
+			R_sram_d <= "ZZZZZZZZZZZZZZZZ";
+		    end if;
 		    R_sram_data(31 downto 16) <= sram_d;
 		    R_sram_ubl <= not dmem_byte_sel(3);
 		    R_sram_lbl <= not dmem_byte_sel(2);
 		else
-		    R_sram_d <= cpu_to_dmem(15 downto 0);
+		    if dmem_write = '1' then
+			R_sram_d <= cpu_to_dmem(15 downto 0);
+		    else
+			R_sram_d <= "ZZZZZZZZZZZZZZZZ";
+		    end if;
 		    R_sram_data(15 downto 0) <= sram_d;
 		    R_sram_ubl <= not dmem_byte_sel(1);
 		    R_sram_lbl <= not dmem_byte_sel(0);
 		end if;
 	    else
+		R_sram_d <= "ZZZZZZZZZZZZZZZZ";
 		R_sram_wel <= '1';
-		R_sram_lbl <= '1';
-		R_sram_ubl <= '1';
+		R_sram_lbl <= '0';
+		R_sram_ubl <= '0';
 	    end if;
 	end if;
 
@@ -316,11 +330,11 @@ begin
     sdcard_si <= R_sdcard_si when C_sdcard else 'Z';
     sdcard_sck <= R_sdcard_sck when C_sdcard else 'Z';
     sdcard_cen <= R_sdcard_cen when C_sdcard else 'Z';
-    sram_d <= R_sram_d when C_sram and R_sram_wel = '0' else "ZZZZZZZZZZZZZZZZ";
+    sram_d <= R_sram_d;
     sram_a <= R_sram_a;
-    sram_wel <= R_sram_wel when C_sram else '1';
-    sram_lbl <= R_sram_lbl when C_sram else '1';
-    sram_ubl <= R_sram_ubl when C_sram else '1';
+    sram_wel <= R_sram_wel;
+    sram_lbl <= R_sram_lbl;
+    sram_ubl <= R_sram_ubl;
 
     process(clk)
     begin
