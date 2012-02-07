@@ -144,54 +144,12 @@ sdcard_test(void)
 }
 
 
-void sram_wr(int a, int d)
-{
-
-	a <<= 2;
-
-	__asm(
-		".set noreorder\n"
-		"lui	$3, 0x8000\n"
-		"addu	$3, $3, %1\n"
-#if _BYTE_ORDER == _BIG_ENDIAN
-		"sll %0, 16\n"
-#endif
-		"sw %0, 0($3)\n"
-		".set reorder\n"
-		:
-		: "r" (d), "r" (a)
-	);
-}
-
-
-int sram_rd(int a)
-{
-	int r;
-
-	a <<= 2;
-
-	__asm(
-		".set noreorder\n"
-		"lui	$3, 0x8000\n"
-		"addu	$3, $3, %1\n"
-		"lw %0, 0($3)\n"
-#if _BYTE_ORDER == _BIG_ENDIAN
-		"srl %0, 16\n"
-#endif
-		".set reorder\n"
-		: "=r" (r)
-		: "r" (a)
-	);
-
-	return (r);
-}
-
-
 static void
 sram_test(void)
 {
 	int i, j, r, mem_offset;
 	uint16_t *membuf = (uint16_t *) buf;
+	uint16_t *sram16 = (uint16_t *) 0x80000000;
 	
 	printf("Ispitivanje SRAMa u tijeku...  ");
 	for (j = 0; j < 4096; j++) {
@@ -200,10 +158,10 @@ sram_test(void)
 		} while (mem_offset > 512*1024 - MEMSIZE);
 		r = random();
 		for (i = 0; i < MEMSIZE; i++) {
-			sram_wr(i + mem_offset, (i - (i << 9)) ^ r);
+			sram16[mem_offset + i] = (i - (i << 9)) ^ r;
 		}
 		for (i = 0; i < MEMSIZE; i++) {
-			membuf[i] = sram_rd(i + mem_offset);
+			membuf[i] = sram16[mem_offset + i];
 		}
 		for (i = 0; i < MEMSIZE; i++) {
 			if (membuf[i] != (((i - (i << 9)) ^ r) & 0xffff)) {
