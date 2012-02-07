@@ -309,10 +309,7 @@ begin
 	    end if;
 	end if;
     end process;
-    --led <= R_led when C_gpio else "--------";
-    led(3 downto 0) <= R_led(3 downto 0);
-    led(7) <= R_sram_phase;
-    led(6 downto 4) <= R_sram_delay(2 downto 0);
+    led <= R_led when C_gpio else "--------";
     flash_si <= R_flash_si when C_flash else 'Z';
     flash_sck <= R_flash_sck when C_flash else 'Z';
     flash_cen <= R_flash_cen when C_flash else 'Z';
