@@ -81,8 +81,9 @@ architecture Behavioral of glue is
     signal imem_data_read: std_logic_vector(31 downto 0);
     signal imem_addr_strobe, imem_data_ready: std_logic;
     signal dmem_addr: std_logic_vector(31 downto 2);
-    signal dmem_addr_strobe, dmem_bram_enable, dmem_data_ready: std_logic;
-    signal dmem_byte_we: std_logic_vector(3 downto 0);
+    signal dmem_addr_strobe, dmem_write: std_logic;
+    signal dmem_bram_enable, dmem_data_ready: std_logic;
+    signal dmem_byte_sel: std_logic_vector(3 downto 0);
     signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
 
@@ -126,9 +127,9 @@ begin
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,
-	dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
+	dmem_addr_strobe => dmem_addr_strobe, dmem_addr => dmem_addr,
+	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
 	dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
-	dmem_addr_strobe => dmem_addr_strobe,
 	dmem_data_ready => dmem_data_ready,
 	trace_addr => trace_addr, trace_data => trace_data
     );
@@ -143,7 +144,8 @@ begin
     )
     port map (
 	clk => clk, ce => sio_ce, txd => sio_txd, rxd => sio_rxd,
-	byte_we => dmem_byte_we, bus_in => cpu_to_dmem, bus_out => from_sio
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_sio
     );
     sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
       dmem_addr(4 downto 2) = "001" else '0';
@@ -164,12 +166,10 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) and dmem_addr_strobe = '1'
-	  and dmem_addr(31 downto 28) = x"f" then
+	  and dmem_write = '1' and dmem_addr(31 downto 28) = x"f" then
 	    -- GPIO
 	    if C_gpio and dmem_addr(4 downto 2) = "000" then
-		if dmem_byte_we(0) = '1' then
-		    R_led <= cpu_to_dmem(7 downto 0);
-		end if;
+		R_led <= cpu_to_dmem(7 downto 0);
 	    end if;
 	end if;
     end process;
@@ -251,9 +251,9 @@ begin
     port map (
 	clk => clk, imem_addr_strobe => imem_addr_strobe,
 	imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_addr => dmem_addr, dmem_byte_we => dmem_byte_we,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem,
-	dmem_addr_strobe => dmem_bram_enable
+	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write,
+	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
     );
 
     -- debugging design instance - serial port + control knob / buttons
