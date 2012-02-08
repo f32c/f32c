@@ -233,7 +233,14 @@ begin
 		    R_sram_delay <= C_sram_wait_cycles;
 		    R_sram_phase <= not R_sram_phase;
 		else
-		    R_sram_delay <= R_sram_delay - 1;
+		    if R_sram_delay = C_sram_wait_cycles and
+		      dmem_write = '1' then
+			-- XXX fast store: out of specs!
+			R_sram_delay <=
+			  R_sram_delay - (C_sram_wait_cycles - 1);
+		    else
+			R_sram_delay <= R_sram_delay - 1;
+		    end if;
 		    if dmem_byte_sel(3 downto 2) = "00" or
 		      dmem_byte_sel(1 downto 0) = "00" then
 			R_sram_phase <= '0';
