@@ -236,8 +236,7 @@ begin
 		    if R_sram_delay = C_sram_wait_cycles and
 		      dmem_write = '1' then
 			-- XXX fast store: out of specs!
-			R_sram_delay <=
-			  R_sram_delay - (C_sram_wait_cycles - 1);
+			R_sram_delay <= R_sram_delay - 2;
 		    else
 			R_sram_delay <= R_sram_delay - 1;
 		    end if;
