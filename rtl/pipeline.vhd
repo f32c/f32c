@@ -999,7 +999,7 @@ begin
 	    when x"0c" => trace_data <= EX_eff_alu_op2;
 	    when x"0d" => trace_data <= EX_MEM_addsub_data;
 	    when x"0e" => trace_data <= EX_MEM_logic_data;
-	    when x"0f" => trace_data <= dmem_data_out;
+	    --when x"0f" => trace_data <= dmem_data_out;
 	    when x"10" => trace_data <= dmem_data_in;
 	    --
 	    when x"14" => trace_data <= D_tsc;
