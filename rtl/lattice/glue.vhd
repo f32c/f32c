@@ -106,6 +106,7 @@ architecture Behavioral of glue is
     signal R_sram_a: std_logic_vector(18 downto 0);
     signal R_sram_d: std_logic_vector(15 downto 0);
     signal R_sram_wel, R_sram_lbl, R_sram_ubl: std_logic;
+    signal R_sram_fast_read: boolean;
     signal sram_halfword, sram_ready: std_logic;
 
     -- I/O
@@ -234,8 +235,8 @@ begin
 		    R_sram_phase <= not R_sram_phase;
 		else
 		    if R_sram_delay = C_sram_wait_cycles and
-		      dmem_write = '1' then
-			-- XXX fast store: out of specs!
+		      (R_sram_fast_read or dmem_write = '1') then
+			-- begin of a preselected read or a fast store
 			R_sram_delay <= R_sram_delay - 2;
 		    else
 			R_sram_delay <= R_sram_delay - 1;
@@ -254,7 +255,16 @@ begin
 	if falling_edge(clk) then
 	    if C_sram and
 	      dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
-		R_sram_a <= dmem_addr(19 downto 2) & sram_halfword;
+		R_sram_fast_read <= false;
+		if R_sram_delay = "0000" and dmem_write = '0' then
+		    R_sram_a <= R_sram_a + 1;
+		else
+		    if R_sram_delay = C_sram_wait_cycles and
+		      R_sram_a = (dmem_addr(19 downto 2) & sram_halfword) then
+			R_sram_fast_read <= true;
+		    end if;
+		    R_sram_a <= dmem_addr(19 downto 2) & sram_halfword;
+		end if;
 		R_sram_wel <= not dmem_write;
 		if sram_halfword = '1' then
 		    if dmem_write = '1' then
