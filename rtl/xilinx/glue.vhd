@@ -33,17 +33,17 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity glue is
     generic(
 	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 25;
+	C_clk_freq: integer := 50;
 
 	-- ISA options
 	C_big_endian: boolean := false;
-	C_mult_enable: boolean := false;
-	C_branch_likely: boolean := false;
-	C_sign_extend: boolean := false;
+	C_mult_enable: boolean := true;
+	C_branch_likely: boolean := true;
+	C_sign_extend: boolean := true;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
     
 	-- CPU core configuration options
-	C_branch_prediction: boolean := false;
+	C_branch_prediction: boolean := true;
 	C_result_forwarding: boolean := true;
 	C_load_aligner: boolean := true;
 --	C_register_technology: string := "xilinx_ram32x1s";
@@ -54,11 +54,11 @@ entity glue is
 	C_fast_ID: boolean := true;
 
 	-- debugging options
-	C_debug: boolean := true;
+	C_debug: boolean := false;
 
 	-- SoC configuration options
 	C_mem_size: string := "16k";
-	C_tsc: boolean := false;
+	C_tsc: boolean := true;
 	C_sio: boolean := true;
 	C_gpio: boolean := true
     );
