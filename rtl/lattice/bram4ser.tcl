@@ -55,7 +55,7 @@ set prog "[set prog]                                        eff_alu2: ______44  
 set prog "[set prog]                                                             dmem_in: ______48\033\[K\r\n"
 set prog "[set prog]  XXX: ______57\033\[K\r\n"
 set prog "[set prog]\033\[K\r\n"
-set prog "[set prog]  Cycles: ______52  Instruct: ______53  Branches: ______54     Taken: ______55\033\[K\r\n"
+set prog "[set prog]  Cycles: ______52  Instruct: ______53  Branches: ______54     Taken: ______55\033\[K"
 
 # Invisible cursor, clear to end of screen
 set prog "[set prog]\033\[?25l\033\[J"
