@@ -36,21 +36,23 @@ use UNISIM.VComponents.all;
 
 entity clkgen is
     generic(
-	C_clk_mhz: integer := 50
+	C_debug: boolean;
+	C_clk_freq: integer
     );
     port(
-	clk_in: in std_logic; -- 50 MHz signal expected here
+	clk_50m: in std_logic; -- 50 MHz signal expected here
+	sel: in std_logic;
 	key: in std_logic; -- one-step clocking
-	sel: in std_logic_vector(1 downto 0);
-	clk_out, clk_out_slow: out std_logic;
-	gate_out: out std_logic
+	clk: out std_logic
     );
 end clkgen;
 
 architecture Behavioral of clkgen is
-    signal clkfx, gate: std_logic;
-    signal cnt: std_logic_vector(15 downto 0);
-    signal slowcnt: std_logic_vector(11 downto 0);
+    signal clkfx: std_logic;
+    signal key_d: std_logic_vector(19 downto 0) := x"00000";
+    signal key_r: std_logic := '0';
+    signal sel_r: std_logic := '0';
+
 begin
 
     -- main clock synthesizer
@@ -60,7 +62,7 @@ begin
 	-- Divide by: 1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0,6.5
 	-- 7.0,7.5,8.0,9.0,10.0,11.0,12.0,13.0,14.0,15.0 or 16.0
 	CLKFX_DIVIDE => 10, -- Can be any integer from 1 to 32
-	CLKFX_MULTIPLY => (C_clk_mhz / 5), -- from 2 to 32
+	CLKFX_MULTIPLY => (C_clk_freq / 5), -- from 2 to 32
 	CLKIN_DIVIDE_BY_2 => false, -- TRUE/FALSE to enable CLKIN divide by two feature
 	CLKIN_PERIOD => 20.0, -- Specify period of input clock
 	CLKOUT_PHASE_SHIFT => "NONE", -- Specify phase shift of NONE, FIXED or VARIABLE
@@ -87,14 +89,34 @@ begin
 	PSDONE => open, -- Dynamic phase adjust done output
 	STATUS => open, -- 8-bit DCM status bits output
 	CLKFB => open, -- DCM clock feedback
-	CLKIN => clk_in, -- Clock input (from IBUFG, BUFG or DCM)
+	CLKIN => clk_50m, -- Clock input (from IBUFG, BUFG or DCM)
 	PSCLK => open, -- Dynamic phase adjust clock input
 	PSEN => open, -- Dynamic phase adjust enable input
 	PSINCDEC => open, -- Dynamic phase adjust increment/decrement
 	RST => '0' -- DCM asynchronous reset input
     );
-	
-    clk_out <= clkfx;
+
+    G_debug:
+    if C_debug generate
+    begin
+    -- key debuncer
+    process(clkfx)
+    begin
+	if (rising_edge(clkfx)) then
+	    if (key_d = x"fffff") then
+		if (key /= key_r) then
+		    key_d <= x"00000";
+		end if;
+		key_r <= key;
+	    else
+		key_d <= key_d + 1;
+	    end if;
+	    sel_r <= sel;
+	end if;
+    end process;
+    end generate;
+
+    clk <= clkfx when not C_debug or sel_r = '0' else key_r;
 
 end Behavioral;
 
