@@ -31,6 +31,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+use work.f32c_pack.all;
+
 
 entity idecode is
     generic(
@@ -78,16 +80,16 @@ begin
     reg1_addr <= instruction(25 downto 21);
     reg2_addr <= instruction(20 downto 16);
 
-    reg1_zero <= instruction(25 downto 21) = "00000";
-    x_reg2_zero <= instruction(20 downto 16) = "00000";
+    reg1_zero <= instruction(25 downto 21) = MIPS_REG_ZERO;
+    x_reg2_zero <= instruction(20 downto 16) = MIPS_REG_ZERO;
     reg2_zero <= x_reg2_zero;
 
     -- beq, bne, blez, bgtz
     x_branch1 <= opcode(5) = '0' and opcode(3 downto 2) = "01";
     -- bgez, bltz
     x_branch2 <= opcode = "000001";
-    x_special <= opcode = "000000";
-    x_special3 <= opcode(5 downto 3) = "011" and opcode(0) = '1';
+    x_special <= opcode = MIPS_OP_SPECIAL;
+    x_special3 <= opcode = MIPS_OP_SPECIAL3;
 
     seb_seh_cycle <= C_sign_extend and x_special3;
     seb_seh_select <= instruction(9) when C_sign_extend else '0';
@@ -103,8 +105,8 @@ begin
     process(opcode)
     begin
 	case opcode is
-	when "000000" => type_code <= "00"; -- R-type - special
-	when "011111" => type_code <= "00"; -- R-type - special3
+	when MIPS_OP_SPECIAL => type_code <= "00"; -- R-type - special
+	when MIPS_OP_SPECIAL3 => type_code <= "00"; -- R-type - special3
 	when "000001" => type_code <= "01"; -- J-t - bgez, bgezal, bltz, bltzal
 	when "000010" => type_code <= "01"; -- J-type - j
 	when "000011" => type_code <= "01"; -- J-type - jal
@@ -133,9 +135,9 @@ begin
 	when "01" =>	-- J-type
 	    if (opcode = "000001" and instruction(20) = '1') or
 	      opcode = "000011" then
-		target_addr <= "11111"; -- bgezal / bltzal / jal
+		target_addr <= MIPS_REG_SP; -- bgezal / bltzal / jal
 	    else
-		target_addr <= "00000";
+		target_addr <= MIPS_REG_ZERO;
 	    end if;
 	when "10" =>	-- S-type
 	    target_addr <= "00000";
