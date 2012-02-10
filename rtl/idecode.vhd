@@ -172,8 +172,8 @@ begin
 		op_minor <= "000"; -- ADD
 	    end if;
 	    if fncode(5 downto 3) = "101" then -- SLT / SLTU
-		op_major <= "01";
-		op_minor <= "---";
+		op_major <= "01"; -- SLTI / SLTIU
+		op_minor <= "-1-"; -- subtract
 		if fncode(0) = '1' then
 		    sign_extend_imm <= false; -- SLTU
 		end if;
@@ -201,6 +201,7 @@ begin
 	    end if;
 	    if opcode(2 downto 1) = "01" then
 		op_major <= "01"; -- SLTI / SLTIU
+		op_minor <= "-1-"; -- subtract
 	    end if;
 	end if;
 
