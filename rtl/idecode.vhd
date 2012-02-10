@@ -88,8 +88,8 @@ begin
     x_branch1 <= opcode(5) = '0' and opcode(3 downto 2) = "01";
     -- bgez, bltz
     x_branch2 <= opcode = "000001";
-    x_special <= opcode = MIPS_OP_SPECIAL;
-    x_special3 <= opcode = MIPS_OP_SPECIAL3;
+    x_special <= opcode = MIPS32_OP_SPECIAL;
+    x_special3 <= opcode = MIPS32_OP_SPECIAL3;
 
     seb_seh_cycle <= C_sign_extend and x_special3;
     seb_seh_select <= instruction(9) when C_sign_extend else '0';
@@ -105,24 +105,24 @@ begin
     process(opcode)
     begin
 	case opcode is
-	when MIPS_OP_SPECIAL => type_code <= "00"; -- R-type - special
-	when MIPS_OP_SPECIAL3 => type_code <= "00"; -- R-type - special3
-	when "000001" => type_code <= "01"; -- J-t - bgez, bgezal, bltz, bltzal
-	when "000010" => type_code <= "01"; -- J-type - j
-	when "000011" => type_code <= "01"; -- J-type - jal
-	when "000100" => type_code <= "01"; -- J-type - beq
-	when "000101" => type_code <= "01"; -- J-type - bne
-	when "000110" => type_code <= "01"; -- J-type - blez
-	when "000111" => type_code <= "01"; -- J-type - bgtz
-	when "010100" => type_code <= "01"; -- J-type - beql
-	when "010101" => type_code <= "01"; -- J-type - bnel
-	when "010110" => type_code <= "01"; -- J-type - blezl
-	when "010111" => type_code <= "01"; -- J-type - bgtzl
-	when "101000" => type_code <= "10"; -- S-type - sb
-	when "101001" => type_code <= "10"; -- S-type - sh
-	when "101010" => type_code <= "10"; -- S-type - unimplemented
-	when "101011" => type_code <= "10"; -- S-type - sw
-	when others   => type_code <= "11"; -- I-type
+	when MIPS32_OP_SPECIAL	=> type_code <= "00"; -- R-type
+	when MIPS32_OP_SPECIAL3	=> type_code <= "00"; -- R-type 
+	when MIPS32_OP_REGIMM	=> type_code <= "01"; -- J-type - bltz etc.
+	when MIPS32_OP_J	=> type_code <= "01"; -- J-type
+	when MIPS32_OP_JAL	=> type_code <= "01"; -- J-type
+	when MIPS32_OP_BEQ	=> type_code <= "01"; -- J-type
+	when MIPS32_OP_BNE	=> type_code <= "01"; -- J-type
+	when MIPS32_OP_BLEZ	=> type_code <= "01"; -- J-type
+	when MIPS32_OP_BGTZ	=> type_code <= "01"; -- J-type
+	when MIPS32_OP_BEQL	=> type_code <= "01"; -- J-type
+	when MIPS32_OP_BNEL	=> type_code <= "01"; -- J-type
+	when MIPS32_OP_BLEZL	=> type_code <= "01"; -- J-type
+	when MIPS32_OP_BGTZL	=> type_code <= "01"; -- J-type
+	when MIPS32_OP_SB	=> type_code <= "10"; -- S-type
+	when MIPS32_OP_SH	=> type_code <= "10"; -- S-type
+	when MIPS32_OP_SW	=> type_code <= "10"; -- S-type
+	when MIPS32_OP_SWL	=> type_code <= "10"; -- S-type
+	when others		=> type_code <= "11"; -- I-type
 	end case;
     end process;
 
@@ -133,14 +133,14 @@ begin
     begin
 	case type_code is
 	when "01" =>	-- J-type
-	    if (opcode = "000001" and instruction(20) = '1') or
-	      opcode = "000011" then
-		target_addr <= MIPS_REG_SP; -- bgezal / bltzal / jal
+	    if (opcode = MIPS32_OP_REGIMM and instruction(20) = '1') or
+	      opcode = MIPS32_OP_JAL then
+		target_addr <= MIPS_REG_RA; -- bgezal / bltzal / jal
 	    else
 		target_addr <= MIPS_REG_ZERO;
 	    end if;
 	when "10" =>	-- S-type
-	    target_addr <= "00000";
+	    target_addr <= MIPS_REG_ZERO;
 	when "11" =>	-- I-type
 	    target_addr <= instruction(20 downto 16);
 	when others =>	-- R-type
@@ -211,8 +211,8 @@ begin
 	    mem_cycle <= '1';
 	    -- There's no need set latency only for loads, because for saves
 	    -- the target register is $0 (zero), so latency is ignored
-	    latency(0) <= '1'; -- resolve load-use hazard
-	    latency(1) <= not opcode(1); -- resolve load aligner hazard
+	    latency(0) <= '1'; -- resolve load-use hazard (LW)
+	    latency(1) <= not opcode(1); -- resolve load aligner hazard (LB/LH)
 	end if;
     end process;
 
@@ -223,13 +223,13 @@ begin
     process(opcode, instruction, imm_extension, cond_move)
     begin
 	case opcode is
-	when "000000" => -- special (for MOVN / MOVZ)
+	when MIPS32_OP_SPECIAL => -- MOVN / MOVZ
 	    if (C_movn_movz and cond_move) then
 		immediate_value <= x"00000000";
 	    else
 		immediate_value <= imm_extension & instruction(15 downto 0);
 	    end if;
-	when "001111" => -- lui, XXX revisit: use barrel shifter?
+	when MIPS32_OP_LUI => -- XXX revisit: use barrel shifter?
 	    immediate_value <= instruction(15 downto 0) & x"0000";
 	when others =>
 	    immediate_value <= imm_extension & instruction(15 downto 0);
