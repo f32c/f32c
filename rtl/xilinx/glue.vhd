@@ -33,19 +33,20 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity glue is
     generic(
 	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 50;
+	C_clk_freq: integer := 25;
 
 	-- ISA options
 	C_big_endian: boolean := false;
-	C_mult_enable: boolean := true;
-	C_branch_likely: boolean := true;
-	C_sign_extend: boolean := true;
+	C_mult_enable: boolean := false;
+	C_branch_likely: boolean := false;
+	C_sign_extend: boolean := false;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
     
 	-- CPU core configuration options
-	C_branch_prediction: boolean := true;
+	C_branch_prediction: boolean := false;
 	C_result_forwarding: boolean := true;
 	C_load_aligner: boolean := true;
+--	C_register_technology: string := "xilinx_ram32x1s";
 	C_register_technology: string := "xilinx_ram16x1d";
 
 	-- These may negatively influence timing closure:
@@ -53,11 +54,11 @@ entity glue is
 	C_fast_ID: boolean := true;
 
 	-- debugging options
-	C_debug: boolean := false;
+	C_debug: boolean := true;
 
 	-- SoC configuration options
 	C_mem_size: string := "16k";
-	C_tsc: boolean := true;
+	C_tsc: boolean := false;
 	C_sio: boolean := true;
 	C_gpio: boolean := true
     );
@@ -233,11 +234,11 @@ begin
     -- a DLL clock synthesizer
     clkgen: entity clkgen
     generic map(
-	C_clk_mhz => C_clk_freq
+	C_debug => C_debug,
+	C_clk_freq => C_clk_freq
     )
     port map(
-	clk_in => clk_50m, clk_out => clk, clk_out_slow => open,
-	key => clk_key, sel => sw(1 downto 0)
+	clk_50m => clk_50m, clk => clk, key => clk_key, sel => sw(0)
     );
 	
     -- Block RAM
