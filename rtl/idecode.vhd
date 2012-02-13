@@ -383,7 +383,6 @@ begin
 		unsupported_instr <= true;
 	    end case;
 	when MIPS32_OP_SPECIAL2 =>
-	    target_addr <= instruction(15 downto 11);
 	    unsupported_instr <= true;
 	when MIPS32_OP_SPECIAL3 =>
 	    target_addr <= instruction(15 downto 11);
