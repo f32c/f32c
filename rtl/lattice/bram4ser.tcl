@@ -1,4 +1,4 @@
-#!/usr/local/bin/tclsh8.4
+#!/usr/local/bin/tclsh8.6
 #
 # Copyright 2010 University of Zagreb, Croatia.
 #
@@ -52,7 +52,7 @@ set prog "[set prog]instruct: ______36  instruct: ______37  instruct: ______38  
 set prog "[set prog]                    eff_reg1: ______40  eff_reg1: ______42   addsubx: ______45\033\[K\r\n"
 set prog "[set prog]                    eff_reg2: ______41  eff_reg2: ______43     logic: ______46\033\[K\r\n"
 set prog "[set prog]                                        eff_alu2: ______44  dmem_out: ______47\033\[K\r\n"
-set prog "[set prog]                                                             dmem_in: ______48\033\[K\r\n"
+set prog "[set prog]                                        op_major: ______49   dmem_in: ______48\033\[K\r\n"
 set prog "[set prog]  XXX: ______57\033\[K\r\n"
 set prog "[set prog]\033\[K\r\n"
 set prog "[set prog]  Cycles: ______52  Instruct: ______53  Branches: ______54     Taken: ______55\033\[K"
