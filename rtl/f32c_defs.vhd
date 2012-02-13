@@ -4,10 +4,6 @@ use ieee.std_logic_1164.all;
 
 package f32c_pack is
 
--- Specialized registers: zero and return address
-constant MIPS32_REG_ZERO:		std_logic_vector := "00000";
-constant MIPS32_REG_RA:		std_logic_vector := "11111";
-
 -- Main MIPS32 / MIPS64 opcodes
 constant MIPS32_OP_SPECIAL:	std_logic_vector := "000000";
 constant MIPS32_OP_REGIMM:	std_logic_vector := "000001";
@@ -171,5 +167,22 @@ constant MIPS32_RIMM_BGEZAL:	std_logic_vector := "10001";
 constant MIPS32_RIMM_BLTZALL:	std_logic_vector := "10010";
 constant MIPS32_RIMM_BGEZALL:	std_logic_vector := "10011";
 constant MIPS32_RIMM_SYNCI:	std_logic_vector := "11111";
+
+-- Specialized registers: zero and return address
+constant MIPS32_REG_ZERO:	std_logic_vector := "00000";
+constant MIPS32_REG_RA:		std_logic_vector := "11111";
+
+-- f32c internal codes
+constant TEST_EQ:		std_logic_vector := "100";
+constant TEST_NE:		std_logic_vector := "101";
+constant TEST_LEZ:		std_logic_vector := "110";
+constant TEST_GTZ:		std_logic_vector := "111";
+constant TEST_LTZ:		std_logic_vector := "010";
+constant TEST_GEZ:		std_logic_vector := "011";
+
+constant OP_MAJOR_ALU:		std_logic_vector := "00";
+constant OP_MAJOR_SLT:		std_logic_vector := "01";
+constant OP_MAJOR_SHIFT:	std_logic_vector := "10";
+constant OP_MAJOR_ALT:		std_logic_vector := "11";
 
 end;

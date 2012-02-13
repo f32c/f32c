@@ -31,6 +31,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+use work.f32c_pack.all;
+
 
 entity pipeline is
     generic (
@@ -471,7 +473,7 @@ begin
 		    -- XXX must stall the ID stage - revisit!!!
 		    ID_EX_multicycle_lh_lb <= not EX_MEM_multicycle_lh_lb;
 		    ID_EX_mem_cycle <= '0';
-		    ID_EX_op_major <= "10"; -- shift
+		    ID_EX_op_major <= OP_MAJOR_SHIFT;
 		    ID_EX_immediate(2) <= '0'; -- shift immediate
 		    ID_EX_immediate(1 downto 0) <= "10"; -- shift right logical
 		    if not EX_MEM_multicycle_lh_lb then
@@ -681,25 +683,21 @@ begin
     -- MFHI, MFLO, link PC + 8 -- XXX what about MFC0 / MFC1?
     EX_from_alt <=
       R_hi_lo(63 downto 32) when C_mult_enable and
-      ID_EX_op_major = "11" and ID_EX_op_minor(1) = '0' else
-      R_hi_lo(31 downto 0) when C_mult_enable and ID_EX_op_major = "11"
+      ID_EX_op_major = OP_MAJOR_ALT and ID_EX_op_minor(1) = '0' else
+      R_hi_lo(31 downto 0) when C_mult_enable and ID_EX_op_major = OP_MAJOR_ALT
       and ID_EX_op_minor(1) = '1' else ID_EX_PC_8 & "00";
 
     -- branch or not?
     process(ID_EX_branch_condition, EX_from_alu_equal, EX_eff_reg1)
     begin
 	case ID_EX_branch_condition is
-	when "010"  => -- bltz
-	    EX_take_branch <= EX_eff_reg1(31) = '1';
-	when "011"  => -- bgez
-	    EX_take_branch <= EX_eff_reg1(31) = '0';
-	when "100"  => -- beq
-	    EX_take_branch <= EX_from_alu_equal;
-	when "101"  => -- bne
-	    EX_take_branch <= not EX_from_alu_equal;
-	when "110"  => -- blez
+	when TEST_LTZ => EX_take_branch <= EX_eff_reg1(31) = '1';
+	when TEST_GEZ => EX_take_branch <= EX_eff_reg1(31) = '0';
+	when TEST_EQ  => EX_take_branch <= EX_from_alu_equal;
+	when TEST_NE  => EX_take_branch <= not EX_from_alu_equal;
+	when TEST_LEZ =>
 	    EX_take_branch <= EX_eff_reg1(31) = '1' or EX_from_alu_equal;
-	when "111"  => -- bgtz
+	when TEST_GTZ =>
 	    EX_take_branch <= EX_eff_reg1(31) = '0' and not EX_from_alu_equal;
 	when others =>
 	    EX_take_branch <= false;
@@ -735,9 +733,8 @@ begin
 		else
 		    EX_MEM_take_branch <= false;
 		end if;
-		if ID_EX_op_major = "01" then
+		if ID_EX_op_major = OP_MAJOR_SLT then
 		    EX_MEM_logic_cycle <= '1';
-		    -- SLT / SLTU / SLTI / SLTIU
 		    EX_MEM_logic_data(31 downto 1) <= x"0000000" & "000";
 		    if ID_EX_sign_extend then
 			EX_MEM_logic_data(0) <= EX_from_alu_addsubx(32)
@@ -746,7 +743,7 @@ begin
 			EX_MEM_logic_data(0) <= EX_from_alu_addsubx(32);
 		    end if;
 		elsif ID_EX_jump_cycle or ID_EX_jump_register or
-		  ID_EX_branch_cycle or ID_EX_op_major = "11" then
+		  ID_EX_branch_cycle or ID_EX_op_major = OP_MAJOR_ALT then
 		    -- Store (link) PC + 8 address
 		    EX_MEM_logic_cycle <= '1';
 		    EX_MEM_logic_data <= EX_from_alt;
@@ -866,7 +863,7 @@ begin
 		    MEM_WB_write_enable <= '1';
 		end if;
 		MEM_WB_mem_data <= MEM_data_in;
-		if EX_MEM_op_major = "10" then -- shift
+		if EX_MEM_op_major = OP_MAJOR_SHIFT then
 		    MEM_WB_ex_data <= MEM_from_shift;
 		else
 		    MEM_WB_ex_data <= MEM_eff_data;
@@ -920,7 +917,7 @@ begin
     begin
 	if falling_edge(clk) then
 	    -- XXX revisit instruction decoding
-	    if (ID_EX_op_major = "11" and
+	    if (ID_EX_op_major = OP_MAJOR_ALT and
 	      ID_EX_instruction(5 downto 1) = "01100") then
 		if (ID_EX_instruction(0) = '0') then
 		    -- signed
