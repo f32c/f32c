@@ -5,8 +5,8 @@ use ieee.std_logic_1164.all;
 package f32c_pack is
 
 -- Specialized registers: zero and return address
-constant MIPS_REG_ZERO:		std_logic_vector := "00000";
-constant MIPS_REG_RA:		std_logic_vector := "11111";
+constant MIPS32_REG_ZERO:		std_logic_vector := "00000";
+constant MIPS32_REG_RA:		std_logic_vector := "11111";
 
 -- Main MIPS32 / MIPS64 opcodes
 constant MIPS32_OP_SPECIAL:	std_logic_vector := "000000";

@@ -1,5 +1,5 @@
 --
--- Copyright 2008, 2011 University of Zagreb.
+-- Copyright 2012 University of Zagreb.
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -48,7 +48,7 @@ entity idecode is
 	reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
 	immediate_value: out std_logic_vector(31 downto 0);
 	sign_extension: out std_logic_vector(15 downto 0);
-	sign_extend: out boolean;
+	sign_extend: out boolean; -- for SLT / SLTU
 	op_major: out std_logic_vector(1 downto 0);
 	op_minor: out std_logic_vector(2 downto 0);
 	use_immediate, ignore_reg2: out boolean;
@@ -57,7 +57,7 @@ entity idecode is
 	mem_cycle: out std_logic;
 	mem_write: out std_logic;
 	mem_size: out std_logic_vector(1 downto 0);
-	mem_read_sign_extend: out std_logic;
+	mem_read_sign_extend: out std_logic; -- LB / LH
 	latency: out std_logic_vector(1 downto 0);
 	seb_seh_cycle: out boolean;
 	seb_seh_select: out std_logic
@@ -65,185 +65,356 @@ entity idecode is
 end idecode;
 
 architecture Behavioral of idecode is
-    signal opcode, fncode: std_logic_vector(5 downto 0);
-    signal type_code: std_logic_vector(1 downto 0);
-    signal imm_extension: std_logic_vector(15 downto 0);
-    signal cond_move: boolean;
-    signal x_reg2_zero, x_special, x_special3, sign_extend_imm: boolean;
-    signal x_branch1, x_branch2: boolean;
+    signal unsupported_instr: boolean; -- currently unused
 begin
 
-    opcode <= instruction(31 downto 26);
-    fncode <= instruction(5 downto 0);
-    mem_read_sign_extend <= not opcode(2);
-
-    reg1_addr <= instruction(25 downto 21);
-    reg2_addr <= instruction(20 downto 16);
-
-    reg1_zero <= instruction(25 downto 21) = MIPS_REG_ZERO;
-    x_reg2_zero <= instruction(20 downto 16) = MIPS_REG_ZERO;
-    reg2_zero <= x_reg2_zero;
-
-    -- beq, bne, blez, bgtz
-    x_branch1 <= opcode(5) = '0' and opcode(3 downto 2) = "01";
-    -- bgez, bltz
-    x_branch2 <= opcode = "000001";
-    x_special <= opcode = MIPS32_OP_SPECIAL;
-    x_special3 <= opcode = MIPS32_OP_SPECIAL3;
-
-    seb_seh_cycle <= C_sign_extend and x_special3;
-    seb_seh_select <= instruction(9) when C_sign_extend else '0';
-    cmov_cycle <= C_movn_movz and cond_move;
-    cmov_condition <= (instruction(0) = '0');
-    branch_cycle <= x_branch1 or x_branch2;
-    branch_likely <= C_branch_likely and ((x_branch1 and opcode(4) = '1') or
-      (x_branch2 and instruction(17) = '1'));
-    jump_cycle <= opcode(5 downto 1) = "00001";
-    jump_register <= x_special and fncode(4 downto 1) = "0100";
-
-    -- type_code for target register address calculation
-    process(opcode)
+    process(instruction)
+	variable imm32_unsigned, imm32_signed: std_logic_vector(31 downto 0);
     begin
-	case opcode is
-	when MIPS32_OP_SPECIAL	=> type_code <= "00"; -- R-type
-	when MIPS32_OP_SPECIAL3	=> type_code <= "00"; -- R-type 
-	when MIPS32_OP_REGIMM	=> type_code <= "01"; -- J-type - bltz etc.
-	when MIPS32_OP_J	=> type_code <= "01"; -- J-type
-	when MIPS32_OP_JAL	=> type_code <= "01"; -- J-type
-	when MIPS32_OP_BEQ	=> type_code <= "01"; -- J-type
-	when MIPS32_OP_BNE	=> type_code <= "01"; -- J-type
-	when MIPS32_OP_BLEZ	=> type_code <= "01"; -- J-type
-	when MIPS32_OP_BGTZ	=> type_code <= "01"; -- J-type
-	when MIPS32_OP_BEQL	=> type_code <= "01"; -- J-type
-	when MIPS32_OP_BNEL	=> type_code <= "01"; -- J-type
-	when MIPS32_OP_BLEZL	=> type_code <= "01"; -- J-type
-	when MIPS32_OP_BGTZL	=> type_code <= "01"; -- J-type
-	when MIPS32_OP_SB	=> type_code <= "10"; -- S-type
-	when MIPS32_OP_SH	=> type_code <= "10"; -- S-type
-	when MIPS32_OP_SW	=> type_code <= "10"; -- S-type
-	when MIPS32_OP_SWL	=> type_code <= "10"; -- S-type
-	when others		=> type_code <= "11"; -- I-type
-	end case;
-    end process;
+	-- Fixed decoding
+	reg1_addr <= instruction(25 downto 21);
+	reg2_addr <= instruction(20 downto 16);
 
-    use_immediate <= opcode(5 downto 3) = "001" or opcode(5) = '1' or
-	(C_movn_movz and cond_move);
+	-- Internal signals
+	imm32_unsigned := x"0000" & instruction(15 downto 0);
+	if instruction(15) = '1' then
+	    imm32_signed := x"ffff" & instruction(15 downto 0);
+	    sign_extension <= x"ffff";
+	else
+	    imm32_signed := x"0000" & instruction(15 downto 0);
+	    sign_extension <= x"0000";
+	end if;
 
-    process(type_code, opcode, instruction)
-    begin
-	case type_code is
-	when "01" =>	-- J-type
-	    if (opcode = MIPS32_OP_REGIMM and instruction(20) = '1') or
-	      opcode = MIPS32_OP_JAL then
-		target_addr <= MIPS_REG_RA; -- bgezal / bltzal / jal
-	    else
-		target_addr <= MIPS_REG_ZERO;
-	    end if;
-	when "10" =>	-- S-type
-	    target_addr <= MIPS_REG_ZERO;
-	when "11" =>	-- I-type
+	-- Default output values, overrided later
+	unsupported_instr <= false;
+	branch_cycle <= false;
+	branch_likely <= false; -- should be don't care
+	jump_cycle <= false;
+	jump_register <= false; -- should be don't care
+	reg1_zero <= instruction(25 downto 21) = MIPS32_REG_ZERO;
+	reg2_zero <= instruction(20 downto 16) = MIPS32_REG_ZERO;
+	target_addr <= "-----";
+	immediate_value <= imm32_signed;
+	sign_extend <= false; -- should be don't care
+	op_major <= "00";
+	op_minor <= "000"; -- should be ADD
+	use_immediate <= false; -- should be dont' care
+	ignore_reg2 <= instruction(20 downto 16) = MIPS32_REG_ZERO;
+	cmov_cycle <= false;
+	cmov_condition <= false; -- should be don't care
+	branch_condition <= "---";
+	mem_cycle <= instruction(31);
+	mem_write <= instruction(29);
+	mem_size <= "--";
+	mem_read_sign_extend <= '-';
+	latency <= "00";
+	seb_seh_cycle <= false;
+	seb_seh_select <= '-';
+	
+	-- Main instruction decoder
+	case instruction(31 downto 26) is
+	when MIPS32_OP_J =>
+	    jump_cycle <= true;
+	    target_addr <= MIPS32_REG_ZERO;
+	    ignore_reg2 <= true;
+	when MIPS32_OP_JAL =>
+	    jump_cycle <= true;
+	    target_addr <= MIPS32_REG_RA;
+	    ignore_reg2 <= true;
+	when MIPS32_OP_BEQ =>
+	    branch_cycle <= true;
+	    branch_likely <= false;
+	    branch_condition <= "100";
+	    target_addr <= MIPS32_REG_ZERO;
+	when MIPS32_OP_BNE =>
+	    branch_cycle <= true;
+	    branch_likely <= false;
+	    branch_condition <= "101";
+	    target_addr <= MIPS32_REG_ZERO;
+	when MIPS32_OP_BLEZ =>
+	    branch_cycle <= true;
+	    branch_likely <= false;
+	    branch_condition <= "110";
+	    target_addr <= MIPS32_REG_ZERO;
+	when MIPS32_OP_BGTZ =>
+	    branch_cycle <= true;
+	    branch_likely <= false;
+	    branch_condition <= "111";
+	    target_addr <= MIPS32_REG_ZERO;
+	when MIPS32_OP_ADDI =>
+	    op_major <= "00"; -- ALU
+	    op_minor <= "000"; -- ADD
+	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
-	when others =>	-- R-type
-	    target_addr <= instruction(15 downto 11);
-	end case;
-    end process;
-
-    -- reg2 relevant for load-use or produce-use hazard checking or not?
-    ignore_reg2 <= x_reg2_zero or
-      -- immediate instructions
-      opcode(5 downto 3) = "001" or
-      -- load instructions
-      (opcode(5) = '1' and opcode(3) = '0') or
-      -- j, jal, blez, bgtz
-      (opcode(5 downto 3) = "000" and opcode(1) = '1'); 
-
-    -- op_major: 00 ALU, 01 SLT, 10 shift, 11 mul_et_al
-    process(x_special, x_special3, opcode, fncode, instruction)
-    begin
-	op_major <= "00"; -- ALU
-	op_minor <= "000"; -- ADD
-	mem_cycle <= '0'; -- not a memory operation
-	latency <= "00"; -- result available immediately after EX stage
-	sign_extend_imm <= true;
-	cond_move <= false;
-
-	if x_special then
-	    op_minor <= fncode(2 downto 0);
-	    if C_movn_movz and fncode(5 downto 1) = "00101" then
-		cond_move <= true; -- MOVN / MOVZ
-		op_minor <= "000"; -- ADD
-	    end if;
-	    if fncode(5 downto 3) = "101" then -- SLT / SLTU
-		op_major <= "01"; -- SLTI / SLTIU
-		op_minor <= "-1-"; -- subtract
-		if fncode(0) = '1' then
-		    sign_extend_imm <= false; -- SLTU
-		end if;
-	    end if;
-	    if fncode(5 downto 3) = "000" then -- shift
-		op_major <= "10"; -- shift
-		op_minor <= "---";
-		latency <= "01";
-	    end if;
-	    if fncode(5 downto 4) = "01" then -- MUL/DIV/MFHI/MFLO/MTHI/MTLO
-		op_major <= "11"; -- mul_et_al
-		op_minor <= "---";
-	    end if;
-	elsif x_special3 then
-	    op_minor <= "110"; -- logic, xor cycle, for seb
-	end if;
-
-	if opcode(5 downto 3) = "001" then
-	    op_minor <= opcode(2 downto 0);
-	    if opcode(2) = '1' or opcode(1 downto 0) = "11" then
-		sign_extend_imm <= false; -- for logic and SLTIU
-	    end if;
-	    if opcode(2 downto 0) = "111" then -- LUI
-		op_minor <= "000"; -- ADD
-	    end if;
-	    if opcode(2 downto 1) = "01" then
-		op_major <= "01"; -- SLTI / SLTIU
-		op_minor <= "-1-"; -- subtract
-	    end if;
-	end if;
-
-	if opcode(5 downto 4) = "10" then
-	    mem_cycle <= '1';
-	    -- There's no need set latency only for loads, because for saves
-	    -- the target register is $0 (zero), so latency is ignored
-	    latency(0) <= '1'; -- resolve load-use hazard (LW)
-	    latency(1) <= not opcode(1); -- resolve load aligner hazard (LB/LH)
-	end if;
-    end process;
-
-    imm_extension <= x"ffff" when sign_extend_imm and instruction(15) = '1'
-      else x"0000";
-    sign_extension <= imm_extension;
-
-    process(opcode, instruction, imm_extension, cond_move)
-    begin
-	case opcode is
-	when MIPS32_OP_SPECIAL => -- MOVN / MOVZ
-	    if (C_movn_movz and cond_move) then
-		immediate_value <= x"00000000";
-	    else
-		immediate_value <= imm_extension & instruction(15 downto 0);
-	    end if;
-	when MIPS32_OP_LUI => -- XXX revisit: use barrel shifter?
+	    ignore_reg2 <= true;
+	when MIPS32_OP_ADDIU =>
+	    op_major <= "00"; -- ALU
+	    op_minor <= "000"; -- ADD
+	    use_immediate <= true;
+	    target_addr <= instruction(20 downto 16);
+	    ignore_reg2 <= true;
+	when MIPS32_OP_SLTI =>
+	    op_major <= "01"; -- SLTI / SLTIU
+	    op_minor <= "010"; -- SUB
+	    use_immediate <= true;
+	    sign_extend <= true;
+	    target_addr <= instruction(20 downto 16);
+	    ignore_reg2 <= true;
+	when MIPS32_OP_SLTIU =>
+	    op_major <= "01"; -- SLTI / SLTIU
+	    op_minor <= "010"; -- SUB
+	    use_immediate <= true;
+	    sign_extend <= false;
+	    target_addr <= instruction(20 downto 16);
+	    ignore_reg2 <= true;
+	when MIPS32_OP_ANDI =>
+	    op_minor <= "100"; -- AND
+	    use_immediate <= true;
+	    immediate_value <= imm32_unsigned;
+	    target_addr <= instruction(20 downto 16);
+	    ignore_reg2 <= true;
+	when MIPS32_OP_ORI =>
+	    op_minor <= "101"; -- OR
+	    use_immediate <= true;
+	    immediate_value <= imm32_unsigned;
+	    target_addr <= instruction(20 downto 16);
+	    ignore_reg2 <= true;
+	when MIPS32_OP_XORI =>
+	    op_minor <= "110"; -- XOR
+	    use_immediate <= true;
+	    immediate_value <= imm32_unsigned;
+	    target_addr <= instruction(20 downto 16);
+	    ignore_reg2 <= true;
+	when MIPS32_OP_LUI =>
+	    op_major <= "00"; -- ADD
+	    op_minor <= "000"; -- ADD
+	    use_immediate <= true;
 	    immediate_value <= instruction(15 downto 0) & x"0000";
+	    target_addr <= instruction(20 downto 16);
+	    ignore_reg2 <= true;
+	when MIPS32_OP_BEQL =>
+	    if C_branch_likely then
+		branch_cycle <= true;
+		branch_likely <= true;
+		branch_condition <= "100";
+		target_addr <= MIPS32_REG_ZERO;
+	    else
+		unsupported_instr <= true;
+	    end if;
+	when MIPS32_OP_BNEL =>
+	    if C_branch_likely then
+		branch_cycle <= true;
+		branch_likely <= true;
+		branch_condition <= "101";
+		target_addr <= MIPS32_REG_ZERO;
+	    else
+		unsupported_instr <= true;
+	    end if;
+	when MIPS32_OP_BLEZL =>
+	    if C_branch_likely then
+		branch_cycle <= true;
+		branch_likely <= true;
+		branch_condition <= "110";
+		target_addr <= MIPS32_REG_ZERO;
+	    else
+		unsupported_instr <= true;
+	    end if;
+	when MIPS32_OP_BGTZL =>
+	    if C_branch_likely then
+		branch_cycle <= true;
+		branch_likely <= true;
+		branch_condition <= "111";
+		target_addr <= MIPS32_REG_ZERO;
+	    else
+		unsupported_instr <= true;
+	    end if;
+	when MIPS32_OP_LB =>
+	    mem_size <= "00";
+	    mem_read_sign_extend <= '1';
+	    latency <= "11";
+	    use_immediate <= true;
+	    target_addr <= instruction(20 downto 16);
+	    ignore_reg2 <= true;
+	when MIPS32_OP_LH =>
+	    mem_size <= "01";
+	    mem_read_sign_extend <= '1';
+	    latency <= "11";
+	    use_immediate <= true;
+	    target_addr <= instruction(20 downto 16);
+	    ignore_reg2 <= true;
+	when MIPS32_OP_LW =>
+	    mem_size <= "11";
+	    latency <= "01";
+	    use_immediate <= true;
+	    target_addr <= instruction(20 downto 16);
+	    ignore_reg2 <= true;
+	when MIPS32_OP_LBU =>
+	    mem_size <= "00";
+	    mem_read_sign_extend <= '0';
+	    latency <= "11";
+	    use_immediate <= true;
+	    target_addr <= instruction(20 downto 16);
+	    ignore_reg2 <= true;
+	when MIPS32_OP_LHU =>
+	    mem_size <= "01";
+	    mem_read_sign_extend <= '0';
+	    latency <= "11";
+	    use_immediate <= true;
+	    target_addr <= instruction(20 downto 16);
+	    ignore_reg2 <= true;
+	when MIPS32_OP_SB =>
+	    mem_size <= "00";
+	    use_immediate <= true;
+	    target_addr <= MIPS32_REG_ZERO;
+	when MIPS32_OP_SH =>
+	    mem_size <= "01";
+	    use_immediate <= true;
+	    target_addr <= MIPS32_REG_ZERO;
+	when MIPS32_OP_SWL =>			-- XXX revisit!
+	    mem_size <= "10";
+	    use_immediate <= true;
+	    target_addr <= MIPS32_REG_ZERO;
+	when MIPS32_OP_SW =>
+	    mem_size <= "11";
+	    use_immediate <= true;
+	    target_addr <= MIPS32_REG_ZERO;
+	when MIPS32_OP_REGIMM =>
+	    target_addr <= MIPS32_REG_ZERO;
+	    branch_cycle <= true;
+	    case instruction(20 downto 16) is
+	    when MIPS32_RIMM_BLTZ =>
+		branch_condition <= "010";
+		branch_likely <= false;
+	    when MIPS32_RIMM_BGEZ =>
+		branch_condition <= "011";
+		branch_likely <= false;
+	    when MIPS32_RIMM_BLTZL =>
+		branch_condition <= "010";
+		branch_likely <= true;
+	    when MIPS32_RIMM_BGEZL =>
+		branch_condition <= "011";
+		branch_likely <= true;
+	    when MIPS32_RIMM_BLTZAL =>
+		branch_condition <= "010";
+		branch_likely <= false;
+		target_addr <= MIPS32_REG_RA;
+	    when MIPS32_RIMM_BGEZAL =>
+		branch_condition <= "011";
+		branch_likely <= false;
+		target_addr <= MIPS32_REG_RA;
+	    when MIPS32_RIMM_BLTZALL =>
+		branch_condition <= "010";
+		branch_likely <= true;
+		target_addr <= MIPS32_REG_RA;
+	    when MIPS32_RIMM_BGEZALL =>
+		branch_condition <= "011";
+		branch_likely <= true;
+		target_addr <= MIPS32_REG_RA;
+	    when others =>
+		unsupported_instr <= true;
+	    end case;
+	when MIPS32_OP_SPECIAL =>
+	    target_addr <= instruction(15 downto 11);
+	    case instruction(5 downto 0) is
+	    when MIPS32_SPEC_SLL =>
+		op_major <= "10";
+		latency <= "01";
+	    when MIPS32_SPEC_SRL =>
+		op_major <= "10";
+		latency <= "01";
+	    when MIPS32_SPEC_SRA =>
+		op_major <= "10";
+		latency <= "01";
+	    when MIPS32_SPEC_SLLV =>
+		op_major <= "10";
+		latency <= "01";
+	    when MIPS32_SPEC_SRLV =>
+		op_major <= "10";
+		latency <= "01";
+	    when MIPS32_SPEC_SRAV =>
+		op_major <= "10";
+		latency <= "01";
+	    when MIPS32_SPEC_JR =>
+		jump_register <= true;
+	    when MIPS32_SPEC_JALR =>
+		jump_register <= true;
+	    when MIPS32_SPEC_MOVZ =>
+		if C_movn_movz then
+		    op_minor <= "000"; -- ADD
+		    cmov_cycle <= true;
+		    cmov_condition <= true;
+		else
+		    unsupported_instr <= true;
+		end if;
+	    when MIPS32_SPEC_MOVN =>
+		if C_movn_movz then
+		    op_minor <= "000"; -- ADD
+		    cmov_cycle <= true;
+		    cmov_condition <= false;
+		else
+		    unsupported_instr <= true;
+		end if;
+	    when MIPS32_SPEC_MFHI =>
+		op_major <= "11";
+		op_minor <= "-0-"; -- XXX revisit
+	    when MIPS32_SPEC_MTHI =>
+		op_major <= "11";
+	    when MIPS32_SPEC_MFLO =>
+		op_major <= "11";
+		op_minor <= "-1-"; -- XXX revisit
+	    when MIPS32_SPEC_MTLO =>
+		op_major <= "11";
+	    when MIPS32_SPEC_MULT =>
+		op_major <= "11";
+	    when MIPS32_SPEC_MULTU =>
+		op_major <= "11";
+	    when MIPS32_SPEC_ADD =>
+		op_minor <= "000"; -- ADD
+	    when MIPS32_SPEC_ADDU =>
+		op_minor <= "000"; -- ADD
+	    when MIPS32_SPEC_SUB =>
+		op_minor <= "010"; -- SUB
+	    when MIPS32_SPEC_SUBU =>
+		op_minor <= "010"; -- SUB
+	    when MIPS32_SPEC_AND =>
+		op_minor <= "100"; -- AND
+	    when MIPS32_SPEC_OR =>
+		op_minor <= "101"; -- OR
+	    when MIPS32_SPEC_XOR =>
+		op_minor <= "110"; -- XOR
+	    when MIPS32_SPEC_NOR =>
+		op_minor <= "111"; -- NOR
+	    when MIPS32_SPEC_SLT =>
+		op_major <= "01"; -- SLTI / SLTIU
+		op_minor <= "010"; -- SUB
+		sign_extend <= true;
+	    when MIPS32_SPEC_SLTU =>
+		op_major <= "01"; -- SLTI / SLTIU
+		op_minor <= "010"; -- SUB
+		sign_extend <= false;
+	    when others =>
+		unsupported_instr <= true;
+	    end case;
+	when MIPS32_OP_SPECIAL2 =>
+	    target_addr <= instruction(15 downto 11);
+	    unsupported_instr <= true;
+	when MIPS32_OP_SPECIAL3 =>
+	    target_addr <= instruction(15 downto 11);
+	    op_minor <= "110";
+	    case instruction(5 downto 0) is
+	    when MIPS32_SPEC3_BSHFL =>
+		if C_sign_extend then
+		    seb_seh_cycle <= true;
+		    seb_seh_select <= instruction(9);
+		else
+		    unsupported_instr <= true;
+		end if;
+	    when others =>
+		unsupported_instr <= true;
+	    end case;
 	when others =>
-	    immediate_value <= imm_extension & instruction(15 downto 0);
+	    unsupported_instr <= true;
 	end case;
     end process;
 
-    branch_condition <=
-      '1' & opcode(1 downto 0) when x_branch1 -- beq, bne, blez, bgtz
-      else "01" & instruction(16) when x_branch2 -- bgez, bltz
-      else "000";
-
-    mem_write <= opcode(3);
-    mem_size <= opcode(1 downto 0);
-
-    sign_extend <= sign_extend_imm; -- for the SLT family
 end Behavioral;
-
