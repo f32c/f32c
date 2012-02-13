@@ -96,7 +96,7 @@ begin
 	target_addr <= "-----";
 	immediate_value <= imm32_signed;
 	sign_extend <= false; -- should be don't care
-	op_major <= "00";
+	op_major <= OP_MAJOR_ALU;
 	op_minor <= "000"; -- should be ADD
 	use_immediate <= false; -- should be dont' care
 	ignore_reg2 <= instruction(20 downto 16) = MIPS32_REG_ZERO;
@@ -124,44 +124,44 @@ begin
 	when MIPS32_OP_BEQ =>
 	    branch_cycle <= true;
 	    branch_likely <= false;
-	    branch_condition <= "100";
+	    branch_condition <= TEST_EQ;
 	    target_addr <= MIPS32_REG_ZERO;
 	when MIPS32_OP_BNE =>
 	    branch_cycle <= true;
 	    branch_likely <= false;
-	    branch_condition <= "101";
+	    branch_condition <= TEST_NE;
 	    target_addr <= MIPS32_REG_ZERO;
 	when MIPS32_OP_BLEZ =>
 	    branch_cycle <= true;
 	    branch_likely <= false;
-	    branch_condition <= "110";
+	    branch_condition <= TEST_LEZ;
 	    target_addr <= MIPS32_REG_ZERO;
 	when MIPS32_OP_BGTZ =>
 	    branch_cycle <= true;
 	    branch_likely <= false;
-	    branch_condition <= "111";
+	    branch_condition <= TEST_GTZ;
 	    target_addr <= MIPS32_REG_ZERO;
 	when MIPS32_OP_ADDI =>
-	    op_major <= "00"; -- ALU
+	    op_major <= OP_MAJOR_ALU;
 	    op_minor <= "000"; -- ADD
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_ADDIU =>
-	    op_major <= "00"; -- ALU
+	    op_major <= OP_MAJOR_ALU;
 	    op_minor <= "000"; -- ADD
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_SLTI =>
-	    op_major <= "01"; -- SLTI / SLTIU
+	    op_major <= OP_MAJOR_SLT;
 	    op_minor <= "010"; -- SUB
 	    use_immediate <= true;
 	    sign_extend <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_SLTIU =>
-	    op_major <= "01"; -- SLTI / SLTIU
+	    op_major <= OP_MAJOR_SLT;
 	    op_minor <= "010"; -- SUB
 	    use_immediate <= true;
 	    sign_extend <= false;
@@ -186,7 +186,7 @@ begin
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_LUI =>
-	    op_major <= "00"; -- ADD
+	    op_major <= OP_MAJOR_ALU;
 	    op_minor <= "000"; -- ADD
 	    use_immediate <= true;
 	    immediate_value <= instruction(15 downto 0) & x"0000";
@@ -196,7 +196,7 @@ begin
 	    if C_branch_likely then
 		branch_cycle <= true;
 		branch_likely <= true;
-		branch_condition <= "100";
+		branch_condition <= TEST_EQ;
 		target_addr <= MIPS32_REG_ZERO;
 	    else
 		unsupported_instr <= true;
@@ -205,7 +205,7 @@ begin
 	    if C_branch_likely then
 		branch_cycle <= true;
 		branch_likely <= true;
-		branch_condition <= "101";
+		branch_condition <= TEST_NE;
 		target_addr <= MIPS32_REG_ZERO;
 	    else
 		unsupported_instr <= true;
@@ -214,7 +214,7 @@ begin
 	    if C_branch_likely then
 		branch_cycle <= true;
 		branch_likely <= true;
-		branch_condition <= "110";
+		branch_condition <= TEST_LEZ;
 		target_addr <= MIPS32_REG_ZERO;
 	    else
 		unsupported_instr <= true;
@@ -223,7 +223,7 @@ begin
 	    if C_branch_likely then
 		branch_cycle <= true;
 		branch_likely <= true;
-		branch_condition <= "111";
+		branch_condition <= TEST_GTZ;
 		target_addr <= MIPS32_REG_ZERO;
 	    else
 		unsupported_instr <= true;
@@ -270,31 +270,31 @@ begin
 	    branch_cycle <= true;
 	    case instruction(20 downto 16) is
 	    when MIPS32_RIMM_BLTZ =>
-		branch_condition <= "010";
+		branch_condition <= TEST_LTZ;
 		branch_likely <= false;
 	    when MIPS32_RIMM_BGEZ =>
-		branch_condition <= "011";
+		branch_condition <= TEST_GEZ;
 		branch_likely <= false;
 	    when MIPS32_RIMM_BLTZL =>
-		branch_condition <= "010";
+		branch_condition <= TEST_LTZ;
 		branch_likely <= true;
 	    when MIPS32_RIMM_BGEZL =>
-		branch_condition <= "011";
+		branch_condition <= TEST_GEZ;
 		branch_likely <= true;
 	    when MIPS32_RIMM_BLTZAL =>
-		branch_condition <= "010";
+		branch_condition <= TEST_LTZ;
 		branch_likely <= false;
 		target_addr <= MIPS32_REG_RA;
 	    when MIPS32_RIMM_BGEZAL =>
-		branch_condition <= "011";
+		branch_condition <= TEST_GEZ;
 		branch_likely <= false;
 		target_addr <= MIPS32_REG_RA;
 	    when MIPS32_RIMM_BLTZALL =>
-		branch_condition <= "010";
+		branch_condition <= TEST_LTZ;
 		branch_likely <= true;
 		target_addr <= MIPS32_REG_RA;
 	    when MIPS32_RIMM_BGEZALL =>
-		branch_condition <= "011";
+		branch_condition <= TEST_GEZ;
 		branch_likely <= true;
 		target_addr <= MIPS32_REG_RA;
 	    when others =>
@@ -304,22 +304,22 @@ begin
 	    target_addr <= instruction(15 downto 11);
 	    case instruction(5 downto 0) is
 	    when MIPS32_SPEC_SLL =>
-		op_major <= "10";
+		op_major <= OP_MAJOR_SHIFT;
 		latency <= "01";
 	    when MIPS32_SPEC_SRL =>
-		op_major <= "10";
+		op_major <= OP_MAJOR_SHIFT;
 		latency <= "01";
 	    when MIPS32_SPEC_SRA =>
-		op_major <= "10";
+		op_major <= OP_MAJOR_SHIFT;
 		latency <= "01";
 	    when MIPS32_SPEC_SLLV =>
-		op_major <= "10";
+		op_major <= OP_MAJOR_SHIFT;
 		latency <= "01";
 	    when MIPS32_SPEC_SRLV =>
-		op_major <= "10";
+		op_major <= OP_MAJOR_SHIFT;
 		latency <= "01";
 	    when MIPS32_SPEC_SRAV =>
-		op_major <= "10";
+		op_major <= OP_MAJOR_SHIFT;
 		latency <= "01";
 	    when MIPS32_SPEC_JR =>
 		jump_register <= true;
@@ -342,19 +342,19 @@ begin
 		    unsupported_instr <= true;
 		end if;
 	    when MIPS32_SPEC_MFHI =>
-		op_major <= "11";
+		op_major <= OP_MAJOR_ALT;
 		op_minor <= "-0-"; -- XXX revisit
 	    when MIPS32_SPEC_MTHI =>
-		op_major <= "11";
+		op_major <= OP_MAJOR_ALT;
 	    when MIPS32_SPEC_MFLO =>
-		op_major <= "11";
+		op_major <= OP_MAJOR_ALT;
 		op_minor <= "-1-"; -- XXX revisit
 	    when MIPS32_SPEC_MTLO =>
-		op_major <= "11";
+		op_major <= OP_MAJOR_ALT;
 	    when MIPS32_SPEC_MULT =>
-		op_major <= "11";
+		op_major <= OP_MAJOR_ALT;
 	    when MIPS32_SPEC_MULTU =>
-		op_major <= "11";
+		op_major <= OP_MAJOR_ALT;
 	    when MIPS32_SPEC_ADD =>
 		op_minor <= "000"; -- ADD
 	    when MIPS32_SPEC_ADDU =>
@@ -372,11 +372,11 @@ begin
 	    when MIPS32_SPEC_NOR =>
 		op_minor <= "111"; -- NOR
 	    when MIPS32_SPEC_SLT =>
-		op_major <= "01"; -- SLTI / SLTIU
+		op_major <= OP_MAJOR_SLT;
 		op_minor <= "010"; -- SUB
 		sign_extend <= true;
 	    when MIPS32_SPEC_SLTU =>
-		op_major <= "01"; -- SLTI / SLTIU
+		op_major <= OP_MAJOR_SLT;
 		op_minor <= "010"; -- SUB
 		sign_extend <= false;
 	    when others =>
