@@ -1,6 +1,5 @@
 
 #include <stdarg.h>
-#include <types.h>
 
 
 extern int _xvprintf(char const *, void(*)(int, void *), void *, va_list);

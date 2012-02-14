@@ -1,6 +1,5 @@
 
 #include <sys/param.h>
-#include <mips/endian.h>
 #include <io.h>
 #include <sio.h>
 
