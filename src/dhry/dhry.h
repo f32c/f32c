@@ -391,6 +391,7 @@
 
 /* General definitions: */
 
+#include <sys/param.h>
 #include <stdio.h>
 #include <string.h>
                 /* for strcpy, strcmp */

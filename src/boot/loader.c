@@ -1,6 +1,7 @@
 
-#include <types.h>
-#include <endian.h>
+#include <sys/param.h>
+#include <mips/endian.h>
+#include <sys/stdint.h>
 #include <io.h>
 
 
@@ -49,7 +50,7 @@ int cold_boot = 1;
 	} while (0)
 
 
-__dead void
+__dead2 void
 _start(void)
 {
 	int c, pos, val, len;

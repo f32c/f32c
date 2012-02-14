@@ -2,6 +2,8 @@
 #ifndef _SDCARD_H_
 #define	_SDCARD_H_
 
+#include <sys/stdint.h>
+
 int sdcard_init(void);
 int sdcard_read(char *, int);
 int sdcard_cmd(int , uint32_t);

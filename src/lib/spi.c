@@ -1,6 +1,6 @@
 
-#include <types.h>
-#include <endian.h>
+#include <sys/param.h>
+#include <mips/endian.h>
 #include <io.h>
 
 
