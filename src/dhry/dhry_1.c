@@ -144,7 +144,7 @@ main ()
 #ifdef MSC_CLOCK
   Begin_Time = clock();
 #endif
-  Begin_Time = rdtsc();
+  RDTSC(Begin_Time);
 
   for (Run_Index = 1; Run_Index <= Number_Of_Runs; ++Run_Index)
   {
@@ -206,7 +206,7 @@ main ()
 #ifdef MSC_CLOCK
   End_Time = clock();
 #endif
-  End_Time = rdtsc();
+  RDTSC(End_Time);
 
 #ifdef NOTYET
   printf ("Execution ends\n");
