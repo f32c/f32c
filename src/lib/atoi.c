@@ -1,5 +1,4 @@
 
-#include <sys/param.h>
 
 int
 atoi(const char *c)

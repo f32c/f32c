@@ -2,8 +2,6 @@
 #ifndef	_STRING_H_
 #define	_STRING_H_
 
-#include <mips/endian.h>
-
 
 #define	memcpy(dst, src, len) _memcpy(dst, src, len)
 
