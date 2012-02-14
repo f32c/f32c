@@ -35,9 +35,9 @@
  */
 
 
+#include <sys/param.h>
 #include <sio.h>
 #include <stdarg.h>
-#include <types.h>
 
 
 #define	MAXNBUF	32

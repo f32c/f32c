@@ -1,6 +1,6 @@
 
-#include <types.h>
-#include <endian.h>
+#include <sys/types.h>
+#include <mips/endian.h>
 #include <io.h>
 #include <sdcard.h>
 #include <sio.h>

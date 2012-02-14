@@ -1,5 +1,5 @@
 
-#include <types.h>
+#include <sys/param.h>
 #include <io.h>
 #include <spi.h>
 

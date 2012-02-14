@@ -2,7 +2,8 @@
 #ifndef _STDIO_H_
 #define	_STDIO_H_
 
-#include <types.h>
+#include <sys/stdint.h>
+
 #include <sio.h>
 
 

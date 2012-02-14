@@ -1,8 +1,8 @@
 
-#include <endian.h>
+#include <sys/param.h>
+#include <mips/endian.h>
 #include <io.h>
 #include <sio.h>
-#include <types.h>
 
 #define	SIO_RXBUFSIZE	16
 #define	SIO_RXBUFMASK	0x0f

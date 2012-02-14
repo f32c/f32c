@@ -1,6 +1,6 @@
 
-#include <asm.h>
-#include <regdef.h>
+#include <mips/asm.h>
+#include <mips/regdef.h>
 #include <io.h>
 
 

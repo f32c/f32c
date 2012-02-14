@@ -2,8 +2,7 @@
 #ifndef	_STRING_H_
 #define	_STRING_H_
 
-#include <types.h>
-#include <endian.h>
+#include <mips/endian.h>
 
 
 #define	memcpy(dst, src, len) _memcpy(dst, src, len)
