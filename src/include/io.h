@@ -9,6 +9,9 @@
 #define	IO_LED		IO_ADDR(0x00)	/* byte, WR */
 #define	IO_PUSHBTN	IO_ADDR(0x00)	/* byte, RD */
 #define	IO_DIPSW	IO_ADDR(0x01)	/* byte, RD */
+#define	IO_PMOD_J1_J2	IO_ADDR(0x01)	/* byte, WR */
+#define	IO_LCD_DB	IO_ADDR(0x02)	/* byte, WR */
+#define	IO_LCD_CTRL	IO_ADDR(0x03)	/* byte, WR */
 #define	IO_SIO_BYTE	IO_ADDR(0x04)	/* byte, RW */
 #define	IO_SIO_STATUS	IO_ADDR(0x05)	/* byte, RD */
 #define	IO_SIO_BAUD	IO_ADDR(0x06)	/* half, WR */
@@ -23,6 +26,24 @@
 #define	SIO_RX_OVERRUN	0x2
 #define	SIO_RX_FULL	0x1
 
+/* Pushbutton input bitmask */
+#define	ROT_A		0x40
+#define	ROT_B		0x20
+#define	BTN_CENTER	0x10
+#define	BTN_UP		0x08
+#define	BTN_DOWN	0x04
+#define	BTN_LEFT	0x02
+#define	BTN_RIGHT	0x01
+
+/* PMOD output mask */
+#define	PMOD_J1_MASK	0x0f
+#define	PMOD_J2_MASK	0xf0
+
+/* LCD control output bitmask */
+#define	LCD_CTRL_E	0x4
+#define	LCD_CTRL_RS	0x2
+#define	LCD_CTRL_RW	0x1
+
 /* SPI bitmask: outputs */
 #define	SPI_SI		0x80
 #define	SPI_SCK		0x40
@@ -30,13 +51,6 @@
 /* SPI bitmask: input */
 #define	SPI_SO_BITPOS	0
 #define	SPI_SO		(1 << SPI_SO_BITPOS)
-
-/* Pushbutton bitmask */
-#define	BTN_CENTER	0x10
-#define	BTN_UP		0x08
-#define	BTN_DOWN	0x04
-#define	BTN_LEFT	0x02
-#define	BTN_RIGHT	0x01
 
 #if !defined(__ASSEMBLER__)
 

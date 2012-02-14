@@ -170,7 +170,21 @@ begin
 	  and dmem_write = '1' and dmem_addr(31 downto 28) = x"f" then
 	    -- GPIO
 	    if C_gpio and dmem_addr(4 downto 2) = "000" then
-		R_led <= cpu_to_dmem(7 downto 0);
+		if dmem_byte_sel(0) = '1' then
+		    R_led <= cpu_to_dmem(7 downto 0);
+		end if;
+		if dmem_byte_sel(1) = '1' then
+		    j1 <= cpu_to_dmem(11 downto 8);
+		    j2 <= cpu_to_dmem(15 downto 12);
+		end if;
+		if dmem_byte_sel(2) = '1' then
+		    lcd_db <= cpu_to_dmem(23 downto 16);
+		end if;
+		if dmem_byte_sel(3) = '1' then
+		    lcd_e <= cpu_to_dmem(26);
+		    lcd_rs <= cpu_to_dmem(25);
+		    lcd_rw <= cpu_to_dmem(24);
+		end if;
 	    end if;
 	end if;
     end process;
@@ -219,14 +233,6 @@ begin
 	    io_to_cpu <= "--------------------------------";
 	end case;
     end process;
-
-    -- XXX fix or remove these!
-    lcd_db <= "--------";
-    lcd_e <= '-';
-    lcd_rs <= '-';
-    lcd_rw <= '-';
-    j1 <= "----";
-    j2 <= "----";
 
     final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = x"f"
       else dmem_to_cpu;
