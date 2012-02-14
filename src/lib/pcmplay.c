@@ -69,13 +69,14 @@ pcm_play(void)
 	int pcm_out, dds_out, i, c, t, vu;
 	short *sram = (short *) 0x88000000;
 	
-	c = rdtsc() - pcm_next_tsc;
+	RDTSC(c);
+	c -= pcm_next_tsc;
 	if (c < 0)
 		c = -c;
 	if (c < pcm_period)
 		return;
 	if (c > pcm_period << 4)
-		pcm_next_tsc = rdtsc();
+		RDTSC(pcm_next_tsc);
 	else
 		pcm_next_tsc += pcm_period;
 

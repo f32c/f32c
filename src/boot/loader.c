@@ -1,11 +1,9 @@
 
 #include <sys/param.h>
-#include <mips/endian.h>
-#include <sys/stdint.h>
 #include <io.h>
 
 
-#define MONITOR
+//#define MONITOR
 
 #ifdef MONITOR
 #define BOOTADDR	0x00000400
@@ -120,7 +118,7 @@ prompt:
 loop:
 	/* Blink LEDs while waiting for serial input */
 	do {
-		INW(val, IO_TSC);
+		RDTSC(val);
 		INB(c, IO_SIO_STATUS);
 		OUTB(IO_LED, val >> 20);
 	} while ((c & SIO_RX_FULL) == 0);
@@ -137,6 +135,7 @@ loop:
 		if (c == 's')
 			goto boot;
 
+#ifdef MONITOR
 		if (c == 'X') {
 			dumpmode = 0x100 + 16;
 			goto prompt;
@@ -156,6 +155,7 @@ loop:
 				val = c - '0';
 			dumpaddr = (void *) (((int) dumpaddr << 4) | val);
 		}
+#endif
 
 		goto loop;
 	}

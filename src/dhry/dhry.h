@@ -392,9 +392,9 @@
 /* General definitions: */
 
 #include <sys/param.h>
+#include <io.h>		/* for RDTSC() */
 #include <stdio.h>
-#include <string.h>
-                /* for strcpy, strcmp */
+#include <string.h>	/* for strcpy, strcmp */
 
 #define Null 0 
                 /* Value of a Null pointer */
