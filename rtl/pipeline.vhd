@@ -45,6 +45,9 @@ entity pipeline is
 	C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff";
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
 
+	-- COP0 options
+	C_tsc: boolean;
+
 	-- optimization options
 	C_result_forwarding: boolean := true;
 	C_branch_prediction: boolean := true;
@@ -106,6 +109,8 @@ architecture Behavioral of pipeline is
     signal ID_jump_register: boolean;
     signal ID_op_major: std_logic_vector(1 downto 0);
     signal ID_op_minor: std_logic_vector(2 downto 0);
+    signal ID_read_alt: boolean;
+    signal ID_alt_sel: std_logic_vector(2 downto 0);
     signal ID_immediate: std_logic_vector(31 downto 0);
     signal ID_sign_extension: std_logic_vector(15 downto 0);
     signal ID_sign_extend: boolean;
@@ -139,6 +144,8 @@ architecture Behavioral of pipeline is
     signal ID_EX_branch_condition: std_logic_vector(2 downto 0);
     signal ID_EX_op_major: std_logic_vector(1 downto 0);
     signal ID_EX_op_minor: std_logic_vector(2 downto 0);
+    signal ID_EX_read_alt: boolean;
+    signal ID_EX_alt_sel: std_logic_vector(2 downto 0);
     signal ID_EX_mem_cycle, ID_EX_mem_write: std_logic;
     signal ID_EX_mem_size: std_logic_vector(1 downto 0);
     signal ID_EX_mem_read_sign_extend: std_logic;
@@ -220,9 +227,12 @@ architecture Behavioral of pipeline is
     signal R_mul_a, R_mul_b: std_logic_vector(32 downto 0);
     signal R_hi_lo: std_logic_vector(63 downto 0);
 
+    -- COP0
+    signal R_tsc: std_logic_vector(31 downto 0);
+
     -- signals used for debugging only
     signal reg_trace_data: std_logic_vector(31 downto 0);
-    signal D_tsc, D_instr, D_b_instr, D_b_taken: std_logic_vector(31 downto 0);
+    signal D_instr, D_b_instr, D_b_taken: std_logic_vector(31 downto 0);
 
 begin
 
@@ -353,7 +363,8 @@ begin
     generic map (
 	C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend,
-	C_movn_movz => C_movn_movz
+	C_movn_movz => C_movn_movz,
+	C_tsc => C_tsc
     )
     port map (
 	instruction => IF_ID_instruction,
@@ -362,6 +373,7 @@ begin
 	immediate_value => ID_immediate, use_immediate => ID_use_immediate,
 	cmov_cycle => ID_cmov_cycle, cmov_condition => ID_cmov_condition,
 	sign_extension => ID_sign_extension,
+	read_alt => ID_read_alt, alt_sel => ID_alt_sel,
 	target_addr => ID_writeback_addr, op_major => ID_op_major,
 	op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
 	branch_cycle => ID_branch_cycle, branch_likely => ID_branch_likely,
@@ -553,6 +565,8 @@ begin
 		    ID_EX_branch_target <= ID_branch_target;
 		    ID_EX_seb_seh_cycle <= ID_seb_seh_cycle;
 		    ID_EX_seb_seh_select <= ID_seb_seh_select;
+		    ID_EX_alt_sel <= ID_alt_sel;
+		    ID_EX_read_alt <= ID_read_alt;
 		    ID_EX_writeback_addr <= ID_writeback_addr;
 		    ID_EX_mem_cycle <= ID_mem_cycle;
 		    ID_EX_branch_cycle <= ID_branch_cycle;
@@ -681,11 +695,17 @@ begin
       (ID_EX_mem_size(0) = '1' and EX_2bit_add(1) = '1') else '0';		
 
     -- MFHI, MFLO, link PC + 8 -- XXX what about MFC0 / MFC1?
+--    EX_from_alt <=
+--      R_hi_lo(63 downto 32) when C_mult_enable and
+--      ID_EX_op_major = OP_MAJOR_ALT and ID_EX_op_minor(1) = '0' else
+--     R_hi_lo(31 downto 0) when C_mult_enable and ID_EX_op_major = OP_MAJOR_ALT
+--      and ID_EX_op_minor(1) = '1' else ID_EX_PC_8 & "00";
+    with ID_EX_alt_sel select
     EX_from_alt <=
-      R_hi_lo(63 downto 32) when C_mult_enable and
-      ID_EX_op_major = OP_MAJOR_ALT and ID_EX_op_minor(1) = '0' else
-      R_hi_lo(31 downto 0) when C_mult_enable and ID_EX_op_major = OP_MAJOR_ALT
-      and ID_EX_op_minor(1) = '1' else ID_EX_PC_8 & "00";
+      R_hi_lo(63 downto 32) when ALT_HI,
+      R_hi_lo(31 downto 0) when ALT_LO,
+      R_tsc when ALT_COP0_COUNT,
+      ID_EX_PC_8 & "00" when others;
 
     -- branch or not?
     process(ID_EX_branch_condition, EX_from_alu_equal, EX_eff_reg1)
@@ -742,9 +762,10 @@ begin
 		    else
 			EX_MEM_logic_data(0) <= EX_from_alu_addsubx(32);
 		    end if;
-		elsif ID_EX_jump_cycle or ID_EX_jump_register or
-		  ID_EX_branch_cycle or ID_EX_op_major = OP_MAJOR_ALT then
-		    -- Store (link) PC + 8 address
+--		elsif ID_EX_jump_cycle or ID_EX_jump_register or
+--		  ID_EX_branch_cycle or ID_EX_op_major = OP_MAJOR_ALT then
+		elsif ID_EX_read_alt then
+		    -- PC + 8, MFHI, MFLO, MTC0
 		    EX_MEM_logic_cycle <= '1';
 		    EX_MEM_logic_data <= EX_from_alt;
 		else
@@ -937,13 +958,15 @@ begin
     end process;
     end generate; -- multiplier
 
+    -- COP0
+    R_tsc <= R_tsc + 1 when rising_edge(clk);
+
     -- XXX performance counters
     G_perf_cnt:
     if C_debug generate
     process(clk)
     begin
 	if rising_edge(clk) then
-	    D_tsc <= D_tsc + 1;
 	    if EX_MEM_branch_cycle then
 		D_b_instr <= D_b_instr + 1;
 	    end if;
@@ -999,7 +1022,7 @@ begin
 	    --when x"0f" => trace_data <= dmem_data_out;
 	    when x"10" => trace_data <= dmem_data_in;
 	    --
-	    when x"14" => trace_data <= D_tsc;
+	    when x"14" => trace_data <= R_tsc;
 	    when x"15" => trace_data <= D_instr;
 	    when x"16" => trace_data <= D_b_instr;
 	    when x"17" => trace_data <= D_b_taken;

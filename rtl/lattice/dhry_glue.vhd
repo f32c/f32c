@@ -42,6 +42,9 @@ entity glue is
 	C_sign_extend: boolean := true; -- +24 LUT4
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00001fff"; -- 8 LUT4/bit
 
+	-- COP0 options
+	C_tsc: boolean := true;
+
 	-- CPU core configuration options
 	C_branch_prediction: boolean := true; -- true: +37 LUT4, +1 BRAM
 	C_result_forwarding: boolean := true; -- true: +244 LUT4
@@ -56,7 +59,6 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: string := "16k";
-	C_tsc: boolean := true;
 	C_sio: boolean := true
 
 	--
@@ -110,8 +112,6 @@ architecture Behavioral of glue is
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_ce: std_logic;
-    signal tsc_25m: std_logic_vector(34 downto 0);
-    signal tsc: std_logic_vector(31 downto 0);
 
 begin
 
@@ -129,12 +129,10 @@ begin
     -- f32c core
     pipeline: entity pipeline
     generic map (
-	C_big_endian => C_big_endian,
-	C_branch_likely => C_branch_likely,
-	C_sign_extend => C_sign_extend,
-	C_movn_movz => C_movn_movz,
-	C_mult_enable => C_mult_enable,
-	C_PC_mask => C_PC_mask,
+	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
+	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
+	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
+	C_tsc => C_tsc,
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
@@ -179,47 +177,23 @@ begin
     -- 0x8*******: (2B, RW)   SRAM
     -- 0xf*****00: (4B, RW)   GPIO (LED, switches/buttons)
     -- 0xf*****04: (4B, RW) * SIO
-    -- 0xf*****08: (4B, RD) * TSC
     -- 0xf*****0c: (4B, WR)   PCM signal
     -- 0xf*****10: (1B, RW)   SPI Flash
     -- 0xf*****14: (1B, RW)   SPI MicroSD
     -- 0xf*****1c: (4B, WR)   FM DDS register
     --
-    process(dmem_addr, from_sio, tsc)
+    process(dmem_addr, from_sio)
     begin
         case dmem_addr(4 downto 2) is
         when "000"  =>
             io_to_cpu <="----------------" & "--------" & "---00000";
         when "001"  => io_to_cpu <= from_sio;
-        when "010"  => io_to_cpu <= tsc;
         when others =>
             io_to_cpu <= "--------------------------------";
         end case;
     end process;
 
     final_to_cpu <= io_to_cpu when dmem_addr(31) = '1' else dmem_to_cpu;
-
-    G_tsc:
-    if C_tsc generate
-    process(clk_25m)
-    begin
-	if rising_edge(clk_25m) then
-	    tsc_25m <= tsc_25m + 1;
-	end if;
-    end process;
-    -- Safely move upper bits of tsc_25m over clock domain boundary
-    process(clk, tsc_25m)
-    begin
-	if rising_edge(clk) and tsc_25m(2 downto 1) = "10" then
-	    if C_big_endian then
-		tsc <= tsc_25m(10 downto 3) & tsc_25m(18 downto 11) &
-		  tsc_25m(26 downto 19) & tsc_25m(34 downto 27);
-	    else
-		tsc <= tsc_25m(34 downto 3);
-	    end if;
-	end if;
-    end process;
-    end generate;
 
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
