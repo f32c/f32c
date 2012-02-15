@@ -268,7 +268,7 @@ main ()
   }
   
 #endif /* NOTYET */
-#define TSC_TICKS_PER_MS 3125	/* f32c TSC freq = 3.125 MHz */
+#define TSC_TICKS_PER_MS 100000	/* f32c TSC freq = 100.00 MHz */
     if (User_Time < 0)
 	User_Time = -User_Time;
     printf ("\nms tot: %d\n", User_Time / TSC_TICKS_PER_MS);
