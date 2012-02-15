@@ -38,7 +38,8 @@ entity idecode is
     generic(
 	C_branch_likely: boolean;
 	C_sign_extend: boolean;
-	C_movn_movz: boolean
+	C_movn_movz: boolean;
+	C_tsc: boolean
     );
     port(
 	instruction: in std_logic_vector(31 downto 0);
@@ -51,6 +52,8 @@ entity idecode is
 	sign_extend: out boolean; -- for SLT / SLTU
 	op_major: out std_logic_vector(1 downto 0);
 	op_minor: out std_logic_vector(2 downto 0);
+	alt_sel: out std_logic_vector(2 downto 0);
+	read_alt: out boolean;
 	use_immediate, ignore_reg2: out boolean;
 	cmov_cycle, cmov_condition: out boolean;
 	branch_condition: out std_logic_vector(2 downto 0);
@@ -110,6 +113,8 @@ begin
 	latency <= "00";
 	seb_seh_cycle <= false;
 	seb_seh_select <= '-';
+	alt_sel <= ALT_PC_8;
+	read_alt <= false;
 	
 	-- Main instruction decoder
 	case instruction(31 downto 26) is
@@ -117,10 +122,12 @@ begin
 	    jump_cycle <= true;
 	    target_addr <= MIPS32_REG_ZERO;
 	    ignore_reg2 <= true;
+	    read_alt <= true;
 	when MIPS32_OP_JAL =>
 	    jump_cycle <= true;
 	    target_addr <= MIPS32_REG_RA;
 	    ignore_reg2 <= true;
+	    read_alt <= true;
 	when MIPS32_OP_BEQ =>
 	    branch_cycle <= true;
 	    branch_likely <= false;
@@ -192,6 +199,10 @@ begin
 	    immediate_value <= instruction(15 downto 0) & x"0000";
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
+	when MIPS32_OP_COP0 =>
+	    read_alt <= true;
+	    alt_sel <= ALT_COP0_COUNT;
+	    target_addr <= instruction(20 downto 16);
 	when MIPS32_OP_BEQL =>
 	    if C_branch_likely then
 		branch_cycle <= true;
@@ -268,6 +279,7 @@ begin
 	when MIPS32_OP_REGIMM =>
 	    target_addr <= MIPS32_REG_ZERO;
 	    branch_cycle <= true;
+	    read_alt <= true;
 	    case instruction(20 downto 16) is
 	    when MIPS32_RIMM_BLTZ =>
 		branch_condition <= TEST_LTZ;
@@ -323,8 +335,10 @@ begin
 		latency <= "01";
 	    when MIPS32_SPEC_JR =>
 		jump_register <= true;
+		read_alt <= true;
 	    when MIPS32_SPEC_JALR =>
 		jump_register <= true;
+		read_alt <= true;
 	    when MIPS32_SPEC_MOVZ =>
 		if C_movn_movz then
 		    op_minor <= "000"; -- ADD
@@ -342,15 +356,11 @@ begin
 		    unsupported_instr <= true;
 		end if;
 	    when MIPS32_SPEC_MFHI =>
-		op_major <= OP_MAJOR_ALT;
-		op_minor <= "-0-"; -- XXX revisit
-	    when MIPS32_SPEC_MTHI =>
-		op_major <= OP_MAJOR_ALT;
+		read_alt <= true;
+		alt_sel <= ALT_HI;
 	    when MIPS32_SPEC_MFLO =>
-		op_major <= OP_MAJOR_ALT;
-		op_minor <= "-1-"; -- XXX revisit
-	    when MIPS32_SPEC_MTLO =>
-		op_major <= OP_MAJOR_ALT;
+		read_alt <= true;
+		alt_sel <= ALT_LO;
 	    when MIPS32_SPEC_MULT =>
 		op_major <= OP_MAJOR_ALT;
 	    when MIPS32_SPEC_MULTU =>

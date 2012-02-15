@@ -42,6 +42,9 @@ entity glue is
 	C_sign_extend: boolean := true;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
     
+	-- COP0 options
+	C_tsc: boolean := true;
+
 	-- CPU core configuration options
 	C_branch_prediction: boolean := true;
 	C_result_forwarding: boolean := true;
@@ -58,7 +61,6 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: string := "16k";
-	C_tsc: boolean := true;
 	C_sio: boolean := true;
 	C_gpio: boolean := true
     );
@@ -92,8 +94,6 @@ architecture Behavioral of glue is
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_txd, sio_rxd, sio_ce: std_logic;
     signal R_led: std_logic_vector(7 downto 0);
-    signal tsc_50m: std_logic_vector(35 downto 0);
-    signal tsc: std_logic_vector(31 downto 0);
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(6 downto 0);
 
@@ -109,12 +109,10 @@ begin
     -- f32c core
     pipeline: entity pipeline
     generic map (
-	C_big_endian => C_big_endian,
-	C_branch_likely => C_branch_likely,
-	C_sign_extend => C_sign_extend,
-	C_movn_movz => C_movn_movz,
-	C_mult_enable => C_mult_enable,
-	C_PC_mask => C_PC_mask,
+	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
+	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
+	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
+	C_tsc => C_tsc,
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
@@ -199,36 +197,13 @@ begin
 	end if;
     end process;
 
-    G_tsc:
-    if C_tsc generate
-    process(clk_50m)
-    begin
-	if rising_edge(clk_50m) then
-	    tsc_50m <= tsc_50m + 1;
-	end if;
-    end process;
-    -- Safely move upper bits of tsc_50m over clock domain boundary
-    process(clk, tsc_50m)
-    begin
-	if rising_edge(clk) and tsc_50m(3 downto 2) = "10" then
-	    if C_big_endian then
-		tsc <= tsc_50m(11 downto 4) & tsc_50m(19 downto 12) &
-		  tsc_50m(27 downto 20) & tsc_50m(35 downto 28);
-	    else
-		tsc <= tsc_50m(35 downto 4);
-	    end if;
-	end if;
-    end process;
-    end generate;
-
     -- XXX replace with a balanced multiplexer
-    process(dmem_addr, R_sw, R_btns, from_sio, tsc)
+    process(dmem_addr, R_sw, R_btns, from_sio)
     begin
 	case dmem_addr(4 downto 2) is
 	when "000"  =>
 	    io_to_cpu <="----------------" & "----" & R_sw & "-" & R_btns;
 	when "001"  => io_to_cpu <= from_sio;
-	when "010"  => io_to_cpu <= tsc;
 	when others =>
 	    io_to_cpu <= "--------------------------------";
 	end case;
