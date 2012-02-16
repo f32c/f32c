@@ -112,7 +112,7 @@ begin
 	mem_read_sign_extend <= not instruction(27);
 	latency <= "00";
 	seb_seh_cycle <= false;
-	seb_seh_select <= '-';
+	seb_seh_select <= instruction(9);
 	alt_sel <= ALT_PC_8;
 	read_alt <= false;
 	
@@ -149,13 +149,11 @@ begin
 	    branch_condition <= TEST_GTZ;
 	    target_addr <= MIPS32_REG_ZERO;
 	when MIPS32_OP_ADDI =>
-	    op_major <= OP_MAJOR_ALU;
 	    op_minor <= "000"; -- ADD
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_ADDIU =>
-	    op_major <= OP_MAJOR_ALU;
 	    op_minor <= "000"; -- ADD
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
@@ -193,8 +191,6 @@ begin
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_LUI =>
-	    op_major <= OP_MAJOR_ALU;
-	    op_minor <= "000"; -- ADD
 	    use_immediate <= true;
 	    immediate_value <= instruction(15 downto 0) & x"0000";
 	    target_addr <= instruction(20 downto 16);
@@ -341,7 +337,6 @@ begin
 		read_alt <= true;
 	    when MIPS32_SPEC_MOVZ =>
 		if C_movn_movz then
-		    op_minor <= "000"; -- ADD
 		    cmov_cycle <= true;
 		    cmov_condition <= true;
 		else
@@ -349,7 +344,6 @@ begin
 		end if;
 	    when MIPS32_SPEC_MOVN =>
 		if C_movn_movz then
-		    op_minor <= "000"; -- ADD
 		    cmov_cycle <= true;
 		    cmov_condition <= false;
 		else
@@ -401,7 +395,6 @@ begin
 	    when MIPS32_SPEC3_BSHFL =>
 		if C_sign_extend then
 		    seb_seh_cycle <= true;
-		    seb_seh_select <= instruction(9);
 		else
 		    unsupported_instr <= true;
 		end if;
