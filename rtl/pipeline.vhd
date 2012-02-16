@@ -345,7 +345,7 @@ begin
       IF_PC((14 - C_bp_global_depth) downto 2);
     IF_bpredict_re <= '1' when ID_running else '0';
 
-    bptrace: entity bptrace
+    bptrace: entity work.bptrace
     port map (
 	din => MEM_bpredict_score, dout => IF_ID_bpredict_score,
 	rdaddr => IF_bpredict_index, wraddr => EX_MEM_bpredict_index,
@@ -359,7 +359,7 @@ begin
     --
 	
     -- instruction decoder
-    idecode: entity idecode
+    idecode: entity work.idecode
     generic map (
 	C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend,
@@ -387,7 +387,7 @@ begin
     );
 
     -- three- or four-ported register file: 2(3) async reads, 1 sync write
-    regfile: entity reg1w2r
+    regfile: entity work.reg1w2r
     generic map (
 	C_register_technology => C_register_technology,
 	C_debug => C_debug
@@ -637,7 +637,7 @@ begin
     end generate; -- no result_forwarding
 
     -- instantiate the ALU
-    alu: entity alu
+    alu: entity work.alu
     generic map (
 	C_sign_extend => C_sign_extend
     )
@@ -666,7 +666,7 @@ begin
       else ID_EX_immediate(1 downto 0);
 
     -- instantiate the barrel shifter
-    shift: entity shift
+    shift: entity work.shift
     generic map (
 	C_load_aligner => C_load_aligner
     )
@@ -915,7 +915,7 @@ begin
     -- instantiate memory load aligner
     G_pipelined_load_aligner:
     if C_load_aligner generate
-    loadalign: entity loadalign
+    loadalign: entity work.loadalign
     generic map (
 	C_big_endian => C_big_endian
     )
