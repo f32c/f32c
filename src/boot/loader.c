@@ -8,7 +8,7 @@
 #ifdef MONITOR
 #define BOOTADDR	0x00000400
 #else
-#define BOOTADDR	0x000001a0
+#define BOOTADDR	0x00000200
 #endif
 
 
@@ -119,8 +119,19 @@ loop:
 	/* Blink LEDs while waiting for serial input */
 	do {
 		RDTSC(val);
+#ifndef MONITOR
+		if (val & 0x08000000)
+			pos = 0xff;
+		else
+			pos = 0;
+		if ((val & 0xff) > ((val >> 19) & 0xff))
+			OUTB(IO_LED, pos ^ 0x0f);
+		else
+			OUTB(IO_LED, pos ^ 0xf0);
+#else
+		OUTB(IO_LED, val >> 24);
+#endif
 		INB(c, IO_SIO_STATUS);
-		OUTB(IO_LED, val >> 20);
 	} while ((c & SIO_RX_FULL) == 0);
 	INB(c, IO_SIO_BYTE);
 
