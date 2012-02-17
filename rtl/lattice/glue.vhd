@@ -42,6 +42,9 @@ entity glue is
 	C_sign_extend: boolean := true;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
 
+	-- COP0 options
+	C_tsc: boolean := true;
+
 	-- CPU core configuration options
 	C_branch_prediction: boolean := true;
 	C_result_forwarding: boolean := true;
@@ -59,7 +62,6 @@ entity glue is
 	C_mem_size: string := "16k";
 	C_sram: boolean := true;
 	C_sram_wait_cycles: std_logic_vector := x"4"; -- OK do 87.5 MHz
-	C_tsc: boolean := true;
 	C_sio: boolean := true;
 	C_gpio: boolean := true;
 	C_flash: boolean := true;
@@ -115,8 +117,6 @@ architecture Behavioral of glue is
     signal R_flash_cen, R_flash_sck, R_flash_si: std_logic;
     signal R_sdcard_cen, R_sdcard_sck, R_sdcard_si: std_logic;
     signal R_led: std_logic_vector(7 downto 0);
-    signal R_tsc_25m: std_logic_vector(34 downto 0);
-    signal R_tsc: std_logic_vector(31 downto 0);
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
     signal R_dac_in_l, R_dac_in_r: std_logic_vector(15 downto 2);
@@ -149,12 +149,10 @@ begin
     -- f32c core
     pipeline: entity pipeline
     generic map (
-	C_big_endian => C_big_endian,
-	C_branch_likely => C_branch_likely,
-	C_sign_extend => C_sign_extend,
-	C_movn_movz => C_movn_movz,
-	C_mult_enable => C_mult_enable,
-	C_PC_mask => C_PC_mask,
+	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
+	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
+	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
+	C_tsc => C_tsc,
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
@@ -362,36 +360,13 @@ begin
 	end if;
     end process;
 
-    G_tsc:
-    if C_tsc generate
-    process(clk_25m)
-    begin
-	if rising_edge(clk_25m) then
-	    R_tsc_25m <= R_tsc_25m + 1;
-	end if;
-    end process;
-    -- Safely move upper bits of tsc_25m over clock domain boundary
-    process(clk, R_tsc_25m)
-    begin
-	if rising_edge(clk) and R_tsc_25m(2 downto 1) = "10" then
-	    if C_big_endian then
-		R_tsc <= R_tsc_25m(10 downto 3) & R_tsc_25m(18 downto 11) &
-		  R_tsc_25m(26 downto 19) & R_tsc_25m(34 downto 27);
-	    else
-		R_tsc <= R_tsc_25m(34 downto 3);
-	    end if;
-	end if;
-    end process;
-    end generate;
-
     -- XXX replace with a balanced multiplexer
-    process(dmem_addr, R_sw, R_btns, R_tsc, from_sio, flash_so, sdcard_so)
+    process(dmem_addr, R_sw, R_btns, from_sio, flash_so, sdcard_so)
     begin
 	case dmem_addr(4 downto 2) is
 	when "000"  =>
 	    io_to_cpu <="----------------" & "----" & R_sw & "---" & R_btns;
 	when "001"  => io_to_cpu <= from_sio;
-	when "010"  => io_to_cpu <= R_tsc;
 	when "100"  =>
 	    if C_flash then
 		io_to_cpu <= "------------------------" & "0000000" & flash_so;

@@ -6,7 +6,7 @@
 
 #define	PCM_SKIP 	25000
 #define	PCM_END		3000000
-#define	PCM_TSC_CYCLES	71	/* 3.125 MHz / 44.1 kHz = 71 TSC cycles */
+#define	PCM_TSC_CYCLES	1842	/* 81.25 MHz / 44.1 kHz */
 
 #define	PCM_VOL_MAX	12
 #define	PCM_VOL_MIN	0
