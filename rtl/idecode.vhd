@@ -109,7 +109,7 @@ begin
 	mem_cycle <= instruction(31);
 	mem_write <= instruction(29);
 	mem_size <= instruction(27 downto 26);
-	mem_read_sign_extend <= not instruction(28);
+	mem_read_sign_extend <= '-';
 	latency <= "00";
 	seb_seh_cycle <= false;
 	seb_seh_select <= instruction(9);
@@ -237,11 +237,13 @@ begin
 	    end if;
 	when MIPS32_OP_LB =>
 	    latency <= "11";
+	    mem_read_sign_extend <= '1';
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_LH =>
 	    latency <= "11";
+	    mem_read_sign_extend <= '1';
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
@@ -251,11 +253,13 @@ begin
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_LBU =>
+	    mem_read_sign_extend <= '0';
 	    latency <= "11";
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_LHU =>
+	    mem_read_sign_extend <= '0';
 	    latency <= "11";
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
