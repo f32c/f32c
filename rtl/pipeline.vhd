@@ -695,11 +695,6 @@ begin
       (ID_EX_mem_size(0) = '1' and EX_2bit_add(1) = '1') else '0';		
 
     -- MFHI, MFLO, link PC + 8 -- XXX what about MFC0 / MFC1?
---    EX_from_alt <=
---      R_hi_lo(63 downto 32) when C_mult_enable and
---      ID_EX_op_major = OP_MAJOR_ALT and ID_EX_op_minor(1) = '0' else
---     R_hi_lo(31 downto 0) when C_mult_enable and ID_EX_op_major = OP_MAJOR_ALT
---      and ID_EX_op_minor(1) = '1' else ID_EX_PC_8 & "00";
     with ID_EX_alt_sel select
     EX_from_alt <=
       R_hi_lo(63 downto 32) when ALT_HI,
@@ -762,8 +757,6 @@ begin
 		    else
 			EX_MEM_logic_data(0) <= EX_from_alu_addsubx(32);
 		    end if;
---		elsif ID_EX_jump_cycle or ID_EX_jump_register or
---		  ID_EX_branch_cycle or ID_EX_op_major = OP_MAJOR_ALT then
 		elsif ID_EX_read_alt then
 		    -- PC + 8, MFHI, MFLO, MTC0
 		    EX_MEM_logic_cycle <= '1';
@@ -825,14 +818,22 @@ begin
     G_bp_update_score:
     if C_branch_prediction generate
     MEM_bpredict_score <=
-      "01" when EX_MEM_bpredict_score = "00" and EX_MEM_take_branch else
-      "00" when EX_MEM_bpredict_score = "00" and not EX_MEM_take_branch else
-      "10" when EX_MEM_bpredict_score = "01" and EX_MEM_take_branch else
-      "00" when EX_MEM_bpredict_score = "01" and not EX_MEM_take_branch else
-      "11" when EX_MEM_bpredict_score = "10" and EX_MEM_take_branch else
-      "01" when EX_MEM_bpredict_score = "10" and not EX_MEM_take_branch else
-      "11" when EX_MEM_bpredict_score = "11" and EX_MEM_take_branch else
-      "10" when EX_MEM_bpredict_score = "11" and not EX_MEM_take_branch;
+      BP_WEAK_NOT_TAKEN when EX_MEM_bpredict_score = BP_STRONG_NOT_TAKEN and
+	EX_MEM_take_branch else
+      BP_STRONG_NOT_TAKEN when EX_MEM_bpredict_score = BP_STRONG_NOT_TAKEN and
+	not EX_MEM_take_branch else
+      BP_WEAK_TAKEN when EX_MEM_bpredict_score = BP_WEAK_NOT_TAKEN and
+	EX_MEM_take_branch else
+      BP_STRONG_NOT_TAKEN when EX_MEM_bpredict_score = BP_WEAK_NOT_TAKEN and
+	not EX_MEM_take_branch else
+      BP_STRONG_TAKEN when EX_MEM_bpredict_score = BP_WEAK_TAKEN and
+	EX_MEM_take_branch else
+      BP_WEAK_NOT_TAKEN when EX_MEM_bpredict_score = BP_WEAK_TAKEN and
+	not EX_MEM_take_branch else
+      BP_STRONG_TAKEN when EX_MEM_bpredict_score = BP_STRONG_TAKEN and
+	EX_MEM_take_branch else
+      BP_WEAK_TAKEN when EX_MEM_bpredict_score = BP_STRONG_TAKEN and
+	not EX_MEM_take_branch;
     MEM_bpredict_we <= '1' when EX_MEM_branch_cycle else '0';
 
     process(clk)
