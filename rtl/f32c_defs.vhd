@@ -190,4 +190,10 @@ constant ALT_LO:		std_logic_vector := "001";
 constant ALT_COP0_COUNT:	std_logic_vector := "011";
 constant ALT_PC_8:		std_logic_vector := "111";
 
+-- Branch predictor saturation counter values
+constant BP_STRONG_TAKEN:	std_logic_vector := "11";
+constant BP_WEAK_TAKEN:		std_logic_vector := "10";
+constant BP_WEAK_NOT_TAKEN:	std_logic_vector := "01";
+constant BP_STRONG_NOT_TAKEN:	std_logic_vector := "00";
+
 end;
