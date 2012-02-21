@@ -70,7 +70,8 @@ MK_CFLAGS += -fno-zero-initialized-in-bss
 MK_LDFLAGS += -Ttext ${LOADADDR} -N ${ENDIANFLAGS}
 
 
-CC = mips-elf-gcc ${MK_INCLUDES} ${MK_CFLAGS} ${ECFLAGS}
+CC = mips-elf-gcc ${MK_INCLUDES} ${MK_CFLAGS}
+MKDEP = ${CC} -MM
 LD = mips-elf-ld ${MK_LDFLAGS} ${LDFLAGS}
 OBJCOPY = mips-elf-objcopy -O ihex
 
@@ -91,8 +92,7 @@ ${PROG}: ${OBJS} Makefile
 	${LD} -o ${PROG} ${OBJS}
 
 depend:
-	echo ${MK_INCLUDES} ${CFILES}
-	mkdep ${MK_INCLUDES} ${CFILES}
+	${MKDEP} ${MK_INCLUDES} ${CFILES}
 
 clean:
 	rm -f ${OBJS} ${PROG} ${HEX}
@@ -101,7 +101,12 @@ cleandepend:
 	rm -f .depend
 
 #
+# Rule for compiling C files
+#
+%.o : %.c
+	$(CC) -c -pipe $< -o $@
+
+#
 # Dependencies
 #
 #include .depend
-
