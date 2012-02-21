@@ -109,7 +109,7 @@ begin
 	mem_cycle <= instruction(31);
 	mem_write <= instruction(29);
 	mem_size <= instruction(27 downto 26);
-	mem_read_sign_extend <= not instruction(27);
+	mem_read_sign_extend <= not instruction(28);
 	latency <= "00";
 	seb_seh_cycle <= false;
 	seb_seh_select <= instruction(9);
