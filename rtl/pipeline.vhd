@@ -817,27 +817,34 @@ begin
     -- branch prediction
     G_bp_update_score:
     if C_branch_prediction generate
-    MEM_bpredict_score <=
-      BP_WEAK_NOT_TAKEN when EX_MEM_bpredict_score = BP_STRONG_NOT_TAKEN and
-	EX_MEM_take_branch else
-      BP_STRONG_NOT_TAKEN when EX_MEM_bpredict_score = BP_STRONG_NOT_TAKEN and
-	not EX_MEM_take_branch else
-      BP_WEAK_TAKEN when EX_MEM_bpredict_score = BP_WEAK_NOT_TAKEN and
-	EX_MEM_take_branch else
-      BP_STRONG_NOT_TAKEN when EX_MEM_bpredict_score = BP_WEAK_NOT_TAKEN and
-	not EX_MEM_take_branch else
-      BP_STRONG_TAKEN when EX_MEM_bpredict_score = BP_WEAK_TAKEN and
-	EX_MEM_take_branch else
-      BP_WEAK_NOT_TAKEN when EX_MEM_bpredict_score = BP_WEAK_TAKEN and
-	not EX_MEM_take_branch else
-      BP_STRONG_TAKEN when EX_MEM_bpredict_score = BP_STRONG_TAKEN and
-	EX_MEM_take_branch else
-      BP_WEAK_TAKEN when EX_MEM_bpredict_score = BP_STRONG_TAKEN and
-	not EX_MEM_take_branch;
     MEM_bpredict_we <= '1' when EX_MEM_branch_cycle else '0';
-
     process(clk)
     begin
+	if falling_edge(clk) then
+	    if EX_MEM_take_branch then
+		case EX_MEM_bpredict_score is
+		    when BP_STRONG_NOT_TAKEN =>
+			MEM_bpredict_score <= BP_WEAK_NOT_TAKEN;
+		    when BP_WEAK_NOT_TAKEN =>
+			MEM_bpredict_score <= BP_WEAK_TAKEN;
+		    when BP_WEAK_TAKEN =>
+			MEM_bpredict_score <= BP_STRONG_TAKEN;
+		    when BP_STRONG_TAKEN =>
+			MEM_bpredict_score <= BP_STRONG_TAKEN;
+		end case;
+	    else
+		case EX_MEM_bpredict_score is
+		    when BP_STRONG_NOT_TAKEN =>
+			MEM_bpredict_score <= BP_STRONG_NOT_TAKEN;
+		    when BP_WEAK_NOT_TAKEN =>
+			MEM_bpredict_score <= BP_STRONG_NOT_TAKEN;
+		    when BP_WEAK_TAKEN =>
+			MEM_bpredict_score <= BP_WEAK_NOT_TAKEN;
+		    when BP_STRONG_TAKEN =>
+			MEM_bpredict_score <= BP_WEAK_TAKEN;
+		end case;
+	    end if;
+	end if;
 	if rising_edge(clk) then
 	    if EX_MEM_branch_cycle then
 		EX_MEM_branch_hist((C_bp_global_depth - 2) downto 0) <=
