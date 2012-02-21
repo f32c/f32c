@@ -831,6 +831,8 @@ begin
 			MEM_bpredict_score <= BP_STRONG_TAKEN;
 		    when BP_STRONG_TAKEN =>
 			MEM_bpredict_score <= BP_STRONG_TAKEN;
+		    when others =>
+			-- do nothing: appease Xilinx synthesizer
 		end case;
 	    else
 		case EX_MEM_bpredict_score is
@@ -842,6 +844,8 @@ begin
 			MEM_bpredict_score <= BP_WEAK_NOT_TAKEN;
 		    when BP_STRONG_TAKEN =>
 			MEM_bpredict_score <= BP_WEAK_TAKEN;
+		    when others =>
+			-- do nothing: appease Xilinx synthesizer
 		end case;
 	    end if;
 	end if;
