@@ -105,12 +105,13 @@ begin
 	ignore_reg2 <= instruction(20 downto 16) = MIPS32_REG_ZERO;
 	cmov_cycle <= false;
 	cmov_condition <= false; -- should be don't care
-	branch_condition <= "---";
+	branch_condition <= TEST_UNDEFINED;
 	mem_cycle <= instruction(31);
-	mem_write <= instruction(29);
-	mem_size <= "--";
+	--mem_write <= instruction(29);
+	mem_write <= '-';
+	mem_size <= MEM_SIZE_UNDEFINED;
 	mem_read_sign_extend <= '-';
-	latency <= "00";
+	latency <= LATENCY_EX;
 	seb_seh_cycle <= false;
 	seb_seh_select <= instruction(9);
 	alt_sel <= ALT_PC_8;
@@ -206,6 +207,7 @@ begin
 		branch_condition <= TEST_EQ;
 		target_addr <= MIPS32_REG_ZERO;
 	    else
+		latency <= LATENCY_UNDEFINED;
 		unsupported_instr <= true;
 	    end if;
 	when MIPS32_OP_BNEL =>
@@ -215,6 +217,7 @@ begin
 		branch_condition <= TEST_NE;
 		target_addr <= MIPS32_REG_ZERO;
 	    else
+		latency <= LATENCY_UNDEFINED;
 		unsupported_instr <= true;
 	    end if;
 	when MIPS32_OP_BLEZL =>
@@ -224,6 +227,7 @@ begin
 		branch_condition <= TEST_LEZ;
 		target_addr <= MIPS32_REG_ZERO;
 	    else
+		latency <= LATENCY_UNDEFINED;
 		unsupported_instr <= true;
 	    end if;
 	when MIPS32_OP_BGTZL =>
@@ -233,52 +237,70 @@ begin
 		branch_condition <= TEST_GTZ;
 		target_addr <= MIPS32_REG_ZERO;
 	    else
+		latency <= LATENCY_UNDEFINED;
 		unsupported_instr <= true;
 	    end if;
 	when MIPS32_OP_LB =>
-	    latency <= "11";
-	    mem_size <= "00";
+	    latency <= LATENCY_WB;
+	    mem_write <= '0';
+	    mem_size <= MEM_SIZE_8;
 	    mem_read_sign_extend <= '1';
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_LH =>
-	    latency <= "11";
-	    mem_size <= "01";
+	    latency <= LATENCY_WB;
+	    mem_write <= '0';
+	    mem_size <= MEM_SIZE_16;
 	    mem_read_sign_extend <= '1';
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_LW =>
-	    latency <= "01";
-	    mem_size <= "11";
+	    latency <= LATENCY_MEM;
+	    mem_write <= '0';
+	    mem_size <= MEM_SIZE_32;
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_LBU =>
-	    latency <= "11";
-	    mem_size <= "00";
+	    latency <= LATENCY_WB;
+	    mem_write <= '0';
+	    mem_size <= MEM_SIZE_8;
 	    mem_read_sign_extend <= '0';
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_LHU =>
-	    latency <= "01";
-	    mem_size <= "01";
+	    latency <= LATENCY_WB;
+	    mem_write <= '0';
+	    mem_size <= MEM_SIZE_16;
 	    mem_read_sign_extend <= '0';
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_SB =>
+	    latency <= LATENCY_UNDEFINED;
+	    mem_write <= '1';
+	    mem_size <= MEM_SIZE_8;
 	    use_immediate <= true;
 	    target_addr <= MIPS32_REG_ZERO;
 	when MIPS32_OP_SH =>
+	    latency <= LATENCY_UNDEFINED;
+	    mem_write <= '1';
+	    mem_size <= MEM_SIZE_16;
 	    use_immediate <= true;
 	    target_addr <= MIPS32_REG_ZERO;
 	when MIPS32_OP_SWL =>			-- XXX revisit!
+	    latency <= LATENCY_UNDEFINED;
+	    mem_write <= '1';
+	    mem_size <= MEM_SIZE_32;
 	    use_immediate <= true;
 	    target_addr <= MIPS32_REG_ZERO;
 	when MIPS32_OP_SW =>
+	    latency <= LATENCY_UNDEFINED;
+	    mem_write <= '1';
+	    mem_size <= MEM_SIZE_32;
 	    use_immediate <= true;
 	    target_addr <= MIPS32_REG_ZERO;
 	when MIPS32_OP_REGIMM =>
@@ -315,6 +337,7 @@ begin
 		branch_likely <= true;
 		target_addr <= MIPS32_REG_RA;
 	    when others =>
+		latency <= LATENCY_UNDEFINED;
 		unsupported_instr <= true;
 	    end case;
 	when MIPS32_OP_SPECIAL =>
@@ -322,22 +345,22 @@ begin
 	    case instruction(5 downto 0) is
 	    when MIPS32_SPEC_SLL =>
 		op_major <= OP_MAJOR_SHIFT;
-		latency <= "01";
+		latency <= LATENCY_MEM;
 	    when MIPS32_SPEC_SRL =>
 		op_major <= OP_MAJOR_SHIFT;
-		latency <= "01";
+		latency <= LATENCY_MEM;
 	    when MIPS32_SPEC_SRA =>
 		op_major <= OP_MAJOR_SHIFT;
-		latency <= "01";
+		latency <= LATENCY_MEM;
 	    when MIPS32_SPEC_SLLV =>
 		op_major <= OP_MAJOR_SHIFT;
-		latency <= "01";
+		latency <= LATENCY_MEM;
 	    when MIPS32_SPEC_SRLV =>
 		op_major <= OP_MAJOR_SHIFT;
-		latency <= "01";
+		latency <= LATENCY_MEM;
 	    when MIPS32_SPEC_SRAV =>
 		op_major <= OP_MAJOR_SHIFT;
-		latency <= "01";
+		latency <= LATENCY_MEM;
 	    when MIPS32_SPEC_JR =>
 		jump_register <= true;
 		read_alt <= true;
@@ -349,6 +372,7 @@ begin
 		    cmov_cycle <= true;
 		    cmov_condition <= true;
 		else
+		    latency <= LATENCY_UNDEFINED;
 		    unsupported_instr <= true;
 		end if;
 	    when MIPS32_SPEC_MOVN =>
@@ -356,6 +380,7 @@ begin
 		    cmov_cycle <= true;
 		    cmov_condition <= false;
 		else
+		    latency <= LATENCY_UNDEFINED;
 		    unsupported_instr <= true;
 		end if;
 	    when MIPS32_SPEC_MFHI =>
@@ -393,9 +418,11 @@ begin
 		op_minor <= "010"; -- SUB
 		sign_extend <= false;
 	    when others =>
+		latency <= LATENCY_UNDEFINED;
 		unsupported_instr <= true;
 	    end case;
 	when MIPS32_OP_SPECIAL2 =>
+	    latency <= LATENCY_UNDEFINED;
 	    unsupported_instr <= true;
 	when MIPS32_OP_SPECIAL3 =>
 	    target_addr <= instruction(15 downto 11);
@@ -405,12 +432,15 @@ begin
 		if C_sign_extend then
 		    seb_seh_cycle <= true;
 		else
+		    latency <= LATENCY_UNDEFINED;
 		    unsupported_instr <= true;
 		end if;
 	    when others =>
+		latency <= LATENCY_UNDEFINED;
 		unsupported_instr <= true;
 	    end case;
 	when others =>
+	    latency <= LATENCY_UNDEFINED;
 	    unsupported_instr <= true;
 	end case;
     end process;
