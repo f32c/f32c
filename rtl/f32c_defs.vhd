@@ -172,13 +172,37 @@ constant MIPS32_RIMM_SYNCI:	std_logic_vector := "11111";
 constant MIPS32_REG_ZERO:	std_logic_vector := "00000";
 constant MIPS32_REG_RA:		std_logic_vector := "11111";
 
+--
 -- f32c internal codes
+--
+
+-- Memory access width
+constant MEM_SIZE_UNDEFINED:	std_logic_vector := "--";
+constant MEM_SIZE_8:		std_logic_vector := "00";
+constant MEM_SIZE_16:		std_logic_vector := "01";
+constant MEM_SIZE_32:		std_logic_vector := "10";
+constant MEM_SIZE_64:		std_logic_vector := "11";
+
+-- Result availability latency
+constant LATENCY_UNDEFINED:	std_logic_vector := "--";
+constant LATENCY_EX:		std_logic_vector := "00";
+constant LATENCY_MEM:		std_logic_vector := "01";
+constant LATENCY_WB:		std_logic_vector := "11";
+
+-- Test conditions (branch / trap)
+constant TEST_UNDEFINED:	std_logic_vector := "---";
 constant TEST_EQ:		std_logic_vector := "100";
 constant TEST_NE:		std_logic_vector := "101";
 constant TEST_LEZ:		std_logic_vector := "110";
 constant TEST_GTZ:		std_logic_vector := "111";
 constant TEST_LTZ:		std_logic_vector := "010";
 constant TEST_GEZ:		std_logic_vector := "011";
+
+-- Branch predictor saturation counter values
+constant BP_STRONG_TAKEN:	std_logic_vector := "11";
+constant BP_WEAK_TAKEN:		std_logic_vector := "10";
+constant BP_WEAK_NOT_TAKEN:	std_logic_vector := "01";
+constant BP_STRONG_NOT_TAKEN:	std_logic_vector := "00";
 
 constant OP_MAJOR_ALU:		std_logic_vector := "00";
 constant OP_MAJOR_SLT:		std_logic_vector := "01";
@@ -189,11 +213,5 @@ constant ALT_HI:		std_logic_vector := "000";
 constant ALT_LO:		std_logic_vector := "001";
 constant ALT_COP0_COUNT:	std_logic_vector := "011";
 constant ALT_PC_8:		std_logic_vector := "111";
-
--- Branch predictor saturation counter values
-constant BP_STRONG_TAKEN:	std_logic_vector := "11";
-constant BP_WEAK_TAKEN:		std_logic_vector := "10";
-constant BP_WEAK_NOT_TAKEN:	std_logic_vector := "01";
-constant BP_STRONG_NOT_TAKEN:	std_logic_vector := "00";
 
 end;
