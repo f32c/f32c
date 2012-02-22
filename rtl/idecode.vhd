@@ -107,7 +107,6 @@ begin
 	cmov_condition <= false; -- should be don't care
 	branch_condition <= TEST_UNDEFINED;
 	mem_cycle <= instruction(31);
-	--mem_write <= instruction(29);
 	mem_write <= '-';
 	mem_size <= MEM_SIZE_UNDEFINED;
 	mem_read_sign_extend <= '-';
