@@ -137,7 +137,6 @@ architecture Behavioral of pipeline is
     signal ID_EX_fwd_mem_alu_op2, ID_EX_sign_extend: boolean;
     signal ID_EX_cmov_cycle, ID_EX_cmov_condition: boolean;
     signal ID_EX_branch_cycle, ID_EX_branch_likely: boolean;
-    signal ID_EX_jump_cycle: boolean;
     signal ID_EX_cancel_next, ID_EX_predict_taken: boolean;
     signal ID_EX_bpredict_index: std_logic_vector(12 downto 0);
     signal ID_EX_branch_target: std_logic_vector(31 downto 2);
@@ -517,7 +516,6 @@ begin
 		    ID_EX_mem_write <= '0'; -- XXX do we need this?
 		    ID_EX_branch_cycle <= false;
 		    ID_EX_branch_likely <= false;
-		    ID_EX_jump_cycle <= false;
 		    ID_EX_predict_taken <= false;
 		    if MEM_take_branch and not ID_running then
 			ID_EX_cancel_next <= true;
@@ -570,7 +568,6 @@ begin
 		    ID_EX_mem_cycle <= ID_mem_cycle;
 		    ID_EX_branch_cycle <= ID_branch_cycle;
 		    ID_EX_branch_likely <= ID_branch_likely;
-		    ID_EX_jump_cycle <= ID_jump_cycle;
 		    ID_EX_predict_taken <= ID_predict_taken;
 		    ID_EX_bpredict_score <= IF_ID_bpredict_score;
 		    ID_EX_bpredict_index <= IF_ID_bpredict_index;
@@ -608,11 +605,11 @@ begin
     --
 
     -- When result forwarding muxes are not configured, stall the pipeline
-    -- until the results from all instructions preceding a branch or a jump
-    -- instruction are flushed or stored in the register file.
-    -- XXX revisit!
+    -- until the results from all instructions preceding a branch instruction
+    -- are flushed or stored in the register file.
+    -- XXX revisit!  jump cycles?
     EX_running <= MEM_running and
-      (C_result_forwarding or not (ID_EX_branch_cycle or ID_EX_jump_cycle)
+      (C_result_forwarding or not ID_EX_branch_cycle
       or EX_MEM_writeback_addr = "00000");
 
     -- forward the results from later stages
