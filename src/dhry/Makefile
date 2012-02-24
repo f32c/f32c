@@ -11,7 +11,7 @@ DHRY_CFLAGS += -Ofast
 DHRY_CFLAGS += -finline-limit=0
 
 # builtin_strcpy is faster than handcrafted version but requires swr/swl
-DHRY_CFLAGS += -DUSE_BUILTIN_STRCPY
+DHRY_CFLAGS += -DUSE_BUILTIN_STRCPY -DFASTER_STRCMP
 
 
 CFILES = dhry_1.c dhry_2.c miscfn.c \

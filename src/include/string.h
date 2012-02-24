@@ -21,13 +21,24 @@ static inline int
 strcmp(const char *s1, const char *s2)
 {
 	int c1, c2;
+#ifdef FASTER_STRCMP
+	int b1, b2;
+#endif
 	uint32_t v0;
 	const uint32_t t0 = 0x01010101;
 	const uint32_t t1 = 0x80808080;
 
-	/* Check for aligned pointers for faster operation on 32-bit words */
-	if (((int)s1 | (int)s2) & 0x3)
-		goto slow;
+	/* Check for unaligned pointers */
+	if (((int)s1 | (int)s2) & 0x3) {
+#ifndef FASTER_STRCMP
+slow:
+#endif
+		do {
+			c1 = *(const unsigned char *)s1++;
+			c2 = *(const unsigned char *)s2++;
+		} while (c1 != 0 && c1 == c2);
+		return (c1 - c2);
+	}
 
 	for (;;) {
 		/* Check whether words are equal */
@@ -35,12 +46,45 @@ strcmp(const char *s1, const char *s2)
 		c2 = *((int *)s2);
 		v0 = (((uint32_t)c1) - t0) & t1;
 		if (c1 != c2) {
-slow:
-			do {
-				c1 = *(const unsigned char *)s1++;
-				c2 = *(const unsigned char *)s2++;
-			} while (c1 != 0 && c1 == c2);
-			return (c1 - c2);
+#ifdef FASTER_STRCMP
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+			b1 = c1 & 0xff;
+			b2 = c2 & 0xff;
+			if (b1 == 0 || b1 != b2)
+				return (b1 - b2);
+			b1 = (c1 >> 8) & 0xff;
+			b2 = (c2 >> 8) & 0xff;
+			if (b1 == 0 || b1 != b2)
+				return (b1 - b2);
+			b1 = (c1 >> 16) & 0xff;
+			b2 = (c2 >> 16) & 0xff;
+			if (b1 == 0 || b1 != b2)
+				return (b1 - b2);
+			b1 = (c1 >> 24) & 0xff;
+			b2 = (c2 >> 24) & 0xff;
+			return (b1 - b2);
+#elif _BYTE_ORDER == _BIG_ENDIAN
+			b1 = (c1 >> 24) & 0xff;
+			b2 = (c2 >> 24) & 0xff;
+			if (b1 == 0 || b1 != b2)
+				return (b1 - b2);
+			b1 = (c1 >> 16) & 0xff;
+			b2 = (c2 >> 16) & 0xff;
+			if (b1 == 0 || b1 != b2)
+				return (b1 - b2);
+			b1 = (c1 >> 8) & 0xff;
+			b2 = (c2 >> 8) & 0xff;
+			if (b1 == 0 || b1 != b2)
+				return (b1 - b2);
+			b1 = c1 & 0xff;
+			b2 = c2 & 0xff;
+			return (b1 - b2);
+#else
+#error "Unsupported byte order."
+#endif
+#else
+			goto slow;
+#endif
 		}
 		/* Check if the word contains any zero bytes */
 		if (v0) {
