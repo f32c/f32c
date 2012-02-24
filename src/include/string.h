@@ -44,7 +44,7 @@ slow:
 		/* Check whether words are equal */
 		c1 = *((int *)s1);
 		c2 = *((int *)s2);
-		v0 = (((uint32_t)c1) - t0) & t1;
+		v0 = ((uint32_t)c1) - t0;
 		if (c1 != c2) {
 #ifdef FASTER_STRCMP
 #if _BYTE_ORDER == _LITTLE_ENDIAN
@@ -86,10 +86,11 @@ slow:
 			goto slow;
 #endif
 		}
+		v0 &= t1;
 		/* Check if the word contains any zero bytes */
 		if (v0) {
 			/* Maybe */           
-			if (__predict_true(v0 & ~((uint32_t)c1))) 
+			if (__predict_false(v0 & ~((uint32_t)c1))) 
 				return(0);
 		}
 		s1 += 4;
