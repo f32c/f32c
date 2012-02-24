@@ -45,47 +45,8 @@ slow:
 		c1 = *((int *)s1);
 		c2 = *((int *)s2);
 		v0 = ((uint32_t)c1) - t0;
-		if (c1 != c2) {
-#ifdef FASTER_STRCMP
-#if _BYTE_ORDER == _LITTLE_ENDIAN
-			b1 = c1 & 0xff;
-			b2 = c2 & 0xff;
-			if (b1 == 0 || b1 != b2)
-				return (b1 - b2);
-			b1 = (c1 >> 8) & 0xff;
-			b2 = (c2 >> 8) & 0xff;
-			if (b1 == 0 || b1 != b2)
-				return (b1 - b2);
-			b1 = (c1 >> 16) & 0xff;
-			b2 = (c2 >> 16) & 0xff;
-			if (b1 == 0 || b1 != b2)
-				return (b1 - b2);
-			b1 = (c1 >> 24) & 0xff;
-			b2 = (c2 >> 24) & 0xff;
-			return (b1 - b2);
-#elif _BYTE_ORDER == _BIG_ENDIAN
-			b1 = (c1 >> 24) & 0xff;
-			b2 = (c2 >> 24) & 0xff;
-			if (b1 == 0 || b1 != b2)
-				return (b1 - b2);
-			b1 = (c1 >> 16) & 0xff;
-			b2 = (c2 >> 16) & 0xff;
-			if (b1 == 0 || b1 != b2)
-				return (b1 - b2);
-			b1 = (c1 >> 8) & 0xff;
-			b2 = (c2 >> 8) & 0xff;
-			if (b1 == 0 || b1 != b2)
-				return (b1 - b2);
-			b1 = c1 & 0xff;
-			b2 = c2 & 0xff;
-			return (b1 - b2);
-#else
-#error "Unsupported byte order."
-#endif
-#else
-			goto slow;
-#endif
-		}
+		if (c1 != c2)
+			break;
 		v0 &= t1;
 		/* Check if the word contains any zero bytes */
 		if (v0) {
@@ -93,9 +54,69 @@ slow:
 			if (__predict_false(v0 & ~((uint32_t)c1))) 
 				return(0);
 		}
+#ifndef FASTER_STRCMP
 		s1 += 4;
 		s2 += 4;
+#else
+		/* Check whether words are equal */
+		c1 = *((int *)s1 + 1);
+		c2 = *((int *)s2 + 1);
+		v0 = ((uint32_t)c1) - t0;
+		if (c1 != c2)
+			break;
+		v0 &= t1;
+		/* Check if the word contains any zero bytes */
+		if (v0) {
+			/* Maybe */           
+			if (__predict_false(v0 & ~((uint32_t)c1))) 
+				return(0);
+		}
+		s1 += 8;
+		s2 += 8;
+#endif
 	}
+
+#ifdef FASTER_STRCMP
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+	b1 = c1 & 0xff;
+	b2 = c2 & 0xff;
+	if (__predict_false(b1 == 0 || b1 != b2))
+		return (b1 - b2);
+	b1 = c1 & 0xff00;
+	b2 = c2 & 0xff00;
+	if (b1 == 0 || b1 != b2)
+		return (b1 - b2);
+	c1 >>= 16;
+	c2 >>= 16;
+	b1 = c1 & 0xff;
+	b2 = c2 & 0xff;
+	if (b1 == 0 || b1 != b2)
+		return (b1 - b2);
+	b1 = c1 & 0xff00;
+	b2 = c2 & 0xff00;
+	return (b1 - b2);
+#elif _BYTE_ORDER == _BIG_ENDIAN
+	b1 = (c1 >> 24) & 0xff;
+	b2 = (c2 >> 24) & 0xff;
+	if (b1 == 0 || b1 != b2)
+		return (b1 - b2);
+	b1 = (c1 >> 16) & 0xff;
+	b2 = (c2 >> 16) & 0xff;
+	if (b1 == 0 || b1 != b2)
+		return (b1 - b2);
+	b1 = c1 & 0xff00;
+	b2 = c2 & 0xff00;
+	if (b1 == 0 || b1 != b2)
+		return (b1 - b2);
+	b1 = c1 & 0xff;
+	b2 = c2 & 0xff;
+	return (b1 - b2);
+#else
+#error "Unsupported byte order."
+#endif
+#else
+	goto slow;
+#endif
 }
 
 
