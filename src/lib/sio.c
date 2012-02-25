@@ -10,6 +10,7 @@ void (*sio_idle_fn)(void) = NULL;
 static char sio_rxbuf[SIO_RXBUFSIZE];
 static int sio_rxbuf_head = 1;
 static int sio_rxbuf_tail = 1;
+static int sio_tx_xoff = 0;
 
 
 static int
@@ -20,6 +21,16 @@ sio_probe_rx(void)
 	INB(s, IO_SIO_STATUS);
 	if (s & SIO_RX_FULL) {
 		INB(c, IO_SIO_BYTE);
+		if (c == 0x13) {
+			/* XOFF */
+			sio_tx_xoff = 1;
+			return(s);
+		}
+		if (c == 0x11) {
+			/* XON */
+			sio_tx_xoff = 0;
+			return(s);
+		}
 		sio_rxbuf[sio_rxbuf_head++] = c;
 		sio_rxbuf_head &= SIO_RXBUFMASK;
 	}
@@ -61,7 +72,7 @@ sio_putchar(int c, int blocking)
 		if (sio_idle_fn != NULL)
 			(*sio_idle_fn)();
 		in = sio_probe_rx();
-		busy = (in & SIO_TX_BUSY);
+		busy = (in & SIO_TX_BUSY) || sio_tx_xoff;
 	} while (blocking && busy);
 
 	if (busy)
