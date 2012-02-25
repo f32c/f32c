@@ -127,7 +127,6 @@ architecture Behavioral of pipeline is
     signal ID_seb_seh_cycle: boolean;
     signal ID_seb_seh_select: std_logic;
     -- boundary to stage 3
-    signal ID_EX_PC_8: std_logic_vector(31 downto 2);
     signal ID_EX_bpredict_score: std_logic_vector(1 downto 0);
     signal ID_EX_writeback_addr: std_logic_vector(4 downto 0);
     signal ID_EX_reg1_data, ID_EX_reg2_data: std_logic_vector(31 downto 0);
@@ -535,7 +534,6 @@ begin
 		    ID_EX_op_minor <= "---";
 		    ID_EX_mem_size <= "--";
 		    ID_EX_branch_condition <= "---";
-		    ID_EX_PC_8 <= "------------------------------";
 		    -- ID_EX_branch_target <= "------------------------------";
 		    ID_EX_bpredict_score <= "--";
 		    ID_EX_bpredict_index <= "-------------";
@@ -558,7 +556,6 @@ begin
 		      ID_mem_write = '0' and ID_mem_size(1) = '0';
 		    ID_EX_mem_read_sign_extend <= ID_mem_read_sign_extend;
 		    ID_EX_branch_condition <= ID_branch_condition;
-		    ID_EX_PC_8 <= (IF_ID_PC_4 + 1) and C_PC_mask(31 downto 2);
 		    ID_EX_branch_target <= ID_branch_target;
 		    ID_EX_seb_seh_cycle <= ID_seb_seh_cycle;
 		    ID_EX_seb_seh_select <= ID_seb_seh_select;
@@ -695,7 +692,7 @@ begin
       R_hi_lo(63 downto 32) when ALT_HI,
       R_hi_lo(31 downto 0) when ALT_LO,
       R_tsc when ALT_COP0_COUNT,
-      ID_EX_PC_8 & "00" when others;
+      IF_ID_PC_4 & "00" when others;
 
     -- branch or not?
     process(ID_EX_branch_condition, EX_from_alu_equal, EX_eff_reg1)
@@ -735,7 +732,7 @@ begin
 		if ID_EX_branch_cycle then
 		    EX_MEM_take_branch <= EX_take_branch;
 		    if ID_EX_predict_taken then
-			EX_MEM_branch_target <= ID_EX_PC_8;
+			EX_MEM_branch_target <= IF_ID_PC_4;
 		    else
 			EX_MEM_branch_target <=
 			  ID_EX_branch_target and C_PC_mask(31 downto 2);
