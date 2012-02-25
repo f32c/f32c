@@ -32,7 +32,7 @@ extern int led_byte;
 
 
 static int old_pcm_vol, old_pcm_bal;
-static int old_bauds = 115200;
+static int bauds = 115200;
 static int new_bauds = 115200;
 
 
@@ -246,9 +246,18 @@ redraw_display()
 	);
 
 	/* Recompute and set baudrate */
-	if (old_bauds != new_bauds) {
-		old_bauds = new_bauds;
-		val = new_bauds * 1024 / 1000 * 1024 / 81250 + 1;
+	if (bauds != new_bauds) {
+		bauds = new_bauds;
+		val = new_bauds;
+		if (bauds > 1000000)
+			val /= 10;
+		val = val * 1024 / 1000 * 1024 / 81250 + 1;
+		if (bauds > 1000000)
+			val *= 10;
+		if (bauds > 460800 && bauds <= 1500000)
+			val = val * 9 / 10;
+		if (bauds == 1500000)
+			val = val * 9 / 10;
 		OUTH(IO_SIO_BAUD, val);
 	}
 }
@@ -426,11 +435,11 @@ main(void)
 			break;
 		case '8':
 			printf("Unesite zeljeni baud rate"
-			    " (300 do 460800 bps): ");
+			    " (300 do 3000000 bps): ");
 			if (gets(buf, BUFSIZE) != 0)
 				return (0);	/* Got CTRL + C */
 			i = atoi(buf);
-			if (buf[0] != 0 && i >= 300 && i <= 460800)
+			if (buf[0] != 0 && i >= 300 && i <= 3000000)
 				new_bauds = i;
 			break;
 		case '9':
