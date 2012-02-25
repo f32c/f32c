@@ -8,9 +8,9 @@
 
 void (*sio_idle_fn)(void) = NULL;
 static char sio_rxbuf[SIO_RXBUFSIZE];
-static int sio_rxbuf_head = 1;
-static int sio_rxbuf_tail = 1;
-static int sio_tx_xoff = 0;
+static uint8_t sio_rxbuf_head = 1;
+static uint8_t sio_rxbuf_tail = 1;
+static uint8_t sio_tx_xoff = 0;
 
 
 static int
