@@ -107,7 +107,7 @@ begin
 	cmov_condition <= false; -- should be don't care
 	branch_condition <= TEST_UNDEFINED;
 	mem_cycle <= instruction(31);
-	mem_write <= '-';
+	mem_write <= '0';
 	mem_size <= MEM_SIZE_UNDEFINED;
 	mem_read_sign_extend <= '-';
 	latency <= LATENCY_EX;
@@ -241,7 +241,6 @@ begin
 	    end if;
 	when MIPS32_OP_LB =>
 	    latency <= LATENCY_WB;
-	    mem_write <= '0';
 	    mem_size <= MEM_SIZE_8;
 	    mem_read_sign_extend <= '1';
 	    use_immediate <= true;
@@ -249,7 +248,6 @@ begin
 	    ignore_reg2 <= true;
 	when MIPS32_OP_LH =>
 	    latency <= LATENCY_WB;
-	    mem_write <= '0';
 	    mem_size <= MEM_SIZE_16;
 	    mem_read_sign_extend <= '1';
 	    use_immediate <= true;
@@ -257,14 +255,12 @@ begin
 	    ignore_reg2 <= true;
 	when MIPS32_OP_LW =>
 	    latency <= LATENCY_MEM;
-	    mem_write <= '0';
 	    mem_size <= MEM_SIZE_32;
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MIPS32_OP_LBU =>
 	    latency <= LATENCY_WB;
-	    mem_write <= '0';
 	    mem_size <= MEM_SIZE_8;
 	    mem_read_sign_extend <= '0';
 	    use_immediate <= true;
@@ -272,7 +268,6 @@ begin
 	    ignore_reg2 <= true;
 	when MIPS32_OP_LHU =>
 	    latency <= LATENCY_WB;
-	    mem_write <= '0';
 	    mem_size <= MEM_SIZE_16;
 	    mem_read_sign_extend <= '0';
 	    use_immediate <= true;
