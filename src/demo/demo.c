@@ -214,7 +214,7 @@ redraw_display()
 	printf(
 	    "\nFER - Digitalna logika 2011/2012\n\n"
 	    "ULX2S FPGA plocica - demonstracijsko-dijagnosticki program\n"
-	    "v 0.96 29/01/2012\n\n"
+	    "v 0.97 25/02/2012\n\n"
 	    "Glavni izbornik:\n\n"
 	    " 1: Glasnoca: %d (zvucni izlaz ", pcm_vol & ~PCM_VOL_MUTE
 	);
@@ -249,7 +249,7 @@ redraw_display()
 	if (old_bauds != new_bauds) {
 		old_bauds = new_bauds;
 		val = new_bauds * 1024 / 1000 * 1024 / 81250 + 1;
-		OUTW(IO_SIO_BAUD, val);
+		OUTH(IO_SIO_BAUD, val);
 	}
 }
 
@@ -443,7 +443,7 @@ main(void)
 		redraw_display();
 	} while (res == 0);
 
-	printf("Pritisnite 'x' za povratak u glavni izbornik.\n");
+	printf("Pritisnite 's' za povratak u glavni izbornik.\n");
 	return (0);
 }
 
