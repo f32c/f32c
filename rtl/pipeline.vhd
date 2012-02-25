@@ -460,8 +460,8 @@ begin
     ID_fwd_mem_alu_op2 <= ID_fwd_mem_reg2 and not ID_use_immediate;
 
     -- compute branch target - XXX revisit: perhaps use ID_immediate here?
-    ID_branch_target <= IF_ID_PC_4 +
-      (ID_sign_extension(13 downto 0) & IF_ID_instruction(15 downto 0));
+    ID_branch_target <= C_PC_mask(31 downto 2) and (IF_ID_PC_4 +
+      (ID_sign_extension(13 downto 0) & IF_ID_instruction(15 downto 0)));
 
     -- branch prediction
     ID_predict_taken <= C_branch_prediction and
@@ -512,7 +512,6 @@ begin
 		    -- insert a bubble if branching or ID stage is stalled
 		    ID_EX_writeback_addr <= "00000"; -- NOP
 		    ID_EX_mem_cycle <= '0';
-		    ID_EX_mem_write <= '0'; -- XXX do we need this?
 		    ID_EX_branch_cycle <= false;
 		    ID_EX_branch_likely <= false;
 		    ID_EX_predict_taken <= false;
@@ -526,6 +525,7 @@ begin
 			ID_EX_instruction <= x"00000000"; -- debugging only
 		    end if;
 		    -- Don't care bits (optimization hints)
+		    ID_EX_mem_write <= '-'; -- XXX is this safe?
 		    ID_EX_reg1_data <= "--------------------------------";
 		    ID_EX_reg2_data <= "--------------------------------";
 		    ID_EX_alu_op2 <= "--------------------------------";
@@ -534,7 +534,6 @@ begin
 		    ID_EX_op_minor <= "---";
 		    ID_EX_mem_size <= "--";
 		    ID_EX_branch_condition <= "---";
-		    -- ID_EX_branch_target <= "------------------------------";
 		    ID_EX_bpredict_score <= "--";
 		    ID_EX_bpredict_index <= "-------------";
 		    ID_EX_latency <= "--";
@@ -720,6 +719,7 @@ begin
 		EX_MEM_mem_size <= ID_EX_mem_size;
 		EX_MEM_multicycle_lh_lb <= not C_load_aligner
 		  and ID_EX_multicycle_lh_lb;
+		EX_MEM_mem_cycle <= ID_EX_mem_cycle;
 		EX_MEM_mem_write <= ID_EX_mem_write;
 		EX_MEM_mem_byte_sel <= EX_mem_byte_sel;
 		EX_MEM_shamt_1_2_4 <= EX_shamt(2 downto 0);
@@ -734,8 +734,7 @@ begin
 		    if ID_EX_predict_taken then
 			EX_MEM_branch_target <= IF_ID_PC_4;
 		    else
-			EX_MEM_branch_target <=
-			  ID_EX_branch_target and C_PC_mask(31 downto 2);
+			EX_MEM_branch_target <= ID_EX_branch_target;
 		    end if;
 		else
 		    EX_MEM_take_branch <= false;
@@ -766,7 +765,6 @@ begin
 		else
 		    EX_MEM_writeback_addr <= ID_EX_writeback_addr;
 		end if;
-		EX_MEM_mem_cycle <= ID_EX_mem_cycle;
 		EX_MEM_latency <= ID_EX_latency(1);
 		EX_MEM_mem_read_sign_extend <= ID_EX_mem_read_sign_extend;
 		EX_MEM_branch_taken <= ID_EX_predict_taken;
