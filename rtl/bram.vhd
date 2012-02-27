@@ -117,54 +117,64 @@ begin
 
     process(clk)
     begin
-	if falling_edge(clk) and imem_addr_strobe = '1' then
-	    ibram_0 <= bram_0(conv_integer(imem_addr));
-	    ibram_1 <= bram_1(conv_integer(imem_addr));
-	    ibram_2 <= bram_2(conv_integer(imem_addr));
-	    ibram_3 <= bram_3(conv_integer(imem_addr));
-	end if;
-    end process;
-
-    process(clk)
-    begin
-	if falling_edge(clk) and dmem_addr_strobe = '1' and
-	  dmem_byte_sel(0) = '1' then
-	    dbram_0 <= bram_0(conv_integer(dmem_addr));
-	    if dmem_write = '1' then
-		bram_0(conv_integer(dmem_addr)) <= dmem_data_in(7 downto 0);
+	if falling_edge(clk) then
+	    if imem_addr_strobe = '1' then
+		ibram_0 <= bram_0(conv_integer(imem_addr));
+		ibram_1 <= bram_1(conv_integer(imem_addr));
+		ibram_2 <= bram_2(conv_integer(imem_addr));
+		ibram_3 <= bram_3(conv_integer(imem_addr));
 	    end if;
 	end if;
     end process;
 
     process(clk)
     begin
-	if falling_edge(clk) and dmem_addr_strobe = '1' and
-	  dmem_byte_sel(1) = '1' then
-	    dbram_1 <= bram_1(conv_integer(dmem_addr));
-	    if dmem_write = '1' then
-		bram_1(conv_integer(dmem_addr)) <= dmem_data_in(15 downto 8);
+	if falling_edge(clk) then
+	    if dmem_addr_strobe = '1' and dmem_byte_sel(0) = '1' then
+		dbram_0 <= bram_0(conv_integer(dmem_addr));
+		if dmem_write = '1' then
+		    bram_0(conv_integer(dmem_addr)) <=
+		      dmem_data_in(7 downto 0);
+		end if;
 	    end if;
 	end if;
     end process;
 
     process(clk)
     begin
-	if falling_edge(clk) and dmem_addr_strobe = '1' and
-	  dmem_byte_sel(2) = '1' then
-	    dbram_2 <= bram_2(conv_integer(dmem_addr));
-	    if dmem_write = '1' then
-		bram_2(conv_integer(dmem_addr)) <= dmem_data_in(23 downto 16);
+	if falling_edge(clk) then
+	    if dmem_addr_strobe = '1' and dmem_byte_sel(1) = '1' then
+		dbram_1 <= bram_1(conv_integer(dmem_addr));
+		if dmem_write = '1' then
+		    bram_1(conv_integer(dmem_addr)) <=
+		      dmem_data_in(15 downto 8);
+		end if;
 	    end if;
 	end if;
     end process;
 
     process(clk)
     begin
-	if falling_edge(clk) and dmem_addr_strobe = '1' and
-	  dmem_byte_sel(3) = '1' then
-	    dbram_3 <= bram_3(conv_integer(dmem_addr));
-	    if dmem_write = '1' then
-		bram_3(conv_integer(dmem_addr)) <= dmem_data_in(31 downto 24);
+	if falling_edge(clk) then
+	    if dmem_addr_strobe = '1' and dmem_byte_sel(2) = '1' then
+		dbram_2 <= bram_2(conv_integer(dmem_addr));
+		if dmem_write = '1' then
+		    bram_2(conv_integer(dmem_addr)) <=
+		      dmem_data_in(23 downto 16);
+		end if;
+	    end if;
+	end if;
+    end process;
+
+    process(clk)
+    begin
+	if falling_edge(clk) then
+	    if dmem_addr_strobe = '1' and dmem_byte_sel(3) = '1' then
+		dbram_3 <= bram_3(conv_integer(dmem_addr));
+		if dmem_write = '1' then
+		    bram_3(conv_integer(dmem_addr)) <=
+		      dmem_data_in(31 downto 24);
+		end if;
 	    end if;
 	end if;
     end process;
