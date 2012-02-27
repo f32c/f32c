@@ -1000,47 +1000,37 @@ begin
     debug_XXX(3 downto 1) <= "000";
     debug_XXX(0) <= MEM_WB_write_enable;
 
-    process(trace_addr)
-    begin
-	if trace_addr(5) = '0' then
-	    trace_data <= reg_trace_data;
-	else
-	    case "000" & trace_addr(4 downto 0) is
-	    when x"00" => trace_data <= IF_PC & "00";
-	    when x"01" => trace_data <= IF_ID_PC & "00";
-	    when x"02" => trace_data <= ID_EX_PC & "00";
-	    when x"03" => trace_data <= EX_MEM_PC & "00";
-	    when x"04" => trace_data <= imem_data_in;
-	    when x"05" => trace_data <= IF_ID_instruction;
-	    when x"06" => trace_data <= ID_EX_instruction;
-	    when x"07" => trace_data <= EX_MEM_instruction;
-	    when x"08" => trace_data <= ID_reg1_eff_data;
-	    when x"09" => trace_data <= ID_reg2_eff_data;
-	    when x"0a" => trace_data <= EX_eff_reg1;
-	    when x"0b" => trace_data <= EX_eff_reg2;
-	    when x"0c" => trace_data <= EX_eff_alu_op2;
-	    when x"0d" => trace_data <= EX_MEM_addsub_data;
-	    when x"0e" => trace_data <= EX_MEM_logic_data;
-	    --when x"0f" => trace_data <= dmem_data_out;
-	    when x"10" => trace_data <= dmem_data_in;
-	    --
-	    when x"14" => trace_data <= R_tsc;
-	    when x"15" => trace_data <= D_instr;
-	    when x"16" => trace_data <= D_b_instr;
-	    when x"17" => trace_data <= D_b_taken;
-	    --
-	    when x"19" => trace_data <= debug_XXX;
-	    --
-	    when x"1a" => trace_data <= R_hi_lo(63 downto 32);
-	    when x"1b" => trace_data <= R_hi_lo(31 downto 0);
-	    -- when x"1c" => trace_data <= BadVAddr;
-	    -- when x"1d" => trace_data <= EPC;
-	    -- when x"1e" => trace_data <= Status;
-	    -- when x"1f" => trace_data <= Cause;
-	    when others => trace_data <= x"00000000";
-	    end case;
-	end if;
-    end process;
+    with ("00" & trace_addr) select
+    trace_data <=
+	IF_PC & "00"		when x"20",
+	IF_ID_PC & "00"		when x"21",
+	ID_EX_PC & "00"		when x"22",
+	EX_MEM_PC & "00"	when x"23",
+	imem_data_in		when x"24",
+	IF_ID_instruction	when x"25",
+	ID_EX_instruction	when x"26",
+	EX_MEM_instruction	when x"27",
+	ID_reg1_eff_data	when x"28",
+	ID_reg2_eff_data	when x"29",
+	EX_eff_reg1		when x"2a",
+	EX_eff_reg2		when x"2b",
+	EX_eff_alu_op2		when x"2c",
+	EX_MEM_addsub_data	when x"2d",
+	EX_MEM_logic_data	when x"2e",
+	-- dmem_data_out	when x"2f",
+	dmem_data_in		when x"30",
+	--
+	R_tsc			when x"34",
+	D_instr			when x"35",
+	D_b_instr		when x"36",
+	D_b_taken		when x"37",
+	--
+	debug_XXX		when x"39",
+	--
+	R_hi_lo(63 downto 32)	when x"3a",
+	R_hi_lo(31 downto 0)	when x"3b",
+	reg_trace_data		when others;
+
     end generate;
 
     G_without_trace_mux:
