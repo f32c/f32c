@@ -48,7 +48,6 @@ end alu;
 
 architecture Behavioral of alu is
     signal ex, ey: std_logic_vector(32 downto 0);
-    signal x_logic: std_logic_vector(31 downto 0);
 begin
 
     ex <= '0' & x;
@@ -57,12 +56,13 @@ begin
     addsubx <= ex + ey when funct(1) = '0' else ex - ey;
 
     process(x, y, funct, seb_seh_cycle, seb_seh_select)
+	variable x_logic: std_logic_vector(31 downto 0);
     begin
 	case funct is
-	when "00" =>	x_logic <= x and y;
-	when "01" =>	x_logic <= x or y;
-	when "10" =>	x_logic <= x xor y;
-	when others => 	x_logic <= not(x or y);
+	when "00" =>	x_logic := x and y;
+	when "01" =>	x_logic := x or y;
+	when "10" =>	x_logic := x xor y;
+	when others => 	x_logic := not(x or y);
 	end case;
 
 	if C_sign_extend and seb_seh_cycle then

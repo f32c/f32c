@@ -46,42 +46,43 @@ entity loadalign is
 end loadalign;
 
 architecture Behavioral of loadalign is
-    signal mem_align_tmp_h: std_logic_vector(15 downto 0);
-    signal mem_align_tmp_b: std_logic_vector(7 downto 0);
 begin
 
     process(mem_align_in, mem_read_sign_extend_pipelined,
       mem_addr_offset, mem_size_pipelined)
+	variable mem_align_tmp_h: std_logic_vector(15 downto 0);
+	variable mem_align_tmp_b: std_logic_vector(7 downto 0);
     begin
+
 	-- byte
 	if C_big_endian then
 	    case mem_addr_offset is
-		when "11" => mem_align_tmp_b <= mem_align_in(7 downto 0);
-		when "10" => mem_align_tmp_b <= mem_align_in(15 downto 8);
-		when "01" => mem_align_tmp_b <= mem_align_in(23 downto 16);
-		when others => mem_align_tmp_b <= mem_align_in(31 downto 24);
+		when "11" => mem_align_tmp_b := mem_align_in(7 downto 0);
+		when "10" => mem_align_tmp_b := mem_align_in(15 downto 8);
+		when "01" => mem_align_tmp_b := mem_align_in(23 downto 16);
+		when others => mem_align_tmp_b := mem_align_in(31 downto 24);
 	    end case;
 	else
 	    case mem_addr_offset is
-		when "00" => mem_align_tmp_b <= mem_align_in(7 downto 0);
-		when "01" => mem_align_tmp_b <= mem_align_in(15 downto 8);
-		when "10" => mem_align_tmp_b <= mem_align_in(23 downto 16);
-		when others => mem_align_tmp_b <= mem_align_in(31 downto 24);
+		when "00" => mem_align_tmp_b := mem_align_in(7 downto 0);
+		when "01" => mem_align_tmp_b := mem_align_in(15 downto 8);
+		when "10" => mem_align_tmp_b := mem_align_in(23 downto 16);
+		when others => mem_align_tmp_b := mem_align_in(31 downto 24);
 	    end case;
 	end if;
 
 	-- half-word
 	if C_big_endian then
 	    case mem_addr_offset is
-		when "10" => mem_align_tmp_h <= mem_align_in(15 downto 0);
-		when "00" => mem_align_tmp_h <= mem_align_in(31 downto 16);
-		when others => mem_align_tmp_h <= "----------------";
+		when "10" => mem_align_tmp_h := mem_align_in(15 downto 0);
+		when "00" => mem_align_tmp_h := mem_align_in(31 downto 16);
+		when others => mem_align_tmp_h := "----------------";
 	    end case;
 	else
 	    case mem_addr_offset is
-		when "00" => mem_align_tmp_h <= mem_align_in(15 downto 0);
-		when "10" => mem_align_tmp_h <= mem_align_in(31 downto 16);
-		when others => mem_align_tmp_h <= "----------------";
+		when "00" => mem_align_tmp_h := mem_align_in(15 downto 0);
+		when "10" => mem_align_tmp_h := mem_align_in(31 downto 16);
+		when others => mem_align_tmp_h := "----------------";
 	    end case;
 	end if;
 
