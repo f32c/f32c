@@ -24,15 +24,28 @@ end reg1w2r;
 architecture Behavioral of reg1w2r is
     type reg_type is array(0 to 31) of std_logic_vector(31 downto 0);
     signal R1, R2, RD: reg_type;
+
+    -- Prevent XST from inferring block RAMs
+    attribute ram_style: string;
+    attribute ram_style of R1: signal is "distributed";
+    attribute ram_style of R2: signal is "distributed";
+    attribute ram_style of RD: signal is "distributed";
+
 begin
-    R1(conv_integer(wr_addr)) <= wr_data when
-	rising_edge(clk) and wr_enable = '1';
-    R2(conv_integer(wr_addr)) <= wr_data when
-	rising_edge(clk) and wr_enable = '1';
-    RD(conv_integer(wr_addr)) <= wr_data when
-	rising_edge(clk) and wr_enable = '1' and C_debug;
+    process(clk)
+    begin
+	if rising_edge(clk) then
+	    if wr_enable = '1' then
+		R1(conv_integer(wr_addr)) <= wr_data;
+		R2(conv_integer(wr_addr)) <= wr_data;
+	    end if;
+	    if C_debug and wr_enable = '1' then
+		RD(conv_integer(wr_addr)) <= wr_data;
+	    end if;
+	end if;
+    end process;
 
     rd1_data <= R1(conv_integer(rd1_addr));
     rd2_data <= R2(conv_integer(rd2_addr));
-    rdd_data <= RD(conv_integer(rdd_addr)) when C_debug;
+    rdd_data <= RD(conv_integer(rdd_addr)) when C_debug else x"00000000";
 end Behavioral;
