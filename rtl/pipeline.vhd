@@ -221,8 +221,8 @@ architecture Behavioral of pipeline is
     signal WB_clk: std_logic;
 
     -- multiplication unit
-    signal mul_res: std_logic_vector(65 downto 0);
-    signal R_mul_a, R_mul_b: std_logic_vector(32 downto 0);
+    signal mul_res: signed(65 downto 0);
+    signal R_mul_a, R_mul_b: signed(32 downto 0);
     signal R_hi_lo: std_logic_vector(63 downto 0);
 
     -- COP0
@@ -942,20 +942,86 @@ begin
 	    -- XXX revisit instruction decoding
 	    if (ID_EX_op_major = OP_MAJOR_ALT and
 	      ID_EX_instruction(5 downto 1) = "01100") then
+		R_mul_a(31) <= EX_eff_reg1(31);
+		R_mul_a(30) <= EX_eff_reg1(30);
+		R_mul_a(29) <= EX_eff_reg1(29);
+		R_mul_a(28) <= EX_eff_reg1(28);
+		R_mul_a(27) <= EX_eff_reg1(27);
+		R_mul_a(26) <= EX_eff_reg1(26);
+		R_mul_a(25) <= EX_eff_reg1(25);
+		R_mul_a(24) <= EX_eff_reg1(24);
+		R_mul_a(23) <= EX_eff_reg1(23);
+		R_mul_a(22) <= EX_eff_reg1(22);
+		R_mul_a(21) <= EX_eff_reg1(21);
+		R_mul_a(20) <= EX_eff_reg1(20);
+		R_mul_a(19) <= EX_eff_reg1(19);
+		R_mul_a(18) <= EX_eff_reg1(18);
+		R_mul_a(17) <= EX_eff_reg1(17);
+		R_mul_a(16) <= EX_eff_reg1(16);
+		R_mul_a(15) <= EX_eff_reg1(15);
+		R_mul_a(14) <= EX_eff_reg1(14);
+		R_mul_a(13) <= EX_eff_reg1(13);
+		R_mul_a(12) <= EX_eff_reg1(12);
+		R_mul_a(11) <= EX_eff_reg1(11);
+		R_mul_a(10) <= EX_eff_reg1(10);
+		R_mul_a(9) <= EX_eff_reg1(9);
+		R_mul_a(8) <= EX_eff_reg1(8);
+		R_mul_a(7) <= EX_eff_reg1(7);
+		R_mul_a(6) <= EX_eff_reg1(6);
+		R_mul_a(5) <= EX_eff_reg1(5);
+		R_mul_a(4) <= EX_eff_reg1(4);
+		R_mul_a(3) <= EX_eff_reg1(3);
+		R_mul_a(2) <= EX_eff_reg1(2);
+		R_mul_a(1) <= EX_eff_reg1(1);
+		R_mul_a(0) <= EX_eff_reg1(0);
+		R_mul_b(31) <= EX_eff_reg2(31);
+		R_mul_b(30) <= EX_eff_reg2(30);
+		R_mul_b(29) <= EX_eff_reg2(29);
+		R_mul_b(28) <= EX_eff_reg2(28);
+		R_mul_b(27) <= EX_eff_reg2(27);
+		R_mul_b(26) <= EX_eff_reg2(26);
+		R_mul_b(25) <= EX_eff_reg2(25);
+		R_mul_b(24) <= EX_eff_reg2(24);
+		R_mul_b(23) <= EX_eff_reg2(23);
+		R_mul_b(22) <= EX_eff_reg2(22);
+		R_mul_b(21) <= EX_eff_reg2(21);
+		R_mul_b(20) <= EX_eff_reg2(20);
+		R_mul_b(19) <= EX_eff_reg2(19);
+		R_mul_b(18) <= EX_eff_reg2(18);
+		R_mul_b(17) <= EX_eff_reg2(17);
+		R_mul_b(16) <= EX_eff_reg2(16);
+		R_mul_b(15) <= EX_eff_reg2(15);
+		R_mul_b(14) <= EX_eff_reg2(14);
+		R_mul_b(13) <= EX_eff_reg2(13);
+		R_mul_b(12) <= EX_eff_reg2(12);
+		R_mul_b(11) <= EX_eff_reg2(11);
+		R_mul_b(10) <= EX_eff_reg2(10);
+		R_mul_b(9) <= EX_eff_reg2(9);
+		R_mul_b(8) <= EX_eff_reg2(8);
+		R_mul_b(7) <= EX_eff_reg2(7);
+		R_mul_b(6) <= EX_eff_reg2(6);
+		R_mul_b(5) <= EX_eff_reg2(5);
+		R_mul_b(4) <= EX_eff_reg2(4);
+		R_mul_b(3) <= EX_eff_reg2(3);
+		R_mul_b(2) <= EX_eff_reg2(2);
+		R_mul_b(1) <= EX_eff_reg2(1);
+		R_mul_b(0) <= EX_eff_reg2(0);
 		if (ID_EX_instruction(0) = '0') then
 		    -- signed
-		    R_mul_a <= EX_eff_reg1(31) & EX_eff_reg1;
-		    R_mul_b <= EX_eff_reg2(31) & EX_eff_reg2;
+		    R_mul_a(32) <= EX_eff_reg1(31);
+		    R_mul_b(32) <= EX_eff_reg2(31);
 		else
 		    -- unsigned
-		    R_mul_a <= '0' & EX_eff_reg1;
-		    R_mul_b <= '0' & EX_eff_reg2;
+		    R_mul_a(32) <= '0';
+		    R_mul_b(32) <= '0';
 		end if;
 	    end if;
 	    -- XXX revisit R_hi_lo write enable
 	    -- XXX don't update R_hi_lo if exception pending
-	    R_hi_lo(63 downto 32) <= mul_res(63 downto 32);
-	    R_hi_lo(31 downto 0) <= mul_res(31 downto 0);
+	    R_hi_lo(63 downto 32) <=
+	      conv_std_logic_vector(mul_res(63 downto 32), 32);
+	    R_hi_lo(31 downto 0) <=
+	      conv_std_logic_vector(mul_res(31 downto 0), 32);
 	end if;
     end process;
     end generate; -- multiplier
