@@ -101,11 +101,26 @@ architecture x of bram is
 	others => (others => '0')
     );
 
+    -- Lattice Diamond attributes
     attribute syn_ramstyle: string;
     attribute syn_ramstyle of bram_0: signal is "no_rw_check";
     attribute syn_ramstyle of bram_1: signal is "no_rw_check";
     attribute syn_ramstyle of bram_2: signal is "no_rw_check";
     attribute syn_ramstyle of bram_3: signal is "no_rw_check";
+
+    -- Xilinx XST attributes
+    attribute ram_style: string;
+    attribute ram_style of bram_0: signal is "no_rw_check";
+    attribute ram_style of bram_1: signal is "no_rw_check";
+    attribute ram_style of bram_2: signal is "no_rw_check";
+    attribute ram_style of bram_3: signal is "no_rw_check";
+
+    -- Altera Quartus attributes
+    attribute ramstyle: string;
+    attribute ramstyle of bram_0: signal is "no_rw_check";
+    attribute ramstyle of bram_1: signal is "no_rw_check";
+    attribute ramstyle of bram_2: signal is "no_rw_check";
+    attribute ramstyle of bram_3: signal is "no_rw_check";
 
     signal ibram_0, ibram_1, ibram_2, ibram_3: std_logic_vector(7 downto 0);
     signal dbram_0, dbram_1, dbram_2, dbram_3: std_logic_vector(7 downto 0);
@@ -118,24 +133,15 @@ begin
     process(clk)
     begin
 	if falling_edge(clk) then
-	    if imem_addr_strobe = '1' then
-		ibram_0 <= bram_0(conv_integer(imem_addr));
-		ibram_1 <= bram_1(conv_integer(imem_addr));
-		ibram_2 <= bram_2(conv_integer(imem_addr));
-		ibram_3 <= bram_3(conv_integer(imem_addr));
-	    end if;
-	end if;
-    end process;
-
-    process(clk)
-    begin
-	if falling_edge(clk) then
-	    if dmem_addr_strobe = '1' and dmem_byte_sel(0) = '1' then
-		dbram_0 <= bram_0(conv_integer(dmem_addr));
-		if dmem_write = '1' then
+	    if dmem_addr_strobe = '1' then
+		if dmem_write = '1' and dmem_byte_sel(0) = '1' then
 		    bram_0(conv_integer(dmem_addr)) <=
 		      dmem_data_in(7 downto 0);
 		end if;
+		dbram_0 <= bram_0(conv_integer(dmem_addr));
+	    end if;
+	    if imem_addr_strobe = '1' then
+		ibram_0 <= bram_0(conv_integer(imem_addr));
 	    end if;
 	end if;
     end process;
@@ -144,11 +150,14 @@ begin
     begin
 	if falling_edge(clk) then
 	    if dmem_addr_strobe = '1' and dmem_byte_sel(1) = '1' then
-		dbram_1 <= bram_1(conv_integer(dmem_addr));
 		if dmem_write = '1' then
 		    bram_1(conv_integer(dmem_addr)) <=
 		      dmem_data_in(15 downto 8);
 		end if;
+		dbram_1 <= bram_1(conv_integer(dmem_addr));
+	    end if;
+	    if imem_addr_strobe = '1' then
+		ibram_1 <= bram_1(conv_integer(imem_addr));
 	    end if;
 	end if;
     end process;
@@ -157,11 +166,14 @@ begin
     begin
 	if falling_edge(clk) then
 	    if dmem_addr_strobe = '1' and dmem_byte_sel(2) = '1' then
-		dbram_2 <= bram_2(conv_integer(dmem_addr));
 		if dmem_write = '1' then
 		    bram_2(conv_integer(dmem_addr)) <=
 		      dmem_data_in(23 downto 16);
 		end if;
+		dbram_2 <= bram_2(conv_integer(dmem_addr));
+	    end if;
+	    if imem_addr_strobe = '1' then
+		ibram_2 <= bram_2(conv_integer(imem_addr));
 	    end if;
 	end if;
     end process;
@@ -170,11 +182,14 @@ begin
     begin
 	if falling_edge(clk) then
 	    if dmem_addr_strobe = '1' and dmem_byte_sel(3) = '1' then
-		dbram_3 <= bram_3(conv_integer(dmem_addr));
 		if dmem_write = '1' then
 		    bram_3(conv_integer(dmem_addr)) <=
 		      dmem_data_in(31 downto 24);
 		end if;
+		dbram_3 <= bram_3(conv_integer(dmem_addr));
+	    end if;
+	    if imem_addr_strobe = '1' then
+		ibram_3 <= bram_3(conv_integer(imem_addr));
 	    end if;
 	end if;
     end process;
