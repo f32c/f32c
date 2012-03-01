@@ -583,9 +583,7 @@ begin
 		    if C_debug then
 			ID_EX_instruction <= IF_ID_instruction;
 			ID_EX_PC <= IF_ID_PC;
-			if (IF_ID_instruction /= x"00000000") then
-			    D_instr <= D_instr + 1;
-		        end if;
+			D_instr <= D_instr + 1;
 		    else
 			ID_EX_instruction <= IF_ID_instruction; -- XXX MULT!!!
 		    end if;
