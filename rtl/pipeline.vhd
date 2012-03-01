@@ -275,7 +275,6 @@ begin
     --	revisit movz / movn: use ALU (and / or) instead of (slow) shifter!
     --	revisit target_addr computation in idecode.vhd
     --	don't branch until branch delay slot fetched!!!
-    --	reset?
     --	MTHI/MTLO/MFC0/MTC0?
     --	division? - block on MFHI/MFLO if result not ready
     --	result forwarding: muxes instead of priority encoders?
@@ -330,7 +329,12 @@ begin
 		IF_ID_branch_delay_slot <=
 		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 		IF_ID_bpredict_index <= IF_bpredict_index;
-		IF_ID_instruction <= IF_instruction;
+		if reset = '1' then
+		    IF_ID_instruction <=
+		      MIPS32_OP_SPECIAL & x"00000" & MIPS32_SPEC_JR;
+		else
+		    IF_ID_instruction <= IF_instruction;
+		end if;
 	    end if;
 	end if;
     end process;
