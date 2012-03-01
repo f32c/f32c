@@ -172,6 +172,40 @@ constant MIPS32_RIMM_SYNCI:	std_logic_vector := "11111";
 constant MIPS32_REG_ZERO:	std_logic_vector := "00000";
 constant MIPS32_REG_RA:		std_logic_vector := "11111";
 
+-- COP0 registers
+constant MIPS_COP0_TLB_INDEX:	std_logic_vector := "00000";
+constant MIPS_COP0_TLB_RANDOM:	std_logic_vector := "00001";
+constant MIPS_COP0_TLB_L00:	std_logic_vector := "00010";
+constant MIPS_COP0_TLB_L01:	std_logic_vector := "00011";
+constant MIPS_COP0_TLB_CONTEXT:	std_logic_vector := "00100";
+constant MIPS_COP0_TLB_PG_MASK:	std_logic_vector := "00101";
+constant MIPS_COP0_TLB_WIRED:	std_logic_vector := "00110";
+constant MIPS_COP0_INFO:	std_logic_vector := "00111";
+constant MIPS_COP0_BAD_VADDR:	std_logic_vector := "01000";
+constant MIPS_COP0_COUNT:	std_logic_vector := "01001";
+constant MIPS_COP0_TLB_HI:	std_logic_vector := "01010";
+constant MIPS_COP0_COMPARE:	std_logic_vector := "01011";
+constant MIPS_COP0_STATUS:	std_logic_vector := "01100";
+constant MIPS_COP0_CAUSE:	std_logic_vector := "01101";
+constant MIPS_COP0_EXC_PC:	std_logic_vector := "01110";
+constant MIPS_COP0_PRID:	std_logic_vector := "01111";
+constant MIPS_COP0_CONFIG:	std_logic_vector := "10000";
+constant MIPS_COP0_LLADDR:	std_logic_vector := "10001";
+constant MIPS_COP0_WATCH_LO:	std_logic_vector := "10010";
+constant MIPS_COP0_WATCH_HI:	std_logic_vector := "10011";
+constant MIPS_COP0_TLB_XCONTEXT: std_logic_vector := "10100";
+constant MIPS_COP0_RESERVED_21:	std_logic_vector := "10101";
+constant MIPS_COP0_RESERVED_22:	std_logic_vector := "10110";
+constant MIPS_COP0_DEBUG:	std_logic_vector := "10111";
+constant MIPS_COP0_DEPC:	std_logic_vector := "11000";
+constant MIPS_COP0_PERFCNT:	std_logic_vector := "11001";
+constant MIPS_COP0_ECC:		std_logic_vector := "11010";
+constant MIPS_COP0_CACHE_ERR:	std_logic_vector := "11011";
+constant MIPS_COP0_DATA_LO:	std_logic_vector := "11100";
+constant MIPS_COP0_DATA_HI:	std_logic_vector := "11101";
+constant MIPS_COP0_ERROR_PC:	std_logic_vector := "11110";
+constant MIPS_COP0_DESAVE:	std_logic_vector := "11111";
+
 --
 -- f32c internal codes
 --
