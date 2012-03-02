@@ -95,7 +95,6 @@ architecture Behavioral of pipeline is
     signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
     signal IF_ID_branch_delay_slot: boolean;
     signal IF_ID_PC, IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
-    signal IF_ID_exception: boolean;
 	
     -- pipeline stage 2: instruction decode and register fetch
     signal ID_running: boolean;
@@ -337,20 +336,7 @@ begin
 		IF_ID_branch_delay_slot <=
 		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 		IF_ID_bpredict_index <= IF_bpredict_index;
-		if R_reset = '1' then
-		    IF_ID_instruction <=
-		      MIPS32_OP_SPECIAL & x"00000" & MIPS32_SPEC_JR;
-		    IF_ID_exception <= false;
-		elsif R_intr = '1' and not IF_ID_exception and
-		  (ID_branch_cycle or ID_jump_cycle or ID_jump_register) then
-		    IF_ID_instruction <=
-		      MIPS32_OP_SPECIAL & x"00000" & MIPS32_SPEC_JR;
-		    IF_ID_exception <= true;
-		    R_cop0_epc <= IF_PC; -- addr of instruction just cancelled
-		else
-		    IF_ID_instruction <= IF_instruction;
-		    IF_ID_exception <= false;
-		end if;
+		IF_ID_instruction <= IF_instruction;
 	    end if;
 	end if;
     end process;
@@ -483,14 +469,12 @@ begin
     ID_branch_target <= C_PC_mask(31 downto 2) and (IF_ID_PC_4 +
       (ID_sign_extension(13 downto 0) & IF_ID_instruction(15 downto 0)));
 
-    -- branch prediction - don't predict if interrupts are pending!
+    -- branch prediction
     ID_predict_taken <= C_branch_prediction and
-      ID_branch_cycle and IF_ID_bpredict_score(1) = '1' and
-      not R_intr = '1';
+      ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
 
     -- compute jump target
-    ID_jump_target <= ID_reg1_data(31 downto 2) or C_intr_PC(31 downto 2)
-      when IF_ID_exception else
+    ID_jump_target <=
       ID_reg1_data(31 downto 2) when ID_jump_register else
       ID_branch_target when ID_predict_taken else
       IF_ID_PC(29 downto 24) & IF_ID_instruction(23 downto 0);
@@ -552,6 +536,7 @@ begin
 		    ID_EX_reg2_data <= "--------------------------------";
 		    ID_EX_alu_op2 <= "--------------------------------";
 		    ID_EX_immediate <= "--------------------------------";
+		    ID_EX_cop0_addr <= "-----";
 		    ID_EX_op_major <= "--";
 		    ID_EX_op_minor <= "---";
 		    ID_EX_mem_size <= "--";
@@ -565,6 +550,7 @@ begin
 		    ID_EX_reg2_data <= ID_reg2_eff_data;
 		    ID_EX_alu_op2 <= ID_alu_op2;
 		    ID_EX_immediate <= ID_immediate;
+		    ID_EX_cop0_addr <= ID_reg2_addr;
 		    ID_EX_sign_extend <= ID_sign_extend;
 		    ID_EX_op_major <= ID_op_major;
 		    ID_EX_op_minor <= ID_op_minor;
