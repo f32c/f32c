@@ -44,6 +44,7 @@ entity pipeline is
 	C_movn_movz: boolean;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff";
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
+	C_intr_PC: std_logic_vector(31 downto 0) := x"00000200";
 
 	-- COP0 options
 	C_tsc: boolean;
@@ -229,9 +230,11 @@ architecture Behavioral of pipeline is
     signal R_hi_lo: std_logic_vector(63 downto 0);
 
     -- COP0
+    signal R_reset: std_logic; -- registered reset input
+    signal R_intr: std_logic; -- registered IRQ input
     signal R_cop0_count: std_logic_vector(31 downto 0);
     signal R_cop0_epc: std_logic_vector(31 downto 2);
-    signal R_cop0_ei: std_logic := '1';
+    signal R_cop0_ei: std_logic;
 
     -- signals used for debugging only
     signal reg_trace_data: std_logic_vector(31 downto 0);
@@ -334,17 +337,16 @@ begin
 		IF_ID_branch_delay_slot <=
 		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 		IF_ID_bpredict_index <= IF_bpredict_index;
-		if reset = '1' then
+		if R_reset = '1' then
 		    IF_ID_instruction <=
 		      MIPS32_OP_SPECIAL & x"00000" & MIPS32_SPEC_JR;
 		    IF_ID_exception <= false;
-		elsif intr = '1' and R_cop0_ei = '1' and not
+		elsif R_intr = '1' and not IF_ID_exception and
 		  (ID_branch_cycle or ID_jump_cycle or ID_jump_register) then
 		    IF_ID_instruction <=
 		      MIPS32_OP_SPECIAL & x"00000" & MIPS32_SPEC_JR;
-		    R_cop0_ei <= '0';
 		    IF_ID_exception <= true;
-		    R_cop0_epc <= IF_PC;
+		    R_cop0_epc <= IF_PC; -- addr of instruction just cancelled
 		else
 		    IF_ID_instruction <= IF_instruction;
 		    IF_ID_exception <= false;
@@ -481,12 +483,14 @@ begin
     ID_branch_target <= C_PC_mask(31 downto 2) and (IF_ID_PC_4 +
       (ID_sign_extension(13 downto 0) & IF_ID_instruction(15 downto 0)));
 
-    -- branch prediction
+    -- branch prediction - don't predict if interrupts are pending!
     ID_predict_taken <= C_branch_prediction and
-      ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
+      ID_branch_cycle and IF_ID_bpredict_score(1) = '1' and
+      not R_intr = '1';
 
     -- compute jump target
-    ID_jump_target <=
+    ID_jump_target <= ID_reg1_data(31 downto 2) or C_intr_PC(31 downto 2)
+      when IF_ID_exception else
       ID_reg1_data(31 downto 2) when ID_jump_register else
       ID_branch_target when ID_predict_taken else
       IF_ID_PC(29 downto 24) & IF_ID_instruction(23 downto 0);
@@ -986,6 +990,8 @@ begin
     end generate; -- multiplier
 
     -- COP0
+    R_reset <= reset when rising_edge(clk);
+    R_intr <= intr and R_cop0_ei when rising_edge(clk);
     R_cop0_count <= R_cop0_count + 1 when rising_edge(clk);
 
     -- XXX performance counters
