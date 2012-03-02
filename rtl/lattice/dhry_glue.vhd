@@ -142,7 +142,7 @@ begin
 	C_debug => false
     )
     port map (
-	clk => clk, reset => '0',
+	clk => clk, reset => '0', intr => '0',
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,
