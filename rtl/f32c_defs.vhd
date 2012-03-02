@@ -245,7 +245,7 @@ constant OP_MAJOR_ALT:		std_logic_vector := "11";
 
 constant ALT_HI:		std_logic_vector := "000";
 constant ALT_LO:		std_logic_vector := "001";
-constant ALT_COP0_COUNT:	std_logic_vector := "011";
-constant ALT_PC_8:		std_logic_vector := "111";
+constant ALT_PC_8:		std_logic_vector := "010";
+constant ALT_COP0:		std_logic_vector := "011";
 
 end;
