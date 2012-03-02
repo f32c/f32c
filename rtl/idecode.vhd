@@ -197,7 +197,7 @@ begin
 	    ignore_reg2 <= true;
 	when MIPS32_OP_COP0 =>
 	    read_alt <= true;
-	    alt_sel <= ALT_COP0_COUNT;
+	    alt_sel <= ALT_COP0;
 	    target_addr <= instruction(20 downto 16);
 	when MIPS32_OP_BEQL =>
 	    if C_branch_likely then

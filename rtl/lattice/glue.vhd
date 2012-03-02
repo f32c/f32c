@@ -126,7 +126,7 @@ architecture Behavioral of glue is
     signal trace_addr: std_logic_vector(5 downto 0);
     signal trace_data: std_logic_vector(31 downto 0);
     signal debug_txd: std_logic;
-    signal debug_res: std_logic;
+    signal res, intr: std_logic;
 
     -- FM TX DDS
     signal clk_dds, dds_out: std_logic;
@@ -142,9 +142,10 @@ begin
     )
     port map (
 	clk_25m => clk_25m, clk => clk, clk_325m => clk_dds,
-	sel => sw(2), key => btn_down, res => debug_res
+	sel => sw(2), key => btn_down, res => '0'
     );
-    debug_res <= btn_up and sw(0) when C_debug else '0';
+    res <= btn_up and sw(0); -- when C_debug else '0';
+    intr <= btn_center and sw(0); -- when C_debug else '0';
 
     -- f32c core
     pipeline: entity pipeline
@@ -162,7 +163,7 @@ begin
 	C_debug => C_debug
     )
     port map (
-	clk => clk, reset => '0',
+	clk => clk, reset => res, intr => intr,
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,

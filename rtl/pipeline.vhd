@@ -72,6 +72,7 @@ entity pipeline is
 	dmem_data_in: in std_logic_vector(31 downto 0);
 	dmem_data_out: out std_logic_vector(31 downto 0);
 	dmem_data_ready: in std_logic;
+	intr: in std_logic;
 	-- debugging only
 	trace_addr: in std_logic_vector(5 downto 0);
 	trace_data: out std_logic_vector(31 downto 0)
@@ -93,6 +94,7 @@ architecture Behavioral of pipeline is
     signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
     signal IF_ID_branch_delay_slot: boolean;
     signal IF_ID_PC, IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
+    signal IF_ID_exception: boolean;
 	
     -- pipeline stage 2: instruction decode and register fetch
     signal ID_running: boolean;
@@ -128,7 +130,7 @@ architecture Behavioral of pipeline is
     signal ID_seb_seh_select: std_logic;
     -- boundary to stage 3
     signal ID_EX_bpredict_score: std_logic_vector(1 downto 0);
-    signal ID_EX_writeback_addr: std_logic_vector(4 downto 0);
+    signal ID_EX_writeback_addr, ID_EX_cop0_addr: std_logic_vector(4 downto 0);
     signal ID_EX_reg1_data, ID_EX_reg2_data: std_logic_vector(31 downto 0);
     signal ID_EX_immediate, ID_EX_alu_op2: std_logic_vector(31 downto 0);
     signal ID_EX_fwd_ex_reg1, ID_EX_fwd_ex_reg2, ID_EX_fwd_ex_alu_op2: boolean;
@@ -164,6 +166,7 @@ architecture Behavioral of pipeline is
     signal EX_from_shift: std_logic_vector(31 downto 0);
     signal EX_from_alu_addsubx: std_logic_vector(32 downto 0);
     signal EX_from_alu_logic, EX_from_alt: std_logic_vector(31 downto 0);
+    signal EX_from_cop0: std_logic_vector(31 downto 0);
     signal EX_from_alu_equal: boolean;
     signal EX_2bit_add: std_logic_vector(1 downto 0);
     signal EX_mem_align_shamt: std_logic_vector(1 downto 0);
@@ -226,7 +229,9 @@ architecture Behavioral of pipeline is
     signal R_hi_lo: std_logic_vector(63 downto 0);
 
     -- COP0
-    signal R_tsc: std_logic_vector(31 downto 0);
+    signal R_cop0_count: std_logic_vector(31 downto 0);
+    signal R_cop0_epc: std_logic_vector(31 downto 2);
+    signal R_cop0_ei: std_logic := '1';
 
     -- signals used for debugging only
     signal reg_trace_data: std_logic_vector(31 downto 0);
@@ -332,8 +337,17 @@ begin
 		if reset = '1' then
 		    IF_ID_instruction <=
 		      MIPS32_OP_SPECIAL & x"00000" & MIPS32_SPEC_JR;
+		    IF_ID_exception <= false;
+		elsif intr = '1' and R_cop0_ei = '1' and not
+		  (ID_branch_cycle or ID_jump_cycle or ID_jump_register) then
+		    IF_ID_instruction <=
+		      MIPS32_OP_SPECIAL & x"00000" & MIPS32_SPEC_JR;
+		    R_cop0_ei <= '0';
+		    IF_ID_exception <= true;
+		    R_cop0_epc <= IF_PC;
 		else
 		    IF_ID_instruction <= IF_instruction;
+		    IF_ID_exception <= false;
 		end if;
 	    end if;
 	end if;
@@ -687,13 +701,18 @@ begin
       EX_2bit_add = "11" or ID_EX_mem_size(1) = '1' or
       (ID_EX_mem_size(0) = '1' and EX_2bit_add(1) = '1') else '0';		
 
-    -- MFHI, MFLO, link PC + 8 -- XXX what about MFC0 / MFC1?
+    -- MFHI, MFLO, MFC0, link PC + 8
     with ID_EX_alt_sel select
     EX_from_alt <=
       R_hi_lo(63 downto 32) when ALT_HI,
       R_hi_lo(31 downto 0) when ALT_LO,
-      R_tsc when ALT_COP0_COUNT,
+      EX_from_cop0 when ALT_COP0,
       IF_ID_PC_4 & "00" when others;
+
+    -- COP0 outbound mux
+    with ID_EX_cop0_addr select
+    EX_from_cop0 <=
+      R_cop0_count when others;
 
     -- branch or not?
     process(ID_EX_branch_condition, EX_from_alu_equal, EX_eff_reg1)
@@ -967,7 +986,7 @@ begin
     end generate; -- multiplier
 
     -- COP0
-    R_tsc <= R_tsc + 1 when rising_edge(clk);
+    R_cop0_count <= R_cop0_count + 1 when rising_edge(clk);
 
     -- XXX performance counters
     G_perf_cnt:
@@ -1026,7 +1045,7 @@ begin
 	-- dmem_data_out	when x"2f",
 	dmem_data_in		when x"30",
 	--
-	R_tsc			when x"34",
+	R_cop0_count		when x"34",
 	D_instr			when x"35",
 	D_b_instr		when x"36",
 	D_b_taken		when x"37",
