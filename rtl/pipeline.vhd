@@ -750,6 +750,16 @@ begin
 		else
 		    EX_MEM_take_branch <= false;
 		end if;
+		-- Exception dispatching should happen here
+		if R_reset = '1' then
+		    EX_MEM_writeback_addr <= "00000";
+		    EX_MEM_mem_cycle <= '0';
+		    EX_MEM_branch_taken <= false;
+		    EX_MEM_take_branch <= true;
+		    EX_MEM_branch_target <= C_init_PC(31 downto 2) and
+		      C_PC_mask(31 downto 2);
+		    -- XXX TODO: cancel next instruction
+		end if;
 		if ID_EX_op_major = OP_MAJOR_SLT then
 		    EX_MEM_logic_cycle <= '1';
 		    EX_MEM_logic_data(31 downto 1) <= x"0000000" & "000";
