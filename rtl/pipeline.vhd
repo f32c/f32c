@@ -172,6 +172,8 @@ architecture Behavioral of pipeline is
     signal EX_mem_align_shamt: std_logic_vector(1 downto 0);
     signal EX_mem_byte_sel: std_logic_vector(3 downto 0);
     signal EX_take_branch: boolean;
+    signal EX_exception_pending: boolean;
+    signal EX_exception_target: std_logic_vector(31 downto 0);
     -- boundary to stage 4
     signal EX_MEM_writeback_addr: std_logic_vector(4 downto 0);
     signal EX_MEM_addsub_data: std_logic_vector(31 downto 0);
@@ -721,10 +723,40 @@ begin
 	end case;
     end process;
 
+    -- Exceptions / interrupts
+    EX_exception_pending <= R_reset = '1' or
+      (R_intr = '1' and R_cop0_ei = '1');
+    EX_exception_target <= C_init_PC when R_reset = '1' else C_intr_PC;
+
     process(clk)
     begin
 	if rising_edge(clk) then
-	    if MEM_running and EX_running and not MEM_cancel_EX then
+	    if EX_exception_pending or
+	      (MEM_running and (MEM_cancel_EX or not EX_running)) then
+		if EX_exception_pending then
+		    EX_MEM_branch_target <= EX_exception_target(31 downto 2)
+		     and C_PC_mask(31 downto 2);
+		    EX_MEM_take_branch <= true;
+		    -- XXX testing only - ei should be set elsewhere
+		    if R_reset = '1' then
+			R_cop0_ei <= '1';
+		    else
+			R_cop0_ei <= '0';
+		    end if;
+		else
+		    EX_MEM_take_branch <= false;
+		end if;
+		-- insert a bubble in the MEM stage
+		EX_MEM_branch_taken <= false;
+		EX_MEM_branch_likely <= false;
+		EX_MEM_writeback_addr <= "00000";
+		EX_MEM_mem_cycle <= '0';
+		EX_MEM_latency <= '0';
+		-- debugging only
+		if C_debug then
+		    EX_MEM_instruction <= x"00000000";
+		end if;
+	    elsif MEM_running and EX_running and not MEM_cancel_EX then
 		EX_MEM_mem_data_out <= EX_from_shift;
 		EX_MEM_addsub_data <= EX_from_alu_addsubx(31 downto 0);
 		EX_MEM_mem_size <= ID_EX_mem_size;
@@ -749,16 +781,6 @@ begin
 		    end if;
 		else
 		    EX_MEM_take_branch <= false;
-		end if;
-		-- Exception dispatching should happen here
-		if R_reset = '1' then
-		    EX_MEM_writeback_addr <= "00000";
-		    EX_MEM_mem_cycle <= '0';
-		    EX_MEM_branch_taken <= false;
-		    EX_MEM_take_branch <= true;
-		    EX_MEM_branch_target <= C_init_PC(31 downto 2) and
-		      C_PC_mask(31 downto 2);
-		    -- XXX TODO: cancel next instruction
 		end if;
 		if ID_EX_op_major = OP_MAJOR_SLT then
 		    EX_MEM_logic_cycle <= '1';
@@ -793,18 +815,6 @@ begin
 		if C_debug then
 		    EX_MEM_instruction <= ID_EX_instruction;
 		    EX_MEM_PC <= ID_EX_PC;
-		end if;
-	    elsif MEM_running and (MEM_cancel_EX or not EX_running) then
-		-- insert a bubble in the MEM stage
-		EX_MEM_take_branch <= false;
-		EX_MEM_branch_taken <= false;
-		EX_MEM_branch_likely <= false;
-		EX_MEM_writeback_addr <= "00000";
-		EX_MEM_mem_cycle <= '0';
-		EX_MEM_latency <= '0';
-		-- debugging only
-		if C_debug then
-		    EX_MEM_instruction <= x"00000000";
 		end if;
 	    end if;
 	end if;
