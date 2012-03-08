@@ -69,6 +69,8 @@ MK_CFLAGS += -fno-zero-initialized-in-bss
 
 MK_LDFLAGS += -Ttext ${LOADADDR} -N ${ENDIANFLAGS}
 
+# Pull in any module-specific options
+MK_CFLAGS += ${CFLAGS}
 
 CC = mips-elf-gcc ${MK_INCLUDES} ${MK_CFLAGS}
 MKDEP = ${CC} -MM
