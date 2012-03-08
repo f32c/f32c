@@ -42,6 +42,9 @@ entity glue is
 	C_sign_extend: boolean := true;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
 
+	-- COP0 options
+	C_tsc: boolean := true;
+
 	-- CPU core configuration options
 	C_branch_prediction: boolean := true;
 	C_result_forwarding: boolean := true;
@@ -153,6 +156,7 @@ begin
 	C_movn_movz => C_movn_movz,
 	C_mult_enable => C_mult_enable,
 	C_PC_mask => C_PC_mask,
+	C_tsc => C_tsc,
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
@@ -162,7 +166,7 @@ begin
 	C_debug => C_debug
     )
     port map (
-	clk => clk, reset => '0',
+	clk => clk, reset => '0', intr => '0',
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,
