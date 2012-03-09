@@ -554,7 +554,7 @@ begin
 		    ID_EX_reg2_data <= ID_reg2_eff_data;
 		    ID_EX_alu_op2 <= ID_alu_op2;
 		    ID_EX_immediate <= ID_immediate;
-		    ID_EX_cop0_addr <= ID_reg2_addr;
+		    ID_EX_cop0_addr <= IF_ID_instruction(15 downto 11);
 		    ID_EX_sign_extend <= ID_sign_extend;
 		    ID_EX_op_major <= ID_op_major;
 		    ID_EX_op_minor <= ID_op_minor;
