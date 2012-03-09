@@ -61,7 +61,7 @@ entity glue is
 	-- SoC configuration options
 	C_mem_size: string := "16k";
 	C_sram: boolean := true;
-	C_tsc: boolean := true;
+	C_sram_wait_cycles: std_logic_vector := x"4"; -- OK do 87.5 MHz
 	C_sio: boolean := true;
 	C_gpio: boolean := true;
 	C_flash: boolean := true;
@@ -102,9 +102,14 @@ architecture Behavioral of glue is
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
 
     -- SRAM
+    signal R_sram_phase: std_logic;
+    signal R_sram_delay: std_logic_vector(3 downto 0);
+    signal R_sram_data: std_logic_vector(31 downto 0);
     signal R_sram_a: std_logic_vector(18 downto 0);
     signal R_sram_d: std_logic_vector(15 downto 0);
     signal R_sram_wel, R_sram_lbl, R_sram_ubl: std_logic;
+    signal R_sram_fast_read: boolean;
+    signal sram_halfword, sram_ready: std_logic;
 
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
@@ -112,8 +117,6 @@ architecture Behavioral of glue is
     signal R_flash_cen, R_flash_sck, R_flash_si: std_logic;
     signal R_sdcard_cen, R_sdcard_sck, R_sdcard_si: std_logic;
     signal R_led: std_logic_vector(7 downto 0);
-    signal R_tsc_25m: std_logic_vector(34 downto 0);
-    signal R_tsc: std_logic_vector(31 downto 0);
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
     signal R_dac_in_l, R_dac_in_r: std_logic_vector(15 downto 2);
@@ -123,7 +126,7 @@ architecture Behavioral of glue is
     signal trace_addr: std_logic_vector(5 downto 0);
     signal trace_data: std_logic_vector(31 downto 0);
     signal debug_txd: std_logic;
-    signal debug_res: std_logic;
+    signal res, intr: std_logic;
 
     -- FM TX DDS
     signal clk_dds, dds_out: std_logic;
@@ -143,19 +146,17 @@ begin
     )
     port map (
 	clk_25m => clk_25m, clk => clk, clk_325m => clk_dds,
-	sel => sw(2), key => btn_down, res => debug_res
+	sel => sw(2), key => btn_down, res => '0'
     );
-    debug_res <= btn_up and sw(0) when C_debug else '0';
+    res <= btn_up and sw(0); -- when C_debug else '0';
+    intr <= btn_center and sw(0); -- when C_debug else '0';
 
     -- f32c core
     pipeline: entity pipeline
     generic map (
-	C_big_endian => C_big_endian,
-	C_branch_likely => C_branch_likely,
-	C_sign_extend => C_sign_extend,
-	C_movn_movz => C_movn_movz,
-	C_mult_enable => C_mult_enable,
-	C_PC_mask => C_PC_mask,
+	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
+	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
+	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
 	C_tsc => C_tsc,
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
@@ -166,7 +167,7 @@ begin
 	C_debug => C_debug
     )
     port map (
-	clk => clk, reset => '0', intr => '0',
+	clk => clk, reset => res, intr => intr,
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,
@@ -211,6 +212,11 @@ begin
     p_ring <= R_dac_acc_r(16) when sw(3) = '0' else breakout_audio;
     end generate;
 
+    sram_ready <='1' when not C_sram or
+      (R_sram_delay = x"0" and R_sram_phase = '0') else '0';
+    dmem_data_ready <= '1' when dmem_addr(31 downto 28) /= x"8" else
+      sram_ready;
+
     -- I/O port map:
     -- 0x8*******: (2B, RW) * SRAM
     -- 0xf*****00: (4B, RW) * GPIO (LED, switches/buttons)
@@ -221,21 +227,75 @@ begin
     -- 0xf*****14: (1B, RW) * SPI MicroSD
     -- 0xf*****1c: (4B, WR) * FM DDS register
     -- I/O write access:
+    sram_halfword <= '0' when dmem_byte_sel(3 downto 2) = "00" else
+      '1' when dmem_byte_sel(1 downto 0) = "00" else not R_sram_phase;
     process(clk)
     begin
-	if C_sram and falling_edge(clk) then
+	if C_sram and rising_edge(clk) then
 	    if dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
-		R_sram_a <= dmem_addr(20 downto 2);
-		R_sram_d <= cpu_to_dmem(15 downto 0);
-		R_sram_wel <= not dmem_write;
-		R_sram_lbl <= '0';
-		R_sram_ubl <= '0';
+		if R_sram_delay = "000" & R_sram_phase then
+		    R_sram_delay <= C_sram_wait_cycles;
+		    R_sram_phase <= not R_sram_phase;
+		else
+		    if R_sram_delay = C_sram_wait_cycles and
+		      (R_sram_fast_read or dmem_write = '1') then
+			-- begin of a preselected read or a fast store
+			R_sram_delay <= R_sram_delay - 2;
+		    else
+			R_sram_delay <= R_sram_delay - 1;
+		    end if;
+		    if dmem_byte_sel(3 downto 2) = "00" or
+		      dmem_byte_sel(1 downto 0) = "00" then
+			R_sram_phase <= '0';
+		    end if;
+		end if;
 	    else
-		R_sram_wel <= '1';
-		R_sram_lbl <= '1';
-		R_sram_ubl <= '1';
+		R_sram_delay <= C_sram_wait_cycles;
+		R_sram_phase <= '1';
 	    end if;
 	end if;
+
+	if falling_edge(clk) then
+	    if C_sram and
+	      dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
+		R_sram_fast_read <= false;
+		if R_sram_delay = "0000" and dmem_write = '0' then
+		    R_sram_a <= R_sram_a + 1;
+		else
+		    if R_sram_delay = C_sram_wait_cycles and
+		      R_sram_a = (dmem_addr(19 downto 2) & sram_halfword) then
+			R_sram_fast_read <= true;
+		    end if;
+		    R_sram_a <= dmem_addr(19 downto 2) & sram_halfword;
+		end if;
+		R_sram_wel <= not dmem_write;
+		if sram_halfword = '1' then
+		    if dmem_write = '1' then
+			R_sram_d <= cpu_to_dmem(31 downto 16);
+		    else
+			R_sram_d <= "ZZZZZZZZZZZZZZZZ";
+		    end if;
+		    R_sram_data(31 downto 16) <= sram_d;
+		    R_sram_ubl <= not dmem_byte_sel(3);
+		    R_sram_lbl <= not dmem_byte_sel(2);
+		else
+		    if dmem_write = '1' then
+			R_sram_d <= cpu_to_dmem(15 downto 0);
+		    else
+			R_sram_d <= "ZZZZZZZZZZZZZZZZ";
+		    end if;
+		    R_sram_data(15 downto 0) <= sram_d;
+		    R_sram_ubl <= not dmem_byte_sel(1);
+		    R_sram_lbl <= not dmem_byte_sel(0);
+		end if;
+	    else
+		R_sram_d <= "ZZZZZZZZZZZZZZZZ";
+		R_sram_wel <= '1';
+		R_sram_lbl <= '0';
+		R_sram_ubl <= '0';
+	    end if;
+	end if;
+
 	if rising_edge(clk) and dmem_addr_strobe = '1'
 	  and dmem_write = '1' and dmem_addr(31 downto 28) = x"f" then
 	    -- GPIO
@@ -291,11 +351,11 @@ begin
     sdcard_si <= R_sdcard_si when C_sdcard else 'Z';
     sdcard_sck <= R_sdcard_sck when C_sdcard else 'Z';
     sdcard_cen <= R_sdcard_cen when C_sdcard else 'Z';
-    sram_d <= R_sram_d when C_sram and R_sram_wel = '0' else "ZZZZZZZZZZZZZZZZ";
+    sram_d <= R_sram_d;
     sram_a <= R_sram_a;
-    sram_wel <= R_sram_wel when C_sram else '1';
-    sram_lbl <= R_sram_lbl when C_sram else '1';
-    sram_ubl <= R_sram_ubl when C_sram else '1';
+    sram_wel <= R_sram_wel;
+    sram_lbl <= R_sram_lbl;
+    sram_ubl <= R_sram_ubl;
 
     process(clk)
     begin
@@ -305,36 +365,13 @@ begin
 	end if;
     end process;
 
-    G_tsc:
-    if C_tsc generate
-    process(clk_25m)
-    begin
-	if rising_edge(clk_25m) then
-	    R_tsc_25m <= R_tsc_25m + 1;
-	end if;
-    end process;
-    -- Safely move upper bits of tsc_25m over clock domain boundary
-    process(clk, R_tsc_25m)
-    begin
-	if rising_edge(clk) and R_tsc_25m(2 downto 1) = "10" then
-	    if C_big_endian then
-		R_tsc <= R_tsc_25m(10 downto 3) & R_tsc_25m(18 downto 11) &
-		  R_tsc_25m(26 downto 19) & R_tsc_25m(34 downto 27);
-	    else
-		R_tsc <= R_tsc_25m(34 downto 3);
-	    end if;
-	end if;
-    end process;
-    end generate;
-
     -- XXX replace with a balanced multiplexer
-    process(dmem_addr, R_sw, R_btns, R_tsc, from_sio, flash_so, sdcard_so)
+    process(dmem_addr, R_sw, R_btns, from_sio, flash_so, sdcard_so)
     begin
 	case dmem_addr(4 downto 2) is
 	when "000"  =>
 	    io_to_cpu <="----------------" & "----" & R_sw & "---" & R_btns;
 	when "001"  => io_to_cpu <= from_sio;
-	when "010"  => io_to_cpu <= R_tsc;
 	when "100"  =>
 	    if C_flash then
 		io_to_cpu <= "------------------------" & "0000000" & flash_so;
@@ -353,13 +390,12 @@ begin
     end process;
 
     final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = x"f"
-      else x"0000" & sram_d when C_sram and dmem_addr(31 downto 28) = x"8"
+      else R_sram_data when C_sram and dmem_addr(31 downto 28) = x"8"
       else dmem_to_cpu;
 
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
     imem_data_ready <= '1';
-    dmem_data_ready <= '1';
     bram: entity bram
     generic map (
 	C_mem_size => C_mem_size
