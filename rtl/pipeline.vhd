@@ -47,7 +47,8 @@ entity pipeline is
 	C_intr_PC: std_logic_vector(31 downto 0) := x"00000200";
 
 	-- COP0 options
-	C_tsc: boolean;
+	C_cop0_count: boolean;
+	C_cop0_config: boolean;
 
 	-- optimization options
 	C_result_forwarding: boolean := true;
@@ -369,8 +370,7 @@ begin
     generic map (
 	C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend,
-	C_movn_movz => C_movn_movz,
-	C_tsc => C_tsc
+	C_movn_movz => C_movn_movz
     )
     port map (
 	instruction => IF_ID_instruction,

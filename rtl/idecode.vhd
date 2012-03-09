@@ -38,8 +38,7 @@ entity idecode is
     generic(
 	C_branch_likely: boolean;
 	C_sign_extend: boolean;
-	C_movn_movz: boolean;
-	C_tsc: boolean
+	C_movn_movz: boolean
     );
     port(
 	instruction: in std_logic_vector(31 downto 0);
