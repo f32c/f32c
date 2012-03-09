@@ -47,6 +47,7 @@ entity pipeline is
 	C_intr_PC: std_logic_vector(31 downto 0) := x"00000200";
 
 	-- COP0 options
+	C_clk_freq: integer;
 	C_cop0_count: boolean;
 	C_cop0_config: boolean;
 
@@ -235,6 +236,7 @@ architecture Behavioral of pipeline is
     signal R_reset: std_logic; -- registered reset input
     signal R_intr: std_logic; -- registered IRQ input
     signal R_cop0_count: std_logic_vector(31 downto 0);
+    signal R_cop0_config: std_logic_vector(31 downto 0);
     signal R_cop0_epc: std_logic_vector(31 downto 2);
     signal R_cop0_ei: std_logic;
 
@@ -704,7 +706,9 @@ begin
     -- COP0 outbound mux
     with ID_EX_cop0_addr select
     EX_from_cop0 <=
-      R_cop0_count when others;
+      R_cop0_count when MIPS_COP0_COUNT,
+      R_cop0_config when MIPS_COP0_CONFIG,
+      "--------------------------------" when others;
 
     -- branch or not?
     process(ID_EX_branch_condition, EX_from_alu_equal, EX_eff_reg1)
@@ -1000,6 +1004,42 @@ begin
     R_intr <= intr and R_cop0_ei when rising_edge(clk);
     R_cop0_count <= R_cop0_count + 1 when rising_edge(clk);
 
+    -- R_cop0_config
+    process(R_cop0_count)
+    begin
+	if C_cop0_config then
+	    R_cop0_config(31) <= '0'; -- no config1 register
+	    if C_clk_freq = 81 then
+		R_cop0_config(30 downto 29) <= "11"; -- div with 4
+		R_cop0_config(28 downto 16) <=
+		  conv_std_logic_vector(325, 13);
+	    elsif C_clk_freq = 33 then
+		R_cop0_config(30 downto 29) <= "10"; -- div with 3
+		R_cop0_config(28 downto 16) <= conv_std_logic_vector(100, 13);
+	    elsif C_clk_freq = 66 then
+		R_cop0_config(30 downto 29) <= "10"; -- div with 3
+		R_cop0_config(28 downto 16) <= conv_std_logic_vector(200, 13);
+	    elsif C_clk_freq = 133 then
+		R_cop0_config(30 downto 29) <= "10"; -- div with 3
+		R_cop0_config(28 downto 16) <= conv_std_logic_vector(400, 13);
+	    elsif C_clk_freq = 166 then
+		R_cop0_config(30 downto 29) <= "10"; -- div with 3
+		R_cop0_config(28 downto 16) <= conv_std_logic_vector(500, 13);
+	    else
+		R_cop0_config(30 downto 29) <= "00"; -- div with 1
+		R_cop0_config(28 downto 16) <=
+		  conv_std_logic_vector(C_clk_freq, 13);
+	    end if;
+	    if C_big_endian then
+		R_cop0_config(15) <= '1';
+	    else
+		R_cop0_config(15) <= '0';
+	    end if;
+	    R_cop0_config(14 downto 0) <= conv_std_logic_vector(0, 15);
+	else
+	    R_cop0_config <= R_cop0_count;
+	end if;
+    end process;
     -- XXX performance counters
     G_perf_cnt:
     if C_debug generate
