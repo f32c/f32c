@@ -43,7 +43,8 @@ entity glue is
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
 
 	-- COP0 options
-	C_tsc: boolean := true;
+	C_cop0_count: boolean := true;
+	C_cop0_config: boolean := true;
 
 	-- CPU core configuration options
 	C_branch_prediction: boolean := true;
@@ -153,7 +154,7 @@ begin
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
 	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
-	C_tsc => C_tsc,
+	C_cop0_count => C_cop0_count, C_cop0_config => C_cop0_config,
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
