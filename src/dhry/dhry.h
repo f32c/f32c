@@ -391,10 +391,13 @@
 
 /* General definitions: */
 
+/* f32c */
 #include <sys/param.h>
-#include <io.h>		/* for RDTSC() */
+#include <io.h>			/* for RDTSC() */
 #include <stdio.h>
-#include <string.h>	/* for strcpy, strcmp */
+#include <string.h>		/* for strcpy, strcmp */
+#include <mips/asm.h>		
+#include <mips/cpuregs.h>	/* for mfc0 rxx, cp0_config */
 
 #define Null 0 
                 /* Value of a Null pointer */
