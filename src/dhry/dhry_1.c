@@ -281,9 +281,8 @@ main ()
     printf ("Dhry/s:\t\t%d\n", tmp);
     printf ("VAX DMIPS:\t%d.%03d\n", tmp / 1757,
 	(tmp * 1000 / 1757) % 1000);
-    printf ("VAX DMIPS/MHz:\t%d.%03d\n",
-	(tmp * 10000 / freq_khz * 100 / 1757) / 1000,
-	(tmp * 10000 / freq_khz * 100 / 1757) % 1000);
+    tmp = Number_Of_Runs * 1000 / 1757 * 1000 / (User_Time / 1000);
+    printf ("VAX DMIPS/MHz:\t%d.%03d\n", tmp / 1000, tmp % 1000);
 }
 
 
