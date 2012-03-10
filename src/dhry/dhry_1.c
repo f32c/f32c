@@ -268,14 +268,19 @@ main ()
   }
   
 #endif /* NOTYET */
-#define TSC_TICKS_PER_MS 100000	/* f32c TSC freq = 100.00 MHz */
+#define TSC_TICKS_PER_MS 170000	/* f32c TSC freq = 170.00 MHz */
     if (User_Time < 0)
 	User_Time = -User_Time;
+    printf ("\nticks: %d @ %d MHz", User_Time, TSC_TICKS_PER_MS / 1000);
     printf ("\nms tot: %d\n", User_Time / TSC_TICKS_PER_MS);
     Run_Index =  Number_Of_Runs * 1000 / (User_Time / TSC_TICKS_PER_MS);
     printf ("dhry/s: %d\n", Run_Index);
-    printf ("VAX dhry/s: %d.", Run_Index / 1757);
+    printf ("VAX DMIPS: %d.", Run_Index / 1757);
     printf ("%d\n", (Run_Index * 10 / 1757) % 10);
+    printf ("VAX DMIPS/MHz: %d.",
+	(Run_Index / 1757 * 1000 / (TSC_TICKS_PER_MS / 1000)) / 1000);
+    printf ("%03d\n",
+	(Run_Index / 1757 * 1000 / (TSC_TICKS_PER_MS / 1000)) % 1000);
 }
 
 
