@@ -1,7 +1,5 @@
 
-#include <sys/types.h>
-#include <mips/endian.h>
-#include <io.h>
+#include <sys/param.h>
 #include <sdcard.h>
 #include <sio.h>
 #include <stdio.h>
@@ -12,7 +10,6 @@
 
 
 /* From lib/pcmplay.c */
-
 #define	PCM_TSC_CYCLES	1842	/* 81.25 MHz / 44.1 kHz */
 
 #define	PCM_VOL_MAX	12
@@ -209,7 +206,6 @@ ftoc(int f)
 static void
 redraw_display()
 {
-	int val;
 
 	printf(
 	    "\nFER - Digitalna logika 2011/2012\n\n"
@@ -238,27 +234,13 @@ redraw_display()
 		printf("VU-metar\n");
 	else
 		printf("0x%02x (%d)\n", led_byte, led_byte);
-	printf(
-	    " 8: USB UART (RS-232) baud rate: %d bps\n"
+	printf( " 8: USB UART (RS-232) baud rate: %d bps\n"
 	    " 9: Ispitaj SRAM\n"
-	    " 0: Ispisi sadrzaj kazala MicroSD kartice\n\n"
-	    , new_bauds
-	);
+	    " 0: Ispisi sadrzaj kazala MicroSD kartice\n\n" , new_bauds);
 
-	/* Recompute and set baudrate */
 	if (bauds != new_bauds) {
 		bauds = new_bauds;
-		val = new_bauds;
-		if (bauds > 1000000)
-			val /= 10;
-		val = val * 1024 / 1000 * 1024 / 81250 + 1;
-		if (bauds > 1000000)
-			val *= 10;
-		if (bauds > 460800 && bauds <= 1500000)
-			val = val * 9 / 10;
-		if (bauds == 1500000)
-			val = val * 9 / 10;
-		OUTH(IO_SIO_BAUD, val);
+		sio_setbaud(bauds);
 	}
 }
 
