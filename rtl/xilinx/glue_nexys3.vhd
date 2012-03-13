@@ -23,7 +23,7 @@
 -- SUCH DAMAGE.
 --
 
--- $Id$
+-- $Id: glue.vhd 914 2012-02-16 12:56:32Z marko $
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -33,7 +33,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity glue is
     generic(
 	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 100;
+	C_clk_freq: integer := 170;
 
 	-- ISA options
 	C_big_endian: boolean := false;
@@ -66,14 +66,15 @@ entity glue is
 	C_gpio: boolean := true
     );
     port (
-	clk_50m: in std_logic;
+	clk_100m: in std_logic;
 	rs232_dce_txd: out std_logic;
 	rs232_dce_rxd: in std_logic;
-	lcd_db: out std_logic_vector(7 downto 0);
-	lcd_e, lcd_rs, lcd_rw: out std_logic;
-	j1, j2: out std_logic_vector(3 downto 0);
+--	lcd_db: out std_logic_vector(7 downto 0);
+--	lcd_e, lcd_rs, lcd_rw: out std_logic;
+--	j1, j2: out std_logic_vector(3 downto 0);
 	led: out std_logic_vector(7 downto 0);
-	rot_a, rot_b, rot_center: in std_logic;
+--	rot_a, rot_b, rot_center: in std_logic;
+	btn_center: in std_logic;
 	btn_south, btn_north, btn_east, btn_west: in std_logic;
 	sw: in std_logic_vector(3 downto 0)
     );
@@ -124,7 +125,7 @@ begin
 	C_debug => C_debug
     )
     port map (
-	clk => clk, reset => '0',
+	clk => clk, reset => '0', intr => '0',
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,
@@ -166,24 +167,26 @@ begin
     -- I/O write access:
     process(clk)
     begin
-	if rising_edge(clk) and dmem_addr_strobe = '1'
-	  and dmem_write = '1' and dmem_addr(31 downto 28) = x"f" then
-	    -- GPIO
-	    if C_gpio and dmem_addr(4 downto 2) = "000" then
-		if dmem_byte_sel(0) = '1' then
-		    R_led <= cpu_to_dmem(7 downto 0);
-		end if;
-		if dmem_byte_sel(1) = '1' then
-		    j1 <= cpu_to_dmem(11 downto 8);
-		    j2 <= cpu_to_dmem(15 downto 12);
-		end if;
-		if dmem_byte_sel(2) = '1' then
-		    lcd_db <= cpu_to_dmem(23 downto 16);
-		end if;
-		if dmem_byte_sel(3) = '1' then
-		    lcd_e <= cpu_to_dmem(26);
-		    lcd_rs <= cpu_to_dmem(25);
-		    lcd_rw <= cpu_to_dmem(24);
+	if rising_edge(clk) then
+	    if dmem_addr_strobe = '1' and dmem_write = '1'
+	      and dmem_addr(31 downto 28) = x"f" then
+		-- GPIO
+		if C_gpio and dmem_addr(4 downto 2) = "000" then
+		    if dmem_byte_sel(0) = '1' then
+			R_led <= cpu_to_dmem(7 downto 0);
+		    end if;
+		    if dmem_byte_sel(1) = '1' then
+--			j1 <= cpu_to_dmem(11 downto 8);
+--			j2 <= cpu_to_dmem(15 downto 12);
+		    end if;
+		    if dmem_byte_sel(2) = '1' then
+--			lcd_db <= cpu_to_dmem(23 downto 16);
+		    end if;
+		    if dmem_byte_sel(3) = '1' then
+--			lcd_e <= cpu_to_dmem(26);
+--			lcd_rs <= cpu_to_dmem(25);
+--			lcd_rw <= cpu_to_dmem(24);
+		    end if;
 		end if;
 	    end if;
 	end if;
@@ -194,7 +197,9 @@ begin
     begin
 	if C_gpio and rising_edge(clk) then
 	    R_sw <= sw;
-	    R_btns <= rot_a & rot_b & rot_center &
+	    R_btns <=
+--	      rot_a & rot_b & rot_center &
+	      "00" & btn_center &
 	      btn_north & btn_south & btn_west & btn_east;
 	end if;
     end process;
@@ -221,7 +226,7 @@ begin
 	C_clk_freq => C_clk_freq
     )
     port map(
-	clk_50m => clk_50m, clk => clk, key => clk_key, sel => sw(0)
+	clk_100m => clk_100m, clk => clk, key => clk_key, sel => sw(0)
     );
 	
     -- Block RAM
@@ -243,10 +248,11 @@ begin
     -- debugging design instance - serial port + control knob / buttons
     G_debug:
     if C_debug generate
-    clk_key <= btn_south;
+    --clk_key <= btn_south;
+    clk_key <= '1'; -- clk selector
     debug_serial: entity work.serial_debug
     port map(
-	clk_50m => clk_50m,
+	clk_50m => clk,
 	rs232_txd => debug_txd,
 	trace_addr => trace_addr,
 	trace_data => trace_data
