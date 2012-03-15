@@ -58,10 +58,10 @@ MK_CFLAGS += -fselective-scheduling
 MK_CFLAGS += -finline-limit=16 -fmerge-all-constants
 MK_CFLAGS += -falign-functions=4 -falign-labels=4
 MK_CFLAGS += -falign-jumps=4 -falign-loops=4
-MK_CFLAGS += -fsched2-use-superblocks
 MK_CFLAGS += -freorder-blocks -fpeel-loops
-MK_CFLAGS += -fgcse-sm -fgcse-las
-MK_CFLAGS += -fira-algorithm=priority
+#MK_CFLAGS += -fsched2-use-superblocks
+#MK_CFLAGS += -fgcse-sm -fgcse-las
+#MK_CFLAGS += -fira-algorithm=priority
 MK_CFLAGS += -mno-shared
 
 # No zero-filled BSS
