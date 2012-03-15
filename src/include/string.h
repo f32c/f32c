@@ -29,7 +29,7 @@ strcmp(const char *s1, const char *s2)
 	const uint32_t t1 = 0x80808080;
 
 	/* Check for unaligned pointers */
-	if (((int)s1 | (int)s2) & 0x3) {
+	if (__predict_false(((int)s1 | (int)s2) & 0x3)) {
 #ifndef FASTER_STRCMP
 slow:
 #endif
@@ -49,11 +49,8 @@ slow:
 			break;
 		v0 &= t1;
 		/* Check if the word contains any zero bytes */
-		if (v0) {
-			/* Maybe */           
-			if (__predict_false(v0 & ~((uint32_t)c1))) 
-				return(0);
-		}
+		if (v0 && __predict_false(v0 & ~((uint32_t)c1))) 
+			return(0);
 #ifndef FASTER_STRCMP
 		s1 += 4;
 		s2 += 4;
@@ -66,11 +63,8 @@ slow:
 			break;
 		v0 &= t1;
 		/* Check if the word contains any zero bytes */
-		if (v0) {
-			/* Maybe */           
-			if (__predict_false(v0 & ~((uint32_t)c1))) 
-				return(0);
-		}
+		if (v0 && __predict_false(v0 & ~((uint32_t)c1))) 
+			return(0);
 		s1 += 8;
 		s2 += 8;
 #endif
@@ -90,7 +84,7 @@ slow:
 	c2 >>= 16;
 	b1 = c1 & 0xff;
 	b2 = c2 & 0xff;
-	if (b1 == 0 || b1 != b2)
+	if (__predict_false(b1 == 0 || b1 != b2))
 		return (b1 - b2);
 	b1 = c1 & 0xff00;
 	b2 = c2 & 0xff00;
