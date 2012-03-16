@@ -4,8 +4,8 @@ PROG = dhry
 CSTD = KnR
 WARNS = 1
 
-DHRY_CFLAGS += -O3
-DHRY_CFLAGS += -finline-limit=64
+DHRY_CFLAGS += -Ofast
+DHRY_CFLAGS += -finline-limit=128
 
 CFILES = dhry_cheat.c miscfn.c \
 	../lib/div.c ../lib/printf.c ../lib/sio.c
@@ -14,10 +14,8 @@ ASFILES = ../lib/start.S
 
 include ../conf/f32c.mk
 
-# gcc 4.6.1 produces fastest __divsi3() implementation using -O2, not -O3!
-
 ../lib/div.o:	Makefile ../lib/div.c
-	${CC} -DOPTIMIZED_DIVSI3 -O2 -c -o ../lib/div.o ../lib/div.c
+	${CC} -DOPTIMIZED_DIVSI3 -c -o ../lib/div.o ../lib/div.c
 
 # Specialized build options for dhry_*.c files
 
