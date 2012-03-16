@@ -163,7 +163,7 @@ main ()
 #ifdef MSC_CLOCK
   Begin_Time = clock();
 #endif
-  Begin_Time = rdtsc();
+  RDTSC(Begin_Time);
 
   for (Run_Index = 1; Run_Index <= Number_Of_Runs; ++Run_Index)
   {
@@ -225,7 +225,7 @@ main ()
 #ifdef MSC_CLOCK
   End_Time = clock();
 #endif
-  End_Time = rdtsc();
+  RDTSC(End_Time);
 
 #ifdef NOTYET
   printf ("Execution ends\n");
@@ -287,14 +287,21 @@ main ()
   }
   
 #endif /* NOTYET */
-#define TSC_TICKS_PER_MS 3125	/* f32c TSC freq = 3.125 MHz */
     if (User_Time < 0)
 	User_Time = -User_Time;
-    printf ("\nms tot: %d\n", User_Time / TSC_TICKS_PER_MS);
-    Run_Index =  Number_Of_Runs * 1000 / (User_Time / TSC_TICKS_PER_MS);
-    printf ("dhry/s: %d\n", Run_Index);
-    printf ("VAX dhry/s: %d.", Run_Index / 1757);
-    printf ("%d\n", (Run_Index * 10 / 1757) % 10);
+
+    uint32_t tmp, freq_khz;
+    mfc0_macro(tmp, MIPS_COP_0_CONFIG);
+    freq_khz = ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1);
+    
+    printf ("\nticks:\t\t%d @ %d.%03d MHz\nms:\t\t%d\n", User_Time,
+	freq_khz / 1000, freq_khz % 1000, User_Time / freq_khz);
+    tmp =  Number_Of_Runs * 1000 / (User_Time / freq_khz);
+    printf ("Dhry/s:\t\t%d\n", tmp);
+    printf ("VAX DMIPS:\t%d.%03d\n", tmp / 1757,
+	(tmp * 1000 / 1757) % 1000);
+    tmp = Number_Of_Runs * 1000 / 1757 * 1000 / (User_Time / 1000);
+    printf ("VAX DMIPS/MHz:\t%d.%03d\n", tmp / 1000, tmp % 1000);
 }
 
 
