@@ -67,15 +67,21 @@ MK_CFLAGS += -mno-shared
 # No zero-filled BSS
 MK_CFLAGS += -fno-zero-initialized-in-bss
 
-MK_LDFLAGS += -Ttext ${LOADADDR} -N ${ENDIANFLAGS}
-
-# Pull in any module-specific options
+# Pull in any module-specific compiler flags
 MK_CFLAGS += ${CFLAGS}
 
+# Linker flags
+MK_LDFLAGS += -N ${ENDIANFLAGS}
+MK_LDFLAGS += -Ttext ${LOADADDR}
+MK_LDFLAGS += -nostartfiles -nostdlib
+
+# Pull in any module-specific linker flags
+MK_LDFLAGS += ${LDFLAGS}
+
 CC = mips-elf-gcc ${MK_INCLUDES} ${MK_CFLAGS}
-MKDEP = ${CC} -MM
-LD = mips-elf-ld ${MK_LDFLAGS} ${LDFLAGS}
+LD = mips-elf-ld ${MK_LDFLAGS}
 OBJCOPY = mips-elf-objcopy -O ihex
+MKDEP = ${CC} -MM
 
 
 #
@@ -94,7 +100,7 @@ ${PROG}: ${OBJS} Makefile
 	${LD} -o ${PROG} ${OBJS}
 
 depend:
-	${MKDEP} ${MK_INCLUDES} ${CFILES}
+	${MKDEP} ${CFILES}
 
 clean:
 	rm -f ${OBJS} ${PROG} ${HEX}
