@@ -48,6 +48,7 @@ endif
 
 MK_CFLAGS += -Wextra -Wsystem-headers -Wshadow -Wpadded -Winline
 MK_CFLAGS += -ffreestanding
+MK_CFLAGS += -mno-shared
 
 # Debugging options
 MK_CFLAGS += -g
@@ -58,11 +59,13 @@ MK_CFLAGS += -fselective-scheduling
 MK_CFLAGS += -finline-limit=16 -fmerge-all-constants
 MK_CFLAGS += -falign-functions=4 -falign-labels=4
 MK_CFLAGS += -falign-jumps=4 -falign-loops=4
-MK_CFLAGS += -freorder-blocks -fpeel-loops
+MK_CFLAGS += -fpeel-loops
+MK_CFLAGS += -fgcse-sm
+
+# Those flags improved performance with gcc-4.6, but not with gcc-4.7
+#MK_CFLAGS += -fgcse-las
 #MK_CFLAGS += -fsched2-use-superblocks
-#MK_CFLAGS += -fgcse-sm -fgcse-las
 #MK_CFLAGS += -fira-algorithm=priority
-MK_CFLAGS += -mno-shared
 
 # No zero-filled BSS
 MK_CFLAGS += -fno-zero-initialized-in-bss
