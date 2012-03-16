@@ -1,5 +1,5 @@
 
-#include <sys/types.h>
+#include <sys/param.h>
  
 
 //#define	LOOKUP_24_7
@@ -7,15 +7,16 @@
 #define	UDIVMOD_SIGNED	0x1
 #define	UDIVMOD_DO_MOD	0x2
 
+
 #define	UDIVMOD_BODY()							\
 	lo = 0;								\
 	uint32_t bit = 1;						\
 									\
-	while (b < a && (b & 0x80000000) == 0 && bit) {			\
-		__asm ("addu %0, %1, %1" : "=r" (b) : "r" (b)); 	\
+	while (__predict_true(b < a && (int) b >= 0 && bit != 0)) {	\
+		b <<= 1;						\
 		__asm ("addu %0, %1, %1" : "=r" (bit) : "r" (bit));	\
 	}								\
-	while (__predict_true(bit)) {					\
+	while (__predict_true(bit != 0)) {				\
 		if (a >= b) {						\
 			lo |= bit;					\
 			a -= b;						\
@@ -82,16 +83,19 @@ __udivmodsi3(uint32_t a, uint32_t b, int flags)
 
 	UDIVMOD_BODY();
 
-	if (flags & UDIVMOD_DO_MOD)
-		lo = a;
+	if (__predict_false(flags & UDIVMOD_DO_MOD))
+		return (a);
+#ifndef OPTIMIZED_DIVSI3
 	if (neg)
-		lo = -lo;
+		return (-lo);
+#endif
 	return (lo);
 }
 
 
 int32_t
-__divsi3(int32_t a, int32_t b)
+__attribute__((optimize("-Ofast")))
+__divsi3(uint32_t a, uint32_t b)
 {
 #ifdef LOOKUP_24_7
 	uint32_t lo;
@@ -113,19 +117,19 @@ __divsi3(int32_t a, int32_t b)
 	int neg = 0;
 	uint32_t lo;
 
-	if (a < 0) {
-		a = -a;
+	if ((int)a < 0) {
+		a = -(int)a;
 		neg = 1;
 	}
-	if (b < 0) {
-		b = -b;
+	if ((int)b < 0) {
+		b = -(int)b;
 		neg = !neg;
 	}
 
 	UDIVMOD_BODY();
 
 	if (neg)
-		lo = -lo;
+		return (-lo);
 	return (lo);
 #else
 	return (__udivmodsi3(a, b, UDIVMOD_SIGNED));
