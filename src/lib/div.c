@@ -94,7 +94,6 @@ __udivmodsi3(uint32_t a, uint32_t b, int flags)
 
 
 int32_t
-__attribute__((optimize("-Ofast")))
 __divsi3(uint32_t a, uint32_t b)
 {
 #ifdef LOOKUP_24_7
