@@ -14,6 +14,9 @@ DHRY_CFLAGS += -fno-inline-functions -fno-inline-small-functions
 # builtin_strcpy is faster than a handcrafted version but requires swr/swl
 DHRY_CFLAGS += -DUSE_BUILTIN_STRCPY -DFASTER_STRCMP
 
+# Build a faster __divsi3()
+CFLAGS += -DOPTIMIZED_DIVSI3
+
 CFILES = dhry_1.c dhry_2.c miscfn.c \
 	../lib/div.c ../lib/printf.c ../lib/sio.c
 
@@ -21,12 +24,6 @@ ASFILES = ../lib/start.S
 
 
 include ../conf/f32c.mk
-
-
-# Build a faster __divsi3()
-
-../lib/div.o:	Makefile ../lib/div.c
-	${CC} -Ofast -DOPTIMIZED_DIVSI3 -c -o ../lib/div.o ../lib/div.c
 
 
 # Specialized build rules for dhry_*.c files

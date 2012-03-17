@@ -128,7 +128,7 @@ main ()
 #else
   Number_Of_Runs = 1000000; /* XXX hardcoded */
 #endif /* NOTYET */
-  printf ("\nExecution starts, %d runs through Dhrystone\n", Number_Of_Runs);
+  printf ("\n%d runs...\n", Number_Of_Runs);
 
   /***************/
   /* Start timer */
@@ -214,30 +214,26 @@ main ()
   printf ("Final values of the variables used in the benchmark:\n");
   printf ("\n");
 #endif /* NOTYET */
-  printf ("1	%d (5)\n", Int_Glob);
-  printf ("2	%d (1)\n", Bool_Glob);
-  printf ("3	%c (A)\n", Ch_1_Glob);
-  printf ("4	%c (B)\n", Ch_2_Glob);
-  printf ("5	%d (7)\n", Arr_1_Glob[8]);
-  printf ("6	%d (Number_Of_Runs + 10)\n", Arr_2_Glob[8][7]);
-  printf ("7.a	%d (impl-dep)\n", (int) Ptr_Glob->Ptr_Comp);
-  printf ("7.b	%d (0)\n", Ptr_Glob->Discr);
-  printf ("7.c	%d (2)\n", Ptr_Glob->variant.var_1.Enum_Comp);
-  printf ("7.d	%d (17)\n", Ptr_Glob->variant.var_1.Int_Comp);
-  printf ("7.e	%s (%s)\n", Ptr_Glob->variant.var_1.Str_Comp,
+  printf ("1	%d (5)\n2	%d (1)\n", Int_Glob, Bool_Glob);
+  printf ("3	%c (A)\n4	%c (B)\n", Ch_1_Glob, Ch_2_Glob);
+  printf ("5	%d (7)\n6	%d (Number_Of_Runs + 10)\n",
+    Arr_1_Glob[8], Arr_2_Glob[8][7]);
+  printf ("7.a	%d (impl-dep)\n7.b	%d (0)\n"
+    "7.c	%d (2)\n7.d	%d (17)\n"
+    "7.e	%s (%s)\n", (int) Ptr_Glob->Ptr_Comp,
+    Ptr_Glob->Discr, Ptr_Glob->variant.var_1.Enum_Comp,
+    Ptr_Glob->variant.var_1.Int_Comp, Ptr_Glob->variant.var_1.Str_Comp,
     "DHRYSTONE PROGRAM, SOME STRING");
-  printf ("8.a	%d (impl-dep), same as above\n", (int) Next_Ptr_Glob->Ptr_Comp);
-  printf ("8.b	%d (0)\n", Next_Ptr_Glob->Discr);
-  printf ("8.c	%d (1)\n", Next_Ptr_Glob->variant.var_1.Enum_Comp);
-  printf ("8.d	%d (18)\n", Next_Ptr_Glob->variant.var_1.Int_Comp);
-  printf ("8.e	%s (%s)\n", Next_Ptr_Glob->variant.var_1.Str_Comp,
-    "DHRYSTONE PROGRAM, SOME STRING");
-  printf ("9	%d (5)\n", Int_1_Loc);
-  printf ("10	%d (13)\n", Int_2_Loc);
-  printf ("11	%d (7)\n", Int_3_Loc);
-  printf ("12	%d (1)\n", Enum_Loc);
-  printf ("13	%s (%s)\n", Str_1_Loc, "DHRYSTONE PROGRAM, 1'ST STRING");
-  printf ("14	%s (%s)\n", Str_2_Loc, "DHRYSTONE PROGRAM, 2'ND STRING");
+  printf ("8.a	%d (impl-dep), same as above\n8.b	%d (0)\n",
+    "8.c	%d (1)\n8.d	%d (18)\n8.e	%s (%s)\n",
+    (int) Next_Ptr_Glob->Ptr_Comp, Next_Ptr_Glob->Discr,
+    Next_Ptr_Glob->variant.var_1.Enum_Comp,
+    Next_Ptr_Glob->variant.var_1.Int_Comp,
+    Next_Ptr_Glob->variant.var_1.Str_Comp, "DHRYSTONE PROGRAM, SOME STRING");
+  printf ("9	%d (5)\n10	%d (13)\n", Int_1_Loc, Int_1_Loc);
+  printf ("11	%d (7)\n12	%d (1)\n", Int_3_Loc, Enum_Loc);
+  printf ("13	%s (DHRYSTONE PROGRAM, 1'ST STRING)\n"
+    "14	%s (DHRYSTONE PROGRAM, 2'ND STRING)\n", Str_1_Loc, Str_2_Loc);
 
   User_Time = End_Time - Begin_Time;
 
@@ -278,11 +274,10 @@ main ()
     printf ("\nticks:\t\t%d @ %d.%03d MHz\nms:\t\t%d\n", User_Time,
 	freq_khz / 1000, freq_khz % 1000, User_Time / freq_khz);
     tmp =  Number_Of_Runs * 1000 / (User_Time / freq_khz);
-    printf ("Dhry/s:\t\t%d\n", tmp);
-    printf ("VAX DMIPS:\t%d.%03d\n", tmp / 1757,
-	(tmp * 1000 / 1757) % 1000);
+    printf ("Dhry/s:\t\t%d\nDMIPS:\t\t%d.%03d\n", tmp,
+	tmp / 1757, (tmp * 1000 / 1757) % 1000);
     tmp = Number_Of_Runs * 1000 / 1757 * 1000 / (User_Time / 1000);
-    printf ("VAX DMIPS/MHz:\t%d.%03d\n", tmp / 1000, tmp % 1000);
+    printf ("DMIPS/MHz:\t%d.%03d\n", tmp / 1000, tmp % 1000);
 }
 
 
