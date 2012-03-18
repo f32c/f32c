@@ -224,7 +224,7 @@ main ()
     Ptr_Glob->Discr, Ptr_Glob->variant.var_1.Enum_Comp,
     Ptr_Glob->variant.var_1.Int_Comp, Ptr_Glob->variant.var_1.Str_Comp,
     "DHRYSTONE PROGRAM, SOME STRING");
-  printf ("8.a	%d (impl-dep), same as above\n8.b	%d (0)\n",
+  printf ("8.a	%d (impl-dep), same as above\n8.b	%d (0)\n"
     "8.c	%d (1)\n8.d	%d (18)\n8.e	%s (%s)\n",
     (int) Next_Ptr_Glob->Ptr_Comp, Next_Ptr_Glob->Discr,
     Next_Ptr_Glob->variant.var_1.Enum_Comp,
