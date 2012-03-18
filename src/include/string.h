@@ -21,23 +21,21 @@ static inline int
 strcmp(const char *s1, const char *s2)
 {
 	int c1, c2;
-#ifdef FASTER_STRCMP
+#ifdef FAST_STRCMP
 	int b1, b2;
-#endif
 	uint32_t v0;
 	const uint32_t t0 = 0x01010101;
 	const uint32_t t1 = 0x80808080;
 
 	/* Check for unaligned pointers */
 	if (__predict_false(((int)s1 | (int)s2) & 0x3)) {
-#ifndef FASTER_STRCMP
-slow:
-#endif
+#endif /* FAST_STRCMP */
 		do {
 			c1 = *(const unsigned char *)s1++;
 			c2 = *(const unsigned char *)s2++;
 		} while (c1 != 0 && c1 == c2);
 		return (c1 - c2);
+#ifdef FAST_STRCMP
 	}
 
 	for (;;) {
@@ -51,7 +49,7 @@ slow:
 		/* Check if the word contains any zero bytes */
 		if (v0 && __predict_false(v0 & ~((uint32_t)c1))) 
 			return(0);
-#ifndef FASTER_STRCMP
+#ifndef UNROLLED_STRCMP
 		s1 += 4;
 		s2 += 4;
 #else
@@ -70,7 +68,6 @@ slow:
 #endif
 	}
 
-#ifdef FASTER_STRCMP
 #if _BYTE_ORDER == _LITTLE_ENDIAN
 	b1 = c1 & 0xff;
 	b2 = c2 & 0xff;
@@ -108,9 +105,7 @@ slow:
 #else
 #error "Unsupported byte order."
 #endif
-#else
-	goto slow;
-#endif
+#endif /* FAST_STRCMP */
 }
 
 
