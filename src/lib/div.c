@@ -12,11 +12,11 @@
 	lo = 0;								\
 	uint32_t bit = 1;						\
 									\
-	while (__predict_true(b < a && (int) b >= 0 && bit != 0)) {	\
+	while (b < a && (int) b > 0) {					\
 		b <<= 1;						\
-		__asm ("addu %0, %1, %1" : "=r" (bit) : "r" (bit));	\
+		bit <<= 1;						\
 	}								\
-	while (__predict_true(bit != 0)) {				\
+	while (bit != 0) {						\
 		if (a >= b) {						\
 			lo |= bit;					\
 			a -= b;						\
