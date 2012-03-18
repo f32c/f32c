@@ -10,7 +10,7 @@
 
 #define	UDIVMOD_BODY()							\
 	lo = 0;								\
-	uint32_t bit = 1;						\
+	uint32_t bit = (b > 0);						\
 									\
 	while (b < a && (int) b > 0) {					\
 		b <<= 1;						\
