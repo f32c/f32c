@@ -67,17 +67,23 @@ static uint32_t div_24_7[126] = {
 static uint32_t
 __udivmodsi3(uint32_t a, uint32_t b, int flags)
 {
+#ifndef OPTIMIZED_DIVSI3
 	int neg = 0;
+#endif
 	uint32_t lo;
 
 	if (flags & UDIVMOD_SIGNED) {
 		if ((int)b < 0) {
 			b = -(int)b;
+#ifndef OPTIMIZED_DIVSI3
 			neg = 1;
+#endif
 		}
 		if ((int)a < 0) {
 			a = -(int)a;
+#ifndef OPTIMIZED_DIVSI3
 			neg = !neg;
+#endif
 		}
 	}
 
