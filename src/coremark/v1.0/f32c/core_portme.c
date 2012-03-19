@@ -8,6 +8,10 @@
 
 #include <sys/param.h>
 #include <sys/stdint.h>
+#include <io.h>
+
+#include <mips/asm.h>
+#include <mips/cpuregs.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,14 +45,13 @@
 	Use lower values to increase resolution, but make sure that overflow does not occur.
 	If there are issues with the return value overflowing, increase this value.
 	*/
-#define	CLOCKS_PER_SEC 100000000
+#define	CLOCKS_PER_SEC 90000000
 
 #define NSECS_PER_SEC CLOCKS_PER_SEC
 #define CORETIMETYPE clock_t 
-#define GETMYTIME(_t) (*_t=clock())
+#define GETMYTIME(_t) do {int t; RDTSC(t); *_t = t;} while (0);
 #define MYTIMEDIFF(fin,ini) ((fin)-(ini))
 #define TIMER_RES_DIVIDER 1
-#define SAMPLE_TIME_IMPLEMENTATION 1
 #define EE_TICKS_PER_SEC (NSECS_PER_SEC / TIMER_RES_DIVIDER)
 
 /** Define Host specific (POSIX), or target specific global time variables. */
@@ -61,7 +64,7 @@ static CORETIMETYPE start_time_val, stop_time_val;
 	or zeroing some system parameters - e.g. setting the cpu clocks cycles to 0.
 */
 void start_time(void) {
-//	GETMYTIME(&start_time_val );      
+	GETMYTIME(&start_time_val );      
 }
 /* Function : stop_time
 	This function will be called right after ending the timed portion of the benchmark.
@@ -70,7 +73,7 @@ void start_time(void) {
 	or other system parameters - e.g. reading the current value of cpu cycles counter.
 */
 void stop_time(void) {
-//	GETMYTIME(&stop_time_val );      
+	GETMYTIME(&stop_time_val );      
 }
 /* Function : get_time
 	Return an abstract "ticks" number that signifies time on the system.
