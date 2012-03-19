@@ -27,24 +27,33 @@ MK_CFLAGS += -msoft-div
 
 MK_CFLAGS += -nostdinc -I../../include
 
-MK_CFLAGS += -Wextra -Wsystem-headers -Wshadow -Wpadded -Winline
+#MK_CFLAGS += -Wextra -Wsystem-headers -Wshadow -Wpadded -Winline
 MK_CFLAGS += -ffreestanding
-MK_CFLAGS += -mno-shared
+#MK_CFLAGS += -mno-shared
 
 # Optimization options
-#MK_CFLAGS += -Os
 MK_CFLAGS += -O2
-MK_CFLAGS += -fselective-scheduling
-MK_CFLAGS += -finline-limit=4 -fmerge-all-constants
-MK_CFLAGS += -falign-functions=4 -falign-labels=4
-MK_CFLAGS += -falign-jumps=4 -falign-loops=4
 MK_CFLAGS += -fpeel-loops
-MK_CFLAGS += -fgcse-sm
+
+# Minor improvements
+#MK_CFLAGS += -fselective-scheduling
+#MK_CFLAGS += -finline-functions
+#MK_CFLAGS += -fsched2-use-superblocks
+
+# Useless
+#MK_CFLAGS += -fira-algorithm=priority
+#MK_CFLAGS += -fgcse-sm
+#MK_CFLAGS += -fgcse-las
+#MK_CFLAGS += -fmerge-all-constants
+#MK_CFLAGS += -finline-limit=4
+#MK_CFLAGS += -falign-functions=4 -falign-labels=4
+#MK_CFLAGS += -falign-jumps=4 -falign-loops=4
 
 # Linker flags
-MK_LDFLAGS += -N ${ENDIANFLAGS}
+MK_LDFLAGS += -N
 MK_LDFLAGS += -Ttext ${LOADADDR}
 MK_LDFLAGS += -nostartfiles -nostdlib
+#MK_LDFLAHS += ${ENDIANFLAGS}
 
 
 PORT_CFLAGS = ${MK_CFLAGS}
