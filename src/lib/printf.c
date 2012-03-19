@@ -109,6 +109,9 @@ reswitch:
 		case 'd':
 		case 'i':
 			goto handle_sign;
+		case 'l':
+			/* XXX quad modifier - fixme! */
+			goto reswitch;
 		case 'o':
 			base = 8;
 			goto handle_nosign;
