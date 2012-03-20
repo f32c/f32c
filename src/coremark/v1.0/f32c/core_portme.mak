@@ -33,7 +33,7 @@ MK_CFLAGS += -ffreestanding
 
 # Optimization options
 MK_CFLAGS += -O2
-MK_CFLAGS += -fpeel-loops
+MK_CFLAGS += -fpeel-loops -funroll-loops
 
 # Minor improvements
 #MK_CFLAGS += -fselective-scheduling
