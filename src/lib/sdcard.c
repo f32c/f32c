@@ -140,7 +140,7 @@ disk_initialize(BYTE drive __unused)
 {
 
 	if (sdcard_init())
-		return(STA_NOINIT);
+		return (STA_NOINIT);
 	else
 		return (0);
 }
@@ -151,7 +151,7 @@ disk_status(BYTE drive __unused)
 {
 
 	if (sdcard_addr_shift < 0)
-		return(STA_NOINIT);
+		return (STA_NOINIT);
 	else
 		return (0);
 }
@@ -177,5 +177,5 @@ disk_read (BYTE Drive __unused, BYTE* Buffer, DWORD SectorNumber,
 error:
 	/* Mark the card as dead */
 	sdcard_addr_shift = -1;
-	return(RES_ERROR);
+	return (RES_ERROR);
 }
