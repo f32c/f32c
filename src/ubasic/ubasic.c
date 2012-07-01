@@ -61,7 +61,7 @@ static struct for_state for_stack[MAX_FOR_STACK_DEPTH];
 static int for_stack_ptr;
 
 #define MAX_VARNUM 26
-static char variables[MAX_VARNUM];
+static int variables[MAX_VARNUM];
 
 static int ended;
 
@@ -265,6 +265,7 @@ print_statement(void)
     } else if(tokenizer_token() == TOKENIZER_SEMICOLON) {
       tokenizer_next();
     } else if(tokenizer_token() == TOKENIZER_VARIABLE ||
+	      tokenizer_token() == TOKENIZER_LEFTPAREN ||
 	      tokenizer_token() == TOKENIZER_NUMBER) {
       printf("%d", expr());
     } else {

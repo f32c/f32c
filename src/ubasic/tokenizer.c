@@ -43,7 +43,7 @@
 
 static char const *ptr, *nextptr;
 
-#define MAX_NUMLEN 5
+#define MAX_NUMLEN 11 
 
 struct keyword_token {
   char *keyword;
