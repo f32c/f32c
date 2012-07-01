@@ -262,8 +262,6 @@ print_statement(void)
     } else if(tokenizer_token() == TOKENIZER_COMMA) {
       printf(" ");
       tokenizer_next();
-    } else if(tokenizer_token() == TOKENIZER_SEMICOLON) {
-      tokenizer_next();
     } else if(tokenizer_token() == TOKENIZER_VARIABLE ||
 	      tokenizer_token() == TOKENIZER_LEFTPAREN ||
 	      tokenizer_token() == TOKENIZER_NUMBER) {
