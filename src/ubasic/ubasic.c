@@ -246,7 +246,7 @@ static void
 goto_statement(void)
 {
   accept(TOKENIZER_GOTO);
-  jump_linenum(tokenizer_num());
+  jump_linenum(expr());
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -325,8 +325,7 @@ gosub_statement(void)
 {
   int linenum;
   accept(TOKENIZER_GOSUB);
-  linenum = tokenizer_num();
-  accept(TOKENIZER_NUMBER);
+  linenum = expr();
   accept(TOKENIZER_CR);
   if(gosub_stack_ptr < MAX_GOSUB_STACK_DEPTH) {
     gosub_stack[gosub_stack_ptr] = tokenizer_num();
