@@ -228,7 +228,7 @@ static void
 jump_linenum(int linenum)
 {
   tokenizer_init(program_ptr);
-  while(tokenizer_num() != linenum) {
+  while(tokenizer_num() < linenum) {
     do {
       do {
 	tokenizer_next();
