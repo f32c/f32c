@@ -149,4 +149,43 @@ strlen(const char *str)
 
 	return(cp - str);
 }
+
+
+#define	strchr(p, ch) index((p), (ch))
+
+static inline char *
+index(const char *p, int ch)
+{
+	union {
+		const char *cp;
+		char *p;
+	} u;
+
+	u.cp = p;
+	for (;; ++u.p) {
+		if (*u.p == ch)
+			return(u.p);
+		if (*u.p == '\0')
+		return(NULL);
+	}
+	/* NOTREACHED */
+}
+
+
+static inline int
+strncmp(const char *s1, const char *s2, size_t n)
+{
+ 
+	if (n == 0)
+		return (0);
+	do {
+		if (*s1 != *s2++)
+			return (*(const unsigned char *)s1 -
+				*(const unsigned char *)(s2 - 1));
+		if (*s1++ == 0)
+			break;
+	} while (--n != 0);
+	return (0);
+}
+
 #endif /* !_STRING_H_ */
