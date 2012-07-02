@@ -37,6 +37,8 @@
 #endif
 
 
+#include <sys/param.h>
+
 #include "ubasic.h"
 #include "tokenizer.h"
 

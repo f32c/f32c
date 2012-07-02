@@ -36,10 +36,12 @@
 #define DEBUG_PRINTF(...)
 #endif
 
-#include "tokenizer.h"
+#include <sys/param.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+
+#include "tokenizer.h"
 
 static char const *ptr, *nextptr;
 
