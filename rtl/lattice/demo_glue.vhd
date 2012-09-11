@@ -149,8 +149,8 @@ begin
 	clk_25m => clk_25m, clk => clk, clk_325m => clk_dds,
 	sel => sw(2), key => btn_down, res => '0'
     );
-    res <= btn_up and sw(0); -- when C_debug else '0';
-    intr <= btn_center and sw(0); -- when C_debug else '0';
+    res <= btn_up and sw(0) when C_debug else '0';
+    intr <= btn_center and sw(0) when C_debug else '0';
 
     -- f32c core
     pipeline: entity pipeline
