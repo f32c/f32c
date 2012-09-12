@@ -208,9 +208,10 @@ redraw_display()
 {
 
 	printf(
-	    "\nFER - Digitalna logika 2011/2012\n\n"
-	    "ULX2S FPGA plocica - demonstracijsko-dijagnosticki program\n"
-	    "v 0.97 25/02/2012\n\n"
+	    "\n\nFER - Digitalna logika 2012/2013\n\n"
+	    "Razvojna plocica ULX2S\n\n"
+	    "Demonstracijsko-dijagnosticka konfiguracija\n"
+	    "v 1.00 12/09/2012 (Zec)\n\n"
 	    "Glavni izbornik:\n\n"
 	    " 1: Glasnoca: %d (zvucni izlaz ", pcm_vol & ~PCM_VOL_MUTE
 	);
