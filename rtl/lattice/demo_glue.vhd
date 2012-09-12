@@ -62,7 +62,7 @@ entity glue is
 	-- SoC configuration options
 	C_mem_size: string := "16k";
 	C_sram: boolean := true;
-	C_sram_wait_cycles: std_logic_vector := x"4"; -- OK do 87.5 MHz
+	C_sram_wait_cycles: std_logic_vector := x"5"; -- ISSI, OK do 87.5 MHz
 	C_sio: boolean := true;
 	C_gpio: boolean := true;
 	C_flash: boolean := true;
