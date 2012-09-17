@@ -134,7 +134,6 @@ term(void)
   int op;
 
   f1 = factor();
-  op = tokenizer_token();
   DEBUG_PRINTF("term: token %d\n", op);
   while(op == TOKENIZER_ASTR ||
 	op == TOKENIZER_SLASH ||

@@ -31,6 +31,7 @@
 #include "ubasic.h"
 
 static const char program[] =
+#if 0
 "10 gosub 100\n\
 20 for i = 1 to 10\n\
 30 print i\n\
@@ -39,6 +40,10 @@ static const char program[] =
 60 end\n\
 100 print \"subroutine\"\n\
 110 return\n";
+#else
+"10 print 1 + -1\n\
+20 print 2 + 2\n";
+#endif
 
 /*---------------------------------------------------------------------------*/
 int

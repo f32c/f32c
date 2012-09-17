@@ -28,7 +28,7 @@
  *
  */
 
-#define DEBUG 0
+//#define DEBUG 0
 
 #if DEBUG
 #define DEBUG_PRINTF(...)  printf(__VA_ARGS__)
@@ -106,7 +106,7 @@ singlechar(void)
   } else if(*ptr == '=') {
     return TOKENIZER_EQ;
   }
-  return 0;
+  return TOKENIZER_ERROR;
 }
 /*---------------------------------------------------------------------------*/
 static int
@@ -139,7 +139,7 @@ get_next_token(void)
     }
     DEBUG_PRINTF("get_next_token: error due to too long number\n");
     return TOKENIZER_ERROR;
-  } else if(singlechar()) {
+  } else if((i = singlechar()) != TOKENIZER_ERROR) {
     nextptr = ptr + 1;
     return singlechar();
   } else if(*ptr == '"') {
