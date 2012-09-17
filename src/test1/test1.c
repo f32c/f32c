@@ -43,8 +43,13 @@ txbit(int bit, int len)
 }
 
 
-//#define CYCLE 939 /* za ftsc = 3.125 MHz */
-#define CYCLE 24414 /* za ftsc = 81.25 MHz */
+/*
+ * 32 bits = 20 ms -> 0.625 ms / bit -> 1600 bit / s
+ * 1 bit = 2 symbols
+ * 64 symbols = 20 ms -> 0.3125 ms / symbol
+ */
+
+#define CYCLE 25390 /* za ftsc = 81.25 MHz */
 
 
 static void
