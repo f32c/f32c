@@ -101,7 +101,7 @@ fm_tx(void)
 		t <<= 1;
 	}
 
-	txbit(1, 14 * CYCLE + CYCLE / 4);
+	txbit(1, 13 * CYCLE);
 }
 
 
@@ -239,17 +239,19 @@ main(void)
 			break;
 		case BTN_DOWN | BTN_LEFT:
 			fwd_rev = 12 - speed;
-			left_right = 19;
+			left_right = 23 + speed;
 			break;
 		case BTN_DOWN | BTN_RIGHT:
 			fwd_rev = 12 - speed;
-			left_right = 13;
+			left_right = 9 - speed;
 			break;
 		case BTN_LEFT:
 			left_right = 23 + speed;
+			fwd_rev = 20 + speed;
 			break;
 		case BTN_RIGHT:
 			left_right = 9 - speed;
+			fwd_rev = 20 + speed;
 			break;
 		default:
 			break;
