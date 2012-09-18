@@ -85,7 +85,7 @@ fm_tx(void)
 	outw |= engine_key << (31 - 23);
 	outw |= csum << 3;
 
-	txbit(0, 2 * CYCLE + CYCLE / 4);
+	txbit(0, 2 * CYCLE);
 	txbit(0, CYCLE);
 	txbit(1, CYCLE);
 
