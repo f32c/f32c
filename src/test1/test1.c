@@ -55,8 +55,7 @@ txbit(int bit, int len)
 static void
 fm_tx(void)
 {
-	int i, t;
-	int outw, csum;
+	int i, outw, csum;
 
 	csum = 4;
 	csum ^= mg_sound;
@@ -85,9 +84,8 @@ fm_tx(void)
 	outw |= fwd_rev << 18;
 	outw |= 0x3 << 23;
 
-	t = outw;
 	for (i = 0; i < 32; i++) {
-		if (t & 0x80000000) {
+		if (outw & 0x80000000) {
 			/* 1 */
 			txbit(0, CYCLE);
 			txbit(1, CYCLE);
@@ -96,7 +94,7 @@ fm_tx(void)
 			txbit(1, CYCLE);
 			txbit(0, CYCLE);
 		}
-		t <<= 1;
+		outw <<= 1;
 	}
 
 	txbit(0, 14 * CYCLE);
