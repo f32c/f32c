@@ -72,20 +72,18 @@ fm_tx(void)
 	csum ^= (left_right >> 4);
 	csum &= 0xf;
 
-	outw = 0x7;
-	outw |= 0x3 << 24;
-	outw |= fwd_rev << 19;
-	outw |= left_right << 9;
-	outw |= turr_left << (31 - 15);
-	outw |= turr_right << (31 - 14);
-	outw |= gun_elev << (31 - 16);
-	outw |= gun_bullet << (31 - 17);
-	outw |= gun_sound << (31 - 13);
-	outw |= mg_sound << (31 - 24);
-	outw |= engine_key << (31 - 23);
-	outw |= csum << 3;
-
-	outw >>= 1;
+	outw = 0x3;
+	outw |= csum << 2;
+	outw |= mg_sound << 6;
+	outw |= engine_key << 7;
+	outw |= left_right << 8;
+	outw |= gun_bullet << 13;
+	outw |= gun_elev << 14;
+	outw |= turr_left << 15;
+	outw |= turr_right << 16;
+	outw |= gun_sound << 17;
+	outw |= fwd_rev << 18;
+	outw |= 0x3 << 23;
 
 	t = outw;
 	for (i = 0; i < 32; i++) {
