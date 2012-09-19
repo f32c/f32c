@@ -60,16 +60,16 @@ fm_tx(void)
 
 	csum = 4;
 	csum ^= mg_sound;
-	csum ^= 2 * gun_sound;
-	csum ^= 2 * engine_key;
-	csum ^= 2 * gun_bullet;
-	csum ^= 4 * gun_elev;
-	csum ^= 8 * turr_left;
+	csum ^= gun_sound << 1;
+	csum ^= engine_key << 1;
+	csum ^= gun_bullet << 1;
+	csum ^= gun_elev << 2;
+	csum ^= turr_left << 3;
 	csum ^= turr_right;
 	csum ^= fwd_rev << 2;
-	csum ^= ((fwd_rev & 0xfc) >> 2);
+	csum ^= fwd_rev >> 2;
 	csum ^= left_right;
-	csum ^= (left_right >> 4);
+	csum ^= left_right >> 4;
 	csum &= 0xf;
 
 	outw = 0x3;
