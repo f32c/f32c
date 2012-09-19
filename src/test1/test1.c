@@ -32,11 +32,11 @@ txbit(int bit, int len)
 	int dds_out;
 
 	if (bit) {
-		dds_out = dds_base - 20;
+		dds_out = dds_base + 20;
 		OUTW(IO_DDS, dds_out);
 		wait(len);
 	} else {
-		dds_out = dds_base + 20;
+		dds_out = dds_base - 20;
 		OUTW(IO_DDS, dds_out);
 		wait(len);
 	}
@@ -85,23 +85,30 @@ fm_tx(void)
 	outw |= engine_key << (31 - 23);
 	outw |= csum << 3;
 
-	txbit(0, 2 * CYCLE);
-	txbit(0, CYCLE);
+	txbit(1, 2 * CYCLE);
+	/* 0 */
+#if 1
 	txbit(1, CYCLE);
+	txbit(0, CYCLE);
+#else
+	outw >>= 1;
+#endif
 
 	t = outw;
 	for (i = 0; i < 31; i++) {
 		if (t & 0x80000000) {
-			txbit(1, CYCLE);
+			/* 1 */
 			txbit(0, CYCLE);
+			txbit(1, CYCLE);
 		} else {
-			txbit(0, CYCLE);
+			/* 0 */
 			txbit(1, CYCLE);
+			txbit(0, CYCLE);
 		}
 		t <<= 1;
 	}
 
-	txbit(1, 13 * CYCLE);
+	txbit(0, 13 * CYCLE);
 }
 
 
