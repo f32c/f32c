@@ -179,10 +179,10 @@ main(void)
 		/* Select carrier frequency */
 		switch (c & 0x3) {
 		case 0:
-			dds_base = 349676; /* 325 MHz PLL, 27.095 MHz */
+			dds_base = 350321; /* CH1: 325 MHz PLL, 27.145 MHz */
 			break;
-		case 1:
-			dds_base = 350321; /* 325 MHz PLL, 27.145 MHz */
+		case 2:
+			dds_base = 349676; /* CH3: 325 MHz PLL, 27.095 MHz */
 			break;
 		default:
 			dds_base = 0; /* Do not transmit */
