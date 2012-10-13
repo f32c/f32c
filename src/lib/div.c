@@ -18,8 +18,8 @@
 	}								\
 	while (bit != 0) {						\
 		if (a >= b) {						\
-			lo |= bit;					\
 			a -= b;						\
+			lo |= bit;					\
 		}							\
 		bit >>= 1;						\
 		b >>= 1;						\
