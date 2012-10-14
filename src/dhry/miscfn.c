@@ -4,6 +4,7 @@
 
 
 static char malloc_pool[96]; /* XXX hardcoded 2 * 48 */
+
 static int malloc_i = 0;
 
 

@@ -230,7 +230,7 @@ main ()
     Next_Ptr_Glob->variant.var_1.Enum_Comp,
     Next_Ptr_Glob->variant.var_1.Int_Comp,
     Next_Ptr_Glob->variant.var_1.Str_Comp, "DHRYSTONE PROGRAM, SOME STRING");
-  printf ("9	%d (5)\n10	%d (13)\n", Int_1_Loc, Int_1_Loc);
+  printf ("9	%d (5)\n10	%d (13)\n", Int_1_Loc, Int_2_Loc);
   printf ("11	%d (7)\n12	%d (1)\n", Int_3_Loc, Enum_Loc);
   printf ("13	%s (DHRYSTONE PROGRAM, 1'ST STRING)\n"
     "14	%s (DHRYSTONE PROGRAM, 2'ND STRING)\n", Str_1_Loc, Str_2_Loc);
