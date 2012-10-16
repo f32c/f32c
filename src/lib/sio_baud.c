@@ -10,7 +10,7 @@
 /*
  * Set RS-232 baudrate.  Works well with FT-232R from 300 to 3000000 bauds.
  */
-void
+__attribute__((optimize("-Os"))) void
 sio_setbaud(int bauds)
 {
 	uint32_t val, freq_khz;

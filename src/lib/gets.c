@@ -29,7 +29,7 @@
 #include <stdio.h>
 
 
-int
+__attribute__((optimize("-Os"))) int
 gets(char *cp, int size)
 {
 	char *lp, *end;
