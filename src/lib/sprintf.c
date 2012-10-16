@@ -10,7 +10,7 @@ struct snprintf_arg {
 };
 
 
-static void
+static __attribute__((optimize("-Os"))) void
 snprintf_pchar(int c, void *arg)
 {
 	struct snprintf_arg *const info = arg;
@@ -22,7 +22,7 @@ snprintf_pchar(int c, void *arg)
 }
 
 
-int
+__attribute__((optimize("-Os"))) int
 sprintf(char *str, const char *fmt, ...)
 {
 	va_list ap;
@@ -41,7 +41,7 @@ sprintf(char *str, const char *fmt, ...)
 }
 
 
-int
+__attribute__((optimize("-Os"))) int
 snprintf(char *str, size_t size, const char *fmt, ...)
 {
 	va_list ap;

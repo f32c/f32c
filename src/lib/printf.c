@@ -45,7 +45,7 @@
 #define	PCHAR(c) {(*func)(c, arg); retval++;}
 
 
-int
+__attribute__((optimize("-Os"))) int
 _xvprintf(char const *fmt, void(*func)(int, void *), void *arg, va_list ap)
 {
 	char nbuf[MAXNBUF];
@@ -168,7 +168,7 @@ number:
 }
 
 
-static void
+static __attribute__((optimize("-Os"))) void
 sio_pchar(int c, void *arg __unused)
 {
 
@@ -179,7 +179,7 @@ sio_pchar(int c, void *arg __unused)
 }
 
 
-int
+__attribute__((optimize("-Os"))) int
 printf(const char *fmt, ...)
 {
 	va_list ap;

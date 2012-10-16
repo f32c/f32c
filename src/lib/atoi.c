@@ -1,6 +1,6 @@
 
 
-int
+__attribute__((optimize("-Os"))) int
 atoi(const char *c)
 {
 	int i = 0;

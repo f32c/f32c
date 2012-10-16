@@ -41,7 +41,7 @@
  * Ignores `locale' stuff.  Assumes that the upper and lower case
  * alphabets and digits are each contiguous.
  */
-long
+__attribute__((optimize("-Os"))) long
 strtol(const char *nptr, char **endptr, int base)
 {
 	const char *s = nptr;

@@ -13,7 +13,7 @@ static uint8_t sio_rxbuf_tail = 1;
 static uint8_t sio_tx_xoff = 0;
 
 
-static int
+static __attribute__((optimize("-Os"))) int
 sio_probe_rx(void)
 {
 	int c, s;
@@ -38,7 +38,7 @@ sio_probe_rx(void)
 }
 
 
-int
+__attribute__((optimize("-Os"))) int
 sio_getchar(int blocking)
 {
 	int c;
@@ -62,7 +62,7 @@ sio_getchar(int blocking)
 }
 
 
-int
+__attribute__((optimize("-Os"))) int
 sio_putchar(int c, int blocking)
 {
 	int in;
