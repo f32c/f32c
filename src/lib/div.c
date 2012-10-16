@@ -2,6 +2,12 @@
 #include <sys/param.h>
  
 
+/*
+ * Using -Os optimization produces both the fastest and the most compact
+ * division, so we override whatever optimization option was requested
+ * at gcc invocation with __attribute__((optimize("-Os"))).
+ */
+
 #define	UDIVMOD_SIGNED	0x1
 #define	UDIVMOD_DO_MOD	0x2
 
@@ -24,7 +30,7 @@
 	}
 
 
-static uint32_t
+static __attribute__((optimize("-Os"))) uint32_t
 __udivmodsi3(uint32_t a, uint32_t b, int flags)
 {
 #ifndef OPTIMIZED_DIVSI3
@@ -59,7 +65,7 @@ __udivmodsi3(uint32_t a, uint32_t b, int flags)
 }
 
 
-int32_t
+__attribute__((optimize("-Os"))) int32_t
 __divsi3(uint32_t a, uint32_t b)
 {
 #ifdef OPTIMIZED_DIVSI3
