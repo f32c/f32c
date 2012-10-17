@@ -45,7 +45,7 @@
 	Use lower values to increase resolution, but make sure that overflow does not occur.
 	If there are issues with the return value overflowing, increase this value.
 	*/
-#define	CLOCKS_PER_SEC 90000000
+#define	CLOCKS_PER_SEC 80000000	/* 80 Mhz */
 
 #define NSECS_PER_SEC CLOCKS_PER_SEC
 #define CORETIMETYPE clock_t 
