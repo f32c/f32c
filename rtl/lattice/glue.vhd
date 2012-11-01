@@ -103,14 +103,8 @@ architecture Behavioral of glue is
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
 
     -- SRAM
-    signal R_sram_phase: std_logic;
-    signal R_sram_delay: std_logic_vector(3 downto 0);
-    signal R_sram_data: std_logic_vector(31 downto 0);
-    signal R_sram_a: std_logic_vector(18 downto 0);
-    signal R_sram_d: std_logic_vector(15 downto 0);
-    signal R_sram_wel, R_sram_lbl, R_sram_ubl: std_logic;
-    signal R_sram_fast_read: boolean;
-    signal sram_halfword, sram_ready: std_logic;
+    signal sram_ready: std_logic;
+    signal sram_to_cpu: std_logic_vector(31 downto 0);
 
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
@@ -210,90 +204,21 @@ begin
     p_ring <= R_dac_acc_r(16);
     end generate;
 
-    sram_ready <='1' when not C_sram or
-      (R_sram_delay = x"0" and R_sram_phase = '0') else '0';
     dmem_data_ready <= '1' when dmem_addr(31 downto 28) /= x"8" else
       sram_ready;
 
     -- I/O port map:
-    -- 0x8*******: (2B, RW) * SRAM
+    -- 0x8*******: (4B, RW) * SRAM
     -- 0xf*****00: (4B, RW) * GPIO (LED, switches/buttons)
     -- 0xf*****04: (4B, RW) * SIO
-    -- 0xf*****08: (4B, RD) * TSC
     -- 0xf*****0c: (4B, WR) * PCM signal
     -- 0xf*****10: (1B, RW) * SPI Flash
     -- 0xf*****14: (1B, RW) * SPI MicroSD
     -- 0xf*****1c: (4B, WR) * FM DDS register
+
     -- I/O write access:
-    sram_halfword <= '0' when dmem_byte_sel(3 downto 2) = "00" else
-      '1' when dmem_byte_sel(1 downto 0) = "00" else not R_sram_phase;
     process(clk)
     begin
-	if C_sram and rising_edge(clk) then
-	    if dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
-		if R_sram_delay = "000" & R_sram_phase then
-		    R_sram_delay <= C_sram_wait_cycles;
-		    R_sram_phase <= not R_sram_phase;
-		else
-		    if R_sram_delay = C_sram_wait_cycles and
-		      (R_sram_fast_read or dmem_write = '1') then
-			-- begin of a preselected read or a fast store
-			R_sram_delay <= R_sram_delay - 2;
-		    else
-			R_sram_delay <= R_sram_delay - 1;
-		    end if;
-		    if dmem_byte_sel(3 downto 2) = "00" or
-		      dmem_byte_sel(1 downto 0) = "00" then
-			R_sram_phase <= '0';
-		    end if;
-		end if;
-	    else
-		R_sram_delay <= C_sram_wait_cycles;
-		R_sram_phase <= '1';
-	    end if;
-	end if;
-
-	if falling_edge(clk) then
-	    if C_sram and
-	      dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
-		R_sram_fast_read <= false;
-		if R_sram_delay = "0000" and dmem_write = '0' then
-		    R_sram_a <= R_sram_a + 1;
-		else
-		    if R_sram_delay = C_sram_wait_cycles and
-		      R_sram_a = (dmem_addr(19 downto 2) & sram_halfword) then
-			R_sram_fast_read <= true;
-		    end if;
-		    R_sram_a <= dmem_addr(19 downto 2) & sram_halfword;
-		end if;
-		R_sram_wel <= not dmem_write;
-		if sram_halfword = '1' then
-		    if dmem_write = '1' then
-			R_sram_d <= cpu_to_dmem(31 downto 16);
-		    else
-			R_sram_d <= "ZZZZZZZZZZZZZZZZ";
-		    end if;
-		    R_sram_data(31 downto 16) <= sram_d;
-		    R_sram_ubl <= not dmem_byte_sel(3);
-		    R_sram_lbl <= not dmem_byte_sel(2);
-		else
-		    if dmem_write = '1' then
-			R_sram_d <= cpu_to_dmem(15 downto 0);
-		    else
-			R_sram_d <= "ZZZZZZZZZZZZZZZZ";
-		    end if;
-		    R_sram_data(15 downto 0) <= sram_d;
-		    R_sram_ubl <= not dmem_byte_sel(1);
-		    R_sram_lbl <= not dmem_byte_sel(0);
-		end if;
-	    else
-		R_sram_d <= "ZZZZZZZZZZZZZZZZ";
-		R_sram_wel <= '1';
-		R_sram_lbl <= '0';
-		R_sram_ubl <= '0';
-	    end if;
-	end if;
-
 	if rising_edge(clk) and dmem_addr_strobe = '1'
 	  and dmem_write = '1' and dmem_addr(31 downto 28) = x"f" then
 	    -- GPIO
@@ -349,11 +274,6 @@ begin
     sdcard_si <= R_sdcard_si when C_sdcard else 'Z';
     sdcard_sck <= R_sdcard_sck when C_sdcard else 'Z';
     sdcard_cen <= R_sdcard_cen when C_sdcard else 'Z';
-    sram_d <= R_sram_d;
-    sram_a <= R_sram_a;
-    sram_wel <= R_sram_wel;
-    sram_lbl <= R_sram_lbl;
-    sram_ubl <= R_sram_ubl;
 
     process(clk)
     begin
@@ -388,7 +308,7 @@ begin
     end process;
 
     final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = x"f"
-      else R_sram_data when C_sram and dmem_addr(31 downto 28) = x"8"
+      else sram_to_cpu when C_sram and dmem_addr(31 downto 28) = x"8"
       else dmem_to_cpu;
 
     -- Block RAM
@@ -406,6 +326,19 @@ begin
 	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
     );
 
+    -- SRAM
+    sram: entity sram
+    generic map (
+	C_sram_wait_cycles => C_sram_wait_cycles
+    )
+    port map (
+	clk => clk, sram_a => sram_a, sram_d => sram_d,
+	sram_wel => sram_wel, sram_lbl => sram_lbl, sram_ubl => sram_ubl,
+	sram_addr_strobe => dmem_addr_strobe, sram_write => dmem_write,
+	sram_byte_sel => dmem_byte_sel, sram_addr => dmem_addr,
+	sram_data_out => sram_to_cpu, sram_data_in => cpu_to_dmem,
+	sram_ready => sram_ready
+    );
 
     -- debugging design instance
     G_debug:
