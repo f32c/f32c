@@ -103,7 +103,7 @@ architecture Behavioral of glue is
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
 
     -- SRAM
-    signal sram_ready: std_logic;
+    signal sram_addr_strobe, sram_ready: std_logic;
     signal sram_to_cpu: std_logic_vector(31 downto 0);
 
     -- I/O
@@ -204,8 +204,7 @@ begin
     p_ring <= R_dac_acc_r(16);
     end generate;
 
-    dmem_data_ready <= '1' when dmem_addr(31 downto 28) /= x"8" else
-      sram_ready;
+    dmem_data_ready <= sram_ready when sram_addr_strobe = '1' else '1';
 
     -- I/O port map:
     -- 0x8*******: (4B, RW) * SRAM
@@ -308,7 +307,7 @@ begin
     end process;
 
     final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = x"f"
-      else sram_to_cpu when C_sram and dmem_addr(31 downto 28) = x"8"
+      else sram_to_cpu when sram_addr_strobe = '1'
       else dmem_to_cpu;
 
     -- Block RAM
@@ -327,6 +326,8 @@ begin
     );
 
     -- SRAM
+    sram_addr_strobe <= dmem_addr_strobe when
+      dmem_addr(31 downto 28) = x"8" and C_sram else '0';
     sram: entity sram
     generic map (
 	C_sram_wait_cycles => C_sram_wait_cycles
@@ -334,8 +335,8 @@ begin
     port map (
 	clk => clk, sram_a => sram_a, sram_d => sram_d,
 	sram_wel => sram_wel, sram_lbl => sram_lbl, sram_ubl => sram_ubl,
-	sram_addr_strobe => dmem_addr_strobe, sram_write => dmem_write,
-	sram_byte_sel => dmem_byte_sel, sram_addr => dmem_addr,
+	sram_addr_strobe => sram_addr_strobe, sram_write => dmem_write,
+	sram_byte_sel => dmem_byte_sel, sram_addr => dmem_addr(19 downto 2),
 	sram_data_out => sram_to_cpu, sram_data_in => cpu_to_dmem,
 	sram_ready => sram_ready
     );

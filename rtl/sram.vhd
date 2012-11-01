@@ -20,7 +20,7 @@ entity sram is
 	sram_addr_strobe: in std_logic;
 	sram_write: in std_logic;
 	sram_byte_sel: in std_logic_vector(3 downto 0);
-	sram_addr: in std_logic_vector(31 downto 2);
+	sram_addr: in std_logic_vector(19 downto 2);
 	sram_data_in: in std_logic_vector(31 downto 0);
 	sram_data_out: out std_logic_vector(31 downto 0);
 	sram_ready: out std_logic
@@ -45,7 +45,7 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) then
-	    if sram_addr_strobe = '1' and sram_addr(31 downto 28) = x"8" then
+	    if sram_addr_strobe = '1' then
 		if R_sram_delay = "000" & R_sram_phase then
 		    R_sram_delay <= C_sram_wait_cycles;
 		    R_sram_phase <= not R_sram_phase;
@@ -69,16 +69,16 @@ begin
 	end if;
 
 	if falling_edge(clk) then
-	    if sram_addr_strobe = '1' and sram_addr(31 downto 28) = x"8" then
+	    if sram_addr_strobe = '1' then
 		R_sram_fast_read <= false;
 		if R_sram_delay = "0000" and sram_write = '0' then
 		    R_sram_a <= R_sram_a + 1;
 		else
 		    if R_sram_delay = C_sram_wait_cycles and
-		      R_sram_a = (sram_addr(19 downto 2) & sram_halfword) then
+		      R_sram_a = (sram_addr & sram_halfword) then
 			R_sram_fast_read <= true;
 		    end if;
-		    R_sram_a <= sram_addr(19 downto 2) & sram_halfword;
+		    R_sram_a <= sram_addr & sram_halfword;
 		end if;
 		R_sram_wel <= not sram_write;
 		if sram_halfword = '1' then
