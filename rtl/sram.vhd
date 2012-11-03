@@ -190,7 +190,7 @@ begin
 	    end if;
 	end if;
 
-	if falling_edge(clk) then
+	if rising_edge(clk) then
 	    if addr_strobe = '1' then
 		R_fast_read <= false;
 		if R_delay = "0000" and write = '0' then
