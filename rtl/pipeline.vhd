@@ -436,21 +436,21 @@ begin
 
     G_ID_forwarding:
     if C_result_forwarding generate
-    ID_running <= ID_EX_cancel_next or
+    ID_running <= imem_data_ready = '1' and (ID_EX_cancel_next or
       (EX_running and not ID_EX_multicycle_lh_lb and
       not ID_load_align_hazard and not ID_jump_register_hazard and
       (ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
       ID_EX_latency(0) = '0') and (ID_ignore_reg2 or
-      ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency(0) = '0'));
+      ID_reg2_addr /= ID_EX_writeback_addr or ID_EX_latency(0) = '0')));
     end generate;
 
     G_ID_no_forwarding:
     if not C_result_forwarding generate
-    ID_running <= ID_EX_cancel_next or
+    ID_running <= imem_data_ready = '1' and (ID_EX_cancel_next or
       (EX_running and not ID_EX_multicycle_lh_lb and
       not ID_load_align_hazard and not ID_jump_register_hazard and
       not (ID_fwd_ex_reg1 or ID_fwd_mem_reg1)
-      and (ID_ignore_reg2 or not (ID_fwd_ex_reg2 or ID_fwd_mem_reg2)));
+      and (ID_ignore_reg2 or not (ID_fwd_ex_reg2 or ID_fwd_mem_reg2))));
     end generate;
 	
     ID_alu_op2 <= ID_immediate when ID_use_immediate else ID_reg2_eff_data;
