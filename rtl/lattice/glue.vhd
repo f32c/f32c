@@ -335,10 +335,23 @@ begin
     port map (
 	clk => clk, sram_a => sram_a, sram_d => sram_d,
 	sram_wel => sram_wel, sram_lbl => sram_lbl, sram_ubl => sram_ubl,
+	data_out => sram_to_cpu,
+	-- Port A
 	A_addr_strobe => sram_addr_strobe, A_write => dmem_write,
 	A_byte_sel => dmem_byte_sel, A_addr => dmem_addr(19 downto 2),
 	A_data_in => cpu_to_dmem, A_ready => sram_ready,
-	data_out => sram_to_cpu
+	-- Port B
+	B_addr_strobe => sw(2), B_write => '0',
+	B_byte_sel => x"f", B_addr => (others => '-'),
+	B_data_in => (others => '-'), B_ready => open,
+	-- Port C
+	C_addr_strobe => sw(1), C_write => '0',
+	C_byte_sel => x"f", C_addr => (others => '-'),
+	C_data_in => (others => '-'), C_ready => open,
+	-- Port D
+	D_addr_strobe => sw(0), D_write => '0',
+	D_byte_sel => x"f", D_addr => (others => '-'),
+	D_data_in => (others => '-'), D_ready => open
     );
 
     -- debugging design instance
