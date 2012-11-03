@@ -40,7 +40,7 @@ entity glue is
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
-	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
+	C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff";
 
 	-- COP0 options
 	C_cop0_count: boolean := true;
@@ -99,12 +99,14 @@ architecture Behavioral of glue is
     signal dmem_addr_strobe, dmem_write: std_logic;
     signal dmem_bram_enable, dmem_data_ready: std_logic;
     signal dmem_byte_sel: std_logic_vector(3 downto 0);
-    signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
-    signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
+    signal dmem_to_cpu, imem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
+    signal io_to_cpu: std_logic_vector(31 downto 0);
+    signal final_to_cpu_i, final_to_cpu_d: std_logic_vector(31 downto 0);
 
     -- SRAM
-    signal sram_addr_strobe, sram_ready: std_logic;
-    signal sram_to_cpu: std_logic_vector(31 downto 0);
+    signal sram_data_strobe, sram_data_ready: std_logic;
+    signal sram_instr_strobe, sram_instr_ready: std_logic;
+    signal from_sram: std_logic_vector(31 downto 0);
 
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
@@ -160,12 +162,12 @@ begin
     )
     port map (
 	clk => clk, reset => res, intr => intr,
-	imem_addr => imem_addr, imem_data_in => imem_data_read,
+	imem_addr => imem_addr, imem_data_in => final_to_cpu_i,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,
 	dmem_addr_strobe => dmem_addr_strobe, dmem_addr => dmem_addr,
 	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
-	dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
+	dmem_data_in => final_to_cpu_d, dmem_data_out => cpu_to_dmem,
 	dmem_data_ready => dmem_data_ready,
 	trace_addr => trace_addr, trace_data => trace_data
     );
@@ -203,8 +205,6 @@ begin
     p_tip(0) <= '0';
     p_ring <= R_dac_acc_r(16);
     end generate;
-
-    dmem_data_ready <= sram_ready when sram_addr_strobe = '1' else '1';
 
     -- I/O port map:
     -- 0x8*******: (4B, RW) * SRAM
@@ -306,28 +306,33 @@ begin
 	end case;
     end process;
 
-    final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = x"f"
-      else sram_to_cpu when sram_addr_strobe = '1'
+    final_to_cpu_d <= io_to_cpu when dmem_addr(31 downto 28) = x"f"
+      else from_sram when sram_data_strobe = '1'
       else dmem_to_cpu;
+    final_to_cpu_i <= from_sram when sram_instr_strobe = '1'
+      else imem_to_cpu;
 
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
-    imem_data_ready <= '1';
     bram: entity bram
     generic map (
 	C_mem_size => C_mem_size
     )
     port map (
 	clk => clk, imem_addr_strobe => imem_addr_strobe,
-	imem_addr => imem_addr, imem_data_out => imem_data_read,
+	imem_addr => imem_addr, imem_data_out => imem_to_cpu,
 	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write,
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
 	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
     );
 
     -- SRAM
-    sram_addr_strobe <= dmem_addr_strobe when
+    sram_data_strobe <= dmem_addr_strobe when
       dmem_addr(31 downto 28) = x"8" and C_sram else '0';
+    dmem_data_ready <= sram_data_ready when sram_data_strobe = '1' else '1';
+    sram_instr_strobe <= imem_addr_strobe when
+      imem_addr(31 downto 28) = x"8" and C_sram else '0';
+    imem_data_ready <= sram_instr_ready when sram_instr_strobe = '1' else '1';
     sram: entity sram
     generic map (
 	C_sram_wait_cycles => C_sram_wait_cycles
@@ -335,20 +340,20 @@ begin
     port map (
 	clk => clk, sram_a => sram_a, sram_d => sram_d,
 	sram_wel => sram_wel, sram_lbl => sram_lbl, sram_ubl => sram_ubl,
-	data_out => sram_to_cpu,
-	-- Port A
-	A_addr_strobe => sram_addr_strobe, A_write => dmem_write,
+	data_out => from_sram,
+	-- Port A: CPU, data bus
+	A_addr_strobe => sram_data_strobe, A_write => dmem_write,
 	A_byte_sel => dmem_byte_sel, A_addr => dmem_addr(19 downto 2),
-	A_data_in => cpu_to_dmem, A_ready => sram_ready,
-	-- Port B
-	B_addr_strobe => sw(2), B_write => '0',
-	B_byte_sel => x"f", B_addr => (others => '-'),
-	B_data_in => (others => '-'), B_ready => open,
-	-- Port C
+	A_data_in => cpu_to_dmem, A_ready => sram_data_ready,
+	-- Port B: CPU, instruction bus
+	B_addr_strobe => sram_instr_strobe, B_write => '0',
+	B_byte_sel => x"f", B_addr => imem_addr(19 downto 2),
+	B_data_in => (others => '-'), B_ready => sram_instr_ready,
+	-- Port C: currently unused
 	C_addr_strobe => sw(1), C_write => '0',
 	C_byte_sel => x"f", C_addr => (others => '-'),
 	C_data_in => (others => '-'), C_ready => open,
-	-- Port D
+	-- Port D: currently unused
 	D_addr_strobe => sw(0), D_write => '0',
 	D_byte_sel => x"f", D_addr => (others => '-'),
 	D_data_in => (others => '-'), D_ready => open
