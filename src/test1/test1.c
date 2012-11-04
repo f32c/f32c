@@ -45,9 +45,26 @@ main(void)
 	printf("\n");
 
 	/* Pobrisi SRAM */
-	p32 = (void *) 0x80000000;
-	for (i = 0; i < 1024 * 1024 / 4; i++)
-		*p32++ = 0;
+	printf("\nPattern fill:");
+	for (int j = 255; j >= 0; j -= 59) {
+		uint32_t pat;
+
+		printf(" %d", j);
+		pat = j + (j << 8);
+		pat += pat << 16;
+		p32 = (void *) 0x80000000;
+		for (i = 0; i < 1024 * 1024 / 4;
+		    i++, pat += i + (i << 16), p32++)
+			*p32 = pat;
+		pat = j + (j << 8);
+		pat += pat << 16;
+		p32 = (void *) 0x80000000;
+		for (i = 0; i < 1024 * 1024 / 4;
+		    i++, pat += i + (i << 16), p32++)
+			if (*p32 != pat)
+				printf("greska %d %08x %08x\n", i, *p32, pat);
+	}
+	printf("\n");
 
 	/* Kopiraj fn1() iz BRAM u SRAM */
 	fn1_ram = (void *) 0x80001000;
@@ -64,14 +81,16 @@ main(void)
 			printf("greska %d %08x %08x\n", i, *p32, *fn1_rom);
 
 	/* Izvedi fn1() u BRAM */
-	p32 = (void *) 0x80000000;
+	//p32 = (void *) 0x80000000;
+	p32 = (void *) 0x00003000;
 	*p32 = 0x101;
 	printf("BRAM: *p32 = %08x\n", *p32);
 	i = fn1(1, p32);
 	printf("i = %08x *p32 = %08x\n", i, *p32);
 
 	/* Izvedi fn1() u SRAM */
-	p32 = (void *) 0x80000000;
+	//p32 = (void *) 0x80000000;
+	p32 = (void *) 0x00003000;
 	*p32 = 0x101;
 	printf("SRAM: *p32 = %08x\n", *p32);
 #if 0
