@@ -278,6 +278,7 @@ begin
     --
 
     -- XXX TODO:
+    --  cancel and restart an incomplete instruction fetch on branch!
     --  revisit / simplify register file write-enable setting
     --	revisit MULT / MFHI / MFLO decoding (now done in EX stage!!!)
     --  commit MULT result in MEM stage (branch likely must cancel commit)!
@@ -286,11 +287,13 @@ begin
     --	unaligned load / store instructions?
     --	revisit movz / movn: use ALU (and / or) instead of (slow) shifter!
     --	revisit target_addr computation in idecode.vhd
-    --	don't branch until branch delay slot fetched!!!
     --	MTHI/MTLO/MFC0/MTC0?
     --	division? - block on MFHI/MFLO if result not ready
     --	result forwarding: muxes instead of priority encoders?
     --	exceptions/interrupts
+    --
+    -- Believed to have been fixed already:
+    --	don't branch until branch delay slot fetched!!!
 
 
     --
@@ -501,7 +504,8 @@ begin
 			ID_EX_immediate(10 downto 6) <=
 			  EX_mem_align_shamt & "000";
 		    end if;
-		    if MEM_take_branch and not ID_running then
+		    if MEM_take_branch and not ID_running and
+		      imem_data_ready = '1' then
 			ID_EX_cancel_next <= true;
 		    end if;
 		    if ID_running then
@@ -525,7 +529,8 @@ begin
 		    ID_EX_branch_cycle <= false;
 		    ID_EX_branch_likely <= false;
 		    ID_EX_predict_taken <= false;
-		    if MEM_take_branch and not ID_running then
+		    if MEM_take_branch and not ID_running and
+		      imem_data_ready = '1' then
 			ID_EX_cancel_next <= true;
 		    end if;
 		    if ID_running then
