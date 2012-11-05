@@ -345,6 +345,8 @@ begin
 		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 		IF_ID_bpredict_index <= IF_bpredict_index;
 		IF_ID_instruction <= IF_instruction;
+	    elsif ID_EX_branch_likely and not EX_take_branch then
+		IF_ID_instruction <= x"00000000";
 	    end if;
 	end if;
     end process;
