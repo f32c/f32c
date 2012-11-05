@@ -3,15 +3,6 @@
 #include <io.h>
 
 
-//#define MONITOR
-
-#ifdef MONITOR
-#define BOOTADDR	0x00000400
-#else
-#define BOOTADDR	0x00000200
-#endif
-
-
 #if _BYTE_ORDER == _BIG_ENDIAN
 static char *prompt = "\r\nf32c/be> ";
 #elif _BYTE_ORDER == _LITTLE_ENDIAN
@@ -20,8 +11,7 @@ static char *prompt = "\r\nf32c/le> ";
 #error "Unsupported byte order."
 #endif
 
-int cold_boot = 1;
-
+void *base_addr = NULL;
 
 #define	pchar(c)							\
 	do {								\
@@ -37,7 +27,7 @@ int cold_boot = 1;
 #define	phex(c)								\
 	do {								\
 									\
-		hc = (((c) >> 4) & 0xf) + '0';				\
+		int hc = (((c) >> 4) & 0xf) + '0';			\
 		if (hc > '9')						\
 			hc += 'a' - '9' - 1;				\
 		pchar(hc);						\
@@ -48,176 +38,115 @@ int cold_boot = 1;
 	} while (0)
 
 
-__dead2 void
+__dead2
+void
 _start(void)
 {
-	int c, pos, val, len;
+	int c, cnt, pos, val, len, t;
 	char *cp;
-#ifdef MONITOR
-	int hc;
-	int dumpmode = 0;
-	uint8_t *dumpaddr = NULL;
-#endif
 
 	__asm __volatile__(
 		".set noreorder;"
-		"nop;"
-		"li $29, (0x80000000);"
+		"nop;"			/* just in case... */
 		".set reorder;"
 	);
 
-	if (cold_boot) {
 boot:
-		cold_boot = 0;
+	if (base_addr) {
+		cp = (void *) base_addr;
+		base_addr = NULL;
 		__asm __volatile__(
-			".set noreorder;"
-			"j %0;"
-			"move $31, $0;"
-			".set reorder;"
-			:
-			: "i" (BOOTADDR)
+		".set noreorder;"
+		"lui $4, 0x8000;"	/* stack mask */
+		"lui $5, 0x0010;"	/* top of the initial stack */
+		"move $31, $0;"
+		"and $29, %0, $4;"	/* clear low bits of the stack */
+		"jr %0;"
+		"or $29, $29, $5;"	/* set stack */
+		".set reorder;"
+		: 
+		: "r" (cp)
 		);
 	}
 
 prompt:
-#ifdef MONITOR
-	for (dumpmode &= 0xff; dumpmode > 0; dumpmode--) {
-		pchar('\r');
-		pchar('\n');
-
-		/* addr */
-		val = (int) dumpaddr;
-		for (pos = 4; pos; pos--) {
-			phex(val >> 24);
-			val <<= 8;
-		}
-
-		/* hex */
-		for (pos = 0;; pos++) {
-			if ((pos & 0x7) == 0)
-				pchar(' ');
-			pchar(' ');
-			if (pos == 16)
-				break;
-			phex(dumpaddr[pos]);
-		}
-
-		/* ASCII */
-		for (pos = 16; pos; pos--) {
-			val = *dumpaddr++;
-			if (val < 32 || val > 126)
-				val = '.';
-			pchar(val);
-		}
-	}
-#endif
-
 	for (cp = prompt; *cp != 0; cp++)
 		pchar(*cp);
+
+next:
+	pos = -1;
+	cp = 0;
+	len = 255;
+	val = 0;
+	cnt = 2;
 
 loop:
 	/* Blink LEDs while waiting for serial input */
 	do {
-		RDTSC(val);
-#ifndef MONITOR
-		if (val & 0x08000000)
-			pos = 0xff;
+		RDTSC(t);
+		if (t & 0x08000000)
+			c = 0xff;
 		else
-			pos = 0;
-		if ((val & 0xff) > ((val >> 19) & 0xff))
-			OUTB(IO_LED, pos ^ 0x0f);
+			c = 0;
+		if ((t & 0xff) > ((t >> 19) & 0xff))
+			OUTB(IO_LED, c ^ 0x0f);
 		else
-			OUTB(IO_LED, pos ^ 0xf0);
-#else
-		OUTB(IO_LED, val >> 24);
-#endif
+			OUTB(IO_LED, c ^ 0xf0);
 		INB(c, IO_SIO_STATUS);
 	} while ((c & SIO_RX_FULL) == 0);
 	INB(c, IO_SIO_BYTE);
 
-	/* CR ? */
-	if (c == '\r')
-		goto prompt;
+	if (pos < 0) {
+		if (c == 'S')
+			pos = 0;
+		else {
+			if (c == '\r') /* CR ? */
+				goto prompt;
+			/* Echo char */
+			pchar(c);
+		}
+		goto loop;
+	}
+	if (c == '\r') /* CR ? */
+		goto next;
 
-	if (c != ':') {
-		/* Echo char */
-		pchar(c);
+	val <<= 4;
+	if (c >= 'a')
+		c -= 32;
+	if (c >= 'A')
+		val |= c - 'A' + 10;
+	else
+		val |= c - '0';
+	pos++;
 
-		if (c == 's')
+	/* Address width */
+	if (pos == 1) {
+		if (val == 9)
 			goto boot;
-
-#ifdef MONITOR
-		if (c == 'X') {
-			dumpmode = 0x100 + 16;
-			goto prompt;
-		}
-
-		if (c == 'x')
-			dumpmode = 0x100 + 16;
-
-		if (dumpmode &&
-		    ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) {
-			if (dumpmode & 0x100)
-				dumpaddr = NULL;
-			dumpmode &= 0xff;
-			if (c & 0x40)
-				val = c - 'a' + 10;
-			else
-				val = c - '0';
-			dumpaddr = (void *) (((int) dumpaddr << 4) | val);
-		}
-#endif
-
+		if (val >= 1 && val <= 3)
+			len = (val << 1) + 5;
+		val = 0;
 		goto loop;
 	}
 
-	pos = 0;
-	cp = 0;
-	len = 0;
-	do {
-		/* Wait for serial input */
-		do {
-			INB(c, IO_SIO_STATUS);
-		} while ((c & SIO_RX_FULL) == 0);
-		INB(c, IO_SIO_BYTE);
+	/* Byte count */
+	if (pos == 3) {
+		cnt += (val << 1);
+		val = 0;
+		goto loop;
+	}
 
-		if (c == '\r') {
-			if (len < 0)
-				goto boot;
-			else
-				goto loop;
-		}
+	/* End of address */
+	if (pos == len) {
+		cp = (char *) val;
+		if (base_addr == NULL)
+			base_addr = (void *) val;
+		goto loop;
+	}
 
-		val <<= 4;
-		if (c >= 'a')
-			c -= 32;
-		if (c >= 'A')
-			val |= c - 'A' + 10;
-		else
-			val |= c - '0';
+	if (pos > len && (pos & 1) && pos < cnt)
+		*cp++ = val;
 
-		/* Byte count */
-		if (pos == 1)
-			len = ((val & 0xff) << 1) + 8;
-
-		/* Address */
-		if (pos == 5)
-			cp = (char *) (val & 0xffff);
-
-		/* Record type - only type 0 contains valid data */
-		if (pos == 7 && (val & 0xff) != 0) {
-			if ((val & 0xff) == 1) /* EOF marker */
-				len = -1; /* boot after receiving a CR char */
-			else
-				len = 0;
-		}
-
-		/* Data */
-		if ((pos & 1) && pos > 8 && pos < len)
-			*cp++ = val;
-
-		pos++;
-	} while (1);
-
+	goto loop;
 	/* Unreached */
 }
