@@ -42,7 +42,7 @@ __dead2
 void
 _start(void)
 {
-	int c, cnt, pos, val, len, t;
+	int c, cnt, pos, val, len;
 	char *cp;
 
 	__asm __volatile__(
@@ -75,23 +75,24 @@ prompt:
 
 next:
 	pos = -1;
-	cp = 0;
 	len = 255;
-	val = 0;
 	cnt = 2;
 
 loop:
 	/* Blink LEDs while waiting for serial input */
 	do {
-		RDTSC(t);
-		if (t & 0x08000000)
-			c = 0xff;
-		else
-			c = 0;
-		if ((t & 0xff) > ((t >> 19) & 0xff))
-			OUTB(IO_LED, c ^ 0x0f);
-		else
-			OUTB(IO_LED, c ^ 0xf0);
+		if (pos < 0) {
+			RDTSC(val);
+			if (val & 0x08000000)
+				c = 0xff;
+			else
+				c = 0;
+			if ((val & 0xff) > ((val >> 19) & 0xff))
+				OUTB(IO_LED, c ^ 0x0f);
+			else
+				OUTB(IO_LED, c ^ 0xf0);
+		} else
+			OUTB(IO_LED, (int) cp >> 8);
 		INB(c, IO_SIO_STATUS);
 	} while ((c & SIO_RX_FULL) == 0);
 	INB(c, IO_SIO_BYTE);
@@ -105,6 +106,7 @@ loop:
 			/* Echo char */
 			pchar(c);
 		}
+		val = 0;
 		goto loop;
 	}
 	if (c == '\r') /* CR ? */
@@ -121,7 +123,7 @@ loop:
 
 	/* Address width */
 	if (pos == 1) {
-		if (val == 9)
+		if (val >= 7 && val <= 9)
 			goto boot;
 		if (val >= 1 && val <= 3)
 			len = (val << 1) + 5;
