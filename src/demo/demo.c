@@ -435,7 +435,7 @@ main(void)
 		redraw_display();
 	} while (res == 0);
 
-	printf("Pritisnite 's' za povratak u glavni izbornik.\n");
+	printf("Utipkajte S 8 za povratak u glavni izbornik.\n");
 	return (0);
 }
 

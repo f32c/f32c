@@ -11,7 +11,10 @@ static char *prompt = "\r\nf32c/le> ";
 #error "Unsupported byte order."
 #endif
 
-void *base_addr = NULL;
+#define	BOOTADDR	0x0200
+
+
+void *base_addr = (void *) BOOTADDR;
 
 #define	pchar(c)							\
 	do {								\
@@ -51,9 +54,9 @@ _start(void)
 		".set reorder;"
 	);
 
-boot:
 	if (base_addr) {
 		cp = (void *) base_addr;
+boot:
 		base_addr = NULL;
 		__asm __volatile__(
 		".set noreorder;"
@@ -70,8 +73,12 @@ boot:
 	}
 
 prompt:
-	for (cp = prompt; *cp != 0; cp++)
-		pchar(*cp);
+	cp = prompt;
+	do {
+		c = *cp++;
+pchar:
+		pchar(c);
+	} while (*cp != 0);
 
 next:
 	pos = -1;
@@ -104,7 +111,7 @@ loop:
 			if (c == '\r') /* CR ? */
 				goto prompt;
 			/* Echo char */
-			pchar(c);
+			goto pchar;
 		}
 		val = 0;
 		goto loop;
@@ -123,8 +130,13 @@ loop:
 
 	/* Address width */
 	if (pos == 1) {
-		if (val >= 7 && val <= 9)
+		if (val >= 7 && val <= 9) {
+			if (base_addr != NULL)
+				cp = base_addr;
+			else
+				cp = (void *) BOOTADDR;
 			goto boot;
+		}
 		if (val >= 1 && val <= 3)
 			len = (val << 1) + 5;
 		val = 0;

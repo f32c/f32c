@@ -22,30 +22,56 @@ while {[eof $hexfile] == 0} {
     incr linenum
     set line [string trim $line]
     # Does the line begin with a valid label?
-    if {[string index $line 0] != ":"} {
+    if {[string index $line 0] != "S"} {
 	if {$line == ""} {
 	    continue;
 	}
 	puts "Invalid input file format at line $linenum"
 	exit 1
     }
-    set len [scan [string range $line 1 2] %02x]
-    set block_addr [scan [string range $line 3 6] %04x]
-    set type [scan [string range $line 7 8] %02x]
-    if {$type != 0} {
-	continue
+    set rtype [string index $line 1]
+    set len [scan [string range $line 2 3] %02x]
+    switch $rtype {
+	0 {
+	    set hex [string range $line 8 [expr $len * 2 + 1]]
+	    while {$hex != ""} {
+		set ascii [scan [string range $hex 0 1] %02x]
+		puts -nonewline [format %c $ascii]
+		set hex [string range $hex 2 end]
+	    }
+	    puts -nonewline ": "
+	    continue
+	}
+	1 {
+	    set addr_last 7
+	}
+	2 {
+	    set addr_last 9
+	}
+	3 {
+	    set addr_last 11
+	}
+	9 {
+	    continue
+	}
+	default {
+	    puts "XXX $rtype"
+	    continue
+	}
     }
+    set block_addr [scan [string range $line 4 $addr_last] %x]
     while {$addr < $block_addr} {
 	set mem($addr) 0
 	incr addr
     }
-    for {set i 0} {$i < [expr $len * 2]} {incr i 2} {
-	set val [scan [string range $line [expr 9 + $i] [expr 10 + $i]] %x]
+    for {set i [expr $addr_last + 1]} {$i < [expr $len * 2 + 2]} {incr i 2} {
+	set val [scan [string range $line $i [expr $i + 1]] %x]
 	set mem($addr) $val
 	incr addr
     }
 }
 close $hexfile
+
 
 # Pad mem to 512 byte-block boundary
 while {[expr $addr % 512] != 0} {
@@ -53,6 +79,7 @@ while {[expr $addr % 512] != 0} {
     incr addr
 }
 set endaddr $addr
+puts "$addr bytes"
 
 set bramfile [open $ofile]
 set linenum 0
