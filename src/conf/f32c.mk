@@ -83,7 +83,7 @@ MK_LDFLAGS += ${LDFLAGS}
 
 CC = mips-elf-gcc ${MK_INCLUDES} ${MK_CFLAGS}
 LD = mips-elf-ld ${MK_LDFLAGS}
-OBJCOPY = mips-elf-objcopy -O ihex
+OBJCOPY = mips-elf-objcopy -O srec
 MKDEP = ${CC} -MM
 
 
