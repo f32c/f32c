@@ -486,7 +486,7 @@ begin
     ID_jump_target <=
       ID_reg1_data(31 downto 2) when ID_jump_register else
       ID_branch_target when ID_predict_taken else
-      IF_ID_PC(29 downto 24) & IF_ID_instruction(23 downto 0);
+      IF_ID_PC_4(31 downto 28) & IF_ID_instruction(25 downto 0);
 
     process(clk)
     begin
