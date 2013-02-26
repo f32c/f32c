@@ -1,5 +1,5 @@
 
-#include <types.h>
+#include <sys/param.h>
 
 uint32_t
 __mulsi3(uint32_t a, uint32_t b)
