@@ -25,9 +25,11 @@ int led_byte = -1;
 static int pcm_addr = PCM_END;
 static int pcm_lo_acc[2] = {0, 0};
 static int pcm_hi_acc[2] = {0, 0};
+#ifdef BRAM
 static int pcm_rv1_acc[2] = {0, 0};
 static int pcm_rv2_acc[2] = {0, 0};
 static int pcm_rv3_acc[2] = {0, 0};
+#endif
 static int pcm_avg[2] = {0, 0};
 static int pcm_vu[2] = {0, 0};
 static int pcm_evol[2] = {0, 0};
@@ -66,8 +68,11 @@ update_dds_freq(void)
 void
 pcm_play(void)
 {
-	int pcm_out, dds_out, i, c, t, vu;
+	int pcm_out, dds_out, i, c, vu;
+#ifdef BRAM
+	int t;
 	short *sram = (short *) 0x88000000;
+#endif
 	
 	RDTSC(c);
 	c -= pcm_next_tsc;
@@ -104,6 +109,7 @@ pcm_play(void)
 		pcm_hi_acc[i] = c - (((c - pcm_hi_acc[i]) * pcm_hi) >> 16);
 		c = c - pcm_hi_acc[i];
 
+#ifdef BRAM
 		/* Reverb */
 		t = c
 		    + sram[delay_idx - 3110]
@@ -127,6 +133,7 @@ pcm_play(void)
 			if (c < -32768)
 				c = -32768;
 		}
+#endif
 		
 		/* 32 -> 16 bit */
 		c &= 0xffff;

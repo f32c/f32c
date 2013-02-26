@@ -144,6 +144,7 @@ sdcard_test(void)
 static void
 sram_test(void)
 {
+#ifdef BRAM
 	int i, j, r, mem_offset;
 	uint16_t *membuf = (uint16_t *) buf;
 	uint16_t *sram16 = (uint16_t *) 0x80000000;
@@ -167,6 +168,7 @@ sram_test(void)
 			}
 		}
 	}
+#endif
 	printf("SRAM OK!\n");
 }
 
