@@ -125,6 +125,7 @@ set mul_set "mult multu mflo mfhi"
 set unaligned_store_set "swl swr"
 set unaligned_load_set "lwl lwr"
 set sign_extend_set "seb seh"
+set cp0_set "mfc0"
 
 puts -nonewline "Branch likely instructions: "
 foreach instr [lsort [array names instr_map]] {
@@ -142,22 +143,6 @@ foreach instr [lsort [array names instr_map]] {
 }
 puts ""
 
-puts -nonewline "Unaligned store instructions: "
-foreach instr [lsort [array names instr_map]] {
-    if {[lsearch $unaligned_store_set $instr] >= 0} {
-	puts -nonewline "$instr "
-    }
-}
-puts ""
-
-puts -nonewline "Unaligned load instructions: "
-foreach instr [lsort [array names instr_map]] {
-    if {[lsearch $unaligned_load_set $instr] >= 0} {
-	puts -nonewline "$instr "
-    }
-}
-puts ""
-
 puts -nonewline "Sign extend instructions: "
 foreach instr [lsort [array names instr_map]] {
     if {[lsearch $sign_extend_set $instr] >= 0} {
@@ -166,9 +151,33 @@ foreach instr [lsort [array names instr_map]] {
 }
 puts ""
 
-puts -nonewline "Unsupported instructions: "
+puts -nonewline "CP0 instructions: "
 foreach instr [lsort [array names instr_map]] {
-    if {[lsearch "$base_isa_set $mul_set $unaligned_load_set $unaligned_store_set $branch_likely_set $sign_extend_set" $instr] < 0} {
+    if {[lsearch $cp0_set $instr] >= 0} {
+	puts -nonewline "$instr "
+    }
+}
+puts ""
+
+puts -nonewline "Unaligned store instructions (unsupported): "
+foreach instr [lsort [array names instr_map]] {
+    if {[lsearch $unaligned_store_set $instr] >= 0} {
+	puts -nonewline "$instr "
+    }
+}
+puts ""
+
+puts -nonewline "Unaligned load instructions (unsupported): "
+foreach instr [lsort [array names instr_map]] {
+    if {[lsearch $unaligned_load_set $instr] >= 0} {
+	puts -nonewline "$instr "
+    }
+}
+puts ""
+
+puts -nonewline "Other unsupported instructions: "
+foreach instr [lsort [array names instr_map]] {
+    if {[lsearch "$base_isa_set $mul_set $unaligned_load_set $unaligned_store_set $branch_likely_set $sign_extend_set $cp0_set" $instr] < 0} {
 	puts -nonewline "$instr "
     }
 }
