@@ -4,7 +4,7 @@ ifndef LOADADDR
 LOADADDR = 0x80000000
 endif
 
-ifneq (${LOADADDR}, 0x80000000)
+ifeq ($(findstring 0x8, ${LOADADDR}),)
 MK_CFLAGS += -DBRAM
 endif
 
