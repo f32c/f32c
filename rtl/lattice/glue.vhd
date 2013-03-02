@@ -132,7 +132,7 @@ architecture Behavioral of glue is
 begin
 
     -- clock synthesizer
-    clkgen: entity clkgen
+    clkgen: entity work.clkgen
     generic map (
 	C_clk_freq => C_clk_freq,
 	C_debug => C_debug
@@ -145,7 +145,7 @@ begin
     intr <= btn_center and sw(0) when C_debug else '0';
 
     -- f32c core
-    pipeline: entity pipeline
+    pipeline: entity work.pipeline
     generic map (
 	C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
@@ -175,7 +175,7 @@ begin
     -- RS232 sio
     G_sio:
     if C_sio generate
-    sio: entity sio
+    sio: entity work.sio
     generic map (
 	C_big_endian => C_big_endian,
 	C_clk_freq => C_clk_freq
@@ -314,7 +314,7 @@ begin
 
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
-    bram: entity bram
+    bram: entity work.bram
     generic map (
 	C_mem_size => C_mem_size
     )
@@ -333,7 +333,7 @@ begin
     sram_instr_strobe <= imem_addr_strobe when
       imem_addr(31 downto 28) = x"8" and C_sram else '0';
     imem_data_ready <= sram_instr_ready when sram_instr_strobe = '1' else '1';
-    sram: entity sram
+    sram: entity work.sram
     generic map (
 	C_sram_wait_cycles => C_sram_wait_cycles
     )
