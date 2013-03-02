@@ -60,7 +60,7 @@ begin
 	-- PLL generator
 	G_pll_325:
 	if not C_debug and C_clk_freq = 81 generate
-	PLL: entity pll
+	PLL: entity work.pll
 	generic map (
 		C_pll_freq => 325
 	)
@@ -74,7 +74,7 @@ begin
 
 	G_pll:
 	if not C_debug and C_clk_freq /= 81 generate
-	PLL: entity pll
+	PLL: entity work.pll
 	generic map (
 		C_pll_freq => C_clk_freq
 	)
