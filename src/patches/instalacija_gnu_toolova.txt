@@ -5,7 +5,7 @@ Postupak buildanja GNU alata za MIPS platformu
 Verzije koje trenutno provjereno rade su:
 
 	binutils-2.23.1.tar.bz2
-	gcc-4.7.2.tar.bz2
+	gcc-4.8.0.tar.bz2
 	mpc-1.0.1.tar.gz
 	mpfr-3.0.1.tar.bz2
 	gmp-5.0.5.tar.bz2
@@ -14,21 +14,21 @@ Verzije koje trenutno provjereno rade su:
 poddirektorije unutar gcc/, uz uklanjanje oznaka verzija:
 
 	tar -xzf binutils-2.23.1.tar.bz2
-	tar -xzf gcc-4.7.2.tar.bz2
+	tar -xzf gcc-4.8.0.tar.bz2
 	tar -xzf mpc-1.0.1.tar.gz
 	tar -xzf mpfr-3.1.1.tar.bz2
 	tar -xzf gmp-5.1.1.tar.bz2 
-	mv mpc-1.0.1 gcc-4.7.2/mpc
-	mv mpfr-3.0.1 gcc-4.7.2/mpfr
-	mv gmp-5.0.5 gcc-4.7.2/gmp
+	mv mpc-1.0.1 gcc-4.8.0/mpc
+	mv mpfr-3.0.1 gcc-4.8.0/mpfr
+	mv gmp-5.0.5 gcc-4.8.0/gmp
 
 3) Patchirati alate binutils i gcc s optimizacijama za procesor f32c:
 
 	cd binutils-2.23.1
 	patch <~/fpgasvn/f32c/src/patches/binutils-2.21.diff 
 
-	cd ../gcc-4.7.2
-	patch < ~/fpgasvn/f32c/src/patches/gcc-4.7.0.diff 
+	cd ../gcc-4.8.0
+	patch < ~/fpgasvn/f32c/src/patches/gcc-4.8.0.diff 
 
 4) Prevesti i instalirati binutils:
 
@@ -41,7 +41,7 @@ poddirektorije unutar gcc/, uz uklanjanje oznaka verzija:
 
 5) Prevesti i instalirati gcc:
 
-	cd ../gcc-4.7.2
+	cd ../gcc-4.8.0
 	./configure --target=mips-elf --enable-languages=c,c++ \
 	    --prefix=/usr/local --mandir=/usr/local/man \
 	    --infodir=/usr/local/info --disable-nls --disable-shared
