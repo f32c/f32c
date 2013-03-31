@@ -1,0 +1,440 @@
+--- configure	2013-02-15 18:45:54.000000000 +0100
++++ configure	2013-03-31 21:57:58.000000000 +0200
+@@ -2783,6 +2783,9 @@ target_libraries="target-libgcc \
+ 		target-libada \
+ 		target-libgo"
+ 
++# XXX Marko no libraries!
++target_libraries=""
++
+ # these tools are built using the target libraries, and are intended to
+ # run only in the target environment
+ #
+@@ -2804,6 +2807,10 @@ build_configdirs=`echo ${build_libs} ${b
+ 
+ 
+ 
++# Don't build target tools and libraries for f32c yet
++target_libraries=""
++target_tools=""
++
+ ################################################################################
+ 
+ srcname="gnu development package"
+--- gcc/config/mips/mips-cpus.def	2013-02-25 14:53:16.000000000 +0100
++++ gcc/config/mips/mips-cpus.def	2013-03-31 21:57:57.000000000 +0200
+@@ -55,6 +55,7 @@ MIPS_CPU ("r3900", PROCESSOR_R3900, 1, 0
+ 
+ /* MIPS II processors.  */
+ MIPS_CPU ("r6000", PROCESSOR_R6000, 2, 0)
++MIPS_CPU ("f32c", PROCESSOR_F32C, 2, 0)
+ 
+ /* MIPS III processors.  */
+ MIPS_CPU ("r4000", PROCESSOR_R4000, 3, 0)
+--- gcc/config/mips/mips.c	2013-02-25 14:53:16.000000000 +0100
++++ gcc/config/mips/mips.c	2013-03-31 21:57:57.000000000 +0200
+@@ -1121,7 +1121,16 @@ static const struct mips_rtx_cost_data
+     COSTS_N_INSNS (68),           /* int_div_di */
+ 		     1,           /* branch_cost */
+ 		     4            /* memory_latency */
+-  }
++  },
++  { /* F32C */
++    SOFT_FP_COSTS,
++    COSTS_N_INSNS (3),            /* int_mult_si */
++    COSTS_N_INSNS (3),            /* int_mult_di */
++    COSTS_N_INSNS (36),           /* int_div_si */
++    COSTS_N_INSNS (68),           /* int_div_di */
++		     1,           /* branch_cost */
++		     4            /* memory_latency */
++  },
+ };
+ 
+ static rtx mips_find_pic_call_symbol (rtx, rtx, bool);
+--- gcc/config/mips/mips.h	2013-02-25 14:53:16.000000000 +0100
++++ gcc/config/mips/mips.h	2013-03-31 22:01:22.000000000 +0200
+@@ -206,6 +206,7 @@ struct mips_cpu_info {
+ #define TARGET_LOONGSON_2F          (mips_arch == PROCESSOR_LOONGSON_2F)
+ #define TARGET_LOONGSON_2EF         (TARGET_LOONGSON_2E || TARGET_LOONGSON_2F)
+ #define TARGET_LOONGSON_3A          (mips_arch == PROCESSOR_LOONGSON_3A)
++#define TARGET_F32C                 (mips_arch == PROCESSOR_F32C)
+ #define TARGET_MIPS3900             (mips_arch == PROCESSOR_R3900)
+ #define TARGET_MIPS4000             (mips_arch == PROCESSOR_R4000)
+ #define TARGET_MIPS4120             (mips_arch == PROCESSOR_R4120)
+@@ -234,6 +235,7 @@ struct mips_cpu_info {
+ #define TUNE_LOONGSON_2EF           (mips_tune == PROCESSOR_LOONGSON_2E	\
+ 				     || mips_tune == PROCESSOR_LOONGSON_2F)
+ #define TUNE_LOONGSON_3A            (mips_tune == PROCESSOR_LOONGSON_3A)
++#define TUNE_F32C                   (mips_tune == PROCESSOR_F32C)
+ #define TUNE_MIPS3000               (mips_tune == PROCESSOR_R3000)
+ #define TUNE_MIPS3900               (mips_tune == PROCESSOR_R3900)
+ #define TUNE_MIPS4000               (mips_tune == PROCESSOR_R4000)
+@@ -490,6 +492,12 @@ struct mips_cpu_info {
+       if (TARGET_PAIRED_SINGLE_FLOAT)					\
+ 	builtin_define ("__mips_paired_single_float");			\
+ 									\
++      if (TARGET_SWMUL)							\
++	builtin_define ("__mips_swmul");				\
++									\
++      if (TARGET_SWDIV)							\
++	builtin_define ("__mips_swdiv");				\
++									\
+       if (TARGET_BIG_ENDIAN)						\
+ 	{								\
+ 	  builtin_define_std ("MIPSEB");				\
+@@ -696,7 +704,7 @@ struct mips_cpu_info {
+ #define MIPS_ISA_LEVEL_SPEC \
+   "%{" MIPS_ISA_LEVEL_OPTION_SPEC ":;: \
+      %{march=mips1|march=r2000|march=r3000|march=r3900:-mips1} \
+-     %{march=mips2|march=r6000:-mips2} \
++     %{march=mips2|march=r6000|march=f32c:-mips2} \
+      %{march=mips3|march=r4*|march=vr4*|march=orion|march=loongson2*:-mips3} \
+      %{march=mips4|march=r8000|march=vr5*|march=rm7000|march=rm9000 \
+        |march=r10000|march=r12000|march=r14000|march=r16000:-mips4} \
+@@ -716,7 +724,7 @@ struct mips_cpu_info {
+   "%{mhard-float|msoft-float|mno-float|march=mips*:; \
+      march=vr41*|march=m4k|march=4k*|march=24kc|march=24kec \
+      |march=34kc|march=34kn|march=74kc|march=1004kc|march=5kc \
+-     |march=octeon|march=xlr: -msoft-float;		  \
++     |march=octeon|march=xlr|march=f32c: -msoft-float; \
+      march=*: -mhard-float}"
+ 
+ /* A spec condition that matches 32-bit options.  It only works if
+@@ -974,8 +982,8 @@ struct mips_cpu_info {
+ #define ISA_HAS_TRUNC_W		(!ISA_MIPS1)
+ 
+ /* ISA includes the MIPS32r2 seb and seh instructions.  */
+-#define ISA_HAS_SEB_SEH		((ISA_MIPS32R2		\
+-				  || ISA_MIPS64R2)	\
++#define ISA_HAS_SEB_SEH		((ISA_MIPS32R2				\
++				  || ISA_MIPS64R2 || TARGET_F32C)	\
+ 				 && !TARGET_MIPS16)
+ 
+ /* ISA includes the MIPS32/64 rev 2 ext and ins instructions.  */
+@@ -1039,6 +1047,7 @@ struct mips_cpu_info {
+ 				 || ISA_MIPS64				\
+ 				 || ISA_MIPS64R2			\
+ 				 || TARGET_MIPS5500			\
++				 || TARGET_F32C				\
+ 				 || TARGET_LOONGSON_2EF)
+ 
+ /* ISA includes synci, jr.hb and jalr.hb.  */
+--- gcc/config/mips/mips.md	2013-02-25 14:53:16.000000000 +0100
++++ gcc/config/mips/mips.md	2013-03-31 22:02:49.000000000 +0200
+@@ -64,6 +64,7 @@
+   sr71000
+   xlr
+   xlp
++  f32c
+ ])
+ 
+ (define_c_enum "unspec" [
+@@ -1047,6 +1048,7 @@
+ (include "sr71k.md")
+ (include "xlr.md")
+ (include "xlp.md")
++(include "f32c.md")
+ (include "generic.md")
+ 
+ ;;
+@@ -1445,7 +1447,7 @@
+   [(set (match_operand:GPR 0 "register_operand")
+ 	(mult:GPR (match_operand:GPR 1 "register_operand")
+ 		  (match_operand:GPR 2 "register_operand")))]
+-  ""
++  "!TARGET_SWMUL"
+ {
+   rtx lo;
+ 
+@@ -1525,7 +1527,7 @@
+   [(set (match_operand:GPR 0 "muldiv_target_operand" "=l")
+ 	(mult:GPR (match_operand:GPR 1 "register_operand" "d")
+ 		  (match_operand:GPR 2 "register_operand" "d")))]
+-  "!TARGET_FIX_R4000"
++  "!TARGET_SWMUL && !TARGET_FIX_R4000"
+   "<d>mult\t%1,%2"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "<MODE>")])
+@@ -1869,7 +1871,7 @@
+   [(set (match_operand:DI 0 "register_operand")
+ 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+ 		 (any_extend:DI (match_operand:SI 2 "register_operand"))))]
+-  "mips_mulsidi3_gen_fn (<CODE>) != NULL"
++  "!TARGET_SWMUL && mips_mulsidi3_gen_fn (<CODE>) != NULL"
+ {
+   mulsidi3_gen_fn fn = mips_mulsidi3_gen_fn (<CODE>);
+   emit_insn (fn (operands[0], operands[1], operands[2]));
+@@ -1897,7 +1899,7 @@
+   [(set (match_operand:DI 0 "muldiv_target_operand" "=ka")
+ 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 		 (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))]
+-  "!TARGET_64BIT && (!TARGET_FIX_R4000 || ISA_HAS_DSP)"
++  "!TARGET_SWMUL && !TARGET_64BIT && (!TARGET_FIX_R4000 || ISA_HAS_DSP)"
+ {
+   if (ISA_HAS_DSP_MULT)
+     return "mult<u>\t%q0,%1,%2";
+@@ -1912,7 +1914,7 @@
+ 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 		 (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))
+    (clobber (match_scratch:DI 3 "=x"))]
+-  "!TARGET_64BIT && TARGET_FIX_R4000 && !ISA_HAS_DSP"
++  "!TARGET_SWMUL && !TARGET_64BIT && TARGET_FIX_R4000 && !ISA_HAS_DSP"
+   "mult<u>\t%1,%2\;mflo\t%L0\;mfhi\t%M0"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "SI")
+@@ -1991,7 +1993,7 @@
+ 	     (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 	     (any_extend:DI (match_operand:SI 2 "register_operand" "d")))]
+ 	  UNSPEC_SET_HILO))]
+-  "TARGET_64BIT && !TARGET_FIX_R4000"
++  "!TARGET_SWMUL && TARGET_64BIT && !TARGET_FIX_R4000"
+   "mult<u>\t%1,%2"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "SI")])
+@@ -2002,7 +2004,7 @@
+ 	(mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 		 (sign_extend:DI (match_operand:SI 2 "register_operand" "d"))))
+    (clobber (match_scratch:DI 3 "=l"))]
+-  "TARGET_64BIT && ISA_HAS_DMUL3"
++  "!TARGET_SWDIV && TARGET_64BIT && ISA_HAS_DMUL3"
+   "dmul\t%0,%1,%2"
+   [(set_attr "type" "imul3")
+    (set_attr "mode" "DI")])
+@@ -2014,7 +2016,7 @@
+ 	 (mult:DI
+ 	  (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 	  (any_extend:DI (match_operand:SI 2 "register_operand" "d")))))]
+-  "!TARGET_64BIT && ISA_HAS_MULS"
++  "!TARGET_SWDIV && !TARGET_64BIT && ISA_HAS_MULS"
+   "muls<u>\t$0,%1,%2"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "SI")])
+@@ -2055,7 +2057,7 @@
+ 	  (mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+ 		   (any_extend:DI (match_operand:SI 2 "register_operand")))
+ 	  (const_int 32))))]
+-  ""
++  "!TARGET_SWMUL"
+ {
+   if (ISA_HAS_MULHI)
+     emit_insn (gen_<su>mulsi3_highpart_mulhi_internal (operands[0],
+@@ -2078,7 +2080,7 @@
+ 		   (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
+ 	  (const_int 32))))
+    (clobber (match_scratch:SI 3 "=l"))]
+-  "!ISA_HAS_MULHI && !TARGET_MIPS16"
++  "!TARGET_SWMUL && !ISA_HAS_MULHI && !TARGET_MIPS16"
+   { return TARGET_FIX_R4000 ? "mult<u>\t%1,%2\n\tmfhi\t%0" : "#"; }
+   "&& reload_completed && !TARGET_FIX_R4000"
+   [(const_int 0)]
+@@ -2472,7 +2474,9 @@
+ 		  (match_operand:ANYF 2 "register_operand")))]
+   "<divide_condition>"
+ {
+-  if (const_1_operand (operands[1], <MODE>mode))
++  if (TARGET_SWDIV)
++    FAIL;
++  else if (const_1_operand (operands[1], <MODE>mode))
+     if (!(<recip_condition> && flag_unsafe_math_optimizations))
+       operands[1] = force_reg (<MODE>mode, operands[1]);
+ })
+@@ -2534,7 +2538,7 @@
+    (set (match_operand:GPR 3 "register_operand")
+ 	(mod:GPR (match_dup 1)
+ 		 (match_dup 2)))]
+-  "!TARGET_FIX_VR4120"
++  "!TARGET_SWDIV && !TARGET_FIX_VR4120"
+ {
+   if (TARGET_MIPS16)
+     {
+@@ -2555,7 +2559,7 @@
+    (set (match_operand:GPR 3 "register_operand" "=d")
+ 	(mod:GPR (match_dup 1)
+ 		 (match_dup 2)))]
+-  "!TARGET_FIX_VR4120 && !TARGET_MIPS16"
++  "!TARGET_SWDIV && !TARGET_FIX_VR4120 && !TARGET_MIPS16"
+   "#"
+   "&& reload_completed"
+   [(const_int 0)]
+@@ -2574,7 +2578,7 @@
+    (set (match_operand:GPR 3 "register_operand")
+ 	(umod:GPR (match_dup 1)
+ 		  (match_dup 2)))]
+-  ""
++  "!TARGET_SWDIV"
+ {
+   if (TARGET_MIPS16)
+     {
+@@ -2595,7 +2599,7 @@
+    (set (match_operand:GPR 3 "register_operand" "=d")
+ 	(umod:GPR (match_dup 1)
+ 		  (match_dup 2)))]
+-  "!TARGET_MIPS16"
++  "!TARGET_SWDIV && !TARGET_MIPS16"
+   "#"
+   "reload_completed"
+   [(const_int 0)]
+@@ -2611,7 +2615,7 @@
+   [(set (match_operand:GPR 0 "register_operand")
+ 	(any_mod:GPR (match_operand:GPR 1 "register_operand")
+ 		     (match_operand:GPR 2 "register_operand")))]
+-  ""
++  "!TARGET_SWDIV"
+ {
+   rtx hilo;
+ 
+@@ -2638,7 +2642,7 @@
+ 	  [(any_div:GPR (match_operand:GPR 1 "register_operand" "d")
+ 			(match_operand:GPR 2 "register_operand" "d"))]
+ 	  UNSPEC_SET_HILO))]
+-  ""
++  "!TARGET_SWDIV"
+   { return mips_output_division ("<GPR:d>div<u>\t%.,%1,%2", operands); }
+   [(set_attr "type" "idiv")
+    (set_attr "mode" "<GPR:MODE>")])
+--- gcc/config/mips/mips.opt	2013-02-25 14:53:16.000000000 +0100
++++ gcc/config/mips/mips.opt	2013-03-31 21:57:57.000000000 +0200
+@@ -111,6 +111,14 @@ mdouble-float
+ Target Report RejectNegative InverseMask(SINGLE_FLOAT, DOUBLE_FLOAT)
+ Allow hardware floating-point instructions to cover both 32-bit and 64-bit operations
+ 
++msoft-mul
++Target Report Mask(SWMUL)
++Do not use integer mul instructions
++
++msoft-div
++Target Report Mask(SWDIV)
++Do not use integer div instructions
++
+ mdsp
+ Target Report Mask(DSP)
+ Use MIPS-DSP instructions
+--- gcc/doc/g++.1	2013-03-22 12:05:20.000000000 +0100
++++ gcc/doc/g++.1	2013-03-31 21:57:58.000000000 +0200
+@@ -14979,6 +14979,7 @@ The processor names are:
+ \&\fB34kc\fR, \fB34kf2_1\fR, \fB34kf1_1\fR, \fB34kn\fR,
+ \&\fB74kc\fR, \fB74kf2_1\fR, \fB74kf1_1\fR, \fB74kf3_2\fR,
+ \&\fB1004kc\fR, \fB1004kf2_1\fR, \fB1004kf1_1\fR,
++\&\fBf32c\fR,
+ \&\fBloongson2e\fR, \fBloongson2f\fR, \fBloongson3a\fR,
+ \&\fBm4k\fR,
+ \&\fBocteon\fR, \fBocteon+\fR, \fBocteon2\fR,
+--- gcc/doc/gcc.1	2013-03-22 12:05:20.000000000 +0100
++++ gcc/doc/gcc.1	2013-03-31 21:57:58.000000000 +0200
+@@ -14979,6 +14979,7 @@ The processor names are:
+ \&\fB34kc\fR, \fB34kf2_1\fR, \fB34kf1_1\fR, \fB34kn\fR,
+ \&\fB74kc\fR, \fB74kf2_1\fR, \fB74kf1_1\fR, \fB74kf3_2\fR,
+ \&\fB1004kc\fR, \fB1004kf2_1\fR, \fB1004kf1_1\fR,
++\&\fBf32c\fR,
+ \&\fBloongson2e\fR, \fBloongson2f\fR, \fBloongson3a\fR,
+ \&\fBm4k\fR,
+ \&\fBocteon\fR, \fBocteon+\fR, \fBocteon2\fR,
+--- gcc/doc/invoke.texi	2013-03-14 10:13:36.000000000 +0100
++++ gcc/doc/invoke.texi	2013-03-31 21:57:58.000000000 +0200
+@@ -15900,6 +15900,7 @@ The processor names are:
+ @samp{34kc}, @samp{34kf2_1}, @samp{34kf1_1}, @samp{34kn},
+ @samp{74kc}, @samp{74kf2_1}, @samp{74kf1_1}, @samp{74kf3_2},
+ @samp{1004kc}, @samp{1004kf2_1}, @samp{1004kf1_1},
++@samp{f32c},
+ @samp{loongson2e}, @samp{loongson2f}, @samp{loongson3a},
+ @samp{m4k},
+ @samp{octeon}, @samp{octeon+}, @samp{octeon2},
+--- /dev/null	2013-03-31 22:22:00.000000000 +0200
++++ gcc/config/mips/f32c.md	2013-03-31 22:21:11.000000000 +0200
+@@ -0,0 +1,96 @@
++;;
++;; f32c pipeline description
++;;
++
++
++(define_automaton "f32c_cpu, f32c_mdu")
++
++;; Integer execution unit.
++(define_cpu_unit "f32c_ixu_arith"       "f32c_cpu")
++(define_cpu_unit "f32c_ixu_mpydiv"      "f32c_mdu")
++
++(define_insn_reservation "f32c_int_load" 3
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "load"))
++  "f32c_ixu_arith")
++
++(define_insn_reservation "f32c_int_store" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "store"))
++  "f32c_ixu_arith")
++
++(define_bypass 3 "f32c_int_load"   "f32c_int_store")
++
++(define_insn_reservation "f32c_int_mult" 1
++  (and (eq_attr "cpu" "f32c")
++       (and (eq_attr "type" "imul,imadd")
++	    (eq_attr "mode" "SI")))
++  "f32c_ixu_arith+(f32c_ixu_mpydiv*2)")
++
++(define_insn_reservation "f32c_int_mfhilo" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "mfhi,mflo"))
++  "f32c_ixu_arith+f32c_ixu_mpydiv")
++
++(define_insn_reservation "f32c_int_shift" 2
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "shift"))
++  "f32c_ixu_arith")
++
++(define_insn_reservation "f32c_condmove" 2
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "condmove"))
++  "f32c_ixu_arith")
++
++;; All other integer insns.
++(define_insn_reservation "f32c_int_alu" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "arith,const,logical,move,nop,signext,slt"))
++  "f32c_ixu_arith")
++
++(define_insn_reservation "f32c_int_branch" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "branch"))
++  "f32c_ixu_arith")
++
++;; JR/JALR.
++(define_insn_reservation "f32c_int_jump" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "jump,call"))
++  "f32c_ixu_arith")
++
++;; Any    -> JR/JALR (without dependency) : 1 clock issue delay
++;; Load   -> JR/JALR (with dependency)    : 3 clock issue delay
++;; Shift  -> JR/JALR (with dependency)    : 3 clock issue delay
++;; Any    -> JR/JALR (with dependency)    : 2 clock issue delay
++(define_bypass 3 "f32c_int_load"   "f32c_int_jump")
++(define_bypass 3 "f32c_int_shift"  "f32c_int_jump")
++(define_bypass 2 "f32c_int_alu"    "f32c_int_jump")
++(define_bypass 2 "f32c_int_mfhilo" "f32c_int_jump")
++
++;; Unknown 
++(define_insn_reservation "f32c_int_unknown" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "unknown,multi"))
++  "f32c_ixu_arith+f32c_ixu_mpydiv")
++
++
++;; Substitute sll %0,%1,1 with addu %0,%1,%1
++(define_insn "*ashl<mode>3"
++  [(set (match_operand:GPR 0 "register_operand" "=d")
++        (ashift:GPR (match_operand:GPR 1 "register_operand" "d")
++                       (match_operand:SI 2 "arith_operand" "dI")))]
++  "TARGET_F32C"
++{
++  if (CONST_INT_P (operands[2]))
++    operands[2] = GEN_INT (INTVAL (operands[2])
++                           & (GET_MODE_BITSIZE (<MODE>mode) - 1));
++                               
++  if (CONST_INT_P (operands[2]) && INTVAL (operands[2]) == 1)
++    return "addu\t%0,%1,%1";
++  else
++    return "sll\t%0,%1,%2";
++}
++  [(set_attr "type" "shift")
++   (set_attr "mode" "<MODE>")])
++
