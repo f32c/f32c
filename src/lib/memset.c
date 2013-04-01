@@ -3,10 +3,8 @@ __attribute__((optimize("-Os"))) void *
 memset(char *b, int c, unsigned int len)
 {
 
-	while (len != 0) {
+	for (; len != 0; len--)
 		*b++ = c;
-		len--;
-	}
 
 	return (b);
 }
