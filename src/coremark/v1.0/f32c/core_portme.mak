@@ -34,28 +34,30 @@ MK_CFLAGS += -ffreestanding
 # Optimization options
 MK_CFLAGS += -O2
 MK_CFLAGS += -finline-functions
-MK_CFLAGS += -fpeel-loops -funroll-loops -ftracer
+MK_CFLAGS += -fpeel-loops -funroll-loops
 MK_CFLAGS += -fselective-scheduling -fsel-sched-pipelining
 
 # Minor improvements
+MK_CFLAGS += -fsched2-use-superblocks
 MK_CFLAGS += -fipa-cp-clone -fipa-pta -fmodulo-sched
-MK_CFLAGS += -fira-region=one -fira-loop-pressure
+MK_CFLAGS += -fira-loop-pressure
 
 # Useless
 #MK_CFLAGS += -fpredictive-commoning
-#MK_CFLAGS += -funswitch-loops -ftree-loop-im
 #MK_CFLAGS += -fgcse-after-reload
-#MK_CFLAGS += -fmodulo-sched-allow-regmoves
 #MK_CFLAGS += -fmerge-all-constants
-#MK_CFLAGS += -finline-limit=4
 #MK_CFLAGS += -falign-functions=4 -falign-labels=4
 #MK_CFLAGS += -falign-jumps=4 -falign-loops=4
 
 # Negative impact on performance
+#MK_CFLAGS += -ftracer
+#MK_CFLAGS += -finline-limit=0
+#MK_CFLAGS += -funswitch-loops -ftree-loop-im
+#MK_CFLAGS += -fira-algorithm=priority
+#MK_CFLAGS += -fmodulo-sched-allow-regmoves
 #MK_CFLAGS += -fgcse-sm
 #MK_CFLAGS += -fgcse-las
-#MK_CFLAGS += -fsched2-use-superblocks
-#MK_CFLAGS += -fira-algorithm=priority
+#MK_CFLAGS += -fira-region=one
 
 # Linker flags
 MK_LDFLAGS += -N
