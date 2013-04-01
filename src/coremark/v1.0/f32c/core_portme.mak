@@ -11,7 +11,7 @@ CC = mips-elf-gcc
 # Flag : CFLAGS
 #	Use this flag to define compiler options. Note, you can add compiler options from the command line using XCFLAGS="other flags"
 
-LOADADDR = 0x00000200
+LOADADDR = 0x80000000
 ENDIANFLAGS = -EL
 
 # MIPS-specific flags
@@ -24,6 +24,9 @@ MK_CFLAGS += -G 32768
 # f32c-specific flags
 #MK_CFLAGS += -msoft-mul
 MK_CFLAGS += -msoft-div
+
+# No zero-filled BSS
+MK_CFLAGS += -fno-zero-initialized-in-bss
 
 MK_CFLAGS += -nostdinc -I../../include
 
