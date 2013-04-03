@@ -362,7 +362,7 @@ begin
     -- debugging design instance
     G_debug:
     if C_debug generate
-    debug: entity serial_debug
+    debug: entity work.serial_debug
     port map (
 	clk => clk_25m, rs232_txd => debug_txd,
 	trace_addr => trace_addr, trace_data => trace_data

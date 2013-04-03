@@ -40,7 +40,7 @@ entity glue is
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
-	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
+	C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff";
 
 	-- COP0 options
 	C_cop0_count: boolean := true;
@@ -60,7 +60,7 @@ entity glue is
 	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
 
 	-- SoC configuration options
-	C_mem_size: string := "16k";
+	C_mem_size: string := "8k";
 	C_sram: boolean := true;
 	C_sram_wait_cycles: std_logic_vector := x"5"; -- ISSI, OK do 87.5 MHz
 	C_sio: boolean := true;
@@ -99,18 +99,14 @@ architecture Behavioral of glue is
     signal dmem_addr_strobe, dmem_write: std_logic;
     signal dmem_bram_enable, dmem_data_ready: std_logic;
     signal dmem_byte_sel: std_logic_vector(3 downto 0);
-    signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
-    signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
+    signal dmem_to_cpu, imem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
+    signal io_to_cpu: std_logic_vector(31 downto 0);
+    signal final_to_cpu_i, final_to_cpu_d: std_logic_vector(31 downto 0);
 
     -- SRAM
-    signal R_sram_phase: std_logic;
-    signal R_sram_delay: std_logic_vector(3 downto 0);
-    signal R_sram_data: std_logic_vector(31 downto 0);
-    signal R_sram_a: std_logic_vector(18 downto 0);
-    signal R_sram_d: std_logic_vector(15 downto 0);
-    signal R_sram_wel, R_sram_lbl, R_sram_ubl: std_logic;
-    signal R_sram_fast_read: boolean;
-    signal sram_halfword, sram_ready: std_logic;
+    signal sram_data_strobe, sram_data_ready: std_logic;
+    signal sram_instr_strobe, sram_instr_ready: std_logic;
+    signal from_sram: std_logic_vector(31 downto 0);
 
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
@@ -170,12 +166,12 @@ begin
     )
     port map (
 	clk => clk, reset => res, intr => intr,
-	imem_addr => imem_addr, imem_data_in => imem_data_read,
+	imem_addr => imem_addr, imem_data_in => final_to_cpu_i,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,
 	dmem_addr_strobe => dmem_addr_strobe, dmem_addr => dmem_addr,
 	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
-	dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
+	dmem_data_in => final_to_cpu_d, dmem_data_out => cpu_to_dmem,
 	dmem_data_ready => dmem_data_ready,
 	trace_addr => trace_addr, trace_data => trace_data
     );
@@ -214,90 +210,18 @@ begin
     p_ring <= R_dac_acc_r(16) when sw(3) = '0' else breakout_audio;
     end generate;
 
-    sram_ready <='1' when not C_sram or
-      (R_sram_delay = x"0" and R_sram_phase = '0') else '0';
-    dmem_data_ready <= '1' when dmem_addr(31 downto 28) /= x"8" else
-      sram_ready;
-
     -- I/O port map:
-    -- 0x8*******: (2B, RW) * SRAM
+    -- 0x8*******: (4B, RW) * SRAM
     -- 0xf*****00: (4B, RW) * GPIO (LED, switches/buttons)
     -- 0xf*****04: (4B, RW) * SIO
-    -- 0xf*****08: (4B, RD) * TSC
     -- 0xf*****0c: (4B, WR) * PCM signal
     -- 0xf*****10: (1B, RW) * SPI Flash
     -- 0xf*****14: (1B, RW) * SPI MicroSD
     -- 0xf*****1c: (4B, WR) * FM DDS register
+
     -- I/O write access:
-    sram_halfword <= '0' when dmem_byte_sel(3 downto 2) = "00" else
-      '1' when dmem_byte_sel(1 downto 0) = "00" else not R_sram_phase;
     process(clk)
     begin
-	if C_sram and rising_edge(clk) then
-	    if dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
-		if R_sram_delay = "000" & R_sram_phase then
-		    R_sram_delay <= C_sram_wait_cycles;
-		    R_sram_phase <= not R_sram_phase;
-		else
-		    if R_sram_delay = C_sram_wait_cycles and
-		      (R_sram_fast_read or dmem_write = '1') then
-			-- begin of a preselected read or a fast store
-			R_sram_delay <= R_sram_delay - 2;
-		    else
-			R_sram_delay <= R_sram_delay - 1;
-		    end if;
-		    if dmem_byte_sel(3 downto 2) = "00" or
-		      dmem_byte_sel(1 downto 0) = "00" then
-			R_sram_phase <= '0';
-		    end if;
-		end if;
-	    else
-		R_sram_delay <= C_sram_wait_cycles;
-		R_sram_phase <= '1';
-	    end if;
-	end if;
-
-	if falling_edge(clk) then
-	    if C_sram and
-	      dmem_addr_strobe = '1' and dmem_addr(31 downto 28) = x"8" then
-		R_sram_fast_read <= false;
-		if R_sram_delay = "0000" and dmem_write = '0' then
-		    R_sram_a <= R_sram_a + 1;
-		else
-		    if R_sram_delay = C_sram_wait_cycles and
-		      R_sram_a = (dmem_addr(19 downto 2) & sram_halfword) then
-			R_sram_fast_read <= true;
-		    end if;
-		    R_sram_a <= dmem_addr(19 downto 2) & sram_halfword;
-		end if;
-		R_sram_wel <= not dmem_write;
-		if sram_halfword = '1' then
-		    if dmem_write = '1' then
-			R_sram_d <= cpu_to_dmem(31 downto 16);
-		    else
-			R_sram_d <= "ZZZZZZZZZZZZZZZZ";
-		    end if;
-		    R_sram_data(31 downto 16) <= sram_d;
-		    R_sram_ubl <= not dmem_byte_sel(3);
-		    R_sram_lbl <= not dmem_byte_sel(2);
-		else
-		    if dmem_write = '1' then
-			R_sram_d <= cpu_to_dmem(15 downto 0);
-		    else
-			R_sram_d <= "ZZZZZZZZZZZZZZZZ";
-		    end if;
-		    R_sram_data(15 downto 0) <= sram_d;
-		    R_sram_ubl <= not dmem_byte_sel(1);
-		    R_sram_lbl <= not dmem_byte_sel(0);
-		end if;
-	    else
-		R_sram_d <= "ZZZZZZZZZZZZZZZZ";
-		R_sram_wel <= '1';
-		R_sram_lbl <= '0';
-		R_sram_ubl <= '0';
-	    end if;
-	end if;
-
 	if rising_edge(clk) and dmem_addr_strobe = '1'
 	  and dmem_write = '1' and dmem_addr(31 downto 28) = x"f" then
 	    -- GPIO
@@ -353,11 +277,6 @@ begin
     sdcard_si <= R_sdcard_si when C_sdcard else 'Z';
     sdcard_sck <= R_sdcard_sck when C_sdcard else 'Z';
     sdcard_cen <= R_sdcard_cen when C_sdcard else 'Z';
-    sram_d <= R_sram_d;
-    sram_a <= R_sram_a;
-    sram_wel <= R_sram_wel;
-    sram_lbl <= R_sram_lbl;
-    sram_ubl <= R_sram_ubl;
 
     process(clk)
     begin
@@ -391,25 +310,58 @@ begin
 	end case;
     end process;
 
-    final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = x"f"
-      else R_sram_data when C_sram and dmem_addr(31 downto 28) = x"8"
+    final_to_cpu_d <= io_to_cpu when dmem_addr(31 downto 28) = x"f"
+      else from_sram when sram_data_strobe = '1'
       else dmem_to_cpu;
+    final_to_cpu_i <= from_sram when sram_instr_strobe = '1'
+      else imem_to_cpu;
 
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
-    imem_data_ready <= '1';
     bram: entity work.bram
     generic map (
 	C_mem_size => C_mem_size
     )
     port map (
 	clk => clk, imem_addr_strobe => imem_addr_strobe,
-	imem_addr => imem_addr, imem_data_out => imem_data_read,
+	imem_addr => imem_addr, imem_data_out => imem_to_cpu,
 	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write,
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
 	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
     );
 
+    -- SRAM
+    sram_data_strobe <= dmem_addr_strobe when
+      dmem_addr(31 downto 28) = x"8" and C_sram else '0';
+    dmem_data_ready <= sram_data_ready when sram_data_strobe = '1' else '1';
+    sram_instr_strobe <= imem_addr_strobe when
+      imem_addr(31 downto 28) = x"8" and C_sram else '0';
+    imem_data_ready <= sram_instr_ready when sram_instr_strobe = '1' else '1';
+    sram: entity work.sram
+    generic map (
+	C_sram_wait_cycles => C_sram_wait_cycles
+    )
+    port map (
+	clk => clk, sram_a => sram_a, sram_d => sram_d,
+	sram_wel => sram_wel, sram_lbl => sram_lbl, sram_ubl => sram_ubl,
+	data_out => from_sram,
+	-- Port A: CPU, data bus
+	A_addr_strobe => sram_data_strobe, A_write => dmem_write,
+	A_byte_sel => dmem_byte_sel, A_addr => dmem_addr(19 downto 2),
+	A_data_in => cpu_to_dmem, A_ready => sram_data_ready,
+	-- Port B: CPU, instruction bus
+	B_addr_strobe => sram_instr_strobe, B_write => '0',
+	B_byte_sel => x"f", B_addr => imem_addr(19 downto 2),
+	B_data_in => (others => '-'), B_ready => sram_instr_ready,
+	-- Port C: currently unused
+	C_addr_strobe => sw(1), C_write => '0',
+	C_byte_sel => x"f", C_addr => (others => '-'),
+	C_data_in => (others => '-'), C_ready => open,
+	-- Port D: currently unused
+	D_addr_strobe => sw(0), D_write => '0',
+	D_byte_sel => x"f", D_addr => (others => '-'),
+	D_data_in => (others => '-'), D_ready => open
+    );
 
     -- debugging design instance
     G_debug:
