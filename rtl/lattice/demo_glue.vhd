@@ -58,6 +58,7 @@ entity glue is
 
 	-- debugging options
 	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
+	C_no_cpu: boolean := true;
 
 	-- SoC configuration options
 	C_mem_size: string := "16k";
@@ -130,9 +131,8 @@ architecture Behavioral of glue is
     signal clk_dds, dds_out: std_logic;
     signal R_dds_cnt, R_dds_div, R_dds_div1: std_logic_vector(21 downto 0);
 
-    -- Breakout game
-    signal breakout_video: std_logic_vector(3 downto 0);
-    signal breakout_audio: std_logic;
+    -- Video framebuffer
+    signal video_dac: std_logic_vector(3 downto 0);
 
 begin
 
@@ -150,6 +150,8 @@ begin
     intr <= btn_center and sw(0) when C_debug else '0';
 
     -- f32c core
+    G_CPU:
+    if not C_no_cpu generate
     pipeline: entity work.pipeline
     generic map (
 	C_clk_freq => C_clk_freq,
@@ -176,6 +178,7 @@ begin
 	dmem_data_ready => dmem_data_ready,
 	trace_addr => trace_addr, trace_data => trace_data
     );
+    end generate;
 
     -- RS232 sio
     G_sio:
@@ -204,11 +207,11 @@ begin
 	    R_dac_acc_r <= (R_dac_acc_r(16) & R_dac_in_r) + R_dac_acc_r;
 	end if;
     end process;
-    p_tip(3) <= R_dac_acc_l(16) when sw(3) = '0' else breakout_video(3);
-    p_tip(2) <= R_dac_acc_l(16) when sw(3) = '0' else breakout_video(2);
-    p_tip(1) <= R_dac_acc_l(16) when sw(3) = '0' else breakout_video(1);
-    p_tip(0) <= '0' when sw(3) = '0' else breakout_video(0);
-    p_ring <= R_dac_acc_r(16) when sw(3) = '0' else breakout_audio;
+    p_tip(3) <= R_dac_acc_l(16) when sw(3) = '0' else video_dac(3);
+    p_tip(2) <= R_dac_acc_l(16) when sw(3) = '0' else video_dac(2);
+    p_tip(1) <= R_dac_acc_l(16) when sw(3) = '0' else video_dac(1);
+    p_tip(0) <= '0' when sw(3) = '0' else video_dac(0);
+    p_ring <= R_dac_acc_r(16);
     end generate;
 
     -- I/O port map:
@@ -400,12 +403,10 @@ begin
     j2(5) <= not dds_out when C_ddsfm else 'Z';
 
     -- Breakout game, producing PAL composite video
-    breakout: entity work.breakout
+    fb: entity work.fb
     port map (
 	clk => clk, clk_dac => clk_dds,
-	sw => x"f", btn_left => btn_left, btn_right => btn_right,
-	btn_up => btn_up, btn_down => btn_down, btn_center => btn_center,
-	led => open, p_tip => breakout_video, p_ring => breakout_audio
+	dac_out => video_dac
     );
 
 end Behavioral;
