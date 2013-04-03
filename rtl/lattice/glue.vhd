@@ -83,7 +83,8 @@ entity glue is
 	led: out std_logic_vector(7 downto 0);
 	btn_left, btn_right, btn_up, btn_down, btn_center: in std_logic;
 	sw: in std_logic_vector(3 downto 0);
-	dil: out std_logic_vector(29 downto 20);
+	j1: out std_logic_vector(23 downto 20);
+	j2: out std_logic_vector(5 downto 2);
 	sram_a: out std_logic_vector(18 downto 0);
 	sram_d: inout std_logic_vector(15 downto 0);
 	sram_wel, sram_lbl, sram_ubl: out std_logic
@@ -385,13 +386,13 @@ begin
     end generate;
 
     -- make a dipole?
-    dil(20) <= dds_out when C_ddsfm else 'Z';
-    dil(21) <= dds_out when C_ddsfm else 'Z';
-    dil(22) <= dds_out when C_ddsfm else 'Z';
-    dil(23) <= dds_out when C_ddsfm else 'Z';
-    dil(26) <= not dds_out when C_ddsfm else 'Z';
-    dil(27) <= not dds_out when C_ddsfm else 'Z';
-    dil(28) <= not dds_out when C_ddsfm else 'Z';
-    dil(29) <= not dds_out when C_ddsfm else 'Z';
+    j1(20) <= dds_out when C_ddsfm else 'Z';
+    j1(21) <= dds_out when C_ddsfm else 'Z';
+    j1(22) <= dds_out when C_ddsfm else 'Z';
+    j1(23) <= dds_out when C_ddsfm else 'Z';
+    j2(2) <= not dds_out when C_ddsfm else 'Z';
+    j2(3) <= not dds_out when C_ddsfm else 'Z';
+    j2(4) <= not dds_out when C_ddsfm else 'Z';
+    j2(5) <= not dds_out when C_ddsfm else 'Z';
 
 end Behavioral;
