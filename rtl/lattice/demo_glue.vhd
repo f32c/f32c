@@ -133,6 +133,8 @@ architecture Behavioral of glue is
 
     -- Video framebuffer
     signal video_dac: std_logic_vector(3 downto 0);
+    signal fb_addr_strobe, fb_data_ready: std_logic;
+    signal fb_addr: std_logic_vector(19 downto 2);
 
 begin
 
@@ -357,12 +359,12 @@ begin
 	B_addr_strobe => sram_instr_strobe, B_write => '0',
 	B_byte_sel => x"f", B_addr => imem_addr(19 downto 2),
 	B_data_in => (others => '-'), B_ready => sram_instr_ready,
-	-- Port C: currently unused
-	C_addr_strobe => sw(1), C_write => '0',
-	C_byte_sel => x"f", C_addr => (others => '-'),
-	C_data_in => (others => '-'), C_ready => open,
+	-- Port C: video framebuffer
+	C_addr_strobe => fb_addr_strobe, C_write => '0',
+	C_byte_sel => x"f", C_addr => fb_addr,
+	C_data_in => (others => '-'), C_ready => fb_data_ready,
 	-- Port D: currently unused
-	D_addr_strobe => sw(0), D_write => '0',
+	D_addr_strobe => '0', D_write => '0',
 	D_byte_sel => x"f", D_addr => (others => '-'),
 	D_data_in => (others => '-'), D_ready => open
     );
@@ -406,6 +408,10 @@ begin
     fb: entity work.fb
     port map (
 	clk => clk, clk_dac => clk_dds,
+	addr_strobe => fb_addr_strobe,
+	addr_out => fb_addr,
+	data_ready => fb_data_ready,
+	data_in => from_sram,
 	dac_out => video_dac
     );
 
