@@ -144,14 +144,18 @@ main(void)
 			g = ib[tmp++];
 			b = ib[tmp++];
 			luma = r + g + b;
-			if (r > g + b)
-				color = 32 + 8 + (luma >> 6) * 16;
+			if (r > g + b) {
+				if (g > b)
+					color = 32 + 8 + (luma >> 6) * 16;
+				else
+					color = 32 + 7 + (luma >> 6) * 16;
+			}
 			else if (g > r + b)
-				color = 32 + 3 + (luma >> 6) * 16;
-			else if (b > r + g)
 				color = 32 + 13 + (luma >> 6) * 16;
+			else if (b > r + g)
+				color = 32 + 2 + (luma >> 6) * 16;
 			else if (b > ((r + g) * 3) >> 2)
-				color = 32 + 14 + (luma >> 6) * 16;
+				color = 32 + 1 + (luma >> 6) * 16;
 			else
 				color = (luma / 3) >> 3;
 			fb[x0 + y0 * 512] = color;
