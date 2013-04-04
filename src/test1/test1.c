@@ -1,8 +1,11 @@
 
 #include <sys/param.h>
+#include <sdcard.h>
 #include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <fatfs/ff.h>
 
 #include <mips/asm.h>
 
@@ -11,7 +14,11 @@ int fib(int);
 void rectangle(int x0, int y0, int x1, int y1, int color);
 
 
-char *fb = (char *) 0x800c0000;
+#define SECTOR_SIZE     512     /* buffer size */
+
+unsigned char *ib = (void *) 0x80040000;
+unsigned char *fb = (void *) 0x800c0000;
+FATFS fh;
 
 
 int
@@ -53,7 +60,8 @@ rectangle(int x0, int y0, int x1, int y1, int color)
 int
 main(void)
 {
-	int x0, y0, x1, y1, color;
+	FIL fp;
+	int res, x0, y0, x1, y1, color;
 	uint32_t tmp, freq_khz;
 	uint32_t start, end;
 
@@ -76,26 +84,26 @@ main(void)
 	RDTSC(end);
 	printf("\nCompleted in %d ms\n", (end - start) / freq_khz);
 
-	/* Iscrtaj cijelu paletu */
+	printf("256-bitna paleta\n");
 	rectangle(0, 0, 511, 15, 16);
 	rectangle(0, 272, 511, 287, 16);
 	for (x0 = 0; x0 < 512; x0++)
 		for (y0 = 0; y0 < 256; y0++)
 			fb[x0 + 512 * y0 + 512 * 16] =
 				x0 / 32 + (y0 & 0xf0);
-	while (sio_getchar(0) != 27) {}
+	while (sio_getchar(0) != ' ') {}
 
-	/* Vertikalne crte u boji */
+	printf("Vertikalne crte u boji\n");
 	rectangle(0, 0, 511, 287, 0);
-	while (sio_getchar(0) != 27) {
+	while (sio_getchar(0) != ' ') {
 		for (x0 = 0; x0 < 512; x0 += 2)
 			for (y0 = 0; y0 < 256; y0++)
 				fb[x0 + 512 * y0 + 512 * 16] = tmp >> 4;
 		tmp++;
 	}
 
-	/* Pravokutnici u boji */
-	while (sio_getchar(0) != 27) {
+	printf("Pravokutnici u boji\n");
+	while (sio_getchar(0) != ' ') {
 		x0 = random() & 0x1ff;
 		x1 = random() & 0x1ff;
 		y0 = (random() & 0xff) + (tmp & 0x1f);
@@ -107,6 +115,47 @@ main(void)
 		for (p0 = (int *) &fb[512 * 287],
 		    p1 = (int *) &fb[512 * 288]; p0 > (int *) fb;)
 			*(--p1) = *(--p0);
+	}
+
+	/* Procitaj sliku iz datoteke i ispisi na ekran */
+	if (sdcard_init() || sdcard_cmd(SD_CMD_SEND_CID, 0) ||
+	    sdcard_read((char *) ib, 16)) {
+		printf("Nije pronadjena MicroSD kartica!\n");
+		return (-1);
+	}
+	f_mount(0, &fh);
+	if (f_open(&fp, "zastav~1.raw", FA_READ)) {
+		printf("Nije pronadjena datoteka /zastav~1.raw!\n");
+		return (-1);
+	}
+	printf("Citam datoteku /zastav~1.raw...\n");
+	for (int i = 0; i < 3 * 288 * SECTOR_SIZE; i += SECTOR_SIZE) {
+		if ((res = f_read(&fp, &ib[i], SECTOR_SIZE, &tmp))) {
+			printf("\nf_read() failed!\n");
+			return (-1);
+		}
+	}
+	tmp = 0;
+	printf("Obrada slike...\n");
+	for (y0 = 0; y0 < 288; y0++) {
+		int r, g, b, luma;
+		for (x0 = 0; x0 < 512; x0++) {
+			r = ib[tmp++];
+			g = ib[tmp++];
+			b = ib[tmp++];
+			luma = r + g + b;
+			if (r > g + b)
+				color = 32 + 8 + (luma >> 6) * 16;
+			else if (g > r + b)
+				color = 32 + 3 + (luma >> 6) * 16;
+			else if (b > r + g)
+				color = 32 + 13 + (luma >> 6) * 16;
+			else if (b > ((r + g) * 3) >> 2)
+				color = 32 + 14 + (luma >> 6) * 16;
+			else
+				color = (luma / 3) >> 3;
+			fb[x0 + y0 * 512] = color;
+		}
 	}
 
 	return (0);
