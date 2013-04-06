@@ -22,6 +22,9 @@ sdcard_cmd(int cmd, uint32_t arg)
 {
 	int i, res;
 
+	/* Init SPI */
+	spi_start_transaction(SPI_PORT_SDCARD);
+
 	/* Preamble */
 	spi_byte_in(SPI_PORT_SDCARD);
 
