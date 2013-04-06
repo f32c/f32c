@@ -110,10 +110,8 @@ architecture Behavioral of glue is
     signal from_sram: std_logic_vector(31 downto 0);
 
     -- I/O
-    signal from_sio: std_logic_vector(31 downto 0);
-    signal sio_txd, sio_ce: std_logic;
-    signal R_flash_cen, R_flash_sck, R_flash_si: std_logic;
-    signal R_sdcard_cen, R_sdcard_sck, R_sdcard_si: std_logic;
+    signal from_sio, from_flash, from_sdcard: std_logic_vector(31 downto 0);
+    signal sio_txd, sio_ce, flash_ce, sdcard_ce: std_logic;
     signal R_led: std_logic_vector(7 downto 0);
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
@@ -190,6 +188,36 @@ begin
       dmem_addr(4 downto 2) = "001" else '0';
     end generate;
 
+    -- On-board SPI flash
+    G_flash:
+    if C_flash generate
+    flash: entity work.spi
+    port map (
+	clk => clk, ce => flash_ce,
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_flash,
+	spi_sck => flash_sck, spi_cen => flash_cen,
+	spi_si => flash_si, spi_so => flash_so
+    );
+    flash_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
+      dmem_addr(4 downto 2) = "100" else '0';
+    end generate;
+
+    -- MicroSD card
+    G_sdcard:
+    if C_sdcard generate
+    sdcard: entity work.spi
+    port map (
+	clk => clk, ce => sdcard_ce,
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_sdcard,
+	spi_sck => sdcard_sck, spi_cen => sdcard_cen,
+	spi_si => sdcard_si, spi_so => sdcard_so
+    );
+    sdcard_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
+      dmem_addr(4 downto 2) = "101" else '0';
+    end generate;
+
     -- PCM stereo 1-bit DAC
     G_pcmdac:
     if C_pcmdac generate
@@ -244,18 +272,6 @@ begin
 		    end if;
 		end if;
 	    end if;
-	    -- SPI Flash
-	    if C_flash and dmem_addr(4 downto 2) = "100" then
-		R_flash_si <= cpu_to_dmem(7);
-		R_flash_sck <= cpu_to_dmem(6);
-		R_flash_cen <= cpu_to_dmem(5);
-	    end if;
-	    -- SPI MicroSD
-	    if C_sdcard and dmem_addr(4 downto 2) = "101" then
-		R_sdcard_si <= cpu_to_dmem(7);
-		R_sdcard_sck <= cpu_to_dmem(6);
-		R_sdcard_cen <= cpu_to_dmem(5);
-	    end if;
 	    -- DDS
 	    if C_ddsfm and dmem_addr(4 downto 2) = "111" then
 		if C_big_endian then
@@ -268,12 +284,6 @@ begin
 	end if;
     end process;
     led <= R_led when C_gpio else "--------";
-    flash_si <= R_flash_si when C_flash else 'Z';
-    flash_sck <= R_flash_sck when C_flash else 'Z';
-    flash_cen <= R_flash_cen when C_flash else 'Z';
-    sdcard_si <= R_sdcard_si when C_sdcard else 'Z';
-    sdcard_sck <= R_sdcard_sck when C_sdcard else 'Z';
-    sdcard_cen <= R_sdcard_cen when C_sdcard else 'Z';
 
     process(clk)
     begin
@@ -284,21 +294,26 @@ begin
     end process;
 
     -- XXX replace with a balanced multiplexer
-    process(dmem_addr, R_sw, R_btns, from_sio, flash_so, sdcard_so)
+    process(dmem_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard)
     begin
 	case dmem_addr(4 downto 2) is
 	when "000"  =>
 	    io_to_cpu <="----------------" & "----" & R_sw & "---" & R_btns;
-	when "001"  => io_to_cpu <= from_sio;
+	when "001"  =>
+	    if C_sio then
+		io_to_cpu <= from_sio;
+	    else
+		io_to_cpu <= "--------------------------------";
+	    end if;
 	when "100"  =>
 	    if C_flash then
-		io_to_cpu <= "------------------------" & "0000000" & flash_so;
+		io_to_cpu <= from_flash;
 	    else
 		io_to_cpu <= "--------------------------------";
 	    end if;
 	when "101"  =>
 	    if C_sdcard then
-		io_to_cpu <= "------------------------" & "0000000" & sdcard_so;
+		io_to_cpu <= from_sdcard;
 	    else
 		io_to_cpu <= "--------------------------------";
 	    end if;
