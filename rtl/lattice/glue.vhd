@@ -357,22 +357,34 @@ begin
 	clk => clk, sram_a => sram_a, sram_d => sram_d,
 	sram_wel => sram_wel, sram_lbl => sram_lbl, sram_ubl => sram_ubl,
 	data_out => from_sram,
-	-- Port A: CPU, data bus
-	A_addr_strobe => sram_data_strobe, A_write => dmem_write,
-	A_byte_sel => dmem_byte_sel, A_addr => dmem_addr(19 downto 2),
-	A_data_in => cpu_to_dmem, A_ready => sram_data_ready,
-	-- Port B: CPU, instruction bus
-	B_addr_strobe => sram_instr_strobe, B_write => '0',
-	B_byte_sel => x"f", B_addr => imem_addr(19 downto 2),
-	B_data_in => (others => '-'), B_ready => sram_instr_ready,
-	-- Port C: currently unused
-	C_addr_strobe => sw(1), C_write => '0',
-	C_byte_sel => x"f", C_addr => (others => '-'),
-	C_data_in => (others => '-'), C_ready => open,
-	-- Port D: currently unused
-	D_addr_strobe => sw(0), D_write => '0',
-	D_byte_sel => x"f", D_addr => (others => '-'),
-	D_data_in => (others => '-'), D_ready => open
+	-- Port #0: CPU, data bus
+	bus_in(0).addr_strobe => sram_data_strobe,
+	bus_in(0).write => dmem_write,
+	bus_in(0).byte_sel => dmem_byte_sel,
+	bus_in(0).addr => dmem_addr(19 downto 2),
+	bus_in(0).data_in => cpu_to_dmem,
+	ready_out(0) => sram_data_ready,
+	-- Port #1: CPU, instruction bus
+	bus_in(1).addr_strobe => sram_instr_strobe,
+	bus_in(1).write => '0',
+	bus_in(1).byte_sel => x"f",
+	bus_in(1).addr => imem_addr(19 downto 2),
+	bus_in(1).data_in => (others => '-'),
+	ready_out(1) => sram_instr_ready,
+	-- Port #2: currently unused
+	bus_in(2).addr_strobe => '0',
+	bus_in(2).write => '0',
+	bus_in(2).byte_sel => (others => '-'),
+	bus_in(2).addr => (others => '-'),
+	bus_in(2).data_in => (others => '-'),
+	ready_out(2) => open,
+	-- Port #3: currently unused
+	bus_in(3).addr_strobe => '0',
+	bus_in(3).write => '0',
+	bus_in(3).byte_sel => (others => '-'),
+	bus_in(3).addr => (others => '-'),
+	bus_in(3).data_in => (others => '-'),
+	ready_out(3) => open
     );
 
     -- debugging design instance
