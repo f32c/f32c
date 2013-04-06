@@ -5,6 +5,9 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.numeric_std.ALL;
 
 entity spi is
+    generic (
+	C_fixed_speed: boolean := true
+    );
     port (
 	ce, clk: in std_logic;
 	bus_write: in std_logic;
@@ -45,13 +48,19 @@ begin
     process(clk)
 	variable clk_acc_next: std_logic_vector(7 downto 0);
     begin
-	clk_acc_next := R_clk_acc + R_clk_div;
+	if C_fixed_speed then
+	    clk_acc_next := R_clk_acc xor x"80";
+	else
+	    clk_acc_next := R_clk_acc + R_clk_div;
+	end if;
 
 	if rising_edge(clk) then
 	    -- bus interface logic
 	    if ce = '1' and bus_write = '1' then
 		if byte_sel(1) = '1' then
-		    R_clk_div <= bus_in(15 downto 8);
+		    if C_fixed_speed then
+			R_clk_div <= bus_in(15 downto 8);
+		    end if;
 		    R_clk_acc <= 0;
 		    R_cen <= '1';
 		    R_bit_cnt <= x"7";
