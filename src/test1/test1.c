@@ -2,6 +2,7 @@
 #include <sys/param.h>
 #include <sdcard.h>
 #include <io.h>
+#include <spi.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -16,7 +17,6 @@ void rectangle(int x0, int y0, int x1, int y1, int color);
 
 #define SECTOR_SIZE     512     /* buffer size */
 
-unsigned char *ib = (void *) 0x80040000;
 unsigned char *fb = (void *) 0x800c0000;
 FATFS fh;
 
@@ -79,10 +79,47 @@ main(void)
 #endif
 
 	RDTSC(start);
-	for (tmp = 0; tmp <= 20; tmp++)
+	for (tmp = 0; tmp <= 25; tmp++)
 		printf("fib(%d) = %d\n", tmp, fib(tmp));
 	RDTSC(end);
-	printf("\nCompleted in %d ms\n", (end - start) / freq_khz);
+	printf("\nFibonacci completed in %d ms\n", (end - start) / freq_khz);
+
+	/* Initialize SPI bulk-read transaction */
+	spi_start_transaction(SPI_PORT_FLASH);
+	spi_byte(SPI_PORT_FLASH, 0x0b); /* High-speed read */
+	spi_byte(SPI_PORT_FLASH, 0);
+	spi_byte(SPI_PORT_FLASH, 0);
+	spi_byte(SPI_PORT_FLASH, 0);
+	spi_byte_in(SPI_PORT_FLASH); /* dummy byte, ignored */
+
+	RDTSC(start);
+	color = 0;
+	for (int i = 0; i < 1024 * 1024 / 4; i++) {
+		tmp = spi_byte_in(SPI_PORT_FLASH);
+		tmp = (tmp << 8) | spi_byte_in(SPI_PORT_FLASH);
+		tmp = (tmp << 8) | spi_byte_in(SPI_PORT_FLASH);
+		tmp = (tmp << 8) | spi_byte_in(SPI_PORT_FLASH);
+		color += tmp;
+	}
+	RDTSC(end);
+	printf("\n1 MByte fetched via SPI from Flash to registers in %d ms\n",
+	    (end - start) / freq_khz);
+
+	RDTSC(start);
+	for (int j = 0; j < 8; j++) {
+		int *p = (int *) fb;
+		for (int i = 0; i < 128 * 1024 / 4; i++) {
+			tmp = spi_byte_in(SPI_PORT_FLASH);
+			tmp = (tmp << 8) | spi_byte_in(SPI_PORT_FLASH);
+			tmp = (tmp << 8) | spi_byte_in(SPI_PORT_FLASH);
+			tmp = (tmp << 8) | spi_byte_in(SPI_PORT_FLASH);
+			*p++ = tmp;
+		}
+	}
+	RDTSC(end);
+	printf("1 MByte fetched via SPI from Flash to SRAM in %d ms\n\n",
+	    (end - start) / freq_khz);
+	while (sio_getchar(0) != ' ') {}
 
 	printf("256-bitna paleta\n");
 	rectangle(0, 0, 511, 15, 16);
@@ -119,7 +156,7 @@ main(void)
 
 	/* Procitaj sliku iz datoteke i ispisi na ekran */
 	if (sdcard_init() || sdcard_cmd(SD_CMD_SEND_CID, 0) ||
-	    sdcard_read((char *) ib, 16)) {
+	    sdcard_read((char *) fb, 16)) {
 		printf("Nije pronadjena MicroSD kartica!\n");
 		return (-1);
 	}
@@ -129,20 +166,21 @@ main(void)
 		return (-1);
 	}
 	printf("Citam datoteku /zastav~1.raw...\n");
-	for (int i = 0; i < 3 * 288 * SECTOR_SIZE; i += SECTOR_SIZE) {
-		if ((res = f_read(&fp, &ib[i], SECTOR_SIZE, &tmp))) {
-			printf("\nf_read() failed!\n");
-			return (-1);
-		}
-	}
-	tmp = 0;
-	printf("Obrada slike...\n");
-	for (y0 = 0; y0 < 288; y0++) {
+	for (int i = 0; i < 288 * SECTOR_SIZE; i += SECTOR_SIZE) {
+		unsigned char *ib = &fb[i];
 		int r, g, b, luma;
+
+		for (x0 = 0; x0 < 3; x0++, ib += SECTOR_SIZE)
+			if ((res = f_read(&fp, ib, SECTOR_SIZE, &tmp))) {
+				printf("\nf_read() failed!\n");
+				return (-1);
+			}
+
+		ib = &fb[i];
 		for (x0 = 0; x0 < 512; x0++) {
-			r = ib[tmp++];
-			g = ib[tmp++];
-			b = ib[tmp++];
+			r = *ib++;
+			g = *ib++;
+			b = *ib++;
 			luma = r + g + b;
 			if (r > g + b) {
 				if (g > b)
@@ -158,7 +196,7 @@ main(void)
 				color = 32 + 1 + (luma >> 6) * 16;
 			else
 				color = (luma / 3) >> 3;
-			fb[x0 + y0 * 512] = color;
+			fb[x0 + i] = color;
 		}
 	}
 

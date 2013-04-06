@@ -44,13 +44,6 @@
 #define	LCD_CTRL_RS	0x2
 #define	LCD_CTRL_RW	0x1
 
-/* SPI bitmask: outputs */
-#define	SPI_SI		0x80
-#define	SPI_SCK		0x40
-#define	SPI_CEN		0x20
-/* SPI bitmask: input */
-#define	SPI_SO_BITPOS	0
-#define	SPI_SO		(1 << SPI_SO_BITPOS)
 
 #if !defined(__ASSEMBLER__)
 
