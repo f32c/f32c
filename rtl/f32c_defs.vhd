@@ -248,4 +248,20 @@ constant ALT_LO:		std_logic_vector := "001";
 constant ALT_PC_8:		std_logic_vector := "010";
 constant ALT_COP0:		std_logic_vector := "011";
 
+
+--
+-- SRAM port type
+--
+type sram_port_type is
+    record
+	addr: std_logic_vector(19 downto 2);
+	data_in: std_logic_vector(31 downto 0);
+	byte_sel: std_logic_vector(3 downto 0);
+	addr_strobe: std_logic;
+	write: std_logic;
+    end record;
+
+type sram_port_array is array(0 to 3) of sram_port_type;
+type sram_ready_array is array(0 to 3) of std_logic;
+
 end;
