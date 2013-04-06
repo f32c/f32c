@@ -79,13 +79,17 @@ begin
 
     -- Arbiter: round-robin port selection combinatorial logic
     process(bus_in, R_active_port)
-	variable i, t: integer;
+	variable i, j, t: integer;
     begin
-	for i in 1 to C_ports loop
-	    t := (R_active_port + i) mod C_ports;
-	    if bus_in(t).addr_strobe = '1' then
-		exit;
-	    end if;
+	for i in 0 to (C_ports - 1) loop
+	    for j in 1 to C_ports loop
+		if R_active_port = i then
+		    t := (i + j) mod C_ports;
+		    if bus_in(t).addr_strobe = '1' then
+			exit;
+		    end if;
+		end if;
+	    end loop;
 	end loop;
 	next_port <= t;
     end process;
