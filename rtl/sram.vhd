@@ -10,6 +10,7 @@ use work.f32c_pack.all;
 
 entity sram is
     generic (
+	C_ports: integer := 4;
 	C_sram_wait_cycles: std_logic_vector
     );
     port (
@@ -55,54 +56,7 @@ architecture Structure of sram is
 
 begin
 
-    -- Arbiter: round-robin port selection combinatorial logic
-    process(bus_in, R_active_port)
-    begin
-	case R_active_port is
-	    when 0 =>
-		if bus_in(1).addr_strobe = '1' then
-		    next_port <= 1;
-		elsif bus_in(2).addr_strobe = '1' then
-		    next_port <= 2;
-		elsif bus_in(3).addr_strobe = '1' then
-		    next_port <= 3;
-		else
-		    next_port <= 0;
-		end if;
-	    when 1 =>
-		if bus_in(2).addr_strobe = '1' then
-		    next_port <= 2;
-		elsif bus_in(3).addr_strobe = '1' then
-		    next_port <= 3;
-		elsif bus_in(0).addr_strobe = '1' then
-		    next_port <= 0;
-		else
-		    next_port <= 1;
-		end if;
-	    when 2 =>
-		if bus_in(3).addr_strobe = '1' then
-		    next_port <= 3;
-		elsif bus_in(0).addr_strobe = '1' then
-		    next_port <= 0;
-		elsif bus_in(1).addr_strobe = '1' then
-		    next_port <= 1;
-		else
-		    next_port <= 2;
-		end if;
-	    when others => -- port 3
-		if bus_in(0).addr_strobe = '1' then
-		    next_port <= 0;
-		elsif bus_in(1).addr_strobe = '1' then
-		    next_port <= 1;
-		elsif bus_in(2).addr_strobe = '1' then
-		    next_port <= 2;
-		else
-		    next_port <= 3;
-		end if;
-	end case;
-    end process;
-
-    -- Port mux
+    -- Mux for input ports
     cur_port <= R_active_port when R_arbiter_locked else next_port;
     addr_strobe <= bus_in(cur_port).addr_strobe;
     write <= bus_in(cur_port).write;
@@ -110,10 +64,31 @@ begin
     addr <= bus_in(cur_port).addr;
     data_in <= bus_in(cur_port).data_in;
 
-    ready_out(0) <= ready when R_active_port = 0 else '0';
-    ready_out(1) <= ready when R_active_port = 1 else '0';
-    ready_out(2) <= ready when R_active_port = 2 else '0';
-    ready_out(3) <= ready when R_active_port = 3 else '0';
+    -- Demux for outbound ready signals
+    process(ready, R_active_port)
+	variable i: integer;
+    begin
+	for i in 0 to (C_ports - 1) loop
+	    if i = R_active_port then
+		ready_out(i) <= ready;
+	    else
+		ready_out(i) <= '0';
+	    end if;
+	end loop;
+    end process;
+
+    -- Arbiter: round-robin port selection combinatorial logic
+    process(bus_in, R_active_port)
+	variable i, t: integer;
+    begin
+	for i in 1 to C_ports loop
+	    t := (R_active_port + i) mod C_ports;
+	    if bus_in(t).addr_strobe = '1' then
+		exit;
+	    end if;
+	end loop;
+	next_port <= t;
+    end process;
 
     halfword <= '0' when byte_sel(3 downto 2) = "00" else
       '1' when byte_sel(1 downto 0) = "00" else not R_phase;
