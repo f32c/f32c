@@ -58,7 +58,7 @@ begin
 	    -- bus interface logic
 	    if ce = '1' and bus_write = '1' then
 		if byte_sel(1) = '1' then
-		    if C_fixed_speed then
+		    if not C_fixed_speed then
 			R_clk_div <= bus_in(15 downto 8);
 		    end if;
 		    R_clk_acc <= 0;
