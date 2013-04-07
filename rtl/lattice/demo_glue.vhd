@@ -30,6 +30,9 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+use work.f32c_pack.all;
+
+
 entity glue is
     generic (
 	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
@@ -47,9 +50,9 @@ entity glue is
 	C_cop0_config: boolean := true;
 
 	-- CPU core configuration options
-	C_branch_prediction: boolean := true;
-	C_result_forwarding: boolean := true;
-	C_load_aligner: boolean := true;
+	C_branch_prediction: boolean := false;
+	C_result_forwarding: boolean := false;
+	C_load_aligner: boolean := false;
 	C_register_technology: string := "lattice";
 
 	-- These may negatively influence timing closure:
@@ -58,10 +61,10 @@ entity glue is
 
 	-- debugging options
 	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
-	C_no_cpu: boolean := false;
 
 	-- SoC configuration options
-	C_mem_size: string := "16k";
+	C_cpus: integer := 2;
+	C_bram_size: string := "16k";
 	C_sram: boolean := true;
 	C_sram_wait_cycles: std_logic_vector := x"5"; -- ISSI, OK do 87.5 MHz
 	C_sio: boolean := true;
@@ -93,24 +96,45 @@ entity glue is
 end glue;
 
 architecture Behavioral of glue is
+    -- types for signals going to / from f32c core(s)
+    type f32c_addr_bus is array(0 to (C_cpus - 1)) of
+      std_logic_vector(31 downto 2);
+    type f32c_byte_sel is array(0 to (C_cpus - 1)) of
+      std_logic_vector(3 downto 0);
+    type f32c_data_bus is array(0 to (C_cpus - 1)) of
+      std_logic_vector(31 downto 0);
+    type f32c_std_logic is array(0 to (C_cpus - 1)) of std_logic;
+    type f32c_debug_addr is array(0 to (C_cpus - 1)) of
+      std_logic_vector(5 downto 0);
+
+    -- types for interfacing to multi-port SRAM controller
+    type sram_port_multi is array(0 to (3 * C_cpus - 1)) of sram_port_type;
+    type sram_ready_multi is array(0 to (3 * C_cpus - 1)) of std_logic;
+
+
     signal clk: std_logic;
-    signal imem_addr: std_logic_vector(31 downto 2);
-    signal imem_data_read: std_logic_vector(31 downto 0);
-    signal imem_addr_strobe, imem_data_ready: std_logic;
-    signal dmem_addr: std_logic_vector(31 downto 2);
-    signal dmem_addr_strobe, dmem_write: std_logic;
-    signal dmem_bram_enable, dmem_data_ready: std_logic;
-    signal dmem_byte_sel: std_logic_vector(3 downto 0);
-    signal dmem_to_cpu, imem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
-    signal io_to_cpu: std_logic_vector(31 downto 0);
-    signal final_to_cpu_i, final_to_cpu_d: std_logic_vector(31 downto 0);
+
+    -- signals to / from f32c cores(s)
+    signal res, intr: f32c_std_logic;
+    signal imem_addr, dmem_addr: f32c_addr_bus;
+    signal final_to_cpu_i, final_to_cpu_d, cpu_to_dmem: f32c_data_bus;
+    signal imem_addr_strobe, dmem_addr_strobe, dmem_write: f32c_std_logic;
+    signal imem_data_ready, dmem_data_ready: f32c_std_logic;
+    signal dmem_byte_sel: f32c_byte_sel;
 
     -- SRAM
+    signal to_sram: sram_port_multi;
+    signal sram_ready: sram_ready_multi;
     signal sram_data_strobe, sram_data_ready: std_logic;
     signal sram_instr_strobe, sram_instr_ready: std_logic;
     signal from_sram: std_logic_vector(31 downto 0);
 
+    -- Block RAM
+    signal imem_to_cpu, dmem_to_cpu: std_logic_vector(31 downto 0);
+    signal dmem_bram_enable: std_logic;
+
     -- I/O
+    signal io_to_cpu: std_logic_vector(31 downto 0);
     signal from_sio, from_flash, from_sdcard: std_logic_vector(31 downto 0);
     signal sio_txd, sio_ce, flash_ce, sdcard_ce: std_logic;
     signal R_led: std_logic_vector(7 downto 0);
@@ -120,10 +144,9 @@ architecture Behavioral of glue is
     signal R_dac_acc_l, R_dac_acc_r: std_logic_vector(16 downto 2);
 
     -- debugging only
-    signal trace_addr: std_logic_vector(5 downto 0);
-    signal trace_data: std_logic_vector(31 downto 0);
+    signal trace_addr: f32c_debug_addr;
+    signal trace_data: f32c_data_bus;
     signal debug_txd: std_logic;
-    signal res, intr: std_logic;
 
     -- FM TX DDS
     signal clk_dds, dds_out: std_logic;
@@ -146,14 +169,14 @@ begin
 	clk_25m => clk_25m, clk => clk, clk_325m => clk_dds,
 	sel => sw(2), key => btn_down, res => '0'
     );
-    res <= btn_up and sw(0) when C_debug else '0';
-    intr <= btn_center and sw(0) when C_debug else '0';
 
-    -- f32c core
-    G_CPU:
-    if not C_no_cpu generate
+    -- f32c core(s)
+    G_CPU: for i in 0 to (C_cpus - 1) generate
+    begin
+    intr(i) <= '0';
+    res(i) <= sw(i);
     pipeline: entity work.pipeline
-    generic map (
+	generic map (
 	C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
@@ -168,15 +191,16 @@ begin
 	C_debug => C_debug
     )
     port map (
-	clk => clk, reset => res, intr => intr,
-	imem_addr => imem_addr, imem_data_in => final_to_cpu_i,
-	imem_addr_strobe => imem_addr_strobe,
-	imem_data_ready => imem_data_ready,
-	dmem_addr_strobe => dmem_addr_strobe, dmem_addr => dmem_addr,
-	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
-	dmem_data_in => final_to_cpu_d, dmem_data_out => cpu_to_dmem,
-	dmem_data_ready => dmem_data_ready,
-	trace_addr => trace_addr, trace_data => trace_data
+	clk => clk, reset => res(i), intr => intr(i),
+	imem_addr => imem_addr(i), imem_data_in => final_to_cpu_i(i),
+	imem_addr_strobe => imem_addr_strobe(i),
+	imem_data_ready => imem_data_ready(i),
+	dmem_addr_strobe => dmem_addr_strobe(i),
+	dmem_addr => dmem_addr(i),
+	dmem_write => dmem_write(i), dmem_byte_sel => dmem_byte_sel(i),
+	dmem_data_in => final_to_cpu_d(i), dmem_data_out => cpu_to_dmem(i),
+	dmem_data_ready => dmem_data_ready(i),
+	trace_addr => trace_addr(i), trace_data => trace_data(i)
     );
     end generate;
 
@@ -190,11 +214,11 @@ begin
     )
     port map (
 	clk => clk, ce => sio_ce, txd => sio_txd, rxd => rs232_rx,
-	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_sio
+	bus_write => dmem_write(0), byte_sel => dmem_byte_sel(0),
+	bus_in => cpu_to_dmem(0), bus_out => from_sio
     );
-    sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
-      dmem_addr(4 downto 2) = "001" else '0';
+    sio_ce <= dmem_addr_strobe(0) when dmem_addr(0)(31 downto 28) = x"f" and
+      dmem_addr(0)(4 downto 2) = "001" else '0';
     end generate;
 
     -- On-board SPI flash
@@ -203,13 +227,13 @@ begin
     flash: entity work.spi
     port map (
 	clk => clk, ce => flash_ce,
-	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_flash,
+	bus_write => dmem_write(0), byte_sel => dmem_byte_sel(0),
+	bus_in => cpu_to_dmem(0), bus_out => from_flash,
 	spi_sck => flash_sck, spi_cen => flash_cen,
 	spi_si => flash_si, spi_so => flash_so
     );
-    flash_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
-      dmem_addr(4 downto 2) = "100" else '0';
+    flash_ce <= dmem_addr_strobe(0) when dmem_addr(0)(31 downto 28) = x"f" and
+      dmem_addr(0)(4 downto 2) = "100" else '0';
     end generate;
 
     -- MicroSD card
@@ -218,13 +242,13 @@ begin
     sdcard: entity work.spi
     port map (
 	clk => clk, ce => sdcard_ce,
-	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_sdcard,
+	bus_write => dmem_write(0), byte_sel => dmem_byte_sel(0),
+	bus_in => cpu_to_dmem(0), bus_out => from_sdcard,
 	spi_sck => sdcard_sck, spi_cen => sdcard_cen,
 	spi_si => sdcard_si, spi_so => sdcard_so
     );
-    sdcard_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
-      dmem_addr(4 downto 2) = "101" else '0';
+    sdcard_ce <= dmem_addr_strobe(0) when dmem_addr(0)(31 downto 28) = x"f" and
+      dmem_addr(0)(4 downto 2) = "101" else '0';
     end generate;
 
     -- PCM stereo 1-bit DAC
@@ -256,38 +280,39 @@ begin
     -- I/O write access:
     process(clk)
     begin
-	if rising_edge(clk) and dmem_addr_strobe = '1'
-	  and dmem_write = '1' and dmem_addr(31 downto 28) = x"f" then
+	if rising_edge(clk) and dmem_addr_strobe(0) = '1'
+	  and dmem_write(0) = '1' and dmem_addr(0)(31 downto 28) = x"f" then
 	    -- GPIO
-	    if C_gpio and dmem_addr(4 downto 2) = "000" then
-		R_led <= cpu_to_dmem(7 downto 0);
+	    if C_gpio and dmem_addr(0)(4 downto 2) = "000" then
+		R_led <= cpu_to_dmem(0)(7 downto 0);
 	    end if;
 	    -- PCMDAC
-	    if C_pcmdac and dmem_addr(4 downto 2) = "011" then
-		if dmem_byte_sel(2) = '1' then
+	    if C_pcmdac and dmem_addr(0)(4 downto 2) = "011" then
+		if dmem_byte_sel(0)(2) = '1' then
 		    if C_big_endian then
-			R_dac_in_l <= cpu_to_dmem(23 downto 16) &
-			  cpu_to_dmem(31 downto 26);
+			R_dac_in_l <= cpu_to_dmem(0)(23 downto 16) &
+			  cpu_to_dmem(0)(31 downto 26);
 		    else
-			R_dac_in_l <= cpu_to_dmem(31 downto 18);
+			R_dac_in_l <= cpu_to_dmem(0)(31 downto 18);
 		    end if;
 		end if;
-		if dmem_byte_sel(0) = '1' then
+		if dmem_byte_sel(0)(0) = '1' then
 		    if C_big_endian then
-			R_dac_in_r <= cpu_to_dmem(7 downto 0) &
-			  cpu_to_dmem(15 downto 10);
+			R_dac_in_r <= cpu_to_dmem(0)(7 downto 0) &
+			  cpu_to_dmem(0)(15 downto 10);
 		    else
-			R_dac_in_r <= cpu_to_dmem(15 downto 2);
+			R_dac_in_r <= cpu_to_dmem(0)(15 downto 2);
 		    end if;
 		end if;
 	    end if;
 	    -- DDS
-	    if C_ddsfm and dmem_addr(4 downto 2) = "111" then
+	    if C_ddsfm and dmem_addr(0)(4 downto 2) = "111" then
 		if C_big_endian then
-		    R_dds_div <= cpu_to_dmem(15 downto 10) & 
-		      cpu_to_dmem(23 downto 16) & cpu_to_dmem(31 downto 24);
+		    R_dds_div <= cpu_to_dmem(0)(15 downto 10) & 
+		      cpu_to_dmem(0)(23 downto 16) &
+		      cpu_to_dmem(0)(31 downto 24);
 		else
-		    R_dds_div <= cpu_to_dmem(21 downto 0);
+		    R_dds_div <= cpu_to_dmem(0)(21 downto 0);
 		end if;
 	    end if;
 	end if;
@@ -305,7 +330,7 @@ begin
     -- XXX replace with a balanced multiplexer
     process(dmem_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard)
     begin
-	case dmem_addr(4 downto 2) is
+	case dmem_addr(0)(4 downto 2) is
 	when "000"  =>
 	    io_to_cpu <="----------------" & "----" & R_sw & "---" & R_btns;
 	when "001"  =>
@@ -331,69 +356,93 @@ begin
 	end case;
     end process;
 
-    final_to_cpu_d <= io_to_cpu when dmem_addr(31 downto 28) = x"f"
+    final_to_cpu_d(0) <= io_to_cpu when dmem_addr(0)(31 downto 28) = x"f"
       else from_sram when sram_data_strobe = '1'
       else dmem_to_cpu;
-    final_to_cpu_i <= from_sram when sram_instr_strobe = '1'
+    final_to_cpu_i(0) <= from_sram when sram_instr_strobe = '1'
       else imem_to_cpu;
+    final_to_cpu_d(1) <= from_sram;
+    final_to_cpu_i(1) <= from_sram;
 
     -- Block RAM
-    dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
+    dmem_bram_enable <= dmem_addr_strobe(0) when dmem_addr(0)(31) /= '1'
+      else '0';
     bram: entity work.bram
     generic map (
-	C_mem_size => C_mem_size
+	C_mem_size => C_bram_size
     )
     port map (
-	clk => clk, imem_addr_strobe => imem_addr_strobe,
-	imem_addr => imem_addr, imem_data_out => imem_to_cpu,
-	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
+	clk => clk, imem_addr_strobe => imem_addr_strobe(0),
+	imem_addr => imem_addr(0), imem_data_out => imem_to_cpu,
+	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write(0),
+	dmem_byte_sel => dmem_byte_sel(0), dmem_addr => dmem_addr(0),
+	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem(0)
     );
 
     -- SRAM
-    sram_data_strobe <= dmem_addr_strobe when
-      dmem_addr(31 downto 28) = x"8" and C_sram else '0';
-    dmem_data_ready <= sram_data_ready when sram_data_strobe = '1' else '1';
-    sram_instr_strobe <= imem_addr_strobe when
-      imem_addr(31 downto 28) = x"8" and C_sram else '0';
-    imem_data_ready <= sram_instr_ready when sram_instr_strobe = '1' else '1';
+    sram_data_strobe <= dmem_addr_strobe(0) when
+      dmem_addr(0)(31 downto 28) = x"8" and C_sram else '0';
+    dmem_data_ready(0) <= sram_data_ready when sram_data_strobe = '1' else '1';
+    sram_instr_strobe <= imem_addr_strobe(0) when
+      imem_addr(0)(31 downto 28) = x"8" and C_sram else '0';
+    imem_data_ready(0) <= sram_instr_ready when sram_instr_strobe = '1'
+      else '1';
+
+    process(imem_addr, dmem_addr, dmem_byte_sel, cpu_to_dmem, dmem_write,
+      sram_data_strobe, sram_instr_strobe, fb_addr_strobe, fb_addr,
+      sram_ready)
+	variable cpu, p: integer;
+    begin
+	for cpu in 0 to (C_cpus - 1) loop
+	    p := cpu * 3;
+	    if cpu = 0 then
+		-- CPU, data bus
+		to_sram(p).addr_strobe <= sram_data_strobe;
+		sram_data_ready <= sram_ready(p);
+		-- CPU, instruction bus
+		to_sram(p + 1).addr_strobe <= sram_instr_strobe;
+		sram_instr_ready <= sram_ready(p + 1);
+	    else
+		-- CPU, data bus
+		to_sram(p).addr_strobe <= dmem_addr_strobe(cpu);
+		dmem_data_ready(cpu) <= sram_ready(p);
+		-- CPU, instruction bus
+		to_sram(p + 1).addr_strobe <= imem_addr_strobe(cpu);
+		imem_data_ready(cpu) <= sram_ready(p + 1);
+	    end if;
+	    -- CPU, data bus
+	    to_sram(p).write <= dmem_write(cpu);
+	    to_sram(p).byte_sel <= dmem_byte_sel(cpu);
+	    to_sram(p).addr <= dmem_addr(cpu)(19 downto 2);
+	    to_sram(p).data_in <= cpu_to_dmem(cpu);
+	    -- CPU, instruction bus
+	    to_sram(p + 1).addr <= imem_addr(cpu)(19 downto 2);
+	    to_sram(p + 1).data_in <= (others => '-');
+	    to_sram(p + 1).write <= '0';
+	    to_sram(p + 1).byte_sel <= x"f";
+	    -- video framebuffer
+	    to_sram(p + 2).addr_strobe <= fb_addr_strobe;
+	    to_sram(p + 2).write <= '0';
+	    to_sram(p + 2).byte_sel <= x"f";
+	    to_sram(p + 2).addr <= fb_addr;
+	    to_sram(p + 2).data_in <= (others => '-');
+	end loop;
+    end process;
+
+    -- XXX revisit this - hardcoded lanes!
+    fb_data_ready <= sram_ready(2) or sram_ready(5);
+
     sram: entity work.sram
     generic map (
+	C_ports => C_cpus * 3,
 	C_sram_wait_cycles => C_sram_wait_cycles
     )
     port map (
 	clk => clk, sram_a => sram_a, sram_d => sram_d,
 	sram_wel => sram_wel, sram_lbl => sram_lbl, sram_ubl => sram_ubl,
 	data_out => from_sram,
-	-- Port #0: CPU, data bus
-	bus_in(0).addr_strobe => sram_data_strobe,
-	bus_in(0).write => dmem_write,
-	bus_in(0).byte_sel => dmem_byte_sel,
-	bus_in(0).addr => dmem_addr(19 downto 2),
-	bus_in(0).data_in => cpu_to_dmem,
-	ready_out(0) => sram_data_ready,
-	-- Port #1: CPU, instruction bus
-	bus_in(1).addr_strobe => sram_instr_strobe,
-	bus_in(1).write => '0',
-	bus_in(1).byte_sel => x"f",
-	bus_in(1).addr => imem_addr(19 downto 2),
-	bus_in(1).data_in => (others => '-'),
-	ready_out(1) => sram_instr_ready,
-	-- Port #2: video framebuffer
-	bus_in(2).addr_strobe => fb_addr_strobe,
-	bus_in(2).write => '0',
-	bus_in(2).byte_sel => x"f",
-	bus_in(2).addr => fb_addr,
-	bus_in(2).data_in => (others => '-'),
-	ready_out(2) => fb_data_ready,
-	-- Port #3: currently unused
-	bus_in(3).addr_strobe => '0',
-	bus_in(3).write => '0',
-	bus_in(3).byte_sel => (others => '-'),
-	bus_in(3).addr => (others => '-'),
-	bus_in(3).data_in => (others => '-'),
-	ready_out(3) => open
+	-- Multi-port connections:
+	bus_in => to_sram, ready_out => sram_ready
     );
 
     -- debugging design instance

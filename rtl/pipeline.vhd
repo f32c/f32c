@@ -323,7 +323,7 @@ begin
       else imem_data_in;
 
     imem_addr <= IF_PC;
-    imem_addr_strobe <= '1';
+    imem_addr_strobe <= not R_reset; -- XXX revisit!!!
 
     process(clk)
     begin
@@ -1007,9 +1007,14 @@ begin
     end generate; -- multiplier
 
     -- COP0
-    R_reset <= reset when rising_edge(clk);
-    R_intr <= intr and R_cop0_ei when rising_edge(clk);
-    R_cop0_count <= R_cop0_count + 1 when rising_edge(clk);
+    process(clk)
+    begin
+	if rising_edge(clk) then
+	    R_reset <= reset;
+	    R_intr <= intr and R_cop0_ei;
+	    R_cop0_count <= R_cop0_count + 1;
+	end if;
+    end process;
 
     -- R_cop0_config
     process(R_cop0_count)

@@ -10,7 +10,7 @@ use work.f32c_pack.all;
 
 entity sram is
     generic (
-	C_ports: integer := 4;
+	C_ports: integer;
 	C_sram_wait_cycles: std_logic_vector
     );
     port (
