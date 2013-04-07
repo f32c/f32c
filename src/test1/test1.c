@@ -17,6 +17,8 @@ void rectangle(int x0, int y0, int x1, int y1, int color);
 
 #define SECTOR_SIZE     512     /* buffer size */
 
+int first_run = 1;
+
 unsigned char *fb = (void *) 0x800c0000;
 FATFS fh;
 
@@ -57,6 +59,18 @@ rectangle(int x0, int y0, int x1, int y1, int color)
 }
 
 
+void
+cpu1_test()
+{
+	int i;
+
+	while (1) {
+		for (i = 0; i < 288 * 512; i++)
+			fb[i]++;
+	}
+}
+
+
 int
 main(void)
 {
@@ -64,6 +78,10 @@ main(void)
 	int res, x0, y0, x1, y1, color;
 	uint32_t tmp, freq_khz;
 	uint32_t start, end;
+
+	if (first_run == 0)
+		cpu1_test();
+	first_run = 0;
 
 	printf("Hello, MIPS world!\n\n");
 
