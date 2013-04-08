@@ -120,8 +120,8 @@ main(void)
 		color += tmp;
 	}
 	RDTSC(end);
-	printf("\n1 MByte fetched via SPI from Flash to registers in %d ms\n",
-	    (end - start) / freq_khz);
+	printf("\n1 MByte fetched via spi_byte_in() from Flash to registers"
+	    " in %d ms\n", (end - start) / freq_khz);
 
 	RDTSC(start);
 	for (int j = 0; j < 8; j++) {
@@ -135,8 +135,15 @@ main(void)
 		}
 	}
 	RDTSC(end);
-	printf("1 MByte fetched via SPI from Flash to SRAM in %d ms\n\n",
-	    (end - start) / freq_khz);
+	printf("1 MByte fetched via spi_byte_in() from Flash to SRAM"
+	    " in %d ms\n", (end - start) / freq_khz);
+
+	RDTSC(start);
+	for (int j = 0; j < 8; j++)
+		spi_block_in(SPI_PORT_FLASH, fb, 128 * 1024);
+	RDTSC(end);
+	printf("1 MByte fetched via spi_block_in() from Flash to SRAM"
+	    " in %d ms\n\n", (end - start) / freq_khz);
 	while (sio_getchar(0) != ' ') {}
 
 	printf("256-bitna paleta\n");
