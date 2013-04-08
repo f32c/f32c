@@ -73,11 +73,7 @@ sdcard_read(char *buf, int n)
 	}
 
 	/* Fetch data */
-	for (; n > 0; n--) {
-		if (sio_idle_fn != NULL && (i & SD_IDLE_MASK) == 0)
-			(*sio_idle_fn)();
-		*buf++ = spi_byte_in(SPI_PORT_SDCARD);
-	}
+	spi_block_in(SPI_PORT_SDCARD, buf, n);
         
 	/* CRC - ignored */
 	spi_byte_in(SPI_PORT_SDCARD);
@@ -106,7 +102,7 @@ sdcard_init(void)
 		return (res);
 
 	/* Initiate initialization process, loop until done */
-	for (i = 0; i < (1 << 16); i++) {
+	for (i = 0; i < (1 << 18); i++) {
 		sdcard_cmd(SD_CMD_APP_CMD, 0);
 		res = sdcard_cmd(SD_CMD_APP_SEND_OP_COND, 1 << 30);
 		if (res == 0)
