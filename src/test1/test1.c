@@ -19,7 +19,9 @@ void rectangle(int x0, int y0, int x1, int y1, int color);
 
 int first_run = 1;
 
-unsigned char *fb = (void *) 0x800c0000;
+#define	FB_BASE		0x800c0000
+
+unsigned char *fb = (void *) FB_BASE;
 FATFS fh;
 
 
@@ -62,11 +64,18 @@ rectangle(int x0, int y0, int x1, int y1, int color)
 void
 cpu1_test()
 {
-	int i;
+	uint32_t i, t0, t1, *p;
 
 	while (1) {
-		for (i = 0; i < 288 * 512; i++)
-			fb[i]++;
+		p = (void *) FB_BASE;
+		for (i = 0; i < 288 * 512 / sizeof(*p); i++) {
+			t0 = *p;
+			t1 = (t0 + (1 << 24)) & 0xff000000;
+			t1 += (t0 + (1 << 16)) & 0xff0000;
+			t1 += (t0 + (1 << 8)) & 0xff00;
+			t1 += (t0 + 1) & 0xff;
+			*p++ = t1;
+		}
 	}
 }
 
@@ -151,10 +160,18 @@ main(void)
 	rectangle(0, 272, 511, 287, 16);
 	tmp = 0;
 	do {
-		for (x0 = 0; x0 < 512; x0++)
-			for (y0 = 0; y0 < 256; y0++)
-				fb[x0 + 512 * y0 + 512 * 16] =
-				    ((tmp >> 2)& 0x8) ^ (x0 / 32 + (y0 & 0xf0));
+		int i;
+		uint32_t *p = (void *) &fb[16 * 512];
+
+		for (y0 = 0; y0 < 256; y0++)
+			for (x0 = 0; x0 < 16; x0++) {
+				color = (((tmp >> 4) & 0x8) ^
+				    (x0 + (y0 & 0xf0))) & 0xff;
+				color = (color << 8) | color;
+				color = (color << 16) | color;
+				for (i = 0; i < 8; i++)
+					*p++ = color;
+			}
 		tmp++;
 	} while (sio_getchar(0) != ' ');
 
@@ -178,8 +195,12 @@ main(void)
 		rectangle(0, 0, 511, 0, tmp++ >> 4);
 		int *p0, *p1;
 		for (p0 = (int *) &fb[512 * 287],
-		    p1 = (int *) &fb[512 * 288]; p0 > (int *) fb;)
+		    p1 = (int *) &fb[512 * 288]; p0 > (int *) fb;) {
 			*(--p1) = *(--p0);
+			*(--p1) = *(--p0);
+			*(--p1) = *(--p0);
+			*(--p1) = *(--p0);
+		}
 	}
 
 	/* Procitaj sliku iz datoteke i ispisi na ekran */
