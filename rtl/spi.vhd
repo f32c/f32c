@@ -64,7 +64,7 @@ begin
 		    if not C_fixed_speed then
 			R_clk_div <= bus_in(15 downto 8);
 		    end if;
-		    R_clk_acc <= 0;
+		    R_clk_acc <= (others => '0');
 		    R_cen <= '1';
 		    R_bit_cnt <= x"7";
 		elsif byte_sel(0) = '1' then
