@@ -142,11 +142,14 @@ main(void)
 	printf("256-bitna paleta\n");
 	rectangle(0, 0, 511, 15, 16);
 	rectangle(0, 272, 511, 287, 16);
-	for (x0 = 0; x0 < 512; x0++)
-		for (y0 = 0; y0 < 256; y0++)
-			fb[x0 + 512 * y0 + 512 * 16] =
-				x0 / 32 + (y0 & 0xf0);
-	while (sio_getchar(0) != ' ') {}
+	tmp = 0;
+	do {
+		for (x0 = 0; x0 < 512; x0++)
+			for (y0 = 0; y0 < 256; y0++)
+				fb[x0 + 512 * y0 + 512 * 16] =
+				    ((tmp >> 2)& 0x8) ^ (x0 / 32 + (y0 & 0xf0));
+		tmp++;
+	} while (sio_getchar(0) != ' ');
 
 	printf("Vertikalne crte u boji\n");
 	rectangle(0, 0, 511, 287, 0);
