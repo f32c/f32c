@@ -9,6 +9,7 @@
 
 int spi_byte(int, int);
 int spi_byte_in(int);
+void spi_block_in(int, void *, int);
 void spi_start_transaction(int);
 
 #endif /* !_SPI_H_ */
