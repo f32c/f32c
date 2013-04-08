@@ -50,9 +50,9 @@ entity glue is
 	C_cop0_config: boolean := true;
 
 	-- CPU core configuration options
-	C_branch_prediction: boolean := false;
-	C_result_forwarding: boolean := false;
-	C_load_aligner: boolean := false;
+	C_branch_prediction: boolean := true;
+	C_result_forwarding: boolean := true;
+	C_load_aligner: boolean := true;
 	C_register_technology: string := "lattice";
 
 	-- These may negatively influence timing closure:
@@ -63,7 +63,7 @@ entity glue is
 	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
 
 	-- SoC configuration options
-	C_cpus: integer := 2;
+	C_cpus: integer := 1;
 	C_bram_size: string := "16k";
 	C_sram: boolean := true;
 	C_sram_wait_cycles: std_logic_vector := x"5"; -- ISSI, OK do 87.5 MHz
@@ -176,7 +176,7 @@ begin
     intr(i) <= '0';
     res(i) <= sw(i);
     pipeline: entity work.pipeline
-	generic map (
+    generic map (
 	C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
@@ -356,14 +356,6 @@ begin
 	end case;
     end process;
 
-    final_to_cpu_d(0) <= io_to_cpu when dmem_addr(0)(31 downto 28) = x"f"
-      else from_sram when sram_data_strobe = '1'
-      else dmem_to_cpu;
-    final_to_cpu_i(0) <= from_sram when sram_instr_strobe = '1'
-      else imem_to_cpu;
-    final_to_cpu_d(1) <= from_sram;
-    final_to_cpu_i(1) <= from_sram;
-
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe(0) when dmem_addr(0)(31) /= '1'
       else '0';
@@ -390,25 +382,41 @@ begin
 
     process(imem_addr, dmem_addr, dmem_byte_sel, cpu_to_dmem, dmem_write,
       sram_data_strobe, sram_instr_strobe, fb_addr_strobe, fb_addr,
-      sram_ready)
+      sram_ready, io_to_cpu, from_sram)
 	variable cpu, p: integer;
+	variable fb_ready: std_logic;
     begin
+	fb_ready := '0';
 	for cpu in 0 to (C_cpus - 1) loop
 	    p := cpu * 3;
 	    if cpu = 0 then
 		-- CPU, data bus
 		to_sram(p).addr_strobe <= sram_data_strobe;
 		sram_data_ready <= sram_ready(p);
+		if dmem_addr(0)(31 downto 28) = x"f" then
+		    final_to_cpu_d(0) <= io_to_cpu;
+		elsif sram_data_strobe = '1' then
+		    final_to_cpu_d(0) <= from_sram;
+		else
+		    final_to_cpu_d(0) <= dmem_to_cpu;
+		end if;
 		-- CPU, instruction bus
 		to_sram(p + 1).addr_strobe <= sram_instr_strobe;
 		sram_instr_ready <= sram_ready(p + 1);
-	    else
+		if sram_instr_strobe = '1' then
+		    final_to_cpu_i(0) <= from_sram;
+		else
+		    final_to_cpu_i(0) <= imem_to_cpu;
+		end if;
+	    else -- CPU #1, CPU #2...
 		-- CPU, data bus
 		to_sram(p).addr_strobe <= dmem_addr_strobe(cpu);
 		dmem_data_ready(cpu) <= sram_ready(p);
+		final_to_cpu_d(1) <= from_sram;
 		-- CPU, instruction bus
 		to_sram(p + 1).addr_strobe <= imem_addr_strobe(cpu);
 		imem_data_ready(cpu) <= sram_ready(p + 1);
+		final_to_cpu_i(1) <= from_sram;
 	    end if;
 	    -- CPU, data bus
 	    to_sram(p).write <= dmem_write(cpu);
@@ -426,11 +434,12 @@ begin
 	    to_sram(p + 2).byte_sel <= x"f";
 	    to_sram(p + 2).addr <= fb_addr;
 	    to_sram(p + 2).data_in <= (others => '-');
+	    if sram_ready(p + 2) = '1' then
+		fb_ready := '1';
+	    end if;
 	end loop;
+	fb_data_ready <= fb_ready;
     end process;
-
-    -- XXX revisit this - hardcoded lanes!
-    fb_data_ready <= sram_ready(2) or sram_ready(5);
 
     sram: entity work.sram
     generic map (
