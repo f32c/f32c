@@ -101,8 +101,8 @@ foreach instr [array names instr_map] {
 set tabcnt 0
 set start [lindex [lsort -integer [array names mem]] 0]
 set end [lindex [lsort -integer [array names mem]] end]
-puts -nonewline "First word @ $start, "
-puts -nonewline "last word @ $end, "
+puts -nonewline "First word 0x[format %08x $start], "
+puts -nonewline "last word 0x[format %08x $end], "
 puts "$endian endian."
 puts "Instruction frequencies (total $tot):"
 foreach entry [lsort -integer -decreasing -index 1 $instr_list] {
