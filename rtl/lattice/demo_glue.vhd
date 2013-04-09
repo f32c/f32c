@@ -91,6 +91,7 @@ entity glue is
 	j2: out std_logic_vector(5 downto 2);
 	sram_a: out std_logic_vector(18 downto 0);
 	sram_d: inout std_logic_vector(15 downto 0);
+	sram_oel: out std_logic; -- XXX the old ULXP2 board needs this!
 	sram_wel, sram_lbl, sram_ubl: out std_logic
     );
 end glue;
@@ -372,6 +373,7 @@ begin
     );
 
     -- SRAM
+    sram_oel <= '0'; -- XXX the old ULXP2 board needs this!
     sram_data_strobe <= dmem_addr_strobe(0) when
       dmem_addr(0)(31 downto 28) = x"8" and C_sram else '0';
     dmem_data_ready(0) <= sram_data_ready when sram_data_strobe = '1' else '1';
@@ -460,7 +462,7 @@ begin
     debug: entity work.serial_debug
     port map (
 	clk => clk_25m, rs232_txd => debug_txd,
-	trace_addr => trace_addr, trace_data => trace_data
+	trace_addr => trace_addr(0), trace_data => trace_data(0)
     );
     end generate;
 
