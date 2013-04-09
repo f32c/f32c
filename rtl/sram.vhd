@@ -12,7 +12,7 @@ entity sram is
     generic (
 	C_ports: integer;
 	C_sram_wait_cycles: std_logic_vector;
-	C_fast_word_read: boolean := false
+	C_fast_word_access: boolean := false
     );
     port (
 	-- To physical SRAM signals
@@ -113,8 +113,8 @@ begin
 		    R_delay <= C_sram_wait_cycles;
 		    R_phase <= not R_phase;
 		else
-		    if R_delay = C_sram_wait_cycles and
-		      ((C_fast_word_read and R_fast_read) or write = '1') then
+		    if C_fast_word_access and R_delay = C_sram_wait_cycles and
+		      (R_fast_read or write = '1') then
 			-- begin of a preselected read or a fast store
 			R_delay <= R_delay - 2;
 		    else
@@ -130,9 +130,7 @@ begin
 		R_delay <= C_sram_wait_cycles;
 		R_phase <= '1';
 	    end if;
-	end if;
 
-	if rising_edge(clk) then
 	    if addr_strobe = '1' then
 		R_fast_read <= false;
 		if R_delay = "0000" and write = '0' then
@@ -144,7 +142,11 @@ begin
 		    end if;
 		    R_a <= addr & halfword;
 		end if;
-		R_wel <= not write;
+		if R_delay = "0001" and R_phase = '1' then
+		    R_wel <= '1';
+		else
+		    R_wel <= not write;
+		end if;
 		if halfword = '1' then
 		    if write = '1' then
 			R_d <= data_in(31 downto 16);
