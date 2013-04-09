@@ -11,7 +11,8 @@ use work.f32c_pack.all;
 entity sram is
     generic (
 	C_ports: integer;
-	C_sram_wait_cycles: std_logic_vector
+	C_sram_wait_cycles: std_logic_vector;
+	C_fast_word_read: boolean := false
     );
     port (
 	-- To physical SRAM signals
@@ -113,7 +114,7 @@ begin
 		    R_phase <= not R_phase;
 		else
 		    if R_delay = C_sram_wait_cycles and
-		      (R_fast_read or write = '1') then
+		      ((C_fast_word_read and R_fast_read) or write = '1') then
 			-- begin of a preselected read or a fast store
 			R_delay <= R_delay - 2;
 		    else
