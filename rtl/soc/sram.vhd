@@ -12,7 +12,7 @@ entity sram is
     generic (
 	C_ports: integer;
 	C_sram_wait_cycles: std_logic_vector; -- XXX unused, remove!
-	C_wait_cycles: integer := 10
+	C_wait_cycles: integer := 6
     );
     port (
 	clk: in std_logic;
@@ -38,7 +38,6 @@ architecture Structure of sram is
 
     -- Bus interface registers
     signal R_bus_out: std_logic_vector(31 downto 0);	-- to CPU bus
-    signal R_ready: std_logic;				-- to CPU bus
 
     -- Bus interface signals (resolved from bus_in record via R_cur_port)
     signal addr_strobe: std_logic;			-- from CPU bus
@@ -48,8 +47,9 @@ architecture Structure of sram is
     signal data_in: std_logic_vector(31 downto 0);	-- from CPU bus
 
     -- Arbiter registers
-    signal R_cur_port, R_prev_port: integer;
+    signal R_cur_port: integer;
     signal R_phase: integer;
+    signal R_ack_bitmap: std_logic_vector(0 to (C_ports - 1));
 
     -- Arbiter internal signals
     signal next_port: integer;
@@ -57,7 +57,7 @@ architecture Structure of sram is
 begin
 
     --
-    -- R_phase strobe write R_phase' R_cur_port' R_wc' R_ready' R_a' R_d' R_wel'
+    -- R_phase strobe write R_phase' R_cur_port' R_wc' R_ack_b' R_a' R_d' R_wel'
     --    0	  0	*	0	new	  0	   0	R_a  R_d    1
     --    0	  1	0	1    R_cur_port	 write	   0	new   Z   !write
     --    0	  1	1	1    R_cur_port	 write	   1	new  new  !write
@@ -72,15 +72,11 @@ begin
     data_in <= bus_in(R_cur_port).data_in;
 
     -- Demux for outbound ready signals
-    process(R_ready, R_prev_port)
+    process(R_ack_bitmap)
 	variable i: integer;
     begin
 	for i in 0 to (C_ports - 1) loop
-	    if i = R_prev_port then
-		ready_out(i) <= R_ready;
-	    else
-		ready_out(i) <= '0';
-	    end if;
+	    ready_out(i) <= R_ack_bitmap(i);
 	end loop;
     end process;
 
@@ -104,12 +100,10 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) then
-	    R_prev_port <= R_cur_port;
 	    if R_phase = 0 then
+		R_ack_bitmap <= (others => '0');
 		if addr_strobe = '0' then
 		    R_cur_port <= next_port;
-		    -- to CPU bus
-		    R_ready <= '0';
 		else
 		    R_byte_sel <= byte_sel;
 		    if byte_sel(1 downto 0) = "00" then
@@ -149,14 +143,14 @@ begin
 		    end if;
 		end if;
 		R_wc <= '0';
-		if R_ready = '1' then
-		    R_ready <= '0';
-		    R_phase <= 0;
-		else
-		    R_ready <= '1';
+		if R_ack_bitmap = "0" then
+		    R_ack_bitmap(R_cur_port) <= '1';
 		    if R_cur_port /= next_port then
 			R_phase <= 0;
 		    end if;
+		else
+		    R_ack_bitmap <= (others => '0');
+		    R_phase <= 0;
 		end if;
 		R_cur_port <= next_port;
 		-- physical signals to SRAM
