@@ -12,7 +12,7 @@ entity sram is
     generic (
 	C_ports: integer;
 	C_sram_wait_cycles: std_logic_vector; -- XXX unused, remove!
-	C_wait_cycles: integer := 13
+	C_wait_cycles: integer := 10
     );
     port (
 	clk: in std_logic;
@@ -72,7 +72,7 @@ begin
     data_in <= bus_in(R_cur_port).data_in;
 
     -- Demux for outbound ready signals
-    process(R_ready, R_cur_port)
+    process(R_ready, R_prev_port)
 	variable i: integer;
     begin
 	for i in 0 to (C_ports - 1) loop
@@ -116,14 +116,17 @@ begin
 			R_phase <= C_wait_cycles + 1;
 			R_high_half <= '1';
 			R_a <= addr & '1';
-			R_ubl <= byte_sel(3);
-			R_lbl <= byte_sel(2);
+			R_ubl <= not byte_sel(3);
+			R_lbl <= not byte_sel(2);
+			if byte_sel(3 downto 2) = "00" then
+			    -- XXX should never happen, should we care?
+			end if;
 		    else
 			R_phase <= R_phase + 1;
 			R_high_half <= '0';
 			R_a <= addr & '0';
-			R_ubl <= byte_sel(1);
-			R_lbl <= byte_sel(0);
+			R_ubl <= not byte_sel(1);
+			R_lbl <= not byte_sel(0);
 		    end if;
 		end if;
 	    elsif R_phase = C_wait_cycles then
@@ -133,7 +136,10 @@ begin
 		end if;
 		R_phase <= R_phase + 1;
 		R_high_half <= '1';
+		-- physical signals to SRAM
 		R_a(0) <= '1';
+		R_ubl <= not R_byte_sel(3);
+		R_lbl <= not R_byte_sel(2);
 	    elsif R_phase >= C_wait_cycles * 2 then
 		if R_wc = '0' then
 		    if R_high_half = '1' then
@@ -143,8 +149,15 @@ begin
 		    end if;
 		end if;
 		R_wc <= '0';
-		R_phase <= 0;
-		R_ready <= '1';
+		if R_ready = '1' then
+		    R_ready <= '0';
+		    R_phase <= 0;
+		else
+		    R_ready <= '1';
+		    if R_cur_port /= next_port then
+			R_phase <= 0;
+		    end if;
+		end if;
 		R_cur_port <= next_port;
 		-- physical signals to SRAM
 		R_wel <= '1';
