@@ -12,7 +12,8 @@ entity sram is
     generic (
 	C_ports: integer;
 	C_sram_wait_cycles: std_logic_vector; -- XXX unused, remove!
-	C_wait_cycles: integer := 6
+	-- C_wait_cycles: integer := 3
+	C_wait_cycles: integer := 3
     );
     port (
 	clk: in std_logic;
@@ -33,8 +34,7 @@ architecture Structure of sram is
     signal R_a: std_logic_vector(18 downto 0);		-- to SRAM
     signal R_d: std_logic_vector(15 downto 0);		-- to SRAM
     signal R_wel, R_lbl, R_ubl: std_logic;		-- to SRAM
-    signal R_wc, R_high_half: std_logic;		-- internal
-    signal R_byte_sel: std_logic_vector(3 downto 0);	-- internal
+    signal R_byte_sel_hi: std_logic_vector(1 downto 0);	-- internal
 
     -- Bus interface registers
     signal R_bus_out: std_logic_vector(31 downto 0);	-- to CPU bus
@@ -57,11 +57,11 @@ architecture Structure of sram is
 begin
 
     --
-    -- R_phase strobe write R_phase' R_cur_port' R_wc' R_ack_b' R_a' R_d' R_wel'
-    --    0	  0	*	0	new	  0	   0	R_a  R_d    1
-    --    0	  1	0	1    R_cur_port	 write	   0	new   Z   !write
-    --    0	  1	1	1    R_cur_port	 write	   1	new  new  !write
-    --	  1	  *	*	2    R_cur_port  R_wc	   0    R_a  R_d  !R_wc
+    -- R_phase strobe write R_phase' R_cur_port' R_ack' R_a' R_d' R_wel'
+    --    0	  0	*	0	new	    0	R_a  R_d    1
+    --    0	  1	0	1    R_cur_port	    0	new   Z   !write
+    --    0	  1	1	1    R_cur_port	    1	new  new  !write
+    --	  1	  *	*	2    R_cur_port     0   R_a  R_d  R_wel
     --
 
     -- Mux for input ports
@@ -99,65 +99,47 @@ begin
 
     process(clk)
     begin
+	if falling_edge(clk) then
+	    if R_phase = 2 + C_wait_cycles then
+		R_bus_out(15 downto 0) <= sram_d;
+	    elsif R_phase = 0 then
+		R_bus_out(31 downto 16) <= sram_d;
+	    end if;
+	end if;
+
 	if rising_edge(clk) then
 	    if R_phase = 0 then
-		R_ack_bitmap <= (others => '0');
-		if addr_strobe = '0' then
+		if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
+		    -- idle
 		    R_cur_port <= next_port;
 		else
-		    R_byte_sel <= byte_sel;
-		    if byte_sel(1 downto 0) = "00" then
-			R_phase <= C_wait_cycles + 1;
-			R_high_half <= '1';
-			R_a <= addr & '1';
-			R_ubl <= not byte_sel(3);
-			R_lbl <= not byte_sel(2);
-			if byte_sel(3 downto 2) = "00" then
-			    -- XXX should never happen, should we care?
-			end if;
-		    else
-			R_phase <= R_phase + 1;
-			R_high_half <= '0';
-			R_a <= addr & '0';
-			R_ubl <= not byte_sel(1);
-			R_lbl <= not byte_sel(0);
-		    end if;
+		    -- start new transaction
+		    R_phase <= R_phase + 1;
+		    R_byte_sel_hi <= byte_sel(3 downto 2);
+		    R_a <= addr & '0';
+		    R_ubl <= not byte_sel(1);
+		    R_lbl <= not byte_sel(0);
 		end if;
-	    elsif R_phase = C_wait_cycles then
-		-- Sample low half word, bump addr
-		if R_wc = '0' then
-		    R_bus_out(15 downto 0) <= sram_d;
-		end if;
+		R_ack_bitmap <= (others => '0');
+	    elsif R_phase = 1 + C_wait_cycles then
+		-- Bump addr
 		R_phase <= R_phase + 1;
-		R_high_half <= '1';
 		-- physical signals to SRAM
 		R_a(0) <= '1';
-		R_ubl <= not R_byte_sel(3);
-		R_lbl <= not R_byte_sel(2);
-	    elsif R_phase >= C_wait_cycles * 2 then
-		if R_wc = '0' then
-		    if R_high_half = '1' then
-			R_bus_out(31 downto 16) <= sram_d;
-		    else
-			R_bus_out(15 downto 0) <= sram_d;
-		    end if;
-		end if;
-		R_wc <= '0';
-		if R_ack_bitmap = "0" then
-		    R_ack_bitmap(R_cur_port) <= '1';
-		    if R_cur_port /= next_port then
-			R_phase <= 0;
-		    end if;
-		else
-		    R_ack_bitmap <= (others => '0');
-		    R_phase <= 0;
-		end if;
+		R_ubl <= not R_byte_sel_hi(1);
+		R_lbl <= not R_byte_sel_hi(0);
+	    elsif R_phase = 1 + C_wait_cycles * 2 then
+		R_ack_bitmap(R_cur_port) <= '1';
+		R_phase <= 0;
 		R_cur_port <= next_port;
 		-- physical signals to SRAM
 		R_wel <= '1';
 		R_ubl <= '0';
 		R_lbl <= '0';
 		R_d <= (others => 'Z');
+	    elsif R_phase > 1 + C_wait_cycles * 2 then
+		-- should never happen!
+		R_phase <= 0;
 	    else
 		R_phase <= R_phase + 1;
 	    end if;
