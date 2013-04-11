@@ -64,9 +64,10 @@ rectangle(int x0, int y0, int x1, int y1, int color)
 void
 cpu1_test()
 {
-	uint32_t i, t0, t1, *p;
+	uint32_t i, t0, t1;
+	uint32_t *p;
 
-	while (1) {
+	do {
 		p = (void *) FB_BASE;
 		for (i = 0; i < 288 * 512 / sizeof(*p); i++) {
 			t0 = *p;
@@ -76,7 +77,8 @@ cpu1_test()
 			t1 += (t0 + 1) & 0xff;
 			*p++ = t1;
 		}
-	}
+		i = sio_getchar(0);
+	} while (i != ' ' && i != 's');
 }
 
 
@@ -104,6 +106,33 @@ main(void)
 #else
 	printf("external static RAM.\n\n");
 #endif
+
+	do {
+		res = sio_getchar(0);
+	} while (res != ' ' && res != 's');
+
+	if (res == 's') {
+		unsigned int i, last = 0;
+		uint32_t t, *p;
+		do {
+			t = 0;
+			p = (void *) FB_BASE;
+			RDTSC(start);
+			for (i = 0; i < 288 * 512 / sizeof(*p) / 4; i++) {
+				t += *p++;
+				t += *p++;
+				t += *p++;
+				t += *p++;
+			}
+			RDTSC(end);
+			if (t != last || res == 't')
+				printf("csum = %08x, %d bytes read in %d us\n",
+				    t, 288 * 512,
+				    (end - start) / (freq_khz / 1000));
+			last = t;
+			res = sio_getchar(0);
+		} while (res != ' ' && res != 's');
+	}
 
 	RDTSC(start);
 	for (tmp = 0; tmp <= 25; tmp++)
@@ -160,8 +189,8 @@ main(void)
 	rectangle(0, 272, 511, 287, 16);
 	tmp = 0;
 	do {
-		int i;
-		uint32_t *p = (void *) &fb[16 * 512];
+		uint32_t i;
+		char *p = (void *) &fb[16 * 512];
 
 		for (y0 = 0; y0 < 256; y0++)
 			for (x0 = 0; x0 < 16; x0++) {
@@ -169,11 +198,22 @@ main(void)
 				    (x0 + (y0 & 0xf0))) & 0xff;
 				color = (color << 8) | color;
 				color = (color << 16) | color;
-				for (i = 0; i < 8; i++)
+				for (i = 0; i < 32 / sizeof(*p); i++)
 					*p++ = color;
 			}
+		for (x0 = 0; x0 < 512; x0++) {
+			fb[x0 + 16 * 512 + 512 * (x0 / 2)] = 31;
+			fb[x0 + 512 * (256 + 16) - 512 * (x0 / 2)] = 31;
+		}
+		for (x0 = 0; x0 < 512; x0++) {
+			fb[x0 + 16 * 512 + 512 * (x0 & 0xff)] = 31;
+			fb[x0 + 512 * (256 + 16) - 512 * (x0 & 0xff)] = 31;
+		}
 		tmp++;
-	} while (sio_getchar(0) != ' ');
+		res = sio_getchar(0);
+		if (res == 27)
+			return(0);
+	} while (res != ' ');
 
 	printf("Vertikalne crte u boji\n");
 	rectangle(0, 0, 511, 287, 0);
@@ -193,12 +233,9 @@ main(void)
 		color = tmp >> 4;
 		rectangle(x0, y0, x1, y1, color);
 		rectangle(0, 0, 511, 0, tmp++ >> 4);
-		int *p0, *p1;
-		for (p0 = (int *) &fb[512 * 287],
-		    p1 = (int *) &fb[512 * 288]; p0 > (int *) fb;) {
-			*(--p1) = *(--p0);
-			*(--p1) = *(--p0);
-			*(--p1) = *(--p0);
+		uint32_t *p0, *p1;
+		for (p0 = (void *) &fb[512 * 287],
+		    p1 = (void *) &fb[512 * 288]; (void *) p0 > (void *) fb;) {
 			*(--p1) = *(--p0);
 		}
 	}
