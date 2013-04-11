@@ -41,13 +41,16 @@ architecture Structure of sram is
     -- State machine constants
     constant C_phase_idle: integer := 0;
     constant C_phase_read_upper_half: integer := 1 + C_wait_cycles;
-    constant C_phase_read_terminate: integer := 1 + C_wait_cycles * 2;
+    constant C_phase_read_terminate: integer := 2 + C_wait_cycles * 2;
+    constant C_phase_write_upper_half: integer := C_wait_cycles;
+    constant C_phase_write_terminate: integer := C_wait_cycles * 2;
 
     -- Physical interface registers
     signal R_a: std_logic_vector(18 downto 0);		-- to SRAM
     signal R_d: std_logic_vector(15 downto 0);		-- to SRAM
     signal R_wel, R_lbl, R_ubl: std_logic;		-- to SRAM
     signal R_byte_sel_hi: std_logic_vector(1 downto 0);	-- internal
+    signal R_high_word: std_logic_vector(15 downto 0);	-- internal
 
     -- Bus interface registers
     signal R_bus_out: std_logic_vector(31 downto 0);	-- to CPU bus
@@ -122,34 +125,58 @@ begin
 
 	if rising_edge(clk) then
 	    if R_phase = C_phase_idle then
+		R_wel <= '1';
+		R_ubl <= '0';
+		R_lbl <= '0';
+		R_d <= (others => 'Z');
 		if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
 		    -- idle
 		    R_cur_port <= next_port;
 		else
 		    -- start new transaction
 		    R_phase <= R_phase + 1;
-		    R_byte_sel_hi <= byte_sel(3 downto 2);
 		    R_a <= addr & '0';
-		    R_ubl <= not byte_sel(1);
-		    R_lbl <= not byte_sel(0);
+		    R_wel <= not write;
+		    if write = '1' then
+			R_ubl <= not byte_sel(1);
+			R_lbl <= not byte_sel(0);
+			R_d <= data_in(15 downto 0);
+			R_byte_sel_hi <= byte_sel(3 downto 2);
+			R_high_word <= data_in(31 downto 16);
+		    else
+			R_ubl <= '0';
+			R_lbl <= '0';
+			R_d <= (others => 'Z');
+		    end if;
 		end if;
 		R_ack_bitmap <= (others => '0');
-	    elsif R_phase = C_phase_read_upper_half then
-		-- Bump addr
+	    elsif R_wel = '1' and R_phase = C_phase_read_upper_half then
 		R_phase <= R_phase + 1;
-		-- physical signals to SRAM
+		-- physical signals to SRAM: bump addr
 		R_a(0) <= '1';
-		R_ubl <= not R_byte_sel_hi(1);
-		R_lbl <= not R_byte_sel_hi(0);
-	    elsif R_phase = C_phase_read_terminate then
+	    elsif R_wel = '1' and R_phase = C_phase_read_terminate then
 		R_ack_bitmap(R_cur_port) <= '1';
 		R_phase <= C_phase_idle;
 		R_cur_port <= next_port;
-		-- physical signals to SRAM
-		R_wel <= '1';
-		R_ubl <= '0';
-		R_lbl <= '0';
-		R_d <= (others => 'Z');
+	    elsif R_wel = '0' and R_phase = C_phase_write_upper_half - 1 then
+		R_phase <= R_phase + 1;
+		-- physical signals to SRAM: terminate 16-bit write
+		R_ubl <= '1';
+		R_lbl <= '1';
+	    elsif R_wel = '0' and R_phase = C_phase_write_upper_half then
+		R_phase <= R_phase + 1;
+		-- physical signals to SRAM: bump addr, refill data
+		R_a(0) <= '1';
+		R_ubl <= not R_byte_sel_hi(1);
+		R_lbl <= not R_byte_sel_hi(0);
+		R_d <= R_high_word;
+	    elsif R_wel = '0' and R_phase = C_phase_write_terminate then
+		R_ack_bitmap(R_cur_port) <= '1';
+		R_phase <= C_phase_idle;
+		R_cur_port <= next_port;
+		-- physical signals to SRAM: terminate 16-bit write
+		R_ubl <= '1';
+		R_lbl <= '1';
 	    else
 		R_phase <= R_phase + 1;
 	    end if;
@@ -157,7 +184,7 @@ begin
     end process;
 
     sram_d <= R_d;
-    sram_a <= R_a;
+    sram_a <= R_a(9 downto 0) & R_a(18 downto 10); -- XXX bezuspjesni ISSI hack
     sram_wel <= R_wel;
     sram_lbl <= R_lbl;
     sram_ubl <= R_ubl;
