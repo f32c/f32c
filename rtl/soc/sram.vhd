@@ -12,7 +12,15 @@ entity sram is
     generic (
 	C_ports: integer;
 	C_sram_wait_cycles: std_logic_vector; -- XXX unused, remove!
-	-- C_wait_cycles: integer := 3
+	-- ISSI SRAM:
+	-- C_wait_cycles: integer := 13 -- ne stigne iscrtat sliku
+	-- C_wait_cycles: integer := 7 -- neispravno! R_a(6) je uvijek 1 !?!
+	-- C_wait_cycles: integer := 6 -- neispravno! R_a(6) je uvijek 1 !?!
+	-- C_wait_cycles: integer := 2 -- prebrzi timing, neispravno citanje
+	-- Alliance SRAM:
+	-- C_wait_cycles: integer := 13 -- ne stigne iscrtat sliku
+	-- C_wait_cycles: integer := 8 -- ne stigne i crtat i pricat s CPU
+	-- C_wait_cycles: integer := 2 -- prebrzi timing, neispravno citanje
 	C_wait_cycles: integer := 3
     );
     port (
@@ -30,6 +38,11 @@ entity sram is
 end sram;
 
 architecture Structure of sram is
+    -- State machine constants
+    constant C_phase_idle: integer := 0;
+    constant C_phase_read_upper_half: integer := 1 + C_wait_cycles;
+    constant C_phase_read_terminate: integer := 1 + C_wait_cycles * 2;
+
     -- Physical interface registers
     signal R_a: std_logic_vector(18 downto 0);		-- to SRAM
     signal R_d: std_logic_vector(15 downto 0);		-- to SRAM
@@ -47,8 +60,8 @@ architecture Structure of sram is
     signal data_in: std_logic_vector(31 downto 0);	-- from CPU bus
 
     -- Arbiter registers
-    signal R_cur_port: integer;
-    signal R_phase: integer;
+    signal R_phase: integer range 0 to C_phase_read_terminate;
+    signal R_cur_port: integer range 0 to (C_ports - 1);
     signal R_ack_bitmap: std_logic_vector(0 to (C_ports - 1));
 
     -- Arbiter internal signals
@@ -100,7 +113,7 @@ begin
     process(clk)
     begin
 	if falling_edge(clk) then
-	    if R_phase = 2 + C_wait_cycles then
+	    if R_phase = C_phase_read_upper_half + 1 then
 		R_bus_out(15 downto 0) <= sram_d;
 	    elsif R_phase = 0 then
 		R_bus_out(31 downto 16) <= sram_d;
@@ -108,7 +121,7 @@ begin
 	end if;
 
 	if rising_edge(clk) then
-	    if R_phase = 0 then
+	    if R_phase = C_phase_idle then
 		if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
 		    -- idle
 		    R_cur_port <= next_port;
@@ -121,25 +134,22 @@ begin
 		    R_lbl <= not byte_sel(0);
 		end if;
 		R_ack_bitmap <= (others => '0');
-	    elsif R_phase = 1 + C_wait_cycles then
+	    elsif R_phase = C_phase_read_upper_half then
 		-- Bump addr
 		R_phase <= R_phase + 1;
 		-- physical signals to SRAM
 		R_a(0) <= '1';
 		R_ubl <= not R_byte_sel_hi(1);
 		R_lbl <= not R_byte_sel_hi(0);
-	    elsif R_phase = 1 + C_wait_cycles * 2 then
+	    elsif R_phase = C_phase_read_terminate then
 		R_ack_bitmap(R_cur_port) <= '1';
-		R_phase <= 0;
+		R_phase <= C_phase_idle;
 		R_cur_port <= next_port;
 		-- physical signals to SRAM
 		R_wel <= '1';
 		R_ubl <= '0';
 		R_lbl <= '0';
 		R_d <= (others => 'Z');
-	    elsif R_phase > 1 + C_wait_cycles * 2 then
-		-- should never happen!
-		R_phase <= 0;
 	    else
 		R_phase <= R_phase + 1;
 	    end if;
