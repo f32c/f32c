@@ -92,6 +92,8 @@ architecture Behavioral of pipeline is
     signal IF_bpredict_index: std_logic_vector(12 downto 0);
     signal IF_bpredict_re: std_logic;
     signal IF_instruction: std_logic_vector(31 downto 0);
+    signal IF_fetch_complete: boolean;
+    -- boundary to stage 2
     signal IF_ID_instruction: std_logic_vector(31 downto 0);
     signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
     signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
@@ -301,6 +303,8 @@ begin
     -- ===================================
     --
 
+    IF_fetch_complete <= imem_data_ready = '1';
+
     -- compute current and next program counter
     -- XXX revisit: make IF_PC a register, not an output from a mux.
     IF_PC <= EX_MEM_branch_target when MEM_take_branch else IF_ID_PC_next;
@@ -441,7 +445,7 @@ begin
 
     G_ID_forwarding:
     if C_result_forwarding generate
-    ID_running <= imem_data_ready = '1' and (ID_EX_cancel_next or
+    ID_running <= IF_fetch_complete and (ID_EX_cancel_next or
       (EX_running and not ID_EX_multicycle_lh_lb and
       not ID_load_align_hazard and not ID_jump_register_hazard and
       (ID_reg1_zero or ID_reg1_addr /= ID_EX_writeback_addr or
@@ -451,7 +455,7 @@ begin
 
     G_ID_no_forwarding:
     if not C_result_forwarding generate
-    ID_running <= imem_data_ready = '1' and (ID_EX_cancel_next or
+    ID_running <= IF_fetch_complete and (ID_EX_cancel_next or
       (EX_running and not ID_EX_multicycle_lh_lb and
       not ID_load_align_hazard and not ID_jump_register_hazard and
       not (ID_fwd_ex_reg1 or ID_fwd_mem_reg1)
@@ -507,7 +511,7 @@ begin
 			  EX_mem_align_shamt & "000";
 		    end if;
 		    if MEM_take_branch and not ID_running and
-		      imem_data_ready = '1' then
+		      IF_fetch_complete then
 			ID_EX_cancel_next <= true;
 		    end if;
 		    if ID_running then
@@ -532,7 +536,7 @@ begin
 		    ID_EX_branch_likely <= false;
 		    ID_EX_predict_taken <= false;
 		    if MEM_take_branch and not ID_running and
-		      imem_data_ready = '1' then
+		      IF_fetch_complete then
 			ID_EX_cancel_next <= true;
 		    end if;
 		    if ID_running then
