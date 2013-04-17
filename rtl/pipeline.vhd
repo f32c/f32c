@@ -92,7 +92,7 @@ architecture Behavioral of pipeline is
     signal IF_bpredict_index: std_logic_vector(12 downto 0);
     signal IF_bpredict_re: std_logic;
     signal IF_instruction: std_logic_vector(31 downto 0);
-    signal IF_fetch_complete: boolean;
+    signal IF_fetch_complete, IF_need_refetch: boolean;
     -- boundary to stage 2
     signal IF_ID_instruction: std_logic_vector(31 downto 0);
     signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
@@ -303,7 +303,8 @@ begin
     -- ===================================
     --
 
-    IF_fetch_complete <= imem_data_ready = '1';
+    IF_fetch_complete <= MEM_take_branch or imem_data_ready = '1';
+    IF_need_refetch <= MEM_take_branch and imem_data_ready = '0';
 
     -- compute current and next program counter
     -- XXX revisit: make IF_PC a register, not an output from a mux.
@@ -333,7 +334,11 @@ begin
     begin
 	if rising_edge(clk) then
 	    if MEM_take_branch then
-		IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
+		if IF_need_refetch then
+		    IF_ID_PC_next <= IF_PC and C_PC_mask(31 downto 2);
+		else
+		    IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
+		end if;
 	    elsif ID_running then
 		if (ID_jump_cycle or ID_jump_register or ID_predict_taken)
 		  and not ID_EX_cancel_next then
@@ -342,7 +347,9 @@ begin
 		    IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
 		end if;
 	    end if;
-	    if ID_running then
+	    if IF_need_refetch then
+		IF_ID_instruction <= x"00000000";
+	    elsif ID_running then
 		IF_ID_PC <= IF_PC and C_PC_mask(31 downto 2);
 		IF_ID_PC_4 <= IF_PC_next and C_PC_mask(31 downto 2);
 		IF_ID_branch_delay_slot <=
