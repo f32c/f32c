@@ -116,7 +116,7 @@ begin
 		ADB8 => imem_addr(8), ADB9 => imem_addr(9),
 		ADB10 => imem_addr(10), ADB11 => imem_addr(11),
 		ADB12 => imem_addr(12), ADB13 => imem_addr(13),
-		CEB => '1', CLKB => not clk, WEB => '0', 
+		CEB => imem_addr_strobe, CLKB => not clk, WEB => '0', 
 		CSB0 => '0', CSB1 => '0', CSB2 => '0', RSTB => '0'
 	);
 
@@ -172,7 +172,7 @@ begin
 		ADB8 => imem_addr(8), ADB9 => imem_addr(9),
 		ADB10 => imem_addr(10), ADB11 => imem_addr(11),
 		ADB12 => imem_addr(12), ADB13 => imem_addr(13),
-		CEB => '1', CLKB => not clk, WEB => '0', 
+		CEB => imem_addr_strobe, CLKB => not clk, WEB => '0', 
 		CSB0 => '0', CSB1 => '0', CSB2 => '0', RSTB => '0'
 	);
 
@@ -228,7 +228,7 @@ begin
 		ADB8 => imem_addr(8), ADB9 => imem_addr(9),
 		ADB10 => imem_addr(10), ADB11 => imem_addr(11),
 		ADB12 => imem_addr(12), ADB13 => imem_addr(13),
-		CEB => '1', CLKB => not clk, WEB => '0', 
+		CEB => imem_addr_strobe, CLKB => not clk, WEB => '0', 
 		CSB0 => '0', CSB1 => '0', CSB2 => '0', RSTB => '0'
 	);
 
@@ -284,7 +284,7 @@ begin
 		ADB8 => imem_addr(8), ADB9 => imem_addr(9),
 		ADB10 => imem_addr(10), ADB11 => imem_addr(11),
 		ADB12 => imem_addr(12), ADB13 => imem_addr(13),
-		CEB => '1', CLKB => not clk, WEB => '0', 
+		CEB => imem_addr_strobe, CLKB => not clk, WEB => '0', 
 		CSB0 => '0', CSB1 => '0', CSB2 => '0', RSTB => '0'
 	);
 
@@ -340,7 +340,7 @@ begin
 		ADB8 => imem_addr(8), ADB9 => imem_addr(9),
 		ADB10 => imem_addr(10), ADB11 => imem_addr(11),
 		ADB12 => imem_addr(12), ADB13 => imem_addr(13),
-		CEB => '1', CLKB => not clk, WEB => '0', 
+		CEB => imem_addr_strobe, CLKB => not clk, WEB => '0', 
 		CSB0 => '0', CSB1 => '0', CSB2 => '0', RSTB => '0'
 	);
 
@@ -396,7 +396,7 @@ begin
 		ADB8 => imem_addr(8), ADB9 => imem_addr(9),
 		ADB10 => imem_addr(10), ADB11 => imem_addr(11),
 		ADB12 => imem_addr(12), ADB13 => imem_addr(13),
-		CEB => '1', CLKB => not clk, WEB => '0', 
+		CEB => imem_addr_strobe, CLKB => not clk, WEB => '0', 
 		CSB0 => '0', CSB1 => '0', CSB2 => '0', RSTB => '0'
 	);
 
@@ -452,7 +452,7 @@ begin
 		ADB8 => imem_addr(8), ADB9 => imem_addr(9),
 		ADB10 => imem_addr(10), ADB11 => imem_addr(11),
 		ADB12 => imem_addr(12), ADB13 => imem_addr(13),
-		CEB => '1', CLKB => not clk, WEB => '0', 
+		CEB => imem_addr_strobe, CLKB => not clk, WEB => '0', 
 		CSB0 => '0', CSB1 => '0', CSB2 => '0', RSTB => '0'
 	);
 
@@ -508,7 +508,7 @@ begin
 		ADB8 => imem_addr(8), ADB9 => imem_addr(9),
 		ADB10 => imem_addr(10), ADB11 => imem_addr(11),
 		ADB12 => imem_addr(12), ADB13 => imem_addr(13),
-		CEB => '1', CLKB => not clk, WEB => '0', 
+		CEB => imem_addr_strobe, CLKB => not clk, WEB => '0', 
 		CSB0 => '0', CSB1 => '0', CSB2 => '0', RSTB => '0'
 	);
 	end generate; -- 16k
