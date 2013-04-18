@@ -12,17 +12,13 @@ entity sram is
     generic (
 	C_ports: integer;
 	C_sram_wait_cycles: std_logic_vector; -- XXX unused, remove!
-	-- ISSI SRAM:
-	-- C_wait_cycles: integer := 13 -- ne stigne iscrtat sliku
-	-- C_wait_cycles: integer := 7 -- neispravno! R_a(6) je uvijek 1 !?!
-	-- C_wait_cycles: integer := 6 -- neispravno! R_a(6) je uvijek 1 !?!
-	-- C_wait_cycles: integer := 5 -- OK!
-	-- C_wait_cycles: integer := 4 -- prebrzi timing, neispravno citanje
-	-- Alliance SRAM:
 	-- C_wait_cycles: integer := 13 -- ne stigne iscrtat sliku
 	-- C_wait_cycles: integer := 8 -- ne stigne i crtat i pricat s CPU
+	-- ISSI SRAM:
+	-- C_wait_cycles: integer := 3 -- prebrzi timing, neispravno citanje
+	-- Alliance SRAM:
 	-- C_wait_cycles: integer := 2 -- prebrzi timing, neispravno citanje
-	C_wait_cycles: integer := 5
+	C_wait_cycles: integer := 4
     );
     port (
 	clk: in std_logic;
@@ -125,6 +121,7 @@ begin
 	end if;
 
 	if rising_edge(clk) then
+	    R_ack_bitmap <= (others => '0');
 	    if R_phase = C_phase_idle then
 		R_wel <= '1';
 		R_ubl <= '0';
@@ -144,13 +141,14 @@ begin
 			R_d <= data_in(15 downto 0);
 			R_byte_sel_hi <= byte_sel(3 downto 2);
 			R_high_word <= data_in(31 downto 16);
+			-- we can safely acknowledge the write immediately
+			R_ack_bitmap(R_cur_port) <= '1';
 		    else
 			R_ubl <= '0';
 			R_lbl <= '0';
 			R_d <= (others => 'Z');
 		    end if;
 		end if;
-		R_ack_bitmap <= (others => '0');
 	    elsif R_wel = '1' and R_phase = C_phase_read_upper_half then
 		R_phase <= R_phase + 1;
 		-- physical signals to SRAM: bump addr
@@ -172,7 +170,6 @@ begin
 		R_lbl <= not R_byte_sel_hi(0);
 		R_d <= R_high_word;
 	    elsif R_wel = '0' and R_phase = C_phase_write_terminate then
-		R_ack_bitmap(R_cur_port) <= '1';
 		R_phase <= C_phase_idle;
 		R_cur_port <= next_port;
 		-- physical signals to SRAM: terminate 16-bit write
