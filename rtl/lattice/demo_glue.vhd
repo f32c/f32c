@@ -59,8 +59,9 @@ entity glue is
 	C_movn_movz: boolean := false; -- true: +16 LUT4, -DMIPS, incomplete
 	C_fast_ID: boolean := true; -- false: +7 LUT4, -Fmax
 
-	-- debugging options
+	-- Debugging / testing options (should be turned off)
 	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
+	C_prng_imem_delay: boolean := false;
 
 	-- SoC configuration options
 	C_cpus: integer := 1;
@@ -148,6 +149,7 @@ architecture Behavioral of glue is
     signal trace_addr: f32c_debug_addr;
     signal trace_data: f32c_data_bus;
     signal debug_txd: std_logic;
+    signal R_prng: std_logic_vector(7 downto 0);
 
     -- FM TX DDS
     signal clk_dds, dds_out: std_logic;
@@ -365,7 +367,7 @@ begin
 	C_mem_size => C_bram_size
     )
     port map (
-	clk => clk, imem_addr_strobe => imem_addr_strobe(0),
+	clk => clk, imem_addr_strobe => R_prng(7), --imem_addr_strobe(0),
 	imem_addr => imem_addr(0), imem_data_out => imem_to_cpu,
 	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write(0),
 	dmem_byte_sel => dmem_byte_sel(0), dmem_addr => dmem_addr(0),
@@ -380,7 +382,7 @@ begin
     sram_instr_strobe <= imem_addr_strobe(0) when
       imem_addr(0)(31 downto 28) = x"8" and C_sram else '0';
     imem_data_ready(0) <= sram_instr_ready when sram_instr_strobe = '1'
-      else '1';
+      else R_prng(7);
 
     process(imem_addr, dmem_addr, dmem_byte_sel, cpu_to_dmem, dmem_write,
       sram_data_strobe, sram_instr_strobe, fb_addr_strobe, fb_addr,
@@ -407,6 +409,8 @@ begin
 		sram_instr_ready <= sram_ready(p + 1);
 		if sram_instr_strobe = '1' then
 		    final_to_cpu_i(0) <= from_sram;
+		elsif R_prng(7) = '0' then
+		    final_to_cpu_i(0) <= x"deadc0de";
 		else
 		    final_to_cpu_i(0) <= imem_to_cpu;
 		end if;
@@ -491,7 +495,7 @@ begin
     j2(4) <= not dds_out when C_ddsfm else 'Z';
     j2(5) <= not dds_out when C_ddsfm else 'Z';
 
-    -- Breakout game, producing PAL composite video
+    -- Video framebuffer
     fb: entity work.fb
     port map (
 	clk => clk, clk_dac => clk_dds,
@@ -501,5 +505,18 @@ begin
 	data_in => from_sram,
 	dac_out => video_dac
     );
+
+    G_prng_imem_delay:
+    if C_prng_imem_delay generate
+    process(clk)
+    begin
+	if falling_edge(clk) then
+	    R_prng(6 downto 0) <= R_prng(7 downto 1);
+	    R_prng(7) <=
+	      not R_prng(0) xor R_prng(2) xor R_prng(3) xor R_prng(4);
+	end if;
+    end process;
+    end generate;
+    R_prng(7) <= '1' when not C_prng_imem_delay;
 
 end Behavioral;
