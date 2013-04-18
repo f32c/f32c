@@ -228,6 +228,9 @@ begin
     G_flash:
     if C_flash generate
     flash: entity work.spi
+    generic map (
+	C_turbo_mode => true
+    )
     port map (
 	clk => clk, ce => flash_ce,
 	bus_write => dmem_write(0), byte_sel => dmem_byte_sel(0),
