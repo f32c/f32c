@@ -79,7 +79,7 @@ begin
     end process;
 
     -- Arbiter: round-robin port selection combinatorial logic
-    process(bus_in, R_cur_port)
+    process(bus_in, R_cur_port, R_last_port)
 	variable i, j, t: integer;
     begin
 	if C_prio_port >= 0 and R_cur_port /= C_prio_port and
@@ -124,12 +124,12 @@ begin
 		    -- idle
 		    R_cur_port <= next_port;
 		else
-		    -- start new transaction
+		    -- start a new transaction
 		    R_phase <= R_phase + 1;
+		    R_byte_sel_hi <= byte_sel(3 downto 2);
 		    R_a <= addr & '0';
 		    R_wel <= not write;
 		    if write = '1' then
-			R_byte_sel_hi <= byte_sel(3 downto 2);
 			R_high_word <= data_in(31 downto 16);
 			if byte_sel(1 downto 0) /= "00" then
 			    R_ubl <= not byte_sel(1);
