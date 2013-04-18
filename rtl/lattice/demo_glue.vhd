@@ -67,12 +67,13 @@ entity glue is
 	C_cpus: integer := 1;
 	C_bram_size: string := "16k";
 	C_sram: boolean := true;
-	C_sram_wait_cycles: std_logic_vector := x"5"; -- ISSI, OK do 87.5 MHz
+	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_sio: boolean := true;
 	C_gpio: boolean := true;
 	C_flash: boolean := true;
 	C_sdcard: boolean := true;
 	C_pcmdac: boolean := true;
+	C_framebuffer: boolean := true;
 	C_ddsfm: boolean := true
     );
     port (
@@ -267,12 +268,17 @@ begin
 	    R_dac_acc_r <= (R_dac_acc_r(16) & R_dac_in_r) + R_dac_acc_r;
 	end if;
     end process;
-    p_tip(3) <= R_dac_acc_l(16) when sw(3) = '0' else video_dac(3);
-    p_tip(2) <= R_dac_acc_l(16) when sw(3) = '0' else video_dac(2);
-    p_tip(1) <= R_dac_acc_l(16) when sw(3) = '0' else video_dac(1);
-    p_tip(0) <= '0' when sw(3) = '0' else video_dac(0);
-    p_ring <= R_dac_acc_r(16);
     end generate;
+
+    p_tip(3) <= video_dac(3) when C_framebuffer and sw(3) = '1'
+      else R_dac_acc_l(16);
+    p_tip(2) <= video_dac(2) when C_framebuffer and sw(3) = '1'
+      else R_dac_acc_l(16);
+    p_tip(1) <= video_dac(1) when C_framebuffer and sw(3) = '1'
+      else R_dac_acc_l(16);
+    p_tip(0) <= video_dac(0) when C_framebuffer and sw(3) = '1'
+      else R_dac_acc_l(16);
+    p_ring <= R_dac_acc_r(16);
 
     -- I/O port map:
     -- 0x8*******: (4B, RW) * SRAM
@@ -390,70 +396,68 @@ begin
     process(imem_addr, dmem_addr, dmem_byte_sel, cpu_to_dmem, dmem_write,
       sram_data_strobe, sram_instr_strobe, fb_addr_strobe, fb_addr,
       sram_ready, io_to_cpu, from_sram)
-	variable cpu, p: integer;
-	variable fb_ready: std_logic;
+	variable data_port, instr_port, fb_port: integer;
     begin
-	fb_ready := '0';
 	for cpu in 0 to (C_cpus - 1) loop
-	    p := cpu * 3;
+	    data_port := cpu;
+	    instr_port := C_cpus + cpu;
 	    if cpu = 0 then
 		-- CPU, data bus
-		to_sram(p).addr_strobe <= sram_data_strobe;
-		sram_data_ready <= sram_ready(p);
-		if dmem_addr(0)(31 downto 28) = x"f" then
-		    final_to_cpu_d(0) <= io_to_cpu;
+		to_sram(data_port).addr_strobe <= sram_data_strobe;
+		sram_data_ready <= sram_ready(data_port);
+		if dmem_addr(cpu)(31 downto 28) = x"f" then
+		    final_to_cpu_d(cpu) <= io_to_cpu;
 		elsif sram_data_strobe = '1' then
-		    final_to_cpu_d(0) <= from_sram;
+		    final_to_cpu_d(cpu) <= from_sram;
 		else
-		    final_to_cpu_d(0) <= dmem_to_cpu;
+		    final_to_cpu_d(cpu) <= dmem_to_cpu;
 		end if;
 		-- CPU, instruction bus
-		to_sram(p + 1).addr_strobe <= sram_instr_strobe;
-		sram_instr_ready <= sram_ready(p + 1);
+		to_sram(instr_port).addr_strobe <= sram_instr_strobe;
+		sram_instr_ready <= sram_ready(instr_port);
 		if sram_instr_strobe = '1' then
-		    final_to_cpu_i(0) <= from_sram;
+		    final_to_cpu_i(cpu) <= from_sram;
 		elsif R_prng(7) = '0' then
-		    final_to_cpu_i(0) <= x"deadc0de";
+		    final_to_cpu_i(cpu) <= x"deadc0de";
 		else
-		    final_to_cpu_i(0) <= imem_to_cpu;
+		    final_to_cpu_i(cpu) <= imem_to_cpu;
 		end if;
 	    else -- CPU #1, CPU #2...
 		-- CPU, data bus
-		to_sram(p).addr_strobe <= dmem_addr_strobe(cpu);
-		dmem_data_ready(cpu) <= sram_ready(p);
-		final_to_cpu_d(1) <= from_sram;
+		to_sram(data_port).addr_strobe <= dmem_addr_strobe(cpu);
+		dmem_data_ready(cpu) <= sram_ready(data_port);
+		final_to_cpu_d(cpu) <= from_sram;
 		-- CPU, instruction bus
-		to_sram(p + 1).addr_strobe <= imem_addr_strobe(cpu);
-		imem_data_ready(cpu) <= sram_ready(p + 1);
-		final_to_cpu_i(1) <= from_sram;
+		to_sram(instr_port).addr_strobe <= imem_addr_strobe(cpu);
+		imem_data_ready(cpu) <= sram_ready(instr_port);
+		final_to_cpu_i(cpu) <= from_sram;
 	    end if;
 	    -- CPU, data bus
-	    to_sram(p).write <= dmem_write(cpu);
-	    to_sram(p).byte_sel <= dmem_byte_sel(cpu);
-	    to_sram(p).addr <= dmem_addr(cpu)(19 downto 2);
-	    to_sram(p).data_in <= cpu_to_dmem(cpu);
+	    to_sram(cpu).write <= dmem_write(cpu);
+	    to_sram(cpu).byte_sel <= dmem_byte_sel(cpu);
+	    to_sram(cpu).addr <= dmem_addr(cpu)(19 downto 2);
+	    to_sram(cpu).data_in <= cpu_to_dmem(cpu);
 	    -- CPU, instruction bus
-	    to_sram(p + 1).addr <= imem_addr(cpu)(19 downto 2);
-	    to_sram(p + 1).data_in <= (others => '-');
-	    to_sram(p + 1).write <= '0';
-	    to_sram(p + 1).byte_sel <= x"f";
-	    -- video framebuffer
-	    to_sram(p + 2).addr_strobe <= fb_addr_strobe;
-	    to_sram(p + 2).write <= '0';
-	    to_sram(p + 2).byte_sel <= x"f";
-	    to_sram(p + 2).addr <= fb_addr;
-	    to_sram(p + 2).data_in <= (others => '-');
-	    if sram_ready(p + 2) = '1' then
-		fb_ready := '1';
-	    end if;
+	    to_sram(C_cpus + cpu).addr <= imem_addr(cpu)(19 downto 2);
+	    to_sram(C_cpus + cpu).data_in <= (others => '-');
+	    to_sram(C_cpus + cpu).write <= '0';
+	    to_sram(C_cpus + cpu).byte_sel <= x"f";
 	end loop;
-	fb_data_ready <= fb_ready;
+	-- video framebuffer
+	fb_port := 2 * C_cpus;
+	to_sram(fb_port).addr_strobe <= fb_addr_strobe;
+	to_sram(fb_port).write <= '0';
+	to_sram(fb_port).byte_sel <= x"f";
+	to_sram(fb_port).addr <= fb_addr;
+	to_sram(fb_port).data_in <= (others => '-');
+	fb_data_ready <= sram_ready(fb_port);
     end process;
 
     sram: entity work.sram
     generic map (
-	C_ports => C_cpus * 3,
-	C_sram_wait_cycles => C_sram_wait_cycles
+	C_ports => 2 * C_cpus + 1,
+	C_prio_port => 2 * C_cpus, -- framebuffer
+	C_wait_cycles => C_sram_wait_cycles
     )
     port map (
 	clk => clk, sram_a => sram_a, sram_d => sram_d,
@@ -499,6 +503,8 @@ begin
     j2(5) <= not dds_out when C_ddsfm else 'Z';
 
     -- Video framebuffer
+    G_framebuffer:
+    if C_framebuffer generate
     fb: entity work.fb
     port map (
 	clk => clk, clk_dac => clk_dds,
@@ -508,6 +514,7 @@ begin
 	data_in => from_sram,
 	dac_out => video_dac
     );
+    end generate;
 
     G_prng_imem_delay:
     if C_prng_imem_delay generate

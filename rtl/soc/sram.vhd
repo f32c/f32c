@@ -11,14 +11,8 @@ use work.f32c_pack.all;
 entity sram is
     generic (
 	C_ports: integer;
-	C_sram_wait_cycles: std_logic_vector; -- XXX unused, remove!
-	-- C_wait_cycles: integer := 13 -- ne stigne iscrtat sliku
-	-- C_wait_cycles: integer := 8 -- ne stigne i crtat i pricat s CPU
-	-- ISSI SRAM:
-	-- C_wait_cycles: integer := 3 -- prebrzi timing, neispravno citanje
-	-- Alliance SRAM:
-	-- C_wait_cycles: integer := 2 -- prebrzi timing, neispravno citanje
-	C_wait_cycles: integer := 4
+	C_prio_port: integer := -1;
+	C_wait_cycles: integer
     );
     port (
 	clk: in std_logic;
@@ -61,22 +55,13 @@ architecture Structure of sram is
 
     -- Arbiter registers
     signal R_phase: integer range 0 to C_phase_read_terminate;
-    signal R_cur_port: integer range 0 to (C_ports - 1);
+    signal R_cur_port, R_last_port: integer range 0 to (C_ports - 1);
     signal R_ack_bitmap: std_logic_vector(0 to (C_ports - 1));
 
     -- Arbiter internal signals
     signal next_port: integer;
 
 begin
-
-    --
-    -- R_phase strobe write R_phase' R_cur_port' R_ack' R_a' R_d' R_wel'
-    --    0	  0	*	0	new	    0	R_a  R_d    1
-    --    0	  1	0	1    R_cur_port	    0	new   Z   !write
-    --    0	  1	1	1    R_cur_port	    1	new  new  !write
-    --	  1	  *	*	2    R_cur_port     0   R_a  R_d  R_wel
-    --
-
     -- Mux for input ports
     addr_strobe <= bus_in(R_cur_port).addr_strobe;
     write <= bus_in(R_cur_port).write;
@@ -97,17 +82,22 @@ begin
     process(bus_in, R_cur_port)
 	variable i, j, t: integer;
     begin
-	for i in 0 to (C_ports - 1) loop
-	    for j in 1 to C_ports loop
-		if R_cur_port = i then
-		    t := (i + j) mod C_ports;
-		    if bus_in(t).addr_strobe = '1' then
-			exit;
+	if C_prio_port >= 0 and R_cur_port /= C_prio_port and
+	  bus_in(C_prio_port).addr_strobe = '1' then
+	    next_port <= C_prio_port;
+	else
+	    for i in 0 to (C_ports - 1) loop
+		for j in 1 to C_ports loop
+		    if R_last_port = i then
+			t := (i + j) mod C_ports;
+			if bus_in(t).addr_strobe = '1' then
+			    exit;
+			end if;
 		    end if;
-		end if;
+		end loop;
 	    end loop;
-	end loop;
-	next_port <= t;
+	    next_port <= t;
+	end if;
     end process;
 
     process(clk)
@@ -122,6 +112,9 @@ begin
 
 	if rising_edge(clk) then
 	    R_ack_bitmap <= (others => '0');
+	    if R_cur_port /= C_prio_port then
+		R_last_port <= R_cur_port;
+	    end if;
 	    if R_phase = C_phase_idle then
 		R_wel <= '1';
 		R_ubl <= '0';
@@ -143,10 +136,6 @@ begin
 			R_high_word <= data_in(31 downto 16);
 			-- we can safely acknowledge the write immediately
 			R_ack_bitmap(R_cur_port) <= '1';
-		    else
-			R_ubl <= '0';
-			R_lbl <= '0';
-			R_d <= (others => 'Z');
 		    end if;
 		end if;
 	    elsif R_wel = '1' and R_phase = C_phase_read_upper_half then
