@@ -129,11 +129,19 @@ begin
 		    R_a <= addr & '0';
 		    R_wel <= not write;
 		    if write = '1' then
-			R_ubl <= not byte_sel(1);
-			R_lbl <= not byte_sel(0);
-			R_d <= data_in(15 downto 0);
 			R_byte_sel_hi <= byte_sel(3 downto 2);
 			R_high_word <= data_in(31 downto 16);
+			if byte_sel(1 downto 0) /= "00" then
+			    R_ubl <= not byte_sel(1);
+			    R_lbl <= not byte_sel(0);
+			    R_d <= data_in(15 downto 0);
+			else
+			    R_a <= addr & '1';
+			    R_ubl <= not byte_sel(3);
+			    R_lbl <= not byte_sel(2);
+			    R_d <= data_in(31 downto 16);
+			    R_phase <= C_phase_write_upper_half + 1;
+			end if;
 			-- we can safely acknowledge the write immediately
 			R_ack_bitmap(R_cur_port) <= '1';
 		    end if;
@@ -147,7 +155,12 @@ begin
 		R_phase <= C_phase_idle;
 		R_cur_port <= next_port;
 	    elsif R_wel = '0' and R_phase = C_phase_write_upper_half - 1 then
-		R_phase <= R_phase + 1;
+		if R_byte_sel_hi /= "00" then
+		    R_phase <= R_phase + 1;
+		else
+		    R_phase <= C_phase_idle;
+		    R_cur_port <= next_port;
+		end if;
 		-- physical signals to SRAM: terminate 16-bit write
 		R_ubl <= '1';
 		R_lbl <= '1';
