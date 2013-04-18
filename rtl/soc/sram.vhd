@@ -16,12 +16,13 @@ entity sram is
 	-- C_wait_cycles: integer := 13 -- ne stigne iscrtat sliku
 	-- C_wait_cycles: integer := 7 -- neispravno! R_a(6) je uvijek 1 !?!
 	-- C_wait_cycles: integer := 6 -- neispravno! R_a(6) je uvijek 1 !?!
-	-- C_wait_cycles: integer := 2 -- prebrzi timing, neispravno citanje
+	-- C_wait_cycles: integer := 5 -- OK!
+	-- C_wait_cycles: integer := 4 -- prebrzi timing, neispravno citanje
 	-- Alliance SRAM:
 	-- C_wait_cycles: integer := 13 -- ne stigne iscrtat sliku
 	-- C_wait_cycles: integer := 8 -- ne stigne i crtat i pricat s CPU
 	-- C_wait_cycles: integer := 2 -- prebrzi timing, neispravno citanje
-	C_wait_cycles: integer := 3
+	C_wait_cycles: integer := 5
     );
     port (
 	clk: in std_logic;
@@ -184,7 +185,7 @@ begin
     end process;
 
     sram_d <= R_d;
-    sram_a <= R_a(9 downto 0) & R_a(18 downto 10); -- XXX bezuspjesni ISSI hack
+    sram_a <= R_a(9 downto 1) & R_a(18 downto 10) & R_a(0); -- XXX ISSI hack
     sram_wel <= R_wel;
     sram_lbl <= R_lbl;
     sram_ubl <= R_ubl;
