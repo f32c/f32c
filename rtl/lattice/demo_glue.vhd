@@ -433,15 +433,15 @@ begin
 		final_to_cpu_i(cpu) <= from_sram;
 	    end if;
 	    -- CPU, data bus
-	    to_sram(cpu).write <= dmem_write(cpu);
-	    to_sram(cpu).byte_sel <= dmem_byte_sel(cpu);
-	    to_sram(cpu).addr <= dmem_addr(cpu)(19 downto 2);
-	    to_sram(cpu).data_in <= cpu_to_dmem(cpu);
+	    to_sram(data_port).write <= dmem_write(cpu);
+	    to_sram(data_port).byte_sel <= dmem_byte_sel(cpu);
+	    to_sram(data_port).addr <= dmem_addr(cpu)(19 downto 2);
+	    to_sram(data_port).data_in <= cpu_to_dmem(cpu);
 	    -- CPU, instruction bus
-	    to_sram(C_cpus + cpu).addr <= imem_addr(cpu)(19 downto 2);
-	    to_sram(C_cpus + cpu).data_in <= (others => '-');
-	    to_sram(C_cpus + cpu).write <= '0';
-	    to_sram(C_cpus + cpu).byte_sel <= x"f";
+	    to_sram(instr_port).addr <= imem_addr(cpu)(19 downto 2);
+	    to_sram(instr_port).data_in <= (others => '-');
+	    to_sram(instr_port).write <= '0';
+	    to_sram(instr_port).byte_sel <= x"f";
 	end loop;
 	-- video framebuffer
 	fb_port := 2 * C_cpus;
