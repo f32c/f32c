@@ -7,7 +7,7 @@ use IEEE.numeric_std.ALL;
 entity spi is
     generic (
 	C_fixed_speed: boolean := true;
-	C_turbo_mode: boolean := true
+	C_turbo_mode: boolean := false
     );
     port (
 	ce, clk: in std_logic;
