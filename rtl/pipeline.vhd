@@ -94,11 +94,12 @@ architecture Behavioral of pipeline is
     signal IF_instruction: std_logic_vector(31 downto 0);
     signal IF_fetch_complete, IF_need_refetch: boolean;
     -- boundary to stage 2
+    signal IF_ID_fetch_in_progress, IF_ID_incomplete_branch: boolean;
     signal IF_ID_instruction: std_logic_vector(31 downto 0);
     signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
     signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
     signal IF_ID_branch_delay_slot: boolean;
-    signal IF_ID_PC, IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
+    signal IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
 	
     -- pipeline stage 2: instruction decode and register fetch
     signal ID_running: boolean;
@@ -245,6 +246,7 @@ architecture Behavioral of pipeline is
     -- signals used for debugging only
     signal reg_trace_data: std_logic_vector(31 downto 0);
     signal D_instr, D_b_instr, D_b_taken: std_logic_vector(31 downto 0);
+    signal IF_ID_PC: std_logic_vector(31 downto 2);
 
 begin
 
@@ -303,12 +305,7 @@ begin
     -- ===================================
     --
 
-    IF_fetch_complete <= MEM_take_branch or imem_data_ready = '1';
-    IF_need_refetch <= MEM_take_branch and imem_data_ready = '0';
-
     -- compute current and next program counter
-    -- XXX revisit: make IF_PC a register, not an output from a mux.
-    IF_PC <= EX_MEM_branch_target when MEM_take_branch else IF_ID_PC_next;
 
     G_fast_ID:
     if C_fast_ID generate
@@ -330,15 +327,30 @@ begin
     imem_addr <= IF_PC;
     imem_addr_strobe <= not R_reset; -- XXX revisit!!!
 
+    IF_fetch_complete <= MEM_take_branch or imem_data_ready = '1';
+    IF_need_refetch <= MEM_take_branch and
+      (imem_data_ready = '0' or IF_ID_fetch_in_progress);
+
+    IF_PC <= EX_MEM_branch_target when MEM_take_branch else IF_ID_PC_next;
+
     process(clk)
     begin
 	if rising_edge(clk) then
-	    if MEM_take_branch then
-		if IF_need_refetch then
-		    IF_ID_PC_next <= IF_PC and C_PC_mask(31 downto 2);
-		else
-		    IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
-		end if;
+	    if imem_data_ready = '0' then
+		IF_ID_fetch_in_progress <= true;
+	    else
+		IF_ID_fetch_in_progress <= false;
+	    end if;
+	    if IF_need_refetch then
+		IF_ID_incomplete_branch <= true;
+	    elsif imem_data_ready = '1' then
+		IF_ID_incomplete_branch <= false;
+	    end if;
+	    if MEM_take_branch and not IF_need_refetch then
+		IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
+	    elsif IF_need_refetch or IF_ID_incomplete_branch then
+		IF_ID_PC_next <=
+		  EX_MEM_branch_target and C_PC_mask(31 downto 2);
 	    elsif ID_running then
 		if (ID_jump_cycle or ID_jump_register or ID_predict_taken)
 		  and not ID_EX_cancel_next then
@@ -347,17 +359,20 @@ begin
 		    IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
 		end if;
 	    end if;
-	    if IF_need_refetch then
+	    if IF_need_refetch or IF_ID_incomplete_branch then
 		IF_ID_instruction <= x"00000000";
+		IF_ID_branch_delay_slot <= false;
 	    elsif ID_running then
-		IF_ID_PC <= IF_PC and C_PC_mask(31 downto 2);
 		IF_ID_PC_4 <= IF_PC_next and C_PC_mask(31 downto 2);
-		IF_ID_branch_delay_slot <=
-		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 		IF_ID_bpredict_index <= IF_bpredict_index;
 		IF_ID_instruction <= IF_instruction;
+		IF_ID_branch_delay_slot <=
+		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
+		-- debugging only: XXX revisit!
+		IF_ID_PC <= IF_PC and C_PC_mask(31 downto 2);
 	    elsif ID_EX_branch_likely and not EX_take_branch then
 		IF_ID_instruction <= x"00000000";
+		IF_ID_branch_delay_slot <= false;
 	    end if;
 	end if;
     end process;
