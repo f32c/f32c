@@ -764,7 +764,9 @@ begin
     -- Exceptions / interrupts
     EX_exception_pending <= R_reset = '1' or
       (R_intr = '1' and R_cop0_ei = '1');
-    EX_exception_target <= C_init_PC when R_reset = '1' else C_intr_PC;
+    EX_exception_target <= C_init_PC when R_reset = '1' and C_cpuid = 0
+      else x"80000000" when R_reset = '1' -- XXX hack - revisit!
+      else C_intr_PC;
 
     process(clk)
     begin
