@@ -138,17 +138,20 @@ architecture Behavioral of glue is
     signal dmem_bram_enable: std_logic;
 
     -- I/O
-    signal io_to_cpu: std_logic_vector(31 downto 0);
+    signal io_write: std_logic;
+    signal io_byte_sel: std_logic_vector(3 downto 0);
+    signal io_addr: std_logic_vector(31 downto 2);
+    signal cpu_to_io, io_to_cpu: std_logic_vector(31 downto 0);
     signal from_sio, from_flash, from_sdcard: std_logic_vector(31 downto 0);
     signal sio_txd, sio_ce, flash_ce, sdcard_ce: std_logic;
-    signal cur_io_port: integer range 0 to (C_io_ports - 1);
     signal io_addr_strobe: std_logic_vector((C_io_ports - 1) downto 0);
+    signal next_io_port: integer range 0 to (C_io_ports - 1);
+    signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
     signal R_led: std_logic_vector(7 downto 0);
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
     signal R_dac_in_l, R_dac_in_r: std_logic_vector(15 downto 2);
     signal R_dac_acc_l, R_dac_acc_r: std_logic_vector(16 downto 2);
-    signal R_prev_io_port: integer range 0 to (C_io_ports - 1);
 
     -- debugging only
     signal trace_addr: f32c_debug_addr;
@@ -228,11 +231,11 @@ begin
     )
     port map (
 	clk => clk, ce => sio_ce, txd => sio_txd, rxd => rs232_rx,
-	bus_write => dmem_write(0), byte_sel => dmem_byte_sel(0),
-	bus_in => cpu_to_dmem(0), bus_out => from_sio
+	bus_write => io_write, byte_sel => io_byte_sel,
+	bus_in => cpu_to_io, bus_out => from_sio
     );
-    sio_ce <= dmem_addr_strobe(0) when dmem_addr(0)(31 downto 28) = x"f" and
-      dmem_addr(0)(4 downto 2) = "001" else '0';
+    sio_ce <= io_addr_strobe(R_cur_io_port) when
+      io_addr(4 downto 2) = "001" else '0';
     end generate;
 
     --
@@ -246,13 +249,13 @@ begin
     )
     port map (
 	clk => clk, ce => flash_ce,
-	bus_write => dmem_write(0), byte_sel => dmem_byte_sel(0),
-	bus_in => cpu_to_dmem(0), bus_out => from_flash,
+	bus_write => io_write, byte_sel => io_byte_sel,
+	bus_in => cpu_to_io, bus_out => from_flash,
 	spi_sck => flash_sck, spi_cen => flash_cen,
 	spi_si => flash_si, spi_so => flash_so
     );
-    flash_ce <= dmem_addr_strobe(0) when dmem_addr(0)(31 downto 28) = x"f" and
-      dmem_addr(0)(4 downto 2) = "100" else '0';
+    flash_ce <= io_addr_strobe(R_cur_io_port) when
+      io_addr(4 downto 2) = "100" else '0';
     end generate;
 
     --
@@ -263,13 +266,13 @@ begin
     sdcard: entity work.spi
     port map (
 	clk => clk, ce => sdcard_ce,
-	bus_write => dmem_write(0), byte_sel => dmem_byte_sel(0),
-	bus_in => cpu_to_dmem(0), bus_out => from_sdcard,
+	bus_write => io_write, byte_sel => io_byte_sel,
+	bus_in => cpu_to_io, bus_out => from_sdcard,
 	spi_sck => sdcard_sck, spi_cen => sdcard_cen,
 	spi_si => sdcard_si, spi_so => sdcard_so
     );
-    sdcard_ce <= dmem_addr_strobe(0) when dmem_addr(0)(31 downto 28) = x"f" and
-      dmem_addr(0)(4 downto 2) = "101" else '0';
+    sdcard_ce <= io_addr_strobe(R_cur_io_port) when
+      io_addr(4 downto 2) = "101" else '0';
     end generate;
 
     --
@@ -308,12 +311,20 @@ begin
     --
     -- I/O arbiter
     --
-    process(R_prev_io_port, io_addr_strobe)
-	variable i, j, t: integer;
+    process(R_cur_io_port, dmem_addr, dmem_addr_strobe)
+	variable i, j, t, cpu: integer;
     begin
+	for cpu in 0 to (C_cpus - 1) loop
+	    if dmem_addr(cpu)(31 downto 28) = x"f" then
+		io_addr_strobe(cpu) <= dmem_addr_strobe(cpu);
+	    else
+		io_addr_strobe(cpu) <= '0';
+	    end if;
+	end loop;
+	io_addr_strobe(C_cpus) <= '0'; -- XXX TODO: DMA port
 	for i in 0 to (C_io_ports - 1) loop
 	    for j in 1 to C_io_ports loop
-		if R_prev_io_port = i then
+		if R_cur_io_port = i then
 		    t := (i + j) mod C_io_ports;
 		    if io_addr_strobe(t) = '1' then
 			exit;
@@ -321,68 +332,68 @@ begin
 		end if;
 	    end loop;
 	end loop;
-	cur_io_port <= t;
+	next_io_port <= t;
     end process;
 
     --
-    -- I/O write access:
+    -- I/O access
     --
+    io_write <= dmem_write(R_cur_io_port);
+    io_addr <=  dmem_addr(R_cur_io_port);
+    io_byte_sel <= dmem_byte_sel(R_cur_io_port);
+    cpu_to_io <= cpu_to_dmem(R_cur_io_port);
     process(clk)
     begin
 	if rising_edge(clk) then
-	    R_prev_io_port <= cur_io_port;
+	    R_cur_io_port <= next_io_port;
 	end if;
-	if rising_edge(clk) and dmem_addr_strobe(0) = '1'
-	  and dmem_write(0) = '1' and dmem_addr(0)(31 downto 28) = x"f" then
+	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
+	  and io_write = '1' then
 	    -- GPIO
-	    if C_gpio and dmem_addr(0)(4 downto 2) = "000" then
-		R_led <= cpu_to_dmem(0)(7 downto 0);
+	    if C_gpio and io_addr(4 downto 2) = "000" then
+		R_led <= cpu_to_io(7 downto 0);
 	    end if;
 	    -- PCMDAC
-	    if C_pcmdac and dmem_addr(0)(4 downto 2) = "011" then
-		if dmem_byte_sel(0)(2) = '1' then
+	    if C_pcmdac and io_addr(4 downto 2) = "011" then
+		if io_byte_sel(2) = '1' then
 		    if C_big_endian then
-			R_dac_in_l <= cpu_to_dmem(0)(23 downto 16) &
-			  cpu_to_dmem(0)(31 downto 26);
+			R_dac_in_l <= cpu_to_io(23 downto 16) &
+			  cpu_to_io(31 downto 26);
 		    else
-			R_dac_in_l <= cpu_to_dmem(0)(31 downto 18);
+			R_dac_in_l <= cpu_to_io(31 downto 18);
 		    end if;
 		end if;
-		if dmem_byte_sel(0)(0) = '1' then
+		if io_byte_sel(0) = '1' then
 		    if C_big_endian then
-			R_dac_in_r <= cpu_to_dmem(0)(7 downto 0) &
-			  cpu_to_dmem(0)(15 downto 10);
+			R_dac_in_r <= cpu_to_io(7 downto 0) &
+			  cpu_to_io(15 downto 10);
 		    else
-			R_dac_in_r <= cpu_to_dmem(0)(15 downto 2);
+			R_dac_in_r <= cpu_to_io(15 downto 2);
 		    end if;
 		end if;
 	    end if;
 	    -- DDS
-	    if C_ddsfm and dmem_addr(0)(4 downto 2) = "111" then
+	    if C_ddsfm and io_addr(4 downto 2) = "111" then
 		if C_big_endian then
-		    R_dds_div <= cpu_to_dmem(0)(15 downto 10) & 
-		      cpu_to_dmem(0)(23 downto 16) &
-		      cpu_to_dmem(0)(31 downto 24);
+		    R_dds_div <= cpu_to_io(15 downto 10) & 
+		      cpu_to_io(23 downto 16) &
+		      cpu_to_io(31 downto 24);
 		else
-		    R_dds_div <= cpu_to_dmem(0)(21 downto 0);
+		    R_dds_div <= cpu_to_io(21 downto 0);
 		end if;
 	    end if;
 	end if;
-    end process;
-    led <= R_led when C_gpio else "--------";
-
-    process(clk)
-    begin
 	if C_gpio and rising_edge(clk) then
 	    R_sw <= sw;
 	    R_btns <= btn_center & btn_up & btn_down & btn_left & btn_right;
 	end if;
     end process;
+    led <= R_led when C_gpio else "--------";
 
     -- XXX replace with a balanced multiplexer
-    process(dmem_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard)
+    process(io_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard)
     begin
-	case dmem_addr(0)(4 downto 2) is
+	case io_addr(4 downto 2) is
 	when "000"  =>
 	    io_to_cpu <="----------------" & "----" & R_sw & "---" & R_btns;
 	when "001"  =>
@@ -434,7 +445,7 @@ begin
       dmem_addr_strobe, imem_addr_strobe, fb_addr_strobe, fb_addr,
       sram_ready, io_to_cpu, from_sram)
 	variable data_port, instr_port, fb_port: integer;
-	variable sram_data_strobe, sram_instr_strobe, io_strobe: std_logic;
+	variable sram_data_strobe, sram_instr_strobe: std_logic;
     begin
 	for cpu in 0 to (C_cpus - 1) loop
 	    data_port := cpu;
@@ -449,15 +460,14 @@ begin
 	    else
 		sram_instr_strobe := '0';
 	    end if;
-	    if dmem_addr(cpu)(31 downto 28) = x"f" then
-		io_strobe := dmem_addr_strobe(cpu);
-	    else
-		io_strobe := '0';
-	    end if;
 	    if cpu = 0 then
 		-- CPU, data bus
-		if io_strobe = '1' then
-		    dmem_data_ready(cpu) <= '1'; -- XXX revisit
+		if io_addr_strobe(cpu) = '1' then
+		    if R_cur_io_port = cpu then
+			dmem_data_ready(cpu) <= '1';
+		    else
+			dmem_data_ready(cpu) <= '0';
+		    end if;
 		    final_to_cpu_d(cpu) <= io_to_cpu;
 		elsif sram_data_strobe = '1' then
 		    dmem_data_ready(cpu) <= sram_ready(data_port);
@@ -479,8 +489,12 @@ begin
 		end if;
 	    else -- CPU #1, CPU #2...
 		-- CPU, data bus
-		if io_strobe = '1' then
-		    dmem_data_ready(cpu) <= '1'; -- XXX revisit
+		if io_addr_strobe(cpu) = '1' then
+		    if R_cur_io_port = cpu then
+			dmem_data_ready(cpu) <= '1';
+		    else
+			dmem_data_ready(cpu) <= '0';
+		    end if;
 		    final_to_cpu_d(cpu) <= io_to_cpu;
 		elsif sram_data_strobe = '1' then
 		    dmem_data_ready(cpu) <= sram_ready(data_port);
@@ -537,7 +551,9 @@ begin
 	bus_in => to_sram, ready_out => sram_ready
     );
 
+    --
     -- debugging design instance
+    --
     G_debug:
     if C_debug generate
     debug: entity work.serial_debug
@@ -549,7 +565,9 @@ begin
 
     rs232_tx <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
 
+    --
     -- DDS FM transmitter
+    --
     G_ddsfm:
     if C_ddsfm generate
     process(clk_dds)
@@ -562,7 +580,7 @@ begin
     dds_out <= R_dds_cnt(21);
     end generate;
 
-    -- make a dipole?
+    -- more pins radiate more RF power
     j1(20) <= dds_out when C_ddsfm else 'Z';
     j1(21) <= dds_out when C_ddsfm else 'Z';
     j1(22) <= dds_out when C_ddsfm else 'Z';
@@ -572,7 +590,9 @@ begin
     j2(4) <= not dds_out when C_ddsfm else 'Z';
     j2(5) <= not dds_out when C_ddsfm else 'Z';
 
+    --
     -- Video framebuffer
+    --
     G_framebuffer:
     if C_framebuffer generate
     fb: entity work.fb
