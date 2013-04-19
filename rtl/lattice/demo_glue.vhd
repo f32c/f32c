@@ -99,6 +99,8 @@ entity glue is
 end glue;
 
 architecture Behavioral of glue is
+    constant C_io_ports: integer := C_cpus + 1;
+
     -- types for signals going to / from f32c core(s)
     type f32c_addr_bus is array(0 to (C_cpus - 1)) of
       std_logic_vector(31 downto 2);
@@ -115,6 +117,7 @@ architecture Behavioral of glue is
     type sram_ready_multi is array(0 to (3 * C_cpus - 1)) of std_logic;
 
 
+    -- global clock
     signal clk: std_logic;
 
     -- signals to / from f32c cores(s)
@@ -128,8 +131,6 @@ architecture Behavioral of glue is
     -- SRAM
     signal to_sram: sram_port_multi;
     signal sram_ready: sram_ready_multi;
-    signal sram_data_strobe, sram_data_ready: std_logic;
-    signal sram_instr_strobe, sram_instr_ready: std_logic;
     signal from_sram: std_logic_vector(31 downto 0);
 
     -- Block RAM
@@ -140,11 +141,14 @@ architecture Behavioral of glue is
     signal io_to_cpu: std_logic_vector(31 downto 0);
     signal from_sio, from_flash, from_sdcard: std_logic_vector(31 downto 0);
     signal sio_txd, sio_ce, flash_ce, sdcard_ce: std_logic;
+    signal cur_io_port: integer range 0 to (C_io_ports - 1);
+    signal io_addr_strobe: std_logic_vector((C_io_ports - 1) downto 0);
     signal R_led: std_logic_vector(7 downto 0);
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
     signal R_dac_in_l, R_dac_in_r: std_logic_vector(15 downto 2);
     signal R_dac_acc_l, R_dac_acc_r: std_logic_vector(16 downto 2);
+    signal R_prev_io_port: integer range 0 to (C_io_ports - 1);
 
     -- debugging only
     signal trace_addr: f32c_debug_addr;
@@ -163,7 +167,9 @@ architecture Behavioral of glue is
 
 begin
 
-    -- clock synthesizer
+    --
+    -- Clock synthesizer
+    --
     clkgen: entity work.clkgen
     generic map (
 	C_clk_freq => C_clk_freq,
@@ -174,14 +180,16 @@ begin
 	sel => sw(2), key => btn_down, res => '0'
     );
 
+    --
     -- f32c core(s)
+    --
     G_CPU: for i in 0 to (C_cpus - 1) generate
     begin
     intr(i) <= '0';
     res(i) <= sw(i);
     pipeline: entity work.pipeline
     generic map (
-	C_clk_freq => C_clk_freq,
+	C_cpuid => i, C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
 	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
@@ -208,7 +216,9 @@ begin
     );
     end generate;
 
+    --
     -- RS232 sio
+    --
     G_sio:
     if C_sio generate
     sio: entity work.sio
@@ -225,7 +235,9 @@ begin
       dmem_addr(0)(4 downto 2) = "001" else '0';
     end generate;
 
+    --
     -- On-board SPI flash
+    --
     G_flash:
     if C_flash generate
     flash: entity work.spi
@@ -243,7 +255,9 @@ begin
       dmem_addr(0)(4 downto 2) = "100" else '0';
     end generate;
 
+    --
     -- MicroSD card
+    --
     G_sdcard:
     if C_sdcard generate
     sdcard: entity work.spi
@@ -258,7 +272,9 @@ begin
       dmem_addr(0)(4 downto 2) = "101" else '0';
     end generate;
 
+    --
     -- PCM stereo 1-bit DAC
+    --
     G_pcmdac:
     if C_pcmdac generate
     process(clk)
@@ -289,9 +305,33 @@ begin
     -- 0xf*****14: (1B, RW) * SPI MicroSD
     -- 0xf*****1c: (4B, WR) * FM DDS register
 
+    --
+    -- I/O arbiter
+    --
+    process(R_prev_io_port, io_addr_strobe)
+	variable i, j, t: integer;
+    begin
+	for i in 0 to (C_io_ports - 1) loop
+	    for j in 1 to C_io_ports loop
+		if R_prev_io_port = i then
+		    t := (i + j) mod C_io_ports;
+		    if io_addr_strobe(t) = '1' then
+			exit;
+		    end if;
+		end if;
+	    end loop;
+	end loop;
+	cur_io_port <= t;
+    end process;
+
+    --
     -- I/O write access:
+    --
     process(clk)
     begin
+	if rising_edge(clk) then
+	    R_prev_io_port <= cur_io_port;
+	end if;
 	if rising_edge(clk) and dmem_addr_strobe(0) = '1'
 	  and dmem_write(0) = '1' and dmem_addr(0)(31 downto 28) = x"f" then
 	    -- GPIO
@@ -368,7 +408,9 @@ begin
 	end case;
     end process;
 
-    -- Block RAM
+    --
+    -- Block RAM (only CPU #0)
+    --
     dmem_bram_enable <= dmem_addr_strobe(0) when dmem_addr(0)(31) /= '1'
       else '0';
     bram: entity work.bram
@@ -383,61 +425,89 @@ begin
 	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem(0)
     );
 
+    --
     -- SRAM
+    --
     sram_oel <= '0'; -- XXX the old ULXP2 board needs this!
-    sram_data_strobe <= dmem_addr_strobe(0) when
-      dmem_addr(0)(31 downto 28) = x"8" and C_sram else '0';
-    dmem_data_ready(0) <= sram_data_ready when sram_data_strobe = '1' else '1';
-    sram_instr_strobe <= imem_addr_strobe(0) when
-      imem_addr(0)(31 downto 28) = x"8" and C_sram else '0';
-    imem_data_ready(0) <= sram_instr_ready when sram_instr_strobe = '1'
-      else R_prng(7);
 
     process(imem_addr, dmem_addr, dmem_byte_sel, cpu_to_dmem, dmem_write,
-      sram_data_strobe, sram_instr_strobe, fb_addr_strobe, fb_addr,
+      dmem_addr_strobe, imem_addr_strobe, fb_addr_strobe, fb_addr,
       sram_ready, io_to_cpu, from_sram)
 	variable data_port, instr_port, fb_port: integer;
+	variable sram_data_strobe, sram_instr_strobe, io_strobe: std_logic;
     begin
 	for cpu in 0 to (C_cpus - 1) loop
 	    data_port := cpu;
 	    instr_port := C_cpus + cpu;
+	    if dmem_addr(cpu)(31 downto 28) = x"8" then
+		sram_data_strobe := dmem_addr_strobe(cpu);
+	    else
+		sram_data_strobe := '0';
+	    end if;
+	    if imem_addr(cpu)(31 downto 28) = x"8" then
+		sram_instr_strobe := imem_addr_strobe(cpu);
+	    else
+		sram_instr_strobe := '0';
+	    end if;
+	    if dmem_addr(cpu)(31 downto 28) = x"f" then
+		io_strobe := dmem_addr_strobe(cpu);
+	    else
+		io_strobe := '0';
+	    end if;
 	    if cpu = 0 then
 		-- CPU, data bus
-		to_sram(data_port).addr_strobe <= sram_data_strobe;
-		sram_data_ready <= sram_ready(data_port);
-		if dmem_addr(cpu)(31 downto 28) = x"f" then
+		if io_strobe = '1' then
+		    dmem_data_ready(cpu) <= '1'; -- XXX revisit
 		    final_to_cpu_d(cpu) <= io_to_cpu;
 		elsif sram_data_strobe = '1' then
+		    dmem_data_ready(cpu) <= sram_ready(data_port);
 		    final_to_cpu_d(cpu) <= from_sram;
 		else
-		    final_to_cpu_d(cpu) <= dmem_to_cpu;
+		    dmem_data_ready(cpu) <= '1';
+		    final_to_cpu_d(cpu) <= dmem_to_cpu; -- BRAM
 		end if;
 		-- CPU, instruction bus
-		to_sram(instr_port).addr_strobe <= sram_instr_strobe;
-		sram_instr_ready <= sram_ready(instr_port);
 		if sram_instr_strobe = '1' then
+		    imem_data_ready(cpu) <= sram_ready(instr_port);
 		    final_to_cpu_i(cpu) <= from_sram;
 		elsif R_prng(7) = '0' then
-		    final_to_cpu_i(cpu) <= x"deadc0de";
+		    imem_data_ready(cpu) <= '0';
+		    final_to_cpu_i(cpu) <= x"deadc0de"; -- XXX testing
 		else
-		    final_to_cpu_i(cpu) <= imem_to_cpu;
+		    imem_data_ready(cpu) <= '1';
+		    final_to_cpu_i(cpu) <= imem_to_cpu; -- BRAM
 		end if;
 	    else -- CPU #1, CPU #2...
 		-- CPU, data bus
-		to_sram(data_port).addr_strobe <= dmem_addr_strobe(cpu);
-		dmem_data_ready(cpu) <= sram_ready(data_port);
-		final_to_cpu_d(cpu) <= from_sram;
+		if io_strobe = '1' then
+		    dmem_data_ready(cpu) <= '1'; -- XXX revisit
+		    final_to_cpu_d(cpu) <= io_to_cpu;
+		elsif sram_data_strobe = '1' then
+		    dmem_data_ready(cpu) <= sram_ready(data_port);
+		    final_to_cpu_d(cpu) <= from_sram;
+		else
+		    -- XXX assert address eror signal?
+		    dmem_data_ready(cpu) <= '1';
+		    final_to_cpu_d(cpu) <= (others => '-');
+		end if;
 		-- CPU, instruction bus
-		to_sram(instr_port).addr_strobe <= imem_addr_strobe(cpu);
-		imem_data_ready(cpu) <= sram_ready(instr_port);
-		final_to_cpu_i(cpu) <= from_sram;
+		if sram_instr_strobe = '1' then
+		    imem_data_ready(cpu) <= sram_ready(instr_port);
+		    final_to_cpu_i(cpu) <= from_sram;
+		else
+		    -- XXX assert address eror signal?
+		    imem_data_ready(cpu) <= '1';
+		    final_to_cpu_i(cpu) <= (others => '-');
+		end if;
 	    end if;
 	    -- CPU, data bus
+	    to_sram(data_port).addr_strobe <= sram_data_strobe;
 	    to_sram(data_port).write <= dmem_write(cpu);
 	    to_sram(data_port).byte_sel <= dmem_byte_sel(cpu);
 	    to_sram(data_port).addr <= dmem_addr(cpu)(19 downto 2);
 	    to_sram(data_port).data_in <= cpu_to_dmem(cpu);
 	    -- CPU, instruction bus
+	    to_sram(instr_port).addr_strobe <= sram_instr_strobe;
 	    to_sram(instr_port).addr <= imem_addr(cpu)(19 downto 2);
 	    to_sram(instr_port).data_in <= (others => '-');
 	    to_sram(instr_port).write <= '0';
