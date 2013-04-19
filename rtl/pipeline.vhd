@@ -48,6 +48,7 @@ entity pipeline is
 
 	-- COP0 options
 	C_clk_freq: integer;
+	C_cpuid: integer := 0;
 	C_cop0_count: boolean;
 	C_cop0_config: boolean;
 
@@ -1043,41 +1044,22 @@ begin
     end process;
 
     -- R_cop0_config
-    process(R_cop0_count)
-    begin
-	if C_cop0_config then
-	    R_cop0_config(31) <= '0'; -- no config1 register
-	    if C_clk_freq = 81 then
-		R_cop0_config(30 downto 29) <= "11"; -- div with 4
-		R_cop0_config(28 downto 16) <=
-		  conv_std_logic_vector(325, 13);
-	    elsif C_clk_freq = 33 then
-		R_cop0_config(30 downto 29) <= "10"; -- div with 3
-		R_cop0_config(28 downto 16) <= conv_std_logic_vector(100, 13);
-	    elsif C_clk_freq = 66 then
-		R_cop0_config(30 downto 29) <= "10"; -- div with 3
-		R_cop0_config(28 downto 16) <= conv_std_logic_vector(200, 13);
-	    elsif C_clk_freq = 133 then
-		R_cop0_config(30 downto 29) <= "10"; -- div with 3
-		R_cop0_config(28 downto 16) <= conv_std_logic_vector(400, 13);
-	    elsif C_clk_freq = 166 then
-		R_cop0_config(30 downto 29) <= "10"; -- div with 3
-		R_cop0_config(28 downto 16) <= conv_std_logic_vector(500, 13);
-	    else
-		R_cop0_config(30 downto 29) <= "00"; -- div with 1
-		R_cop0_config(28 downto 16) <=
-		  conv_std_logic_vector(C_clk_freq, 13);
-	    end if;
-	    if C_big_endian then
-		R_cop0_config(15) <= '1';
-	    else
-		R_cop0_config(15) <= '0';
-	    end if;
-	    R_cop0_config(14 downto 0) <= conv_std_logic_vector(0, 15);
-	else
-	    R_cop0_config <= R_cop0_count;
-	end if;
-    end process;
+    G_cop0_config:
+    if C_cop0_config generate
+    R_cop0_config(31) <= '0'; -- no config1 register
+    with C_clk_freq select R_cop0_config(30 downto 16) <=
+	"10" & conv_std_logic_vector(100, 13) when 33,
+	"10" & conv_std_logic_vector(200, 13) when 66,
+	"11" & conv_std_logic_vector(325, 13) when 81,
+	"10" & conv_std_logic_vector(400, 13) when 133,
+	"10" & conv_std_logic_vector(500, 13) when 166,
+	"00" & conv_std_logic_vector(C_clk_freq, 13) when others;
+    R_cop0_config(15) <= '1' when C_big_endian else '0';
+    R_cop0_config(14 downto 8) <= (others => '-');
+    R_cop0_config(7 downto 0) <= conv_std_logic_vector(C_cpuid, 8);
+    end generate;
+    R_cop0_config <= (others => '-') when not C_cop0_config;
+
     -- XXX performance counters
     G_perf_cnt:
     if C_debug generate
