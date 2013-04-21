@@ -46,6 +46,10 @@ entity pipeline is
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
 	C_intr_PC: std_logic_vector(31 downto 0) := x"00000200";
 
+	-- Cache
+	C_icache: boolean := true;
+	C_dcache: boolean := false;
+
 	-- COP0 options
 	C_clk_freq: integer;
 	C_cpuid: integer := 0;
@@ -92,8 +96,12 @@ architecture Behavioral of pipeline is
     signal IF_PC_incr: std_logic;
     signal IF_bpredict_index: std_logic_vector(12 downto 0);
     signal IF_bpredict_re: std_logic;
-    signal IF_instruction: std_logic_vector(31 downto 0);
-    signal IF_fetch_complete, IF_need_refetch: boolean;
+    signal IF_instruction, IF_icache_instruction: std_logic_vector(31 downto 0);
+    signal IF_data_ready, IF_fetch_complete, IF_need_refetch: boolean;
+    signal IF_to_icache_x9, IF_from_icache_x9: std_logic_vector(8 downto 0);
+    signal IF_to_icache_x36, IF_from_icache_x36: std_logic_vector(35 downto 0);
+    signal IF_icache_tag_in, IF_icache_tag_out: std_logic_vector(11 downto 0);
+    signal IF_icache_line_valid: boolean;
     -- boundary to stage 2
     signal IF_ID_fetch_in_progress, IF_ID_incomplete_branch: boolean;
     signal IF_ID_instruction: std_logic_vector(31 downto 0);
@@ -306,6 +314,35 @@ begin
     -- ===================================
     --
 
+    G_cachetag_x9:
+    if C_icache or C_dcache generate
+    cachetag_x9: entity work.bram_dp_x9
+    port map (
+	clk_a => not clk, clk_b => '0', res => R_reset,
+	ce_a => '1', ce_b => '0', we_a => '0', we_b => '0',
+	addr_a => '0' & '0' & IF_PC(10 downto 2),
+	addr_b => '1' & "0000000000",
+	data_in_a => IF_to_icache_x9, data_in_b => "000000000",
+	data_out_a => IF_from_icache_x9, data_out_b => open
+    );
+    end generate;
+
+    G_icache_x36:
+    if C_icache generate
+    icache_x36: entity work.bram_sp_x36
+    port map (
+	clk => not clk, ce => '1', we => '0', res => R_reset,
+	addr => '0' & IF_PC(10 downto 2),
+	data_in => IF_to_icache_x36, data_out => IF_from_icache_x36
+    );
+
+    IF_icache_tag_in <= IF_PC(22 downto 11);
+    IF_icache_tag_out <= IF_from_icache_x9 & IF_from_icache_x36(35 downto 33);
+    IF_icache_instruction <= IF_from_icache_x36(31 downto 0);
+    IF_icache_line_valid <= true when IF_from_icache_x36(32) = '1' and
+      IF_icache_tag_in = IF_icache_tag_out else false;
+    end generate;
+
     -- compute current and next program counter
 
     G_fast_ID:
@@ -328,23 +365,25 @@ begin
     imem_addr <= IF_PC;
     imem_addr_strobe <= not R_reset; -- XXX revisit!!!
 
-    IF_fetch_complete <= MEM_take_branch or imem_data_ready = '1';
+    IF_data_ready <= imem_data_ready = '1';
+
+    IF_fetch_complete <= MEM_take_branch or IF_data_ready;
     IF_need_refetch <= MEM_take_branch and
-      (imem_data_ready = '0' or IF_ID_fetch_in_progress);
+      (not IF_data_ready or IF_ID_fetch_in_progress);
 
     IF_PC <= EX_MEM_branch_target when MEM_take_branch else IF_ID_PC_next;
 
     process(clk)
     begin
 	if rising_edge(clk) then
-	    if imem_data_ready = '0' then
+	    if not IF_data_ready then
 		IF_ID_fetch_in_progress <= true;
 	    else
 		IF_ID_fetch_in_progress <= false;
 	    end if;
 	    if IF_need_refetch then
 		IF_ID_incomplete_branch <= true;
-	    elsif imem_data_ready = '1' then
+	    elsif IF_data_ready then
 		IF_ID_incomplete_branch <= false;
 	    end if;
 	    if MEM_take_branch and not IF_need_refetch then
