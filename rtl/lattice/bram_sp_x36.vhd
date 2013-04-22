@@ -7,13 +7,13 @@ use xp2.components.all;
 
 entity bram_sp_x36 is
     port (
-        clk: in std_logic; 
+	clk: in std_logic; 
 	ce: in std_logic;
-        we: in std_logic; 
-        res: in std_logic; 
-        addr: in std_logic_vector(9 downto 0); 
-        data_in: in std_logic_vector(35 downto 0); 
-        data_out: out std_logic_vector(35 downto 0)
+	we: in std_logic; 
+	res: in std_logic; 
+	addr: in std_logic_vector(9 downto 0); 
+	data_in: in std_logic_vector(35 downto 0); 
+	data_out: out std_logic_vector(35 downto 0)
     );
 end bram_sp_x36;
 
@@ -21,13 +21,13 @@ architecture Structure of bram_sp_x36 is
 begin
     bram_16_0: DP16KB
 	generic map (
-	    CSDECODE_A => "000", CSDECODE_B => "000",
+	    -- CSDECODE_A => "000", CSDECODE_B => "000",
 	    WRITEMODE_A => "WRITETHROUGH", WRITEMODE_B => "WRITETHROUGH",
 	    GSR => "DISABLED", RESETMODE => "SYNC", 
 	    REGMODE_A => "NOREG", REGMODE_B => "NOREG",
 	    DATA_WIDTH_A => 18, DATA_WIDTH_B => 18
 	)
-        port map (
+	port map (
 	    DIA0 => data_in(0), DIA1 => data_in(1),
 	    DIA2 => data_in(2), DIA3 => data_in(3),
 	    DIA4 => data_in(4), DIA5 => data_in(5),
@@ -79,9 +79,9 @@ begin
 	    ADB10 => addr(6), ADB11 => addr(7),
 	    ADB12 => addr(8), ADB13 => '1', 
 
-            CEA => ce, CLKA => clk, WEA => we, RSTA => res, 
+	    CEA => ce, CLKA => clk, WEA => we, RSTA => res, 
 	    CSA0 => '0', CSA1 => '0', CSA2 => '0',
-            CEB => ce, CLKB => clk, WEB => we, RSTB => res, 
+	    CEB => ce, CLKB => clk, WEB => we, RSTB => res, 
 	    CSB0 => '0', CSB1 => '0', CSB2 => '0'
 	);
 end Structure;
