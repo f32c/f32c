@@ -86,8 +86,8 @@ int
 main(void)
 {
 	FIL fp;
-	int res, x0, y0, x1, y1, color;
-	uint32_t tmp, freq_khz;
+	int res, x0, y0, x1, y1;
+	uint32_t color, tmp, freq_khz;
 	uint32_t start, end;
 
 	if (first_run == 0)
@@ -184,33 +184,51 @@ main(void)
 	    " in %d ms\n\n", (end - start) / freq_khz);
 	while (sio_getchar(0) != ' ') {}
 
-	printf("256-bitna paleta\n");
-	rectangle(0, 0, 511, 15, 16);
-	rectangle(0, 272, 511, 287, 16);
+	printf("240-bitna paleta\n");
+	rectangle(0, 0, 511, 15, 8);
+	rectangle(0, 272, 511, 287, 8);
 	tmp = 0;
+	int mode = 0;
 	do {
 		uint32_t i;
-		char *p = (void *) &fb[16 * 512];
+		uint8_t *p = (void *) &fb[16 * 512];
 
 		for (y0 = 0; y0 < 256; y0++)
 			for (x0 = 0; x0 < 16; x0++) {
-				color = (((tmp >> 4) & 0x8) ^
-				    (x0 + (y0 & 0xf0))) & 0xff;
-				color = (color << 8) | color;
-				color = (color << 16) | color;
-				for (i = 0; i < 32 / sizeof(*p); i++)
+				color = (x0 + (y0 & 0xf0)) & 0xff;
+				for (i = 0; i < 32 / 2; i++) {
+					if ((color >> 4) == 1)
+						color &= 0xf;
+					if (mode == 0)
+						*p++ = color;
+					else if (y0 < 16)
+						*p++ = (i & 0xf) + 16;
+					else if (mode == 1)
+						*p++ = (i & 0xc) + 16 +
+						    ((y0 & 8) >> 2);
+					else
+						*p++ = ((i & 0xc) + 16 +
+						    ((y0 & 8) >> 2)) + 1;
 					*p++ = color;
+				}
 			}
+#if 0
 		for (x0 = 0; x0 < 512; x0++) {
-			fb[x0 + 16 * 512 + 512 * (x0 / 2)] = 31;
-			fb[x0 + 512 * (256 + 16) - 512 * (x0 / 2)] = 31;
+			fb[x0 + 16 * 512 + 512 * (x0 / 2)] = 15;
+			fb[x0 + 512 * (256 + 16) - 512 * (x0 / 2)] = 15;
 		}
 		for (x0 = 0; x0 < 512; x0++) {
-			fb[x0 + 16 * 512 + 512 * (x0 & 0xff)] = 31;
-			fb[x0 + 512 * (256 + 16) - 512 * (x0 & 0xff)] = 31;
+			fb[x0 + 16 * 512 + 512 * (x0 & 0xff)] = 15;
+			fb[x0 + 512 * (256 + 16) - 512 * (x0 & 0xff)] = 15;
 		}
+#endif
 		tmp++;
 		res = sio_getchar(0);
+		if (res == 't') {
+			mode++;
+			if (mode == 3)
+				mode = 0;
+		}
 		if (res == 27)
 			return(0);
 	} while (res != ' ');
