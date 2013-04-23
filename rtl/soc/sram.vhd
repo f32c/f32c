@@ -193,7 +193,7 @@ begin
     end process;
 
     sram_d <= R_d;
-    sram_a <= R_a(9 downto 1) & R_a(18 downto 10) & R_a(0); -- XXX ISSI hack
+    sram_a <= R_a(8 downto 1) & R_a(18 downto 9) & R_a(0); -- XXX ISSI hack
     sram_wel <= R_wel;
     sram_lbl <= R_lbl;
     sram_ubl <= R_ubl;
