@@ -298,8 +298,14 @@ main(void)
 				color = 32 + 2 + (luma >> 6) * 16;
 			else if (b > ((r + g) * 3) >> 2)
 				color = 32 + 1 + (luma >> 6) * 16;
-			else
-				color = (luma / 3) >> 3;
+			else {
+				color = ((luma / 3) & 0xf) + 16;
+				fb[x0 + i] = color;
+				if (x0 < 512) {
+					x0++; ib += 3;
+					color = (luma / 3) >> 4;
+				}
+			}
 			fb[x0 + i] = color;
 		}
 	}
