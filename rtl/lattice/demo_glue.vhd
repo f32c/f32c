@@ -322,6 +322,7 @@ begin
 	    end if;
 	end loop;
 	io_addr_strobe(C_cpus) <= '0'; -- XXX TODO: DMA port
+	t := R_cur_io_port;
 	for i in 0 to (C_io_ports - 1) loop
 	    for j in 1 to C_io_ports loop
 		if R_cur_io_port = i then
