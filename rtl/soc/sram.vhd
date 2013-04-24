@@ -87,6 +87,7 @@ begin
 	  bus_in(C_prio_port).addr_strobe = '1' then
 	    next_port <= C_prio_port;
 	else
+	    t := R_last_port;
 	    for i in 0 to (C_ports - 1) loop
 		for j in 1 to C_ports loop
 		    if R_last_port = i then
