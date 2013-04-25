@@ -19,9 +19,9 @@ void rectangle(int x0, int y0, int x1, int y1, int color);
 
 int first_run = 1;
 
-#define	FB_BASE		0x800c0000
 
-unsigned char *fb = (void *) FB_BASE;
+uint8_t *fb = (void *) FB_BASE;
+uint16_t *fb16 = (void *) FB_BASE;
 FATFS fh;
 
 
@@ -184,44 +184,55 @@ main(void)
 	    " in %d ms\n\n", (end - start) / freq_khz);
 	while (sio_getchar(0) != ' ') {}
 
-	printf("240-bitna paleta\n");
-	rectangle(0, 0, 511, 15, 8);
-	rectangle(0, 272, 511, 287, 8);
+	printf("8 i 16 bitne palete boja (tipka 't' za odabir prikaza)\n");
+	rectangle(0, 0, 511, 15, 15);
+	rectangle(0, 272, 511, 287, 15);
 	tmp = 0;
 	int mode = 0;
 	do {
 		uint32_t i;
-		uint8_t *p = (void *) &fb[16 * 512];
+		uint8_t *p8 = (void *) &fb[16 * 512];
+		uint16_t *p16 = (void *) &fb16[16 * 512];
 
-		for (y0 = 0; y0 < 256; y0++)
-			for (x0 = 0; x0 < 16; x0++) {
-				color = (x0 + (y0 & 0xf0)) & 0xff;
-				for (i = 0; i < 32 / 2; i++) {
-					if ((color >> 4) == 1)
-						color &= 0xf;
-					if (mode == 0)
-						*p++ = color;
-					else if (y0 < 16)
-						*p++ = (i & 0xf) + 16;
-					else if (mode == 1)
-						*p++ = (i & 0xc) + 16 +
-						    ((y0 & 8) >> 2);
-					else
-						*p++ = ((i & 0xc) + 16 +
-						    ((y0 & 8) >> 2)) + 1;
-					*p++ = color;
+                OUTB(IO_FB, !(mode == 0));
+
+		for (y0 = 0; y0 < 256; y0++) {
+			if (mode == 0) {
+				for (x0 = 0; x0 < 16; x0++) {
+					color = (x0 + (y0 & 0xf0)) & 0xff;
+					for (i = 0; i < 32 / sizeof(*p8); i++)
+						*p8++ = color;
+				}
+			} else {
+				for (x0 = 0; x0 < 512; x0++) {
+					color = ((y0 / 4) << 10)
+					    + ((x0 / 8) << 4)
+					    + ((tmp / 64) & 0xf);
+					*p16++ = color;
 				}
 			}
-#if 0
-		for (x0 = 0; x0 < 512; x0++) {
-			fb[x0 + 16 * 512 + 512 * (x0 / 2)] = 15;
-			fb[x0 + 512 * (256 + 16) - 512 * (x0 / 2)] = 15;
 		}
-		for (x0 = 0; x0 < 512; x0++) {
-			fb[x0 + 16 * 512 + 512 * (x0 & 0xff)] = 15;
-			fb[x0 + 512 * (256 + 16) - 512 * (x0 & 0xff)] = 15;
+
+		if (mode == 0) {
+			for (x0 = 0; x0 < 512; x0++) {
+				fb[x0 + 16 * 512 + 512 * (x0 / 2)] = 31;
+				fb[x0 + 512 * (256 + 16) - 512 * (x0 / 2)] = 31;
+			}
+			for (x0 = 0; x0 < 512; x0++) {
+				fb[x0 + 16 * 512 + 512 * (x0 & 0xff)] = 31;
+				fb[x0 + 512 * (256 + 16) - 512 * (x0 & 0xff)] = 31;
+			}
+		} else if (mode == 1) {
+			for (x0 = 0; x0 < 512; x0++) {
+				fb16[x0 + 16 * 512 + 512 * (x0 / 2)] = 63 << 10;
+				fb16[x0 + 512 * (256 + 16) - 512 * (x0 / 2)] = 63 << 10;
+			}
+			for (x0 = 0; x0 < 512; x0++) {
+				fb16[x0 + 16 * 512 + 512 * (x0 & 0xff)] = 63 << 10;
+				fb16[x0 + 512 * (256 + 16) - 512 * (x0 & 0xff)] = 63 << 10;
+			}
 		}
-#endif
+
 		tmp++;
 		res = sio_getchar(0);
 		if (res == 't') {
@@ -233,7 +244,8 @@ main(void)
 			return(0);
 	} while (res != ' ');
 
-	printf("Vertikalne crte u boji\n");
+	printf("Vertikalne crte u boji (8-bitna paleta)\n");
+	OUTB(IO_FB, 0);
 	rectangle(0, 0, 511, 287, 0);
 	while (sio_getchar(0) != ' ') {
 		for (x0 = 0; x0 < 512; x0 += 2)
@@ -298,14 +310,8 @@ main(void)
 				color = 32 + 2 + (luma >> 6) * 16;
 			else if (b > ((r + g) * 3) >> 2)
 				color = 32 + 1 + (luma >> 6) * 16;
-			else {
-				color = ((luma / 3) & 0xf) + 16;
-				fb[x0 + i] = color;
-				if (x0 < 512) {
-					x0++; ib += 3;
-					color = (luma / 3) >> 4;
-				}
-			}
+			else 
+				color = (luma / 3) >> 3;
 			fb[x0 + i] = color;
 		}
 	}
