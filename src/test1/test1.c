@@ -208,12 +208,13 @@ main(void)
 				for (x0 = 0; x0 < 512; x0++) {
 					saturation = (tmp / 64) & 0xf;
 					chroma = x0 / 8;
-					if (saturation == 0) {
-						luma = (y0 / 2);
-						color = (luma << 9);
+					luma = y0 / 2;
+					if (saturation < 4) {
+						color = (luma << 9)
+						    + ((chroma / 2) << 4)
+						    + saturation;
 					} else {
-						luma = (y0 / 4);
-						color = (luma << 10)
+						color = ((luma / 2) << 10)
 						    + (chroma << 4)
 						    + saturation;
 					}
