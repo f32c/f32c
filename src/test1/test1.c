@@ -36,6 +36,126 @@ fib(int n)
 } 
 
 
+
+// these macros treat 16 bit signed integers as 16-bit fixed point 
+// quantities in 1.15 format.
+
+#define	FPMUL(x, y) ((int16_t)(((int32_t)x * (int32_t)y) >> 15))
+#define	FPDIV(x, y) ((int16_t)(((int32_t)x << 15) / (int32_t) y))
+#define	FP_ONE (0x8000)
+#define	FP_HALF (0x4000)
+
+#define	NEG_X	0x01
+#define	NEG_Y	0x02
+#define	SWAP_XY	0x04
+
+// computes a coarse approximation to the arctan function.
+// inputs: x, y 16-bit integer or fixed point quantities.
+// output: fixed point quantity in 1.15 format in range -1.0 to 0.99997 pirads.
+//         (alternatively this can be interpreted as int in range
+//	    -32768 to 32767.)
+//	   angles are measured relative to the positive x axis.
+//         
+// A pirad is a unit of angle measurement equivalent to Pi Radians.
+// 360 degrees = 2*pi radians = 2 pirads.
+//
+// This function uses a very coarse approximation to the atan function. 
+// It has a maximum error of about 5 degrees.
+// 
+
+int
+atan(int y, int x)
+{
+	int flags = 0;
+	int tmp;
+	int atan;
+
+	// fold input values into first 45 degree sector
+	if (y < 0) {
+		flags |= NEG_Y;
+		y = -y;
+	}
+
+	if (x < 0) {
+		flags |= NEG_X;
+		x = -x;
+	}
+
+	if (y > x) {
+		flags |= SWAP_XY;
+		tmp = x;
+		x = y;
+		y = tmp;
+	}
+
+	// compute ratio y/x in 0.15 format.
+	if (x == 0)
+		atan = 0;
+	else
+		atan = FPDIV(y, x) >> 2;
+
+	// unfold result
+	if (flags & SWAP_XY)
+		atan = FP_HALF - atan;
+
+	if (flags & NEG_X)
+		atan = FP_ONE - atan;
+
+	if (flags & NEG_Y)
+		atan = -atan;
+
+	return (atan);
+}
+
+
+uint32_t
+sqrt(uint32_t a) {
+	uint32_t x = a >> 1;
+	int i;
+
+	for (i = 0; x != 0 && i < 10; i++)
+		x = (x + a / x) / 2;
+
+	return (x);
+}
+
+
+#define	WR	77	/* 0.299 * 256 */
+#define	WB	29	/* 0.114 * 256 */
+#define	WG	150	/* 0.586 * 256 */
+#define	WU	126	/* 0.492 * 256 */
+#define	WV	224	/* 0.877 * 256 */
+
+uint32_t
+rgb2p16(int r, int g, int b) {
+	int color, luma, chroma, saturation;
+	int u, v;
+
+	luma = (WR * r + WB * b + WG * g) >> 8;
+	u = WU * (b - luma);
+	v = WV * (r - luma);
+
+	chroma = atan(u, v) >> 8;
+	chroma = (28 - (chroma >> 2)) & 0x3f;
+
+	saturation = sqrt((u * u + v * v) >> 4) >> 9;
+	if (saturation > 15)
+		saturation = 15;
+
+	if (saturation < 4) {
+		color = ((luma / 2) << 9)
+		    + ((chroma / 2) << 4)
+		    + saturation;
+	} else {
+		color = ((luma / 4) << 10)
+		    + (chroma << 4)
+		    + saturation;
+	}
+
+	return (color);
+}
+
+
 void
 rectangle(int x0, int y0, int x1, int y1, int color)
 {
@@ -107,6 +227,8 @@ main(void)
 #else
 	printf("external static RAM.\n\n");
 #endif
+
+	goto slika;
 
 	do {
 		res = sio_getchar(0);
@@ -280,6 +402,7 @@ main(void)
 		}
 	}
 
+slika:
 	/* Procitaj sliku iz datoteke i ispisi na ekran */
 	if (sdcard_init() || sdcard_cmd(SD_CMD_SEND_CID, 0) ||
 	    sdcard_read((char *) fb, 16)) {
@@ -291,9 +414,12 @@ main(void)
 		printf("Nije pronadjena datoteka /zastav~1.raw!\n");
 		return (-1);
 	}
+
 	printf("Citam datoteku /zastav~1.raw...\n");
+	OUTB(IO_FB, 1); /* 16-bit mode */
+
 	for (int i = 0; i < 288 * SECTOR_SIZE; i += SECTOR_SIZE) {
-		unsigned char *ib = &fb[i];
+		unsigned char *ib = (void *) &fb16[i];
 
 		for (x0 = 0; x0 < 3; x0++, ib += SECTOR_SIZE)
 			if ((res = f_read(&fp, ib, SECTOR_SIZE, &tmp))) {
@@ -301,27 +427,12 @@ main(void)
 				return (-1);
 			}
 
-		ib = &fb[i];
+		ib = (void *) &fb16[i];
 		for (x0 = 0; x0 < 512; x0++) {
 			r = *ib++;
 			g = *ib++;
 			b = *ib++;
-			luma = r + g + b;
-			if (r > g + b) {
-				if (g > b)
-					color = 32 + 8 + (luma >> 6) * 16;
-				else
-					color = 32 + 7 + (luma >> 6) * 16;
-			}
-			else if (g > r + b)
-				color = 32 + 13 + (luma >> 6) * 16;
-			else if (b > r + g)
-				color = 32 + 2 + (luma >> 6) * 16;
-			else if (b > ((r + g) * 3) >> 2)
-				color = 32 + 1 + (luma >> 6) * 16;
-			else 
-				color = (luma / 3) >> 3;
-			fb[x0 + i] = color;
+			fb16[x0 + i] = rgb2p16(r, g, b);
 		}
 	}
 
