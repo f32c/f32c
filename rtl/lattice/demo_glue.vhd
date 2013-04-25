@@ -150,6 +150,7 @@ architecture Behavioral of glue is
     signal R_led: std_logic_vector(7 downto 0);
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
+    signal R_fb_mode: std_logic;
     signal R_dac_in_l, R_dac_in_r: std_logic_vector(15 downto 2);
     signal R_dac_acc_l, R_dac_acc_r: std_logic_vector(16 downto 2);
 
@@ -306,6 +307,7 @@ begin
     -- 0xf*****0c: (4B, WR) * PCM signal
     -- 0xf*****10: (1B, RW) * SPI Flash
     -- 0xf*****14: (1B, RW) * SPI MicroSD
+    -- 0xf*****18: (1B, WR) * Framebuffer
     -- 0xf*****1c: (4B, WR) * FM DDS register
 
     --
@@ -372,6 +374,10 @@ begin
 			R_dac_in_r <= cpu_to_io(15 downto 2);
 		    end if;
 		end if;
+	    end if;
+	    -- Framebuffer
+	    if C_framebuffer and io_addr(4 downto 2) = "110" then
+		R_fb_mode <= cpu_to_io(0);
 	    end if;
 	    -- DDS
 	    if C_ddsfm and io_addr(4 downto 2) = "111" then
@@ -603,6 +609,7 @@ begin
 	addr_out => fb_addr,
 	data_ready => fb_data_ready,
 	data_in => from_sram,
+	mode => R_fb_mode,
 	dac_out => video_dac
     );
     end generate;
