@@ -89,6 +89,7 @@ main(void)
 	int res, x0, y0, x1, y1;
 	uint32_t color, tmp, freq_khz;
 	uint32_t start, end;
+	int r, g, b, luma, chroma, saturation;
 
 	if (first_run == 0)
 		cpu1_test();
@@ -205,9 +206,17 @@ main(void)
 				}
 			} else {
 				for (x0 = 0; x0 < 512; x0++) {
-					color = ((y0 / 4) << 10)
-					    + ((x0 / 8) << 4)
-					    + ((tmp / 64) & 0xf);
+					saturation = (tmp / 64) & 0xf;
+					chroma = x0 / 8;
+					if (saturation == 0) {
+						luma = (y0 / 2);
+						color = (luma << 9);
+					} else {
+						luma = (y0 / 4);
+						color = (luma << 10)
+						    + (chroma << 4)
+						    + saturation;
+					}
 					*p16++ = color;
 				}
 			}
@@ -284,7 +293,6 @@ main(void)
 	printf("Citam datoteku /zastav~1.raw...\n");
 	for (int i = 0; i < 288 * SECTOR_SIZE; i += SECTOR_SIZE) {
 		unsigned char *ib = &fb[i];
-		int r, g, b, luma;
 
 		for (x0 = 0; x0 < 3; x0++, ib += SECTOR_SIZE)
 			if ((res = f_read(&fp, ib, SECTOR_SIZE, &tmp))) {
