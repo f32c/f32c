@@ -792,20 +792,25 @@ begin
       "--------------------------------" when others;
 
     -- branch or not?
-    process(ID_EX_branch_condition, EX_from_alu_equal, EX_eff_reg1)
+    process(ID_EX_branch_cycle, ID_EX_branch_condition, EX_from_alu_equal,
+      EX_eff_reg1)
     begin
-	case ID_EX_branch_condition is
-	when TEST_LTZ => EX_take_branch <= EX_eff_reg1(31) = '1';
-	when TEST_GEZ => EX_take_branch <= EX_eff_reg1(31) = '0';
-	when TEST_EQ  => EX_take_branch <= EX_from_alu_equal;
-	when TEST_NE  => EX_take_branch <= not EX_from_alu_equal;
-	when TEST_LEZ =>
-	    EX_take_branch <= EX_eff_reg1(31) = '1' or EX_from_alu_equal;
-	when TEST_GTZ =>
-	    EX_take_branch <= EX_eff_reg1(31) = '0' and not EX_from_alu_equal;
-	when others =>
+	if ID_EX_branch_cycle then
+	    case ID_EX_branch_condition is
+	    when TEST_LTZ => EX_take_branch <= EX_eff_reg1(31) = '1';
+	    when TEST_GEZ => EX_take_branch <= EX_eff_reg1(31) = '0';
+	    when TEST_EQ  => EX_take_branch <= EX_from_alu_equal;
+	    when TEST_NE  => EX_take_branch <= not EX_from_alu_equal;
+	    when TEST_LEZ =>
+	      EX_take_branch <= EX_eff_reg1(31) = '1' or EX_from_alu_equal;
+	    when TEST_GTZ =>
+	      EX_take_branch <= EX_eff_reg1(31) = '0' and not EX_from_alu_equal;
+	    when others =>
+	      EX_take_branch <= false;
+	    end case;
+	else
 	    EX_take_branch <= false;
-	end case;
+	end if;
     end process;
 
     -- Exceptions / interrupts
@@ -859,15 +864,13 @@ begin
 		EX_MEM_branch_likely <= ID_EX_branch_likely;
 		EX_MEM_bpredict_score <= ID_EX_bpredict_score;
 		EX_MEM_bpredict_index <= ID_EX_bpredict_index;
+		EX_MEM_take_branch <= EX_take_branch;
 		if ID_EX_branch_cycle then
-		    EX_MEM_take_branch <= EX_take_branch;
 		    if ID_EX_predict_taken then
 			EX_MEM_branch_target <= IF_ID_PC_4;
 		    else
 			EX_MEM_branch_target <= ID_EX_branch_target;
 		    end if;
-		else
-		    EX_MEM_take_branch <= false;
 		end if;
 		if ID_EX_op_major = OP_MAJOR_SLT then
 		    EX_MEM_logic_cycle <= '1';
