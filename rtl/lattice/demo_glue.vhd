@@ -61,7 +61,7 @@ entity glue is
 
 	-- Debugging / testing options (should be turned off)
 	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
-	C_prng_imem_delay: boolean := false;
+	C_prng_imem_delay: boolean := true; -- false;
 
 	-- SoC configuration options
 	C_cpus: integer := 1;
