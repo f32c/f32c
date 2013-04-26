@@ -187,6 +187,7 @@ architecture Behavioral of pipeline is
     signal EX_mem_align_shamt: std_logic_vector(1 downto 0);
     signal EX_mem_byte_sel: std_logic_vector(3 downto 0);
     signal EX_take_branch: boolean;
+    signal EX_branch_target: std_logic_vector(31 downto 2);
     signal EX_exception_pending: boolean;
     signal EX_exception_target: std_logic_vector(31 downto 0);
     -- boundary to stage 4
@@ -813,6 +814,9 @@ begin
 	end if;
     end process;
 
+    EX_branch_target <= IF_ID_PC_4 when ID_EX_predict_taken
+      else ID_EX_branch_target;
+
     -- Exceptions / interrupts
     EX_exception_pending <= R_reset = '1' or
       (R_intr = '1' and R_cop0_ei = '1');
@@ -865,12 +869,9 @@ begin
 		EX_MEM_bpredict_score <= ID_EX_bpredict_score;
 		EX_MEM_bpredict_index <= ID_EX_bpredict_index;
 		EX_MEM_take_branch <= EX_take_branch;
+		EX_MEM_branch_taken <= ID_EX_predict_taken;
 		if ID_EX_branch_cycle then
-		    if ID_EX_predict_taken then
-			EX_MEM_branch_target <= IF_ID_PC_4;
-		    else
-			EX_MEM_branch_target <= ID_EX_branch_target;
-		    end if;
+		    EX_MEM_branch_target <= EX_branch_target;
 		end if;
 		if ID_EX_op_major = OP_MAJOR_SLT then
 		    EX_MEM_logic_cycle <= '1';
@@ -900,7 +901,6 @@ begin
 		end if;
 		EX_MEM_latency <= ID_EX_latency(1);
 		EX_MEM_mem_read_sign_extend <= ID_EX_mem_read_sign_extend;
-		EX_MEM_branch_taken <= ID_EX_predict_taken;
 		-- debugging only
 		if C_debug then
 		    EX_MEM_instruction <= ID_EX_instruction;
