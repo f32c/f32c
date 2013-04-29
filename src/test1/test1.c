@@ -5,6 +5,7 @@
 #include <spi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <fatfs/ff.h>
 
@@ -22,7 +23,55 @@ int first_run = 1;
 
 uint8_t *fb = (void *) FB_BASE;
 uint16_t *fb16 = (void *) FB_BASE;
+char *fnbuf;
+int mode = 1;
+
 FATFS fh;
+
+
+FRESULT
+scan_files(char* path)
+{
+	FRESULT res;
+	FILINFO fno;
+	DIR dir;
+	int i;
+
+	/* Open the directory */
+	res = f_opendir(&dir, path);
+	if (res != FR_OK)
+		return (res);
+
+	i = strlen(path);
+	do {
+		/* Read a directory item */
+		res = f_readdir(&dir, &fno);
+		if (res != FR_OK || fno.fname[0] == 0)
+			break;
+
+		/* Ignore dot entry */
+		if (fno.fname[0] == '.')
+			continue;
+
+		/* Recursively scan subdirectories */
+		if (fno.fattrib & AM_DIR) {
+			path[i] = '/';
+			strcpy(&path[i+1], fno.fname);
+			res = scan_files(path);
+			if (res != FR_OK)
+				break;
+			path[i] = 0;
+		} else {
+			strcpy(fnbuf, path);
+			fnbuf += i;
+			strcpy(fnbuf, fno.fname);
+			fnbuf += strlen(fno.fname);
+			*fnbuf++ = 0;
+		}
+	} while (1);
+
+	return (res);
+}
 
 
 int
@@ -34,7 +83,6 @@ fib(int n)
 	else
 		return (fib(n-1) + fib(n-2));
 } 
-
 
 
 // these macros treat 16 bit signed integers as 16-bit fixed point 
@@ -142,17 +190,84 @@ rgb2p16(int r, int g, int b) {
 	if (saturation > 15)
 		saturation = 15;
 
-	if (saturation < 4) {
-		color = ((luma / 2) << 9)
-		    + ((chroma / 2) << 4)
-		    + saturation;
-	} else {
-		color = ((luma / 4) << 10)
-		    + (chroma << 4)
-		    + saturation;
-	}
+	if (saturation < 4)
+		color = ((luma / 2) << 9) + ((chroma / 2) << 4) + saturation;
+	else
+		color = ((luma / 4) << 10) + (chroma << 4) + saturation;
 
 	return (color);
+}
+
+
+uint32_t
+rgb2p8(int r, int g, int b) {
+	int color, luma, chroma, saturation;
+	int u, v;
+
+	luma = (WR * r + WB * b + WG * g) >> 8;
+	u = WU * (b - luma);
+	v = WV * (r - luma);
+
+	chroma = atan(u, v) >> 8;
+	chroma = (6 - (chroma >> 4)) & 0xf;
+
+	saturation = sqrt((u * u + v * v) >> 4) >> 9;
+	if (saturation > 2)
+		/* color */
+		color = 32 + (luma / 28) * 16 + chroma;
+	else
+		/* grayscale */
+		color = luma / 8;
+
+	return (color);
+}
+
+
+static void
+load_raw(char *fname)
+{
+	FIL fp;
+	int r, g, b;
+	uint32_t i, x, y;
+	unsigned char *ib;
+
+	if (f_open(&fp, fname, FA_READ))
+		return;
+
+	printf("Citam datoteku %s...\n", fname);
+
+	OUTB(IO_FB, mode);
+
+	for (i = 0; i < 288 * SECTOR_SIZE; i += SECTOR_SIZE) {
+
+		if (mode)
+			ib = (void *) &fb16[i];
+		else
+			ib = (void *) &fb[i];
+
+		for (x = 0; x < 3; x++, ib += SECTOR_SIZE)
+			if (f_read(&fp, ib, SECTOR_SIZE, &y)) {
+				printf("\nf_read() failed!\n");
+				f_close(&fp);
+				return;
+			}
+
+		if (mode)
+			ib = (void *) &fb16[i];
+		else
+			ib = (void *) &fb[i];
+
+		for (x = 0; x < 512; x++) {
+			r = *ib++;
+			g = *ib++;
+			b = *ib++;
+			if (mode)
+				fb16[x + i] = rgb2p16(r, g, b);
+			else
+				fb[x + i] = rgb2p8(r, g, b);
+		}
+	}
+	f_close(&fp);
 }
 
 
@@ -205,11 +320,10 @@ cpu1_test()
 int
 main(void)
 {
-	FIL fp;
 	int res, x0, y0, x1, y1;
 	uint32_t color, tmp, freq_khz;
+	uint32_t chroma, luma, saturation;
 	uint32_t start, end;
-	int r, g, b, luma, chroma, saturation;
 
 	if (first_run == 0)
 		cpu1_test();
@@ -228,7 +342,7 @@ main(void)
 	printf("external static RAM.\n\n");
 #endif
 
-	goto slika;
+//	goto slika;
 
 	do {
 		res = sio_getchar(0);
@@ -311,7 +425,6 @@ main(void)
 	rectangle(0, 0, 511, 15, 15);
 	rectangle(0, 272, 511, 287, 15);
 	tmp = 0;
-	int mode = 0;
 	do {
 		uint32_t i;
 		uint8_t *p8 = (void *) &fb[16 * 512];
@@ -407,34 +520,37 @@ slika:
 	if (sdcard_init() || sdcard_cmd(SD_CMD_SEND_CID, 0) ||
 	    sdcard_read((char *) fb, 16)) {
 		printf("Nije pronadjena MicroSD kartica!\n");
-		return (-1);
+		goto slika;
 	}
 	f_mount(0, &fh);
-	if (f_open(&fp, "zastav~1.raw", FA_READ)) {
-		printf("Nije pronadjena datoteka /zastav~1.raw!\n");
-		return (-1);
+
+	fnbuf = (void *) &fb16[512 * 300];
+	*fnbuf = 0;
+
+	scan_files("");
+	*fnbuf = 0;
+	fnbuf = (void *) &fb16[512 * 300];
+
+	int l;
+	for (;; fnbuf += l + 1) {
+		l = strlen(fnbuf);
+		if (l == 0)
+			goto slika;
+		if (l < 5)
+			continue;
+		if (strcmp(&fnbuf[l - 4], ".RAW") != 0)
+			continue;
+
+		load_raw(fnbuf);
+
+		RDTSC(start);
+		do {
+			res = sio_getchar(0);
+			if (res == 27)
+				return(0);
+			RDTSC(tmp);
+		} while (res != ' ' && tmp - start < freq_khz * 5000);
 	}
 
-	printf("Citam datoteku /zastav~1.raw...\n");
-	OUTB(IO_FB, 1); /* 16-bit mode */
-
-	for (int i = 0; i < 288 * SECTOR_SIZE; i += SECTOR_SIZE) {
-		unsigned char *ib = (void *) &fb16[i];
-
-		for (x0 = 0; x0 < 3; x0++, ib += SECTOR_SIZE)
-			if ((res = f_read(&fp, ib, SECTOR_SIZE, &tmp))) {
-				printf("\nf_read() failed!\n");
-				return (-1);
-			}
-
-		ib = (void *) &fb16[i];
-		for (x0 = 0; x0 < 512; x0++) {
-			r = *ib++;
-			g = *ib++;
-			b = *ib++;
-			fb16[x0 + i] = rgb2p16(r, g, b);
-		}
-	}
-
-	return (0);
+	/* XXX notreached! */
 }
