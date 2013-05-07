@@ -17,6 +17,10 @@ FATFS fh;
 char buf[SECTOR_SIZE];
 
 
+//#define IMAGE_NAME	"1:ulx2s_flash1.img"
+#define IMAGE_NAME	"1:fat12_4m.img"
+
+
 static void
 spi_wait()
 {
@@ -40,9 +44,9 @@ main(void)
 		return;
 	}
 
-	f_mount(0, &fh);
-	if (f_open(&fp, "ulx2s_~1.img", FA_READ)) {
-		printf("Nije pronadjena datoteka /ulx2s_~1.img!\n");
+	f_mount(1, &fh);
+	if (f_open(&fp, IMAGE_NAME, FA_READ)) {
+		printf("Nije pronadjena datoteka %s!\n", IMAGE_NAME);
 		return;
 	}
 
