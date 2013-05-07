@@ -16,7 +16,7 @@ int fib(int);
 void rectangle(int x0, int y0, int x1, int y1, int color);
 
 
-#define SECTOR_SIZE     512     /* buffer size */
+#define SECTOR_SIZE     4096     /* FLASH sectors are big! */
 
 int first_run = 1;
 
@@ -238,26 +238,25 @@ load_raw(char *fname)
 
 	OUTB(IO_FB, mode);
 
-	for (i = 0; i < 288 * SECTOR_SIZE; i += SECTOR_SIZE) {
+	for (i = 0; i < 288 * 512; i += SECTOR_SIZE) {
 
 		if (mode)
 			ib = (void *) &fb16[i];
 		else
 			ib = (void *) &fb[i];
 
-		for (x = 0; x < 3; x++, ib += SECTOR_SIZE)
-			if (f_read(&fp, ib, SECTOR_SIZE, &y)) {
-				printf("\nf_read() failed!\n");
-				f_close(&fp);
-				return;
-			}
+		if (f_read(&fp, ib, 3 * SECTOR_SIZE, &y)) {
+			printf("\nf_read() failed!\n");
+			f_close(&fp);
+			return;
+		}
 
 		if (mode)
 			ib = (void *) &fb16[i];
 		else
 			ib = (void *) &fb[i];
 
-		for (x = 0; x < 512; x++) {
+		for (x = 0; x < SECTOR_SIZE; x++) {
 			r = *ib++;
 			g = *ib++;
 			b = *ib++;
