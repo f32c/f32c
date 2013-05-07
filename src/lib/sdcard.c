@@ -134,8 +134,8 @@ sdcard_init(void)
 }
 
 
-DSTATUS
-disk_initialize(BYTE drive __unused)
+int
+sdcard_disk_initialize(void)
 {
 
 	if (sdcard_init())
@@ -145,8 +145,8 @@ disk_initialize(BYTE drive __unused)
 }
 
 
-DSTATUS
-disk_status(BYTE drive __unused)
+int
+sdcard_disk_status(void)
 {
 
 	if (sdcard_addr_shift < 0)
@@ -156,9 +156,8 @@ disk_status(BYTE drive __unused)
 }
 
 
-DRESULT
-disk_read (BYTE Drive __unused, BYTE* Buffer, DWORD SectorNumber,
-    BYTE SectorCount)
+int
+sdcard_disk_read(uint8_t *Buffer, uint32_t SectorNumber, uint32_t SectorCount)
 {
 
 	if (sdcard_addr_shift < 0)
