@@ -79,7 +79,7 @@ typedef struct {
 	WORD	id;		/* File system mount ID */
 	WORD	n_rootdir;	/* Number of root dir entries (FAT12/16) */
 #if _MAX_SS != 512
-	WORD	ssize;		/* Bytes per sector (512, 1024, 2048 or 4096) */
+	DWORD	ssize;		/* Bytes per sector (512, 1024, 2048 or 4096) */
 #endif
 #if _FS_REENTRANT
 	_SYNC_t	sobj;		/* Identifier of sync object */
@@ -156,6 +156,7 @@ typedef struct {
 #if _USE_LFN
 	WCHAR*	lfn;		/* Pointer to the LFN working buffer */
 	WORD	lfn_idx;	/* Last matched LFN index number (0xFFFF:No LFN) */
+	WORD	lfn_padding;	/* pad to word boundary */
 #endif
 } DIR;
 
