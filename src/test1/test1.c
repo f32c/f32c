@@ -440,7 +440,7 @@ main(void)
 				}
 			} else {
 				for (x0 = 0; x0 < 512; x0++) {
-					saturation = (tmp / 64) & 0xf;
+					saturation = (tmp / 4) & 0xf;
 					chroma = x0 / 8;
 					luma = y0 / 2;
 					if (saturation < 4) {
@@ -516,11 +516,8 @@ main(void)
 
 slika:
 	/* Procitaj sliku iz datoteke i ispisi na ekran */
-	if (sdcard_init() || sdcard_cmd(SD_CMD_SEND_CID, 0) ||
-	    sdcard_read((char *) fb, 16)) {
-		printf("Nije pronadjena MicroSD kartica!\n");
-		goto slika;
-	}
+	mode = 1;
+
 	f_mount(0, &fh);
 
 	fnbuf = (void *) &fb16[512 * 300];
