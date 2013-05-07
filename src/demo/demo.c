@@ -131,8 +131,10 @@ sdcard_test(void)
 		printf("%02x", (u_char) buf[i]);
 	printf("\n\n");
 
-	f_mount(0, &fh);
-	buf[0] = 0;
+	f_mount(1, &fh);
+	buf[0] = '1';
+	buf[1] = ':';
+	buf[2] = 0;
 	sd_scan_line = 0;
 	sd_scan_stop = 19;
 	scan_files(buf);
