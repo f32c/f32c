@@ -190,10 +190,7 @@ rgb2p16(int r, int g, int b) {
 	if (saturation > 15)
 		saturation = 15;
 
-	if (saturation < 4)
-		color = ((luma / 2) << 9) + ((chroma / 2) << 4) + saturation;
-	else
-		color = ((luma / 4) << 10) + (chroma << 4) + saturation;
+	color = ((luma / 2) << 9) + ((chroma / 2) << 4) + saturation;
 
 	return (color);
 }
@@ -443,15 +440,9 @@ main(void)
 					saturation = (tmp / 4) & 0xf;
 					chroma = x0 / 8;
 					luma = y0 / 2;
-					if (saturation < 4) {
-						color = (luma << 9)
-						    + ((chroma / 2) << 4)
-						    + saturation;
-					} else {
-						color = ((luma / 2) << 10)
-						    + (chroma << 4)
-						    + saturation;
-					}
+					color = (luma << 9)
+					    + ((chroma / 2) << 4)
+					    + saturation;
 					*p16++ = color;
 				}
 			}
