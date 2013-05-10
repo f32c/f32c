@@ -16,8 +16,6 @@ int fib(int);
 void rectangle(int x0, int y0, int x1, int y1, int color);
 
 
-#define SECTOR_SIZE     4096     /* FLASH sectors are big! */
-
 int first_run = 1;
 
 
@@ -157,14 +155,23 @@ atan(int y, int x)
 
 
 uint32_t
-sqrt(uint32_t a) {
-	uint32_t x = a >> 1;
-	int i;
+sqrt(uint32_t r) {
+	uint32_t t, q, b;
 
-	for (i = 0; x != 0 && i < 10; i++)
-		x = (x + a / x) / 2;
+	b = 0x40000000;
+	q = 0;
 
-	return (x);
+	while( b >= 256 ) {
+		t = q + b;
+		q = q / 2;     /* shift right 1 bit */
+		if( r >= t ) {
+			r = r - t;
+			q = q + b;
+		}
+		b = b / 4;     /* shift right 2 bits */
+	}
+
+	return (q);
 }
 
 
@@ -179,18 +186,19 @@ rgb2p16(int r, int g, int b) {
 	int color, luma, chroma, saturation;
 	int u, v;
 
+	/* Transform RGB into YUV */
 	luma = (WR * r + WB * b + WG * g) >> 8;
 	u = WU * (b - luma);
 	v = WV * (r - luma);
 
-	chroma = atan(u, v) >> 8;
-	chroma = (28 - (chroma >> 2)) & 0x3f;
-
-	saturation = sqrt((u * u + v * v) >> 4) >> 9;
+	/* Transform {U,V} cartesian coords into {chroma, saturation} phasor */
+	chroma = (28 - (atan(u, v) >> 10)) & 0x3f;
+	saturation = (sqrt((u * u + v * v) >> 1) + (1 << 13)) >> 14;
 	if (saturation > 15)
 		saturation = 15;
 
-	color = ((luma / 2) << 9) + ((chroma / 2) << 4) + saturation;
+	/* Encode in 16 bits */
+	color = (saturation << 12) | ((chroma >> 1) << 7) | (luma >> 1);
 
 	return (color);
 }
@@ -201,20 +209,27 @@ rgb2p8(int r, int g, int b) {
 	int color, luma, chroma, saturation;
 	int u, v;
 
+	/* Transform RGB into YUV */
 	luma = (WR * r + WB * b + WG * g) >> 8;
 	u = WU * (b - luma);
 	v = WV * (r - luma);
 
-	chroma = atan(u, v) >> 8;
-	chroma = (6 - (chroma >> 4)) & 0xf;
+	/* Transform {U,V} cartesian coords into {chroma, saturation} phasor */
+	chroma = (28 - (atan(u, v) >> 10)) & 0x3f;
+	saturation = (sqrt((u * u + v * v) >> 1) + (1 << 13)) >> 14;
+	if (saturation > 15)
+		saturation = 15;
 
-	saturation = sqrt((u * u + v * v) >> 4) >> 9;
-	if (saturation > 2)
-		/* color */
-		color = 32 + (luma / 28) * 16 + chroma;
-	else
+	if (saturation > 6) {
+		/* saturated color */
+		color = 128 + (luma / 16) * 16 + (chroma >> 2);
+	} else if (saturation > 1) {
+		/* dim color */
+		color = 32 + (luma * 6 / 8 / 16) * 16 + (chroma >> 2);
+	} else {
 		/* grayscale */
 		color = luma / 8;
+	}
 
 	return (color);
 }
@@ -225,35 +240,47 @@ load_raw(char *fname)
 {
 	FIL fp;
 	int r, g, b;
-	uint32_t i, x, y;
+	uint32_t i, x, y, ssize;
 	unsigned char *ib;
 
 	if (f_open(&fp, fname, FA_READ))
 		return;
 
 	printf("Citam datoteku %s...\n", fname);
+	if (fname[0] == '1' && fname[1] == ':')
+		ssize = 512;	/* sdcard */
+	else
+		ssize = 4096;	/* flash */
+
 
 	OUTB(IO_FB, mode);
 
-	for (i = 0; i < 288 * 512; i += SECTOR_SIZE) {
+	for (i = 0; i < 288 * 512; i += ssize) {
 
 		if (mode)
 			ib = (void *) &fb16[i];
 		else
 			ib = (void *) &fb[i];
 
-		if (f_read(&fp, ib, 3 * SECTOR_SIZE, &y)) {
+#if 0
+		/* XXX bug in microsd low-level I/O library? */
+		if (f_read(&fp, ib, 3 * ssize, &y)) {
 			printf("\nf_read() failed!\n");
 			f_close(&fp);
 			return;
 		}
+#else
+		f_read(&fp, ib, ssize, &y);
+		f_read(&fp, ((char *) ib) + ssize, ssize, &y);
+		f_read(&fp, ((char *) ib) + 2 * ssize, ssize, &y);
+#endif
 
 		if (mode)
 			ib = (void *) &fb16[i];
 		else
 			ib = (void *) &fb[i];
 
-		for (x = 0; x < SECTOR_SIZE; x++) {
+		for (x = 0; x < ssize; x++) {
 			r = *ib++;
 			g = *ib++;
 			b = *ib++;
@@ -338,7 +365,7 @@ main(void)
 	printf("external static RAM.\n\n");
 #endif
 
-//	goto slika;
+	//goto slika;
 
 	do {
 		res = sio_getchar(0);
@@ -437,12 +464,11 @@ main(void)
 				}
 			} else {
 				for (x0 = 0; x0 < 512; x0++) {
-					saturation = (tmp / 4) & 0xf;
-					chroma = x0 / 8;
-					luma = y0 / 2;
-					color = (luma << 9)
-					    + ((chroma / 2) << 4)
-					    + saturation;
+					saturation = (tmp / 2) & 0xf;
+					chroma = x0 / 16;
+					luma = y0;
+					color = (saturation << 12) |
+					    (chroma << 7) | (luma >> 1);
 					*p16++ = color;
 				}
 			}
@@ -459,12 +485,12 @@ main(void)
 			}
 		} else if (mode == 1) {
 			for (x0 = 0; x0 < 512; x0++) {
-				fb16[x0 + 16 * 512 + 512 * (x0 / 2)] = 63 << 10;
-				fb16[x0 + 512 * (256 + 16) - 512 * (x0 / 2)] = 63 << 10;
+				fb16[x0 + 16 * 512 + 512 * (x0 / 2)] = 127;
+				fb16[x0 + 512 * (256 + 16) - 512 * (x0 / 2)] = 127;
 			}
 			for (x0 = 0; x0 < 512; x0++) {
-				fb16[x0 + 16 * 512 + 512 * (x0 & 0xff)] = 63 << 10;
-				fb16[x0 + 512 * (256 + 16) - 512 * (x0 & 0xff)] = 63 << 10;
+				fb16[x0 + 16 * 512 + 512 * (x0 & 0xff)] = 127;
+				fb16[x0 + 512 * (256 + 16) - 512 * (x0 & 0xff)] = 127;
 			}
 		}
 
@@ -485,7 +511,7 @@ main(void)
 	while (sio_getchar(0) != ' ') {
 		for (x0 = 0; x0 < 512; x0 += 2)
 			for (y0 = 0; y0 < 256; y0++)
-				fb[x0 + 512 * y0 + 512 * 16] = tmp >> 4;
+				fb[x0 + 512 * y0 + 512 * 16] = tmp >> 2;
 		tmp++;
 	}
 
@@ -495,7 +521,7 @@ main(void)
 		x1 = random() & 0x1ff;
 		y0 = (random() & 0xff) + (tmp & 0x1f);
 		y1 = (random() & 0xff) + (tmp & 0x1f);
-		color = tmp >> 4;
+		color = tmp >> 2;
 		rectangle(x0, y0, x1, y1, color);
 		rectangle(0, 0, 511, 0, tmp++ >> 4);
 		uint32_t *p0, *p1;
@@ -507,14 +533,15 @@ main(void)
 
 slika:
 	/* Procitaj sliku iz datoteke i ispisi na ekran */
-	mode = 1;
 
-	f_mount(0, &fh);
+	mode = 1; /* 16-bitni prikaz */
+
+	f_mount(1, &fh);
 
 	fnbuf = (void *) &fb16[512 * 300];
 	*fnbuf = 0;
 
-	scan_files("");
+	scan_files("1:");
 	*fnbuf = 0;
 	fnbuf = (void *) &fb16[512 * 300];
 
@@ -536,7 +563,7 @@ slika:
 			if (res == 27)
 				return(0);
 			RDTSC(tmp);
-		} while (res != ' ' && tmp - start < freq_khz * 5000);
+		} while (res != ' ' && tmp - start < freq_khz * 1000);
 	}
 
 	/* XXX notreached! */
