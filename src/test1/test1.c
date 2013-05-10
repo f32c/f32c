@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fb.h>
 
 #include <fatfs/ff.h>
 
@@ -13,7 +14,6 @@
 
 
 int fib(int);
-void rectangle(int x0, int y0, int x1, int y1, int color);
 
 
 int first_run = 1;
@@ -83,158 +83,6 @@ fib(int n)
 } 
 
 
-// these macros treat 16 bit signed integers as 16-bit fixed point 
-// quantities in 1.15 format.
-
-#define	FPMUL(x, y) ((int16_t)(((int32_t)x * (int32_t)y) >> 15))
-#define	FPDIV(x, y) ((int16_t)(((int32_t)x << 15) / (int32_t) y))
-#define	FP_ONE (0x8000)
-#define	FP_HALF (0x4000)
-
-#define	NEG_X	0x01
-#define	NEG_Y	0x02
-#define	SWAP_XY	0x04
-
-// computes a coarse approximation to the arctan function.
-// inputs: x, y 16-bit integer or fixed point quantities.
-// output: fixed point quantity in 1.15 format in range -1.0 to 0.99997 pirads.
-//         (alternatively this can be interpreted as int in range
-//	    -32768 to 32767.)
-//	   angles are measured relative to the positive x axis.
-//         
-// A pirad is a unit of angle measurement equivalent to Pi Radians.
-// 360 degrees = 2*pi radians = 2 pirads.
-//
-// This function uses a very coarse approximation to the atan function. 
-// It has a maximum error of about 5 degrees.
-// 
-
-int
-atan(int y, int x)
-{
-	int flags = 0;
-	int tmp;
-	int atan;
-
-	// fold input values into first 45 degree sector
-	if (y < 0) {
-		flags |= NEG_Y;
-		y = -y;
-	}
-
-	if (x < 0) {
-		flags |= NEG_X;
-		x = -x;
-	}
-
-	if (y > x) {
-		flags |= SWAP_XY;
-		tmp = x;
-		x = y;
-		y = tmp;
-	}
-
-	// compute ratio y/x in 0.15 format.
-	if (x == 0)
-		atan = 0;
-	else
-		atan = FPDIV(y, x) >> 2;
-
-	// unfold result
-	if (flags & SWAP_XY)
-		atan = FP_HALF - atan;
-
-	if (flags & NEG_X)
-		atan = FP_ONE - atan;
-
-	if (flags & NEG_Y)
-		atan = -atan;
-
-	return (atan);
-}
-
-
-uint32_t
-sqrt(uint32_t r) {
-	uint32_t t, q, b;
-
-	b = 0x40000000;
-	q = 0;
-
-	while( b >= 256 ) {
-		t = q + b;
-		q = q / 2;     /* shift right 1 bit */
-		if( r >= t ) {
-			r = r - t;
-			q = q + b;
-		}
-		b = b / 4;     /* shift right 2 bits */
-	}
-
-	return (q);
-}
-
-
-#define	WR	77	/* 0.299 * 256 */
-#define	WB	29	/* 0.114 * 256 */
-#define	WG	150	/* 0.586 * 256 */
-#define	WU	126	/* 0.492 * 256 */
-#define	WV	224	/* 0.877 * 256 */
-
-uint32_t
-rgb2p16(int r, int g, int b) {
-	int color, luma, chroma, saturation;
-	int u, v;
-
-	/* Transform RGB into YUV */
-	luma = (WR * r + WB * b + WG * g) >> 8;
-	u = WU * (b - luma);
-	v = WV * (r - luma);
-
-	/* Transform {U,V} cartesian coords into {chroma, saturation} phasor */
-	chroma = (28 - (atan(u, v) >> 10)) & 0x3f;
-	saturation = (sqrt((u * u + v * v) >> 1) + (1 << 13)) >> 14;
-	if (saturation > 15)
-		saturation = 15;
-
-	/* Encode in 16 bits */
-	color = (saturation << 12) | ((chroma >> 1) << 7) | (luma >> 1);
-
-	return (color);
-}
-
-
-uint32_t
-rgb2p8(int r, int g, int b) {
-	int color, luma, chroma, saturation;
-	int u, v;
-
-	/* Transform RGB into YUV */
-	luma = (WR * r + WB * b + WG * g) >> 8;
-	u = WU * (b - luma);
-	v = WV * (r - luma);
-
-	/* Transform {U,V} cartesian coords into {chroma, saturation} phasor */
-	chroma = (28 - (atan(u, v) >> 10)) & 0x3f;
-	saturation = (sqrt((u * u + v * v) >> 1) + (1 << 13)) >> 14;
-	if (saturation > 15)
-		saturation = 15;
-
-	if (saturation > 6) {
-		/* saturated color */
-		color = 128 + (luma / 16) * 16 + (chroma >> 2);
-	} else if (saturation > 1) {
-		/* dim color */
-		color = 32 + (luma * 6 / 8 / 16) * 16 + (chroma >> 2);
-	} else {
-		/* grayscale */
-		color = luma / 8;
-	}
-
-	return (color);
-}
-
-
 static void
 load_raw(char *fname)
 {
@@ -253,7 +101,7 @@ load_raw(char *fname)
 		ssize = 4096;	/* flash */
 
 
-	OUTB(IO_FB, mode);
+	set_fb_mode(mode);
 
 	for (i = 0; i < 288 * 512; i += ssize) {
 
@@ -285,37 +133,12 @@ load_raw(char *fname)
 			g = *ib++;
 			b = *ib++;
 			if (mode)
-				fb16[x + i] = rgb2p16(r, g, b);
+				fb16[x + i] = rgb2pal(r, g, b);
 			else
-				fb[x + i] = rgb2p8(r, g, b);
+				fb[x + i] = rgb2pal(r, g, b);
 		}
 	}
 	f_close(&fp);
-}
-
-
-void
-rectangle(int x0, int y0, int x1, int y1, int color)
-{
-	int tmp, x, yoff;
-
-	if (x1 < x0) {
-		tmp = x0;
-		x0 = x1;
-		x1 = tmp;
-	}
-	if (y1 < y0) {
-		tmp = y0;
-		y0 = y1;
-		y1 = tmp;
-	}
-
-	while (y0 <= y1) {
-		yoff = y0 * 512;
-		for (x = x0; x <= x1; x++)
-			fb[yoff + x] = color;
-		y0++;
-	}
 }
 
 
@@ -453,7 +276,7 @@ main(void)
 		uint8_t *p8 = (void *) &fb[16 * 512];
 		uint16_t *p16 = (void *) &fb16[16 * 512];
 
-                OUTB(IO_FB, !(mode == 0));
+                set_fb_mode(mode);
 
 		for (y0 = 0; y0 < 256; y0++) {
 			if (mode == 0) {
@@ -506,7 +329,7 @@ main(void)
 	} while (res != ' ');
 
 	printf("Vertikalne crte u boji (8-bitna paleta)\n");
-	OUTB(IO_FB, 0);
+	set_fb_mode(0);
 	rectangle(0, 0, 511, 287, 0);
 	while (sio_getchar(0) != ' ') {
 		for (x0 = 0; x0 < 512; x0 += 2)
