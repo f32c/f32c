@@ -171,26 +171,52 @@ rectangle(int x0, int y0, int x1, int y1, int color)
 		y0 = y1;
 		y1 = x;
 	}
+	if (x0 < 0)
+		x0 = 0;
+	if (y0 < 0)
+		y0 = 0;
+	if (x1 > 511)
+		x1 = 511;
+	if (y1 > 287)
+		y1 = 287;
 
-	for (; y0 <= y1; y0++)
-		for (x = x0; x <= x1; x++)
-			plot(x, y0, color);
+	if (fb_mode) {
+		color = (color << 16) | (color & 0xffff);
+		for (; y0 <= y1; y0++) {
+			for (x = x0; x <= x1 && (x & 1); x++)
+				fb8[(y0 << 9) + x] = color;
+			for (; x <= x1 && (x & 3) == 0; x += 2)
+				*((int *) &fb16[(y0 << 9) + x]) = color;
+			for (; x <= x1; x++)
+				fb8[(y0 << 9) + x] = color;
+		}
+	} else {
+		color = (color << 8) | (color & 0xff);
+		color = (color << 16) | (color & 0xffff);
+		for (; y0 <= y1; y0++) {
+			for (x = x0; x <= x1 && (x & 3); x++)
+				fb8[(y0 << 9) + x] = color;
+			for (; x <= x1 && (x & 3) == 0; x += 4)
+				*((int *) &fb8[(y0 << 9) + x]) = color;
+			for (; x <= x1; x++)
+				fb8[(y0 << 9) + x] = color;
+		}
+	}
 }
 
 
 void
 line(int x0, int y0, int x1, int y1, int color)
 {
-	int x, y, dx, dy, dx0, dy0, px, py, e, i;
+	int x, y, dx, dy, dx0, dy0, p, e, i;
 
 	dx = x1 - x0;
 	dy = y1 - y0;
 	dx0 = ABS(dx);
 	dy0 = ABS(dy);
-	px = 2 * dy0 - dx0;
-	py = 2 * dx0 - dy0;
 
 	if (dy0 <= dx0) {
+		p = 2 * dy0 - dx0;
 		if (dx >= 0) {
 			x = x0;
 			y = y0;
@@ -203,18 +229,19 @@ line(int x0, int y0, int x1, int y1, int color)
 		plot(x, y, color);
 		for (i = 0; x < e; i++) {
 			x++;
-			if (px < 0)
-				px += 2 * dy0;
+			if (p < 0)
+				p += 2 * dy0;
 			else {
 				if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
 					y++;
 				else
 					y--;
-				px += 2 * (dy0 - dx0);
+				p += 2 * (dy0 - dx0);
 			}
 			plot(x, y, color);
 		}
 	} else {
+		p = 2 * dx0 - dy0;
 		if (dy >= 0) {
 			x = x0;
 			y = y0;
@@ -227,14 +254,14 @@ line(int x0, int y0, int x1, int y1, int color)
 		plot(x, y, color);
 		for (i = 0; y < e; i++) {
 			y++;
-			if (py <= 0)
-				py += 2 * dx0;
+			if (p <= 0)
+				p += 2 * dx0;
 			else {
 				if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
 					x++;
 				else
 					x--;
-				py += 2 * (dx0 - dy0);
+				p += 2 * (dx0 - dy0);
 			}
 			plot(x, y, color);
 		}
