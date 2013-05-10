@@ -1,7 +1,9 @@
 
 
 void set_fb_mode(int);
-void rectangle(int, int, int, int, int);
 int rgb2pal(int, int, int);
 
+void line(int, int, int, int, int);
+void rectangle(int, int, int, int, int);
+void circle(int, int, int, int);
 
