@@ -9,6 +9,8 @@ static int	fb_mode;
 static uint8_t	*fb8 = (void *) FB_BASE;
 static uint16_t	*fb16 = (void *) FB_BASE;
 
+#define	ABS(a) (((a) < 0) ? -(a) : (a))
+
 
 void
 set_fb_mode(int mode)
@@ -141,10 +143,23 @@ rgb2pal(int r, int g, int b) {
 }
 
 
+static void
+plot(int x, int y, int color)
+{
+
+	if (x < 0 || x > 511 || y < 0 || y > 287)
+		return;
+	if (fb_mode)
+		fb16[(y << 9) + x] = color;
+	else
+		fb8[(y << 9) + x] = color;
+}
+
+
 void
 rectangle(int x0, int y0, int x1, int y1, int color)
 {
-	int tmp, x, yoff;
+	int tmp, x;
 
 	if (x1 < x0) {
 		tmp = x0;
@@ -157,21 +172,110 @@ rectangle(int x0, int y0, int x1, int y1, int color)
 		y1 = tmp;
 	}
 
-	if (fb_mode) {
-		/* 16-bit encoding */
-		while (y0 <= y1) {
-			yoff = y0 * 512;
-			for (x = x0; x <= x1; x++)
-				fb16[yoff + x] = color;
-			y0++;
+	while (y0 <= y1) {
+		for (x = x0; x <= x1; x++)
+			plot(x, y0, color);
+		y0++;
+	}
+}
+
+
+void
+line(int x0, int y0, int x1, int y1, int color)
+{
+	int x, y, dx, dy, dx0, dy0, px, py, xe, ye, i;
+
+	dx = x1 - x0;
+	dy = y1 - y0;
+	dx0 = ABS(dx);
+	dy0 = ABS(dy);
+	px = 2 * dy0 - dx0;
+	py = 2 * dx0 - dy0;
+
+	if (dy0 <= dx0) {
+		if (dx >= 0) {
+			x = x0;
+			y = y0;
+			xe = x1;
+		} else {
+			x = x1;
+			y = y1;
+			xe = x0;
+		}
+		plot(x, y, color);
+		for (i = 0; x < xe; i++) {
+			x = x + 1;
+			if (px < 0) {
+				px =px + 2 * dy0;
+			} else {
+				if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0)) {
+					y = y + 1;
+				} else {
+					y = y - 1;
+				}
+				px = px + 2 * (dy0 - dx0);
+			}
+			plot(x, y, color);
 		}
 	} else {
-		/* 8-bit encoding */
-		while (y0 <= y1) {
-			yoff = y0 * 512;
-			for (x = x0; x <= x1; x++)
-				fb8[yoff + x] = color;
-			y0++;
+		if (dy >= 0) {
+			x = x0;
+			y = y0;
+			ye = y1;
+		} else {
+			x = x1;
+			y = y1;
+			ye = y0;
 		}
+		plot(x, y, color);
+		for (i = 0; y < ye; i++) {
+			y = y + 1;
+			if (py <= 0) {
+				py = py + 2 * dx0;
+			} else {
+				if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0)) {
+					x = x + 1;
+				} else {
+					x = x - 1;
+				}
+				py = py + 2 * (dx0 - dy0);
+			}
+			plot(x, y, color);
+		}
+	}
+}
+
+
+void
+circle(int x0, int y0, int r, int color)
+{
+	int f = 1 - r;
+	int ddF_x = 1;
+	int ddF_y = -2 * r;
+	int x = 0;
+	int y = r;
+ 
+	plot(x0, y0 + r, color);
+	plot(x0, y0 - r, color);
+	plot(x0 + r, y0, color);
+	plot(x0 - r, y0, color);
+ 
+	while(x < y) {
+		if (f >= 0) {
+			y--;
+			ddF_y += 2;
+			f += ddF_y;
+		}
+		x++;
+		ddF_x += 2;
+		f += ddF_x;    
+		plot(x0 + x, y0 + y, color);
+		plot(x0 - x, y0 + y, color);
+		plot(x0 + x, y0 - y, color);
+		plot(x0 - x, y0 - y, color);
+		plot(x0 + y, y0 + x, color);
+		plot(x0 - y, y0 + x, color);
+		plot(x0 + y, y0 - x, color);
+		plot(x0 - y, y0 - x, color);
 	}
 }
