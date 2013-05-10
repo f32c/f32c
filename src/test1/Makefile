@@ -6,7 +6,7 @@ CFILES = test1.c \
 	../lib/random.c ../lib/fatfs.c ../lib/spi.c \
 	../lib/diskio.c ../lib/sdcard.c ../lib/fb.c
 
-#CFLAGS += -DOPTIMIZED_DIVSI3 -DFAST_STRCMP -DUNROLLED_STRCMP
+CFLAGS += -DOPTIMIZED_DIVSI3
 CFLAGS += -Os
 
 ASFILES = ../lib/start.S
