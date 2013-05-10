@@ -110,18 +110,11 @@ load_raw(char *fname)
 		else
 			ib = (void *) &fb[i];
 
-#if 0
-		/* XXX bug in microsd low-level I/O library? */
 		if (f_read(&fp, ib, 3 * ssize, &y)) {
 			printf("\nf_read() failed!\n");
 			f_close(&fp);
 			return;
 		}
-#else
-		f_read(&fp, ib, ssize, &y);
-		f_read(&fp, ((char *) ib) + ssize, ssize, &y);
-		f_read(&fp, ((char *) ib) + 2 * ssize, ssize, &y);
-#endif
 
 		if (mode)
 			ib = (void *) &fb16[i];

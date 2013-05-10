@@ -157,18 +157,19 @@ sdcard_disk_status(void)
 
 
 int
-sdcard_disk_read(uint8_t *Buffer, uint32_t SectorNumber, uint32_t SectorCount)
+sdcard_disk_read(uint8_t *buf, uint32_t sector, uint32_t cnt)
 {
 
 	if (sdcard_addr_shift < 0)
 		goto error;
 
-	for (; SectorCount > 0; SectorCount--) {
-		if (sdcard_cmd(SD_CMD_READ_BLOCK,
-		    SectorNumber << sdcard_addr_shift))
+	for (; cnt > 0; cnt--) {
+		if (sdcard_cmd(SD_CMD_READ_BLOCK, sector << sdcard_addr_shift))
 			goto error;
-		if (sdcard_read((char *) Buffer, SD_BLOCKLEN))
+		if (sdcard_read((char *) buf, SD_BLOCKLEN))
 			goto error;
+		buf += SD_BLOCKLEN;
+		sector++;
 	}
 	return (RES_OK);
 
