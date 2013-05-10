@@ -216,50 +216,6 @@ main(void)
 	RDTSC(end);
 	printf("\nFibonacci completed in %d ms\n", (end - start) / freq_khz);
 
-	/* Initialize SPI bulk-read transaction */
-	spi_start_transaction(SPI_PORT_FLASH);
-	spi_byte(SPI_PORT_FLASH, 0x0b); /* High-speed read */
-	spi_byte(SPI_PORT_FLASH, 0);
-	spi_byte(SPI_PORT_FLASH, 0);
-	spi_byte(SPI_PORT_FLASH, 0);
-	spi_byte_in(SPI_PORT_FLASH); /* dummy byte, ignored */
-
-	RDTSC(start);
-	color = 0;
-	for (int i = 0; i < 1024 * 1024 / 4; i++) {
-		tmp = spi_byte_in(SPI_PORT_FLASH);
-		tmp = (tmp << 8) | spi_byte_in(SPI_PORT_FLASH);
-		tmp = (tmp << 8) | spi_byte_in(SPI_PORT_FLASH);
-		tmp = (tmp << 8) | spi_byte_in(SPI_PORT_FLASH);
-		color += tmp;
-	}
-	RDTSC(end);
-	printf("\n1 MByte fetched via spi_byte_in() from Flash to registers"
-	    " in %d ms\n", (end - start) / freq_khz);
-
-	RDTSC(start);
-	for (int j = 0; j < 8; j++) {
-		int *p = (int *) fb;
-		for (int i = 0; i < 128 * 1024 / 4; i++) {
-			tmp = spi_byte_in(SPI_PORT_FLASH);
-			tmp = (tmp << 8) | spi_byte_in(SPI_PORT_FLASH);
-			tmp = (tmp << 8) | spi_byte_in(SPI_PORT_FLASH);
-			tmp = (tmp << 8) | spi_byte_in(SPI_PORT_FLASH);
-			*p++ = tmp;
-		}
-	}
-	RDTSC(end);
-	printf("1 MByte fetched via spi_byte_in() from Flash to SRAM"
-	    " in %d ms\n", (end - start) / freq_khz);
-
-	RDTSC(start);
-	for (int j = 0; j < 8; j++)
-		spi_block_in(SPI_PORT_FLASH, fb, 128 * 1024);
-	RDTSC(end);
-	printf("1 MByte fetched via spi_block_in() from Flash to SRAM"
-	    " in %d ms\n\n", (end - start) / freq_khz);
-	while (sio_getchar(0) != ' ') {}
-
 	printf("8 i 16 bitne palete boja (tipka 't' za odabir prikaza)\n");
 	rectangle(0, 0, 511, 15, 15);
 	rectangle(0, 272, 511, 287, 15);
@@ -320,6 +276,26 @@ main(void)
 		if (res == 27)
 			return(0);
 	} while (res != ' ');
+
+	printf("Random crte u boji (16-bitna paleta)\n");
+	set_fb_mode(1);
+	rectangle(0, 0, 511, 287, 0);
+	while (sio_getchar(0) != ' ') {
+		x0 = random();
+		y0 = random();
+		line(x0 & 0x1ff, (x0 >> 9) % 288, y0 & 0x1ff, (y0 >> 9) % 288,
+		    x0 ^ y0 ^ (x0 >> 13) ^ (y0 >> 12));
+	}
+
+	printf("Random kruznice u boji (16-bitna paleta)\n");
+	set_fb_mode(1);
+	rectangle(0, 0, 511, 287, 0);
+	while (sio_getchar(0) != ' ') {
+		x0 = random();
+		y0 = random();
+		circle(x0 & 0x1ff, (x0 >> 9) % 288, y0 & 0x1ff,
+		    x0 ^ y0 ^ (x0 >> 13) ^ (y0 >> 12));
+	}
 
 	printf("Vertikalne crte u boji (8-bitna paleta)\n");
 	set_fb_mode(0);
