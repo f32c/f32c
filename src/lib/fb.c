@@ -1,6 +1,7 @@
 
 #include <sys/param.h>
 #include <io.h>
+#include <fb.h>
 
 
 static int	fb_mode;
@@ -295,5 +296,35 @@ circle(int x0, int y0, int r, int color)
 		plot(x0 - y, y0 + x, color);
 		plot(x0 + y, y0 - x, color);
 		plot(x0 - y, y0 - x, color);
+	}
+}
+
+
+void
+filledcircle(int x0, int y0, int r, int color)
+{
+	int f = 1 - r;
+	int ddF_x = 1;
+	int ddF_y = -2 * r;
+	int x = 0;
+	int y = r;
+ 
+	plot(x0, y0 + r, color);
+	plot(x0, y0 - r, color);
+	rectangle(x0 + r, y0, x0 - r, y0, color);
+ 
+	while(x < y) {
+		if (f >= 0) {
+			y--;
+			ddF_y += 2;
+			f += ddF_y;
+		}
+		x++;
+		ddF_x += 2;
+		f += ddF_x;    
+		rectangle(x0 - x, y0 + y, x0 + x, y0 + y, color);
+		rectangle(x0 - x, y0 - y, x0 + x, y0 - y, color);
+		rectangle(x0 - y, y0 + x, x0 + y, y0 + x, color);
+		rectangle(x0 - y, y0 - x, x0 + y, y0 - x, color);
 	}
 }
