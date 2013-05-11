@@ -3,8 +3,6 @@
 #include <io.h>
 
 
-void rectangle(int x0, int y0, int x1, int y1, int color);
-
 static int	fb_mode;
 static uint8_t	*fb8 = (void *) FB_BASE;
 static uint16_t	*fb16 = (void *) FB_BASE;
@@ -80,20 +78,21 @@ atan(int y, int x)
 
 
 static uint32_t
-sqrt(uint32_t r) {
+sqrt(uint32_t r)
+{
 	uint32_t t, q, b;
 
 	b = 0x40000000;
 	q = 0;
 
-	while( b >= 256 ) {
+	while (b >= 256) {
 		t = q + b;
-		q = q / 2;     /* shift right 1 bit */
-		if( r >= t ) {
-			r = r - t;
-			q = q + b;
+		q >>= 1;
+		if (r >= t) {
+			r -= t;
+			q += b;
 		}
-		b = b / 4;     /* shift right 2 bits */
+		b >>= 2;
 	}
 
 	return (q);
@@ -122,21 +121,17 @@ rgb2pal(int r, int g, int b) {
 	if (saturation > 15)
 		saturation = 15;
 
-	if (fb_mode) {
+	if (fb_mode)
 		/* 16-bit encoding */
 		color = (saturation << 12) | ((chroma >> 1) << 7) | (luma >> 1);
-	} else {
+	else {
 		/* 8-bit encoding */
-		if (saturation > 6) {
-			/* saturated color */
-			color = 128 + (luma / 16) * 16 + (chroma >> 2);
-		} else if (saturation > 1) {
-			/* dim color */
-			color = 32 + (luma * 6 / 8 / 16) * 16 + (chroma >> 2);
-		} else {
-			/* grayscale */
+		if (saturation > 7)		/* saturated color */
+			color = 32 + (luma * 6 / 8 / 32) * 16 + (chroma >> 2);
+		else if (saturation > 0)	/* dim color */
+			color = 128 + (luma / 32) * 16 + (chroma >> 2);
+		else 				/* grayscale */
 			color = luma / 8;
-		}
 	}
 
 	return (color);
@@ -184,11 +179,11 @@ rectangle(int x0, int y0, int x1, int y1, int color)
 		color = (color << 16) | (color & 0xffff);
 		for (; y0 <= y1; y0++) {
 			for (x = x0; x <= x1 && (x & 1); x++)
-				fb8[(y0 << 9) + x] = color;
-			for (; x <= x1 && (x & 3) == 0; x += 2)
+				fb16[(y0 << 9) + x] = color;
+			for (; x < x1; x += 2)
 				*((int *) &fb16[(y0 << 9) + x]) = color;
 			for (; x <= x1; x++)
-				fb8[(y0 << 9) + x] = color;
+				fb16[(y0 << 9) + x] = color;
 		}
 	} else {
 		color = (color << 8) | (color & 0xff);
@@ -196,7 +191,7 @@ rectangle(int x0, int y0, int x1, int y1, int color)
 		for (; y0 <= y1; y0++) {
 			for (x = x0; x <= x1 && (x & 3); x++)
 				fb8[(y0 << 9) + x] = color;
-			for (; x <= x1 && (x & 3) == 0; x += 4)
+			for (; x <= (x1 - 3); x += 4)
 				*((int *) &fb8[(y0 << 9) + x]) = color;
 			for (; x <= x1; x++)
 				fb8[(y0 << 9) + x] = color;
