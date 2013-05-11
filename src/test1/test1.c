@@ -18,16 +18,18 @@ int fib(int);
 
 int first_run = 1;
 
-
 uint8_t *fb = (void *) FB_BASE;
 uint16_t *fb16 = (void *) FB_BASE;
-char *fnbuf;
 int mode = 1;
 
-FATFS fh;
 
+#define FAT
 
-FRESULT
+#ifdef FAT
+static FATFS fh;
+static char *fnbuf;
+
+static FRESULT
 scan_files(char* path)
 {
 	FRESULT res;
@@ -70,17 +72,6 @@ scan_files(char* path)
 
 	return (res);
 }
-
-
-int
-fib(int n)
-{
-
-	if (n < 2)
-		return (n);
-	else
-		return (fib(n-1) + fib(n-2));
-} 
 
 
 static void
@@ -133,23 +124,28 @@ load_raw(char *fname)
 	}
 	f_close(&fp);
 }
+#endif
+
+
+int
+fib(int n)
+{
+
+	if (n < 2)
+		return (n);
+	else
+		return (fib(n-1) + fib(n-2));
+} 
 
 
 void
 cpu1_test()
 {
-	uint32_t i, t0, t1;
-	uint32_t *p;
+	uint32_t i;
 
 	do {
-		p = (void *) FB_BASE;
-		for (i = 0; i < 288 * 512 / sizeof(*p); i++) {
-			t0 = *p;
-			t1 = (t0 + (1 << 24)) & 0xff000000;
-			t1 += (t0 + (1 << 16)) & 0xff0000;
-			t1 += (t0 + (1 << 8)) & 0xff00;
-			t1 += (t0 + 1) & 0xff;
-			*p++ = t1;
+		for (i = 0; i < 288 * 512; i++) {
+			fb16[i] += 1;
 		}
 		i = sio_getchar(0);
 	} while (i != ' ' && i != 's');
@@ -161,8 +157,9 @@ main(void)
 {
 	int res, x0, y0, x1, y1;
 	uint32_t color, tmp, freq_khz;
-	uint32_t chroma, luma, saturation;
 	uint32_t start, end;
+	uint32_t i, last;
+	uint32_t t, *p;
 
 	if (first_run == 0)
 		cpu1_test();
@@ -188,8 +185,7 @@ main(void)
 	} while (res != ' ' && res != 's');
 
 	if (res == 's') {
-		unsigned int i, last = 0;
-		uint32_t t, *p;
+		last = 0;
 		do {
 			t = 0;
 			p = (void *) FB_BASE;
@@ -216,124 +212,51 @@ main(void)
 	RDTSC(end);
 	printf("\nFibonacci completed in %d ms\n", (end - start) / freq_khz);
 
-	printf("8 i 16 bitne palete boja (tipka 't' za odabir prikaza)\n");
-	rectangle(0, 0, 511, 15, 15);
-	rectangle(0, 272, 511, 287, 15);
-	tmp = 0;
-	do {
-		uint32_t i;
-		uint8_t *p8 = (void *) &fb[16 * 512];
-		uint16_t *p16 = (void *) &fb16[16 * 512];
-
-                set_fb_mode(mode);
-
-		for (y0 = 0; y0 < 256; y0++) {
-			if (mode == 0) {
-				for (x0 = 0; x0 < 16; x0++) {
-					color = (x0 + (y0 & 0xf0)) & 0xff;
-					for (i = 0; i < 32 / sizeof(*p8); i++)
-						*p8++ = color;
-				}
-			} else {
-				for (x0 = 0; x0 < 512; x0++) {
-					saturation = (tmp / 2) & 0xf;
-					chroma = x0 / 16;
-					luma = y0;
-					color = (saturation << 12) |
-					    (chroma << 7) | (luma >> 1);
-					*p16++ = color;
-				}
-			}
-		}
-
-		if (mode == 0) {
-			for (x0 = 0; x0 < 512; x0++) {
-				fb[x0 + 16 * 512 + 512 * (x0 / 2)] = 31;
-				fb[x0 + 512 * (256 + 16) - 512 * (x0 / 2)] = 31;
-			}
-			for (x0 = 0; x0 < 512; x0++) {
-				fb[x0 + 16 * 512 + 512 * (x0 & 0xff)] = 31;
-				fb[x0 + 512 * (256 + 16) - 512 * (x0 & 0xff)] = 31;
-			}
-		} else if (mode == 1) {
-			for (x0 = 0; x0 < 512; x0++) {
-				fb16[x0 + 16 * 512 + 512 * (x0 / 2)] = 127;
-				fb16[x0 + 512 * (256 + 16) - 512 * (x0 / 2)] = 127;
-			}
-			for (x0 = 0; x0 < 512; x0++) {
-				fb16[x0 + 16 * 512 + 512 * (x0 & 0xff)] = 127;
-				fb16[x0 + 512 * (256 + 16) - 512 * (x0 & 0xff)] = 127;
-			}
-		}
-
-		tmp++;
-		res = sio_getchar(0);
-		if (res == 't') {
-			mode++;
-			if (mode == 3)
-				mode = 0;
-		}
-		if (res == 27)
-			return(0);
-	} while (res != ' ');
-
-	printf("Random crte u boji (16-bitna paleta)\n");
 	set_fb_mode(1);
-	rectangle(0, 0, 511, 287, 0);
-	while (sio_getchar(0) != ' ') {
-		x0 = random();
-		y0 = random();
-		line(x0 & 0x1ff, (x0 >> 9) % 288, y0 & 0x1ff, (y0 >> 9) % 288,
-		    x0 ^ y0 ^ (x0 >> 13) ^ (y0 >> 12));
-	}
 
-	printf("Random kruznice u boji (16-bitna paleta)\n");
-	set_fb_mode(1);
+	printf("Crte\n");
 	rectangle(0, 0, 511, 287, 0);
-	while (sio_getchar(0) != ' ') {
-		x0 = random();
-		y0 = random();
-		circle(x0 & 0x1ff, (x0 >> 9) % 288, y0 & 0x1ff,
-		    x0 ^ y0 ^ (x0 >> 13) ^ (y0 >> 12));
-	}
-
-	printf("Vertikalne crte u boji (8-bitna paleta)\n");
-	set_fb_mode(0);
-	rectangle(0, 0, 511, 287, 0);
-	while (sio_getchar(0) != ' ') {
-		for (x0 = 0; x0 < 512; x0 += 2)
-			for (y0 = 0; y0 < 256; y0++)
-				fb[x0 + 512 * y0 + 512 * 16] = tmp >> 2;
-		tmp++;
-	}
-
-	printf("Pravokutnici u boji\n");
 	while (sio_getchar(0) != ' ') {
 		x0 = random() & 0x1ff;
+		y0 = random() % 288;
 		x1 = random() & 0x1ff;
-		y0 = (random() & 0xff) + (tmp & 0x1f);
-		y1 = (random() & 0xff) + (tmp & 0x1f);
-		color = tmp >> 2;
-		rectangle(x0, y0, x1, y1, color);
-		rectangle(0, 0, 511, 0, tmp++ >> 4);
-		uint32_t *p0, *p1;
-		for (p0 = (void *) &fb[512 * 287],
-		    p1 = (void *) &fb[512 * 288]; (void *) p0 > (void *) fb;) {
-			*(--p1) = *(--p0);
-		}
+		y1 = random() % 288;
+		color = random();
+		line(x0, y0, x1, y1, color);
 	}
 
+	printf("Krugovi\n");
+	rectangle(0, 0, 511, 287, 0);
+	while (sio_getchar(0) != ' ') {
+		x0 = random() & 0x1ff;
+		y0 = random() % 288;
+		tmp = random() & 0x7f;
+		color = random();
+		filledcircle(x0, y0, tmp, color);
+	}
+
+	printf("Pravokutnici\n");
+	while (sio_getchar(0) != ' ') {
+		x0 = random() & 0x1ff;
+		y0 = random() % 288;
+		x1 = random() & 0x1ff;
+		y1 = random() % 288;
+		color = random();
+		rectangle(x0, y0, x1, y1, color);
+	}
+
+#ifdef FAT
 slika:
 	/* Procitaj sliku iz datoteke i ispisi na ekran */
 
 	mode = 1; /* 16-bitni prikaz */
 
-	f_mount(1, &fh);
-
 	fnbuf = (void *) &fb16[512 * 300];
 	*fnbuf = 0;
 
-	scan_files("1:");
+	f_mount(1, &fh); scan_files("1:");
+	//f_mount(0, &fh); scan_files("");
+
 	*fnbuf = 0;
 	fnbuf = (void *) &fb16[512 * 300];
 
@@ -359,4 +282,7 @@ slika:
 	}
 
 	/* XXX notreached! */
+#endif
+
+	return (0);
 }
