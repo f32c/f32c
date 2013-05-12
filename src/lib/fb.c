@@ -226,7 +226,7 @@ rectangle(int x0, int y0, int x1, int y1, int color)
 }
 
 
-__attribute__((optimize("-O3"))) void
+void
 line(int x0, int y0, int x1, int y1, int color)
 {
 	int x, y, dx, dy, dx0, dy0, p, e, i, c, d;
