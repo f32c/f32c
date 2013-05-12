@@ -219,34 +219,61 @@ switch_mode:
 
 	printf("Crte\n");
 	rectangle(0, 0, 511, 287, 0);
+	RDTSC(start);
+	i = 0;
 	while (sio_getchar(0) != ' ') {
-		x0 = (random() & 0x3ff) - 256;
-		y0 = (random() % 0x1ff) - 128;
-		x1 = (random() & 0x3ff) - 256;
-		y1 = (random() % 0x1ff) - 128;
-		color = random();
+		tmp = random();
+		x0 = (tmp & 0x3ff) - 256;
+		y0 = ((tmp >> 16) % 0x1ff) - 128;
+		color = (tmp >> 10);
+		tmp = random();
+		x1 = (tmp & 0x3ff) - 256;
+		y1 = ((tmp >> 16) % 0x1ff) - 128;
 		line(x0, y0, x1, y1, color);
+		i++;
 	}
+	RDTSC(end);
+	printf("%d iteracija u %d.%d sekundi (%d ops / s)\n", i,
+	    (end - start) / freq_khz / 1000,
+	    (end - start) / freq_khz % 1000,
+	    i * freq_khz / ((end - start) / 1000));
 
 	printf("Krugovi\n");
 	rectangle(0, 0, 511, 287, 0);
+	i = 0;
 	while (sio_getchar(0) != ' ') {
-		x0 = random() & 0x1ff;
-		y0 = random() % 288;
-		tmp = random() & 0x7f;
-		color = random();
+		tmp = random();
+		x0 = (tmp & 0x3ff) - 256;
+		y0 = ((tmp >> 16) % 0x1ff) - 128;
+		color = (tmp >> 10);
+		tmp = (tmp >> 20) & 0x7f;
 		filledcircle(x0, y0, tmp, color);
+		i++;
 	}
+	RDTSC(end);
+	printf("%d iteracija u %d.%d sekundi (%d ops / s)\n", i,
+	    (end - start) / freq_khz / 1000,
+	    (end - start) / freq_khz % 1000,
+	    i * freq_khz / ((end - start) / 1000));
 
 	printf("Pravokutnici\n");
+	i = 0;
 	while (sio_getchar(0) != ' ') {
-		x0 = random() & 0x1ff;
-		y0 = random() % 288;
-		x1 = random() & 0x1ff;
-		y1 = random() % 288;
-		color = random();
+		tmp = random();
+		x0 = tmp & 0x1ff;
+		y0 = ((tmp >> 16) % 0x1ff) - 128;
+		color = (tmp >> 10);
+		tmp = random();
+		x1 = tmp & 0x1ff;
+		y1 = ((tmp >> 16) % 0x1ff) - 128;
 		rectangle(x0, y0, x1, y1, color);
+		i++;
 	}
+	RDTSC(end);
+	printf("%d iteracija u %d.%d sekundi (%d ops / s)\n", i,
+	    (end - start) / freq_khz / 1000,
+	    (end - start) / freq_khz % 1000,
+	    i * freq_khz / ((end - start) / 1000));
 
 #ifdef FAT
 slika:
