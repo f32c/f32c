@@ -3,10 +3,8 @@
 #include <io.h>
 #include <fb.h>
 
-
-static int	fb_mode;
-static uint8_t	*fb8 = (void *) FB_BASE;
-static uint16_t	*fb16 = (void *) FB_BASE;
+static uint32_t	fb_mode = -1;
+static uint8_t	*fb = (void *) FB_BASE;
 
 #define	ABS(a) (((a) < 0) ? -(a) : (a))
 
@@ -15,10 +13,14 @@ void
 set_fb_mode(int mode)
 {
 
-	if (mode)
+	if (mode == 1)
 		fb_mode = 1;
-	else
+	else if (mode == 0)
 		fb_mode = 0;
+	else {
+		fb_mode = -1;
+		fb = NULL;
+	}
 
 	OUTB(IO_FB, fb_mode);
 }
@@ -119,10 +121,10 @@ rgb2pal(int r, int g, int b) {
 	/* Transform {U, V} cartesian into polar {chroma, saturation} coords */
 	chroma = (28 - (atan(u, v) >> 10)) & 0x3f;
 	saturation = (sqrt((u * u + v * v) >> 1) + (1 << 13)) >> 14;
-	if (saturation > 15)
+	if (__predict_false(saturation > 15))
 		saturation = 15;
 
-	if (fb_mode)
+	if (__predict_true(fb_mode))
 		/* 16-bit encoding */
 		color = (saturation << 12) | ((chroma >> 1) << 7) | (luma >> 1);
 	else {
@@ -139,23 +141,46 @@ rgb2pal(int r, int g, int b) {
 }
 
 
-static void
+__attribute__((optimize("-O3"))) void
 plot(int x, int y, int color)
 {
 
-	if (x < 0 || x > 511 || y < 0 || y > 287)
+	int off = (y << 9) + x;
+	uint8_t *dp = fb;
+
+	if (__predict_false(y < 0 || y > 287 || fb_mode > 1 || (x >> 9)))
 		return;
-	if (fb_mode)
-		fb16[(y << 9) + x] = color;
+	
+	if (__predict_true(fb_mode != 0))
+		*((uint16_t *) &dp[off << 1]) = color;
 	else
-		fb8[(y << 9) + x] = color;
+		dp[off] = color;
 }
 
+
+static __attribute__((optimize("-O3"))) void
+plot_internal(int x, int y, int mode_color, uint8_t *dp)
+{
+
+	int off = (y << 9) + x;
+
+	if (__predict_false(y < 0 || y > 287 || (x >> 9)))
+		return;
+	
+	if (__predict_true(mode_color < 0))
+		*((uint16_t *) &dp[off << 1]) = mode_color;
+	else
+		dp[off] = mode_color;
+}
 
 void
 rectangle(int x0, int y0, int x1, int y1, int color)
 {
 	int x;
+	uint16_t *fb16 = (void *) fb;
+
+	if (fb_mode > 1)
+		return;
 
 	if (x1 < x0) {
 		x = x0;
@@ -167,16 +192,16 @@ rectangle(int x0, int y0, int x1, int y1, int color)
 		y0 = y1;
 		y1 = x;
 	}
-	if (x0 < 0)
+	if (__predict_false(x0 < 0))
 		x0 = 0;
-	if (y0 < 0)
+	if (__predict_false(y0 < 0))
 		y0 = 0;
-	if (x1 > 511)
+	if (__predict_false(x1 > 511))
 		x1 = 511;
-	if (y1 > 287)
+	if (__predict_false(y1 > 287))
 		y1 = 287;
 
-	if (fb_mode) {
+	if (__predict_true(fb_mode)) {
 		color = (color << 16) | (color & 0xffff);
 		for (; y0 <= y1; y0++) {
 			for (x = x0; x <= x1 && (x & 1); x++)
@@ -191,28 +216,34 @@ rectangle(int x0, int y0, int x1, int y1, int color)
 		color = (color << 16) | (color & 0xffff);
 		for (; y0 <= y1; y0++) {
 			for (x = x0; x <= x1 && (x & 3); x++)
-				fb8[(y0 << 9) + x] = color;
+				fb[(y0 << 9) + x] = color;
 			for (; x <= (x1 - 3); x += 4)
-				*((int *) &fb8[(y0 << 9) + x]) = color;
+				*((int *) &fb[(y0 << 9) + x]) = color;
 			for (; x <= x1; x++)
-				fb8[(y0 << 9) + x] = color;
+				fb[(y0 << 9) + x] = color;
 		}
 	}
 }
 
 
-void
+__attribute__((optimize("-O3"))) void
 line(int x0, int y0, int x1, int y1, int color)
 {
-	int x, y, dx, dy, dx0, dy0, p, e, i;
+	int x, y, dx, dy, dx0, dy0, p, e, i, c, d;
 
 	dx = x1 - x0;
 	dy = y1 - y0;
 	dx0 = ABS(dx);
 	dy0 = ABS(dy);
 
+	if (fb_mode > 1)
+		return;
+	if (fb_mode != 0)
+		color |= 0x80000000;
+
 	if (dy0 <= dx0) {
-		p = 2 * dy0 - dx0;
+		c = (dx < 0 && dy < 0) || (dx > 0 && dy > 0);
+		d = 2 * dy0 - dx0;
 		if (dx >= 0) {
 			x = x0;
 			y = y0;
@@ -222,22 +253,24 @@ line(int x0, int y0, int x1, int y1, int color)
 			y = y1;
 			e = x0;
 		}
-		plot(x, y, color);
+		p = d;
+		plot_internal(x, y, color, fb);
 		for (i = 0; x < e; i++) {
 			x++;
 			if (p < 0)
 				p += 2 * dy0;
 			else {
-				if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
+				if (c)
 					y++;
 				else
 					y--;
-				p += 2 * (dy0 - dx0);
+				p += d;
 			}
-			plot(x, y, color);
+			plot_internal(x, y, color, fb);
 		}
 	} else {
-		p = 2 * dx0 - dy0;
+		c = (dx < 0 && dy < 0) || (dx > 0 && dy > 0);
+		d = 2 * dx0 - dy0;
 		if (dy >= 0) {
 			x = x0;
 			y = y0;
@@ -247,19 +280,20 @@ line(int x0, int y0, int x1, int y1, int color)
 			y = y1;
 			e = y0;
 		}
-		plot(x, y, color);
+		p = d;
+		plot_internal(x, y, color, fb);
 		for (i = 0; y < e; i++) {
 			y++;
 			if (p <= 0)
 				p += 2 * dx0;
 			else {
-				if ((dx < 0 && dy < 0) || (dx > 0 && dy > 0))
+				if (c)
 					x++;
 				else
 					x--;
-				p += 2 * (dx0 - dy0);
+				p += d;
 			}
-			plot(x, y, color);
+			plot_internal(x, y, color, fb);
 		}
 	}
 }
@@ -274,10 +308,15 @@ circle(int x0, int y0, int r, int color)
 	int x = 0;
 	int y = r;
  
-	plot(x0, y0 + r, color);
-	plot(x0, y0 - r, color);
-	plot(x0 + r, y0, color);
-	plot(x0 - r, y0, color);
+	if (fb_mode > 1)
+		return;
+	if (fb_mode != 0)
+		color |= 0x80000000;
+
+	plot_internal(x0, y0 + r, color, fb);
+	plot_internal(x0, y0 - r, color, fb);
+	plot_internal(x0 + r, y0, color, fb);
+	plot_internal(x0 - r, y0, color, fb);
  
 	while(x < y) {
 		if (f >= 0) {
@@ -288,14 +327,14 @@ circle(int x0, int y0, int r, int color)
 		x++;
 		ddF_x += 2;
 		f += ddF_x;    
-		plot(x0 + x, y0 + y, color);
-		plot(x0 - x, y0 + y, color);
-		plot(x0 + x, y0 - y, color);
-		plot(x0 - x, y0 - y, color);
-		plot(x0 + y, y0 + x, color);
-		plot(x0 - y, y0 + x, color);
-		plot(x0 + y, y0 - x, color);
-		plot(x0 - y, y0 - x, color);
+		plot_internal(x0 + x, y0 + y, color, fb);
+		plot_internal(x0 - x, y0 + y, color, fb);
+		plot_internal(x0 + x, y0 - y, color, fb);
+		plot_internal(x0 - x, y0 - y, color, fb);
+		plot_internal(x0 + y, y0 + x, color, fb);
+		plot_internal(x0 - y, y0 + x, color, fb);
+		plot_internal(x0 + y, y0 - x, color, fb);
+		plot_internal(x0 - y, y0 - x, color, fb);
 	}
 }
 
