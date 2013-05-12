@@ -20,7 +20,7 @@ int first_run = 1;
 
 uint8_t *fb = (void *) FB_BASE;
 uint16_t *fb16 = (void *) FB_BASE;
-int mode = 1;
+int mode;
 
 
 #define FAT
@@ -90,9 +90,6 @@ load_raw(char *fname)
 		ssize = 512;	/* sdcard */
 	else
 		ssize = 4096;	/* flash */
-
-
-	set_fb_mode(mode);
 
 	for (i = 0; i < 288 * 512; i += ssize) {
 
@@ -212,15 +209,21 @@ main(void)
 	RDTSC(end);
 	printf("\nFibonacci completed in %d ms\n", (end - start) / freq_khz);
 
-	set_fb_mode(1);
+switch_mode:
+	mode = !mode;
+	set_fb_mode(mode);
+	if (mode)
+		printf("16-bitna paleta\n");
+	else
+		printf("8-bitna paleta\n");
 
 	printf("Crte\n");
 	rectangle(0, 0, 511, 287, 0);
 	while (sio_getchar(0) != ' ') {
-		x0 = random() & 0x1ff;
-		y0 = random() % 288;
-		x1 = random() & 0x1ff;
-		y1 = random() % 288;
+		x0 = (random() & 0x3ff) - 256;
+		y0 = (random() % 0x1ff) - 128;
+		x1 = (random() & 0x3ff) - 256;
+		y1 = (random() % 0x1ff) - 128;
 		color = random();
 		line(x0, y0, x1, y1, color);
 	}
@@ -248,9 +251,6 @@ main(void)
 #ifdef FAT
 slika:
 	/* Procitaj sliku iz datoteke i ispisi na ekran */
-
-	mode = 1; /* 16-bitni prikaz */
-
 	fnbuf = (void *) &fb16[512 * 300];
 	*fnbuf = 0;
 
@@ -275,14 +275,10 @@ slika:
 		RDTSC(start);
 		do {
 			res = sio_getchar(0);
-			if (res == 27)
-				return(0);
+			if (res == ' ')
+				goto switch_mode;
 			RDTSC(tmp);
 		} while (res != ' ' && tmp - start < freq_khz * 1000);
 	}
-
-	/* XXX notreached! */
 #endif
-
-	return (0);
 }
