@@ -146,13 +146,12 @@ rgb2pal(int r, int g, int b) {
 __attribute__((optimize("-O3"))) void
 plot(int x, int y, int color)
 {
-
 	int off = (y << 9) + x;
 	uint8_t *dp = fb;
 
 	if (__predict_false(y < 0 || y > 287 || fb_mode > 1 || (x >> 9)))
 		return;
-	
+
 	if (__predict_true(fb_mode != 0))
 		*((uint16_t *) &dp[off << 1]) = color;
 	else
@@ -160,39 +159,37 @@ plot(int x, int y, int color)
 }
 
 
-static __attribute__((optimize("-O3"))) void
-plot_internal(int x, int y, int mode_color, uint8_t *dp)
+static void
+plot_internal_8(int x, int y, int color, uint8_t *dp)
 {
 
-	int off = (y << 9) + x;
-
-	if (__predict_false(y < 0 || y > 287 || (x >> 9)))
-		return;
-	
-	if (__predict_true(mode_color < 0))
-		*((uint16_t *) &dp[off << 1]) = mode_color;
-	else
-		dp[off] = mode_color;
+	if (!(y < 0 || y > 287 || (x >> 9)))
+		dp[(y << 9) + x] = color;
 }
 
 
-static __attribute__((optimize("-O3"))) void
-plot_internal_unbounded_8(int x, int y, int mode_color, uint8_t *dp)
+static void
+plot_internal_16(int x, int y, int color, uint8_t *dp)
 {
 
-	int off = (y << 9) + x;
-
-	dp[off] = mode_color;
+	if (!(y < 0 || y > 287 || (x >> 9)))
+		*((uint16_t *) &dp[(y << 10) + 2 * x]) = color;
 }
 
 
-static __attribute__((optimize("-O3"))) void
-plot_internal_unbounded_16(int x, int y, int mode_color, uint8_t *dp)
+static void
+plot_internal_unbounded_8(int x, int y, int color, uint8_t *dp)
 {
 
-	int off = (y << 10) + 2 * x;
+	dp[(y << 9) + x] = color;
+}
 
-	*((uint16_t *) &dp[off]) = mode_color;
+
+static void
+plot_internal_unbounded_16(int x, int y, int color, uint8_t *dp)
+{
+
+	*((uint16_t *) &dp[(y << 10) + 2 * x]) = color;
 }
 
 
@@ -262,11 +259,10 @@ line(int x0, int y0, int x1, int y1, int color)
 
 	if ((x0 >> 9) || y0 < 0 || y0 > 287 ||
 	    (x1 >> 9) || y1 < 0 || y1 > 287) {
-		plotfn = plot_internal;
-		if (fb_mode != 0)
-			color |= 0x80000000;
+		if (fb_mode)
+			plotfn = plot_internal_16;
 		else
-			color &= 0x7fffffff;
+			plotfn = plot_internal_8;
 	} else if (fb_mode)
 		plotfn = plot_internal_unbounded_16;
 	else
@@ -344,11 +340,10 @@ circle(int x0, int y0, int r, int color)
 	plotfn_t *plotfn;
  
 	if (x0 - r < 0 || x0 + r > 511 || y0 - r < 0 || y0 + r > 287) {
-		plotfn = plot_internal;
-		if (fb_mode != 0)
-			color |= 0x80000000;
+		if (fb_mode)
+			plotfn = plot_internal_16;
 		else
-			color &= 0x7fffffff;
+			plotfn = plot_internal_8;
 	} else if (fb_mode)
 		plotfn = plot_internal_unbounded_16;
 	else
