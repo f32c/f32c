@@ -16,8 +16,6 @@
 int fib(int);
 
 
-int first_run = 1;
-
 uint8_t *fb = (void *) FB_BASE;
 uint16_t *fb16 = (void *) FB_BASE;
 int mode;
@@ -125,42 +123,11 @@ load_raw(char *fname)
 
 
 int
-fib(int n)
-{
-
-	if (n < 2)
-		return (n);
-	else
-		return (fib(n-1) + fib(n-2));
-} 
-
-
-void
-cpu1_test()
-{
-	uint32_t i;
-
-	do {
-		for (i = 0; i < 288 * 512; i++) {
-			fb16[i] += 1;
-		}
-		i = sio_getchar(0);
-	} while (i != ' ' && i != 's');
-}
-
-
-int
 main(void)
 {
 	int res, x0, y0, x1, y1;
 	uint32_t color, tmp, freq_khz;
-	uint32_t start, end;
-	uint32_t i, last;
-	uint32_t t, *p;
-
-	if (first_run == 0)
-		cpu1_test();
-	first_run = 0;
+	uint32_t start, end, i;
 
 	printf("Hello, MIPS world!\n\n");
 
@@ -177,38 +144,6 @@ main(void)
 
 	//goto slika;
 
-	do {
-		res = sio_getchar(0);
-	} while (res != ' ' && res != 's');
-
-	if (res == 's') {
-		last = 0;
-		do {
-			t = 0;
-			p = (void *) FB_BASE;
-			RDTSC(start);
-			for (i = 0; i < 288 * 512 / sizeof(*p) / 4; i++) {
-				t += *p++;
-				t += *p++;
-				t += *p++;
-				t += *p++;
-			}
-			RDTSC(end);
-			if (t != last || res == 't')
-				printf("csum = %08x, %d bytes read in %d us\n",
-				    t, 288 * 512,
-				    (end - start) / (freq_khz / 1000));
-			last = t;
-			res = sio_getchar(0);
-		} while (res != ' ' && res != 's');
-	}
-
-	RDTSC(start);
-	for (tmp = 0; tmp <= 25; tmp++)
-		printf("fib(%d) = %d\n", tmp, fib(tmp));
-	RDTSC(end);
-	printf("\nFibonacci completed in %d ms\n", (end - start) / freq_khz);
-
 switch_mode:
 	mode = !mode;
 	set_fb_mode(mode);
@@ -218,46 +153,47 @@ switch_mode:
 		printf("8-bitna paleta\n");
 
 	printf("Crte\n");
-	rectangle(0, 0, 511, 287, 0);
 	RDTSC(start);
 	i = 0;
 	while (sio_getchar(0) != ' ') {
 		tmp = random();
-		x0 = (tmp & 0x3ff) - 256;
-		y0 = ((tmp >> 16) % 0x1ff) - 128;
-		color = (tmp >> 10);
+		x0 = tmp & 0x1ff;
+		y0 = ((tmp >> 16) & 0xff) + ((tmp >> 24) & 0x1f);
+		color = (tmp >> 27);
 		tmp = random();
-		x1 = (tmp & 0x3ff) - 256;
-		y1 = ((tmp >> 16) % 0x1ff) - 128;
+		x1 = tmp & 0x1ff;
+		y1 = ((tmp >> 16) & 0xff) + ((tmp >> 24) & 0x1f);
+		color ^= (tmp >> 13);
 		line(x0, y0, x1, y1, color);
 		i++;
 	}
 	RDTSC(end);
-	printf("%d iteracija u %d.%d sekundi (%d ops / s)\n", i,
+	printf("%d iteracija u %d.%03d sekundi (%d ops / s)\n", i,
 	    (end - start) / freq_khz / 1000,
 	    (end - start) / freq_khz % 1000,
 	    i * freq_khz / ((end - start) / 1000));
 
 	printf("Krugovi\n");
-	rectangle(0, 0, 511, 287, 0);
 	i = 0;
+	RDTSC(start);
 	while (sio_getchar(0) != ' ') {
 		tmp = random();
-		x0 = (tmp & 0x3ff) - 256;
-		y0 = ((tmp >> 16) % 0x1ff) - 128;
+		x0 = tmp & 0x1ff;
+		y0 = ((tmp >> 16) & 0xff) + ((tmp >> 24) & 0x1f);
 		color = (tmp >> 10);
 		tmp = (tmp >> 20) & 0x7f;
 		filledcircle(x0, y0, tmp, color);
 		i++;
 	}
 	RDTSC(end);
-	printf("%d iteracija u %d.%d sekundi (%d ops / s)\n", i,
+	printf("%d iteracija u %d.%03d sekundi (%d ops / s)\n", i,
 	    (end - start) / freq_khz / 1000,
 	    (end - start) / freq_khz % 1000,
 	    i * freq_khz / ((end - start) / 1000));
 
 	printf("Pravokutnici\n");
 	i = 0;
+	RDTSC(start);
 	while (sio_getchar(0) != ' ') {
 		tmp = random();
 		x0 = tmp & 0x1ff;
@@ -270,7 +206,7 @@ switch_mode:
 		i++;
 	}
 	RDTSC(end);
-	printf("%d iteracija u %d.%d sekundi (%d ops / s)\n", i,
+	printf("%d iteracija u %d.%03d sekundi (%d ops / s)\n", i,
 	    (end - start) / freq_khz / 1000,
 	    (end - start) / freq_khz % 1000,
 	    i * freq_khz / ((end - start) / 1000));
