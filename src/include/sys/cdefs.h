@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)cdefs.h	8.8 (Berkeley) 1/9/95
- * $FreeBSD$
+ * $FreeBSD: f32c/src/include/sys/cdefs.h 907 2012-02-14 21:18:19Z marko $
  */
 
 #ifndef	_SYS_CDEFS_H_
@@ -412,7 +412,7 @@
  * Embed the rcs id of a source file in the resulting library.  Note that in
  * more recent ELF binutils, we use .ident allowing the ID to be stripped.
  * Usage:
- *	__FBSDID("$FreeBSD$");
+ *	__FBSDID("$FreeBSD: f32c/src/include/sys/cdefs.h 907 2012-02-14 21:18:19Z marko $");
  */
 #ifndef	__FBSDID
 #if !defined(lint) && !defined(STRIP_FBSDID)

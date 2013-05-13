@@ -24,7 +24,7 @@
 # SUCH DAMAGE.
 #
 
-# $Id: $
+# $Id$
 
 
 if {$argc != 1} {

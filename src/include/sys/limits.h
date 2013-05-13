@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: f32c/src/include/sys/limits.h 907 2012-02-14 21:18:19Z marko $
  */
 
 #ifndef _SYS_LIMITS_H_

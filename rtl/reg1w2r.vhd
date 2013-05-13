@@ -1,4 +1,4 @@
--- $Id: reg1w2r.vhd 255 2011-04-28 19:59:44Z marko $
+-- $Id$
 
 library ieee;
 use ieee.std_logic_1164.all;

@@ -23,7 +23,7 @@
 -- SUCH DAMAGE.
 --
 
--- $Id: serial.vhd 116 2011-03-28 12:43:12Z marko $
+-- $Id$
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;

@@ -26,7 +26,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- * $FreeBSD$
+ * $FreeBSD: f32c/src/include/mips/cdefs.h 907 2012-02-14 21:18:19Z marko $
  */
 
 #ifndef _MIPS_CDEFS_H_

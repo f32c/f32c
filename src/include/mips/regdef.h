@@ -6,7 +6,7 @@
  * regdef.h -- MIPS register definitions.
  *
  *	JNPR: regdef.h,v 1.3 2006/08/07 05:38:57 katta
- * $FreeBSD$
+ * $FreeBSD: f32c/src/include/mips/regdef.h 907 2012-02-14 21:18:19Z marko $
  */
 
 #ifndef _MACHINE_REGDEF_H_
