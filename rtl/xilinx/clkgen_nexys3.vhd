@@ -24,7 +24,7 @@
 --
 --
 
--- $Id: clkgen.vhd 891 2012-02-10 09:32:49Z marko $
+-- $Id$
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;

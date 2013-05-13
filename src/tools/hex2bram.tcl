@@ -1,7 +1,7 @@
 #!/usr/local/bin/tclsh8.6
 #
 
-# $Id: $
+# $Id$
 
 
 if {$argc == 0} {
