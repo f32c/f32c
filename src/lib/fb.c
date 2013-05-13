@@ -238,8 +238,10 @@ line(int x0, int y0, int x1, int y1, int color)
 
 	if (fb_mode > 1)
 		return;
-	if (fb_mode != 0)
+	if (fb_mode)
 		color |= 0x80000000;
+	else
+		color &= 0x7fffffff;
 
 	if (dy0 <= dx0) {
 		c = (dx < 0 && dy < 0) || (dx > 0 && dy > 0);
