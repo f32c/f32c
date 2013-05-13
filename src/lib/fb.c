@@ -3,6 +3,8 @@
 #include <io.h>
 #include <fb.h>
 
+typedef void plotfn_t(int x, int y, int mode_color, uint8_t *dp);
+
 static uint32_t	fb_mode = -1;
 static uint8_t	*fb = (void *) FB_BASE;
 
@@ -173,6 +175,27 @@ plot_internal(int x, int y, int mode_color, uint8_t *dp)
 		dp[off] = mode_color;
 }
 
+
+static __attribute__((optimize("-O3"))) void
+plot_internal_unbounded_8(int x, int y, int mode_color, uint8_t *dp)
+{
+
+	int off = (y << 9) + x;
+
+	dp[off] = mode_color;
+}
+
+
+static __attribute__((optimize("-O3"))) void
+plot_internal_unbounded_16(int x, int y, int mode_color, uint8_t *dp)
+{
+
+	int off = (y << 10) + 2 * x;
+
+	*((uint16_t *) &dp[off]) = mode_color;
+}
+
+
 void
 rectangle(int x0, int y0, int x1, int y1, int color)
 {
@@ -230,18 +253,27 @@ void
 line(int x0, int y0, int x1, int y1, int color)
 {
 	int x, y, dx, dy, dx0, dy0, p, e, i, c, d;
+	plotfn_t *plotfn;
 
 	dx = x1 - x0;
 	dy = y1 - y0;
 	dx0 = ABS(dx);
 	dy0 = ABS(dy);
 
+	if ((x0 >> 9) || y0 < 0 || y0 > 287 ||
+	    (x1 >> 9) || y1 < 0 || y1 > 287) {
+		plotfn = plot_internal;
+		if (fb_mode != 0)
+			color |= 0x80000000;
+		else
+			color &= 0x7fffffff;
+	} else if (fb_mode)
+		plotfn = plot_internal_unbounded_16;
+	else
+		plotfn = plot_internal_unbounded_8;
+
 	if (fb_mode > 1)
 		return;
-	if (fb_mode)
-		color |= 0x80000000;
-	else
-		color &= 0x7fffffff;
 
 	if (dy0 <= dx0) {
 		c = (dx < 0 && dy < 0) || (dx > 0 && dy > 0);
@@ -256,7 +288,7 @@ line(int x0, int y0, int x1, int y1, int color)
 			e = x0;
 		}
 		p = d;
-		plot_internal(x, y, color, fb);
+		plotfn(x, y, color, fb);
 		for (i = 0; x < e; i++) {
 			x++;
 			if (p < 0)
@@ -268,7 +300,7 @@ line(int x0, int y0, int x1, int y1, int color)
 					y--;
 				p += d;
 			}
-			plot_internal(x, y, color, fb);
+			plotfn(x, y, color, fb);
 		}
 	} else {
 		c = (dx < 0 && dy < 0) || (dx > 0 && dy > 0);
@@ -283,7 +315,7 @@ line(int x0, int y0, int x1, int y1, int color)
 			e = y0;
 		}
 		p = d;
-		plot_internal(x, y, color, fb);
+		plotfn(x, y, color, fb);
 		for (i = 0; y < e; i++) {
 			y++;
 			if (p <= 0)
@@ -295,7 +327,7 @@ line(int x0, int y0, int x1, int y1, int color)
 					x--;
 				p += d;
 			}
-			plot_internal(x, y, color, fb);
+			plotfn(x, y, color, fb);
 		}
 	}
 }
@@ -309,16 +341,26 @@ circle(int x0, int y0, int r, int color)
 	int ddF_y = -2 * r;
 	int x = 0;
 	int y = r;
+	plotfn_t *plotfn;
  
+	if (x0 - r < 0 || x0 + r > 511 || y0 - r < 0 || y0 + r > 287) {
+		plotfn = plot_internal;
+		if (fb_mode != 0)
+			color |= 0x80000000;
+		else
+			color &= 0x7fffffff;
+	} else if (fb_mode)
+		plotfn = plot_internal_unbounded_16;
+	else
+		plotfn = plot_internal_unbounded_8;
+
 	if (fb_mode > 1)
 		return;
-	if (fb_mode != 0)
-		color |= 0x80000000;
 
-	plot_internal(x0, y0 + r, color, fb);
-	plot_internal(x0, y0 - r, color, fb);
-	plot_internal(x0 + r, y0, color, fb);
-	plot_internal(x0 - r, y0, color, fb);
+	plotfn(x0, y0 + r, color, fb);
+	plotfn(x0, y0 - r, color, fb);
+	plotfn(x0 + r, y0, color, fb);
+	plotfn(x0 - r, y0, color, fb);
  
 	while(x < y) {
 		if (f >= 0) {
@@ -329,14 +371,14 @@ circle(int x0, int y0, int r, int color)
 		x++;
 		ddF_x += 2;
 		f += ddF_x;    
-		plot_internal(x0 + x, y0 + y, color, fb);
-		plot_internal(x0 - x, y0 + y, color, fb);
-		plot_internal(x0 + x, y0 - y, color, fb);
-		plot_internal(x0 - x, y0 - y, color, fb);
-		plot_internal(x0 + y, y0 + x, color, fb);
-		plot_internal(x0 - y, y0 + x, color, fb);
-		plot_internal(x0 + y, y0 - x, color, fb);
-		plot_internal(x0 - y, y0 - x, color, fb);
+		plotfn(x0 + x, y0 + y, color, fb);
+		plotfn(x0 - x, y0 + y, color, fb);
+		plotfn(x0 + x, y0 - y, color, fb);
+		plotfn(x0 - x, y0 - y, color, fb);
+		plotfn(x0 + y, y0 + x, color, fb);
+		plotfn(x0 - y, y0 + x, color, fb);
+		plotfn(x0 + y, y0 - x, color, fb);
+		plotfn(x0 - y, y0 - x, color, fb);
 	}
 }
 
