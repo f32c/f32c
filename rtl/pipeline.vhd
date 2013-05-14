@@ -61,6 +61,7 @@ entity pipeline is
 	C_branch_prediction: boolean := true;
 	C_bp_global_depth: integer := 6; -- range 2 to 12
 	C_load_aligner: boolean := true;
+	C_reg_IF_PC: boolean := true;
 	C_fast_ID: boolean := true;
 	C_register_technology: string := "unknown";
 
@@ -380,7 +381,8 @@ begin
     IF_need_refetch <= MEM_take_branch and
       (not IF_data_ready or IF_ID_fetch_in_progress);
 
-    IF_PC <= EX_MEM_branch_target when MEM_take_branch else IF_ID_PC_next;
+    IF_PC <= EX_MEM_branch_target when not C_reg_IF_PC and MEM_take_branch
+      else IF_ID_PC_next;
 
     process(clk)
     begin
@@ -395,7 +397,10 @@ begin
 	    elsif IF_data_ready then
 		IF_ID_incomplete_branch <= false;
 	    end if;
-	    if MEM_take_branch and not IF_need_refetch then
+	    if C_reg_IF_PC and (MEM_running and EX_running) and
+	      (EX_take_branch xor ID_EX_predict_taken) then
+		IF_ID_PC_next <= EX_branch_target;
+	    elsif MEM_take_branch and not IF_need_refetch then
 		IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
 	    elsif IF_need_refetch or IF_ID_incomplete_branch then
 		IF_ID_PC_next <=
