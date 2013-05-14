@@ -56,7 +56,6 @@ entity glue is
 
 	-- These may negatively influence timing closure:
 	C_movn_movz: boolean := false; -- true: +5 LUT4, -DMIPS
-	C_fast_ID: boolean := true; -- false: +7 LUT4, -Fmax
 
 	-- SoC configuration options
 	C_mem_size: string := "16k";
@@ -138,7 +137,6 @@ begin
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
-	C_fast_ID => C_fast_ID,
 	C_register_technology => C_register_technology,
 	-- debugging only
 	C_debug => false

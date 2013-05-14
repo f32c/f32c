@@ -55,9 +55,8 @@ entity glue is
 	C_load_aligner: boolean := true;
 	C_register_technology: string := "lattice";
 
-	-- These may negatively influence timing closure:
+	-- This may negatively influence timing closure:
 	C_movn_movz: boolean := false; -- true: +16 LUT4, -DMIPS, incomplete
-	C_fast_ID: boolean := true; -- false: +7 LUT4, -Fmax
 
 	-- Debugging / testing options (should be turned off)
 	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
@@ -201,7 +200,6 @@ begin
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
-	C_fast_ID => C_fast_ID,
 	C_register_technology => C_register_technology,
 	-- debugging only
 	C_debug => C_debug

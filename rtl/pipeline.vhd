@@ -62,7 +62,6 @@ entity pipeline is
 	C_bp_global_depth: integer := 6; -- range 2 to 12
 	C_load_aligner: boolean := true;
 	C_reg_IF_PC: boolean := true;
-	C_fast_ID: boolean := true;
 	C_register_technology: string := "unknown";
 
 	-- debugging options
@@ -352,17 +351,6 @@ begin
 
     -- compute current and next program counter
 
-    G_fast_ID:
-    if C_fast_ID generate
-    IF_PC_next <= IF_PC + 1 when ID_running else IF_PC;
-    end generate;
-
-    G_not_fast_ID:
-    if not C_fast_ID generate
-    IF_PC_incr <= '1' when ID_running else '0';
-    IF_PC_next <= IF_PC + IF_PC_incr;
-    end generate;
-
     -- instruction word fetch: big / little endian
     IF_from_imem_aligned <=
       imem_data_in(7 downto 0) & imem_data_in(15 downto 8) &
@@ -384,9 +372,27 @@ begin
     IF_PC <= EX_MEM_branch_target when not C_reg_IF_PC and MEM_take_branch
       else IF_ID_PC_next;
 
+    IF_PC_next <=
+      EX_branch_target when
+	C_reg_IF_PC and (MEM_running and EX_running) and
+	(EX_take_branch xor ID_EX_predict_taken)
+      else IF_PC + 1 when
+	MEM_take_branch and not IF_need_refetch and ID_running
+      else IF_PC when
+	MEM_take_branch and not IF_need_refetch
+      else EX_MEM_branch_target when
+	IF_need_refetch or IF_ID_incomplete_branch
+      else ID_jump_target when
+	ID_running and not ID_EX_cancel_next and
+	(ID_jump_cycle or ID_jump_register or ID_predict_taken)
+      else IF_PC + 1 when
+	ID_running
+      else IF_ID_PC_next; -- i.e. do not change
+
     process(clk)
     begin
 	if rising_edge(clk) then
+	    IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
 	    if not IF_data_ready then
 		IF_ID_fetch_in_progress <= true;
 	    else
@@ -397,27 +403,11 @@ begin
 	    elsif IF_data_ready then
 		IF_ID_incomplete_branch <= false;
 	    end if;
-	    if C_reg_IF_PC and (MEM_running and EX_running) and
-	      (EX_take_branch xor ID_EX_predict_taken) then
-		IF_ID_PC_next <= EX_branch_target;
-	    elsif MEM_take_branch and not IF_need_refetch then
-		IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
-	    elsif IF_need_refetch or IF_ID_incomplete_branch then
-		IF_ID_PC_next <=
-		  EX_MEM_branch_target and C_PC_mask(31 downto 2);
-	    elsif ID_running then
-		if (ID_jump_cycle or ID_jump_register or ID_predict_taken)
-		  and not ID_EX_cancel_next then
-		    IF_ID_PC_next <= ID_jump_target and C_PC_mask(31 downto 2);
-		else
-		    IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
-		end if;
-	    end if;
 	    if IF_need_refetch or IF_ID_incomplete_branch then
 		IF_ID_instruction <= x"00000000";
 		IF_ID_branch_delay_slot <= false;
 	    elsif ID_running then
-		IF_ID_PC_4 <= IF_PC_next and C_PC_mask(31 downto 2);
+		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
 		IF_ID_bpredict_index <= IF_bpredict_index;
 		IF_ID_instruction <= IF_instruction;
 		IF_ID_branch_delay_slot <=
