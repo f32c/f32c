@@ -60,7 +60,7 @@ entity glue is
 
 	-- Debugging / testing options (should be turned off)
 	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
-	C_prng_imem_delay: boolean := true; -- false;
+	C_prng_imem_delay: boolean := false;
 
 	-- SoC configuration options
 	C_cpus: integer := 1;
@@ -190,7 +190,7 @@ begin
     begin
     intr(i) <= '0';
     res(i) <= sw(i);
-    pipeline: entity work.pipeline
+    cpu: entity work.cache
     generic map (
 	C_cpuid => i, C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
