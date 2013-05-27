@@ -100,7 +100,7 @@ architecture Behavioral of pipeline is
     signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
     signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
     signal IF_ID_branch_delay_slot: boolean;
-    signal IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
+    signal IF_ID_PC, IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
 	
     -- pipeline stage 2: instruction decode and register fetch
     signal ID_running: boolean;
@@ -248,7 +248,6 @@ architecture Behavioral of pipeline is
     -- signals used for debugging only
     signal reg_trace_data: std_logic_vector(31 downto 0);
     signal D_instr, D_b_instr, D_b_taken: std_logic_vector(31 downto 0);
-    signal IF_ID_PC: std_logic_vector(31 downto 2);
 
 begin
 
@@ -325,7 +324,7 @@ begin
       (not IF_data_ready or IF_ID_fetch_in_progress);
 
     IF_PC <= EX_MEM_branch_target when not C_reg_IF_PC and MEM_take_branch
-      else IF_ID_PC_next;
+      else IF_ID_PC;
 
     IF_PC_next <=
       EX_branch_target when
@@ -348,6 +347,9 @@ begin
     begin
 	if rising_edge(clk) then
 	    IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
+	    if IF_data_ready then
+		IF_ID_PC <= IF_PC_next and C_PC_mask(31 downto 2);
+	    end if;
 	    if not IF_data_ready then
 		IF_ID_fetch_in_progress <= true;
 	    else
@@ -367,8 +369,6 @@ begin
 		IF_ID_instruction <= IF_instruction;
 		IF_ID_branch_delay_slot <=
 		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
-		-- debugging only: XXX revisit!
-		IF_ID_PC <= IF_PC and C_PC_mask(31 downto 2);
 	    elsif ID_EX_branch_likely and not EX_take_branch then
 		IF_ID_instruction <= x"00000000";
 		IF_ID_branch_delay_slot <= false;
