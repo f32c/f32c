@@ -60,6 +60,7 @@ architecture x of cache is
     signal icache_tag_in, icache_tag_out: std_logic_vector(15 downto 0);
     signal iaddr_cacheable, icache_line_valid: boolean;
     signal i_strobe, icache_write, instr_ready: std_logic;
+    signal R_i_strobe: std_logic;
 begin
 
     pipeline: entity work.pipeline
@@ -91,27 +92,34 @@ begin
 
     icache_lut: entity work.cache_lut
     port map (
+	clk => clk,
 	rd_addr => i_addr(7 downto 2),
-	rd_data => icache_data_out,
-	rd_tag => icache_tag_out,
+	rd_data => icache_data_out, rd_tag => icache_tag_out,
 	wr_addr => i_addr(7 downto 2),
-	wr_data => imem_data_in,
-	wr_tag => icache_tag_in,
-	wr_enable => icache_write,
-	clk => clk
+	wr_data => imem_data_in, wr_tag => icache_tag_in,
+	wr_enable => icache_write
     );
 
     imem_addr <= i_addr;
-    imem_addr_strobe <=
-      '1' when not iaddr_cacheable or not icache_line_valid else '0';
-    i_data <= icache_data_out when iaddr_cacheable else imem_data_in;
+    imem_addr_strobe <= '1' when not iaddr_cacheable else R_i_strobe;
+    i_data <= icache_data_out when icache_line_valid else imem_data_in;
     instr_ready <= imem_data_ready when not iaddr_cacheable else
-      '1' when icache_line_valid else '0';
+      '1' when icache_line_valid else icache_write;
 
-    iaddr_cacheable <= false; -- imem_addr(31 downto 30) = "10";
-    icache_tag_in <= imem_addr(31) & "00" & imem_addr(19 downto 8) & '1';
-    icache_line_valid <= icache_tag_in = icache_tag_out;
-    icache_write <=
-      imem_data_ready when iaddr_cacheable and not icache_line_valid else '0';
+    iaddr_cacheable <= i_addr(31 downto 27) = "10000";
+    icache_tag_in <= '1' & i_addr(31) & "00" & i_addr(19 downto 8);
+    icache_line_valid <= iaddr_cacheable and icache_tag_in = icache_tag_out;
+    icache_write <= imem_data_ready when R_i_strobe = '1' else '0';
 
+    process(clk)
+    begin
+    if rising_edge(clk) then
+	if iaddr_cacheable and
+	  not icache_line_valid and imem_data_ready = '0' then
+	    R_i_strobe <= '1';
+	else
+	    R_i_strobe <= '0';
+	end if;
+    end if;
+    end process;
 end x;
