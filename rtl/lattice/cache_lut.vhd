@@ -59,9 +59,9 @@ begin
     begin
 
 	wr_e <= wr_enable when b = conv_integer(wr_addr(5 downto 4)) else '0';
-	rd_data <= rd_d when b = conv_integer(wr_addr(5 downto 4))
+	rd_data <= rd_d when b = conv_integer(rd_addr(5 downto 4))
 	  else (others => 'Z');
-	rd_tag <= rd_t when b = conv_integer(wr_addr(5 downto 4))
+	rd_tag <= rd_t when b = conv_integer(rd_addr(5 downto 4))
 	  else (others => 'Z');
 
 	data_iter: for i in 0 to 3 generate
