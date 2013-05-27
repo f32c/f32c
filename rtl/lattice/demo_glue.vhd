@@ -43,7 +43,7 @@ entity glue is
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
-	C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff";
+	C_PC_mask: std_logic_vector(31 downto 0) := x"880fffff";
 
 	-- COP0 options
 	C_cop0_count: boolean := true;
@@ -157,7 +157,7 @@ architecture Behavioral of glue is
     signal trace_addr: f32c_debug_addr;
     signal trace_data: f32c_data_bus;
     signal debug_txd: std_logic;
-    signal R_prng: std_logic_vector(7 downto 0);
+    signal R_prng: std_logic_vector(8 downto 0);
 
     -- FM TX DDS
     signal clk_dds, dds_out: std_logic;
@@ -434,7 +434,7 @@ begin
 	C_mem_size => C_bram_size
     )
     port map (
-	clk => clk, imem_addr_strobe => R_prng(7), --imem_addr_strobe(0),
+	clk => clk, imem_addr_strobe => imem_addr_strobe(0),
 	imem_addr => imem_addr(0), imem_data_out => imem_to_cpu,
 	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write(0),
 	dmem_byte_sel => dmem_byte_sel(0), dmem_addr => dmem_addr(0),
@@ -485,7 +485,7 @@ begin
 		if sram_instr_strobe = '1' then
 		    imem_data_ready(cpu) <= sram_ready(instr_port);
 		    final_to_cpu_i(cpu) <= from_sram;
-		elsif R_prng(7) = '0' then
+		elsif R_prng(8) = '0' or imem_addr_strobe(cpu) = '0' then
 		    imem_data_ready(cpu) <= '0';
 		    final_to_cpu_i(cpu) <= x"deadc0de"; -- XXX testing
 		else
@@ -620,9 +620,10 @@ begin
 	    R_prng(6 downto 0) <= R_prng(7 downto 1);
 	    R_prng(7) <=
 	      not R_prng(0) xor R_prng(2) xor R_prng(3) xor R_prng(4);
+	    R_prng(8) <= R_prng(7) and imem_addr_strobe(0);
 	end if;
     end process;
     end generate;
-    R_prng(7) <= '1' when not C_prng_imem_delay;
+    R_prng(8) <= '1' when not C_prng_imem_delay;
 
 end Behavioral;
