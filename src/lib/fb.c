@@ -246,17 +246,17 @@ rectangle(int x0, int y0, int x1, int y1, int color)
 }
 
 
-void
+__attribute__((optimize("-O3"))) void
 line(int x0, int y0, int x1, int y1, int color)
 {
-	int x, y, dx, dy, dx0, dy0, p, e, i, c, d;
 	plotfn_t *plotfn;
-
-	dx = x1 - x0;
-	dy = y1 - y0;
-	dx0 = ABS(dx);
-	dy0 = ABS(dy);
-
+	int dx = ABS(x1 - x0);
+	int sx = x0 < x1 ? 1 : -1;
+	int dy = -ABS(y1 - y0);
+	int sy = y0 < y1 ? 1 : -1; 
+	int err = dx + dy;
+	int e2;
+ 
 	if ((x0 >> 9) || y0 < 0 || y0 > 287 ||
 	    (x1 >> 9) || y1 < 0 || y1 > 287) {
 		if (fb_mode)
@@ -271,59 +271,18 @@ line(int x0, int y0, int x1, int y1, int color)
 	if (fb_mode > 1)
 		return;
 
-	if (dy0 <= dx0) {
-		c = (dx < 0 && dy < 0) || (dx > 0 && dy > 0);
-		d = 2 * dy0 - dx0;
-		if (dx >= 0) {
-			x = x0;
-			y = y0;
-			e = x1;
-		} else {
-			x = x1;
-			y = y1;
-			e = x0;
+	for (;;) {
+		plotfn(x0, y0, color, fb);
+		e2 = 2 * err;
+		if (x0 == x1 && y0 == y1)
+			break;
+		if (e2 >= dy) {
+			err += dy;
+			x0 += sx;
 		}
-		p = d;
-		plotfn(x, y, color, fb);
-		for (i = 0; x < e; i++) {
-			x++;
-			if (p < 0)
-				p += 2 * dy0;
-			else {
-				if (c)
-					y++;
-				else
-					y--;
-				p += d;
-			}
-			plotfn(x, y, color, fb);
-		}
-	} else {
-		c = (dx < 0 && dy < 0) || (dx > 0 && dy > 0);
-		d = 2 * dx0 - dy0;
-		if (dy >= 0) {
-			x = x0;
-			y = y0;
-			e = y1;
-		} else {
-			x = x1;
-			y = y1;
-			e = y0;
-		}
-		p = d;
-		plotfn(x, y, color, fb);
-		for (i = 0; y < e; i++) {
-			y++;
-			if (p <= 0)
-				p += 2 * dx0;
-			else {
-				if (c)
-					x++;
-				else
-					x--;
-				p += d;
-			}
-			plotfn(x, y, color, fb);
+		if (e2 <= dx) {
+			err += dx;
+			y0 += sy;
 		}
 	}
 }
