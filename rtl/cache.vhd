@@ -62,6 +62,9 @@ architecture x of cache is
     signal i_strobe, icache_write, instr_ready: std_logic;
     signal R_i_strobe: std_logic;
     signal R_i_addr: std_logic_vector(31 downto 2);
+
+    signal to_i_bram, from_i_bram: std_logic_vector(3 * 18 - 1 downto 0);
+
 begin
 
     pipeline: entity work.pipeline
@@ -92,14 +95,25 @@ begin
 	trace_addr => trace_addr, trace_data => trace_data
     );
 
-    icache_lut: entity work.cache_lut
+    icache_data_out <= from_i_bram(31 downto 0);
+    icache_tag_out <= from_i_bram(43 downto 32);
+    to_i_bram(31 downto 0) <= imem_data_in;
+    to_i_bram(43 downto 32) <= icache_tag_in;
+
+    i_block_iter: for b in 0 to 2 generate
+    begin
+    i_bram_dp: entity work.bram_dp_x18
     port map (
-	clk => clk,
-	addr => i_addr(11 downto 2),
-	rd_data => icache_data_out, rd_tag => icache_tag_out,
-	wr_data => imem_data_in, wr_tag => icache_tag_in,
-	wr_enable => icache_write
+        clk_a => clk, clk_b => clk,
+        ce_a => '1', ce_b => '0',
+        we_a => icache_write, we_b => '0',
+        addr_a => i_addr(11 downto 2), addr_b => (others => '0'),
+        data_in_a => to_i_bram(b * 18 + 17 downto b * 18),
+        data_in_b => (others => '0'),
+        data_out_a => from_i_bram(b * 18 + 17 downto b * 18),
+        data_out_b => open
     );
+    end generate i_block_iter;
 
     imem_addr <= R_i_addr;
     imem_addr_strobe <= '1' when not iaddr_cacheable else R_i_strobe;
