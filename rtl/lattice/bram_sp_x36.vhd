@@ -11,7 +11,7 @@ entity bram_sp_x36 is
 	ce: in std_logic;
 	we: in std_logic; 
 	res: in std_logic; 
-	addr: in std_logic_vector(9 downto 0); 
+	addr: in std_logic_vector(8 downto 0); 
 	data_in: in std_logic_vector(35 downto 0); 
 	data_out: out std_logic_vector(35 downto 0)
     );

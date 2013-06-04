@@ -52,6 +52,9 @@ entity pipeline is
 	C_cop0_count: boolean;
 	C_cop0_config: boolean;
 
+	-- Cache interface
+	C_icache: boolean := false;
+
 	-- optimization options
 	C_result_forwarding: boolean := true;
 	C_branch_prediction: boolean := true;
@@ -88,7 +91,7 @@ architecture Behavioral of pipeline is
     signal debug_XXX: std_logic_vector(31 downto 0) := x"00000000";
 
     -- pipeline stage 1: instruction fetch
-    signal IF_PC, IF_PC_next: std_logic_vector(31 downto 2);
+    signal IF_PC, IF_PC_next, IF_PC_ext_next: std_logic_vector(31 downto 2);
     signal IF_PC_incr: std_logic;
     signal IF_bpredict_index: std_logic_vector(12 downto 0);
     signal IF_bpredict_re: std_logic;
@@ -314,7 +317,7 @@ begin
       imem_data_in(23 downto 16) & imem_data_in(31 downto 24) when C_big_endian
       else imem_data_in;
 
-    imem_addr <= IF_PC;
+    imem_addr <= IF_PC_ext_next when C_icache else IF_PC;
     imem_addr_strobe <= not R_reset; -- XXX revisit!!!
 
     IF_data_ready <= imem_data_ready = '1';
@@ -342,14 +345,15 @@ begin
       else IF_PC + 1 when
 	ID_running
       else IF_ID_PC_next; -- i.e. do not change
+    IF_PC_ext_next <=
+      IF_PC_next and C_PC_mask(31 downto 2) when IF_data_ready
+      else IF_ID_PC; -- i.e. do not change
 
     process(clk)
     begin
 	if rising_edge(clk) then
 	    IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
-	    if IF_data_ready then
-		IF_ID_PC <= IF_PC_next and C_PC_mask(31 downto 2);
-	    end if;
+	    IF_ID_PC <= IF_PC_ext_next;
 	    if not IF_data_ready then
 		IF_ID_fetch_in_progress <= true;
 	    else

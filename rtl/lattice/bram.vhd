@@ -37,14 +37,16 @@ use xp2.components.all;
 
 entity bram is
 	generic(
-		C_mem_size: string
+		C_mem_size: integer
 	);
 	port(
 		clk: in std_logic;
 		imem_addr_strobe: in std_logic;
+		imem_data_ready: out std_logic;
 		imem_addr: in std_logic_vector(31 downto 2);
 		imem_data_out: out std_logic_vector(31 downto 0);
 		dmem_addr_strobe: in std_logic;
+		dmem_data_ready: out std_logic;
 		dmem_write: in std_logic;
 		dmem_byte_sel: in std_logic_vector(3 downto 0);
 		dmem_addr: in std_logic_vector(31 downto 2);
@@ -55,15 +57,114 @@ end bram;
 
 architecture Behavioral of bram is
 	signal dmem_data_read, dmem_write_out: std_logic_vector(31 downto 0);
-	signal dmem_bram_cs: std_logic;
+	signal dmem_bram_cs, we: std_logic;
+	signal byte_en: std_logic_vector(3 downto 0);
+	signal addr: std_logic_vector(10 downto 2);
 begin
 	
 	dmem_data_out <= dmem_data_read; -- shut up compiler errors
 	dmem_write_out <= dmem_data_in;
 	dmem_bram_cs <= dmem_addr_strobe;
+	dmem_data_ready <= '1';
+
+	G_2k:
+	if C_mem_size = 2 generate
+	we <= dmem_addr_strobe and dmem_write;
+	byte_en <= "1111" when we = '0' else dmem_byte_sel;
+	addr <= dmem_addr(10 downto 2) when dmem_addr_strobe = '1'
+	    else imem_addr(10 downto 2);
+	imem_data_ready <= not dmem_addr_strobe;
+	imem_data_out <= dmem_data_read;
+	ram_2_0: DP16KB
+	generic map (
+		-- CSDECODE_B => "000", CSDECODE_A => "000",
+		WRITEMODE_B => "NORMAL", WRITEMODE_A => "NORMAL",
+		GSR => "ENABLED", RESETMODE => "SYNC", 
+		REGMODE_B => "NOREG", REGMODE_A => "NOREG",
+		DATA_WIDTH_B => 18, DATA_WIDTH_A => 18,
+		INITVAL_00 => "0x0780500010078041000015A00002F00780B00000020600000911A03002F007808000000000000000",
+		INITVAL_01 => "0x0480D00001048090000D0780C010000780B00000006A51D0250006000008000641D024000001F021",
+		INITVAL_02 => "0x06066000041000310005048A500001100A40000004A65002E404818000530780F000000480E00003",
+		INITVAL_03 => "0x0480700002048031FEFF04806000FF028801FEF8100A40000014004100040000000000028C01FEFD",
+		INITVAL_04 => "0x00002198C304804000FF000000402102240000020004C0A024080020900000000000000086100019",
+		INITVAL_05 => "0x07084000F0070840000F0100000030000000000002240000030062A0A02A06639000FF0604A000FF",
+		INITVAL_06 => "0x02898000041000410004008610000A0000000000026201FEEC060990000110004100051400410000",
+		INITVAL_07 => "0x04A65002E401000000140000000000028891FED90000504403010000003000000020210000003021",
+		INITVAL_08 => "0x0284000003050820006104807000020100000022048031FEFF04806000FF000020A2000288900005",
+		INITVAL_09 => "0x0008A02025048841FEC90004A0202502E20000030509900041048841FEE0010000004E048821FED0",
+		INITVAL_0a => "0x028601FEAD11A03002F00484A1FEFF020800000605E2400003048591FEF90286D000110486300001",
+		INITVAL_0b => "0x00000020210100000020000000000002E200000305A5900003048030040001000000050000000000",
+		INITVAL_0c => "0x000E207021010000005E000420202100000000000286E00004048C600005010000005E0004206021",
+		INITVAL_0d => "0x15AE2002F00100000020000600602102A401FEB3000400502111A0A002F0000C30A02A0286600007",
+		INITVAL_0e => "0x0100000020140A2000000000000000020801FEAB000670402A026201FEAD0607900001022401FEAF",
+		INITVAL_0f => "0x00000000000000000000000000000000000004000002007C650D82F0C632066660140D048A500001"
+	)
+	port map (
+		DIA0 => dmem_write_out(0), DIA1 => dmem_write_out(1),
+		DIA2 => dmem_write_out(2), DIA3 => dmem_write_out(3),
+		DIA4 => dmem_write_out(4), DIA5 => dmem_write_out(5),
+		DIA6 => dmem_write_out(6), DIA7 => dmem_write_out(7),
+		DIA8 => '0',
+		DIA9 => dmem_write_out(8), DIA10 => dmem_write_out(9),
+		DIA11 => dmem_write_out(10), DIA12 => dmem_write_out(11),
+		DIA13 => dmem_write_out(12), DIA14 => dmem_write_out(13),
+		DIA15 => dmem_write_out(14), DIA16 => dmem_write_out(15),
+		DIA17 => '0', 
+		DOA0 => dmem_data_read(0), DOA1 => dmem_data_read(1),
+		DOA2 => dmem_data_read(2), DOA3 => dmem_data_read(3),
+		DOA4 => dmem_data_read(4), DOA5 => dmem_data_read(5),
+		DOA6 => dmem_data_read(6), DOA7 => dmem_data_read(7),
+		DOA8 => open,
+		DOA9 => dmem_data_read(8), DOA10 => dmem_data_read(9),
+		DOA11 => dmem_data_read(10), DOA12 => dmem_data_read(11),
+		DOA13 => dmem_data_read(12), DOA14 => dmem_data_read(13),
+		DOA15 => dmem_data_read(14), DOA16 => dmem_data_read(15),
+		DOA17 => open, 
+		ADA0 => byte_en(0), ADA1 => byte_en(1),
+		ADA2 => '0', ADA3 => '0', ADA4 => '0',
+		ADA5 => addr(2), ADA6 => addr(3),
+		ADA7 => addr(4), ADA8 => addr(5),
+		ADA9 => addr(6), ADA10 => addr(7),
+		ADA11 => addr(8), ADA12 => addr(9),
+		ADA13 => addr(10),
+		CEA => '1', CLKA => not clk, WEA => we,
+		CSA0 => '0', CSA1 => '0', CSA2 => '0', RSTA => '0',
+
+		DIB0 => dmem_write_out(16), DIB1 => dmem_write_out(17),
+		DIB2 => dmem_write_out(18), DIB3 => dmem_write_out(19),
+		DIB4 => dmem_write_out(20), DIB5 => dmem_write_out(21),
+		DIB6 => dmem_write_out(22), DIB7 => dmem_write_out(23),
+		DIB8 => '0',
+		DIB9 => dmem_write_out(24), DIB10 => dmem_write_out(25),
+		DIB11 => dmem_write_out(26), DIB12 => dmem_write_out(27),
+		DIB13 => dmem_write_out(28), DIB14 => dmem_write_out(29),
+		DIB15 => dmem_write_out(30), DIB16 => dmem_write_out(31),
+		DIB17 => '0', 
+		DOB0 => dmem_data_read(16), DOB1 => dmem_data_read(17),
+		DOB2 => dmem_data_read(18), DOB3 => dmem_data_read(19),
+		DOB4 => dmem_data_read(20), DOB5 => dmem_data_read(21),
+		DOB6 => dmem_data_read(22), DOB7 => dmem_data_read(23),
+		DOB8 => open,
+		DOB9 => dmem_data_read(24), DOB10 => dmem_data_read(25),
+		DOB11 => dmem_data_read(26), DOB12 => dmem_data_read(27),
+		DOB13 => dmem_data_read(28), DOB14 => dmem_data_read(29),
+		DOB15 => dmem_data_read(30), DOB16 => dmem_data_read(31),
+		DOB17 => open, 
+		ADB0 => byte_en(2), ADB1 => byte_en(3),
+		ADB2 => '0', ADB3 => '0', ADB4 => '1',
+		ADB5 => addr(2), ADB6 => addr(3),
+		ADB7 => addr(4), ADB8 => addr(5),
+		ADB9 => addr(6), ADB10 => addr(7),
+		ADB11 => addr(8), ADB12 => addr(9),
+		ADB13 => addr(10),
+		CEB => '1', CLKB => not clk, WEB => we,
+		CSB0 => '0', CSB1 => '0', CSB2 => '0', RSTB => '0'
+	);
+	end generate; -- 2k
 
 	G_16k:
-	if C_mem_size = "16k" generate
+	if C_mem_size = 16 generate
+	imem_data_ready <= '1';
 	ram_16_0: DP16KB
 	generic map (
 		-- CSDECODE_B => "000", CSDECODE_A => "000",

@@ -37,85 +37,38 @@ use xp2.components.all;
 
 entity cache_lut is
     port(
-	rd_addr: in std_logic_vector(5 downto 0);
+	clk: in std_logic;
+	addr: in std_logic_vector(9 downto 0);
 	rd_data: out std_logic_vector(31 downto 0);
-	rd_tag: out std_logic_vector(15 downto 0);
-	wr_addr: in std_logic_vector(5 downto 0);
+	rd_tag: out std_logic_vector(11 downto 0);
 	wr_data: in std_logic_vector(31 downto 0);
-	wr_tag: in std_logic_vector(15 downto 0);
-	wr_enable: in std_logic;
-	clk: in std_logic
+	wr_tag: in std_logic_vector(11 downto 0);
+	wr_enable: in std_logic
     );
 end cache_lut;
 
 architecture Behavioral of cache_lut is
-
+    signal to_bram, from_bram: std_logic_vector(3 * 18 - 1 downto 0);
 begin
 
-    block_iter: for b in 0 to 3 generate
-	signal wr_e: std_logic;
-	signal rd_d: std_logic_vector(31 downto 0);
-	signal rd_t: std_logic_vector(15 downto 0);
+    rd_data <= from_bram(31 downto 0);
+    rd_tag <= from_bram(43 downto 32);
+    to_bram(31 downto 0) <= wr_data;
+    to_bram(43 downto 32) <= wr_tag;
+
+    block_iter: for b in 0 to 2 generate
     begin
-
-	wr_e <= wr_enable when b = conv_integer(wr_addr(5 downto 4)) else '0';
-	rd_data <= rd_d when b = conv_integer(rd_addr(5 downto 4))
-	  else (others => 'Z');
-	rd_tag <= rd_t when b = conv_integer(rd_addr(5 downto 4))
-	  else (others => 'Z');
-
-	data_iter: for i in 0 to 3 generate
-	data_a: DPR16X4A
-	port map (
-		DI0 => wr_data(i * 8 + 0), DI1 => wr_data(i * 8 + 1),
-		DI2 => wr_data(i * 8 + 2), DI3 => wr_data(i * 8 + 3),
-		DO0 => rd_d(i * 8 + 0), DO1 => rd_d(i * 8 + 1),
-		DO2 => rd_d(i * 8 + 2), DO3 => rd_d(i * 8 + 3),
-		WAD0 => wr_addr(0), WAD1 => wr_addr(1),
-		WAD2 => wr_addr(2), WAD3 => wr_addr(3),
-		RAD0 => rd_addr(0), RAD1 => rd_addr(1),
-		RAD2 => rd_addr(2), RAD3 => rd_addr(3),
-		WCK => clk, WRE => wr_e
-	);
-	data_b: DPR16X4B
-	port map (
-		DI0 => wr_data(i * 8 + 4), DI1 => wr_data(i * 8 + 5),
-		DI2 => wr_data(i * 8 + 6), DI3 => wr_data(i * 8 + 7),
-		DO0 => rd_d(i * 8 + 4), DO1 => rd_d(i * 8 + 5),
-		DO2 => rd_d(i * 8 + 6), DO3 => rd_d(i * 8 + 7),
-		WAD0 => wr_addr(0), WAD1 => wr_addr(1),
-		WAD2 => wr_addr(2), WAD3 => wr_addr(3),
-		RAD0 => rd_addr(0), RAD1 => rd_addr(1),
-		RAD2 => rd_addr(2), RAD3 => rd_addr(3),
-		WCK => clk, WRE => wr_e
-	);
-	end generate data_iter;
-
-	tag_iter: for i in 0 to 1 generate
-	tag_a: DPR16X4A
-	port map (
-		DI0 => wr_tag(i * 8 + 0), DI1 => wr_tag(i * 8 + 1),
-		DI2 => wr_tag(i * 8 + 2), DI3 => wr_tag(i * 8 + 3),
-		DO0 => rd_t(i * 8 + 0), DO1 => rd_t(i * 8 + 1),
-		DO2 => rd_t(i * 8 + 2), DO3 => rd_t(i * 8 + 3),
-		WAD0 => wr_addr(0), WAD1 => wr_addr(1),
-		WAD2 => wr_addr(2), WAD3 => wr_addr(3),
-		RAD0 => rd_addr(0), RAD1 => rd_addr(1),
-		RAD2 => rd_addr(2), RAD3 => rd_addr(3),
-		WCK => clk, WRE => wr_e
-	);
-	tag_b: DPR16X4B
-	port map (
-		DI0 => wr_tag(i * 8 + 4), DI1 => wr_tag(i * 8 + 5),
-		DI2 => wr_tag(i * 8 + 6), DI3 => wr_tag(i * 8 + 7),
-		DO0 => rd_t(i * 8 + 4), DO1 => rd_t(i * 8 + 5),
-		DO2 => rd_t(i * 8 + 6), DO3 => rd_t(i * 8 + 7),
-		WAD0 => wr_addr(0), WAD1 => wr_addr(1),
-		WAD2 => wr_addr(2), WAD3 => wr_addr(3),
-		RAD0 => rd_addr(0), RAD1 => rd_addr(1),
-		RAD2 => rd_addr(2), RAD3 => rd_addr(3),
-		WCK => clk, WRE => wr_e
-	);
-	end generate tag_iter;
+    bram_dp: entity work.bram_dp_x18
+    port map (
+	clk_a => clk, clk_b => clk,
+	ce_a => '1', ce_b => '0',
+	we_a => wr_enable, we_b => '0',
+	res => '0',
+	addr_a => addr, addr_b => (others => '0'),
+	data_in_a => to_bram(b * 18 + 17 downto b * 18),
+	data_in_b => (others => '0'),
+	data_out_a => from_bram(b * 18 + 17 downto b * 18),
+	data_out_b => open
+    );
     end generate block_iter;
 end Behavioral;
