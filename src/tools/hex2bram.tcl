@@ -142,7 +142,15 @@ while {[eof $bramfile] == 0} {
 	    set addrstep [expr $section * 16]
 	    for {set addr 0} {$addr < $endaddr} {incr addr $addrstep} {
 		for {set i 0} {$i < 32} {incr i} {
-		    switch $section {
+                    switch $section {
+		    2 {
+			set byte_addr [expr $addr + $seqn + $i]
+			set ivbuf($i) [peek $byte_addr]
+		    }
+		    4 {
+			set byte_addr [expr $addr + $seqn + $i * 2]
+			set ivbuf($i) [peek $byte_addr]
+		    }
 		    8 {
 			set byte_addr [expr $addr + $seqn + $i * 4]
 			set ivbuf($i) [peek $byte_addr]
