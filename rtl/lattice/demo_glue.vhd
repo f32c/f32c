@@ -43,7 +43,7 @@ entity glue is
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
-	C_PC_mask: std_logic_vector(31 downto 0) := x"880fffff";
+	C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff";
 
 	-- COP0 options
 	C_cop0_count: boolean := true;
@@ -64,7 +64,7 @@ entity glue is
 
 	-- SoC configuration options
 	C_cpus: integer := 1;
-	C_bram_size: string := "16k";
+	C_bram_size: integer := 2;
 	C_sram: boolean := true;
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_sio: boolean := true;
@@ -134,7 +134,7 @@ architecture Behavioral of glue is
 
     -- Block RAM
     signal imem_to_cpu, dmem_to_cpu: std_logic_vector(31 downto 0);
-    signal dmem_bram_enable: std_logic;
+    signal bram_i_ready, bram_d_ready, dmem_bram_enable: std_logic;
 
     -- I/O
     signal io_write: std_logic;
@@ -436,6 +436,7 @@ begin
     port map (
 	clk => clk, imem_addr_strobe => imem_addr_strobe(0),
 	imem_addr => imem_addr(0), imem_data_out => imem_to_cpu,
+	imem_data_ready => bram_i_ready, dmem_data_ready => bram_d_ready,
 	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write(0),
 	dmem_byte_sel => dmem_byte_sel(0), dmem_addr => dmem_addr(0),
 	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem(0)
@@ -478,7 +479,7 @@ begin
 		    dmem_data_ready(cpu) <= sram_ready(data_port);
 		    final_to_cpu_d(cpu) <= from_sram;
 		else
-		    dmem_data_ready(cpu) <= '1';
+		    dmem_data_ready(cpu) <= bram_d_ready;
 		    final_to_cpu_d(cpu) <= dmem_to_cpu; -- BRAM
 		end if;
 		-- CPU, instruction bus
@@ -489,7 +490,7 @@ begin
 		    imem_data_ready(cpu) <= '0';
 		    final_to_cpu_i(cpu) <= x"deadc0de"; -- XXX testing
 		else
-		    imem_data_ready(cpu) <= '1';
+		    imem_data_ready(cpu) <= bram_i_ready;
 		    final_to_cpu_i(cpu) <= imem_to_cpu; -- BRAM
 		end if;
 	    else -- CPU #1, CPU #2...
