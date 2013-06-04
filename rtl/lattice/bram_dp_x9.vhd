@@ -9,7 +9,6 @@ entity bram_dp_x9 is
 	clk_a, clk_b: in std_logic; 
 	ce_a, ce_b: in std_logic;
 	we_a, we_b: in std_logic; 
-	res: in std_logic; 
 	addr_a, addr_b: in std_logic_vector(10 downto 0); 
 	data_in_a, data_in_b: in std_logic_vector(8 downto 0); 
 	data_out_a, data_out_b: out std_logic_vector(8 downto 0)
@@ -80,9 +79,9 @@ begin
 	    ADB11 => addr_b(8), ADB12 => addr_b(9),
 	    ADB13 => addr_b(10),
 
-	    CEA => ce_a, CLKA => clk_a, WEA => we_a, RSTA => res, 
+	    CEA => ce_a, CLKA => clk_a, WEA => we_a, RSTA => '0', 
 	    CSA0 => '0', CSA1 => '0', CSA2 => '0',
-	    CEB => ce_b, CLKB => clk_b, WEB => we_b, RSTB => res, 
+	    CEB => ce_b, CLKB => clk_b, WEB => we_b, RSTB => '0', 
 	    CSB0 => '0', CSB1 => '0', CSB2 => '0'
 	);
 end Structure;
