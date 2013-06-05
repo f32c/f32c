@@ -117,7 +117,7 @@ begin
 
     imem_addr <= R_i_addr;
     imem_addr_strobe <= '1' when not iaddr_cacheable else R_i_strobe;
-    i_data <= icache_data_out when icache_line_valid else imem_data_in;
+    i_data <= icache_data_out when iaddr_cacheable else imem_data_in;
     instr_ready <= imem_data_ready when not iaddr_cacheable else
       '1' when icache_line_valid else '0';
 
