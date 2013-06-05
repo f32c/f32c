@@ -129,7 +129,7 @@ main ()
 #ifdef BRAM
   Number_Of_Runs = 1000000; /* code in (fast) block RAM */
 #else
-  Number_Of_Runs = 10000; /* code in (slow) external SRAM */
+  Number_Of_Runs = 200000; /* code in (slow) external SRAM */
 #endif
 #endif /* NOTYET */
   printf ("\n%d runs...\n", Number_Of_Runs);
