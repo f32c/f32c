@@ -271,11 +271,11 @@ line(int x0, int y0, int x1, int y1, int color)
 	if (fb_mode > 1)
 		return;
 
+	plotfn(x0, y0, color, fb);
 	for (;;) {
-		plotfn(x0, y0, color, fb);
-		e2 = 2 * err;
 		if (x0 == x1 && y0 == y1)
 			break;
+		e2 = 2 * err;
 		if (e2 >= dy) {
 			err += dy;
 			x0 += sx;
@@ -284,6 +284,7 @@ line(int x0, int y0, int x1, int y1, int color)
 			err += dx;
 			y0 += sy;
 		}
+		plotfn(x0, y0, color, fb);
 	}
 }
 
