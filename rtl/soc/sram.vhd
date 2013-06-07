@@ -31,10 +31,10 @@ end sram;
 architecture Structure of sram is
     -- State machine constants
     constant C_phase_idle: integer := 0;
-    constant C_phase_read_upper_half: integer := 1 + C_wait_cycles;
-    constant C_phase_read_terminate: integer := 1 + C_wait_cycles * 2;
+    constant C_phase_read_upper_half: integer := C_wait_cycles;
+    constant C_phase_read_terminate: integer := C_wait_cycles * 2;
     constant C_phase_write_upper_half: integer := 1 + C_wait_cycles;
-    constant C_phase_write_terminate: integer := 2 + C_wait_cycles * 2;
+    constant C_phase_write_terminate: integer := 1 + C_wait_cycles * 2;
 
     -- Physical interface registers
     signal R_a: std_logic_vector(18 downto 0);		-- to SRAM
@@ -194,8 +194,7 @@ begin
     end process;
 
     sram_d <= R_d;
-    -- XXX ISSI hack
-    sram_a <= R_a(7 downto 1) & R_a(12 downto 8) & R_a(18 downto 13) & R_a(0);
+    sram_a <= R_a;
     sram_wel <= R_wel;
     sram_lbl <= R_lbl;
     sram_ubl <= R_ubl;
