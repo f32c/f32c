@@ -72,8 +72,8 @@ entity glue is
 	C_flash: boolean := true;
 	C_sdcard: boolean := true;
 	C_pcmdac: boolean := true;
-	C_framebuffer: boolean := true;
-	C_ddsfm: boolean := true
+	C_framebuffer: boolean := false; -- true;
+	C_ddsfm: boolean := false
     );
     port (
 	clk_25m: in std_logic;

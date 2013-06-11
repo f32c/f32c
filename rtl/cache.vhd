@@ -56,10 +56,13 @@ end cache;
 architecture x of cache is
     signal i_addr: std_logic_vector(31 downto 2);
     signal i_data: std_logic_vector(31 downto 0);
+    signal icache_addr: std_logic_vector(11 downto 2);
     signal icache_data_in, icache_data_out: std_logic_vector(31 downto 0);
     signal icache_tag_in, icache_tag_out: std_logic_vector(11 downto 0);
     signal iaddr_cacheable, icache_line_valid: boolean;
     signal i_strobe, icache_write, instr_ready: std_logic;
+    signal flush_i_line, flush_d_line: std_logic;
+
     signal R_i_strobe: std_logic;
     signal R_i_addr: std_logic_vector(31 downto 2);
 
@@ -69,7 +72,7 @@ begin
 
     pipeline: entity work.pipeline
     generic map (
-	C_icache => true,
+	C_cache => true,
 	C_cpuid => C_cpuid, C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
@@ -92,6 +95,7 @@ begin
 	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
 	dmem_data_in => dmem_data_in, dmem_data_out => dmem_data_out,
 	dmem_data_ready => dmem_data_ready,
+	flush_i_line => flush_i_line, flush_d_line => flush_d_line,
 	trace_addr => trace_addr, trace_data => trace_data
     );
 
@@ -107,7 +111,7 @@ begin
         clk_a => clk, clk_b => clk,
         ce_a => '1', ce_b => '0',
         we_a => icache_write, we_b => '0',
-        addr_a => i_addr(11 downto 2), addr_b => (others => '0'),
+        addr_a => icache_addr(11 downto 2), addr_b => (others => '0'),
         data_in_a => to_i_bram(b * 18 + 17 downto b * 18),
         data_in_b => (others => '0'),
         data_out_a => from_i_bram(b * 18 + 17 downto b * 18),
@@ -121,11 +125,14 @@ begin
     instr_ready <= imem_data_ready when not iaddr_cacheable else
       '1' when icache_line_valid else '0';
 
-    --iaddr_cacheable <= R_i_addr(31 downto 30) = "10" and R_i_addr(27) = '0';
-    iaddr_cacheable <= true;
-    icache_tag_in <= R_i_addr(31) & "00" & '1' & R_i_addr(19 downto 12);
-    icache_line_valid <= iaddr_cacheable and icache_tag_in = icache_tag_out;
-    icache_write <= imem_data_ready when R_i_strobe = '1' else '0';
+    iaddr_cacheable <= R_i_addr(31 downto 30) = "10" and R_i_addr(27) = '0';
+    icache_write <= imem_data_ready when R_i_strobe = '1' else flush_i_line;
+    icache_tag_in <=
+      not flush_i_line & R_i_addr(31) & "00" & R_i_addr(19 downto 12);
+    icache_line_valid <= iaddr_cacheable and icache_tag_out(11) = '1' and
+      icache_tag_in(10 downto 0) = icache_tag_out(10 downto 0);
+    icache_addr <= i_addr(11 downto 2) when flush_i_line = '0' else
+      dmem_addr(11 downto 2);
 
     process(clk)
     begin
