@@ -48,12 +48,10 @@ entity pipeline is
 
 	-- COP0 options
 	C_clk_freq: integer;
+	C_cache: boolean;
 	C_cpuid: integer := 0;
 	C_cop0_count: boolean;
 	C_cop0_config: boolean;
-
-	-- Cache interface
-	C_icache: boolean := false;
 
 	-- optimization options
 	C_result_forwarding: boolean := true;
@@ -79,6 +77,7 @@ entity pipeline is
 	dmem_data_in: in std_logic_vector(31 downto 0);
 	dmem_data_out: out std_logic_vector(31 downto 0);
 	dmem_data_ready: in std_logic;
+	flush_i_line, flush_d_line: out std_logic;
 	intr: in std_logic;
 	-- debugging only
 	trace_addr: in std_logic_vector(5 downto 0);
@@ -137,6 +136,7 @@ architecture Behavioral of pipeline is
     signal ID_jump_register_hazard: boolean;
     signal ID_seb_seh_cycle: boolean;
     signal ID_seb_seh_select: std_logic;
+    signal ID_flush_i_line, ID_flush_d_line: std_logic;
     -- boundary to stage 3
     signal ID_EX_bpredict_score: std_logic_vector(1 downto 0);
     signal ID_EX_writeback_addr, ID_EX_cop0_addr: std_logic_vector(4 downto 0);
@@ -162,6 +162,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_latency: std_logic_vector(1 downto 0);
     signal ID_EX_seb_seh_cycle: boolean;
     signal ID_EX_seb_seh_select: std_logic;
+    signal ID_EX_flush_i_line, ID_EX_flush_d_line: std_logic;
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal ID_EX_PC: std_logic_vector(31 downto 2); -- debugging only
     signal ID_EX_sign_extend_debug: std_logic; -- debugging only
@@ -208,6 +209,7 @@ architecture Behavioral of pipeline is
     signal EX_MEM_mem_write: std_logic;
     signal EX_MEM_mem_byte_sel: std_logic_vector(3 downto 0);
     signal EX_MEM_op_major: std_logic_vector(1 downto 0);
+    signal EX_MEM_flush_i_line, EX_MEM_flush_d_line: std_logic;
     signal EX_MEM_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal EX_MEM_PC: std_logic_vector(31 downto 2); -- debugging only
 	
@@ -317,7 +319,7 @@ begin
       imem_data_in(23 downto 16) & imem_data_in(31 downto 24) when C_big_endian
       else imem_data_in;
 
-    imem_addr <= IF_PC_ext_next when C_icache else IF_PC;
+    imem_addr <= IF_PC_ext_next when C_cache else IF_PC;
     imem_addr_strobe <= not R_reset; -- XXX revisit!!!
 
     IF_data_ready <= imem_data_ready = '1';
@@ -404,6 +406,7 @@ begin
     -- instruction decoder
     idecode: entity work.idecode
     generic map (
+	C_cache => C_cache,
 	C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend,
 	C_movn_movz => C_movn_movz
@@ -424,8 +427,8 @@ begin
 	mem_write => ID_mem_write, mem_size => ID_mem_size,
 	mem_read_sign_extend => ID_mem_read_sign_extend,
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
-	seb_seh_cycle => ID_seb_seh_cycle,
-	seb_seh_select => ID_seb_seh_select
+	seb_seh_cycle => ID_seb_seh_cycle, seb_seh_select => ID_seb_seh_select,
+	flush_i_line => ID_flush_i_line, flush_d_line => ID_flush_d_line
     );
 
     -- three- or four-ported register file: 2(3) async reads, 1 sync write
@@ -545,6 +548,10 @@ begin
 		    if true or C_debug then -- XXX mult depends on C_debug!!!
 			ID_EX_instruction <= x"00000001"; -- debugging only
 		    end if;
+		    if C_cache then
+			ID_EX_flush_i_line <= '0';
+			ID_EX_flush_d_line <= '0';
+		    end if;
 		    -- schedule forwarding of memory read
 		    ID_EX_fwd_ex_reg1 <= false;
 		    ID_EX_fwd_ex_reg2 <= false;
@@ -569,6 +576,10 @@ begin
 		    end if;
 		    if true or C_debug then -- XXX mult depends on C_debug!!!
 			ID_EX_instruction <= x"00000000"; -- debugging only
+		    end if;
+		    if C_cache then
+			ID_EX_flush_i_line <= '0';
+			ID_EX_flush_d_line <= '0';
 		    end if;
 		    -- Don't care bits (optimization hints)
 		    ID_EX_mem_write <= '-'; -- XXX is this safe?
@@ -616,6 +627,10 @@ begin
 		    ID_EX_bpredict_score <= IF_ID_bpredict_score;
 		    ID_EX_bpredict_index <= IF_ID_bpredict_index;
 		    ID_EX_latency <= ID_latency;
+		    if C_cache then
+			ID_EX_flush_i_line <= ID_flush_i_line;
+			ID_EX_flush_d_line <= ID_flush_d_line;
+		    end if;
 		    -- schedule result forwarding
 		    ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
 		    ID_EX_fwd_ex_reg2 <= ID_fwd_ex_reg2;
@@ -802,6 +817,10 @@ begin
 		EX_MEM_writeback_addr <= "00000";
 		EX_MEM_mem_cycle <= '0';
 		EX_MEM_latency <= '0';
+		if C_cache then
+		    EX_MEM_flush_i_line <= '0';
+		    EX_MEM_flush_d_line <= '0';
+		end if;
 		-- debugging only
 		if C_debug then
 		    EX_MEM_instruction <= x"00000000";
@@ -855,6 +874,10 @@ begin
 		end if;
 		EX_MEM_latency <= ID_EX_latency(1);
 		EX_MEM_mem_read_sign_extend <= ID_EX_mem_read_sign_extend;
+		if C_cache then
+		    EX_MEM_flush_i_line <= ID_EX_flush_i_line;
+		    EX_MEM_flush_d_line <= ID_EX_flush_d_line;
+		end if;
 		-- debugging only
 		if C_debug then
 		    EX_MEM_instruction <= ID_EX_instruction;
@@ -937,6 +960,8 @@ begin
       EX_MEM_mem_data_out(15 downto 8) & EX_MEM_mem_data_out(23 downto 16) &
       EX_MEM_mem_data_out(31 downto 24) when C_big_endian
       else EX_MEM_mem_data_out;
+    flush_i_line <= EX_MEM_flush_i_line;
+    flush_d_line <= EX_MEM_flush_d_line;
 
     -- memory output must be externally registered (it is with internal BRAM)
     -- inbound data word: big / little endian
