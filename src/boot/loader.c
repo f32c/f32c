@@ -11,7 +11,7 @@ static char *prompt = "\r\nf32c/le> ";
 #error "Unsupported byte order."
 #endif
 
-#define	BOOTADDR	0x0200
+#define	BOOTADDR	0x0220
 
 
 void *base_addr = (void *) BOOTADDR;
@@ -49,9 +49,7 @@ _start(void)
 	char *cp;
 
 	__asm __volatile__(
-		".set noreorder;"
-		"nop;"			/* just in case... */
-		".set reorder;"
+		"move $31, $0;"
 	);
 
 	if (base_addr) {
@@ -62,13 +60,22 @@ boot:
 		".set noreorder;"
 		"lui $4, 0x8000;"	/* stack mask */
 		"lui $5, 0x0010;"	/* top of the initial stack */
-		"move $31, $0;"
 		"and $29, %0, $4;"	/* clear low bits of the stack */
 		"jr %0;"
 		"or $29, $29, $5;"	/* set stack */
 		".set reorder;"
 		: 
 		: "r" (cp)
+		);
+	}
+
+	/* Flush I-cache, clear DRAM */
+	for (cp = (void *) 0x80000000; cp < (char *) 0x80100000;  cp += 4) {
+		__asm (
+			"cache	0, 0(%0);"
+			"sw	$0, 0(%0)"
+			:
+			: "r" (cp)
 		);
 	}
 
