@@ -58,7 +58,7 @@ architecture x of cache is
     signal i_data: std_logic_vector(31 downto 0);
     signal icache_addr: std_logic_vector(11 downto 2);
     signal icache_data_in, icache_data_out: std_logic_vector(31 downto 0);
-    signal icache_tag_in, icache_tag_out: std_logic_vector(11 downto 0);
+    signal icache_tag_in, icache_tag_out: std_logic_vector(12 downto 0);
     signal iaddr_cacheable, icache_line_valid: boolean;
     signal i_strobe, icache_write, instr_ready: std_logic;
     signal flush_i_line, flush_d_line: std_logic;
@@ -66,7 +66,7 @@ architecture x of cache is
     signal R_i_strobe: std_logic;
     signal R_i_addr: std_logic_vector(31 downto 2);
 
-    signal to_i_bram, from_i_bram: std_logic_vector(3 * 18 - 1 downto 0);
+    signal to_i_bram, from_i_bram: std_logic_vector(44 downto 0);
 
 begin
 
@@ -100,13 +100,25 @@ begin
     );
 
     icache_data_out <= from_i_bram(31 downto 0);
-    icache_tag_out <= from_i_bram(43 downto 32);
+    icache_tag_out <= from_i_bram(44 downto 32);
     to_i_bram(31 downto 0) <= imem_data_in;
-    to_i_bram(43 downto 32) <= icache_tag_in;
+    to_i_bram(44 downto 32) <= icache_tag_in;
 
-    i_block_iter: for b in 0 to 2 generate
+    tag_dp_bram: entity work.bram_dp_x9
+    port map (
+        clk_a => clk, clk_b => clk,
+        ce_a => '1', ce_b => '0',
+        we_a => icache_write, we_b => '0',
+        addr_a => '0' & icache_addr(11 downto 2), addr_b => (others => '0'),
+        data_in_a => to_i_bram(44 downto 36),
+        data_in_b => (others => '0'),
+        data_out_a => from_i_bram(44 downto 36),
+        data_out_b => open
+    );
+
+    i_block_iter: for b in 0 to 1 generate
     begin
-    i_bram_dp: entity work.bram_dp_x18
+    i_dp_bram: entity work.bram_dp_x18
     port map (
         clk_a => clk, clk_b => clk,
         ce_a => '1', ce_b => '0',
@@ -125,12 +137,12 @@ begin
     instr_ready <= imem_data_ready when not iaddr_cacheable else
       '1' when icache_line_valid else '0';
 
-    iaddr_cacheable <= R_i_addr(31 downto 30) = "10" and R_i_addr(27) = '0';
+    iaddr_cacheable <= true; -- XXX kseg0: R_i_addr(31 downto 29) = "100";
     icache_write <= imem_data_ready when R_i_strobe = '1' else flush_i_line;
     icache_tag_in <=
-      not flush_i_line & R_i_addr(31) & "00" & R_i_addr(19 downto 12);
-    icache_line_valid <= iaddr_cacheable and icache_tag_out(11) = '1' and
-      icache_tag_in(10 downto 0) = icache_tag_out(10 downto 0);
+      not flush_i_line & R_i_addr(31) & "000" & R_i_addr(19 downto 12);
+    icache_line_valid <= iaddr_cacheable and icache_tag_out(12) = '1' and
+      icache_tag_in(11 downto 0) = icache_tag_out(11 downto 0);
     icache_addr <= i_addr(11 downto 2) when flush_i_line = '0' else
       dmem_addr(11 downto 2);
 
