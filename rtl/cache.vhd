@@ -56,7 +56,6 @@ end cache;
 architecture x of cache is
     signal i_addr: std_logic_vector(31 downto 2);
     signal i_data: std_logic_vector(31 downto 0);
-    signal icache_addr: std_logic_vector(11 downto 2);
     signal icache_data_in, icache_data_out: std_logic_vector(31 downto 0);
     signal icache_tag_in, icache_tag_out: std_logic_vector(12 downto 0);
     signal iaddr_cacheable, icache_line_valid: boolean;
@@ -106,28 +105,29 @@ begin
 
     tag_dp_bram: entity work.bram_dp_x9
     port map (
-        clk_a => clk, clk_b => clk,
-        ce_a => '1', ce_b => '0',
-        we_a => icache_write, we_b => '0',
-        addr_a => '0' & icache_addr(11 downto 2), addr_b => (others => '0'),
-        data_in_a => to_i_bram(44 downto 36),
-        data_in_b => (others => '0'),
-        data_out_a => from_i_bram(44 downto 36),
-        data_out_b => open
+	clk_a => clk, clk_b => clk,
+	ce_a => '1', ce_b => '1',
+	we_a => icache_write, we_b => flush_i_line,
+	addr_a => '0' & i_addr(11 downto 2),
+	addr_b => '0' & dmem_addr(11 downto 2),
+	data_in_a => to_i_bram(44 downto 36),
+	data_in_b => (others => '0'),
+	data_out_a => from_i_bram(44 downto 36),
+	data_out_b => open
     );
 
     i_block_iter: for b in 0 to 1 generate
     begin
     i_dp_bram: entity work.bram_dp_x18
     port map (
-        clk_a => clk, clk_b => clk,
-        ce_a => '1', ce_b => '0',
-        we_a => icache_write, we_b => '0',
-        addr_a => icache_addr(11 downto 2), addr_b => (others => '0'),
-        data_in_a => to_i_bram(b * 18 + 17 downto b * 18),
-        data_in_b => (others => '0'),
-        data_out_a => from_i_bram(b * 18 + 17 downto b * 18),
-        data_out_b => open
+	clk_a => clk, clk_b => clk,
+	ce_a => '1', ce_b => '0',
+	we_a => icache_write, we_b => '0',
+	addr_a => i_addr(11 downto 2), addr_b => (others => '0'),
+	data_in_a => to_i_bram(b * 18 + 17 downto b * 18),
+	data_in_b => (others => '0'),
+	data_out_a => from_i_bram(b * 18 + 17 downto b * 18),
+	data_out_b => open
     );
     end generate i_block_iter;
 
@@ -143,8 +143,6 @@ begin
       not flush_i_line & R_i_addr(31) & "000" & R_i_addr(19 downto 12);
     icache_line_valid <= iaddr_cacheable and icache_tag_out(12) = '1' and
       icache_tag_in(11 downto 0) = icache_tag_out(11 downto 0);
-    icache_addr <= i_addr(11 downto 2) when flush_i_line = '0' else
-      dmem_addr(11 downto 2);
 
     process(clk)
     begin
