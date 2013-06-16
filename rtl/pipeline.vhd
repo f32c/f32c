@@ -512,7 +512,8 @@ begin
 
     -- branch prediction
     ID_predict_taken <= C_branch_prediction and
-      ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
+      ID_branch_cycle and IF_ID_bpredict_score(1) = '1'
+      and not EX_exception_pending;
 
     -- compute jump target
     ID_jump_target <=
@@ -763,7 +764,7 @@ begin
 
     -- branch or not?
     process(ID_EX_branch_cycle, ID_EX_branch_condition, EX_from_alu_equal,
-      EX_eff_reg1)
+      EX_eff_reg1, EX_exception_pending)
     begin
 	if ID_EX_branch_cycle then
 	    case ID_EX_branch_condition is
@@ -781,9 +782,15 @@ begin
 	else
 	    EX_take_branch <= false;
 	end if;
+	if EX_exception_pending then
+	    EX_take_branch <= true;
+	end if;
     end process;
 
-    EX_branch_target <= IF_ID_PC_4 when ID_EX_predict_taken
+    EX_branch_target <=
+      EX_exception_target(31 downto 2) and C_PC_mask(31 downto 2)
+      when EX_exception_pending
+      else IF_ID_PC_4 when ID_EX_predict_taken
       else ID_EX_branch_target;
 
     -- Exceptions / interrupts
@@ -799,8 +806,7 @@ begin
 	    if EX_exception_pending or
 	      (MEM_running and (MEM_cancel_EX or not EX_running)) then
 		if EX_exception_pending then
-		    EX_MEM_branch_target <= EX_exception_target(31 downto 2)
-		     and C_PC_mask(31 downto 2);
+		    EX_MEM_branch_target <= EX_branch_target;
 		    EX_MEM_take_branch <= true;
 		    -- XXX testing only - ei should be set elsewhere
 		    if R_reset = '1' then
