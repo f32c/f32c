@@ -54,15 +54,14 @@ entity glue is
 
 	-- These may negatively influence timing closure:
 	C_movn_movz: boolean := false; -- true: +16 LUT4, -DMIPS, incomplete
-	C_fast_ID: boolean := true; -- false: +7 LUT4, -Fmax
 
 	-- debugging options
 	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
 
 	-- SoC configuration options
-	C_mem_size: string := "16k";
+	C_bram_size: integer := 16;
 	C_sram: boolean := true;
-	C_sram_wait_cycles: std_logic_vector := x"5"; -- ISSI, OK do 87.5 MHz
+	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_sio: boolean := true;
 	C_gpio: boolean := true;
 	C_flash: boolean := true;
@@ -154,7 +153,6 @@ begin
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
-	C_fast_ID => C_fast_ID,
 	C_register_technology => C_register_technology,
 	-- debugging only
 	C_debug => C_debug
@@ -332,7 +330,7 @@ begin
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
     bram: entity work.bram
     generic map (
-	C_mem_size => C_mem_size
+	C_mem_size => C_bram_size
     )
     port map (
 	clk => clk, imem_addr_strobe => imem_addr_strobe,
@@ -351,7 +349,9 @@ begin
     imem_data_ready <= sram_instr_ready when sram_instr_strobe = '1' else '1';
     sram: entity work.sram
     generic map (
-	C_sram_wait_cycles => C_sram_wait_cycles
+	C_ports => 2,
+	C_wait_cycles => C_sram_wait_cycles,
+	C_pipelined_read => not C_debug
     )
     port map (
 	clk => clk, sram_a => sram_a, sram_d => sram_d,

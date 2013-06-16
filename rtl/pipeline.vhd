@@ -48,7 +48,7 @@ entity pipeline is
 
 	-- COP0 options
 	C_clk_freq: integer;
-	C_cache: boolean;
+	C_cache: boolean := false;
 	C_cpuid: integer := 0;
 	C_cop0_count: boolean;
 	C_cop0_config: boolean;
@@ -58,7 +58,7 @@ entity pipeline is
 	C_branch_prediction: boolean := true;
 	C_bp_global_depth: integer := 6; -- range 2 to 12
 	C_load_aligner: boolean := true;
-	C_reg_IF_PC: boolean := true;
+	C_reg_IF_PC: boolean := false;
 	C_register_technology: string := "unknown";
 
 	-- debugging options

@@ -71,7 +71,7 @@ begin
 
     pipeline: entity work.pipeline
     generic map (
-	C_cache => true,
+	C_cache => true, C_reg_IF_PC => true,
 	C_cpuid => C_cpuid, C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
