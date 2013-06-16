@@ -12,7 +12,8 @@ entity sram is
     generic (
 	C_ports: integer;
 	C_prio_port: integer := -1;
-	C_wait_cycles: integer
+	C_wait_cycles: integer;
+	C_pipelined_read: boolean
     );
     port (
 	clk: in std_logic;
@@ -104,8 +105,16 @@ begin
 
     process(clk)
     begin
-	if falling_edge(clk) then
+	if C_pipelined_read and falling_edge(clk) then
 	    if R_phase = C_phase_read_upper_half + 1 then
+		R_bus_out(15 downto 0) <= sram_d;
+	    else
+		R_bus_out(31 downto 16) <= sram_d;
+	    end if;
+	end if;
+
+	if not C_pipelined_read and rising_edge(clk) then
+	    if R_phase = C_phase_read_upper_half then
 		R_bus_out(15 downto 0) <= sram_d;
 	    else
 		R_bus_out(31 downto 16) <= sram_d;

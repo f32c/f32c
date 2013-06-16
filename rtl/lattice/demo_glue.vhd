@@ -547,7 +547,8 @@ begin
     generic map (
 	C_ports => 2 * C_cpus + 1,
 	C_prio_port => 2 * C_cpus, -- framebuffer
-	C_wait_cycles => C_sram_wait_cycles
+	C_wait_cycles => C_sram_wait_cycles,
+	C_pipelined_read => not C_debug
     )
     port map (
 	clk => clk, sram_a => sram_a, sram_d => sram_d,
