@@ -58,7 +58,7 @@ entity glue is
 	C_movn_movz: boolean := false; -- true: +5 LUT4, -DMIPS
 
 	-- SoC configuration options
-	C_mem_size: string := "16k";
+	C_mem_size: integer := 16;
 	C_sio: boolean := true
 
 	--
