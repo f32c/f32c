@@ -138,9 +138,8 @@ begin
       '1' when icache_line_valid else '0';
 
     iaddr_cacheable <= true; -- XXX kseg0: R_i_addr(31 downto 29) = "100";
-    icache_write <= imem_data_ready when R_i_strobe = '1' else flush_i_line;
-    icache_tag_in <=
-      not flush_i_line & R_i_addr(31) & "000" & R_i_addr(19 downto 12);
+    icache_write <= imem_data_ready when R_i_strobe = '1' else '0';
+    icache_tag_in <= '1' & R_i_addr(31) & "000" & R_i_addr(19 downto 12);
     icache_line_valid <= iaddr_cacheable and icache_tag_out(12) = '1' and
       icache_tag_in(11 downto 0) = icache_tag_out(11 downto 0);
 
