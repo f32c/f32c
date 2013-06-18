@@ -1092,8 +1092,8 @@ begin
 	"10" & conv_std_logic_vector(500, 13) when 166,
 	"00" & conv_std_logic_vector(C_clk_freq, 13) when others;
     R_cop0_config(15) <= '1' when C_big_endian else '0';
-    R_cop0_config(14 downto 8) <= (others => '-');
-    R_cop0_config(7 downto 0) <= conv_std_logic_vector(C_cpuid, 8);
+    R_cop0_config(14 downto 4) <= (others => '-');
+    R_cop0_config(3 downto 0) <= conv_std_logic_vector(C_cpuid, 4);
     end generate;
     R_cop0_config <= (others => '-') when not C_cop0_config;
 
