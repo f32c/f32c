@@ -63,7 +63,7 @@ entity glue is
 	C_prng_imem_delay: boolean := false;
 
 	-- SoC configuration options
-	C_cpus: integer := 1;
+	C_cpus: integer := 2;
 	C_bram_size: integer := 2;
 	C_sram: boolean := true;
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
@@ -153,6 +153,9 @@ architecture Behavioral of glue is
     signal R_dac_in_l, R_dac_in_r: std_logic_vector(15 downto 2);
     signal R_dac_acc_l, R_dac_acc_r: std_logic_vector(16 downto 2);
 
+    -- CPU reset control
+    signal R_cpu_reset: std_logic_vector(15 downto 0) := x"fffe";
+
     -- debugging only
     signal trace_addr: f32c_debug_addr;
     signal trace_data: f32c_data_bus;
@@ -189,7 +192,7 @@ begin
     G_CPU: for i in 0 to (C_cpus - 1) generate
     begin
     intr(i) <= '0';
-    res(i) <= sw(i);
+    res(i) <= sw(i) or R_cpu_reset(i) when C_debug else R_cpu_reset(i);
     cpu: entity work.cache
     generic map (
 	C_cpuid => i, C_clk_freq => C_clk_freq,
@@ -302,6 +305,7 @@ begin
     -- 0x8*******: (4B, RW) * SRAM
     -- 0xf*****00: (4B, RW) * GPIO (LED, switches/buttons)
     -- 0xf*****04: (4B, RW) * SIO
+    -- 0xf*****08: (1B, WR) * CPU reset bitmap
     -- 0xf*****0c: (4B, WR) * PCM signal
     -- 0xf*****10: (1B, RW) * SPI Flash
     -- 0xf*****14: (1B, RW) * SPI MicroSD
@@ -353,6 +357,10 @@ begin
 	    -- GPIO
 	    if C_gpio and io_addr(4 downto 2) = "000" then
 		R_led <= cpu_to_io(7 downto 0);
+	    end if;
+	    -- CPU reset control
+	    if C_cpus /= 1 and io_addr(4 downto 2) = "010" then
+		R_cpu_reset <= cpu_to_io(15 downto 0);
 	    end if;
 	    -- PCMDAC
 	    if C_pcmdac and io_addr(4 downto 2) = "011" then
@@ -516,7 +524,8 @@ begin
 		    final_to_cpu_i(cpu) <= from_sram;
 		else
 		    -- XXX assert address eror signal?
-		    imem_data_ready(cpu) <= '1';
+		    -- XXX hack for avoiding a deadlock in i-cache FSM
+		    imem_data_ready(cpu) <= imem_addr_strobe(cpu);
 		    final_to_cpu_i(cpu) <= (others => '-');
 		end if;
 	    end if;
