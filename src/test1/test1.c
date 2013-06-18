@@ -134,8 +134,8 @@ main(void)
 	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
 	freq_khz = ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1);
 
-	printf("f32c @ %d.%03d MHz, code running from ",
-	    freq_khz / 1000, freq_khz % 1000);
+	printf("f32c @ %d.%03d MHz, CPU #%d, code running from ",
+	    freq_khz / 1000, freq_khz % 1000, tmp & 0xf);
 #ifdef BRAM
 	printf("FPGA block RAM.\n\n");
 #else
@@ -241,7 +241,7 @@ slika:
 			if (res == ' ')
 				goto switch_mode;
 			RDTSC(tmp);
-		} while (res != ' ' && tmp - start < freq_khz * 1000);
+		} while (res != ' ' && tmp - start < freq_khz * 5000);
 	}
 #endif
 }
