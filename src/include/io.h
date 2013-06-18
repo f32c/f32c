@@ -16,6 +16,7 @@
 #define	IO_SIO_BYTE	IO_ADDR(0x04)	/* byte, RW */
 #define	IO_SIO_STATUS	IO_ADDR(0x05)	/* byte, RD */
 #define	IO_SIO_BAUD	IO_ADDR(0x06)	/* half, WR */
+#define	IO_CPU_RESET	IO_ADDR(0x08)	/* byte, WR */
 #define	IO_PCM_OUT	IO_ADDR(0x0c)	/* word, WR */
 #define	IO_SPI_FLASH	IO_ADDR(0x10)	/* byte, RW */
 #define	IO_SPI_SDCARD	IO_ADDR(0x14)	/* byte, RW */
