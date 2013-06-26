@@ -584,18 +584,18 @@ begin
 		    end if;
 		    -- Don't care bits (optimization hints)
 		    ID_EX_mem_write <= '-'; -- XXX is this safe?
-		    ID_EX_reg1_data <= "--------------------------------";
-		    ID_EX_reg2_data <= "--------------------------------";
-		    ID_EX_alu_op2 <= "--------------------------------";
-		    ID_EX_immediate <= "--------------------------------";
-		    ID_EX_cop0_addr <= "-----";
-		    ID_EX_op_major <= "--";
-		    ID_EX_op_minor <= "---";
-		    ID_EX_mem_size <= "--";
-		    ID_EX_branch_condition <= "---";
-		    ID_EX_bpredict_score <= "--";
-		    ID_EX_bpredict_index <= "-------------";
-		    ID_EX_latency <= "--";
+		    ID_EX_reg1_data <= (others => '-');
+		    ID_EX_reg2_data <= (others => '-');
+		    ID_EX_alu_op2 <= (others => '-');
+		    ID_EX_immediate <= (others => '-');
+		    ID_EX_cop0_addr <= (others => '-');
+		    ID_EX_op_major <= (others => '-');
+		    ID_EX_op_minor <= (others => '-');
+		    ID_EX_mem_size <= (others => '-');
+		    ID_EX_branch_condition <= (others => '-');
+		    ID_EX_bpredict_score <= (others => '-');
+		    ID_EX_bpredict_index <= (others => '-');
+		    ID_EX_latency <= (others => '-');
 		else
 		    -- propagate the next instruction from ID to EX stage
 		    ID_EX_reg1_data <= ID_reg1_eff_data;
@@ -760,7 +760,7 @@ begin
     EX_from_cop0 <=
       R_cop0_count when MIPS_COP0_COUNT,
       R_cop0_config when MIPS_COP0_CONFIG,
-      "--------------------------------" when others;
+      (others => '-') when others;
 
     -- branch or not?
     process(ID_EX_branch_cycle, ID_EX_branch_condition, EX_from_alu_equal,
@@ -1076,9 +1076,12 @@ begin
 	if rising_edge(clk) then
 	    R_reset <= reset;
 	    R_intr <= intr and R_cop0_ei;
-	    R_cop0_count <= R_cop0_count + 1;
+	    if C_cop0_count then
+		R_cop0_count <= R_cop0_count + 1;
+	    end if;
 	end if;
     end process;
+    R_cop0_count <= (others => '-') when not C_cop0_count; 
 
     -- R_cop0_config
     G_cop0_config:
