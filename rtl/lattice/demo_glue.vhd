@@ -132,6 +132,8 @@ architecture Behavioral of glue is
     signal to_sram: sram_port_multi;
     signal sram_ready: sram_ready_multi;
     signal from_sram: std_logic_vector(31 downto 0);
+    signal snoop_cycle: std_logic;
+    signal snoop_addr: std_logic_vector(31 downto 2);
 
     -- Block RAM
     signal imem_to_cpu, dmem_to_cpu: std_logic_vector(31 downto 0);
@@ -219,6 +221,7 @@ begin
 	dmem_write => dmem_write(i), dmem_byte_sel => dmem_byte_sel(i),
 	dmem_data_in => final_to_cpu_d(i), dmem_data_out => cpu_to_dmem(i),
 	dmem_data_ready => dmem_data_ready(i),
+	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
 	trace_addr => trace_addr(i), trace_data => trace_data(i)
     );
     end generate;
@@ -565,6 +568,7 @@ begin
 	clk => clk, sram_a => sram_a, sram_d => sram_d,
 	sram_wel => sram_wel, sram_lbl => sram_lbl, sram_ubl => sram_ubl,
 	data_out => from_sram,
+	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
 	-- Multi-port connections:
 	bus_in => to_sram, ready_out => sram_ready
     );

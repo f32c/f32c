@@ -78,6 +78,8 @@ entity pipeline is
 	dmem_data_in: in std_logic_vector(31 downto 0);
 	dmem_data_out: out std_logic_vector(31 downto 0);
 	dmem_data_ready: in std_logic;
+	snoop_cycle: in std_logic;
+	snoop_addr: in std_logic_vector(31 downto 2);
 	flush_i_line, flush_d_line: out std_logic;
 	intr: in std_logic;
 	-- debugging only
