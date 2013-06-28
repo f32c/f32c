@@ -139,6 +139,7 @@ architecture Behavioral of pipeline is
     signal ID_jump_register_hazard: boolean;
     signal ID_seb_seh_cycle: boolean;
     signal ID_seb_seh_select: std_logic;
+    signal ID_ll, ID_sc: boolean;
     signal ID_flush_i_line, ID_flush_d_line: std_logic;
     -- boundary to stage 3
     signal ID_EX_bpredict_score: std_logic_vector(1 downto 0);
@@ -165,6 +166,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_latency: std_logic_vector(1 downto 0);
     signal ID_EX_seb_seh_cycle: boolean;
     signal ID_EX_seb_seh_select: std_logic;
+    signal ID_EX_ll, ID_EX_sc: boolean;
     signal ID_EX_flush_i_line, ID_EX_flush_d_line: std_logic;
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal ID_EX_PC: std_logic_vector(31 downto 2); -- debugging only
@@ -213,6 +215,8 @@ architecture Behavioral of pipeline is
     signal EX_MEM_mem_byte_sel: std_logic_vector(3 downto 0);
     signal EX_MEM_op_major: std_logic_vector(1 downto 0);
     signal EX_MEM_flush_i_line, EX_MEM_flush_d_line: std_logic;
+    signal EX_MEM_ll_bit: std_logic;
+    signal EX_MEM_ll_addr: std_logic_vector(31 downto 2);
     signal EX_MEM_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal EX_MEM_PC: std_logic_vector(31 downto 2); -- debugging only
 	
@@ -432,6 +436,7 @@ begin
 	mem_read_sign_extend => ID_mem_read_sign_extend,
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
 	seb_seh_cycle => ID_seb_seh_cycle, seb_seh_select => ID_seb_seh_select,
+	ll => ID_ll, sc => ID_sc,
 	flush_i_line => ID_flush_i_line, flush_d_line => ID_flush_d_line
     );
 
@@ -582,6 +587,10 @@ begin
 		    if true or C_debug then -- XXX mult depends on C_debug!!!
 			ID_EX_instruction <= x"00000000"; -- debugging only
 		    end if;
+		    if C_ll_sc then
+		        ID_EX_ll <= false;
+		        ID_EX_sc <= false;
+		    end if;
 		    if C_cache then
 			ID_EX_flush_i_line <= '0';
 			ID_EX_flush_d_line <= '0';
@@ -632,6 +641,10 @@ begin
 		    ID_EX_bpredict_score <= IF_ID_bpredict_score;
 		    ID_EX_bpredict_index <= IF_ID_bpredict_index;
 		    ID_EX_latency <= ID_latency;
+		    if C_ll_sc then
+		        ID_EX_ll <= ID_ll;
+		        ID_EX_sc <= ID_sc;
+		    end if;
 		    if C_cache then
 			ID_EX_flush_i_line <= ID_flush_i_line;
 			ID_EX_flush_d_line <= ID_flush_d_line;
@@ -807,6 +820,19 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) then
+	    if C_ll_sc then
+		if ID_EX_ll then
+		    EX_MEM_ll_bit <= '1';
+		    EX_MEM_ll_addr(19 downto 2) <=
+		      EX_from_alu_addsubx(19 downto 2); -- XXX
+		else
+		    -- Clear LL flag if write ACK is not for our own request
+		    if snoop_cycle = '1' and dmem_data_ready = '0' and
+		      EX_MEM_ll_addr = snoop_addr then
+			EX_MEM_ll_bit <= '0';
+		    end if;
+		end if;
+	    end if;
 	    if EX_exception_pending or
 	      (MEM_running and (MEM_cancel_EX or not EX_running)) then
 		if EX_exception_pending then
