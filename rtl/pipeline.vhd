@@ -217,6 +217,7 @@ architecture Behavioral of pipeline is
     signal EX_MEM_flush_i_line, EX_MEM_flush_d_line: std_logic;
     signal EX_MEM_ll_bit: std_logic;
     signal EX_MEM_ll_addr: std_logic_vector(31 downto 2);
+    signal EX_MEM_sc: boolean;
     signal EX_MEM_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal EX_MEM_PC: std_logic_vector(31 downto 2); -- debugging only
 	
@@ -833,6 +834,7 @@ begin
 		    end if;
 		end if;
 	    end if;
+
 	    if EX_exception_pending or
 	      (MEM_running and (MEM_cancel_EX or not EX_running)) then
 		if EX_exception_pending then
@@ -853,6 +855,9 @@ begin
 		EX_MEM_writeback_addr <= "00000";
 		EX_MEM_mem_cycle <= '0';
 		EX_MEM_latency <= '0';
+		if C_ll_sc then
+		    EX_MEM_sc <= false;
+		end if;
 		if C_cache then
 		    EX_MEM_flush_i_line <= '0';
 		    EX_MEM_flush_d_line <= '0';
@@ -910,6 +915,12 @@ begin
 		end if;
 		EX_MEM_latency <= ID_EX_latency(1);
 		EX_MEM_mem_read_sign_extend <= ID_EX_mem_read_sign_extend;
+		if C_ll_sc then
+		    EX_MEM_sc <= ID_EX_sc;
+		    if EX_MEM_ll_bit = '0' then
+			EX_MEM_mem_cycle <= '0';
+		    end if;
+		end if;
 		if C_cache then
 		    EX_MEM_flush_i_line <= ID_EX_flush_i_line;
 		    EX_MEM_flush_d_line <= ID_EX_flush_d_line;
@@ -919,6 +930,8 @@ begin
 		    EX_MEM_instruction <= ID_EX_instruction;
 		    EX_MEM_PC <= ID_EX_PC;
 		end if;
+	    elsif C_ll_sc and EX_MEM_sc and EX_MEM_ll_bit = '0' then
+		EX_MEM_mem_cycle <= '0';
 	    end if;
 	end if;
     end process;
@@ -1009,7 +1022,11 @@ begin
     begin
 	if rising_edge(clk) then
 	    if MEM_running then
-		MEM_WB_mem_cycle <= EX_MEM_mem_cycle;
+		if C_ll_sc and EX_MEM_sc then
+		    MEM_WB_mem_cycle <= '0';
+		else
+		    MEM_WB_mem_cycle <= EX_MEM_mem_cycle;
+		end if;
 		MEM_WB_mem_read_sign_extend <= EX_MEM_mem_read_sign_extend;
 		MEM_WB_mem_addr_offset <= EX_MEM_addsub_data(1 downto 0);
 		MEM_WB_mem_size <= EX_MEM_mem_size;
@@ -1024,6 +1041,8 @@ begin
 		MEM_WB_mem_data <= MEM_data_in;
 		if EX_MEM_op_major = OP_MAJOR_SHIFT then
 		    MEM_WB_ex_data <= MEM_from_shift;
+		elsif C_ll_sc and EX_MEM_sc then
+		    MEM_WB_ex_data <= x"0000000" & "000" & EX_MEM_mem_cycle;
 		else
 		    MEM_WB_ex_data <= MEM_eff_data;
 		end if;
