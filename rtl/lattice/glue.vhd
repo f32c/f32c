@@ -168,6 +168,8 @@ begin
 	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
 	dmem_data_in => final_to_cpu_d, dmem_data_out => cpu_to_dmem,
 	dmem_data_ready => dmem_data_ready,
+	snoop_cycle => '0', snoop_addr => "--------------------------------",
+	flush_i_line => open, flush_d_line => open,
 	trace_addr => trace_addr, trace_data => trace_data
     );
 

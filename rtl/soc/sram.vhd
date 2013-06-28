@@ -19,7 +19,9 @@ entity sram is
 	clk: in std_logic;
 	-- To internal bus / logic blocks
 	data_out: out std_logic_vector(31 downto 0); -- XXX rename to bus_out!
-	ready_out: out sram_ready_array;
+	ready_out: out sram_ready_array; -- one bit per port
+	snoop_addr: out std_logic_vector(31 downto 2);
+	snoop_cycle: out std_logic;
 	-- Inbound multi-port bus connections
 	bus_in: in sram_port_array;
 	-- To physical SRAM signals
@@ -59,6 +61,8 @@ architecture Structure of sram is
     signal R_cur_port, R_pending_port: integer range 0 to (C_ports - 1);
     signal R_last_port: integer range 0 to (C_ports - 1);
     signal R_ack_bitmap: std_logic_vector(0 to (C_ports - 1));
+    signal R_snoop_cycle: std_logic;
+    signal R_snoop_addr: std_logic_vector(31 downto 2);
 
     -- Arbiter internal signals
     signal next_port: integer;
@@ -123,6 +127,7 @@ begin
 
 	if rising_edge(clk) then
 	    R_ack_bitmap <= (others => '0');
+	    R_snoop_cycle <= '0';
 	    R_pending_port <= next_port;
 	    if R_cur_port /= C_prio_port then
 		R_last_port <= R_cur_port;
@@ -156,6 +161,8 @@ begin
 			end if;
 			-- we can safely acknowledge the write immediately
 			R_ack_bitmap(R_cur_port) <= '1';
+			R_snoop_addr(19 downto 2) <= addr; -- XXX
+			R_snoop_cycle <= '1';
 		    end if;
 		end if;
 	    elsif R_wel = '1' and R_phase = C_phase_read_upper_half then
@@ -209,5 +216,7 @@ begin
     sram_ubl <= R_ubl;
 
     data_out <= R_bus_out;
+    snoop_addr <= R_snoop_addr;
+    snoop_cycle <= R_snoop_cycle;
 
 end Structure;

@@ -152,7 +152,9 @@ begin
 	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
 	dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
 	dmem_data_ready => dmem_data_ready,
-	trace_addr => "000000", trace_data => open
+	snoop_cycle => '0', snoop_addr => "------------------------------",
+	flush_i_line => open, flush_d_line => open,
+	trace_addr => "------", trace_data => open
     );
 
 

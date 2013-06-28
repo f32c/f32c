@@ -47,6 +47,8 @@ entity cache is
 	dmem_data_in: in std_logic_vector(31 downto 0);
 	dmem_data_out: out std_logic_vector(31 downto 0);
 	dmem_data_ready: in std_logic;
+	snoop_cycle: in std_logic;
+	snoop_addr: in std_logic_vector(31 downto 2);
 	intr: in std_logic;
 	-- debugging only
 	trace_addr: in std_logic_vector(5 downto 0);
@@ -95,6 +97,7 @@ begin
 	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
 	dmem_data_in => dmem_data_in, dmem_data_out => dmem_data_out,
 	dmem_data_ready => dmem_data_ready,
+	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
 	flush_i_line => flush_i_line, flush_d_line => flush_d_line,
 	trace_addr => trace_addr, trace_data => trace_data
     );
