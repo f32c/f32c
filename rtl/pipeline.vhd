@@ -41,6 +41,7 @@ entity pipeline is
 	C_mult_enable: boolean;
 	C_branch_likely: boolean;
 	C_sign_extend: boolean;
+	C_ll_sc: boolean;
 	C_movn_movz: boolean;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff";
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
@@ -407,6 +408,7 @@ begin
     idecode: entity work.idecode
     generic map (
 	C_cache => C_cache,
+	C_ll_sc => C_ll_sc,
 	C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend,
 	C_movn_movz => C_movn_movz

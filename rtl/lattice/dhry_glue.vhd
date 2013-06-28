@@ -40,6 +40,7 @@ entity glue is
 	C_mult_enable: boolean := true; -- true: +16 LUT4
 	C_branch_likely: boolean := true; -- true: +2 LUT4
 	C_sign_extend: boolean := true; -- +24 LUT4
+	C_ll_sc: boolean := false;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00001fff"; -- 8 LUT4/bit
 
 	-- COP0 options
@@ -137,6 +138,7 @@ begin
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
+	C_ll_sc => C_ll_sc,
 	C_register_technology => C_register_technology,
 	-- debugging only
 	C_debug => false

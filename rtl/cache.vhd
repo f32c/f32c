@@ -15,6 +15,7 @@ entity cache is
 	C_mult_enable: boolean;
 	C_branch_likely: boolean;
 	C_sign_extend: boolean;
+	C_ll_sc: boolean;
 	C_movn_movz: boolean;
 	C_PC_mask: std_logic_vector(31 downto 0);
 
@@ -72,7 +73,7 @@ begin
     pipeline: entity work.pipeline
     generic map (
 	C_cache => true, C_reg_IF_PC => true,
-	C_cpuid => C_cpuid, C_clk_freq => C_clk_freq,
+	C_cpuid => C_cpuid, C_clk_freq => C_clk_freq, C_ll_sc => C_ll_sc,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
 	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,

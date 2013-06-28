@@ -40,6 +40,7 @@ entity glue is
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
+	C_ll_sc: boolean := false;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff";
 
 	-- COP0 options
@@ -154,6 +155,7 @@ begin
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
 	C_register_technology => C_register_technology,
+	C_ll_sc => C_ll_sc,
 	-- debugging only
 	C_debug => C_debug
     )
