@@ -38,6 +38,7 @@ entity idecode is
     generic(
 	C_branch_likely: boolean;
 	C_sign_extend: boolean;
+	C_ll_sc: boolean;
 	C_movn_movz: boolean;
 	C_cache: boolean
     );
@@ -61,6 +62,7 @@ entity idecode is
 	mem_write: out std_logic;
 	mem_size: out std_logic_vector(1 downto 0);
 	mem_read_sign_extend: out std_logic; -- LB / LH
+	ll, sc: out std_logic;
 	flush_i_line, flush_d_line: out std_logic;
 	latency: out std_logic_vector(1 downto 0);
 	seb_seh_cycle: out boolean;
@@ -118,6 +120,8 @@ begin
 	read_alt <= false;
 	flush_i_line <= '0';
 	flush_d_line <= '0';
+	ll <= '0';
+	sc <= '0';
 	
 	-- Main instruction decoder
 	case instruction(31 downto 26) is
@@ -262,6 +266,18 @@ begin
 	    use_immediate <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
+	when MIPS32_OP_LL =>
+	    latency <= LATENCY_MEM;
+	    mem_size <= MEM_SIZE_32;
+	    use_immediate <= true;
+	    target_addr <= instruction(20 downto 16);
+	    ignore_reg2 <= true;
+	    case C_ll_sc is
+	    when true =>
+		ll <= '1';
+	    when others =>
+		ll <= '0';
+	    end case;
 	when MIPS32_OP_LBU =>
 	    latency <= LATENCY_WB;
 	    mem_size <= MEM_SIZE_8;
@@ -306,6 +322,19 @@ begin
 	    mem_size <= MEM_SIZE_32;
 	    use_immediate <= true;
 	    target_addr <= MIPS32_REG_ZERO;
+	when MIPS32_OP_SC =>
+	    latency <= LATENCY_UNDEFINED;
+	    mem_write <= '1';
+	    mem_size <= MEM_SIZE_32;
+	    use_immediate <= true;
+	    case C_ll_sc is
+	    when true =>
+		sc <= '1';
+		target_addr <= instruction(20 downto 16);
+	    when others =>
+		sc <= '0';
+		target_addr <= MIPS32_REG_ZERO;
+	    end case;
 	when MIPS32_OP_CACHE =>
 	    latency <= LATENCY_UNDEFINED;
 	    use_immediate <= true;
