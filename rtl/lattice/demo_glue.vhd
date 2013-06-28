@@ -51,7 +51,7 @@ entity glue is
 	C_cop0_config: boolean := true;
 
 	-- CPU core configuration options
-	C_branch_prediction: boolean := true;
+	C_branch_prediction: boolean := false;
 	C_result_forwarding: boolean := true;
 	C_load_aligner: boolean := true;
 	C_register_technology: string := "lattice";
