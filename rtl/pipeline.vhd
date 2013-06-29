@@ -827,9 +827,7 @@ begin
 		    EX_MEM_ll_addr(19 downto 2) <=
 		      EX_from_alu_addsubx(19 downto 2); -- XXX
 		else
-		    -- Clear LL flag if write ACK is not for our own request
-		    if snoop_cycle = '1' and dmem_data_ready = '0' and
-		      EX_MEM_ll_addr = snoop_addr then
+		    if snoop_cycle = '1' and EX_MEM_ll_addr = snoop_addr then
 			EX_MEM_ll_bit <= '0';
 		    end if;
 		end if;
