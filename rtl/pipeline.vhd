@@ -575,6 +575,7 @@ begin
 		    -- insert a bubble if branching or ID stage is stalled
 		    ID_EX_writeback_addr <= "00000"; -- NOP
 		    ID_EX_mem_cycle <= '0';
+		    ID_EX_mem_write <= '0';
 		    ID_EX_branch_cycle <= false;
 		    ID_EX_branch_likely <= false;
 		    ID_EX_predict_taken <= false;
@@ -597,7 +598,6 @@ begin
 			ID_EX_flush_d_line <= '0';
 		    end if;
 		    -- Don't care bits (optimization hints)
-		    ID_EX_mem_write <= '-'; -- XXX is this safe?
 		    ID_EX_reg1_data <= (others => '-');
 		    ID_EX_reg2_data <= (others => '-');
 		    ID_EX_alu_op2 <= (others => '-');
