@@ -5,24 +5,7 @@
 #include <stdlib.h>
 
 #include <mips/asm.h>
-
-
-static __inline void
-atomic_set_32(__volatile uint32_t *p, uint32_t v)
-{
-	uint32_t temp;
-
-	__asm __volatile (
-		"1:\n"
-		"	ll %0, %3\n"		/* load old value */
-		"	or %0, %2, %0\n"	/* calculate new value */
-		"	sc %0, %1\n"		/* attempt to store */
-		"	beqz %0, 1b\n"		/* spin if failed */
-		: "=&r" (temp), "=m" (*p)
-		: "r" (v), "m" (*p)
-		: "memory"
-	);
-}
+#include <mips/atomic.h>
 
 
 int
@@ -39,7 +22,7 @@ main(void)
 	if (cpuid > 0) {
 		/* This will execute only on CPU #1 */
 		do {
-			*p = *p + 1;
+			atomic_add_32(p, 1);
 		} while (1);
 	}
 
@@ -51,9 +34,10 @@ main(void)
 	do {} while (*p == 0);
 
 	printf("Loop starting on CPU #0...\n");
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < 750; i++) {
+		atomic_clear_32(p, 0xffffffff);
+		do {} while (*p == 0);
 		printf("%d ", *p);
-//		atomic_set_32(p, 0);
 	}
 	printf("\n");
 
