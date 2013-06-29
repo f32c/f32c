@@ -917,7 +917,7 @@ begin
 		EX_MEM_mem_read_sign_extend <= ID_EX_mem_read_sign_extend;
 		if C_ll_sc then
 		    EX_MEM_sc <= ID_EX_sc;
-		    if EX_MEM_ll_bit = '0' then
+		    if ID_EX_sc and EX_MEM_ll_bit = '0' then
 			EX_MEM_mem_cycle <= '0';
 		    end if;
 		end if;
