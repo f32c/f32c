@@ -11,7 +11,7 @@
 int
 main(void)
 {
-	int i, cpuid;
+	int i, r, cpuid;
 	volatile uint32_t *p = (void *) 0x80080000;
 
 	mfc0_macro(cpuid, MIPS_COP_0_CONFIG);
@@ -34,10 +34,11 @@ main(void)
 	do {} while (*p == 0);
 
 	printf("Loop starting on CPU #0...\n");
-	for (i = 0; i < 750; i++) {
+	for (i = 0; i < 1000000; i++) {
 		atomic_clear_32(p, 0xffffffff);
-		do {} while (*p == 0);
-		printf("%d ", *p);
+		r = *p;
+		if (r > 0)
+			printf("%d:%d ", i, r);
 	}
 	printf("\n");
 
