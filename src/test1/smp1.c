@@ -1,5 +1,6 @@
 
 #include <sys/param.h>
+#include <fb.h>
 #include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,11 +32,22 @@ uint32_t		lock_mem;
 void
 thread(int cpuid)
 {
+	int tmp, x0, y0, x1, y1, color;
 
 	do {
 		lock_spin(lockp);
 		printf("%d ", cpuid);
 		unlock_spin(lockp);
+
+		tmp = random();
+                x0 = tmp & 0x1ff;
+                y0 = ((tmp >> 16) & 0x7f) + (cpuid << 7) + 16;
+                color = (tmp >> 27);
+                tmp = random();
+                x1 = tmp & 0x1ff;
+                y1 = ((tmp >> 16) & 0x7f) + (cpuid << 7) + 16;
+                color ^= (tmp >> 13);
+                line(x0, y0, x1, y1, color);
 	} while (1);
 }
 
@@ -47,6 +59,7 @@ main(void)
 	volatile uint32_t *p = (void *) 0x80080000;
 
 	lockp = &lock_mem;
+	set_fb_mode(1);		/* 16-bitna paleta */
 
 	mfc0_macro(cpuid, MIPS_COP_0_CONFIG);
 	cpuid &= 0xf;
