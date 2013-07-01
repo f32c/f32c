@@ -563,11 +563,18 @@ filledcircle(int x0, int y0, int r, int color)
 }
 
 
-void
+__attribute__((optimize("-O3"))) void
 drawchar(int x0, int y0, int c, int color)
 {
-	int x, y;
+	int x, y, xs, ys, off, dot, scale_x, scale_y;
 	uint8_t *bp;
+
+	scale_x = (c >> 16) & 0xff;
+	scale_y = (c >> 24) & 0xff;
+	if (scale_x == 0)
+		scale_x = 1;
+	if (scale_y == 0)
+		scale_y = 1;
 
 	c &= 0xff;
 	if (c < 32 || c > 126)
@@ -575,14 +582,30 @@ drawchar(int x0, int y0, int c, int color)
 	else
 		bp = &font_map[(c - 32) * 10];
 
-	for (y = y0; y < y0 + 10; y++) {
-		c = *bp++;
-		for (x = x0; x < x0 + 6; x++) {
-			if (c & 0x80)
-				plot(x, y, color);
+	for (y = y0, ys = 0; y < y0 + 10 * scale_y; y++, ys++) {
+		if (__predict_true(ys == scale_y)) {
+			bp++;
+			ys = 0;
+		}
+		if (__predict_false(y < 0 || y > 287))
+			continue;
+		c = *bp;
+		for (x = x0, xs = 0; x < x0 + 6 * scale_x; x++, xs++) {
+			if (__predict_true(xs == scale_x)) {
+				c = c << 1;
+				xs = 0;
+			}
+			if (__predict_false(x >> 9))
+				continue;
+			off = (y << 9) + x;
+			if (__predict_false(c & 0x80))
+				dot = color;
 			else
-				plot(x, y, 0);
-			c = c << 1;
+				dot = 0;
+			if (__predict_true(fb_mode != 0))
+				*((uint16_t *) &fb[off << 1]) = dot;
+			else
+				fb[off] = dot;
 		}
 	}
 }
