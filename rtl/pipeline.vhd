@@ -43,9 +43,10 @@ entity pipeline is
 	C_sign_extend: boolean;
 	C_ll_sc: boolean;
 	C_movn_movz: boolean;
+	C_exceptions: boolean := true;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff";
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
-	C_intr_PC: std_logic_vector(31 downto 0) := x"00000200";
+	C_intr_PC: std_logic_vector(31 downto 0) := x"00000180";
 
 	-- COP0 options
 	C_clk_freq: integer;
@@ -100,7 +101,7 @@ architecture Behavioral of pipeline is
     signal IF_instruction: std_logic_vector(31 downto 0);
     signal IF_data_ready, IF_fetch_complete, IF_need_refetch: boolean;
     -- boundary to stage 2
-    signal IF_ID_reset_cycle: boolean;
+    signal IF_ID_exception_cycle: boolean;
     signal IF_ID_fetch_in_progress, IF_ID_incomplete_branch: boolean;
     signal IF_ID_instruction: std_logic_vector(31 downto 0);
     signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
@@ -120,7 +121,7 @@ architecture Behavioral of pipeline is
     signal ID_alu_op2: std_logic_vector(31 downto 0);
     signal ID_fwd_ex_reg1, ID_fwd_ex_reg2, ID_fwd_ex_alu_op2: boolean;
     signal ID_fwd_mem_reg1, ID_fwd_mem_reg2, ID_fwd_mem_alu_op2: boolean;
-    signal ID_jump_register: boolean;
+    signal ID_jump_register, ID_eret: boolean;
     signal ID_op_major: std_logic_vector(1 downto 0);
     signal ID_op_minor: std_logic_vector(2 downto 0);
     signal ID_read_alt: boolean;
@@ -254,7 +255,7 @@ architecture Behavioral of pipeline is
     signal R_cop0_count: std_logic_vector(31 downto 0);
     signal R_cop0_config: std_logic_vector(31 downto 0);
     signal R_cop0_epc: std_logic_vector(31 downto 2);
-    signal R_cop0_ei: std_logic;
+    signal R_cop0_ei: std_logic := '1'; -- XXX revisit!
 
     -- signals used for debugging only
     signal reg_trace_data: std_logic_vector(31 downto 0);
@@ -373,16 +374,21 @@ begin
 		IF_ID_incomplete_branch <= false;
 	    end if;
 	    if IF_need_refetch or IF_ID_incomplete_branch then
-		IF_ID_reset_cycle <= false;
+		IF_ID_exception_cycle <= false;
 		IF_ID_instruction <= x"00000000";
 		IF_ID_branch_delay_slot <= false;
 	    elsif ID_running then
-		if R_reset = '1' and not IF_ID_reset_cycle then
-		    IF_ID_reset_cycle <= true;
-		    IF_ID_instruction <= x"08000000"; -- Jump
+		if R_reset = '1' and not IF_ID_exception_cycle then
+		    IF_ID_exception_cycle <= true;
+		    IF_ID_instruction <= "000010" & C_init_PC(27 downto 2);
+		elsif R_intr = '1' and R_cop0_ei = '1' and
+		  not IF_ID_exception_cycle then
+		    R_cop0_ei <= '0';
+		    IF_ID_exception_cycle <= true;
+		    IF_ID_instruction <= "000010" & C_intr_PC(27 downto 2);
 		else
-		    IF_ID_reset_cycle <= false;
-		    if IF_ID_reset_cycle then
+		    IF_ID_exception_cycle <= false;
+		    if IF_ID_exception_cycle then
 			IF_ID_instruction <= x"00000000";
 		    else
 			IF_ID_instruction <= IF_instruction;
@@ -393,7 +399,7 @@ begin
 		IF_ID_branch_delay_slot <=
 		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 	    elsif ID_EX_branch_likely and not EX_take_branch then
-		IF_ID_reset_cycle <= false;
+		IF_ID_exception_cycle <= false;
 		IF_ID_instruction <= x"00000000";
 		IF_ID_branch_delay_slot <= false;
 	    end if;
@@ -424,11 +430,11 @@ begin
     -- instruction decoder
     idecode: entity work.idecode
     generic map (
-	C_cache => C_cache,
 	C_ll_sc => C_ll_sc,
 	C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend,
-	C_movn_movz => C_movn_movz
+	C_movn_movz => C_movn_movz,
+	C_exceptions => C_exceptions
     )
     port map (
 	instruction => IF_ID_instruction,
@@ -447,7 +453,7 @@ begin
 	mem_read_sign_extend => ID_mem_read_sign_extend,
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
 	seb_seh_cycle => ID_seb_seh_cycle, seb_seh_select => ID_seb_seh_select,
-	ll => ID_ll, sc => ID_sc,
+	ll => ID_ll, sc => ID_sc, eret => ID_eret,
 	flush_i_line => ID_flush_i_line, flush_d_line => ID_flush_d_line
     );
 
@@ -536,10 +542,11 @@ begin
 
     -- compute jump target
     ID_jump_target <= ID_reg1_data(31 downto 2) when ID_jump_register
+      else R_cop0_epc when C_exceptions and ID_eret
       else ID_branch_target when ID_predict_taken
       else "0000" & IF_ID_instruction(25 downto 0)
-        when IF_ID_reset_cycle and C_cpuid = 0
-      else "1000" & IF_ID_instruction(25 downto 0) when IF_ID_reset_cycle
+        when IF_ID_exception_cycle and C_cpuid = 0
+      else "1000" & IF_ID_instruction(25 downto 0) when IF_ID_exception_cycle
       else IF_ID_PC_4(31 downto 28) & IF_ID_instruction(25 downto 0);
 
     process(clk)
@@ -1199,6 +1206,7 @@ begin
 	--
 	R_hi_lo(63 downto 32)	when x"3a",
 	R_hi_lo(31 downto 0)	when x"3b",
+	R_cop0_epc & "00"	when x"3d",
 	reg_trace_data		when others;
 
     end generate;

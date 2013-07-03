@@ -40,12 +40,12 @@ entity idecode is
 	C_sign_extend: boolean;
 	C_ll_sc: boolean;
 	C_movn_movz: boolean;
-	C_cache: boolean
+	C_exceptions: boolean
     );
     port(
 	instruction: in std_logic_vector(31 downto 0);
 	branch_cycle, branch_likely: out boolean;
-	jump_cycle, jump_register: out boolean;
+	jump_cycle, jump_register, eret: out boolean;
 	reg1_zero, reg2_zero: out boolean;
 	reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
 	immediate_value: out std_logic_vector(31 downto 0);
@@ -97,6 +97,7 @@ begin
 	branch_likely <= false; -- should be don't care
 	jump_cycle <= false;
 	jump_register <= false; -- should be don't care
+	eret <= false;
 	reg1_zero <= instruction(25 downto 21) = MIPS32_REG_ZERO;
 	reg2_zero <= instruction(20 downto 16) = MIPS32_REG_ZERO;
 	target_addr <= "-----";
@@ -206,6 +207,10 @@ begin
 	    read_alt <= true;
 	    alt_sel <= ALT_COP0;
 	    target_addr <= instruction(20 downto 16);
+	    if C_exceptions and instruction(5 downto 0) = MIPS32_COP0_ERET then
+		jump_cycle <= true;
+		eret <= true;
+	    end if;
 	when MIPS32_OP_BEQL =>
 	    if C_branch_likely then
 		branch_cycle <= true;
