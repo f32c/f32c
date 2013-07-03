@@ -100,6 +100,7 @@ architecture Behavioral of pipeline is
     signal IF_instruction: std_logic_vector(31 downto 0);
     signal IF_data_ready, IF_fetch_complete, IF_need_refetch: boolean;
     -- boundary to stage 2
+    signal IF_ID_reset_cycle: boolean;
     signal IF_ID_fetch_in_progress, IF_ID_incomplete_branch: boolean;
     signal IF_ID_instruction: std_logic_vector(31 downto 0);
     signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
@@ -188,16 +189,13 @@ architecture Behavioral of pipeline is
     signal EX_mem_byte_sel: std_logic_vector(3 downto 0);
     signal EX_take_branch: boolean;
     signal EX_branch_target: std_logic_vector(31 downto 2);
-    signal EX_exception_pending: boolean;
-    signal EX_exception_target: std_logic_vector(31 downto 0);
     -- boundary to stage 4
     signal EX_MEM_writeback_addr: std_logic_vector(4 downto 0);
     signal EX_MEM_addsub_data: std_logic_vector(31 downto 0);
     signal EX_MEM_logic_data: std_logic_vector(31 downto 0);
     signal EX_MEM_mem_data_out: std_logic_vector(31 downto 0);
-    signal EX_MEM_branch_target: std_logic_vector(29 downto 0) :=
-      C_init_PC(31 downto 2);
-    signal EX_MEM_take_branch: boolean := true; -- jump to C_init_PC addr
+    signal EX_MEM_branch_target: std_logic_vector(29 downto 0);
+    signal EX_MEM_take_branch: boolean;
     signal EX_MEM_branch_cycle, EX_MEM_branch_taken: boolean;
     signal EX_MEM_branch_likely: boolean;
     signal EX_MEM_bpredict_score: std_logic_vector(1 downto 0);
@@ -375,15 +373,27 @@ begin
 		IF_ID_incomplete_branch <= false;
 	    end if;
 	    if IF_need_refetch or IF_ID_incomplete_branch then
+		IF_ID_reset_cycle <= false;
 		IF_ID_instruction <= x"00000000";
 		IF_ID_branch_delay_slot <= false;
 	    elsif ID_running then
+		if R_reset = '1' and not IF_ID_reset_cycle then
+		    IF_ID_reset_cycle <= true;
+		    IF_ID_instruction <= x"08000000"; -- Jump
+		else
+		    IF_ID_reset_cycle <= false;
+		    if IF_ID_reset_cycle then
+			IF_ID_instruction <= x"00000000";
+		    else
+			IF_ID_instruction <= IF_instruction;
+		    end if;
+		end if;
 		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
 		IF_ID_bpredict_index <= IF_bpredict_index;
-		IF_ID_instruction <= IF_instruction;
 		IF_ID_branch_delay_slot <=
 		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 	    elsif ID_EX_branch_likely and not EX_take_branch then
+		IF_ID_reset_cycle <= false;
 		IF_ID_instruction <= x"00000000";
 		IF_ID_branch_delay_slot <= false;
 	    end if;
@@ -522,14 +532,15 @@ begin
 
     -- branch prediction
     ID_predict_taken <= C_branch_prediction and
-      ID_branch_cycle and IF_ID_bpredict_score(1) = '1'
-      and not EX_exception_pending;
+      ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
 
     -- compute jump target
-    ID_jump_target <=
-      ID_reg1_data(31 downto 2) when ID_jump_register else
-      ID_branch_target when ID_predict_taken else
-      IF_ID_PC_4(31 downto 28) & IF_ID_instruction(25 downto 0);
+    ID_jump_target <= ID_reg1_data(31 downto 2) when ID_jump_register
+      else ID_branch_target when ID_predict_taken
+      else "0000" & IF_ID_instruction(25 downto 0)
+        when IF_ID_reset_cycle and C_cpuid = 0
+      else "1000" & IF_ID_instruction(25 downto 0) when IF_ID_reset_cycle
+      else IF_ID_PC_4(31 downto 28) & IF_ID_instruction(25 downto 0);
 
     process(clk)
     begin
@@ -782,7 +793,7 @@ begin
 
     -- branch or not?
     process(ID_EX_branch_cycle, ID_EX_branch_condition, EX_from_alu_equal,
-      EX_eff_reg1, EX_exception_pending)
+      EX_eff_reg1)
     begin
 	if ID_EX_branch_cycle then
 	    case ID_EX_branch_condition is
@@ -800,23 +811,10 @@ begin
 	else
 	    EX_take_branch <= false;
 	end if;
-	if EX_exception_pending then
-	    EX_take_branch <= true;
-	end if;
     end process;
 
-    EX_branch_target <=
-      EX_exception_target(31 downto 2) and C_PC_mask(31 downto 2)
-      when EX_exception_pending
-      else IF_ID_PC_4 when ID_EX_predict_taken
+    EX_branch_target <= IF_ID_PC_4 when ID_EX_predict_taken
       else ID_EX_branch_target;
-
-    -- Exceptions / interrupts
-    EX_exception_pending <= R_reset = '1' or
-      (R_intr = '1' and R_cop0_ei = '1');
-    EX_exception_target <= C_init_PC when R_reset = '1' and C_cpuid = 0
-      else x"80000000" when R_reset = '1' -- XXX hack - revisit!
-      else C_intr_PC;
 
     process(clk)
     begin
@@ -833,21 +831,9 @@ begin
 		end if;
 	    end if;
 
-	    if EX_exception_pending or
-	      (MEM_running and (MEM_cancel_EX or not EX_running)) then
-		if EX_exception_pending then
-		    EX_MEM_branch_target <= EX_branch_target;
-		    EX_MEM_take_branch <= true;
-		    -- XXX testing only - ei should be set elsewhere
-		    if R_reset = '1' then
-			R_cop0_ei <= '1';
-		    else
-			R_cop0_ei <= '0';
-		    end if;
-		else
-		    EX_MEM_take_branch <= false;
-		end if;
+	    if (MEM_running and (MEM_cancel_EX or not EX_running)) then
 		-- insert a bubble in the MEM stage
+		EX_MEM_take_branch <= false;
 		EX_MEM_branch_taken <= false;
 		EX_MEM_branch_likely <= false;
 		EX_MEM_writeback_addr <= "00000";
