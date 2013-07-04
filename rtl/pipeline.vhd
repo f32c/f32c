@@ -171,6 +171,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_seb_seh_select: std_logic;
     signal ID_EX_ll, ID_EX_sc: boolean;
     signal ID_EX_flush_i_line, ID_EX_flush_d_line: std_logic;
+    signal ID_EX_ei: boolean;
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal ID_EX_epc: std_logic_vector(31 downto 2); -- debugging only
     signal ID_EX_sign_extend_debug: std_logic; -- debugging only
@@ -398,9 +399,9 @@ begin
 			IF_ID_instruction <= x"00000000";
 		    else
 			IF_ID_instruction <= IF_instruction;
-		    end if;
-		    if C_exceptions and ID_eret then
-			R_cop0_ei <= '1';
+			if C_exceptions and ID_EX_ei then
+			    R_cop0_ei <= '1';
+			end if;
 		    end if;
 		end if;
 		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
@@ -675,6 +676,9 @@ begin
 		    ID_EX_bpredict_score <= IF_ID_bpredict_score;
 		    ID_EX_bpredict_index <= IF_ID_bpredict_index;
 		    ID_EX_latency <= ID_latency;
+		    if C_exceptions then
+			ID_EX_ei <= ID_eret;
+		    end if;
 		    if C_ll_sc then
 		        ID_EX_ll <= ID_ll;
 		        ID_EX_sc <= ID_sc;
