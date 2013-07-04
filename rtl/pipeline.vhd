@@ -108,6 +108,7 @@ architecture Behavioral of pipeline is
     signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
     signal IF_ID_branch_delay_slot: boolean;
     signal IF_ID_PC, IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
+    signal IF_ID_epc: std_logic_vector(31 downto 2);
 	
     -- pipeline stage 2: instruction decode and register fetch
     signal ID_running: boolean;
@@ -171,7 +172,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_ll, ID_EX_sc: boolean;
     signal ID_EX_flush_i_line, ID_EX_flush_d_line: std_logic;
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
-    signal ID_EX_PC: std_logic_vector(31 downto 2); -- debugging only
+    signal ID_EX_epc: std_logic_vector(31 downto 2); -- debugging only
     signal ID_EX_sign_extend_debug: std_logic; -- debugging only
 	
     -- pipeline stage 3: execute
@@ -218,7 +219,7 @@ architecture Behavioral of pipeline is
     signal EX_MEM_ll_addr: std_logic_vector(31 downto 2);
     signal EX_MEM_sc: boolean;
     signal EX_MEM_instruction: std_logic_vector(31 downto 0); -- debugging only
-    signal EX_MEM_PC: std_logic_vector(31 downto 2); -- debugging only
+    signal EX_MEM_epc: std_logic_vector(31 downto 2); -- debugging only
 	
     -- pipeline stage 4: memory access
     signal MEM_running, MEM_take_branch: boolean;
@@ -378,17 +379,19 @@ begin
 		IF_ID_instruction <= x"00000000";
 		IF_ID_branch_delay_slot <= false;
 	    elsif ID_running then
-		if R_reset = '1' and not IF_ID_exception_cycle then
+		if C_exceptions and R_reset = '1' and
+		  not IF_ID_exception_cycle then
 		    IF_ID_exception_cycle <= true;
 		    IF_ID_instruction <= "000010" & C_init_PC(27 downto 2);
-		elsif R_intr = '1' and R_cop0_ei = '1' and
+		elsif C_exceptions and R_intr = '1' and R_cop0_ei = '1' and
 		  not IF_ID_exception_cycle then
-		    R_cop0_ei <= '0';
+--		    R_cop0_ei <= '0';
+		    R_cop0_epc <= IF_ID_epc;
 		    IF_ID_exception_cycle <= true;
 		    IF_ID_instruction <= "000010" & C_intr_PC(27 downto 2);
 		else
 		    IF_ID_exception_cycle <= false;
-		    if IF_ID_exception_cycle then
+		    if C_exceptions and IF_ID_exception_cycle then
 			IF_ID_instruction <= x"00000000";
 		    else
 			IF_ID_instruction <= IF_instruction;
@@ -398,6 +401,11 @@ begin
 		IF_ID_bpredict_index <= IF_bpredict_index;
 		IF_ID_branch_delay_slot <=
 		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
+		if (C_exceptions or C_debug) and
+		  (not (ID_branch_cycle or ID_jump_cycle or ID_jump_register)
+		  or ID_EX_cancel_next or MEM_take_branch) then
+		    IF_ID_epc <= IF_PC and C_PC_mask(31 downto 2);
+		end if;
 	    elsif ID_EX_branch_likely and not EX_take_branch then
 		IF_ID_exception_cycle <= false;
 		IF_ID_instruction <= x"00000000";
@@ -589,7 +597,8 @@ begin
 		    ID_EX_fwd_mem_reg2 <= true;
 		    ID_EX_fwd_mem_alu_op2 <= false;
 		elsif not ID_running or (not IF_ID_branch_delay_slot and
-		  (MEM_take_branch or ID_EX_cancel_next)) then
+		  (MEM_take_branch or ID_EX_cancel_next)) or
+		  (C_exceptions and R_intr = '1') then -- XXX revisit!!!
 		    -- insert a bubble if branching or ID stage is stalled
 		    ID_EX_writeback_addr <= "00000"; -- NOP
 		    ID_EX_mem_cycle <= '0';
@@ -678,7 +687,7 @@ begin
 		    -- debugging only
 		    if C_debug then
 			ID_EX_instruction <= IF_ID_instruction;
-			ID_EX_PC <= IF_ID_PC;
+			ID_EX_epc <= IF_ID_epc;
 			D_instr <= D_instr + 1;
 		    else
 			ID_EX_instruction <= IF_ID_instruction; -- XXX MULT!!!
@@ -919,7 +928,7 @@ begin
 		-- debugging only
 		if C_debug then
 		    EX_MEM_instruction <= ID_EX_instruction;
-		    EX_MEM_PC <= ID_EX_PC;
+		    EX_MEM_epc <= ID_EX_epc;
 		end if;
 	    elsif C_ll_sc and EX_MEM_sc and EX_MEM_ll_bit = '0' then
 		EX_MEM_mem_cycle <= '0';
@@ -1180,9 +1189,9 @@ begin
     with ("00" & trace_addr) select
     trace_data <=
 	IF_PC & "00"		when x"20",
-	IF_ID_PC & "00"		when x"21",
-	ID_EX_PC & "00"		when x"22",
-	EX_MEM_PC & "00"	when x"23",
+	IF_ID_epc & "00"	when x"21",
+	ID_EX_epc & "00"	when x"22",
+	EX_MEM_epc & "00"	when x"23",
 	imem_data_in		when x"24",
 	IF_ID_instruction	when x"25",
 	ID_EX_instruction	when x"26",
