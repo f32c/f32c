@@ -46,7 +46,7 @@ entity pipeline is
 	C_exceptions: boolean := true;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff";
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
-	C_intr_PC: std_logic_vector(31 downto 0) := x"00000180";
+	C_intr_PC: std_logic_vector(31 downto 0) := x"00000280";
 
 	-- COP0 options
 	C_clk_freq: integer;
@@ -337,9 +337,11 @@ begin
       (not IF_data_ready or IF_ID_fetch_in_progress);
 
     IF_PC <= EX_MEM_branch_target when not C_reg_IF_PC and MEM_take_branch
-      else IF_ID_PC;
+      and not IF_ID_exception_cycle else IF_ID_PC;
 
     IF_PC_next <=
+      ID_jump_target when C_exceptions and
+	ID_running and IF_ID_exception_cycle else
       EX_branch_target when
 	C_reg_IF_PC and (MEM_running and EX_running) and
 	(EX_take_branch xor ID_EX_predict_taken)
@@ -383,18 +385,22 @@ begin
 		  not IF_ID_exception_cycle then
 		    IF_ID_exception_cycle <= true;
 		    IF_ID_instruction <= "000010" & C_init_PC(27 downto 2);
+		    R_cop0_ei <= '1'; -- XXX revisit!
 		elsif C_exceptions and R_intr = '1' and R_cop0_ei = '1' and
 		  not IF_ID_exception_cycle then
---		    R_cop0_ei <= '0';
-		    R_cop0_epc <= IF_ID_epc;
 		    IF_ID_exception_cycle <= true;
 		    IF_ID_instruction <= "000010" & C_intr_PC(27 downto 2);
+		    R_cop0_ei <= '0';
+		    R_cop0_epc <= IF_ID_epc;
 		else
 		    IF_ID_exception_cycle <= false;
 		    if C_exceptions and IF_ID_exception_cycle then
 			IF_ID_instruction <= x"00000000";
 		    else
 			IF_ID_instruction <= IF_instruction;
+		    end if;
+		    if C_exceptions and ID_eret then
+			R_cop0_ei <= '1';
 		    end if;
 		end if;
 		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
