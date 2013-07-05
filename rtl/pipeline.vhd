@@ -388,7 +388,7 @@ begin
 		    IF_ID_instruction <= "000010" & C_init_PC(27 downto 2);
 		    R_cop0_ei <= '1'; -- XXX revisit!
 		elsif C_exceptions and R_intr = '1' and R_cop0_ei = '1' and
-		  not IF_ID_exception_cycle then
+		  not IF_ID_exception_cycle and not MEM_take_branch then
 		    IF_ID_exception_cycle <= true;
 		    IF_ID_instruction <= "000010" & C_intr_PC(27 downto 2);
 		    R_cop0_ei <= '0';
@@ -1134,7 +1134,7 @@ begin
     begin
 	if rising_edge(clk) then
 	    R_reset <= reset;
-	    R_intr <= intr and R_cop0_ei;
+	    R_intr <= intr and R_cop0_ei and IF_ID_PC_4(31); -- XXX
 	    if C_cop0_count then
 		R_cop0_count <= R_cop0_count + 1;
 	    end if;
@@ -1194,7 +1194,7 @@ begin
     debug_XXX(8) <= EX_MEM_mem_cycle;
     debug_XXX(7 downto 4) <= EX_MEM_mem_byte_sel;
     debug_XXX(3 downto 1) <= "000";
-    debug_XXX(0) <= MEM_WB_write_enable;
+    debug_XXX(0) <= R_cop0_ei;
 
     with ("00" & trace_addr) select
     trace_data <=
