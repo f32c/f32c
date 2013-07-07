@@ -208,8 +208,8 @@ begin
 	    alt_sel <= ALT_COP0;
 	    target_addr <= instruction(20 downto 16);
 	    if C_exceptions and instruction(5 downto 0) = MIPS32_COP0_ERET then
-		jump_cycle <= true;
 		eret <= true;
+		branch_cycle <= true;
 	    end if;
 	when MIPS32_OP_BEQL =>
 	    if C_branch_likely then
