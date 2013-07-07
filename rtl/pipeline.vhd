@@ -100,8 +100,9 @@ architecture Behavioral of pipeline is
     signal IF_bpredict_re: std_logic;
     signal IF_instruction: std_logic_vector(31 downto 0);
     signal IF_data_ready, IF_fetch_complete, IF_need_refetch: boolean;
+    signal IF_exception_pending: boolean;
     -- boundary to stage 2
-    signal IF_ID_exception_cycle: boolean;
+    signal IF_ID_exception_cycle, IF_ID_intr_cycle: boolean;
     signal IF_ID_fetch_in_progress, IF_ID_incomplete_branch: boolean;
     signal IF_ID_instruction: std_logic_vector(31 downto 0);
     signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
@@ -171,7 +172,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_seb_seh_select: std_logic;
     signal ID_EX_ll, ID_EX_sc: boolean;
     signal ID_EX_flush_i_line, ID_EX_flush_d_line: std_logic;
-    signal ID_EX_ei: boolean;
+    signal ID_EX_eret: boolean;
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal ID_EX_epc: std_logic_vector(31 downto 2); -- debugging only
     signal ID_EX_sign_extend_debug: std_logic; -- debugging only
@@ -253,11 +254,12 @@ architecture Behavioral of pipeline is
 
     -- COP0
     signal R_reset: std_logic; -- registered reset input
-    signal R_intr: std_logic; -- registered IRQ input
+    signal R_intr_pending: boolean; -- registered IRQ input
+    signal R_cop0_ei: boolean := true; -- XXX revisit!
+    signal R_ei_countdown: std_logic_vector(1 downto 0);
     signal R_cop0_count: std_logic_vector(31 downto 0);
     signal R_cop0_config: std_logic_vector(31 downto 0);
     signal R_cop0_epc: std_logic_vector(31 downto 2);
-    signal R_cop0_ei: std_logic := '1'; -- XXX revisit!
 
     -- signals used for debugging only
     signal reg_trace_data: std_logic_vector(31 downto 0);
@@ -338,11 +340,9 @@ begin
       (not IF_data_ready or IF_ID_fetch_in_progress);
 
     IF_PC <= EX_MEM_branch_target when not C_reg_IF_PC and MEM_take_branch
-      and not IF_ID_exception_cycle else IF_ID_PC;
+      and not IF_ID_exception_cycle else IF_ID_PC; -- XXX revisit exception!
 
     IF_PC_next <=
-      ID_jump_target when C_exceptions and
-	ID_running and IF_ID_exception_cycle else
       EX_branch_target when
 	C_reg_IF_PC and (MEM_running and EX_running) and
 	(EX_take_branch xor ID_EX_predict_taken)
@@ -362,9 +362,20 @@ begin
       IF_PC_next and C_PC_mask(31 downto 2) when IF_data_ready
       else IF_ID_PC; -- i.e. do not change
 
+    IF_exception_pending <= C_exceptions and
+      ((R_intr_pending and not MEM_take_branch) or R_reset = '1');
+
     process(clk)
     begin
 	if rising_edge(clk) then
+	    if C_exceptions then
+		if intr = '1' and R_cop0_ei then
+		    R_intr_pending <= true;
+		end if;
+		if ID_EX_eret then
+		    R_ei_countdown <= "01";
+		end if;
+	    end if;
 	    IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
 	    IF_ID_PC <= IF_PC_ext_next;
 	    if not IF_data_ready then
@@ -379,29 +390,37 @@ begin
 	    end if;
 	    if IF_need_refetch or IF_ID_incomplete_branch then
 		IF_ID_exception_cycle <= false;
+		IF_ID_intr_cycle <= false;
 		IF_ID_instruction <= x"00000000";
 		IF_ID_branch_delay_slot <= false;
 	    elsif ID_running then
-		if C_exceptions and R_reset = '1' and
-		  not IF_ID_exception_cycle then
+		if R_reset = '1' then
+		    R_intr_pending <= false;
 		    IF_ID_exception_cycle <= true;
-		    IF_ID_instruction <= "000010" & C_init_PC(27 downto 2);
-		    R_cop0_ei <= '1'; -- XXX revisit!
-		elsif C_exceptions and R_intr = '1' and R_cop0_ei = '1' and
-		  not IF_ID_exception_cycle and not MEM_take_branch then
+		    IF_ID_intr_cycle <= false;
+		    IF_ID_instruction <= x"10000000"; -- branch
+		    R_cop0_ei <= true; -- XXX revisit!
+		    R_cop0_epc <= IF_ID_epc;
+		elsif IF_exception_pending then
+		    R_intr_pending <= false;
 		    IF_ID_exception_cycle <= true;
-		    IF_ID_instruction <= "000010" & C_intr_PC(27 downto 2);
-		    R_cop0_ei <= '0';
+		    IF_ID_intr_cycle <= true;
+		    IF_ID_instruction <= x"10000000"; -- branch
+		    R_cop0_ei <= false;
 		    R_cop0_epc <= IF_ID_epc;
 		else
 		    IF_ID_exception_cycle <= false;
-		    if C_exceptions and IF_ID_exception_cycle then
+		    IF_ID_intr_cycle <= false;
+		    if C_exceptions and (IF_ID_exception_cycle or ID_eret) then
 			IF_ID_instruction <= x"00000000";
 		    else
 			IF_ID_instruction <= IF_instruction;
-			if C_exceptions and ID_EX_ei then
-			    R_cop0_ei <= '1';
+		    end if;
+		    if R_ei_countdown /= "00" then
+			if R_ei_countdown = "01" then
+			    R_cop0_ei <= true;
 			end if;
+			R_ei_countdown <= R_ei_countdown - 1;
 		    end if;
 		end if;
 		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
@@ -548,20 +567,20 @@ begin
     ID_fwd_mem_alu_op2 <= ID_fwd_mem_reg2 and not ID_use_immediate;
 
     -- compute branch target - XXX revisit: perhaps use ID_immediate here?
-    ID_branch_target <= C_PC_mask(31 downto 2) and (IF_ID_PC_4 +
+    ID_branch_target <= R_cop0_epc when C_exceptions and ID_eret
+      else(C_intr_PC and C_PC_mask)(31 downto 2)
+        when IF_ID_exception_cycle and IF_ID_intr_cycle
+      else (C_init_PC and C_PC_mask)(31 downto 2) when IF_ID_exception_cycle
+      else C_PC_mask(31 downto 2) and (IF_ID_PC_4 +
       (ID_sign_extension(13 downto 0) & IF_ID_instruction(15 downto 0)));
 
     -- branch prediction
-    ID_predict_taken <= C_branch_prediction and
-      ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
+    ID_predict_taken <= C_branch_prediction and not (C_exceptions and ID_eret)
+      and ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
 
     -- compute jump target
     ID_jump_target <= ID_reg1_data(31 downto 2) when ID_jump_register
-      else R_cop0_epc when C_exceptions and ID_eret
       else ID_branch_target when ID_predict_taken
-      else "0000" & IF_ID_instruction(25 downto 0)
-        when IF_ID_exception_cycle and C_cpuid = 0
-      else "1000" & IF_ID_instruction(25 downto 0) when IF_ID_exception_cycle
       else IF_ID_PC_4(31 downto 28) & IF_ID_instruction(25 downto 0);
 
     process(clk)
@@ -604,8 +623,8 @@ begin
 		    ID_EX_fwd_mem_reg2 <= true;
 		    ID_EX_fwd_mem_alu_op2 <= false;
 		elsif not ID_running or (not IF_ID_branch_delay_slot and
-		  (MEM_take_branch or ID_EX_cancel_next)) or
-		  (C_exceptions and R_intr = '1') then -- XXX revisit!!!
+		  (MEM_take_branch or ID_EX_cancel_next) and
+		  not IF_ID_exception_cycle) or IF_exception_pending then
 		    -- insert a bubble if branching or ID stage is stalled
 		    ID_EX_writeback_addr <= "00000"; -- NOP
 		    ID_EX_mem_cycle <= '0';
@@ -677,7 +696,7 @@ begin
 		    ID_EX_bpredict_index <= IF_ID_bpredict_index;
 		    ID_EX_latency <= ID_latency;
 		    if C_exceptions then
-			ID_EX_ei <= ID_eret;
+			ID_EX_eret <= ID_eret;
 		    end if;
 		    if C_ll_sc then
 		        ID_EX_ll <= ID_ll;
@@ -821,7 +840,9 @@ begin
     process(ID_EX_branch_cycle, ID_EX_branch_condition, EX_from_alu_equal,
       EX_eff_reg1)
     begin
-	if ID_EX_branch_cycle then
+	if C_exceptions and ID_ex_eret then
+	    EX_take_branch <= true;
+	elsif ID_EX_branch_cycle then
 	    case ID_EX_branch_condition is
 	    when TEST_LTZ => EX_take_branch <= EX_eff_reg1(31) = '1';
 	    when TEST_GEZ => EX_take_branch <= EX_eff_reg1(31) = '0';
@@ -1134,7 +1155,6 @@ begin
     begin
 	if rising_edge(clk) then
 	    R_reset <= reset;
-	    R_intr <= intr and R_cop0_ei and IF_ID_PC_4(31); -- XXX
 	    if C_cop0_count then
 		R_cop0_count <= R_cop0_count + 1;
 	    end if;
