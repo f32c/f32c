@@ -27,6 +27,22 @@ int mode;
 static FATFS fh;
 static char *fnbuf;
 
+static int old_ts;
+
+
+static void
+display_timestamp(void)
+{
+	int *sp = (void *) 0x300;
+
+	if (old_ts == *sp)
+		return;
+	old_ts = *sp;
+	
+	drawchar(450, 30, (((old_ts / 50) % 10)+ '0'), 0xffff);
+}
+
+
 static FRESULT
 scan_files(char* path)
 {
@@ -116,6 +132,7 @@ load_raw(char *fname)
 			else
 				fb[x + i] = rgb2pal(r, g, b);
 		}
+		display_timestamp();
 	}
 	f_close(&fp);
 }
@@ -166,6 +183,7 @@ switch_mode:
 		color ^= (tmp >> 13);
 		line(x0, y0, x1, y1, color);
 		i++;
+		display_timestamp();
 	}
 	RDTSC(end);
 	printf("%d iteracija u %d.%03d sekundi (%d ops / s)\n", i,
@@ -184,6 +202,7 @@ switch_mode:
 		tmp = (tmp >> 20) & 0x7f;
 		filledcircle(x0, y0, tmp, color);
 		i++;
+		display_timestamp();
 	}
 	RDTSC(end);
 	printf("%d iteracija u %d.%03d sekundi (%d ops / s)\n", i,
@@ -204,6 +223,7 @@ switch_mode:
 		y1 = ((tmp >> 16) % 0x1ff) - 128;
 		rectangle(x0, y0, x1, y1, color);
 		i++;
+		display_timestamp();
 	}
 	RDTSC(end);
 	printf("%d iteracija u %d.%03d sekundi (%d ops / s)\n", i,
@@ -237,6 +257,7 @@ slika:
 
 		RDTSC(start);
 		do {
+			display_timestamp();
 			res = sio_getchar(0);
 			if (res == ' ')
 				goto switch_mode;
