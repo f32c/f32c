@@ -173,6 +173,7 @@ architecture Behavioral of glue is
     signal video_dac: std_logic_vector(3 downto 0);
     signal fb_addr_strobe, fb_data_ready: std_logic;
     signal fb_addr: std_logic_vector(19 downto 2);
+    signal fb_tick: std_logic;
 
 begin
 
@@ -194,7 +195,7 @@ begin
     --
     G_CPU: for i in 0 to (C_cpus - 1) generate
     begin
-    intr(i) <= '0';
+    intr(i) <= fb_tick;
     res(i) <= sw(i) or R_cpu_reset(i) when C_debug else R_cpu_reset(i);
     cpu: entity work.cache
     generic map (
@@ -625,7 +626,8 @@ begin
 	data_ready => fb_data_ready,
 	data_in => from_sram,
 	mode => R_fb_mode,
-	dac_out => video_dac
+	dac_out => video_dac,
+	tick_out => fb_tick
     );
     end generate;
 
