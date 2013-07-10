@@ -43,6 +43,7 @@ architecture Structure of sram is
     signal R_a: std_logic_vector(18 downto 0);		-- to SRAM
     signal R_d: std_logic_vector(15 downto 0);		-- to SRAM
     signal R_wel, R_lbl, R_ubl: std_logic;		-- to SRAM
+    signal R_write_cycle: boolean;			-- internal
     signal R_byte_sel_hi: std_logic_vector(1 downto 0);	-- internal
     signal R_high_word: std_logic_vector(15 downto 0);	-- internal
 
@@ -133,6 +134,7 @@ begin
 		R_last_port <= R_cur_port;
 	    end if;
 	    if R_phase = C_phase_idle then
+		R_write_cycle <= false;
 		R_wel <= '1';
 		R_ubl <= '0';
 		R_lbl <= '0';
@@ -145,8 +147,9 @@ begin
 		    R_phase <= 1;
 		    R_byte_sel_hi <= byte_sel(3 downto 2);
 		    R_a <= addr & '0';
-		    R_wel <= not write;
 		    if write = '1' then
+			R_write_cycle <= true;
+			R_wel <= '0';
 			R_high_word <= data_in(31 downto 16);
 			if byte_sel(1 downto 0) /= "00" then
 			    R_ubl <= not byte_sel(1);
@@ -163,13 +166,16 @@ begin
 			R_ack_bitmap(R_cur_port) <= '1';
 			R_snoop_addr(19 downto 2) <= addr; -- XXX
 			R_snoop_cycle <= '1';
+		    else
+			R_write_cycle <= false;
+			R_wel <= '1';
 		    end if;
 		end if;
-	    elsif R_wel = '1' and R_phase = C_phase_read_upper_half then
+	    elsif not R_write_cycle and R_phase = C_phase_read_upper_half then
 		R_phase <= R_phase + 1;
 		-- physical signals to SRAM: bump addr
 		R_a(0) <= '1';
-	    elsif R_wel = '1' and R_phase = C_phase_read_terminate then
+	    elsif not R_write_cycle and R_phase = C_phase_read_terminate then
 		R_ack_bitmap(R_cur_port) <= '1';
 		if R_pending_port /= R_cur_port and
 		  bus_in(R_pending_port).write = '0' then
@@ -180,7 +186,7 @@ begin
 		    R_phase <= C_phase_idle;
 		    R_cur_port <= next_port;
 		end if;
-	    elsif R_wel = '0' and R_phase = C_phase_write_upper_half - 1 then
+	    elsif R_write_cycle and R_phase = C_phase_write_upper_half - 1 then
 		if R_byte_sel_hi /= "00" then
 		    R_phase <= R_phase + 1;
 		else
@@ -188,21 +194,20 @@ begin
 		    R_cur_port <= next_port;
 		end if;
 		-- physical signals to SRAM: terminate 16-bit write
-		R_ubl <= '1';
-		R_lbl <= '1';
-	    elsif R_wel = '0' and R_phase = C_phase_write_upper_half then
+		R_wel <= '1';
+	    elsif R_write_cycle and R_phase = C_phase_write_upper_half then
 		R_phase <= R_phase + 1;
 		-- physical signals to SRAM: bump addr, refill data
 		R_a(0) <= '1';
 		R_ubl <= not R_byte_sel_hi(1);
 		R_lbl <= not R_byte_sel_hi(0);
 		R_d <= R_high_word;
-	    elsif R_wel = '0' and R_phase = C_phase_write_terminate then
+		R_wel <= '0';
+	    elsif R_write_cycle and R_phase = C_phase_write_terminate then
 		R_phase <= C_phase_idle;
 		R_cur_port <= next_port;
 		-- physical signals to SRAM: terminate 16-bit write
-		R_ubl <= '1';
-		R_lbl <= '1';
+		R_wel <= '1';
 	    else
 		R_phase <= R_phase + 1;
 	    end if;
