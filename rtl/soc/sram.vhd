@@ -59,8 +59,10 @@ architecture Structure of sram is
 
     -- Arbiter registers
     signal R_phase: integer range 0 to C_phase_write_terminate;
-    signal R_cur_port, R_pending_port: integer range 0 to (C_ports - 1);
+    signal R_cur_port: integer range 0 to (C_ports - 1);
     signal R_last_port: integer range 0 to (C_ports - 1);
+    signal R_prio_pending: boolean;
+    signal R_prio_cnt: std_logic_vector(1 downto 0);
     signal R_ack_bitmap: std_logic_vector(0 to (C_ports - 1));
     signal R_snoop_cycle: std_logic;
     signal R_snoop_addr: std_logic_vector(31 downto 2);
@@ -101,7 +103,7 @@ begin
 		end if;
 	    end loop;
 	end loop;
-	if bus_in(C_prio_port).addr_strobe = '1' then
+	if R_prio_pending then
 	    next_port <= C_prio_port;
 	else
 	    next_port <= t;
@@ -129,10 +131,18 @@ begin
 	if rising_edge(clk) then
 	    R_ack_bitmap <= (others => '0');
 	    R_snoop_cycle <= '0';
-	    R_pending_port <= next_port;
-	    if R_phase = 1 and R_cur_port /= C_prio_port then
-		R_last_port <= R_cur_port;
+	    R_prio_pending <= (C_prio_port >= 0 and R_prio_cnt(1) /= '1' 
+	      and bus_in(C_prio_port).addr_strobe = '1');
+
+	    if R_phase = 1 then
+		if R_cur_port /= C_prio_port then
+		    R_last_port <= R_cur_port;
+		    R_prio_cnt <= "00";
+		else
+		    R_prio_cnt <= R_prio_cnt + 1;
+		end if;
 	    end if;
+
 	    if R_phase = C_phase_idle then
 		R_write_cycle <= false;
 		R_wel <= '1';
@@ -142,6 +152,8 @@ begin
 		if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
 		    -- idle
 		    R_cur_port <= next_port;
+		    R_prio_pending <= (C_prio_port >= 0 and
+		      bus_in(C_prio_port).addr_strobe = '1');
 		else
 		    -- start a new transaction
 		    R_phase <= 1;
@@ -174,15 +186,8 @@ begin
 		R_a(0) <= '1';
 	    elsif not R_write_cycle and R_phase = C_phase_read_terminate then
 		R_ack_bitmap(R_cur_port) <= '1';
-		if R_pending_port /= R_cur_port and
-		  bus_in(R_pending_port).write = '0' then
-		    R_phase <= 1;
-		    R_a <= bus_in(R_pending_port).addr & '0';
-		    R_cur_port <= R_pending_port;
-		else
-		    R_phase <= C_phase_idle;
-		    R_cur_port <= next_port;
-		end if;
+		R_phase <= C_phase_idle;
+		R_cur_port <= next_port;
 	    elsif R_write_cycle and R_phase = C_phase_write_upper_half - 1 then
 		if R_byte_sel_hi /= "00" then
 		    R_phase <= R_phase + 1;
