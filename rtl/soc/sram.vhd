@@ -87,23 +87,23 @@ begin
 
     -- Arbiter: round-robin port selection combinatorial logic
     process(bus_in, R_cur_port, R_last_port)
-	variable i, j, t: integer;
+	variable i, j, t, n: integer;
     begin
-	if C_prio_port >= 0 and R_cur_port /= C_prio_port and
-	  bus_in(C_prio_port).addr_strobe = '1' then
+	t := R_last_port;
+	for i in 0 to (C_ports - 1) loop
+	    for j in 1 to C_ports loop
+		if R_last_port = i then
+		    n := (i + j) mod C_ports;
+		    if bus_in(n).addr_strobe = '1' and n /= C_prio_port then
+			t := n;
+			exit;
+		    end if;
+		end if;
+	    end loop;
+	end loop;
+	if bus_in(C_prio_port).addr_strobe = '1' then
 	    next_port <= C_prio_port;
 	else
-	    t := R_last_port;
-	    for i in 0 to (C_ports - 1) loop
-		for j in 1 to C_ports loop
-		    if R_last_port = i then
-			t := (i + j) mod C_ports;
-			if bus_in(t).addr_strobe = '1' then
-			    exit;
-			end if;
-		    end if;
-		end loop;
-	    end loop;
 	    next_port <= t;
 	end if;
     end process;
@@ -130,7 +130,7 @@ begin
 	    R_ack_bitmap <= (others => '0');
 	    R_snoop_cycle <= '0';
 	    R_pending_port <= next_port;
-	    if R_cur_port /= C_prio_port then
+	    if R_phase = 1 and R_cur_port /= C_prio_port then
 		R_last_port <= R_cur_port;
 	    end if;
 	    if R_phase = C_phase_idle then
@@ -166,9 +166,6 @@ begin
 			R_ack_bitmap(R_cur_port) <= '1';
 			R_snoop_addr(19 downto 2) <= addr; -- XXX
 			R_snoop_cycle <= '1';
-		    else
-			R_write_cycle <= false;
-			R_wel <= '1';
 		    end if;
 		end if;
 	    elsif not R_write_cycle and R_phase = C_phase_read_upper_half then
