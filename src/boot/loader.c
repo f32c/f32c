@@ -118,7 +118,8 @@ loop:
 			if (c == '\r') /* CR ? */
 				goto prompt;
 			/* Echo char */
-			goto pchar;
+			if (c >= 32)
+				goto pchar;
 		}
 		val = 0;
 		goto loop;
