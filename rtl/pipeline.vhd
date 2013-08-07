@@ -1213,8 +1213,7 @@ begin
     debug_XXX(11 downto 9) <= "000";
     debug_XXX(8) <= EX_MEM_mem_cycle;
     debug_XXX(7 downto 4) <= EX_MEM_mem_byte_sel;
-    debug_XXX(3 downto 1) <= "000";
-    debug_XXX(0) <= R_cop0_ei;
+    debug_XXX(3 downto 0) <= x"1" when R_cop0_ei else x"0";
 
     with ("00" & trace_addr) select
     trace_data <=

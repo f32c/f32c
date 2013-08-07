@@ -64,7 +64,7 @@ entity glue is
 	C_prng_imem_delay: boolean := false;
 
 	-- SoC configuration options
-	C_cpus: integer := 2;
+	C_cpus: integer := 1;
 	C_bram_size: integer := 2;
 	C_sram: boolean := true;
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
@@ -195,7 +195,7 @@ begin
     --
     G_CPU: for i in 0 to (C_cpus - 1) generate
     begin
-    intr(i) <= fb_tick;
+    intr(i) <= '0'; -- fb_tick;
     res(i) <= sw(i) or R_cpu_reset(i) when C_debug else R_cpu_reset(i);
     cpu: entity work.cache
     generic map (
