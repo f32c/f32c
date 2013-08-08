@@ -12,5 +12,4 @@ PROG = loader
 
 CFILES = loader.c
 
-include ../conf/f32c.mk
-
+include ${POST_MK}
