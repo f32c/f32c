@@ -569,8 +569,8 @@ drawchar(int x0, int y0, int c, int color)
 	int x, y, xs, ys, off, dot, scale_x, scale_y;
 	uint8_t *bp;
 
-	scale_x = (c >> 16) & 0xff;
-	scale_y = (c >> 24) & 0xff;
+	scale_y = (c >> 16) & 0xff;
+	scale_x = (c >> 24) & 0xff;
 	if (scale_x == 0)
 		scale_x = 1;
 	if (scale_y == 0)
