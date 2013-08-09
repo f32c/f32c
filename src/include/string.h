@@ -3,17 +3,26 @@
 #define	_STRING_H_
 
 
+void *memchr(const void *, int, size_t) __pure;
+void *memmove(void *, const void *, size_t);
+void *memset(void *, int, size_t);
+int memcmp(const void *, const void *, size_t) __pure;
+
 #define	memcpy(dst, src, len) _memcpy(dst, src, len)
 
 #ifdef USE_BUILTIN_STRCPY
 /* XXX this works on pure SWL / SWR luck (unimplemented instructions!) */
 #define	strcpy(dst, src) __builtin_strcpy((dst), (src))
 #else
+#if 0
 #define	strcpy(dst, src)					\
 	if (sizeof(src) != sizeof(void *))			\
 		_memcpy((dst), (src), sizeof(src));		\
 	else							\
 		_strcpy(dst, src);
+#else
+#define	strcpy(dst, src)	 _strcpy(dst, src);
+#endif
 #endif
 
 
@@ -118,15 +127,18 @@ _memcpy(char *dst, const char *src, int len)
 }
 
 
-static inline void
+static inline char *
 _strcpy(char *dst, const char *src)
 {
+	char *ret = dst;
 	int c;
 
 	do {
 		c = *src++;
 		*dst++ = c;
 	} while (c != 0);
+
+	return(ret);
 }
 
 
