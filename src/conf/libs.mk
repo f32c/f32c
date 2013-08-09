@@ -8,6 +8,10 @@ ifneq (,$(findstring random,$(F32C_LIBS)))
 	_NEED_RANDOM = YES
 endif
 
+ifneq (,$(findstring float,$(F32C_LIBS)))
+	_NEED_FLOAT = YES
+endif
+
 ifneq (,$(findstring sio,$(F32C_LIBS)))
 	_NEED_SIO = YES
 endif
@@ -90,6 +94,20 @@ endif
 
 ifdef _NEED_DIV
 	CFILES += ${BASE_DIR}lib/div.c
+endif
+
+ifdef _NEED_FLOAT
+	CFILES += ${BASE_DIR}lib/float/ashldi3.c
+	CFILES += ${BASE_DIR}lib/float/clzsi2.c
+	CFILES += ${BASE_DIR}lib/float/divdf3.c
+	CFILES += ${BASE_DIR}lib/float/fixsfsi.c
+	CFILES += ${BASE_DIR}lib/float/floatunsidf.c
+	CFILES += ${BASE_DIR}lib/float/floatunsisf.c
+	CFILES += ${BASE_DIR}lib/float/lshrdi3.c
+	CFILES += ${BASE_DIR}lib/float/muldf3.c
+	CFILES += ${BASE_DIR}lib/float/mulsf3.c
+	CFILES += ${BASE_DIR}lib/float/negdf2.c
+	CFILES += ${BASE_DIR}lib/float/truncdfsf2.c
 endif
 
 ifdef _NEED_ATOI
