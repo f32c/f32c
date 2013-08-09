@@ -100,6 +100,8 @@ ifdef _NEED_FLOAT
 	CFILES += ${BASE_DIR}lib/float/adddf3.c
 	CFILES += ${BASE_DIR}lib/float/ashldi3.c
 	CFILES += ${BASE_DIR}lib/float/clzsi2.c
+	CFILES += ${BASE_DIR}lib/float/comparedf2.c
+	CFILES += ${BASE_DIR}lib/float/comparesf2.c
 	CFILES += ${BASE_DIR}lib/float/divdf3.c
 	CFILES += ${BASE_DIR}lib/float/extendsfdf2.c
 	CFILES += ${BASE_DIR}lib/float/fixdfsi.c
