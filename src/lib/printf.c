@@ -93,7 +93,7 @@ pd(void(*func)(int, void *), void *arg, double x)
 		tx = tx * 10.0;
 		x = x / 10.0;
 		i = tx;
-		if (i == 0)
+		if (integ == 0 && i == 0)
 			lim /= 100;
 		else
 			integ = 1;
