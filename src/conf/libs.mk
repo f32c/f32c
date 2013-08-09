@@ -97,9 +97,11 @@ ifdef _NEED_DIV
 endif
 
 ifdef _NEED_FLOAT
+	CFILES += ${BASE_DIR}lib/float/adddf3.c
 	CFILES += ${BASE_DIR}lib/float/ashldi3.c
 	CFILES += ${BASE_DIR}lib/float/clzsi2.c
 	CFILES += ${BASE_DIR}lib/float/divdf3.c
+	CFILES += ${BASE_DIR}lib/float/extendsfdf2.c
 	CFILES += ${BASE_DIR}lib/float/fixsfsi.c
 	CFILES += ${BASE_DIR}lib/float/floatunsidf.c
 	CFILES += ${BASE_DIR}lib/float/floatunsisf.c
@@ -107,6 +109,7 @@ ifdef _NEED_FLOAT
 	CFILES += ${BASE_DIR}lib/float/muldf3.c
 	CFILES += ${BASE_DIR}lib/float/mulsf3.c
 	CFILES += ${BASE_DIR}lib/float/negdf2.c
+	CFILES += ${BASE_DIR}lib/float/subdf3.c
 	CFILES += ${BASE_DIR}lib/float/truncdfsf2.c
 endif
 
