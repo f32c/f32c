@@ -104,6 +104,8 @@ ifdef _NEED_FLOAT
 	CFILES += ${BASE_DIR}lib/float/extendsfdf2.c
 	CFILES += ${BASE_DIR}lib/float/fixdfsi.c
 	CFILES += ${BASE_DIR}lib/float/fixsfsi.c
+	CFILES += ${BASE_DIR}lib/float/fixunsdfsi.c
+	CFILES += ${BASE_DIR}lib/float/fixunssfsi.c
 	CFILES += ${BASE_DIR}lib/float/floatunsidf.c
 	CFILES += ${BASE_DIR}lib/float/floatunsisf.c
 	CFILES += ${BASE_DIR}lib/float/lshrdi3.c
