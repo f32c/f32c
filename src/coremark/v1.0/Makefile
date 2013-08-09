@@ -45,6 +45,9 @@ endif
 
 CFLAGS += -DITERATIONS=$(ITERATIONS)
 
+# Omit floating point libs and printf parts
+CFLAGS += -DNO_PRINTF_FLOAT
+
 CORE_FILES = core_list_join core_main core_matrix core_state core_util \
 	../../lib/printf ../../lib/sio ../../lib/div \
 	../../lib/memset ../../lib/memcpy

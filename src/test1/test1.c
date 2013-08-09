@@ -151,8 +151,13 @@ main(void)
 	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
 	freq_khz = ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1);
 
+#if 0
 	printf("f32c @ %d.%03d MHz, CPU #%d, code running from ",
 	    freq_khz / 1000, freq_khz % 1000, tmp & 0xf);
+#else
+	printf("f32c @ %f MHz, CPU #%d, code running from ",
+	    freq_khz / 1000.0, tmp & 0xf);
+#endif
 #ifdef BRAM
 	printf("FPGA block RAM.\n\n");
 #else

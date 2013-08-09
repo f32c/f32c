@@ -26,6 +26,9 @@ ifneq (,$(findstring printf,$(F32C_LIBS)))
 	_NEED_DIV = YES
 	_NEED_SIO = YES
 	_NEED_PRINTF = YES
+ifeq (,$(findstring NO_PRINTF_FLOAT,$(CFLAGS)))
+	_NEED_FLOAT = YES
+endif
 endif
 
 ifneq (,$(findstring gets,$(F32C_LIBS)))

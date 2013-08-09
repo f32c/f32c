@@ -18,8 +18,12 @@ DHRY_CFLAGS += -DFAST_STRCMP -DUNROLLED_STRCMP
 # Build a faster __divsi3()
 CFLAGS += -DOPTIMIZED_DIVSI3
 
-CFILES = dhry_1.c dhry_2.c miscfn.c \
-	../lib/div.c ../lib/printf.c ../lib/sio.c
+# Omit floating point libs and printf parts
+CFLAGS += -DNO_PRINTF_FLOAT
+
+CFILES = dhry_1.c dhry_2.c miscfn.c
+
+F32C_LIBS = printf
 
 ASFILES = ../lib/start.S
 
