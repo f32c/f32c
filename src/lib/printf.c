@@ -45,6 +45,65 @@
 #define	PCHAR(c) {(*func)(c, arg); retval++;}
 
 
+#ifndef NO_PRINTF_FLOAT
+__attribute__((optimize("-Os"))) static int
+pd(void(*func)(int, void *), void *arg, double x)
+{
+	double tx, one = 1.0, integ = 0, lim = 0.00000000001;
+	char cb[128]; /* XXX hardcoded buffer size on stack - revisit!!! */
+	int first = 0, last = 0, retval = 0, i, t;
+
+	if (x == 0) {
+		PCHAR('0');
+		return(retval);
+	}
+
+	if (x < 0) {
+		x = -x;
+		PCHAR('-');
+	}
+
+	if (x < one) {
+		PCHAR('0');
+	} else {
+		for (tx = x; tx >= one; tx /= 10, lim *= 10) {
+			i = tx;
+			i %= 10;
+			cb[last++] = '0' + i;
+		}
+		if (last > first)
+			last--;
+		for (i = 0; i < (last - first + 1) / 2; i++) {
+			t = cb[first + i];
+			cb[first + i] = cb[last - i];
+			cb[last - i] = t;
+		}
+		for (i = first; i <= last; i++) {
+			PCHAR(cb[i]);
+			integ = integ * 10 + (cb[i] - '0');
+		}
+		x = x - integ;
+		if (x < lim)
+			return(retval);
+	}
+
+	tx = x;
+	PCHAR('.');
+	while (integ == 0 || x > lim) {
+		tx = tx * 10.0;
+		x = x / 10.0;
+		i = tx;
+		if (i == 0)
+			lim /= 100;
+		else
+			integ = 1;
+		PCHAR('0' + (i % 10));
+	}
+	return(retval);
+}
+#endif /* NO_PRINTF_FLOAT */
+
+
 __attribute__((optimize("-Os"))) int
 _xvprintf(char const *fmt, void(*func)(int, void *), void *arg, va_list ap)
 {
@@ -159,6 +218,11 @@ number:
 				PCHAR(nbuf[--n]);
 			}
 			break;
+#ifndef NO_PRINTF_FLOAT
+		case 'f':
+			retval += pd(func, arg, va_arg(ap, double));
+			break;
+#endif /* NO_PRINTF_FLOAT */
 		default:
 			break;
 		}
