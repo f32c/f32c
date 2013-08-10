@@ -1,4 +1,8 @@
 
+ifneq (,$(findstring setjmp,$(F32C_LIBS)))
+	_NEED_SETJMP = YES
+endif
+
 ifneq (,$(findstring div,$(F32C_LIBS)))
 	_NEED_DIV = YES
 endif
@@ -62,6 +66,11 @@ endif
 
 
 
+
+ifdef _NEED_SETJMP
+	CFILES += ${BASE_DIR}lib/setjmperr.c
+	ASFILES += ${BASE_DIR}lib/setjmp.S
+endif
 
 ifdef _NEED_SIO
 	CFILES += ${BASE_DIR}lib/sio.c

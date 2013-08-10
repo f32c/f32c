@@ -4,10 +4,40 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <setjmp.h>
 #include <time.h>
 
 
 int errno;
+
+
+void memcpy(void)
+{
+}
+
+
+void *sbrk(intptr_t p __unused)
+{
+
+	return (NULL);
+}
+
+
+int
+setjmp(jmp_buf env)
+{
+
+	return (_setjmp(env));
+}
+
+
+void
+longjmp(jmp_buf env, int val)
+{
+
+	_longjmp(env, val);
+}
+
 
 int *__error(void)
 {
