@@ -50,10 +50,13 @@ ifeq ($(WARNS), 2)
 MK_CFLAGS += -Werror
 endif
 
-MK_CFLAGS += -Wextra -Wsystem-headers -Wshadow -Wpadded
-#MK_CFLAGS += -Winline
 MK_CFLAGS += -ffreestanding
 MK_CFLAGS += -mno-shared
+
+MK_CFLAGS += -Wextra -Wsystem-headers -Wshadow
+# Too strict:
+#MK_CFLAGS += -Wpadded
+#MK_CFLAGS += -Winline
 
 # Debugging options
 MK_CFLAGS += -g

@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <fb.h>
 
 #include <fatfs/ff.h>
@@ -91,12 +93,13 @@ scan_files(char* path)
 static void
 load_raw(char *fname)
 {
-	FIL fp;
 	int r, g, b;
 	uint32_t i, x, y, ssize;
 	unsigned char *ib;
+	int f;
 
-	if (f_open(&fp, fname, FA_READ))
+	f = open(fname, O_RDONLY);
+	if (f < 0)
 		return;
 
 	printf("Citam datoteku %s...\n", fname);
@@ -112,9 +115,10 @@ load_raw(char *fname)
 		else
 			ib = (void *) &fb[i];
 
-		if (f_read(&fp, ib, 3 * ssize, &y)) {
-			printf("\nf_read() failed!\n");
-			f_close(&fp);
+		y = read(f, ib, 3 * ssize);
+		if (y <= 0) {
+			printf("\nread() failed!\n");
+			close(f);
 			return;
 		}
 
@@ -134,7 +138,7 @@ load_raw(char *fname)
 		}
 		display_timestamp();
 	}
-	f_close(&fp);
+	close(f);
 }
 #endif
 
