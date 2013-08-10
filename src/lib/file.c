@@ -56,7 +56,7 @@ int
 close(int d)
 {
 
-	if (d >= MAXFILES || file_map[d].in_use == 0)
+	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
 		return (-1);
 	f_close(&file_map[d].fp);
 	file_map[d].in_use = 0;
@@ -70,7 +70,7 @@ read(int d, void *buf, size_t nbytes)
 	FRESULT f_res;
 	uint32_t got;
 
-	if (d >= MAXFILES || file_map[d].in_use == 0)
+	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
 		return (-1);
 
 	f_res = f_read(&file_map[d].fp, buf, nbytes, &got);
@@ -86,7 +86,7 @@ write(int d, const void *buf, size_t nbytes)
 	FRESULT f_res;
 	uint32_t wrote;
 
-	if (d >= MAXFILES || file_map[d].in_use == 0)
+	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
 		return (-1);
 
 	f_res = f_write(&file_map[d].fp, buf, nbytes, &wrote);
@@ -101,7 +101,7 @@ lseek(int d, off_t offset, int whence)
 {
 	FRESULT f_res;
 
-	if (d >= MAXFILES || file_map[d].in_use == 0)
+	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
 		return (-1);
 
 	/* XXX revisit!!! */
