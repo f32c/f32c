@@ -10,7 +10,7 @@
 
 #include <fatfs/ff.h>
 
-#define MAXFILES 32
+#define MAXFILES 8
 
 
 static int max_open = -1;
