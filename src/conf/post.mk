@@ -23,7 +23,7 @@ WARNS = 2
 endif
 
 # Includes
-MK_INCLUDES = -nostdinc -I../include -I.
+MK_INCLUDES = -nostdinc -I${BASE_DIR}include -I.
 
 # MIPS-specific flags
 MK_CFLAGS += -march=f32c
