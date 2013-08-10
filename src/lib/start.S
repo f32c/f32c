@@ -8,7 +8,7 @@
 /*
  * Setup the SP and global (small data) pointer register and jump into main().
  */
-	.section .text.startup
+	.section .text.unlikely
 	.globl _start
 	.type _start,@function
 
@@ -34,3 +34,4 @@ flush_loop:
 
 	la	gp, _gp
 	j	_C_LABEL(main)
+	nop
