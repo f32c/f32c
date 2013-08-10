@@ -19,6 +19,7 @@ void free(void *ptr);
 
 #define RAND_MAX        0x7fffffff
 
+char    *getenv(const char *);
 
 #define	exit(x)								\
 	do {								\

@@ -12,6 +12,10 @@ ifneq (,$(findstring float,$(F32C_LIBS)))
 	_NEED_FLOAT = YES
 endif
 
+ifneq (,$(findstring math,$(F32C_LIBS)))
+	_NEED_MATH = YES
+endif
+
 ifneq (,$(findstring sio,$(F32C_LIBS)))
 	_NEED_SIO = YES
 endif
@@ -127,6 +131,23 @@ ifdef _NEED_FLOAT
 	CFILES += ${BASE_DIR}lib/float/subdf3.c
 	CFILES += ${BASE_DIR}lib/float/subsf3.c
 	CFILES += ${BASE_DIR}lib/float/truncdfsf2.c
+endif
+
+ifdef _NEED_MATH
+	CFILES += ${BASE_DIR}lib/math/acos.c
+	CFILES += ${BASE_DIR}lib/math/asin.c
+	CFILES += ${BASE_DIR}lib/math/atan.c
+	CFILES += ${BASE_DIR}lib/math/cos.c
+	CFILES += ${BASE_DIR}lib/math/exp.c
+	CFILES += ${BASE_DIR}lib/math/fabs.c
+	CFILES += ${BASE_DIR}lib/math/fmod.c
+	CFILES += ${BASE_DIR}lib/math/floor.c
+	CFILES += ${BASE_DIR}lib/math/isnan.c
+	CFILES += ${BASE_DIR}lib/math/log.c
+	CFILES += ${BASE_DIR}lib/math/pow.c
+	CFILES += ${BASE_DIR}lib/math/sin.c
+	CFILES += ${BASE_DIR}lib/math/sqrt.c
+	CFILES += ${BASE_DIR}lib/math/scalbn.c
 endif
 
 ifdef _NEED_ATOI
