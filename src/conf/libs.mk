@@ -93,6 +93,7 @@ endif
 
 ifdef _NEED_FATFS
 	CFILES += ${BASE_DIR}lib/fatfs.c
+	CFILES += ${BASE_DIR}lib/file.c
 endif
 
 ifdef _NEED_RANDOM
