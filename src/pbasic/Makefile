@@ -9,6 +9,7 @@ CFILES = bas1.c bas2.c bas3.c bas4.c bas5.c \
 F32C_LIBS = printf math fatfs setjmp
 
 CFLAGS += -DOPTIMIZED_DIVSI3
+CFLAGS += -G 0
 
 CFLAGS += -Wno-unused-parameter
 CFLAGS += -Wno-missing-braces -Wno-sign-compare
