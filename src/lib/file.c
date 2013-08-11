@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <stdio.h>
 
 #include <fatfs/ff.h>
 
@@ -36,6 +37,10 @@ open(const char *path, int flags __unused, ...)
 	/* XXX temp. hack - revisit flag mapping!!! */
 	if (f_open(&file_map[d].fp, path, FA_READ))
 		return (-1);
+
+	/* XXX hack! */
+	if (d < 3)
+		d = 3;
 
 	if (d > max_open)
 		max_open = d;
@@ -70,6 +75,16 @@ read(int d, void *buf, size_t nbytes)
 	FRESULT f_res;
 	uint32_t got;
 
+	/* XXX hack */
+	if (d >= 0 && d <= 2) {
+		char *cp = (char *) buf;
+		for (;nbytes != 0; nbytes--) {
+			*cp++ = getchar() & 0177;
+			got++;
+		}
+		return (got);
+	}
+
 	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
 		return (-1);
 
@@ -85,6 +100,13 @@ write(int d, const void *buf, size_t nbytes)
 {
 	FRESULT f_res;
 	uint32_t wrote;
+
+	/* XXX hack */
+	if (d >= 0 && d <= 2) {
+		char *cp = (char *) buf;
+		for (;nbytes != 0; nbytes--)
+			printf("%c", *cp++);
+	}
 
 	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
 		return (-1);
