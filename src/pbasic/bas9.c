@@ -12,6 +12,7 @@
  */
 
 #ifdef	__STDC__
+static	CHAR	*necvt(double, int, int *, int *);
 static	STR	lgcvt(void);
 static	void	_scale(double *, int *, int *, int);
 static	CHAR	*d_expand(double, int, int *);
@@ -125,7 +126,6 @@ mgcvt()
 	int     ndigit=9;
 	register CHAR   *p1, *p2;
 	register int    i;
-	CHAR	*necvt();
 	STR	st;
 
 	if(vartype== IVAL)	/* integer deal with them separately */
