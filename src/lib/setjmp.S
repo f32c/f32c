@@ -51,7 +51,7 @@
  * The previous signal state is NOT restored.
  */
 
-LEAF(_setjmp)
+LEAF(setjmp)
 	.set	noreorder
 	li	v0, 0xACEDBADE			# sigcontext magic number
 	sw	ra, (2 * 4)(a0)			# sc_pc = return address
@@ -66,11 +66,11 @@ LEAF(_setjmp)
 	sw	s7, (11 * 4)(a0)
 	sw	sp, (12 * 4)(a0)
 	sw	s8, (13 * 4)(a0)
-	j	ra
+	jr	ra
 	move	v0, zero
-END(_setjmp)
+END(setjmp)
 
-LEAF(_longjmp)
+LEAF(longjmp)
 #ifdef ABICALLS 
 	subu	sp, sp, 32
 	.cprestore 16
@@ -90,7 +90,7 @@ LEAF(_longjmp)
 	lw	s7, (11 * 4)(a0)
 	lw	sp, (12 * 4)(a0)
 	lw	s8, (13 * 4)(a0)
-	j	ra
+	jr	ra
 	move	v0, a1
 botch:
 	jal	_C_LABEL(longjmperror)
@@ -98,4 +98,4 @@ botch:
 //	jal	_C_LABEL(abort)
 	jr	zero
 	nop
-END(_longjmp)
+END(longjmp)
