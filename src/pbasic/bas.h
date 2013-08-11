@@ -29,7 +29,7 @@
 typedef char	CHAR;
 
 #define VOID	/**/
-#define UC(c)	((c) & 0x7f)
+#define UC(c)	((c) & MASK)
 
 #ifndef	WORD_SIZ
 #define	WORD_SIZ	4
