@@ -6,9 +6,12 @@
 #include <signal.h>
 #include <setjmp.h>
 #include <time.h>
+#include <stdio.h>
 
 
 int errno;
+
+static char *freep = (void *) 0x80080000;
 
 
 void memcpy(void)
@@ -16,10 +19,14 @@ void memcpy(void)
 }
 
 
-void *sbrk(intptr_t p __unused)
+void *sbrk(intptr_t p)
 {
 
-	return (NULL);
+	if (p != 0)
+		freep = freep + p;
+
+printf("sbrk(%d) new: %p\n", p, freep);
+	return (freep);
 }
 
 
