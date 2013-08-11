@@ -13,7 +13,7 @@ CFLAGS += -G 0
 
 CFLAGS += -Wno-unused-parameter
 CFLAGS += -Wno-missing-braces -Wno-sign-compare
-CFLAGS += -Wno-char-subscripts -Wno-clobbered
+CFLAGS += -Wno-char-subscripts
 CFLAGS += -Wno-maybe-uninitialized
 
 ASFILES += ${BASE_DIR}lib/start.S
