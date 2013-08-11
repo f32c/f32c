@@ -79,8 +79,8 @@ in1line()
 int
 input()
 {
-	register CHAR   *p;
-	register ival   i;
+	CHAR   *p;
+	ival   i = 0;
 	value	*l;
 	register int     c;
 	char    vty;
@@ -92,12 +92,11 @@ input()
 	int     firsttime=0;
 	int	noerr;
 	int	frfile = 0;
-	STR	st;
+	STR	st = NULL;
 
 	infunc = in1line;
 	c=getch();
 	if(c=='"'){
-		i=0;
 		p=line;
 		while(*point && *point != '"'){
 			*p++ = *point++;
@@ -151,7 +150,7 @@ for(;;){
 		if(noerr)
 			while( (c = (*infunc)()) == ' ');
 		if(!noerr || (c && c != ',')){
-			if(vty == SVAL)
+			if(vty == SVAL && st != NULL)
 				FREE_STR(st);
 			if(frfile)
 				error(26);
@@ -425,7 +424,7 @@ readd()
 	register int	c;
 	register value	*l;
 	register char   vty;
-	STR	st;
+	STR	st = NULL;
 
 	for(;;){
 		l= (value *)getname(0);
@@ -446,9 +445,10 @@ readd()
 		while( (c = readd1()) == ' ');
 		if(c && c != ',')
 			error(BADDATA);
-		if(vty == SVAL)
+		if(vty == SVAL) {
+			assert(st != NULL);
 			stringassign( (stringp)l, curentry, st, 0);
-		else
+		} else
 			putin(l, (int)vty);
 		if(getch()!=',')
 			break;
@@ -487,9 +487,9 @@ int	cnt;
 int
 matinput()
 {
-	register CHAR   *p;
-	register ival   i;
-	register int     c;
+	CHAR   *p;
+	ival	i = 0;
+	int     c;
 	struct	entry	*ep;
 	valp	l;
 	char	vty;
@@ -509,7 +509,6 @@ matinput()
 	infunc = in1line;
 	c=getch();
 	if(c=='"'){
-		i=0;
 		p=line;
 		while(*point && *point != '"'){
 			*p++ = *point++;

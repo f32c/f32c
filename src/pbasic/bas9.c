@@ -659,7 +659,7 @@ CHAR	*ptr, **ptrp;
 	register int    c;
 	register long	lx = 0;
 	long	ly;
-	long	lym;
+	long	lym = -1;
 	int    exp;
 	int    ndigits = 0;
 	int    exponent = 0;
@@ -712,6 +712,7 @@ CHAR	*ptr, **ptrp;
 			lzeros++;
 		}
 		if(ly){
+			assert(lym > 0);
 			if(lym >= MAX_L_INT)
 				break;
 			lym *= 10;

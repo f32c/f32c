@@ -141,3 +141,13 @@ void
 rset_term(int arg __unused)
 {
 }
+
+
+void
+__assert(char *func, char *file, int line, char *expr)
+{
+
+	printf("assert failed: file %s line %d function %s expr %s\n",
+	    file, line, func, expr);
+	exit(1);
+}

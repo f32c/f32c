@@ -1,9 +1,8 @@
 /*
  * allocation routines.
  */
-#include <sys/param.h>
 
-#include <stdlib.h>
+#include "bas.h"
 
 #define	PAGE_SIZE	4096
 #define	PAGE_MASK	(PAGE_SIZE-1)
@@ -271,7 +270,7 @@ get_pages(size_t npages, register PAH *pap)
 	int	freed = 0;
 	int	hasfreed;
 	int	maxhash;
-	PA	*spa, *sopa;
+	PA	*spa, *sopa = NULL;
 	size_t	spages;
 
 /*
@@ -318,8 +317,10 @@ get_pages(size_t npages, register PAH *pap)
 				pa->ph.nblks = npages;
 				if(sopa == 0)
 					free_pages = npa;
-				else
+				else {
+					assert(sopa != NULL);
 					sopa->ph.page = npa;
+				}
 				return(pa);
 			}
 		}
