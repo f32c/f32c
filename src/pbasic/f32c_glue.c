@@ -31,25 +31,7 @@ void *sbrk(intptr_t p)
 
 	if (p != 0)
 		freep = freep + p;
-
-printf("sbrk(%d) new: %p\n", p, freep);
 	return (freep);
-}
-
-
-int
-setjmp(jmp_buf env)
-{
-
-	return (_setjmp(env));
-}
-
-
-void
-longjmp(jmp_buf env, int val)
-{
-
-	_longjmp(env, val);
 }
 
 
