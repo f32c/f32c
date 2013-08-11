@@ -14,8 +14,15 @@ int errno;
 static char *freep = (void *) 0x80080000;
 
 
-void memcpy(void)
+void *
+memcpy(void *dst, const void *src, size_t len)
 {
+	const char *from = src;
+	char *to = dst;
+
+	for(; len != 0; len--)
+		*to++ = *from++;
+	return (dst);
 }
 
 
