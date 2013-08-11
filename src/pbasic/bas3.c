@@ -685,19 +685,19 @@ evalu()
 void
 ffn(pep, strp)
 struct	entry	*pep;
-STR	strp;
+volatile STR	strp;
 {
-	register struct  deffn   *p;
-	register struct	entry	*ep;
-	register int    i;
+	struct  deffn   *p;
+	struct	entry	*ep;
+	int	i;
 	union	ffn_vars *cur_arg;
 	struct	entry	**rp, *rep;
 	CHAR    *spoint;
 	struct	forst	*fp;
-	char	vty = 0;
+	volatile char	vty = 0;
 	char	ctype;
 	STR	st;
-	STR	retst = 0;
+	volatile STR	retst = 0;
 	union	ffn_vars args[FN_MAX_ARGS];
 
 	if( (ep = pep) == 0){
