@@ -8,11 +8,12 @@
 
 #include <sys/param.h>
 
+#include <assert.h>
 #include <signal.h>
-#include <sys/fcntl.h>
-#include <unistd.h>
 #include <stdlib.h>
+#include <sys/fcntl.h>
 #include <time.h>
+#include <unistd.h>
 
 #define	BLOCKSIZ 512
 

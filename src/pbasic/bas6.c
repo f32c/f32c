@@ -636,7 +636,7 @@ int
 bfield()
 {
 	filebufp fp;
-	struct	entry	*ep;
+	struct	entry	*ep = NULL;
 	register stringp	sp;
 	register itype	il;
 	ival	bsiz = 0;
@@ -665,6 +665,7 @@ bfield()
 		/*
 		 * magic time
 		 */
+		assert(ep != NULL);
 		if( (ep->flags & IS_FSTRING) == 0 && sp->str != 0)
 			mfree( (MEMP)sp->str);
 		ep->flags |= IS_FSTRING;

@@ -560,7 +560,7 @@ int	islp, iswrt;
 	STR	patstr = 0;
 	STR	ost;
 	int	is_str_pat = -1;
-	struct	str_info	savpat;
+	struct	str_info savpat = {.strlen = -1};
 	static	CHAR	comma[] = ",";
 	static	CHAR	quote[] = "\"";
 
@@ -702,6 +702,7 @@ STR	st, spat, savpat;
 	ival	flen;
 
 	if(!spat->strlen){
+		assert(savpat->strlen != -1);
 		spat->strlen = savpat->strlen;
 		spat->strval = savpat->strval;
 	}
@@ -791,7 +792,7 @@ matprint()
 	struct	entry	*ep;
 	ival	d1, d2;
 	valp	vpp;
-	ival	*ivpp;
+	ival	*ivpp = NULL;
 	char	vty;
 
 	if(getch() == '#'){
@@ -824,8 +825,10 @@ matprint()
 			for(i = 0 ; i < d1 ; i++){
 				if(vty == RVAL)
 					res = *vpp++;
-				else
+				else {
+					assert(ivpp != NULL);
 					res.i = *ivpp++;
+				}
 				st = mgcvt();
 
 				VOID(*outfunc)(filedes, st->strval, st->strlen);
@@ -1761,7 +1764,7 @@ int	isedit;
 	CHAR    chblock[BLOCKSIZ];
 	int     nleft=0;
 	register int    special=0;
-	register CHAR   *q;
+	register CHAR   *q = NULL;
 
 	readfile=fp;
 	inserted=1;     /* make certain variables are cleared */
@@ -1773,6 +1776,7 @@ int	isedit;
 			if( (nleft=read(fp, (char *)q,BLOCKSIZ)) <= 0)
 				break;
 		}
+		assert(q != NULL);
 		*p= *q++;
 		nleft--;
 		if(special){
