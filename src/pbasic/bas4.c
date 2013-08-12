@@ -267,7 +267,7 @@ datef()
 			}
 			tf %= mplies[n + 1];
 			
-			while(n){
+			while(n >= 0){
 				*p++ = '0' + (tf / mplies[n]);
 				tf %= mplies[n];
 				n--;
