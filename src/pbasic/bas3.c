@@ -129,9 +129,9 @@ struct  m {
 void
 eval()
 {
-	register int    c;
-	register struct	m	*j;
-	register int    i;
+	int    c;
+	struct	m	*j;
+	int    i;
 	value	*pp;
 	int	firsttime;
 	int	unaries[2];
@@ -427,7 +427,7 @@ rnd()
 #ifdef	SOFTFP
 	value   temp;
 #endif
-	register int    rn;
+	int    rn;
 
 	rn = rand() & 077777;
 	if(*point!='('){
@@ -544,7 +544,7 @@ babs()
 void
 len()
 {
-	register STR	st;
+	STR	st;
 
 	st = stringeval();
 	res.i = (itype)st->strlen;
@@ -555,7 +555,7 @@ len()
 void
 ascval()
 {
-	register STR	st;
+	STR	st;
 
 	st = stringeval();
 	if(!st->strlen)
@@ -649,8 +649,8 @@ pii()
 void
 evalu()
 {
-	register CHAR   *tmp;
-	register STR	st;
+	CHAR   *tmp;
+	STR	st;
 	int	c;
 
 	if(evallock>10)
@@ -870,7 +870,7 @@ int	nargs;
 union	ffn_vars *args;
 int	tofree;
 {
-	register int    i;
+	int    i;
 	union	ffn_vars *cur_arg;
 	struct	entry	**rp, *rep;
 	STR	ost = 0;
@@ -892,8 +892,8 @@ int	tofree;
 void
 drop_fns()
 {
-	register forstp	fp, nfp = 0;
-	register struct entry	*ep;
+	forstp	fp, nfp = 0;
+	struct entry	*ep;
 
 	for(fp = bstack ; fp ; fp = nfp){
 		nfp = fp->next;
@@ -928,7 +928,7 @@ drop_fns()
 int
 fnend()
 {
-	register forstp	fp;
+	forstp	fp;
 
 	check();
 	for(fp = estack ; fp ; fp = fp->prev)
@@ -943,8 +943,8 @@ fnend()
 int
 fncmd()
 {
-	register struct	entry	*ep;
-	register forstp	fp;
+	struct	entry	*ep;
+	forstp	fp;
 	STR	st;
 
 	if(!ispletter(point))
@@ -986,8 +986,8 @@ recover_vars(sptr, doit)
 forstp	sptr;
 int	doit;
 {
-	register loc_sav_t *ls;
-	register struct	loc_sav_e *lse;
+	loc_sav_t *ls;
+	struct	loc_sav_e *lse;
 	loc_sav_t *nls;
 
 	ls = sptr->fnLOCAL;
@@ -1088,7 +1088,7 @@ real_memory()
 	l = evalint();
 	p = (char *)l;
 #else
-	register long   ll;	/* really only for a vax */
+	long   ll;	/* really only for a vax */
 
 	evalreal();
 	if(res.f > 0x7fff000 || res.f < 0)      /* check this */
@@ -1160,7 +1160,7 @@ int	mode;
 void
 peekf()
 {
-	register char   *p;
+	char   *p;
 
 	p = real_memory();
 	res.i = (itype)pkpok(p, (itype)0, 1);
@@ -1170,8 +1170,8 @@ peekf()
 int
 poke()                		/* sp = approx position of stack */
 {                                       /* can give bus errors */
-	register char   *p;
-	register itype	i;
+	char   *p;
+	itype	i;
 
 	p = real_memory();
 	if(getch() != ',')
@@ -1453,7 +1453,7 @@ extern	int	max_mem_size;
 int
 bopts()
 {
-	register int	c;
+	int	c;
 	itype	memsiz;
 
 	if( (c = getch()) == OPT_BASE){
@@ -1496,7 +1496,7 @@ bopts()
 void
 ssystem()
 {
-	register STR	st;
+	STR	st;
 
 	st = stringeval();
 	NULL_TERMINATE(st);
@@ -1525,7 +1525,7 @@ static	int	sys_error;
 void
 bsyscall()
 {
-	register int	nargs;
+	int	nargs;
 	int	args[MAX_SYS_ARGS];
 	itype	scall;
 	itype	rval;

@@ -52,9 +52,9 @@ static	void	bfdcheck();
 void
 setupfiles(int argc, char **argv)
 {
-	register char    *q;
-	register int    fp;
-	register int     nfiles=MAXFILES;
+	char    *q;
+	int    fp;
+	int     nfiles=MAXFILES;
 
 #ifdef  NOEDIT
 	noedit=1;
@@ -96,7 +96,7 @@ runfile(fp)
 int	fp;
 {
 	static	int    firsttime = 1; /* flag to say that we are just loading */
-	register lpoint p;
+	lpoint p;
 
 	setupmyterm();          /* set up terminal - now done after files */
 	program = 0;
@@ -177,9 +177,9 @@ int	fp;
 int
 bfopen()
 {
-	register struct filebuf *p;
-	register struct filebuf *q;
-	register int     c;
+	struct filebuf *p;
+	struct filebuf *q;
+	int     c;
 	itype	i;
 	int     append=0;
 	itype   bl = 0;
@@ -333,8 +333,8 @@ static	void
 bfdcheck(userfd)
 int	userfd;
 {
-	register filebufp p;
-	register filebufp q = 0;	/* only for lint */
+	filebufp p;
+	filebufp q = 0;	/* only for lint */
 
 	for(p = filestart ; p ; p = q){
 		q = p->next;
@@ -355,7 +355,7 @@ int	userfd;
 int
 fclosef()
 {
-	register int	c;
+	int	c;
 
 	c = getch();
 	point--;
@@ -372,9 +372,9 @@ fclosef()
 
 static	void
 close_1(p)
-register filebufp p;
+filebufp p;
 {
-	register filebufp op;
+	filebufp op;
 
 	if(p->use & _BLOCKED)
 		kill_fstrs(p->buf, p->buf + p->bufsiz);
@@ -404,7 +404,7 @@ register filebufp p;
 void
 eofl()
 {
-	register struct filebuf *p;
+	struct filebuf *p;
 	struct	stat	statbuf;
 
 	p=getf(evalint(),(_READ | _WRITE) );
@@ -439,8 +439,8 @@ eofl()
 void
 fposn()
 {
-	register struct filebuf *p;
-	register itype	i;
+	struct filebuf *p;
+	itype	i;
 
 	i=evalint();
 	vartype= IVAL;
@@ -461,10 +461,10 @@ fposn()
 
 struct  filebuf *
 getf(i,j)
-register ival	i;     /* file descriptor */
-register int	j;     /* access permission */
+ival	i;     /* file descriptor */
+int	j;     /* access permission */
 {
-	register struct filebuf *p;
+	struct filebuf *p;
 
 	if(i == 0)
 		error(29);
@@ -480,7 +480,7 @@ register int	j;     /* access permission */
 
 static	void
 f_flush(p)
-register struct filebuf *p;
+struct filebuf *p;
 {
 
 	if(p->nleft){
@@ -497,7 +497,7 @@ register struct filebuf *p;
 void
 flushall()
 {
-	register struct filebuf *p;
+	struct filebuf *p;
 	for(p = filestart ; p ; p = p->next)
 		if(p->nleft && ( p->use & _WRITE ) ){
 			if(write(p->filedes,p->buf,p->nleft) != p->nleft){
@@ -515,7 +515,7 @@ flushall()
 void
 closeall()
 {
-	register struct filebuf *p;
+	struct filebuf *p;
 
 	flushall();
 	while( (p = filestart) != 0)
@@ -527,11 +527,11 @@ closeall()
 
 int
 putfile(p,q,i)
-register struct filebuf *p;
+struct filebuf *p;
 CHAR   *q;
-register int     i;
+int     i;
 {
-	register ival	j;
+	ival	j;
 
 	if(i <= 0)
 		return(0);
@@ -558,7 +558,7 @@ register int     i;
 
 int
 fin1ch(p)
-register filebufp p;
+filebufp p;
 {
 	if(p->use & _TERMINAL)          /* kludge for terminal files */
 		p->use &= ~_EOF;
@@ -605,9 +605,9 @@ static	void
 blrset(pad)
 int	pad;
 {
-	register stringp sp;
-	register STR	st;
-	register ival	i;
+	stringp sp;
+	STR	st;
+	ival	i;
 
 	sp = (stringp)getname(0);
 	if(vartype != SVAL)
@@ -637,10 +637,10 @@ bfield()
 {
 	filebufp fp;
 	struct	entry	*ep = NULL;
-	register stringp	sp;
-	register itype	il;
+	stringp	sp;
+	itype	il;
 	ival	bsiz = 0;
-	register CHAR	*p;
+	CHAR	*p;
 
 	if(getch() != '#')
 		error(SYNTAX);
@@ -682,9 +682,9 @@ bfield()
 int
 bput()
 {
-	register filebufp fp;
-	register itype	pos = -1;
-	register int	c;
+	filebufp fp;
+	itype	pos = -1;
+	int	c;
 
 	if(getch() != '#')
 		error(SYNTAX);
@@ -715,9 +715,9 @@ bput()
 int
 bget()
 {
-	register filebufp fp;
-	register ival	pos = -1;
-	register int	c;
+	filebufp fp;
+	ival	pos = -1;
+	int	c;
 
 	if(getch() != '#')
 		error(SYNTAX);

@@ -83,7 +83,7 @@ static	int	lcount;
 int
 main(int argc, char **argv)
 {
-	register int	i = 0;
+	int	i = 0;
 
 	catchsignal();
 	startfp();              /* start up the floating point hardware */
@@ -158,8 +158,8 @@ compile(fl, fline, hasnolnumb)
 int     fl, hasnolnumb;
 CHAR	*fline;
 {
-	register CHAR   *p, *k, *q;
-	register const	struct tabl    *l;
+	CHAR   *p, *k, *q;
+	const	struct tabl    *l;
 	lnumb	lin=0;
 	CHAR	*tmp;
 	CHAR    charac;
@@ -313,7 +313,7 @@ CHAR	*fline;
 
 static	CHAR    *
 eql(p, q, end)
-register CHAR   *p, *q, *end;
+CHAR   *p, *q, *end;
 {
 	p++, q++;
 	while(p < end){
@@ -368,8 +368,8 @@ void
 insert(lsize)
 int    lsize;
 {
-	register lpoint p, op;
-	register lnumb	l;
+	lpoint p, op;
+	lnumb	l;
 
 	inserted=1;                  /* say we want the variables cleared */
 	l= linenumber;
@@ -398,7 +398,7 @@ ins_line(op, lsize)
 lpoint op;
 int	lsize;
 {
-	register lpoint p;
+	lpoint p;
 							/* align the length */
 	/*
 	 * no longer needed.
@@ -470,8 +470,8 @@ int	lsize;
 void
 execute()
 {
-	register int    c, i;
-	register lpoint p;
+	int    c, i;
+	lpoint p;
 
 	for(;;){
 #ifdef	MSDOS
@@ -530,7 +530,7 @@ execute()
 
 void
 save_env(e)
-register struct	env	*e;
+struct	env	*e;
 {
 	e->e_point = point;
 	e->e_stolin = stocurlin;
@@ -544,7 +544,7 @@ register struct	env	*e;
 
 void
 ret_env(e)
-register struct	env	*e;
+struct	env	*e;
 {
 	point = e->e_point;
 	stocurlin = e->e_stolin;
@@ -570,7 +570,7 @@ void
 error(i)
 int     i;                      /* error code */
 {
-	register forstp	fp;
+	forstp	fp;
 
 	if(newentry){
 		drop_val(newentry, 1);
@@ -654,8 +654,8 @@ int	err;
 void
 errtrap()
 {
-	register lpoint p;
-	register lnumb	l;
+	lpoint p;
+	lnumb	l;
 
 	l=getlin();
 	if(l == NOLNUMB)
@@ -683,8 +683,8 @@ errtrap()
 int
 resume()
 {
-	register lpoint p;
-	register lnumb	i;
+	lpoint p;
+	lnumb	i;
 	int	c;
 
 	if(!intrap)
@@ -726,7 +726,7 @@ resume()
 int
 doerror()
 {
-	register itype	i;
+	itype	i;
 
 	i=evalint();
 	check();
@@ -796,7 +796,7 @@ clear()
  */
 void
 free_entry(op)
-register struct	entry	*op;
+struct	entry	*op;
 {
 	if(op->vtype == UNK_VAL){
 		mfree( (MEMP)op);
@@ -822,8 +822,8 @@ static	void
 free_ar(op)
 struct	entry	*op;
 {
-	register int	j = 1;
-	register stringp sp;
+	int	j = 1;
+	stringp sp;
 	int	i;
 
 	for(i = 0 ; i < op->dimens ; i++)
@@ -840,8 +840,8 @@ void
 clear_htab(htab)
 struct	hash	*htab;
 {
-	register struct entry   **p, *op;
-	register int	i = 0;
+	struct entry   **p, *op;
+	int	i = 0;
 
 	for(p = htab->hasht ; i < HSHTABSIZ ; i++, p++)
 		while( (op = *p) != 0){
@@ -852,10 +852,10 @@ struct	hash	*htab;
 
 void
 clr_stack(sptr)
-register forstp	sptr;
+forstp	sptr;
 {
-	register forstp np;
-	register struct	entry	*ep;
+	forstp np;
+	struct	entry	*ep;
 
 	while(sptr){
 		if(sptr->fortyp == FNTYP){
@@ -890,7 +890,7 @@ void
 kill_fstrs(bstr, estr)
 CHAR	*bstr, *estr;
 {
-	register struct entry   **p, *op;
+	struct entry   **p, *op;
 
 	for(p = hshtab.hasht ; p < &hshtab.hasht[HSHTABSIZ]; p++)
 		for(op = *p ; op ; op = op->link)
@@ -912,7 +912,7 @@ int	doall;
 {
 	struct	hash	tmphshtab;
 	struct	entry	**p, **q;
-	register struct	entry	*ep, **nep, **neq, *tep = 0;
+	struct	entry	*ep, **nep, **neq, *tep = 0;
 
 	q = tmphshtab.hasht;
 	for(p = hshtab.hasht ; p < &hshtab.hasht[HSHTABSIZ] ; p++, q++){
@@ -938,9 +938,9 @@ int	doall;
 
 void
 add_entry(op)
-register struct	entry	*op;
+struct	entry	*op;
 {
-	register int	i;
+	int	i;
 
 	i = MKhash(op->ln_hash);
 	op->link = hshtab.hasht[i];
@@ -969,7 +969,7 @@ void *
 mmalloc(len)
 ival	len;
 {
-	register void	*p;
+	void	*p;
 
 #ifndef	OWN_ALLOC
 #ifndef	i386
@@ -1013,7 +1013,7 @@ int
 mtestalloc(len)
 ival	len;
 {
-	register void	*p;
+	void	*p;
 
 #ifndef	OWN_ALLOC
 #ifndef	i386
@@ -1039,7 +1039,7 @@ memp
 mmalloc(len)
 ival	len;
 {
-	register memp	p;
+	memp	p;
 #ifndef	OWN_ALLOC
 	char	*malloc();
 
@@ -1082,7 +1082,7 @@ int
 mtestalloc(len)
 ival	len;
 {
-	register memp	p;
+	memp	p;
 #ifndef	OWN_ALLOC
 	char	*malloc();
 
@@ -1163,7 +1163,7 @@ static	const	struct	mysigs {
 void
 catchsignal()
 {
-	register const	struct mysigs	*sp;
+	const	struct mysigs	*sp;
 
 	for(sp = traps ; sp < &traps[sizeof(traps) / sizeof(traps[0])]; sp++)
 		if(sp->sigval)

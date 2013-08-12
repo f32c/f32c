@@ -88,9 +88,9 @@ static	int	do_alloc_pages(void);
 #define	MIN_ALLOCSIZ	64
 
 void	*
-m_get(register size_t size)
+m_get(size_t size)
 {
-	register PH	*php;
+	PH	*php;
 	OB	*ob;
 	PAH	*pap;
 
@@ -159,8 +159,8 @@ mdump()
 void
 m_free(void *mem)
 {
-	register PH	*php;
-	register OB	*ob;
+	PH	*php;
+	OB	*ob;
 
 	ob = (OB *)mem;
 	php = OBJTOPAGE(ob);
@@ -209,7 +209,7 @@ out:;
 void
 m_purge()
 {
-	register PAH	*pap;
+	PAH	*pap;
 
 	if(!done_alloc_pages)
 		return;
@@ -220,10 +220,10 @@ m_purge()
 static	PH *
 alloc_page(size_t size, PAH *pap)
 {
-	register PH	*php;
-	register OB	*ob;
+	PH	*php;
+	OB	*ob;
 	PA	*pa;
-	register size_t	nobjs, osize;
+	size_t	nobjs, osize;
 	size_t	npages;
 
 	osize = size / sizeof(OB);
@@ -264,9 +264,9 @@ alloc_page(size_t size, PAH *pap)
  * Now uses best fit algorithm
  */
 static	PA *
-get_pages(size_t npages, register PAH *pap)
+get_pages(size_t npages, PAH *pap)
 {
-	register PA	*pa, *opa, *npa;
+	PA	*pa, *opa, *npa;
 	int	freed = 0;
 	int	hasfreed;
 	int	maxhash;
@@ -360,9 +360,9 @@ get_pages(size_t npages, register PAH *pap)
 }
 
 static	void
-free_pap_pages(register PAH *pap)
+free_pap_pages(PAH *pap)
 {
-	register PH	*php, *nphp = 0;
+	PH	*php, *nphp = 0;
 
 	for(php = pap->page ; php ; php = nphp){
 		nphp = php->next;
@@ -384,8 +384,8 @@ static	void
 free_page(php)
 PH	*php;
 {
-	register PA	*pa = php->page;
-	register PA	*tpa, *xpa;
+	PA	*pa = php->page;
+	PA	*tpa, *xpa;
 
 	pages_free += php->nblks;
 
@@ -421,8 +421,8 @@ extern	void	*sbrk(int);
 static	int
 do_alloc_pages(void)
 {
-	register char	*cur_mem;
-	register size_t	i;
+	char	*cur_mem;
+	size_t	i;
 
 	done_alloc_pages = 1;
 
@@ -443,7 +443,7 @@ do_alloc_pages(void)
 static	PA *
 get_space(size_t size)
 {
-	register void	*cur_mem;
+	void	*cur_mem;
 
 	cur_mem = sbrk(PAGE_SIZE * size);
 	if(cur_mem == (void *)-1)
