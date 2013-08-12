@@ -73,7 +73,7 @@ ssize_t
 read(int d, void *buf, size_t nbytes)
 {
 	FRESULT f_res;
-	uint32_t got;
+	uint32_t got = 0;
 
 	/* XXX hack */
 	if (d >= 0 && d <= 2) {
