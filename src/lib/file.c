@@ -24,16 +24,17 @@ static struct {
 
 
 int
-open(const char *path, int flags __unused, ...)
+open(const char *path, int flags, ...)
 {
 	int try, d = 0;
+	int ff_flags;
 	DIR ff_dir;
 	
-	if (*path == '1')
+	if (path[0] == '1' && path[1] == ':')
 		d = 1;
 	if (ff_mounted[d] == 0 && f_mount(d, &ff_mounts[d]) == FR_OK)
 		for (try = 0; try <= d; try++)
-			if (f_opendir(&ff_dir, "1:") == FR_OK) {
+			if (d == 0 || f_opendir(&ff_dir, "1:") == FR_OK) {
 				ff_mounted[d] = 1;
 				break;
 			}
@@ -47,8 +48,14 @@ open(const char *path, int flags __unused, ...)
 	if (d == MAXFILES)
 		return (-1);
 
-	/* XXX temp. hack - revisit flag mapping!!! */
-	if (f_open(&file_map[d].fp, path, FA_READ))
+	/* Map open() flags to f_open() flags */
+	ff_flags = ((flags & O_ACCMODE) + 1);
+	if (flags & (O_CREAT | O_TRUNC))
+		ff_flags |= FA_CREATE_ALWAYS;
+	else if (flags & O_CREAT)
+		ff_flags |= FA_OPEN_ALWAYS;
+
+	if (f_open(&file_map[d].fp, path, ff_flags))
 		return (-1);
 
 	file_map[d].in_use = 1;
