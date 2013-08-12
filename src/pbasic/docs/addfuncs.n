@@ -1,0 +1,161 @@
+
+Notes for updateing and maintaining Basic.
+                (c) P. (Rabbit) Cockcroft 1982.
+
+1) Variables and their uses.
+
+char    *point    - This points to the next character that will
+                    be interpreted.
+
+typedef struct lin *lpoint
+
+lpoint  stocurlin - Points to the start of the line structure
+                    of the current line. Is null in direct mode.
+
+unsigned curline  - Linenumber of current line being executed.
+                    Zero in direct mode.
+
+lpoint  errortrap - Pointer to start of line where error trapping will
+                    go to. Null if no error trapping.
+
+char    inserted  - Flag set if program has been changed. Used to clear
+                    data space if program text changed.
+
+char    trapped   - Set if cntrl-c has been hit. Will cause program to
+                    exit next time through the execute routine.
+
+char    elsecount - Set if elses are legal terminators. (After an if
+                    statement only).
+
+char    runmode   - Set if in runmode. Zero in direct mode.
+
+char    vartype   - Type of variable. Set by getname() - get a variable,
+                    getop() - get a number and several of the other
+                    functions.
+                    Values:-   0) Floating point variable
+                               1) Integer variable
+                               2) String variable.
+
+char   *filestart - Pointer to start of file buffers. If you want to
+                    add more dynamic buffers for other purposes. Put
+                    them in before filestart is initialised. For semi
+                    permanent buffers. Or place them after estarr and
+                    change data space by using xpand (Fairly unstable).
+
+char    *fendcore - End of file buffers start of basic text.
+
+char    *ecore    - End of basic program.
+
+char    *vvend    - Very end of allocated data. Changes very quickly
+                   ( by for-next - gosub stack ).
+
+typedef value  union {
+                double f;
+                int     i;
+                };
+
+value  res        - General purpose register for maths. Result always in
+                    here. (else return value from evalint() ).
+
+long  overfl      - Used when integer maths overflows. Value is
+                    converted from long to double with vartype set
+                    accordingly by over().
+
+int     cursor    - Current cursor location across screen.
+
+char    line[]    - Input line. Place where edit and readfi() put the
+                    input line. Where the editor works. Input to compile
+                    function.
+
+char    nline[]   - Compiled line is here. What is executed in direct
+                    mode. Sqirelled away by insert().
+
+int     (*functb[]),
+        (*functs[]),
+        (*commandf[]),
+        (*strngcommand[]) - Maths , Command, and string function jump tables.
+
+char    *ermsg[]  - Table of error messages. To add other error messages
+                    put them at the end of this table and increment MAXERR.
+
+Other pointers and variables are used for various purposes probarbly
+not needed for adding functions. Don't change them if you don't know
+what they do.
+
+2) Useful functions.etc.
+
+object *getname() - If point points to a valid name then returns a
+                    pointer to it. If variable does not exist create it.
+                    (Will not create arrays).
+                    Only ever returns with a valid pointer.
+
+int     getch()   - Get the next character on the line. Ignores spaces.
+                    ( Care must be used at end of line so don't run off).
+
+int     check()   - calls error if not at the end of a statement.
+                    Use when got all arguments and want to see if and
+                    garbage is at end of command.
+
+int     error()   - Call error routines. Will always tidy up. Sets error
+                    code to parameter. (NO checking of parameter is done).
+                    THIS ROUTINE NEVER RETURNS. WILL ALWAYS GET YOU OUT
+                    FROM WHERE YOU ARE BACK TO COMMAND MODE. (Useful).
+
+int     eval()    - Will evaluate any mathematical expression. The
+                    result will be in res with vartype set accordingly.
+
+int     evalint() - Will call eval() and then returns an integer if
+                    possible. Otherwise returns -1. (Negative values are
+                    usually thought of as an error).
+
+int     stringeval(f) - Will evaluate string expressions. f is the
+                    destination it must be a pointer to a character
+                    array of at least 256 characters. (Usually gblock or
+                    on stack or allocated by grow() -actually on the stack).
+                    gcursiz will contain the length of the string.
+                    N.B. gblock (can) will be corrupted by stringeval
+                        and the input routine ( edit() ).
+
+int     edit(f1,f2) - Input routine from the terminal. (Full editor).
+                   f1 is number of characters to be used as a prompt.
+                   (in line[] ), f2 is the number of characters to be
+                   printed out at the start. (so can be used to edit the
+                   given string. The string must already be in line[].
+                   f2 must never be less than f1.
+
+object  *grow(v) - Will allocate v bytes on the stack. V must be even.
+                   Should be used for maths functions which need a lot
+                   of stack space for their local variables. It will
+                   call error if it runs out of stack space. (Will only
+                   use one segmentation register for the stack. Rest is
+                   for program and data). Returns a pointer to the space.
+                   (This means that 75 or so brackets can be used).
+int   istermin(c),
+      isletter(c),
+      isdigit(c) - Macros that return true if c is a terminator, a
+                   letter or a digit.
+
+3) Adding More functions, commands. etc.
+
+The basic idea is to put an entry in the corresponding table and to add
+the function name and token value into the tokenising table at the
+correct spot. Commands need to return a value all others do not.
+Commands that need to change the direction of the program return -1
+otherwise use 'normret'. - Most commands will return by using 'normret'.
+
+Maths and string functions that require brackets fit perfectly into this
+scheme but the exceptions are as follows:-
+
+commands:-
+        These require a zero to be deleted and the function to be
+added in it's place this is so that mid$ can be used on the left hand
+side of a statement. Nothing else need be done.
+
+Maths functions without brackets or optional brackets:-
+        These are nasty because the value of rnd is used for various
+uses. So :- Decrement the defined constant RND and then decrement the
+entry in the tokenising table. Place the new entry where RND used to be.
+
+( Maybe you might like to make brackets not as tightly bound to
+functions - currently must be tight against the keyword (No particular
+reason but thats how I like functions to be)).
