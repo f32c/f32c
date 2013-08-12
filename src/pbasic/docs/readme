@@ -1,0 +1,50 @@
+BASIC (an Interpreter)
+----------------------
+
+This directory contains the source of my BASIC interpreter. 
+It was originally started when I was a student as a 2ndyr project, I
+continued to work on it afterwards every once in a while, putting
+various extra facilities into it as I went along. 
+The interpreter is based on a combination of Microsoft level 5 basic and
+and RT11's MU-Basic with a smattering of Basic Plus in there for good
+measure. The rational behind this was that these were the versions I
+first learned to program in (many years ago). There are some parts of
+the system I would redo again (especially the file handling - which is
+only just workable) but I don't have the time. I'm sure the
+documentation does not have all the latest facilities in but most of
+them can be worked out from the source code.
+
+This code is being put in the Public Domain since I will soon loose
+network connectivity (I am leaving my job) and I don't particularly want
+to sell it. This system does not contain any proprietary software. All
+the algorithms are original or come from publicly available sources.
+
+There are no licensing restrictions on this code or documentation at
+all. I only ask that you give appropriate credit to the author.
+
+Building the system
+-------------------
+
+This system has been built and tested on a Vax running 4.2 (4.1) on a
+pdp11 (with and without floating point hardware ) running V6 V7 BSD 2.8 and
+BSD 2.9, a pyramid 98X and on a unisoft 68000 (V7) system. With
+appropriate convertion of the terminal handling routines (about 20 lines
+of code) it should run on System V systems as well.
+
+The system dependent code has been extracted and placed in relevent
+subdirectories. Follow one of the current systems for conversion guidance.
+The only nasty is that it assumes (in print()) that ints and structure
+pointers are the same size. This can be fixed but I don't want to do it.
+(It also assumes that all pointer types are the same size which I
+wouldn't like to have to fix)
+
+To compile the system use the "gen" shell script which will do all the
+work.
+
+You may want to sort out the terminal handling/editing routines as
+well.
+
+Have fun.
+
+Phil Cockcroft 28 Sept 86
+-------------------------

@@ -1,0 +1,587 @@
+.TH BASIC 1
+.SH
+basic \- `Basic' language interpreter
+.SH SYNOPSIS
+.B basic
+[ -e -x -n file ]
+.SH DESCRIPTION
+.B Basic
+is an interpreter for the Basic language. See below
+for current commands recognised. If a file is given then
+that file is loaded up into core and run without any
+interaction. This can be used for games etc. which use a
+small calling program which is set user-id. All commands
+are only recognised in lower case. A line editor is
+invoked for all input from the terminal.
+To get characters less than space into a line use the
+construct \\n \\a etc. which will get cntrl-n and
+cntrl-a into the line.
+.PP
+FLAGS
+.HP 6
+-e use the in built editor for line input. Even when
+default mode is for no editor.
+.HP 6
+-x don't use the editor ever. Use the terminal driver
+for all editing and input.
+.HP 6
+-n where n is any number between 0 and 9 defines the
+number of file buffers allocated at start up.
+.PP
+COMMANDS
+.HP 6
+Standard Dartmouth Basic Commands:-
+.HP 6
+end
+.br
+This terminates the execution of a program
+and returns to command level.
+.HP 6
+run { l }
+.br
+This will execute a program, if an optional
+line number is given then the program is run from that
+line. All variables are cleared and all files are
+closed.
+.HP 6
+goto l
+.br
+This command will transfer control to the
+specified line number
+.HP 6
+let x = EXP
+.br
+This command is used to introduce an
+assignment. If a command is not found on a line then a
+implied let is assumed.
+.HP 6
+list
+.br
+the whole file
+.HP 6
+list 1-2
+.br
+lines 1 to 2
+.HP 6
+list -1
+.br
+lines up to 1
+.HP 6
+list 1
+.br
+line 1
+list 1-
+.HP 6
+.br
+line 1 onwards
+.br
+This command will list any number of lines of
+text onto the terminal. The start and last line can be
+specified as can to a specified line and from a
+specified line.
+.HP 6
+print or '?'
+.HP 6
+print #f
+.br
+This command will print out all of it's
+parameters, they have to be separated by commas or
+semi-colons, if a comma is used then the print head is
+moved to the next tab position (16 places ). If a file
+descriptor is given then output is to the given file.
+.HP 6
+rem or `'
+.br
+A comment statement, is ignored totally by
+the program during execution.
+.HP 6
+stop
+.br
+Stops the execution of the program and
+returns to command level. Similar to 'end' but prints a
+message. A program can also be 'cont'inued after a stop.
+.HP 6
+for x = EXP to EXP { step EXP }
+.br
+Will start execution of a for loop. It will
+take the two limits and an optional step argument. The
+loop is always executed once.
+.HP 6
+next { x { , y } }
+.br
+End of the for loop, if the terminal
+conditions are met then execution continues from the
+next statement otherwise return to end of the
+corresponding for statement. The next does not need a
+parameter if this is the case the most recently
+activated loop is used. If there are more than one
+parameter then each one is only checked after the
+completion of the inner loop.
+.HP 6
+gosub l
+.br
+Transfer command to a line number. Save
+return address so that the program can resume execution
+after the gosub command.
+.HP 6
+return
+.br
+Return from a subroutine ( called by gosub ).
+It will return from the most recently activated
+subroutine call.
+.HP 6
+read VAR { , VAR }
+.br
+Read data from the data statements contained
+in the program. An item can be a string or a variable.
+.HP 6
+data OBJECT { , OBJECT }
+.br
+Statements that contain the data used in the
+read statements. Items are separated by commas. The
+data statement must be the only one on the line.
+.HP 6
+restore { l }
+.br
+Restore the data pointer to the start of the
+file. So that the data can be read again. If an
+optional line number is given then the restore occurs
+from the start of that line. If no data statements are
+found then the restore is from the start of the
+program.
+.HP 6
+if EXP then STATEMENT { else STATEMENT }
+.br
+The if statement if the condition is true
+then the commands after the 'then' are executed. If
+this is a line number then a goto is performed. If the
+condition is false then the statement after the else is
+dealt with in a similar manner, the else statement is
+an optinal facility.
+.HP 6
+dim VAR(d,d,d) { , VAR(d) }
+.br
+Dimension a list of arrays ( string or
+arithmetic ) a maximum of three subscripts can be used.
+All arrays must be dimensioned before use.
+.HP 6
+exit , bye , quit
+.br
+Terminate the execution of the interpreter,
+closing all files.
+.PP
+Extended Basic Commands
+.HP 6
+delete l - l
+.br
+Delete a specified range of lines. If they
+are not found then no lines will be deleted.
+.HP 6
+edit l
+.br
+Edit a given line. If the exit from the edit
+is via a cntrl-c then do not change the line.
+.HP 6
+input { #f, } 
+.br
+input "prompt";
+.br
+Input from a terminal or from a file. If the
+input is from the terminal then a prompt message can
+also be added.
+.HP 6
+clear EXP
+.br
+Clear all variables then allocate the amount
+of string space specified by the second parameter.
+.HP 6
+save STRINGEXP
+.br
+Save the current program to a named file.
+.HP 6
+old STRINGEXP
+.br
+Load a program from the named file. All
+variables are cleared.
+.HP 6
+new { EXP }
+.br
+Wipe the program from core. All files are
+closed and the interpreter is reset to its inital
+state. If a parameter is given then that is the number
+of file buffers that are allocated.
+.HP 6
+shell
+.br
+Shell out to Unix. This is the Bourne shell. If
+the interpreter is made set userid then this is turned
+off in the shell.
+.HP 6
+resume { l }
+.br
+Return from an error trap. If a parameter is
+given then the return is made to that line. An error
+trap is set up by the "on error goto" statement.
+.HP 6
+random
+.br
+Randomise the random number generator. The
+generator always starts from the same place in its
+sequence, when a program is started.
+.HP 6
+on EXP goto l { , l}
+on - gosub
+on error goto l
+.br
+This command will execute either a goto or a
+gosub to a specified line number. The linenumber is
+specified by the value of the statement and the
+linenumber is taken from the list of line numbers that
+is given.
+If the error format is used, only one
+linenumber is required. This is the line where a jump
+is performed to if an error occurs.
+.HP 6
+error EXP
+.br
+Execute the given error sequence. Useful for
+debugging of error trap routines.
+.HP 6
+auto { l { ,l } }
+.br
+Perform auto line numbering so that a program
+can be typed in without having to bother about
+linenumbers. An optional start and increment can also
+be specified.
+.HP 6
+cls
+.br
+Clear the terminals screen.
+.HP 6
+base 0 | 1
+.br
+Specify the starting index for arrays. This
+can have a value of either zero or one.
+.HP 6
+poke EXP,EXP
+.br
+Poke a value into a location. Unreasonable
+addresses are ignored. ( Can cause bus-errors if not
+using split i and d space.
+(Not available on Vax systems).
+.HP 6
+open STRINGEXP
+{ for input|output|append|terminal } as EXP
+.br
+Open a file for input/ output. This command
+can be used to specify whether the file is to be read
+or writen to. A file cannot be opened for writing if
+the file is already open. If the mode is terminal then
+it will believe that it is talking to a terminal. (No
+buffering. Open for reading and writing.) If the option
+is 'for output' it may be ommitted.
+.HP 6
+close EXP
+.br
+Close a file. Releases the file descriptor
+and flushes out all stored data.
+.HP 6
+merge STRINGEXP
+.br
+Merge two files together. If there is a line
+in the file with the same linenumber as in the program
+then that line is replaced by the new one. All other
+lines are inserted into the file.
+.HP 6
+chain STRINGEXP
+.br
+Read in a program, then start to execute it.
+All simple variables are kept but all arrays and
+strings are cleared. The size of the string space is
+kept the same.
+.HP 6
+def fnNAME{ ( VAR {,VAR } ) } = EXP
+.br
+Define a user defineable function.
+.HP 6
+linput
+.br
+Identical to input but ignores seperators.
+.HP 6
+mid$(STRINGVAL, EXP { ,EXP} ) = STRINGEXP
+.br
+Assign STRINGEXP to STRINGVAL starting at EXP1
+and finishing at EXP2.
+.HP 6
+cont
+.br
+Continue execution of a program that has been
+halted by a stop statement or by control-c.
+.HP 6
+while EXP
+.br
+Start of a while loop. The loop is repeated
+until EXP is false. If EXP is false at the start then do
+not execute the loop at all. A while loop must be
+terminated by a wend statement.
+.HP 6
+wend
+.br
+Terminating statement of a while loop. Only one
+wend is allowed for each while.
+.HP 6
+repeat
+.br
+Start statement for a repeat - until loop. This
+type of loop will always be executed at least once.
+.HP 6
+until EXP
+.br
+The terminating statement of a repeat - until
+loop. The loop terminates when EXP is true.
+.PP
+String functions Available
+.br
+.HP 6
+mid$(a$,i,j)
+.br
+Returns the part of a$ between the i'th and
+j'th positions. If the second parameter is not
+specified then the string is taken between the start
+value and the end of the string.
+.HP 6
+right$(a$,j)
+.br
+Returns the right j characters of a$.
+.HP 6
+left$(a$,j)
+.br
+Returns the left j characters of a$.
+.HP 6
+string$(a$,j)
+.br
+Returns a$ repeated j times.
+.HP 6
+ermsg$(j)
+.br
+Returns the j'th error message.
+.HP 6
+chr$(j)
+.br
+Returns the ascii character corresponding to
+the value of j.
+.HP 6
+str$(j)
+.br
+Returns a string representation corresponding
+to j. This is similar but not the same as what can
+printed out.
+.HP 6
+space$(j)
+.br
+Returns a string of j spaces
+.HP 6
+get$(f)
+.br
+Returns one character from file f. If f is zero
+use the terminal. Returns a zero lenght string on cntl-c
+.HP 6
+date$
+.br
+returns a string coresponding to the current
+date. ( Same string as printed out when logging on. ).
+.PP
+Maths functions Available:-
+.HP 6
+sgn(x)
+.br
+Returns the sign of a number. It's value is 1
+if greater than zero , zero if equal to zero. -1 if
+negative.
+.HP 6
+len(a$)
+.br
+Returns the length of string a$.
+.HP 6
+abs(x)
+.br
+Returns the absolute value of x.
+.HP 6
+int(x)
+.br
+than x.
+.HP 6
+val(a$)
+.br
+Returns the value of the number specified by
+the string.
+.HP 6
+asc(a$)
+.br
+Returns the ascii code for the first element
+of a$.
+.HP 6
+instr(a$,b$,c)
+.br
+Returns the starting position that a$ is in
+b$, starting from the optional c'th position.
+.HP 6
+eof(f)
+.br
+Returns true if the file specified by f has
+reached the end of the file.
+.HP 6
+posn(f)
+.br
+Returns the current printing position in the
+file. If f is zero then it is the printing position of
+the terminal.
+.HP 6
+sqrt(x)
+.br
+Returns the square root of X.
+.HP 6
+log(x)
+.br
+Returns the natural logarithm of x.
+.HP 6
+exp(x)
+.br
+Returns e^x. e=2.7182818..
+.HP 6
+eval(a$)
+.br
+Evaluates a$.
+e.g. eval("12") returns the value 12.
+.HP 6
+rnd
+.br
+Returns a random number between 1 and 32767.
+.HP 6
+rnd(x)
+.br
+If x is zero returns a random number between
+0 and 1 otherwise returns a random number
+between 1 and int(x).
+.HP 6
+peek(x)
+.br
+Returns the value of the byte at address x.
+If x is unreasonable then returns zero.
+( Not available on a VAX )
+.HP 6
+sin(x)
+.br
+.HP 6
+cos(x)
+.br
+.HP 6
+atan(x)
+.br
+Trignometric functions. (May not yet be
+implemented).
+.HP 6
+pi
+.br
+Returns the value of pi. = 3.141592653589...
+.HP 6
+erl
+.br
+Returns the line number of the last error.
+Zero if error was in immeadiate mode.
+.HP 6
+err
+.br
+Returns the error code of the last error.
+.HP 6
+tim
+.br
+Returns a numeric value for the number of
+seconds since
+1:1:1970 i.e. the value of the Unix clock.
+.PP
+Mathematical Operators:-
+.HP 6
+	The  following  mathematical  operators   are
+accepted.
+.nf
+             ^               exponentiation
+             *               multiplication
+             /               division
+             mod             remainder
+             +               addition
+             -               subtraction
+
+     bitwise operators:-
+        for real values non-zero is true,
+             and             bitwise and
+             or              bitwise or
+             xor             bitwise exclusive or
+             not             bitwise not
+
+     comparison operators:-
+             <=              less than or equal
+             <>              not equal to
+             >=              greater than or equal
+             =               equal
+             >               greater than
+             <               less than
+
+      Assignment statements can also have the form
+        a +=  b     a -=  b     a *=  b    a /=  b
+      Which have similar meanings to C's interpretation
+.fi
+.PP
+.nf
+EXPRESSION SYNTAX
+
+        stringexp  ::= string | string + stringexp
+        string     ::= qstring | stringvar | stringfunc
+        qstrings   ::= "any char" | `any char`
+                        N.B. strings with nothing after them on the
+                             line do not need the terminating quote
+        stringvar  ::= numbvar$ | numbvar$[ dim1 { ,dim2 {, dim3 } } ]
+        stringfunc ::= chr$(val) | mid$(stringexp, val {,val} )
+                        | date$ | right$(stringexp, val)
+                        | left$(stringexp, val) | ermsg$(val)
+                        | str$( val) | space$(val)
+                        | string$(stringexp, val) | get$( 0 | fval )
+
+        val        ::= term | term sep val
+                        | not val | - val
+        term       ::= numb | valfunc | numbvr
+                        | stringexp csep stringexp
+        numb       ::= digit | digit digit+
+                        | digit* . digit*
+                        | digit* e {+ | -} digit+
+                        | digit* . digit* e {+ | -} digit+
+        digit      ::= 0 1 2 3 4 5 6 7 8 9
+        numbvr     ::= numbvar | subsc
+        numbvar    ::= lett | lett alpha+
+        subsc      ::= numbvar( val {, val { ,val } } )
+        sep        ::= + - * /  ^ and or xor | csep
+        csep       ::= <> > < >= <= =
+        valfunc    ::= sgn(val) | len(stringexp)
+                        | abs(val) | val(stringexp)
+                        | asc(stringexp) | eof(fval)
+                        | posn( 0 | fval) | sqrt(val)
+                        | instr(stringexp, val { ,val} )
+                        | log(val) | exp(val) | eval(stringexp)
+                        | int(val) | peek(val) | rnd
+                        | rnd(val) | usrfunc | pi
+                        | erl | err | tim
+        usrfunc    ::=  fn/numbvar { (val { , val { , val } } ) }
+        fval       ::= val with value between 1-9
+
+.SH DIAGNOSTICS
+When the interpreter discovers an error it will call
+an error trapping routine. The errors can be caught by
+the user program using the on-error feature. If no error
+trapping routine has been supplied a message is printed
+with the corresponding line number.
+
+.SH BUGS
+None yet!
+
+.SH AUTHOR
+Phil Cockcroft
