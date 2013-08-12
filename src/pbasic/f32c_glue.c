@@ -151,3 +151,16 @@ __assert(char *func, char *file, int line, char *expr)
 	    file, line, func, expr);
 	exit(1);
 }
+
+
+void *
+memset(void *b, int c, size_t len)
+{
+	char *cp = b;
+
+	while (len-- > 0)
+		*cp++ = c;
+
+	return (b);
+}
+
