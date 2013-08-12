@@ -14,7 +14,9 @@
 #define MAXFILES 8
 
 
-static int max_open = -1;
+static FATFS ff_mounts[2];
+static int ff_mounted[2];
+
 static struct {
 	FIL 	fp;
 	int	in_use;
@@ -24,26 +26,31 @@ static struct {
 int
 open(const char *path, int flags __unused, ...)
 {
-	int d;
-
-	if (max_open == MAXFILES - 2)
+	int try, d = 0;
+	DIR ff_dir;
+	
+	if (*path == '1')
+		d = 1;
+	if (ff_mounted[d] == 0 && f_mount(d, &ff_mounts[d]) == FR_OK)
+		for (try = 0; try <= d; try++)
+			if (f_opendir(&ff_dir, "1:") == FR_OK) {
+				ff_mounted[d] = 1;
+				break;
+			}
+	if (ff_mounted[d] == 0)
 		return (-1);
-	for (d = 0; d <= max_open; d++)
-		if (file_map[d].in_use)
+
+	/* XXX temp. hack - 0, 1 and 2 reserved for RS232 stdio */
+	for (d = 3; d < MAXFILES; d++)
+		if (file_map[d].in_use == 0)
 			break;
-	if (d == max_open)
-		d++;
+	if (d == MAXFILES)
+		return (-1);
 
 	/* XXX temp. hack - revisit flag mapping!!! */
 	if (f_open(&file_map[d].fp, path, FA_READ))
 		return (-1);
 
-	/* XXX hack! */
-	if (d < 3)
-		d = 3;
-
-	if (d > max_open)
-		max_open = d;
 	file_map[d].in_use = 1;
 	return (d);
 }
