@@ -12,7 +12,6 @@ CFLAGS += -DOPTIMIZED_DIVSI3
 
 CFLAGS += -Wno-unused-parameter
 CFLAGS += -Wno-missing-braces -Wno-sign-compare
-CFLAGS += -Wno-char-subscripts
 
 ASFILES += ${BASE_DIR}lib/start.S
 
