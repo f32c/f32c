@@ -163,7 +163,7 @@ typedef char	CHAR;
 #define	isphex(c)	(chtab[*(unsigned char *)(c)] & (_X|_N))
 #define	lcase(c)	lcastab[UC(c)]
 
-#define	TYP_SIZ(typ)	(typ_siz[typ])
+#define	TYP_SIZ(typ)	(typ_siz[UC(typ)])
 
 /*
  *      values of constants from the symbol table
