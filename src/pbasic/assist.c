@@ -18,7 +18,7 @@
 int
 getch()
 {
-	register char   *p;
+	char   *p;
 
 	p = (char *)point;
 #ifdef	__STDC__
@@ -43,8 +43,8 @@ getch()
 void
 check()         /* check to see no garbage at end of command */
 {
-	register char   *p;
-	register char   c;
+	char   *p;
+	char   c;
 
 	p = (char *)point;
 	while(*p == ' ')
@@ -87,9 +87,9 @@ startfp()
 
 int
 _conv(p)
-register value	*p;
+value	*p;
 {
-	register ival	i;
+	ival	i;
 
 	i = p->f;
 	if(i < 0){
@@ -115,7 +115,7 @@ register value	*p;
 
 int
 cmp(p,q)
-register value  *p,*q;
+value  *p,*q;
 {
 	if(vartype != RVAL){
 		if(p->i == q->i)
@@ -183,7 +183,7 @@ int	c;
 	if(p->i < 0)
 		error(41);
 	if(q->i >= 0 && q->i < 31){
-		register itype  ll = 1;
+		itype  ll = 1;
 		for(c = 0; c < q->i ; c++){
 			ll = mmult_ply(p->i, ll, 0);
 			if(vartype == RVAL)
@@ -238,7 +238,7 @@ mdm(p,q,c)              /* integer * / mod */
 valp    p,q;
 int	c;
 {
-	register itype  ll;
+	itype  ll;
 
 	if(c=='*'){
 #ifdef	BIG_INTS
@@ -252,7 +252,7 @@ int	c;
 			fmul(p, q);
 		}
 #else
-		register long    l = (long)p->i * q->i;
+		long    l = (long)p->i * q->i;
 		if(l > 32767 || l < -32768){    /* overflow */
 			q->f = l;
 			vartype = RVAL;
@@ -298,8 +298,8 @@ ads(p,q,c)              /* integer + - */
 valp    p,q;
 int	c;
 {
-	register long   l;
-	register itype	ii;
+	long   l;
+	itype	ii;
 
 	l = p->i;
 	if(c == '+'){
@@ -386,7 +386,7 @@ andor(p,q,c)                    /* integer logical */
 valp    p,q;
 int	c;
 {
-	register itype	i,j;
+	itype	i,j;
 
 	i = p->i;
 	j = q->i;
@@ -444,7 +444,7 @@ int	var;
 void
 negate()                /* negate the value in res */
 {
-	register itype	t;
+	itype	t;
 
 	if(vartype != RVAL){
 		t = res.i;
@@ -506,8 +506,8 @@ mmult_ply(p, q, err)
 itype p, q;
 int	err;
 {
-	register unsigned long	aa, bb;
-	register unsigned long	result;
+	unsigned long	aa, bb;
+	unsigned long	result;
 	int	minus = 0;
 
 	if(p < 0){

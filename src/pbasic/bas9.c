@@ -27,8 +27,8 @@ static	int	pat_exp();
 void
 stringcompare()
 {
-	register ival   i;
-	register CHAR   *p,*q;
+	ival   i;
+	CHAR   *p,*q;
 	ival    cursiz;
 	int     reslt=0;
 	int     c;
@@ -78,8 +78,8 @@ stringcompare()
 
 void
 compare(c,reslt)
-register int     c;
-register int    reslt;
+int     c;
+int    reslt;
 {
 	vartype= IVAL;
 	if(c==EQL){
@@ -124,8 +124,8 @@ mgcvt()
 {
 	int     sign, decpt;
 	int     ndigit=9;
-	register CHAR   *p1, *p2;
-	register int    i;
+	CHAR   *p1, *p2;
+	int    i;
 	STR	st;
 
 	if(vartype== IVAL)	/* integer deal with them separately */
@@ -212,13 +212,13 @@ static	STR
 lgcvt()
 {
 	CHAR    s[16];
-	register CHAR   *p,*q;
+	CHAR   *p,*q;
 	STR	st;
 	ival	fl=0;
 #ifdef	BIG_INTS
-	register unsigned long	l;
+	unsigned long	l;
 #else
-	register unsigned l;
+	unsigned l;
 #endif
 
 	l=  res.i;
@@ -248,8 +248,8 @@ lgcvt()
 lnumb
 getlin()
 {
-	register lnumb	l=0;
-	register int    c;
+	lnumb	l=0;
+	int    c;
 
 	c=getch();
 	if(!isnumber(c)){
@@ -274,9 +274,9 @@ getlin()
 lpoint
 getline()
 {
-	register lnumb	l=0;
-	register lpoint p;
-	register int    c;
+	lnumb	l=0;
+	lpoint p;
+	int    c;
 
 	c=getch();
 	if(!isnumber(c))
@@ -300,9 +300,9 @@ getline()
 
 lpoint
 getsline(l)
-register lnumb	l;
+lnumb	l;
 {
-	register lpoint	p;
+	lpoint	p;
 
 	if(l == NOLNUMB)
 		return(program);
@@ -319,9 +319,9 @@ register lnumb	l;
 
 lnumb
 getrline(p)
-register lpoint	p;
+lpoint	p;
 {
-	register lpoint	op, savp;
+	lpoint	op, savp;
 
 	if(p->linnumb != CONTLNUMB)
 		return(p->linnumb);
@@ -337,10 +337,10 @@ register lpoint	p;
 
 void
 prsline(str, p)
-register lpoint	p;
+lpoint	p;
 const char *str;
 {
-	register lpoint	op, savp;
+	lpoint	op, savp;
 	lnumb	xline;
 
 	if(str)
@@ -373,10 +373,10 @@ const char *str;
 
 char    *
 printlin(l)
-register lnumb	l;
+lnumb	l;
 {
 	static char   ln[7];
-	register char   *p;
+	char   *p;
 
 	p = &ln[5];
 	do{
@@ -402,8 +402,8 @@ lnumb	l;
 int
 checktype()
 {
-	register CHAR   *tpoint;
-	register int    c;
+	CHAR   *tpoint;
+	int    c;
 
 	if( (c= UC(*point)) & SPECIAL){
 		if(c != FN){
@@ -438,7 +438,7 @@ int
 slen(s)
 char *s;
 {
-	register char *p = s;
+	char *p = s;
 
 	while(*p)
 		p++;
@@ -460,7 +460,7 @@ char    *s;
 
 CHAR    *
 str_cpy(a,b)
-register CHAR   *a,*b;
+CHAR   *a,*b;
 {
 #ifdef	mips
 	while( (*b = *a) != 0)
@@ -474,9 +474,9 @@ register CHAR   *a,*b;
 
 void
 set_mem(b, len, c)
-register CHAR	*b;
-register ival	len;
-register int	c;
+CHAR	*b;
+ival	len;
+int	c;
 {
 	if(!len)
 		return;
@@ -487,11 +487,11 @@ register int	c;
 
 void
 clr_mem(b, len)
-register CHAR	*b;
-register ival	len;
+CHAR	*b;
+ival	len;
 {
 	if(len >= 20 && ((long)b & WORD_MASK) == 0){
-		register ival	xlen = len & WORD_MASK;
+		ival	xlen = len & WORD_MASK;
 		len >>= WORD_SHIFT;
 		do {
 			/*LINTED*/
@@ -514,8 +514,8 @@ register ival	len;
 
 CHAR	*
 strmov(dest, src, len)
-register CHAR	*dest, *src;
-register ival	len;
+CHAR	*dest, *src;
+ival	len;
 {
 #if	defined(i386) || defined(mips)
 #ifdef	mips
@@ -526,7 +526,7 @@ register ival	len;
 
 	if( (len >>= WORD_SHIFT) != 0){
 #ifdef	DUFF
-		register int	dufslen = (len + 7) >> 3;
+		int	dufslen = (len + 7) >> 3;
 
 		switch(len &= 7){
 		case 0:
@@ -655,9 +655,9 @@ int
 getnumb(ptr, ptrp)
 CHAR	*ptr, **ptrp;
 {
-	register double x;
-	register int    c;
-	register long	lx = 0;
+	double x;
+	int    c;
+	long	lx = 0;
 	long	ly;
 	long	lym = -1;
 	int    exp;
@@ -860,7 +860,7 @@ necvt(x, ndigits, decpt, sign)
 int	ndigits, *decpt, *sign;
 double	x;
 {
-	register CHAR	*p;
+	CHAR	*p;
 	int	nd;
 
 	_scale(&x, decpt, sign, 1);
@@ -877,9 +877,9 @@ double	x;
 int	ndigits;
 int	*nd;
 {
-	register CHAR	*p;
-	register int	ndig = ndigits + 1;
-	register int	c;
+	CHAR	*p;
+	int	ndig = ndigits + 1;
+	int	c;
 	static	CHAR	tbuf[30];
 
 	for(p = tbuf, *p++ = '0'; ndig ; ndig--){
@@ -918,8 +918,8 @@ double	*xp;
 int	*decpt;
 int	zflag;
 {
-	register const	struct	cvttab	*cp = cvttab;
-	register int	exp;
+	const	struct	cvttab	*cp = cvttab;
+	int	exp;
 	double	x = *xp;
 	double	y;
 
@@ -965,7 +965,7 @@ STR
 mathpat(spat)
 STR	spat;
 {
-	register STR	outstr;
+	STR	outstr;
 	CHAR	*pat, *epat;
 	ival	olen;
 	ival	flen;

@@ -37,8 +37,8 @@ static	STR	strpat();
 int
 forr()
 {
-	register struct forst *p;
-	register struct	entry	*ep;
+	struct forst *p;
+	struct	entry	*ep;
 	int	vty;
 	int	dir = DIR_INC;
 	value   start;
@@ -130,9 +130,9 @@ got:    p->elses=elsecount;             /* set up all information for the */
 int
 next()
 {
-	register struct forst *p;
-	register value  *l;
-	register int    c;
+	struct forst *p;
+	value  *l;
+	int    c;
 
 	c=getch();
 	point--;
@@ -171,7 +171,7 @@ got:;
 		    error(35);
 		asm("nov:");
 #else
-		register long   m = p->step.i;
+		long   m = p->step.i;
 		m += l->i;
 		if(IS_OVER(l->i, p->step.i, m))
 			error(35);
@@ -247,7 +247,7 @@ nort:
 void
 bld_gosub()
 {
-	register forstp   pt;
+	forstp   pt;
 
 	pt = (forstp)mmalloc((ival)sizeof(struct forst));
 	if((pt->prev = estack) != 0)
@@ -265,7 +265,7 @@ bld_gosub()
 int
 gosub()
 {
-	register lpoint l;
+	lpoint l;
 
 	l=getline();
 	check();
@@ -286,7 +286,7 @@ gosub()
 int
 retn()
 {
-	register struct forst   *p;
+	struct forst   *p;
 
 	check();
 	for(p = estack ; p ; p = p->prev)
@@ -317,9 +317,9 @@ got:
 int
 runn()
 {
-	register lpoint p;
-	register lnumb	l;
-	register int	c;
+	lpoint p;
+	lnumb	l;
+	int	c;
 	int	rflag = 0;
 	STR	st;
 
@@ -407,7 +407,7 @@ endd()
 int
 gotos()
 {
-	register lpoint p;
+	lpoint p;
 
 	p=getline();
 	check();
@@ -463,7 +463,7 @@ static	char	lp_devname[] = "bas.lpout";
 int
 lprint()
 {
-	register int	fd;
+	int	fd;
 
 	if(lp_fd > 0){
 		VOID close(lp_fd);
@@ -545,13 +545,13 @@ doprint(islp, iswrt)
 int	islp, iswrt;
 {
 	ival    i;
-	register int     c;
+	int     c;
 #ifdef	__STDC__
-	register int    (*outfunc)(filebufp, CHAR *, int);
+	int    (*outfunc)(filebufp, CHAR *, int);
 #else
-	register int    (*outfunc)();   /* pointer to the output function */
+	int    (*outfunc)();   /* pointer to the output function */
 #endif
-	register ival   *curcursor;     /* pointer to the current cursor */
+	ival   *curcursor;     /* pointer to the current cursor */
 					/* 'posn' if a file, or 'cursor' */
 	int     Twidth;                 /* width of the screen or of the */
 	filebufp filedes = 0;           /* file. BLOCKSIZ if a file */
@@ -780,11 +780,11 @@ matprint()
 	ival    i;
 	STR	st;
 #ifdef	__STDC__
-	register int    (*outfunc)(filebufp, CHAR *, int);
+	int    (*outfunc)(filebufp, CHAR *, int);
 #else
-	register int    (*outfunc)();   /* pointer to the output function */
+	int    (*outfunc)();   /* pointer to the output function */
 #endif
-	register ival   *curcursor;     /* pointer to the current cursor */
+	ival   *curcursor;     /* pointer to the current cursor */
 					/* 'posn' if a file, or 'cursor' */
 	int     Twidth;                 /* width of the screen or of the */
 	filebufp filedes = 0;           /* file. BLOCKSIZ if a file */
@@ -856,9 +856,9 @@ matprint()
 int
 iff()
 {
-	register CHAR   *p;
-	register int    c;
-	register int    elsees;
+	CHAR   *p;
+	int    c;
+	int    elsees;
 
 	eval();
 	if(getch()!=THEN)
@@ -901,8 +901,8 @@ int
 onn()
 {
 	lnumb	lnm[128];
-	register lnumb	*l;
-	register lpoint p;
+	lnumb	*l;
+	lpoint p;
 	itype   m;
 	int     k;
 
@@ -962,9 +962,9 @@ static	const	struct	t_info {
 int
 cls()
 {
-	register struct	t_info	*tp;
-	register const	CHAR	*p, *q;
-	register char	*tvar;
+	struct	t_info	*tp;
+	const	CHAR	*p, *q;
+	char	*tvar;
 
 	set_term();
 
@@ -992,7 +992,7 @@ cls()
 int
 base()
 {
-	register itype	i;
+	itype	i;
 
 	i=evalint();
 	check();
@@ -1045,8 +1045,8 @@ clearl()
 int
 list()
 {
-	register lnumb	l1,l2;
-	register lpoint p;
+	lnumb	l1,l2;
+	lpoint p;
 
 	l1=getlin();
 	if(l1 == NOLNUMB){
@@ -1100,10 +1100,10 @@ static	int
 listl(p)
 lpoint p;
 {
-	register CHAR   *q;
-	register const	struct tabl *l;
-	register CHAR    *r;
-	register int	t;
+	CHAR   *q;
+	const	struct tabl *l;
+	CHAR    *r;
+	int	t;
 
 	/* do the linenumber */
 	if(p->linnumb == CONTLNUMB)
@@ -1222,8 +1222,8 @@ cont()
 int
 bdelete()
 {
-	register lpoint	p3;
-	register lpoint p1,p2;
+	lpoint	p3;
+	lpoint p1,p2;
 
 	p1=getline();
 	if(getch()!='-')
@@ -1261,7 +1261,7 @@ bdelete()
 
 shell()
 {
-	register char	*s;
+	char	*s;
 
 	check();
 	flushall();
@@ -1310,11 +1310,11 @@ do_system(cmd)
 CHAR	*cmd;
 {
 #if 0
-	register int    i;
+	int    i;
 #ifdef	__STDC__
-	register SIGFUNC (*q)(int) , (*p)(int);
+	SIGFUNC (*q)(int) , (*p)(int);
 #else
-	register SIGFUNC (*q)() , (*p)();
+	SIGFUNC (*q)() , (*p)();
 #endif
 	char    *s;
 	char	*args[4];
@@ -1406,8 +1406,8 @@ bdircom(cmd, clen)
 const char *cmd;
 ival	clen;
 {
-	register STR	stc;
-	register STR	st;
+	STR	stc;
+	STR	st;
 	int	c;
 
 	c = getch();
@@ -1451,9 +1451,9 @@ ival	clen;
 int
 editl()
 {
-	register lpoint p, pe, pt;
-	register int	i;
-	register lnumb	l1, l2;
+	lpoint p, pe, pt;
+	int	i;
+	lnumb	l1, l2;
 	lpoint	lastl;
 	int	fd;
 	char	fname_tmp[MAXLIN];
@@ -1461,7 +1461,6 @@ editl()
 	char	*et;
 	static	const char	tname[] = "/tmp/be_tmp.";
 	
-
 	if(stocurlin || noedit)
 		error(13);      /* illegal edit */
 
@@ -1469,8 +1468,9 @@ editl()
         if(l1 == NOLNUMB){
                 l2= NOLNUMB;
                 if(getch()=='-'){
-                        if( (l2 = getlin()) == NOLNUMB)
+                        if( (l2 = getlin()) == NOLNUMB) {
                                 error(SYNTAX);
+			}
                 }
                 else
                         point--;
@@ -1480,8 +1480,9 @@ editl()
                         l2 = l1;
                         point--;
                 }
-                else
+                else {
                         l2 = getlin();
+		}
         }
         check();
 	
@@ -1608,8 +1609,8 @@ do_edit:;
 int
 dauto()
 {
-	register lnumb	start, end;
-	register ival	i1;
+	lnumb	start, end;
+	ival	i1;
 	lnumb   i2;
 	long    l;
 	int     c;
@@ -1664,9 +1665,9 @@ dauto()
 int
 save()
 {
-	register lpoint p;
-	register int    fp;
-	register int    i;
+	lpoint p;
+	int    fp;
+	int    i;
 	STR	st;
 
 	st = stringeval();     /* get the name */
@@ -1695,8 +1696,8 @@ save()
 int
 old()
 {
-	register int    fp;
-	register STR	st;
+	int    fp;
+	STR	st;
 
 	st = stringeval();		/* get the file name */
 	NULL_TERMINATE(st);
@@ -1713,7 +1714,7 @@ old()
 static	void
 clear_prog()
 {
-	register lpoint	p, p1;
+	lpoint	p, p1;
 
 	for(p1 = p = program ; p ; p = p1){
 		p1 = p->next;
@@ -1730,8 +1731,8 @@ clear_prog()
 int
 merge()
 {
-	register int    fp;
-	register STR	st;
+	int    fp;
+	STR	st;
 
 	st = stringeval();
 	NULL_TERMINATE(st);
@@ -1759,12 +1760,12 @@ int	fp;
 lpoint	lp;
 int	isedit;
 {
-	register CHAR   *p;
+	CHAR   *p;
 	int     i;
 	CHAR    chblock[BLOCKSIZ];
 	int     nleft=0;
-	register int    special=0;
-	register CHAR   *q = NULL;
+	int    special=0;
+	CHAR   *q = NULL;
 
 	readfile=fp;
 	inserted=1;     /* make certain variables are cleared */
@@ -1841,7 +1842,7 @@ bad:    VOID close(fp);         /* come here if there is an error */
 int
 neww()
 {
-	register int    i,c;
+	int    i,c;
 
 	c=getch();
 	point--;
@@ -1879,9 +1880,9 @@ neww()
 int
 chain()
 {
-	register int     fp;
-	register lpoint	lp;
-	register lnumb	ln = NOLNUMB;
+	int     fp;
+	lpoint	lp;
+	lnumb	ln = NOLNUMB;
 	int	all = 0;
 	STR	st;
 
@@ -1953,9 +1954,9 @@ def_fn(ftyp, dftyp)
 int	ftyp, dftyp;
 {
 	struct  deffn   fn;     /* temporary place for evaluation */
-	register struct deffn *p;
-	register CHAR   *l;
-	register int     i=0;
+	struct deffn *p;
+	CHAR   *l;
+	int     i=0;
 	int     c;
 	struct	entry	*ep;
 	char	vty;
@@ -2075,8 +2076,8 @@ int	ftyp, dftyp;
 int
 rept()
 {
-	register struct forst   *p;
-	register CHAR   *tp;
+	struct forst   *p;
+	CHAR   *tp;
 
 	if(getch() == UNTIL){
 		tp = point;     /* save point */
@@ -2112,7 +2113,7 @@ rept()
 int
 untilf()
 {
-	register struct forst   *p;
+	struct forst   *p;
 	eval();
 	check();
 	for(p = bstack ; p ; p = p->prev)
@@ -2153,9 +2154,9 @@ got:
 int
 whilef()
 {
-	register CHAR    *spoint = point;
-	register lpoint lp;
-	register struct forst   *p;
+	CHAR    *spoint = point;
+	lpoint lp;
+	struct forst   *p;
 
 	eval();
 	check();
@@ -2187,7 +2188,7 @@ whilef()
 int
 wendf()
 {
-	register struct forst   *p;
+	struct forst   *p;
 	CHAR    *spoint =point;
 
 	check();
@@ -2228,9 +2229,9 @@ got:
 static	lpoint
 get_end()
 {
-	register lpoint lp;
-	register CHAR   *p;
-	register int    c;
+	lpoint lp;
+	CHAR   *p;
+	int    c;
 	int     wcount=0;
 	int     rcount=0;
 	int     flag=0;
@@ -2329,10 +2330,10 @@ int
 renumb()
 {
 	struct  ta      *ta, *eta;
-	register struct ta *tp;
-	register CHAR   *q;
-	register lpoint p;
-	register lpoint np;
+	struct ta *tp;
+	CHAR   *q;
+	lpoint p;
+	lpoint np;
 	int	c;
 	lnumb	l1,start,inc;
 	int     size,pl;

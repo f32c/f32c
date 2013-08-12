@@ -40,7 +40,7 @@ static	int
 in1file()
 #endif
 {
-	register int	c;
+	int	c;
 
 	if(pushback >= 0){
 		c = pushback;
@@ -66,7 +66,7 @@ static	int
 in1line()
 #endif
 {
-	register int	c;
+	int	c;
 
 	if(pushback >= 0){
 		c = pushback;
@@ -82,7 +82,7 @@ input()
 	CHAR   *p;
 	ival   i = 0;
 	value	*l;
-	register int     c;
+	int     c;
 	char    vty;
 #ifdef	__STDC__
 	int	(*infunc)(void);
@@ -188,14 +188,14 @@ for(;;){
 static	int
 getstrdt(infunc, st)
 #ifdef	__STDC__
-register int	(*infunc)(void);
+int	(*infunc)(void);
 #else
-register int	(*infunc)();
+int	(*infunc)();
 #endif
-register STR	st;
+STR	st;
 {
-	register CHAR *q;
-	register int	c;
+	CHAR *q;
+	int	c;
 	int	charac;
 	ival	curlen;
 
@@ -241,14 +241,14 @@ register STR	st;
 static	int
 getdata(infunc)
 #ifdef	__STDC__
-register int	(*infunc)(void);
+int	(*infunc)(void);
 #else
-register int	(*infunc)();
+int	(*infunc)();
 #endif
 {
 	CHAR	tbuf[MAXLIN];
-	register CHAR	*p;
-	register int	c;
+	CHAR	*p;
+	int	c;
 	int     minus=0;
 	int	decp = 0;
 
@@ -306,9 +306,9 @@ int
 linput()
 {
 
-	register CHAR   *p;
-	register ival	i;
-	register int     c;
+	CHAR   *p;
+	ival	i;
+	int     c;
 	CHAR	*q;
 	stringp	l;
 	STR	st;
@@ -401,7 +401,7 @@ linput()
 static	int
 readd1()
 {
-	register int	c;
+	int	c;
 
 	if(pushback >= 0){
 		c = pushback;
@@ -421,9 +421,9 @@ readd1()
 int
 readd()
 {
-	register int	c;
-	register value	*l;
-	register char   vty;
+	int	c;
+	value	*l;
+	char   vty;
 	STR	st = NULL;
 
 	for(;;){
@@ -463,7 +463,7 @@ MEMP	lp;
 int	vty;
 int	cnt;
 {
-	register int	c;
+	int	c;
 	int	stp = TYP_SIZ(vty);
 	value	*l = (valp)lp;
 
@@ -616,8 +616,8 @@ matinput()
 static	void
 getmore()
 {
-	register CHAR   *q;
-	register lpoint p;
+	CHAR   *q;
+	lpoint p;
 
 	if(!datastolin)
 		p = program;
@@ -648,7 +648,7 @@ getmore()
 int
 dodata()
 {
-	register CHAR    *p;
+	CHAR    *p;
 
 	if(stocurlin){
 		p=stocurlin->lin;
@@ -675,9 +675,9 @@ dodata()
 int
 restore()
 {
-	register CHAR   *q;
-	register lpoint p;
-	register lnumb	i;
+	CHAR   *q;
+	lpoint p;
+	lnumb	i;
 
 	i=getlin();
 	check();

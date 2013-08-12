@@ -199,8 +199,8 @@ int
 edit(fl,fi,fc)
 ival	fl, fi, fc;
 {
-	register CHAR   *q;
-	register CHAR   *p;
+	CHAR   *q;
+	CHAR   *p;
 	int     c = 0;
 	int     special;
 	int	llen;
@@ -301,9 +301,9 @@ ival	fl, fi, fc;
 static	int
 normal_edit()
 {
-	register CHAR	*pcursr;
-	register int	c;
-	register int	i;
+	CHAR	*pcursr;
+	int	c;
+	int	i;
 	int	lastescaped = 0;
 	int	inword;
 	CHAR	*plim;
@@ -439,11 +439,11 @@ static	int
 command_mode(fc)
 ival	fc;
 {
-	register int	mcursr;
-	register int	c = 0;
+	int	mcursr;
+	int	c = 0;
 	int	lnum;
 	int	nchars;
-	register int	repcnt = 1;
+	int	repcnt = 1;
 	int	repset;
 
 	edit_mode = COMMAND_EDIT;
@@ -819,9 +819,9 @@ static void
 dodotcmd(c)
 int	c;
 {
-	register int	ndels = 0;
-	register int	ndelp = 0;
-	register int	doins = 0;
+	int	ndels = 0;
+	int	ndelp = 0;
+	int	doins = 0;
 	int	mcursr = cursr;
 	struct	undo	xundo;
 	CHAR	in_text[MAXLIN+1];
@@ -1039,9 +1039,9 @@ int	c, repcnt;
 
 void
 dotilde(repcnt)
-register int	repcnt;
+int	repcnt;
 {
-	register int	c;
+	int	c;
 
 	if(llim == line_end){
 		undo.orepcnt = 0;
@@ -1067,10 +1067,10 @@ register int	repcnt;
 
 static	void
 insert_mode(c, repcnt)
-register int	c;
+int	c;
 int	repcnt;
 {
-	register int	mcursr;
+	int	mcursr;
 	int	nchanged;
 	int	iposn;
 	int	inword;
@@ -1266,7 +1266,7 @@ int	nchars;
 CHAR	*buf;
 CHAR	**ibuf, **rbuf;
 {
-	register CHAR	*p;
+	CHAR	*p;
 	int	nc, mcursr, nchanged;
 
 	if(!nchars)
@@ -1303,7 +1303,7 @@ CHAR	**ibuf, **rbuf;
 
 		/* not at end of line */
 		if(cursr < line_end){
-			register CHAR	*sp, *q;
+			CHAR	*sp, *q;
 			sp = eline + line_end;
 			q = sp + nchars;
 			while(sp >= p)
@@ -1334,9 +1334,9 @@ static	void
 redraw_line(force)
 int	force;
 {
-	register CHAR	*p;
-	register int	i;
-	register int	scursr;
+	CHAR	*p;
+	int	i;
+	int	scursr;
 	int	savscr;
 	int	xem = 0;
 
@@ -1388,8 +1388,8 @@ static	void
 draw_from_cursr(nchanged)
 int	nchanged;
 {
-	register CHAR	*p;
-	register int	i;
+	CHAR	*p;
+	int	i;
 	int	xem = 0;
 	int	savscr;
 	int	scursr;
@@ -1445,8 +1445,8 @@ static	void
 mv_cursr(ncursr)
 int	ncursr;
 {
-	register CHAR	*p;
-	register int	i;
+	CHAR	*p;
+	int	i;
 
 	if(ncursr >= line_end){
 		if(edit_mode == COMMAND_EDIT)
@@ -1485,9 +1485,9 @@ int	ncursr;
 
 static	void
 mvto_lin(lnum)
-register int	lnum;
+int	lnum;
 {
-	register savl_t	*savlp;
+	savl_t	*savlp;
 
 	if(lnum == cur_elnumb){
 		redraw_line(3);
@@ -1523,11 +1523,11 @@ static	int
 dosrch(cmdc)
 int	cmdc;
 {
-	register int	i, lnum;
+	int	i, lnum;
 	int	incr = (cmdc == '?') ? 1 : -1;
 	CHAR	*mstr = srbuf.bufp + 1;
 	int	nchrs = srbuf.slen - 1;
-	register savl_t	*ptr;
+	savl_t	*ptr;
 	int	bol = 0;
 
 	if(*mstr == '^'){
@@ -1560,8 +1560,8 @@ CHAR	*str, *ofstr;
 int	slen, oflen, bol;
 {
 	int	retrys;
-	register CHAR	*p, *q;
-	register int	icnt;
+	CHAR	*p, *q;
+	int	icnt;
 
 	retrys = oflen - slen;
 	do  {
@@ -1580,8 +1580,8 @@ del_c(nchars, ubufupdate)
 int	nchars;
 int	ubufupdate;
 {
-	register CHAR	*p, *q;
-	register CHAR	*eq;
+	CHAR	*p, *q;
+	CHAR	*eq;
 	int	nchanged;
 
 	if(cursr >= line_end){
@@ -1645,7 +1645,7 @@ chng_line()
 
 static	void
 sav_ubuf(savl, nchars, sbuf)
-register savl_t	*savl;
+savl_t	*savl;
 int	nchars;
 CHAR	*sbuf;
 {
@@ -1660,7 +1660,7 @@ CHAR	*sbuf;
 
 static	void
 free_ubuf(savl)
-register savl_t	*savl;
+savl_t	*savl;
 {
 	if(savl->bufp){
 		mfree( (MEMP)savl->bufp);
@@ -1702,7 +1702,7 @@ sav_curline()
 
 static	void
 recov_line(savl)
-register savl_t	*savl;
+savl_t	*savl;
 {
 	if(llim)
 		VOID strmov(eline, line, llim);
@@ -1718,9 +1718,9 @@ register savl_t	*savl;
 static	void
 set_sc()
 {
-	register int	i, sc;
-	register int	ncur;
-	register CHAR	*p;
+	int	i, sc;
+	int	ncur;
+	CHAR	*p;
 
 	ncur = cursr;
 
@@ -1744,9 +1744,9 @@ set_sc()
 static	void
 setscend()
 {
-	register int	i;
-	register int	scrwidth = scrlim - llim;
-	register CHAR	*p;
+	int	i;
+	int	scrwidth = scrlim - llim;
+	CHAR	*p;
 
 	scend = scstart;
 	p = eline + scstart;
@@ -1758,7 +1758,7 @@ setscend()
 static	void
 kill_line()
 {						/* save the whole line */
-	register int	nchars;
+	int	nchars;
 
 	nchars = line_end - llim;
 	sav_ubuf(&ubuf, nchars, eline + llim);
@@ -1776,7 +1776,7 @@ int	repcnt, cmdc;
 void	(*dfunc)(void);
 int	dotcmd;
 {
-	register int	mcursr;
+	int	mcursr;
 	int	c;
 	int	xrepcnt;
 
@@ -1879,9 +1879,9 @@ find_c(c, repcnt, last_c, dotcmd)
 int	c, repcnt;
 int	last_c, dotcmd;
 {
-	register int	mcursr = cursr;
-	register int	xc;
-	register int	found = 0;
+	int	mcursr = cursr;
+	int	xc;
+	int	found = 0;
 	
 	if( (xc = last_c) <= 0){
 		if(!dotcmd || !lastgtcmdp){
@@ -1940,8 +1940,8 @@ static	int
 gtword(c, repcnt, cw)
 int	c, repcnt, cw;
 {
-	register int	mcursr = cursr;
-	register int	wtype, rtype;
+	int	mcursr = cursr;
+	int	wtype, rtype;
 	int	ascword;
 
 	ascword = (c < 'A' || c > 'Z');
@@ -2001,8 +2001,8 @@ int	c, repcnt, cw;
 static	int
 mtchbrkt()
 {
-	register int	mcursr = cursr;
-	register int	nc = 0, rbseen = 0;
+	int	mcursr = cursr;
+	int	nc = 0, rbseen = 0;
 
 	/*
 	 * search forward for matching '('
@@ -2126,9 +2126,9 @@ pflush()
 static void
 putchs(sp, len)
 const	char	*sp;
-register int	len;
+int	len;
 {
-	register CHAR	*s = (CHAR *)sp;
+	CHAR	*s = (CHAR *)sp;
 
 	if(len + xpbuflen < MAXLIN){
 		VOID strmov(xpbuf + xpbuflen, s, len);

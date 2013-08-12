@@ -41,9 +41,9 @@ static	int	nstr_free;
 STR
 stringeval()
 {
-	register STR	st;
-	register STR	fstr = NULL;
-	register int     c;
+	STR	st;
+	STR	fstr = NULL;
+	int     c;
 	stringp l;
 	CHAR    charac;
 
@@ -173,7 +173,7 @@ for(;;){
 
 void
 stringassign(p, ep, st, nodel)
-register stringp p;
+stringp p;
 struct	entry	*ep;
 STR	st;
 int	nodel;
@@ -205,9 +205,9 @@ int	nodel;
 STR
 datef()
 {
-	register STR	st;
-	register int	c, i, n;
-	register CHAR	*p, *q;
+	STR	st;
+	int	c, i, n;
+	CHAR	*p, *q;
 	struct	tm	*tmp;
 	int	tf;
 	static	int	mplies[] = { 0, 1, 10, 100, 1000, 10000 };
@@ -285,10 +285,10 @@ datef()
 STR
 strng()
 {
-	register CHAR	*p;
+	CHAR	*p;
 	itype	m;
-	register ival	cursiz=0;
-	register int	siz;
+	ival	cursiz=0;
+	int	siz;
 	STR	st;
 
 	st = stringeval();
@@ -321,8 +321,8 @@ strng()
 STR
 leftst()
 {
-	register itype    l1;
-	register STR	st;
+	itype    l1;
+	STR	st;
 
 	st = stringeval();
 	if(getch()!=',')
@@ -340,8 +340,8 @@ leftst()
 STR
 rightst()
 {
-	register itype	l1;
-	register STR	st;
+	itype	l1;
+	STR	st;
 
 	st = stringeval();
 	if(getch()!=',')
@@ -369,8 +369,8 @@ rightst()
 static	STR
 midst()
 {
-	register STR	st;
-	register itype   l1,l2;
+	STR	st;
+	itype   l1,l2;
 
 	st = stringeval();
 
@@ -401,9 +401,9 @@ midst()
 STR
 estrng()
 {
-	register STR	st;
-	register CHAR   *q;
-	register itype  l;
+	STR	st;
+	CHAR   *q;
+	itype  l;
 	ival	mlen;
 
 	l = evalint();
@@ -421,8 +421,8 @@ estrng()
 STR
 chrstr()
 {
-	register STR	st;
-	register itype	i;
+	STR	st;
+	itype	i;
 
 	i = evalint();
 	if(i < 0 || i > 255)
@@ -440,7 +440,7 @@ chrstr()
 STR
 nstrng()
 {
-	register STR	st;
+	STR	st;
 
 	eval();
 	st = mgcvt();
@@ -493,10 +493,10 @@ val()
 void
 binval()
 {
-	register itype	iv = 0;
+	itype	iv = 0;
 	int	minus = 0;
 	int	max_digits = sizeof(itype) * 8;
-	register CHAR	*p;
+	CHAR	*p;
 	STR	st;
 
 	st = stringeval();
@@ -530,7 +530,7 @@ void
 brinstr(rflag)
 int rflag;
 {
-	register CHAR   *p,*q,*r;
+	CHAR   *p,*q,*r;
 	itype   i=0;
 	STR	st1, st2;
 	ival	cursiz;
@@ -588,7 +588,7 @@ rinstr()
 STR
 space()
 {
-	register itype  i;
+	itype  i;
 	STR	st;
 
 	i = evalint();
@@ -611,7 +611,7 @@ space()
 int
 lhmidst()
 {
-	register CHAR	*p;
+	CHAR	*p;
 	itype   i1,i2;
 	ival	cursiz,rhside;
 	stringp	pat;
@@ -681,8 +681,8 @@ xlate()
 {
 	ival	cursiz1;
 	ival	cursiz2;
-	register CHAR   *p, *q;
-	register ival	c;
+	CHAR   *p, *q;
+	ival	c;
 	STR	st1, st2;
 
 	st1 = stringeval();
@@ -709,7 +709,7 @@ xlate()
 void
 mkint()
 {
-	register STR	st;
+	STR	st;
 
 	st = stringeval();
 	if(st->strlen < sizeof(itype) )
@@ -725,7 +725,7 @@ mkint()
 void
 mkdouble()
 {
-	register STR	st;
+	STR	st;
 
 	st = stringeval();
 	if(st->strlen < sizeof(res) )
@@ -744,8 +744,8 @@ mkdouble()
 STR
 mkistr()
 {
-	register itype	iv;
-	register STR	st;
+	itype	iv;
+	STR	st;
 
 	iv = evalint();
 	st = ALLOC_STR( (ival)sizeof(itype));
@@ -761,7 +761,7 @@ mkistr()
 STR
 mkdstr()
 {
-	register STR	st;
+	STR	st;
 
 	evalreal();
 	st = ALLOC_STR( (ival)sizeof(res));
@@ -776,8 +776,8 @@ static	STR
 hocvtstr(shift)
 int	shift;
 {
-	register STR	st;
-	register CHAR	*p;
+	STR	st;
+	CHAR	*p;
 	int	nchars;
 	unsigned long	lv;
 	ival	nsig;
@@ -885,7 +885,7 @@ blower()
 
 void
 COPY_OVER_STR(st, fstr)
-register STR	st, fstr;
+STR	st, fstr;
 {
 	if(st->allocstr && st->allocstr != st->locbuf)
 		mfree((MEMP)st->allocstr);
@@ -904,9 +904,9 @@ register STR	st, fstr;
 
 void
 FREE_STR(st)
-register STR	st;
+STR	st;
 {
-	register STR	nst;
+	STR	nst;
 
 	if(st->allocstr != 0 && st->allocstr != st->locbuf)
 		mfree((MEMP)st->allocstr);
@@ -949,7 +949,7 @@ register STR	st;
 
 void
 NULL_TERMINATE(st)
-register STR	st;
+STR	st;
 {
 	if(st->strlen >= st->alloclen)
 		RESERVE_SPACE(st, (ival)(st->strlen+1));
@@ -972,11 +972,11 @@ register STR	st;
 
 void
 RESERVE_SPACE(st, len)
-register STR	st;
-register ival	len;
+STR	st;
+ival	len;
 {
-	register CHAR	*p;
-	register CHAR	*tofree = 0;
+	CHAR	*p;
+	CHAR	*tofree = 0;
 
 	if(len == 0){
 		st->strval = st->allocstr;
@@ -1015,7 +1015,7 @@ register ival	len;
 void
 DROP_STRINGS()
 {
-	register STR	st;
+	STR	st;
 
 	while( (st = str_free) != 0){
 		str_free = st->next;
@@ -1029,8 +1029,8 @@ ALLOC_STR(len)
 ival	len;
 {
 	/* Take a str element off the free list */
-	register STR	st;
-	register int	i;
+	STR	st;
+	int	i;
 
 	if( (st = str_free) == 0){
 		for(i = 10 ; i ; i--){

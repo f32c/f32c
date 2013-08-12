@@ -63,9 +63,9 @@ nam_read(nam, lp)
 CHAR	*nam;
 int	*lp;
 {
-	register int	c;
-	register CHAR	*p = nam;
-	register int	l;
+	int	c;
+	CHAR	*p = nam;
+	int	l;
 
 	c = getch();
 	if(!isletter(c))
@@ -99,7 +99,7 @@ int	namlen, l;
 struct	entry	*np;
 int	vtype;
 {
-	register struct	entry	*ep;
+	struct	entry	*ep;
 
 	ep = (struct entry *)mmalloc((ival)(sizeof(struct entry)+namlen));
 	ep->link = 0;
@@ -127,9 +127,9 @@ getnm(isfunc, mknew)
 int	isfunc;
 int	mknew;
 {
-	register struct entry   *ep;
-	register CHAR   *p,*q;
-	register struct entry   *np;
+	struct entry   *ep;
+	CHAR   *p,*q;
+	struct entry   *np;
 	int    l;
 	char	vtype;
 	int	namlen;	/* it would be better if this was a char... */
@@ -174,8 +174,8 @@ volatile int	isfunc;
 int	isfunc;
 #endif
 {
-	register struct entry   *ep;
-	register CHAR   *p,*q;
+	struct entry   *ep;
+	CHAR   *p,*q;
 	struct  entry   *np = 0;
 	int	l;
 	int	namlen;
@@ -255,10 +255,10 @@ int	isfunc;
 
 void
 def_darr(ep, siz1, siz2)
-register struct	entry	*ep;
+struct	entry	*ep;
 int	siz1, siz2;
 {
-	register ival	l;
+	ival	l;
 
 	l = TYP_SIZ(vartype) * siz1;
 	if(siz2)
@@ -282,8 +282,8 @@ struct entry	*
 getmat(mk)
 int	mk;
 {
-	register struct entry   *ep;
-	register CHAR   *p,*q;
+	struct entry   *ep;
+	CHAR   *p,*q;
 	struct  entry   *np = 0;
 	int	l;
 	int	namlen;
@@ -332,13 +332,13 @@ int	mk;
 
 static	MEMP
 getarray(ep)
-register struct	entry	*ep;
+struct	entry	*ep;
 {
-	register itype	l;
+	itype	l;
 	itype   *m;
 	int     c;
 	int     i=1;
-	register ival   j=0;
+	ival   j=0;
 
 	point++;
 	m = ep->_dims + ep->dimens - 1;
@@ -373,7 +373,7 @@ register struct	entry	*ep;
 int
 dimensio()
 {
-	register struct	entry	*ep;
+	struct	entry	*ep;
 
 	do {
 		ep = getnm(0, 1);
@@ -394,9 +394,9 @@ dim_one()
 	long    j;
 	int     c;
 	char    vty;
-	register int     i;
-	register itype   *r;
-	register struct	entry	*ep;
+	int     i;
+	itype   *r;
+	struct	entry	*ep;
 	int	ii;
 
 	ep = newentry;
@@ -445,7 +445,7 @@ drop_val(dap, tofree)
 struct	entry	*dap;
 int	tofree;
 {
-	register struct	entry	*ep, *np;
+	struct	entry	*ep, *np;
 	int	i = MKhash(dap->ln_hash);
 
 	for(np = 0, ep = hshtab.hasht[i]; ep ; np = ep, ep = ep->link)
@@ -497,9 +497,9 @@ void
 assign(isfunc)
 int	isfunc;
 {
-	register as_part *ap;
-	register int	npart;
-	register valp	p;
+	as_part *ap;
+	int	npart;
+	valp	p;
 	char   vty;
 	int    c;
 	STR	st, fstr;
@@ -686,8 +686,8 @@ bcommon()
 int
 blocal()
 {
-	register forstp	fp;
-	register  struct entry	*ep;
+	forstp	fp;
+	struct entry	*ep;
 	loc_sav_t	*lp;
 	struct	loc_sav_e	loc;
 	struct	entry	*todrop;
@@ -758,8 +758,8 @@ struct	entry	*
 dup_var(oep)
 struct	entry	*oep;
 {
-	register struct	entry	*ep;
-	register ival	i, j, siz;
+	struct	entry	*ep;
+	ival	i, j, siz;
 
 	ep = (struct entry *)mmalloc( (ival)(sizeof(struct entry)+oep->namlen));
 	*ep = *oep;
