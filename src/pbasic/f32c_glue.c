@@ -10,9 +10,11 @@
 #include <string.h>
 
 
+extern int _end;
+
 int errno;
 
-static char *freep = (void *) 0x80080000;
+static char *freep;
 
 
 #undef memcpy
@@ -30,6 +32,10 @@ memcpy(void *dst, const void *src, size_t len)
 
 void *sbrk(intptr_t p)
 {
+
+	/* First invocation.  Find out the first free address. */
+	if (freep == NULL)
+		freep = (void *) &_end;
 
 	if (p != 0)
 		freep = freep + p;
