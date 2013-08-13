@@ -7,6 +7,7 @@
 #include <setjmp.h>
 #include <time.h>
 #include <stdio.h>
+#include <string.h>
 
 
 int errno;
@@ -14,6 +15,7 @@ int errno;
 static char *freep = (void *) 0x80080000;
 
 
+#undef memcpy
 void *
 memcpy(void *dst, const void *src, size_t len)
 {
@@ -42,9 +44,11 @@ int *__error(void)
 }
 
 char *
-getenv(const char *name __unused)
+getenv(const char *name)
 {
 
+	if (strcmp(name, "TERM") == 0)
+		return ("ansi");	/* for CLS */
 	return ("");
 }
 
