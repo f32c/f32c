@@ -98,13 +98,21 @@ foreach instr [array names instr_map] {
     lappend instr_list "$instr $instr_map($instr)"
 }
 
+set headers [exec mips-elf-objdump -h [lindex $argv 0]]
+foreach line [split $headers \n] {
+    set line [string trim $line]
+    set sname [lindex [split $line] 1]
+    if {[lsearch ".text .rodata .data .sdata .sbss .bss" $sname] >= 0} {
+	puts -nonewline "[string range $sname 1 end] section:	"
+	puts -nonewline "start 0x[string range $line 36 43] "
+	puts "len 0x[string range $line 16 23]"
+    }
+}
+
 set tabcnt 0
 set start [lindex [lsort -integer [array names mem]] 0]
 set end [lindex [lsort -integer [array names mem]] end]
-puts -nonewline "First word 0x[format %08x $start], "
-puts -nonewline "last word 0x[format %08x $end], "
-puts "$endian endian."
-puts "Instruction frequencies (total $tot):"
+puts "$endian endian code; instruction frequencies (total $tot):"
 foreach entry [lsort -integer -decreasing -index 1 $instr_list] {
     puts -nonewline "[format %6s [lindex $entry 0]]:[format %5d [lindex $entry 1]]"
     incr tabcnt
@@ -127,58 +135,71 @@ set unaligned_load_set "lwl lwr"
 set sign_extend_set "seb seh"
 set cp0_set "mfc0 cache"
 
-puts -nonewline "Branch likely instructions: "
+set found ""
 foreach instr [lsort [array names instr_map]] {
     if {[lsearch $branch_likely_set $instr] >= 0} {
-	puts -nonewline "$instr "
+	lappend found $instr
     }
 }
-puts ""
+if {$found != ""} {
+    puts "Branch likely (optional): $found"
+}
 
-puts -nonewline "Multiplication instructions: "
+set found ""
 foreach instr [lsort [array names instr_map]] {
     if {[lsearch $mul_set $instr] >= 0} {
-	puts -nonewline "$instr "
+	lappend found $instr
     }
 }
-puts ""
+if {$found != ""} {
+    puts "Multiplication (optional): $found"
+}
 
-puts -nonewline "Sign extend instructions: "
+set found ""
 foreach instr [lsort [array names instr_map]] {
     if {[lsearch $sign_extend_set $instr] >= 0} {
-	puts -nonewline "$instr "
+	lappend found $instr
     }
 }
-puts ""
+if {$found != ""} {
+    puts "Sign extend (optional): $found"
+}
 
-puts -nonewline "CP0 instructions: "
+set found ""
 foreach instr [lsort [array names instr_map]] {
     if {[lsearch $cp0_set $instr] >= 0} {
-	puts -nonewline "$instr "
+	lappend found $instr
     }
 }
-puts ""
+if {$found != ""} {
+    puts "CP0 (optional): $found"
+}
 
-puts -nonewline "Unaligned store instructions (unsupported): "
+set found ""
 foreach instr [lsort [array names instr_map]] {
     if {[lsearch $unaligned_store_set $instr] >= 0} {
-	puts -nonewline "$instr "
+	lappend found $instr
     }
 }
-puts ""
+if {$found != ""} {
+    puts "Unaligned store (unsupported): $found"
+}
 
-puts -nonewline "Unaligned load instructions (unsupported): "
+set found ""
 foreach instr [lsort [array names instr_map]] {
     if {[lsearch $unaligned_load_set $instr] >= 0} {
-	puts -nonewline "$instr "
+	lappend found $instr
     }
 }
-puts ""
+if {$found != ""} {
+    puts "Unaligned load (unsupported): $found"
+}
 
-puts -nonewline "Other unsupported instructions: "
 foreach instr [lsort [array names instr_map]] {
     if {[lsearch "$base_isa_set $mul_set $unaligned_load_set $unaligned_store_set $branch_likely_set $sign_extend_set $cp0_set" $instr] < 0} {
-	puts -nonewline "$instr "
+	lappend found $instr
     }
 }
-puts ""
+if {$found != ""} {
+    puts "Other unsupported: $found"
+}
