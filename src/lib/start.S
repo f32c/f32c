@@ -29,7 +29,7 @@ flush_loop:
 	mfc0	t0, $MIPS_COP_0_CONFIG
 	andi	t0, t0, 0xf	/* CPUID is in 4 LS bits */
 	sll	t0, t0, 13	/* 8 k for each CPU should be enough */
-	li	sp, 0x80010000
+	li	sp, 0x80100000
 	subu	sp, sp, t0
 
 	la	gp, _gp
