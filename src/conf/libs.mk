@@ -3,6 +3,10 @@ ifneq (,$(findstring setjmp,$(F32C_LIBS)))
 	_NEED_SETJMP = YES
 endif
 
+ifneq (,$(findstring -msoft-mul,$(MK_CFLAGS)))
+	_NEED_MUL = YES
+endif
+
 ifneq (,$(findstring div,$(F32C_LIBS)))
 	_NEED_DIV = YES
 endif
@@ -13,10 +17,13 @@ ifneq (,$(findstring random,$(F32C_LIBS)))
 endif
 
 ifneq (,$(findstring float,$(F32C_LIBS)))
+	_NEED_DIV = YES
 	_NEED_FLOAT = YES
 endif
 
 ifneq (,$(findstring math,$(F32C_LIBS)))
+	_NEED_DIV = YES
+	_NEED_FLOAT = YES
 	_NEED_MATH = YES
 endif
 
@@ -61,6 +68,7 @@ ifneq (,$(findstring fatfs,$(F32C_LIBS)))
 endif
 
 ifneq (,$(findstring framebuffer,$(F32C_LIBS)))
+	_NEED_DIV = YES
 	_NEED_FB = YES
 endif
 
@@ -107,6 +115,10 @@ endif
 
 ifdef _NEED_RANDOM
 	CFILES += ${BASE_DIR}lib/random.c
+endif
+
+ifdef _NEED_MUL
+	CFILES += ${BASE_DIR}lib/mul.c
 endif
 
 ifdef _NEED_DIV
