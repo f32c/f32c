@@ -92,6 +92,7 @@ MK_LDFLAGS += ${LDFLAGS}
 CC = mips-elf-gcc ${MK_INCLUDES} ${MK_CFLAGS}
 LD = mips-elf-ld ${MK_LDFLAGS}
 OBJCOPY = mips-elf-objcopy -O srec
+ISA_CHECK = ${BASE_DIR}tools/isa_check.tcl
 MKDEP = ${CC} -MM
 
 #
@@ -111,6 +112,7 @@ HEX = ${PROG}.hex
 IHEX = ${PROG}.ihex
 
 ${HEX}: ${PROG} Makefile
+	${ISA_CHECK} ${PROG}
 	${OBJCOPY} ${PROG} ${HEX}
 
 ${PROG}: ${OBJS} Makefile
