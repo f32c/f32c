@@ -207,7 +207,7 @@ static uint8_t	*fb = (void *) FB_BASE;
 
 
 void
-set_fb_mode(int mode)
+fb_set_mode(int mode)
 {
 
 	if (mode == 1)
@@ -306,7 +306,7 @@ sqrt(uint32_t r)
 #define	WV	224	/* 0.877 * 256 */
 
 int
-rgb2pal(int r, int g, int b) {
+fb_rgb2pal(int r, int g, int b) {
 	int color, luma, chroma, saturation;
 	int u, v;
 
@@ -339,7 +339,7 @@ rgb2pal(int r, int g, int b) {
 
 
 __attribute__((optimize("-O3"))) void
-plot(int x, int y, int color)
+fb_plot(int x, int y, int color)
 {
 	int off = (y << 9) + x;
 	uint8_t *dp = fb;
@@ -389,7 +389,7 @@ plot_internal_unbounded_16(int x, int y, int color, uint8_t *dp)
 
 
 void
-rectangle(int x0, int y0, int x1, int y1, int color)
+fb_rectangle(int x0, int y0, int x1, int y1, int color)
 {
 	int x;
 	uint16_t *fb16 = (void *) fb;
@@ -442,7 +442,7 @@ rectangle(int x0, int y0, int x1, int y1, int color)
 
 
 __attribute__((optimize("-O3"))) void
-line(int x0, int y0, int x1, int y1, int color)
+fb_line(int x0, int y0, int x1, int y1, int color)
 {
 	plotfn_t *plotfn;
 	int dx = ABS(x1 - x0);
@@ -485,7 +485,7 @@ line(int x0, int y0, int x1, int y1, int color)
 
 
 void
-circle(int x0, int y0, int r, int color)
+fb_circle(int x0, int y0, int r, int color)
 {
 	int f = 1 - r;
 	int ddF_x = 1;
@@ -534,7 +534,7 @@ circle(int x0, int y0, int r, int color)
 
 
 void
-filledcircle(int x0, int y0, int r, int color)
+fb_filledcircle(int x0, int y0, int r, int color)
 {
 	int f = 1 - r;
 	int ddF_x = 1;
@@ -542,9 +542,9 @@ filledcircle(int x0, int y0, int r, int color)
 	int x = 0;
 	int y = r;
  
-	plot(x0, y0 + r, color);
-	plot(x0, y0 - r, color);
-	rectangle(x0 + r, y0, x0 - r, y0, color);
+	fb_plot(x0, y0 + r, color);
+	fb_plot(x0, y0 - r, color);
+	fb_rectangle(x0 + r, y0, x0 - r, y0, color);
  
 	while(x < y) {
 		if (f >= 0) {
@@ -555,16 +555,16 @@ filledcircle(int x0, int y0, int r, int color)
 		x++;
 		ddF_x += 2;
 		f += ddF_x;    
-		rectangle(x0 - x, y0 + y, x0 + x, y0 + y, color);
-		rectangle(x0 - x, y0 - y, x0 + x, y0 - y, color);
-		rectangle(x0 - y, y0 + x, x0 + y, y0 + x, color);
-		rectangle(x0 - y, y0 - x, x0 + y, y0 - x, color);
+		fb_rectangle(x0 - x, y0 + y, x0 + x, y0 + y, color);
+		fb_rectangle(x0 - x, y0 - y, x0 + x, y0 - y, color);
+		fb_rectangle(x0 - y, y0 + x, x0 + y, y0 + x, color);
+		fb_rectangle(x0 - y, y0 - x, x0 + y, y0 - x, color);
 	}
 }
 
 
 __attribute__((optimize("-O3"))) void
-drawchar(int x0, int y0, int c, int color)
+fb_drawchar(int x0, int y0, int c, int color)
 {
 	int x, y, xs, ys, off, dot, scale_x, scale_y;
 	uint8_t *bp;

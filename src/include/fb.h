@@ -1,11 +1,11 @@
 
 
-void set_fb_mode(int);
-int rgb2pal(int, int, int);
+void fb_set_mode(int);
+int fb_rgb2pal(int, int, int);
 
-void plot(int, int, int);
-void line(int, int, int, int, int);
-void rectangle(int, int, int, int, int);
-void circle(int, int, int, int);
-void filledcircle(int, int, int, int);
-void drawchar(int, int, int, int);
+void fb_plot(int, int, int);
+void fb_line(int, int, int, int, int);
+void fb_rectangle(int, int, int, int, int);
+void fb_circle(int, int, int, int);
+void fb_filledcircle(int, int, int, int);
+void fb_drawchar(int, int, int, int);
