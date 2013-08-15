@@ -89,6 +89,7 @@ main(int argc, char **argv)
 	startfp();              /* start up the floating point hardware */
 	setupfiles(argc,argv);
 	setupmyterm();          /* set up files after processing files */
+	setup_fb();
 	program = 0;
 	clear();
 	prints("Rabbit Basic version v2.0\n");

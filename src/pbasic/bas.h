@@ -654,6 +654,7 @@ STR	stringeval(void), mgcvt(void), mathpat(STR);
 void	stringassign(stringp, struct entry *, STR, int);
 void	closeall(void), clr_stack(forstp);
 void	setupfiles(int, char **), setupmyterm(void);
+void	setup_fb(void);
 void	errtrap(void), flushall(void), insert(int), negate(void);
 void	ins_line(lpoint, int);
 void	set_term(void), rset_term(int);
@@ -712,7 +713,9 @@ int	endd(void),runn(void),gotos(void),rem(void),lets(void),list(void),
 	bput(void), bget(void), bdefint(void), bdefstr(void), bdefdbl(void),
 	bcommon(void), blocal(void), defproc(void), bopts(void), lprint(void),
 	tron(void), troff(void), bdir(void), bdirl(void), bdeffn(void),
-	bmat(void), bwrite(void), berase(void);
+	bmat(void), bwrite(void), berase(void),
+	draw_fgcolor(void), draw_bgcolor(void), draw_plot(void),
+	draw_line(void), draw_rectangle(void), draw_circle(void);
 
 int	quit(void);
 
@@ -748,6 +751,7 @@ void	stringassign(), assign();
 void	ffn();
 void	closeall(), clr_stack();
 void	setupfiles(), setupmyterm();
+void	setup_fb();
 void	errtrap(), flushall(), insert(), negate();
 void	ins_line();
 void	set_term(), rset_term();
@@ -794,7 +798,9 @@ int	endd(),runn(),gotos(),rem(),lets(),list(),
 	linput(),poke(),rept(),untilf(),whilef(),wendf(),renumb(),
 	fnend(), fncmd(), blset(), brset(), bfield(), bput(), bget(),
 	bdefint(), bdefstr(), bdefdbl(), bcommon(), blocal(), bopts(),
-	bdir(), bdirl(), bmat(), bwrite(), berase();
+	bdir(), bdirl(), bmat(), bwrite(), berase(),
+	draw_fgcolor(), draw_bgcolor(), draw_plot(),
+	draw_line(), draw_rectangle(), draw_circle();
 
 int	quit();
 
@@ -1051,6 +1057,8 @@ const	intf_t	commandf = {
 	untilf,whilef,wendf,renumb,fnend,fncmd, blset, brset, bfield, bput,
 	bget,lhmidst, bdefint, bdefstr, bdefdbl, bcommon, blocal, defproc,
 	bdeffn, bopts, lprint, tron, troff, bdir, bdirl, bmat, bwrite, berase,
+	draw_fgcolor, draw_bgcolor, draw_plot,
+	draw_line, draw_rectangle, draw_circle,
 };
 
 /*      table of error messages */
@@ -1195,6 +1203,13 @@ const	struct  tabl    table[]={
 	"mat",		0307,
 	"write",	0310,
 	"erase",	0311,
+	/* framebuffer commands */
+	"fgcolor",	0312,
+	"bgcolor",	0313,
+	"plot",		0314,
+	"line",		0315,
+	"rectangle",	0316,
+	"circle",	0317,
 	/*
 	 * commands go to here
 	 */
