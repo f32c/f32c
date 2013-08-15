@@ -195,6 +195,7 @@ if {$found != ""} {
     puts "Unaligned load (unsupported): $found"
 }
 
+set found ""
 foreach instr [lsort [array names instr_map]] {
     if {[lsearch "$base_isa_set $mul_set $unaligned_load_set $unaligned_store_set $branch_likely_set $sign_extend_set $cp0_set" $instr] < 0} {
 	lappend found $instr
