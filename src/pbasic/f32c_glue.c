@@ -163,14 +163,24 @@ __assert(char *func, char *file, int line, char *expr)
 }
 
 
+/* XXX gcc -O3 yields an infinite loop (recursive jal memset): compiler bug? */
+__attribute__((optimize("-O2")))
 void *
 memset(void *b, int c, size_t len)
 {
 	char *cp = b;
+	int *ip = b;
 
+	c &= 0xff;
+	c |= (c << 8);
+	c |= (c << 16);
+
+	while (((int) cp & 3) && len-- > 0)
+		*cp++ = c;
+	for (;len >= 4; len -= 4)
+		*ip++ = c;
 	while (len-- > 0)
 		*cp++ = c;
 
 	return (b);
 }
-
