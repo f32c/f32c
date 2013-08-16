@@ -152,7 +152,8 @@ architecture Behavioral of glue is
     signal R_led: std_logic_vector(7 downto 0);
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
-    signal R_fb_mode: std_logic;
+    signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
+    signal R_fb_base_addr: std_logic_vector(19 downto 2);
     signal R_dac_in_l, R_dac_in_r: std_logic_vector(15 downto 2);
     signal R_dac_acc_l, R_dac_acc_r: std_logic_vector(16 downto 2);
 
@@ -297,13 +298,13 @@ begin
     end process;
     end generate;
 
-    p_tip(3) <= video_dac(3) when C_framebuffer and sw(3) = '1'
+    p_tip(3) <= video_dac(3) when C_framebuffer and R_fb_mode /= "11"
       else R_dac_acc_l(16);
-    p_tip(2) <= video_dac(2) when C_framebuffer and sw(3) = '1'
+    p_tip(2) <= video_dac(2) when C_framebuffer and R_fb_mode /= "11"
       else R_dac_acc_l(16);
-    p_tip(1) <= video_dac(1) when C_framebuffer and sw(3) = '1'
+    p_tip(1) <= video_dac(1) when C_framebuffer and R_fb_mode /= "11"
       else R_dac_acc_l(16);
-    p_tip(0) <= video_dac(0) when C_framebuffer and sw(3) = '1'
+    p_tip(0) <= video_dac(0) when C_framebuffer and R_fb_mode /= "11"
       else R_dac_acc_l(16);
     p_ring <= R_dac_acc_r(16);
 
@@ -389,7 +390,8 @@ begin
 	    end if;
 	    -- Framebuffer
 	    if C_framebuffer and io_addr(4 downto 2) = "110" then
-		R_fb_mode <= cpu_to_io(0);
+		R_fb_mode <= cpu_to_io(1 downto 0);
+		R_fb_base_addr <= cpu_to_io(19 downto 2);
 	    end if;
 	    -- DDS
 	    if C_ddsfm and io_addr(4 downto 2) = "111" then
@@ -626,6 +628,7 @@ begin
 	data_ready => fb_data_ready,
 	data_in => from_sram,
 	mode => R_fb_mode,
+	base_addr => R_fb_base_addr,
 	dac_out => video_dac,
 	tick_out => fb_tick
     );
