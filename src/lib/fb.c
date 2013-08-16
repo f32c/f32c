@@ -200,8 +200,8 @@ static uint8_t font_map[] = {
 };
 
 
-static uint32_t	fb_mode = -1;
-static uint8_t	*fb = (void *) FB_BASE;
+static uint32_t	fb_mode = 3;
+static uint8_t	*fb;
 
 #define	ABS(a) (((a) < 0) ? -(a) : (a))
 
@@ -210,16 +210,14 @@ void
 fb_set_mode(int mode)
 {
 
-	if (mode == 1)
-		fb_mode = 1;
-	else if (mode == 0)
-		fb_mode = 0;
-	else {
-		fb_mode = -1;
-		fb = NULL;
-	}
+	fb_mode = mode & 3;
 
-	OUTB(IO_FB, fb_mode);
+	if (fb_mode > 1)
+		fb = NULL;
+	else
+		fb = (void *) 0x800b0000;
+
+	OUTW(IO_FB, ((uint32_t) fb) | fb_mode);
 }
 
 

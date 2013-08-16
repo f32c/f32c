@@ -23,8 +23,6 @@
 #define	IO_FB		IO_ADDR(0x18)	/* byte, WR */
 #define	IO_DDS		IO_ADDR(0x1c)	/* word, WR */
 
-#define	FB_BASE		0x80080000
-
 
 /* SIO status bitmask */
 #define	SIO_TX_BUSY	0x4
