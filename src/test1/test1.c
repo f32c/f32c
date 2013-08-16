@@ -41,7 +41,7 @@ display_timestamp(void)
 		return;
 	old_ts = *sp;
 	
-	drawchar(450, 30, (((old_ts / 50) % 10)+ '0'), 0xffff);
+	fb_drawchar(450, 30, (((old_ts / 50) % 10)+ '0'), 0xffff);
 }
 
 
@@ -132,9 +132,9 @@ load_raw(char *fname)
 			g = *ib++;
 			b = *ib++;
 			if (mode)
-				fb16[x + i] = rgb2pal(r, g, b);
+				fb16[x + i] = fb_rgb2pal(r, g, b);
 			else
-				fb[x + i] = rgb2pal(r, g, b);
+				fb[x + i] = fb_rgb2pal(r, g, b);
 		}
 		display_timestamp();
 	}
@@ -172,7 +172,7 @@ main(void)
 
 switch_mode:
 	mode = !mode;
-	set_fb_mode(mode);
+	fb_set_mode(mode);
 	if (mode)
 		printf("16-bitna paleta\n");
 	else
@@ -190,7 +190,7 @@ switch_mode:
 		x1 = tmp & 0x1ff;
 		y1 = ((tmp >> 16) & 0xff) + ((tmp >> 24) & 0x1f);
 		color ^= (tmp >> 13);
-		line(x0, y0, x1, y1, color);
+		fb_line(x0, y0, x1, y1, color);
 		i++;
 		display_timestamp();
 	}
@@ -209,7 +209,7 @@ switch_mode:
 		y0 = ((tmp >> 16) & 0xff) + ((tmp >> 24) & 0x1f);
 		color = (tmp >> 10);
 		tmp = (tmp >> 20) & 0x7f;
-		filledcircle(x0, y0, tmp, color);
+		fb_filledcircle(x0, y0, tmp, color);
 		i++;
 		display_timestamp();
 	}
@@ -230,7 +230,7 @@ switch_mode:
 		tmp = random();
 		x1 = tmp & 0x1ff;
 		y1 = ((tmp >> 16) % 0x1ff) - 128;
-		rectangle(x0, y0, x1, y1, color);
+		fb_rectangle(x0, y0, x1, y1, color);
 		i++;
 		display_timestamp();
 	}
