@@ -202,9 +202,10 @@ do_ls(const char *path)
 	FILINFO fno;
 	DIR dir;
 	int c;
+	char *fname;
 	static char lfn[_MAX_LFN + 1];
 	fno.lfname = lfn;
-	fno.lfsize = sizeof lfn;
+	fno.lfsize = sizeof(lfn);
 
 	/* Dummy open, just to auto-mount the volume */
 	fres = open(path, 0);
@@ -222,31 +223,23 @@ do_ls(const char *path)
 		if (fres != FR_OK || fno.fname[0] == 0)
 			break;
 
-#if 0
-		/* Ignore dot entry */
-		if (lfn[0] == '.')
-			continue;
-#endif
-
-		if (scan_stop) {
-			if (fno.fattrib & AM_DIR)
-				c = 'd';
-			else
-				c = ' ';
-			printf("%10d %c %s/%s\n", (int) fno.fsize, c,
-			    path, lfn);
-		} else
-			break;
+		if (fno.fattrib & AM_DIR)
+			c = 'd';
+		else
+			c = ' ';
+		if (lfn[0] == 0)
+			fname = fno.fname;
+		else
+			fname = lfn;
+		printf("%10d %c %s/%s\n", (int) fno.fsize, c, path, fname);
 
 		/* Pager */
-		if (scan_line++ == scan_stop) {
+		if (scan_line++ >= scan_stop) {
 			printf("--More-- (line %d)", scan_line);
 			c = getchar();
 			printf("\r                      \r");
-			if (c == 3 || c == 'q') {
-				scan_stop = 0;
+			if (c == 3 || c == 'q')
 				break;
-			}
 			scan_stop = scan_line;
 			if (c == ' ')
 				scan_stop += 21;
