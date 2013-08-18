@@ -70,7 +70,6 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount
 	spi_byte(SPI_PORT_FLASH, SPI_CMD_WRDI);
 	busy_wait();
         
-#if 1
 	/* Enable Write Status Register */
 	spi_start_transaction(SPI_PORT_FLASH);
 	spi_byte(SPI_PORT_FLASH, SPI_CMD_EWSR);
@@ -79,7 +78,6 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount
 	spi_start_transaction(SPI_PORT_FLASH);
 	spi_byte(SPI_PORT_FLASH, SPI_CMD_WRSR);
 	spi_byte(SPI_PORT_FLASH, 0x1c);
-#endif
 
 	return (RES_OK);
 }
@@ -161,11 +159,13 @@ disk_read(BYTE drive, BYTE* Buffer, DWORD SectorNumber, BYTE SectorCount)
 DRESULT
 disk_write(BYTE drive, const BYTE* Buffer, DWORD SectorNumber, BYTE SectorCount)
 {
+	uint8_t *buf = (void *) Buffer;
 
 	switch (drive) {
 	case 0:
-		return(flash_disk_write(Buffer, SectorNumber, SectorCount));
+		return(flash_disk_write(buf, SectorNumber, SectorCount));
 	case 1:
+		return(sdcard_disk_write(buf, SectorNumber, SectorCount));
 	default:
 		return (RES_ERROR);
 	}
