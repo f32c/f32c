@@ -184,6 +184,8 @@ disk_ioctl(BYTE drive, BYTE cmd, void* buf)
 		else
 			*up = 512;
 		return (RES_OK);
+	case CTRL_SYNC:
+		return (RES_OK);
 	default:
 		return (RES_ERROR);
 	}
