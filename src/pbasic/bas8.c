@@ -1330,11 +1330,12 @@ shell()
 	normret;
 }
 
+
+#if 0
 int
 do_system(cmd)
 CHAR	*cmd;
 {
-#if 0
 	int    i;
 #ifdef	__STDC__
 	SIGFUNC (*q)(int) , (*p)(int);
@@ -1391,10 +1392,8 @@ CHAR	*cmd;
 	set_term();
 	rset_term(0);
 	return(status);
-#else /* 0 */
-	return(-1);
-#endif /* 0 */
 }
+#endif /* 0 */
 
 #endif
 

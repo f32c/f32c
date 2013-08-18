@@ -1,13 +1,17 @@
 
 #include <sys/param.h>
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <signal.h>
+#include <fcntl.h>
 #include <setjmp.h>
-#include <time.h>
+#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <time.h>
+#include <fatfs/ff.h>
+
+#include "bas.h"
 
 
 extern int _end;
@@ -37,8 +41,7 @@ void *sbrk(intptr_t p)
 	if (freep == NULL)
 		freep = (void *) &_end;
 
-	if (p != 0)
-		freep = freep + p;
+	freep = freep + p;
 	return (freep);
 }
 
@@ -103,11 +106,11 @@ syscall(int number __unused, ...)
 time_t
 time(time_t *tloc)
 {
-	time_t res = 0;
+	time_t t = 0;
 
 	if (tloc != NULL)
-		*tloc = res;
-	return (res);
+		*tloc = t;
+	return (t);
 }
 
 
@@ -154,12 +157,14 @@ rset_term(int arg __unused)
 
 
 void
-__assert(char *func, char *file, int line, char *expr)
+__assert(const char *func, const char *file, int lno, const char *expr)
 {
 
 	printf("assert failed: file %s line %d function %s expr %s\n",
-	    file, line, func, expr);
-	exit(1);
+	    file, lno, func, expr);
+	while (1) {
+		exit(1);
+	}
 }
 
 
@@ -183,4 +188,88 @@ memset(void *b, int c, size_t len)
 		*cp++ = c;
 
 	return (b);
+}
+
+
+static int scan_line;
+static int scan_stop;
+
+
+static int
+do_ls(const char *path)
+{
+	FRESULT fres;
+	FILINFO fno;
+	DIR dir;
+	int c;
+	static char lfn[_MAX_LFN + 1];
+	fno.lfname = lfn;
+	fno.lfsize = sizeof lfn;
+
+	/* Dummy open, just to auto-mount the volume */
+	fres = open(path, 0);
+	if (fres >= 0)
+		close (fres);
+
+	/* Open the directory */
+	fres = f_opendir(&dir, path);
+	if (fres != FR_OK)
+		return (fres);
+
+	do {
+		/* Read a directory item */
+		fres = f_readdir(&dir, &fno);
+		if (fres != FR_OK || fno.fname[0] == 0)
+			break;
+
+#if 0
+		/* Ignore dot entry */
+		if (lfn[0] == '.')
+			continue;
+#endif
+
+		if (scan_stop) {
+			if (fno.fattrib & AM_DIR)
+				c = 'd';
+			else
+				c = ' ';
+			printf("%10d %c %s/%s\n", (int) fno.fsize, c,
+			    path, lfn);
+		} else
+			break;
+
+		/* Pager */
+		if (scan_line++ == scan_stop) {
+			printf("--More-- (line %d)", scan_line);
+			c = getchar();
+			printf("\r                      \r");
+			if (c == 3 || c == 'q') {
+				scan_stop = 0;
+				break;
+			}
+			scan_stop = scan_line;
+			if (c == ' ')
+				scan_stop += 21;
+		}
+	} while (1);
+
+	return (fres);
+}
+
+
+int
+do_system(char *cp)
+{
+
+	scan_line = 0;
+	scan_stop = 21;
+
+	if (strlen(cp) >= 5 && strncmp(cp, "ls -", 4) == 0) {
+		for (cp = &cp[5]; *cp == ' '; cp++)
+			{}
+		return(do_ls(cp));
+	}
+
+printf("XXX do_system: _%s_\n", cp);
+	return (-1);
 }
