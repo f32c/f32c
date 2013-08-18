@@ -11,6 +11,7 @@ int sdcard_cmd(int, uint32_t);
 int sdcard_disk_initialize(void);
 int sdcard_disk_status(void);
 int sdcard_disk_read(uint8_t *, uint32_t, uint32_t);
+int sdcard_disk_write(uint8_t *, uint32_t, uint32_t);
 
 #define	SD_CMD_GO_IDLE_STATE		0
 #define	SD_CMD_SEND_OP_COND		1

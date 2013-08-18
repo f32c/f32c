@@ -34,8 +34,6 @@ sdcard_cmd(int cmd, uint32_t arg)
 	/* Argument */
 	spi_byte(SPI_PORT_SDCARD, arg >> 24);
 	spi_byte(SPI_PORT_SDCARD, arg >> 16);
-	if (sio_idle_fn != NULL)
-		(*sio_idle_fn)();
 	spi_byte(SPI_PORT_SDCARD, arg >> 8);
 	spi_byte(SPI_PORT_SDCARD, arg);
 
@@ -47,8 +45,6 @@ sdcard_cmd(int cmd, uint32_t arg)
 		res = spi_byte_in(SPI_PORT_SDCARD);
 		if ((res & 0x80) == 0)
 			break;
-		if (sio_idle_fn != NULL)
-			(*sio_idle_fn)();
 	}
 
 	return (res);
@@ -78,6 +74,46 @@ sdcard_read(char *buf, int n)
 	/* CRC - ignored */
 	spi_byte_in(SPI_PORT_SDCARD);
 	spi_byte_in(SPI_PORT_SDCARD);
+
+	return (0);
+}
+
+
+/*
+ * Writes a data block of n bytes from the card and stores it in a buffer
+ * pointed to by the buf argument.  Returns 0 on success, -1 on failure.
+ */
+int
+sdcard_write(char *buf, int n)
+{
+	int i;
+
+	/* Dummy byte */
+	spi_byte_out(SPI_PORT_SDCARD, 0xff);
+
+	/* Send data start token */
+	spi_byte_out(SPI_PORT_SDCARD, 0xfe);
+
+	/* Send data */
+	for (i = 0; i < n; i++)
+		spi_byte_out(SPI_PORT_SDCARD, buf[i]);
+        
+	/* Send two dummy CRC bytes */
+	spi_byte_out(SPI_PORT_SDCARD, 0xff);
+	spi_byte_out(SPI_PORT_SDCARD, 0xff);
+
+	/* Get response */
+	int res = spi_byte(SPI_PORT_SDCARD, 0xff);
+//printf("sdcard_write() respones is %02x ", res & 0xff);
+
+	/* Wait while SPI busy */
+	for (i = 5000000; spi_byte(SPI_PORT_SDCARD, 0xff) != 0xff; i--) {
+		if (i == 0)
+			return (-1);
+	}
+//printf("%d\n", i);
+
+	spi_byte_out(SPI_PORT_SDCARD, 0xff);
 
 	return (0);
 }
@@ -167,6 +203,30 @@ sdcard_disk_read(uint8_t *buf, uint32_t sector, uint32_t cnt)
 		if (sdcard_cmd(SD_CMD_READ_BLOCK, sector << sdcard_addr_shift))
 			goto error;
 		if (sdcard_read((char *) buf, SD_BLOCKLEN))
+			goto error;
+		buf += SD_BLOCKLEN;
+		sector++;
+	}
+	return (RES_OK);
+
+error:
+	/* Mark the card as dead */
+	sdcard_addr_shift = -1;
+	return (RES_ERROR);
+}
+
+
+int
+sdcard_disk_write(uint8_t *buf, uint32_t sector, uint32_t cnt)
+{
+
+	if (sdcard_addr_shift < 0)
+		goto error;
+
+	for (; cnt > 0; cnt--) {
+		if (sdcard_cmd(SD_CMD_WRITE_BLOCK, sector << sdcard_addr_shift))
+			goto error;
+		if (sdcard_write((char *) buf, SD_BLOCKLEN))
 			goto error;
 		buf += SD_BLOCKLEN;
 		sector++;
