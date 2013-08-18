@@ -2,7 +2,6 @@
 #include <sys/param.h>
 #include <sdcard.h>
 #include <spi.h>
-#include <sio.h>
 
 #include <fatfs/diskio.h>
 
@@ -61,12 +60,9 @@ sdcard_read(char *buf, int n)
 	int i;
 
 	/* Wait for data start token */
-	for (i = 10000; spi_byte_in(SPI_PORT_SDCARD) != 0xfe; i--) {
-		if (sio_idle_fn != NULL && (i & SD_IDLE_MASK) == 0)
-			(*sio_idle_fn)();
-		if (i == 0)
+	for (i = 0; spi_byte_in(SPI_PORT_SDCARD) != 0xfe; i++)
+		if (i == 1 << 24)
 			return (-1);
-	}
 
 	/* Fetch data */
 	spi_block_in(SPI_PORT_SDCARD, buf, n);
@@ -88,32 +84,26 @@ sdcard_write(char *buf, int n)
 {
 	int i;
 
-	/* Dummy byte */
-	spi_byte_out(SPI_PORT_SDCARD, 0xff);
+	/* Send a dummy byte, just in case */
+	spi_byte(SPI_PORT_SDCARD, 0xff);
 
 	/* Send data start token */
-	spi_byte_out(SPI_PORT_SDCARD, 0xfe);
+	spi_byte(SPI_PORT_SDCARD, 0xfe);
 
-	/* Send data */
+	/* Send data block */
 	for (i = 0; i < n; i++)
-		spi_byte_out(SPI_PORT_SDCARD, buf[i]);
+		spi_byte(SPI_PORT_SDCARD, buf[i]);
         
 	/* Send two dummy CRC bytes */
-	spi_byte_out(SPI_PORT_SDCARD, 0xff);
-	spi_byte_out(SPI_PORT_SDCARD, 0xff);
+	spi_byte(SPI_PORT_SDCARD, 0xff);
+	spi_byte(SPI_PORT_SDCARD, 0xff);
 
-	/* Get response */
-	int res = spi_byte(SPI_PORT_SDCARD, 0xff);
-//printf("sdcard_write() respones is %02x ", res & 0xff);
-
-	/* Wait while SPI busy */
-	for (i = 5000000; spi_byte(SPI_PORT_SDCARD, 0xff) != 0xff; i--) {
-		if (i == 0)
+	/* Wait while sdcard busy */
+	for (i = 0; spi_byte(SPI_PORT_SDCARD, 0xff) != 0xff; i++)
+		if (i == 1 << 24)
 			return (-1);
-	}
-//printf("%d\n", i);
 
-	spi_byte_out(SPI_PORT_SDCARD, 0xff);
+	spi_byte(SPI_PORT_SDCARD, 0xff);
 
 	return (0);
 }
