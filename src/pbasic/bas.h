@@ -10,12 +10,15 @@
 
 #include <assert.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/fcntl.h>
 #include <time.h>
 #include <unistd.h>
 
 #define	BLOCKSIZ 512
+
+#define	DEB printf("%s: %s() %d\n", __FILE__, __FUNCTION__, __LINE__);
 
 #define	BIG_INTS
 #define	OWN_ALLOC
@@ -172,7 +175,7 @@ typedef char	CHAR;
 #define FN              0263
 #define	FNEND		0262
 #define	MIDSTR		0271		/* mid$ command */
-#define MAXCOMMAND      0320            /* maximum allowed command code */
+#define MAXCOMMAND      0330            /* maximum allowed command code */
 #define DATA            0236
 #define QUOTE           0233
 #define ERROR           0231
@@ -716,8 +719,8 @@ int	endd(void),runn(void),gotos(void),rem(void),lets(void),list(void),
 	bmat(void), bwrite(void), berase(void),
 	file_kill(void), file_mkdir(void), file_copy(void), file_rename(void),
 	file_cd(void), file_pwd(void),
-	draw_fgcolor(void), draw_bgcolor(void), draw_plot(void),
-	draw_line(void), draw_rectangle(void), draw_circle(void);
+	vidmode(void), color(void), plot(void), lineto(void),
+	rectangle(void), circle(void), blkmove(void), text(void);
 
 int	quit(void);
 
@@ -803,8 +806,10 @@ int	endd(),runn(),gotos(),rem(),lets(),list(),
 	bdir(), bdirl(), bmat(), bwrite(), berase(),
 	file_kill(), file_mkdir(), file_copy(), file_rename(),
 	file_cd(), file_pwd(),
-	draw_fgcolor(), draw_bgcolor(), draw_plot(),
-	draw_line(), draw_rectangle(), draw_circle();
+	vidmode(), color(), plot(), lineto(),
+	rectangle(), circle(), blkmove(), text();
+
+int	quit(void);
 
 int	quit();
 
@@ -1061,10 +1066,8 @@ const	intf_t	commandf = {
 	untilf,whilef,wendf,renumb,fnend,fncmd, blset, brset, bfield, bput,
 	bget,lhmidst, bdefint, bdefstr, bdefdbl, bcommon, blocal, defproc,
 	bdeffn, bopts, lprint, tron, troff, bdir, bdirl, bmat, bwrite, berase,
-	file_kill, file_mkdir, file_copy, file_rename,
-	file_cd, file_pwd,
-	draw_fgcolor, draw_bgcolor, draw_plot,
-	draw_line, draw_rectangle, draw_circle,
+	file_kill, file_mkdir, file_copy, file_rename, file_cd, file_pwd,
+	vidmode, color, plot, lineto, rectangle, circle, blkmove, text
 };
 
 /*      table of error messages */
@@ -1220,7 +1223,7 @@ const	struct  tabl    table[]={
 	"vidmode",	0320,
 	"color",	0321,
 	"plot",		0322,
-	"lineto"	0323,
+	"lineto",	0323,
 	"rectangle",	0324,
 	"circle",	0325,
 	"blkmove",	0326,

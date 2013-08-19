@@ -5,6 +5,8 @@
 #include <fb.h>
 
 
+static int last_x;
+static int last_y;
 static int fgcolor = 0xffff;
 static int bgcolor = 0;
 
@@ -13,36 +15,58 @@ void
 setup_fb(void)
 {
 
-	fb_set_mode(1);
+	/* Turn off video framebuffer */
+	fb_set_mode(3);
 }
 
 
 int
-draw_fgcolor(void)
+vidmode(void)
 {
-	int arg;
+	int mode;
 
-	arg = evalint();
+	mode = evalint();
 	check();
-	fgcolor = arg;
+	if (mode < 0 || mode > 3)
+		error(33);	/* argument error */
+	fb_set_mode(mode);
+	if (mode < 2)
+		fb_rectangle(0, 0, 511, 287, 0);
+	last_x = 0;
+	last_y = 0;
 	normret;
 }
 
 
 int
-draw_bgcolor(void)
+color(void)
 {
-	int arg;
+	int color, c;
+	int bg = 0;
 
-	arg = evalint();
-	check();
-	bgcolor = arg;
+	color = evalint();
+	c = getch();
+	if (istermin(c))
+		point--;
+	else {
+		if (c != ',')
+			error(15);
+		bg = evalint();
+		check();
+		if (bg < 0 || bg > 1)
+			error(33);	/* argument error */
+	}
+
+	if (bg)
+		bgcolor = color;
+	else
+		fgcolor = color;
 	normret;
 }
 
 
 int
-draw_plot(void)
+plot(void)
 {
 	int x, y;
 
@@ -57,7 +81,7 @@ draw_plot(void)
 
 
 int
-draw_line(void)
+lineto(void)
 {
 	int x0, y0, x1, y1;
 
@@ -78,7 +102,7 @@ draw_line(void)
 
 
 int
-draw_rectangle(void)
+rectangle(void)
 {
 	int x0, y0, x1, y1;
 
@@ -102,28 +126,7 @@ draw_rectangle(void)
 
 
 int
-draw_fillrectangle(void)
-{
-	int x0, y0, x1, y1;
-
-	x0 = evalint();
-	if(getch() != ',')
-		error(SYNTAX);
-	y0 = evalint();
-	if(getch() != ',')
-		error(SYNTAX);
-	x1 = evalint();
-	if(getch() != ',')
-		error(SYNTAX);
-	y1 = evalint();
-	check();
-	fb_rectangle(x0, y0, x1, y1, fgcolor);
-	normret;
-}
-
-
-int
-draw_circle(void)
+circle(void)
 {
 	int x0, y0, r;
 
@@ -141,18 +144,16 @@ draw_circle(void)
 
 
 int
-draw_fillcircle(void)
+blkmove(void)
 {
-	int x0, y0, r;
 
-	x0 = evalint();
-	if(getch() != ',')
-		error(SYNTAX);
-	y0 = evalint();
-	if(getch() != ',')
-		error(SYNTAX);
-	r = evalint();
-	check();
-	fb_filledcircle(x0, y0, r, fgcolor);
+	normret;
+}
+
+
+int
+text(void)
+{
+
 	normret;
 }
