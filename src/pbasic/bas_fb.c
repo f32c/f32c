@@ -68,36 +68,53 @@ color(void)
 int
 plot(void)
 {
-	int x, y;
+	int x, y, c;
+	int firstdot = 1;
 
-	x = evalint();
-	if(getch() != ',')
-		error(SYNTAX);
-	y = evalint();
-	check();
-	fb_plot(x, y, fgcolor);
-	normret;
+	do {
+		x = evalint();
+		if(getch() != ',')
+			error(SYNTAX);
+		y = evalint();
+		if (firstdot) {
+			fb_plot(x, y, fgcolor);
+			firstdot = 0;
+		} else
+			fb_line(last_x, last_y, x, y, fgcolor);
+		last_x = x;
+		last_y = y;
+		c = getch();
+		if (istermin(c)) {
+			point--;
+			normret;
+		}
+		if (c != ',')
+			error(15);
+	} while (1);
 }
 
 
 int
 lineto(void)
 {
-	int x0, y0, x1, y1;
+	int x, y, c;
 
-	x0 = evalint();
-	if(getch() != ',')
-		error(SYNTAX);
-	y0 = evalint();
-	if(getch() != ',')
-		error(SYNTAX);
-	x1 = evalint();
-	if(getch() != ',')
-		error(SYNTAX);
-	y1 = evalint();
-	check();
-	fb_line(x0, y0, x1, y1, fgcolor);
-	normret;
+	do {
+		x = evalint();
+		if(getch() != ',')
+			error(SYNTAX);
+		y = evalint();
+		fb_line(last_x, last_y, x, y, fgcolor);
+		last_x = x;
+		last_y = y;
+		c = getch();
+		if (istermin(c)) {
+			point--;
+			normret;
+		}
+		if (c != ',')
+			error(15);
+	} while (1);
 }
 
 
@@ -105,6 +122,7 @@ int
 rectangle(void)
 {
 	int x0, y0, x1, y1;
+	int c, fill = 0;
 
 	x0 = evalint();
 	if(getch() != ',')
@@ -116,11 +134,27 @@ rectangle(void)
 	if(getch() != ',')
 		error(SYNTAX);
 	y1 = evalint();
-	check();
-	fb_line(x0, y0, x0, y1, fgcolor);
-	fb_line(x0, y1, x1, y1, fgcolor);
-	fb_line(x1, y1, x0, y1, fgcolor);
-	fb_line(x1, y0, x0, y0, fgcolor);
+
+	c = getch();
+	if (istermin(c))
+		point--;
+	else {
+		if (c != ',')
+			error(15);
+		fill = evalint();
+		check();
+		if (fill < 0 || fill > 1)
+			error(33);	/* argument error */
+	}
+
+	if (fill)
+		fb_rectangle(x0, y0, x1, y1, fgcolor);
+	else {
+		fb_line(x0, y0, x1, y0, fgcolor);
+		fb_line(x1, y0, x1, y1, fgcolor);
+		fb_line(x1, y1, x0, y1, fgcolor);
+		fb_line(x0, y1, x0, y0, fgcolor);
+	}
 	normret;
 }
 
@@ -129,6 +163,7 @@ int
 circle(void)
 {
 	int x0, y0, r;
+	int c, fill = 0;
 
 	x0 = evalint();
 	if(getch() != ',')
@@ -137,8 +172,23 @@ circle(void)
 	if(getch() != ',')
 		error(SYNTAX);
 	r = evalint();
-	check();
-	fb_circle(x0, y0, r, fgcolor);
+
+	c = getch();
+	if (istermin(c))
+		point--;
+	else {
+		if (c != ',')
+			error(15);
+		fill = evalint();
+		check();
+		if (fill < 0 || fill > 1)
+			error(33);	/* argument error */
+	}
+
+	if (fill)
+		fb_filledcircle(x0, y0, r, fgcolor);
+	else
+		fb_circle(x0, y0, r, fgcolor);
 	normret;
 }
 
