@@ -702,7 +702,7 @@ STR	rightst(void),leftst(void),
 
 int	endd(void),runn(void),gotos(void),rem(void),lets(void),list(void),
 	print(void),stop(void),bdelete(void),editl(void),input(void),
-	clearl(void),save(void),old(void),neww(void),shell(void),resume(void),
+	clearl(void),save(void),load(void),neww(void),shell(void),resume(void),
 	iff(void),brandom(void),dimensio(void),forr(void),next(void),
 	gosub(void),retn(void),onn(void),doerror(void),
 	dauto(void),readd(void),dodata(void),cls(void),restore(void),
@@ -714,6 +714,8 @@ int	endd(void),runn(void),gotos(void),rem(void),lets(void),list(void),
 	bcommon(void), blocal(void), defproc(void), bopts(void), lprint(void),
 	tron(void), troff(void), bdir(void), bdirl(void), bdeffn(void),
 	bmat(void), bwrite(void), berase(void),
+	file_kill(void), file_mkdir(void), file_copy(void), file_rename(void),
+	file_cd(void), file_pwd(void),
 	draw_fgcolor(void), draw_bgcolor(void), draw_plot(void),
 	draw_line(void), draw_rectangle(void), draw_circle(void);
 
@@ -790,7 +792,7 @@ STR	datef(), binstr();
 
 int	endd(),runn(),gotos(),rem(),lets(),list(),
 	print(),stop(),bdelete(),editl(),input(),clearl(),lprint(),
-	save(),old(),neww(),shell(),resume(),iff(), tron(), troff(),
+	save(),load(),neww(),shell(),resume(),iff(), tron(), troff(),
 	brandom(),dimensio(),forr(),next(),gosub(),retn(),
 	onn(),doerror(),rem(),dauto(), defproc(), bdeffn(),
 	readd(),dodata(),cls(),restore(),base(),bfopen(),
@@ -799,6 +801,8 @@ int	endd(),runn(),gotos(),rem(),lets(),list(),
 	fnend(), fncmd(), blset(), brset(), bfield(), bput(), bget(),
 	bdefint(), bdefstr(), bdefdbl(), bcommon(), blocal(), bopts(),
 	bdir(), bdirl(), bmat(), bwrite(), berase(),
+	file_kill(), file_mkdir(), file_copy(), file_rename(),
+	file_cd(), file_pwd(),
 	draw_fgcolor(), draw_bgcolor(), draw_plot(),
 	draw_line(), draw_rectangle(), draw_circle();
 
@@ -1051,12 +1055,14 @@ const	strf_t	strngncommand = {
 
 const	intf_t	commandf = {
 	endd,runn,gotos,rem,list,lets,print,stop,bdelete,editl,input,clearl,
-	save,old,neww,shell,resume,iff,brandom,dimensio,forr,next,gosub,retn,
+	save,load,neww,shell,resume,iff,brandom,dimensio,forr,next,gosub,retn,
 	onn,doerror,print,rem,dauto,readd,dodata,cls,restore,base,bfopen,
 	fclosef,merge,quit,quit,quit,chain,deffunc,cont,poke,linput,rept,
 	untilf,whilef,wendf,renumb,fnend,fncmd, blset, brset, bfield, bput,
 	bget,lhmidst, bdefint, bdefstr, bdefdbl, bcommon, blocal, defproc,
 	bdeffn, bopts, lprint, tron, troff, bdir, bdirl, bmat, bwrite, berase,
+	file_kill, file_mkdir, file_copy, file_rename,
+	file_cd, file_pwd,
 	draw_fgcolor, draw_bgcolor, draw_plot,
 	draw_line, draw_rectangle, draw_circle,
 };
@@ -1142,7 +1148,7 @@ const	struct  tabl    table[]={
 	"input",	0212,
 	"clear",	0213,
 	"save",		0214,
-	"old",		0215,
+	"load",		0215,
 	"new",		0216,
 	"shell",	0217,
 	"resume",	0220,
@@ -1203,13 +1209,22 @@ const	struct  tabl    table[]={
 	"mat",		0307,
 	"write",	0310,
 	"erase",	0311,
+	/* filesystem utilities */
+	"kill",		0312,
+	"mkdir",	0313,
+	"copy",		0314,
+	"rename",	0315,
+	"cd",		0316,
+	"pwd",		0317,
 	/* framebuffer commands */
-	"fgcolor",	0312,
-	"bgcolor",	0313,
-	"plot",		0314,
-	"line",		0315,
-	"rectangle",	0316,
-	"circle",	0317,
+	"vidmode",	0320,
+	"color",	0321,
+	"plot",		0322,
+	"lineto"	0323,
+	"rectangle",	0324,
+	"circle",	0325,
+	"blkmove",	0326,
+	"text",		0327,
 	/*
 	 * commands go to here
 	 */

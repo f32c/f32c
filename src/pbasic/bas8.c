@@ -1718,7 +1718,7 @@ save()
  */
 
 int
-old()
+load()
 {
 	int    fp;
 	STR	st;
