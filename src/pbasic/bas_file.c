@@ -118,14 +118,16 @@ file_copy()
 
 	st1 = stringeval();
 	NULL_TERMINATE(st1);
+	strcpy(buf, st1->strval);
+	FREE_STR(st1);
 	if(getch() != ',')
 		error(SYNTAX);
+
 	st2 = stringeval();
 	NULL_TERMINATE(st2);
 	check();
 
-	from = open(st1->strval, O_RDONLY);
-	FREE_STR(st1);
+	from = open(buf, O_RDONLY);
 	if (from < 0)
 		error(15);
 	to = open(st2->strval, O_CREAT|O_RDWR);
@@ -161,22 +163,25 @@ file_copy()
 int
 file_rename()
 {
+	char buf[256];
 	STR st1, st2;
 
 	st1 = stringeval();
 	NULL_TERMINATE(st1);
+	strcpy(buf, st1->strval);
+	FREE_STR(st1);
 	if(getch() != ',')
 		error(SYNTAX);
+
 	st2 = stringeval();
 	NULL_TERMINATE(st2);
 	check();
-	if (f_rename(st1->strval, st2->strval) != FR_OK)
+
+	if (f_rename(buf, st2->strval) != FR_OK)
 		goto fail;
-	FREE_STR(st1);
 	FREE_STR(st2);
 	goto ok;
 fail:
-	FREE_STR(st1);
 	FREE_STR(st2);
 	error(15);
 ok:
