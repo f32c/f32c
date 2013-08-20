@@ -55,7 +55,7 @@ sdcard_cmd(int cmd, uint32_t arg)
  * pointed to by the buf argument.  Returns 0 on success, -1 on failure.
  */
 static int
-sdcard_read(char *buf, int n)
+sdcard_read_block(char *buf)
 {
 	int i;
 
@@ -65,7 +65,7 @@ sdcard_read(char *buf, int n)
 			return (-1);
 
 	/* Fetch data */
-	spi_block_in(SPI_PORT_SDCARD, buf, n);
+	spi_block_in(SPI_PORT_SDCARD, buf, SD_BLOCKLEN);
 
 	/* CRC - ignored */
 	spi_byte(SPI_PORT_SDCARD, 0xff);
@@ -80,7 +80,7 @@ sdcard_read(char *buf, int n)
  * pointed to by the buf argument.  Returns 0 on success, -1 on failure.
  */
 static int
-sdcard_write(char *buf, int n)
+sdcard_write_block(char *buf)
 {
 	int i;
 
@@ -91,7 +91,7 @@ sdcard_write(char *buf, int n)
 	spi_byte(SPI_PORT_SDCARD, 0xfe);
 
 	/* Send data block */
-	for (i = 0; i < n; i++)
+	for (i = 0; i < SD_BLOCKLEN; i++)
 		spi_byte(SPI_PORT_SDCARD, buf[i]);
 
 	/* Send two dummy CRC bytes */
@@ -195,7 +195,7 @@ sdcard_disk_read(uint8_t *buf, uint32_t sector, uint32_t cnt)
 	if (sdcard_cmd(SD_CMD_READ_MULTI_BLOCK, sector << sdcard_addr_shift))
 		goto error;
 	for (; cnt > 0; cnt--) {
-		if (sdcard_read((char *) buf, SD_BLOCKLEN))
+		if (sdcard_read_block((char *) buf))
 			goto error;
 		buf += SD_BLOCKLEN;
 	}
@@ -224,7 +224,7 @@ sdcard_disk_write(uint8_t *buf, uint32_t sector, uint32_t cnt)
 	for (; cnt > 0; cnt--) {
 		if (sdcard_cmd(SD_CMD_WRITE_BLOCK, sector << sdcard_addr_shift))
 			goto error;
-		if (sdcard_write((char *) buf, SD_BLOCKLEN))
+		if (sdcard_write_block((char *) buf))
 			goto error;
 		buf += SD_BLOCKLEN;
 		sector++;
