@@ -315,7 +315,8 @@ fb_rgb2pal(int r, int g, int b) {
 
 	/* Transform {U, V} cartesian into polar {chroma, saturation} coords */
 	chroma = (28 - (atan(u, v) >> 10)) & 0x3f;
-	saturation = (sqrt((u * u + v * v) >> 1) + (1 << 13)) >> 14;
+	saturation = sqrt((u * u + v * v) >> 1);
+	saturation = (saturation + (saturation >> 1) + (1 << 14)) >> 15;
 	if (__predict_false(saturation > 15))
 		saturation = 15;
 
