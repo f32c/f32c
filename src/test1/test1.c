@@ -24,6 +24,7 @@ uint8_t *fb = (void *) FB_BASE;
 uint16_t *fb16 = (void *) FB_BASE;
 int mode;
 
+uint32_t start, end, freq_khz;
 
 #define FAT
 
@@ -115,6 +116,17 @@ load_raw(char *fname)
 		return;
 
 	printf("Citam datoteku %s...\n", fname);
+	int got = 0;
+	RDTSC(start);
+	for (i = 0; i < 3; i++)
+		got += read(f, fb16, 288 * 512 * 2);
+	RDTSC(end);
+#define	SEEK_SET 0
+	lseek(f, 0, SEEK_SET);
+	printf("   %d bytes in %f s (%f bytes/s)\n", got,
+	    0.001 * (end - start) / freq_khz,
+	    got / (0.001 * (end - start) / freq_khz));
+
 	if (fname[0] == '1' && fname[1] == ':')
 		ssize = 512;	/* sdcard */
 	else
@@ -159,8 +171,7 @@ int
 main(void)
 {
 	int res, x0, y0, x1, y1;
-	uint32_t color, tmp, freq_khz;
-	uint32_t start, end, i;
+	uint32_t color, tmp, i;
 
 	printf("Hello, MIPS world!\n\n");
 
