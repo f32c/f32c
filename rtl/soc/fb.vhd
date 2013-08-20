@@ -145,7 +145,7 @@ begin
 		else
 		    if pixel_data(7) = '1' then
 			R_luma <= pixel_data(6 downto 4) & "1111";
-			R_chroma_sat <= "0010";
+			R_chroma_sat <= "0011";
 		    else
 			R_luma <= ((pixel_data(6 downto 4) - 1) & "0000") +
 			  ("00" & (pixel_data(6 downto 4) - 1) & "00");
