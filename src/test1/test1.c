@@ -18,6 +18,8 @@
 int fib(int);
 
 
+#define	FB_BASE 0x800b0000
+
 uint8_t *fb = (void *) FB_BASE;
 uint16_t *fb16 = (void *) FB_BASE;
 int mode;
@@ -52,6 +54,11 @@ scan_files(char* path)
 	FILINFO fno;
 	DIR dir;
 	int i;
+	char *fname;
+	static char lfn[_MAX_LFN + 1];
+
+	fno.lfname = lfn;
+	fno.lfsize = sizeof(lfn);
 
 	/* Open the directory */
 	res = f_opendir(&dir, path);
@@ -69,6 +76,11 @@ scan_files(char* path)
 		if (fno.fname[0] == '.')
 			continue;
 
+		if (lfn[0] == 0)
+			fname = fno.fname;
+		else
+			fname = lfn;
+
 		/* Recursively scan subdirectories */
 		if (fno.fattrib & AM_DIR) {
 			path[i] = '/';
@@ -80,8 +92,8 @@ scan_files(char* path)
 		} else {
 			strcpy(fnbuf, path);
 			fnbuf += i;
-			strcpy(fnbuf, fno.fname);
-			fnbuf += strlen(fno.fname);
+			strcpy(fnbuf, fname);
+			fnbuf += strlen(fname);
 			*fnbuf++ = 0;
 		}
 	} while (1);
@@ -259,7 +271,8 @@ slika:
 			goto slika;
 		if (l < 5)
 			continue;
-		if (strcmp(&fnbuf[l - 4], ".RAW") != 0)
+		if (strcmp(&fnbuf[l - 4], ".RAW") != 0 &&
+		    strcmp(&fnbuf[l - 4], ".raw") != 0)
 			continue;
 
 		load_raw(fnbuf);
