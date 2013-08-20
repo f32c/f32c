@@ -29,14 +29,6 @@ spi_block_in(int port, void *buf, int len)
 
 
 int
-spi_byte_in(int port)
-{
-
-	return (spi_byte(port, 0xff));
-}
-
-
-int
 spi_byte(int port, int out)
 {
 	int in;
