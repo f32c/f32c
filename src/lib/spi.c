@@ -1,14 +1,16 @@
 
+#include <sys/param.h>
+
 #include <io.h>
 #include <spi.h>
 
 
-__attribute__((optimize("-O3"))) 
 void
 spi_block_in(int port, void *buf, int len)
 {
-	char *cp = (char *) buf;
-	int c, cnt;
+	uint32_t *wp = (uint32_t *) buf;
+	uint32_t w = 0;
+	int c;
 
 	if (len == 0)
 		return;
@@ -17,14 +19,17 @@ spi_block_in(int port, void *buf, int len)
 	do {
 		LW(c, IO_SPI_FLASH, port);
 	} while ((c & 0x100) == 0);
-	for (cnt = 1; cnt != len; cnt++) {
+	for (len--; len != 0; len--) {
 		SB(0xff, IO_SPI_FLASH, port);
-		*cp++ = c;
+		w = (w >> 8) | (c << 24);
+		if ((len & 3) == 0)
+			*wp++ = w;
 		do {
 			LW(c, IO_SPI_FLASH, port);
 		} while ((c & 0x100) == 0);
 	}
-	*cp = c;
+	w = (w >> 8) | (c << 24);
+	*wp++ = w;
 }
 
 
