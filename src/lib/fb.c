@@ -325,7 +325,7 @@ fb_rgb2pal(int r, int g, int b) {
 		color = (saturation << 12) | ((chroma >> 1) << 7) | (luma >> 1);
 	else {
 		/* 8-bit encoding */
-		if (saturation > 7)		/* saturated color */
+		if (saturation > 8)		/* saturated color */
 			color = 32 + (luma * 6 / 8 / 32) * 16 +
 			    (((chroma + 2) >> 2) & 0xf);
 		else if (saturation > 0)	/* dim color */
