@@ -5,7 +5,6 @@
 #include <sys/stdint.h>
 
 int sdcard_init(void);
-int sdcard_read(char *, int);
 int sdcard_cmd(int, uint32_t);
 
 int sdcard_disk_initialize(void);
@@ -18,6 +17,7 @@ int sdcard_disk_write(uint8_t *, uint32_t, uint32_t);
 #define	SD_CMD_SEND_IF_COND		8
 #define	SD_CMD_SEND_CSD			9
 #define	SD_CMD_SEND_CID			10
+#define	SD_CMD_STOP_TRANSMISSION	12
 #define	SD_CMD_SET_BLOCKLEN		16
 #define	SD_CMD_READ_BLOCK		17
 #define	SD_CMD_READ_MULTI_BLOCK		18
