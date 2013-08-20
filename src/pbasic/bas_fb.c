@@ -1,14 +1,47 @@
 
 #include "bas.h"
 
+#include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 #include <fb.h>
 
 
+static const struct colormap {
+	int value;
+	char *name;
+} colormap[] = {
+	{ 0x000000, "black" },
+	{ 0x000080, "navy" },
+	{ 0x0000ff, "blue" },
+	{ 0x008000, "green" },
+	{ 0x008080, "teal" },
+	{ 0x00ff00, "lime" },
+	{ 0x00ffff, "cyan" },
+	{ 0x404040, "gray25" },
+	{ 0x4b0082, "indigo" },
+	{ 0x800000, "maroon" },
+	{ 0x800080, "purple" },
+	{ 0x808000, "olive" },
+	{ 0x808080, "gray" },
+	{ 0x808080, "gray50" },
+	{ 0x842222, "brown" },	/* a52a2a maps to red with 8-bit PAL pallete */
+	{ 0xc0c0c0, "gray75" },
+	{ 0xee82ee, "violet" },
+	{ 0xf0e68c, "khaki" },
+	{ 0xff0000, "red" },
+	{ 0xff00ff, "magenta" },
+	{ 0xffa500, "orange" },
+	{ 0xffc0cb, "pink" },
+	{ 0xffff00, "yellow" },
+	{ 0xffffff, "white" },
+	{ -1, NULL },
+};
+
 static int last_x;
 static int last_y;
-static int fgcolor = 0xffff;
-static int bgcolor = 0;
+static int fgcolor;
+static int bgcolor;
 
 
 void
@@ -30,8 +63,10 @@ vidmode(void)
 	if (mode < 0 || mode > 3)
 		error(33);	/* argument error */
 	fb_set_mode(mode);
+	fgcolor = fb_rgb2pal(255, 255, 255);
+	bgcolor = fb_rgb2pal(0, 0, 0);
 	if (mode < 2)
-		fb_rectangle(0, 0, 511, 287, 0);
+		fb_rectangle(0, 0, 511, 287, bgcolor);
 	last_x = 0;
 	last_y = 0;
 	normret;
@@ -41,10 +76,53 @@ vidmode(void)
 int
 color(void)
 {
-	int color, c;
+	char buf[16];
+	STR st;
+	int c, color = 0;
 	int bg = 0;
+	uint32_t i, len;
 
-	color = evalint();
+	/* Skip whitespace */
+	c = getch();
+	point--;
+
+	/* First arg string or numeric? */
+	if (checktype()) {
+		st = stringeval();
+		NULL_TERMINATE(st);
+		len = strlen(st->strval);
+		if (len == 0 || len > 15) {
+			FREE_STR(st);
+			error(33);	/* argument error */
+		}
+		for (i = 0; i <= len; i++)
+			buf[i] = tolower(st->strval[i]);
+		FREE_STR(st);
+		if (buf[0] == '#') {
+			if (len != 7)
+				error(33);	/* argument error */
+			for (i = 1; i < 7; i++) {
+				c = buf[i];
+				if (!isxdigit(c))
+					error(33);	/* argument error */
+				if (c <= '9')
+					color = (color << 4) + c - '0';
+				else
+					color = (color << 4) + c - 'a' + 10;
+			}
+		} else {
+			i = -1;
+			do {
+				if (colormap[++i].name == NULL)
+					error(33);	/* argument error */
+			} while (strcmp(buf, colormap[i].name) != 0);
+			color = colormap[i].value;
+		}
+		color = fb_rgb2pal(color >> 16, (color >> 8) & 0xff,
+		    color & 0xff);
+	} else
+		color = evalint();
+
 	c = getch();
 	if (istermin(c))
 		point--;
