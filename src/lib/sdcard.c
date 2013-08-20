@@ -25,7 +25,7 @@ sdcard_cmd(int cmd, uint32_t arg)
 	spi_start_transaction(SPI_PORT_SDCARD);
 
 	/* Preamble */
-	spi_byte_in(SPI_PORT_SDCARD);
+	spi_byte(SPI_PORT_SDCARD, 0xff);
 
 	/* Command */
 	spi_byte(SPI_PORT_SDCARD, cmd | 0x40);
@@ -41,7 +41,7 @@ sdcard_cmd(int cmd, uint32_t arg)
 	
 	/* Wait for a valid response byte, up to 8 cycles */
 	for (i = 0; i < 8; i++) {
-		res = spi_byte_in(SPI_PORT_SDCARD);
+		res = spi_byte(SPI_PORT_SDCARD, 0xff);
 		if ((res & 0x80) == 0)
 			break;
 	}
@@ -60,7 +60,7 @@ sdcard_read(char *buf, int n)
 	int i;
 
 	/* Wait for data start token */
-	for (i = 0; spi_byte_in(SPI_PORT_SDCARD) != 0xfe; i++)
+	for (i = 0; spi_byte(SPI_PORT_SDCARD, 0xff) != 0xfe; i++)
 		if (i == 1 << 24)
 			return (-1);
 
@@ -68,8 +68,8 @@ sdcard_read(char *buf, int n)
 	spi_block_in(SPI_PORT_SDCARD, buf, n);
 
 	/* CRC - ignored */
-	spi_byte_in(SPI_PORT_SDCARD);
-	spi_byte_in(SPI_PORT_SDCARD);
+	spi_byte(SPI_PORT_SDCARD, 0xff);
+	spi_byte(SPI_PORT_SDCARD, 0xff);
 
 	return (0);
 }
@@ -117,6 +117,9 @@ sdcard_init(void)
 	/* Mark card as uninitialized */
 	sdcard_addr_shift = -1;
 	
+	/* Terminate current transaction, if any */
+	sdcard_cmd(SD_CMD_STOP_TRANSMISSION, 0);
+
 	/* CRC embedded in bits 15..8 of command word */
 	res = sdcard_cmd(SD_CMD_GO_IDLE_STATE | 0x9500, 0) & 0xfe;
 	if (res)
@@ -150,11 +153,11 @@ sdcard_init(void)
 		return (0);
 
 	/* byte #1, bit 6 of response determines card type */
-	if (spi_byte_in(SPI_PORT_SDCARD) & (1 << 6))
+	if (spi_byte(SPI_PORT_SDCARD, 0xff) & (1 << 6))
 		sdcard_addr_shift = 0;	/* block addressing */
 	/* Flush the remaining response bytes */
 	for (i = 0; i < 3; i++)
-		spi_byte_in(SPI_PORT_SDCARD);
+		spi_byte(SPI_PORT_SDCARD, 0xff);
 
 	return (0);
 }

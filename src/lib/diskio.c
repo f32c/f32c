@@ -104,7 +104,7 @@ flash_disk_read(uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount)
 		spi_byte(SPI_PORT_FLASH, addr >> 16);
 		spi_byte(SPI_PORT_FLASH, addr >> 8);
 		spi_byte(SPI_PORT_FLASH, addr);
-		spi_byte_in(SPI_PORT_FLASH); /* dummy byte, ignored */
+		spi_byte(SPI_PORT_FLASH, 0xff); /* dummy byte, ignored */
 		spi_block_in(SPI_PORT_FLASH, buf, SectorCount * FLASH_BLOCKLEN);
 	}
 	return (RES_OK);
