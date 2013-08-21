@@ -140,15 +140,23 @@ lseek(int d, off_t offset, int whence)
 	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
 		return (-1);
 
-	/* XXX revisit!!! */
-#define	SEEK_SET 0
-	if (whence != SEEK_SET)
+	switch (whence) {
+	case SEEK_SET:
+		break;
+	case SEEK_CUR:
+		offset = f_tell(&file_map[d].fp) + offset;
+		break;
+	case SEEK_END:
+		offset = f_size(&file_map[d].fp) + offset; /* XXX revisit */
+		break;
+	default:
 		return (-1);
+	}
 
 	f_res = f_lseek(&file_map[d].fp, offset);
 	if (f_res != FR_OK)
 		return (-1);
-	return (offset);
+	return ((int) f_tell(&file_map[d].fp));
 }
 
 
