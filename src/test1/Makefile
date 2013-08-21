@@ -1,7 +1,7 @@
 
 PROG = test1
 
-CFILES = test1.c
+CFILES = test1.c ../lib/tjpgd.c
 
 F32C_LIBS = printf fatfs random framebuffer
 
