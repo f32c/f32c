@@ -107,8 +107,8 @@ static void
 load_raw(char *fname)
 {
 	int r, g, b;
-	uint32_t i, x, y, ssize;
-	unsigned char *ib;
+	uint32_t i;
+	unsigned char *ib = (void *) 0x80020000;
 	int f;
 
 	f = open(fname, O_RDONLY);
@@ -118,51 +118,24 @@ load_raw(char *fname)
 	printf("Citam datoteku %s...\n", fname);
 	int got = 0;
 	RDTSC(start);
-	for (i = 0; i < 3; i++)
-		got += read(f, fb16, 288 * 512 * 2);
+	got += read(f, ib, 288 * 512 * 3);
 	RDTSC(end);
-#define	SEEK_SET 0
-	lseek(f, 0, SEEK_SET);
+	close(f);
 	printf("   %d bytes in %f s (%f bytes/s)\n", got,
 	    0.001 * (end - start) / freq_khz,
 	    got / (0.001 * (end - start) / freq_khz));
 
-	if (fname[0] == '1' && fname[1] == ':')
-		ssize = 512;	/* sdcard */
-	else
-		ssize = 4096;	/* flash */
-
-	for (i = 0; i < 288 * 512; i += ssize) {
-
+	for (i = 0; i < 512 * 288; i++) {
+		r = *ib++;
+		g = *ib++;
+		b = *ib++;
+		f = fb_rgb2pal(r, g, b);
 		if (mode)
-			ib = (void *) &fb16[i];
+			fb16[i] = f;
 		else
-			ib = (void *) &fb[i];
-
-		y = read(f, ib, 3 * ssize);
-		if (y <= 0) {
-			printf("\nread() failed!\n");
-			close(f);
-			return;
-		}
-
-		if (mode)
-			ib = (void *) &fb16[i];
-		else
-			ib = (void *) &fb[i];
-
-		for (x = 0; x < ssize; x++) {
-			r = *ib++;
-			g = *ib++;
-			b = *ib++;
-			if (mode)
-				fb16[x + i] = fb_rgb2pal(r, g, b);
-			else
-				fb[x + i] = fb_rgb2pal(r, g, b);
-		}
-		display_timestamp();
+			fb[i] = f;
 	}
-	close(f);
+	display_timestamp();
 }
 #endif
 
