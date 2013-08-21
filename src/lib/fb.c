@@ -564,19 +564,23 @@ fb_filledcircle(int x0, int y0, int r, int color)
 
 
 __attribute__((optimize("-O3"))) void
-fb_drawchar(int x0, int y0, int c, int color)
+fb_text(int x0, int y0, const char *cp, int color, int scale)
 {
-	int x, y, xs, ys, off, dot, scale_x, scale_y;
+	int c, x, y, xs, ys, off, dot;
 	uint8_t *bp;
+	int scale_x = (scale >> 16) & 0xff;
+	int scale_y = scale & 0xff;
 
-	scale_y = (c >> 16) & 0xff;
-	scale_x = (c >> 24) & 0xff;
 	if (scale_x == 0)
 		scale_x = 1;
 	if (scale_y == 0)
 		scale_y = 1;
 
-	c &= 0xff;
+next_char:
+	c = *cp++;
+	if (c == 0)
+		return;
+	
 	if (c < 32 || c > 126)
 		bp = font_map;
 	else
@@ -595,17 +599,20 @@ fb_drawchar(int x0, int y0, int c, int color)
 				c = c << 1;
 				xs = 0;
 			}
-			if (__predict_false(x >> 9))
+			if (__predict_false(x < 0 || x > 511))
 				continue;
 			off = (y << 9) + x;
 			if (__predict_false(c & 0x80))
 				dot = color;
 			else
-				dot = 0;
+				dot = color >> 16;
 			if (__predict_true(fb_mode != 0))
 				*((uint16_t *) &fb[off << 1]) = dot;
 			else
 				fb[off] = dot;
 		}
 	}
+
+	x0 += 6 * scale_x;
+	goto next_char;
 }
