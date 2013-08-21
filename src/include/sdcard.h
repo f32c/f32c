@@ -26,6 +26,8 @@ int sdcard_disk_write(uint8_t *, uint32_t, uint32_t);
 #define	SD_CMD_APP_CMD			55
 #define	SD_CMD_READ_OCR			58
 
+/* ACMD commands which require SD_CMD_APP_CMD prefix */
+#define	SD_CMD_SET_WR_BLOCK_ERASE_COUNT	23
 #define	SD_CMD_APP_SEND_OP_COND		41
 
 #define	SD_BLOCKLEN			512
