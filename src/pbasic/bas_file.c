@@ -107,14 +107,21 @@ ok:
 }
 
 
+#include <io.h>
+#include <mips/asm.h>
+
 int
 file_copy()
 {
-	char buf[4096];
+	char buf[16384];
 	STR st1, st2;
 	int from, to;
 	int got, wrote;
-	int tot = 0;
+	int tmp, tot = 0;
+	uint32_t start, end, freq_khz;
+
+	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
+	freq_khz = ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1);
 
 	st1 = stringeval();
 	NULL_TERMINATE(st1);
@@ -137,6 +144,7 @@ file_copy()
 		error(14);
 	}
 
+	RDTSC(start);
 	do {
 		got = read(from, buf, sizeof(buf));
 		if (got < 0) {
@@ -152,10 +160,14 @@ file_copy()
 		}
 		tot += wrote;
 	} while (got > 0);
+	RDTSC(end);
 
 	close(from);
 	close(to);
-	printf("Copied %d bytes.\n", tot);
+	printf("Copied %d bytes in %f s (%f bytes/s)\n", tot,
+	    0.001 * (end - start) / freq_khz,
+	    tot / (0.001 * (end - start) / freq_khz));
+
 	normret;
 }
 
