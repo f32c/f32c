@@ -11,6 +11,7 @@
 #include <fb.h>
 
 #include <fatfs/ff.h>
+#include <tjpgd.h>
 
 #include <mips/asm.h>
 
@@ -33,6 +34,78 @@ static FATFS fh;
 static char *fnbuf;
 
 static int old_ts;
+
+
+/* User defined device identifier */
+typedef struct {
+    int fh;	   /* File handle */
+    BYTE *fbuf;    /* Pointer to the frame buffer for output function */
+    UINT wfbuf;    /* Width of the frame buffer [pix] */
+} IODEV;
+
+
+/*------------------------------*/
+/* User defined input funciton  */
+/*------------------------------*/
+
+UINT in_func (JDEC* jd, BYTE* buff, UINT nbyte)
+{
+    IODEV *dev = (IODEV*)jd->device;   /* Device identifier for the session (5th argument of jd_prepare function) */
+    UINT retval;
+
+    if (buff) {
+        /* Read bytes from input stream */
+        retval = read(dev->fh, buff, nbyte);
+    } else {
+        /* Remove bytes from input stream */
+        retval = lseek(dev->fh, nbyte, SEEK_CUR) ? nbyte : 0;
+    }
+
+#if 0
+if (buff)
+	printf("%s: read %d %d\n", __FUNCTION__, nbyte, retval);
+else
+	printf("%s: skip %d %d\n", __FUNCTION__, nbyte, retval);
+#endif
+    return (retval);
+}
+
+
+/*------------------------------*/
+/* User defined output funciton */
+/*------------------------------*/
+
+UINT out_func (JDEC* jd, void* bitmap, JRECT* rect)
+{
+    IODEV *dev = (IODEV*)jd->device;
+    BYTE *src, *dst;
+    UINT y, bws, bwd;
+
+    /* Put progress indicator */
+    if (rect->left == 0) {
+        printf("\r%lu%%", (rect->top << jd->scale) * 100UL / jd->height);
+    }
+
+    /* Copy the decompressed RGB rectanglar to the frame buffer (assuming RGB888 cfg) */
+    src = (BYTE*)bitmap;
+    dst = dev->fbuf + (mode + 1) * (rect->top * dev->wfbuf + rect->left);  /* Left-top of destination rectangular */
+    bws = 3 * (rect->right - rect->left + 1);     /* Width of source rectangular [byte] */
+    bwd = (mode + 1) * dev->wfbuf;                         /* Width of frame buffer [byte] */
+    for (y = rect->top; y <= rect->bottom; y++) {
+	for (uint32_t i = 0, j = 0; i < bws; i += 3, j += (mode + 1)) {
+		int color;
+		
+		color = fb_rgb2pal(src[i], src[i+1], src[i+2]);
+		if (mode)
+			*((uint16_t *) &dst[j]) = color;
+		else
+			dst[j] = color;
+	}
+        src += bws; dst += bwd;  /* Next line */
+    }
+
+    return 1;    /* Continue to decompress */
+}
 
 
 static void
@@ -108,6 +181,40 @@ scan_files(char* path)
 
 
 static void
+load_jpg(char *fname)
+{
+	char work_buf[8192];
+	JDEC jdec;
+	JRESULT res;
+	IODEV devid;
+
+	devid.fh = open(fname, O_RDONLY);
+	if (devid.fh < 0)
+		return;
+
+	printf("\nCitam datoteku %s...\n", fname);
+
+	res = jd_prepare(&jdec, in_func, work_buf, sizeof(work_buf), &devid);
+	if (res == JDR_OK) {
+		printf("Image dimensions: %u by %u. %u bytes used.\n",
+		    jdec.width, jdec.height, 3100 - jdec.sz_pool);
+
+		devid.fbuf = (void *) 0x800b0000;
+		devid.wfbuf = 512;
+
+		res = jd_decomp(&jdec, out_func, 0);
+		if (res == JDR_OK)
+			printf("\rOK  \n");
+		else
+			printf("Failed to decompress: rc=%d\n", res);
+	} else {
+		printf("Failed to prepare: rc=%d\n", res);
+	}
+	close(devid.fh);
+}
+
+
+static void
 load_raw(char *fname)
 {
 	int r, g, b;
@@ -167,8 +274,6 @@ main(void)
 #else
 	printf("external static RAM.\n\n");
 #endif
-
-	//goto slika;
 
 switch_mode:
 	mode = !mode;
@@ -259,11 +364,19 @@ slika:
 			goto slika;
 		if (l < 5)
 			continue;
+#if 0
 		if (strcmp(&fnbuf[l - 4], ".RAW") != 0 &&
 		    strcmp(&fnbuf[l - 4], ".raw") != 0)
+#else
+		if (strcmp(&fnbuf[l - 4], ".JPG") != 0 &&
+		    strcmp(&fnbuf[l - 4], ".jpg") != 0)
+#endif
 			continue;
 
+if (0)
 		load_raw(fnbuf);
+else
+		load_jpg(fnbuf);
 
 		RDTSC(start);
 		do {
