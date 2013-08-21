@@ -136,9 +136,9 @@ color(void)
 	}
 
 	if (bg)
-		bgcolor = color;
+		bgcolor = color & 0xffff;
 	else
-		fgcolor = color;
+		fgcolor = color & 0xffff;
 	normret;
 }
 
@@ -240,13 +240,13 @@ rectangle(void)
 int
 circle(void)
 {
-	int x0, y0, r;
+	int x, y, r;
 	int c, fill = 0;
 
-	x0 = evalint();
+	x = evalint();
 	if(getch() != ',')
 		error(SYNTAX);
-	y0 = evalint();
+	y = evalint();
 	if(getch() != ',')
 		error(SYNTAX);
 	r = evalint();
@@ -264,23 +264,54 @@ circle(void)
 	}
 
 	if (fill)
-		fb_filledcircle(x0, y0, r, fgcolor);
+		fb_filledcircle(x, y, r, fgcolor);
 	else
-		fb_circle(x0, y0, r, fgcolor);
-	normret;
-}
-
-
-int
-blkmove(void)
-{
-
+		fb_circle(x, y, r, fgcolor);
 	normret;
 }
 
 
 int
 text(void)
+{
+	int x, y, c;
+	int scale_x = 1;
+	int scale_y = 1;
+	STR st;
+
+	x = evalint();
+	if(getch() != ',')
+		error(SYNTAX);
+	y = evalint();
+	if(getch() != ',')
+		error(SYNTAX);
+	st = stringeval();
+	NULL_TERMINATE(st);
+	c = getch();
+	if (istermin(c))
+		point--;
+	else {
+		if (c != ',')
+			error(15);
+		scale_x = evalint() & 0xff;
+	}
+	c = getch();
+	if (istermin(c))
+		point--;
+	else {
+		if (c != ',')
+			error(15);
+		scale_y = evalint() & 0xff;
+	}
+
+	fb_text(x, y, st->strval, (bgcolor << 16) | fgcolor,
+	    (scale_x << 16) | scale_y);
+	normret;
+}
+
+
+int
+blkmove(void)
 {
 
 	normret;
