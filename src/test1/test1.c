@@ -39,12 +39,16 @@ static void
 display_timestamp(void)
 {
 	int *sp = (void *) 0x300;
+	char buf[16];
 
 	if (old_ts == *sp)
 		return;
 	old_ts = *sp;
 	
-	fb_drawchar(450, 30, (((old_ts / 50) % 10)+ '0'), 0xffff);
+	buf[0] = ((old_ts / 50) % 10) + '0';
+	buf[1] = 0;
+
+	fb_text(450, 30, buf, 0xffff, 0);
 }
 
 
