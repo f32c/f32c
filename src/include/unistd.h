@@ -587,4 +587,17 @@ extern int optreset;			/* getopt(3) external variable */
 #endif /* __BSD_VISIBLE */
 __END_DECLS
 
+#ifndef SEEK_SET
+#define	SEEK_SET	0	/* set file offset to offset */
+#define	SEEK_CUR	1	/* set file offset to current plus offset */
+#define	SEEK_END	2	/* set file offset to EOF plus offset */
+#endif
+
+#ifndef _POSIX_SOURCE
+/* whence values for lseek(2); renamed by POSIX 1003.1 */
+#define	L_SET		SEEK_SET
+#define	L_INCR		SEEK_CUR
+#define	L_XTND		SEEK_END
+#endif
+
 #endif /* !_UNISTD_H_ */
