@@ -275,7 +275,8 @@ atan(int y, int x)
 }
 
 
-static uint32_t
+#if 0
+uint32_t
 sqrt(uint32_t r)
 {
 	uint32_t t, q, b;
@@ -295,6 +296,7 @@ sqrt(uint32_t r)
 
 	return (q);
 }
+#endif
 
 
 #define	WR	77	/* 0.299 * 256 */
@@ -315,8 +317,13 @@ fb_rgb2pal(int r, int g, int b) {
 
 	/* Transform {U, V} cartesian into polar {chroma, saturation} coords */
 	chroma = (28 - (atan(u, v) >> 10)) & 0x3f;
-	saturation = sqrt((u * u + v * v) >> 1);
-	saturation = (saturation + (saturation >> 1) + (1 << 14)) >> 15;
+	u = ABS(u);
+	v = ABS(v);
+	if (u > v)
+		saturation = u + v * 3 / 8;
+	else
+		saturation = v + u * 3 / 8;
+	saturation = (saturation + (saturation >> 1) + (1 << 10)) >> 11;
 	if (__predict_false(saturation > 15))
 		saturation = 15;
 
