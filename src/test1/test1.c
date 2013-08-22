@@ -81,10 +81,12 @@ UINT out_func (JDEC* jd, void* bitmap, JRECT* rect)
     BYTE *src, *dst;
     UINT y, bws, bwd;
 
+#if 0
     /* Put progress indicator */
     if (rect->left == 0) {
-        printf("\r%lu%%", (rect->top << jd->scale) * 100UL / jd->height);
+	printf("\r%lu%%", (rect->top << jd->scale) * 100UL / jd->height);
     }
+#endif
 
     /* Copy the decompressed RGB rectanglar to the frame buffer (assuming RGB888 cfg) */
     src = (BYTE*)bitmap;
@@ -202,11 +204,16 @@ load_jpg(char *fname)
 		devid.fbuf = (void *) 0x800b0000;
 		devid.wfbuf = 512;
 
+		RDTSC(start);
 		res = jd_decomp(&jdec, out_func, 0);
+		RDTSC(end);
+#if 0
 		if (res == JDR_OK)
 			printf("\rOK  \n");
 		else
 			printf("Failed to decompress: rc=%d\n", res);
+#endif
+		printf("%f s\n", 0.001 * (end - start) / freq_khz);
 	} else {
 		printf("Failed to prepare: rc=%d\n", res);
 	}
