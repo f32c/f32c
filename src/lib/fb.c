@@ -221,8 +221,6 @@ fb_set_mode(int mode)
 }
 
 
-#define	FPMUL(x, y) ((int16_t)(((int32_t)x * (int32_t)y) >> 15))
-#define	FPDIV(x, y) ((int16_t)(((int32_t)x << 15) / (int32_t) y))
 #define	FP_ONE (0x8000)
 #define	FP_HALF (0x4000)
 
@@ -261,7 +259,7 @@ atan(int y, int x)
 	if (x == y)
 		atan = 1 << 13;
 	else
-		atan = FPDIV(y, x) >> 2;
+		atan = (y << 13) / x;
 
 	/* unfold result */
 	if (flags & SWAP_XY)
