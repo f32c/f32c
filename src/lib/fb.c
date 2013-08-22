@@ -221,15 +221,15 @@ fb_set_mode(int mode)
 }
 
 
-#define	FP_ONE (0x8000)
-#define	FP_HALF (0x4000)
+#define	FP_ONE (0x20)
+#define	FP_HALF (0x10)
 
 #define	NEG_X	0x01
 #define	NEG_Y	0x02
 #define	SWAP_XY	0x04
 
 static int
-atan(int y, int x)
+atan_i(int y, int x)
 {
 	int flags = 0;
 	int tmp;
@@ -253,13 +253,13 @@ atan(int y, int x)
 		y = tmp;
 	}
 
-	/* compute ratio y/x in 0.15 format. */
+	/* compute ratio y/x in 0.5 format. */
 	if (x == 0)
 		return(0);
 	if (x == y)
-		atan = 1 << 13;
+		atan = FP_HALF / 2;
 	else
-		atan = (y << 13) / x;
+		atan = (y << 3) / x;
 
 	/* unfold result */
 	if (flags & SWAP_XY)
@@ -316,7 +316,7 @@ fb_rgb2pal(int r, int g, int b) {
 	v = WV * (r - luma);
 
 	/* Transform {U, V} cartesian into polar {chroma, saturation} coords */
-	chroma = (28 - (atan(u, v) >> 10)) & 0x3f;
+	chroma = (28 - atan_i(u >> 10, v >> 10)) & 0x3f;
 	u = ABS(u);
 	v = ABS(v);
 	if (u > v)
