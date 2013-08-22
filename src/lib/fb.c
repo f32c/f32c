@@ -257,7 +257,9 @@ atan(int y, int x)
 
 	/* compute ratio y/x in 0.15 format. */
 	if (x == 0)
-		atan = 0;
+		return(0);
+	if (x == y)
+		atan = 1 << 13;
 	else
 		atan = FPDIV(y, x) >> 2;
 
