@@ -221,8 +221,8 @@ fb_set_mode(int mode)
 }
 
 
-#define	FP_ONE (0x20)
-#define	FP_HALF (0x10)
+#define	FP_ONE (0x80)
+#define	FP_HALF (0x40)
 
 #define	NEG_X	0x01
 #define	NEG_Y	0x02
@@ -253,13 +253,13 @@ atan_i(int y, int x)
 		y = tmp;
 	}
 
-	/* compute ratio y/x in 0.5 format. */
+	/* compute ratio y/x in 0.7 format. */
 	if (x == 0)
 		return(0);
 	if (x == y)
 		atan = FP_HALF / 2;
 	else
-		atan = (y << 3) / x;
+		atan = (y << 5) / x;
 
 	/* unfold result */
 	if (flags & SWAP_XY)
@@ -316,14 +316,14 @@ fb_rgb2pal(int r, int g, int b) {
 	v = WV * (r - luma);
 
 	/* Transform {U, V} cartesian into polar {chroma, saturation} coords */
-	chroma = (28 - atan_i(u >> 10, v >> 10)) & 0x3f;
+	chroma = (28 - (atan_i(u >> 8, v >> 8) >> 2)) & 0x3f;
 	u = ABS(u);
 	v = ABS(v);
 	if (u > v)
 		saturation = u + v * 3 / 8;
 	else
 		saturation = v + u * 3 / 8;
-	saturation = (saturation + (saturation >> 1) + (1 << 10)) >> 11;
+	saturation = (saturation + (1 << 10)) >> 11;
 	if (__predict_false(saturation > 15))
 		saturation = 15;
 
