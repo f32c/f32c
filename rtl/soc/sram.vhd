@@ -115,17 +115,15 @@ begin
 	if C_pipelined_read and falling_edge(clk) then
 	    if R_phase = C_phase_read_upper_half + 2 then
 		R_bus_out(15 downto 0) <= sram_d;
-	    else
-		R_bus_out(31 downto 16) <= sram_d;
 	    end if;
+	    R_bus_out(31 downto 16) <= sram_d;
 	end if;
 
 	if not C_pipelined_read and rising_edge(clk) then
 	    if R_phase = C_phase_read_upper_half then
 		R_bus_out(15 downto 0) <= sram_d;
-	    else
-		R_bus_out(31 downto 16) <= sram_d;
 	    end if;
+	    R_bus_out(31 downto 16) <= sram_d;
 	end if;
 
 	if rising_edge(clk) then
