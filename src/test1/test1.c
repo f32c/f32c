@@ -78,8 +78,13 @@ else
 UINT out_func (JDEC* jd, void* bitmap, JRECT* rect)
 {
     IODEV *dev = (IODEV*)jd->device;
-    BYTE *src, *dst;
     UINT y, bws, bwd;
+    BYTE *dst;
+#if JD_FORMAT < JD_FMT_RGB32
+    BYTE *src;
+#else
+    LONG *src;
+#endif
 
 #if 0
     /* Put progress indicator */
@@ -89,15 +94,29 @@ UINT out_func (JDEC* jd, void* bitmap, JRECT* rect)
 #endif
 
     /* Copy the decompressed RGB rectanglar to the frame buffer (assuming RGB888 cfg) */
+#if JD_FORMAT < JD_FMT_RGB32
     src = (BYTE*)bitmap;
-    dst = dev->fbuf + (mode + 1) * (rect->top * dev->wfbuf + rect->left);  /* Left-top of destination rectangular */
     bws = 3 * (rect->right - rect->left + 1);     /* Width of source rectangular [byte] */
+#else
+    src = (LONG*)bitmap;
+    bws = (rect->right - rect->left + 1);     /* Width of source rectangular [byte] */
+#endif
+    dst = dev->fbuf + (mode + 1) * (rect->top * dev->wfbuf + rect->left);  /* Left-top of destination rectangular */
     bwd = (mode + 1) * dev->wfbuf;                         /* Width of frame buffer [byte] */
     for (y = rect->top; y <= rect->bottom; y++) {
+#if JD_FORMAT < JD_FMT_RGB32
 	for (uint32_t i = 0, j = 0; i < bws; i += 3, j += (mode + 1)) {
-		int color;
+#else
+	for (uint32_t i = 0, j = 0; i < bws; i++, j += (mode + 1)) {
+#endif
+		uint32_t color;
 		
+#if JD_FORMAT < JD_FMT_RGB32
 		color = fb_rgb2pal(src[i], src[i+1], src[i+2]);
+#else
+		color = fb_rgb2pal(src[i] >> 16, (src[i] >> 8) & 0xff,
+		    src[i] & 0xff);
+#endif
 		if (mode)
 			*((uint16_t *) &dst[j]) = color;
 		else
@@ -194,12 +213,14 @@ load_jpg(char *fname)
 	if (devid.fh < 0)
 		return;
 
-	printf("\nCitam datoteku %s...\n", fname);
+	printf("Citam datoteku %s... ", fname);
 
 	res = jd_prepare(&jdec, in_func, work_buf, sizeof(work_buf), &devid);
 	if (res == JDR_OK) {
+#if 0
 		printf("Image dimensions: %u by %u. %u bytes used.\n",
 		    jdec.width, jdec.height, 3100 - jdec.sz_pool);
+#endif
 
 		devid.fbuf = (void *) 0x800b0000;
 		devid.wfbuf = 512;
@@ -387,6 +408,7 @@ else
 
 		RDTSC(start);
 		do {
+			fb_text(16, 264, fnbuf, fb_rgb2pal(255, 255, 255), 0);
 			display_timestamp();
 			res = sio_getchar(0);
 			if (res == ' ')
