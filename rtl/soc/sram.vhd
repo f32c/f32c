@@ -34,8 +34,8 @@ end sram;
 architecture Structure of sram is
     -- State machine constants
     constant C_phase_idle: integer := 0;
-    constant C_phase_read_upper_half: integer := C_wait_cycles;
-    constant C_phase_read_terminate: integer := C_wait_cycles * 2;
+    constant C_phase_read_upper_half: integer := C_wait_cycles - 1;
+    constant C_phase_read_terminate: integer := C_wait_cycles * 2 - 1;
     constant C_phase_write_upper_half: integer := C_wait_cycles;
     constant C_phase_write_terminate: integer := C_wait_cycles * 2;
 
@@ -113,7 +113,7 @@ begin
     process(clk)
     begin
 	if C_pipelined_read and falling_edge(clk) then
-	    if R_phase = C_phase_read_upper_half + 1 then
+	    if R_phase = C_phase_read_upper_half + 2 then
 		R_bus_out(15 downto 0) <= sram_d;
 	    else
 		R_bus_out(31 downto 16) <= sram_d;
