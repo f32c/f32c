@@ -41,6 +41,10 @@ void *sbrk(intptr_t p)
 	if (freep == NULL)
 		freep = (void *) &_end;
 
+	/* XXX hardcoded upper memory limit - revisit! */
+	if ((void *) (freep + p) >= (void *) 0x800b0000)
+		return ((void *) -1);
+
 	freep = freep + p;
 	return (freep);
 }
