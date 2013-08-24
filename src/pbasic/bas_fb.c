@@ -291,21 +291,26 @@ text(void)
 	if (istermin(c))
 		point--;
 	else {
-		if (c != ',')
+		if (c != ',') {
+			FREE_STR(st);
 			error(15);
+		}
 		scale_x = evalint() & 0xff;
 	}
 	c = getch();
 	if (istermin(c))
 		point--;
 	else {
-		if (c != ',')
+		if (c != ',') {
 			error(15);
+			FREE_STR(st);
+		}
 		scale_y = evalint() & 0xff;
 	}
 
 	fb_text(x, y, st->strval, (bgcolor << 16) | fgcolor,
 	    (scale_x << 16) | scale_y);
+	FREE_STR(st);
 	normret;
 }
 
