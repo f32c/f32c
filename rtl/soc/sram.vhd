@@ -37,7 +37,7 @@ architecture Structure of sram is
     constant C_phase_read_upper_half: integer := C_wait_cycles - 1;
     constant C_phase_read_terminate: integer := C_wait_cycles * 2 - 1;
     constant C_phase_write_upper_half: integer := C_wait_cycles;
-    constant C_phase_write_terminate: integer := C_wait_cycles * 2 - 1;
+    constant C_phase_write_terminate: integer := C_wait_cycles * 2 - 2;
 
     -- Physical interface registers
     signal R_a: std_logic_vector(18 downto 0);		-- to SRAM
@@ -170,7 +170,7 @@ begin
 			    R_ubl <= not byte_sel(3);
 			    R_lbl <= not byte_sel(2);
 			    R_d <= data_in(31 downto 16);
-			    R_phase <= C_phase_write_upper_half + 1;
+			    R_phase <= C_phase_write_upper_half;
 			end if;
 			-- we can safely acknowledge the write immediately
 			R_ack_bitmap(R_cur_port) <= '1';
