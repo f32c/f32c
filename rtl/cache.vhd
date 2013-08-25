@@ -31,6 +31,9 @@ entity cache is
 	C_load_aligner: boolean;
 	C_register_technology: string;
 
+	-- cache options
+	C_icache_size: integer := 8;
+
 	-- debugging options
 	C_debug: boolean
     );
@@ -57,7 +60,7 @@ entity cache is
 end cache;
 
 architecture x of cache is
-    signal i_addr: std_logic_vector(31 downto 2);
+    signal i_addr, d_addr: std_logic_vector(31 downto 2);
     signal i_data: std_logic_vector(31 downto 0);
     signal icache_data_in, icache_data_out: std_logic_vector(31 downto 0);
     signal icache_tag_in, icache_tag_out: std_logic_vector(12 downto 0);
@@ -93,7 +96,7 @@ begin
 	imem_addr_strobe => open,
 	imem_data_ready => instr_ready,
 	dmem_addr_strobe => dmem_addr_strobe,
-	dmem_addr => dmem_addr,
+	dmem_addr => d_addr,
 	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
 	dmem_data_in => dmem_data_in, dmem_data_out => dmem_data_out,
 	dmem_data_ready => dmem_data_ready,
@@ -107,19 +110,48 @@ begin
     to_i_bram(31 downto 0) <= imem_data_in;
     to_i_bram(44 downto 32) <= icache_tag_in;
 
+    G_icache_2k:
+    if C_icache_size = 2 generate
+    tag_dp_bram: entity work.bram_dp_x9
+    port map (
+	clk_a => clk, clk_b => clk,
+	ce_a => '1', ce_b => '1',
+	we_a => icache_write, we_b => flush_i_line,
+	addr_a => "00" & i_addr(10 downto 2),
+	addr_b => "00" & d_addr(10 downto 2),
+	data_in_a => to_i_bram(44 downto 36),
+	data_in_b => (others => '0'),
+	data_out_a => from_i_bram(44 downto 36),
+	data_out_b => open
+    );
+    i_dp_bram: entity work.bram_dp_x18
+    port map (
+	clk_a => clk, clk_b => clk,
+	ce_a => '1', ce_b => '1',
+	we_a => icache_write, we_b => icache_write,
+	addr_a => '0' & i_addr(10 downto 2),
+	addr_b => '1' & i_addr(10 downto 2),
+	data_in_a => to_i_bram(0 * 18 + 17 downto 0 * 18),
+	data_in_b => to_i_bram(1 * 18 + 17 downto 1 * 18),
+	data_out_a => from_i_bram(0 * 18 + 17 downto 0 * 18),
+	data_out_b => from_i_bram(1 * 18 + 17 downto 1 * 18)
+    );
+    end generate; -- icache_2k
+
+    G_icache_4k:
+    if C_icache_size = 4 generate
     tag_dp_bram: entity work.bram_dp_x9
     port map (
 	clk_a => clk, clk_b => clk,
 	ce_a => '1', ce_b => '1',
 	we_a => icache_write, we_b => flush_i_line,
 	addr_a => '0' & i_addr(11 downto 2),
-	addr_b => '0' & dmem_addr(11 downto 2),
+	addr_b => '0' & d_addr(11 downto 2),
 	data_in_a => to_i_bram(44 downto 36),
 	data_in_b => (others => '0'),
 	data_out_a => from_i_bram(44 downto 36),
 	data_out_b => open
     );
-
     i_block_iter: for b in 0 to 1 generate
     begin
     i_dp_bram: entity work.bram_dp_x18
@@ -134,6 +166,39 @@ begin
 	data_out_b => open
     );
     end generate i_block_iter;
+    end generate; -- icache_4k
+
+    G_icache_8k:
+    if C_icache_size = 8 generate
+    tag_dp_bram: entity work.bram_dp_x9
+    port map (
+	clk_a => clk, clk_b => clk,
+	ce_a => '1', ce_b => '1',
+	we_a => icache_write, we_b => flush_i_line,
+	addr_a => i_addr(12 downto 2),
+	addr_b => d_addr(12 downto 2),
+	data_in_a => to_i_bram(44 downto 36),
+	data_in_b => (others => '0'),
+	data_out_a => from_i_bram(44 downto 36),
+	data_out_b => open
+    );
+    i_block_iter: for b in 0 to 3 generate
+    begin
+    i_dp_bram: entity work.bram_dp_x9
+    port map (
+	clk_a => clk, clk_b => clk,
+	ce_a => '1', ce_b => '0',
+	we_a => icache_write, we_b => '0',
+	addr_a => i_addr(12 downto 2), addr_b => (others => '0'),
+	data_in_a => to_i_bram(b * 9 + 8 downto b * 9),
+	data_in_b => (others => '0'),
+	data_out_a => from_i_bram(b * 9 + 8 downto b * 9),
+	data_out_b => open
+    );
+    end generate i_block_iter;
+    end generate; -- icache_8k
+
+    dmem_addr <= d_addr;
 
     imem_addr <= R_i_addr;
     imem_addr_strobe <= '1' when not iaddr_cacheable else R_i_strobe;
@@ -141,11 +206,25 @@ begin
     instr_ready <= imem_data_ready when not iaddr_cacheable else
       '1' when icache_line_valid else '0';
 
-    iaddr_cacheable <= true; -- XXX kseg0: R_i_addr(31 downto 29) = "100";
+    iaddr_cacheable <=
+      (C_icache_size = 2 or C_icache_size = 4 or C_icache_size = 8) and
+      true; -- XXX kseg0: R_i_addr(31 downto 29) = "100";
     icache_write <= imem_data_ready when R_i_strobe = '1' else '0';
-    icache_tag_in <= '1' & R_i_addr(31) & "000" & R_i_addr(19 downto 12);
-    icache_line_valid <= iaddr_cacheable and icache_tag_out(12) = '1' and
-      icache_tag_in(11 downto 0) = icache_tag_out(11 downto 0);
+    icache_tag_in <=
+      '1' & R_i_addr(31) & "00" & R_i_addr(19 downto 11)
+      when C_icache_size = 2 else
+      '1' & R_i_addr(31) & "000" & R_i_addr(19 downto 12)
+      when C_icache_size = 4 else
+      '1' & R_i_addr(31) & "0000" & R_i_addr(19 downto 13);
+    icache_line_valid <=
+      iaddr_cacheable and icache_tag_out(12) = '1' and
+      icache_tag_in(11) = icache_tag_out(11) and
+      ((C_icache_size = 2 and
+      icache_tag_in(8 downto 0) = icache_tag_out(8 downto 0)) or
+      (C_icache_size = 4 and
+      icache_tag_in(7 downto 0) = icache_tag_out(7 downto 0)) or
+      (C_icache_size = 8 and
+      icache_tag_in(6 downto 0) = icache_tag_out(6 downto 0)));
 
     process(clk)
     begin
