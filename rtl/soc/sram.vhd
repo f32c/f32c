@@ -45,7 +45,7 @@ architecture Structure of sram is
     signal R_wel, R_lbl, R_ubl: std_logic;		-- to SRAM
     signal R_write_cycle: boolean;			-- internal
     signal R_byte_sel_hi: std_logic_vector(1 downto 0);	-- internal
-    signal R_high_word: std_logic_vector(15 downto 0);	-- internal
+    signal R_out_word: std_logic_vector(31 downto 0);	-- internal
 
     -- Bus interface registers
     signal R_bus_out: std_logic_vector(31 downto 0);	-- to CPU bus
@@ -112,6 +112,18 @@ begin
 
     process(clk)
     begin
+	if falling_edge(clk) then
+	    if R_phase = C_phase_idle or
+	      R_phase = C_phase_write_upper_half or
+	      R_phase = C_phase_write_terminate then
+		R_d <= (others => 'Z');
+	    elsif R_write_cycle and R_phase = C_phase_idle + 1 then
+		R_d <= R_out_word(15 downto 0);
+	    elsif R_write_cycle and R_phase = C_phase_write_upper_half + 1 then
+		R_d <= R_out_word(31 downto 16);
+	    end if;
+	end if;
+
 	if C_pipelined_read and falling_edge(clk) then
 	    if R_phase = C_phase_read_upper_half + 2 then
 		R_bus_out(15 downto 0) <= sram_d;
@@ -146,7 +158,6 @@ begin
 		R_wel <= '1';
 		R_ubl <= '0';
 		R_lbl <= '0';
-		R_d <= (others => 'Z');
 		if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
 		    -- idle
 		    R_cur_port <= next_port;
@@ -160,16 +171,14 @@ begin
 		    if write = '1' then
 			R_write_cycle <= true;
 			R_wel <= '0';
-			R_high_word <= data_in(31 downto 16);
+			R_out_word <= data_in;
 			if byte_sel(1 downto 0) /= "00" then
 			    R_ubl <= not byte_sel(1);
 			    R_lbl <= not byte_sel(0);
-			    R_d <= data_in(15 downto 0);
 			else
 			    R_a <= addr & '1';
 			    R_ubl <= not byte_sel(3);
 			    R_lbl <= not byte_sel(2);
-			    R_d <= data_in(31 downto 16);
 			    R_phase <= C_phase_write_upper_half;
 			end if;
 			-- we can safely acknowledge the write immediately
@@ -201,7 +210,6 @@ begin
 		R_a(0) <= '1';
 		R_ubl <= not R_byte_sel_hi(1);
 		R_lbl <= not R_byte_sel_hi(0);
-		R_d <= R_high_word;
 		R_wel <= '0';
 	    elsif R_write_cycle and R_phase = C_phase_write_terminate then
 		R_phase <= C_phase_idle;
