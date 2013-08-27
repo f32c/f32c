@@ -59,7 +59,7 @@ architecture Structure of sram is
 
     -- Arbiter registers
     signal R_phase: integer range 0 to C_phase_write_terminate;
-    signal R_cur_port: integer range 0 to (C_ports - 1);
+    signal R_cur_port, R_next_port: integer range 0 to (C_ports - 1);
     signal R_last_port: integer range 0 to (C_ports - 1);
     signal R_prio_pending: boolean;
     signal R_prio_cnt: std_logic_vector(1 downto 0);
@@ -72,11 +72,11 @@ architecture Structure of sram is
 
 begin
     -- Mux for input ports
-    addr_strobe <= bus_in(R_cur_port).addr_strobe;
-    write <= bus_in(R_cur_port).write;
-    byte_sel <= bus_in(R_cur_port).byte_sel;
-    addr <= bus_in(R_cur_port).addr;
-    data_in <= bus_in(R_cur_port).data_in;
+    addr_strobe <= bus_in(R_next_port).addr_strobe;
+    write <= bus_in(R_next_port).write;
+    byte_sel <= bus_in(R_next_port).byte_sel;
+    addr <= bus_in(R_next_port).addr;
+    data_in <= bus_in(R_next_port).data_in;
 
     -- Demux for outbound ready signals
     process(R_ack_bitmap)
@@ -88,7 +88,7 @@ begin
     end process;
 
     -- Arbiter: round-robin port selection combinatorial logic
-    process(bus_in, R_cur_port, R_last_port)
+    process(bus_in, R_next_port, R_last_port)
 	variable i, j, t, n: integer;
     begin
 	t := R_last_port;
@@ -144,7 +144,7 @@ begin
 	    R_prio_pending <= (C_prio_port >= 0 and R_prio_cnt(1) /= '1' 
 	      and bus_in(C_prio_port).addr_strobe = '1');
 
-	    if R_phase = 1 then
+	    if R_phase = C_phase_idle + 1 then
 		if R_cur_port /= C_prio_port then
 		    R_last_port <= R_cur_port;
 		    R_prio_cnt <= "00";
@@ -153,6 +153,7 @@ begin
 		end if;
 	    end if;
 
+	    R_next_port <= next_port;
 	    if R_phase = C_phase_idle then
 		R_write_cycle <= false;
 		R_wel <= '1';
@@ -165,7 +166,7 @@ begin
 		      bus_in(C_prio_port).addr_strobe = '1');
 		else
 		    -- start a new transaction
-		    R_phase <= 1;
+		    R_phase <= C_phase_idle + 1;
 		    R_byte_sel_hi <= byte_sel(3 downto 2);
 		    R_a <= addr & '0';
 		    if write = '1' then
@@ -193,8 +194,34 @@ begin
 		R_a(0) <= '1';
 	    elsif not R_write_cycle and R_phase = C_phase_read_terminate then
 		R_ack_bitmap(R_cur_port) <= '1';
-		R_phase <= C_phase_idle;
-		R_cur_port <= next_port;
+		if R_cur_port /= R_next_port and addr_strobe = '1' then
+		    -- jump-start a new transaction
+		    R_cur_port <= R_next_port;
+		    R_phase <= C_phase_idle + 1;
+		    R_byte_sel_hi <= byte_sel(3 downto 2);
+		    R_a <= addr & '0';
+		    if write = '1' then
+			R_write_cycle <= true;
+			R_wel <= '0';
+			R_out_word <= data_in;
+			if byte_sel(1 downto 0) /= "00" then
+			    R_ubl <= not byte_sel(1);
+			    R_lbl <= not byte_sel(0);
+			else
+			    R_a <= addr & '1';
+			    R_ubl <= not byte_sel(3);
+			    R_lbl <= not byte_sel(2);
+			    R_phase <= C_phase_write_upper_half;
+			end if;
+			-- we can safely acknowledge the write immediately
+			R_ack_bitmap(R_next_port) <= '1';
+			R_snoop_addr(19 downto 2) <= addr; -- XXX
+			R_snoop_cycle <= '1';
+		    end if;
+		else
+		    R_phase <= C_phase_idle;
+		    R_cur_port <= next_port;
+		end if;
 	    elsif R_write_cycle and R_phase = C_phase_write_upper_half - 1 then
 		if R_byte_sel_hi /= "00" then
 		    R_phase <= R_phase + 1;
