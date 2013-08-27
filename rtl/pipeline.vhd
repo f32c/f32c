@@ -587,7 +587,8 @@ begin
     begin
 	if rising_edge(clk) then
 	    if EX_running then
-		if not C_load_aligner and ID_EX_multicycle_lh_lb then
+		if not C_load_aligner and ID_EX_multicycle_lh_lb and
+		  not MEM_cancel_EX then
 		    -- multicycle load aligner
 		    -- byte / half word load, insert an arithm shift right cycle
 		    -- XXX must stall the ID stage - revisit!!!
@@ -629,6 +630,7 @@ begin
 		    ID_EX_writeback_addr <= "00000"; -- NOP
 		    ID_EX_mem_cycle <= '0';
 		    ID_EX_mem_write <= '0';
+		    ID_EX_multicycle_lh_lb <= false;
 		    ID_EX_branch_cycle <= false;
 		    ID_EX_branch_likely <= false;
 		    ID_EX_predict_taken <= false;
