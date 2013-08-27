@@ -284,6 +284,7 @@ main(void)
 {
 	int res, x0, y0, x1, y1;
 	uint32_t color, tmp, i;
+	volatile uint8_t *p;
 
 	printf("Hello, MIPS world!\n\n");
 
@@ -303,7 +304,33 @@ main(void)
 	printf("external static RAM.\n\n");
 #endif
 
+	printf("Framebuffer iskljucen: ");
+
 switch_mode:
+	tmp = 0;
+	RDTSC(start);
+	for (p = (void *) 0x80000000, i = 0; i < 256*1024; i += 8, p += 8) {
+		p[0]; p[1]; p[2]; p[3]; p[4]; p[5]; p[6]; p[7];
+	}
+	RDTSC(end);
+	double speed = 1 / (0.001 * (end - start) / freq_khz);
+	printf("1 MByte procitan u %d.%03d sekundi (%f MB / s)\n",
+	    (end - start) / freq_khz / 1000,
+	    (end - start) / freq_khz % 1000,
+	    speed);
+
+	/* Ispitaj RAW konzistentnost */
+	p = (void *) 0x800c0000;
+	for (i = 0; p < (uint8_t *) 0x800f0000; i += 37) {
+		p[0] = i; p[1] = i; p[2] = i;
+		tmp = p[2];
+		p[1] = i; p[2] = i; p[3] = i;
+		color = p[1];
+		if (tmp != (i & 0xff) || color != (i & 0xff))
+			printf("%08x != %08x\n", i, tmp);
+		p++;
+	} 
+
 	mode = !mode;
 	fb_set_mode(mode);
 	if (mode)
