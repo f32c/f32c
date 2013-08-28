@@ -62,7 +62,6 @@ architecture Structure of sram is
     signal R_cur_port, R_next_port: integer range 0 to (C_ports - 1);
     signal R_last_port: integer range 0 to (C_ports - 1);
     signal R_prio_pending: boolean;
-    signal R_prio_cnt: std_logic_vector(1 downto 0);
     signal R_ack_bitmap: std_logic_vector(0 to (C_ports - 1));
     signal R_snoop_cycle: std_logic;
     signal R_snoop_addr: std_logic_vector(31 downto 2);
@@ -141,16 +140,12 @@ begin
 	if rising_edge(clk) then
 	    R_ack_bitmap <= (others => '0');
 	    R_snoop_cycle <= '0';
-	    R_prio_pending <= (C_prio_port >= 0 and R_prio_cnt(1) /= '1' 
-	      and bus_in(C_prio_port).addr_strobe = '1');
 
-	    if R_phase = C_phase_idle + 1 then
-		if R_cur_port /= C_prio_port then
-		    R_last_port <= R_cur_port;
-		    R_prio_cnt <= "00";
-		else
-		    R_prio_cnt <= R_prio_cnt + 1;
-		end if;
+	    R_prio_pending <= R_cur_port /= C_prio_port and
+	      C_prio_port >= 0 and bus_in(C_prio_port).addr_strobe = '1';
+
+	    if R_phase = C_phase_idle + 1 and R_cur_port /= C_prio_port then
+		R_last_port <= R_cur_port;
 	    end if;
 
 	    R_next_port <= next_port;
@@ -162,8 +157,6 @@ begin
 		if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
 		    -- idle
 		    R_cur_port <= next_port;
-		    R_prio_pending <= (C_prio_port >= 0 and
-		      bus_in(C_prio_port).addr_strobe = '1');
 		else
 		    -- start a new transaction
 		    R_phase <= C_phase_idle + 1;
