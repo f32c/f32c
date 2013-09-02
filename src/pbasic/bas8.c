@@ -1668,7 +1668,7 @@ dauto()
 			break;
 		insert((int)i1);
 		if( (l= (long)start+end) >=65530){
-			autostart=10;
+			autostart=100;
 			autoincr=10;
 			error(6);       /* undefined line number */
 		}
@@ -1880,7 +1880,7 @@ neww()
 	}
 	else
 		check();
-	autostart=10;
+	autostart=100;
 	autoincr=10;
 	baseval=1;
 	drg_opt = OPT_RAD;
@@ -2365,7 +2365,7 @@ renumb()
 	long    numb;
 	int	err = 0;
 
-	start = 10;
+	start = 100;
 	inc = 10;
 	l1 = getlin();
 	if(l1 != NOLNUMB){              /* get start line number */

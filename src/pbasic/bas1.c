@@ -90,7 +90,7 @@ main(int argc, char **argv)
 	setup_fb();
 	program = 0;
 	clear();
-	prints("Rabbit Basic version v2.0\n");
+	prints("Rabbit Basic version v2.0.1\n");
 	if(setexit() == ERR_RESET){
 		drop_fns();
 		execute();	/* execute the line */
