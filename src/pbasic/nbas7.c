@@ -50,6 +50,8 @@ readc()
 		break;
 	}
 #endif
+	if (c == 3)
+		trapped = 1;
 	return( ((int)c) & 0177);
 }
 
