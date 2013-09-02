@@ -52,10 +52,8 @@ extern	void	m_purge();
 #endif
 #endif
 
-
-#ifdef	MSDOS
 static	int	lcount;
-#endif
+
 
 /*
  *      The main program , it sets up all the files, signals,terminal
@@ -475,13 +473,11 @@ execute()
 	lpoint p;
 
 	for(;;){
-#ifdef	MSDOS
 		if(++lcount > 100){
 			lcount = 0;
-			if(CHK_KEY())
+			if(sio_getchar(0) == 3)
 				trap(0);
 		}
-#endif
 		savepoint=point;
 		if(trapped)
 			dobreak();
