@@ -50,10 +50,12 @@ open(const char *path, int flags, ...)
 
 	/* Map open() flags to f_open() flags */
 	ff_flags = ((flags & O_ACCMODE) + 1);
+#if !defined(_FS_READONLY)
 	if (flags & (O_CREAT | O_TRUNC))
 		ff_flags |= FA_CREATE_ALWAYS;
 	else if (flags & O_CREAT)
 		ff_flags |= FA_OPEN_ALWAYS;
+#endif
 
 	if (f_open(&file_map[d].fp, path, ff_flags))
 		return (-1);
@@ -112,23 +114,29 @@ read(int d, void *buf, size_t nbytes)
 ssize_t
 write(int d, const void *buf, size_t nbytes)
 {
+#if !defined(_FS_READONLY)
 	FRESULT f_res;
-	uint32_t wrote;
+#endif
+	uint32_t wrote = nbytes;
 
 	/* XXX hack */
 	if (d >= 0 && d <= 2) {
 		char *cp = (char *) buf;
-		for (;nbytes != 0; nbytes--)
+		for (; nbytes != 0; nbytes--)
 			printf("%c", *cp++);
+		return (wrote);
 	}
 
 	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
 		return (-1);
 
+#if defined(_FS_READONLY)
+	return (-1);
+#else
 	f_res = f_write(&file_map[d].fp, buf, nbytes, &wrote);
 	if (f_res != FR_OK)
 		return (-1);
-	return (wrote);
+#endif
 }
 
 
@@ -165,10 +173,15 @@ unlink(const char *path)
 {
 	FRESULT f_res;
 
+#if !defined(_FS_READONLY)
 	f_res = f_unlink(path);
 	if (f_res != FR_OK)
 		return (-1);
 	return (0);
+#else
+	f_res = (path == path) - 2;	/* shut up unused arg warning */
+	return (f_res);
+#endif
 }
 
 

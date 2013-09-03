@@ -14,19 +14,25 @@
 / Functions and Buffer Configurations
 /----------------------------------------------------------------------------*/
 
+#ifndef _FS_TINY
 #define	_FS_TINY	0	/* 0:Normal or 1:Tiny */
+#endif
 /* When _FS_TINY is set to 1, FatFs uses the sector buffer in the file system
 /  object instead of the sector buffer in the individual file object for file
 /  data transfer. This reduces memory consumption 512 bytes each file object. */
 
 
+#ifndef _FS_READONLY
 #define _FS_READONLY	0	/* 0:Read/Write or 1:Read only */
+#endif
 /* Setting _FS_READONLY to 1 defines read only configuration. This removes
 /  writing functions, f_write, f_sync, f_unlink, f_mkdir, f_chmod, f_rename,
 /  f_truncate and useless f_getfree. */
 
 
+#ifndef _FS_MINIMIZE
 #define _FS_MINIMIZE	0	/* 0 to 3 */
+#endif
 /* The _FS_MINIMIZE option defines minimization level to remove some functions.
 /
 /   0: Full function.
@@ -36,11 +42,15 @@
 /   3: f_lseek is removed in addition to 2. */
 
 
+#ifndef _USE_STRFUNC
 #define	_USE_STRFUNC	0	/* 0:Disable or 1-2:Enable */
+#endif
 /* To enable string functions, set _USE_STRFUNC to 1 or 2. */
 
 
+#ifndef _USE_MKFS
 #define	_USE_MKFS	0	/* 0:Disable or 1:Enable */
+#endif
 /* To enable f_mkfs function, set _USE_MKFS to 1 and set _FS_READONLY to 0 */
 
 
@@ -90,8 +100,13 @@
 */
 
 
+#ifndef _USE_LFN
 #define	_USE_LFN	2		/* 0 to 3 */
+#endif
+
+#ifndef _MAX_LFN
 #define	_MAX_LFN	63		/* Maximum LFN length to handle (12 to 255) */
+#endif
 /* The _USE_LFN option switches the LFN support.
 /
 /   0: Disable LFN feature. _MAX_LFN and _LFN_UNICODE have no effect.
@@ -110,7 +125,9 @@
 /  enable LFN feature and set _LFN_UNICODE to 1. */
 
 
+#ifndef _FS_RPATH
 #define _FS_RPATH	2	/* 0 to 2 */
+#endif
 /* The _FS_RPATH option configures relative path feature.
 /
 /   0: Disable relative path feature and remove related functions.
@@ -125,11 +142,15 @@
 / Physical Drive Configurations
 /----------------------------------------------------------------------------*/
 
+#ifndef _VOLUMES
 #define _VOLUMES	2
+#endif
 /* Number of volumes (logical drives) to be used. */
 
 
+#ifndef _MAX_SS
 #define	_MAX_SS		4096		/* 512, 1024, 2048 or 4096 */
+#endif
 /* Maximum sector size to be handled.
 /  Always set 512 for memory card and hard disk but a larger value may be
 /  required for on-board flash memory, floppy disk and optical disk.
@@ -137,7 +158,9 @@
 /  and GET_SECTOR_SIZE command must be implememted to the disk_ioctl function. */
 
 
+#ifndef _MULTI_PARTITION
 #define	_MULTI_PARTITION	0	/* 0:Single partition, 1/2:Enable multiple partition */
+#endif
 /* When set to 0, each volume is bound to the same physical drive number and
 / it can mount only first primaly partition. When it is set to 1, each volume
 / is tied to the partitions listed in VolToPart[]. */
@@ -183,7 +206,9 @@
 /      function must be added to the project. */
 
 
+#ifndef _FS_SHARE
 #define	_FS_SHARE	4	/* 0:Disable or >=1:Enable */
+#endif
 /* To enable file shareing feature, set _FS_SHARE to 1 or greater. The value
    defines how many files can be opened simultaneously. */
 
