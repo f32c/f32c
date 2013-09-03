@@ -1,19 +1,17 @@
 
 #include <sys/param.h>
-#include <sdcard.h>
+#include <fcntl.h>
 #include <io.h>
 #include <sio.h>
 #include <spi.h>
 #include <stdio.h>
-
-#include <fatfs/ff.h>
+#include <unistd.h>
 
 
 #define	PAGE_SIZE	4096	/* SPI flash minimum unit of work */
 #define	SECTOR_SIZE	512	/* buffer size */
 
 
-FATFS fh;
 char buf[SECTOR_SIZE];
 
 
@@ -34,18 +32,9 @@ spi_wait()
 void
 main(void)
 {
-	FIL fp;
-	int i, j, k, res;
-	uint got;
+	int fd, i, j, k, got;
 
-	if (sdcard_init() || sdcard_cmd(SD_CMD_SEND_CID, 0) ||
-	    sdcard_read((char *) buf, 16)) {
-		printf("Nije pronadjena MicroSD kartica!\n");
-		return;
-	}
-
-	f_mount(1, &fh);
-	if (f_open(&fp, IMAGE_NAME, FA_READ)) {
+	if ((fd = open(IMAGE_NAME, 0)) < 0) {
 		printf("Nije pronadjena datoteka %s!\n", IMAGE_NAME);
 		return;
 	}
@@ -72,12 +61,12 @@ main(void)
 		OUTB(IO_LED, i >> 2);
 
 		for (j = 0; j < PAGE_SIZE / SECTOR_SIZE; j++) {
-			if ((res = f_read(&fp, buf, SECTOR_SIZE, &got))) {
-				printf("\nf_read() failed!\n");
+			if ((got = read(fd, buf, SECTOR_SIZE)) < 0) {
+				printf("\nread() failed!\n");
 				goto done;
 			}
 			if (got != SECTOR_SIZE) {
-				printf("\nf_read(): short read!\n");
+				printf("\nread(): short read!\n");
 				goto done;
 			}
 
