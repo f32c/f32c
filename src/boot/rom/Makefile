@@ -3,6 +3,7 @@
 LOADADDR = 0x00000000
 
 # No optional instructions in the loader
+CFLAGS += -march=mips3 -mtune=f32c
 CFLAGS += -mno-branch-likely -msoft-mul
 
 PROG = loader
