@@ -5,6 +5,8 @@
 #include <stdio.h>
 
 
+#define	SRAM_BASE	0x80000000
+#define	SRAM_TOP	0x80100000
 #define	LOADER_BASE	0x800f8000
 
 
@@ -83,9 +85,28 @@ void
 main(void)
 {
 	uint8_t *cp = (void *) LOADER_BASE;
-	int res_sec, sec_size, len;
+	int *p;
+	int res_sec, sec_size, len, i;
 
 	puts(msg);
+
+	/* Turn off video framebuffer, just in case */
+	OUTW(IO_FB, 3);
+
+	/* SRAM init & self-test */
+	for (i = -1; i <= 0; i++) {
+		/* memset() SRAM */
+		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p++)
+			*p = i;
+
+		/* check SRAM */
+		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p++)
+			if (*p != i) {
+				puts("SRAM BIST failed\n");
+				return;
+			}
+	}
+	puts("SRAM BIST passed\n");
 
 	flash_read_block((void *) cp, 0, 512);
 	sec_size = (cp[0xc] << 8) + cp[0xb];
