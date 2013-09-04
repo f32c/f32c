@@ -50,7 +50,7 @@ open(const char *path, int flags, ...)
 
 	/* Map open() flags to f_open() flags */
 	ff_flags = ((flags & O_ACCMODE) + 1);
-#if !defined(_FS_READONLY)
+#if !defined(_FS_READONLY) || (_FS_READONLY == 0)
 	if (flags & (O_CREAT | O_TRUNC))
 		ff_flags |= FA_CREATE_ALWAYS;
 	else if (flags & O_CREAT)
@@ -114,7 +114,7 @@ read(int d, void *buf, size_t nbytes)
 ssize_t
 write(int d, const void *buf, size_t nbytes)
 {
-#if !defined(_FS_READONLY)
+#if !defined(_FS_READONLY) || (_FS_READONLY == 0)
 	FRESULT f_res;
 #endif
 	uint32_t wrote = nbytes;
@@ -130,12 +130,13 @@ write(int d, const void *buf, size_t nbytes)
 	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
 		return (-1);
 
-#if defined(_FS_READONLY)
+#if defined(_FS_READONLY) && (_FS_READONLY == 1)
 	return (-1);
 #else
 	f_res = f_write(&file_map[d].fp, buf, nbytes, &wrote);
 	if (f_res != FR_OK)
 		return (-1);
+	return (wrote);
 #endif
 }
 
@@ -173,7 +174,7 @@ unlink(const char *path)
 {
 	FRESULT f_res;
 
-#if !defined(_FS_READONLY)
+#if !defined(_FS_READONLY) || (_FS_READONLY == 0)
 	f_res = f_unlink(path);
 	if (f_res != FR_OK)
 		return (-1);
