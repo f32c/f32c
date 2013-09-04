@@ -100,11 +100,14 @@ main(void)
 			*p = i;
 
 		/* check SRAM */
-		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p++)
+		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p++) {
 			if (*p != i) {
 				puts("SRAM BIST failed\n");
 				return;
 			}
+			OUTB(IO_LED, ((int) p) >> 12);
+		}
+
 	}
 	puts("SRAM BIST passed\n");
 
@@ -124,6 +127,7 @@ main(void)
 	puts(" len 0x");
 	phex32(len);
 	puts("\n\n");
+	OUTB(IO_LED, 0);
 
 	__asm __volatile__(
 		".set noreorder;"
