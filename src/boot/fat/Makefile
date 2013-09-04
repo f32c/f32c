@@ -2,8 +2,9 @@
 # Bootloader uses a non-default loadaddr
 LOADADDR = 0x800f8000
 
-# No branch likely instructions in the loader
-CFLAGS += -mno-branch-likely
+# No optional instructions in the loader
+CFLAGS += -march=mips3 -mtune=f32c
+CFLAGS += -mno-branch-likely -msoft-mul
 
 # Omit floating point libs and printf parts
 CFLAGS += -DNO_PRINTF_FLOAT
