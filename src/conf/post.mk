@@ -91,7 +91,7 @@ MK_LDFLAGS += ${LDFLAGS}
 
 CC = mips-elf-gcc ${MK_INCLUDES} ${MK_CFLAGS}
 LD = mips-elf-ld ${MK_LDFLAGS}
-OBJCOPY = mips-elf-objcopy -O srec
+OBJCOPY = mips-elf-objcopy
 ISA_CHECK = ${BASE_DIR}tools/isa_check.tcl
 MKDEP = ${CC} -MM
 
@@ -108,12 +108,15 @@ include ${LIBS_MK}
 
 OBJS = $(ASFILES:.S=.o) $(CFILES:.c=.o)
 
+BIN = ${PROG}.bin
 HEX = ${PROG}.hex
-IHEX = ${PROG}.ihex
 
-${HEX}: ${PROG} Makefile
+${HEX}: ${BIN} Makefile
+	${OBJCOPY} -O srec ${PROG} ${HEX}
+
+${BIN}: ${PROG} Makefile
 	${ISA_CHECK} ${PROG}
-	${OBJCOPY} ${PROG} ${HEX}
+	${OBJCOPY} -O binary ${PROG} ${BIN}
 
 ${PROG}: ${OBJS} Makefile
 	${LD} -o ${PROG} ${OBJS}
@@ -122,7 +125,7 @@ depend:
 	${MKDEP} ${CFILES}
 
 clean:
-	rm -f ${OBJS} ${PROG} ${HEX}
+	rm -f ${OBJS} ${PROG} ${BIN} ${HEX}
 
 cleandepend:
 	rm -f .depend
