@@ -17,7 +17,7 @@ _start:
 	nop
 
 	/* Invalidate the entire I-cache */
-	li	t1, 4096 / 4
+	li	t1, 8192 / 4
 	lui	t0, 0x8000
 flush_loop:
 	addiu	t1, t1, -1
