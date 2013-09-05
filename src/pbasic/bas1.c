@@ -116,6 +116,7 @@ main(int argc, char **argv)
         		execute();
 		}
 	}
+	firstrun = 0;
 
 	prints("Ready\n");
 
