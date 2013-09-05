@@ -52,8 +52,6 @@ extern	void	m_purge();
 #endif
 #endif
 
-static	int	lcount;
-
 
 /*
  *      The main program , it sets up all the files, signals,terminal
@@ -78,10 +76,13 @@ static	int	lcount;
  *              N.B. reset() NEVER returns , so error() NEVER returns.
  */
 
+static int firstrun = 1;
+
 int
 main(int argc, char **argv)
 {
-	int	i = 0;
+	int fp;
+	int i = 0;
 
 	catchsignal();
 	startfp();              /* start up the floating point hardware */
@@ -100,7 +101,24 @@ main(int argc, char **argv)
 	stocurlin=0;            /* say we are in immeadiate mode */
 	if(cursor)              /* put cursor on a blank line */
 		prints( (char *)nl);
+	
+	if (firstrun && ((fp = open("1:/autoexec.bas",0)) > 0 ||
+	    (fp = open("/autoexec.bas",0)) > 0)) {
+		firstrun = 0;
+		readfi(fp, 0, 0);
+		close(fp);
+        	clear();
+        	lp_fd = -1;
+        	if (program) {
+        		stocurlin=program;
+        		point= program->lin;
+        		elsecount=0;
+        		execute();
+		}
+	}
+
 	prints("Ready\n");
+
 	for(;;){
 		do{
 			trapped=0;
@@ -117,9 +135,6 @@ main(int argc, char **argv)
 		closeall();
 	}
 
-#ifdef	MSDOS
-	lcount = 0;
-#endif
 	clr_stack(bstack);	/* reset the gosub stack */
 	bstack = estack = 0;
 	if(str_used)		/* free any spare strings */
@@ -473,11 +488,8 @@ execute()
 	lpoint p;
 
 	for(;;){
-		if(++lcount > 100){
-			lcount = 0;
-			if(sio_getchar(0) == 3)
-				trap(0);
-		}
+		if(sio_getchar(0) == 3)
+			trap(0);
 		savepoint=point;
 		if(trapped)
 			dobreak();
