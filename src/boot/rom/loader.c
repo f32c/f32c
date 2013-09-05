@@ -88,28 +88,38 @@ main(void)
 	int *p;
 	int res_sec, sec_size, len, i;
 
-	puts(msg);
+	/* Turn on LEDs */
+	OUTB(IO_LED, 255);
 
 	/* Turn off video framebuffer, just in case */
 	OUTW(IO_FB, 3);
 
-	/* SRAM init & self-test */
+	/* Reset all CPU cores except CPU #0 */
+	OUTW(IO_CPU_RESET, ~1);
+
+	/* Crude SRAM self-test & bzero() */
 	for (i = -1; i <= 0; i++) {
 		/* memset() SRAM */
 		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p++)
 			*p = i;
 
 		/* check SRAM */
-		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p++) {
+		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p++)
 			if (*p != i) {
 				puts("SRAM BIST failed\n");
-				return;
+				/* Blink LEDs: on/off 1:1 */
+				do {
+					if ((i++ >> 22) & 1)
+						OUTB(IO_LED, 255);
+					else
+						OUTB(IO_LED, 0);
+				} while (1);
 			}
-			OUTB(IO_LED, ((int) p) >> 12);
-		}
 
 	}
+
 	puts("SRAM BIST passed\n");
+	puts(msg);
 
 	flash_read_block((void *) cp, 0, 512);
 	sec_size = (cp[0xc] << 8) + cp[0xb];
@@ -117,7 +127,13 @@ main(void)
 	if (cp[0x1fe] != 0x55 || cp[0x1ff] != 0xaa || sec_size != 4096
 	    || res_sec < 2) {
 		puts("Invalid boot sector\n");
-		return;
+		/* Blink LEDs: on/off 1:3 */
+		do {
+			if (((i++ >> 22) & 3) == 0)
+				OUTB(IO_LED, 255);
+			else
+				OUTB(IO_LED, 0);
+		} while (1);
 	}
 
 	len = sec_size * res_sec - 512;
@@ -127,6 +143,8 @@ main(void)
 	puts(" len 0x");
 	phex32(len);
 	puts("\n\n");
+
+	/* Turn off LEDs before jumping to next loader stage */
 	OUTB(IO_LED, 0);
 
 	__asm __volatile__(
