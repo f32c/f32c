@@ -7,16 +7,19 @@
 
 
 static const char *bootfiles[] = {
-	"1:/boot/bootme.bin",
+	"1:/bootme.bin",
 	"/boot/kernel",
 	"/boot/basic.bin",
 	NULL
 };
 
 
-#define LOAD_COOKIE	0x10adc0de
+#define	SRAM_BASE	0x80000000
+#define	SRAM_TOP	0x80100000
+#define	LOADER_BASE	0x800f8000
 
-#define	LOADADDR	0x80000000
+#define LOAD_COOKIE	0x10adc0de
+#define	LOADADDR	SRAM_BASE
 
 
 void
@@ -56,9 +59,19 @@ main(void)
 		i = read(fd, cp, 65536);
 		cp += i;
 	} while (i > 0);
-	printf("OK, loaded %d bytes\n", (int) (cp - LOADADDR));
+	printf("OK, loaded at %p len %p\n\n",
+	    (void *) LOADADDR, (cp - LOADADDR));
 
-	printf("Invalidating I-cache...\n");
+	/* bzero() the rest of the available SRAM */
+	do {
+		*cp++ = 0;
+	} while (((int) cp & 3));
+	do {
+		*((int *) cp) = 0;
+		cp += 4;
+	} while (cp < (char *) LOADER_BASE);
+
+	/* Invalidate I-cache */
 	cp = (char *) LOADADDR;
 	for (i = 0; i < 8192; i += 4, cp += 4) {
 		__asm __volatile__(
@@ -69,8 +82,6 @@ main(void)
 	}
 
 	cp = (char *) LOADADDR;
-	printf("Starting at %p\n", cp);
-
 	__asm __volatile__(
 		".set noreorder;"
 		"lui $4, 0x8000;"	/* stack mask */
