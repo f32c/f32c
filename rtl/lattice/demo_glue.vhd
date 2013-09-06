@@ -69,7 +69,7 @@ entity glue is
 	C_sram: boolean := true;
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_sio: boolean := true;
-	C_gpio: boolean := true;
+	C_led_btns: boolean := true;
 	C_flash: boolean := true;
 	C_sdcard: boolean := true;
 	C_pcmdac: boolean := true;
@@ -244,7 +244,7 @@ begin
 	bus_in => cpu_to_io, bus_out => from_sio
     );
     sio_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(4 downto 2) = "001" else '0';
+      io_addr(7 downto 4) = x"2" else '0';
     end generate;
 
     --
@@ -264,7 +264,7 @@ begin
 	spi_si => flash_si, spi_so => flash_so
     );
     flash_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(4 downto 2) = "100" else '0';
+      io_addr(7 downto 4) = x"3" and io_addr(3 downto 2) = "00" else '0';
     end generate;
 
     --
@@ -281,7 +281,7 @@ begin
 	spi_si => sdcard_si, spi_so => sdcard_so
     );
     sdcard_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(4 downto 2) = "101" else '0';
+      io_addr(7 downto 4) = x"3" and io_addr(3 downto 2) = "01" else '0';
     end generate;
 
     --
@@ -309,15 +309,15 @@ begin
     p_ring <= R_dac_acc_r(16);
 
     -- I/O port map:
-    -- 0x8*******: (4B, RW) * SRAM
-    -- 0xf*****00: (4B, RW) * GPIO (LED, switches/buttons)
-    -- 0xf*****04: (4B, RW) * SIO
-    -- 0xf*****08: (1B, WR) * CPU reset bitmap
-    -- 0xf*****0c: (4B, WR) * PCM signal
-    -- 0xf*****10: (1B, RW) * SPI Flash
-    -- 0xf*****14: (1B, RW) * SPI MicroSD
-    -- 0xf*****18: (1B, WR) * Framebuffer
-    -- 0xf*****1c: (4B, WR) * FM DDS register
+    -- 0x8*******: (4B, RW) : SRAM
+    -- 0xf*****10: (4B, RW) : LED, switches, buttons, rotary, LCD
+    -- 0xf*****20: (4B, RW) : SIO
+    -- 0xf*****30: (1B, RW) : SPI Flash
+    -- 0xf*****34: (1B, RW) : SPI MicroSD
+    -- 0xf*****40: (1B, WR) : Framebuffer
+    -- 0xf*****50: (4B, WR) : PCM signal
+    -- 0xf*****60: (4B, WR) : FM DDS register
+    -- 0xf*****f0: (1B, WR) : CPU reset bitmap
 
     --
     -- I/O arbiter
@@ -361,16 +361,16 @@ begin
 	end if;
 	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
 	  and io_write = '1' then
-	    -- GPIO
-	    if C_gpio and io_addr(4 downto 2) = "000" then
+	    -- LEDs
+	    if C_led_btns and io_addr(7 downto 4) = x"1" then
 		R_led <= cpu_to_io(7 downto 0);
 	    end if;
 	    -- CPU reset control
-	    if C_cpus /= 1 and io_addr(4 downto 2) = "010" then
+	    if C_cpus /= 1 and io_addr(7 downto 4) = x"f" then
 		R_cpu_reset <= cpu_to_io(15 downto 0);
 	    end if;
 	    -- PCMDAC
-	    if C_pcmdac and io_addr(4 downto 2) = "011" then
+	    if C_pcmdac and io_addr(7 downto 4) = x"5" then
 		if io_byte_sel(2) = '1' then
 		    if C_big_endian then
 			R_dac_in_l <= cpu_to_io(23 downto 16) &
@@ -389,12 +389,12 @@ begin
 		end if;
 	    end if;
 	    -- Framebuffer
-	    if C_framebuffer and io_addr(4 downto 2) = "110" then
+	    if C_framebuffer and io_addr(7 downto 4) = x"4" then
 		R_fb_mode <= cpu_to_io(1 downto 0);
 		R_fb_base_addr <= cpu_to_io(19 downto 2);
 	    end if;
 	    -- DDS
-	    if C_ddsfm and io_addr(4 downto 2) = "111" then
+	    if C_ddsfm and io_addr(7 downto 4) = x"6" then
 		if C_big_endian then
 		    R_dds_div <= cpu_to_io(15 downto 10) & 
 		      cpu_to_io(23 downto 16) &
@@ -404,33 +404,29 @@ begin
 		end if;
 	    end if;
 	end if;
-	if C_gpio and rising_edge(clk) then
+	if C_led_btns and rising_edge(clk) then
 	    R_sw <= sw;
 	    R_btns <= btn_center & btn_up & btn_down & btn_left & btn_right;
 	end if;
     end process;
-    led <= R_led when C_gpio else "--------";
+    led <= R_led when C_led_btns else "--------";
 
     -- XXX replace with a balanced multiplexer
     process(io_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard)
     begin
-	case io_addr(4 downto 2) is
-	when "000"  =>
+	case io_addr(7 downto 4) is
+	when x"1"  =>
 	    io_to_cpu <="----------------" & "----" & R_sw & "---" & R_btns;
-	when "001"  =>
+	when x"2"  =>
 	    if C_sio then
 		io_to_cpu <= from_sio;
 	    else
 		io_to_cpu <= "--------------------------------";
 	    end if;
-	when "100"  =>
-	    if C_flash then
+	when x"3"  =>
+	    if C_flash and io_addr(3 downto 2) = "00" then
 		io_to_cpu <= from_flash;
-	    else
-		io_to_cpu <= "--------------------------------";
-	    end if;
-	when "101"  =>
-	    if C_sdcard then
+	    elsif C_sdcard and io_addr(3 downto 2) = "01" then
 		io_to_cpu <= from_sdcard;
 	    else
 		io_to_cpu <= "--------------------------------";
