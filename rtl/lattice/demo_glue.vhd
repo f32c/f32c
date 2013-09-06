@@ -61,7 +61,6 @@ entity glue is
 
 	-- Debugging / testing options (should be turned off)
 	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
-	C_prng_imem_delay: boolean := false;
 
 	-- SoC configuration options
 	C_cpus: integer := 1;
@@ -165,7 +164,6 @@ architecture Behavioral of glue is
     signal trace_addr: f32c_debug_addr;
     signal trace_data: f32c_data_bus;
     signal debug_txd: std_logic;
-    signal R_prng: std_logic_vector(8 downto 0);
 
     -- FM TX DDS
     signal clk_dds, dds_out: std_logic;
@@ -525,12 +523,12 @@ begin
 		if sram_instr_strobe = '1' then
 		    imem_data_ready(cpu) <= sram_ready(instr_port);
 		    final_to_cpu_i(cpu) <= from_sram;
-		elsif R_prng(8) = '0' or imem_addr_strobe(cpu) = '0' then
+		elsif imem_addr_strobe(cpu) = '0' then
 		    imem_data_ready(cpu) <= '0';
-		    final_to_cpu_i(cpu) <= x"deadc0de"; -- XXX testing
+		    final_to_cpu_i(cpu) <= bram_i_to_cpu;
 		else
 		    imem_data_ready(cpu) <= bram_i_ready;
-		    final_to_cpu_i(cpu) <= bram_i_to_cpu; -- BRAM
+		    final_to_cpu_i(cpu) <= bram_i_to_cpu;
 		end if;
 	    else -- CPU #1, CPU #2...
 		-- CPU, data bus
@@ -656,19 +654,5 @@ begin
 	tick_out => fb_tick
     );
     end generate;
-
-    G_prng_imem_delay:
-    if C_prng_imem_delay generate
-    process(clk)
-    begin
-	if falling_edge(clk) then
-	    R_prng(6 downto 0) <= R_prng(7 downto 1);
-	    R_prng(7) <=
-	      not R_prng(0) xor R_prng(2) xor R_prng(3) xor R_prng(4);
-	    R_prng(8) <= R_prng(7) and imem_addr_strobe(0);
-	end if;
-    end process;
-    end generate;
-    R_prng(8) <= '1' when not C_prng_imem_delay;
 
 end Behavioral;
