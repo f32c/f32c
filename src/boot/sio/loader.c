@@ -3,19 +3,6 @@
 #include <io.h>
 
 
-#if _BYTE_ORDER == _BIG_ENDIAN
-static char *prompt = "\r\nf32c/be> ";
-#elif _BYTE_ORDER == _LITTLE_ENDIAN
-static char *prompt = "\r\nf32c/le> ";
-#else
-#error "Unsupported byte order."
-#endif
-
-#define	BOOTADDR	0x0220
-
-
-void *base_addr = (void *) BOOTADDR;
-
 #define	pchar(c)							\
 	do {								\
 		int s;							\
@@ -47,27 +34,11 @@ _start(void)
 {
 	int c, cnt, pos, val, len;
 	char *cp;
+	void *base_addr = NULL;
 
 	__asm __volatile__(
 		"move $31, $0;"
 	);
-
-	if (base_addr) {
-		cp = (void *) base_addr;
-boot:
-		base_addr = NULL;
-		__asm __volatile__(
-		".set noreorder;"
-		"lui $4, 0x8000;"	/* stack mask */
-		"lui $5, 0x0010;"	/* top of the initial stack */
-		"and $29, %0, $4;"	/* clear low bits of the stack */
-		"jr %0;"
-		"or $29, $29, $5;"	/* set stack */
-		".set reorder;"
-		: 
-		: "r" (cp)
-		);
-	}
 
 	/* Flush I-cache, clear DRAM */
 	for (cp = (void *) 0x80000000; cp < (char *) 0x80100000;  cp += 4) {
@@ -80,12 +51,16 @@ boot:
 	}
 
 prompt:
-	cp = prompt;
+	pos = 0;
+	c = 0x33660A0D;			/* "\r\nf3" */
 	do {
-		c = *cp++;
-pchar:
 		pchar(c);
-	} while (*cp != 0);
+		c >>= 8;
+		if (c == 0 && pos == 0) {
+			pos = -1;
+			c = 0x203E6332;	/* "2c> " */
+		}
+	} while (c != 0);
 
 next:
 	pos = -1;
@@ -119,7 +94,7 @@ loop:
 				goto prompt;
 			/* Echo char */
 			if (c >= 32)
-				goto pchar;
+				pchar(c);
 		}
 		val = 0;
 		goto loop;
@@ -139,11 +114,17 @@ loop:
 	/* Address width */
 	if (pos == 1) {
 		if (val >= 7 && val <= 9) {
-			if (base_addr != NULL)
-				cp = base_addr;
-			else
-				cp = (void *) BOOTADDR;
-			goto boot;
+			__asm __volatile__(
+			".set noreorder;"
+			"lui $4, 0x8000;"	/* stack mask */
+			"lui $5, 0x0010;"	/* top of the initial stack */
+			"and $29, %0, $4;"	/* clr low bits of the stack */
+			"jr %0;"
+			"or $29, $29, $5;"	/* set stack */
+			".set reorder;"
+			: 
+			: "r" (base_addr)
+			);
 		}
 		if (val >= 1 && val <= 3)
 			len = (val << 1) + 5;
