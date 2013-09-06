@@ -9,12 +9,15 @@
 #define	SRAM_TOP	0x80100000
 #define	LOADER_BASE	0x800f8000
 
+#define	ONLY_I_ROM
 
+#ifndef ONLY_I_ROM
 #if _BYTE_ORDER == _BIG_ENDIAN
 static const char *msg = "ULX2S ROM bootloader v 0.1 (f32c/be)\n";
 #else
 static const char *msg = "ULX2S ROM bootloader v 0.1 (f32c/le)\n";
 #endif
+#endif /* !ONLY_I_ROM */
 
 
 static void
@@ -31,6 +34,7 @@ flash_read_block(char *buf, uint32_t addr, uint32_t len)
 }
 
 
+#ifndef ONLY_I_ROM
 static void
 pchar(char c)
 {
@@ -79,6 +83,11 @@ puts(const char *cp)
 		pchar(*cp);
 	}
 }
+#else /* ONLY_I_ROM */
+#define	puts(c)
+#define	pchar(c)
+#define	phex32(c)
+#endif /* !ONLY_I_ROM */
 
 
 void
