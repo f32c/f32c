@@ -7,21 +7,22 @@
 
 #define	IO_ADDR(a)	(IO_BASE + (a))
 
-#define	IO_LED		IO_ADDR(0x00)	/* byte, WR */
-#define	IO_PUSHBTN	IO_ADDR(0x00)	/* byte, RD */
-#define	IO_DIPSW	IO_ADDR(0x01)	/* byte, RD */
-#define	IO_PMOD_J1_J2	IO_ADDR(0x01)	/* byte, WR */
-#define	IO_LCD_DB	IO_ADDR(0x02)	/* byte, WR */
-#define	IO_LCD_CTRL	IO_ADDR(0x03)	/* byte, WR */
-#define	IO_SIO_BYTE	IO_ADDR(0x04)	/* byte, RW */
-#define	IO_SIO_STATUS	IO_ADDR(0x05)	/* byte, RD */
-#define	IO_SIO_BAUD	IO_ADDR(0x06)	/* half, WR */
-#define	IO_CPU_RESET	IO_ADDR(0x08)	/* byte, WR */
-#define	IO_PCM_OUT	IO_ADDR(0x0c)	/* word, WR */
-#define	IO_SPI_FLASH	IO_ADDR(0x10)	/* byte, RW */
-#define	IO_SPI_SDCARD	IO_ADDR(0x14)	/* byte, RW */
-#define	IO_FB		IO_ADDR(0x18)	/* byte, WR */
-#define	IO_DDS		IO_ADDR(0x1c)	/* word, WR */
+#define	IO_GPIO_DATA	IO_ADDR(0x00)	/* word, RW */
+#define	IO_GPIO_CTL	IO_ADDR(0x04)	/* word, WR */
+#define	IO_LED		IO_ADDR(0x10)	/* byte, WR */
+#define	IO_PUSHBTN	IO_ADDR(0x10)	/* byte, RD */
+#define	IO_DIPSW	IO_ADDR(0x11)	/* byte, RD */
+#define	IO_LCD_DB	IO_ADDR(0x12)	/* byte, WR */
+#define	IO_LCD_CTRL	IO_ADDR(0x13)	/* byte, WR */
+#define	IO_SIO_BYTE	IO_ADDR(0x20)	/* byte, RW */
+#define	IO_SIO_STATUS	IO_ADDR(0x21)	/* byte, RD */
+#define	IO_SIO_BAUD	IO_ADDR(0x22)	/* half, WR */
+#define	IO_SPI_FLASH	IO_ADDR(0x30)	/* half, RW */
+#define	IO_SPI_SDCARD	IO_ADDR(0x34)	/* half, RW */
+#define	IO_FB		IO_ADDR(0x40)	/* word, WR */
+#define	IO_PCM_OUT	IO_ADDR(0x50)	/* word, WR */
+#define	IO_DDS		IO_ADDR(0x60)	/* word, WR */
+#define	IO_CPU_RESET	IO_ADDR(0xf0)	/* byte, WR */
 
 
 /* SIO status bitmask */
