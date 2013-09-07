@@ -18,8 +18,7 @@
 char *buf = (char *) 0x80080000;
 
 
-//#define IMAGE_NAME	"1:ulx2s_flash1.img"
-#define IMAGE_NAME	"1:fat12_4m.img"
+#define IMAGE_NAME	"1:ulx2s_spi_4m.img"
 
 
 void
