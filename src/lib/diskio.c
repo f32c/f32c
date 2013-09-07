@@ -22,8 +22,7 @@ static void busy_wait(void);
 static int
 flash_disk_write(const uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount)
 {
-	int addr = SectorNumber * FLASH_BLOCKLEN;
-	int i;
+	int addr, i, sum, in_aai = 0;
 
 	/* Enable Write Status Register */
 	spi_start_transaction(SPI_PORT_FLASH);
@@ -34,26 +33,66 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount
 	spi_byte(SPI_PORT_FLASH, SPI_CMD_WRSR);
 	spi_byte(SPI_PORT_FLASH, 0);
 
-	for (; SectorCount > 0; SectorCount--) {
+	/* Erase sectors */
+	addr = SectorNumber * FLASH_BLOCKLEN;
+	for (i = (int) SectorCount; i > 0;) {
 		/* Write enable */
 		spi_start_transaction(SPI_PORT_FLASH);
 		spi_byte(SPI_PORT_FLASH, SPI_CMD_WREN);
-
 		spi_start_transaction(SPI_PORT_FLASH);
-		spi_byte(SPI_PORT_FLASH, 0x20); /* Sector erase */
-		spi_byte(SPI_PORT_FLASH, addr >> 16);
-		spi_byte(SPI_PORT_FLASH, addr >> 8);
-		spi_byte(SPI_PORT_FLASH, addr);
+		if (i >= 16 && (addr & (FLASH_BLOCKLEN * 16 - 1)) == 0) {
+			spi_byte(SPI_PORT_FLASH, 0xd8); /* 64K block erase */
+			spi_byte(SPI_PORT_FLASH, addr >> 16);
+			spi_byte(SPI_PORT_FLASH, addr >> 8);
+			spi_byte(SPI_PORT_FLASH, addr);
+			i -= 16;
+			addr += 16 * FLASH_BLOCKLEN;
+		} else {
+			spi_byte(SPI_PORT_FLASH, 0x20); /* 4K sector erase */
+			spi_byte(SPI_PORT_FLASH, addr >> 16);
+			spi_byte(SPI_PORT_FLASH, addr >> 8);
+			spi_byte(SPI_PORT_FLASH, addr);
+			i -= 1;
+			addr += FLASH_BLOCKLEN;
+		}
 		busy_wait();
+	}
 
-		/* Write enable */
-		spi_start_transaction(SPI_PORT_FLASH);
-		spi_byte(SPI_PORT_FLASH, SPI_CMD_WREN);
+	addr = SectorNumber * FLASH_BLOCKLEN;
+	for (; SectorCount > 0; SectorCount--, addr += FLASH_BLOCKLEN) {
+		/* No need to write blank sectors */
+		if (((int) buf & 3) == 0) {
+			/* Word-aligned buffer */
+			for (i = 0, sum = 0; i < FLASH_BLOCKLEN; i += 4)
+				sum |= *((int *) &buf[i]);
+		} else {
+			/* Unaligned buffer */
+			for (i = 0, sum = 0; i < FLASH_BLOCKLEN; i++)
+				sum |= buf[i];
+		}
+		if (sum == 0) {
+			if (in_aai) {
+				/* Write disable - exit AAI write mode */
+				spi_start_transaction(SPI_PORT_FLASH);
+				spi_byte(SPI_PORT_FLASH, SPI_CMD_WRDI);
+				busy_wait();
+			}
+			in_aai = 0;
+			buf += FLASH_BLOCKLEN;
+			continue;
+		}
+
+		if (!in_aai) {
+			/* Write enable */
+			spi_start_transaction(SPI_PORT_FLASH);
+			spi_byte(SPI_PORT_FLASH, SPI_CMD_WREN);
+		}
 
 		for (i = 0; i < FLASH_BLOCKLEN; i += 2) {
 			spi_start_transaction(SPI_PORT_FLASH);
 			spi_byte(SPI_PORT_FLASH, 0xad); /* AAI write */
-			if (i == 0) {
+			if (!in_aai) {
+				in_aai = 1;
 				spi_byte(SPI_PORT_FLASH, addr >> 16);
 				spi_byte(SPI_PORT_FLASH, addr >> 8);
 				spi_byte(SPI_PORT_FLASH, addr);
@@ -62,14 +101,13 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount
 			spi_byte(SPI_PORT_FLASH, *buf++);
 			busy_wait();
 		}
-		addr += FLASH_BLOCKLEN;
 	}
 
-	/* Write disable */
+	/* Write disable - exit AAI write mode */
 	spi_start_transaction(SPI_PORT_FLASH);
 	spi_byte(SPI_PORT_FLASH, SPI_CMD_WRDI);
 	busy_wait();
-        
+
 	/* Enable Write Status Register */
 	spi_start_transaction(SPI_PORT_FLASH);
 	spi_byte(SPI_PORT_FLASH, SPI_CMD_EWSR);
