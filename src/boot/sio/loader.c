@@ -30,7 +30,11 @@
 
 __dead2
 void
+#ifdef ROM_LOADER
+sio_boot(void)
+#else
 _start(void)
+#endif
 {
 	int c, cnt, pos, val, len;
 	char *cp;
