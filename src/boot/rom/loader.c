@@ -20,6 +20,9 @@ static const char *msg = "ULX2S ROM bootloader v 0.1 (f32c/le)\n";
 #endif /* !ONLY_I_ROM */
 
 
+void sio_boot(void);
+
+
 static void
 flash_read_block(char *buf, uint32_t addr, uint32_t len)
 {
@@ -136,6 +139,7 @@ main(void)
 	if (cp[0x1fe] != 0x55 || cp[0x1ff] != 0xaa || sec_size != 4096
 	    || res_sec < 2) {
 		puts("Invalid boot sector\n");
+#if 0
 		/* Blink LEDs: on/off 1:3 */
 		do {
 			if (((i++ >> 22) & 3) == 0)
@@ -143,6 +147,9 @@ main(void)
 			else
 				OUTB(IO_LED, 0);
 		} while (1);
+#else
+		sio_boot();
+#endif
 	}
 
 	len = sec_size * res_sec - 512;
@@ -155,6 +162,15 @@ main(void)
 
 	/* Turn off LEDs before jumping to next loader stage */
 	OUTB(IO_LED, 0);
+
+	/* Check for keypress */
+	INB(i, IO_SIO_STATUS);
+	if (i & SIO_RX_FULL) {
+		INB(i, IO_SIO_BYTE);
+		if (i == ' ')
+			sio_boot();
+	}
+	
 
 	__asm __volatile__(
 		".set noreorder;"
