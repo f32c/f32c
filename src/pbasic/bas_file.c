@@ -9,6 +9,10 @@
 #include "bas.h"
 
 
+extern void *m_get(unsigned int);
+extern void m_free(void *);
+
+
 int
 file_cd()
 {
@@ -113,7 +117,9 @@ ok:
 int
 file_copy()
 {
-	char buf[16384];
+	char nambuf[256];
+	char *buf;
+	int buflen;
 	STR st1, st2;
 	int from, to;
 	int got, wrote;
@@ -125,37 +131,52 @@ file_copy()
 
 	st1 = stringeval();
 	NULL_TERMINATE(st1);
-	strcpy(buf, st1->strval);
+	strcpy(nambuf, st1->strval);
 	FREE_STR(st1);
 	if(getch() != ',')
 		error(SYNTAX);
 
 	st2 = stringeval();
 	NULL_TERMINATE(st2);
-	check();
+	check(); /* XXX st2 leak? */
 
-	from = open(buf, O_RDONLY);
+	from = open(nambuf, O_RDONLY);
 	if (from < 0)
 		error(15);
+
+	for (buflen = 64 * 1024; buflen >= 4096; buflen = buflen >> 1) {
+		buf = m_get(buflen);
+		if (buf != NULL)
+			break;
+	}
+	if (buf == NULL) {
+		close (from);
+		FREE_STR(st2);
+		error(24);	/* out of core */
+	}
+
 	to = open(st2->strval, O_CREAT|O_RDWR);
 	FREE_STR(st2);
 	if (to < 0) {
-		close (from);
+		m_free(buf);
+		close (from);	/* cannot creat file */
 		error(14);
 	}
 
 	RDTSC(start);
 	do {
-		got = read(from, buf, sizeof(buf));
+		got = read(from, buf, buflen);
 		if (got < 0) {
 			close(from);
 			close(to);
+			m_free(buf);
 			error(30);	/* unexpected eof */
 		}
 		wrote = write(to, buf, got);
 		if (wrote < got) {
 			close(from);
 			close(to);
+			mfree(buf);
 			error(60);	/* File write error */
 		}
 		tot += wrote;
@@ -164,6 +185,7 @@ file_copy()
 
 	close(from);
 	close(to);
+	m_free(buf);
 	printf("Copied %d bytes in %f s (%f bytes/s)\n", tot,
 	    0.001 * (end - start) / freq_khz,
 	    tot / (0.001 * (end - start) / freq_khz));
