@@ -69,7 +69,8 @@ entity glue is
 	C_sram: boolean := true;
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_sio: boolean := true;
-	C_led_btns: boolean := true;
+	C_leds_btns: boolean := true;
+	C_gpio: boolean := true;
 	C_flash: boolean := true;
 	C_sdcard: boolean := true;
 	C_pcmdac: boolean := true;
@@ -89,12 +90,14 @@ entity glue is
 	led: out std_logic_vector(7 downto 0);
 	btn_left, btn_right, btn_up, btn_down, btn_center: in std_logic;
 	sw: in std_logic_vector(3 downto 0);
-	j1: out std_logic_vector(23 downto 20);
-	j2: out std_logic_vector(5 downto 2);
+	j1_2, j1_3, j1_4, j1_8, j1_9, j1_13, j1_14, j1_15: inout std_logic;
+	j1_16, j1_17, j1_18, j1_19, j1_20, j1_21, j1_22, j1_24: inout std_logic;
+	j2_2, j2_3, j2_4, j2_5, j2_6, j2_7, j2_8, j2_9: inout std_logic;
+	j2_10, j2_11, j2_12, j2_13, j2_16: inout std_logic;
 	sram_a: out std_logic_vector(18 downto 0);
 	sram_d: inout std_logic_vector(15 downto 0);
-	sram_oel: out std_logic; -- XXX the old ULXP2 board needs this!
 	sram_wel, sram_lbl, sram_ubl: out std_logic
+	-- sram_oel: out std_logic -- XXX the old ULXP2 board needs this!
     );
 end glue;
 
@@ -152,6 +155,7 @@ architecture Behavioral of glue is
     signal R_led: std_logic_vector(7 downto 0);
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
+    signal R_gpio_ctl, R_gpio_in, R_gpio_out: std_logic_vector(28 downto 0);
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
     signal R_fb_base_addr: std_logic_vector(19 downto 2);
     signal R_dac_in_l, R_dac_in_r: std_logic_vector(15 downto 2);
@@ -309,11 +313,13 @@ begin
 
     -- I/O port map:
     -- 0x8*******: (4B, RW) : SRAM
+    -- 0xf*****00: (4B, RW) : GPIO data
+    -- 0xf*****04: (4B, WR) : GPIO control
     -- 0xf*****10: (4B, RW) : LED, switches, buttons, rotary, LCD
     -- 0xf*****20: (4B, RW) : SIO
-    -- 0xf*****30: (1B, RW) : SPI Flash
-    -- 0xf*****34: (1B, RW) : SPI MicroSD
-    -- 0xf*****40: (1B, WR) : Framebuffer
+    -- 0xf*****30: (2B, RW) : SPI Flash
+    -- 0xf*****34: (2B, RW) : SPI MicroSD
+    -- 0xf*****40: (4B, WR) : Framebuffer
     -- 0xf*****50: (4B, WR) : PCM signal
     -- 0xf*****60: (4B, WR) : FM DDS register
     -- 0xf*****f0: (1B, WR) : CPU reset bitmap
@@ -360,8 +366,38 @@ begin
 	end if;
 	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
 	  and io_write = '1' then
+	    -- GPIO
+	    if C_gpio and io_addr(7 downto 4) = x"0" then
+		if io_addr(3) = '0' then
+		    if io_byte_sel(0) = '1' then
+			R_gpio_out(7 downto 0) <= cpu_to_io(7 downto 0);
+		    end if;
+		    if io_byte_sel(1) = '1' then
+			R_gpio_out(15 downto 8) <= cpu_to_io(15 downto 8);
+		    end if;
+		    if io_byte_sel(2) = '1' then
+			R_gpio_out(23 downto 16) <= cpu_to_io(23 downto 16);
+		    end if;
+		    if io_byte_sel(3) = '1' then
+			R_gpio_out(28 downto 24) <= cpu_to_io(28 downto 24);
+		    end if;
+		else
+		    if io_byte_sel(0) = '1' then
+			R_gpio_ctl(7 downto 0) <= cpu_to_io(7 downto 0);
+		    end if;
+		    if io_byte_sel(1) = '1' then
+			R_gpio_ctl(15 downto 8) <= cpu_to_io(15 downto 8);
+		    end if;
+		    if io_byte_sel(2) = '1' then
+			R_gpio_ctl(23 downto 16) <= cpu_to_io(23 downto 16);
+		    end if;
+		    if io_byte_sel(3) = '1' then
+			R_gpio_ctl(28 downto 24) <= cpu_to_io(28 downto 24);
+		    end if;
+		end if;
+	    end if;
 	    -- LEDs
-	    if C_led_btns and io_addr(7 downto 4) = x"1" then
+	    if C_leds_btns and io_addr(7 downto 4) = x"1" then
 		R_led <= cpu_to_io(7 downto 0);
 	    end if;
 	    -- CPU reset control
@@ -403,24 +439,65 @@ begin
 		end if;
 	    end if;
 	end if;
-	if C_led_btns and rising_edge(clk) then
+	if C_leds_btns and rising_edge(clk) then
 	    R_sw <= sw;
 	    R_btns <= btn_center & btn_up & btn_down & btn_left & btn_right;
 	end if;
+	if C_gpio and rising_edge(clk) then
+	    R_gpio_in(0) <= j1_2;
+	    R_gpio_in(1) <= j1_3;
+	    R_gpio_in(2) <= j1_4;
+	    R_gpio_in(3) <= j1_8;
+	    R_gpio_in(4) <= j1_9;
+	    R_gpio_in(5) <= j1_13;
+	    R_gpio_in(6) <= j1_14;
+	    R_gpio_in(7) <= j1_15;
+	    R_gpio_in(8) <= j1_16;
+	    R_gpio_in(9) <= j1_17;
+	    R_gpio_in(10) <= j1_18;
+	    R_gpio_in(11) <= j1_19;
+	    R_gpio_in(12) <= j1_20;
+	    R_gpio_in(13) <= j1_21;
+	    R_gpio_in(14) <= j1_22;
+	    R_gpio_in(15) <= j1_24;
+	    R_gpio_in(16) <= j2_2;
+	    R_gpio_in(17) <= j2_3;
+	    R_gpio_in(18) <= j2_4;
+	    R_gpio_in(19) <= j2_5;
+	    R_gpio_in(20) <= j2_6;
+	    R_gpio_in(21) <= j2_7;
+	    R_gpio_in(22) <= j2_8;
+	    R_gpio_in(23) <= j2_9;
+	    R_gpio_in(24) <= j2_10;
+	    R_gpio_in(25) <= j2_11;
+	    R_gpio_in(26) <= j2_12;
+	    R_gpio_in(27) <= j2_13;
+	    R_gpio_in(28) <= j2_16;
+	end if;
     end process;
-    led <= R_led when C_led_btns else "--------";
+    led <= R_led when C_leds_btns else (others => '-');
 
     -- XXX replace with a balanced multiplexer
     process(io_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard)
     begin
 	case io_addr(7 downto 4) is
+	when x"0"  =>
+	    if C_gpio then
+		io_to_cpu <= "---" & R_gpio_in;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
 	when x"1"  =>
-	    io_to_cpu <="----------------" & "----" & R_sw & "---" & R_btns;
+	    if C_leds_btns then
+		io_to_cpu <="----------------" & "----" & R_sw & "---" & R_btns;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
 	when x"2"  =>
 	    if C_sio then
 		io_to_cpu <= from_sio;
 	    else
-		io_to_cpu <= "--------------------------------";
+		io_to_cpu <= (others => '-');
 	    end if;
 	when x"3"  =>
 	    if C_flash and io_addr(3 downto 2) = "00" then
@@ -428,10 +505,10 @@ begin
 	    elsif C_sdcard and io_addr(3 downto 2) = "01" then
 		io_to_cpu <= from_sdcard;
 	    else
-		io_to_cpu <= "--------------------------------";
+		io_to_cpu <= (others => '-');
 	    end if;
 	when others =>
-	    io_to_cpu <= "--------------------------------";
+	    io_to_cpu <= (others => '-');
 	end case;
     end process;
 
@@ -478,7 +555,7 @@ begin
     --
     -- SRAM
     --
-    sram_oel <= '0'; -- XXX the old ULXP2 board needs this!
+    --sram_oel <= '0'; -- XXX the old ULXP2 board needs this!
 
     process(imem_addr, dmem_addr, dmem_byte_sel, cpu_to_dmem, dmem_write,
       dmem_addr_strobe, imem_addr_strobe, fb_addr_strobe, fb_addr,
@@ -627,14 +704,14 @@ begin
     end generate;
 
     -- more pins radiate more RF power
-    j1(20) <= dds_out when C_ddsfm else 'Z';
-    j1(21) <= dds_out when C_ddsfm else 'Z';
-    j1(22) <= dds_out when C_ddsfm else 'Z';
-    j1(23) <= dds_out when C_ddsfm else 'Z';
-    j2(2) <= not dds_out when C_ddsfm else 'Z';
-    j2(3) <= not dds_out when C_ddsfm else 'Z';
-    j2(4) <= not dds_out when C_ddsfm else 'Z';
-    j2(5) <= not dds_out when C_ddsfm else 'Z';
+    --j1(20) <= dds_out when C_ddsfm else 'Z';
+    --j1(21) <= dds_out when C_ddsfm else 'Z';
+    --j1(22) <= dds_out when C_ddsfm else 'Z';
+    --j1(23) <= dds_out when C_ddsfm else 'Z';
+    --j2(2) <= not dds_out when C_ddsfm else 'Z';
+    --j2(3) <= not dds_out when C_ddsfm else 'Z';
+    --j2(4) <= not dds_out when C_ddsfm else 'Z';
+    --j2(5) <= not dds_out when C_ddsfm else 'Z';
 
     --
     -- Video framebuffer
@@ -654,5 +731,38 @@ begin
 	tick_out => fb_tick
     );
     end generate;
+
+    --
+    -- GPIO
+    --
+    j1_2 <= R_gpio_out(0) when R_gpio_ctl(0) = '1' else 'Z';
+    j1_3 <= R_gpio_out(1) when R_gpio_ctl(1) = '1' else 'Z';
+    j1_4 <= R_gpio_out(2) when R_gpio_ctl(2) = '1' else 'Z';
+    j1_8 <= R_gpio_out(3) when R_gpio_ctl(3) = '1' else 'Z';
+    j1_9 <= R_gpio_out(4) when R_gpio_ctl(4) = '1' else 'Z';
+    j1_13 <= R_gpio_out(5) when R_gpio_ctl(5) = '1' else 'Z';
+    j1_14 <= R_gpio_out(6) when R_gpio_ctl(6) = '1' else 'Z';
+    j1_15 <= R_gpio_out(7) when R_gpio_ctl(7) = '1' else 'Z';
+    j1_16 <= R_gpio_out(8) when R_gpio_ctl(8) = '1' else 'Z';
+    j1_17 <= R_gpio_out(9) when R_gpio_ctl(9) = '1' else 'Z';
+    j1_18 <= R_gpio_out(10) when R_gpio_ctl(10) = '1' else 'Z';
+    j1_19 <= R_gpio_out(11) when R_gpio_ctl(11) = '1' else 'Z';
+    j1_20 <= R_gpio_out(12) when R_gpio_ctl(12) = '1' else 'Z';
+    j1_21 <= R_gpio_out(13) when R_gpio_ctl(13) = '1' else 'Z';
+    j1_22 <= R_gpio_out(14) when R_gpio_ctl(14) = '1' else 'Z';
+    j1_24 <= R_gpio_out(15) when R_gpio_ctl(15) = '1' else 'Z';
+    j2_2 <= R_gpio_out(16) when R_gpio_ctl(16) = '1' else 'Z';
+    j2_3 <= R_gpio_out(17) when R_gpio_ctl(17) = '1' else 'Z';
+    j2_4 <= R_gpio_out(18) when R_gpio_ctl(18) = '1' else 'Z';
+    j2_5 <= R_gpio_out(19) when R_gpio_ctl(19) = '1' else 'Z';
+    j2_6 <= R_gpio_out(20) when R_gpio_ctl(20) = '1' else 'Z';
+    j2_7 <= R_gpio_out(21) when R_gpio_ctl(21) = '1' else 'Z';
+    j2_8 <= R_gpio_out(22) when R_gpio_ctl(22) = '1' else 'Z';
+    j2_9 <= R_gpio_out(23) when R_gpio_ctl(23) = '1' else 'Z';
+    j2_10 <= R_gpio_out(24) when R_gpio_ctl(24) = '1' else 'Z';
+    j2_11 <= R_gpio_out(25) when R_gpio_ctl(25) = '1' else 'Z';
+    j2_12 <= R_gpio_out(26) when R_gpio_ctl(26) = '1' else 'Z';
+    j2_13 <= R_gpio_out(27) when R_gpio_ctl(27) = '1' else 'Z';
+    j2_16 <= R_gpio_out(28) when R_gpio_ctl(28) = '1' else 'Z';
 
 end Behavioral;
