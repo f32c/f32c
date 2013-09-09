@@ -123,7 +123,8 @@ main(int argc, char **argv)
 	for(;;){
 		do{
 			trapped=0;
-			*line ='>';
+			line[0] = '>';
+			line[1] = 0;
 			VOID edit( (ival)1, (ival)1, (ival)0);
 		}while( trapped || ( !(i=compile(1, nline, 0)) && !linenumber));
 		if(!linenumber)
