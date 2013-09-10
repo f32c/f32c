@@ -13,6 +13,8 @@ CFLAGS += -DNO_PRINTF_FLOAT
 CFLAGS += -D_FS_MINIMIZE=1 -D_FS_READONLY=1 -D_FS_SHARE=0
 CFLAGS += -D_FS_TINY=1 -D_FS_RPATH=0 -D_USE_LFN=0
 
+# SPI flash image name
+SPI_IMG_NAME = ulx2s_4m.img
 
 PROG = loader
 
@@ -23,3 +25,11 @@ F32C_LIBS = printf fatfs
 ASFILES = ${BASE_DIR}lib/start.S
 
 include ${POST_MK}
+
+image:	loader.bin
+	cat /dev/zero | tr "\000" "\377" | dd ibs=4k count=1k of=${SPI_IMG_NAME}
+	newfs_msdos -F 12 -S 4096 -s 1024 -r 3 -n 1 ./${SPI_IMG_NAME}
+	dd bs=1 if=loader.bin of=${SPI_IMG_NAME} oseek=512 conv=notrunc
+	mmd -i ${SPI_IMG_NAME} ::boot
+	mcopy -i ${SPI_IMG_NAME} ../../pbasic/basic.bin ::boot
+	mattrib -i ${SPI_IMG_NAME} +r ::boot/basic.bin
