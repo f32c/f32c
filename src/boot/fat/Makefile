@@ -28,7 +28,10 @@ include ${POST_MK}
 
 image:	loader.bin
 	cat /dev/zero | tr "\000" "\377" | dd ibs=4k count=1k of=${SPI_IMG_NAME}
-	newfs_msdos -F 12 -S 4096 -s 1024 -r 3 -n 1 ./${SPI_IMG_NAME}
+	echo "(`wc -c loader.bin | cut -c1-9` + 512 + 4095) / 4096" | bc > .rs
+	echo "Reserved sectors:" `cat .rs`
+	newfs_msdos -F 12 -S 4096 -s 1024 -r `cat .rs` -n 1 ./${SPI_IMG_NAME}
+	rm .rs
 	dd bs=1 if=loader.bin of=${SPI_IMG_NAME} oseek=512 conv=notrunc
 	mmd -i ${SPI_IMG_NAME} ::boot
 	mcopy -i ${SPI_IMG_NAME} ../../pbasic/basic.bin ::boot
