@@ -368,7 +368,7 @@ begin
 	  and io_write = '1' then
 	    -- GPIO
 	    if C_gpio and io_addr(7 downto 4) = x"0" then
-		if io_addr(3) = '0' then
+		if io_addr(2) = '0' then
 		    if io_byte_sel(0) = '1' then
 			R_gpio_out(7 downto 0) <= cpu_to_io(7 downto 0);
 		    end if;
