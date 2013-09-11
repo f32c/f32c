@@ -1,9 +1,9 @@
 
 PROG = test1
 
-CFILES = test1.c ../lib/tjpgd.c
+CFILES = test1.c
 
-F32C_LIBS = printf fatfs random framebuffer
+F32C_LIBS = printf fatfs random framebuffer jpeg
 
 CFLAGS += -DOPTIMIZED_DIVSI3
 
