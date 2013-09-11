@@ -9,7 +9,7 @@ CFILES = bas1.c bas2.c bas3.c bas4.c bas5.c \
 CFILES += bas_fb.c bas_file.c f32c_glue.c \
 	  ${BASE_DIR}lib/atoi.c ${BASE_DIR}lib/random.c
 
-F32C_LIBS = setjmp math fatfs printf framebuffer
+F32C_LIBS = setjmp math fatfs printf framebuffer jpeg
 
 CFLAGS += -DOPTIMIZED_DIVSI3
 

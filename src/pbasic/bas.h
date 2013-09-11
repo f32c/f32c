@@ -720,7 +720,7 @@ int	endd(void),runn(void),gotos(void),rem(void),lets(void),list(void),
 	file_kill(void), file_mkdir(void), file_copy(void), file_rename(void),
 	file_cd(void), file_pwd(void), file_more(void),
 	vidmode(void), color(void), plot(void), lineto(void),
-	rectangle(void), circle(void), blkmove(void), text(void);
+	rectangle(void), circle(void), text(void), loadjpg(void);
 
 int	quit(void);
 
@@ -807,7 +807,7 @@ int	endd(),runn(),gotos(),rem(),lets(),list(),
 	file_more(), file_kill(), file_mkdir(), file_copy(), file_rename(),
 	file_cd(), file_pwd(),
 	vidmode(), color(), plot(), lineto(),
-	rectangle(), circle(), blkmove(), text();
+	rectangle(), circle(), text(), loadjpg();
 
 int	quit(void);
 
@@ -1066,7 +1066,7 @@ const	intf_t	commandf = {
 	bdeffn, bopts, tron, troff, bdir, bdirl, bmat, bwrite, berase,
 	file_more, file_kill, file_mkdir, file_copy, file_rename,
 	file_cd, file_pwd,
-	vidmode, color, plot, lineto, rectangle, circle, blkmove, text
+	vidmode, color, plot, lineto, rectangle, circle, text, loadjpg
 };
 
 /*      table of error messages */
@@ -1225,8 +1225,8 @@ const	struct  tabl    table[]={
 	"lineto",	0323,
 	"rectangle",	0324,
 	"circle",	0325,
-	"blkmove",	0326,
-	"text",		0327,
+	"text",		0326,
+	"loadjpg",	0327,
 	/*
 	 * commands go to here
 	 */
