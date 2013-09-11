@@ -6,6 +6,16 @@
 #include <string.h>
 #include <fb.h>
 
+#include <tjpgd.h>
+
+
+/* User defined device identifier for JPEG decompression*/
+typedef struct {
+	int fh;		/* File handle */
+	BYTE *fbuf;	/* Pointer to the frame buffer for output function */
+	UINT wfbuf;	/* Width of the frame buffer [pix] */
+} IODEV;
+
 
 static const struct colormap {
 	int value;
@@ -42,6 +52,7 @@ static int last_x;
 static int last_y;
 static int fgcolor;
 static int bgcolor;
+static int fb_mode = 3;
 
 
 void
@@ -63,6 +74,7 @@ vidmode(void)
 	if (mode < 0 || mode > 3)
 		error(33);	/* argument error */
 	fb_set_mode(mode);
+	fb_mode = mode;
 	fgcolor = fb_rgb2pal(255, 255, 255);
 	bgcolor = fb_rgb2pal(0, 0, 0);
 	if (mode < 2)
@@ -302,8 +314,8 @@ text(void)
 		point--;
 	else {
 		if (c != ',') {
-			error(15);
 			FREE_STR(st);
+			error(15);
 		}
 		scale_y = evalint() & 0xff;
 	}
@@ -315,9 +327,117 @@ text(void)
 }
 
 
-int
-blkmove(void)
+/* Input function for JPEG decompression */
+static UINT
+in_func(JDEC* jd, BYTE* buff, UINT nbyte)
 {
+	IODEV *dev = (IODEV*)jd->device;
+	UINT retval;
 
+	if (buff) {
+		/* Read bytes from input stream */
+		retval = read(dev->fh, buff, nbyte);
+	} else {
+		/* Remove bytes from input stream */
+		retval = lseek(dev->fh, nbyte, SEEK_CUR) ? nbyte : 0;
+	}
+
+	return (retval);
+}
+
+
+/* Output funciton for JPEG decompression */
+static UINT
+out_func(JDEC* jd, void* bitmap, JRECT* rect)
+{
+	IODEV *dev = (IODEV*)jd->device;
+	UINT y, bws, bwd;
+	BYTE *dst;
+#if JD_FORMAT < JD_FMT_RGB32
+	BYTE *src;
+#else
+	LONG *src;
+#endif
+
+	/* Copy the decompressed RGB rectanglar to the frame buffer (assuming RGB888 cfg) */
+#if JD_FORMAT < JD_FMT_RGB32
+	src = (BYTE*)bitmap;
+	/* Width of source rectangular [byte] */
+	bws = 3 * (rect->right - rect->left + 1);
+#else
+	src = (LONG*)bitmap;
+	/* Width of source rectangular [byte] */
+	bws = (rect->right - rect->left + 1);
+#endif
+	/* Left-top of destination rectangular */
+	dst = dev->fbuf + (fb_mode + 1) * (rect->top * dev->wfbuf + rect->left);
+	/* Width of frame buffer [byte] */
+	bwd = (fb_mode + 1) * dev->wfbuf;
+	for (y = rect->top; y <= rect->bottom; y++) {
+#if JD_FORMAT < JD_FMT_RGB32
+		for (uint32_t i = 0, j = 0; i < bws; i += 3, j += (fb_mode + 1)) {
+#else
+		for (uint32_t i = 0, j = 0; i < bws; i++, j += (fb_mode + 1)) {
+#endif
+			uint32_t color;
+		
+#if JD_FORMAT < JD_FMT_RGB32
+			color = fb_rgb2pal(src[i], src[i+1], src[i+2]);
+#else
+			color = fb_rgb2pal(src[i] >> 16, (src[i] >> 8) & 0xff,
+			    src[i] & 0xff);
+#endif
+			if (fb_mode)
+				*((uint16_t *) &dst[j]) = color;
+			else
+				dst[j] = color;
+		}
+		src += bws; dst += bwd;  /* Next line */
+	}
+
+	return (1);    /* Continue to decompress */
+}
+
+
+int
+loadjpg(void)
+{
+	char work_buf[8192];
+	STR st;
+	JDEC jdec;
+	JRESULT r;
+	IODEV devid;
+
+	st = stringeval();
+	NULL_TERMINATE(st);
+	strcpy(work_buf, st->strval);
+	FREE_STR(st);
+	check();
+
+	if (fb_mode > 1)
+		error(24);	/* out of core */
+
+	devid.fh = open(work_buf, O_RDONLY);
+	if (devid.fh < 0)
+		error(15);
+
+	r = jd_prepare(&jdec, in_func, work_buf, sizeof(work_buf), &devid);
+	if (r == JDR_OK) {
+		printf("Image dimensions: %u by %u.\n",
+		    jdec.width, jdec.height);
+		if (jdec.width > 512 || jdec.height > 288) {
+			close(devid.fh);
+			error(12); /* buffer size overflow in field */
+		}
+
+		devid.fbuf = (void *) 0x800b0000; /* XXX hardcoded!!! */
+		devid.wfbuf = 512;
+		r = jd_decomp(&jdec, out_func, 0);
+                if (r != JDR_OK)
+                        printf("Failed to decompress: rc=%d\n", r);
+	} else {
+		printf("Failed to prepare: rc=%d\n", r);
+	}
+	close(devid.fh);
 	normret;
 }
