@@ -72,6 +72,12 @@ ifneq (,$(findstring framebuffer,$(F32C_LIBS)))
 	_NEED_FB = YES
 endif
 
+ifneq (,$(findstring jpeg,$(F32C_LIBS)))
+	_NEED_DIV = YES
+	_NEED_FB = YES
+	_NEED_JPEG = YES
+endif
+
 
 
 
@@ -178,5 +184,9 @@ endif
 
 ifdef _NEED_FB
 	CFILES += ${BASE_DIR}lib/fb.c
+endif
+
+ifdef _NEED_JPEG
+	CFILES += ${BASE_DIR}lib/tjpgd.c
 endif
 
