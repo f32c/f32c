@@ -374,7 +374,6 @@ runn()
 	}
 got:
 	clear();   /* zap the variables */
-	lp_fd = -1;
 	if(!rflag)
 		closeall();
 	if(!p)                 /* no program so return */
@@ -455,39 +454,6 @@ bwrite()
 	normret;
 }
 
-static	ival	lp_cursor;
-static	int	lp_width = 80;
-
-static	char	lp_devname[] = "bas.lpout";
-
-int
-lprint()
-{
-	int	fd;
-
-	if(lp_fd > 0){
-		VOID close(lp_fd);
-		lp_fd = 0;
-	}
-	if(lp_fd < 0)
-		fd = -1;
-	else
-		fd = open(lp_devname, 1);
-	if(fd < 0){
-		fd = creat(lp_devname, 0644);
-		if(fd < 0)
-			error(14);
-	}
-	VOID lseek(fd, 0L, 2);
-	lp_fd = fd;
-
-	doprint(1, 0);
-
-	VOID close(lp_fd);
-	lp_fd = 0;
-
-	normret;
-}
 
 #ifdef	__STDC__
 /*
@@ -499,16 +465,6 @@ mypwrite(filebufp fp, CHAR *buf, int len)
 {
 	fp = fp;
 	return((int)write(1, (char *)buf, (unsigned)len));
-}
-
-/*ARGSUSED*/
-static	int
-lpwrite(filebufp fp, CHAR *buf, int len)
-{
-	fp = fp;
-	if(write(lp_fd, (char *)buf, (unsigned)len) != len)
-		c_error(60);
-	return(0);
 }
 #else
 
@@ -523,18 +479,6 @@ CHAR	*buf;
 int	len;
 {
 	return((int)write(1, (char *)buf, (unsigned)len));
-}
-
-/*ARGSUSED*/
-static	int
-lpwrite(fp, buf, len)
-filebufp fp;
-CHAR	*buf;
-int	len;
-{
-	if(write(lp_fd, (char *)buf, (unsigned)len) != len)
-		c_error(60);
-	return(0);
 }
 #endif
 
@@ -565,11 +509,7 @@ int	islp, iswrt;
 	static	CHAR	quote[] = "\"";
 
 	c=getch();
-	if(islp){
-		outfunc = lpwrite;
-		curcursor= &lp_cursor;
-		Twidth = lp_width;
-	} else if(c=='#'){
+	if(c=='#'){
 		i=evalint();
 		if( (c = getch()) !=','){
 			if(!istermin(c))

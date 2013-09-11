@@ -714,11 +714,11 @@ int	endd(void),runn(void),gotos(void),rem(void),lets(void),list(void),
 	rept(void),untilf(void),whilef(void),wendf(void),renumb(void),
 	fnend(void), fncmd(void), blset(void), brset(void), bfield(void),
 	bput(void), bget(void), bdefint(void), bdefstr(void), bdefdbl(void),
-	bcommon(void), blocal(void), defproc(void), bopts(void), lprint(void),
+	bcommon(void), blocal(void), defproc(void), bopts(void),
 	tron(void), troff(void), bdir(void), bdirl(void), bdeffn(void),
 	bmat(void), bwrite(void), berase(void),
 	file_kill(void), file_mkdir(void), file_copy(void), file_rename(void),
-	file_cd(void), file_pwd(void),
+	file_cd(void), file_pwd(void), file_more(void),
 	vidmode(void), color(void), plot(void), lineto(void),
 	rectangle(void), circle(void), blkmove(void), text(void);
 
@@ -794,7 +794,7 @@ STR	rightst(),leftst(),strng(),estrng(),chrstr(),nstrng(),
 STR	datef(), binstr();
 
 int	endd(),runn(),gotos(),rem(),lets(),list(),
-	print(),stop(),bdelete(),editl(),input(),clearl(),lprint(),
+	print(),stop(),bdelete(),editl(),input(),clearl(),
 	save(),load(),neww(),shell(),resume(),iff(), tron(), troff(),
 	brandom(),dimensio(),forr(),next(),gosub(),retn(),
 	onn(),doerror(),rem(),dauto(), defproc(), bdeffn(),
@@ -804,7 +804,7 @@ int	endd(),runn(),gotos(),rem(),lets(),list(),
 	fnend(), fncmd(), blset(), brset(), bfield(), bput(), bget(),
 	bdefint(), bdefstr(), bdefdbl(), bcommon(), blocal(), bopts(),
 	bdir(), bdirl(), bmat(), bwrite(), berase(),
-	file_kill(), file_mkdir(), file_copy(), file_rename(),
+	file_more(), file_kill(), file_mkdir(), file_copy(), file_rename(),
 	file_cd(), file_pwd(),
 	vidmode(), color(), plot(), lineto(),
 	rectangle(), circle(), blkmove(), text();
@@ -972,8 +972,6 @@ ival	cursor;         /* position of cursor on line */
 
 int     readfile;       /* input file , file descriptor */
 
-int	lp_fd;		/* file descriptor for lprint */
-
 char    vartype;        /* current type of variable */
 
 lpoint  datastolin;     /* pointer to start of current data line */
@@ -1065,8 +1063,9 @@ const	intf_t	commandf = {
 	fclosef,merge,quit,quit,quit,chain,deffunc,cont,poke,linput,rept,
 	untilf,whilef,wendf,renumb,fnend,fncmd, blset, brset, bfield, bput,
 	bget,lhmidst, bdefint, bdefstr, bdefdbl, bcommon, blocal, defproc,
-	bdeffn, bopts, lprint, tron, troff, bdir, bdirl, bmat, bwrite, berase,
-	file_kill, file_mkdir, file_copy, file_rename, file_cd, file_pwd,
+	bdeffn, bopts, tron, troff, bdir, bdirl, bmat, bwrite, berase,
+	file_more, file_kill, file_mkdir, file_copy, file_rename,
+	file_cd, file_pwd,
 	vidmode, color, plot, lineto, rectangle, circle, blkmove, text
 };
 
@@ -1153,7 +1152,7 @@ const	struct  tabl    table[]={
 	"save",		0214,
 	"load",		0215,
 	"new",		0216,
-	"shell",	0217,
+	"shell",	0217,		/* XXX -> exec */
 	"resume",	0220,
 	"if",		0221,
 	"random",	0222,
@@ -1204,15 +1203,15 @@ const	struct  tabl    table[]={
 	"defproc",	0277,
 	"deffn",	0300,
 	"opt",		0301,
-	"lprint",	0302,
-	"tron",		0303,
-	"troff",	0304,
-	"dir",		0305,
-	"dirl",		0306,
-	"mat",		0307,
-	"write",	0310,
-	"erase",	0311,
+	"tron",		0302,
+	"troff",	0303,
+	"dir",		0304,
+	"dirl",		0305,
+	"mat",		0306,
+	"write",	0307,
+	"erase",	0310,
 	/* filesystem utilities */
+	"more",		0311,
 	"kill",		0312,
 	"mkdir",	0313,
 	"copy",		0314,

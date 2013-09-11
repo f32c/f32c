@@ -109,7 +109,6 @@ int	fp;
 	firsttime=0;
 	readfi(fp, (lpoint)0, 0);
 	clear();
-	lp_fd = -1;
 	p= program;	/* is this needed - yes */
 	if(!p)
 		VOID quit();
