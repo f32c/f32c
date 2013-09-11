@@ -6,6 +6,9 @@
 #include <string.h>
 #include <fatfs/ff.h>
 
+#include <io.h>
+#include <mips/asm.h>
+
 #include "bas.h"
 
 
@@ -16,6 +19,7 @@ extern void m_free(void *);
 int
 file_cd()
 {
+	char name[128];
 	STR st;
 	DIR dir;
 	int fres;
@@ -24,14 +28,16 @@ file_cd()
 
 	st = stringeval();
 	NULL_TERMINATE(st);
+	strcpy(name, st->strval);
+	FREE_STR(st);
 	check();
 
-	if (strlen(st->strval) >= 2 && st->strval[1] == ':') {
-		buf[0] = st->strval[0];
+	if (strlen(name) >= 2 && name[1] == ':') {
+		buf[0] = name[0];
 		buf[1] = ':';
 		buf[2] = 0;
 		if (buf[0] < '0' || buf[0] > '1')
-			goto fail;
+			error(15);
 
 		/* Dummy open, just to auto-mount the volume */
 		fres = open(buf, 0);
@@ -41,20 +47,14 @@ file_cd()
 		/* Open the directory */
 		fres = f_opendir(&dir, buf);
 		if (fres != FR_OK)
-			goto fail;
+			error(15);
 		if (f_chdrive(buf[0] - '0') != FR_OK)
-			goto fail;
+			error(15);
 		start = 2;
 	}
 
-	if (strlen(st->strval) > start && f_chdir(&st->strval[start]) != FR_OK)
-		goto fail;
-	FREE_STR(st);
-	goto ok;
-fail:
-	FREE_STR(st);
-	error(15);
-ok:
+	if (strlen(name) > start && f_chdir(&name[start]) != FR_OK)
+		error(15);
 	normret;
 }
 
@@ -74,19 +74,16 @@ file_pwd()
 int
 file_kill()
 {
+	char name[128];
 	STR st;
 
 	st = stringeval();
 	NULL_TERMINATE(st);
+	strcpy(name, st->strval);
+	FREE_STR(st);
 	check();
-	if (f_unlink(st->strval) != FR_OK)
-		goto fail;
-	FREE_STR(st);
-	goto ok;
-fail:
-	FREE_STR(st);
-	error(15);
-ok:
+	if (f_unlink(name) != FR_OK)
+		error(15);
 	normret;
 }
 
@@ -94,33 +91,27 @@ ok:
 int
 file_mkdir()
 {
+	char name[128];
 	STR st;
 
 	st = stringeval();
 	NULL_TERMINATE(st);
+	strcpy(name, st->strval);
+	FREE_STR(st);
 	check();
-	if (f_mkdir(st->strval) != FR_OK)
-		goto fail;
-	FREE_STR(st);
-	goto ok;
-fail:
-	FREE_STR(st);
-	error(15);
-ok:
+	if (f_mkdir(name) != FR_OK)
+		error(15);
 	normret;
 }
 
 
-#include <io.h>
-#include <mips/asm.h>
-
 int
 file_copy()
 {
-	char nambuf[256];
+	char from_name[128], to_name[128];
 	char *buf;
 	int buflen;
-	STR st1, st2;
+	STR st;
 	int from, to;
 	int got, wrote;
 	int tmp, tot = 0;
@@ -129,18 +120,20 @@ file_copy()
 	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
 	freq_khz = ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1);
 
-	st1 = stringeval();
-	NULL_TERMINATE(st1);
-	strcpy(nambuf, st1->strval);
-	FREE_STR(st1);
+	st = stringeval();
+	NULL_TERMINATE(st);
+	strcpy(from_name, st->strval);
+	FREE_STR(st);
 	if(getch() != ',')
 		error(SYNTAX);
 
-	st2 = stringeval();
-	NULL_TERMINATE(st2);
-	check(); /* XXX st2 leak? */
+	st = stringeval();
+	NULL_TERMINATE(st);
+	strcpy(to_name, st->strval);
+	FREE_STR(st);
+	check();
 
-	from = open(nambuf, O_RDONLY);
+	from = open(from_name, O_RDONLY);
 	if (from < 0)
 		error(15);
 
@@ -151,12 +144,10 @@ file_copy()
 	}
 	if (buf == NULL) {
 		close (from);
-		FREE_STR(st2);
 		error(24);	/* out of core */
 	}
 
-	to = open(st2->strval, O_CREAT|O_RDWR);
-	FREE_STR(st2);
+	to = open(to_name, O_CREAT|O_RDWR);
 	if (to < 0) {
 		m_free(buf);
 		close (from);	/* cannot creat file */
@@ -202,27 +193,69 @@ file_copy()
 int
 file_rename()
 {
-	char buf[256];
-	STR st1, st2;
+	char from_name[128], to_name[128];
+	STR st;
 
-	st1 = stringeval();
-	NULL_TERMINATE(st1);
-	strcpy(buf, st1->strval);
-	FREE_STR(st1);
+	st = stringeval();
+	NULL_TERMINATE(st);
+	strcpy(from_name, st->strval);
+	FREE_STR(st);
 	if(getch() != ',')
 		error(SYNTAX);
 
-	st2 = stringeval();
-	NULL_TERMINATE(st2);
+	st = stringeval();
+	NULL_TERMINATE(st);
+	strcpy(to_name, st->strval);
+	FREE_STR(st);
 	check();
 
-	if (f_rename(buf, st2->strval) != FR_OK)
-		goto fail;
-	FREE_STR(st2);
-	goto ok;
-fail:
-	FREE_STR(st2);
-	error(15);
-ok:
+	if (f_rename(from_name, to_name) != FR_OK)
+		error(15);
+	normret;
+}
+
+
+int
+file_more()
+{
+	char buf[128];
+	STR st;
+	int fd, got, i, c, last, lno = 0;
+
+	st = stringeval();
+	NULL_TERMINATE(st);
+	strcpy(buf, st->strval);
+	FREE_STR(st);
+	check();
+
+	fd = open(buf, 0);
+	if (fd < 0)
+		error(15);
+
+	do {
+		got = read(fd, buf, 128);
+		for (i = 0, last = 0; i < got; i++) {
+			if (buf[i] == '\n') {
+				write(1, &buf[last], i - last + 1);
+				last = i + 1;
+				if (lno++ == 20) {
+					printf("-- more --");
+					c = sio_getchar(1);
+					if (c == 3) {
+						printf("^C\n");
+						goto done;
+					}
+					if (c == ' ')
+						lno = 0;
+					else
+						lno--;
+					printf("\r          \r");
+				}
+			}
+		}
+	} while (got > 0);
+
+done:
+	close(fd);
 	normret;
 }

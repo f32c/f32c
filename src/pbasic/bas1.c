@@ -108,7 +108,6 @@ main(int argc, char **argv)
 		readfi(fp, 0, 0);
 		close(fp);
         	clear();
-        	lp_fd = -1;
         	if (program) {
         		stocurlin=program;
         		point= program->lin;
@@ -590,10 +589,6 @@ int     i;                      /* error code */
 	if(readfile){                   /* close file descriptor */
 		VOID close(readfile);   /* from loading a file */
 		readfile=0;
-	}
-	if(lp_fd > 0){			/* close file for lprint */
-		VOID close(lp_fd);
-		lp_fd = 0;
 	}
 	if(renstr != 0){
 		mfree(renstr);
