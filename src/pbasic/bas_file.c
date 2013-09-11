@@ -180,6 +180,11 @@ file_copy()
 			error(60);	/* File write error */
 		}
 		tot += wrote;
+		/* CTRL + C ? */
+		if (sio_getchar(0) == 3) {
+			printf("^C - interrupted!\n");
+			got = 0;
+		}
 	} while (got > 0);
 	RDTSC(end);
 
