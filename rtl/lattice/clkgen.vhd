@@ -41,7 +41,8 @@ entity clkgen is
 	);
 	port (
 		clk_25m: in std_logic;
-		sel: in std_logic;
+		ena_325m: in std_logic;
+		sel: in std_logic; -- only for debugging
 		key: in std_logic; -- one-step clocking
 		res: in std_logic; -- only when C_debug is enabled
 		clk, clk_325m: out std_logic
@@ -68,7 +69,14 @@ begin
         	clk => clk_25m, lock => pll_lock, clkok => pll_clk,
 		clkop => pll_clk_325m
 	);
-	clk_325m <= pll_clk_325m;
+	DCS_325: DCS
+	generic map (
+		dcsmode => "POS"
+	)
+	port map (
+		sel => ena_325m, clk0 => '0', clk1 => pll_clk_325m,
+		dcsout => clk_325m
+	);
 	clk <= pll_clk;
 	end generate;
 
@@ -114,7 +122,7 @@ begin
 	end process;
 
 	-- Clock selector
-	DCS_0: DCS
+	DCS_25: DCS
 	generic map (
 		dcsmode => "POS"
 	)

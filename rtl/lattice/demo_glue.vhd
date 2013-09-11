@@ -122,6 +122,7 @@ architecture Behavioral of glue is
 
     -- global clock
     signal clk: std_logic;
+    signal clk_325m, ena_325m: std_logic;
 
     -- signals to / from f32c cores(s)
     signal res, intr: f32c_std_logic;
@@ -170,7 +171,7 @@ architecture Behavioral of glue is
     signal debug_txd: std_logic;
 
     -- FM TX DDS
-    signal clk_dds, dds_out: std_logic;
+    signal dds_out: std_logic;
     signal R_dds_cnt, R_dds_div, R_dds_div1: std_logic_vector(21 downto 0);
 
     -- Video framebuffer
@@ -190,9 +191,11 @@ begin
 	C_debug => C_debug
     )
     port map (
-	clk_25m => clk_25m, clk => clk, clk_325m => clk_dds,
+	clk_25m => clk_25m, ena_325m => ena_325m,
+	clk => clk, clk_325m => clk_325m,
 	sel => sw(2), key => btn_down, res => '0'
     );
+    ena_325m <= '1' when R_fb_mode /= "11" else '0';
 
     --
     -- f32c core(s)
@@ -693,9 +696,9 @@ begin
     --
     G_ddsfm:
     if C_ddsfm generate
-    process(clk_dds)
+    process(clk_325m)
     begin
-	if (rising_edge(clk_dds)) then
+	if rising_edge(clk_325m) then
 	    R_dds_div1 <= R_dds_div; -- Cross clock domain
 	    R_dds_cnt <= R_dds_cnt + R_dds_div1;
 	end if;
@@ -720,7 +723,7 @@ begin
     if C_framebuffer generate
     fb: entity work.fb
     port map (
-	clk => clk, clk_dac => clk_dds,
+	clk => clk, clk_dac => clk_325m,
 	addr_strobe => fb_addr_strobe,
 	addr_out => fb_addr,
 	data_ready => fb_data_ready,
