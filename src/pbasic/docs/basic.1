@@ -581,7 +581,19 @@ trapping routine has been supplied a message is printed
 with the corresponding line number.
 
 .SH BUGS
-None yet!
+The RENUMBER command fails to properly track and update goto targets
+hidden inside IF .. THEN .. ELSE constructs.
 
-.SH AUTHOR
-Phil Cockcroft
+The MOD function sometimes returns non-integer values.
+
+REPEAT / UNTIL loops inside functions, procedures or nested inside
+other loops apparently do not work.
+
+
+.SH AUTHORS
+Phil Cockcroft created the Rabbit BASIC in early 1980's while he was at
+University College, London.  He released the source code to the
+Public Domain in 1986 and continued to further improve and maintain it
+until mid-1990's.  Features specific to the ULX2S FPGA board, such
+as file management and framebuffer routines, were added by
+Marko Zec in 2013.
