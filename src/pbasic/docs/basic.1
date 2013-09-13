@@ -1,237 +1,207 @@
 .TH BASIC 1
-.SH
-basic \- `Basic' language interpreter
-.SH SYNOPSIS
-.B basic
-[ -e -x -n file ]
 .SH DESCRIPTION
-.B Basic
-is an interpreter for the Basic language. See below
-for current commands recognised. If a file is given then
-that file is loaded up into core and run without any
-interaction. This can be used for games etc. which use a
-small calling program which is set user-id. All commands
-are only recognised in lower case. A line editor is
-invoked for all input from the terminal.
-To get characters less than space into a line use the
-construct \\n \\a etc. which will get cntrl-n and
-cntrl-a into the line.
-.PP
-FLAGS
+.B Rabbit BASIC
+is an interpreter for the BASIC programming language. See below
+for current commands recognised. 
+At startup, the interpreter attempts to load and execute a program
+called autoexec.bat from the root directory of the on-board Flash drive.
+If the startup program is not found or its execution terminates,
+a line editor is invoked which accepts and processes
+all subsequent input from the terminal.
+.SH EDITING
+To get special ASCII characters into a line use constructs like
+\\n \\a etc. which will get ctrl-n and ctrl-a into the line.
+.SH COMMANDS
 .HP 6
--e use the in built editor for line input. Even when
-default mode is for no editor.
-.HP 6
--x don't use the editor ever. Use the terminal driver
-for all editing and input.
-.HP 6
--n where n is any number between 0 and 9 defines the
-number of file buffers allocated at start up.
-.PP
-COMMANDS
-.HP 6
-Standard Dartmouth Basic Commands:-
-.HP 6
-end
+END
 .br
-This terminates the execution of a program
-and returns to command level.
+Terminate program execution and return to the interactive mode
+command prompt.
 .HP 6
-run { l }
+RUN { l }
 .br
-This will execute a program, if an optional
-line number is given then the program is run from that
-line. All variables are cleared and all files are
-closed.
+Execute the currently loaded program.  An optional numeric argument
+can be provided indicating a line number from which the program
+execution will begin.
+All variables are cleared and all currently open files
+are closed prior to the beginning of program execution.
 .HP 6
-goto l
+GOTO l
 .br
-This command will transfer control to the
-specified line number
+Jumps to the specified line number.
 .HP 6
-let x = EXP
+LET x = exp
 .br
-This command is used to introduce an
-assignment. If a command is not found on a line then a
-implied let is assumed.
+Assign a value to a variable.  If the LET keyword may be omitted.
 .HP 6
-list
+LIST
 .br
-the whole file
+lists the whole program
 .HP 6
-list 1-2
+LIST 1-2
 .br
-lines 1 to 2
+lists lines 1 to 2
 .HP 6
-list -1
+LIST -100
 .br
-lines up to 1
+lists all lines up to 100
 .HP 6
-list 1
+LIST 1
 .br
-line 1
-list 1-
+lists only line 1
 .HP 6
+LIST 1-
 .br
-line 1 onwards
+lists line 1 onwards
 .br
-This command will list any number of lines of
-text onto the terminal. The start and last line can be
-specified as can to a specified line and from a
-specified line.
+This command will display the entire or the selected portion
+of the current program onto the terminal.
 .HP 6
-print or '?'
+PRINT or '?' { arg, ... }
 .HP 6
-print #f
+PRINT #f { arg, ... }
 .br
-This command will print out all of it's
-parameters, they have to be separated by commas or
-semi-colons, if a comma is used then the print head is
-moved to the next tab position (16 places ). If a file
-descriptor is given then output is to the given file.
+Prints a variable number of arguments to the terminal.
+The arguments may be separated either by commas or
+semi-colons.  A comma indicates that the cursor will be
+advanced to the next tab stop (usually 8 or 16 characters).
+The output may be directed to a file if a file descriptor
+preceeded by a hash sign is provided as the first argument.
 .HP 6
-rem or `'
+REM or `'
 .br
-A comment statement, is ignored totally by
-the program during execution.
+An arbitrary comment.
 .HP 6
-stop
+STOP
 .br
-Stops the execution of the program and
-returns to command level. Similar to 'end' but prints a
-message. A program can also be 'cont'inued after a stop.
+Stops program execution and returns to the interactive command prompt.
+Functionally equivalent to the END command, with two exceptions:
+the STOP command prints a message, and permits the execution to
+be continued via the CONT command.
 .HP 6
-for x = EXP to EXP { step EXP }
+FOR var = expr1 TO expr2 { STEP expr }
 .br
-Will start execution of a for loop. It will
-take the two limits and an optional step argument. The
-loop is always executed once.
+Beginning of a FOR loop.  The value of variable
+var will be initialized to expr1 and will be increased
+by one on each subsequent loop iteration, and loping will
+continue as long as var is less then or equal to expr2.
+The loop is always executed at least once.
 .HP 6
-next { x { , y } }
+NEXT { x { , y } }
 .br
-End of the for loop, if the terminal
-conditions are met then execution continues from the
-next statement otherwise return to end of the
-corresponding for statement. The next does not need a
+End of a FOR loop. If terminal conditions are met then
+execution continues from the
+next statement, otherwise return to end of the
+corresponding for statement. The NEXT statement does not need a
 parameter if this is the case the most recently
-activated loop is used. If there are more than one
-parameter then each one is only checked after the
+activated loop is used. If there are multiple
+parameters then each one is only checked after the
 completion of the inner loop.
 .HP 6
-gosub l
+GOSUB l
 .br
-Transfer command to a line number. Save
-return address so that the program can resume execution
-after the gosub command.
+Jump to a subrutine ar line l, saving current line number on
+the return stack.
 .HP 6
-return
+RETURN
 .br
-Return from a subroutine ( called by gosub ).
-It will return from the most recently activated
-subroutine call.
+Return from a subroutine, resuming execution at a line following
+the last GOSUB command.
 .HP 6
-read VAR { , VAR }
+READ var { , var }
 .br
-Read data from the data statements contained
-in the program. An item can be a string or a variable.
+Read a string or numeric data item from DATA statements embedded
+in the program and assign it to variable(s) provided as arguments.
 .HP 6
-data OBJECT { , OBJECT }
+DATA object { , object }
 .br
-Statements that contain the data used in the
-read statements. Items are separated by commas. The
-data statement must be the only one on the line.
+Declare comma separated constant data items to be used by
+READ statements. 
+DATA statements are not permitted inside IF - THEN - ELSE constructs.
 .HP 6
-restore { l }
+RESTORE { l }
 .br
 Restore the data pointer to the start of the
-file. So that the data can be read again. If an
-optional line number is given then the restore occurs
+file, so that the data can be read again. If an
+optional line number is provided then the restore occurs
 from the start of that line. If no data statements are
 found then the restore is from the start of the
 program.
 .HP 6
-if EXP then STATEMENT { else STATEMENT }
+IF exp THEN statement { ELSE statement }
 .br
-The if statement if the condition is true
-then the commands after the 'then' are executed. If
-this is a line number then a goto is performed. If the
-condition is false then the statement after the else is
-dealt with in a similar manner, the else statement is
-an optinal facility.
+If the condition is true
+then the commands after the THEN keyword are executed.  A
+line line number may be specified instead of a command, which
+implies a GOTO to the requested line. If the
+condition is false then the statement after the optional ELSE
+keyword is evaluated and executed.
 .HP 6
-dim VAR(d,d,d) { , VAR(d) }
+DIM var(d,d,d) { , var(d) }
 .br
-Dimension a list of arrays ( string or
-arithmetic ) a maximum of three subscripts can be used.
-All arrays must be dimensioned before use.
+Declare and allocate memory for a list of arrays (string or
+arithmetic).   A maximum of three subscripts can be used.
+All arrays must be declared via DIM before use.
 .HP 6
-exit , bye , quit
+EXIT , BYE , QUIT
 .br
 Terminate the execution of the interpreter,
 closing all files.
-.PP
-Extended Basic Commands
 .HP 6
-delete l - l
+DELETE l - l
 .br
 Delete a specified range of lines. If they
 are not found then no lines will be deleted.
 .HP 6
-edit l
+EDIT l
 .br
-Edit a given line. If the exit from the edit
-is via a cntrl-c then do not change the line.
+Edit an existing line of the program text.  Editing may be
+terminated via ctrl-c, discarding all changes.
 .HP 6
-input { #f, } 
+INPUT { #f, } 
 .br
-input "prompt";
+INPUT "prompt";
 .br
-Input from a terminal or from a file. If the
+Input data from a terminal or from a file. If the
 input is from the terminal then a prompt message can
 also be added.
 .HP 6
-clear EXP
+CLEAR exp
 .br
 Clear all variables then allocate the amount
 of string space specified by the second parameter.
 .HP 6
-save STRINGEXP
+SAVE stringexp
 .br
 Save the current program to a named file.
 .HP 6
-old STRINGEXP
+LOAD stringexp
 .br
 Load a program from the named file. All
 variables are cleared.
 .HP 6
-new { EXP }
+NEW { exp }
 .br
 Wipe the program from core. All files are
 closed and the interpreter is reset to its inital
 state. If a parameter is given then that is the number
 of file buffers that are allocated.
 .HP 6
-shell
-.br
-Shell out to Unix. This is the Bourne shell. If
-the interpreter is made set userid then this is turned
-off in the shell.
-.HP 6
-resume { l }
+RESUME { l }
 .br
 Return from an error trap. If a parameter is
 given then the return is made to that line. An error
-trap is set up by the "on error goto" statement.
+trap is set up by the "ON ERROR GOTO" statement.
 .HP 6
-random
+RANDOM
 .br
-Randomise the random number generator. The
-generator always starts from the same place in its
-sequence, when a program is started.
+Reseed the random number generator.
 .HP 6
-on EXP goto l { , l}
-on - gosub
-on error goto l
+ON exp GOTO l { , l}
+.HP 6
+ON exp GOSUB
+.HP 6
+ON ERROR GOTO l
 .br
 This command will execute either a goto or a
 gosub to a specified line number. The linenumber is
@@ -242,265 +212,260 @@ If the error format is used, only one
 linenumber is required. This is the line where a jump
 is performed to if an error occurs.
 .HP 6
-error EXP
+ERROR exp
 .br
 Execute the given error sequence. Useful for
 debugging of error trap routines.
 .HP 6
-auto { l { ,l } }
+AUTO { l { ,l } }
 .br
 Perform auto line numbering so that a program
 can be typed in without having to bother about
 linenumbers. An optional start and increment can also
 be specified.
 .HP 6
-cls
+CLS
 .br
 Clear the terminals screen.
 .HP 6
-base 0 | 1
+BASE 0 | 1
 .br
 Specify the starting index for arrays. This
 can have a value of either zero or one.
 .HP 6
-poke EXP,EXP
+POKE exp, exp
 .br
-Poke a value into a location. Unreasonable
-addresses are ignored. ( Can cause bus-errors if not
-using split i and d space.
-(Not available on Vax systems).
+Write a byte into a memory location.
 .HP 6
-open STRINGEXP
-{ for input|output|append|terminal } as EXP
+OPEN stringexp
+{ FOR INPUT|OUTPUT|APPEND|TERMINAL } AS exp
 .br
-Open a file for input/ output. This command
+Open a file for input or output. This command
 can be used to specify whether the file is to be read
 or writen to. A file cannot be opened for writing if
-the file is already open. If the mode is terminal then
+the file is already open. If the mode is TERMINAL then
 it will believe that it is talking to a terminal. (No
 buffering. Open for reading and writing.) If the option
-is 'for output' it may be ommitted.
+is 'FOR OUTPUT' it may be ommitted.
 .HP 6
-close EXP
+CLOSE exp
 .br
 Close a file. Releases the file descriptor
 and flushes out all stored data.
 .HP 6
-merge STRINGEXP
+MERGE stringexp
 .br
 Merge two files together. If there is a line
 in the file with the same linenumber as in the program
 then that line is replaced by the new one. All other
 lines are inserted into the file.
 .HP 6
-chain STRINGEXP
+CHAIN stringexp
 .br
 Read in a program, then start to execute it.
 All simple variables are kept but all arrays and
 strings are cleared. The size of the string space is
 kept the same.
 .HP 6
-def fnNAME{ ( VAR {,VAR } ) } = EXP
+DEF FNname{ ( var {,var } ) } = exp
 .br
 Define a user defineable function.
 .HP 6
-linput
+LINPUT
 .br
 Identical to input but ignores seperators.
 .HP 6
-mid$(STRINGVAL, EXP { ,EXP} ) = STRINGEXP
+MID$(stringval, exp { ,exp} ) = stringexp
 .br
-Assign STRINGEXP to STRINGVAL starting at EXP1
-and finishing at EXP2.
+Assign stringexp to stringval starting at exp1
+and finishing at exp2.
 .HP 6
-cont
+CONT
 .br
-Continue execution of a program that has been
-halted by a stop statement or by control-c.
+Continue execution of a program which has been
+halted by a stop statement or by ctrl-c.
 .HP 6
-while EXP
+WHILE exp
 .br
-Start of a while loop. The loop is repeated
-until EXP is false. If EXP is false at the start then do
+Beginning of a WHILE loop. The loop is repeated
+until exp is false. If exp is false at the start then do
 not execute the loop at all. A while loop must be
-terminated by a wend statement.
+terminated by a WEND statement.
 .HP 6
-wend
+WEND
 .br
-Terminating statement of a while loop. Only one
-wend is allowed for each while.
+Terminating statement of a WHILE loop. Only one
+WEND is allowed for each WHILE.
 .HP 6
-repeat
+REPEAT
 .br
-Start statement for a repeat - until loop. This
+Start statement for a REPEAT - UNTIL loop. This
 type of loop will always be executed at least once.
 .HP 6
-until EXP
+UNTIL exp
 .br
-The terminating statement of a repeat - until
-loop. The loop terminates when EXP is true.
+The terminating statement of a REPEAT - UNTIL
+loop. The loop terminates when exp is true.
 .PP
 String functions Available
 .br
 .HP 6
-mid$(a$,i,j)
+MID$(a$,i,j)
 .br
 Returns the part of a$ between the i'th and
 j'th positions. If the second parameter is not
 specified then the string is taken between the start
 value and the end of the string.
 .HP 6
-right$(a$,j)
+RIGHT$(a$,j)
 .br
 Returns the right j characters of a$.
 .HP 6
-left$(a$,j)
+LEFT$(a$,j)
 .br
 Returns the left j characters of a$.
 .HP 6
-string$(a$,j)
+STRING$(a$,j)
 .br
 Returns a$ repeated j times.
 .HP 6
-ermsg$(j)
+ERMSG$(j)
 .br
 Returns the j'th error message.
 .HP 6
-chr$(j)
+CHR$(j)
 .br
 Returns the ascii character corresponding to
 the value of j.
 .HP 6
-str$(j)
+STR$(j)
 .br
 Returns a string representation corresponding
 to j. This is similar but not the same as what can
 printed out.
 .HP 6
-space$(j)
+SPACE$(j)
 .br
 Returns a string of j spaces
 .HP 6
-get$(f)
+GET$(f)
 .br
 Returns one character from file f. If f is zero
 use the terminal. Returns a zero lenght string on cntl-c
 .HP 6
-date$
+DATE$
 .br
 returns a string coresponding to the current
 date. ( Same string as printed out when logging on. ).
 .PP
 Maths functions Available:-
 .HP 6
-sgn(x)
+SGN(x)
 .br
 Returns the sign of a number. It's value is 1
 if greater than zero , zero if equal to zero. -1 if
 negative.
 .HP 6
-len(a$)
+LEN(a$)
 .br
 Returns the length of string a$.
 .HP 6
-abs(x)
+ABS(x)
 .br
 Returns the absolute value of x.
 .HP 6
-int(x)
+INT(x)
 .br
 than x.
 .HP 6
-val(a$)
+VAL(a$)
 .br
 Returns the value of the number specified by
 the string.
 .HP 6
-asc(a$)
+ASC(a$)
 .br
 Returns the ascii code for the first element
 of a$.
 .HP 6
-instr(a$,b$,c)
+INSTR(a$,b$,c)
 .br
 Returns the starting position that a$ is in
 b$, starting from the optional c'th position.
 .HP 6
-eof(f)
+EOF(f)
 .br
 Returns true if the file specified by f has
 reached the end of the file.
 .HP 6
-posn(f)
+POSN(f)
 .br
 Returns the current printing position in the
 file. If f is zero then it is the printing position of
 the terminal.
 .HP 6
-sqrt(x)
+SQRT(x)
 .br
 Returns the square root of X.
 .HP 6
-log(x)
+LOG(x)
 .br
 Returns the natural logarithm of x.
 .HP 6
-exp(x)
+EXP(x)
 .br
 Returns e^x. e=2.7182818..
 .HP 6
-eval(a$)
+EVAL(a$)
 .br
 Evaluates a$.
-e.g. eval("12") returns the value 12.
+e.g. EVAL("12") returns the value 12.
 .HP 6
-rnd
+RND
 .br
 Returns a random number between 1 and 32767.
 .HP 6
-rnd(x)
+RND(x)
 .br
 If x is zero returns a random number between
 0 and 1 otherwise returns a random number
 between 1 and int(x).
 .HP 6
-peek(x)
+PEEK(x)
 .br
 Returns the value of the byte at address x.
-If x is unreasonable then returns zero.
-( Not available on a VAX )
 .HP 6
-sin(x)
+SIN(x)
 .br
 .HP 6
-cos(x)
+COS(x)
 .br
 .HP 6
-atan(x)
+ATAN(x)
 .br
 Trignometric functions. (May not yet be
 implemented).
 .HP 6
-pi
+PI
 .br
 Returns the value of pi. = 3.141592653589...
 .HP 6
-erl
+ERL
 .br
 Returns the line number of the last error.
 Zero if error was in immeadiate mode.
 .HP 6
-err
+ERR
 .br
 Returns the error code of the last error.
 .HP 6
-tim
+TIM
 .br
 Returns a numeric value for the number of
 seconds since
 1:1:1970 i.e. the value of the Unix clock.
 .PP
-Mathematical Operators:-
+.B Mathematical Operators:
 .HP 6
 	The  following  mathematical  operators   are
 accepted.
@@ -508,16 +473,16 @@ accepted.
              ^               exponentiation
              *               multiplication
              /               division
-             mod             remainder
+             MOD             remainder
              +               addition
              -               subtraction
 
      bitwise operators:-
         for real values non-zero is true,
-             and             bitwise and
-             or              bitwise or
-             xor             bitwise exclusive or
-             not             bitwise not
+             AND             bitwise and
+             OR              bitwise or
+             XOR             bitwise exclusive or
+             NOT             bitwise not
 
      comparison operators:-
              <=              less than or equal
@@ -572,24 +537,20 @@ EXPRESSION SYNTAX
                         | erl | err | tim
         usrfunc    ::=  fn/numbvar { (val { , val { , val } } ) }
         fval       ::= val with value between 1-9
-
 .SH DIAGNOSTICS
 When the interpreter discovers an error it will call
 an error trapping routine. The errors can be caught by
 the user program using the on-error feature. If no error
 trapping routine has been supplied a message is printed
 with the corresponding line number.
-
 .SH BUGS
 The RENUMBER command fails to properly track and update goto targets
 hidden inside IF .. THEN .. ELSE constructs.
 
 The MOD function sometimes returns non-integer values.
 
-REPEAT / UNTIL loops inside functions, procedures or nested inside
+REPEAT - UNTIL loops inside functions, procedures or nested inside
 other loops apparently do not work.
-
-
 .SH AUTHORS
 Phil Cockcroft created the Rabbit BASIC in early 1980's while he was at
 University College, London.  He released the source code to the
