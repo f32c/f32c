@@ -238,21 +238,32 @@ file_more()
 			if (buf[i] == '\n') {
 				write(1, &buf[last], i - last + 1);
 				last = i + 1;
-				if (lno++ == 20) {
+				lno++;
+				if (lno == 23) {
+stopped:
 					printf("-- more --");
 					c = sio_getchar(1);
-					if (c == 3) {
-						printf("^C\n");
-						goto done;
-					}
-					if (c == ' ')
-						lno = 0;
-					else
-						lno--;
 					printf("\r          \r");
+					switch(c) {
+					case 3:
+						printf("^C\n");
+					case 4:
+					case 'q':
+						goto done;
+					case ' ':
+						lno = 0;
+						break;
+					case '\r':
+					case 'j':
+						lno--;
+						break;
+					default:
+						goto stopped;
+					}
 				}
 			}
 		}
+		write(1, &buf[last], i - last);
 	} while (got > 0);
 
 done:
