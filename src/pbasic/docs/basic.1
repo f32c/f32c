@@ -17,16 +17,20 @@ all subsequent input from the controlling terminal.
 All lines prepended with a numeric line identifier are assumed
 to be a part of a program and will be stored into the main memory at a
 position corresponding to the specified line number, and will not be
-further evaluated or interpreted until the program execution begins.
+further evaluated or interpreted until program execution begins.
 Conversely, lines entered without a line number will be interpreted and
 executed immediately.
 
-Editing a line may be aborted at any time by pressing ctrl-c.
-The contents of the line buffer may be redrawn by pressing ctrl-r, which
-can come handy particularly when editing lines longer then terminal width
-(usually 80 characters).
+Editing a line may be aborted at any time by pressing
+.IR <ctrl-C> .
+The contents of the line buffer may be redrawn by pressing
+.IR <ctrl-R>
+which can come handy particularly when editing lines longer then
+terminal width (usually 80 characters).
 Characters at the end of the line may be deleted
-by pressing either the delete key or ctrl-h.  Neither cursors nor other
+by pressing either the delete key or
+.IR <ctrl-H> .
+Neither cursors nor other
 special keys, such as Home, End, PgUp or PgDown can be used in
 editing mode, since mapping of those keys varies from one terminal
 emulation program and terminal emulation mode to another.
@@ -157,73 +161,70 @@ advance the cursor one character to the right.
 Undo the last change.
 
 .SH BASIC COMMANDS
-.HP 6
-END
-.br
+.TP
+.BR REM \ or
+.B '
+An arbitrary comment.
+.TP
+.B LET var = exp
+Evaluate the expression
+.I exp
+and assign its a value to the variable
+.IR var .
+The LET keyword may be omitted for brevity.
+.TP
+.BR PRINT
+or
+.B '?' { arg, ... }
+.TP
+.B PRINT #f { arg, ... }
+Prints a variable number of arguments to the terminal.
+The arguments may be separated either by commas or
+semi-colons.  A comma indicates that the cursor will be
+advanced to the next tab stop (typically 8 characters).
+The output may be directed to a file if a file descriptor
+preceeded by a hash sign is provided as the first argument.
+.TP
+.B INPUT { #f, } var1 { , ... } 
+.TP
+.B INPUT \&"prompt\&"; var1 { , ... }
+Input data from a terminal or from a file and store it to named
+variable(s). A prompt message can be displayed when reading input
+from the controlling terminal.
+.TP
+.B GOTO l
+Jump to the specified line number.
+.TP
+.B GOSUB l
+Jump to a subrutine ar line
+.IR l , saving current line number on the return stack.
+.TP
+.B RETURN
+Return from a subroutine, resuming execution at a line following
+the last GOSUB command.
+.TP
+.B END
 Terminate program execution and return to the interactive mode
 command prompt.
-.HP 6
-RUN { l }
-.br
+.TP
+.B STOP
+Stops program execution and returns to the interactive command prompt.
+Unlike the END command, the STOP command prints a message,
+and permits the execution to be continued via the CONT command.
+.TP
+.B RUN { l }
 Execute the currently loaded program.  An optional numeric argument
 can be provided indicating a line number from which the program
 execution will begin.
 All variables are cleared and all currently open files
 are closed prior to the beginning of program execution.
-.HP 6
-GOTO l
-.br
-Jumps to the specified line number.
-.HP 6
-LET x = exp
-.br
-Assign a value to a variable.  If the LET keyword may be omitted.
-.HP 6
-LIST
-.br
-lists the whole program
-.HP 6
-LIST 1-2
-.br
-lists lines 1 to 2
-.HP 6
-LIST -100
-.br
-lists all lines up to 100
-.HP 6
-LIST 1
-.br
-lists only line 1
-.HP 6
-LIST 1-
-.br
-lists line 1 onwards
-.br
-This command will display the entire or the selected portion
-of the current program onto the terminal.
-.HP 6
-PRINT or '?' { arg, ... }
-.HP 6
-PRINT #f { arg, ... }
-.br
-Prints a variable number of arguments to the terminal.
-The arguments may be separated either by commas or
-semi-colons.  A comma indicates that the cursor will be
-advanced to the next tab stop (usually 8 or 16 characters).
-The output may be directed to a file if a file descriptor
-preceeded by a hash sign is provided as the first argument.
-.HP 6
-REM or `'
-.br
-An arbitrary comment.
-.HP 6
-STOP
-.br
-Stops program execution and returns to the interactive command prompt.
-Functionally equivalent to the END command, with two exceptions:
-the STOP command prints a message, and permits the execution to
-be continued via the CONT command.
-.HP 6
+.TP
+.B LIST { start } { - end }
+XXX
+
+TODO: from here on...
+
+.TP
 FOR var = expr1 TO expr2 { STEP expr }
 .br
 Beginning of a FOR loop.  The value of variable
@@ -242,17 +243,6 @@ parameter if this is the case the most recently
 activated loop is used. If there are multiple
 parameters then each one is only checked after the
 completion of the inner loop.
-.HP 6
-GOSUB l
-.br
-Jump to a subrutine ar line l, saving current line number on
-the return stack.
-.HP 6
-RETURN
-.br
-Return from a subroutine, resuming execution at a line following
-the last GOSUB command.
-.HP 6
 READ var { , var }
 .br
 Read a string or numeric data item from DATA statements embedded
@@ -300,16 +290,8 @@ are not found then no lines will be deleted.
 .HP 6
 EDIT l
 .br
-Edit an existing line of the program text.  Editing may be
-terminated via ctrl-c, discarding all changes.
+Edit an existing line of the program text.
 .HP 6
-INPUT { #f, } 
-.br
-INPUT "prompt";
-.br
-Input data from a terminal or from a file. If the
-input is from the terminal then a prompt message can
-also be added.
 .HP 6
 CLEAR exp
 .br
@@ -428,7 +410,7 @@ and finishing at exp2.
 CONT
 .br
 Continue execution of a program which has been
-halted by a stop statement or by ctrl-c.
+halted by a stop statement or by <ctrl-C>.
 .HP 6
 WHILE exp
 .br
