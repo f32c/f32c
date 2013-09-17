@@ -37,7 +37,9 @@ emulation program and terminal emulation mode to another.
 
 .B Extend editing mode
 
-Pressing the ESC key enters the extended editing mode which mimics
+Pressing the
+.I <Esc>
+key enters the extended editing mode which mimics
 certain features of the "vi" editor commonly available on many 
 UNIX-like operating systems.  The extended mode also permits scrolling
 through the recent command history, thus repeating and editing
@@ -46,7 +48,9 @@ previously issued commands.
 Once the extended editing mode is invoked, the editor operates
 either in command or in text entry mode.  The text entry mode 
 can be entered by issuing one of the appropriate commands (see below)
-and can be suspended by pressing the ESC key.
+and can be suspended by pressing the
+.I <Esc>
+key.
 Optionally, each command may be prepended by a numeric value defining
 how many times that command should be repeated.
 
@@ -162,9 +166,8 @@ Undo the last change.
 
 .SH BASIC COMMANDS
 .TP
-.BR REM \ or
-.B '
-An arbitrary comment.
+.BR REM \ or \ ' \  {\ text\ }
+An arbitrary comment, ignored by the interpreter.
 .TP
 .B LET var = exp
 Evaluate the expression
@@ -173,9 +176,7 @@ and assign its a value to the variable
 .IR var .
 The LET keyword may be omitted for brevity.
 .TP
-.BR PRINT
-or
-.B ? { arg, ... }
+.BR PRINT \ or \ ? \ \  {\ arg,\  ...\  }
 .TP
 .B PRINT #f { arg, ... }
 Prints a variable number of arguments to the terminal.
@@ -187,10 +188,17 @@ preceeded by a hash sign is provided as the first argument.
 .TP
 .B INPUT { #f, } var1 { , ... } 
 .TP
-.B INPUT \&"prompt\&"; var1 { , ... }
-Input data from a terminal or from a file and store it to named
-variable(s). A prompt message can be displayed when reading input
-from the controlling terminal.
+.B INPUT \&"txt\&"; var1 { , ... }
+Input data from a terminal or from a file and store it into named
+variable(s). An optional message string
+.I txt
+can be displayed before processing input from the controlling terminal.
+.TP
+.B LINPUT { #f, } var 
+.TP
+.B LINPUT \&"txt\&"; var
+Input a whole line (ignoring separators) into a single string variable
+.IR var .
 .TP
 .B GOTO lnum
 Unconditionally jump to the program line specified by
@@ -247,6 +255,52 @@ completion of the inner loop.  Alternatively, the NEXT keyword
 may be used with no arguments, in which case it implies closure
 of the first unterminated FOR loop.
 .TP
+.B WHILE expr
+Beginning of a WHILE - WEND loop. The body of the loop is executed
+as long as the value of the expression
+.I expr
+evaluates to a non-zero value.  The expression
+.I expr
+is evaluated
+.I before
+the body of the loop gets executed.
+.TP
+.B WEND
+Terminate a body of a WHILE loop.
+.TP
+.B REPEAT
+Begining of a REPEAT - UNTIL loop.
+.TP
+.B UNTIL expr
+Terminating statement of a REPEAT - UNTIL loop.
+The body of the loop is executed as long as the value of the expression
+.I expr
+evaluates to a non-zero value.  The expression
+.I expr
+is evaluated
+.I after
+the body of the loop gets executed, so the commands inside the loop
+are guaranteed to be executed at least once.
+.TP
+.B DATA constant { , constant ... }
+Declare comma separated numerical or string
+constants to be used by READ statements. 
+DATA statements are not permitted inside IF - THEN - ELSE constructs.
+.TP
+.B READ var { , var ... }
+Read string or numeric constant(s) from DATA statements embedded
+in the program and assign them to variable(s) provided as arguments.
+.TP
+.B RESTORE { lnum }
+Restore the pointer for reading DATA constants to the start of the
+program, so that the constants can be READ again. If an
+optional line number
+.I lnum
+is provided then the restore occurs
+from the start of that line. If no DATA statements are
+found then the RESTORE command searches from the start of the
+program.
+.TP
 .B END
 Terminate program execution and return to the interactive mode
 command prompt.
@@ -268,26 +322,7 @@ XXX
 
 TODO: from here on...
 
-READ var { , var }
-.br
-Read a string or numeric data item from DATA statements embedded
-in the program and assign it to variable(s) provided as arguments.
-.HP 6
-DATA object { , object }
-.br
-Declare comma separated constant data items to be used by
-READ statements. 
-DATA statements are not permitted inside IF - THEN - ELSE constructs.
-.HP 6
-RESTORE { l }
-.br
-Restore the data pointer to the start of the
-file, so that the data can be read again. If an
-optional line number is provided then the restore occurs
-from the start of that line. If no data statements are
-found then the restore is from the start of the
-program.
-.HP 6
+
 .HP 6
 DIM var(d,d,d) { , var(d) }
 .br
@@ -415,10 +450,6 @@ DEF FNname{ ( var {,var } ) } = exp
 .br
 Define a user defineable function.
 .HP 6
-LINPUT
-.br
-Identical to input but ignores seperators.
-.HP 6
 MID$(stringval, exp { ,exp} ) = stringexp
 .br
 Assign stringexp to stringval starting at exp1
@@ -429,28 +460,8 @@ CONT
 Continue execution of a program which has been
 halted by a stop statement or by <ctrl-C>.
 .HP 6
-WHILE exp
-.br
-Beginning of a WHILE loop. The loop is repeated
-until exp is false. If exp is false at the start then do
-not execute the loop at all. A while loop must be
-terminated by a WEND statement.
-.HP 6
-WEND
-.br
-Terminating statement of a WHILE loop. Only one
-WEND is allowed for each WHILE.
-.HP 6
-REPEAT
-.br
-Start statement for a REPEAT - UNTIL loop. This
-type of loop will always be executed at least once.
-.HP 6
-UNTIL exp
-.br
-The terminating statement of a REPEAT - UNTIL
-loop. The loop terminates when exp is true.
-.PP
+
+
 String functions Available
 .br
 .HP 6
