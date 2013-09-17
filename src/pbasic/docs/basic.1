@@ -1,13 +1,15 @@
 .TH BASIC 1
 .SH DESCRIPTION
-.B Rabbit BASIC
+.I Rabbit BASIC
 is an interpreter for a dialect of the BASIC programming language
 loosely modelled around the historic Dartmouth BASIC.
 The interpreter operates either in interactive mode, which permits
 issuing individual commands or editing the current program, or
 in run mode, executing the program loaded in main memory.
 At startup, the interpreter attempts to load and execute a program
-called autoexec.bat from the root directory of the on-board Flash drive.
+called
+.I autoexec.bat
+from the root directory of the on-board Flash drive.
 If the startup program can not be found or its execution terminates,
 an interactive line editor is invoked which accepts and processes
 all subsequent input from the controlling terminal.
@@ -20,23 +22,74 @@ Conversely, lines entered without a line number will be interpreted and
 executed immediately.
 
 Editing a line may be aborted at any time by pressing ctrl-c.
-Contents of the line buffer may be redrawn by pressing ctrl-r, which
-can come handy when editing lines longer then terminal width (usually
-80 characters).  Characters at the end of the line may be deleted
-by pressing either the delete key or ctrl-h.  Neither cursor nor other
+The contents of the line buffer may be redrawn by pressing ctrl-r, which
+can come handy particularly when editing lines longer then terminal width
+(usually 80 characters).
+Characters at the end of the line may be deleted
+by pressing either the delete key or ctrl-h.  Neither cursors nor other
 special keys, such as Home, End, PgUp or PgDown can be used in
 editing mode, since mapping of those keys varies from one terminal
-emulation program implementation to another, and from the emulation
-mode and encoding used.
+emulation program and terminal emulation mode to another.
 
 .B Extend editing mode
 
-Pressing the ESC keys enters the extended editing mode which mimics
-certain features of the "vi" editor commonly available on most of the
+Pressing the ESC key enters the extended editing mode which mimics
+certain features of the "vi" editor commonly available on many 
 UNIX-like operating systems.  The extended mode also permits scrolling
 through the recent command history, thus repeating and editing
 previously issued commands.
 
+Once the extended editing mode is entered, the editor operates
+either in command or in text entry mode.  The text entry mode 
+can be entered by issuing one of the appropriate commands (see below)
+and can be suspended by pressing the ESC key.
+Each command may be prepended by a numeric value defining how many
+times the command should be repeated.
+
+Navigation commands:
+.TP
+.B k
+Recall previous line from the command history buffer.
+.TP
+.B j
+Recall next line from the command history buffer.
+.TP
+.B h
+Move the cursor left one character.
+.TP
+.B l
+Move the cursor right one character.
+.TP
+.B b
+Move the cursor to the begining of the previous word.
+.TP
+.B w
+Move the cursor to the begining of the next word.
+.TP
+Text entry commands:
+.TP
+.B a
+Append new text,
+.I after
+the cursor.
+.TP
+.B i
+Insert new text,
+.I before
+the cursor.
+.TP
+.B A
+Append new text to the end of the line.
+.TP
+.B I
+Insert new text at the beginning of the line.
+.TP
+.B R
+Replace text starting from the current cursor position.
+.TP
+
+
+.TP
 To get special ASCII characters into a line use constructs like
 \\n \\a etc. which will get ctrl-n and ctrl-a into the line.
 .SH BASIC COMMANDS
