@@ -175,7 +175,7 @@ The LET keyword may be omitted for brevity.
 .TP
 .BR PRINT
 or
-.B '?' { arg, ... }
+.B ? { arg, ... }
 .TP
 .B PRINT #f { arg, ... }
 Prints a variable number of arguments to the terminal.
@@ -192,25 +192,69 @@ Input data from a terminal or from a file and store it to named
 variable(s). A prompt message can be displayed when reading input
 from the controlling terminal.
 .TP
-.B GOTO l
-Jump to the specified line number.
+.B GOTO lnum
+Unconditionally jump to the program line specified by
+.IR lnum .
 .TP
-.B GOSUB l
-Jump to a subrutine ar line
-.IR l , saving current line number on the return stack.
+.B GOSUB lnum
+Jump to a subrutine at line
+.IR lnum ,
+saving the current line number on the return stack.
 .TP
 .B RETURN
-Return from a subroutine, resuming execution at a line following
+Return from a subroutine, resuming execution at the line following
 the last GOSUB command.
+.TP
+.B IF expr THEN commands { ELSE commands }
+Evaluate the expression
+.I expr
+and if the result is non-zero execute command(s) following
+the THEN keyword.
+Optionally, an ELSE keyword may be included followed by command(s)
+to be executed if the expression
+.I expr
+evaluates to zero.
+A line line number may be specified instead of
+a command following either or both THEN and ELSE keywords,
+which implies a GOTO to the requested line.
+.TP
+.B FOR var = expr1 TO expr2 { STEP expr3 }
+Beginning of a FOR loop.  The value of variable
+.I var
+will be initialized to the value of
+.I expr1
+and will be increased on each subsequent loop iteration
+either by one or by the value of
+.I expr3
+if the optional STEP keyword is specified.
+Looping will continue as long as the value of
+.I var
+is less then or equal to
+.IR expr2 .
+The loop is always executed at least once.
+.TP
+.B NEXT { var, ... }
+Increase the value of variable 
+.I var
+either by one or by the alternative STEP specified in the
+corresponding FOR statement.  If the value of the variable
+exceeds the limit specified in the FOR statement, advance
+to the next program line, otherwise jump to the line
+immediately following the FOR statement.
+Multiple variable names may be specified following the NEXT
+keyword, in which case each one is processed only after the
+completion of the inner loop.  Alternatively, the NEXT keyword
+may be used with no arguments, in which case it implies closure
+of the first unterminated FOR loop.
 .TP
 .B END
 Terminate program execution and return to the interactive mode
 command prompt.
 .TP
 .B STOP
-Stops program execution and returns to the interactive command prompt.
+Stop program execution and return to the interactive command prompt.
 Unlike the END command, the STOP command prints a message,
-and permits the execution to be continued via the CONT command.
+and permits the execution to be resumed via the CONT command.
 .TP
 .B RUN { l }
 Execute the currently loaded program.  An optional numeric argument
@@ -224,25 +268,6 @@ XXX
 
 TODO: from here on...
 
-.TP
-FOR var = expr1 TO expr2 { STEP expr }
-.br
-Beginning of a FOR loop.  The value of variable
-var will be initialized to expr1 and will be increased
-by one on each subsequent loop iteration, and loping will
-continue as long as var is less then or equal to expr2.
-The loop is always executed at least once.
-.HP 6
-NEXT { x { , y } }
-.br
-End of a FOR loop. If terminal conditions are met then
-execution continues from the
-next statement, otherwise return to end of the
-corresponding for statement. The NEXT statement does not need a
-parameter if this is the case the most recently
-activated loop is used. If there are multiple
-parameters then each one is only checked after the
-completion of the inner loop.
 READ var { , var }
 .br
 Read a string or numeric data item from DATA statements embedded
@@ -263,14 +288,6 @@ from the start of that line. If no data statements are
 found then the restore is from the start of the
 program.
 .HP 6
-IF exp THEN statement { ELSE statement }
-.br
-If the condition is true
-then the commands after the THEN keyword are executed.  A
-line line number may be specified instead of a command, which
-implies a GOTO to the requested line. If the
-condition is false then the statement after the optional ELSE
-keyword is evaluated and executed.
 .HP 6
 DIM var(d,d,d) { , var(d) }
 .br
@@ -682,6 +699,7 @@ other loops apparently do not work.
 Phil Cockcroft created the Rabbit BASIC in early 1980's while he was at
 University College, London.  He released the source code to the
 Public Domain in 1986 and continued to further improve and maintain it
-until mid-1990's.  Features specific to the ULX2S FPGA board, such
-as file management and framebuffer routines, were added by
-Marko Zec in 2013.
+until mid-1990's.
+In 2013. Marko Zec added features specific to the ULX2S FPGA board, such
+as file management and framebuffer routines, and rewrote this
+manual page.
