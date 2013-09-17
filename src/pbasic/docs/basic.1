@@ -5,7 +5,7 @@ is an interpreter for a dialect of the BASIC programming language
 loosely modelled around the historic Dartmouth BASIC.
 The interpreter operates either in interactive mode, which permits
 issuing individual commands or editing the current program, or
-in run mode, executing the program loaded in main memory.
+in run mode, executing the program loaded into the main memory.
 At startup, the interpreter attempts to load and execute a program
 called
 .I autoexec.bat
@@ -39,7 +39,7 @@ UNIX-like operating systems.  The extended mode also permits scrolling
 through the recent command history, thus repeating and editing
 previously issued commands.
 
-Once the extended editing mode is entered, the editor operates
+Once the extended editing mode is invoked, the editor operates
 either in command or in text entry mode.  The text entry mode 
 can be entered by issuing one of the appropriate commands (see below)
 and can be suspended by pressing the ESC key.
@@ -90,6 +90,16 @@ Append new text to the end of the line.
 .B I
 Insert new text at the beginning of the line.
 .TP
+.B r
+Replace a single character at the current cursor position.
+.TP
+.B s
+Substitute a character at the current cursor position with new text.
+.TP
+.B C
+Clear text from the current cursor position to the end of the line
+and append new text.
+.TP
 .B R
 Replace text starting from the current cursor position.
 .TP
@@ -136,7 +146,15 @@ the current cursor position.
 Paste the contents of the auxiliary buffer
 .I before
 the current cursor position.
-
+.TP
+Miscellaneous commands:
+.TP
+.B ~
+Reverse the case of the character at the current cursor position, and
+advance the cursor one character to the right.
+.TP
+.B u
+Undo the last change.
 
 .SH BASIC COMMANDS
 .HP 6
