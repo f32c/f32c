@@ -43,16 +43,16 @@ Once the extended editing mode is entered, the editor operates
 either in command or in text entry mode.  The text entry mode 
 can be entered by issuing one of the appropriate commands (see below)
 and can be suspended by pressing the ESC key.
-Each command may be prepended by a numeric value defining how many
-times the command should be repeated.
+Optionally, each command may be prepended by a numeric value defining
+how many times that command should be repeated.
 
 Navigation commands:
 .TP
 .B k
-Recall previous line from the command history buffer.
+Recall the previous line from the command history buffer.
 .TP
 .B j
-Recall next line from the command history buffer.
+Recall the next line from the command history buffer.
 .TP
 .B h
 Move the cursor left one character.
@@ -65,6 +65,12 @@ Move the cursor to the begining of the previous word.
 .TP
 .B w
 Move the cursor to the begining of the next word.
+.TP
+.B 0
+Move the cursor to the begining of the line.
+.TP
+.B $
+Move the cursor to the end of the line.
 .TP
 Text entry commands:
 .TP
@@ -87,11 +93,51 @@ Insert new text at the beginning of the line.
 .B R
 Replace text starting from the current cursor position.
 .TP
-
-
+Text deletion commands:
 .TP
-To get special ASCII characters into a line use constructs like
-\\n \\a etc. which will get ctrl-n and ctrl-a into the line.
+.B x
+Delete the character the cursor is on,
+and place the deleted character into an auxiliary clipboard buffer.
+.TP
+.B d<nav>
+Delete characters in the direction defined by the
+.I nav
+key, which may be any of
+.B h
+,
+.B l
+,
+.B b
+,
+.B w
+,
+.B 0
+or
+.B $
+(see above for the description of the navigation commands).
+Deleted character(s) are placed into an auxiliary clipboard buffer.
+.TP
+Copy and paste commands:
+.TP
+.B y<nav>
+Copy characters in the direction defined by the
+.I nav
+key into an auxiliary buffer.  The set of valid navigation keys
+is the same as for the
+.B d
+command.
+.TP
+.B p
+Paste the contents of the auxiliary buffer
+.I after
+the current cursor position.
+.TP
+.B P
+Paste the contents of the auxiliary buffer
+.I before
+the current cursor position.
+
+
 .SH BASIC COMMANDS
 .HP 6
 END
