@@ -325,6 +325,9 @@ Declare and allocate memory for a list of arrays (string or
 arithmetic).  A maximum of three subscripts can be used.
 All arrays must be declared via DIM before use.
 .TP
+.B BASE 0 | 1
+Specify the starting index for arrays, which may be either zero or one.
+.TP
 .B OPEN stringexp { FOR INPUT|OUTPUT|APPEND|TERMINAL } AS exp
 Open a file named
 .I stringexp
@@ -338,11 +341,39 @@ Close a file with file descriptor
 .IR exp .
 Releases the file descriptor and flushes out all buffered data.
 .TP
+.B ON ERROR GOTO lnum
+Register an error handler routine at line
+.IR lnum .
+.TP
+.B RESUME { lnum }
+Return from an error handler.  Optionally, do not return to the
+instruction which triggered the error, but to the line
+.IR lnum .
+.TP
+.B DEF FNname{ ( var {,var } ) } = exp
+Define a function.
+.TP
+.B MID$(stringval, exp { ,exp} ) = stringexp
+Assign
+.I stringexp
+to
+.I stringval
+starting at
+.I exp1
+and finishing at
+.IR exp2 .
+.TP
 .B CLS
 Clear the terminal screen.
 .TP
-.B POKE exp, exp
-Write a byte into a memory location.
+.B POKE addr, byte
+Write a
+.I byte
+into a memory location at
+.IR addr .
+.TP
+.B RANDOM
+Reseed the random number generator.
 .TP
 .B END
 Terminate program execution and return to the interactive mode
@@ -414,47 +445,15 @@ as the lines from the file
 .I stringexp
 will be silently overwritten.
 .TP
-.B RESUME { lnum }
-Return from an error trap. If a parameter is
-given then the return is made to that line. An error
-trap is set up by the "ON ERROR GOTO" statement.
+.B CHAIN stringexp
+Load a program from file
+.IR stringexp ,
+and execute it immediately.  Numeric variables are preserved
+but all arrays and strings are cleared.
 .TP
-.B RANDOM
-Reseed the random number generator.
-.TP
-.B ON ERROR GOTO lnum
-If the error format is used, only one
-linenumber is required. This is the line where a jump
-is performed to if an error occurs.
-.HP 6
-ERROR exp
-.br
-Execute the given error sequence. Useful for
-debugging of error trap routines.
-.HP 6
-.HP 6
-BASE 0 | 1
-.br
-Specify the starting index for arrays. This
-can have a value of either zero or one.
-.HP 6
-.HP 6
-CHAIN stringexp
-.br
-Read in a program, then start to execute it.
-All simple variables are kept but all arrays and
-strings are cleared. The size of the string space is
-kept the same.
-.HP 6
-DEF FNname{ ( var {,var } ) } = exp
-.br
-Define a user defineable function.
-.HP 6
-MID$(stringval, exp { ,exp} ) = stringexp
-.br
-Assign stringexp to stringval starting at exp1
-and finishing at exp2.
-
+.B ERROR exp
+Execute the given error sequence, which may be useful for
+debugging of error handler routines.
 .SH FUNCTIONS
 .TP
 .B MID$(a$,i,j)
@@ -567,45 +566,33 @@ Zero if error was in immeadiate mode.
 Returns the error code of the last error.
 .TP
 .B TIM
-Returns a numeric value for the number of seconds since
-1:1:1970 i.e. the value of the Unix clock.
+Returns a numeric value for the number of seconds since 1:1:1970.
+.SH MATHEMATICAL OPERATORS
+        ^               exponentiation
+        *               multiplication
+        /               division
+        MOD             remainder
+        +               addition
+        -               subtraction
 
-.PP
-.B Mathematical Operators:
-.HP 6
-	The  following  mathematical  operators   are
-accepted.
-.nf
-             ^               exponentiation
-             *               multiplication
-             /               division
-             MOD             remainder
-             +               addition
-             -               subtraction
+        AND             bitwise and
+        OR              bitwise or
+        XOR             bitwise exclusive or
+        NOT             bitwise not
 
-     bitwise operators:-
-        for real values non-zero is true,
-             AND             bitwise and
-             OR              bitwise or
-             XOR             bitwise exclusive or
-             NOT             bitwise not
+        <=              less than or equal
+        <>              not equal to
+        >=              greater than or equal
+        =               equal
+        >               greater than
+        <               less than
 
-     comparison operators:-
-             <=              less than or equal
-             <>              not equal to
-             >=              greater than or equal
-             =               equal
-             >               greater than
-             <               less than
-
-      Assignment statements can also have the form
-        a +=  b     a -=  b     a *=  b    a /=  b
-      Which have similar meanings to C's interpretation
-.fi
-.PP
-.nf
-EXPRESSION SYNTAX
-
+Certain assignments can be specified in an abbreviated form:
+        a += b          a = a + b
+        a -= b          a = a - b
+        a *= b          a = a * b
+        a /= b          a = a / b
+.SH EXPRESSION SYNTAX
         stringexp  ::= string | string + stringexp
         string     ::= qstring | stringvar | stringfunc
         qstrings   ::= "any char" | `any char`
