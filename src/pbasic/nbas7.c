@@ -19,7 +19,6 @@ int	ch_werase = CTRL('w');
 int	ch_lnext = CTRL('v');
 int	ch_susp = CTRL('z');
 int	line_len = 80;
-extern	int	ter_width;
 
 /*      read a single character */
 
@@ -53,23 +52,6 @@ readc()
 	if (c == 3)
 		trapped = 1;
 	return( ((int)c) & 0177);
-}
-
-/*      sets up the terminal structures so that the editor is in rare
- *    with no paging or line boundries and no echo
- *      Also sets up the user modes so that they are sensible when
- *    we exit. ( friendly ).
- */
-
-void
-setupmyterm()
-{
-/*
-	set_cap();
-*/
-	setu_term();
-	if(ter_width > 10)
-		line_len = ter_width;
 }
 
 /*   the actual editor pretty straight forward but.. */
@@ -215,8 +197,6 @@ ival	fl, fi, fc;
 
 	eline = xeline;
 
-	set_term();
-	
 	if(!edit_history){
 		llen = sizeof(savl_t) * Hist_Siz;
 		edit_history = (savl_t *)mmalloc(llen);
@@ -260,7 +240,6 @@ ival	fl, fi, fc;
 		pflush();
 		hist_numb--;
 		cursor=0;
-		rset_term(0);
 		return(c);
 	}
 
@@ -296,7 +275,6 @@ ival	fl, fi, fc;
 	free_ubuf(&Ubuf);
 	setundo();
 	cursor=0;
-	rset_term(0);
 	return(c);
 }
 
@@ -415,9 +393,7 @@ normal_edit()
 		} else if(c == ch_susp){
 			putchs(crlf, 2);
 			pflush();	/* flush it out */
-			rset_term(0);
 			VOID kill(0, SIGTSTP);
-			set_term();
 			if(llim)
 				putchs(eline, llim);
 			for(i = pcursr - plim, pcursr = plim; i ; i--)

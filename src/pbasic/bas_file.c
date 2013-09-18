@@ -7,7 +7,6 @@
 #include <fatfs/ff.h>
 
 #include <io.h>
-#include <mips/asm.h>
 
 #include "bas.h"
 
@@ -114,11 +113,8 @@ file_copy()
 	STR st;
 	int from, to;
 	int got, wrote;
-	int tmp, tot = 0;
-	uint32_t start, end, freq_khz;
-
-	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
-	freq_khz = ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1);
+	int tot = 0;
+	uint32_t start, end;
 
 	st = stringeval();
 	NULL_TERMINATE(st);

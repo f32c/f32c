@@ -9,7 +9,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+
+#include <io.h>
+#include <sio.h>
 #include <fatfs/ff.h>
+#include <mips/asm.h>
 
 #include "bas.h"
 
@@ -17,8 +21,31 @@
 extern int _end;
 
 int errno;
-
+uint32_t freq_khz, tsc_hi, tsc_lo;
 static char *freep;
+
+
+void
+tsc_update(void)
+{
+	uint32_t tsc;
+
+	RDTSC(tsc);
+	if (tsc < tsc_lo)
+		tsc_hi++;
+	tsc_lo = tsc;
+}
+
+
+void
+setup_f32c(void)
+{
+	uint32_t tmp;
+
+	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
+	freq_khz = ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1);
+	sio_idle_fn = tsc_update;
+}
 
 
 #undef memcpy
@@ -138,24 +165,6 @@ ctime(const time_t *clock __unused)
 
 void
 srand(unsigned seed __unused)
-{
-}
-
-
-void
-set_term(void)
-{
-}
-
-
-void
-setu_term(void)
-{
-}
-
-
-void
-rset_term(int arg __unused)
 {
 }
 
