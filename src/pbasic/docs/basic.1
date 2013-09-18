@@ -456,6 +456,51 @@ Execute the given error sequence, which may be useful for
 debugging of error handler routines.
 .SH FUNCTIONS
 .TP
+.B MIN(x, ...)
+Returns the minimum value among all of the provided arguments.
+.TP
+.B MAX(x, ... )
+Returns the max value among all of the provided arguments.
+.TP
+.B ABS(x)
+Returns the absolute value of x.
+.TP
+.B SGN(x)
+Returns the sign of a number. It's value is 1
+if greater than zero , zero if equal to zero. -1 if negative.
+.TP
+.B INT(x)
+Return the integer part of x.
+.TP
+.B SQRT(x)
+Returns the square root of x.
+.TP
+.B LOG(x)
+Returns the natural logarithm of x.
+.TP
+.B LOG10(x)
+Returns the logarithm in base 10 of x.
+.TP
+.B EXP(x)
+Returns e^x. e=2.7182818..
+.TP
+.B SIN(x) COS(x) TAN(x) ASIN(x) ACOS(x) ATAN(x)
+Trignometric functions.
+.TP
+.B SINH(x) COSH(x) TANH(x) ASINH(x) ACOSH(x) ATANH(x)
+Hyperbolic functions.
+.TP
+.B RND
+Returns an integer random number between 1 and 32767.
+.TP
+.B RND(x)
+If x is zero returns a random number between
+0 and 1 otherwise returns an integer random number
+between 1 and INT(x).
+.TP
+.B PEEK(x)
+Returns the value of a byte from memory at address x.
+.TP
 .B MID$(a$,i,j)
 Returns the part of a$ between the i'th and
 j'th positions. If the second parameter is not
@@ -490,21 +535,8 @@ Returns a string of j spaces
 Returns one character from file f. If f is zero
 use the terminal. Returns a zero lenght string on cntl-c
 .TP
-.B DATE$
-Returns a string coresponding to the current date.
-.TP
-.B SGN(x)
-Returns the sign of a number. It's value is 1
-if greater than zero , zero if equal to zero. -1 if negative.
-.TP
 .B LEN(a$)
 Returns the length of string a$.
-.TP
-.B ABS(x)
-Returns the absolute value of x.
-.TP
-.B INT(x)
-Return the integer part of x.
 .TP
 .B VAL(a$)
 Returns the value of the number specified by the string.
@@ -524,36 +556,9 @@ Returns the current printing position in the
 file. If f is zero then it is the printing position of
 the terminal.
 .TP
-.B SQRT(x)
-Returns the square root of x.
-.TP
-.B LOG(x)
-Returns the natural logarithm of x.
-.TP
-.B EXP(x)
-Returns e^x. e=2.7182818..
-.TP
 .B EVAL(a$)
 Evaluates the expression defined by the string a$.
 e.g. EVAL("12") returns the value 12.
-.TP
-.B RND
-Returns a random number between 1 and 32767.
-.TP
-.B RND(x)
-If x is zero returns a random number between
-0 and 1 otherwise returns a random number
-between 1 and int(x).
-.TP
-.B PEEK(x)
-Returns the value of the byte at address x.
-.TP
-.B SIN(x)
-.TP
-.B COS(x)
-.TP
-.B ATAN(x)
-Trignometric functions.
 .TP
 .B PI
 Returns the value of pi. = 3.141592653589...
@@ -566,7 +571,7 @@ Zero if error was in immeadiate mode.
 Returns the error code of the last error.
 .TP
 .B TIM
-Returns a numeric value for the number of seconds since 1:1:1970.
+Returns a numeric value for the number of seconds since system startup.
 .SH MATHEMATICAL OPERATORS
         ^               exponentiation
         *               multiplication
