@@ -164,7 +164,7 @@ advance the cursor one character to the right.
 .B u
 Undo the last change.
 
-.SH BASIC COMMANDS
+.SH COMMANDS
 .TP
 .BR REM \ or \ ' \  {\ text\ }
 An arbitrary comment, ignored by the interpreter.
@@ -325,6 +325,25 @@ Declare and allocate memory for a list of arrays (string or
 arithmetic).  A maximum of three subscripts can be used.
 All arrays must be declared via DIM before use.
 .TP
+.B OPEN stringexp { FOR INPUT|OUTPUT|APPEND|TERMINAL } AS exp
+Open a file named
+.I stringexp
+to be used with file descriptor
+.IR exp .
+Output mode is implied, hence the 'FOR OUTPUT' option may be
+omitted for brevity.
+.TP
+.B CLOSE exp
+Close a file with file descriptor
+.IR exp .
+Releases the file descriptor and flushes out all buffered data.
+.TP
+.B CLS
+Clear the terminal screen.
+.TP
+.B POKE exp, exp
+Write a byte into a memory location.
+.TP
 .B END
 Terminate program execution and return to the interactive mode
 command prompt.
@@ -334,6 +353,10 @@ Terminate program execution and return to the interactive mode
 command prompt.
 Unlike the END command, the STOP command prints a message,
 and permits the execution to be resumed via the CONT command.
+.TP
+.B CONT
+Continue execution of a program which has been
+halted by a STOP command or via <ctrl-C>.
 .TP
 .B CLEAR
 Clear all variables.
@@ -379,7 +402,17 @@ Save the current program to a named file.
 .TP
 .B LOAD stringexp
 Close all files and clear all variables, then load a program from
-the named file.
+file
+.IR stringexp .
+.TP
+.B MERGE stringexp
+Read a program from file
+.I stringexp
+end merge it with the current program stored in main memory.
+Program lines in current program which have the same line numbers
+as the lines from the file
+.I stringexp
+will be silently overwritten.
 .TP
 .B RESUME { lnum }
 Return from an error trap. If a parameter is
@@ -399,41 +432,12 @@ ERROR exp
 Execute the given error sequence. Useful for
 debugging of error trap routines.
 .HP 6
-CLS
-.br
-Clear the terminals screen.
 .HP 6
 BASE 0 | 1
 .br
 Specify the starting index for arrays. This
 can have a value of either zero or one.
 .HP 6
-POKE exp, exp
-.br
-Write a byte into a memory location.
-.HP 6
-OPEN stringexp
-{ FOR INPUT|OUTPUT|APPEND|TERMINAL } AS exp
-.br
-Open a file for input or output. This command
-can be used to specify whether the file is to be read
-or writen to. A file cannot be opened for writing if
-the file is already open. If the mode is TERMINAL then
-it will believe that it is talking to a terminal. (No
-buffering. Open for reading and writing.) If the option
-is 'FOR OUTPUT' it may be ommitted.
-.HP 6
-CLOSE exp
-.br
-Close a file. Releases the file descriptor
-and flushes out all stored data.
-.HP 6
-MERGE stringexp
-.br
-Merge two files together. If there is a line
-in the file with the same linenumber as in the program
-then that line is replaced by the new one. All other
-lines are inserted into the file.
 .HP 6
 CHAIN stringexp
 .br
@@ -450,171 +454,122 @@ MID$(stringval, exp { ,exp} ) = stringexp
 .br
 Assign stringexp to stringval starting at exp1
 and finishing at exp2.
-.HP 6
-CONT
-.br
-Continue execution of a program which has been
-halted by a stop statement or by <ctrl-C>.
-.HP 6
 
-
-String functions Available
-.br
-.HP 6
-MID$(a$,i,j)
-.br
+.SH FUNCTIONS
+.TP
+.B MID$(a$,i,j)
 Returns the part of a$ between the i'th and
 j'th positions. If the second parameter is not
 specified then the string is taken between the start
 value and the end of the string.
-.HP 6
-RIGHT$(a$,j)
-.br
+.TP
+.B RIGHT$(a$,j)
 Returns the right j characters of a$.
-.HP 6
-LEFT$(a$,j)
-.br
+.TP
+.B LEFT$(a$,j)
 Returns the left j characters of a$.
-.HP 6
-STRING$(a$,j)
-.br
+.TP
+.B STRING$(a$,j)
 Returns a$ repeated j times.
-.HP 6
-ERMSG$(j)
-.br
+.TP
+.B ERMSG$(j)
 Returns the j'th error message.
-.HP 6
-CHR$(j)
-.br
+.TP
+.B CHR$(j)
 Returns the ascii character corresponding to
 the value of j.
-.HP 6
-STR$(j)
-.br
+.TP
+.B STR$(j)
 Returns a string representation corresponding
 to j. This is similar but not the same as what can
 printed out.
-.HP 6
-SPACE$(j)
-.br
+.TP
+.B SPACE$(j)
 Returns a string of j spaces
-.HP 6
-GET$(f)
-.br
+.TP
+.B GET$(f)
 Returns one character from file f. If f is zero
 use the terminal. Returns a zero lenght string on cntl-c
-.HP 6
-DATE$
-.br
-returns a string coresponding to the current
-date. ( Same string as printed out when logging on. ).
-.PP
-Maths functions Available:-
-.HP 6
-SGN(x)
-.br
+.TP
+.B DATE$
+Returns a string coresponding to the current date.
+.TP
+.B SGN(x)
 Returns the sign of a number. It's value is 1
-if greater than zero , zero if equal to zero. -1 if
-negative.
-.HP 6
-LEN(a$)
-.br
+if greater than zero , zero if equal to zero. -1 if negative.
+.TP
+.B LEN(a$)
 Returns the length of string a$.
-.HP 6
-ABS(x)
-.br
+.TP
+.B ABS(x)
 Returns the absolute value of x.
-.HP 6
-INT(x)
-.br
-than x.
-.HP 6
-VAL(a$)
-.br
-Returns the value of the number specified by
-the string.
-.HP 6
-ASC(a$)
-.br
-Returns the ascii code for the first element
-of a$.
-.HP 6
-INSTR(a$,b$,c)
-.br
+.TP
+.B INT(x)
+Return the integer part of x.
+.TP
+.B VAL(a$)
+Returns the value of the number specified by the string.
+.TP
+.B ASC(a$)
+Returns the ascii code for the first element of a$.
+.TP
+.B INSTR(a$,b$,c)
 Returns the starting position that a$ is in
 b$, starting from the optional c'th position.
-.HP 6
-EOF(f)
-.br
-Returns true if the file specified by f has
-reached the end of the file.
-.HP 6
-POSN(f)
-.br
+.TP
+.B EOF(f)
+Returns true if the file specified by f has reached the end of the file.
+.TP
+.B POSN(f)
 Returns the current printing position in the
 file. If f is zero then it is the printing position of
 the terminal.
-.HP 6
-SQRT(x)
-.br
-Returns the square root of X.
-.HP 6
-LOG(x)
-.br
+.TP
+.B SQRT(x)
+Returns the square root of x.
+.TP
+.B LOG(x)
 Returns the natural logarithm of x.
-.HP 6
-EXP(x)
-.br
+.TP
+.B EXP(x)
 Returns e^x. e=2.7182818..
-.HP 6
-EVAL(a$)
-.br
-Evaluates a$.
+.TP
+.B EVAL(a$)
+Evaluates the expression defined by the string a$.
 e.g. EVAL("12") returns the value 12.
-.HP 6
-RND
-.br
+.TP
+.B RND
 Returns a random number between 1 and 32767.
-.HP 6
-RND(x)
-.br
+.TP
+.B RND(x)
 If x is zero returns a random number between
 0 and 1 otherwise returns a random number
 between 1 and int(x).
-.HP 6
-PEEK(x)
-.br
+.TP
+.B PEEK(x)
 Returns the value of the byte at address x.
-.HP 6
-SIN(x)
-.br
-.HP 6
-COS(x)
-.br
-.HP 6
-ATAN(x)
-.br
-Trignometric functions. (May not yet be
-implemented).
-.HP 6
-PI
-.br
+.TP
+.B SIN(x)
+.TP
+.B COS(x)
+.TP
+.B ATAN(x)
+Trignometric functions.
+.TP
+.B PI
 Returns the value of pi. = 3.141592653589...
-.HP 6
-ERL
-.br
+.TP
+.B ERL
 Returns the line number of the last error.
 Zero if error was in immeadiate mode.
-.HP 6
-ERR
-.br
+.TP
+.B ERR
 Returns the error code of the last error.
-.HP 6
-TIM
-.br
-Returns a numeric value for the number of
-seconds since
+.TP
+.B TIM
+Returns a numeric value for the number of seconds since
 1:1:1970 i.e. the value of the Unix clock.
+
 .PP
 .B Mathematical Operators:
 .HP 6
