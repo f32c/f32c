@@ -906,8 +906,6 @@ cls()
 	const	CHAR	*p, *q;
 	char	*tvar;
 
-	set_term();
-
 	tvar = getenv("TERM");
 	if(!tvar|| !*tvar)
 		tvar = "";
@@ -919,7 +917,6 @@ cls()
 			break;
 	}
 	prints( (char *)tp->t_clr);
-	rset_term(0);
 	cursor = 0;
 	normret;
 }
@@ -1311,7 +1308,6 @@ CHAR	*cmd;
 	i=fork();
 #endif
 	if(i==0){
-		rset_term(1);
 		VOID setuid(getuid());       /* stop user getting clever */
 		VOID execv(s, args);
 		exit(-1);                       /* problem */
@@ -1329,8 +1325,6 @@ CHAR	*cmd;
 #ifdef  SIGTSTP
 	VOID signal(SIGTSTP, t);
 #endif
-	set_term();
-	rset_term(0);
 	return(status);
 }
 #endif /* 0 */

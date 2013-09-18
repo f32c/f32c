@@ -98,7 +98,6 @@ int	fp;
 	static	int    firsttime = 1; /* flag to say that we are just loading */
 	lpoint p;
 
-	setupmyterm();          /* set up terminal - now done after files */
 	program = 0;
 	if(setexit() == ERR_RESET){	/* the file at the moment */
 		drop_fns();

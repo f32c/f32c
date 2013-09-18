@@ -657,10 +657,10 @@ STR	stringeval(void), mgcvt(void), mathpat(STR);
 void	stringassign(stringp, struct entry *, STR, int);
 void	closeall(void), clr_stack(forstp);
 void	setupfiles(int, char **), setupmyterm(void);
+void	setup_f32c(void);
 void	setup_fb(void);
 void	errtrap(void), flushall(void), insert(int), negate(void);
 void	ins_line(lpoint, int);
-void	set_term(void), rset_term(int);
 void	set_mem(CHAR *, ival, int);
 void	clr_mem(CHAR *, ival);
 void	save_env(struct env *), ret_env(struct env *);
@@ -669,7 +669,7 @@ void	drop_val(struct entry *, int), execute(void);
 void	free_entry(struct entry *), add_entry(struct entry *);
 void	fpcrash(void),kill_fstrs(CHAR *, CHAR *);
 void	notit(void), startfp(void);
-void	setu_term(void), errtrap(void);
+void	errtrap(void);
 void	dostop(int);
 void	catchsignal(void);
 int	fin1ch(filebufp);
@@ -824,6 +824,7 @@ STR	ALLOC_STR();
 
 /*   definition of variables for other source files */
 
+extern	uint32_t freq_khz, tsc_hi, tsc_lo;
 extern  int     baseval;
 extern	int	drg_opt;
 extern	int	tron_flag;

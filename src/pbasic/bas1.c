@@ -86,9 +86,9 @@ main(int argc, char **argv)
 
 	catchsignal();
 	startfp();              /* start up the floating point hardware */
-	setupfiles(argc,argv);
-	setupmyterm();          /* set up files after processing files */
+	setup_f32c();
 	setup_fb();
+	setupfiles(argc,argv);
 	program = 0;
 	clear();
 	prints("Rabbit Basic version v2.0.1\n");
@@ -1289,7 +1289,6 @@ int
 quit()
 {
 	flushall();                     /* flush the files */
-	rset_term(1);
 	if(cursor)
 		prints( (char *)nl);
 	exit(0);                       /* goodbye */
@@ -1329,7 +1328,6 @@ onstop(x)
 int	x;
 {
 	flushall();                     /* flush the files */
-	rset_term(1);
 	if(cursor){
 		prints( (char *)nl);
 		cursor = 0;
