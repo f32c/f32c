@@ -209,6 +209,25 @@ Jump to a subrutine at line
 .IR lnum ,
 saving the current line number on the return stack.
 .TP
+.B ON expr GOTO lnum1 { , lnum2 ... }
+Jump to the line number selected from the list following the
+GOTO statement and indexed by the value of
+.IR expr .
+If
+.I expr
+is less than or equal to zero or exceeds the number of elements
+in the list then proceed to the next instruction.
+.TP
+.B ON expr GOSUB lnum1 { , lnum2 ... }
+Jump to a subroutine at the line number selected from the list following the
+GOTOSUB statement indexed by the value of
+.IR expr ,
+saving the current line number on the return stack.
+If
+.I expr
+is less than or equal to zero or exceeds the number of elements
+in the list then proceed to the next instruction.
+.TP
 .B RETURN
 Return from a subroutine, resuming execution at the line following
 the last GOSUB command.
@@ -301,92 +320,76 @@ from the start of that line. If no DATA statements are
 found then the RESTORE command searches from the start of the
 program.
 .TP
+.B DIM var(d1 {, d2} {, d3}) {, ... }
+Declare and allocate memory for a list of arrays (string or
+arithmetic).  A maximum of three subscripts can be used.
+All arrays must be declared via DIM before use.
+.TP
 .B END
 Terminate program execution and return to the interactive mode
 command prompt.
 .TP
 .B STOP
-Stop program execution and return to the interactive command prompt.
+Terminate program execution and return to the interactive mode
+command prompt.
 Unlike the END command, the STOP command prints a message,
 and permits the execution to be resumed via the CONT command.
+.TP
+.B CLEAR
+Clear all variables.
+.TP
+.B NEW
+Close all files, clear all variables, and clear program memory.
 .TP
 .B RUN { l }
 Execute the currently loaded program.  An optional numeric argument
 can be provided indicating a line number from which the program
 execution will begin.
 All variables are cleared and all currently open files
-are closed prior to the beginning of program execution.
+are closed prior to starting program execution.
 .TP
 .B LIST { start } { - end }
-XXX
-
-TODO: from here on...
-
-
-.HP 6
-DIM var(d,d,d) { , var(d) }
-.br
-Declare and allocate memory for a list of arrays (string or
-arithmetic).   A maximum of three subscripts can be used.
-All arrays must be declared via DIM before use.
-.HP 6
-EXIT , BYE , QUIT
-.br
+Display the content of the program memory to the controlling terminal.
+Optionally a range of line numbers to display may be specified.
+.TP
+.B EDIT lnum
+Edit an existing line of the program text.
+.TP
+.B AUTO { start {, step } }
+Perform auto line numbering so that a program can be typed in without
+entering line numbers.  An optional
+.I start
+line number and an increment
+.I step
+may also be specified.
+.TP
+.B DELETE start - end
+Delete a range of lines between
+.I start
+and
+.I end
+inclusively.
+.TP
+.B BYE
 Terminate the execution of the interpreter,
 closing all files.
-.HP 6
-DELETE l - l
-.br
-Delete a specified range of lines. If they
-are not found then no lines will be deleted.
-.HP 6
-EDIT l
-.br
-Edit an existing line of the program text.
-.HP 6
-.HP 6
-CLEAR exp
-.br
-Clear all variables then allocate the amount
-of string space specified by the second parameter.
-.HP 6
-SAVE stringexp
-.br
+.TP
+.B SAVE stringexp
 Save the current program to a named file.
-.HP 6
-LOAD stringexp
-.br
-Load a program from the named file. All
-variables are cleared.
-.HP 6
-NEW { exp }
-.br
-Wipe the program from core. All files are
-closed and the interpreter is reset to its inital
-state. If a parameter is given then that is the number
-of file buffers that are allocated.
-.HP 6
-RESUME { l }
-.br
+.TP
+.B LOAD stringexp
+Close all files and clear all variables, then load a program from
+the named file.
+.TP
+.B RESUME { lnum }
 Return from an error trap. If a parameter is
 given then the return is made to that line. An error
 trap is set up by the "ON ERROR GOTO" statement.
-.HP 6
-RANDOM
-.br
+.TP
+.B RANDOM
 Reseed the random number generator.
-.HP 6
-ON exp GOTO l { , l}
-.HP 6
-ON exp GOSUB
-.HP 6
-ON ERROR GOTO l
-.br
-This command will execute either a goto or a
-gosub to a specified line number. The linenumber is
-specified by the value of the statement and the
-linenumber is taken from the list of line numbers that
-is given.
+.TP
+.B ON ERROR GOTO lnum
 If the error format is used, only one
 linenumber is required. This is the line where a jump
 is performed to if an error occurs.
@@ -395,13 +398,6 @@ ERROR exp
 .br
 Execute the given error sequence. Useful for
 debugging of error trap routines.
-.HP 6
-AUTO { l { ,l } }
-.br
-Perform auto line numbering so that a program
-can be typed in without having to bother about
-linenumbers. An optional start and increment can also
-be specified.
 .HP 6
 CLS
 .br
