@@ -37,7 +37,7 @@ architecture Structure of sram is
     constant C_phase_read_upper_half: integer := C_wait_cycles - 1;
     constant C_phase_read_terminate: integer := C_wait_cycles * 2 - 1;
     constant C_phase_write_upper_half: integer := C_wait_cycles;
-    constant C_phase_write_terminate: integer := C_wait_cycles * 2 - 2;
+    constant C_phase_write_terminate: integer := C_wait_cycles * 2 - 1;
 
     -- Physical interface registers
     signal R_a: std_logic_vector(18 downto 0);		-- to SRAM
