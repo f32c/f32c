@@ -504,6 +504,106 @@ displays a single new line.  The pager may be interrupted by pressing
 .I <q>
 or
 .IR <ctrl+c> .
+.TP
+.B VIDMODE expr
+Choose one of four possible video output modes, identified by integer
+values in range from 0 to 3.  Mode 0 uses a fixed 8-bit colour pallete,
+whereas mode 1 uses a fixed 16-bit pallete for each of
+512 (W) x 288 (H) pixels in the fixed-size display matrix.
+Mode 2 displays a static
+test image, while mode 3 completely turns off the video output.
+Modes 2 and 3 do not consume any memory bandwidth, hence permit
+the CPU to operate at full speed, whereas activating the framebuffer
+(modes 0 and 1) may have a noticeable impact on program execution
+performance.  By default the display is turned off (mode 3).
+.TP
+.B COLOR fgcolor {, bgcolor}
+Select a color to be used in subsequent graphics operations.  An optional
+background color which is only used when displaying text
+may be specified as a second argument.  Colors may be specified
+in three different formats.  If the argument
+provided is a string and the first character of the argument is "#",
+then next six characters are interpreted as hexadecimal values
+in form of
+.IR RRGGBB ,
+corresponding to 8-bit values of red, green and blue components.
+Alternatively, if the argument is a string and its first character is
+not "#", then the color key is searched for in the following pallete:
+.IR black ,
+.IR gray ,
+.IR gray25 ,
+.IR gray50 ,
+.IR gray75 ,
+.IR white ,
+.IR red ,
+.IR green ,
+.IR navy ,
+.IR blue ,
+.IR teal ,
+.IR lime ,
+.IR cyan ,
+.IR indigo ,
+.IR maroon ,
+.IR purple ,
+.IR olive ,
+.IR brown ,
+.IR violet ,
+.IR khaki ,
+.IR magenta ,
+.IR orange ,
+.IR pink ,
+.IR yellow .
+Finally, a color may be specified as a numeric value, which will be
+interpreted differently depending on the pallete in use (8-bit or
+16-bit).
+.TP
+.B PLOT x0, y0 {, x1, y1 ... }
+Draw a single pixel at coordinates
+.IR (x0,y0) .
+If additional coordinates are provided then continue drawing lines
+to coordinates corresponding to further argument pairs.
+.TP
+.B LINETO x0, y0 {, x1, y1 ... }
+Draw a line from the last cursor position to a pixel at coordinates
+.IR (x0,y0) .
+If additional coordinates are provided then continue drawing lines
+to coordinates corresponding to further argument pairs.
+.TP
+.B RECTANGLE x0, y0, x1, y1 {, fill}
+Draw a border of a rectangle defined by the provided coordinates.
+If an optional argument
+.I fill
+is provided and its value is non-zero, then the entire region
+encompassed by the rectangle is filled with current color.
+.TP
+.B CIRCLE x, y, r {, fill}
+Draw a circle at
+.IR x ,
+.I y
+with radius
+.IR r .
+If an optional argument
+.I fill
+is provided and its value is non-zero, then the entire region
+encompassed by the circle is filled with current color.
+.TP
+.B TEXT x, y, stringexpr {, scale_x {, scale_y} }
+Draw text
+.I stringexpr
+at
+.IR x ,
+.IR y .
+Optional arguments
+.I scale_x
+and
+.I scale_y
+may be specified to increase the size of the font.
+.TP
+.B LOADJPG path
+Load a JPEG image from a file pointed to by
+.IR path
+to the framebuffer.
+The size of the image may not exceed 512 by 288 pixels.
 .SH FUNCTIONS
 .TP
 .B MIN(x, ...)
