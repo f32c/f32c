@@ -285,7 +285,7 @@ is evaluated
 the body of the loop gets executed.
 .TP
 .B WEND
-Terminate a body of a WHILE loop.
+Terminate the body of a WHILE loop.
 .TP
 .B REPEAT
 Begining of a REPEAT - UNTIL loop.
@@ -454,6 +454,56 @@ but all arrays and strings are cleared.
 .B ERROR exp
 Execute the given error sequence, which may be useful for
 debugging of error handler routines.
+.TP
+.B DIR { path }
+List directory contents of the current directory, or 
+of the target
+.I path
+if provided.
+.TP
+.B CD path
+Change current directory to
+.IR path .
+.TP
+.B PWD
+Print the current directory.
+.TP
+.B KILL path
+Remove a file or directory pointed to by
+.IR path .
+Directories must be empty for the reques to succeed.
+.TP
+.B MKDIR path
+Create a directory at
+.IR path .
+.TP
+.B COPY src_path, dst_path
+Copy a file from
+.I src_path
+to
+.IR dst_path .
+If the destination file already exists it will be silently overwritten.
+.TP
+.B RENAME from_path, to_path
+Rename a file named
+.I from_path
+to
+.IR to_path .
+.TP
+.B MORE path
+Display an ASCII file pointed to by
+.I path
+to the controlling terminal line by line, pausing each page (24 lines)
+for terminal input.  Pressing
+.I <space> 
+displays another page, whereas pressing
+.I <enter>
+or
+.I <j>
+displays a single new line.  The pager may be interrupted by pressing
+.I <q>
+or
+.IR <ctrl+c> .
 .SH FUNCTIONS
 .TP
 .B MIN(x, ...)
