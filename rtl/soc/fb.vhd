@@ -91,7 +91,7 @@ begin
     end process;
 
     need_refill <= mode(1) = '0' and scan_line /= "0000000001" and
-      R_pixbuf_wr_addr /= R_pixbuf_rd_addr - 1;
+      R_pixbuf_wr_addr + 1 /= R_pixbuf_rd_addr;
     addr_strobe <= '1' when need_refill else '0';
     addr_out <= R_sram_addr;
 
