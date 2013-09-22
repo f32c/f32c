@@ -1,0 +1,27 @@
+diff -drup ../org/binutils-2.23.1/gas/config/tc-mips.c ./gas/config/tc-mips.c
+--- ../org/binutils-2.23.1/gas/config/tc-mips.c	2012-09-04 16:21:03.000000000 +0200
++++ ./gas/config/tc-mips.c	2013-09-22 10:39:32.000000000 +0200
+@@ -19153,6 +19153,7 @@ static const struct mips_cpu_info mips_c
+ 						ISA_MIPS32R2,	CPU_MIPS32R2 },
+   { "1004kf1_1",      MIPS_CPU_ASE_DSP | MIPS_CPU_ASE_MT,
+ 						ISA_MIPS32R2,	CPU_MIPS32R2 },
++  { "f32c",           0,                       ISA_MIPS32R2,   CPU_MIPS32R2 },
+ 
+   /* MIPS 64 */
+   { "5kc",            0,			ISA_MIPS64,	CPU_MIPS64 },
+diff -drup ../org/binutils-2.23.1/opcodes/mips-dis.c ./opcodes/mips-dis.c
+--- ../org/binutils-2.23.1/opcodes/mips-dis.c	2012-09-04 16:23:13.000000000 +0200
++++ ./opcodes/mips-dis.c	2013-09-22 10:39:32.000000000 +0200
+@@ -562,6 +562,12 @@ const struct mips_arch_choice mips_arch_
+     mips_cp0sel_names_mips3264, ARRAY_SIZE (mips_cp0sel_names_mips3264),
+     mips_hwr_names_numeric },
+ 
++  { "f32c",    1, bfd_mach_mipsisa32r2, CPU_MIPS32R2,
++    (ISA_MIPS32R2),
++    mips_cp0_names_mips3264r2,
++    mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
++    mips_hwr_names_mips3264r2 },
++
+   { "mips32r2",	1, bfd_mach_mipsisa32r2, CPU_MIPS32R2,
+     (ISA_MIPS32R2 | INSN_SMARTMIPS | INSN_DSP | INSN_DSPR2
+      | INSN_MIPS3D | INSN_MT | INSN_MCU),
