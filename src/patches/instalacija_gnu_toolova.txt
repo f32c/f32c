@@ -37,7 +37,7 @@ poddirektorije unutar gcc/, uz uklanjanje oznaka verzija:
 	    --prefix=/usr/local --mandir=/usr/local/man \
 	    --infodir=/usr/local/info --disable-nls --disable-shared
 	make
-	sudo make install
+	make install
 
 5) Prevesti i instalirati gcc:
 
@@ -46,11 +46,36 @@ poddirektorije unutar gcc/, uz uklanjanje oznaka verzija:
 	    --prefix=/usr/local --mandir=/usr/local/man \
 	    --infodir=/usr/local/info --disable-nls --disable-shared
 	make
-	sudo make install
+	make install
 
 6) Gotovo!  Provjera verzije instaliranih alata:
 
 	echo | mips-elf-as -v
 	mips-elf-gcc -v
 
-Napomena: Na FreeBSD-u koristiti gmake umjesto make!
+
+Specificnosti razlicitih operacijskih sustava:
+=============================================
+
+Linux / FreeBSD:
+	make install napraviti s administratorskim ovlastima (su / sudo).
+
+FreeBSD:
+	Koristiti gmake umjesto make.
+
+Microsoft Windows:
+	Za izgradnju i koristenje GNU alata treba prvo instalirati
+	razvojnu okolinu Cygwin (www.cygwin.org), a prilikom instalacije
+	treba odabrati slijedece dodatne pakete:
+
+	Devel/autoconf2.5
+	Devel/automake1.9
+	Devel/binutils
+	Devel/gcc-g++
+	Devel/make
+	Devel/patch
+	Doc/man
+	Doc/texinfo
+	Editors/vim
+	Tcl/tck-tk
+	Utils/diffutils
