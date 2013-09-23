@@ -509,7 +509,7 @@ or
 Choose one of four possible video output modes, identified by integer
 values in range from 0 to 3.  Mode 0 uses a fixed 8-bit colour pallete,
 whereas mode 1 uses a fixed 16-bit pallete for each of
-512 (W) x 288 (H) pixels in the fixed-size display matrix.
+512 (W) x 288 (H) pixels in a fixed-size video display matrix.
 Mode 2 displays a static
 test image, while mode 3 completely turns off the video output.
 Modes 2 and 3 do not consume any memory bandwidth, hence permit
@@ -797,6 +797,22 @@ hidden inside IF .. THEN .. ELSE constructs.
 
 REPEAT - UNTIL loops inside functions, procedures or nested inside
 other loops apparently do not work.
+
+The MOD operator is implemented using
+.IR fmod(3) ,
+so the result may or may not include a fractional part.
+.SH DISCLAIMER
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE.
 .SH AUTHORS
 Phil Cockcroft created the Rabbit BASIC in early 1980's while he was at
 University College, London.  He released the source code to the
