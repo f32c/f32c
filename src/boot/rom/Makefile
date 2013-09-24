@@ -13,6 +13,4 @@ CFILES = loader.c ../sio/loader.c
 
 F32C_LIBS = spi
 
-ASFILES = ${BASE_DIR}lib/start.S
-
 include ${POST_MK}

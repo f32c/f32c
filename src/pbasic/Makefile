@@ -16,7 +16,5 @@ CFLAGS += -DOPTIMIZED_DIVSI3
 CFLAGS += -Wno-unused-parameter
 CFLAGS += -Wno-missing-braces -Wno-sign-compare
 
-ASFILES += ${BASE_DIR}lib/start.S
-
 include ${POST_MK}
 

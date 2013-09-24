@@ -22,8 +22,6 @@ CFILES = loader.c
 
 F32C_LIBS = printf fatfs
 
-ASFILES = ${BASE_DIR}lib/start.S
-
 include ${POST_MK}
 
 image:	loader.bin

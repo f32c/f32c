@@ -13,3 +13,6 @@ PROG = loader
 CFILES = loader.c
 
 include ${POST_MK}
+
+# Do not build lib/start.S !
+ASFILES = 

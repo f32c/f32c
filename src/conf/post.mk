@@ -92,7 +92,12 @@ MK_LDFLAGS += ${LDFLAGS}
 CC = mips-elf-gcc ${MK_INCLUDES} ${MK_CFLAGS}
 LD = mips-elf-ld ${MK_LDFLAGS}
 OBJCOPY = mips-elf-objcopy
-ISA_CHECK = ${BASE_DIR}tools/isa_check.tcl
+ifeq ($(OS), FreeBSD)
+TCLSH = tclsh8.6
+else
+TCLSH = tclsh
+endif
+ISA_CHECK = ${TCLSH} ${BASE_DIR}tools/isa_check.tcl
 MKDEP = ${CC} -MM
 
 #
@@ -101,6 +106,11 @@ MKDEP = ${CC} -MM
 
 include ${LIBS_MK}
 
+#
+# Automatically include start.S in list of ASFILES
+#
+
+ASFILES += ${BASE_DIR}lib/start.S
 
 #
 # Autogenerate targets
