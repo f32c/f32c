@@ -25,8 +25,6 @@ CFILES = dhry_1.c dhry_2.c miscfn.c
 
 F32C_LIBS = printf
 
-ASFILES = ../lib/start.S
-
 include ${POST_MK}
 
 # Specialized build rules for dhry_*.c files
