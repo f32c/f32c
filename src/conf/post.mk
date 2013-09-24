@@ -92,12 +92,11 @@ MK_LDFLAGS += ${LDFLAGS}
 CC = mips-elf-gcc ${MK_INCLUDES} ${MK_CFLAGS}
 LD = mips-elf-ld ${MK_LDFLAGS}
 OBJCOPY = mips-elf-objcopy
-ifeq ($(OS), FreeBSD)
-TCLSH = tclsh8.6
+ifeq ($(shell uname -o), FreeBSD)
+ISA_CHECK = ${BASE_DIR}tools/isa_check.tcl
 else
-TCLSH = tclsh
+ISA_CHECK = tclsh ${BASE_DIR}tools/isa_check.tcl
 endif
-ISA_CHECK = ${TCLSH} ${BASE_DIR}tools/isa_check.tcl
 MKDEP = ${CC} -MM
 
 #
