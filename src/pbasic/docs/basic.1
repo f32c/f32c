@@ -387,7 +387,8 @@ and permits the execution to be resumed via the CONT command.
 .TP
 .B CONT
 Continue execution of a program which has been
-halted by a STOP command or via <ctrl-C>.
+halted by a STOP command or via
+.IR <ctrl-C> .
 .TP
 .B CLEAR
 Clear all variables.
@@ -508,7 +509,7 @@ or
 displays a single new line.  The pager may be interrupted by pressing
 .I <q>
 or
-.IR <ctrl+c> .
+.IR <ctrl+C> .
 .TP
 .B BAUDS expr
 Change the serial console baud rate.  The FT232R USB to UART bridge on
@@ -1003,12 +1004,58 @@ iteration # 3
 Ready
 .PD 1
 .TP
-Display random values on LEDs until any button is pressed on the ULX2S board or <ctrl+c> is received on the controlling terminal:
+Display random values on LEDs until a button is pressed on the ULX2S board or until <ctrl+C> is received on the controlling terminal:
 .TP
 .PD 0
 .BR "" > " repeat : poke -240, rnd(255) : sleep 0.1 : until peek(-240) > 0"
 .TP
-breaking
+Ready
+.PD 1
+.TP
+A short program for computing factorials:
+.TP
+.PD 0
+.BR "" > "10 input " "" "\&""f:""; f"
+.TP
+.BR "" > "20 r = 1 : for i = 1 to f : r = r * i : next i"
+.TP
+.BR "" > "30 print f; " "" "\&""! =""; r 
+.TP
+.BR "" > "40 goto 10"
+.TP
+.BR "" > list
+.TP
+   10 INPUT "f:"; f
+.TP
+   20 r = 1 : FOR i = 1 TO f : r = r * i : NEXT i
+.TP
+   30 PRINT f; "! ="; r
+.TP
+   40 GOTO 10
+.TP
+Ready
+.TP
+.BR "" > "save " "" "\&""factorial.bas""
+.TP
+Ready
+.TP
+.BR "" > run
+.TP
+.BR "" f: 3
+.TP
+ 3! = 6
+.TP
+.BR "" f: 8
+.TP
+ 8! = 40320
+.TP
+.BR "" f: 100
+.TP
+ 100! = 9.33262154e157
+.TP
+.IR "" "f: " <ctrl+C>
+.TP
+breaking at line 10
 .TP
 Ready
 .PD 1
@@ -1025,8 +1072,8 @@ The MOD operator is implemented using
 .IR fmod(3) ,
 so the result may or may not include a fractional part.
 
-The EXEC command does not check for the type of the file, so it is
-possible to load a non-executable file and execute it, which may
+The EXEC command does not check for the file type, so it is
+possible to load a non-executable file which may
 lead to a system lockup and / or result in data loss.
 .SH DISCLAIMER
 THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
