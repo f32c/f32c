@@ -67,7 +67,7 @@ entity glue is
 	C_bram_size: integer := 2;
 	C_i_rom_only: boolean := true;
 	C_sram: boolean := true;
-	C_sram_wait_cycles: integer := 5; -- ISSI, OK do 87.5 MHz
+	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true;
 	C_gpio: boolean := true;
