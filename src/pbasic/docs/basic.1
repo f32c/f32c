@@ -505,6 +505,11 @@ displays a single new line.  The pager may be interrupted by pressing
 or
 .IR <ctrl+c> .
 .TP
+.B BAUDS expr
+Change the serial console baud rate.  The FT232R USB to UART bridge on
+ULX2S FPGA board should work well with most standard baud rates ranging
+from 300 to 3000000 bauds.  The default speed is 115200 bauds.
+.TP
 .B VIDMODE expr
 Choose one of four possible video output modes, identified by integer
 values in range from 0 to 3.  Mode 0 uses a fixed 8-bit colour pallete,
