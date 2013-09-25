@@ -758,11 +758,6 @@ Returns a numeric value for the number of seconds since system startup.
         >               greater than
         <               less than
 
-Certain assignments can be specified in an abbreviated form:
-        a += b          a = a + b
-        a -= b          a = a - b
-        a *= b          a = a * b
-        a /= b          a = a / b
 .SH EXPRESSION SYNTAX
         stringexp  ::= string | string + stringexp
         string     ::= qstring | stringvar | stringfunc
@@ -814,7 +809,7 @@ An on-board SPI Flash memory chip can be
 accessed from BASIC as disk drive
 .IR \&"0:\&" .
 In standard
-configuration the SPI Flash drive also hosts the executable binary of
+configuration the SPI Flash drive also hosts an executable binary of
 the BASIC interpreter which is automatically loaded by the ROM
 bootloader when the board is powered up.  Data can be read from the
 on-board Flash drive at rates of up to 10 MBytes/s, while writing
@@ -824,8 +819,8 @@ moderately exercised to avoid exceeding the chip's declared
 endurance of around 100.000 write cycles.
 
 A MicroSD, MicroSDHC or MicroSDXC card formatted with the FAT32
-file system inserted in the MicroSD slot should be accessible as disk
-drive
+file system and inserted in the MicroSD slot should be accessible
+as disk drive
 .IR \&"1:\&" .
 Read speeds of up to 4.5 MBytes/s and write speeds of
 up to 2.5 MBytes/s may be sustained depending on card type,
