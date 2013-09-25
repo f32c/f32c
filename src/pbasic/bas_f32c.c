@@ -93,7 +93,6 @@ bas_exec(void)
 
 	*up = LOAD_COOKIE;
 	strcpy((void *) &up[1], name);
-	printf("Executing %s\n", (char *) &up[1]);
 
 	flash_read_block((void *) cp, 0, 512);
 	sec_size = (cp[0xc] << 8) + cp[0xb];
