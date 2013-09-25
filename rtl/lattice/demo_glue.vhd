@@ -67,7 +67,7 @@ entity glue is
 	C_bram_size: integer := 2;
 	C_i_rom_only: boolean := true;
 	C_sram: boolean := true;
-	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
+	C_sram_wait_cycles: integer := 5; -- ISSI, OK do 87.5 MHz
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true;
 	C_gpio: boolean := true;
@@ -462,7 +462,7 @@ begin
 	    R_gpio_in(12) <= j1_20;
 	    R_gpio_in(13) <= j1_21;
 	    R_gpio_in(14) <= j1_22;
-	    R_gpio_in(15) <= j1_24;
+	    R_gpio_in(15) <= j1_23;
 	    R_gpio_in(16) <= j2_2;
 	    R_gpio_in(17) <= j2_3;
 	    R_gpio_in(18) <= j2_4;
