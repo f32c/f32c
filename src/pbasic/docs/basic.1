@@ -827,54 +827,105 @@ which permits I/O ports to be addressed using small negative integers.
 The following ports may be safely accessed from BASIC using
 PEEK and POKE:
 .TP
-.B GPIO DATA
+.B GPIO
 .TP
-.I -256 (0xffffff00): GPIO byte 0
-.TP
+.I -256 (0xffffff00): GPIO data, byte 0 (input / output)
+.IP
+.PD 0
 bit 0: pin j1_2
+.IP
 bit 1: pin j1_3
+.IP
 bit 2: pin j1_4
+.IP
 bit 3: pin j1_8
+.IP
 bit 4: pin j1_9
+.IP
 bit 5: pin j1_13
+.IP
 bit 6: pin j1_14
+.IP
 bit 7: pin j1_15
-.El
-.Pp
-.I -255 (0xffffff01): GPIO byte 1
+.PD 1
 .TP
+.I -255 (0xffffff01): GPIO data, byte 1 (input / output)
+.IP
+.PD 0
 bit 0: pin j1_16
+.IP
 bit 1: pin j1_17
+.IP
 bit 2: pin j1_18
+.IP
 bit 3: pin j1_19
+.IP
 bit 4: pin j1_20
+.IP
 bit 5: pin j1_21
+.IP
 bit 6: pin j1_22
+.IP
 bit 7: pin j1_23
+.PD 1
 .TP
-.I -254 (0xffffff02): GPIO byte 2
-.TP
+.I -254 (0xffffff02): GPIO data, byte 2 (input / output)
+.IP
+.PD 0
 bit 0: pin j2_2
+.IP
 bit 1: pin j2_3
+.IP
 bit 2: pin j2_4
+.IP
 bit 3: pin j2_5
+.IP
 bit 4: pin j2_6
+.IP
 bit 5: pin j2_7
+.IP
 bit 6: pin j2_8
+.IP
 bit 7: pin j2_9
+.PD 1
 .TP
-.I -253 (0xffffff03): GPIO byte 3
-.TP
+.I -253 (0xffffff03): GPIO data, byte 3 (input / output)
+.IP
+.PD 0
 bit 0: pin j2_10
+.IP
 bit 1: pin j2_11
+.IP
 bit 2: pin j2_12
+.IP
 bit 3: pin j2_13
+.IP
 bit 4: pin j2_16
+.IP
 bit 5: not connected
+.IP
 bit 6: not connected
+.IP
 bit 7: not connected
+.PD 1
 .TP
-.B GPIO CONTROL
+.I -252 (0xffffff04): GPIO control, byte 0 (output only)
+.TP
+.I -251 (0xffffff05): GPIO control, byte 1 (output only)
+.TP
+.I -250 (0xffffff06): GPIO control, byte 2 (output only)
+.TP
+.I -249 (0xffffff07): GPIO control, byte 3 (output only)
+
+.RE
+.RS
+.RS
+The total of 29 pins on DIL connectors J1 and J2 can be controlled
+via GPIO ports.  GPIO data ports can be both read and written to,
+while the bits in corresponding control ports determine whether
+each pin will be configured as input (control bit cleared) or as
+output (control bit set).  By default all pins are configured as
+input, which means they can be driven by external signals.
 .TP
 .B LEDS, BUTTONS AND SWITCHES
 .SH DIAGNOSTICS
