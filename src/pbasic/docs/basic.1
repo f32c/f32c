@@ -328,7 +328,7 @@ All arrays must be declared via DIM before use.
 .B BASE 0 | 1
 Specify the starting index for arrays, which may be either zero or one.
 .TP
-.B OPEN stringexp { FOR INPUT|OUTPUT|APPEND|TERMINAL } AS exp
+.B OPEN stringexp { FOR INPUT | OUTPUT | APPEND | TERMINAL } AS exp
 Open a file named
 .I stringexp
 to be used with file descriptor
@@ -491,7 +491,7 @@ to
 .IR to_path .
 .TP
 .B EXEC path
-Load a program from file at
+Load a binary program (MIPS executable) from file at
 .I path
 into SRAM and execute it, displacing the BASIC interpreter.
 .TP
@@ -968,6 +968,52 @@ an error trapping routine. The errors can be caught by
 the user program using the on-error feature. If no error
 trapping routine has been supplied a message is printed
 with the corresponding line number.
+.SH EXAMPLES
+Compute a sum of two numbers:
+.TP
+.PD 0
+.BR "" > "? 1 + 2"
+.TP
+ 3
+.TP
+Ready
+.PD 1
+.TP
+Compute a sine function:
+.TP
+.PD 0
+.BR "" > "? sin(pi/4)"
+.TP
+ 0.707106781
+.TP
+Ready
+.PD 1
+.TP
+Iterate three times through a FOR loop:
+.TP
+.PD 0
+.BR "" > " for i = 1 to 3 : print " "" "\&""iteration #""; i : next i"
+.TP
+iteration # 1
+.TP
+iteration # 2
+.TP
+iteration # 3
+.TP
+Ready
+.PD 1
+.TP
+Display random values on LEDs until any button is pressed on the ULX2S board or <ctrl+c> is received on the controlling terminal:
+.TP
+.PD 0
+.BR "" > " repeat : poke -240, rnd(255) : sleep 0.1 : until peek(-240) > 0"
+.TP
+breaking
+.TP
+Ready
+.PD 1
+.RE
+.RS
 .SH BUGS
 The RENUMBER command fails to properly track and update goto targets
 hidden inside IF .. THEN .. ELSE constructs.
