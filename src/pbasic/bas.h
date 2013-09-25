@@ -722,6 +722,7 @@ int	endd(void),runn(void),gotos(void),rem(void),lets(void),list(void),
 	vidmode(void), color(void), plot(void), lineto(void),
 	rectangle(void), circle(void), text(void), loadjpg(void);
 
+int	bas_sleep(void), bauds(void);
 int	quit(void);
 
 
@@ -809,8 +810,7 @@ int	endd(),runn(),gotos(),rem(),lets(),list(),
 	vidmode(), color(), plot(), lineto(),
 	rectangle(), circle(), text(), loadjpg();
 
-int	quit(void);
-
+int	bas_sleep(), bauds();
 int	quit();
 
 void	COPY_OVER_STR();
@@ -1061,7 +1061,8 @@ const	intf_t	commandf = {
 	endd,runn,gotos,rem,list,lets,print,stop,bdelete,editl,input,clearl,
 	save,load,neww,shell,resume,iff,brandom,dimensio,forr,next,gosub,retn,
 	onn,doerror,print,rem,dauto,readd,dodata,cls,restore,base,bfopen,
-	fclosef,merge,quit,quit,quit,chain,deffunc,cont,poke,linput,rept,
+	fclosef,merge, bauds, quit, bas_sleep,
+	chain,deffunc,cont,poke,linput,rept,
 	untilf,whilef,wendf,renumb,fnend,fncmd, blset, brset, bfield, bput,
 	bget,lhmidst, bdefint, bdefstr, bdefdbl, bcommon, blocal, defproc,
 	bdeffn, bopts, tron, troff, bdir, bdirl, bmat, bwrite, berase,
@@ -1175,9 +1176,9 @@ const	struct  tabl    table[]={
 	"open",		0242,
 	"close",	0243,
 	"merge",	0244,
-	"quit",		0245,
+	"bauds",	0245,
 	"bye",		0246,
-	"exit",		0247,
+	"sleep",	0247,
 	"chain",	0250,
 	"def",		0251,
 	"cont",		0252,
