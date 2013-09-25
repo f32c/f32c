@@ -490,6 +490,11 @@ Rename a file named
 to
 .IR to_path .
 .TP
+.B EXEC path
+Load a program from file at
+.I path
+into SRAM and execute it, displacing the BASIC interpreter.
+.TP
 .B MORE path
 Display an ASCII file pointed to by
 .I path
@@ -826,9 +831,10 @@ Read speeds of up to 4.5 MBytes/s and write speeds of
 up to 2.5 MBytes/s may be sustained depending on card type,
 data layout and access patterns.
 
-The ULX2S board has 1 MByte of static RAM mapped by the SoC
-configuration to 0x80000000, which is also the address where the
-bootloader loads the BASIC interpreter.  The linear video framebuffer
+1 MByte of on-board static RAM is mapped by the SoC
+configuration to address 0x80000000, which is also the address where
+the BASIC interpreter is automatically loaded by the ROM bootloader.
+The linear video framebuffer
 region is mapped to 0x800b0000 and depending on the video pallete
 selected (8- or 16-bit) it occupies either 147456 or 294912 bytes
 of SRAM.
@@ -977,6 +983,10 @@ other loops apparently do not work.
 The MOD operator is implemented using
 .IR fmod(3) ,
 so the result may or may not include a fractional part.
+
+The EXEC command does not check for the type of the file, so it is
+possible to load a non-executable file and execute it, which may
+lead to a system lockup and / or result in data loss.
 .SH DISCLAIMER
 THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -995,5 +1005,5 @@ University College, London.  He released the source code to the
 Public Domain in 1986 and continued to further improve and maintain it
 until mid-1990's.
 In 2013. Marko Zec added features specific to the ULX2S FPGA board, such
-as file management and framebuffer routines, and rewrote this
+as file management and framebuffer routines, and rewrote most of this
 manual page.
