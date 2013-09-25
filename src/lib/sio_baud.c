@@ -24,9 +24,5 @@ sio_setbaud(int bauds)
 	val = val * 1024 / 1000 * 1024 / freq_khz + 1;
 	if (bauds > 1000000)
 		val *= 10;
-	if (bauds > 460800 && bauds <= 1500000)
-		val = val * 9 / 10;
-	if (bauds == 1500000)
-		val = val * 9 / 10;
 	OUTH(IO_SIO_BAUD, val);
 }
