@@ -36,6 +36,7 @@ image:	loader.bin
 	mcopy -i ${SPI_IMG_NAME} ../../pbasic/basic.bin ::boot
 	mattrib -i ${SPI_IMG_NAME} +r ::boot/basic.bin
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/* ::pics
-	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/demo1.bas ::autoexec.bas
-	groff -mandoc -Tascii -P-c ../../pbasic/docs/basic.1 > .bas.man
+	mcopy -i ${SPI_IMG_NAME} ../../pbasic/COPYRIGHT ::copyright.txt
+	groff -mandoc -Tascii ../../pbasic/docs/basic.1 > .bas.man
 	mcopy -i ${SPI_IMG_NAME} .bas.man ::readme.txt
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/demo1.bas ::autoexec.bas
