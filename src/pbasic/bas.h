@@ -705,7 +705,8 @@ STR	rightst(void),leftst(void),
 
 int	endd(void),runn(void),gotos(void),rem(void),lets(void),list(void),
 	print(void),stop(void),bdelete(void),editl(void),input(void),
-	clearl(void),save(void),load(void),neww(void),shell(void),resume(void),
+	clearl(void),save(void),load(void),neww(void),
+	bas_exec(void), resume(void),
 	iff(void),brandom(void),dimensio(void),forr(void),next(void),
 	gosub(void),retn(void),onn(void),doerror(void),
 	dauto(void),readd(void),dodata(void),cls(void),restore(void),
@@ -796,7 +797,8 @@ STR	datef(), binstr();
 
 int	endd(),runn(),gotos(),rem(),lets(),list(),
 	print(),stop(),bdelete(),editl(),input(),clearl(),
-	save(),load(),neww(),shell(),resume(),iff(), tron(), troff(),
+	save(),load(),neww(),
+	bas_exec(), resume(),iff(), tron(), troff(),
 	brandom(),dimensio(),forr(),next(),gosub(),retn(),
 	onn(),doerror(),rem(),dauto(), defproc(), bdeffn(),
 	readd(),dodata(),cls(),restore(),base(),bfopen(),
@@ -1059,7 +1061,8 @@ const	strf_t	strngncommand = {
 
 const	intf_t	commandf = {
 	endd,runn,gotos,rem,list,lets,print,stop,bdelete,editl,input,clearl,
-	save,load,neww,shell,resume,iff,brandom,dimensio,forr,next,gosub,retn,
+	save,load,neww,
+	bas_exec, resume,iff,brandom,dimensio,forr,next,gosub,retn,
 	onn,doerror,print,rem,dauto,readd,dodata,cls,restore,base,bfopen,
 	fclosef,merge, bauds, quit, bas_sleep,
 	chain,deffunc,cont,poke,linput,rept,
@@ -1154,7 +1157,7 @@ const	struct  tabl    table[]={
 	"save",		0214,
 	"load",		0215,
 	"new",		0216,
-	"shell",	0217,		/* XXX -> exec */
+	"exec",		0217,
 	"resume",	0220,
 	"if",		0221,
 	"random",	0222,
