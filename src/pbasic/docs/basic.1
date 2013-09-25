@@ -795,7 +795,7 @@ a 32-bit RISC CPU core operating at 81.25 MHz also permits execution
 of various software packages, including a BASIC interpreter.
 
 An on-board SPI Flash memory chip can be
-accessed from the BASIC interpreter as disk drive
+accessed from BASIC as disk drive
 .IR \&"0:\&" .
 In standard
 configuration the SPI Flash drive also hosts the executable binary of
@@ -902,11 +902,7 @@ bit 3: pin j2_13
 .IP
 bit 4: pin j2_16
 .IP
-bit 5: not connected
-.IP
-bit 6: not connected
-.IP
-bit 7: not connected
+bit 5 to 7: not connected
 .PD 1
 .TP
 .I -252 (0xffffff04): GPIO control, byte 0 (output only)
@@ -920,14 +916,40 @@ bit 7: not connected
 .RE
 .RS
 .RS
-The total of 29 pins on DIL connectors J1 and J2 can be controlled
+A total of 29 pins on DIL connectors J1 and J2 can be controlled
 via GPIO ports.  GPIO data ports can be both read and written to,
-while the bits in corresponding control ports determine whether
-each pin will be configured as input (control bit cleared) or as
+while bits in the corresponding control ports determine whether
+each pin is configured as input (control bit cleared) or as
 output (control bit set).  By default all pins are configured as
-input, which means they can be driven by external signals.
+input.
 .TP
 .B LEDS, BUTTONS AND SWITCHES
+.TP
+.I -240 (0xffffff10): pushbuttons / LEDs (input / output)
+.IP
+.PD 0
+bit 0: btn_right (input)
+.IP
+bit 1: bnt_left (input)
+.IP
+bit 2: btn_down (input)
+.IP
+bit 3: btn_up (input)
+.IP
+bit 4: btn_center (input)
+.IP
+bits 0 to 7: led_0 to led_7 (output)
+.PD 1
+.TP
+.I -239 (0xffffff11): DIL switches (input)
+.IP
+.PD 0
+bits 0 to 3: sw_0 to sw_3 (input)
+.IP
+bits 4 to 7: not connected
+.PD 1
+.RE
+.RS
 .SH DIAGNOSTICS
 When the interpreter discovers an error it will call
 an error trapping routine. The errors can be caught by
