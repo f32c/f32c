@@ -91,7 +91,7 @@ entity glue is
 	btn_left, btn_right, btn_up, btn_down, btn_center: in std_logic;
 	sw: in std_logic_vector(3 downto 0);
 	j1_2, j1_3, j1_4, j1_8, j1_9, j1_13, j1_14, j1_15: inout std_logic;
-	j1_16, j1_17, j1_18, j1_19, j1_20, j1_21, j1_22, j1_24: inout std_logic;
+	j1_16, j1_17, j1_18, j1_19, j1_20, j1_21, j1_22, j1_23: inout std_logic;
 	j2_2, j2_3, j2_4, j2_5, j2_6, j2_7, j2_8, j2_9: inout std_logic;
 	j2_10, j2_11, j2_12, j2_13, j2_16: inout std_logic;
 	sram_a: out std_logic_vector(18 downto 0);
@@ -753,7 +753,7 @@ begin
     j1_20 <= R_gpio_out(12) when R_gpio_ctl(12) = '1' else 'Z';
     j1_21 <= R_gpio_out(13) when R_gpio_ctl(13) = '1' else 'Z';
     j1_22 <= R_gpio_out(14) when R_gpio_ctl(14) = '1' else 'Z';
-    j1_24 <= R_gpio_out(15) when R_gpio_ctl(15) = '1' else 'Z';
+    j1_23 <= R_gpio_out(15) when R_gpio_ctl(15) = '1' else 'Z';
     j2_2 <= R_gpio_out(16) when R_gpio_ctl(16) = '1' else 'Z';
     j2_3 <= R_gpio_out(17) when R_gpio_ctl(17) = '1' else 'Z';
     j2_4 <= R_gpio_out(18) when R_gpio_ctl(18) = '1' else 'Z';
