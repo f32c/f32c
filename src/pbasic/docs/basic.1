@@ -785,6 +785,98 @@ Certain assignments can be specified in an abbreviated form:
                         | erl | err | tim
         usrfunc    ::=  fn/numbvar { (val { , val { , val } } ) }
         fval       ::= val with value between 1-9
+.SH ULX2S FPGA BOARD
+ULX2S is a compact-factor FPGA prototyping board designed primarily
+as an affordable teaching aid to be used in basic digital design
+courses and to be easily embeddable in more complex digital systems.
+A pre-built
+FPGA bitstream with a system-on-a-chip configuration centered around
+a 32-bit RISC CPU core operating at 81.25 MHz also permits execution
+of various software packages, including a BASIC interpreter.
+
+An on-board SPI Flash memory chip can be
+accessed from the BASIC interpreter as disk drive
+.IR \&"0:\&" .
+In standard
+configuration the SPI Flash drive also hosts the executable binary of
+the BASIC interpreter which is automatically loaded by the ROM
+bootloader when the board is powered up.  Data can be read from the
+on-board Flash drive at rates of up to 10 MBytes/s, while writing
+speed is limited to around 185 KBytes/s.  The SPI Flash chip does
+not provide any wear-leveling machinery, so write access should be
+moderately exercised to avoid exceeding the chip's declared 
+endurance of around 100.000 write cycles.
+
+A MicroSD, MicroSDHC or MicroSDXC card formatted with the FAT32
+file system inserted in the MicroSD slot should be accessible as disk
+drive
+.IR \&"1:\&" .
+Read speeds of up to 4.5 MBytes/s and write speeds of
+up to 2.5 MBytes/s may be sustained depending on card type,
+data layout and access patterns.
+
+The ULX2S board has 1 MByte of static RAM mapped by the SoC
+configuration to 0x80000000, which is also the address where the
+bootloader loads the BASIC interpreter.  The linear video framebuffer
+region is mapped to 0x800b0000 and depending on the video pallete
+selected (8- or 16-bit) it occupies either 147456 or 294912 bytes
+of SRAM.
+
+All I/O ports are memory-mapped to a region starting at 0xff000000,
+which permits I/O ports to be addressed using small negative integers.
+The following ports may be safely accessed from BASIC using
+PEEK and POKE:
+.TP
+.B GPIO DATA
+.TP
+.I -256 (0xffffff00): GPIO byte 0
+.TP
+bit 0: pin j1_2
+bit 1: pin j1_3
+bit 2: pin j1_4
+bit 3: pin j1_8
+bit 4: pin j1_9
+bit 5: pin j1_13
+bit 6: pin j1_14
+bit 7: pin j1_15
+.El
+.Pp
+.I -255 (0xffffff01): GPIO byte 1
+.TP
+bit 0: pin j1_16
+bit 1: pin j1_17
+bit 2: pin j1_18
+bit 3: pin j1_19
+bit 4: pin j1_20
+bit 5: pin j1_21
+bit 6: pin j1_22
+bit 7: pin j1_23
+.TP
+.I -254 (0xffffff02): GPIO byte 2
+.TP
+bit 0: pin j2_2
+bit 1: pin j2_3
+bit 2: pin j2_4
+bit 3: pin j2_5
+bit 4: pin j2_6
+bit 5: pin j2_7
+bit 6: pin j2_8
+bit 7: pin j2_9
+.TP
+.I -253 (0xffffff03): GPIO byte 3
+.TP
+bit 0: pin j2_10
+bit 1: pin j2_11
+bit 2: pin j2_12
+bit 3: pin j2_13
+bit 4: pin j2_16
+bit 5: not connected
+bit 6: not connected
+bit 7: not connected
+.TP
+.B GPIO CONTROL
+.TP
+.B LEDS, BUTTONS AND SWITCHES
 .SH DIAGNOSTICS
 When the interpreter discovers an error it will call
 an error trapping routine. The errors can be caught by
