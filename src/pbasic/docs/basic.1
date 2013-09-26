@@ -359,8 +359,7 @@ as a single-line expression
 .B DEF FNname( var {,var } )
 Define a function
 .I FNname
-as a subroutine which may include multiple
-lines terminated by a
+as a subroutine which may include multiple lines terminated by a
 .IR FNEND
 statement.  The result is returned by simply assigning
 .I FNname
@@ -368,10 +367,29 @@ a value before reaching the terminating
 .IR FNEND
 statement.
 .TP
+.B DEFPROC name( var {,var } )
+Define a procedure
+.I name
+as a subroutine which may include multiple lines terminated by a
+.IR FNEND
+statement.  Unlike functions, procedures do not return values.
+.TP
 .B FNEND
 Terminating statement of a
 .I DEF FNname
+or a
+.I DEFPROC
 block.
+.TP
+.B LOCAL var1 {, var2 .. }
+Declare variables with a scope local to functions and procedures.
+The
+.I LOCAL
+statement should be placed immediately following
+.I DEF FNname
+or
+.I DEFPROC
+statements.
 .TP
 .B MID$(stringval, start {, len } ) = stringexp
 Assign
