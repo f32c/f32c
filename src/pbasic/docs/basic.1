@@ -8,7 +8,7 @@ issuing individual commands or editing the current program, or
 in run mode, executing the program loaded into the main memory.
 At startup, the interpreter attempts to load and execute a program
 called
-.I autoexec.bat
+.I autoexec.bas
 from the root directory of the on-board Flash drive.
 If the startup program can not be found or its execution terminates,
 an interactive line editor is invoked which accepts and processes
@@ -46,7 +46,7 @@ through the recent command history, thus repeating and editing
 previously issued commands.
 
 Once the extended editing mode is invoked, the editor operates
-either in command or in text entry mode.  The text entry mode 
+either in editing command or in text entry mode.  The text entry mode 
 can be entered by issuing one of the appropriate commands (see below)
 and can be suspended by pressing the
 .I <Esc>
@@ -172,7 +172,7 @@ An arbitrary comment, ignored by the interpreter.
 .B LET var = exp
 Evaluate the expression
 .I exp
-and assign its a value to the variable
+and assign its value to variable
 .IR var .
 The LET keyword may be omitted for brevity.
 .TP
@@ -373,15 +373,16 @@ Terminating statement of a
 .I DEF FNname
 block.
 .TP
-.B MID$(stringval, exp { ,exp} ) = stringexp
+.B MID$(stringval, start {, len } ) = stringexp
 Assign
 .I stringexp
 to
 .I stringval
-starting at
-.I exp1
-and finishing at
-.IR exp2 .
+starting from character
+.I start
+and either replacing next
+.I len
+characters or the remainder of the string.
 .TP
 .B CLS
 Clear the terminal screen.
@@ -492,7 +493,7 @@ Print the current directory.
 .B KILL path
 Remove a file or directory pointed to by
 .IR path .
-Directories must be empty for the reques to succeed.
+Directories must be empty for the requestt to succeed.
 .TP
 .B MKDIR path
 Create a directory at
@@ -653,8 +654,7 @@ Returns the max value among all of the provided arguments.
 Returns the absolute value of x.
 .TP
 .B SGN(x)
-Returns the sign of a number. It's value is 1
-if greater than zero , zero if equal to zero. -1 if negative.
+Returns the sign of the argument x, which can be -1, 0 or 1.
 .TP
 .B INT(x)
 Return the integer part of x.
@@ -688,11 +688,16 @@ between 1 and INT(x).
 .B PEEK(x)
 Returns the value of a byte from memory at address x.
 .TP
-.B MID$(a$,i,j)
-Returns the part of a$ between the i'th and
-j'th positions. If the second parameter is not
-specified then the string is taken between the start
-value and the end of the string.
+.B MID$(a$, start {, len })
+Returns a substring of
+.I a$
+between character
+.I start
+and the end of the string.  If optional argument
+.I len
+is provided, the substring will be restricted to
+.I len
+characters.
 .TP
 .B RIGHT$(a$,j)
 Returns the right j characters of a$.
@@ -710,17 +715,13 @@ Returns the j'th error message.
 Returns the ascii character corresponding to
 the value of j.
 .TP
-.B STR$(j)
-Returns a string representation corresponding
-to j. This is similar but not the same as what can
-printed out.
+.B STR$(expr)
+Evaluate numeric expression
+.I expr
+and conver the result to a string.
 .TP
 .B SPACE$(j)
 Returns a string of j spaces
-.TP
-.B GET$(f)
-Returns one character from file f. If f is zero
-use the terminal. Returns a zero lenght string on cntl-c
 .TP
 .B LEN(a$)
 Returns the length of string a$.
@@ -731,9 +732,15 @@ Returns the value of the number specified by the string.
 .B ASC(a$)
 Returns the ascii code for the first element of a$.
 .TP
-.B INSTR(a$,b$,c)
-Returns the starting position that a$ is in
-b$, starting from the optional c'th position.
+.B INSTR(a$, b$ {,c})
+Return the position of first occurence of string
+.I a$
+inside string
+.IR b$ .
+If optional argument
+.I c
+is provided then the search begins from character
+.IR c .
 .TP
 .B EOF(f)
 Returns true if the file specified by f has reached the end of the file.
@@ -783,14 +790,7 @@ Returns a numeric value for the number of seconds since system startup.
         stringexp  ::= string | string + stringexp
         string     ::= qstring | stringvar | stringfunc
         qstrings   ::= "any char" | `any char`
-                        N.B. strings with nothing after them on the
-                             line do not need the terminating quote
         stringvar  ::= numbvar$ | numbvar$[ dim1 { ,dim2 {, dim3 } } ]
-        stringfunc ::= chr$(val) | mid$(stringexp, val {,val} )
-                        | date$ | right$(stringexp, val)
-                        | left$(stringexp, val) | ermsg$(val)
-                        | str$( val) | space$(val)
-                        | string$(stringexp, val) | get$( 0 | fval )
 
         val        ::= term | term sep val
                         | not val | - val
@@ -806,17 +806,7 @@ Returns a numeric value for the number of seconds since system startup.
         subsc      ::= numbvar( val {, val { ,val } } )
         sep        ::= + - * /  ^ and or xor | csep
         csep       ::= <> > < >= <= =
-        valfunc    ::= sgn(val) | len(stringexp)
-                        | abs(val) | val(stringexp)
-                        | asc(stringexp) | eof(fval)
-                        | posn( 0 | fval) | sqrt(val)
-                        | instr(stringexp, val { ,val} )
-                        | log(val) | exp(val) | eval(stringexp)
-                        | int(val) | peek(val) | rnd
-                        | rnd(val) | usrfunc | pi
-                        | erl | err | tim
         usrfunc    ::=  fn/numbvar { (val { , val { , val } } ) }
-        fval       ::= val with value between 1-9
 .SH ULX2S FPGA BOARD
 ULX2S is a tiny FPGA prototyping board designed primarily as an
 affordable teaching aid to be used in basic digital design
@@ -857,10 +847,11 @@ of SRAM.
 
 All I/O ports are memory-mapped to a region starting at 0xff000000,
 which permits I/O ports to be addressed using small negative integers.
-The following ports may be safely accessed from BASIC using
-PEEK and POKE:
+The following ports may be safely accessed from BASIC using PEEK and POKE:
 .TP
-.B GPIO
+.B General-Purpose Input / Output (GPIO)
+.TP
+A total of 29 pins on DIL connectors J1 and J2 can be controlled via GPIO ports.  GPIO data ports can be both read and written to, while bits in the corresponding control ports determine whether each pin is configured as input (control bit cleared) or as output (control bit set).  By default all pins are configured as input.
 .TP
 .I -256 (0xffffff00): GPIO data, byte 0 (input / output)
 .IP
@@ -945,18 +936,11 @@ bits 5 to 7: not connected
 .I -250 (0xffffff06): GPIO control, byte 2 (output only)
 .TP
 .I -249 (0xffffff07): GPIO control, byte 3 (output only)
-
 .RE
 .RS
 .RS
-A total of 29 pins on DIL connectors J1 and J2 can be controlled
-via GPIO ports.  GPIO data ports can be both read and written to,
-while bits in the corresponding control ports determine whether
-each pin is configured as input (control bit cleared) or as
-output (control bit set).  By default all pins are configured as
-input.
 .TP
-.B LEDS, BUTTONS AND SWITCHES
+.B LEDs, buttons and switches
 .TP
 .I -240 (0xffffff10): pushbuttons / LEDs (input / output)
 .IP
