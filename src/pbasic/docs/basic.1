@@ -350,8 +350,28 @@ Return from an error handler.  Optionally, do not return to the
 instruction which triggered the error, but to the line
 .IR lnum .
 .TP
-.B DEF FNname{ ( var {,var } ) } = exp
-Define a function.
+.B DEF FNname( var {,var } ) = exp
+Define a function
+.I FNname
+as a single-line expression
+.IR exp .
+.TP
+.B DEF FNname( var {,var } )
+Define a function
+.I FNname
+as a subroutine which may include multiple
+lines terminated by a
+.IR FNEND
+statement.  The result is returned by simply assigning
+.I FNname
+a value before reaching the terminating
+.IR FNEND
+statement.
+.TP
+.B FNEND
+Terminating statement of a
+.I DEF FNname
+block.
 .TP
 .B MID$(stringval, exp { ,exp} ) = stringexp
 Assign
@@ -532,7 +552,7 @@ test image, while mode 3 completely turns off the video output.
 Modes 2 and 3 do not consume any memory bandwidth, hence permit
 the CPU to operate at full speed, whereas activating the framebuffer
 (modes 0 and 1) may have a noticeable impact on program execution
-performance.  By default the display is turned off (mode 3).
+performance.  By default the video framebuffer is turned off (mode 3).
 .TP
 .B COLOR fgcolor {, bgcolor}
 Select a color to be used in subsequent graphics operations.  An optional
@@ -828,7 +848,7 @@ up to 2.5 MBytes/s may be sustained depending on card type,
 data layout and access patterns.
 
 1 MByte of on-board static RAM is mapped by the SoC
-configuration to address 0x80000000, which is also the address where
+configuration to address 0x80000000, which is also the location where
 the BASIC interpreter is automatically loaded by the ROM bootloader.
 The linear video framebuffer
 region is mapped to 0x800b0000 and depending on the video pallete
