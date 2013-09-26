@@ -27,8 +27,17 @@ main(void)
 	int fd, i, got;
 	int j, sum;
 
+again:
+	printf("\nULX2S SPI Flash programer v0.1\n\n");
+
 	if ((fd = open(IMAGE_NAME, 0)) < 0) {
 		printf("Nije pronadjena datoteka %s!\n", IMAGE_NAME);
+		printf("\nPritisnite tipku <ESC> za izlaz, ili "
+		    "umetnite karticu u MicroSD utor\n"
+		    "i pritisnite bilo koju tipku za ponovni pokusaj.\n\n");
+		i = getchar();
+		if (i != 27)
+			goto again;
 		return;
 	}
 
@@ -77,4 +86,9 @@ main(void)
 
 done:
 	printf("\nGotovo!\n\n");
+
+	printf("Pritisnite bilo koju tipku NA PLOCICI za izlaz iz programa\n");
+	do {
+		INB(i, IO_PUSHBTN);
+	} while (i == 0);
 }
