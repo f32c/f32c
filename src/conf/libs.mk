@@ -16,11 +16,6 @@ ifneq (,$(findstring random,$(F32C_LIBS)))
 	_NEED_RANDOM = YES
 endif
 
-ifneq (,$(findstring float,$(F32C_LIBS)))
-	_NEED_DIV = YES
-	_NEED_FLOAT = YES
-endif
-
 ifneq (,$(findstring math,$(F32C_LIBS)))
 	_NEED_DIV = YES
 	_NEED_FLOAT = YES

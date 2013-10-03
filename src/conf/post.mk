@@ -33,9 +33,10 @@ MK_CFLAGS += ${ENDIANFLAGS}
 MK_CFLAGS += -G 32768
 
 # f32c-specific flags
-#MK_CFLAGS += -msoft-mul
-MK_CFLAGS += -msoft-div
-MK_CFLAGS += -msoft-float
+#MK_CFLAGS += -mno-mul
+MK_CFLAGS += -mno-div
+MK_CFLAGS += -mno-unaligned-load
+MK_CFLAGS += -mno-unaligned-store
 
 # Language flags
 ifeq ($(CSTD), ANSI)
