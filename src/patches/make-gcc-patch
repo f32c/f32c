@@ -1,6 +1,6 @@
 #!/bin/sh
 
-GCC_VER="gcc-4.6.2"
+GCC_VER="gcc-4.8.1"
 
 diff -drup ../org/$GCC_VER/gcc/config/mips gcc/config/mips | fgrep -v "Only in gcc/config/mips:"
 diff -dup /dev/null gcc/config/mips/f32c.md
