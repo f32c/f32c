@@ -3,7 +3,7 @@ PROG = test1
 
 CFILES = test1.c
 
-F32C_LIBS = printf fatfs random framebuffer jpeg
+F32C_LIBS = printf framebuffer random fatfs
 
 CFLAGS += -DOPTIMIZED_DIVSI3
 
