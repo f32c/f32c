@@ -42,6 +42,9 @@ _start:
 	/* Start with a nop, just in case */
 	nop
 
+#ifdef BRAM
+	li	sp, 0x00004000
+#else
 	/* Invalidate the entire I-cache */
 	li	t1, 8192 / 4
 	lui	t0, 0x8000
@@ -57,7 +60,7 @@ flush_loop:
 	sll	t0, t0, 13	/* 8 k for each CPU should be enough */
 	li	sp, 0x80100000
 	subu	sp, sp, t0
+#endif
 
 	la	gp, _gp
 	j	_C_LABEL(main)
-	nop
