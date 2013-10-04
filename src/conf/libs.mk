@@ -29,7 +29,7 @@ ifneq (,$(findstring setjmp,$(F32C_LIBS)))
 	_NEED_SETJMP = YES
 endif
 
-ifneq (,$(findstring -msoft-mul,$(MK_CFLAGS)))
+ifneq (,$(findstring -mno-mul,$(MK_CFLAGS)))
 	_NEED_MUL = YES
 endif
 

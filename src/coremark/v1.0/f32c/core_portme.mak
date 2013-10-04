@@ -24,6 +24,8 @@ MK_CFLAGS += -G 32768
 # f32c-specific flags
 #MK_CFLAGS += -mno-mul
 MK_CFLAGS += -mno-div
+MK_CFLAGS += -mno-unaligned-load
+MK_CFLAGS += -mno-unaligned-store
 
 # No zero-filled BSS
 MK_CFLAGS += -fno-zero-initialized-in-bss

@@ -11,12 +11,9 @@ DHRY_CFLAGS += -Ofast
 DHRY_CFLAGS += -fno-inline-functions -fno-inline-small-functions
 #DHRY_CFLAGS += -finline-limit=32
 
-# builtin_strcpy is faster than a handcrafted version but requires swr/swl
+# builtin_strcpy is faster than a handcrafted version
 DHRY_CFLAGS += -DUSE_BUILTIN_STRCPY
 DHRY_CFLAGS += -DFAST_STRCMP -DUNROLLED_STRCMP
-
-# Build a faster __divsi3()
-CFLAGS += -DOPTIMIZED_DIVSI3
 
 # Omit floating point libs and printf parts
 CFLAGS += -DNO_PRINTF_FLOAT
