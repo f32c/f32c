@@ -28,7 +28,7 @@
 
 
 if {$argc == 0} {
-    puts "Usage: ./ihex2bram.tcl ifile \[ofile\]"
+    puts "Usage: ./hex2bram.tcl ifile \[ofile\]"
     exit 1
 } elseif {$argc == 1} {
     set ofile bram.vhd

@@ -34,6 +34,8 @@
  * at gcc invocation with __attribute__((optimize("-Os"))).
  */
 
+#define	OPTIMIZED_DIVSI3
+
 #define	UDIVMOD_SIGNED	0x1
 #define	UDIVMOD_DO_MOD	0x2
 
