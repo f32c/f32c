@@ -1,3 +1,29 @@
+/*-
+ * Copyright (c) 2013 Marko Zec
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * $Id$
+ */
 
 #include <sys/param.h>
 #include <sdcard.h>
@@ -27,7 +53,7 @@ int mode;
 
 uint32_t start, end, freq_khz;
 
-#define FAT
+//#define FAT
 
 #ifdef FAT
 static FATFS fh;
@@ -209,10 +235,13 @@ load_jpg(char *fname)
 	JRESULT res;
 	IODEV devid;
 
+printf("%s %d\n", __FUNCTION__, __LINE__);
+printf("Citam datoteku %s... ", fname);
 	devid.fh = open(fname, O_RDONLY);
 	if (devid.fh < 0)
 		return;
 
+printf("%s %d\n", __FUNCTION__, __LINE__);
 	printf("Citam datoteku %s... ", fname);
 
 	res = jd_prepare(&jdec, in_func, work_buf, sizeof(work_buf), &devid);
@@ -282,7 +311,8 @@ load_raw(char *fname)
 int
 main(void)
 {
-	int res, x0, y0, x1, y1;
+	//int res;
+	int x0, y0, x1, y1;
 	uint32_t color, tmp, i;
 	volatile uint8_t *p8;
 	volatile uint32_t *p32;
@@ -308,9 +338,10 @@ main(void)
 	printf("Framebuffer iskljucen: ");
 
 switch_mode:
+for (x0 = 0; x0 < 2; x0++) {
 	tmp = 0;
 	RDTSC(start);
-	for (p32 = (void *) 0x80000000, i = 0; i < 256*1024; i += 8, p32 += 8) {
+	for (p32 = (void *) 0x80040000, i = 0; i < 256*1024; i += 8, p32 += 8) {
 		p32[0]; p32[1]; p32[2]; p32[3]; p32[4]; p32[5]; p32[6]; p32[7];
 	}
 	RDTSC(end);
@@ -319,6 +350,31 @@ switch_mode:
 	    (end - start) / freq_khz / 1000,
 	    (end - start) / freq_khz % 1000,
 	    speed);
+}
+for (x0 = 0; x0 < 2; x0++) {
+	tmp = 0;
+	RDTSC(start);
+for (y0 = 0; y0 < 4; y0++) {
+	for (p32 = (void *) 0x80040000, i = 0; i < 256*1024; i += 16) {
+		*p32++ = i;
+		*p32++ = i;
+		*p32++ = i;
+		*p32++ = i;
+	}
+}
+	RDTSC(end);
+	double speed = 1 / (0.001 * (end - start) / freq_khz);
+	printf("1 MByte zapisan u %d.%03d sekundi (%f MB / s)\n",
+	    (end - start) / freq_khz / 1000,
+	    (end - start) / freq_khz % 1000,
+	    speed);
+}
+for (x0 = 0; x0 < 2000 * (mode == 1); x0++) {
+	i = open("/autoexec.bas", O_RDONLY);
+	read(i, (void *) 0x80040000, 256 * 1024);
+	close(i);
+}
+
 
 	/* Ispitaj RAW konzistentnost */
 	p8 = (void *) 0x800c0000;
@@ -353,7 +409,7 @@ switch_mode:
 		color ^= (tmp >> 13);
 		fb_line(x0, y0, x1, y1, color);
 		i++;
-		display_timestamp();
+		//display_timestamp();
 	}
 	RDTSC(end);
 	printf("%d iteracija u %d.%03d sekundi (%d ops / s)\n", i,
@@ -372,7 +428,7 @@ switch_mode:
 		tmp = (tmp >> 20) & 0x7f;
 		fb_filledcircle(x0, y0, tmp, color);
 		i++;
-		display_timestamp();
+		//display_timestamp();
 	}
 	RDTSC(end);
 	printf("%d iteracija u %d.%03d sekundi (%d ops / s)\n", i,
@@ -393,7 +449,7 @@ switch_mode:
 		y1 = ((tmp >> 16) % 0x1ff) - 128;
 		fb_rectangle(x0, y0, x1, y1, color);
 		i++;
-		display_timestamp();
+		//display_timestamp();
 	}
 	RDTSC(end);
 	printf("%d iteracija u %d.%03d sekundi (%d ops / s)\n", i,
@@ -445,4 +501,5 @@ else
 		} while (res != ' ' && tmp - start < freq_khz * 5000);
 	}
 #endif
+	goto switch_mode;
 }
