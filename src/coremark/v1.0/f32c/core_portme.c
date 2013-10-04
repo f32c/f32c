@@ -45,6 +45,8 @@
 	Use lower values to increase resolution, but make sure that overflow does not occur.
 	If there are issues with the return value overflowing, increase this value.
 	*/
+
+#undef	CLOCKS_PER_SEC
 #define	CLOCKS_PER_SEC 81250000	/* 81.25 Mhz */
 
 #define NSECS_PER_SEC CLOCKS_PER_SEC
