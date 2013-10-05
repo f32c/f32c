@@ -1,6 +1,6 @@
 diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips-cpus.def gcc/config/mips/mips-cpus.def
 --- ../org/gcc-4.8.1/gcc/config/mips/mips-cpus.def	2013-02-25 14:53:16.000000000 +0100
-+++ gcc/config/mips/mips-cpus.def	2013-10-03 23:17:15.000000000 +0200
++++ gcc/config/mips/mips-cpus.def	2013-10-03 23:41:16.000000000 +0200
 @@ -55,6 +55,7 @@ MIPS_CPU ("r3900", PROCESSOR_R3900, 1, 0
  
  /* MIPS II processors.  */
@@ -11,7 +11,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips-cpus.def gcc/config/mips/mips-c
  MIPS_CPU ("r4000", PROCESSOR_R4000, 3, 0)
 diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.c gcc/config/mips/mips.c
 --- ../org/gcc-4.8.1/gcc/config/mips/mips.c	2013-02-25 14:53:16.000000000 +0100
-+++ gcc/config/mips/mips.c	2013-10-03 23:17:15.000000000 +0200
++++ gcc/config/mips/mips.c	2013-10-05 00:30:52.000000000 +0200
 @@ -1121,7 +1121,16 @@ static const struct mips_rtx_cost_data
      COSTS_N_INSNS (68),           /* int_div_di */
  		     1,           /* branch_cost */
@@ -35,7 +35,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.c gcc/config/mips/mips.c
       and lw/lw/sw/sw is usually better than ldl/ldr/sdl/sdr.
       Otherwise move word-sized chunks.  */
 -  if (MEM_ALIGN (src) == BITS_PER_WORD / 2
-+  if (TARGET_NO_UNALIGNED_LOAD || TARGET_NO_UNALIGNED_STORE)
++  if (NO_UNALIGNED_LOAD || NO_UNALIGNED_STORE)
 +    bits = MIN(MEM_ALIGN(src), MEM_ALIGN(dest));
 +  else if (MEM_ALIGN (src) == BITS_PER_WORD / 2
        && MEM_ALIGN (dest) == BITS_PER_WORD / 2)
@@ -43,7 +43,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.c gcc/config/mips/mips.c
    else
 diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.h gcc/config/mips/mips.h
 --- ../org/gcc-4.8.1/gcc/config/mips/mips.h	2013-02-25 14:53:16.000000000 +0100
-+++ gcc/config/mips/mips.h	2013-10-03 23:17:15.000000000 +0200
++++ gcc/config/mips/mips.h	2013-10-05 00:44:11.000000000 +0200
 @@ -206,6 +206,7 @@ struct mips_cpu_info {
  #define TARGET_LOONGSON_2F          (mips_arch == PROCESSOR_LOONGSON_2F)
  #define TARGET_LOONGSON_2EF         (TARGET_LOONGSON_2E || TARGET_LOONGSON_2F)
@@ -104,7 +104,19 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.h gcc/config/mips/mips.h
       march=*: -mhard-float}"
  
  /* A spec condition that matches 32-bit options.  It only works if
-@@ -974,8 +984,8 @@ struct mips_cpu_info {
+@@ -808,6 +818,11 @@ struct mips_cpu_info {
+    been generated up to this point.  */
+ #define ISA_HAS_BRANCHLIKELY	(!ISA_MIPS1)
+ 
++/* F32C hacks */
++#define	NO_DIV (TARGET_SWDIV || TARGET_F32C)
++#define	NO_UNALIGNED_LOAD (TARGET_NO_UNALIGNED_LOAD || TARGET_F32C)
++#define	NO_UNALIGNED_STORE (TARGET_NO_UNALIGNED_STORE || TARGET_F32C)
++
+ /* ISA has a three-operand multiplication instruction (usually spelt "mul").  */
+ #define ISA_HAS_MUL3		((TARGET_MIPS3900                       \
+ 				  || TARGET_MIPS5400			\
+@@ -974,8 +989,8 @@ struct mips_cpu_info {
  #define ISA_HAS_TRUNC_W		(!ISA_MIPS1)
  
  /* ISA includes the MIPS32r2 seb and seh instructions.  */
@@ -115,7 +127,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.h gcc/config/mips/mips.h
  				 && !TARGET_MIPS16)
  
  /* ISA includes the MIPS32/64 rev 2 ext and ins instructions.  */
-@@ -1039,6 +1049,7 @@ struct mips_cpu_info {
+@@ -1039,6 +1054,7 @@ struct mips_cpu_info {
  				 || ISA_MIPS64				\
  				 || ISA_MIPS64R2			\
  				 || TARGET_MIPS5500			\
@@ -125,7 +137,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.h gcc/config/mips/mips.h
  /* ISA includes synci, jr.hb and jalr.hb.  */
 diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
 --- ../org/gcc-4.8.1/gcc/config/mips/mips.md	2013-02-25 14:53:16.000000000 +0100
-+++ gcc/config/mips/mips.md	2013-10-03 23:17:15.000000000 +0200
++++ gcc/config/mips/mips.md	2013-10-05 00:44:08.000000000 +0200
 @@ -64,6 +64,7 @@
    sr71000
    xlr
@@ -201,7 +213,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  		 (sign_extend:DI (match_operand:SI 2 "register_operand" "d"))))
     (clobber (match_scratch:DI 3 "=l"))]
 -  "TARGET_64BIT && ISA_HAS_DMUL3"
-+  "!TARGET_SWDIV && TARGET_64BIT && ISA_HAS_DMUL3"
++  "!NO_DIV && TARGET_64BIT && ISA_HAS_DMUL3"
    "dmul\t%0,%1,%2"
    [(set_attr "type" "imul3")
     (set_attr "mode" "DI")])
@@ -210,7 +222,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  	  (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
  	  (any_extend:DI (match_operand:SI 2 "register_operand" "d")))))]
 -  "!TARGET_64BIT && ISA_HAS_MULS"
-+  "!TARGET_SWDIV && !TARGET_64BIT && ISA_HAS_MULS"
++  "!NO_DIV && !TARGET_64BIT && ISA_HAS_MULS"
    "muls<u>\t$0,%1,%2"
    [(set_attr "type" "imul")
     (set_attr "mode" "SI")])
@@ -237,7 +249,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "<divide_condition>"
  {
 -  if (const_1_operand (operands[1], <MODE>mode))
-+  if (TARGET_SWDIV)
++  if (NO_DIV)
 +    FAIL;
 +  else if (const_1_operand (operands[1], <MODE>mode))
      if (!(<recip_condition> && flag_unsafe_math_optimizations))
@@ -248,7 +260,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  	(mod:GPR (match_dup 1)
  		 (match_dup 2)))]
 -  "!TARGET_FIX_VR4120"
-+  "!TARGET_SWDIV && !TARGET_FIX_VR4120"
++  "!NO_DIV && !TARGET_FIX_VR4120"
  {
    if (TARGET_MIPS16)
      {
@@ -257,7 +269,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  	(mod:GPR (match_dup 1)
  		 (match_dup 2)))]
 -  "!TARGET_FIX_VR4120 && !TARGET_MIPS16"
-+  "!TARGET_SWDIV && !TARGET_FIX_VR4120 && !TARGET_MIPS16"
++  "!NO_DIV && !TARGET_FIX_VR4120 && !TARGET_MIPS16"
    "#"
    "&& reload_completed"
    [(const_int 0)]
@@ -266,7 +278,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  	(umod:GPR (match_dup 1)
  		  (match_dup 2)))]
 -  ""
-+  "!TARGET_SWDIV"
++  "!NO_DIV"
  {
    if (TARGET_MIPS16)
      {
@@ -275,7 +287,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  	(umod:GPR (match_dup 1)
  		  (match_dup 2)))]
 -  "!TARGET_MIPS16"
-+  "!TARGET_SWDIV && !TARGET_MIPS16"
++  "!NO_DIV && !TARGET_MIPS16"
    "#"
    "reload_completed"
    [(const_int 0)]
@@ -284,7 +296,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  	(any_mod:GPR (match_operand:GPR 1 "register_operand")
  		     (match_operand:GPR 2 "register_operand")))]
 -  ""
-+  "!TARGET_SWDIV"
++  "!NO_DIV"
  {
    rtx hilo;
  
@@ -293,7 +305,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  			(match_operand:GPR 2 "register_operand" "d"))]
  	  UNSPEC_SET_HILO))]
 -  ""
-+  "!TARGET_SWDIV"
++  "!NO_DIV"
    { return mips_output_division ("<GPR:d>div<u>\t%.,%1,%2", operands); }
    [(set_attr "type" "idiv")
     (set_attr "mode" "<GPR:MODE>")])
@@ -302,7 +314,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  			  (match_operand 2 "const_int_operand")
  			  (match_operand 3 "const_int_operand")))]
 -  "!TARGET_MIPS16"
-+  "!TARGET_MIPS16 && !TARGET_NO_UNALIGNED_LOAD"
++  "!TARGET_MIPS16 && !NO_UNALIGNED_LOAD"
  {
    if (mips_expand_ext_as_unaligned_load (operands[0], operands[1],
  					 INTVAL (operands[2]),
@@ -311,7 +323,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  			  (match_operand 2 "const_int_operand")
  			  (match_operand 3 "const_int_operand")))]
 -  "!TARGET_MIPS16"
-+  "!TARGET_MIPS16 && !TARGET_NO_UNALIGNED_LOAD"
++  "!TARGET_MIPS16 && !NO_UNALIGNED_LOAD"
  {
    if (mips_expand_ext_as_unaligned_load (operands[0], operands[1],
  					 INTVAL (operands[2]),
@@ -320,7 +332,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  			  (match_operand 2 "const_int_operand"))
  	(match_operand:GPR 3 "reg_or_0_operand"))]
 -  "!TARGET_MIPS16"
-+  "!TARGET_MIPS16 && !TARGET_NO_UNALIGNED_STORE"
++  "!TARGET_MIPS16 && !NO_UNALIGNED_STORE"
  {
    if (mips_expand_ins_as_unaligned_store (operands[0], operands[3],
  					  INTVAL (operands[1]),
@@ -329,7 +341,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  		     (match_operand:QI 2 "memory_operand" "m")]
  		    UNSPEC_LOAD_LEFT))]
 -  "!TARGET_MIPS16 && mips_mem_fits_mode_p (<MODE>mode, operands[1])"
-+  "!TARGET_MIPS16 && !TARGET_NO_UNALIGNED_LOAD && mips_mem_fits_mode_p (<MODE>mode, operands[1])"
++  "!TARGET_MIPS16 && !NO_UNALIGNED_LOAD && mips_mem_fits_mode_p (<MODE>mode, operands[1])"
    "<load>l\t%0,%2"
    [(set_attr "move_type" "load")
     (set_attr "mode" "<MODE>")])
@@ -338,7 +350,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  		     (match_operand:GPR 3 "register_operand" "0")]
  		    UNSPEC_LOAD_RIGHT))]
 -  "!TARGET_MIPS16 && mips_mem_fits_mode_p (<MODE>mode, operands[1])"
-+  "!TARGET_MIPS16 && !TARGET_NO_UNALIGNED_LOAD && mips_mem_fits_mode_p (<MODE>mode, operands[1])"
++  "!TARGET_MIPS16 && !NO_UNALIGNED_LOAD && mips_mem_fits_mode_p (<MODE>mode, operands[1])"
    "<load>r\t%0,%2"
    [(set_attr "move_type" "load")
     (set_attr "mode" "<MODE>")])
@@ -347,7 +359,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  		     (match_operand:QI 2 "memory_operand" "m")]
  		    UNSPEC_STORE_LEFT))]
 -  "!TARGET_MIPS16 && mips_mem_fits_mode_p (<MODE>mode, operands[0])"
-+  "!TARGET_MIPS16 && !TARGET_NO_UNALIGNED_LOAD && mips_mem_fits_mode_p (<MODE>mode, operands[0])"
++  "!TARGET_MIPS16 && !NO_UNALIGNED_STORE && mips_mem_fits_mode_p (<MODE>mode, operands[0])"
    "<store>l\t%z1,%2"
    [(set_attr "move_type" "store")
     (set_attr "mode" "<MODE>")])
@@ -356,13 +368,13 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.md gcc/config/mips/mips.md
  		     (match_dup 0)]
  		    UNSPEC_STORE_RIGHT))]
 -  "!TARGET_MIPS16 && mips_mem_fits_mode_p (<MODE>mode, operands[0])"
-+  "!TARGET_MIPS16 && !TARGET_NO_UNALIGNED_LOAD && mips_mem_fits_mode_p (<MODE>mode, operands[0])"
++  "!TARGET_MIPS16 && !NO_UNALIGNED_STORE && mips_mem_fits_mode_p (<MODE>mode, operands[0])"
    "<store>r\t%z1,%2"
    [(set_attr "move_type" "store")
     (set_attr "mode" "<MODE>")])
 diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
 --- ../org/gcc-4.8.1/gcc/config/mips/mips.opt	2013-02-25 14:53:16.000000000 +0100
-+++ gcc/config/mips/mips.opt	2013-10-03 23:17:15.000000000 +0200
++++ gcc/config/mips/mips.opt	2013-10-03 23:41:16.000000000 +0200
 @@ -111,6 +111,22 @@ mdouble-float
  Target Report RejectNegative InverseMask(SINGLE_FLOAT, DOUBLE_FLOAT)
  Allow hardware floating-point instructions to cover both 32-bit and 64-bit operations
@@ -386,8 +398,8 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
  mdsp
  Target Report Mask(DSP)
  Use MIPS-DSP instructions
---- /dev/null	2013-10-03 23:26:34.000000000 +0200
-+++ gcc/config/mips/f32c.md	2013-10-03 23:17:15.000000000 +0200
+--- /dev/null	2013-10-05 21:00:00.000000000 +0200
++++ gcc/config/mips/f32c.md	2013-10-03 23:41:16.000000000 +0200
 @@ -0,0 +1,96 @@
 +;;
 +;; f32c pipeline description
@@ -486,7 +498,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
 +   (set_attr "mode" "<MODE>")])
 +
 --- ../org/gcc-4.8.1/configure	2013-02-15 18:45:54.000000000 +0100
-+++ configure	2013-10-03 23:19:02.000000000 +0200
++++ configure	2013-10-03 23:41:16.000000000 +0200
 @@ -2789,7 +2789,10 @@ target_libraries="target-libgcc \
  # note: any program that *uses* libraries that are in the "target_libraries"
  # list belongs in this list.
@@ -500,7 +512,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
  ################################################################################
  
 --- ../org/gcc-4.8.1/gcc/doc/g++.1	2013-05-31 11:58:16.000000000 +0200
-+++ gcc/doc/g++.1	2013-10-03 23:17:15.000000000 +0200
++++ gcc/doc/g++.1	2013-10-03 23:41:16.000000000 +0200
 @@ -14978,6 +14978,7 @@ The processor names are:
  \&\fB34kc\fR, \fB34kf2_1\fR, \fB34kf1_1\fR, \fB34kn\fR,
  \&\fB74kc\fR, \fB74kf2_1\fR, \fB74kf1_1\fR, \fB74kf3_2\fR,
@@ -510,7 +522,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
  \&\fBm4k\fR,
  \&\fBocteon\fR, \fBocteon+\fR, \fBocteon2\fR,
 --- ../org/gcc-4.8.1/gcc/doc/gcc.1	2013-05-31 11:58:16.000000000 +0200
-+++ gcc/doc/gcc.1	2013-10-03 23:17:15.000000000 +0200
++++ gcc/doc/gcc.1	2013-10-03 23:41:16.000000000 +0200
 @@ -14978,6 +14978,7 @@ The processor names are:
  \&\fB34kc\fR, \fB34kf2_1\fR, \fB34kf1_1\fR, \fB34kn\fR,
  \&\fB74kc\fR, \fB74kf2_1\fR, \fB74kf1_1\fR, \fB74kf3_2\fR,
@@ -520,7 +532,7 @@ diff -drup ../org/gcc-4.8.1/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
  \&\fBm4k\fR,
  \&\fBocteon\fR, \fBocteon+\fR, \fBocteon2\fR,
 --- ../org/gcc-4.8.1/gcc/doc/invoke.texi	2013-03-29 14:41:29.000000000 +0100
-+++ gcc/doc/invoke.texi	2013-10-03 23:17:16.000000000 +0200
++++ gcc/doc/invoke.texi	2013-10-03 23:41:16.000000000 +0200
 @@ -15899,6 +15899,7 @@ The processor names are:
  @samp{34kc}, @samp{34kf2_1}, @samp{34kf1_1}, @samp{34kn},
  @samp{74kc}, @samp{74kf2_1}, @samp{74kf1_1}, @samp{74kf3_2},
