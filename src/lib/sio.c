@@ -29,14 +29,14 @@
 #include <io.h>
 #include <sio.h>
 
-#define	SIO_RXBUFSIZE	16
-#define	SIO_RXBUFMASK	0x0f
+#define	SIO_RXBUFSIZE	(1 << 3)
+#define	SIO_RXBUFMASK	(SIO_RXBUFSIZE - 1)
 
 void (*sio_idle_fn)(void) = NULL;
 static char sio_rxbuf[SIO_RXBUFSIZE];
-static uint8_t sio_rxbuf_head = 1;
-static uint8_t sio_rxbuf_tail = 1;
-static uint8_t sio_tx_xoff = 0;
+static uint8_t sio_rxbuf_head;
+static uint8_t sio_rxbuf_tail;
+static uint8_t sio_tx_xoff;
 
 
 static __attribute__((optimize("-Os"))) int
