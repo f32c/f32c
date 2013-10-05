@@ -62,9 +62,9 @@ MK_CFLAGS += -G 32768
 
 # f32c-specific flags
 #MK_CFLAGS += -mno-mul
-MK_CFLAGS += -mno-div
-MK_CFLAGS += -mno-unaligned-load
-MK_CFLAGS += -mno-unaligned-store
+#MK_CFLAGS += -mno-div
+#MK_CFLAGS += -mno-unaligned-load
+#MK_CFLAGS += -mno-unaligned-store
 
 # Language flags
 ifeq ($(CSTD), ANSI)
