@@ -4,12 +4,13 @@ PROG = dhry
 CSTD = KnR
 WARNS = 1
 
-# Override -Os
+# Override -Os, and turn on extra optimization efforts
 DHRY_CFLAGS += -Ofast
+DHRY_CFLAGS += -fselective-scheduling
 
 # Inlining functions is not permitted per Dhrystone rules!
 DHRY_CFLAGS += -fno-inline-functions -fno-inline-small-functions
-#DHRY_CFLAGS += -finline-limit=32
+DHRY_CFLAGS += -finline-limit=0
 
 # builtin_strcpy is faster than a handcrafted version
 DHRY_CFLAGS += -DUSE_BUILTIN_STRCPY
