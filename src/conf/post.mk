@@ -66,11 +66,6 @@ MK_CFLAGS += -G 32768
 #MK_CFLAGS += -mno-unaligned-load
 #MK_CFLAGS += -mno-unaligned-store
 
-# Language flags
-ifeq ($(CSTD), ANSI)
-MK_CFLAGS += -std=c99
-endif
-
 # Warning flags
 ifneq ($(WARNS), 0)
 MK_CFLAGS += -Wall
