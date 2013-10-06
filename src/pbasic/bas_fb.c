@@ -384,6 +384,7 @@ out_func(JDEC* jd, void* bitmap, JRECT* rect)
 #else
 	LONG *src;
 #endif
+	uint32_t i, j;
 
 	/* Copy the decompressed RGB rectanglar to the frame buffer (assuming RGB888 cfg) */
 #if JD_FORMAT < JD_FMT_RGB32
@@ -401,9 +402,9 @@ out_func(JDEC* jd, void* bitmap, JRECT* rect)
 	bwd = (fb_mode + 1) * dev->wfbuf;
 	for (y = rect->top; y <= rect->bottom; y++) {
 #if JD_FORMAT < JD_FMT_RGB32
-		for (uint32_t i = 0, j = 0; i < bws; i += 3, j += (fb_mode + 1)) {
+		for (i = 0, j = 0; i < bws; i += 3, j += (fb_mode + 1)) {
 #else
-		for (uint32_t i = 0, j = 0; i < bws; i++, j += (fb_mode + 1)) {
+		for (i = 0, j = 0; i < bws; i++, j += (fb_mode + 1)) {
 #endif
 			uint32_t color;
 		
