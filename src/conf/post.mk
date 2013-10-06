@@ -106,7 +106,7 @@ ISA_CHECK = ${BASE_DIR}tools/isa_check.tcl
 else
 ISA_CHECK = tclsh ${BASE_DIR}tools/isa_check.tcl
 endif
-MKDEP = ${CC} -MM
+MKDEP = ${CC} -MM >.depend
 
 #
 # Add libraries to the list of CFILES
@@ -153,3 +153,5 @@ cleandepend:
 #
 %.o : %.c
 	$(CC) -c -pipe $< -o $@
+
+-include .depend
