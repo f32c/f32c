@@ -91,7 +91,7 @@ main(int argc, char **argv)
 	setupfiles(argc,argv);
 	program = 0;
 	clear();
-	prints("Rabbit BASIC version 2.1\n");
+	prints("Rabbit BASIC version 2.1.0 (built " __DATE__ ")\n");
 	if(setexit() == ERR_RESET){
 		drop_fns();
 		execute();	/* execute the line */
