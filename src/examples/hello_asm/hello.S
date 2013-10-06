@@ -2,7 +2,7 @@
  * Print a message on serial console, and blink LEDs until a button
  * is pressed on the ULX2S FPGA board.
  *
- * $Id $
+ * $Id$
  */
 
 #include <mips/asm.h>
