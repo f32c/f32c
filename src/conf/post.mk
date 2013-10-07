@@ -121,10 +121,20 @@ include ${LIBS_MK}
 ASFILES += ${BASE_DIR}lib/start.S
 
 #
+# All object files go to OBJDIR
+#
+
+ifndef OBJDIR
+OBJDIR=./obj/
+endif
+
+#
 # Autogenerate targets
 #
 
-OBJS = $(ASFILES:.S=.o) $(CFILES:.c=.o)
+ASM_OBJS = $(addprefix ${OBJDIR},$(ASFILES:.S=.O))
+C_OBJS = $(addprefix ${OBJDIR},$(CFILES:.c=.o))
+OBJS = ${ASM_OBJS} ${C_OBJS}
 
 BIN = ${PROG}.bin
 HEX = ${PROG}.hex
@@ -151,7 +161,15 @@ cleandepend:
 #
 # Rule for compiling C files
 #
-%.o : %.c
+$(addprefix ${OBJDIR},%.o) : %.c
+	@mkdir -p $(dir $@)
+	$(CC) -c -pipe -o $@ $<
+
+#
+# Rule for compiling ASM files
+#
+$(addprefix ${OBJDIR},%.O) : %.S
+	@mkdir -p $(dir $@)
 	$(CC) -c -pipe -o $@ $<
 
 -include .depend
