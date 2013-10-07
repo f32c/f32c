@@ -43,7 +43,9 @@ endif
 MK_INCLUDES = -nostdinc -I${BASE_DIR}include
 
 # MIPS-specific flags
+ifeq ($(findstring -march=,$(CFLAGS)),)
 MK_CFLAGS += -march=f32c
+endif
 MK_CFLAGS += ${ENDIANFLAGS}
 MK_CFLAGS += -G 32768
 
@@ -53,8 +55,16 @@ MK_CFLAGS += -G 32768
 #MK_CFLAGS += -mno-unaligned-load
 #MK_CFLAGS += -mno-unaligned-store
 
+# Optimization options
+ifeq ($(findstring -O,$(CFLAGS)),)
+MK_CFLAGS += -Os -fpeel-loops
+endif
+
 # Do not try to link with libc and standard startup files
 MK_CFLAGS += -ffreestanding
+
+# Do not link; use a pipe to feed the as
+MK_CFLAGS += -c -pipe
 
 # Default is to warn and abort on all standard errors and warnings
 ifndef WARNS
@@ -83,9 +93,6 @@ endif
 
 # Include debugging info
 #MK_CFLAGS += -g
-
-# Optimization options
-MK_CFLAGS += -Os -fpeel-loops
 
 # Pull in any module-specific compiler flags
 MK_CFLAGS += ${CFLAGS}
@@ -163,13 +170,13 @@ cleandepend:
 #
 $(addprefix ${OBJDIR},%.o) : %.c
 	@mkdir -p $(dir $@)
-	$(CC) -c -pipe -o $@ $<
+	$(CC) -o $@ $<
 
 #
 # Rule for compiling ASM files
 #
 $(addprefix ${OBJDIR},%.O) : %.S
 	@mkdir -p $(dir $@)
-	$(CC) -c -pipe -o $@ $<
+	$(CC) -o $@ $<
 
 -include .depend
