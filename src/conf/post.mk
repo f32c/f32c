@@ -39,25 +39,12 @@ ifndef ENDIANFLAGS
 ENDIANFLAGS = -EL
 endif
 
-# C flavor: K&R or ANSI (C99)
-ifndef CSTD
-CSTD = ANSI
-endif
-
-# Default is to warn and abort on all errors
-ifndef WARNS
-WARNS = 2
-endif
-
 # Includes
-#MK_INCLUDES = -nostdinc -I${BASE_DIR}include -I.
 MK_INCLUDES = -nostdinc -I${BASE_DIR}include
 
 # MIPS-specific flags
 MK_CFLAGS += -march=f32c
-#MK_CFLAGS += -march=mips2 -mtune=f32c
 MK_CFLAGS += ${ENDIANFLAGS}
-#MK_CFLAGS += -mno-branch-likely
 MK_CFLAGS += -G 32768
 
 # f32c-specific flags
@@ -66,23 +53,36 @@ MK_CFLAGS += -G 32768
 #MK_CFLAGS += -mno-unaligned-load
 #MK_CFLAGS += -mno-unaligned-store
 
-# Warning flags
-ifneq ($(WARNS), 0)
-MK_CFLAGS += -Wall
-endif
-ifeq ($(WARNS), 2)
-MK_CFLAGS += -Werror
-endif
-
+# Do not try to link with libc and standard startup files
 MK_CFLAGS += -ffreestanding
 
-MK_CFLAGS += -Wextra -Wsystem-headers -Wshadow
-# Too strict:
-#MK_CFLAGS += -Wpadded
-#MK_CFLAGS += -Winline
+# Default is to warn and abort on all standard errors and warnings
+ifndef WARNS
+WARNS = 2
+endif
 
-# Debugging options
-MK_CFLAGS += -g
+# Warning flags
+ifeq ($(findstring ${WARNS}, "01234"),)
+$(error Unsupportde WARNS level ${WARNS})
+endif
+ifneq ($(findstring ${WARNS}, "1234"),)
+MK_CFLAGS += -Wall
+endif
+ifneq ($(findstring ${WARNS}, "234"),)
+MK_CFLAGS += -Werror
+endif
+ifneq ($(findstring ${WARNS}, "34"),)
+MK_CFLAGS += -Wextra -Wsystem-headers -Wshadow
+endif
+ifneq ($(findstring ${WARNS}, "4"),)
+MK_CFLAGS += -Winline
+endif
+
+# Too strict to be practical:
+#MK_CFLAGS += -Wpadded
+
+# Include debugging info
+#MK_CFLAGS += -g
 
 # Optimization options
 MK_CFLAGS += -Os -fpeel-loops
@@ -98,7 +98,7 @@ MK_LDFLAGS += -nostartfiles -nostdlib
 # Pull in any module-specific linker flags
 MK_LDFLAGS += ${LDFLAGS}
 
-CC = mips-elf-gcc ${MK_INCLUDES} ${MK_CFLAGS}
+CC = mips-elf-gcc ${MK_CFLAGS} ${MK_INCLUDES}
 LD = mips-elf-ld ${MK_LDFLAGS}
 OBJCOPY = mips-elf-objcopy
 ifeq ($(shell uname -o), FreeBSD)
@@ -106,7 +106,7 @@ ISA_CHECK = ${BASE_DIR}tools/isa_check.tcl
 else
 ISA_CHECK = tclsh ${BASE_DIR}tools/isa_check.tcl
 endif
-MKDEP = ${CC} -MM >.depend
+MKDEP = ${CC} -MM
 
 #
 # Add libraries to the list of CFILES
@@ -140,7 +140,7 @@ ${PROG}: ${OBJS} Makefile
 	${LD} -o ${PROG} ${OBJS}
 
 depend:
-	${MKDEP} ${CFILES}
+	${MKDEP} ${CFILES} > .depend
 
 clean:
 	rm -f ${OBJS} ${PROG} ${BIN} ${HEX}
@@ -152,6 +152,6 @@ cleandepend:
 # Rule for compiling C files
 #
 %.o : %.c
-	$(CC) -c -pipe $< -o $@
+	$(CC) -c -pipe -o $@ $<
 
 -include .depend

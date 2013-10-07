@@ -1,7 +1,6 @@
 
 PROG = dhry
 
-CSTD = KnR
 WARNS = 1
 
 # Override -Os, and turn on extra optimization efforts

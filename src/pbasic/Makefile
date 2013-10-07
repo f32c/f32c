@@ -11,8 +11,10 @@ CFILES += bas_fb.c bas_file.c bas_f32c.c f32c_glue.c \
 
 F32C_LIBS = setjmp math fatfs printf framebuffer jpeg sio_baud
 
-CFLAGS += -Wno-unused-parameter
-CFLAGS += -Wno-missing-braces -Wno-sign-compare
-
 include ${POST_MK}
 
+CFLAGS += -Wno-missing-braces
+ifneq ($(findstring ${WARNS}, "34"),)
+CFLAGS += -Wno-unused-parameter
+CFLAGS += -Wno-sign-compare
+endif
