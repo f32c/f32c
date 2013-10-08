@@ -5,6 +5,9 @@ use ieee.std_logic_arith.all;
 use ieee.numeric_std.all;
 
 entity fb is
+    generic (
+	C_big_endian: boolean
+    );
     port (
 	clk, clk_dac: in std_logic;
 	addr_strobe: out std_logic;
@@ -156,11 +159,20 @@ begin
 	    elsif mode = "01" then
 		-- 16-bit color pallete
 		-- Don't change chroma phase for grayscale pixels.
-		if pixel_data(15 downto 12) /= "0000" then
-		    R_chroma_phase <= pixel_data(11 downto 7) & '0';
+		if C_big_endian then
+		    if pixel_data(7 downto 4) /= "0000" then
+			R_chroma_phase <= pixel_data(3 downto 0) &
+			  pixel_data(15) & '0';
+		    end if;
+		    R_chroma_sat <= pixel_data(7 downto 4);
+		    R_luma <= pixel_data(14 downto 8);
+		else
+		    if pixel_data(15 downto 12) /= "0000" then
+			R_chroma_phase <= pixel_data(11 downto 7) & '0';
+		    end if;
+		    R_chroma_sat <= pixel_data(15 downto 12);
+		    R_luma <= pixel_data(6 downto 0);
 		end if;
-		R_chroma_sat <= pixel_data(15 downto 12);
-		R_luma <= pixel_data(6 downto 0);
 	    end if;
 	    -- Surpress displaying anything past the last horizontal pixel
 	    if R_hpos = C_hpos_lim then
