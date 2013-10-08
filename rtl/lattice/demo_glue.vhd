@@ -428,8 +428,16 @@ begin
 	    end if;
 	    -- Framebuffer
 	    if C_framebuffer and io_addr(7 downto 4) = x"4" then
-		R_fb_mode <= cpu_to_io(1 downto 0);
-		R_fb_base_addr <= cpu_to_io(19 downto 2);
+		if C_big_endian then
+		    R_fb_mode <= cpu_to_io(25 downto 24);
+		    R_fb_base_addr <=
+		      cpu_to_io(11 downto 8) &
+		      cpu_to_io(23 downto 16) &
+		      cpu_to_io(31 downto 26);
+		else
+		    R_fb_mode <= cpu_to_io(1 downto 0);
+		    R_fb_base_addr <= cpu_to_io(19 downto 2);
+		end if;
 	    end if;
 	    -- DDS
 	    if C_ddsfm and io_addr(7 downto 4) = x"6" then
@@ -722,6 +730,9 @@ begin
     G_framebuffer:
     if C_framebuffer generate
     fb: entity work.fb
+    generic map (
+	C_big_endian => C_big_endian
+    )
     port map (
 	clk => clk, clk_dac => clk_325m,
 	addr_strobe => fb_addr_strobe,
