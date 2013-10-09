@@ -134,6 +134,7 @@ set unaligned_store_set "swl swr"
 set unaligned_load_set "lwl lwr"
 set sign_extend_set "seb seh"
 set cp0_set "mfc0 cache"
+set unsupported 0
 
 set found ""
 foreach instr [lsort [array names instr_map]] {
@@ -182,7 +183,8 @@ foreach instr [lsort [array names instr_map]] {
     }
 }
 if {$found != ""} {
-    puts "Unaligned store (unsupported): $found"
+    puts "Unaligned store (UNSUPPORTED!): $found"
+    set unsupported 1
 }
 
 set found ""
@@ -192,7 +194,8 @@ foreach instr [lsort [array names instr_map]] {
     }
 }
 if {$found != ""} {
-    puts "Unaligned load (unsupported): $found"
+    puts "Unaligned load (UNSUPPORTED!): $found"
+    set unsupported 1
 }
 
 set found ""
@@ -202,5 +205,8 @@ foreach instr [lsort [array names instr_map]] {
     }
 }
 if {$found != ""} {
-    puts "Other unsupported: $found"
+    puts "Misc. UNSUPPORTED: $found"
+    set unsupported 1
 }
+
+exit $unsupported
