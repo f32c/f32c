@@ -32,7 +32,7 @@ entity cache is
 	C_register_technology: string;
 
 	-- cache options
-	C_icache_size: integer := 4;
+	C_icache_size: integer := 8;
 
 	-- debugging options
 	C_debug: boolean
