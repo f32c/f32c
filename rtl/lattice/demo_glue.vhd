@@ -51,7 +51,7 @@ entity glue is
 	C_cop0_config: boolean := true;
 
 	-- CPU core configuration options
-	C_branch_prediction: boolean := true;
+	C_branch_prediction: boolean := false;
 	C_result_forwarding: boolean := true;
 	C_load_aligner: boolean := true;
 	C_register_technology: string := "lattice";
@@ -63,7 +63,7 @@ entity glue is
 	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
 
 	-- SoC configuration options
-	C_cpus: integer := 1;
+	C_cpus: integer := 2;
 	C_bram_size: integer := 2;
 	C_i_rom_only: boolean := true;
 	C_sram: boolean := true;
