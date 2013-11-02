@@ -1,6 +1,6 @@
 #!/usr/local/bin/tclsh8.6
 #
-# Copyright (c) 2013 Marko Zec
+# Copyright 2011-2013 Marko Zec, University of Zagreb
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -208,9 +208,9 @@ while {[eof $bramfile] == 0} {
 		}
 		set prefix "INITVAL_[format %02x [expr $addr / $addrstep]] =>"
 		if {$addr < [expr $endaddr - $addrstep]} {
-		    lappend filebuf "		$prefix \"0x[set hex]\","
+		    lappend filebuf "	$prefix \"0x[set hex]\","
 		} else {
-		    lappend filebuf "		$prefix \"0x[set hex]\""
+		    lappend filebuf "	$prefix \"0x[set hex]\""
 		}
 	    }
 	    #
