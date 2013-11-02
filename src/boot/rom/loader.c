@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -158,6 +158,15 @@ main(void)
 
 	puts("SRAM BIST passed\n");
 	puts(msg);
+
+#ifdef ONLY_I_ROM
+	/* Set stack pointer to SRAM, just below FAT bootloader base */
+	__asm __volatile__(
+		"move $29, %0;"
+		:
+		: "r" (cp)
+	);
+#endif
 
 	flash_read_block((void *) cp, 0, 512);
 	sec_size = (cp[0xc] << 8) + cp[0xb];
