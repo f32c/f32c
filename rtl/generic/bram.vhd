@@ -1,3 +1,30 @@
+--
+-- Copyright 2013 Marko Zec, University of Zagreb
+--
+-- Redistribution and use in source and binary forms, with or without
+-- modification, are permitted provided that the following conditions
+-- are met:
+-- 1. Redistributions of source code must retain the above copyright
+--    notice, this list of conditions and the following disclaimer.
+-- 2. Redistributions in binary form must reproduce the above copyright
+--    notice, this list of conditions and the following disclaimer in the
+--    documentation and/or other materials provided with the distribution.
+--
+-- THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+-- ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-- ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+-- FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-- DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-- OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-- HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-- LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-- SUCH DAMAGE.
+--
+
+-- $Id$
+
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -6,14 +33,16 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity bram is
     generic(
-	C_mem_size: string
+	C_mem_size: integer
     );
     port(
 	clk: in std_logic;
 	imem_addr_strobe: in std_logic;
+	imem_data_ready: out std_logic;
 	imem_addr: in std_logic_vector(31 downto 2);
 	imem_data_out: out std_logic_vector(31 downto 0);
 	dmem_addr_strobe: in std_logic;
+	dmem_data_ready: out std_logic;
 	dmem_write: in std_logic;
 	dmem_byte_sel: in std_logic_vector(3 downto 0);
 	dmem_addr: in std_logic_vector(31 downto 2);
@@ -23,7 +52,8 @@ entity bram is
 end bram;
 
 architecture x of bram is
-    type bram_type is array(0 to 4095) of std_logic_vector(7 downto 0);
+    type bram_type is array(0 to (C_mem_size * 256 - 1))
+      of std_logic_vector(7 downto 0);
     signal bram_0: bram_type := (
 	x"00", x"00", x"f8", x"09", x"00", x"f8", x"00", x"10", 
 	x"21", x"24", x"08", x"25", x"00", x"00", x"0d", x"01", 
@@ -126,6 +156,9 @@ architecture x of bram is
     signal dbram_0, dbram_1, dbram_2, dbram_3: std_logic_vector(7 downto 0);
 
 begin
+
+    imem_data_ready <= '1';
+    dmem_data_ready <= '1';
 
     dmem_data_out <= dbram_3 & dbram_2 & dbram_1 & dbram_0;
     imem_data_out <= ibram_3 & ibram_2 & ibram_1 & ibram_0;
