@@ -1,3 +1,30 @@
+--
+-- Copyright 2013 Marko Zec, University of Zagreb
+--
+-- Redistribution and use in source and binary forms, with or without
+-- modification, are permitted provided that the following conditions
+-- are met:
+-- 1. Redistributions of source code must retain the above copyright
+--    notice, this list of conditions and the following disclaimer.
+-- 2. Redistributions in binary form must reproduce the above copyright
+--    notice, this list of conditions and the following disclaimer in the
+--    documentation and/or other materials provided with the distribution.
+--
+-- THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+-- ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+-- ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+-- FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+-- DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+-- OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+-- HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-- LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+-- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+-- SUCH DAMAGE.
+--
+    
+-- $Id$
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
@@ -6,7 +33,10 @@ use ieee.numeric_std.all;
 
 entity fb is
     generic (
-	C_big_endian: boolean
+	C_big_endian: boolean := false;
+	C_clk_freq: integer := 81250000;
+	C_pixclk_div: std_logic_vector := "00111"; -- 512 h @ 81.25 MHz
+	C_hpos_lim: std_logic_vector := x"200" -- last visible hpix + 1
     );
     port (
 	clk, clk_dac: in std_logic;
@@ -23,10 +53,6 @@ end fb;
 
 
 architecture behavioral of fb is
-    -- XXX hardwired constants - should be derived from generics...
-    constant C_pixclk_div: std_logic_vector := "00111"; -- 512 h @ 81.25 MHz
-    constant C_hpos_lim: std_logic_vector := x"200"; -- last visible hpix + 1
-
     -- Types
     type pixbuf_dpram_type is array(0 to 15) of std_logic_vector(31 downto 0);
 
@@ -56,7 +82,7 @@ begin
     CVBS: entity work.cvbs
     generic map (
 	C_interlaced => false,
-	C_clk_freq => 81250000,
+	C_clk_freq => C_clk_freq,
 	C_dac_freq => 325000000
     )
     port map (

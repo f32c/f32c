@@ -1,5 +1,5 @@
 --
--- Copyright 2011 University of Zagreb.
+-- Copyright 2011-2013 Marko Zec, University of Zagreb
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions

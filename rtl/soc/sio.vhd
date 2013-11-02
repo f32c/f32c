@@ -1,5 +1,5 @@
 --
--- Copyright 2011 University of Zagreb, Croatia.
+-- Copyright 2013 Marko Zec, University of Zagreb
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -22,7 +22,6 @@
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
 --
---
 
 -- $Id$
 
@@ -34,8 +33,8 @@ use IEEE.numeric_std.ALL;
 
 entity sio is
     generic (
-	C_big_endian: boolean;
 	C_clk_freq: integer;
+	C_big_endian: boolean := false;
 	C_init_baudrate: integer := 115200;
 	C_fixed_baudrate: boolean := false;
 	C_tx_only: boolean := false;
@@ -69,7 +68,7 @@ architecture Behavioral of sio is
     -- baud * 16 impulse generator
     signal R_baudrate: std_logic_vector(15 downto 0) :=
       std_logic_vector(to_unsigned(
-	C_init_baudrate * 2**10 / 1000 * 2**10 / 1000 / C_clk_freq, 16));
+	C_init_baudrate * 2**10 / 1000 * 2**10 / C_clk_freq / 1000, 16));
     signal R_baudgen: std_logic_vector(16 downto 0);
 
     -- transmit logic
