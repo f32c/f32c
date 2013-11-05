@@ -50,6 +50,7 @@
 #define	IO_PCM_FIRST	IO_ADDR(0x50)	/* word, WR */
 #define	IO_PCM_LAST	IO_ADDR(0x54)	/* word, WR */
 #define	IO_PCM_FREQ	IO_ADDR(0x58)	/* word, WR */
+#define	IO_PCM_VOLUME	IO_ADDR(0x5c)	/* half, WR */
 #define	IO_CPU_RESET	IO_ADDR(0xf0)	/* byte, WR */
 
 
