@@ -75,9 +75,8 @@ entity glue is
 	C_gpio: boolean := true;
 	C_flash: boolean := true;
 	C_sdcard: boolean := true;
-	C_pcmdac: boolean := true;
 	C_framebuffer: boolean := true;
-	C_ddsfm: boolean := false
+	C_pcm: boolean := true
     );
     port (
 	clk_25m: in std_logic;
@@ -104,7 +103,7 @@ entity glue is
 end glue;
 
 architecture Behavioral of glue is
-    constant C_io_ports: integer := C_cpus + 1;
+    constant C_io_ports: integer := C_cpus;
 
     -- types for signals going to / from f32c core(s)
     type f32c_addr_bus is array(0 to (C_cpus - 1)) of
@@ -118,9 +117,8 @@ architecture Behavioral of glue is
       std_logic_vector(5 downto 0);
 
     -- types for interfacing to multi-port SRAM controller
-    type sram_port_multi is array(0 to (3 * C_cpus - 1)) of sram_port_type;
-    type sram_ready_multi is array(0 to (3 * C_cpus - 1)) of std_logic;
-
+    type sram_port_multi is array(0 to (2 * C_cpus + 1)) of sram_port_type;
+    type sram_ready_multi is array(0 to (2 * C_cpus + 1)) of std_logic;
 
     -- global clock
     signal clk: std_logic;
@@ -150,7 +148,7 @@ architecture Behavioral of glue is
     signal io_byte_sel: std_logic_vector(3 downto 0);
     signal io_addr: std_logic_vector(31 downto 2);
     signal cpu_to_io, io_to_cpu: std_logic_vector(31 downto 0);
-    signal from_sio, from_flash, from_sdcard: std_logic_vector(31 downto 0);
+    signal from_flash, from_sdcard, from_sio: std_logic_vector(31 downto 0);
     signal sio_txd, sio_ce, flash_ce, sdcard_ce: std_logic;
     signal io_addr_strobe: std_logic_vector((C_io_ports - 1) downto 0);
     signal next_io_port: integer range 0 to (C_io_ports - 1);
@@ -167,20 +165,22 @@ architecture Behavioral of glue is
     -- CPU reset control
     signal R_cpu_reset: std_logic_vector(15 downto 0) := x"fffe";
 
-    -- debugging only
-    signal trace_addr: f32c_debug_addr;
-    signal trace_data: f32c_data_bus;
-    signal debug_txd: std_logic;
-
-    -- FM TX DDS
-    signal dds_out: std_logic;
-    signal R_dds_cnt, R_dds_div, R_dds_div1: std_logic_vector(21 downto 0);
-
     -- Video framebuffer
     signal video_dac: std_logic_vector(3 downto 0);
     signal fb_addr_strobe, fb_data_ready: std_logic;
     signal fb_addr: std_logic_vector(19 downto 2);
     signal fb_tick: std_logic;
+
+    -- PCM audio
+    signal pcm_addr_strobe, pcm_data_ready: std_logic;
+    signal pcm_addr: std_logic_vector(19 downto 2);
+    signal from_pcm: std_logic_vector(31 downto 0);
+    signal pcm_ce, pcm_l, pcm_r: std_logic;
+
+    -- debugging only
+    signal trace_addr: f32c_debug_addr;
+    signal trace_data: f32c_data_bus;
+    signal debug_txd: std_logic;
 
 begin
 
@@ -296,7 +296,7 @@ begin
     -- PCM stereo 1-bit DAC
     --
     G_pcmdac:
-    if C_pcmdac generate
+    if false generate
     process(clk)
     begin
 	if rising_edge(clk) then
@@ -325,8 +325,7 @@ begin
     -- 0xf*****30: (2B, RW) : SPI Flash
     -- 0xf*****34: (2B, RW) : SPI MicroSD
     -- 0xf*****40: (4B, WR) : Framebuffer
-    -- 0xf*****50: (4B, WR) : PCM signal
-    -- 0xf*****60: (4B, WR) : FM DDS register
+    -- 0xf*****50: (4B, RW) : PCM audio
     -- 0xf*****f0: (1B, WR) : CPU reset bitmap
 
     --
@@ -342,7 +341,6 @@ begin
 		io_addr_strobe(cpu) <= '0';
 	    end if;
 	end loop;
-	io_addr_strobe(C_cpus) <= '0'; -- XXX TODO: DMA port
 	t := R_cur_io_port;
 	for i in 0 to (C_io_ports - 1) loop
 	    for j in 1 to C_io_ports loop
@@ -409,25 +407,6 @@ begin
 	    if C_cpus /= 1 and io_addr(7 downto 4) = x"f" then
 		R_cpu_reset <= cpu_to_io(15 downto 0);
 	    end if;
-	    -- PCMDAC
-	    if C_pcmdac and io_addr(7 downto 4) = x"5" then
-		if io_byte_sel(2) = '1' then
-		    if C_big_endian then
-			R_dac_in_l <= cpu_to_io(23 downto 16) &
-			  cpu_to_io(31 downto 26);
-		    else
-			R_dac_in_l <= cpu_to_io(31 downto 18);
-		    end if;
-		end if;
-		if io_byte_sel(0) = '1' then
-		    if C_big_endian then
-			R_dac_in_r <= cpu_to_io(7 downto 0) &
-			  cpu_to_io(15 downto 10);
-		    else
-			R_dac_in_r <= cpu_to_io(15 downto 2);
-		    end if;
-		end if;
-	    end if;
 	    -- Framebuffer
 	    if C_framebuffer and io_addr(7 downto 4) = x"4" then
 		if C_big_endian then
@@ -439,16 +418,6 @@ begin
 		else
 		    R_fb_mode <= cpu_to_io(1 downto 0);
 		    R_fb_base_addr <= cpu_to_io(19 downto 2);
-		end if;
-	    end if;
-	    -- DDS
-	    if C_ddsfm and io_addr(7 downto 4) = x"6" then
-		if C_big_endian then
-		    R_dds_div <= cpu_to_io(15 downto 10) & 
-		      cpu_to_io(23 downto 16) &
-		      cpu_to_io(31 downto 24);
-		else
-		    R_dds_div <= cpu_to_io(21 downto 0);
 		end if;
 	    end if;
 	end if;
@@ -520,6 +489,12 @@ begin
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
+	when x"5"  =>
+	    if C_pcm then
+		io_to_cpu <= from_pcm;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
 	when others =>
 	    io_to_cpu <= (others => '-');
 	end case;
@@ -568,12 +543,10 @@ begin
     --
     -- SRAM
     --
-    --sram_oel <= '0'; -- XXX the old ULXP2 board needs this!
-
     process(imem_addr, dmem_addr, dmem_byte_sel, cpu_to_dmem, dmem_write,
       dmem_addr_strobe, imem_addr_strobe, fb_addr_strobe, fb_addr,
       sram_ready, io_to_cpu, from_sram)
-	variable data_port, instr_port, fb_port: integer;
+	variable data_port, instr_port, fb_port, pcm_port: integer;
 	variable sram_data_strobe, sram_instr_strobe: std_logic;
     begin
 	for cpu in 0 to (C_cpus - 1) loop
@@ -662,18 +635,29 @@ begin
 	    to_sram(instr_port).byte_sel <= x"f";
 	end loop;
 	-- video framebuffer
-	fb_port := 2 * C_cpus;
-	to_sram(fb_port).addr_strobe <= fb_addr_strobe;
-	to_sram(fb_port).write <= '0';
-	to_sram(fb_port).byte_sel <= x"f";
-	to_sram(fb_port).addr <= fb_addr;
-	to_sram(fb_port).data_in <= (others => '-');
-	fb_data_ready <= sram_ready(fb_port);
+	if C_framebuffer then
+	    fb_port := 2 * C_cpus;
+	    to_sram(fb_port).addr_strobe <= fb_addr_strobe;
+	    to_sram(fb_port).write <= '0';
+	    to_sram(fb_port).byte_sel <= x"f";
+	    to_sram(fb_port).addr <= fb_addr;
+	    to_sram(fb_port).data_in <= (others => '-');
+	    fb_data_ready <= sram_ready(fb_port);
+	end if;
+	if C_pcm then
+	    pcm_port := 2 * C_cpus + 1;
+	    to_sram(pcm_port).addr_strobe <= pcm_addr_strobe;
+	    to_sram(pcm_port).write <= '0';
+	    to_sram(pcm_port).byte_sel <= x"f";
+	    to_sram(pcm_port).addr <= pcm_addr;
+	    to_sram(pcm_port).data_in <= (others => '-');
+	    pcm_data_ready <= sram_ready(pcm_port);
+	end if;
     end process;
 
     sram: entity work.sram
     generic map (
-	C_ports => 2 * C_cpus + 1,
+	C_ports => 2 * C_cpus + 2, -- extra ports: framebuffer and PCM audio
 	C_prio_port => 2 * C_cpus, -- framebuffer
 	C_wait_cycles => C_sram_wait_cycles,
 	C_pipelined_read => not C_debug
@@ -702,31 +686,6 @@ begin
     rs232_tx <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
 
     --
-    -- DDS FM transmitter
-    --
-    G_ddsfm:
-    if C_ddsfm generate
-    process(clk_325m)
-    begin
-	if rising_edge(clk_325m) then
-	    R_dds_div1 <= R_dds_div; -- Cross clock domain
-	    R_dds_cnt <= R_dds_cnt + R_dds_div1;
-	end if;
-    end process;
-    dds_out <= R_dds_cnt(21);
-    end generate;
-
-    -- more pins radiate more RF power
-    --j1(20) <= dds_out when C_ddsfm else 'Z';
-    --j1(21) <= dds_out when C_ddsfm else 'Z';
-    --j1(22) <= dds_out when C_ddsfm else 'Z';
-    --j1(23) <= dds_out when C_ddsfm else 'Z';
-    --j2(2) <= not dds_out when C_ddsfm else 'Z';
-    --j2(3) <= not dds_out when C_ddsfm else 'Z';
-    --j2(4) <= not dds_out when C_ddsfm else 'Z';
-    --j2(5) <= not dds_out when C_ddsfm else 'Z';
-
-    --
     -- Video framebuffer
     --
     G_framebuffer:
@@ -746,6 +705,24 @@ begin
 	dac_out => video_dac,
 	tick_out => fb_tick
     );
+    end generate;
+
+    --
+    -- PCM audio
+    --
+    G_pcm:
+    if C_pcm generate
+    pcm: entity work.pcm
+    port map (
+	clk => clk, io_ce => pcm_ce, io_addr => io_addr(3 downto 2),
+	io_bus_write => io_write, io_byte_sel => io_byte_sel,
+	io_bus_in => cpu_to_io, io_bus_out => from_pcm,
+	addr_strobe => pcm_addr_strobe, data_ready => pcm_data_ready,
+	addr_out => pcm_addr, data_in => from_sram,
+	out_r => pcm_r, out_l => pcm_l
+    );
+    pcm_ce <= io_addr_strobe(R_cur_io_port) when
+      io_addr(7 downto 4) = x"5" else '0';
     end generate;
 
     --
