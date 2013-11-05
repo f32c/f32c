@@ -702,7 +702,8 @@ begin
       io_addr(7 downto 4) = x"5" else '0';
     end generate;
 
-    p_tip <= video_dac when C_framebuffer else pcm_l & pcm_l & pcm_l & pcm_l;
+    p_tip <= video_dac when C_framebuffer and R_fb_mode /= "11"
+      else pcm_l & pcm_l & pcm_l & pcm_l;
     p_ring <= pcm_r;
 
     --
