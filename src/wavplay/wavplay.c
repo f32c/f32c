@@ -14,7 +14,7 @@
 void
 main(void)
 {
-	int f, block, cur, got, cnt;
+	int i, f, block = 0, cur, got, cnt = 0, vol = 12;
 	char *buf = (void *) 0x80080000;
 
 	printf("Hello, FPGA world!\n");
@@ -26,9 +26,6 @@ main(void)
 	}
 
 	got = read(f, buf, 0x8000);
-	block = 0;
-	cnt = 0;
-
 	OUTW(IO_PCM_FIRST, buf);
 	OUTW(IO_PCM_LAST, buf + 0x7ffe);
 	OUTW(IO_PCM_FREQ, 9108); /* 44.1 kHz sample rate */
@@ -39,9 +36,16 @@ main(void)
 			got = read(f, buf + block, 0x4000);
 			block = cur & 0x4000;
 			cnt += got;
-			printf("%d\n", cnt);
+			INB(i, IO_PUSHBTN);
+			if ((i & BTN_UP) && vol < 15)
+				vol++;
+			if ((i & BTN_DOWN) && vol > 0)
+				vol--;
+			OUTH(IO_PCM_VOLUME, vol + (vol << 8));
+			printf("%d	%d\n", vol, cnt);
 		}
 	}
 
-	OUTW(IO_PCM_FREQ, 0); /* O Hz sample rate = shut down PCM output */
+	OUTW(IO_PCM_FREQ, 0); /* O Hz sample rate - stop PCM DMA */
+	OUTH(IO_PCM_VOLUME, 0); /* volume 0 on both channels - shut up PCM */
 }
