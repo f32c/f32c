@@ -159,8 +159,6 @@ architecture Behavioral of glue is
     signal R_gpio_ctl, R_gpio_in, R_gpio_out: std_logic_vector(28 downto 0);
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
     signal R_fb_base_addr: std_logic_vector(19 downto 2);
-    signal R_dac_in_l, R_dac_in_r: std_logic_vector(15 downto 2);
-    signal R_dac_acc_l, R_dac_acc_r: std_logic_vector(16 downto 2);
 
     -- CPU reset control
     signal R_cpu_reset: std_logic_vector(15 downto 0) := x"fffe";
@@ -292,40 +290,19 @@ begin
       io_addr(7 downto 4) = x"3" and io_addr(3 downto 2) = "01" else '0';
     end generate;
 
-    --
-    -- PCM stereo 1-bit DAC
-    --
-    G_pcmdac:
-    if false generate
-    process(clk)
-    begin
-	if rising_edge(clk) then
-	    R_dac_acc_l <= (R_dac_acc_l(16) & R_dac_in_l) + R_dac_acc_l;
-	    R_dac_acc_r <= (R_dac_acc_r(16) & R_dac_in_r) + R_dac_acc_r;
-	end if;
-    end process;
-    end generate;
-
-    p_tip(3) <= video_dac(3) when C_framebuffer and R_fb_mode /= "11"
-      else R_dac_acc_l(16);
-    p_tip(2) <= video_dac(2) when C_framebuffer and R_fb_mode /= "11"
-      else R_dac_acc_l(16);
-    p_tip(1) <= video_dac(1) when C_framebuffer and R_fb_mode /= "11"
-      else R_dac_acc_l(16);
-    p_tip(0) <= video_dac(0) when C_framebuffer and R_fb_mode /= "11"
-      else R_dac_acc_l(16);
-    p_ring <= R_dac_acc_r(16);
-
-    -- I/O port map:
-    -- 0x8*******: (4B, RW) : SRAM
+    -- Memory map:
+    -- 0x0*******: (4B, RW) : Embedded block RAM (2 - 16 KBytes, fast)
+    -- 0x8*******: (4B, RW) : External static RAM (1 MByte, slow)
     -- 0xf*****00: (4B, RW) : GPIO data
     -- 0xf*****04: (4B, WR) : GPIO control
-    -- 0xf*****10: (4B, RW) : LED, switches, buttons, rotary, LCD
+    -- 0xf*****10: (2B, RW) : LED (WR), switches, buttons (RD)
     -- 0xf*****20: (4B, RW) : SIO
     -- 0xf*****30: (2B, RW) : SPI Flash
     -- 0xf*****34: (2B, RW) : SPI MicroSD
-    -- 0xf*****40: (4B, WR) : Framebuffer
-    -- 0xf*****50: (4B, RW) : PCM audio
+    -- 0xf*****40: (4B, WR) : Video framebuffer control
+    -- 0xf*****50: (4B, RW) : PCM audio DMA first addr (WR) / current addr (RD)
+    -- 0xf*****54: (4B, WR) : PCM audio DMA last addr
+    -- 0xf*****58: (3B, WR) : PCM audio DMA refill frequency (sampling rate)
     -- 0xf*****f0: (1B, WR) : CPU reset bitmap
 
     --
@@ -724,6 +701,9 @@ begin
     pcm_ce <= io_addr_strobe(R_cur_io_port) when
       io_addr(7 downto 4) = x"5" else '0';
     end generate;
+
+    p_tip <= video_dac when C_framebuffer else pcm_l & pcm_l & pcm_l & pcm_l;
+    p_ring <= pcm_r;
 
     --
     -- GPIO
