@@ -72,7 +72,7 @@ begin
 	    -- Refill data from main memory
 	    if data_ready = '1' then
 		R_dma_needs_refill <= false;
-		R_dma_data <= data_in;
+		R_dma_data <= data_in xor x"80008000"; -- signed -> unsigned
 		if R_dma_cur_addr = R_dma_last_addr then
 		    R_dma_cur_addr <= R_dma_first_addr;
 		else
