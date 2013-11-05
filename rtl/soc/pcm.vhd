@@ -33,7 +33,7 @@ use IEEE.numeric_std.ALL;
 
 entity pcm is
     port (
-	clk: in std_logic;
+	clk, clk_dac: in std_logic;
 	io_ce, io_bus_write: in std_logic;
 	io_addr: in std_logic_vector(1 downto 0);
 	io_byte_sel: in std_logic_vector(3 downto 0);
@@ -53,7 +53,7 @@ architecture Behavioral of pcm is
     signal R_dma_trigger_acc, R_dma_trigger_incr: std_logic_vector(23 downto 0);
     signal R_dma_data: std_logic_vector(31 downto 0);
     signal R_dma_needs_refill: boolean;
-    signal R_dac_acc_l, R_dac_acc_r: std_logic_vector(16 downto 2);
+    signal R_dac_acc_l, R_dac_acc_r: std_logic_vector(16 downto 0);
 
 begin
 
@@ -93,12 +93,17 @@ begin
 		    R_dma_trigger_incr <= io_bus_in(23 downto 0);
 		end if;
 	    end if;
+	end if;
+    end process;
 
+    process(clk_dac)
+    begin
+	if rising_edge(clk_dac) then
 	    -- Output 1-bit DAC
 	    R_dac_acc_l <=
-	      (R_dac_acc_l(16) & R_dma_data(15 downto 2)) + R_dac_acc_l;
+	      (R_dac_acc_l(16) & R_dma_data(15 downto 0)) + R_dac_acc_l;
 	    R_dac_acc_r <=
-	      (R_dac_acc_r(16) & R_dma_data(31 downto 18)) + R_dac_acc_r;
+	      (R_dac_acc_r(16) & R_dma_data(31 downto 16)) + R_dac_acc_r;
 	end if;
     end process;
 

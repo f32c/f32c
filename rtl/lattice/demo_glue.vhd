@@ -120,9 +120,8 @@ architecture Behavioral of glue is
     type sram_port_multi is array(0 to (2 * C_cpus + 1)) of sram_port_type;
     type sram_ready_multi is array(0 to (2 * C_cpus + 1)) of std_logic;
 
-    -- global clock
-    signal clk: std_logic;
-    signal clk_325m, ena_325m: std_logic;
+    -- synthesized clocks
+    signal clk, clk_325m: std_logic;
 
     -- signals to / from f32c cores(s)
     signal res, intr: f32c_std_logic;
@@ -191,11 +190,10 @@ begin
 	C_debug => C_debug
     )
     port map (
-	clk_25m => clk_25m, ena_325m => ena_325m,
+	clk_25m => clk_25m, ena_325m => '1',
 	clk => clk, clk_325m => clk_325m,
 	sel => sw(2), key => btn_down, res => '0'
     );
-    ena_325m <= '1' when R_fb_mode /= "11" else '0';
 
     --
     -- f32c core(s)
@@ -691,7 +689,8 @@ begin
     if C_pcm generate
     pcm: entity work.pcm
     port map (
-	clk => clk, io_ce => pcm_ce, io_addr => io_addr(3 downto 2),
+	clk => clk, clk_dac => clk_325m,
+	io_ce => pcm_ce, io_addr => io_addr(3 downto 2),
 	io_bus_write => io_write, io_byte_sel => io_byte_sel,
 	io_bus_in => cpu_to_io, io_bus_out => from_pcm,
 	addr_strobe => pcm_addr_strobe, data_ready => pcm_data_ready,
