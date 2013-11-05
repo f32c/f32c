@@ -46,8 +46,10 @@
 #define	IO_SPI_FLASH	IO_ADDR(0x30)	/* half, RW */
 #define	IO_SPI_SDCARD	IO_ADDR(0x34)	/* half, RW */
 #define	IO_FB		IO_ADDR(0x40)	/* word, WR */
-#define	IO_PCM_OUT	IO_ADDR(0x50)	/* word, WR */
-#define	IO_DDS		IO_ADDR(0x60)	/* word, WR */
+#define	IO_PCM_CUR	IO_ADDR(0x50)	/* word, RD */
+#define	IO_PCM_FIRST	IO_ADDR(0x50)	/* word, WR */
+#define	IO_PCM_LAST	IO_ADDR(0x54)	/* word, WR */
+#define	IO_PCM_FREQ	IO_ADDR(0x58)	/* word, WR */
 #define	IO_CPU_RESET	IO_ADDR(0xf0)	/* byte, WR */
 
 
