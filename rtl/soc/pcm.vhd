@@ -53,6 +53,9 @@ architecture Behavioral of pcm is
     signal R_dma_trigger_acc, R_dma_trigger_incr: std_logic_vector(23 downto 0);
     signal R_dma_data: std_logic_vector(31 downto 0);
     signal R_dma_needs_refill: boolean;
+    signal R_eff_vol_l, R_cfg_vol_l: std_logic_vector(3 downto 0);
+    signal R_eff_vol_r, R_cfg_vol_r: std_logic_vector(3 downto 0);
+    signal R_pcm_data_l, R_pcm_data_r: std_logic_vector(15 downto 0);
     signal R_dac_acc_l, R_dac_acc_r: std_logic_vector(16 downto 0);
 
 begin
@@ -78,11 +81,26 @@ begin
 		else
 		    R_dma_cur_addr <= R_dma_cur_addr + 1;
 		end if;
+		R_eff_vol_l <= R_cfg_vol_l;
+		R_eff_vol_r <= R_cfg_vol_r;
+	    end if;
+
+	    -- Apply volume settings
+	    if R_eff_vol_l = x"f" then
+		R_pcm_data_l <= R_dma_data(31 downto 16);
+	    else
+		R_dma_data(31 downto 16) <= '0' & R_dma_data(31 downto 17);
+		R_eff_vol_l <= R_eff_vol_l + 1;
+	    end if;
+	    if R_eff_vol_r = x"f" then
+		R_pcm_data_r <= R_dma_data(15 downto 0);
+	    else
+		R_dma_data(15 downto 0) <= '0' & R_dma_data(15 downto 1);
+		R_eff_vol_r <= R_eff_vol_r + 1;
 	    end if;
 
 	    -- Write to control registers when requested
 	    if io_ce = '1' and  io_bus_write = '1' then
-		R_dma_cur_addr <= R_dma_first_addr;
 		if io_addr = "00" then	-- DMA region first addr
 		    R_dma_first_addr <= io_bus_in(19 downto 2);
 		end if;
@@ -92,6 +110,12 @@ begin
 		if io_addr = "10" then	-- DMA frequency control
 		    R_dma_trigger_incr <= io_bus_in(23 downto 0);
 		end if;
+		if io_addr = "11" then	-- Volume control
+		    R_cfg_vol_l <= io_bus_in(3 downto 0);
+		    R_cfg_vol_r <= io_bus_in(11 downto 8);
+		else
+		    R_dma_cur_addr <= R_dma_first_addr;
+		end if;
 	    end if;
 	end if;
     end process;
@@ -100,10 +124,8 @@ begin
     begin
 	if rising_edge(clk_dac) then
 	    -- Output 1-bit DAC
-	    R_dac_acc_l <=
-	      (R_dac_acc_l(16) & R_dma_data(15 downto 0)) + R_dac_acc_l;
-	    R_dac_acc_r <=
-	      (R_dac_acc_r(16) & R_dma_data(31 downto 16)) + R_dac_acc_r;
+	    R_dac_acc_l <= (R_dac_acc_l(16) & R_pcm_data_l) + R_dac_acc_l;
+	    R_dac_acc_r <= (R_dac_acc_r(16) & R_pcm_data_r) + R_dac_acc_r;
 	end if;
     end process;
 
