@@ -28,7 +28,10 @@
 #include <sys/param.h>
 
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
+#define MALLOC_DIAGNOSTIC
 
 extern int _end;
 
@@ -50,8 +53,8 @@ malloc_internal(size_t size)
 	size_t i, len, best_len = 0;
 	int best = -1;
 
-	/* Word align request size */
-	size = (size + 3) & ~3;
+	/* Align request size to word length */
+	size = (size + (sizeof(int) - 1)) & ~(sizeof(int) - 1);
 
 	/* Find the smallest free chunk */
 	for (i = 0; i < descr_tbl_len - 1; i++)
@@ -60,7 +63,8 @@ malloc_internal(size_t size)
 			if (len >= size && (best < 0 || len < best_len)) {
 				best_len = len;
 				best = i;
-				break;
+				if (best_len == size)
+					break;
 			}
 		}
 
