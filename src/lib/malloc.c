@@ -92,6 +92,9 @@ free(void *ptr)
 {
 	size_t i, j, step;
 
+	if (ptr == NULL)
+		return;
+
 	for (step = i = descr_tbl_len / 2;;) {
 		if (step > 1)
 			step /= 2;
