@@ -75,8 +75,8 @@ malloc_internal(size_t size)
 	if (best_len > size) {
 		/* Split the free chunk in two */
 		if (GET_FREE(descr_tbl[best + 1]) == 0) {
-			memmove(&descr_tbl[best + 1], &descr_tbl[best],
-			    (descr_tbl_len - best) * sizeof(*descr_tbl));
+			for (i = descr_tbl_len - 1; i > best; i--)
+				descr_tbl[i + 1] = descr_tbl[i];
 			descr_tbl_len++;
 		}
 		descr_tbl[best + 1] = descr_tbl[best] + size;
@@ -113,8 +113,9 @@ free(void *ptr)
 			}
 #endif
 			if (j > i) {
-				memmove(&descr_tbl[i + 1], &descr_tbl[j + 1],
-				    sizeof(*descr_tbl) * (descr_tbl_len - j));
+				do {
+					descr_tbl[++i] = descr_tbl[++j];
+				} while (j < descr_tbl_len - 1);
 				descr_tbl_len -= (j - i);
 			}
 			return;
