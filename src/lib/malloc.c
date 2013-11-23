@@ -90,10 +90,16 @@ malloc_internal(size_t size)
 void
 free(void *ptr)
 {
-	size_t i, j;
+	size_t i, j, step;
 
-	for (i = 0; i < descr_tbl_len - 1; i++)
-		if (descr_tbl[i] == ptr) {
+	for (step = i = descr_tbl_len / 2;;) {
+		if (step > 1)
+			step /= 2;
+		if (ptr > (void *) descr_tbl[i])
+			i += step;
+		else if (SET_FREE(ptr, 1) < descr_tbl[i])
+			i -= step;
+		else if (descr_tbl[i] == ptr) {
 			descr_tbl[i] = SET_FREE(descr_tbl[i], 1);
 			/* Attempt to merge adjacent free chunks */
 			if (GET_FREE(descr_tbl[i + 1]))
@@ -119,13 +125,17 @@ free(void *ptr)
 				descr_tbl_len -= (j - i);
 			}
 			return;
-		}
+		} else
+			i++;
 #ifdef MALLOC_DIAGNOSTIC
-	printf("XXX Can't free %p\n", ptr);
-	for (i = 0; i < descr_tbl_len; i++)
-		printf("%p\n", descr_tbl[i]);
-	exit(1);
+		if (i < 0 || i >= descr_tbl_len) {
+			printf("XXX Can't free %p, i = %d\n", ptr, i);
+			for (i = 0; i < descr_tbl_len; i++)
+				printf("%p\n", descr_tbl[i]);
+			exit(1);
+		}
 #endif
+	}
 }
 
 
