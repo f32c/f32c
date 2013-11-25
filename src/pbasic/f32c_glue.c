@@ -48,7 +48,6 @@ extern int _end;
 
 int errno;
 uint32_t freq_khz, tsc_hi, tsc_lo;
-static char *freep;
 
 
 void
@@ -87,6 +86,9 @@ memcpy(void *dst, const void *src, size_t len)
 }
 
 
+#ifdef OWN_ALLOC
+static char *freep;
+
 void *sbrk(intptr_t p)
 {
 
@@ -101,6 +103,7 @@ void *sbrk(intptr_t p)
 	freep = freep + p;
 	return (freep);
 }
+#endif
 
 
 int *__error(void)
