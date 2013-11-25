@@ -37,8 +37,13 @@
 #include "bas.h"
 
 
+#ifdef OWN_ALLOC
 extern void *m_get(unsigned int);
 extern void m_free(void *);
+#else
+#define	m_get(size) malloc(size)
+#define	m_free(ptr) free(ptr)
+#endif
 
 
 int
