@@ -25,6 +25,10 @@
 # $Id$
 #
 
+ifneq (,$(findstring malloc,$(F32C_LIBS)))
+	_NEED_MALLOC = YES
+endif
+
 ifneq (,$(findstring setjmp,$(F32C_LIBS)))
 	_NEED_SETJMP = YES
 endif
@@ -101,6 +105,9 @@ endif
 
 
 
+ifdef _NEED_MALLOC
+	CFILES += ${BASE_DIR}lib/malloc.c
+endif
 
 ifdef _NEED_SETJMP
 	CFILES += ${BASE_DIR}lib/setjmperr.c
