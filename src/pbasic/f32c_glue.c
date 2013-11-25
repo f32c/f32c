@@ -25,8 +25,6 @@
  * $Id$
  */
 
-#include <sys/param.h>
-
 #include <fcntl.h>
 #include <setjmp.h>
 #include <signal.h>

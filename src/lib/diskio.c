@@ -25,7 +25,6 @@
  * $Id$
  */
 
-#include <sys/param.h>
 #include <sdcard.h>
 #include <spi.h>
 

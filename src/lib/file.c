@@ -29,8 +29,6 @@
  * Glue between POSIX unistd open etc. and FatFS interfaces.
  */
 
-#include <sys/param.h>
-
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>

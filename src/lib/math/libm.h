@@ -13,8 +13,6 @@
 #ifndef _LIBM_H
 #define _LIBM_H
 
-#include <sys/param.h>
-
 #include <stdint.h>
 #include <float.h>
 #include <math.h>

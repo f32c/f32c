@@ -47,6 +47,7 @@
 			  || ((c) >= 'A' && (c) <= 'F') \
 			  || ((c) >= 'a' && (c) <= 'f'))
 #define isprint(c)	((c) >= ' ' && (c) <= '~')
+#define isalnum(c)	(isdigit(c) || isalpha (c))
 
 #define toupper(c)	((c) - 0x20 * (((c) >= 'a') && ((c) <= 'z')))
 #define tolower(c)	((c) + 0x20 * (((c) >= 'A') && ((c) <= 'Z')))

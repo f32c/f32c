@@ -5,7 +5,6 @@
  * $Id$
  */
 
-#include <sys/param.h>
 #include <stdio.h>
 #include <io.h>
 

@@ -6,8 +6,6 @@
  *    all the C parts of the interpreter.
  */
 
-#include <sys/param.h>
-
 #include <assert.h>
 #include <signal.h>
 #include <stdio.h>

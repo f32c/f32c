@@ -25,8 +25,6 @@
  * $Id$
  */
 
-#include <sys/param.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -37,16 +35,16 @@ static uint32_t *heap;
 
 #define	HEAP_TOP	0x800f8000
 
-#define	GET_LEN(len)		((len) & ~0x80000000)
-#define	IS_FREE(len)		((len) & 0x80000000)
-#define	SET_FREE(len)		((len) | 0x80000000)
+#define	GET_LEN(len)	((len) & ~0x80000000)
+#define	IS_FREE(len)	((len) & 0x80000000)
+#define	SET_FREE(len)	((len) | 0x80000000)
 
 
 /*
  * Each chunk is preceeded by a 4-byte length & type descriptor.  Length
  * value stored in the descriptor is a sum of the payload length (rounded
- * to * multiplies of 4) and the size of the descriptor.  LS bit indicates
- * chunk type, which can be either used (0) or free (1).
+ * to multiplies of 4) and the size of the descriptor.  The most significant
+ * bit indicates chunk type, which can be either used (0) or free (1).
  */
 
 
