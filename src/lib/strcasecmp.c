@@ -34,7 +34,6 @@
 #include <sys/cdefs.h>
 __FBSDID("$FreeBSD: stable/9/sys/libkern/strcasecmp.c 206360 2010-04-07 16:29:10Z joel $");
 
-#include <sys/param.h>
 //#include <sys/ctype.h>
 //#include <sys/libkern.h>
 

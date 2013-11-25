@@ -25,8 +25,6 @@
  * $Id$
  */
 
-#include <sys/param.h>
- 
 
 /*
  * Using -Os optimization produces both the fastest and the most compact

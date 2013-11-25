@@ -1,7 +1,4 @@
 
-#include <sys/param.h>
-
-
 static int randseed;
 
 

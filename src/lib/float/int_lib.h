@@ -32,7 +32,6 @@
 #endif
 
 /* Include the standard compiler builtin headers we use functionality from. */
-#include <sys/param.h>
 //#include <limits.h>
 #include <stdint.h>
 #include <stdbool.h>

@@ -21,7 +21,6 @@
 #ifndef FP_LIB_HEADER
 #define FP_LIB_HEADER
 
-#include <sys/param.h>
 #include <stdint.h>
 #include <stdbool.h>
 //#include <limits.h>

@@ -40,7 +40,9 @@ ENDIANFLAGS = -EL
 endif
 
 # Includes
-MK_INCLUDES = -nostdinc -I${BASE_DIR}include
+MK_INCLUDES = -nostdinc
+MK_INCLUDES += -I${BASE_DIR}include
+MK_STDINC = -include sys/param.h
 
 # MIPS-specific flags
 ifeq ($(findstring -march=,$(CFLAGS)),)
@@ -105,7 +107,8 @@ MK_LDFLAGS += -nostartfiles -nostdlib
 # Pull in any module-specific linker flags
 MK_LDFLAGS += ${LDFLAGS}
 
-CC = mips-elf-gcc ${MK_CFLAGS} ${MK_INCLUDES}
+CC = mips-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
+AS = mips-elf-gcc ${MK_CFLAGS} ${MK_INCLUDES}
 LD = mips-elf-ld ${MK_LDFLAGS}
 OBJCOPY = mips-elf-objcopy
 ifeq ($(shell uname -o), FreeBSD)
@@ -177,6 +180,6 @@ $(addprefix ${OBJDIR},%.o) : %.c
 #
 $(addprefix ${OBJDIR},%.O) : %.S
 	@mkdir -p $(dir $@)
-	$(CC) -o $@ $<
+	$(AS) -o $@ $<
 
 -include .depend

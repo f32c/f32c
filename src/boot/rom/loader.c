@@ -25,8 +25,6 @@
  * $Id$
  */
 
-#include <sys/param.h>
-
 #include <spi.h>
 #include <stdio.h>
 

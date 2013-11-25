@@ -25,7 +25,6 @@
  * $Id$
  */
 
-#include <sys/param.h>
 #include <fcntl.h>
 #include <io.h>
 #include <sio.h>
