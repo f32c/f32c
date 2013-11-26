@@ -30,7 +30,7 @@ MK_CFLAGS += -mno-unaligned-store
 # No zero-filled BSS
 MK_CFLAGS += -fno-zero-initialized-in-bss
 
-MK_CFLAGS += -nostdinc -I../../include
+MK_CFLAGS += -nostdinc -I${BASE_DIR}include -include sys/param.h
 
 #MK_CFLAGS += -Wextra -Wsystem-headers -Wshadow -Wpadded -Winline
 MK_CFLAGS += -ffreestanding

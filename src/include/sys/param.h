@@ -38,6 +38,8 @@
 #ifndef _SYS_PARAM_H_
 #define _SYS_PARAM_H_
 
+#ifndef __ASSEMBLER__
+
 #include <sys/_null.h>
 #include <sys/types.h>
 #include <sys/cdefs.h>
@@ -55,5 +57,7 @@
 /* Macros for min/max. */
 #define	MIN(a,b) (((a)<(b))?(a):(b))
 #define	MAX(a,b) (((a)>(b))?(a):(b))
+
+#endif	/* !__ASSEMBLER__ */
 
 #endif	/* _SYS_PARAM_H_ */
