@@ -25,11 +25,10 @@
 
 -- $Id$
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.numeric_std.ALL;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 
 entity sio is
     generic (
@@ -55,7 +54,7 @@ end sio;
 -- SIO -> CPU data word:
 -- 31..11  unused
 --     10  set if tx busy
---      9  set if rx overrun occured, reset on read
+--      9  reserved
 --      8  set if rx_byte is unread, reset on read
 --   7..0  rx_byte
 --
@@ -83,17 +82,16 @@ architecture Behavioral of sio is
     signal rx_des: std_logic_vector(7 downto 0);
     signal rx_phase: std_logic_vector(3 downto 0);
     signal rx_byte: std_logic_vector(7 downto 0);
-    signal rx_full: std_logic;
-    signal rx_overruns: std_logic;
+    signal rx_full, R_rx_full: std_logic;
 begin
 
     G_bypass:
     if C_bypass generate
     process(clk)
     begin
-	if (rising_edge(clk)) then
+	if rising_edge(clk) then
 	    rx_running <= rxd;
-	    if (ce = '1' and bus_write = '1' and byte_sel(0) = '1') then
+	    if ce = '1' and bus_write = '1' and byte_sel(0) = '1' then
 		tx_running <= bus_in(0);
 	    end if;
 	end if;
@@ -115,15 +113,21 @@ begin
     tx_running <= '1' when tx_phase /= x"0" else '0';
     bus_out(31 downto 11) <= "---------------------";
     bus_out(10) <= tx_running;
-    bus_out(9 downto 8) <= rx_overruns & rx_full when not C_tx_only else "--";
+    bus_out(9 downto 8) <= '-' & R_rx_full when not C_tx_only else "--";
     bus_out(7 downto 0) <= rx_byte when not C_tx_only else "--------";
     txd <= tx_ser(0);
 
     process(clk)
     begin
-	if (rising_edge(clk)) then
+	if falling_edge(clk) then
+	    if ce = '1' then
+		R_rx_full <= rx_full;
+	    end if;
+	end if;
+
+	if rising_edge(clk) then
 	    -- bus interface logic
-	    if (ce = '1') then
+	    if ce = '1' then
 		if not C_fixed_baudrate and bus_write = '1' and
 		  byte_sel(2) = '1' then
 		    if C_big_endian then
@@ -133,14 +137,13 @@ begin
 			R_baudrate <= bus_in(31 downto 16);
 		    end if;
 		end if;
-		if (bus_write = '1' and byte_sel(0) = '1') then
-		    if (tx_phase = x"0") then
+		if bus_write = '1' and byte_sel(0) = '1' then
+		    if tx_phase = x"0" then
 			tx_phase <= x"1";
 			tx_ser <= bus_in(7 downto 0) & '0';
 		    end if;
-		else
+		elsif bus_write = '0' and byte_sel(0) = '1' then
 		    rx_full <= '0';
-		    rx_overruns <= '0';
 		end if;
 	    end if;
 
@@ -148,23 +151,23 @@ begin
 	    R_baudgen <= ('0' & R_baudgen(15 downto 0)) + ('0' & R_baudrate);
 
 	    -- tx logic
-	    if (tx_phase /= x"0" and R_baudgen(16) = '1') then
+	    if tx_phase /= x"0" and R_baudgen(16) = '1' then
 		tx_tickcnt <= tx_tickcnt + 1;
-		if (tx_tickcnt = x"f") then
+		if tx_tickcnt = x"f" then
 		    tx_ser <= '1' & tx_ser(8 downto 1);
 		    tx_phase <= tx_phase + 1;
-		    if (tx_phase = x"a") then
+		    if tx_phase = x"a" then
 			tx_phase <= x"0";
 		    end if;
 		end if;
 	    end if;
 
 	    -- rx logic
-	    if (R_baudgen(16) = '1' and not C_tx_only) then
-		if (rx_phase = x"0") then
-		    if (rxd = '0') then
+	    if R_baudgen(16) = '1' and not C_tx_only then
+		if rx_phase = x"0" then
+		    if rxd = '0' then
 			-- start bit, delay further sampling for ~0.5 T
-			if (rx_tickcnt = x"8") then
+			if rx_tickcnt = x"8" then
 			    rx_phase <= rx_phase + 1;
 			    rx_tickcnt <= x"0";
 			else
@@ -175,14 +178,13 @@ begin
 		    end if;
 		else
 		    rx_tickcnt <= rx_tickcnt + 1;
-		    if (rx_tickcnt = x"f") then
+		    if rx_tickcnt = x"f" then
 			rx_des <= rxd & rx_des(7 downto 1);
 			rx_phase <= rx_phase + 1;
-			if (rx_phase = x"9") then
+			if rx_phase = x"9" then
 			    rx_phase <= x"0";
 			    rx_full <= '1';
 			    rx_byte <= rx_des;
-			    -- XXX properly detect rx overruns
 			end if;
 		    end if;
 		end if;

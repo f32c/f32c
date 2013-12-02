@@ -25,11 +25,10 @@
 
 -- $Id$
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.numeric_std.ALL;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 
 entity pcm is
     port (
@@ -59,10 +58,15 @@ architecture Behavioral of pcm is
 
 begin
 
-    process(clk, R_dma_trigger_acc, R_dma_trigger_incr)
+    process(clk, R_dma_trigger_acc, R_dma_trigger_incr, R_vol_l, R_vol_r,
+      R_dma_data_l, R_dma_data_r)
 	variable dma_trigger_next: std_logic_vector(23 downto 0);
+	variable mul_l, mul_r: std_logic_vector(31 downto 0);
     begin
 	dma_trigger_next := R_dma_trigger_acc + R_dma_trigger_incr;
+
+	mul_l := R_dma_data_l * R_vol_l;
+	mul_r := R_dma_data_r * R_vol_r;
 
 	if rising_edge(clk) then
 	    -- Periodically request new data
@@ -84,8 +88,8 @@ begin
 	    end if;
 
 	    -- Apply volume settings
-	    R_pcm_data_l <= (R_dma_data_l * R_vol_l)(31 downto 16);
-	    R_pcm_data_r <= (R_dma_data_r * R_vol_r)(31 downto 16);
+	    R_pcm_data_l <= mul_l(31 downto 16);
+	    R_pcm_data_r <= mul_r(31 downto 16);
 
 	    -- Write to control registers when requested
 	    if io_ce = '1' and  io_bus_write = '1' then
