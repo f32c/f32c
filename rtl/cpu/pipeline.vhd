@@ -91,6 +91,11 @@ end pipeline;
 
 architecture Behavioral of pipeline is
 
+    constant C_eff_init_PC: std_logic_vector(31 downto 0)
+      := C_init_PC and C_PC_mask;
+    constant C_eff_intr_PC: std_logic_vector(31 downto 0)
+      := C_intr_PC and C_PC_mask;
+
     signal debug_XXX: std_logic_vector(31 downto 0) := x"00000000";
 
     -- pipeline stage 1: instruction fetch
@@ -568,9 +573,9 @@ begin
 
     -- compute branch target - XXX revisit: perhaps use ID_immediate here?
     ID_branch_target <= R_cop0_epc when C_exceptions and ID_eret
-      else(C_intr_PC and C_PC_mask)(31 downto 2)
+      else C_eff_intr_PC(31 downto 2)
         when IF_ID_exception_cycle and IF_ID_intr_cycle
-      else (C_init_PC and C_PC_mask)(31 downto 2) when IF_ID_exception_cycle
+      else C_eff_init_PC(31 downto 2) when IF_ID_exception_cycle
       else C_PC_mask(31 downto 2) and (IF_ID_PC_4 +
       (ID_sign_extension(13 downto 0) & IF_ID_instruction(15 downto 0)));
 
