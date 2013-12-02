@@ -116,10 +116,6 @@ architecture Behavioral of glue is
     type f32c_debug_addr is array(0 to (C_cpus - 1)) of
       std_logic_vector(5 downto 0);
 
-    -- types for interfacing to multi-port SRAM controller
-    type sram_port_multi is array(0 to (2 * C_cpus + 1)) of sram_port_type;
-    type sram_ready_multi is array(0 to (2 * C_cpus + 1)) of std_logic;
-
     -- synthesized clocks
     signal clk, clk_325m: std_logic;
 
@@ -132,8 +128,8 @@ architecture Behavioral of glue is
     signal dmem_byte_sel: f32c_byte_sel;
 
     -- SRAM
-    signal to_sram: sram_port_multi;
-    signal sram_ready: sram_ready_multi;
+    signal to_sram: sram_port_array;
+    signal sram_ready: sram_ready_array;
     signal from_sram: std_logic_vector(31 downto 0);
     signal snoop_cycle: std_logic;
     signal snoop_addr: std_logic_vector(31 downto 2);
