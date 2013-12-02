@@ -42,7 +42,7 @@ begin
 	dout <= outreg;
 	end generate;
 
-	G_bptrace_dpr:
+	G_bptrace_ebr:
 	if C_bptrace_ebram generate
 	begin
     	bptrace_ebram: DP16KB

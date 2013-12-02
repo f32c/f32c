@@ -59,7 +59,7 @@ begin
     we_lower <= wr_enable and not wr_addr(4);
     we_upper <= wr_enable and wr_addr(4);
 
-    iter: for i in 0 to 3 generate
+    iter_1: for i in 0 to 3 generate
     begin
 	reg_set_upper_1a: DPR16X4A
 	port map (
@@ -131,7 +131,7 @@ begin
 	  else rd1_upper(i * 8 + 7);
     end generate;
 
-    iter: for i in 0 to 3 generate
+    iter_2: for i in 0 to 3 generate
     begin
 	reg_set_upper_2a: DPR16X4A
 	port map (
@@ -203,7 +203,7 @@ begin
 	  else rd2_upper(i * 8 + 7);
     end generate;
 
-    iter: for i in 0 to 3 generate
+    iter_3: for i in 0 to 3 generate
     begin
 	reg_set_upper_da: DPR16X4A
 	port map (
