@@ -28,7 +28,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
-use ieee.std_logic_arith.all;
 use ieee.numeric_std.all;
 
 entity fb is
@@ -36,7 +35,8 @@ entity fb is
 	C_big_endian: boolean := false;
 	C_clk_freq: integer := 81250000;
 	C_pixclk_div: std_logic_vector := "00111"; -- 512 h @ 81.25 MHz
-	C_hpos_lim: std_logic_vector := x"200" -- last visible hpix + 1
+	C_hpos_first: std_logic_vector := x"000"; -- first visible hpix
+	C_hpos_last: std_logic_vector := x"200" -- last visible hpix + 1
     );
     port (
 	clk, clk_dac: in std_logic;
@@ -142,9 +142,11 @@ begin
 		R_pixclk <= R_pixclk + 1;
 	    else
 		R_pixclk <= (others => '0');
-		if R_hpos /= C_hpos_lim then
+		if R_hpos /= C_hpos_last then
 		    R_hpos <= R_hpos + 1;
-		    if mode(0) = '0' then
+		    if R_hpos < C_hpos_first then
+			-- do nothing
+		    elsif mode(0) = '0' then
 			-- 8 bits per pixel 
 			if R_pixbuf_rd_byte = "11" then
 			    R_pixbuf_rd_addr <= R_pixbuf_rd_addr + 1;
@@ -201,7 +203,7 @@ begin
 		end if;
 	    end if;
 	    -- Surpress displaying anything past the last horizontal pixel
-	    if R_hpos = C_hpos_lim then
+	    if R_hpos < C_hpos_first or R_hpos = C_hpos_last then
 		R_luma <= (others => '0');
 		R_chroma_sat <= (others => '0');
 		R_chroma_phase <= (others => '0');
