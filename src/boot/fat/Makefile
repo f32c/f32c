@@ -4,7 +4,7 @@ LOADADDR = 0x800f8000
 
 # No optional instructions in the loader
 CFLAGS += -march=mips3 -mtune=f32c
-CFLAGS += -mno-branch-likely -mno-mul
+CFLAGS += -mno-branch-likely -mno-mul -mno-div
 
 # Omit floating point libs and printf parts
 CFLAGS += -DNO_PRINTF_FLOAT
