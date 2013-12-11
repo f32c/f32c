@@ -2,7 +2,7 @@
 # FER ULX2S board I/O constraints
 #
 # Board revision A, Sep 2011
-# Constraints file revision 1.02, 2013/12/03
+# Constraints file revision 1.03, 2013/12/08
 #
 
 COMMERCIAL;
@@ -172,3 +172,10 @@ IOBUF PORT "btn_center" PULLMODE=DOWN;
 
 # Dampen noise on dangling MicroSD input pin, overriding defaults
 IOBUF PORT "sdcard_so" PULLMODE=UP;
+
+# Phone jack signals may drain a significant amount of current
+IOBUF PORT "p_ring" DRIVE=20 PULLMODE=NONE;
+IOBUF PORT "p_tip_0" DRIVE=20 PULLMODE=NONE;
+IOBUF PORT "p_tip_1" DRIVE=20 PULLMODE=NONE;
+IOBUF PORT "p_tip_2" DRIVE=20 PULLMODE=NONE;
+IOBUF PORT "p_tip_3" DRIVE=20 PULLMODE=NONE;
