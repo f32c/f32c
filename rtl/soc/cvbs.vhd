@@ -41,7 +41,6 @@ entity cvbs is
 	luma: in std_logic_vector(6 downto 0);
 	chroma_phase: in std_logic_vector(5 downto 0);
 	chroma_sat: in std_logic_vector(3 downto 0);
-	frame_0: out std_logic;
 	active_pixel: out std_logic;
 	scan_line: out std_logic_vector(9 downto 0);
 	dac_out: out std_logic_vector(3 downto 0)
