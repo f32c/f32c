@@ -626,6 +626,8 @@ begin
 	end if;
     end process;
 
+    G_sram:
+    if C_sram generate
     sram: entity work.sram
     generic map (
 	C_ports => 2 * C_cpus + 2, -- extra ports: framebuffer and PCM audio
@@ -641,6 +643,7 @@ begin
 	-- Multi-port connections:
 	bus_in => to_sram, ready_out => sram_ready
     );
+    end generate;
 
     --
     -- debugging design instance
