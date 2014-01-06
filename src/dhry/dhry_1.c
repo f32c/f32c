@@ -105,25 +105,35 @@ main ()
         /* Warning: With 16-Bit processors and Number_Of_Runs > 32000,  */
         /* overflow may occur for this array element.                   */
 
-#ifdef NOTYET
-  printf ("\n");
-  printf ("Dhrystone Benchmark, Version 2.1 (Language: C)\n");
-  printf ("\n");
+#if 0
+  printf ("\nDhrystone Benchmark, Version 2.1 (Language: C)\n\n");
   if (Reg)
   {
     printf ("Program compiled with 'register' attribute\n");
-    printf ("\n");
   }
   else
   {
     printf ("Program compiled without 'register' attribute\n");
-    printf ("\n");
   }
-  printf ("Please give the number of runs through the benchmark: ");
+#endif
+
+#if 1
   {
     int n;
-    scanf ("%d", &n);
-    Number_Of_Runs = n;
+
+    /* Flush any stale characters from SIO RX buffer */
+    for (n = 100000; n > 0; n --) {
+	if (sio_getchar(0) != -1)
+	    n = 100000;
+    }
+
+#if 0
+    printf ("\nPlease give the number of runs through the benchmark: ");
+#else
+    printf ("\nNumber of runs: ");
+#endif
+    gets((char *) Arr_1_Glob, 50);
+    Number_Of_Runs = atoi((char *) Arr_1_Glob);
   }
 #else
 #ifdef BRAM
@@ -131,8 +141,8 @@ main ()
 #else
   Number_Of_Runs = 200000; /* code in (slow) external SRAM */
 #endif
-#endif /* NOTYET */
   printf ("\n%d runs...\n", Number_Of_Runs);
+#endif
 
   /***************/
   /* Start timer */

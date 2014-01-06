@@ -20,7 +20,7 @@ CFLAGS += -DNO_PRINTF_FLOAT
 
 CFILES = dhry_1.c dhry_2.c miscfn.c
 
-F32C_LIBS = printf
+F32C_LIBS = printf atoi gets
 
 include ${POST_MK}
 
