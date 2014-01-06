@@ -26,9 +26,6 @@ architecture Structure of pll is
     signal scuba_vlo: std_logic;
 
     -- local component declarations
-    component VLO
-        port (Z: out std_logic);
-    end component;
     component EPLLD1
     -- synopsys translate_off
         generic (CLKOK_BYPASS : in String; CLKOS_BYPASS : in String; 
@@ -64,9 +61,7 @@ architecture Structure of pll is
     attribute syn_noprune of Structure : architecture is true;
 
 begin
-    -- component instantiation statements
-    scuba_vlo_inst: VLO
-        port map (Z=>scuba_vlo);
+    scuba_vlo <= '0';
 
     PLL_325:
     if C_pll_freq = 325 generate
@@ -395,7 +390,6 @@ end Structure;
 library xp2;
 configuration Structure_CON of pll is
     for Structure
-        for all:VLO use entity xp2.VLO(V); end for;
         for all:EPLLD1 use entity xp2.EPLLD1(V); end for;
     end for;
 end Structure_CON;
