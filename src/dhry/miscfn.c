@@ -13,8 +13,8 @@ malloc(int size)
 {
 	void *addr;
 
-	addr = &malloc_pool[malloc_i * size];
-	malloc_i ^= 1;
+	addr = &malloc_pool[malloc_i];
+	malloc_i ^= 48;
 
 	return(addr);
 }
