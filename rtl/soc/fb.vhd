@@ -88,9 +88,8 @@ begin
     port map (
 	clk => clk, clk_dac => clk_dac,
 	luma => R_luma, chroma_phase => R_chroma_phase,
-	chroma_sat => R_chroma_sat, frame_0 => open,
-	active_pixel => active_pixel, scan_line => scan_line,
-	dac_out => dac_out
+	chroma_sat => R_chroma_sat, active_pixel => active_pixel,
+	scan_line => scan_line, dac_out => dac_out
     );
 
     --
