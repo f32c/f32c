@@ -1,9 +1,17 @@
--- $Id$
+--
+-- Copyright 2013 - 2014 Marko Zec, University of Zagreb.        
+--
+-- Neither this file nor any parts of it may be used unless an explicit 
+-- permission is obtained from the author.  The file may not be copied,
+-- disseminated or further distributed in its entirety or in part under
+-- any circumstances.
+--
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+-- $Id: $
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
 
 use work.f32c_pack.all;
 
