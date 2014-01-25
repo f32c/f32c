@@ -547,7 +547,7 @@ begin
 		    final_to_cpu_d(cpu) <= from_sram;
 		elsif C_i_rom_only then
 		    -- XXX assert address eror signal?
-		    dmem_data_ready(cpu) <= '1';
+		    dmem_data_ready(cpu) <= dmem_addr_strobe(cpu);
 		    final_to_cpu_d(cpu) <= (others => '-');
 		else
 		    dmem_data_ready(cpu) <= bram_d_ready;
