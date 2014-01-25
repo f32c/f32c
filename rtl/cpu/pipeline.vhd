@@ -7,7 +7,7 @@
 -- any circumstances.
 --
 
--- $Id: pipeline.vhd 1714 2013-12-02 22:20:02Z marko $
+-- $Id$
 
 library ieee;
 use ieee.std_logic_1164.all;

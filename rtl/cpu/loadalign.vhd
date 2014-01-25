@@ -7,7 +7,7 @@
 -- any circumstances.
 --
 
--- $Id: loadalign.vhd 1664 2013-11-02 14:45:26Z marko $
+-- $Id$
 
 library ieee;
 use ieee.std_logic_1164.all;
