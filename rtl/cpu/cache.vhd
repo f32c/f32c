@@ -41,6 +41,7 @@ entity cache is
 
 	-- cache options
 	C_icache_size: integer := 8;
+	C_dcache_size: integer := 2;
 
 	-- debugging options
 	C_debug: boolean
@@ -73,13 +74,15 @@ architecture x of cache is
     signal icache_data_in, icache_data_out: std_logic_vector(31 downto 0);
     signal icache_tag_in, icache_tag_out: std_logic_vector(12 downto 0);
     signal iaddr_cacheable, icache_line_valid: boolean;
-    signal i_strobe, icache_write, instr_ready: std_logic;
+    signal icache_write, instr_ready: std_logic;
     signal flush_i_line, flush_d_line: std_logic;
+    signal to_i_bram, from_i_bram: std_logic_vector(44 downto 0);
 
-    signal R_i_strobe: std_logic;
+    signal R_i_strobe, R_d_strobe: std_logic;
     signal R_i_addr: std_logic_vector(31 downto 2);
 
-    signal to_i_bram, from_i_bram: std_logic_vector(44 downto 0);
+    signal daddr_cacheable: boolean;
+    signal cpu_d_strobe, cpu_d_write, cpu_d_ready: std_logic;
 
 begin
 
@@ -103,11 +106,11 @@ begin
 	imem_addr => i_addr, imem_data_in => i_data,
 	imem_addr_strobe => open,
 	imem_data_ready => instr_ready,
-	dmem_addr_strobe => dmem_addr_strobe,
+	dmem_addr_strobe => cpu_d_strobe,
 	dmem_addr => d_addr,
-	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
+	dmem_write => cpu_d_write, dmem_byte_sel => dmem_byte_sel,
 	dmem_data_in => dmem_data_in, dmem_data_out => dmem_data_out,
-	dmem_data_ready => dmem_data_ready,
+	dmem_data_ready => cpu_d_ready,
 	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
 	flush_i_line => flush_i_line, flush_d_line => flush_d_line,
 	trace_addr => trace_addr, trace_data => trace_data
@@ -206,8 +209,6 @@ begin
     end generate i_block_iter;
     end generate; -- icache_8k
 
-    dmem_addr <= d_addr;
-
     imem_addr <= R_i_addr;
     imem_addr_strobe <= '1' when not iaddr_cacheable else R_i_strobe;
     i_data <= icache_data_out when iaddr_cacheable else imem_data_in;
@@ -244,6 +245,21 @@ begin
 	else
 	    R_i_strobe <= '0';
 	end if;
+	if cpu_d_strobe = '1' and dmem_data_ready = '1' then
+	    R_d_strobe <= '0';
+	elsif cpu_d_strobe = '1' then
+	    R_d_strobe <= '1';
+	end if;
     end if;
     end process;
+
+    dmem_addr <= d_addr;
+    dmem_write <= cpu_d_write;
+    dmem_addr_strobe <= cpu_d_strobe when not daddr_cacheable
+      or cpu_d_write = '1' else cpu_d_strobe and R_d_strobe;
+    cpu_d_ready <= dmem_data_ready when not daddr_cacheable
+      or cpu_d_write = '1' else dmem_data_ready and R_d_strobe;
+    daddr_cacheable <=
+      (C_dcache_size = 2 or C_dcache_size = 4 or C_dcache_size = 8) and
+      d_addr(31 downto 29) = "100" and d_addr(20) = '1';
 end x;
