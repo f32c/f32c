@@ -1,3 +1,13 @@
+--
+-- Copyright 2013 - 2014 Marko Zec, University of Zagreb.        
+--
+-- Neither this file nor any parts of it may be used unless an explicit 
+-- permission is obtained from the author.  The file may not be copied,
+-- disseminated or further distributed in its entirety or in part under
+-- any circumstances.
+--
+
+-- $Id:$
 
 library ieee;
 use ieee.std_logic_1164.all;
