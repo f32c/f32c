@@ -70,8 +70,9 @@ end cache;
 
 architecture x of cache is
     constant C_D_IDLE: std_logic_vector := "00";
-    constant C_D_HIT: std_logic_vector := "01";
-    constant C_D_FETCHING: std_logic_vector := "10";
+    constant C_D_WRITE: std_logic_vector := "01";
+    constant C_D_READ: std_logic_vector := "10";
+    constant C_D_FETCH: std_logic_vector := "11";
 
     signal i_addr, d_addr: std_logic_vector(31 downto 2);
     signal i_data: std_logic_vector(31 downto 0);
@@ -91,7 +92,7 @@ architecture x of cache is
     signal R_i_strobe: std_logic;
     signal R_i_addr: std_logic_vector(31 downto 2);
     signal R_d_state: std_logic_vector(1 downto 0);
-    signal R_dcache_data_out: std_logic_vector(31 downto 0);
+    signal dcache_data_out: std_logic_vector(31 downto 0);
 
     signal cpu_d_strobe, cpu_d_write, cpu_d_ready: std_logic;
     signal cpu_d_byte_sel: std_logic_vector(3 downto 0);
@@ -251,7 +252,9 @@ begin
     process(clk)
     begin
     if rising_edge(clk) then
-	-- instruction cache
+	--
+	-- instruction cache FSM
+	--
 	R_i_addr <= i_addr;
 	if iaddr_cacheable and
 	  not icache_line_valid and imem_data_ready = '0' then
@@ -259,19 +262,28 @@ begin
 	else
 	    R_i_strobe <= '0';
 	end if;
-	-- data cache
-	if R_d_state = C_D_HIT or dmem_data_ready = '1' then
+
+	--
+	-- data cache FSM
+	--
+	if cpu_d_strobe = '0' then
+	    R_d_state <= C_D_IDLE;
+	elsif (R_d_state = C_D_WRITE or R_d_state = C_D_FETCH)
+	  and dmem_data_ready = '1' then
+	    R_d_state <= C_D_IDLE;
+	elsif R_d_state = C_D_READ and dcache_line_valid then
 	    R_d_state <= C_D_IDLE;
 	elsif cpu_d_strobe = '1' and daddr_cacheable then
-	    if dcache_line_valid then
-		R_d_state <= C_D_HIT;
+	    if cpu_d_write = '1' then
+		R_d_state <= C_D_WRITE;
+	    elsif R_d_state = C_D_IDLE then
+		R_d_state <= C_D_READ;
 	    else
-		R_d_state <= C_D_FETCHING;
+		R_d_state <= C_D_FETCH;
 	    end if;
 	else
 	    R_d_state <= C_D_IDLE;
 	end if;
-	R_dcache_data_out <= from_d_bram(31 downto 0);
     end if;
     end process;
 
@@ -279,20 +291,24 @@ begin
     dmem_write <= cpu_d_write;
     dmem_byte_sel <= cpu_d_byte_sel;
     dmem_data_out <= cpu_d_data_out;
+
     dmem_addr_strobe <=
       cpu_d_strobe when not daddr_cacheable or cpu_d_write = '1'
-      else '1' when R_d_state = C_D_FETCHING else '0';
-    cpu_d_data_in <= R_dcache_data_out when R_d_state = C_D_HIT
+      else '1' when R_d_state = C_D_READ and not dcache_line_valid
+      else '0' when R_d_state = C_D_IDLE else cpu_d_strobe;
+    cpu_d_data_in <= dcache_data_out when R_d_state = C_D_READ
       else dmem_data_in;
-    cpu_d_ready <=
-      dmem_data_ready when not daddr_cacheable or cpu_d_write = '1'
-      else '1' when R_d_state = C_D_HIT else dmem_data_ready;
+    cpu_d_ready <= '1' when R_d_state = C_D_READ and dcache_line_valid
+      else dmem_data_ready;
 
     daddr_cacheable <=
       (C_dcache_size = 2 or C_dcache_size = 4 or C_dcache_size = 8) and
       d_addr(31 downto 29) = "100" and d_addr(20) = '1';
-    dcache_write <= cpu_d_write and cpu_d_strobe when daddr_cacheable else '0';
-    d_tag_valid_bit <= '1' when cpu_d_byte_sel = "1111" else '0';
+    dcache_write <= dmem_data_ready and cpu_d_strobe when
+      daddr_cacheable and R_d_state = C_D_WRITE
+      else '0';
+    d_tag_valid_bit <=
+      '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111" else '1';
     dcache_tag_in <=
       d_tag_valid_bit & "000" & d_addr(19 downto 11)
       when C_dcache_size = 2 else
@@ -300,7 +316,7 @@ begin
       when C_dcache_size = 4 else
       d_tag_valid_bit & "00000" & d_addr(19 downto 13);
     dcache_line_valid <=
-      daddr_cacheable and dcache_tag_out(12) = '1' and
+      dcache_tag_out(12) = '1' and
       ((C_dcache_size = 2 and
       dcache_tag_in(8 downto 0) = dcache_tag_out(8 downto 0)) or
       (C_dcache_size = 4 and
@@ -309,15 +325,17 @@ begin
       dcache_tag_in(6 downto 0) = dcache_tag_out(6 downto 0)));
 
     dcache_tag_out <= from_d_bram(44 downto 32);
-    to_d_bram(31 downto 0) <= cpu_d_data_out;
+    dcache_data_out <= from_d_bram(31 downto 0);
+    to_d_bram(31 downto 0) <=
+      cpu_d_data_out when cpu_d_write = '1' else dmem_data_in;
     to_d_bram(44 downto 32) <= dcache_tag_in;
 
     G_dcache_2k:
     if C_dcache_size = 2 generate
     tag_dp_bram_d: entity work.bram_dp_x9
     port map (
-	clk_a => '0', clk_b => not clk,
-	ce_a => '0', ce_b => '1',
+	clk_a => clk, clk_b => clk,
+	ce_a => '1', ce_b => '1',
 	we_a => '0', we_b => dcache_write,
 	addr_a => (others => '0'),
 	addr_b => "00" & d_addr(10 downto 2),
@@ -328,7 +346,7 @@ begin
     );
     d_dp_bram: entity work.bram_dp_x18
     port map (
-	clk_a => not clk, clk_b => not clk,
+	clk_a => clk, clk_b => clk,
 	ce_a => '1', ce_b => '1',
 	we_a => dcache_write, we_b => dcache_write,
 	addr_a => '0' & d_addr(10 downto 2),
