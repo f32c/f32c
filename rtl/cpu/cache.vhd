@@ -40,8 +40,8 @@ entity cache is
 	C_register_technology: string;
 
 	-- cache options
-	C_icache_size: integer := 8;
-	C_dcache_size: integer := 2;
+	C_icache_size: integer;
+	C_dcache_size: integer;
 
 	-- debugging options
 	C_debug: boolean
@@ -380,5 +380,35 @@ begin
 	data_out_b => from_d_bram(1 * 18 + 17 downto 1 * 18)
     );
     end generate; -- dcache_2k
+
+    G_dcache_4k:
+    if C_dcache_size = 4 generate
+    tag_dp_bram_d: entity work.bram_dp_x9
+    port map (
+	clk_a => clk, clk_b => clk,
+	ce_a => '1', ce_b => '1',
+	we_a => '0', we_b => dcache_write,
+	addr_a => (others => '0'),
+	addr_b => '0' & d_addr(11 downto 2),
+	data_in_a => (others => '0'),
+	data_in_b => to_d_bram(44 downto 36),
+	data_out_a => open,
+	data_out_b => from_d_bram(44 downto 36)
+    );
+    d_block_iter: for b in 0 to 1 generate
+    begin
+    d_dp_bram: entity work.bram_dp_x18
+    port map (
+	clk_a => clk, clk_b => clk,
+	ce_a => '1', ce_b => '0',
+	we_a => dcache_write, we_b => '0',
+	addr_a => d_addr(11 downto 2), addr_b => (others => '0'),
+	data_in_a => to_d_bram(b * 18 + 17 downto b * 18),
+	data_in_b => (others => '0'),
+	data_out_a => from_d_bram(b * 18 + 17 downto b * 18),
+	data_out_b => open
+    );
+    end generate d_block_iter;
+    end generate; -- dcache_4k
 
 end x;
