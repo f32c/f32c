@@ -301,7 +301,8 @@ begin
     daddr_cacheable <=
       (C_dcache_size = 2 or C_dcache_size = 4 or C_dcache_size = 8) and
       d_addr(31 downto 29) = "100" and d_addr(20) = '0';
-    dcache_write <= dmem_data_ready when R_d_state = C_D_WRITE else '0';
+    dcache_write <= dmem_data_ready when
+      (R_d_state = C_D_WRITE or R_d_state = C_D_FETCH) else '0';
     d_tag_valid_bit <=
       '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111" else '1';
     dcache_tag_in <=
