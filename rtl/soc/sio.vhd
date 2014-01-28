@@ -82,7 +82,7 @@ architecture Behavioral of sio is
     signal rx_des: std_logic_vector(7 downto 0);
     signal rx_phase: std_logic_vector(3 downto 0);
     signal rx_byte: std_logic_vector(7 downto 0);
-    signal rx_full, R_rx_full: std_logic;
+    signal rx_full: std_logic;
 begin
 
     G_bypass:
@@ -113,18 +113,12 @@ begin
     tx_running <= '1' when tx_phase /= x"0" else '0';
     bus_out(31 downto 11) <= "---------------------";
     bus_out(10) <= tx_running;
-    bus_out(9 downto 8) <= '-' & R_rx_full when not C_tx_only else "--";
+    bus_out(9 downto 8) <= '-' & rx_full when not C_tx_only else "--";
     bus_out(7 downto 0) <= rx_byte when not C_tx_only else "--------";
     txd <= tx_ser(0);
 
     process(clk)
     begin
-	if falling_edge(clk) then
-	    if ce = '1' then
-		R_rx_full <= rx_full;
-	    end if;
-	end if;
-
 	if rising_edge(clk) then
 	    -- bus interface logic
 	    if ce = '1' then
