@@ -39,11 +39,12 @@
 	.type _start,@function
 
 _start:
-	/* Start with a nop, just in case */
-	nop
+	/* Magic block required by the FAT bootloader, otherwise harmless */
+	la	s0, _start	/* Executable code base address */
+	la	s1, _end	/* End of BSS section */
 
 #ifdef BRAM
-	li	sp, 0x00004000
+	li	sp, 0x00010000	/* 64 k */
 #else
 	/* Invalidate the entire I-cache */
 	li	t1, 8192 / 4
