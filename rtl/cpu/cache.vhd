@@ -266,10 +266,7 @@ begin
 	--
 	-- data cache FSM
 	--
-	if cpu_d_strobe = '0' then
-	    R_d_state <= C_D_IDLE;
-	elsif (R_d_state = C_D_WRITE or R_d_state = C_D_FETCH)
-	  and dmem_data_ready = '1' then
+	if cpu_d_strobe = '0' or dmem_data_ready = '1' then
 	    R_d_state <= C_D_IDLE;
 	elsif R_d_state = C_D_READ and dcache_line_valid then
 	    R_d_state <= C_D_IDLE;
@@ -294,7 +291,7 @@ begin
 
     dmem_addr_strobe <=
       cpu_d_strobe when not daddr_cacheable or cpu_d_write = '1'
-      else '1' when R_d_state = C_D_READ and not dcache_line_valid
+      else '0' when R_d_state = C_D_READ and dcache_line_valid
       else '0' when R_d_state = C_D_IDLE else cpu_d_strobe;
     cpu_d_data_in <= dcache_data_out when R_d_state = C_D_READ
       else dmem_data_in;
@@ -303,10 +300,8 @@ begin
 
     daddr_cacheable <=
       (C_dcache_size = 2 or C_dcache_size = 4 or C_dcache_size = 8) and
-      d_addr(31 downto 29) = "100" and d_addr(20) = '1';
-    dcache_write <= dmem_data_ready and cpu_d_strobe when
-      daddr_cacheable and R_d_state = C_D_WRITE
-      else '0';
+      d_addr(31 downto 29) = "100" and d_addr(20) = '0';
+    dcache_write <= dmem_data_ready when R_d_state = C_D_WRITE else '0';
     d_tag_valid_bit <=
       '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111" else '1';
     dcache_tag_in <=
@@ -327,7 +322,7 @@ begin
     dcache_tag_out <= from_d_bram(44 downto 32);
     dcache_data_out <= from_d_bram(31 downto 0);
     to_d_bram(31 downto 0) <=
-      cpu_d_data_out when cpu_d_write = '1' else dmem_data_in;
+      cpu_d_data_out when R_d_state = C_D_WRITE else dmem_data_in;
     to_d_bram(44 downto 32) <= dcache_tag_in;
 
     G_dcache_2k:
