@@ -91,6 +91,7 @@ architecture x of cache is
 
     signal R_i_strobe: std_logic;
     signal R_i_addr: std_logic_vector(31 downto 2);
+    signal R_dcache_wbuf: std_logic_vector(31 downto 0);
     signal R_d_state: std_logic_vector(1 downto 0);
     signal dcache_data_out: std_logic_vector(31 downto 0);
 
@@ -303,8 +304,8 @@ begin
       d_addr(31 downto 29) = "100" and d_addr(20) = '0';
     dcache_write <= dmem_data_ready when
       (R_d_state = C_D_WRITE or R_d_state = C_D_FETCH) else '0';
-    d_tag_valid_bit <=
-      '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111" else '1';
+    d_tag_valid_bit <= '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111"
+      and not dcache_line_valid else '1';
     dcache_tag_in <=
       d_tag_valid_bit & "000" & d_addr(19 downto 11)
       when C_dcache_size = 2 else
@@ -322,9 +323,35 @@ begin
 
     dcache_tag_out <= from_d_bram(44 downto 32);
     dcache_data_out <= from_d_bram(31 downto 0);
-    to_d_bram(31 downto 0) <=
-      cpu_d_data_out when R_d_state = C_D_WRITE else dmem_data_in;
     to_d_bram(44 downto 32) <= dcache_tag_in;
+    to_d_bram(31 downto 0) <= R_dcache_wbuf when R_d_state = C_D_WRITE
+      else dmem_data_in;
+
+    process(clk)
+    begin
+    if falling_edge(clk) then
+	if cpu_d_byte_sel(0) = '1' then
+	    R_dcache_wbuf(7 downto 0) <= cpu_d_data_out(7 downto 0);
+	else
+	    R_dcache_wbuf(7 downto 0) <= dcache_data_out(7 downto 0);
+	end if;
+	if cpu_d_byte_sel(1) = '1' then
+	    R_dcache_wbuf(15 downto 8) <= cpu_d_data_out(15 downto 8);
+	else
+	    R_dcache_wbuf(15 downto 8) <= dcache_data_out(15 downto 8);
+	end if;
+	if cpu_d_byte_sel(2) = '1' then
+	    R_dcache_wbuf(23 downto 16) <= cpu_d_data_out(23 downto 16);
+	else
+	    R_dcache_wbuf(23 downto 16) <= dcache_data_out(23 downto 16);
+	end if;
+	if cpu_d_byte_sel(3) = '1' then
+	    R_dcache_wbuf(31 downto 24) <= cpu_d_data_out(31 downto 24);
+	else
+	    R_dcache_wbuf(31 downto 24) <= dcache_data_out(31 downto 24);
+	end if;
+    end if;
+    end process;
 
     G_dcache_2k:
     if C_dcache_size = 2 generate
