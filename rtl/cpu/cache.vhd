@@ -411,4 +411,34 @@ begin
     end generate d_block_iter;
     end generate; -- dcache_4k
 
+    G_dcache_8k:
+    if C_dcache_size = 8 generate
+    tag_dp_bram_d: entity work.bram_dp_x9
+    port map (
+	clk_a => clk, clk_b => clk,
+	ce_a => '1', ce_b => '1',
+	we_a => '0', we_b => dcache_write,
+	addr_a => (others => '0'),
+	addr_b => d_addr(12 downto 2),
+	data_in_a => (others => '0'),
+	data_in_b => to_d_bram(44 downto 36),
+	data_out_a => open,
+	data_out_b => from_d_bram(44 downto 36)
+    );
+    d_block_iter: for b in 0 to 3 generate
+    begin
+    d_dp_bram: entity work.bram_dp_x9
+    port map (
+	clk_a => clk, clk_b => clk,
+	ce_a => '1', ce_b => '0',
+	we_a => dcache_write, we_b => '0',
+	addr_a => d_addr(12 downto 2), addr_b => (others => '0'),
+	data_in_a => to_d_bram(b * 9 + 8 downto b * 9),
+	data_in_b => (others => '0'),
+	data_out_a => from_d_bram(b * 9 + 8 downto b * 9),
+	data_out_b => open
+    );
+    end generate d_block_iter;
+    end generate; -- dcache_8k
+
 end x;
