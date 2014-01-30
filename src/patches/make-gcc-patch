@@ -1,11 +1,9 @@
 #!/bin/sh
 
-GCC_VER="gcc-4.8.1"
+GCC_VER="gcc-4.9-20140126"
 
 cp ../org/$GCC_VER/gcc/config/mips/mips-tables.opt gcc/config/mips/mips-tables.opt
 diff -drup ../org/$GCC_VER/gcc/config/mips gcc/config/mips | fgrep -v "Only in gcc/config/mips:"
 diff -dup /dev/null gcc/config/mips/f32c.md
 diff -dup ../org/$GCC_VER/configure configure
-diff -dup ../org/$GCC_VER/gcc/doc/g++.1 gcc/doc/g++.1
-diff -dup ../org/$GCC_VER/gcc/doc/gcc.1 gcc/doc/gcc.1
 diff -dup ../org/$GCC_VER/gcc/doc/invoke.texi gcc/doc/invoke.texi
