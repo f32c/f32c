@@ -37,6 +37,10 @@ image:	loader.bin
 	mattrib -i ${SPI_IMG_NAME} +r ::boot/basic.bin
 	mcopy -i ${SPI_IMG_NAME} ../../wavplay/wavplay.bin ::
 	mattrib -i ${SPI_IMG_NAME} +r ::wavplay.bin
+	mcopy -i ${SPI_IMG_NAME} ../../dhry/dhry.bin ::dhry.bin
+	mattrib -i ${SPI_IMG_NAME} +r ::dhry.bin
+	mcopy -i ${SPI_IMG_NAME} ../../coremark/v1.0/coremark.bin ::coremark.bin
+	mattrib -i ${SPI_IMG_NAME} +r ::coremark.bin
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/pictures.txt ::pics
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/*.jpg ::pics
 	mcopy -i ${SPI_IMG_NAME} ../../pbasic/COPYRIGHT ::copyright.txt
