@@ -52,7 +52,7 @@ load_bin(const char *fname)
 	int16_t *shortp;
 	int fd;
 	int i;
-	char *cp = NULL; /* XXX remove this */
+	char *cp;
 	char *start, *end;
 
 	printf("Trying %s... ", fname);
