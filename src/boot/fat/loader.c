@@ -146,7 +146,7 @@ main(void)
 	    " (built " __DATE__ ")\n");
 
 	if (*((int *) loadaddr) == LOAD_COOKIE)
-		loadaddr = load_bin(loadaddr);
+		loadaddr = load_bin(&loadaddr[4]);
 	else
 		loadaddr = NULL;
 
