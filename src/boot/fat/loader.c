@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,6 +27,7 @@
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 
@@ -40,72 +41,132 @@ static const char *bootfiles[] = {
 
 #define	SRAM_BASE	0x80000000
 #define	SRAM_TOP	0x80100000
-#define	LOADER_BASE	0x800f8000
 
 #define LOAD_COOKIE	0x10adc0de
-#define	LOADADDR	SRAM_BASE
 
+
+static char *
+load_bin(const char *fname)
+{
+	uint8_t hdrbuf[16];
+	int16_t *shortp;
+	int fd;
+	int i;
+	char *cp = NULL; /* XXX remove this */
+	char *start, *end;
+
+	printf("Trying %s... ", fname);
+	fd = open(fname, O_RDONLY);
+	if (fd < 0) {
+		printf("not found\n");
+		return (NULL);
+	}
+
+	i = read(fd, hdrbuf, 16);
+	close(fd);
+	if (i != 16) {
+		printf("short read\n");
+		return (NULL);
+	};
+
+	if (hdrbuf[2] == 0x10 && hdrbuf[3] == 0x3c &&
+	    hdrbuf[6] == 0x10 && hdrbuf[7] == 0x26 &&
+	    hdrbuf[10] == 0x11 && hdrbuf[11] == 0x3c &&
+	    hdrbuf[14] == 0x31 && hdrbuf[7] == 0x26) {
+		/* Little-endian cookie found */
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+		shortp = (void *) &hdrbuf[0];
+		start = (void *) (*shortp << 16);
+		shortp = (void *) &hdrbuf[4];
+		start = (void *)((int) start + *shortp);
+		shortp = (void *) &hdrbuf[8];
+		end = (void *) (*shortp << 16);
+		shortp = (void *) &hdrbuf[12];
+		end = (void *)((int) end + *shortp);
+#else
+		printf("little-endian code, but CPU is big-endian\n");
+		return (NULL);
+#endif
+	} else if (hdrbuf[2] == 0x10 && hdrbuf[3] == 0x3c &&
+	    hdrbuf[6] == 0x10 && hdrbuf[7] == 0x26 &&
+	    hdrbuf[10] == 0x11 && hdrbuf[11] == 0x3c &&
+	    hdrbuf[14] == 0x31 && hdrbuf[7] == 0x26) {
+		/* Big-endian cookie found */
+#if _BYTE_ORDER == _BIG_ENDIAN
+		shortp = (void *) &hdrbuf[2];
+		start = (void *) (*shortp << 16);
+		shortp = (void *) &hdrbuf[6];
+		start = (void *)((int) start + *shortp);
+		shortp = (void *) &hdrbuf[12];
+		end = (void *) (*shortp << 16);
+		shortp = (void *) &hdrbuf[14];
+		end = (void *)((int) end + *shortp);
+#else
+		printf("big-endian code, but CPU is little-endian\n");
+		return (NULL);
+#endif
+	} else {
+		printf("invalid file type, missing header cookie\n");
+		return (NULL);
+	}
+
+	fd = open(fname, O_RDONLY);
+	cp = start;
+	do {
+		i = read(fd, cp, 65536);
+		cp += i;
+		if (cp > end) {
+			printf("corrupt text file, aborting\n");
+			return (NULL);
+		}
+	} while (i > 0);
+	close(fd);
+
+	printf("OK\nLoaded text & data at %p; bss starts at %p len %p\n\n",
+	    start, cp, (void *) (end - cp));
+
+	/* bzero() the BSS section */
+	bzero(cp, end - cp);
+
+	return (start);
+}
 
 void
 main(void)
 {
-	int i, fd = -1;
-	char *cp = (char *) LOADADDR;
+	int i;
+	char *loadaddr = (void *) SRAM_BASE;
 
-	printf("ULX2S FAT bootloader v 0.1 "
+	printf("ULX2S FAT bootloader v 0.2 "
 #if _BYTE_ORDER == _BIG_ENDIAN
 	    "(f32c/be)"
 #else
 	    "(f32c/le)"
 #endif
-	    "\n");
+	    " (built " __DATE__ ")\n");
 
-	if (*((int *) cp) == LOAD_COOKIE) {
-		printf("Trying %s... ", &cp[4]);
-		fd = open(&cp[4], O_RDONLY);
-		if (fd < 0)
-			printf("not found\n");
-	}
+	if (*((int *) loadaddr) == LOAD_COOKIE)
+		loadaddr = load_bin(loadaddr);
+	else
+		loadaddr = NULL;
 
-	for (i = 0; fd < 0 && bootfiles[i] != NULL; i++) {
-		printf("Trying %s... ", bootfiles[i]);
-		fd = open(bootfiles[i], O_RDONLY);
-		if (fd > 0)
-			break;
-		printf("not found\n");
-	}
-	if (fd < 0) {
+	for (i = 0; loadaddr == NULL && bootfiles[i] != NULL; i++)
+		loadaddr = load_bin(bootfiles[i]);
+
+	if (loadaddr == NULL) {
 		printf("Exiting\n");
 		return;
 	}
 
-	do {
-		i = read(fd, cp, 65536);
-		cp += i;
-	} while (i > 0);
-	printf("OK, loaded at %p len %p\n\n",
-	    (void *) LOADADDR, (cp - LOADADDR));
-
-	/* bzero() the rest of the available SRAM */
-	do {
-		*cp++ = 0;
-	} while (((int) cp & 3));
-	do {
-		*((int *) cp) = 0;
-		cp += 4;
-	} while (cp < (char *) LOADER_BASE);
-
 	/* Invalidate I-cache */
-	cp = (char *) LOADADDR;
-	for (i = 0; i < 8192; i += 4, cp += 4) {
+	for (i = 0; i < 8192; i += 4) {
 		__asm __volatile__(
 			"cache	0, 0(%0)"
 			: 
-			: "r" (cp)
+			: "r" (i)
 		);
 	}
 
-	cp = (char *) LOADADDR;
 	__asm __volatile__(
 		".set noreorder;"
 		"lui $4, 0x8000;"	/* stack mask */
@@ -116,6 +177,6 @@ main(void)
 		"or $29, $29, $5;"      /* set the stack pointer */
 		".set reorder;"
 		: 
-		: "r" (cp)
+		: "r" (loadaddr)
 	);
 }
