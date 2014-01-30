@@ -357,8 +357,8 @@ begin
     if C_dcache_size = 2 generate
     tag_dp_bram_d: entity work.bram_dp_x9
     port map (
-	clk_a => clk, clk_b => clk,
-	ce_a => '1', ce_b => '1',
+	clk_a => '0', clk_b => clk,
+	ce_a => '0', ce_b => '1',
 	we_a => '0', we_b => dcache_write,
 	addr_a => (others => '0'),
 	addr_b => "00" & d_addr(10 downto 2),
@@ -385,8 +385,8 @@ begin
     if C_dcache_size = 4 generate
     tag_dp_bram_d: entity work.bram_dp_x9
     port map (
-	clk_a => clk, clk_b => clk,
-	ce_a => '1', ce_b => '1',
+	clk_a => '0', clk_b => clk,
+	ce_a => '0', ce_b => '1',
 	we_a => '0', we_b => dcache_write,
 	addr_a => (others => '0'),
 	addr_b => '0' & d_addr(11 downto 2),
@@ -399,7 +399,7 @@ begin
     begin
     d_dp_bram: entity work.bram_dp_x18
     port map (
-	clk_a => clk, clk_b => clk,
+	clk_a => clk, clk_b => '0',
 	ce_a => '1', ce_b => '0',
 	we_a => dcache_write, we_b => '0',
 	addr_a => d_addr(11 downto 2), addr_b => (others => '0'),
@@ -415,8 +415,8 @@ begin
     if C_dcache_size = 8 generate
     tag_dp_bram_d: entity work.bram_dp_x9
     port map (
-	clk_a => clk, clk_b => clk,
-	ce_a => '1', ce_b => '1',
+	clk_a => '0', clk_b => clk,
+	ce_a => '0', ce_b => '1',
 	we_a => '0', we_b => dcache_write,
 	addr_a => (others => '0'),
 	addr_b => d_addr(12 downto 2),
@@ -429,7 +429,7 @@ begin
     begin
     d_dp_bram: entity work.bram_dp_x9
     port map (
-	clk_a => clk, clk_b => clk,
+	clk_a => clk, clk_b => '0',
 	ce_a => '1', ce_b => '0',
 	we_a => dcache_write, we_b => '0',
 	addr_a => d_addr(12 downto 2), addr_b => (others => '0'),
