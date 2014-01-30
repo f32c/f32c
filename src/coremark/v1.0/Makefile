@@ -73,7 +73,8 @@ $(OPATH)$(PORT_DIR):
 compile: $(OPATH) $(OPATH)$(PORT_DIR) $(OBJS) $(HEADERS) 
 link: compile 
 	$(LD) $(LFLAGS) $(XLFLAGS) $(OBJS) $(LOUTCMD)
-	mips-elf-objdump -O srec coremark.mips cm.hex
+	mips-elf-objcopy -O binary coremark.mips coremark.bin
+	mips-elf-objcopy -O srec coremark.mips coremark.hex
 	
 else
 
@@ -81,7 +82,8 @@ compile: $(OPATH) $(SRCS) $(HEADERS)
 	$(CC) $(CFLAGS) $(XCFLAGS) $(SRCS) $(OUTCMD)
 link: compile 
 	@echo "Link performed along with compile"
-	mips-elf-objcopy -O srec coremark.mips cm.hex
+	mips-elf-objcopy -O binary coremark.mips coremark.bin
+	mips-elf-objcopy -O srec coremark.mips coremark.hex
 
 endif
 
@@ -120,7 +122,7 @@ load: $(OUTFILE)
 .PHONY: clean
 clean:
 	rm -f $(OUTFILE) $(OPATH)*.log *.info $(OPATH)index.html $(PORT_CLEAN)
-	rm -f cm.hex
+	rm -f coremark.hex coremark.bin
 
 .PHONY: force_rebuild
 force_rebuild:
