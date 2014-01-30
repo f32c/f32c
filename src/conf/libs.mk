@@ -84,6 +84,10 @@ ifneq (,$(findstring spi,$(F32C_LIBS)))
 	_NEED_SPI = YES
 endif
 
+ifneq (,$(findstring memset,$(F32C_LIBS)))
+	_NEED_MEMSET = YES
+endif
+
 ifneq (,$(findstring fatfs,$(F32C_LIBS)))
 	_NEED_DIV = YES
 	_NEED_SPI = YES
@@ -128,6 +132,10 @@ endif
 
 ifdef _NEED_GETS
 	CFILES += ${BASE_DIR}lib/gets.c
+endif
+
+ifdef _NEED_MEMSET
+	CFILES += ${BASE_DIR}lib/memset.c
 endif
 
 ifdef _NEED_SPI
