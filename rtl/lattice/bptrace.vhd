@@ -18,7 +18,8 @@ entity bptrace is
 end bptrace;
 
 architecture Structure of bptrace is
-	signal do_a, outreg: std_logic_vector(1 downto 0);
+	signal do_a, do_b, outreg: std_logic_vector(1 downto 0);
+	signal wea, web: std_logic;
 
 begin
 
@@ -31,12 +32,26 @@ begin
 		DO0 => do_a(0), DO1 => do_a(1), DO2 => open, DO3 => open,
 		WAD0 => wraddr(0), WAD1 => wraddr(1), WAD2 => wraddr(2), WAD3 => wraddr(3),
 		RAD0 => rdaddr(0), RAD1 => rdaddr(1), RAD2 => rdaddr(2), RAD3 => rdaddr(3),
-		WCK => clk, WRE => we
+		WCK => clk, WRE => wea
 	);
+	bptrace_dpr_b: DPR16X4B
+	port map (
+		DI0 => din(0), DI1 => din(1), DI2 => '0', DI3 => '0',
+		DO0 => do_b(0), DO1 => do_b(1), DO2 => open, DO3 => open,
+		WAD0 => wraddr(0), WAD1 => wraddr(1), WAD2 => wraddr(2), WAD3 => wraddr(3),
+		RAD0 => rdaddr(0), RAD1 => rdaddr(1), RAD2 => rdaddr(2), RAD3 => rdaddr(3),
+		WCK => clk, WRE => web
+	);
+	wea <= we and not wraddr(4);
+	web <= we and wraddr(4);
 	process(clk)
 	begin
 		if (rising_edge(clk) and re = '1') then
-			outreg <= do_a;
+			if rdaddr(4) = '0' then
+				outreg <= do_a;
+			else
+				outreg <= do_b;
+			end if;
 		end if;
 	end process;
 	dout <= outreg;
