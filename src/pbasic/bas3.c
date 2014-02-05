@@ -351,13 +351,32 @@ ame:    if(j->mvalue < i){         /* current operator has higher */
 void
 tim()
 {
+#ifdef f32c
 	uint64_t tmp;
+#else
+	time_t t;
+#endif
 
+#ifdef f32c
 	tmp = tsc_hi;
 	tmp = (tmp << 32) + tsc_lo;
-
 	res.f = tmp / 1000.0 / freq_khz;
 	vartype = RVAL;
+#else
+	time(&t);
+#ifndef SOFTFP
+#ifdef BIG_INTS
+	res.i = t;
+	vartype = IVAL;
+#else
+	res.f = t;
+        vartype = RVAL;
+#endif
+#else
+	overfl = t;
+	over(0,&res);		/* convert from long to real */
+#endif
+#endif
 }
 
 #ifdef	RAND48

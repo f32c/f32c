@@ -13,6 +13,8 @@ F32C_LIBS = setjmp math fatfs printf framebuffer jpeg sio_baud
 
 include ${POST_MK}
 
+CFLAGS += -Df32c
+
 CFLAGS += -Wno-missing-braces
 ifneq ($(findstring ${WARNS}, "34"),)
 CFLAGS += -Wno-unused-parameter
