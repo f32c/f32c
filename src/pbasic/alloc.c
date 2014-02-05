@@ -418,7 +418,6 @@ PH	*php;
 	}
 }
 
-extern	void	*sbrk(int);
 
 static	int
 do_alloc_pages(void)
@@ -450,7 +449,7 @@ get_space(size_t size)
 	cur_mem = sbrk(PAGE_SIZE * size);
 	if(cur_mem == (void *)-1)
 		return( (PA *)0);
-	if( (int)cur_mem % PAGE_SIZE)
+	if((size_t)cur_mem % PAGE_SIZE)
 		return( (PA *)0);
 	return( (PA *)cur_mem);
 }
