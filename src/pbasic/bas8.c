@@ -906,6 +906,9 @@ cls()
 	const	CHAR	*p, *q;
 	char	*tvar;
 
+#ifndef f32c
+	set_term();
+#endif
 	tvar = getenv("TERM");
 	if(!tvar|| !*tvar)
 		tvar = "";
@@ -917,6 +920,9 @@ cls()
 			break;
 	}
 	prints( (char *)tp->t_clr);
+#ifndef f32c
+	rset_term(0);
+#endif
 	cursor = 0;
 	normret;
 }
@@ -1268,7 +1274,7 @@ shell()
 }
 
 
-#if 0
+#ifndef f32c
 int
 do_system(cmd)
 CHAR	*cmd;
@@ -1308,6 +1314,7 @@ CHAR	*cmd;
 	i=fork();
 #endif
 	if(i==0){
+		rset_term(1);
 		VOID setuid(getuid());       /* stop user getting clever */
 		VOID execv(s, args);
 		exit(-1);                       /* problem */
@@ -1325,6 +1332,8 @@ CHAR	*cmd;
 #ifdef  SIGTSTP
 	VOID signal(SIGTSTP, t);
 #endif
+	set_term();
+	rset_term(0);
 	return(status);
 }
 #endif /* 0 */
@@ -1426,9 +1435,8 @@ editl()
         if(l1 == NOLNUMB){
                 l2= NOLNUMB;
                 if(getch()=='-'){
-                        if( (l2 = getlin()) == NOLNUMB) {
+                        if( (l2 = getlin()) == NOLNUMB)
                                 error(SYNTAX);
-			}
                 }
                 else
                         point--;
@@ -1438,9 +1446,8 @@ editl()
                         l2 = l1;
                         point--;
                 }
-                else {
+                else
                         l2 = getlin();
-		}
         }
         check();
 	
