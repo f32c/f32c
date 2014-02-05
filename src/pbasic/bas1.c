@@ -53,6 +53,10 @@ extern	void	m_purge();
 #endif
 
 
+#ifdef MSDOS
+static int	lcount;
+#endif
+
 /*
  *      The main program , it sets up all the files, signals,terminal
  *      and pointers and prints the start up message.
@@ -76,7 +80,9 @@ extern	void	m_purge();
  *              N.B. reset() NEVER returns , so error() NEVER returns.
  */
 
+#ifdef f32c
 static int firstrun = 1;
+#endif
 
 int
 main(int argc, char **argv)
@@ -86,9 +92,14 @@ main(int argc, char **argv)
 
 	catchsignal();
 	startfp();              /* start up the floating point hardware */
+#ifdef f32c
 	setup_f32c();
 	setup_fb();
+#endif
 	setupfiles(argc,argv);
+#ifndef f32c
+	setupmyterm();		/* set up files after processing files */
+#endif
 	program = 0;
 	clear();
 	prints("Rabbit BASIC version 2.1.0 (built " __DATE__ ")\n");
@@ -102,6 +113,7 @@ main(int argc, char **argv)
 	if(cursor)              /* put cursor on a blank line */
 		prints( (char *)nl);
 	
+#ifdef f32c
 	if (firstrun && ((fp = open("1:/autoexec.bas",0)) > 0 ||
 	    (fp = open("/autoexec.bas",0)) > 0)) {
 		firstrun = 0;
@@ -116,6 +128,7 @@ main(int argc, char **argv)
 		}
 	}
 	firstrun = 0;
+#endif
 
 	prints("Ready\n");
 
@@ -136,6 +149,9 @@ main(int argc, char **argv)
 		closeall();
 	}
 
+#ifdef MSDOS
+	lcount = 0;
+#endif
 	clr_stack(bstack);	/* reset the gosub stack */
 	bstack = estack = 0;
 	if(str_used)		/* free any spare strings */
@@ -489,8 +505,17 @@ execute()
 	lpoint p;
 
 	for(;;){
+#ifdef MSDOS
+		if(++lcount > 100){
+			lcount = 0;
+			if(CHK_KEY())
+				trap(0);
+		}
+#endif
+#ifdef f32c
 		if(sio_getchar(0) == 3)
 			trap(0);
+#endif
 		savepoint=point;
 		if(trapped)
 			dobreak();
@@ -1289,6 +1314,9 @@ int
 quit()
 {
 	flushall();                     /* flush the files */
+#ifndef f32c
+	rset_term(1);
+#endif
 	if(cursor)
 		prints( (char *)nl);
 	exit(0);                       /* goodbye */
