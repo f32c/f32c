@@ -5,7 +5,9 @@
 
 #ifndef	MSDOS
 #ifndef	FD_CLOEXEC
-//#include <sys/ioctl.h>
+#ifndef f32c
+#include <sys/ioctl.h>
+#endif
 #endif
 #endif
 
@@ -98,6 +100,9 @@ int	fp;
 	static	int    firsttime = 1; /* flag to say that we are just loading */
 	lpoint p;
 
+#ifndef f32c
+	setupmyterm();		/* set up terminal - now done after files */
+#endif
 	program = 0;
 	if(setexit() == ERR_RESET){	/* the file at the moment */
 		drop_fns();
@@ -159,8 +164,8 @@ int	fp;
  *    written at the same time
  */
 
-#ifndef __FreeBSD__
-//long	lseek();
+#if !defined(__FreeBSD__) && !defined(f32c)
+long	lseek();
 	/* To phil C		phil@gmrs.isar.de
 	   From Julian S	jhs@freebsd.org
 	   Date 950813
