@@ -1,22 +1,59 @@
 /*
  * BASIC by Phil Cockcroft
  */
-/*
- * terminal specific configuration routines for 80386's
- */
 
+#include <unistd.h>
 #include <termios.h>
+
+#include "bas.h"
 
 #define	DEFWIDTH 80
 
+extern	int	ter_width;
+extern	char	noedit;
+
 static	struct	termios	oterm, nterm;
+static	int	got_mode;
 
-extern  int     ter_width;
-extern  char    noedit;
+int
+bas_exec(void)
+{
+	/* XXX do nothing - revisit! */
+	normret;
+}
 
-static  int     got_mode;
+int
+loadjpg(void)
+{
+	/* XXX do nothing - revisit! */
+	normret;
+}
 
+int
+bauds(void)
+{
+	/* do nothing */
+	normret;
+}
+
+int
+bas_sleep(void)
+{
+
+	evalreal();
+	check();
+	if (res.f < ZERO)
+		error(33);	/* argument error */
+	usleep(res.f * 1000.0);
+
+	normret;
+}
+
+/*
+ * terminal specific configuration routines for 80386's
+ */
 void
+
 setu_term()
 {
 	(void) tcgetattr(0, &oterm);

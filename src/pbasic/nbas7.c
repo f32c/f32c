@@ -54,6 +54,7 @@ readc()
 	return( ((int)c) & 0177);
 }
 
+#ifndef f32c
 /* sets up the terminal structures so that the editor is in rare
  * with no paging or line boundries and no echo
  * Also sets up the user modes so that they are sensible when
@@ -70,6 +71,7 @@ setupmyterm()
 	if(ter_width > 10)
 		line_len = ter_width;
 }
+#endif
 
 /*   the actual editor pretty straight forward but.. */
 
