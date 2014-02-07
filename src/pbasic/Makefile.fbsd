@@ -1,0 +1,36 @@
+
+PROG = basic
+
+# Original pbasic files
+CFILES = bas1.c bas2.c bas3.c bas4.c bas5.c \
+	 bas6.c nbas7.c bas8.c bas9.c assist.c alloc.c
+
+# Local extras
+CFILES += bas_fb.c bas_file.c ../lib/fb.c
+
+# Do not link; use a pipe to feed the as
+MK_CFLAGS += -c -pipe -Dfreebsd -O3
+
+MK_LDFLAGS += -lm
+
+CC = gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
+AS = gcc ${MK_CFLAGS} ${MK_INCLUDES}
+LD = gcc ${MK_LDFLAGS}
+
+ASM_OBJS = $(addprefix ${OBJDIR},$(ASFILES:.S=.O))
+C_OBJS = $(addprefix ${OBJDIR},$(CFILES:.c=.o))
+OBJS = ${ASM_OBJS} ${C_OBJS}
+
+${PROG}: ${OBJS} Makefile
+	${LD} -o ${PROG} ${OBJS}
+
+#
+# Rule for compiling C files
+#
+$(addprefix ${OBJDIR},%.o) : %.c
+	@mkdir -p $(dir $@)
+	$(CC) -o $@ $<
+
+clean:
+	rm -f ${OBJS} ${PROG}
+

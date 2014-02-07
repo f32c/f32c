@@ -25,22 +25,28 @@
  * $Id$
  */
 
-#include "bas.h"
-
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef f32c
 #include <fb.h>
-
 #include <tjpgd.h>
+#else
+#include "../include/fb.h"
+#endif
+
+#include "bas.h"
 
 
+#ifdef f32c
 /* User defined device identifier for JPEG decompression*/
 typedef struct {
 	int fh;		/* File handle */
 	BYTE *fbuf;	/* Pointer to the frame buffer for output function */
 	UINT wfbuf;	/* Width of the frame buffer [pix] */
 } IODEV;
+#endif
 
 
 static const struct colormap {
@@ -353,6 +359,7 @@ text(void)
 }
 
 
+#ifdef f32c
 /* Input function for JPEG decompression */
 static UINT
 in_func(JDEC* jd, BYTE* buff, UINT nbyte)
@@ -468,3 +475,4 @@ loadjpg(void)
 	close(devid.fh);
 	normret;
 }
+#endif
