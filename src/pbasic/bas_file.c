@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,9 +28,11 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
-#include <fatfs/ff.h>
 
+#ifdef f32c
+#include <fatfs/ff.h>
 #include <io.h>
+#endif
 
 #include "bas.h"
 
@@ -49,10 +51,12 @@ file_cd()
 {
 	char name[128];
 	STR st;
-	DIR dir;
 	int fres;
 	int start = 0;
 	char buf[4];
+#ifdef f32c
+	DIR dir;
+#endif
 
 	st = stringeval();
 	NULL_TERMINATE(st);
@@ -60,6 +64,7 @@ file_cd()
 	FREE_STR(st);
 	check();
 
+#ifdef f32c
 	if (strlen(name) >= 2 && name[1] == ':') {
 		buf[0] = name[0];
 		buf[1] = ':';
@@ -83,6 +88,10 @@ file_cd()
 
 	if (strlen(name) > start && f_chdir(&name[start]) != FR_OK)
 		error(15);
+#else
+	if (chdir(&name[start]))
+		error(15);
+#endif
 	normret;
 }
 
@@ -93,7 +102,11 @@ file_pwd()
 	char buf[256];
 
 	check();
+#ifdef f32c
 	f_getcwd(buf, 256);
+#else
+	getcwd(buf, 256);
+#endif
 	printf("%s\n", buf);
 	normret;
 }
@@ -110,8 +123,13 @@ file_kill()
 	strcpy(name, st->strval);
 	FREE_STR(st);
 	check();
+#ifdef f32c
 	if (f_unlink(name) != FR_OK)
 		error(15);
+#else
+	if (unlink(name))
+		error(15);
+#endif
 	normret;
 }
 
@@ -127,8 +145,13 @@ file_mkdir()
 	strcpy(name, st->strval);
 	FREE_STR(st);
 	check();
+#ifdef f32c
 	if (f_mkdir(name) != FR_OK)
 		error(15);
+#else
+	if (mkdir(name))
+		error(15);
+#endif
 	normret;
 }
 
@@ -179,7 +202,9 @@ file_copy()
 		error(14);
 	}
 
+#ifdef f32c
 	RDTSC(start);
+#endif
 	do {
 		got = read(from, buf, buflen);
 		if (got < 0) {
@@ -196,20 +221,28 @@ file_copy()
 			error(60);	/* File write error */
 		}
 		tot += wrote;
+#ifdef f32c
 		/* CTRL + C ? */
 		if (sio_getchar(0) == 3) {
 			printf("^C - interrupted!\n");
 			got = 0;
 		}
+#endif
 	} while (got > 0);
+#ifdef f32c
 	RDTSC(end);
+#endif
 
 	close(from);
 	close(to);
 	m_free(buf);
+#ifdef f32c
 	printf("Copied %d bytes in %f s (%f bytes/s)\n", tot,
 	    0.001 * (end - start) / freq_khz,
 	    tot / (0.001 * (end - start) / freq_khz));
+#else
+	printf("Copied %d bytes\n", tot);
+#endif
 
 	normret;
 }
@@ -234,8 +267,13 @@ file_rename()
 	FREE_STR(st);
 	check();
 
+#ifdef f32c
 	if (f_rename(from_name, to_name) != FR_OK)
 		error(15);
+#else
+	if (rename(from_name, to_name))
+		error(15);
+#endif
 	normret;
 }
 
@@ -249,10 +287,17 @@ file_more()
 
 	st = stringeval();
 	NULL_TERMINATE(st);
+#ifdef f32c
 	strcpy(buf, st->strval);
+#else
+	sprintf(buf, "more %s", st->strval);
+#endif
 	FREE_STR(st);
 	check();
 
+#ifndef f32c
+	system(buf);
+#else
 	fd = open(buf, 0);
 	if (fd < 0)
 		error(15);
@@ -293,5 +338,6 @@ stopped:
 
 done:
 	close(fd);
+#endif
 	normret;
 }

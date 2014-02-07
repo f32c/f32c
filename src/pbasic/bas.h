@@ -149,9 +149,11 @@ typedef char	CHAR;
 /*      isnumber()      - true if character is a number */
 /*      istermin()      - true if character is a terminator */
 
+#ifndef isnumber
+#define	isnumber(c)	(chtab[(c)] & _N)
+#endif
 #define istermin(c)  (!(c)|| (c)==':' ||((CHAR)(c)==(CHAR)ELSE && elsecount))
 #define	isletter(c)	(chtab[(c)] & (_L|_A))
-#define	isnumber(c)	(chtab[(c)] & _N)
 #define	iscchar(c)	(chtab[(c)] & (_L|_N|_A))
 #define	isnchar(c)	(chtab[(c)] & (_L|_N|_U|_A))
 #define	ishex(c)	(chtab[(c)] & (_X|_N))
