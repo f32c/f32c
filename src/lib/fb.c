@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,8 +25,14 @@
  * $Id$
  */
 
+#include <sys/param.h>
+
+#ifdef f32c
 #include <io.h>
 #include <fb.h>
+#else
+#include "../include/fb.h"
+#endif
 
 typedef void plotfn_t(int x, int y, int mode_color, uint8_t *dp);
 
@@ -235,6 +241,7 @@ void
 fb_set_mode(int mode)
 {
 
+#ifdef f32c
 	fb_mode = mode & 3;
 
 	if (fb_mode > 1)
@@ -243,6 +250,7 @@ fb_set_mode(int mode)
 		fb = (void *) 0x800b0000;
 
 	OUTW(IO_FB, ((uint32_t) fb) | fb_mode);
+#endif
 }
 
 
