@@ -54,6 +54,23 @@ readc()
 	return( ((int)c) & 0177);
 }
 
+/* sets up the terminal structures so that the editor is in rare
+ * with no paging or line boundries and no echo
+ * Also sets up the user modes so that they are sensible when
+ * we exit. ( friendly ).
+ */
+
+void
+setupmyterm()
+{
+/*
+	set_cap();
+*/
+	setu_term();
+	if(ter_width > 10)
+		line_len = ter_width;
+}
+
 /*   the actual editor pretty straight forward but.. */
 
 #define	NORMAL_CHAR(c)	((c) >= ' ' && (c) <= '~')
