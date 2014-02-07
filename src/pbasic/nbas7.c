@@ -49,8 +49,10 @@ readc()
 		break;
 	}
 #endif
+#ifdef f32c
 	if (c == 3)
 		trapped = 1;
+#endif
 	return( ((int)c) & 0177);
 }
 
@@ -216,6 +218,10 @@ ival	fl, fi, fc;
 
 	eline = xeline;
 
+#ifndef f32c
+	set_term();
+#endif
+
 	if(!edit_history){
 		llen = sizeof(savl_t) * Hist_Siz;
 		edit_history = (savl_t *)mmalloc(llen);
@@ -259,6 +265,9 @@ ival	fl, fi, fc;
 		pflush();
 		hist_numb--;
 		cursor=0;
+#ifndef f32c
+		rset_term(0);
+#endif
 		return(c);
 	}
 
@@ -294,6 +303,9 @@ ival	fl, fi, fc;
 	free_ubuf(&Ubuf);
 	setundo();
 	cursor=0;
+#ifndef f32c
+	rset_term(0);
+#endif
 	return(c);
 }
 
@@ -408,16 +420,20 @@ normal_edit()
 			lastescaped = 1;
 			putchs("^\b", 2); 
 			continue;
-#ifdef	SIGTSTP
+#ifndef f32c
+#ifdef SIGTSTP
 		} else if(c == ch_susp){
 			putchs(crlf, 2);
 			pflush();	/* flush it out */
+			rset_term(0);
 			VOID kill(0, SIGTSTP);
+			set_term();
 			if(llim)
 				putchs(eline, llim);
 			for(i = pcursr - plim, pcursr = plim; i ; i--)
 				VOID putxch(*pcursr++);
 			continue;
+#endif
 #endif
 		}
 		if(pcursr >= eline + MAXLIN){
