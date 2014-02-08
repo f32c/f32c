@@ -1595,7 +1595,7 @@ save()
 }
 
 /*
- *      The 'old' command , loads a program from a file. The old
+ *      The 'load' command , loads a program from a file. The old
  *    program (if any ) is wiped.
  *      Most of the work is done in readfi, ( see also error ).
  */
@@ -1631,7 +1631,7 @@ clear_prog()
 }
 
 /*
- *      The 'merge' command , similar to 'old' but does not zap the old
+ *      The 'merge' command , similar to 'load' but does not zap the old
  *    program so the two files are 'merged' .
  */
 

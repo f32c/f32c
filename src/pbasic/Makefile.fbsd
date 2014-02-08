@@ -9,7 +9,7 @@ CFILES = bas1.c bas2.c bas3.c bas4.c bas5.c \
 CFILES += bas_fb.c bas_file.c bas_unix.c ../lib/fb.c
 
 # Do not link; use a pipe to feed the as
-MK_CFLAGS += -c -pipe -Dfreebsd -O3
+MK_CFLAGS += -c -pipe -O3
 
 MK_LDFLAGS += -lm
 
@@ -34,3 +34,5 @@ $(addprefix ${OBJDIR},%.o) : %.c
 clean:
 	rm -f ${OBJS} ${PROG}
 
+install:
+	install basic /usr/local/bin

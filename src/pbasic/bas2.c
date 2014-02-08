@@ -59,7 +59,8 @@ int	*lp;
 	if(!isalpha(c))
 		error(VARREQD);
 	vartype = (char)tcharmap[c - 'A'];
-	for(*p++ = (CHAR)(l = c), c = UC(*point); isnchar(c); c = UC(*++point)){
+	for(*p++ = (CHAR)(l = c), c = UC(*point); isalnum(c) || c == '_';
+	    c = UC(*++point)){
 		l += c;
 		*p++ = (CHAR)c;
 	}

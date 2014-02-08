@@ -418,7 +418,7 @@ checktype()
 	}
 	if(!isalpha(c))
 		error(SYNTAX);
-	while(ispnchar(tpoint))
+	while(isalnum(*tpoint) || *tpoint == '_')
 		tpoint++;
 	if(*tpoint == D_STR)
 		return(1);
