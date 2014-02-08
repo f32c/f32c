@@ -58,7 +58,7 @@ setupfiles(int argc, char **argv)
 		q = *++argv;
 		if(*q++ !='-')
 			break;
-		if(ispnumber(q)){
+		if(isdigit(*q)){
 			nfiles= atoi(q);
 			if(nfiles<0 || nfiles > MAXFILES)
 				nfiles=MAXFILES;

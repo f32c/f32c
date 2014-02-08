@@ -56,7 +56,7 @@ int	*lp;
 	int	l;
 
 	c = getch();
-	if(!isletter(c))
+	if(!isalpha(c))
 		error(VARREQD);
 	vartype = (char)tcharmap[c - 'A'];
 	for(*p++ = (CHAR)(l = c), c = UC(*point); isnchar(c); c = UC(*++point)){
@@ -602,12 +602,12 @@ int	vty;
 			break;
 		}
 		first = 0;
-		if(!isletter(c))
+		if(!isalpha(c))
 			error(SYNTAX);
 		c1 = getch();
 		if(c1 == '-'){
 			c1 = getch();
-			if(!isletter(c1))
+			if(!isalpha(c1))
 				error(SYNTAX);
 			if(c1 - c > 'z' - 'a' || c1 < c)
 				error(SYNTAX);
@@ -619,7 +619,7 @@ int	vty;
 				c++;
 			}
 		}
-		else if(isletter(c1) || istermin(c1)){
+		else if(isalpha(c1) || istermin(c1)){
 			set_let(c, (CHAR)vty);
 			/*
 			 * single character set

@@ -83,7 +83,7 @@ for(;;){
 		if(*point)
 			point++;
 	}
-	else if(isletter(c)){           /* a string variable */
+	else if(isalpha(c)){           /* a string variable */
 #if 0
 		CHAR *sp = --point;
 
@@ -148,7 +148,7 @@ for(;;){
 	FREE_STR(fstr);
 	if(c != '+'){
 		point--;
-		if(c != '"' && c != '`' && !isletter(c))
+		if(c != '"' && c != '`' && !isalpha(c))
 			break;
 	}
 	}
@@ -217,8 +217,8 @@ datef()
 			error(SYNTAX);
 		tmp = localtime(&m);
 		for(p = st->strval, i = st->strlen ; i ;){
-			c = lcase(*p);
-			for(q = p, n = 0 ; lcase(*q) == c && n < i; q++)
+			c = tolower(*p);
+			for(q = p, n = 0 ; tolower(*q) == c && n < i; q++)
 				n++;
 			i -= n;
 			switch(c){
@@ -461,7 +461,7 @@ val()
 		p++;
 		minus++;
 	}
-	if(!ispnumber(p) && *p != '.' && *p != '&'){
+	if(!isdigit(*p) && *p != '.' && *p != '&'){
 		FREE_STR(st);
 		if(minus)
 			error(36);
@@ -849,7 +849,7 @@ bupper()
 	st = stringeval();
 	for(i = st->strlen , p = st->strval ; i ; i--, p++){
 		c = UC(*p);
-		if(islcase(c))
+		if(islower(c))
 			*p = c - 'a' + 'A';
 	}
 	return(st);
@@ -866,7 +866,7 @@ blower()
 	st = stringeval();
 	for(i = st->strlen , p = st->strval ; i ; i--, p++){
 		c = UC(*p);
-		if(isucase(c))
+		if(isupper(c))
 			*p = c - 'A' + 'a';
 	}
 	return(st);

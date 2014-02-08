@@ -170,7 +170,7 @@ for(;;){
 			(*fpfunc)();
 #endif
 	}
-	else if(isletter(c)){
+	else if(isalpha(c)){
 		CHAR    *sp = --point;
 
 		pp= (value *)getname(0);         /* we have a variable */
@@ -199,7 +199,7 @@ for(;;){
 		else
 			res = *pp;
 	}
-	else if(isnumber(c) || c=='.' || c == '&'){
+	else if(isdigit(c) || c=='.' || c == '&'){
 		if(!getnumb(--point, &point))   /* we have a number */
 			error(36);      	/* bad number */
 	}

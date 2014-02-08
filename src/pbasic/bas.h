@@ -7,6 +7,7 @@
  */
 
 #include <assert.h>
+#include <ctype.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -141,26 +142,13 @@ typedef char	CHAR;
 #define	_X		16	/* hex */
 
 /*      definitions of some simple functions */
-/*      isletter()      - true if character is a letter */
-/*      isnumber()      - true if character is a number */
 /*      istermin()      - true if character is a terminator */
 
-#ifndef isnumber
-#define	isnumber(c)	(chtab[(c)] & _N)
-#endif
 #define istermin(c)  (!(c)|| (c)==':' ||((CHAR)(c)==(CHAR)ELSE && elsecount))
-#define	isletter(c)	(chtab[(c)] & (_L|_A))
-#define	iscchar(c)	(chtab[(c)] & (_L|_N|_A))
 #define	isnchar(c)	(chtab[(c)] & (_L|_N|_U|_A))
-#define	ishex(c)	(chtab[(c)] & (_X|_N))
-#define	islcase(c)	(chtab[(c)] & _L)
-#define	isucase(c)	(chtab[(c)] & _A)
 #define	ispletter(c)	(chtab[*(unsigned char *)(c)] & (_L|_A))
-#define	ispnumber(c)	(chtab[*(unsigned char *)(c)] & _N)
 #define	ispcchar(c)	(chtab[*(unsigned char *)(c)] & (_L|_N|_A))
 #define	ispnchar(c)	(chtab[*(unsigned char *)(c)] & (_L|_N|_U|_A))
-#define	isphex(c)	(chtab[*(unsigned char *)(c)] & (_X|_N))
-#define	lcase(c)	lcastab[UC(c)]
 
 #define	TYP_SIZ(typ)	(typ_siz[UC(typ)])
 
@@ -782,7 +770,6 @@ extern  const	intf_t	commandf;
 extern  const	str_t   ermesg;
 extern  const	struct  tabl    table[];
 extern	const	CHAR	chtab[];
-extern	const	CHAR	lcastab[];
 extern	const	int	typ_siz[];
 
 /*
@@ -856,8 +843,8 @@ int     evallock;       /* lock to stop recursive eval function */
 int	fnlock;		/* lock to stop recursive user functions */
 MEMP	renstr;		/* pointer to an array used by renumber */
 
-lnumb	autostart=10;   /* values for auto command */
-lnumb	autoincr=10;
+lnumb	autostart = 100; /* values for auto command */
+lnumb	autoincr = 10;
 
 void	(*fpfunc)(void);
 
@@ -1010,201 +997,201 @@ const	str_t	ermesg = {
 /*      tokenising table */
 
 const	struct  tabl    table[]={
-	"end",		0200,             /* commands 0200 - 0300 */
-	"run",		0201,
-	"goto",		0202,
-	"rem",		0203,
-	"list",		0204,
-	"let",		0205,
-	"print",	0206,
-	"stop",		0207,
-	"delete",	0210,
-	"edit",		0211,
-	"input",	0212,
-	"clear",	0213,
-	"save",		0214,
-	"load",		0215,
-	"new",		0216,
-	"exec",		0217,
-	"resume",	0220,
-	"if",		0221,
-	"random",	0222,
-	"dim",		0223,
-	"for",		0224,
-	"next",		0225,
-	"gosub",	0226,
-	"return",	0227,
-	"on",		0230,
-	"error",	0231,
+	"END",		0200,             /* commands 0200 - 0300 */
+	"RUN",		0201,
+	"GOTO",		0202,
+	"REM",		0203,
+	"LIST",		0204,
+	"LET",		0205,
+	"PRINT",	0206,
+	"STOP",		0207,
+	"DELETE",	0210,
+	"EDIT",		0211,
+	"INPUT",	0212,
+	"CLEAR",	0213,
+	"SAVE",		0214,
+	"LOAD",		0215,
+	"NEW",		0216,
+	"EXEC",		0217,
+	"RESUME",	0220,
+	"IF",		0221,
+	"RANDOM",	0222,
+	"DIM",		0223,
+	"FOR",		0224,
+	"NEXT",		0225,
+	"GOSUB",	0226,
+	"RETURN",	0227,
+	"ON",		0230,
+	"ERROR",	0231,
 	"?",		0232,
 	"'",		0233,
-	"auto",		0234,
-	"read",		0235,
-	"data",		0236,
-	"cls",		0237,
-	"restore",	0240,
-	"base",		0241,
-	"open",		0242,
-	"close",	0243,
-	"merge",	0244,
-	"bauds",	0245,
-	"bye",		0246,
-	"sleep",	0247,
-	"chain",	0250,
-	"def",		0251,
-	"cont",		0252,
-	"poke",		0253,
-	"linput",	0254,
-	"repeat",	0255,
-	"until",	0256,
-	"while",	0257,
-	"wend",		0260,
-	"renumber",	0261,
-	"fnend",	0262,
-	"fn",		0263,	/* is a command and a function (special) */
-	"lset",		0264,		/* random access files */
-	"rset",		0265,
-	"field",	0266,
-	"put",		0267,
-	"get",		0270,
-	"mid$",		0271,
-	"defint",	0272,
-	"defstr",	0273,
-	"defdbl",	0274,
-	"common",	0275,
-	"local",	0276,
-	"defproc",	0277,
-	"deffn",	0300,
-	"opt",		0301,
-	"tron",		0302,
-	"troff",	0303,
-	"dir",		0304,
-	"dirl",		0305,
-	"mat",		0306,
-	"write",	0307,
-	"erase",	0310,
+	"AUTO",		0234,
+	"READ",		0235,
+	"DATA",		0236,
+	"CLS",		0237,
+	"RESTORE",	0240,
+	"BASE",		0241,
+	"OPEN",		0242,
+	"CLOSE",	0243,
+	"MERGE",	0244,
+	"BAUDS",	0245,
+	"BYE",		0246,
+	"SLEEP",	0247,
+	"CHAIN",	0250,
+	"DEF",		0251,
+	"CONT",		0252,
+	"POKE",		0253,
+	"LINPUT",	0254,
+	"REPEAT",	0255,
+	"UNTIL",	0256,
+	"WHILE",	0257,
+	"WEND",		0260,
+	"RENUMBER",	0261,
+	"FNEND",	0262,
+	"FN",		0263,	/* is a command and a function (special) */
+	"LSET",		0264,		/* random access files */
+	"RSET",		0265,
+	"FIELD",	0266,
+	"PUT",		0267,
+	"GET",		0270,
+	"MID$",		0271,
+	"DEFINT",	0272,
+	"DEFSTR",	0273,
+	"DEFDBL",	0274,
+	"COMMON",	0275,
+	"LOCAL",	0276,
+	"DEFPROC",	0277,
+	"DEFFN",	0300,
+	"OPT",		0301,
+	"TRON",		0302,
+	"TROFF",	0303,
+	"DIR",		0304,
+	"DIRL",		0305,
+	"MAT",		0306,
+	"WRITE",	0307,
+	"ERASE",	0310,
 	/* filesystem utilities */
-	"more",		0311,
-	"kill",		0312,
-	"mkdir",	0313,
-	"copy",		0314,
-	"rename",	0315,
-	"cd",		0316,
-	"pwd",		0317,
+	"MORE",		0311,
+	"KILL",		0312,
+	"MKDIR",	0313,
+	"COPY",		0314,
+	"RENAME",	0315,
+	"CD",		0316,
+	"PWD",		0317,
 	/* framebuffer commands */
-	"vidmode",	0320,
-	"color",	0321,
-	"plot",		0322,
-	"lineto",	0323,
-	"rectangle",	0324,
-	"circle",	0325,
-	"text",		0326,
-	"loadjpg",	0327,
+	"VIDMODE",	0320,
+	"COLOR",	0321,
+	"PLOT",		0322,
+	"LINETO",	0323,
+	"RECTANGLE",	0324,
+	"CIRCLE",	0325,
+	"TEXT",		0326,
+	"LOADJPG",	0327,
 	/*
 	 * commands go to here
 	 */
 	/*
 	 * seperators go from here
 	 */
-	"else",		0331,
-	"then",		0332,
-	"tab",		0333,
-	"step",		0334,
-	"to",		0335,
-	"and",		0336,
-	"or",		0337,
-	"xor",		0340,
-	"mod",		0341,
+	"ELSE",		0331,
+	"THEN",		0332,
+	"TAB",		0333,
+	"STEP",		0334,
+	"TO",		0335,
+	"AND",		0336,
+	"OR",		0337,
+	"XOR",		0340,
+	"MOD",		0341,
 	"<=",		0342,
 	"<>",		0343,
 	">=",		0344,
-	"as",		0345,
-	"output",	0346,
-	"append",	0347,
-	"not",		0350,
-	"terminal",	0351,
-	"record",	0352,
-	"recordsize",	0353,
-	"all",		0354,
+	"AS",		0345,
+	"OUTPUT",	0346,
+	"APPEND",	0347,
+	"NOT",		0350,
+	"TERMINAL",	0351,
+	"RECORD",	0352,
+	"RECORDSIZE",	0353,
+	"ALL",		0354,
 	"==",		0355,	/* aprox equal */
-	"using",	0356,
-	"imp",		0357,
-	"eqv",		0360,
+	"USING",	0356,
+	"IMP",		0357,
+	"EQV",		0360,
 	/*
 	 * at 370 to 374 are the values for extended functions
 	 * which are then followed by one of the following after it has
 	 * been decoded.
 	 */
-	"right$",	MKSFA(0), /* string functs with args */
-	"left$",	MKSFA(1),
-	"string$",	MKSFA(2),
-	"ermsg$",	MKSFA(3),
-	"chr$",		MKSFA(4),
-	"str$",		MKSFA(5),
-	"space$",	MKSFA(6),
-	"xlate", 	MKSFA(7),
-	"mkis$",	MKSFA(010),
-	"mkds$",	MKSFA(011),
-	"hex$", 	MKSFA(012),
-	"oct$",		MKSFA(013),
-	"bin$",		MKSFA(014),
-	"dec$",		MKSFA(015),
-	"upper$",	MKSFA(016),
-	"lower$",	MKSFA(017),
+	"RIGHT$",	MKSFA(0), /* string functs with args */
+	"LEFT$",	MKSFA(1),
+	"STRING$",	MKSFA(2),
+	"ERMSG$",	MKSFA(3),
+	"CHR$",		MKSFA(4),
+	"STR$",		MKSFA(5),
+	"SPACE$",	MKSFA(6),
+	"XLATE", 	MKSFA(7),
+	"MKIS$",	MKSFA(010),
+	"MKDS$",	MKSFA(011),
+	"HEX$", 	MKSFA(012),
+	"OCT$",		MKSFA(013),
+	"BIN$",		MKSFA(014),
+	"DEC$",		MKSFA(015),
+	"UPPER$",	MKSFA(016),
+	"LOWER$",	MKSFA(017),
 
-	"date$",	MKSFN(0),	/* strng funcs without args */
+	"DATE$",	MKSFN(0),	/* strng funcs without args */
 
-	"sgn",		MKIFA(0),       /* maths functions with args */
-	"len",		MKIFA(1),
-	"abs",		MKIFA(2),
-	"val",		MKIFA(3),
-	"asc",		MKIFA(4),
-	"instr",	MKIFA(5),
-	"eof",		MKIFA(6),
-	"posn",		MKIFA(7),
-	"sqrt",		MKIFA(010),
-	"log",		MKIFA(011),
-	"exp",		MKIFA(012),
-	"eval",		MKIFA(013),
-	"int",		MKIFA(014),
-	"peek",		MKIFA(015),
-	"sin",		MKIFA(016),
-	"cos",		MKIFA(017),
-	"atan",		MKIFA(020),
-	"mksi",		MKIFA(021),
-	"mksd",		MKIFA(022),
-	"system", 	MKIFA(023),
-	"log10",	MKIFA(024),
-	"tan", 		MKIFA(025),
-	"fix", 		MKIFA(026),
-	"bval",		MKIFA(027),
-	"sinh",		MKIFA(030),
-	"cosh",		MKIFA(031),
-	"tanh",		MKIFA(032),
-	"asinh",	MKIFA(033),
-	"acosh",	MKIFA(034),
-	"atanh",	MKIFA(035),
-	"asin",		MKIFA(036),
-	"acos",		MKIFA(037),
-	"varptr",	MKIFA(040),
-	"syscall",	MKIFA(041),
-	"max",		MKIFA(042),
-	"min",		MKIFA(043),
-	"cint",		MKIFA(044),
-	"creal",	MKIFA(045),
-	"rinstr",	MKIFA(046),
+	"SGN",		MKIFA(0),       /* maths functions with args */
+	"LEN",		MKIFA(1),
+	"ABS",		MKIFA(2),
+	"VAL",		MKIFA(3),
+	"ASC",		MKIFA(4),
+	"INSTR",	MKIFA(5),
+	"EOF",		MKIFA(6),
+	"POSN",		MKIFA(7),
+	"SQRT",		MKIFA(010),
+	"LOG",		MKIFA(011),
+	"EXP",		MKIFA(012),
+	"EVAL",		MKIFA(013),
+	"INT",		MKIFA(014),
+	"PEEK",		MKIFA(015),
+	"SIN",		MKIFA(016),
+	"COS",		MKIFA(017),
+	"ATAN",		MKIFA(020),
+	"MKSI",		MKIFA(021),
+	"MKSD",		MKIFA(022),
+	"SYSTEM", 	MKIFA(023),
+	"LOG10",	MKIFA(024),
+	"TAN", 		MKIFA(025),
+	"FIX", 		MKIFA(026),
+	"BVAL",		MKIFA(027),
+	"SINH",		MKIFA(030),
+	"COSH",		MKIFA(031),
+	"TANH",		MKIFA(032),
+	"ASINH",	MKIFA(033),
+	"ACOSH",	MKIFA(034),
+	"ATANH",	MKIFA(035),
+	"ASIN",		MKIFA(036),
+	"ACOS",		MKIFA(037),
+	"VARPTR",	MKIFA(040),
+	"SYSCALL",	MKIFA(041),
+	"MAX",		MKIFA(042),
+	"MIN",		MKIFA(043),
+	"CINT",		MKIFA(044),
+	"CREAL",	MKIFA(045),
+	"RINSTR",	MKIFA(046),
 
-	"rnd",		MKIFN(0),	/* maths funcs without args */
-	"pi",		MKIFN(1),
-	"erl",		MKIFN(2),
-	"err",		MKIFN(3),
-	"tim",		MKIFN(4),
-	"syserr",	MKIFN(5),
+	"RND",		MKIFN(0),	/* maths funcs without args */
+	"PI",		MKIFN(1),
+	"ERL",		MKIFN(2),
+	"ERR",		MKIFN(3),
+	"TIM",		MKIFN(4),
+	"SYSERR",	MKIFN(5),
 
-	"rad",		MKOFN(0),	/* options */
-	"deg",		MKOFN(1),
-	"grad",		MKOFN(2),
-	"memsize",	MKOFN(3),
+	"RAD",		MKOFN(0),	/* options */
+	"DEG",		MKOFN(1),
+	"GRAD",		MKOFN(2),
+	"MEMSIZE",	MKOFN(3),
 	0,0
 };
 
@@ -1219,25 +1206,6 @@ const	CHAR	chtab[256] = {
 /*96*/	0, _L|_X, _L|_X, _L|_X, _L|_X, _L|_X, _L|_X, _L,
 /*104*/	_L, _L, _L, _L, _L, _L, _L, _L,
 /*112*/	_L, _L, _L, _L, _L, _L, _L, _L, _L, _L, _L, 0, 0, 0, 0, 0,
-};
-
-const	CHAR	lcastab[256] = {
-	000, 001, 002, 003, 004, 005, 006, 007, 
-	010, 011, 012, 013, 014, 015, 016, 017, 
-	020, 021, 022, 023, 024, 025, 026, 027, 
-	030, 031, 032, 033, 034, 035, 036, 037, 
-	' ', '!', '"', '#', '$', '%', '&', '\'', 
-	'(', ')', '*', '+', ',', '-', '.', '/', 
-	'0', '1', '2', '3', '4', '5', '6', '7', 
-	'8', '9', ':', ';', '<', '=', '>', '?', 
-	'@', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 
-	'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 
-	'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 
-	'x', 'y', 'z', '[', '\\', ']', '^', '_', 
-	'`', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 
-	'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 
-	'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 
-	'x', 'y', 'z', '{', '|', '}', '~', 0177,
 };
 
 const	int	typ_siz[] = {

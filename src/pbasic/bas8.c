@@ -768,15 +768,15 @@ iff()
 	if(getch()!=THEN)
 		error(SYNTAX);
 	if(!IS_ZERO(res)){
-		c=getch();              /* true */
+		c=getch();		/* true */
 		point--;
-		elsecount++;            /* say `else`s are allowed */
-		if(isnumber(c))         /* if it's a number then */
-			VOID gotos();        /* execute a goto */
-		return(-1);             /* return to execute another ins. */
+		elsecount++;		/* say `else`s are allowed */
+		if(isdigit(c))		/* if it's a number then */
+			VOID gotos();	/* execute a goto */
+		return(-1);		/* return to execute another ins. */
 	}
 	for(elsees = 0, p= point; *p ; p++) /* skip all nested 'if'-'else' */
-		if(*p==(CHAR)ELSE){         /* pairs */
+		if(*p==(CHAR)ELSE){	/* pairs */
 			if(--elsees < 0){
 				p++;
 				break;
@@ -784,12 +784,12 @@ iff()
 		}
 		else if(*p==(CHAR)IF)
 			elsees++;
-	point = p;                      /* we are after the else or at */
+	point = p;			/* we are after the else or at */
 	if(!*p)
 		normret;
-	while(*p++ == ' ');             /* end of line */
-	p--;                            /* ignore the space after else */
-	if(ispnumber(p))                /* if number then do a goto */
+	while(*p++ == ' ');		/* end of line */
+	p--;				/* ignore the space after else */
+	if(isdigit(*p))			/* if number then do a goto */
 		VOID gotos();
 	return(-1);
 }
@@ -1039,17 +1039,7 @@ lpoint p;
 				t = ((t-EXFUNC) << 8) + UC(*++q);
 			for(l=table;l->chval;l++){
 				if(l->chval == t){
-#if 0
-					r=str_cpy( (CHAR *)l->string, r);
-#else /* Marko */
-					char *cp;
-					for (cp = (char *)l->string; *cp;
-					    cp++, r++)
-						if (*cp >= 'a' && *cp <= 'z')
-							*r = *cp - 32;
-						else
-							*r = *cp;
-#endif
+					r=str_cpy((CHAR *)l->string, r);
 					break;
 				}
 			}
@@ -2326,24 +2316,24 @@ renumb()
 				q++;
 				while(*q++ == ' ');
 				q--;
-				if(ispnumber(q))        /* got one ok */
+				if(isdigit(*q))	/* got one ok */
 					goto ok1;
 			}
 			if(c != GOTO && c != GOSUB)
-				continue;       /* can't be anything else */
+				continue;	/* can't be anything else */
 			q++;
-		ok1:                            /* have a label */
+		ok1:				/* have a label */
 			do{
 				while(*q++ == ' ');
-				q--;                    /* look for number */
-				if( !ispnumber(q) ){
+				q--;		/* look for number */
+				if(!isdigit(*q)){
 					prsline("Line number required on line ",
 									p);
 					prints((char *)nl);	/* missing */
 					err = 1;
 					goto out1;
 				}
-				for(l1 = 0; ispnumber(q) ; q++) /* get it */
+				for(l1 = 0; isdigit(*q) ; q++) /* get it */
 					if(l1 >= 6553)
 						error(7);
 					else l1 = l1 * 10 + *q - '0';
@@ -2413,7 +2403,7 @@ renumb()
 				*r++ = *q++;
 				while(*q == ' ' && r < &nline[MAXLIN] )
 					*r++ = *q++;
-				if(ispnumber(q)) /* got optional line number*/
+				if(isdigit(*q)) /* got optional line number*/
 					goto ok2;
 			}
 			if(c != GOTO && c != GOSUB)
@@ -2425,7 +2415,7 @@ renumb()
 			ok2: ;
 				if(r>= &nline[MAXLIN] )
 					break;
-				for(l1 = 0 ; ispnumber(q) ; q++) /* get numb*/
+				for(l1 = 0 ; isdigit(*q) ; q++) /* get numb*/
 					l1 = l1 * 10 + *q - '0';
 
 				if(l1 == 0)         /* skip if not found */
