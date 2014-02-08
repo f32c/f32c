@@ -228,13 +228,13 @@ int	(*infunc)(void);
 		minus++;
 		c = (*infunc)();
 	}
-	if(!isnumber(c) && c !='.'){
+	if(!isdigit(c) && c !='.'){
 		if(c != '&')
 			return(0);
 		do {
 			*p++ = (CHAR)c;
 			c = (*infunc)();
-		}while(ishex(c));
+		}while(isxdigit(c));
 		goto done;
 	}
 	do {
@@ -243,19 +243,19 @@ int	(*infunc)(void);
 				return(0);
 		*p++ = (CHAR)c;
 		c = (*infunc)();
-	} while(isnumber(c) || c == '.');
+	} while(isdigit(c) || c == '.');
 	if(c == 'e' || c == 'E'){
 		*p++ = (CHAR)c;
 		if( (c = (*infunc)()) == '+' || c == '-'){
 			*p++ = (CHAR)c;
 			c = (*infunc)();
 		}
-		if(!isnumber(c))
+		if(!isdigit(c))
 			return(0);
 		do {
 			*p++ = (CHAR)c;
 			c = (*infunc)();
-		} while(isnumber(c));
+		} while(isdigit(c));
 	}
 	if(c == D_INT || c == D_FLT){
 		*p++ = (CHAR)c;

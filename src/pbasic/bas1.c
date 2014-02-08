@@ -186,7 +186,7 @@ CHAR	*fline;
 		p++;
 	if(!hasnolnumb){
 		/*LINTED*/
-		while(ispnumber(p)){                    /* get line number */
+		while(isdigit(*p)){                    /* get line number */
 			if(lin >= 6553)
 				error(7);
 			lin = lin*10 + (*p++ -'0');
@@ -253,7 +253,7 @@ CHAR	*fline;
 		/*
 		 * now do a quick check on the first character
 		 */
-		charac = lcase(*p);
+		charac = toupper(*p);
 		
 		for(l = table ; l->string ; l++)
 			if(charac == *l->string)
@@ -275,12 +275,12 @@ CHAR	*fline;
 		for(k = p, p++ ; ispcchar(p); p++);
 
 		/* special case for FN */
-		if(p >= k + 2 && charac == 'f' && lcase(k[1]) == 'n'){
+		if(p >= k + 2 && charac == 'f' && tolower(k[1]) == 'n'){
 			/*
 			 * and make certain it isn't fnend
 			 */
-			if(p != k+5 || lcase(k[2]) != 'e' ||
-				lcase(k[3]) != 'n' || lcase(k[4]) != 'd'){
+			if(p != k+5 || tolower(k[2]) != 'e' ||
+				tolower(k[3]) != 'n' || tolower(k[4]) != 'd'){
 				*q++ = (CHAR)FN;
 				for(k += 2; k < p ;)
 					 *q++ = *k++;
@@ -333,7 +333,7 @@ CHAR   *p, *q, *end;
 {
 	p++, q++;
 	while(p < end){
-		if(*p != *q && lcase(*p) != lcase(*q))
+		if(*p != *q && tolower(*p) != tolower(*q))
 			return(0);
 		p++, q++;
 	}

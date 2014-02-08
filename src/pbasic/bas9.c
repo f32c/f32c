@@ -245,7 +245,7 @@ getlin()
 	int    c;
 
 	c=getch();
-	if(!isnumber(c)){
+	if(!isdigit(c)){
 		point--;
 		return(NOLNUMB);
 	}
@@ -254,7 +254,7 @@ getlin()
 			error(7);
 		l= l*10 + (c-'0');
 		c= UC(*point++);
-	}while(isnumber(c));
+	}while(isdigit(c));
 	point--;
 	return(l);
 }
@@ -272,14 +272,14 @@ getline()
 	int    c;
 
 	c=getch();
-	if(!isnumber(c))
+	if(!isdigit(c))
 		error(5);
 	do{
 		if(l>=6553)
 			error(7);
 		l= l*10+(c-'0');
 		c= UC(*point++);
-	}while(isnumber(c));
+	}while(isdigit(c));
 	point--;
 			/* speed it up a bit no need to search the whole lot */
 	if((p = stocurlin) == 0 || l < p->linnumb)
@@ -337,7 +337,7 @@ const char *str;
 	lnumb	xline;
 
 	if(str)
-		prints( (char *)str);
+		prints((char *) str);
 
 	if(p->linnumb != CONTLNUMB){
 		printd(p->linnumb);
@@ -410,13 +410,13 @@ checktype()
 		c = UC(*tpoint++);
 	}
 	else {
-		if(isnumber(c) || c=='.' || c== '-' || c=='(' || c == '&')
+		if(isdigit(c) || c=='.' || c== '-' || c=='(' || c == '&')
 			return(0);
 		if(c=='"' || c=='`')
 			return(1);
 		tpoint= point + 1;
 	}
-	if(!isletter(c))
+	if(!isalpha(c))
 		error(SYNTAX);
 	while(ispnchar(tpoint))
 		tpoint++;
@@ -665,19 +665,19 @@ CHAR	*ptr, **ptrp;
 
 	if(*ptr == '&'){
 		c = UC(*++ptr);
-		if(!ishex(c))
+		if(!isxdigit(c))
 			return(0);
 		do {
 			if((unsigned long)lx &
 			((unsigned long)0x0FL << (4 * (sizeof(itype) * 2 - 1))))
 				return(0);
-			if(isnumber(c))
+			if(isdigit(c))
 				c -= '0';
 			else
 				c = (c & 0x7) + 9;
 			lx = (lx << 4) | c;
 			c = UC(*++ptr);
-		} while(ishex(c));
+		} while(isxdigit(c));
 		vartype= IVAL;
 		res.i = (itype)lx;
 		if(ptrp)
@@ -690,7 +690,7 @@ CHAR	*ptr, **ptrp;
 	 * large number (>8 digits) then we go back to original algorithm
 	 */
 	ly = 0;
-	for(c = UC(*ptr) ; isnumber(c); c = UC(*++ptr)){
+	for(c = UC(*ptr) ; isdigit(c); c = UC(*++ptr)){
 		if(lx >= MAX_L_INT){
 			if(ly)
 				break;
@@ -724,7 +724,7 @@ CHAR	*ptr, **ptrp;
 	else
 		x = ZERO;
 
-dot:    for(; isnumber(c) ; c = UC(*++ptr)){
+dot:    for(; isdigit(c) ; c = UC(*++ptr)){
 		if(!lzeros){
 			if(c == '0'){ /* ignore leading zeros */
 				seenz = 1;
@@ -768,13 +768,13 @@ dot:    for(; isnumber(c) ; c = UC(*++ptr)){
 				minus++;
 			c = UC(*++ptr);
 		}
-		if(!isnumber(c))
+		if(!isdigit(c))
 			return(0);
 		do {
 			if(exp < BIGEXP)
 				exp = exp * 10 + c - '0';
 			c = UC(*++ptr);
-		} while(isnumber(c));
+		} while(isdigit(c));
 		if(minus)
 			exponent -= exp;
 		else
