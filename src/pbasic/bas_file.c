@@ -296,7 +296,7 @@ file_more()
 	check();
 
 #ifndef f32c
-	system(buf);
+	do_system(buf);
 #else
 	fd = open(buf, 0);
 	if (fd < 0)
