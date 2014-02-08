@@ -337,7 +337,7 @@ const char *str;
 	lnumb	xline;
 
 	if(str)
-		prints((char *) str);
+		prints(str);
 
 	if(p->linnumb != CONTLNUMB){
 		printd(p->linnumb);
@@ -429,9 +429,9 @@ checktype()
 
 int
 slen(s)
-char *s;
+const char *s;
 {
-	char *p = s;
+	const char *p = s;
 
 	while(*p)
 		p++;
@@ -443,7 +443,7 @@ char *s;
 
 void
 prints(s)
-char    *s;
+const char    *s;
 {
 	VOID write(1, s,(unsigned)slen(s));
 }

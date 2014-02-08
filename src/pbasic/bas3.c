@@ -691,7 +691,7 @@ volatile STR	strp;
 	union	ffn_vars args[FN_MAX_ARGS];
 
 	if( (ep = pep) == 0){
-		if(!ispletter(point))
+		if(!isalpha(*point))
 			error(SYNTAX);
 		ep = getnm(ISFUNC, 0);
 		if(!ep)
@@ -937,7 +937,7 @@ fncmd()
 	forstp	fp;
 	STR	st;
 
-	if(!ispletter(point))
+	if(!isalpha(*point))
 		error(SYNTAX);
 	ep = getnm(ISFUNC, 0);
 	if(!ep)
