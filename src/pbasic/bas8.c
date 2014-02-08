@@ -1013,12 +1013,6 @@ lpoint p;
 	int	t;
 
 	/* do the linenumber */
-#if 0
-	if(p->linnumb == CONTLNUMB)
-		r = str_cpy((CHAR *)"     ", line);
-	else
-		r = str_cpy((CHAR *)printlin(p->linnumb), line);
-#else /* Marko */
 	r = str_cpy((CHAR *)"     ", line);
 	if(p->linnumb != CONTLNUMB) {
 		if (p->linnumb > 9999)
@@ -1031,7 +1025,6 @@ lpoint p;
 			r -= 1;
 		r = str_cpy((CHAR *)printlin(p->linnumb), r - 1);
 	}
-#endif
 
 	for(q= p->lin; *q && r < &line[MAXLIN]; q++){
 		if(*q & (CHAR)SPECIAL){              /* reserved words */
@@ -1282,7 +1275,7 @@ CHAR	*cmd;
 	rset_term(0);
 	return(status);
 }
-#endif /* 0 */
+#endif /* !f32c */
 
 #endif
 
