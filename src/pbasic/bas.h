@@ -85,13 +85,14 @@ typedef char	CHAR;
 #define	SFUNCN	0373
 #define	SFUNCA	0374
 #define	OFUNC	0375
+#define	EXCMD	0376
 
 #define	MKIFN(x) ((1<<8) | SPECIAL | (x))
 #define	MKIFA(x) ((2<<8) | SPECIAL | (x))
 #define	MKSFN(x) ((3<<8) | SPECIAL | (x))
 #define	MKSFA(x) ((4<<8) | SPECIAL | (x))
-
 #define	MKOFN(x) ((5<<8) | SPECIAL | (x))
+#define	MKXCMD(x) ((6<<8) | SPECIAL | (x))
 
 #define NORMAL          0               /* normal return from a command */
 #define GTO             1               /* ignore rest of line return */
@@ -756,7 +757,6 @@ extern	const	voidf_t	functs;
 extern  const	voidf_t	functb;
 extern  const	strf_t	strngcommand;
 extern  const	strf_t	strngncommand;
-extern  const	intf_t	commandf;
 extern  const	str_t   ermesg;
 extern  const	struct  tabl    table[];
 extern	const	int	typ_siz[];
@@ -903,7 +903,7 @@ const	strf_t	strngncommand = {
 
 /*      commands */
 
-const	intf_t	commandf = {
+static const intf_t commandf = {
 	endd,runn,gotos,rem,list,lets,print,stop,bdelete,editl,input,clearl,
 	save,load,neww,
 	bas_exec, resume,iff,brandom,dimensio,forr,next,gosub,retn,
@@ -915,7 +915,13 @@ const	intf_t	commandf = {
 	bdeffn, bopts, tron, troff, bdir, bdirl, bmat, bwrite, berase,
 	file_more, file_kill, file_mkdir, file_copy, file_rename,
 	file_cd, file_pwd,
-	vidmode, color, plot, lineto, rectangle, circle, text, loadjpg
+	vidmode, color, plot, lineto, rectangle, circle, text
+};
+
+/*      extended commands */
+
+static const intf_t xcmdf = {
+	loadjpg
 };
 
 /*      table of error messages */
@@ -1075,7 +1081,6 @@ const	struct  tabl    table[]={
 	"RECTANGLE",	0324,
 	"CIRCLE",	0325,
 	"TEXT",		0326,
-	"LOADJPG",	0327,
 	/*
 	 * commands go to here
 	 */
@@ -1107,11 +1112,14 @@ const	struct  tabl    table[]={
 	"IMP",		0357,
 	"EQV",		0360,
 	/*
-	 * at 370 to 374 are the values for extended functions
+	 * at 370 to 376 are the values for extended functions
 	 * which are then followed by one of the following after it has
 	 * been decoded.
 	 */
-	"RIGHT$",	MKSFA(0), /* string functs with args */
+	/* extended commands */
+	"LOADJPG",	MKXCMD(0),
+	/* string functs with args */
+	"RIGHT$",	MKSFA(0),
 	"LEFT$",	MKSFA(1),
 	"STRING$",	MKSFA(2),
 	"ERMSG$",	MKSFA(3),

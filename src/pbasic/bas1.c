@@ -517,9 +517,16 @@ execute()
 			}
 		}
 		else {
-			if(c >= MAXCOMMAND)
+			if (c == EXCMD) {
+				c = getch();
+				/* execute the command */
+				i = (*xcmdf[c&0177])();
+			} else if(c >= MAXCOMMAND)
 				error(8);
-			i = (*commandf[c&0177])();     /* execute the command */
+			else {
+				/* execute the command */
+				i = (*commandf[c&0177])();
+			}
 		}
 		if(i == NORMAL){
 			if((c=getch())==':')
