@@ -24,7 +24,6 @@
 
 extern	void	_exit();
 
-#ifdef	__STDC__
 static	CHAR    *eql(CHAR *, CHAR *, CHAR *);
 static	void	docont(void);
 static	void	free_ar(struct entry *);
@@ -36,20 +35,6 @@ static  SIGFUNC	onstop(int);
 extern	void	*m_get(unsigned int);
 extern	void	m_free(void *);
 extern	void	m_purge(void);
-#endif
-#else
-static	CHAR    *eql();
-static	void	docont();
-static	void	free_ar();
-static	SIGFUNC	trap(), seger(), mcore(), quit1(), catchfp();
-#ifdef  SIGTSTP
-static  SIGFUNC	onstop();
-#endif
-#ifdef	OWN_ALLOC
-extern	void	*m_get();
-extern	void	m_free();
-extern	void	m_purge();
-#endif
 #endif
 
 
@@ -995,7 +980,6 @@ struct	entry	*op;
  *    with the interpreter and we should cry for help. (It doesn't ).
  */
 
-#ifdef	__STDC__
 void *
 mmalloc(len)
 ival	len;
@@ -1064,75 +1048,6 @@ ival	len;
 	return(0);
 }
 
-#else
-
-memp
-mmalloc(len)
-ival	len;
-{
-	memp	p;
-#ifndef	OWN_ALLOC
-	char	*malloc();
-
-	p = (memp)malloc((unsigned int)len);
-	if(p != 0)
-		return(p);
-	clear();
-	if( (p = (memp)malloc((unsigned int)len)) == 0){
-		prints("out of core\n");        /* print message */
-		VOID quit();                    /* exit flushing buffers */
-	}
-	mfree(p);
-#else
-	if( (p = m_get((unsigned int)len)) != 0)
-		return(p);
-	clear();
-	m_purge();
-	if( (p = m_get((unsigned int)len)) == 0){
-		prints("out of core\n");        /* print message */
-		VOID quit();                    /* exit flushing buffers */
-	}
-	m_free( (MEMP)p);
-#endif
-	error(24);
-	NO_RET;				/* should never be reached */
-}
-
-void
-mfree(mem)
-MEMP	mem;
-{
-#ifdef	OWN_ALLOC
-	m_free( (void *)mem);
-#else
-	free(mem);
-#endif
-}
-
-int
-mtestalloc(len)
-ival	len;
-{
-	memp	p;
-#ifndef	OWN_ALLOC
-	char	*malloc();
-
-	p = (memp)malloc((unsigned int)len);
-	if(p != 0){
-		mfree(p);
-		return(1);
-	}
-#else
-	m_purge();
-	if( (p = m_get((unsigned int)len)) != 0){
-		m_free(p);
-		return(1);
-	}
-#endif
-	return(0);
-}
-
-#endif
 
 /*
  *      This routine tries to set up the system to catch all the signals that
@@ -1143,23 +1058,14 @@ ival	len;
 
 
 #ifndef	MSDOS
-#ifdef	__STDC__
 /*ARGSUSED*/
 static	SIGFUNC	squit(int x) { VOID quit(); }
 static	SIGFUNC sexit(int x) { _exit(x); }
-#else
-static	SIGFUNC	squit()	{ VOID quit(); }
-static	SIGFUNC sexit() { _exit(1); }
-#endif
 #endif
 
 static	const	struct	mysigs {
 	int	sigval;
-#ifdef	__STDC__
 	SIGFUNC	(*sigfunc)(int);
-#else
-	SIGFUNC	(*sigfunc)();
-#endif
 } traps[] = {
 #ifndef	MSDOS
 	SIGHUP, squit,           /* hang up */
@@ -1342,11 +1248,7 @@ docont()
 }
 
 #ifdef  SIGTSTP
-#ifdef	__STDC__
-#if __STDC__ != 0
 extern	int	kill(pid_t, int);
-#endif
-#endif
 /*
  * support added for job control
  */

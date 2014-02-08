@@ -71,10 +71,6 @@ typedef char	CHAR;
 #define	MAX_ARRAY	200000000
 #endif
 
-#ifndef	__STDC__
-#define	const	/* absolutely nothing */
-#endif
-
 #define MASK            0377
 
 #define SPECIAL         0200            /* top bit set */
@@ -307,7 +303,6 @@ typedef union {
 	double  f;
 } value, *valp;
 
-#ifdef	__STDC__
 typedef	void	*MEMP;
 typedef	void	(*voidf_t[])(void);
 typedef	STR	(*strf_t[])(void);
@@ -315,15 +310,6 @@ typedef	int	(*intf_t[])(void);
 typedef	void	mbinf_t(valp, valp, int);
 typedef	void	(*mathf_t[])(valp, valp, int);
 typedef	char	*str_t[];
-#else
-typedef	char	*MEMP;
-typedef	void	(*voidf_t[])();
-typedef	STR	(*strf_t[])();
-typedef	int	(*intf_t[])();
-typedef	void	mbinf_t();
-typedef	void	(*mathf_t[])();
-typedef	char	*str_t[];
-#endif
 
 /*      all structures must have an exact multiple of the size of an int
  *    to the start of the next structure
@@ -542,21 +528,14 @@ struct	str_info {
 
 #define conv(p) \
 	( ((p)->f > MAXint || (p)->f < MINint) ? 1 : _conv(p) )
-#ifdef	__STDC__
+
 extern	int	_conv(value *);
-#else
-extern	int	_conv();
-#endif
 
 #define cvt(p)  (p)->f = (p)->i
 
 #else
 
-#ifdef	__STDC__
 extern	int	conv(value *);
-#else
-extern	int	conv();
-#endif
 
 #endif
 
@@ -610,16 +589,10 @@ char	*getenv();
 #define	do_system	system
 #endif
 
-#ifdef	__STDC__
 #define	SIGFUNC	void
-#else
-#define	SIGFUNC int
-#endif
 
 #define	NOLNUMB	65534
 #define	CONTLNUMB 65533
-
-#ifdef	__STDC__
 
 extern	const	mathf_t	mbin;
 
@@ -727,103 +700,6 @@ int	bas_sleep(void), bauds(void);
 int	quit(void);
 
 
-#else
-
-extern	mathf_t	mbin;
-
-struct	entry	*getnm();
-struct	entry	*dup_var();
-filebufp getf();
-lpoint  getline(), getsline();
-void	prsline();
-lnumb	getrline();
-memp    mmalloc();
-int	mtestalloc();
-void	mfree();
-MEMP	getname();
-struct	entry *getmat();
-char    *printlin();
-CHAR    *str_cpy();
-lnumb	getlin();
-itype	evalint();
-int	getch();
-int	checktype(), compile(), edit(), getnumb();
-int	putfile(), fin1ch();
-int	do_system();
-void	execute(), error(), clear(), eval();
-void	check(), putin(), prints(), printd();
-void	readfi(), compare(), stringcompare();
-STR	stringeval(), mgcvt(), mathpat();
-void	stringassign(), assign();
-void	ffn();
-void	closeall(), clr_stack();
-void	setupfiles(), setupmyterm();
-void	setup_fb();
-void	errtrap(), flushall(), insert(), negate();
-void	ins_line();
-void	set_term(), rset_term();
-void	ch_clear(), dostop(), dobreak(), drop_fns(), drop_val();
-void	kill_fstrs(), notit();
-void	setu_term(), startfp();
-void	catchsignal();
-
-CHAR	*strmov();
-void	set_mem();
-void	free();
-void	save_env(), ret_env();
-void	c_error();
-void	evalreal(), clear_htab();
-void	free_entry(), add_entry();
-void	recover_vars();
-void	fpcrash();
-void	def_darr();
-itype	mmult_ply();
-void	matread();
-int	matinput();
-int	matprint();
-
-void    rnd(),pii(),erlin(),erval(),tim(), binval();
-void    sgn(),len(),babs(),val(),ascval(),instr(),eofl(),fposn(),bsqrtf(),
-	blogf(),bexpf(),evalu(),intf(),peekf(),bsinf(),bcosf(),batanf(),
-	mkint(),mkdouble(), ssystem(), blog10f(), btanf(), bfixf(),
-	bsinh(), bconsh(), btanh(), basinh(), bacosh(), batanh(),
-	basinf(), bacosf(), bvarptr(), bsyscall(), bsyserr(), bmax(), bmin(),
-	bcreal(), bcint(), rinstr();
-
-STR	rightst(),leftst(),strng(),estrng(),chrstr(),nstrng(),
-	space(), xlate(), mkistr(),mkdstr(), hexstr(), octstr(), decstr(),
-	bupper(), blower();
-STR	datef(), binstr();
-
-int	endd(),runn(),gotos(),rem(),lets(),list(),
-	print(),stop(),bdelete(),editl(),input(),clearl(),
-	save(),load(),neww(),
-	bas_exec(), resume(),iff(), tron(), troff(),
-	brandom(),dimensio(),forr(),next(),gosub(),retn(),
-	onn(),doerror(),rem(),dauto(), defproc(), bdeffn(),
-	readd(),dodata(),cls(),restore(),base(),bfopen(),
-	fclosef(),merge(),chain(),deffunc(),cont(),lhmidst(),
-	linput(),poke(),rept(),untilf(),whilef(),wendf(),renumb(),
-	fnend(), fncmd(), blset(), brset(), bfield(), bput(), bget(),
-	bdefint(), bdefstr(), bdefdbl(), bcommon(), blocal(), bopts(),
-	bdir(), bdirl(), bmat(), bwrite(), berase(),
-	file_more(), file_kill(), file_mkdir(), file_copy(), file_rename(),
-	file_cd(), file_pwd(),
-	vidmode(), color(), plot(), lineto(),
-	rectangle(), circle(), text(), loadjpg();
-
-int	bas_sleep(), bauds();
-int	quit();
-
-void	COPY_OVER_STR();
-void	FREE_STR();
-void	RESERVE_SPACE();
-void	NULL_TERMINATE();
-void	DROP_STRINGS();
-STR	ALLOC_STR();
-
-#endif
-
 /*   definition of variables for other source files */
 
 extern	uint32_t freq_khz, tsc_hi, tsc_lo;
@@ -879,11 +755,7 @@ extern  char    noedit;
 extern  long    overfl;
 #endif
 extern  value   res;
-#ifdef	__STDC__
 extern	void	(*fpfunc)(void);
-#else
-extern	void	(*fpfunc)();
-#endif
 
 extern  const	double  pivalue;
 extern  const	double  MAXint,MINint;
@@ -987,11 +859,7 @@ MEMP	renstr;		/* pointer to an array used by renumber */
 lnumb	autostart=10;   /* values for auto command */
 lnumb	autoincr=10;
 
-#ifdef	__STDC__
 void	(*fpfunc)(void);
-#else
-void	(*fpfunc)();
-#endif
 
 int     ter_width;      /* set from the terms system call */
 

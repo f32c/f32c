@@ -39,17 +39,10 @@
  *    'silly' programs that are given as parameters.
  */
 
-#ifdef	__STDC__
 static	void	runfile(int), f_flush(filebufp);
 static	void	close_1(filebufp);
 static	void	blrset(int);
 static	void	bfdcheck(int);
-#else
-static	void	runfile(), f_flush();
-static	void	close_1();
-static	void	blrset();
-static	void	bfdcheck();
-#endif
 
 void
 setupfiles(int argc, char **argv)

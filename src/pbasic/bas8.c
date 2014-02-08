@@ -8,17 +8,10 @@
  *    anywhere else for any reason.
  */
 
-#ifdef	__STDC__
 static	void	clear_prog(void);
 static	int	listl(lpoint), mypwrite(filebufp, CHAR *, int), def_fn(int, int);
 static	lpoint  get_end(void);
 static	STR	strpat(STR, STR, STR);
-#else
-static	void	clear_prog();
-static	int	listl(), mypwrite(), def_fn();
-static	lpoint  get_end();
-static	STR	strpat();
-#endif
 
 /*
  *      The 'for' command , this is fairly straight forward , but
@@ -433,12 +426,7 @@ gotos()
  *      work ( nor will most of the rest of the interpreter ).
  */
 
-#ifndef	__STDC__
-extern  int	write();
-static	void	doprint();
-#else
 static	void	doprint(int, int);
-#endif
 
 int
 print()
@@ -455,7 +443,6 @@ bwrite()
 }
 
 
-#ifdef	__STDC__
 /*
  * fp is a null argument
  */
@@ -466,21 +453,6 @@ mypwrite(filebufp fp, CHAR *buf, int len)
 	fp = fp;
 	return((int)write(1, (char *)buf, (unsigned)len));
 }
-#else
-
-/*
- * fp is a null argument
- */
-/*ARGSUSED*/
-static	int
-mypwrite(fp, buf, len)
-filebufp fp;
-CHAR	*buf;
-int	len;
-{
-	return((int)write(1, (char *)buf, (unsigned)len));
-}
-#endif
 
 static  const	CHAR    spaces[]="                ";    /* 16 spaces */
 
@@ -490,11 +462,7 @@ int	islp, iswrt;
 {
 	ival    i;
 	int     c;
-#ifdef	__STDC__
 	int    (*outfunc)(filebufp, CHAR *, int);
-#else
-	int    (*outfunc)();   /* pointer to the output function */
-#endif
 	ival   *curcursor;     /* pointer to the current cursor */
 					/* 'posn' if a file, or 'cursor' */
 	int     Twidth;                 /* width of the screen or of the */
@@ -719,11 +687,7 @@ matprint()
 {
 	ival    i;
 	STR	st;
-#ifdef	__STDC__
 	int    (*outfunc)(filebufp, CHAR *, int);
-#else
-	int    (*outfunc)();   /* pointer to the output function */
-#endif
 	ival   *curcursor;     /* pointer to the current cursor */
 					/* 'posn' if a file, or 'cursor' */
 	int     Twidth;                 /* width of the screen or of the */
@@ -1280,20 +1244,12 @@ do_system(cmd)
 CHAR	*cmd;
 {
 	int    i;
-#ifdef	__STDC__
 	SIGFUNC (*q)(int) , (*p)(int);
-#else
-	SIGFUNC (*q)() , (*p)();
-#endif
 	char    *s;
 	char	*args[4];
 	int	status;
 #ifdef  SIGTSTP
-#ifdef	__STDC__
 	SIGFUNC	(*t)(int);
-#else
-	SIGFUNC	(*t)();
-#endif
 #endif
 
 	flushall();
@@ -1346,11 +1302,7 @@ static	const	char	bdircmd[] = "ls -C ";
 static	const	char	bdirlcmd[] = "ls -l ";
 #define	BDIRLCMD_LEN	(sizeof(bdirlcmd)-1)
 
-#ifdef	__STDC__
 static	void	bdircom(const char *, ival);
-#else
-static	void	bdircom();
-#endif
 
 int
 bdir()

@@ -32,18 +32,11 @@ union	ffn_vars {
 #define	ostr	_svs._ostr
 #define	nstr	_svs._nstr
 
-#ifdef	__STDC__
 static	void	recov_parms(struct entry **, int, union ffn_vars *, int);
 static	void	setdrg(int);
 static	void	hyper_sc(int);
-#else
-static	void	recov_parms();
-static	void	setdrg();
-static	void	hyper_sc();
-#endif
 
 #ifndef SOFTFP
-#ifdef	__STDC__
 extern	double  sin(double);
 extern	double  cos(double);
 extern	double	asin(double);
@@ -52,16 +45,6 @@ extern	double  atan(double);
 extern	double	exp(double);
 extern	double	log(double);
 extern	double  sqrt(double);
-#else
-extern	double  sin();
-extern	double  cos();
-extern	double	asin();
-extern	double	acos();
-extern	double  atan();
-extern	double	exp();
-extern	double	log();
-extern	double  sqrt();
-#endif
 static	const	double	logmaxval = LOGMAXVAL;
 static	const	double	TWO = 2.0;
 static	const	double	INSIG = MAX_INSIG;
@@ -1108,21 +1091,14 @@ real_memory()
 	return(p);
 }
 
-#if	defined(SYS5_4) && __STDC__ == 0
-static	sigjmp_buf	pksig_catch;
-#else
 static	jmp_buf	pksig_catch;
-#endif
 
 static	SIGFUNC
 pksig_catchf(sig)
 int	sig;
 {
-#if	defined(SYS5_4) && __STDC__ == 0
-	siglongjmp(pksig_catch, sig);
-#else
+
 	longjmp(pksig_catch, sig);
-#endif
 }
 
 static	int
@@ -1132,20 +1108,12 @@ itype	val;
 int	mode;
 {
 	int	rval = -1;
-#ifdef	__STDC__
 	SIGFUNC	(*old_bus)(int), (*old_seg)(int);
-#else
-	SIGFUNC	(*old_bus)(), (*old_seg)();
-#endif
 
 	old_bus = signal(SIGBUS, pksig_catchf);
 	old_seg = signal(SIGSEGV, pksig_catchf);
 
-#if	defined(SYS5_4) && __STDC__ == 0
-	switch(sigsetjmp(pksig_catch, 0)){
-#else
 	switch(setjmp(pksig_catch)){
-#endif
 	case 0:
 		if(mode)
 			rval = (int)UC(*loc);
@@ -1521,11 +1489,7 @@ ssystem()
 #define	MAX_SYS_ARGS	6
 
 extern	int	errno;
-#ifdef	__STDC__
 extern	int	syscall(int, ...);
-#else
-extern	int	syscall();
-#endif
 
 static	int	sys_error;
 

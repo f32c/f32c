@@ -21,7 +21,6 @@ getch()
 	char   *p;
 
 	p = (char *)point;
-#ifdef	__STDC__
 	while(*p == ' ')
 		p++;
 #ifdef	mips
@@ -30,11 +29,6 @@ getch()
 #else
 	point = (CHAR *)++p;
 	return(*(unsigned char *)(p - 1));
-#endif
-#else
-	while(*p++ == ' ');
-	point = p;
-	return(UC(*--p));
 #endif
 }
 
@@ -61,11 +55,7 @@ check()         /* check to see no garbage at end of command */
 #ifndef SOFTFP
 /*ARGSUSED*/
 void
-#ifdef	__STDC__
 fpcrash(void)
-#else
-fpcrash()
-#endif
 {
 	c_error(34);	/* arithmetic overflow */
 	if(res.f < ZERO)
@@ -135,8 +125,6 @@ value  *p,*q;
 
 /* all the routines below should be put into AS */
 
-#ifdef	__STDC__
-
 #if	defined(mips) && !defined(lint) && !defined(CDS_COMPILER)
 static	void	fandor(valp, valp, int), andor(valp, valp, int);
 static	void	comop(valp, valp, int), fads(valp, valp, int);
@@ -146,22 +134,8 @@ static	void	mdm(valp, valp, int), fexp(valp, valp, int), ex(valp, valp,int);
 static	mbinf_t	fandor, andor, comop, fads, ads, fmdm, mdm, fexp, ex;
 #endif
 
-#else
 
-#ifdef	mips
-static	void	fandor(), andor(), comop(), fads(), ads(), fmdm();
-static	void	mdm(), fexp(), ex();
-#else
-static	mbinf_t	fandor, andor, comop, fads, ads, fmdm, mdm, fexp, ex;
-#endif
-
-#endif
-
-#ifdef	__STDC__
 const	mathf_t	mbin = {
-#else
-mathf_t	mbin = {
-#endif
 	0, 0,
 	fandor,
 	andor,
@@ -204,11 +178,7 @@ fmdm(p,q,c)             /* floating * / mod */
 valp    p,q;
 int	c;
 {
-#ifdef	__STDC__
 	double	fmod(double, double);
-#else
-	double	fmod();
-#endif
 /*
 	double  floor();
 	double	x;
@@ -470,11 +440,7 @@ notit()                 /* logical negation */
 	vartype = IVAL;
 }
 
-#ifdef	__STDC__
 double	log(double), exp(double);
-#else
-double	log(),exp();
-#endif
 
 /*ARGSUSED*/
 static	void
