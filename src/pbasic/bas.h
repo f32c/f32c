@@ -135,18 +135,10 @@ typedef char	CHAR;
 #define	MKhash(x)	((x) % HSHTABSIZ)
 #define	TMAPSIZ		(128 - 'A')	/* length of defint array */
 
-#define	_L		1	/* letter, lower */
-#define	_N		2	/* number */
-#define	_U		4	/* underscore */
-#define	_A		8	/* letter, upper */
-#define	_X		16	/* hex */
-
 /*      definitions of some simple functions */
 /*      istermin()      - true if character is a terminator */
 
 #define istermin(c)  (!(c)|| (c)==':' ||((CHAR)(c)==(CHAR)ELSE && elsecount))
-#define	isnchar(c)	(chtab[(c)] & (_L|_N|_U|_A))
-#define	ispnchar(c)	(chtab[*(unsigned char *)(c)] & (_L|_N|_U|_A))
 
 #define	TYP_SIZ(typ)	(typ_siz[UC(typ)])
 
@@ -767,7 +759,6 @@ extern  const	strf_t	strngncommand;
 extern  const	intf_t	commandf;
 extern  const	str_t   ermesg;
 extern  const	struct  tabl    table[];
-extern	const	CHAR	chtab[];
 extern	const	int	typ_siz[];
 
 /*
@@ -1191,19 +1182,6 @@ const	struct  tabl    table[]={
 	"GRAD",		MKOFN(2),
 	"MEMSIZE",	MKOFN(3),
 	0,0
-};
-
-const	CHAR	chtab[256] = {
-/*0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/*16*/	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/*32*/	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/*48*/	_N, _N, _N, _N, _N, _N, _N, _N, _N, _N, 0, 0, 0, 0, 0, 0,
-/*64*/	0, _A|_X, _A|_X, _A|_X, _A|_X, _A|_X, _A|_X, _A,
-/*72*/	_A, _A, _A, _A, _A, _A, _A, _A,
-/*80*/	_A, _A, _A, _A, _A, _A, _A, _A, _A, _A, _A, 0, 0, 0, 0, _U,
-/*96*/	0, _L|_X, _L|_X, _L|_X, _L|_X, _L|_X, _L|_X, _L,
-/*104*/	_L, _L, _L, _L, _L, _L, _L, _L,
-/*112*/	_L, _L, _L, _L, _L, _L, _L, _L, _L, _L, _L, 0, 0, 0, 0, 0,
 };
 
 const	int	typ_siz[] = {
