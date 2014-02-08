@@ -34,28 +34,16 @@
 #define LBRACK  '('
 #define RBRACK  ')'
 
-#ifdef	__STDC__
 static	MEMP	getarray(struct entry *);
 static	void	dim_one(void);
 static	void	bdeftype(int);
 static	int	nam_read(CHAR *, int *);
 static	struct	entry	*new_entry(CHAR *, int, int, struct entry *, int);
-#else
-static	MEMP	getarray();
-static	void	dim_one();
-static	void	bdeftype();
-static	int	nam_read();
-static	struct	entry	*new_entry();
-#endif
 
-#ifdef	__STDC__
 #if	defined(mips) && !defined(lint) && !defined(CDS_COMPILER)
 static const union entry_vals entry_zero;	/* should be zero */
 #else
 static const union entry_vals entry_zero = { 0 };
-#endif
-#else
-static union entry_vals entry_zero;		/* should be zero */
 #endif
 
 static	int

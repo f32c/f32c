@@ -11,18 +11,11 @@
  *    logical value
  */
 
-#ifdef	__STDC__
 static	CHAR	*necvt(double, int, int *, int *);
 static	STR	lgcvt(void);
 static	void	_scale(double *, int *, int *, int);
 static	CHAR	*d_expand(double, int, int *);
 static	int	pat_exp(CHAR *, int, int, int, int, int, int, int, int, int);
-#else
-static	STR	lgcvt();
-static	void	_scale();
-static	CHAR	*d_expand();
-static	int	pat_exp();
-#endif
 
 void
 stringcompare()

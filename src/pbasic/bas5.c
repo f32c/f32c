@@ -16,29 +16,17 @@
  *      added 28-oct-81
  */
 
-#ifdef	__STDC__
 static	int	getstrdt( int (*)(void), STR),getdata( int (*)(void) );
 static	int	in1file(void), in1line(void);
 static	int	readd1(void);
 static	void	getmore(void);
-#else
-static	int	getstrdt(),getdata();
-static	int	in1file(), in1line();
-static	int	readd1();
-static	void	getmore();
-#endif
 
 static	int	pushback = -1;
 
 static	filebufp _curinfile;
 
-#ifdef	__STDC__
 static	int
 in1file(void)
-#else
-static	int
-in1file()
-#endif
 {
 	int	c;
 
@@ -58,13 +46,8 @@ in1file()
 
 static	CHAR	*in1iline;
 
-#ifdef	__STDC__
 static	int
 in1line(void)
-#else
-static	int
-in1line()
-#endif
 {
 	int	c;
 
@@ -84,11 +67,7 @@ input()
 	value	*l;
 	int     c;
 	char    vty;
-#ifdef	__STDC__
 	int	(*infunc)(void);
-#else
-	int	(*infunc)();
-#endif
 	int     firsttime=0;
 	int	noerr;
 	int	frfile = 0;
@@ -187,11 +166,7 @@ for(;;){
 
 static	int
 getstrdt(infunc, st)
-#ifdef	__STDC__
 int	(*infunc)(void);
-#else
-int	(*infunc)();
-#endif
 STR	st;
 {
 	CHAR *q;
@@ -240,11 +215,7 @@ STR	st;
 
 static	int
 getdata(infunc)
-#ifdef	__STDC__
 int	(*infunc)(void);
-#else
-int	(*infunc)();
-#endif
 {
 	CHAR	tbuf[MAXLIN];
 	CHAR	*p;
@@ -493,11 +464,7 @@ matinput()
 	struct	entry	*ep;
 	valp	l;
 	char	vty;
-#ifdef	__STDC__
 	int	(*infunc)(void);
-#else
-	int	(*infunc)();
-#endif
 	int     has_str=0;
 	int	noerr;
 	int	frfile = 0;

@@ -21,13 +21,8 @@
  *    result will be put.
  */
 
-#ifdef	__STDC__
 static	STR	midst(void);
 static	STR	hocvtstr(int);
-#else
-static	STR	midst();
-static	STR	hocvtstr();
-#endif
 
 static	STR	str_free;
 static	int	nstr_free;
@@ -211,13 +206,7 @@ datef()
 	struct	tm	*tmp;
 	int	tf;
 	static	int	mplies[] = { 0, 1, 10, 100, 1000, 10000 };
-#ifndef	__STDC__
-	char    *ctime();
-	long	m;
-	struct	tm	*localtime();
-#else
 	time_t	m;
-#endif
 
 	VOID time(&m);
 
