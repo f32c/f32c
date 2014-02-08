@@ -146,8 +146,6 @@ typedef char	CHAR;
 
 #define istermin(c)  (!(c)|| (c)==':' ||((CHAR)(c)==(CHAR)ELSE && elsecount))
 #define	isnchar(c)	(chtab[(c)] & (_L|_N|_U|_A))
-#define	ispletter(c)	(chtab[*(unsigned char *)(c)] & (_L|_A))
-#define	ispcchar(c)	(chtab[*(unsigned char *)(c)] & (_L|_N|_A))
 #define	ispnchar(c)	(chtab[*(unsigned char *)(c)] & (_L|_N|_U|_A))
 
 #define	TYP_SIZ(typ)	(typ_siz[UC(typ)])
@@ -595,7 +593,7 @@ itype	evalint(void);
 char    *printlin(lnumb);
 CHAR	*str_cpy(CHAR *, CHAR *);
 CHAR	*strmov(CHAR *, CHAR *, ival);
-int	slen(char *);
+int	slen(const char *);
 
 int	cmp(value *, value *);
 int	getch(void), getnumb(CHAR *, CHAR **);
@@ -612,7 +610,7 @@ void	evalreal(void), clear_htab(struct hash *);
 void	recover_vars(forstp, int);
 void	ffn(struct entry *, STR);
 void	error(int), clear(void), eval(void), c_error(int);
-void	check(void), putin(value *, int), prints(char *), printd(lnumb);
+void	check(void), putin(value *, int), prints(const char *), printd(lnumb);
 void	readfi(int, lpoint, int), compare(int, int), stringcompare(void);
 STR	stringeval(void), mgcvt(void), mathpat(STR);
 void	stringassign(stringp, struct entry *, STR, int);

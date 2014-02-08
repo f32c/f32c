@@ -24,7 +24,7 @@
 
 extern	void	_exit();
 
-static	CHAR    *eql(CHAR *, CHAR *, CHAR *);
+static	CHAR    *eql(const CHAR *, const CHAR *, const CHAR *);
 static	void	docont(void);
 static	void	free_ar(struct entry *);
 static	SIGFUNC	trap(int), seger(int), mcore(int), quit1(int), catchfp(int);
@@ -201,7 +201,7 @@ CHAR	*fline;
 	}
 	while(*p){
 		/*LINTED*/
-		if(!ispletter(p)){
+		if(!isalpha(*p)){
 			/* not a keyword. check for special characters */
 			switch(*p++){
 			case '"':
@@ -264,7 +264,7 @@ CHAR	*fline;
 		if(l->string == 0){
 			*q++ = *p++;
 			/*LINTED*/
-			while(ispletter(p))
+			while(isalpha(*p))
 				*q++ = *p++;
 			continue;
 		}
@@ -272,7 +272,7 @@ CHAR	*fline;
 		 * get the length of the word
 		 */
 		/*LINTED*/
-		for(k = p, p++ ; ispcchar(p); p++);
+		for(k = p, p++ ; isalnum(*p); p++);
 
 		/* special case for FN */
 		if(p >= k + 2 && charac == 'f' && tolower(k[1]) == 'n'){
@@ -293,8 +293,8 @@ CHAR	*fline;
 		 * check entry in the table
 		 */
 		for(; l->string ; l++)
-			if(charac == *l->string &&
-				    (tmp = eql(k, (CHAR *)l->string, p)) != 0){
+			if (charac == *l->string &&
+				    (tmp = eql(k, l->string, p)) != 0){
 				if(l->chval > 0377){
 					*q++ = (CHAR)(EXFUNC + (l->chval >> 8));
 					*q++ = (CHAR)(l->chval & MASK);
@@ -327,9 +327,9 @@ CHAR	*fline;
  *    it can take a long time to load a large program ).
  */
 
-static	CHAR    *
+static CHAR *
 eql(p, q, end)
-CHAR   *p, *q, *end;
+const CHAR   *p, *q, *end;
 {
 	p++, q++;
 	while(p < end){
@@ -339,11 +339,11 @@ CHAR   *p, *q, *end;
 	}
 #ifndef	NO_SCOMMS
 	if(*p == '.' && *q)
-		return(p + 1);
+		return((char *) &p[1]);
 #endif
 	if(*q)
-		return(0);
-	return(p);
+		return(NULL);
+	return((char *) p);
 }
 
 /*

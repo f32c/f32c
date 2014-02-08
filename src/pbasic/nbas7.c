@@ -154,7 +154,7 @@ static	void	insert_mode(int, int);
 static	void	redraw_line(int);
 static	void	mvto_lin(int);
 static	int	dosrch(int);
-static	int	substr(CHAR *, int, CHAR *, int, int);
+static	int	substr(const CHAR *, int, const CHAR *, int, int);
 static	void	kill_line(void);
 static	void	yank_line(void);
 static	void	chng_line(void);
@@ -1569,11 +1569,11 @@ int	cmdc;
 
 static int
 substr(str, slen, ofstr, oflen, bol)
-CHAR	*str, *ofstr;
+const CHAR *str, *ofstr;
 int	slen, oflen, bol;
 {
 	int	retrys;
-	CHAR	*p, *q;
+	const CHAR *p, *q;
 	int	icnt;
 
 	retrys = oflen - slen;
@@ -2083,7 +2083,7 @@ CHAR	*pcursr, *plim;
 		sslen = slen( (char *)l->string);
 		if(sslen < i)
 			continue;
-		if(!substr(savc, i, (CHAR *)l->string, sslen, 1))
+		if(!substr(savc, i, l->string, sslen, 1))
 			continue;
 		if(!force || flist == 0)
 			flist = l->string;

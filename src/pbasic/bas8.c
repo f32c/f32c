@@ -1879,7 +1879,7 @@ int	ftyp, dftyp;
 	else
 		point--;
 	/*LINTED*/
-	if(!ispletter(point))
+	if(!isalpha(*point))
 		error(SYNTAX);
 	ep = getnm(ISFUNC, 1);
 	if(ep)
