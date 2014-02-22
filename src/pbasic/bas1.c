@@ -72,15 +72,17 @@ static int firstrun = 1;
 int
 main(int argc, char **argv)
 {
-	int fp;
 	int i = 0;
+#ifdef f32c
+	int fp;
+#endif
 
 	catchsignal();
 	startfp();              /* start up the floating point hardware */
 #ifdef f32c
 	setup_f32c();
-#endif
 	setup_fb();
+#endif
 	setupfiles(argc,argv);
 #ifndef f32c
 	setupmyterm();		/* set up files after processing files */
@@ -500,6 +502,8 @@ execute()
 #ifdef f32c
 		if(sio_getchar(0) == 3)
 			trap(0);
+#else
+		update_x11();
 #endif
 		savepoint=point;
 		if(trapped)
@@ -1221,7 +1225,7 @@ int
 quit()
 {
 	flushall();                     /* flush the files */
-#ifndef f32c
+#if 0 // XXX #ifndef f32c
 	rset_term(1);
 #endif
 	if(cursor)
