@@ -32,7 +32,16 @@
 #include <fb.h>
 #else
 #include "../include/fb.h"
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xos.h>
+#include <X11/Xatom.h>
+#include <X11/keysym.h>
 #endif
+
+/* XXX defined in bas.h */
+extern void *mmalloc(uint32_t);
+extern void *mfree(void *);
 
 typedef void plotfn_t(int x, int y, int mode_color, uint8_t *dp);
 
@@ -234,6 +243,12 @@ static uint8_t font_map[] = {
 static uint32_t	fb_mode = 3;
 static uint8_t	*fb;
 
+#ifndef f32c
+static Display *dis;
+static Window win;
+static GC gc;
+#endif
+
 #define	ABS(a) (((a) < 0) ? -(a) : (a))
 
 
@@ -241,14 +256,45 @@ void
 fb_set_mode(int mode)
 {
 
-#ifdef f32c
-	fb_mode = mode & 3;
+#ifndef f32c
+	if (mode < 2 && dis == NULL)
+		dis = XOpenDisplay(NULL);
+	if (fb_mode < 2) {
+		XUnmapWindow(dis, win);
+		XDestroyWindow(dis, win);
+		XFlush(dis);
+	}
+#endif
+	if (fb != NULL)
+		mfree(fb);
 
+	fb_mode = mode & 3;
 	if (fb_mode > 1)
 		fb = NULL;
 	else
-		fb = (void *) 0x800b0000;
+		fb = (uint8_t *) mmalloc(512 * 288 * (fb_mode + 1));
+	if (fb == NULL && fb_mode < 2)
+		fb_mode = 3;
+#ifndef f32c
+	if (fb_mode < 2) {
+		win = XCreateSimpleWindow(dis, RootWindow(dis, 0), 1, 1,
+		    512, 288, 0, WhitePixel(dis, 0), BlackPixel(dis, 0));
+		XMapWindow(dis, win);
+		XStoreName(dis, win, "BASIC");
+		XSizeHints* win_size_hints = XAllocSizeHints();
+		win_size_hints->flags = PMaxSize;
+		win_size_hints->max_width = 512;
+		win_size_hints->max_height = 288;
+		XSetWMNormalHints(dis, win, win_size_hints);
+		XFree(win_size_hints);
+		gc=XCreateGC(dis, win, 0,0);
+		XSetBackground(dis, gc, BlackPixel(dis, 0));
+		XSetForeground(dis, gc, WhitePixel(dis, 0));
+		XFlush(dis);
+	}
+#endif
 
+#ifdef f32c
 	OUTW(IO_FB, ((uint32_t) fb) | fb_mode);
 #endif
 }
@@ -378,7 +424,10 @@ fb_rgb2pal(int r, int g, int b) {
 }
 
 
-__attribute__((optimize("-O3"))) void
+#ifdef f32c
+__attribute__((optimize("-O3")))
+#endif
+void
 fb_plot(int x, int y, int color)
 {
 	int off = (y << 9) + x;
@@ -391,6 +440,9 @@ fb_plot(int x, int y, int color)
 		*((uint16_t *) &dp[off << 1]) = color;
 	else
 		dp[off] = color;
+#ifndef f32c
+	XDrawRectangle(dis, win, gc, x, y, 1, 1);
+#endif
 }
 
 
@@ -400,6 +452,9 @@ plot_internal_8(int x, int y, int color, uint8_t *dp)
 
 	if (!(y < 0 || y > 287 || (x >> 9)))
 		dp[(y << 9) + x] = color;
+#ifndef f32c
+	XDrawRectangle(dis, win, gc, x, y, 1, 1);
+#endif
 }
 
 
@@ -409,6 +464,9 @@ plot_internal_16(int x, int y, int color, uint8_t *dp)
 
 	if (!(y < 0 || y > 287 || (x >> 9)))
 		*((uint16_t *) &dp[(y << 10) + 2 * x]) = color;
+#ifndef f32c
+	XDrawRectangle(dis, win, gc, x, y, 1, 1);
+#endif
 }
 
 
@@ -417,6 +475,9 @@ plot_internal_unbounded_8(int x, int y, int color, uint8_t *dp)
 {
 
 	dp[(y << 9) + x] = color;
+#ifndef f32c
+	XDrawRectangle(dis, win, gc, x, y, 1, 1);
+#endif
 }
 
 
@@ -425,6 +486,9 @@ plot_internal_unbounded_16(int x, int y, int color, uint8_t *dp)
 {
 
 	*((uint16_t *) &dp[(y << 10) + 2 * x]) = color;
+#ifndef f32c
+	XDrawRectangle(dis, win, gc, x, y, 1, 1);
+#endif
 }
 
 
@@ -478,10 +542,16 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 				fb[(y0 << 9) + x] = color;
 		}
 	}
+#ifndef f32c
+	XFlush(dis);
+#endif
 }
 
 
-__attribute__((optimize("-O3"))) void
+#ifdef f32c
+__attribute__((optimize("-O3")))
+#endif
+void
 fb_line(int x0, int y0, int x1, int y1, int color)
 {
 	plotfn_t *plotfn;
@@ -521,6 +591,9 @@ fb_line(int x0, int y0, int x1, int y1, int color)
 		}
 		plotfn(x0, y0, color, fb);
 	}
+#ifndef f32c
+	XFlush(dis);
+#endif
 }
 
 
@@ -570,6 +643,9 @@ fb_circle(int x0, int y0, int r, int color)
 		plotfn(x0 + y, y0 - x, color, fb);
 		plotfn(x0 - y, y0 - x, color, fb);
 	}
+#ifndef f32c
+	XFlush(dis);
+#endif
 }
 
 
@@ -600,10 +676,16 @@ fb_filledcircle(int x0, int y0, int r, int color)
 		fb_rectangle(x0 - y, y0 + x, x0 + y, y0 + x, color);
 		fb_rectangle(x0 - y, y0 - x, x0 + y, y0 - x, color);
 	}
+#ifndef f32c
+	XFlush(dis);
+#endif
 }
 
 
-__attribute__((optimize("-O3"))) void
+#ifdef f32c
+__attribute__((optimize("-O3")))
+#endif
+void
 fb_text(int x0, int y0, const char *cp, int color, int scale)
 {
 	int c, x, y, xs, ys, off, dot;
@@ -618,8 +700,12 @@ fb_text(int x0, int y0, const char *cp, int color, int scale)
 
 next_char:
 	c = *cp++;
-	if (c == 0)
+	if (c == 0) {
+#ifndef f32c
+	XFlush(dis);
+#endif
 		return;
+	}
 	
 	if (c < 32 || c > 126)
 		bp = font_map;

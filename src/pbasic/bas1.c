@@ -79,8 +79,8 @@ main(int argc, char **argv)
 	startfp();              /* start up the floating point hardware */
 #ifdef f32c
 	setup_f32c();
-	setup_fb();
 #endif
+	setup_fb();
 	setupfiles(argc,argv);
 #ifndef f32c
 	setupmyterm();		/* set up files after processing files */
@@ -994,9 +994,6 @@ ival	len;
 	void	*p;
 
 #ifndef	OWN_ALLOC
-#ifndef	i386
-	extern	void	*malloc(unsigned int);
-#endif
 	if( (p = malloc((unsigned int)len)) != 0)
 		return(p);
 	clear();
@@ -1038,9 +1035,6 @@ ival	len;
 	void	*p;
 
 #ifndef	OWN_ALLOC
-#ifndef	i386
-	extern	void	*malloc(unsigned int);
-#endif
 	if( (p = malloc((unsigned int)len)) != 0){
 		mfree( (MEMP)p);
 		return(1);

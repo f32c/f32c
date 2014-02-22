@@ -37,15 +37,6 @@
 #include "bas.h"
 
 
-#ifdef OWN_ALLOC
-extern void *m_get(unsigned int);
-extern void m_free(void *);
-#else
-#define	m_get(size) malloc(size)
-#define	m_free(ptr) free(ptr)
-#endif
-
-
 int
 file_cd()
 {
@@ -186,7 +177,7 @@ file_copy()
 		error(15);
 
 	for (buflen = 64 * 1024; buflen >= 4096; buflen = buflen >> 1) {
-		buf = m_get(buflen);
+		buf = mmalloc(buflen);
 		if (buf != NULL)
 			break;
 	}
@@ -197,7 +188,7 @@ file_copy()
 
 	to = open(to_name, O_CREAT|O_RDWR);
 	if (to < 0) {
-		m_free(buf);
+		mfree(buf);
 		close (from);	/* cannot creat file */
 		error(14);
 	}
@@ -210,7 +201,7 @@ file_copy()
 		if (got < 0) {
 			close(from);
 			close(to);
-			m_free(buf);
+			mfree(buf);
 			error(30);	/* unexpected eof */
 		}
 		wrote = write(to, buf, got);
@@ -235,7 +226,7 @@ file_copy()
 
 	close(from);
 	close(to);
-	m_free(buf);
+	mfree(buf);
 #ifdef f32c
 	printf("Copied %d bytes in %f s (%f bytes/s)\n", tot,
 	    0.001 * (end - start) / freq_khz,
