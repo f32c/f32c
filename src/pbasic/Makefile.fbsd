@@ -12,6 +12,7 @@ MK_INCLUDES += -I/usr/local/include
 
 # Do not link; use a pipe to feed the as
 MK_CFLAGS += -c -pipe -O3
+MK_CFLAGS += -Wall
 
 MK_LDFLAGS += -lm -lX11 -L/usr/local/lib
 

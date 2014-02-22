@@ -34,6 +34,11 @@
 #include <tjpgd.h>
 #else
 #include "../include/fb.h"
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xos.h>
+#include <X11/Xatom.h>
+#include <X11/keysym.h>
 #endif
 
 #include "bas.h"
@@ -80,21 +85,55 @@ static const struct colormap {
 	{ -1, NULL },
 };
 
+static int fb_mode = 3;
 static int last_x;
 static int last_y;
 static int fgcolor;
 static int bgcolor;
-static int fb_mode = 3;
+void *fb_buff;
 
+#ifndef f32c
+static Display *dis;
+static Window win;
+static XImage *ximg;
+static uint32_t *img;
+static int x11_update_pending;
+#endif
 
+#ifdef f32c
+#define	X11_SCHED_UPDATE()
+#else
+#define	X11_SCHED_UPDATE() do {x11_update_pending = 1;} while (0)
+#endif
+
+#ifdef f32c
 void
 setup_fb(void)
 {
 
 	/* Turn off video framebuffer */
-	fb_set_mode(3);
+	fb_set_mode(3, NULL);
 }
+#endif
 
+
+#ifndef f32c
+void
+update_x11(void)
+{
+	uint16_t *fb_16 = fb_buff;
+	int i;
+
+	if (fb_mode > 1 || x11_update_pending == 0)
+		return;
+	x11_update_pending = 0;
+
+	for (i = 0; i < 512 * 288; i ++)
+		img[i] = fb_16[i];
+	XPutImage(dis, win, DefaultGC(dis, 0), ximg, 0, 0, 0, 0, 512, 288);
+	XFlush(dis);
+}
+#endif
 
 int
 vidmode(void)
@@ -105,14 +144,50 @@ vidmode(void)
 	check();
 	if (mode < 0 || mode > 3)
 		error(33);	/* argument error */
-	fb_set_mode(mode);
-	fb_mode = mode;
+	if (mode != fb_mode) {
+		mfree(fb_buff);
+		fb_buff = NULL;
+		if (mode < 2) {
+			fb_buff = mmalloc(512 * 288 * (mode + 1));
+			if (fb_buff == NULL)
+				mode = 3;
+		}
+	}
+	fb_set_mode(mode, fb_buff);
 	fgcolor = fb_rgb2pal(255, 255, 255);
 	bgcolor = fb_rgb2pal(0, 0, 0);
 	if (mode < 2)
 		fb_rectangle(0, 0, 511, 287, bgcolor);
 	last_x = 0;
 	last_y = 0;
+#ifndef f32c
+	if (dis != NULL) {
+		XDestroyImage(ximg);
+		XUnmapWindow(dis, win);
+		XDestroyWindow(dis, win);
+		XCloseDisplay(dis);
+		dis = NULL;
+		img = NULL;
+	}
+	if (mode < 2) {
+		img = malloc(512 * 288 * 4);
+		dis = XOpenDisplay(NULL);
+		win = XCreateSimpleWindow(dis, RootWindow(dis, 0), 1, 1,
+		    512, 288, 0, WhitePixel(dis, 0), BlackPixel(dis, 0));
+		XMapWindow(dis, win);
+		XStoreName(dis, win, "BASIC");
+		XSizeHints* win_size_hints = XAllocSizeHints();
+		win_size_hints->flags = PMinSize;
+		win_size_hints->min_width = 512;
+		win_size_hints->min_height = 288;
+		XSetWMNormalHints(dis, win, win_size_hints);
+		XFree(win_size_hints);
+		ximg = XCreateImage(dis, DefaultVisual(dis, 0),
+		    24, ZPixmap, 0, (void *) img, 512, 288, 32, 0);
+		XFlush(dis);
+	}
+#endif
+	fb_mode = mode;
 	normret;
 }
 
@@ -203,6 +278,7 @@ plot(void)
 			firstdot = 0;
 		} else
 			fb_line(last_x, last_y, x, y, fgcolor);
+		X11_SCHED_UPDATE();
 		last_x = x;
 		last_y = y;
 		c = getch();
@@ -227,6 +303,7 @@ lineto(void)
 			error(SYNTAX);
 		y = evalint();
 		fb_line(last_x, last_y, x, y, fgcolor);
+		X11_SCHED_UPDATE();
 		last_x = x;
 		last_y = y;
 		c = getch();
@@ -277,6 +354,7 @@ rectangle(void)
 		fb_line(x1, y1, x0, y1, fgcolor);
 		fb_line(x0, y1, x0, y0, fgcolor);
 	}
+	X11_SCHED_UPDATE();
 	normret;
 }
 
@@ -311,6 +389,7 @@ circle(void)
 		fb_filledcircle(x, y, r, fgcolor);
 	else
 		fb_circle(x, y, r, fgcolor);
+	X11_SCHED_UPDATE();
 	normret;
 }
 
@@ -355,6 +434,7 @@ text(void)
 	fb_text(x, y, st->strval, (bgcolor << 16) | fgcolor,
 	    (scale_x << 16) | scale_y);
 	FREE_STR(st);
+	X11_SCHED_UPDATE();
 	normret;
 }
 
