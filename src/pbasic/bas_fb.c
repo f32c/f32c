@@ -99,6 +99,7 @@ static Display *dis;
 static Window win;
 static XImage *ximg;
 static uint32_t *img;
+static int x11_scale = 2;
 static int x11_update_pending;
 static struct timeval x11_last_updated;
 static struct timezone tz;
@@ -158,8 +159,9 @@ update_x11(void)
 	struct timeval now;
 	uint8_t *fb_8 = fb_buff;
 	uint16_t *fb_16 = fb_buff;
+	uint32_t *dstp = img;
 	int64_t delta;
-	int i;
+	int x, y, xs, ys;
 
 	if (fb_mode > 1 || x11_update_pending == 0)
 		return;
@@ -168,17 +170,24 @@ update_x11(void)
 	    now.tv_usec - x11_last_updated.tv_usec;
 	if (delta < 20000)
 		return;
-	x11_last_updated = now;
 	x11_update_pending = 0;
 
 	if (fb_mode == 0)
-		for (i = 0; i < 512 * 288; i ++)
-			img[i] = map8[fb_8[i]];
+	    for (y = 0; y < 288; y++, fb_8 += 512)
+		for (ys = 0; ys < x11_scale; ys++)
+		    for (x = 0; x < 512; x++)
+			for (xs = 0; xs < x11_scale; xs++)
+			    *dstp++ = map8[fb_8[x]];
 	else
-		for (i = 0; i < 512 * 288; i ++)
-			img[i] = map16[fb_16[i]];
-	XPutImage(dis, win, DefaultGC(dis, 0), ximg, 0, 0, 0, 0, 512, 288);
+	    for (y = 0; y < 288; y++, fb_16 += 512)
+		for (ys = 0; ys < x11_scale; ys++)
+		    for (x = 0; x < 512; x++)
+			for (xs = 0; xs < x11_scale; xs++)
+			    *dstp++ = map16[fb_16[x]];
+	XPutImage(dis, win, DefaultGC(dis, 0), ximg, 0, 0, 0, 0,
+	    512 * x11_scale, 288 * x11_scale);
 	XFlush(dis);
+	gettimeofday(&x11_last_updated, &tz);
 }
 #endif
 
@@ -217,20 +226,22 @@ vidmode(void)
 		img = NULL;
 	}
 	if (mode < 2) {
-		img = malloc(512 * 288 * 4);
+		img = malloc(512 * 288 * 4 * x11_scale * x11_scale);
 		dis = XOpenDisplay(NULL);
 		win = XCreateSimpleWindow(dis, RootWindow(dis, 0), 1, 1,
-		    512, 288, 0, WhitePixel(dis, 0), BlackPixel(dis, 0));
+		    512 * x11_scale, 288 * x11_scale,
+		    0, WhitePixel(dis, 0), BlackPixel(dis, 0));
 		XMapWindow(dis, win);
 		XStoreName(dis, win, "BASIC");
 		XSizeHints* win_size_hints = XAllocSizeHints();
 		win_size_hints->flags = PMinSize;
-		win_size_hints->min_width = 512;
-		win_size_hints->min_height = 288;
+		win_size_hints->min_width = 512 * x11_scale;
+		win_size_hints->min_height = 288 * x11_scale;
 		XSetWMNormalHints(dis, win, win_size_hints);
 		XFree(win_size_hints);
 		ximg = XCreateImage(dis, DefaultVisual(dis, 0),
-		    24, ZPixmap, 0, (void *) img, 512, 288, 32, 0);
+		    24, ZPixmap, 0, (void *) img,
+		    512 * x11_scale, 288 * x11_scale, 32, 0);
 		XFlush(dis);
 	}
 #endif
