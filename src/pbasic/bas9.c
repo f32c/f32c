@@ -259,13 +259,13 @@ getlin()
 	return(l);
 }
 
-/*      getline() gets a line number and returns a valid pointer
+/*      getbline() gets a line number and returns a valid pointer
  *    to it, if there is no linenumber or the line is not there
  *    then there is an error. Used by 'goto' etc.
  */
 
 lpoint
-getline()
+getbline()
 {
 	lnumb	l=0;
 	lpoint p;
