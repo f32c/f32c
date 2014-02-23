@@ -260,7 +260,7 @@ gosub()
 {
 	lpoint l;
 
-	l=getline();
+	l=getbline();
 	check();
 	bld_gosub();
 	stocurlin=l;
@@ -401,7 +401,7 @@ gotos()
 {
 	lpoint p;
 
-	p=getline();
+	p=getbline();
 	check();
 	if(!stocurlin){
 		clr_stack(bstack);		/* zap the stack */
@@ -1140,10 +1140,10 @@ bdelete()
 	lpoint	p3;
 	lpoint p1,p2;
 
-	p1=getline();
+	p1=getbline();
 	if(getch()!='-')
 		error(SYNTAX);
-	p2=getline();
+	p2=getbline();
 	check();
 	if(p1->linnumb > p2->linnumb)
 		reset();

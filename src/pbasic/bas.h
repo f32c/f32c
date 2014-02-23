@@ -578,7 +578,7 @@ char	*getenv();
 extern	const	mathf_t	mbin;
 
 filebufp getf(ival, int);
-lpoint  getline(void), getsline(lnumb);
+lpoint  getbline(void), getsline(lnumb);
 lnumb	getrline(lpoint);
 void	prsline(const char *, lpoint);
 struct	entry	*getnm(int, int);
