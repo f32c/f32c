@@ -81,8 +81,8 @@ main(int argc, char **argv)
 	startfp();              /* start up the floating point hardware */
 #ifdef f32c
 	setup_f32c();
-	setup_fb();
 #endif
+	setup_fb();
 	setupfiles(argc,argv);
 #ifndef f32c
 	setupmyterm();		/* set up files after processing files */
@@ -502,8 +502,6 @@ execute()
 #ifdef f32c
 		if(sio_getchar(0) == 3)
 			trap(0);
-#else
-		update_x11();
 #endif
 		savepoint=point;
 		if(trapped)
@@ -531,6 +529,9 @@ execute()
 				/* execute the command */
 				i = (*commandf[c&0177])();
 			}
+#ifndef f32c
+			update_x11();
+#endif
 		}
 		if(i == NORMAL){
 			if((c=getch())==':')

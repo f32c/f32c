@@ -34,6 +34,8 @@
 #include <tjpgd.h>
 #else
 #include "../include/fb.h"
+#include <math.h>
+#include <sys/time.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
@@ -98,6 +100,10 @@ static Window win;
 static XImage *ximg;
 static uint32_t *img;
 static int x11_update_pending;
+static struct timeval x11_last_updated;
+static struct timezone tz;
+static uint32_t map8[256];
+static uint32_t map16[65536];
 #endif
 
 #ifdef f32c
@@ -106,30 +112,71 @@ static int x11_update_pending;
 #define	X11_SCHED_UPDATE() do {x11_update_pending = 1;} while (0)
 #endif
 
-#ifdef f32c
+
 void
 setup_fb(void)
 {
+#ifndef f32c
+	int r, g, b, i;
+
+	/* XXX brute force guessing method - revisit!!! */
+	/* Populate PAL palette to RGB conversion maps */
+	fb_set_mode(1, NULL);
+	for (r = 0; r < 256; r += 1)
+		for (g = 0; g < 256; g += 1)
+			for (b = 0; b < 256; b += 1) {
+				i = fb_rgb2pal(r, g, b);
+				map16[i] = ((r << 16) + (g << 8) + b);
+			}
+	fb_set_mode(0, NULL);
+	for (r = 0; r < 256; r += 1)
+		for (g = 0; g < 256; g += 1)
+			for (b = 0; b < 256; b += 1) {
+				i = fb_rgb2pal(r, g, b);
+				map8[i] = ((r << 16) + (g << 8) + b);
+			}
+	/* Populate monochrome parts of the pallete */
+	for (i = 0; i < 16; i++) {
+		r = g = b = i << 4;
+		map8[i] = ((r << 16) + (g << 8) + b);
+	}
+	for (i = 0; i < 128 * 32; i++) {
+		r = g = b = (uint8_t) i << 1;
+		map16[i] = ((r << 16) + (g << 8) + b);
+	}
+#endif
 
 	/* Turn off video framebuffer */
 	fb_set_mode(3, NULL);
 }
-#endif
 
 
 #ifndef f32c
 void
 update_x11(void)
 {
+	struct timeval now;
+	uint8_t *fb_8 = fb_buff;
 	uint16_t *fb_16 = fb_buff;
+	int64_t delta;
 	int i;
 
 	if (fb_mode > 1 || x11_update_pending == 0)
 		return;
+	gettimeofday(&now, &tz);
+	delta = (now.tv_sec - x11_last_updated.tv_sec) * 1000000 +
+	    now.tv_usec - x11_last_updated.tv_usec;
+	if (delta < 20000)
+		return;
+	x11_last_updated = now;
 	x11_update_pending = 0;
 
-	for (i = 0; i < 512 * 288; i ++)
-		img[i] = fb_16[i];
+	if (fb_mode == 0)
+		for (i = 0; i < 512 * 288; i ++)
+			img[i] = map8[fb_8[i]];
+	else
+		for (i = 0; i < 512 * 288; i ++)
+			img[i] = map16[fb_16[i]];
 	XPutImage(dis, win, DefaultGC(dis, 0), ximg, 0, 0, 0, 0, 512, 288);
 	XFlush(dis);
 }
@@ -544,7 +591,7 @@ loadjpg(void)
 			error(12); /* buffer size overflow in field */
 		}
 
-		devid.fbuf = (void *) 0x800b0000; /* XXX hardcoded!!! */
+		devid.fbuf = fb_buff;
 		devid.wfbuf = 512;
 		r = jd_decomp(&jdec, out_func, 0);
                 if (r != JDR_OK)
