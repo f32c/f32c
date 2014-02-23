@@ -99,7 +99,7 @@ static Display *dis;
 static Window win;
 static XImage *ximg;
 static uint32_t *img;
-static int x11_scale = 2;
+static int x11_scale = 1;
 static int x11_update_pending;
 static struct timeval x11_last_updated;
 static struct timezone tz;
@@ -154,7 +154,7 @@ setup_fb(void)
 
 #ifndef f32c
 void
-update_x11(void)
+update_x11(int nodelay)
 {
 	struct timeval now;
 	uint8_t *fb_8 = fb_buff;
@@ -168,7 +168,7 @@ update_x11(void)
 	gettimeofday(&now, &tz);
 	delta = (now.tv_sec - x11_last_updated.tv_sec) * 1000000 +
 	    now.tv_usec - x11_last_updated.tv_usec;
-	if (delta < 20000)
+	if (!nodelay && delta < 20000)
 		return;
 	x11_update_pending = 0;
 
@@ -194,12 +194,26 @@ update_x11(void)
 int
 vidmode(void)
 {
-	int mode;
+	int mode, scale, c;
 
 	mode = evalint();
-	check();
 	if (mode < 0 || mode > 3)
 		error(33);	/* argument error */
+
+	c = getch();
+	if (istermin(c))
+		point--;
+	else {
+		if (c != ',')
+			error(15);
+		scale = evalint();
+		check();
+		if (scale < 1 || scale > 4)
+			error(33);	/* argument error */
+		x11_scale = scale;
+	}
+	check();
+
 	if (mode != fb_mode) {
 		mfree(fb_buff);
 		fb_buff = NULL;
@@ -226,8 +240,10 @@ vidmode(void)
 		img = NULL;
 	}
 	if (mode < 2) {
-		img = malloc(512 * 288 * 4 * x11_scale * x11_scale);
 		dis = XOpenDisplay(NULL);
+		if (dis == NULL)
+			error(14);	/* cannot creat file */
+		img = malloc(512 * 288 * 4 * x11_scale * x11_scale);
 		win = XCreateSimpleWindow(dis, RootWindow(dis, 0), 1, 1,
 		    512 * x11_scale, 288 * x11_scale,
 		    0, WhitePixel(dis, 0), BlackPixel(dis, 0));
