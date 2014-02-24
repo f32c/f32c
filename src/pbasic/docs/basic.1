@@ -561,7 +561,7 @@ Pause program execution for
 seconds.  Fractional values are permitted for specifying delays with
 sub-second resolution.
 .TP
-.B VIDMODE expr {, scaling}
+.B VIDMODE expr {, scaling {, onroot}}
 Choose one of four possible video output modes, identified by integer
 values in range from 0 to 3.  Mode 0 uses a fixed 8-bit colour pallete,
 whereas mode 1 uses a fixed 16-bit pallete for each of
@@ -572,9 +572,15 @@ Modes 2 and 3 do not consume any memory bandwidth, hence permit
 the CPU to operate at full speed, whereas activating the framebuffer
 (modes 0 and 1) may have a noticeable impact on program execution
 performance.  By default the video framebuffer is turned off (mode 3).
-An optional integer scaling factor ranging from 1 to 4 may be specified
-when displaying the graphical output on an X11 screen.  The scaling
-factor is silently ignored when running on the ULX2S FPGA board.
+An optional integer
+.I scaling
+factor ranging from 1 to 4 may be specified
+when displaying the graphical output on an X11 screen.  Additionally,
+graphic output may be directed to the root window by setting
+.I onroot 
+parameter to 1. 
+Scaling factor and onroot parameters are silently ignored when
+BASIC is running on the ULX2S FPGA board.
 .TP
 .B COLOR fgcolor {, bgcolor}
 Select a color to be used in subsequent graphics operations.  An optional
