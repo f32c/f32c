@@ -210,7 +210,9 @@ vidmode(void)
 		check();
 		if (scale < 1 || scale > 4)
 			error(33);	/* argument error */
+#ifndef f32c
 		x11_scale = scale;
+#endif
 	}
 	check();
 
