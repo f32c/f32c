@@ -675,8 +675,8 @@ int	endd(void),runn(void),gotos(void),rem(void),lets(void),list(void),
 	bmat(void), bwrite(void), berase(void),
 	file_kill(void), file_mkdir(void), file_copy(void), file_rename(void),
 	file_cd(void), file_pwd(void), file_more(void),
-	vidmode(void), color(void), plot(void), lineto(void),
-	rectangle(void), circle(void), text(void), loadjpg(void);
+	plot(void), lineto(void), rectangle(void), circle(void), text(void),
+	vidmode(void), ink(void), paper(void), loadjpg(void);
 
 int	bas_sleep(void), bauds(void);
 int	quit(void);
@@ -918,13 +918,13 @@ static const intf_t commandf = {
 	bdeffn, bopts, tron, troff, bdir, bdirl, bmat, bwrite, berase,
 	file_more, file_kill, file_mkdir, file_copy, file_rename,
 	file_cd, file_pwd,
-	vidmode, color, plot, lineto, rectangle, circle, text
+	plot, lineto, rectangle, circle, text
 };
 
 /*      extended commands */
 
 static const intf_t xcmdf = {
-	loadjpg
+	vidmode, ink, paper, loadjpg
 };
 
 /*      table of error messages */
@@ -1077,13 +1077,11 @@ const	struct  tabl    table[]={
 	"CD",		0316,
 	"PWD",		0317,
 	/* framebuffer commands */
-	"VIDMODE",	0320,
-	"COLOR",	0321,
-	"PLOT",		0322,
-	"LINETO",	0323,
-	"RECTANGLE",	0324,
-	"CIRCLE",	0325,
-	"TEXT",		0326,
+	"PLOT",		0320,
+	"LINETO",	0321,
+	"RECTANGLE",	0322,
+	"CIRCLE",	0323,
+	"TEXT",		0324,
 	/*
 	 * commands go to here
 	 */
@@ -1119,8 +1117,13 @@ const	struct  tabl    table[]={
 	 * which are then followed by one of the following after it has
 	 * been decoded.
 	 */
+
 	/* extended commands */
-	"LOADJPG",	MKXCMD(0),
+	"VIDMODE",	MKXCMD(0),
+	"INK",		MKXCMD(1),
+	"PAPER",	MKXCMD(2),
+	"LOADJPG",	MKXCMD(3),
+
 	/* string functs with args */
 	"RIGHT$",	MKSFA(0),
 	"LEFT$",	MKSFA(1),
