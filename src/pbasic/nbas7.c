@@ -4,6 +4,10 @@
 #include        "bas.h"
 #include	<errno.h>
 
+#ifndef f32c
+#include	<sys/ioctl.h>
+#endif
+
 /*
  * these variables should be set in the terminal configuration routines.
  */
@@ -26,6 +30,7 @@ int
 readc()
 {
 	char    c='\r';
+	int 	got;
 
 #ifdef  SIG_JMP
 	if(!setjmp(ecall)){
@@ -37,7 +42,20 @@ readc()
 		ecalling = 0;
 	}
 #else
-	switch(read(0,&c,1)){		/* reading from a pipe exit on eof */
+#ifndef f32c
+	do {
+		ioctl(0, FIONREAD, &got);
+		if (got) {
+			got = read(0, &c, 1);
+			break;
+		}
+		update_x11();
+		usleep(50 * 1000);
+	} while (1);
+#else
+	got = read(0, &c, 1);
+#endif
+	switch(got) {		/* reading from a pipe exit on eof */
 	case 1:
 		break;
 	case 0:

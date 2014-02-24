@@ -117,9 +117,6 @@ main(int argc, char **argv)
 	firstrun = 0;
 #endif
 
-#ifndef f32c
-	update_x11(1);
-#endif
 	prints("Ready\n");
 
 	for(;;){
@@ -533,7 +530,7 @@ execute()
 				i = (*commandf[c&0177])();
 			}
 #ifndef f32c
-			update_x11(0);
+			update_x11();
 #endif
 		}
 		if(i == NORMAL){

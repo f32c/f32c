@@ -154,8 +154,9 @@ setup_fb(void)
 
 #ifndef f32c
 void
-update_x11(int nodelay)
+update_x11()
 {
+	XEvent ev;
 	struct timeval now;
 	uint8_t *fb_8 = fb_buff;
 	uint16_t *fb_16 = fb_buff;
@@ -163,12 +164,16 @@ update_x11(int nodelay)
 	int64_t delta;
 	int x, y, xs, ys;
 
-	if (fb_mode > 1 || x11_update_pending == 0)
+	if (fb_mode > 1)
+		return;
+	while (XCheckMaskEvent(dis, ExposureMask | StructureNotifyMask, &ev))
+		x11_update_pending = 1;
+	if (x11_update_pending == 0)
 		return;
 	gettimeofday(&now, &tz);
 	delta = (now.tv_sec - x11_last_updated.tv_sec) * 1000000 +
 	    now.tv_usec - x11_last_updated.tv_usec;
-	if (!nodelay && delta < 20000)
+	if (delta < 20000)
 		return;
 	x11_update_pending = 0;
 
@@ -248,13 +253,16 @@ vidmode(void)
 		img = malloc(512 * 288 * 4 * x11_scale * x11_scale);
 		win = XCreateSimpleWindow(dis, RootWindow(dis, 0), 1, 1,
 		    512 * x11_scale, 288 * x11_scale,
-		    0, WhitePixel(dis, 0), BlackPixel(dis, 0));
+		    10, WhitePixel(dis, 0), BlackPixel(dis, 0));
+		XSelectInput(dis, win, ExposureMask | StructureNotifyMask);
 		XMapWindow(dis, win);
-		XStoreName(dis, win, "BASIC");
+		XStoreName(dis, win, "Rabbit BASIC");
 		XSizeHints* win_size_hints = XAllocSizeHints();
-		win_size_hints->flags = PMinSize;
+		win_size_hints->flags = PMinSize | PMaxSize;
 		win_size_hints->min_width = 512 * x11_scale;
 		win_size_hints->min_height = 288 * x11_scale;
+		win_size_hints->max_width = 512 * x11_scale;
+		win_size_hints->max_height = 288 * x11_scale;
 		XSetWMNormalHints(dis, win, win_size_hints);
 		XFree(win_size_hints);
 		ximg = XCreateImage(dis, DefaultVisual(dis, 0),
