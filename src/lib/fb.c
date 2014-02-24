@@ -604,7 +604,7 @@ fb_filledcircle(int x0, int y0, int r, int color)
 
 
 __attribute__((optimize("-O3"))) void
-fb_text(int x0, int y0, const char *cp, int color, int scale)
+fb_text(int x0, int y0, const char *cp, int fgcolor, int bgcolor, int scale)
 {
 	int c, x, y, xs, ys, off, dot;
 	uint8_t *bp;
@@ -643,9 +643,11 @@ next_char:
 				continue;
 			off = (y << 9) + x;
 			if (__predict_false(c & 0x80))
-				dot = color;
+				dot = fgcolor;
+			else if (bgcolor < 0)
+				continue;
 			else
-				dot = color >> 16;
+				dot = bgcolor;
 			if (__predict_true(fb_mode != 0))
 				*((uint16_t *) &fb[off << 1]) = dot;
 			else

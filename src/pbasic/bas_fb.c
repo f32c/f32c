@@ -202,6 +202,10 @@ vidmode(void)
 {
 	int mode, c;
 
+	/* Skip whitespace */
+	c = getch();
+	point--;
+
 	mode = evalint();
 	if (mode < 0 || mode > 3)
 		error(33);	/* argument error */
@@ -285,6 +289,7 @@ vidmode(void)
 		ximg = XCreateImage(dis, DefaultVisual(dis, 0),
 		    24, ZPixmap, 0, (void *) img,
 		    512 * x11_scale, 288 * x11_scale, 32, 0);
+		gettimeofday(&x11_last_updated, &tz);
 		XFlush(dis);
 	}
 #endif
@@ -294,12 +299,11 @@ vidmode(void)
 
 
 int
-color(void)
+ink(void)
 {
 	char buf[16];
 	STR st;
 	int c, color = 0;
-	int bg = 0;
 	uint32_t i, len;
 
 	/* Skip whitespace */
@@ -342,23 +346,62 @@ color(void)
 		    color & 0xff);
 	} else
 		color = evalint();
+	check();
+	fgcolor = color & 0xffff;
+	normret;
+}
 
+
+int
+paper(void)
+{
+	char buf[16];
+	STR st;
+	int c, color = 0;
+	uint32_t i, len;
+
+	/* Skip whitespace */
 	c = getch();
-	if (istermin(c))
-		point--;
-	else {
-		if (c != ',')
-			error(15);
-		bg = evalint();
-		check();
-		if (bg < 0 || bg > 1)
-			error(33);	/* argument error */
-	}
+	point--;
 
-	if (bg)
-		bgcolor = color & 0xffff;
-	else
-		fgcolor = color & 0xffff;
+	/* First arg string or numeric? */
+	if (checktype()) {
+		st = stringeval();
+		NULL_TERMINATE(st);
+		len = strlen(st->strval);
+		if (len == 0 || len > 15) {
+			FREE_STR(st);
+			error(33);	/* argument error */
+		}
+		for (i = 0; i <= len; i++)
+			buf[i] = tolower(st->strval[i]);
+		FREE_STR(st);
+		if (buf[0] == '#') {
+			if (len != 7)
+				error(33);	/* argument error */
+			for (i = 1; i < 7; i++) {
+				c = buf[i];
+				if (!isxdigit(c))
+					error(33);	/* argument error */
+				if (c <= '9')
+					color = (color << 4) + c - '0';
+				else
+					color = (color << 4) + c - 'a' + 10;
+			}
+		} else {
+			i = -1;
+			do {
+				if (colormap[++i].name == NULL)
+					error(33);	/* argument error */
+			} while (strcmp(buf, colormap[i].name) != 0);
+			color = colormap[i].value;
+		}
+		color = fb_rgb2pal(color >> 16, (color >> 8) & 0xff,
+		    color & 0xff);
+	} else
+		color = evalint();
+	check();
+	bgcolor = color;
 	normret;
 }
 
@@ -368,6 +411,10 @@ plot(void)
 {
 	int x, y, c;
 	int firstdot = 1;
+
+	/* Skip whitespace */
+	c = getch();
+	point--;
 
 	do {
 		x = evalint();
@@ -398,6 +445,10 @@ lineto(void)
 {
 	int x, y, c;
 
+	/* Skip whitespace */
+	c = getch();
+	point--;
+
 	do {
 		x = evalint();
 		if(getch() != ',')
@@ -423,6 +474,10 @@ rectangle(void)
 {
 	int x0, y0, x1, y1;
 	int c, fill = 0;
+
+	/* Skip whitespace */
+	c = getch();
+	point--;
 
 	x0 = evalint();
 	if(getch() != ',')
@@ -466,6 +521,10 @@ circle(void)
 	int x, y, r;
 	int c, fill = 0;
 
+	/* Skip whitespace */
+	c = getch();
+	point--;
+
 	x = evalint();
 	if(getch() != ',')
 		error(SYNTAX);
@@ -503,6 +562,10 @@ text(void)
 	int scale_y = 1;
 	STR st;
 
+	/* Skip whitespace */
+	c = getch();
+	point--;
+
 	x = evalint();
 	if(getch() != ',')
 		error(SYNTAX);
@@ -532,8 +595,7 @@ text(void)
 		scale_y = evalint() & 0xff;
 	}
 
-	fb_text(x, y, st->strval, (bgcolor << 16) | fgcolor,
-	    (scale_x << 16) | scale_y);
+	fb_text(x, y, st->strval, fgcolor, bgcolor, (scale_x << 16) | scale_y);
 	FREE_STR(st);
 	X11_SCHED_UPDATE();
 	normret;
