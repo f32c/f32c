@@ -100,6 +100,7 @@ static Window win;
 static XImage *ximg;
 static uint32_t *img;
 static int x11_scale = 1;
+static int x11_onroot;
 static int x11_update_pending;
 static struct timeval x11_last_updated;
 static struct timezone tz;
@@ -199,7 +200,7 @@ update_x11()
 int
 vidmode(void)
 {
-	int mode, scale, c;
+	int mode, c;
 
 	mode = evalint();
 	if (mode < 0 || mode > 3)
@@ -211,13 +212,25 @@ vidmode(void)
 	else {
 		if (c != ',')
 			error(15);
-		scale = evalint();
-		check();
-		if (scale < 1 || scale > 4)
+		c = evalint();
+		if (c < 1 || c > 4)
 			error(33);	/* argument error */
 #ifndef f32c
-		x11_scale = scale;
+		x11_scale = c;
 #endif
+		c = getch();
+		if (istermin(c))
+			point--;
+		else {
+			if (c != ',')
+				error(15);
+			c = evalint();
+			if (c < 0 || c > 1)
+				error(33);	/* argument error */
+#ifndef f32c
+			x11_onroot = c;
+#endif
+		}
 	}
 	check();
 
@@ -251,12 +264,16 @@ vidmode(void)
 		if (dis == NULL)
 			error(14);	/* cannot creat file */
 		img = malloc(512 * 288 * 4 * x11_scale * x11_scale);
-		win = XCreateSimpleWindow(dis, RootWindow(dis, 0), 1, 1,
-		    512 * x11_scale, 288 * x11_scale,
-		    10, WhitePixel(dis, 0), BlackPixel(dis, 0));
+		if (x11_onroot)
+			win = RootWindow(dis, 0);
+		else {
+			win = XCreateSimpleWindow(dis, RootWindow(dis, 0),
+			    1, 1, 512 * x11_scale, 288 * x11_scale,
+			    10, WhitePixel(dis, 0), BlackPixel(dis, 0));
+			XMapWindow(dis, win);
+			XStoreName(dis, win, "Rabbit BASIC");
+		}
 		XSelectInput(dis, win, ExposureMask | StructureNotifyMask);
-		XMapWindow(dis, win);
-		XStoreName(dis, win, "Rabbit BASIC");
 		XSizeHints* win_size_hints = XAllocSizeHints();
 		win_size_hints->flags = PMinSize | PMaxSize;
 		win_size_hints->min_width = 512 * x11_scale;
