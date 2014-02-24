@@ -582,11 +582,9 @@ parameter to 1.
 Scaling factor and onroot parameters are silently ignored when
 BASIC is running on the ULX2S FPGA board.
 .TP
-.B COLOR fgcolor {, bgcolor}
-Select a color to be used in subsequent graphics operations.  An optional
-background color which is only used when displaying text
-may be specified as a second argument.  Colors may be specified
-in three different formats.  If the argument
+.B INK color
+Select a color to be used in subsequent graphics operations.
+Colors may be specified in three different formats.  If the argument
 provided is a string and the first character of the argument is "#",
 then next six characters are interpreted as hexadecimal values
 in form of
@@ -621,6 +619,13 @@ not "#", then the color key is searched for in the following pallete:
 Finally, a color may be specified as a numeric value, which will be
 interpreted differently depending on the pallete in use (8-bit or
 16-bit).
+.TP
+.B PAPER color
+Select a color to be used as a background when drawing text.  The same
+syntax and rules as for the
+.I INK
+command apply.  Additionally, transparent background may be selected
+by specifying -1 as the color value.
 .TP
 .B PLOT x0, y0 {, x1, y1 ... }
 Draw a single pixel at coordinates
