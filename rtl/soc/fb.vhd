@@ -1,5 +1,5 @@
 --
--- Copyright 2013 Marko Zec, University of Zagreb
+-- Copyright 2013, 2014 Marko Zec, University of Zagreb
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -173,13 +173,16 @@ begin
 		    R_chroma_sat <= "0000";
 		    -- Don't change chroma phase for grayscale pixels.
 		else
-		    if pixel_data(7) = '1' then
-			R_luma <= pixel_data(6 downto 4) & "1111";
-			R_chroma_sat <= "0011";
+		    if pixel_data(7 downto 6) = "10" then
+			R_luma <= pixel_data(5 downto 4) & "11110";
+			R_chroma_sat <= "0110";
+		    elsif pixel_data(7 downto 6) = "11" then
+			R_luma <= pixel_data(5 downto 4) & "11110";
+			R_chroma_sat <= "1111";
 		    else
 			R_luma <= ((pixel_data(6 downto 4) - 1) & "0000") +
 			  ("00" & (pixel_data(6 downto 4) - 1) & "00");
-			R_chroma_sat <= "1111";
+			R_chroma_sat <= "0010";
 		    end if;
 		    R_chroma_phase <= (pixel_data(3 downto 0) & "01");
 		end if;
