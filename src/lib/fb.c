@@ -366,10 +366,12 @@ fb_rgb2pal(int r, int g, int b) {
 	else {
 		/* 8-bit encoding */
 		chroma >>= 2;
-		if (__predict_false(saturation > 8)) /* saturated color */
-			color = 32 + (luma * 6 / 8 / 32) * 16 + chroma;
+		if (__predict_false(saturation > 10)) /* saturated color */
+			color = 192 + (luma / 64) * 16 + chroma;
+		else if (__predict_false(saturation > 5)) /* medium color */
+			color = 128 + (luma / 64) * 16 + chroma;
 		else if (__predict_true(saturation > 0)) /* dim color */
-			color = 128 + (luma / 32) * 16 + chroma;
+			color = 32 + (luma * 6 / 8 / 32) * 16 + chroma;
 		else 				/* grayscale */
 			color = luma / 8;
 	}
