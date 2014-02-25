@@ -115,46 +115,71 @@ static uint32_t map16[65536];
 #endif
 
 
+#ifndef f32c
+static uint32_t
+pal2rgb(int sat, int chroma, int luma)
+{
+	int u, v, r, g, b;
+	float phase, PI = 3.14159265359, ampl = 8.5;
+
+	phase = PI * (chroma - 6.5) / 16.0;
+	u = 128.0 + ampl * sat * cos(phase);
+	v = 128.0 + ampl * sat * sin(phase);
+	r = luma * 2 + 1.4075 * (v - 128);
+	g = luma * 2 - 0.3455 * (u - 128) - (0.7169 * (v - 128));
+	b = luma * 2 + 1.7790 * (u - 128);
+	if (r < 0)
+		r = 0;
+	if (r > 255)
+		r = 255;
+	if (g < 0)	
+		g = 0;
+	if (g > 255)	
+		g = 255;
+	if (b < 0)
+		b = 0;
+	if (b > 255)
+		b = 255;
+
+	return ((r << 16) + (g << 8) + b);
+}
+#endif
+
+
 void
 setup_fb(void)
 {
 #ifndef f32c
-	int r, g, b, i;
-	int u, v, sat, chroma, luma;
-	float phase, PI = 3.14159265359, ampl = 8.5;
+	int sat, chroma, luma, i;
 
-	/* Populate pallete to RGB maps */
+	/* Populate 16-bit pallete to RGB map */
 	for (sat = 0; sat < 16; sat++)
 	    for (chroma = 0; chroma < 32; chroma++)
 		for (luma = 0; luma < 128; luma++) {
-		    phase = PI * (chroma - 6.5) / 16.0;
-		    u = 128.0 + ampl * sat * cos(phase);
-		    v = 128.0 + ampl * sat * sin(phase);
-		    r = luma * 2 + 1.4075 * (v - 128);
-		    g = luma * 2 - 0.3455 * (u - 128) - (0.7169 * (v - 128));
-		    b = luma * 2 + 1.7790 * (u - 128);
-		    if (r < 0)
-			r = 0;
-		    if (r > 255)
-			r = 255;
-		    if (g < 0)	
-			g = 0;
-		    if (g > 255)	
-			g = 255;
-		    if (b < 0)
-			b = 0;
-		    if (b > 255)
-			b = 255;
 		    i = (sat << 12) | ((chroma << 7) | luma);
-		    map16[i] = ((r << 16) + (g << 8) + b);
-		    if (sat > 8)		/* saturated color */
-			i = 32 + (luma * 6 / 8 / 16) * 16 + chroma / 2;
-		    else if (sat > 0)	/* dim color */
-			i = 128 + (luma / 16) * 16 + chroma / 2;
-		    else			/* grayscale */
-			i = luma / 4;
-		    map8[i] = ((r << 16) + (g << 8) + b);
+		    map16[i] = pal2rgb(sat, chroma, luma);
 		}
+	/* Populate 8-bit pallete to RGB map */
+	for (i = 0; i < 32; i++)
+		map8[i] = pal2rgb(0, 0, i * 4);
+	for (i = 32; i < 128; i++) {
+		luma = (i - 32) / 16 * 5.5 * 4;
+		sat = 3;
+		chroma = (i % 16) * 2 + 1;
+		map8[i] = pal2rgb(sat, chroma, luma);
+	}
+	for (i = 128; i < 192; i++) {
+		luma = (i - 128) / 16 * 8 * 4 + 7;
+		sat = 7;
+		chroma = (i % 16) * 2 + 1;
+		map8[i] = pal2rgb(sat, chroma, luma);
+	}
+	for (i = 192; i < 256; i++) {
+		luma = (i - 192) / 16 * 8 * 4 + 15;
+		sat = 15;
+		chroma = (i % 16) * 2 + 1;
+		map8[i] = pal2rgb(sat, chroma, luma);
+	}
 #endif
 
 	/* Turn off video framebuffer */
