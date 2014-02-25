@@ -120,32 +120,41 @@ setup_fb(void)
 {
 #ifndef f32c
 	int r, g, b, i;
+	int u, v, sat, chroma, luma;
+	float phase, PI = 3.14159265359, ampl = 8.5;
 
-	/* XXX brute force guessing method - revisit!!! */
-	/* Populate PAL palette to RGB conversion maps */
-	fb_set_mode(1, NULL);
-	for (r = 0; r < 256; r += 1)
-		for (g = 0; g < 256; g += 1)
-			for (b = 0; b < 256; b += 1) {
-				i = fb_rgb2pal(r, g, b);
-				map16[i] = ((r << 16) + (g << 8) + b);
-			}
-	fb_set_mode(0, NULL);
-	for (r = 0; r < 256; r += 1)
-		for (g = 0; g < 256; g += 1)
-			for (b = 0; b < 256; b += 1) {
-				i = fb_rgb2pal(r, g, b);
-				map8[i] = ((r << 16) + (g << 8) + b);
-			}
-	/* Populate monochrome parts of the pallete */
-	for (i = 0; i < 16; i++) {
-		r = g = b = i << 4;
-		map8[i] = ((r << 16) + (g << 8) + b);
-	}
-	for (i = 0; i < 128 * 32; i++) {
-		r = g = b = (uint8_t) i << 1;
-		map16[i] = ((r << 16) + (g << 8) + b);
-	}
+	/* Populate pallete to RGB maps */
+	for (sat = 0; sat < 16; sat++)
+	    for (chroma = 0; chroma < 32; chroma++)
+		for (luma = 0; luma < 128; luma++) {
+		    phase = PI * (chroma - 6.5) / 16.0;
+		    u = 128.0 + ampl * sat * cos(phase);
+		    v = 128.0 + ampl * sat * sin(phase);
+		    r = luma * 2 + 1.4075 * (v - 128);
+		    g = luma * 2 - 0.3455 * (u - 128) - (0.7169 * (v - 128));
+		    b = luma * 2 + 1.7790 * (u - 128);
+		    if (r < 0)
+			r = 0;
+		    if (r > 255)
+			r = 255;
+		    if (g < 0)	
+			g = 0;
+		    if (g > 255)	
+			g = 255;
+		    if (b < 0)
+			b = 0;
+		    if (b > 255)
+			b = 255;
+		    i = (sat << 12) | ((chroma << 7) | luma);
+		    map16[i] = ((r << 16) + (g << 8) + b);
+		    if (sat > 8)		/* saturated color */
+			i = 32 + (luma * 6 / 8 / 16) * 16 + chroma / 2;
+		    else if (sat > 0)	/* dim color */
+			i = 128 + (luma / 16) * 16 + chroma / 2;
+		    else			/* grayscale */
+			i = luma / 4;
+		    map8[i] = ((r << 16) + (g << 8) + b);
+		}
 #endif
 
 	/* Turn off video framebuffer */
