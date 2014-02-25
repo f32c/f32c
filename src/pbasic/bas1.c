@@ -65,17 +65,13 @@ static int	lcount;
  *              N.B. reset() NEVER returns , so error() NEVER returns.
  */
 
-#ifdef f32c
 static int firstrun = 1;
-#endif
 
 int
 main(int argc, char **argv)
 {
 	int i = 0;
-#ifdef f32c
 	int fp;
-#endif
 
 	catchsignal();
 	startfp();              /* start up the floating point hardware */
@@ -89,7 +85,7 @@ main(int argc, char **argv)
 #endif
 	program = 0;
 	clear();
-	prints("Rabbit BASIC version 2.1.0 (built " __DATE__ ")\n");
+	prints("Rabbit BASIC version 2.1.1 (built " __DATE__ ")\n");
 	if(setexit() == ERR_RESET){
 		drop_fns();
 		execute();	/* execute the line */
@@ -100,9 +96,11 @@ main(int argc, char **argv)
 	if(cursor)              /* put cursor on a blank line */
 		prints( (char *)nl);
 	
+	if (firstrun && (
 #ifdef f32c
-	if (firstrun && ((fp = open("1:/autoexec.bas",0)) > 0 ||
-	    (fp = open("/autoexec.bas",0)) > 0)) {
+	    (fp = open("1:autoexec.bas",0)) > 0 ||
+#endif
+	    (fp = open("autoexec.bas",0)) > 0)) {
 		firstrun = 0;
 		readfi(fp, 0, 0);
 		close(fp);
@@ -115,7 +113,6 @@ main(int argc, char **argv)
 		}
 	}
 	firstrun = 0;
-#endif
 
 	prints("Ready\n");
 
