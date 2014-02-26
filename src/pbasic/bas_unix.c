@@ -23,13 +23,6 @@ bas_exec(void)
 }
 
 int
-loadjpg(void)
-{
-	/* XXX do nothing - revisit! */
-	normret;
-}
-
-int
 bauds(void)
 {
 	/* do nothing */
@@ -44,7 +37,7 @@ bas_sleep(void)
 	check();
 	if (res.f < ZERO)
 		error(33);	/* argument error */
-	usleep(res.f * 1000.0);
+	usleep(res.f * 1000000.0);
 
 	normret;
 }
