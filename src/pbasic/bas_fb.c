@@ -160,22 +160,22 @@ setup_fb(void)
 		    map16[i] = pal2rgb(sat, chroma, luma);
 		}
 	/* Populate 8-bit pallete to RGB map */
-	for (i = 0; i < 32; i++)
-		map8[i] = pal2rgb(0, 0, i * 4);
-	for (i = 32; i < 128; i++) {
-		luma = (i - 32) / 16 * 5.5 * 4;
-		sat = 3;
+	for (i = 0; i < 16; i++)
+		map8[i] = pal2rgb(0, 0, i * 8);
+	for (i = 16; i < 128; i++) {
+		luma = i / 16 * 4 * 4;
+		sat = 2;
 		chroma = (i % 16) * 2 + 1;
 		map8[i] = pal2rgb(sat, chroma, luma);
 	}
 	for (i = 128; i < 192; i++) {
-		luma = (i - 128) / 16 * 8 * 4 + 7;
-		sat = 7;
+		luma = (i - 128) / 16 * 8 * 4 + 16;
+		sat = 5;
 		chroma = (i % 16) * 2 + 1;
 		map8[i] = pal2rgb(sat, chroma, luma);
 	}
 	for (i = 192; i < 256; i++) {
-		luma = (i - 192) / 16 * 8 * 4 + 15;
+		luma = (i - 192) / 16 * 8 * 4 + 16;
 		sat = 15;
 		chroma = (i % 16) * 2 + 1;
 		map8[i] = pal2rgb(sat, chroma, luma);
