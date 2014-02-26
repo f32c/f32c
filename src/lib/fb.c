@@ -366,21 +366,31 @@ fb_rgb2pal(int r, int g, int b) {
 	else {
 		/* 8-bit encoding */
 		chroma >>= 2;
-		if (__predict_false(saturation > 10)) /* saturated color */
+		if (__predict_false(saturation > 8))
+			/* saturated color */
 			color = 192 + (luma / 64) * 16 + chroma;
-		else if (__predict_false(saturation > 5)) /* medium color */
+		else if (__predict_false(saturation > 4))
+			/* medium color */
 			color = 128 + (luma / 64) * 16 + chroma;
-		else if (__predict_true(saturation > 0)) /* dim color */
-			color = 32 + (luma * 6 / 8 / 32) * 16 + chroma;
-		else 				/* grayscale */
-			color = luma / 8;
+		else if (__predict_true(saturation > 0)) {
+			/* dim color */
+			if (__predict_false(luma < 32))
+				color = 16 + chroma;
+			else
+				color = (luma / 32) * 16 + chroma;
+		} else
+			/* grayscale */
+			color = luma / 16;
 	}
 
 	return (color);
 }
 
 
-__attribute__((optimize("-O3"))) void
+#ifdef f32c
+__attribute__((optimize("-O3")))
+#endif
+void
 fb_plot(int x, int y, int color)
 {
 	int off = (y << 9) + x;
@@ -483,7 +493,10 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 }
 
 
-__attribute__((optimize("-O3"))) void
+#ifdef f32c
+__attribute__((optimize("-O3")))
+#endif
+void
 fb_line(int x0, int y0, int x1, int y1, int color)
 {
 	plotfn_t *plotfn;
@@ -605,7 +618,10 @@ fb_filledcircle(int x0, int y0, int r, int color)
 }
 
 
-__attribute__((optimize("-O3"))) void
+#ifdef f32c
+__attribute__((optimize("-O3")))
+#endif
+void
 fb_text(int x0, int y0, const char *cp, int fgcolor, int bgcolor, int scale)
 {
 	int c, x, y, xs, ys, off, dot;

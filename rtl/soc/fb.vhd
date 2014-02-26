@@ -168,20 +168,19 @@ begin
 		R_chroma_sat <= R_hpos(5 downto 2);
 	    elsif mode = "00" then
 		-- 8-bit color pallete
-		if pixel_data(7 downto 5) = "000" then
-		    R_luma <= pixel_data(4 downto 0) & "00";
+		if pixel_data(7 downto 4) = "0000" then
+		    R_luma <= pixel_data(3 downto 0) & "000";
 		    R_chroma_sat <= "0000";
 		    -- Don't change chroma phase for grayscale pixels.
 		else
 		    if pixel_data(7 downto 6) = "10" then
-			R_luma <= pixel_data(5 downto 4) & "11110";
-			R_chroma_sat <= "0110";
+			R_luma <= pixel_data(5 downto 4) & "10000";
+			R_chroma_sat <= "0101";
 		    elsif pixel_data(7 downto 6) = "11" then
-			R_luma <= pixel_data(5 downto 4) & "11110";
+			R_luma <= pixel_data(5 downto 4) & "10000";
 			R_chroma_sat <= "1111";
 		    else
-			R_luma <= ((pixel_data(6 downto 4) - 1) & "0000") +
-			  ("00" & (pixel_data(6 downto 4) - 1) & "00");
+			R_luma <= pixel_data(6 downto 4) & "0000";
 			R_chroma_sat <= "0010";
 		    end if;
 		    R_chroma_phase <= (pixel_data(3 downto 0) & "01");
