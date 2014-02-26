@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,11 +29,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "bas.h"
+
 #ifdef f32c
 #include <fb.h>
 #include <tjpgd.h>
 #else
 #include "../include/fb.h"
+#include "tjpgd.h"
 #include <math.h>
 #include <sys/time.h>
 #include <X11/Xlib.h>
@@ -43,17 +46,13 @@
 #include <X11/keysym.h>
 #endif
 
-#include "bas.h"
 
-
-#ifdef f32c
 /* User defined device identifier for JPEG decompression*/
 typedef struct {
 	int fh;		/* File handle */
 	BYTE *fbuf;	/* Pointer to the frame buffer for output function */
 	UINT wfbuf;	/* Width of the frame buffer [pix] */
 } IODEV;
-#endif
 
 
 static const struct colormap {
@@ -208,7 +207,7 @@ update_x11()
 	gettimeofday(&now, &tz);
 	delta = (now.tv_sec - x11_last_updated.tv_sec) * 1000000 +
 	    now.tv_usec - x11_last_updated.tv_usec;
-	if (delta < 20000)
+	if (delta < 30000)
 		return;
 	x11_update_pending = 0;
 
@@ -636,7 +635,6 @@ text(void)
 }
 
 
-#ifdef f32c
 /* Input function for JPEG decompression */
 static UINT
 in_func(JDEC* jd, BYTE* buff, UINT nbyte)
@@ -750,6 +748,6 @@ loadjpg(void)
 		printf("Failed to prepare: rc=%d\n", r);
 	}
 	close(devid.fh);
+	X11_SCHED_UPDATE();
 	normret;
 }
-#endif

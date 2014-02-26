@@ -6,7 +6,7 @@ CFILES = bas1.c bas2.c bas3.c bas4.c bas5.c \
 	 bas6.c nbas7.c bas8.c bas9.c assist.c alloc.c
 
 # Local extras
-CFILES += bas_file.c bas_unix.c bas_fb.c ../lib/fb.c
+CFILES += bas_file.c bas_unix.c bas_fb.c ../lib/fb.c tjpgd.c
 
 MK_INCLUDES += -I/usr/local/include
 
