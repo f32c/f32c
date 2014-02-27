@@ -673,7 +673,8 @@ int	endd(void),runn(void),gotos(void),rem(void),lets(void),list(void),
 	file_kill(void), file_mkdir(void), file_copy(void), file_rename(void),
 	file_cd(void), file_pwd(void), file_more(void),
 	plot(void), lineto(void), rectangle(void), circle(void), text(void),
-	vidmode(void), ink(void), paper(void), loadjpg(void);
+	vidmode(void), ink(void), paper(void), loadjpg(void),
+	sprgrab(void), sprload(void), sprput(void), sprfree(void);
 
 int	bas_sleep(void), bauds(void);
 int	quit(void);
@@ -921,7 +922,8 @@ static const intf_t commandf = {
 /*      extended commands */
 
 static const intf_t xcmdf = {
-	vidmode, ink, paper, loadjpg
+	vidmode, ink, paper, loadjpg,
+	sprgrab, sprload, sprput, sprfree
 };
 
 /*      table of error messages */
@@ -1120,6 +1122,10 @@ const	struct  tabl    table[]={
 	"INK",		MKXCMD(1),
 	"PAPER",	MKXCMD(2),
 	"LOADJPG",	MKXCMD(3),
+	"SPRGRAB",	MKXCMD(4),
+	"SPRLOAD",	MKXCMD(5),
+	"SPRPUT",	MKXCMD(6),
+	"SPRFREE",	MKXCMD(7),
 
 	/* string functs with args */
 	"RIGHT$",	MKSFA(0),
