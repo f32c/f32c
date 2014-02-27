@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/queue.h>
 
 #include "bas.h"
 
@@ -451,10 +452,6 @@ plot(void)
 	int x, y, c;
 	int firstdot = 1;
 
-	/* Skip whitespace */
-	c = getch();
-	point--;
-
 	do {
 		x = evalint();
 		if(getch() != ',')
@@ -484,10 +481,6 @@ lineto(void)
 {
 	int x, y, c;
 
-	/* Skip whitespace */
-	c = getch();
-	point--;
-
 	do {
 		x = evalint();
 		if(getch() != ',')
@@ -513,10 +506,6 @@ rectangle(void)
 {
 	int x0, y0, x1, y1;
 	int c, fill = 0;
-
-	/* Skip whitespace */
-	c = getch();
-	point--;
 
 	x0 = evalint();
 	if(getch() != ',')
@@ -560,10 +549,6 @@ circle(void)
 	int x, y, r;
 	int c, fill = 0;
 
-	/* Skip whitespace */
-	c = getch();
-	point--;
-
 	x = evalint();
 	if(getch() != ',')
 		error(SYNTAX);
@@ -601,10 +586,6 @@ text(void)
 	int scale_y = 1;
 	STR st;
 
-	/* Skip whitespace */
-	c = getch();
-	point--;
-
 	x = evalint();
 	if(getch() != ',')
 		error(SYNTAX);
@@ -636,6 +617,162 @@ text(void)
 
 	fb_text(x, y, st->strval, fgcolor, bgcolor, (scale_x << 16) | scale_y);
 	FREE_STR(st);
+	X11_SCHED_UPDATE();
+	normret;
+}
+
+
+struct sprite {
+	SLIST_ENTRY(sprite)	spr_le;
+	uint16_t		spr_id;
+	uint16_t		size_x;
+	uint16_t		size_y;
+	char			data[];
+};
+
+static SLIST_HEAD(, sprite) spr_head;
+
+
+static int
+spr_free(int id)
+{
+	struct sprite *sp;
+
+	SLIST_FOREACH(sp, &spr_head, spr_le)
+		if (sp->spr_id == id) {
+			SLIST_REMOVE(&spr_head, sp, sprite, spr_le);
+			mfree(sp);
+			return (0);
+		}
+	return (1);
+}
+
+
+static struct sprite *
+spr_alloc(int id, int bufsize)
+{
+	struct sprite *sp;
+
+	spr_free(id);
+	sp = mmalloc(sizeof(struct sprite) + bufsize);
+	SLIST_INSERT_HEAD(&spr_head, sp, spr_le);
+	sp->spr_id = id;
+	
+	return (sp);
+}
+
+
+int
+sprgrab(void)
+{
+	int id, x0, y0, x1, y1, x, y;
+	struct sprite *sp;
+	uint16_t *u16src, *u16dst;
+	uint8_t *u8src, *u8dst;
+
+	id = evalint();
+	if(getch() != ',')
+		error(SYNTAX);
+	x0 = evalint();
+	if(getch() != ',')
+		error(SYNTAX);
+	y0 = evalint();
+	if(getch() != ',')
+		error(SYNTAX);
+	x1 = evalint();
+	if(getch() != ',')
+		error(SYNTAX);
+	y1 = evalint();
+	check();
+
+	if (x0 < 0 || x1 > 511 || x0 > x1 ||
+	    y0 < 0 || y1 > 287 || y0 > y1 || id < 0 || fb_mode > 1)
+		error(15);
+
+	sp = spr_alloc(id, (x1 - x0 + 1) * (y1 - y0 + 1) * (fb_mode + 1));
+	sp->size_x = x1 - x0 + 1;
+	sp->size_y = y1 - y0 + 1;
+
+	if (fb_mode == 0)
+		for (u8dst = (void *) &sp->data, y = y0; y <= y1; y++) {
+			u8src = &((uint8_t *) fb_buff)[(y << 9) + x0];
+			for (x = x0; x <= x1; x++)
+				*u8dst++ = *u8src++;
+		}
+	else
+		for (u16dst = (void *) &sp->data, y = y0; y <= y1; y++) {
+			u16src = &((uint16_t *) fb_buff)[(y << 9) + x0];
+			for (x = x0; x <= x1; x++)
+				*u16dst++ = *u16src++;
+		}
+	normret;
+}
+
+
+int
+sprload(void)
+{
+
+	normret;
+}
+
+
+int
+sprfree(void)
+{
+
+	normret;
+}
+int
+sprput(void)
+{
+	int id, x0, y0, x1, y1, x, y;
+	struct sprite *sp;
+	uint16_t *u16src, *u16dst;
+	uint8_t *u8src, *u8dst;
+
+	id = evalint();
+	if(getch() != ',')
+		error(SYNTAX);
+	x0 = evalint();
+	if(getch() != ',')
+		error(SYNTAX);
+	y0 = evalint();
+	check();
+
+	SLIST_FOREACH(sp, &spr_head, spr_le)
+		if (sp->spr_id == id)
+			break;
+	if (sp == NULL)
+		error(BADDATA);
+
+	x1 = x0 + sp->size_x;
+	y1 = y0 + sp->size_y;
+	if (x0 < 0)
+		x0 = 0;
+	if (y0 < 0)
+		y0 = 0;
+	if (x1 > 512)
+		x1 = 512;
+	if (y1 > 288)
+		y1 = 288;
+
+	if (fb_mode == 0)
+		for (y = y0; y < y1; y++) {
+			u8src =
+			    &((uint8_t *) &sp->data)[(y - y0) * sp->size_x];
+			u8dst = &((uint8_t *) fb_buff)[(y << 9) + x0];
+			for (x = x0; x < x1; x++)
+				*u8dst++ = *u8src++;
+		}
+	else
+		for (y = y0; y < y1; y++) {
+			u16src =
+			    &((uint16_t *) &sp->data)[(y - y0) * sp->size_x];
+			u16dst = &((uint16_t *) fb_buff)[(y << 9) + x0];
+			for (x = x0; x < x1; x++)
+				*u16dst++ = *u16src++;
+		}
 	X11_SCHED_UPDATE();
 	normret;
 }
