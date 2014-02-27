@@ -190,17 +190,34 @@ begin
 		-- Don't change chroma phase for grayscale pixels.
 		if C_big_endian then
 		    if pixel_data(7 downto 4) /= "0000" then
-			R_chroma_phase <= pixel_data(3 downto 0) &
-			  pixel_data(15) & '0';
+			if pixel_data(7 downto 6) = "00" then
+			    R_chroma_phase <= pixel_data(3 downto 0) &
+			      pixel_data(15) & '0';
+			else
+			    R_chroma_phase <= pixel_data(3 downto 0) &
+			      pixel_data(15 downto 14);
+			end if;
 		    end if;
 		    R_chroma_sat <= pixel_data(7 downto 4);
-		    R_luma <= pixel_data(14 downto 8);
+		    if pixel_data(15 downto 14) = "00" then
+			R_luma <= pixel_data(14 downto 8);
+		    else
+			R_luma <= pixel_data(13 downto 8) & '0';
+		    end if;
 		else
 		    if pixel_data(15 downto 12) /= "0000" then
-			R_chroma_phase <= pixel_data(11 downto 7) & '0';
+			if pixel_data(15 downto 14) = "00" then
+			    R_chroma_phase <= pixel_data(11 downto 7) & '0';
+			else
+			    R_chroma_phase <= pixel_data(11 downto 6);
+			end if;
 		    end if;
 		    R_chroma_sat <= pixel_data(15 downto 12);
-		    R_luma <= pixel_data(6 downto 0);
+		    if pixel_data(15 downto 14) = "00" then
+			R_luma <= pixel_data(6 downto 0);
+		    else
+			R_luma <= pixel_data(5 downto 0) & '0';
+		    end if;
 		end if;
 	    end if;
 	    -- Surpress displaying anything past the last horizontal pixel
