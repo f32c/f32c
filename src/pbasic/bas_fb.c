@@ -119,9 +119,9 @@ static uint32_t
 pal2rgb(int sat, int chroma, int luma)
 {
 	int u, v, r, g, b;
-	float phase, PI = 3.14159265359, ampl = 8.5;
+	float phase, PI = 3.14159265359, ampl = 8;
 
-	phase = PI * (chroma - 6.5) / 16.0;
+	phase = PI * (chroma - 13) / 32.0;
 	u = 128.0 + ampl * sat * cos(phase);
 	v = 128.0 + ampl * sat * sin(phase);
 	r = luma * 2 + 1.4075 * (v - 128);
@@ -152,11 +152,17 @@ setup_fb(void)
 	int sat, chroma, luma, i;
 
 	/* Populate 16-bit pallete to RGB map */
-	for (sat = 0; sat < 16; sat++)
-	    for (chroma = 0; chroma < 32; chroma++)
+	for (sat = 0; sat < 4; sat++)
+	    for (chroma = 0; chroma < 64; chroma += 2)
 		for (luma = 0; luma < 128; luma++) {
-		    i = (sat << 12) | ((chroma << 7) | luma);
+		    i = (sat << 12) | ((chroma << 6) | luma);
 		    map16[i] = pal2rgb(sat, chroma, luma);
+		}
+	for (sat = 4; sat < 16; sat++)
+	    for (chroma = 0; chroma < 64; chroma++)
+		for (luma = 0; luma < 64; luma++) {
+		    i = (sat << 12) | ((chroma << 6) | luma);
+		    map16[i] = pal2rgb(sat, chroma, luma * 2);
 		}
 	/* Populate 8-bit pallete to RGB map */
 	for (i = 0; i < 16; i++)
@@ -164,19 +170,19 @@ setup_fb(void)
 	for (i = 16; i < 128; i++) {
 		luma = i / 16 * 4 * 4;
 		sat = 2;
-		chroma = (i % 16) * 2 + 1;
+		chroma = (i % 16) * 4 + 2;
 		map8[i] = pal2rgb(sat, chroma, luma);
 	}
 	for (i = 128; i < 192; i++) {
 		luma = (i - 128) / 16 * 8 * 4 + 16;
 		sat = 5;
-		chroma = (i % 16) * 2 + 1;
+		chroma = (i % 16) * 4 + 2;
 		map8[i] = pal2rgb(sat, chroma, luma);
 	}
 	for (i = 192; i < 256; i++) {
 		luma = (i - 192) / 16 * 8 * 4 + 16;
 		sat = 15;
-		chroma = (i % 16) * 2 + 1;
+		chroma = (i % 16) * 4 + 2;
 		map8[i] = pal2rgb(sat, chroma, luma);
 	}
 #endif
