@@ -610,7 +610,7 @@ void	closeall(void), clr_stack(forstp);
 void	setupfiles(int, char **), setupmyterm(void);
 void	setup_f32c(void);
 void	setup_fb(void);
-void	update_x11(void);
+void	update_x11(int);
 void	errtrap(void), flushall(void), insert(int), negate(void);
 void	ins_line(lpoint, int);
 void	set_mem(CHAR *, ival, int);
