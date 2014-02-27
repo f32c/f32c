@@ -84,31 +84,12 @@ memcpy(void *dst, const void *src, size_t len)
 }
 
 
-#ifdef OWN_ALLOC
-static char *freep;
-
-void *sbrk(intptr_t p)
-{
-
-	/* First invocation.  Find out the first free address. */
-	if (freep == NULL)
-		freep = (void *) &_end;
-
-	/* XXX hardcoded upper memory limit - revisit! */
-	if ((void *) (freep + p) >= (void *) 0x800b0000)
-		return ((void *) -1);
-
-	freep = freep + p;
-	return (freep);
-}
-#endif
-
-
 int *__error(void)
 {
 
 	return (&errno);
 }
+
 
 char *
 getenv(const char *name)

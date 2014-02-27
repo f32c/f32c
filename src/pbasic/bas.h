@@ -20,9 +20,6 @@
 #define	DEB printf("%s: %s() %d\n", __FILE__, __FUNCTION__, __LINE__);
 
 #define	BIG_INTS
-#ifdef f32c
-#define	OWN_ALLOC
-#endif
 //#define	RAND48
 /*
  * include the correct include file for the current machine
