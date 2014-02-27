@@ -37,8 +37,8 @@ bas_sleep(void)
 	check();
 	if (res.f < ZERO)
 		error(33);	/* argument error */
+	update_x11(1);
 	usleep(res.f * 1000000.0);
-
 	normret;
 }
 

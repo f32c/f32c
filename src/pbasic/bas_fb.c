@@ -195,7 +195,7 @@ setup_fb(void)
 
 #ifndef f32c
 void
-update_x11()
+update_x11(int nowait)
 {
 	XEvent ev;
 	struct timeval now;
@@ -214,7 +214,7 @@ update_x11()
 	gettimeofday(&now, &tz);
 	delta = (now.tv_sec - x11_last_updated.tv_sec) * 1000000 +
 	    now.tv_usec - x11_last_updated.tv_usec;
-	if (delta < 30000)
+	if (!nowait && delta < 30000)
 		return;
 	x11_update_pending = 0;
 

@@ -49,7 +49,7 @@ readc()
 			got = read(0, &c, 1);
 			break;
 		}
-		update_x11();
+		update_x11(0);
 		usleep(50 * 1000);
 	} while (1);
 #else
