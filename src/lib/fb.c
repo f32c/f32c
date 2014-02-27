@@ -308,30 +308,6 @@ atan_i(int y, int x)
 }
 
 
-#if 0
-uint32_t
-sqrt(uint32_t r)
-{
-	uint32_t t, q, b;
-
-	b = 0x40000000;
-	q = 0;
-
-	while (b >= 256) {
-		t = q + b;
-		q >>= 1;
-		if (r >= t) {
-			r -= t;
-			q += b;
-		}
-		b >>= 2;
-	}
-
-	return (q);
-}
-#endif
-
-
 #define	WR	77	/* 0.299 * 256 */
 #define	WB	29	/* 0.114 * 256 */
 #define	WG	150	/* 0.586 * 256 */
@@ -349,21 +325,26 @@ fb_rgb2pal(int r, int g, int b) {
 	v = WV * (r - luma);
 
 	/* Transform {U, V} cartesian into polar {chroma, saturation} coords */
-	chroma = (28 - (atan_i(u >> 8, v >> 8) >> 2)) & 0x3f;
+	chroma = ((atan_i(v >> 8, u >> 8) >> 2) - 49) & 0x3f;
 	u = ABS(u);
 	v = ABS(v);
 	if (u > v)
-		saturation = u + v * 3 / 8;
+		saturation = u + v * 3 / 8 + (1 << 10);
 	else
-		saturation = v + u * 3 / 8;
-	saturation = (saturation + (1 << 10)) >> 11;
+		saturation = v + u * 3 / 8 + (1 << 10);
+	saturation >>= 11;
 	if (__predict_false(saturation > 15))
 		saturation = 15;
 
-	if (__predict_true(fb_mode))
+	if (__predict_true(fb_mode)) {
 		/* 16-bit encoding */
-		color = (saturation << 12) | ((chroma >> 1) << 7) | (luma >> 1);
-	else {
+		if (__predict_false(saturation > 3))
+			color = (saturation << 12) |
+			    (chroma << 6) | (luma >> 2);
+		else
+			color = (saturation << 12) |
+			    ((chroma & 0x3e) << 6) | (luma >> 1);
+	} else {
 		/* 8-bit encoding */
 		chroma >>= 2;
 		if (__predict_false(saturation > 8))
