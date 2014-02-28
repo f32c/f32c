@@ -921,8 +921,8 @@ out_func(JDEC* jd, void* bitmap, JRECT* rect)
 			}
 			dst += 2 * dev->wfbuf;
 		} else {
-#if JD_FORMAT < JD_FMT_RGB32
 			dst8 = (void *) dst;
+#if JD_FORMAT < JD_FMT_RGB32
 			for (i = 0; i < bws; i += 3) {
 #else
 			for (i = 0; i < bws; i++) {
