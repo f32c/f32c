@@ -113,7 +113,10 @@ static uint32_t map16[65536];
 #ifdef f32c
 #define	X11_SCHED_UPDATE()
 #else
-#define	X11_SCHED_UPDATE() do {x11_update_pending = 1;} while (0)
+#define	X11_SCHED_UPDATE() do {					\
+	if (fb_visible == fb_drawable)				\
+		x11_update_pending = 1;				\
+	} while (0)
 #endif
 
 
