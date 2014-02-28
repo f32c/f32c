@@ -87,12 +87,14 @@ static const struct colormap {
 	{ -1, NULL },
 };
 
-static int fb_mode = 3;
+void *fb_buff[2];
+static int bgcolor;
 static int last_x;
 static int last_y;
-static int fgcolor;
-static int bgcolor;
-void *fb_buff;
+static uint16_t fgcolor;
+static uint16_t fb_mode = 3;
+static uint8_t fb_visible;
+static uint8_t fb_drawable;
 
 #ifndef f32c
 static Display *dis;
@@ -189,7 +191,7 @@ setup_fb(void)
 #endif
 
 	/* Turn off video framebuffer */
-	fb_set_mode(3, NULL);
+	fb_set_mode(3, NULL, NULL);
 }
 
 
@@ -199,8 +201,8 @@ update_x11(int nowait)
 {
 	XEvent ev;
 	struct timeval now;
-	uint8_t *fb_8 = fb_buff;
-	uint16_t *fb_16 = fb_buff;
+	uint8_t *fb_8 = fb_buff[fb_visible];
+	uint16_t *fb_16 = fb_buff[fb_visible];
 	uint32_t *dstp = img;
 	int64_t delta;
 	int x, y, xs, ys;
@@ -237,14 +239,11 @@ update_x11(int nowait)
 }
 #endif
 
+
 int
 vidmode(void)
 {
 	int mode, c;
-
-	/* Skip whitespace */
-	c = getch();
-	point--;
 
 	mode = evalint();
 	if (mode < 0 || mode > 3)
@@ -279,15 +278,17 @@ vidmode(void)
 	check();
 
 	if (mode != fb_mode) {
-		mfree(fb_buff);
-		fb_buff = NULL;
-		if (mode < 2) {
-			fb_buff = mmalloc(512 * 288 * (mode + 1));
-			if (fb_buff == NULL)
-				mode = 3;
-		}
+		mfree(fb_buff[0]);
+		if (fb_buff[1])
+			mfree(fb_buff[1]);
+		fb_buff[0] = NULL;
+		fb_buff[1] = NULL;
+		if (mode < 2)
+			fb_buff[0] = mmalloc(512 * 288 * (mode + 1));
 	}
-	fb_set_mode(mode, fb_buff);
+	fb_drawable = 0;
+	fb_visible = 0;
+	fb_set_mode(mode, fb_buff[0], fb_buff[0]);
 	fgcolor = fb_rgb2pal(255, 255, 255);
 	bgcolor = fb_rgb2pal(0, 0, 0);
 	if (mode < 2)
@@ -339,7 +340,44 @@ vidmode(void)
 
 
 int
-ink(void)
+drawable(void)
+{
+	int visual;
+
+	visual = evalint();
+	check();
+	if (visual < 0 || visual > 1)
+		error(36);	/* argument error */
+	if (fb_mode > 1)
+		error(26);	/* out of data */
+	if (fb_buff[visual] == NULL)
+		fb_buff[visual] = mmalloc(512 * 288 * (fb_mode + 1));
+	fb_drawable = visual;
+	fb_set_mode(fb_mode, fb_buff[fb_drawable], fb_buff[fb_visible]);
+	normret;
+}
+
+
+int
+visible(void)
+{
+	int visual;
+
+	visual = evalint();
+	check();
+	if (visual < 0 || visual > 1)
+		error(36);	/* argument error */
+	if (fb_buff[visual] == NULL || fb_mode > 1)
+		error(26);	/* out of data */
+	fb_visible = visual;
+	fb_set_mode(fb_mode, fb_buff[fb_drawable], fb_buff[fb_visible]);
+	X11_SCHED_UPDATE();
+	normret;
+}
+
+
+static int
+parse_color(void)
 {
 	char buf[16];
 	STR st;
@@ -386,6 +424,16 @@ ink(void)
 		    color & 0xff);
 	} else
 		color = evalint();
+	return (color);
+}
+
+
+int
+ink(void)
+{
+	int color;
+
+	color = parse_color();
 	check();
 	fgcolor = color & 0xffff;
 	normret;
@@ -395,51 +443,9 @@ ink(void)
 int
 paper(void)
 {
-	char buf[16];
-	STR st;
-	int c, color = 0;
-	uint32_t i, len;
+	int color;
 
-	/* Skip whitespace */
-	c = getch();
-	point--;
-
-	/* First arg string or numeric? */
-	if (checktype()) {
-		st = stringeval();
-		NULL_TERMINATE(st);
-		len = strlen(st->strval);
-		if (len == 0 || len > 15) {
-			FREE_STR(st);
-			error(33);	/* argument error */
-		}
-		for (i = 0; i <= len; i++)
-			buf[i] = tolower(st->strval[i]);
-		FREE_STR(st);
-		if (buf[0] == '#') {
-			if (len != 7)
-				error(33);	/* argument error */
-			for (i = 1; i < 7; i++) {
-				c = buf[i];
-				if (!isxdigit(c))
-					error(33);	/* argument error */
-				if (c <= '9')
-					color = (color << 4) + c - '0';
-				else
-					color = (color << 4) + c - 'a' + 10;
-			}
-		} else {
-			i = -1;
-			do {
-				if (colormap[++i].name == NULL)
-					error(33);	/* argument error */
-			} while (strcmp(buf, colormap[i].name) != 0);
-			color = colormap[i].value;
-		}
-		color = fb_rgb2pal(color >> 16, (color >> 8) & 0xff,
-		    color & 0xff);
-	} else
-		color = evalint();
+	color = parse_color();
 	check();
 	bgcolor = color;
 	normret;
@@ -624,6 +630,7 @@ text(void)
 
 struct sprite {
 	SLIST_ENTRY(sprite)	spr_le;
+	int			spr_trans_color;
 	uint16_t		spr_id;
 	uint16_t		size_x;
 	uint16_t		size_y;
@@ -657,6 +664,7 @@ spr_alloc(int id, int bufsize)
 	sp = mmalloc(sizeof(struct sprite) + bufsize);
 	SLIST_INSERT_HEAD(&spr_head, sp, spr_le);
 	sp->spr_id = id;
+	sp->spr_trans_color = -1;
 	
 	return (sp);
 }
@@ -695,13 +703,14 @@ sprgrab(void)
 
 	if (fb_mode == 0)
 		for (u8dst = (void *) &sp->data, y = y0; y <= y1; y++) {
-			u8src = &((uint8_t *) fb_buff)[(y << 9) + x0];
+			u8src = (uint8_t *) fb_buff[fb_drawable];
+			u8src += (y << 9) + x0;
 			for (x = x0; x <= x1; x++)
 				*u8dst++ = *u8src++;
 		}
 	else
 		for (u16dst = (void *) &sp->data, y = y0; y <= y1; y++) {
-			u16src = &((uint16_t *) fb_buff)[(y << 9) + x0];
+			u16src = (uint16_t *) fb_buff[fb_drawable];					u16src += (y << 9) + x0;
 			for (x = x0; x <= x1; x++)
 				*u16dst++ = *u16src++;
 		}
@@ -718,11 +727,56 @@ sprload(void)
 
 
 int
-sprfree(void)
+sprtrans(void)
 {
+	int id, color;
+	struct sprite *sp;
 
+	id = evalint();
+	if(getch() != ',')
+		error(SYNTAX);
+	color = parse_color();
+	check();
+
+	SLIST_FOREACH(sp, &spr_head, spr_le)
+		if (sp->spr_id == id)
+			break;
+	if (sp == NULL)
+		error(BADDATA);
+	sp->spr_trans_color = color;
 	normret;
 }
+
+
+int
+sprfree(void)
+{
+	struct sprite *sp;
+	int c, id;
+
+	/* Skip whitespace */
+	c = getch();
+	point--;
+
+	if (istermin(c)) {
+		/* Free all sprites */
+		do {
+			sp = SLIST_FIRST(&spr_head);
+			if (sp == NULL)
+				break;
+			SLIST_REMOVE(&spr_head, sp, sprite, spr_le);
+			mfree(sp);
+		} while (0);
+	} else {
+		id = evalint();
+		check();
+		if (spr_free(id))
+			error(BADDATA);
+	}
+	normret;
+}
+
+
 int
 sprput(void)
 {
@@ -761,7 +815,8 @@ sprput(void)
 		for (y = y0; y < y1; y++) {
 			u8src =
 			    &((uint8_t *) &sp->data)[(y - y0) * sp->size_x];
-			u8dst = &((uint8_t *) fb_buff)[(y << 9) + x0];
+			u8dst = (uint8_t *) fb_buff[fb_drawable];
+			u8dst += (y << 9) + x0;
 			for (x = x0; x < x1; x++)
 				*u8dst++ = *u8src++;
 		}
@@ -769,7 +824,8 @@ sprput(void)
 		for (y = y0; y < y1; y++) {
 			u16src =
 			    &((uint16_t *) &sp->data)[(y - y0) * sp->size_x];
-			u16dst = &((uint16_t *) fb_buff)[(y << 9) + x0];
+			u16dst = (uint16_t *) fb_buff[fb_drawable];
+			u16dst += (y << 9) + x0;
 			for (x = x0; x < x1; x++)
 				*u16dst++ = *u16src++;
 		}
@@ -882,7 +938,7 @@ loadjpg(void)
 			error(12); /* buffer size overflow in field */
 		}
 
-		devid.fbuf = fb_buff;
+		devid.fbuf = fb_buff[fb_drawable];
 		devid.wfbuf = 512;
 		r = jd_decomp(&jdec, out_func, 0);
                 if (r != JDR_OK)

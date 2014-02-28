@@ -238,7 +238,7 @@ static uint8_t	*fb;
 
 
 void
-fb_set_mode(int mode, void *base)
+fb_set_mode(int mode, void *drawable, void *visible)
 {
 
 	fb_mode = mode & 3;
@@ -246,10 +246,10 @@ fb_set_mode(int mode, void *base)
 	if (fb_mode > 1)
 		fb = NULL;
 	else
-		fb = base;
+		fb = drawable;
 
 #ifdef f32c
-	OUTW(IO_FB, ((uint32_t) fb) | fb_mode);
+	OUTW(IO_FB, ((uint32_t) visible) | fb_mode);
 #endif
 }
 
