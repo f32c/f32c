@@ -350,8 +350,8 @@ vidmode(void)
 	fb_drawable = 0;
 	fb_visible = 0;
 	fb_set_mode(mode, fb_buff[0], fb_buff[0]);
-	fgcolor = fb_rgb2pal(255, 255, 255);
-	bgcolor = fb_rgb2pal(0, 0, 0);
+	fgcolor = fb_rgb2pal(0xffffff);
+	bgcolor = fb_rgb2pal(0);
 	if (mode < 2)
 		fb_rectangle(0, 0, 511, 287, bgcolor);
 	last_x = 0;
@@ -481,8 +481,7 @@ parse_color(void)
 			} while (strcmp(buf, colormap[i].name) != 0);
 			color = colormap[i].value;
 		}
-		color = fb_rgb2pal(color >> 16, (color >> 8) & 0xff,
-		    color & 0xff);
+		color = fb_rgb2pal(color);
 	} else
 		color = evalint();
 	return (color);
@@ -877,14 +876,16 @@ static UINT
 out_func(JDEC* jd, void* bitmap, JRECT* rect)
 {
 	IODEV *dev = (IODEV*)jd->device;
-	UINT y, bws, bwd;
+	UINT y, bws;
 	BYTE *dst;
 #if JD_FORMAT < JD_FMT_RGB32
 	BYTE *src;
 #else
 	LONG *src;
 #endif
-	uint32_t i, j;
+	uint32_t i, rgb, prev_rgb = 0, color = 0;
+	uint16_t *dst16;
+	uint8_t *dst8;
 
 	/* Copy the decompressed RGB rectanglar to the frame buffer (assuming RGB888 cfg) */
 #if JD_FORMAT < JD_FMT_RGB32
@@ -898,28 +899,49 @@ out_func(JDEC* jd, void* bitmap, JRECT* rect)
 #endif
 	/* Left-top of destination rectangular */
 	dst = dev->fbuf + (fb_mode + 1) * (rect->top * dev->wfbuf + rect->left);
-	/* Width of frame buffer [byte] */
-	bwd = (fb_mode + 1) * dev->wfbuf;
 	for (y = rect->top; y <= rect->bottom; y++) {
+		if (fb_mode) {
+			dst16 = (void *) dst;
 #if JD_FORMAT < JD_FMT_RGB32
-		for (i = 0, j = 0; i < bws; i += 3, j += (fb_mode + 1)) {
+			for (i = 0; i < bws; i += 3) {
 #else
-		for (i = 0, j = 0; i < bws; i++, j += (fb_mode + 1)) {
+			for (i = 0; i < bws; i++) {
 #endif
-			uint32_t color;
-		
 #if JD_FORMAT < JD_FMT_RGB32
-			color = fb_rgb2pal(src[i], src[i+1], src[i+2]);
+				rgb = src[i] * 65536 +
+				    src[i+1] * 256 + src[i+2];
 #else
-			color = fb_rgb2pal(src[i] >> 16, (src[i] >> 8) & 0xff,
-			    src[i] & 0xff);
+				rgb = src[i];
 #endif
-			if (fb_mode)
-				*((uint16_t *) &dst[j]) = color;
-			else
-				dst[j] = color;
+				if (rgb != prev_rgb) {
+					prev_rgb = rgb;
+					color = fb_rgb2pal(rgb);
+				}
+				*dst16++ = color;
+			}
+			dst += 2 * dev->wfbuf;
+		} else {
+#if JD_FORMAT < JD_FMT_RGB32
+			dst8 = (void *) dst;
+			for (i = 0; i < bws; i += 3) {
+#else
+			for (i = 0; i < bws; i++) {
+#endif
+#if JD_FORMAT < JD_FMT_RGB32
+				rgb = src[i] * 65536 +
+				    src[i+1] * 256 + src[i+2];
+#else
+				rgb = src[i];
+#endif
+				if (rgb != prev_rgb) {
+					prev_rgb = rgb;
+					color = fb_rgb2pal(rgb);
+				}
+				*dst8++ = color;
+			}
+			dst += dev->wfbuf;
 		}
-		src += bws; dst += bwd;  /* Next line */
+		src += bws; /* Next line */
 	}
 
 	return (1);    /* Continue to decompress */
@@ -950,8 +972,6 @@ loadjpg(void)
 
 	r = jd_prepare(&jdec, in_func, work_buf, sizeof(work_buf), &devid);
 	if (r == JDR_OK) {
-		printf("Image dimensions: %u by %u.\n",
-		    jdec.width, jdec.height);
 		if (jdec.width > 512 || jdec.height > 288) {
 			close(devid.fh);
 			error(12); /* buffer size overflow in field */
