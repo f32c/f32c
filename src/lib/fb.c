@@ -338,12 +338,15 @@ fb_rgb2pal(int r, int g, int b) {
 
 	if (__predict_true(fb_mode)) {
 		/* 16-bit encoding */
-		if (__predict_false(saturation > 3))
+		if (__predict_true(saturation < 4)) {
+			color = luma >> 1;
+			if (__predict_true(saturation != 0)) {
+				color |= (chroma & 0x3e) << 6;
+				color |= saturation << 12;
+			}
+		} else
 			color = (saturation << 12) |
 			    (chroma << 6) | (luma >> 2);
-		else
-			color = (saturation << 12) |
-			    ((chroma & 0x3e) << 6) | (luma >> 1);
 	} else {
 		/* 8-bit encoding */
 		chroma >>= 2;
