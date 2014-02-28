@@ -315,10 +315,13 @@ atan_i(int y, int x)
 #define	WV	224	/* 0.877 * 256 */
 
 int
-fb_rgb2pal(int r, int g, int b) {
+fb_rgb2pal(uint32_t rgb) {
 	int color, luma, chroma, saturation;
 	int u, v;
-
+	uint8_t r = rgb >> 16;
+	uint8_t g = rgb >> 8;
+	uint8_t b = rgb;
+	
 	/* Transform RGB into YUV */
 	luma = (WR * r + WB * b + WG * g) >> 8;
 	u = WU * (b - luma);

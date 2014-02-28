@@ -26,7 +26,7 @@
  */
 
 void fb_set_mode(int, void *, void *);
-int fb_rgb2pal(int, int, int);
+int fb_rgb2pal(uint32_t);
 
 void fb_plot(int, int, int);
 void fb_line(int, int, int, int, int);
