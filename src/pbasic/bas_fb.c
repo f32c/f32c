@@ -117,6 +117,63 @@ static uint32_t map16[65536];
 #endif
 
 
+struct sprite {
+	SLIST_ENTRY(sprite)	spr_le;
+	int			spr_trans_color;
+	uint16_t		spr_id;
+	uint16_t		size_x;
+	uint16_t		size_y;
+	char			data[];
+};
+
+static SLIST_HEAD(, sprite) spr_head;
+
+
+static void
+spr_flush(void)
+{
+	struct sprite *sp;
+
+	do {
+		sp = SLIST_FIRST(&spr_head);
+		if (sp == NULL)
+			return;
+		SLIST_REMOVE(&spr_head, sp, sprite, spr_le);
+		mfree(sp);
+	} while (0);
+}
+
+
+static int
+spr_free(int id)
+{
+	struct sprite *sp;
+
+	SLIST_FOREACH(sp, &spr_head, spr_le)
+		if (sp->spr_id == id) {
+			SLIST_REMOVE(&spr_head, sp, sprite, spr_le);
+			mfree(sp);
+			return (0);
+		}
+	return (1);
+}
+
+
+static struct sprite *
+spr_alloc(int id, int bufsize)
+{
+	struct sprite *sp;
+
+	spr_free(id);
+	sp = mmalloc(sizeof(struct sprite) + bufsize);
+	SLIST_INSERT_HEAD(&spr_head, sp, spr_le);
+	sp->spr_id = id;
+	sp->spr_trans_color = -1;
+	
+	return (sp);
+}
+
+
 #ifndef f32c
 static uint32_t
 pal2rgb(int sat, int chroma, int luma)
@@ -286,6 +343,7 @@ vidmode(void)
 		if (mode < 2)
 			fb_buff[0] = mmalloc(512 * 288 * (mode + 1));
 	}
+	spr_flush();
 	fb_drawable = 0;
 	fb_visible = 0;
 	fb_set_mode(mode, fb_buff[0], fb_buff[0]);
@@ -628,48 +686,6 @@ text(void)
 }
 
 
-struct sprite {
-	SLIST_ENTRY(sprite)	spr_le;
-	int			spr_trans_color;
-	uint16_t		spr_id;
-	uint16_t		size_x;
-	uint16_t		size_y;
-	char			data[];
-};
-
-static SLIST_HEAD(, sprite) spr_head;
-
-
-static int
-spr_free(int id)
-{
-	struct sprite *sp;
-
-	SLIST_FOREACH(sp, &spr_head, spr_le)
-		if (sp->spr_id == id) {
-			SLIST_REMOVE(&spr_head, sp, sprite, spr_le);
-			mfree(sp);
-			return (0);
-		}
-	return (1);
-}
-
-
-static struct sprite *
-spr_alloc(int id, int bufsize)
-{
-	struct sprite *sp;
-
-	spr_free(id);
-	sp = mmalloc(sizeof(struct sprite) + bufsize);
-	SLIST_INSERT_HEAD(&spr_head, sp, spr_le);
-	sp->spr_id = id;
-	sp->spr_trans_color = -1;
-	
-	return (sp);
-}
-
-
 int
 sprgrab(void)
 {
@@ -751,23 +767,15 @@ sprtrans(void)
 int
 sprfree(void)
 {
-	struct sprite *sp;
 	int c, id;
 
 	/* Skip whitespace */
 	c = getch();
 	point--;
 
-	if (istermin(c)) {
-		/* Free all sprites */
-		do {
-			sp = SLIST_FIRST(&spr_head);
-			if (sp == NULL)
-				break;
-			SLIST_REMOVE(&spr_head, sp, sprite, spr_le);
-			mfree(sp);
-		} while (0);
-	} else {
+	if (istermin(c))
+		spr_flush();
+	else {
 		id = evalint();
 		check();
 		if (spr_free(id))
@@ -780,7 +788,7 @@ sprfree(void)
 int
 sprput(void)
 {
-	int id, x0, y0, x1, y1, x, y;
+	int id, x0, y0, x1, y1, x, y, c;
 	struct sprite *sp;
 	uint16_t *u16src, *u16dst;
 	uint8_t *u8src, *u8dst;
@@ -817,8 +825,12 @@ sprput(void)
 			    &((uint8_t *) &sp->data)[(y - y0) * sp->size_x];
 			u8dst = (uint8_t *) fb_buff[fb_drawable];
 			u8dst += (y << 9) + x0;
-			for (x = x0; x < x1; x++)
-				*u8dst++ = *u8src++;
+			for (x = x0; x < x1; x++) {
+				c = *u8src++;
+				if (c != sp->spr_trans_color)
+					*u8dst = c;
+				u8dst++;
+			}
 		}
 	else
 		for (y = y0; y < y1; y++) {
@@ -826,8 +838,12 @@ sprput(void)
 			    &((uint16_t *) &sp->data)[(y - y0) * sp->size_x];
 			u16dst = (uint16_t *) fb_buff[fb_drawable];
 			u16dst += (y << 9) + x0;
-			for (x = x0; x < x1; x++)
-				*u16dst++ = *u16src++;
+			for (x = x0; x < x1; x++) {
+				c = *u16src++;
+				if (c != sp->spr_trans_color)
+					*u16dst = c;
+				u16dst++;
+			}
 		}
 	X11_SCHED_UPDATE();
 	normret;
