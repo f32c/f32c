@@ -25,7 +25,7 @@
  * $Id$
  */
 
-void fb_set_mode(int, void *);
+void fb_set_mode(int, void *, void *);
 int fb_rgb2pal(int, int, int);
 
 void fb_plot(int, int, int);

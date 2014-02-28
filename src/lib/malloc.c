@@ -40,6 +40,13 @@ static uint32_t *heap;
 #define	SET_FREE(len)	((len) | 0x80000000)
 
 
+//#define MALLOC_DEBUG
+
+#ifdef MALLOC_DEBUG
+static int free_cnt = 1;
+static int used_cnt = 0;
+#endif
+
 /*
  * Each chunk is preceeded by a 4-byte length & type descriptor.  Length
  * value stored in the descriptor is a sum of the payload length (rounded
@@ -66,8 +73,16 @@ free(void *ptr)
 	/* Attempt to merge with next free block */
 	while (IS_FREE(heap[i + len])) {
 		len += GET_LEN(heap[i + len]);
+#ifdef MALLOC_DEBUG
+		free_cnt--;
+#endif
 	}
 	heap[i] = SET_FREE(len);
+#ifdef MALLOC_DEBUG
+	free_cnt++;
+	used_cnt--;
+	printf("free(%p): used %d free %d\n", ptr, used_cnt, free_cnt);
+#endif
 }
 
 
@@ -109,6 +124,16 @@ malloc(size_t size)
 	heap[best_i] = size;
 	if (best_len > size)
 		heap[best_i + size] = SET_FREE(best_len - size);
+	else {
+#ifdef MALLOC_DEBUG
+		free_cnt--;
+#endif
+	}
 
+#ifdef MALLOC_DEBUG
+	used_cnt++;
+	printf("malloc(%d): used %d free %d\n", (size - 1) * 4,
+	    used_cnt, free_cnt);
+#endif
 	return (&heap[best_i + 1]);
 }
