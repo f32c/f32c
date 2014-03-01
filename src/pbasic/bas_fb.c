@@ -172,7 +172,6 @@ spr_alloc(int id, int bufsize)
 	sp->spr_data = (void *) &sp->buf;
 	sp->spr_id = id;
 	sp->spr_trans_color = -1;
-	
 	return (sp);
 }
 
@@ -202,7 +201,6 @@ pal2rgb(int sat, int chroma, int luma)
 		b = 0;
 	if (b > 255)
 		b = 255;
-
 	return ((r << 16) + (g << 8) + b);
 }
 #endif
@@ -737,14 +735,6 @@ sprgrab(void)
 
 
 int
-sprload(void)
-{
-
-	normret;
-}
-
-
-int
 sprtrans(void)
 {
 	int id, color;
@@ -790,7 +780,7 @@ sprfree(void)
 int
 sprput(void)
 {
-	int id, x0, y0, x1, y1, x, y, c;
+	int id, x0, y0, x0_v, y0_v, x1, y1, x, y, c;
 	struct sprite *sp;
 	uint16_t *u16src, *u16dst;
 	uint8_t *u8src, *u8dst;
@@ -812,22 +802,25 @@ sprput(void)
 
 	x1 = x0 + sp->spr_size_x;
 	y1 = y0 + sp->spr_size_y;
+	x0_v = x0;
 	if (x0 < 0)
-		x0 = 0;
+		x0_v = 0;
+	y0_v = y0;
 	if (y0 < 0)
-		y0 = 0;
+		y0_v = 0;
 	if (x1 > 512)
 		x1 = 512;
 	if (y1 > 288)
 		y1 = 288;
 
 	if (fb_mode == 0)
-		for (y = y0; y < y1; y++) {
+		for (y = y0_v; y < y1; y++) {
 			u8src = &((uint8_t *) sp->spr_data)[(y - y0)
 			    * sp->spr_size_x];
+			u8src += (x0_v - x0);
 			u8dst = (uint8_t *) fb_buff[fb_drawable];
-			u8dst += (y << 9) + x0;
-			for (x = x0; x < x1; x++) {
+			u8dst += (y << 9) + x0_v;
+			for (x = x0_v; x < x1; x++) {
 				c = *u8src++;
 				if (c != sp->spr_trans_color)
 					*u8dst = c;
@@ -835,12 +828,13 @@ sprput(void)
 			}
 		}
 	else
-		for (y = y0; y < y1; y++) {
+		for (y = y0_v; y < y1; y++) {
 			u16src = &((uint16_t *) sp->spr_data)[(y - y0)
 			    * sp->spr_size_x];
+			u16src += (x0_v - x0);
 			u16dst = (uint16_t *) fb_buff[fb_drawable];
-			u16dst += (y << 9) + x0;
-			for (x = x0; x < x1; x++) {
+			u16dst += (y << 9) + x0_v;
+			for (x = x0_v; x < x1; x++) {
 				c = *u16src++;
 				if (c != sp->spr_trans_color)
 					*u16dst = c;
@@ -949,7 +943,7 @@ jpeg_dump_decoded(JDEC* jd, void* bitmap, JRECT* rect)
 int
 loadjpg(void)
 {
-	char work_buf[6 * 1024];
+	char work_buf[8192];
 	STR st;
 	JDEC jdec;
 	JRESULT r;
@@ -966,16 +960,61 @@ loadjpg(void)
 	jh.fh = open(work_buf, O_RDONLY);
 	if (jh.fh < 0)
 		error(15);
-	jh.sp = &spr;
 	r = jd_prepare(&jdec, jpeg_fetch_encoded, work_buf,
 	    sizeof(work_buf), &jh);
 	if (r == JDR_OK) {
+		jh.sp = &spr;
 		spr.spr_data = fb_buff[fb_drawable];
 		spr.spr_size_x = 512;
 		spr.spr_size_y = 288;
 		r = jd_decomp(&jdec, jpeg_dump_decoded, 0);
                 if (r != JDR_OK)
                         printf("Failed to decompress: rc=%d\n", r);
+	} else {
+		printf("Failed to prepare: rc=%d\n", r);
+	}
+	close(jh.fh);
+	X11_SCHED_UPDATE();
+	normret;
+}
+
+
+int
+sprload(void)
+{
+	char work_buf[8192];
+	STR st;
+	JDEC jdec;
+	JRESULT r;
+	jdecomp_handle jh;
+	struct sprite *sp;
+	int id;
+
+	id = evalint();
+	if(getch() != ',')
+		error(SYNTAX);
+	st = stringeval();
+	NULL_TERMINATE(st);
+	strcpy(work_buf, st->strval);
+	FREE_STR(st);
+	check();
+	if (fb_mode > 1)
+		error(24);	/* out of core */
+	jh.fh = open(work_buf, O_RDONLY);
+	if (jh.fh < 0)
+		error(15);
+	r = jd_prepare(&jdec, jpeg_fetch_encoded, work_buf,
+	    sizeof(work_buf), &jh);
+	if (r == JDR_OK) {
+		sp = spr_alloc(id, jdec.width * jdec.height * (fb_mode +1));
+		jh.sp = sp;
+		sp->spr_size_x = jdec.width;
+		sp->spr_size_y = jdec.height;
+		r = jd_decomp(&jdec, jpeg_dump_decoded, 0);
+                if (r != JDR_OK) {
+			spr_free(id);
+                        printf("Failed to decompress: rc=%d\n", r);
+		}
 	} else {
 		printf("Failed to prepare: rc=%d\n", r);
 	}
