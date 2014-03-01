@@ -48,14 +48,6 @@
 #endif
 
 
-/* User defined device identifier for JPEG decompression*/
-typedef struct {
-	int fh;		/* File handle */
-	BYTE *fbuf;	/* Pointer to the frame buffer for output function */
-	UINT wfbuf;	/* Width of the frame buffer [pix] */
-} IODEV;
-
-
 static const struct colormap {
 	int value;
 	char *name;
@@ -122,12 +114,19 @@ static uint32_t map16[65536];
 
 struct sprite {
 	SLIST_ENTRY(sprite)	spr_le;
-	int			spr_trans_color;
+	char			*spr_data;
+	int32_t			spr_trans_color;
 	uint16_t		spr_id;
-	uint16_t		size_x;
-	uint16_t		size_y;
-	char			data[];
+	uint16_t		spr_size_x;
+	uint16_t		spr_size_y;
+	char			buf[];
 };
+
+typedef struct {
+	struct sprite	*sp;
+	int32_t		fh;
+} jdecomp_handle;
+
 
 static SLIST_HEAD(, sprite) spr_head;
 
@@ -170,6 +169,7 @@ spr_alloc(int id, int bufsize)
 	spr_free(id);
 	sp = mmalloc(sizeof(struct sprite) + bufsize);
 	SLIST_INSERT_HEAD(&spr_head, sp, spr_le);
+	sp->spr_data = (void *) &sp->buf;
 	sp->spr_id = id;
 	sp->spr_trans_color = -1;
 	
@@ -716,18 +716,18 @@ sprgrab(void)
 		error(15);
 
 	sp = spr_alloc(id, (x1 - x0 + 1) * (y1 - y0 + 1) * (fb_mode + 1));
-	sp->size_x = x1 - x0 + 1;
-	sp->size_y = y1 - y0 + 1;
+	sp->spr_size_x = x1 - x0 + 1;
+	sp->spr_size_y = y1 - y0 + 1;
 
 	if (fb_mode == 0)
-		for (u8dst = (void *) &sp->data, y = y0; y <= y1; y++) {
+		for (u8dst = (void *) sp->spr_data, y = y0; y <= y1; y++) {
 			u8src = (uint8_t *) fb_buff[fb_drawable];
 			u8src += (y << 9) + x0;
 			for (x = x0; x <= x1; x++)
 				*u8dst++ = *u8src++;
 		}
 	else
-		for (u16dst = (void *) &sp->data, y = y0; y <= y1; y++) {
+		for (u16dst = (void *) sp->spr_data, y = y0; y <= y1; y++) {
 			u16src = (uint16_t *) fb_buff[fb_drawable];					u16src += (y << 9) + x0;
 			for (x = x0; x <= x1; x++)
 				*u16dst++ = *u16src++;
@@ -810,8 +810,8 @@ sprput(void)
 	if (sp == NULL)
 		error(BADDATA);
 
-	x1 = x0 + sp->size_x;
-	y1 = y0 + sp->size_y;
+	x1 = x0 + sp->spr_size_x;
+	y1 = y0 + sp->spr_size_y;
 	if (x0 < 0)
 		x0 = 0;
 	if (y0 < 0)
@@ -823,8 +823,8 @@ sprput(void)
 
 	if (fb_mode == 0)
 		for (y = y0; y < y1; y++) {
-			u8src =
-			    &((uint8_t *) &sp->data)[(y - y0) * sp->size_x];
+			u8src = &((uint8_t *) sp->spr_data)[(y - y0)
+			    * sp->spr_size_x];
 			u8dst = (uint8_t *) fb_buff[fb_drawable];
 			u8dst += (y << 9) + x0;
 			for (x = x0; x < x1; x++) {
@@ -836,8 +836,8 @@ sprput(void)
 		}
 	else
 		for (y = y0; y < y1; y++) {
-			u16src =
-			    &((uint16_t *) &sp->data)[(y - y0) * sp->size_x];
+			u16src = &((uint16_t *) sp->spr_data)[(y - y0)
+			    * sp->spr_size_x];
 			u16dst = (uint16_t *) fb_buff[fb_drawable];
 			u16dst += (y << 9) + x0;
 			for (x = x0; x < x1; x++) {
@@ -853,18 +853,18 @@ sprput(void)
 
 
 /* Input function for JPEG decompression */
-static UINT
-in_func(JDEC* jd, BYTE* buff, UINT nbyte)
+static uint32_t
+jpeg_fetch_encoded(JDEC* jd, BYTE* buff, UINT nbyte)
 {
-	IODEV *dev = (IODEV*)jd->device;
-	UINT retval;
+	jdecomp_handle *jh = (jdecomp_handle *)jd->device;
+	uint32_t retval;
 
 	if (buff) {
 		/* Read bytes from input stream */
-		retval = read(dev->fh, buff, nbyte);
+		retval = read(jh->fh, buff, nbyte);
 	} else {
 		/* Remove bytes from input stream */
-		retval = lseek(dev->fh, nbyte, SEEK_CUR) ? nbyte : 0;
+		retval = lseek(jh->fh, nbyte, SEEK_CUR) ? nbyte : 0;
 	}
 
 	return (retval);
@@ -873,45 +873,39 @@ in_func(JDEC* jd, BYTE* buff, UINT nbyte)
 
 /* Output funciton for JPEG decompression */
 static UINT
-out_func(JDEC* jd, void* bitmap, JRECT* rect)
+jpeg_dump_decoded(JDEC* jd, void* bitmap, JRECT* rect)
 {
-	IODEV *dev = (IODEV*)jd->device;
-	UINT y, bws;
-	BYTE *dst;
+	jdecomp_handle *jh = (jdecomp_handle *)jd->device;
+	struct sprite *sp = jh->sp;
+	uint32_t x, y, xlim, ylim;
+	char *dst;
 #if JD_FORMAT < JD_FMT_RGB32
-	BYTE *src;
+	uint8_t *src;
 #else
-	LONG *src;
+	uint32_t *src;
 #endif
-	uint32_t i, rgb, prev_rgb = 0, color = 0;
+	uint32_t rgb, prev_rgb = 0, color = 0;
 	uint16_t *dst16;
 	uint8_t *dst8;
 
-	/* Copy the decompressed RGB rectanglar to the frame buffer (assuming RGB888 cfg) */
-#if JD_FORMAT < JD_FMT_RGB32
-	src = (BYTE*)bitmap;
-	/* Width of source rectangular [byte] */
-	bws = 3 * (rect->right - rect->left + 1);
-#else
-	src = (LONG*)bitmap;
-	/* Width of source rectangular [byte] */
-	bws = (rect->right - rect->left + 1);
-#endif
-	/* Left-top of destination rectangular */
-	dst = dev->fbuf + (fb_mode + 1) * (rect->top * dev->wfbuf + rect->left);
-	for (y = rect->top; y <= rect->bottom; y++) {
+	src = (void *)bitmap;
+	ylim = rect->bottom;
+	if (rect->bottom > sp->spr_size_y - 1)
+		ylim = sp->spr_size_y - 1;
+	xlim = rect->right;
+	if (rect->right > sp->spr_size_x - 1)
+		xlim = sp->spr_size_x - 1;
+	for (y = rect->top; y <= ylim; y++) {
 		if (fb_mode) {
+			dst = sp->spr_data +
+			    2 * (y * sp->spr_size_x + rect->left);
 			dst16 = (void *) dst;
+			for (x = rect->left; x <= xlim; x++) {
 #if JD_FORMAT < JD_FMT_RGB32
-			for (i = 0; i < bws; i += 3) {
+				rgb = src[0] * 65536 + src[1] * 256 + src[2];
+				src += 3;
 #else
-			for (i = 0; i < bws; i++) {
-#endif
-#if JD_FORMAT < JD_FMT_RGB32
-				rgb = src[i] * 65536 +
-				    src[i+1] * 256 + src[i+2];
-#else
-				rgb = src[i];
+				rgb = *src++;
 #endif
 				if (rgb != prev_rgb) {
 					prev_rgb = rgb;
@@ -919,19 +913,16 @@ out_func(JDEC* jd, void* bitmap, JRECT* rect)
 				}
 				*dst16++ = color;
 			}
-			dst += 2 * dev->wfbuf;
+			dst += 2 * sp->spr_size_x;
 		} else {
+			dst = sp->spr_data + (y * sp->spr_size_x + rect->left);
 			dst8 = (void *) dst;
+			for (x = rect->left; x <= xlim; x++) {
 #if JD_FORMAT < JD_FMT_RGB32
-			for (i = 0; i < bws; i += 3) {
+				rgb = src[0] * 65536 + src[1] * 256 + src[2];
+				src += 3;
 #else
-			for (i = 0; i < bws; i++) {
-#endif
-#if JD_FORMAT < JD_FMT_RGB32
-				rgb = src[i] * 65536 +
-				    src[i+1] * 256 + src[i+2];
-#else
-				rgb = src[i];
+				rgb = *src++;
 #endif
 				if (rgb != prev_rgb) {
 					prev_rgb = rgb;
@@ -939,11 +930,9 @@ out_func(JDEC* jd, void* bitmap, JRECT* rect)
 				}
 				*dst8++ = color;
 			}
-			dst += dev->wfbuf;
+			dst += sp->spr_size_x;
 		}
-		src += bws; /* Next line */
 	}
-
 	return (1);    /* Continue to decompress */
 }
 
@@ -951,41 +940,37 @@ out_func(JDEC* jd, void* bitmap, JRECT* rect)
 int
 loadjpg(void)
 {
-	char work_buf[8192];
+	char work_buf[6 * 1024];
 	STR st;
 	JDEC jdec;
 	JRESULT r;
-	IODEV devid;
+	jdecomp_handle jh;
+	struct sprite spr;
 
 	st = stringeval();
 	NULL_TERMINATE(st);
 	strcpy(work_buf, st->strval);
 	FREE_STR(st);
 	check();
-
 	if (fb_mode > 1)
 		error(24);	/* out of core */
-
-	devid.fh = open(work_buf, O_RDONLY);
-	if (devid.fh < 0)
+	jh.fh = open(work_buf, O_RDONLY);
+	if (jh.fh < 0)
 		error(15);
-
-	r = jd_prepare(&jdec, in_func, work_buf, sizeof(work_buf), &devid);
+	jh.sp = &spr;
+	r = jd_prepare(&jdec, jpeg_fetch_encoded, work_buf,
+	    sizeof(work_buf), &jh);
 	if (r == JDR_OK) {
-		if (jdec.width > 512 || jdec.height > 288) {
-			close(devid.fh);
-			error(12); /* buffer size overflow in field */
-		}
-
-		devid.fbuf = fb_buff[fb_drawable];
-		devid.wfbuf = 512;
-		r = jd_decomp(&jdec, out_func, 0);
+		spr.spr_data = fb_buff[fb_drawable];
+		spr.spr_size_x = 512;
+		spr.spr_size_y = 288;
+		r = jd_decomp(&jdec, jpeg_dump_decoded, 0);
                 if (r != JDR_OK)
                         printf("Failed to decompress: rc=%d\n", r);
 	} else {
 		printf("Failed to prepare: rc=%d\n", r);
 	}
-	close(devid.fh);
+	close(jh.fh);
 	X11_SCHED_UPDATE();
 	normret;
 }
