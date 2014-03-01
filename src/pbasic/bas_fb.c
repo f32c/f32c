@@ -878,7 +878,6 @@ jpeg_dump_decoded(JDEC* jd, void* bitmap, JRECT* rect)
 	jdecomp_handle *jh = (jdecomp_handle *)jd->device;
 	struct sprite *sp = jh->sp;
 	uint32_t x, y, xlim, ylim;
-	char *dst;
 #if JD_FORMAT < JD_FMT_RGB32
 	uint8_t *src;
 #else
@@ -895,11 +894,10 @@ jpeg_dump_decoded(JDEC* jd, void* bitmap, JRECT* rect)
 	xlim = rect->right;
 	if (rect->right > sp->spr_size_x - 1)
 		xlim = sp->spr_size_x - 1;
-	for (y = rect->top; y <= ylim; y++) {
-		if (fb_mode) {
-			dst = sp->spr_data +
-			    2 * (y * sp->spr_size_x + rect->left);
-			dst16 = (void *) dst;
+	if (fb_mode)
+		for (y = rect->top; y <= ylim; y++) {
+			dst16 = (void *) sp->spr_data;
+			dst16 = &dst16[y * sp->spr_size_x + rect->left];
 			for (x = rect->left; x <= xlim; x++) {
 #if JD_FORMAT < JD_FMT_RGB32
 				rgb = src[0] * 65536 + src[1] * 256 + src[2];
@@ -913,10 +911,17 @@ jpeg_dump_decoded(JDEC* jd, void* bitmap, JRECT* rect)
 				}
 				*dst16++ = color;
 			}
-			dst += 2 * sp->spr_size_x;
-		} else {
-			dst = sp->spr_data + (y * sp->spr_size_x + rect->left);
-			dst8 = (void *) dst;
+			if (x < rect->right)
+#if JD_FORMAT < JD_FMT_RGB32
+				src += 3 * (rect->right - x);
+#else
+				src += (rect->right - x);
+#endif
+		}
+	else
+		for (y = rect->top; y <= ylim; y++) {
+			dst8 = (void *) sp->spr_data;
+			dst8 = &dst8[y * sp->spr_size_x + rect->left];
 			for (x = rect->left; x <= xlim; x++) {
 #if JD_FORMAT < JD_FMT_RGB32
 				rgb = src[0] * 65536 + src[1] * 256 + src[2];
@@ -930,9 +935,13 @@ jpeg_dump_decoded(JDEC* jd, void* bitmap, JRECT* rect)
 				}
 				*dst8++ = color;
 			}
-			dst += sp->spr_size_x;
+			if (x < rect->right)
+#if JD_FORMAT < JD_FMT_RGB32
+				src += 3 * (rect->right - x);
+#else
+				src += (rect->right - x);
+#endif
 		}
-	}
 	return (1);    /* Continue to decompress */
 }
 
