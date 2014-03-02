@@ -15,7 +15,7 @@
 
 #define	JD_SZBUF	4096	/* Size of stream input buffer */
 #define	JD_USE_SCALE	1	/* Use descaling feature for output */
-#define JD_TBLCLIP	0	/* Use table for saturation (might be a bit faster but increases 1K bytes of code size) */
+#define JD_TBLCLIP	1	/* Use table for saturation (might be a bit faster but increases 1K bytes of code size) */
 
 /*---------------------------------------------------------------------------*/
 

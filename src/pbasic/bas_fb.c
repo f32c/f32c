@@ -35,6 +35,7 @@
 #ifdef f32c
 #include <fb.h>
 #include <tjpgd.h>
+#include <io.h>
 #else
 #include "../include/fb.h"
 #include "tjpgd.h"
@@ -45,6 +46,7 @@
 #include <X11/Xos.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h>
+#include <X11/keysymdef.h>
 #endif
 
 
@@ -89,6 +91,13 @@ static uint8_t fb_visible;
 static uint8_t fb_drawable;
 
 #ifndef f32c
+/* XXX from <io.h> */
+#define	BTN_CENTER	0x10
+#define	BTN_UP		0x08
+#define	BTN_DOWN	0x04
+#define	BTN_LEFT	0x02
+#define	BTN_RIGHT	0x01
+int x11_keys;
 static Display *dis;
 static Window win;
 static XImage *ximg;
@@ -264,11 +273,57 @@ update_x11(int nowait)
 	uint32_t *dstp = img;
 	int64_t delta;
 	int x, y, xs, ys;
+	KeySym keysym;
+	char keybuf[32];
 
 	if (fb_mode > 1)
 		return;
 	while (XCheckMaskEvent(dis, ExposureMask | StructureNotifyMask, &ev))
 		x11_update_pending = 1;
+	if (x11_onroot) {
+		XQueryKeymap(dis, keybuf);
+		x11_keys = 0;
+		if (keybuf[8] & 0x02)
+			x11_keys |= BTN_CENTER;
+		if (keybuf[12] & 0x10)
+			x11_keys |= BTN_LEFT;
+		if (keybuf[12] & 0x40)
+			x11_keys |= BTN_RIGHT;
+		if (keybuf[12] & 0x04)
+			x11_keys |= BTN_UP;
+		if (keybuf[13] & 0x01)
+			x11_keys |= BTN_DOWN;
+	} else
+		while (XCheckMaskEvent(dis,
+		    KeyPressMask | KeyReleaseMask, &ev)) {
+			keysym = XLookupKeysym((void *) &ev, 0);
+			x = 0;
+			switch(keysym) {
+			case XK_space:
+				x = BTN_CENTER;
+				break;
+			case XK_Left:
+				x = BTN_LEFT;
+				break;
+			case XK_Right:
+				x = BTN_RIGHT;
+				break;
+			case XK_Up:
+				x = BTN_UP;
+				break;
+			case XK_Down:
+				x = BTN_DOWN;
+				break;
+			}
+			switch(ev.type) {
+			case KeyPress:
+				x11_keys |= x;
+				break;
+			case KeyRelease:
+				x11_keys &= ~x;
+				break;
+			}
+		}
 	if (x11_update_pending == 0)
 		return;
 	gettimeofday(&now, &tz);
@@ -368,16 +423,17 @@ vidmode(void)
 		if (dis == NULL)
 			error(14);	/* cannot creat file */
 		img = malloc(512 * 288 * 4 * x11_scale * x11_scale);
-		if (x11_onroot)
+		if (x11_onroot) {
 			win = RootWindow(dis, 0);
-		else {
+		} else {
 			win = XCreateSimpleWindow(dis, RootWindow(dis, 0),
 			    1, 1, 512 * x11_scale, 288 * x11_scale,
 			    10, WhitePixel(dis, 0), BlackPixel(dis, 0));
 			XMapWindow(dis, win);
 			XStoreName(dis, win, "Rabbit BASIC");
 		}
-		XSelectInput(dis, win, ExposureMask | StructureNotifyMask);
+		XSelectInput(dis, win, ExposureMask | StructureNotifyMask |
+		    KeyPressMask | KeyReleaseMask);
 		XSizeHints* win_size_hints = XAllocSizeHints();
 		win_size_hints->flags = PMinSize | PMaxSize;
 		win_size_hints->min_width = 512 * x11_scale;
@@ -949,11 +1005,23 @@ loadjpg(void)
 	JRESULT r;
 	jdecomp_handle jh;
 	struct sprite spr;
+	int c, descale = 0;
 
 	st = stringeval();
 	NULL_TERMINATE(st);
 	strcpy(work_buf, st->strval);
 	FREE_STR(st);
+	c = getch();
+	if (istermin(c))
+		point--;
+	else {
+		if (c != ',')
+			error(15);
+		descale = evalint();
+		if (descale < 0 || descale > 3)
+			error(33);      /* argument error */
+        }
+
 	check();
 	if (fb_mode > 1)
 		error(24);	/* out of core */
@@ -967,7 +1035,7 @@ loadjpg(void)
 		spr.spr_data = fb_buff[fb_drawable];
 		spr.spr_size_x = 512;
 		spr.spr_size_y = 288;
-		r = jd_decomp(&jdec, jpeg_dump_decoded, 0);
+		r = jd_decomp(&jdec, jpeg_dump_decoded, descale);
                 if (r != JDR_OK)
                         printf("Failed to decompress: rc=%d\n", r);
 	} else {
@@ -988,7 +1056,7 @@ sprload(void)
 	JRESULT r;
 	jdecomp_handle jh;
 	struct sprite *sp;
-	int id;
+	int c, id, descale = 0;
 
 	id = evalint();
 	if(getch() != ',')
@@ -997,7 +1065,18 @@ sprload(void)
 	NULL_TERMINATE(st);
 	strcpy(work_buf, st->strval);
 	FREE_STR(st);
+	c = getch();
+	if (istermin(c))
+		point--;
+	else {
+		if (c != ',')
+			error(15);
+		descale = evalint();
+		if (descale < 0 || descale > 3)
+			error(33);	/* argument error */
+	}
 	check();
+
 	if (fb_mode > 1)
 		error(24);	/* out of core */
 	jh.fh = open(work_buf, O_RDONLY);
@@ -1008,9 +1087,9 @@ sprload(void)
 	if (r == JDR_OK) {
 		sp = spr_alloc(id, jdec.width * jdec.height * (fb_mode +1));
 		jh.sp = sp;
-		sp->spr_size_x = jdec.width;
-		sp->spr_size_y = jdec.height;
-		r = jd_decomp(&jdec, jpeg_dump_decoded, 0);
+		sp->spr_size_x = jdec.width >> descale;
+		sp->spr_size_y = jdec.height >> descale;
+		r = jd_decomp(&jdec, jpeg_dump_decoded, descale);
                 if (r != JDR_OK) {
 			spr_free(id);
                         printf("Failed to decompress: rc=%d\n", r);
@@ -1021,4 +1100,17 @@ sprload(void)
 	close(jh.fh);
 	X11_SCHED_UPDATE();
 	normret;
+}
+
+
+void
+curkeys(void)
+{
+
+#ifdef f32c
+	INB(res.i, IO_PUSHBTN);
+#else
+	res.i = x11_keys;
+#endif
+	vartype = IVAL;
 }

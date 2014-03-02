@@ -648,7 +648,7 @@ void    rnd(void),pii(void),erlin(void),erval(void),tim(void),
 	btanh(void), basinh(void), bacosh(void), batanh(void),
 	basinf(void), bacosf(void), bvarptr(void), bsyscall(void),
 	bsyserr(void), bmax(void), bmin(void), bcreal(void), bcint(void),
-	rinstr(void);
+	rinstr(void), curkeys(void);
 
 STR	rightst(void),leftst(void),
 	strng(void),estrng(void),chrstr(void),nstrng(void),space(void),
@@ -880,7 +880,7 @@ CHAR	tcharmap[TMAPSIZ];
 /*      maths functions that do not want an argument */
 
 const	voidf_t	functs = {
-	rnd, pii, erlin, erval, tim, bsyserr
+	rnd, pii, erlin, erval, tim, bsyserr, curkeys
 };
 
 /*      other maths functions */
@@ -1198,6 +1198,7 @@ const	struct  tabl    table[]={
 	"ERR",		MKIFN(3),
 	"TIM",		MKIFN(4),
 	"SYSERR",	MKIFN(5),
+	"CURKEYS",	MKIFN(6),
 
 	"RAD",		MKOFN(0),	/* options */
 	"DEG",		MKOFN(1),
