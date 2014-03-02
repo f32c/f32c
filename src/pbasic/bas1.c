@@ -804,15 +804,9 @@ clear()
 	m_purge();
 #endif
 
-	datastolin=0;                           /* reset the pointer to data */
-	datapoint=0;                           /* reset the pointer to data */
-	contpos=0;
-#ifdef	RAND48
-	srand48(1);
-#else
-	srand(0);                               /* reset the random number */
-						/* generator */
-#endif
+	datastolin = 0;		/* reset the pointer to data */
+	datapoint = 0;		/* reset the pointer to data */
+	contpos = 0;
 }
 
 

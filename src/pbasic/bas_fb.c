@@ -1110,6 +1110,7 @@ curkeys(void)
 #ifdef f32c
 	INB(res.i, IO_PUSHBTN);
 #else
+	update_x11(0); /* Fetch key status */
 	res.i = x11_keys;
 #endif
 	vartype = IVAL;
