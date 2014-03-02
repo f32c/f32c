@@ -337,29 +337,21 @@ tim()
 #ifdef f32c
 	uint64_t tmp;
 #else
-	time_t t;
+	struct timeval tv;
+	static uint64_t t0;
 #endif
 
 #ifdef f32c
 	tmp = tsc_hi;
 	tmp = (tmp << 32) + tsc_lo;
 	res.f = tmp / 1000.0 / freq_khz;
+#else
+	gettimeofday(&tv, NULL);
+	if (t0 == 0)
+		t0 = tv.tv_sec;
+	res.f = 1.0 * (tv.tv_sec - t0) + tv.tv_usec / 1000000.0;
+#endif
 	vartype = RVAL;
-#else
-	time(&t);
-#ifndef SOFTFP
-#ifdef BIG_INTS
-	res.i = t;
-	vartype = IVAL;
-#else
-	res.f = t;
-        vartype = RVAL;
-#endif
-#else
-	overfl = t;
-	over(0,&res);		/* convert from long to real */
-#endif
-#endif
 }
 
 #ifdef	RAND48

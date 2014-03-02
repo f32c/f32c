@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <sys/fcntl.h>
 #include <time.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #define	BLOCKSIZ 512
