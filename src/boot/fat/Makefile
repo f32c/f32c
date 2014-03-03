@@ -47,3 +47,4 @@ image:	loader.bin
 	groff -mandoc -Tascii ../../pbasic/docs/basic.1 > .bas.man
 	mcopy -i ${SPI_IMG_NAME} .bas.man ::readme.txt
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/demo1.bas ::autoexec.bas
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/snake.bas ::snake.bas
