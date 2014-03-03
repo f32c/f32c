@@ -1,0 +1,41 @@
+
+PROG = basic
+
+# Original pbasic files
+CFILES = bas1.c bas2.c bas3.c bas4.c bas5.c \
+	 bas6.c nbas7.c bas8.c bas9.c assist.c
+
+# Local extras
+CFILES += bas_file.c bas_unix.c bas_fb.c ../lib/fb.c tjpgd.c
+
+MK_INCLUDES += -I/usr/include
+
+# Do not link; use a pipe to feed the as
+MK_CFLAGS += -c -pipe -O3
+MK_CFLAGS += -Wall -Wno-missing-braces
+
+MK_LDFLAGS += -lm -lX11
+
+CC = gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
+AS = gcc ${MK_CFLAGS} ${MK_INCLUDES}
+LD = gcc ${MK_LDFLAGS}
+
+ASM_OBJS = $(addprefix ${OBJDIR},$(ASFILES:.S=.O))
+C_OBJS = $(addprefix ${OBJDIR},$(CFILES:.c=.o))
+OBJS = ${ASM_OBJS} ${C_OBJS}
+
+${PROG}: ${OBJS} Makefile
+	${LD} -o ${PROG} ${OBJS}
+
+#
+# Rule for compiling C files
+#
+$(addprefix ${OBJDIR},%.o) : %.c
+	@mkdir -p $(dir $@)
+	$(CC) -o $@ $<
+
+clean:
+	rm -f ${OBJS} ${PROG}
+
+install:
+	install basic /usr/local/bin

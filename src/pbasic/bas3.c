@@ -1480,8 +1480,6 @@ ssystem()
  */
 #define	MAX_SYS_ARGS	6
 
-extern	int	errno;
-extern	int	syscall(int, ...);
 
 static	int	sys_error;
 

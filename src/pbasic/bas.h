@@ -8,9 +8,11 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
 #include <signal.h>
-#include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/fcntl.h>
 #include <time.h>
 #include <sys/time.h>

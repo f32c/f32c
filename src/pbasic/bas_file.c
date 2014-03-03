@@ -186,7 +186,7 @@ file_copy()
 		error(24);	/* out of core */
 	}
 
-	to = open(to_name, O_CREAT|O_RDWR);
+	to = open(to_name, O_CREAT|O_RDWR, 0);
 	if (to < 0) {
 		mfree(buf);
 		close (from);	/* cannot creat file */
