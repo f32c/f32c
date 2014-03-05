@@ -25,12 +25,13 @@
  * $Id$
  */
 
+#include <stddef.h>
+#include <stdint.h>
 
 #ifdef f32c
 #include <io.h>
 #include <fb.h>
 #else
-#include <stdint.h>
 #include "../include/sys/cdefs.h"
 #include "../include/fb.h"
 #endif
