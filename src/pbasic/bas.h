@@ -633,6 +633,10 @@ void	matread(MEMP, int, int);
 int	matinput(void);
 int	matprint(void);
 
+void	setu_term();
+void	set_term();
+void	rset_term(int type);
+
 void	COPY_OVER_STR(STR, STR);
 void	FREE_STR(STR);
 void	RESERVE_SPACE(STR, ival);
@@ -1215,8 +1219,4 @@ const	int	typ_siz[] = {
 };
 
 #endif
-
-void setu_term(); /* dodao MMMM */
-void set_term(); /* dodao MMMM */
-void rset_term(int type); /* dodao MMMM */
 

@@ -157,9 +157,6 @@ int	fp;
  *    written at the same time
  */
 
-/* MMMM dodao __APPLE__
-#if !defined(__FreeBSD__) && !defined(f32c)
-*/
 #if !defined(__FreeBSD__) && !defined(f32c) && !defined(__APPLE__)
     long	lseek();
 	/* To phil C		phil@gmrs.isar.de

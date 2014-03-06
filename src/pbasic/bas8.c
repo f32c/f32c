@@ -1267,9 +1267,9 @@ CHAR	*cmd;
 #endif
 	p=signal(SIGINT, SIG_IGN);       /* ignore some signals */
 	q=signal(SIGQUIT, SIG_IGN);
-	while(i != wait(&status) && i != -1) /* wait on the 'child' */
-    ; /* MMMM dodao
-         semicolon on a separate line to silence the empty while loop warning */
+	while(i != wait(&status) && i != -1) {
+		/* wait on the 'child' */
+	}
 	VOID signal(SIGINT,p);          /* resignal to what they */
 	VOID signal(SIGQUIT,q);         /* were before */
 #ifdef  SIGTSTP
