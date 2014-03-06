@@ -402,7 +402,6 @@ vidmode(void)
 	spr_flush();
 	fb_drawable = 0;
 	fb_visible = 0;
-	x11_keys = 0;
 	fb_set_mode(mode, fb_buff[0], fb_buff[0]);
 	fgcolor = fb_rgb2pal(0xffffff);
 	bgcolor = fb_rgb2pal(0);
@@ -418,6 +417,7 @@ vidmode(void)
 		XCloseDisplay(dis);
 		dis = NULL;
 		img = NULL;
+		x11_keys = 0;
 	}
 	if (mode < 2) {
 		dis = XOpenDisplay(NULL);
