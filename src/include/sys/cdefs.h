@@ -128,7 +128,9 @@
 #if defined(__STDC__) || defined(__cplusplus)
 #define	__P(protos)	protos		/* full-blown ANSI C */
 #define	__CONCAT1(x,y)	x ## y
+#if !defined(__APPLE__)
 #define	__CONCAT(x,y)	__CONCAT1(x,y)
+#endif /* not defined CONCAT */
 #define	__STRING(x)	#x		/* stringify without expanding x */
 #define	__XSTRING(x)	__STRING(x)	/* expand x, then stringify */
 
@@ -180,8 +182,12 @@
  * a feature that we cannot live without.
  */
 #ifdef lint
+#if !defined(__APPLE)
 #define	__dead2
+#endif /* not defined dead2 */
+#if !defined(__APPLE)
 #define	__pure2
+#endif /* not defined pure2 */
 #define	__unused
 #define	__packed
 #define	__aligned(x)
@@ -199,10 +205,18 @@
 /* XXX Find out what to do for __packed, __aligned and __section */
 #endif
 #if __GNUC_PREREQ__(2, 7)
+#if !defined(__APPLE__)
 #define	__dead2		__attribute__((__noreturn__))
+#endif /* not defined __dead2 */
+#if !defined(__APPLE__)
 #define	__pure2		__attribute__((__const__))
+#endif /* not defined __pure2 */
+#if !defined(__APPLE__)
 #define	__unused	__attribute__((__unused__))
+#endif /* not defined __unused */
+#if !defined(__APPLE__)
 #define	__used		__attribute__((__used__))
+#endif /* not defined __used */
 #define	__packed	__attribute__((__packed__))
 #define	__aligned(x)	__attribute__((__aligned__(x)))
 #define	__section(x)	__attribute__((__section__(x)))
@@ -269,7 +283,9 @@
 
 #if __GNUC_PREREQ__(2, 96)
 #define	__malloc_like	__attribute__((__malloc__))
+#if !defined(__APPLE__)
 #define	__pure		__attribute__((__pure__))
+#endif /* not defined __pure */
 #else
 #define	__malloc_like
 #define	__pure
@@ -487,7 +503,9 @@
 #define	__GLOBL(sym)	__GLOBL1(sym)
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
+#if !defined(__APPLE__)
 #define	__IDSTRING(name,string)	__asm__(".ident\t\"" string "\"")
+#endif /* not defined IDSTRING */
 #else
 /*
  * The following definition might not work well if used in header files,
