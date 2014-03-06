@@ -1215,3 +1215,8 @@ const	int	typ_siz[] = {
 };
 
 #endif
+
+void setu_term(); /* dodao MMMM */
+void set_term(); /* dodao MMMM */
+void rset_term(int type); /* dodao MMMM */
+
