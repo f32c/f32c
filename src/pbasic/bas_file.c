@@ -42,10 +42,10 @@ file_cd()
 {
 	char name[128];
 	STR st;
-	//MMMM visak int fres;
 	int start = 0;
-	//MMMM visak char buf[4];
 #ifdef f32c
+	int fres;
+	char buf[4];
 	DIR dir;
 #endif
 
@@ -157,7 +157,9 @@ file_copy()
 	int from, to;
 	int got, wrote;
 	int tot = 0;
-	//MMMM visak uint32_t start, end;
+#ifdef f32c
+	uint32_t start, end;
+#endif
 
 	st = stringeval();
 	NULL_TERMINATE(st);
@@ -274,7 +276,9 @@ file_more()
 {
 	char buf[128];
 	STR st;
-	//MMMM visak int fd, got, i, c, last, lno = 0;
+#ifdef f32c
+	int fd, got, i, c, last, lno = 0;
+#endif
 
 	st = stringeval();
 	NULL_TERMINATE(st);
