@@ -487,7 +487,9 @@ visible(void)
 		error(26);	/* out of data */
 	fb_visible = visual;
 	fb_set_mode(fb_mode, fb_buff[fb_drawable], fb_buff[fb_visible]);
-	X11_SCHED_UPDATE();
+#ifndef f32c
+	x11_update_pending = 1;
+#endif
 	normret;
 }
 
