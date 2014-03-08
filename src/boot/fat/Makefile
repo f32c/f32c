@@ -33,6 +33,7 @@ image:	loader.bin
 	dd bs=1 if=loader.bin of=${SPI_IMG_NAME} oseek=512 conv=notrunc
 	mmd -i ${SPI_IMG_NAME} ::boot
 	mmd -i ${SPI_IMG_NAME} ::pics
+	mmd -i ${SPI_IMG_NAME} ::pics/logos
 	mcopy -i ${SPI_IMG_NAME} ../../pbasic/basic.bin ::boot
 	mattrib -i ${SPI_IMG_NAME} +r ::boot/basic.bin
 	mcopy -i ${SPI_IMG_NAME} ../../wavplay/wavplay.bin ::
@@ -43,6 +44,7 @@ image:	loader.bin
 	mattrib -i ${SPI_IMG_NAME} +r ::coremark.bin
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/pictures.txt ::pics
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/*.jpg ::pics
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/logos/*.jpg ::pics/logos
 	mcopy -i ${SPI_IMG_NAME} ../../pbasic/COPYRIGHT ::copyright.txt
 	groff -mandoc -Tascii ../../pbasic/docs/basic.1 > .bas.man
 	mcopy -i ${SPI_IMG_NAME} .bas.man ::readme.txt
