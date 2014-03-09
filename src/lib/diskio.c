@@ -229,7 +229,7 @@ disk_write(BYTE drive, const BYTE* Buffer, DWORD SectorNumber, BYTE SectorCount)
 DRESULT
 disk_ioctl(BYTE drive, BYTE cmd, void* buf)
 {
-	uint32_t *up = buf;
+	WORD *up = buf;
 
 	switch (cmd) {
 	case GET_SECTOR_SIZE:

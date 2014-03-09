@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,7 +40,7 @@
 
 
 static FATFS ff_mounts[2];
-static int ff_mounted[2];
+static char ff_mounted[2];
 
 static struct {
 	FIL 	fp;
@@ -51,20 +51,17 @@ static struct {
 int
 open(const char *path, int flags, ...)
 {
-	int try, d = 0;
+	int d;
 	int ff_flags;
-	DIR ff_dir;
 	
-	if (path[0] == '1' && path[1] == ':')
-		d = 1;
-	if (ff_mounted[d] == 0 && f_mount(d, &ff_mounts[d]) == FR_OK)
-		for (try = 0; try <= d; try++)
-			if (d == 0 || f_opendir(&ff_dir, "1:") == FR_OK) {
-				ff_mounted[d] = 1;
-				break;
-			}
-	if (ff_mounted[d] == 0)
-		return (-1);
+	if (ff_mounted[0] == 0) {
+		f_mount(&ff_mounts[0], "C:", 0);
+		ff_mounted[0] = 1;
+	}
+	if (ff_mounted[1] == 0) {
+		f_mount(&ff_mounts[1], "D:", 0);
+		ff_mounted[1] = 1;
+	}
 
 	/* XXX temp. hack - 0, 1 and 2 reserved for RS232 stdio */
 	for (d = 3; d < MAXFILES; d++)

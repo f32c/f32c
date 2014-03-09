@@ -32,7 +32,12 @@
 #include <io.h>
 #include <fb.h>
 #else
+#ifdef __APPLE__
+#define	__predict_true(x) (x)
+#define	__predict_false(x) (x)
+#else
 #include "../include/sys/cdefs.h"
+#endif
 #include "../include/fb.h"
 #endif
 
