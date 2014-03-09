@@ -60,19 +60,12 @@ file_cd()
 		buf[0] = name[0];
 		buf[1] = ':';
 		buf[2] = 0;
-		if (buf[0] < '0' || buf[0] > '1')
-			error(15);
-
-		/* Dummy open, just to auto-mount the volume */
-		fres = open(buf, 0);
-		if (fres >= 0)
-			close(fres);
 
 		/* Open the directory */
 		fres = f_opendir(&dir, buf);
 		if (fres != FR_OK)
 			error(15);
-		if (f_chdrive(buf[0] - '0') != FR_OK)
+		if (f_chdrive(buf) != FR_OK)
 			error(15);
 		start = 2;
 	}
