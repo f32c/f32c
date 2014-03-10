@@ -32,7 +32,7 @@
 
 
 static const char *bootfiles[] = {
-	"1:/bootme.bin",
+	"D:/bootme.bin",
 	"/boot/kernel",
 	"/boot/basic.bin",
 	NULL
@@ -46,7 +46,7 @@ static const char *bootfiles[] = {
 
 
 static char *
-load_bin(const char *fname)
+load_bin(const char *fname, int verbose)
 {
 	uint8_t hdrbuf[16];
 	int16_t *shortp;
@@ -55,10 +55,12 @@ load_bin(const char *fname)
 	char *cp;
 	char *start, *end;
 
-	printf("Trying %s... ", fname);
+	if (verbose)
+		printf("Trying %s... ", fname);
 	fd = open(fname, O_RDONLY);
 	if (fd < 0) {
-		printf("not found\n");
+		if (verbose)
+			printf("not found\n");
 		return (NULL);
 	}
 
@@ -121,9 +123,11 @@ load_bin(const char *fname)
 		}
 	} while (i > 0);
 	close(fd);
-
-	printf("OK\nLoaded text & data at %p; bss starts at %p len %p\n\n",
-	    start, cp, (void *) (end - cp));
+	
+	if (verbose)
+		printf("OK\nLoaded text & data at %p;"
+		    " bss starts at %p len %p\n\n",
+		    start, cp, (void *) (end - cp));
 
 	/* bzero() the BSS section */
 	bzero(cp, end - cp);
@@ -137,23 +141,25 @@ main(void)
 	int i;
 	char *loadaddr = (void *) SRAM_BASE;
 
-	printf("ULX2S FAT bootloader v 0.2 "
-#if _BYTE_ORDER == _BIG_ENDIAN
-	    "(f32c/be)"
-#else
-	    "(f32c/le)"
-#endif
-	    " (built " __DATE__ ")\n");
 
 	if (*((int *) loadaddr) == LOAD_COOKIE)
-		loadaddr = load_bin(&loadaddr[4]);
-	else
+		loadaddr = load_bin(&loadaddr[4], 0);
+	else {
+		printf("ULX2S FAT bootloader v 0.3 "
+#if _BYTE_ORDER == _BIG_ENDIAN
+		    "(f32c/be)"
+#else
+		    "(f32c/le)"
+#endif
+		    " (built " __DATE__ ")\n");
 		loadaddr = NULL;
+	}
 
 	for (i = 0; loadaddr == NULL && bootfiles[i] != NULL; i++)
-		loadaddr = load_bin(bootfiles[i]);
+		loadaddr = load_bin(bootfiles[i], 1);
 
 	if (loadaddr == NULL) {
+		*((int *) SRAM_BASE) = 0;
 		printf("Exiting\n");
 		return;
 	}

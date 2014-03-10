@@ -10,7 +10,7 @@ CFLAGS += -mno-branch-likely -mno-mul -mno-div
 CFLAGS += -DNO_PRINTF_FLOAT
 
 # Reduce FATFS code size
-CFLAGS += -D_FS_MINIMIZE=1 -D_FS_READONLY=1 -D_FS_SHARE=0
+CFLAGS += -D_FS_MINIMIZE=1 -D_FS_READONLY=1 -D_USE_ERASE=0
 CFLAGS += -D_FS_TINY=1 -D_FS_RPATH=0 -D_USE_LFN=0
 
 # SPI flash image name
