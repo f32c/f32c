@@ -633,9 +633,9 @@ void	matread(MEMP, int, int);
 int	matinput(void);
 int	matprint(void);
 
-void	setu_term();
-void	set_term();
-void	rset_term(int type);
+void	setu_term(void);
+void	set_term(void);
+void	rset_term(int);
 
 void	COPY_OVER_STR(STR, STR);
 void	FREE_STR(STR);
