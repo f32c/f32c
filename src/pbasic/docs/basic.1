@@ -1,6 +1,6 @@
 .TH BASIC 1
 .SH DESCRIPTION
-.I Rabbit BASIC
+Rabbit BASIC
 is an interpreter for a dialect of the BASIC programming language
 loosely modelled around the historic Dartmouth BASIC.
 The interpreter operates either in interactive mode, which permits
@@ -552,7 +552,7 @@ or
 .TP
 .B BAUDS expr
 Change the serial console baud rate.  The FT232R USB to UART bridge on
-ULX2S FPGA board should work well with most standard baud rates ranging
+the ULX2S FPGA board should work well with most standard baud rates ranging
 from 300 to 3000000 bauds.  The default speed is 115200 bauds.
 .TP
 .B SLEEP expr
@@ -580,7 +580,29 @@ graphic output may be directed to the root window by setting
 .I onroot 
 parameter to 1. 
 Scaling factor and onroot parameters are silently ignored when
-BASIC is running on the ULX2S FPGA board.
+BASIC is running on the ULX2S FPGA board.  Note that each invocation
+of
+.I VIDMODE
+command implicitly clears all currently defined sprites (see below).
+.TP
+.B DRAWABLE expr
+Sets drawable framebuffer to the value of
+.IR expr ,
+which may be either 0 or 1.  Framebuffer 0 is the default, and is
+automatically allocated each time video mode gets changed via the
+.I VIDMODE
+command, whereas framebuffer 1 will be automatically allocated the
+first time it gets referenced using the
+.I DRAWABLE
+command.
+.TP
+.B VISIBLE expr
+Sets visible framebuffer to the value of
+.IR expr ,
+which may be either 0 or 1.  Framebuffer 0 is the default, whereas
+framebuffer 1 must be first allocated using the
+.I DRAWABLE
+command.
 .TP
 .B INK color
 Select a color to be used in subsequent graphics operations.
@@ -673,7 +695,50 @@ may be specified to increase the size of the font.
 Load a JPEG image from a file pointed to by
 .IR path
 to the framebuffer.
-The size of the image may not exceed 512 by 288 pixels.
+.TP
+.B SPRGRAB spr_id, x0, y0, x1, y1
+Create a sprite uniquely identified by a positive integer
+.I spr_id
+and fill it with data from the drawable framebuffer enclosed in
+a rectangular area defined by coordinates
+.IR x0 ,
+.IR y0 ,
+.IR x1
+and
+.IR y1 .
+.TP
+.B SPRLOAD spr_id, path {, downscaling_factor}
+Create a sprite uniquely identified by a positive integer
+.I spr_id
+and populate it with JPEG image loaded from a file at
+.IR path .
+An optional integer parameter
+.I downscaling_factor
+in range between 0 and 3 may be specified to reduce the size of the
+sprite.  Note that creating sprites bigger than the framebuffer
+area (512 * 288) is permitted, though should be used with care in
+order to avoid memory exhaustion problems, especially on constrained
+platforms such as the ULX2S board.
+.TP
+.B SPRTRANS spr_id, color
+Declare
+.I color
+as transparent for existing sprite
+.IR spr_id .
+.TP
+.B SPRPUT spr_id, x, y
+Place sprite
+.I spr_id
+on the drawable framebuffer at coordinates
+.IR x
+and 
+.IR y .
+.TP
+.B SPRFREE {spr_id}
+Destroy all defined sprites and return the occupied memory to the free
+memory pool.  If an optional
+.I spr_id
+argument is provided, only the selected sprite is freed.
 .SH FUNCTIONS
 .TP
 .B MIN(x, ...)
@@ -797,7 +862,15 @@ Zero if error was in immeadiate mode.
 Returns the error code of the last error.
 .TP
 .B TIM
-Returns a numeric value for the number of seconds since system startup.
+Returns a numeric value for the number of seconds since interpreter startup.
+.TP
+.B CURKEYS
+Returns a bitmapped value corresponding to the current state of cursor
+buttons (see
+.I LEDs, buttons and switches
+below).  When running in an X11 environment, space bar is mapped to the
+.IR btn_center
+key.
 .SH MATHEMATICAL OPERATORS
         ^               exponentiation
         *               multiplication
