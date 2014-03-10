@@ -85,7 +85,7 @@ main(int argc, char **argv)
 #endif
 	program = 0;
 	clear();
-	prints("Rabbit BASIC version 2.1.1 (built " __DATE__ ")\n");
+	prints("Rabbit BASIC version 2.1.2 (built " __DATE__ ")\n");
 	if(setexit() == ERR_RESET){
 		drop_fns();
 		execute();	/* execute the line */
@@ -98,7 +98,7 @@ main(int argc, char **argv)
 	
 	if (firstrun && (
 #ifdef f32c
-	    (fp = open("1:autoexec.bas",0)) > 0 ||
+	    (fp = open("d:autoexec.bas",0)) > 0 ||
 #endif
 	    (fp = open("autoexec.bas",0)) > 0)) {
 		firstrun = 0;

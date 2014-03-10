@@ -36,7 +36,7 @@
 
 #include <fatfs/ff.h>
 
-#define MAXFILES 8
+#define MAXFILES 4
 
 
 static FATFS ff_mounts[2];
@@ -63,8 +63,7 @@ open(const char *path, int flags, ...)
 		ff_mounted[1] = 1;
 	}
 
-	/* XXX temp. hack - 0, 1 and 2 reserved for RS232 stdio */
-	for (d = 3; d < MAXFILES; d++)
+	for (d = 0; d < MAXFILES; d++)
 		if (file_map[d].in_use == 0)
 			break;
 	if (d == MAXFILES)
@@ -83,7 +82,7 @@ open(const char *path, int flags, ...)
 		return (-1);
 
 	file_map[d].in_use = 1;
-	return (d);
+	return (d + 3);
 }
 
 
@@ -99,6 +98,11 @@ int
 close(int d)
 {
 
+	/* XXX hack for stdin, stdout, stderr */
+	if (d >= 0 && d <= 2)
+		return (0);
+	d -= 3;
+
 	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
 		return (-1);
 	f_close(&file_map[d].fp);
@@ -113,7 +117,7 @@ read(int d, void *buf, size_t nbytes)
 	FRESULT f_res;
 	uint32_t got = 0;
 
-	/* XXX hack */
+	/* XXX hack for stdin, stdout, stderr */
 	if (d >= 0 && d <= 2) {
 		char *cp = (char *) buf;
 		for (;nbytes != 0; nbytes--) {
@@ -122,6 +126,7 @@ read(int d, void *buf, size_t nbytes)
 		}
 		return (got);
 	}
+	d -= 3;
 
 	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
 		return (-1);
@@ -141,13 +146,14 @@ write(int d, const void *buf, size_t nbytes)
 #endif
 	uint32_t wrote = nbytes;
 
-	/* XXX hack */
+	/* XXX hack for stdin, stdout, stderr */
 	if (d >= 0 && d <= 2) {
 		char *cp = (char *) buf;
 		for (; nbytes != 0; nbytes--)
 			printf("%c", *cp++);
 		return (wrote);
 	}
+	d -= 3;
 
 	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
 		return (-1);
@@ -167,6 +173,11 @@ off_t
 lseek(int d, off_t offset, int whence)
 {
 	FRESULT f_res;
+
+	/* XXX hack for stdin, stdout, stderr */
+	if (d >= 0 && d <= 2)
+		return (-1);
+	d -= 3;
 
 	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
 		return (-1);

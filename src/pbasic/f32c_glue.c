@@ -221,22 +221,27 @@ do_ls(const char *path)
 {
 	FRESULT fres;
 	FILINFO fno;
+	FATFS *fs;
 	DIR dir;
-	int c;
+	DWORD free_clust;
+	int c, filecnt = 0;
+	uint64_t totsize = 0;
 	char *fname;
 	static char lfn[_MAX_LFN + 1];
 	fno.lfname = lfn;
 	fno.lfsize = sizeof(lfn);
 
-	/* Dummy open, just to auto-mount the volume */
-	fres = open(path, 0);
-	if (fres >= 0)
-		close (fres);
-
 	/* Open the directory */
 	fres = f_opendir(&dir, path);
 	if (fres != FR_OK)
 		return (fres);
+
+	printf("Directory for ");
+	if (*path == 0) {
+		f_getcwd(lfn, _MAX_LFN);
+		printf("%s\n", lfn);
+	} else
+		printf("%s\n", path);
 
 	do {
 		/* Read a directory item */
@@ -244,15 +249,17 @@ do_ls(const char *path)
 		if (fres != FR_OK || fno.fname[0] == 0)
 			break;
 
-		if (fno.fattrib & AM_DIR)
-			c = 'd';
-		else
-			c = ' ';
 		if (lfn[0] == 0)
 			fname = fno.fname;
 		else
 			fname = lfn;
-		printf("%10d %c %s/%s\n", (int) fno.fsize, c, path, fname);
+		if (fno.fattrib & AM_DIR)
+			printf("<DIR>       %s\n", fname);
+		else {
+			printf("%10d  %s\n", (int) fno.fsize, fname);
+			totsize += fno.fsize;
+		}
+		filecnt++;
 
 		/* Pager */
 		if (scan_line++ >= scan_stop) {
@@ -260,12 +267,19 @@ do_ls(const char *path)
 			c = getchar();
 			printf("\r                      \r");
 			if (c == 3 || c == 'q')
-				break;
+				return (fres);
 			scan_stop = scan_line;
 			if (c == ' ')
 				scan_stop += 21;
 		}
 	} while (1);
+
+	if (f_getfree(path, &free_clust, &fs))
+		return (-1);
+	printf("%u Kbytes in %d files, ",
+	    (uint32_t) (totsize / 1024), filecnt);
+	printf("%lu Kbytes free.\n",
+	    free_clust * fs->csize * (fs->ssize / 512) / 2);
 
 	return (fres);
 }
