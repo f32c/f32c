@@ -142,6 +142,10 @@ sdcard_init(void)
 	/* Terminate current transaction, if any */
 	sdcard_cmd(SD_CMD_STOP_TRANSMISSION, 0);
 
+	/* Clock in some dummy data in an attempt to wake up the card */
+	for (i = 0; i < (1 << 18); i++)
+		spi_byte(SPI_PORT_SDCARD, 0xff);
+
 	/* CRC embedded in bits 15..8 of command word */
 	res = sdcard_cmd(SD_CMD_GO_IDLE_STATE | 0x9500, 0) & 0xfe;
 	if (res)
