@@ -1022,8 +1022,8 @@ loadjpg(void)
 			error(15);
 		descale = evalint();
 		if (descale < 0 || descale > 3)
-			error(33);      /* argument error */
-        }
+			error(33);	/* argument error */
+	}
 
 	check();
 	if (fb_mode > 1)
@@ -1039,8 +1039,8 @@ loadjpg(void)
 		spr.spr_size_x = 512;
 		spr.spr_size_y = 288;
 		r = jd_decomp(&jdec, jpeg_dump_decoded, descale);
-                if (r != JDR_OK)
-                        printf("Failed to decompress: rc=%d\n", r);
+		if (r != JDR_OK)
+			printf("Failed to decompress: rc=%d\n", r);
 	} else {
 		printf("Failed to prepare: rc=%d\n", r);
 	}
@@ -1094,9 +1094,9 @@ sprload(void)
 		    sp->spr_size_x * sp->spr_size_y * (fb_mode +1));
 		jh.sp = sp;
 		r = jd_decomp(&jdec, jpeg_dump_decoded, descale);
-                if (r != JDR_OK) {
+		if (r != JDR_OK) {
 			spr_free(id);
-                        printf("Failed to decompress: rc=%d\n", r);
+			printf("Failed to decompress: rc=%d\n", r);
 		}
 	} else {
 		printf("Failed to prepare: rc=%d\n", r);
