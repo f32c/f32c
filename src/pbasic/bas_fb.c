@@ -1088,10 +1088,10 @@ sprload(void)
 	r = jd_prepare(&jdec, jpeg_fetch_encoded, work_buf,
 	    sizeof(work_buf), &jh);
 	if (r == JDR_OK) {
+		sp = spr_alloc(id,
+		   jdec.width * jdec.height * (fb_mode +1) >> (descale * 2));
 		sp->spr_size_x = jdec.width >> descale;
 		sp->spr_size_y = jdec.height >> descale;
-		sp = spr_alloc(id,
-		    sp->spr_size_x * sp->spr_size_y * (fb_mode +1));
 		jh.sp = sp;
 		r = jd_decomp(&jdec, jpeg_dump_decoded, descale);
 		if (r != JDR_OK) {
