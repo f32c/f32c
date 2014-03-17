@@ -32,21 +32,23 @@ image:	loader.bin
 	rm .rs
 	dd bs=1 if=loader.bin of=${SPI_IMG_NAME} oseek=512 conv=notrunc
 	mmd -i ${SPI_IMG_NAME} ::boot
-	mmd -i ${SPI_IMG_NAME} ::pics
-	mmd -i ${SPI_IMG_NAME} ::pics/logos
+	mmd -i ${SPI_IMG_NAME} ::demo
+	mmd -i ${SPI_IMG_NAME} ::demo/pics
+	mmd -i ${SPI_IMG_NAME} ::demo/logos
+	mmd -i ${SPI_IMG_NAME} ::bench
 	mcopy -i ${SPI_IMG_NAME} ../../pbasic/basic.bin ::boot
-	mattrib -i ${SPI_IMG_NAME} +r ::boot/basic.bin
-	mcopy -i ${SPI_IMG_NAME} ../../wavplay/wavplay.bin ::
-	mattrib -i ${SPI_IMG_NAME} +r ::wavplay.bin
-	mcopy -i ${SPI_IMG_NAME} ../../dhry/dhry.bin ::dhry.bin
-	mattrib -i ${SPI_IMG_NAME} +r ::dhry.bin
-	mcopy -i ${SPI_IMG_NAME} ../../coremark/v1.0/coremark.bin ::coremark.bin
-	mattrib -i ${SPI_IMG_NAME} +r ::coremark.bin
-	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/pictures.txt ::pics
-	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/*.jpg ::pics
-	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/logos/*.jpg ::pics/logos
+	mcopy -i ${SPI_IMG_NAME} ../../wavplay/wavplay.bin ::demo
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/pictures.txt \
+		::demo/pics
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/*.jpg ::demo/pics
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/logos/*.jpg \
+		::demo/logos
 	mcopy -i ${SPI_IMG_NAME} ../../pbasic/COPYRIGHT ::copyright.txt
 	groff -mandoc -Tascii ../../pbasic/docs/basic.1 > .bas.man
 	mcopy -i ${SPI_IMG_NAME} .bas.man ::readme.txt
-	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/demo1.bas ::autoexec.bas
-	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/snake.bas ::snake.bas
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/demo.bas ::demo
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/snake.bas ::demo
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/tetris.bas ::demo
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/autoexec.bas ::
+	mcopy -i ${SPI_IMG_NAME} ../../coremark/v1.0/coremark.bin ::bench
+	mcopy -i ${SPI_IMG_NAME} ../../dhry/dhry.bin ::bench
