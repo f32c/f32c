@@ -49,6 +49,8 @@ image:	loader.bin
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/demo.bas ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/snake.bas ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/tetris.bas ::demo
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/pacman.bas ::demo
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/four.bas ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/autoexec.bas ::
 	mcopy -i ${SPI_IMG_NAME} ../../coremark/v1.0/coremark.bin ::bench
 	mcopy -i ${SPI_IMG_NAME} ../../dhry/dhry.bin ::bench
