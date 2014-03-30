@@ -202,7 +202,7 @@ update_x11(int nowait)
 	XEvent ev;
 	struct timeval now;
 	uint8_t *fb_8 = fb_active;
-	uint16_t *fb_16 = fb_active;
+	uint16_t *fb_16 = (void *) fb_active;
 	uint32_t *dstp = img;
 	int64_t delta;
 	int x, y, xs, ys;
