@@ -29,7 +29,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#ifdef f32c
+#ifdef __mips__
 #include <io.h>
 #include <fb.h>
 #else
@@ -274,7 +274,7 @@ fb_set_mode(int mode)
 	if (fb_mode <= 1)
 		fb_rectangle(0, 0, 511, 287, 0);
 
-#ifdef f32c
+#ifdef __mips__
 	OUTW(IO_FB, ((uint32_t) fb_active) | fb_mode);
 #endif
 }
@@ -302,7 +302,7 @@ fb_set_visible(int visual)
 	if (visual < 0 || visual > 1 || fb[visual] == NULL)
 		return;
 	fb_visible = visual;
-#ifdef f32c
+#ifdef __mips__
 	OUTW(IO_FB, ((uint32_t) fb[fb_visible]) | fb_mode);
 #endif
 }
@@ -428,7 +428,7 @@ fb_rgb2pal(uint32_t rgb) {
 }
 
 
-#ifdef f32c
+#ifdef __mips__
 __attribute__((optimize("-O3")))
 #endif
 void
@@ -535,7 +535,7 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 }
 
 
-#ifdef f32c
+#ifdef __mips__
 __attribute__((optimize("-O3")))
 #endif
 void
@@ -660,7 +660,7 @@ fb_filledcircle(int x0, int y0, int r, int color)
 }
 
 
-#ifdef f32c
+#ifdef __mips__
 __attribute__((optimize("-O3")))
 #endif
 void
