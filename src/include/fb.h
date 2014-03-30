@@ -37,6 +37,7 @@ void fb_circle(int, int, int, int);
 void fb_filledcircle(int, int, int, int);
 void fb_text(int, int, const char *, int, int, int);
 
+extern uint8_t *fb[];
 extern uint8_t *fb_active;
 extern uint8_t fb_mode;
 extern uint8_t fb_visible;
