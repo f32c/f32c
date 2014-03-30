@@ -239,8 +239,7 @@ static uint8_t font_map[] = {
 };
 
 
-static uint8_t *fb[2];
-
+uint8_t *fb[2];
 uint8_t *fb_active;
 uint8_t fb_visible;
 uint8_t fb_drawable;
