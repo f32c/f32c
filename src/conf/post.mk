@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013 Marko Zec
+# Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -49,7 +49,11 @@ ifeq ($(findstring -march=,$(CFLAGS)),)
 MK_CFLAGS += -march=f32c
 endif
 MK_CFLAGS += ${ENDIANFLAGS}
+
+# small data section tuning
+ifeq ($(findstring -G,$(CFLAGS)),)
 MK_CFLAGS += -G 32768
+endif
 
 # f32c-specific flags
 #MK_CFLAGS += -mno-mul

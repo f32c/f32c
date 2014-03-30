@@ -103,14 +103,27 @@ endif
 ifneq (,$(findstring framebuffer,$(F32C_LIBS)))
 	_NEED_DIV = YES
 	_NEED_FB = YES
+	_NEED_MALLOC = YES
 endif
 
 ifneq (,$(findstring jpeg,$(F32C_LIBS)))
 	_NEED_DIV = YES
 	_NEED_FB = YES
+	_NEED_MALLOC = YES
 	_NEED_JPEG = YES
 endif
 
+ifneq (,$(findstring sprite,$(F32C_LIBS)))
+	_NEED_DIV = YES
+	_NEED_FB = YES
+	_NEED_JPEG = YES
+	_NEED_SPRITE = YES
+	_NEED_MALLOC = YES
+	_NEED_SPI = YES
+	_NEED_SDCARD = YES
+	_NEED_DISKIO = YES
+	_NEED_FATFS = YES
+endif
 
 
 ifdef _NEED_MALLOC
@@ -232,5 +245,9 @@ endif
 
 ifdef _NEED_JPEG
 	CFILES += ${BASE_DIR}lib/tjpgd.c
+endif
+
+ifdef _NEED_SPRITE
+	CFILES += ${BASE_DIR}lib/sprite.c
 endif
 

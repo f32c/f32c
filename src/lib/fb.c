@@ -27,6 +27,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #ifdef f32c
 #include <io.h>
@@ -238,25 +239,72 @@ static uint8_t font_map[] = {
 };
 
 
-static uint32_t	fb_mode = 3;
-static uint8_t	*fb;
+uint8_t fb_mode = 3;
+uint8_t *fb_active;
+
+static uint8_t fb_visible;
+static uint8_t fb_drawable;
+static uint8_t *fb[2];
 
 #define	ABS(a) (((a) < 0) ? -(a) : (a))
 
 
 void
-fb_set_mode(int mode, void *drawable, void *visible)
+fb_set_mode(int mode)
 {
 
-	fb_mode = mode & 3;
+	free(fb[1]);
+	fb[1] = NULL;
+	fb_drawable = 0;
+	fb_visible = 0;
 
-	if (fb_mode > 1)
-		fb = NULL;
-	else
-		fb = drawable;
+	mode &= 3;
+	if (mode > 1) {
+		free(fb[0]);
+		fb[0] = NULL;
+	} else {
+		if (fb_mode != mode) {
+			free(fb[0]);
+			fb[0] = malloc((mode + 1) * 512 * 288);
+		}
+		if (fb[0] == NULL)
+			mode = 3;
+	}
+	fb_mode = mode;
+	fb_active = fb[0];
+	if (fb_mode <= 1)
+		fb_rectangle(0, 0, 511, 287, 0);
 
 #ifdef f32c
-	OUTW(IO_FB, ((uint32_t) visible) | fb_mode);
+	OUTW(IO_FB, ((uint32_t) fb_active) | fb_mode);
+#endif
+}
+
+
+void
+fb_set_drawable(int visual)
+{
+
+	if (visual < 0 || visual > 1)
+		return;
+	if (fb[visual] == NULL)
+		fb[visual] = malloc((fb_mode + 1) * 512 * 288);
+	if (fb[visual] == NULL)
+		return;
+	fb_drawable = visual;
+	fb_active = fb[visual];
+}
+
+
+void
+fb_set_visible(int visual)
+{
+
+	if (visual < 0 || visual > 1 || fb[visual] == NULL)
+		return;
+	fb_visible = visual;
+#ifdef f32c
+	OUTW(IO_FB, ((uint32_t) fb[fb_visible]) | fb_mode);
 #endif
 }
 
@@ -388,7 +436,7 @@ void
 fb_plot(int x, int y, int color)
 {
 	int off = (y << 9) + x;
-	uint8_t *dp = fb;
+	uint8_t *dp = fb_active;
 
 	if (__predict_false(y < 0 || y > 287 || fb_mode > 1 || (x >> 9)))
 		return;
@@ -438,7 +486,6 @@ void
 fb_rectangle(int x0, int y0, int x1, int y1, int color)
 {
 	int x;
-	uint16_t *fb16 = (void *) fb;
 
 	if (fb_mode > 1)
 		return;
@@ -463,6 +510,7 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 		y1 = 287;
 
 	if (__predict_true(fb_mode)) {
+		uint16_t *fb16 = (void *) fb_active;
 		color = (color << 16) | (color & 0xffff);
 		for (; y0 <= y1; y0++) {
 			for (x = x0; x <= x1 && (x & 1); x++)
@@ -473,15 +521,16 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 				fb16[(y0 << 9) + x] = color;
 		}
 	} else {
+		uint8_t *fb8 = (void *) fb_active;
 		color = (color << 8) | (color & 0xff);
 		color = (color << 16) | (color & 0xffff);
 		for (; y0 <= y1; y0++) {
 			for (x = x0; x <= x1 && (x & 3); x++)
-				fb[(y0 << 9) + x] = color;
+				fb8[(y0 << 9) + x] = color;
 			for (; x <= (x1 - 3); x += 4)
-				*((int *) &fb[(y0 << 9) + x]) = color;
+				*((int *) &fb8[(y0 << 9) + x]) = color;
 			for (; x <= x1; x++)
-				fb[(y0 << 9) + x] = color;
+				fb8[(y0 << 9) + x] = color;
 		}
 	}
 }
@@ -515,7 +564,7 @@ fb_line(int x0, int y0, int x1, int y1, int color)
 	if (fb_mode > 1)
 		return;
 
-	plotfn(x0, y0, color, fb);
+	plotfn(x0, y0, color, fb_active);
 	for (;;) {
 		if (x0 == x1 && y0 == y1)
 			break;
@@ -528,7 +577,7 @@ fb_line(int x0, int y0, int x1, int y1, int color)
 			err += dx;
 			y0 += sy;
 		}
-		plotfn(x0, y0, color, fb);
+		plotfn(x0, y0, color, fb_active);
 	}
 }
 
@@ -556,10 +605,10 @@ fb_circle(int x0, int y0, int r, int color)
 	if (fb_mode > 1)
 		return;
 
-	plotfn(x0, y0 + r, color, fb);
-	plotfn(x0, y0 - r, color, fb);
-	plotfn(x0 + r, y0, color, fb);
-	plotfn(x0 - r, y0, color, fb);
+	plotfn(x0, y0 + r, color, fb_active);
+	plotfn(x0, y0 - r, color, fb_active);
+	plotfn(x0 + r, y0, color, fb_active);
+	plotfn(x0 - r, y0, color, fb_active);
  
 	while(x < y) {
 		if (f >= 0) {
@@ -570,14 +619,14 @@ fb_circle(int x0, int y0, int r, int color)
 		x++;
 		ddF_x += 2;
 		f += ddF_x;    
-		plotfn(x0 + x, y0 + y, color, fb);
-		plotfn(x0 - x, y0 + y, color, fb);
-		plotfn(x0 + x, y0 - y, color, fb);
-		plotfn(x0 - x, y0 - y, color, fb);
-		plotfn(x0 + y, y0 + x, color, fb);
-		plotfn(x0 - y, y0 + x, color, fb);
-		plotfn(x0 + y, y0 - x, color, fb);
-		plotfn(x0 - y, y0 - x, color, fb);
+		plotfn(x0 + x, y0 + y, color, fb_active);
+		plotfn(x0 - x, y0 + y, color, fb_active);
+		plotfn(x0 + x, y0 - y, color, fb_active);
+		plotfn(x0 - x, y0 - y, color, fb_active);
+		plotfn(x0 + y, y0 + x, color, fb_active);
+		plotfn(x0 - y, y0 + x, color, fb_active);
+		plotfn(x0 + y, y0 - x, color, fb_active);
+		plotfn(x0 - y, y0 - x, color, fb_active);
 	}
 }
 
@@ -661,9 +710,9 @@ next_char:
 			else
 				dot = bgcolor;
 			if (__predict_true(fb_mode != 0))
-				*((uint16_t *) &fb[off << 1]) = dot;
+				*((uint16_t *) &fb_active[off << 1]) = dot;
 			else
-				fb[off] = dot;
+				fb_active[off] = dot;
 		}
 	}
 

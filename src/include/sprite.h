@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec, Univeristy of Zagreb
+ * Copyright (c) 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -22,20 +22,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id$
+ * $Id: $
  */
 
-void fb_set_mode(int);
-void fb_set_drawable(int);
-void fb_set_visible(int);
-int fb_rgb2pal(uint32_t);
-
-void fb_plot(int, int, int);
-void fb_line(int, int, int, int, int);
-void fb_rectangle(int, int, int, int, int);
-void fb_circle(int, int, int, int);
-void fb_filledcircle(int, int, int, int);
-void fb_text(int, int, const char *, int, int, int);
-
-extern uint8_t *fb_active;
-extern uint8_t fb_mode;
+void spr_flush(void);
+int spr_free(int);
+int spr_grab(int, int, int, int, int);
+int spr_trans(int, int);
+int spr_put(int, int, int);
+int spr_load(int, char *, int);
+int jpg_load(char *, int);
