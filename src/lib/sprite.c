@@ -33,7 +33,7 @@
 #include <fcntl.h>
 #include <sys/queue.h>
 
-#ifdef f32c
+#ifdef __mips__
 #include <fb.h>
 #include <tjpgd.h>
 #include <io.h>

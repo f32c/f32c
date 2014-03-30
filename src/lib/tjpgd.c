@@ -18,7 +18,7 @@
 / Sep 03,'12 R0.01b Added JD_TBLCLIP option.
 /----------------------------------------------------------------------------*/
 
-#ifdef f32c
+#ifdef __mips__
 #include <tjpgd.h>
 #else
 #include "../pbasic/bas.h"
