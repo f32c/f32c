@@ -33,11 +33,13 @@
 #include "bas.h"
 
 #ifdef f32c
-#include <fb.h>
-#include <tjpgd.h>
 #include <io.h>
+#include <fb.h>
+#include <sprite.h>
+#include <tjpgd.h>
 #else
 #include "../include/fb.h"
+#include "../include/sprite.h"
 #include "tjpgd.h"
 #include <math.h>
 #include <sys/time.h>
@@ -81,14 +83,10 @@ static const struct colormap {
 	{ -1, NULL },
 };
 
-void *fb_buff[2];
 static int bgcolor;
 static int last_x;
 static int last_y;
 static uint16_t fgcolor;
-static uint16_t fb_mode = 3;
-static uint8_t fb_visible;
-static uint8_t fb_drawable;
 
 #ifndef f32c
 /* XXX from <io.h> */
@@ -119,71 +117,6 @@ static uint32_t map16[65536];
 		x11_update_pending = 1;				\
 	} while (0)
 #endif
-
-
-struct sprite {
-	SLIST_ENTRY(sprite)	spr_le;
-	char			*spr_data;
-	int32_t			spr_trans_color;
-	uint16_t		spr_id;
-	uint16_t		spr_size_x;
-	uint16_t		spr_size_y;
-	char			buf[];
-};
-
-typedef struct {
-	struct sprite	*sp;
-	int32_t		fh;
-} jdecomp_handle;
-
-
-static SLIST_HEAD(, sprite) spr_head;
-
-
-static void
-spr_flush(void)
-{
-	struct sprite *sp;
-
-	do {
-		sp = SLIST_FIRST(&spr_head);
-		if (sp == NULL)
-			return;
-		SLIST_REMOVE(&spr_head, sp, sprite, spr_le);
-		mfree(sp);
-	} while (0);
-}
-
-
-static int
-spr_free(int id)
-{
-	struct sprite *sp;
-
-	SLIST_FOREACH(sp, &spr_head, spr_le)
-		if (sp->spr_id == id) {
-			SLIST_REMOVE(&spr_head, sp, sprite, spr_le);
-			mfree(sp);
-			return (0);
-		}
-	return (1);
-}
-
-
-static struct sprite *
-spr_alloc(int id, int bufsize)
-{
-	struct sprite *sp;
-
-	spr_free(id);
-	sp = mmalloc(sizeof(struct sprite) + bufsize);
-	SLIST_INSERT_HEAD(&spr_head, sp, spr_le);
-	sp->spr_data = (void *) &sp->buf;
-	sp->spr_id = id;
-	sp->spr_trans_color = -1;
-	return (sp);
-}
-
 
 #ifndef f32c
 static uint32_t
@@ -258,7 +191,7 @@ setup_fb(void)
 #endif
 
 	/* Turn off video framebuffer */
-	fb_set_mode(3, NULL, NULL);
+	fb_set_mode(3);
 }
 
 
@@ -268,8 +201,8 @@ update_x11(int nowait)
 {
 	XEvent ev;
 	struct timeval now;
-	uint8_t *fb_8 = fb_buff[fb_visible];
-	uint16_t *fb_16 = fb_buff[fb_visible];
+	uint8_t *fb_8 = fb_active;
+	uint16_t *fb_16 = fb_active;
 	uint32_t *dstp = img;
 	int64_t delta;
 	int x, y, xs, ys;
@@ -390,19 +323,8 @@ vidmode(void)
 	}
 	check();
 
-	if (mode != fb_mode) {
-		mfree(fb_buff[0]);
-		if (fb_buff[1])
-			mfree(fb_buff[1]);
-		fb_buff[0] = NULL;
-		fb_buff[1] = NULL;
-		if (mode < 2)
-			fb_buff[0] = mmalloc(512 * 288 * (mode + 1));
-	}
 	spr_flush();
-	fb_drawable = 0;
-	fb_visible = 0;
-	fb_set_mode(mode, fb_buff[0], fb_buff[0]);
+	fb_set_mode(mode);
 	fgcolor = fb_rgb2pal(0xffffff);
 	bgcolor = fb_rgb2pal(0);
 	if (mode < 2)
@@ -464,12 +386,7 @@ drawable(void)
 	check();
 	if (visual < 0 || visual > 1)
 		error(36);	/* argument error */
-	if (fb_mode > 1)
-		error(26);	/* out of data */
-	if (fb_buff[visual] == NULL)
-		fb_buff[visual] = mmalloc(512 * 288 * (fb_mode + 1));
-	fb_drawable = visual;
-	fb_set_mode(fb_mode, fb_buff[fb_drawable], fb_buff[fb_visible]);
+	fb_set_drawable(visual);
 	normret;
 }
 
@@ -483,10 +400,7 @@ visible(void)
 	check();
 	if (visual < 0 || visual > 1)
 		error(36);	/* argument error */
-	if (fb_buff[visual] == NULL || fb_mode > 1)
-		error(26);	/* out of data */
-	fb_visible = visual;
-	fb_set_mode(fb_mode, fb_buff[fb_drawable], fb_buff[fb_visible]);
+	fb_set_visible(visual);
 #ifndef f32c
 	x11_update_pending = 1;
 #endif
@@ -748,10 +662,7 @@ text(void)
 int
 sprgrab(void)
 {
-	int id, x0, y0, x1, y1, x, y;
-	struct sprite *sp;
-	uint16_t *u16src, *u16dst;
-	uint8_t *u8src, *u8dst;
+	int id, x0, y0, x1, y1;
 
 	id = evalint();
 	if(getch() != ',')
@@ -768,27 +679,8 @@ sprgrab(void)
 	y1 = evalint();
 	check();
 
-	if (x0 < 0 || x1 > 511 || x0 > x1 ||
-	    y0 < 0 || y1 > 287 || y0 > y1 || id < 0 || fb_mode > 1)
-		error(15);
-
-	sp = spr_alloc(id, (x1 - x0 + 1) * (y1 - y0 + 1) * (fb_mode + 1));
-	sp->spr_size_x = x1 - x0 + 1;
-	sp->spr_size_y = y1 - y0 + 1;
-
-	if (fb_mode == 0)
-		for (u8dst = (void *) sp->spr_data, y = y0; y <= y1; y++) {
-			u8src = (uint8_t *) fb_buff[fb_drawable];
-			u8src += (y << 9) + x0;
-			for (x = x0; x <= x1; x++)
-				*u8dst++ = *u8src++;
-		}
-	else
-		for (u16dst = (void *) sp->spr_data, y = y0; y <= y1; y++) {
-			u16src = (uint16_t *) fb_buff[fb_drawable];					u16src += (y << 9) + x0;
-			for (x = x0; x <= x1; x++)
-				*u16dst++ = *u16src++;
-		}
+	if (spr_grab(id, x0, y0, x1, y1) != 0)
+		error(BADDATA);
 	normret;
 }
 
@@ -797,7 +689,6 @@ int
 sprtrans(void)
 {
 	int id, color;
-	struct sprite *sp;
 
 	id = evalint();
 	if(getch() != ',')
@@ -805,12 +696,8 @@ sprtrans(void)
 	color = parse_color();
 	check();
 
-	SLIST_FOREACH(sp, &spr_head, spr_le)
-		if (sp->spr_id == id)
-			break;
-	if (sp == NULL)
+	if (spr_trans(id, color) != 0)
 		error(BADDATA);
-	sp->spr_trans_color = color;
 	normret;
 }
 
@@ -839,10 +726,7 @@ sprfree(void)
 int
 sprput(void)
 {
-	int id, x0, y0, x0_v, y0_v, x1, y1, x, y, c;
-	struct sprite *sp;
-	uint16_t *u16src, *u16dst;
-	uint8_t *u8src, *u8dst;
+	int id, x0, y0;
 
 	id = evalint();
 	if(getch() != ',')
@@ -853,198 +737,8 @@ sprput(void)
 	y0 = evalint();
 	check();
 
-	SLIST_FOREACH(sp, &spr_head, spr_le)
-		if (sp->spr_id == id)
-			break;
-	if (sp == NULL)
+	if (spr_put(id, x0, y0))
 		error(BADDATA);
-
-	x1 = x0 + sp->spr_size_x;
-	y1 = y0 + sp->spr_size_y;
-	x0_v = x0;
-	if (x0 < 0)
-		x0_v = 0;
-	y0_v = y0;
-	if (y0 < 0)
-		y0_v = 0;
-	if (x1 > 512)
-		x1 = 512;
-	if (y1 > 288)
-		y1 = 288;
-
-	if (fb_mode == 0)
-		for (y = y0_v; y < y1; y++) {
-			u8src = &((uint8_t *) sp->spr_data)[(y - y0)
-			    * sp->spr_size_x];
-			u8src += (x0_v - x0);
-			u8dst = (uint8_t *) fb_buff[fb_drawable];
-			u8dst += (y << 9) + x0_v;
-			for (x = x0_v; x < x1; x++) {
-				c = *u8src++;
-				if (c != sp->spr_trans_color)
-					*u8dst = c;
-				u8dst++;
-			}
-		}
-	else
-		for (y = y0_v; y < y1; y++) {
-			u16src = &((uint16_t *) sp->spr_data)[(y - y0)
-			    * sp->spr_size_x];
-			u16src += (x0_v - x0);
-			u16dst = (uint16_t *) fb_buff[fb_drawable];
-			u16dst += (y << 9) + x0_v;
-			for (x = x0_v; x < x1; x++) {
-				c = *u16src++;
-				if (c != sp->spr_trans_color)
-					*u16dst = c;
-				u16dst++;
-			}
-		}
-	X11_SCHED_UPDATE();
-	normret;
-}
-
-
-/* Input function for JPEG decompression */
-static uint32_t
-jpeg_fetch_encoded(JDEC* jd, BYTE* buff, UINT nbyte)
-{
-	jdecomp_handle *jh = (jdecomp_handle *)jd->device;
-	uint32_t retval;
-
-	if (buff) {
-		/* Read bytes from input stream */
-		retval = read(jh->fh, buff, nbyte);
-	} else {
-		/* Remove bytes from input stream */
-		retval = lseek(jh->fh, nbyte, SEEK_CUR) ? nbyte : 0;
-	}
-
-	return (retval);
-}
-
-
-/* Output funciton for JPEG decompression */
-static UINT
-jpeg_dump_decoded(JDEC* jd, void* bitmap, JRECT* rect)
-{
-	jdecomp_handle *jh = (jdecomp_handle *)jd->device;
-	struct sprite *sp = jh->sp;
-	uint32_t x, y, xlim, ylim;
-#if JD_FORMAT < JD_FMT_RGB32
-	uint8_t *src;
-#else
-	uint32_t *src;
-#endif
-	uint32_t rgb, prev_rgb = 0, color = 0;
-	uint16_t *dst16;
-	uint8_t *dst8;
-
-	src = (void *)bitmap;
-	ylim = rect->bottom;
-	if (rect->bottom > sp->spr_size_y - 1)
-		ylim = sp->spr_size_y - 1;
-	xlim = rect->right;
-	if (rect->right > sp->spr_size_x - 1)
-		xlim = sp->spr_size_x - 1;
-	if (fb_mode)
-		for (y = rect->top; y <= ylim; y++) {
-			dst16 = (void *) sp->spr_data;
-			dst16 = &dst16[y * sp->spr_size_x + rect->left];
-			for (x = rect->left; x <= xlim; x++) {
-#if JD_FORMAT < JD_FMT_RGB32
-				rgb = src[0] * 65536 + src[1] * 256 + src[2];
-				src += 3;
-#else
-				rgb = *src++;
-#endif
-				if (rgb != prev_rgb) {
-					prev_rgb = rgb;
-					color = fb_rgb2pal(rgb);
-				}
-				*dst16++ = color;
-			}
-			if (x < rect->right)
-#if JD_FORMAT < JD_FMT_RGB32
-				src += 3 * (rect->right - x);
-#else
-				src += (rect->right - x);
-#endif
-		}
-	else
-		for (y = rect->top; y <= ylim; y++) {
-			dst8 = (void *) sp->spr_data;
-			dst8 = &dst8[y * sp->spr_size_x + rect->left];
-			for (x = rect->left; x <= xlim; x++) {
-#if JD_FORMAT < JD_FMT_RGB32
-				rgb = src[0] * 65536 + src[1] * 256 + src[2];
-				src += 3;
-#else
-				rgb = *src++;
-#endif
-				if (rgb != prev_rgb) {
-					prev_rgb = rgb;
-					color = fb_rgb2pal(rgb);
-				}
-				*dst8++ = color;
-			}
-			if (x < rect->right)
-#if JD_FORMAT < JD_FMT_RGB32
-				src += 3 * (rect->right - x);
-#else
-				src += (rect->right - x);
-#endif
-		}
-	return (1);    /* Continue to decompress */
-}
-
-
-int
-loadjpg(void)
-{
-	char work_buf[8192];
-	STR st;
-	JDEC jdec;
-	JRESULT r;
-	jdecomp_handle jh;
-	struct sprite spr;
-	int c, descale = 0;
-
-	st = stringeval();
-	NULL_TERMINATE(st);
-	strcpy(work_buf, st->strval);
-	FREE_STR(st);
-	c = getch();
-	if (istermin(c))
-		point--;
-	else {
-		if (c != ',')
-			error(15);
-		descale = evalint();
-		if (descale < 0 || descale > 3)
-			error(33);	/* argument error */
-	}
-
-	check();
-	if (fb_mode > 1)
-		error(24);	/* out of core */
-	jh.fh = open(work_buf, O_RDONLY);
-	if (jh.fh < 0)
-		error(15);
-	r = jd_prepare(&jdec, jpeg_fetch_encoded, work_buf,
-	    sizeof(work_buf), &jh);
-	if (r == JDR_OK) {
-		jh.sp = &spr;
-		spr.spr_data = fb_buff[fb_drawable];
-		spr.spr_size_x = 512;
-		spr.spr_size_y = 288;
-		r = jd_decomp(&jdec, jpeg_dump_decoded, descale);
-		if (r != JDR_OK)
-			printf("Failed to decompress: rc=%d\n", r);
-	} else {
-		printf("Failed to prepare: rc=%d\n", r);
-	}
-	close(jh.fh);
 	X11_SCHED_UPDATE();
 	normret;
 }
@@ -1053,12 +747,8 @@ loadjpg(void)
 int
 sprload(void)
 {
-	char work_buf[8192];
+	char name[128];
 	STR st;
-	JDEC jdec;
-	JRESULT r;
-	jdecomp_handle jh;
-	struct sprite *sp;
 	int c, id, descale = 0;
 
 	id = evalint();
@@ -1066,7 +756,7 @@ sprload(void)
 		error(SYNTAX);
 	st = stringeval();
 	NULL_TERMINATE(st);
-	strcpy(work_buf, st->strval);
+	strcpy(name, st->strval); /* XXX REVISIT: strncpy() */
 	FREE_STR(st);
 	c = getch();
 	if (istermin(c))
@@ -1080,28 +770,38 @@ sprload(void)
 	}
 	check();
 
-	if (fb_mode > 1)
-		error(24);	/* out of core */
-	jh.fh = open(work_buf, O_RDONLY);
-	if (jh.fh < 0)
-		error(15);
-	r = jd_prepare(&jdec, jpeg_fetch_encoded, work_buf,
-	    sizeof(work_buf), &jh);
-	if (r == JDR_OK) {
-		sp = spr_alloc(id,
-		   jdec.width * jdec.height * (fb_mode +1) >> (descale * 2));
-		sp->spr_size_x = jdec.width >> descale;
-		sp->spr_size_y = jdec.height >> descale;
-		jh.sp = sp;
-		r = jd_decomp(&jdec, jpeg_dump_decoded, descale);
-		if (r != JDR_OK) {
-			spr_free(id);
-			printf("Failed to decompress: rc=%d\n", r);
-		}
-	} else {
-		printf("Failed to prepare: rc=%d\n", r);
+	if (spr_load(id, name, descale))
+		error(BADDATA);
+	X11_SCHED_UPDATE();
+	normret;
+}
+
+
+int
+loadjpg(void)
+{
+	char name[128];
+	STR st;
+	int c, descale = 0;
+
+	st = stringeval();
+	NULL_TERMINATE(st);
+	strcpy(name, st->strval); /* XXX REVISIT: strncpy() */
+	FREE_STR(st);
+	c = getch();
+	if (istermin(c))
+		point--;
+	else {
+		if (c != ',')
+			error(15);
+		descale = evalint();
+		if (descale < 0 || descale > 3)
+			error(33);	/* argument error */
 	}
-	close(jh.fh);
+	check();
+
+	if (jpg_load(name, descale))
+		error(BADDATA);
 	X11_SCHED_UPDATE();
 	normret;
 }
