@@ -327,8 +327,6 @@ vidmode(void)
 	fb_set_mode(mode);
 	fgcolor = fb_rgb2pal(0xffffff);
 	bgcolor = fb_rgb2pal(0);
-	if (mode < 2)
-		fb_rectangle(0, 0, 511, 287, bgcolor);
 	last_x = 0;
 	last_y = 0;
 #ifndef f32c
