@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013 Marko Zec
+# Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -86,6 +86,10 @@ endif
 
 ifneq (,$(findstring memset,$(F32C_LIBS)))
 	_NEED_MEMSET = YES
+endif
+
+ifneq (,$(findstring qsort,$(F32C_LIBS)))
+	_NEED_QSORT = YES
 endif
 
 ifneq (,$(findstring fatfs,$(F32C_LIBS)))
@@ -216,6 +220,10 @@ endif
 
 ifdef _NEED_ATOI
 	CFILES += ${BASE_DIR}lib/atoi.c
+endif
+
+ifdef _NEED_QSORT
+	CFILES += ${BASE_DIR}lib/qsort.c
 endif
 
 ifdef _NEED_FB
