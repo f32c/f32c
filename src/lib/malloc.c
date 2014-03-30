@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,6 +31,7 @@
 
 extern void *_end;
 
+static void *heapinit = &_end;
 static uint32_t *heap;
 
 #define	HEAP_TOP	0x800f8000
@@ -97,9 +98,10 @@ malloc(size_t size)
 
 	size = ((size + 3) >> 2) + 1;
 
-	if (heap == NULL) {
+	if (heapinit != NULL) {
 		/* init */
-		heap = (void *) &_end;
+		heap = heapinit;
+		heapinit = NULL;
 		i = (HEAP_TOP - ((uint32_t) heap)) / sizeof(*heap) - 1;
 		heap[0] = SET_FREE(i);
 		heap[i] = 0;
