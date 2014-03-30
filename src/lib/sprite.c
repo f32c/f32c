@@ -39,7 +39,7 @@
 #include <io.h>
 #else
 #include "../include/fb.h"
-#include "tjpgd.h"
+#include "../pbasic/tjpgd.h"	/* XXX BASIC HACK, REVISIT! */
 #endif
 
 

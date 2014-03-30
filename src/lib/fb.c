@@ -239,12 +239,12 @@ static uint8_t font_map[] = {
 };
 
 
-uint8_t fb_mode = 3;
-uint8_t *fb_active;
-
-static uint8_t fb_visible;
-static uint8_t fb_drawable;
 static uint8_t *fb[2];
+
+uint8_t *fb_active;
+uint8_t fb_visible;
+uint8_t fb_drawable;
+uint8_t fb_mode = 3;
 
 #define	ABS(a) (((a) < 0) ? -(a) : (a))
 
