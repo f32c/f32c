@@ -33,6 +33,8 @@ double strtod(const char * __restrict, char ** __restrict);
 long strtol(const char * __restrict, char ** __restrict, int);
 unsigned long strtoul(const char * __restrict, char ** __restrict, int);
 
+void qsort(void *, size_t, size_t, int (*)(const void *, const void *));
+
 #define rand() random()
 uint32_t random(void);
 void srand(unsigned);
