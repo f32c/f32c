@@ -29,6 +29,7 @@ void spr_flush(void);
 int spr_free(int);
 int spr_grab(int, int, int, int, int);
 int spr_trans(int, int);
+int spr_size(int, int *, int *);
 int spr_put(int, int, int);
 int spr_load(int, char *, int);
 int jpg_load(char *, int);
