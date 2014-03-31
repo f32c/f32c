@@ -157,6 +157,22 @@ spr_trans(int id, int color)
 
 
 int
+spr_size(int id, int *w, int *h)
+{
+	struct sprite *sp;
+
+	SLIST_FOREACH(sp, &spr_head, spr_le)
+		if (sp->spr_id == id)
+			break;
+	if (sp == NULL)
+		return (-1);
+	*w = sp->spr_size_x;
+	*h = sp->spr_size_y;
+	return (0);
+}
+
+
+int
 spr_put(int id, int x0, int y0)
 {
 	int x0_v, y0_v, x1, y1, x, y, c;
