@@ -35,9 +35,9 @@ image:	loader.bin
 	mmd -i ${SPI_IMG_NAME} ::demo
 	mmd -i ${SPI_IMG_NAME} ::demo/pics
 	mmd -i ${SPI_IMG_NAME} ::demo/logos
+	mmd -i ${SPI_IMG_NAME} ::demo/chess
 	mmd -i ${SPI_IMG_NAME} ::bench
 	mcopy -i ${SPI_IMG_NAME} ../../pbasic/basic.bin ::boot
-	mcopy -i ${SPI_IMG_NAME} ../../wavplay/wavplay.bin ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/pictures.txt \
 		::demo/pics
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/*.jpg ::demo/pics
@@ -51,6 +51,12 @@ image:	loader.bin
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/tetris.bas ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/pacman.bas ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/four.bas ::demo
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/chess/chess.bin ::demo
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/chess/board.jpg ::demo/chess
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/chess/white.jpg ::demo/chess
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/chess/black.jpg ::demo/chess
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/chess/book.txt ::demo/chess
+	mcopy -i ${SPI_IMG_NAME} ../../wavplay/wavplay.bin ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/autoexec.bas ::
 	mcopy -i ${SPI_IMG_NAME} ../../coremark/v1.0/coremark.bin ::bench
 	mcopy -i ${SPI_IMG_NAME} ../../dhry/dhry.bin ::bench
