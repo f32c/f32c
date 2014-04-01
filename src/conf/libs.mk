@@ -71,6 +71,10 @@ ifeq (,$(findstring NO_PRINTF_FLOAT,$(CFLAGS)))
 endif
 endif
 
+ifneq (,$(findstring sprintf,$(F32C_LIBS)))
+	_NEED_SPRINTF = YES
+endif
+
 ifneq (,$(findstring gets,$(F32C_LIBS)))
 	_NEED_SIO = YES
 	_NEED_GETS = YES
@@ -145,6 +149,10 @@ endif
 
 ifdef _NEED_PRINTF
 	CFILES += ${BASE_DIR}lib/printf.c
+endif
+
+ifdef _NEED_PRINTF
+	CFILES += ${BASE_DIR}lib/sprintf.c
 endif
 
 ifdef _NEED_GETS
