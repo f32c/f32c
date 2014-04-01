@@ -56,6 +56,9 @@ image:	loader.bin
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/chess/white.jpg ::demo/chess
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/chess/black.jpg ::demo/chess
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/chess/book.txt ::demo/chess
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/chess/README ::demo/chess
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/chess/COPYING ::demo/chess
+	mcopy -i ${SPI_IMG_NAME} ../../../../demo/chess/mscp.c ::demo/chess
 	mcopy -i ${SPI_IMG_NAME} ../../wavplay/wavplay.bin ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/autoexec.bas ::
 	mcopy -i ${SPI_IMG_NAME} ../../coremark/v1.0/coremark.bin ::bench
