@@ -244,6 +244,8 @@ begin
 		else
 		    R_phase <= C_phase_idle;
 		    R_cur_port <= next_port;
+		    R_ubl <= '1';
+		    R_lbl <= '1';
 		end if;
 	    elsif R_write_cycle and R_phase = C_phase_write_upper_half - 1 then
 		if R_byte_sel_hi /= "00" then
