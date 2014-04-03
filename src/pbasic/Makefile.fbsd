@@ -17,9 +17,9 @@ MK_CFLAGS += -Wall -Wno-missing-braces
 
 MK_LDFLAGS += -lm -lX11 -L/usr/local/lib
 
-CC = gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
-AS = gcc ${MK_CFLAGS} ${MK_INCLUDES}
-LD = gcc ${MK_LDFLAGS}
+CC = cc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
+AS = cc ${MK_CFLAGS} ${MK_INCLUDES}
+LD = cc ${MK_LDFLAGS}
 
 ASM_OBJS = $(addprefix ${OBJDIR},$(ASFILES:.S=.O))
 C_OBJS = $(addprefix ${OBJDIR},$(CFILES:.c=.o))
