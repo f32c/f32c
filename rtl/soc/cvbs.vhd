@@ -350,7 +350,8 @@ begin
 	    else
 		Rx_dac_out <= Rx_vout(7 downto 4) + 1;
 	    end if;
-	    dac_out <= Rx_dac_out;
 	end if;
     end process;
+
+    dac_out <= Rx_dac_out;
 end;
