@@ -185,6 +185,8 @@ begin
 		if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
 		    -- idle
 		    R_cur_port <= next_port;
+		    R_ubl <= '1';
+		    R_lbl <= '1';
 		else
 		    -- start a new transaction
 		    R_phase <= C_phase_idle + 1;
@@ -252,6 +254,8 @@ begin
 		end if;
 		-- physical signals to SRAM: terminate 16-bit write
 		R_wel <= '1';
+		R_ubl <= '1';
+		R_lbl <= '1';
 	    elsif R_write_cycle and R_phase = C_phase_write_upper_half then
 		R_phase <= R_phase + 1;
 		-- physical signals to SRAM: bump addr, refill data
@@ -264,6 +268,8 @@ begin
 		R_cur_port <= next_port;
 		-- physical signals to SRAM: terminate 16-bit write
 		R_wel <= '1';
+		R_ubl <= '1';
+		R_lbl <= '1';
 	    else
 		R_phase <= R_phase + 1;
 	    end if;
