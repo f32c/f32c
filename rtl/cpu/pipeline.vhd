@@ -452,6 +452,7 @@ begin
     -- instruction decoder
     idecode: entity work.idecode
     generic map (
+	C_cache => C_cache,
 	C_ll_sc => C_ll_sc,
 	C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend,
