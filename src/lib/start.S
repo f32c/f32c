@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,7 +44,11 @@ _start:
 	la	s1, _end	/* End of BSS section */
 
 #ifdef BRAM
+#ifdef ONLY_I_ROM
+	li	sp, 0x80100000	/* SRAM top */
+#else
 	li	sp, 0x00010000	/* 64 k */
+#endif
 #else
 	/* Invalidate the entire I-cache */
 	li	t1, 8192 / 4
