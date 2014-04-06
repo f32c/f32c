@@ -20,6 +20,7 @@ entity idecode is
     generic(
 	C_branch_likely: boolean;
 	C_sign_extend: boolean;
+	C_cache: boolean;
 	C_ll_sc: boolean;
 	C_movn_movz: boolean;
 	C_exceptions: boolean
@@ -320,11 +321,15 @@ begin
 		unsupported_instr <= true;
 	    end if;
 	when MIPS32_OP_CACHE =>
-	    latency <= LATENCY_UNDEFINED;
-	    use_immediate <= true;
 	    target_addr <= MIPS32_REG_ZERO;
-	    flush_i_line <= not instruction(16);
-	    flush_d_line <= instruction(16);
+	    if C_cache then
+		latency <= LATENCY_UNDEFINED;
+		use_immediate <= true;
+		flush_i_line <= not instruction(16);
+		flush_d_line <= instruction(16);
+	    else
+		unsupported_instr <= true;
+	    end if;
 	when MIPS32_OP_REGIMM =>
 	    target_addr <= MIPS32_REG_ZERO;
 	    branch_cycle <= true;
