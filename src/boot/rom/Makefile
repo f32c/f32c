@@ -9,6 +9,9 @@ CFLAGS += -mno-branch-likely
 # Appropriately configure ../sio/loader.c build
 CFLAGS += -DROM_LOADER
 
+# Appropriately configure lib/start.S build
+CFLAGS += -DONLY_I_ROM
+
 PROG = loader
 
 CFILES = loader.c ../sio/loader.c

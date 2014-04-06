@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec, University of Zagreb
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,6 @@
 #define	SRAM_BASE	0x80000000
 #define	SRAM_TOP	0x80100000
 #define	LOADER_BASE	0x800f8000
-
-#define	ONLY_I_ROM
 
 #ifndef ONLY_I_ROM
 #if _BYTE_ORDER == _BIG_ENDIAN
@@ -151,20 +149,10 @@ main(void)
 						OUTB(IO_LED, 0);
 				} while (1);
 			}
-
 	}
 
 	puts("SRAM BIST passed\n");
 	puts(msg);
-
-#ifdef ONLY_I_ROM
-	/* Set stack pointer to SRAM, just below FAT bootloader base */
-	__asm __volatile__(
-		"move $29, %0;"
-		:
-		: "r" (cp)
-	);
-#endif
 
 	flash_read_block((void *) cp, 0, 512);
 	sec_size = (cp[0xc] << 8) + cp[0xb];
@@ -204,7 +192,6 @@ main(void)
 			sio_boot();
 	}
 	
-
 	__asm __volatile__(
 		".set noreorder;"
 		"lui $4, 0x8000;"       /* stack mask */
