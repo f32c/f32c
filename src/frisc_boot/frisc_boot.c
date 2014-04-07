@@ -27,10 +27,11 @@ try_boot(char *fname)
 	char buf[128];
 
 	sprintf(buf, "%s%s", drive, fname);
-	fno = open(buf, 0);
+	fno = open(buf, O_RDONLY);
 	if (fno < 0)
 		return;
 
+	printf("Loading %s\n", buf);
 	while (read(fno, &c, 1) == 1) {
 		if (!isascii(c))
 			return;
@@ -80,8 +81,9 @@ main(void)
 	fno.lfname = lfn;
 	fno.lfsize = sizeof(lfn);
 
-	/* Force mount of the media */
-	fres = open(drive, 0);
+	/* Dummy open to force-mount MicroSD drive */
+	l = open(drive, O_RDONLY);
+	close(l);
 
 	fres = f_opendir(&dir, drive);
 	if (fres != FR_OK)
@@ -91,7 +93,7 @@ main(void)
 		/* Read a directory item */
 		fres = f_readdir(&dir, &fno);
 		if (fres != FR_OK || fno.fname[0] == 0)
-			OUTB(IO_CPU_RESET + 0xc, 1);
+			break;
 		if (lfn[0] == 0)
 			fname = fno.fname;
 		else
@@ -100,4 +102,5 @@ main(void)
 		if (l > 2 && strcmp(&fname[l - 2], ".p") == 0)
 			try_boot(fname);
 	} while (1);
+	OUTB(IO_CPU_RESET + 0xc, 1);
 }
