@@ -134,12 +134,16 @@ main(void)
 	/* Crude SRAM self-test & bzero() */
 	for (i = -1; i <= 0; i++) {
 		/* memset() SRAM */
-		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p++)
-			*p = i;
+		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p += 4) {
+			p[0] = i;
+			p[1] = i;
+			p[2] = i;
+			p[3] = i;
+		}
 
 		/* check SRAM */
-		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p++)
-			if (*p != i) {
+		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p += 4)
+			if (p[0] != i || p[1] != i || p[2] != i || p[3] != i) {
 				puts("SRAM BIST failed\n");
 				/* Blink LEDs: on/off 1:1 */
 				do {
