@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -143,7 +143,7 @@ sdcard_init(void)
 	sdcard_cmd(SD_CMD_STOP_TRANSMISSION, 0);
 
 	/* Clock in some dummy data in an attempt to wake up the card */
-	for (i = 0; i < (1 << 18); i++)
+	for (i = 0; i < (1 << 16); i++)
 		spi_byte(SPI_PORT_SDCARD, 0xff);
 
 	/* CRC embedded in bits 15..8 of command word */
@@ -157,7 +157,7 @@ sdcard_init(void)
 		return (res);
 
 	/* Initiate initialization process, loop until done */
-	for (i = 0; i < (1 << 18); i++) {
+	for (i = 0; i < (1 << 16); i++) {
 		sdcard_cmd(SD_CMD_APP_CMD, 0);
 		res = sdcard_cmd(SD_CMD_APP_SEND_OP_COND, 1 << 30);
 		if (res == 0)
