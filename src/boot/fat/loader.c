@@ -33,6 +33,7 @@
 
 
 static const char *bootfiles[] = {
+	"D:/frisc_ld.bin",
 	"D:/bootme.bin",
 	"/boot/kernel",
 	"/boot/basic.bin",
@@ -142,7 +143,6 @@ main(void)
 	int i;
 	char *loadaddr = (void *) SRAM_BASE;
 
-
 	if (*((int *) loadaddr) == LOAD_COOKIE)
 		loadaddr = load_bin(&loadaddr[4], 0);
 	else {
@@ -156,13 +156,12 @@ main(void)
 		loadaddr = NULL;
 	}
 
-	/* Attempt to load a FRISC MicroSD bootloader, or start FRISC */
-	loadaddr = load_bin("D:frisc_boot.bin", 0);
-	if (loadaddr == NULL)
-		OUTB(IO_CPU_RESET + 0xc, 0x1); /* Attempt to start FRISC */
-
-	for (i = 0; loadaddr == NULL && bootfiles[i] != NULL; i++)
-		loadaddr = load_bin(bootfiles[i], 1);
+	for (i = 0; loadaddr == NULL && bootfiles[i] != NULL; i++) {
+		/* On FRISC systems drop to serial loader */
+		if (i)
+			OUTB(IO_CPU_RESET + 0xc, 0x1);
+		loadaddr = load_bin(bootfiles[i], i);
+	}
 
 	if (loadaddr == NULL) {
 		*((int *) SRAM_BASE) = 0;
