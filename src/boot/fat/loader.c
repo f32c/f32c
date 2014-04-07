@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <io.h>
 
 
 static const char *bootfiles[] = {
@@ -145,7 +146,7 @@ main(void)
 	if (*((int *) loadaddr) == LOAD_COOKIE)
 		loadaddr = load_bin(&loadaddr[4], 0);
 	else {
-		printf("ULX2S FAT bootloader v 0.3 "
+		printf("ULX2S FAT bootloader v 0.4 "
 #if _BYTE_ORDER == _BIG_ENDIAN
 		    "(f32c/be)"
 #else
@@ -154,6 +155,11 @@ main(void)
 		    " (built " __DATE__ ")\n");
 		loadaddr = NULL;
 	}
+
+	/* Attempt to load a FRISC MicroSD bootloader, or start FRISC */
+	loadaddr = load_bin("D:frisc_boot.bin", 0);
+	if (loadaddr == NULL)
+		OUTB(IO_CPU_RESET + 0xc, 0x1); /* Attempt to start FRISC */
 
 	for (i = 0; loadaddr == NULL && bootfiles[i] != NULL; i++)
 		loadaddr = load_bin(bootfiles[i], 1);
