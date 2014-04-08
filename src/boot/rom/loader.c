@@ -143,7 +143,7 @@ main(void)
 
 		/* check SRAM */
 		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p += 4)
-			if (p[0] != i || p[1] != i || p[2] != i || p[3] != i) {
+			if (p[0] + p[1] + p[2] + p[3] != i << 2) {
 				puts("SRAM BIST failed\n");
 				/* Blink LEDs: on/off 1:1 */
 				do {
