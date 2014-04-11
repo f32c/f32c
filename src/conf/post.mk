@@ -106,7 +106,7 @@ MK_CFLAGS += ${CFLAGS}
 # Linker flags
 MK_LDFLAGS += -N ${ENDIANFLAGS}
 MK_LDFLAGS += -Ttext ${LOADADDR}
-MK_LDFLAGS += -nostartfiles -nostdlib
+MK_LDFLAGS += -nostdlib
 
 # Pull in any module-specific linker flags
 MK_LDFLAGS += ${LDFLAGS}
