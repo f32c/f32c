@@ -1,6 +1,7 @@
 #!/bin/sh
 
-GCC_VER="gcc-4.9-20140126"
+CWD=`pwd`
+GCC_VER=`basename $CWD`
 
 cp ../org/$GCC_VER/gcc/config/mips/mips-tables.opt gcc/config/mips/mips-tables.opt
 diff -drup ../org/$GCC_VER/gcc/config/mips gcc/config/mips | fgrep -v "Only in gcc/config/mips:"
