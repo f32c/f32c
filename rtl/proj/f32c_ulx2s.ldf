@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <BaliProject version="3.0" title="f32c_ulx2s" device="LFXP2-5E-6TN144C" default_implementation="f32c_ulx2s">
     <Options/>
-    <Implementation title="f32c_ulx2s" dir="f32c_ulx2s" description="f32c_ulx2s" synthesis="synplify" default_strategy="Timing">
-        <Options top="glue"/>
+    <Implementation title="f32c_ulx2s" dir="f32c_ulx2s" description="f32c_ulx2s" synthesis="synplify" default_strategy="Strategy1">
+        <Options def_top="glue" top="glue"/>
         <Source name="../soc/cvbs.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -70,6 +70,9 @@
             <Options/>
         </Source>
         <Source name="../lattice/serial.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../lego_ir/lego_ir.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="ulx2s.lpf" type="Logic Preference" type_short="LPF">
