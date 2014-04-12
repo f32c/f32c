@@ -1,5 +1,5 @@
 --
--- Copyright 2011-2013 Marko Zec, University of Zagreb
+-- Copyright 2011-2014 Marko Zec, University of Zagreb
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -77,7 +77,8 @@ entity glue is
 	C_flash: boolean := true;
 	C_sdcard: boolean := true;
 	C_framebuffer: boolean := true;
-	C_pcm: boolean := true
+	C_pcm: boolean := true;
+	C_lego_ir: boolean := true
     );
     port (
 	clk_25m: in std_logic;
@@ -170,6 +171,12 @@ architecture Behavioral of glue is
     signal pcm_addr: std_logic_vector(19 downto 2);
     signal from_pcm: std_logic_vector(31 downto 0);
     signal pcm_ce, pcm_l, pcm_r: std_logic;
+
+    -- Lego Power Functions Infrared Controller
+    signal R_lego_ir_enable: std_logic;
+    signal R_lego_ch: std_logic_vector(1 downto 0);
+    signal R_lego_a, R_lego_b: std_logic_vector(3 downto 0);
+    signal lego_ir_out: std_logic;
 
     -- debugging only
     signal trace_addr: f32c_debug_addr;
@@ -300,6 +307,7 @@ begin
     -- 0xf*****50: (4B, RW) : PCM audio DMA first addr (WR) / current addr (RD)
     -- 0xf*****54: (4B, WR) : PCM audio DMA last addr
     -- 0xf*****58: (3B, WR) : PCM audio DMA refill frequency (sampling rate)
+    -- 0xf*****60: (2B, WR) : Lego Power Functions Infrared Controller
     -- 0xf*****f0: (1B, WR) : CPU reset bitmap
 
     --
@@ -376,6 +384,17 @@ begin
 	    -- LEDs
 	    if C_leds_btns and io_addr(7 downto 4) = x"1" then
 		R_led <= cpu_to_io(7 downto 0);
+	    end if;
+	    -- LEDs
+	    if C_lego_ir and io_addr(7 downto 4) = x"6" then
+		if io_byte_sel(1) = '1' then
+		    R_lego_ir_enable <= cpu_to_io(15);
+		    R_lego_ch <= cpu_to_io(9 downto 8);
+		end if;
+		if io_byte_sel(0) = '1' then
+		    R_lego_a <= cpu_to_io(3 downto 0);
+		    R_lego_b <= cpu_to_io(7 downto 4);
+		end if;
 	    end if;
 	    -- CPU reset control
 	    if C_cpus /= 1 and io_addr(7 downto 4) = x"f" then
@@ -702,9 +721,27 @@ begin
       io_addr(7 downto 4) = x"5" else '0';
     end generate;
 
-    p_tip <= video_dac when C_framebuffer and R_fb_mode /= "11"
-      else pcm_l & pcm_l & pcm_l & pcm_l;
-    p_ring <= pcm_r;
+    --
+    -- Lego Power Functions Infrared Controller
+    --
+    G_lego_ir:
+    if C_lego_ir generate
+    lego_ir: entity work.lego_ir
+    generic map (
+	C_clk_freq => 81250000
+    )
+    port map (
+	clk => clk, ch => R_lego_ch,
+	pwm_a => R_lego_a, pwm_b => R_lego_b,
+	ir => lego_ir_out
+    );
+    end generate;
+
+    p_tip <= (others => lego_ir_out) when C_lego_ir and R_lego_ir_enable = '1'
+      else video_dac when C_framebuffer and R_fb_mode /= "11"
+      else (others => pcm_l);
+    p_ring <= lego_ir_out when C_lego_ir and R_lego_ir_enable = '1'
+      else pcm_r;
 
     --
     -- GPIO
