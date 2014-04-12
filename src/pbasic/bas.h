@@ -683,7 +683,8 @@ int	endd(void),runn(void),gotos(void),rem(void),lets(void),list(void),
 	vidmode(void), drawable(void), visible(void),
 	ink(void), paper(void), loadjpg(void),
 	sprgrab(void), sprload(void), sprtrans(void),
-	sprput(void), sprfree(void);
+	sprput(void), sprfree(void),
+	lego_ch(void), lego_red(void), lego_blue(void);
 
 int	bas_sleep(void), bauds(void);
 int	quit(void);
@@ -932,7 +933,10 @@ static const intf_t commandf = {
 
 static const intf_t xcmdf = {
 	vidmode, drawable, visible, ink, paper, loadjpg,
-	sprgrab, sprload, sprtrans, sprput, sprfree
+	sprgrab, sprload, sprtrans, sprput, sprfree,
+#ifdef f32c
+	lego_ch, lego_red, lego_blue,
+#endif
 };
 
 /*      table of error messages */
@@ -1138,6 +1142,11 @@ const	struct  tabl    table[]={
 	"SPRTRANS",	MKXCMD(8),
 	"SPRPUT",	MKXCMD(9),
 	"SPRFREE",	MKXCMD(10),
+#ifdef f32c
+	"LEGOCH",	MKXCMD(11),
+	"LEGORED",	MKXCMD(12),
+	"LEGOBLUE",	MKXCMD(13),
+#endif
 
 	/* string functs with args */
 	"RIGHT$",	MKSFA(0),
