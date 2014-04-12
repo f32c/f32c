@@ -301,3 +301,53 @@ do_system(char *cp)
 printf("XXX do_system: _%s_\n", cp);
 	return (-1);
 }
+
+
+static char ir_red, ir_blue;
+
+int
+lego_ch(void)
+{
+	int ch;
+
+	ch = evalint();
+	check();
+	if (ch < 0 || ch > 4)
+		error(33);
+	if (ch > 0)
+		ch += 127;
+	ir_red = ir_blue = 0;
+        OUTB(IO_LEGO_CTL, ch);
+        OUTB(IO_LEGO_DATA, 0);
+	normret;
+}
+
+
+int
+lego_red(void)
+{
+	int val;
+
+	val = evalint();
+	check();
+	if (val < -7 || val > 7)
+		error(33);
+	ir_red = val;
+        OUTB(IO_LEGO_DATA, (ir_blue << 4) | (ir_red & 0xf));
+	normret;
+}
+
+
+int
+lego_blue(void)
+{
+	int val;
+
+	val = evalint();
+	check();
+	if (val < -7 || val > 7)
+		error(33);
+	ir_blue = val;
+        OUTB(IO_LEGO_DATA, (ir_blue << 4) | (ir_red & 0xf));
+	normret;
+}
