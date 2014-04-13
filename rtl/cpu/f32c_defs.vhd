@@ -162,6 +162,7 @@ constant MIPS64_SPEC3_DBSHFL:	std_logic_vector := "100100";
 constant MIPS32_SPEC3_RDHWR:	std_logic_vector := "111011";
 
 -- COP0 function codes
+constant MIPS32_COP0_WAIT:	std_logic_vector := "100000";
 constant MIPS32_COP0_ERET:	std_logic_vector := "011000";
 
 -- REGIMM function encoding

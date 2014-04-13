@@ -49,7 +49,8 @@ entity idecode is
 	flush_i_line, flush_d_line: out std_logic;
 	latency: out std_logic_vector(1 downto 0);
 	seb_seh_cycle: out boolean;
-	seb_seh_select: out std_logic
+	seb_seh_select: out std_logic;
+	cop0_wait: out boolean
     );  
 end idecode;
 
@@ -106,6 +107,7 @@ begin
 	flush_d_line <= '0';
 	ll <= false;
 	sc <= false;
+	cop0_wait <= false;
 	
 	-- Main instruction decoder
 	case instruction(31 downto 26) is
@@ -193,6 +195,9 @@ begin
 	    if C_exceptions and instruction(5 downto 0) = MIPS32_COP0_ERET then
 		eret <= true;
 		branch_cycle <= true;
+	    end if;
+	    if instruction(5 downto 0) = MIPS32_COP0_WAIT then
+		cop0_wait <= true;
 	    end if;
 	when MIPS32_OP_BEQL =>
 	    if C_branch_likely then

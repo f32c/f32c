@@ -133,6 +133,7 @@ architecture Behavioral of pipeline is
     signal ID_seb_seh_select: std_logic;
     signal ID_ll, ID_sc: boolean;
     signal ID_flush_i_line, ID_flush_d_line: std_logic;
+    signal ID_wait: boolean;
     -- boundary to stage 3
     signal ID_EX_bpredict_score: std_logic_vector(1 downto 0);
     signal ID_EX_writeback_addr, ID_EX_cop0_addr: std_logic_vector(4 downto 0);
@@ -160,7 +161,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_seb_seh_select: std_logic;
     signal ID_EX_ll, ID_EX_sc: boolean;
     signal ID_EX_flush_i_line, ID_EX_flush_d_line: std_logic;
-    signal ID_EX_eret: boolean;
+    signal ID_EX_eret, ID_EX_wait: boolean;
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal ID_EX_epc: std_logic_vector(31 downto 2); -- debugging only
     signal ID_EX_sign_extend_debug: std_logic; -- debugging only
@@ -477,7 +478,8 @@ begin
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
 	seb_seh_cycle => ID_seb_seh_cycle, seb_seh_select => ID_seb_seh_select,
 	ll => ID_ll, sc => ID_sc, eret => ID_eret,
-	flush_i_line => ID_flush_i_line, flush_d_line => ID_flush_d_line
+	flush_i_line => ID_flush_i_line, flush_d_line => ID_flush_d_line,
+	cop0_wait => ID_wait
     );
 
     -- three- or four-ported register file: 2(3) async reads, 1 sync write
@@ -686,6 +688,7 @@ begin
 		    ID_EX_bpredict_score <= IF_ID_bpredict_score;
 		    ID_EX_bpredict_index <= IF_ID_bpredict_index;
 		    ID_EX_latency <= ID_latency;
+		    ID_EX_wait <= ID_wait;
 		    if C_exceptions then
 			ID_EX_eret <= ID_eret;
 		    end if;
@@ -714,6 +717,7 @@ begin
 		    end if;
 		end if;
 	    else
+		ID_EX_wait <= ID_EX_wait and R_cop0_count(7 downto 0) /= x"00";
 		if ID_running then
 		    ID_EX_cancel_next <= false;
 		end if;
@@ -731,7 +735,7 @@ begin
     -- until the results from all instructions preceding a branch instruction
     -- are flushed or stored in the register file.
     -- XXX revisit!  jump cycles?
-    EX_running <= MEM_running and
+    EX_running <= MEM_running and not ID_EX_wait and
       (C_result_forwarding or not ID_EX_branch_cycle
       or EX_MEM_writeback_addr = "00000");
 
