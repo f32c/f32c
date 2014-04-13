@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -75,6 +75,8 @@ sio_getchar(int blocking)
 			(*sio_idle_fn)();
 		sio_probe_rx();
 		busy = (sio_rxbuf_head == sio_rxbuf_tail);
+		if (blocking && busy)
+			__asm __volatile__("wait;");
 	} while (blocking && busy);
 
 	if (busy)
