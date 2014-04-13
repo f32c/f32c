@@ -1,6 +1,6 @@
 #!/usr/local/bin/tclsh8.6
 #
-# Copyright 2010-2013 Marko Zec, University of Zagreb
+# Copyright 2010-2014 Marko Zec, University of Zagreb
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -133,7 +133,7 @@ set mul_set "mult multu mflo mfhi"
 set unaligned_store_set "swl swr"
 set unaligned_load_set "lwl lwr"
 set sign_extend_set "seb seh"
-set cp0_set "mfc0 cache"
+set cp0_set "mfc0 cache wait"
 set unsupported 0
 
 set found ""
