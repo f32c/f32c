@@ -66,7 +66,7 @@ main(void)
 	int i, f, fpos = 0, block, cur, got, vol = 0xfff;
 	char *buf = (void *) 0x80080000;
 
-	tmpbuf[0] = '1';
+	tmpbuf[0] = 'd';
 	tmpbuf[1] = ':';
 	tmpbuf[2] = 0;
 	f = open(tmpbuf, O_RDONLY);
@@ -113,6 +113,7 @@ next_file:
 			if ((i & BTN_RIGHT))
 				break;
 		}
+		__asm __volatile__("wait");
 	}
 	close(f);
 	fpos++;
