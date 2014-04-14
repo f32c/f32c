@@ -271,7 +271,7 @@ CHAR	*fline;
 		 * get the length of the word
 		 */
 		/*LINTED*/
-		for(k = p, p++ ; isalnum(*p); p++);
+		for(k = p, p++ ; isalnum(*p) || *p == '_'; p++);
 
 		/* special case for FN */
 		if(p >= k + 2 && charac == 'f' && tolower(k[1]) == 'n'){
