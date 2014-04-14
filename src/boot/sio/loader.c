@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,6 @@
 		} while (s & SIO_TX_BUSY);				\
 		OUTB(IO_SIO_BYTE, (c));					\
 	} while (0)
-
 
 #define	phex(c)								\
 	do {								\
@@ -111,6 +110,9 @@ loop:
 				OUTB(IO_LED, c ^ 0xf0);
 		} else
 			OUTB(IO_LED, (int) cp >> 8);
+#ifdef ROM_LOADER
+		__asm __volatile__("wait");
+#endif
 		INB(c, IO_SIO_STATUS);
 	} while ((c & SIO_RX_FULL) == 0);
 	INB(c, IO_SIO_BYTE);
