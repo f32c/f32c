@@ -1143,9 +1143,9 @@ const	struct  tabl    table[]={
 	"SPRPUT",	MKXCMD(9),
 	"SPRFREE",	MKXCMD(10),
 #ifdef f32c
-	"LEGOCH",	MKXCMD(11),
-	"LEGORED",	MKXCMD(12),
-	"LEGOBLUE",	MKXCMD(13),
+	"LEGO_CH",	MKXCMD(11),
+	"LEGO_RED",	MKXCMD(12),
+	"LEGO_BLUE",	MKXCMD(13),
 #endif
 
 	/* string functs with args */
