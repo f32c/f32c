@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -51,6 +51,8 @@
 #define	IO_PCM_LAST	IO_ADDR(0x54)	/* word, WR */
 #define	IO_PCM_FREQ	IO_ADDR(0x58)	/* word, WR */
 #define	IO_PCM_VOLUME	IO_ADDR(0x5c)	/* half, WR */
+#define	IO_LEGO_DATA	IO_ADDR(0x60)	/* byte, WR */
+#define	IO_LEGO_CTL	IO_ADDR(0x61)	/* byte, WR */
 #define	IO_CPU_RESET	IO_ADDR(0xf0)	/* byte, WR */
 
 
