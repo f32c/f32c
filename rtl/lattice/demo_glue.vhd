@@ -44,7 +44,7 @@ entity glue is
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
-	C_ll_sc: boolean := true;
+	C_ll_sc: boolean := false;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff";
 
 	-- COP0 options
@@ -119,7 +119,7 @@ architecture Behavioral of glue is
       std_logic_vector(5 downto 0);
 
     -- synthesized clocks
-    signal clk, clk_325m: std_logic;
+    signal clk, clk_325m, ena_325m: std_logic;
 
     -- signals to / from f32c cores(s)
     signal res, intr: f32c_std_logic;
@@ -194,10 +194,11 @@ begin
 	C_debug => C_debug
     )
     port map (
-	clk_25m => clk_25m, ena_325m => '1',
+	clk_25m => clk_25m, ena_325m => ena_325m,
 	clk => clk, clk_325m => clk_325m,
 	sel => sw(2), key => btn_down, res => '0'
     );
+    ena_325m <= '0' when R_fb_mode = "11" else '1';
 
     --
     -- f32c core(s)
