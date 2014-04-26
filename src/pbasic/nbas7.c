@@ -487,6 +487,30 @@ ival	fc;
 		c = readc();
 		if(trapped)
 			break;
+
+		/* Translate VT-100 cursor keys to vi commands */
+		if (c == '[') {
+			c = readc();
+			if(trapped)
+				break;
+			switch(c) {
+			case 'A':	/* up */
+				c = 'k';
+				break;
+			case 'B':	/* down */
+				c = 'j';
+				break;
+			case 'C':	/* right */
+				c = 'l';
+				break;
+			case 'D':	/* left */
+				c = 'h';
+				break;
+			default:
+				continue;
+			};
+		}
+
 		if(c >= '1' && c <= '9'){
 			repset = 1;
 			repcnt = c - '0';
