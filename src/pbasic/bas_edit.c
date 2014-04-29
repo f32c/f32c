@@ -5,7 +5,7 @@
 #endif
 
 
-static int termwidth = 80;
+static int term_width = 80;
 
 
 #ifndef f32c
@@ -48,28 +48,38 @@ readc(void)
 
 
 static void
+request_term_size(void)
+{
+
+	write(0, "\x1b[s", 3);		/* Save cursor */
+	write(0, "\x1b[999C", 6);	/* Move cursor to right margin */
+	write(0, "\x1b[6n", 4);		/* Query cursor position */
+	write(0, "\x1b[u", 3);		/* Restore cursor */
+}
+
+
+static void
 redraw_line(int oldpos, int newpos, int len)
 {
 	int i;
 	int len_full = 0;
 
-	if (len % termwidth == 0)
+	if (len % term_width == 0)
 		len_full = 1;
 
-//printf("\n.pos_full %d len_full %d.\n\n", pos_full, len_full);
-	for (i = oldpos / termwidth; i > 0; i--)
+	for (i = oldpos / term_width; i > 0; i--)
 		write(0, "\x1b[A", 4);	/* Cursor up */
 	write(0, "\r", 1);		/* Cursor to column 0 */
 	write(0, line, len);
 	if (!len_full)
 		write(0, "\x1b[K", 4);	/* Erase to the end of the line */
-	for (i = len / termwidth; i > len_full; i--)
+	for (i = len / term_width; i > len_full; i--)
 		write(0, "\x1b[A", 4);	/* Cursor up */
 	write(0, "\r", 1);		/* Cursor to column 0 */
-	for (i = newpos / termwidth; i > 0; i--)
+	for (i = newpos / term_width; i > 0; i--)
 		write(0, "\n", 1);	/* Cursor down */
-	i = (newpos / termwidth) * termwidth;
-	write(0, &line[i], newpos % termwidth);
+	i = (newpos / term_width) * term_width;
+	write(0, &line[i], newpos % term_width);
 }
 
 
@@ -84,12 +94,15 @@ edit(ival promptlen, ival fi, ival fc)
 	char c;
 	int pos = fi;
 	int esc_mode = 0;
+	int vt100_val = 0;
 	int i;
 
-//printf("IN: edit %d, %d, %d\n", promptlen, fi, fc);
 #ifndef f32c
 	set_term();
 #endif
+
+	request_term_size();
+
 	line[fi] = 0;
 	write(0, line, fi);
 
@@ -102,13 +115,23 @@ edit(ival promptlen, ival fi, ival fc)
 		}
 		if (c == 27) {
 			esc_mode = 1;
+			vt100_val = 0;
 			continue;
 		}
 		if (esc_mode && (c == '[' || c == 'O' || isdigit(c))) {
+			if (isdigit(c)) {
+				vt100_val = (vt100_val * 10) + c - '0';
+			}
 			esc_mode = 2;
 			continue;
 		}
 		if (esc_mode == 2) {
+			if (c == ';') {
+				vt100_val = 0;
+				continue;
+			}
+			if (c == 'R' && vt100_val != 0)
+				term_width = vt100_val;
 			if (c == 'D' && pos > promptlen) {
 				/* Cursor left */
 				redraw_line(pos, pos - 1, fi);
@@ -138,6 +161,7 @@ edit(ival promptlen, ival fi, ival fc)
 		}
 		if (c == 18) {
 			/* CTRL-R */
+			request_term_size();
 			redraw_line(pos, pos, fi);
 			continue;
 		}
@@ -157,7 +181,6 @@ edit(ival promptlen, ival fi, ival fc)
 			}
 			continue;
 		}
-//printf(".%d %d.\n", pos, c);
 		if (fi >= MAXLIN)
 			continue; /* Line buffer full - ignore char */
 		pos++;
@@ -176,10 +199,8 @@ edit(ival promptlen, ival fi, ival fc)
 
 	redraw_line(pos, fi, fi);
 	write(0, "\r\n", 2);
-//printf("\b\bOUT 1:    \b\b\b%s\r\n", &line[promptlen]);
 #ifndef f32c
 	rset_term(0);
 #endif
-//printf("OUT 2: %s\n", &line[promptlen]);
 	return (0);
 }
