@@ -69,13 +69,13 @@ redraw_line(int oldpos, int newpos, int len)
 		len_full = 1;
 
 	for (i = oldpos / term_width; i > 0; i--)
-		write(0, "\x1b[A", 4);	/* Cursor up */
+		write(0, "\x1b[A", 3);	/* Cursor up */
 	write(0, "\r", 1);		/* Cursor to column 0 */
 	write(0, line, len);
 	if (!len_full)
-		write(0, "\x1b[K", 4);	/* Erase to the end of the line */
+		write(0, "\x1b[K", 3);	/* Erase to the end of the line */
 	for (i = len / term_width; i > len_full; i--)
-		write(0, "\x1b[A", 4);	/* Cursor up */
+		write(0, "\x1b[A", 3);	/* Cursor up */
 	write(0, "\r", 1);		/* Cursor to column 0 */
 	for (i = newpos / term_width; i > 0; i--)
 		write(0, "\n", 1);	/* Cursor down */
@@ -97,15 +97,19 @@ edit(ival promptlen, ival fi, ival fc)
 	int esc_mode = 0;
 	int vt100_val = 0;
 	int insert = 1;
+	int need_redraw = 1;
 	int i, nchar;
 
 #ifndef f32c
 	set_term();
 #endif
 
+	/* Make room for preloaded buffer content */
+	for (i = 0; i < fi / term_width; i++)
+		write(0, "\n", 1);
+
+	/* This will implicitly redraw buffer content */
 	request_term_size();
-	line[fi] = 0;
-	write(0, line, fi);
 
 	while (1) {
 		c = readc();
@@ -128,16 +132,28 @@ edit(ival promptlen, ival fi, ival fc)
 				vt100_val = 0;
 				continue;
 			}
-			if (c == 'R' && vt100_val != 0)
+			if (c == 'R' && vt100_val != 0) {
 				term_width = vt100_val;
+				if (need_redraw)
+					redraw_line(pos, pos, fi);
+				need_redraw = 0;
+			}
 			if (c == 'D' && pos > promptlen) {
 				/* Cursor left */
-				redraw_line(pos, pos - 1, fi);
+				if (pos % term_width)
+					write(0, "\b", 1); /* 1 ch. left */
+				else
+					/* 1 line up and to the right margin */
+					write(0, "\x1b[A\x1b[999C", 9);
 				pos--;
 			}
 			if (c == 'C' && pos < fi) {
 				/* Cursor right */
-				redraw_line(pos, pos + 1, fi);
+				if ((pos + 1) % term_width)
+					write(0, "\x1b[C", 3); /* 1 ch. right */
+				else
+					/* 1 line down and to the left margin */
+					write(0, "\r\n", 2);
 				pos++;
 			}
 			if (c == 'H') {
@@ -171,10 +187,13 @@ edit(ival promptlen, ival fi, ival fc)
 			line[fi] = 0;
 			break;
 		}
-		if (c == 18) {
-			/* CTRL-R */
+		if (c == 18 || c == 12) {
+			/* CTRL-R or CTRL-L */
+			if (c == 12)
+				/* Clear screen, cursor home */
+				write(0, "\x1b[2J\x1b[H", 7);
 			request_term_size();
-			redraw_line(pos, pos, fi);
+			need_redraw = 1;
 			continue;
 		}
 		if (c == 8 || c == 127) {
@@ -182,14 +201,15 @@ edit(ival promptlen, ival fi, ival fc)
 			if (pos > promptlen) {
 				pos--;
 				fi--;
-				write(0, "\b", 1);
-				if (pos != fi) {
+				if (pos != fi ||
+				    ((pos + 1) % term_width) == 0) {
 					/* Delete in the middle of the line */
 					for (i = pos; i < fi; i++)
 						line[i] = line[i + 1];
-				}
-				line[fi] = ' ';
-				redraw_line(pos + 1, pos, fi + 1);
+					line[fi] = ' ';
+					redraw_line(pos + 1, pos, fi + 1);
+				} else
+					write(0, "\b \b", 3);
 			}
 			continue;
 		}
