@@ -57,11 +57,9 @@ edit(ival promptlen, ival fi, ival fc)
 	int esc_mode = 0;
 
 //printf("IN: edit %d, %d, %d\n", promptlen, fi, fc);
-
 #ifndef f32c
 	set_term();
 #endif
-
 	line[fi] = 0;
 	write(0, line, fi);
 
@@ -69,8 +67,8 @@ edit(ival promptlen, ival fi, ival fc)
 		c = readc();
 		if (trapped) {
 			/* CTRL + C */
-			write(0, "^C\r\n", 4);
-			return (0);
+			write(0, "^C", 2);
+			break;
 		}
 		if (c == 27) {
 			esc_mode = 1;
@@ -83,10 +81,8 @@ edit(ival promptlen, ival fi, ival fc)
 		esc_mode = 0;
 		if (c == 10 || c == 13)	{
 			/* CR / LF */
-			write(0, "\r\n", 2);
 			line[fi] = 0;
-//printf("OUT: %s\n", &line[promptlen]);
-			return (0);
+			break;
 		}
 		if (c == 8 || c == 127) {
 			/* Delete / Backspace */
@@ -103,4 +99,11 @@ edit(ival promptlen, ival fi, ival fc)
 		pos++;
 		fi++;
 	}
+
+	write(0, "\r\n", 2);
+#ifndef f32c
+	rset_term(0);
+#endif
+//printf("OUT: %s\n", &line[promptlen]);
+	return (0);
 }
