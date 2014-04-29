@@ -207,7 +207,7 @@ edit(ival promptlen, ival fi, ival fc)
 			pos += nchar;
 			fi += nchar;
 		} else {
-			if (!insert && pos + nchar >= MAXLIN)
+			if (pos + nchar >= MAXLIN)
 				continue; /* Line buffer full - ignore char */
 			pos += nchar;
 			if (fi < pos)
