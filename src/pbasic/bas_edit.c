@@ -96,6 +96,7 @@ edit(ival promptlen, ival fi, ival fc)
 	int pos = fi;
 	int esc_mode = 0;
 	int vt100_val = 0;
+	int insert = 1;
 	int i, nchar;
 
 #ifndef f32c
@@ -103,7 +104,6 @@ edit(ival promptlen, ival fi, ival fc)
 #endif
 
 	request_term_size();
-
 	line[fi] = 0;
 	write(0, line, fi);
 
@@ -150,13 +150,17 @@ edit(ival promptlen, ival fi, ival fc)
 				redraw_line(pos, fi, fi);
 				pos = fi;
 			}
-			if (c == 126 && pos < fi) {
+			if (c == 126 && vt100_val == 3 && pos < fi) {
 				/* Delete in the middle of the line */
 				for (i = pos; i < fi; i++)
 					line[i] = line[i + 1];
 				fi--;
 				line[fi] = ' ';
 				redraw_line(pos, pos, fi + 1);
+			}
+			if (c == 126 && vt100_val == 2) {
+				/* Toggle insert / overwrite mode */
+				insert ^= 1;
 			}
 			esc_mode = 0;
 			continue;
@@ -197,14 +201,23 @@ edit(ival promptlen, ival fi, ival fc)
 		}
 		if (c < 32)
 			continue;
-		if (fi + nchar >= MAXLIN)
-			continue; /* Line buffer full - ignore char */
-		pos += nchar;
-		fi += nchar;
+		if (insert) {
+			if (fi + nchar >= MAXLIN)
+				continue; /* Line buffer full - ignore char */
+			pos += nchar;
+			fi += nchar;
+		} else {
+			if (!insert && pos + nchar >= MAXLIN)
+				continue; /* Line buffer full - ignore char */
+			pos += nchar;
+			if (fi < pos)
+				fi = pos;
+		}
 		if (pos < fi) {
 			/* Insert in the middle of the line */
-			for (i = fi; i >= pos; i--)
-				line[i] = line[i - nchar];
+			if (insert)
+				for (i = fi; i >= pos; i--)
+					line[i] = line[i - nchar];
 			for (i = 1; i <= nchar; i++)
 				line[pos - i] = c;
 			redraw_line(pos - nchar, pos, fi);
