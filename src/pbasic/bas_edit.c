@@ -96,7 +96,7 @@ edit(ival promptlen, ival fi, ival fc)
 	int pos = fi;
 	int esc_mode = 0;
 	int vt100_val = 0;
-	int i;
+	int i, nchar;
 
 #ifndef f32c
 	set_term();
@@ -109,11 +109,8 @@ edit(ival promptlen, ival fi, ival fc)
 
 	while (1) {
 		c = readc();
-		if (trapped) {
-			/* CTRL + C */
-			write(0, "^C", 2);
-			break;
-		}
+		if (trapped)
+			break;	/* CTRL + C */
 		if (c == 27) {
 			esc_mode = 1;
 			vt100_val = 0;
@@ -182,23 +179,36 @@ edit(ival promptlen, ival fi, ival fc)
 			}
 			continue;
 		}
-		if (fi >= MAXLIN)
+		nchar = 1;
+		if (c == 9) {
+			/* TAB / CTRL-I */
+			nchar = 4;
+			c = ' ';
+		}
+		if (c < 32)
+			continue;
+		if (fi + nchar >= MAXLIN)
 			continue; /* Line buffer full - ignore char */
-		pos++;
-		fi++;
+		pos += nchar;
+		fi += nchar;
 		if (pos < fi) {
 			/* Insert in the middle of the line */
 			for (i = fi; i >= pos; i--)
-				line[i] = line[i - 1];
-			line[pos - 1] = c;
-			redraw_line(pos - 1, pos, fi);
+				line[i] = line[i - nchar];
+			for (i = 1; i <= nchar; i++)
+				line[pos - i] = c;
+			redraw_line(pos - nchar, pos, fi);
 		} else {
-			write(0, &c, 1);
-			line[pos - 1] = c;
+			for (i = 1; i <= nchar; i++) {
+				line[pos - i] = c;
+				write(0, &c, 1);
+			}
 		}
 	}
 
 	redraw_line(pos, fi, fi);
+	if (trapped)
+		write(0, "^C", 2);
 	write(0, "\r\n", 2);
 #ifndef f32c
 	rset_term(0);
