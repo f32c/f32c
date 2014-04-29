@@ -41,7 +41,7 @@ readc(void)
 		quit();
 #else
 	got = read(0, &c, 1);
-	if (c == 3)	/* CTRL + C */
+	if (c == 3 || got == 0)	/* CTRL + C */
 		trapped = 1;
 #endif
 	return (c);
