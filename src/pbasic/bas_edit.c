@@ -124,7 +124,8 @@ edit(ival promptlen, ival fi, ival fc)
 				for (i = pos; i < fi; i++)
 					line[i] = line[i + 1];
 				fi--;
-				redraw_line(pos, pos, fi);
+				line[fi] = ' ';
+				redraw_line(pos, pos, fi + 1);
 			}
 			esc_mode = 0;
 			continue;
@@ -151,7 +152,8 @@ edit(ival promptlen, ival fi, ival fc)
 					for (i = pos; i < fi; i++)
 						line[i] = line[i + 1];
 				}
-				redraw_line(pos + 1, pos, fi);
+				line[fi] = ' ';
+				redraw_line(pos + 1, pos, fi + 1);
 			}
 			continue;
 		}
@@ -172,6 +174,7 @@ edit(ival promptlen, ival fi, ival fc)
 		}
 	}
 
+	redraw_line(pos, fi, fi);
 	write(0, "\r\n", 2);
 //printf("\b\bOUT 1:    \b\b\b%s\r\n", &line[promptlen]);
 #ifndef f32c
