@@ -5,6 +5,7 @@
 #endif
 
 
+static int term_height = 24;
 static int term_width = 80;
 
 
@@ -119,14 +120,14 @@ edit(ival promptlen, ival fi, ival fc)
 			continue;
 		}
 		if (esc_mode && (c == '[' || c == 'O' || isdigit(c))) {
-			if (isdigit(c)) {
+			if (isdigit(c))
 				vt100_val = (vt100_val * 10) + c - '0';
-			}
 			esc_mode = 2;
 			continue;
 		}
 		if (esc_mode == 2) {
 			if (c == ';') {
+				term_height = vt100_val;
 				vt100_val = 0;
 				continue;
 			}
