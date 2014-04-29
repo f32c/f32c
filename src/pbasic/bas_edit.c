@@ -55,6 +55,7 @@ edit(ival promptlen, ival fi, ival fc)
 	char c;
 	int pos = fi;
 	int esc_mode = 0;
+	int i;
 
 //printf("IN: edit %d, %d, %d\n", promptlen, fi, fc);
 #ifndef f32c
@@ -78,6 +79,20 @@ edit(ival promptlen, ival fi, ival fc)
 			esc_mode = 2;
 			continue;
 		}
+		if (esc_mode == 2) {
+			if (c == 'D' && pos > promptlen) {
+				/* Cursor left */
+				write(0, "\b", 1);
+				pos--;
+			}
+			if (c == 'C' && pos < fi) {
+				/* Cursor right */
+				write(0, &line[pos], 1);
+				pos++;
+			}
+			esc_mode = 0;
+			continue;
+		}
 		esc_mode = 0;
 		if (c == 10 || c == 13)	{
 			/* CR / LF */
@@ -87,17 +102,33 @@ edit(ival promptlen, ival fi, ival fc)
 		if (c == 8 || c == 127) {
 			/* Delete / Backspace */
 			if (pos > promptlen) {
-				write(0, "\b \b", 3);
 				pos--;
 				fi--;
+				if (pos == fi)
+					write(0, "\b \b", 3);
+				else {
+					/* Delete in the middle of the line */
+					/* XXX TODO!!! */
+				}
 			}
 			continue;
 		}
 //printf(".%d %d.\n", pos, c);
+		if (fi >= MAXLIN)
+			continue; /* Line buffer full - ignore char */
 		write(0, &c, 1);
-		line[pos] = c;
 		pos++;
 		fi++;
+		if (pos < fi) {
+			/* Insert in the middle of the line */
+			for (i = fi; i >= pos; i--)
+				line[i] = line[i - 1];
+			line[pos - 1] = c;
+			write(0, &line[pos], fi - pos);
+			for (i = pos; i < fi; i++)
+				write(0, "\b", 1);
+		}
+		line[pos - 1] = c;
 	}
 
 	write(0, "\r\n", 2);
