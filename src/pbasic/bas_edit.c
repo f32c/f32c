@@ -104,11 +104,17 @@ edit(ival promptlen, ival fi, ival fc)
 			if (pos > promptlen) {
 				pos--;
 				fi--;
+				write(0, "\b", 1);
 				if (pos == fi)
-					write(0, "\b \b", 3);
+					write(0, " \b", 2);
 				else {
 					/* Delete in the middle of the line */
-					/* XXX TODO!!! */
+					for (i = pos; i < fi; i++)
+						line[i] = line[i + 1];
+					write(0, &line[pos], fi - pos);
+					write(0, " ", 1);
+					for (i = pos; i <= fi; i++)
+						write(0, "\b", 1);
 				}
 			}
 			continue;
