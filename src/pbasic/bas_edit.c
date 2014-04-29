@@ -52,10 +52,12 @@ static void
 request_term_size(void)
 {
 
-	write(0, "\x1b[s", 3);		/* Save cursor */
-	write(0, "\x1b[999C", 6);	/* Move cursor to right margin */
-	write(0, "\x1b[6n", 4);		/* Query cursor position */
-	write(0, "\x1b[u", 3);		/* Restore cursor */
+	write(0,
+	    "\x1b[s"		/* Save cursor */
+	    "\x1b[999C"		/* Move cursor to right margin */
+	    "\x1b[6n"		/* Query cursor position */
+	    "\x1b[u"		/* Restore cursor */
+	    , 3 + 6 + 4 + 3);
 }
 
 
