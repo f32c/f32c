@@ -90,6 +90,16 @@ edit(ival promptlen, ival fi, ival fc)
 				write(0, &line[pos], 1);
 				pos++;
 			}
+			if (c == 126 && pos < fi) {
+				/* Delete in the middle of the line */
+				for (i = pos; i < fi; i++)
+					line[i] = line[i + 1];
+				fi--;
+				write(0, &line[pos], fi - pos);
+				write(0, " ", 1);
+				for (i = pos; i <= fi; i++)
+					write(0, "\b", 1);
+			}
 			esc_mode = 0;
 			continue;
 		}
@@ -100,7 +110,7 @@ edit(ival promptlen, ival fi, ival fc)
 			break;
 		}
 		if (c == 8 || c == 127) {
-			/* Delete / Backspace */
+			/* Backspace */
 			if (pos > promptlen) {
 				pos--;
 				fi--;
