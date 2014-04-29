@@ -5,6 +5,9 @@
 #endif
 
 
+static int termwidth = 80;
+
+
 #ifndef f32c
 void
 setupmyterm()
@@ -41,6 +44,32 @@ readc(void)
 		trapped = 1;
 #endif
 	return (c);
+}
+
+
+static void
+redraw_line(int oldpos, int newpos, int len)
+{
+	int i;
+	int len_full = 0;
+
+	if (len % termwidth == 0)
+		len_full = 1;
+
+//printf("\n.pos_full %d len_full %d.\n\n", pos_full, len_full);
+	for (i = oldpos / termwidth; i > 0; i--)
+		write(0, "\x1b[A", 4);	/* Cursor up */
+	write(0, "\r", 1);		/* Cursor to column 0 */
+	write(0, line, len);
+	if (!len_full)
+		write(0, "\x1b[K", 4);	/* Erase to the end of the line */
+	for (i = len / termwidth; i > len_full; i--)
+		write(0, "\x1b[A", 4);	/* Cursor up */
+	write(0, "\r", 1);		/* Cursor to column 0 */
+	for (i = newpos / termwidth; i > 0; i--)
+		write(0, "\n", 1);	/* Cursor down */
+	i = (newpos / termwidth) * termwidth;
+	write(0, &line[i], newpos % termwidth);
 }
 
 
@@ -82,12 +111,12 @@ edit(ival promptlen, ival fi, ival fc)
 		if (esc_mode == 2) {
 			if (c == 'D' && pos > promptlen) {
 				/* Cursor left */
-				write(0, "\b", 1);
+				redraw_line(pos, pos - 1, fi);
 				pos--;
 			}
 			if (c == 'C' && pos < fi) {
 				/* Cursor right */
-				write(0, &line[pos], 1);
+				redraw_line(pos, pos + 1, fi);
 				pos++;
 			}
 			if (c == 126 && pos < fi) {
@@ -95,10 +124,7 @@ edit(ival promptlen, ival fi, ival fc)
 				for (i = pos; i < fi; i++)
 					line[i] = line[i + 1];
 				fi--;
-				write(0, &line[pos], fi - pos);
-				write(0, " ", 1);
-				for (i = pos; i <= fi; i++)
-					write(0, "\b", 1);
+				redraw_line(pos, pos, fi);
 			}
 			esc_mode = 0;
 			continue;
@@ -109,30 +135,29 @@ edit(ival promptlen, ival fi, ival fc)
 			line[fi] = 0;
 			break;
 		}
+		if (c == 18) {
+			/* CTRL-R */
+			redraw_line(pos, pos, fi);
+			continue;
+		}
 		if (c == 8 || c == 127) {
 			/* Backspace */
 			if (pos > promptlen) {
 				pos--;
 				fi--;
 				write(0, "\b", 1);
-				if (pos == fi)
-					write(0, " \b", 2);
-				else {
+				if (pos != fi) {
 					/* Delete in the middle of the line */
 					for (i = pos; i < fi; i++)
 						line[i] = line[i + 1];
-					write(0, &line[pos], fi - pos);
-					write(0, " ", 1);
-					for (i = pos; i <= fi; i++)
-						write(0, "\b", 1);
 				}
+				redraw_line(pos + 1, pos, fi);
 			}
 			continue;
 		}
 //printf(".%d %d.\n", pos, c);
 		if (fi >= MAXLIN)
 			continue; /* Line buffer full - ignore char */
-		write(0, &c, 1);
 		pos++;
 		fi++;
 		if (pos < fi) {
@@ -140,17 +165,18 @@ edit(ival promptlen, ival fi, ival fc)
 			for (i = fi; i >= pos; i--)
 				line[i] = line[i - 1];
 			line[pos - 1] = c;
-			write(0, &line[pos], fi - pos);
-			for (i = pos; i < fi; i++)
-				write(0, "\b", 1);
+			redraw_line(pos - 1, pos, fi);
+		} else {
+			write(0, &c, 1);
+			line[pos - 1] = c;
 		}
-		line[pos - 1] = c;
 	}
 
 	write(0, "\r\n", 2);
+//printf("\b\bOUT 1:    \b\b\b%s\r\n", &line[promptlen]);
 #ifndef f32c
 	rset_term(0);
 #endif
-//printf("OUT: %s\n", &line[promptlen]);
+//printf("OUT 2: %s\n", &line[promptlen]);
 	return (0);
 }
