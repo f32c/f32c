@@ -140,6 +140,16 @@ edit(ival promptlen, ival fi, ival fc)
 				redraw_line(pos, pos + 1, fi);
 				pos++;
 			}
+			if (c == 'H') {
+				/* Home */
+				redraw_line(pos, promptlen, fi);
+				pos = promptlen;
+			}
+			if (c == 'F') {
+				/* End */
+				redraw_line(pos, fi, fi);
+				pos = fi;
+			}
 			if (c == 126 && pos < fi) {
 				/* Delete in the middle of the line */
 				for (i = pos; i < fi; i++)
