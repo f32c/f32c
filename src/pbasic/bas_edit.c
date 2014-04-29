@@ -75,7 +75,7 @@ edit(ival promptlen, ival fi, ival fc)
 			esc_mode = 1;
 			continue;
 		}
-		if (esc_mode && c == '[') {
+		if (esc_mode && (c == '[' || c == 'O' || isdigit(c))) {
 			esc_mode = 2;
 			continue;
 		}
