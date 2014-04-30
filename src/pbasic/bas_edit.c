@@ -122,73 +122,88 @@ edit(ival promptlen, ival fi, ival fc)
 			continue;
 		}
 		if (esc_mode == 2) {
-			if (c == ';') {
+			esc_mode = 0;
+			switch (c) {
+			case ';':
 				term_height = vt100_val;
 				vt100_val = 0;
+				esc_mode = 2;
 				continue;
-			}
-			if (c == 'R' && vt100_val != 0) {
-				term_width = vt100_val;
-				redraw_line(pos, pos, fi);
-			}
-			if (c == 'D' && pos > promptlen) {
-				/* Cursor left */
-				if (pos % term_width)
-					write(0, "\b", 1); /* 1 ch. left */
-				else
-					/* 1 line up and to the right margin */
-					write(0, "\x1b[A\x1b[999C", 9);
-				pos--;
-			}
-			if (c == 'C' && pos < fi) {
-				/* Cursor right */
-				if ((pos + 1) % term_width)
-					write(0, &line[pos], 1);
-				else
-					/* 1 line down and to the left margin */
-					write(0, "\r\n", 2);
-				pos++;
-			}
-			if (c == 'H') {
+			case 'R':
+				if (vt100_val != 0) {
+					term_width = vt100_val;
+					redraw_line(pos, pos, fi);
+				}
+				continue;
+			case 'D':
+				c = 'B' - 64; /* CTRL-B, cursor right */
+				break;
+			case 'C':
+				c = 'F' - 64; /* CTRL-F, cursor right */
+				break;
+			case 'H':
 				/* Home */
 				redraw_line(pos, promptlen, fi);
 				pos = promptlen;
-			}
-			if (c == 'F') {
+				continue;
+			case 'F':
 				/* End */
 				redraw_line(pos, fi, fi);
 				pos = fi;
-			}
-			if (c == 126 && vt100_val == 3 && pos < fi) {
+				continue;
+			case 126:
+				if (vt100_val == 3 && pos < fi) {
 				/* Delete in the middle of the line */
 				for (i = pos; i < fi; i++)
 					line[i] = line[i + 1];
 				fi--;
 				line[fi] = ' ';
 				redraw_line(pos, pos, fi + 1);
-			}
-			if (c == 126 && vt100_val == 2) {
+				}
+				if (vt100_val == 2) {
 				/* Toggle insert / overwrite mode */
 				insert ^= 1;
+				}
+				continue;
+			default:
+				continue;
 			}
-			esc_mode = 0;
-			continue;
 		}
 		esc_mode = 0;
-		if (c == 10 || c == 13) {
+		if (c == 'J' - 64 || c == 'M' - 64) {
 			/* CR / LF */
 			line[fi] = 0;
 			break;
 		}
-		if (c == 18 || c == 12) {
+		if (c == 'B' - 64 && pos > promptlen) {
+			/* CTRL-B, cursor left */
+			if (pos % term_width)
+				write(0, "\b", 1); /* 1 ch. left */
+			else
+				/* 1 line up and to the right margin */
+				write(0, "\x1b[A\x1b[999C", 9);
+			pos--;
+			continue;
+		}
+		if (c == 'F' - 64 && pos < fi) {
+			/* CTRL-F, cursor right */
+			if ((pos + 1) % term_width)
+				write(0, &line[pos], 1);
+			else
+				/* 1 line down and to the left margin */
+				write(0, "\r\n", 2);
+			pos++;
+			continue;
+		}
+		if (c == 'R' - 64 || c == 'L' - 64) {
 			/* CTRL-R or CTRL-L */
-			if (c == 12)
+			if (c == 'L' - 64)
 				/* Clear screen, cursor home */
 				write(0, "\x1b[2J\x1b[H", 7);
 			request_term_size();
 			continue;
 		}
-		if (c == 8 || c == 127) {
+		if (c == 'H' - 64 || c == 127) {
 			/* Backspace */
 			if (pos > promptlen) {
 				pos--;
@@ -206,7 +221,7 @@ edit(ival promptlen, ival fi, ival fc)
 			continue;
 		}
 		nchar = 1;
-		if (c == 9) {
+		if (c == 'I' - 64) {
 			/* TAB / CTRL-I */
 			nchar = 4;
 			c = ' ';
