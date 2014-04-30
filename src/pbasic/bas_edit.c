@@ -99,19 +99,12 @@ edit(ival promptlen, ival fi, ival fc)
 	int esc_mode = 0;
 	int vt100_val = 0;
 	int insert = 1;
-	int need_redraw = 1;
 	int i, nchar;
 
 #ifndef f32c
 	set_term();
 #endif
-
-	/* Make room for preloaded buffer content */
-	for (i = 0; i < fi / term_width; i++)
-		write(0, "\n", 1);
-
-	/* This will implicitly redraw buffer content */
-	request_term_size();
+	write(0, line, fi);
 
 	while (1) {
 		c = readc();
@@ -136,9 +129,7 @@ edit(ival promptlen, ival fi, ival fc)
 			}
 			if (c == 'R' && vt100_val != 0) {
 				term_width = vt100_val;
-				if (need_redraw)
-					redraw_line(pos, pos, fi);
-				need_redraw = 0;
+				redraw_line(pos, pos, fi);
 			}
 			if (c == 'D' && pos > promptlen) {
 				/* Cursor left */
@@ -152,7 +143,7 @@ edit(ival promptlen, ival fi, ival fc)
 			if (c == 'C' && pos < fi) {
 				/* Cursor right */
 				if ((pos + 1) % term_width)
-					write(0, "\x1b[C", 3); /* 1 ch. right */
+					write(0, &line[pos], 1);
 				else
 					/* 1 line down and to the left margin */
 					write(0, "\r\n", 2);
@@ -184,7 +175,7 @@ edit(ival promptlen, ival fi, ival fc)
 			continue;
 		}
 		esc_mode = 0;
-		if (c == 10 || c == 13)	{
+		if (c == 10 || c == 13) {
 			/* CR / LF */
 			line[fi] = 0;
 			break;
@@ -195,7 +186,6 @@ edit(ival promptlen, ival fi, ival fc)
 				/* Clear screen, cursor home */
 				write(0, "\x1b[2J\x1b[H", 7);
 			request_term_size();
-			need_redraw = 1;
 			continue;
 		}
 		if (c == 8 || c == 127) {
@@ -251,7 +241,8 @@ edit(ival promptlen, ival fi, ival fc)
 		}
 	}
 
-	redraw_line(pos, fi, fi);
+	if (pos != fi)
+		redraw_line(pos, fi, fi);
 	if (trapped)
 		write(0, "^C", 2);
 	write(0, "\r\n", 2);
