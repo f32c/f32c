@@ -1,9 +1,15 @@
 #include "bas.h"
 
+#include <string.h>
+
 #ifndef f32c
 #include <sys/ioctl.h>
 #endif
 
+
+#define	HIST_MAX_LEN	20
+static int hist_len;
+static char *hist[HIST_MAX_LEN];
 
 static int term_height = 24;
 static int term_width = 80;
@@ -45,6 +51,29 @@ readc(void)
 		trapped = 1;
 #endif
 	return (c);
+}
+
+
+static void
+history_add(const char *line, int llen)
+{
+	int i;
+	char *copy;
+
+	if (hist_len && !strncmp(hist[hist_len - 1], line, llen))
+		return;
+	copy = mmalloc(llen + 1);
+	if (!copy)
+		return;
+	memcpy(copy, line, llen + 1);
+	if (hist_len == HIST_MAX_LEN) {
+		mfree(hist[0]);
+		for (i = 0; i < HIST_MAX_LEN - 1; i++)
+			hist[i] = hist[i + 1];
+		hist_len--;
+	}
+	hist[hist_len] = copy;
+	hist_len++;
 }
 
 
@@ -101,6 +130,7 @@ edit(ival promptlen, ival fi, ival fc)
 	int size_known = 0;
 	int insert = 1;
 	int i, nchar;
+	int hist_index = hist_len;
 
 #ifndef f32c
 	set_term();
@@ -148,6 +178,12 @@ edit(ival promptlen, ival fi, ival fc)
 				break;
 			case 'C':
 				c = 'F' - 64; /* CTRL-F, cursor right */
+				break;
+			case 'A':
+				c = 'P' - 64; /* CTRL-P, cursor up */
+				break;
+			case 'B':
+				c = 'N' - 64; /* CTRL-N, cursor down */
 				break;
 			case 'H':
 				c = 'A' - 64; /* CTRL-A, cursor home */
@@ -211,6 +247,29 @@ edit(ival promptlen, ival fi, ival fc)
 				/* Clear screen, cursor home */
 				write(0, "\x1b[2J\x1b[H", 7);
 			request_term_size();
+			continue;
+		}
+		if (c == 'P' - 64 || c == 'N' - 64) {
+			if (c == 'P' - 64) {
+				if (hist_index == 0)
+					continue;
+				hist_index--;
+			} else {
+				if (hist_index == hist_len)
+					continue;
+				hist_index++;
+			}
+			for (i = promptlen; i < fi; i++)
+				line[i] = ' ';
+			redraw_line(pos, pos, fi);
+			if (hist_index < hist_len) {
+				i = strlen(hist[hist_index]);
+				strcpy(&line[promptlen], hist[hist_index]);
+				fi = promptlen + i;
+			} else
+				fi = promptlen;
+			redraw_line(pos, fi, fi);
+			pos = fi;
 			continue;
 		}
 		if (c == 'D' - 64 && pos < fi) {
@@ -296,6 +355,13 @@ edit(ival promptlen, ival fi, ival fc)
 		redraw_line(pos, fi, fi);
 	if (trapped)
 		write(0, "^C", 2);
+	else {
+		for (i = promptlen; i < fi; i++)
+			if (line[i] != ' ')
+				break;
+		if (i < fi && !isdigit(line[i]))
+			history_add(&line[promptlen], fi - i);
+	}
 	write(0, "\r\n", 2);
 #ifndef f32c
 	rset_term(0);
