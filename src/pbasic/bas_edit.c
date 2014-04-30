@@ -150,28 +150,20 @@ edit(ival promptlen, ival fi, ival fc)
 				c = 'F' - 64; /* CTRL-F, cursor right */
 				break;
 			case 'H':
-				/* Home */
-				redraw_line(pos, promptlen, fi);
-				pos = promptlen;
-				continue;
+				c = 'A' - 64; /* CTRL-A, cursor home */
+				break;
 			case 'F':
-				/* End */
-				redraw_line(pos, fi, fi);
-				pos = fi;
-				continue;
+				c = 'E' - 64; /* CTRL-E, cursor to line end */
+				break;
 			case 126:
-				if (vt100_val == 3 && pos < fi) {
-				/* Delete in the middle of the line */
-				for (i = pos; i < fi; i++)
-					line[i] = line[i + 1];
-				fi--;
-				line[fi] = ' ';
-				redraw_line(pos, pos, fi + 1);
+				if (vt100_val == 3 && fi > promptlen) {
+					/* Delete in the middle of the line */
+					c = 'D' - 64;
+					break;
 				}
-				if (vt100_val == 2) {
-				/* Toggle insert / overwrite mode */
-				insert ^= 1;
-				}
+				if (vt100_val == 2)
+					/* Toggle insert / overwrite mode */
+					insert ^= 1;
 				continue;
 			default:
 				continue;
@@ -201,12 +193,33 @@ edit(ival promptlen, ival fi, ival fc)
 			pos++;
 			continue;
 		}
+		if (c == 'A' - 64) {
+			/* Home */
+			redraw_line(pos, promptlen, fi);
+			pos = promptlen;
+			continue;
+		}
+		if (c == 'E' - 64) {
+			/* End */
+			redraw_line(pos, fi, fi);
+			pos = fi;
+			continue;
+		}
 		if (c == 'R' - 64 || c == 'L' - 64) {
 			/* CTRL-R or CTRL-L */
 			if (c == 'L' - 64)
 				/* Clear screen, cursor home */
 				write(0, "\x1b[2J\x1b[H", 7);
 			request_term_size();
+			continue;
+		}
+		if (c == 'D' - 64 && pos < fi) {
+			/* CTRL-D - delete in the middle of the line */
+			for (i = pos; i < fi; i++)
+				line[i] = line[i + 1];
+			fi--;
+			line[fi] = ' ';
+			redraw_line(pos, pos, fi + 1);
 			continue;
 		}
 		if (c == 'H' - 64 || c == 127) {
