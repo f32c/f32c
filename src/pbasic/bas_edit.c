@@ -98,13 +98,20 @@ edit(ival promptlen, ival fi, ival fc)
 	int pos = fi;
 	int esc_mode = 0;
 	int vt100_val = 0;
+	int size_known = 0;
 	int insert = 1;
 	int i, nchar;
 
 #ifndef f32c
 	set_term();
 #endif
-	write(0, line, fi);
+	if (pos == promptlen)
+		write(0, line, fi);
+	else {
+		for (i = 0; i < fi / term_width; i++)
+			write(0, "\n", 1);
+		request_term_size();
+	}
 
 	while (1) {
 		c = readc();
@@ -132,6 +139,7 @@ edit(ival promptlen, ival fi, ival fc)
 			case 'R':
 				if (vt100_val != 0) {
 					term_width = vt100_val;
+					size_known = 1;
 					redraw_line(pos, pos, fi);
 				}
 				continue;
@@ -170,11 +178,9 @@ edit(ival promptlen, ival fi, ival fc)
 			}
 		}
 		esc_mode = 0;
-		if (c == 'J' - 64 || c == 'M' - 64) {
+		if (c == 'J' - 64 || c == 'M' - 64)
 			/* CR / LF */
-			line[fi] = 0;
 			break;
-		}
 		if (c == 'B' - 64 && pos > promptlen) {
 			/* CTRL-B, cursor left */
 			if (pos % term_width)
@@ -223,7 +229,21 @@ edit(ival promptlen, ival fi, ival fc)
 		nchar = 1;
 		if (c == 'I' - 64) {
 			/* TAB / CTRL-I */
-			nchar = 4;
+			for (i = promptlen; i < pos; i++)
+				if (line[i] != ' ')
+					break;
+			if (i < fi && isdigit(line[i])) {
+				for (; i < pos; i++)
+					if (!isdigit(line[i]))
+						break;
+				if (i == pos)
+					nchar = 1;
+				else
+					nchar = 4 - (pos - i - 1) % 4;
+			} else
+				nchar = 4 - (pos - promptlen) % 4;
+			if (nchar == 0)
+				nchar = 4;
 			c = ' ';
 		}
 		if (c < 32)
@@ -253,9 +273,12 @@ edit(ival promptlen, ival fi, ival fc)
 				line[pos - i] = c;
 				write(0, &c, 1);
 			}
+			if (!size_known)
+				request_term_size();
 		}
 	}
 
+	line[fi] = 0;
 	if (pos != fi)
 		redraw_line(pos, fi, fi);
 	if (trapped)
