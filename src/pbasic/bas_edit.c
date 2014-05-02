@@ -129,8 +129,9 @@ edit(ival promptlen, ival fi, ival fc)
 	int vt100_val = 0;
 	int size_known = 0;
 	int insert = 1;
-	int i, nchar;
+	int i, nchar, lnum;
 	int hist_index = hist_len;
+	lpoint p;
 
 #ifndef f32c
 	set_term();
@@ -250,24 +251,56 @@ edit(ival promptlen, ival fi, ival fc)
 			continue;
 		}
 		if (c == 'P' - 64 || c == 'N' - 64) {
-			if (c == 'P' - 64) {
-				if (hist_index == 0)
+			/* Prev / next - history or program line */
+			for (lnum = 0, i = promptlen; i < fi; i++) {
+				if (line[i] == ' ')
 					continue;
-				hist_index--;
-			} else {
-				if (hist_index == hist_len)
-					continue;
-				hist_index++;
+				if (!isdigit(line[i]))
+					break;
+				line[fi] = 0;
+				lnum = atoi(&line[i]);
+				break;
 			}
-			for (i = promptlen; i < fi; i++)
-				line[i] = ' ';
-			redraw_line(pos, pos, fi);
-			if (hist_index < hist_len) {
-				i = strlen(hist[hist_index]);
-				strcpy(&line[promptlen], hist[hist_index]);
-				fi = promptlen + i;
-			} else
-				fi = promptlen;
+			if (lnum > 0) {
+				/* Program line */
+				for (p = program; p != NULL; p = p->next) {
+					if (c == 'P' - 64) {
+						if (p->next == NULL ||
+						    p->next->linnumb >= lnum)
+							break;
+					} else
+						if (p->linnumb > lnum)
+							break;
+				}
+				if (p == NULL)
+					continue;
+				promptlen = 0;
+				for (i = promptlen; i < fi; i++)
+					line[i] = ' ';
+				redraw_line(pos, pos, fi);
+				fi = listl(p);
+			} else {
+				/* Command line */
+				if (c == 'P' - 64) {
+					if (hist_index == 0)
+						continue;
+					hist_index--;
+				} else {
+					if (hist_index == hist_len)
+						continue;
+					hist_index++;
+				}
+				for (i = promptlen; i < fi; i++)
+					line[i] = ' ';
+				redraw_line(pos, pos, fi);
+				if (hist_index < hist_len) {
+					i = strlen(hist[hist_index]);
+					strcpy(&line[promptlen],
+					    hist[hist_index]);
+					fi = promptlen + i;
+				} else
+					fi = promptlen;
+			}
 			redraw_line(pos, fi, fi);
 			pos = fi;
 			continue;

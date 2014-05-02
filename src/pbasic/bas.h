@@ -589,6 +589,7 @@ char    *printlin(lnumb);
 CHAR	*str_cpy(CHAR *, CHAR *);
 CHAR	*strmov(CHAR *, CHAR *, ival);
 int	slen(const char *);
+int	listl(lpoint);                                                  
 
 int	cmp(value *, value *);
 int	getch(void), getnumb(CHAR *, CHAR **);
