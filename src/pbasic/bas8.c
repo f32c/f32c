@@ -9,7 +9,7 @@
  */
 
 static	void	clear_prog(void);
-static	int	listl(lpoint), mypwrite(filebufp, CHAR *, int), def_fn(int, int);
+static	int	mypwrite(filebufp, CHAR *, int), def_fn(int, int);
 static	lpoint  get_end(void);
 static	STR	strpat(STR, STR, STR);
 
@@ -1004,10 +1004,8 @@ list()
  *    by nline[] this should not cause any problems.
  *      The result is in line[].
  */
-
-static	int
-listl(p)
-lpoint p;
+int
+listl(lpoint p)
 {
 	CHAR   *q;
 	const	struct tabl *l;
