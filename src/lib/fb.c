@@ -33,7 +33,7 @@
 #include <io.h>
 #include <fb.h>
 #else
-#ifdef __APPLE__
+#ifndef __FreeBSD__
 #define	__predict_true(x) (x)
 #define	__predict_false(x) (x)
 #else

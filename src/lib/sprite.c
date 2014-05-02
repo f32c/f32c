@@ -38,6 +38,11 @@
 #include <tjpgd.h>
 #include <io.h>
 #else
+#ifndef __FreeBSD__
+#define __predict_true(x) (x)
+#define __predict_false(x) (x)
+#include <stdint.h>
+#endif
 #include "../include/fb.h"
 #include "../pbasic/tjpgd.h"	/* XXX BASIC HACK, REVISIT! */
 #endif
