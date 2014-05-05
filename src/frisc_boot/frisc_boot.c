@@ -62,7 +62,7 @@ try_boot(char *fname)
 			*cp++ = val;
 	}
 	if (bootaddr != (void *) -1) {
-		*((int *) 0x3fc) = (int) bootaddr;
+		*((int *) 0x3ffc) = (int) bootaddr;
 		OUTB(IO_CPU_RESET + 0xc, 1);
 	}
 }
