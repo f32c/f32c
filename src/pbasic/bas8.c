@@ -1226,53 +1226,10 @@ int
 do_system(cmd)
 CHAR	*cmd;
 {
-	int    i;
-	SIGFUNC (*q)(int) , (*p)(int);
-	char    *s;
-	char	*args[4];
 	int	status;
-#ifdef  SIGTSTP
-	SIGFUNC	(*t)(int);
-#endif
 
 	flushall();
-	s = getenv("SHELL");
-	if(!s || !*s)
-		s = "/bin/sh";
-	args[0] = "sh (from basic)";
-	if(cmd != 0){
-		args[1] = "-c";
-		args[2] = (char *)cmd;
-		args[3] = (char *)0;
-	}
-	else
-		args[1] = (char  *)0;
-#ifdef  VFORK
-	i = vfork();
-#else
-	i=fork();
-#endif
-	if(i==0){
-		rset_term(1);
-		VOID setuid(getuid());       /* stop user getting clever */
-		VOID execv(s, args);
-		exit(-1);                       /* problem */
-	}
-	if(i == -1)
-		return(i);
-#ifdef  SIGTSTP
-	t = signal(SIGTSTP, SIG_DFL);
-#endif
-	p=signal(SIGINT, SIG_IGN);       /* ignore some signals */
-	q=signal(SIGQUIT, SIG_IGN);
-	while(i != wait(&status) && i != -1) {
-		/* wait on the 'child' */
-	}
-	VOID signal(SIGINT,p);          /* resignal to what they */
-	VOID signal(SIGQUIT,q);         /* were before */
-#ifdef  SIGTSTP
-	VOID signal(SIGTSTP, t);
-#endif
+	status = system(cmd);
 	set_term();
 	rset_term(0);
 	return(status);

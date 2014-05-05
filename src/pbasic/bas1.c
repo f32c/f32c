@@ -485,7 +485,7 @@ int	lsize;
 void
 execute()
 {
-	int    c, i;
+	int    c, i = NORMAL;
 	lpoint p;
 
 	for(;;){
