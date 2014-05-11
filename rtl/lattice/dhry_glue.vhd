@@ -1,5 +1,5 @@
 --
--- Copyright 2011-2013 Marko Zec, University of Zagreb
+-- Copyright 2011-2014 Marko Zec, University of Zagreb
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -124,7 +124,7 @@ begin
     )
     port map (
 	clk_25m => clk_25m, clk => clk, clk_325m => open,
-	sel => '0', key => '0', res => '0'
+	ena_325m => '0', sel => '0', key => '0', res => '0'
     );
 
     -- f32c core
@@ -172,31 +172,15 @@ begin
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
 	bus_in => cpu_to_dmem, bus_out => from_sio
     );
-    sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
-      dmem_addr(4 downto 2) = "001" else '0';
+    sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11" and
+      dmem_addr(7 downto 4) = x"2" else '0';
     end generate;
 
     --
     -- I/O port map:
-    -- 0x8*******: (2B, RW)   SRAM
-    -- 0xf*****00: (4B, RW)   GPIO (LED, switches/buttons)
-    -- 0xf*****04: (4B, RW) * SIO
-    -- 0xf*****0c: (4B, WR)   PCM signal
-    -- 0xf*****10: (1B, RW)   SPI Flash
-    -- 0xf*****14: (1B, RW)   SPI MicroSD
-    -- 0xf*****1c: (4B, WR)   FM DDS register
+    -- 0xf*****20: (4B, RW) * SIO
     --
-    process(dmem_addr, from_sio)
-    begin
-        case dmem_addr(4 downto 2) is
-        when "000"  =>
-            io_to_cpu <="----------------" & "--------" & "---00000";
-        when "001"  => io_to_cpu <= from_sio;
-        when others =>
-            io_to_cpu <= "--------------------------------";
-        end case;
-    end process;
-
+    io_to_cpu <= from_sio;
     final_to_cpu <= io_to_cpu when dmem_addr(31) = '1' else dmem_to_cpu;
 
     -- Block RAM
