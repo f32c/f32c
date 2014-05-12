@@ -127,12 +127,13 @@ if {$tabcnt != 0} {
     puts ""
 }
 
-set base_isa_set "sh lhu lh bgtz sllv srav beq sltu bgez srl srlv xor xori lui sw lbu and slt lw andi slti blez nop bne li sra addu nor negu subu bnez jalr or sltiu ori j beqz sll bltz jr sb lb move addiu jal"
+set base_isa_set "sh lhu lh bgtz sllv srav beq sltu bgez srl srlv xor xori lui sw lbu and slt lw andi slti blez nop bne li sra addu nor negu subu bnez jalr or sltiu ori j beqz sll bltz jr sb lb move addiu jal b bal"
 set branch_likely_set "bnezl bltzl bnel beql beqzl bgezl bgtzl blezl"
 set mul_set "mult multu mflo mfhi"
 set unaligned_store_set "swl swr"
 set unaligned_load_set "lwl lwr"
 set sign_extend_set "seb seh"
+set condmove_set "movn movz"
 set cp0_set "mfc0 cache wait"
 set unsupported 0
 
@@ -164,6 +165,16 @@ foreach instr [lsort [array names instr_map]] {
 }
 if {$found != ""} {
     puts "Sign extend (optional): $found"
+}
+
+set found ""
+foreach instr [lsort [array names instr_map]] {
+    if {[lsearch $condmove_set $instr] >= 0} {
+	lappend found $instr
+    }
+}
+if {$found != ""} {
+    puts "Conditional move (optional): $found"
 }
 
 set found ""
@@ -200,7 +211,7 @@ if {$found != ""} {
 
 set found ""
 foreach instr [lsort [array names instr_map]] {
-    if {[lsearch "$base_isa_set $mul_set $unaligned_load_set $unaligned_store_set $branch_likely_set $sign_extend_set $cp0_set" $instr] < 0} {
+    if {[lsearch "$base_isa_set $mul_set $unaligned_load_set $unaligned_store_set $branch_likely_set $sign_extend_set $condmove_set $cp0_set" $instr] < 0} {
 	lappend found $instr
     }
 }
