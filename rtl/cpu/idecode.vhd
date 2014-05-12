@@ -403,6 +403,9 @@ begin
 		if C_movn_movz then
 		    cmov_cycle <= true;
 		    cmov_condition <= true;
+		    use_immediate <= true;
+		    immediate_value <= x"00000000";
+		    latency <= LATENCY_MEM;
 		else
 		    latency <= LATENCY_UNDEFINED;
 		    unsupported_instr <= true;
@@ -411,6 +414,9 @@ begin
 		if C_movn_movz then
 		    cmov_cycle <= true;
 		    cmov_condition <= false;
+		    use_immediate <= true;
+		    immediate_value <= x"00000000";
+		    latency <= LATENCY_MEM;
 		else
 		    latency <= LATENCY_UNDEFINED;
 		    unsupported_instr <= true;
