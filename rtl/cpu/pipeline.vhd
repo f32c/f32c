@@ -717,7 +717,9 @@ begin
 		    end if;
 		end if;
 	    else
-		ID_EX_wait <= ID_EX_wait and R_cop0_count(7 downto 0) /= x"00";
+		if C_cop0_count then
+		    ID_EX_wait <= ID_EX_wait and R_cop0_count(9 downto 2) /= 0;
+		end if;
 		if ID_running then
 		    ID_EX_cancel_next <= false;
 		end if;
@@ -1146,6 +1148,8 @@ begin
     end generate; -- multiplier
 
     -- COP0
+    G_cop0_count:
+    if C_cop0_count generate
     process(clk)
     begin
 	if rising_edge(clk) then
@@ -1155,7 +1159,11 @@ begin
 	    end if;
 	end if;
     end process;
-    R_cop0_count <= (others => '-') when not C_cop0_count; 
+    end generate;
+    G_not_cop0_count:
+    if not C_cop0_count generate
+    R_cop0_count <= (others => '-'); 
+    end generate;
 
     -- R_cop0_config
     G_cop0_config:
@@ -1172,7 +1180,10 @@ begin
     R_cop0_config(14 downto 4) <= (others => '-');
     R_cop0_config(3 downto 0) <= conv_std_logic_vector(C_cpuid, 4);
     end generate;
-    R_cop0_config <= (others => '-') when not C_cop0_config;
+    G_not_cop0_config:
+    if not C_cop0_config generate
+    R_cop0_config <= (others => '-');
+    end generate;
 
     -- XXX performance counters
     G_perf_cnt:
