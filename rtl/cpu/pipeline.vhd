@@ -295,7 +295,6 @@ begin
     --  reintroduce area-optimized branch likely support as an option
     --	sort out the endianess story
     --	unaligned load / store instructions?
-    --	revisit movz / movn: use ALU (and / or) instead of (slow) shifter!
     --	revisit target_addr computation in idecode.vhd
     --	MTHI/MTLO/MFC0/MTC0?
     --	division? - block on MFHI/MFLO if result not ready
