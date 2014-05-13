@@ -11,7 +11,8 @@ CC = mips-elf-gcc
 # Flag : CFLAGS
 #	Use this flag to define compiler options. Note, you can add compiler options from the command line using XCFLAGS="other flags"
 
-LOADADDR = 0x80000000
+#LOADADDR = 0x80000000
+LOADADDR = 0x200
 ENDIANFLAGS = -EL
 
 # MIPS-specific flags
@@ -20,6 +21,7 @@ MK_CFLAGS += -march=f32c
 MK_CFLAGS += ${ENDIANFLAGS}
 #MK_CFLAGS += -mno-branch-likely
 MK_CFLAGS += -G 32768
+MK_CFLAGS += -DBRAM
 
 MK_CFLAGS += -nostdinc -I${BASE_DIR}include -include sys/param.h
 
@@ -33,29 +35,9 @@ MK_CFLAGS += -fpeel-loops -funroll-all-loops
 
 # Minor improvements
 MK_CFLAGS += -fipa-cp-clone
-MK_CFLAGS += -fmodulo-sched
-MK_CFLAGS += -fira-loop-pressure
-MK_CFLAGS += -fira-algorithm=priority
-MK_CFLAGS += -fira-region=one
-MK_CFLAGS += -fgcse-after-reload
-MK_CFLAGS += -fsel-sched-pipelining
+MK_CFLAGS += -fipa-pta
 MK_CFLAGS += -finline-limit=0
-
-# Useless
-#MK_CFLAGS += -fmerge-all-constants
-#MK_CFLAGS += -falign-functions=4 -falign-labels=4
-#MK_CFLAGS += -falign-jumps=4 -falign-loops=4
-
-# Negative impact on performance
-#MK_CFLAGS += -fsched2-use-superblocks
-#MK_CFLAGS += -ftracer
-#MK_CFLAGS += -funswitch-loops -ftree-loop-im
-#MK_CFLAGS += -fmodulo-sched-allow-regmoves
-#MK_CFLAGS += -fgcse-sm
-#MK_CFLAGS += -fgcse-las
-#MK_CFLAGS += -fselective-scheduling
-#MK_CFLAGS += -fipa-pta
-#MK_CFLAGS += -fpredictive-commoning
+MK_CFLAGS += -fselective-scheduling2
 
 # Linker flags
 MK_LDFLAGS += -N
