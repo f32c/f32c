@@ -1,5 +1,5 @@
 --
--- Copyright 2008, 2010 University of Zagreb, Croatia.
+-- Copyright 2008-2014 Marko Zec, University of Zagreb
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -40,7 +40,8 @@ entity glue is
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
-	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
+	C_ll_sc: boolean := false;
+	C_PC_mask: std_logic_vector(31 downto 0) := x"00007fff";
     
 	-- COP0 options
 	C_cop0_count: boolean := true;
@@ -50,20 +51,16 @@ entity glue is
 	C_branch_prediction: boolean := true;
 	C_result_forwarding: boolean := true;
 	C_load_aligner: boolean := true;
---	C_register_technology: string := "xilinx_ram32x1s";
-	C_register_technology: string := "xilinx_ram16x1d";
+
+	-- FPGA platform-specific options
+	C_register_technology: string := "xilinx_ram16x1d"; --"xilinx_ram32x1s";
 
 	-- These may negatively influence timing closure:
 	C_movn_movz: boolean := false; -- true: +16 LUT4, -DMIPS, incomplete
-	C_fast_ID: boolean := true;
-
-	-- debugging options
-	C_debug: boolean := false;
 
 	-- SoC configuration options
-	C_mem_size: string := "16k";
-	C_sio: boolean := true;
-	C_gpio: boolean := true
+	C_mem_size: integer := 32;
+	C_sio: boolean := true
     );
     port (
 	clk_100m: in std_logic;
@@ -95,19 +92,19 @@ architecture Behavioral of glue is
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_txd, sio_rxd, sio_ce: std_logic;
-    signal R_led: std_logic_vector(7 downto 0);
-    signal R_sw: std_logic_vector(3 downto 0);
-    signal R_btns: std_logic_vector(6 downto 0);
-
-    -- debugging only
-    signal trace_addr: std_logic_vector(5 downto 0);
-    signal trace_data: std_logic_vector(31 downto 0);
-    signal debug_txd: std_logic;
-    signal debug_res: std_logic;
-    signal clk_key: std_logic;
 
 begin
 
+    -- clock synthesizer
+    clkgen: entity work.clkgen
+    generic map(
+	C_clk_freq => C_clk_freq,
+	C_debug => false
+    )
+    port map(
+	clk_100m => clk_100m, clk => clk, key => '0', sel => '0'
+    );
+	
     -- f32c core
     pipeline: entity work.pipeline
     generic map (
@@ -119,10 +116,10 @@ begin
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
-	C_fast_ID => C_fast_ID,
+	C_ll_sc => C_ll_sc,
 	C_register_technology => C_register_technology,
 	-- debugging only
-	C_debug => C_debug
+	C_debug => false
     )
     port map (
 	clk => clk, reset => '0', intr => '0',
@@ -133,7 +130,9 @@ begin
 	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
 	dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
 	dmem_data_ready => dmem_data_ready,
-	trace_addr => trace_addr, trace_data => trace_data
+	snoop_cycle => '0', snoop_addr => "------------------------------",
+	flush_i_line => open, flush_d_line => open,
+	trace_addr => "------", trace_data => open
     );
 
     -- RS232 sio
@@ -145,90 +144,21 @@ begin
 	C_clk_freq => C_clk_freq
     )
     port map (
-	clk => clk, ce => sio_ce, txd => sio_txd, rxd => sio_rxd,
+	clk => clk, ce => sio_ce, txd => rs232_dce_txd, rxd => rs232_dce_rxd,
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
 	bus_in => cpu_to_dmem, bus_out => from_sio
     );
-    sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"f" and
-      dmem_addr(4 downto 2) = "001" else '0';
-    rs232_dce_txd <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
-    sio_rxd <= rs232_dce_rxd;
+    sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11" and
+      dmem_addr(7 downto 4) = x"2" else '0';
     end generate;
 
     -- I/O port map:
-    -- 0x8*******: (2B, RW)   SRAM
-    -- 0xf*****00: (4B, RW) * GPIO (LED, switches/buttons)
-    -- 0xf*****04: (4B, RW) * SIO
-    -- 0xf*****08: (4B, RD) * TSC
-    -- 0xf*****0c: (4B, WR)   PCM signal
-    -- 0xf*****10: (1B, RW)   SPI Flash
-    -- 0xf*****14: (1B, RW)   SPI MicroSD
-    -- 0xf*****1c: (4B, WR)   FM DDS register
-    -- I/O write access:
-    process(clk)
-    begin
-	if rising_edge(clk) then
-	    if dmem_addr_strobe = '1' and dmem_write = '1'
-	      and dmem_addr(31 downto 28) = x"f" then
-		-- GPIO
-		if C_gpio and dmem_addr(4 downto 2) = "000" then
-		    if dmem_byte_sel(0) = '1' then
-			R_led <= cpu_to_dmem(7 downto 0);
-		    end if;
-		    if dmem_byte_sel(1) = '1' then
---			j1 <= cpu_to_dmem(11 downto 8);
---			j2 <= cpu_to_dmem(15 downto 12);
-		    end if;
-		    if dmem_byte_sel(2) = '1' then
---			lcd_db <= cpu_to_dmem(23 downto 16);
-		    end if;
-		    if dmem_byte_sel(3) = '1' then
---			lcd_e <= cpu_to_dmem(26);
---			lcd_rs <= cpu_to_dmem(25);
---			lcd_rw <= cpu_to_dmem(24);
-		    end if;
-		end if;
-	    end if;
-	end if;
-    end process;
-    led <= R_led when C_gpio else "--------";
+    -- I/O port map:
+    -- 0xf*****20: (4B, RW) * SIO
+    --
+    io_to_cpu <= from_sio;
+    final_to_cpu <= io_to_cpu when dmem_addr(31) = '1' else dmem_to_cpu;
 
-    process(clk)
-    begin
-	if C_gpio and rising_edge(clk) then
-	    R_sw <= sw;
-	    R_btns <=
---	      rot_a & rot_b & rot_center &
-	      "00" & btn_center &
-	      btn_north & btn_south & btn_west & btn_east;
-	end if;
-    end process;
-
-    -- XXX replace with a balanced multiplexer
-    process(dmem_addr, R_sw, R_btns, from_sio)
-    begin
-	case dmem_addr(4 downto 2) is
-	when "000"  =>
-	    io_to_cpu <="----------------" & "----" & R_sw & "-" & R_btns;
-	when "001"  => io_to_cpu <= from_sio;
-	when others =>
-	    io_to_cpu <= "--------------------------------";
-	end case;
-    end process;
-
-    final_to_cpu <= io_to_cpu when dmem_addr(31 downto 28) = x"f"
-      else dmem_to_cpu;
-
-    -- a DLL clock synthesizer
-    clkgen: entity work.clkgen
-    generic map(
-	C_debug => C_debug,
-	C_clk_freq => C_clk_freq
-    )
-    port map(
-	clk_100m => clk_100m, clk => clk, key => clk_key, sel => sw(0)
-    );
-	
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
     imem_data_ready <= '1';
@@ -245,24 +175,8 @@ begin
 	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
     );
 
-    -- debugging design instance - serial port + control knob / buttons
-    G_debug:
-    if C_debug generate
-    --clk_key <= btn_south;
-    clk_key <= '1'; -- clk selector
-    debug_serial: entity work.serial_debug
-    port map(
-	clk_50m => clk,
-	rs232_txd => debug_txd,
-	trace_addr => trace_addr,
-	trace_data => trace_data
-    );
-    end generate; -- serial_debug
-	
-    G_nodebug:
-    if not C_debug generate
-    clk_key <= '1'; -- clk selector
-    end generate; -- nodebug
-	
+    -- Appease XST for unused ports
+    led <= "ZZZZZZZZ";
+
 end Behavioral;
 
