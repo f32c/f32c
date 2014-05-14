@@ -41,7 +41,7 @@ entity glue is
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
 	C_ll_sc: boolean := false;
-	C_PC_mask: std_logic_vector(31 downto 0) := x"00003fff";
+	C_PC_mask: std_logic_vector(31 downto 0) := x"00007fff";
     
 	-- COP0 options
 	C_cop0_count: boolean := true;
