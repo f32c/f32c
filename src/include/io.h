@@ -36,6 +36,7 @@
 #define	IO_GPIO_DATA	IO_ADDR(0x00)	/* word, RW */
 #define	IO_GPIO_CTL	IO_ADDR(0x04)	/* word, WR */
 #define	IO_LED		IO_ADDR(0x10)	/* byte, WR */
+#define	IO_LCD		IO_ADDR(0x11)	/* byte, WR */
 #define	IO_PUSHBTN	IO_ADDR(0x10)	/* byte, RD */
 #define	IO_DIPSW	IO_ADDR(0x11)	/* byte, RD */
 #define	IO_LCD_DB	IO_ADDR(0x12)	/* byte, WR */
@@ -75,9 +76,9 @@
 #define	PMOD_J2_MASK	0xf0
 
 /* LCD control output bitmask */
-#define	LCD_CTRL_E	0x4
-#define	LCD_CTRL_RS	0x2
-#define	LCD_CTRL_RW	0x1
+#define	LCD_DATA	0x0f
+#define	LCD_RS		0x10
+#define	LCD_E		0x20
 
 
 #if !defined(__ASSEMBLER__)

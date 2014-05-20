@@ -129,6 +129,9 @@ ifneq (,$(findstring sprite,$(F32C_LIBS)))
 	_NEED_FATFS = YES
 endif
 
+ifneq (,$(findstring lcd,$(F32C_LIBS)))
+	_NEED_LCD = YES
+endif
 
 ifdef _NEED_MALLOC
 	CFILES += ${BASE_DIR}lib/malloc.c
@@ -257,5 +260,9 @@ endif
 
 ifdef _NEED_SPRITE
 	CFILES += ${BASE_DIR}lib/sprite.c
+endif
+
+ifdef _NEED_LCD
+	CFILES += ${BASE_DIR}lib/lcd.c
 endif
 
