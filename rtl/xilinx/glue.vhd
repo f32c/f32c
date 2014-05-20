@@ -59,8 +59,10 @@ entity glue is
 	C_movn_movz: boolean := false; -- true: +16 LUT4, -DMIPS, incomplete
 
 	-- SoC configuration options
-	C_mem_size: integer := 32;
-	C_sio: boolean := true
+	C_bram_size: integer := 32;	-- KBytes
+	C_sio: boolean := true;
+	C_leds_btns: boolean := true;
+	C_lcd: boolean := true
     );
     port (
 	clk_50m: in std_logic;
@@ -89,8 +91,13 @@ architecture Behavioral of glue is
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
 
     -- I/O
+    signal io_addr_strobe: std_logic;
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_ce: std_logic;
+    signal R_led: std_logic_vector(7 downto 0);
+    signal R_lcd: std_logic_vector(5 downto 0);
+    signal R_sw: std_logic_vector(3 downto 0);
+    signal R_btns: std_logic_vector(6 downto 0);
 
 begin
 
@@ -133,6 +140,7 @@ begin
 	flush_i_line => open, flush_d_line => open,
 	trace_addr => "------", trace_data => open
     );
+    final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
 
     -- RS232 sio
     G_sio:
@@ -154,10 +162,55 @@ begin
 
     --
     -- I/O port map:
+    -- 0xf*****10: (2B, RW) : LED, LCD (WR), switches, buttons (RD)
     -- 0xf*****20: (4B, RW) * SIO
     --
-    io_to_cpu <= from_sio;
-    final_to_cpu <= io_to_cpu when dmem_addr(31) = '1' else dmem_to_cpu;
+    io_addr_strobe <= '1' when dmem_addr(31 downto 30) = "11" else '0';
+    process(clk)
+    begin
+	if rising_edge(clk) and io_addr_strobe = '1'
+	  and dmem_write = '1' then
+	    -- LEDs
+	    if C_leds_btns and dmem_addr(7 downto 4) = x"1" and
+	      dmem_byte_sel(0) = '1' then
+		R_led <= cpu_to_dmem(7 downto 0);
+	    end if;
+	    -- LCD
+	    if C_lcd and dmem_addr(7 downto 4) = x"1" and
+	      dmem_byte_sel(1) = '1' then
+		R_lcd <= cpu_to_dmem(13 downto 8);
+	    end if;
+	end if;
+	if C_leds_btns and rising_edge(clk) then
+	    R_sw <= sw;
+	    R_btns <= rot_a & rot_b & rot_center &
+	      btn_north & btn_south & btn_west & btn_east;
+	end if;
+    end process;
+    led <= R_led when C_leds_btns else "ZZZZZZZZ";
+    lcd_db <= R_lcd(3 downto 0) & "ZZZZ" when C_lcd else "ZZZZZZZZ";
+    lcd_rs <= R_lcd(4) when C_lcd else 'Z';
+    lcd_e <= R_lcd(5) when C_lcd else 'Z';
+    lcd_rw <= '0' when C_lcd else 'Z';
+    process(dmem_addr, R_sw, R_btns, from_sio)
+    begin
+	case dmem_addr(7 downto 4) is
+	when x"1"  =>
+	    if C_leds_btns then
+		io_to_cpu <="----------------" & "----" & R_sw & '-' & R_btns;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
+	when x"2"  =>
+	    if C_sio then
+		io_to_cpu <= from_sio;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
+	when others =>
+	    io_to_cpu <= (others => '-');
+	end case;
+    end process;
 
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
@@ -165,7 +218,7 @@ begin
     dmem_data_ready <= '1';
     bram: entity work.bram
     generic map (
-	C_mem_size => C_mem_size
+	C_mem_size => C_bram_size
     )
     port map (
 	clk => clk, imem_addr_strobe => imem_addr_strobe,
@@ -176,11 +229,6 @@ begin
     );
 
     -- Appease XST for unused ports
-    led <= "ZZZZZZZZ";
-    lcd_db <= "ZZZZZZZZ";
-    lcd_e <= 'Z';
-    lcd_rs <= 'Z';
-    lcd_rw <= 'Z';
     j1 <= "ZZZZ";
     j2 <= "ZZZZ";
 
