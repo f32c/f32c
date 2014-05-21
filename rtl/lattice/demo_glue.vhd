@@ -73,6 +73,7 @@ entity glue is
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true;
+	C_lcd: boolean := true;
 	C_gpio: boolean := true;
 	C_flash: boolean := true;
 	C_sdcard: boolean := true;
@@ -151,6 +152,7 @@ architecture Behavioral of glue is
     signal next_io_port: integer range 0 to (C_io_ports - 1);
     signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
     signal R_led: std_logic_vector(7 downto 0);
+    signal R_lcd: std_logic_vector(5 downto 0);
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
     signal R_gpio_ctl, R_gpio_in, R_gpio_out: std_logic_vector(28 downto 0);
@@ -300,7 +302,7 @@ begin
     -- 0x8*******: (4B, RW) : External static RAM (1 MByte, slow)
     -- 0xf*****00: (4B, RW) : GPIO data
     -- 0xf*****04: (4B, WR) : GPIO control
-    -- 0xf*****10: (2B, RW) : LED (WR), switches, buttons (RD)
+    -- 0xf*****10: (2B, RW) : LED, LCD (WR), switches, buttons (RD)
     -- 0xf*****20: (4B, RW) : SIO
     -- 0xf*****30: (2B, RW) : SPI Flash
     -- 0xf*****34: (2B, RW) : SPI MicroSD
@@ -383,10 +385,16 @@ begin
 		end if;
 	    end if;
 	    -- LEDs
-	    if C_leds_btns and io_addr(7 downto 4) = x"1" then
+	    if C_leds_btns and io_addr(7 downto 4) = x"1" and
+	      io_byte_sel(0) = '1' then
 		R_led <= cpu_to_io(7 downto 0);
 	    end if;
-	    -- LEDs
+	    -- LCD
+	    if C_lcd and io_addr(7 downto 4) = x"1" and
+	      io_byte_sel(1) = '1' then
+		R_lcd <= cpu_to_io(13 downto 8);
+	    end if;
+	    -- LEGO IR
 	    if C_lego_ir and io_addr(7 downto 4) = x"6" then
 		if io_byte_sel(1) = '1' then
 		    R_lego_ir_enable <= cpu_to_io(15);
@@ -747,12 +755,18 @@ begin
     --
     -- GPIO
     --
-    j1_2 <= R_gpio_out(0) when R_gpio_ctl(0) = '1' else 'Z';
-    j1_3 <= R_gpio_out(1) when R_gpio_ctl(1) = '1' else 'Z';
-    j1_4 <= R_gpio_out(2) when R_gpio_ctl(2) = '1' else 'Z';
-    j1_8 <= R_gpio_out(3) when R_gpio_ctl(3) = '1' else 'Z';
-    j1_9 <= R_gpio_out(4) when R_gpio_ctl(4) = '1' else 'Z';
-    j1_13 <= R_gpio_out(5) when R_gpio_ctl(5) = '1' else 'Z';
+    j1_2 <= R_lcd(3);
+    j1_3 <= R_lcd(2);
+    j1_4 <= R_lcd(1);
+    j1_8 <= R_lcd(0);
+    j1_9 <= R_lcd(5);
+    j1_13 <= R_lcd(4);
+--    j1_2 <= R_gpio_out(0) when R_gpio_ctl(0) = '1' else 'Z';
+--    j1_3 <= R_gpio_out(1) when R_gpio_ctl(1) = '1' else 'Z';
+--    j1_4 <= R_gpio_out(2) when R_gpio_ctl(2) = '1' else 'Z';
+--    j1_8 <= R_gpio_out(3) when R_gpio_ctl(3) = '1' else 'Z';
+--    j1_9 <= R_gpio_out(4) when R_gpio_ctl(4) = '1' else 'Z';
+--    j1_13 <= R_gpio_out(5) when R_gpio_ctl(5) = '1' else 'Z';
     j1_14 <= R_gpio_out(6) when R_gpio_ctl(6) = '1' else 'Z';
     j1_15 <= R_gpio_out(7) when R_gpio_ctl(7) = '1' else 'Z';
     j1_16 <= R_gpio_out(8) when R_gpio_ctl(8) = '1' else 'Z';
