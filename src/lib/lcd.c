@@ -51,9 +51,9 @@ lcd_nibble(int rs, int val)
 		val |= LCD_RS;
 	
 	OUTB(IO_LCD, val | LCD_E);
-	lcd_delay(20);		/* XXX empirical delay! */
+	lcd_delay(6);
 	OUTB(IO_LCD, val);
-	lcd_delay(20);		/* XXX empirical delay! */
+	lcd_delay(40);
 }
 
 
@@ -71,25 +71,20 @@ lcd_init(void)
 {
 
 	/* Cold-start init sequence */
-	lcd_delay(15000);
 	lcd_nibble(0, 0x3);
 	lcd_delay(4100);
 	lcd_nibble(0, 0x3);
 	lcd_delay(100);
 	lcd_nibble(0, 0x3);
 	lcd_delay(4100);
-	lcd_nibble(0, 2);
+	lcd_nibble(0, 0x2);
 
 	/* We should be in 4-bit mode now */
-	lcd_delay(40);
-	lcd_byte(0, 0x28);	/* 1/16 duty cycle, font 0 (5x8) */
-	lcd_delay(40);
-	lcd_byte(0, 0x01);	/* Clear screen */
-	lcd_delay(2000);
+	lcd_byte(0, 0x28);	/* 4-bit, 2 lines, font 0 (5x8) */
 	lcd_byte(0, 0x06);	/* Auto position increment, no scroll */
-	lcd_delay(40);
 	lcd_byte(0, 0x0c);	/* Display on, cursor off, blink off */
-	lcd_delay(40);
+	lcd_byte(0, 0x01);	/* Clear screen */
+	lcd_delay(1600);
 }
 
 
