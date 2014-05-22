@@ -9,7 +9,7 @@ CFILES = bas1.c bas2.c bas3.c bas4.c bas5.c \
 CFILES += bas_fb.c bas_file.c bas_f32c.c bas_edit.c \
 	f32c_glue.c ${BASE_DIR}lib/atoi.c ${BASE_DIR}lib/random.c
 
-F32C_LIBS = setjmp math printf sio_baud sprite
+F32C_LIBS = setjmp math printf sio_baud sprite lcd
 
 include ${POST_MK}
 
