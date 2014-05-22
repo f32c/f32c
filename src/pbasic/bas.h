@@ -685,7 +685,8 @@ int	endd(void),runn(void),gotos(void),rem(void),lets(void),list(void),
 	ink(void), paper(void), loadjpg(void),
 	sprgrab(void), sprload(void), sprtrans(void),
 	sprput(void), sprfree(void),
-	lego_ch(void), lego_red(void), lego_blue(void);
+	lego_ch(void), lego_red(void), lego_blue(void),
+	b_lcd_init(void), b_lcd_puts(void), b_lcd_pos(void);
 
 int	bas_sleep(void), bauds(void);
 int	quit(void);
@@ -937,6 +938,7 @@ static const intf_t xcmdf = {
 	sprgrab, sprload, sprtrans, sprput, sprfree,
 #ifdef f32c
 	lego_ch, lego_red, lego_blue,
+	b_lcd_init, b_lcd_puts, b_lcd_pos,
 #endif
 };
 
@@ -1147,6 +1149,9 @@ const	struct  tabl    table[]={
 	"LEGO_CH",	MKXCMD(11),
 	"LEGO_RED",	MKXCMD(12),
 	"LEGO_BLUE",	MKXCMD(13),
+	"LCD_INIT",	MKXCMD(14),
+	"LCD_PUTS",	MKXCMD(15),
+	"LCD_POS",	MKXCMD(16),
 #endif
 
 	/* string functs with args */

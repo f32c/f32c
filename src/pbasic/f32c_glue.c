@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,6 +36,7 @@
 
 #include <io.h>
 #include <sio.h>
+#include <lcd.h>
 #include <fatfs/ff.h>
 #include <mips/asm.h>
 
@@ -349,5 +350,55 @@ lego_blue(void)
 		error(33);
 	ir_blue = val;
         OUTB(IO_LEGO_DATA, (ir_blue << 4) | (ir_red & 0xf));
+	normret;
+}
+
+
+int
+b_lcd_init(void)
+{
+
+	check();
+	lcd_init();
+	normret;
+}
+
+
+int
+b_lcd_puts(void)
+{
+	STR st;
+	int c;
+
+	st = stringeval();
+	c = getch();
+
+	if (istermin(c))
+		point--;
+	else {
+		FREE_STR(st);
+		error(SYNTAX);
+	}
+
+	NULL_TERMINATE(st);
+	lcd_puts(st->strval);
+	FREE_STR(st);
+	normret;
+}
+
+
+int
+b_lcd_pos(void)
+{
+	int x, y;
+
+	x = evalint();
+	if (getch() != ',')
+		error(SYNTAX);
+	y = evalint();
+	check();
+	if (x < 0 || x > 15 || y < 0 || y > 1)
+		error(BADDATA);
+	lcd_byte(0, 0x80 + x + y * 0x40);
 	normret;
 }
