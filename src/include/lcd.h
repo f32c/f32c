@@ -32,4 +32,6 @@ void lcd_init(void);
 void lcd_byte(int, int);
 void lcd_puts(const char *);
 
+#define	lcd_pos(x, y) lcd_byte(0, 0x80 + (x) + (y) * 0x40)
+
 #endif /* !_LCD_H_ */
