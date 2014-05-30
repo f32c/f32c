@@ -60,6 +60,7 @@ endif
 #MK_CFLAGS += -mno-div
 #MK_CFLAGS += -mno-unaligned-load
 #MK_CFLAGS += -mno-unaligned-store
+#MK_CFLAGS += -mcondmove
 
 # Optimization options
 ifeq ($(findstring -O,$(CFLAGS)),)
@@ -115,7 +116,7 @@ CC = mips-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
 AS = mips-elf-gcc ${MK_CFLAGS} ${MK_INCLUDES}
 LD = mips-elf-ld ${MK_LDFLAGS}
 OBJCOPY = mips-elf-objcopy
-ifeq ($(shell uname -o), FreeBSD)
+ifeq ($(shell uname -s), FreeBSD)
 ISA_CHECK = ${BASE_DIR}tools/isa_check.tcl
 else
 ISA_CHECK = tclsh ${BASE_DIR}tools/isa_check.tcl
