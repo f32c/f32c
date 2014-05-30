@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <io.h>
+#include <lcd.h>
 
 #include <fatfs/ff.h>
 
@@ -73,6 +74,7 @@ main(void)
 	if (f > 0)
 		close(f);
 	scan_files(tmpbuf);
+	lcd_init();
 
 next_file:
 	f = open(fnames[fpos], O_RDONLY);
@@ -81,6 +83,9 @@ next_file:
 		exit (1);
 	}
 	printf("Playing %s, vol %d\n", fnames[fpos], vol);
+	lcd_pos(0, 0);
+	lcd_puts(&fnames[fpos][3]);
+	lcd_puts("          ");
 
 	block = 0;
 	got = read(f, buf, 0x8000);
@@ -102,6 +107,9 @@ next_file:
 			if ((i & (BTN_UP|BTN_DOWN)))
 				printf("Playing %s, vol %d\n",
 				    fnames[fpos], vol);
+			lcd_pos(0, 1);
+			sprintf(tmpbuf, "volume %d ", vol);
+			lcd_puts(tmpbuf);
 			OUTW(IO_PCM_VOLUME, vol + (vol << 16));
 			if ((i & BTN_LEFT)) {
 				close(f);
