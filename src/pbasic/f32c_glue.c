@@ -399,6 +399,6 @@ b_lcd_pos(void)
 	check();
 	if (x < 0 || x > 15 || y < 0 || y > 1)
 		error(BADDATA);
-	lcd_byte(0, 0x80 + x + y * 0x40);
+	lcd_pos(x, y);
 	normret;
 }
