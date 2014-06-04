@@ -1,6 +1,79 @@
+diff -drup ../org/binutils-2.23.1/bfd/elfxx-mips.c ./bfd/elfxx-mips.c
+--- ../org/binutils-2.23.1/bfd/elfxx-mips.c	2012-09-04 16:19:46.000000000 +0200
++++ ./bfd/elfxx-mips.c	2014-05-30 15:49:04.000000000 +0200
+@@ -1974,6 +1974,7 @@ got_page_reloc_p (unsigned int r_type)
+   return r_type == R_MIPS_GOT_PAGE || r_type == R_MICROMIPS_GOT_PAGE;
+ }
+ 
++#if 0
+ static inline bfd_boolean
+ got_ofst_reloc_p (unsigned int r_type)
+ {
+@@ -1985,6 +1986,7 @@ got_hi16_reloc_p (unsigned int r_type)
+ {
+   return r_type == R_MIPS_GOT_HI16 || r_type == R_MICROMIPS_GOT_HI16;
+ }
++#endif
+ 
+ static inline bfd_boolean
+ got_lo16_reloc_p (unsigned int r_type)
+diff -drup ../org/binutils-2.23.1/binutils/nm.c ./binutils/nm.c
+--- ../org/binutils-2.23.1/binutils/nm.c	2012-06-29 18:55:15.000000000 +0200
++++ ./binutils/nm.c	2014-05-30 15:56:33.000000000 +0200
+@@ -1691,7 +1691,7 @@ main (int argc, char **argv)
+ 
+   END_PROGRESS (program_name);
+ 
+-#ifdef HAVE_SBRK
++#if 0 //def HAVE_SBRK
+   if (show_stats)
+     {
+       char *lim = (char *) sbrk (0);
+diff -drup ../org/binutils-2.23.1/binutils/readelf.c ./binutils/readelf.c
+--- ../org/binutils-2.23.1/binutils/readelf.c	2012-11-05 17:27:35.000000000 +0100
++++ ./binutils/readelf.c	2014-06-04 11:22:31.000000000 +0200
+@@ -9035,13 +9035,15 @@ static void
+ print_dynamic_symbol (bfd_vma si, unsigned long hn)
+ {
+   Elf_Internal_Sym * psym;
+-  int n;
++  int i, n;
+ 
+   psym = dynamic_symbols + si;
+ 
+   n = print_vma (si, DEC_5);
+   if (n < 5)
+-    fputs ("     " + n, stdout);
++    for (i = n; i < 5; i++)
++      fputs (" ", stdout);
++//    fputs ("     "[n], stdout);
+   printf (" %3lu: ", hn);
+   print_vma (psym->st_value, LONG_HEX);
+   putchar (' ');
+diff -drup ../org/binutils-2.23.1/gas/as.c ./gas/as.c
+--- ../org/binutils-2.23.1/gas/as.c	2012-06-07 14:47:23.000000000 +0200
++++ ./gas/as.c	2014-05-30 15:57:31.000000000 +0200
+@@ -966,17 +966,10 @@ This program has absolutely no warranty.
+ static void
+ dump_statistics (void)
+ {
+-#ifdef HAVE_SBRK
+-  char *lim = (char *) sbrk (0);
+-#endif
+   long run_time = get_run_time () - start_time;
+ 
+   fprintf (stderr, _("%s: total time in assembly: %ld.%06ld\n"),
+ 	   myname, run_time / 1000000, run_time % 1000000);
+-#ifdef HAVE_SBRK
+-  fprintf (stderr, _("%s: data size %ld\n"),
+-	   myname, (long) (lim - (char *) &environ));
+-#endif
+ 
+   subsegs_print_statistics (stderr);
+   write_print_statistics (stderr);
 diff -drup ../org/binutils-2.23.1/gas/config/tc-mips.c ./gas/config/tc-mips.c
 --- ../org/binutils-2.23.1/gas/config/tc-mips.c	2012-09-04 16:21:03.000000000 +0200
-+++ ./gas/config/tc-mips.c	2013-09-22 10:39:32.000000000 +0200
++++ ./gas/config/tc-mips.c	2014-05-30 15:44:33.000000000 +0200
 @@ -19153,6 +19153,7 @@ static const struct mips_cpu_info mips_c
  						ISA_MIPS32R2,	CPU_MIPS32R2 },
    { "1004kf1_1",      MIPS_CPU_ASE_DSP | MIPS_CPU_ASE_MT,
@@ -9,9 +82,21 @@ diff -drup ../org/binutils-2.23.1/gas/config/tc-mips.c ./gas/config/tc-mips.c
  
    /* MIPS 64 */
    { "5kc",            0,			ISA_MIPS64,	CPU_MIPS64 },
+diff -drup ../org/binutils-2.23.1/ld/ldmain.c ./ld/ldmain.c
+--- ../org/binutils-2.23.1/ld/ldmain.c	2012-07-13 15:20:26.000000000 +0200
++++ ./ld/ldmain.c	2014-06-04 11:25:00.000000000 +0200
+@@ -53,6 +53,8 @@
+ 
+ #include <string.h>
+ 
++#undef HAVE_SBRK
++
+ #ifdef HAVE_SBRK
+ #if !HAVE_DECL_SBRK
+ extern void *sbrk ();
 diff -drup ../org/binutils-2.23.1/opcodes/mips-dis.c ./opcodes/mips-dis.c
 --- ../org/binutils-2.23.1/opcodes/mips-dis.c	2012-09-04 16:23:13.000000000 +0200
-+++ ./opcodes/mips-dis.c	2013-09-22 10:39:32.000000000 +0200
++++ ./opcodes/mips-dis.c	2014-05-30 15:44:33.000000000 +0200
 @@ -562,6 +562,12 @@ const struct mips_arch_choice mips_arch_
      mips_cp0sel_names_mips3264, ARRAY_SIZE (mips_cp0sel_names_mips3264),
      mips_hwr_names_numeric },
