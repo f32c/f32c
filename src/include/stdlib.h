@@ -45,6 +45,8 @@ void *malloc(size_t size);
 void *realloc(void *ptr, size_t size);
 void free(void *ptr);
 
+#define	alloca(sz) __builtin_alloca(sz)
+
 #define RAND_MAX        0x7fffffff
 
 char    *getenv(const char *);
