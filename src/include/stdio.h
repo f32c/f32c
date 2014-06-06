@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -42,7 +42,18 @@ int	sprintf(char * __restrict, const char * __restrict, ...) \
 	    __attribute__((format (printf, 2, 3)));
 int	snprintf(char * __restrict, size_t, const char * __restrict, ...) \
 	    __attribute__((format (printf, 3, 4)));
+int	vprintf(const char * __restrict, __va_list);
 int	vsprintf(char * __restrict, const char * __restrict, __va_list);
+
+#if __ISO_C_VISIBLE >= 1999
+int	snprintf(char * __restrict, size_t, const char * __restrict,
+	    ...) __printflike(3, 4);
+int	vscanf(const char * __restrict, __va_list) __scanflike(1, 0);
+int	vsnprintf(char * __restrict, size_t, const char * __restrict,
+	    __va_list) __printflike(3, 0);
+int	vsscanf(const char * __restrict, const char * __restrict, __va_list)
+	    __scanflike(2, 0);
+#endif
 
 int	gets(char *, int);
 
