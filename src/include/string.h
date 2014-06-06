@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,10 +34,9 @@ void *memmove(void *, const void *, size_t);
 void *memset(void *, int, size_t);
 int memcmp(const void *, const void *, size_t) __pure;
 
-#define	memcpy(dst, src, len) _memcpy(dst, src, len)
+#define	memcpy(dst, src, len) _memcpy((void *) dst, (void *) src, len)
 
 #ifdef USE_BUILTIN_STRCPY
-/* XXX this works on pure SWL / SWR luck (unimplemented instructions!) */
 #define	strcpy(dst, src) __builtin_strcpy((dst), (src))
 #else
 #if 0
