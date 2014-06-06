@@ -80,6 +80,13 @@ ifneq (,$(findstring gets,$(F32C_LIBS)))
 	_NEED_GETS = YES
 endif
 
+ifneq (,$(findstring assert,$(F32C_LIBS)))
+	_NEED_ASSERT = YES
+	_NEED_DIV = YES
+	_NEED_SIO = YES
+	_NEED_PRINTF = YES
+endif
+
 ifneq (,$(findstring atoi,$(F32C_LIBS)))
 	_NEED_ATOI = YES
 endif
@@ -160,6 +167,10 @@ endif
 
 ifdef _NEED_GETS
 	CFILES += ${BASE_DIR}lib/gets.c
+endif
+
+ifdef _NEED_ASSERT
+	CFILES += ${BASE_DIR}lib/assert.c
 endif
 
 ifdef _NEED_MEMSET
