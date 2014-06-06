@@ -52,9 +52,13 @@ void free(void *ptr);
 char    *getenv(const char *);
 
 /* XXX exit() works only on CPU #0 - fixme! */
-#define	exit(x)								\
-	do {								\
-		__asm __volatile ("jr $0; nop");			\
-	} while (0);
+static inline void __dead2
+exit(int x __unused)
+{
+
+	while (1) {
+		__asm __volatile ("jr $0; nop");
+	}
+}
 
 #endif /* !_STDLIB_H_ */
