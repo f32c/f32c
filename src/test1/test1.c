@@ -25,46 +25,91 @@
  * $Id$
  */
 
-#include <sdcard.h>
 #include <io.h>
-#include <spi.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <fb.h>
-
-#include <fatfs/ff.h>
 
 #include <mips/asm.h>
 
 
-static int free_cnt;
+#define	SYSCALL()	__asm __volatile ("syscall")
+
+#define	RDEPC(var)	__asm __volatile ("move %0, $27"	\
+                : "=r" (var))	/* outputs */
+
+void epc_test1(void)
+{
+
+	__asm __volatile (
+		".set noreorder\n"
+		"jr $31\n"
+		"syscall\n"
+		".set reorder"
+	);
+}
+
+static int cnt = 0;
 
 void
 main(void)
 {
-	uint32_t now, then;
-	void *p[1024];
-	int i, cnt = 0;
-	size_t size;
+	void *epc;
 
-	RDTSC(then);
-	do {
-		size = random() & 0xfff;
-		i = random() & 0x3ff;
-		if (p[i] != NULL) {
-			free(p[i]);
-			free_cnt++;
-		}
-		p[i] = malloc(size);
-		if (cnt++ == 1024) {
-			RDTSC(now);
-			printf("%d %d\n", now - then, free_cnt);
-			free_cnt = 0;
-			RDTSC(then);
-			cnt = 0;
-		}
-	} while (1);
+	printf("Uncached instruction stream:\n");
+again:
+	SYSCALL();
+	RDEPC(epc);
+	printf("#1 - sequential code: %p\n", epc);
+
+	SYSCALL();
+	sio_getchar(0);
+	RDEPC(epc);
+	printf("#2 - before jal: %p\n", epc);
+
+	epc_test1();
+	RDEPC(epc);
+	printf("#3 - jump delay slot: %p\n", epc);
+
+	__asm __volatile (
+		".set noreorder\n"
+		"b 1f\n"
+		"syscall\n"
+		"1:\n"
+		".set reorder"
+	);
+	RDEPC(epc);
+	printf("#4 - taken branch delay slot: %p\n", epc);
+
+	__asm __volatile (
+		".set noreorder\n"
+		"beql $0,$27,1f\n"
+		"syscall\n"
+		"1:\n"
+		"syscall\n"
+		".set reorder"
+	);
+	RDEPC(epc);
+	printf("#5 " "- after delay / nullify slot of untaken branch likely"
+	    ": %p <- XXX!\n", epc);
+
+	__asm __volatile (
+		".set noreorder\n"
+		"beq $0,$27,1f\n"
+		"syscall\n"
+		"1:\n"
+		".set reorder"
+	);
+	RDEPC(epc);
+	printf("#6 - delay slot of untaken branch: %p\n", epc);
+
+	printf("\n");
+	cnt++;
+	if (cnt == 2) {
+		printf("Clearing I-cache...\n");
+		__asm __volatile ("j _start");
+	}
+	if (cnt <= 3) {
+		printf("Cached instruction stream:\n");
+		goto again;
+	}
+	__asm __volatile  ("j $0");
 }
