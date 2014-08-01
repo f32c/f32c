@@ -28,7 +28,7 @@ entity idecode is
     port(
 	instruction: in std_logic_vector(31 downto 0);
 	branch_cycle, branch_likely: out boolean;
-	jump_cycle, jump_register, eret: out boolean;
+	jump_cycle, jump_register: out boolean;
 	reg1_zero, reg2_zero: out boolean;
 	reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
 	immediate_value: out std_logic_vector(31 downto 0);
@@ -50,6 +50,7 @@ entity idecode is
 	latency: out std_logic_vector(1 downto 0);
 	seb_seh_cycle: out boolean;
 	seb_seh_select: out std_logic;
+	exception: out boolean;
 	cop0_wait: out boolean
     );  
 end idecode;
@@ -81,7 +82,6 @@ begin
 	branch_likely <= false; -- should be don't care
 	jump_cycle <= false;
 	jump_register <= false; -- should be don't care
-	eret <= false;
 	reg1_zero <= instruction(25 downto 21) = MIPS32_REG_ZERO;
 	reg2_zero <= instruction(20 downto 16) = MIPS32_REG_ZERO;
 	target_addr <= "-----";
@@ -107,6 +107,7 @@ begin
 	flush_d_line <= '0';
 	ll <= false;
 	sc <= false;
+	exception <= false;
 	cop0_wait <= false;
 	
 	-- Main instruction decoder
@@ -192,10 +193,6 @@ begin
 	    read_alt <= true;
 	    alt_sel <= ALT_COP0;
 	    target_addr <= instruction(20 downto 16);
-	    if C_exceptions and instruction(5 downto 0) = MIPS32_COP0_ERET then
-		eret <= true;
-		branch_cycle <= true;
-	    end if;
 	    if instruction(5 downto 0) = MIPS32_COP0_WAIT then
 		cop0_wait <= true;
 	    end if;
@@ -419,6 +416,20 @@ begin
 		    latency <= LATENCY_MEM;
 		else
 		    latency <= LATENCY_UNDEFINED;
+		    unsupported_instr <= true;
+		end if;
+	    when MIPS32_SPEC_SYSCALL =>
+		if C_exceptions then
+		    exception <= true;
+		    target_addr <= "11011"; -- $27 aka k1
+		else
+		    unsupported_instr <= true;
+		end if;
+	    when MIPS32_SPEC_BREAK =>
+		if C_exceptions then
+		    exception <= true;
+		    target_addr <= "11011"; -- $27 aka k1
+		else
 		    unsupported_instr <= true;
 		end if;
 	    when MIPS32_SPEC_MFHI =>
