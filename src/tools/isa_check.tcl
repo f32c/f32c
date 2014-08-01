@@ -135,6 +135,7 @@ set unaligned_load_set "lwl lwr"
 set sign_extend_set "seb seh"
 set condmove_set "movn movz"
 set cp0_set "mfc0 cache wait"
+set exception_set "syscall break"
 set unsupported 0
 
 set found ""
@@ -189,6 +190,16 @@ if {$found != ""} {
 
 set found ""
 foreach instr [lsort [array names instr_map]] {
+    if {[lsearch $exception_set $instr] >= 0} {
+	lappend found $instr
+    }
+}
+if {$found != ""} {
+    puts "Exceptions (optional): $found"
+}
+
+set found ""
+foreach instr [lsort [array names instr_map]] {
     if {[lsearch $unaligned_store_set $instr] >= 0} {
 	lappend found $instr
     }
@@ -211,7 +222,7 @@ if {$found != ""} {
 
 set found ""
 foreach instr [lsort [array names instr_map]] {
-    if {[lsearch "$base_isa_set $mul_set $unaligned_load_set $unaligned_store_set $branch_likely_set $sign_extend_set $condmove_set $cp0_set" $instr] < 0} {
+    if {[lsearch "$base_isa_set $mul_set $unaligned_load_set $unaligned_store_set $branch_likely_set $sign_extend_set $condmove_set $cp0_set $exception_set" $instr] < 0} {
 	lappend found $instr
     }
 }
