@@ -92,6 +92,7 @@ architecture Behavioral of pipeline is
     signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
     signal IF_ID_branch_delay_slot: boolean;
     signal IF_ID_PC, IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
+    signal IF_ID_EPC: std_logic_vector(31 downto 2);
 	
     -- pipeline stage 2: instruction decode and register fetch
     signal ID_running: boolean;
@@ -155,8 +156,8 @@ architecture Behavioral of pipeline is
     signal ID_EX_seb_seh_select: std_logic;
     signal ID_EX_ll, ID_EX_sc: boolean;
     signal ID_EX_flush_i_line, ID_EX_flush_d_line: std_logic;
-    signal ID_EX_exception, ID_EX_wait: boolean;
-    signal ID_EX_PC: std_logic_vector(31 downto 2);
+    signal ID_EX_branch_delay_slot, ID_EX_exception, ID_EX_wait: boolean;
+    signal ID_EX_EPC: std_logic_vector(31 downto 2);
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal ID_EX_sign_extend_debug: std_logic; -- debugging only
 	
@@ -204,7 +205,6 @@ architecture Behavioral of pipeline is
     signal EX_MEM_ll_addr: std_logic_vector(31 downto 2);
     signal EX_MEM_sc: boolean;
     signal EX_MEM_instruction: std_logic_vector(31 downto 0); -- debugging only
-    signal EX_MEM_PC: std_logic_vector(31 downto 2);
 	
     -- pipeline stage 4: memory access
     signal MEM_running, MEM_take_branch: boolean;
@@ -364,6 +364,9 @@ begin
 		IF_ID_bpredict_index <= IF_bpredict_index;
 		IF_ID_branch_delay_slot <=
 		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
+		if C_exceptions then
+		    IF_ID_EPC <= IF_PC;
+		end if;
 	    elsif ID_EX_branch_likely and not EX_take_branch then
 		IF_ID_instruction <= x"00000000";
 		IF_ID_branch_delay_slot <= false;
@@ -639,7 +642,8 @@ begin
 		    end if;
 		    if C_exceptions then
 			ID_EX_exception <= ID_exception;
-			ID_EX_PC <= IF_ID_PC;
+			ID_EX_EPC <= IF_ID_EPC;
+			ID_EX_branch_delay_slot <= IF_ID_branch_delay_slot;
 		    end if;
 		    -- schedule result forwarding
 		    ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
@@ -828,9 +832,6 @@ begin
 		    EX_MEM_flush_i_line <= '0';
 		    EX_MEM_flush_d_line <= '0';
 		end if;
-		if C_exceptions and MEM_cancel_EX then
-		    EX_MEM_PC <= ID_EX_PC;
-		end if;
 		-- debugging only
 		if C_debug then
 		    EX_MEM_instruction <= x"00000000";
@@ -867,7 +868,11 @@ begin
 		    end if;
 		elsif ID_EX_exception then
 		    EX_MEM_logic_cycle <= '1';
-		    EX_MEM_logic_data <= EX_MEM_PC & "00";
+		    if ID_EX_branch_delay_slot then
+			EX_MEM_logic_data <= ID_EX_EPC & "01";
+		    else
+			EX_MEM_logic_data <= ID_EX_EPC & "00";
+		    end if;
 		elsif ID_EX_read_alt then
 		    -- PC + 8, MFHI, MFLO, MTC0
 		    EX_MEM_logic_cycle <= '1';
@@ -896,9 +901,6 @@ begin
 		if C_cache then
 		    EX_MEM_flush_i_line <= ID_EX_flush_i_line;
 		    EX_MEM_flush_d_line <= ID_EX_flush_d_line;
-		end if;
-		if C_exceptions then
-		    EX_MEM_PC <= ID_EX_PC;
 		end if;
 		-- debugging only
 		if C_debug then
