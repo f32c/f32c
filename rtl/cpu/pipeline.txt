@@ -29,18 +29,27 @@ ID stage stall causes:
 	- must insert bubble in EX
 
 
-Area optimized synthesis @ r459, Lattice XP2-8E-7, 81.25 MHz:
-  Number of registers:    808
-      PFU registers:    785
-      PIO registers:    23
-   Number of SLICEs:          1072 out of  4176 (26%)
-      SLICEs(logic/ROM):       976 out of  3420 (29%)
-      SLICEs(logic/ROM/RAM):    96 out of   756 (13%)
-          As RAM:           96 out of   756 (13%)
-          As Logic/ROM:      0 out of   756 (0%)
-   Number of logic LUT4s:     1241
-   Number of distributed RAM:  96 (192 LUT4s)
-   Number of ripple logic:    136 (272 LUT4s)
-   Number of shift registers:   0
-   Total number of LUT4s:     1705
+Exception FSM
+=============
 
+EI .. enable interrupts
+EIP .. exception in progress
+
+#0: EI = 1, IF_ID_EIP = 0, EX_MEM_EIP = 0:
+	- exception flows from ID, accepted in EX stage
+	- store EPC
+	- initiate branch to handler address
+	- move FSM to state #1
+
+#1: EI = 0, IF_ID_EIP = 0, EX_MEM_EIP = 1:
+	- discards all instructions in EX, ignores jumps / branches in ID
+	- waits for IF to fetch 1st instr. from exception handler addr
+	- move FSM to state #2
+
+#2: EI = 0, IF_ID_EIP = 1, EX_MEM_EIP = 1:
+	- discards all instructions in EX
+	- move FSM to state #3
+
+#3: EI = 0, IF_ID_EIP = 0, EX_MEM_EIP = 0:
+	- normal operation, exceptions ignored
+	- ERET / RFE moves FSM to state #0 (EI = 1, EIP = 0)
