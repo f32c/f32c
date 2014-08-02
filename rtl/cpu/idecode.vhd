@@ -50,7 +50,7 @@ entity idecode is
 	latency: out std_logic_vector(1 downto 0);
 	seb_seh_cycle: out boolean;
 	seb_seh_select: out std_logic;
-	exception: out boolean;
+	exception, di, ei: out boolean;
 	cop0_wait: out boolean
     );  
 end idecode;
@@ -108,6 +108,8 @@ begin
 	ll <= false;
 	sc <= false;
 	exception <= false;
+	di <= false;
+	ei <= false;
 	cop0_wait <= false;
 	
 	-- Main instruction decoder
@@ -193,8 +195,18 @@ begin
 	    read_alt <= true;
 	    alt_sel <= ALT_COP0;
 	    target_addr <= instruction(20 downto 16);
-	    if instruction(5 downto 0) = MIPS32_COP0_WAIT then
-		cop0_wait <= true;
+	    if C_exceptions and
+	      instruction(25 downto 21) = MIPS32_COP0_MFMC0 then
+		if instruction(5) = '1' then
+		    ei <= true;
+		else
+		    di <= true;
+		end if;
+	    end if;
+	    if instruction(25) = '1' then
+		if instruction(5 downto 0) = MIPS32_COP0_CO_WAIT then
+		    cop0_wait <= true;
+		end if;
 	    end if;
 	when MIPS32_OP_BEQL =>
 	    if C_branch_likely then
