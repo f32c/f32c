@@ -93,6 +93,7 @@ architecture Behavioral of pipeline is
     signal IF_ID_branch_delay_slot: boolean;
     signal IF_ID_PC, IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
     signal IF_ID_EPC: std_logic_vector(31 downto 2);
+    signal IF_ID_EIP: boolean;
 	
     -- pipeline stage 2: instruction decode and register fetch
     signal ID_running: boolean;
@@ -106,7 +107,7 @@ architecture Behavioral of pipeline is
     signal ID_alu_op2: std_logic_vector(31 downto 0);
     signal ID_fwd_ex_reg1, ID_fwd_ex_reg2, ID_fwd_ex_alu_op2: boolean;
     signal ID_fwd_mem_reg1, ID_fwd_mem_reg2, ID_fwd_mem_alu_op2: boolean;
-    signal ID_jump_register, ID_exception: boolean;
+    signal ID_jump_register: boolean;
     signal ID_op_major: std_logic_vector(1 downto 0);
     signal ID_op_minor: std_logic_vector(2 downto 0);
     signal ID_read_alt: boolean;
@@ -128,7 +129,7 @@ architecture Behavioral of pipeline is
     signal ID_seb_seh_select: std_logic;
     signal ID_ll, ID_sc: boolean;
     signal ID_flush_i_line, ID_flush_d_line: std_logic;
-    signal ID_wait: boolean;
+    signal ID_wait, ID_exception, ID_di, ID_ei: boolean;
     -- boundary to stage 3
     signal ID_EX_bpredict_score: std_logic_vector(1 downto 0);
     signal ID_EX_writeback_addr, ID_EX_cop0_addr: std_logic_vector(4 downto 0);
@@ -156,7 +157,8 @@ architecture Behavioral of pipeline is
     signal ID_EX_seb_seh_select: std_logic;
     signal ID_EX_ll, ID_EX_sc: boolean;
     signal ID_EX_flush_i_line, ID_EX_flush_d_line: std_logic;
-    signal ID_EX_branch_delay_slot, ID_EX_exception, ID_EX_wait: boolean;
+    signal ID_EX_branch_delay_slot, ID_EX_wait: boolean;
+    signal ID_EX_exception, ID_EX_ei, ID_EX_di: boolean;
     signal ID_EX_EPC: std_logic_vector(31 downto 2);
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal ID_EX_sign_extend_debug: std_logic; -- debugging only
@@ -205,6 +207,7 @@ architecture Behavioral of pipeline is
     signal EX_MEM_ll_addr: std_logic_vector(31 downto 2);
     signal EX_MEM_sc: boolean;
     signal EX_MEM_instruction: std_logic_vector(31 downto 0); -- debugging only
+    signal EX_MEM_EIP: boolean;
 	
     -- pipeline stage 4: memory access
     signal MEM_running, MEM_take_branch: boolean;
@@ -239,6 +242,7 @@ architecture Behavioral of pipeline is
     signal R_reset: std_logic; -- registered reset input
     signal R_cop0_count: std_logic_vector(31 downto 0);
     signal R_cop0_config: std_logic_vector(31 downto 0);
+    signal R_cop0_EI: boolean := false;
 
     -- signals used for debugging only
     signal reg_trace_data: std_logic_vector(31 downto 0);
@@ -422,9 +426,9 @@ begin
 	mem_read_sign_extend => ID_mem_read_sign_extend,
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
 	seb_seh_cycle => ID_seb_seh_cycle, seb_seh_select => ID_seb_seh_select,
-	ll => ID_ll, sc => ID_sc, exception => ID_exception,
-	flush_i_line => ID_flush_i_line, flush_d_line => ID_flush_d_line,
-	cop0_wait => ID_wait
+	ll => ID_ll, sc => ID_sc, cop0_wait => ID_wait,
+	exception => ID_exception, di => ID_di, ei => ID_ei,
+	flush_i_line => ID_flush_i_line, flush_d_line => ID_flush_d_line
     );
 
     -- three- or four-ported register file: 2(3) async reads, 1 sync write
@@ -642,6 +646,8 @@ begin
 		    end if;
 		    if C_exceptions then
 			ID_EX_exception <= ID_exception;
+			ID_EX_ei <= ID_ei;
+			ID_EX_di <= ID_di;
 			ID_EX_EPC <= IF_ID_EPC;
 			ID_EX_branch_delay_slot <= IF_ID_branch_delay_slot;
 		    end if;
@@ -857,7 +863,26 @@ begin
 		if ID_EX_branch_cycle then
 		    EX_MEM_branch_target <= EX_branch_target;
 		end if;
-		if ID_EX_op_major = OP_MAJOR_SLT then
+	        if C_exceptions then
+		    if ID_EX_ei then
+			R_cop0_EI <= true;
+		    end if;
+		    if ID_EX_di then
+			R_cop0_EI <= false;
+		    end if;
+		end if;
+EX_MEM_EIP <= false; -- XXX testing, revisit!
+		if C_exceptions and ID_EX_exception and R_cop0_EI then
+		    R_cop0_EI <= false;
+--		    EX_MEM_EIP <= true;
+		    -- XXX testing only, revisit!
+		    EX_MEM_logic_cycle <= '1';
+		    if ID_EX_branch_delay_slot then
+			EX_MEM_logic_data <= ID_EX_EPC & "01";
+		    else
+			EX_MEM_logic_data <= ID_EX_EPC & "00";
+		    end if;
+		elsif ID_EX_op_major = OP_MAJOR_SLT then
 		    EX_MEM_logic_cycle <= '1';
 		    EX_MEM_logic_data(31 downto 1) <= x"0000000" & "000";
 		    if ID_EX_sign_extend then
@@ -865,13 +890,6 @@ begin
 			  xor (EX_eff_reg1(31) xor EX_eff_alu_op2(31));
 		    else
 			EX_MEM_logic_data(0) <= EX_from_alu_addsubx(32);
-		    end if;
-		elsif ID_EX_exception then
-		    EX_MEM_logic_cycle <= '1';
-		    if ID_EX_branch_delay_slot then
-			EX_MEM_logic_data <= ID_EX_EPC & "01";
-		    else
-			EX_MEM_logic_data <= ID_EX_EPC & "00";
 		    end if;
 		elsif ID_EX_read_alt then
 		    -- PC + 8, MFHI, MFLO, MTC0
@@ -924,8 +942,8 @@ begin
       else EX_MEM_addsub_data;
 
     MEM_take_branch <= EX_MEM_take_branch xor EX_MEM_branch_taken;
-    MEM_cancel_EX <= C_branch_likely and EX_MEM_branch_likely and
-      not EX_MEM_take_branch;
+    MEM_cancel_EX <= (C_branch_likely and EX_MEM_branch_likely and
+      not EX_MEM_take_branch); -- or (C_exceptions and EX_MEM_EIP);
 
     -- branch prediction
     G_bp_update_score:
@@ -1102,9 +1120,7 @@ begin
     begin
 	if rising_edge(clk) then
 	    R_reset <= reset;
-	    if C_cop0_count then
-		R_cop0_count <= R_cop0_count + 1;
-	    end if;
+	    R_cop0_count <= R_cop0_count + 1;
 	end if;
     end process;
     end generate;
