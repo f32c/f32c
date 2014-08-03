@@ -431,6 +431,7 @@
  * 13	MIPS_COP_0_CAUSE	3333 Exception cause register.
  * 14	MIPS_COP_0_EXC_PC	3636 Exception PC.
  * 15	MIPS_COP_0_PRID		3333 Processor revision identifier.
+ * 15/1	MIPS_COP_0_EBASE	..33 Exception vector base register.
  * 16	MIPS_COP_0_CONFIG	3333 Configuration register.
  * 16/1	MIPS_COP_0_CONFIG1	..33 Configuration register 1.
  * 16/2	MIPS_COP_0_CONFIG2	..33 Configuration register 2.
@@ -477,6 +478,7 @@
 #define	MIPS_COP_0_CAUSE	_(13)
 #define	MIPS_COP_0_EXC_PC	_(14)
 #define	MIPS_COP_0_PRID		_(15)
+#define	MIPS_COP_0_EBASE	_(15)
 
 /* MIPS-III */
 #define	MIPS_COP_0_TLB_LO0	_(2)
