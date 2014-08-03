@@ -135,7 +135,7 @@ set unaligned_load_set "lwl lwr"
 set sign_extend_set "seb seh"
 set condmove_set "movn movz"
 set cp0_set "mfc0 cache wait"
-set exception_set "syscall break ei di"
+set exception_set "syscall break ei di mtc0"
 set unsupported 0
 
 set found ""
