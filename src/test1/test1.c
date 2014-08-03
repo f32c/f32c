@@ -33,15 +33,23 @@
 
 #define	RDEPC(var) mfc0_macro(epc, MIPS_COP_0_EXC_PC);
 
+int isr_cnt;
+
+
 void isr_test(void)
 {
 	__asm __volatile (
 		".set noreorder\n"
+		"la $26, %0\n"
+		"lw $27, ($26)\n"
+		"addiu $27, $27, 1\n"
+		"sw $27, ($26)\n"
 		"mfc0 $27, $14\n"	// k1 <- MIPS_COP_0_EXC_PC
 		"addiu $27, $27, 4\n"
 		"jr $27\n"
 		"ei\n"
 		".set reorder"
+		: : "m" (isr_cnt)
 	);
 }
 
@@ -69,24 +77,12 @@ main(void)
 {
 	void *epc;
 
-	RDEPC(epc);
-	printf("Initial EPC value: %p\n", epc);
-
-	__asm __volatile (
-		".set noreorder\n"
-		"li $2, -1\n"
-		"mtc0 $2, $14\n"	// k1 <- MIPS_COP_0_EXC_PC
-		".set reorder"
-	);
-	printf("Wrote -1 to EPC\n");
-
-	RDEPC(epc);
-	printf("EPC after mtc0 v0, MIPS_COP_0_EXC_PC: %p\n", epc);
-
 	printf("Setting ISR address...\n");
 	epc = &isr_test;
-	__asm __volatile ("move $26, %0"	\
-                : : "r" (epc));
+	__asm __volatile (
+		"mtc0 %0, $15"		// MIPS_COP_0_EBASE <- &isr_test
+                : : "r" (epc)
+	);
 
 	printf("Enabling interrupts...\n");
 	__asm __volatile ("ei\n");
@@ -102,16 +98,16 @@ again:
 		".set reorder"
 	);
 	RDEPC(epc);
-	printf("#1 - sequential code: %p\n", epc);
+	printf("%d - sequential code: %p\n", isr_cnt, epc);
 
 	__asm __volatile ("syscall");
 	sio_getchar(0);
 	RDEPC(epc);
-	printf("#2 - before jal: %p\n", epc);
+	printf("%d - before jal: %p\n", isr_cnt, epc);
 
 	epc_test1();
 	RDEPC(epc);
-	printf("#3 - jump delay slot: %p\n", epc);
+	printf("%d - jump delay slot: %p\n", isr_cnt, epc);
 
 	__asm __volatile (
 		".set noreorder\n"
@@ -122,7 +118,7 @@ again:
 		".set reorder"
 	);
 	RDEPC(epc);
-	printf("#4 - taken branch delay slot: %p\n", epc);
+	printf("%d - taken branch delay slot: %p\n", isr_cnt, epc);
 
 	__asm __volatile (
 		".set noreorder\n"
@@ -132,8 +128,8 @@ again:
 		".set reorder"
 	);
 	RDEPC(epc);
-	printf("#5 " "- after delay / nullify slot of untaken branch likely"
-	    ": %p\n", epc);
+	printf("%d " "- after delay / nullify slot of untaken branch likely"
+	    ": %p\n", isr_cnt, epc);
 
 	__asm __volatile (
 		".set noreorder\n"
@@ -143,7 +139,7 @@ again:
 		".set reorder"
 	);
 	RDEPC(epc);
-	printf("#6 - delay slot of untaken branch: %p\n", epc);
+	printf("%d - delay slot of untaken branch: %p\n", isr_cnt, epc);
 
 	printf("\n");
 	cnt++;
