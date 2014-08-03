@@ -160,6 +160,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_branch_delay_slot, ID_EX_wait: boolean;
     signal ID_EX_exception, ID_EX_ei, ID_EX_di: boolean;
     signal ID_EX_EPC: std_logic_vector(31 downto 2);
+    signal ID_EX_EIP: boolean;
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal ID_EX_sign_extend_debug: std_logic; -- debugging only
 	
@@ -364,6 +365,18 @@ begin
 		IF_ID_branch_delay_slot <= false;
 	    elsif ID_running then
 		IF_ID_instruction <= IF_instruction;
+		if C_exceptions then
+		    if IF_ID_EIP then
+			IF_ID_EIP <= false;
+			IF_ID_instruction <= x"00000000";
+		    end if;
+		    if not IF_ID_EIP and not ID_EX_EIP and EX_MEM_EIP and
+		      not (ID_branch_cycle or ID_jump_cycle or
+		      ID_jump_register) then
+			IF_ID_EIP <= true;
+			IF_ID_instruction <= x"03400008"; -- jr k0, XXX!!!
+		    end if;
+		end if;
 		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
 		IF_ID_bpredict_index <= IF_bpredict_index;
 		IF_ID_branch_delay_slot <=
@@ -560,7 +573,8 @@ begin
 		    ID_EX_fwd_mem_reg2 <= true;
 		    ID_EX_fwd_mem_alu_op2 <= false;
 		elsif not ID_running or (not IF_ID_branch_delay_slot and
-		  (MEM_take_branch or ID_EX_cancel_next)) then
+		  (MEM_take_branch or ID_EX_cancel_next)) or
+		  (C_exceptions and EX_MEM_EIP) then
 		    -- insert a bubble if branching or ID stage is stalled
 		    ID_EX_writeback_addr <= "00000"; -- NOP
 		    ID_EX_mem_cycle <= '0';
@@ -589,6 +603,7 @@ begin
 		    end if;
 		    if C_exceptions then
 			ID_EX_exception <= false;
+			ID_EX_EIP <= IF_ID_EIP;
 		    end if;
 		    -- Don't care bits (optimization hints)
 		    ID_EX_reg1_data <= (others => '-');
@@ -646,6 +661,7 @@ begin
 		    end if;
 		    if C_exceptions then
 			ID_EX_exception <= ID_exception;
+			ID_EX_EIP <= IF_ID_EIP;
 			ID_EX_ei <= ID_ei;
 			ID_EX_di <= ID_di;
 			ID_EX_EPC <= IF_ID_EPC;
@@ -823,7 +839,11 @@ begin
 		end if;
 	    end if;
 
-	    if (MEM_running and (MEM_cancel_EX or not EX_running)) then
+	    if C_exceptions and ID_EX_EIP then
+		EX_MEM_EIP <= false;
+	    end if;
+
+	    if MEM_running and (MEM_cancel_EX or not EX_running) then
 		-- insert a bubble in the MEM stage
 		EX_MEM_take_branch <= false;
 		EX_MEM_branch_taken <= false;
@@ -871,10 +891,9 @@ begin
 			R_cop0_EI <= false;
 		    end if;
 		end if;
-EX_MEM_EIP <= false; -- XXX testing, revisit!
 		if C_exceptions and ID_EX_exception and R_cop0_EI then
 		    R_cop0_EI <= false;
---		    EX_MEM_EIP <= true;
+		    EX_MEM_EIP <= true;
 		    -- XXX testing only, revisit!
 		    EX_MEM_logic_cycle <= '1';
 		    if ID_EX_branch_delay_slot then
@@ -943,7 +962,7 @@ EX_MEM_EIP <= false; -- XXX testing, revisit!
 
     MEM_take_branch <= EX_MEM_take_branch xor EX_MEM_branch_taken;
     MEM_cancel_EX <= (C_branch_likely and EX_MEM_branch_likely and
-      not EX_MEM_take_branch); -- or (C_exceptions and EX_MEM_EIP);
+      not EX_MEM_take_branch) or (C_exceptions and EX_MEM_EIP);
 
     -- branch prediction
     G_bp_update_score:
@@ -1217,7 +1236,13 @@ EX_MEM_EIP <= false; -- XXX testing, revisit!
 
     G_without_trace_mux:
     if not C_debug generate
-	trace_data <= x"00000000";
+	--trace_data <= x"00000000";
+	trace_data(7 downto 4) <= x"f";
+	trace_data(0) <= '1' when R_cop0_EI else '0';
+	trace_data(1) <= '1' when IF_ID_EIP else '0';
+	trace_data(2) <= '1' when EX_MEM_EIP else '0';
+	trace_data(3) <= '1' when ID_EX_wait else '0';
+
     end generate;
 end Behavioral;
 
