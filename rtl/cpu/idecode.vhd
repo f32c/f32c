@@ -439,14 +439,14 @@ begin
 	    when MIPS32_SPEC_SYSCALL =>
 		if C_exceptions then
 		    exception <= true;
-		    target_addr <= MIPS32_REG_ZERO;
+		    target_addr <= MIPS32_REG_K0;
 		else
 		    unsupported_instr <= true;
 		end if;
 	    when MIPS32_SPEC_BREAK =>
 		if C_exceptions then
 		    exception <= true;
-		    target_addr <= MIPS32_REG_ZERO;
+		    target_addr <= MIPS32_REG_K0;
 		else
 		    unsupported_instr <= true;
 		end if;

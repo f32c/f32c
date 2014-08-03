@@ -245,7 +245,7 @@ architecture Behavioral of pipeline is
     signal R_cop0_count: std_logic_vector(31 downto 0);
     signal R_cop0_config: std_logic_vector(31 downto 0);
     signal R_cop0_EPC: std_logic_vector(31 downto 0);
-    signal R_cop0_EBASE: std_logic_vector(31 downto 8);
+    signal R_cop0_EBASE: std_logic_vector(31 downto 2);
     signal R_cop0_EI: boolean := false;
 
     -- signals used for debugging only
@@ -377,7 +377,7 @@ begin
 		      not (ID_branch_cycle or ID_jump_cycle or
 		      ID_jump_register) then
 			IF_ID_EIP <= true;
-			IF_ID_instruction <= x"03400008"; -- jr k0, XXX!!!
+			IF_ID_instruction <= x"03400008"; -- jr k0
 		    end if;
 		end if;
 		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
@@ -805,7 +805,6 @@ begin
       R_cop0_count when MIPS_COP0_COUNT,
       R_cop0_config when MIPS_COP0_CONFIG,
       R_cop0_EPC when MIPS_COP0_EXC_PC,
-      R_cop0_EBASE & x"00" when MIPS_COP0_EBASE, -- XXX testing, remove this!
       (others => '-') when others;
 
     -- branch or not?
@@ -904,8 +903,8 @@ begin
 			    R_cop0_EPC <= EX_eff_reg2 and C_PC_mask;
 			end if;
 			if ID_EX_cop0_addr = MIPS_COP0_EBASE then
-			    R_cop0_EBASE <= EX_eff_reg2(31 downto 8)
-			      and C_PC_mask(31 downto 8);
+			    R_cop0_EBASE <= EX_eff_reg2(31 downto 2)
+			      and C_PC_mask(31 downto 2);
 			end if;
 		    end if;
 		end if;
@@ -920,6 +919,8 @@ begin
 		    else
 			R_cop0_EPC(1 downto 0) <= "00";
 		    end if;
+		    EX_MEM_logic_cycle <= '1';
+		    EX_MEM_logic_data <= R_cop0_EBASE & "00";
 		elsif ID_EX_op_major = OP_MAJOR_SLT then
 		    EX_MEM_logic_cycle <= '1';
 		    EX_MEM_logic_data(31 downto 1) <= x"0000000" & "000";
