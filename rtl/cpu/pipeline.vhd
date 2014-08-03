@@ -245,6 +245,7 @@ architecture Behavioral of pipeline is
     signal R_cop0_count: std_logic_vector(31 downto 0);
     signal R_cop0_config: std_logic_vector(31 downto 0);
     signal R_cop0_EPC: std_logic_vector(31 downto 0);
+    signal R_cop0_EBASE: std_logic_vector(31 downto 8);
     signal R_cop0_EI: boolean := false;
 
     -- signals used for debugging only
@@ -804,6 +805,7 @@ begin
       R_cop0_count when MIPS_COP0_COUNT,
       R_cop0_config when MIPS_COP0_CONFIG,
       R_cop0_EPC when MIPS_COP0_EXC_PC,
+      R_cop0_EBASE & x"00" when MIPS_COP0_EBASE, -- XXX testing, remove this!
       (others => '-') when others;
 
     -- branch or not?
@@ -898,7 +900,13 @@ begin
 			R_cop0_EI <= false;
 		    end if;
 		    if ID_EX_cop0_write then
-			R_cop0_EPC <= EX_eff_reg2 and C_PC_mask;
+			if ID_EX_cop0_addr = MIPS_COP0_EXC_PC then
+			    R_cop0_EPC <= EX_eff_reg2 and C_PC_mask;
+			end if;
+			if ID_EX_cop0_addr = MIPS_COP0_EBASE then
+			    R_cop0_EBASE <= EX_eff_reg2(31 downto 8)
+			      and C_PC_mask(31 downto 8);
+			end if;
 		    end if;
 		end if;
 		if C_exceptions and ID_EX_exception and R_cop0_EI then
