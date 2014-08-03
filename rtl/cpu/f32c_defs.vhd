@@ -185,8 +185,10 @@ constant MIPS32_RIMM_BLTZALL:	std_logic_vector := "10010";
 constant MIPS32_RIMM_BGEZALL:	std_logic_vector := "10011";
 constant MIPS32_RIMM_SYNCI:	std_logic_vector := "11111";
 
--- Specialized registers: zero and return address
+-- Specialized registers: zero, exception slots, return address
 constant MIPS32_REG_ZERO:	std_logic_vector := "00000";
+constant MIPS32_REG_K0:		std_logic_vector := "11010";
+constant MIPS32_REG_K1:		std_logic_vector := "11011";
 constant MIPS32_REG_RA:		std_logic_vector := "11111";
 
 -- COP0 registers
