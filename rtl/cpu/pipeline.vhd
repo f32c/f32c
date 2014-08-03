@@ -129,7 +129,7 @@ architecture Behavioral of pipeline is
     signal ID_seb_seh_select: std_logic;
     signal ID_ll, ID_sc: boolean;
     signal ID_flush_i_line, ID_flush_d_line: std_logic;
-    signal ID_wait, ID_exception, ID_di, ID_ei: boolean;
+    signal ID_wait, ID_cop0_write, ID_exception, ID_di, ID_ei: boolean;
     -- boundary to stage 3
     signal ID_EX_bpredict_score: std_logic_vector(1 downto 0);
     signal ID_EX_writeback_addr, ID_EX_cop0_addr: std_logic_vector(4 downto 0);
@@ -157,7 +157,8 @@ architecture Behavioral of pipeline is
     signal ID_EX_seb_seh_select: std_logic;
     signal ID_EX_ll, ID_EX_sc: boolean;
     signal ID_EX_flush_i_line, ID_EX_flush_d_line: std_logic;
-    signal ID_EX_branch_delay_slot, ID_EX_wait: boolean;
+    signal ID_EX_branch_delay_slot: boolean;
+    signal ID_EX_cop0_write, ID_EX_wait: boolean;
     signal ID_EX_exception, ID_EX_ei, ID_EX_di: boolean;
     signal ID_EX_EPC: std_logic_vector(31 downto 2);
     signal ID_EX_EIP: boolean;
@@ -243,6 +244,7 @@ architecture Behavioral of pipeline is
     signal R_reset: std_logic; -- registered reset input
     signal R_cop0_count: std_logic_vector(31 downto 0);
     signal R_cop0_config: std_logic_vector(31 downto 0);
+    signal R_cop0_EPC: std_logic_vector(31 downto 0);
     signal R_cop0_EI: boolean := false;
 
     -- signals used for debugging only
@@ -439,7 +441,8 @@ begin
 	mem_read_sign_extend => ID_mem_read_sign_extend,
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
 	seb_seh_cycle => ID_seb_seh_cycle, seb_seh_select => ID_seb_seh_select,
-	ll => ID_ll, sc => ID_sc, cop0_wait => ID_wait,
+	ll => ID_ll, sc => ID_sc,
+	cop0_wait => ID_wait, cop0_write => ID_cop0_write,
 	exception => ID_exception, di => ID_di, ei => ID_ei,
 	flush_i_line => ID_flush_i_line, flush_d_line => ID_flush_d_line
     );
@@ -601,7 +604,9 @@ begin
 			ID_EX_flush_i_line <= '0';
 			ID_EX_flush_d_line <= '0';
 		    end if;
+		    ID_EX_wait <= false; -- XXX move under C_exceptions
 		    if C_exceptions then
+			ID_EX_cop0_write <= false;
 			ID_EX_exception <= false;
 			ID_EX_EIP <= IF_ID_EIP;
 		    end if;
@@ -650,7 +655,7 @@ begin
 		    ID_EX_bpredict_score <= IF_ID_bpredict_score;
 		    ID_EX_bpredict_index <= IF_ID_bpredict_index;
 		    ID_EX_latency <= ID_latency;
-		    ID_EX_wait <= ID_wait;
+		    ID_EX_wait <= ID_wait; -- XXX move under C_exceptions
 		    if C_ll_sc then
 		        ID_EX_ll <= ID_ll;
 		        ID_EX_sc <= ID_sc;
@@ -660,6 +665,7 @@ begin
 			ID_EX_flush_d_line <= ID_flush_d_line;
 		    end if;
 		    if C_exceptions then
+			ID_EX_cop0_write <= ID_cop0_write;
 			ID_EX_exception <= ID_exception;
 			ID_EX_EIP <= IF_ID_EIP;
 			ID_EX_ei <= ID_ei;
@@ -797,6 +803,7 @@ begin
     EX_from_cop0 <=
       R_cop0_count when MIPS_COP0_COUNT,
       R_cop0_config when MIPS_COP0_CONFIG,
+      R_cop0_EPC when MIPS_COP0_EXC_PC,
       (others => '-') when others;
 
     -- branch or not?
@@ -890,16 +897,20 @@ begin
 		    if ID_EX_di then
 			R_cop0_EI <= false;
 		    end if;
+		    if ID_EX_cop0_write then
+			R_cop0_EPC <= EX_eff_reg2 and C_PC_mask;
+		    end if;
 		end if;
 		if C_exceptions and ID_EX_exception and R_cop0_EI then
-		    R_cop0_EI <= false;
-		    EX_MEM_EIP <= true;
-		    -- XXX testing only, revisit!
-		    EX_MEM_logic_cycle <= '1';
+		    R_cop0_EI <= false; -- disable all exceptions
+		    EX_MEM_writeback_addr <= "00000"; -- discard result
+		    EX_MEM_EIP <= true; -- signal exception in progress
+		    R_cop0_EPC(31 downto 2) <=
+		      ID_EX_EPC and C_PC_mask(31 downto 2);
 		    if ID_EX_branch_delay_slot then
-			EX_MEM_logic_data <= ID_EX_EPC & "01";
+			R_cop0_EPC(1 downto 0) <= "01";
 		    else
-			EX_MEM_logic_data <= ID_EX_EPC & "00";
+			R_cop0_EPC(1 downto 0) <= "00";
 		    end if;
 		elsif ID_EX_op_major = OP_MAJOR_SLT then
 		    EX_MEM_logic_cycle <= '1';

@@ -51,7 +51,7 @@ entity idecode is
 	seb_seh_cycle: out boolean;
 	seb_seh_select: out std_logic;
 	exception, di, ei: out boolean;
-	cop0_wait: out boolean
+	cop0_write, cop0_wait: out boolean
     );  
 end idecode;
 
@@ -110,6 +110,7 @@ begin
 	exception <= false;
 	di <= false;
 	ei <= false;
+	cop0_write <= false;
 	cop0_wait <= false;
 	
 	-- Main instruction decoder
@@ -202,6 +203,11 @@ begin
 		else
 		    di <= true;
 		end if;
+	    end if;
+	    if C_exceptions and
+	      instruction(25 downto 21) = MIPS32_COP0_MT then
+		target_addr <= MIPS32_REG_ZERO;
+		cop0_write <= true;
 	    end if;
 	    if instruction(25) = '1' then
 		if instruction(5 downto 0) = MIPS32_COP0_CO_WAIT then
@@ -433,14 +439,14 @@ begin
 	    when MIPS32_SPEC_SYSCALL =>
 		if C_exceptions then
 		    exception <= true;
-		    target_addr <= "11011"; -- $27 aka k1
+		    target_addr <= MIPS32_REG_ZERO;
 		else
 		    unsupported_instr <= true;
 		end if;
 	    when MIPS32_SPEC_BREAK =>
 		if C_exceptions then
 		    exception <= true;
-		    target_addr <= "11011"; -- $27 aka k1
+		    target_addr <= MIPS32_REG_ZERO;
 		else
 		    unsupported_instr <= true;
 		end if;
