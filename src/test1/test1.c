@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,10 +31,19 @@
 #include <mips/asm.h>
 
 
-#define	SYSCALL()	__asm __volatile ("syscall")
-
 #define	RDEPC(var)	__asm __volatile ("move %0, $27"	\
                 : "=r" (var))	/* outputs */
+
+void isr_test(void)
+{
+	__asm __volatile (
+		".set noreorder\n"
+		"addiu $27, $27, 4\n"
+		"jr $27\n"
+		"ei\n"
+		".set reorder"
+	);
+}
 
 void epc_test1(void)
 {
@@ -43,6 +52,12 @@ void epc_test1(void)
 		".set noreorder\n"
 		"jr $31\n"
 		"syscall\n"
+		"nop\n"
+		"nop\n"
+		"nop\n"
+		"nop\n"
+		"nop\n"
+		"addiu $27, $27, 4096\n"
 		".set reorder"
 	);
 }
@@ -54,13 +69,28 @@ main(void)
 {
 	void *epc;
 
+	printf("Setting ISR address...\n");
+	epc = &isr_test;
+	__asm __volatile ("move $26, %0"	\
+                : : "r" (epc));
+
+	printf("Enabling interrupts...\n");
+	__asm __volatile ("ei\n");
+
 	printf("Uncached instruction stream:\n");
 again:
-	SYSCALL();
+	__asm __volatile (
+		".set noreorder\n"
+		"li $27, 1\n"
+		"syscall\n"
+		"addiu $27, $27, 16384\n"
+		"1:\n"
+		".set reorder"
+	);
 	RDEPC(epc);
 	printf("#1 - sequential code: %p\n", epc);
 
-	SYSCALL();
+	__asm __volatile ("syscall");
 	sio_getchar(0);
 	RDEPC(epc);
 	printf("#2 - before jal: %p\n", epc);
@@ -73,6 +103,7 @@ again:
 		".set noreorder\n"
 		"b 1f\n"
 		"syscall\n"
+		"nop\n"
 		"1:\n"
 		".set reorder"
 	);
@@ -84,12 +115,11 @@ again:
 		"beql $0,$27,1f\n"
 		"syscall\n"
 		"1:\n"
-		"syscall\n"
 		".set reorder"
 	);
 	RDEPC(epc);
 	printf("#5 " "- after delay / nullify slot of untaken branch likely"
-	    ": %p <- XXX!\n", epc);
+	    ": %p\n", epc);
 
 	__asm __volatile (
 		".set noreorder\n"
@@ -111,5 +141,8 @@ again:
 		printf("Cached instruction stream:\n");
 		goto again;
 	}
+	printf("Done, disabling interrupts...\n\n");
+	__asm __volatile ("di");
+
 	__asm __volatile  ("j $0");
 }
