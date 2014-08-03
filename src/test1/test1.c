@@ -31,13 +31,13 @@
 #include <mips/asm.h>
 
 
-#define	RDEPC(var)	__asm __volatile ("move %0, $27"	\
-                : "=r" (var))	/* outputs */
+#define	RDEPC(var) mfc0_macro(epc, MIPS_COP_0_EXC_PC);
 
 void isr_test(void)
 {
 	__asm __volatile (
 		".set noreorder\n"
+		"mfc0 $27, $14\n"	// k1 <- MIPS_COP_0_EXC_PC
 		"addiu $27, $27, 4\n"
 		"jr $27\n"
 		"ei\n"
@@ -68,6 +68,20 @@ void
 main(void)
 {
 	void *epc;
+
+	RDEPC(epc);
+	printf("Initial EPC value: %p\n", epc);
+
+	__asm __volatile (
+		".set noreorder\n"
+		"li $2, -1\n"
+		"mtc0 $2, $14\n"	// k1 <- MIPS_COP_0_EXC_PC
+		".set reorder"
+	);
+	printf("Wrote -1 to EPC\n");
+
+	RDEPC(epc);
+	printf("EPC after mtc0 v0, MIPS_COP_0_EXC_PC: %p\n", epc);
 
 	printf("Setting ISR address...\n");
 	epc = &isr_test;
