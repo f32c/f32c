@@ -165,8 +165,8 @@ constant MIPS32_SPEC3_RDHWR:	std_logic_vector := "111011";
 constant MIPS32_COP0_MF:	std_logic_vector := "00000";
 constant MIPS32_COP0_MT:	std_logic_vector := "00100";
 constant MIPS32_COP0_MFMC0:	std_logic_vector := "01011";
-constant MIPS32_COP0_CO_WAIT:	std_logic_vector := "1-----"; -- "100000";
-constant MIPS32_COP0_CO_ERET:	std_logic_vector := "0-----"; -- "011000";
+constant MIPS32_COP0_CO_WAIT:	std_logic_vector := "100000";
+constant MIPS32_COP0_CO_ERET:	std_logic_vector := "011000";
 
 -- REGIMM function encoding
 constant MIPS32_RIMM_BLTZ:	std_logic_vector := "00000";
