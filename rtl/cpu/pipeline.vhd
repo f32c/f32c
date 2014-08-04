@@ -247,6 +247,7 @@ architecture Behavioral of pipeline is
     signal R_cop0_EPC: std_logic_vector(31 downto 0);
     signal R_cop0_EBASE: std_logic_vector(31 downto 2);
     signal R_cop0_EI: boolean := false;
+    signal R_intr: std_logic;
 
     -- signals used for debugging only
     signal reg_trace_data: std_logic_vector(31 downto 0);
@@ -286,7 +287,6 @@ begin
     --
 
     -- XXX TODO:
-    --  cancel and restart an incomplete instruction fetch on branch!
     --  revisit / simplify register file write-enable setting
     --	revisit MULT / MFHI / MFLO decoding (now done in EX stage!!!)
     --  commit MULT result in MEM stage (branch likely must cancel commit)!
@@ -294,13 +294,15 @@ begin
     --	sort out the endianess story
     --	unaligned load / store instructions?
     --	revisit target_addr computation in idecode.vhd
-    --	MTHI/MTLO/MFC0/MTC0?
+    --	MTHI/MTLO
     --	division? - block on MFHI/MFLO if result not ready
     --	result forwarding: muxes instead of priority encoders?
     --	exceptions/interrupts
     --
     -- Believed to have been fixed already:
+    --  cancel and restart an incomplete instruction fetch on branch!
     --	don't branch until branch delay slot fetched!!!
+    --  MFC0/MTC0
 
 
     --
@@ -368,23 +370,28 @@ begin
 		IF_ID_branch_delay_slot <= false;
 	    elsif ID_running then
 		IF_ID_instruction <= IF_instruction;
+		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
+		IF_ID_bpredict_index <= IF_bpredict_index;
+		IF_ID_branch_delay_slot <=
+		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
+		if C_exceptions and EX_MEM_EIP then
+		    if not IF_ID_EIP and not ID_EX_EIP then
+			if not (ID_branch_cycle or ID_jump_cycle or
+			  ID_jump_register or IF_ID_branch_delay_slot or
+			  ID_EX_branch_delay_slot) then
+			    IF_ID_EIP <= true;
+			    IF_ID_instruction <= x"03400008"; -- jr k0
+			else
+			    IF_ID_instruction <= x"00000000";
+			end if;
+		    end if;
+		    IF_ID_branch_delay_slot <= false;
+		end if;
 		if C_exceptions then
 		    if IF_ID_EIP then
 			IF_ID_EIP <= false;
 			IF_ID_instruction <= x"00000000";
 		    end if;
-		    if not IF_ID_EIP and not ID_EX_EIP and EX_MEM_EIP and
-		      not (ID_branch_cycle or ID_jump_cycle or
-		      ID_jump_register) then
-			IF_ID_EIP <= true;
-			IF_ID_instruction <= x"03400008"; -- jr k0
-		    end if;
-		end if;
-		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
-		IF_ID_bpredict_index <= IF_bpredict_index;
-		IF_ID_branch_delay_slot <=
-		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
-		if C_exceptions then
 		    IF_ID_EPC <= IF_PC;
 		end if;
 	    elsif ID_EX_branch_likely and not EX_take_branch then
@@ -609,6 +616,9 @@ begin
 		    if C_exceptions then
 			ID_EX_cop0_write <= false;
 			ID_EX_exception <= false;
+			ID_EX_ei <= false;
+			ID_EX_di <= false;
+			ID_EX_branch_delay_slot <= false;
 			ID_EX_EIP <= IF_ID_EIP;
 		    end if;
 		    -- Don't care bits (optimization hints)
@@ -805,6 +815,7 @@ begin
       R_cop0_count when MIPS_COP0_COUNT,
       R_cop0_config when MIPS_COP0_CONFIG,
       R_cop0_EPC when MIPS_COP0_EXC_PC,
+      R_cop0_EBASE & "00" when MIPS_COP0_EBASE, -- XXX testing, remove this!
       (others => '-') when others;
 
     -- branch or not?
@@ -851,10 +862,13 @@ begin
 		EX_MEM_EIP <= false;
 	    end if;
 
+	    R_intr <= intr;
+
 	    if MEM_running and (MEM_cancel_EX or not EX_running) then
 		-- insert a bubble in the MEM stage
 		EX_MEM_take_branch <= false;
 		EX_MEM_branch_taken <= false;
+		EX_MEM_branch_cycle <= false;
 		EX_MEM_branch_likely <= false;
 		EX_MEM_writeback_addr <= "00000";
 		EX_MEM_mem_cycle <= '0';
@@ -891,7 +905,7 @@ begin
 		if ID_EX_branch_cycle then
 		    EX_MEM_branch_target <= EX_branch_target;
 		end if;
-	        if C_exceptions then
+	        if C_exceptions and not EX_MEM_EIP then
 		    if ID_EX_ei then
 			R_cop0_EI <= true;
 		    end if;
@@ -908,9 +922,9 @@ begin
 			end if;
 		    end if;
 		end if;
-		if C_exceptions and ID_EX_exception and R_cop0_EI then
+		if C_exceptions and R_cop0_EI and
+		  (ID_EX_exception or R_intr = '1') then
 		    R_cop0_EI <= false; -- disable all exceptions
-		    EX_MEM_writeback_addr <= "00000"; -- discard result
 		    EX_MEM_EIP <= true; -- signal exception in progress
 		    R_cop0_EPC(31 downto 2) <=
 		      ID_EX_EPC and C_PC_mask(31 downto 2);
@@ -919,8 +933,25 @@ begin
 		    else
 			R_cop0_EPC(1 downto 0) <= "00";
 		    end if;
-		    EX_MEM_logic_cycle <= '1';
-		    EX_MEM_logic_data <= R_cop0_EBASE & "00";
+		    -- copy EBASE to k0
+--		    EX_MEM_op_major <= OP_MAJOR_ALT;
+--		    EX_MEM_logic_cycle <= '1';
+--		    EX_MEM_logic_data <= R_cop0_EBASE & "00";
+--		    EX_MEM_writeback_addr <= MIPS32_REG_K0;
+		    -- insert a bubble in the MEM stage
+		    EX_MEM_writeback_addr <= MIPS32_REG_ZERO;
+		    EX_MEM_take_branch <= false;
+		    EX_MEM_branch_taken <= false;
+		    EX_MEM_branch_cycle <= false;
+		    EX_MEM_branch_likely <= false;
+		    EX_MEM_mem_cycle <= '0';
+		    if C_ll_sc then
+			EX_MEM_sc <= false;
+		    end if;
+		    if C_cache then
+			EX_MEM_flush_i_line <= '0';
+			EX_MEM_flush_d_line <= '0';
+		    end if;
 		elsif ID_EX_op_major = OP_MAJOR_SLT then
 		    EX_MEM_logic_cycle <= '1';
 		    EX_MEM_logic_data(31 downto 1) <= x"0000000" & "000";
@@ -982,7 +1013,7 @@ begin
 
     MEM_take_branch <= EX_MEM_take_branch xor EX_MEM_branch_taken;
     MEM_cancel_EX <= (C_branch_likely and EX_MEM_branch_likely and
-      not EX_MEM_take_branch) or (C_exceptions and EX_MEM_EIP);
+      not EX_MEM_take_branch); -- or (C_exceptions and EX_MEM_EIP);
 
     -- branch prediction
     G_bp_update_score:
@@ -1209,24 +1240,21 @@ begin
     if C_debug generate
     ID_EX_sign_extend_debug <= '1' when ID_EX_sign_extend else '0';
 
-    debug_XXX(31 downto 29) <= "000";
-    debug_XXX(28) <= '1' when ID_running else '0';
-    debug_XXX(27 downto 25) <= "000";
-    debug_XXX(24) <= '1' when EX_running else '0';
-    debug_XXX(23 downto 21) <= "000";
-    debug_XXX(20) <= '1' when MEM_running else '0';
-    debug_XXX(19 downto 17) <= "000";
-    debug_XXX(16) <= imem_data_ready;
-    debug_XXX(15 downto 13) <= "000";
-    debug_XXX(12) <= dmem_data_ready;
-    debug_XXX(11 downto 9) <= "000";
-    debug_XXX(8) <= EX_MEM_mem_cycle;
-    debug_XXX(7 downto 4) <= EX_MEM_mem_byte_sel;
-    debug_XXX(3 downto 0) <= x"0";
+    debug_XXX(28) <= '1' when R_cop0_EI else '0';
+    debug_XXX(24) <= '1' when IF_ID_EIP else '0';
+    debug_XXX(20) <= '1' when ID_EX_EIP else '0';
+    debug_XXX(16) <= '1' when EX_MEM_EIP else '0';
+    debug_XXX(12) <= '1' when ID_running else '0';
+    debug_XXX(8) <= '1' when EX_running else '0';
+    debug_XXX(4) <= '1' when IF_ID_branch_delay_slot else '0';
+    debug_XXX(0) <= '1' when ID_EX_branch_delay_slot else '0';
+
 
     with ("00" & trace_addr) select
     trace_data <=
 	IF_PC & "00"		when x"20",
+	IF_ID_EPC & "00"	when x"21",
+	ID_EX_EPC & "00"	when x"22",
 	imem_data_in		when x"24",
 	IF_ID_instruction	when x"25",
 	ID_EX_instruction	when x"26",
@@ -1247,9 +1275,12 @@ begin
 	D_b_taken		when x"37",
 	--
 	debug_XXX		when x"39",
+	R_hi_lo(31 downto 0)	when x"3a",
+	R_hi_lo(63 downto 32)	when x"3b",
 	--
-	R_hi_lo(63 downto 32)	when x"3a",
-	R_hi_lo(31 downto 0)	when x"3b",
+	R_cop0_EBASE & "00"	when x"3c",
+	R_cop0_EPC 	 	when x"3d",
+	--
 	reg_trace_data		when others;
 
     end generate;
