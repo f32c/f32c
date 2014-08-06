@@ -27,11 +27,13 @@
 
 #include <io.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <mips/asm.h>
 
 
-#define	RDEPC(var) mfc0_macro(epc, MIPS_COP_0_EXC_PC);
+#define	RDEPC(var) mfc0_macro(var, MIPS_COP_0_EXC_PC);
+#define	RDEBASE(var) mfc0_macro(var, MIPS_COP_0_EBASE);
 
 int isr_cnt;
 
@@ -40,12 +42,21 @@ void isr_test(void)
 {
 	__asm __volatile (
 		".set noreorder\n"
-		"la $26, %0\n"
-		"lw $27, ($26)\n"
-		"addiu $27, $27, 1\n"
-		"sw $27, ($26)\n"
+		"nop\n"
+		"nop\n"
+		"nop\n"
+		// testing - incr. dummy counter
+		"la $26, %0\n"		// k0 <- &isr_cnt
+		"lw $27, ($26)\n"	// k1 <- *isr_cnt
+		"addiu $27, $27, 1\n"	// k1++
+		"sw $27, ($26)\n"	// *isr_cnt <= k1
+		// bail out from interrupt
 		"mfc0 $27, $14\n"	// k1 <- MIPS_COP_0_EXC_PC
-		"addiu $27, $27, 4\n"
+		"andi $26, $27, 1\n"
+		"beq $26, $0, 1f\n"	// branch delay slot?
+		"mfc0 $26, $15\n"	// k0 <- MIPS_COP_0_EBASE
+		"addiu $27, $27, -5\n"	// return to branch / jump
+		"1:\n"
 		"jr $27\n"
 		"ei\n"
 		".set reorder"
@@ -60,17 +71,22 @@ void epc_test1(void)
 		".set noreorder\n"
 		"jr $31\n"
 		"syscall\n"
-		"nop\n"
-		"nop\n"
-		"nop\n"
-		"nop\n"
-		"nop\n"
-		"addiu $27, $27, 4096\n"
 		".set reorder"
 	);
 }
 
-static int cnt = 0;
+int cnt = 0;
+
+int rt(void);
+
+void *
+rdepc(void)
+{
+	void *x;
+
+	RDEPC(x);
+	return (x);
+}
 
 void
 main(void)
@@ -84,8 +100,47 @@ main(void)
                 : : "r" (epc)
 	);
 
+	epc = NULL;
+	RDEPC(epc);
+	printf("EPC = %p\n", epc);
+	epc = NULL;
+	RDEBASE(epc);
+	printf("EBASE = %p\n", epc);
+
 	printf("Enabling interrupts...\n");
-	__asm __volatile ("ei\n");
+	epc = &isr_test;
+	__asm __volatile (
+		"move $26, %0\n"	// k0 <- &isr_test
+		"ei"
+                : : "r" (epc)
+	);
+
+#if 1
+	/* Testing interrupts */
+	int i = 0;
+	int c = -1;
+	volatile int *a = &isr_cnt;
+	void *tepc = NULL;
+	do {
+		epc = rdepc();
+		c = *a;
+		if (epc != tepc) {
+			__asm __volatile ("di");
+			printf(" %p %d %d\n", epc, c, i);
+			__asm __volatile ("ei");
+		}
+		tepc = epc;
+		i++;
+		putchar(8);
+		if (i == 16)
+			i = 0;
+//		putchar(8);	// XXX ovo vise ne radi!!!
+		if (i < 10)
+			putchar('0' + i);
+		else
+			putchar('a' + i - 10);
+	} while (1);
+#endif
 
 	printf("Uncached instruction stream:\n");
 again:
@@ -93,8 +148,7 @@ again:
 		".set noreorder\n"
 		"li $27, 1\n"
 		"syscall\n"
-		"addiu $27, $27, 16384\n"
-		"1:\n"
+		"nop\n"
 		".set reorder"
 	);
 	RDEPC(epc);
