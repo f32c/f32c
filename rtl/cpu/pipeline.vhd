@@ -618,8 +618,10 @@ begin
 			ID_EX_exception <= false;
 			ID_EX_ei <= false;
 			ID_EX_di <= false;
-			ID_EX_branch_delay_slot <= false;
 			ID_EX_EIP <= IF_ID_EIP;
+			if EX_MEM_EIP then
+			    ID_EX_branch_delay_slot <= false;
+			end if;
 		    end if;
 		    -- Don't care bits (optimization hints)
 		    ID_EX_reg1_data <= (others => '-');
@@ -923,6 +925,7 @@ begin
 		    end if;
 		end if;
 		if C_exceptions and R_cop0_EI and
+		  not ID_EX_branch_delay_slot and
 		  (ID_EX_exception or R_intr = '1') then
 		    R_cop0_EI <= false; -- disable all exceptions
 		    EX_MEM_EIP <= true; -- signal exception in progress
