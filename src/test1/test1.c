@@ -42,9 +42,6 @@ void isr_test(void)
 {
 	__asm __volatile (
 		".set noreorder\n"
-		"nop\n"
-		"nop\n"
-		"nop\n"
 		// testing - incr. dummy counter
 		"la $26, %0\n"		// k0 <- &isr_cnt
 		"lw $27, ($26)\n"	// k1 <- *isr_cnt
@@ -54,7 +51,7 @@ void isr_test(void)
 		"mfc0 $27, $14\n"	// k1 <- MIPS_COP_0_EXC_PC
 		"andi $26, $27, 1\n"
 		"beq $26, $0, 1f\n"	// branch delay slot?
-		"mfc0 $26, $15\n"	// k0 <- MIPS_COP_0_EBASE
+		"nop\n"
 		"addiu $27, $27, -5\n"	// return to branch / jump
 		"1:\n"
 		"jr $27\n"
@@ -108,12 +105,7 @@ main(void)
 	printf("EBASE = %p\n", epc);
 
 	printf("Enabling interrupts...\n");
-	epc = &isr_test;
-	__asm __volatile (
-		"move $26, %0\n"	// k0 <- &isr_test
-		"ei"
-                : : "r" (epc)
-	);
+	__asm __volatile ("ei");
 
 #if 1
 	/* Testing interrupts */
@@ -131,10 +123,9 @@ main(void)
 		}
 		tepc = epc;
 		i++;
-		putchar(8);
 		if (i == 16)
 			i = 0;
-//		putchar(8);	// XXX ovo vise ne radi!!!
+		putchar(8);
 		if (i < 10)
 			putchar('0' + i);
 		else
