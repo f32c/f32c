@@ -869,7 +869,8 @@ begin
 
 	    R_intr <= intr;
 
-	    if MEM_running and (MEM_cancel_EX or not EX_running) then
+	    if MEM_running and (MEM_cancel_EX or not EX_running or
+	      (C_exceptions and EX_MEM_EIP)) then
 		-- insert a bubble in the MEM stage
 		EX_MEM_take_branch <= false;
 		EX_MEM_branch_taken <= false;
@@ -1019,7 +1020,7 @@ begin
 
     MEM_take_branch <= EX_MEM_take_branch xor EX_MEM_branch_taken;
     MEM_cancel_EX <= (C_branch_likely and EX_MEM_branch_likely and
-      not EX_MEM_take_branch); -- or (C_exceptions and EX_MEM_EIP);
+      not EX_MEM_take_branch);
 
     -- branch prediction
     G_bp_update_score:

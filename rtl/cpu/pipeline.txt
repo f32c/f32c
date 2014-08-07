@@ -37,17 +37,19 @@ EIP .. exception in progress
 
 #0: EI = 1, IF_ID_EIP = 0, ID_EX_EIP = 0, EX_MEM_EIP = 0:
 	- exception flows from ID, accepted in EX stage
+	- in EX_MEM schedule copying EBASE -> k0 (in WB stage, 2 cycles later)
 	- store EPC
 
 #1: EI = 0, IF_ID_EIP = 0, ID_EX_EIP = 0, EX_MEM_EIP = 1:
-	- discards all instructions in EX
-	- on IF_ID boundary, wait for a non-branch-delay slot, replace with jr
+	- discard all instructions arriving to IF_ID, ID_EX and EX_MEM
+	- wait for a non-branch-delay slot in IF_ID
+	- issue "jr k0" in IF_ID
 
 #2: EI = 0, IF_ID_EIP = 1, ID_EX_EIP = 0, EX_MEM_EIP = 1:
-	- discards all instructions in EX and in ID
+	- discard all instructions arriving to IF_ID, ID_EX and EX_MEM
 
 #3: EI = 0, IF_ID_EIP = 0, ID_EX_EIP = 1, EX_MEM_EIP = 1:
-	- discards all instructions in EX
+	- discard all instructions arriving to IF_ID, ID_EX and EX_MEM
 
 #4: EI = 0, IF_ID_EIP = 0, ID_EX_EIP = 0, EX_MEM_EIP = 0:
 	- normal operation, exceptions ignored
