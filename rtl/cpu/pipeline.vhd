@@ -90,7 +90,6 @@ architecture Behavioral of pipeline is
     signal IF_ID_instruction: std_logic_vector(31 downto 0);
     signal IF_ID_bpredict_score: std_logic_vector(1 downto 0);
     signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
-    signal IF_ID_branch_delay_slot: boolean;
     signal IF_ID_PC, IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
     signal IF_ID_EPC: std_logic_vector(31 downto 2);
     signal IF_ID_EIP: boolean;
@@ -371,8 +370,6 @@ begin
 		IF_ID_instruction <= IF_instruction;
 		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
 		IF_ID_bpredict_index <= IF_bpredict_index;
-		IF_ID_branch_delay_slot <=
-		  ID_branch_cycle or ID_jump_cycle or ID_jump_register;
 		if C_exceptions and EX_MEM_EIP then
 		    if not IF_ID_EIP and not ID_EX_EIP then
 			if not (ID_branch_cycle or ID_jump_cycle or
@@ -384,7 +381,6 @@ begin
 			    IF_ID_instruction <= x"00000000";
 			end if;
 		    end if;
-		    IF_ID_branch_delay_slot <= false;
 		end if;
 		if C_exceptions then
 		    if IF_ID_EIP then
@@ -581,7 +577,7 @@ begin
 		    ID_EX_fwd_mem_reg1 <= false;
 		    ID_EX_fwd_mem_reg2 <= true;
 		    ID_EX_fwd_mem_alu_op2 <= false;
-		elsif not ID_running or (not IF_ID_branch_delay_slot and
+		elsif not ID_running or (not ID_EX_branch_delay_follows and
 		  (MEM_take_branch or ID_EX_cancel_next)) or
 		  (C_exceptions and EX_MEM_EIP) then
 		    -- insert a bubble if branching or ID stage is stalled
@@ -664,6 +660,8 @@ begin
 		    ID_EX_mem_cycle <= ID_mem_cycle;
 		    ID_EX_branch_cycle <= ID_branch_cycle;
 		    ID_EX_branch_likely <= ID_branch_likely;
+		    ID_EX_branch_delay_follows <= ID_branch_cycle or
+		      ID_jump_cycle or ID_jump_register;
 		    ID_EX_predict_taken <= ID_predict_taken;
 		    ID_EX_bpredict_score <= IF_ID_bpredict_score;
 		    ID_EX_bpredict_index <= IF_ID_bpredict_index;
@@ -685,8 +683,6 @@ begin
 			ID_EX_ei <= ID_ei;
 			ID_EX_di <= ID_di;
 			ID_EX_EPC <= IF_ID_EPC;
-			ID_EX_branch_delay_follows <= ID_branch_cycle or
-			  ID_jump_cycle or ID_jump_register;
 			ID_EX_branch_delay_slot <= ID_EX_branch_delay_follows;
 		    end if;
 		    -- schedule result forwarding
@@ -1256,7 +1252,7 @@ begin
     debug_XXX(16) <= '1' when EX_MEM_EIP else '0';
     debug_XXX(12) <= '1' when ID_running else '0';
     debug_XXX(8) <= '1' when EX_running else '0';
-    debug_XXX(4) <= '1' when IF_ID_branch_delay_slot else '0';
+    debug_XXX(4) <= '1' when ID_EX_branch_delay_follows else '0';
     debug_XXX(0) <= '1' when ID_EX_branch_delay_slot else '0';
 
 
