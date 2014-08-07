@@ -367,7 +367,6 @@ begin
 	    end if;
 	    if IF_need_refetch or IF_ID_incomplete_branch then
 		IF_ID_instruction <= x"00000000";
-		IF_ID_branch_delay_slot <= false;
 	    elsif ID_running then
 		IF_ID_instruction <= IF_instruction;
 		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
@@ -396,7 +395,6 @@ begin
 		end if;
 	    elsif ID_EX_branch_likely and not EX_take_branch then
 		IF_ID_instruction <= x"00000000";
-		IF_ID_branch_delay_slot <= false;
 	    end if;
 	end if;
     end process;
@@ -939,7 +937,8 @@ begin
 		    end if;
 		end if;
 		if C_exceptions and R_cop0_EI and
-		  not ID_EX_branch_delay_slot and not ID_EX_bubble and
+--		  not ID_EX_branch_delay_slot and
+		  not ID_EX_bubble and
 		  (ID_EX_exception or R_intr = '1') then
 		    R_cop0_EI <= false; -- disable all exceptions
 		    EX_MEM_EIP <= true; -- signal exception in progress
