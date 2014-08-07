@@ -157,7 +157,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_seb_seh_select: std_logic;
     signal ID_EX_ll, ID_EX_sc: boolean;
     signal ID_EX_flush_i_line, ID_EX_flush_d_line: std_logic;
-    signal ID_EX_branch_delay_slot: boolean;
+    signal ID_EX_branch_delay_follows, ID_EX_branch_delay_slot: boolean;
     signal ID_EX_cop0_write, ID_EX_wait: boolean;
     signal ID_EX_exception, ID_EX_ei, ID_EX_di: boolean;
     signal ID_EX_EPC: std_logic_vector(31 downto 2);
@@ -376,7 +376,7 @@ begin
 		if C_exceptions and EX_MEM_EIP then
 		    if not IF_ID_EIP and not ID_EX_EIP then
 			if not (ID_branch_cycle or ID_jump_cycle or
-			  ID_jump_register or IF_ID_branch_delay_slot or
+			  ID_jump_register or ID_EX_branch_delay_follows or
 			  ID_EX_branch_delay_slot) then
 			    IF_ID_EIP <= true;
 			    IF_ID_instruction <= x"03400008"; -- jr k0
@@ -620,6 +620,7 @@ begin
 			ID_EX_EIP <= IF_ID_EIP;
 			if EX_MEM_EIP then
 			    ID_EX_branch_delay_slot <= false;
+			    ID_EX_branch_delay_follows <= false;
 			end if;
 		    end if;
 		    -- Don't care bits (optimization hints)
@@ -684,7 +685,9 @@ begin
 			ID_EX_ei <= ID_ei;
 			ID_EX_di <= ID_di;
 			ID_EX_EPC <= IF_ID_EPC;
-			ID_EX_branch_delay_slot <= IF_ID_branch_delay_slot;
+			ID_EX_branch_delay_follows <= ID_branch_cycle or
+			  ID_jump_cycle or ID_jump_register;
+			ID_EX_branch_delay_slot <= ID_EX_branch_delay_follows;
 		    end if;
 		    -- schedule result forwarding
 		    ID_EX_fwd_ex_reg1 <= ID_fwd_ex_reg1;
