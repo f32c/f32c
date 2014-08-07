@@ -951,12 +951,11 @@ begin
 			R_cop0_EPC(1 downto 0) <= "00";
 		    end if;
 		    -- copy EBASE to k0
---		    EX_MEM_op_major <= OP_MAJOR_ALT;
---		    EX_MEM_logic_cycle <= '1';
---		    EX_MEM_logic_data <= R_cop0_EBASE & "00";
---		    EX_MEM_writeback_addr <= MIPS32_REG_K0;
-		    -- insert a bubble in the MEM stage
-		    EX_MEM_writeback_addr <= MIPS32_REG_ZERO;
+		    EX_MEM_op_major <= OP_MAJOR_ALT;
+		    EX_MEM_logic_cycle <= '1';
+		    EX_MEM_logic_data <= R_cop0_EBASE & "00";
+		    EX_MEM_writeback_addr <= MIPS32_REG_K0;
+		    -- nullify the rest of the interrupted instruction
 		    EX_MEM_take_branch <= false;
 		    EX_MEM_branch_taken <= false;
 		    EX_MEM_branch_cycle <= false;
