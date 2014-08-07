@@ -161,7 +161,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_cop0_write, ID_EX_wait: boolean;
     signal ID_EX_exception, ID_EX_ei, ID_EX_di: boolean;
     signal ID_EX_EPC: std_logic_vector(31 downto 2);
-    signal ID_EX_EIP: boolean;
+    signal ID_EX_EIP, ID_EX_bubble: boolean;
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal ID_EX_sign_extend_debug: std_logic; -- debugging only
 	
@@ -587,7 +587,7 @@ begin
 		  (MEM_take_branch or ID_EX_cancel_next)) or
 		  (C_exceptions and EX_MEM_EIP) then
 		    -- insert a bubble if branching or ID stage is stalled
-		    ID_EX_writeback_addr <= "00000"; -- NOP
+		    ID_EX_writeback_addr <= MIPS32_REG_ZERO; -- NOP
 		    ID_EX_mem_cycle <= '0';
 		    ID_EX_mem_write <= '0';
 		    ID_EX_multicycle_lh_lb <= false;
@@ -614,6 +614,7 @@ begin
 		    end if;
 		    ID_EX_wait <= false; -- XXX move under C_exceptions
 		    if C_exceptions then
+			ID_EX_bubble <= true;
 			ID_EX_cop0_write <= false;
 			ID_EX_exception <= false;
 			ID_EX_ei <= false;
@@ -678,6 +679,7 @@ begin
 			ID_EX_flush_d_line <= ID_flush_d_line;
 		    end if;
 		    if C_exceptions then
+			ID_EX_bubble <= false;
 			ID_EX_cop0_write <= ID_cop0_write;
 			ID_EX_exception <= ID_exception;
 			ID_EX_EIP <= IF_ID_EIP;
@@ -704,6 +706,9 @@ begin
 	    else
 		if C_cop0_count then
 		    ID_EX_wait <= ID_EX_wait and R_cop0_count(9 downto 2) /= 0;
+		    if R_intr = '1' then
+			ID_EX_wait <= false;
+		    end if;
 		end if;
 		if ID_running then
 		    ID_EX_cancel_next <= false;
@@ -724,7 +729,7 @@ begin
     -- XXX revisit!  jump cycles?
     EX_running <= MEM_running and not ID_EX_wait and
       (C_result_forwarding or not ID_EX_branch_cycle
-      or EX_MEM_writeback_addr = "00000");
+      or EX_MEM_writeback_addr = MIPS32_REG_ZERO);
 
     -- forward the results from later stages
     G_EX_forwarding:
@@ -872,7 +877,7 @@ begin
 		EX_MEM_branch_taken <= false;
 		EX_MEM_branch_cycle <= false;
 		EX_MEM_branch_likely <= false;
-		EX_MEM_writeback_addr <= "00000";
+		EX_MEM_writeback_addr <= MIPS32_REG_ZERO;
 		EX_MEM_mem_cycle <= '0';
 		EX_MEM_latency <= '0';
 		if C_ll_sc then
@@ -907,6 +912,15 @@ begin
 		if ID_EX_branch_cycle then
 		    EX_MEM_branch_target <= EX_branch_target;
 		end if;
+		if C_movn_movz and ID_EX_cmov_cycle then
+		    if (EX_eff_reg2 = x"00000000") = ID_EX_cmov_condition then
+			EX_MEM_writeback_addr <= ID_EX_writeback_addr;
+		    else
+			EX_MEM_writeback_addr <= MIPS32_REG_ZERO;
+		    end if;
+		else
+		    EX_MEM_writeback_addr <= ID_EX_writeback_addr;
+		end if;
 	        if C_exceptions and not EX_MEM_EIP then
 		    if ID_EX_ei then
 			R_cop0_EI <= true;
@@ -925,7 +939,7 @@ begin
 		    end if;
 		end if;
 		if C_exceptions and R_cop0_EI and
-		  not ID_EX_branch_delay_slot and
+		  not ID_EX_branch_delay_slot and not ID_EX_bubble and
 		  (ID_EX_exception or R_intr = '1') then
 		    R_cop0_EI <= false; -- disable all exceptions
 		    EX_MEM_EIP <= true; -- signal exception in progress
@@ -971,15 +985,6 @@ begin
 		else
 		    EX_MEM_logic_data <= EX_from_alu_logic;
 		    EX_MEM_logic_cycle <= ID_EX_op_minor(2);
-		end if;
-		if (C_movn_movz and ID_EX_cmov_cycle) then
-		    if (EX_eff_reg2 = x"00000000") = ID_EX_cmov_condition then
-			EX_MEM_writeback_addr <= ID_EX_writeback_addr;
-		    else
-			EX_MEM_writeback_addr <= "00000";
-		    end if;
-		else
-		    EX_MEM_writeback_addr <= ID_EX_writeback_addr;
 		end if;
 		EX_MEM_latency <= ID_EX_latency(1);
 		EX_MEM_mem_read_sign_extend <= ID_EX_mem_read_sign_extend;
@@ -1100,7 +1105,7 @@ begin
 		MEM_WB_writeback_addr <= EX_MEM_writeback_addr;
 		MEM_WB_multicycle_lh_lb <= not C_load_aligner
 		  and EX_MEM_multicycle_lh_lb;
-		if EX_MEM_writeback_addr = "00000" then
+		if EX_MEM_writeback_addr = MIPS32_REG_ZERO then
 		    MEM_WB_write_enable <= '0';
 		else
 		    MEM_WB_write_enable <= '1';
