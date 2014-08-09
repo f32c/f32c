@@ -613,7 +613,9 @@ begin
 			ID_EX_exception <= false;
 			ID_EX_ei <= false;
 			ID_EX_di <= false;
-			ID_EX_EIP <= IF_ID_EIP;
+			if ID_running then
+			    ID_EX_EIP <= IF_ID_EIP;
+			end if;
 			if EX_MEM_EIP then
 			    ID_EX_branch_delay_slot <= false;
 			    ID_EX_branch_delay_follows <= false;
@@ -679,7 +681,9 @@ begin
 			ID_EX_bubble <= false;
 			ID_EX_cop0_write <= ID_cop0_write;
 			ID_EX_exception <= ID_exception;
-			ID_EX_EIP <= IF_ID_EIP;
+			if ID_running then
+			    ID_EX_EIP <= IF_ID_EIP;
+			end if;
 			ID_EX_ei <= ID_ei;
 			ID_EX_di <= ID_di;
 			ID_EX_EPC <= IF_ID_EPC;
@@ -862,7 +866,7 @@ begin
 		end if;
 	    end if;
 
-	    if C_exceptions and ID_EX_EIP then
+	    if C_exceptions and ID_EX_EIP and ID_running then
 		EX_MEM_EIP <= false;
 	    end if;
 
@@ -936,9 +940,7 @@ begin
 			end if;
 		    end if;
 		end if;
-		if C_exceptions and R_cop0_EI and
---		  not ID_EX_branch_delay_slot and
-		  not ID_EX_bubble and
+		if C_exceptions and R_cop0_EI and not ID_EX_bubble and
 		  (ID_EX_exception or R_intr = '1') then
 		    R_cop0_EI <= false; -- disable all exceptions
 		    EX_MEM_EIP <= true; -- signal exception in progress
