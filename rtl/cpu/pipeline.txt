@@ -53,3 +53,5 @@ EIP .. exception in progress
 
 #4: EI = 0, IF_ID_EIP = 0, ID_EX_EIP = 0, EX_MEM_EIP = 0:
 	- normal operation, exceptions ignored
+
+Exception FSM is synchronized to arrival of new instructions in ID stage.
