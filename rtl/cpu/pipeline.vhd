@@ -370,22 +370,14 @@ begin
 		IF_ID_instruction <= IF_instruction;
 		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
 		IF_ID_bpredict_index <= IF_bpredict_index;
-		if C_exceptions and EX_MEM_EIP then
-		    if not IF_ID_EIP and not ID_EX_EIP then
-			if not (ID_branch_cycle or ID_jump_cycle or
-			  ID_jump_register or ID_EX_branch_delay_follows or
-			  ID_EX_branch_delay_slot) then
-			    IF_ID_EIP <= true;
-			    IF_ID_instruction <= x"03400008"; -- jr k0
-			else
-			    IF_ID_instruction <= x"00000000";
-			end if;
-		    end if;
-		end if;
 		if C_exceptions then
+		    if EX_MEM_EIP and not IF_ID_EIP and not ID_EX_EIP then
+			IF_ID_EIP <= true;
+			IF_ID_instruction <= x"03400008"; -- jr k0
+		    end if;
 		    if IF_ID_EIP then
 			IF_ID_EIP <= false;
-			IF_ID_instruction <= x"00000000";
+			IF_ID_instruction <= x"00000000"; -- delay slot
 		    end if;
 		    IF_ID_EPC <= IF_PC;
 		end if;
@@ -560,7 +552,7 @@ begin
 		      IF_fetch_complete then
 			ID_EX_cancel_next <= true;
 		    end if;
-		    if ID_running then
+		    if ID_running or EX_MEM_EIP then
 			ID_EX_cancel_next <= false;
 		    end if;
 		    if true or C_debug then -- XXX mult depends on C_debug!!!
@@ -592,7 +584,7 @@ begin
 		      IF_fetch_complete then
 			ID_EX_cancel_next <= true;
 		    end if;
-		    if ID_running then
+		    if ID_running or EX_MEM_EIP then
 			ID_EX_cancel_next <= false;
 		    end if;
 		    if true or C_debug then -- XXX mult depends on C_debug!!!
@@ -711,7 +703,7 @@ begin
 			ID_EX_wait <= false;
 		    end if;
 		end if;
-		if ID_running then
+		if ID_running or EX_MEM_EIP then
 		    ID_EX_cancel_next <= false;
 		end if;
 	    end if;
