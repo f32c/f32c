@@ -49,11 +49,6 @@ void isr_test(void)
 		"sw $27, ($26)\n"	// *isr_cnt <= k1
 		// bail out from interrupt
 		"mfc0 $27, $14\n"	// k1 <- MIPS_COP_0_EXC_PC
-		"andi $26, $27, 1\n"
-		"beq $26, $0, 1f\n"	// branch delay slot?
-		"nop\n"
-		"addiu $27, $27, -5\n"	// return to branch / jump
-		"1:\n"
 		"jr $27\n"
 		"ei\n"
 		".set reorder"
@@ -112,17 +107,18 @@ main(void)
 	int i = 0;
 	int c = -1;
 	volatile int *a = &isr_cnt;
-	void *tepc = NULL;
 	do {
 		epc = rdepc();
-		c = *a;
-		if (epc != tepc) {
-			__asm __volatile ("di");
-			printf(" %p %d %d\n", epc, c, i);
-			__asm __volatile ("ei");
+		if (*a > c + 20000) {
+			c = *a;
+			printf(" %p %d %d", epc, c, i);
+			printf(" A %d", random());
+			printf(" B %d", random());
+			printf(" C %d", random());
+			printf(" D %d\n", random());
 		}
-		tepc = epc;
 		i++;
+		putchar(8);
 		if (i == 16)
 			i = 0;
 		putchar(8);
