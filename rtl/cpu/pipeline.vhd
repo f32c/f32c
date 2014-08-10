@@ -92,7 +92,7 @@ architecture Behavioral of pipeline is
     signal IF_ID_bpredict_index: std_logic_vector(12 downto 0);
     signal IF_ID_PC, IF_ID_PC_4, IF_ID_PC_next: std_logic_vector(31 downto 2);
     signal IF_ID_EPC: std_logic_vector(31 downto 2);
-    signal IF_ID_EIP: boolean;
+    signal IF_ID_EIP, IF_ID_bubble: boolean;
 	
     -- pipeline stage 2: instruction decode and register fetch
     signal ID_running: boolean;
@@ -366,8 +366,10 @@ begin
 	    end if;
 	    if IF_need_refetch or IF_ID_incomplete_branch then
 		IF_ID_instruction <= x"00000000";
+		IF_ID_bubble <= C_exceptions;
 	    elsif ID_running then
 		IF_ID_instruction <= IF_instruction;
+		IF_ID_bubble <= false;
 		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
 		IF_ID_bpredict_index <= IF_bpredict_index;
 		if C_exceptions then
@@ -383,6 +385,7 @@ begin
 		end if;
 	    elsif ID_EX_branch_likely and not EX_take_branch then
 		IF_ID_instruction <= x"00000000";
+		IF_ID_bubble <= C_exceptions;
 	    end if;
 	end if;
     end process;
@@ -670,7 +673,7 @@ begin
 			ID_EX_flush_d_line <= ID_flush_d_line;
 		    end if;
 		    if C_exceptions then
-			ID_EX_bubble <= false;
+			ID_EX_bubble <= IF_ID_bubble;
 			ID_EX_cop0_write <= ID_cop0_write;
 			ID_EX_exception <= ID_exception;
 			if ID_running then
