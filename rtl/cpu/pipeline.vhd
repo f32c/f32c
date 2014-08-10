@@ -681,7 +681,9 @@ begin
 			end if;
 			ID_EX_ei <= ID_ei;
 			ID_EX_di <= ID_di;
-			ID_EX_EPC <= IF_ID_EPC;
+			if not ID_EX_branch_delay_follows then
+			    ID_EX_EPC <= IF_ID_EPC;
+			end if;
 			ID_EX_branch_delay_slot <= ID_EX_branch_delay_follows;
 		    end if;
 		    -- schedule result forwarding
