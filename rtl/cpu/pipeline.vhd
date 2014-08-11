@@ -1164,8 +1164,8 @@ begin
     begin
 	if falling_edge(clk) then
 	    -- XXX revisit instruction decoding
-	    if (ID_EX_op_major = OP_MAJOR_ALT and
-	      ID_EX_instruction(5 downto 1) = "01100") then
+	    if not EX_MEM_EIP and ID_EX_op_major = OP_MAJOR_ALT and
+	      ID_EX_instruction(5 downto 1) = "01100" then
 		R_mul_a(31 downto 0) <= CONV_SIGNED(UNSIGNED(EX_eff_reg1), 32);
 		R_mul_b(31 downto 0) <= CONV_SIGNED(UNSIGNED(EX_eff_reg2), 32);
 		if (ID_EX_instruction(0) = '0') then
