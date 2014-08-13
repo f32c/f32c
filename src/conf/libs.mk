@@ -25,6 +25,10 @@
 # $Id$
 #
 
+ifneq (,$(findstring isr,$(F32C_LIBS)))
+	_NEED_ISR = YES
+endif
+
 ifneq (,$(findstring malloc,$(F32C_LIBS)))
 	_NEED_MALLOC = YES
 endif
@@ -138,6 +142,12 @@ endif
 
 ifneq (,$(findstring lcd,$(F32C_LIBS)))
 	_NEED_LCD = YES
+endif
+
+
+ifdef _NEED_ISR
+	ASFILES += ${BASE_DIR}lib/exception.S
+	CFILES += ${BASE_DIR}lib/isr.c
 endif
 
 ifdef _NEED_MALLOC
