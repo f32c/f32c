@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <sys/isr.h>
+
 #include <mips/asm.h>
 
 
@@ -37,62 +39,28 @@
 
 int isr_cnt;
 
-
-void isr_test(void)
-{
-	__asm __volatile (
-		".set noreorder\n"
-		// testing - incr. dummy counter
-		"la $26, %0\n"		// k0 <- &isr_cnt
-		"lw $27, ($26)\n"	// k1 <- *isr_cnt
-		"addiu $27, $27, 1\n"	// k1++
-		"sw $27, ($26)\n"	// *isr_cnt <= k1
-		// bail out from interrupt
-		"mfc0 $27, $14\n"	// k1 <- MIPS_COP_0_EXC_PC
-		"jr $27\n"
-		"ei\n"
-		".set reorder"
-		: : "m" (isr_cnt)
-	);
-}
-
-void epc_test1(void)
-{
-
-	__asm __volatile (
-		".set noreorder\n"
-		"jr $31\n"
-		"syscall\n"
-		".set reorder"
-	);
-}
-
 int cnt = 0;
 
-int rt(void);
 
-void *
-rdepc(void)
+static void
+test_isr(void)
 {
-	void *x;
 
-	RDEPC(x);
-	return (x);
+	isr_cnt++;
 }
+
+
+struct isr_link test_isr_reg = {
+	.handler_fn = &test_isr
+};
 
 void
 main(void)
 {
 	void *epc;
 
-	printf("Setting ISR address...\n");
-	epc = &isr_test;
-	__asm __volatile (
-		"mtc0 %0, $15\n"	// MIPS_COP_0_EBASE <- &isr_test
-		"li $1, 0xff00\n"	// interrupt mask - all enabled
-		"mtc0 $1, $12"		// MIPS_COP_0_STATUS <- 0xff00
-                : : "r" (epc)
-	);
+	isr_register_handler(2, &test_isr_reg);
+	isr_enable();
 
 	epc = NULL;
 	RDEPC(epc);
@@ -101,16 +69,13 @@ main(void)
 	RDEBASE(epc);
 	printf("EBASE = %p\n", epc);
 
-	printf("Enabling interrupts...\n");
-	__asm __volatile ("ei");
-
 #if 1
 	/* Testing interrupts */
 	int i = 0;
 	int c = -1;
 	volatile int *a = &isr_cnt;
 	do {
-		epc = rdepc();
+		RDEPC(epc);
 		if (*a > c + 20000) {
 			c = *a;
 			printf(" %p %d %d", epc, c, i);
@@ -147,10 +112,6 @@ again:
 	sio_getchar(0);
 	RDEPC(epc);
 	printf("%d - before jal: %p\n", isr_cnt, epc);
-
-	epc_test1();
-	RDEPC(epc);
-	printf("%d - jump delay slot: %p\n", isr_cnt, epc);
 
 	__asm __volatile (
 		".set noreorder\n"
