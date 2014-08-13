@@ -64,7 +64,7 @@ entity pipeline is
 	snoop_cycle: in std_logic;
 	snoop_addr: in std_logic_vector(31 downto 2);
 	flush_i_line, flush_d_line: out std_logic;
-	intr: in std_logic;
+	intr: in std_logic_vector(5 downto 0);
 	-- debugging only
 	trace_addr: in std_logic_vector(5 downto 0);
 	trace_data: out std_logic_vector(31 downto 0)
@@ -239,14 +239,15 @@ architecture Behavioral of pipeline is
     signal R_mul_a, R_mul_b: signed(32 downto 0);
     signal R_hi_lo: std_logic_vector(63 downto 0);
 
-    -- COP0
+    -- COP0 registers
     signal R_reset: std_logic; -- registered reset input
     signal R_cop0_count: std_logic_vector(31 downto 0);
     signal R_cop0_config: std_logic_vector(31 downto 0);
-    signal R_cop0_EPC: std_logic_vector(31 downto 0);
+    signal R_cop0_EPC: std_logic_vector(31 downto 2);
     signal R_cop0_EBASE: std_logic_vector(31 downto 2);
-    signal R_cop0_EI: boolean := false;
-    signal R_intr: std_logic;
+    signal R_cop0_EI, R_cop0_BD: std_logic;
+    signal R_cop0_intr, R_cop0_intr_mask: std_logic_vector(7 downto 0);
+    signal R_cop0_EX_code: std_logic_vector(4 downto 0);
 
     -- signals used for debugging only
     signal reg_trace_data: std_logic_vector(31 downto 0);
@@ -704,7 +705,8 @@ begin
 	    else
 		if C_cop0_count then
 		    ID_EX_wait <= ID_EX_wait and R_cop0_count(9 downto 2) /= 0;
-		    if R_intr = '1' then
+		    if R_cop0_EI = '1' and
+		      (R_cop0_intr and R_cop0_intr_mask) /= x"00" then
 			ID_EX_wait <= false;
 		    end if;
 		end if;
@@ -818,9 +820,12 @@ begin
     with ID_EX_cop0_addr select
     EX_from_cop0 <=
       R_cop0_count when MIPS_COP0_COUNT,
+      "----------------" & R_cop0_intr_mask & "-------" & R_cop0_EI
+	when MIPS_COP0_STATUS,
+      R_cop0_BD & "---------------" & R_cop0_intr & "-" & R_cop0_EX_code & "--"
+	when MIPS_COP0_CAUSE,
+      R_cop0_EPC & "00" when MIPS_COP0_EXC_PC,
       R_cop0_config when MIPS_COP0_CONFIG,
-      R_cop0_EPC when MIPS_COP0_EXC_PC,
-      R_cop0_EBASE & "00" when MIPS_COP0_EBASE, -- XXX testing, remove this!
       (others => '-') when others;
 
     -- branch or not?
@@ -867,7 +872,7 @@ begin
 		EX_MEM_EIP <= false;
 	    end if;
 
-	    R_intr <= intr;
+	    R_cop0_intr(7 downto 2) <= intr;
 
 	    if MEM_running and (MEM_cancel_EX or not EX_running or
 	      (C_exceptions and EX_MEM_EIP)) then
@@ -922,14 +927,24 @@ begin
 		end if;
 	        if C_exceptions and not EX_MEM_EIP then
 		    if ID_EX_ei then
-			R_cop0_EI <= true;
+			R_cop0_EI <= '1';
 		    end if;
 		    if ID_EX_di then
-			R_cop0_EI <= false;
+			R_cop0_EI <= '0';
 		    end if;
 		    if ID_EX_cop0_write then
+			if ID_EX_cop0_addr = MIPS_COP0_STATUS then
+			    R_cop0_intr_mask <= EX_eff_reg2(15 downto 8);
+			    R_cop0_EI <= EX_eff_reg2(0);
+			end if;
+			if ID_EX_cop0_addr = MIPS_COP0_CAUSE then
+			    R_cop0_BD <= EX_eff_reg2(31);
+			    R_cop0_intr(1 downto 0) <= EX_eff_reg2(9 downto 8);
+			    R_cop0_EX_code <= EX_eff_reg2(6 downto 2);
+			end if;
 			if ID_EX_cop0_addr = MIPS_COP0_EXC_PC then
-			    R_cop0_EPC <= EX_eff_reg2 and C_PC_mask;
+			    R_cop0_EPC <= EX_eff_reg2(31 downto 2)
+			      and C_PC_mask(31 downto 2);
 			end if;
 			if ID_EX_cop0_addr = MIPS_COP0_EBASE then
 			    R_cop0_EBASE <= EX_eff_reg2(31 downto 2)
@@ -937,16 +952,16 @@ begin
 			end if;
 		    end if;
 		end if;
-		if C_exceptions and R_cop0_EI and not ID_EX_bubble and
-		  (ID_EX_exception or R_intr = '1') then
-		    R_cop0_EI <= false; -- disable all exceptions
+		if C_exceptions and R_cop0_EI = '1' and not ID_EX_bubble and
+		  ((R_cop0_intr and R_cop0_intr_mask) /= x"00"
+		  or ID_EX_exception) then
+		    R_cop0_EI <= '0'; -- disable all exceptions
 		    EX_MEM_EIP <= true; -- signal exception in progress
-		    R_cop0_EPC(31 downto 2) <=
-		      ID_EX_EPC and C_PC_mask(31 downto 2);
+		    R_cop0_EPC <= ID_EX_EPC and C_PC_mask(31 downto 2);
 		    if ID_EX_branch_delay_slot then
-			R_cop0_EPC(1 downto 0) <= "01";
+			R_cop0_BD <= '1';
 		    else
-			R_cop0_EPC(1 downto 0) <= "00";
+			R_cop0_BD <= '0';
 		    end if;
 		    -- copy EBASE to k0
 		    EX_MEM_op_major <= OP_MAJOR_ALT;
@@ -1245,7 +1260,7 @@ begin
     if C_debug generate
     ID_EX_sign_extend_debug <= '1' when ID_EX_sign_extend else '0';
 
-    debug_XXX(28) <= '1' when R_cop0_EI else '0';
+    debug_XXX(28) <= R_cop0_EI;
     debug_XXX(24) <= '1' when IF_ID_EIP else '0';
     debug_XXX(20) <= '1' when ID_EX_EIP else '0';
     debug_XXX(16) <= '1' when EX_MEM_EIP else '0';
@@ -1284,7 +1299,7 @@ begin
 	R_hi_lo(63 downto 32)	when x"3b",
 	--
 	R_cop0_EBASE & "00"	when x"3c",
-	R_cop0_EPC 	 	when x"3d",
+	R_cop0_EPC & "00"  	when x"3d",
 	--
 	reg_trace_data		when others;
 
@@ -1294,7 +1309,7 @@ begin
     if not C_debug generate
 	--trace_data <= x"00000000";
 	trace_data(7 downto 4) <= x"f";
-	trace_data(0) <= '1' when R_cop0_EI else '0';
+	trace_data(0) <= R_cop0_EI;
 	trace_data(1) <= '1' when IF_ID_EIP else '0';
 	trace_data(2) <= '1' when EX_MEM_EIP else '0';
 	trace_data(3) <= '1' when ID_EX_wait else '0';
