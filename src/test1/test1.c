@@ -88,7 +88,9 @@ main(void)
 	printf("Setting ISR address...\n");
 	epc = &isr_test;
 	__asm __volatile (
-		"mtc0 %0, $15"		// MIPS_COP_0_EBASE <- &isr_test
+		"mtc0 %0, $15\n"	// MIPS_COP_0_EBASE <- &isr_test
+		"li $1, 0xff00\n"	// interrupt mask - all enabled
+		"mtc0 $1, $12"		// MIPS_COP_0_STATUS <- 0xff00
                 : : "r" (epc)
 	);
 
