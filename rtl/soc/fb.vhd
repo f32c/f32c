@@ -97,7 +97,7 @@ begin
     --
     process(clk)
     begin
-	if (mode(1) = '0' and rising_edge(clk)) then
+	if mode(1) = '0' and rising_edge(clk) then
 	    if scan_line = "00" & x"10" then
 		R_sram_addr <= base_addr;
 		R_pixbuf_wr_addr <= (others => '0');
@@ -108,7 +108,9 @@ begin
 		R_sram_addr <= R_sram_addr + 1;
 		R_pixbuf_wr_addr <= R_pixbuf_wr_addr + 1;
 	    end if;
+	end if;
 
+	if rising_edge(clk) then
 	    R_scan_line_high <= scan_line(9 downto 8);
 	    if R_scan_line_high /= "00" and scan_line = "00" & x"01" then
 		R_tick <= '1';
@@ -129,8 +131,8 @@ begin
     process(clk)
 	variable vpos: std_logic_vector(9 downto 0) := scan_line - 40;
     begin
-	if (rising_edge(clk)) then
-	    if (active_pixel = '0') then
+	if rising_edge(clk) then
+	    if active_pixel = '0' then
 		R_pixclk <= (others => '0');
 		R_hpos <= (others => '0');
 	        if scan_line = "0000000001" then
