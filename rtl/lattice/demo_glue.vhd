@@ -116,6 +116,7 @@ architecture Behavioral of glue is
     type f32c_data_bus is array(0 to (C_cpus - 1)) of
       std_logic_vector(31 downto 0);
     type f32c_std_logic is array(0 to (C_cpus - 1)) of std_logic;
+    type f32c_intr is array(0 to (C_cpus - 1)) of std_logic_vector(5 downto 0);
     type f32c_debug_addr is array(0 to (C_cpus - 1)) of
       std_logic_vector(5 downto 0);
 
@@ -123,7 +124,8 @@ architecture Behavioral of glue is
     signal clk, clk_325m, ena_325m: std_logic;
 
     -- signals to / from f32c cores(s)
-    signal res, intr: f32c_std_logic;
+    signal res: f32c_std_logic;
+    signal intr: f32c_intr;
     signal imem_addr, dmem_addr: f32c_addr_bus;
     signal final_to_cpu_i, final_to_cpu_d, cpu_to_dmem: f32c_data_bus;
     signal imem_addr_strobe, dmem_addr_strobe, dmem_write: f32c_std_logic;
@@ -163,6 +165,7 @@ architecture Behavioral of glue is
     signal R_cpu_reset: std_logic_vector(15 downto 0) := x"fffe";
 
     -- Video framebuffer
+    signal R_fb_intr: std_logic;
     signal video_dac: std_logic_vector(3 downto 0);
     signal fb_addr_strobe, fb_data_ready: std_logic;
     signal fb_addr: std_logic_vector(19 downto 2);
@@ -207,7 +210,7 @@ begin
     --
     G_CPU: for i in 0 to (C_cpus - 1) generate
     begin
-    intr(i) <= '0'; -- fb_tick;
+    intr(i) <= "00000" & R_fb_intr when i = 0 else "000000";
     res(i) <= sw(i) or R_cpu_reset(i) when C_debug else R_cpu_reset(i);
     cpu: entity work.cache
     generic map (
@@ -421,6 +424,15 @@ begin
 		    R_fb_mode <= cpu_to_io(1 downto 0);
 		    R_fb_base_addr <= cpu_to_io(19 downto 2);
 		end if;
+	    end if;
+	end if;
+	if C_framebuffer and rising_edge(clk) then
+	    if io_addr_strobe(R_cur_io_port) = '1' and
+	      io_addr(7 downto 4) = x"4" then
+		R_fb_intr <= '0';
+	    end if;
+	    if fb_tick = '1' then
+		R_fb_intr <= '1';
 	    end if;
 	end if;
 	if C_leds_btns and rising_edge(clk) then
