@@ -27,34 +27,46 @@
 
 #include <io.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include <sys/isr.h>
-
-#include <mips/asm.h>
-
-
-#define	RDEPC(var) mfc0_macro(var, MIPS_COP_0_EXC_PC);
-#define	RDEBASE(var) mfc0_macro(var, MIPS_COP_0_EBASE);
 
 
 int isr_cnt;
 
 
 static int
-test_isr(void)
+test_isr(int irq)
 {
 	int i;
 
-	/* Clear the 50 Hz framebuffer interrupt */
-	INB(i, IO_FB);
-
 	isr_cnt++;
+	OUTB(IO_LED, isr_cnt >> 10);
+
+	if (irq == 2) {
+		/* Clear the 50 Hz framebuffer interrupt */
+if ((isr_cnt & 0xfff) == 0)
+		INB(i, IO_FB);
+	}
+
+	if (irq == 3) {
+		/* Clear the sio interrupt */
+		INB(i, IO_SIO_STATUS);
+		if (i & SIO_RX_FULL) {
+			INB(i, IO_SIO_BYTE);
+			OUTB(IO_SIO_BYTE, i);
+		} else
+			return (0);
+	}
+
 	return (1);
 }
 
 
-struct isr_link test_isr_reg = {
+struct isr_link test_fb_isr = {
+	.handler_fn = &test_isr
+};
+
+struct isr_link test_sio_isr = {
 	.handler_fn = &test_isr
 };
 
@@ -64,14 +76,16 @@ main(void)
 {
 	int i = 0;
 
-	isr_register_handler(2, &test_isr_reg);
+	isr_register_handler(2, &test_fb_isr);
+	isr_register_handler(3, &test_sio_isr);
 	__asm("ei");
 
 	volatile int *a = &isr_cnt;
 	do {
-		if (i != *a)
+		if (*a > i) {
 			printf("\r%d", *a);
-		i = *a;
+			i = *a;
+		}
 		__asm("wait");
 	} while (1);
 }
