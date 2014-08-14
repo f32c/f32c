@@ -40,14 +40,19 @@ static SLIST_HEAD(, isr_link) isr_registry[8];
 void
 isr_dispatch(int filtered_irqs)
 {
-	int irq;
+	int irq, serviced;
 	struct isr_link *isrl;
 
 	for (irq = 0; filtered_irqs != 0; filtered_irqs >>= 1, irq++) {
 		if ((filtered_irqs & 1) == 0)
 			continue;
+		serviced = 0;
 		SLIST_FOREACH(isrl, &isr_registry[irq], isr_le)
-			isrl->handler_fn();
+			serviced += isrl->handler_fn();
+		if (serviced == 0) {
+			printf("Stray IRQ #%d, disabling.\n", irq);
+			disable_irq(irq);
+		}
 	}
 }
 
@@ -57,4 +62,5 @@ isr_register_handler(int irq, struct isr_link *isr_entry)
 {
 	
 	SLIST_INSERT_HEAD(&isr_registry[irq], isr_entry, isr_le);
+	enable_irq(irq);
 }

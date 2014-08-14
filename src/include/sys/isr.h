@@ -30,7 +30,7 @@
 
 #include <sys/queue.h>
 
-typedef void isr_handler_fn(void);
+typedef int isr_handler_fn(void);
 
 struct isr_link {
 	SLIST_ENTRY(isr_link)	 isr_le;
@@ -39,7 +39,8 @@ struct isr_link {
 
 
 void isr_register_handler(int, struct isr_link *);
-void isr_enable(void);
+void enable_irq(int);
+void disable_irq(int);
 
 #endif /* !_SYS_ISR_H_ */
 
