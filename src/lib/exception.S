@@ -34,98 +34,102 @@
 #define	ISR_STACK_SIZE	4096
 
 
-	.data
+	.bss
 
 _exception_stack:	.space ISR_STACK_SIZE
-_exception_regs:	.space REGSIZE * 29
+_exception_regs:	.space REGSIZE * 20
 
 
 	.text
+	.set	reorder
 
 /*
  * Prepare register context for executing ISR handlers and call isr_dispatch().
  */
 LEAF(_exception_start)
-	.set	reorder
 	.set	noat
 
-	/* Save register context */
+	/*
+	 * Save register context. "S" registers will be saved by callees,
+	 * so don't waste time and space on saving them here.
+	 */
 	la	k1, _exception_regs
-	sw	$1, (0 * REGSIZE)(k1)
-	sw	$2, (1 * REGSIZE)(k1)
-	sw	$3, (2 * REGSIZE)(k1)
-	sw	$4, (3 * REGSIZE)(k1)
-	sw	$5, (4 * REGSIZE)(k1)
-	sw	$6, (5 * REGSIZE)(k1)
-	sw	$7, (6 * REGSIZE)(k1)
-	sw	$8, (7 * REGSIZE)(k1)
-	sw	$9, (8 * REGSIZE)(k1)
-	sw	$10, (9 * REGSIZE)(k1)
-	sw	$11, (10 * REGSIZE)(k1)
-	sw	$12, (11 * REGSIZE)(k1)
-	sw	$13, (12 * REGSIZE)(k1)
-	sw	$14, (13 * REGSIZE)(k1)
-	sw	$15, (14 * REGSIZE)(k1)
-	sw	$16, (15 * REGSIZE)(k1)
-	sw	$17, (16 * REGSIZE)(k1)
-	sw	$18, (17 * REGSIZE)(k1)
-	sw	$19, (18 * REGSIZE)(k1)
-	sw	$20, (19 * REGSIZE)(k1)
-	sw	$21, (20 * REGSIZE)(k1)
-	sw	$22, (21 * REGSIZE)(k1)
-	sw	$23, (22 * REGSIZE)(k1)
-	sw	$24, (23 * REGSIZE)(k1)
-	sw	$25, (24 * REGSIZE)(k1)
-	sw	$28, (25 * REGSIZE)(k1)
-	sw	$29, (26 * REGSIZE)(k1)
-	sw	$30, (27 * REGSIZE)(k1)
-	sw	$31, (28 * REGSIZE)(k1)
+	sw	ra, (0 * REGSIZE)(k1)
+	sw	AT, (1 * REGSIZE)(k1)
+	sw	v0, (2 * REGSIZE)(k1)
+	sw	v1, (3 * REGSIZE)(k1)
+	sw	a0, (4 * REGSIZE)(k1)
+	sw	a1, (5 * REGSIZE)(k1)
+	sw	a2, (6 * REGSIZE)(k1)
+	sw	a3, (7 * REGSIZE)(k1)
+#if defined(__mips_n32)
+	sw	a4, (8 * REGSIZE)(k1)
+	sw	a5, (9 * REGSIZE)(k1)
+	sw	a6, (10 * REGSIZE)(k1)
+	sw	a7, (11 * REGSIZE)(k1)
+	sw	t0, (12 * REGSIZE)(k1)
+	sw	t1, (13 * REGSIZE)(k1)
+	sw	t2, (14 * REGSIZE)(k1)
+	sw	t3, (15 * REGSIZE)(k1)
+#else
+	sw	t0, (8 * REGSIZE)(k1)
+	sw	t1, (9 * REGSIZE)(k1)
+	sw	t2, (10 * REGSIZE)(k1)
+	sw	t3, (11 * REGSIZE)(k1)
+	sw	t4, (12 * REGSIZE)(k1)
+	sw	t5, (13 * REGSIZE)(k1)
+	sw	t6, (14 * REGSIZE)(k1)
+	sw	t7, (15 * REGSIZE)(k1)
+#endif
+	sw	t8, (16 * REGSIZE)(k1)
+	sw	t9, (17 * REGSIZE)(k1)
+	sw	gp, (18 * REGSIZE)(k1)
+	sw	fp, (19 * REGSIZE)(k1)
 
-	/* Set the exception stack */
+	/* Set up the exception stack */
 	la	sp, _exception_stack
 	addiu	sp, sp, ISR_STACK_SIZE
 
-	/* Clear software IRQs, pass masked IRQs to isr_dispatch() */
+	/* Pass masked IRQs to isr_dispatch() */
 	mfc0	v0, $MIPS_COP_0_CAUSE
 	mfc0	v1, $MIPS_COP_0_STATUS
 	and	a0, v1, v0
 	srl	a0, a0, 8
-	li	a1, ~(MIPS_SOFT_INT_MASK_1 | MIPS_SOFT_INT_MASK_0)
 	andi	a0, a0, 0xff
-	and	v0, a1, v0
-	mtc0	v0, $MIPS_COP_0_CAUSE
 	jal	isr_dispatch
 
 	/* Restore register context */
-	lw	$1, (0 * REGSIZE)(k1)
-	lw	$2, (1 * REGSIZE)(k1)
-	lw	$3, (2 * REGSIZE)(k1)
-	lw	$4, (3 * REGSIZE)(k1)
-	lw	$5, (4 * REGSIZE)(k1)
-	lw	$6, (5 * REGSIZE)(k1)
-	lw	$7, (6 * REGSIZE)(k1)
-	lw	$8, (7 * REGSIZE)(k1)
-	lw	$9, (8 * REGSIZE)(k1)
-	lw	$10, (9 * REGSIZE)(k1)
-	lw	$11, (10 * REGSIZE)(k1)
-	lw	$12, (11 * REGSIZE)(k1)
-	lw	$13, (12 * REGSIZE)(k1)
-	lw	$14, (13 * REGSIZE)(k1)
-	lw	$15, (14 * REGSIZE)(k1)
-	lw	$16, (15 * REGSIZE)(k1)
-	lw	$17, (16 * REGSIZE)(k1)
-	lw	$18, (17 * REGSIZE)(k1)
-	lw	$19, (18 * REGSIZE)(k1)
-	lw	$20, (19 * REGSIZE)(k1)
-	lw	$21, (20 * REGSIZE)(k1)
-	lw	$22, (21 * REGSIZE)(k1)
-	lw	$23, (22 * REGSIZE)(k1)
-	lw	$24, (23 * REGSIZE)(k1)
-	lw	$25, (24 * REGSIZE)(k1)
-	lw	$28, (25 * REGSIZE)(k1)
-	lw	$29, (26 * REGSIZE)(k1)
-	lw	$30, (27 * REGSIZE)(k1)
-	lw	$31, (28 * REGSIZE)(k1)
+	lw	ra, (0 * REGSIZE)(k1)
+	lw	AT, (1 * REGSIZE)(k1)
+	lw	v0, (2 * REGSIZE)(k1)
+	lw	v1, (3 * REGSIZE)(k1)
+	lw	a0, (4 * REGSIZE)(k1)
+	lw	a1, (5 * REGSIZE)(k1)
+	lw	a2, (6 * REGSIZE)(k1)
+	lw	a3, (7 * REGSIZE)(k1)
+#if defined(__mips_n32)
+	lw	a4, (8 * REGSIZE)(k1)
+	lw	a5, (9 * REGSIZE)(k1)
+	lw	a6, (10 * REGSIZE)(k1)
+	lw	a7, (11 * REGSIZE)(k1)
+	lw	t0, (12 * REGSIZE)(k1)
+	lw	t1, (13 * REGSIZE)(k1)
+	lw	t2, (14 * REGSIZE)(k1)
+	lw	t3, (15 * REGSIZE)(k1)
+#else
+	lw	t0, (8 * REGSIZE)(k1)
+	lw	t1, (9 * REGSIZE)(k1)
+	lw	t2, (10 * REGSIZE)(k1)
+	lw	t3, (11 * REGSIZE)(k1)
+	lw	t4, (12 * REGSIZE)(k1)
+	lw	t5, (13 * REGSIZE)(k1)
+	lw	t6, (14 * REGSIZE)(k1)
+	lw	t7, (15 * REGSIZE)(k1)
+#endif
+	lw	t8, (16 * REGSIZE)(k1)
+	lw	t9, (17 * REGSIZE)(k1)
+	lw	gp, (18 * REGSIZE)(k1)
+	lw	fp, (19 * REGSIZE)(k1)
 
 	mfc0	k0, $MIPS_COP_0_EXC_PC
 	ei
@@ -134,14 +138,29 @@ END(_exception_start)
 
 
 /*
- * Set exception address, enable all interrupts.
+ * Set exception address, enable IRQ line (placed in a0).
  */
-LEAF(isr_enable)
-	.set	reorder
-
-	la	a0, _exception_start
-	mtc0	a0, $MIPS_COP_0_EBASE
-	li	a0, MIPS_SR_INT_MASK | MIPS_SR_INT_IE
+LEAF(enable_irq)
+	la	a1, _exception_start
+	mtc0	a1, $MIPS_COP_0_EBASE
+	li	a1, 0x100
+	sll	a1, a0
+	mfc0	a0, $MIPS_COP_0_STATUS
+	or	a0, a0, a1
 	mtc0	a0, $MIPS_COP_0_STATUS
 	jr	ra
-END(isr_enable)
+END(enable_irq)
+
+
+/*
+ * Disable IRQ line (placed in a0).
+ */
+LEAF(disable_irq)
+	li	a1, 0x100
+	sll	a1, a0
+	mfc0	a0, $MIPS_COP_0_STATUS
+	not	a1
+	and	a0, a0, a1
+	mtc0	a0, $MIPS_COP_0_STATUS
+	jr	ra
+END(disable_irq)
