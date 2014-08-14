@@ -210,7 +210,7 @@ begin
     --
     G_CPU: for i in 0 to (C_cpus - 1) generate
     begin
-    intr(i) <= "00000" & R_fb_intr when i = 0 else "000000";
+    intr(i) <= "0000" & from_sio(8) & R_fb_intr when i = 0 else "000000";
     res(i) <= sw(i) or R_cpu_reset(i) when C_debug else R_cpu_reset(i);
     cpu: entity work.cache
     generic map (
