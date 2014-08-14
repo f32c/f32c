@@ -25,13 +25,8 @@
  * $Id$
  */
 
-#include <sys/isr.h>
-
-#include <mips/asm.h>
-#include <mips/regdef.h>
-#include <mips/cpuregs.h>
-
 #include <stdio.h>
+#include <sys/isr.h>
 
 
 static SLIST_HEAD(, isr_link) isr_registry[8];
@@ -48,7 +43,7 @@ isr_dispatch(int filtered_irqs)
 			continue;
 		serviced = 0;
 		SLIST_FOREACH(isrl, &isr_registry[irq], isr_le)
-			serviced += isrl->handler_fn();
+			serviced += isrl->handler_fn(irq);
 		if (serviced == 0) {
 			printf("Stray IRQ #%d, disabling.\n", irq);
 			disable_irq(irq);

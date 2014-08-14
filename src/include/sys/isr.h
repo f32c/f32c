@@ -30,7 +30,7 @@
 
 #include <sys/queue.h>
 
-typedef int isr_handler_fn(void);
+typedef int isr_handler_fn(int);
 
 struct isr_link {
 	SLIST_ENTRY(isr_link)	 isr_le;
