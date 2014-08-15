@@ -75,8 +75,6 @@ sio_getchar(int blocking)
 			(*sio_idle_fn)();
 		sio_probe_rx();
 		busy = (sio_rxbuf_head == sio_rxbuf_tail);
-		if (blocking && busy)
-			__asm __volatile__("wait;");
 	} while (blocking && busy);
 
 	if (busy)
