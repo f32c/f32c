@@ -80,8 +80,8 @@ ifneq (,$(findstring sprintf,$(F32C_LIBS)))
 endif
 
 ifneq (,$(findstring gets,$(F32C_LIBS)))
-	_NEED_SIO = YES
 	_NEED_GETS = YES
+	_NEED_SIO = YES
 endif
 
 ifneq (,$(findstring assert,$(F32C_LIBS)))
@@ -171,7 +171,7 @@ ifdef _NEED_PRINTF
 	CFILES += ${BASE_DIR}lib/printf.c
 endif
 
-ifdef _NEED_PRINTF
+ifdef _NEED_SPRINTF
 	CFILES += ${BASE_DIR}lib/sprintf.c
 endif
 
