@@ -42,6 +42,7 @@ entity glue is
 	C_sign_extend: boolean := true; -- +24 LUT4
 	C_ll_sc: boolean := false;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00001fff"; -- 8 LUT4/bit
+	C_exceptions: boolean := false;
 
 	-- COP0 options
 	C_cop0_count: boolean := true;
@@ -138,13 +139,13 @@ begin
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
-	C_ll_sc => C_ll_sc,
+	C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
 	C_register_technology => C_register_technology,
 	-- debugging only
 	C_debug => false
     )
     port map (
-	clk => clk, reset => '0', intr => '0',
+	clk => clk, reset => '0', intr => "000000",
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,

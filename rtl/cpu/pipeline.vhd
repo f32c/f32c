@@ -26,7 +26,7 @@ entity pipeline is
 	C_sign_extend: boolean;
 	C_ll_sc: boolean;
 	C_movn_movz: boolean;
-	C_exceptions: boolean := true;
+	C_exceptions: boolean;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff";
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
 
@@ -602,8 +602,8 @@ begin
 			ID_EX_flush_i_line <= '0';
 			ID_EX_flush_d_line <= '0';
 		    end if;
-		    ID_EX_wait <= false; -- XXX move under C_exceptions
 		    if C_exceptions then
+			ID_EX_wait <= false;
 			ID_EX_bubble <= true;
 			ID_EX_cop0_write <= false;
 			ID_EX_exception <= false;
@@ -664,7 +664,6 @@ begin
 		    ID_EX_bpredict_score <= IF_ID_bpredict_score;
 		    ID_EX_bpredict_index <= IF_ID_bpredict_index;
 		    ID_EX_latency <= ID_latency;
-		    ID_EX_wait <= ID_wait; -- XXX move under C_exceptions
 		    if C_ll_sc then
 		        ID_EX_ll <= ID_ll;
 		        ID_EX_sc <= ID_sc;
@@ -674,6 +673,7 @@ begin
 			ID_EX_flush_d_line <= ID_flush_d_line;
 		    end if;
 		    if C_exceptions then
+			ID_EX_wait <= ID_wait;
 			ID_EX_bubble <= IF_ID_bubble;
 			ID_EX_cop0_write <= ID_cop0_write;
 			ID_EX_exception <= ID_exception;
@@ -703,12 +703,9 @@ begin
 		    end if;
 		end if;
 	    else
-		if C_cop0_count then
-		    ID_EX_wait <= ID_EX_wait and R_cop0_count(9 downto 2) /= 0;
-		    if R_cop0_EI = '1' and
-		      (R_cop0_intr and R_cop0_intr_mask) /= x"00" then
-			ID_EX_wait <= false;
-		    end if;
+		if C_exceptions and R_cop0_EI = '1'
+		  and (R_cop0_intr and R_cop0_intr_mask) /= x"00" then
+		    ID_EX_wait <= false;
 		end if;
 		if ID_running or EX_MEM_EIP then
 		    ID_EX_cancel_next <= false;
