@@ -110,9 +110,6 @@ loop:
 				OUTB(IO_LED, c ^ 0xf0);
 		} else
 			OUTB(IO_LED, (int) cp >> 8);
-#ifdef ROM_LOADER
-		__asm __volatile__("wait");
-#endif
 		INB(c, IO_SIO_STATUS);
 	} while ((c & SIO_RX_FULL) == 0);
 	INB(c, IO_SIO_BYTE);
