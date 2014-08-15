@@ -36,8 +36,11 @@
 
 	.bss
 
+/*
+ * _exception_regs MUST follow _exception_stack in memory!
+ */
 _exception_stack:	.space ISR_STACK_SIZE
-_exception_regs:	.space REGSIZE * 20
+_exception_regs:	.space REGSIZE * 21
 
 
 	.text
@@ -62,16 +65,6 @@ LEAF(_exception_start)
 	sw	a1, (5 * REGSIZE)(k1)
 	sw	a2, (6 * REGSIZE)(k1)
 	sw	a3, (7 * REGSIZE)(k1)
-#if defined(__mips_n32)
-	sw	a4, (8 * REGSIZE)(k1)
-	sw	a5, (9 * REGSIZE)(k1)
-	sw	a6, (10 * REGSIZE)(k1)
-	sw	a7, (11 * REGSIZE)(k1)
-	sw	t0, (12 * REGSIZE)(k1)
-	sw	t1, (13 * REGSIZE)(k1)
-	sw	t2, (14 * REGSIZE)(k1)
-	sw	t3, (15 * REGSIZE)(k1)
-#else
 	sw	t0, (8 * REGSIZE)(k1)
 	sw	t1, (9 * REGSIZE)(k1)
 	sw	t2, (10 * REGSIZE)(k1)
@@ -80,22 +73,23 @@ LEAF(_exception_start)
 	sw	t5, (13 * REGSIZE)(k1)
 	sw	t6, (14 * REGSIZE)(k1)
 	sw	t7, (15 * REGSIZE)(k1)
-#endif
 	sw	t8, (16 * REGSIZE)(k1)
 	sw	t9, (17 * REGSIZE)(k1)
 	sw	gp, (18 * REGSIZE)(k1)
 	sw	fp, (19 * REGSIZE)(k1)
 
-	/* Set up the exception stack */
-	la	sp, _exception_stack
-	addiu	sp, sp, ISR_STACK_SIZE
-
-	/* Pass masked IRQs to isr_dispatch() */
+	/* Mask IRQs */
 	mfc0	v0, $MIPS_COP_0_CAUSE
 	mfc0	v1, $MIPS_COP_0_STATUS
 	and	a0, v1, v0
 	srl	a0, a0, 8
 	andi	a0, a0, 0xff
+
+	/* Set up the exception stack */
+	sw	sp, (20 * REGSIZE)(k1)
+	move	sp, k1
+
+	/* isr_dispatch() does the rest */
 	jal	isr_dispatch
 
 	/* Restore register context */
@@ -107,16 +101,6 @@ LEAF(_exception_start)
 	lw	a1, (5 * REGSIZE)(k1)
 	lw	a2, (6 * REGSIZE)(k1)
 	lw	a3, (7 * REGSIZE)(k1)
-#if defined(__mips_n32)
-	lw	a4, (8 * REGSIZE)(k1)
-	lw	a5, (9 * REGSIZE)(k1)
-	lw	a6, (10 * REGSIZE)(k1)
-	lw	a7, (11 * REGSIZE)(k1)
-	lw	t0, (12 * REGSIZE)(k1)
-	lw	t1, (13 * REGSIZE)(k1)
-	lw	t2, (14 * REGSIZE)(k1)
-	lw	t3, (15 * REGSIZE)(k1)
-#else
 	lw	t0, (8 * REGSIZE)(k1)
 	lw	t1, (9 * REGSIZE)(k1)
 	lw	t2, (10 * REGSIZE)(k1)
@@ -125,11 +109,11 @@ LEAF(_exception_start)
 	lw	t5, (13 * REGSIZE)(k1)
 	lw	t6, (14 * REGSIZE)(k1)
 	lw	t7, (15 * REGSIZE)(k1)
-#endif
 	lw	t8, (16 * REGSIZE)(k1)
 	lw	t9, (17 * REGSIZE)(k1)
 	lw	gp, (18 * REGSIZE)(k1)
 	lw	fp, (19 * REGSIZE)(k1)
+	lw	sp, (20 * REGSIZE)(k1)
 
 	mfc0	k0, $MIPS_COP_0_EXC_PC
 	ei
