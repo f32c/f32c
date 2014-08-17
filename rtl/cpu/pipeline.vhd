@@ -341,8 +341,8 @@ begin
       else EX_MEM_branch_target when
 	IF_need_refetch or IF_ID_incomplete_branch
       else ID_jump_target when
-	ID_running and not ID_EX_cancel_next and
-	(ID_jump_cycle or ID_jump_register or ID_predict_taken)
+	ID_running and not ID_EX_cancel_next and not IF_ID_bubble and
+	(ID_jump_cycle or ID_predict_taken)
       else IF_PC + 1 when
 	ID_running
       else IF_ID_PC_next; -- i.e. do not change
@@ -366,8 +366,7 @@ begin
 		IF_ID_incomplete_branch <= false;
 	    end if;
 	    if IF_need_refetch or IF_ID_incomplete_branch then
-		IF_ID_instruction <= x"00000000";
-		IF_ID_bubble <= C_exceptions;
+		IF_ID_bubble <= true;
 	    elsif ID_running then
 		IF_ID_instruction <= IF_instruction;
 		IF_ID_bubble <= false;
@@ -380,13 +379,12 @@ begin
 		    end if;
 		    if IF_ID_EIP then
 			IF_ID_EIP <= false;
-			IF_ID_instruction <= x"00000000"; -- delay slot
+			IF_ID_bubble <= true; -- delay slot
 		    end if;
 		    IF_ID_EPC <= IF_PC;
 		end if;
 	    elsif ID_EX_branch_likely and not EX_take_branch then
-		IF_ID_instruction <= x"00000000";
-		IF_ID_bubble <= C_exceptions;
+		IF_ID_bubble <= true;
 	    end if;
 	end if;
     end process;
@@ -530,7 +528,7 @@ begin
 
     -- compute jump target
     ID_jump_target <= ID_reg1_data(31 downto 2) when ID_jump_register
-      else ID_branch_target when ID_predict_taken
+      else ID_branch_target when C_branch_prediction and ID_predict_taken
       else IF_ID_PC_4(31 downto 28) & IF_ID_instruction(25 downto 0);
 
     process(clk)
@@ -575,7 +573,7 @@ begin
 		    ID_EX_fwd_mem_alu_op2 <= false;
 		elsif not ID_running or (not ID_EX_branch_delay_follows and
 		  (MEM_take_branch or ID_EX_cancel_next)) or
-		  (C_exceptions and EX_MEM_EIP) then
+		  IF_ID_bubble or (C_exceptions and EX_MEM_EIP) then
 		    -- insert a bubble if branching or ID stage is stalled
 		    ID_EX_writeback_addr <= MIPS32_REG_ZERO; -- NOP
 		    ID_EX_mem_cycle <= '0';
@@ -658,8 +656,8 @@ begin
 		    ID_EX_mem_cycle <= ID_mem_cycle;
 		    ID_EX_branch_cycle <= ID_branch_cycle;
 		    ID_EX_branch_likely <= ID_branch_likely;
-		    ID_EX_branch_delay_follows <= ID_branch_cycle or
-		      ID_jump_cycle or ID_jump_register;
+		    ID_EX_branch_delay_follows <=
+		      ID_branch_cycle or ID_jump_cycle;
 		    ID_EX_predict_taken <= ID_predict_taken;
 		    ID_EX_bpredict_score <= IF_ID_bpredict_score;
 		    ID_EX_bpredict_index <= IF_ID_bpredict_index;
@@ -724,7 +722,7 @@ begin
     -- until the results from all instructions preceding a branch instruction
     -- are flushed or stored in the register file.
     -- XXX revisit!  jump cycles?
-    EX_running <= MEM_running and not ID_EX_wait and
+    EX_running <= MEM_running and not (C_exceptions and ID_EX_wait) and
       (C_result_forwarding or not ID_EX_branch_cycle
       or EX_MEM_writeback_addr = MIPS32_REG_ZERO);
 
@@ -869,7 +867,9 @@ begin
 		EX_MEM_EIP <= false;
 	    end if;
 
-	    R_cop0_intr(7 downto 2) <= intr;
+	    if C_exceptions then
+		R_cop0_intr(7 downto 2) <= intr;
+	    end if;
 
 	    if MEM_running and (MEM_cancel_EX or not EX_running or
 	      (C_exceptions and EX_MEM_EIP)) then
