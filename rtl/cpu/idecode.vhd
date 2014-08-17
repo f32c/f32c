@@ -204,15 +204,13 @@ begin
 		    di <= true;
 		end if;
 	    end if;
-	    if C_exceptions and
-	      instruction(25 downto 21) = MIPS32_COP0_MT then
+	    if C_exceptions and instruction(25 downto 21) = MIPS32_COP0_MT then
 		target_addr <= MIPS32_REG_ZERO;
 		cop0_write <= true;
 	    end if;
-	    if instruction(25) = '1' then
-		if instruction(5 downto 0) = MIPS32_COP0_CO_WAIT then
-		    cop0_wait <= true;
-		end if;
+	    if C_exceptions and instruction(25) = '1' and
+		instruction(5 downto 0) = MIPS32_COP0_CO_WAIT then
+		cop0_wait <= true;
 	    end if;
 	when MIPS32_OP_BEQL =>
 	    if C_branch_likely then
@@ -409,9 +407,11 @@ begin
 		op_major <= OP_MAJOR_SHIFT;
 		latency <= LATENCY_MEM;
 	    when MIPS32_SPEC_JR =>
+		jump_cycle <= true;
 		jump_register <= true;
 		read_alt <= true;
 	    when MIPS32_SPEC_JALR =>
+		jump_cycle <= true;
 		jump_register <= true;
 		read_alt <= true;
 	    when MIPS32_SPEC_MOVZ =>
@@ -440,15 +440,11 @@ begin
 		if C_exceptions then
 		    exception <= true;
 		    target_addr <= MIPS32_REG_K0;
-		else
-		    unsupported_instr <= true;
 		end if;
 	    when MIPS32_SPEC_BREAK =>
 		if C_exceptions then
 		    exception <= true;
 		    target_addr <= MIPS32_REG_K0;
-		else
-		    unsupported_instr <= true;
 		end if;
 	    when MIPS32_SPEC_MFHI =>
 		read_alt <= true;
