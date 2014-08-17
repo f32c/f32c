@@ -43,7 +43,7 @@ type sram_port_type is
 	write: std_logic;
     end record;
 
-type sram_port_array is array(0 to 15) of sram_port_type;
-type sram_ready_array is array(0 to 15) of std_logic;
+type sram_port_array is array(0 to 7) of sram_port_type;
+type sram_ready_array is array(0 to 7) of std_logic;
 
 end;
