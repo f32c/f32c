@@ -37,6 +37,7 @@
 #include <io.h>
 #include <sio.h>
 #include <lcd.h>
+#include <sys/isr.h>
 #include <fatfs/ff.h>
 #include <mips/asm.h>
 
@@ -49,16 +50,26 @@ int errno;
 uint32_t freq_khz, tsc_hi, tsc_lo;
 
 
-void
-tsc_update(void)
+int
+tsc_update(int irq)
 {
 	uint32_t tsc;
+
+	 /* Clear the 50 Hz framebuffer interrupt */
+	INB(tsc, IO_FB);
 
 	RDTSC(tsc);
 	if (tsc < tsc_lo)
 		tsc_hi++;
 	tsc_lo = tsc;
+
+	return (1);
 }
+
+
+struct isr_link fb_isr = {
+	.handler_fn = &tsc_update
+};
 
 
 void
@@ -68,7 +79,8 @@ setup_f32c(void)
 
 	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
 	freq_khz = ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1);
-	sio_idle_fn = tsc_update;
+	isr_register_handler(2, &fb_isr);
+	__asm("ei");
 }
 
 

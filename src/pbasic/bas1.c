@@ -497,7 +497,7 @@ execute()
 		}
 #endif
 #ifdef f32c
-		if(sio_getchar(0) == 3)
+		if (sio_getchar(0) == 3)
 			trap(0);
 #endif
 		savepoint=point;

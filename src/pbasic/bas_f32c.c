@@ -90,8 +90,6 @@ bas_sleep(void)
 		now = tsc_hi;
 		now = (now << 32) + tsc_lo;
 		c = sio_getchar(0);
-		if (now <= end)
-			__asm __volatile__("wait; wait; wait; wait;");
 	} while (c != 3 && now <= end);
 
 	if (c == 3)
