@@ -145,6 +145,14 @@ ifneq (,$(findstring lcd,$(F32C_LIBS)))
 endif
 
 
+ifdef _NEED_MUL
+	CFILES += ${BASE_DIR}lib/mul.c
+endif
+
+ifdef _NEED_DIV
+	CFILES += ${BASE_DIR}lib/div.c
+endif
+
 ifdef _NEED_ISR
 	ASFILES += ${BASE_DIR}lib/exception.S
 	CFILES += ${BASE_DIR}lib/isr.c
@@ -206,14 +214,6 @@ endif
 
 ifdef _NEED_RANDOM
 	CFILES += ${BASE_DIR}lib/random.c
-endif
-
-ifdef _NEED_MUL
-	CFILES += ${BASE_DIR}lib/mul.c
-endif
-
-ifdef _NEED_DIV
-	CFILES += ${BASE_DIR}lib/div.c
 endif
 
 ifdef _NEED_FLOAT
