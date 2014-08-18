@@ -384,7 +384,8 @@ begin
 		    IF_ID_EPC <= IF_PC;
 		end if;
 	    elsif ID_EX_branch_likely and not EX_take_branch then
-		IF_ID_bubble <= true;
+		IF_ID_bubble <= false; -- XXX should be true?
+		IF_ID_instruction <= x"00000000"; -- NOP, XXX, revisit!!!
 	    end if;
 	end if;
     end process;
