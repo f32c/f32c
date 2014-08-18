@@ -132,6 +132,7 @@ bas_exec(void)
 
 	__asm __volatile__(
 		".set noreorder;"
+		"mtc0 $0, $12;"		/* Mask and disable all interrupts */
 		"lui $4, 0x8000;"       /* stack mask */
 		"lui $5, 0x0010;"       /* top of the initial stack */
 		"and $29, %0, $4;"      /* clear low bits of the stack */
