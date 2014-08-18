@@ -893,7 +893,7 @@ begin
 		if C_debug then
 		    EX_MEM_instruction <= x"00000000";
 		end if;
-	    elsif MEM_running and EX_running and not MEM_cancel_EX then
+	    elsif MEM_running and EX_running then
 		EX_MEM_mem_data_out <= EX_from_shift;
 		EX_MEM_addsub_data <= EX_from_alu_addsubx(31 downto 0);
 		EX_MEM_mem_size <= ID_EX_mem_size;
