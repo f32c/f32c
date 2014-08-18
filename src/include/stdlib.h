@@ -47,17 +47,24 @@ void free(void *ptr);
 
 #define	alloca(sz) __builtin_alloca(sz)
 
-#define RAND_MAX        0x7fffffff
+#define	EXIT_FAILURE	1
+#define	EXIT_SUCCESS	0
 
-char    *getenv(const char *);
+#define	RAND_MAX	0x7fffffff
+
+char	*getenv(const char *);
 
 /* XXX exit() works only on CPU #0 - fixme! */
-static inline void __dead2
+_Noreturn static inline void
 exit(int x __unused)
 {
 
 	while (1) {
-		__asm __volatile ("jr $0; nop");
+		__asm __volatile (
+			".set noreorder\n"
+			"jr $0\n"
+			"mtc0 $0, $12"	/* Mask and disable all interrupts */
+		);
 	}
 }
 
