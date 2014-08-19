@@ -702,8 +702,9 @@ begin
 		    end if;
 		end if;
 	    else
-		if C_exceptions and R_cop0_EI = '1'
-		  and (R_cop0_intr and R_cop0_intr_mask) /= x"00" then
+		if C_exceptions and ID_EX_wait and (R_cop0_EI = '0' or
+		  (R_cop0_intr and R_cop0_intr_mask) /= x"00") then
+		    ID_EX_bubble <= true;
 		    ID_EX_wait <= false;
 		end if;
 		if ID_running or EX_MEM_EIP then
