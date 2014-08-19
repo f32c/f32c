@@ -43,7 +43,7 @@ isr_dispatch(int filtered_irqs)
 			continue;
 		serviced = 0;
 		SLIST_FOREACH(isrl, &isr_registry[irq], isr_le)
-			serviced += isrl->handler_fn(irq);
+			serviced += isrl->handler_fn();
 		if (serviced == 0) {
 			printf("Stray IRQ #%d, disabling.\n", irq);
 			disable_irq(irq);
