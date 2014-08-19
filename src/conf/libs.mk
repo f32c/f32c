@@ -168,7 +168,11 @@ ifdef _NEED_SETJMP
 endif
 
 ifdef _NEED_SIO
-	CFILES += ${BASE_DIR}lib/sio.c
+	ifdef _NEED_ISR
+		CFILES += ${BASE_DIR}lib/sio.c
+	else
+		CFILES += ${BASE_DIR}lib/sio_poll.c
+	endif
 endif
 
 ifdef _NEED_SIO_BAUD
