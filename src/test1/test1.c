@@ -35,57 +35,37 @@ int isr_cnt;
 
 
 static int
-test_isr(int irq)
+fb_isr(void)
 {
 	int i;
 
+	/* Clear the fb interrupt */
+	INB(i, IO_FB);
+
 	isr_cnt++;
-	OUTB(IO_LED, isr_cnt >> 10);
-
-	if (irq == 2) {
-		/* Clear the 50 Hz framebuffer interrupt */
-if ((isr_cnt & 0xfff) == 0)
-		INB(i, IO_FB);
-	}
-
-	if (irq == 3) {
-		/* Clear the sio interrupt */
-		INB(i, IO_SIO_STATUS);
-		if (i & SIO_RX_FULL) {
-			INB(i, IO_SIO_BYTE);
-			OUTB(IO_SIO_BYTE, i);
-		} else
-			return (0);
-	}
+	OUTB(IO_LED, isr_cnt);
 
 	return (1);
 }
 
 
-struct isr_link test_fb_isr = {
-	.handler_fn = &test_isr
-};
-
-struct isr_link test_sio_isr = {
-	.handler_fn = &test_isr
+struct isr_link fb_isr_l = {
+	.handler_fn = &fb_isr
 };
 
 
 void
 main(void)
 {
-	int i = 0;
+	int c = 0;
 
-	isr_register_handler(2, &test_fb_isr);
-	isr_register_handler(3, &test_sio_isr);
+	isr_register_handler(2, &fb_isr_l);
 	__asm("ei");
 
-	volatile int *a = &isr_cnt;
-	do {
-		if (*a > i) {
-			printf("\r%d", *a);
-			i = *a;
-		}
-		__asm("wait");
-	} while (1);
+	while (c != 3) {
+		c = sio_getchar(1);
+		if (c > 0)
+			sio_putchar(c, 1);
+	}
+	__asm("di");
 }
