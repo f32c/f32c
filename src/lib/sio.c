@@ -45,7 +45,7 @@ static uint8_t sio_tx_xoff;
 static uint8_t sio_isr_registered;
 
 
-__attribute__((optimize("-Os"))) int
+static __attribute__((optimize("-Os"))) int
 sio_rx_isr(void)
 {
 	int c, s;
