@@ -51,7 +51,7 @@ uint32_t freq_khz, tsc_hi, tsc_lo;
 
 
 int
-tsc_update(int irq)
+tsc_update(void)
 {
 	uint32_t tsc;
 
@@ -62,7 +62,6 @@ tsc_update(int irq)
 	if (tsc < tsc_lo)
 		tsc_hi++;
 	tsc_lo = tsc;
-
 	return (1);
 }
 
