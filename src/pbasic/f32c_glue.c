@@ -50,7 +50,7 @@ int errno;
 uint32_t freq_khz, tsc_hi, tsc_lo;
 
 
-int
+static int
 tsc_update(void)
 {
 	uint32_t tsc;
@@ -66,7 +66,7 @@ tsc_update(void)
 }
 
 
-struct isr_link fb_isr = {
+static struct isr_link fb_isr = {
 	.handler_fn = &tsc_update
 };
 
