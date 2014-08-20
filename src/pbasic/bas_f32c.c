@@ -90,7 +90,10 @@ bas_sleep(void)
 		now = tsc_hi;
 		now = (now << 32) + tsc_lo;
 		c = sio_getchar(0);
-	} while (c != 3 && now <= end);
+		if (now >= end)
+			break;
+		asm("wait"); /* Low-power mode */
+	} while (c != 3);
 
 	if (c == 3)
 		trapped = 1;
