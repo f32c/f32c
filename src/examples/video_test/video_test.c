@@ -18,7 +18,7 @@ static char buf[64];
 
 
 /*
- * tsc_update() executes in interrupt context, must not use MULT / MULTU! */
+ * tsc_update() executes in interrupt context, must not use MULT / MULTU!
  */
 static int
 tsc_update(void)
