@@ -17,9 +17,6 @@ static uint32_t freq_khz, tsc_hi, tsc_lo;
 static char buf[64];
 
 
-/*
- * tsc_update() executes in interrupt context, must not use MULT / MULTU!
- */
 static int
 tsc_update(void)
 {
@@ -33,6 +30,13 @@ tsc_update(void)
 		tsc_hi++;
 	tsc_lo = tsc;
 
+	/*
+	 * tsc_update() executes in interrupt context, and as such it
+	 * should not use MULT / MULTU, but fb_text() does.  In this
+	 * particular program, by pure luck this seems not to be a problem,
+	 * but in general, interrupt context routines should be more
+	 * carefully crafted to avoid messing up HI and LO registers.
+	 */
 	fb_text(180, 260, buf, -1, 0, 0);
 	fb_text(180, 140, buf, -1, 0, 0);
 
