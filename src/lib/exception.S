@@ -35,6 +35,7 @@
 
 
 	.bss
+	.align 4
 
 /*
  * _exception_regs MUST follow _exception_stack in memory!
