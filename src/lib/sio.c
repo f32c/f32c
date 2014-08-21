@@ -76,6 +76,7 @@ sio_register_isr(void)
 {
 
 	sio_isr_registered = 1;
+	asm("di");
 	isr_register_handler(3, &sio_isr_link);
 	asm("ei");
 }
@@ -108,9 +109,6 @@ __attribute__((optimize("-Os"))) int
 sio_putchar(int c, int blocking)
 {
 	int s, busy;
-
-	if (!sio_isr_registered)
-		sio_register_isr();
 
 	do {
 		INB(s, IO_SIO_STATUS);
