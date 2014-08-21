@@ -45,6 +45,10 @@ ifneq (,$(findstring div,$(F32C_LIBS)))
 	_NEED_DIV = YES
 endif
 
+ifneq (,$(findstring div64,$(F32C_LIBS)))
+	_NEED_DIV64 = YES
+endif
+
 ifneq (,$(findstring random,$(F32C_LIBS)))
 	_NEED_DIV = YES
 	_NEED_RANDOM = YES
@@ -151,6 +155,10 @@ endif
 
 ifdef _NEED_DIV
 	CFILES += ${BASE_DIR}lib/div.c
+endif
+
+ifdef _NEED_DIV64
+	CFILES += ${BASE_DIR}lib/div64.c
 endif
 
 ifdef _NEED_ISR
