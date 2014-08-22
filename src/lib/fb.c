@@ -668,13 +668,13 @@ fb_text(int x0, int y0, const char *cp, int fgcolor, int bgcolor, int scale)
 {
 	int c, x, y, xs, ys, off, dot;
 	uint8_t *bp;
-	int scale_x = (scale >> 16) & 0xff;
 	int scale_y = scale & 0xff;
+	int scale_x = (scale >> 16) & 0xff;
 
-	if (scale_x == 0)
-		scale_x = 1;
 	if (scale_y == 0)
 		scale_y = 1;
+	if (scale_x == 0)
+		scale_x = scale_y;
 
 next_char:
 	c = *cp++;
