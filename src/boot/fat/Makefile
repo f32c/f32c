@@ -46,6 +46,7 @@ image:	loader.bin
 	mcopy -i ${SPI_IMG_NAME} ../../pbasic/COPYRIGHT ::copyright.txt
 	groff -mandoc -Tascii ../../pbasic/docs/basic.1 > .bas.man
 	mcopy -i ${SPI_IMG_NAME} .bas.man ::readme.txt
+	mcopy -i ${SPI_IMG_NAME} ../../examples/video_test/vidtest.bin ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/demo.bas ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/snake.bas ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/tetris.bas ::demo
