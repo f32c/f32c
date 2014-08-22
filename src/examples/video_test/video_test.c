@@ -13,7 +13,7 @@
 #include <mips/asm.h>
 
 
-static uint32_t freq_khz, tsc_hi, tsc_lo;
+static uint32_t ink, freq_khz, tsc_hi, tsc_lo;
 static char buf[64];
 
 
@@ -29,6 +29,7 @@ tsc_update(void)
 	if (tsc < tsc_lo)
 		tsc_hi++;
 	tsc_lo = tsc;
+	OUTB(IO_LED, tsc >> 20);
 
 	/*
 	 * tsc_update() executes in interrupt context, and as such it
@@ -37,8 +38,9 @@ tsc_update(void)
 	 * but in general, interrupt context routines should be more
 	 * carefully crafted to avoid messing up HI and LO registers.
 	 */
-	fb_text(180, 260, buf, -1, 0, 0);
-	fb_text(180, 140, buf, -1, 0, 0);
+	fb_text(38, 228, buf, 0, -1, 3);
+	fb_text(35, 225, buf, ink, -1, 3);
+	fb_text(180, 260, buf, ink, 0, 0);
 
 	return (1);
 }
@@ -76,17 +78,18 @@ main(void)
 
 again:
 	fb_set_mode(mode);
+	ink = fb_rgb2pal(0xffffff);	/* white */
 
 	/* Lines */
-	for (rep = 0; rep < 10; rep++) {
+	for (rep = 0; rep < 20; rep++) {
 		start = ms_uptime();
-		for (i = 0; i < 20000; i++) {
+		for (i = 0; i < 10000; i++) {
 			tmp = random();
 			x0 = tmp & 0x1ff;
 			y0 = (tmp >> 8) & 0xff;
 			x1 = (tmp >> 16) & 0x1ff;
 			y1= (tmp >> 24) & 0xff;
-			fb_line(x0, y0, x1, y1, i);
+			fb_line(x0, y0, x1, y1, i ^ tmp);
 		}
 		end = ms_uptime();
 		tmp = i * 1000 / (end - start);
