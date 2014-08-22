@@ -95,6 +95,9 @@ again:
 		tmp = i * 1000 / (end - start);
 		sprintf(buf, " mode %d: %u lines / s ", mode, tmp);
 		printf("%s\n", buf);
+
+		if (sio_getchar(0) == 3)
+			exit(0); /* CTRL+C */
 	}
 
 	mode ^= 1;

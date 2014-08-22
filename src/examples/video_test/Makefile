@@ -1,5 +1,5 @@
 
-PROG = video_test
+PROG = vidtest
 
 CFILES = video_test.c
 
