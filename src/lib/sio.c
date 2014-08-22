@@ -109,10 +109,11 @@ __attribute__((optimize("-Os"))) int
 sio_putchar(int c, int blocking)
 {
 	int s, busy;
+	volatile uint8_t *xoff_ptr = &sio_tx_xoff;
 
 	do {
 		INB(s, IO_SIO_STATUS);
-		busy = (s & SIO_TX_BUSY) || sio_tx_xoff;
+		busy = (s & SIO_TX_BUSY) || *xoff_ptr;
 	} while (blocking && busy);
 
 	if (busy == 0)
