@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,6 +30,7 @@
 #include <sio.h>
 #include <spi.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include <fatfs/ff.h>
@@ -51,9 +52,49 @@ main(void)
 {
 	int fd, i, got;
 	int j, sum;
+	int man_id, dev_id;
 
 again:
 	printf("\nULX2S SPI Flash programer v0.1\n\n");
+
+	spi_start_transaction(SPI_PORT_FLASH);
+	spi_byte(SPI_PORT_FLASH, 0x90); /* RDID */
+	spi_byte(SPI_PORT_FLASH, 0);
+	spi_byte(SPI_PORT_FLASH, 0);
+	spi_byte(SPI_PORT_FLASH, 0);
+	man_id = spi_byte(SPI_PORT_FLASH, 0);
+	dev_id = spi_byte(SPI_PORT_FLASH, 0);
+	printf("SPI manufacturer ");
+	switch (man_id) {
+	case 0xbf:
+		printf("SST");
+		break;
+	case 0x01:
+		printf("Spansion");
+		break;
+	default:
+		printf("unknown");
+		break;
+	}
+	printf(" (ID 0x%02x), ", man_id);
+	printf("device ");
+	switch (dev_id) {
+	case 0x4a:
+		printf("SST25VF032B");
+		break;
+	case 0x15:
+		printf("S25FL132K");
+		break;
+	default:
+		printf("unknown");
+		break;
+	}
+	printf(" (ID 0x%02x)\n", dev_id);
+
+	spi_start_transaction(SPI_PORT_FLASH);
+	j = spi_byte(SPI_PORT_FLASH, 0x9f); /* JEDEC ID */
+	printf("device type %02x, ", spi_byte(SPI_PORT_FLASH, 0));
+	printf("capacity %02x\n", spi_byte(SPI_PORT_FLASH, 0));
 
 	if ((fd = open(IMAGE_NAME, 0)) < 0) {
 		printf("Nije pronadjena datoteka %s!\n", IMAGE_NAME);
