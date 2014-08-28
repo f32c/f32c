@@ -26,25 +26,25 @@
  */
 
 #include <fcntl.h>
-#include <io.h>
-#include <sio.h>
 #include <spi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <fatfs/ff.h>
 #include <fatfs/diskio.h>
 
+
+#define	SPI_MFG_SPANS   0x01
+#define	SPI_MFG_SST	0xbf
 
 #define	SECTOR_BURST	16
 #define	BLOCK_SIZE	4096 * SECTOR_BURST	/* buffer size */
 
 
-char *buf = (char *) 0x80080000;
+char *buf;
 
 
-#define IMAGE_NAME	"1:ulx2s_4m.img"
+#define	IMAGE_NAME	"d:ulx2s_4m.img"
 
 
 void
@@ -54,8 +54,14 @@ main(void)
 	int j, sum;
 	int man_id, dev_id;
 
+	buf = malloc(BLOCK_SIZE);
+	if (buf == NULL) {
+		printf("malloc() failed!\n");
+		exit(1);
+	}
+
 again:
-	printf("\nULX2S SPI Flash programer v0.1\n\n");
+	printf("\nULX2S SPI Flash programer v1.0\n\n");
 
 	spi_start_transaction(SPI_PORT_FLASH);
 	spi_byte(SPI_PORT_FLASH, 0x90); /* RDID */
@@ -66,10 +72,10 @@ again:
 	dev_id = spi_byte(SPI_PORT_FLASH, 0);
 	printf("SPI manufacturer ");
 	switch (man_id) {
-	case 0xbf:
+	case SPI_MFG_SST:
 		printf("SST");
 		break;
-	case 0x01:
+	case SPI_MFG_SPANS:
 		printf("Spansion");
 		break;
 	default:
@@ -118,8 +124,10 @@ again:
 	spi_start_transaction(SPI_PORT_FLASH);
 	spi_byte(SPI_PORT_FLASH, 0x06); /* WREN */
 
-	spi_start_transaction(SPI_PORT_FLASH);
-	spi_byte(SPI_PORT_FLASH, 0x60); /* Chip erase */
+	if (man_id != SPI_MFG_SPANS) {
+		spi_start_transaction(SPI_PORT_FLASH);
+		spi_byte(SPI_PORT_FLASH, 0x60); /* Chip erase */
+	}
 
 	spi_start_transaction(SPI_PORT_FLASH);
 	spi_byte(SPI_PORT_FLASH, 0x05); /* RDSR */

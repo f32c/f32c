@@ -3,7 +3,7 @@ PROG = fprog
 
 CFILES = fprog.c
 
-F32C_LIBS = printf fatfs
+F32C_LIBS = printf fatfs malloc
 
 # Omit floating point libs and printf parts
 CFLAGS += -DNO_PRINTF_FLOAT
