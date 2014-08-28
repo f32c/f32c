@@ -193,15 +193,12 @@ edit(ival promptlen, ival fi, ival fc)
 				c = 'E' - 64; /* CTRL-E, cursor to line end */
 				break;
 			case 126:
-				if (vt100_val == 3 && fi > promptlen) {
+				if (vt100_val == 3 && fi > promptlen)
 					/* Delete in the middle of the line */
 					c = 'D' - 64;
-					break;
-				}
 				if (vt100_val == 2)
-					/* Toggle insert / overwrite mode */
-					insert ^= 1;
-				continue;
+					c = 'O' - 64; /* CTRL-O, overwrite */
+				break;
 			default:
 				continue;
 			}
@@ -248,6 +245,11 @@ edit(ival promptlen, ival fi, ival fc)
 				/* Clear screen, cursor home */
 				write(0, "\x1b[2J\x1b[H", 7);
 			request_term_size();
+			continue;
+		}
+		if (c == 'O' - 64) {
+			/* Toggle insert / overwrite mode */
+			insert ^= 1;
 			continue;
 		}
 		if (c == 'P' - 64 || c == 'N' - 64) {
