@@ -6,167 +6,76 @@ loosely modelled around the historic Dartmouth BASIC.
 The interpreter operates either in interactive mode, which permits
 issuing individual commands or editing the current program, or
 in run mode, executing the program loaded into the main memory.
+
 At startup, the interpreter attempts to load and execute a program
 called
 .I autoexec.bas
-from the root directory of the on-board Flash drive.
+in the current directory on UNIX machines, or from the root directory
+of the on-board Flash drive when running on the ULX2S FPGA board.
 If the startup program can not be found or its execution terminates,
 an interactive line editor is invoked which accepts and processes
 all subsequent input from the controlling terminal.
 .SH INTERACTIVE MODE
 All lines prepended with a numeric line identifier are assumed
-to be a part of a program and will be stored into the main memory at a
+to be a part of a program and will be stored in the main memory at a
 position corresponding to the specified line number, and will not be
 further evaluated or interpreted until program execution begins.
 Conversely, lines entered without a line number will be interpreted and
-executed immediately.
+executed immediately.  The command line interpreter features a history
+buffer which permits repeating and editing previously issued commands.
+For proper operation the line editor requires a terminal emulator capable
+of correctly handling a small subset of VT-100 control sequences as well
+as encoding navigation keys using VT-100 control codes.
 
-Editing a line may be aborted at any time by pressing
-.IR <ctrl-C> .
-The contents of the line buffer may be redrawn by pressing
-.IR <ctrl-R>
-which can come handy particularly when editing lines longer then
-terminal width (usually 80 characters).
-Characters at the end of the line may be deleted
-by pressing either the delete key or
-.IR <ctrl-H> .
-Neither cursors nor other
-special keys, such as Home, End, PgUp or PgDown can be used in
-editing mode, since mapping of those keys varies from one terminal
-emulation program and terminal emulation mode to another.
+The following control keys may be used for navigation and line editing:
+.TP
+.BR <ctrl-C>
+Interrupts editing of the current line, discarding all input.
+.TP
+.BR <ctrl-R>
+Redraws the current line.  Handy when the terminal emulator does not
+correctly interpret all VT-100 control sequences.
+.TP
+.BR <ctrl-L>
+Clears the entire screen, then redraws the current line.
+.TP
+.BR <ctrl-P> \ or \ <cursor-up>
+Discards the current line and replaces it with the previous line from
+history buffer.
+.TP
+.BR <ctrl-N> \ or \ <cursor-down>
+Discards the current line and replaces it with the next line from
+history buffer.
+.TP
+.BR <ctrl-B> \ or \ <cursor-left>
+Moves cursor one position to the left.
+.TP
+.BR <ctrl-F> \ or \ <cursor-left>
+Moves cursor one position to the right.
+.TP
+.BR <ctrl-A> \ or \ <Home>
+Moves cursor to the first character.
+.TP
+.BR <ctrl-E> \ or \ <End>
+Moves cursor to the end of the line.
+.TP
+.BR <ctrl-H> \ or \ <Backspace>
+Deletes the character before current cursor position.
+.TP
+.BR <ctrl-D> \ or \ <Delete>
+Deletes the character at current cursor position.
+.TP
+.BR <ctrl-O> \ or \ <Insert>
+Toggles between insert and overwrite mode.
+.TP
+.BR <ctrl-I> \ or \ <Tab>
+Inserts space characters so that the new cursor position becomes aligned
+to multiples of four.
 
-.B Extend editing mode
-
-Pressing the
-.I <Esc>
-key enters the extended editing mode which mimics
-certain features of the "vi" editor commonly available on many 
-UNIX-like operating systems.  The extended mode also permits scrolling
-through the recent command history, thus repeating and editing
-previously issued commands.
-
-Once the extended editing mode is invoked, the editor operates
-either in editing command or in text entry mode.  The text entry mode 
-can be entered by issuing one of the appropriate commands (see below)
-and can be suspended by pressing the
-.I <Esc>
-key.
-Optionally, each command may be prepended by a numeric value defining
-how many times that command should be repeated.
-
-Navigation commands:
-.TP
-.B k
-Recall the previous line from the command history buffer.
-.TP
-.B j
-Recall the next line from the command history buffer.
-.TP
-.B h
-Move the cursor left one character.
-.TP
-.B l
-Move the cursor right one character.
-.TP
-.B b
-Move the cursor to the begining of the previous word.
-.TP
-.B w
-Move the cursor to the begining of the next word.
-.TP
-.B 0
-Move the cursor to the begining of the line.
-.TP
-.B $
-Move the cursor to the end of the line.
-.TP
-Text entry commands:
-.TP
-.B a
-Append new text,
-.I after
-the cursor.
-.TP
-.B i
-Insert new text,
-.I before
-the cursor.
-.TP
-.B A
-Append new text to the end of the line.
-.TP
-.B I
-Insert new text at the beginning of the line.
-.TP
-.B r
-Replace a single character at the current cursor position.
-.TP
-.B s
-Substitute a character at the current cursor position with new text.
-.TP
-.B C
-Clear text from the current cursor position to the end of the line
-and append new text.
-.TP
-.B R
-Replace text starting from the current cursor position.
-.TP
-Text deletion commands:
-.TP
-.B x
-Delete the character the cursor is on,
-and place the deleted character into an auxiliary clipboard buffer.
-.TP
-.B d<nav>
-Delete characters in the direction defined by the
-.I nav
-key, which may be any of
-.B h
-,
-.B l
-,
-.B b
-,
-.B w
-,
-.B 0
-or
-.B $
-(see above for the description of the navigation commands).
-Deleted character(s) are placed into an auxiliary clipboard buffer.
-.TP
-Copy and paste commands:
-.TP
-.B y<nav>
-Copy characters in the direction defined by the
-.I nav
-key into an auxiliary buffer.  The set of valid navigation keys
-is the same as for the
-.B d
-command.
-.TP
-.B p
-Paste the contents of the auxiliary buffer
-.I after
-the current cursor position.
-.TP
-.B P
-Paste the contents of the auxiliary buffer
-.I before
-the current cursor position.
-.TP
-Miscellaneous commands:
-.TP
-.B ~
-Reverse the case of the character at the current cursor position, and
-advance the cursor one character to the right.
-.TP
-.B u
-Undo the last change.
 
 .SH COMMANDS
 .TP
-.BR REM \ or \ ' \  {\ text\ }
+.BR REM \ or \ or \ ' \  {\ text\ }> 
 An arbitrary comment, ignored by the interpreter.
 .TP
 .B LET var = exp
@@ -945,12 +854,10 @@ data layout and access patterns.
 1 MByte of on-board static RAM is mapped by the SoC
 configuration to address 0x80000000, which is also the location where
 the BASIC interpreter is automatically loaded by the ROM bootloader.
-The linear video framebuffer
-region is mapped to 0x800b0000 and depending on the video pallete
-selected (8- or 16-bit) it occupies either 147456 or 294912 bytes
-of SRAM.
+The linear video framebuffer, if enabled, occupies either 147456 or
+294912 bytes of SRAM depending on the selected pallete (8- or 16-bit).
 
-All I/O ports are memory-mapped to a region starting at 0xff000000,
+All I/O ports are memory-mapped to a region starting at 0xffff8000,
 which permits I/O ports to be addressed using small negative integers.
 The following ports may be safely accessed from BASIC using PEEK and POKE:
 .TP
@@ -1180,7 +1087,7 @@ Ready
 .TP
  100! = 9.33262154e157
 .TP
-.IR "" "f: " <ctrl+C>
+.BR "" "f: "<ctrl+C>
 .TP
 breaking at line 10
 .TP
@@ -1216,5 +1123,5 @@ University College, London.  He released the source code to the
 Public Domain in 1986 and continued to further improve and maintain it
 until mid-1990's.
 In 2013. Marko Zec added features specific to the ULX2S FPGA board, such
-as file management and framebuffer routines, and rewrote most of this
-manual page.
+as file management and framebuffer routines, and rewrote the line editor
+as well as the most of this manual.
