@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,17 +32,24 @@
 
 
 #if defined(_FS_READONLY) && _FS_READONLY == 1
-#define DISKIO_RO
+#define	DISKIO_RO
 #endif
 
-#define FLASH_BLOCKLEN  4096
+#define	FLASH_BLOCKLEN	4096
 
-
-#define	SPI_CMD_WREN	0x06
-#define	SPI_CMD_WRDI	0x04
 #define	SPI_CMD_WRSR	0x01
+#define	SPI_CMD_PAGEWR	0x02
+#define	SPI_CMD_WRDI	0x04
 #define	SPI_CMD_RDSR	0x05
+#define	SPI_CMD_WREN	0x06
+#define	SPI_CMD_FASTRD	0x0b
+#define	SPI_CMD_ERSEC	0x20
 #define	SPI_CMD_EWSR	0x50
+#define	SPI_CMD_RDID	0x90
+#define	SPI_CMD_AAIWR	0xad
+
+#define	SPI_MFG_SPANS	0x01
+#define	SPI_MFG_SST	0xbf
 
 
 #ifndef DISKIO_RO
@@ -65,10 +72,10 @@ flash_erase_sectors(int start, int cnt)
 	for (; cnt > 0; cnt--, addr += FLASH_BLOCKLEN) {
 		/* Skip already blank sectors */
 		spi_start_transaction(SPI_PORT_FLASH);
-		spi_byte(SPI_PORT_FLASH, 0x0b); /* High-speed read */
+		spi_byte(SPI_PORT_FLASH, SPI_CMD_FASTRD);
 		spi_byte(SPI_PORT_FLASH, addr >> 16);
 		spi_byte(SPI_PORT_FLASH, addr >> 8);
-		spi_byte(SPI_PORT_FLASH, addr);
+		spi_byte(SPI_PORT_FLASH, 0);
 		spi_byte(SPI_PORT_FLASH, 0xff); /* dummy byte, ignored */
 		for (i = 0, sum = 0xff; i < FLASH_BLOCKLEN; i++)
 			sum &= spi_byte(SPI_PORT_FLASH, 0xff);
@@ -79,19 +86,29 @@ flash_erase_sectors(int start, int cnt)
 		spi_start_transaction(SPI_PORT_FLASH);
 		spi_byte(SPI_PORT_FLASH, SPI_CMD_WREN);
 		spi_start_transaction(SPI_PORT_FLASH);
-		spi_byte(SPI_PORT_FLASH, 0x20); /* 4K sector erase */
+		spi_byte(SPI_PORT_FLASH, SPI_CMD_ERSEC);
 		spi_byte(SPI_PORT_FLASH, addr >> 16);
 		spi_byte(SPI_PORT_FLASH, addr >> 8);
-		spi_byte(SPI_PORT_FLASH, addr);
+		spi_byte(SPI_PORT_FLASH, 0);
 		busy_wait();
 	}
 }
 
 
 static int
-flash_disk_write(const uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount)
+flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
+    uint32_t SectorCount)
 {
-	int addr, i, in_aai = 0;
+	int mfg_id, addr, i, j, in_aai = 0;
+
+	/* Get SPI chip ID */
+	spi_start_transaction(SPI_PORT_FLASH);
+	spi_byte(SPI_PORT_FLASH, SPI_CMD_RDID);
+	spi_byte(SPI_PORT_FLASH, 0);
+	spi_byte(SPI_PORT_FLASH, 0);
+	spi_byte(SPI_PORT_FLASH, 0);
+	mfg_id = spi_byte(SPI_PORT_FLASH, 0);
+	spi_byte(SPI_PORT_FLASH, 0);
 
 	/* Enable Write Status Register */
 	spi_start_transaction(SPI_PORT_FLASH);
@@ -105,28 +122,50 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount
 	/* Erase sectors */
 	flash_erase_sectors(SectorNumber, SectorCount);
 
-	/* Write enable */
-	spi_start_transaction(SPI_PORT_FLASH);
-	spi_byte(SPI_PORT_FLASH, SPI_CMD_WREN);
-
 	addr = SectorNumber * FLASH_BLOCKLEN;
-	for (; SectorCount > 0; SectorCount--, addr += FLASH_BLOCKLEN) {
-		for (i = 0; i < FLASH_BLOCKLEN; i += 2) {
+	for (; SectorCount > 0; SectorCount--)
+		switch (mfg_id) {
+		case SPI_MFG_SST:
+			/* Write enable */
 			spi_start_transaction(SPI_PORT_FLASH);
-			spi_byte(SPI_PORT_FLASH, 0xad); /* AAI write */
-			if (!in_aai) {
+			spi_byte(SPI_PORT_FLASH, SPI_CMD_WREN);
+
+			for (i = 0; i < FLASH_BLOCKLEN; i += 2) {
+				spi_start_transaction(SPI_PORT_FLASH);
+				spi_byte(SPI_PORT_FLASH, SPI_CMD_AAIWR);
+				if (!in_aai) {
+					spi_byte(SPI_PORT_FLASH, addr >> 16);
+					spi_byte(SPI_PORT_FLASH, addr >> 8);
+					spi_byte(SPI_PORT_FLASH, 0);
+				}
 				in_aai = 1;
+				spi_byte(SPI_PORT_FLASH, *buf++);
+				spi_byte(SPI_PORT_FLASH, *buf++);
+				busy_wait();
+			}
+			break;
+		case SPI_MFG_SPANS:
+			for (i = 0; i < FLASH_BLOCKLEN;
+			    i += 256, addr += 256) {
+				/* Write enable */
+				spi_start_transaction(SPI_PORT_FLASH);
+				spi_byte(SPI_PORT_FLASH, SPI_CMD_WREN);
+
+				spi_start_transaction(SPI_PORT_FLASH);
+				spi_byte(SPI_PORT_FLASH, SPI_CMD_PAGEWR);
 				spi_byte(SPI_PORT_FLASH, addr >> 16);
 				spi_byte(SPI_PORT_FLASH, addr >> 8);
-				spi_byte(SPI_PORT_FLASH, addr);
+				spi_byte(SPI_PORT_FLASH, 0);
+				for (j = 0; j < 256; j++)
+					spi_byte(SPI_PORT_FLASH, *buf++);
+				busy_wait();
 			}
-			spi_byte(SPI_PORT_FLASH, *buf++);
-			spi_byte(SPI_PORT_FLASH, *buf++);
-			busy_wait();
+			break;
+		default:
+			return (RES_ERROR);
 		}
-	}
 
-	/* Write disable - exit AAI write mode */
+	/* Write disable */
 	spi_start_transaction(SPI_PORT_FLASH);
 	spi_byte(SPI_PORT_FLASH, SPI_CMD_WRDI);
 	busy_wait();
@@ -152,10 +191,10 @@ flash_disk_read(uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount)
 
 	for (; SectorCount > 0; SectorCount--) {
 		spi_start_transaction(SPI_PORT_FLASH);
-		spi_byte(SPI_PORT_FLASH, 0x0b); /* High-speed read */
+		spi_byte(SPI_PORT_FLASH, SPI_CMD_FASTRD);
 		spi_byte(SPI_PORT_FLASH, addr >> 16);
 		spi_byte(SPI_PORT_FLASH, addr >> 8);
-		spi_byte(SPI_PORT_FLASH, addr);
+		spi_byte(SPI_PORT_FLASH, 0);
 		spi_byte(SPI_PORT_FLASH, 0xff); /* dummy byte, ignored */
 		spi_block_in(SPI_PORT_FLASH, buf, SectorCount * FLASH_BLOCKLEN);
 	}
@@ -171,7 +210,7 @@ disk_initialize(BYTE drive)
 	case 0:
 		return (RES_OK);
 	case 1:
-		return(sdcard_disk_initialize());
+		return (sdcard_disk_initialize());
 	default:
 		return (RES_ERROR);
 	}
@@ -186,7 +225,7 @@ disk_status(BYTE drive)
 	case 0:
 		return (RES_OK);
 	case 1:
-		return(sdcard_disk_status());
+		return (sdcard_disk_status());
 	default:
 		return (RES_ERROR);
 	}
@@ -199,9 +238,9 @@ disk_read(BYTE drive, BYTE* Buffer, DWORD SectorNumber, BYTE SectorCount)
 
 	switch (drive) {
 	case 0:
-		return(flash_disk_read(Buffer, SectorNumber, SectorCount));
+		return (flash_disk_read(Buffer, SectorNumber, SectorCount));
 	case 1:
-		return(sdcard_disk_read(Buffer, SectorNumber, SectorCount));
+		return (sdcard_disk_read(Buffer, SectorNumber, SectorCount));
 	default:
 		return (RES_ERROR);
 	}
@@ -216,9 +255,9 @@ disk_write(BYTE drive, const BYTE* Buffer, DWORD SectorNumber, BYTE SectorCount)
 
 	switch (drive) {
 	case 0:
-		return(flash_disk_write(buf, SectorNumber, SectorCount));
+		return (flash_disk_write(buf, SectorNumber, SectorCount));
 	case 1:
-		return(sdcard_disk_write(buf, SectorNumber, SectorCount));
+		return (sdcard_disk_write(buf, SectorNumber, SectorCount));
 	default:
 		return (RES_ERROR);
 	}
