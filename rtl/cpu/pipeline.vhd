@@ -15,6 +15,7 @@ use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
 use work.f32c_pack.all;
+use work.mips_pack.all;
 
 
 entity pipeline is
@@ -412,7 +413,7 @@ begin
     --
 	
     -- instruction decoder
-    idecode: entity work.idecode
+    idecode: entity work.idecode_mips
     generic map (
 	C_cache => C_cache,
 	C_ll_sc => C_ll_sc,
