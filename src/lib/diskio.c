@@ -68,17 +68,17 @@ flash_erase_sectors(int start, int cnt)
 {
 	int addr, sum, i;
 
-	addr = start * FLASH_BLOCKLEN;
-	for (; cnt > 0; cnt--, addr += FLASH_BLOCKLEN) {
+	addr = start * (FLASH_BLOCKLEN / 256);
+	for (; cnt > 0; cnt--, addr += (FLASH_BLOCKLEN / 256)) {
 		/* Skip already blank sectors */
 		spi_start_transaction(SPI_PORT_FLASH);
 		spi_byte(SPI_PORT_FLASH, SPI_CMD_FASTRD);
-		spi_byte(SPI_PORT_FLASH, addr >> 16);
 		spi_byte(SPI_PORT_FLASH, addr >> 8);
+		spi_byte(SPI_PORT_FLASH, addr);
 		spi_byte(SPI_PORT_FLASH, 0);
-		spi_byte(SPI_PORT_FLASH, 0xff); /* dummy byte, ignored */
+		spi_byte(SPI_PORT_FLASH, 0); /* dummy byte, ignored */
 		for (i = 0, sum = 0xff; i < FLASH_BLOCKLEN; i++)
-			sum &= spi_byte(SPI_PORT_FLASH, 0xff);
+			sum &= spi_byte(SPI_PORT_FLASH, 0);
 		if (sum == 0xff)
 			continue;
 
@@ -87,8 +87,8 @@ flash_erase_sectors(int start, int cnt)
 		spi_byte(SPI_PORT_FLASH, SPI_CMD_WREN);
 		spi_start_transaction(SPI_PORT_FLASH);
 		spi_byte(SPI_PORT_FLASH, SPI_CMD_ERSEC);
-		spi_byte(SPI_PORT_FLASH, addr >> 16);
 		spi_byte(SPI_PORT_FLASH, addr >> 8);
+		spi_byte(SPI_PORT_FLASH, addr);
 		spi_byte(SPI_PORT_FLASH, 0);
 		busy_wait();
 	}
@@ -122,7 +122,7 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 	/* Erase sectors */
 	flash_erase_sectors(SectorNumber, SectorCount);
 
-	addr = SectorNumber * FLASH_BLOCKLEN;
+	addr = SectorNumber * (FLASH_BLOCKLEN / 256);
 	for (; SectorCount > 0; SectorCount--)
 		switch (mfg_id) {
 		case SPI_MFG_SST:
@@ -134,8 +134,8 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 				spi_start_transaction(SPI_PORT_FLASH);
 				spi_byte(SPI_PORT_FLASH, SPI_CMD_AAIWR);
 				if (!in_aai) {
-					spi_byte(SPI_PORT_FLASH, addr >> 16);
 					spi_byte(SPI_PORT_FLASH, addr >> 8);
+					spi_byte(SPI_PORT_FLASH, addr);
 					spi_byte(SPI_PORT_FLASH, 0);
 				}
 				in_aai = 1;
@@ -145,16 +145,15 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 			}
 			break;
 		case SPI_MFG_SPANS:
-			for (i = 0; i < FLASH_BLOCKLEN;
-			    i += 256, addr += 256) {
+			for (i = 0; i < FLASH_BLOCKLEN; i += 256, addr++) {
 				/* Write enable */
 				spi_start_transaction(SPI_PORT_FLASH);
 				spi_byte(SPI_PORT_FLASH, SPI_CMD_WREN);
 
 				spi_start_transaction(SPI_PORT_FLASH);
 				spi_byte(SPI_PORT_FLASH, SPI_CMD_PAGEWR);
-				spi_byte(SPI_PORT_FLASH, addr >> 16);
 				spi_byte(SPI_PORT_FLASH, addr >> 8);
+				spi_byte(SPI_PORT_FLASH, addr);
 				spi_byte(SPI_PORT_FLASH, 0);
 				for (j = 0; j < 256; j++)
 					spi_byte(SPI_PORT_FLASH, *buf++);
@@ -187,15 +186,15 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 static int
 flash_disk_read(uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount)
 {
-	int addr = SectorNumber * FLASH_BLOCKLEN;
+	int addr = SectorNumber * (FLASH_BLOCKLEN / 256);
 
 	for (; SectorCount > 0; SectorCount--) {
 		spi_start_transaction(SPI_PORT_FLASH);
 		spi_byte(SPI_PORT_FLASH, SPI_CMD_FASTRD);
-		spi_byte(SPI_PORT_FLASH, addr >> 16);
 		spi_byte(SPI_PORT_FLASH, addr >> 8);
+		spi_byte(SPI_PORT_FLASH, addr);
 		spi_byte(SPI_PORT_FLASH, 0);
-		spi_byte(SPI_PORT_FLASH, 0xff); /* dummy byte, ignored */
+		spi_byte(SPI_PORT_FLASH, 0); /* dummy byte, ignored */
 		spi_block_in(SPI_PORT_FLASH, buf, SectorCount * FLASH_BLOCKLEN);
 	}
 	return (RES_OK);
