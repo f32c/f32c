@@ -133,7 +133,7 @@ include ${LIBS_MK}
 # Automatically include start.S in list of ASFILES
 #
 
-ASFILES += ${BASE_DIR}lib/start.S
+ASFILES += ${BASE_DIR}lib/mips/start.S
 
 #
 # All object files go to OBJDIR
