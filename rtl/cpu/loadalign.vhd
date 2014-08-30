@@ -1,5 +1,5 @@
 --
--- Copyright 2011 - 2014 Marko Zec, University of Zagreb.        
+-- Copyright 2011 - 2014 Marko Zec, University of Zagreb.
 --
 -- Neither this file nor any parts of it may be used unless an explicit 
 -- permission is obtained from the author.  The file may not be copied,
