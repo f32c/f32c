@@ -162,7 +162,7 @@ ifdef _NEED_DIV64
 endif
 
 ifdef _NEED_ISR
-	ASFILES += ${BASE_DIR}lib/exception.S
+	ASFILES += ${BASE_DIR}lib/mips/exception.S
 	CFILES += ${BASE_DIR}lib/isr.c
 endif
 
@@ -172,7 +172,7 @@ endif
 
 ifdef _NEED_SETJMP
 	CFILES += ${BASE_DIR}lib/setjmperr.c
-	ASFILES += ${BASE_DIR}lib/setjmp.S
+	ASFILES += ${BASE_DIR}lib/mips/setjmp.S
 endif
 
 ifdef _NEED_SIO
