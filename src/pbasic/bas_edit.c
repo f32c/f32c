@@ -175,7 +175,7 @@ edit(ival promptlen, ival fi, ival fc)
 				}
 				continue;
 			case 'D':
-				c = 'B' - 64; /* CTRL-B, cursor right */
+				c = 'B' - 64; /* CTRL-B, cursor left */
 				break;
 			case 'C':
 				c = 'F' - 64; /* CTRL-F, cursor right */
