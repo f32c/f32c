@@ -33,17 +33,18 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity glue is
     generic(
 	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 170;
+	C_clk_freq: integer := 130;
 
 	-- ISA options
 	C_big_endian: boolean := false;
-	C_mult_enable: boolean := true;
+	C_mult_enable: boolean := false;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
 	C_ll_sc: boolean := false;
-	C_PC_mask: std_logic_vector(31 downto 0) := x"00007fff";
-    
+	C_PC_mask: std_logic_vector(31 downto 0) := x"00001fff";
+
 	-- COP0 options
+	C_exceptions: boolean := false;
 	C_cop0_count: boolean := true;
 	C_cop0_config: boolean := true;
 
@@ -59,7 +60,7 @@ entity glue is
 	C_movn_movz: boolean := false; -- true: +16 LUT4, -DMIPS, incomplete
 
 	-- SoC configuration options
-	C_mem_size: integer := 32;
+	C_mem_size: integer := 16;
 	C_sio: boolean := true
     );
     port (
@@ -116,13 +117,13 @@ begin
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
-	C_ll_sc => C_ll_sc,
+	C_exceptions => C_exceptions, C_ll_sc => C_ll_sc,
 	C_register_technology => C_register_technology,
 	-- debugging only
 	C_debug => false
     )
     port map (
-	clk => clk, reset => '0', intr => '0',
+	clk => clk, reset => '0', intr => "000000",
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,
