@@ -577,7 +577,7 @@ begin
 		  (MEM_take_branch or ID_EX_cancel_next)) or
 		  IF_ID_bubble or (C_exceptions and EX_MEM_EIP) then
 		    -- insert a bubble if branching or ID stage is stalled
-		    ID_EX_writeback_addr <= MIPS32_REG_ZERO; -- NOP
+		    ID_EX_writeback_addr <= MI32_REG_ZERO; -- NOP
 		    ID_EX_mem_cycle <= '0';
 		    ID_EX_mem_write <= '0';
 		    ID_EX_multicycle_lh_lb <= false;
@@ -727,7 +727,7 @@ begin
     -- XXX revisit!  jump cycles?
     EX_running <= MEM_running and not (C_exceptions and ID_EX_wait) and
       (C_result_forwarding or not ID_EX_branch_cycle
-      or EX_MEM_writeback_addr = MIPS32_REG_ZERO);
+      or EX_MEM_writeback_addr = MI32_REG_ZERO);
 
     -- forward the results from later stages
     G_EX_forwarding:
@@ -817,13 +817,13 @@ begin
     -- COP0 outbound mux
     with ID_EX_cop0_addr select
     EX_from_cop0 <=
-      R_cop0_count when MIPS_COP0_COUNT,
+      R_cop0_count when MI32_COP0_COUNT,
       "----------------" & R_cop0_intr_mask & "-------" & R_cop0_EI
-	when MIPS_COP0_STATUS,
+	when MI32_COP0_STATUS,
       R_cop0_BD & "---------------" & R_cop0_intr & "-" & R_cop0_EX_code & "--"
-	when MIPS_COP0_CAUSE,
-      R_cop0_EPC & "00" when MIPS_COP0_EXC_PC,
-      R_cop0_config when MIPS_COP0_CONFIG,
+	when MI32_COP0_CAUSE,
+      R_cop0_EPC & "00" when MI32_COP0_EXC_PC,
+      R_cop0_config when MI32_COP0_CONFIG,
       (others => '-') when others;
 
     -- branch or not?
@@ -881,7 +881,7 @@ begin
 		EX_MEM_branch_taken <= false;
 		EX_MEM_branch_cycle <= false;
 		EX_MEM_branch_likely <= false;
-		EX_MEM_writeback_addr <= MIPS32_REG_ZERO;
+		EX_MEM_writeback_addr <= MI32_REG_ZERO;
 		EX_MEM_mem_cycle <= '0';
 		EX_MEM_latency <= '0';
 		if C_ll_sc then
@@ -920,7 +920,7 @@ begin
 		    if (EX_eff_reg2 = x"00000000") = ID_EX_cmov_condition then
 			EX_MEM_writeback_addr <= ID_EX_writeback_addr;
 		    else
-			EX_MEM_writeback_addr <= MIPS32_REG_ZERO;
+			EX_MEM_writeback_addr <= MI32_REG_ZERO;
 		    end if;
 		else
 		    EX_MEM_writeback_addr <= ID_EX_writeback_addr;
@@ -933,20 +933,20 @@ begin
 			R_cop0_EI <= '0';
 		    end if;
 		    if ID_EX_cop0_write then
-			if ID_EX_cop0_addr = MIPS_COP0_STATUS then
+			if ID_EX_cop0_addr = MI32_COP0_STATUS then
 			    R_cop0_intr_mask <= EX_eff_reg2(15 downto 8);
 			    R_cop0_EI <= EX_eff_reg2(0);
 			end if;
-			if ID_EX_cop0_addr = MIPS_COP0_CAUSE then
+			if ID_EX_cop0_addr = MI32_COP0_CAUSE then
 			    R_cop0_BD <= EX_eff_reg2(31);
 			    R_cop0_intr(1 downto 0) <= EX_eff_reg2(9 downto 8);
 			    R_cop0_EX_code <= EX_eff_reg2(6 downto 2);
 			end if;
-			if ID_EX_cop0_addr = MIPS_COP0_EXC_PC then
+			if ID_EX_cop0_addr = MI32_COP0_EXC_PC then
 			    R_cop0_EPC <= EX_eff_reg2(31 downto 2)
 			      and C_PC_mask(31 downto 2);
 			end if;
-			if ID_EX_cop0_addr = MIPS_COP0_EBASE then
+			if ID_EX_cop0_addr = MI32_COP0_EBASE then
 			    R_cop0_EBASE <= EX_eff_reg2(31 downto 2)
 			      and C_PC_mask(31 downto 2);
 			end if;
@@ -967,7 +967,7 @@ begin
 		    EX_MEM_op_major <= OP_MAJOR_ALT;
 		    EX_MEM_logic_cycle <= '1';
 		    EX_MEM_logic_data <= R_cop0_EBASE & "00";
-		    EX_MEM_writeback_addr <= MIPS32_REG_K0;
+		    EX_MEM_writeback_addr <= MI32_REG_K0;
 		    -- nullify the rest of the interrupted instruction
 		    EX_MEM_take_branch <= false;
 		    EX_MEM_branch_taken <= false;
@@ -1117,7 +1117,7 @@ begin
 		MEM_WB_writeback_addr <= EX_MEM_writeback_addr;
 		MEM_WB_multicycle_lh_lb <= not C_load_aligner
 		  and EX_MEM_multicycle_lh_lb;
-		if EX_MEM_writeback_addr = MIPS32_REG_ZERO then
+		if EX_MEM_writeback_addr = MI32_REG_ZERO then
 		    MEM_WB_write_enable <= '0';
 		else
 		    MEM_WB_write_enable <= '1';
