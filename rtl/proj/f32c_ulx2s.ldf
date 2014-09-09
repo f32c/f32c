@@ -3,13 +3,16 @@
     <Options/>
     <Implementation title="f32c_ulx2s" dir="f32c_ulx2s" description="f32c_ulx2s" synthesis="synplify" default_strategy="Timing">
         <Options top="glue"/>
-        <Source name="../cpu/f32c_defs.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../cpu/defs_f32c.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../cpu/mips_defs.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../cpu/defs_mi32.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../cpu/idecode_mips.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../cpu/defs_rv32.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../cpu/idecode_mi32.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../cpu/alu.vhd" type="VHDL" type_short="VHDL">
