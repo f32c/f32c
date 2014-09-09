@@ -12,7 +12,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-package mips_pack is
+package mi32_pack is
 
 -- Main MI32 opcodes
 constant MI32_OP_SPECIAL:	std_logic_vector := "000000";

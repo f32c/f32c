@@ -14,10 +14,10 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
 use work.f32c_pack.all;
-use work.mips_pack.all;
+use work.mi32_pack.all;
 
 
-entity idecode_mips is
+entity idecode_mi32 is
     generic(
 	C_branch_likely: boolean;
 	C_sign_extend: boolean;
@@ -54,9 +54,9 @@ entity idecode_mips is
 	exception, di, ei: out boolean;
 	cop0_write, cop0_wait: out boolean
     );  
-end idecode_mips;
+end idecode_mi32;
 
-architecture Behavioral of idecode_mips is
+architecture Behavioral of idecode_mi32 is
     signal unsupported_instr: boolean; -- currently unused
 begin
 
