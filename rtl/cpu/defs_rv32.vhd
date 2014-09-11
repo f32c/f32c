@@ -31,6 +31,10 @@ constant RV32I_OP_SYS:		std_logic_vector := "1110011";
 constant RV64I_OP_REG_IMM:	std_logic_vector := "0011011";
 constant RV64I_OP_REG_REG:	std_logic_vector := "0111011";
 
+-- Specialized registers: zero, exception slots, return address
+constant RV32_REG_ZERO:		std_logic_vector := "00000";
+constant RV32_REG_RA:		std_logic_vector := "00001";
+
 -- Branch conditions
 constant RV32_COND_EQ:		std_logic_vector := "000";
 constant RV32_COND_NE:		std_logic_vector := "001";

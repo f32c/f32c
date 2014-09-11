@@ -14,6 +14,10 @@ use ieee.std_logic_1164.all;
 
 package f32c_pack is
 
+-- ISA / Architecture
+constant ARCH_MI32:		integer := 0;
+constant ARCH_RV32:		integer := 1;
+
 --
 -- f32c internal codes
 --

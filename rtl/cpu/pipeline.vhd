@@ -20,6 +20,9 @@ use work.mi32_pack.all;
 
 entity pipeline is
     generic (
+	-- Architecture
+	C_arch: integer := ARCH_MI32;
+
 	-- ISA options
 	C_big_endian: boolean;
 	C_mult_enable: boolean;
@@ -412,7 +415,9 @@ begin
     -- =======================================================
     --
 	
-    -- instruction decoder
+    -- MI32 instruction decoder
+    G_idecode_mi32:
+    if C_arch = ARCH_MI32 generate
     idecode: entity work.idecode_mi32
     generic map (
 	C_cache => C_cache,
@@ -444,6 +449,37 @@ begin
 	exception => ID_exception, di => ID_di, ei => ID_ei,
 	flush_i_line => ID_flush_i_line, flush_d_line => ID_flush_d_line
     );
+    end generate;
+
+    -- RV32 instruction decoder
+    G_idecode_rv32:
+    if C_arch = ARCH_RV32 generate
+    idecode: entity work.idecode_rv32
+    generic map (
+	C_cache => C_cache,
+	C_ll_sc => C_ll_sc,
+	C_exceptions => C_exceptions
+    )
+    port map (
+	instruction => IF_ID_instruction,
+	reg1_addr => ID_reg1_addr, reg2_addr => ID_reg2_addr,
+	reg1_zero => ID_reg1_zero, reg2_zero => ID_reg2_zero,
+	immediate_value => ID_immediate, use_immediate => ID_use_immediate,
+	sign_extension => ID_sign_extension,
+	read_alt => ID_read_alt, alt_sel => ID_alt_sel,
+	target_addr => ID_writeback_addr, op_major => ID_op_major,
+	op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
+	branch_cycle => ID_branch_cycle, jump_register => ID_jump_register,
+	branch_condition => ID_branch_condition, sign_extend => ID_sign_extend,
+	mem_write => ID_mem_write, mem_size => ID_mem_size,
+	mem_read_sign_extend => ID_mem_read_sign_extend,
+	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
+	ll => ID_ll, sc => ID_sc,
+	cop0_wait => ID_wait, cop0_write => ID_cop0_write,
+	exception => ID_exception, di => ID_di, ei => ID_ei,
+	flush_i_line => ID_flush_i_line, flush_d_line => ID_flush_d_line
+    );
+    end generate;
 
     -- three- or four-ported register file: 2(3) async reads, 1 sync write
     regfile: entity work.reg1w2r
