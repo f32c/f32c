@@ -29,7 +29,7 @@
 #define	_IO_H_
 
 
-#define	IO_BASE		-32768
+#define	IO_BASE		-256
 
 #define	IO_ADDR(a)	(IO_BASE + (a))
 
@@ -129,6 +129,7 @@
 
 /* I/O macros */
 
+#ifdef __mips__
 #define	OUTB(port, data)					   \
 	__asm __volatile ("sb %0, %1($0)"	/* IO_BASE = 0xf* */ \
 		:				/* outputs */	   \
@@ -158,6 +159,40 @@
 	__asm __volatile ("lw %0, %1($0)"	/* IO_BASE = 0xf* */ \
 		: "=r" (data)			/* outputs */	   \
 		: "i" (port))			/* inputs */
+#endif /* __mips__ */
+
+
+#ifdef __riscv__
+#define	OUTB(port, data)					   \
+	__asm __volatile ("sb %0, %1(zero)"	/* IO_BASE = 0xf* */ \
+		:				/* outputs */	   \
+		: "r" (data), "i" (port))	/* inputs */
+
+#define	OUTH(port, data)					   \
+	__asm __volatile ("sh %0, %1(zero)"	/* IO_BASE = 0xf* */ \
+		:				/* outputs */	   \
+		: "r" (data), "i" (port))	/* inputs */
+
+#define	OUTW(port, data)					   \
+	__asm __volatile ("sw %0, %1(zero)"	/* IO_BASE = 0xf* */ \
+		:				/* outputs */	   \
+		: "r" (data), "i" (port))	/* inputs */
+
+#define	INB(data, port)						   \
+	__asm __volatile ("lb %0, %1(zero)"	/* IO_BASE = 0xf* */ \
+		: "=r" (data)			/* outputs */	   \
+		: "i" (port))			/* inputs */
+
+#define	INH(data, port)						   \
+	__asm __volatile ("lh %0, %1(zero)"	/* IO_BASE = 0xf* */ \
+		: "=r" (data)			/* outputs */	   \
+		: "i" (port))			/* inputs */
+
+#define	INW(data, port)						   \
+	__asm __volatile ("lw %0, %1(zero)"	/* IO_BASE = 0xf* */ \
+		: "=r" (data)			/* outputs */	   \
+		: "i" (port))			/* inputs */
+#endif /* __riscv__ */
 
 
 /*
