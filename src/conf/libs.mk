@@ -41,6 +41,10 @@ ifneq (,$(findstring -mno-mul,$(MK_CFLAGS)))
 	_NEED_MUL = YES
 endif
 
+ifeq ($(ARCH),riscv)
+	_NEED_MUL = YES
+endif
+
 ifneq (,$(findstring div,$(F32C_LIBS)))
 	_NEED_DIV = YES
 endif

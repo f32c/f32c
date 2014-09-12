@@ -42,6 +42,16 @@ MK_STDINC = -include sys/param.h
 ifeq (${ARCH},riscv)
 	# RISCV-specific flags
 
+	# Generate rv32 code (default is rv64)
+	MK_CFLAGS += -m32
+	MK_LDFLAGS += -melf32lriscv
+
+	# f32c has no FP hardware
+	MK_CFLAGS += -msoft-float
+
+	# f32c/riscv has no mul / div hardware (default is mrvm)
+	MK_CFLAGS += -mno-rvm
+
 else
 	# MIPS-specific flags
 
