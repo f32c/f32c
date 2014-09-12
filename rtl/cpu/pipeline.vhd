@@ -26,10 +26,10 @@ entity pipeline is
 	-- ISA options
 	C_big_endian: boolean;
 	C_mult_enable: boolean;
-	C_branch_likely: boolean;
-	C_sign_extend: boolean;
+	C_branch_likely: boolean;	-- MI32 only
+	C_sign_extend: boolean;		-- MI32 only
+	C_movn_movz: boolean;		-- MI32 only
 	C_ll_sc: boolean;
-	C_movn_movz: boolean;
 	C_exceptions: boolean;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff";
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
