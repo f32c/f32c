@@ -190,6 +190,7 @@ begin
 	    ignore_reg2 <= true;
 	when MI32_OP_LUI =>
 	    use_immediate <= true;
+	    op_minor <= OP_MINOR_OR;
 	    immediate_value <= instruction(15 downto 0) & x"0000";
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
