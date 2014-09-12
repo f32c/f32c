@@ -1,6 +1,6 @@
 #!/usr/local/bin/tclsh8.6
 #
-# Copyright 2010-2014 Marko Zec, University of Zagreb
+# Copyright 2010 - 2014 Marko Zec, University of Zagreb
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -27,12 +27,16 @@
 #
 
 
-if {$argc != 1} {
-    puts "Usage: isa_check.tcl ifile"
+if {$argc != 2} {
+    puts "Usage: isa_check.tcl arch ifile"
     exit 1
 }
 
-set elffile [open "| mips-elf-objdump -s [lindex $argv 0]"]
+set arch [lindex $argv 0]
+set objfile [lindex $argv 1]
+set objdump "[set arch]-elf-objdump"
+
+set elffile [open "| $objdump -s $objfile"]
 set linenum 0
 set section undefined
 set endian none
@@ -66,24 +70,24 @@ while {[eof $elffile] == 0} {
 	}
     } elseif {$endian == "none" &&
 	[lrange $line 1 2] == "file format"} {
-	if {[lindex $line 3] == "elf32-littlemips"} {
+	if {[lindex $line 3] == "elf32-little[set arch]"} {
 	    set endian little
-	} elseif {[lindex $line 3] == "elf32-bigmips"} {
+	} elseif {[lindex $line 3] == "elf32-big[set arch]"} {
 	    set endian big
-        }
+	}
     }
 }
 close $elffile
 
 array set instr_map ""
-set elffile [open "| mips-elf-objdump -d [lindex $argv 0]"]
+set elffile [open "| $objdump -d $objfile"]
 set tot 0
 while {[eof $elffile] == 0} {
     gets $elffile line
     if {[string first ":	" $line] < 0} {
 	continue
     }
-    set instr [lindex [split [string trim $line]] 3]
+    set instr [lindex [string trim $line] 2]
     if {[array get instr_map $instr] != ""} {
 	incr instr_map($instr)
     } else {
@@ -98,7 +102,7 @@ foreach instr [array names instr_map] {
     lappend instr_list "$instr $instr_map($instr)"
 }
 
-set headers [exec mips-elf-objdump -h [lindex $argv 0]]
+set headers [exec $objdump -h $objfile]
 foreach line [split $headers \n] {
     set line [string trim $line]
     set sname [lindex [split $line] 1]
@@ -113,6 +117,7 @@ set tabcnt 0
 set start [lindex [lsort -integer [array names mem]] 0]
 set end [lindex [lsort -integer [array names mem]] end]
 puts "$endian endian code; instruction frequencies (total $tot):"
+
 foreach entry [lsort -integer -decreasing -index 1 $instr_list] {
     puts -nonewline "[format %6s [lindex $entry 0]]:[format %5d [lindex $entry 1]]"
     incr tabcnt
@@ -127,108 +132,113 @@ if {$tabcnt != 0} {
     puts ""
 }
 
-set base_isa_set "sh lhu lh bgtz sllv srav beq sltu bgez srl srlv xor xori lui sw lbu and slt lw andi slti blez nop bne li sra addu nor negu subu bnez jalr or sltiu ori j beqz sll bltz jr sb lb move addiu jal b bal"
-set branch_likely_set "bnezl bltzl bnel beql beqzl bgezl bgtzl blezl"
-set mul_set "mult multu mflo mfhi"
-set unaligned_store_set "swl swr"
-set unaligned_load_set "lwl lwr"
-set sign_extend_set "seb seh"
-set condmove_set "movn movz"
-set cp0_set "mfc0 cache wait"
-set exception_set "syscall break ei di mtc0"
 set unsupported 0
 
-set found ""
-foreach instr [lsort [array names instr_map]] {
-    if {[lsearch $branch_likely_set $instr] >= 0} {
-	lappend found $instr
-    }
-}
-if {$found != ""} {
-    puts "Branch likely (optional): $found"
-}
+if {$arch == "mips"} {
+    set base_isa_set "sh lhu lh bgtz sllv srav beq sltu bgez srl srlv xor xori lui sw lbu and slt lw andi slti blez nop bne li sra addu nor negu subu bnez jalr or sltiu ori j beqz sll bltz jr sb lb move addiu jal b bal"
+    set branch_likely_set "bnezl bltzl bnel beql beqzl bgezl bgtzl blezl"
+    set mul_set "mult multu mflo mfhi"
+    set unaligned_store_set "swl swr"
+    set unaligned_load_set "lwl lwr"
+    set sign_extend_set "seb seh"
+    set condmove_set "movn movz"
+    set cp0_set "mfc0 cache wait"
+    set exception_set "syscall break ei di mtc0"
 
-set found ""
-foreach instr [lsort [array names instr_map]] {
-    if {[lsearch $mul_set $instr] >= 0} {
-	lappend found $instr
+    set found ""
+    foreach instr [lsort [array names instr_map]] {
+	if {[lsearch $branch_likely_set $instr] >= 0} {
+	    lappend found $instr
+	}
     }
-}
-if {$found != ""} {
-    puts "Multiplication (optional): $found"
-}
+    if {$found != ""} {
+	puts "Branch likely (optional): $found"
+    }
 
-set found ""
-foreach instr [lsort [array names instr_map]] {
-    if {[lsearch $sign_extend_set $instr] >= 0} {
-	lappend found $instr
+    set found ""
+    foreach instr [lsort [array names instr_map]] {
+	if {[lsearch $mul_set $instr] >= 0} {
+	    lappend found $instr
+	}
     }
-}
-if {$found != ""} {
-    puts "Sign extend (optional): $found"
-}
+    if {$found != ""} {
+	puts "Multiplication (optional): $found"
+    }
 
-set found ""
-foreach instr [lsort [array names instr_map]] {
-    if {[lsearch $condmove_set $instr] >= 0} {
-	lappend found $instr
+    set found ""
+    foreach instr [lsort [array names instr_map]] {
+	if {[lsearch $sign_extend_set $instr] >= 0} {
+	    lappend found $instr
+	}
     }
-}
-if {$found != ""} {
-    puts "Conditional move (optional): $found"
-}
+    if {$found != ""} {
+	puts "Sign extend (optional): $found"
+    }
 
-set found ""
-foreach instr [lsort [array names instr_map]] {
-    if {[lsearch $cp0_set $instr] >= 0} {
-	lappend found $instr
+    set found ""
+    foreach instr [lsort [array names instr_map]] {
+	if {[lsearch $condmove_set $instr] >= 0} {
+	    lappend found $instr
+	}
     }
-}
-if {$found != ""} {
-    puts "CP0 (optional): $found"
-}
+    if {$found != ""} {
+	puts "Conditional move (optional): $found"
+    }
 
-set found ""
-foreach instr [lsort [array names instr_map]] {
-    if {[lsearch $exception_set $instr] >= 0} {
-	lappend found $instr
+    set found ""
+    foreach instr [lsort [array names instr_map]] {
+	if {[lsearch $cp0_set $instr] >= 0} {
+	    lappend found $instr
+	}
     }
-}
-if {$found != ""} {
-    puts "Exceptions (optional): $found"
-}
+    if {$found != ""} {
+	puts "CP0 (optional): $found"
+    }
 
-set found ""
-foreach instr [lsort [array names instr_map]] {
-    if {[lsearch $unaligned_store_set $instr] >= 0} {
-	lappend found $instr
+    set found ""
+    foreach instr [lsort [array names instr_map]] {
+	if {[lsearch $exception_set $instr] >= 0} {
+	    lappend found $instr
+	}
     }
-}
-if {$found != ""} {
-    puts "Unaligned store (UNSUPPORTED!): $found"
-    set unsupported 1
-}
+    if {$found != ""} {
+	puts "Exceptions (optional): $found"
+    }
 
-set found ""
-foreach instr [lsort [array names instr_map]] {
-    if {[lsearch $unaligned_load_set $instr] >= 0} {
-	lappend found $instr
+    set found ""
+    foreach instr [lsort [array names instr_map]] {
+	if {[lsearch $unaligned_store_set $instr] >= 0} {
+	    lappend found $instr
+	}
     }
-}
-if {$found != ""} {
-    puts "Unaligned load (UNSUPPORTED!): $found"
-    set unsupported 1
-}
+    if {$found != ""} {
+	puts "Unaligned store (UNSUPPORTED!): $found"
+	set unsupported 1
+    }
 
-set found ""
-foreach instr [lsort [array names instr_map]] {
-    if {[lsearch "$base_isa_set $mul_set $unaligned_load_set $unaligned_store_set $branch_likely_set $sign_extend_set $condmove_set $cp0_set $exception_set" $instr] < 0} {
-	lappend found $instr
+    set found ""
+    foreach instr [lsort [array names instr_map]] {
+	if {[lsearch $unaligned_load_set $instr] >= 0} {
+	    lappend found $instr
+	}
     }
-}
-if {$found != ""} {
-    puts "Misc. UNSUPPORTED: $found"
-    set unsupported 1
+    if {$found != ""} {
+	puts "Unaligned load (UNSUPPORTED!): $found"
+	set unsupported 1
+    }
+
+    set found ""
+    foreach instr [lsort [array names instr_map]] {
+	if {[lsearch "$base_isa_set $mul_set $unaligned_load_set $unaligned_store_set $branch_likely_set $sign_extend_set $condmove_set $cp0_set $exception_set" $instr] < 0} {
+	    lappend found $instr
+	}
+    }
+    if {$found != ""} {
+	puts "Misc. UNSUPPORTED: $found"
+	set unsupported 1
+    }
+} else {
+    set base_isa_set "lb lbu lh lhu lw sb sh sw j jal jalr li add addi and andi sub lui mv"
 }
 
 exit $unsupported
