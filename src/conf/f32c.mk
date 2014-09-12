@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013 Marko Zec
+# Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -34,3 +34,8 @@ BASE_DIR = $(subst conf/f32c.mk,,${MAKEFILES})
 
 LIBS_MK = $(join ${BASE_DIR},conf/libs.mk)
 POST_MK = $(join ${BASE_DIR},conf/post.mk)
+
+# MI32 (MIPS) is the default architecture
+ifndef ARCH
+	ARCH = mips
+endif

@@ -112,10 +112,10 @@ MK_LDFLAGS += -nostdlib
 # Pull in any module-specific linker flags
 MK_LDFLAGS += ${LDFLAGS}
 
-CC = mips-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
-AS = mips-elf-gcc ${MK_CFLAGS} ${MK_INCLUDES}
-LD = mips-elf-ld ${MK_LDFLAGS}
-OBJCOPY = mips-elf-objcopy
+CC = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
+AS = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_INCLUDES}
+LD = ${ARCH}-elf-ld ${MK_LDFLAGS}
+OBJCOPY = ${ARCH}-elf-objcopy
 ifeq ($(shell uname -s), FreeBSD)
 ISA_CHECK = ${BASE_DIR}tools/isa_check.tcl
 else
@@ -133,7 +133,7 @@ include ${LIBS_MK}
 # Automatically include start.S in list of ASFILES
 #
 
-ASFILES += ${BASE_DIR}lib/mips/start.S
+ASFILES += ${BASE_DIR}lib/${ARCH}/start.S
 
 #
 # All object files go to OBJDIR
