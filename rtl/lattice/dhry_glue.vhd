@@ -165,7 +165,6 @@ begin
     sio: entity work.sio
     generic map (
 	C_clk_freq => C_clk_freq,
-	C_fixed_baudrate => true,
 	C_big_endian => C_big_endian
     )
     port map (
