@@ -15,6 +15,9 @@
         <Source name="../cpu/idecode_mi32.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../cpu/idecode_rv32.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../cpu/alu.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
