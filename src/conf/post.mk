@@ -34,33 +34,39 @@ ifeq ($(findstring 0x8, ${LOADADDR}),)
 MK_CFLAGS += -DBRAM
 endif
 
-# -EB big-endian (gcc default); -EL little-endian
-ifndef ENDIANFLAGS
-ENDIANFLAGS = -EL
-endif
-
 # Includes
 MK_INCLUDES = -nostdinc
 MK_INCLUDES += -I${BASE_DIR}include
 MK_STDINC = -include sys/param.h
 
-# MIPS-specific flags
-ifeq ($(findstring -march=,$(CFLAGS)),)
-MK_CFLAGS += -march=f32c
-endif
-MK_CFLAGS += ${ENDIANFLAGS}
+ifeq (${ARCH},riscv)
+	# RISCV-specific flags
 
-# small data section tuning
-ifeq ($(findstring -G,$(CFLAGS)),)
-MK_CFLAGS += -G 32768
-endif
+else
+	# MIPS-specific flags
 
-# f32c-specific flags
-#MK_CFLAGS += -mno-mul
-#MK_CFLAGS += -mno-div
-#MK_CFLAGS += -mno-unaligned-load
-#MK_CFLAGS += -mno-unaligned-store
-#MK_CFLAGS += -mcondmove
+	# -EB big-endian (mips-elf-gcc default); -EL little-endian
+	ifndef ENDIANFLAGS
+		ENDIANFLAGS = -EL
+	endif
+
+	ifeq ($(findstring -march=,$(CFLAGS)),)
+		MK_CFLAGS += -march=f32c
+	endif
+	MK_CFLAGS += ${ENDIANFLAGS}
+
+	# small data section tuning
+	ifeq ($(findstring -G,$(CFLAGS)),)
+		MK_CFLAGS += -G 32768
+	endif
+
+	# f32c-specific flags
+	#MK_CFLAGS += -mno-mul
+	#MK_CFLAGS += -mno-div
+	#MK_CFLAGS += -mno-unaligned-load
+	#MK_CFLAGS += -mno-unaligned-store
+	#MK_CFLAGS += -mcondmove
+endif
 
 # Optimization options
 ifeq ($(findstring -O,$(CFLAGS)),)
@@ -140,7 +146,7 @@ ASFILES += ${BASE_DIR}lib/${ARCH}/start.S
 #
 
 ifndef OBJDIR
-OBJDIR=./obj/
+OBJDIR=./obj/${ARCH}
 endif
 
 #
