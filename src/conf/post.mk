@@ -163,8 +163,8 @@ endif
 # Autogenerate targets
 #
 
-ASM_OBJS = $(addprefix ${OBJDIR},$(ASFILES:.S=.O))
-C_OBJS = $(addprefix ${OBJDIR},$(CFILES:.c=.o))
+ASM_OBJS = $(addprefix ${OBJDIR}/,$(ASFILES:.S=.O))
+C_OBJS = $(addprefix ${OBJDIR}/,$(CFILES:.c=.o))
 OBJS = ${ASM_OBJS} ${C_OBJS}
 
 BIN = ${PROG}.bin
@@ -174,7 +174,7 @@ ${HEX}: ${BIN} Makefile
 	${OBJCOPY} -O srec ${PROG} ${HEX}
 
 ${BIN}: ${PROG} Makefile
-	${ISA_CHECK} ${PROG}
+	${ISA_CHECK} ${ARCH} ${PROG}
 	${OBJCOPY} -O binary ${PROG} ${BIN}
 
 ${PROG}: ${OBJS} Makefile
@@ -192,14 +192,14 @@ cleandepend:
 #
 # Rule for compiling C files
 #
-$(addprefix ${OBJDIR},%.o) : %.c
+$(addprefix ${OBJDIR}/,%.o) : %.c
 	@mkdir -p $(dir $@)
 	$(CC) -o $@ $<
 
 #
 # Rule for compiling ASM files
 #
-$(addprefix ${OBJDIR},%.O) : %.S
+$(addprefix ${OBJDIR}/,%.O) : %.S
 	@mkdir -p $(dir $@)
 	$(AS) -o $@ $<
 
