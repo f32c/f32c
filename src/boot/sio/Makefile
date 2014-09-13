@@ -2,11 +2,13 @@
 # Bootloader uses a non-default loadaddr
 LOADADDR = 0x00000000
 
-# Do not use GP-relative addressing
-CFLAGS += -G 0
+ifeq (${ARCH},mips)
+	# Do not use GP-relative addressing
+	CFLAGS += -G 0
 
-# No branch likely instructions in the loader
-CFLAGS += -mno-branch-likely
+	# No branch likely instructions in the loader
+	CFLAGS += -mno-branch-likely
+endif
 
 PROG = loader
 
