@@ -64,10 +64,12 @@ _start(void)
 	char *cp;
 	void *base_addr = NULL;
 
+#ifdef __mips__
 	__asm __volatile__(
-		"move $31, $0;"
+		"move $31, $0"		/* ra <- zero */
 	);
 
+#ifndef BRAM
 	/* Flush I-cache, clear DRAM */
 	for (cp = (void *) 0x80000000; cp < (char *) 0x80100000;  cp += 4) {
 		__asm (
@@ -77,6 +79,12 @@ _start(void)
 			: "r" (cp)
 		);
 	}
+#else
+	cp = NULL;	/* shut up uninitialized use warnings */
+#endif
+#else
+	cp = NULL;	/* shut up uninitialized use warnings */
+#endif
 
 prompt:
 	pos = 0;
@@ -142,6 +150,7 @@ loop:
 	/* Address width */
 	if (pos == 1) {
 		if (val >= 7 && val <= 9) {
+#ifdef __mips__
 			__asm __volatile__(
 			".set noreorder;"
 			"lui $4, 0x8000;"	/* stack mask */
@@ -153,6 +162,20 @@ loop:
 			: 
 			: "r" (base_addr)
 			);
+#else
+			/* XXX riscv fixme */
+			__asm __volatile__(
+#ifndef BRAM
+			"li sp, 0x80100000;"	/* set stack */
+#else
+			"li sp, 0x00010000;"	/* set stack */
+#endif
+			"mv ra, zero;"	
+			"jr %0;"
+			: 
+			: "r" (base_addr)
+			);
+#endif
 		}
 		if (val >= 1 && val <= 3)
 			len = (val << 1) + 5;
