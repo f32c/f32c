@@ -28,6 +28,13 @@
 #ifndef _IO_H_
 #define	_IO_H_
 
+#ifdef __mips__
+#include <mips/io.h>
+#endif
+#ifdef __riscv__
+#include <riscv/io.h>
+#endif
+
 
 #define	IO_BASE		-256
 
@@ -79,148 +86,6 @@
 #define	LCD_DATA	0x0f
 #define	LCD_RS		0x10
 #define	LCD_E		0x20
-
-
-#if !defined(__ASSEMBLER__)
-
-/* Load / store macros */
-
-#define	SB(data, offset, addr)						\
-	__asm __volatile (						\
-		"sb %0, %1(%2)"						\
-		:							\
-		: "r" (data), "i" (offset), "r" (addr)			\
-	)
-
-#define	SH(data, offset, addr)						\
-	__asm __volatile (						\
-		"sh %0, %1(%2)"						\
-		:							\
-		: "r" (data), "i" (offset), "r" (addr)			\
-	)
-
-#define	SW(data, offset, addr)						\
-	__asm __volatile (						\
-		"sw %0, %1(%2)"						\
-		:							\
-		: "r" (data), "i" (offset), "r" (addr)			\
-	)
-
-#define	LB(data, offset, addr)						\
-	__asm __volatile (						\
-		"lb %0, %1(%2)"						\
-		: "=r" (data)						\
-		: "i" (offset), "r" (addr)				\
-	)
-
-#define	LH(data, offset, addr)						\
-	__asm __volatile (						\
-		"lh %0, %1(%2)"						\
-		: "=r" (data)						\
-		: "i" (offset), "r" (addr)				\
-	)
-
-#define	LW(data, offset, addr)						\
-	__asm __volatile (						\
-		"lw %0, %1(%2)"						\
-		: "=r" (data)						\
-		: "i" (offset), "r" (addr)				\
-	)
-
-/* I/O macros */
-
-#ifdef __mips__
-#define	OUTB(port, data)					   \
-	__asm __volatile ("sb %0, %1($0)"	/* IO_BASE = 0xf* */ \
-		:				/* outputs */	   \
-		: "r" (data), "i" (port))	/* inputs */
-
-#define	OUTH(port, data)					   \
-	__asm __volatile ("sh %0, %1($0)"	/* IO_BASE = 0xf* */ \
-		:				/* outputs */	   \
-		: "r" (data), "i" (port))	/* inputs */
-
-#define	OUTW(port, data)					   \
-	__asm __volatile ("sw %0, %1($0)"	/* IO_BASE = 0xf* */ \
-		:				/* outputs */	   \
-		: "r" (data), "i" (port))	/* inputs */
-
-#define	INB(data, port)						   \
-	__asm __volatile ("lb %0, %1($0)"	/* IO_BASE = 0xf* */ \
-		: "=r" (data)			/* outputs */	   \
-		: "i" (port))			/* inputs */
-
-#define	INH(data, port)						   \
-	__asm __volatile ("lh %0, %1($0)"	/* IO_BASE = 0xf* */ \
-		: "=r" (data)			/* outputs */	   \
-		: "i" (port))			/* inputs */
-
-#define	INW(data, port)						   \
-	__asm __volatile ("lw %0, %1($0)"	/* IO_BASE = 0xf* */ \
-		: "=r" (data)			/* outputs */	   \
-		: "i" (port))			/* inputs */
-#endif /* __mips__ */
-
-
-#ifdef __riscv__
-#define	OUTB(port, data)					   \
-	__asm __volatile ("sb %0, %1(zero)"	/* IO_BASE = 0xf* */ \
-		:				/* outputs */	   \
-		: "r" (data), "i" (port))	/* inputs */
-
-#define	OUTH(port, data)					   \
-	__asm __volatile ("sh %0, %1(zero)"	/* IO_BASE = 0xf* */ \
-		:				/* outputs */	   \
-		: "r" (data), "i" (port))	/* inputs */
-
-#define	OUTW(port, data)					   \
-	__asm __volatile ("sw %0, %1(zero)"	/* IO_BASE = 0xf* */ \
-		:				/* outputs */	   \
-		: "r" (data), "i" (port))	/* inputs */
-
-#define	INB(data, port)						   \
-	__asm __volatile ("lb %0, %1(zero)"	/* IO_BASE = 0xf* */ \
-		: "=r" (data)			/* outputs */	   \
-		: "i" (port))			/* inputs */
-
-#define	INH(data, port)						   \
-	__asm __volatile ("lh %0, %1(zero)"	/* IO_BASE = 0xf* */ \
-		: "=r" (data)			/* outputs */	   \
-		: "i" (port))			/* inputs */
-
-#define	INW(data, port)						   \
-	__asm __volatile ("lw %0, %1(zero)"	/* IO_BASE = 0xf* */ \
-		: "=r" (data)			/* outputs */	   \
-		: "i" (port))			/* inputs */
-#endif /* __riscv__ */
-
-
-/*
- * Declaration of misc. IO functions.
- */
-
-/* XXX this doesn't belong here... */
-#include <mips/cpuregs.h>
-#define	RDTSC(var)						\
-	__asm __volatile ("mfc0 %0, $%1"			\
-		: "=r" (var)			/* outputs */	\
-		: "i" (MIPS_COP_0_COUNT))	/* inputs */
-
-#define	DELAY(ticks) 						\
-	__asm __volatile__ (					\
-		".set noreorder;"				\
-		".set noat;"					\
-		"	li	$1, -2;"			\
-		"	and	$1, $1, %0;"			\
-		"1:	bnez	$1, 1b;"			\
-		"	addiu	$1, $1, -2;"			\
-		".set at;"					\
-		".set reorder;"					\
-		:						\
-		: "r" (ticks)					\
-	)
-
-#endif /* __ASSEMBLER__ */
 
 #endif /* !_IO_H_ */
 
