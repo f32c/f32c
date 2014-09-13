@@ -41,8 +41,16 @@
 	.type _start,@function
 
 _start:
-	/* Magic block required by the FAT bootloader, otherwise harmless */
-	la	s0, _start	/* Executable code base address */
-	la	s1, _end	/* End of BSS section */
 
+#ifdef BRAM
+#ifdef ONLY_I_ROM
+	li      sp, 0x80100000  /* SRAM top */
+#else
+	li      sp, 0x00010000  /* 64 k */
+#endif
+#else
+	li      sp, 0x80100000  /* SRAM top */
+#endif
+
+	la	gp, _gp
 	j	main
