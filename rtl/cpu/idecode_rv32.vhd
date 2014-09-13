@@ -55,11 +55,18 @@ architecture Behavioral of idecode_rv32 is
 begin
 
     process(instruction)
-	variable imm32_unsigned, imm32_signed: std_logic_vector(31 downto 0);
+	variable imm32_signed: std_logic_vector(31 downto 0);
     begin
 	-- Fixed decoding
 	reg1_addr <= instruction(19 downto 15);
 	reg2_addr <= instruction(24 downto 20);
+
+	-- Internal signals
+	if instruction(31) = '1' then
+	    imm32_signed := x"fffff" & instruction(31 downto 20);
+	else
+	    imm32_signed := x"00000" & instruction(31 downto 20);
+	end if;
 
 	-- Default output values, overrided later
 	unsupported_instr <= false;
@@ -77,7 +84,7 @@ begin
 	branch_condition <= TEST_UNDEFINED;
 	mem_cycle <= '0';
 	mem_write <= '0';
-	mem_size <= MEM_SIZE_UNDEFINED;
+	mem_size <= instruction(13 downto 12);
 	mem_read_sign_extend <= '-';
 	latency <= LATENCY_EX;
 	alt_sel <= ALT_PC_8;
@@ -92,6 +99,44 @@ begin
 	cop0_write <= false;
 	cop0_wait <= false;
 	
+	-- Main instruction decoder
+	case instruction(6 downto 0) is
+	when RV32I_OP_LUI =>
+	    use_immediate <= true;
+	    immediate_value <= instruction(31 downto 12) & x"000";
+	    op_minor <= OP_MINOR_OR;
+	    ignore_reg2 <= true;
+	when RV32I_OP_AUIPC =>
+	    use_immediate <= true;
+	    immediate_value <= instruction(31 downto 12) & x"000";
+	    op_minor <= OP_MINOR_OR;
+	    ignore_reg2 <= true;
+	when RV32I_OP_JAL =>
+	    use_immediate <= true;
+	    ignore_reg2 <= true;
+	    -- XXX immediate_value <= XXX?
+	when RV32I_OP_JALR =>
+	    use_immediate <= true;
+	    ignore_reg2 <= true;
+	when RV32I_OP_BRANCH =>
+	    branch_cycle <= true;
+	when RV32I_OP_LOAD =>
+	    use_immediate <= true;
+	    latency <= LATENCY_WB;
+	    ignore_reg2 <= true;
+	    mem_cycle <= '1';
+	    mem_read_sign_extend <= not instruction(14);
+	when RV32I_OP_STORE =>
+	    use_immediate <= true;
+	    immediate_value(4 downto 0) <= instruction(11 downto 7);
+	    mem_cycle <= '1';
+	    mem_write <= '1';
+	when RV32I_OP_REG_IMM =>
+	    ignore_reg2 <= true;
+	when RV32I_OP_REG_REG =>
+	when others =>
+	end case;
+
     end process;
 
 end Behavioral;
