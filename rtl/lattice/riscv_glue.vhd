@@ -129,6 +129,7 @@ begin
 	trace_addr => "------", trace_data => open
     );
 
+
     -- RS232 sio
     G_sio:
     if C_sio generate
