@@ -112,20 +112,17 @@
  */
 
 #define	RDTSC(var)						\
-	__asm __volatile ("mfc0 %0, $%1"			\
+	__asm __volatile ("rdtime %0"				\
 		: "=r" (var)			/* outputs */	\
-		: "i" (MIPS_COP_0_COUNT))	/* inputs */
+		: )				/* inputs */
 
 #define	DELAY(ticks) 						\
 	__asm __volatile__ (					\
-		".set noreorder;"				\
-		".set noat;"					\
-		"	li	$1, -2;"			\
+		"	li	$1, -4;"			\
 		"	and	$1, $1, %0;"			\
-		"1:	bnez	$1, 1b;"			\
-		"	addiu	$1, $1, -2;"			\
-		".set at;"					\
-		".set reorder;"					\
+		"	addi	$1, $1, 4;"			\
+		"1:	addi	$1, $1, -4;"			\
+		"	bnez	$1, 1b;"			\
 		:						\
 		: "r" (ticks)					\
 	)
