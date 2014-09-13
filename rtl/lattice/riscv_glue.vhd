@@ -33,7 +33,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity glue is
     generic (
 	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-	C_clk_freq: integer := 100;
+	C_clk_freq: integer := 50;
 
 	-- ISA options
 	C_big_endian: boolean := false;
@@ -61,12 +61,14 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
-	C_sio: boolean := true
+	C_sio: boolean := true;
+	C_leds: boolean := true
     );
     port (
 	clk_25m: in std_logic;
 	rs232_tx: out std_logic;
-	rs232_rx: in std_logic
+	rs232_rx: in std_logic;
+	led: out std_logic_vector(7 downto 0)
     );
 end glue;
 
@@ -153,6 +155,17 @@ begin
     --
     io_to_cpu <= from_sio;
     final_to_cpu <= io_to_cpu when dmem_addr(31) = '1' else dmem_to_cpu;
+
+    -- LEDs
+    process(clk)
+    begin
+    if C_leds and rising_edge(clk) then
+	if dmem_addr_strobe = '1' and dmem_addr(31 downto 30) = "11"
+	  and dmem_addr(7 downto 4) = x"1" and dmem_write = '1' then
+	    led <= cpu_to_dmem(7 downto 0);
+	end if;
+    end if;
+    end process;
 
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
