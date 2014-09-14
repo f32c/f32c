@@ -115,6 +115,7 @@ architecture Behavioral of pipeline is
     signal ID_op_minor: std_logic_vector(2 downto 0);
     signal ID_read_alt: boolean;
     signal ID_alt_sel: std_logic_vector(2 downto 0);
+    signal ID_shift_funct: std_logic_vector(1 downto 0);
     signal ID_immediate: std_logic_vector(31 downto 0);
     signal ID_sign_extension: std_logic_vector(15 downto 0);
     signal ID_sign_extend: boolean;
@@ -151,6 +152,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_op_minor: std_logic_vector(2 downto 0);
     signal ID_EX_read_alt: boolean;
     signal ID_EX_alt_sel: std_logic_vector(2 downto 0);
+    signal ID_EX_shift_funct: std_logic_vector(1 downto 0);
     signal ID_EX_mem_cycle, ID_EX_mem_write: std_logic;
     signal ID_EX_mem_size: std_logic_vector(1 downto 0);
     signal ID_EX_mem_read_sign_extend: std_logic;
@@ -433,7 +435,7 @@ begin
 	reg1_zero => ID_reg1_zero, reg2_zero => ID_reg2_zero,
 	immediate_value => ID_immediate, use_immediate => ID_use_immediate,
 	cmov_cycle => ID_cmov_cycle, cmov_condition => ID_cmov_condition,
-	sign_extension => ID_sign_extension,
+	sign_extension => ID_sign_extension, shift_fn => ID_shift_funct,
 	read_alt => ID_read_alt, alt_sel => ID_alt_sel,
 	target_addr => ID_writeback_addr, op_major => ID_op_major,
 	op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
@@ -465,7 +467,7 @@ begin
 	reg1_addr => ID_reg1_addr, reg2_addr => ID_reg2_addr,
 	reg1_zero => ID_reg1_zero, reg2_zero => ID_reg2_zero,
 	immediate_value => ID_immediate, use_immediate => ID_use_immediate,
-	sign_extension => ID_sign_extension,
+	sign_extension => ID_sign_extension, shift_fn => ID_shift_funct,
 	read_alt => ID_read_alt, alt_sel => ID_alt_sel,
 	target_addr => ID_writeback_addr, op_major => ID_op_major,
 	op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
@@ -690,6 +692,7 @@ begin
 		    ID_EX_seb_seh_select <= ID_seb_seh_select;
 		    ID_EX_alt_sel <= ID_alt_sel;
 		    ID_EX_read_alt <= ID_read_alt;
+		    ID_EX_shift_funct <= ID_shift_funct;
 		    ID_EX_writeback_addr <= ID_writeback_addr;
 		    ID_EX_mem_cycle <= ID_mem_cycle;
 		    ID_EX_branch_cycle <= ID_branch_cycle;
@@ -811,7 +814,7 @@ begin
       else ID_EX_immediate(10 downto 6); -- shift immediate
 
     EX_shift_funct_8_16 <= OP_SHIFT_LL when ID_EX_mem_cycle = '1'
-      else ID_EX_immediate(1 downto 0); -- XXX no, properly decode this!
+      else ID_EX_shift_funct;
 
     -- instantiate the barrel shifter
     shift: entity work.shift
@@ -941,7 +944,7 @@ begin
 		EX_MEM_mem_write <= ID_EX_mem_write;
 		EX_MEM_mem_byte_sel <= EX_mem_byte_sel;
 		EX_MEM_shamt_1_2_4 <= EX_shamt(2 downto 0);
-		EX_MEM_shift_funct <= ID_EX_immediate(1 downto 0); -- XXX no!
+		EX_MEM_shift_funct <= ID_EX_shift_funct;
 		EX_MEM_op_major <= ID_EX_op_major;
 		EX_MEM_branch_cycle <= ID_EX_branch_cycle;
 		EX_MEM_branch_likely <= ID_EX_branch_likely;

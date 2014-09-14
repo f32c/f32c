@@ -38,6 +38,7 @@ entity idecode_mi32 is
 	op_major: out std_logic_vector(1 downto 0);
 	op_minor: out std_logic_vector(2 downto 0);
 	alt_sel: out std_logic_vector(2 downto 0);
+	shift_fn: out std_logic_vector(1 downto 0);
 	read_alt: out boolean;
 	use_immediate, ignore_reg2: out boolean;
 	cmov_cycle, cmov_condition: out boolean;
@@ -66,6 +67,12 @@ begin
 	-- Fixed decoding
 	reg1_addr <= instruction(25 downto 21);
 	reg2_addr <= instruction(20 downto 16);
+	case instruction(1 downto 0) is
+	when "00" => shift_fn <= OP_SHIFT_LL;
+	when "01" => shift_fn <= OP_SHIFT_BYPASS;
+	when "10" => shift_fn <= OP_SHIFT_RL;
+	when "11" => shift_fn <= OP_SHIFT_RA;
+	end case;
 
 	-- Internal signals
 	imm32_unsigned := x"0000" & instruction(15 downto 0);

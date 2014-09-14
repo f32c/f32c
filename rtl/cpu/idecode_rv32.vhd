@@ -35,6 +35,7 @@ entity idecode_rv32 is
 	op_major: out std_logic_vector(1 downto 0);
 	op_minor: out std_logic_vector(2 downto 0);
 	alt_sel: out std_logic_vector(2 downto 0);
+	shift_fn: out std_logic_vector(1 downto 0);
 	read_alt: out boolean;
 	use_immediate, ignore_reg2: out boolean;
 	branch_condition: out std_logic_vector(2 downto 0);
@@ -61,14 +62,10 @@ begin
 	reg1_addr <= instruction(19 downto 15);
 	reg2_addr <= instruction(24 downto 20);
 	case instruction(13 downto 12) is
-	when RV32_MEM_SIZE_B =>
-	    mem_size <= MEM_SIZE_8;
-	when RV32_MEM_SIZE_H =>
-	    mem_size <= MEM_SIZE_16;
-	when RV32_MEM_SIZE_W =>
-	    mem_size <= MEM_SIZE_32;
-	when RV32_MEM_SIZE_D =>
-	    mem_size <= MEM_SIZE_64;
+	when RV32_MEM_SIZE_B => mem_size <= MEM_SIZE_8;
+	when RV32_MEM_SIZE_H => mem_size <= MEM_SIZE_16;
+	when RV32_MEM_SIZE_W => mem_size <= MEM_SIZE_32;
+	when RV32_MEM_SIZE_D => mem_size <= MEM_SIZE_64;
 	end case;
 
 	-- Internal signals
