@@ -127,6 +127,7 @@ begin
 	when RV32I_OP_JALR =>
 	    use_immediate <= true;
 	    ignore_reg2 <= true;
+	    jump_register <= true;
 	when RV32I_OP_BRANCH =>
 	    branch_cycle <= true;
 	    target_addr <= RV32_REG_ZERO;

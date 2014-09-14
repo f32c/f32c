@@ -12,6 +12,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+use work.f32c_pack.all;
+
 
 entity shift is
     generic (
@@ -36,30 +38,28 @@ architecture Behavioral of shift is
 begin
     -- shift by 8 and 16 occurs in EX stage; shift by 1, 2 and 4 is in MEM stage
 
-    sel8 <= funct_8_16 when shamt_8_16(0) = '1' else "01";
-    sel16 <= funct_8_16 when shamt_8_16(1) = '1' else "01";
-    sel1 <= funct_1_2_4 when shamt_1_2_4(0) = '1' else "01";
-    sel2 <= funct_1_2_4 when shamt_1_2_4(1) = '1' else "01";
-    sel4 <= funct_1_2_4 when shamt_1_2_4(2) = '1' else "01";
+    sel8 <= funct_8_16 when shamt_8_16(0) = '1' else OP_SHIFT_BYPASS;
+    sel16 <= funct_8_16 when shamt_8_16(1) = '1' else OP_SHIFT_BYPASS;
+    sel1 <= funct_1_2_4 when shamt_1_2_4(0) = '1' else OP_SHIFT_BYPASS;
+    sel2 <= funct_1_2_4 when shamt_1_2_4(1) = '1' else OP_SHIFT_BYPASS;
+    sel4 <= funct_1_2_4 when shamt_1_2_4(2) = '1' else OP_SHIFT_BYPASS;
 
-    -- sel: "00" sll, "10" srl, "11" sra, "01" bypass
-	
     with sel8 select stage8 <=
-	stage8_in(23 downto 0) & x"00" when "00",
-	x"00" & stage8_in(31 downto 8) when "10",
+	stage8_in(23 downto 0) & x"00" when OP_SHIFT_LL,
+	x"00" & stage8_in(31 downto 8) when OP_SHIFT_RL,
 	stage8_in(31) & stage8_in(31) & stage8_in(31) & stage8_in(31) &
 	    stage8_in(31) & stage8_in(31) & stage8_in(31) & stage8_in(31) &
-	    stage8_in(31 downto 8) when "11",
+	    stage8_in(31 downto 8) when OP_SHIFT_RA,
 	stage8_in when others;
 
     with sel16 select stage16 <=
-	stage8(15 downto 0) & x"0000" when "00",
-	x"0000" & stage8(31 downto 16) when "10",
+	stage8(15 downto 0) & x"0000" when OP_SHIFT_LL,
+	x"0000" & stage8(31 downto 16) when OP_SHIFT_RL,
 	stage8(31) & stage8(31) & stage8(31) & stage8(31) &
 	  stage8(31) & stage8(31) & stage8(31) & stage8(31) &
 	  stage8(31) & stage8(31) & stage8(31) & stage8(31) &
 	  stage8(31) & stage8(31) & stage8(31) & stage8(31) &
-	  stage8(31 downto 16) when "11",
+	  stage8(31 downto 16) when OP_SHIFT_RA,
 	stage8 when others;
 	
     stage16_out <= stage16;
@@ -68,22 +68,22 @@ begin
     -- on EX to MEM boundary.
 
     with sel1 select stage1 <=
-	stage1_in(30 downto 0) & "0" when "00",
-	"0" & stage1_in(31 downto 1) when "10",
-	stage1_in(31) & stage1_in(31 downto 1) when "11",
+	stage1_in(30 downto 0) & "0" when OP_SHIFT_LL,
+	"0" & stage1_in(31 downto 1) when OP_SHIFT_RL,
+	stage1_in(31) & stage1_in(31 downto 1) when OP_SHIFT_RA,
 	stage1_in when others;
 
     with sel2 select stage2 <=
-	stage1(29 downto 0) & "00" when "00",
-	"00" & stage1(31 downto 2) when "10",
-	stage1(31) & stage1(31) & stage1(31 downto 2) when "11",
+	stage1(29 downto 0) & "00" when OP_SHIFT_LL,
+	"00" & stage1(31 downto 2) when OP_SHIFT_RL,
+	stage1(31) & stage1(31) & stage1(31 downto 2) when OP_SHIFT_RA,
 	stage1 when others;
 
     with sel4 select stage4 <=
-	stage2(27 downto 0) & x"0" when "00",
-	x"0" & stage2(31 downto 4) when "10",
+	stage2(27 downto 0) & x"0" when OP_SHIFT_LL,
+	x"0" & stage2(31 downto 4) when OP_SHIFT_RL,
 	stage2(31) & stage2(31) & stage2(31) & stage2(31) &
-	stage2(31 downto 4) when "11",
+	stage2(31 downto 4) when OP_SHIFT_RA,
 	stage2 when others;
    	
     process(stage4, mem_multicycle_lh_lb, mem_read_sign_extend_multicycle,
@@ -116,4 +116,3 @@ begin
 	end if;
     end process;
 end Behavioral;
-

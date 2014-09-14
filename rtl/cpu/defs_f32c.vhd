@@ -64,6 +64,12 @@ constant OP_MINOR_OR:		std_logic_vector := "101";
 constant OP_MINOR_XOR:		std_logic_vector := "110";
 constant OP_MINOR_NOR:		std_logic_vector := "111";
 
+-- Shift operation select
+constant OP_SHIFT_LL:		std_logic_vector := "00";
+constant OP_SHIFT_BYPASS:	std_logic_vector := "01";
+constant OP_SHIFT_RL:		std_logic_vector := "10";
+constant OP_SHIFT_RA:		std_logic_vector := "11";
+
 -- ALT mux select
 constant ALT_HI:		std_logic_vector := "000";
 constant ALT_LO:		std_logic_vector := "001";
