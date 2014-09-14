@@ -109,7 +109,7 @@ begin
 	when RV32I_OP_AUIPC =>
 	    use_immediate <= true;
 	    immediate_value <= instruction(31 downto 12) & x"000";
-	    op_minor <= OP_MINOR_OR;
+	    op_minor <= OP_MINOR_ADD;
 	    ignore_reg2 <= true;
 	when RV32I_OP_JAL =>
 	    use_immediate <= true;
@@ -164,7 +164,11 @@ begin
 	    use_immediate <= false;
 	    case instruction(14 downto 12) is
 	    when RV32_FN3_ADD =>
-		-- implicit OP_MAJOR_ALU, OP_MINOR_ADD;
+		if instruction(30) = '0' then
+		    op_minor <= OP_MINOR_ADD;
+		else
+		    op_minor <= OP_MINOR_SUB;
+		end if;
 	    when RV32_FN3_SL =>
 		op_major <= OP_MAJOR_SHIFT;
 		latency <= LATENCY_MEM;
@@ -190,7 +194,5 @@ begin
 	    end case;
 	when others =>
 	end case;
-
     end process;
-
 end Behavioral;
