@@ -810,8 +810,8 @@ begin
       EX_eff_reg1(4 downto 0) when ID_EX_immediate(2) = '1' -- shift variable
       else ID_EX_immediate(10 downto 6); -- shift immediate
 
-    EX_shift_funct_8_16 <= "00" when ID_EX_mem_cycle = '1' -- sll
-      else ID_EX_immediate(1 downto 0);
+    EX_shift_funct_8_16 <= OP_SHIFT_LL when ID_EX_mem_cycle = '1'
+      else ID_EX_immediate(1 downto 0); -- XXX no, properly decode this!
 
     -- instantiate the barrel shifter
     shift: entity work.shift
@@ -941,7 +941,7 @@ begin
 		EX_MEM_mem_write <= ID_EX_mem_write;
 		EX_MEM_mem_byte_sel <= EX_mem_byte_sel;
 		EX_MEM_shamt_1_2_4 <= EX_shamt(2 downto 0);
-		EX_MEM_shift_funct <= ID_EX_immediate(1 downto 0);
+		EX_MEM_shift_funct <= ID_EX_immediate(1 downto 0); -- XXX no!
 		EX_MEM_op_major <= ID_EX_op_major;
 		EX_MEM_branch_cycle <= ID_EX_branch_cycle;
 		EX_MEM_branch_likely <= ID_EX_branch_likely;
