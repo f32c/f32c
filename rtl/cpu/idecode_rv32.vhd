@@ -60,6 +60,16 @@ begin
 	-- Fixed decoding
 	reg1_addr <= instruction(19 downto 15);
 	reg2_addr <= instruction(24 downto 20);
+	case instruction(13 downto 12) is
+	when RV32_MEM_SIZE_B =>
+	    mem_size <= MEM_SIZE_8;
+	when RV32_MEM_SIZE_H =>
+	    mem_size <= MEM_SIZE_16;
+	when RV32_MEM_SIZE_W =>
+	    mem_size <= MEM_SIZE_32;
+	when RV32_MEM_SIZE_D =>
+	    mem_size <= MEM_SIZE_64;
+	end case;
 
 	-- Internal signals
 	if instruction(31) = '1' then
@@ -84,7 +94,6 @@ begin
 	branch_condition <= TEST_UNDEFINED;
 	mem_cycle <= '0';
 	mem_write <= '0';
-	mem_size <= instruction(13 downto 12);
 	mem_read_sign_extend <= '-';
 	latency <= LATENCY_EX;
 	alt_sel <= ALT_PC_8;
@@ -120,6 +129,7 @@ begin
 	    ignore_reg2 <= true;
 	when RV32I_OP_BRANCH =>
 	    branch_cycle <= true;
+	    target_addr <= RV32_REG_ZERO;
 	when RV32I_OP_LOAD =>
 	    use_immediate <= true;
 	    latency <= LATENCY_WB;
@@ -129,6 +139,7 @@ begin
 	when RV32I_OP_STORE =>
 	    use_immediate <= true;
 	    immediate_value(4 downto 0) <= instruction(11 downto 7);
+	    target_addr <= RV32_REG_ZERO;
 	    mem_cycle <= '1';
 	    mem_write <= '1';
 	when RV32I_OP_REG_IMM =>
