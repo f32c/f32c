@@ -31,6 +31,16 @@ constant RV32I_OP_SYS:		std_logic_vector := "1110011";
 constant RV64I_OP_REG_IMM:	std_logic_vector := "0011011";
 constant RV64I_OP_REG_REG:	std_logic_vector := "0111011";
 
+-- funct3 codes
+constant RV32_FN3_ADD:		std_logic_vector := "000";
+constant RV32_FN3_SL:		std_logic_vector := "001";
+constant RV32_FN3_SLT:		std_logic_vector := "010";
+constant RV32_FN3_SLTU:		std_logic_vector := "011";
+constant RV32_FN3_XOR:		std_logic_vector := "100";
+constant RV32_FN3_SR:		std_logic_vector := "101";
+constant RV32_FN3_OR:		std_logic_vector := "110";
+constant RV32_FN3_AND:		std_logic_vector := "111";
+
 -- Specialized registers: zero, exception slots, return address
 constant RV32_REG_ZERO:		std_logic_vector := "00000";
 constant RV32_REG_RA:		std_logic_vector := "00001";
