@@ -132,8 +132,62 @@ begin
 	    mem_cycle <= '1';
 	    mem_write <= '1';
 	when RV32I_OP_REG_IMM =>
+	    use_immediate <= true;
 	    ignore_reg2 <= true;
+	    case instruction(14 downto 12) is
+	    when RV32_FN3_ADD =>
+		-- implicit OP_MAJOR_ALU, OP_MINOR_ADD;
+	    when RV32_FN3_SL =>
+		op_major <= OP_MAJOR_SHIFT;
+		latency <= LATENCY_MEM;
+		-- XXX incomplete
+	    when RV32_FN3_SLT =>
+		op_major <= OP_MAJOR_SLT;
+		op_minor <= OP_MINOR_SUB;
+		sign_extend <= true;
+	    when RV32_FN3_SLTU =>
+		op_major <= OP_MAJOR_SLT;
+		op_minor <= OP_MINOR_SUB;
+		sign_extend <= false;
+	    when RV32_FN3_XOR =>
+		op_minor <= OP_MINOR_XOR;
+	    when RV32_FN3_SR =>
+		op_major <= OP_MAJOR_SHIFT;
+		latency <= LATENCY_MEM;
+		-- XXX incomplete
+	    when RV32_FN3_OR =>
+		op_minor <= OP_MINOR_OR;
+	    when RV32_FN3_AND =>
+		op_minor <= OP_MINOR_AND;
+	    end case;
 	when RV32I_OP_REG_REG =>
+	    use_immediate <= false;
+	    case instruction(14 downto 12) is
+	    when RV32_FN3_ADD =>
+		-- implicit OP_MAJOR_ALU, OP_MINOR_ADD;
+	    when RV32_FN3_SL =>
+		op_major <= OP_MAJOR_SHIFT;
+		latency <= LATENCY_MEM;
+		-- XXX incomplete
+	    when RV32_FN3_SLT =>
+		op_major <= OP_MAJOR_SLT;
+		op_minor <= OP_MINOR_SUB;
+		sign_extend <= true;
+	    when RV32_FN3_SLTU =>
+		op_major <= OP_MAJOR_SLT;
+		op_minor <= OP_MINOR_SUB;
+		sign_extend <= false;
+	    when RV32_FN3_XOR =>
+		op_minor <= OP_MINOR_XOR;
+	    when RV32_FN3_SR =>
+		op_major <= OP_MAJOR_SHIFT;
+		latency <= LATENCY_MEM;
+		-- XXX incomplete
+	    when RV32_FN3_OR =>
+		op_minor <= OP_MINOR_OR;
+	    when RV32_FN3_AND =>
+		op_minor <= OP_MINOR_AND;
+	    end case;
 	when others =>
 	end case;
 
