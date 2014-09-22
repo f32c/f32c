@@ -54,6 +54,7 @@ entity glue is
 
 	-- CPU core configuration options
 	C_branch_prediction: boolean := true;
+	C_full_shifter: boolean := false; -- true;
 	C_result_forwarding: boolean := true;
 	C_load_aligner: boolean := true;
 	C_register_technology: string := "lattice";
@@ -221,7 +222,7 @@ begin
 	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
-	C_load_aligner => C_load_aligner,
+	C_load_aligner => C_load_aligner, C_full_shifter => C_full_shifter,
 	C_register_technology => C_register_technology,
 	C_cop0_count => C_cop0_count, C_cop0_config => C_cop0_config,
 	C_exceptions => C_exceptions, C_ll_sc => C_ll_sc,

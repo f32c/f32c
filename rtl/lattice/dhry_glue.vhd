@@ -50,6 +50,7 @@ entity glue is
 
 	-- CPU core configuration options
 	C_branch_prediction: boolean := true;
+	C_full_shifter: boolean := true;
 	C_result_forwarding: boolean := true;
 	C_load_aligner: boolean := true;
 
@@ -109,7 +110,7 @@ begin
 	C_cop0_count => C_cop0_count, C_cop0_config => C_cop0_config,
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
-	C_load_aligner => C_load_aligner,
+	C_load_aligner => C_load_aligner, C_full_shifter => C_full_shifter,
 	C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
 	C_register_technology => C_register_technology,
 	-- debugging only

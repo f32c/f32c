@@ -46,6 +46,7 @@ entity pipeline is
 	C_branch_prediction: boolean := true;
 	C_bp_global_depth: integer := 6; -- range 2 to 12
 	C_load_aligner: boolean := true;
+	C_full_shifter: boolean := true;
 	C_reg_IF_PC: boolean := false;
 	C_register_technology: string := "unknown";
 
@@ -204,6 +205,7 @@ architecture Behavioral of pipeline is
     signal EX_MEM_mem_read_sign_extend: std_logic;
     signal EX_MEM_shamt_1_2_4: std_logic_vector(2 downto 0);
     signal EX_MEM_shift_funct: std_logic_vector(1 downto 0);
+    signal EX_MEM_shift_blocked: boolean;
     signal EX_MEM_mem_size: std_logic_vector(1 downto 0);
     signal EX_MEM_multicycle_lh_lb: boolean;
     signal EX_MEM_mem_write: std_logic;
@@ -222,6 +224,7 @@ architecture Behavioral of pipeline is
     signal MEM_bpredict_score: std_logic_vector(1 downto 0);
     signal MEM_bpredict_we: std_logic;
     signal MEM_eff_data: std_logic_vector(31 downto 0);
+    signal MEM_shamt_1_2_4: std_logic_vector(2 downto 0);
     signal MEM_data_in, MEM_from_shift: std_logic_vector(31 downto 0);
     -- boundary to stage 5
     signal MEM_WB_mem_cycle: std_logic;
@@ -661,7 +664,7 @@ begin
 		    ID_EX_alu_op2 <= (others => '-');
 		    ID_EX_immediate <= (others => '-');
 		    ID_EX_cop0_addr <= (others => '-');
-		    ID_EX_op_major <= (others => '-');
+		    ID_EX_op_major <= OP_MAJOR_ALU;
 		    ID_EX_op_minor <= (others => '-');
 		    ID_EX_mem_size <= (others => '-');
 		    ID_EX_branch_condition <= (others => '-');
@@ -823,7 +826,7 @@ begin
     )
     port map (
 	shamt_8_16 => EX_shamt(4 downto 3), funct_8_16 => EX_shift_funct_8_16,
-	shamt_1_2_4 => EX_MEM_shamt_1_2_4, funct_1_2_4 => EX_MEM_shift_funct,
+	shamt_1_2_4 => MEM_shamt_1_2_4, funct_1_2_4 => EX_MEM_shift_funct,
 	stage1_in => EX_MEM_mem_data_out, stage4_out => MEM_from_shift,
 	stage8_in => EX_eff_reg2, stage16_out => EX_from_shift,
 	mem_multicycle_lh_lb => MEM_WB_multicycle_lh_lb,
@@ -913,6 +916,14 @@ begin
 		R_cop0_intr(7 downto 2) <= intr;
 	    end if;
 
+	    if not C_full_shifter and EX_MEM_shift_blocked then
+		if EX_MEM_shamt_1_2_4 = "010" then
+		    EX_MEM_shift_blocked <= false;
+		end if;
+		EX_MEM_mem_data_out <= MEM_from_shift;
+		EX_MEM_shamt_1_2_4 <= EX_MEM_shamt_1_2_4 - 1;
+	    end if;
+
 	    if MEM_running and (MEM_cancel_EX or not EX_running or
 	      (C_exceptions and EX_MEM_EIP)) then
 		-- insert a bubble in the MEM stage
@@ -945,6 +956,9 @@ begin
 		EX_MEM_mem_byte_sel <= EX_mem_byte_sel;
 		EX_MEM_shamt_1_2_4 <= EX_shamt(2 downto 0);
 		EX_MEM_shift_funct <= ID_EX_shift_funct;
+		EX_MEM_shift_blocked <= not C_full_shifter
+		  and ID_EX_op_major = OP_MAJOR_SHIFT
+		  and EX_shamt(2 downto 1) /= "00";
 		EX_MEM_op_major <= ID_EX_op_major;
 		EX_MEM_branch_cycle <= ID_EX_branch_cycle;
 		EX_MEM_branch_likely <= ID_EX_branch_likely;
@@ -1065,7 +1079,8 @@ begin
     -- ===============================
     --
 
-    MEM_running <= EX_MEM_mem_cycle = '0' or dmem_data_ready = '1';
+    MEM_running <= (EX_MEM_mem_cycle = '0' or dmem_data_ready = '1')
+      and not (not C_full_shifter and EX_MEM_shift_blocked);
 
     MEM_eff_data <= EX_MEM_logic_data when EX_MEM_logic_cycle = '1'
       else EX_MEM_addsub_data;
@@ -1073,6 +1088,10 @@ begin
     MEM_take_branch <= EX_MEM_take_branch xor EX_MEM_branch_taken;
     MEM_cancel_EX <= (C_branch_likely and EX_MEM_branch_likely and
       not EX_MEM_take_branch);
+
+    MEM_shamt_1_2_4 <= "001" when not C_full_shifter and EX_MEM_shift_blocked
+      else "00" & EX_MEM_shamt_1_2_4(0) when not C_full_shifter
+      else EX_MEM_shamt_1_2_4;
 
     -- branch prediction
     G_bp_update_score:
