@@ -36,6 +36,7 @@ entity cache is
 
 	-- optimization options
 	C_result_forwarding: boolean;
+	C_full_shifter: boolean;
 	C_branch_prediction: boolean;
 	C_load_aligner: boolean;
 	C_register_technology: string;
@@ -111,7 +112,7 @@ begin
 	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
-	C_load_aligner => C_load_aligner,
+	C_load_aligner => C_load_aligner, C_full_shifter => C_full_shifter,
 	C_register_technology => C_register_technology,
 	C_cop0_count => C_cop0_count, C_cop0_config => C_cop0_config,
 	C_exceptions => C_exceptions,
