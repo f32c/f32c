@@ -30,10 +30,16 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+use work.f32c_pack.all;
+
+
 entity glue is
     generic (
 	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-	C_clk_freq: integer := 50;
+	C_clk_freq: integer := 25;
+
+	-- Architecture
+	C_arch: integer := ARCH_MI32; -- RV32;
 
 	-- ISA options
 	C_big_endian: boolean := false;
@@ -49,7 +55,7 @@ entity glue is
 	C_cop0_config: boolean := true;
 
 	-- CPU core configuration options
-	C_branch_prediction: boolean := true;
+	C_branch_prediction: boolean := false;
 	C_result_forwarding: boolean := true;
 	C_load_aligner: boolean := true;
 
@@ -58,6 +64,9 @@ entity glue is
 
 	-- These may negatively influence timing closure:
 	C_movn_movz: boolean := false;
+
+	-- Debugging / testing options (should be turned off)
+	C_debug: boolean := true;
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
@@ -68,7 +77,9 @@ entity glue is
 	clk_25m: in std_logic;
 	rs232_tx: out std_logic;
 	rs232_rx: in std_logic;
-	led: out std_logic_vector(7 downto 0)
+	led: out std_logic_vector(7 downto 0);
+	btn_left, btn_right, btn_up, btn_down, btn_center: in std_logic;
+	sw: in std_logic_vector(3 downto 0)
     );
 end glue;
 
@@ -86,25 +97,34 @@ architecture Behavioral of glue is
 
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
-    signal sio_ce: std_logic;
+    signal sio_ce, sio_txd: std_logic;
+
+    -- debugging only
+    signal trace_addr: std_logic_vector(5 downto 0);
+    signal trace_data: std_logic_vector(31 downto 0);
+    signal debug_txd: std_logic;
 
 begin
 
-    -- clock synthesizer
+    --
+    -- Clock synthesizer
+    --
     clkgen: entity work.clkgen
     generic map (
 	C_clk_freq => C_clk_freq,
-	C_debug => false
+	C_debug => C_debug
     )
     port map (
 	clk_25m => clk_25m, clk => clk, clk_325m => open,
-	ena_325m => '0', sel => '0', key => '0', res => '0'
+	ena_325m => '0', sel => sw(2), key => btn_down, res => '0'
     );
 
+    --
     -- f32c core
+    --
     pipeline: entity work.pipeline
     generic map (
-	C_clk_freq => C_clk_freq,
+	C_arch => C_arch, C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
 	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
@@ -115,7 +135,7 @@ begin
 	C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
 	C_register_technology => C_register_technology,
 	-- debugging only
-	C_debug => false
+	C_debug => C_debug
     )
     port map (
 	clk => clk, reset => '0', intr => "000000",
@@ -128,11 +148,26 @@ begin
 	dmem_data_ready => dmem_data_ready,
 	snoop_cycle => '0', snoop_addr => "------------------------------",
 	flush_i_line => open, flush_d_line => open,
-	trace_addr => "------", trace_data => open
+	trace_addr => trace_addr, trace_data => trace_data
     );
 
+    --
+    -- debugging design instance
+    --
+    G_debug:
+    if C_debug generate
+    debug: entity work.serial_debug
+    port map (
+	clk => clk_25m, rs232_txd => debug_txd,
+	trace_addr => trace_addr, trace_data => trace_data
+    );
+    end generate;
 
+    rs232_tx <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
+
+    --
     -- RS232 sio
+    --
     G_sio:
     if C_sio generate
     sio: entity work.sio
@@ -141,7 +176,7 @@ begin
 	C_big_endian => C_big_endian
     )
     port map (
-	clk => clk, ce => sio_ce, txd => rs232_tx, rxd => rs232_rx,
+	clk => clk, ce => sio_ce, txd => sio_txd, rxd => rs232_rx,
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
 	bus_in => cpu_to_dmem, bus_out => from_sio
     );
@@ -156,7 +191,9 @@ begin
     io_to_cpu <= from_sio;
     final_to_cpu <= io_to_cpu when dmem_addr(31) = '1' else dmem_to_cpu;
 
+    --
     -- LEDs
+    --
     process(clk)
     begin
     if C_leds and rising_edge(clk) then
@@ -167,7 +204,9 @@ begin
     end if;
     end process;
 
+    --
     -- Block RAM
+    --
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
     imem_data_ready <= '1';
     dmem_data_ready <= '1';
