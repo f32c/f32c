@@ -117,6 +117,8 @@ architecture Behavioral of pipeline is
     signal ID_read_alt: boolean;
     signal ID_alt_sel: std_logic_vector(2 downto 0);
     signal ID_shift_funct: std_logic_vector(1 downto 0);
+    signal ID_shift_variable: boolean;
+    signal ID_shift_amount: std_logic_vector(4 downto 0);
     signal ID_immediate: std_logic_vector(31 downto 0);
     signal ID_sign_extension: std_logic_vector(15 downto 0);
     signal ID_sign_extend: boolean;
@@ -154,6 +156,8 @@ architecture Behavioral of pipeline is
     signal ID_EX_read_alt: boolean;
     signal ID_EX_alt_sel: std_logic_vector(2 downto 0);
     signal ID_EX_shift_funct: std_logic_vector(1 downto 0);
+    signal ID_EX_shift_variable: boolean;
+    signal ID_EX_shift_amount: std_logic_vector(4 downto 0);
     signal ID_EX_mem_cycle, ID_EX_mem_write: std_logic;
     signal ID_EX_mem_size: std_logic_vector(1 downto 0);
     signal ID_EX_mem_read_sign_extend: std_logic;
@@ -439,6 +443,7 @@ begin
 	immediate_value => ID_immediate, use_immediate => ID_use_immediate,
 	cmov_cycle => ID_cmov_cycle, cmov_condition => ID_cmov_condition,
 	sign_extension => ID_sign_extension, shift_fn => ID_shift_funct,
+	shift_variable => ID_shift_variable, shift_amount => ID_shift_amount,
 	read_alt => ID_read_alt, alt_sel => ID_alt_sel,
 	target_addr => ID_writeback_addr, op_major => ID_op_major,
 	op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
@@ -696,6 +701,8 @@ begin
 		    ID_EX_alt_sel <= ID_alt_sel;
 		    ID_EX_read_alt <= ID_read_alt;
 		    ID_EX_shift_funct <= ID_shift_funct;
+		    ID_EX_shift_variable <= ID_shift_variable;
+		    ID_EX_shift_amount <= ID_shift_amount;
 		    ID_EX_writeback_addr <= ID_writeback_addr;
 		    ID_EX_mem_cycle <= ID_mem_cycle;
 		    ID_EX_branch_cycle <= ID_branch_cycle;
@@ -813,8 +820,8 @@ begin
       "10" when EX_2bit_add = "01" else
       "11" when EX_2bit_add = "00";
     EX_shamt <= EX_mem_align_shamt & "---" when ID_EX_mem_cycle = '1' else
-      EX_eff_reg1(4 downto 0) when ID_EX_immediate(2) = '1' -- shift variable
-      else ID_EX_immediate(10 downto 6); -- shift immediate
+      EX_eff_reg1(4 downto 0) when ID_EX_shift_variable
+      else ID_EX_shift_amount;
 
     EX_shift_funct_8_16 <= OP_SHIFT_LL when ID_EX_mem_cycle = '1'
       else ID_EX_shift_funct;
