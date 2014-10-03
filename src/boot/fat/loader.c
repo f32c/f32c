@@ -131,11 +131,12 @@ load_bin(const char *fname, int verbose)
 		    " bss starts at %p len %p\n\n",
 		    start, cp, (void *) (end - cp));
 
-	/* bzero() the BSS section */
+	/* clear the BSS section */
 	bzero(cp, end - cp);
 
 	return (start);
 }
+
 
 void
 main(void)
@@ -177,6 +178,11 @@ main(void)
 			: "r" (i)
 		);
 	}
+
+	/* Turn off video framebuffer and PCM audio DMA */
+	OUTW(IO_FB, 3);		/* framebuffer off */
+	OUTW(IO_PCM_FREQ, 0);	/* stop PCM DMA */
+	OUTW(IO_PCM_VOLUME, 0);	/* mute PCM DAC output */
 
 	__asm __volatile__(
 		".set noreorder;"
