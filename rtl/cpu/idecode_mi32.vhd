@@ -39,6 +39,8 @@ entity idecode_mi32 is
 	op_minor: out std_logic_vector(2 downto 0);
 	alt_sel: out std_logic_vector(2 downto 0);
 	shift_fn: out std_logic_vector(1 downto 0);
+	shift_variable: out boolean;
+	shift_amount: out std_logic_vector(4 downto 0);
 	read_alt: out boolean;
 	use_immediate, ignore_reg2: out boolean;
 	cmov_cycle, cmov_condition: out boolean;
@@ -73,6 +75,8 @@ begin
 	when "10" => shift_fn <= OP_SHIFT_RL;
 	when "11" => shift_fn <= OP_SHIFT_RA;
 	end case;
+	shift_variable <= instruction(2) = '1';
+	shift_amount <= instruction(10 downto 6);
 
 	-- Internal signals
 	imm32_unsigned := x"0000" & instruction(15 downto 0);
@@ -205,8 +209,7 @@ begin
 	    read_alt <= true;
 	    alt_sel <= ALT_COP0;
 	    target_addr <= instruction(20 downto 16);
-	    if C_exceptions and
-	      instruction(25 downto 21) = MI32_COP0_MFMC0 then
+	    if C_exceptions and instruction(25 downto 21) = MI32_COP0_MFMC0 then
 		if instruction(5) = '1' then
 		    ei <= true;
 		else
