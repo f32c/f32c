@@ -1,5 +1,5 @@
 --
--- Copyright 2013 Marko Zec, University of Zagreb
+-- Copyright 2013, 2014 Marko Zec, University of Zagreb
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -141,9 +141,9 @@ begin
 	      R_phase = C_phase_write_upper_half or
 	      R_phase = C_phase_write_terminate then
 		R_d <= (others => 'Z');
-	    elsif R_write_cycle and R_phase = C_phase_idle + 1 then
+	    elsif R_write_cycle and R_phase = C_phase_idle + 2 then
 		R_d <= R_out_word(15 downto 0);
-	    elsif R_write_cycle and R_phase = C_phase_write_upper_half + 1 then
+	    elsif R_write_cycle and R_phase = C_phase_write_upper_half + 2 then
 		R_d <= R_out_word(31 downto 16);
 	    end if;
 	end if;
