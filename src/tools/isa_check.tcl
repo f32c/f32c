@@ -48,7 +48,7 @@ while {[eof $elffile] == 0} {
     if {[string range $line 0 18] == "Contents of section"} {
 	set section [string trim [lindex $line 3] :]
     } elseif {[string index $line 0] == " " &&
-	[lsearch ".text .rodata .data .sdata" $section] != -1} {
+	[lsearch ".init .text .rodata .data .sdata" $section] != -1} {
 	set line_addr [expr 0x[lindex [string range $line 0 10] 0]]
 	if {$addr != $line_addr} {
 	    set addr $line_addr
@@ -106,7 +106,7 @@ set headers [exec $objdump -h $objfile]
 foreach line [split $headers \n] {
     set line [string trim $line]
     set sname [lindex [split $line] 1]
-    if {[lsearch ".text .rodata .data .sdata .sbss .bss" $sname] >= 0} {
+    if {[lsearch ".init .text .rodata .data .sdata .sbss .bss" $sname] >= 0} {
 	puts -nonewline "[string range $sname 1 end] section:	"
 	puts -nonewline "start 0x[string range $line 36 43] "
 	puts "len 0x[string range $line 16 23]"

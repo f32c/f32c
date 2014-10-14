@@ -36,7 +36,7 @@
 /*
  * Setup the SP and global (small data) pointer register and jump into main().
  */
-	.section .text.unlikely
+	.section .init
 	.globl _start
 	.type _start,@function
 

@@ -122,7 +122,7 @@ MK_CFLAGS += ${CFLAGS}
 
 # Linker flags
 MK_LDFLAGS += -N ${ENDIANFLAGS}
-MK_LDFLAGS += -Ttext ${LOADADDR}
+MK_LDFLAGS += --section-start=.init=${LOADADDR}
 MK_LDFLAGS += -nostdlib
 
 # Pull in any module-specific linker flags
