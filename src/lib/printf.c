@@ -2,7 +2,6 @@
  * Copyright (c) 1986, 1988, 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
- * Copyright (c) 2011 University of Zagreb
  *
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -152,9 +151,14 @@ reswitch:
 				n = n * 10 + ch - '0';
 				ch = *fmt;
 				if (ch < '0' || ch > '9')
-				break;
+					break;
 			}
 			width = n;
+			goto reswitch;
+		case '*':
+			width = va_arg(ap, int);
+			/* fallthrough */
+		case '.':
 			goto reswitch;
 		case 's':
 			cp = va_arg(ap, char *);
