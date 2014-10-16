@@ -41,7 +41,7 @@ MK_CFLAGS += -fselective-scheduling2
 
 # Linker flags
 MK_LDFLAGS += -N
-MK_LDFLAGS += -Ttext ${LOADADDR}
+MK_LDFLAGS += -Wl,--section-start=.init=${LOADADDR}
 MK_LDFLAGS += -nostartfiles -nostdlib
 #MK_LDFLAHS += ${ENDIANFLAGS}
 
