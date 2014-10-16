@@ -31,6 +31,8 @@
 #include <setjmp.h>
 #include <assert.h>
 
+#define MICROPY_NLR_SETJMP 1
+
 typedef struct _nlr_buf_t nlr_buf_t;
 struct _nlr_buf_t {
     // the entries here must all be machine word size
