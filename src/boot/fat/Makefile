@@ -38,16 +38,17 @@ image:	loader.bin
 	mmd -i ${SPI_IMG_NAME} ::demo/logos
 	mmd -i ${SPI_IMG_NAME} ::demo/chess
 	mmd -i ${SPI_IMG_NAME} ::bench
-	mcopy -i ${SPI_IMG_NAME} ../../pbasic/basic.bin ::boot
+	mcopy -i ${SPI_IMG_NAME} ../../lang/basic/basic.bin ::boot
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/pictures.txt \
 		::demo/pics
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/*.jpg ::demo/pics
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/logos/*.jpg \
 		::demo/logos
-	mcopy -i ${SPI_IMG_NAME} ../../pbasic/COPYRIGHT ::copyright.txt
-	groff -mandoc -Tascii ../../pbasic/docs/basic.1 > .bas.man
+	mcopy -i ${SPI_IMG_NAME} ../../lang/basic/COPYRIGHT ::copyright.txt
+	groff -mandoc -Tascii ../../lang/basic/docs/basic.1 > .bas.man
 	mcopy -i ${SPI_IMG_NAME} .bas.man ::readme.txt
 	mcopy -i ${SPI_IMG_NAME} ../../examples/video_test/vidtest.bin ::demo
+	mcopy -i ${SPI_IMG_NAME} ../../examples/wavplay/wavplay.bin ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/demo.bas ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/snake.bas ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/tetris.bas ::demo
@@ -61,7 +62,6 @@ image:	loader.bin
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/chess/README ::demo/chess
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/chess/COPYING ::demo/chess
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/chess/mscp.c ::demo/chess
-	mcopy -i ${SPI_IMG_NAME} ../../wavplay/wavplay.bin ::demo
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/autoexec.bas ::
-	mcopy -i ${SPI_IMG_NAME} ../../coremark/v1.0/coremark.bin ::bench
-	mcopy -i ${SPI_IMG_NAME} ../../dhry/dhry.bin ::bench
+	mcopy -i ${SPI_IMG_NAME} ../../bench/coremark/coremark.bin ::bench
+	mcopy -i ${SPI_IMG_NAME} ../../bench/dhry/dhry.bin ::bench
