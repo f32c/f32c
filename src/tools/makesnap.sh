@@ -3,7 +3,7 @@
 svn co svn+ssh://login.nxlab.fer.hr/fpgasvn/f32c/src src
 
 rm -fr src/.svn
-rm -fr src/coremark src/demo src/tools src/test1 src/boot
+rm -fr src/tools src/misc
 
 # Pipelinanje naredbi ne radi bas pouzdano pod cygwinom,
 # pa za sad kompletno eliminiramo skriptu isa_check.tcl
