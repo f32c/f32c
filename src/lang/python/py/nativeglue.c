@@ -122,8 +122,13 @@ void *const mp_fun_table[MP_F_NUMBER_OF] = {
     mp_call_method_n_kw,
     mp_getiter,
     mp_iternext,
+#ifndef MICROPY_NLR_SETJMP
     nlr_push,
     nlr_pop,
+#else
+    NULL,
+    NULL,
+#endif
     mp_native_raise,
     mp_import_name,
     mp_import_from,

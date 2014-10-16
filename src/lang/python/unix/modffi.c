@@ -150,7 +150,7 @@ STATIC mp_obj_t return_ffi_value(ffi_arg val, char type)
             return mp_obj_new_float(val_union.flt);
         }
         case 'd': {
-            double *p = (double*)&val;
+            double *p = (void *) &val;
             return mp_obj_new_float(*p);
         }
         default:

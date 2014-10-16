@@ -456,6 +456,12 @@ typedef double mp_float_t;
 #define MP_ENDIANNESS_LITTLE (!MP_ENDIANNESS_BIG)
 #else
   // Endiannes not defined by port so try to autodetect it.
+  #ifdef __amd64
+    #define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+  #endif
+  #ifdef __i386
+    #define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
+  #endif
   #if defined(__BYTE_ORDER__)
     #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       #define MP_ENDIANNESS_LITTLE (1)
