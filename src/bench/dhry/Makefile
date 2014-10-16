@@ -26,8 +26,8 @@ include ${POST_MK}
 
 # Specialized build rules for dhry_*.c files
 
-$(addprefix ${OBJDIR},dhry_1.o): dhry_1.c
+./obj/${ARCH}/dhry_1.o: dhry_1.c
 	${CC} ${DHRY_CFLAGS} -o $@ dhry_1.c
 
-$(addprefix ${OBJDIR},dhry_2.o): dhry_2.c
+./obj/${ARCH}/dhry_2.o: dhry_2.c
 	${CC} ${DHRY_CFLAGS} -o $@ dhry_2.c

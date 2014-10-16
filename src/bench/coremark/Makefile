@@ -52,7 +52,7 @@ CORE_FILES = core_list_join core_main core_matrix core_state core_util \
 	../../lib/printf ../../lib/sio_poll ../../lib/div \
 	../../lib/memset ../../lib/memcpy
 ORIG_SRCS = $(addsuffix .c,$(CORE_FILES))
-SRCS = ../../lib/start.S $(ORIG_SRCS) $(PORT_SRCS)
+SRCS = ../../lib/${ARCH}/start.S $(ORIG_SRCS) $(PORT_SRCS)
 OBJS = $(addprefix $(OPATH),$(addsuffix $(OEXT),$(CORE_FILES)) $(PORT_OBJS))
 OUTNAME = coremark$(EXE)
 OUTFILE = $(OPATH)$(OUTNAME)
