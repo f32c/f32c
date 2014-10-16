@@ -154,7 +154,7 @@ void asm_x64_start_pass(asm_x64_t *as, uint pass) {
 
 void asm_x64_end_pass(asm_x64_t *as) {
     if (as->pass == ASM_X64_PASS_COMPUTE) {
-        MP_PLAT_ALLOC_EXEC(as->code_offset, (void**) &as->code_base, &as->code_size);
+        MP_PLAT_ALLOC_EXEC(as->code_offset, (void *) &as->code_base, &as->code_size);
         if(as->code_base == NULL) {
             assert(0);
         }
