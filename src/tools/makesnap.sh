@@ -1,10 +1,10 @@
 #!/bin/csh
 
 svn co svn+ssh://login.nxlab.fer.hr/fpgasvn/f32c f32c
-svn co svn+ssh://login.nxlab.fer.hr/fpgasvn/demo/chess f32c/src/chess
+svn co svn+ssh://login.nxlab.fer.hr/fpgasvn/demo/chess f32c/src/examples/chess
 
-rm -fr src/.svn
-rm -fr src/tools src/misc
+rm -fr f32c/.svn f32c/src/examples/chess/.svn f32c/rtl
+rm -fr f32c/src/tools f32c/src/misc
 
 # Pipelinanje naredbi ne radi bas pouzdano pod cygwinom,
 # pa za sad kompletno eliminiramo skriptu isa_check.tcl
