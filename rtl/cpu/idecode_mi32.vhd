@@ -73,7 +73,7 @@ begin
 	when "00" => shift_fn <= OP_SHIFT_LL;
 	when "01" => shift_fn <= OP_SHIFT_BYPASS;
 	when "10" => shift_fn <= OP_SHIFT_RL;
-	when "11" => shift_fn <= OP_SHIFT_RA;
+	when others => shift_fn <= OP_SHIFT_RA;
 	end case;
 	shift_variable <= instruction(2) = '1';
 	shift_amount <= instruction(10 downto 6);
