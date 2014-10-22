@@ -65,7 +65,7 @@ begin
 	when RV32_MEM_SIZE_B => mem_size <= MEM_SIZE_8;
 	when RV32_MEM_SIZE_H => mem_size <= MEM_SIZE_16;
 	when RV32_MEM_SIZE_W => mem_size <= MEM_SIZE_32;
-	when RV32_MEM_SIZE_D => mem_size <= MEM_SIZE_64;
+	when others => mem_size <= MEM_SIZE_64;
 	end case;
 
 	-- Internal signals
@@ -168,6 +168,8 @@ begin
 		op_minor <= OP_MINOR_OR;
 	    when RV32_FN3_AND =>
 		op_minor <= OP_MINOR_AND;
+	    when others =>
+		-- nothing to do here, just appease ISE warnings
 	    end case;
 	when RV32I_OP_REG_REG =>
 	    use_immediate <= false;
@@ -200,6 +202,8 @@ begin
 		op_minor <= OP_MINOR_OR;
 	    when RV32_FN3_AND =>
 		op_minor <= OP_MINOR_AND;
+	    when others =>
+		-- nothing to do here, just appease ISE warnings
 	    end case;
 	when others =>
 	end case;
