@@ -126,13 +126,10 @@ malloc(size_t size)
 	heap[best_i] = size;
 	if (best_len > size)
 		heap[best_i + size] = SET_FREE(best_len - size);
-	else {
 #ifdef MALLOC_DEBUG
+	else
 		free_cnt--;
-#endif
-	}
 
-#ifdef MALLOC_DEBUG
 	used_cnt++;
 	printf("malloc(%d): used %d free %d\n", (size - 1) * 4,
 	    used_cnt, free_cnt);
