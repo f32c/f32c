@@ -44,7 +44,7 @@
 #include <stdint.h>
 #endif
 #include "../include/fb.h"
-#include "../pbasic/tjpgd.h"	/* XXX BASIC HACK, REVISIT! */
+#include "../lang/basic/tjpgd.h"	/* XXX BASIC HACK, REVISIT! */
 #endif
 
 
