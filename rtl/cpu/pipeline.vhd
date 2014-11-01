@@ -591,12 +591,10 @@ begin
 		    ID_EX_multicycle_lh_lb <= not EX_MEM_multicycle_lh_lb;
 		    ID_EX_mem_cycle <= '0';
 		    ID_EX_op_major <= OP_MAJOR_SHIFT;
-		    ID_EX_immediate(2) <= '0'; -- shift immediate
-		    ID_EX_immediate(1 downto 0) <= "10"; -- shift right logical
+		    ID_EX_shift_variable <= false;
+		    ID_EX_shift_funct <= OP_SHIFT_RL;
 		    if not EX_MEM_multicycle_lh_lb then
-			-- shift amount
-			ID_EX_immediate(10 downto 6) <=
-			  EX_mem_align_shamt & "000";
+			ID_EX_shift_amount <=  EX_mem_align_shamt & "000";
 		    end if;
 		    if MEM_take_branch and not ID_running and
 		      IF_fetch_complete then
