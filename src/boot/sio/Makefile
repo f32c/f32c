@@ -2,6 +2,8 @@
 # Bootloader uses a non-default loadaddr
 LOADADDR = 0x00000000
 
+LDFLAGS = -Ttext=${LOADADDR}
+
 ifeq (${ARCH},mips)
 	# Do not use GP-relative addressing
 	CFLAGS += -G 0
