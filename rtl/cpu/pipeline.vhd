@@ -134,6 +134,7 @@ architecture Behavioral of pipeline is
     signal ID_jump_register_hazard: boolean;
     signal ID_seb_seh_cycle: boolean;
     signal ID_seb_seh_select: std_logic;
+    signal ID_mult, ID_mult_signed: boolean;
     signal ID_ll, ID_sc: boolean;
     signal ID_flush_i_line, ID_flush_d_line: std_logic;
     signal ID_wait, ID_cop0_write, ID_exception, ID_di, ID_ei: boolean;
@@ -165,6 +166,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_latency: std_logic_vector(1 downto 0);
     signal ID_EX_seb_seh_cycle: boolean;
     signal ID_EX_seb_seh_select: std_logic;
+    signal ID_EX_mult, ID_EX_mult_signed: boolean;
     signal ID_EX_ll, ID_EX_sc: boolean;
     signal ID_EX_flush_i_line, ID_EX_flush_d_line: std_logic;
     signal ID_EX_branch_delay_follows, ID_EX_branch_delay_slot: boolean;
@@ -301,8 +303,6 @@ begin
 
     -- XXX TODO:
     --  revisit / simplify register file write-enable setting
-    --	revisit MULT / MFHI / MFLO decoding (now done in EX stage!!!)
-    --  commit MULT result in MEM stage (branch likely must cancel commit)!
     --  reintroduce area-optimized branch likely support as an option
     --	sort out the endianess story
     --	unaligned load / store instructions?
@@ -310,12 +310,14 @@ begin
     --	MTHI/MTLO
     --	division? - block on MFHI/MFLO if result not ready
     --	result forwarding: muxes instead of priority encoders?
-    --	exceptions/interrupts
     --
     -- Believed to have been fixed already:
     --  cancel and restart an incomplete instruction fetch on branch!
     --	don't branch until branch delay slot fetched!!!
     --  MFC0/MTC0
+    --	revisit MULT / MFHI / MFLO decoding (now done in EX stage!!!)
+    --  commit MULT result in MEM stage (branch likely must cancel commit)!
+    --	exceptions/interrupts
 
 
     --
@@ -454,6 +456,7 @@ begin
 	mem_read_sign_extend => ID_mem_read_sign_extend,
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
 	seb_seh_cycle => ID_seb_seh_cycle, seb_seh_select => ID_seb_seh_select,
+	mult => ID_mult, mult_signed => ID_mult_signed,
 	ll => ID_ll, sc => ID_sc,
 	cop0_wait => ID_wait, cop0_write => ID_cop0_write,
 	exception => ID_exception, di => ID_di, ei => ID_ei,
@@ -484,6 +487,7 @@ begin
 	mem_write => ID_mem_write, mem_size => ID_mem_size,
 	mem_read_sign_extend => ID_mem_read_sign_extend,
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
+	mult => ID_mult, mult_signed => ID_mult_signed,
 	ll => ID_ll, sc => ID_sc,
 	cop0_wait => ID_wait, cop0_write => ID_cop0_write,
 	exception => ID_exception, di => ID_di, ei => ID_ei,
@@ -603,12 +607,12 @@ begin
 		    if ID_running or EX_MEM_EIP then
 			ID_EX_cancel_next <= false;
 		    end if;
-		    if true or C_debug then -- XXX mult depends on C_debug!!!
-			ID_EX_instruction <= x"00000001"; -- debugging only
-		    end if;
 		    if C_cache then
 			ID_EX_flush_i_line <= '0';
 			ID_EX_flush_d_line <= '0';
+		    end if;
+		    if C_debug then
+			ID_EX_instruction <= x"00000001"; -- debugging only
 		    end if;
 		    -- schedule forwarding of memory read
 		    ID_EX_fwd_ex_reg1 <= false;
@@ -635,8 +639,9 @@ begin
 		    if ID_running or EX_MEM_EIP then
 			ID_EX_cancel_next <= false;
 		    end if;
-		    if true or C_debug then -- XXX mult depends on C_debug!!!
-			ID_EX_instruction <= x"00000000"; -- debugging only
+		    if C_mult_enable then
+			ID_EX_mult <= false;
+			ID_EX_mult_signed <= false;
 		    end if;
 		    if C_ll_sc then
 		        ID_EX_ll <= false;
@@ -660,6 +665,9 @@ begin
 			    ID_EX_branch_delay_slot <= false;
 			    ID_EX_branch_delay_follows <= false;
 			end if;
+		    end if;
+		    if C_debug then
+			ID_EX_instruction <= x"00000000"; -- debugging only
 		    end if;
 		    -- Don't care bits (optimization hints)
 		    ID_EX_reg1_data <= (others => '-');
@@ -711,6 +719,10 @@ begin
 		    ID_EX_bpredict_score <= IF_ID_bpredict_score;
 		    ID_EX_bpredict_index <= IF_ID_bpredict_index;
 		    ID_EX_latency <= ID_latency;
+		    if C_mult_enable then
+			ID_EX_mult <= ID_mult;
+			ID_EX_mult_signed <= ID_mult_signed;
+		    end if;
 		    if C_ll_sc then
 		        ID_EX_ll <= ID_ll;
 		        ID_EX_sc <= ID_sc;
@@ -745,8 +757,6 @@ begin
 		    if C_debug then
 			ID_EX_instruction <= IF_ID_instruction;
 			D_instr <= D_instr + 1;
-		    else
-			ID_EX_instruction <= IF_ID_instruction; -- XXX MULT!!!
 		    end if;
 		end if;
 	    else
@@ -1243,15 +1253,13 @@ begin
 	if falling_edge(clk) then
 	    -- XXX revisit instruction decoding
 	    if not EX_MEM_EIP and ID_EX_op_major = OP_MAJOR_ALT and
-	      ID_EX_instruction(5 downto 1) = "01100" then
+	      ID_EX_mult then
 		R_mul_a(31 downto 0) <= CONV_SIGNED(UNSIGNED(EX_eff_reg1), 32);
 		R_mul_b(31 downto 0) <= CONV_SIGNED(UNSIGNED(EX_eff_reg2), 32);
-		if (ID_EX_instruction(0) = '0') then
-		    -- signed
+		if ID_EX_mult_signed then
 		    R_mul_a(32) <= EX_eff_reg1(31);
 		    R_mul_b(32) <= EX_eff_reg2(31);
 		else
-		    -- unsigned
 		    R_mul_a(32) <= '0';
 		    R_mul_b(32) <= '0';
 		end if;

@@ -49,6 +49,7 @@ entity idecode_mi32 is
 	mem_write: out std_logic;
 	mem_size: out std_logic_vector(1 downto 0);
 	mem_read_sign_extend: out std_logic; -- LB / LH
+	mult, mult_signed: out boolean;
 	ll, sc: out boolean;
 	flush_i_line, flush_d_line: out std_logic;
 	latency: out std_logic_vector(1 downto 0);
@@ -117,6 +118,8 @@ begin
 	read_alt <= false;
 	flush_i_line <= '0';
 	flush_d_line <= '0';
+	mult <= false;
+	mult_signed <= false;
 	ll <= false;
 	sc <= false;
 	exception <= false;
@@ -466,8 +469,11 @@ begin
 		alt_sel <= ALT_LO;
 	    when MI32_SPEC_MULT =>
 		op_major <= OP_MAJOR_ALT;
+		mult <= true;
+		mult_signed <= true;
 	    when MI32_SPEC_MULTU =>
 		op_major <= OP_MAJOR_ALT;
+		mult <= true;
 	    when MI32_SPEC_ADD =>
 		op_minor <= OP_MINOR_ADD;
 	    when MI32_SPEC_ADDU =>
