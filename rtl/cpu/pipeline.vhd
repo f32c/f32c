@@ -688,8 +688,8 @@ begin
 		    ID_EX_cmov_condition <= C_movn_movz and ID_cmov_condition;
 		    ID_EX_mem_write <= ID_mem_write;
 		    ID_EX_mem_size <= ID_mem_size;
-		    ID_EX_multicycle_lh_lb <=
-		      not C_load_aligner and ID_mem_cycle = '1' and
+		    ID_EX_multicycle_lh_lb <= not (C_exceptions and EX_MEM_EIP)
+		      and not C_load_aligner and ID_mem_cycle = '1' and
 		      ID_mem_write = '0' and ID_mem_size(1) = '0';
 		    ID_EX_mem_read_sign_extend <= ID_mem_read_sign_extend;
 		    ID_EX_branch_condition <= ID_branch_condition;
