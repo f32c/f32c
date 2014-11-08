@@ -588,7 +588,7 @@ begin
 	if rising_edge(clk) then
 	    if EX_running then
 		if not C_load_aligner and ID_EX_multicycle_lh_lb and
-		  not MEM_cancel_EX then
+		  not MEM_cancel_EX and not EX_MEM_EIP then
 		    -- multicycle load aligner
 		    -- byte / half word load, insert an arithm shift right cycle
 		    -- XXX must stall the ID stage - revisit!!!
@@ -1022,7 +1022,8 @@ begin
 		end if;
 		if C_exceptions and R_cop0_EI = '1' and not ID_EX_bubble and
 		  ((R_cop0_intr and R_cop0_intr_mask) /= x"00"
-		  or ID_EX_exception) then
+		  or ID_EX_exception) and not (ID_EX_multicycle_lh_lb
+		  or EX_MEM_multicycle_lh_lb or MEM_WB_multicycle_lh_lb) then
 		    R_cop0_EI <= '0'; -- disable all exceptions
 		    EX_MEM_EIP <= true; -- signal exception in progress
 		    R_cop0_EPC <= ID_EX_EPC and C_PC_mask(31 downto 2);
