@@ -57,10 +57,13 @@ architecture Behavioral of idecode_rv32 is
 begin
 
     process(instruction)
-	variable imm32_signed: std_logic_vector(31 downto 0);
+	variable imm32_i: std_logic_vector(31 downto 0);
+	variable imm32_s: std_logic_vector(31 downto 0);
+	variable imm32_sb: std_logic_vector(31 downto 0);
+	variable imm32_u: std_logic_vector(31 downto 0);
+	variable imm32_uj: std_logic_vector(31 downto 0);
     begin
 	-- Fixed decoding
-	reg1_addr <= instruction(19 downto 15);
 	reg2_addr <= instruction(24 downto 20);
 	case instruction(13 downto 12) is
 	when RV32_MEM_SIZE_B => mem_size <= MEM_SIZE_8;
@@ -69,21 +72,35 @@ begin
 	when others => mem_size <= MEM_SIZE_64;
 	end case;
 
-	-- Internal signals
+	-- Extract and sign extend immediate values
+	imm32_u := instruction(31 downto 12) & x"000";
 	if instruction(31) = '1' then
-	    imm32_signed := x"fffff" & instruction(31 downto 20);
+	    imm32_i := x"fffff" & instruction(31 downto 20);
+	    imm32_s := x"fffff" & instruction(31 downto 25) &
+	      instruction(11 downto 7);
+	    imm32_sb := x"fffff" & instruction(7) & instruction(30 downto 25) &
+	      instruction(11 downto 8) & '0';
+	    imm32_uj := x"fff" & instruction(20) & instruction(19 downto 12) &
+	      instruction(20) & instruction(30 downto 21);
 	else
-	    imm32_signed := x"00000" & instruction(31 downto 20);
+	    imm32_i := x"00000" & instruction(31 downto 20);
+	    imm32_s := x"00000" & instruction(31 downto 25) &
+	      instruction(11 downto 7);
+	    imm32_sb := x"00000" & instruction(7) & instruction(30 downto 25) &
+	      instruction(11 downto 8) & '0';
+	    imm32_uj := x"000" & instruction(20) & instruction(19 downto 12) &
+	      instruction(20) & instruction(30 downto 21);
 	end if;
 
 	-- Default output values, overrided later
+	reg1_addr <= instruction(19 downto 15);
 	unsupported_instr <= false;
 	branch_cycle <= false;
 	jump_register <= false;
 	reg1_zero <= instruction(19 downto 15) = RV32_REG_ZERO;
 	reg2_zero <= instruction(24 downto 20) = RV32_REG_ZERO;
 	target_addr <= instruction(11 downto 7);
-	immediate_value <= imm32_signed;
+	immediate_value <= (others => '-');
 	sign_extend <= true;
 	op_major <= OP_MAJOR_ALU;
 	op_minor <= OP_MINOR_ADD;
@@ -112,39 +129,49 @@ begin
 	case instruction(6 downto 0) is
 	when RV32I_OP_LUI =>
 	    use_immediate <= true;
-	    immediate_value <= instruction(31 downto 12) & x"000";
+	    immediate_value <= imm32_u;
 	    op_minor <= OP_MINOR_OR;
+	    reg1_addr <= RV32_REG_ZERO;
+	    reg1_zero <= true;
 	    ignore_reg2 <= true;
 	when RV32I_OP_AUIPC =>
 	    use_immediate <= true;
-	    immediate_value <= instruction(31 downto 12) & x"000";
+	    immediate_value <= imm32_u;
 	    op_minor <= OP_MINOR_ADD;
+	    reg1_addr <= RV32_REG_ZERO;
+	    reg1_zero <= true;
 	    ignore_reg2 <= true;
+	    -- XXX indicate PC as operand2 !!!
 	when RV32I_OP_JAL =>
 	    use_immediate <= true;
 	    ignore_reg2 <= true;
-	    -- XXX immediate_value <= XXX?
+	    immediate_value <= imm32_uj;
 	when RV32I_OP_JALR =>
 	    use_immediate <= true;
 	    ignore_reg2 <= true;
 	    jump_register <= true;
+	    immediate_value <= imm32_i;
 	when RV32I_OP_BRANCH =>
 	    branch_cycle <= true;
 	    target_addr <= RV32_REG_ZERO;
+	    immediate_value <= imm32_sb;
 	when RV32I_OP_LOAD =>
 	    use_immediate <= true;
 	    latency <= LATENCY_WB;
 	    ignore_reg2 <= true;
 	    mem_cycle <= '1';
 	    mem_read_sign_extend <= not instruction(14);
+	    immediate_value <= imm32_i;
 	when RV32I_OP_STORE =>
 	    use_immediate <= true;
-	    immediate_value(4 downto 0) <= instruction(11 downto 7);
+	    immediate_value <= imm32_s;
 	    target_addr <= RV32_REG_ZERO;
 	    mem_cycle <= '1';
 	    mem_write <= '1';
+	    immediate_value <= imm32_s;
 	when RV32I_OP_REG_IMM =>
 	    use_immediate <= true;
+	    immediate_value <= imm32_i;
 	    ignore_reg2 <= true;
 	    case instruction(14 downto 12) is
 	    when RV32_FN3_ADD =>
