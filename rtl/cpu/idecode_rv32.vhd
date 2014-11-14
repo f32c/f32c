@@ -66,7 +66,6 @@ begin
 	variable imm32_uj: std_logic_vector(31 downto 0);
     begin
 	-- Fixed decoding
-	reg2_addr <= instruction(24 downto 20);
 	case instruction(13 downto 12) is
 	when RV32_MEM_SIZE_B => mem_size <= MEM_SIZE_8;
 	when RV32_MEM_SIZE_H => mem_size <= MEM_SIZE_16;
@@ -97,11 +96,13 @@ begin
 
 	-- Default output values, overrided later
 	reg1_addr <= instruction(19 downto 15);
+	reg2_addr <= instruction(24 downto 20);
+	reg1_zero <= instruction(19 downto 15) = RV32_REG_ZERO;
+	reg2_zero <= instruction(24 downto 20) = RV32_REG_ZERO;
+	ignore_reg2 <= instruction(24 downto 20) = RV32_REG_ZERO;
 	unsupported_instr <= false;
 	branch_cycle <= false;
 	jump_register <= false;
-	reg1_zero <= instruction(19 downto 15) = RV32_REG_ZERO;
-	reg2_zero <= instruction(24 downto 20) = RV32_REG_ZERO;
 	target_addr <= instruction(11 downto 7);
 	shift_variable <= false;
 	shift_fn <= OP_SHIFT_LL; -- memory store align
@@ -110,7 +111,6 @@ begin
 	op_major <= OP_MAJOR_ALU;
 	op_minor <= OP_MINOR_ADD;
 	use_immediate <= false; -- should be dont' care
-	ignore_reg2 <= instruction(24 downto 20) = RV32_REG_ZERO;
 	branch_condition <= TEST_UNDEFINED;
 	mem_cycle <= '0';
 	mem_write <= '0';
@@ -196,10 +196,20 @@ begin
 	    when RV32_FN3_AND =>
 		op_minor <= OP_MINOR_AND;
 	    when RV32_FN3_SL =>
+		reg1_addr <= instruction(24 downto 20);
+		reg2_addr <= instruction(19 downto 15);
+		reg1_zero <= instruction(24 downto 20) = RV32_REG_ZERO;
+		reg2_zero <= instruction(19 downto 15) = RV32_REG_ZERO;
+		ignore_reg2 <= instruction(19 downto 15) = RV32_REG_ZERO;
 		op_major <= OP_MAJOR_SHIFT;
 		latency <= LATENCY_MEM;
 		shift_fn <= OP_SHIFT_LL;
 	    when RV32_FN3_SR =>
+		reg1_addr <= instruction(24 downto 20);
+		reg2_addr <= instruction(19 downto 15);
+		reg1_zero <= instruction(24 downto 20) = RV32_REG_ZERO;
+		reg2_zero <= instruction(19 downto 15) = RV32_REG_ZERO;
+		ignore_reg2 <= instruction(19 downto 15) = RV32_REG_ZERO;
 		op_major <= OP_MAJOR_SHIFT;
 		latency <= LATENCY_MEM;
 		if instruction(30) = '1' then
@@ -234,11 +244,21 @@ begin
 	    when RV32_FN3_AND =>
 		op_minor <= OP_MINOR_AND;
 	    when RV32_FN3_SL =>
+		reg1_addr <= instruction(24 downto 20);
+		reg2_addr <= instruction(19 downto 15);
+		reg1_zero <= instruction(24 downto 20) = RV32_REG_ZERO;
+		reg2_zero <= instruction(19 downto 15) = RV32_REG_ZERO;
+		ignore_reg2 <= instruction(19 downto 15) = RV32_REG_ZERO;
 		op_major <= OP_MAJOR_SHIFT;
 		latency <= LATENCY_MEM;
 		shift_fn <= OP_SHIFT_LL;
 		shift_variable <= true;
 	    when RV32_FN3_SR =>
+		reg1_addr <= instruction(24 downto 20);
+		reg2_addr <= instruction(19 downto 15);
+		reg1_zero <= instruction(24 downto 20) = RV32_REG_ZERO;
+		reg2_zero <= instruction(19 downto 15) = RV32_REG_ZERO;
+		ignore_reg2 <= instruction(19 downto 15) = RV32_REG_ZERO;
 		op_major <= OP_MAJOR_SHIFT;
 		latency <= LATENCY_MEM;
 		shift_variable <= true;
