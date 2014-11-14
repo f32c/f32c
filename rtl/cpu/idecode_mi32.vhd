@@ -76,6 +76,9 @@ begin
 	when "10" => shift_fn <= OP_SHIFT_RL;
 	when others => shift_fn <= OP_SHIFT_RA;
 	end case;
+	if instruction(31) = '1' then
+	    shift_fn <= OP_SHIFT_LL; -- memory store align
+	end if;
 	shift_variable <= instruction(2) = '1';
 	shift_amount <= instruction(10 downto 6);
 
