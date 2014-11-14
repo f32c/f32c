@@ -104,7 +104,7 @@ begin
 	reg2_zero <= instruction(24 downto 20) = RV32_REG_ZERO;
 	target_addr <= instruction(11 downto 7);
 	shift_variable <= false;
-	shift_fn <= "--";
+	shift_fn <= OP_SHIFT_LL; -- memory store align
 	immediate_value <= (others => '-');
 	sign_extend <= true;
 	op_major <= OP_MAJOR_ALU;
