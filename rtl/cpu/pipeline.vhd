@@ -183,7 +183,7 @@ architecture Behavioral of pipeline is
     signal EX_eff_alu_op2: std_logic_vector(31 downto 0);
     signal EX_shamt: std_logic_vector(4 downto 0);
     signal EX_shift_funct_8_16: std_logic_vector(1 downto 0);
-    signal EX_from_shift: std_logic_vector(31 downto 0);
+    signal EX_to_shift, EX_from_shift: std_logic_vector(31 downto 0);
     signal EX_from_alu_addsubx: std_logic_vector(32 downto 0);
     signal EX_from_alu_logic, EX_from_alt: std_logic_vector(31 downto 0);
     signal EX_from_cop0: std_logic_vector(31 downto 0);
@@ -828,12 +828,15 @@ begin
       "01" when EX_2bit_add = "10" else
       "10" when EX_2bit_add = "01" else
       "11" when EX_2bit_add = "00";
-    EX_shamt <= EX_mem_align_shamt & "---" when ID_EX_mem_cycle = '1' else
-      EX_eff_reg1(4 downto 0) when ID_EX_shift_variable
-      else ID_EX_shift_amount;
+    EX_shamt <= EX_mem_align_shamt & "---" when ID_EX_mem_cycle = '1'
+      else ID_EX_shift_amount when not ID_EX_shift_variable
+      else EX_eff_reg1(4 downto 0) when C_arch = ARCH_MI32 
+      else EX_eff_reg2(4 downto 0); -- when C_arch = ARCH_RV32
 
     EX_shift_funct_8_16 <= OP_SHIFT_LL when ID_EX_mem_cycle = '1'
-      else ID_EX_shift_funct;
+      else ID_EX_shift_funct; -- XXX revisit: register this!
+
+    EX_to_shift <= EX_eff_reg2 when C_arch = ARCH_MI32 else EX_eff_reg1;
 
     -- instantiate the barrel shifter
     shift: entity work.shift
@@ -844,7 +847,7 @@ begin
 	shamt_8_16 => EX_shamt(4 downto 3), funct_8_16 => EX_shift_funct_8_16,
 	shamt_1_2_4 => MEM_shamt_1_2_4, funct_1_2_4 => EX_MEM_shift_funct,
 	stage1_in => EX_MEM_mem_data_out, stage4_out => MEM_from_shift,
-	stage8_in => EX_eff_reg2, stage16_out => EX_from_shift,
+	stage8_in => EX_to_shift, stage16_out => EX_from_shift,
 	mem_multicycle_lh_lb => MEM_WB_multicycle_lh_lb,
 	mem_read_sign_extend_multicycle => EX_MEM_mem_read_sign_extend,
 	mem_size_multicycle => EX_MEM_mem_size(0)
