@@ -479,6 +479,7 @@ begin
 	reg1_zero => ID_reg1_zero, reg2_zero => ID_reg2_zero,
 	immediate_value => ID_immediate, use_immediate => ID_use_immediate,
 	sign_extension => ID_sign_extension, shift_fn => ID_shift_funct,
+	shift_variable => ID_shift_variable, shift_amount => ID_shift_amount,
 	read_alt => ID_read_alt, alt_sel => ID_alt_sel,
 	target_addr => ID_writeback_addr, op_major => ID_op_major,
 	op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,

@@ -36,6 +36,8 @@ entity idecode_rv32 is
 	op_minor: out std_logic_vector(2 downto 0);
 	alt_sel: out std_logic_vector(2 downto 0);
 	shift_fn: out std_logic_vector(1 downto 0);
+	shift_variable: out boolean;
+	shift_amount: out std_logic_vector(4 downto 0);
 	read_alt: out boolean;
 	use_immediate, ignore_reg2: out boolean;
 	branch_condition: out std_logic_vector(2 downto 0);
@@ -71,6 +73,7 @@ begin
 	when RV32_MEM_SIZE_W => mem_size <= MEM_SIZE_32;
 	when others => mem_size <= MEM_SIZE_64;
 	end case;
+	shift_amount <= instruction(24 downto 20);
 
 	-- Extract and sign extend immediate values
 	imm32_u := instruction(31 downto 12) & x"000";
@@ -100,6 +103,8 @@ begin
 	reg1_zero <= instruction(19 downto 15) = RV32_REG_ZERO;
 	reg2_zero <= instruction(24 downto 20) = RV32_REG_ZERO;
 	target_addr <= instruction(11 downto 7);
+	shift_variable <= false;
+	shift_fn <= "--";
 	immediate_value <= (others => '-');
 	sign_extend <= true;
 	op_major <= OP_MAJOR_ALU;
@@ -143,11 +148,10 @@ begin
 	    ignore_reg2 <= true;
 	    -- XXX indicate PC as operand2 !!!
 	when RV32I_OP_JAL =>
-	    use_immediate <= true;
 	    ignore_reg2 <= true;
+	    branch_cycle <= true;
 	    immediate_value <= imm32_uj;
 	when RV32I_OP_JALR =>
-	    use_immediate <= true;
 	    ignore_reg2 <= true;
 	    jump_register <= true;
 	    immediate_value <= imm32_i;
@@ -175,11 +179,8 @@ begin
 	    ignore_reg2 <= true;
 	    case instruction(14 downto 12) is
 	    when RV32_FN3_ADD =>
-		-- implicit OP_MAJOR_ALU, OP_MINOR_ADD;
-	    when RV32_FN3_SL =>
-		op_major <= OP_MAJOR_SHIFT;
-		latency <= LATENCY_MEM;
-		-- XXX incomplete
+		op_major <= OP_MAJOR_ALU;
+		op_minor <= OP_MINOR_ADD;
 	    when RV32_FN3_SLT =>
 		op_major <= OP_MAJOR_SLT;
 		op_minor <= OP_MINOR_SUB;
@@ -190,14 +191,22 @@ begin
 		sign_extend <= false;
 	    when RV32_FN3_XOR =>
 		op_minor <= OP_MINOR_XOR;
-	    when RV32_FN3_SR =>
-		op_major <= OP_MAJOR_SHIFT;
-		latency <= LATENCY_MEM;
-		-- XXX incomplete
 	    when RV32_FN3_OR =>
 		op_minor <= OP_MINOR_OR;
 	    when RV32_FN3_AND =>
 		op_minor <= OP_MINOR_AND;
+	    when RV32_FN3_SL =>
+		op_major <= OP_MAJOR_SHIFT;
+		latency <= LATENCY_MEM;
+		shift_fn <= OP_SHIFT_LL;
+	    when RV32_FN3_SR =>
+		op_major <= OP_MAJOR_SHIFT;
+		latency <= LATENCY_MEM;
+		if instruction(30) = '1' then
+		    shift_fn <= OP_SHIFT_RA;
+		else
+		    shift_fn <= OP_SHIFT_RL;
+		end if;
 	    when others =>
 		-- nothing to do here, just appease ISE warnings
 	    end case;
@@ -210,10 +219,6 @@ begin
 		else
 		    op_minor <= OP_MINOR_SUB;
 		end if;
-	    when RV32_FN3_SL =>
-		op_major <= OP_MAJOR_SHIFT;
-		latency <= LATENCY_MEM;
-		-- XXX incomplete
 	    when RV32_FN3_SLT =>
 		op_major <= OP_MAJOR_SLT;
 		op_minor <= OP_MINOR_SUB;
@@ -224,14 +229,24 @@ begin
 		sign_extend <= false;
 	    when RV32_FN3_XOR =>
 		op_minor <= OP_MINOR_XOR;
-	    when RV32_FN3_SR =>
-		op_major <= OP_MAJOR_SHIFT;
-		latency <= LATENCY_MEM;
-		-- XXX incomplete
 	    when RV32_FN3_OR =>
 		op_minor <= OP_MINOR_OR;
 	    when RV32_FN3_AND =>
 		op_minor <= OP_MINOR_AND;
+	    when RV32_FN3_SL =>
+		op_major <= OP_MAJOR_SHIFT;
+		latency <= LATENCY_MEM;
+		shift_fn <= OP_SHIFT_LL;
+		shift_variable <= true;
+	    when RV32_FN3_SR =>
+		op_major <= OP_MAJOR_SHIFT;
+		latency <= LATENCY_MEM;
+		shift_variable <= true;
+		if instruction(30) = '1' then
+		    shift_fn <= OP_SHIFT_RA;
+		else
+		    shift_fn <= OP_SHIFT_RL;
+		end if;
 	    when others =>
 		-- nothing to do here, just appease ISE warnings
 	    end case;
