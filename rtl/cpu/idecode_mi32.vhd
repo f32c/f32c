@@ -67,9 +67,19 @@ begin
     process(instruction)
 	variable imm32_unsigned, imm32_signed: std_logic_vector(31 downto 0);
     begin
+	-- Internal signals
+	imm32_unsigned := x"0000" & instruction(15 downto 0);
+	if instruction(15) = '1' then
+	    imm32_signed := x"ffff" & instruction(15 downto 0);
+	else
+	    imm32_signed := x"0000" & instruction(15 downto 0);
+	end if;
+
 	-- Fixed decoding
 	reg1_addr <= instruction(25 downto 21);
 	reg2_addr <= instruction(20 downto 16);
+	reg1_zero <= instruction(25 downto 21) = MI32_REG_ZERO;
+	reg2_zero <= instruction(20 downto 16) = MI32_REG_ZERO;
 	case instruction(1 downto 0) is
 	when "00" => shift_fn <= OP_SHIFT_LL;
 	when "01" => shift_fn <= OP_SHIFT_BYPASS;
@@ -81,24 +91,15 @@ begin
 	end if;
 	shift_variable <= instruction(2) = '1';
 	shift_amount <= instruction(10 downto 6);
-
-	-- Internal signals
-	imm32_unsigned := x"0000" & instruction(15 downto 0);
-	if instruction(15) = '1' then
-	    imm32_signed := x"ffff" & instruction(15 downto 0);
-	else
-	    imm32_signed := x"0000" & instruction(15 downto 0);
-	end if;
+	branch_offset <= imm32_signed(29 downto 0);
+	mem_cycle <= instruction(31);
 
 	-- Default output values, overrided later
 	unsupported_instr <= false;
 	branch_cycle <= false;
 	branch_likely <= false; -- should be don't care
-	branch_offset <= imm32_signed(29 downto 0);
 	jump_cycle <= false;
 	jump_register <= false; -- should be don't care
-	reg1_zero <= instruction(25 downto 21) = MI32_REG_ZERO;
-	reg2_zero <= instruction(20 downto 16) = MI32_REG_ZERO;
 	target_addr <= "-----";
 	immediate_value <= imm32_signed;
 	sign_extend <= false; -- should be don't care
@@ -109,7 +110,6 @@ begin
 	cmov_cycle <= false;
 	cmov_condition <= false; -- should be don't care
 	branch_condition <= TEST_UNDEFINED;
-	mem_cycle <= instruction(31);
 	mem_write <= '0';
 	mem_size <= MEM_SIZE_UNDEFINED;
 	mem_read_sign_extend <= '-';
