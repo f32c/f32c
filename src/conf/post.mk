@@ -89,6 +89,9 @@ MK_CFLAGS += -ffreestanding
 # Do not link; use a pipe to feed the as
 MK_CFLAGS += -c -pipe
 
+# Every function goes in a separate section, so that unused ones can be GC-ed
+MK_CFLAGS += -ffunction-sections -fdata-sections
+
 # Default is to warn and abort on all standard errors and warnings
 ifndef WARNS
 WARNS = 2
@@ -124,6 +127,9 @@ MK_CFLAGS += ${CFLAGS}
 MK_LDFLAGS += -N ${ENDIANFLAGS}
 MK_LDFLAGS += --section-start=.init=${LOADADDR}
 MK_LDFLAGS += -nostdlib
+
+# Garbage-collect unused section (unreferenced functions)
+MK_LDFLAGS += -gc-sections
 
 # Pull in any module-specific linker flags
 MK_LDFLAGS += ${LDFLAGS}
