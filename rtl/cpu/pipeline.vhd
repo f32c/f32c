@@ -20,7 +20,7 @@ use work.mi32_pack.all;
 
 entity pipeline is
     generic (
-	-- Architecture
+	-- Instruction set architecture
 	C_arch: integer := ARCH_MI32;
 
 	-- ISA options
@@ -80,6 +80,8 @@ architecture Behavioral of pipeline is
 
     constant C_eff_init_PC: std_logic_vector(31 downto 0)
       := C_init_PC and C_PC_mask;
+
+    constant REG_ZERO: std_logic_vector(4 downto 0) := ARCH_REG_ZERO(C_arch);
 
     signal debug_XXX: std_logic_vector(31 downto 0) := x"00000000";
 
@@ -625,7 +627,7 @@ begin
 		  (MEM_take_branch or ID_EX_cancel_next)) or
 		  IF_ID_bubble or (C_exceptions and EX_MEM_EIP) then
 		    -- insert a bubble if branching or ID stage is stalled
-		    ID_EX_writeback_addr <= MI32_REG_ZERO; -- NOP
+		    ID_EX_writeback_addr <= REG_ZERO; -- NOP
 		    ID_EX_mem_cycle <= '0';
 		    ID_EX_mem_write <= '0';
 		    ID_EX_multicycle_lh_lb <= false;
@@ -784,7 +786,7 @@ begin
     -- XXX revisit!  jump cycles?
     EX_running <= MEM_running and not (C_exceptions and ID_EX_wait) and
       (C_result_forwarding or not ID_EX_branch_cycle
-      or EX_MEM_writeback_addr = MI32_REG_ZERO);
+      or EX_MEM_writeback_addr = REG_ZERO);
 
     -- forward the results from later stages
     G_EX_forwarding:
@@ -943,7 +945,7 @@ begin
 		EX_MEM_branch_taken <= false;
 		EX_MEM_branch_cycle <= false;
 		EX_MEM_branch_likely <= false;
-		EX_MEM_writeback_addr <= MI32_REG_ZERO;
+		EX_MEM_writeback_addr <= REG_ZERO;
 		EX_MEM_mem_cycle <= '0';
 		EX_MEM_latency <= '0';
 		if C_ll_sc then
@@ -985,7 +987,7 @@ begin
 		    if (EX_eff_reg2 = x"00000000") = ID_EX_cmov_condition then
 			EX_MEM_writeback_addr <= ID_EX_writeback_addr;
 		    else
-			EX_MEM_writeback_addr <= MI32_REG_ZERO;
+			EX_MEM_writeback_addr <= REG_ZERO;
 		    end if;
 		else
 		    EX_MEM_writeback_addr <= ID_EX_writeback_addr;
@@ -1188,7 +1190,7 @@ begin
 		MEM_WB_writeback_addr <= EX_MEM_writeback_addr;
 		MEM_WB_multicycle_lh_lb <= not C_load_aligner
 		  and EX_MEM_multicycle_lh_lb;
-		if EX_MEM_writeback_addr = MI32_REG_ZERO then
+		if EX_MEM_writeback_addr = REG_ZERO then
 		    MEM_WB_write_enable <= '0';
 		else
 		    MEM_WB_write_enable <= '1';
