@@ -26,11 +26,11 @@ entity idecode_rv32 is
     port(
 	instruction: in std_logic_vector(31 downto 0);
 	branch_cycle: out boolean;
+	branch_offset: out std_logic_vector(31 downto 2);
 	jump_register: out boolean;
 	reg1_zero, reg2_zero: out boolean;
 	reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
 	immediate_value: out std_logic_vector(31 downto 0);
-	sign_extension: out std_logic_vector(15 downto 0);
 	sign_extend: out boolean; -- for SLT / SLTU
 	op_major: out std_logic_vector(1 downto 0);
 	op_minor: out std_logic_vector(2 downto 0);
@@ -112,6 +112,7 @@ begin
 	op_minor <= OP_MINOR_ADD;
 	use_immediate <= false; -- should be dont' care
 	branch_condition <= TEST_UNDEFINED;
+	branch_offset <= (others => '-');
 	mem_cycle <= '0';
 	mem_write <= '0';
 	mem_read_sign_extend <= '-';
@@ -150,15 +151,15 @@ begin
 	when RV32I_OP_JAL =>
 	    ignore_reg2 <= true;
 	    branch_cycle <= true;
-	    immediate_value <= imm32_uj;
+	    branch_offset <= imm32_uj(31 downto 2);
 	when RV32I_OP_JALR =>
 	    ignore_reg2 <= true;
 	    jump_register <= true;
 	    immediate_value <= imm32_i;
 	when RV32I_OP_BRANCH =>
 	    branch_cycle <= true;
+	    branch_offset <= imm32_sb(31 downto 2);
 	    target_addr <= RV32_REG_ZERO;
-	    immediate_value <= imm32_sb;
 	when RV32I_OP_LOAD =>
 	    use_immediate <= true;
 	    latency <= LATENCY_WB;

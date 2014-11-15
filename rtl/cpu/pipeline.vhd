@@ -105,6 +105,7 @@ architecture Behavioral of pipeline is
     signal ID_running: boolean;
     signal ID_reg1_zero, ID_reg2_zero: boolean;
     signal ID_branch_cycle, ID_branch_likely, ID_jump_cycle: boolean;
+    signal ID_branch_offset: std_logic_vector(31 downto 2);
     signal ID_cmov_cycle, ID_cmov_condition: boolean;
     signal ID_reg1_addr, ID_reg2_addr: std_logic_vector(4 downto 0);
     signal ID_writeback_addr: std_logic_vector(4 downto 0);
@@ -122,7 +123,6 @@ architecture Behavioral of pipeline is
     signal ID_shift_variable: boolean;
     signal ID_shift_amount: std_logic_vector(4 downto 0);
     signal ID_immediate: std_logic_vector(31 downto 0);
-    signal ID_sign_extension: std_logic_vector(15 downto 0);
     signal ID_sign_extend: boolean;
     signal ID_use_immediate, ID_ignore_reg2: boolean;
     signal ID_predict_taken: boolean;
@@ -445,7 +445,7 @@ begin
 	reg1_zero => ID_reg1_zero, reg2_zero => ID_reg2_zero,
 	immediate_value => ID_immediate, use_immediate => ID_use_immediate,
 	cmov_cycle => ID_cmov_cycle, cmov_condition => ID_cmov_condition,
-	sign_extension => ID_sign_extension, shift_fn => ID_shift_funct,
+	branch_offset => ID_branch_offset, shift_fn => ID_shift_funct,
 	shift_variable => ID_shift_variable, shift_amount => ID_shift_amount,
 	read_alt => ID_read_alt, alt_sel => ID_alt_sel,
 	target_addr => ID_writeback_addr, op_major => ID_op_major,
@@ -479,7 +479,7 @@ begin
 	reg1_addr => ID_reg1_addr, reg2_addr => ID_reg2_addr,
 	reg1_zero => ID_reg1_zero, reg2_zero => ID_reg2_zero,
 	immediate_value => ID_immediate, use_immediate => ID_use_immediate,
-	sign_extension => ID_sign_extension, shift_fn => ID_shift_funct,
+	branch_offset => ID_branch_offset, shift_fn => ID_shift_funct,
 	shift_variable => ID_shift_variable, shift_amount => ID_shift_amount,
 	read_alt => ID_read_alt, alt_sel => ID_alt_sel,
 	target_addr => ID_writeback_addr, op_major => ID_op_major,
@@ -572,17 +572,18 @@ begin
       not ID_reg2_zero and ID_reg2_addr = EX_MEM_writeback_addr;
     ID_fwd_mem_alu_op2 <= ID_fwd_mem_reg2 and not ID_use_immediate;
 
-    -- compute branch target - XXX revisit: perhaps use ID_immediate here?
-    ID_branch_target <= C_PC_mask(31 downto 2) and (IF_ID_PC_4 +
-      (ID_sign_extension(13 downto 0) & IF_ID_instruction(15 downto 0)));
+    -- compute branch target
+    ID_branch_target <=
+      C_PC_mask(31 downto 2) and (IF_ID_PC_4 + ID_branch_offset);
 
     -- branch prediction
     ID_predict_taken <= C_branch_prediction
       and ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
 
     -- compute jump target
-    ID_jump_target <= ID_reg1_data(31 downto 2) when ID_jump_register
-      else ID_branch_target when C_branch_prediction and ID_predict_taken
+    ID_jump_target <=
+      ID_reg1_data(31 downto 2) when C_arch = ARCH_MI32 and ID_jump_register
+      else ID_branch_target when C_branch_prediction and not ID_jump_cycle
       else IF_ID_PC_4(31 downto 28) & IF_ID_instruction(25 downto 0);
 
     process(clk)
