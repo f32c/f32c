@@ -29,11 +29,11 @@ entity idecode_mi32 is
     port(
 	instruction: in std_logic_vector(31 downto 0);
 	branch_cycle, branch_likely: out boolean;
+	branch_offset: out std_logic_vector(31 downto 2);
 	jump_cycle, jump_register: out boolean;
 	reg1_zero, reg2_zero: out boolean;
 	reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
 	immediate_value: out std_logic_vector(31 downto 0);
-	sign_extension: out std_logic_vector(15 downto 0);
 	sign_extend: out boolean; -- for SLT / SLTU
 	op_major: out std_logic_vector(1 downto 0);
 	op_minor: out std_logic_vector(2 downto 0);
@@ -86,16 +86,15 @@ begin
 	imm32_unsigned := x"0000" & instruction(15 downto 0);
 	if instruction(15) = '1' then
 	    imm32_signed := x"ffff" & instruction(15 downto 0);
-	    sign_extension <= x"ffff";
 	else
 	    imm32_signed := x"0000" & instruction(15 downto 0);
-	    sign_extension <= x"0000";
 	end if;
 
 	-- Default output values, overrided later
 	unsupported_instr <= false;
 	branch_cycle <= false;
 	branch_likely <= false; -- should be don't care
+	branch_offset <= imm32_signed(29 downto 0);
 	jump_cycle <= false;
 	jump_register <= false; -- should be don't care
 	reg1_zero <= instruction(25 downto 21) = MI32_REG_ZERO;
