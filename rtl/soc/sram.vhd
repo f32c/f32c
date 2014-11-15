@@ -136,18 +136,6 @@ begin
 
     process(clk)
     begin
-	if falling_edge(clk) then
-	    if R_phase = C_phase_idle or
-	      R_phase = C_phase_write_upper_half or
-	      R_phase = C_phase_write_terminate then
-		R_d <= (others => 'Z');
-	    elsif R_write_cycle and R_phase = C_phase_idle + 2 then
-		R_d <= R_out_word(15 downto 0);
-	    elsif R_write_cycle and R_phase = C_phase_write_upper_half + 2 then
-		R_d <= R_out_word(31 downto 16);
-	    end if;
-	end if;
-
 	if C_pipelined_read and falling_edge(clk) then
 	    if R_phase = C_phase_read_upper_half + 2 then
 		R_bus_out(15 downto 0) <= sram_d;
@@ -179,6 +167,7 @@ begin
 		R_wel <= '1';
 		R_ubl <= '0';
 		R_lbl <= '0';
+		R_d <= (others => 'Z');
 		if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
 		    -- idle
 		    R_cur_port <= next_port;
@@ -244,6 +233,9 @@ begin
 		    R_ubl <= '1';
 		    R_lbl <= '1';
 		end if;
+	    elsif R_write_cycle and R_phase = C_phase_idle + 1 then
+		R_phase <= R_phase + 1;
+		R_d <= R_out_word(15 downto 0);
 	    elsif R_write_cycle and R_phase = C_phase_write_upper_half - 1 then
 		if R_byte_sel_hi /= "00" then
 		    R_phase <= R_phase + 1;
@@ -255,6 +247,7 @@ begin
 		R_wel <= '1';
 		R_ubl <= '1';
 		R_lbl <= '1';
+		R_d <= (others => 'Z');
 	    elsif R_write_cycle and R_phase = C_phase_write_upper_half then
 		R_phase <= R_phase + 1;
 		-- physical signals to SRAM: bump addr, refill data
@@ -262,6 +255,9 @@ begin
 		R_ubl <= not R_byte_sel_hi(1);
 		R_lbl <= not R_byte_sel_hi(0);
 		R_wel <= '0';
+	    elsif R_write_cycle and R_phase = C_phase_write_upper_half + 1 then
+		R_phase <= R_phase + 1;
+		R_d <= R_out_word(31 downto 16);
 	    elsif R_write_cycle and R_phase = C_phase_write_terminate then
 		R_phase <= C_phase_idle;
 		R_cur_port <= next_port;
@@ -269,6 +265,7 @@ begin
 		R_wel <= '1';
 		R_ubl <= '1';
 		R_lbl <= '1';
+		R_d <= (others => 'Z');
 	    else
 		R_phase <= R_phase + 1;
 	    end if;
