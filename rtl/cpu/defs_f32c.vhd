@@ -12,6 +12,10 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+use work.mi32_pack.all;
+use work.rv32_pack.all;
+
+
 package f32c_pack is
 
 -- ISA / Architecture
@@ -76,4 +80,21 @@ constant ALT_LO:		std_logic_vector := "001";
 constant ALT_PC_8:		std_logic_vector := "010";
 constant ALT_COP0:		std_logic_vector := "011";
 
-end;
+function ARCH_REG_ZERO(arch : integer) return std_logic_vector;
+
+end f32c_pack;
+
+package body f32c_pack is
+
+-- Arch-dependent reg-zero
+function ARCH_REG_ZERO(arch : integer)
+    return std_logic_vector is
+begin
+   if arch = ARCH_MI32 then
+	return MI32_REG_ZERO;
+   else
+	return RV32_REG_ZERO;
+   end if;
+end ARCH_REG_ZERO; 
+
+end f32c_pack;
