@@ -82,16 +82,16 @@ begin
 	      instruction(11 downto 7);
 	    imm32_sb := x"fffff" & instruction(7) & instruction(30 downto 25) &
 	      instruction(11 downto 8) & '0';
-	    imm32_uj := x"fff" & instruction(20) & instruction(19 downto 12) &
-	      instruction(20) & instruction(30 downto 21);
+	    imm32_uj := x"fff" & instruction(19 downto 12) & instruction(20) &
+	      instruction(30 downto 21) & '0';
 	else
 	    imm32_i := x"00000" & instruction(31 downto 20);
 	    imm32_s := x"00000" & instruction(31 downto 25) &
 	      instruction(11 downto 7);
 	    imm32_sb := x"00000" & instruction(7) & instruction(30 downto 25) &
 	      instruction(11 downto 8) & '0';
-	    imm32_uj := x"000" & instruction(20) & instruction(19 downto 12) &
-	      instruction(20) & instruction(30 downto 21);
+	    imm32_uj := x"000" & instruction(19 downto 12) & instruction(20) &
+	      instruction(30 downto 21) & '0';
 	end if;
 
 	-- Default output values, overrided later
