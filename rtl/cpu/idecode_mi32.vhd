@@ -109,7 +109,7 @@ begin
 	ignore_reg2 <= instruction(20 downto 16) = MI32_REG_ZERO;
 	cmov_cycle <= false;
 	cmov_condition <= false; -- should be don't care
-	branch_condition <= TEST_UNDEFINED;
+	branch_condition <= (others => '-');
 	mem_write <= '0';
 	mem_size <= MEM_SIZE_UNDEFINED;
 	mem_read_sign_extend <= '-';
@@ -145,22 +145,22 @@ begin
 	when MI32_OP_BEQ =>
 	    branch_cycle <= true;
 	    branch_likely <= false;
-	    branch_condition <= TEST_EQ;
+	    branch_condition <= MI32_TEST_EQ;
 	    target_addr <= MI32_REG_ZERO;
 	when MI32_OP_BNE =>
 	    branch_cycle <= true;
 	    branch_likely <= false;
-	    branch_condition <= TEST_NE;
+	    branch_condition <= MI32_TEST_NE;
 	    target_addr <= MI32_REG_ZERO;
 	when MI32_OP_BLEZ =>
 	    branch_cycle <= true;
 	    branch_likely <= false;
-	    branch_condition <= TEST_LEZ;
+	    branch_condition <= MI32_TEST_LEZ;
 	    target_addr <= MI32_REG_ZERO;
 	when MI32_OP_BGTZ =>
 	    branch_cycle <= true;
 	    branch_likely <= false;
-	    branch_condition <= TEST_GTZ;
+	    branch_condition <= MI32_TEST_GTZ;
 	    target_addr <= MI32_REG_ZERO;
 	when MI32_OP_ADDI =>
 	    op_minor <= OP_MINOR_ADD;
@@ -233,7 +233,7 @@ begin
 	    if C_branch_likely then
 		branch_cycle <= true;
 		branch_likely <= true;
-		branch_condition <= TEST_EQ;
+		branch_condition <= MI32_TEST_EQ;
 		target_addr <= MI32_REG_ZERO;
 	    else
 		latency <= LATENCY_UNDEFINED;
@@ -243,7 +243,7 @@ begin
 	    if C_branch_likely then
 		branch_cycle <= true;
 		branch_likely <= true;
-		branch_condition <= TEST_NE;
+		branch_condition <= MI32_TEST_NE;
 		target_addr <= MI32_REG_ZERO;
 	    else
 		latency <= LATENCY_UNDEFINED;
@@ -253,7 +253,7 @@ begin
 	    if C_branch_likely then
 		branch_cycle <= true;
 		branch_likely <= true;
-		branch_condition <= TEST_LEZ;
+		branch_condition <= MI32_TEST_LEZ;
 		target_addr <= MI32_REG_ZERO;
 	    else
 		latency <= LATENCY_UNDEFINED;
@@ -263,7 +263,7 @@ begin
 	    if C_branch_likely then
 		branch_cycle <= true;
 		branch_likely <= true;
-		branch_condition <= TEST_GTZ;
+		branch_condition <= MI32_TEST_GTZ;
 		target_addr <= MI32_REG_ZERO;
 	    else
 		latency <= LATENCY_UNDEFINED;
@@ -371,31 +371,31 @@ begin
 	    read_alt <= true;
 	    case instruction(20 downto 16) is
 	    when MI32_RIMM_BLTZ =>
-		branch_condition <= TEST_LTZ;
+		branch_condition <= MI32_TEST_LTZ;
 		branch_likely <= false;
 	    when MI32_RIMM_BGEZ =>
-		branch_condition <= TEST_GEZ;
+		branch_condition <= MI32_TEST_GEZ;
 		branch_likely <= false;
 	    when MI32_RIMM_BLTZL =>
-		branch_condition <= TEST_LTZ;
+		branch_condition <= MI32_TEST_LTZ;
 		branch_likely <= true;
 	    when MI32_RIMM_BGEZL =>
-		branch_condition <= TEST_GEZ;
+		branch_condition <= MI32_TEST_GEZ;
 		branch_likely <= true;
 	    when MI32_RIMM_BLTZAL =>
-		branch_condition <= TEST_LTZ;
+		branch_condition <= MI32_TEST_LTZ;
 		branch_likely <= false;
 		target_addr <= MI32_REG_RA;
 	    when MI32_RIMM_BGEZAL =>
-		branch_condition <= TEST_GEZ;
+		branch_condition <= MI32_TEST_GEZ;
 		branch_likely <= false;
 		target_addr <= MI32_REG_RA;
 	    when MI32_RIMM_BLTZALL =>
-		branch_condition <= TEST_LTZ;
+		branch_condition <= MI32_TEST_LTZ;
 		branch_likely <= true;
 		target_addr <= MI32_REG_RA;
 	    when MI32_RIMM_BGEZALL =>
-		branch_condition <= TEST_GEZ;
+		branch_condition <= MI32_TEST_GEZ;
 		branch_likely <= true;
 		target_addr <= MI32_REG_RA;
 	    when others =>

@@ -39,15 +39,6 @@ constant LATENCY_EX:		std_logic_vector := "00";
 constant LATENCY_MEM:		std_logic_vector := "01";
 constant LATENCY_WB:		std_logic_vector := "11";
 
--- Test conditions (branch / trap)
-constant TEST_UNDEFINED:	std_logic_vector := "---";
-constant TEST_EQ:		std_logic_vector := "100";
-constant TEST_NE:		std_logic_vector := "101";
-constant TEST_LEZ:		std_logic_vector := "110";
-constant TEST_GTZ:		std_logic_vector := "111";
-constant TEST_LTZ:		std_logic_vector := "010";
-constant TEST_GEZ:		std_logic_vector := "011";
-
 -- Branch predictor saturation counter values
 constant BP_STRONG_TAKEN:	std_logic_vector := "11";
 constant BP_WEAK_TAKEN:		std_logic_vector := "10";

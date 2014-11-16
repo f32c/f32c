@@ -190,4 +190,12 @@ constant MI32_COP0_DATA_HI:	std_logic_vector := "11101";
 constant MI32_COP0_ERROR_PC:	std_logic_vector := "11110";
 constant MI32_COP0_DESAVE:	std_logic_vector := "11111";
 
+-- Test conditions (branch / trap)
+constant MI32_TEST_LTZ:		std_logic_vector := "010";
+constant MI32_TEST_GEZ:		std_logic_vector := "011";
+constant MI32_TEST_EQ:		std_logic_vector := "100";
+constant MI32_TEST_NE:		std_logic_vector := "101";
+constant MI32_TEST_LEZ:		std_logic_vector := "110";
+constant MI32_TEST_GTZ:		std_logic_vector := "111";
+
 end;
