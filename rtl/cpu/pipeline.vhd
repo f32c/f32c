@@ -402,7 +402,9 @@ begin
 			IF_ID_bubble <= true; -- delay slot
 		    end if;
 		end if;
-	    elsif ID_EX_branch_likely and not EX_take_branch then
+	    elsif (C_arch = ARCH_MI32
+	      and (ID_EX_branch_likely and not EX_take_branch))
+	      or (C_arch = ARCH_RV32 and EX_take_branch) then
 		IF_ID_bubble <= false; -- XXX should be true?
 		IF_ID_instruction <= x"00000000"; -- NOP, XXX, revisit!!!
 	    end if;
@@ -720,8 +722,8 @@ begin
 		    ID_EX_mem_cycle <= ID_mem_cycle;
 		    ID_EX_branch_cycle <= ID_branch_cycle;
 		    ID_EX_branch_likely <= ID_branch_likely;
-		    ID_EX_branch_delay_follows <=
-		      ID_branch_cycle or ID_jump_cycle;
+		    ID_EX_branch_delay_follows <= C_arch = ARCH_MI32
+		      and (ID_branch_cycle or ID_jump_cycle);
 		    ID_EX_predict_taken <= ID_predict_taken;
 		    ID_EX_bpredict_score <= IF_ID_bpredict_score;
 		    ID_EX_bpredict_index <= IF_ID_bpredict_index;
@@ -1120,8 +1122,9 @@ begin
       else EX_MEM_addsub_data;
 
     MEM_take_branch <= EX_MEM_take_branch xor EX_MEM_branch_taken;
-    MEM_cancel_EX <= (C_branch_likely and EX_MEM_branch_likely and
-      not EX_MEM_take_branch);
+    MEM_cancel_EX <= (C_arch = ARCH_MI32 and C_branch_likely
+      and EX_MEM_branch_likely and not EX_MEM_take_branch) or
+      (C_arch = ARCH_RV32 and EX_MEM_take_branch);
 
     MEM_shamt_1_2_4 <= "001" when not C_full_shifter and EX_MEM_shift_blocked
       else "00" & EX_MEM_shamt_1_2_4(0) when not C_full_shifter
