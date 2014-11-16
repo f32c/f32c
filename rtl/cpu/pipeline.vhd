@@ -389,7 +389,7 @@ begin
 		IF_ID_bubble <= false;
 		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
 		IF_ID_bpredict_index <= IF_bpredict_index;
-		if C_arch = ARCH_RV32 or C_exceptions then
+		if C_debug or C_arch = ARCH_RV32 or C_exceptions then
 		    IF_ID_EPC <= IF_PC;
 		end if;
 		if C_exceptions then
@@ -578,7 +578,7 @@ begin
     -- compute branch target
     ID_branch_target <= C_PC_mask(31 downto 2) and
       (IF_ID_PC_4 + ID_branch_offset) when C_arch = ARCH_MI32
-      else C_PC_mask(31 downto 2) and (IF_ID_EPC - 1 + ID_branch_offset);
+      else C_PC_mask(31 downto 2) and (IF_ID_EPC + ID_branch_offset);
 
     -- branch prediction
     ID_predict_taken <= C_branch_prediction
@@ -738,6 +738,10 @@ begin
 			ID_EX_flush_i_line <= ID_flush_i_line;
 			ID_EX_flush_d_line <= ID_flush_d_line;
 		    end if;
+		    if (C_exceptions or C_debug)
+		      and not ID_EX_branch_delay_follows then
+			ID_EX_EPC <= IF_ID_EPC;
+		    end if;
 		    if C_exceptions then
 			ID_EX_wait <= ID_wait;
 			ID_EX_bubble <= IF_ID_bubble;
@@ -748,9 +752,6 @@ begin
 			end if;
 			ID_EX_ei <= ID_ei;
 			ID_EX_di <= ID_di;
-			if not ID_EX_branch_delay_follows then
-			    ID_EX_EPC <= IF_ID_EPC;
-			end if;
 			ID_EX_branch_delay_slot <= ID_EX_branch_delay_follows;
 		    end if;
 		    -- schedule result forwarding
