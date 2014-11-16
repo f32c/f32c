@@ -59,4 +59,13 @@ constant RV32_MEM_SIZE_H:	std_logic_vector := "01";
 constant RV32_MEM_SIZE_W:	std_logic_vector := "10";
 constant RV32_MEM_SIZE_D:	std_logic_vector := "11";
 
+-- Test conditions
+constant RV32_TEST_EQ:		std_logic_vector := "000";
+constant RV32_TEST_NE:		std_logic_vector := "001";
+constant RV32_TEST_ALWAYS:	std_logic_vector := "010";
+constant RV32_TEST_LT:		std_logic_vector := "100";
+constant RV32_TEST_GE:		std_logic_vector := "101";
+constant RV32_TEST_LTU:		std_logic_vector := "110";
+constant RV32_TEST_GEU:		std_logic_vector := "111";
+
 end;

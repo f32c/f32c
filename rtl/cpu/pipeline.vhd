@@ -16,6 +16,7 @@ use ieee.std_logic_unsigned.all;
 
 use work.f32c_pack.all;
 use work.mi32_pack.all;
+use work.rv32_pack.all;
 
 
 entity pipeline is
@@ -388,6 +389,9 @@ begin
 		IF_ID_bubble <= false;
 		IF_ID_PC_4 <= IF_PC + 1 and C_PC_mask(31 downto 2);
 		IF_ID_bpredict_index <= IF_bpredict_index;
+		if C_arch = ARCH_RV32 or C_exceptions then
+		    IF_ID_EPC <= IF_PC;
+		end if;
 		if C_exceptions then
 		    if EX_MEM_EIP and not IF_ID_EIP and not ID_EX_EIP then
 			IF_ID_EIP <= true;
@@ -397,7 +401,6 @@ begin
 			IF_ID_EIP <= false;
 			IF_ID_bubble <= true; -- delay slot
 		    end if;
-		    IF_ID_EPC <= IF_PC;
 		end if;
 	    elsif ID_EX_branch_likely and not EX_take_branch then
 		IF_ID_bubble <= false; -- XXX should be true?
@@ -573,8 +576,9 @@ begin
     ID_fwd_mem_alu_op2 <= ID_fwd_mem_reg2 and not ID_use_immediate;
 
     -- compute branch target
-    ID_branch_target <=
-      C_PC_mask(31 downto 2) and (IF_ID_PC_4 + ID_branch_offset);
+    ID_branch_target <= C_PC_mask(31 downto 2) and
+      (IF_ID_PC_4 + ID_branch_offset) when C_arch = ARCH_MI32
+      else C_PC_mask(31 downto 2) and (IF_ID_EPC - 1 + ID_branch_offset);
 
     -- branch prediction
     ID_predict_taken <= C_branch_prediction
@@ -887,16 +891,29 @@ begin
     process(ID_EX_branch_cycle, ID_EX_branch_condition, EX_from_alu_equal,
       EX_eff_reg1)
     begin
-	if ID_EX_branch_cycle then
+	if C_arch = ARCH_MI32 and ID_EX_branch_cycle then
 	    case ID_EX_branch_condition is
-	    when TEST_LTZ => EX_take_branch <= EX_eff_reg1(31) = '1';
-	    when TEST_GEZ => EX_take_branch <= EX_eff_reg1(31) = '0';
-	    when TEST_EQ  => EX_take_branch <= EX_from_alu_equal;
-	    when TEST_NE  => EX_take_branch <= not EX_from_alu_equal;
-	    when TEST_LEZ =>
+	    when MI32_TEST_LTZ => EX_take_branch <= EX_eff_reg1(31) = '1';
+	    when MI32_TEST_GEZ => EX_take_branch <= EX_eff_reg1(31) = '0';
+	    when MI32_TEST_EQ  => EX_take_branch <= EX_from_alu_equal;
+	    when MI32_TEST_NE  => EX_take_branch <= not EX_from_alu_equal;
+	    when MI32_TEST_LEZ =>
 	      EX_take_branch <= EX_eff_reg1(31) = '1' or EX_from_alu_equal;
-	    when TEST_GTZ =>
+	    when MI32_TEST_GTZ =>
 	      EX_take_branch <= EX_eff_reg1(31) = '0' and not EX_from_alu_equal;
+	    when others =>
+	      EX_take_branch <= false;
+	    end case;
+	elsif C_arch = ARCH_RV32 and ID_EX_branch_cycle then
+	    case ID_EX_branch_condition is
+	    when RV32_TEST_ALWAYS =>
+	      EX_take_branch <= true;
+	    when RV32_TEST_EQ  => EX_take_branch <= EX_from_alu_equal;
+	    when RV32_TEST_NE  => EX_take_branch <= not EX_from_alu_equal;
+	    when RV32_TEST_LT  => -- XXX revisit!
+	    when RV32_TEST_GE  => -- XXX revisit!
+	    when RV32_TEST_LTU => -- XXX revisit!
+	    when RV32_TEST_GEU => -- XXX revisit!
 	    when others =>
 	      EX_take_branch <= false;
 	    end case;
