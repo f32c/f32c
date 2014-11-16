@@ -111,7 +111,7 @@ begin
 	op_major <= OP_MAJOR_ALU;
 	op_minor <= OP_MINOR_ADD;
 	use_immediate <= false; -- should be dont' care
-	branch_condition <= TEST_UNDEFINED;
+	branch_condition <= (others => '-');
 	branch_offset <= (others => '-');
 	mem_cycle <= '0';
 	mem_write <= '0';
@@ -152,13 +152,16 @@ begin
 	    ignore_reg2 <= true;
 	    branch_cycle <= true;
 	    branch_offset <= imm32_uj(31 downto 2);
+	    branch_condition <= RV32_TEST_ALWAYS;
 	when RV32I_OP_JALR =>
 	    ignore_reg2 <= true;
 	    jump_register <= true;
 	    immediate_value <= imm32_i;
+	    branch_condition <= RV32_TEST_ALWAYS;
 	when RV32I_OP_BRANCH =>
 	    branch_cycle <= true;
 	    branch_offset <= imm32_sb(31 downto 2);
+	    branch_condition <= instruction(14 downto 12);
 	    target_addr <= RV32_REG_ZERO;
 	when RV32I_OP_LOAD =>
 	    use_immediate <= true;
