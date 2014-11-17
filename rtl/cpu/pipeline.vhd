@@ -124,7 +124,7 @@ architecture Behavioral of pipeline is
     signal ID_shift_variable: boolean;
     signal ID_shift_amount: std_logic_vector(4 downto 0);
     signal ID_immediate: std_logic_vector(31 downto 0);
-    signal ID_sign_extend: boolean;
+    signal ID_slt_signed: boolean;
     signal ID_use_immediate, ID_ignore_reg2: boolean;
     signal ID_predict_taken: boolean;
     signal ID_branch_target, ID_jump_target: std_logic_vector(31 downto 2);
@@ -148,7 +148,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_immediate, ID_EX_alu_op2: std_logic_vector(31 downto 0);
     signal ID_EX_fwd_ex_reg1, ID_EX_fwd_ex_reg2, ID_EX_fwd_ex_alu_op2: boolean;
     signal ID_EX_fwd_mem_reg1, ID_EX_fwd_mem_reg2: boolean;
-    signal ID_EX_fwd_mem_alu_op2, ID_EX_sign_extend: boolean;
+    signal ID_EX_fwd_mem_alu_op2, ID_EX_slt_signed: boolean;
     signal ID_EX_cmov_cycle, ID_EX_cmov_condition: boolean;
     signal ID_EX_branch_cycle, ID_EX_branch_likely: boolean;
     signal ID_EX_jump_register: boolean;
@@ -458,7 +458,7 @@ begin
 	op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
 	branch_cycle => ID_branch_cycle, branch_likely => ID_branch_likely,
 	jump_cycle => ID_jump_cycle, jump_register => ID_jump_register,
-	branch_condition => ID_branch_condition, sign_extend => ID_sign_extend,
+	branch_condition => ID_branch_condition, slt_signed => ID_slt_signed,
 	mem_write => ID_mem_write, mem_size => ID_mem_size,
 	mem_read_sign_extend => ID_mem_read_sign_extend,
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
@@ -492,7 +492,7 @@ begin
 	target_addr => ID_writeback_addr, op_major => ID_op_major,
 	op_minor => ID_op_minor, mem_cycle => ID_mem_cycle,
 	branch_cycle => ID_branch_cycle, jump_register => ID_jump_register,
-	branch_condition => ID_branch_condition, sign_extend => ID_sign_extend,
+	branch_condition => ID_branch_condition, slt_signed => ID_slt_signed,
 	mem_write => ID_mem_write, mem_size => ID_mem_size,
 	mem_read_sign_extend => ID_mem_read_sign_extend,
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
@@ -703,7 +703,7 @@ begin
 		    ID_EX_alu_op2 <= ID_alu_op2;
 		    ID_EX_immediate <= ID_immediate;
 		    ID_EX_cop0_addr <= IF_ID_instruction(15 downto 11);
-		    ID_EX_sign_extend <= ID_sign_extend;
+		    ID_EX_slt_signed <= ID_slt_signed;
 		    ID_EX_op_major <= ID_op_major;
 		    ID_EX_op_minor <= ID_op_minor;
 		    ID_EX_cmov_cycle <= C_movn_movz and ID_cmov_cycle;
@@ -1099,7 +1099,7 @@ begin
 		elsif ID_EX_op_major = OP_MAJOR_SLT then
 		    EX_MEM_logic_cycle <= '1';
 		    EX_MEM_logic_data(31 downto 1) <= x"0000000" & "000";
-		    if ID_EX_sign_extend then
+		    if ID_EX_slt_signed then
 			EX_MEM_logic_data(0) <= EX_from_alu_addsubx(32)
 			  xor EX_eff_reg1(31) xor EX_eff_alu_op2(31);
 		    else
