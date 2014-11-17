@@ -31,7 +31,7 @@ entity idecode_rv32 is
 	reg1_zero, reg2_zero, reg1_pc: out boolean;
 	reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
 	immediate_value: out std_logic_vector(31 downto 0);
-	sign_extend: out boolean; -- for SLT / SLTU
+	slt_signed: out boolean;
 	op_major: out std_logic_vector(1 downto 0);
 	op_minor: out std_logic_vector(2 downto 0);
 	alt_sel: out std_logic_vector(2 downto 0);
@@ -108,7 +108,7 @@ begin
 	shift_variable <= false;
 	shift_fn <= OP_SHIFT_LL; -- memory store align
 	immediate_value <= (others => '-');
-	sign_extend <= true;
+	slt_signed <= false;
 	op_major <= OP_MAJOR_ALU;
 	op_minor <= OP_MINOR_ADD;
 	use_immediate <= false; -- should be dont' care
@@ -191,11 +191,11 @@ begin
 	    when RV32_FN3_SLT =>
 		op_major <= OP_MAJOR_SLT;
 		op_minor <= OP_MINOR_SUB;
-		sign_extend <= true;
+		slt_signed <= true;
 	    when RV32_FN3_SLTU =>
 		op_major <= OP_MAJOR_SLT;
 		op_minor <= OP_MINOR_SUB;
-		sign_extend <= false;
+		slt_signed <= false;
 	    when RV32_FN3_XOR =>
 		op_minor <= OP_MINOR_XOR;
 	    when RV32_FN3_OR =>
@@ -239,11 +239,11 @@ begin
 	    when RV32_FN3_SLT =>
 		op_major <= OP_MAJOR_SLT;
 		op_minor <= OP_MINOR_SUB;
-		sign_extend <= true;
+		slt_signed <= true;
 	    when RV32_FN3_SLTU =>
 		op_major <= OP_MAJOR_SLT;
 		op_minor <= OP_MINOR_SUB;
-		sign_extend <= false;
+		slt_signed <= false;
 	    when RV32_FN3_XOR =>
 		op_minor <= OP_MINOR_XOR;
 	    when RV32_FN3_OR =>

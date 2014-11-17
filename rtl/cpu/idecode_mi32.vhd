@@ -34,7 +34,7 @@ entity idecode_mi32 is
 	reg1_zero, reg2_zero: out boolean;
 	reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
 	immediate_value: out std_logic_vector(31 downto 0);
-	sign_extend: out boolean; -- for SLT / SLTU
+	slt_signed: out boolean;
 	op_major: out std_logic_vector(1 downto 0);
 	op_minor: out std_logic_vector(2 downto 0);
 	alt_sel: out std_logic_vector(2 downto 0);
@@ -102,7 +102,7 @@ begin
 	jump_register <= false; -- should be don't care
 	target_addr <= "-----";
 	immediate_value <= imm32_signed;
-	sign_extend <= false; -- should be don't care
+	slt_signed <= false; -- should be don't care
 	op_major <= OP_MAJOR_ALU;
 	op_minor <= OP_MINOR_ADD;
 	use_immediate <= false; -- should be dont' care
@@ -176,14 +176,14 @@ begin
 	    op_major <= OP_MAJOR_SLT;
 	    op_minor <= OP_MINOR_SUB;
 	    use_immediate <= true;
-	    sign_extend <= true;
+	    slt_signed <= true;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MI32_OP_SLTIU =>
 	    op_major <= OP_MAJOR_SLT;
 	    op_minor <= OP_MINOR_SUB;
 	    use_immediate <= true;
-	    sign_extend <= false;
+	    slt_signed <= false;
 	    target_addr <= instruction(20 downto 16);
 	    ignore_reg2 <= true;
 	when MI32_OP_ANDI =>
@@ -495,11 +495,11 @@ begin
 	    when MI32_SPEC_SLT =>
 		op_major <= OP_MAJOR_SLT;
 		op_minor <= OP_MINOR_SUB;
-		sign_extend <= true;
+		slt_signed <= true;
 	    when MI32_SPEC_SLTU =>
 		op_major <= OP_MAJOR_SLT;
 		op_minor <= OP_MINOR_SUB;
-		sign_extend <= false;
+		slt_signed <= false;
 	    when others =>
 		latency <= LATENCY_UNDEFINED;
 		unsupported_instr <= true;
