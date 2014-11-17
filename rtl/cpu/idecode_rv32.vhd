@@ -166,6 +166,7 @@ begin
 	    branch_offset <= imm32_sb(31 downto 2);
 	    branch_condition <= instruction(14 downto 12);
 	    target_addr <= RV32_REG_ZERO;
+	    op_minor <= OP_MINOR_SUB;
 	when RV32I_OP_LOAD =>
 	    use_immediate <= true;
 	    latency <= LATENCY_WB;
