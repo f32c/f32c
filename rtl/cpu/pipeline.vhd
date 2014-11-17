@@ -104,7 +104,7 @@ architecture Behavioral of pipeline is
 	
     -- pipeline stage 2: instruction decode and register fetch
     signal ID_running: boolean;
-    signal ID_reg1_zero, ID_reg2_zero: boolean;
+    signal ID_reg1_zero, ID_reg2_zero, ID_reg1_pc: boolean;
     signal ID_branch_cycle, ID_branch_likely, ID_jump_cycle: boolean;
     signal ID_branch_offset: std_logic_vector(31 downto 2);
     signal ID_cmov_cycle, ID_cmov_condition: boolean;
@@ -151,6 +151,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_fwd_mem_alu_op2, ID_EX_sign_extend: boolean;
     signal ID_EX_cmov_cycle, ID_EX_cmov_condition: boolean;
     signal ID_EX_branch_cycle, ID_EX_branch_likely: boolean;
+    signal ID_EX_jump_register: boolean;
     signal ID_EX_cancel_next, ID_EX_predict_taken: boolean;
     signal ID_EX_bpredict_index: std_logic_vector(12 downto 0);
     signal ID_EX_branch_target: std_logic_vector(31 downto 2);
@@ -484,6 +485,7 @@ begin
 	instruction => IF_ID_instruction,
 	reg1_addr => ID_reg1_addr, reg2_addr => ID_reg2_addr,
 	reg1_zero => ID_reg1_zero, reg2_zero => ID_reg2_zero,
+	reg1_pc => ID_reg1_pc,
 	immediate_value => ID_immediate, use_immediate => ID_use_immediate,
 	branch_offset => ID_branch_offset, shift_fn => ID_shift_funct,
 	shift_variable => ID_shift_variable, shift_amount => ID_shift_amount,
@@ -523,9 +525,10 @@ begin
     -- at the half of the clk cycle, in which case no bypass logic is required.
     --
     WB_clk <= clk when C_load_aligner else not clk;
-    ID_reg1_eff_data <= ID_reg1_data when not C_load_aligner or
-      ID_reg1_zero or ID_reg1_addr /= MEM_WB_writeback_addr else
-      WB_writeback_data;
+    ID_reg1_eff_data <= IF_ID_EPC & "00" when C_arch = ARCH_RV32 and ID_reg1_pc
+      else ID_reg1_data when not C_load_aligner or
+      ID_reg1_zero or ID_reg1_addr /= MEM_WB_writeback_addr
+      else WB_writeback_data;
     ID_reg2_eff_data <= ID_reg2_data when not C_load_aligner or
       ID_reg2_zero or ID_reg2_addr /= MEM_WB_writeback_addr else
       WB_writeback_data;
@@ -538,7 +541,8 @@ begin
     ID_load_align_hazard <= C_load_aligner and EX_MEM_latency = '1'
       and ((not ID_reg1_zero and ID_reg1_addr = EX_MEM_writeback_addr) or
       (not ID_ignore_reg2 and ID_reg2_addr = EX_MEM_writeback_addr));
-    ID_jump_register_hazard <= ID_jump_register and not ID_reg1_zero and
+    ID_jump_register_hazard <= C_arch = ARCH_MI32
+      and ID_jump_register and not ID_reg1_zero and
       (ID_reg1_addr = ID_EX_writeback_addr or
       ID_reg1_addr = EX_MEM_writeback_addr or
       (C_load_aligner and ID_reg1_addr = MEM_WB_writeback_addr));
@@ -639,6 +643,7 @@ begin
 		    ID_EX_mem_cycle <= '0';
 		    ID_EX_mem_write <= '0';
 		    ID_EX_multicycle_lh_lb <= false;
+		    ID_EX_jump_register <= false;
 		    ID_EX_branch_cycle <= false;
 		    ID_EX_branch_likely <= false;
 		    ID_EX_predict_taken <= false;
@@ -721,6 +726,8 @@ begin
 		    ID_EX_shift_amount <= ID_shift_amount;
 		    ID_EX_writeback_addr <= ID_writeback_addr;
 		    ID_EX_mem_cycle <= ID_mem_cycle;
+		    ID_EX_jump_register <=
+		      C_arch = ARCH_RV32 and ID_jump_register;
 		    ID_EX_branch_cycle <= ID_branch_cycle;
 		    ID_EX_branch_likely <= ID_branch_likely;
 		    ID_EX_branch_delay_follows <= C_arch = ARCH_MI32
@@ -1004,7 +1011,12 @@ begin
 		EX_MEM_take_branch <= EX_take_branch;
 		EX_MEM_branch_taken <= ID_EX_predict_taken;
 		if ID_EX_branch_cycle then
-		    EX_MEM_branch_target <= EX_branch_target;
+		    if C_arch = ARCH_RV32 and ID_EX_jump_register then
+			EX_MEM_branch_target <= C_PC_mask(31 downto 2)
+			  and EX_from_alu_addsubx(31 downto 2);
+		    else
+			EX_MEM_branch_target <= EX_branch_target;
+		    end if;
 		end if;
 		if C_movn_movz and ID_EX_cmov_cycle then
 		    if (EX_eff_reg2 = x"00000000") = ID_EX_cmov_condition then

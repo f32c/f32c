@@ -28,7 +28,7 @@ entity idecode_rv32 is
 	branch_cycle: out boolean;
 	branch_offset: out std_logic_vector(31 downto 2);
 	jump_register: out boolean;
-	reg1_zero, reg2_zero: out boolean;
+	reg1_zero, reg2_zero, reg1_pc: out boolean;
 	reg1_addr, reg2_addr, target_addr: out std_logic_vector(4 downto 0);
 	immediate_value: out std_logic_vector(31 downto 0);
 	sign_extend: out boolean; -- for SLT / SLTU
@@ -100,6 +100,7 @@ begin
 	reg1_zero <= instruction(19 downto 15) = RV32_REG_ZERO;
 	reg2_zero <= instruction(24 downto 20) = RV32_REG_ZERO;
 	ignore_reg2 <= instruction(24 downto 20) = RV32_REG_ZERO;
+	reg1_pc <= false;
 	unsupported_instr <= false;
 	branch_cycle <= false;
 	jump_register <= false;
@@ -136,18 +137,16 @@ begin
 	when RV32I_OP_LUI =>
 	    use_immediate <= true;
 	    immediate_value <= imm32_u;
-	    op_minor <= OP_MINOR_OR;
 	    reg1_addr <= RV32_REG_ZERO;
 	    reg1_zero <= true;
 	    ignore_reg2 <= true;
 	when RV32I_OP_AUIPC =>
 	    use_immediate <= true;
 	    immediate_value <= imm32_u;
-	    op_minor <= OP_MINOR_ADD;
 	    reg1_addr <= RV32_REG_ZERO;
 	    reg1_zero <= true;
+	    reg1_pc <= true;
 	    ignore_reg2 <= true;
-	    -- XXX indicate PC as operand2 !!!
 	when RV32I_OP_JAL =>
 	    ignore_reg2 <= true;
 	    branch_cycle <= true;
@@ -155,7 +154,9 @@ begin
 	    branch_condition <= RV32_TEST_ALWAYS;
 	    read_alt <= true;
 	when RV32I_OP_JALR =>
+	    use_immediate <= true;
 	    ignore_reg2 <= true;
+	    branch_cycle <= true;
 	    jump_register <= true;
 	    immediate_value <= imm32_i;
 	    branch_condition <= RV32_TEST_ALWAYS;
