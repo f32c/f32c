@@ -277,6 +277,9 @@ begin
 	    when others =>
 		-- nothing to do here, just appease ISE warnings
 	    end case;
+	when RV32I_OP_SYS =>
+	    read_alt <= true;
+	    alt_sel <= ALT_COP0;
 	when others =>
 	end case;
     end process;

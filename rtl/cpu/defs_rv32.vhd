@@ -41,17 +41,18 @@ constant RV32_FN3_SR:		std_logic_vector := "101";
 constant RV32_FN3_OR:		std_logic_vector := "110";
 constant RV32_FN3_AND:		std_logic_vector := "111";
 
--- Specialized registers: zero, exception slots, return address
-constant RV32_REG_ZERO:		std_logic_vector := "00000";
-constant RV32_REG_RA:		std_logic_vector := "00001";
+-- SYS codes
+constant RV32_SYS_SCALL:	std_logic_vector := "000000000000";
+constant RV32_SYS_SBREAK:	std_logic_vector := "000000000001";
+constant RV32_SYS_RDCYCLE:	std_logic_vector := "110000000000";
+constant RV32_SYS_RDCYCLEH:	std_logic_vector := "110010000000";
+constant RV32_SYS_RDTIME:	std_logic_vector := "110000000001";
+constant RV32_SYS_RDTIMEH:	std_logic_vector := "110010000001";
+constant RV32_SYS_RDINSTRET:	std_logic_vector := "110000000010";
+constant RV32_SYS_RDINSTRETH:	std_logic_vector := "110010000010";
 
--- Branch conditions
-constant RV32_COND_EQ:		std_logic_vector := "000";
-constant RV32_COND_NE:		std_logic_vector := "001";
-constant RV32_COND_LT:		std_logic_vector := "100";
-constant RV32_COND_GE:		std_logic_vector := "101";
-constant RV32_COND_LTU:		std_logic_vector := "110";
-constant RV32_COND_GEU:		std_logic_vector := "111";
+-- Specialized registers: zero
+constant RV32_REG_ZERO:		std_logic_vector := "00000";
 
 -- Memory access width
 constant RV32_MEM_SIZE_B:	std_logic_vector := "00";
