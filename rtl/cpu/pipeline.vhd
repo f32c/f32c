@@ -179,7 +179,6 @@ architecture Behavioral of pipeline is
     signal ID_EX_EPC: std_logic_vector(31 downto 2);
     signal ID_EX_EIP, ID_EX_bubble: boolean;
     signal ID_EX_instruction: std_logic_vector(31 downto 0); -- debugging only
-    signal ID_EX_sign_extend_debug: std_logic; -- debugging only
 	
     -- pipeline stage 3: execute
     signal EX_running: boolean;
@@ -922,10 +921,16 @@ begin
 	      EX_take_branch <= true;
 	    when RV32_TEST_EQ  => EX_take_branch <= EX_from_alu_equal;
 	    when RV32_TEST_NE  => EX_take_branch <= not EX_from_alu_equal;
-	    when RV32_TEST_LT  => -- XXX revisit!
-	    when RV32_TEST_GE  => -- XXX revisit!
-	    when RV32_TEST_LTU => -- XXX revisit!
-	    when RV32_TEST_GEU => -- XXX revisit!
+	    when RV32_TEST_LT  =>
+	      EX_take_branch <= (EX_eff_reg1(31) xor EX_eff_alu_op2(31)
+	        xor EX_from_alu_addsubx(32)) = '1';
+	    when RV32_TEST_GE  =>
+	      EX_take_branch <= (EX_eff_reg1(31) xor EX_eff_alu_op2(31)
+	        xor EX_from_alu_addsubx(32)) = '0';
+	    when RV32_TEST_LTU =>
+	      EX_take_branch <= EX_from_alu_addsubx(32) = '1';
+	    when RV32_TEST_GEU =>
+	      EX_take_branch <= EX_from_alu_addsubx(32) = '0';
 	    when others =>
 	      EX_take_branch <= false;
 	    end case;
@@ -943,8 +948,8 @@ begin
 	    if C_ll_sc then
 		if ID_EX_ll then
 		    EX_MEM_ll_bit <= '1';
-		    EX_MEM_ll_addr(19 downto 2) <=
-		      EX_from_alu_addsubx(19 downto 2); -- XXX
+		    EX_MEM_ll_addr <= EX_from_alu_addsubx(31 downto 2)
+		      and C_PC_mask(31 downto 2);
 		else
 		    if snoop_cycle = '1' and EX_MEM_ll_addr = snoop_addr then
 			EX_MEM_ll_bit <= '0';
@@ -1089,7 +1094,7 @@ begin
 		    EX_MEM_logic_data(31 downto 1) <= x"0000000" & "000";
 		    if ID_EX_sign_extend then
 			EX_MEM_logic_data(0) <= EX_from_alu_addsubx(32)
-			  xor (EX_eff_reg1(31) xor EX_eff_alu_op2(31));
+			  xor EX_eff_reg1(31) xor EX_eff_alu_op2(31);
 		    else
 			EX_MEM_logic_data(0) <= EX_from_alu_addsubx(32);
 		    end if;
@@ -1363,7 +1368,6 @@ begin
     -- mux for debugging probes
     G_with_trace_mux:
     if C_debug generate
-    ID_EX_sign_extend_debug <= '1' when ID_EX_sign_extend else '0';
 
     debug_XXX(28) <= R_cop0_EI;
     debug_XXX(24) <= '1' when IF_ID_EIP else '0';
