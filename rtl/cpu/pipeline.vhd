@@ -887,6 +887,8 @@ begin
       EX_PC_RET & "00" when others;
 
     -- COP0 outbound mux
+    G_MI32_COP0_mux:
+    if C_arch = ARCH_MI32 generate
     with ID_EX_cop0_addr select
     EX_from_cop0 <=
       R_cop0_count when MI32_COP0_COUNT,
@@ -897,6 +899,11 @@ begin
       R_cop0_EPC & "00" when MI32_COP0_EXC_PC,
       R_cop0_config when MI32_COP0_CONFIG,
       (others => '-') when others;
+    end generate;
+    G_RV32_COP0_mux:
+    if C_arch = ARCH_RV32 generate
+    EX_from_cop0 <= R_cop0_count;
+    end generate;
 
     -- branch or not?
     process(ID_EX_branch_cycle, ID_EX_branch_condition, EX_from_alu_equal,
