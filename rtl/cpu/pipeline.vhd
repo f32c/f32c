@@ -195,6 +195,7 @@ architecture Behavioral of pipeline is
     signal EX_mem_byte_sel: std_logic_vector(3 downto 0);
     signal EX_take_branch: boolean;
     signal EX_branch_target: std_logic_vector(31 downto 2);
+    signal EX_PC_RET: std_logic_vector(31 downto 2);
     -- boundary to stage 4
     signal EX_MEM_writeback_addr: std_logic_vector(4 downto 0);
     signal EX_MEM_addsub_data: std_logic_vector(31 downto 0);
@@ -870,13 +871,14 @@ begin
       EX_2bit_add = "11" or ID_EX_mem_size(1) = '1' or
       (ID_EX_mem_size(0) = '1' and EX_2bit_add(1) = '1') else '0';		
 
-    -- MFHI, MFLO, MFC0, link PC + 8
+    -- link return address, MFHI, MFLO, MFC0
+    EX_PC_RET <= IF_ID_PC_4 when C_arch = ARCH_MI32 else IF_ID_EPC;
     with ID_EX_alt_sel select
     EX_from_alt <=
       R_hi_lo(63 downto 32) when ALT_HI,
       R_hi_lo(31 downto 0) when ALT_LO,
       EX_from_cop0 when ALT_COP0,
-      IF_ID_PC_4 & "00" when others;
+      EX_PC_RET & "00" when others;
 
     -- COP0 outbound mux
     with ID_EX_cop0_addr select

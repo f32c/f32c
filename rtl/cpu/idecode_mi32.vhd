@@ -116,7 +116,7 @@ begin
 	latency <= LATENCY_EX;
 	seb_seh_cycle <= false;
 	seb_seh_select <= instruction(9);
-	alt_sel <= ALT_PC_8;
+	alt_sel <= ALT_PC_RET;
 	read_alt <= false;
 	flush_i_line <= '0';
 	flush_d_line <= '0';
