@@ -117,7 +117,7 @@ begin
 	mem_write <= '0';
 	mem_read_sign_extend <= '-';
 	latency <= LATENCY_EX;
-	alt_sel <= ALT_PC_8;
+	alt_sel <= ALT_PC_RET;
 	read_alt <= false;
 	flush_i_line <= '0';
 	flush_d_line <= '0';
@@ -153,11 +153,13 @@ begin
 	    branch_cycle <= true;
 	    branch_offset <= imm32_uj(31 downto 2);
 	    branch_condition <= RV32_TEST_ALWAYS;
+	    read_alt <= true;
 	when RV32I_OP_JALR =>
 	    ignore_reg2 <= true;
 	    jump_register <= true;
 	    immediate_value <= imm32_i;
 	    branch_condition <= RV32_TEST_ALWAYS;
+	    read_alt <= true;
 	when RV32I_OP_BRANCH =>
 	    branch_cycle <= true;
 	    branch_offset <= imm32_sb(31 downto 2);

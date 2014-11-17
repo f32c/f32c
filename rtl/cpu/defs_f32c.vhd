@@ -68,7 +68,7 @@ constant OP_SHIFT_RA:		std_logic_vector := "11";
 -- ALT mux select
 constant ALT_HI:		std_logic_vector := "000";
 constant ALT_LO:		std_logic_vector := "001";
-constant ALT_PC_8:		std_logic_vector := "010";
+constant ALT_PC_RET:		std_logic_vector := "010";
 constant ALT_COP0:		std_logic_vector := "011";
 
 function ARCH_REG_ZERO(arch : integer) return std_logic_vector;
