@@ -15,7 +15,7 @@ INC += -I$(BUILD)
 AS = mips-elf-gcc -G 32768 -EL -c -I../../../include -nostdinc -nostdlib -march=f32c
 
 CFLAGS_MIPS = -I../../../include -include sys/param.h -nostdinc
-CFLAGS_MIPS += -G 32768 -EL -march=f32c
+CFLAGS_MIPS += -G 32768 -EL -march=f32c -ffunction-sections
 CFLAGS = $(INC) -Wall -Werror -ansi -std=gnu99 -nostdlib $(CFLAGS_MIPS) $(COPT)
 
 #Debugging/Optimization
@@ -27,7 +27,7 @@ endif
 
 CFLAGS += -DNO_PRINTF_FLOAT
 
-LDFLAGS = -N -EL -nostdlib
+LDFLAGS = -N -EL -nostdlib -gc-sections
 LDFLAGS += --section-start=.init=0x80000000
 
 LIBS =
@@ -58,9 +58,14 @@ SRC_S = \
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_S:.S=.o)) $(SRC_C:.c=.o)
 
-all: $(BUILD)/firmware.elf
+all: $(BUILD)/py.bin
 
-$(BUILD)/firmware.elf: $(OBJ)
+$(BUILD)/py.bin: $(BUILD)/py.elf
+	../../../tools/isa_check.tcl mips $(BUILD)/py.elf
+	mips-elf-objcopy -O binary $(BUILD)/py.elf $(BUILD)/py.bin
+	mips-elf-objcopy -O srec $(BUILD)/py.elf $(BUILD)/py.hex
+
+$(BUILD)/py.elf: $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(LD) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 	$(Q)$(SIZE) $@
