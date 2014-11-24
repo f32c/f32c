@@ -21,10 +21,8 @@ use work.rv32_pack.all;
 
 entity pipeline is
     generic (
-	-- Instruction set architecture
-	C_arch: integer := ARCH_MI32;
-
 	-- ISA options
+	C_arch: integer;
 	C_big_endian: boolean;
 	C_mult_enable: boolean;
 	C_branch_likely: boolean;	-- MI32 only
