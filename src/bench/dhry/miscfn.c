@@ -20,7 +20,6 @@ malloc(int size)
 }
 
 
-#if 0
 /* memcpy() and strcpy() are required for -Os builds */
 #ifdef memcpy
 #undef memcpy
@@ -42,4 +41,3 @@ strcpy(char *dst, const char *src)
 	for (; *src != 0;)
 		*dst++ = *src++;
 }
-#endif
