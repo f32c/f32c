@@ -104,7 +104,7 @@ bas_sleep(void)
 int
 bas_exec(void)
 {
-	char name[128];
+	char buf[256];
 	STR st;
 	uint32_t *up = (void *) SRAM_BASE;
 	uint8_t *cp = (void *) LOADER_BASE;
@@ -112,14 +112,29 @@ bas_exec(void)
 
 	st = stringeval();
 	NULL_TERMINATE(st);
-	strcpy(name, st->strval);
+	strcpy(buf, st->strval);
+	len = strlen(buf);
+	if (len >= 1 && buf[1] != ':') {
+		if (buf[0] == '/') {
+			f_getcwd(buf, sizeof(buf));
+			strcpy(&buf[2], st->strval);
+		} else {
+			f_getcwd(buf, sizeof(buf));
+			len = strlen(buf);
+			buf[len++] = '/';
+			strcpy(&buf[len], st->strval);
+		}
+	}
 	FREE_STR(st);
 	check();
-	if (open(name, O_RDONLY) < 0)
+
+	if (open(buf, O_RDONLY) < 0)
+		sprintf(&buf[strlen(buf)], ".bin");
+	if (open(buf, O_RDONLY) < 0)
 		error(15);
 
 	*up = LOAD_COOKIE;
-	strcpy((void *) &up[1], name);
+	strcpy((void *) &up[1], buf);
 
 	flash_read_block((void *) cp, 0, 512);
 	sec_size = (cp[0xc] << 8) + cp[0xb];
