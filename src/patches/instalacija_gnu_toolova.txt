@@ -63,7 +63,9 @@ Linux / FreeBSD:
 	make install napraviti s administratorskim ovlastima (su / sudo).
 
 FreeBSD:
-	Koristiti gmake umjesto make.
+	Koristiti gmake umjesto make.  Od verzije 10.0 na vise instalirati
+	gcc pkg, postaviti environment CC=gcc48, te u mpfr/vasprintf.c
+	zamijeniti #include <wchar.h> s #include "/usr/include/wchar.h".
 
 Microsoft Windows:
 	Za izgradnju i koristenje GNU alata treba prvo instalirati
