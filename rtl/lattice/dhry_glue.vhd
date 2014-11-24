@@ -30,12 +30,16 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+use work.f32c_pack.all;
+
+
 entity glue is
     generic (
 	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
 	C_clk_freq: integer := 100;
 
 	-- ISA options
+	C_arch: integer := ARCH_MI32;
 	C_big_endian: boolean := false;
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
@@ -103,7 +107,7 @@ begin
     -- f32c core
     pipeline: entity work.pipeline
     generic map (
-	C_clk_freq => C_clk_freq,
+	C_arch => C_arch, C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
 	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,

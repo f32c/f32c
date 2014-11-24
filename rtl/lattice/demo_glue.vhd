@@ -40,6 +40,7 @@ entity glue is
 	C_clk_freq: integer := 81;
 
 	-- ISA options
+	C_arch: integer := ARCH_MI32;
 	C_big_endian: boolean := false;
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
@@ -216,7 +217,7 @@ begin
     res(i) <= sw(i) or R_cpu_reset(i) when C_debug else R_cpu_reset(i);
     cpu: entity work.cache
     generic map (
-	C_cpuid => i, C_clk_freq => C_clk_freq,
+	C_arch => C_arch, C_cpuid => i, C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
 	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
