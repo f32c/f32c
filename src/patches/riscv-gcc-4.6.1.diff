@@ -1,0 +1,28 @@
+diff --git a/binutils-2.21.1/gas/config/tc-riscv.c b/binutils-2.21.1/gas/config/tc-riscv.c
+index 7a3bf45..d5707d8 100644
+--- a/binutils-2.21.1/gas/config/tc-riscv.c
++++ b/binutils-2.21.1/gas/config/tc-riscv.c
+@@ -32,7 +32,7 @@
+ #include "dwarf2dbg.h"
+ #include "dw2gencfi.h"
+ 
+-#include <execinfo.h>
++//#include <execinfo.h>
+ #include <stdint.h>
+ 
+ #ifdef DEBUG
+diff --git a/gcc-4.6.1/configure b/gcc-4.6.1/configure
+index 32f239e..bf04429 100755
+--- a/gcc-4.6.1/configure
++++ b/gcc-4.6.1/configure
+@@ -2731,6 +2731,10 @@ target_libraries="target-libgcc \
+ #
+ target_tools="target-examples target-groff target-gperf target-rda"
+ 
++# Don't build target tools and libraries for f32c yet
++target_libraries=""
++target_tools=""
++
+ ################################################################################
+ 
+ ## All tools belong in one of the four categories, and are assigned above
