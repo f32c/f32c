@@ -39,7 +39,7 @@ entity glue is
 	C_clk_freq: integer := 25;
 
 	-- Architecture
-	C_arch: integer := ARCH_MI32; -- RV32;
+	C_arch: integer := ARCH_RV32;
 
 	-- ISA options
 	C_big_endian: boolean := false;
