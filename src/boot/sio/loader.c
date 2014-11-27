@@ -68,33 +68,43 @@ _start(void)
 	__asm __volatile__(
 		"move $31, $0"		/* ra <- zero */
 	);
+#endif
 
 #ifndef BRAM
 	/* Flush I-cache, clear DRAM */
 	for (cp = (void *) 0x80000000; cp < (char *) 0x80100000;  cp += 4) {
 		__asm (
+#ifdef __mips__
 			"cache	0, 0(%0);"
 			"sw	$0, 0(%0)"
+#else
+			"sw	zero, 0(%0)"
+#endif
 			:
 			: "r" (cp)
 		);
 	}
-#else
-	cp = NULL;	/* shut up uninitialized use warnings */
 #endif
-#else
+
 	cp = NULL;	/* shut up uninitialized use warnings */
-#endif
 
 prompt:
 	pos = 0;
+#ifdef __mips__
 	c = 0x33660A0D;			/* "\r\nf3" */
+#else /* riscv */
+	c = 0x76720A0D;			/* "\r\nrv" */
+#endif
 	do {
 		pchar(c);
 		c >>= 8;
 		if (c == 0 && pos == 0) {
 			pos = -1;
+#ifdef __mips__
 			c = 0x203E6332;	/* "2c> " */
+#else /* riscv */
+			c = 0x203E3233;	/* "32> " */
+#endif
 		}
 	} while (c != 0);
 
@@ -162,14 +172,12 @@ loop:
 			: 
 			: "r" (base_addr)
 			);
-#else
-			/* XXX riscv fixme */
+#else /* riscv */
 			__asm __volatile__(
-#ifndef BRAM
-			"li sp, 0x80100000;"	/* set stack */
-#else
-			"li sp, 0x00010000;"	/* set stack */
-#endif
+			"lui s0, 0x8000;"	/* stack mask */
+			"lui s1, 0x0010;"	/* top of the initial stack */
+			"and sp, %0, s0;"	/* clr low bits of the stack */
+			"or sp, sp, s1;"	/* set stack */
 			"mv ra, zero;"	
 			"jr %0;"
 			: 
