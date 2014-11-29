@@ -34,6 +34,7 @@ LIBS =
 
 SRC_C = \
 	main.c \
+	file.c \
 	../../lib/setjmperr.c \
 	../../lib/div.c \
 	../../lib/printf.c \
@@ -44,6 +45,11 @@ SRC_C = \
 	../../lib/memset.c \
 	../../lib/memmove.c \
 	../../lib/gets.c \
+	../../lib/file.c \
+	../../lib/fatfs.c \
+	../../lib/diskio.c \
+	../../lib/sdcard.c \
+	../../lib/spi.c \
 
 
 #	string0.c \
@@ -58,14 +64,14 @@ SRC_S = \
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_S:.S=.o)) $(SRC_C:.c=.o)
 
-all: $(BUILD)/py.bin
+all: py.bin
 
-$(BUILD)/py.bin: $(BUILD)/py.elf
-	../../../tools/isa_check.tcl mips $(BUILD)/py.elf
-	mips-elf-objcopy -O binary $(BUILD)/py.elf $(BUILD)/py.bin
-	mips-elf-objcopy -O srec $(BUILD)/py.elf $(BUILD)/py.hex
+py.bin: py.elf
+	../../../tools/isa_check.tcl mips py.elf
+	mips-elf-objcopy -O binary py.elf py.bin
+	mips-elf-objcopy -O srec py.elf py.hex
 
-$(BUILD)/py.elf: $(OBJ)
+py.elf: $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(LD) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 	$(Q)$(SIZE) $@
@@ -78,3 +84,7 @@ $(BUILD)/setjmp.o: setjmp.S
 $(BUILD)/start.o: start.S
 	$(AS) start.S -o $@
 
+clean:
+	rm -fr build
+	rm -f *.o
+	rm -f py.bin py.elf py.hex

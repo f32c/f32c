@@ -113,12 +113,6 @@ mp_import_stat_t mp_import_stat(const char *path) {
     return MP_IMPORT_STAT_NO_EXIST;
 }
 
-mp_obj_t mp_builtin_open(uint n_args, const mp_obj_t *args) {
-	printf("\r\n%s %d\n", __FUNCTION__, __LINE__);
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_builtin_open_obj, 1, 2, mp_builtin_open);
-
 void nlr_jump_fail(void *val) {
 	printf("\r\n%s %d\n", __FUNCTION__, __LINE__);
 }
