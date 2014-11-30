@@ -32,7 +32,7 @@
 #include "obj.h"
 #include "builtin.h"
 
-#if MICROPY_PY_BUILTINS_FLOAT && MICROPY_PY_MATH
+#if MICROPY_PY_MATH
 
 /// \module math - mathematical functions
 ///
@@ -122,8 +122,6 @@ MATH_FUN_1_TO_BOOL(isinf, isinf)
 MATH_FUN_1_TO_BOOL(isnan, isnan)
 /// \function trunc(x)
 MATH_FUN_1_TO_INT(trunc, trunc)
-/// \function ldexp(x, exp)
-MATH_FUN_2(ldexp, ldexp)
 /// \function erf(x)
 /// Return the error function of `x`.
 MATH_FUN_1(erf, erf)
@@ -131,11 +129,17 @@ MATH_FUN_1(erf, erf)
 /// Return the complementary error function of `x`.
 MATH_FUN_1(erfc, erfc)
 /// \function gamma(x)
+
+#ifdef NOTYET
+/// \function ldexp(x, exp)
+MATH_FUN_2(ldexp, ldexp)
 /// Return the gamma function of `x`.
 MATH_FUN_1(gamma, tgamma)
 /// \function lgamma(x)
 /// return the natural logarithm of the gamma function of `x`.
 MATH_FUN_1(lgamma, lgamma)
+#endif
+
 //TODO: factorial, fsum
 
 // Functions that return a tuple
@@ -207,7 +211,6 @@ STATIC const mp_map_elem_t mp_module_math_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_floor), (mp_obj_t)&mp_math_floor_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_fmod), (mp_obj_t)&mp_math_fmod_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_frexp), (mp_obj_t)&mp_math_frexp_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_ldexp), (mp_obj_t)&mp_math_ldexp_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_modf), (mp_obj_t)&mp_math_modf_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_isfinite), (mp_obj_t)&mp_math_isfinite_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_isinf), (mp_obj_t)&mp_math_isinf_obj },
@@ -217,8 +220,11 @@ STATIC const mp_map_elem_t mp_module_math_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_degrees), (mp_obj_t)&mp_math_degrees_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_erf), (mp_obj_t)&mp_math_erf_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_erfc), (mp_obj_t)&mp_math_erfc_obj },
+#ifdef NOTYET
+    { MP_OBJ_NEW_QSTR(MP_QSTR_ldexp), (mp_obj_t)&mp_math_ldexp_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_gamma), (mp_obj_t)&mp_math_gamma_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_lgamma), (mp_obj_t)&mp_math_lgamma_obj },
+#endif
 };
 
 STATIC const mp_obj_dict_t mp_module_math_globals = {
