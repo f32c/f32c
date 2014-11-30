@@ -1,65 +1,65 @@
-/************************************************************************
- * libc/math/lib_sinf.c
- *
- * This file is a part of NuttX:
- *
- *   Copyright (C) 2012 Gregory Nutt. All rights reserved.
- *   Ported by: Darcy Gong
- *
- * It derives from the Rhombs OS math library by Nick Johnson which has
- * a compatibile, MIT-style license:
- *
- * Copyright (C) 2009-2011 Nick Johnson <nickbjohnson4224 at gmail.com>
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- ************************************************************************/
+/* e_asinf.c -- float version of e_asin.c.
+ * Conversion to float by Ian Lance Taylor, Cygnus Support, ian@cygnus.com.
+ */
 
-/************************************************************************
- * Included Files
- ************************************************************************/
+/*
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ */
 
-#include <math.h>
-#include <float.h>
+#include <sys/cdefs.h>
+__FBSDID("$FreeBSD: head/lib/msun/src/e_asinf.c 181405 2008-08-08 00:21:27Z das $");
 
-/************************************************************************
- * Public Functions
- ************************************************************************/
+#include "math.h"
+#include "math_private.h"
 
-float asinf(float x)
+static const float
+one =  1.0000000000e+00, /* 0x3F800000 */
+huge =  1.000e+30,
+	/* coefficient for R(x^2) */
+pS0 =  1.6666586697e-01,
+pS1 = -4.2743422091e-02,
+pS2 = -8.6563630030e-03,
+qS1 = -7.0662963390e-01;
+
+static const double
+pio2 =  1.570796326794896558e+00;
+
+float
+asinf(float x)
 {
-  long double y, y_sin, y_cos;
-
-  y = 0;
-
-  while (1)
-    {
-      y_sin = sinf(y);
-      y_cos = cosf(y);
-
-      if (y > M_PI_2 || y < -M_PI_2)
-        {
-          y = fmodf(y, M_PI);
-        }
-
-      if (y_sin + FLT_EPSILON >= x && y_sin - FLT_EPSILON <= x)
-        {
-          break;
-        }
-
-      y = y - (y_sin - x) / y_cos;
-    }
-
-  return y;
+	double s;
+	float t,w,p,q;
+	int32_t hx,ix;
+	GET_FLOAT_WORD(hx,x);
+	ix = hx&0x7fffffff;
+	if(ix>=0x3f800000) {		/* |x| >= 1 */
+	    if(ix==0x3f800000)		/* |x| == 1 */
+		return x*pio2;		/* asin(+-1) = +-pi/2 with inexact */
+	    return (x-x)/(x-x);		/* asin(|x|>1) is NaN */
+	} else if (ix<0x3f000000) {	/* |x|<0.5 */
+	    if(ix<0x39800000) {		/* |x| < 2**-12 */
+		if(huge+x>one) return x;/* return x with inexact if x!=0*/
+	    }
+	    t = x*x;
+	    p = t*(pS0+t*(pS1+t*pS2));
+	    q = one+t*qS1;
+	    w = p/q;
+	    return x+x*w;
+	}
+	/* 1> |x|>= 0.5 */
+	w = one-fabsf(x);
+	t = w*(float)0.5;
+	p = t*(pS0+t*(pS1+t*pS2));
+	q = one+t*qS1;
+	s = sqrt(t);
+	w = p/q;
+	t = pio2-2.0*(s+s*w);
+	if(hx>0) return t; else return -t;
 }
-

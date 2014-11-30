@@ -17,7 +17,7 @@
 __FBSDID("$FreeBSD: head/lib/msun/src/s_frexpf.c 176451 2008-02-22 02:30:36Z das $");
 
 #include "math.h"
-#include "libm.h"
+#include "math_private.h"
 
 static const float
 two25 =  3.3554432000e+07; /* 0x4c000000 */
