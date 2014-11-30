@@ -15,7 +15,7 @@
  * Method: shift and subtract
  */
 
-#include "libm.h"
+#include "math_private.h"
 
 static const double Zero[] = {0.0, -0.0,};
 

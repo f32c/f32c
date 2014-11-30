@@ -1,4 +1,4 @@
-#include "libm.h"
+#include "math_private.h"
 
 double scalbn(double x, int n)
 {

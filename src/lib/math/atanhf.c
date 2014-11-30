@@ -17,7 +17,7 @@
 __FBSDID("$FreeBSD: head/lib/msun/src/e_atanhf.c 176451 2008-02-22 02:30:36Z das $");
 
 #include "math.h"
-#include "libm.h"
+#include "math_private.h"
 
 static const float one = 1.0, huge = 1e30;
 

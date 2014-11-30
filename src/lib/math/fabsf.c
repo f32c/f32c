@@ -1,41 +1,33 @@
-/************************************************************************
- * libc/math/lib_fabsf.c
- *
- * This file is a part of NuttX:
- *
- *   Copyright (C) 2012 Gregory Nutt. All rights reserved.
- *   Ported by: Darcy Gong
- *
- * It derives from the Rhombs OS math library by Nick Johnson which has
- * a compatibile, MIT-style license:
- *
- * Copyright (C) 2009, 2010 Nick Johnson <nickbjohnson4224 at gmail.com>
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- ************************************************************************/
+/* s_fabsf.c -- float version of s_fabs.c.
+ * Conversion to float by Ian Lance Taylor, Cygnus Support, ian@cygnus.com.
+ */
 
-/************************************************************************
- * Included Files
- ************************************************************************/
+/*
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ */
 
-#include <math.h>
+#include <sys/cdefs.h>
+__FBSDID("$FreeBSD: head/lib/msun/src/s_fabsf.c 176451 2008-02-22 02:30:36Z das $");
 
-/************************************************************************
- * Public Functions
- ************************************************************************/
+/*
+ * fabsf(x) returns the absolute value of x.
+ */
 
-float fabsf(float x)
+#include "math.h"
+#include "math_private.h"
+
+float
+fabsf(float x)
 {
-  return ((x < 0) ? -x : x);
+	u_int32_t ix;
+	GET_FLOAT_WORD(ix,x);
+	SET_FLOAT_WORD(x,ix&0x7fffffff);
+        return x;
 }
