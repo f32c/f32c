@@ -32,6 +32,8 @@
 #include <math.h>
 #include <errno.h>
 
+#include "libm.h"
+
 /************************************************************************
  * Public Functions
  ************************************************************************/
@@ -39,17 +41,15 @@
 static float
 lib_sqrtapprox(float x)
 {
-  int32_t i, *ip;
-  float *xp;
+  int32_t i;
 
   /* Floats + bit manipulation = +inf fun! */
 
-  ip = (void *) &x;
-  i = *ip;
+  GET_FLOAT_WORD(i, x);
   i = 0x1fc00000 + (i >> 1);
-  xp = (void *) &i;
+  SET_FLOAT_WORD(x, i);
 
-  return *xp;
+  return x;
 }
 
 float sqrtf(float x)
