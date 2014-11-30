@@ -80,18 +80,18 @@ SRC_C += ../../lib/float/subdf3.c
 SRC_C += ../../lib/float/subsf3.c
 SRC_C += ../../lib/float/truncdfsf2.c
 
+SRC_C += ../../lib/math/exp.c
+SRC_C += ../../lib/math/sqrt.c
+SRC_C += ../../lib/math/scalbn.c
+SRC_C += ../../lib/math/isnan.c
 
+# single precision math functions
 SRC_C += ../../lib/math/fmodf.c
 SRC_C += ../../lib/math/floorf.c
 SRC_C += ../../lib/math/powf.c
 SRC_C += ../../lib/math/modff.c
 SRC_C += ../../lib/math/logf.c
 SRC_C += ../../lib/math/expf.c
-SRC_C += ../../lib/math/exp.c
-SRC_C += ../../lib/math/scalbn.c
-SRC_C += ../../lib/math/isnan.c
-
-# single precision math functions
 SRC_C += ../../lib/math/acosf.c
 SRC_C += ../../lib/math/asinf.c
 SRC_C += ../../lib/math/atanf.c
@@ -114,6 +114,7 @@ SRC_C += ../../lib/math/asinhf.c
 SRC_C += ../../lib/math/expm1f.c
 SRC_C += ../../lib/math/log1pf.c
 SRC_C += ../../lib/math/frexpf.c
+SRC_C += ../../lib/math/scalbnf.c
 SRC_C += ../../lib/math/isinf.c
 SRC_C += ../../lib/math/isfinite.c
 
@@ -129,7 +130,6 @@ SRC_C += ../../lib/math/cos.c
 SRC_C += ../../lib/math/fabs.c
 SRC_C += ../../lib/math/log.c
 SRC_C += ../../lib/math/sin.c
-SRC_C += ../../lib/math/sqrt.c
 endif
 
 
