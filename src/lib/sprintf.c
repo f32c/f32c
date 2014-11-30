@@ -49,6 +49,21 @@ snprintf_pchar(int c, void *arg)
 
 
 __attribute__((optimize("-Os"))) int
+vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
+{
+	struct snprintf_arg info;
+	int retval;
+
+	info.str = str;
+	info.remain = size;
+	retval = _xvprintf(fmt, snprintf_pchar, &info, ap);
+	if (info.remain >= 1)
+		*info.str++ = '\0';
+	return (retval);
+}
+
+
+__attribute__((optimize("-Os"))) int
 sprintf(char *str, const char *fmt, ...)
 {
 	va_list ap;
@@ -71,34 +86,10 @@ __attribute__((optimize("-Os"))) int
 snprintf(char *str, size_t size, const char *fmt, ...)
 {
 	va_list ap;
-	struct snprintf_arg info;
 	int retval;
  
-	if (size == 0)
-		return (0);
-
-	info.str = str;
-	info.remain = size;
-
 	va_start(ap, fmt);
-	retval = _xvprintf(fmt, snprintf_pchar, &info, ap);
+	retval = vsnprintf(str, size, fmt, ap);
 	va_end(ap);
- 
-	*info.str = 0;
-	return (retval);
-}
-
-
-__attribute__((optimize("-Os"))) int
-vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
-{
-	struct snprintf_arg info;
-	int retval;
-
-	info.str = str;
-	info.remain = size;
-	retval = _xvprintf(fmt, snprintf_pchar, &info, ap);
-	if (info.remain >= 1)
-		*info.str++ = '\0';
 	return (retval);
 }
