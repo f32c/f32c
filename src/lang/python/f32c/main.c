@@ -157,11 +157,6 @@ int vprintf(const char *format, va_list ap)
         return (retval);
 }
 
-int vsnprintf(char *str,  size_t  size,  const  char  *format, va_list ap)
-{
-	return snprintf(str, size, format, ap);
-}
-
 #undef putchar
 int putchar(int c)
 {
