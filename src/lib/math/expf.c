@@ -1,173 +1,98 @@
-/************************************************************************
- * libc/math/lib_expf.c
- *
- * This file is a part of NuttX:
- *
- *   Copyright (C) 2012 Gregory Nutt. All rights reserved.
- *   Ported by: Darcy Gong
- *
- * It derives from the Rhombs OS math library by Nick Johnson which has
- * a compatibile, MIT-style license:
- *
- * Copyright (C) 2009-2011 Nick Johnson <nickbjohnson4224 at gmail.com>
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- ************************************************************************/
+/* e_expf.c -- float version of e_exp.c.
+ * Conversion to float by Ian Lance Taylor, Cygnus Support, ian@cygnus.com.
+ */
 
-/************************************************************************
- * Included Files
- ************************************************************************/
+/*
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ */
 
-#include <sys/types.h>
-#include <math.h>
+#include <sys/cdefs.h>
+__FBSDID("$FreeBSD: head/lib/msun/src/e_expf.c 251024 2013-05-27 08:50:10Z das $");
 
+#include <float.h>
 
-/************************************************************************
- * Pre-processor Definitions
- ************************************************************************/
+#include "math.h"
+#include "math_private.h"
 
-#define M_E2    (M_E * M_E)
-#define M_E4    (M_E2 * M_E2)
-#define M_E8    (M_E4 * M_E4)
-#define M_E16   (M_E8 * M_E8)
-#define M_E32   (M_E16 * M_E16)
-#define M_E64   (M_E32 * M_E32)
-#define M_E128  (M_E64 * M_E64)
-#define M_E256  (M_E128 * M_E128)
-#define M_E512  (M_E256 * M_E256)
-#define M_E1024 (M_E512 * M_E512)
+static const float
+one	= 1.0,
+halF[2]	= {0.5,-0.5,},
+o_threshold=  8.8721679688e+01,  /* 0x42b17180 */
+u_threshold= -1.0397208405e+02,  /* 0xc2cff1b5 */
+ln2HI[2]   ={ 6.9314575195e-01,		/* 0x3f317200 */
+	     -6.9314575195e-01,},	/* 0xbf317200 */
+ln2LO[2]   ={ 1.4286067653e-06,  	/* 0x35bfbe8e */
+	     -1.4286067653e-06,},	/* 0xb5bfbe8e */
+invln2 =  1.4426950216e+00, 		/* 0x3fb8aa3b */
+/*
+ * Domain [-0.34568, 0.34568], range ~[-4.278e-9, 4.447e-9]:
+ * |x*(exp(x)+1)/(exp(x)-1) - p(x)| < 2**-27.74
+ */
+P1 =  1.6666625440e-1,		/*  0xaaaa8f.0p-26 */
+P2 = -2.7667332906e-3;		/* -0xb55215.0p-32 */
 
-/************************************************************************
- * Private Data
- ************************************************************************/
+static volatile float
+huge	= 1.0e+30,
+twom100 = 7.8886090522e-31;      /* 2**-100=0x0d800000 */
 
-static double _expi_square_tbl[11] =
+float
+expf(float x)
 {
-  M_E,                          // e^1
-  M_E2,                         // e^2
-  M_E4,                         // e^4
-  M_E8,                         // e^8
-  M_E16,                        // e^16
-  M_E32,                        // e^32
-  M_E64,                        // e^64
-  M_E128,                       // e^128
-  M_E256,                       // e^256
-  M_E512,                       // e^512
-  M_E1024,                      // e^1024
-};
+	float y,hi=0.0,lo=0.0,c,t,twopk;
+	int32_t k=0,xsb;
+	u_int32_t hx;
 
-/************************************************************************
- * Public Functions
- ************************************************************************/
+	GET_FLOAT_WORD(hx,x);
+	xsb = (hx>>31)&1;		/* sign bit of x */
+	hx &= 0x7fffffff;		/* high word of |x| */
 
-double lib_expi(size_t n)
-{
-  size_t i;
-  double val;
+    /* filter out non-finite argument */
+	if(hx >= 0x42b17218) {			/* if |x|>=88.721... */
+	    if(hx>0x7f800000)
+		 return x+x;	 		/* NaN */
+            if(hx==0x7f800000)
+		return (xsb==0)? x:0.0;		/* exp(+-inf)={inf,0} */
+	    if(x > o_threshold) return huge*huge; /* overflow */
+	    if(x < u_threshold) return twom100*twom100; /* underflow */
+	}
 
-  if (n > 1024)
-    {
-      return INFINITY;
-    }
+    /* argument reduction */
+	if(hx > 0x3eb17218) {		/* if  |x| > 0.5 ln2 */
+	    if(hx < 0x3F851592) {	/* and |x| < 1.5 ln2 */
+		hi = x-ln2HI[xsb]; lo=ln2LO[xsb]; k = 1-xsb-xsb;
+	    } else {
+		k  = invln2*x+halF[xsb];
+		t  = k;
+		hi = x - t*ln2HI[0];	/* t*ln2HI is exact here */
+		lo = t*ln2LO[0];
+	    }
+	    STRICT_ASSIGN(float, x, hi - lo);
+	}
+	else if(hx < 0x39000000)  {	/* when |x|<2**-14 */
+	    if(huge+x>one) return one+x;/* trigger inexact */
+	}
+	else k = 0;
 
-  val = 1.0;
-
-  for (i = 0; n; i++)
-    {
-      if (n & (1 << i))
-        {
-          n   &= ~(1 << i);
-          val *= _expi_square_tbl[i];
-        }
-    }
-
-  return val;
-}
-
-/************************************************************************
- * Private Data
- ************************************************************************/
-
-static float _flt_inv_fact[] =
-{
-  1.0 / 1.0,                    // 1/0!
-  1.0 / 1.0,                    // 1/1!
-  1.0 / 2.0,                    // 1/2!
-  1.0 / 6.0,                    // 1/3!
-  1.0 / 24.0,                   // 1/4!
-  1.0 / 120.0,                  // 1/5!
-  1.0 / 720.0,                  // 1/6!
-  1.0 / 5040.0,                 // 1/7!
-  1.0 / 40320.0,                // 1/8!
-  1.0 / 362880.0,               // 1/9!
-  1.0 / 3628800.0,              // 1/10!
-};
-
-/************************************************************************
- * Public Functions
- ************************************************************************/
-
-float expf(float x)
-{
-  size_t int_part;
-  bool invert;
-  float value;
-  float x0;
-  size_t i;
-
-  if (x == 0)
-    {
-      return 1;
-    }
-  else if (x < 0)
-    {
-      invert = true;
-      x = -x;
-    }
-  else
-    {
-      invert = false;
-    }
-
-  /* Extract integer component */
-
-  int_part = (size_t) x;
-
-  /* set x to fractional component */
-
-  x -= (float)int_part;
-
-  /* Perform Taylor series approximation with eleven terms */
-
-  value = 0.0;
-  x0 = 1.0;
-  for (i = 0; i < 10; i++)
-    {
-      value += x0 * _flt_inv_fact[i];
-      x0 *= x;
-    }
-
-  /* Multiply by exp of the integer component */
-
-  value *= lib_expi(int_part);
-
-  if (invert)
-    {
-      return (1.0 / value);
-    }
-  else
-    {
-      return value;
-    }
+    /* x is now in primary range */
+	t  = x*x;
+	if(k >= -125)
+	    SET_FLOAT_WORD(twopk,0x3f800000+(k<<23));
+	else
+	    SET_FLOAT_WORD(twopk,0x3f800000+((k+100)<<23));
+	c  = x - t*(P1+t*P2);
+	if(k==0) 	return one-((x*c)/(c-(float)2.0)-x);
+	else 		y = one-((lo-(x*c)/((float)2.0-c))-hi);
+	if(k >= -125) {
+	    if(k==128) return y*2.0F*0x1p127F;
+	    return y*twopk;
+	} else {
+	    return y*twopk*twom100;
+	}
 }

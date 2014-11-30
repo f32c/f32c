@@ -17,7 +17,7 @@
 __FBSDID("$FreeBSD: head/lib/msun/src/s_erff.c 268590 2014-07-13 16:24:16Z kargl $");
 
 #include "math.h"
-#include "libm.h"
+#include "math_private.h"
 
 /* XXX Prevent compilers from erroneously constant folding: */
 static const volatile float tiny = 1e-30;

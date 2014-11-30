@@ -1,47 +1,104 @@
-/************************************************************************
- * libc/math/lib_fmodf.c
- *
- * This file is a part of NuttX:
- *
- *   Copyright (C) 2012 Gregory Nutt. All rights reserved.
- *   Ported by: Darcy Gong
- *
- * It derives from the Rhombs OS math library by Nick Johnson which has
- * a compatibile, MIT-style license:
- *
- * Copyright (C) 2009-2011 Nick Johnson <nickbjohnson4224 at gmail.com>
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- ************************************************************************/
+/* e_fmodf.c -- float version of e_fmod.c.
+ * Conversion to float by Ian Lance Taylor, Cygnus Support, ian@cygnus.com.
+ */
 
-/************************************************************************
- * Included Files
- ************************************************************************/
+/*
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ */
 
-#include <math.h>
+#include <sys/cdefs.h>
+__FBSDID("$FreeBSD: head/lib/msun/src/e_fmodf.c 176451 2008-02-22 02:30:36Z das $");
 
-/************************************************************************
- * Public Functions
- ************************************************************************/
+/*
+ * __ieee754_fmodf(x,y)
+ * Return x mod y in exact arithmetic
+ * Method: shift and subtract
+ */
 
-float fmodf(float x, float div)
+#include "math.h"
+#include "math_private.h"
+
+static const float one = 1.0, Zero[] = {0.0, -0.0,};
+
+float
+fmodf(float x, float y)
 {
-  float n0;
+	int32_t n,hx,hy,hz,ix,iy,sx,i;
 
-  x /= div;
-  x = modff(x, &n0);
-  x *= div;
+	GET_FLOAT_WORD(hx,x);
+	GET_FLOAT_WORD(hy,y);
+	sx = hx&0x80000000;		/* sign of x */
+	hx ^=sx;		/* |x| */
+	hy &= 0x7fffffff;	/* |y| */
 
-  return x;
+    /* purge off exception values */
+	if(hy==0||(hx>=0x7f800000)||		/* y=0,or x not finite */
+	   (hy>0x7f800000))			/* or y is NaN */
+	    return (x*y)/(x*y);
+	if(hx<hy) return x;			/* |x|<|y| return x */
+	if(hx==hy)
+	    return Zero[(u_int32_t)sx>>31];	/* |x|=|y| return x*0*/
+
+    /* determine ix = ilogb(x) */
+	if(hx<0x00800000) {	/* subnormal x */
+	    for (ix = -126,i=(hx<<8); i>0; i<<=1) ix -=1;
+	} else ix = (hx>>23)-127;
+
+    /* determine iy = ilogb(y) */
+	if(hy<0x00800000) {	/* subnormal y */
+	    for (iy = -126,i=(hy<<8); i>=0; i<<=1) iy -=1;
+	} else iy = (hy>>23)-127;
+
+    /* set up {hx,lx}, {hy,ly} and align y to x */
+	if(ix >= -126)
+	    hx = 0x00800000|(0x007fffff&hx);
+	else {		/* subnormal x, shift x to normal */
+	    n = -126-ix;
+	    hx = hx<<n;
+	}
+	if(iy >= -126)
+	    hy = 0x00800000|(0x007fffff&hy);
+	else {		/* subnormal y, shift y to normal */
+	    n = -126-iy;
+	    hy = hy<<n;
+	}
+
+    /* fix point fmod */
+	n = ix - iy;
+	while(n--) {
+	    hz=hx-hy;
+	    if(hz<0){hx = hx+hx;}
+	    else {
+	    	if(hz==0) 		/* return sign(x)*0 */
+		    return Zero[(u_int32_t)sx>>31];
+	    	hx = hz+hz;
+	    }
+	}
+	hz=hx-hy;
+	if(hz>=0) {hx=hz;}
+
+    /* convert back to floating value and restore the sign */
+	if(hx==0) 			/* return sign(x)*0 */
+	    return Zero[(u_int32_t)sx>>31];
+	while(hx<0x00800000) {		/* normalize x */
+	    hx = hx+hx;
+	    iy -= 1;
+	}
+	if(iy>= -126) {		/* normalize output */
+	    hx = ((hx-0x00800000)|((iy+127)<<23));
+	    SET_FLOAT_WORD(x,hx|sx);
+	} else {		/* subnormal output */
+	    n = -126 - iy;
+	    hx >>= n;
+	    SET_FLOAT_WORD(x,hx|sx);
+	    x *= one;		/* create necessary signal */
+	}
+	return x;		/* exact output */
 }

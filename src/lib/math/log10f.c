@@ -17,7 +17,7 @@ __FBSDID("$FreeBSD: head/lib/msun/src/e_log10f.c 251024 2013-05-27 08:50:10Z das
  */
 
 #include "math.h"
-#include "libm.h"
+#include "math_private.h"
 #include "k_logf.h"
 
 static const float

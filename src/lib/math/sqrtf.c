@@ -1,95 +1,86 @@
-/************************************************************************
- * libc/math/lib_sqrtf.c
- *
- * This file is a part of NuttX:
- *
- *   Copyright (C) 2012 Gregory Nutt. All rights reserved.
- *   Ported by: Darcy Gong
- *
- * It derives from the Rhombs OS math library by Nick Johnson which has
- * a compatibile, MIT-style license:
- *
- * Copyright (C) 2009-2011 Nick Johnson <nickbjohnson4224 at gmail.com>
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- ************************************************************************/
+/* e_sqrtf.c -- float version of e_sqrt.c.
+ * Conversion to float by Ian Lance Taylor, Cygnus Support, ian@cygnus.com.
+ */
 
-/************************************************************************
- * Included Files
- ************************************************************************/
+/*
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ *
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice
+ * is preserved.
+ * ====================================================
+ */
 
-#include <math.h>
-#include <errno.h>
 
-#include "libm.h"
+#include "math.h"
+#include "math_private.h"
 
-/************************************************************************
- * Public Functions
- ************************************************************************/
+static	const float	one	= 1.0, tiny=1.0e-30;
 
-static float
-lib_sqrtapprox(float x)
+float
+sqrtf(float x)
 {
-  int32_t i;
+	float z;
+	int32_t sign = (int)0x80000000;
+	int32_t ix,s,q,m,t,i;
+	u_int32_t r;
 
-  /* Floats + bit manipulation = +inf fun! */
+	GET_FLOAT_WORD(ix,x);
 
-  GET_FLOAT_WORD(i, x);
-  i = 0x1fc00000 + (i >> 1);
-  SET_FLOAT_WORD(x, i);
+    /* take care of Inf and NaN */
+	if((ix&0x7f800000)==0x7f800000) {
+	    return x*x+x;		/* sqrt(NaN)=NaN, sqrt(+inf)=+inf
+					   sqrt(-inf)=sNaN */
+	}
+    /* take care of zero */
+	if(ix<=0) {
+	    if((ix&(~sign))==0) return x;/* sqrt(+-0) = +-0 */
+	    else if(ix<0)
+		return (x-x)/(x-x);		/* sqrt(-ve) = sNaN */
+	}
+    /* normalize x */
+	m = (ix>>23);
+	if(m==0) {				/* subnormal x */
+	    for(i=0;(ix&0x00800000)==0;i++) ix<<=1;
+	    m -= i-1;
+	}
+	m -= 127;	/* unbias exponent */
+	ix = (ix&0x007fffff)|0x00800000;
+	if(m&1)	/* odd m, double x to make it even */
+	    ix += ix;
+	m >>= 1;	/* m = [m/2] */
 
-  return x;
-}
+    /* generate sqrt(x) bit by bit */
+	ix += ix;
+	q = s = 0;		/* q = sqrt(x) */
+	r = 0x01000000;		/* r = moving bit from right to left */
 
-float sqrtf(float x)
-{
-  float y;
+	while(r!=0) {
+	    t = s+r;
+	    if(t<=ix) {
+		s    = t+r;
+		ix  -= t;
+		q   += r;
+	    }
+	    ix += ix;
+	    r>>=1;
+	}
 
-  /* Filter out invalid/trivial inputs */
-
-  if (x < 0.0)
-    {
-      errno = EDOM;
-      return NAN;
-    }
-
-  if (isnan(x))
-    {
-      return NAN;
-    }
-
-  if (isinf(x))
-    {
-      return INFINITY;
-    }
-
-  if (x == 0.0)
-    {
-      return 0.0;
-    }
-
-  /* Guess square root (using bit manipulation) */
-
-  y = lib_sqrtapprox(x);
-
-  /* Perform three iterations of approximation. This number (3) is
-   * definitely optimal
-   */
-
-  y = 0.5 * (y + x / y);
-  y = 0.5 * (y + x / y);
-  y = 0.5 * (y + x / y);
-
-  return y;
+    /* use floating add to find out rounding direction */
+	if(ix!=0) {
+	    z = one-tiny; /* trigger inexact flag */
+	    if (z>=one) {
+	        z = one+tiny;
+		if (z>one)
+		    q += 2;
+		else
+		    q += (q&1);
+	    }
+	}
+	ix = (q>>1)+0x3f000000;
+	ix += (m <<23);
+	SET_FLOAT_WORD(z,ix);
+	return z;
 }
