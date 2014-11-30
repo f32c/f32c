@@ -87,3 +87,18 @@ snprintf(char *str, size_t size, const char *fmt, ...)
 	*info.str = 0;
 	return (retval);
 }
+
+
+__attribute__((optimize("-Os"))) int
+vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
+{
+	struct snprintf_arg info;
+	int retval;
+
+	info.str = str;
+	info.remain = size;
+	retval = _xvprintf(fmt, snprintf_pchar, &info, ap);
+	if (info.remain >= 1)
+		*info.str++ = '\0';
+	return (retval);
+}
