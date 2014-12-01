@@ -54,35 +54,21 @@ printf("\n%s %d\n", __FUNCTION__, __LINE__);
     }
 }
 
+char *linebuf;
+
+int edit(int promptlen, int fi, int maxlin);
+
+
 int main(int argc, char **argv) {
     char line[1024];
 
     mp_init();
 
-#if 0
-    do_str("print('hello world!')");
-    do_str("print(123)");
-    do_str("a = 1000");
-    do_str("b = 1");
-    do_str("print(a - b)");
-    do_str("for x in range(3):");
-    do_str("    print(x)");
-    do_str("");
-#endif
-
-#if 0
-    do {
-	printf(">>> ");
-	gets(line, 256);
-	if (line[0] == '.')
-		break;
-    	do_str(line);
-    } while (1);
-#endif
-
     for (;;) {
-	printf(">>> ");
-	gets(line, 256);
+	sprintf(line, ">>> ");
+	linebuf = line;
+	edit(4, 4, 256);
+	strcpy(linebuf, &linebuf[4]);
 	if (line[0] == '.')
 		break;
         while (mp_repl_continue_with_input(line)) {

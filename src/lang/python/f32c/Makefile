@@ -36,6 +36,7 @@ LIBS =
 SRC_C = \
 	main.c \
 	file.c \
+	edit.c \
 	../../lib/setjmperr.c \
 	../../lib/div.c \
 	../../lib/printf.c \
@@ -51,6 +52,7 @@ SRC_C = \
 	../../lib/diskio.c \
 	../../lib/sdcard.c \
 	../../lib/spi.c \
+	../../lib/strcpy.c \
 
 SRC_C += ../../lib/float/adddf3.c
 SRC_C += ../../lib/float/addsf3.c
