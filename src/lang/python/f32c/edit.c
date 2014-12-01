@@ -15,7 +15,7 @@ static int term_width = 80;
 
 extern char *linebuf;
 
-static int trapped; /* XXX unused! */
+extern int trapped;
 
 
 static int
@@ -103,7 +103,6 @@ edit(int promptlen, int fi, int maxlin)
 	int pos = fi;
 	int esc_mode = 0;
 	int vt100_val = 0;
-	int size_known = 0;
 	int insert = 1;
 	int i, nchar;
 	int hist_index = hist_len;
@@ -113,7 +112,6 @@ edit(int promptlen, int fi, int maxlin)
 	else {
 		for (i = 0; i < fi / term_width; i++)
 			write(0, "\n", 1);
-		request_term_size();
 	}
 
 	while (1) {
@@ -142,7 +140,6 @@ edit(int promptlen, int fi, int maxlin)
 			case 'R':
 				if (vt100_val != 0) {
 					term_width = vt100_val;
-					size_known = 1;
 					redraw_line(pos, pos, fi);
 				}
 				continue;
@@ -322,8 +319,6 @@ edit(int promptlen, int fi, int maxlin)
 				linebuf[pos - i] = c;
 				write(0, &c, 1);
 			}
-			if (!size_known)
-				request_term_size();
 		}
 	}
 
@@ -336,7 +331,7 @@ edit(int promptlen, int fi, int maxlin)
 		for (i = promptlen; i < fi; i++)
 			if (linebuf[i] != ' ')
 				break;
-		if (i < fi && !isdigit(linebuf[i]))
+		if (i < fi)
 			history_add(&linebuf[promptlen], fi - i);
 	}
 	write(0, "\r\n", 2);
