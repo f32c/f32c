@@ -55,34 +55,41 @@ printf("\n%s %d\n", __FUNCTION__, __LINE__);
 }
 
 char *linebuf;
+int trapped;
 
 int edit(int promptlen, int fi, int maxlin);
 
 
 int main(int argc, char **argv) {
     char line[1024];
+    int pos;
 
     mp_init();
 
     for (;;) {
-	sprintf(line, ">>> ");
+	trapped = 0;
 	linebuf = line;
+	sprintf(line, ">>> ");
 	edit(4, 4, 256);
 	strcpy(linebuf, &linebuf[4]);
-	if (line[0] == '.')
-		break;
+	if (trapped)
+		continue;
+	pos = strlen(line);
         while (mp_repl_continue_with_input(line)) {
-	    int pos = strlen(line);
-	    printf("... ");
-	    gets(&line[pos], 256);
-	    if (line[pos] == 0)
+	    linebuf = &line[pos];
+	    sprintf(linebuf, "... ");
+	    edit(4, 4, 256);
+	    strcpy(linebuf, &linebuf[4]);
+	    if (trapped || line[pos] == 0)
 		break;
+	    pos = strlen(line);
+	    if (*linebuf == ' ')
+		line[pos++] = ';';
         }
+	if (trapped)
+		continue;
     	do_str(line);
     }
-
-    mp_deinit();
-    return 0;
 }
 
 void gc_collect(void) {
