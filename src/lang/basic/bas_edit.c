@@ -127,7 +127,6 @@ edit(ival promptlen, ival fi, ival fc)
 	int pos = fi;
 	int esc_mode = 0;
 	int vt100_val = 0;
-	int size_known = 0;
 	int insert = 1;
 	int i, nchar, lnum;
 	int hist_index = hist_len;
@@ -170,7 +169,6 @@ edit(ival promptlen, ival fi, ival fc)
 			case 'R':
 				if (vt100_val != 0) {
 					term_width = vt100_val;
-					size_known = 1;
 					redraw_line(pos, pos, fi);
 				}
 				continue;
@@ -380,8 +378,6 @@ edit(ival promptlen, ival fi, ival fc)
 				line[pos - i] = c;
 				write(0, &c, 1);
 			}
-			if (!size_known)
-				request_term_size();
 		}
 	}
 
