@@ -9,6 +9,12 @@ QSTR_DEFS = qstrdefsport.h
 # include py core make definitions
 include ../py/py.mk
 
+ifeq ($(shell uname -s), FreeBSD)
+ISA_CHECK = ${BASE_DIR}tools/isa_check.tcl
+else
+ISA_CHECK = tclsh ${BASE_DIR}tools/isa_check.tcl
+endif
+
 CROSS_COMPILE = mips-elf-
 
 INC =  -I.
@@ -148,7 +154,7 @@ OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_S:.S=.o)) $(SRC_C:.c=.o)
 all: $(PROG).bin
 
 $(PROG).bin: $(PROG).elf
-	../../../tools/isa_check.tcl mips $(PROG).elf
+	$(ISA_CHECK) mips $(PROG).elf
 	mips-elf-objcopy -O binary $(PROG).elf $(PROG).bin
 	mips-elf-objcopy -O srec $(PROG).elf $(PROG).hex
 
