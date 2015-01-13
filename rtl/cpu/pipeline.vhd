@@ -37,8 +37,9 @@ entity pipeline is
 	C_clk_freq: integer;
 	C_cache: boolean := false;
 	C_cpuid: integer := 0;
-	C_cop0_count: boolean;
-	C_cop0_config: boolean;
+	C_cop0_count: boolean := false;
+	C_cop0_compare: boolean := false;
+	C_cop0_config: boolean := false;
 
 	-- optimization options
 	C_result_forwarding: boolean := true;
@@ -257,13 +258,14 @@ architecture Behavioral of pipeline is
 
     -- COP0 registers
     signal R_reset: std_logic; -- registered reset input
-    signal R_cop0_count: std_logic_vector(31 downto 0);
+    signal R_cop0_count, R_cop0_compare: std_logic_vector(31 downto 0);
     signal R_cop0_config: std_logic_vector(31 downto 0);
     signal R_cop0_EPC: std_logic_vector(31 downto 2);
     signal R_cop0_EBASE: std_logic_vector(31 downto 2);
     signal R_cop0_EI, R_cop0_BD: std_logic;
     signal R_cop0_intr, R_cop0_intr_mask: std_logic_vector(7 downto 0);
     signal R_cop0_EX_code: std_logic_vector(4 downto 0);
+    signal R_cop0_timer_intr: std_logic;
 
     -- signals used for debugging only
     signal reg_trace_data: std_logic_vector(31 downto 0);
@@ -890,6 +892,7 @@ begin
     with ID_EX_cop0_addr select
     EX_from_cop0 <=
       R_cop0_count when MI32_COP0_COUNT,
+      R_cop0_compare when MI32_COP0_COMPARE,
       "----------------" & R_cop0_intr_mask & "-------" & R_cop0_EI
 	when MI32_COP0_STATUS,
       R_cop0_BD & "---------------" & R_cop0_intr & "-" & R_cop0_EX_code & "--"
@@ -967,7 +970,8 @@ begin
 	    end if;
 
 	    if C_exceptions then
-		R_cop0_intr(7 downto 2) <= intr;
+		R_cop0_intr(6 downto 2) <= intr(4 downto 0);
+		R_cop0_intr(7) <= intr(5) or R_cop0_timer_intr;
 	    end if;
 
 	    if not C_full_shifter and EX_MEM_shift_blocked then
@@ -1062,6 +1066,11 @@ begin
 			    R_cop0_EBASE <= EX_eff_reg2(31 downto 2)
 			      and C_PC_mask(31 downto 2);
 			end if;
+			if ID_EX_cop0_addr = MI32_COP0_COMPARE and
+			  C_cop0_count and C_cop0_compare then
+			    R_cop0_compare <= EX_eff_reg2;
+			    R_cop0_timer_intr <= '0';
+			end if;
 		    end if;
 		end if;
 		if C_exceptions and R_cop0_EI = '1' and not ID_EX_bubble and
@@ -1129,6 +1138,10 @@ begin
 		end if;
 	    elsif C_ll_sc and EX_MEM_sc and EX_MEM_ll_bit = '0' then
 		EX_MEM_mem_cycle <= '0';
+	    end if;
+	    if C_exceptions and C_cop0_count and C_cop0_compare
+	      and R_cop0_count = R_cop0_compare then
+		R_cop0_timer_intr <= '1';
 	    end if;
 	end if;
     end process;
