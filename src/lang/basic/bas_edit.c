@@ -34,6 +34,7 @@ readc(void)
 	int got;
 
 #ifndef f32c
+	c = 0;
 	do {
 		ioctl(0, FIONREAD, &got);
 		if (got) {
