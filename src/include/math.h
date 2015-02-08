@@ -21,6 +21,8 @@
 #include <sys/_types.h>
 //#include <machine/_limits.h>
 
+#include <stdbool.h>
+
 /*
  * ANSI/POSIX
  */
