@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
+ * Copyright (c) 2013 - 2015 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -657,6 +657,135 @@ fb_filledcircle(int x0, int y0, int r, int color)
 		fb_rectangle(x0 - y, y0 + x, x0 + y, y0 + x, color);
 		fb_rectangle(x0 - y, y0 - x, x0 + y, y0 - x, color);
 	}
+}
+
+
+static void
+fb_fill_8(int x, int y, int color)
+{
+	uint8_t *fb8 = (void *) fb_active;
+	int curcolor, ssiz, l, r;
+	struct {
+		int16_t x, y;
+	} *sb, *sp;
+
+	curcolor = fb8[(y << 9) + x];
+	if (curcolor == color)
+		return;
+    
+	ssiz = 4096; /* XXX */
+	sp = sb = malloc(sizeof(*sp) * ssiz);
+	if (sb == NULL)
+		return;
+	sp->x = x;
+	sp->y = y;
+    
+	for (; sp >= sb; sp--) {    
+		x = sp->x;
+		y = sp->y;
+		l = r = 0;
+		for (; y >= 0 && fb8[(y << 9) + x] == curcolor; y--) {}
+		for (y++; y < 288 && fb8[(y << 9) + x] == curcolor; y++) {
+			fb8[(y << 9) + x] = color;
+			if (!l && x > 0 &&
+			    fb8[(y << 9) + x - 1] == curcolor) {
+				sp->x = x - 1;
+				sp->y = y;
+				sp++;
+				if (sp - sb == ssiz)
+					goto abort;
+				l = 1;
+			} else if (l && x > 0 &&
+			    fb8[(y << 9) + x - 1] != curcolor)
+				l = 0;
+			if (!r && x < 511 &&
+			    fb8[(y << 9) + x + 1] == curcolor) {
+				sp->x = x + 1;
+				sp->y = y;
+				sp++;
+				if (sp - sb == ssiz)
+					goto abort;
+				r = 1;
+			} else if (r && x < 511 &&
+			    fb8[(y << 9) + x + 1] != curcolor)
+				r = 0;
+		}
+	}
+abort:
+	free(sb);
+}
+
+
+static void
+fb_fill_16(int x, int y, int color)
+{
+	uint16_t *fb16 = (void *) fb_active;
+	int curcolor, ssiz, l, r;
+	struct {
+		int16_t x, y;
+	} *sb, *sp;
+
+	curcolor = fb16[(y << 9) + x];
+	if (curcolor == color)
+		return;
+    
+	ssiz = 4096; /* XXX */
+	sp = sb = malloc(sizeof(*sp) * ssiz);
+	if (sb == NULL)
+		return;
+	sp->x = x;
+	sp->y = y;
+    
+	for (; sp >= sb; sp--) {    
+		x = sp->x;
+		y = sp->y;
+		l = r = 0;
+		for (; y >= 0 && fb16[(y << 9) + x] == curcolor; y--) {}
+		for (y++; y < 288 && fb16[(y << 9) + x] == curcolor; y++) {
+			fb16[(y << 9) + x] = color;
+			if (!l && x > 0 &&
+			    fb16[(y << 9) + x - 1] == curcolor) {
+				l = 1;
+				sp->x = x - 1;
+				sp->y = y;
+				sp++;
+				if (sp - sb == ssiz)
+					goto abort;
+			} else if (l && x > 0 &&
+			    fb16[(y << 9) + x - 1] != curcolor)
+				l = 0;
+			if (!r && x < 511 &&
+			    fb16[(y << 9) + x + 1] == curcolor) {
+				r = 1;
+				sp->x = x + 1;
+				sp->y = y;
+				sp++;
+				if (sp - sb == ssiz)
+					goto abort;
+			} else if (r && x < 511 &&
+			    fb16[(y << 9) + x + 1] != curcolor)
+				r = 0;
+		}
+	}
+abort:
+	free(sb);
+}
+
+
+void
+fb_fill(int x, int y, int color)
+{
+
+	if (__predict_false(fb_mode > 1))
+		return;
+
+	if (__predict_false(x < 0 || y < 0 || x > 511 || y > 287))
+		return;
+
+	if (fb_mode)
+		fb_fill_16(x, y, color);
+	else
+		fb_fill_8(x, y, color);
 }
 
 

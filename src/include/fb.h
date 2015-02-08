@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec, Univeristy of Zagreb
+ * Copyright (c) 2013 - 2015 Marko Zec, Univeristy of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,6 +35,7 @@ void fb_line(int, int, int, int, int);
 void fb_rectangle(int, int, int, int, int);
 void fb_circle(int, int, int, int);
 void fb_filledcircle(int, int, int, int);
+void fb_floodfill(int, int, int);
 void fb_text(int, int, const char *, int, int, int);
 
 extern uint8_t *fb[];
