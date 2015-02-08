@@ -614,6 +614,23 @@ circle(void)
 
 
 int
+fill(void)
+{
+	int x, y;
+
+	x = evalint();
+	if(getch() != ',')
+		error(SYNTAX);
+	y = evalint();
+	check();
+
+	fb_fill(x, y, fgcolor);
+	X11_SCHED_UPDATE();
+	normret;
+}
+
+
+int
 text(void)
 {
 	int x, y, c;
