@@ -32,6 +32,8 @@
 #ifdef f32c
 #include <fatfs/ff.h>
 #include <io.h>
+#else
+#include <sys/stat.h>
 #endif
 
 #include "bas.h"
@@ -133,7 +135,7 @@ file_mkdir()
 	if (f_mkdir(name) != FR_OK)
 		error(15);
 #else
-	if (mkdir(name))
+	if (mkdir(name, 0777))
 		error(15);
 #endif
 	normret;

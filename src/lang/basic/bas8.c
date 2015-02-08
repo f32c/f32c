@@ -450,9 +450,7 @@ bwrite()
 static	int
 mypwrite(filebufp fp, CHAR *buf, int len)
 {
-#if !defined(__APPLE__)
-	fp = fp;
-#endif
+
 	return((int)write(1, (char *)buf, (unsigned)len));
 }
 

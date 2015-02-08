@@ -684,7 +684,7 @@ int	endd(void),runn(void),gotos(void),rem(void),lets(void),list(void),
 	vidmode(void), drawable(void), visible(void),
 	ink(void), paper(void), loadjpg(void),
 	sprgrab(void), sprload(void), sprtrans(void),
-	sprput(void), sprfree(void),
+	sprput(void), sprfree(void), fill(void),
 	lego_ch(void), lego_red(void), lego_blue(void),
 	b_lcd_init(void), b_lcd_puts(void), b_lcd_pos(void);
 
@@ -935,7 +935,7 @@ static const intf_t commandf = {
 
 static const intf_t xcmdf = {
 	vidmode, drawable, visible, ink, paper, loadjpg,
-	sprgrab, sprload, sprtrans, sprput, sprfree,
+	sprgrab, sprload, sprtrans, sprput, sprfree, fill,
 #ifdef f32c
 	lego_ch, lego_red, lego_blue,
 	b_lcd_init, b_lcd_puts, b_lcd_pos,
@@ -1145,13 +1145,14 @@ const	struct  tabl    table[]={
 	"SPRTRANS",	MKXCMD(8),
 	"SPRPUT",	MKXCMD(9),
 	"SPRFREE",	MKXCMD(10),
+	"FILL",		MKXCMD(11),
 #ifdef f32c
-	"LEGO_CH",	MKXCMD(11),
-	"LEGO_RED",	MKXCMD(12),
-	"LEGO_BLUE",	MKXCMD(13),
-	"LCD_INIT",	MKXCMD(14),
-	"LCD_PUTS",	MKXCMD(15),
-	"LCD_POS",	MKXCMD(16),
+	"LEGO_CH",	MKXCMD(12),
+	"LEGO_RED",	MKXCMD(13),
+	"LEGO_BLUE",	MKXCMD(14),
+	"LCD_INIT",	MKXCMD(15),
+	"LCD_PUTS",	MKXCMD(16),
+	"LCD_POS",	MKXCMD(17),
 #endif
 
 	/* string functs with args */
