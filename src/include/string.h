@@ -28,6 +28,7 @@
 #ifndef	_STRING_H_
 #define	_STRING_H_
 
+char *strstr(const char *, const char *) __pure;
 
 void *memchr(const void *, int, size_t) __pure;
 void *memmove(void *, const void *, size_t);
