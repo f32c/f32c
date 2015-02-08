@@ -35,7 +35,7 @@ void fb_line(int, int, int, int, int);
 void fb_rectangle(int, int, int, int, int);
 void fb_circle(int, int, int, int);
 void fb_filledcircle(int, int, int, int);
-void fb_floodfill(int, int, int);
+void fb_fill(int, int, int);
 void fb_text(int, int, const char *, int, int, int);
 
 extern uint8_t *fb[];
