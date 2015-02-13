@@ -237,7 +237,7 @@ bfopen()
 
 	if(ncurfiles >= maxfiles)	/* out of file descriptors */
 		error(31);
-	p = (filebufp)mmalloc((ival)(sizeof(struct filebuf) + bsize));
+	p = mmalloc((ival)(sizeof(struct filebuf) + bsize));
 	p->bufsiz = bsize;
 	p->filedes=0;
 	p->userfiledes=0;
