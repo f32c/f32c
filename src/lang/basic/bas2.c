@@ -86,7 +86,7 @@ int	vtype;
 {
 	struct	entry	*ep;
 
-	ep = (struct entry *)mmalloc((ival)(sizeof(struct entry)+namlen));
+	ep = mmalloc((ival)(sizeof(struct entry)+namlen));
 	ep->link = 0;
 	if(!np)
 		hshtab.hasht[MKhash(l)] = ep;
@@ -244,8 +244,8 @@ int	siz1, siz2;
 	l = TYP_SIZ(vartype) * siz1;
 	if(siz2)
 		l *= siz2;
-	ep->_darr = (memp)mmalloc( (ival)(l +
-				(siz2 ? (sizeof(ival) * 2) : sizeof(ival))));
+	ep->_darr = mmalloc((ival)(l +
+	    (siz2 ? (sizeof(ival) * 2) : sizeof(ival))));
 	/*LINTED*/
 	ep->_dims = (ival *)(ep->_darr + l);
 	ep->_dims[0] = siz1;
@@ -410,7 +410,7 @@ dim_one()
 	j *= TYP_SIZ(vty);
 	if(!mtestalloc( (ival)(j + (i * sizeof(ival)))))
 		error(24);
-	ep->_darr = (memp)mmalloc((ival)(j + (i * sizeof(ival))));
+	ep->_darr = mmalloc((ival)(j + (i * sizeof(ival))));
 	/*LINTED*/
 	ep->_dims = (ival *)(ep->_darr + j);
 	ep->dimens = (char)i;
@@ -721,7 +721,7 @@ blocal()
 			todrop = ep;
 		}
 		if(lp == 0 || lp->narg >= LOC_SAV_E){
-			lp = (loc_sav_t *)mmalloc((ival)sizeof(loc_sav_t));
+			lp = mmalloc((ival)sizeof(loc_sav_t));
 			lp->narg = 0;
 			lp->next = fp->fnLOCAL;
 			fp->fnLOCAL = lp;
@@ -742,7 +742,7 @@ struct	entry	*oep;
 	struct	entry	*ep;
 	ival	i, j, siz;
 
-	ep = (struct entry *)mmalloc( (ival)(sizeof(struct entry)+oep->namlen));
+	ep = mmalloc( (ival)(sizeof(struct entry)+oep->namlen));
 	*ep = *oep;
 	ep->link = 0;
 	VOID strmov(ep->_name, oep->_name, ep->namlen+1);
@@ -763,7 +763,7 @@ struct	entry	*oep;
 		/*
 		 * reallocate the array and the indexes
 		 */
-		ep->_darr = (memp)mmalloc(siz);
+		ep->_darr = mmalloc(siz);
 		/*LINTED*/
 		ep->_dims = (ival *)(ep->_darr + j);
 		for(i = 0 ; i < ep->dimens ; i++)

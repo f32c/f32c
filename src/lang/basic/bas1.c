@@ -31,12 +31,6 @@ static	SIGFUNC	trap(int), seger(int), mcore(int), quit1(int), catchfp(int);
 #ifdef  SIGTSTP
 static  SIGFUNC	onstop(int);
 #endif
-#ifdef	OWN_ALLOC
-extern	void	*m_get(unsigned int);
-extern	void	m_free(void *);
-extern	void	m_purge(void);
-#endif
-
 
 #ifdef MSDOS
 static int	lcount;
@@ -422,7 +416,7 @@ int	lsize;
 	 */
 	lsize += sizeof(struct olin);
 
-	p = (lpoint) mmalloc((ival)lsize);
+	p = mmalloc((ival)lsize);
 	VOID str_cpy(nline, p->lin);    /* move the line into the space */
 	p->linnumb = linenumber;        /* give it a linenumber */
 	if(!op){
@@ -800,9 +794,6 @@ clear()
 	 * free any spare string blocks
 	 */
 	DROP_STRINGS();
-#ifdef	OWN_ALLOC
-	m_purge();
-#endif
 
 	datastolin = 0;		/* reset the pointer to data */
 	datapoint = 0;		/* reset the pointer to data */
@@ -989,39 +980,22 @@ ival	len;
 {
 	void	*p;
 
-#ifndef	OWN_ALLOC
-	if( (p = malloc((unsigned int)len)) != 0)
+	if ((p = malloc((unsigned int)len)) != NULL)
 		return(p);
 	clear();
-	if( (p = malloc((unsigned int)len)) == 0){
-		prints("out of core\n");        /* print message */
-		VOID quit();                    /* exit flushing buffers */
-	}
-	mfree( (MEMP)p);
-#else
-	if( (p = m_get((unsigned int)len)) != 0)
+	if ((p = malloc((unsigned int)len)) != NULL)
 		return(p);
-	clear();
-	m_purge();
-	if( (p = m_get((unsigned int)len)) == 0){
-		prints("out of core\n");        /* print message */
-		VOID quit();                    /* exit flushing buffers */
-	}
-	m_free( (void *)p);
-#endif
-	error(24);
-	NO_RET;					/* should never be reached */
+	prints("out of core\n");        /* print message */
+	VOID quit();                    /* exit flushing buffers */
+	NO_RET;				/* should never be reached */
 }
 
 void
 mfree(mem)
 MEMP	mem;
 {
-#ifdef	OWN_ALLOC
-	m_free( (void *)mem);
-#else
+
 	free( (void *)mem);
-#endif
 }
 
 int
@@ -1030,19 +1004,11 @@ ival	len;
 {
 	void	*p;
 
-#ifndef	OWN_ALLOC
-	if( (p = malloc((unsigned int)len)) != 0){
-		mfree( (MEMP)p);
-		return(1);
+	if( (p = malloc((unsigned int)len)) != NULL) {
+		mfree(p);
+		return (1);
 	}
-#else
-	m_purge();
-	if( (p = m_get((unsigned int)len)) != 0){
-		m_free(p);
-		return(1);
-	}
-#endif
-	return(0);
+	return (0);
 }
 
 

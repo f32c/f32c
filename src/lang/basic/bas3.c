@@ -745,8 +745,8 @@ volatile STR	strp;
 			check();
 		if(p->ncall >= MAX_FCALLS)
 			error(44);
-		fp = (forstp)mmalloc((ival)(sizeof(struct forst) +
-						sizeof(struct JMPBUF)));
+		fp = mmalloc((ival)(sizeof(struct forst) +
+		    sizeof(struct JMPBUF)));
 		fp->fnJMP = (struct JMPBUF *)(fp + 1);
 		if((fp->prev = estack) != 0)
 			fp->prev->next = fp;
@@ -1413,10 +1413,6 @@ batanh()
  * the option command.
  */
 
-#ifdef	OWN_ALLOC
-extern	int	max_mem_size;
-#endif
-
 int
 bopts()
 {
@@ -1445,9 +1441,6 @@ bopts()
 			memsiz = MAX_MEM_DEFAULT;
 		else if(memsiz > MAX_MEM_MAX)
 			memsiz = MAX_MEM_MAX;
-#ifdef	OWN_ALLOC
-		max_mem_size = memsiz;
-#endif
 		break;
 	default:
 		error(SYNTAX);

@@ -242,7 +242,7 @@ ival	fl, fi, fc;
 
 	if(!edit_history){
 		llen = sizeof(savl_t) * Hist_Siz;
-		edit_history = (savl_t *)mmalloc(llen);
+		edit_history = mmalloc(llen);
 		clr_mem( (memp)edit_history, (ival)llen);
 	}
 	cur_elnumb = ++hist_numb;
@@ -1707,7 +1707,7 @@ CHAR	*sbuf;
 	if(savl->bufp)
 		mfree( (MEMP)savl->bufp);
 	savl->slen = nchars;
-	savl->bufp = (CHAR *)mmalloc( (ival)(nchars + 1));
+	savl->bufp = mmalloc( (ival)(nchars + 1));
 	if(nchars)
 		VOID strmov(savl->bufp, sbuf, nchars);
 	savl->bufp[nchars] = 0;

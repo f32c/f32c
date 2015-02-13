@@ -88,7 +88,7 @@ forr()
 	/*
 	 * grow the stack
 	 */
-	p = (forstp)mmalloc((ival)sizeof(struct forst));
+	p = mmalloc((ival)sizeof(struct forst));
 	if((p->prev = estack) != 0)
 		p->prev->next = p;
 	else
@@ -242,7 +242,7 @@ bld_gosub()
 {
 	forstp   pt;
 
-	pt = (forstp)mmalloc((ival)sizeof(struct forst));
+	pt = mmalloc((ival)sizeof(struct forst));
 	if((pt->prev = estack) != 0)
 		pt->prev->next = pt;
 	else
@@ -1887,7 +1887,7 @@ int	ftyp, dftyp;
 		fn.mpnt = stocurlin->next;
 							  /* get the space */
 		i = fn.narg * sizeof(struct entry *);
-		ep->_deffn = (deffnp) mmalloc((ival)(sizeof(struct deffn) + i));
+		ep->_deffn = mmalloc((ival)(sizeof(struct deffn) + i));
 		fn.vargs = (struct entry **)(ep->_deffn + 1);
 		for(arg = fn.vargs, i = 0 ; i < fn.narg ; i++, arg++)
 			*arg = args[i];
@@ -1912,7 +1912,7 @@ int	ftyp, dftyp;
 		error(SYNTAX);
 	c = ((l - point + 1) + WORD_MASK) & ~WORD_MASK;
 	i = c + (fn.narg * sizeof(struct entry *)) + sizeof(struct deffn);
-	p= (deffnp) mmalloc((ival)i);			/* get the space */
+	p = mmalloc((ival)i);			/* get the space */
 	/*LINTED*/
 	fn.vargs = (struct entry **)((memp)(p + 1) + c);
 	for(arg = fn.vargs, i = 0 ; i < fn.narg ; i++, arg++)
@@ -1951,7 +1951,7 @@ rept()
 	}
 	point--;
 	check();
-	p = (forstp)mmalloc((ival)sizeof(struct forst));
+	p = mmalloc((ival)sizeof(struct forst));
 	if((p->prev = estack) != 0)
 		p->prev->next = p;
 	else
@@ -2020,7 +2020,7 @@ whilef()
 	if(!IS_ZERO(res)){
 		/* got to go through it once so make it look like a */
 		/* repeat - until */
-		p = (forstp)mmalloc((ival)sizeof(struct forst));
+		p = mmalloc((ival)sizeof(struct forst));
 		if((p->prev = estack) != 0)
 			p->prev->next = p;
 		else
@@ -2231,7 +2231,7 @@ renumb()
 	 */
 	if( (numb * inc) + start > 65530L)
 		error(7);
-	ta = (struct ta *)mmalloc((ival)(numb * sizeof(struct ta)));
+	ta = mmalloc((ival)(numb * sizeof(struct ta)));
 	renstr = (MEMP)ta;
 
 	/*
@@ -2404,7 +2404,7 @@ renumb()
 		size = (size + 03) & ~03;
 */
 		pl = p->linnumb;        /* save line number */
-		p = (lpoint)mmalloc( (ival)size);
+		p = mmalloc((ival)size);
 		p->linnumb = pl;        /* restore line number*/
 		if(!np){		/* first line */
 			p->next = program->next;
