@@ -600,6 +600,13 @@ and
 .I scale_y
 may be specified to increase the size of the font.
 .TP
+.B FILL x, y
+Flood the area at coordinates
+.IR x
+and 
+.IR y
+of the drawable framebuffer with the current ink color.
+.TP
 .B LOADJPG path
 Load a JPEG image from a file pointed to by
 .IR path
@@ -718,8 +725,7 @@ Returns a$ repeated j times.
 Returns the j'th error message.
 .TP
 .B CHR$(j)
-Returns the ascii character corresponding to
-the value of j.
+Returns the ascii character corresponding to the value of j.
 .TP
 .B STR$(expr)
 Evaluate numeric expression
@@ -727,7 +733,10 @@ Evaluate numeric expression
 and conver the result to a string.
 .TP
 .B SPACE$(j)
-Returns a string of j spaces
+Returns a string of j spaces.
+.TP
+.B DIR$(path$)
+Returns the list of file names residing in a directory at path$.
 .TP
 .B LEN(a$)
 Returns the length of string a$.
@@ -781,24 +790,24 @@ below).  When running in an X11 environment, space bar is mapped to the
 .IR btn_center
 key.
 .SH MATHEMATICAL OPERATORS
-        ^               exponentiation
-        *               multiplication
-        /               division
-        MOD             remainder
-        +               addition
-        -               subtraction
+        ^		exponentiation
+        *		multiplication
+        /		division
+        MOD	remainder
+        +		addition
+        -		subtraction
 
-        AND             bitwise and
-        OR              bitwise or
-        XOR             bitwise exclusive or
-        NOT             bitwise not
+        AND	bitwise and
+        OR		bitwise or
+        XOR	bitwise exclusive or
+        NOT	bitwise not
 
-        <=              less than or equal
-        <>              not equal to
-        >=              greater than or equal
-        =               equal
-        >               greater than
-        <               less than
+        <=		less than or equal
+        <>		not equal to
+        >=		greater than or equal
+        =		equal
+        >		greater than
+        <		less than
 
 .SH EXPRESSION SYNTAX
         stringexp  ::= string | string + stringexp
