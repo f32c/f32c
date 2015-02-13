@@ -181,7 +181,7 @@ int	nodel;
 	}
 	if((p->len = st->strlen) != 0){
 		if(st->allocstr == st->locbuf){
-			p->str = (CHAR *)mmalloc(st->strlen);
+			p->str = mmalloc(st->strlen);
 			VOID strmov(p->str, st->allocstr, st->strlen);
 		}
 		else
@@ -974,7 +974,7 @@ ival	len;
 	if(st->allocstr != 0){
 		if(st->alloclen < len){
 			len = STR_ALIGN(len);
-			p = (CHAR *)mmalloc(len);
+			p = mmalloc(len);
 			if(st->allocstr != st->locbuf)
 				tofree = st->allocstr;
 			st->allocstr = p;
@@ -988,7 +988,7 @@ ival	len;
 		}
 		else {
 			len = STR_ALIGN(len);
-			st->allocstr = (CHAR *)mmalloc(len);
+			st->allocstr = mmalloc(len);
 			st->alloclen = len;
 		}
 	}
@@ -1023,9 +1023,7 @@ ival	len;
 
 	if ((st = str_free) == NULL) {
 		for (i = 10 ; i ; i--) {
-			st = (STR)mmalloc(sizeof(* st));
-			if (st == NULL)
-				break;
+			st = mmalloc(sizeof(* st));
 			clr_mem((memp)st, sizeof(* st) - LOC_BUF_SIZ);
 			st->next = str_free;
 			str_free = st;
@@ -1062,7 +1060,7 @@ ival	len;
 	}
 	else {
 		st->alloclen = STR_ALIGN(len);
-		st->allocstr = (CHAR *)mmalloc(st->alloclen);
+		st->allocstr = mmalloc(st->alloclen);
 	}
 	st->strval = st->allocstr;
 	return(st);
