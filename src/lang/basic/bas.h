@@ -658,10 +658,11 @@ void    rnd(void),pii(void),erlin(void),erval(void),tim(void),
 	bsyserr(void), bmax(void), bmin(void), bcreal(void), bcint(void),
 	rinstr(void), curkeys(void);
 
-STR	rightst(void),leftst(void),
-	strng(void),estrng(void),chrstr(void),nstrng(void),space(void),
-	xlate(void),mkistr(void),mkdstr(void),hexstr(void),octstr(void),
-	datef(void), binstr(void), decstr(void), blower(void), bupper(void);
+STR	rightst(void), leftst(void),
+	strng(void), estrng(void), chrstr(void), nstrng(void), space(void),
+	xlate(void), mkistr(void), mkdstr(void), hexstr(void), octstr(void),
+	datef(void), binstr(void), decstr(void), blower(void), bupper(void),
+	bdirs(void);
 
 int	endd(void),runn(void),gotos(void),rem(void),lets(void),list(void),
 	print(void),stop(void),bdelete(void),editl(void),input(void),
@@ -907,7 +908,7 @@ const	voidf_t    functb = {
 const	strf_t	strngcommand = {
 	rightst, leftst, strng, estrng, chrstr, nstrng, space,
 	xlate, mkistr, mkdstr, hexstr, octstr, binstr, decstr,
-	bupper, blower,
+	bupper, blower, bdirs
 };
 
 const	strf_t	strngncommand = {
@@ -1164,14 +1165,15 @@ const	struct  tabl    table[]={
 	"STR$",		MKSFA(5),
 	"SPACE$",	MKSFA(6),
 	"XLATE", 	MKSFA(7),
-	"MKIS$",	MKSFA(010),
-	"MKDS$",	MKSFA(011),
-	"HEX$", 	MKSFA(012),
-	"OCT$",		MKSFA(013),
-	"BIN$",		MKSFA(014),
-	"DEC$",		MKSFA(015),
-	"UPPER$",	MKSFA(016),
-	"LOWER$",	MKSFA(017),
+	"MKIS$",	MKSFA(8),
+	"MKDS$",	MKSFA(9),
+	"HEX$", 	MKSFA(10),
+	"OCT$",		MKSFA(11),
+	"BIN$",		MKSFA(12),
+	"DEC$",		MKSFA(13),
+	"UPPER$",	MKSFA(14),
+	"LOWER$",	MKSFA(15),
+	"DIR$",		MKSFA(16),
 
 	"DATE$",	MKSFN(0),	/* strng funcs without args */
 
