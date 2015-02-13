@@ -23,13 +23,8 @@ getch()
 	p = (char *)point;
 	while(*p == ' ')
 		p++;
-#ifdef	mips
-	point = (CHAR *)(p+1);
+	point = &p[1];
 	return(*(unsigned char *)p);
-#else
-	point = (CHAR *)++p;
-	return(*(unsigned char *)(p - 1));
-#endif
 }
 
 /* AS  #define  ELSE 0351 */
@@ -125,15 +120,7 @@ value  *p,*q;
 
 /* all the routines below should be put into AS */
 
-#if	defined(mips) && !defined(lint) && !defined(CDS_COMPILER)
-static	void	fandor(valp, valp, int), andor(valp, valp, int);
-static	void	comop(valp, valp, int), fads(valp, valp, int);
-static	void	ads(valp, valp, int), fmdm(valp, valp, int);
-static	void	mdm(valp, valp, int), fexp(valp, valp, int), ex(valp, valp,int);
-#else
 static	mbinf_t	fandor, andor, comop, fads, ads, fmdm, mdm, fexp, ex;
-#endif
-
 
 const	mathf_t	mbin = {
 	0, 0,
@@ -402,11 +389,7 @@ int	var;
 	if(var != RVAL)
 		p->i = res.i;
 	else
-#ifdef	mips
-		*p = res;
-#else
 		p->f = res.f;
-#endif
 }
 
 /* MACRO */
