@@ -455,14 +455,9 @@ CHAR    *
 str_cpy(a,b)
 CHAR   *a,*b;
 {
-#ifdef	mips
 	while( (*b = *a) != 0)
 		b++, a++;
 	return(b);
-#else
-	while((*b++ = *a++));
-	return(--b);
-#endif
 }
 
 void
@@ -501,84 +496,13 @@ ival	len;
 	} while(--len);
 }
 
-#ifndef	lint
-#define	DUFF
-#endif
-
 CHAR	*
 strmov(dest, src, len)
 CHAR	*dest, *src;
 ival	len;
 {
-#if	defined(i386) || defined(mips)
-#ifdef	mips
-	if( (((long)dest | (long) src) & WORD_MASK) == 0)
-#endif
-	{
-	int	xlen = len & WORD_MASK;
-
-	if( (len >>= WORD_SHIFT) != 0){
-#ifdef	DUFF
-		int	dufslen = (len + 7) >> 3;
-
-		switch(len &= 7){
-		case 0:
-		do {
-			*(int *)dest = *(int *)src;
-			dest += sizeof(int);
-			src += sizeof(int);
-		case 7:
-			*(int *)dest = *(int *)src;
-			dest += sizeof(int);
-			src += sizeof(int);
-		case 6:
-			*(int *)dest = *(int *)src;
-			dest += sizeof(int);
-			src += sizeof(int);
-		case 5:
-			*(int *)dest = *(int *)src;
-			dest += sizeof(int);
-			src += sizeof(int);
-		case 4:
-			*(int *)dest = *(int *)src;
-			dest += sizeof(int);
-			src += sizeof(int);
-		case 3:
-			*(int *)dest = *(int *)src;
-			dest += sizeof(int);
-			src += sizeof(int);
-		case 2:
-			*(int *)dest = *(int *)src;
-			dest += sizeof(int);
-			src += sizeof(int);
-		case 1:
-			*(int *)dest = *(int *)src;
-			dest += sizeof(int);
-			src += sizeof(int);
-		}while(--dufslen);
-		}
-#else
-		do {
-			/*LINTED*/
-			*(int *)dest = *(int *)src;
-			dest += sizeof(int);
-			src += sizeof(int);
-		}while(--len);
-#endif
-	}
-	len = xlen;
-	}
-#endif
-	if(len)
-		do {
-#ifdef	mips
-			*dest = *src;
-			dest++;
-			src++;
-#else
-			*dest++ = *src++;
-#endif
-		}while(--len);
+	while (len-- > 0)
+		*dest++ = *src++;
 	return(dest);
 }
 

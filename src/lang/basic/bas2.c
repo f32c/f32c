@@ -40,11 +40,7 @@ static	void	bdeftype(int);
 static	int	nam_read(CHAR *, int *);
 static	struct	entry	*new_entry(CHAR *, int, int, struct entry *, int);
 
-#if	defined(mips) && !defined(lint) && !defined(CDS_COMPILER)
-static const union entry_vals entry_zero;	/* should be zero */
-#else
-static const union entry_vals entry_zero = { 0 };
-#endif
+static const union entry_vals entry_zero;
 
 static	int
 nam_read(nam, lp)
@@ -157,11 +153,7 @@ int	mknew;
 
 MEMP
 getname(isfunc)
-#ifdef	mips
-volatile int	isfunc;
-#else
 int	isfunc;
-#endif
 {
 	struct entry   *ep;
 	CHAR   *p,*q;
