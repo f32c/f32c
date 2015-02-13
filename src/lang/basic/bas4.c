@@ -1006,9 +1006,9 @@ DROP_STRINGS()
 {
 	STR	st;
 
-	while( (st = str_free) != 0){
+	while ((st = str_free) != NULL){
 		str_free = st->next;
-		mfree( (MEMP)st);
+		mfree((MEMP)st);
 	}
 	nstr_free = 0;
 }
@@ -1021,15 +1021,19 @@ ival	len;
 	STR	st;
 	int	i;
 
-	if( (st = str_free) == 0){
-		for(i = 10 ; i ; i--){
+	if ((st = str_free) == NULL) {
+		for (i = 10 ; i ; i--) {
 			st = (STR)mmalloc(sizeof(* st));
-			clr_mem( (memp)st, sizeof(* st) - LOC_BUF_SIZ);
+			if (st == NULL)
+				break;
+			clr_mem((memp)st, sizeof(* st) - LOC_BUF_SIZ);
 			st->next = str_free;
 			str_free = st;
 			nstr_free++;
 		}
 		st = str_free;
+		if (st == NULL)
+			error(ENOMEM);
 	}
 	str_free = st->next;
 	nstr_free--;
