@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
+ * Copyright (c) 2013 - 2015 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,6 +34,7 @@
 #include <io.h>
 #else
 #include <sys/stat.h>
+#include <dirent.h>
 #endif
 
 #include "bas.h"
@@ -79,6 +80,69 @@ file_cd()
 		error(15);
 #endif
 	normret;
+}
+
+
+STR
+bdirs()
+{
+	char *name;
+	STR st;
+	int len;
+#ifdef f32c
+	DIR dir;
+	FILINFO finfo;
+	int fres;
+	static char lfn[_MAX_LFN + 1];
+	finfo.lfname = lfn;
+	finfo.lfsize = sizeof(lfn);
+#else
+	DIR *dir;
+	struct dirent *dp;
+#endif
+
+	st = stringeval();
+	NULL_TERMINATE(st);
+
+#ifdef f32c
+	fres = f_opendir(&dir, st->strval);
+	if (fres != FR_OK) {
+		FREE_STR(st);
+		error(15);
+	}
+#else
+	dir = opendir(st->strval);
+	if (dir == NULL) {
+		FREE_STR(st);
+		error(15);
+	}
+#endif
+
+	st->strlen = 0;
+#ifdef f32c
+	while (f_readdir(&dir, &finfo) == FR_OK && finfo.fname[0] != 0) {
+		if (lfn[0] == 0)
+			name = finfo.fname;
+		else
+			name = lfn;
+#else
+	while ((dp = readdir(dir)) != NULL) {
+		name = dp->d_name;
+#endif
+		len = strlen(name);
+		if (st->alloclen < st->strlen + len + 1)
+			RESERVE_SPACE(st, st->strlen + len + 1);
+		if (st->strlen != 0) {
+			st->strval[st->strlen] = ' ';
+			st->strlen++;
+		}
+		strcpy(&st->strval[st->strlen], name);
+		st->strlen += len;
+	}
+#ifndef f32c
+	closedir(dir);
+#endif
+	return(st);
 }
 
 
