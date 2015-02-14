@@ -546,18 +546,18 @@ static	const	struct	cvttab	{
 	 * values down, and they don't improve the performance much for
 	 * large values.
 	 */
-	1e256,	256,	BIGval/1e256,	/* bad value */
-	1e128,	128,	BIGval/1e128,	/* bad value also in i386 */
-	1e64,	64,	BIGval/1e64,
+	{1e256,	256,	BIGval/1e256},	/* bad value */
+	{1e128,	128,	BIGval/1e128},	/* bad value also in i386 */
+	{1e64,	64,	BIGval/1e64},
 #endif
 #endif
-	1e32,	32,	BIGval/1e32,	/* bad value also in i386 */
-	1e16,	16,	BIGval/1e16,
-	1e8,	8,	BIGval/1e8,
-	10000,	4,	BIGval/10000,
-	100,	2,	BIGval/100,
-	10,	1,	BIGval/10,
-	0,	0,	0,
+	{1e32,	32,	BIGval/1e32},	/* bad value also in i386 */
+	{1e16,	16,	BIGval/1e16},
+	{1e8,	8,	BIGval/1e8},
+	{10000,	4,	BIGval/10000},
+	{100,	2,	BIGval/100},
+	{10,	1,	BIGval/10},
+	{0,	0,	0}
 };
 
 static	const	double	TEN = 10.0;

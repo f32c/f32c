@@ -15,7 +15,6 @@ include ${POST_MK}
 
 CFLAGS += -Df32c
 
-CFLAGS += -Wno-missing-braces
 ifneq ($(findstring ${WARNS}, "34"),)
 CFLAGS += -Wno-unused-parameter
 CFLAGS += -Wno-sign-compare
