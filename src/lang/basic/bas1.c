@@ -27,10 +27,14 @@ extern	void	_exit();
 static	CHAR    *eql(const CHAR *, const CHAR *, const CHAR *);
 static	void	docont(void);
 static	void	free_ar(struct entry *);
-static	SIGFUNC	trap(int), seger(int), mcore(int), quit1(int), catchfp(int);
+
+static	SIGFUNC	trap(int);
+#ifndef f32c
+static  SIGFUNC seger(int), mcore(int), quit1(int), catchfp(int);
 #ifdef  SIGTSTP
 static  SIGFUNC	onstop(int);
 #endif
+#endif /* !f32c */
 
 #ifdef MSDOS
 static int	lcount;
@@ -67,14 +71,17 @@ main(int argc, char **argv)
 	int i = 0;
 	int fp;
 
-	catchsignal();
-	startfp();              /* start up the floating point hardware */
 #ifdef f32c
 	setup_f32c();
+	maxfiles = MAXFILES;
+#else
+	catchsignal();
 #endif
-	setup_fb();
-	setupfiles(argc,argv);
+	startfp();              /* start up the floating point hardware */
+
+	setup_fb();		/* video framebuffer */
 #ifndef f32c
+	setupfiles(argc,argv);
 	setupmyterm();		/* set up files after processing files */
 #endif
 	program = 0;
@@ -1019,7 +1026,7 @@ ival	len;
  *    sending of signals).
  */
 
-
+#ifndef f32c
 #ifndef	MSDOS
 /*ARGSUSED*/
 static	SIGFUNC	squit(int x) { VOID quit(); }
@@ -1031,31 +1038,31 @@ static	const	struct	mysigs {
 	SIGFUNC	(*sigfunc)(int);
 } traps[] = {
 #ifndef	MSDOS
-	SIGHUP, squit,           /* hang up */
+	{SIGHUP, 	squit},           /* hang up */
 #endif
-	SIGINT,	trap,
+	{SIGINT,	trap},
 #ifndef	MSDOS
-	SIGQUIT, quit1,
-	SIGILL,	sexit,
-	SIGTRAP, sexit,
-	SIGIOT, sexit,
+	{SIGQUIT, 	quit1},
+	{SIGILL,	sexit},
+	{SIGTRAP, 	sexit},
+	{SIGIOT, 	sexit},
 #ifdef	SIGEMT
-	SIGEMT, sexit,
+	{SIGEMT, 	sexit},
 #endif
-	SIGFPE,	catchfp,        /* fp exception */
-	/* SIGKILL, 0,		/ * kill    */
-	SIGBUS,	seger,		/* seg err */
-	SIGSEGV, mcore,         /* bus err */
+	{SIGFPE,	catchfp},	/* fp exception */
+	/* SIGKILL, 0,			/ * kill    */
+	{SIGBUS,	seger},		/* seg err */
+	{SIGSEGV, 	mcore},         /* bus err */
 	/* SIGSYS,	0, */
-	SIGPIPE, sexit,
-	SIGALRM, squit,
-	SIGTERM, sexit,
-	SIGUSR1, sexit,
+	{SIGPIPE,	sexit},
+	{SIGALRM,	squit},
+	{SIGTERM,	sexit},
+	{SIGUSR1,	sexit},
 #ifdef	SIGUSR2
-	SIGUSR2, sexit,
+	{SIGUSR2,	sexit},
 #endif
 #ifdef	SIGTSTP
-	SIGTSTP, onstop,
+	{SIGTSTP,	onstop},
 #endif
 #endif
 };
@@ -1123,6 +1130,7 @@ int	x;
 	_exit(-1);
 	/*NOTREACHED*/
 }
+#endif /* !f32c */
 
 /*
  *      Called by the cntrl-c signal (number 2 ). It sets 'trapped' to
@@ -1148,6 +1156,7 @@ int	x;
 #endif
 }
 
+#ifndef f32c
 /*
  *      called by cntrl-\ trap , It prints the message and then exits
  *    via quit() so flushing the buffers, and getting the terminal back
@@ -1169,6 +1178,7 @@ int	x;
 	prints("quit\n\r");     /* print the message */
 	VOID quit();            /* exit */
 }
+#endif /* !f32c */
 
 /*
  *      resets the terminal , flushes all files then exits
@@ -1210,6 +1220,7 @@ docont()
 	cancont=0;
 }
 
+#ifndef f32c
 #ifdef  SIGTSTP
 extern	int	kill(pid_t, int);
 /*
@@ -1234,3 +1245,4 @@ int	x;
 	VOID signal(SIGTSTP,onstop);
 }
 #endif
+#endif /* !f32c */

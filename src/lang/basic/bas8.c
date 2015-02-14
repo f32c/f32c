@@ -852,27 +852,28 @@ onn()
  *    so that there is no waiting on the page clearing ( form feed ).
  */
 
+#ifndef f32c
 static	const	struct	t_info {
 	const	CHAR	*t_term;
 	const	CHAR	*t_clr;
 } t_clr_info[] = {
-	"vt100",	"\033[H\033[J$",
-	"at386",	"\033[2J\033[H",
-	"ansi",		"\033[H\033[J",
-	"xterm",	"\033[H\033[2J",
-	0, "\014",
+	{"vt100",	"\033[H\033[J$"},
+	{"at386",	"\033[2J\033[H"},
+	{"ansi",	"\033[H\033[J"},
+	{"xterm",	"\033[H\033[2J"},
+	{0,		"\014"}
 };
+#endif
 
 int
 cls()
 {
+#ifndef f32c
 	struct	t_info	*tp;
 	const	CHAR	*p, *q;
 	char	*tvar;
 
-#ifndef f32c
 	set_term();
-#endif
 	tvar = getenv("TERM");
 	if(!tvar|| !*tvar)
 		tvar = "";
@@ -884,10 +885,11 @@ cls()
 			break;
 	}
 	prints( (char *)tp->t_clr);
-#ifndef f32c
 	rset_term(0);
-#endif
 	cursor = 0;
+#else /* f32c */
+	prints("\033[H\033[J$");
+#endif
 	normret;
 }
 
