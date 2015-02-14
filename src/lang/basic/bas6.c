@@ -39,11 +39,15 @@
  *    'silly' programs that are given as parameters.
  */
 
-static	void	runfile(int), f_flush(filebufp);
+#ifndef f32c
+static	void	runfile(int);
+#endif
+static  void	f_flush(filebufp);
 static	void	close_1(filebufp);
 static	void	blrset(int);
 static	void	bfdcheck(int);
 
+#ifndef f32c
 void
 setupfiles(int argc, char **argv)
 {
@@ -115,6 +119,7 @@ int	fp;
 			/* go and run it */
 	execute();
 }
+#endif /* !f32c */
 
 /* commands implemented are :-
 	open / creat
