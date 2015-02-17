@@ -74,7 +74,7 @@ architecture Behavioral of sio is
     signal tx_tickcnt: std_logic_vector(3 downto 0);
     signal tx_phase: std_logic_vector(3 downto 0);
     signal tx_running: std_logic;
-    signal tx_ser: std_logic_vector(8 downto 0);
+    signal tx_ser: std_logic_vector(8 downto 0) := (others => '1');
 
     -- receive logic
     signal rx_tickcnt: std_logic_vector(3 downto 0);
