@@ -121,6 +121,7 @@ ifneq (,$(findstring fatfs,$(F32C_LIBS)))
 	_NEED_SDCARD = YES
 	_NEED_DISKIO = YES
 	_NEED_FATFS = YES
+	_NEED_MALLOC = YES
 endif
 
 ifneq (,$(findstring framebuffer,$(F32C_LIBS)))

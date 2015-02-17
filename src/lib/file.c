@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
+ * Copyright (c) 2013 - 2015 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,19 +33,17 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <fatfs/ff.h>
 
-#define MAXFILES 4
+#define MAXFILES 8
 
 
 static FATFS ff_mounts[2];
 static char ff_mounted[2];
 
-static struct {
-	FIL 	fp;
-	int	in_use;
-} file_map[MAXFILES];
+static FIL *file_map[MAXFILES];
 
 
 int
@@ -64,7 +62,7 @@ open(const char *path, int flags, ...)
 	}
 
 	for (d = 0; d < MAXFILES; d++)
-		if (file_map[d].in_use == 0)
+		if (file_map[d] == NULL)
 			break;
 	if (d == MAXFILES)
 		return (-1);
@@ -78,10 +76,16 @@ open(const char *path, int flags, ...)
 		ff_flags |= FA_OPEN_ALWAYS;
 #endif
 
-	if (f_open(&file_map[d].fp, path, ff_flags))
+	file_map[d] = malloc(sizeof(FIL));
+	if (file_map[d] == NULL)
 		return (-1);
 
-	file_map[d].in_use = 1;
+	if (f_open(file_map[d], path, ff_flags)) {
+		free(file_map[d]);
+		file_map[d] = NULL;
+		return (-1);
+	}
+
 	return (d + 3);
 }
 
@@ -103,10 +107,11 @@ close(int d)
 		return (0);
 	d -= 3;
 
-	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
+	if (d < 0 || d >= MAXFILES || file_map[d] == NULL)
 		return (-1);
-	f_close(&file_map[d].fp);
-	file_map[d].in_use = 0;
+	f_close(file_map[d]);
+	free(file_map[d]);
+	file_map[d] = NULL;
 	return (0);
 }
 
@@ -128,10 +133,10 @@ read(int d, void *buf, size_t nbytes)
 	}
 	d -= 3;
 
-	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
+	if (d < 0 || d >= MAXFILES || file_map[d] == NULL)
 		return (-1);
 
-	f_res = f_read(&file_map[d].fp, buf, nbytes, &got);
+	f_res = f_read(file_map[d], buf, nbytes, &got);
 	if (f_res != FR_OK)
 		return (-1);
 	return (got);
@@ -155,13 +160,13 @@ write(int d, const void *buf, size_t nbytes)
 	}
 	d -= 3;
 
-	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
+	if (d < 0 || d >= MAXFILES || file_map[d] == NULL)
 		return (-1);
 
 #if defined(_FS_READONLY) && (_FS_READONLY == 1)
 	return (-1);
 #else
-	f_res = f_write(&file_map[d].fp, buf, nbytes, &wrote);
+	f_res = f_write(file_map[d], buf, nbytes, &wrote);
 	if (f_res != FR_OK)
 		return (-1);
 	return (wrote);
@@ -179,26 +184,26 @@ lseek(int d, off_t offset, int whence)
 		return (-1);
 	d -= 3;
 
-	if (d < 0 || d >= MAXFILES || file_map[d].in_use == 0)
+	if (d < 0 || d >= MAXFILES || file_map[d] == NULL)
 		return (-1);
 
 	switch (whence) {
 	case SEEK_SET:
 		break;
 	case SEEK_CUR:
-		offset = f_tell(&file_map[d].fp) + offset;
+		offset = f_tell(file_map[d]) + offset;
 		break;
 	case SEEK_END:
-		offset = f_size(&file_map[d].fp) + offset; /* XXX revisit */
+		offset = f_size(file_map[d]) + offset; /* XXX revisit */
 		break;
 	default:
 		return (-1);
 	}
 
-	f_res = f_lseek(&file_map[d].fp, offset);
+	f_res = f_lseek(file_map[d], offset);
 	if (f_res != FR_OK)
 		return (-1);
-	return ((int) f_tell(&file_map[d].fp));
+	return ((int) f_tell(file_map[d]));
 }
 
 
