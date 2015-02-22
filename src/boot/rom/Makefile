@@ -3,7 +3,7 @@
 LOADADDR = 0x00000000
 
 # No optional instructions in the loader
-CFLAGS += -march=mips3 -mtune=f32c
+CFLAGS += -march=mips3 -mtune=f32c -mno-div -mno-mul
 CFLAGS += -mno-branch-likely
 
 # Appropriately configure ../sio/loader.c build
@@ -16,6 +16,6 @@ PROG = loader
 
 CFILES = loader.c ../sio/loader.c
 
-F32C_LIBS = spi
+F32C_LIBS = spi sio_baud
 
 include ${POST_MK}

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
+ * Copyright (c) 2013 - 2015 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,11 +52,11 @@
 	} while (0)
 
 
-__dead2
-void
 #ifdef ROM_LOADER
+void
 sio_boot(void)
 #else
+__dead2 void
 _start(void)
 #endif
 {
@@ -64,10 +64,9 @@ _start(void)
 	char *cp;
 	void *base_addr = NULL;
 
-#ifdef __mips__
-	__asm __volatile__(
-		"move $31, $0"		/* ra <- zero */
-	);
+#ifndef ROM_LOADER
+	/* Just in case CPY reset misses fetching the first instruction */
+	__asm __volatile__("nop");
 #endif
 
 #ifndef BRAM
@@ -136,6 +135,10 @@ loop:
 		if (c == 'S')
 			pos = 0;
 		else {
+#ifdef ROM_LOADER
+			if (c == -1) /* Initiate binary load sequence? */
+				return;
+#endif
 			if (c == '\r') /* CR ? */
 				goto prompt;
 			/* Echo char */
@@ -166,6 +169,7 @@ loop:
 			"lui $4, 0x8000;"	/* stack mask */
 			"lui $5, 0x0010;"	/* top of the initial stack */
 			"and $29, %0, $4;"	/* clr low bits of the stack */
+			"move $31, $0;"		/* ra <- zero */
 			"jr %0;"
 			"or $29, $29, $5;"	/* set stack */
 			".set reorder;"
