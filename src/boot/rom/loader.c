@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
+ * Copyright (c) 2013 - 2015 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,6 +26,7 @@
  */
 
 #include <spi.h>
+#include <sio.h>
 #include <stdio.h>
 
 
@@ -115,6 +116,41 @@ puts(const char *cp)
 #endif /* !ONLY_I_ROM */
 
 
+static int
+sio_getch()
+{
+	int c;
+
+	do {
+		INB(c, IO_SIO_STATUS);
+	} while ((c & SIO_RX_FULL) == 0);
+	INB(c, IO_SIO_BYTE);
+	return (c & 0xff);
+}
+
+
+static void *
+sio_load_binary(void)
+{
+	uint32_t i, base = 0, len = 0;
+	char *cp;
+
+	sio_setbaud(3000000);
+
+	for (i = 0; i < 4; i++)
+		base = (base << 8) + sio_getch();
+	for (i = 0; i < 4; i++)
+		len = (len << 8) + sio_getch();
+	for (cp = (void *) base; len > 0; len--, cp++) {
+		*cp = sio_getch();
+		OUTB(IO_LED, ((int) cp) >> 10);
+	}
+
+	sio_setbaud(115200);
+	return ((void *) base);
+}
+
+
 void
 main(void)
 {
@@ -164,17 +200,9 @@ main(void)
 	if (cp[0x1fe] != 0x55 || cp[0x1ff] != 0xaa || sec_size != 4096
 	    || res_sec < 2) {
 		puts("Invalid boot sector\n");
-#if 0
-		/* Blink LEDs: on/off 1:3 */
-		do {
-			if (((i++ >> 22) & 3) == 0)
-				OUTB(IO_LED, 255);
-			else
-				OUTB(IO_LED, 0);
-		} while (1);
-#else
 		sio_boot();
-#endif
+		cp = sio_load_binary();
+		goto boot;
 	}
 
 	len = sec_size * res_sec - 512;
@@ -188,22 +216,25 @@ main(void)
 	/* Turn off LEDs before jumping to next loader stage */
 	OUTB(IO_LED, 0);
 
-	/* Check for keypress */
+	/* Check SIO RX buffer */
 	INB(i, IO_SIO_STATUS);
 	if (i & SIO_RX_FULL) {
 		INB(i, IO_SIO_BYTE);
-		if (i == ' ')
+		if (i == ' ') {
 			sio_boot();
+			cp = sio_load_binary();
+		}
 	}
 	
+boot:
 	__asm __volatile__(
 		".set noreorder;"
-		"lui $4, 0x8000;"       /* stack mask */
-		"lui $5, 0x0010;"       /* top of the initial stack */
-		"and $29, %0, $4;"      /* clear low bits of the stack */
-		"move $31, $0;"         /* return to ROM loader when done */
+		"lui $4, 0x8000;"	/* stack mask */
+		"lui $5, 0x0010;"	/* top of the initial stack */
+		"and $29, %0, $4;"	/* clear low bits of the stack */
+		"move $31, $0;"		/* return to ROM loader when done */
 		"jr %0;"
-		"or $29, $29, $5;"      /* set the stack pointer */
+		"or $29, $29, $5;"	/* set the stack pointer */
 		".set reorder;"
 		:
 		: "r" (cp)
