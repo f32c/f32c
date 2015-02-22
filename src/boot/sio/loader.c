@@ -65,7 +65,7 @@ _start(void)
 	void *base_addr = NULL;
 
 #ifndef ROM_LOADER
-	/* Just in case CPY reset misses fetching the first instruction */
+	/* Just in case CPU reset misses fetching the first instruction */
 	__asm __volatile__("nop");
 #endif
 
