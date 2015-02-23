@@ -29,7 +29,6 @@ void do_str(const char *src) {
         // parse error
         mp_parse_show_exception(lex, parse_error_kind);
         mp_lexer_free(lex);
-printf("\n%s %d\n", __FUNCTION__, __LINE__);
         return;
     }
 
