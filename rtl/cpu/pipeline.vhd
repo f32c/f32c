@@ -1,5 +1,5 @@
 --
--- Copyright 2008 - 2014 Marko Zec, University of Zagreb.
+-- Copyright 2008 - 2015 Marko Zec, University of Zagreb.
 --
 -- Neither this file nor any parts of it may be used unless an explicit 
 -- permission is obtained from the author.  The file may not be copied,
@@ -371,6 +371,7 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) then
+	    R_reset <= reset;
 	    IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
 	    IF_ID_PC <= IF_PC_ext_next;
 	    if not IF_data_ready then
@@ -1143,6 +1144,10 @@ begin
 	      and R_cop0_count = R_cop0_compare then
 		R_cop0_timer_intr <= '1';
 	    end if;
+	    if R_reset = '1' then
+		EX_MEM_mem_cycle <= '0';
+		EX_MEM_mem_write <= '0';
+	    end if;
 	end if;
     end process;
 
@@ -1337,7 +1342,6 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) then
-	    R_reset <= reset;
 	    R_cop0_count <= R_cop0_count + 1;
 	end if;
     end process;
