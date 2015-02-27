@@ -52,4 +52,11 @@
 #define toupper(c)	((c) - 0x20 * (((c) >= 'a') && ((c) <= 'z')))
 #define tolower(c)	((c) + 0x20 * (((c) >= 'A') && ((c) <= 'Z')))
 
+#define	isblank(c)	((c) == '\t' || (c) == ' ')
+#define	iscntrl(c)	((c) < 32 || (c) == 0177)
+#define	isgraph(c)	((c) >= '!' && (c) <= '~')
+#define	ispunct(c)	((((c) >= '!' && (c) <= '/')) \
+			  || ((c) >= ':' && (c) <= '@') \
+			  || ((c) >= '[' && (c) <= 0140) \
+			  || ((c) >= '{' && (c) <= '~'))
 #endif /* !_CTYPE_H_ */
