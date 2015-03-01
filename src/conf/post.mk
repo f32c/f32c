@@ -135,6 +135,7 @@ MK_LDFLAGS += -gc-sections
 MK_LDFLAGS += ${LDFLAGS}
 
 CC = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
+CXX = ${ARCH}-elf-g++ ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
 AS = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_INCLUDES}
 LD = ${ARCH}-elf-ld ${MK_LDFLAGS}
 OBJCOPY = ${ARCH}-elf-objcopy
@@ -170,8 +171,9 @@ endif
 #
 
 ASM_OBJS = $(addprefix ${OBJDIR}/,$(ASFILES:.S=.O))
+CXX_OBJS = $(addprefix ${OBJDIR}/,$(CXXFILES:.cpp=.o))
 C_OBJS = $(addprefix ${OBJDIR}/,$(CFILES:.c=.o))
-OBJS = ${ASM_OBJS} ${C_OBJS}
+OBJS = ${ASM_OBJS} ${C_OBJS} ${CXX_OBJS}
 
 BIN = ${PROG}.bin
 HEX = ${PROG}.hex
@@ -201,6 +203,14 @@ cleandepend:
 $(addprefix ${OBJDIR}/,%.o) : %.c
 	@mkdir -p $(dir $@)
 	$(CC) -o $@ $<
+
+#
+# Rule for compiling C++ files
+# XXX fixme extensions: .cc, .cxx, .c++ etc.
+#
+$(addprefix ${OBJDIR}/,%.o) : %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) -o $@ $<
 
 #
 # Rule for compiling ASM files
