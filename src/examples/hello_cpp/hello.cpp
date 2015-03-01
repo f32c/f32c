@@ -2,7 +2,7 @@
  * Print a message on serial console, and blink LEDs until a button
  * is pressed on the ULX2S FPGA board.
  *
- * $Id: hello.c 1693 2013-11-25 23:14:31Z marko $
+ * $Id$
  */
 
 extern "C" {
