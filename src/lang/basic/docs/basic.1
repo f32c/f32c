@@ -963,7 +963,7 @@ bits 5 to 7: not connected
 .TP
 .B LEDs, buttons and switches
 .TP
-.I -240 (0xffffff10): pushbuttons / LEDs (input / output)
+.I -240 (0xffffff10): pushbuttons (inpuut)
 .IP
 .PD 0
 bit 0: btn_right (input)
@@ -975,11 +975,15 @@ bit 2: btn_down (input)
 bit 3: btn_up (input)
 .IP
 bit 4: btn_center (input)
+.PD 1
+.TP
+.I -239 (0xffffff11): LEDs (output)
 .IP
+.PD 0
 bits 0 to 7: led_0 to led_7 (output)
 .PD 1
 .TP
-.I -239 (0xffffff11): DIL switches (input)
+.I -238 (0xffffff12): DIL switches (input)
 .IP
 .PD 0
 bits 0 to 3: sw_0 to sw_3 (input)
