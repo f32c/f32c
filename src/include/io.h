@@ -42,12 +42,10 @@
 
 #define	IO_GPIO_DATA	IO_ADDR(0x00)	/* word, RW */
 #define	IO_GPIO_CTL	IO_ADDR(0x04)	/* word, WR */
-#define	IO_LED		IO_ADDR(0x10)	/* byte, WR */
-#define	IO_LCD		IO_ADDR(0x11)	/* byte, WR */
 #define	IO_PUSHBTN	IO_ADDR(0x10)	/* byte, RD */
-#define	IO_DIPSW	IO_ADDR(0x11)	/* byte, RD */
-#define	IO_LCD_DB	IO_ADDR(0x12)	/* byte, WR */
-#define	IO_LCD_CTRL	IO_ADDR(0x13)	/* byte, WR */
+#define	IO_LED		IO_ADDR(0x11)	/* byte, WR */
+#define	IO_DIPSW	IO_ADDR(0x12)	/* byte, RD */
+#define	IO_LCD		IO_ADDR(0x13)	/* byte, WR */
 #define	IO_SIO_BYTE	IO_ADDR(0x20)	/* byte, RW */
 #define	IO_SIO_STATUS	IO_ADDR(0x21)	/* byte, RD */
 #define	IO_SIO_BAUD	IO_ADDR(0x22)	/* half, WR */
