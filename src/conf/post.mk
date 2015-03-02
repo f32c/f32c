@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
+# Copyright (c) 2013-2015 Marko Zec, University of Zagreb
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -135,7 +135,7 @@ MK_LDFLAGS += -gc-sections
 MK_LDFLAGS += ${LDFLAGS}
 
 CC = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
-CXX = ${ARCH}-elf-g++ ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
+CXX = ${ARCH}-elf-g++ ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES} -fno-rtti -fno-exceptions
 AS = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_INCLUDES}
 LD = ${ARCH}-elf-ld ${MK_LDFLAGS}
 OBJCOPY = ${ARCH}-elf-objcopy
