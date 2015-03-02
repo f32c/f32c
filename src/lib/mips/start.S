@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
+ * Copyright (c) 2013-2015 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -68,4 +68,23 @@ flush_loop:
 #endif
 
 	la	gp, _gp
+
+#ifdef ONLY_I_ROM
+	/* No ctor walk / support when data memory cannot be read */
 	j	_C_LABEL(main)
+#else
+	la	s0, __init_array_start
+	la	s1, _fdata
+	move	s2, ra
+	b	ctor_loop_enter
+	.set noreorder
+ctor_loop:
+	jalr	a0
+	addiu	s0, s0, 4
+ctor_loop_enter:
+	bne	s0, s1,	ctor_loop
+	lw	a0, (s0)
+	j	_C_LABEL(main)
+	move	ra, s2
+	.set reorder
+#endif
