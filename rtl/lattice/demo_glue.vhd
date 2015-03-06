@@ -81,8 +81,7 @@ entity glue is
 	C_sdcard: boolean := true;
 	C_framebuffer: boolean := true;
 	C_pcm: boolean := true;
-	C_lego_ir: boolean := true;
-	C_lcd: boolean := false
+	C_dds: boolean := true
     );
     port (
 	clk_25m: in std_logic;
@@ -157,7 +156,6 @@ architecture Behavioral of glue is
     signal next_io_port: integer range 0 to (C_io_ports - 1);
     signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
     signal R_led: std_logic_vector(7 downto 0);
-    signal R_lcd: std_logic_vector(5 downto 0);
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
     signal R_gpio_ctl, R_gpio_in, R_gpio_out: std_logic_vector(28 downto 0);
@@ -180,11 +178,9 @@ architecture Behavioral of glue is
     signal from_pcm: std_logic_vector(31 downto 0);
     signal pcm_ce, pcm_l, pcm_r: std_logic;
 
-    -- Lego Power Functions Infrared Controller
-    signal R_lego_ir_enable: std_logic;
-    signal R_lego_ch: std_logic_vector(1 downto 0);
-    signal R_lego_a, R_lego_b: std_logic_vector(3 downto 0);
-    signal lego_ir_out: std_logic;
+    -- DDS frequency synthesizer
+    signal R_dds, R_dds_fast, R_dds_acc: std_logic_vector(31 downto 0);
+    signal R_dds_enable: std_logic;
 
     -- debugging only
     signal trace_addr: f32c_debug_addr;
@@ -206,7 +202,7 @@ begin
 	clk => clk, clk_325m => clk_325m,
 	sel => sw(2), key => btn_down, res => '0'
     );
-    ena_325m <= '0' when R_fb_mode = "11" else '1';
+    ena_325m <= R_dds_enable when R_fb_mode = "11" else '1';
 
     --
     -- f32c core(s)
@@ -386,6 +382,9 @@ begin
 		    end if;
 		    if io_byte_sel(3) = '1' then
 			R_gpio_ctl(28 downto 24) <= cpu_to_io(28 downto 24);
+			if C_dds then
+			    R_dds_enable <= cpu_to_io(31);
+			end if;
 		    end if;
 		end if;
 	    end if;
@@ -394,21 +393,9 @@ begin
 	      io_byte_sel(1) = '1' then
 		R_led <= cpu_to_io(15 downto 8);
 	    end if;
-	    -- LCD
-	    if C_lcd and io_addr(7 downto 4) = x"1" and
-	      io_byte_sel(3) = '1' then
-		R_lcd <= cpu_to_io(29 downto 24);
-	    end if;
-	    -- LEGO IR
-	    if C_lego_ir and io_addr(7 downto 4) = x"6" then
-		if io_byte_sel(1) = '1' then
-		    R_lego_ir_enable <= cpu_to_io(15);
-		    R_lego_ch <= cpu_to_io(9 downto 8);
-		end if;
-		if io_byte_sel(0) = '1' then
-		    R_lego_a <= cpu_to_io(3 downto 0);
-		    R_lego_b <= cpu_to_io(7 downto 4);
-		end if;
+	    -- DDS
+	    if C_dds and io_addr(7 downto 4) = x"6" then
+		R_dds <= cpu_to_io;
 	    end if;
 	    -- CPU reset control
 	    if C_cpus /= 1 and io_addr(7 downto 4) = x"f" then
@@ -744,43 +731,21 @@ begin
       io_addr(7 downto 4) = x"5" else '0';
     end generate;
 
-    --
-    -- Lego Power Functions Infrared Controller
-    --
-    G_lego_ir:
-    if C_lego_ir generate
-    lego_ir: entity work.lego_ir
-    generic map (
-	C_clk_freq => 81250000
-    )
-    port map (
-	clk => clk, ch => R_lego_ch,
-	pwm_a => R_lego_a, pwm_b => R_lego_b,
-	ir => lego_ir_out
-    );
-    end generate;
-
-    p_tip <= (others => lego_ir_out) when C_lego_ir and R_lego_ir_enable = '1'
+    p_tip <= (others => R_dds_acc(31)) when C_dds and R_dds_enable = '1'
       else video_dac when C_framebuffer and R_fb_mode /= "11"
       else (others => pcm_l);
-    p_ring <= lego_ir_out when C_lego_ir and R_lego_ir_enable = '1'
+    p_ring <= R_dds_acc(31) when C_dds and R_dds_enable = '1'
       else pcm_r;
 
     --
     -- GPIO
     --
-    j1_2 <= R_lcd(3);
-    j1_3 <= R_lcd(2);
-    j1_4 <= R_lcd(1);
-    j1_8 <= R_lcd(0);
-    j1_9 <= R_lcd(5);
-    j1_13 <= R_lcd(4);
---    j1_2 <= R_gpio_out(0) when R_gpio_ctl(0) = '1' else 'Z';
---    j1_3 <= R_gpio_out(1) when R_gpio_ctl(1) = '1' else 'Z';
---    j1_4 <= R_gpio_out(2) when R_gpio_ctl(2) = '1' else 'Z';
---    j1_8 <= R_gpio_out(3) when R_gpio_ctl(3) = '1' else 'Z';
---    j1_9 <= R_gpio_out(4) when R_gpio_ctl(4) = '1' else 'Z';
---    j1_13 <= R_gpio_out(5) when R_gpio_ctl(5) = '1' else 'Z';
+    j1_2 <= R_gpio_out(0) when R_gpio_ctl(0) = '1' else 'Z';
+    j1_3 <= R_gpio_out(1) when R_gpio_ctl(1) = '1' else 'Z';
+    j1_4 <= R_gpio_out(2) when R_gpio_ctl(2) = '1' else 'Z';
+    j1_8 <= R_gpio_out(3) when R_gpio_ctl(3) = '1' else 'Z';
+    j1_9 <= R_gpio_out(4) when R_gpio_ctl(4) = '1' else 'Z';
+    j1_13 <= R_gpio_out(5) when R_gpio_ctl(5) = '1' else 'Z';
     j1_14 <= R_gpio_out(6) when R_gpio_ctl(6) = '1' else 'Z';
     j1_15 <= R_gpio_out(7) when R_gpio_ctl(7) = '1' else 'Z';
     j1_16 <= R_gpio_out(8) when R_gpio_ctl(8) = '1' else 'Z';
@@ -805,4 +770,14 @@ begin
     j2_13 <= R_gpio_out(27) when R_gpio_ctl(27) = '1' else 'Z';
     j2_16 <= R_gpio_out(28) when R_gpio_ctl(28) = '1' else 'Z';
 
+    --
+    -- DDS
+    --
+    process(clk_325m)
+    begin
+	if rising_edge(clk_325m) then
+	    R_dds_fast <= R_dds;
+	    R_dds_acc <= R_dds_acc + R_dds_fast;
+	end if;
+    end process;
 end Behavioral;
