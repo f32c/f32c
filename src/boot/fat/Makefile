@@ -2,6 +2,9 @@
 # Bootloader uses a non-default loadaddr
 LOADADDR = 0x800f8000
 
+# Do not link standard libs
+WITHOUT_LIBS = true
+
 # No optional instructions in the loader
 CFLAGS += -march=mips3 -mtune=f32c
 CFLAGS += -mno-branch-likely -mno-mul -mno-div
@@ -18,9 +21,12 @@ SPI_IMG_NAME = ulx2s_4m.img
 
 PROG = loader
 
-CFILES = loader.c
+CFILES = loader.c ../../lib/sio_poll.c \
+	../../lib/printf.c ../../lib/fatfs.c ../../lib/file.c \
+	../../lib/malloc.c ../../lib/spi.c ../../lib/sdcard.c \
+	../../lib/diskio.c ../../lib/mul.c ../../lib/div.c
 
-F32C_LIBS = printf fatfs
+ASFILES = ../../lib/${ARCH}/start.S
 
 include ${POST_MK}
 

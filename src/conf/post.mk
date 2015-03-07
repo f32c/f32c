@@ -41,7 +41,14 @@ MK_STDINC = -include sys/param.h
 
 # Libs
 LIBDIR = ${BASE_DIR}lib/${ARCH}
-MK_LIBS = -lc -lm -lulx2s
+
+ifneq ($(WITHOUT_LIBS),true)
+ ifneq ($(WITHOUT_FLOAT),)
+  MK_LIBS = ${LIBS} -lcint
+ else
+  MK_LIBS = ${LIBS} -lc
+ endif
+endif
 
 ifeq (${ARCH},riscv)
 	# RISCV-specific flags
