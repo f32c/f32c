@@ -15,12 +15,13 @@ DHRY_CFLAGS += -finline-limit=0
 DHRY_CFLAGS += -DUSE_BUILTIN_STRCPY
 DHRY_CFLAGS += -DFAST_STRCMP -DUNROLLED_STRCMP
 
-# Omit floating point libs and printf parts
-CFLAGS += -DNO_PRINTF_FLOAT
+# We don't need floating point support here
+WITHOUT_FLOAT = yes
 
 CFILES = dhry_1.c dhry_2.c miscfn.c
 
-F32C_LIBS = printf atoi gets
+# Override default interrupt-driven sio routines
+CFILES += ../../lib/sio_poll.c
 
 include ${POST_MK}
 

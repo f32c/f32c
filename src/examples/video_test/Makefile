@@ -3,9 +3,8 @@ PROG = vidtest
 
 CFILES = video_test.c
 
-F32C_LIBS = printf sprintf framebuffer random div64 isr
+WITHOUT_FLOAT = yes
 
-# Omit floating point libs and corresponding printf parts
-CFLAGS += -DNO_PRINTF_FLOAT
+LIBS = -lulx2s
 
 include ${POST_MK}
