@@ -59,7 +59,7 @@ ifeq ($(LIB),c)
 	file.c gets.c isr.c malloc.c memcmp.c memcpy.c memmove.c \
 	memset.c mul.c printf.c qsort.c \
 	random.c sdcard.c setjmperr.c sio.c sio_baud.c sio_poll.c \
-	spi.c sprintf.c sprite.c strcasecmp.c strcpy.c strncpy.c \
+	spi.c sprintf.c strcasecmp.c strcpy.c strncpy.c \
 	strstr.c strtol.c
 
  ifeq ($(INT_LIBC),true)
@@ -94,7 +94,7 @@ ifeq ($(LIB),m)
 endif
 
 ifeq ($(LIB),ulx2s)
- CFILES = fb.c tjpgd.c lcd.c
+ CFILES = fb.c tjpgd.c sprite.c lcd.c
 endif
 
 include ${POST_MK}
