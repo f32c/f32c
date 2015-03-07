@@ -79,7 +79,7 @@ endif
 
 ifeq ($(LIB),m)
  CFILES = math/scalbn.c math/pow.c math/isnan.c math/fabs.c math/floor.c \
-	math/log.c math/atan.c math/cos.c math/acos.c \
+	math/log.c math/atan.c math/cos.c math/acos.c math/copysignf.c \
 	math/fmod.c math/sinhf.c math/sin.c math/sqrt.c math/asin.c \
 	math/exp.c math/cosf.c math/sinf.c math/acosf.c math/asinf.c \
 	math/atanf.c math/expf.c math/fabsf.c math/fmodf.c math/floorf.c \
