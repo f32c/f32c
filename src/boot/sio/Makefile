@@ -4,6 +4,9 @@ LOADADDR = 0x00000000
 
 LDFLAGS = -Ttext=${LOADADDR}
 
+# Do not link standard libs
+WITHOUT_LIBS = true
+
 ifeq (${ARCH},mips)
 	# Do not use GP-relative addressing
 	CFLAGS += -G 0
@@ -17,6 +20,3 @@ PROG = loader
 CFILES = loader.c
 
 include ${POST_MK}
-
-# Do not build lib/start.S !
-ASFILES = 
