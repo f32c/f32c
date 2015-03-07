@@ -1,9 +1,14 @@
 
 PROG = frisc_ld
 
-CFILES = frisc_boot.c
+WITHOUT_LIBS = true
 
-F32C_LIBS = sprintf fatfs
+CFILES = frisc_boot.c ../../lib/sio_poll.c ../../lib/sprintf.c \
+	../../lib/printf.c ../../lib/fatfs.c ../../lib/file.c \
+	../../lib/malloc.c ../../lib/spi.c ../../lib/sdcard.c \
+	../../lib/diskio.c ../../lib/mul.c ../../lib/div.c
+
+ASFILES = ../../lib/${ARCH}/start.S
 
 # Use a non-default loadaddr
 LOADADDR = 0x800f0000
