@@ -39,6 +39,10 @@ MK_INCLUDES = -nostdinc
 MK_INCLUDES += -I${BASE_DIR}include
 MK_STDINC = -include sys/param.h
 
+# Libs
+LIBDIR = ${BASE_DIR}lib/${ARCH}
+MK_LIBS = -lc -lm -lulx2s
+
 ifeq (${ARCH},riscv)
 	# RISCV-specific flags
 
@@ -126,6 +130,7 @@ MK_CFLAGS += ${CFLAGS}
 # Linker flags
 MK_LDFLAGS += -N ${ENDIANFLAGS}
 MK_LDFLAGS += --section-start=.init=${LOADADDR}
+MK_LDFLAGS += --library-path=${LIBDIR}
 MK_LDFLAGS += -nostdlib
 
 # Garbage-collect unused section (unreferenced functions)
@@ -134,10 +139,14 @@ MK_LDFLAGS += -gc-sections
 # Pull in any module-specific linker flags
 MK_LDFLAGS += ${LDFLAGS}
 
+# Library construction flags
+MK_ARFLAGS = r
+
 CC = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
 CXX = ${ARCH}-elf-g++ ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES} -fno-rtti -fno-exceptions
 AS = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_INCLUDES}
 LD = ${ARCH}-elf-ld ${MK_LDFLAGS}
+AR = ${ARCH}-elf-ar ${MK_ARFLAGS}
 OBJCOPY = ${ARCH}-elf-objcopy
 ifeq ($(shell uname -s), FreeBSD)
 ISA_CHECK = ${BASE_DIR}tools/isa_check.tcl
@@ -146,17 +155,6 @@ ISA_CHECK = tclsh ${BASE_DIR}tools/isa_check.tcl
 endif
 MKDEP = ${CC} -MM
 
-#
-# Add libraries to the list of CFILES
-#
-
-include ${LIBS_MK}
-
-#
-# Automatically include start.S in list of ASFILES
-#
-
-ASFILES += ${BASE_DIR}lib/${ARCH}/start.S
 
 #
 # All object files go to OBJDIR
@@ -169,6 +167,12 @@ endif
 #
 # Autogenerate targets
 #
+
+ifeq ($(PROG),)
+ ifeq ($(LIB),)
+  .DEFAULT_GOAL := abort
+ endif
+endif
 
 ASM_OBJS = $(addprefix ${OBJDIR}/,$(ASFILES:.S=.O))
 CXX_OBJS = $(addprefix ${OBJDIR}/,$(CXXFILES:.cpp=.o))
@@ -186,7 +190,10 @@ ${BIN}: ${PROG} Makefile
 	${OBJCOPY} -O binary ${PROG} ${BIN}
 
 ${PROG}: ${OBJS} Makefile
-	${LD} -o ${PROG} ${OBJS}
+	${LD} -o ${PROG} ${OBJS} ${MK_LIBS}
+
+${LIB}: ${OBJS} Makefile
+	${AR} ${ARCH}/lib${LIB}.a ${OBJS}
 
 depend:
 	${MKDEP} ${CFILES} > .depend
@@ -196,6 +203,9 @@ clean:
 
 cleandepend:
 	rm -f .depend
+
+abort:
+	@ echo Error: unspecified target!
 
 #
 # Rule for compiling C files

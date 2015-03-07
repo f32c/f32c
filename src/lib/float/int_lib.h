@@ -35,7 +35,7 @@
 //#include <limits.h>
 #include <stdint.h>
 #include <stdbool.h>
-//#include <float.h>
+#include <float.h>
 
 /* Include the commonly used internal type definitions. */
 #include "int_types.h"
