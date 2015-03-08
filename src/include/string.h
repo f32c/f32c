@@ -35,7 +35,9 @@ void *memmove(void *, const void *, size_t);
 void *memset(void *, int, size_t);
 int memcmp(const void *, const void *, size_t) __pure;
 
-#define	memcpy(dst, src, len) _memcpy((void *) dst, (void *) src, len)
+#define	memcpy(dst, src, len) _memcpy((dst), (src), (len))
+#define	strncpy(dst, src, len) __builtin_strncpy((dst), (src), (len))
+#define	strrchr(buf, ch) __builtin_strrchr((buf), (ch))
 
 #ifdef USE_BUILTIN_STRCPY
 #define	strcpy(dst, src) __builtin_strcpy((dst), (src))
@@ -145,11 +147,13 @@ strcmp(const char *s1, const char *s2)
 
 
 static inline void
-_memcpy(char *dst, const char *src, int len)
+_memcpy(void *dst, const void *src, int len)
 {
+	char *dst1 = (char *) dst;
+	const char *src1 = (const char *) src;
 
 	while (len--)
-		*dst++ = *src++;
+		*dst1++ = *src1++;
 }
 
 
