@@ -25,6 +25,11 @@
 # $Id$
 #
 
+ifeq ($(MAKECMDGOALS),crt0)
+ LIB = crt0
+ .DEFAULT_GOAL = lib
+endif
+
 ifeq ($(MAKECMDGOALS),c)
  LIB = c
  .DEFAULT_GOAL = lib
@@ -49,11 +54,15 @@ ifeq ($(MAKECMDGOALS),ulx2s)
 endif
 
 ifeq ($(.DEFAULT_GOAL),)
-$(error Must specify library target: c cint m ulx2s)
+$(error Must specify library target: crt0 c cint m ulx2s)
+endif
+
+ifeq ($(LIB),crt0)
+ ASFILES = ${ARCH}/start.S
 endif
 
 ifeq ($(LIB),c)
- ASFILES = ${ARCH}/start.S ${ARCH}/setjmp.S ${ARCH}/exception.S
+ ASFILES = ${ARCH}/setjmp.S ${ARCH}/exception.S
 
  CFILES = assert.c atoi.c diskio.c div.c div64.c fatfs.c \
 	file.c gets.c isr.c malloc.c memcmp.c memcpy.c memmove.c \
