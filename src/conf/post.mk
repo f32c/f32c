@@ -138,7 +138,6 @@ MK_CFLAGS += ${CFLAGS}
 MK_LDFLAGS += -N ${ENDIANFLAGS}
 MK_LDFLAGS += --section-start=.init=${LOADADDR}
 MK_LDFLAGS += --library-path=${LIBDIR}
-MK_LDFLAGS += -nostdlib
 
 # Garbage-collect unused section (unreferenced functions)
 MK_LDFLAGS += -gc-sections
