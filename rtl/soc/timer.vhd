@@ -14,8 +14,8 @@ entity timer is
         C_period_frac: integer range 0 to 16 := 0;     -- period resolution enhancement bits (1-16)
         -- setting C_period_frac to 0 will disable both period and frac
         -- period and frac registers can be used for AFC limits
-        C_pres: integer range 0 to 32 := 16; -- number of prescaler bits (0-32)
-	C_bits: integer range 2 to 32 := 10  -- bit size of the timer (2-32)
+        C_pres: integer range 0 to 32 := 10; -- number of prescaler bits (0-32)
+	C_bits: integer range 2 to 32 := 12  -- bit size of the timer (2-32)
     );
     port (
 	ce, clk: in std_logic;
