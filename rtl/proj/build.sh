@@ -22,4 +22,4 @@ cd ${DIR}
 ln -s "${PROJECT}_${PROJECT}.p2t" "${BUGGYNAME}.p2t"
 cd ..
 # end bugfix
-diamondc build.tcl project
+diamondc build.tcl $*
