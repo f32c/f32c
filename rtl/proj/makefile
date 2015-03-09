@@ -1,5 +1,5 @@
 all:
-	./build.sh
+	./build.sh project
 
 clean:
 	rm -rf project .recovery f32c_ulx2s1.sty *~
