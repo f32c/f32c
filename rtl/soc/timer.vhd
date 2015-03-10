@@ -26,6 +26,8 @@ entity timer is
 	bus_out: out std_logic_vector(31 downto 0);
 	timer_irq: out std_logic; -- interrut requuest line (active level high)
 	sign: out std_logic; -- output MSB (sign) bit
+	icp_enable: out std_logic_vector(1 downto 0); -- input enable bits
+	ocp_enable: out std_logic_vector(1 downto 0); -- output enable bits
 	icp: in std_logic_vector(1 downto 0); -- input capture signals 0 and 1
 	ocp: out std_logic_vector(1 downto 0) -- output compare signals 0 and 1
     );
@@ -44,8 +46,8 @@ architecture arch of timer is
     signal commit: std_logic; -- detects a write cycle to apply register
     -- period enhancement register and its next value
     signal R_fractional, L_fractional_next: std_logic_vector(C_period_frac downto 0);
-    constant C_ctrl_bits: integer := 20; -- number of control bits
-    -- extension for increment register for missing prescaler bits in addressabe storage
+    constant C_ctrl_bits: integer := 24; -- number of control bits
+    -- extension for increment register for missing prescaler bits in addressable storage
     -- extended increment register naming
     signal R_increment, R_inc_min, R_inc_max, R_increment_faster, R_increment_slower: 
       std_logic_vector(C_bits+C_pres-1 downto 0);
@@ -111,7 +113,8 @@ architecture arch of timer is
     constant C_icpn_xor:    ctrl_icp_array := (15,14);  -- icp xor 1=inverted,0=normal
     constant C_icpn_afcen:  ctrl_icp_array := (16,18);  -- enable ICP AFC
     constant C_icpn_afcinv: ctrl_icp_array := (17,19);  -- invert ICP AFC logic
-  
+    constant C_ocpn_enable: ctrl_ocp_array := (20,21);  -- ocp physical output enable bits
+    constant C_icpn_enable: ctrl_icp_array := (23,22);  -- icp physical input enable bits
 
     signal R_counter: std_logic_vector(C_bits+C_pres-1 downto 0); -- handled specificaly (auto-increments)
 
@@ -159,6 +162,9 @@ begin
           when others;
     
     sign <= R(C_counter)(C_bits-1); -- output sign (MSB bit of the counter)
+    
+    icp_enable <= R_control(C_icpn_enable(C_icps_max-1)) & R_control(C_icpn_enable(0));
+    ocp_enable <= R_control(C_ocpn_enable(C_ocps_max-1)) & R_control(C_ocpn_enable(0));
 
     -- this will save us some typing
     commit <= '1' when ce = '1' and bus_write = '1' and addr = C_apply else '0';
