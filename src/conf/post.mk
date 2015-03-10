@@ -200,7 +200,7 @@ ${PROG}: ${OBJS} Makefile
 	${LD} -o ${PROG} ${OBJS} ${MK_LIBS}
 
 ${LIB}: ${OBJS} Makefile
-	${AR} ${ARCH}/lib${LIB}.a ${OBJS}
+	${AR} ${LIBDIR}/lib${LIB}.a ${OBJS}
 
 depend:
 	${MKDEP} ${CFILES} > .depend
