@@ -35,9 +35,8 @@ MK_CFLAGS += -DBRAM
 endif
 
 # Includes
-MK_INCLUDES = -nostdinc
 MK_INCLUDES += -I${BASE_DIR}include
-MK_STDINC = -include sys/param.h
+MK_STDINC = -nostdinc -include sys/param.h
 
 # Libs
 LIBDIR = ${BASE_DIR}lib/${ARCH}
@@ -139,7 +138,11 @@ MK_LDFLAGS += -N ${ENDIANFLAGS}
 MK_LDFLAGS += --section-start=.init=${LOADADDR}
 MK_LDFLAGS += --library-path=${LIBDIR}
 ifndef WITHOUT_LIBS
- MK_LDFLAGS += -lcrt0
+ ifeq ($(findstring 0x8, ${LOADADDR}),)
+  MK_LDFLAGS += -lcrt0bram
+ else
+  MK_LDFLAGS += -lcrt0
+ endif
 endif
 
 # Garbage-collect unused section (unreferenced functions)
