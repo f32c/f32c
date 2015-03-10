@@ -201,7 +201,7 @@ begin
 	case dmem_addr(7 downto 4) is
 	when x"1"  =>
 	    if C_leds_btns then
-		io_to_cpu <="------------" & R_sw & '-----------' & R_btns;
+		io_to_cpu <="------------" & R_sw & "---------" & R_btns;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
