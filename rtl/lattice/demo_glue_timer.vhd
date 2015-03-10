@@ -186,7 +186,8 @@ architecture Behavioral of glue is
     -- Timer
     signal from_timer: std_logic_vector(31 downto 0);
     signal timer_ce: std_logic;
-    signal ocp: std_logic_vector(1 downto 0);
+    signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
+    signal icp_enable: std_logic_vector(1 downto 0);
     signal timer_intr: std_logic;
 
     -- debugging only
@@ -473,7 +474,9 @@ begin
     end generate;
     G_led_timer:
     if C_timer = true generate
-    led <= ocp(1 downto 0) & R_led(5 downto 0) when C_leds_btns else (others => '-');
+    ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_led(6);
+    ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_led(7);
+    led <= ocp_mux & R_led(5 downto 0) when C_leds_btns else (others => '-');
     end generate;
 
     -- XXX replace with a balanced multiplexer
@@ -771,7 +774,9 @@ begin
 	bus_write => io_write, byte_sel => io_byte_sel,
 	bus_in => cpu_to_io, bus_out => from_timer,
 	timer_irq => timer_intr,
+	ocp_enable => ocp_enable, -- enable physical output
 	ocp => ocp, -- output compare signal
+	icp_enable => icp_enable, -- enable physical input
 	icp => R_led(1 downto 0) -- for debugging connect led0 and led1 to icp 0 and 1
     );
     timer_ce <= io_addr_strobe(R_cur_io_port) when
