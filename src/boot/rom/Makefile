@@ -17,12 +17,12 @@ CFLAGS += -DONLY_I_ROM
 
 PROG = loader
 
+LIBSRC = ../../lib/src
+
 CFILES = loader.c ../sio/loader.c \
-	../../lib/spi.c ../../lib/sio_baud.c \
-	../../lib/mul.c ../../lib/div.c
+	${LIBSRC}/spi.c ${LIBSRC}/sio_baud.c \
+	${LIBSRC}/mul.c ${LIBSRC}/div.c
 
-ASFILES = ../../lib/${ARCH}/start.S
-
-F32C_LIBS = spi sio_baud
+ASFILES = ${LIBSRC}/${ARCH}/start.S
 
 include ${POST_MK}

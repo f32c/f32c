@@ -21,12 +21,14 @@ SPI_IMG_NAME = ulx2s_4m.img
 
 PROG = loader
 
-CFILES = loader.c ../../lib/sio_poll.c \
-	../../lib/printf.c ../../lib/fatfs.c ../../lib/file.c \
-	../../lib/malloc.c ../../lib/spi.c ../../lib/sdcard.c \
-	../../lib/diskio.c ../../lib/mul.c ../../lib/div.c
+LIBSRC = ../../lib/src
 
-ASFILES = ../../lib/${ARCH}/start.S
+CFILES = loader.c ${LIBSRC}/sio_poll.c \
+	${LIBSRC}/printf.c ${LIBSRC}/fatfs.c ${LIBSRC}/file.c \
+	${LIBSRC}/malloc.c ${LIBSRC}/spi.c ${LIBSRC}/sdcard.c \
+	${LIBSRC}/diskio.c ${LIBSRC}/mul.c ${LIBSRC}/div.c
+
+ASFILES = ${LIBSRC}/${ARCH}/start.S
 
 include ${POST_MK}
 
