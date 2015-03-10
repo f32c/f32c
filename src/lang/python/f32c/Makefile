@@ -39,7 +39,7 @@ LDFLAGS += -gc-sections
 LDFLAGS += --section-start=.init=0x80000000
 LDFLAGS += --library-path=../../../lib/${ARCH}
 
-LIBS = -lc -lm
+LIBS = -lcrt0 -lc -lm
 
 SRC_C = main.c file.c edit.c
 

@@ -42,8 +42,8 @@ MK_STDINC = -include sys/param.h
 # Libs
 LIBDIR = ${BASE_DIR}lib/${ARCH}
 
-ifneq ($(WITHOUT_LIBS),true)
- ifneq ($(WITHOUT_FLOAT),)
+ifndef WITHOUT_LIBS
+ ifdef WITHOUT_FLOAT
   MK_LIBS = ${LIBS} -lcint
  else
   MK_LIBS = ${LIBS} -lc
@@ -138,7 +138,9 @@ MK_CFLAGS += ${CFLAGS}
 MK_LDFLAGS += -N ${ENDIANFLAGS}
 MK_LDFLAGS += --section-start=.init=${LOADADDR}
 MK_LDFLAGS += --library-path=${LIBDIR}
-MK_LDFLAGS += -lcrt0
+ifndef WITHOUT_LIBS
+ MK_LDFLAGS += -lcrt0
+endif
 
 # Garbage-collect unused section (unreferenced functions)
 MK_LDFLAGS += -gc-sections
