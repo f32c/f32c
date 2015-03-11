@@ -11,9 +11,32 @@ CC = mips-elf-gcc
 # Flag : CFLAGS
 #	Use this flag to define compiler options. Note, you can add compiler options from the command line using XCFLAGS="other flags"
 
-LOADADDR = 0x80000000
-#LOADADDR = 0x200
+WITHOUT_FLOAT = true
 ENDIANFLAGS = -EL
+
+# Default load offset - bootloader is at 0x00000000
+ifndef LOADADDR
+LOADADDR = 0x80000000
+endif
+
+ifeq ($(findstring 0x8, ${LOADADDR}),)
+MK_CFLAGS += -DBRAM
+endif
+
+# Includes
+MK_INCLUDES += -I${BASE_DIR}include
+MK_STDINC = -nostdinc -include sys/param.h
+
+# Libs
+LIBDIR = ${BASE_DIR}lib/${ARCH}
+
+ifndef WITHOUT_LIBS
+ ifdef WITHOUT_FLOAT
+  MK_LIBS = ${LIBS} -lcint
+ else
+  MK_LIBS = ${LIBS} -lc
+ endif
+endif
 
 # MIPS-specific flags
 MK_CFLAGS += -march=f32c
@@ -21,9 +44,8 @@ MK_CFLAGS += -march=f32c
 MK_CFLAGS += ${ENDIANFLAGS}
 #MK_CFLAGS += -mno-branch-likely
 MK_CFLAGS += -G 32768
-#MK_CFLAGS += -DBRAM
 
-MK_CFLAGS += -nostdinc -I${BASE_DIR}include -include sys/param.h
+MK_CFLAGS += ${MK_STDINC} ${MK_INCLUDES}
 
 #MK_CFLAGS += -Wextra -Wsystem-headers -Wshadow -Wpadded -Winline
 MK_CFLAGS += -ffreestanding
@@ -40,11 +62,19 @@ MK_CFLAGS += -finline-limit=0
 MK_CFLAGS += -fselective-scheduling2
 
 # Linker flags
+#MK_LDFLAHS += ${ENDIANFLAGS}
 MK_LDFLAGS += -N
 MK_LDFLAGS += -Wl,--section-start=.init=${LOADADDR}
+MK_LDFLAGS += -Wl,--library-path=${LIBDIR}
 MK_LDFLAGS += -nostartfiles -nostdlib
-#MK_LDFLAHS += ${ENDIANFLAGS}
-
+ifndef WITHOUT_LIBS
+ ifeq ($(findstring 0x8, ${LOADADDR}),)
+  MK_LDFLAGS += -lcrt0bram
+ else
+  MK_LDFLAGS += -lcrt0
+ endif
+endif
+MK_LDFLAGS += ${MK_LIBS}
 
 PORT_CFLAGS = ${MK_CFLAGS}
 
