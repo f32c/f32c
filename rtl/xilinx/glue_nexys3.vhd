@@ -1,5 +1,5 @@
 --
--- Copyright 2008-2014 Marko Zec, University of Zagreb
+-- Copyright 2008-2015 Marko Zec, University of Zagreb
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -35,12 +35,12 @@ use work.f32c_pack.all;
 entity glue is
     generic(
 	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 130;
+	C_clk_freq: integer := 80;
 
 	-- ISA options
 	C_arch: integer := ARCH_MI32;
 	C_big_endian: boolean := false;
-	C_mult_enable: boolean := false;
+	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
 	C_ll_sc: boolean := false;
@@ -63,21 +63,19 @@ entity glue is
 	C_movn_movz: boolean := false; -- true: +16 LUT4, -DMIPS, incomplete
 
 	-- SoC configuration options
-	C_mem_size: integer := 16;
-	C_sio: boolean := true
+	C_mem_size: integer := 16;	-- KBytes
+	C_sio: boolean := true;
+	C_leds_btns: boolean := true
     );
     port (
 	clk_100m: in std_logic;
 	rs232_dce_txd: out std_logic;
 	rs232_dce_rxd: in std_logic;
---	lcd_db: out std_logic_vector(7 downto 0);
---	lcd_e, lcd_rs, lcd_rw: out std_logic;
 --	j1, j2: out std_logic_vector(3 downto 0);
 	led: out std_logic_vector(7 downto 0);
---	rot_a, rot_b, rot_center: in std_logic;
 	btn_center: in std_logic;
 	btn_south, btn_north, btn_east, btn_west: in std_logic;
-	sw: in std_logic_vector(3 downto 0)
+	sw: in std_logic_vector(7 downto 0)
     );
 end glue;
 
@@ -94,8 +92,12 @@ architecture Behavioral of glue is
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
 
     -- I/O
+    signal io_addr_strobe: std_logic;
     signal from_sio: std_logic_vector(31 downto 0);
-    signal sio_txd, sio_rxd, sio_ce: std_logic;
+    signal sio_ce: std_logic;
+    signal R_led: std_logic_vector(7 downto 0);
+    signal R_sw: std_logic_vector(7 downto 0);
+    signal R_btns: std_logic_vector(4 downto 0);
 
 begin
 
@@ -138,6 +140,7 @@ begin
 	flush_i_line => open, flush_d_line => open,
 	trace_addr => "------", trace_data => open
     );
+    final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
 
     -- RS232 sio
     G_sio:
@@ -156,12 +159,47 @@ begin
       dmem_addr(7 downto 4) = x"2" else '0';
     end generate;
 
+    --
     -- I/O port map:
-    -- I/O port map:
+    -- 0xf*****10: (4B, RW) : LED (WR), switches, buttons (RD)
     -- 0xf*****20: (4B, RW) * SIO
     --
-    io_to_cpu <= from_sio;
-    final_to_cpu <= io_to_cpu when dmem_addr(31) = '1' else dmem_to_cpu;
+    io_addr_strobe <= '1' when dmem_addr(31 downto 30) = "11" else '0';
+    process(clk)
+    begin
+	if rising_edge(clk) and io_addr_strobe = '1'
+	  and dmem_write = '1' then
+	    -- LEDs
+	    if C_leds_btns and dmem_addr(7 downto 4) = x"1" and
+	      dmem_byte_sel(1) = '1' then
+		R_led <= cpu_to_dmem(15 downto 8);
+	    end if;
+	end if;
+	if C_leds_btns and rising_edge(clk) then
+	    R_sw <= sw;
+	    R_btns <= btn_center & btn_north & btn_south & btn_west & btn_east;
+	end if;
+    end process;
+    led <= R_led when C_leds_btns else "ZZZZZZZZ";
+    process(dmem_addr, R_sw, R_btns, from_sio)
+    begin
+	case dmem_addr(7 downto 4) is
+	when x"1"  =>
+	    if C_leds_btns then
+		io_to_cpu <="--------" & R_sw & "-----------" & R_btns;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
+	when x"2"  =>
+	    if C_sio then
+		io_to_cpu <= from_sio;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
+	when others =>
+	    io_to_cpu <= (others => '-');
+	end case;
+    end process;
 
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
@@ -178,9 +216,6 @@ begin
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
 	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
     );
-
-    -- Appease XST for unused ports
-    led <= "ZZZZZZZZ";
 
 end Behavioral;
 
