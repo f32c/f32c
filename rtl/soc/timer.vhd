@@ -56,7 +56,7 @@ architecture arch of timer is
     -- extension for control register (this extension is different than C_ext_registers)
     signal Rtmp_ctrl_ext, R_ctrl_ext: std_logic_vector(C_ctrl_bits-C_bits-1 downto 0);
     -- complete control register (extended if needed)
-    signal R_control: std_logic_vector(C_ctrl_bits-1 downto 0);
+    signal Rtmp_control, R_control: std_logic_vector(C_ctrl_bits-1 downto 0);
     
     -- max number of ocp/icp units determined by fixed
     -- register locations in address space - to allocate address space
@@ -155,7 +155,7 @@ begin
         std_logic_vector(resize(unsigned(R_increment),32)) -- exception:
           when conv_std_logic_vector(C_increment,4),       -- increment direct read R (not Rtmp)
         std_logic_vector(resize(unsigned(
-            Rtmp(C_control)(C_bits-1 downto C_iocps_max) & Rintr
+            Rtmp_control(C_ctrl_bits-1 downto C_iocps_max) & Rintr
           ),32))
           when conv_std_logic_vector(C_control,4),
         std_logic_vector(resize(unsigned(Rtmp(conv_integer(addr))),32))
@@ -207,10 +207,12 @@ begin
     -- extended control register
     extended_control_register: if C_ctrl_bits > C_bits generate
       R_control <= R_ctrl_ext & R(C_control);
+      Rtmp_control <= Rtmp_ctrl_ext & Rtmp(C_control);
     end generate;
     
     trimmed_control_register: if C_ctrl_bits <= C_bits generate
       R_control <= R(C_control)(C_ctrl_bits-1 downto 0);
+      Rtmp_control <= Rtmp(C_control)(C_ctrl_bits-1 downto 0);
     end generate;
         
     -- join all interrupt request bits into one bit
