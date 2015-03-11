@@ -166,7 +166,7 @@ begin
 
     --
     -- I/O port map:
-    -- 0xf*****10: (2B, RW) : LED, LCD (WR), switches, buttons (RD)
+    -- 0xf*****10: (4B, RW) : LED, LCD (WR), switches, buttons (RD)
     -- 0xf*****20: (4B, RW) * SIO
     --
     io_addr_strobe <= '1' when dmem_addr(31 downto 30) = "11" else '0';
@@ -177,7 +177,7 @@ begin
 	    -- LEDs
 	    if C_leds_btns and dmem_addr(7 downto 4) = x"1" and
 	      dmem_byte_sel(1) = '1' then
-		R_led <= cpu_to_dmem(7 downto 0);
+		R_led <= cpu_to_dmem(15 downto 8);
 	    end if;
 	    -- LCD
 	    if C_lcd and dmem_addr(7 downto 4) = x"1" and
