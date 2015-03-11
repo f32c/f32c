@@ -55,6 +55,18 @@ set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulati
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
+set_location_assignment PIN_R8 -to clk_50m
+set_location_assignment PIN_M16 -to rs232_rxd
+set_location_assignment PIN_B16 -to rs232_txd
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_50m
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_rxd
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_txd
+set_global_assignment -name VHDL_FILE ../../cpu/idecode_rv32.vhd
+set_global_assignment -name VHDL_FILE ../../cpu/idecode_mi32.vhd
+set_global_assignment -name VHDL_FILE ../../cpu/defs_rv32.vhd
+set_global_assignment -name VHDL_FILE ../../cpu/defs_mi32.vhd
+set_global_assignment -name VHDL_FILE ../../cpu/defs_f32c.vhd
 set_global_assignment -name VHDL_FILE ../../soc/sio.vhd
 set_global_assignment -name VHDL_FILE ../../altera/glue.vhd
 set_global_assignment -name VHDL_FILE ../../generic/reg1w2r.vhd
@@ -64,13 +76,7 @@ set_global_assignment -name VHDL_FILE ../../cpu/shift.vhd
 set_global_assignment -name VHDL_FILE ../../cpu/pipeline.vhd
 set_global_assignment -name VHDL_FILE ../../cpu/loadalign.vhd
 set_global_assignment -name VHDL_FILE ../../cpu/idecode.vhd
-set_global_assignment -name VHDL_FILE ../../cpu/f32c_defs.vhd
 set_global_assignment -name VHDL_FILE ../../cpu/alu.vhd
-set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
-set_location_assignment PIN_R8 -to clk_50m
-set_location_assignment PIN_M16 -to rs232_rxd
-set_location_assignment PIN_B16 -to rs232_txd
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_50m
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_rxd
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_txd
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
