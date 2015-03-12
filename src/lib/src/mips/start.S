@@ -39,40 +39,51 @@
 	.type _start,@function
 
 _start:
+#ifdef BRAM
+#ifdef ONLY_I_ROM
+	li	sp, 0x80100000	/* SRAM top */
+#else /* !ONLY_I_ROM */
+	li	sp, 0x00010000	/* 64 k */
+	/* The SIO bootloader doesn't bzero the BSS, so we must do it here. */
+	la	s0, __bss_start	/* Start of BSS section */
+	la	s1, _end	/* End of BSS section */
+bss_bzero:
+	.set noreorder
+	sw	zero, (s0)
+	bne	s0, s1, bss_bzero
+	addiu	s0, s0, 4
+	.set reorder
+#endif /* !ONLY_I_ROM */
+#else /* !BRAM */
 	/* Magic block required by the FAT bootloader, otherwise harmless */
 	la	s0, _start	/* Executable code base address */
 	la	s1, _end	/* End of BSS section */
 
-#ifdef BRAM
-#ifdef ONLY_I_ROM
-	li	sp, 0x80100000	/* SRAM top */
-#else
-	li	sp, 0x00010000	/* 64 k */
-#endif
-#else
-	/* Invalidate the entire I-cache */
+	/* Invalidate I-cache */
 	li	t1, 8192 / 4
 	lui	t0, 0x8000
-flush_loop:
+icache_flush:
 	addiu	t1, t1, -1
 	cache	0, 0(t0)
 	addiu	t0, t0, 4
-	bgtz	t1, flush_loop
+	bgtz	t1, icache_flush
 
 	/* Set up stack pointer, depending on CPU ID */
+	li	sp, 0x80100000
+#ifdef XXX_SMP_NOTYET
 	mfc0	t0, $MIPS_COP_0_CONFIG
 	andi	t0, t0, 0xf	/* CPUID is in 4 LS bits */
 	sll	t0, t0, 13	/* 8 k for each CPU should be enough */
-	li	sp, 0x80100000
 	subu	sp, sp, t0
-#endif
+#endif /* XXX_SMP_NOTYET */
+#endif /* !BRAM */
 
 	la	gp, _gp
 
 #ifdef ONLY_I_ROM
 	/* No ctor walk / support when data memory cannot be read */
 	j	_C_LABEL(main)
-#else
+#else /* !ONLY_I_ROM */
 	la	s0, __init_array_start
 	la	s1, _fdata
 	move	s2, ra
@@ -87,4 +98,4 @@ ctor_loop_enter:
 	j	_C_LABEL(main)
 	move	ra, s2
 	.set reorder
-#endif
+#endif /* !ONLY_I_ROM */
