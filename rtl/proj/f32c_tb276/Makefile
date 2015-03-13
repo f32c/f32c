@@ -49,7 +49,10 @@ SRCS = \
 all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt 
 
 clean:
-	rm -rf *~ $(PROJECT).jdi $(PROJECT).jic *.rpt *.chg smart.log *.htm *.eqn *.sof *.pof *.smsg *.summary db incremental_db output_files greybox_tmp $(ASSIGNMENT_FILES)
+	rm -rf *~ $(PROJECT).jdi $(PROJECT).jic $(PROJECT).pin $(PROJECT).qws \
+	       *.rpt *.chg smart.log *.htm *.eqn *.sof *.pof *.smsg *.summary \
+	       db incremental_db output_files greybox_tmp \
+	       $(ASSIGNMENT_FILES)
 
 map: smart.log $(PROJECT).map.rpt
 fit: smart.log $(PROJECT).fit.rpt
