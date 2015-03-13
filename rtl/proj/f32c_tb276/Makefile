@@ -21,21 +21,22 @@ SERIAL_FLASH_LOADER_DEVICE = EP4CE6
 ###################################################################
 # Setup your sources here
 SRCS = \
+ ../../altera/glue_tb276.vhd \
+ ../../altera/pll_25_100MHz.vhd \
  ../../cpu/idecode_rv32.vhd \
  ../../cpu/idecode_mi32.vhd \
  ../../cpu/defs_rv32.vhd \
  ../../cpu/defs_mi32.vhd \
  ../../cpu/defs_f32c.vhd \
- ../../soc/sio.vhd \
- ../../altera/glue.vhd \
- ../../generic/reg1w2r.vhd \
- ../../generic/bram.vhd \
- ../../generic/bptrace.vhd \
  ../../cpu/shift.vhd \
  ../../cpu/pipeline.vhd \
  ../../cpu/loadalign.vhd \
  ../../cpu/idecode.vhd \
- ../../cpu/alu.vhd
+ ../../cpu/alu.vhd \
+ ../../soc/sio.vhd \
+ ../../generic/reg1w2r.vhd \
+ ../../generic/bram.vhd \
+ ../../generic/bptrace.vhd
 
 ###################################################################
 # Main Targets
@@ -48,7 +49,7 @@ SRCS = \
 all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt 
 
 clean:
-	rm -rf *~ *.rpt *.chg smart.log *.htm *.eqn *.sof *.pof *.smsg *.summary db incremental_db output_files $(ASSIGNMENT_FILES)
+	rm -rf *~ $(PROJECT).jdi $(PROJECT).jic *.rpt *.chg smart.log *.htm *.eqn *.sof *.pof *.smsg *.summary db incremental_db output_files greybox_tmp $(ASSIGNMENT_FILES)
 
 map: smart.log $(PROJECT).map.rpt
 fit: smart.log $(PROJECT).fit.rpt
