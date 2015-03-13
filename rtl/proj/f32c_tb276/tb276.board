@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------- #
-set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+#set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 #set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
@@ -15,7 +15,7 @@ set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
-set_location_assignment PIN_25 -to clk_50m
+set_location_assignment PIN_25 -to clk_25m
 set_location_assignment PIN_73 -to btn_right
 set_location_assignment PIN_74 -to btn_left
 set_location_assignment PIN_3 -to led[7]
@@ -35,9 +35,9 @@ set_location_assignment PIN_111 -to sw[0]
 # rs232 is not on tb276 board
 # we define it on J3 connector
 # rs232-TTL3V3 converter is needed
-set_location_assignment PIN_135 -to rs232_rxd
-set_location_assignment PIN_136 -to rs232_txd
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_50m
+set_location_assignment PIN_136 -to rs232_rxd
+set_location_assignment PIN_133 -to rs232_txd
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_25m
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_rxd
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_txd
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[0]
