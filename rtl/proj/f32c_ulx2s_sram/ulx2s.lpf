@@ -1,0 +1,181 @@
+#
+# FER ULX2S board I/O constraints
+#
+# Board revision A, Sep 2011
+# Constraints file revision 1.03, 2013/12/08
+#
+
+COMMERCIAL;
+BLOCK RESETPATHS;
+BLOCK ASYNCPATHS;
+BLOCK JTAGPATHS;
+
+# Main 25 MHz on-board clock generator
+LOCATE COMP "clk_25m" SITE "30";	# IN
+FREQUENCY PORT "clk_25m" 25 MHz;
+
+# USB UART receive and transmit data
+LOCATE COMP "rs232_rx" SITE "10";	# IN
+LOCATE COMP "rs232_tx" SITE "137";	# OUT
+
+# LED indicators
+LOCATE COMP "led_0" SITE "29";		# OUT (shared with j2_17)
+LOCATE COMP "led_1" SITE "37";		# OUT (shared with j2_18)
+LOCATE COMP "led_2" SITE "36";		# OUT (shared with j2_19)
+LOCATE COMP "led_3" SITE "35";		# OUT (shared with j2_20)
+LOCATE COMP "led_4" SITE "144";		# OUT (shared with j1_12)
+LOCATE COMP "led_5" SITE "5";		# OUT (shared with j1_7)
+LOCATE COMP "led_6" SITE "6";		# OUT (shared with j1_6)
+LOCATE COMP "led_7" SITE "138";		# OUT (shared with j1_5)
+
+# DIP switches
+LOCATE COMP "sw_0" SITE "45";		# IN
+LOCATE COMP "sw_1" SITE "46";		# IN
+LOCATE COMP "sw_2" SITE "129";		# IN
+LOCATE COMP "sw_3" SITE "130";		# IN
+
+# Pushbuttons
+LOCATE COMP "btn_up" SITE "11";		# IN
+LOCATE COMP "btn_down" SITE "1";	# IN (shared with j1_10)
+LOCATE COMP "btn_left" SITE "2";	# IN (shared with j1_11)
+LOCATE COMP "btn_right" SITE "38";	# IN (shared with j2_14)
+LOCATE COMP "btn_center" SITE "22";	# IN (shared with j2_15)
+
+# Phone jack - resistor network only on tip!
+LOCATE COMP "p_ring" SITE "44";		# INOUT (75 Ohm)
+LOCATE COMP "p_tip_0" SITE "32";	# INOUT (1330 Ohm) (shared with j2_21)
+LOCATE COMP "p_tip_1" SITE "27";	# INOUT (665 Ohm) (shared with j2_22)
+LOCATE COMP "p_tip_2" SITE "28";	# INOUT (330 Ohm) (shared with j2_23)
+LOCATE COMP "p_tip_3" SITE "43";	# INOUT (160 Ohm)
+
+# Serial flash (SPI)
+LOCATE COMP "flash_cen" SITE "13";	# OUT
+LOCATE COMP "flash_sck" SITE "16";	# OUT
+LOCATE COMP "flash_si" SITE "19";	# OUT
+LOCATE COMP "flash_so" SITE "18";	# IN
+
+# MicroSD card (SPI)
+LOCATE COMP "sdcard_cen" SITE "15";	# OUT
+LOCATE COMP "sdcard_sck" SITE "20";	# OUT
+LOCATE COMP "sdcard_si" SITE "17";	# OUT
+LOCATE COMP "sdcard_so" SITE "21";	# IN
+
+# 512K x 16 bit SRAM
+LOCATE COMP "sram_wel" SITE "93";	# OUT
+LOCATE COMP "sram_lbl" SITE "120";	# OUT
+LOCATE COMP "sram_ubl" SITE "121";	# OUT
+LOCATE COMP "sram_a_0" SITE "101";	# OUT
+LOCATE COMP "sram_a_1" SITE "103";	# OUT
+LOCATE COMP "sram_a_2" SITE "104";	# OUT
+LOCATE COMP "sram_a_3" SITE "107";	# OUT
+LOCATE COMP "sram_a_4" SITE "108";	# OUT
+LOCATE COMP "sram_a_5" SITE "125";	# OUT
+LOCATE COMP "sram_a_6" SITE "127";	# OUT
+LOCATE COMP "sram_a_7" SITE "122";	# OUT
+LOCATE COMP "sram_a_8" SITE "58";	# OUT
+LOCATE COMP "sram_a_9" SITE "53";	# OUT
+LOCATE COMP "sram_a_10" SITE "54";	# OUT
+LOCATE COMP "sram_a_11" SITE "55";	# OUT
+LOCATE COMP "sram_a_12" SITE "56";	# OUT
+LOCATE COMP "sram_a_13" SITE "57";	# OUT
+LOCATE COMP "sram_a_14" SITE "73";	# OUT
+LOCATE COMP "sram_a_15" SITE "74";	# OUT
+LOCATE COMP "sram_a_16" SITE "77";	# OUT
+LOCATE COMP "sram_a_17" SITE "78";	# OUT
+LOCATE COMP "sram_a_18" SITE "94";	# OUT
+LOCATE COMP "sram_d_0" SITE "98";	# INOUT
+LOCATE COMP "sram_d_1" SITE "96";	# INOUT
+LOCATE COMP "sram_d_2" SITE "92";	# INOUT
+LOCATE COMP "sram_d_3" SITE "91";	# INOUT
+LOCATE COMP "sram_d_4" SITE "89";	# INOUT
+LOCATE COMP "sram_d_5" SITE "88";	# INOUT
+LOCATE COMP "sram_d_6" SITE "87";	# INOUT
+LOCATE COMP "sram_d_7" SITE "90";	# INOUT
+LOCATE COMP "sram_d_8" SITE "61";	# INOUT
+LOCATE COMP "sram_d_9" SITE "62";	# INOUT
+LOCATE COMP "sram_d_10" SITE "99";	# INOUT
+LOCATE COMP "sram_d_11" SITE "100";	# INOUT
+LOCATE COMP "sram_d_12" SITE "102";	# INOUT
+LOCATE COMP "sram_d_13" SITE "113";	# INOUT
+LOCATE COMP "sram_d_14" SITE "116";	# INOUT
+LOCATE COMP "sram_d_15" SITE "119";	# INOUT
+
+# 2 x 24 pin DIL header: j1 (left side)
+# "j1_1" -> VCCIO (3.3 V)
+LOCATE COMP "j1_2" SITE "131";		# INOUT
+LOCATE COMP "j1_3" SITE "134";		# INOUT
+LOCATE COMP "j1_4" SITE "9";		# INOUT
+LOCATE COMP "j1_5" SITE "138";		# INOUT (shared with led_7)
+LOCATE COMP "j1_6" SITE "6";		# INOUT (shared with led_6)
+LOCATE COMP "j1_7" SITE "5";		# INOUT (shared with led_5)
+LOCATE COMP "j1_8" SITE "8";		# INOUT
+LOCATE COMP "j1_9" SITE "7";		# INOUT
+LOCATE COMP "j1_10" SITE "1";		# INOUT (shared with btn_down)
+LOCATE COMP "j1_11" SITE "2";		# INOUT (shared with btn_left)
+LOCATE COMP "j1_12" SITE "144";		# INOUT (shared with led_4)
+LOCATE COMP "j1_13" SITE "143";		# INOUT
+LOCATE COMP "j1_14" SITE "142";		# INOUT
+LOCATE COMP "j1_15" SITE "141";		# INOUT
+LOCATE COMP "j1_16" SITE "133";		# INOUT
+LOCATE COMP "j1_17" SITE "132";		# INOUT
+LOCATE COMP "j1_19" SITE "123";		# INOUT
+LOCATE COMP "j1_18" SITE "124";		# INOUT
+LOCATE COMP "j1_20" SITE "115";		# INOUT
+LOCATE COMP "j1_21" SITE "114";		# INOUT
+LOCATE COMP "j1_22" SITE "110";		# INOUT
+LOCATE COMP "j1_23" SITE "109";		# INOUT
+# "j1_24" -> VCCIO (3.3 V)
+
+# 2 x 24 pin DIL header: j2 (right side)
+# "j2_1" -> GND
+LOCATE COMP "j2_2" SITE "72";		# INOUT
+LOCATE COMP "j2_3" SITE "71";		# INOUT
+LOCATE COMP "j2_4" SITE "70";		# INOUT
+LOCATE COMP "j2_5" SITE "69";		# INOUT
+LOCATE COMP "j2_6" SITE "66";		# INOUT
+LOCATE COMP "j2_7" SITE "65";		# INOUT
+LOCATE COMP "j2_8" SITE "52";		# INOUT
+LOCATE COMP "j2_9" SITE "50";		# INOUT
+LOCATE COMP "j2_10" SITE "48";		# INOUT
+LOCATE COMP "j2_11" SITE "47";		# INOUT
+LOCATE COMP "j2_12" SITE "40";		# INOUT
+LOCATE COMP "j2_13" SITE "39";		# INOUT
+LOCATE COMP "j2_14" SITE "38";		# INOUT (shared with btn_right)
+LOCATE COMP "j2_15" SITE "22";		# INOUT (shared with btn_center)
+LOCATE COMP "j2_16" SITE "31";		# INOUT
+LOCATE COMP "j2_17" SITE "29";		# INOUT (shared with led_0)
+LOCATE COMP "j2_18" SITE "37";		# INOUT (shared with led_1)
+LOCATE COMP "j2_19" SITE "36";		# INOUT (shared with led_2)
+LOCATE COMP "j2_20" SITE "35";		# INOUT (shared with led_3)
+LOCATE COMP "j2_21" SITE "32";		# INOUT (shared with p_tip_0)
+LOCATE COMP "j2_22" SITE "27";		# INOUT (shared with p_tip_1)
+LOCATE COMP "j2_23" SITE "28";		# INOUT (shared with p_tip_2)
+# "j2_24" -> GND
+
+#
+# Special I/O properties should be declared here
+#
+
+# All I/O ports are tied to 3.3 V
+IOBUF ALLPORTS IO_TYPE=LVCMOS33 PULLMODE=NONE;
+
+# DIP switches and pushbuttons need a pulldown resistor, overriding defaults
+IOBUF PORT "sw_0" PULLMODE=DOWN;
+IOBUF PORT "sw_1" PULLMODE=DOWN;
+IOBUF PORT "sw_2" PULLMODE=DOWN;
+IOBUF PORT "sw_3" PULLMODE=DOWN;
+IOBUF PORT "btn_up" PULLMODE=DOWN;
+IOBUF PORT "btn_down" PULLMODE=DOWN;
+IOBUF PORT "btn_left" PULLMODE=DOWN;
+IOBUF PORT "btn_right" PULLMODE=DOWN;
+IOBUF PORT "btn_center" PULLMODE=DOWN;
+
+# Dampen noise on dangling MicroSD input pin, overriding defaults
+IOBUF PORT "sdcard_so" PULLMODE=UP;
+
+# Phone jack signals may drain a significant amount of current
+IOBUF PORT "p_ring" DRIVE=20 PULLMODE=NONE;
+IOBUF PORT "p_tip_0" DRIVE=20 PULLMODE=NONE;
+IOBUF PORT "p_tip_1" DRIVE=20 PULLMODE=NONE;
+IOBUF PORT "p_tip_2" DRIVE=20 PULLMODE=NONE;
+IOBUF PORT "p_tip_3" DRIVE=20 PULLMODE=NONE;
