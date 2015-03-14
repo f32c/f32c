@@ -5,7 +5,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
-use ieee.numeric_std.all;
 
 entity timer is
     generic (
@@ -146,19 +145,17 @@ architecture arch of timer is
 begin
     with addr select
       bus_out <=
-        std_logic_vector(resize(unsigned(R_counter(C_bits+C_pres-1 downto C_pres)),32)) 
+        ext(R_counter(C_bits+C_pres-1 downto C_pres), 32)
           when conv_std_logic_vector(C_counter,4),
-        std_logic_vector(resize(unsigned(R_icp(0)),32))
+        ext(R_icp(0),32)
           when conv_std_logic_vector(C_icpn(0),4),
-        std_logic_vector(resize(unsigned(R_icp(1)),32))
+        ext(R_icp(1),32)
           when conv_std_logic_vector(C_icpn(1),4),
-        std_logic_vector(resize(unsigned(R_increment),32)) -- exception:
+        ext(R_increment,32) -- exception:
           when conv_std_logic_vector(C_increment,4),       -- increment direct read R (not Rtmp)
-        std_logic_vector(resize(unsigned(
-            Rtmp_control(C_ctrl_bits-1 downto C_iocps_max) & Rintr
-          ),32))
+        ext(Rtmp_control(C_ctrl_bits-1 downto C_iocps_max) & Rintr,32)
           when conv_std_logic_vector(C_control,4),
-        std_logic_vector(resize(unsigned(Rtmp(conv_integer(addr))),32))
+        ext(Rtmp(conv_integer(addr)),32)
           when others;
     
     sign <= R(C_counter)(C_bits-1); -- output sign (MSB bit of the counter)
