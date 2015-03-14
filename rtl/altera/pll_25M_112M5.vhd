@@ -4,7 +4,7 @@
 -- MODULE: altpll 
 
 -- ============================================================
--- File Name: pll_25_100MHz.vhd
+-- File Name: pll_25M_112M5.vhd
 -- Megafunction Name(s):
 -- 			altpll
 --
@@ -39,25 +39,23 @@ USE ieee.std_logic_1164.all;
 LIBRARY altera_mf;
 USE altera_mf.all;
 
-ENTITY pll_25_100MHz IS
+ENTITY pll_25M_112M5 IS
 	PORT
 	(
 		inclk0		: IN STD_LOGIC  := '0';
-		c0		: OUT STD_LOGIC ;
-		locked		: OUT STD_LOGIC 
+		c0		: OUT STD_LOGIC 
 	);
-END pll_25_100MHz;
+END pll_25M_112M5;
 
 
-ARCHITECTURE SYN OF pll_25_100mhz IS
+ARCHITECTURE SYN OF pll_25m_112m5 IS
 
 	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (4 DOWNTO 0);
 	SIGNAL sub_wire1	: STD_LOGIC ;
 	SIGNAL sub_wire2	: STD_LOGIC ;
-	SIGNAL sub_wire3	: STD_LOGIC ;
-	SIGNAL sub_wire4	: STD_LOGIC_VECTOR (1 DOWNTO 0);
-	SIGNAL sub_wire5_bv	: BIT_VECTOR (0 DOWNTO 0);
-	SIGNAL sub_wire5	: STD_LOGIC_VECTOR (0 DOWNTO 0);
+	SIGNAL sub_wire3	: STD_LOGIC_VECTOR (1 DOWNTO 0);
+	SIGNAL sub_wire4_bv	: BIT_VECTOR (0 DOWNTO 0);
+	SIGNAL sub_wire4	: STD_LOGIC_VECTOR (0 DOWNTO 0);
 
 
 
@@ -116,36 +114,33 @@ ARCHITECTURE SYN OF pll_25_100mhz IS
 		port_extclk1		: STRING;
 		port_extclk2		: STRING;
 		port_extclk3		: STRING;
-		self_reset_on_loss_lock		: STRING;
 		width_clock		: NATURAL
 	);
 	PORT (
 			clk	: OUT STD_LOGIC_VECTOR (4 DOWNTO 0);
-			inclk	: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-			locked	: OUT STD_LOGIC 
+			inclk	: IN STD_LOGIC_VECTOR (1 DOWNTO 0)
 	);
 	END COMPONENT;
 
 BEGIN
-	sub_wire5_bv(0 DOWNTO 0) <= "0";
-	sub_wire5    <= To_stdlogicvector(sub_wire5_bv);
+	sub_wire4_bv(0 DOWNTO 0) <= "0";
+	sub_wire4    <= To_stdlogicvector(sub_wire4_bv);
 	sub_wire1    <= sub_wire0(0);
 	c0    <= sub_wire1;
-	locked    <= sub_wire2;
-	sub_wire3    <= inclk0;
-	sub_wire4    <= sub_wire5(0 DOWNTO 0) & sub_wire3;
+	sub_wire2    <= inclk0;
+	sub_wire3    <= sub_wire4(0 DOWNTO 0) & sub_wire2;
 
 	altpll_component : altpll
 	GENERIC MAP (
 		bandwidth_type => "AUTO",
-		clk0_divide_by => 1,
+		clk0_divide_by => 2,
 		clk0_duty_cycle => 50,
-		clk0_multiply_by => 4,
+		clk0_multiply_by => 9,
 		clk0_phase_shift => "0",
 		compensate_clock => "CLK0",
 		inclk0_input_frequency => 40000,
 		intended_device_family => "Cyclone IV E",
-		lpm_hint => "CBX_MODULE_PREFIX=pll_25_100MHz",
+		lpm_hint => "CBX_MODULE_PREFIX=pll_25M_112M5",
 		lpm_type => "altpll",
 		operation_mode => "NORMAL",
 		pll_type => "AUTO",
@@ -159,7 +154,7 @@ BEGIN
 		port_fbin => "PORT_UNUSED",
 		port_inclk0 => "PORT_USED",
 		port_inclk1 => "PORT_UNUSED",
-		port_locked => "PORT_USED",
+		port_locked => "PORT_UNUSED",
 		port_pfdena => "PORT_UNUSED",
 		port_phasecounterselect => "PORT_UNUSED",
 		port_phasedone => "PORT_UNUSED",
@@ -190,13 +185,11 @@ BEGIN
 		port_extclk1 => "PORT_UNUSED",
 		port_extclk2 => "PORT_UNUSED",
 		port_extclk3 => "PORT_UNUSED",
-		self_reset_on_loss_lock => "OFF",
 		width_clock => 5
 	)
 	PORT MAP (
-		inclk => sub_wire4,
-		clk => sub_wire0,
-		locked => sub_wire2
+		inclk => sub_wire3,
+		clk => sub_wire0
 	);
 
 
@@ -224,7 +217,7 @@ END SYN;
 -- Retrieval info: PRIVATE: DEVICE_SPEED_GRADE STRING "8"
 -- Retrieval info: PRIVATE: DIV_FACTOR0 NUMERIC "1"
 -- Retrieval info: PRIVATE: DUTY_CYCLE0 STRING "50.00000000"
--- Retrieval info: PRIVATE: EFF_OUTPUT_FREQ_VALUE0 STRING "100.000000"
+-- Retrieval info: PRIVATE: EFF_OUTPUT_FREQ_VALUE0 STRING "112.500000"
 -- Retrieval info: PRIVATE: EXPLICIT_SWITCHOVER_COUNTER STRING "0"
 -- Retrieval info: PRIVATE: EXT_FEEDBACK_RADIO STRING "0"
 -- Retrieval info: PRIVATE: GLOCKED_COUNTER_EDIT_CHANGED STRING "1"
@@ -240,7 +233,7 @@ END SYN;
 -- Retrieval info: PRIVATE: INCLK1_FREQ_UNIT_COMBO STRING "MHz"
 -- Retrieval info: PRIVATE: INTENDED_DEVICE_FAMILY STRING "Cyclone IV E"
 -- Retrieval info: PRIVATE: INT_FEEDBACK__MODE_RADIO STRING "1"
--- Retrieval info: PRIVATE: LOCKED_OUTPUT_CHECK STRING "1"
+-- Retrieval info: PRIVATE: LOCKED_OUTPUT_CHECK STRING "0"
 -- Retrieval info: PRIVATE: LONG_SCAN_RADIO STRING "1"
 -- Retrieval info: PRIVATE: LVDS_MODE_DATA_RATE STRING "Not Available"
 -- Retrieval info: PRIVATE: LVDS_MODE_DATA_RATE_DIRTY NUMERIC "0"
@@ -249,7 +242,7 @@ END SYN;
 -- Retrieval info: PRIVATE: MIRROR_CLK0 STRING "0"
 -- Retrieval info: PRIVATE: MULT_FACTOR0 NUMERIC "1"
 -- Retrieval info: PRIVATE: NORMAL_MODE_RADIO STRING "1"
--- Retrieval info: PRIVATE: OUTPUT_FREQ0 STRING "100.00000000"
+-- Retrieval info: PRIVATE: OUTPUT_FREQ0 STRING "112.50000000"
 -- Retrieval info: PRIVATE: OUTPUT_FREQ_MODE0 STRING "1"
 -- Retrieval info: PRIVATE: OUTPUT_FREQ_UNIT0 STRING "MHz"
 -- Retrieval info: PRIVATE: PHASE_RECONFIG_FEATURE_ENABLED STRING "1"
@@ -267,7 +260,7 @@ END SYN;
 -- Retrieval info: PRIVATE: PLL_PFDENA_CHECK STRING "0"
 -- Retrieval info: PRIVATE: PLL_TARGET_HARCOPY_CHECK NUMERIC "0"
 -- Retrieval info: PRIVATE: PRIMARY_CLK_COMBO STRING "inclk0"
--- Retrieval info: PRIVATE: RECONFIG_FILE STRING "pll_25_100MHz.mif"
+-- Retrieval info: PRIVATE: RECONFIG_FILE STRING "pll_25M_112M5.mif"
 -- Retrieval info: PRIVATE: SACN_INPUTS_CHECK STRING "0"
 -- Retrieval info: PRIVATE: SCAN_FEATURE_ENABLED STRING "1"
 -- Retrieval info: PRIVATE: SELF_RESET_LOCK_LOSS STRING "0"
@@ -288,9 +281,9 @@ END SYN;
 -- Retrieval info: PRIVATE: ZERO_DELAY_RADIO STRING "0"
 -- Retrieval info: LIBRARY: altera_mf altera_mf.altera_mf_components.all
 -- Retrieval info: CONSTANT: BANDWIDTH_TYPE STRING "AUTO"
--- Retrieval info: CONSTANT: CLK0_DIVIDE_BY NUMERIC "1"
+-- Retrieval info: CONSTANT: CLK0_DIVIDE_BY NUMERIC "2"
 -- Retrieval info: CONSTANT: CLK0_DUTY_CYCLE NUMERIC "50"
--- Retrieval info: CONSTANT: CLK0_MULTIPLY_BY NUMERIC "4"
+-- Retrieval info: CONSTANT: CLK0_MULTIPLY_BY NUMERIC "9"
 -- Retrieval info: CONSTANT: CLK0_PHASE_SHIFT STRING "0"
 -- Retrieval info: CONSTANT: COMPENSATE_CLOCK STRING "CLK0"
 -- Retrieval info: CONSTANT: INCLK0_INPUT_FREQUENCY NUMERIC "40000"
@@ -308,7 +301,7 @@ END SYN;
 -- Retrieval info: CONSTANT: PORT_FBIN STRING "PORT_UNUSED"
 -- Retrieval info: CONSTANT: PORT_INCLK0 STRING "PORT_USED"
 -- Retrieval info: CONSTANT: PORT_INCLK1 STRING "PORT_UNUSED"
--- Retrieval info: CONSTANT: PORT_LOCKED STRING "PORT_USED"
+-- Retrieval info: CONSTANT: PORT_LOCKED STRING "PORT_UNUSED"
 -- Retrieval info: CONSTANT: PORT_PFDENA STRING "PORT_UNUSED"
 -- Retrieval info: CONSTANT: PORT_PHASECOUNTERSELECT STRING "PORT_UNUSED"
 -- Retrieval info: CONSTANT: PORT_PHASEDONE STRING "PORT_UNUSED"
@@ -339,22 +332,19 @@ END SYN;
 -- Retrieval info: CONSTANT: PORT_extclk1 STRING "PORT_UNUSED"
 -- Retrieval info: CONSTANT: PORT_extclk2 STRING "PORT_UNUSED"
 -- Retrieval info: CONSTANT: PORT_extclk3 STRING "PORT_UNUSED"
--- Retrieval info: CONSTANT: SELF_RESET_ON_LOSS_LOCK STRING "OFF"
 -- Retrieval info: CONSTANT: WIDTH_CLOCK NUMERIC "5"
 -- Retrieval info: USED_PORT: @clk 0 0 5 0 OUTPUT_CLK_EXT VCC "@clk[4..0]"
 -- Retrieval info: USED_PORT: @inclk 0 0 2 0 INPUT_CLK_EXT VCC "@inclk[1..0]"
 -- Retrieval info: USED_PORT: c0 0 0 0 0 OUTPUT_CLK_EXT VCC "c0"
 -- Retrieval info: USED_PORT: inclk0 0 0 0 0 INPUT_CLK_EXT GND "inclk0"
--- Retrieval info: USED_PORT: locked 0 0 0 0 OUTPUT GND "locked"
 -- Retrieval info: CONNECT: @inclk 0 0 1 1 GND 0 0 0 0
 -- Retrieval info: CONNECT: @inclk 0 0 1 0 inclk0 0 0 0 0
 -- Retrieval info: CONNECT: c0 0 0 0 0 @clk 0 0 1 0
--- Retrieval info: CONNECT: locked 0 0 0 0 @locked 0 0 0 0
--- Retrieval info: GEN_FILE: TYPE_NORMAL pll_25_100MHz.vhd TRUE
--- Retrieval info: GEN_FILE: TYPE_NORMAL pll_25_100MHz.ppf TRUE
--- Retrieval info: GEN_FILE: TYPE_NORMAL pll_25_100MHz.inc FALSE
--- Retrieval info: GEN_FILE: TYPE_NORMAL pll_25_100MHz.cmp TRUE
--- Retrieval info: GEN_FILE: TYPE_NORMAL pll_25_100MHz.bsf FALSE
--- Retrieval info: GEN_FILE: TYPE_NORMAL pll_25_100MHz_inst.vhd FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL pll_25M_112M5.vhd TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL pll_25M_112M5.ppf TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL pll_25M_112M5.inc FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL pll_25M_112M5.cmp FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL pll_25M_112M5.bsf FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL pll_25M_112M5_inst.vhd FALSE
 -- Retrieval info: LIB_FILE: altera_mf
 -- Retrieval info: CBX_MODULE_PREFIX: ON

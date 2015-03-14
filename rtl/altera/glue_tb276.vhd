@@ -35,7 +35,7 @@ use work.f32c_pack.all;
 entity glue is
     generic(
 	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 100;
+	C_clk_freq: integer := 112;
 
 	-- ISA options
 	C_arch: integer := ARCH_MI32;
@@ -65,6 +65,7 @@ entity glue is
 	-- SoC configuration options
 	C_mem_size: integer := 8;	-- KBytes
 	C_sio: boolean := true;
+	C_timer: boolean := true;
 	C_leds_btns: boolean := true
     );
     port (
@@ -97,9 +98,16 @@ architecture Behavioral of glue is
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(1 downto 0);
 
+    -- Timer
+    signal from_timer: std_logic_vector(31 downto 0);
+    signal timer_ce: std_logic;
+    signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
+    signal icp_enable: std_logic_vector(1 downto 0);
+    signal timer_intr: std_logic;
+
 begin
 
-    clock: entity work.pll_25_100MHz
+    clock: entity work.pll_25M_112M5
     port map (
         inclk0 => clk_25m,
         c0 => clk
@@ -174,8 +182,17 @@ begin
 	    R_btns <= btn_left & btn_right;
 	end if;
     end process;
-    led <= R_led when C_leds_btns else "ZZZZZZZZ";
-    process(dmem_addr, R_sw, R_btns, from_sio)
+    G_led_standard:
+    if C_timer = false generate
+    led <= R_led when C_leds_btns else (others => 'Z');
+    end generate;
+    G_led_timer:
+    if C_timer = true generate
+    ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_led(6);
+    ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_led(7);
+    led <= ocp_mux & R_led(5 downto 0) when C_leds_btns else (others => 'Z');
+    end generate;
+    process(dmem_addr, R_sw, R_btns, from_sio, from_timer)
     begin
 	case dmem_addr(7 downto 4) is
 	when x"1"  =>
@@ -190,10 +207,43 @@ begin
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
+	when x"8" | x"9" | x"A" | x"B"  =>
+	    if C_timer then
+		io_to_cpu <= from_timer;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
 	when others =>
 	    io_to_cpu <= (others => '-');
 	end case;
     end process;
+
+    --
+    -- Timer
+    --
+    G_timer:
+    if C_timer generate
+    timer: entity work.timer
+    --generic map (
+    --    C_bits => 16
+    --)
+    port map (
+        clk => clk, ce => timer_ce, addr => dmem_addr(5 downto 2),
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_timer,
+	timer_irq => timer_intr,
+	ocp_enable => ocp_enable, -- enable physical output
+	ocp => ocp, -- output compare signal
+	icp_enable => icp_enable, -- enable physical input
+	icp => R_led(1 downto 0) -- for debugging connect led0 and led1 to icp 0 and 1
+    );
+    timer_ce <= io_addr_strobe when
+      dmem_addr(7 downto 4) = x"8" or 
+      dmem_addr(7 downto 4) = x"9" or
+      dmem_addr(7 downto 4) = x"A" or 
+      dmem_addr(7 downto 4) = x"B" 
+      else '0';
+    end generate;
 
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
