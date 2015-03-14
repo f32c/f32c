@@ -233,7 +233,7 @@ begin
             if R_counter(C_bits+C_pres-1 downto C_pres) < R(C_period) + R_fractional(C_period_frac) then
               R_counter <= R_counter + R_increment;
             else
-              R_counter <= 0;
+              R_counter <= (others => '0');
               R_fractional <= L_fractional_next;
             end if;
           end if;
