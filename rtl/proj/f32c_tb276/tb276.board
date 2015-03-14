@@ -34,9 +34,9 @@ set_location_assignment PIN_114 -to sw[1]
 set_location_assignment PIN_111 -to sw[0]
 # rs232 is not on tb276 board
 # we define it on J3 connector
-# rs232-TTL3V3 converter is needed
-set_location_assignment PIN_137 -to rs232_rxd
-set_location_assignment PIN_135 -to rs232_txd
+# pinout for usbserial-TTL3V3 FTDI adapter
+set_location_assignment PIN_128 -to rs232_txd
+set_location_assignment PIN_132 -to rs232_rxd
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_25m
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_rxd
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_txd
