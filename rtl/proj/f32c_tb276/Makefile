@@ -22,7 +22,8 @@ SERIAL_FLASH_LOADER_DEVICE = EP4CE6
 # Setup your sources here
 SRCS = \
  ../../altera/glue_tb276.vhd \
- ../../altera/pll_25_100MHz.vhd \
+ ../../altera/pll_25M_112M5.vhd \
+ ../../altera/pll_112M5_433M92.vhd \
  ../../cpu/idecode_rv32.vhd \
  ../../cpu/idecode_mi32.vhd \
  ../../cpu/defs_rv32.vhd \
@@ -34,9 +35,11 @@ SRCS = \
  ../../cpu/idecode.vhd \
  ../../cpu/alu.vhd \
  ../../soc/sio.vhd \
+ ../../soc/timer.vhd \
  ../../generic/reg1w2r.vhd \
  ../../generic/bram.vhd \
  ../../generic/bptrace.vhd
+
 
 ###################################################################
 # Main Targets
