@@ -1,0 +1,13 @@
+# xc6slx9.ocd
+# OpenOCD commands
+
+telnet_port 4444
+gdb_port 3333
+
+# JTAG TAPs
+jtag newtap xc6slx9 tap -expected-id 0x24001093 -irlen 6
+
+scan_chain
+init
+svf -tap xc6slx9.tap default.svf
+shutdown
