@@ -53,7 +53,8 @@ all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt
 
 clean:
 	rm -rf *~ $(PROJECT).jdi $(PROJECT).jic $(PROJECT).pin $(PROJECT).qws \
-	       *.rpt *.chg smart.log *.htm *.eqn *.sof *.pof *.smsg *.summary \
+	       *.rpt *.chg smart.log *.htm *.eqn *.sof *.svf *.pof *.smsg *.summary \
+	       PLL*INFO.txt \
 	       db incremental_db output_files greybox_tmp \
 	       $(ASSIGNMENT_FILES)
 
@@ -102,6 +103,9 @@ $(PROJECT).sof: all
 $(PROJECT).jic: $(PROJECT).sof
 	quartus_cpf -c -d $(CONFIG_DEVICE) -s $(SERIAL_FLASH_LOADER_DEVICE) $(PROJECT).sof $(PROJECT).jic
 
+$(PROJECT).svf: $(PROJECT).sof
+	quartus_cpf -c -q 1MHz -g 3.3 -n p $(PROJECT).sof $(PROJECT).svf
+
 ###################################################################
 # Project initialization
 ###################################################################
@@ -126,6 +130,9 @@ upload: program
 
 program: $(PROJECT).sof
 	quartus_pgm --no_banner --mode=jtag -o "P;$(PROJECT).sof"
+
+program_ocd: $(PROJECT).svf
+	openocd --file=interface/altera-usb-blaster.cfg --file=tb276.ocd
 
 flash: $(PROJECT).jic
 	quartus_pgm --no_banner --mode=jtag -o "IPV;$(PROJECT).jic"
