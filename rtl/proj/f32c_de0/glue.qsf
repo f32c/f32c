@@ -62,21 +62,6 @@ set_location_assignment PIN_B16 -to rs232_txd
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_50m
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_rxd
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_txd
-set_global_assignment -name VHDL_FILE ../../cpu/idecode_rv32.vhd
-set_global_assignment -name VHDL_FILE ../../cpu/idecode_mi32.vhd
-set_global_assignment -name VHDL_FILE ../../cpu/defs_rv32.vhd
-set_global_assignment -name VHDL_FILE ../../cpu/defs_mi32.vhd
-set_global_assignment -name VHDL_FILE ../../cpu/defs_f32c.vhd
-set_global_assignment -name VHDL_FILE ../../soc/sio.vhd
-set_global_assignment -name VHDL_FILE ../../altera/glue.vhd
-set_global_assignment -name VHDL_FILE ../../generic/reg1w2r.vhd
-set_global_assignment -name VHDL_FILE ../../generic/bram.vhd
-set_global_assignment -name VHDL_FILE ../../generic/bptrace.vhd
-set_global_assignment -name VHDL_FILE ../../cpu/shift.vhd
-set_global_assignment -name VHDL_FILE ../../cpu/pipeline.vhd
-set_global_assignment -name VHDL_FILE ../../cpu/loadalign.vhd
-set_global_assignment -name VHDL_FILE ../../cpu/idecode.vhd
-set_global_assignment -name VHDL_FILE ../../cpu/alu.vhd
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[0]
@@ -107,4 +92,23 @@ set_location_assignment PIN_M1 -to sw[0]
 set_location_assignment PIN_T8 -to sw[1]
 set_location_assignment PIN_B9 -to sw[2]
 set_location_assignment PIN_M15 -to sw[3]
+set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_ASYNCHRONOUS_SIGNAL_PIPELINING ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON
+set_global_assignment -name VHDL_FILE ../../altera/pll_50m.vhd
+set_global_assignment -name VHDL_FILE ../../cpu/idecode_rv32.vhd
+set_global_assignment -name VHDL_FILE ../../cpu/idecode_mi32.vhd
+set_global_assignment -name VHDL_FILE ../../cpu/defs_rv32.vhd
+set_global_assignment -name VHDL_FILE ../../cpu/defs_mi32.vhd
+set_global_assignment -name VHDL_FILE ../../cpu/defs_f32c.vhd
+set_global_assignment -name VHDL_FILE ../../soc/sio.vhd
+set_global_assignment -name VHDL_FILE ../../altera/glue.vhd
+set_global_assignment -name VHDL_FILE ../../generic/reg1w2r.vhd
+set_global_assignment -name VHDL_FILE ../../generic/bram.vhd
+set_global_assignment -name VHDL_FILE ../../generic/bptrace.vhd
+set_global_assignment -name VHDL_FILE ../../cpu/shift.vhd
+set_global_assignment -name VHDL_FILE ../../cpu/pipeline.vhd
+set_global_assignment -name VHDL_FILE ../../cpu/loadalign.vhd
+set_global_assignment -name VHDL_FILE ../../cpu/alu.vhd
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
