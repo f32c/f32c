@@ -102,15 +102,14 @@ architecture Behavioral of glue is
 begin
 
     -- clock synthesizer
---  clkgen: entity work.clkgen
---    generic map(
---      C_clk_freq => C_clk_freq,
---      C_debug => false
---    )
---    port map(
---      clk_100m => clk_100m, clk => clk, key => '0', sel => '0'
---    );
-    clk <= clk_25m;
+  clkgen: entity work.pll_25M_112M5
+    --generic map(
+    --  C_clk_freq => C_clk_freq,
+    --  C_debug => false
+    --)
+    port map(
+      clk_in1 => clk_25m, clk_out1 => clk
+    );
 	
     -- f32c core
     pipeline: entity work.pipeline
