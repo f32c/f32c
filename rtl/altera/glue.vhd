@@ -57,10 +57,10 @@ entity glue is
 	C_load_aligner: boolean := true;
 
 	-- FPGA platform-specific options
-	C_register_technology: string := "xilinx_ram16x1d"; --"xilinx_ram32x1s";
+	C_register_technology: string := "altera";
 
 	-- These may negatively influence timing closure:
-	C_movn_movz: boolean := false; -- true: +16 LUT4, -DMIPS, incomplete
+	C_movn_movz: boolean := false;
 
 	-- SoC configuration options
 	C_mem_size: integer := 32;	-- KBytes
@@ -167,7 +167,7 @@ begin
 	end if;
 	if C_leds_btns and rising_edge(clk) then
 	    R_sw <= sw;
-	    R_btns <= btn_left & btn_right;
+	    R_btns <= not btn_left & not btn_right;
 	end if;
     end process;
     led <= R_led when C_leds_btns else "ZZZZZZZZ";
@@ -176,7 +176,7 @@ begin
 	case dmem_addr(7 downto 4) is
 	when x"1"  =>
 	    if C_leds_btns then
-		io_to_cpu <="------------" & R_sw & "--------------" & R_btns;
+		io_to_cpu <="------------" & R_sw & "-----------000" & R_btns;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
