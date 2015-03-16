@@ -1359,6 +1359,8 @@ begin
 	"10" & conv_std_logic_vector(100, 13) when 33,
 	"10" & conv_std_logic_vector(200, 13) when 66,
 	"11" & conv_std_logic_vector(325, 13) when 81,
+	"01" & conv_std_logic_vector(175, 13) when 87,
+	"01" & conv_std_logic_vector(225, 13) when 112,
 	"10" & conv_std_logic_vector(400, 13) when 133,
 	"10" & conv_std_logic_vector(500, 13) when 166,
 	"00" & conv_std_logic_vector(C_clk_freq, 13) when others;
