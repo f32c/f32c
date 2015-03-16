@@ -35,7 +35,7 @@ use work.f32c_pack.all;
 entity glue is
     generic(
 	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 50;
+	C_clk_freq: integer := 110;
 
 	-- ISA options
 	C_arch: integer := ARCH_MI32;
@@ -99,7 +99,14 @@ architecture Behavioral of glue is
 
 begin
 
-    clk <= clk_50m;
+    clock: entity work.pll_50m
+    generic map (
+	C_clk_freq => C_clk_freq
+    )
+    port map (
+	clk_50m => clk_50m,
+	clk => clk
+    );
 
     -- f32c core
     pipeline: entity work.pipeline
