@@ -1,6 +1,8 @@
 # xc6slx9.ocd
 # OpenOCD commands
 
+# impact->boundary scan->right click in right window->add xilinx device->one step svf
+
 telnet_port 4444
 gdb_port 3333
 
