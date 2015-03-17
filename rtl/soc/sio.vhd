@@ -190,7 +190,7 @@ begin
 			rx_break_tickcnt <= rx_break_tickcnt + 1;
 		    end if;
 		else
-		    rx_break_tickcnt <= 0;
+		    rx_break_tickcnt <= (others => '0');
 		    if rx_break_tickcnt = x"ff" then
 			break <= '1';
 		    else
