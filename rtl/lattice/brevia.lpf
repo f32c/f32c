@@ -1,0 +1,45 @@
+#
+# LatticeXP2 Brevia Rev B
+#
+
+COMMERCIAL;
+BLOCK RESETPATHS;
+BLOCK ASYNCPATHS;
+BLOCK JTAGPATHS;
+
+# Main 25 MHz on-board clock generator
+LOCATE COMP "clk_50m" SITE "21";	# IN
+FREQUENCY PORT "clk_50m" 50 MHz;
+LOCATE COMP "clk_ena" SITE "22";	# IN
+
+# USB UART receive and transmit data
+#LOCATE COMP "rs232_rx" SITE "110";	# IN	(DB-9, doesn't work)
+#LOCATE COMP "rs232_tx" SITE "109";	# OUT	(DB-9, doesn't work)
+LOCATE COMP "rs232_rx" SITE "30";	# IN	(FT232R)
+LOCATE COMP "rs232_tx" SITE "29";	# OUT	(FT232R)
+
+# LED indicators
+LOCATE COMP "led_0" SITE "46";		# OUT
+LOCATE COMP "led_1" SITE "45";		# OUT
+LOCATE COMP "led_2" SITE "44";		# OUT
+LOCATE COMP "led_3" SITE "43";		# OUT
+LOCATE COMP "led_4" SITE "40";		# OUT
+LOCATE COMP "led_5" SITE "39";		# OUT
+LOCATE COMP "led_6" SITE "38";		# OUT
+LOCATE COMP "led_7" SITE "37";		# OUT
+
+# DIP switches
+LOCATE COMP "sw_0" SITE "58";		# IN
+LOCATE COMP "sw_1" SITE "57";		# IN
+LOCATE COMP "sw_2" SITE "56";		# IN
+LOCATE COMP "sw_3" SITE "55";		# IN
+
+# Pushbuttons
+LOCATE COMP "btn_up" SITE "54";		# IN
+LOCATE COMP "btn_down" SITE "53";	# IN
+LOCATE COMP "btn_left" SITE "52";	# IN
+LOCATE COMP "btn_right" SITE "50";	# IN
+LOCATE COMP "btn_center" SITE "19";	# IN
+
+# All I/O ports are tied to 3.3 V
+IOBUF ALLPORTS IO_TYPE=LVCMOS33 PULLMODE=NONE;
