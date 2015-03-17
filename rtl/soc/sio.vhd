@@ -1,5 +1,5 @@
 --
--- Copyright 2013 Marko Zec, University of Zagreb
+-- Copyright 2013-2015 Marko Zec, University of Zagreb
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -45,6 +45,7 @@ entity sio is
 	byte_sel: in std_logic_vector(3 downto 0);
 	bus_in: in std_logic_vector(31 downto 0);
 	bus_out: out std_logic_vector(31 downto 0);
+	break: out std_logic;
 	rxd: in std_logic;
 	txd: out std_logic
     );
@@ -83,6 +84,7 @@ architecture Behavioral of sio is
     signal rx_phase: std_logic_vector(3 downto 0);
     signal rx_byte: std_logic_vector(7 downto 0);
     signal rx_full: std_logic;
+    signal rx_break_tickcnt: std_logic_vector(7 downto 0);
 begin
 
     G_bypass:
@@ -180,6 +182,19 @@ begin
 			    rx_full <= '1';
 			    rx_byte <= rx_des;
 			end if;
+		    end if;
+		end if;
+
+		if rxd = '0' then
+		    if rx_break_tickcnt /= x"ff" then
+			rx_break_tickcnt <= rx_break_tickcnt + 1;
+		    end if;
+		else
+		    rx_break_tickcnt <= 0;
+		    if rx_break_tickcnt = x"ff" then
+			break <= '1';
+		    else
+			break <= '0';
 		    end if;
 		end if;
 	    end if;
