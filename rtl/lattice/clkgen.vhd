@@ -43,7 +43,7 @@ entity clkgen is
 		ena_325m: in std_logic;
 		sel: in std_logic; -- only for debugging
 		key: in std_logic; -- one-step clocking
-		res: in std_logic; -- only when C_debug is enabled
+		res: in std_logic;
 		clk, clk_325m: out std_logic
 	);
 end clkgen;
@@ -93,7 +93,7 @@ begin
 	clk <= pll_clk;
 	end generate;
 
-	resl <= not res when C_debug else pll_lock;
+	resl <= not res and pll_lock;
 
 	-- reset
 	gsr_inst: GSR

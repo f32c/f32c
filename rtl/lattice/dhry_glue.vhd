@@ -94,7 +94,7 @@ architecture Behavioral of glue is
     -- I/O
     signal io_addr_strobe: std_logic;
     signal from_sio: std_logic_vector(31 downto 0);
-    signal sio_ce: std_logic;
+    signal sio_ce, sio_break: std_logic;
     signal R_led: std_logic_vector(7 downto 0);
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
@@ -109,7 +109,7 @@ begin
     )
     port map (
 	clk_25m => clk_25m, clk => clk, clk_325m => open,
-	ena_325m => '0', sel => '0', key => '0', res => '0'
+	ena_325m => '0', sel => '0', key => '0', res => sio_break
     );
 
     -- f32c core
@@ -154,7 +154,7 @@ begin
     port map (
 	clk => clk, ce => sio_ce, txd => rs232_tx, rxd => rs232_rx,
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_sio
+	bus_in => cpu_to_dmem, bus_out => from_sio, break => sio_break
     );
     sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11" and
       dmem_addr(7 downto 4) = x"2" else '0';
