@@ -1357,11 +1357,13 @@ begin
     R_cop0_config(31) <= '0'; -- no config1 register
     with C_clk_freq select R_cop0_config(30 downto 16) <=
 	"10" & conv_std_logic_vector(100, 13) when 33,
+	"01" & conv_std_logic_vector(125, 13) when 62,
 	"10" & conv_std_logic_vector(200, 13) when 66,
 	"11" & conv_std_logic_vector(325, 13) when 81,
 	"01" & conv_std_logic_vector(175, 13) when 87,
 	"01" & conv_std_logic_vector(225, 13) when 112,
 	"10" & conv_std_logic_vector(400, 13) when 133,
+	"01" & conv_std_logic_vector(275, 13) when 137,
 	"10" & conv_std_logic_vector(500, 13) when 166,
 	"00" & conv_std_logic_vector(C_clk_freq, 13) when others;
     R_cop0_config(15) <= '1' when C_big_endian else '0';
