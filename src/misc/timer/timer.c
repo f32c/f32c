@@ -132,6 +132,8 @@ main(void)
 	                  | (0<<TCTRL_AFCEN_ICP2)  | (0<<TCTRL_AFCINV_ICP2)
 	                  | (1<<TCTRL_XOR_OCP1)    | (1<<TCTRL_XOR_OCP2)
 	                  | (1<<TCTRL_XOR_ICP1)    | (1<<TCTRL_XOR_ICP2)
+	                  | (1<<TCTRL_ENABLE_OCP1) | (1<<TCTRL_ENABLE_OCP2)
+	                  | (1<<TCTRL_ENABLE_ICP1) | (1<<TCTRL_ENABLE_ICP2)
 	                  ;
 
         TIMER[TC_APPLY] = (1<<TC_CONTROL)
