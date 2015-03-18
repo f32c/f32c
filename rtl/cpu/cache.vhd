@@ -33,6 +33,7 @@ entity cache is
 	C_clk_freq: integer;
 	C_cpuid: integer;
 	C_cop0_count: boolean;
+	C_cop0_compare: boolean;
 	C_cop0_config: boolean;
 
 	-- optimization options
@@ -115,8 +116,8 @@ begin
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner, C_full_shifter => C_full_shifter,
 	C_register_technology => C_register_technology,
-	C_cop0_count => C_cop0_count, C_cop0_config => C_cop0_config,
-	C_exceptions => C_exceptions,
+	C_cop0_count => C_cop0_count, C_cop0_compare => C_cop0_compare,
+	C_cop0_config => C_cop0_config, C_exceptions => C_exceptions,
 	-- debugging only
 	C_debug => C_debug
     )
