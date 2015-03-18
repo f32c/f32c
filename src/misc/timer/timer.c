@@ -118,8 +118,8 @@ main(void)
 	TIMER[TC_ICP2_START] = 0;
 	TIMER[TC_ICP2_STOP]  = (1<<(TIMER_BITS))-1;
 #endif
-	TIMER[TC_INC_MIN]    = 30000;
-	TIMER[TC_INC_MAX]    = 40000;
+	TIMER[TC_INC_MIN]    = 300;
+	TIMER[TC_INC_MAX]    = 600;
 	
 	TIMER[TC_ICP1]       = 173; // setpoint ICP1
 	TIMER[TC_ICP2]       = 689; // setpoint ICP2
