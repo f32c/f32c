@@ -51,6 +51,7 @@ entity glue is
 	-- COP0 options
 	C_exceptions: boolean := true;
 	C_cop0_count: boolean := true;
+	C_cop0_compare: boolean := true;
 	C_cop0_config: boolean := true;
 
 	-- CPU core configuration options
@@ -221,8 +222,9 @@ begin
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner, C_full_shifter => C_full_shifter,
 	C_register_technology => C_register_technology,
-	C_cop0_count => C_cop0_count, C_cop0_config => C_cop0_config,
-	C_exceptions => C_exceptions, C_ll_sc => C_ll_sc,
+	C_cop0_count => C_cop0_count, C_cop0_compare => C_cop0_compare,
+	C_cop0_config => C_cop0_config, C_exceptions => C_exceptions,
+	C_ll_sc => C_ll_sc,
 	C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
 	-- debugging only
 	C_debug => C_debug
