@@ -50,7 +50,7 @@ vfiles += $(foreach core,$(xilinx_cores),$(core:.xco=.v))
 junk += $(local_corengcs)
 
 .PHONY: default xilinx_cores clean twr etwr
-default: $(project).bit $(project).mcs
+default: $(project).bit $(project).mcs $(project).svf
 xilinx_cores: $(corengcs)
 twr: $(project).twr
 etwr: $(project)_err.twr
