@@ -1,7 +1,7 @@
 project = xc6slx9
 vendor = xilinx
 family = spartan6
-part = xc6slx9-tqg144
+part = xc6slx9-tqg144-2
 top_module = glue
 isedir = /usr/local/xilinx/14.7/ISE_DS
 
