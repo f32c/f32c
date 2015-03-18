@@ -11,5 +11,5 @@ jtag newtap xc6slx9 tap -expected-id 0x24001093 -irlen 6
 
 scan_chain
 init
-svf -tap xc6slx9.tap default.svf
+svf -tap xc6slx9.tap xc6slx9.svf
 shutdown
