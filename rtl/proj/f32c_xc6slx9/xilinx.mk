@@ -87,10 +87,16 @@ date = $(shell date +%F-%H-%M)
 # some common junk
 junk += *.xrpt
 
-programming_files: $(project).bit $(project).mcs
+$(project).svf: $(project).bit
+	cp $< default.bit
+	impact -batch bit2svf.ut
+	mv default.svf $@
+	rm default.bit
+
+programming_files: $(project).bit $(project).mcs $(project).svf
 	mkdir -p $@/$(date)
 	mkdir -p $@/latest
-	for x in .bit .mcs .cfi _bd.bmm; do cp $(project)$$x $@/$(date)/$(project)$$x; cp $(project)$$x $@/latest/$(project)$$x; done
+	for x in .svf .bit .mcs; do cp $(project)$$x $@/$(date)/$(project)$$x; cp $(project)$$x $@/latest/$(project)$$x; done
 	$(xil_env); xst -help | head -1 | sed 's/^/#/' | cat - $(project).scr > $@/$(date)/$(project).scr
 
 $(project).mcs: $(project).bit
