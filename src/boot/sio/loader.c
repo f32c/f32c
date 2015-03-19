@@ -148,7 +148,7 @@ loop:
 		val = 0;
 		goto loop;
 	}
-	if (c == '\r') /* CR ? */
+	if (c >= 10 && c <= 13) /* CR / LF ? */
 		goto next;
 
 	val <<= 4;
@@ -189,7 +189,7 @@ loop:
 			);
 #endif
 		}
-		if (val >= 1 && val <= 3)
+		if (val <= 3)
 			len = (val << 1) + 5;
 		val = 0;
 		goto loop;
@@ -201,6 +201,10 @@ loop:
 		val = 0;
 		goto loop;
 	}
+
+	/* Valid len? */
+	if (len < 6)
+		goto loop;
 
 	/* End of address */
 	if (pos == len) {
