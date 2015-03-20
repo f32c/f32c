@@ -39,6 +39,7 @@ struct isr_link {
 
 
 void isr_register_handler(int, struct isr_link *);
+void isr_remove_handler(int, struct isr_link *);
 void enable_irq(int);
 void disable_irq(int);
 

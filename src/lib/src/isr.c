@@ -59,3 +59,12 @@ isr_register_handler(int irq, struct isr_link *isr_entry)
 	SLIST_INSERT_HEAD(&isr_registry[irq], isr_entry, isr_le);
 	enable_irq(irq);
 }
+
+void
+isr_remove_handler(int irq, struct isr_link *isr_entry)
+{
+	
+	SLIST_REMOVE(&isr_registry[irq], isr_entry, isr_link, isr_le);
+	if (SLIST_EMPTY(&isr_registry[irq]))
+		disable_irq(irq);
+}
