@@ -9,6 +9,9 @@ WITHOUT_LIBS = true
 CFLAGS += -march=mips3 -mtune=f32c -mno-div -mno-mul
 CFLAGS += -mno-branch-likely
 
+# Omit useless initializers to fit into 2 K of ROM
+CFLAGS += -Wno-error=maybe-uninitialized
+
 # Appropriately configure ../sio/loader.c build
 CFLAGS += -DROM_LOADER
 
