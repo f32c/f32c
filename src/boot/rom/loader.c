@@ -60,7 +60,6 @@ flash_read_block(char *buf, uint32_t addr, uint32_t len)
 }
 
 
-#ifndef ONLY_I_ROM
 static void
 pchar(char c)
 {
@@ -73,6 +72,7 @@ pchar(char c)
 }
 
 
+#ifndef ONLY_I_ROM
 static void
 phex(uint8_t c)
 {
@@ -111,15 +111,14 @@ puts(const char *cp)
 }
 #else /* ONLY_I_ROM */
 #define	puts(c)
-#define	pchar(c)
 #define	phex32(c)
 #endif /* !ONLY_I_ROM */
 
 
-static int
+static uint8_t
 sio_getch()
 {
-	int c;
+	uint8_t c;
 
 	do {
 		INB(c, IO_SIO_STATUS);
@@ -132,22 +131,59 @@ sio_getch()
 static void *
 sio_load_binary(void)
 {
-	uint32_t i, base = 0, len = 0;
+	uint32_t i, t;
+	uint32_t csum, base, len;
 	char *cp;
 
-	sio_setbaud(3000000);
-
-	for (i = 0; i < 4; i++)
-		base = (base << 8) + sio_getch();
-	for (i = 0; i < 4; i++)
-		len = (len << 8) + sio_getch();
-	for (cp = (void *) base; len > 0; len--, cp++) {
-		*cp = sio_getch();
-		OUTB(IO_LED, ((int) cp) >> 10);
-	}
-
-	sio_setbaud(115200);
-	return ((void *) base);
+	do {
+		OUTB(IO_LED, (base) >> 10);
+		i = sio_getch();
+		switch (i) {
+		case 0x80:	/* Set base addr */
+			for (i = 0; i < 4; i++)
+				base = (base << 8) + sio_getch();
+			break;
+		case 0x81:	/* Read csum */
+			t = csum;
+			for (i = 0; i < 4; i++) {
+				pchar(t >> 24);
+				t <<= 8;
+			}
+			break;
+		case 0x90:	/* Set len = base */
+			len = base;
+			break;
+		case 0x91:	/* Set csum = base */
+			csum = base;
+			break;
+		case 0xa0:	/* Write block */
+			cp = (void *) base;
+			csum = 0;
+			for (i = 0; i < len; i++) {
+				t = sio_getch();
+				cp[i] = t;
+				csum += t;
+			}
+			break;
+		case 0xa1:	/* Read block */
+			cp = (void *) base;
+			csum = 0;
+			for (i = 0; i < len; i++) {
+				t = cp[i];
+				pchar(t);
+				csum += t;
+			}
+			break;
+		case 0xb0:	/* Set baudrate, abuse base as speed */
+			sio_setbaud(base);
+			break;
+		case 0xb1:	/* Done, jump to base */
+			return ((void *) base);
+			break;
+		default:
+			break;
+		}
+	} while (1);
 }
 
 
