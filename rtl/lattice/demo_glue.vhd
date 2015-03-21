@@ -82,6 +82,7 @@ entity glue is
 	C_sdcard: boolean := true;
 	C_framebuffer: boolean := true;
 	C_pcm: boolean := true;
+	C_timer: boolean := true;
 	C_dds: boolean := true
     );
     port (
@@ -183,6 +184,13 @@ architecture Behavioral of glue is
     signal R_dds, R_dds_fast, R_dds_acc: std_logic_vector(31 downto 0);
     signal R_dds_enable: std_logic;
 
+    -- Timer
+    signal from_timer: std_logic_vector(31 downto 0);
+    signal timer_ce: std_logic;
+    signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
+    signal icp_enable: std_logic_vector(1 downto 0);
+    signal timer_intr: std_logic;
+
     -- debugging only
     signal trace_addr: f32c_debug_addr;
     signal trace_data: f32c_data_bus;
@@ -210,7 +218,7 @@ begin
     --
     G_CPU: for i in 0 to (C_cpus - 1) generate
     begin
-    intr(i) <= "0000" & from_sio(8) & R_fb_intr when i = 0 else "000000";
+    intr(i) <= "000" & timer_intr & from_sio(8) & R_fb_intr when i = 0 else "000000";
     res(i) <= sw(i) or R_cpu_reset(i) when C_debug else R_cpu_reset(i);
     cpu: entity work.cache
     generic map (
@@ -462,10 +470,19 @@ begin
 	    R_gpio_in(28) <= j2_16;
 	end if;
     end process;
+    G_led_standard:
+    if C_timer = false generate
     led <= R_led when C_leds_btns else (others => '-');
+    end generate;
+    G_led_timer:
+    if C_timer = true generate
+    ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_led(6);
+    ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_led(7);
+    led <= ocp_mux & R_led(5 downto 0) when C_leds_btns else (others => '-');
+    end generate;
 
     -- XXX replace with a balanced multiplexer
-    process(io_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard)
+    process(io_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard, from_timer)
     begin
 	case io_addr(7 downto 4) is
 	when x"0"  =>
@@ -497,6 +514,12 @@ begin
 	when x"5"  =>
 	    if C_pcm then
 		io_to_cpu <= from_pcm;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
+	when x"8" | x"9" | x"A" | x"B"  =>
+	    if C_timer then
+		io_to_cpu <= from_timer;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
@@ -771,6 +794,34 @@ begin
     j2_12 <= R_gpio_out(26) when R_gpio_ctl(26) = '1' else 'Z';
     j2_13 <= R_gpio_out(27) when R_gpio_ctl(27) = '1' else 'Z';
     j2_16 <= R_gpio_out(28) when R_gpio_ctl(28) = '1' else 'Z';
+
+    --
+    -- Timer
+    --
+    G_timer:
+    if C_timer generate
+    timer: entity work.timer
+    generic map (
+        C_pres => 10,
+        C_bits => 12
+    )
+    port map (
+        clk => clk, ce => timer_ce, addr => io_addr(5 downto 2),
+	bus_write => io_write, byte_sel => io_byte_sel,
+	bus_in => cpu_to_io, bus_out => from_timer,
+	timer_irq => timer_intr,
+	ocp_enable => ocp_enable, -- enable physical output
+	ocp => ocp, -- output compare signal
+	icp_enable => icp_enable, -- enable physical input
+	icp => R_led(1 downto 0) -- for debugging connect led0 and led1 to icp 0 and 1
+    );
+    timer_ce <= io_addr_strobe(R_cur_io_port) when
+      io_addr(7 downto 4) = x"8" or 
+      io_addr(7 downto 4) = x"9" or
+      io_addr(7 downto 4) = x"A" or 
+      io_addr(7 downto 4) = x"B" 
+      else '0';
+    end generate;
 
     --
     -- DDS

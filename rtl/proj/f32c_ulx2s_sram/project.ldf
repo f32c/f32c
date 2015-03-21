@@ -3,7 +3,7 @@
     <Options/>
     <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Timing">
         <Options top="glue"/>
-        <Source name="../../lattice/demo_glue_timer.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../lattice/demo_glue.vhd" type="VHDL" type_short="VHDL">
             <Options top_module="glue"/>
         </Source>
         <Source name="../../cpu/defs_f32c.vhd" type="VHDL" type_short="VHDL">
