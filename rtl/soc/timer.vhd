@@ -126,6 +126,8 @@ architecture arch of timer is
     signal R_icp_rising_edge: std_logic_vector(C_icps_max-1 downto 0);
     signal R_icp_hit: std_logic_vector(C_icps_max-1 downto 0); -- becomes 1 when icp condition is met
     signal R_icp_lt_sp: std_logic_vector(C_icps_max-1 downto 0); -- becomes 1 when icp is less than setpoint
+    signal R_icp_wants_faster: std_logic_vector(C_icps_max-1 downto 0);
+    signal R_icp_wants_slower: std_logic_vector(C_icps_max-1 downto 0);
 
 
     -- output compare related registers
@@ -141,6 +143,8 @@ architecture arch of timer is
     signal Rintr: std_logic_vector(C_iocps_max-1 downto 0);
     
     signal internal_ocp: std_logic_vector(C_ocps_max-1 downto 0); -- non-inverted ocp signal
+    
+    constant C_afc_joint_register : boolean := false; -- use joint register for afc (otherwise use for loop)
 
 begin
     with addr select
@@ -160,8 +164,8 @@ begin
     
     sign <= R(C_counter)(C_bits-1); -- output sign (MSB bit of the counter)
     
-    icp_enable <= R_control(C_icpn_enable(C_icps_max-1)) & R_control(C_icpn_enable(0));
-    ocp_enable <= R_control(C_ocpn_enable(C_ocps_max-1)) & R_control(C_ocpn_enable(0));
+    -- icp_enable <= R_control(C_icpn_enable(C_icps_max-1)) & R_control(C_icpn_enable(0));
+    -- ocp_enable <= R_control(C_ocpn_enable(C_ocps_max-1)) & R_control(C_ocpn_enable(0));
 
     -- this will save us some typing
     commit <= '1' when ce = '1' and bus_write = '1' and addr = C_apply else '0';
@@ -180,26 +184,66 @@ begin
 
     -- AFC increment control
     R_increment_faster <= R_increment+1;
-    R_faster <= '1' when R_increment < R_inc_max and 
-     (      (R_icp_hit(0) = '1'
-         and ( R_icp_lt_sp(0)='1' xor R_control(C_icpn_afcinv(0))='1' )  -- previous icp value less than the setpoint
-         and R_control(C_icpn_afcen(0)) = '1')
-       or   (R_icp_hit(C_icps_max-1) = '1' 
-         and ( R_icp_lt_sp(C_icps_max-1)='1' xor R_control(C_icpn_afcinv(C_icps_max-1))='1' ) -- previous icp value less than the setpoint
-         and R_control(C_icpn_afcen(C_icps_max-1)) = '1')
-     )
-     else '0';
-     
     R_increment_slower <= R_increment-1;
-    R_slower <= '1' when R_increment > R_inc_min and 
-     (      (R_icp_hit(0) = '1' 
-         and ( R_icp_lt_sp(0)='0' xor R_control(C_icpn_afcinv(0))='1' ) -- previous icp value greater than the setpoint
-         and R_control(C_icpn_afcen(0)) = '1')
-       or   (R_icp_hit(C_icps_max-1) = '1' 
-         and ( R_icp_lt_sp(C_icps_max-1)='0' xor R_control(C_icpn_afcinv(C_icps_max-1))='1' ) -- previous icp value greater than the setpoint 
-         and R_control(C_icpn_afcen(C_icps_max-1)) = '1')
-     )
-     else '0';
+
+    joint_register_afc: if C_afc_joint_register generate
+    -- takes more LE than process_var_afc
+    for_icp_afc: for i in 0 to C_icps_max-1 generate
+        R_icp_wants_faster(i) <= '1' 
+          when R_icp_hit(i) = '1' -- afc hit
+          -- previous icp value less than the setpoint
+          and ( R_icp_lt_sp(i)='1' xor R_control(C_icpn_afcinv(i))='1' )  
+          and R_control(C_icpn_afcen(i)) = '1' -- and afc is enabled
+          else '0';
+        R_icp_wants_slower(i) <= '1' 
+          when R_icp_hit(i) = '1' -- afc hit
+          -- previous icp value greater than the setpoint 
+          and ( R_icp_lt_sp(i)='0' xor R_control(C_icpn_afcinv(i))='1' )
+          and R_control(C_icpn_afcen(i)) = '1' -- and afc is enabled
+          else '0';
+    end generate;
+    R_faster <= '1' when R_increment < R_inc_max and R_icp_wants_faster /= 0 else '0';
+    R_slower <= '1' when R_increment > R_inc_min and R_icp_wants_slower /= 0 else '0';
+    end generate;
+    
+    process_var_afc: if not C_afc_joint_register generate
+      -- looks like it could be written shorter
+      process(clk)
+        variable faster : std_logic;
+        variable slower : std_logic;
+      begin
+        faster := '0';
+        slower := '0';
+        for i in 0 to C_icps_max-1 loop
+          if R_icp_hit(i) = '1' -- afc hit
+            -- previous icp value less than the setpoint
+            and ( R_icp_lt_sp(i)='1' xor R_control(C_icpn_afcinv(i))='1' )  
+            and R_control(C_icpn_afcen(i)) = '1' -- and afc is enabled
+          then
+            faster := '1';
+          end if;
+          if R_icp_hit(i) = '1' -- afc hit
+            -- previous icp value less than the setpoint
+            and ( R_icp_lt_sp(i)='0' xor R_control(C_icpn_afcinv(i))='1' )  
+            and R_control(C_icpn_afcen(i)) = '1' -- and afc is enabled
+          then
+            slower := '1';
+          end if;
+        end loop;
+        if R_increment < R_inc_max and faster = '1' then
+          R_faster <= '1';
+        else
+          R_faster <= '0';
+        end if;
+        if R_increment > R_inc_min and slower = '1' then
+          R_slower <= '1';
+        else 
+          R_slower <= '0';
+        end if;
+      end process;
+    end generate;
+    
+    
 
     -- extended control register
     extended_control_register: if C_ctrl_bits > C_bits generate
@@ -211,7 +255,7 @@ begin
       R_control <= R(C_control)(C_ctrl_bits-1 downto 0);
       Rtmp_control <= Rtmp(C_control)(C_ctrl_bits-1 downto 0);
     end generate;
-        
+
     -- join all interrupt request bits into one bit
     -- todo: aggregate OR for all with variable number of icp/ocp units
     timer_irq <= ( R_control(C_ocpn_ie(0))              and Rintr(C_ocpn_intr(0)) )
@@ -255,6 +299,7 @@ begin
              and R_counter(C_bits+C_pres-1 downto C_pres) <  R(C_ocpn_stop(i)) ) )
       else '0';
     ocp(i) <= internal_ocp(i) xor R_control(C_ocpn_xor(i)); -- output optionally inverted
+    ocp_enable(i) <= R_control(C_ocpn_enable(i));
 
     -- ocp synchronizer (2-stage shift register)
     process(clk)
@@ -302,6 +347,7 @@ begin
     -- here is vhdl implementation of the 3-stage shift register
     -- http://www.bitweenie.com/listings/vhdl-shift-register/
     input_capture: for i in 0 to C_icps-1 generate    
+    icp_enable(i) <= R_control(C_icpn_enable(i));
     -- icp synchronizer (3-stage shift register)
     process(clk)
     begin
