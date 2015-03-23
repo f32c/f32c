@@ -144,7 +144,7 @@ architecture arch of timer is
     
     signal internal_ocp: std_logic_vector(C_ocps_max-1 downto 0); -- non-inverted ocp signal
     
-    constant C_afc_joint_register : boolean := false; -- use joint register for afc (otherwise use for loop)
+    constant C_afc_joint_register : boolean := true; -- afc joint register is true combinatorial logico
 
 begin
     with addr select
@@ -190,13 +190,13 @@ begin
     -- takes more LE than process_var_afc
     for_icp_afc: for i in 0 to C_icps_max-1 generate
         R_icp_wants_faster(i) <= '1' 
-          when R_icp_hit(i) = '1' -- afc hit
+          when R_icp_hit(i) = '1' -- icp hit
           -- previous icp value less than the setpoint
           and ( R_icp_lt_sp(i)='1' xor R_control(C_icpn_afcinv(i))='1' )  
           and R_control(C_icpn_afcen(i)) = '1' -- and afc is enabled
           else '0';
         R_icp_wants_slower(i) <= '1' 
-          when R_icp_hit(i) = '1' -- afc hit
+          when R_icp_hit(i) = '1' -- icp hit
           -- previous icp value greater than the setpoint 
           and ( R_icp_lt_sp(i)='0' xor R_control(C_icpn_afcinv(i))='1' )
           and R_control(C_icpn_afcen(i)) = '1' -- and afc is enabled
@@ -242,8 +242,6 @@ begin
         end if;
       end process;
     end generate;
-    
-    
 
     -- extended control register
     extended_control_register: if C_ctrl_bits > C_bits generate
