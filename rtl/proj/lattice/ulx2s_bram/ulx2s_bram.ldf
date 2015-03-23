@@ -2,7 +2,7 @@
 <BaliProject version="3.2" title="ulx2s_bram" device="LFXP2-5E-6TN144C" default_implementation="impl1">
     <Options/>
     <Implementation title="impl1" dir="impl1" description="impl1" synthesis="synplify" default_strategy="Timing">
-        <Options def_top="glue" top="glue"/>
+        <Options top="glue"/>
         <Source name="../../../cpu/alu.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -75,7 +75,7 @@
         <Source name="../../../lattice/ulx2s_toplevel_bram.vhd" type="VHDL" type_short="VHDL">
             <Options top_module="glue"/>
         </Source>
-        <Source name="../../ulx2s.lpf" type="Logic Preference" type_short="LPF">
+        <Source name="../ulx2s.lpf" type="Logic Preference" type_short="LPF">
             <Options/>
         </Source>
     </Implementation>
