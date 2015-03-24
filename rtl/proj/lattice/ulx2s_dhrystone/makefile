@@ -1,5 +1,5 @@
 all:
-	./build.sh project
+	../build.sh project
 
 clean:
 	rm -rf project .recovery *~
