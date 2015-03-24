@@ -155,6 +155,8 @@ architecture x of bram is
     signal ibram_0, ibram_1, ibram_2, ibram_3: std_logic_vector(7 downto 0);
     signal dbram_0, dbram_1, dbram_2, dbram_3: std_logic_vector(7 downto 0);
 
+    signal write_enable: boolean;
+
 begin
 
     imem_data_ready <= '1';
@@ -163,11 +165,14 @@ begin
     dmem_data_out <= dbram_3 & dbram_2 & dbram_1 & dbram_0;
     imem_data_out <= ibram_3 & ibram_2 & ibram_1 & ibram_0;
 
+    write_enable <=
+      dmem_write = '1' and dmem_addr(19 downto 9) /= x"00" & "000";
+
     process(clk)
     begin
 	if falling_edge(clk) then
-	    if dmem_addr_strobe = '1' then
-		if dmem_write = '1' and dmem_byte_sel(0) = '1' then
+	    if dmem_addr_strobe = '1' and dmem_byte_sel(0) = '1' then
+		if write_enable then
 		    bram_0(conv_integer(dmem_addr)) <=
 		      dmem_data_in(7 downto 0);
 		end if;
@@ -183,7 +188,7 @@ begin
     begin
 	if falling_edge(clk) then
 	    if dmem_addr_strobe = '1' and dmem_byte_sel(1) = '1' then
-		if dmem_write = '1' then
+		if write_enable then
 		    bram_1(conv_integer(dmem_addr)) <=
 		      dmem_data_in(15 downto 8);
 		end if;
@@ -199,7 +204,7 @@ begin
     begin
 	if falling_edge(clk) then
 	    if dmem_addr_strobe = '1' and dmem_byte_sel(2) = '1' then
-		if dmem_write = '1' then
+		if write_enable then
 		    bram_2(conv_integer(dmem_addr)) <=
 		      dmem_data_in(23 downto 16);
 		end if;
@@ -215,7 +220,7 @@ begin
     begin
 	if falling_edge(clk) then
 	    if dmem_addr_strobe = '1' and dmem_byte_sel(3) = '1' then
-		if dmem_write = '1' then
+		if write_enable then
 		    bram_3(conv_integer(dmem_addr)) <=
 		      dmem_data_in(31 downto 24);
 		end if;
