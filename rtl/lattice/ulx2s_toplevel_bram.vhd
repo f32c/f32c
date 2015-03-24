@@ -75,7 +75,7 @@ begin
 	C_mem_size => C_mem_size
     )
     port map (
-	clk => clk, intr => "000000",
+	clk => clk,
 	rs232_tx => rs232_tx, rs232_rx => rs232_rx, rs232_break => rs232_break,
 	leds => led, btns => btns, sw(3 downto 0) => sw
     );
