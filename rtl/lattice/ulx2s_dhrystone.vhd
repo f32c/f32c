@@ -66,16 +66,12 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
-	C_sio: boolean := true;
-	C_leds_btns: boolean := true
+	C_sio: boolean := true
     );
     port (
 	clk_25m: in std_logic;
 	rs232_tx: out std_logic;
-	rs232_rx: in std_logic;
-	led: out std_logic_vector(7 downto 0);
-	btn_left, btn_right, btn_up, btn_down, btn_center: in std_logic;
-	sw: in std_logic_vector(3 downto 0)
+	rs232_rx: in std_logic
     );
 end glue;
 
@@ -94,10 +90,7 @@ architecture Behavioral of glue is
     -- I/O
     signal io_addr_strobe: std_logic;
     signal from_sio: std_logic_vector(31 downto 0);
-    signal sio_ce, sio_break: std_logic;
-    signal R_led: std_logic_vector(7 downto 0);
-    signal R_sw: std_logic_vector(3 downto 0);
-    signal R_btns: std_logic_vector(4 downto 0);
+    signal sio_ce: std_logic;
 
 begin
 
@@ -109,7 +102,7 @@ begin
     )
     port map (
 	clk_25m => clk_25m, clk => clk, clk_325m => open,
-	ena_325m => '0', sel => '0', key => '0', res => sio_break
+	ena_325m => '0', sel => '0', key => '0', res => '0'
     );
 
     -- f32c core
@@ -154,7 +147,7 @@ begin
     port map (
 	clk => clk, ce => sio_ce, txd => rs232_tx, rxd => rs232_rx,
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_sio, break => sio_break
+	bus_in => cpu_to_dmem, bus_out => from_sio, break => open
     );
     sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11" and
       dmem_addr(7 downto 4) = x"2" else '0';
@@ -162,46 +155,10 @@ begin
 
     --
     -- I/O port map:
-    -- 0xf*****10: (4B, RW) : LED (WR), switches, buttons (RD)
     -- 0xf*****20: (4B, RW) * SIO
     --
-    io_addr_strobe <= '1' when C_leds_btns and dmem_addr(31 downto 30) = "11"
-      else '0';
-    process(clk)
-    begin
-	if rising_edge(clk) and io_addr_strobe = '1'
-	  and dmem_write = '1' then
-	    -- LEDs
-	    if C_leds_btns and dmem_addr(7 downto 4) = x"1" and
-	      dmem_byte_sel(1) = '1' then
-		R_led <= cpu_to_dmem(15 downto 8);
-	    end if;
-	end if;
-	if C_leds_btns and rising_edge(clk) then
-	    R_sw <= sw;
-	    R_btns <= btn_center & btn_up & btn_down & btn_left & btn_right;
-	end if;
-    end process;
-    led <= R_led when C_leds_btns else "ZZZZZZZZ";
-    process(dmem_addr, R_sw, R_btns, from_sio)
-    begin
-	case dmem_addr(7 downto 4) is
-	when x"1"  =>
-	    if C_leds_btns then
-		io_to_cpu <="------------" & R_sw & "-----------" & R_btns;
-	    else
-		io_to_cpu <= (others => '-');
-	    end if;
-	when x"2"  =>
-	    if C_sio then
-		io_to_cpu <= from_sio;
-	    else
-		io_to_cpu <= (others => '-');
-	    end if;
-	when others =>
-	    io_to_cpu <= (others => '-');
-	end case;
-    end process;
+    io_addr_strobe <= dmem_addr_strobe when dmem_addr(31) = '1' else '0';
+    io_to_cpu <= from_sio;
 
     -- Block RAM
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
