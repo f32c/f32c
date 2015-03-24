@@ -49,6 +49,7 @@ entity glue_bram is
 
 	-- COP0 options
 	C_cop0_count: boolean := true;
+	C_cop0_compare: boolean := true;
 	C_cop0_config: boolean := true;
 
 	-- CPU core configuration options
@@ -70,7 +71,6 @@ entity glue_bram is
     );
     port (
 	clk: in std_logic;
-	intr: in std_logic_vector(7 downto 2);
 	rs232_rx: in std_logic;
 	rs232_tx, rs232_break: out std_logic;
 	btns: in std_logic_vector(7 downto 0);
@@ -91,9 +91,10 @@ architecture Behavioral of glue_bram is
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
 
     -- I/O
+    signal intr: std_logic_vector(5 downto 0);
     signal io_addr_strobe: std_logic;
     signal from_sio: std_logic_vector(31 downto 0);
-    signal sio_ce, sio_intr: std_logic;
+    signal sio_ce: std_logic;
     signal R_leds: std_logic_vector(7 downto 0);
     signal R_sw: std_logic_vector(7 downto 0);
     signal R_btns: std_logic_vector(7 downto 0);
@@ -108,6 +109,7 @@ begin
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
 	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
 	C_cop0_count => C_cop0_count, C_cop0_config => C_cop0_config,
+	C_cop0_compare => C_cop0_compare,
 	C_branch_prediction => C_branch_prediction,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner, C_full_shifter => C_full_shifter,
@@ -130,6 +132,7 @@ begin
 	trace_addr => "------", trace_data => open
     );
     final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
+    intr <= "0000" & from_sio(8) & '0';
 
     -- RS232 sio
     G_sio:
@@ -146,7 +149,6 @@ begin
     );
     sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11" and
       dmem_addr(7 downto 4) = x"2" else '0';
-    sio_intr <= from_sio(8);
     end generate;
 
     --
