@@ -1,5 +1,5 @@
 #!/bin/sh
-
+THISDIR=$(dirname ${0})
 DIAMOND_BINDIR=$(dirname $(which diamond))
 DIAMOND_ROOT=$(dirname $(dirname ${DIAMOND_BINDIR}))
 DIAMOND_TCLTK=$(find ${DIAMOND_ROOT} -type d -name tcltk)
@@ -22,4 +22,4 @@ cd ${DIR}
 ln -s "${PROJECT}_${PROJECT}.p2t" "${BUGGYNAME}.p2t"
 cd ..
 # end bugfix
-diamondc build.tcl $*
+diamondc ${THISDIR}/build.tcl $*
