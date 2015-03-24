@@ -47,6 +47,10 @@ entity glue is
 	clk_25m: in std_logic;
 	rs232_tx: out std_logic;
 	rs232_rx: in std_logic;
+	j1_2, j1_3, j1_4, j1_8, j1_9, j1_13, j1_14, j1_15: inout std_logic;
+	j1_16, j1_17, j1_18, j1_19, j1_20, j1_21, j1_22, j1_23: inout std_logic;
+	j2_2, j2_3, j2_4, j2_5, j2_6, j2_7, j2_8, j2_9: inout std_logic;
+	j2_10, j2_11, j2_12, j2_13, j2_16: inout std_logic;
 	led: out std_logic_vector(7 downto 0);
 	btn_left, btn_right, btn_up, btn_down, btn_center: in std_logic;
 	sw: in std_logic_vector(3 downto 0)
@@ -77,6 +81,35 @@ begin
     port map (
 	clk => clk,
 	rs232_tx => rs232_tx, rs232_rx => rs232_rx, rs232_break => rs232_break,
+	gpio(0) => j1_2,
+	gpio(1) => j1_3,
+	gpio(2) => j1_4,
+	gpio(3) => j1_8,
+	gpio(4) => j1_9,
+	gpio(5) => j1_13,
+	gpio(6) => j1_14,
+	gpio(7) => j1_15,
+	gpio(8) => j1_16,
+	gpio(9) => j1_17,
+	gpio(10) => j1_18,
+	gpio(11) => j1_19,
+	gpio(12) => j1_20,
+	gpio(13) => j1_21,
+	gpio(14) => j1_22,
+	gpio(15) => j1_23,
+	gpio(16) => j2_2,
+	gpio(17) => j2_3,
+	gpio(18) => j2_4,
+	gpio(19) => j2_5,
+	gpio(20) => j2_6,
+	gpio(21) => j2_7,
+	gpio(22) => j2_8,
+	gpio(23) => j2_9,
+	gpio(24) => j2_10,
+	gpio(25) => j2_11,
+	gpio(26) => j2_12,
+	gpio(27) => j2_13,
+	gpio(28) => j2_16,
 	leds => led, btns => btns, sw(3 downto 0) => sw
     );
     btns <= "000" & btn_left & btn_right & btn_up & btn_down & btn_center;
