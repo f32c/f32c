@@ -67,6 +67,7 @@ entity glue_bram is
 	-- SoC configuration options
 	C_mem_size: integer := 16;	-- in KBytes
 	C_sio: boolean := true;
+	C_gpio: boolean := true;
 	C_timer: boolean := true;
 	C_leds_btns: boolean := true
     );
@@ -76,6 +77,7 @@ entity glue_bram is
 	rs232_tx, rs232_break: out std_logic;
 	btns: in std_logic_vector(7 downto 0);
 	sw: in std_logic_vector(7 downto 0);
+	gpio: inout std_logic_vector(28 downto 0);
 	leds: out std_logic_vector(7 downto 0)
     );
 end glue_bram;
@@ -98,6 +100,9 @@ architecture Behavioral of glue_bram is
     signal icp_enable: std_logic_vector(1 downto 0);
     signal timer_intr: std_logic;
     
+    -- GPIO
+    signal R_gpio_ctl, R_gpio_in, R_gpio_out: std_logic_vector(28 downto 0);
+
     -- I/O
     signal intr: std_logic_vector(5 downto 0);
     signal io_addr_strobe: std_logic;
@@ -170,6 +175,39 @@ begin
     begin
 	if rising_edge(clk) and io_addr_strobe = '1'
 	  and dmem_write = '1' then
+	    -- GPIO
+	    if C_gpio and dmem_addr(7 downto 4) = x"0" then
+		if dmem_addr(2) = '0' then
+		    if dmem_byte_sel(0) = '1' then
+			R_gpio_out(7 downto 0) <= cpu_to_dmem(7 downto 0);
+		    end if;
+		    if dmem_byte_sel(1) = '1' then
+			R_gpio_out(15 downto 8) <= cpu_to_dmem(15 downto 8);
+		    end if;
+		    if dmem_byte_sel(2) = '1' then
+			R_gpio_out(23 downto 16) <= cpu_to_dmem(23 downto 16);
+		    end if;
+		    if dmem_byte_sel(3) = '1' then
+			R_gpio_out(28 downto 24) <= cpu_to_dmem(28 downto 24);
+		    end if;
+		else
+		    if dmem_byte_sel(0) = '1' then
+			R_gpio_ctl(7 downto 0) <= cpu_to_dmem(7 downto 0);
+		    end if;
+		    if dmem_byte_sel(1) = '1' then
+			R_gpio_ctl(15 downto 8) <= cpu_to_dmem(15 downto 8);
+		    end if;
+		    if dmem_byte_sel(2) = '1' then
+			R_gpio_ctl(23 downto 16) <= cpu_to_dmem(23 downto 16);
+		    end if;
+		    if dmem_byte_sel(3) = '1' then
+			R_gpio_ctl(28 downto 24) <= cpu_to_dmem(28 downto 24);
+			--if C_dds then
+			--    R_dds_enable <= cpu_to_dmem(31);
+			--end if;
+		    end if;
+		end if;
+	    end if;
 	    -- LEDs
 	    if C_leds_btns and dmem_addr(7 downto 4) = x"1" and
 	      dmem_byte_sel(1) = '1' then
@@ -179,6 +217,9 @@ begin
 	if C_leds_btns and rising_edge(clk) then
 	    R_sw <= sw;
 	    R_btns <= btns;
+	end if;
+	if C_gpio and rising_edge(clk) then
+	    R_gpio_in <= gpio;
 	end if;
     end process;
 
@@ -196,6 +237,12 @@ begin
     process(dmem_addr, R_sw, R_btns, from_sio, from_timer)
     begin
 	case dmem_addr(7 downto 4) is
+	when x"0"  =>
+	    if C_gpio then
+		io_to_cpu <= "---" & R_gpio_in;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
 	when x"1"  =>
 	    if C_leds_btns then
 		io_to_cpu <="--------" & R_sw & "--------" & R_btns;
@@ -218,6 +265,11 @@ begin
 	    io_to_cpu <= (others => '-');
 	end case;
     end process;
+
+    -- GPIO
+    gpio_3state: for i in 0 to 28 generate
+      gpio(i) <= R_gpio_out(i) when R_gpio_ctl(i) = '1' else 'Z';
+    end generate;
 
     -- Timer
     G_timer:
