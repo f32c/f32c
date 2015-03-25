@@ -72,14 +72,19 @@ ifeq ($(LIB),crt0bram)
 endif
 
 ifeq ($(LIB),c)
- ASFILES = ${ARCH}/setjmp.S ${ARCH}/exception.S
+ ifneq ($(ARCH),riscv)
+  ASFILES = ${ARCH}/setjmp.S ${ARCH}/exception.S
+ endif
 
  CFILES = assert.c atoi.c diskio.c div.c div64.c fatfs.c \
-	file.c gets.c isr.c malloc.c memcmp.c memcpy.c memmove.c \
-	memset.c mul.c printf.c qsort.c \
-	random.c sdcard.c setjmperr.c sio.c sio_baud.c sio_poll.c \
+	file.c gets.c malloc.c memcmp.c memcpy.c memmove.c \
+	memset.c mul.c printf.c qsort.c random.c sdcard.c sio_poll.c \
 	spi.c sprintf.c strcasecmp.c strcpy.c strncpy.c \
 	strstr.c strtol.c
+
+ ifneq ($(ARCH),riscv)
+  CFILES += sio.c sio_baud.c setjmperr.c isr.c
+ endif
 
  ifeq ($(INT_LIBC),true)
   LIB = cint
