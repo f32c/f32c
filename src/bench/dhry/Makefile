@@ -4,7 +4,7 @@ PROG = dhry
 WARNS = 1
 
 # Override -Os, and turn on extra optimization efforts
-DHRY_CFLAGS += -Ofast
+#DHRY_CFLAGS += -Ofast
 DHRY_CFLAGS += -fselective-scheduling
 
 # Inlining functions is not permitted per Dhrystone rules!
