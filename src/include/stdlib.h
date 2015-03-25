@@ -61,9 +61,13 @@ exit(int x __unused)
 
 	while (1) {
 		__asm __volatile (
+#ifdef __mips__
 			".set noreorder\n"
 			"jr $0\n"
 			"mtc0 $0, $12"	/* Mask and disable all interrupts */
+#else /* riscv */
+			"jr zero\n"
+#endif
 		);
 	}
 }
