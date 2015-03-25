@@ -89,7 +89,7 @@ junk += *.xrpt
 
 $(project).svf: $(project).bit
 	cp $< default.bit
-	impact -batch bit2svf.ut
+	$(xil_env); impact -batch bit2svf.ut
 	mv default.svf $@
 	rm default.bit
 
@@ -98,6 +98,9 @@ programming_files: $(project).bit $(project).mcs $(project).svf
 	mkdir -p $@/latest
 	for x in .svf .bit .mcs; do cp $(project)$$x $@/$(date)/$(project)$$x; cp $(project)$$x $@/latest/$(project)$$x; done
 	$(xil_env); xst -help | head -1 | sed 's/^/#/' | cat - $(project).scr > $@/$(date)/$(project).scr
+
+program: programming_files
+	openocd --file=interface/altera-usb-blaster.cfg --file=$(project).ocd
 
 $(project).mcs: $(project).bit
 	$(xil_env); \
