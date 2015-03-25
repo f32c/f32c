@@ -121,7 +121,10 @@ next_file:
 			if ((i & BTN_RIGHT))
 				break;
 		}
+#ifdef __mips__
+		/* Wait for an interrupt, but which one? - XXX REVISIT!!! */
 		__asm __volatile__("wait");
+#endif
 	}
 	close(f);
 	fpos++;
