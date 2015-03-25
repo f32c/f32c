@@ -15,17 +15,23 @@ else
 ISA_CHECK = tclsh ${BASE_DIR}tools/isa_check.tcl
 endif
 
-CROSS_COMPILE = mips-elf-
+CROSS_COMPILE = $(ARCH)-elf-
 
 INC =  -I.
 INC += -I$(PY_SRC)
 INC += -I$(BUILD)
 
-AS = mips-elf-gcc -G 32768 -EL -c -I../../../include -nostdinc -nostdlib -march=f32c
+ifeq ($(ARCH),mips)
+ AS = mips-elf-gcc -G 32768 -EL -c -I../../../include -nostdinc -nostdlib -march=f32c
+else
+ AS = riscv-elf-gcc -c -I../../../include -nostdinc -nostdlib
+endif
 
-CFLAGS_MIPS = -I../../../include -include sys/param.h -nostdinc
-CFLAGS_MIPS += -G 32768 -EL -march=f32c -ffunction-sections
-CFLAGS = $(INC) -Wall -Werror -ansi -std=gnu99 -nostdlib $(CFLAGS_MIPS) $(COPT)
+CFLAGS_F32C = -I../../../include -include sys/param.h -nostdinc -ffunction-sections
+ifeq ($(ARCH),mips)
+ CFLAGS_F32C += -G 32768 -EL -march=f32c
+endif
+CFLAGS = $(INC) -Wall -Werror -ansi -std=gnu99 -nostdlib $(CFLAGS_F32C) $(COPT)
 
 #Debugging/Optimization
 ifeq ($(DEBUG), 1)
@@ -48,9 +54,9 @@ OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_S:.S=.o)) $(SRC_C:.c=.o)
 all: $(PROG).bin
 
 $(PROG).bin: $(PROG).elf
-	$(ISA_CHECK) mips $(PROG).elf
-	mips-elf-objcopy -O binary $(PROG).elf $(PROG).bin
-	mips-elf-objcopy -O srec $(PROG).elf $(PROG).hex
+	$(ISA_CHECK) $(ARCH) $(PROG).elf
+	$(ARCH)-elf-objcopy -O binary $(PROG).elf $(PROG).bin
+	$(ARCH)-elf-objcopy -O srec $(PROG).elf $(PROG).hex
 
 $(PROG).elf: $(OBJ)
 	$(ECHO) "LINK $@"
