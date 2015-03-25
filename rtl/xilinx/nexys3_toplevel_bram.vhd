@@ -30,13 +30,16 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+library unisim;
+use unisim.vcomponents.all;
+
 use work.f32c_pack.all;
 
 
 entity glue is
     generic (
 	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 60;
+	C_clk_freq: integer := 80;
 
 	-- SoC configuration options
 	C_mem_size: integer := 32;
@@ -49,7 +52,7 @@ entity glue is
 	rs232_dce_rxd: in std_logic;
 	led: out std_logic_vector(7 downto 0);
 	btn_center, btn_south, btn_north, btn_east, btn_west: in std_logic;
-        sw: in std_logic_vector(7 downto 0)
+	sw: in std_logic_vector(7 downto 0)
     );
 end glue;
 
@@ -65,6 +68,13 @@ begin
     )
     port map(
 	clk_100m => clk_100m, clk => clk, key => '0', sel => '0'
+    );
+
+    -- reset hard-block: Xilinx Spartan-6 specific
+    reset: startup_spartan6
+    port map (
+	clk => clk, gsr => rs232_break, gts => rs232_break,
+	keyclearb => '0'
     );
 
     -- generic BRAM glue
