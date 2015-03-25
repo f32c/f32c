@@ -21,8 +21,8 @@
 #ifdef __mips__
 #include <tjpgd.h>
 #else
-#include "../lang/basic/bas.h"
-#include "../lang/basic/tjpgd.h"
+#include "../../lang/basic/bas.h"
+#include "../../lang/basic/tjpgd.h"
 #endif
 
 

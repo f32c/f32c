@@ -33,13 +33,8 @@
 #include <io.h>
 #include <fb.h>
 #else
-#ifndef __FreeBSD__
-#define	__predict_true(x) (x)
-#define	__predict_false(x) (x)
-#else
-#include "../include/sys/cdefs.h"
-#endif
-#include "../include/fb.h"
+#include "../../include/sys/cdefs.h"
+#include "../../include/fb.h"
 #endif
 
 typedef void plotfn_t(int x, int y, int mode_color, uint8_t *dp);
