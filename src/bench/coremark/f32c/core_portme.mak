@@ -6,7 +6,7 @@ OUTFLAG= -o
 
 # Flag : CC
 #	Use this flag to define compiler to use
-CC = mips-elf-gcc
+CC = $(ARCH)-elf-gcc
 
 # Flag : CFLAGS
 #	Use this flag to define compiler options. Note, you can add compiler options from the command line using XCFLAGS="other flags"
@@ -39,11 +39,13 @@ ifndef WITHOUT_LIBS
 endif
 
 # MIPS-specific flags
-MK_CFLAGS += -march=f32c
-#MK_CFLAGS += -march=mips2 -mtune=f32c
-MK_CFLAGS += ${ENDIANFLAGS}
-#MK_CFLAGS += -mno-branch-likely
-MK_CFLAGS += -G 32768
+ifeq ($(ARCH),mips)
+ MK_CFLAGS += -march=f32c
+ #MK_CFLAGS += -march=mips2 -mtune=f32c
+ MK_CFLAGS += ${ENDIANFLAGS}
+ #MK_CFLAGS += -mno-branch-likely
+ MK_CFLAGS += -G 32768
+endif
 
 MK_CFLAGS += ${MK_STDINC} ${MK_INCLUDES}
 
