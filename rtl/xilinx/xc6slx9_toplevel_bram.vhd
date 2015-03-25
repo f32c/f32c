@@ -51,8 +51,9 @@ entity glue is
 	rs232_dce_txd: out std_logic;
 	rs232_dce_rxd: in std_logic;
 	led: out std_logic_vector(7 downto 0);
-	btn_center, btn_south, btn_north, btn_east, btn_west: in std_logic;
-	sw: in std_logic_vector(7 downto 0)
+	gpio: inout std_logic_vector(39 downto 0);
+	btn_k2, btn_k3: in std_logic
+	-- sw: in std_logic_vector(7 downto 0)
     );
 end glue;
 
@@ -86,8 +87,11 @@ begin
     port map (
 	clk => clk,
 	rs232_tx => rs232_dce_txd, rs232_rx => rs232_dce_rxd,
-	rs232_break => rs232_break, gpio => open,
-	leds => led, btns => btns, sw => sw
+	rs232_break => rs232_break,
+	gpio => gpio(28 downto 0),
+	leds => led,
+	btns => btns,
+	sw => "00000000"
     );
-    btns <= "000" & btn_west & btn_east & btn_north & btn_south & btn_center;
+    btns <= "000000" & btn_k3 & btn_k2;
 end Behavioral;
