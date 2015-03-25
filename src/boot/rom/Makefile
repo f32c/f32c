@@ -6,11 +6,17 @@ LOADADDR = 0x00000000
 WITHOUT_LIBS = true
 
 # No optional instructions in the loader
-CFLAGS += -march=mips3 -mtune=f32c -mno-div -mno-mul
-CFLAGS += -mno-branch-likely
+ifeq ($(ARCH),mips)
+ CFLAGS += -march=mips3 -mtune=f32c -mno-div -mno-mul
+ CFLAGS += -mno-branch-likely
+endif
 
 # Omit useless initializers to fit into 2 K of ROM
-CFLAGS += -Wno-error=maybe-uninitialized
+ifeq ($(ARCH),mips)
+ CFLAGS += -Wno-error=maybe-uninitialized
+else
+ CFLAGS += -Wno-error=uninitialized
+endif
 
 # Appropriately configure ../sio/loader.c build
 CFLAGS += -DROM_LOADER
