@@ -6,8 +6,10 @@ LOADADDR = 0x800f8000
 WITHOUT_LIBS = true
 
 # No optional instructions in the loader
-CFLAGS += -march=mips3 -mtune=f32c
-CFLAGS += -mno-branch-likely -mno-mul -mno-div
+ifeq ($(ARCH),mips)
+ CFLAGS += -march=mips3 -mtune=f32c
+ CFLAGS += -mno-branch-likely -mno-mul -mno-div
+endif
 
 # Omit floating point libs and printf parts
 CFLAGS += -DNO_PRINTF_FLOAT
