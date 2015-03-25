@@ -164,56 +164,61 @@ Net "Led<6>" LOC =  P9 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16P, S
 Net "Led<7>" LOC = P10 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16N_VREF, Sch name = LD7
 
 ## Switches
-Net "sw<0>" LOC =  P11 | IOSTANDARD = LVCMOS33;
-Net "sw<1>" LOC =  P12 | IOSTANDARD = LVCMOS33;
-Net "sw<2>" LOC =  P14 | IOSTANDARD = LVCMOS33;
-Net "sw<3>" LOC =  P15 | IOSTANDARD = LVCMOS33;
-Net "sw<4>" LOC =  P16 | IOSTANDARD = LVCMOS33;
-Net "sw<5>" LOC =  P17 | IOSTANDARD = LVCMOS33;
-Net "sw<6>" LOC =  P21 | IOSTANDARD = LVCMOS33;
-Net "sw<7>" LOC =  P22 | IOSTANDARD = LVCMOS33;
+#Net "sw<0>" LOC =  P11 | IOSTANDARD = LVCMOS33;
+#Net "sw<1>" LOC =  P12 | IOSTANDARD = LVCMOS33;
+#Net "sw<2>" LOC =  P14 | IOSTANDARD = LVCMOS33;
+#Net "sw<3>" LOC =  P15 | IOSTANDARD = LVCMOS33;
+#Net "sw<4>" LOC =  P16 | IOSTANDARD = LVCMOS33;
+#Net "sw<5>" LOC =  P17 | IOSTANDARD = LVCMOS33;
+#Net "sw<6>" LOC =  P21 | IOSTANDARD = LVCMOS33;
+#Net "sw<7>" LOC =  P22 | IOSTANDARD = LVCMOS33;
 
 ## Buttons
-Net "btn_center" LOC = P23 | IOSTANDARD = LVCMOS33;
-Net "btn_north"  LOC = P78 | IOSTANDARD = LVCMOS33;
-Net "btn_west"   LOC = P24 | IOSTANDARD = LVCMOS33;
-Net "btn_south"  LOC = P79 | IOSTANDARD = LVCMOS33;
-Net "btn_east"   LOC = P26 | IOSTANDARD = LVCMOS33;
+#Net "btn_k1" LOC = Reboot? | IOSTANDARD = LVCMOS33;
+Net "btn_k2" LOC = P79 | IOSTANDARD = LVCMOS33;
+Net "btn_k3" LOC = P78 | IOSTANDARD = LVCMOS33;
 
 ## GPIO
-#Net "gpio<0>" LOC =  P12 | IOSTANDARD = LVCMOS33;
-#Net "gpio<1>" LOC =  P11 | IOSTANDARD = LVCMOS33;
-#Net "gpio<2>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<3>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<4>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<5>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<6>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<7>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<8>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<9>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<10>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<11>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<12>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<13>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<14>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<15>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<16>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<17>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<18>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<19>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<20>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<21>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<22>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<23>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<24>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<25>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<26>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<27>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<28>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<29>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<30>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<31>" LOC =  P | IOSTANDARD = LVCMOS33;
-#Net "gpio<32>" LOC =  P | IOSTANDARD = LVCMOS33;
+Net "gpio<0>" LOC =  P12 | IOSTANDARD = LVCMOS33;
+Net "gpio<1>" LOC =  P11 | IOSTANDARD = LVCMOS33;
+Net "gpio<2>" LOC =  P15 | IOSTANDARD = LVCMOS33;
+Net "gpio<3>" LOC =  P14 | IOSTANDARD = LVCMOS33;
+Net "gpio<4>" LOC =  P17 | IOSTANDARD = LVCMOS33;
+Net "gpio<5>" LOC =  P16 | IOSTANDARD = LVCMOS33;
+Net "gpio<6>" LOC =  P22 | IOSTANDARD = LVCMOS33;
+Net "gpio<7>" LOC =  P21 | IOSTANDARD = LVCMOS33;
+Net "gpio<8>" LOC =  P24 | IOSTANDARD = LVCMOS33;
+Net "gpio<9>" LOC =  P23 | IOSTANDARD = LVCMOS33;
+Net "gpio<10>" LOC =  P27 | IOSTANDARD = LVCMOS33;
+Net "gpio<11>" LOC =  P26 | IOSTANDARD = LVCMOS33;
+Net "gpio<12>" LOC =  P30 | IOSTANDARD = LVCMOS33;
+Net "gpio<13>" LOC =  P29 | IOSTANDARD = LVCMOS33;
+Net "gpio<14>" LOC =  P33 | IOSTANDARD = LVCMOS33;
+Net "gpio<15>" LOC =  P32 | IOSTANDARD = LVCMOS33;
+Net "gpio<16>" LOC =  P35 | IOSTANDARD = LVCMOS33;
+Net "gpio<17>" LOC =  P34 | IOSTANDARD = LVCMOS33;
+Net "gpio<18>" LOC =  P41 | IOSTANDARD = LVCMOS33;
+Net "gpio<19>" LOC =  P40 | IOSTANDARD = LVCMOS33;
+Net "gpio<20>" LOC =  P44 | IOSTANDARD = LVCMOS33;
+Net "gpio<21>" LOC =  P43 | IOSTANDARD = LVCMOS33;
+Net "gpio<22>" LOC =  P46 | IOSTANDARD = LVCMOS33;
+Net "gpio<23>" LOC =  P45 | IOSTANDARD = LVCMOS33;
+Net "gpio<24>" LOC =  P48 | IOSTANDARD = LVCMOS33;
+Net "gpio<25>" LOC =  P47 | IOSTANDARD = LVCMOS33;
+Net "gpio<26>" LOC =  P51 | IOSTANDARD = LVCMOS33;
+Net "gpio<27>" LOC =  P50 | IOSTANDARD = LVCMOS33;
+Net "gpio<28>" LOC =  P56 | IOSTANDARD = LVCMOS33;
+Net "gpio<29>" LOC =  P55 | IOSTANDARD = LVCMOS33;
+Net "gpio<30>" LOC =  P58 | IOSTANDARD = LVCMOS33;
+Net "gpio<31>" LOC =  P57 | IOSTANDARD = LVCMOS33;
+Net "gpio<32>" LOC =  P61 | IOSTANDARD = LVCMOS33;
+Net "gpio<33>" LOC =  P59 | IOSTANDARD = LVCMOS33;
+Net "gpio<34>" LOC =  P66 | IOSTANDARD = LVCMOS33;
+Net "gpio<35>" LOC =  P62 | IOSTANDARD = LVCMOS33;
+Net "gpio<36>" LOC =  P80 | IOSTANDARD = LVCMOS33;
+Net "gpio<37>" LOC =  P67 | IOSTANDARD = LVCMOS33;
+Net "gpio<38>" LOC =  P82 | IOSTANDARD = LVCMOS33;
+Net "gpio<39>" LOC =  P81 | IOSTANDARD = LVCMOS33;
 
 ## VGA Connector
 #NET "vgaRed<0> LOC = U7 | IOSTANDARD = LVCMOS33; # Bank = 2, pin name = IO_L43P, Sch name = RED0
