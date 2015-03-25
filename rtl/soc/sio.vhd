@@ -198,6 +198,7 @@ begin
 		    else
 			break <= '0';
 		    end if;
+		    rx_break_tickcnt(7) <= '0';
 		end if;
 	    end if;
 	end if;
