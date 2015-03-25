@@ -1,5 +1,5 @@
 --
--- Copyright 2011-2013 Marko Zec, University of Zagreb
+-- Copyright 2011-2015 Marko Zec, University of Zagreb
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -65,8 +65,8 @@ begin
 		C_pll_freq => 325
 	)
 	port map (
-        	clk => clk_25m, lock => pll_lock, clkok => pll_clk,
-		clkop => pll_clk_325m
+        	clk => clk_25m, reset => res,
+		lock => pll_lock, clkok => pll_clk, clkop => pll_clk_325m
 	);
 	DCS_325: DCS
 	generic map (
@@ -86,8 +86,8 @@ begin
 		C_pll_freq => C_clk_freq
 	)
 	port map (
-        	clk => clk_25m, lock => pll_lock, clkok => open,
-		clkop => pll_clk
+        	clk => clk_25m, reset => res,
+		lock => pll_lock, clkok => open, clkop => pll_clk
 	);
 	clk_325m <= '0';
 	clk <= pll_clk;

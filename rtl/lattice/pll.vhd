@@ -11,6 +11,7 @@ entity pll is
     );
     port (
         CLK: in std_logic; 
+	reset: in std_logic;
         CLKOP: out std_logic; 
         CLKOK: out std_logic; 
         LOCK: out std_logic);
@@ -87,8 +88,8 @@ begin
         PHASEADJ=> "0.0", CLKOK_DIV=>  4, CLKOP_DIV=>  2, CLKFB_DIV=>  13, 
         CLKI_DIV=>  1)
         -- synopsys translate_on
-        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST=>scuba_vlo, 
-            RSTK=>scuba_vlo, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
+        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST => reset, 
+            RSTK => reset, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
             DRPAI2=>scuba_vlo, DRPAI1=>scuba_vlo, DRPAI0=>scuba_vlo, 
             DFPAI3=>scuba_vlo, DFPAI2=>scuba_vlo, DFPAI1=>scuba_vlo, 
             DFPAI0=>scuba_vlo, PWD=>scuba_vlo, CLKOP=>CLKOP_t, 
@@ -119,8 +120,8 @@ begin
         PHASEADJ=> "0.0", CLKOK_DIV=>  4, CLKOP_DIV=>  4, CLKFB_DIV=>  6, 
         CLKI_DIV=>  1)
         -- synopsys translate_on
-        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST=>scuba_vlo, 
-            RSTK=>scuba_vlo, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
+        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST => reset, 
+            RSTK => reset, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
             DRPAI2=>scuba_vlo, DRPAI1=>scuba_vlo, DRPAI0=>scuba_vlo, 
             DFPAI3=>scuba_vlo, DFPAI2=>scuba_vlo, DFPAI1=>scuba_vlo, 
             DFPAI0=>scuba_vlo, PWD=>scuba_vlo, CLKOP=>CLKOP_t, 
@@ -151,8 +152,8 @@ begin
         PHASEADJ=> "0.0", CLKOK_DIV=>  4, CLKOP_DIV=>  4, CLKFB_DIV=>  11, 
         CLKI_DIV=>  2)
         -- synopsys translate_on
-        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST=>scuba_vlo, 
-            RSTK=>scuba_vlo, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
+        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST => reset, 
+            RSTK => reset, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
             DRPAI2=>scuba_vlo, DRPAI1=>scuba_vlo, DRPAI0=>scuba_vlo, 
             DFPAI3=>scuba_vlo, DFPAI2=>scuba_vlo, DFPAI1=>scuba_vlo, 
             DFPAI0=>scuba_vlo, PWD=>scuba_vlo, CLKOP=>CLKOP_t, 
@@ -183,8 +184,8 @@ begin
         PHASEADJ=> "0.0", CLKOK_DIV=>  4, CLKOP_DIV=>  4, CLKFB_DIV=>  5, 
         CLKI_DIV=>  1)
         -- synopsys translate_on
-        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST=>scuba_vlo, 
-            RSTK=>scuba_vlo, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
+        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST => reset, 
+            RSTK => reset, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
             DRPAI2=>scuba_vlo, DRPAI1=>scuba_vlo, DRPAI0=>scuba_vlo, 
             DFPAI3=>scuba_vlo, DFPAI2=>scuba_vlo, DFPAI1=>scuba_vlo, 
             DFPAI0=>scuba_vlo, PWD=>scuba_vlo, CLKOP=>CLKOP_t, 
@@ -215,8 +216,8 @@ begin
         PHASEADJ=> "0.0", CLKOK_DIV=>  4, CLKOP_DIV=>  4, CLKFB_DIV=>  9, 
         CLKI_DIV=>  2)
         -- synopsys translate_on
-        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST=>scuba_vlo, 
-            RSTK=>scuba_vlo, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
+        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST => reset, 
+            RSTK => reset, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
             DRPAI2=>scuba_vlo, DRPAI1=>scuba_vlo, DRPAI0=>scuba_vlo, 
             DFPAI3=>scuba_vlo, DFPAI2=>scuba_vlo, DFPAI1=>scuba_vlo, 
             DFPAI0=>scuba_vlo, PWD=>scuba_vlo, CLKOP=>CLKOP_t, 
@@ -247,8 +248,8 @@ begin
         PHASEADJ=> "0.0", CLKOK_DIV=>  4, CLKOP_DIV=>  8, CLKFB_DIV=>  4, 
         CLKI_DIV=>  1)
         -- synopsys translate_on
-        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST=>scuba_vlo, 
-            RSTK=>scuba_vlo, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
+        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST => reset, 
+            RSTK => reset, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
             DRPAI2=>scuba_vlo, DRPAI1=>scuba_vlo, DRPAI0=>scuba_vlo, 
             DFPAI3=>scuba_vlo, DFPAI2=>scuba_vlo, DFPAI1=>scuba_vlo, 
             DFPAI0=>scuba_vlo, PWD=>scuba_vlo, CLKOP=>CLKOP_t, 
@@ -279,8 +280,8 @@ begin
         PHASEADJ=> "0.0", CLKOK_DIV=>  4, CLKOP_DIV=>  8, CLKFB_DIV=>  7, 
         CLKI_DIV=>  2)
         -- synopsys translate_on
-        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST=>scuba_vlo, 
-            RSTK=>scuba_vlo, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
+        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST => reset, 
+            RSTK => reset, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
             DRPAI2=>scuba_vlo, DRPAI1=>scuba_vlo, DRPAI0=>scuba_vlo, 
             DFPAI3=>scuba_vlo, DFPAI2=>scuba_vlo, DFPAI1=>scuba_vlo, 
             DFPAI0=>scuba_vlo, PWD=>scuba_vlo, CLKOP=>CLKOP_t, 
@@ -311,8 +312,8 @@ begin
         PHASEADJ=> "0.0", CLKOK_DIV=>  4, CLKOP_DIV=>  8, CLKFB_DIV=>  3, 
         CLKI_DIV=>  1)
         -- synopsys translate_on
-        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST=>scuba_vlo, 
-            RSTK=>scuba_vlo, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
+        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST => reset, 
+            RSTK => reset, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
             DRPAI2=>scuba_vlo, DRPAI1=>scuba_vlo, DRPAI0=>scuba_vlo, 
             DFPAI3=>scuba_vlo, DFPAI2=>scuba_vlo, DFPAI1=>scuba_vlo, 
             DFPAI0=>scuba_vlo, PWD=>scuba_vlo, CLKOP=>CLKOP_t, 
@@ -343,8 +344,8 @@ begin
         PHASEADJ=> "0.0", CLKOK_DIV=>  4, CLKOP_DIV=>  8, CLKFB_DIV=>  5, 
         CLKI_DIV=>  2)
         -- synopsys translate_on
-        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST=>scuba_vlo, 
-            RSTK=>scuba_vlo, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
+        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST => reset, 
+            RSTK => reset, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
             DRPAI2=>scuba_vlo, DRPAI1=>scuba_vlo, DRPAI0=>scuba_vlo, 
             DFPAI3=>scuba_vlo, DFPAI2=>scuba_vlo, DFPAI1=>scuba_vlo, 
             DFPAI0=>scuba_vlo, PWD=>scuba_vlo, CLKOP=>CLKOP_t, 
@@ -375,8 +376,8 @@ begin
         PHASEADJ=> "0.0", CLKOK_DIV=>  4, CLKOP_DIV=>  16, CLKFB_DIV=>  2, 
         CLKI_DIV=>  1)
         -- synopsys translate_on
-        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST=>scuba_vlo, 
-            RSTK=>scuba_vlo, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
+        port map (CLKI=>CLK, CLKFB=>CLKFB_t, RST => reset, 
+            RSTK => reset, DPAMODE=>scuba_vlo, DRPAI3=>scuba_vlo, 
             DRPAI2=>scuba_vlo, DRPAI1=>scuba_vlo, DRPAI0=>scuba_vlo, 
             DFPAI3=>scuba_vlo, DFPAI2=>scuba_vlo, DFPAI1=>scuba_vlo, 
             DFPAI0=>scuba_vlo, PWD=>scuba_vlo, CLKOP=>CLKOP_t, 
