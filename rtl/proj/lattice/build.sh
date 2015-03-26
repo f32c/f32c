@@ -1,4 +1,14 @@
 #!/bin/sh
+
+if [ -d  /usr/local/diamond/3.3_x64/bin/lin64 ] ; then
+   export PATH=/usr/local/diamond/3.3_x64/bin/lin64:"${PATH}"
+fi
+      
+if [ -d  /usr/local/diamond/3.4_x64/bin/lin64 ] ; then
+   export PATH=/usr/local/diamond/3.4_x64/bin/lin64:"${PATH}"
+fi
+          
+
 THISDIR=$(dirname ${0})
 DIAMOND_BINDIR=$(dirname $(which diamond))
 DIAMOND_ROOT=$(dirname $(dirname ${DIAMOND_BINDIR}))
