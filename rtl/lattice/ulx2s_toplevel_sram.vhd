@@ -83,6 +83,7 @@ entity glue is
 	C_framebuffer: boolean := true;
 	C_pcm: boolean := true;
 	C_timer: boolean := true;
+	C_tx433: boolean := false; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
 	C_dds: boolean := true
     );
     port (
@@ -126,6 +127,7 @@ architecture Behavioral of glue is
 
     -- synthesized clocks
     signal clk, clk_325m, ena_325m: std_logic;
+    signal clk_433m: std_logic;
 
     -- signals to / from f32c cores(s)
     signal res: f32c_std_logic;
@@ -201,6 +203,7 @@ begin
     --
     -- Clock synthesizer
     --
+    clk_81_325: if C_tx433 = false generate
     clkgen: entity work.clkgen
     generic map (
 	C_clk_freq => C_clk_freq,
@@ -212,6 +215,25 @@ begin
 	sel => sw(2), key => btn_down, res => '0'
     );
     ena_325m <= R_dds_enable when R_fb_mode = "11" else '1';
+    end generate;
+
+    clk_81_325: if C_tx433 = true generate
+    clkgen: entity work.clkgen
+    generic map (
+	C_clk_freq => C_clk_freq,
+	C_debug => C_debug
+    )
+    port map (
+	clk_25m => clk_25m, ena_325m => '0',
+	clk => clk, clk_325m => open,
+	sel => sw(2), key => btn_down, res => '0'
+    );
+    ena_325m <= '0';
+    clk433gen: entity work.pll_81M25_433M33
+    port map (
+      CLK => clk, CLKOP => clk_433m
+    );
+    end generate;
 
     --
     -- f32c core(s)
@@ -793,7 +815,12 @@ begin
     j2_11 <= R_gpio_out(25) when R_gpio_ctl(25) = '1' else 'Z';
     j2_12 <= R_gpio_out(26) when R_gpio_ctl(26) = '1' else 'Z';
     j2_13 <= R_gpio_out(27) when R_gpio_ctl(27) = '1' else 'Z';
+    normal_gpio_28: if C_tx433 = false generate
     j2_16 <= R_gpio_out(28) when R_gpio_ctl(28) = '1' else 'Z';
+    end generate;
+    signal_433MHz_to_gpio_28: if C_tx433 = true generate
+    j2_16 <= R_gpio_out(28) and clk_433m when R_gpio_ctl(28) = '1' else 'Z';
+    end generate;
 
     --
     -- Timer

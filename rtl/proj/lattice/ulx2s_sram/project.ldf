@@ -54,6 +54,9 @@
         <Source name="../../../lattice/pll.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../lattice/pll_81M25_433M33.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../lattice/reg1w2r.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
