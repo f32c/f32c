@@ -40,6 +40,13 @@ SRCS = \
  ../../generic/bram.vhd \
  ../../generic/bptrace.vhd
 
+###################################################################
+#
+# Quartus shell environment vars
+#
+###################################################################
+
+quartus_env ?= . ./quartus_env.sh
 
 ###################################################################
 # Main Targets
@@ -49,7 +56,7 @@ SRCS = \
 # program: program your device with the compiled design
 ###################################################################
 
-all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt 
+all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt $(PROJECT).svf $(PROJECT).jic
 
 clean:
 	rm -rf *~ $(PROJECT).jdi $(PROJECT).jic $(PROJECT).pin $(PROJECT).qws \
@@ -81,37 +88,37 @@ STA_ARGS =
 STAMP = echo done >
 
 $(PROJECT).map.rpt: map.chg $(SOURCE_FILES) 
-	quartus_map $(MAP_ARGS) $(PROJECT)
+	$(quartus_env); quartus_map $(MAP_ARGS) $(PROJECT)
 	$(STAMP) fit.chg
 
 $(PROJECT).fit.rpt: fit.chg $(PROJECT).map.rpt
-	quartus_fit $(FIT_ARGS) $(PROJECT)
+	$(quartus_env); quartus_fit $(FIT_ARGS) $(PROJECT)
 	$(STAMP) asm.chg
 	$(STAMP) sta.chg
 
 $(PROJECT).asm.rpt: asm.chg $(PROJECT).fit.rpt
-	quartus_asm $(ASM_ARGS) $(PROJECT)
+	$(quartus_env); quartus_asm $(ASM_ARGS) $(PROJECT)
 
 $(PROJECT).sta.rpt: sta.chg $(PROJECT).fit.rpt
-	quartus_sta $(STA_ARGS) $(PROJECT) 
+	$(quartus_env); quartus_sta $(STA_ARGS) $(PROJECT) 
 
 smart.log: $(ASSIGNMENT_FILES)
-	quartus_sh --determine_smart_action $(PROJECT) > smart.log
+	$(quartus_env); quartus_sh --determine_smart_action $(PROJECT) > smart.log
 	
 $(PROJECT).sof: all
 
 $(PROJECT).jic: $(PROJECT).sof
-	quartus_cpf -c -d $(CONFIG_DEVICE) -s $(SERIAL_FLASH_LOADER_DEVICE) $(PROJECT).sof $(PROJECT).jic
+	$(quartus_env); quartus_cpf -c -d $(CONFIG_DEVICE) -s $(SERIAL_FLASH_LOADER_DEVICE) $(PROJECT).sof $(PROJECT).jic
 
 $(PROJECT).svf: $(PROJECT).sof
-	quartus_cpf -c -q 1MHz -g 3.3 -n p $(PROJECT).sof $(PROJECT).svf
+	$(quartus_env); quartus_cpf -c -q 1MHz -g 3.3 -n p $(PROJECT).sof $(PROJECT).svf
 
 ###################################################################
 # Project initialization
 ###################################################################
 
 $(ASSIGNMENT_FILES):
-	quartus_sh --prepare -f $(FAMILY) -t $(TOP_LEVEL_ENTITY) $(PROJECT)
+	$(quartus_env); quartus_sh --prepare -f $(FAMILY) -t $(TOP_LEVEL_ENTITY) $(PROJECT)
 	cat $(BOARDFILE) >> $(PROJECT).qsf
 map.chg:
 	$(STAMP) map.chg
@@ -129,11 +136,11 @@ asm.chg:
 upload: program
 
 program: $(PROJECT).sof
-	quartus_pgm --no_banner --mode=jtag -o "P;$(PROJECT).sof"
+	$(quartus_env); quartus_pgm --no_banner --mode=jtag -o "P;$(PROJECT).sof"
 
 program_ocd: $(PROJECT).svf
 	openocd --file=interface/altera-usb-blaster.cfg --file=tb276.ocd
 
 flash: $(PROJECT).jic
-	quartus_pgm --no_banner --mode=jtag -o "IPV;$(PROJECT).jic"
+	$(quartus_env); quartus_pgm --no_banner --mode=jtag -o "IPV;$(PROJECT).jic"
 	echo "Power cycle or Reset device to run"
