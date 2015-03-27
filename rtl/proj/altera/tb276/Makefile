@@ -57,7 +57,7 @@ quartus_env ?= . ./quartus_env.sh
 # program: program your device with the compiled design
 ###################################################################
 
-all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt $(PROJECT).svf $(PROJECT).jic
+all: $(PROJECT).sof $(PROJECT).svf $(PROJECT).jic
 
 clean:
 	rm -rf *~ $(PROJECT).jdi $(PROJECT).jic $(PROJECT).pin $(PROJECT).qws \
@@ -106,7 +106,7 @@ $(PROJECT).sta.rpt: sta.chg $(PROJECT).fit.rpt
 smart.log: $(ASSIGNMENT_FILES)
 	$(quartus_env); quartus_sh --determine_smart_action $(PROJECT) > smart.log
 	
-$(PROJECT).sof: all
+$(PROJECT).sof: map fit asm sta smart
 
 $(PROJECT).jic: $(PROJECT).sof
 	$(quartus_env); quartus_cpf -c -d $(CONFIG_DEVICE) -s $(SERIAL_FLASH_LOADER_DEVICE) $(PROJECT).sof $(PROJECT).jic
