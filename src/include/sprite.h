@@ -31,5 +31,5 @@ int spr_grab(int, int, int, int, int);
 int spr_trans(int, int);
 int spr_size(int, int *, int *);
 int spr_put(int, int, int);
-int spr_load(int, char *, int);
-int jpg_load(char *, int);
+int spr_load(int, const char *, int);
+int jpg_load(const char *, int);
