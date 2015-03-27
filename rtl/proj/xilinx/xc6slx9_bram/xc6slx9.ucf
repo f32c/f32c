@@ -174,7 +174,7 @@ Net "Led<7>" LOC = P10 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16N_VR
 #Net "sw<7>" LOC =  P22 | IOSTANDARD = LVCMOS33;
 
 ## Buttons
-#Net "btn_k1" LOC = Reboot? | IOSTANDARD = LVCMOS33;
+#Net "btn_k1" LOC = P84 | IOSTANDARD = LVCMOS33; # this is clock pin, marked N_GCLK
 Net "btn_k2" LOC = P79 | IOSTANDARD = LVCMOS33;
 Net "btn_k3" LOC = P78 | IOSTANDARD = LVCMOS33;
 
