@@ -50,7 +50,7 @@ vfiles += $(foreach core,$(xilinx_cores),$(core:.xco=.v))
 junk += $(local_corengcs)
 
 .PHONY: default xilinx_cores clean twr etwr
-default: $(project).bit $(project).mcs $(project).svf
+default: $(project).bit $(project).mcs $(project).svf $(project).xsvf
 xilinx_cores: $(corengcs)
 twr: $(project).twr
 etwr: $(project)_err.twr
@@ -93,7 +93,13 @@ $(project).svf: $(project).bit
 	mv default.svf $@
 	rm default.bit
 
-programming_files: $(project).bit $(project).mcs $(project).svf
+$(project).xsvf: $(project).bit
+	cp $< default.bit
+	$(xil_env); impact -batch bit2xsvf.ut
+	mv default.xsvf $@
+	rm default.bit
+
+programming_files: $(project).bit $(project).mcs $(project).svf $(project).xsvf
 	mkdir -p $@/$(date)
 	mkdir -p $@/latest
 	for x in .svf .bit .mcs; do cp $(project)$$x $@/$(date)/$(project)$$x; cp $(project)$$x $@/latest/$(project)$$x; done
