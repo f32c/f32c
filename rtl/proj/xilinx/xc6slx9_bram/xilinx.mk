@@ -13,7 +13,7 @@
 #   vendor      vendor of FPGA (xilinx, altera, etc.)
 #   family      FPGA device family (spartan3e) 
 #   part        FPGA part name (xc4vfx12-10-sf363)
-#   flashsize   size of flash for mcs file (16384)
+#   flashsize   size of flash for mcs file (16384) in kilobytes
 #   optfile     (optional) xst extra opttions file to put in .scr
 #   map_opts    (optional) options to give to map
 #   par_opts    (optional) options to give to par
@@ -93,6 +93,13 @@ $(project).svf: $(project).bit
 	mv default.svf $@
 	rm default.bit
 
+$(project)_flash.svf: $(project).mcs
+	cp $< default.mcs
+	$(xil_env); impact -batch mcs2svf.ut
+	mv default.svf $@
+	rm default.mcs
+junk += $(project)_flash.svf
+
 $(project).xsvf: $(project).bit
 	cp $< default.bit
 	$(xil_env); impact -batch bit2xsvf.ut
@@ -105,12 +112,15 @@ programming_files: $(project).bit $(project).mcs $(project).svf $(project).xsvf
 	for x in .svf .bit .mcs; do cp $(project)$$x $@/$(date)/$(project)$$x; cp $(project)$$x $@/latest/$(project)$$x; done
 	$(xil_env); xst -help | head -1 | sed 's/^/#/' | cat - $(project).scr > $@/$(date)/$(project).scr
 
-program: programming_files
+program: $(project).svf
 	openocd --file=interface/altera-usb-blaster.cfg --file=$(project).ocd
+
+flash: $(project)_flash.svf
+	openocd --file=interface/altera-usb-blaster.cfg --file=$(project)_flash.ocd
 
 $(project).mcs: $(project).bit
 	$(xil_env); \
-	promgen -w -s $(flashsize) -p mcs -o $@ -u 0 $^
+	promgen -spi -w -s $(flashsize) -p mcs -o $@ -u 0 $^
 junk += $(project).mcs $(project).cfi $(project).prm
 
 $(project).bit: $(project)_par.ncd

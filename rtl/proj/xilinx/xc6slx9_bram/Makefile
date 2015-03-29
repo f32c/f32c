@@ -1,7 +1,8 @@
 project = xc6slx9
 vendor = xilinx
 family = spartan6
-part = xc6slx9-tqg144-2
+part = xc6slx9-tqg144-2 # last number -2 is speed grade
+flashsize = 512 # KB (kilobytes) - SPI flash device is M25P40
 top_module = glue
 isedir = /usr/local/xilinx/14.7/ISE_DS
 SHELL = /bin/bash
