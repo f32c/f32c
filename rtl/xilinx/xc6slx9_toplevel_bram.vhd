@@ -88,7 +88,7 @@ begin
 	clk => clk,
 	rs232_tx => rs232_dce_txd, rs232_rx => rs232_dce_rxd,
 	rs232_break => rs232_break,
-	gpio => gpio(28 downto 0),
+	gpio => gpio(31 downto 0),
 	leds => led,
 	btns => btns,
 	sw => "00000000"
