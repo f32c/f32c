@@ -77,7 +77,7 @@ entity glue_bram is
 	rs232_tx, rs232_break: out std_logic;
 	btns: in std_logic_vector(7 downto 0);
 	sw: in std_logic_vector(7 downto 0);
-	gpio: inout std_logic_vector(28 downto 0);
+	gpio: inout std_logic_vector(31 downto 0);
 	leds: out std_logic_vector(7 downto 0)
     );
 end glue_bram;
@@ -101,7 +101,7 @@ architecture Behavioral of glue_bram is
     signal timer_intr: std_logic;
     
     -- GPIO
-    signal R_gpio_ctl, R_gpio_in, R_gpio_out: std_logic_vector(28 downto 0);
+    signal R_gpio_ctl, R_gpio_in, R_gpio_out: std_logic_vector(31 downto 0);
 
     -- I/O
     signal intr: std_logic_vector(5 downto 0);
@@ -188,7 +188,7 @@ begin
 			R_gpio_out(23 downto 16) <= cpu_to_dmem(23 downto 16);
 		    end if;
 		    if dmem_byte_sel(3) = '1' then
-			R_gpio_out(28 downto 24) <= cpu_to_dmem(28 downto 24);
+			R_gpio_out(31 downto 24) <= cpu_to_dmem(31 downto 24);
 		    end if;
 		else
 		    if dmem_byte_sel(0) = '1' then
@@ -201,10 +201,7 @@ begin
 			R_gpio_ctl(23 downto 16) <= cpu_to_dmem(23 downto 16);
 		    end if;
 		    if dmem_byte_sel(3) = '1' then
-			R_gpio_ctl(28 downto 24) <= cpu_to_dmem(28 downto 24);
-			--if C_dds then
-			--    R_dds_enable <= cpu_to_dmem(31);
-			--end if;
+			R_gpio_ctl(31 downto 24) <= cpu_to_dmem(31 downto 24);
 		    end if;
 		end if;
 	    end if;
@@ -239,7 +236,7 @@ begin
 	case dmem_addr(7 downto 4) is
 	when x"0"  =>
 	    if C_gpio then
-		io_to_cpu <= "---" & R_gpio_in;
+		io_to_cpu <= R_gpio_in;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
@@ -267,7 +264,7 @@ begin
     end process;
 
     -- GPIO
-    gpio_3state: for i in 0 to 28 generate
+    gpio_3state: for i in 0 to 31 generate
       gpio(i) <= R_gpio_out(i) when R_gpio_ctl(i) = '1' else 'Z';
     end generate;
 
