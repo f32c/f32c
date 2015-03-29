@@ -7,7 +7,7 @@ gdb_port 3333
 # JTAG TAPs
 jtag newtap tb276 tap -expected-id 0x020f10dd -irlen 10
 
-scan_chain
 init
+scan_chain
 svf -tap tb276.tap project.svf
 shutdown
