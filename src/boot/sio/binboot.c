@@ -1,0 +1,167 @@
+/*-
+ * Copyright (c) 2015 Marko Zec, University of Zagreb
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * $Id$
+ */
+
+#include <io.h>
+#include <sio.h>
+#include <stdio.h>
+
+#include <mips/asm.h>
+
+
+static inline void
+__attribute__((always_inline))
+pchar(char c)
+{
+	int s;
+
+	do {
+		INB(s, IO_SIO_STATUS);
+	} while (s & SIO_TX_BUSY);
+	OUTB(IO_SIO_BYTE, (c));
+}
+
+
+static inline uint8_t
+__attribute__((always_inline))
+sio_getch_blink()
+{
+	uint32_t c;
+
+	do {
+		RDTSC(c);
+		OUTB(IO_LED, (c >> 24));
+		INB(c, IO_SIO_STATUS);
+	} while ((c & SIO_RX_FULL) == 0);
+	INB(c, IO_SIO_BYTE);
+	return (c & 0xff);
+}
+
+
+static inline uint8_t
+__attribute__((always_inline))
+sio_getch()
+{
+	uint32_t c;
+
+	do {
+		INB(c, IO_SIO_STATUS);
+	} while ((c & SIO_RX_FULL) == 0);
+	INB(c, IO_SIO_BYTE);
+	return (c & 0xff);
+}
+
+
+__dead2 void
+__attribute__((section(".init")))
+_start(void)
+{
+	uint32_t i, t;
+	uint32_t csum = 0, base = 0, len = 0;
+	char *cp;
+
+	do {
+		i = sio_getch_blink();
+		switch (i) {
+		case 0x80:	/* Set base addr */
+			for (i = 0; i < 4; i++)
+				base = (base << 8) + sio_getch();
+			break;
+		case 0x81:	/* Read csum */
+			t = csum;
+			for (i = 0; i < 4; i++) {
+				pchar(t >> 24);
+				t <<= 8;
+			}
+			break;
+		case 0x90:	/* Set len = base */
+			len = base;
+			break;
+		case 0x91:	/* Set csum = base */
+			csum = base;
+			break;
+		case 0xa0:	/* Write block */
+			cp = (void *) base;
+			csum = 0;
+			for (i = 0; i < len; i++) {
+				t = sio_getch();
+				cp[i] = t;
+				csum += t;
+			}
+			break;
+		case 0xb1:	/* Done, jump to base */
+#ifdef __mips__
+			__asm __volatile__(
+			".set noreorder;"
+			"lui $4, 0x8000;"	/* stack mask */
+			"lui $5, 0x0010;"	/* top of the initial stack */
+			"and $29, %0, $4;"	/* clr low bits of the stack */
+			"move $31, $0;"		/* ra <- zero */
+			"jr %0;"
+			"or $29, $29, $5;"	/* set stack */
+			".set reorder;"
+			:
+			: "r" (base)
+			);
+#else /* riscv */
+			__asm __volatile__(
+			"lui s0, 0x8000;"	/* stack mask */
+			"lui s1, 0x0010;"	/* top of the initial stack */
+			"and sp, %0, s0;"	/* clr low bits of the stack */
+			"or sp, sp, s1;"	/* set stack */
+			"mv ra, zero;"		/* ra <- zero */
+			"jr %0;"
+			:
+			: "r" (base_addr)
+			);
+#endif
+		case 13:	/* CR detected, send CR, LF, prompt */
+			t = 2;
+#ifdef __mips__
+			i = 0x33660A0D;		/* "\r\nf3" */
+#else /* riscv */
+			i = 0x76720A0D;		/* "\r\nrv" */
+#endif
+			do {
+				pchar(i);
+				i >>= 8;
+				if (i == 0) {
+#ifdef __mips__
+					i = 0x203E6332;		/* "2c> " */
+#else /* riscv */
+					i = 0x203E3233;		/* "32> " */
+#endif
+					t--;
+				}
+			} while (t != 0);
+			break;
+		default:
+			if (i < 128)
+				pchar(i);
+			break;
+		}
+	} while (1);
+}
