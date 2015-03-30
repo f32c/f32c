@@ -97,7 +97,7 @@ architecture Behavioral of glue_bram is
     signal from_timer: std_logic_vector(31 downto 0);
     signal timer_ce: std_logic;
     signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
-    signal icp_enable: std_logic_vector(1 downto 0);
+    signal icp, icp_enable: std_logic_vector(1 downto 0);
     signal timer_intr: std_logic;
     
     -- GPIO
@@ -226,9 +226,9 @@ begin
     end generate;
     G_led_timer:
     if C_timer = true generate
-    ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_leds(6);
-    ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_leds(7);
-    leds <= ocp_mux & R_leds(5 downto 0) when C_leds_btns else (others => '-');
+    ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_leds(1);
+    ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_leds(2);
+    leds <= R_leds(7 downto 3) & ocp_mux & R_leds(0) when C_leds_btns else (others => '-');
     end generate;
 
     process(dmem_addr, R_sw, R_btns, from_sio, from_timer)
@@ -271,6 +271,7 @@ begin
     -- Timer
     G_timer:
     if C_timer generate
+    icp <= R_leds(3) & R_leds(0); -- during debug period, leds will serve as software-generated ICP
     timer: entity work.timer
     generic map (
         C_pres => 10,
@@ -284,7 +285,7 @@ begin
 	ocp_enable => ocp_enable, -- enable physical output
 	ocp => ocp, -- output compare signal
 	icp_enable => icp_enable, -- enable physical input
-	icp => R_leds(1 downto 0) -- for debugging connect led0 and led1 to icp 0 and 1
+	icp => icp -- input capture signal
     );
     timer_ce <= io_addr_strobe when
       dmem_addr(7 downto 4) = x"8" or 
