@@ -95,9 +95,10 @@ $(project).svf: $(project).bit
 
 $(project)_flash.svf: $(project).mcs
 	cp $< default.mcs
+	cp $(project).cfi default.cfi
 	$(xil_env); impact -batch mcs2svf.ut
 	mv default.svf $@
-	rm default.mcs
+	rm default.mcs default.cfi
 junk += $(project)_flash.svf
 
 $(project).xsvf: $(project).bit
