@@ -41,7 +41,7 @@ xil_env ?= . $(isedir)/settings32.sh
 flashsize ?= 8192
 
 libmks = $(patsubst %,$(libdir)/%/module.mk,$(libs)) 
-mkfiles = Makefile $(libmks) xilinx.mk
+mkfiles = Makefile $(libmks) # xilinx.mk
 include $(libmks)
 
 corengcs = $(foreach core,$(xilinx_cores),$(core:.xco=.ngc))
@@ -92,6 +92,7 @@ $(project).svf: $(project).bit
 	$(xil_env); impact -batch bit2svf.ut
 	mv default.svf $@
 	rm default.bit
+junk += $(project).svf _impactbatch.log
 
 $(project)_flash.svf: $(project).mcs
 	cp $< default.mcs
