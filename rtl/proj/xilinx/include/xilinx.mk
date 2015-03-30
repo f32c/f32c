@@ -107,12 +107,16 @@ $(project).xsvf: $(project).bit
 	$(xil_env); impact -batch bit2xsvf.ut
 	mv default.xsvf $@
 	rm default.bit
+junk += $(project).xsvf
+
 
 programming_files: $(project).bit $(project).mcs $(project).svf $(project).xsvf
 	mkdir -p $@/$(date)
 	mkdir -p $@/latest
 	for x in .svf .bit .mcs; do cp $(project)$$x $@/$(date)/$(project)$$x; cp $(project)$$x $@/latest/$(project)$$x; done
 	$(xil_env); xst -help | head -1 | sed 's/^/#/' | cat - $(project).scr > $@/$(date)/$(project).scr
+
+junk += _xmsgs usage_statistics_webtalk.html
 
 program: $(project).svf
 	openocd --file=interface/altera-usb-blaster.cfg --file=$(project).ocd
@@ -129,6 +133,7 @@ $(project).bit: $(project)_par.ncd
 	$(xil_env); \
 	bitgen $(intstyle) -g DriveDone:yes -g StartupClk:Cclk -w $(project)_par.ncd $(project).bit
 junk += $(project).bgn $(project).bit $(project).drc $(project)_bd.bmm
+junk += $(project)_bitgen.xwbt
 
 
 $(project)_par.ncd: $(project).ncd
@@ -142,6 +147,9 @@ junk += $(project)_par.ncd $(project)_par.par $(project)_par.pad
 junk += $(project)_par_pad.csv $(project)_par_pad.txt 
 junk += $(project)_par.grf $(project)_par.ptwx
 junk += $(project)_par.unroutes $(project)_par.xpi
+junk += par_usage_statistics.html
+junk += usage_statistics_webtalk.html
+junk += webtalk.log
 
 $(project).ncd: $(project).ngd
 	if [ -r $(project)_par.ncd ]; then \
