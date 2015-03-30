@@ -1,8 +1,8 @@
-project = xc6slx9
+project = zybo
 vendor = xilinx
-family = spartan6
-part = xc6slx9-tqg144-2 # last number -2 is speed grade
-flashsize = 512 # KB (kilobytes) - SPI flash device is M25P40
+family = zinq
+part = xc7z010-clg400-1 # last number -1 is speed grade
+flashsize = 8192 # KB (kilobytes) - SPI flash device is M25P40
 top_module = glue
 isedir = /usr/local/xilinx/14.7/ISE_DS
 SHELL = /bin/bash
@@ -10,7 +10,7 @@ SHELL = /bin/bash
 # ../../../xilinx/glue_xc6slx9.vhd \
 
 vhdfiles = \
-../../../xilinx/xc6slx9_toplevel_bram.vhd \
+../../../xilinx/zybo_toplevel_bram.vhd \
 ../../../generic/glue_bram.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/bram.vhd \
