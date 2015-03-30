@@ -190,7 +190,7 @@ architecture Behavioral of glue is
     signal from_timer: std_logic_vector(31 downto 0);
     signal timer_ce: std_logic;
     signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
-    signal icp_enable: std_logic_vector(1 downto 0);
+    signal icp, icp_enable: std_logic_vector(1 downto 0);
     signal timer_intr: std_logic;
 
     -- debugging only
@@ -498,9 +498,9 @@ begin
     end generate;
     G_led_timer:
     if C_timer = true generate
-    ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_led(6);
-    ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_led(7);
-    led <= ocp_mux & R_led(5 downto 0) when C_leds_btns else (others => '-');
+    ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_led(1);
+    ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_led(2);
+    led <= R_led(7 downto 3) & ocp_mux & R_led(0) when C_leds_btns else (others => '-');
     end generate;
 
     -- XXX replace with a balanced multiplexer
@@ -827,6 +827,7 @@ begin
     --
     G_timer:
     if C_timer generate
+    icp <= R_led(3) & R_led(0); -- during debug period, leds will serve as software-generated ICP
     timer: entity work.timer
     generic map (
         C_pres => 10,
@@ -840,7 +841,7 @@ begin
 	ocp_enable => ocp_enable, -- enable physical output
 	ocp => ocp, -- output compare signal
 	icp_enable => icp_enable, -- enable physical input
-	icp => R_led(1 downto 0) -- for debugging connect led0 and led1 to icp 0 and 1
+	icp => icp -- input capture signal
     );
     timer_ce <= io_addr_strobe(R_cur_io_port) when
       io_addr(7 downto 4) = x"8" or 
