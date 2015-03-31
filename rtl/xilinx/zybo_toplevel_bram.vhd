@@ -42,14 +42,14 @@ entity glue is
 	C_clk_freq: integer := 125;
 
 	-- SoC configuration options
-	C_mem_size: integer := 32;
+	C_mem_size: integer := 128;
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true
     );
     port (
 	clk_125m: in std_logic;
-	--RsTx: out std_logic;
-	--RsRx: in std_logic;
+        rs232_tx: out std_logic;
+        rs232_rx: in std_logic;
 	led: out std_logic_vector(3 downto 0);
 	sw: in std_logic_vector(3 downto 0);
 	btn: in std_logic_vector(3 downto 0)
@@ -72,7 +72,7 @@ begin
     )
     port map (
 	clk => clk,
-	rs232_tx => open, rs232_rx => '0',
+	rs232_tx => rs232_tx, rs232_rx => rs232_rx,
 	rs232_break => open,
 	gpio => open,
 	leds(3 downto 0) => led(3 downto 0),
