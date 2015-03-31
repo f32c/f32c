@@ -5,6 +5,7 @@ part = xc7z010-clg400-1 # last number -1 is speed grade
 flashsize = 8192 # KB (kilobytes) - SPI flash device is M25P40
 top_module = glue
 isedir = /usr/local/xilinx/14.7/ISE_DS
+openocd_interface = ftdi-zybo.ocd
 SHELL = /bin/bash
 
 # ../../../xilinx/glue_xc6slx9.vhd \

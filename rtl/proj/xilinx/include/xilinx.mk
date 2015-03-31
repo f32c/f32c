@@ -38,6 +38,7 @@ map_opts ?= -timing -ol high -detail -pr b -register_duplication -w
 par_opts ?= -ol high
 isedir ?= /opt/Xilinx/11.1/ISE
 xil_env ?= . $(isedir)/settings32.sh
+openocd_interface ?= interface/altera-usb-blaster.cfg
 flashsize ?= 8192
 
 libmks = $(patsubst %,$(libdir)/%/module.mk,$(libs)) 
@@ -119,10 +120,10 @@ programming_files: $(project).bit $(project).mcs $(project).svf $(project).xsvf
 junk += _xmsgs usage_statistics_webtalk.html
 
 program: $(project).svf
-	openocd --file=interface/altera-usb-blaster.cfg --file=$(project).ocd
+	openocd --file=$(openocd_interface) --file=$(project).ocd
 
 flash: $(project)_flash.svf
-	openocd --file=interface/altera-usb-blaster.cfg --file=$(project)_flash.ocd
+	openocd --file=$(openocd_interface) --file=$(project)_flash.ocd
 
 $(project).mcs: $(project).bit
 	$(xil_env); \
