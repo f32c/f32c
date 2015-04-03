@@ -65,7 +65,7 @@ entity glue is
 	C_movn_movz: boolean := false; -- true: +16 LUT4, -DMIPS, incomplete
 
 	-- Debugging / testing options (should be turned off)
-	C_debug: boolean := false; -- true: +883 LUT4, -Fmax
+	C_debug: boolean := true;
 
 	-- SoC configuration options
 	C_cpus: integer := 1;
@@ -75,6 +75,7 @@ entity glue is
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_sram: boolean := true;
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
+	C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true;
 	C_gpio: boolean := true;
@@ -194,9 +195,13 @@ architecture Behavioral of glue is
     signal timer_intr: std_logic;
 
     -- debugging only
-    signal trace_addr: f32c_debug_addr;
-    signal trace_data: f32c_data_bus;
-    signal debug_txd: std_logic;
+    signal sio_to_debug_data: std_logic_vector(7 downto 0);
+    signal debug_to_sio_data: std_logic_vector(7 downto 0);
+    signal deb_sio_rx_done, deb_sio_tx_busy, deb_sio_tx_strobe: std_logic;
+    signal deb_tx: std_logic;
+    signal debug_debug: std_logic_vector(7 downto 0);
+    signal debug_out_strobe: std_logic;
+    signal debug_active: std_logic;
 
 begin
 
@@ -207,7 +212,7 @@ begin
     clkgen: entity work.clkgen
     generic map (
 	C_clk_freq => C_clk_freq,
-	C_debug => C_debug
+	C_debug => false
     )
     port map (
 	clk_25m => clk_25m, ena_325m => ena_325m,
@@ -221,7 +226,7 @@ begin
     clkgen: entity work.clkgen
     generic map (
 	C_clk_freq => C_clk_freq,
-	C_debug => C_debug
+	C_debug => false
     )
     port map (
 	clk_25m => clk_25m, ena_325m => '0',
@@ -241,7 +246,7 @@ begin
     G_CPU: for i in 0 to (C_cpus - 1) generate
     begin
     intr(i) <= "000" & timer_intr & from_sio(8) & R_fb_intr when i = 0 else "000000";
-    res(i) <= sw(i) or R_cpu_reset(i) when C_debug else R_cpu_reset(i);
+    res(i) <= R_cpu_reset(i);
     cpu: entity work.cache
     generic map (
 	C_arch => C_arch, C_cpuid => i, C_clk_freq => C_clk_freq,
@@ -270,7 +275,15 @@ begin
 	dmem_data_in => final_to_cpu_d(i), dmem_data_out => cpu_to_dmem(i),
 	dmem_data_ready => dmem_data_ready(i),
 	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
-	trace_addr => trace_addr(i), trace_data => trace_data(i)
+	-- debugging
+	debug_in_data => sio_to_debug_data,
+	debug_in_strobe => deb_sio_rx_done,
+	debug_in_busy => open,
+	debug_out_data => debug_to_sio_data,
+	debug_out_strobe => deb_sio_tx_strobe,
+	debug_out_busy => deb_sio_tx_busy,
+	debug_debug => debug_debug,
+	debug_active => debug_active
     );
     end generate;
 
@@ -712,7 +725,7 @@ begin
 	C_ports => 2 * C_cpus + 2, -- extra ports: framebuffer and PCM audio
 	C_prio_port => 2 * C_cpus, -- framebuffer
 	C_wait_cycles => C_sram_wait_cycles,
-	C_pipelined_read => not C_debug
+	C_pipelined_read => C_pipelined_read
     )
     port map (
 	clk => clk, sram_a => sram_a, sram_d => sram_d,
@@ -723,20 +736,6 @@ begin
 	bus_in => to_sram, ready_out => sram_ready
     );
     end generate;
-
-    --
-    -- debugging design instance
-    --
-    G_debug:
-    if C_debug generate
-    debug: entity work.serial_debug
-    port map (
-	clk => clk_25m, rs232_txd => debug_txd,
-	trace_addr => trace_addr(0), trace_data => trace_data(0)
-    );
-    end generate;
-
-    rs232_tx <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
 
     --
     -- Video framebuffer
@@ -861,4 +860,25 @@ begin
 	    R_dds_acc <= R_dds_acc + R_dds_fast;
 	end if;
     end process;
+
+    -- Debugging SIO instance
+    G_debug_sio:
+    if C_debug generate
+    debug_sio: entity work.sio
+    generic map (
+	C_clk_freq => C_clk_freq,
+	C_big_endian => false
+    )
+    port map (
+	clk => clk, ce => '1', txd => deb_tx, rxd => rs232_rx,
+	bus_write => deb_sio_tx_strobe, byte_sel => "0001",
+	bus_in(7 downto 0) => debug_to_sio_data,
+	bus_out(7 downto 0) => sio_to_debug_data,
+	bus_out(8) => deb_sio_rx_done, bus_out(10) => deb_sio_tx_busy,
+	break => open
+    );
+    end generate;
+
+    rs232_tx <= sio_txd when not C_debug or debug_active = '0' else deb_tx;
+
 end Behavioral;
