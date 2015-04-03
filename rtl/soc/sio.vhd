@@ -84,7 +84,7 @@ architecture Behavioral of sio is
     signal rx_phase: std_logic_vector(3 downto 0);
     signal rx_byte: std_logic_vector(7 downto 0);
     signal rx_full: std_logic;
-    signal rx_break_tickcnt: std_logic_vector(7 downto 0);
+    signal rx_break_tickcnt: std_logic_vector(24 downto 0);
 begin
 
     G_bypass:
@@ -184,22 +184,23 @@ begin
 			end if;
 		    end if;
 		end if;
+	    end if;
 
-		if rxd = '0' then
-		    if rx_break_tickcnt /= x"ff" then
-			rx_break_tickcnt <= rx_break_tickcnt + 1;
-		    end if;
-		else
-		    if rx_break_tickcnt = x"ff" then
-			break <= '1';
-		    end if;
-		    if rx_break_tickcnt /= x"00" then
-			rx_break_tickcnt <= rx_break_tickcnt - 1;
-		    else
-			break <= '0';
-		    end if;
-		    rx_break_tickcnt(7) <= '0';
+	    -- break detect logic
+	    if rxd = '0' then
+		if rx_break_tickcnt(23 downto 20) /= x"f" then
+		    rx_break_tickcnt <= rx_break_tickcnt + 1;
 		end if;
+	    else
+		if rx_break_tickcnt(23 downto 20) = x"f" then
+		    break <= '1';
+		end if;
+		if rx_break_tickcnt(23 downto 20) /= x"f" then
+		    rx_break_tickcnt(23) <= '0';
+		    break <= '0';
+		end if;
+		rx_break_tickcnt(22 downto 0) <=
+		    rx_break_tickcnt(22 downto 0) - 1;
 	    end if;
 	end if;
     end process;
