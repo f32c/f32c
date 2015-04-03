@@ -86,6 +86,7 @@ architecture x of debug is
     signal R_cmd: std_logic_vector(7 downto 0);
     signal R_arg1, R_arg2: std_logic_vector(31 downto 0);
     signal R_argcnt: std_logic_vector(1 downto 0);
+    signal R_seqn: std_logic_vector(7 downto 0);
 
     -- Output data & control
     signal R_ctrl_out: std_logic_vector(7 downto 0);
@@ -121,6 +122,9 @@ begin
 			else
 			    R_argcnt <= "00";
 			end if;
+			R_ctrl_out <= R_seqn;
+			R_ctrl_out_strobe <= '1';
+			R_seqn <= R_seqn + 1;
 		    end if;
 		when DEB_REQ_ARG1 =>
 		    R_arg1(31 downto 8) <= R_arg1(23 downto 0);

@@ -71,8 +71,14 @@ entity pipeline is
 	flush_i_line, flush_d_line: out std_logic;
 	intr: in std_logic_vector(5 downto 0);
 	-- debugging only
-	trace_addr: in std_logic_vector(5 downto 0);
-	trace_data: out std_logic_vector(31 downto 0)
+	debug_in_data: in std_logic_vector(7 downto 0);
+	debug_in_strobe: in std_logic;
+	debug_in_busy: out std_logic;
+	debug_out_data: out std_logic_vector(7 downto 0);
+	debug_out_strobe: out std_logic;
+	debug_out_busy: in std_logic;
+	debug_debug: out std_logic_vector(7 downto 0);
+	debug_active: out std_logic
     );
 end pipeline;
 
@@ -268,6 +274,7 @@ architecture Behavioral of pipeline is
     signal R_cop0_timer_intr: std_logic;
 
     -- signals used for debugging only
+    signal trace_addr: std_logic_vector(31 downto 0);
     signal reg_trace_data: std_logic_vector(31 downto 0);
     signal D_instr, D_b_instr, D_b_taken: std_logic_vector(31 downto 0);
 
@@ -1394,64 +1401,26 @@ begin
     end process;
     end generate;
 
-    -- mux for debugging probes
-    G_with_trace_mux:
-    if C_debug generate
 
-    debug_XXX(28) <= R_cop0_EI;
-    debug_XXX(24) <= '1' when IF_ID_EIP else '0';
-    debug_XXX(20) <= '1' when ID_EX_EIP else '0';
-    debug_XXX(16) <= '1' when EX_MEM_EIP else '0';
-    debug_XXX(12) <= '1' when ID_running else '0';
-    debug_XXX(8) <= '1' when EX_running else '0';
-    debug_XXX(4) <= '1' when ID_EX_branch_delay_follows else '0';
-    debug_XXX(0) <= '1' when ID_EX_branch_delay_slot else '0';
+    -- debugger module
+    debug: entity work.debug
+    generic map (
+	C_debug => C_debug
+    )
+    port map (
+	clk => clk,
+	ctrl_in_data => debug_in_data,
+	ctrl_in_strobe => debug_in_strobe,
+	ctrl_in_busy => debug_in_busy,
+	ctrl_out_data => debug_out_data,
+	ctrl_out_strobe => debug_out_strobe,
+	ctrl_out_busy => debug_out_busy,
+	trace_active => debug_active,
+	trace_op => open,
+	trace_addr => trace_addr,
+	trace_data_out(7 downto 0) => debug_debug,
+	trace_data_in => reg_trace_data
+    );
 
-
-    with ("00" & trace_addr) select
-    trace_data <=
-	IF_PC & "00"		when x"20",
-	IF_ID_EPC & "00"	when x"21",
-	ID_EX_EPC & "00"	when x"22",
-	imem_data_in		when x"24",
-	IF_ID_instruction	when x"25",
-	ID_EX_instruction	when x"26",
-	EX_MEM_instruction	when x"27",
-	ID_reg1_eff_data	when x"28",
-	ID_reg2_eff_data	when x"29",
-	EX_eff_reg1		when x"2a",
-	EX_eff_reg2		when x"2b",
-	EX_eff_alu_op2		when x"2c",
-	EX_MEM_addsub_data	when x"2d",
-	EX_MEM_logic_data	when x"2e",
-	-- dmem_data_out	when x"2f",
-	dmem_data_in		when x"30",
-	--
-	R_cop0_count		when x"34",
-	D_instr			when x"35",
-	D_b_instr		when x"36",
-	D_b_taken		when x"37",
-	--
-	debug_XXX		when x"39",
-	R_hi_lo(31 downto 0)	when x"3a",
-	R_hi_lo(63 downto 32)	when x"3b",
-	--
-	R_cop0_EBASE & "00"	when x"3c",
-	R_cop0_EPC & "00"  	when x"3d",
-	--
-	reg_trace_data		when others;
-
-    end generate;
-
-    G_without_trace_mux:
-    if not C_debug generate
-	--trace_data <= x"00000000";
-	trace_data(7 downto 4) <= x"f";
-	trace_data(0) <= R_cop0_EI;
-	trace_data(1) <= '1' when IF_ID_EIP else '0';
-	trace_data(2) <= '1' when EX_MEM_EIP else '0';
-	trace_data(3) <= '1' when ID_EX_wait else '0';
-
-    end generate;
 end Behavioral;
 
