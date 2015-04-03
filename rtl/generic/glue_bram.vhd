@@ -64,6 +64,9 @@ entity glue_bram is
 	-- Negatively influences timing closure, hence disabled
 	C_movn_movz: boolean := false;
 
+	-- CPU debugging
+	C_debug: boolean := true;
+
 	-- SoC configuration options
 	C_mem_size: integer := 16;	-- in KBytes
 	C_sio: boolean := true;
@@ -107,10 +110,19 @@ architecture Behavioral of glue_bram is
     signal intr: std_logic_vector(5 downto 0);
     signal io_addr_strobe: std_logic;
     signal from_sio: std_logic_vector(31 downto 0);
-    signal sio_ce: std_logic;
+    signal sio_ce, sio_tx: std_logic;
     signal R_leds: std_logic_vector(7 downto 0);
     signal R_sw: std_logic_vector(7 downto 0);
     signal R_btns: std_logic_vector(7 downto 0);
+
+    -- Debug
+    signal sio_to_debug_data: std_logic_vector(7 downto 0);
+    signal debug_to_sio_data: std_logic_vector(7 downto 0);
+    signal deb_sio_rx_done, deb_sio_tx_busy, deb_sio_tx_strobe: std_logic;
+    signal deb_tx: std_logic;
+    signal debug_debug: std_logic_vector(7 downto 0);
+    signal debug_out_strobe: std_logic;
+    signal debug_active: std_logic;
 
 begin
 
@@ -129,7 +141,7 @@ begin
 	C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
 	C_register_technology => C_register_technology,
 	-- debugging only
-	C_debug => false
+	C_debug => C_debug
     )
     port map (
 	clk => clk, reset => '0', intr => intr,
@@ -142,7 +154,15 @@ begin
 	dmem_data_ready => dmem_data_ready,
 	snoop_cycle => '0', snoop_addr => "------------------------------",
 	flush_i_line => open, flush_d_line => open,
-	trace_addr => "------", trace_data => open
+	-- debugging
+	debug_in_data => sio_to_debug_data,
+	debug_in_strobe => deb_sio_rx_done,
+	debug_in_busy => open,
+	debug_out_data => debug_to_sio_data,
+	debug_out_strobe => deb_sio_tx_strobe,
+	debug_out_busy => deb_sio_tx_busy,
+	debug_debug => debug_debug,
+	debug_active => debug_active
     );
     final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
     intr <= "000" & timer_intr & from_sio(8) & '0';
@@ -156,7 +176,7 @@ begin
 	C_big_endian => C_big_endian
     )
     port map (
-	clk => clk, ce => sio_ce, txd => rs232_tx, rxd => rs232_rx,
+	clk => clk, ce => sio_ce, txd => sio_tx, rxd => rs232_rx,
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
 	bus_in => cpu_to_dmem, bus_out => from_sio, break => rs232_break
     );
@@ -265,7 +285,7 @@ begin
 
     -- GPIO
     gpio_3state: for i in 0 to 31 generate
-      gpio(i) <= R_gpio_out(i) when R_gpio_ctl(i) = '1' else 'Z';
+	gpio(i) <= R_gpio_out(i) when R_gpio_ctl(i) = '1' else 'Z';
     end generate;
 
     -- Timer
@@ -274,11 +294,11 @@ begin
     icp <= R_leds(3) & R_leds(0); -- during debug period, leds will serve as software-generated ICP
     timer: entity work.timer
     generic map (
-        C_pres => 10,
-        C_bits => 12
+	C_pres => 10,
+	C_bits => 12
     )
     port map (
-        clk => clk, ce => timer_ce, addr => dmem_addr(5 downto 2),
+	clk => clk, ce => timer_ce, addr => dmem_addr(5 downto 2),
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
 	bus_in => cpu_to_dmem, bus_out => from_timer,
 	timer_irq => timer_intr,
@@ -310,5 +330,25 @@ begin
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
 	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
     );
-	
+
+    -- Debugging SIO instance
+    G_debug_sio:
+    if C_debug generate
+    debug_sio: entity work.sio
+    generic map (
+	C_clk_freq => C_clk_freq,
+	C_big_endian => false
+    )
+    port map (
+	clk => clk, ce => '1', txd => deb_tx, rxd => rs232_rx,
+	bus_write => deb_sio_tx_strobe, byte_sel => "0001",
+	bus_in(7 downto 0) => debug_to_sio_data,
+	bus_out(7 downto 0) => sio_to_debug_data,
+	bus_out(8) => deb_sio_rx_done, bus_out(10) => deb_sio_tx_busy,
+	break => open
+    );
+    end generate;
+
+    rs232_tx <= sio_tx when not C_debug or debug_active = '0' else deb_tx;
+
 end Behavioral;
