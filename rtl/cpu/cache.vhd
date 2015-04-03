@@ -67,8 +67,14 @@ entity cache is
 	snoop_addr: in std_logic_vector(31 downto 2);
 	intr: in std_logic_vector(5 downto 0);
 	-- debugging only
-	trace_addr: in std_logic_vector(5 downto 0);
-	trace_data: out std_logic_vector(31 downto 0)
+	debug_in_data: in std_logic_vector(7 downto 0);
+	debug_in_strobe: in std_logic;
+	debug_in_busy: out std_logic;
+	debug_out_data: out std_logic_vector(7 downto 0);
+	debug_out_strobe: out std_logic;
+	debug_out_busy: in std_logic;
+	debug_debug: out std_logic_vector(7 downto 0);
+	debug_active: out std_logic
     );
 end cache;
 
@@ -133,7 +139,15 @@ begin
 	dmem_data_ready => cpu_d_ready,
 	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
 	flush_i_line => flush_i_line, flush_d_line => flush_d_line,
-	trace_addr => trace_addr, trace_data => trace_data
+	-- debugging
+	debug_in_data => debug_in_data,
+	debug_in_strobe => debug_in_strobe,
+	debug_in_busy => debug_in_busy,
+	debug_out_data => debug_out_data,
+	debug_out_strobe => debug_out_strobe,
+	debug_out_busy => debug_out_busy,
+	debug_debug => debug_debug,
+	debug_active => debug_active
     );
 
     icache_data_out <= from_i_bram(31 downto 0);
