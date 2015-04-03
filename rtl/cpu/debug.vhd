@@ -72,11 +72,11 @@ architecture x of debug is
     constant DEB_REQ_EXEC: integer := 3;
 
     -- Commands
-    constant DEB_CMD_ACTIVE: std_logic_vector := x"64"; -- x"9d";
-    constant DEB_CMD_REG_RD: std_logic_vector := x"30"; -- x"a0";
-    constant DEB_CMD_REG_WR: std_logic_vector := x"31"; -- x"a1";
-    constant DEB_CMD_MEM_RD: std_logic_vector := x"61"; -- x"a2";
-    constant DEB_CMD_MEM_WR: std_logic_vector := x"62"; -- x"a3";
+    constant DEB_CMD_ACTIVE: std_logic_vector := x"9d";
+    constant DEB_CMD_REG_RD: std_logic_vector := x"a0";
+    constant DEB_CMD_REG_WR: std_logic_vector := x"a1";
+    constant DEB_CMD_MEM_RD: std_logic_vector := x"a2";
+    constant DEB_CMD_MEM_WR: std_logic_vector := x"a3";
 
     -- Debugger enabled flag
     signal R_debug_active: std_logic := '0';
@@ -90,9 +90,6 @@ architecture x of debug is
     -- Output data & control
     signal R_ctrl_out: std_logic_vector(7 downto 0);
     signal R_ctrl_out_strobe: std_logic;
-
-    -- XXX temporary, testing
-    signal R_reply_sent: boolean;
 
 begin
     ctrl_in_busy <= '0';
@@ -116,7 +113,7 @@ begin
 		    if R_debug_active = '0' and
 		      ctrl_in_data /= DEB_CMD_ACTIVE then
 			-- do nothing
-		    elsif ctrl_in_data(7) = '0' then -- XXX should be '1'!!!
+		    elsif ctrl_in_data(7) = '1' then
 			R_cmd <= ctrl_in_data;
 			R_req_state <= DEB_REQ_ARG1;
 			if ctrl_in_data(6) = '1' then
@@ -159,31 +156,50 @@ begin
 	    -- Process the received cmd
 	    --
 	    if R_req_state = DEB_REQ_EXEC and R_debug_active = '0' then
-		-- XXX should check arg1
-		R_debug_active <= '1';
+		if R_arg1(7 downto 0) = x"ed" then
+		    R_debug_active <= '1';
+		end if;
 		R_req_state <= DEB_REQ_IDLE;
 	    elsif R_req_state = DEB_REQ_EXEC and R_debug_active = '1' then
 		case R_cmd is
 		when DEB_CMD_ACTIVE =>
-		    -- XXX should check arg1
-		    R_debug_active <= '0';
+		    if R_arg1(7 downto 0) = x"dd" then
+			R_debug_active <= '0';
+		    end if;
 		    R_req_state <= DEB_REQ_IDLE;
 		when DEB_CMD_REG_RD =>
 		    if ctrl_out_busy = '0' and R_ctrl_out_strobe = '0' then
-			if R_argcnt = "11" then
+			case R_argcnt is
+			when "00" =>
+			    R_ctrl_out <= trace_data_in(7 downto 0);
+			when "01" =>
+			    R_ctrl_out <= trace_data_in(15 downto 8);
+			when "10" =>
+			    R_ctrl_out <= trace_data_in(23 downto 16);
+			when others =>
+			    R_ctrl_out <= trace_data_in(31 downto 24);
 			    if R_arg2(7 downto 0) = x"00" then
 				R_req_state <= DEB_REQ_IDLE;
 			    else
 				R_arg2 <= R_arg2 - 1;
 				R_arg1 <= R_arg1 + 1;
 			    end if;
-			end if;
-			R_ctrl_out_strobe <= '1';
-R_ctrl_out <= x"3" & R_arg1(1 downto 0) & R_argcnt; -- XXX random data
+			end case;
 			R_argcnt <= R_argcnt + 1;
+			R_ctrl_out_strobe <= '1';
 		    end if;
 		when DEB_CMD_MEM_RD =>
 		    if ctrl_out_busy = '0' and R_ctrl_out_strobe = '0' then
+			case R_arg1(1 downto 0) is
+			when "00" =>
+			    R_ctrl_out <= trace_data_in(7 downto 0);
+			when "01" =>
+			    R_ctrl_out <= trace_data_in(15 downto 8);
+			when "10" =>
+			    R_ctrl_out <= trace_data_in(23 downto 16);
+			when others =>
+			    R_ctrl_out <= trace_data_in(31 downto 24);
+			end case;
 			if R_arg2 = x"00000000" then
 			    R_req_state <= DEB_REQ_IDLE;
 			else
@@ -191,12 +207,11 @@ R_ctrl_out <= x"3" & R_arg1(1 downto 0) & R_argcnt; -- XXX random data
 			    R_arg1 <= R_arg1 + 1;
 			end if;
 			R_ctrl_out_strobe <= '1';
-R_ctrl_out <= "01" & R_arg1(5 downto 0); -- XXX random data
 		    end if;
 		when others =>
 		    -- XXX testing only - nothing should be sent here
-		    R_ctrl_out_strobe <= '1';
-		    R_ctrl_out <= R_cmd + 1;
+		    -- R_ctrl_out_strobe <= '1';
+		    -- R_ctrl_out <= R_cmd + 1;
 		    R_req_state <= DEB_REQ_IDLE;
 		end case;
 	    end if;
