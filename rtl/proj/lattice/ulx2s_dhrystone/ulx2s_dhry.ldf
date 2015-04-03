@@ -2,8 +2,11 @@
 <BaliProject version="3.2" title="ulx2s_dhry" device="LFXP2-5E-7TN144C" default_implementation="impl1">
     <Options/>
     <Implementation title="impl1" dir="impl1" description="impl1" synthesis="synplify" default_strategy="Timing">
-        <Options/>
+        <Options def_top="glue"/>
         <Source name="../../../cpu/alu.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../cpu/debug.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../cpu/defs_f32c.vhd" type="VHDL" type_short="VHDL">
