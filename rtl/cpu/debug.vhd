@@ -45,15 +45,22 @@ use work.f32c_pack.all;
 
 
 entity debug is
+    generic (
+	C_debug: boolean := true
+    );
     port (
 	clk: in std_logic;
-	debug_in_data: in std_logic_vector(7 downto 0);
-	debug_in_strobe: in std_logic;
-	debug_in_busy: out std_logic;
-	debug_out_data: out std_logic_vector(7 downto 0);
-	debug_out_strobe: out std_logic;
-	debug_out_busy: in std_logic;
-	debug_active: out std_logic
+	ctrl_in_data: in std_logic_vector(7 downto 0);
+	ctrl_in_strobe: in std_logic;
+	ctrl_in_busy: out std_logic;
+	ctrl_out_data: out std_logic_vector(7 downto 0);
+	ctrl_out_strobe: out std_logic;
+	ctrl_out_busy: in std_logic;
+	trace_active: out std_logic;
+	trace_op: out std_logic_vector(3 downto 0);
+	trace_addr: out std_logic_vector(31 downto 0);
+	trace_data_out: out std_logic_vector(31 downto 0);
+	trace_data_in: in std_logic_vector(31 downto 0)
     );
 end debug;
 
@@ -65,7 +72,11 @@ architecture x of debug is
     constant DEB_REQ_EXEC: integer := 3;
 
     -- Commands
-    constant DEB_CMD_ACTIVE: std_logic_vector := x"64"; -- XXX: x"9d";
+    constant DEB_CMD_ACTIVE: std_logic_vector := x"64"; -- x"9d";
+    constant DEB_CMD_REG_RD: std_logic_vector := x"30"; -- x"a0";
+    constant DEB_CMD_REG_WR: std_logic_vector := x"31"; -- x"a1";
+    constant DEB_CMD_MEM_RD: std_logic_vector := x"61"; -- x"a2";
+    constant DEB_CMD_MEM_WR: std_logic_vector := x"62"; -- x"a3";
 
     -- Debugger enabled flag
     signal R_debug_active: std_logic := '0';
@@ -76,34 +87,39 @@ architecture x of debug is
     signal R_arg1, R_arg2: std_logic_vector(31 downto 0);
     signal R_argcnt: std_logic_vector(1 downto 0);
 
+    -- Output data & control
+    signal R_ctrl_out: std_logic_vector(7 downto 0);
+    signal R_ctrl_out_strobe: std_logic;
+
     -- XXX temporary, testing
-    signal R_out: std_logic_vector(7 downto 0);
     signal R_reply_sent: boolean;
-    signal R_out_strobe: std_logic;
 
 begin
-    debug_in_busy <= '0';
-    debug_out_strobe <= R_out_strobe;
-    debug_out_data <= R_out;
+    ctrl_in_busy <= '0';
+    ctrl_out_strobe <= R_ctrl_out_strobe;
+    ctrl_out_data <= R_ctrl_out;
+
+    trace_active <= R_debug_active;
+    trace_addr <= R_arg1;
 
     process(clk)
     begin
-	if rising_edge(clk) then
-	    R_out_strobe <= '0';
+	if C_debug and rising_edge(clk) then
+	    R_ctrl_out_strobe <= '0';
 
 	    --
 	    -- FSMD for receiving a cmd with variable length args
 	    --
-	    if debug_in_strobe = '1' then
+	    if ctrl_in_strobe = '1' then
 		case R_req_state is
 		when DEB_REQ_IDLE =>
 		    if R_debug_active = '0' and
-		      debug_in_data /= DEB_CMD_ACTIVE then
+		      ctrl_in_data /= DEB_CMD_ACTIVE then
 			-- do nothing
-		    elsif debug_in_data(7) = '0' then -- XXX should be '1'!!!
-			R_cmd <= debug_in_data;
+		    elsif ctrl_in_data(7) = '0' then -- XXX should be '1'!!!
+			R_cmd <= ctrl_in_data;
 			R_req_state <= DEB_REQ_ARG1;
-			if debug_in_data(6) = '1' then
+			if ctrl_in_data(6) = '1' then
 			    R_argcnt <= "11";
 			else
 			    R_argcnt <= "00";
@@ -111,7 +127,7 @@ begin
 		    end if;
 		when DEB_REQ_ARG1 =>
 		    R_arg1(31 downto 8) <= R_arg1(23 downto 0);
-		    R_arg1(7 downto 0) <= debug_in_data;
+		    R_arg1(7 downto 0) <= ctrl_in_data;
 		    if R_argcnt = "00" then
 			if R_cmd(6) = '1' then
 			    R_argcnt <= "11";
@@ -128,7 +144,7 @@ begin
 		    end if;
 		when DEB_REQ_ARG2 =>
 		    R_arg2(31 downto 8) <= R_arg2(23 downto 0);
-		    R_arg2(7 downto 0) <= debug_in_data;
+		    R_arg2(7 downto 0) <= ctrl_in_data;
 		    if R_argcnt = "00" then
 			R_req_state <= DEB_REQ_EXEC;
 		    else
@@ -152,10 +168,35 @@ begin
 		    -- XXX should check arg1
 		    R_debug_active <= '0';
 		    R_req_state <= DEB_REQ_IDLE;
+		when DEB_CMD_REG_RD =>
+		    if ctrl_out_busy = '0' and R_ctrl_out_strobe = '0' then
+			if R_argcnt = "11" then
+			    if R_arg2(7 downto 0) = x"00" then
+				R_req_state <= DEB_REQ_IDLE;
+			    else
+				R_arg2 <= R_arg2 - 1;
+				R_arg1 <= R_arg1 + 1;
+			    end if;
+			end if;
+			R_ctrl_out_strobe <= '1';
+R_ctrl_out <= x"3" & R_arg1(1 downto 0) & R_argcnt; -- XXX random data
+			R_argcnt <= R_argcnt + 1;
+		    end if;
+		when DEB_CMD_MEM_RD =>
+		    if ctrl_out_busy = '0' and R_ctrl_out_strobe = '0' then
+			if R_arg2 = x"00000000" then
+			    R_req_state <= DEB_REQ_IDLE;
+			else
+			    R_arg2 <= R_arg2 - 1;
+			    R_arg1 <= R_arg1 + 1;
+			end if;
+			R_ctrl_out_strobe <= '1';
+R_ctrl_out <= "01" & R_arg1(5 downto 0); -- XXX random data
+		    end if;
 		when others =>
 		    -- XXX testing only - nothing should be sent here
-		    R_out_strobe <= '1';
-		    R_out <= R_cmd + 1;
+		    R_ctrl_out_strobe <= '1';
+		    R_ctrl_out <= R_cmd + 1;
 		    R_req_state <= DEB_REQ_IDLE;
 		end case;
 	    end if;
