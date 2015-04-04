@@ -20,10 +20,11 @@ vhdfiles = \
 ../../../cpu/loadalign.vhd \
 ../../../cpu/pipeline.vhd \
 ../../../cpu/shift.vhd \
-../../../soc/sio.vhd \
 ../../../cpu/defs_f32c.vhd \
 ../../../cpu/defs_mi32.vhd \
 ../../../cpu/defs_rv32.vhd \
+../../../cpu/debug.vhd \
+../../../soc/sio.vhd \
 ../../../cpu/idecode_mi32.vhd \
 ../../../cpu/idecode_rv32.vhd \
 ../../../xilinx/pll_25M_112M5.vhd \
