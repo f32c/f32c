@@ -419,7 +419,7 @@ begin
 	    end if;
 	end if;
     end process;
-	
+
     G_bp_scoretable:
     if C_branch_prediction generate
     IF_bpredict_index(12 downto (13 - C_bp_global_depth)) <=
@@ -440,7 +440,7 @@ begin
     -- Pipeline stage 2: instruction decode and register fetch
     -- =======================================================
     --
-	
+
     -- MI32 instruction decoder
     G_idecode_mi32:
     if C_arch = ARCH_MI32 generate
@@ -525,7 +525,7 @@ begin
 	rdd_data => reg_trace_data, wr_data => WB_writeback_data,
 	wr_enable => MEM_WB_write_enable, clk => WB_clk
     );
-	
+
     --
     -- WB_writeback_data overrides register reads with pipelined load aligner.
     -- With multicycle aligner WB_writeback_data is written to the regfile
@@ -572,9 +572,9 @@ begin
       not (ID_fwd_ex_reg1 or ID_fwd_mem_reg1)
       and (ID_ignore_reg2 or not (ID_fwd_ex_reg2 or ID_fwd_mem_reg2))));
     end generate;
-	
+
     ID_alu_op2 <= ID_immediate when ID_use_immediate else ID_reg2_eff_data;
-	
+
     -- schedule forwarding of results from the EX stage
     ID_fwd_ex_reg1 <= not MEM_cancel_EX and
       not ID_reg1_zero and ID_reg1_addr = ID_EX_writeback_addr;
@@ -797,7 +797,7 @@ begin
 	end if;
     end process;
 
-			
+
     --
     -- Pipeline stage 3: execute
     -- =========================
@@ -1402,7 +1402,9 @@ begin
     end generate;
 
 
+    --
     -- debugger module
+    --
     debug: entity work.debug
     generic map (
 	C_debug => C_debug
