@@ -1405,7 +1405,7 @@ begin
 	trace_active => debug_active,
 	trace_op => open,
 	trace_addr => trace_addr,
-	trace_data_out(7 downto 0) => debug_debug,
+	trace_data_out => open,
 	trace_data_in => final_trace_data
     );
 

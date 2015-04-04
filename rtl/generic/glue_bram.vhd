@@ -343,8 +343,10 @@ begin
 	clk => clk, ce => '1', txd => deb_tx, rxd => rs232_rx,
 	bus_write => deb_sio_tx_strobe, byte_sel => "0001",
 	bus_in(7 downto 0) => debug_to_sio_data,
+	bus_in(31 downto 8) => x"000000",
 	bus_out(7 downto 0) => sio_to_debug_data,
-	bus_out(8) => deb_sio_rx_done, bus_out(10) => deb_sio_tx_busy,
+	bus_out(8) => deb_sio_rx_done, bus_out(9) => open,
+	bus_out(10) => deb_sio_tx_busy, bus_out(31 downto 11) => open,
 	break => open
     );
     end generate;
