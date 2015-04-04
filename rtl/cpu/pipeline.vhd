@@ -272,11 +272,13 @@ architecture Behavioral of pipeline is
     signal R_cop0_intr, R_cop0_intr_mask: std_logic_vector(7 downto 0);
     signal R_cop0_EX_code: std_logic_vector(4 downto 0);
     signal R_cop0_timer_intr: std_logic;
+    signal sr, cause: std_logic_vector(31 downto 0);
 
     -- signals used for debugging only
     signal trace_addr: std_logic_vector(31 downto 0);
-    signal reg_trace_data: std_logic_vector(31 downto 0);
-    signal D_instr, D_b_instr, D_b_taken: std_logic_vector(31 downto 0);
+    signal reg_trace_data, misc_trace_data: std_logic_vector(31 downto 0);
+    signal final_trace_data: std_logic_vector(31 downto 0);
+    signal D_instr, D_b_instr, D_b_mispredict: std_logic_vector(31 downto 0);
 
 begin
 
@@ -897,14 +899,15 @@ begin
     -- COP0 outbound mux
     G_MI32_COP0_mux:
     if C_arch = ARCH_MI32 generate
+    sr <=  x"0000" & R_cop0_intr_mask & x"0" & "000" & R_cop0_EI;
+    cause <=  R_cop0_BD & "000" & x"000"
+      & R_cop0_intr & "0" & R_cop0_EX_code & "00";
     with ID_EX_cop0_addr select
     EX_from_cop0 <=
       R_cop0_count when MI32_COP0_COUNT,
       R_cop0_compare when MI32_COP0_COMPARE,
-      "----------------" & R_cop0_intr_mask & "-------" & R_cop0_EI
-	when MI32_COP0_STATUS,
-      R_cop0_BD & "---------------" & R_cop0_intr & "-" & R_cop0_EX_code & "--"
-	when MI32_COP0_CAUSE,
+      sr when MI32_COP0_STATUS,
+      cause when MI32_COP0_CAUSE,
       R_cop0_EPC & "00" when MI32_COP0_EXC_PC,
       R_cop0_config when MI32_COP0_CONFIG,
       (others => '-') when others;
@@ -1385,30 +1388,12 @@ begin
     R_cop0_config <= (others => '-');
     end generate;
 
-    -- XXX performance counters
-    G_perf_cnt:
+    --
+    -- Debug module
+    --
+    G_debug:
     if C_debug generate
-    process(clk)
-    begin
-	if rising_edge(clk) then
-	    if EX_MEM_branch_cycle then
-		D_b_instr <= D_b_instr + 1;
-	    end if;
-	    if MEM_take_branch then
-		D_b_taken <= D_b_taken + 1;
-	    end if;
-	end if;
-    end process;
-    end generate;
-
-
-    --
-    -- debugger module
-    --
     debug: entity work.debug
-    generic map (
-	C_debug => C_debug
-    )
     port map (
 	clk => clk,
 	ctrl_in_data => debug_in_data,
@@ -1421,8 +1406,40 @@ begin
 	trace_op => open,
 	trace_addr => trace_addr,
 	trace_data_out(7 downto 0) => debug_debug,
-	trace_data_in => reg_trace_data
+	trace_data_in => final_trace_data
     );
+
+    final_trace_data <= reg_trace_data when trace_addr(5) = '0'
+      else misc_trace_data;
+
+    with trace_addr(4 downto 0) select
+    misc_trace_data <=
+	sr			when "00000",
+	R_hi_lo(31 downto 0)	when "00001",
+	R_hi_lo(63 downto 32)	when "00010",
+	cause			when "00100",
+	IF_ID_EPC & "00"	when "00101",
+	IF_ID_instruction	when "00110",
+	R_cop0_count		when "01000",
+	D_instr			when "01001",
+	D_b_instr		when "01010",
+	D_b_mispredict		when "01011",
+	R_cop0_config		when "11111",
+	(others => '-')		when others;
+
+    -- performance counters
+    process(clk)
+    begin
+	if rising_edge(clk) then
+	    if EX_MEM_branch_cycle then
+		D_b_instr <= D_b_instr + 1;
+	    end if;
+	    if MEM_take_branch then
+		D_b_mispredict <= D_b_mispredict + 1;
+	    end if;
+	end if;
+    end process;
+    end generate;
 
 end Behavioral;
 

@@ -45,9 +45,6 @@ use work.f32c_pack.all;
 
 
 entity debug is
-    generic (
-	C_debug: boolean := true
-    );
     port (
 	clk: in std_logic;
 	ctrl_in_data: in std_logic_vector(7 downto 0);
@@ -102,7 +99,7 @@ begin
 
     process(clk)
     begin
-	if C_debug and rising_edge(clk) then
+	if rising_edge(clk) then
 	    R_ctrl_out_strobe <= '0';
 
 	    --
