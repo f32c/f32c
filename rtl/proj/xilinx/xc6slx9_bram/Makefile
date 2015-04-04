@@ -19,6 +19,7 @@ vhdfiles = \
 ../../../cpu/loadalign.vhd \
 ../../../cpu/pipeline.vhd \
 ../../../cpu/shift.vhd \
+../../../cpu/debug.vhd \
 ../../../soc/sio.vhd \
 ../../../cpu/defs_f32c.vhd \
 ../../../cpu/defs_mi32.vhd \
