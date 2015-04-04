@@ -33,6 +33,9 @@
         <Source name="../../../cpu/shift.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../cpu/debug.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../generic/bptrace.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
