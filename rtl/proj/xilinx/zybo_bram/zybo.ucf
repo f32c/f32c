@@ -58,6 +58,7 @@ NET "led<3>"        LOC=D18 | IOSTANDARD=LVCMOS33; #IO_L3N_T0_DQS_AD1N_35
 #NET "hdmi_scl"      LOC=G17 | IOSTANDARD=LVCMOS33; #IO_L16P_T2_35
 #NET "hdmi_sda"      LOC=G18 | IOSTANDARD=LVCMOS33; #IO_L16N_T2_35
 
+# warning this is from original file - JA..JD strange pin order 
 ## Pmod Header JA (XADC)
 #NET "ja_n<0>"       LOC=N16 | IOSTANDARD=LVCMOS33; #IO_L21N_T3_DQS_AD14N_35
 #NET "ja_p<0>"       LOC=N15 | IOSTANDARD=LVCMOS33; #IO_L21P_T3_DQS_AD14P_35
@@ -98,15 +99,64 @@ NET "led<3>"        LOC=D18 | IOSTANDARD=LVCMOS33; #IO_L3N_T0_DQS_AD1N_35
 #NET "jd_n<3>"       LOC=V18 | IOSTANDARD=LVCMOS33; #IO_L21N_T3_DQS_34
 #NET "jd_p<3>"       LOC=V17 | IOSTANDARD=LVCMOS33; #IO_L21P_T3_DQS_34
 
+# Pmod headers
+# simplified pins order
+# legend:
+# jx_u is upper row
+# jx_d is lower row
+# pinout: (looking at holes, left to right)
+# 3V3 GND jx_u<0> jx_u<1> jx_u<2> jx_u<3>
+# 3V3 GND jx_d<0> jx_d<1> jx_d<2> jx_d<3>
+
+## Pmod Header JA - untested, pins may be wrong
+NET "ja_u<0>"       LOC=N16 | IOSTANDARD=LVCMOS33;
+NET "ja_u<1>"       LOC=N15 | IOSTANDARD=LVCMOS33;
+NET "ja_u<2>"       LOC=L15 | IOSTANDARD=LVCMOS33;
+NET "ja_u<3>"       LOC=L14 | IOSTANDARD=LVCMOS33;
+NET "ja_d<0>"       LOC=J16 | IOSTANDARD=LVCMOS33;
+NET "ja_d<1>"       LOC=K16 | IOSTANDARD=LVCMOS33;
+NET "ja_d<2>"       LOC=J14 | IOSTANDARD=LVCMOS33;
+NET "ja_d<3>"       LOC=K14 | IOSTANDARD=LVCMOS33;
+
+## Pmod Header JB
+NET "jb_u<0>"       LOC=W20 | IOSTANDARD=LVCMOS33;
+NET "jb_u<1>"       LOC=V20 | IOSTANDARD=LVCMOS33;
+NET "jb_u<2>"       LOC=U20 | IOSTANDARD=LVCMOS33;
+NET "jb_u<3>"       LOC=T20 | IOSTANDARD=LVCMOS33;
+NET "jb_d<0>"       LOC=W19 | IOSTANDARD=LVCMOS33;
+NET "jb_d<1>"       LOC=W18 | IOSTANDARD=LVCMOS33;
+NET "jb_d<2>"       LOC=Y19 | IOSTANDARD=LVCMOS33;
+NET "jb_d<3>"       LOC=Y18 | IOSTANDARD=LVCMOS33;
+
+## Pmod Header JC
+NET "jc_u<0>"       LOC=T10 | IOSTANDARD=LVCMOS33;
+NET "jc_u<1>"       LOC=T11 | IOSTANDARD=LVCMOS33;
+NET "jc_u<2>"       LOC=W15 | IOSTANDARD=LVCMOS33;
+NET "jc_u<3>"       LOC=V15 | IOSTANDARD=LVCMOS33;
+NET "jc_d<0>"       LOC=U12 | IOSTANDARD=LVCMOS33;
+NET "jc_d<1>"       LOC=T12 | IOSTANDARD=LVCMOS33;
+NET "jc_d<2>"       LOC=Y14 | IOSTANDARD=LVCMOS33;
+NET "jc_d<3>"       LOC=W14 | IOSTANDARD=LVCMOS33;
+
+## Pmod Header JD
+NET "jd_u<0>"       LOC=R14 | IOSTANDARD=LVCMOS33;
+NET "jd_u<1>"       LOC=P14 | IOSTANDARD=LVCMOS33;
+NET "jd_u<2>"       LOC=T15 | IOSTANDARD=LVCMOS33;
+NET "jd_u<3>"       LOC=T14 | IOSTANDARD=LVCMOS33;
+NET "jd_d<0>"       LOC=V18 | IOSTANDARD=LVCMOS33;
+NET "jd_d<1>"       LOC=V17 | IOSTANDARD=LVCMOS33;
+NET "jd_d<2>"       LOC=U15 | IOSTANDARD=LVCMOS33;
+NET "jd_d<3>"       LOC=U14 | IOSTANDARD=LVCMOS33;
+
 ## Pmod Header JE
-#NET "je<0>"         LOC=V12 | IOSTANDARD=LVCMOS33; #IO_L4P_T0_34
-#NET "je<1>"         LOC=W16 | IOSTANDARD=LVCMOS33; #IO_L18N_T2_34
-#NET "je<2>"         LOC=J15 | IOSTANDARD=LVCMOS33; #IO_25_35
-#NET "je<3>"         LOC=H15 | IOSTANDARD=LVCMOS33; #IO_L19P_T3_35
-#NET "je<4>"         LOC=V13 | IOSTANDARD=LVCMOS33; #IO_L3N_T0_DQS_34
-#NET "je<5>"         LOC=U17 | IOSTANDARD=LVCMOS33; #IO_L9N_T1_DQS_34
-#NET "je<6>"         LOC=T17 | IOSTANDARD=LVCMOS33; #IO_L20P_T3_34
-#NET "je<7>"        LOC=Y17 | IOSTANDARD=LVCMOS33; #IO_L7N_T1_34
+#NET "je_u<0>"         LOC=H15 | IOSTANDARD=LVCMOS33;
+#NET "je_u<1>"         LOC=J15 | IOSTANDARD=LVCMOS33;
+#NET "je_u<2>"         LOC=W16 | IOSTANDARD=LVCMOS33;
+#NET "je_u<3>"         LOC=V12 | IOSTANDARD=LVCMOS33;
+#NET "je_d<0>"         LOC=Y17 | IOSTANDARD=LVCMOS33;
+#NET "je_d<1>"         LOC=T17 | IOSTANDARD=LVCMOS33;
+#NET "je_d<2>"         LOC=U17 | IOSTANDARD=LVCMOS33;
+#NET "je_d<3>"         LOC=V13 | IOSTANDARD=LVCMOS33;
 
 # JE Pmod header, protected with 200 ohm resistors
 # connectors up, looking at the holes:

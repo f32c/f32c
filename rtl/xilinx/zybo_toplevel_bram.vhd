@@ -52,6 +52,14 @@ entity glue is
         rs232_rx: in std_logic;
 	led: out std_logic_vector(3 downto 0);
 	sw: in std_logic_vector(3 downto 0);
+	ja_u: inout std_logic_vector(3 downto 0);
+	ja_d: inout std_logic_vector(3 downto 0);
+	jb_u: inout std_logic_vector(3 downto 0);
+	jb_d: inout std_logic_vector(3 downto 0);
+	jc_u: inout std_logic_vector(3 downto 0);
+	jc_d: inout std_logic_vector(3 downto 0);
+	jd_u: inout std_logic_vector(3 downto 0);
+	jd_d: inout std_logic_vector(3 downto 0);
 	btn: in std_logic_vector(3 downto 0)
     );
 end glue;
@@ -74,7 +82,14 @@ begin
 	clk => clk,
 	rs232_tx => rs232_tx, rs232_rx => rs232_rx,
 	rs232_break => open,
-	gpio => open,
+	gpio(3 downto 0) => ja_u(3 downto 0),
+	gpio(7 downto 4) => ja_d(3 downto 0),
+	gpio(11 downto 8) => jb_u(3 downto 0),
+	gpio(15 downto 12) => jb_d(3 downto 0),
+	gpio(19 downto 16) => jc_u(3 downto 0),
+	gpio(23 downto 20) => jc_d(3 downto 0),
+	gpio(27 downto 24) => jd_u(3 downto 0),
+	gpio(31 downto 28) => jd_d(3 downto 0),
 	leds(3 downto 0) => led(3 downto 0),
 	leds(7 downto 4) => open,
 	btns => btns,
