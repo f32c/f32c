@@ -38,7 +38,7 @@ entity glue is
 	C_clk_freq: integer := 112;
 
 	-- SoC configuration options
-	C_mem_size: integer := 8;
+	C_mem_size: integer := 16;
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true
     );
