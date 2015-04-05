@@ -24,9 +24,9 @@ SRCS = \
  ../../../altera/tb276_toplevel_bram.vhd \
  ../../../altera/pll_25M_112M5.vhd \
  ../../../altera/pll_112M5_433M92.vhd \
+ ../../../altera/bram_altera.vhd \
  ../../../generic/glue_bram.vhd \
  ../../../generic/bptrace.vhd \
- ../../../generic/bram.vhd \
  ../../../generic/reg1w2r.vhd \
  ../../../cpu/idecode_rv32.vhd \
  ../../../cpu/idecode_mi32.vhd \
