@@ -14,6 +14,7 @@ vhdfiles = \
 ../../../generic/glue_bram.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/bram.vhd \
+../../../generic/bootloader.vhd \
 ../../../generic/reg1w2r.vhd \
 ../../../cpu/alu.vhd \
 ../../../cpu/loadalign.vhd \

@@ -25,6 +25,7 @@ SRCS = \
  ../../../altera/pll_25M_112M5.vhd \
  ../../../altera/pll_112M5_433M92.vhd \
  ../../../altera/bram_altera.vhd \
+ ../../../generic/bootloader.vhd \
  ../../../generic/glue_bram.vhd \
  ../../../generic/bptrace.vhd \
  ../../../generic/reg1w2r.vhd \

@@ -42,6 +42,9 @@
         <Source name="../../../generic/bram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../generic/bootloader.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../generic/glue_bram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
