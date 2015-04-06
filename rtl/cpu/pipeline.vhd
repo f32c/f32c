@@ -796,6 +796,9 @@ begin
 		    ID_EX_cancel_next <= false;
 		end if;
 	    end if;
+	    if R_reset = '1' then
+		ID_EX_exception <= true;
+	    end if;
 	end if;
     end process;
 
@@ -1160,6 +1163,9 @@ begin
 	    if R_reset = '1' then
 		EX_MEM_mem_cycle <= '0';
 		EX_MEM_mem_write <= '0';
+		R_cop0_EBASE <= (others => '0');
+		R_cop0_EI <= '1';
+		R_cop0_intr_mask <= (others => '0');
 	    end if;
 	end if;
     end process;
@@ -1414,12 +1420,14 @@ begin
 
     with trace_addr(4 downto 0) select
     misc_trace_data <=
-	sr			when "00000",
-	R_hi_lo(31 downto 0)	when "00001",
-	R_hi_lo(63 downto 32)	when "00010",
-	cause			when "00100",
-	IF_ID_EPC & "00"	when "00101",
-	IF_ID_instruction	when "00110",
+	R_hi_lo(31 downto 0)	when "00000",
+	R_hi_lo(63 downto 32)	when "00001",
+	sr			when "00010",
+	cause			when "00011",
+	R_cop0_EPC & "00"	when "00100",
+	R_cop0_EBASE & "00"	when "00101",
+	IF_ID_EPC & "00"	when "00110",
+	IF_ID_instruction	when "00111",
 	R_cop0_count		when "01000",
 	D_instr			when "01001",
 	D_b_instr		when "01010",
