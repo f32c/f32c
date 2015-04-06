@@ -1,4 +1,4 @@
-#!/usr/local/bin/tclsh8.6
+#!/usr/bin/tclsh
 #
 # Copyright 2011-2013 Marko Zec, University of Zagreb
 #
@@ -129,6 +129,10 @@ while {[eof $bramfile] == 0} {
 	    set generic 1
 	    set section [lindex [split [string trim $line] _:] 1]
 	}
+	if {[string first ": boot_block_type := (" $line] != -1} {
+	    set generic 2
+	    set section 0
+	}
 	# Detect beginning of lattice DP16KB block
 	if {[string first ": DP16KB" $line] != -1} {
 	    set section [lindex [split [string trim $line] _:] 1]
@@ -150,6 +154,25 @@ while {[eof $bramfile] == 0} {
 	    for {set addr 0} {$addr < $endaddr} {incr addr 32} {
 		set line "\t"
 		for {set i $section} {$i < 32} {incr i 4} {
+		    set line \
+		      "[set line]x\"[format %02x [peek [expr $addr + $i]]]\", "
+		}
+		lappend filebuf $line
+	    }
+	    lappend filebuf "\tothers => (others => '0')"
+	    lappend filebuf "    );"
+	    set section undefined
+	    set generic 0
+	    continue
+	} elseif {($generic == 2 && $key != ");") ||
+	  ($lattice == 1 && [string first INITVAL_ $key] == 0)} {
+	    # Prune old INITVAL_ lines
+	    continue
+	} elseif {$generic == 2 && $key == ");"} {
+	    # Generic 8-bit wide BRAM block: construct and dump mem contents
+	    for {set addr 0} {$addr < $endaddr} {incr addr 8} {
+		set line "\t"
+		for {set i 0} {$i < 8} {incr i 1} {
 		    set line \
 		      "[set line]x\"[format %02x [peek [expr $addr + $i]]]\", "
 		}

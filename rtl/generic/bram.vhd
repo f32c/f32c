@@ -56,21 +56,24 @@ architecture x of bram is
     type bram_type is array(0 to (C_mem_size * 256 - 1))
       of std_logic_vector(7 downto 0);
       
-    function boot_block_to_bram(x: boot_block_type) return bram_type is
+    function boot_block_to_bram(x: boot_block_type; n: integer) return bram_type is
       variable y: bram_type;
-      variable i: integer;
+      variable i,l: integer;
     begin
         y := (others => x"00");
-        for i in x'range loop
-          y(i) := x(i);
+        i := n;
+        l := x'length;
+        while(i < l) loop
+          y(i/4) := x(i);
+          i := i + 4;
         end loop;
         return y;
     end boot_block_to_bram;
       
-    signal bram_0: bram_type := boot_block_to_bram(boot_0);
-    signal bram_1: bram_type := boot_block_to_bram(boot_1);
-    signal bram_2: bram_type := boot_block_to_bram(boot_2);
-    signal bram_3: bram_type := boot_block_to_bram(boot_3);
+    signal bram_0: bram_type := boot_block_to_bram(boot_block, 0);
+    signal bram_1: bram_type := boot_block_to_bram(boot_block, 1);
+    signal bram_2: bram_type := boot_block_to_bram(boot_block, 2);
+    signal bram_3: bram_type := boot_block_to_bram(boot_block, 3);
 
     -- Lattice Diamond attributes
     attribute syn_ramstyle: string;
