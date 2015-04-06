@@ -13,7 +13,7 @@
 --	a1	write register(s) (arg1: start, arg2: count)
 --	e2	read memory (arg1: start, arg2: count)
 --	e3	write memory (arg1: start, arg2: count)
---	c8	step (arg: number of clock ticks)
+--	ef	step (arg1: stop or not, arg2: number of clock ticks)
 --
 -- Ideally, those commands should permit synthesizing the following:
 --
@@ -53,6 +53,7 @@ entity debug is
 	ctrl_out_data: out std_logic_vector(7 downto 0);
 	ctrl_out_strobe: out std_logic;
 	ctrl_out_busy: in std_logic;
+	clk_enable: out std_logic;
 	trace_active: out std_logic;
 	trace_op: out std_logic_vector(3 downto 0);
 	trace_addr: out std_logic_vector(31 downto 0);
@@ -72,8 +73,9 @@ architecture x of debug is
     constant DEB_CMD_ACTIVE: std_logic_vector := x"9d";
     constant DEB_CMD_REG_RD: std_logic_vector := x"a0";
     constant DEB_CMD_REG_WR: std_logic_vector := x"a1";
-    constant DEB_CMD_MEM_RD: std_logic_vector := x"a2";
-    constant DEB_CMD_MEM_WR: std_logic_vector := x"a3";
+    constant DEB_CMD_MEM_RD: std_logic_vector := x"e2";
+    constant DEB_CMD_MEM_WR: std_logic_vector := x"e3";
+    constant DEB_CMD_CLK_STEP: std_logic_vector := x"ef";
 
     -- Debugger enabled flag
     signal R_debug_active: std_logic := '0';
@@ -86,6 +88,7 @@ architecture x of debug is
     signal R_seqn: std_logic_vector(7 downto 0);
 
     -- Output data & control
+    signal R_clk_enable: std_logic;
     signal R_ctrl_out: std_logic_vector(7 downto 0);
     signal R_ctrl_out_strobe: std_logic;
 
@@ -96,6 +99,8 @@ begin
 
     trace_active <= R_debug_active;
     trace_addr <= R_arg1;
+
+    clk_enable <= R_clk_enable;
 
     process(clk)
     begin
@@ -209,12 +214,24 @@ begin
 			end if;
 			R_ctrl_out_strobe <= '1';
 		    end if;
+		when DEB_CMD_CLK_STEP =>
+		    if R_arg2 = x"00000000" then
+			R_clk_enable <= R_arg1(0);
+			R_req_state <= DEB_REQ_IDLE;
+		    else
+			R_clk_enable <= '1';
+			R_arg2 <= R_arg2 - 1;
+		    end if;
 		when others =>
 		    -- XXX testing only - nothing should be sent here
 		    -- R_ctrl_out_strobe <= '1';
 		    -- R_ctrl_out <= R_cmd + 1;
 		    R_req_state <= DEB_REQ_IDLE;
 		end case;
+	    end if;
+
+	    if R_debug_active = '0' then
+		R_clk_enable <= '1';
 	    end if;
 	end if;
     end process;
