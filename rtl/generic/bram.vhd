@@ -109,8 +109,15 @@ begin
     dmem_data_out <= dbram_3 & dbram_2 & dbram_1 & dbram_0;
     imem_data_out <= ibram_3 & ibram_2 & ibram_1 & ibram_0;
 
-    write_enable <=
-      dmem_write = '1' and dmem_addr(19 downto 9) /= x"00" & "000";
+    with C_mem_size select write_enable <=
+	dmem_addr(12 downto 9) /= 0 and dmem_write = '1' when 8,
+	dmem_addr(13 downto 9) /= 0 and dmem_write = '1' when 16,
+	dmem_addr(14 downto 9) /= 0 and dmem_write = '1' when 32,
+	dmem_addr(15 downto 9) /= 0 and dmem_write = '1' when 64,
+	dmem_addr(16 downto 9) /= 0 and dmem_write = '1' when 128,
+	dmem_addr(17 downto 9) /= 0 and dmem_write = '1' when 256,
+	dmem_addr(18 downto 9) /= 0 and dmem_write = '1' when 512,
+	dmem_addr(19 downto 9) /= 0 and dmem_write = '1' when others;
 
     process(clk)
     begin
