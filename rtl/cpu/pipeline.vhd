@@ -229,8 +229,9 @@ architecture Behavioral of pipeline is
     signal EX_MEM_ll_bit: std_logic;
     signal EX_MEM_ll_addr: std_logic_vector(31 downto 2);
     signal EX_MEM_sc: boolean;
-    signal EX_MEM_instruction: std_logic_vector(31 downto 0); -- debugging only
     signal EX_MEM_EIP: boolean;
+    signal EX_MEM_instruction: std_logic_vector(31 downto 0);
+    signal EX_MEM_PC: std_logic_vector(31 downto 2);
 	
     -- pipeline stage 4: memory access
     signal MEM_running, MEM_take_branch: boolean;
@@ -249,7 +250,8 @@ architecture Behavioral of pipeline is
     signal MEM_WB_ex_data, MEM_WB_mem_data: std_logic_vector(31 downto 0);
     signal MEM_WB_multicycle_lh_lb: boolean;
     signal MEM_WB_mem_addr_offset: std_logic_vector(1 downto 0);
-    signal MEM_WB_instruction: std_logic_vector(31 downto 0); -- debugging only
+    signal MEM_WB_instruction: std_logic_vector(31 downto 0);
+    signal MEM_WB_PC: std_logic_vector(31 downto 2);
 	
     -- pipeline stage 5: register writeback
     signal WB_eff_data: std_logic_vector(31 downto 0);
@@ -1152,6 +1154,7 @@ begin
 		end if;
 		-- debugging only
 		if C_debug then
+		    EX_MEM_PC <= ID_EX_EPC;
 		    EX_MEM_instruction <= ID_EX_instruction;
 		end if;
 	    elsif C_ll_sc and EX_MEM_sc and EX_MEM_ll_bit = '0' then
@@ -1291,7 +1294,8 @@ begin
 		    MEM_WB_ex_data <= MEM_eff_data;
 		end if;
 		if C_debug then
-		    MEM_WB_instruction <= EX_MEM_instruction; -- debugging only
+		    MEM_WB_PC <= EX_MEM_PC;
+		    MEM_WB_instruction <= EX_MEM_instruction;
 		end if;
 	    else
 		MEM_WB_write_enable <= '0';
@@ -1425,19 +1429,40 @@ begin
 
     with trace_addr(4 downto 0) select
     misc_trace_data <=
-	R_hi_lo(31 downto 0)	when "00000",
-	R_hi_lo(63 downto 32)	when "00001",
+	R_hi_lo(63 downto 32)	when "00000",
+	R_hi_lo(31 downto 0)	when "00001",
 	sr			when "00010",
 	cause			when "00011",
 	R_cop0_EPC & "00"	when "00100",
 	R_cop0_EBASE & "00"	when "00101",
-	IF_ID_EPC & "00"	when "00110",
-	IF_ID_instruction	when "00111",
-	R_cop0_count		when "01000",
-	D_instr			when "01001",
-	D_b_instr		when "01010",
-	D_b_mispredict		when "01011",
-	R_cop0_config		when "11111",
+	R_cop0_count		when "00110",
+	R_cop0_compare		when "00111",
+
+	-- IF
+	IF_PC & "00"		when "01000",
+	imem_data_in		when "01001",
+
+	-- ID
+	IF_ID_EPC & "00"	when "01010",
+	IF_ID_instruction	when "01011",
+
+	-- EX
+	ID_EX_EPC & "00"	when "01100",
+	ID_EX_instruction	when "01101",
+
+	-- MEM
+	EX_MEM_PC & "00"	when "01110",
+	EX_MEM_instruction	when "01111",
+
+	-- WB
+	MEM_WB_PC & "00"	when "10000",
+	MEM_WB_instruction	when "10001",
+
+	-- Performance counters
+	D_instr			when "10100",
+	D_b_instr		when "10101",
+	D_b_mispredict		when "10110",
+	R_cop0_config		when "10111",
 	(others => '-')		when others;
 
     -- performance counters
