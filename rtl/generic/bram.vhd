@@ -30,7 +30,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use work.bootloader.all; -- ram initializaton constants boot_0..3 from bootloader.vhd
+use work.bootloader.all; -- ram initialization constant boot_block from bootloader.vhd
 
 entity bram is
     generic(
