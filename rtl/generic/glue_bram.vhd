@@ -110,7 +110,7 @@ architecture Behavioral of glue_bram is
     signal intr: std_logic_vector(5 downto 0);
     signal io_addr_strobe: std_logic;
     signal from_sio: std_logic_vector(31 downto 0);
-    signal sio_ce, sio_tx: std_logic;
+    signal sio_ce, sio_break, sio_tx: std_logic;
     signal R_leds: std_logic_vector(7 downto 0);
     signal R_sw: std_logic_vector(7 downto 0);
     signal R_btns: std_logic_vector(7 downto 0);
@@ -144,7 +144,7 @@ begin
 	C_debug => C_debug
     )
     port map (
-	clk => clk, reset => '0', intr => intr,
+	clk => clk, reset => sio_break, intr => intr,
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,
@@ -178,10 +178,11 @@ begin
     port map (
 	clk => clk, ce => sio_ce, txd => sio_tx, rxd => rs232_rx,
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_sio, break => rs232_break
+	bus_in => cpu_to_dmem, bus_out => from_sio, break => sio_break
     );
     sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11" and
       dmem_addr(7 downto 4) = x"2" else '0';
+    rs232_break <= sio_break;
     end generate;
 
     --
