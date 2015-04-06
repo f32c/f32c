@@ -168,6 +168,11 @@ NET "jd_d<3>"       LOC=U14 | IOSTANDARD=LVCMOS33;
 Net "rs232_rx" LOC = U17 | IOSTANDARD = LVCMOS33;
 Net "rs232_tx" LOC = V13 | IOSTANDARD = LVCMOS33;
 
+# onboard MIO band 501, PS_MIO48=B12 is RX, PS_MIO49=C12 is TX
+# we don't know how to use this
+#Net "rs232_rx" LOC = B12 | IOSTANDARD = LVCMOS18;
+#Net "rs232_tx" LOC = C12 | IOSTANDARD = LVCMOS18;
+
 ## USB-OTG overcurrent detect pin
 #NET "otg_oc"        LOC=U13 | IOSTANDARD=LVCMOS33; #IO_L3P_T0_DQS_PUDC_B_34
 
