@@ -65,7 +65,7 @@ entity glue is
 	C_movn_movz: boolean := false; -- true: +16 LUT4, -DMIPS, incomplete
 
 	-- Debugging / testing options (should be turned off)
-	C_debug: boolean := true;
+	C_debug: boolean := false;
 
 	-- SoC configuration options
 	C_cpus: integer := 1;
