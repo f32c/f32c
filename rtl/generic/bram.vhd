@@ -56,11 +56,18 @@ architecture x of bram is
     type bram_type is array(0 to (C_mem_size * 256 - 1))
       of std_logic_vector(7 downto 0);
 
+    --
     -- Xilinx ISE 14.7 for Spartan-3 will abort with error about loop 
-    -- iteration limit >64 exceeded. We need 128 iterations here.
-    -- if buiding with makefile, edit file xilinx.opt
+    -- iteration limit >64 exceeded.  We need 128 iterations here.
+    -- If buiding with makefile, edit file xilinx.opt file and
     -- append this line (give sufficiently large limit):
     -- -loop_iteration_limit 2048
+    -- In ISE GUI, open the Design tab, right click on Synthesize - XST,
+    -- choose Process Properties, choose Property display level: Advanced,
+    -- scroll down to the "Other XST Command Line Options" field and
+    -- enter: -loop_iteration_limit 2048
+    --
+
     function boot_block_to_bram(x: boot_block_type; n: integer) return bram_type is
       variable y: bram_type;
       variable i,l: integer;
