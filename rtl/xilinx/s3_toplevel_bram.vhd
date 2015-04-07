@@ -66,14 +66,16 @@ architecture Behavioral of glue is
 begin
 
     -- clock synthesizer
-    clkgen: entity work.clkgen
-    generic map(
-	C_clk_freq => C_clk_freq,
-	C_debug => false
-    )
-    port map(
-	clk_50m => clk_50m, clk => clk, key => '0', sel => '0'
-    );
+--    clkgen: entity work.clkgen
+--    generic map(
+--	C_clk_freq => C_clk_freq,
+--	C_debug => false
+--   )
+--    port map(
+--	clk_50m => clk_50m, clk => clk, key => '0', sel => '0'
+--    );
+    
+    clk <= clk_50m;
 
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
