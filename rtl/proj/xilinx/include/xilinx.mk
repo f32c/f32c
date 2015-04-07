@@ -165,8 +165,16 @@ junk += $(project).ncd $(project).pcf $(project).ngm $(project).mrp $(project).m
 junk += smartguide.ncd $(project).psr 
 junk += $(project)_summary.xml $(project)_usage.xml
 
-$(project).ngd: $(project).ngc $(project).ucf $(project).bmm
-	$(xil_env); ngdbuild $(intstyle) $(project).ngc -bm $(project).bmm
+#### if bmm file is not needed to preload bram
+#### (bram preloaded from vhdl or other means)
+#### then this is suitable
+$(project).ngd: $(project).ngc $(project).ucf
+	$(xil_env); ngdbuild $(intstyle) $(project).ngc
+
+#### if bram should be preloaded from bmm file, this can be used
+#$(project).ngd: $(project).ngc $(project).ucf $(project).bmm
+#	$(xil_env); ngdbuild $(intstyle) $(project).ngc -bm $(project).bmm
+
 junk += $(project).ngd $(project).bld
 
 $(project).ngc: $(vfiles) $(vhdfiles) $(local_corengcs) $(project).scr $(project).prj
