@@ -34,45 +34,38 @@ use work.f32c_pack.all;
 
 entity glue is
     generic (
-	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 112;
+	-- Main clock freq, in multiples of 10 MHz
+	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
-	C_mem_size: integer := 16;
+	C_mem_size: integer := 32;
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true
     );
     port (
-	clk_25m: in std_logic;
+	clk_50m: in std_logic;
 	rs232_txd: out std_logic;
 	rs232_rxd: in std_logic;
 	led: out std_logic_vector(7 downto 0);
 	gpio: inout std_logic_vector(31 downto 0);
-	btn_left, btn_right: in std_logic
-	-- sw: in std_logic_vector(7 downto 0)
+	btn_left, btn_right: in std_logic;
+	sw: in std_logic_vector(7 downto 0)
     );
 end glue;
 
 architecture Behavioral of glue is
-    signal clk, rs232_break: std_logic;
+    signal clk: std_logic;
     signal btns: std_logic_vector(7 downto 0);
 begin
-    -- clock synthesizer: Altera specific
-    clkgen: entity work.pll_25M_112M5
-    --generic map(
-    --  C_clk_freq => C_clk_freq,
-    --  C_debug => false
-    --)
-    port map(
-      inclk0 => clk_25m, c0 => clk
-    );
 
-    -- reset hard-block: Xilinx Spartan-6 specific
-    --reset: startup_spartan6
-    --port map (
-    --	clk => clk, gsr => rs232_break, gts => rs232_break,
-    --	keyclearb => '0'
-    --   );
+    clock: entity work.pll_50m
+    generic map (
+	C_clk_freq => C_clk_freq
+    )
+    port map (
+	clk_50m => clk_50m,
+	clk => clk
+    );
 
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
@@ -83,11 +76,12 @@ begin
     port map (
 	clk => clk,
 	rs232_tx => rs232_txd, rs232_rx => rs232_rxd,
-	rs232_break => rs232_break,
+	rs232_break => open,
 	gpio => gpio(31 downto 0),
 	leds => led,
 	btns => btns,
 	sw => "00000000"
     );
+
     btns <= "000000" & btn_left & btn_right;
 end Behavioral;

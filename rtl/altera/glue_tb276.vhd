@@ -23,7 +23,7 @@
 -- SUCH DAMAGE.
 --
 
--- $Id: glue.vhd 2036 2014-05-14 07:27:52Z marko $
+-- $Id$
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
