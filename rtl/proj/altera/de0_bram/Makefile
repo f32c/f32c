@@ -21,21 +21,22 @@ SERIAL_FLASH_LOADER_DEVICE = EP4CE6
 ###################################################################
 # Setup your sources here
 SRCS = \
- ../../cpu/idecode_rv32.vhd \
- ../../cpu/idecode_mi32.vhd \
- ../../cpu/defs_rv32.vhd \
- ../../cpu/defs_mi32.vhd \
- ../../cpu/defs_f32c.vhd \
- ../../soc/sio.vhd \
- ../../altera/glue.vhd \
- ../../generic/reg1w2r.vhd \
- ../../generic/bram.vhd \
- ../../generic/bptrace.vhd \
- ../../cpu/shift.vhd \
- ../../cpu/pipeline.vhd \
- ../../cpu/loadalign.vhd \
- ../../cpu/idecode.vhd \
- ../../cpu/alu.vhd
+ ../../../cpu/idecode_rv32.vhd \
+ ../../../cpu/idecode_mi32.vhd \
+ ../../../cpu/defs_rv32.vhd \
+ ../../../cpu/defs_mi32.vhd \
+ ../../../cpu/defs_f32c.vhd \
+ ../../../soc/sio.vhd \
+ ../../../altera/glue.vhd \
+ ../../../generic/reg1w2r.vhd \
+ ../../../generic/bram.vhd \
+ ../../../generic/bootloader.vhd \
+ ../../../generic/bptrace.vhd \
+ ../../../cpu/shift.vhd \
+ ../../../cpu/pipeline.vhd \
+ ../../../cpu/loadalign.vhd \
+ ../../../cpu/idecode.vhd \
+ ../../../cpu/alu.vhd
 
 ###################################################################
 # Main Targets
