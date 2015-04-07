@@ -9,6 +9,7 @@ SHELL = /bin/bash
 
 vhdfiles = \
 ../../../xilinx/s3_toplevel_bram.vhd \
+../../../xilinx/dcm_s3_50m.vhd \
 ../../../generic/glue_bram.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/bram.vhd \
