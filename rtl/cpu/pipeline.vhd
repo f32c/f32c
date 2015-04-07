@@ -89,8 +89,6 @@ architecture Behavioral of pipeline is
 
     constant REG_ZERO: std_logic_vector(4 downto 0) := ARCH_REG_ZERO(C_arch);
 
-    signal cpu_clk, clk_enable: std_logic;
-
     -- pipeline stage 1: instruction fetch
     signal IF_PC, IF_PC_next, IF_PC_ext_next: std_logic_vector(31 downto 2);
     signal IF_PC_incr: std_logic;
@@ -277,6 +275,7 @@ architecture Behavioral of pipeline is
     signal sr, cause: std_logic_vector(31 downto 0);
 
     -- signals used for debugging only
+    signal clk_enable: std_logic;
     signal trace_addr: std_logic_vector(31 downto 0);
     signal reg_trace_data, misc_trace_data: std_logic_vector(31 downto 0);
     signal final_trace_data: std_logic_vector(31 downto 0);
@@ -334,10 +333,6 @@ begin
     --	exceptions/interrupts
 
 
-    cpu_clk <= clk when not C_debug
-      else clk and clk_enable;
-
-
     --
     -- Pipeline stage 1: instruction fetch
     -- ===================================
@@ -383,9 +378,9 @@ begin
       IF_PC_next and C_PC_mask(31 downto 2) when IF_data_ready
       else IF_ID_PC; -- i.e. do not change
 
-    process(cpu_clk)
+    process(clk)
     begin
-	if rising_edge(cpu_clk) then
+	if rising_edge(clk) and clk_enable = '1' then
 	    R_reset <= reset;
 	    IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
 	    IF_ID_PC <= IF_PC_ext_next;
@@ -440,7 +435,7 @@ begin
     port map (
 	din => MEM_bpredict_score, dout => IF_ID_bpredict_score,
 	rdaddr => IF_bpredict_index, wraddr => EX_MEM_bpredict_index,
-	re => IF_bpredict_re, we => MEM_bpredict_we, clk => cpu_clk
+	re => IF_bpredict_re, we => MEM_bpredict_we, clk => clk
     );
     end generate;
 
@@ -539,7 +534,7 @@ begin
     -- With multicycle aligner WB_writeback_data is written to the regfile
     -- at the half of the clk cycle, in which case no bypass logic is required.
     --
-    WB_clk <= cpu_clk when C_load_aligner else not cpu_clk;
+    WB_clk <= clk when C_load_aligner else not clk;
     ID_reg1_eff_data <= IF_ID_EPC & "00" when C_arch = ARCH_RV32 and ID_reg1_pc
       else ID_reg1_data when not C_load_aligner or
       ID_reg1_zero or ID_reg1_addr /= MEM_WB_writeback_addr
@@ -612,9 +607,9 @@ begin
       else ID_branch_target when C_branch_prediction and not ID_jump_cycle
       else IF_ID_PC_4(31 downto 28) & IF_ID_instruction(25 downto 0);
 
-    process(cpu_clk)
+    process(clk)
     begin
-	if rising_edge(cpu_clk) then
+	if rising_edge(clk) and clk_enable = '1' then
 	    if EX_running then
 		if not C_load_aligner and ID_EX_multicycle_lh_lb and
 		  not MEM_cancel_EX and not EX_MEM_EIP then
@@ -970,9 +965,9 @@ begin
     EX_branch_target <= IF_ID_PC_4 when ID_EX_predict_taken
       else ID_EX_branch_target;
 
-    process(cpu_clk)
+    process(clk)
     begin
-	if rising_edge(cpu_clk) then
+	if rising_edge(clk) and clk_enable = '1' then
 	    if C_ll_sc then
 		if ID_EX_ll then
 		    EX_MEM_ll_bit <= '1';
@@ -1202,9 +1197,9 @@ begin
     G_bp_update_score:
     if C_branch_prediction generate
     MEM_bpredict_we <= '1' when EX_MEM_branch_cycle else '0';
-    process(cpu_clk)
+    process(clk)
     begin
-	if falling_edge(cpu_clk) then
+	if falling_edge(clk) and clk_enable = '1' then
 	    if EX_MEM_take_branch then
 		case EX_MEM_bpredict_score is
 		    when BP_STRONG_NOT_TAKEN =>
@@ -1233,7 +1228,7 @@ begin
 		end case;
 	    end if;
 	end if;
-	if rising_edge(cpu_clk) then
+	if rising_edge(clk) and clk_enable = '1' then
 	    if EX_MEM_branch_cycle then
 		EX_MEM_branch_hist((C_bp_global_depth - 2) downto 0) <=
 		  EX_MEM_branch_hist((C_bp_global_depth - 1) downto 1);
@@ -1265,9 +1260,9 @@ begin
       dmem_data_in(23 downto 16) & dmem_data_in(31 downto 24) when C_big_endian
       else dmem_data_in;
 
-    process(cpu_clk)
+    process(clk)
     begin
-	if rising_edge(cpu_clk) then
+	if rising_edge(clk) and clk_enable = '1' then
 	    if MEM_running then
 		if C_ll_sc and EX_MEM_sc then
 		    MEM_WB_mem_cycle <= '0';
@@ -1339,9 +1334,9 @@ begin
     G_multiplier:
     if C_mult_enable generate
     mul_res <= R_mul_a * R_mul_b; -- infer asynchronous signed multiplier
-    process (cpu_clk)
+    process (clk)
     begin
-	if falling_edge(cpu_clk) then
+	if falling_edge(clk) and clk_enable = '1' then
 	    if not EX_MEM_EIP and ID_EX_mult then
 		R_mul_a(31 downto 0) <= CONV_SIGNED(UNSIGNED(EX_eff_reg1), 32);
 		R_mul_b(31 downto 0) <= CONV_SIGNED(UNSIGNED(EX_eff_reg2), 32);
@@ -1366,9 +1361,9 @@ begin
     -- COP0
     G_cop0_count:
     if C_cop0_count generate
-    process(cpu_clk)
+    process(clk)
     begin
-	if rising_edge(cpu_clk) then
+	if rising_edge(clk) and clk_enable = '1' then
 	    R_cop0_count <= R_cop0_count + 1;
 	end if;
     end process;
@@ -1466,9 +1461,9 @@ begin
 	(others => '-')		when others;
 
     -- performance counters
-    process(cpu_clk)
+    process(clk)
     begin
-	if rising_edge(cpu_clk) then
+	if rising_edge(clk) and clk_enable = '1' then
 	    if EX_MEM_branch_cycle then
 		D_b_instr <= D_b_instr + 1;
 	    end if;
@@ -1477,6 +1472,11 @@ begin
 	    end if;
 	end if;
     end process;
+    end generate;
+
+    G_no_debug:
+    if not C_debug generate
+	clk_enable <= '1';
     end generate;
 
 end Behavioral;
