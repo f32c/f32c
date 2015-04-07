@@ -39,10 +39,10 @@ use work.f32c_pack.all;
 entity glue is
     generic (
 	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 100;
+	C_clk_freq: integer := 80;
 
 	-- SoC configuration options
-	C_mem_size: integer := 16;
+	C_mem_size: integer := 32;
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true
     );
@@ -66,17 +66,15 @@ architecture Behavioral of glue is
 begin
 
     -- clock synthesizer
---    clkgen: entity work.clkgen
---    generic map(
---	C_clk_freq => C_clk_freq,
---	C_debug => false
---   )
---    port map(
---	clk_50m => clk_50m, clk => clk, key => '0', sel => '0'
---    );
+    clkgen: entity work.clkgen
+    generic map(
+	C_clk_freq => C_clk_freq,
+	C_debug => false
+    )
+    port map(
+	clk_50m => clk_50m, clk => clk, key => '0', sel => '0'
+    );
     
-    clk <= clk_50m;
-
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
     generic map (
@@ -93,7 +91,15 @@ begin
 	btns => btns,
 	sw(7 downto 4) => x"0", sw(3 downto 0) => sw
     );
-    -- btns <= "000" & btnc & btnu & btnd & btnl & btnr;
+
     btns <= '0' & rot_a & rot_b & rot_center &
       btn_north & btn_south & btn_west & btn_east;
+
+    j1 <= (others => 'Z');
+    j2 <= (others => 'Z');
+    lcd_db <= (others => 'Z');
+    lcd_e <= 'Z';
+    lcd_rs <= 'Z';
+    lcd_rw <= 'Z';
+
 end Behavioral;
