@@ -44,7 +44,7 @@ entity glue_bram is
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
 	C_ll_sc: boolean := false;
-	C_PC_mask: std_logic_vector(31 downto 0) := x"0000ffff";
+	C_PC_mask: std_logic_vector(31 downto 0) := x"0001ffff"; -- 128 K
 	C_exceptions: boolean := true;
 
 	-- COP0 options
