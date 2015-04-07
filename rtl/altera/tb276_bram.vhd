@@ -23,7 +23,7 @@
 -- SUCH DAMAGE.
 --
 
--- $Id: bram.vhd 2624 2015-03-24 21:24:02Z marko $
+-- $Id$
 
 
 library IEEE;
