@@ -1,0 +1,85 @@
+##############################################################################
+# These are sample constraints for the three clock inputs.  You will need
+# to change these constraints to suit your application.  Please read the
+# FPGA Development System Reference Guide for more information on expressing
+# timing constraints for your design.
+##############################################################################
+NET "CLK_50M"       LOC = "E12"  | IOSTANDARD = LVCMOS33 | PERIOD = 20 ns;
+#	OFFSET = IN  1.000 VALID 1.000 BEFORE "CLK_50M";
+#	OFFSET = OUT 1.000 AFTER "CLK_50M";
+#NET "CLK_AUX" LOC = V12 | IOSTANDARD = "LVCMOS33" | PERIOD = 10 ns;
+#	OFFSET = IN  1.000 VALID 1.000 BEFORE "CLK_AUX";
+#	OFFSET = OUT 1.000 AFTER "CLK_AUX";
+
+##############################################################################
+# Discrete Indicators (LED)
+##############################################################################
+NET "LED<0>" LOC = R20 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LED<1>" LOC = T19 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LED<2>" LOC = U20 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LED<3>" LOC = U19 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LED<4>" LOC = V19 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LED<5>" LOC = V20 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LED<6>" LOC = Y22 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LED<7>" LOC = W21 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+
+##############################################################################
+# Character Display (LCD)
+##############################################################################
+NET "LCD_DB<0>" LOC = Y13 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LCD_DB<1>" LOC = AB18 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LCD_DB<2>" LOC = AB17 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LCD_DB<3>" LOC = AB12 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LCD_DB<4>" LOC = AA12 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LCD_DB<5>" LOC = Y16 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LCD_DB<6>" LOC = AB16 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LCD_DB<7>" LOC = Y15 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LCD_E" LOC = AB4 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LCD_RS" LOC = Y14 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+NET "LCD_RW" LOC = W13 | IOSTANDARD = "LVCMOS33" | DRIVE = 8 | SLEW = SLOW;
+
+##############################################################################
+# Directional Push-Buttons (BTN)
+##############################################################################
+NET "BTN_EAST" LOC = T16 | IOSTANDARD = "LVCMOS33" | PULLDOWN;
+NET "BTN_NORTH" LOC = T14 | IOSTANDARD = "LVCMOS33" | PULLDOWN;
+NET "BTN_SOUTH" LOC = T15 | IOSTANDARD = "LVCMOS33" | PULLDOWN;
+NET "BTN_WEST" LOC = U15 | IOSTANDARD = "LVCMOS33" | PULLDOWN;
+
+##############################################################################
+# Rotary Knob (ROT)
+##############################################################################
+NET "ROT_CENTER" LOC = R13 | IOSTANDARD = "LVCMOS33" | PULLDOWN;
+NET "ROT_A" LOC = T13 | IOSTANDARD = "LVCMOS33" | PULLUP;
+NET "ROT_B" LOC = R14 | IOSTANDARD = "LVCMOS33" | PULLUP;
+
+##############################################################################
+# Mechanical Switches (SW)
+##############################################################################
+NET "SW<0>" LOC = V8 | IOSTANDARD = "LVCMOS33" | PULLDOWN;
+NET "SW<1>" LOC = U10 | IOSTANDARD = "LVCMOS33" | PULLDOWN;
+NET "SW<2>" LOC = U8 | IOSTANDARD = "LVCMOS33"| PULLDOWN;
+NET "SW<3>" LOC = T9 | IOSTANDARD = "LVCMOS33" | PULLDOWN;
+
+##############################################################################
+# Serial Ports (RS232)
+##############################################################################
+
+NET "RS232_DCE_RXD" LOC = "E16" | IOSTANDARD = LVCMOS33;
+NET "RS232_DCE_TXD" LOC = "F15" | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = SLOW;
+
+#NET "RS232_DTE_RXD" LOC = "F16" | IOSTANDARD = LVCMOS33;
+#NET "RS232_DTE_TXD" LOC = "E15" | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = SLOW;
+
+##############################################################################
+# Accessory Headers J18_IO = J1, J20_IO = J2
+##############################################################################
+NET "J1<0>" LOC = "AA21" | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = SLOW;
+NET "J1<1>" LOC = "AB21" | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = SLOW;
+NET "J1<2>" LOC = "AA19" | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = SLOW;
+NET "J1<3>" LOC = "AB19" | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = SLOW;
+
+NET "J2<0>" LOC = "V14"  | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = SLOW;
+NET "J2<1>" LOC = "V15"  | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = SLOW;
+NET "J2<2>" LOC = "W16"  | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = SLOW;
+NET "J2<3>" LOC = "V16"  | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = SLOW;
