@@ -65,7 +65,7 @@ entity glue_bram is
 	C_movn_movz: boolean := false;
 
 	-- CPU debugging
-	C_debug: boolean := true;
+	C_debug: boolean := false;
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;	-- in KBytes
