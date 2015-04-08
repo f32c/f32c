@@ -1,7 +1,7 @@
 project = s3a_700_bram
 vendor = xilinx
 family = spartan3
-part = xc3s700an-fg484-5 # last number -5 is speed grade
+part = xc3s700an-fgg484-5 # last number -5 is speed grade
 flashsize = 512 # KB (kilobytes) - SPI flash device is M25P40
 top_module = glue
 isedir = /usr/local/xilinx/14.7/ISE_DS
