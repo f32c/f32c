@@ -206,16 +206,12 @@ main(void)
 	/* Crude SRAM self-test & bzero() */
 	for (i = -1; i <= 0; i++) {
 		/* memset() SRAM */
-		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p += 4) {
-			p[0] = i;
-			p[1] = i;
-			p[2] = i;
-			p[3] = i;
-		}
+		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p++)
+			*p = i;
 
 		/* check SRAM */
 		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p += 4)
-			if (p[0] + p[1] + p[2] + p[3] != i << 2) {
+			if (p[0] + p[1] + p[3] + p[4] != i << 2) {
 				puts("SRAM BIST failed\n");
 				/* Blink LEDs: on/off 1:1 */
 				do {
@@ -250,7 +246,11 @@ main(void)
 	puts("\n\n");
 
 	/* Turn off LEDs before jumping to next loader stage */
+#if 0
 	OUTB(IO_LED, 0);
+#else
+	asm("sb $0, -239($0);");
+#endif
 
 	/* Check SIO RX buffer */
 	INB(i, IO_SIO_STATUS);
@@ -265,12 +265,25 @@ main(void)
 boot:
 	__asm __volatile__(
 		".set noreorder;"
+		".set noat;"
+		"move $1, %0;"
 		"lui $4, 0x8000;"	/* stack mask */
 		"lui $5, 0x0010;"	/* top of the initial stack */
 		"and $29, %0, $4;"	/* clear low bits of the stack */
+
+		"beqz $29, cache_skip;"	/* skip cache invalidate for BRAM */
+		"li $2, 0x4000;"	/* max. I-cache size: 16 K */
+		"icache_flush:;"
+		"addiu $2, $2, -4;"
+		"cache 0, 0($4);"
+		"bnez $2, icache_flush;"
+		"addiu $4, $4, 4;"
+		"cache_skip:;"
+
 		"move $31, $0;"		/* return to ROM loader when done */
-		"jr %0;"
+		"jr $1;"
 		"or $29, $29, $5;"	/* set the stack pointer */
+		".set at;"
 		".set reorder;"
 		:
 		: "r" (cp)
