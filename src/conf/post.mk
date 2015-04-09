@@ -138,11 +138,7 @@ MK_LDFLAGS += -N ${ENDIANFLAGS}
 MK_LDFLAGS += --section-start=.init=${LOADADDR}
 MK_LDFLAGS += --library-path=${LIBDIR}
 ifndef WITHOUT_LIBS
- ifeq ($(findstring 0x8, ${LOADADDR}),)
-  MK_LDFLAGS += -lcrt0bram
- else
-  MK_LDFLAGS += -lcrt0
- endif
+MK_LDFLAGS += -lcrt0
 endif
 
 # Garbage-collect unused section (unreferenced functions)
