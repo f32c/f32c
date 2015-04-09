@@ -246,11 +246,7 @@ main(void)
 	puts("\n\n");
 
 	/* Turn off LEDs before jumping to next loader stage */
-#if 0
 	OUTB(IO_LED, 0);
-#else
-	asm("sb $0, -239($0);");
-#endif
 
 	/* Check SIO RX buffer */
 	INB(i, IO_SIO_STATUS);
@@ -274,10 +270,9 @@ boot:
 		"beqz $29, cache_skip;"	/* skip cache invalidate for BRAM */
 		"li $2, 0x4000;"	/* max. I-cache size: 16 K */
 		"icache_flush:;"
-		"addiu $2, $2, -4;"
-		"cache 0, 0($4);"
+		"cache 0, 0($2);"
 		"bnez $2, icache_flush;"
-		"addiu $4, $4, 4;"
+		"addiu $2, $2, -4;"
 		"cache_skip:;"
 
 		"move $31, $0;"		/* return to ROM loader when done */
