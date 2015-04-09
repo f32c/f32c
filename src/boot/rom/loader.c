@@ -191,40 +191,13 @@ void
 main(void)
 {
 	uint8_t *cp = (void *) LOADER_BASE;
-	int *p;
-	int res_sec, sec_size, len, i;
-
-	/* Turn on LEDs */
-	OUTB(IO_LED, 255);
+	int res_sec, sec_size, len, i, c;
 
 	/* Turn off video framebuffer, just in case */
 	OUTW(IO_FB, 3);
 
 	/* Reset all CPU cores except CPU #0 */
 	OUTW(IO_CPU_RESET, ~1);
-
-	/* Crude SRAM self-test & bzero() */
-	for (i = -1; i <= 0; i++) {
-		/* memset() SRAM */
-		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p++)
-			*p = i;
-
-		/* check SRAM */
-		for (p = (int *) SRAM_BASE; p < (int *) SRAM_TOP; p += 4)
-			if (p[0] + p[1] + p[3] + p[4] != i << 2) {
-				puts("SRAM BIST failed\n");
-				/* Blink LEDs: on/off 1:1 */
-				do {
-					if ((i++ >> 22) & 1)
-						OUTB(IO_LED, 255);
-					else
-						OUTB(IO_LED, 0);
-				} while (1);
-			}
-	}
-
-	puts("SRAM BIST passed\n");
-	puts(msg);
 
 	flash_read_block((void *) cp, 0, 512);
 	sec_size = (cp[0xc] << 8) + cp[0xb];
@@ -245,16 +218,21 @@ main(void)
 	phex32(len);
 	puts("\n\n");
 
-	/* Turn off LEDs before jumping to next loader stage */
-	OUTB(IO_LED, 0);
+	/* Wait briefly for an interrupt char from SIO */
+	for (i = 1 << 21; i > 0; i--) {
+		OUTB(IO_LED, i >> 13);
+		if (i > (1 << 20))
+			continue;
 
-	/* Check SIO RX buffer */
-	INB(i, IO_SIO_STATUS);
-	if (i & SIO_RX_FULL) {
-		INB(i, IO_SIO_BYTE);
-		if (i == ' ') {
-			sio_boot();
-			cp = sio_load_binary();
+		/* Check SIO RX buffer */
+		INB(c, IO_SIO_STATUS);
+		if (c & SIO_RX_FULL) {
+			INB(c, IO_SIO_BYTE);
+			if (c == ' ') {
+				sio_boot();
+				cp = sio_load_binary();
+				break;
+			}
 		}
 	}
 	
