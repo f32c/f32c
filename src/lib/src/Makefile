@@ -30,12 +30,6 @@ ifeq ($(MAKECMDGOALS),crt0)
  .DEFAULT_GOAL = lib
 endif
 
-ifeq ($(MAKECMDGOALS),crt0bram)
- LIB = crt0bram
- .DEFAULT_GOAL = lib
- CFLAGS += -DBRAM
-endif
-
 ifeq ($(MAKECMDGOALS),c)
  LIB = c
  .DEFAULT_GOAL = lib
@@ -60,14 +54,10 @@ ifeq ($(MAKECMDGOALS),ulx2s)
 endif
 
 ifeq ($(.DEFAULT_GOAL),)
-$(error Must specify library target: crt0 crt0bram c cint m ulx2s)
+$(error Must specify library target: crt0 c cint m ulx2s)
 endif
 
 ifeq ($(LIB),crt0)
- ASFILES = ${ARCH}/start.S
-endif
-
-ifeq ($(LIB),crt0bram)
  ASFILES = ${ARCH}/start.S
 endif
 
