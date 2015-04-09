@@ -32,6 +32,6 @@ CFILES = loader.c ../sio/loader.c \
 	${LIBSRC}/spi.c ${LIBSRC}/sio_baud.c \
 	${LIBSRC}/mul.c ${LIBSRC}/div.c
 
-ASFILES = ${LIBSRC}/${ARCH}/start.S
+ASFILES = start.S
 
 include ${POST_MK}
