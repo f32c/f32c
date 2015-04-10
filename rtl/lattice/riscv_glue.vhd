@@ -36,23 +36,23 @@ use work.f32c_pack.all;
 entity glue is
     generic (
 	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-	C_clk_freq: integer := 25;
+	C_clk_freq: integer := 50;
 
 	-- Architecture
 	C_arch: integer := ARCH_RV32;
 
 	-- ISA options
 	C_big_endian: boolean := false;
-	C_mult_enable: boolean := true;
-	C_branch_likely: boolean := true;
-	C_sign_extend: boolean := true;
+	C_mult_enable: boolean := false;
+	C_branch_likely: boolean := false;
+	C_sign_extend: boolean := false;
 	C_ll_sc: boolean := false;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"00001fff";
 	C_exceptions: boolean := false;
 
 	-- COP0 options
 	C_cop0_count: boolean := true;
-	C_cop0_config: boolean := true;
+	C_cop0_config: boolean := false;
 
 	-- CPU core configuration options
 	C_branch_prediction: boolean := false;
@@ -66,7 +66,7 @@ entity glue is
 	C_movn_movz: boolean := false;
 
 	-- Debugging / testing options (should be turned off)
-	C_debug: boolean := true;
+	C_debug: boolean := false;
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
@@ -98,11 +98,6 @@ architecture Behavioral of glue is
     -- I/O
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_ce, sio_txd: std_logic;
-
-    -- debugging only
-    signal trace_addr: std_logic_vector(5 downto 0);
-    signal trace_data: std_logic_vector(31 downto 0);
-    signal debug_txd: std_logic;
 
 begin
 
@@ -148,22 +143,10 @@ begin
 	dmem_data_ready => dmem_data_ready,
 	snoop_cycle => '0', snoop_addr => "------------------------------",
 	flush_i_line => open, flush_d_line => open,
-	trace_addr => trace_addr, trace_data => trace_data
+	debug_in_data => x"00", debug_in_strobe => '0', debug_out_busy => '0'
     );
 
-    --
-    -- debugging design instance
-    --
-    G_debug:
-    if C_debug generate
-    debug: entity work.serial_debug
-    port map (
-	clk => clk_25m, rs232_txd => debug_txd,
-	trace_addr => trace_addr, trace_data => trace_data
-    );
-    end generate;
-
-    rs232_tx <= debug_txd when C_debug and sw(3) = '1' else sio_txd;
+    rs232_tx <= sio_txd;
 
     --
     -- RS232 sio
