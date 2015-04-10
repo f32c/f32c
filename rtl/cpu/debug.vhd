@@ -55,6 +55,7 @@ entity debug is
 	ctrl_out_busy: in std_logic;
 	clk_enable: out std_logic;
 	trace_active: out std_logic;
+	trace_break_pc: in std_logic_vector(31 downto 2);
 	trace_op: out std_logic_vector(3 downto 0);
 	trace_addr: out std_logic_vector(31 downto 0);
 	trace_data_out: out std_logic_vector(31 downto 0);
@@ -79,6 +80,7 @@ architecture x of debug is
 
     -- Debugger enabled flag
     signal R_debug_active: std_logic := '0';
+    signal R_breakpoint: std_logic := '0';
 
     -- Request processing FSMD registers
     signal R_req_state: integer;
@@ -220,6 +222,7 @@ begin
 			R_req_state <= DEB_REQ_IDLE;
 		    else
 			R_clk_enable <= '1';
+			R_breakpoint <= '0';
 			R_arg2 <= R_arg2 - 1;
 		    end if;
 		when others =>
@@ -230,9 +233,18 @@ begin
 		end case;
 	    end if;
 
-	    if R_debug_active = '0' then
+	    if R_debug_active = '0' and R_breakpoint = '0' then
 		R_clk_enable <= '1';
 	    end if;
+
+	    --
+	    -- Breakpoint detection
+	    --
+	    if false and trace_break_pc & "00" = x"00000200" then
+		R_breakpoint <= '1';
+		R_clk_enable <= '0';
+	    end if;
+
 	end if;
     end process;
 end x;

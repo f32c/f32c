@@ -1413,6 +1413,7 @@ begin
 	ctrl_out_busy => debug_out_busy,
 	clk_enable => clk_enable,
 	trace_active => debug_active,
+	trace_break_pc => IF_PC,
 	trace_op => open,
 	trace_addr => trace_addr,
 	trace_data_out => open,
