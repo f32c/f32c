@@ -12,10 +12,10 @@ SHELL = /bin/bash
 
 vhdfiles = \
 ../../../xilinx/zybo_toplevel_bram.vhd \
-../../../generic/glue_bram.vhd \
-../../../generic/bptrace.vhd \
+../../../generic/glue_bram_mi32.vhd \
+../../../generic/bootloader_mi32.vhd \
 ../../../generic/bram.vhd \
-../../../generic/bootloader.vhd \
+../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
 ../../../cpu/alu.vhd \
 ../../../cpu/loadalign.vhd \
