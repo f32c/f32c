@@ -8,12 +8,20 @@
 #include <stdio.h>
 #include <io.h>
 
+#ifdef __mips__
+static const char *arch = "mips";
+#elif defined(__riscv__)
+static const char *arch = "riscv";
+#else
+static const char *arch = "unknown";
+#endif
+
 void
 main(void)
 {
 	int in, out = 0;
 
-	printf("Hello, FPGA world!\n");
+	printf("Hello, f32c/%s world!\n", arch);
 
 	do {
 		OUTB(IO_LED, out >> 20);
