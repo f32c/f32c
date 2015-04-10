@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014 Marko Zec, University of Zagreb
+ * Copyright (c) 2013-2015 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,32 +25,42 @@
  * $Id$
  */
 
-#if 0
-#include <mips/asm.h>
-#include <mips/regdef.h>
-#include <mips/cpuregs.h>
-#include <io.h>
-#endif
-
 
 /*
- * Setup the SP and global (small data) pointer register and jump into main().
+ * Clear BSS, set small data index register and jump into main().
+ *
+ * Assumes that the loader has already properly:
+ * 1) set stack pointer
+ * 2) set return address
+ * 3) invalidated caches
  */
 	.section .init
 	.globl _start
 	.type _start,@function
 
 _start:
+	/* Magic block required by the bootloader, otherwise harmless */
+	la	s0, _start	/* Executable code base address */
+	la	s1, _end	/* End of BSS section, word aligned */
+	la	s0, __bss_start	/* Start of BSS section, NOT word aligned */
+	la	gp, _gp	
 
-#ifdef BRAM
-#ifdef ONLY_I_ROM
-	li      sp, 0x80100000  /* SRAM top */
-#else
-	li      sp, 0x00010000  /* 64 k */
-#endif
-#else
-	li      sp, 0x80100000  /* SRAM top */
-#endif
+	/* The loader doesn't bzero the BSS, so we must do it here. */
+bss_bzero:
+	sb	zero, (s0)
+	addi	s0, s0, 1
+	bne	s0, s1, bss_bzero
 
-	la	gp, _gp
+	la	s0, __init_array_start
+	la	s1, _fdata
+	move	s2, ra
+	b	ctor_loop_enter
+
+ctor_loop:
+	jalr	a0
+	addi	s0, s0, 4
+ctor_loop_enter:
+	bne	s0, s1,	ctor_loop
+	lw	a0, (s0)
+	move	ra, s2
 	j	main
