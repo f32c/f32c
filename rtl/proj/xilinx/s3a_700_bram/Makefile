@@ -10,10 +10,10 @@ SHELL = /bin/bash
 vhdfiles = \
 ../../../xilinx/s3_toplevel_bram.vhd \
 ../../../xilinx/dcm_s3_50m.vhd \
-../../../generic/glue_bram.vhd \
-../../../generic/bptrace.vhd \
+../../../generic/glue_bram_mi32.vhd \
+../../../generic/bootloader_mi32.vhd \
 ../../../generic/bram.vhd \
-../../../generic/bootloader.vhd \
+../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
 ../../../cpu/alu.vhd \
 ../../../cpu/loadalign.vhd \

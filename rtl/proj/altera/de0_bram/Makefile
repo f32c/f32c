@@ -27,10 +27,11 @@ SRCS = \
  ../../../cpu/defs_mi32.vhd \
  ../../../cpu/defs_f32c.vhd \
  ../../../soc/sio.vhd \
- ../../../altera/glue.vhd \
- ../../../generic/reg1w2r.vhd \
+ ../../../altera/de0_toplevel_bram.vhd \
+ ../../../generic/glue_bram_mi32.vhd \
+ ../../../generic/bootloader_mi32.vhd \
  ../../../generic/bram.vhd \
- ../../../generic/bootloader.vhd \
+ ../../../generic/reg1w2r.vhd \
  ../../../generic/bptrace.vhd \
  ../../../cpu/shift.vhd \
  ../../../cpu/pipeline.vhd \
