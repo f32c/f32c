@@ -100,7 +100,6 @@ set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON
 set_global_assignment -name VHDL_FILE ../../../altera/pll_50m.vhd
 set_global_assignment -name VHDL_FILE ../../../cpu/debug.vhd
 set_global_assignment -name VHDL_FILE ../../../soc/timer.vhd
-set_global_assignment -name VHDL_FILE ../../../generic/glue_bram.vhd
 set_global_assignment -name VHDL_FILE ../../../altera/de0_toplevel_bram.vhd
 set_global_assignment -name VHDL_FILE ../../../cpu/idecode_rv32.vhd
 set_global_assignment -name VHDL_FILE ../../../cpu/idecode_mi32.vhd
@@ -108,9 +107,10 @@ set_global_assignment -name VHDL_FILE ../../../cpu/defs_rv32.vhd
 set_global_assignment -name VHDL_FILE ../../../cpu/defs_mi32.vhd
 set_global_assignment -name VHDL_FILE ../../../cpu/defs_f32c.vhd
 set_global_assignment -name VHDL_FILE ../../../soc/sio.vhd
-set_global_assignment -name VHDL_FILE ../../../generic/reg1w2r.vhd
+set_global_assignment -name VHDL_FILE ../../../generic/glue_bram_mi32.vhd
+set_global_assignment -name VHDL_FILE ../../../generic/bootloader_mi32.vhd
 set_global_assignment -name VHDL_FILE ../../../generic/bram.vhd
-set_global_assignment -name VHDL_FILE ../../../generic/bootloader.vhd
+set_global_assignment -name VHDL_FILE ../../../generic/reg1w2r.vhd
 set_global_assignment -name VHDL_FILE ../../../generic/bptrace.vhd
 set_global_assignment -name VHDL_FILE ../../../cpu/shift.vhd
 set_global_assignment -name VHDL_FILE ../../../cpu/pipeline.vhd
