@@ -55,10 +55,10 @@ bss_bzero:
 	b	ctor_loop_enter
 
 ctor_loop:
-	jalr	a0
+	lw	a0, (s0)
 	addi	s0, s0, 4
+	jalr	a0
 ctor_loop_enter:
 	bne	s0, s1,	ctor_loop
-	lw	a0, (s0)
 	move	ra, s2
 	j	main
