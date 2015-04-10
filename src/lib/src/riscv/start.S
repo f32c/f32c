@@ -39,11 +39,9 @@
 	.type _start,@function
 
 _start:
-	/* Magic block required by the bootloader, otherwise harmless */
-	la	s0, _start	/* Executable code base address */
+	la	gp, _gp	
 	la	s1, _end	/* End of BSS section, word aligned */
 	la	s0, __bss_start	/* Start of BSS section, NOT word aligned */
-	la	gp, _gp	
 
 	/* The loader doesn't bzero the BSS, so we must do it here. */
 bss_bzero:
