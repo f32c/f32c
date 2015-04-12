@@ -105,7 +105,10 @@ architecture Behavioral of glue_bram is
     
     -- GPIO
     signal R_gpio_ctl, R_gpio_in, R_gpio_out: std_logic_vector(31 downto 0);
-
+    signal from_gpio: std_logic_vector(31 downto 0);
+    signal gpio_ce: std_logic;
+    signal gpio_intr: std_logic;
+   
     -- I/O
     signal intr: std_logic_vector(5 downto 0);
     signal io_addr_strobe: std_logic;
@@ -255,12 +258,12 @@ begin
     process(dmem_addr, R_sw, R_btns, from_sio, from_timer)
     begin
 	case dmem_addr(7 downto 4) is
-	when x"0"  =>
+	when x"0" | x"D" =>
 	    if C_gpio then
-		io_to_cpu <= R_gpio_in;
+		io_to_cpu <= from_gpio;
 	    else
 		io_to_cpu <= (others => '-');
-	    end if;
+	    end if;	
 	when x"1"  =>
 	    if C_leds_btns then
 		io_to_cpu <="--------" & R_sw & "--------" & R_btns;
@@ -285,9 +288,25 @@ begin
     end process;
 
     -- GPIO
-    gpio_3state: for i in 0 to 31 generate
-	gpio(i) <= R_gpio_out(i) when R_gpio_ctl(i) = '1' else 'Z';
+    G_gpio:
+    if C_gpio generate
+    gpio_inst: entity work.gpio
+    generic map (
+	C_bits => 32
+    )
+    port map (
+	clk => clk, ce => gpio_ce, addr => dmem_addr(4 downto 2),
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_gpio,
+	gpio_irq => gpio_intr,
+	gpio_phys => gpio -- physical input/output
+    );
+    gpio_ce <= io_addr_strobe when
+      dmem_addr(7 downto 4) = x"0" or 
+      dmem_addr(7 downto 4) = x"D" 
+      else '0';
     end generate;
+
 
     -- Timer
     G_timer:
