@@ -54,6 +54,9 @@
         <Source name="../../../soc/sio.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../soc/gpio.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../soc/timer.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
