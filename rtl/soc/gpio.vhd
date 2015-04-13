@@ -41,7 +41,7 @@ architecture arch of gpio is
     constant C_rising_ie:  integer   := 3; -- rising edge interrupt enable
     constant C_falling_if: integer   := 4; -- falling edge interrupt flag
     constant C_falling_ie: integer   := 5; -- falling edge interrupt enable
-    constant C_input:      integer   := 7; -- input value last, not a register
+    constant C_input:      integer   := 0; -- input value (overlay at output register value) 
 
     -- edge detection related registers
     constant C_edge_sync_depth: integer := 3; -- number of shift register stages (default 3) for icp clock synchronization
@@ -70,18 +70,18 @@ begin
               if conv_integer(addr) = C_rising_if 
               or conv_integer(addr) = C_falling_if
               then
-                R(conv_integer(addr))(8*i+7 downto 8*i) <= 
-                R(conv_integer(addr))(8*i+7 downto 8*i) and bus_in(8*i+7 downto 8*i); -- only reset interrupt flag, never set
+                R(conv_integer(addr))(8*i+7 downto 8*i) <= -- only can clear intr. flag, never set
+                R(conv_integer(addr))(8*i+7 downto 8*i) and bus_in(8*i+7 downto 8*i);
               else
                 R(conv_integer(addr))(8*i+7 downto 8*i) <=  bus_in(8*i+7 downto 8*i);
               end if;
             else
               if conv_integer(addr) = C_rising_if then
-                R(conv_integer(addr))(8*i+7 downto 8*i) <= 
+                R(conv_integer(addr))(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
                 R(conv_integer(addr))(8*i+7 downto 8*i) or R_rising_edge(8*i+7 downto 8*i);
               end if;
               if conv_integer(addr) = C_falling_if then
-                R(conv_integer(addr))(8*i+7 downto 8*i) <=
+                R(conv_integer(addr))(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
                 R(conv_integer(addr))(8*i+7 downto 8*i) or R_falling_edge(8*i+7 downto 8*i);
               end if;
             end if;
@@ -90,7 +90,7 @@ begin
       end process;
     end generate;
     
-    -- physical output to pins (and 3-state handling)
+    -- physical output to pins with 3-state handling
     phys_io: for i in 0 to C_bits-1 generate
       gpio_phys(i) <= R(C_output)(i) when R(C_direction)(i) = '1' else 'Z';
     end generate;
