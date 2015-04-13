@@ -60,7 +60,7 @@ begin
 
     -- CPU core writes registers
     -- and edge interrupt flags handling
-    -- interrupt flags can be written only 0, writing 1 is nop -> use and
+    -- interrupt flags can be written only 0, writing 1 is nop -> logical and
     writereg_intrflags: for i in 0 to C_bits/8-1 generate
       process(clk)
       begin
@@ -69,10 +69,10 @@ begin
             if ce = '1' and bus_write = '1' then
               if conv_integer(addr) = C_rising_if 
               or conv_integer(addr) = C_falling_if
-              then
+              then -- logical and for interrupt flag registers
                 R(conv_integer(addr))(8*i+7 downto 8*i) <= -- only can clear intr. flag, never set
                 R(conv_integer(addr))(8*i+7 downto 8*i) and bus_in(8*i+7 downto 8*i);
-              else
+              else -- normal write for every other register
                 R(conv_integer(addr))(8*i+7 downto 8*i) <=  bus_in(8*i+7 downto 8*i);
               end if;
             else
