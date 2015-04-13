@@ -95,6 +95,8 @@ architecture Behavioral of glue_bram is
     signal dmem_byte_sel: std_logic_vector(3 downto 0);
     signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
+    signal io_addr_strobe: std_logic;
+    signal intr: std_logic_vector(5 downto 0); -- interrupt
 
     -- Timer
     signal from_timer: std_logic_vector(31 downto 0);
@@ -104,20 +106,19 @@ architecture Behavioral of glue_bram is
     signal timer_intr: std_logic;
     
     -- GPIO
-    signal R_gpio_ctl, R_gpio_in, R_gpio_out: std_logic_vector(31 downto 0);
     signal from_gpio: std_logic_vector(31 downto 0);
     signal gpio_ce: std_logic;
     signal gpio_intr: std_logic;
-   
-    -- I/O
-    signal intr: std_logic_vector(5 downto 0);
-    signal io_addr_strobe: std_logic;
+        
+    -- Serial I/O (RS232)
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_ce, sio_break, sio_tx: std_logic;
-    signal R_leds: std_logic_vector(7 downto 0);
-    signal R_sw: std_logic_vector(7 downto 0);
-    signal R_btns: std_logic_vector(7 downto 0);
 
+    -- onboard LEDs, buttons and switches
+    signal R_leds: std_logic_vector(7 downto 0);
+    signal R_btns: std_logic_vector(7 downto 0);
+    signal R_sw: std_logic_vector(7 downto 0);
+   
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
     signal debug_to_sio_data: std_logic_vector(7 downto 0);
@@ -168,7 +169,7 @@ begin
 	debug_active => debug_active
     );
     final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
-    intr <= "000" & timer_intr & from_sio(8) & '0';
+    intr <= "00" & gpio_intr & timer_intr & from_sio(8) & '0';
 
     -- RS232 sio
     G_sio:
@@ -199,36 +200,6 @@ begin
     begin
 	if rising_edge(clk) and io_addr_strobe = '1'
 	  and dmem_write = '1' then
-	    -- GPIO
-	    if C_gpio and dmem_addr(7 downto 4) = x"0" then
-		if dmem_addr(2) = '0' then
-		    if dmem_byte_sel(0) = '1' then
-			R_gpio_out(7 downto 0) <= cpu_to_dmem(7 downto 0);
-		    end if;
-		    if dmem_byte_sel(1) = '1' then
-			R_gpio_out(15 downto 8) <= cpu_to_dmem(15 downto 8);
-		    end if;
-		    if dmem_byte_sel(2) = '1' then
-			R_gpio_out(23 downto 16) <= cpu_to_dmem(23 downto 16);
-		    end if;
-		    if dmem_byte_sel(3) = '1' then
-			R_gpio_out(31 downto 24) <= cpu_to_dmem(31 downto 24);
-		    end if;
-		else
-		    if dmem_byte_sel(0) = '1' then
-			R_gpio_ctl(7 downto 0) <= cpu_to_dmem(7 downto 0);
-		    end if;
-		    if dmem_byte_sel(1) = '1' then
-			R_gpio_ctl(15 downto 8) <= cpu_to_dmem(15 downto 8);
-		    end if;
-		    if dmem_byte_sel(2) = '1' then
-			R_gpio_ctl(23 downto 16) <= cpu_to_dmem(23 downto 16);
-		    end if;
-		    if dmem_byte_sel(3) = '1' then
-			R_gpio_ctl(31 downto 24) <= cpu_to_dmem(31 downto 24);
-		    end if;
-		end if;
-	    end if;
 	    -- LEDs
 	    if C_leds_btns and dmem_addr(7 downto 4) = x"1" and
 	      dmem_byte_sel(1) = '1' then
@@ -238,9 +209,6 @@ begin
 	if C_leds_btns and rising_edge(clk) then
 	    R_sw <= sw;
 	    R_btns <= btns;
-	end if;
-	if C_gpio and rising_edge(clk) then
-	    R_gpio_in <= gpio;
 	end if;
     end process;
 
