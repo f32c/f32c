@@ -55,6 +55,8 @@ begin
       bus_out <= 
         ext(gpio_phys, 32)
           when conv_std_logic_vector(C_input, C_addr_bits),
+     -- ext(x"12345678", 32)
+     --   when conv_std_logic_vector(C_falling_if, C_addr_bits),
         ext(R(conv_integer(addr)),32)
           when others;
 
@@ -96,10 +98,10 @@ begin
     end generate;
 
     -- join all interrupt request bits into one bit
-    gpio_irq <= '1' when 
+    gpio_irq <= '1' when
                     (  ( R(C_rising_ie)  and R(C_rising_if)  )
                     or ( R(C_falling_ie) and R(C_falling_if) )
-                    ) /= x"00000000" else '0';
+                    ) /= ext("0",C_bits) else '0';
 
     -- warning - asynchronous external icp rising edge
     -- should be passed to async->sync filter to match
@@ -109,24 +111,30 @@ begin
     -- here is vhdl implementation of the 3-stage shift register
     -- http://www.bitweenie.com/listings/vhdl-shift-register/
     -- edge detect synchronizer (3-stage shift register)
+    sync_shifter: for i in 1 to C_edge_sync_depth-1 generate
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        R_edge_sync_shift(i) <= R_edge_sync_shift(i-1);
+      end if;
+    end process;
+    end generate;
     process(clk)
     begin
       if rising_edge(clk) then
         R_edge_sync_shift(0) <= gpio_phys;
-        R_edge_sync_shift(1) <= R_edge_sync_shift(0);
-        R_edge_sync_shift(2) <= R_edge_sync_shift(1);
       end if;
     end process;
-
+    
     -- difference in 2 last bits of the shift register detect synchronous rising/falling edge
     -- rising edge when at C_edge_sync_depth-1 is 0, and one clock earlier at C_edge_sync_depth-2 is 1
     R_rising_edge <=
-         (not R_edge_sync_shift(2))  -- it was 0
-     and (    R_edge_sync_shift(1)); -- 1 is coming after 0
+         (not R_edge_sync_shift(C_edge_sync_depth-1))  -- it was 0
+     and (    R_edge_sync_shift(C_edge_sync_depth-2)); -- 1 is coming after 0
     -- falling edge similar, but other reg is not'ed
     R_falling_edge <=
-         (    R_edge_sync_shift(2))  -- it was 1
-     and (not R_edge_sync_shift(1)); -- 0 is coming after 1
+         (    R_edge_sync_shift(C_edge_sync_depth-1))  -- it was 1
+     and (not R_edge_sync_shift(C_edge_sync_depth-2)); -- 0 is coming after 1
     
 end;
 
