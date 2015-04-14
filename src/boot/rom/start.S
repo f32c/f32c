@@ -25,9 +25,12 @@
  * $Id$
  */
 
+#ifdef __mips__
 #include <mips/asm.h>
 #include <mips/regdef.h>
 #include <mips/cpuregs.h>
+#endif
+
 #include <io.h>
 
 
@@ -38,4 +41,4 @@
 _start:
 	li	sp, 0x80100000
 	move	ra, zero
-	j	_C_LABEL(main)
+	j	main

@@ -14,7 +14,7 @@
 #ifdef __mips__
 msg:	.asciiz	"Hello, FPGA world!\nI'm running on a f32c/mips CPU core.\n"
 #else /* riscv */
-msg:	.asciiz	"Hello, FPGA world!\nI'm running on a f32c/riscv CPU core.\n"
+msg:	.ascii	"Hello, FPGA world!\nI'm running on a f32c/riscv CPU core.\n"
 #endif
 
 	.text
