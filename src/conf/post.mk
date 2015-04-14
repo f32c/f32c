@@ -59,8 +59,8 @@ ifeq (${ARCH},riscv)
 	# f32c has no FP hardware
 	MK_CFLAGS += -msoft-float
 
-	# f32c/riscv has no mul / div hardware (default is mrvm)
-	MK_CFLAGS += -mno-rvm
+	# f32c/riscv has no mul / div hardware (default is muldiv)
+	MK_CFLAGS += -mno-muldiv
 
 else
 	# MIPS-specific flags
