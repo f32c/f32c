@@ -78,14 +78,10 @@ begin
                 R(conv_integer(addr))(8*i+7 downto 8*i) <=  bus_in(8*i+7 downto 8*i);
               end if;
             else
-              if conv_integer(addr) = C_rising_if then
-                R(conv_integer(addr))(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
-                R(conv_integer(addr))(8*i+7 downto 8*i) or R_rising_edge(8*i+7 downto 8*i);
-              end if;
-              if conv_integer(addr) = C_falling_if then
-                R(conv_integer(addr))(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
-                R(conv_integer(addr))(8*i+7 downto 8*i) or R_falling_edge(8*i+7 downto 8*i);
-              end if;
+              R(C_rising_if)(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
+              R(C_rising_if)(8*i+7 downto 8*i) or R_rising_edge(8*i+7 downto 8*i);
+              R(C_falling_if)(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
+              R(C_falling_if)(8*i+7 downto 8*i) or R_falling_edge(8*i+7 downto 8*i);
             end if;
           end if;
         end if;
