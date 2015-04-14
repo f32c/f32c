@@ -64,6 +64,10 @@ _start(void)
 	char *cp;
 	void *base_addr = NULL;
 
+#ifdef __riscv__
+	val = 0;
+#endif
+
 #ifndef ROM_LOADER
 	/* Just in case CPU reset misses fetching the first instruction */
 	__asm __volatile__("nop");
