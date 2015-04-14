@@ -45,7 +45,7 @@ architecture arch of gpio is
 
     -- edge detection related registers
     constant C_edge_sync_depth: integer := 3; -- number of shift register stages (default 3) for icp clock synchronization
-    type T_edge_sync_shift is array (0 to C_edge_sync_depth-1) of std_logic_vector(C_bits-1 downto 0); -- edge detect synchronizer type
+    type T_edge_sync_shift is array (0 to C_bits-1) of std_logic_vector(C_edge_sync_depth-1 downto 0); -- edge detect synchronizer type
     signal R_edge_sync_shift: T_edge_sync_shift;
     signal R_rising_edge, R_falling_edge: std_logic_vector(C_bits-1 downto 0);
 
@@ -55,8 +55,8 @@ begin
       bus_out <= 
         ext(gpio_phys, 32)
           when conv_std_logic_vector(C_input, C_addr_bits),
-     -- ext(x"12345678", 32)
-     --   when conv_std_logic_vector(C_falling_if, C_addr_bits),
+        --ext(x"12345678", 32)
+        --  when conv_std_logic_vector(C_falling_if, C_addr_bits),
         ext(R(conv_integer(addr)),32)
           when others;
 
@@ -92,9 +92,30 @@ begin
       end process;
     end generate;
     
-    -- physical output to pins with 3-state handling
-    phys_io: for i in 0 to C_bits-1 generate
+    each_bit: for i in 0 to C_bits-1 generate
+      -- physical output to pins with 3-state handling
       gpio_phys(i) <= R(C_output)(i) when R(C_direction)(i) = '1' else 'Z';
+
+    -- *** edge detect synchronizer (3-stage shift register) ***
+    -- here is theory and schematics about 3-stage shift register
+    -- https://www.doulos.com/knowhow/fpga/synchronisation/
+    -- here is vhdl implementation of the 3-stage shift register
+    -- http://www.bitweenie.com/listings/vhdl-shift-register/
+      process(clk)
+      begin
+        if rising_edge(clk) then
+          R_edge_sync_shift(i) <= R_edge_sync_shift(i)(C_edge_sync_depth-2 downto 0) & gpio_phys(i);
+        end if;
+      end process;
+      -- difference in 2 last bits of the shift register detect synchronous rising/falling edge
+      -- rising edge when at C_edge_sync_depth-1 is 0, and one clock earlier at C_edge_sync_depth-2 is 1
+      R_rising_edge(i) <=
+           (not R_edge_sync_shift(i)(C_edge_sync_depth-1))  -- it was 0
+       and (    R_edge_sync_shift(i)(C_edge_sync_depth-2)); -- 1 is coming after 0
+      -- falling edge similar, but other reg is not'ed
+      R_falling_edge(i) <=
+           (    R_edge_sync_shift(i)(C_edge_sync_depth-1))  -- it was 1
+       and (not R_edge_sync_shift(i)(C_edge_sync_depth-2)); -- 0 is coming after 1
     end generate;
 
     -- join all interrupt request bits into one bit
@@ -103,39 +124,5 @@ begin
                     or ( R(C_falling_ie) and R(C_falling_if) )
                     ) /= ext("0",C_bits) else '0';
 
-    -- warning - asynchronous external icp rising edge
-    -- should be passed to async->sync filter to match
-    -- the input clock and then be processed.
-    -- here is theory and schematics about 3-stage shift register
-    -- https://www.doulos.com/knowhow/fpga/synchronisation/
-    -- here is vhdl implementation of the 3-stage shift register
-    -- http://www.bitweenie.com/listings/vhdl-shift-register/
-    -- edge detect synchronizer (3-stage shift register)
-    sync_shifter: for i in 1 to C_edge_sync_depth-1 generate
-    process(clk)
-    begin
-      if rising_edge(clk) then
-        R_edge_sync_shift(i) <= R_edge_sync_shift(i-1);
-      end if;
-    end process;
-    end generate;
-    process(clk)
-    begin
-      if rising_edge(clk) then
-        R_edge_sync_shift(0) <= gpio_phys;
-      end if;
-    end process;
-    
-    -- difference in 2 last bits of the shift register detect synchronous rising/falling edge
-    -- rising edge when at C_edge_sync_depth-1 is 0, and one clock earlier at C_edge_sync_depth-2 is 1
-    R_rising_edge <=
-         (not R_edge_sync_shift(C_edge_sync_depth-1))  -- it was 0
-     and (    R_edge_sync_shift(C_edge_sync_depth-2)); -- 1 is coming after 0
-    -- falling edge similar, but other reg is not'ed
-    R_falling_edge <=
-         (    R_edge_sync_shift(C_edge_sync_depth-1))  -- it was 1
-     and (not R_edge_sync_shift(C_edge_sync_depth-2)); -- 0 is coming after 1
-    
 end;
-
 -- todo: level interrupts (they are rarely needed)
