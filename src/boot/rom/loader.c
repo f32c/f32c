@@ -237,6 +237,7 @@ main(void)
 	}
 	
 boot:
+#ifdef __mips__
 	__asm __volatile__(
 		".set noreorder;"
 		".set noat;"
@@ -261,4 +262,13 @@ boot:
 		:
 		: "r" (cp)
 	);
+#else /* riscv */
+	__asm __volatile__(
+		"li sp, 0x80100000;"	/* stack hardcoded to top of SRAM */
+		"move x1, %0;"		/* return to ROM loader when done */
+		"jr x1;"
+		:
+		: "r" (cp)
+	);
+#endif
 }
