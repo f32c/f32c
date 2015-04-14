@@ -163,7 +163,6 @@ architecture Behavioral of glue is
     signal R_led: std_logic_vector(7 downto 0);
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
-    signal R_gpio_ctl, R_gpio_in, R_gpio_out: std_logic_vector(28 downto 0);
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
     signal R_fb_base_addr: std_logic_vector(19 downto 2);
 
@@ -186,6 +185,12 @@ architecture Behavioral of glue is
     -- DDS frequency synthesizer
     signal R_dds, R_dds_fast, R_dds_acc: std_logic_vector(31 downto 0);
     signal R_dds_enable: std_logic;
+
+    -- GPIO
+    signal from_gpio: std_logic_vector(31 downto 0);
+    signal gpio_ce: std_logic;
+    signal gpio_intr: std_logic;
+    signal gpio_28: std_logic;
 
     -- Timer
     signal from_timer: std_logic_vector(31 downto 0);
@@ -245,7 +250,7 @@ begin
     --
     G_CPU: for i in 0 to (C_cpus - 1) generate
     begin
-    intr(i) <= "000" & timer_intr & from_sio(8) & R_fb_intr when i = 0 else "000000";
+    intr(i) <= "00" & gpio_intr & timer_intr & from_sio(8) & R_fb_intr when i = 0 else "000000";
     res(i) <= R_cpu_reset(i);
     cpu: entity work.cache
     generic map (
@@ -347,7 +352,9 @@ begin
     -- 0x0*******: (4B, RW) : Embedded block RAM (2 - 16 KBytes, fast)
     -- 0x8*******: (4B, RW) : External static RAM (1 MByte, slow)
     -- 0xf*****00: (4B, RW) : GPIO data
-    -- 0xf*****04: (4B, WR) : GPIO control
+    -- 0xf*****04: (4B, WR) : GPIO control (direction 1-output 0-input)
+    -- 0xf*****08: (4B, WR) : GPIO rising edge interrupt flag
+    -- 0xf*****0C: (4B, WR) : GPIO rising edge interrupt enable
     -- 0xf*****10: (4B, RW) : LED, LCD (WR), switches, buttons (RD)
     -- 0xf*****20: (4B, RW) : SIO
     -- 0xf*****30: (2B, RW) : SPI Flash
@@ -357,6 +364,9 @@ begin
     -- 0xf*****54: (4B, WR) : PCM audio DMA last addr
     -- 0xf*****58: (3B, WR) : PCM audio DMA refill frequency (sampling rate)
     -- 0xf*****60: (2B, WR) : Lego Power Functions Infrared Controller
+    -- 0xf*****80-BF        : PWM timer interrupts
+    -- 0xf*****D0: (4B, WR) : GPIO falling edge interrupt flag
+    -- 0xf*****D4: (4B, WR) : GPIO falling edge interrupt enable
     -- 0xf*****f0: (1B, WR) : CPU reset bitmap
 
     --
@@ -400,39 +410,6 @@ begin
 	end if;
 	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
 	  and io_write = '1' then
-	    -- GPIO
-	    if C_gpio and io_addr(7 downto 4) = x"0" then
-		if io_addr(2) = '0' then
-		    if io_byte_sel(0) = '1' then
-			R_gpio_out(7 downto 0) <= cpu_to_io(7 downto 0);
-		    end if;
-		    if io_byte_sel(1) = '1' then
-			R_gpio_out(15 downto 8) <= cpu_to_io(15 downto 8);
-		    end if;
-		    if io_byte_sel(2) = '1' then
-			R_gpio_out(23 downto 16) <= cpu_to_io(23 downto 16);
-		    end if;
-		    if io_byte_sel(3) = '1' then
-			R_gpio_out(28 downto 24) <= cpu_to_io(28 downto 24);
-		    end if;
-		else
-		    if io_byte_sel(0) = '1' then
-			R_gpio_ctl(7 downto 0) <= cpu_to_io(7 downto 0);
-		    end if;
-		    if io_byte_sel(1) = '1' then
-			R_gpio_ctl(15 downto 8) <= cpu_to_io(15 downto 8);
-		    end if;
-		    if io_byte_sel(2) = '1' then
-			R_gpio_ctl(23 downto 16) <= cpu_to_io(23 downto 16);
-		    end if;
-		    if io_byte_sel(3) = '1' then
-			R_gpio_ctl(28 downto 24) <= cpu_to_io(28 downto 24);
-			if C_dds then
-			    R_dds_enable <= cpu_to_io(31);
-			end if;
-		    end if;
-		end if;
-	    end if;
 	    -- LEDs
 	    if C_leds_btns and io_addr(7 downto 4) = x"1" and
 	      io_byte_sel(1) = '1' then
@@ -473,37 +450,6 @@ begin
 	    R_sw <= sw;
 	    R_btns <= btn_center & btn_up & btn_down & btn_left & btn_right;
 	end if;
-	if C_gpio and rising_edge(clk) then
-	    R_gpio_in(0) <= j1_2;
-	    R_gpio_in(1) <= j1_3;
-	    R_gpio_in(2) <= j1_4;
-	    R_gpio_in(3) <= j1_8;
-	    R_gpio_in(4) <= j1_9;
-	    R_gpio_in(5) <= j1_13;
-	    R_gpio_in(6) <= j1_14;
-	    R_gpio_in(7) <= j1_15;
-	    R_gpio_in(8) <= j1_16;
-	    R_gpio_in(9) <= j1_17;
-	    R_gpio_in(10) <= j1_18;
-	    R_gpio_in(11) <= j1_19;
-	    R_gpio_in(12) <= j1_20;
-	    R_gpio_in(13) <= j1_21;
-	    R_gpio_in(14) <= j1_22;
-	    R_gpio_in(15) <= j1_23;
-	    R_gpio_in(16) <= j2_2;
-	    R_gpio_in(17) <= j2_3;
-	    R_gpio_in(18) <= j2_4;
-	    R_gpio_in(19) <= j2_5;
-	    R_gpio_in(20) <= j2_6;
-	    R_gpio_in(21) <= j2_7;
-	    R_gpio_in(22) <= j2_8;
-	    R_gpio_in(23) <= j2_9;
-	    R_gpio_in(24) <= j2_10;
-	    R_gpio_in(25) <= j2_11;
-	    R_gpio_in(26) <= j2_12;
-	    R_gpio_in(27) <= j2_13;
-	    R_gpio_in(28) <= j2_16;
-	end if;
     end process;
     G_led_standard:
     if C_timer = false generate
@@ -520,12 +466,12 @@ begin
     process(io_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard, from_timer)
     begin
 	case io_addr(7 downto 4) is
-	when x"0"  =>
+	when x"0" | x"D" =>
 	    if C_gpio then
-		io_to_cpu <= "---" & R_gpio_in;
+		io_to_cpu <= from_gpio;
 	    else
 		io_to_cpu <= (others => '-');
-	    end if;
+	    end if;	
 	when x"1"  =>
 	    if C_leds_btns then
 		io_to_cpu <="------------" & R_sw & "-----------" & R_btns;
@@ -786,39 +732,54 @@ begin
     --
     -- GPIO
     --
-    j1_2 <= R_gpio_out(0) when R_gpio_ctl(0) = '1' else 'Z';
-    j1_3 <= R_gpio_out(1) when R_gpio_ctl(1) = '1' else 'Z';
-    j1_4 <= R_gpio_out(2) when R_gpio_ctl(2) = '1' else 'Z';
-    j1_8 <= R_gpio_out(3) when R_gpio_ctl(3) = '1' else 'Z';
-    j1_9 <= R_gpio_out(4) when R_gpio_ctl(4) = '1' else 'Z';
-    j1_13 <= R_gpio_out(5) when R_gpio_ctl(5) = '1' else 'Z';
-    j1_14 <= R_gpio_out(6) when R_gpio_ctl(6) = '1' else 'Z';
-    j1_15 <= R_gpio_out(7) when R_gpio_ctl(7) = '1' else 'Z';
-    j1_16 <= R_gpio_out(8) when R_gpio_ctl(8) = '1' else 'Z';
-    j1_17 <= R_gpio_out(9) when R_gpio_ctl(9) = '1' else 'Z';
-    j1_18 <= R_gpio_out(10) when R_gpio_ctl(10) = '1' else 'Z';
-    j1_19 <= R_gpio_out(11) when R_gpio_ctl(11) = '1' else 'Z';
-    j1_20 <= R_gpio_out(12) when R_gpio_ctl(12) = '1' else 'Z';
-    j1_21 <= R_gpio_out(13) when R_gpio_ctl(13) = '1' else 'Z';
-    j1_22 <= R_gpio_out(14) when R_gpio_ctl(14) = '1' else 'Z';
-    j1_23 <= R_gpio_out(15) when R_gpio_ctl(15) = '1' else 'Z';
-    j2_2 <= R_gpio_out(16) when R_gpio_ctl(16) = '1' else 'Z';
-    j2_3 <= R_gpio_out(17) when R_gpio_ctl(17) = '1' else 'Z';
-    j2_4 <= R_gpio_out(18) when R_gpio_ctl(18) = '1' else 'Z';
-    j2_5 <= R_gpio_out(19) when R_gpio_ctl(19) = '1' else 'Z';
-    j2_6 <= R_gpio_out(20) when R_gpio_ctl(20) = '1' else 'Z';
-    j2_7 <= R_gpio_out(21) when R_gpio_ctl(21) = '1' else 'Z';
-    j2_8 <= R_gpio_out(22) when R_gpio_ctl(22) = '1' else 'Z';
-    j2_9 <= R_gpio_out(23) when R_gpio_ctl(23) = '1' else 'Z';
-    j2_10 <= R_gpio_out(24) when R_gpio_ctl(24) = '1' else 'Z';
-    j2_11 <= R_gpio_out(25) when R_gpio_ctl(25) = '1' else 'Z';
-    j2_12 <= R_gpio_out(26) when R_gpio_ctl(26) = '1' else 'Z';
-    j2_13 <= R_gpio_out(27) when R_gpio_ctl(27) = '1' else 'Z';
+    G_gpio:
+    if C_gpio generate
+    gpio_inst: entity work.gpio
+    port map (
+	clk => clk, ce => gpio_ce, addr => io_addr(4 downto 2),
+	bus_write => io_write, byte_sel => io_byte_sel,
+	bus_in => cpu_to_io, bus_out => from_gpio,
+	gpio_irq => gpio_intr,
+        gpio_phys(0)  =>   j1_2,
+        gpio_phys(1)  =>   j1_3,
+        gpio_phys(2)  =>   j1_4,
+        gpio_phys(3)  =>   j1_8,
+        gpio_phys(4)  =>   j1_9,
+        gpio_phys(5)  =>   j1_13,
+        gpio_phys(6)  =>   j1_14,
+        gpio_phys(7)  =>   j1_15,
+        gpio_phys(8)  =>   j1_16,
+        gpio_phys(9)  =>   j1_17,
+        gpio_phys(10) =>   j1_18,
+        gpio_phys(11) =>   j1_19,
+        gpio_phys(12) =>   j1_20,
+        gpio_phys(13) =>   j1_21,
+        gpio_phys(14) =>   j1_22,
+        gpio_phys(15) =>   j1_23,
+        gpio_phys(16) =>   j2_2,
+        gpio_phys(17) =>   j2_3,
+        gpio_phys(18) =>   j2_4,
+        gpio_phys(19) =>   j2_5,
+        gpio_phys(20) =>   j2_6,
+        gpio_phys(21) =>   j2_7,
+        gpio_phys(22) =>   j2_8,
+        gpio_phys(23) =>   j2_9,
+        gpio_phys(24) =>   j2_10,
+        gpio_phys(25) =>   j2_11,
+        gpio_phys(26) =>   j2_12,
+        gpio_phys(27) =>   j2_13,
+        gpio_phys(28) =>   gpio_28
+    );
+    gpio_ce <= io_addr_strobe(R_cur_io_port) when
+      io_addr(7 downto 4) = x"0" or 
+      io_addr(7 downto 4) = x"D" 
+      else '0';
+    end generate;
     normal_gpio_28: if C_tx433 = false generate
-    j2_16 <= R_gpio_out(28) when R_gpio_ctl(28) = '1' else 'Z';
+    j2_16 <= gpio_28;
     end generate;
     signal_433MHz_to_gpio_28: if C_tx433 = true generate
-    j2_16 <= R_gpio_out(28) and clk_433m when R_gpio_ctl(28) = '1' else 'Z';
+    j2_16 <= gpio_28 and clk_433m;
     end generate;
 
     --
