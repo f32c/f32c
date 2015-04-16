@@ -328,7 +328,7 @@ begin
 	spi_si => flash_si, spi_so => flash_so
     );
     flash_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 4) = x"F3" and io_addr(3 downto 2) = "00" else '0';
+      io_addr(11 downto 4) = x"B4" else '0';
     end generate;
 
     --
@@ -345,29 +345,30 @@ begin
 	spi_si => sdcard_si, spi_so => sdcard_so
     );
     sdcard_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 4) = x"F3" and io_addr(3 downto 2) = "01" else '0';
+      io_addr(11 downto 4) = x"B5" else '0';
     end generate;
 
     -- Memory map:
     -- 0x0*******: (4B, RW) : Embedded block RAM (2 - 16 KBytes, fast)
     -- 0x8*******: (4B, RW) : External static RAM (1 MByte, slow)
-    -- 0xf*****00: (4B, RW) : GPIO data
-    -- 0xf*****04: (4B, WR) : GPIO control (direction 1-output 0-input)
-    -- 0xf*****08: (4B, WR) : GPIO rising edge interrupt flag
-    -- 0xf*****0C: (4B, WR) : GPIO rising edge interrupt enable
-    -- 0xf*****10: (4B, RW) : LED, LCD (WR), switches, buttons (RD)
-    -- 0xf*****20: (4B, RW) : SIO
-    -- 0xf*****30: (2B, RW) : SPI Flash
-    -- 0xf*****34: (2B, RW) : SPI MicroSD
-    -- 0xf*****40: (4B, WR) : Video framebuffer control
-    -- 0xf*****50: (4B, RW) : PCM audio DMA first addr (WR) / current addr (RD)
-    -- 0xf*****54: (4B, WR) : PCM audio DMA last addr
-    -- 0xf*****58: (3B, WR) : PCM audio DMA refill frequency (sampling rate)
-    -- 0xf*****60: (2B, WR) : Lego Power Functions Infrared Controller
-    -- 0xf*****80-BF        : PWM timer interrupts
-    -- 0xf*****D0: (4B, WR) : GPIO falling edge interrupt flag
-    -- 0xf*****D4: (4B, WR) : GPIO falling edge interrupt enable
-    -- 0xf*****f0: (1B, WR) : CPU reset bitmap
+    -- 0xf****800: (4B, RW) : GPIO data
+    -- 0xf****804: (4B, WR) : GPIO control (direction 1-output 0-input)
+    -- 0xf****808: (4B, WR) : GPIO rising edge interrupt flag
+    -- 0xf****80C: (4B, WR) : GPIO rising edge interrupt enable
+    -- 0xf****810: (4B, WR) : GPIO falling edge interrupt flag
+    -- 0xf****814: (4B, WR) : GPIO falling edge interrupt enable
+    -- 0xf****900: (16B,WR) : TIMER
+    -- 0xf****F00: (4B, RW) : simple input switches, buttons (RD)
+    -- 0xf****F10: (4B, RW) : simple output LED, LCD (WR)
+    -- 0xf****F20: (4B, RW) : SIO
+    -- 0xf****B40: (2B, RW) : SPI Flash
+    -- 0xf****B50: (2B, RW) : SPI MicroSD
+    -- 0xf****B80: (4B, WR) : Video framebuffer control
+    -- 0xf****BA0: (4B, RW) : PCM audio DMA first addr (WR) / current addr (RD)
+    -- 0xf****BA4: (4B, WR) : PCM audio DMA last addr
+    -- 0xf****BA8: (3B, WR) : PCM audio DMA refill frequency (sampling rate)
+    -- 0xf****D20: (2B, WR) : Lego Power Functions Infrared Controller
+    -- 0xf****FF0: (1B, WR) : CPU reset bitmap
 
     --
     -- I/O arbiter
@@ -416,7 +417,7 @@ begin
 		R_led <= cpu_to_io(15 downto 8);
 	    end if;
 	    -- DDS
-	    if C_dds and io_addr(11 downto 4) = x"F6" then
+	    if C_dds and io_addr(11 downto 4) = x"DD" then
 		R_dds <= cpu_to_io;
 	    end if;
 	    -- CPU reset control
@@ -424,7 +425,7 @@ begin
 		R_cpu_reset <= cpu_to_io(15 downto 0);
 	    end if;
 	    -- Framebuffer
-	    if C_framebuffer and io_addr(11 downto 4) = x"F4" then
+	    if C_framebuffer and io_addr(11 downto 4) = x"B8" then
 		if C_big_endian then
 		    R_fb_mode <= cpu_to_io(25 downto 24);
 		    R_fb_base_addr <=
@@ -439,7 +440,7 @@ begin
 	end if;
 	if C_framebuffer and rising_edge(clk) then
 	    if io_addr_strobe(R_cur_io_port) = '1' and
-	      io_addr(11 downto 4) = x"F4" then
+	      io_addr(11 downto 4) = x"B8" then
 		R_fb_intr <= '0';
 	    end if;
 	    if fb_tick = '1' then
@@ -466,7 +467,7 @@ begin
     process(io_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard, from_timer)
     begin
 	case io_addr(11 downto 4) is
-	when x"F0" | x"FD" =>
+	when x"80" | x"81" =>
 	    if C_gpio then
 		io_to_cpu <= from_gpio;
 	    else
@@ -484,21 +485,25 @@ begin
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"F3"  =>
-	    if C_flash and io_addr(3 downto 2) = "00" then
+	when x"B4"  =>
+	    if C_flash then
 		io_to_cpu <= from_flash;
-	    elsif C_sdcard and io_addr(3 downto 2) = "01" then
+            else
+		io_to_cpu <= (others => '-');
+	    end if;
+	when x"B5"  =>
+	    if C_sdcard then
 		io_to_cpu <= from_sdcard;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"F5"  =>
+	when x"BA"  =>
 	    if C_pcm then
 		io_to_cpu <= from_pcm;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"F8" | x"F9" | x"FA" | x"FB"  =>
+	when x"90" | x"91" | x"92" | x"93"  =>
 	    if C_timer then
 		io_to_cpu <= from_timer;
 	    else
@@ -720,7 +725,7 @@ begin
 	out_r => pcm_r, out_l => pcm_l
     );
     pcm_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 4) = x"F5" else '0';
+      io_addr(11 downto 4) = x"BA" else '0';
     end generate;
 
     p_tip <= (others => R_dds_acc(31)) when C_dds and R_dds_enable = '1'
@@ -771,8 +776,8 @@ begin
         gpio_phys(28) =>   gpio_28
     );
     gpio_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 4) = x"F0" or 
-      io_addr(11 downto 4) = x"FD" 
+      io_addr(11 downto 4) = x"80" or 
+      io_addr(11 downto 4) = x"81" 
       else '0';
     end generate;
     normal_gpio_28: if C_tx433 = false generate
@@ -804,10 +809,10 @@ begin
 	icp => icp -- input capture signal
     );
     timer_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 4) = x"F8" or 
-      io_addr(11 downto 4) = x"F9" or
-      io_addr(11 downto 4) = x"FA" or 
-      io_addr(11 downto 4) = x"FB" 
+      io_addr(11 downto 4) = x"90" or 
+      io_addr(11 downto 4) = x"91" or
+      io_addr(11 downto 4) = x"92" or 
+      io_addr(11 downto 4) = x"93" 
       else '0';
     end generate;
 
