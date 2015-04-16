@@ -41,7 +41,7 @@
  * _exception_regs MUST follow _exception_stack in memory!
  */
 _exception_stack:	.space ISR_STACK_SIZE
-_exception_regs:	.space REGSIZE * 19
+_exception_regs:	.space REGSIZE * 20
 
 
 	.text
@@ -76,9 +76,9 @@ LEAF(_exception_start)
 	sw	t7, (15 * REGSIZE)(k1)
 	sw	t8, (16 * REGSIZE)(k1)
 	sw	t9, (17 * REGSIZE)(k1)
+	sw	fp, (18 * REGSIZE)(k1)
 #if 0
-	sw	gp, (19 * REGSIZE)(k1)
-	sw	fp, (20 * REGSIZE)(k1)
+	sw	gp, (20 * REGSIZE)(k1)
 #endif
 
 	/* Mask IRQs */
@@ -89,7 +89,7 @@ LEAF(_exception_start)
 	andi	a0, a0, 0xff
 
 	/* Set up the exception stack */
-	sw	sp, (18 * REGSIZE)(k1)
+	sw	sp, (19 * REGSIZE)(k1)
 	move	sp, k1
 
 	/* isr_dispatch() does the rest */
@@ -114,10 +114,10 @@ LEAF(_exception_start)
 	lw	t7, (15 * REGSIZE)(k1)
 	lw	t8, (16 * REGSIZE)(k1)
 	lw	t9, (17 * REGSIZE)(k1)
-	lw	sp, (18 * REGSIZE)(k1)
+	lw	fp, (18 * REGSIZE)(k1)
+	lw	sp, (19 * REGSIZE)(k1)
 #if 0
-	lw	gp, (19 * REGSIZE)(k1)
-	lw	fp, (20 * REGSIZE)(k1)
+	lw	gp, (20 * REGSIZE)(k1)
 #endif
 
 	mfc0	k0, $MIPS_COP_0_EXC_PC
