@@ -16,7 +16,11 @@ ENDIANFLAGS = -EL
 
 # Default load offset - bootloader is at 0x00000000
 ifndef LOADADDR
-LOADADDR = 0x80000000
+ ifeq ($(ARCH),mips)
+  LOADADDR = 0x80000000
+ else
+  LOADADDR = 0x00000200
+ endif
 endif
 
 ifeq ($(findstring 0x8, ${LOADADDR}),)
@@ -47,6 +51,11 @@ ifeq ($(ARCH),mips)
  MK_CFLAGS += -G 32768
 endif
 
+# MIPS-specific flags
+ifeq ($(ARCH),riscv)
+ MK_CFLAGS += -m32 -mno-muldiv
+endif
+
 MK_CFLAGS += ${MK_STDINC} ${MK_INCLUDES}
 
 #MK_CFLAGS += -Wextra -Wsystem-headers -Wshadow -Wpadded -Winline
@@ -65,16 +74,12 @@ MK_CFLAGS += -fselective-scheduling2
 
 # Linker flags
 #MK_LDFLAHS += ${ENDIANFLAGS}
-MK_LDFLAGS += -N
+#MK_LDFLAGS += -N
 MK_LDFLAGS += -Wl,--section-start=.init=${LOADADDR}
 MK_LDFLAGS += -Wl,--library-path=${LIBDIR}
 MK_LDFLAGS += -nostartfiles -nostdlib
 ifndef WITHOUT_LIBS
- ifeq ($(findstring 0x8, ${LOADADDR}),)
-  MK_LDFLAGS += -lcrt0bram
- else
-  MK_LDFLAGS += -lcrt0
- endif
+ MK_LDFLAGS += -lcrt0
 endif
 MK_LDFLAGS += ${MK_LIBS}
 
@@ -103,7 +108,7 @@ LOAD = echo Loading done
 RUN = 
 
 OEXT = .o
-EXE = .mips
+EXE = .$(ARCH)
 
 # Target : port_pre% and port_post%
 # For the purpose of this simple port, no pre or post steps needed.
