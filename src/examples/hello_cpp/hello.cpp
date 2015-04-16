@@ -45,7 +45,7 @@ main(void)
 	printf("Hello, FPGA world!\n");
 
 	do {
-		OUTB(IO_LED, out >> 20);
+		OUTB(IO_LED, out);
 		out++;
 		hello_global.message();
 		INB(in, IO_PUSHBTN);
