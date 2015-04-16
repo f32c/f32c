@@ -308,7 +308,7 @@ begin
 	bus_in => cpu_to_io, bus_out => from_sio
     );
     sio_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(7 downto 4) = x"2" else '0';
+      io_addr(11 downto 4) = x"F2" else '0';
     end generate;
 
     --
@@ -328,7 +328,7 @@ begin
 	spi_si => flash_si, spi_so => flash_so
     );
     flash_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(7 downto 4) = x"3" and io_addr(3 downto 2) = "00" else '0';
+      io_addr(11 downto 4) = x"F3" and io_addr(3 downto 2) = "00" else '0';
     end generate;
 
     --
@@ -345,7 +345,7 @@ begin
 	spi_si => sdcard_si, spi_so => sdcard_so
     );
     sdcard_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(7 downto 4) = x"3" and io_addr(3 downto 2) = "01" else '0';
+      io_addr(11 downto 4) = x"F3" and io_addr(3 downto 2) = "01" else '0';
     end generate;
 
     -- Memory map:
@@ -411,20 +411,20 @@ begin
 	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
 	  and io_write = '1' then
 	    -- LEDs
-	    if C_leds_btns and io_addr(7 downto 4) = x"1" and
+	    if C_leds_btns and io_addr(11 downto 4) = x"F1" and
 	      io_byte_sel(1) = '1' then
 		R_led <= cpu_to_io(15 downto 8);
 	    end if;
 	    -- DDS
-	    if C_dds and io_addr(7 downto 4) = x"6" then
+	    if C_dds and io_addr(11 downto 4) = x"F6" then
 		R_dds <= cpu_to_io;
 	    end if;
 	    -- CPU reset control
-	    if C_cpus /= 1 and io_addr(7 downto 4) = x"f" then
+	    if C_cpus /= 1 and io_addr(11 downto 4) = x"FF" then
 		R_cpu_reset <= cpu_to_io(15 downto 0);
 	    end if;
 	    -- Framebuffer
-	    if C_framebuffer and io_addr(7 downto 4) = x"4" then
+	    if C_framebuffer and io_addr(11 downto 4) = x"F4" then
 		if C_big_endian then
 		    R_fb_mode <= cpu_to_io(25 downto 24);
 		    R_fb_base_addr <=
@@ -439,7 +439,7 @@ begin
 	end if;
 	if C_framebuffer and rising_edge(clk) then
 	    if io_addr_strobe(R_cur_io_port) = '1' and
-	      io_addr(7 downto 4) = x"4" then
+	      io_addr(11 downto 4) = x"F4" then
 		R_fb_intr <= '0';
 	    end if;
 	    if fb_tick = '1' then
@@ -465,26 +465,26 @@ begin
     -- XXX replace with a balanced multiplexer
     process(io_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard, from_timer)
     begin
-	case io_addr(7 downto 4) is
-	when x"0" | x"D" =>
+	case io_addr(11 downto 4) is
+	when x"F0" | x"FD" =>
 	    if C_gpio then
 		io_to_cpu <= from_gpio;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;	
-	when x"1"  =>
+	when x"F1"  =>
 	    if C_leds_btns then
 		io_to_cpu <="------------" & R_sw & "-----------" & R_btns;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"2"  =>
+	when x"F2"  =>
 	    if C_sio then
 		io_to_cpu <= from_sio;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"3"  =>
+	when x"F3"  =>
 	    if C_flash and io_addr(3 downto 2) = "00" then
 		io_to_cpu <= from_flash;
 	    elsif C_sdcard and io_addr(3 downto 2) = "01" then
@@ -492,13 +492,13 @@ begin
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"5"  =>
+	when x"F5"  =>
 	    if C_pcm then
 		io_to_cpu <= from_pcm;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"8" | x"9" | x"A" | x"B"  =>
+	when x"F8" | x"F9" | x"FA" | x"FB"  =>
 	    if C_timer then
 		io_to_cpu <= from_timer;
 	    else
@@ -720,7 +720,7 @@ begin
 	out_r => pcm_r, out_l => pcm_l
     );
     pcm_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(7 downto 4) = x"5" else '0';
+      io_addr(11 downto 4) = x"F5" else '0';
     end generate;
 
     p_tip <= (others => R_dds_acc(31)) when C_dds and R_dds_enable = '1'
@@ -771,8 +771,8 @@ begin
         gpio_phys(28) =>   gpio_28
     );
     gpio_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(7 downto 4) = x"0" or 
-      io_addr(7 downto 4) = x"D" 
+      io_addr(11 downto 4) = x"F0" or 
+      io_addr(11 downto 4) = x"FD" 
       else '0';
     end generate;
     normal_gpio_28: if C_tx433 = false generate
@@ -804,10 +804,10 @@ begin
 	icp => icp -- input capture signal
     );
     timer_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(7 downto 4) = x"8" or 
-      io_addr(7 downto 4) = x"9" or
-      io_addr(7 downto 4) = x"A" or 
-      io_addr(7 downto 4) = x"B" 
+      io_addr(11 downto 4) = x"F8" or 
+      io_addr(11 downto 4) = x"F9" or
+      io_addr(11 downto 4) = x"FA" or 
+      io_addr(11 downto 4) = x"FB" 
       else '0';
     end generate;
 
