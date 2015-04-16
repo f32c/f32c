@@ -69,8 +69,8 @@ $(OPATH)$(PORT_DIR):
 compile: $(OPATH) $(OPATH)$(PORT_DIR) $(OBJS) $(HEADERS) 
 link: compile 
 	$(LD) $(LFLAGS) $(XLFLAGS) $(OBJS) $(LOUTCMD)
-	mips-elf-objcopy -O binary coremark.mips coremark.bin
-	mips-elf-objcopy -O srec coremark.mips coremark.hex
+	$(ARCH)-elf-objcopy -O binary coremark.$(ARCH) coremark.bin
+	$(ARCH)-elf-objcopy -O srec coremark.$(ARCH) coremark.hex
 	
 else
 
@@ -78,8 +78,8 @@ compile: $(OPATH) $(SRCS) $(HEADERS)
 	$(CC) $(CFLAGS) $(XCFLAGS) $(SRCS) $(OUTCMD)
 link: compile 
 	@echo "Link performed along with compile"
-	mips-elf-objcopy -O binary coremark.mips coremark.bin
-	mips-elf-objcopy -O srec coremark.mips coremark.hex
+	$(ARCH)-elf-objcopy -O binary coremark.$(ARCH) coremark.bin
+	$(ARCH)-elf-objcopy -O srec coremark.$(ARCH) coremark.hex
 
 endif
 
