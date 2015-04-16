@@ -185,7 +185,7 @@ begin
 	bus_in => cpu_to_dmem, bus_out => from_sio, break => sio_break
     );
     sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11" and
-      dmem_addr(7 downto 4) = x"2" else '0';
+      dmem_addr(11 downto 4) = x"F2" else '0';
     rs232_break <= sio_break;
     end generate;
 
