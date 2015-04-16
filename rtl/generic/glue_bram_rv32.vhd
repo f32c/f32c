@@ -181,7 +181,7 @@ begin
 	bus_in => cpu_to_dmem, bus_out => from_sio, break => sio_break
     );
     sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11" and
-      dmem_addr(7 downto 4) = x"2" else '0';
+      dmem_addr(11 downto 4) = x"F2" else '0';
     rs232_break <= sio_break;
     end generate;
 
@@ -197,7 +197,7 @@ begin
 	if rising_edge(clk) and io_addr_strobe = '1'
 	  and dmem_write = '1' then
 	    -- GPIO
-	    if C_gpio and dmem_addr(7 downto 4) = x"0" then
+	    if C_gpio and dmem_addr(11 downto 4) = x"F0" then
 		if dmem_addr(2) = '0' then
 		    if dmem_byte_sel(0) = '1' then
 			R_gpio_out(7 downto 0) <= cpu_to_dmem(7 downto 0);
@@ -227,7 +227,7 @@ begin
 		end if;
 	    end if;
 	    -- LEDs
-	    if C_leds_btns and dmem_addr(7 downto 4) = x"1" and
+	    if C_leds_btns and dmem_addr(11 downto 4) = x"F1" and
 	      dmem_byte_sel(1) = '1' then
 		R_leds <= cpu_to_dmem(15 downto 8);
 	    end if;
@@ -254,26 +254,26 @@ begin
 
     process(dmem_addr, R_sw, R_btns, from_sio, from_timer)
     begin
-	case dmem_addr(7 downto 4) is
-	when x"0"  =>
+	case dmem_addr(11 downto 4) is
+	when x"F0"  =>
 	    if C_gpio then
 		io_to_cpu <= R_gpio_in;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"1"  =>
+	when x"F1"  =>
 	    if C_leds_btns then
 		io_to_cpu <="--------" & R_sw & "--------" & R_btns;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"2"  =>
+	when x"F2"  =>
 	    if C_sio then
 		io_to_cpu <= from_sio;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"8" | x"9" | x"A" | x"B"  =>
+	when x"F8" | x"F9" | x"FA" | x"FB"  =>
 	    if C_timer then
 		io_to_cpu <= from_timer;
 	    else
@@ -309,10 +309,10 @@ begin
 	icp => icp -- input capture signal
     );
     timer_ce <= io_addr_strobe when
-      dmem_addr(7 downto 4) = x"8" or 
-      dmem_addr(7 downto 4) = x"9" or
-      dmem_addr(7 downto 4) = x"A" or 
-      dmem_addr(7 downto 4) = x"B" 
+      dmem_addr(11 downto 4) = x"F8" or 
+      dmem_addr(11 downto 4) = x"F9" or
+      dmem_addr(11 downto 4) = x"FA" or 
+      dmem_addr(11 downto 4) = x"FB" 
       else '0';
     end generate;
 
