@@ -226,7 +226,7 @@ begin
     process(dmem_addr, R_sw, R_btns, from_sio, from_timer)
     begin
 	case dmem_addr(11 downto 4) is
-	when x"F0" | x"FD" =>
+	when x"80" | x"81" =>
 	    if C_gpio then
 		io_to_cpu <= from_gpio;
 	    else
@@ -244,7 +244,7 @@ begin
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"F8" | x"F9" | x"FA" | x"FB"  =>
+	when x"90" | x"91" | x"92" | x"93"  =>
 	    if C_timer then
 		io_to_cpu <= from_timer;
 	    else
@@ -270,8 +270,8 @@ begin
 	gpio_phys => gpio -- physical input/output
     );
     gpio_ce <= io_addr_strobe when
-      dmem_addr(11 downto 4) = x"F0" or 
-      dmem_addr(11 downto 4) = x"FD" 
+      dmem_addr(11 downto 4) = x"80" or 
+      dmem_addr(11 downto 4) = x"81"
       else '0';
     end generate;
 
@@ -296,10 +296,10 @@ begin
 	icp => icp -- input capture signal
     );
     timer_ce <= io_addr_strobe when
-      dmem_addr(11 downto 4) = x"F8" or 
-      dmem_addr(11 downto 4) = x"F9" or
-      dmem_addr(11 downto 4) = x"FA" or 
-      dmem_addr(11 downto 4) = x"FB" 
+      dmem_addr(11 downto 4) = x"90" or 
+      dmem_addr(11 downto 4) = x"91" or
+      dmem_addr(11 downto 4) = x"92" or 
+      dmem_addr(11 downto 4) = x"93" 
       else '0';
     end generate;
 
