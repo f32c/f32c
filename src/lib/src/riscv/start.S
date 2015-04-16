@@ -50,7 +50,7 @@ bss_bzero:
 	bne	s0, s1, bss_bzero
 
 	la	s0, __init_array_start
-	la	s1, _edata	/* XXX was: _fdata */
+	la	s1, __init_array_end
 	move	s2, ra
 	j	ctor_loop_enter
 
