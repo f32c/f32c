@@ -1,0 +1,1 @@
+/usr/local/riscv-elf/lib/ldscripts/elf32lriscv.x
