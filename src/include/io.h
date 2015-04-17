@@ -38,7 +38,7 @@
 
 #define	IO_BASE		0xfffff800
 
-#define	IO_ADDR(a)	(IO_BASE + (a))
+#define	IO_ADDR(a)	(IO_BASE | (a))
 
 #define	IO_GPIO_DATA	IO_ADDR(0x000)	/* word, RW */
 #define	IO_GPIO_CTL	IO_ADDR(0x004)	/* word, WR */
