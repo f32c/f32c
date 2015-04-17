@@ -1375,7 +1375,7 @@ begin
 
     -- R_cop0_config
     G_cop0_config:
-    if C_cop0_config generate
+    if C_cop0_config or C_debug generate
     R_cop0_config(31) <= '0'; -- no config1 register
     with C_clk_freq select R_cop0_config(30 downto 16) <=
 	"10" & conv_std_logic_vector(100, 13) when 33,
@@ -1389,11 +1389,12 @@ begin
 	"10" & conv_std_logic_vector(500, 13) when 166,
 	"00" & conv_std_logic_vector(C_clk_freq, 13) when others;
     R_cop0_config(15) <= '1' when C_big_endian else '0';
-    R_cop0_config(14 downto 4) <= (others => '-');
+    R_cop0_config(14) <= '1' when C_arch = ARCH_RV32 else '0';
+    R_cop0_config(13 downto 4) <= (others => '-');
     R_cop0_config(3 downto 0) <= conv_std_logic_vector(C_cpuid, 4);
     end generate;
     G_not_cop0_config:
-    if not C_cop0_config generate
+    if not C_cop0_config and not C_debug generate
     R_cop0_config <= (others => '-');
     end generate;
 
