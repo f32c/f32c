@@ -1,5 +1,5 @@
 --
--- Copyright 2013 Marko Zec, University of Zagreb
+-- Copyright 2013-2015 Marko Zec, University of Zagreb
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -30,31 +30,97 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use work.bootloader.all; -- ram initialization constant boot_block from bootloader.vhd
 
-entity bram is
+
+entity bram_rv32 is
     generic(
 	C_mem_size: integer
     );
     port(
 	clk: in std_logic;
-	imem_addr_strobe: in std_logic;
-	imem_data_ready: out std_logic;
 	imem_addr: in std_logic_vector(31 downto 2);
 	imem_data_out: out std_logic_vector(31 downto 0);
-	dmem_addr_strobe: in std_logic;
-	dmem_data_ready: out std_logic;
 	dmem_write: in std_logic;
 	dmem_byte_sel: in std_logic_vector(3 downto 0);
 	dmem_addr: in std_logic_vector(31 downto 2);
 	dmem_data_in: in std_logic_vector(31 downto 0);
 	dmem_data_out: out std_logic_vector(31 downto 0)
     );
-end bram;
+end bram_rv32;
 
-architecture x of bram is
+architecture x of bram_rv32 is
     type bram_type is array(0 to (C_mem_size * 256 - 1))
       of std_logic_vector(7 downto 0);
+
+    type boot_block_type is array(0 to 511) of std_logic_vector(7 downto 0);
+
+    constant boot_block : boot_block_type := (
+	x"13", x"01", x"01", x"fe", x"23", x"2e", x"11", x"00", 
+	x"23", x"2c", x"81", x"00", x"23", x"2a", x"91", x"00", 
+	x"23", x"28", x"21", x"01", x"23", x"26", x"31", x"01", 
+	x"23", x"24", x"41", x"01", x"23", x"22", x"51", x"01", 
+	x"13", x"00", x"00", x"00", x"13", x"08", x"00", x"00", 
+	x"93", x"05", x"00", x"00", x"93", x"07", x"00", x"00", 
+	x"37", x"13", x"72", x"76", x"b7", x"33", x"3e", x"20", 
+	x"37", x"0e", x"00", x"08", x"93", x"08", x"30", x"00", 
+	x"93", x"0e", x"00", x"06", x"13", x"0f", x"10", x"00", 
+	x"93", x"0f", x"50", x"00", x"93", x"00", x"00", x"04", 
+	x"13", x"04", x"30", x"05", x"93", x"04", x"d0", x"00", 
+	x"13", x"09", x"f0", x"01", x"13", x"0a", x"00", x"00", 
+	x"13", x"07", x"d3", x"a0", x"03", x"06", x"10", x"b0", 
+	x"93", x"12", x"d6", x"01", x"e3", x"cc", x"02", x"fe", 
+	x"23", x"00", x"e0", x"b0", x"13", x"57", x"87", x"40", 
+	x"33", x"65", x"47", x"01", x"63", x"18", x"05", x"00", 
+	x"13", x"0a", x"f0", x"ff", x"13", x"87", x"33", x"23", 
+	x"6f", x"f0", x"df", x"fd", x"e3", x"1c", x"07", x"fc", 
+	x"13", x"05", x"20", x"00", x"13", x"06", x"f0", x"0f", 
+	x"13", x"07", x"f0", x"ff", x"93", x"09", x"05", x"00", 
+	x"13", x"da", x"85", x"40", x"63", x"5e", x"07", x"02", 
+	x"f3", x"27", x"10", x"c0", x"b3", x"f6", x"c7", x"01", 
+	x"b3", x"3a", x"d0", x"00", x"b3", x"02", x"50", x"41", 
+	x"93", x"f6", x"f2", x"0f", x"93", x"d2", x"37", x"41", 
+	x"93", x"fa", x"f7", x"0f", x"93", x"f2", x"f2", x"0f", 
+	x"63", x"d6", x"52", x"01", x"93", x"c6", x"f6", x"00", 
+	x"6f", x"00", x"80", x"00", x"93", x"c6", x"06", x"0f", 
+	x"23", x"02", x"d0", x"f0", x"6f", x"00", x"80", x"00", 
+	x"23", x"02", x"40", x"f1", x"83", x"0a", x"10", x"b0", 
+	x"93", x"92", x"fa", x"01", x"e3", x"dc", x"02", x"fa", 
+	x"03", x"0a", x"00", x"b0", x"63", x"5c", x"07", x"02", 
+	x"63", x"18", x"8a", x"00", x"93", x"07", x"00", x"00", 
+	x"13", x"07", x"00", x"00", x"6f", x"f0", x"df", x"f9", 
+	x"e3", x"0a", x"9a", x"f4", x"93", x"07", x"00", x"00", 
+	x"e3", x"58", x"49", x"f9", x"83", x"07", x"10", x"b0", 
+	x"93", x"96", x"d7", x"01", x"e3", x"cc", x"06", x"fe", 
+	x"23", x"00", x"40", x"b1", x"93", x"07", x"00", x"00", 
+	x"6f", x"f0", x"9f", x"f7", x"93", x"06", x"6a", x"ff", 
+	x"e3", x"f0", x"d8", x"f6", x"93", x"9a", x"47", x"00", 
+	x"63", x"d6", x"4e", x"01", x"13", x"0a", x"0a", x"fe", 
+	x"6f", x"00", x"00", x"01", x"93", x"07", x"0a", x"fd", 
+	x"b3", x"e7", x"57", x"01", x"63", x"d6", x"40", x"01", 
+	x"93", x"02", x"9a", x"fc", x"b3", x"e7", x"52", x"01", 
+	x"13", x"07", x"17", x"00", x"63", x"1c", x"e7", x"03", 
+	x"93", x"8a", x"97", x"ff", x"63", x"e0", x"59", x"03", 
+	x"37", x"04", x"00", x"08", x"b7", x"04", x"01", x"00", 
+	x"33", x"71", x"88", x"00", x"33", x"61", x"91", x"00", 
+	x"93", x"00", x"00", x"00", x"67", x"00", x"08", x"00", 
+	x"6f", x"f0", x"5f", x"fa", x"e3", x"c0", x"f8", x"fa", 
+	x"93", x"92", x"17", x"00", x"13", x"86", x"52", x"00", 
+	x"6f", x"f0", x"5f", x"f9", x"63", x"18", x"17", x"01", 
+	x"93", x"96", x"17", x"00", x"33", x"05", x"d5", x"00", 
+	x"6f", x"f0", x"5f", x"f8", x"e3", x"de", x"cf", x"ee", 
+	x"63", x"1c", x"c7", x"00", x"93", x"85", x"07", x"00", 
+	x"13", x"06", x"07", x"00", x"e3", x"16", x"08", x"ee", 
+	x"13", x"88", x"07", x"00", x"6f", x"f0", x"5f", x"ee", 
+	x"e3", x"50", x"e6", x"ee", x"13", x"1a", x"f7", x"01", 
+	x"e3", x"5c", x"0a", x"ec", x"e3", x"5a", x"a7", x"ec", 
+	x"23", x"80", x"f5", x"00", x"93", x"85", x"15", x"00", 
+	x"6f", x"f0", x"9f", x"ec", x"00", x"00", x"00", x"00", 
+	x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00", 
+	x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00", 
+	x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00", 
+	x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00", 
+	others => (others => '0')
+    );
 
     --
     -- Xilinx ISE 14.7 for Spartan-3 will abort with error about loop 
@@ -115,9 +181,6 @@ architecture x of bram is
 
 begin
 
-    imem_data_ready <= '1';
-    dmem_data_ready <= '1';
-
     dmem_data_out <= dbram_3 & dbram_2 & dbram_1 & dbram_0;
     imem_data_out <= ibram_3 & ibram_2 & ibram_1 & ibram_0;
 
@@ -134,8 +197,7 @@ begin
     process(clk)
     begin
 	if falling_edge(clk) then
-	    if dmem_addr_strobe = '1' and dmem_byte_sel(0) = '1'
-	      and write_enable then
+	    if dmem_byte_sel(0) = '1' and write_enable then
 		bram_0(conv_integer(dmem_addr)) <= dmem_data_in(7 downto 0);
 	    end if;
 	    dbram_0 <= bram_0(conv_integer(dmem_addr));
@@ -146,8 +208,7 @@ begin
     process(clk)
     begin
 	if falling_edge(clk) then
-	    if dmem_addr_strobe = '1' and dmem_byte_sel(1) = '1'
-	      and write_enable then
+	    if dmem_byte_sel(1) = '1' and write_enable then
 		bram_1(conv_integer(dmem_addr)) <= dmem_data_in(15 downto 8);
 	    end if;
 	    dbram_1 <= bram_1(conv_integer(dmem_addr));
@@ -158,8 +219,7 @@ begin
     process(clk)
     begin
 	if falling_edge(clk) then
-	    if dmem_addr_strobe = '1' and dmem_byte_sel(2) = '1'
-	      and write_enable then
+	    if dmem_byte_sel(2) = '1' and write_enable then
 		bram_2(conv_integer(dmem_addr)) <= dmem_data_in(23 downto 16);
 	    end if;
 	    dbram_2 <= bram_2(conv_integer(dmem_addr));
@@ -170,8 +230,7 @@ begin
     process(clk)
     begin
 	if falling_edge(clk) then
-	    if dmem_addr_strobe = '1' and dmem_byte_sel(3) = '1'
-	      and write_enable then
+	    if dmem_byte_sel(3) = '1' and write_enable then
 		bram_3(conv_integer(dmem_addr)) <= dmem_data_in(31 downto 24);
 	    end if;
 	    dbram_3 <= bram_3(conv_integer(dmem_addr));

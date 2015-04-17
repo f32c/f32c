@@ -38,22 +38,22 @@ entity glue_bram is
 	C_clk_freq: integer;
 
 	-- ISA options
-	C_arch: integer := ARCH_RV32;
+	C_arch: integer;
 	C_big_endian: boolean := false;
-	C_mult_enable: boolean := false;
+	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
-	C_sign_extend: boolean := false;
+	C_sign_extend: boolean := true;
 	C_ll_sc: boolean := false;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"0001ffff"; -- 128 K
-	C_exceptions: boolean := false;
+	C_exceptions: boolean := true;
 
 	-- COP0 options
 	C_cop0_count: boolean := true;
-	C_cop0_compare: boolean := false;
-	C_cop0_config: boolean := false;
+	C_cop0_compare: boolean := true;
+	C_cop0_config: boolean := true;
 
 	-- CPU core configuration options
-	C_branch_prediction: boolean := false;
+	C_branch_prediction: boolean := true;
 	C_full_shifter: boolean := true;
 	C_result_forwarding: boolean := true;
 	C_load_aligner: boolean := true;
@@ -70,18 +70,19 @@ entity glue_bram is
 	-- SoC configuration options
 	C_mem_size: integer := 16;	-- in KBytes
 	C_sio: boolean := true;
-	C_gpio: boolean := false;
-	C_timer: boolean := false;
+	C_gpio: boolean := true;
+	C_timer: boolean := true;
 	C_leds_btns: boolean := true
     );
     port (
 	clk: in std_logic;
 	rs232_rx: in std_logic;
 	rs232_tx, rs232_break: out std_logic;
-	btns: in std_logic_vector(7 downto 0);
-	sw: in std_logic_vector(7 downto 0);
+	btns: in std_logic_vector(15 downto 0);
+	sw: in std_logic_vector(15 downto 0);
 	gpio: inout std_logic_vector(31 downto 0);
-	leds: out std_logic_vector(7 downto 0)
+	leds: out std_logic_vector(15 downto 0);
+	lcd_7seg: out std_logic_vector(15 downto 0)
     );
 end glue_bram;
 
@@ -91,10 +92,13 @@ architecture Behavioral of glue_bram is
     signal imem_addr_strobe, imem_data_ready: std_logic;
     signal dmem_addr: std_logic_vector(31 downto 2);
     signal dmem_addr_strobe, dmem_write: std_logic;
-    signal dmem_bram_enable, dmem_data_ready: std_logic;
+    signal dmem_bram_write, dmem_data_ready: std_logic;
     signal dmem_byte_sel: std_logic_vector(3 downto 0);
     signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
+    signal io_addr_strobe: std_logic;
+    signal io_addr: std_logic_vector(11 downto 2);
+    signal intr: std_logic_vector(5 downto 0); -- interrupt
 
     -- Timer
     signal from_timer: std_logic_vector(31 downto 0);
@@ -104,17 +108,20 @@ architecture Behavioral of glue_bram is
     signal timer_intr: std_logic;
     
     -- GPIO
-    signal R_gpio_ctl, R_gpio_in, R_gpio_out: std_logic_vector(31 downto 0);
-
-    -- I/O
-    signal intr: std_logic_vector(5 downto 0);
-    signal io_addr_strobe: std_logic;
+    signal from_gpio: std_logic_vector(31 downto 0);
+    signal gpio_ce: std_logic;
+    signal gpio_intr: std_logic;
+        
+    -- Serial I/O (RS232)
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_ce, sio_break, sio_tx: std_logic;
-    signal R_leds: std_logic_vector(7 downto 0);
-    signal R_sw: std_logic_vector(7 downto 0);
-    signal R_btns: std_logic_vector(7 downto 0);
 
+    -- onboard LEDs, buttons and switches
+    signal R_leds: std_logic_vector(15 downto 0);
+    signal R_lcd_7seg: std_logic_vector(15 downto 0);
+    signal R_btns: std_logic_vector(15 downto 0);
+    signal R_sw: std_logic_vector(15 downto 0);
+   
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
     signal debug_to_sio_data: std_logic_vector(7 downto 0);
@@ -165,7 +172,11 @@ begin
 	debug_active => debug_active
     );
     final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
-    intr <= "000" & timer_intr & from_sio(8) & '0';
+    intr <= "00" & gpio_intr & timer_intr & from_sio(8) & '0';
+    io_addr_strobe <= '1' when dmem_addr(31 downto 30) = "11" else '0';
+    io_addr <= '0' & dmem_addr(10 downto 2);
+    imem_data_ready <= '1';
+    dmem_data_ready <= '1';
 
     -- RS232 sio
     G_sio:
@@ -180,64 +191,35 @@ begin
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
 	bus_in => cpu_to_dmem, bus_out => from_sio, break => sio_break
     );
-    sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11" and
-      dmem_addr(11 downto 4) = x"F2" else '0';
+    sio_ce <= io_addr_strobe when io_addr(11 downto 4) = x"30" else '0';
     rs232_break <= sio_break;
     end generate;
 
     --
-    -- I/O port map:
-    -- 0xf*****10: (4B, RW) : LED (WR), switches, buttons (RD)
-    -- 0xf*****20: (4B, RW) * SIO
+    -- I/O
     --
-    io_addr_strobe <= '1' when C_leds_btns and dmem_addr(31 downto 30) = "11"
-      else '0';
     process(clk)
     begin
-	if rising_edge(clk) and io_addr_strobe = '1'
-	  and dmem_write = '1' then
-	    -- GPIO
-	    if C_gpio and dmem_addr(11 downto 4) = x"F0" then
-		if dmem_addr(2) = '0' then
-		    if dmem_byte_sel(0) = '1' then
-			R_gpio_out(7 downto 0) <= cpu_to_dmem(7 downto 0);
-		    end if;
-		    if dmem_byte_sel(1) = '1' then
-			R_gpio_out(15 downto 8) <= cpu_to_dmem(15 downto 8);
-		    end if;
-		    if dmem_byte_sel(2) = '1' then
-			R_gpio_out(23 downto 16) <= cpu_to_dmem(23 downto 16);
-		    end if;
-		    if dmem_byte_sel(3) = '1' then
-			R_gpio_out(31 downto 24) <= cpu_to_dmem(31 downto 24);
-		    end if;
-		else
-		    if dmem_byte_sel(0) = '1' then
-			R_gpio_ctl(7 downto 0) <= cpu_to_dmem(7 downto 0);
-		    end if;
-		    if dmem_byte_sel(1) = '1' then
-			R_gpio_ctl(15 downto 8) <= cpu_to_dmem(15 downto 8);
-		    end if;
-		    if dmem_byte_sel(2) = '1' then
-			R_gpio_ctl(23 downto 16) <= cpu_to_dmem(23 downto 16);
-		    end if;
-		    if dmem_byte_sel(3) = '1' then
-			R_gpio_ctl(31 downto 24) <= cpu_to_dmem(31 downto 24);
-		    end if;
-		end if;
-	    end if;
+	if rising_edge(clk) and io_addr_strobe = '1' and dmem_write = '1' then
 	    -- LEDs
-	    if C_leds_btns and dmem_addr(11 downto 4) = x"F1" and
-	      dmem_byte_sel(1) = '1' then
-		R_leds <= cpu_to_dmem(15 downto 8);
+	    if C_leds_btns and io_addr(11 downto 4) = x"70" then
+		if dmem_byte_sel(0) = '1' then
+		    R_leds(7 downto 0) <= cpu_to_dmem(7 downto 0);
+		end if;
+		if dmem_byte_sel(1) = '1' then
+		    R_leds(15 downto 8) <= cpu_to_dmem(15 downto 8);
+		end if;
+		if dmem_byte_sel(2) = '1' then
+		    R_lcd_7seg(7 downto 0) <= cpu_to_dmem(23 downto 16);
+		end if;
+		if dmem_byte_sel(3) = '1' then
+		    R_lcd_7seg(15 downto 8) <= cpu_to_dmem(31 downto 24);
+		end if;
 	    end if;
 	end if;
 	if C_leds_btns and rising_edge(clk) then
 	    R_sw <= sw;
 	    R_btns <= btns;
-	end if;
-	if C_gpio and rising_edge(clk) then
-	    R_gpio_in <= gpio;
 	end if;
     end process;
 
@@ -249,33 +231,34 @@ begin
     if C_timer = true generate
     ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_leds(1);
     ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_leds(2);
-    leds <= R_leds(7 downto 3) & ocp_mux & R_leds(0) when C_leds_btns else (others => '-');
+    leds <= R_leds(15 downto 3) & ocp_mux & R_leds(0) when C_leds_btns
+      else (others => '-');
     end generate;
 
-    process(dmem_addr, R_sw, R_btns, from_sio, from_timer)
+    process(io_addr, R_sw, R_btns, from_sio, from_timer, from_gpio)
     begin
-	case dmem_addr(11 downto 4) is
-	when x"F0"  =>
+	case io_addr(11 downto 4) is
+	when x"00" | x"01" =>
 	    if C_gpio then
-		io_to_cpu <= R_gpio_in;
+		io_to_cpu <= from_gpio;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;	
+	when x"10" | x"11" | x"12" | x"13"  =>
+	    if C_timer then
+		io_to_cpu <= from_timer;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"F1"  =>
-	    if C_leds_btns then
-		io_to_cpu <="--------" & R_sw & "--------" & R_btns;
-	    else
-		io_to_cpu <= (others => '-');
-	    end if;
-	when x"F2"  =>
+	when x"30"  =>
 	    if C_sio then
 		io_to_cpu <= from_sio;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"F8" | x"F9" | x"FA" | x"FB"  =>
-	    if C_timer then
-		io_to_cpu <= from_timer;
+	when x"F0"  =>
+	    if C_leds_btns then
+		io_to_cpu <= R_sw & R_btns;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
@@ -285,9 +268,22 @@ begin
     end process;
 
     -- GPIO
-    gpio_3state: for i in 0 to 31 generate
-	gpio(i) <= R_gpio_out(i) when R_gpio_ctl(i) = '1' else 'Z';
+    G_gpio:
+    if C_gpio generate
+    gpio_inst: entity work.gpio
+    generic map (
+	C_bits => 32
+    )
+    port map (
+	clk => clk, ce => gpio_ce, addr => dmem_addr(4 downto 2),
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_gpio,
+	gpio_irq => gpio_intr,
+	gpio_phys => gpio -- physical input/output
+    );
+    gpio_ce <= io_addr_strobe when io_addr(11 downto 8) = x"0" else '0';
     end generate;
+
 
     -- Timer
     G_timer:
@@ -308,29 +304,39 @@ begin
 	icp_enable => icp_enable, -- enable physical input
 	icp => icp -- input capture signal
     );
-    timer_ce <= io_addr_strobe when
-      dmem_addr(11 downto 4) = x"F8" or 
-      dmem_addr(11 downto 4) = x"F9" or
-      dmem_addr(11 downto 4) = x"FA" or 
-      dmem_addr(11 downto 4) = x"FB" 
-      else '0';
+    timer_ce <= io_addr_strobe when io_addr(11 downto 8) = x"1" else '0';
     end generate;
 
     -- Block RAM
-    dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
-    imem_data_ready <= '1';
-    dmem_data_ready <= '1';
-    bram: entity work.bram
+    dmem_bram_write <=
+      dmem_addr_strobe and dmem_write when dmem_addr(31) /= '1' else '0';
+    G_bram_mi32:
+    if C_arch = ARCH_MI32 generate
+    bram_mi32: entity work.bram_mi32
     generic map (
 	C_mem_size => C_mem_size
     )
     port map (
-	clk => clk, imem_addr_strobe => imem_addr_strobe,
-	imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write,
+	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
+	dmem_write => dmem_bram_write,
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
 	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
     );
+    end generate;
+    G_bram_rv32:
+    if C_arch = ARCH_RV32 generate
+    bram_rv32: entity work.bram_rv32
+    generic map (
+	C_mem_size => C_mem_size
+    )
+    port map (
+	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
+	dmem_write => dmem_bram_write,
+	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
+    );
+    end generate;
+
 
     -- Debugging SIO instance
     G_debug_sio:
