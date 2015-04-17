@@ -256,7 +256,7 @@ begin
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"F0"  =>
+	when x"70"  =>
 	    if C_leds_btns then
 		io_to_cpu <= R_sw & R_btns;
 	    else
