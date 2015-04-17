@@ -36,6 +36,10 @@
 #define	SPI_READY_MASK (1 << 16)
 #endif
 
+#define	SPI_DATA	0
+#define	SPI_CONTROL	1
+
+
 void
 spi_block_in(int port, void *buf, int len)
 {
@@ -46,12 +50,12 @@ spi_block_in(int port, void *buf, int len)
 	if (len == 0)
 		return;
 
-	SB(0xff, IO_SPI_FLASH, port);
+	SB(0xff, SPI_DATA, port);
 	do {
-		LW(c, IO_SPI_FLASH, port);
+		LW(c, SPI_DATA, port);
 	} while ((c & SPI_READY_MASK) == 0);
 	for (len--; len != 0; len--) {
-		SB(0xff, IO_SPI_FLASH, port);
+		SB(0xff, SPI_DATA, port);
 #if (_BYTE_ORDER == _LITTLE_ENDIAN)
 		w = (w >> 8) | (c << 24);
 #else
@@ -60,7 +64,7 @@ spi_block_in(int port, void *buf, int len)
 		if ((len & 3) == 0)
 			*wp++ = w;
 		do {
-			LW(c, IO_SPI_FLASH, port);
+			LW(c, SPI_DATA, port);
 		} while ((c & SPI_READY_MASK) == 0);
 	}
 #if (_BYTE_ORDER == _LITTLE_ENDIAN)
@@ -77,9 +81,9 @@ spi_byte(int port, int out)
 {
 	uint32_t in;
 
-	SB(out, IO_SPI_FLASH, port);
+	SB(out, SPI_DATA, port);
 	do {
-		LW(in, IO_SPI_FLASH, port);
+		LW(in, SPI_DATA, port);
 	} while ((in & SPI_READY_MASK) == 0);
 #if (_BYTE_ORDER == _LITTLE_ENDIAN)
 	return (in & 0xff);
@@ -94,8 +98,8 @@ spi_start_transaction(int port)
 {
 	uint32_t in;
 
-	SB(0x80, IO_SPI_FLASH, port + 1);
+	SB(0x80, SPI_CONTROL, port);
 	do {
-		LW(in, IO_SPI_FLASH, port + 1);
+		LW(in, SPI_DATA, port);
 	} while ((in & SPI_READY_MASK) == 0);
 }
