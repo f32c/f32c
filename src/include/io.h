@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
+ * Copyright (c) 2013-2015 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,30 +36,43 @@
 #endif
 
 
-#define	IO_BASE		-256
+#define	IO_BASE		0xfffff800
 
 #define	IO_ADDR(a)	(IO_BASE + (a))
 
-#define	IO_GPIO_DATA	IO_ADDR(0x00)	/* word, RW */
-#define	IO_GPIO_CTL	IO_ADDR(0x04)	/* word, WR */
-#define	IO_PUSHBTN	IO_ADDR(0x10)	/* byte, RD */
-#define	IO_LED		IO_ADDR(0x11)	/* byte, WR */
-#define	IO_DIPSW	IO_ADDR(0x12)	/* byte, RD */
-#define	IO_LCD		IO_ADDR(0x13)	/* byte, WR */
-#define	IO_SIO_BYTE	IO_ADDR(0x20)	/* byte, RW */
-#define	IO_SIO_STATUS	IO_ADDR(0x21)	/* byte, RD */
-#define	IO_SIO_BAUD	IO_ADDR(0x22)	/* half, WR */
-#define	IO_SPI_FLASH	IO_ADDR(0x30)	/* half, RW */
-#define	IO_SPI_SDCARD	IO_ADDR(0x34)	/* half, RW */
-#define	IO_FB		IO_ADDR(0x40)	/* word, WR */
-#define	IO_PCM_CUR	IO_ADDR(0x50)	/* word, RD */
-#define	IO_PCM_FIRST	IO_ADDR(0x50)	/* word, WR */
-#define	IO_PCM_LAST	IO_ADDR(0x54)	/* word, WR */
-#define	IO_PCM_FREQ	IO_ADDR(0x58)	/* word, WR */
-#define	IO_PCM_VOLUME	IO_ADDR(0x5c)	/* half, WR */
-#define	IO_LEGO_DATA	IO_ADDR(0x60)	/* byte, WR */
-#define	IO_LEGO_CTL	IO_ADDR(0x61)	/* byte, WR */
-#define	IO_CPU_RESET	IO_ADDR(0xf0)	/* byte, WR */
+#define	IO_GPIO_DATA	IO_ADDR(0x000)	/* word, RW */
+#define	IO_GPIO_CTL	IO_ADDR(0x004)	/* word, WR */
+#define	IO_GPIO_RISE_IF	IO_ADDR(0x008)	/* word, RW (clear only) */
+#define	IO_GPIO_RISE_IE	IO_ADDR(0x00C)	/* word, RW */
+#define	IO_GPIO_FALL_IF	IO_ADDR(0x010)	/* word, RW (clear only) */
+#define	IO_GPIO_FALL_IE	IO_ADDR(0x014)	/* word, RW */
+
+#define	IO_TIMER	IO_ADDR(0x100)	/* 16-byte, WR */
+
+#define	IO_SIO_BYTE	IO_ADDR(0x300)	/* byte, RW */
+#define	IO_SIO_STATUS	IO_ADDR(0x301)	/* byte, RD */
+#define	IO_SIO_BAUD	IO_ADDR(0x302)	/* half, WR */
+
+#define	IO_SPI_FLASH	IO_ADDR(0x340)	/* half, RW */
+#define	IO_SPI_SDCARD	IO_ADDR(0x350)	/* half, RW */
+
+#define	IO_FB		IO_ADDR(0x380)	/* word, WR */
+
+#define	IO_PCM_CUR	IO_ADDR(0x3A0)	/* word, RD */
+#define	IO_PCM_FIRST	IO_ADDR(0x3A0)	/* word, WR */
+#define	IO_PCM_LAST	IO_ADDR(0x3A4)	/* word, WR */
+#define	IO_PCM_FREQ	IO_ADDR(0x3A8)	/* word, WR */
+#define	IO_PCM_VOLUME	IO_ADDR(0x3AC)	/* half, WR */
+
+#define	IO_LEGO_DATA	IO_ADDR(0x520)	/* byte, WR */
+#define	IO_LEGO_CTL	IO_ADDR(0x521)	/* byte, WR */
+
+#define	IO_PUSHBTN	IO_ADDR(0x700)	/* word, RD */
+#define	IO_DIPSW	IO_ADDR(0x702)	/* word, RD */
+#define	IO_LED		IO_ADDR(0x704)	/* word, WR */
+#define	IO_LCD		IO_ADDR(0x706)	/* word, WR */
+
+#define	IO_CPU_RESET	IO_ADDR(0x7F0)	/* byte, WR */
 
 
 /* SIO status bitmask */
