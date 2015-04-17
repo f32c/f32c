@@ -25,6 +25,7 @@
  * $Id$
  */
 
+#include <io.h>
 #include <fcntl.h>
 #include <spi.h>
 #include <stdio.h>
@@ -63,13 +64,13 @@ main(void)
 again:
 	printf("\nULX2S SPI Flash programer v1.0\n\n");
 
-	spi_start_transaction(SPI_PORT_FLASH);
-	spi_byte(SPI_PORT_FLASH, 0x90); /* RDID */
-	spi_byte(SPI_PORT_FLASH, 0);
-	spi_byte(SPI_PORT_FLASH, 0);
-	spi_byte(SPI_PORT_FLASH, 0);
-	man_id = spi_byte(SPI_PORT_FLASH, 0);
-	dev_id = spi_byte(SPI_PORT_FLASH, 0);
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, 0x90); /* RDID */
+	spi_byte(IO_SPI_FLASH, 0);
+	spi_byte(IO_SPI_FLASH, 0);
+	spi_byte(IO_SPI_FLASH, 0);
+	man_id = spi_byte(IO_SPI_FLASH, 0);
+	dev_id = spi_byte(IO_SPI_FLASH, 0);
 	printf("SPI manufacturer ");
 	switch (man_id) {
 	case SPI_MFG_SST:
@@ -97,10 +98,10 @@ again:
 	}
 	printf(" (ID 0x%02x)\n", dev_id);
 
-	spi_start_transaction(SPI_PORT_FLASH);
-	j = spi_byte(SPI_PORT_FLASH, 0x9f); /* JEDEC ID */
-	printf("device type %02x, ", spi_byte(SPI_PORT_FLASH, 0));
-	printf("capacity %02x\n", spi_byte(SPI_PORT_FLASH, 0));
+	spi_start_transaction(IO_SPI_FLASH);
+	j = spi_byte(IO_SPI_FLASH, 0x9f); /* JEDEC ID */
+	printf("device type %02x, ", spi_byte(IO_SPI_FLASH, 0));
+	printf("capacity %02x\n", spi_byte(IO_SPI_FLASH, 0));
 
 	if ((fd = open(IMAGE_NAME, 0)) < 0) {
 		printf("Nije pronadjena datoteka %s!\n", IMAGE_NAME);
@@ -114,24 +115,24 @@ again:
 	}
 
 	printf("Brisem SPI flash...\n");
-	spi_start_transaction(SPI_PORT_FLASH);
-	spi_byte(SPI_PORT_FLASH, 0x50); /* EWSR */
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, 0x50); /* EWSR */
 
-	spi_start_transaction(SPI_PORT_FLASH);
-	spi_byte(SPI_PORT_FLASH, 0x01); /* WRSR */
-	spi_byte(SPI_PORT_FLASH, 0); /* Clear write-protect bits */
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, 0x01); /* WRSR */
+	spi_byte(IO_SPI_FLASH, 0); /* Clear write-protect bits */
 
-	spi_start_transaction(SPI_PORT_FLASH);
-	spi_byte(SPI_PORT_FLASH, 0x06); /* WREN */
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, 0x06); /* WREN */
 
 	if (man_id != SPI_MFG_SPANS) {
-		spi_start_transaction(SPI_PORT_FLASH);
-		spi_byte(SPI_PORT_FLASH, 0x60); /* Chip erase */
+		spi_start_transaction(IO_SPI_FLASH);
+		spi_byte(IO_SPI_FLASH, 0x60); /* Chip erase */
 	}
 
-	spi_start_transaction(SPI_PORT_FLASH);
-	spi_byte(SPI_PORT_FLASH, 0x05); /* RDSR */
-	do {} while (spi_byte(SPI_PORT_FLASH, 0x05) & 1);
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, 0x05); /* RDSR */
+	do {} while (spi_byte(IO_SPI_FLASH, 0x05) & 1);
 
 	printf("Pisem sektore...\n");
 	for (i = 0; i < 1024; i += SECTOR_BURST) {
