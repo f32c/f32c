@@ -49,6 +49,7 @@ image:	loader.bin
 	mmd -i ${SPI_IMG_NAME} ::demo/chess
 	mmd -i ${SPI_IMG_NAME} ::bench
 	mcopy -i ${SPI_IMG_NAME} ../../lang/basic/basic.bin ::boot
+	mcopy -i ${SPI_IMG_NAME} ../../lang/python/f32c/py.bin ::boot
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/pictures.txt \
 		::demo/pics
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/jpegs/*.jpg ::demo/pics

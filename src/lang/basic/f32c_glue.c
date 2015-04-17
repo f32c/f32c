@@ -74,12 +74,16 @@ static struct isr_link fb_isr = {
 void
 setup_f32c(void)
 {
+#ifdef __mips__
 	uint32_t tmp;
 
 	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
 	freq_khz = ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1);
 	isr_register_handler(2, &fb_isr);
 	__asm("ei");
+#else
+	fb_isr.handler_fn();
+#endif
 }
 
 
