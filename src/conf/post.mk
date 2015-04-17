@@ -25,9 +25,13 @@
 # $Id$
 #
 
-# Default load offset - bootloader is at 0x00000000
+# Default load offset - bootloader is always at 0x00000000
 ifndef LOADADDR
-LOADADDR = 0x80000000
+ ifeq (${ARCH},riscv)
+  LOADADDR = 0x00000200
+ else
+  LOADADDR = 0x80000000
+ endif
 endif
 
 ifeq ($(findstring 0x8, ${LOADADDR}),)
