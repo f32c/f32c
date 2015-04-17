@@ -36,7 +36,7 @@ poddirektorije unutar gcc/, uz uklanjanje oznaka verzija:
 	./configure --target=mips-elf --enable-languages=c,c++ \
 	    --prefix=/usr/local --mandir=/usr/local/man \
 	    --infodir=/usr/local/info --disable-nls --disable-shared \
-	    --disable-werror
+	    --disable-werror --with-gnu-as --with-gnu-ld
 	make
 	make install
 
@@ -46,7 +46,7 @@ poddirektorije unutar gcc/, uz uklanjanje oznaka verzija:
 	./configure --target=mips-elf --enable-languages=c,c++ \
 	    --prefix=/usr/local --mandir=/usr/local/man \
 	    --infodir=/usr/local/info --disable-nls --disable-shared \
-	    --disable-werror
+	    --disable-werror --with-gnu-as --with-gnu-ld
 	make
 	make install
 
@@ -83,3 +83,6 @@ Microsoft Windows:
 	Editors/vim
 	Tcl/tck-tk
 	Utils/diffutils
+
+OS-X:
+	Na Miljenkovom stroju PATH mora pocinjati s /opt/local/bin.
