@@ -35,6 +35,9 @@ use work.f32c_pack.all;
 
 entity glue is
     generic (
+	-- ISA: either ARCH_MI32 or ARCH_RV32
+	C_arch: integer := ARCH_MI32;
+
 	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
 	C_clk_freq: integer := 100;
 
@@ -75,6 +78,7 @@ begin
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
     generic map (
+	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size
     )
