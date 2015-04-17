@@ -153,7 +153,7 @@ architecture Behavioral of glue is
     -- I/O
     signal io_write: std_logic;
     signal io_byte_sel: std_logic_vector(3 downto 0);
-    signal io_addr: std_logic_vector(31 downto 2);
+    signal io_addr: std_logic_vector(11 downto 2);
     signal cpu_to_io, io_to_cpu: std_logic_vector(31 downto 0);
     signal from_flash, from_sdcard, from_sio: std_logic_vector(31 downto 0);
     signal sio_txd, sio_ce, flash_ce, sdcard_ce: std_logic;
@@ -250,7 +250,8 @@ begin
     --
     G_CPU: for i in 0 to (C_cpus - 1) generate
     begin
-    intr(i) <= "00" & gpio_intr & timer_intr & from_sio(8) & R_fb_intr when i = 0 else "000000";
+    intr(i) <= "00" & gpio_intr & timer_intr & from_sio(8) & R_fb_intr
+      when i = 0 else "000000";
     res(i) <= R_cpu_reset(i);
     cpu: entity work.cache
     generic map (
@@ -308,7 +309,7 @@ begin
 	bus_in => cpu_to_io, bus_out => from_sio
     );
     sio_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 4) = x"F2" else '0';
+      io_addr(11 downto 4) = x"30" else '0';
     end generate;
 
     --
@@ -328,7 +329,7 @@ begin
 	spi_si => flash_si, spi_so => flash_so
     );
     flash_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 4) = x"B4" else '0';
+      io_addr(11 downto 4) = x"34" else '0';
     end generate;
 
     --
@@ -345,7 +346,7 @@ begin
 	spi_si => sdcard_si, spi_so => sdcard_so
     );
     sdcard_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 4) = x"B5" else '0';
+      io_addr(11 downto 4) = x"35" else '0';
     end generate;
 
     -- Memory map:
@@ -358,9 +359,7 @@ begin
     -- 0xf****810: (4B, WR) : GPIO falling edge interrupt flag
     -- 0xf****814: (4B, WR) : GPIO falling edge interrupt enable
     -- 0xf****900: (16B,WR) : TIMER
-    -- 0xf****F00: (4B, RW) : simple input switches, buttons (RD)
-    -- 0xf****F10: (4B, RW) : simple output LED, LCD (WR)
-    -- 0xf****F20: (4B, RW) : SIO
+    -- 0xf****B00: (4B, RW) : SIO
     -- 0xf****B40: (2B, RW) : SPI Flash
     -- 0xf****B50: (2B, RW) : SPI MicroSD
     -- 0xf****B80: (4B, WR) : Video framebuffer control
@@ -368,6 +367,7 @@ begin
     -- 0xf****BA4: (4B, WR) : PCM audio DMA last addr
     -- 0xf****BA8: (3B, WR) : PCM audio DMA refill frequency (sampling rate)
     -- 0xf****D20: (2B, WR) : Lego Power Functions Infrared Controller
+    -- 0xf****F00: (4B, RW) : simple I/O: switches, buttons (RD), LED, LCD (WR)
     -- 0xf****FF0: (1B, WR) : CPU reset bitmap
 
     --
@@ -401,7 +401,7 @@ begin
     -- I/O access
     --
     io_write <= dmem_write(R_cur_io_port);
-    io_addr <=  dmem_addr(R_cur_io_port);
+    io_addr <=  '0' & dmem_addr(R_cur_io_port)(10 downto 2);
     io_byte_sel <= dmem_byte_sel(R_cur_io_port);
     cpu_to_io <= cpu_to_dmem(R_cur_io_port);
     process(clk)
@@ -412,20 +412,20 @@ begin
 	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
 	  and io_write = '1' then
 	    -- LEDs
-	    if C_leds_btns and io_addr(11 downto 4) = x"F1" and
+	    if C_leds_btns and io_addr(11 downto 4) = x"70" and
 	      io_byte_sel(1) = '1' then
 		R_led <= cpu_to_io(15 downto 8);
 	    end if;
 	    -- DDS
-	    if C_dds and io_addr(11 downto 4) = x"DD" then
+	    if C_dds and io_addr(11 downto 4) = x"7D" then
 		R_dds <= cpu_to_io;
 	    end if;
 	    -- CPU reset control
-	    if C_cpus /= 1 and io_addr(11 downto 4) = x"FF" then
+	    if C_cpus /= 1 and io_addr(11 downto 4) = x"7F" then
 		R_cpu_reset <= cpu_to_io(15 downto 0);
 	    end if;
 	    -- Framebuffer
-	    if C_framebuffer and io_addr(11 downto 4) = x"B8" then
+	    if C_framebuffer and io_addr(11 downto 4) = x"38" then
 		if C_big_endian then
 		    R_fb_mode <= cpu_to_io(25 downto 24);
 		    R_fb_base_addr <=
@@ -440,7 +440,7 @@ begin
 	end if;
 	if C_framebuffer and rising_edge(clk) then
 	    if io_addr_strobe(R_cur_io_port) = '1' and
-	      io_addr(11 downto 4) = x"B8" then
+	      io_addr(11 downto 4) = x"38" then
 		R_fb_intr <= '0';
 	    end if;
 	    if fb_tick = '1' then
@@ -460,52 +460,54 @@ begin
     if C_timer = true generate
     ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_led(1);
     ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_led(2);
-    led <= R_led(7 downto 3) & ocp_mux & R_led(0) when C_leds_btns else (others => '-');
+    led <= R_led(7 downto 3) & ocp_mux & R_led(0) when C_leds_btns
+      else (others => '-');
     end generate;
 
     -- XXX replace with a balanced multiplexer
-    process(io_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard, from_timer)
+    process(io_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard,
+      from_gpio, from_timer)
     begin
 	case io_addr(11 downto 4) is
-	when x"80" | x"81" =>
+	when x"00" | x"01" =>
 	    if C_gpio then
 		io_to_cpu <= from_gpio;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;	
-	when x"F1"  =>
-	    if C_leds_btns then
-		io_to_cpu <="------------" & R_sw & "-----------" & R_btns;
+	when x"10" | x"11" | x"12" | x"13"  =>
+	    if C_timer then
+		io_to_cpu <= from_timer;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"F2"  =>
+	when x"30"  =>
 	    if C_sio then
 		io_to_cpu <= from_sio;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"B4"  =>
+	when x"34"  =>
 	    if C_flash then
 		io_to_cpu <= from_flash;
             else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"B5"  =>
+	when x"35"  =>
 	    if C_sdcard then
 		io_to_cpu <= from_sdcard;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"BA"  =>
+	when x"3A"  =>
 	    if C_pcm then
 		io_to_cpu <= from_pcm;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"90" | x"91" | x"92" | x"93"  =>
-	    if C_timer then
-		io_to_cpu <= from_timer;
+	when x"70"  =>
+	    if C_leds_btns then
+		io_to_cpu <="------------" & R_sw & "-----------" & R_btns;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
@@ -725,7 +727,7 @@ begin
 	out_r => pcm_r, out_l => pcm_l
     );
     pcm_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 4) = x"BA" else '0';
+      io_addr(11 downto 4) = x"3A" else '0';
     end generate;
 
     p_tip <= (others => R_dds_acc(31)) when C_dds and R_dds_enable = '1'
@@ -776,9 +778,7 @@ begin
         gpio_phys(28) =>   gpio_28
     );
     gpio_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 4) = x"80" or 
-      io_addr(11 downto 4) = x"81" 
-      else '0';
+      io_addr(11 downto 8) = x"0" else '0';
     end generate;
     normal_gpio_28: if C_tx433 = false generate
     j2_16 <= gpio_28;
@@ -809,11 +809,7 @@ begin
 	icp => icp -- input capture signal
     );
     timer_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 4) = x"90" or 
-      io_addr(11 downto 4) = x"91" or
-      io_addr(11 downto 4) = x"92" or 
-      io_addr(11 downto 4) = x"93" 
-      else '0';
+      io_addr(11 downto 8) = x"9" else '0';
     end generate;
 
     --
