@@ -25,6 +25,7 @@
  * $Id$
  */
 
+#include <io.h>
 #include <sdcard.h>
 #include <spi.h>
 
@@ -47,26 +48,26 @@ sdcard_cmd(int cmd, uint32_t arg)
 	int i, res;
 
 	/* Init SPI */
-	spi_start_transaction(SPI_PORT_SDCARD);
+	spi_start_transaction(IO_SPI_SDCARD);
 
 	/* Preamble */
-	spi_byte(SPI_PORT_SDCARD, 0xff);
+	spi_byte(IO_SPI_SDCARD, 0xff);
 
 	/* Command */
-	spi_byte(SPI_PORT_SDCARD, cmd | 0x40);
+	spi_byte(IO_SPI_SDCARD, cmd | 0x40);
 
 	/* Argument */
-	spi_byte(SPI_PORT_SDCARD, arg >> 24);
-	spi_byte(SPI_PORT_SDCARD, arg >> 16);
-	spi_byte(SPI_PORT_SDCARD, arg >> 8);
-	spi_byte(SPI_PORT_SDCARD, arg);
+	spi_byte(IO_SPI_SDCARD, arg >> 24);
+	spi_byte(IO_SPI_SDCARD, arg >> 16);
+	spi_byte(IO_SPI_SDCARD, arg >> 8);
+	spi_byte(IO_SPI_SDCARD, arg);
 
 	/* Hack: CRC hidden in command bits 15..8 */
-	spi_byte(SPI_PORT_SDCARD, cmd >> 8);
+	spi_byte(IO_SPI_SDCARD, cmd >> 8);
 	
 	/* Wait for a valid response byte, up to 8 cycles */
 	for (i = 0; i < 8; i++) {
-		res = spi_byte(SPI_PORT_SDCARD, 0xff);
+		res = spi_byte(IO_SPI_SDCARD, 0xff);
 		if ((res & 0x80) == 0)
 			break;
 	}
@@ -84,16 +85,16 @@ sdcard_read_block(char *buf)
 	int i;
 
 	/* Wait for data start token */
-	for (i = 0; spi_byte(SPI_PORT_SDCARD, 0xff) != 0xfe; i++)
+	for (i = 0; spi_byte(IO_SPI_SDCARD, 0xff) != 0xfe; i++)
 		if (i == 1 << 24)
 			return (-1);
 
 	/* Fetch data */
-	spi_block_in(SPI_PORT_SDCARD, buf, SD_BLOCKLEN);
+	spi_block_in(IO_SPI_SDCARD, buf, SD_BLOCKLEN);
 
 	/* CRC - ignored */
-	spi_byte(SPI_PORT_SDCARD, 0xff);
-	spi_byte(SPI_PORT_SDCARD, 0xff);
+	spi_byte(IO_SPI_SDCARD, 0xff);
+	spi_byte(IO_SPI_SDCARD, 0xff);
 	return (0);
 }
 
@@ -108,25 +109,25 @@ sdcard_write_block(char *buf)
 	int i;
 
 	/* Send a dummy byte, just in case */
-	spi_byte(SPI_PORT_SDCARD, 0xff);
+	spi_byte(IO_SPI_SDCARD, 0xff);
 
 	/* Send data start token */
-	spi_byte(SPI_PORT_SDCARD, 0xfc);
+	spi_byte(IO_SPI_SDCARD, 0xfc);
 
 	/* Send data block */
 	for (i = 0; i < SD_BLOCKLEN; i++)
-		spi_byte(SPI_PORT_SDCARD, buf[i]);
+		spi_byte(IO_SPI_SDCARD, buf[i]);
 
 	/* Send two dummy CRC bytes */
-	spi_byte(SPI_PORT_SDCARD, 0xff);
-	spi_byte(SPI_PORT_SDCARD, 0xff);
+	spi_byte(IO_SPI_SDCARD, 0xff);
+	spi_byte(IO_SPI_SDCARD, 0xff);
 
 	/* Wait while sdcard busy */
-	for (i = 0; spi_byte(SPI_PORT_SDCARD, 0xff) != 0xff; i++)
+	for (i = 0; spi_byte(IO_SPI_SDCARD, 0xff) != 0xff; i++)
 		if (i == 1 << 24)
 			return (-1);
 
-	spi_byte(SPI_PORT_SDCARD, 0xff);
+	spi_byte(IO_SPI_SDCARD, 0xff);
 	return (0);
 }
 
@@ -144,7 +145,7 @@ sdcard_init(void)
 
 	/* Clock in some dummy data in an attempt to wake up the card */
 	for (i = 0; i < (1 << 16); i++)
-		spi_byte(SPI_PORT_SDCARD, 0xff);
+		spi_byte(IO_SPI_SDCARD, 0xff);
 
 	/* CRC embedded in bits 15..8 of command word */
 	res = sdcard_cmd(SD_CMD_GO_IDLE_STATE | 0x9500, 0) & 0xfe;
@@ -179,11 +180,11 @@ sdcard_init(void)
 		return (0);
 
 	/* byte #1, bit 6 of response determines card type */
-	if (spi_byte(SPI_PORT_SDCARD, 0xff) & (1 << 6))
+	if (spi_byte(IO_SPI_SDCARD, 0xff) & (1 << 6))
 		sdcard_addr_shift = 0;	/* block addressing */
 	/* Flush the remaining response bytes */
 	for (i = 0; i < 3; i++)
-		spi_byte(SPI_PORT_SDCARD, 0xff);
+		spi_byte(IO_SPI_SDCARD, 0xff);
 	return (0);
 }
 
@@ -225,10 +226,10 @@ sdcard_disk_read(uint8_t *buf, uint32_t sector, uint32_t cnt)
 		buf += SD_BLOCKLEN;
 	}
 	/* Send a dummy byte, just in case */
-	spi_byte(SPI_PORT_SDCARD, 0xff);
+	spi_byte(IO_SPI_SDCARD, 0xff);
 	sdcard_cmd(SD_CMD_STOP_TRANSMISSION, 0);
 	/* Wait while sdcard busy */
-	for (cnt = 0; spi_byte(SPI_PORT_SDCARD, 0xff) != 0xff; cnt++)
+	for (cnt = 0; spi_byte(IO_SPI_SDCARD, 0xff) != 0xff; cnt++)
 		if (cnt == 1 << 24)
 			return (-1);
 	return (RES_OK);
@@ -249,11 +250,11 @@ sdcard_disk_write(uint8_t *buf, uint32_t sector, uint32_t cnt)
 	sdcard_cmd(SD_CMD_APP_CMD, 0);
 	if (sdcard_cmd(SD_CMD_SET_WR_BLOCK_ERASE_COUNT, cnt))
 		goto error;
-	spi_byte(SPI_PORT_SDCARD, 0xff);
+	spi_byte(IO_SPI_SDCARD, 0xff);
 
 	if (sdcard_cmd(SD_CMD_WRITE_MULTI_BLOCK, sector << sdcard_addr_shift))
 		goto error;
-	spi_byte(SPI_PORT_SDCARD, 0xff);
+	spi_byte(IO_SPI_SDCARD, 0xff);
 
 	for (; cnt > 0; cnt--) {
 		if (sdcard_write_block((char *) buf))
@@ -262,11 +263,11 @@ sdcard_disk_write(uint8_t *buf, uint32_t sector, uint32_t cnt)
 	}
 
 	/* Send stop transmission token */
-	spi_byte(SPI_PORT_SDCARD, 0xfb);
+	spi_byte(IO_SPI_SDCARD, 0xfb);
 
 	/* Wait while sdcard busy */
-	spi_byte(SPI_PORT_SDCARD, 0xff);
-	for (cnt = 0; spi_byte(SPI_PORT_SDCARD, 0xff) != 0xff; cnt++)
+	spi_byte(IO_SPI_SDCARD, 0xff);
+	for (cnt = 0; spi_byte(IO_SPI_SDCARD, 0xff) != 0xff; cnt++)
 		if (cnt == 1 << 24)
 			return (-1);
 	return (RES_OK);
