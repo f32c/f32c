@@ -92,7 +92,9 @@ bas_sleep(void)
 		c = sio_getchar(0);
 		if (now >= end)
 			break;
+#ifdef __mips__
 		asm("wait"); /* Low-power mode */
+#endif
 	} while (c != 3);
 
 	if (c == 3)
@@ -148,6 +150,7 @@ bas_exec(void)
 	len = sec_size * res_sec - 512;
 	flash_read_block((void *) cp, 512, len);
 
+#ifdef __mips__
 	__asm __volatile__(
 		".set noreorder;"
 		"mtc0 $0, $12;"		/* Mask and disable all interrupts */
@@ -161,6 +164,9 @@ bas_exec(void)
 		:
 		: "r" (cp)
 	);
+#else /* riscv */
+	/* XXX fixme! */
+#endif
 
 	/* Actually, not reached */
 	normret;

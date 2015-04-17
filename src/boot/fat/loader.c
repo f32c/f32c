@@ -131,9 +131,6 @@ load_bin(const char *fname, int verbose)
 		    " bss starts at %p len %p\n\n",
 		    start, cp, (void *) (end - cp));
 
-	/* clear the BSS section */
-	bzero(cp, end - cp);
-
 	return (start);
 }
 
