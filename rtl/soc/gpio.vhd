@@ -55,8 +55,6 @@ begin
       bus_out <= 
         ext(gpio_phys, 32)
           when conv_std_logic_vector(C_input, C_addr_bits),
-        --ext(x"12345678", 32)
-        --  when conv_std_logic_vector(C_falling_if, C_addr_bits),
         ext(R(conv_integer(addr)),32)
           when others;
 
@@ -92,11 +90,11 @@ begin
       -- physical output to pins with 3-state handling
       gpio_phys(i) <= R(C_output)(i) when R(C_direction)(i) = '1' else 'Z';
 
-    -- *** edge detect synchronizer (3-stage shift register) ***
-    -- here is theory and schematics about 3-stage shift register
-    -- https://www.doulos.com/knowhow/fpga/synchronisation/
-    -- here is vhdl implementation of the 3-stage shift register
-    -- http://www.bitweenie.com/listings/vhdl-shift-register/
+      -- *** edge detect synchronizer (3-stage shift register) ***
+      -- here is theory and schematics about 3-stage shift register
+      -- https://www.doulos.com/knowhow/fpga/synchronisation/
+      -- here is vhdl implementation of the 3-stage shift register
+      -- http://www.bitweenie.com/listings/vhdl-shift-register/
       process(clk)
       begin
         if rising_edge(clk) then
