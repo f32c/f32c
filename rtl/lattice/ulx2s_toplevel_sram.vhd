@@ -413,8 +413,8 @@ begin
 	  and io_write = '1' then
 	    -- LEDs
 	    if C_leds_btns and io_addr(11 downto 4) = x"70" and
-	      io_byte_sel(1) = '1' then
-		R_led <= cpu_to_io(15 downto 8);
+	      io_byte_sel(0) = '1' then
+		R_led <= cpu_to_io(7 downto 0);
 	    end if;
 	    -- DDS
 	    if C_dds and io_addr(11 downto 4) = x"7D" then
