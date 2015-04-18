@@ -25,6 +25,7 @@
  * $Id$
  */
 
+#include <io.h>
 #include <spi.h>
 #include <sio.h>
 #include <stdio.h>
@@ -50,13 +51,13 @@ static void
 flash_read_block(char *buf, uint32_t addr, uint32_t len)
 {
 
-	spi_start_transaction(SPI_PORT_FLASH);
-	spi_byte(SPI_PORT_FLASH, 0x0b); /* High-speed read */
-	spi_byte(SPI_PORT_FLASH, addr >> 16);
-	spi_byte(SPI_PORT_FLASH, addr >> 8);
-	spi_byte(SPI_PORT_FLASH, addr);
-	spi_byte(SPI_PORT_FLASH, 0xff); /* dummy byte, ignored */
-	spi_block_in(SPI_PORT_FLASH, buf, len);
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, 0x0b); /* High-speed read */
+	spi_byte(IO_SPI_FLASH, addr >> 16);
+	spi_byte(IO_SPI_FLASH, addr >> 8);
+	spi_byte(IO_SPI_FLASH, addr);
+	spi_byte(IO_SPI_FLASH, 0xff); /* dummy byte, ignored */
+	spi_block_in(IO_SPI_FLASH, buf, len);
 }
 
 
