@@ -38,7 +38,7 @@ entity glue_bram is
 	C_clk_freq: integer;
 
 	-- ISA options
-	C_arch: integer;
+	C_arch: integer := ARCH_MI32;
 	C_big_endian: boolean := false;
 	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
