@@ -279,6 +279,7 @@ architecture Behavioral of pipeline is
     signal trace_addr: std_logic_vector(31 downto 0);
     signal reg_trace_data, misc_trace_data: std_logic_vector(31 downto 0);
     signal final_trace_data: std_logic_vector(31 downto 0);
+    signal R_d_imem_data_in: std_logic_vector(31 downto 0);
     signal D_instr, D_b_instr, D_b_mispredict: std_logic_vector(31 downto 0);
 
 begin
@@ -1437,7 +1438,7 @@ begin
 
 	-- IF
 	IF_PC & "00"		when "01000",
-	imem_data_in		when "01001",
+	R_d_imem_data_in	when "01001",
 
 	-- ID
 	IF_ID_EPC & "00"	when "01010",
@@ -1472,6 +1473,14 @@ begin
 	    if MEM_take_branch then
 		D_b_mispredict <= D_b_mispredict + 1;
 	    end if;
+	end if;
+    end process;
+
+    -- extra registers for reducing timing pressure on debug mux
+    process(clk)
+    begin
+	if rising_edge(clk) then
+	    R_d_imem_data_in <= imem_data_in;
 	end if;
     end process;
     end generate;
