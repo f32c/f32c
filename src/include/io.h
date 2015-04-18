@@ -69,8 +69,8 @@
 
 #define	IO_PUSHBTN	IO_ADDR(0x700)	/* word, RD */
 #define	IO_DIPSW	IO_ADDR(0x702)	/* word, RD */
-#define	IO_LED		IO_ADDR(0x704)	/* word, WR */
-#define	IO_LCD		IO_ADDR(0x706)	/* word, WR */
+#define	IO_LED		IO_ADDR(0x710)	/* word, WR */
+#define	IO_LCD		IO_ADDR(0x712)	/* word, WR */
 
 #define	IO_CPU_RESET	IO_ADDR(0x7F0)	/* byte, WR */
 
