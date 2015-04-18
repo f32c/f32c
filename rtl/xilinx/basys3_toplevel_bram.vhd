@@ -50,15 +50,15 @@ entity glue is
 	clk: in std_logic;
 	RsTx: out std_logic;
 	RsRx: in std_logic;
-	led: out std_logic_vector(7 downto 0);
-	sw: in std_logic_vector(7 downto 0);
+	led: out std_logic_vector(15 downto 0);
+	sw: in std_logic_vector(15 downto 0);
 	btnC, btnU, btnD, btnL, btnR: in std_logic
     );
 end glue;
 
 architecture Behavioral of glue is
     signal rs232_break: std_logic;
-    signal btns: std_logic_vector(7 downto 0);
+    signal btns: std_logic_vector(15 downto 0);
 begin
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
@@ -75,5 +75,5 @@ begin
 	btns => btns,
 	sw => sw
     );
-    btns <= "000" & btnc & btnu & btnd & btnl & btnr;
+    btns <= x"00" & "000" & btnc & btnu & btnd & btnl & btnr;
 end Behavioral;
