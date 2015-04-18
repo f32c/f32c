@@ -425,7 +425,7 @@ begin
     end process;
 
     G_bp_scoretable:
-    if C_branch_prediction generate
+    if C_branch_prediction and C_arch /= ARCH_RV32 generate
     IF_bpredict_index(12 downto (13 - C_bp_global_depth)) <=
       EX_MEM_branch_hist xor IF_PC(14 downto (15 - C_bp_global_depth));
     IF_bpredict_index((12 - C_bp_global_depth) downto 0) <=
@@ -599,13 +599,14 @@ begin
       else C_PC_mask(31 downto 2) and (IF_ID_EPC + ID_branch_offset);
 
     -- branch prediction
-    ID_predict_taken <= C_branch_prediction
+    ID_predict_taken <= C_branch_prediction and C_arch /= ARCH_RV32
       and ID_branch_cycle and IF_ID_bpredict_score(1) = '1';
 
     -- compute jump target
     ID_jump_target <=
       ID_reg1_data(31 downto 2) when C_arch = ARCH_MI32 and ID_jump_register
-      else ID_branch_target when C_branch_prediction and not ID_jump_cycle
+      else ID_branch_target when C_branch_prediction and C_arch /= ARCH_RV32
+      and not ID_jump_cycle
       else IF_ID_PC_4(31 downto 28) & IF_ID_instruction(25 downto 0);
 
     process(clk)
@@ -1196,7 +1197,7 @@ begin
 
     -- branch prediction
     G_bp_update_score:
-    if C_branch_prediction generate
+    if C_branch_prediction and C_arch /= ARCH_RV32 generate
     MEM_bpredict_we <= '1' when EX_MEM_branch_cycle else '0';
     process(clk)
     begin
