@@ -809,7 +809,7 @@ begin
 	icp => icp -- input capture signal
     );
     timer_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 8) = x"9" else '0';
+      io_addr(11 downto 8) = x"1" else '0';
     end generate;
 
     --
