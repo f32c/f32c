@@ -203,7 +203,7 @@ begin
     begin
 	if rising_edge(clk) and io_addr_strobe = '1' and dmem_write = '1' then
 	    -- LEDs
-	    if C_leds_btns and io_addr(11 downto 4) = x"70" then
+	    if C_leds_btns and io_addr(11 downto 4) = x"71" then
 		if dmem_byte_sel(0) = '1' then
 		    R_leds(7 downto 0) <= cpu_to_dmem(7 downto 0);
 		end if;
