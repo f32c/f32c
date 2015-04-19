@@ -82,10 +82,11 @@ architecture Behavioral of glue is
     signal imem_addr_strobe, imem_data_ready: std_logic;
     signal dmem_addr: std_logic_vector(31 downto 2);
     signal dmem_addr_strobe, dmem_write: std_logic;
-    signal dmem_bram_enable, dmem_data_ready: std_logic;
+    signal dmem_bram_write, dmem_data_ready: std_logic;
     signal dmem_byte_sel: std_logic_vector(3 downto 0);
     signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
     signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
+    signal io_addr: std_logic_vector(11 downto 2);
 
     -- I/O
     signal io_addr_strobe: std_logic;
@@ -97,12 +98,11 @@ begin
     -- clock synthesizer
     clkgen: entity work.clkgen
     generic map (
-	C_clk_freq => C_clk_freq,
-	C_debug => false
+	C_clk_freq => C_clk_freq
     )
     port map (
 	clk_25m => clk_25m, clk => clk, clk_325m => open,
-	ena_325m => '0', sel => '0', key => '0', res => '0'
+	ena_325m => '0', res => '0'
     );
 
     -- f32c core
@@ -139,6 +139,12 @@ begin
 	debug_debug => open, debug_active => open
     );
     final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
+    io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
+      else '0';
+    io_addr <= '0' & dmem_addr(10 downto 2);
+    io_to_cpu <= from_sio;
+    imem_data_ready <= '1';
+    dmem_data_ready <= '1';
 
     -- RS232 sio
     G_sio:
@@ -153,31 +159,37 @@ begin
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
 	bus_in => cpu_to_dmem, bus_out => from_sio, break => open
     );
-    sio_ce <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11" and
-      dmem_addr(7 downto 4) = x"2" else '0';
+    sio_ce <= io_addr_strobe when io_addr(11 downto 4) = x"30" else '0';
     end generate;
 
-    --
-    -- I/O port map:
-    -- 0xf*****20: (4B, RW) * SIO
-    --
-    io_addr_strobe <= dmem_addr_strobe when dmem_addr(31) = '1' else '0';
-    io_to_cpu <= from_sio;
-
     -- Block RAM
-    dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
-    imem_data_ready <= '1';
-    dmem_data_ready <= '1';
-    bram: entity work.bram
+    dmem_bram_write <=
+      dmem_addr_strobe and dmem_write when dmem_addr(31) /= '1' else '0';
+    G_bram_mi32:
+    if C_arch = ARCH_MI32 generate
+    bram_mi32: entity work.bram_mi32
     generic map (
 	C_mem_size => C_mem_size
     )
     port map (
-	clk => clk, imem_addr_strobe => imem_addr_strobe,
-	imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write,
+	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
+	dmem_write => dmem_bram_write,
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
 	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
     );
-	
+    end generate;
+    G_bram_rv32:
+    if C_arch = ARCH_RV32 generate
+    bram_rv32: entity work.bram_rv32
+    generic map (
+	C_mem_size => C_mem_size
+    )
+    port map (
+	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
+	dmem_write => dmem_bram_write,
+	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
+    );
+    end generate;
+
 end Behavioral;
