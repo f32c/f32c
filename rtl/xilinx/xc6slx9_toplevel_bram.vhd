@@ -59,7 +59,7 @@ end glue;
 
 architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
-    signal btns: std_logic_vector(7 downto 0);
+    signal btns: std_logic_vector(1 downto 0);
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
     clkgen: entity work.pll_25M_112M5
@@ -89,9 +89,11 @@ begin
 	rs232_tx => rs232_dce_txd, rs232_rx => rs232_dce_rxd,
 	rs232_break => rs232_break,
 	gpio => gpio(31 downto 0),
-	leds => led,
-	btns => btns,
-	sw => "00000000"
+	leds(7 downto 0) => led,
+	leds(15 downto 8) => open,
+	btns(1 downto 0) => btns(1 downto 0),
+	btns(15 downto 2) => (others => '-'),
+	sw => (others => '-')
     );
-    btns <= "000000" & btn_k3 & btn_k2;
+    btns <= btn_k3 & btn_k2;
 end Behavioral;

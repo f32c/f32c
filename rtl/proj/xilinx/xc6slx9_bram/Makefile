@@ -11,9 +11,9 @@ SHELL = /bin/bash
 
 vhdfiles = \
 ../../../xilinx/xc6slx9_toplevel_bram.vhd \
-../../../generic/glue_bram_mi32.vhd \
-../../../generic/bootloader_mi32.vhd \
-../../../generic/bram.vhd \
+../../../generic/glue_bram.vhd \
+../../../generic/bram_mi32.vhd \
+../../../generic/bram_rv32.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
 ../../../cpu/alu.vhd \
@@ -28,6 +28,7 @@ vhdfiles = \
 ../../../cpu/idecode_mi32.vhd \
 ../../../cpu/idecode_rv32.vhd \
 ../../../xilinx/pll_25M_112M5.vhd \
+../../../soc/gpio.vhd \
 ../../../soc/timer.vhd 
 
 include ../include/xilinx.mk
