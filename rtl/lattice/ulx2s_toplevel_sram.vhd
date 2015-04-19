@@ -156,7 +156,8 @@ architecture Behavioral of glue is
     signal io_addr: std_logic_vector(11 downto 2);
     signal cpu_to_io, io_to_cpu: std_logic_vector(31 downto 0);
     signal from_flash, from_sdcard, from_sio: std_logic_vector(31 downto 0);
-    signal sio_txd, sio_ce, flash_ce, sdcard_ce: std_logic;
+    signal sio_txd, sio_ce, sio_break: std_logic;
+    signal flash_ce, sdcard_ce: std_logic;
     signal io_addr_strobe: std_logic_vector((C_io_ports - 1) downto 0);
     signal next_io_port: integer range 0 to (C_io_ports - 1);
     signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
@@ -216,13 +217,11 @@ begin
     clk_81_325: if C_tx433 = false generate
     clkgen: entity work.clkgen
     generic map (
-	C_clk_freq => C_clk_freq,
-	C_debug => false
+	C_clk_freq => C_clk_freq
     )
     port map (
 	clk_25m => clk_25m, ena_325m => ena_325m,
-	clk => clk, clk_325m => clk_325m,
-	sel => sw(2), key => btn_down, res => '0'
+	clk => clk, clk_325m => clk_325m, res => '0'
     );
     ena_325m <= R_dds_enable when R_fb_mode = "11" else '1';
     end generate;
@@ -230,13 +229,11 @@ begin
     clk_81_325: if C_tx433 = true generate
     clkgen: entity work.clkgen
     generic map (
-	C_clk_freq => C_clk_freq,
-	C_debug => false
+	C_clk_freq => C_clk_freq
     )
     port map (
 	clk_25m => clk_25m, ena_325m => '0',
-	clk => clk, clk_325m => open,
-	sel => sw(2), key => btn_down, res => '0'
+	clk => clk, clk_325m => open, res => '0'
     );
     ena_325m <= '0';
     clk433gen: entity work.pll_81M25_433M33
@@ -306,7 +303,7 @@ begin
     port map (
 	clk => clk, ce => sio_ce, txd => sio_txd, rxd => rs232_rx,
 	bus_write => io_write, byte_sel => io_byte_sel,
-	bus_in => cpu_to_io, bus_out => from_sio
+	bus_in => cpu_to_io, bus_out => from_sio, break => sio_break
     );
     sio_ce <= io_addr_strobe(R_cur_io_port) when
       io_addr(11 downto 4) = x"30" else '0';
