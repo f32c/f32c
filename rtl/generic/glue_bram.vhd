@@ -263,6 +263,12 @@ begin
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
+	when x"71"  =>
+	    if C_leds_btns then
+		io_to_cpu <= "----------------" & R_leds;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
 	when others =>
 	    io_to_cpu <= (others => '-');
 	end case;
