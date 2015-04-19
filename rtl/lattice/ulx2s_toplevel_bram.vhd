@@ -67,12 +67,11 @@ begin
     -- clock synthesizer: Lattice XP2 specific
     clkgen: entity work.clkgen
     generic map (
-	C_clk_freq => C_clk_freq,
-	C_debug => false
+	C_clk_freq => C_clk_freq
     )
     port map (
 	clk_25m => clk_25m, clk => clk, clk_325m => open,
-	ena_325m => '0', sel => '0', key => '0', res => rs232_break
+	ena_325m => '0', res => rs232_break
     );
 
     -- generic BRAM glue
