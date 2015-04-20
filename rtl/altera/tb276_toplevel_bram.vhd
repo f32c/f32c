@@ -54,8 +54,9 @@ entity glue is
 end glue;
 
 architecture Behavioral of glue is
-    signal clk, rs232_break: std_logic;
-    signal btns: std_logic_vector(7 downto 0);
+    signal clk: std_logic;
+    -- signal rs232_break: std_logic;
+    signal btns: std_logic_vector(1 downto 0);
 begin
     -- clock synthesizer: Altera specific
     clkgen: entity work.pll_25M_112M5
@@ -83,11 +84,13 @@ begin
     port map (
 	clk => clk,
 	rs232_tx => rs232_txd, rs232_rx => rs232_rxd,
-	rs232_break => rs232_break,
+	-- rs232_break => rs232_break,
 	gpio => gpio(31 downto 0),
-	leds => led,
-	btns => btns,
-	sw => "00000000"
+	leds(7 downto 0) => led,
+	leds(15 downto 8) => open,
+	btns(1 downto 0) => btns(1 downto 0),
+	btns(15 downto 2) => (others => '-'),
+	sw => (others => '-')
     );
-    btns <= "000000" & btn_left & btn_right;
+    btns <= btn_left & btn_right;
 end Behavioral;
