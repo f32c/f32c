@@ -95,6 +95,12 @@ $(PROJECT).jic: $(PROJECT).sof
 $(PROJECT).svf: $(PROJECT).sof
 	$(quartus_env); quartus_cpf -c -q 1MHz -g 3.3 -n p $(PROJECT).sof $(PROJECT).svf
 
+# http://dangerousprototypes.com/docs/JTAG_SVF_to_XSVF_file_converter
+# executable svf2xsvf502 is in zip file under old subdirectory:
+# http://www.xilinx.com/support/documentation/application_notes/xapp058.zip
+$(PROJECT).xsvf: $(PROJECT).svf
+	svf2xsvf502 -i $(PROJECT).svf -o $(PROJECT).xsvf
+
 ###################################################################
 # Project initialization
 ###################################################################
