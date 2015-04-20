@@ -23,7 +23,7 @@ SERIAL_FLASH_LOADER_DEVICE = EP4CE6
 #
 ###################################################################
 
-quartus_env ?= . ./quartus_env.sh
+quartus_env ?= . ../include/quartus_env.sh
 
 # include makefile which does it all
 include ../include/altera.mk
