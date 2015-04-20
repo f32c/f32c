@@ -34,6 +34,10 @@ use work.f32c_pack.all;
 
 entity glue is
     generic (
+	-- ISA: either ARCH_MI32 or ARCH_RV32
+	C_arch: integer := ARCH_MI32;
+	C_debug: boolean := false;
+
 	-- Main clock: N * 10 MHz
 	C_clk_freq: integer := 112;
 
@@ -49,42 +53,30 @@ entity glue is
 	led: out std_logic_vector(7 downto 0);
 	gpio: inout std_logic_vector(31 downto 0);
 	btn_left, btn_right: in std_logic
-	-- sw: in std_logic_vector(7 downto 0)
     );
 end glue;
 
 architecture Behavioral of glue is
     signal clk: std_logic;
-    -- signal rs232_break: std_logic;
     signal btns: std_logic_vector(1 downto 0);
 begin
     -- clock synthesizer: Altera specific
     clkgen: entity work.pll_25M_112M5
-    --generic map(
-    --  C_clk_freq => C_clk_freq,
-    --  C_debug => false
-    --)
     port map(
       inclk0 => clk_25m, c0 => clk
     );
 
-    -- reset hard-block: Xilinx Spartan-6 specific
-    --reset: startup_spartan6
-    --port map (
-    --	clk => clk, gsr => rs232_break, gts => rs232_break,
-    --	keyclearb => '0'
-    --   );
-
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
     generic map (
+	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
-	C_mem_size => C_mem_size
+	C_mem_size => C_mem_size,
+	C_debug => C_debug
     )
     port map (
 	clk => clk,
 	rs232_tx => rs232_txd, rs232_rx => rs232_rxd,
-	-- rs232_break => rs232_break,
 	gpio => gpio(31 downto 0),
 	leds(7 downto 0) => led,
 	leds(15 downto 8) => open,
