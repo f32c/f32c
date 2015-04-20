@@ -37,6 +37,7 @@ entity glue is
     generic (
 	-- ISA: either ARCH_MI32 or ARCH_RV32
 	C_arch: integer := ARCH_MI32;
+	C_debug: boolean := false;
 
 	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
 	C_clk_freq: integer := 100;
@@ -79,7 +80,8 @@ begin
     generic map (
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
-	C_mem_size => C_mem_size
+	C_mem_size => C_mem_size,
+	C_debug => C_debug
     )
     port map (
 	clk => clk,
