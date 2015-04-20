@@ -42,12 +42,14 @@ _start:
 	la	gp, _gp	
 	la	s1, _end	/* End of BSS section, word aligned */
 	la	s0, __bss_start	/* Start of BSS section, NOT word aligned */
+	j	bss_bzero_enter
 
 	/* The loader doesn't bzero the BSS, so we must do it here. */
-bss_bzero:
+bss_bzero_loop:
 	sb	zero, (s0)
 	addi	s0, s0, 1
-	bne	s0, s1, bss_bzero
+bss_bzero_enter:
+	bne	s0, s1, bss_bzero_loop
 
 	la	s0, __init_array_start
 	la	s1, __init_array_end
