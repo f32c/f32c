@@ -53,7 +53,7 @@ entity glue is
 	clk: in std_logic; -- 100 MHz
 	RsTx: out std_logic; -- FTDI UART
 	RsRx: in std_logic; -- FTDI UART
-	ja, jb, jc: inout std_logic_vector(7 downto 0); -- PMODs
+	JA, JB, JC: inout std_logic_vector(7 downto 0); -- PMODs
 	seg: out std_logic_vector(6 downto 0); -- 7-segment display
 	dp: out std_logic; -- 7-segment display
 	an: out std_logic_vector(3 downto 0); -- 7-segment display
