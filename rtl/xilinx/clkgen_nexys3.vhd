@@ -1,5 +1,5 @@
 --
--- Copyright 2008, 2010 University of Zagreb, Croatia.
+-- Copyright 2015 Marko Zec, University of Zagreb.
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -36,23 +36,16 @@ use UNISIM.VComponents.all;
 
 entity clkgen is
     generic(
-	C_debug: boolean;
 	C_clk_freq: integer
     );
     port(
 	clk_100m: in std_logic; -- 100 MHz signal expected here
-	sel: in std_logic;
-	key: in std_logic; -- one-step clocking
 	clk: out std_logic
     );
 end clkgen;
 
 architecture Behavioral of clkgen is
     signal clkfx: std_logic;
-    signal key_d: std_logic_vector(19 downto 0) := x"00000";
-    signal key_r: std_logic := '0';
-    signal sel_r: std_logic := '0';
-
 begin
 
     -- main clock synthesizer
