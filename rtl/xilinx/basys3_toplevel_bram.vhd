@@ -38,6 +38,9 @@ use work.f32c_pack.all;
 
 entity glue is
     generic (
+	-- ISA
+	C_arch: integer := ARCH_RV32;
+
 	-- Main clock: N * 10 MHz
 	C_clk_freq: integer := 100;
 
@@ -47,9 +50,13 @@ entity glue is
 	C_leds_btns: boolean := true
     );
     port (
-	clk: in std_logic;
-	RsTx: out std_logic;
-	RsRx: in std_logic;
+	clk: in std_logic; -- 100 MHz
+	RsTx: out std_logic; -- FTDI UART
+	RsRx: in std_logic; -- FTDI UART
+	ja, jb, jc: inout std_logic_vector(7 downto 0); -- PMODs
+	seg: out std_logic_vector(6 downto 0); -- 7-segment display
+	dp: out std_logic; -- 7-segment display
+	an: out std_logic_vector(3 downto 0); -- 7-segment display
 	led: out std_logic_vector(15 downto 0);
 	sw: in std_logic_vector(15 downto 0);
 	btnC, btnU, btnD, btnL, btnR: in std_logic
@@ -59,21 +66,25 @@ end glue;
 architecture Behavioral of glue is
     signal rs232_break: std_logic;
     signal btns: std_logic_vector(15 downto 0);
+    signal lcd_7seg: std_logic_vector(15 downto 0);
 begin
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
     generic map (
 	C_clk_freq => C_clk_freq,
+	C_arch => C_arch,
 	C_mem_size => C_mem_size
     )
     port map (
 	clk => clk,
-	rs232_tx => rstx, rs232_rx => rsrx,
-	rs232_break => rs232_break,
-	gpio => open,
-	leds => led,
-	btns => btns,
-	sw => sw
+	rs232_tx => rstx, rs232_rx => rsrx, rs232_break => rs232_break,
+	gpio(7 downto 0) => ja, gpio(15 downto 8) => jb,
+	gpio(23 downto 16) => jc, gpio(31 downto 24) => open,
+	leds => led, lcd_7seg => lcd_7seg,
+	btns => btns, sw => sw
     );
+    seg <= lcd_7seg(6 downto 0);
+    dp <= lcd_7seg(7);
+    an <= lcd_7seg(11 downto 8);
     btns <= x"00" & "000" & btnc & btnu & btnd & btnl & btnr;
 end Behavioral;
