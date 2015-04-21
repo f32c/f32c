@@ -1,5 +1,5 @@
 --
--- Copyright 2015 Marko Zec, University of Zagreb
+-- Copyright 2015 Marko Zec, University of Zagreb.
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -38,6 +38,9 @@ use work.f32c_pack.all;
 
 entity glue is
     generic (
+	-- ISA
+	C_arch: integer := ARCH_MI32;
+
 	-- Main clock: N * 10 MHz
 	C_clk_freq: integer := 80;
 
@@ -50,6 +53,9 @@ entity glue is
 	clk_100m: in std_logic;
 	rs232_dce_txd: out std_logic;
 	rs232_dce_rxd: in std_logic;
+	ja, jb, jc, jd: inout std_logic_vector(7 downto 0); -- PMODs
+	seg: out std_logic_vector(7 downto 0); -- 7-segment display
+	an: out std_logic_vector(3 downto 0); -- 7-segment display
 	led: out std_logic_vector(7 downto 0);
 	btn_center, btn_south, btn_north, btn_east, btn_west: in std_logic;
 	sw: in std_logic_vector(7 downto 0)
@@ -58,16 +64,16 @@ end glue;
 
 architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
-    signal btns: std_logic_vector(7 downto 0);
+    signal btns: std_logic_vector(15 downto 0);
+    signal lcd_7seg: std_logic_vector(15 downto 0);
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
     clkgen: entity work.clkgen
     generic map(
-	C_clk_freq => C_clk_freq,
-	C_debug => false
+	C_clk_freq => C_clk_freq
     )
     port map(
-	clk_100m => clk_100m, clk => clk, key => '0', sel => '0'
+	clk_100m => clk_100m, clk => clk
     );
 
     -- reset hard-block: Xilinx Spartan-6 specific
@@ -81,13 +87,21 @@ begin
     glue_bram: entity work.glue_bram
     generic map (
 	C_clk_freq => C_clk_freq,
+	C_arch => C_arch,
 	C_mem_size => C_mem_size
     )
     port map (
 	clk => clk,
 	rs232_tx => rs232_dce_txd, rs232_rx => rs232_dce_rxd,
-	rs232_break => rs232_break, gpio => open,
-	leds => led, btns => btns, sw => sw
+	rs232_break => rs232_break,
+	gpio(7 downto 0) => ja, gpio(15 downto 8) => jb,
+	gpio(23 downto 16) => jc, gpio(31 downto 24) => jd,
+	leds(7 downto 0) => led, leds(15 downto 8) => open,
+	lcd_7seg => lcd_7seg, btns => btns,
+	sw(7 downto 0) => sw, sw(15 downto 8) => x"00"
     );
-    btns <= "000" & btn_west & btn_east & btn_north & btn_south & btn_center;
+    seg <= lcd_7seg(7 downto 0);
+    an <= lcd_7seg(11 downto 8);
+    btns <=
+      x"00" & "000" & btn_west & btn_east & btn_north & btn_south & btn_center;
 end Behavioral;
