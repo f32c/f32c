@@ -87,4 +87,21 @@ begin
     dp <= lcd_7seg(7);
     an <= lcd_7seg(11 downto 8);
     btns <= x"00" & "000" & btnc & btnu & btnd & btnl & btnr;
+
+    res: startupe2
+    generic map (
+	prog_usr => "FALSE"
+    )
+    port map (
+	clk => clk,
+	gsr => rs232_break,
+	gts => '0',
+	keyclearb => '0',
+	pack => '1',
+	usrcclko => clk,
+	usrcclkts => '0',
+	usrdoneo => '1',
+	usrdonets => '0'
+    );
+
 end Behavioral;
