@@ -68,9 +68,6 @@ end glue;
 architecture Behavioral of glue is
     signal clk: std_logic;
     signal rs232_break: std_logic;
-    signal btns: std_logic_vector(7 downto 0);
-    signal leds: std_logic_vector(7 downto 0);
-    signal switches: std_logic_vector(7 downto 0);
 begin
     clk <= clk_125m;
     -- generic BRAM glue
@@ -92,10 +89,10 @@ begin
 	gpio(27 downto 24) => jd_u(3 downto 0),
 	gpio(31 downto 28) => jd_d(3 downto 0),
 	leds(3 downto 0) => led(3 downto 0),
-	leds(7 downto 4) => open,
-	btns => btns,
-	sw => switches
+	leds(15 downto 4) => open,
+	btns(3 downto 0) => btn(3 downto 0),
+	btns(15 downto 4) => open,
+	sw(3 downto 0) => sw(3 downto 0),
+	sw(15 downto 4) => open
     );
-    btns <= "0000" & btn(3 downto 0);
-    switches <= "0000" & sw(3 downto 0);
 end Behavioral;
