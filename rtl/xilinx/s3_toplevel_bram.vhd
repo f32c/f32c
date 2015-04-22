@@ -38,6 +38,9 @@ use work.f32c_pack.all;
 
 entity glue is
     generic (
+	-- ISA
+	C_arch: integer := ARCH_RV32;
+
 	-- Main clock: N * 10 MHz
 	C_clk_freq: integer := 70;
 
@@ -52,7 +55,7 @@ entity glue is
 	rs232_dce_rxd: in std_logic;
 	lcd_db: out std_logic_vector(7 downto 0);
 	lcd_e, lcd_rs, lcd_rw: out std_logic;
-	j1, j2: out std_logic_vector(3 downto 0);
+	j1, j2: inout std_logic_vector(3 downto 0);
 	led: out std_logic_vector(7 downto 0);
 	rot_a, rot_b, rot_center: in std_logic;
 	btn_south, btn_north, btn_east, btn_west: in std_logic;
@@ -62,44 +65,47 @@ end glue;
 
 architecture Behavioral of glue is
     signal clk: std_logic;
-    signal btns: std_logic_vector(7 downto 0);
+    signal rs232_break: std_logic;
+    signal btns: std_logic_vector(15 downto 0);
+    signal lcd_7seg: std_logic_vector(15 downto 0);
 begin
 
     -- clock synthesizer
     clkgen: entity work.clkgen
     generic map(
-	C_clk_freq => C_clk_freq,
-	C_debug => false
+	C_clk_freq => C_clk_freq
     )
     port map(
-	clk_50m => clk_50m, clk => clk, key => '0', sel => '0'
+	clk_50m => clk_50m, clk => clk
     );
     
+    -- reset hard-block: Xilinx Spartan-3 specific
+    reset: startup_spartan3
+    port map (
+        clk => clk, gsr => rs232_break, gts => rs232_break
+    );
+
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
     generic map (
 	C_clk_freq => C_clk_freq,
+	C_arch => C_arch,
 	C_mem_size => C_mem_size
     )
     port map (
 	clk => clk,
-	rs232_tx => rs232_dce_txd,
-	rs232_rx => rs232_dce_rxd,
-	rs232_break => open,
-	gpio => open,
-	leds => led,
-	btns => btns,
-	sw(7 downto 4) => x"0", sw(3 downto 0) => sw
+	rs232_tx => rs232_dce_txd, rs232_rx => rs232_dce_rxd,
+	rs232_break => rs232_break,
+	gpio(3 downto 0) => j1, gpio(7 downto 4) => j2,
+	gpio(31 downto 8) => open,
+	leds(7 downto 0) => led, leds(15 downto 8) => open,
+	lcd_7seg => lcd_7seg, btns => btns,
+	sw(15 downto 4) => x"000", sw(3 downto 0) => sw
     );
-
-    btns <= '0' & rot_a & rot_b & rot_center &
+    lcd_db <= lcd_7seg(7 downto 0);
+    lcd_e <= lcd_7seg(8);
+    lcd_rw <= lcd_7seg(9);
+    lcd_rs <= lcd_7seg(10);
+    btns <= x"00" & '0' & rot_a & rot_b & rot_center &
       btn_north & btn_south & btn_west & btn_east;
-
-    j1 <= (others => 'Z');
-    j2 <= (others => 'Z');
-    lcd_db <= (others => 'Z');
-    lcd_e <= 'Z';
-    lcd_rs <= 'Z';
-    lcd_rw <= 'Z';
-
 end Behavioral;
