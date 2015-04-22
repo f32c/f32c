@@ -39,6 +39,10 @@ use work.f32c_pack.all;
 
 entity glue is
     generic (
+	-- ISA: either ARCH_MI32 or ARCH_RV32
+	C_arch: integer := ARCH_MI32;
+	C_debug: boolean := false;
+
 	-- Main clock: N * 10 MHz
 	C_clk_freq: integer := 112;
 
@@ -54,7 +58,6 @@ entity glue is
 	led: out std_logic_vector(7 downto 0);
 	gpio: inout std_logic_vector(39 downto 0);
 	btn_k2, btn_k3: in std_logic
-	-- sw: in std_logic_vector(7 downto 0)
     );
 end glue;
 
@@ -64,10 +67,6 @@ architecture Behavioral of glue is
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
     clkgen: entity work.pll_25M_112M5
-    --generic map(
-    --  C_clk_freq => C_clk_freq,
-    --  C_debug => false
-    --)
     port map(
       clk_in1 => clk_25m, clk_out1 => clk
     );
@@ -82,8 +81,10 @@ begin
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
     generic map (
+	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
-	C_mem_size => C_mem_size
+	C_mem_size => C_mem_size,
+	C_debug => C_debug
     )
     port map (
 	clk => clk,
