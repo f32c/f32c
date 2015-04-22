@@ -35,6 +35,9 @@ use work.f32c_pack.all;
 
 entity glue is
     generic (
+	-- ISA
+	C_arch: integer := ARCH_RV32;
+
 	-- Main clock freq, in multiples of 10 MHz
 	C_clk_freq: integer := 100;
 
@@ -48,15 +51,14 @@ entity glue is
 	rs232_txd: out std_logic;
 	rs232_rxd: in std_logic;
 	led: out std_logic_vector(7 downto 0);
-	gpio: inout std_logic_vector(31 downto 0);
 	btn_left, btn_right: in std_logic;
-	sw: in std_logic_vector(7 downto 0)
+	sw: in std_logic_vector(3 downto 0)
     );
 end glue;
 
 architecture Behavioral of glue is
     signal clk: std_logic;
-    signal btns: std_logic_vector(7 downto 0);
+    signal btns: std_logic_vector(15 downto 0);
 begin
 
     clock: entity work.pll_50m
@@ -72,17 +74,18 @@ begin
     glue_bram: entity work.glue_bram
     generic map (
 	C_clk_freq => C_clk_freq,
+	C_arch => C_arch,
 	C_mem_size => C_mem_size
     )
     port map (
 	clk => clk,
 	rs232_tx => rs232_txd, rs232_rx => rs232_rxd,
 	rs232_break => open,
-	gpio => gpio(31 downto 0),
-	leds => led,
+	gpio => open,
+	leds(7 downto 0) => led,
 	btns => btns,
-	sw => "00000000"
+	sw(3 downto 0) => sw
     );
 
-    btns <= "000000" & btn_left & btn_right;
+    btns <= x"000" & "00" & btn_left & btn_right;
 end Behavioral;
