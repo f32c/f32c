@@ -1,5 +1,5 @@
 --
--- Copyright 2008, 2010 University of Zagreb, Croatia.
+-- Copyright 2015 Marko Zec, University of Zagreb.
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -36,22 +36,16 @@ use UNISIM.VComponents.all;
 
 entity clkgen is
     generic(
-	C_debug: boolean;
 	C_clk_freq: integer
     );
     port(
 	clk_50m: in std_logic; -- 50 MHz signal expected here
-	sel: in std_logic;
-	key: in std_logic; -- one-step clocking
 	clk: out std_logic
     );
 end clkgen;
 
 architecture Behavioral of clkgen is
     signal clkfx: std_logic;
-    signal key_d: std_logic_vector(19 downto 0) := x"00000";
-    signal key_r: std_logic := '0';
-    signal sel_r: std_logic := '0';
 
 begin
 
@@ -96,27 +90,7 @@ begin
 	RST => '0' -- DCM asynchronous reset input
     );
 
-    G_debug:
-    if C_debug generate
-    begin
-    -- key debuncer
-    process(clkfx)
-    begin
-	if (rising_edge(clkfx)) then
-	    if (key_d = x"fffff") then
-		if (key /= key_r) then
-		    key_d <= x"00000";
-		end if;
-		key_r <= key;
-	    else
-		key_d <= key_d + 1;
-	    end if;
-	    sel_r <= sel;
-	end if;
-    end process;
-    end generate;
-
-    clk <= clkfx when not C_debug or sel_r = '0' else key_r;
+    clk <= clkfx;
 
 end Behavioral;
 
