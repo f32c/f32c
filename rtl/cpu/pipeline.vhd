@@ -438,6 +438,12 @@ begin
 		IF_ID_bubble <= false; -- XXX should be true?
 		IF_ID_instruction <= x"00000000"; -- NOP, XXX, revisit!!!
 	    end if;
+	    -- crude reset hack for RV32 in absence of proper exception support
+	    if C_arch = ARCH_RV32 and R_reset = '1' then
+		IF_ID_PC <= R_cop0_EBASE;
+		IF_ID_PC_next <= R_cop0_EBASE;
+		IF_ID_bubble <= true;
+	    end if;
 	end if;
     end process;
 
@@ -1184,9 +1190,11 @@ begin
 	    if R_reset = '1' then
 		EX_MEM_mem_cycle <= '0';
 		EX_MEM_mem_write <= '0';
-		R_cop0_EBASE <= (others => '0');
-		R_cop0_EI <= '1';
-		R_cop0_intr_mask <= (others => '0');
+		if C_exceptions then
+		    R_cop0_EBASE <= C_eff_init_PC(31 downto 2);
+		    R_cop0_EI <= '1';
+		    R_cop0_intr_mask <= (others => '0');
+		end if;
 	    end if;
 	end if;
     end process;
