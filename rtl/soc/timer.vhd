@@ -146,16 +146,16 @@ architecture arch of timer is
     signal R_counter: std_logic_vector(C_bits+C_pres-1 downto 0); -- handled specificaly (auto-increments)
 
     -- input capture related registers
-    type icp_reg_type is array (0 to C_icps_max-1) of std_logic_vector(C_bits-1 downto 0);
+    type icp_reg_type is array (0 to C_icps-1) of std_logic_vector(C_bits-1 downto 0);
     signal R_icp: icp_reg_type;
     constant C_icp_sync_depth: integer := 3; -- number of shift register stages (default 3) for icp clock synchronization
-    type T_icp_sync_shift is array (0 to C_icps_max-1) of std_logic_vector(C_icp_sync_depth-1 downto 0); -- icp synchronizer type
+    type T_icp_sync_shift is array (0 to C_icps-1) of std_logic_vector(C_icp_sync_depth-1 downto 0); -- icp synchronizer type
     signal R_icp_sync_shift: T_icp_sync_shift;
-    signal R_icp_rising_edge: std_logic_vector(C_icps_max-1 downto 0);
-    signal R_icp_hit: std_logic_vector(C_icps_max-1 downto 0); -- becomes 1 when icp condition is met
-    signal R_icp_lt_sp: std_logic_vector(C_icps_max-1 downto 0); -- becomes 1 when icp is less than setpoint
-    signal R_icp_wants_faster: std_logic_vector(C_icps_max-1 downto 0);
-    signal R_icp_wants_slower: std_logic_vector(C_icps_max-1 downto 0);
+    signal R_icp_rising_edge: std_logic_vector(C_icps-1 downto 0);
+    signal R_icp_hit: std_logic_vector(C_icps-1 downto 0); -- becomes 1 when icp condition is met
+    signal R_icp_lt_sp: std_logic_vector(C_icps-1 downto 0); -- becomes 1 when icp is less than setpoint
+    signal R_icp_wants_faster: std_logic_vector(C_icps-1 downto 0);
+    signal R_icp_wants_slower: std_logic_vector(C_icps-1 downto 0);
 
 
     -- output compare related registers
@@ -207,9 +207,6 @@ begin
     
     sign <= R(C_counter)(C_bits-1); -- output sign (MSB bit of the counter)
     
-    -- icp_enable <= R_control(C_icpn_enable(C_icps_max-1)) & R_control(C_icpn_enable(0));
-    -- ocp_enable <= R_control(C_ocpn_enable(C_ocps_max-1)) & R_control(C_ocpn_enable(0));
-
     -- this will save us some typing
     commit <= '1' when ce = '1' and bus_write = '1' and addr = C_apply else '0';
     
@@ -298,11 +295,6 @@ begin
     end generate;
 
     -- join all interrupt request bits into one bit
-    -- todo: aggregate OR for all with variable number of icp/ocp units
-    --timer_irq <= ( R_control(C_ocpn_ie(0))          and Rintr(C_ocpn_intr(0)) )
-    --          or ( R_control(C_ocpn_ie(C_ocps - 1)) and Rintr(C_ocpn_intr(C_ocps - 1)) )
-    --          or ( R_control(C_icpn_ie(0))          and Rintr(C_icpn_intr(0)) )
-    --          or ( R_control(C_icpn_ie(C_icps - 1)) and Rintr(C_icpn_intr(C_icps - 1)) );
     timer_irq <= interrupt(C_ocps, C_icps);
     
     -- counter
