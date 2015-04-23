@@ -35,7 +35,8 @@ use ieee.std_logic_arith.all;
 
 entity timer is
     generic (
-        C_ocps: integer range 0 to 2 := 2;  -- number of ocp units 0-2
+        -- warning: C_ocps + C_icps = 4
+        C_ocps: integer range 0 to 4 := 2;  -- number of ocp units 0-4
         C_icps: integer range 0 to 2 := 2;  -- number of icp units 0-2
         C_period_frac: integer range 0 to 16 := 0;     -- period resolution enhancement bits (1-16)
         -- setting C_period_frac to 0 will disable both period and frac
@@ -87,7 +88,7 @@ architecture arch of timer is
     -- max number of ocp/icp units determined by fixed
     -- register locations in address space - to allocate address space
     constant C_icps_max:   integer   := 2;
-    constant C_ocps_max:   integer   := 2;
+    constant C_ocps_max:   integer   := 4;
     -- max combined icps and ocps. Condition:
     -- C_iocps_max >= C_icps_max
     -- C_iocps_max >= C_ocps_max
@@ -105,8 +106,8 @@ architecture arch of timer is
     constant C_period:     integer   := C_inc_min; -- unused if C_period_frac=0
     constant C_fractional: integer   := C_inc_max; -- unused if C_period_frac=0
     type ocp_array is array (0 to C_ocps_max-1) of integer range 0 to C_registers-1;
-    constant C_ocpn_start: ocp_array := (4, 6);
-    constant C_ocpn_stop:  ocp_array := (5, 7);
+    constant C_ocpn_start: ocp_array := (4, 6, 8, 10);
+    constant C_ocpn_stop:  ocp_array := (5, 7, 9, 11);
     type icp_array is array (0 to C_icps_max-1) of integer range 0 to C_registers-1;
     constant C_icpn_start: icp_array := (10, 8);  -- numbering goes downwards
     constant C_icpn_stop:  icp_array := (11, 9);
@@ -129,18 +130,18 @@ architecture arch of timer is
     -- constants to name bit position in control register
     type ctrl_ocp_array is array (0 to C_ocps_max-1) of integer range 0 to C_ctrl_bits-1;
     type ctrl_icp_array is array (0 to C_icps_max-1) of integer range 0 to C_ctrl_bits-1;
-    constant C_ocpn_intr:   ctrl_ocp_array := (0,1);    -- ocp interrupt flags (must occupy lowest index)
-    constant C_icpn_intr:   ctrl_icp_array := (3,2);    -- icp interrupt flags (must occupy lowest index)
-    constant C_ocpn_and:    ctrl_ocp_array := (4,5);    -- ocp 1=and,0=or condition (for wraparound)
-    constant C_icpn_and:    ctrl_icp_array := (7,6);    -- icp 1=and,0=or condition (for wraparound)
-    constant C_ocpn_ie:     ctrl_ocp_array := (8,9);    -- ocp interrupt enable
-    constant C_icpn_ie:     ctrl_icp_array := (11,10);  -- icp interrupt enable
-    constant C_ocpn_xor:    ctrl_ocp_array := (12,13);  -- ocp xor 1=inverted,0=normal
-    constant C_icpn_xor:    ctrl_icp_array := (15,14);  -- icp xor 1=inverted,0=normal
-    constant C_icpn_afcen:  ctrl_icp_array := (16,18);  -- enable ICP AFC
-    constant C_icpn_afcinv: ctrl_icp_array := (17,19);  -- invert ICP AFC logic
-    constant C_ocpn_enable: ctrl_ocp_array := (20,21);  -- ocp physical output enable bits
-    constant C_icpn_enable: ctrl_icp_array := (23,22);  -- icp physical input enable bits
+    constant C_ocpn_intr:   ctrl_ocp_array := (0,1,2,3);     -- ocp interrupt flags (must occupy lowest index)
+    constant C_icpn_intr:   ctrl_icp_array := (3,2);         -- icp interrupt flags (must occupy lowest index)
+    constant C_ocpn_and:    ctrl_ocp_array := (4,5,6,7);     -- ocp 1=and,0=or condition (for wraparound)
+    constant C_icpn_and:    ctrl_icp_array := (7,6);         -- icp 1=and,0=or condition (for wraparound)
+    constant C_ocpn_ie:     ctrl_ocp_array := (8,9,10,11);   -- ocp interrupt enable
+    constant C_icpn_ie:     ctrl_icp_array := (11,10);       -- icp interrupt enable
+    constant C_ocpn_xor:    ctrl_ocp_array := (12,13,14,15); -- ocp xor 1=inverted,0=normal
+    constant C_icpn_xor:    ctrl_icp_array := (15,14);       -- icp xor 1=inverted,0=normal
+    constant C_icpn_afcen:  ctrl_icp_array := (16,18);       -- enable ICP AFC
+    constant C_icpn_afcinv: ctrl_icp_array := (17,19);       -- invert ICP AFC logic
+    constant C_ocpn_enable: ctrl_ocp_array := (20,21,22,23); -- ocp physical output enable bits
+    constant C_icpn_enable: ctrl_icp_array := (23,22);       -- icp physical input enable bits
 
     signal R_counter: std_logic_vector(C_bits+C_pres-1 downto 0); -- handled specificaly (auto-increments)
 
@@ -161,17 +162,32 @@ architecture arch of timer is
     --type ocp_reg_type is array (0 to C_ocps_max-1) of std_logic_vector(C_bits-1 downto 0);
     --signal R_ocp_start, R_ocp_stop: ocp_reg_type;
     constant C_ocp_sync_depth: integer := 2; -- number of shift register stages (default 2) for ocp edge detection
-    type T_ocp_sync_shift is array (0 to C_ocps_max-1) of std_logic_vector(C_ocp_sync_depth-1 downto 0); -- ocp synchronizer type
+    type T_ocp_sync_shift is array (0 to C_ocps-1) of std_logic_vector(C_ocp_sync_depth-1 downto 0); -- ocp synchronizer type
     signal R_ocp_sync_shift: T_ocp_sync_shift;
-    signal R_ocp_rising_edge: std_logic_vector(C_ocps_max-1 downto 0);
+    signal R_ocp_rising_edge: std_logic_vector(C_ocps-1 downto 0);
     
     -- interrupt flag register (both icp and ocp)
     -- addressed by C_ocpn_intr and C_icpn_intr
     signal Rintr: std_logic_vector(C_iocps_max-1 downto 0);
     
-    signal internal_ocp: std_logic_vector(C_ocps_max-1 downto 0); -- non-inverted ocp signal
+    signal internal_ocp: std_logic_vector(C_ocps-1 downto 0); -- non-inverted ocp signal
     
     constant C_afc_joint_register : boolean := true; -- afc joint register is true combinatorial logico
+    
+    -- function to join all interrupt bits into one
+    function interrupt(n_ocps, n_icps: integer) return std_logic is
+      variable i: integer;
+      variable intr: std_logic;
+    begin
+      intr := '0';
+      for i in 0 to n_ocps-1 loop
+        intr := intr or (R_control(C_ocpn_ie(i)) and Rintr(C_ocpn_intr(i)));
+      end loop;
+      for i in 0 to n_icps-1 loop
+        intr := intr or (R_control(C_icpn_ie(i)) and Rintr(C_icpn_intr(i)));
+      end loop;
+      return intr;
+    end interrupt;
 
 begin
     with addr select
@@ -215,7 +231,7 @@ begin
 
     joint_register_afc: if C_afc_joint_register generate
     -- takes more LE than process_var_afc
-    for_icp_afc: for i in 0 to C_icps_max-1 generate
+    for_icp_afc: for i in 0 to C_icps-1 generate
         R_icp_wants_faster(i) <= '1' 
           when R_icp_hit(i) = '1' -- icp hit
           -- previous icp value less than the setpoint
@@ -241,7 +257,7 @@ begin
       begin
         faster := '0';
         slower := '0';
-        for i in 0 to C_icps_max-1 loop
+        for i in 0 to C_icps-1 loop
           if R_icp_hit(i) = '1' -- afc hit
             -- previous icp value less than the setpoint
             and ( R_icp_lt_sp(i)='1' xor R_control(C_icpn_afcinv(i))='1' )  
@@ -283,10 +299,11 @@ begin
 
     -- join all interrupt request bits into one bit
     -- todo: aggregate OR for all with variable number of icp/ocp units
-    timer_irq <= ( R_control(C_ocpn_ie(0))              and Rintr(C_ocpn_intr(0)) )
-              or ( R_control(C_ocpn_ie(C_ocps_max - 1)) and Rintr(C_ocpn_intr(C_ocps_max - 1)) )
-              or ( R_control(C_icpn_ie(0))              and Rintr(C_icpn_intr(0)) )
-              or ( R_control(C_icpn_ie(C_icps_max - 1)) and Rintr(C_icpn_intr(C_icps_max - 1)) );
+    --timer_irq <= ( R_control(C_ocpn_ie(0))          and Rintr(C_ocpn_intr(0)) )
+    --          or ( R_control(C_ocpn_ie(C_ocps - 1)) and Rintr(C_ocpn_intr(C_ocps - 1)) )
+    --          or ( R_control(C_icpn_ie(0))          and Rintr(C_icpn_intr(0)) )
+    --          or ( R_control(C_icpn_ie(C_icps - 1)) and Rintr(C_icpn_intr(C_icps - 1)) );
+    timer_irq <= interrupt(C_ocps, C_icps);
     
     -- counter
     process(clk)
