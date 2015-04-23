@@ -175,7 +175,7 @@ architecture arch of timer is
     constant C_afc_joint_register : boolean := true; -- afc joint register is true combinatorial logico
     
     -- function to join all interrupt bits into one
-    function interrupt(n_ocps, n_icps: integer) return std_logic is
+    impure function interrupt(n_ocps, n_icps: integer) return std_logic is
       variable i: integer;
       variable intr: std_logic;
     begin
