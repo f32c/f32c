@@ -97,6 +97,8 @@ LFLAGS_END = ${MK_LDFLAGS}
 # 	Port specific source files can be added here
 PORT_SRCS = $(PORT_DIR)/core_portme.c
 
+#../../lib/src/sio_poll.c
+
 # Flag : LOAD
 #	For a simple port, we assume self hosted compile and run, no load needed.
 
