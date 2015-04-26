@@ -13,7 +13,7 @@
 #define FRAC_BITS 0
 
 /* timer base address in i/o space */
-#define TIMADR -128
+#define TIMADR -7*256
 
 #define TC_COUNTER    0
 #define TC_INCREMENT  1
