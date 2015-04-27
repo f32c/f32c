@@ -79,6 +79,7 @@ architecture Behavioral of sio is
     signal tx_ser: std_logic_vector(8 downto 0) := (others => '1');
 
     -- receive logic
+    signal R_rxd, R_break: std_logic;
     signal rx_tickcnt: std_logic_vector(3 downto 0);
     signal rx_running: std_logic;
     signal rx_des: std_logic_vector(7 downto 0);
@@ -119,6 +120,7 @@ begin
     bus_out(9 downto 8) <= '-' & rx_full when not C_tx_only else "--";
     bus_out(7 downto 0) <= rx_byte when not C_tx_only else "--------";
     txd <= tx_ser(0);
+    break <= R_break;
 
     process(clk)
     begin
@@ -160,9 +162,10 @@ begin
 	    end if;
 
 	    -- rx logic
+	    R_rxd <= rxd;
 	    if R_baudgen(16) = '1' and not C_tx_only then
 		if rx_phase = x"0" then
-		    if rxd = '0' then
+		    if R_rxd = '0' then
 			-- start bit, delay further sampling for ~0.5 T
 			if rx_tickcnt = x"8" then
 			    rx_phase <= rx_phase + 1;
@@ -176,7 +179,7 @@ begin
 		else
 		    rx_tickcnt <= rx_tickcnt + 1;
 		    if rx_tickcnt = x"f" then
-			rx_des <= rxd & rx_des(7 downto 1);
+			rx_des <= R_rxd & rx_des(7 downto 1);
 			rx_phase <= rx_phase + 1;
 			if rx_phase = x"9" then
 			    rx_phase <= x"0";
@@ -188,23 +191,20 @@ begin
 	    end if;
 
 	    -- break detect logic
-	    if rxd = '0' then
+	    if R_rxd = '0' then
 		if rx_break_tickcnt(23 downto 20) /= x"f" then
 		    rx_break_tickcnt <= rx_break_tickcnt + 1;
 		end if;
 	    else
-		if rx_break_tickcnt(23 downto 20) = x"f" then
-		    break <= '1';
+		if rx_break_tickcnt(23 downto 21) = "111" then
+		    R_break <= '1';
+		    rx_break_tickcnt <= rx_break_tickcnt - 1;
+		else
+		    R_break <= '0';
+		    rx_break_tickcnt <= (others => '0');
 		end if;
-		if rx_break_tickcnt(23 downto 20) = x"d" then
-		    rx_break_tickcnt(23) <= '0';
-		    break <= '0';
-		end if;
-		rx_break_tickcnt(22 downto 0) <=
-		    rx_break_tickcnt(22 downto 0) - 1;
 	    end if;
 	end if;
     end process;
     end generate;
 end Behavioral;
-
