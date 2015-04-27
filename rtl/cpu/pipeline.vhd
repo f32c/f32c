@@ -440,8 +440,7 @@ begin
 	    end if;
 	    -- crude reset hack for RV32 in absence of proper exception support
 	    if C_arch = ARCH_RV32 and R_reset = '1' then
-		IF_ID_PC <= R_cop0_EBASE;
-		IF_ID_PC_next <= R_cop0_EBASE;
+		IF_ID_PC <= R_cop0_EBASE and C_PC_mask(31 downto 2);
 		IF_ID_bubble <= true;
 	    end if;
 	end if;
