@@ -57,9 +57,8 @@ smart: smart.log
 # Executable Configuration
 ###################################################################
 
-MAP_ARGS = --read_settings_files=on $(addprefix --source=,$(SRCS))
-
-FIT_ARGS = --part=$(PART) --read_settings_files=on --effort=standard --optimize_io_register_for_timing=on --one_fit_attempt=off
+MAP_ARGS = --read_settings_files=on --enable_register_retiming=on $(addprefix --source=,$(SRCS))
+FIT_ARGS = --part=$(PART) --read_settings_files=on --effort=standard --optimize_io_register_for_timing=on --one_fit_attempt=off --pack_register=auto
 ASM_ARGS = 
 STA_ARGS = 
 
