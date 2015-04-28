@@ -47,7 +47,6 @@ SRCS = \
 ../../../cpu/shift.vhd \
 ../../../cpu/pipeline.vhd \
 ../../../cpu/loadalign.vhd \
-../../../cpu/idecode.vhd \
 ../../../cpu/alu.vhd \
 ../../../cpu/debug.vhd \
 ../../../soc/sio.vhd \
