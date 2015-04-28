@@ -69,6 +69,7 @@ architecture Behavioral of sio is
     constant C_baud_init: std_logic_vector(15 downto 0) :=
       std_logic_vector(to_unsigned(
 	C_init_baudrate * 2**10 / 1000 * 2**10 / C_clk_freq / 1000, 16));
+    constant C_break_detect_incr: integer := 1 + 50 / C_clk_freq;
 
     -- baud * 16 impulse generator
     signal R_baudrate: std_logic_vector(15 downto 0) := C_baud_init;
@@ -195,13 +196,13 @@ begin
 	    -- break detect logic
 	    if R_rxd = '0' then
 		if rx_break_tickcnt(23 downto 20) /= x"f" then
-		    rx_break_tickcnt <= rx_break_tickcnt + 1;
+		    rx_break_tickcnt <= rx_break_tickcnt + C_break_detect_incr;
 		end if;
 	    else
 		if rx_break_tickcnt(23 downto 21) = "111" then
 		    R_break <= '1';
 		    R_baudrate <= C_baud_init;
-		    rx_break_tickcnt <= rx_break_tickcnt - 1;
+		    rx_break_tickcnt <= rx_break_tickcnt - C_break_detect_incr;
 		else
 		    R_break <= '0';
 		    rx_break_tickcnt <= (others => '0');
