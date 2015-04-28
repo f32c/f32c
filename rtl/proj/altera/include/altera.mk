@@ -59,7 +59,7 @@ smart: smart.log
 
 MAP_ARGS = --read_settings_files=on $(addprefix --source=,$(SRCS))
 
-FIT_ARGS = --part=$(PART) --read_settings_files=on
+FIT_ARGS = --part=$(PART) --read_settings_files=on --effort=standard --optimize_io_register_for_timing=on --one_fit_attempt=off
 ASM_ARGS = 
 STA_ARGS = 
 
