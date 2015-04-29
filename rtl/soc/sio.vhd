@@ -37,6 +37,8 @@ entity sio is
 	C_big_endian: boolean := false;
 	C_init_baudrate: integer := 115200;
 	C_fixed_baudrate: boolean := false;
+	C_break_detect: boolean := false;
+	C_break_resets_baudrate: boolean := false;
 	C_tx_only: boolean := false;
 	C_bypass: boolean := false
     );
@@ -194,15 +196,17 @@ begin
 	    end if;
 
 	    -- break detect logic
-	    if R_rxd = '0' then
+	    if C_break_detect and R_rxd = '0' then
 		if rx_break_tickcnt(23 downto 20) /= x"f" then
 		    rx_break_tickcnt <= rx_break_tickcnt + C_break_detect_incr;
 		end if;
-	    else
+	    elsif C_break_detect then
 		if rx_break_tickcnt(23 downto 21) = "111" then
 		    R_break <= '1';
-		    R_baudrate <= C_baud_init;
 		    rx_break_tickcnt <= rx_break_tickcnt - C_break_detect_incr;
+		    if C_break_resets_baudrate then
+			R_baudrate <= C_baud_init;
+		    end if;
 		else
 		    R_break <= '0';
 		    rx_break_tickcnt <= (others => '0');
