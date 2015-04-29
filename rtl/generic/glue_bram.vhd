@@ -71,6 +71,7 @@ entity glue_bram is
 	-- SoC configuration options
 	C_mem_size: integer := 16;	-- in KBytes
 	C_sio: boolean := true;
+	C_sio_break_detect: boolean := true;
 	C_gpio: boolean := true;
 	C_timer: boolean := true;
 	C_leds_btns: boolean := true
@@ -186,6 +187,8 @@ begin
     sio: entity work.sio
     generic map (
 	C_clk_freq => C_clk_freq,
+	C_break_detect => C_sio_break_detect,
+	C_break_resets_baudrate => C_sio_break_detect,
 	C_big_endian => C_big_endian
     )
     port map (
