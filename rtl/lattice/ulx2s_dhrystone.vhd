@@ -67,6 +67,7 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
+	C_write_protect_bootloader: boolean := false;
 	C_sio: boolean := true
     );
     port (
@@ -170,6 +171,7 @@ begin
     if C_arch = ARCH_MI32 generate
     bram_mi32: entity work.bram_mi32
     generic map (
+	C_write_protect_bootloader => C_write_protect_bootloader,
 	C_mem_size => C_mem_size
     )
     port map (
