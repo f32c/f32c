@@ -36,6 +36,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity bram_rv32 is
     generic(
+	C_write_protect_bootloader: boolean := true;
 	C_mem_size: integer
     );
     port(
@@ -136,20 +137,21 @@ architecture x of bram_rv32 is
     -- enter: -loop_iteration_limit 2048
     --
 
-    function boot_block_to_bram(x: boot_block_type; n: integer) return bram_type is
-      variable y: bram_type;
-      variable i,l: integer;
+    function boot_block_to_bram(x: boot_block_type; n: integer)
+      return bram_type is
+	variable y: bram_type;
+	variable i,l: integer;
     begin
-        y := (others => x"00");
-        i := n;
-        l := x'length;
-        while(i < l) loop
-          y(i/4) := x(i);
-          i := i + 4;
-        end loop;
-        return y;
+	y := (others => x"00");
+	i := n;
+	l := x'length;
+	while(i < l) loop
+	    y(i/4) := x(i);
+	    i := i + 4;
+	end loop;
+	return y;
     end boot_block_to_bram;
-      
+
     signal bram_0: bram_type := boot_block_to_bram(boot_block, 0);
     signal bram_1: bram_type := boot_block_to_bram(boot_block, 1);
     signal bram_2: bram_type := boot_block_to_bram(boot_block, 2);
@@ -186,6 +188,8 @@ begin
     dmem_data_out <= dbram_3 & dbram_2 & dbram_1 & dbram_0;
     imem_data_out <= ibram_3 & ibram_2 & ibram_1 & ibram_0;
 
+    G_rom_protection:
+    if C_write_protect_bootloader generate
     with C_mem_size select write_enable <=
 	dmem_addr(12 downto 9) /= 0 and dmem_write = '1' when 8,
 	dmem_addr(13 downto 9) /= 0 and dmem_write = '1' when 16,
@@ -195,6 +199,12 @@ begin
 	dmem_addr(17 downto 9) /= 0 and dmem_write = '1' when 256,
 	dmem_addr(18 downto 9) /= 0 and dmem_write = '1' when 512,
 	dmem_addr(19 downto 9) /= 0 and dmem_write = '1' when others;
+    end generate;
+    G_flat_ram:
+    if not C_write_protect_bootloader generate
+	write_enable <= dmem_write = '1';
+    end generate;
+
 
     process(clk)
     begin
