@@ -16,6 +16,7 @@ PART ?= EP4CE6E22C8
 BOARDFILE ?= tb276.board
 CONFIG_DEVICE ?= EPCS4
 SERIAL_FLASH_LOADER_DEVICE ?= EP4CE6
+OPENOCD_INTERFACE ?= =interface/altera-usb-blaster.cfg
 ###################################################################
 
 ###################################################################
@@ -126,7 +127,7 @@ program: $(PROJECT).sof
 	$(quartus_env); quartus_pgm --no_banner --mode=jtag -o "P;$(PROJECT).sof"
 
 program_ocd: $(PROJECT).svf
-	openocd --file=interface/altera-usb-blaster.cfg --file=tb276.ocd
+	openocd --file$(OPENOCD_INTERFACE) --file=tb276.ocd
 
 flash: $(PROJECT).jic
 	$(quartus_env); quartus_pgm --no_banner --mode=jtag -o "IPV;$(PROJECT).jic"
