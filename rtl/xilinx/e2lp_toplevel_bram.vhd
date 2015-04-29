@@ -43,10 +43,10 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 
 	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 70;
+	C_clk_freq: integer := 60;
 
 	-- SoC configuration options
-	C_mem_size: integer := 64;
+	C_mem_size: integer := 128;
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true
     );
