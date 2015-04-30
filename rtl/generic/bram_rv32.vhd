@@ -27,7 +27,6 @@
 -- $Id$
 --
 
-
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
@@ -191,6 +190,9 @@ begin
     G_rom_protection:
     if C_write_protect_bootloader generate
     with C_mem_size select write_enable <=
+	dmem_addr(9 downto 9) /= 0 and dmem_write = '1' when 1,
+	dmem_addr(10 downto 9) /= 0 and dmem_write = '1' when 2,
+	dmem_addr(11 downto 9) /= 0 and dmem_write = '1' when 4,
 	dmem_addr(12 downto 9) /= 0 and dmem_write = '1' when 8,
 	dmem_addr(13 downto 9) /= 0 and dmem_write = '1' when 16,
 	dmem_addr(14 downto 9) /= 0 and dmem_write = '1' when 32,
@@ -198,13 +200,13 @@ begin
 	dmem_addr(16 downto 9) /= 0 and dmem_write = '1' when 128,
 	dmem_addr(17 downto 9) /= 0 and dmem_write = '1' when 256,
 	dmem_addr(18 downto 9) /= 0 and dmem_write = '1' when 512,
-	dmem_addr(19 downto 9) /= 0 and dmem_write = '1' when others;
+	dmem_addr(19 downto 9) /= 0 and dmem_write = '1' when 1024,
+	dmem_write = '1' when others;
     end generate;
     G_flat_ram:
     if not C_write_protect_bootloader generate
 	write_enable <= dmem_write = '1';
     end generate;
-
 
     process(clk)
     begin
