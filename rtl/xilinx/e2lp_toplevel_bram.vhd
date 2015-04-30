@@ -43,7 +43,7 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 
 	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 60;
+	C_clk_freq: integer := 80;
 
 	-- SoC configuration options
 	C_mem_size: integer := 128;
@@ -54,6 +54,10 @@ entity glue is
 	clk_50m: in std_logic;
 	rs232_txd: out std_logic;
 	rs232_rxd: in std_logic;
+	lcd_db: out std_logic_vector(3 downto 0);
+	lcd_e, lcd_rs, lcd_rw, lcd_bl: out std_logic;
+	btn: in std_logic_vector(4 downto 0);
+	gpio: inout std_logic_vector(7 downto 0);
 	led: out std_logic_vector(7 downto 0);
 	sw: in std_logic_vector(7 downto 0)
     );
@@ -61,6 +65,7 @@ end glue;
 
 architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
+    signal lcd_7seg: std_logic_vector(15 downto 0);
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
     clkgen: entity work.clkgen
@@ -89,9 +94,15 @@ begin
 	clk => clk,
 	rs232_tx => rs232_txd, rs232_rx => rs232_rxd,
 	rs232_break => rs232_break,
-	gpio => open,
+	gpio(7 downto 0) => gpio, gpio(31 downto 8) => open,
 	leds(7 downto 0) => led, leds(15 downto 8) => open,
-	lcd_7seg => open, btns => x"0000",
+	lcd_7seg => lcd_7seg,
+	btns(4 downto 0) => btn, btns(15 downto 5) => x"00" & "000",
 	sw(7 downto 0) => sw, sw(15 downto 8) => x"00"
     );
+    lcd_db <= lcd_7seg(3 downto 0);
+    lcd_e <= lcd_7seg(4);
+    lcd_rw <= lcd_7seg(5);
+    lcd_rs <= lcd_7seg(6);
+    lcd_bl <= lcd_7seg(7);
 end Behavioral;
