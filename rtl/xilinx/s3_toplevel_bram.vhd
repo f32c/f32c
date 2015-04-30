@@ -104,9 +104,9 @@ begin
 	sw(15 downto 4) => x"000", sw(3 downto 0) => sw
     );
     lcd_db <= lcd_7seg(3 downto 0);
-    lcd_e <= lcd_7seg(4);
-    lcd_rw <= lcd_7seg(5);
-    lcd_rs <= lcd_7seg(6);
+    lcd_rs <= lcd_7seg(4);
+    lcd_e <= lcd_7seg(5);
+    lcd_rw <= '0';
     btns <= x"00" & '0' & rot_a & rot_b & rot_center &
       btn_north & btn_south & btn_west & btn_east;
 end Behavioral;
