@@ -101,8 +101,8 @@ begin
 	sw(7 downto 0) => sw, sw(15 downto 8) => x"00"
     );
     lcd_db <= lcd_7seg(3 downto 0);
-    lcd_e <= lcd_7seg(4);
-    lcd_rw <= lcd_7seg(5);
-    lcd_rs <= lcd_7seg(6);
-    lcd_bl <= lcd_7seg(7);
+    lcd_rs <= lcd_7seg(4);
+    lcd_e <= lcd_7seg(5);
+    lcd_rw <= '0';
+    lcd_bl <= '1';
 end Behavioral;
