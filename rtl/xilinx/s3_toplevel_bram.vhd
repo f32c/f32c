@@ -40,7 +40,7 @@ use work.f32c_pack.all;
 entity glue is
     generic (
 	-- ISA
-	C_arch: integer := ARCH_RV32;
+	C_arch: integer := ARCH_MI32;
 
 	-- Main clock: N * 10 MHz
 	C_clk_freq: integer := 70;
@@ -54,7 +54,7 @@ entity glue is
 	clk_50m: in std_logic;
 	rs232_dce_txd: out std_logic;
 	rs232_dce_rxd: in std_logic;
-	lcd_db: out std_logic_vector(7 downto 0);
+	lcd_db: out std_logic_vector(3 downto 0);
 	lcd_e, lcd_rs, lcd_rw: out std_logic;
 	j1, j2: inout std_logic_vector(3 downto 0);
 	led: out std_logic_vector(7 downto 0);
@@ -103,10 +103,10 @@ begin
 	lcd_7seg => lcd_7seg, btns => btns,
 	sw(15 downto 4) => x"000", sw(3 downto 0) => sw
     );
-    lcd_db <= lcd_7seg(7 downto 0);
-    lcd_e <= lcd_7seg(8);
-    lcd_rw <= lcd_7seg(9);
-    lcd_rs <= lcd_7seg(10);
+    lcd_db <= lcd_7seg(3 downto 0);
+    lcd_e <= lcd_7seg(4);
+    lcd_rw <= lcd_7seg(5);
+    lcd_rs <= lcd_7seg(6);
     btns <= x"00" & '0' & rot_a & rot_b & rot_center &
       btn_north & btn_south & btn_west & btn_east;
 end Behavioral;
