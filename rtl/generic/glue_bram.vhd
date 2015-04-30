@@ -269,7 +269,7 @@ begin
 	    end if;
 	when x"71"  =>
 	    if C_leds_btns then
-		io_to_cpu <= "----------------" & R_leds;
+		io_to_cpu <= R_lcd_7seg & R_leds;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
