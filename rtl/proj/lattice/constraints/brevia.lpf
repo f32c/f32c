@@ -13,10 +13,10 @@ FREQUENCY PORT "clk_50m" 50 MHz;
 LOCATE COMP "clk_ena" SITE "22";	# IN
 
 # USB UART receive and transmit data
-#LOCATE COMP "rs232_rx" SITE "110";	# IN	(DB-9, doesn't work)
-#LOCATE COMP "rs232_tx" SITE "109";	# OUT	(DB-9, doesn't work)
-LOCATE COMP "rs232_rx" SITE "30";	# IN	(FT232R)
-LOCATE COMP "rs232_tx" SITE "29";	# OUT	(FT232R)
+LOCATE COMP "rs232_rx" SITE "110";	# IN	(DB-9)
+LOCATE COMP "rs232_tx" SITE "109";	# OUT	(DB-9)
+#LOCATE COMP "rs232_rx" SITE "30";	# IN	(external FT232R)
+#LOCATE COMP "rs232_tx" SITE "29";	# OUT	(external FT232R)
 
 # LED indicators
 LOCATE COMP "led_0" SITE "46";		# OUT
