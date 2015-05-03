@@ -30,6 +30,7 @@ vhdfiles = \
 ../../../cpu/idecode_mi32.vhd \
 ../../../cpu/idecode_rv32.vhd \
 ../../../xilinx/pll_25M_112M5.vhd \
+../../../xilinx/pll_25M_81M25.vhd \
 ../../../soc/gpio.vhd \
 ../../../soc/timer.vhd 
 
