@@ -8,6 +8,8 @@ that outperforms most ARM microcontrollers running at the same clock.
 It has low LUT footprint so all this can into low cost $25 development FPGA board
 and leave a fair amount of LUT free..
 
+F32C works with Arduino-1.6.x core https://github.com/f32c/arduino
+
 Many FPGA boards with Altera, Lattice and Xilinx FPGA are already supported.
 See http://www.nxlab.fer.hr/fpgarduino
 
