@@ -9,4 +9,6 @@ It has low LUT footprint so all this can into low cost $25 development FPGA boar
 and leave a fair amount of LUT free..
 
 Many FPGA boards with Altera, Lattice and Xilinx FPGA are already supported.
-Porting F32C to new boards should be easy. See http://www.nxlab.fer.hr/fpgarduino
+See http://www.nxlab.fer.hr/fpgarduino
+
+Porting F32C to new boards should be easy.
