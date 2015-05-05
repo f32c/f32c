@@ -56,7 +56,7 @@ entity glue is
 	rs232_rxd: in std_logic;
 	lcd_db: out std_logic_vector(3 downto 0);
 	lcd_e, lcd_rs, lcd_rw, lcd_bl: out std_logic;
-	btn: in std_logic_vector(4 downto 0);
+	btn_south, btn_north, btn_east, btn_west, btn_center: in std_logic;
 	gpio: inout std_logic_vector(7 downto 0);
 	led: out std_logic_vector(7 downto 0);
 	sw: in std_logic_vector(7 downto 0)
@@ -66,6 +66,7 @@ end glue;
 architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
     signal lcd_7seg: std_logic_vector(15 downto 0);
+    signal btns: std_logic_vector(15 downto 0);
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
     clkgen: entity work.clkgen
@@ -96,8 +97,7 @@ begin
 	rs232_break => rs232_break,
 	gpio(7 downto 0) => gpio, gpio(31 downto 8) => open,
 	leds(7 downto 0) => led, leds(15 downto 8) => open,
-	lcd_7seg => lcd_7seg,
-	btns(4 downto 0) => btn, btns(15 downto 5) => x"00" & "000",
+	lcd_7seg => lcd_7seg, btns => btns,
 	sw(7 downto 0) => sw, sw(15 downto 8) => x"00"
     );
     lcd_db <= lcd_7seg(3 downto 0);
@@ -105,4 +105,6 @@ begin
     lcd_e <= lcd_7seg(5);
     lcd_rw <= '0';
     lcd_bl <= '1';
+    btns <= x"00" & "000" & btn_center &
+      btn_north & btn_south & btn_west & btn_east;
 end Behavioral;
