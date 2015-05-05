@@ -1,0 +1,22 @@
+# Digilent Xilinx platform cable
+# cypress FX2 -> CPLD XC2 -> jtag XC3
+
+# when inserted empty device 0x03fd:0x000d then load firmware
+# uncomment either cycfx2load or fxload line
+# or have both commented if you don't want to load firmware
+# when device is inserted into usb
+
+# cycfx2load will load firmware
+SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="03fd", ATTRS{idProduct}=="000d", RUN+="/usr/bin/cycfx2prog -id=03fd:000d prg:/usr/local/xilinx/14.7/ISE_DS/ISE/bin/lin/xusb_emb.hex run"
+# fxload will load firmware
+# SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="03fd", ATTRS{idProduct}=="000d", RUN+="/sbin/fxload -v -t fx2 -I /usr/local/xilinx/14.7/ISE_DS/ISE/bin/lin/xusb_emb.hex -D vid=0x03fd,pid=0x000d" 
+# when firmware is loaded, green led near usb connector on Digilent Spartan 3AN Starter kit should be lit
+# and this command will list some jtag devices
+# xc3sprog -c xpc
+# JTAG loc.:   0  IDCODE: 0x22628093  Desc:                      XC3S700AN Rev: C  IR length:  6
+# JTAG loc.:   1  IDCODE: 0xf5046093  Desc:                         XCF04S Rev: O  IR length:  8
+
+# when device with firmware reloads as 0x03fd:0x0008 give it dialout group permission
+# non-root users that belog to dialout group can access jtag
+SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTRS{idVendor}=="03fd", ATTRS{idProduct}=="0008", GROUP="dialout", MODE="0664"
+
