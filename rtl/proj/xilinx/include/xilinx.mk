@@ -39,6 +39,7 @@ par_opts ?= -ol high
 isedir ?= /opt/Xilinx/11.1/ISE
 xil_env ?= . $(isedir)/settings32.sh
 openocd_interface ?= interface/altera-usb-blaster.cfg
+xc3sprog_interface ?= xpc
 flashsize ?= 8192
 
 libmks = $(patsubst %,$(libdir)/%/module.mk,$(libs)) 
@@ -118,6 +119,9 @@ programming_files: $(project).bit $(project).mcs $(project).svf $(project).xsvf
 	$(xil_env); xst -help | head -1 | sed 's/^/#/' | cat - $(project).scr > $@/$(date)/$(project).scr
 
 junk += _xmsgs usage_statistics_webtalk.html
+
+xc3sprog: $(project).bit
+	xc3sprog -c $(xc3sprog_interface) $(project).bit
 
 program: $(project).svf
 	openocd --file=$(openocd_interface) --file=$(project).ocd
