@@ -13,6 +13,8 @@ openocd_interface = interface/altera-usb-blaster.cfg
 
 vhdfiles = \
 ../../../xilinx/xc6slx9_toplevel_bram.vhd \
+../../../xilinx/pll_25M_112M5.vhd \
+../../../xilinx/pll_25M_81M25.vhd \
 ../../../generic/glue_bram.vhd \
 ../../../generic/bram_mi32.vhd \
 ../../../generic/bram_rv32.vhd \
@@ -22,15 +24,13 @@ vhdfiles = \
 ../../../cpu/loadalign.vhd \
 ../../../cpu/pipeline.vhd \
 ../../../cpu/shift.vhd \
-../../../cpu/debug.vhd \
-../../../soc/sio.vhd \
 ../../../cpu/defs_f32c.vhd \
 ../../../cpu/defs_mi32.vhd \
 ../../../cpu/defs_rv32.vhd \
 ../../../cpu/idecode_mi32.vhd \
 ../../../cpu/idecode_rv32.vhd \
-../../../xilinx/pll_25M_112M5.vhd \
-../../../xilinx/pll_25M_81M25.vhd \
+../../../cpu/debug.vhd \
+../../../soc/sio.vhd \
 ../../../soc/gpio.vhd \
 ../../../soc/timer.vhd 
 
