@@ -98,9 +98,10 @@ set_global_assignment -name PHYSICAL_SYNTHESIS_ASYNCHRONOUS_SIGNAL_PIPELINING ON
 set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON
 
 
+set_global_assignment -name VHDL_FILE ../../../generic/bram_mi32_el.vhd
+set_global_assignment -name VHDL_FILE ../../../generic/bram_mi32_eb.vhd
 set_global_assignment -name VHDL_FILE ../../../generic/glue_bram.vhd
 set_global_assignment -name VHDL_FILE ../../../generic/bram_rv32.vhd
-set_global_assignment -name VHDL_FILE ../../../generic/bram_mi32.vhd
 set_global_assignment -name VHDL_FILE ../../../altera/pll_50m.vhd
 set_global_assignment -name VHDL_FILE ../../../cpu/debug.vhd
 set_global_assignment -name VHDL_FILE ../../../soc/timer.vhd
