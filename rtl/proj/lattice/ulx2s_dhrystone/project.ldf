@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<BaliProject version="3.0" title="project" device="LFXP2-8E-6TN144C" default_implementation="project">
+<BaliProject version="3.2" title="project" device="LFXP2-8E-6TN144C" default_implementation="project">
     <Options/>
     <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Strategy1">
         <Options top="glue"/>
-        <Source name="../../../lattice/dhry_glue.vhd" type="VHDL" type_short="VHDL">
-            <Options top_module="glue"/>
-        </Source>
         <Source name="../../../cpu/alu.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../cpu/debug.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../cpu/defs_f32c.vhd" type="VHDL" type_short="VHDL">
@@ -36,9 +36,6 @@
         <Source name="../../../lattice/bptrace.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../lattice/bram_sio.vhd" type="VHDL" type_short="VHDL" excluded="TRUE">
-            <Options/>
-        </Source>
         <Source name="../../../lattice/clkgen.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -51,10 +48,16 @@
         <Source name="../../../soc/sio.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../generic/bram.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../generic/bram_mi32_eb.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../generic/bootloader_mi32.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../generic/bram_mi32_el.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../generic/bram_rv32.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../lattice/ulx2s_dhrystone.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../constraints/ulx2s.lpf" type="Logic Preference" type_short="LPF">
