@@ -94,7 +94,7 @@ _start(void)
 prompt:
 	pos = 0;
 #ifdef __mips__
-	c = 0x33660A0D;			/* "\r\nf3" */
+	c = 0x336d0A0D;			/* "\r\nm3" */
 #else /* riscv */
 	c = 0x76720A0D;			/* "\r\nrv" */
 #endif
@@ -104,7 +104,11 @@ prompt:
 		if (c == 0 && pos == 0) {
 			pos = -1;
 #ifdef __mips__
-			c = 0x203E6332;	/* "2c> " */
+#ifdef __MIPSEB__
+			c = 0x203E6232;	/* "2b> " */
+#else
+			c = 0x203E6c32;	/* "2l> " */
+#endif
 #else /* riscv */
 			c = 0x203E3233;	/* "32> " */
 #endif
