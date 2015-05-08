@@ -167,9 +167,23 @@ begin
     -- Block RAM
     dmem_bram_write <=
       dmem_addr_strobe and dmem_write when dmem_addr(31) /= '1' else '0';
-    G_bram_mi32:
-    if C_arch = ARCH_MI32 generate
-    bram_mi32: entity work.bram_mi32
+    G_bram_mi32_eb:
+    if C_arch = ARCH_MI32 and C_big_endian generate
+    bram_mi32_eb: entity work.bram_mi32_eb
+    generic map (
+	C_write_protect_bootloader => C_write_protect_bootloader,
+	C_mem_size => C_mem_size
+    )
+    port map (
+	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
+	dmem_write => dmem_bram_write,
+	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
+    );
+    end generate;
+    G_bram_mi32_el:
+    if C_arch = ARCH_MI32 and not C_big_endian generate
+    bram_mi32_el: entity work.bram_mi32_el
     generic map (
 	C_write_protect_bootloader => C_write_protect_bootloader,
 	C_mem_size => C_mem_size
