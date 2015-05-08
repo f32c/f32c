@@ -33,19 +33,19 @@
         <Source name="../../../cpu/shift.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../generic/reg1w2r.vhd" type="VHDL" type_short="VHDL" excluded="TRUE">
-            <Options/>
-        </Source>
         <Source name="../../../generic/bptrace.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../generic/glue_bram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../generic/bram_rv32.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../generic/bram_mi32_el.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../generic/bram_mi32.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../generic/bram_mi32_eb.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../generic/bram_rv32.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../soc/sio.vhd" type="VHDL" type_short="VHDL">
@@ -63,11 +63,11 @@
         <Source name="../../../lattice/pll.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../lattice/ulx2s_toplevel_bram.vhd" type="VHDL" type_short="VHDL">
-            <Options top_module="glue"/>
-        </Source>
         <Source name="../../../lattice/reg1w2r.vhd" type="VHDL" type_short="VHDL">
             <Options/>
+        </Source>
+        <Source name="../../../lattice/ulx2s_toplevel_bram.vhd" type="VHDL" type_short="VHDL">
+            <Options top_module="glue"/>
         </Source>
         <Source name="../constraints/ulx2s.lpf" type="Logic Preference" type_short="LPF">
             <Options/>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<BaliProject version="3.0" title="project" device="LFXP2-8E-6TN144C" default_implementation="project">
+<BaliProject version="3.2" title="project" device="LFXP2-8E-6TN144C" default_implementation="project">
     <Options/>
     <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Timing">
         <Options top="glue"/>
@@ -42,13 +42,13 @@
         <Source name="../../../generic/glue_bram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../generic/bram_mi32.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../generic/bram_mi32_eb.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../generic/bram_mi32_el.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../generic/bram_rv32.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../generic/reg1w2r.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../soc/sio.vhd" type="VHDL" type_short="VHDL">
@@ -64,6 +64,9 @@
             <Options/>
         </Source>
         <Source name="../../../lattice/pll.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../lattice/reg1w2r.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../constraints/ulx2s.lpf" type="Logic Preference" type_short="LPF">
