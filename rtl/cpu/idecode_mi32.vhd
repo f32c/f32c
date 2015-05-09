@@ -114,7 +114,7 @@ begin
 	-- Default output values, overrided later
 	unsupported_instr <= false;
 	branch_cycle <= false;
-	branch_likely <= false; -- should be don't care
+	branch_likely <= instruction(30) = '1';
 	jump_cycle <= false;
 	jump_register <= false; -- should be don't care
 	target_addr <= "-----";
