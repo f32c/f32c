@@ -760,7 +760,8 @@ begin
 		    ID_EX_jump_register <=
 		      C_arch = ARCH_RV32 and ID_jump_register;
 		    ID_EX_branch_cycle <= ID_branch_cycle;
-		    ID_EX_branch_likely <= ID_branch_likely;
+		    ID_EX_branch_likely <= C_branch_likely and
+		      ID_branch_likely and ID_branch_cycle;
 		    ID_EX_branch_delay_follows <= C_arch = ARCH_MI32
 		      and (ID_branch_cycle or ID_jump_cycle);
 		    ID_EX_predict_taken <= ID_predict_taken;
