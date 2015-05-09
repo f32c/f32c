@@ -164,7 +164,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_bpredict_score: std_logic_vector(1 downto 0);
     signal ID_EX_writeback_addr, ID_EX_cop0_addr: std_logic_vector(4 downto 0);
     signal ID_EX_reg1_data, ID_EX_reg2_data: std_logic_vector(31 downto 0);
-    signal ID_EX_immediate, ID_EX_alu_op2: std_logic_vector(31 downto 0);
+    signal ID_EX_alu_op2: std_logic_vector(31 downto 0);
     signal ID_EX_fwd_ex_reg1, ID_EX_fwd_ex_reg2, ID_EX_fwd_ex_alu_op2: boolean;
     signal ID_EX_fwd_mem_reg1, ID_EX_fwd_mem_reg2: boolean;
     signal ID_EX_fwd_mem_alu_op2, ID_EX_slt_signed: boolean;
@@ -721,7 +721,6 @@ begin
 		    ID_EX_reg1_data <= (others => '-');
 		    ID_EX_reg2_data <= (others => '-');
 		    ID_EX_alu_op2 <= (others => '-');
-		    ID_EX_immediate <= (others => '-');
 		    ID_EX_cop0_addr <= (others => '-');
 		    ID_EX_op_major <= OP_MAJOR_ALU;
 		    ID_EX_op_minor <= (others => '-');
@@ -735,7 +734,6 @@ begin
 		    ID_EX_reg1_data <= ID_reg1_eff_data;
 		    ID_EX_reg2_data <= ID_reg2_eff_data;
 		    ID_EX_alu_op2 <= ID_alu_op2;
-		    ID_EX_immediate <= ID_immediate;
 		    ID_EX_cop0_addr <= IF_ID_instruction(15 downto 11);
 		    ID_EX_slt_signed <= ID_slt_signed;
 		    ID_EX_op_major <= ID_op_major;
@@ -873,7 +871,7 @@ begin
     );
 
     -- compute shift amount and function
-    EX_2bit_add <= EX_eff_reg1(1 downto 0) + ID_EX_immediate(1 downto 0);
+    EX_2bit_add <= EX_eff_reg1(1 downto 0) + ID_EX_alu_op2(1 downto 0);
     EX_mem_align_shamt <= "00" when ID_EX_mem_size(1) = '1' else
       EX_2bit_add when not C_big_endian else
       not(EX_2bit_add(1)) & '0' when ID_EX_mem_size = "01" else
