@@ -86,7 +86,6 @@ architecture Behavioral of sio is
     -- receive logic
     signal R_rxd, R_break: std_logic;
     signal rx_tickcnt: std_logic_vector(3 downto 0);
-    signal rx_running: std_logic;
     signal rx_des: std_logic_vector(7 downto 0);
     signal rx_phase: std_logic_vector(3 downto 0);
     signal rx_byte: std_logic_vector(7 downto 0);
@@ -99,13 +98,13 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) then
-	    rx_running <= rxd;
+	    R_rxd <= rxd;
 	    if ce = '1' and bus_write = '1' and byte_sel(0) = '1' then
 		tx_running <= bus_in(0);
 	    end if;
 	end if;
     end process;
-    bus_out <= "-------------------------------" & rx_running;
+    bus_out <= "-------------------------------" & R_rxd;
     txd <= tx_running;
     end generate;
 
