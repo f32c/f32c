@@ -62,7 +62,7 @@ entity timer is
 end timer;
 
 architecture arch of timer is
-    constant C_registers: integer := 16; -- total number of timer registers
+    constant C_registers: integer := 15; -- total number of timer registers
     constant C_ext_registers: integer := 3; -- total number of extended registers by C_pres bits
     -- normal registers
     type timer_reg_type is array (C_registers-1 downto 0) of std_logic_vector(C_bits-1 downto 0);
