@@ -122,7 +122,8 @@ begin
 	slt_signed <= false; -- should be don't care
 	op_major <= OP_MAJOR_ALU;
 	op_minor <= OP_MINOR_ADD;
-	use_immediate <= false; -- should be dont' care
+	use_immediate <= instruction(30 downto 29) = "01" or
+	  instruction(31) = '1';
 	ignore_reg2 <= instruction(20 downto 16) = MI32_REG_ZERO;
 	cmov_cycle <= false;
 	cmov_condition <= false; -- should be don't care
