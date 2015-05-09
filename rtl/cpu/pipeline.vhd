@@ -108,7 +108,6 @@ architecture Behavioral of pipeline is
 
     -- pipeline stage 1: instruction fetch
     signal IF_PC, IF_PC_next, IF_PC_ext_next: std_logic_vector(31 downto 2);
-    signal IF_PC_incr: std_logic;
     signal IF_bpredict_index: std_logic_vector(12 downto 0);
     signal IF_bpredict_re: std_logic;
     signal IF_instruction: std_logic_vector(31 downto 0);
