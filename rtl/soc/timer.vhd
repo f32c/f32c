@@ -39,6 +39,7 @@ entity timer is
         C_ocps: integer range 0 to 4 := 2;  -- number of ocp units 0-4
         C_icps: integer range 0 to 2 := 2;  -- number of icp units 0-2
         C_period_frac: integer range 0 to 16 := 0;     -- period resolution enhancement bits (1-16)
+        C_have_afc: boolean := true; -- if you don't need AFC, set to false and save some LUTs
         -- setting C_period_frac to 0 will disable both period and frac
         -- period and frac registers can be used for AFC limits
         C_pres: integer range 0 to 32 := 10; -- number of prescaler bits (0-32)
@@ -172,7 +173,11 @@ architecture arch of timer is
     
     signal internal_ocp: std_logic_vector(C_ocps-1 downto 0); -- non-inverted ocp signal
     
-    constant C_afc_joint_register : boolean := true; -- afc joint register is true combinatorial logico
+    -- both true and false should provide the same result
+    -- with different number of LUTs used
+    constant C_afc_joint_register : boolean := true;
+    -- true: afc joint register is true combinatorial logic
+    -- false: if optimizer is good it will produce combinatorial logic
     
     -- function to join all interrupt bits into one
     impure function interrupt(n_ocps, n_icps: integer) return std_logic is
@@ -190,18 +195,18 @@ architecture arch of timer is
     end interrupt;
 
 begin
-    with addr select
+    with conv_integer(addr) select
       bus_out <=
         ext(R_counter(C_bits+C_pres-1 downto C_pres), 32)
-          when conv_std_logic_vector(C_counter,4),
-        ext(R_icp(0),32)
-          when conv_std_logic_vector(C_icpn(0),4),
-        ext(R_icp(1),32)
-          when conv_std_logic_vector(C_icpn(1),4),
-        ext(R_increment,32) -- exception:
-          when conv_std_logic_vector(C_increment,4),       -- increment direct read R (not Rtmp)
+          when C_counter,
+        ext(R_icp(0),32) -- if C_icps >= 1
+          when C_icpn(0),
+        ext(R_icp(1),32) -- if C_icps >= 2
+          when C_icpn(1),
+        ext(R_increment,32)  -- exception:
+          when C_increment,  -- increment direct read R (not Rtmp)
         ext(Rtmp_control(C_ctrl_bits-1 downto C_iocps_max) & Rintr,32)
-          when conv_std_logic_vector(C_control,4),
+          when C_control,
         ext(Rtmp(conv_integer(addr)),32)
           when others;
     
@@ -217,16 +222,18 @@ begin
                              R_fractional - ('0' & R(C_fractional)(C_period_frac-1 downto 0)) when others;
     end generate;
     
-    -- extended increment and AFC limits
+    -- extended increment
     R_increment <= Rx(C_xincrement) & R(C_increment);
-    R_inc_min   <= Rx(C_xinc_min) & R(C_inc_min);
-    R_inc_max   <= Rx(C_xinc_max) & R(C_inc_max);
 
-    -- AFC increment control
-    R_increment_faster <= R_increment+1;
-    R_increment_slower <= R_increment-1;
+    -- AFC increment control and extended limits
+    afc_faster_slower: if C_have_afc generate
+      R_inc_min <= Rx(C_xinc_min) & R(C_inc_min);
+      R_inc_max <= Rx(C_xinc_max) & R(C_inc_max);
+      R_increment_faster <= R_increment+1;
+      R_increment_slower <= R_increment-1;
+    end generate;
 
-    joint_register_afc: if C_afc_joint_register generate
+    joint_register_afc: if C_have_afc and C_afc_joint_register generate
     -- takes more LE than process_var_afc
     for_icp_afc: for i in 0 to C_icps-1 generate
         R_icp_wants_faster(i) <= '1' 
@@ -246,7 +253,7 @@ begin
     R_slower <= '1' when R_increment > R_inc_min and R_icp_wants_slower /= 0 else '0';
     end generate;
     
-    process_var_afc: if not C_afc_joint_register generate
+    process_var_afc: if C_have_afc and not C_afc_joint_register generate
       -- looks like it could be written shorter
       process(clk)
         variable faster : std_logic;
@@ -462,7 +469,7 @@ begin
         -- special case for AFC
         -- AFC auto-adjustment of the increment step using ICP
         -- R(C_increment) contains lower bits
-        if i = C_increment then
+        if C_have_afc and i = C_increment then
           if R_faster = '1' and R_slower = '0' then
             R(C_increment) <= R_increment_faster(C_bits-1 downto 0);
           end if;
@@ -486,7 +493,7 @@ begin
         end if;
         -- special case for AFC
         -- Rx(C_xincrement) contains extended higher bits
-        if i = C_xincrement then
+        if C_have_afc and i = C_xincrement then
           if R_faster = '1' and R_slower = '0' then
             Rx(i) <= R_increment_faster(C_bits+C_pres-1 downto C_bits);
           end if;
@@ -655,7 +662,6 @@ end;
 -- [x] flags to enable/disable icp/ocp interrupts
 -- [x] extend afc limit registers, remove C_afc_limit_shift
 -- [ ] 8-bit write maybe doesn't work for extended registers - need testing
--- [ ] using the IEEE numeric.std package
 -- [x] reorder registers: ocp rising addr, icp falling addr 
 -- [x] AFC setpoint in icp hidden memory, one ICP sufficient for AFC
 -- [x] inverse AFC
@@ -664,3 +670,4 @@ end;
 -- [ ] allow interrupt at stop of ocp
 -- [ ] separate register write for control word
 -- [ ] allow shared use of ocp and icp registers (e.g. 3 ocp and 1 icp)
+-- [ ] support bus_out for 0-2 icps (now errors if C_icps not 2)
