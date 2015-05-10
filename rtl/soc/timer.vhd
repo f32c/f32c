@@ -40,6 +40,8 @@ entity timer is
         C_icps: integer range 0 to 2 := 2;  -- number of icp units 0-2
         C_period_frac: integer range 0 to 16 := 0;     -- period resolution enhancement bits (1-16)
         C_have_afc: boolean := true; -- if you don't need AFC, set to false and save some LUTs
+        C_afc_immediate_sp: boolean := true; -- set to true to save some LUTs, setpoint will be compared against Rtmp instead of R - apply not needed 
+        C_have_intr: boolean := true;
         -- setting C_period_frac to 0 will disable both period and frac
         -- period and frac registers can be used for AFC limits
         C_pres: integer range 0 to 32 := 10; -- number of prescaler bits (0-32)
@@ -154,7 +156,7 @@ architecture arch of timer is
 
     -- input capture related registers
     type icp_reg_type is array (0 to C_icps-1) of std_logic_vector(C_bits-1 downto 0);
-    -- signal R_icp: icp_reg_type;
+    signal R_icp: icp_reg_type;
     constant C_icp_sync_depth: integer := 3; -- number of shift register stages (default 3) for icp clock synchronization
     type T_icp_sync_shift is array (0 to C_icps-1) of std_logic_vector(C_icp_sync_depth-1 downto 0); -- icp synchronizer type
     signal R_icp_sync_shift: T_icp_sync_shift;
@@ -224,7 +226,7 @@ architecture arch of timer is
         -- input capture value is read (from R)
         -- setpoint in Rtmp is unreadable
         if adr = C_icpn(i) then
-          retval := ext(R(C_icpn(i)), 32);
+          retval := ext(R_icp(i), 32);
         end if;
       end loop;
       return retval;
@@ -257,7 +259,7 @@ begin
     end generate;
 
     faster_slower_afc: if C_have_afc and C_afc_joint_register generate
-    -- takes more LE than process_var_afc
+    -- takes more LUT than old_faster_slower_afc?
     for_icp_afc: for i in 0 to C_icps-1 generate
         R_icp_wants_faster(i) <= '1' 
           when R_icp_hit(i) = '1' -- icp hit
@@ -440,20 +442,27 @@ begin
         ) else '0';
 
     -- process based on clock synchronous icp
-    --process(clk)
-    --begin
-    -- icp-initiated copying of R_counter register must be
-    -- clock synchronous. When content of R_counter
-    -- becomes stable then it can be copied to R_icp(i)
-    --if rising_edge(clk) then
-    --  if R_icp_hit(i) = '1' then
-    --    R_icp(i) <= R_counter(C_bits+C_pres-1 downto C_pres);
-    --  end if;
-    --end if;
-    --end process;
+    process(clk)
+    begin
+      -- icp-initiated copying of R_counter register must be
+      -- clock synchronous. When content of R_counter
+      -- becomes stable then it can be copied to R_icp(i)
+      if rising_edge(clk) then
+        if R_icp_hit(i) = '1' then
+          R_icp(i) <= R_counter(C_bits+C_pres-1 downto C_pres);
+        end if;
+      end if;
+    end process;
 
-    -- setpoint (kept it Rtmp) with actual ICP value (kept in R) comparison used for AFC
-    R_icp_lt_sp(i) <= '1' when R(C_icpn(i)) < Rtmp(C_icpn(i)) else '0'; -- test: is icp less than setpoint?
+    applied_sp: if C_have_afc and not C_afc_immediate_sp generate
+    -- AFC: compare actual ICP value (R_icp) with setpoint (R), need apply to activate
+    R_icp_lt_sp(i) <= '1' when R_icp(i) < R(C_icpn(i)) else '0'; -- test: is icp less than setpoint?
+    end generate;
+
+    immediate_sp: if C_have_afc and C_afc_immediate_sp generate
+    -- AFC: compare actual ICP value (R_icp) with setpoint (Rtmp), immediately active, no apply
+    R_icp_lt_sp(i) <= '1' when R_icp(i) < Rtmp(C_icpn(i)) else '0'; -- test: is icp less than setpoint?
+    end generate;
     
     -- *** ICP INTERRUPT ***
     -- write cycle with bits 0 to Rtmp(C_control) register will reset interrupt flag
@@ -491,15 +500,17 @@ begin
         else
           -- if not commit (begin)
           -- if ICP hit, copy counter value to active register
-          for j in 0 to C_icps-1 loop
-            if i = C_icpn(j) then
-              if R_icp_hit(j) = '1' then
-                R(i) <= R_counter(C_bits+C_pres-1 downto C_pres);
-              end if;
-            end if;
-          end loop;
+          -- emard: doin this here is dirty but allows to write ICP
+          --for j in 0 to C_icps-1 loop
+          --  if i = C_icpn(j) then
+          --    if R_icp_hit(j) = '1' then
+          --      R(i) <= R_counter(C_bits+C_pres-1 downto C_pres);
+          --    end if;
+          --  end if;
+          --end loop;
+
           -- special case for AFC
-          -- AFC auto-adjustment of the increment step using ICP
+          -- AFC of the increment step using ICP
           -- R(C_increment) contains lower bits
           if C_have_afc then
             if i = C_increment then
