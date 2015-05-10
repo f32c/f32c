@@ -62,7 +62,13 @@ entity timer is
 end timer;
 
 architecture arch of timer is
-    constant C_registers: integer := 15; -- total number of timer registers
+    constant C_addr_bits: integer := 4; -- number of register address bits
+    constant C_registers: integer := 16; -- total number of timer registers
+    -- register R(0) counter is kept in separated register so it
+    -- can be incremented in  processs block seprate from R(x)
+    -- R(15) is apply and it doesn't need to be kept in memory
+    -- however we will create all 16 registers and leave it up
+    -- to optimizer to reduce unused rather than make code more complex
     constant C_ext_registers: integer := 3; -- total number of extended registers by C_pres bits
     -- normal registers
     type timer_reg_type is array (C_registers-1 downto 0) of std_logic_vector(C_bits-1 downto 0);
@@ -200,9 +206,9 @@ begin
         ext(R_counter(C_bits+C_pres-1 downto C_pres), 32)
           when C_counter,
         ext(R_icp(0),32) -- if C_icps >= 1
-          when C_icpn(0),
+          when 12,  -- C_icpn(0), -- 12,
         ext(R_icp(1),32) -- if C_icps >= 2
-          when C_icpn(1),
+          when 13,  -- C_icpn(1), -- 13,
         ext(R_increment,32)  -- exception:
           when C_increment,  -- increment direct read R (not Rtmp)
         ext(Rtmp_control(C_ctrl_bits-1 downto C_iocps_max) & Rintr,32)
@@ -210,7 +216,7 @@ begin
         ext(Rtmp(conv_integer(addr)),32)
           when others;
     
-    sign <= R(C_counter)(C_bits-1); -- output sign (MSB bit of the counter)
+    sign <= R_counter(C_bits+C_pres-1); -- output sign (MSB bit of the counter)
     
     -- this will save us some typing
     commit <= '1' when ce = '1' and bus_write = '1' and addr = C_apply else '0';
@@ -233,7 +239,7 @@ begin
       R_increment_slower <= R_increment-1;
     end generate;
 
-    joint_register_afc: if C_have_afc and C_afc_joint_register generate
+    faster_slower_afc: if C_have_afc and C_afc_joint_register generate
     -- takes more LE than process_var_afc
     for_icp_afc: for i in 0 to C_icps-1 generate
         R_icp_wants_faster(i) <= '1' 
@@ -253,7 +259,7 @@ begin
     R_slower <= '1' when R_increment > R_inc_min and R_icp_wants_slower /= 0 else '0';
     end generate;
     
-    process_var_afc: if C_have_afc and not C_afc_joint_register generate
+    old_faster_slower_afc: if C_have_afc and not C_afc_joint_register generate
       -- looks like it could be written shorter
       process(clk)
         variable faster : std_logic;
@@ -462,7 +468,7 @@ begin
     begin
       if rising_edge(clk) then
         if commit = '1' then
-          if bus_in(i) = '1' then -- and byte_sel(i/8) = '1'
+          if bus_in(i) = '1' and byte_sel(i/8) = '1' then
             R(i) <= Rtmp(i);
           end if;
         end if;
