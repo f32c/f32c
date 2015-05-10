@@ -16,7 +16,8 @@ vhdfiles = \
 ../../../xilinx/pll_25M_112M5.vhd \
 ../../../xilinx/pll_25M_81M25.vhd \
 ../../../generic/glue_bram.vhd \
-../../../generic/bram_mi32.vhd \
+../../../generic/bram_mi32_eb.vhd \
+../../../generic/bram_mi32_el.vhd \
 ../../../generic/bram_rv32.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
