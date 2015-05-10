@@ -78,10 +78,10 @@ architecture arch of gpio is
 
 begin
     -- CPU core reads registers
-    with addr select
+    with conv_integer(addr) select
       bus_out <= 
         ext(gpio_phys, 32)
-          when conv_std_logic_vector(C_input, C_addr_bits),
+          when C_input,
         ext(R(conv_integer(addr)),32)
           when others;
 
