@@ -39,8 +39,8 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 112;
+	-- Main clock: 81 or 112
+	C_clk_freq: integer := 81;
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
@@ -62,10 +62,19 @@ architecture Behavioral of glue is
     signal btns: std_logic_vector(1 downto 0);
 begin
     -- clock synthesizer: Altera specific
+    clk112: if C_clk_freq = 112 generate
     clkgen: entity work.pll_25M_112M5
     port map(
       inclk0 => clk_25m, c0 => clk
     );
+    end generate;
+
+    clk81: if C_clk_freq = 81 generate
+    clkgen: entity work.pll_25M_81M25
+    port map(
+      inclk0 => clk_25m, c0 => clk
+    );
+    end generate;
 
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
