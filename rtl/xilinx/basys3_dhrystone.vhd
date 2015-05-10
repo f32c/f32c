@@ -45,7 +45,7 @@ entity glue is
 	-- ISA options
 	C_arch: integer := ARCH_MI32;
 	C_big_endian: boolean := false;
-	C_mult_enable: boolean := false;
+	C_mult_enable: boolean := true;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
 	C_ll_sc: boolean := false;
