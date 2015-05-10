@@ -154,7 +154,7 @@ architecture arch of timer is
 
     -- input capture related registers
     type icp_reg_type is array (0 to C_icps-1) of std_logic_vector(C_bits-1 downto 0);
-    signal R_icp: icp_reg_type;
+    -- signal R_icp: icp_reg_type;
     constant C_icp_sync_depth: integer := 3; -- number of shift register stages (default 3) for icp clock synchronization
     type T_icp_sync_shift is array (0 to C_icps-1) of std_logic_vector(C_icp_sync_depth-1 downto 0); -- icp synchronizer type
     signal R_icp_sync_shift: T_icp_sync_shift;
@@ -199,22 +199,39 @@ architecture arch of timer is
       end loop;
       return intr;
     end interrupt;
+    
+    -- function to return value to the bus when reading registers
+    -- flexible for variable number of icps
+    impure function busoutput(a: std_logic_vector(C_addr_bits-1 downto 0)) return std_logic_vector is
+      variable i, adr: integer;
+      variable retval: std_logic_vector(31 downto 0);
+    begin
+      adr := conv_integer(a);
+      retval := ext(Rtmp(adr),32); -- default value
+      if adr = C_counter then
+        -- counter is separate from R
+        retval := ext(R_counter(C_bits+C_pres-1 downto C_pres), 32);
+      end if;
+      if adr = C_increment then
+        -- increment is separate from R
+        retval := ext(R_increment, 32);
+      end if;
+      if adr = C_control then
+        -- control has extended bits - separate from R
+        retval := ext(Rtmp_control(C_ctrl_bits-1 downto C_iocps_max) & Rintr,32);
+      end if;
+      for i in 0 to C_icps-1 loop
+        -- input capture value is read (from R)
+        -- setpoint in Rtmp is unreadable
+        if adr = C_icpn(i) then
+          retval := ext(R(C_icpn(i)), 32);
+        end if;
+      end loop;
+      return retval;
+    end busoutput;
 
 begin
-    with conv_integer(addr) select
-      bus_out <=
-        ext(R_counter(C_bits+C_pres-1 downto C_pres), 32)
-          when C_counter,
-        ext(R_icp(0),32) -- if C_icps >= 1
-          when 12,  -- C_icpn(0), -- 12,
-        ext(R_icp(1),32) -- if C_icps >= 2
-          when 13,  -- C_icpn(1), -- 13,
-        ext(R_increment,32)  -- exception:
-          when C_increment,  -- increment direct read R (not Rtmp)
-        ext(Rtmp_control(C_ctrl_bits-1 downto C_iocps_max) & Rintr,32)
-          when C_control,
-        ext(Rtmp(conv_integer(addr)),32)
-          when others;
+    bus_out <= busoutput(addr);
     
     sign <= R_counter(C_bits+C_pres-1); -- output sign (MSB bit of the counter)
     
@@ -261,6 +278,7 @@ begin
     
     old_faster_slower_afc: if C_have_afc and not C_afc_joint_register generate
       -- looks like it could be written shorter
+      -- optimizer should recognize this as combinatorial logic
       process(clk)
         variable faster : std_logic;
         variable slower : std_logic;
@@ -422,20 +440,20 @@ begin
         ) else '0';
 
     -- process based on clock synchronous icp
-    process(clk)
-    begin
+    --process(clk)
+    --begin
     -- icp-initiated copying of R_counter register must be
     -- clock synchronous. When content of R_counter
     -- becomes stable then it can be copied to R_icp(i)
-    if rising_edge(clk) then
-      if R_icp_hit(i) = '1' then
-        R_icp(i) <= R_counter(C_bits+C_pres-1 downto C_pres);
-      end if;
-    end if;
-    end process;
+    --if rising_edge(clk) then
+    --  if R_icp_hit(i) = '1' then
+    --    R_icp(i) <= R_counter(C_bits+C_pres-1 downto C_pres);
+    --  end if;
+    --end if;
+    --end process;
 
-    -- this comparison is used for AFC
-    R_icp_lt_sp(i) <= '1' when R_icp(i) < R(C_icpn(i)) else '0'; -- test: is icp less than setpoint?
+    -- setpoint (kept it Rtmp) with actual ICP value (kept in R) comparison used for AFC
+    R_icp_lt_sp(i) <= '1' when R(C_icpn(i)) < Rtmp(C_icpn(i)) else '0'; -- test: is icp less than setpoint?
     
     -- *** ICP INTERRUPT ***
     -- write cycle with bits 0 to Rtmp(C_control) register will reset interrupt flag
@@ -457,7 +475,6 @@ begin
         end if;
       end if;
     end process;
-
     end generate; -- end input capture
     
     -- writing from temporary registers to active registers
@@ -471,17 +488,30 @@ begin
           if bus_in(i) = '1' and byte_sel(i/8) = '1' then
             R(i) <= Rtmp(i);
           end if;
-        end if;
-        -- special case for AFC
-        -- AFC auto-adjustment of the increment step using ICP
-        -- R(C_increment) contains lower bits
-        if C_have_afc and i = C_increment then
-          if R_faster = '1' and R_slower = '0' then
-            R(C_increment) <= R_increment_faster(C_bits-1 downto 0);
+        else
+          -- if not commit (begin)
+          -- if ICP hit, copy counter value to active register
+          for j in 0 to C_icps-1 loop
+            if i = C_icpn(j) then
+              if R_icp_hit(j) = '1' then
+                R(i) <= R_counter(C_bits+C_pres-1 downto C_pres);
+              end if;
+            end if;
+          end loop;
+          -- special case for AFC
+          -- AFC auto-adjustment of the increment step using ICP
+          -- R(C_increment) contains lower bits
+          if C_have_afc then
+            if i = C_increment then
+              if R_faster = '1' and R_slower = '0' then
+                R(i) <= R_increment_faster(C_bits-1 downto 0);
+              end if;
+              if R_slower = '1' and R_faster = '0' then
+                R(i) <= R_increment_slower(C_bits-1 downto 0);
+              end if;
+            end if;
           end if;
-          if R_slower = '1' and R_faster = '0' then
-            R(C_increment) <= R_increment_slower(C_bits-1 downto 0);
-          end if;
+          -- if not commit (end)
         end if;
       end if;
     end process;
