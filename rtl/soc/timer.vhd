@@ -193,12 +193,14 @@ architecture arch of timer is
       variable intr: std_logic;
     begin
       intr := '0';
+      if C_have_intr then
       for i in 0 to n_ocps-1 loop
         intr := intr or (R_control(C_ocpn_ie(i)) and Rintr(C_ocpn_intr(i)));
       end loop;
       for i in 0 to n_icps-1 loop
         intr := intr or (R_control(C_icpn_ie(i)) and Rintr(C_icpn_intr(i)));
       end loop;
+      end if;
       return intr;
     end interrupt;
     
@@ -368,6 +370,7 @@ begin
     ocp(i) <= internal_ocp(i) xor R_control(C_ocpn_xor(i)); -- output optionally inverted
     ocp_enable(i) <= R_control(C_ocpn_enable(i));
 
+    ocp_interrupt: if C_have_intr generate
     -- ocp synchronizer (2-stage shift register)
     process(clk)
     begin
@@ -404,6 +407,8 @@ begin
         end if;
       end if;
     end process;
+    end generate; -- end ocp_interrupt
+    
     end generate; -- end output_compare
 
     -- warning - asynchronous external icp rising edge
@@ -454,16 +459,7 @@ begin
       end if;
     end process;
 
-    applied_sp: if C_have_afc and not C_afc_immediate_sp generate
-    -- AFC: compare actual ICP value (R_icp) with setpoint (R), need apply to activate
-    R_icp_lt_sp(i) <= '1' when R_icp(i) < R(C_icpn(i)) else '0'; -- test: is icp less than setpoint?
-    end generate;
-
-    immediate_sp: if C_have_afc and C_afc_immediate_sp generate
-    -- AFC: compare actual ICP value (R_icp) with setpoint (Rtmp), immediately active, no apply
-    R_icp_lt_sp(i) <= '1' when R_icp(i) < Rtmp(C_icpn(i)) else '0'; -- test: is icp less than setpoint?
-    end generate;
-    
+    icp_interrupt: if C_have_intr generate
     -- *** ICP INTERRUPT ***
     -- write cycle with bits 0 to Rtmp(C_control) register will reset interrupt flag
     -- no write to apply register is needed to clear the flag
@@ -484,6 +480,18 @@ begin
         end if;
       end if;
     end process;
+    end generate; -- end icp_interrupt
+
+    applied_sp: if C_have_afc and not C_afc_immediate_sp generate
+    -- AFC: compare actual ICP value (R_icp) with setpoint (R), need apply to activate
+    R_icp_lt_sp(i) <= '1' when R_icp(i) < R(C_icpn(i)) else '0'; -- test: is icp less than setpoint?
+    end generate;
+
+    immediate_sp: if C_have_afc and C_afc_immediate_sp generate
+    -- AFC: compare actual ICP value (R_icp) with setpoint (Rtmp), immediately active, no apply
+    R_icp_lt_sp(i) <= '1' when R_icp(i) < Rtmp(C_icpn(i)) else '0'; -- test: is icp less than setpoint?
+    end generate;
+
     end generate; -- end input capture
     
     -- writing from temporary registers to active registers
