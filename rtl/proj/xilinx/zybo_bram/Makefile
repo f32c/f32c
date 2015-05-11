@@ -13,7 +13,8 @@ SHELL = /bin/bash
 vhdfiles = \
 ../../../xilinx/zybo_toplevel_bram.vhd \
 ../../../generic/glue_bram.vhd \
-../../../generic/bram_mi32.vhd \
+../../../generic/bram_mi32_eb.vhd \
+../../../generic/bram_mi32_el.vhd \
 ../../../generic/bram_rv32.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
@@ -24,11 +25,10 @@ vhdfiles = \
 ../../../cpu/defs_f32c.vhd \
 ../../../cpu/defs_mi32.vhd \
 ../../../cpu/defs_rv32.vhd \
-../../../cpu/debug.vhd \
-../../../soc/sio.vhd \
 ../../../cpu/idecode_mi32.vhd \
 ../../../cpu/idecode_rv32.vhd \
-../../../xilinx/pll_25M_112M5.vhd \
+../../../cpu/debug.vhd \
+../../../soc/sio.vhd \
 ../../../soc/gpio.vhd \
 ../../../soc/timer.vhd 
 
