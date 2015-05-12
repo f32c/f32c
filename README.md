@@ -13,14 +13,14 @@ includes a timer and a UART occupies only 1048 6-input LUTs, while still
 being able to execute gcc-generated code when synthesized in the most
 compact configuration which consumes just 697 LUTs.
 
-The RTL code also includes modules such as a simple multi-port SRAM
+The RTL code also includes modules such as a multi-port SRAM
 controller, video framebuffer with PAL modulator, SPI, UART, PCM audio,
 GPIO and PWM outputs, as well as glue logic tailored for numerous popular
 FPGA development boards from various manufacturers.
 
 Pre-compiled gcc-based toolchains for Windows, OS-X and Linux can be
 found at http://www.nxlab.fer.hr/fpgarduino, along with pre-built
-demo bitstreams for a dozen of common FPGA boards, and further details
+demo bitstreams for a few common FPGA boards and further details
 on how to conveniently generate executables using the Arduino IDE.
 
 All VHDL modules are BSD licensed.  The majority of software libraries
