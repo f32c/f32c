@@ -19,9 +19,9 @@ GPIO and PWM outputs, as well as glue logic tailored for numerous popular
 FPGA development boards from various manufacturers.
 
 Pre-compiled gcc-based toolchains for Windows, OS-X and Linux can be
-found at http://www.nxlab.fer.hr/fpgarduino, along with pre-built
-demo bitstreams for a few common FPGA boards and further details
-on how to conveniently generate executables using the Arduino IDE.
+found at http://www.nxlab.fer.hr/fpgarduino, together with pre-built
+demo FPGA bitstreams and further instructions on how to compile
+RISC-V / MIPS executables using the Arduino IDE.
 
 All VHDL modules are BSD licensed.  The majority of software libraries
 are borrowed from FreeBSD, while some originate from other projects and
