@@ -22,3 +22,7 @@ Pre-compiled gcc-based toolchains for Windows, OS-X and Linux can be
 found at http://www.nxlab.fer.hr/fpgarduino , along with pre-built
 demo bitstreams for a dozen of common FPGA boards, and further details
 on how to coveniently generate executables using the Arduino IDE.
+
+All VHDL modules are BSD licensed.  The majority of software libraries
+are borrowed from FreeBSD, with some originate from other projects and
+may bear a MIT-style license.
