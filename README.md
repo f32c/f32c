@@ -1,7 +1,7 @@
 # f32c
 
 f32c is a retargetable 32-bit scalar 5-stage integer processor
-pipeline which can be configured to execute subsets of either RISC-V
+pipeline which can execute subsets of either RISC-V
 or MIPS instruction sets.  The core is implemented in parametrized
 VHDL which permits synthesis with different area / speed tradeoffs,
 and includes a branch predictor, exception handling control block,
