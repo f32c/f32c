@@ -8,7 +8,7 @@ and includes a branch predictor, exception handling control block,
 and optional direct-mapped caches.  There is no MMU.
 Configurable options include:
 
-'''
+```
 C_arch               RISC-V or MIPS ISA
 C_big_endian         bus endianess
 C_mult_enable        synthesize multipler unit
@@ -22,7 +22,7 @@ C_result_forwarding  synthesize result bypasses
 C_load_aligner 	     synthesize load aligner
 C_full_shifter 	     pipelined instead of iterative shifer
 C_debug              synthesize single-stepping debug module
-'''
+```
 
 In synthetic integer benchmarks the core yields 1.63 DMIPS/Mhz and 2.31
 CoreMark/MHz.  A performance-tuned f32c SoC which includes a timer
