@@ -1405,12 +1405,17 @@ begin
 	"10" & conv_std_logic_vector(100, 13) when 33,
 	"01" & conv_std_logic_vector(125, 13) when 62,
 	"10" & conv_std_logic_vector(200, 13) when 66,
+	"10" & conv_std_logic_vector(200, 13) when 67,
 	"11" & conv_std_logic_vector(325, 13) when 81,
 	"01" & conv_std_logic_vector(175, 13) when 87,
 	"01" & conv_std_logic_vector(225, 13) when 112,
 	"10" & conv_std_logic_vector(400, 13) when 133,
 	"01" & conv_std_logic_vector(275, 13) when 137,
 	"10" & conv_std_logic_vector(500, 13) when 166,
+	"10" & conv_std_logic_vector(500, 13) when 167,
+	"10" & conv_std_logic_vector(700, 13) when 233,
+	"10" & conv_std_logic_vector(800, 13) when 266,
+	"10" & conv_std_logic_vector(800, 13) when 267,
 	"00" & conv_std_logic_vector(C_clk_freq, 13) when others;
     R_cop0_config(15) <= '1' when C_big_endian else '0';
     R_cop0_config(14) <= '1' when C_arch = ARCH_RV32 else '0';
