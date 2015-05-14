@@ -27,6 +27,8 @@
 
 #include <io.h>
 
+extern __dead2 void binboot(void);
+
 
 #define	pchar(c)							\
 	do {								\
@@ -146,6 +148,10 @@ loop:
 #ifdef ROM_LOADER
 			if (c == -1) /* Initiate binary load sequence? */
 				return;
+#endif
+#ifdef BIN_LOADER
+			if (c == -1) /* Initiate binary load sequence? */
+				__asm __volatile__("j binboot");
 #endif
 			if (c == '\r') /* CR ? */
 				goto prompt;

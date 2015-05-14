@@ -76,8 +76,7 @@ sio_getch()
 
 
 __dead2 void
-__attribute__((section(".init")))
-_start(void)
+binboot(void)
 {
 	uint32_t i, t;
 	uint32_t csum = 0, base = 0, len = 0;
@@ -135,33 +134,16 @@ _start(void)
 			"mv ra, zero;"		/* ra <- zero */
 			"jr %0;"
 			:
-			: "r" (base_addr)
+			: "r" (base)
 			);
 #endif
-		case 13:	/* CR detected, send CR, LF, prompt */
-			t = 2;
-#ifdef __mips__
-			i = 0x33660A0D;		/* "\r\nf3" */
-#else /* riscv */
-			i = 0x76720A0D;		/* "\r\nrv" */
-#endif
-			do {
-				pchar(i);
-				i >>= 8;
-				if (i == 0) {
-#ifdef __mips__
-					i = 0x203E6332;		/* "2c> " */
-#else /* riscv */
-					i = 0x203E3233;		/* "32> " */
-#endif
-					t--;
-				}
-			} while (t != 0);
-			break;
 		default:
-			if (i < 128)
-				pchar(i);
-			break;
+			/* Detected 7-bit ASCII, return to hex loader */
+#ifdef __mips__
+			__asm __volatile__("jr $0");
+#else /* riscv */
+			__asm __volatile__("jr zero");
+#endif
 		}
 	} while (1);
 }
