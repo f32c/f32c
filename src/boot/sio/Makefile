@@ -17,6 +17,8 @@ endif
 
 PROG = loader
 
-CFILES = loader.c
+CFLAGS += -DBIN_LOADER
+
+CFILES = loader.c binboot.c
 
 include ${POST_MK}
