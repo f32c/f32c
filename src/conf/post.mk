@@ -28,7 +28,7 @@
 # Default load offset - bootloader is always at 0x00000000
 ifndef LOADADDR
  ifeq (${ARCH},riscv)
-  LOADADDR = 0x00000200
+  LOADADDR = 0x00000400
  else
   LOADADDR = 0x80000000
  endif
