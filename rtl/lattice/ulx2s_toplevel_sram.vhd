@@ -216,7 +216,7 @@ begin
     -- Clock synthesizer
     --
     clk_81_325: if C_tx433 = false generate
-    clkgen: entity work.clkgen
+    clkgen_video: entity work.clkgen
     generic map (
 	C_clk_freq => C_clk_freq
     )
@@ -227,8 +227,8 @@ begin
     ena_325m <= R_dds_enable when R_fb_mode = "11" else '1';
     end generate;
 
-    clk_81_325: if C_tx433 = true generate
-    clkgen: entity work.clkgen
+    clk_81_433: if C_tx433 = true generate
+    clkgen_tx433: entity work.clkgen
     generic map (
 	C_clk_freq => C_clk_freq
     )
