@@ -16,8 +16,9 @@ PART = EP4CE6E22C8
 BOARDFILE = tb276.board
 CONFIG_DEVICE = EPCS4
 SERIAL_FLASH_LOADER_DEVICE = EP4CE6
-OPENOCD_INTERFACE==interface/altera-usb-blaster.cfg
+# OPENOCD_INTERFACE=interface/altera-usb-blaster.cfg
 # OPENOCD_INTERFACE=ftdi-fpu1.ocd
+OPENOCD_INTERFACE=remote.ocd
 
 ###################################################################
 #

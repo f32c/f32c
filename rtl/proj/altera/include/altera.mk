@@ -127,7 +127,7 @@ program: $(PROJECT).sof
 	$(quartus_env); quartus_pgm --no_banner --mode=jtag -o "P;$(PROJECT).sof"
 
 program_ocd: $(PROJECT).svf
-	openocd --file$(OPENOCD_INTERFACE) --file=tb276.ocd
+	openocd --file=$(OPENOCD_INTERFACE) --file=tb276.ocd
 
 flash: $(PROJECT).jic
 	$(quartus_env); quartus_pgm --no_banner --mode=jtag -o "IPV;$(PROJECT).jic"
