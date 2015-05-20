@@ -35,9 +35,11 @@
 -- Commands:
 --	9d	enable / disable debugger (arg: ed / dd)
 --	a0	read register(s) (arg1: start, arg2: count)
---	a1	write register(s) (arg1: start, arg2: count)
---	e2	read memory (arg1: start, arg2: count)
---	e3	write memory (arg1: start, arg2: count)
+--	a1	read breakpoint(s) (arg1: start, arg2: count)
+--	e0	write register (arg1: addr, arg2: value) (UNIMPLEMENTED)
+--	e1	write breakpoint (arg1: addr, arg2: value)
+--	e2	read memory (arg1: start, arg2: count) (UNIMPLEMENTED)
+--	e3	write memory (arg1: start, arg2: count) (UNIMPLEMENTED)
 --	ef	step (arg1: stop or not, arg2: number of clock ticks)
 --
 -- Ideally, those commands should permit synthesizing the following:
@@ -70,6 +72,10 @@ use work.f32c_pack.all;
 
 
 entity debug is
+    generic (
+	C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff";
+	C_breakpoints: integer := 2
+    );
     port (
 	clk: in std_logic;
 	ctrl_in_data: in std_logic_vector(7 downto 0);
@@ -98,7 +104,10 @@ architecture x of debug is
     -- Commands
     constant DEB_CMD_ACTIVE: std_logic_vector := x"9d";
     constant DEB_CMD_REG_RD: std_logic_vector := x"a0";
-    constant DEB_CMD_REG_WR: std_logic_vector := x"a1";
+    constant DEB_CMD_BREAKPOINT_RD: std_logic_vector := x"a1";
+    constant DEB_CMD_REG_WR: std_logic_vector := x"e0";
+    constant DEB_CMD_BREAKPOINT_WR: std_logic_vector := x"e1";
+
     constant DEB_CMD_MEM_RD: std_logic_vector := x"e2";
     constant DEB_CMD_MEM_WR: std_logic_vector := x"e3";
     constant DEB_CMD_CLK_STEP: std_logic_vector := x"ef";
@@ -113,6 +122,11 @@ architecture x of debug is
     signal R_arg1, R_arg2: std_logic_vector(31 downto 0);
     signal R_argcnt: std_logic_vector(1 downto 0);
     signal R_seqn: std_logic_vector(7 downto 0);
+
+    -- Breakpoints
+    type break_addrs is
+      array(0 to C_breakpoints - 1) of std_logic_vector(31 downto 0);
+    signal R_break_addrs: break_addrs;
 
     -- Output data & control
     signal R_clk_enable: std_logic;
@@ -130,6 +144,7 @@ begin
     clk_enable <= R_clk_enable;
 
     process(clk)
+	variable break_iter: integer;
     begin
 	if rising_edge(clk) then
 	    R_ctrl_out_strobe <= '0';
@@ -221,6 +236,36 @@ begin
 			R_argcnt <= R_argcnt + 1;
 			R_ctrl_out_strobe <= '1';
 		    end if;
+		when DEB_CMD_BREAKPOINT_RD =>
+		    break_iter := conv_integer(R_arg1);
+		    if ctrl_out_busy = '0' and R_ctrl_out_strobe = '0' then
+			case R_argcnt is
+			when "00" =>
+			    R_ctrl_out <=
+				R_break_addrs(break_iter)(7 downto 0);
+			when "01" =>
+			    R_ctrl_out <=
+				R_break_addrs(break_iter)(15 downto 8);
+			when "10" =>
+			    R_ctrl_out <=
+				R_break_addrs(break_iter)(23 downto 16);
+			when others =>
+			    R_ctrl_out <=
+				R_break_addrs(break_iter)(31 downto 24);
+			    if R_arg2(7 downto 0) = x"00" then
+				R_req_state <= DEB_REQ_IDLE;
+			    else
+				R_arg2 <= R_arg2 - 1;
+				R_arg1 <= R_arg1 + 1;
+			    end if;
+			end case;
+			R_argcnt <= R_argcnt + 1;
+			R_ctrl_out_strobe <= '1';
+		    end if;
+		when DEB_CMD_BREAKPOINT_WR =>
+		    break_iter := conv_integer(R_arg1);
+		    R_break_addrs(break_iter) <= R_arg2;
+		    R_req_state <= DEB_REQ_IDLE;
 		when DEB_CMD_MEM_RD =>
 		    if ctrl_out_busy = '0' and R_ctrl_out_strobe = '0' then
 			case R_arg1(1 downto 0) is
@@ -265,11 +310,15 @@ begin
 	    --
 	    -- Breakpoint detection
 	    --
-	    if false and trace_break_pc & "00" = x"00000200" then
-		R_breakpoint <= '1';
-		R_clk_enable <= '0';
-	    end if;
-
+	    for break_iter in 0 to C_breakpoints - 1 loop
+		if R_break_addrs(break_iter)(0) = '1' and
+		  (trace_break_pc and C_PC_mask(31 downto 2)) =
+		  (R_break_addrs(break_iter)(31 downto 2) and
+		  C_PC_mask(31 downto 2)) then
+		    R_breakpoint <= '1';
+		    R_clk_enable <= '0';
+		end if;
+	    end loop;
 	end if;
     end process;
 end x;
