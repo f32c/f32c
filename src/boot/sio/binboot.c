@@ -109,7 +109,7 @@ binboot(void)
 				crc = (crc >> 31) | (crc << 1);
 				t = sio_getch();
 				cp[i] = t;
-				crc |= t;
+				crc += t;
 			}
 			break;
 		case 0xb1:	/* Done, jump to base */
