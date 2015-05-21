@@ -164,7 +164,7 @@ sio_load_binary(void)
 				crc = (crc >> 31) | (crc << 1);
 				t = sio_getch();
 				cp[i] = t;
-				crc |= t;
+				crc += t;
 			}
 			break;
 		case 0xa1:	/* Read block */
@@ -174,7 +174,7 @@ sio_load_binary(void)
 				crc = (crc >> 31) | (crc << 1);
 				t = cp[i];
 				pchar(t);
-				crc |= t;
+				crc += t;
 			}
 			break;
 		case 0xb0:	/* Set baudrate, abuse base as speed */
