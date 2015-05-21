@@ -133,7 +133,7 @@ static void *
 sio_load_binary(void)
 {
 	uint32_t i, t;
-	uint32_t csum, base, len;
+	uint32_t crc, base, len;
 	char *cp;
 
 	do {
@@ -144,8 +144,8 @@ sio_load_binary(void)
 			for (i = 0; i < 4; i++)
 				base = (base << 8) + sio_getch();
 			break;
-		case 0x81:	/* Read csum */
-			t = csum;
+		case 0x81:	/* Read crc */
+			t = crc;
 			for (i = 0; i < 4; i++) {
 				pchar(t >> 24);
 				t <<= 8;
@@ -154,25 +154,27 @@ sio_load_binary(void)
 		case 0x90:	/* Set len = base */
 			len = base;
 			break;
-		case 0x91:	/* Set csum = base */
-			csum = base;
+		case 0x91:	/* Set crc = base */
+			crc = base;
 			break;
 		case 0xa0:	/* Write block */
 			cp = (void *) base;
-			csum = 0;
+			crc = 0;
 			for (i = 0; i < len; i++) {
+				crc = (crc >> 31) | (crc << 1);
 				t = sio_getch();
 				cp[i] = t;
-				csum += t;
+				crc |= t;
 			}
 			break;
 		case 0xa1:	/* Read block */
 			cp = (void *) base;
-			csum = 0;
+			crc = 0;
 			for (i = 0; i < len; i++) {
+				crc = (crc >> 31) | (crc << 1);
 				t = cp[i];
 				pchar(t);
-				csum += t;
+				crc |= t;
 			}
 			break;
 		case 0xb0:	/* Set baudrate, abuse base as speed */
