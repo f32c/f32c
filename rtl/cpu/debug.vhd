@@ -114,7 +114,6 @@ architecture x of debug is
 
     -- Debugger enabled flag
     signal R_debug_active: std_logic := '0';
-    signal R_breakpoint: std_logic := '0';
 
     -- Request processing FSMD registers
     signal R_req_state: integer;
@@ -127,6 +126,7 @@ architecture x of debug is
     type break_addrs is
       array(0 to C_breakpoints - 1) of std_logic_vector(31 downto 0);
     signal R_break_addrs: break_addrs;
+    signal R_breakpoint: std_logic := '0';
 
     -- Output data & control
     signal R_clk_enable: std_logic;
@@ -293,6 +293,9 @@ begin
 		    else
 			R_clk_enable <= '1';
 			R_breakpoint <= '0';
+			for break_iter in 0 to C_breakpoints - 1 loop
+			    R_break_addrs(break_iter)(1) <= '0';
+			end loop;
 			R_arg2 <= R_arg2 - 1;
 		    end if;
 		when others =>
@@ -316,6 +319,7 @@ begin
 		  (R_break_addrs(break_iter)(31 downto 2) and
 		  C_PC_mask(31 downto 2)) then
 		    R_breakpoint <= '1';
+		    R_break_addrs(break_iter)(1) <= '1';
 		    R_clk_enable <= '0';
 		end if;
 	    end loop;
