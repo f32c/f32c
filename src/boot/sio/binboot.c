@@ -79,7 +79,7 @@ __dead2 void
 binboot(void)
 {
 	uint32_t i, t;
-	uint32_t csum = 0, base = 0, len = 0;
+	uint32_t crc = 0, base = 0, len = 0;
 	char *cp;
 
 	do {
@@ -89,8 +89,8 @@ binboot(void)
 			for (i = 0; i < 4; i++)
 				base = (base << 8) + sio_getch();
 			break;
-		case 0x81:	/* Read csum */
-			t = csum;
+		case 0x81:	/* Read crc */
+			t = crc;
 			for (i = 0; i < 4; i++) {
 				pchar(t >> 24);
 				t <<= 8;
@@ -99,16 +99,17 @@ binboot(void)
 		case 0x90:	/* Set len = base */
 			len = base;
 			break;
-		case 0x91:	/* Set csum = base */
-			csum = base;
+		case 0x91:	/* Set crc = base */
+			crc = base;
 			break;
 		case 0xa0:	/* Write block */
 			cp = (void *) base;
-			csum = 0;
+			crc = 0;
 			for (i = 0; i < len; i++) {
+				crc = (crc >> 31) | (crc << 1);
 				t = sio_getch();
 				cp[i] = t;
-				csum += t;
+				crc |= t;
 			}
 			break;
 		case 0xb1:	/* Done, jump to base */
