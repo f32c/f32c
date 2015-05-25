@@ -40,13 +40,13 @@ use work.f32c_pack.all;
 entity glue is
     generic (
 	-- ISA
-	C_arch: integer := ARCH_MI32;
+	C_arch: integer := ARCH_RV32;
 
 	-- Main clock: N * 10 MHz
 	C_clk_freq: integer := 12;
 
 	-- SoC configuration options
-	C_mem_size: integer := 6;
+	C_mem_size: integer := 4;
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true
     );
@@ -88,9 +88,19 @@ begin
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
     generic map (
+	C_PC_mask => x"00001fff", -- 4 K
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
-	C_mem_size => C_mem_size
+	C_mem_size => C_mem_size,
+	C_mult_enable => false,
+	C_branch_prediction => false,
+	C_load_aligner => false,
+	C_full_shifter => false,
+	C_exceptions => false,
+	C_result_forwarding => false,
+	C_sio_break_detect => false,
+	C_timer => false,
+	C_gpio => true
     )
     port map (
 	clk => clk,
