@@ -1,6 +1,6 @@
 -ifmt mixed
 -ofmt NGC
--opt_mode speed
+-opt_mode area
 -opt_level 1
 -iuc NO
 -keep_hierarchy no
