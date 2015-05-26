@@ -43,7 +43,7 @@ entity glue is
 	C_arch: integer := ARCH_RV32;
 
 	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 12;
+	C_clk_freq: integer := 60;
 
 	-- SoC configuration options
 	C_mem_size: integer := 6;
@@ -69,15 +69,14 @@ architecture Behavioral of glue is
     signal rs232_break: std_logic;
 begin
 
---    clock synthesizer
---    clkgen: entity work.clkgen
---    generic map(
---	C_clk_freq => C_clk_freq
---    )
---    port map(
---	clk_50m => Clk_12MHz, clk => clk
---    );
-    clk <= Clk_12MHz;
+    -- clock synthesizer
+    clkgen: entity work.clkgen
+    generic map(
+	C_clk_freq => C_clk_freq
+    )
+    port map(
+	clk_12m => Clk_12MHz, clk => clk
+    );
     
     -- reset hard-block: Xilinx Spartan-3 specific
     reset: startup_spartan3
@@ -98,7 +97,7 @@ begin
 	C_full_shifter => false,
 	C_exceptions => false,
 --	C_result_forwarding => false,
-	C_sio_break_detect => false,
+--	C_sio_break_detect => false,
 	C_timer => false,
 	C_gpio => false
     )
