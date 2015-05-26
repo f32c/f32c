@@ -46,7 +46,7 @@ entity glue is
 	C_clk_freq: integer := 12;
 
 	-- SoC configuration options
-	C_mem_size: integer := 4;
+	C_mem_size: integer := 6;
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true
     );
@@ -88,7 +88,7 @@ begin
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
     generic map (
-	C_PC_mask => x"00001fff", -- 4 K
+	C_PC_mask => x"00003fff", -- 8 K
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
 	C_mem_size => C_mem_size,
@@ -100,7 +100,7 @@ begin
 	C_result_forwarding => false,
 	C_sio_break_detect => false,
 	C_timer => false,
-	C_gpio => true
+	C_gpio => false
     )
     port map (
 	clk => clk,
