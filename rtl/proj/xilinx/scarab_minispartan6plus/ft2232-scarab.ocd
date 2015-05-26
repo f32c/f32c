@@ -1,0 +1,8 @@
+#
+# PLDkit FPU1 JTAG Programmer
+#
+
+interface ftdi
+ftdi_device_desc "Dual RS232-HS"
+ftdi_vid_pid 0x0403 0x6010
+ftdi_layout_init 0x3088 0x1f8b
