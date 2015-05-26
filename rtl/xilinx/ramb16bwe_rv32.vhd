@@ -67,6 +67,7 @@ begin
 	dmem_addr(10 downto 10) /= 0 and dmem_write = '1' when 2,
 	dmem_addr(11 downto 10) /= 0 and dmem_write = '1' when 4,
 	dmem_addr(12 downto 10) /= 0 and dmem_write = '1' when 6,
+	dmem_addr(12 downto 10) /= 0 and dmem_write = '1' when 8,
 	dmem_write = '1' when others;
     end generate;
     G_flat_ram:
@@ -76,8 +77,9 @@ begin
 
     we_0 <= dmem_byte_sel when write_enable and dmem_addr(12 downto 11) = "00"
 	else x"0";
-    we_1 <= dmem_byte_sel when dmem_addr(12 downto 11) = "01" else x"0";
-    we_2 <= dmem_byte_sel when dmem_addr(12) = '1' else x"0";
+    we_1 <= dmem_byte_sel when dmem_write = '1' and dmem_addr(12 downto 11) = "01"
+	else x"0";
+    we_2 <= dmem_byte_sel when dmem_write = '1' and dmem_addr(12) = '1' else x"0";
 
     dmem_data_out <= dmem_out_0 when dmem_addr(12 downto 11) = "00"
 	else dmem_out_1 when dmem_addr(12 downto 11) = "01"
