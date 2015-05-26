@@ -6,13 +6,13 @@ flashsize = 512 # KB (kilobytes) - SPI flash device is M25P40
 top_module = glue
 isedir = /usr/local/xilinx/14.7/ISE_DS
 SHELL = /bin/bash
-openocd_interface = interface/altera-usb-blaster.cfg
-#openocd_interface = ftdi-fpu1.ocd
+# openocd_interface = interface/altera-usb-blaster.cfg
+openocd_interface = ../include/ft2232-fpu1.ocd
 
 # ../../../xilinx/glue_xc6slx9.vhd \
 
 vhdfiles = \
-../../../xilinx/xc6slx9_toplevel_bram.vhd \
+../../../xilinx/tb299_xc6slx9_toplevel_bram.vhd \
 ../../../xilinx/pll_25M_112M5.vhd \
 ../../../xilinx/pll_25M_81M25.vhd \
 ../../../generic/glue_bram.vhd \

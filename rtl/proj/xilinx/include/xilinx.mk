@@ -91,7 +91,7 @@ junk += *.xrpt
 
 $(project).svf: $(project).bit
 	cp $< default.bit
-	$(xil_env); impact -batch bit2svf.ut
+	$(xil_env); impact -batch ../include/bit2svf.ut
 	mv default.svf $@
 	rm default.bit
 junk += $(project).svf _impactbatch.log
@@ -106,7 +106,7 @@ junk += $(project)_flash.svf
 
 $(project).xsvf: $(project).bit
 	cp $< default.bit
-	$(xil_env); impact -batch bit2xsvf.ut
+	$(xil_env); impact -batch ../include/bit2xsvf.ut
 	mv default.xsvf $@
 	rm default.bit
 junk += $(project).xsvf
@@ -186,7 +186,7 @@ $(project).ngc: $(vfiles) $(vhdfiles) $(local_corengcs) $(project).scr $(project
 junk += xlnx_auto* $(top_module).lso $(project).srp 
 junk += netlist.lst xst $(project).ngc
 
-$(project).prj: $(vfiles) $(vhdfiles) $(mkfiles)
+$(project).prj: $(vfiles) $(vhdfiles) # $(mkfiles)
 	for src in $(vfiles); do echo "verilog work $$src" >> $(project).tmpprj; done
 	for src in $(vhdfiles); do echo "vhdl work $$src" >> $(project).tmpprj; done
 	sort -u $(project).tmpprj > $(project).prj
@@ -195,7 +195,7 @@ junk += $(project).prj
 
 optfile += $(wildcard $(project).opt)
 top_module ?= $(project)
-$(project).scr: $(optfile) $(mkfiles) ./xilinx.opt
+$(project).scr: $(optfile) ./xilinx.opt # $(mkfiles)
 	echo "run" > $@
 	echo "-p $(part)" >> $@
 	echo "-top $(top_module)" >> $@
