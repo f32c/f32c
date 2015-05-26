@@ -15,11 +15,11 @@ SHELL = /bin/bash
 
 vhdfiles = \
 ../../../xilinx/s3_numato_elbert_v2_toplevel_bram.vhd \
-../../../xilinx/dcm_s3_50m.vhd \
+../../../xilinx/ramb16bwe_rv32.vhd \
+../../../xilinx/dcm_s3_12m.vhd \
 ../../../generic/glue_bram.vhd \
 ../../../generic/bram_mi32_eb.vhd \
 ../../../generic/bram_mi32_el.vhd \
-../../../generic/bram_rv32.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
 ../../../cpu/alu.vhd \
