@@ -1,0 +1,17 @@
+# xc6slx9.ocd
+# OpenOCD commands
+
+# impact->boundary scan->right click in right window->add xilinx device glue.bit->one step svf
+
+telnet_port 4444
+gdb_port 3333
+
+adapter_khz 1000
+
+# JTAG TAPs
+jtag newtap xc6slx25 tap -expected-id 0x24004093 -irlen 6
+
+init
+scan_chain
+svf -tap xc6slx25.tap miniSpartan6-plus.svf
+shutdown
