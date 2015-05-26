@@ -97,7 +97,7 @@ begin
 	C_load_aligner => false,
 	C_full_shifter => false,
 	C_exceptions => false,
-	C_result_forwarding => false,
+--	C_result_forwarding => false,
 	C_sio_break_detect => false,
 	C_timer => false,
 	C_gpio => false
