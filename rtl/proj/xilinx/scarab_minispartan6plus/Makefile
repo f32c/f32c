@@ -15,8 +15,8 @@ xc3sprog_interface = ftdi
 
 vhdfiles = \
 ../../../xilinx/scarab_minispartan6plus_toplevel_bram.vhd \
-../../../xilinx/pll_25M_112M5.vhd \
-../../../xilinx/pll_25M_81M25.vhd \
+../../../xilinx/pll_50M_112M5.vhd \
+../../../xilinx/pll_50M_81M25.vhd \
 ../../../generic/glue_bram.vhd \
 ../../../generic/bram_mi32_eb.vhd \
 ../../../generic/bram_mi32_el.vhd \
