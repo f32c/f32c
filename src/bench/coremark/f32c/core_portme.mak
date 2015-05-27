@@ -16,11 +16,7 @@ ENDIANFLAGS = -EL
 
 # Default load offset - bootloader is at 0x00000000
 ifndef LOADADDR
- ifeq ($(ARCH),mips)
-  LOADADDR = 0x80000000
- else
-  LOADADDR = 0x00000200
- endif
+  LOADADDR = 0x400
 endif
 
 ifeq ($(findstring 0x8, ${LOADADDR}),)
