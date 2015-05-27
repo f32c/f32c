@@ -8,6 +8,7 @@ isedir = /usr/local/xilinx/14.7/ISE_DS
 SHELL = /bin/bash
 # openocd_interface = interface/altera-usb-blaster.cfg
 openocd_interface = ../include/ft2232-fpu1.ocd
+xc3sprog_interface = ftdi
 
 # ../../../xilinx/glue_xc6slx9.vhd \
 
