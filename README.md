@@ -24,7 +24,7 @@ C_full_shifter 	     pipelined instead of iterative shifer
 C_debug              synthesize single-stepping debug module
 ```
 
-In synthetic integer benchmarks the core yields 1.63 DMIPS/Mhz and 2.31
+In synthetic integer benchmarks the core yields 1.63 DMIPS/Mhz and 2.66
 CoreMark/MHz.  A performance-tuned f32c SoC which includes a timer
 and a UART occupies only 1048 6-input LUTs, while still being able
 to execute gcc-generated code when synthesized in the most compact
