@@ -831,13 +831,7 @@ begin
     -- =========================
     --
 
-    -- When result forwarding muxes are not configured, stall the pipeline
-    -- until the results from all instructions preceding a branch instruction
-    -- are flushed or stored in the register file.
-    -- XXX revisit!  jump cycles?
-    EX_running <= MEM_running and not (C_exceptions and ID_EX_wait) and
-      (C_result_forwarding or not ID_EX_branch_cycle
-      or EX_MEM_writeback_addr = REG_ZERO);
+    EX_running <= MEM_running and not (C_exceptions and ID_EX_wait);
 
     -- forward the results from later stages
     EX_eff_reg1 <=
