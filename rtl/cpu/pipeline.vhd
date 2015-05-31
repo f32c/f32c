@@ -840,23 +840,19 @@ begin
       or EX_MEM_writeback_addr = REG_ZERO);
 
     -- forward the results from later stages
-    G_EX_forwarding:
-    if C_result_forwarding generate
-    EX_eff_reg1 <= MEM_eff_data when ID_EX_fwd_ex_reg1 else
-      WB_eff_data when ID_EX_fwd_mem_reg1 else ID_EX_reg1_data;
-    EX_eff_reg2 <= MEM_eff_data when ID_EX_fwd_ex_reg2 else
-      WB_eff_data when ID_EX_fwd_mem_reg2 else ID_EX_reg2_data;
-    EX_eff_alu_op2 <= MEM_eff_data when ID_EX_fwd_ex_alu_op2 else
-      WB_eff_data when ID_EX_fwd_mem_alu_op2 else ID_EX_alu_op2;
-    end generate; -- result_forwarding
-
-    G_EX_no_forwarding:
-    if not C_result_forwarding generate
-    EX_eff_reg1 <= ID_EX_reg1_data;
-    EX_eff_reg2 <= WB_eff_data when -- XXX revisit for C_load_aligner = false!
-      not C_load_aligner and ID_EX_fwd_mem_reg2 else ID_EX_reg2_data;
-    EX_eff_alu_op2 <= ID_EX_alu_op2;
-    end generate; -- no result_forwarding
+    EX_eff_reg1 <=
+      MEM_eff_data when ID_EX_fwd_ex_reg1 and C_result_forwarding else
+      WB_eff_data when ID_EX_fwd_mem_reg1 and C_result_forwarding else
+      ID_EX_reg1_data;
+    EX_eff_reg2 <=
+      MEM_eff_data when ID_EX_fwd_ex_reg2 and C_result_forwarding else
+      WB_eff_data when ID_EX_fwd_mem_reg2 and
+     (C_result_forwarding or not C_load_aligner) else
+      ID_EX_reg2_data;
+    EX_eff_alu_op2 <=
+      MEM_eff_data when ID_EX_fwd_ex_alu_op2 and C_result_forwarding else
+      WB_eff_data when ID_EX_fwd_mem_alu_op2 and C_result_forwarding else
+      ID_EX_alu_op2;
 
     -- instantiate the ALU
     alu: entity work.alu
