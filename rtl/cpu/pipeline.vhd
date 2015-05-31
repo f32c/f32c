@@ -1346,7 +1346,7 @@ begin
     -- Multiplier unit, as a separate pipeline
     --
     G_multiplier:
-    if C_mult_enable generate
+    if C_mult_enable and C_arch = ARCH_MI32 generate
     mul_res <= R_mul_a * R_mul_b; -- infer asynchronous signed multiplier
     process (clk)
     begin
