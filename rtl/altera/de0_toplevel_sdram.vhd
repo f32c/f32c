@@ -52,7 +52,14 @@ entity glue is
 	rs232_rxd: in std_logic;
 	led: out std_logic_vector(7 downto 0);
 	btn_left, btn_right: in std_logic;
-	sw: in std_logic_vector(3 downto 0)
+	sw: in std_logic_vector(3 downto 0);
+	dram_addr: out std_logic_vector(12 downto 0);
+	dram_dq: inout std_logic_vector(15 downto 0);
+	dram_ba: out std_logic_vector(1 downto 0);
+	dram_dqm: out std_logic_vector(1 downto 0);
+	dram_ras_n, dram_cas_n: out std_logic;
+	dram_cke, dram_clk: out std_logic;
+	dram_we_n, dram_cs_n: out std_logic
     );
 end glue;
 
@@ -84,7 +91,12 @@ begin
 	gpio => open,
 	leds(7 downto 0) => led,
 	btns => btns,
-	sw(3 downto 0) => sw
+	sw(3 downto 0) => sw,
+	sdram_addr => dram_addr, sdram_data => dram_dq,
+	sdram_ba => dram_ba, sdram_dqm => dram_dqm,
+	sdram_ras => dram_ras_n, sdram_cas => dram_cas_n,
+	sdram_cke => dram_cke, sdram_clk => dram_clk,
+	sdram_we => dram_we_n, sdram_cs => dram_cs_n
     );
 
     btns <= x"000" & "00" & btn_left & btn_right;
