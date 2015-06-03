@@ -197,8 +197,10 @@ set_global_assignment -name VHDL_FILE ../../../cpu/shift.vhd
 set_global_assignment -name VHDL_FILE ../../../cpu/pipeline.vhd
 set_global_assignment -name VHDL_FILE ../../../cpu/loadalign.vhd
 set_global_assignment -name VHDL_FILE ../../../cpu/alu.vhd
-set_global_assignment -name CDF_FILE output_files/Chain1.cdf
 set_global_assignment -name VHDL_FILE ../../../soc/gpio.vhd
+set_global_assignment -name VHDL_FILE ../../../contrib/sdram.vhd
+set_global_assignment -name CDF_FILE output_files/Chain1.cdf
+
 
 
 

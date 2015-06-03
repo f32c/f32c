@@ -84,7 +84,14 @@ entity glue_sdram is
 	sw: in std_logic_vector(15 downto 0);
 	gpio: inout std_logic_vector(31 downto 0);
 	leds: out std_logic_vector(15 downto 0);
-	lcd_7seg: out std_logic_vector(15 downto 0)
+	lcd_7seg: out std_logic_vector(15 downto 0);
+	sdram_addr: out std_logic_vector(12 downto 0);
+	sdram_data: inout std_logic_vector(15 downto 0);
+	sdram_ba: out std_logic_vector(1 downto 0);
+	sdram_dqm: out std_logic_vector(1 downto 0);
+	sdram_ras, sdram_cas: out std_logic;
+	sdram_cke, sdram_clk: out std_logic;
+	sdram_we, sdram_cs: out std_logic
     );
 end glue_sdram;
 
