@@ -110,6 +110,10 @@ architecture Behavioral of glue_sdram is
     signal io_addr: std_logic_vector(11 downto 2);
     signal intr: std_logic_vector(5 downto 0); -- interrupt
 
+    -- SDRAM
+    signal from_sdram: std_logic_vector(31 downto 0);
+    signal sdram_enable, sdram_idle, sdram_data_ready: std_logic;
+
     -- Timer
     signal from_timer: std_logic_vector(31 downto 0);
     signal timer_ce: std_logic;
@@ -181,17 +185,26 @@ begin
 	debug_debug => debug_debug,
 	debug_active => debug_active
     );
-    final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
+    final_to_cpu <= io_to_cpu when io_addr_strobe = '1'
+      else from_sdram when dmem_addr(31 downto 30) = "10"
+      else dmem_to_cpu;
     intr <= "00" & gpio_intr & timer_intr & from_sio(8) & '0';
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
     imem_data_ready <= '1';
-    dmem_data_ready <= '1';
+    dmem_data_ready <=
+      sdram_idle when dmem_addr(31 downto 30) = "10"
+	and dmem_write = '1'
+      else sdram_data_ready when dmem_addr(31 downto 30) = "10"
+	and dmem_write = '0'
+      else '1'; -- I/O or BRAM have no wait states
 
     -- SDRAM
     G_sdram:
     if C_sdram generate
+    sdram_enable <= dmem_addr_strobe and not sdram_data_ready when
+      dmem_addr(31 downto 30) = "10" else '0';
     sdram: entity work.sdram_controller
     generic map (
 	sdram_address_width => 22,
@@ -202,8 +215,10 @@ begin
     port map (
 	clk => clk, reset => sio_break,
 	-- internal connections
-	cmd_enable => '0', cmd_wr => '0', cmd_byte_enable => dmem_byte_sel,
+	cmd_ready => sdram_idle, cmd_enable => sdram_enable,
+	cmd_wr => dmem_write, cmd_byte_enable => dmem_byte_sel,
 	cmd_address => dmem_addr(22 downto 2), cmd_data_in => cpu_to_dmem,
+	data_out => from_sdram, data_out_ready => sdram_data_ready,
 	-- external SDRAM interface
 	sdram_addr => sdram_addr, sdram_data => sdram_data,
 	sdram_ba => sdram_ba, sdram_dqm => sdram_dqm,
