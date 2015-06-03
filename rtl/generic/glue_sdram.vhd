@@ -69,7 +69,8 @@ entity glue_sdram is
 	C_debug: boolean := false;
 
 	-- SoC configuration options
-	C_mem_size: integer := 16;	-- in KBytes
+	C_mem_size: integer := 16; -- Block RAM size, in KBytes
+	C_sdram: boolean := true;
 	C_sio: boolean := true;
 	C_sio_break_detect: boolean := true;
 	C_gpio: boolean := true;
@@ -187,6 +188,30 @@ begin
     io_addr <= '0' & dmem_addr(10 downto 2);
     imem_data_ready <= '1';
     dmem_data_ready <= '1';
+
+    -- SDRAM
+    G_sdram:
+    if C_sdram generate
+    sdram: entity work.sdram_controller
+    generic map (
+	sdram_address_width => 22,
+	sdram_column_bits => 8,
+	sdram_startup_cycles => 10100,
+	cycles_per_refresh => 1524
+    )
+    port map (
+	clk => clk, reset => sio_break,
+	-- internal connections
+	cmd_enable => '0', cmd_wr => '0', cmd_byte_enable => dmem_byte_sel,
+	cmd_address => dmem_addr(22 downto 2), cmd_data_in => cpu_to_dmem,
+	-- external SDRAM interface
+	sdram_addr => sdram_addr, sdram_data => sdram_data,
+	sdram_ba => sdram_ba, sdram_dqm => sdram_dqm,
+	sdram_ras => sdram_ras, sdram_cas => sdram_cas,
+	sdram_cke => sdram_cke, sdram_clk => sdram_clk,
+	sdram_we => sdram_we, sdram_cs => sdram_cs
+    );
+    end generate;
 
     -- RS232 sio
     G_sio:
