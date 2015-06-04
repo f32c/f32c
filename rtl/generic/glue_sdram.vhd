@@ -69,8 +69,8 @@ entity glue_sdram is
 	C_debug: boolean := false;
 
         -- SDRAM parameters
-	C_sdram_address_width : integer := 22;
-	C_sdram_column_bits : integer := 8;
+	C_sdram_address_width : integer := 24;
+	C_sdram_column_bits : integer := 9;
 	C_sdram_startup_cycles : integer := 10100;
 	C_sdram_cycles_per_refresh : integer := 1524;
 
