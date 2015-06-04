@@ -116,6 +116,10 @@ begin
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
+	C_sdram_address_width => 22,
+	C_sdram_column_bits => 9,
+	C_sdram_startup_cycles => 10100,
+	C_sdram_cycles_per_refresh => 1524,
 	C_debug => C_debug
     )
     port map (
