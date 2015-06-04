@@ -16,6 +16,7 @@ xc3sprog_interface = ftdi
 vhdfiles = \
 ../../../xilinx/scarab_minispartan6plus_toplevel_sdram.vhd \
 ../../../xilinx/pll_50M_112M5.vhd \
+../../../xilinx/pll_50M_100M.vhd \
 ../../../xilinx/pll_50M_81M25.vhd \
 ../../../generic/glue_sdram.vhd \
 ../../../contrib/SDRAM_Controller.vhd \
