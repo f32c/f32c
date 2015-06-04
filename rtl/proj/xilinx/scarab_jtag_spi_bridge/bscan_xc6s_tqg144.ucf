@@ -1,0 +1,5 @@
+# see ug385.pdf p.274
+net "MISO"     LOC = "P65"; # [N] DIN
+net "MOSI"     LOC = "P64"; # [B] CSI
+net "CSB"      LOC = "P38"; # [b] CSO
+net "DRCK1"    LOC = "P70"; # [C] CCLK
