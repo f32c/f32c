@@ -223,7 +223,7 @@ begin
 	-- internal connections
 	cmd_ready => sdram_idle, cmd_enable => sdram_enable,
 	cmd_wr => dmem_write, cmd_byte_enable => dmem_byte_sel,
-	cmd_address => dmem_addr(22 downto 2), cmd_data_in => cpu_to_dmem,
+	cmd_address => dmem_addr(C_sdram_address_width downto 2), cmd_data_in => cpu_to_dmem,
 	data_out => from_sdram, data_out_ready => sdram_data_ready,
 	-- external SDRAM interface
 	sdram_addr => sdram_addr, sdram_data => sdram_data,
