@@ -208,7 +208,7 @@ begin
     sdram: entity work.sdram_controller
     generic map (
 	sdram_address_width => 22,
-	sdram_column_bits => 8,
+	sdram_column_bits => 9,
 	sdram_startup_cycles => 10100,
 	cycles_per_refresh => 1524
     )
