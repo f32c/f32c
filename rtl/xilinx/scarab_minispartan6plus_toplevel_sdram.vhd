@@ -110,13 +110,13 @@ begin
 	keyclearb => '0'
     );
 
-    -- generic BRAM glue
+    -- generic SDRAM glue
     glue_sdram: entity work.glue_sdram
     generic map (
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
-	C_sdram_address_width => 22,
+	C_sdram_address_width => 24,
 	C_sdram_column_bits => 9,
 	C_sdram_startup_cycles => 10100,
 	C_sdram_cycles_per_refresh => 1524,
