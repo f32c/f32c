@@ -22,13 +22,30 @@ static const char *arch = "unknown";
 void
 main(void)
 {
-	int in, out = 0;
+	int i;
+	volatile uint8_t *sdram = (void *) 0x80000000;
+	volatile uint32_t *sdram32 = (void *) 0x80000000;
 
 	printf("Hello, f32c/%s world!\n", arch);
 
-	do {
-		OUTB(IO_LED, out >> 20);
-		out++;
-		INB(in, IO_PUSHBTN);
-	} while ((in & BTN_ANY) == 0);
+	for (i = 0; i < 256; i++)
+		sdram[i] = i;
+
+	sdram32[0] = 0xFFFFFFFF;
+	sdram32[1] = 0x00000000;
+	sdram32[2] = 0x11111111;
+	sdram32[3] = 0x88888888;
+
+	for (i = 0; i < 4; i++) {
+		printf("%08x ", sdram32[i]);
+		printf("%08x ", sdram32[i]);
+	}
+	printf("\n");
+
+	for (i = 0; i < 256; i++)
+		if (i & 0xf)
+			printf("%02x ", sdram[i]);
+		else
+			printf("\n%02x ", sdram[i]);
+	printf("\n");
 }
