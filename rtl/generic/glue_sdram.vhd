@@ -68,6 +68,12 @@ entity glue_sdram is
 	-- CPU debugging
 	C_debug: boolean := false;
 
+        -- SDRAM parameters
+	C_sdram_address_width : integer := 22;
+	C_sdram_column_bits : integer := 8;
+	C_sdram_startup_cycles : integer := 10100;
+	C_sdram_cycles_per_refresh : integer := 1524;
+
 	-- SoC configuration options
 	C_mem_size: integer := 16; -- Block RAM size, in KBytes
 	C_sdram: boolean := true;
@@ -207,10 +213,10 @@ begin
       dmem_addr(31 downto 30) = "10" else '0';
     sdram: entity work.sdram_controller
     generic map (
-	sdram_address_width => 22,
-	sdram_column_bits => 9,
-	sdram_startup_cycles => 10100,
-	cycles_per_refresh => 1524
+	sdram_address_width => C_sdram_address_width,
+	sdram_column_bits => C_sdram_column_bits,
+	sdram_startup_cycles => C_sdram_startup_cycles,
+	cycles_per_refresh => C_sdram_cycles_per_refresh
     )
     port map (
 	clk => clk, reset => sio_break,
