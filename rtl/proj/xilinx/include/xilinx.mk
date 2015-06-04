@@ -40,7 +40,7 @@ isedir ?= /opt/Xilinx/11.1/ISE
 xil_env ?= . $(isedir)/settings32.sh
 openocd_interface ?= interface/altera-usb-blaster.cfg
 xc3sprog_interface ?= xpc
-jtag_spi_bridge ?= ../include/bscan_xc6s_ftg256_blink.bit
+jtag_spi_bridge ?= ../include/bscan_xc6s_ftg256_blink.bit.xz
 flashsize ?= 8192
 
 libmks = $(patsubst %,$(libdir)/%/module.mk,$(libs)) 
@@ -125,7 +125,9 @@ xc3sprog: $(project).bit
 	xc3sprog -c $(xc3sprog_interface) $(project).bit
 
 xc3sprog_flash: $(project).bit
-	xc3sprog -c $(xc3sprog_interface) $(jtag_spi_bridge)
+	xz -cd $(jtag_spi_bridge) > /tmp/jtag_spi_bridge.bit
+	xc3sprog -c $(xc3sprog_interface) /tmp/jtag_spi_bridge.bit
+	rm /tmp/jtag_spi_bridge.bit
 	xc3sprog -c $(xc3sprog_interface) -I $(project).bit
 
 program: $(project).svf
