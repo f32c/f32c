@@ -248,8 +248,8 @@ begin
     --	port map (O  => sdram_din(i), IO => sdram_data(i),
     -- 	    I  => iob_data(i), T  => iob_dq_hiz);
     -- end generate;
-    sdram_data <= sdram_din when iob_dq_hiz = '0' else (others => 'Z');
-    iob_data <= sdram_data;
+    sdram_data <= iob_data when iob_dq_hiz = '0' else (others => 'Z');
+    sdram_din <= sdram_data;
                                      
     capture_proc: process(clk) 
     begin
