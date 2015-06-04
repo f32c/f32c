@@ -1,7 +1,7 @@
 -ifmt mixed
 -ofmt NGC
 -opt_mode speed
--opt_level 1
+-opt_level 2
 -iuc NO
 -keep_hierarchy no
 -netlist_hierarchy as_optimized

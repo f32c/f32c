@@ -11,15 +11,13 @@ SHELL = /bin/bash
 openocd_interface = ../include/ft2232-generic.ocd
 xc3sprog_interface = ftdi
 
-# ../../../xilinx/glue_xc6slx9.vhd \
-
 vhdfiles = \
 ../../../xilinx/scarab_minispartan6plus_toplevel_sdram.vhd \
 ../../../xilinx/pll_50M_112M5.vhd \
 ../../../xilinx/pll_50M_100M.vhd \
 ../../../xilinx/pll_50M_81M25.vhd \
+../../../xilinx/SDRAM_Controller.vhd \
 ../../../generic/glue_sdram.vhd \
-../../../contrib/SDRAM_Controller.vhd \
 ../../../generic/bram_mi32_eb.vhd \
 ../../../generic/bram_mi32_el.vhd \
 ../../../generic/bram_rv32.vhd \
