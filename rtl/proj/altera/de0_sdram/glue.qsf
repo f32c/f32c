@@ -176,6 +176,11 @@ set_global_assignment -name PHYSICAL_SYNTHESIS_ASYNCHRONOUS_SIGNAL_PIPELINING ON
 set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON
 
 
+
+
+
+
+set_global_assignment -name VHDL_FILE ../../../soc/sdram.vhd
 set_global_assignment -name VHDL_FILE ../../../generic/bram_mi32_el.vhd
 set_global_assignment -name VHDL_FILE ../../../generic/bram_mi32_eb.vhd
 set_global_assignment -name VHDL_FILE ../../../generic/glue_sdram.vhd
@@ -198,10 +203,5 @@ set_global_assignment -name VHDL_FILE ../../../cpu/pipeline.vhd
 set_global_assignment -name VHDL_FILE ../../../cpu/loadalign.vhd
 set_global_assignment -name VHDL_FILE ../../../cpu/alu.vhd
 set_global_assignment -name VHDL_FILE ../../../soc/gpio.vhd
-set_global_assignment -name VHDL_FILE ../../../contrib/sdram.vhd
 set_global_assignment -name CDF_FILE output_files/Chain1.cdf
-
-
-
-
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
