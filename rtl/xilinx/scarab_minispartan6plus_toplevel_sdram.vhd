@@ -73,7 +73,9 @@ entity glue is
 end glue;
 
 architecture Behavioral of glue is
-    signal clk, rs232_break: std_logic;
+
+    signal clk, sdram_clk_internal: std_logic;
+    signal rs232_break: std_logic;
     signal btns: std_logic_vector(1 downto 0);
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
@@ -128,7 +130,7 @@ begin
 	sdram_addr => sdram_a, sdram_data => sdram_d,
 	sdram_ba => sdram_ba, sdram_dqm => sdram_dqm,
 	sdram_ras => sdram_rasn, sdram_cas => sdram_casn,
-	sdram_cke => sdram_cke, sdram_clk => sdram_clk,
+	sdram_cke => sdram_cke, sdram_clk => sdram_clk_internal,
 	sdram_we => sdram_wen, sdram_cs => sdram_csn,	
 	rs232_tx => rs232_tx, rs232_rx => rs232_rx,
 	rs232_break => rs232_break,
@@ -140,5 +142,15 @@ begin
 	btns(15 downto 0) => (others => '-'),
 	sw(3 downto 0) => sw(4 downto 1),
 	sw(15 downto 4) => (others => '-')
+    );
+
+    -- SDRAM clock output needs special routing on Spartan-6
+    sdram_clk_forward : ODDR2
+    generic map(
+	DDR_ALIGNMENT => "NONE", INIT => '0', SRTYPE => "SYNC"
+    )
+    port map (
+	Q => sdram_clk, C0 => clk, C1 => sdram_clk_internal, CE => '1',
+	R => '0', S => '0', D0 => '0', D1 => '1'
     );
 end Behavioral;
