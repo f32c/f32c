@@ -16,7 +16,6 @@ vhdfiles = \
 ../../../xilinx/pll_50M_112M5.vhd \
 ../../../xilinx/pll_50M_100M.vhd \
 ../../../xilinx/pll_50M_81M25.vhd \
-../../../xilinx/SDRAM_Controller.vhd \
 ../../../generic/glue_sdram.vhd \
 ../../../generic/bram_mi32_eb.vhd \
 ../../../generic/bram_mi32_el.vhd \
@@ -33,6 +32,7 @@ vhdfiles = \
 ../../../cpu/idecode_mi32.vhd \
 ../../../cpu/idecode_rv32.vhd \
 ../../../cpu/debug.vhd \
+../../../soc/sdram.vhd \
 ../../../soc/sio.vhd \
 ../../../soc/gpio.vhd \
 ../../../soc/timer.vhd 
