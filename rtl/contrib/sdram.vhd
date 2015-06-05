@@ -46,9 +46,6 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
--- library UNISIM;
--- use UNISIM.VComponents.all;
-
 
 entity SDRAM_Controller is
     generic (
@@ -216,10 +213,6 @@ begin
     -- Forward the SDRAM clock to the SDRAM chip - 180 degress 
     -- out of phase with the control signals (ensuring setup and holdup 
     -----------------------------------------------------------
-    -- sdram_clk_forward : ODDR2
-    -- generic map(DDR_ALIGNMENT => "NONE", INIT => '0', SRTYPE => "SYNC")
-    -- port map (Q => sdram_clk, C0 => clk, C1 => not clk, CE => '1',
-    --  R => '0', S => '0', D0 => '0', D1 => '1');
     sdram_clk <= not clk;
 
     -----------------------------------------------
@@ -240,13 +233,6 @@ begin
     ---------------------------------------------------------------
     -- Explicitly set up the tristate I/O buffers on the DQ signals
     ---------------------------------------------------------------
-    -- iob_dq_g: for i in 0 to 15 generate
-    -- begin
-    --	iob_dq_iob: IOBUF
-    --	generic map (DRIVE => 12, IOSTANDARD => "LVTTL", SLEW => "FAST")
-    --	port map (O  => sdram_din(i), IO => sdram_data(i),
-    -- 	    I  => iob_data(i), T  => iob_dq_hiz);
-    -- end generate;
     sdram_data <= iob_data when iob_dq_hiz = '0' else (others => 'Z');
     sdram_din <= sdram_data;
                                      
