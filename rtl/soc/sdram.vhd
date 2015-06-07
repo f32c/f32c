@@ -127,11 +127,9 @@ architecture Behavioral of SDRAM_Controller is
     attribute IOB of iob_bank   : signal is "true";
     attribute IOB of iob_data   : signal is "true";
    
-    signal iob_data_next      : std_logic_vector(15 downto 0) := (others => '0');
-    signal captured_data      : std_logic_vector(15 downto 0) := (others => '0');
-    signal captured_data_last : std_logic_vector(15 downto 0) := (others => '0');
-    signal sdram_din          : std_logic_vector(15 downto 0);
-    attribute IOB of captured_data : signal is "true";
+    signal iob_data_next: std_logic_vector(15 downto 0) := (others => '0');
+    signal R_from_sdram_prev, R_from_sdram: std_logic_vector(15 downto 0);
+    attribute IOB of R_from_sdram: signal is "true";
    
     type fsm_state is (
 	s_startup,
@@ -181,8 +179,8 @@ architecture Behavioral of SDRAM_Controller is
     signal iob_dq_hiz       : std_logic := '1';
 
     -- signals for when to read the data off of the bus
-    signal data_ready_delay : std_logic_vector(4 downto 0);   
-    --signal data_ready_delay : std_logic_vector(3 downto 0);   
+    --signal data_ready_delay : std_logic_vector(4 downto 0);   
+    signal data_ready_delay : std_logic_vector(3 downto 0);   
    
     -- bit indexes used when splitting the address into row/colum/bank.
     constant start_of_col  : natural := 0;
@@ -234,20 +232,19 @@ begin
     -- Explicitly set up the tristate I/O buffers on the DQ signals
     ---------------------------------------------------------------
     sdram_data <= iob_data when iob_dq_hiz = '0' else (others => 'Z');
-    sdram_din <= sdram_data;
+    data_out <= R_from_sdram_prev & R_from_sdram;
                                      
     capture_proc: process(clk) 
     begin
-	if rising_edge(clk) then
-	    captured_data <= sdram_din;
+	if falling_edge(clk) then
+	    R_from_sdram <= sdram_data;
+	    R_from_sdram_prev <= R_from_sdram;
 	end if;
     end process;
 
     main_proc: process(clk) 
     begin
 	if rising_edge(clk) then
-	    captured_data_last <= captured_data;
-      
 	    ------------------------------------------------
 	    -- Default state is to do nothing
 	    ------------------------------------------------
@@ -287,7 +284,6 @@ begin
 	    ------------------------------------------------
 	    data_out_ready <= '0';
 	    if data_ready_delay(0) = '1' then
-		data_out       <= captured_data & captured_data_last;
 		data_out_ready <= '1';
 	    end if;
          
