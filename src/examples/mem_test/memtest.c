@@ -48,16 +48,16 @@ main(void)
 	tot_err = 0;
 
 again:
-	seed = random();
+	RDTSC(seed);
 
 	val = seed;
 	RDTSC(start);
 	for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end;
 	    val += 0x137b5d51) {
-		*p8++ = val; *p8++ = val; *p8++ = val; *p8++ = val;
-		*p8++ = val; *p8++ = val; *p8++ = val; *p8++ = val;
-		*p8++ = val; *p8++ = val; *p8++ = val; *p8++ = val;
-		*p8++ = val; *p8++ = val; *p8++ = val; *p8++ = val;
+		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
+		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
+		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
+		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
 	}
 	RDTSC(end);
 	len = (end - start) / freq_khz;
@@ -82,8 +82,13 @@ again:
 	for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end; 
 	    val += 0x137b5d51)
 		for (i = 0; i < 16; i++)
-			if (*p8++ != (val & 0xff))
-				tmp++;
+			if ((i & 2) == 0) {
+				if (*p8++ != (val & 0xff))
+					tmp++;
+			} else {
+				if (*p8++ != ((~val) & 0xff))
+					tmp++;
+			}
 	printf("%d errors\n", tmp);
 	tot_err += tmp;
 	
@@ -91,10 +96,10 @@ again:
 	RDTSC(start);
 	for (p16 = (uint16_t *) mem_base; p16 < (uint16_t *) mem_end;
 	    val += 0x137b5d51) {
-		*p16++ = val; *p16++ = val; *p16++ = val; *p16++ = val;
-		*p16++ = val; *p16++ = val; *p16++ = val; *p16++ = val;
-		*p16++ = val; *p16++ = val; *p16++ = val; *p16++ = val;
-		*p16++ = val; *p16++ = val; *p16++ = val; *p16++ = val;
+		*p16++ = val; *p16++ = ~val; *p16++ = val; *p16++ = ~val;
+		*p16++ = val; *p16++ = ~val; *p16++ = val; *p16++ = ~val;
+		*p16++ = val; *p16++ = ~val; *p16++ = val; *p16++ = ~val;
+		*p16++ = val; *p16++ = ~val; *p16++ = val; *p16++ = ~val;
 	}
 	RDTSC(end);
 	len = (end - start) / freq_khz;
@@ -119,8 +124,13 @@ again:
 	for (p16 = (uint16_t *) mem_base; p16 < (uint16_t *) mem_end; 
 	    val += 0x137b5d51)
 		for (i = 0; i < 16; i++)
-			if (*p16++ != (val & 0xffff))
-				tmp++;
+			if ((i & 1) == 0) {
+				if (*p16++ != (val & 0xffff))
+					tmp++;
+			} else {
+				if (*p16++ != ((~val) & 0xffff))
+					tmp++;
+			}
 	printf("%d errors\n", tmp);
 	tot_err += tmp;
 	
