@@ -129,6 +129,7 @@ xc3sprog_flash: $(project).bit
 	xc3sprog -c $(xc3sprog_interface) /tmp/jtag_spi_bridge.bit
 	rm /tmp/jtag_spi_bridge.bit
 	xc3sprog -c $(xc3sprog_interface) -I $(project).bit
+	xc3sprog -c $(xc3sprog_interface) -R
 
 program: $(project).svf
 	openocd --file=$(openocd_interface) --file=$(project).ocd
