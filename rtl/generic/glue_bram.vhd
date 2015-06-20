@@ -73,6 +73,7 @@ entity glue_bram is
 	C_sio: boolean := true;
 	C_sio_break_detect: boolean := true;
 	C_gpio: boolean := true;
+	C_pid: boolean := false;
 	C_timer: boolean := true;
 	C_leds_btns: boolean := true
     );
@@ -113,7 +114,12 @@ architecture Behavioral of glue_bram is
     signal from_gpio: std_logic_vector(31 downto 0);
     signal gpio_ce: std_logic;
     signal gpio_intr: std_logic;
-        
+
+    -- PID
+    signal from_pid: std_logic_vector(31 downto 0);
+    signal pid_ce: std_logic;
+    signal pid_intr: std_logic;
+
     -- Serial I/O (RS232)
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_ce, sio_break, sio_tx: std_logic;
@@ -262,6 +268,12 @@ begin
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
+	when x"54" | x"55" =>
+	    if C_pid then
+		io_to_cpu <= from_pid;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
 	when x"70"  =>
 	    if C_leds_btns then
 		io_to_cpu <= R_sw & R_btns;
@@ -296,6 +308,20 @@ begin
     gpio_ce <= io_addr_strobe when io_addr(11 downto 8) = x"0" else '0';
     end generate;
 
+    -- PID
+    G_pid:
+    if C_pid generate
+    pid_inst: entity work.pid
+    generic map (
+	C_bits => 32
+    )
+    port map (
+	clk => clk, ce => pid_ce, addr => dmem_addr(4 downto 2),
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_pid
+    );
+    pid_ce <= io_addr_strobe when io_addr(11 downto 4) = x"54" or io_addr(11 downto 4) = x"55" else '0';
+    end generate;
 
     -- Timer
     G_timer:
