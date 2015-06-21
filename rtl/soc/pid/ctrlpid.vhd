@@ -23,10 +23,10 @@ entity ctrlpid is
   port
   (
     clk_pid    : in  std_logic;
-    error      : in  std_logic_vector(31 downto 0);
-    m_k_out    : out std_logic_vector(15 downto 0);
+    error      : in  std_logic_vector(24-1 downto 0);
+    m_k_out    : out std_logic_vector(12-1 downto 0);
     reset      : in  std_logic;
-    KP, KI, KD : in  std_logic_vector(7 downto 0)
+    KP, KI, KD : in  std_logic_vector(6-1 downto 0)
   );
 end ctrlpid;
 
@@ -69,6 +69,6 @@ begin
     KD => KD(5 downto 0)
   );
   
-  m_k_out(15 downto 12) <= (others => '0');
+  -- m_k_out(15 downto 12) <= (others => '0');
 
 end syn;

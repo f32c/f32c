@@ -46,6 +46,7 @@ entity pid is
 	byte_sel: in std_logic_vector(3 downto 0);
 	bus_in: in std_logic_vector(31 downto 0);
 	bus_out: out std_logic_vector(31 downto 0);
+	encoder_out: out std_logic_vector(1 downto 0);
 	bridge_out: out std_logic_vector(1 downto 0) -- hardware output to full bridge
     );
 end pid;
@@ -75,14 +76,16 @@ architecture arch of pid is
     
     signal clkcounter : std_logic_vector(C_clkdivbits-1 downto 0);
     signal clk_pid : std_logic;
-    signal sp: std_logic_vector(31 downto 0) := 0; -- set point
-    signal cv: std_logic_vector(31 downto 0) := 0; -- current value
-    signal error: std_logic_vector(31 downto 0); -- error = sp-cv
+    signal sp: std_logic_vector(23 downto 0) := 0; -- set point
+    signal cv: std_logic_vector(23 downto 0) := 0; -- current value
+    signal error: std_logic_vector(23 downto 0); -- error = sp-cv
     signal reset   : std_logic := '0';
-    signal m_k_out : std_logic_vector(15 downto 0);
+    signal m_k_out : std_logic_vector(11 downto 0);
     signal pwm_compare : std_logic_vector(C_clkdivbits-1 downto 0); -- pwm signal
     signal pwm_sign : std_logic; -- sign of output signal
     signal pwm_out : std_logic; -- pwm output signal
+    signal bridge_f, bridge_r : std_logic; -- pwm bridge forward reverse
+    signal encoder_a, encoder_b : std_logic; -- rotary encoder signals
     
 begin
     -- CPU core reads registers
@@ -119,8 +122,16 @@ begin
       end process;
     clk_pid <= clkcounter(C_clkdivbits-1);
 
-    -- todo: rotary decoder provides cv
-    sp <= R(C_setpoint);
+    -- rotary decoder provides cv
+    rotary_decoder_inst: entity work.rotary_decoder
+    port map(
+      clk => clk,
+      reset => '0',
+      a => encoder_a,
+      b => encoder_b,
+      counter => cv(23 downto 0)
+    );
+    sp <= R(C_setpoint)(23 downto 0);
     error <= sp - cv;
     
     -- instantiate the PID controller
@@ -130,9 +141,9 @@ begin
       error => error,
       reset => '0',
       m_k_out => m_k_out,
-      KP => R(C_pid)(23 downto 16),
-      KI => R(C_pid)(15 downto 8), 
-      KD => R(C_pid)(7 downto 0)
+      KP => R(C_pid)(21 downto 16),
+      KI => R(C_pid)(13 downto 8), 
+      KD => R(C_pid)(5 downto 0)
     );
 
     -- PWM output
@@ -149,6 +160,16 @@ begin
     -- "10": full power reverse
     -- "11": power off (brake)
 
-    -- todo: simulator
+    bridge_f <= bridge_out(0);
+    bridge_r <= bridge_out(1);
 
+    -- simulated motor
+    simulator_inst: entity work.simotor
+    port map(
+      clock => clk,
+      f => bridge_f, r => bridge_r,
+      a => encoder_a, b => encoder_b
+    );
+    
+    encoder_out <= encoder_b & encoder_a; -- for encoder display on LED
 end;

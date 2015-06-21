@@ -83,7 +83,6 @@ begin
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
-	C_pid => C_pid,
 	C_debug => C_debug
     )
     port map (

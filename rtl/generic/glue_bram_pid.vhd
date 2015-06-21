@@ -74,6 +74,7 @@ entity glue_bram is
 	C_sio_break_detect: boolean := true;
 	C_gpio: boolean := true;
 	C_timer: boolean := true;
+	C_pid: boolean := false;
 	C_leds_btns: boolean := true
     );
     port (
@@ -113,6 +114,14 @@ architecture Behavioral of glue_bram is
     signal from_gpio: std_logic_vector(31 downto 0);
     signal gpio_ce: std_logic;
     signal gpio_intr: std_logic;
+
+    -- PID
+    signal from_pid: std_logic_vector(31 downto 0);
+    signal pid_ce: std_logic;
+    signal pid_intr: std_logic; -- currently unused
+    signal pid_bridge_out: std_logic_vector(1 downto 0);
+    signal pid_encoder_out: std_logic_vector(1 downto 0);
+    signal pid_led: std_logic_vector(1 downto 0); -- show on LEDs
 
     -- Serial I/O (RS232)
     signal from_sio: std_logic_vector(31 downto 0);
@@ -229,15 +238,18 @@ begin
     end process;
 
     G_led_standard:
-    if C_timer = false generate
+    if C_timer = false and C_pid = false generate
       leds <= R_leds when C_leds_btns else (others => '-');
     end generate;
     -- muxing LEDs to show PWM of timer or PID
     G_led_timer:
-    if C_timer = true generate
+    if C_timer = true or C_pid = true generate
       ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_leds(1);
       ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_leds(2);
-      leds <= R_leds(15 downto 3) & ocp_mux & R_leds(0) when C_leds_btns
+      pid_led(1 downto 0) <= pid_encoder_out(1 downto 0) 
+                           & pid_bridge_out(1 downto 0) when C_pid = true 
+                        else R_leds(7 downto 4);
+      leds <= R_leds(15 downto 8) & pid_led & R_leds(3) & ocp_mux & R_leds(0) when C_leds_btns
         else (others => '-');
     end generate;
     lcd_7seg <= R_lcd_7seg when C_leds_btns else (others => '-');
@@ -260,6 +272,12 @@ begin
 	when x"30"  =>
 	    if C_sio then
 		io_to_cpu <= from_sio;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
+	when x"54" | x"55" => -- address 0xFFFFFD40
+	    if C_pid then
+		io_to_cpu <= from_pid;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
@@ -295,6 +313,23 @@ begin
 	gpio_phys => gpio -- physical input/output
     );
     gpio_ce <= io_addr_strobe when io_addr(11 downto 8) = x"0" else '0';
+    end generate;
+
+    -- PID
+    G_pid:
+    if C_pid generate
+    pid_inst: entity work.pid
+    generic map (
+	C_bits => 32
+    )
+    port map (
+	clk => clk, ce => pid_ce, addr => dmem_addr(4 downto 2),
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_pid,
+	encoder_out => pid_encoder_out,
+	bridge_out => pid_bridge_out
+    );
+    pid_ce <= io_addr_strobe when io_addr(11 downto 4) = x"54" or io_addr(11 downto 4) = x"55" else '0'; -- address 0xFFFFFD40
     end generate;
 
     -- Timer
