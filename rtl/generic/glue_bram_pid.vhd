@@ -121,7 +121,7 @@ architecture Behavioral of glue_bram is
     signal pid_intr: std_logic; -- currently unused
     signal pid_bridge_out: std_logic_vector(1 downto 0);
     signal pid_encoder_out: std_logic_vector(1 downto 0);
-    signal pid_led: std_logic_vector(1 downto 0); -- show on LEDs
+    signal pid_led: std_logic_vector(3 downto 0); -- show on LEDs
 
     -- Serial I/O (RS232)
     signal from_sio: std_logic_vector(31 downto 0);
@@ -246,7 +246,7 @@ begin
     if C_timer = true or C_pid = true generate
       ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_leds(1);
       ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_leds(2);
-      pid_led(1 downto 0) <= pid_encoder_out(1 downto 0) 
+      pid_led(3 downto 0) <= pid_encoder_out(1 downto 0) 
                            & pid_bridge_out(1 downto 0) when C_pid = true 
                         else R_leds(7 downto 4);
       leds <= R_leds(15 downto 8) & pid_led & R_leds(3) & ocp_mux & R_leds(0) when C_leds_btns
