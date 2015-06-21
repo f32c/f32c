@@ -268,7 +268,7 @@ begin
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"54" | x"55" =>
+	when x"54" | x"55" => -- address 0xFFFFFD40
 	    if C_pid then
 		io_to_cpu <= from_pid;
 	    else
@@ -320,7 +320,7 @@ begin
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
 	bus_in => cpu_to_dmem, bus_out => from_pid
     );
-    pid_ce <= io_addr_strobe when io_addr(11 downto 4) = x"54" or io_addr(11 downto 4) = x"55" else '0';
+    pid_ce <= io_addr_strobe when io_addr(11 downto 4) = x"54" or io_addr(11 downto 4) = x"55" else '0'; -- address 0xFFFFFD40
     end generate;
 
     -- Timer
