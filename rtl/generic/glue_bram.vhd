@@ -73,8 +73,8 @@ entity glue_bram is
 	C_sio: boolean := true;
 	C_sio_break_detect: boolean := true;
 	C_gpio: boolean := true;
-	C_pid: boolean := false;
 	C_timer: boolean := true;
+	C_pid: boolean := false; -- either pid or timer, not both
 	C_leds_btns: boolean := true
     );
     port (
@@ -118,7 +118,8 @@ architecture Behavioral of glue_bram is
     -- PID
     signal from_pid: std_logic_vector(31 downto 0);
     signal pid_ce: std_logic;
-    signal pid_intr: std_logic;
+    signal pid_intr: std_logic; -- currently unused
+    signal pid_bridge_out: std_logic_vector(1 downto 0);
 
     -- Serial I/O (RS232)
     signal from_sio: std_logic_vector(31 downto 0);
@@ -235,7 +236,7 @@ begin
     end process;
 
     G_led_standard:
-    if C_timer = false generate
+    if C_timer = false and C_pid = false generate
     leds <= R_leds when C_leds_btns else (others => '-');
     end generate;
     G_led_timer:
@@ -244,6 +245,11 @@ begin
     ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_leds(2);
     leds <= R_leds(15 downto 3) & ocp_mux & R_leds(0) when C_leds_btns
       else (others => '-');
+    end generate;
+    G_led_pid:
+    if C_pid = true generate -- either timer or pid, not both
+    ocp_mux(1 downto 0) <= pid_bridge_out(1 downto 0);
+    leds <= R_leds(15 downto 2) & ocp_mux when C_leds_btns else (others => '-');
     end generate;
     lcd_7seg <= R_lcd_7seg when C_leds_btns else (others => '-');
 
@@ -318,7 +324,8 @@ begin
     port map (
 	clk => clk, ce => pid_ce, addr => dmem_addr(4 downto 2),
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_pid
+	bus_in => cpu_to_dmem, bus_out => from_pid,
+	bridge_out => pid_bridge_out
     );
     pid_ce <= io_addr_strobe when io_addr(11 downto 4) = x"54" or io_addr(11 downto 4) = x"55" else '0'; -- address 0xFFFFFD40
     end generate;
