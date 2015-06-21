@@ -147,10 +147,10 @@ begin
     );
 
     -- PWM output
-    --pwm_compare <= m_k_out(10 downto 0); -- compare value without sign bit of m_k_out
-    --pwm_sign <= m_k_out(11); -- sign bit of m_k_out defines forward/reverse direction
-    pwm_compare <= R(C_testpwm)(10 downto 0); -- compare value without sign bit of m_k_out
-    pwm_sign <= R(C_testpwm)(11); -- sign bit of m_k_out defines forward/reverse direction
+    pwm_compare <= m_k_out(10 downto 0); -- compare value without sign bit of m_k_out
+    pwm_sign <= m_k_out(11); -- sign bit of m_k_out defines forward/reverse direction
+    --pwm_compare <= R(C_testpwm)(10 downto 0); -- compare value without sign bit of m_k_out
+    --pwm_sign <= R(C_testpwm)(11); -- sign bit of m_k_out defines forward/reverse direction
     pwm_out <= '1' when clkcounter < pwm_compare else '0';
     bridge_out <= '0' & pwm_out when pwm_sign = '0' -- forward: m_k_out is positive
              else not(pwm_out) & '0';               -- reverse: m_k_out is negative
