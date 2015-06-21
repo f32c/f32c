@@ -28,7 +28,7 @@ module simotor_v (
   wire B;
   //-------------Output Ports Data Type------------------
   // Output port can be a storage element (reg) or a wire
-  reg [3:0] encoder;         // encoder output patter
+  reg [1:0] encoder;         // encoder output patter
 
   reg signed [31:0] speed;
   reg [31:0] aspeed; // absolute speed
@@ -54,17 +54,17 @@ module simotor_v (
    KP=11;
    KI=15;
    KD=5;
-
 */
-
   
   parameter [9:0] motor_power = 512;  // acceleration
   parameter [4:0] motor_speed = 16;  // inverse log2 friction proportional to speed
   // larger motor_speed values allow higher motor top speed
   parameter [7:0] motor_friction = 60; // static friction
   // when motor_power > motor_friction it starts to move
-  
-  // ------------ counter register
+
+  wire [31:0] applied_power;
+  assign applied_power = F == 1 && R == 0 ?  motor_power :
+                         F == 0 && R == 1 ? -motor_power : 0;
 
   //------------Code Starts Here-------------------------
   // We trigger the below block with respect to positive
@@ -73,10 +73,7 @@ module simotor_v (
   begin : MOTOR_SIMULATOR // Block Name
 
     // motor voltage 
-    if(F == 1'b1)
-      speed = speed + motor_power;
-    if(R == 1'b1)
-      speed = speed - motor_power;
+    speed = speed + applied_power;
  
     // absolute speed
     aspeed = speed > 0 ? speed : -speed;
@@ -94,10 +91,10 @@ module simotor_v (
 
     // generate encoder value
     case(counter[31:30])
-      2'b00: encoder = 4'b1001;
-      2'b01: encoder = 4'b0011;
-      2'b10: encoder = 4'b0110;
-      2'b11: encoder = 4'b1100;
+      2'b00: encoder = 2'b01;
+      2'b01: encoder = 2'b11;
+      2'b10: encoder = 2'b10;
+      2'b11: encoder = 2'b00;
     endcase
   end // End of Block CLOCK_DIVIDER
 
