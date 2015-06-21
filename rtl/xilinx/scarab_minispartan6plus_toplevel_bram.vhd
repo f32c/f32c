@@ -43,7 +43,7 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: 50 or 81 or 112
+	-- Main clock: 50/81/100112
 	C_clk_freq: integer := 81;
 
 	-- SoC configuration options
@@ -70,6 +70,13 @@ begin
     
     clk112: if C_clk_freq = 112 generate
     clkgen112: entity work.pll_50M_112M5
+    port map(
+      clk_in1 => clk_50MHz, clk_out1 => clk
+    );
+    end generate;
+
+    clk100: if C_clk_freq = 100 generate
+    clkgen100: entity work.pll_50M_100M
     port map(
       clk_in1 => clk_50MHz, clk_out1 => clk
     );
