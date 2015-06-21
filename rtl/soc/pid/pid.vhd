@@ -64,11 +64,11 @@ architecture arch of pid is
     -- this improves code readability
     -- and provides flexible register (re)numbering
     constant C_setpoint:   integer   := 0; -- set point value
-    constant C_undef0:     integer   := 1; -- undefined
+    constant C_undef1:     integer   := 1; -- undefined
     constant C_pid:        integer   := 2; -- constants 0xPPIIDD
-    constant C_undef1:     integer   := 3; -- undefined
-    constant C_undef2:     integer   := 4; -- undefined
-    constant C_undef3:     integer   := 5; -- undefined
+    constant C_undef3:     integer   := 3; -- undefined
+    constant C_undef4:     integer   := 4; -- undefined
+    constant C_testpwm:    integer   := 5; -- undefined
     constant C_output:     integer   := 6; -- output value to control the motor
     constant C_position:   integer   := 7; -- encoder counter
     
@@ -147,10 +147,10 @@ begin
     );
 
     -- PWM output
-    pwm_compare <= m_k_out(10 downto 0); -- compare value without sign bit of m_k_out
-    pwm_sign <= m_k_out(11); -- sign bit of m_k_out defines forward/reverse direction
-    --pwm_compare <= R(C_setpoint)(10 downto 0); -- compare value without sign bit of m_k_out
-    --pwm_sign <= R(C_setpoint)(11); -- sign bit of m_k_out defines forward/reverse direction
+    --pwm_compare <= m_k_out(10 downto 0); -- compare value without sign bit of m_k_out
+    --pwm_sign <= m_k_out(11); -- sign bit of m_k_out defines forward/reverse direction
+    pwm_compare <= R(C_testpwm)(10 downto 0); -- compare value without sign bit of m_k_out
+    pwm_sign <= R(C_testpwm)(11); -- sign bit of m_k_out defines forward/reverse direction
     pwm_out <= '1' when clkcounter < pwm_compare else '0';
     bridge_out <= '0' & pwm_out when pwm_sign = '0' -- forward: m_k_out is positive
              else not(pwm_out) & '0';               -- reverse: m_k_out is negative
