@@ -74,7 +74,7 @@ entity glue_bram is
 	C_sio_break_detect: boolean := true;
 	C_gpio: boolean := true;
 	C_timer: boolean := true;
-	C_pid: boolean := false;
+	C_pid: boolean := true;
 	C_leds_btns: boolean := true
     );
     port (
