@@ -73,7 +73,7 @@ architecture arch of pid is
     
     constant C_clkdivbits: integer   := 11; -- clock divider bits
     
-    signal clkdivider : std_logic_vector(C_clkdivbits-1 downto 0);
+    signal clkcounter : std_logic_vector(C_clkdivbits-1 downto 0);
     signal clk_pid : std_logic;
     signal sp: std_logic_vector(31 downto 0) := 0; -- set point
     signal cv: std_logic_vector(31 downto 0) := 0; -- current value
@@ -114,13 +114,13 @@ begin
     process(clk)
       begin
         if rising_edge(clk) then
-          clkdivider <= clkdivider + 1;
+          clkcounter <= clkcounter + 1;
         end if;
       end process;
-    clk_pid <= clkdivider(C_clkdivbits-1);
+    clk_pid <= clkcounter(C_clkdivbits-1);
 
-    -- todo: rotary decoder that provides cv
-    
+    -- todo: rotary decoder provides cv
+    sp <= R(C_setpoint);
     error <= sp - cv;
     
     -- instantiate the PID controller
@@ -138,7 +138,9 @@ begin
     -- PWM output
     pwm_compare <= m_k_out(10 downto 0); -- compare value without sign bit of m_k_out
     pwm_sign <= m_k_out(11); -- sign bit of m_k_out defines forward/reverse direction
-    pwm_out <= '1' when clkdivider > pwm_compare else '0';
+    --pwm_compare <= R(C_setpoint)(10 downto 0); -- compare value without sign bit of m_k_out
+    --pwm_sign <= R(C_setpoint)(11); -- sign bit of m_k_out defines forward/reverse direction
+    pwm_out <= '1' when clkcounter < pwm_compare else '0';
     bridge_out <= '0' & pwm_out when pwm_sign = '0' -- forward: m_k_out is positive
              else not(pwm_out) & '0';               -- reverse: m_k_out is negative
     -- bridge_out values description
