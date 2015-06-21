@@ -26,12 +26,13 @@
 -- $Id$
 --
 
--- EMARD GPIO with interrupts
+-- PID controller, CPU interface
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
+use work.f32c_pack.all;
 
 entity pid is
     generic (
@@ -60,26 +61,28 @@ architecture arch of pid is
     -- named constants for pid registers
     -- this improves code readability
     -- and provides flexible register (re)numbering
-    constant C_output:     integer   := 0; -- output value
-    constant C_direction:  integer   := 1; -- direction 0=input 1=output
-    constant C_rising_if:  integer   := 2; -- rising edge interrupt flag
-    constant C_rising_ie:  integer   := 3; -- rising edge interrupt enable
-    constant C_falling_if: integer   := 4; -- falling edge interrupt flag
-    constant C_falling_ie: integer   := 5; -- falling edge interrupt enable
-    constant C_input:      integer   := 0; -- input value (overlay at output register value) 
+    constant C_setpoint:   integer   := 0; -- set point value
+    constant C_undef0:     integer   := 1; -- undefined
+    constant C_pid:        integer   := 2; -- constants 0xPPIIDD
+    constant C_undef1:     integer   := 3; -- undefined
+    constant C_undef2:     integer   := 4; -- undefined
+    constant C_undef3:     integer   := 5; -- undefined
+    constant C_output:     integer   := 6; -- output value to control the motor
+    constant C_position:   integer   := 7; -- encoder counter
 
-    -- edge detection related registers
-    constant C_edge_sync_depth: integer := 3; -- number of shift register stages (default 3) for icp clock synchronization
-    type T_edge_sync_shift is array (0 to C_bits-1) of std_logic_vector(C_edge_sync_depth-1 downto 0); -- edge detect synchronizer type
-    signal R_edge_sync_shift: T_edge_sync_shift;
-    signal R_rising_edge, R_falling_edge: std_logic_vector(C_bits-1 downto 0);
+    signal clk_pid : std_logic := '0';
+    signal error   : std_logic_vector(31 downto 0);
+    signal reset   : std_logic := '0';
+    signal m_k_out : std_logic_vector(15 downto 0);
 
 begin
     -- CPU core reads registers
     with conv_integer(addr) select
       bus_out <= 
-        ext(R(conv_integer(C_input)), 32)
-          when C_input,
+        ext(x"1234", 32)
+          when C_position,
+        ext(m_k_out, 32)
+          when C_output,
         ext(R(conv_integer(addr)),32)
           when others;
 
@@ -97,5 +100,17 @@ begin
         end if;
       end process;
     end generate;
+    
+    -- instantiate the PID controller
+    pid_inst: entity work.ctrlpid
+    port map(
+      clk_pid => clk_pid,
+      error => error,
+      reset => '0',
+      m_k_out => m_k_out,
+      KP => R(C_pid)(23 downto 16),
+      KI => R(C_pid)(15 downto 8), 
+      KD => R(C_pid)(7 downto 0)
+    );
 
 end;
