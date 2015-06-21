@@ -246,11 +246,11 @@ begin
     leds <= R_leds(15 downto 3) & ocp_mux & R_leds(0) when C_leds_btns
       else (others => '-');
     end generate;
-    G_led_pid:
-    if C_pid = true generate -- either timer or pid, not both
-    ocp_mux(1 downto 0) <= pid_bridge_out(1 downto 0);
-    leds <= R_leds(15 downto 2) & ocp_mux when C_leds_btns else (others => '-');
-    end generate;
+    -- G_led_pid:
+    -- if C_pid = true generate -- either timer or pid, not both
+    -- ocp_mux(1 downto 0) <= pid_bridge_out(1 downto 0);
+    -- leds <= R_leds(15 downto 2) & ocp_mux when C_leds_btns else (others => '-');
+    -- end generate;
     lcd_7seg <= R_lcd_7seg when C_leds_btns else (others => '-');
 
     process(io_addr, R_sw, R_btns, from_sio, from_timer, from_gpio)
