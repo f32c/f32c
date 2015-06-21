@@ -45,7 +45,8 @@ entity pid is
 	addr: in std_logic_vector(C_addr_bits-1 downto 0); -- address max 8 registers of 32-bit
 	byte_sel: in std_logic_vector(3 downto 0);
 	bus_in: in std_logic_vector(31 downto 0);
-	bus_out: out std_logic_vector(31 downto 0)
+	bus_out: out std_logic_vector(31 downto 0);
+	bridge_out: out std_logic_vector(1 downto 0) -- hardware output to full bridge
     );
 end pid;
 
@@ -69,12 +70,20 @@ architecture arch of pid is
     constant C_undef3:     integer   := 5; -- undefined
     constant C_output:     integer   := 6; -- output value to control the motor
     constant C_position:   integer   := 7; -- encoder counter
-
-    signal clk_pid : std_logic := '0';
-    signal error   : std_logic_vector(31 downto 0);
+    
+    constant C_clkdivbits: integer   := 11; -- clock divider bits
+    
+    signal clkdivider : std_logic_vector(C_clkdivbits-1 downto 0);
+    signal clk_pid : std_logic;
+    signal sp: std_logic_vector(31 downto 0) := 0; -- set point
+    signal cv: std_logic_vector(31 downto 0) := 0; -- current value
+    signal error: std_logic_vector(31 downto 0); -- error = sp-cv
     signal reset   : std_logic := '0';
     signal m_k_out : std_logic_vector(15 downto 0);
-
+    signal pwm_compare : std_logic_vector(C_clkdivbits-1 downto 0); -- pwm signal
+    signal pwm_sign : std_logic; -- sign of output signal
+    signal pwm_out : std_logic; -- pwm output signal
+    
 begin
     -- CPU core reads registers
     with conv_integer(addr) select
@@ -101,6 +110,19 @@ begin
       end process;
     end generate;
     
+    -- PID clock (kHz range)
+    process(clk)
+      begin
+        if rising_edge(clk) then
+          clkdivider <= clkdivider + 1;
+        end if;
+      end process;
+    clk_pid <= clkdivider(C_clkdivbits-1);
+
+    -- todo: rotary decoder that provides cv
+    
+    error <= sp - cv;
+    
     -- instantiate the PID controller
     pid_inst: entity work.ctrlpid
     port map(
@@ -112,5 +134,19 @@ begin
       KI => R(C_pid)(15 downto 8), 
       KD => R(C_pid)(7 downto 0)
     );
+
+    -- PWM output
+    pwm_compare <= m_k_out(10 downto 0); -- compare value without sign bit of m_k_out
+    pwm_sign <= m_k_out(11); -- sign bit of m_k_out defines forward/reverse direction
+    pwm_out <= '1' when clkdivider > pwm_compare else '0';
+    bridge_out <= '0' & pwm_out when pwm_sign = '0' -- forward: m_k_out is positive
+             else not(pwm_out) & '0';               -- reverse: m_k_out is negative
+    -- bridge_out values description
+    -- "00": power off (brake)
+    -- "01": full power forward
+    -- "10": full power reverse
+    -- "11": power off (brake)
+
+    -- todo: simulator
 
 end;
