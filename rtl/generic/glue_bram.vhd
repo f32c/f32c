@@ -74,7 +74,7 @@ entity glue_bram is
 	C_sio_break_detect: boolean := true;
 	C_gpio: boolean := true;
 	C_timer: boolean := true;
-	C_pid: boolean := false; -- either pid or timer, not both
+	C_pid: boolean := false;
 	C_leds_btns: boolean := true
     );
     port (
@@ -120,6 +120,7 @@ architecture Behavioral of glue_bram is
     signal pid_ce: std_logic;
     signal pid_intr: std_logic; -- currently unused
     signal pid_bridge_out: std_logic_vector(1 downto 0);
+    signal pid_led: std_logic_vector(1 downto 0); -- show on LEDs
 
     -- Serial I/O (RS232)
     signal from_sio: std_logic_vector(31 downto 0);
@@ -237,20 +238,17 @@ begin
 
     G_led_standard:
     if C_timer = false and C_pid = false generate
-    leds <= R_leds when C_leds_btns else (others => '-');
+      leds <= R_leds when C_leds_btns else (others => '-');
     end generate;
+    -- muxing LEDs to show PWM of timer or PID
     G_led_timer:
-    if C_timer = true generate
-    ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_leds(1);
-    ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_leds(2);
-    leds <= R_leds(15 downto 3) & ocp_mux & R_leds(0) when C_leds_btns
-      else (others => '-');
+    if C_timer = true or C_pid = true generate
+      ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_leds(1);
+      ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_leds(2);
+      pid_led(1 downto 0) <= pid_bridge_out(1 downto 0) when C_pid = true else R_leds(5 downto 4);
+      leds <= R_leds(15 downto 6) & pid_led & R_leds(3) & ocp_mux & R_leds(0) when C_leds_btns
+        else (others => '-');
     end generate;
-    -- G_led_pid:
-    -- if C_pid = true generate -- either timer or pid, not both
-    -- ocp_mux(1 downto 0) <= pid_bridge_out(1 downto 0);
-    -- leds <= R_leds(15 downto 2) & ocp_mux when C_leds_btns else (others => '-');
-    -- end generate;
     lcd_7seg <= R_lcd_7seg when C_leds_btns else (others => '-');
 
     process(io_addr, R_sw, R_btns, from_sio, from_timer, from_gpio)
