@@ -17,8 +17,7 @@ entity rotary_decoder is
   (
     clk     : in  std_logic;
     reset   : in  std_logic;
-    a       : in  std_logic;
-    b       : in  std_logic;
+    encoder : in  std_logic_vector(1 downto 0);
     counter : out std_logic_vector(23 downto 0)
   );
 end rotary_decoder;
@@ -39,7 +38,7 @@ begin
   port map(
     clk => clk,
     reset => reset,
-    A => a, B => b,
+    A => encoder(0), B => encoder(1),
     counter => counter
   );
 

@@ -92,6 +92,8 @@ architecture arch of pid is
     type bridge_type is array (C_pids-1 downto 0) of std_logic_vector(1 downto 0);
     signal bridge : bridge_type; -- pwm LSB=formward MSB=reverse
     signal bridge_f, bridge_r : std_logic_vector(C_pids-1 downto 0); -- pwm bridge forward reverse
+    type encoder_type is array (C_pids-1 downto 0) of std_logic_vector(1 downto 0);
+    signal encoder : encoder_type;
     signal encoder_a, encoder_b : std_logic_vector(C_pids-1 downto 0); -- rotary encoder signals
     signal kp, ki, kd: std_logic_vector(5 downto 0);
 
@@ -177,8 +179,7 @@ begin
     port map(
       clk => clk,
       reset => '0',
-      a => encoder_a(i),
-      b => encoder_b(i),
+      encoder => encoder(i),
       counter => counter_value(i)
     );
     error_value(i) <= R(C_registers*i + C_setpoint)(23 downto 0) - counter_value(i);
@@ -211,11 +212,11 @@ begin
     )
     port map(
       clock => clk,
-      f => bridge(i)(0), r => bridge(i)(1),
-      a => encoder_a(i), b => encoder_b(i)
+      bridge => bridge(i),
+      encoder => encoder(i)
     );
     end generate;
     
-    encoder_out <= encoder_b(0) & encoder_a(0); -- for encoder display on LED
+    encoder_out <= encoder(0); -- for encoder display on LED
     bridge_out <= bridge(0);
 end;
