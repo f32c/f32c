@@ -40,9 +40,9 @@ module simotor_v (
    parameter [4:0]  motor_speed = 21;
    parameter [31:0] motor_friction = 1;
    pid parameters
-   KP=17;
-   KI=17;
-   KD=8;
+   KP=9;
+   KI=12;
+   KD=0;
 
 ** fast motor,
    PID parameters from real motor approx working
@@ -51,9 +51,9 @@ module simotor_v (
    // larger motor_speed values allow higher motor top speed
    parameter [31:0] motor_friction = 8*8; // static friction
    pid parameters
-   KP=2;
+   KP=4;
    KI=7;
-   KD=-7;
+   KD=-6;
 */
   
   parameter [9:0] motor_power = 512;  // acceleration
