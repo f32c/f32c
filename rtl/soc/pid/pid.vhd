@@ -165,6 +165,11 @@ begin
 
     -- simulated motor
     simulator_inst: entity work.simotor
+    generic map(
+      motor_power => 4,
+      motor_speed => 21,
+      motor_friction => 1
+    )
     port map(
       clock => clk,
       f => bridge_f, r => bridge_r,
