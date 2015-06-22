@@ -319,9 +319,6 @@ begin
     G_pid:
     if C_pid generate
     pid_inst: entity work.pid
-    generic map (
-	C_bits => 32
-    )
     port map (
 	clk => clk, ce => pid_ce, addr => dmem_addr(4 downto 2),
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
