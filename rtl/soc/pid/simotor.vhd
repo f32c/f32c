@@ -22,11 +22,9 @@ entity simotor is
   );
   port
   (
-    clock : in  std_logic;
-    f     : in  std_logic;
-    r     : in  std_logic;
-    a     : out std_logic;
-    b     : out std_logic
+    clock   : in  std_logic;
+    bridge  : in  std_logic_vector(1 downto 0);
+    encoder : out std_logic_vector(1 downto 0)
   );
 end simotor;
 
@@ -57,8 +55,8 @@ begin
   )
   port map(
     CLOCK => clock,
-    F => f, R => r,
-    A => a, B => b
+    F => bridge(0), R => bridge(1),
+    A => encoder(0), B => encoder(1)
   );
 
 end syn;
