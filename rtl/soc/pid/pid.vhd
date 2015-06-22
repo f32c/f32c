@@ -36,14 +36,15 @@ use work.f32c_pack.all;
 
 entity pid is
     generic (
-        C_addr_bits: integer := 2; -- don't touch: number of address bits for PID registers
-        C_bits: integer range 2 to 32 := 32; -- memory register bit width
-	C_pids: integer range 2 to 32 := 2  -- number of pid units
+        C_addr_unit_bits: integer := 1; -- number of bits to address PID units
+	C_pids: integer range 2 to 32 := 2;  -- number of pid units
+        C_addr_bits: integer := 2; -- don't touch: number of address bits to address one PID unit
+        C_bits: integer range 2 to 32 := 32 -- memory register bit width
     );
     port (
 	ce, clk: in std_logic;
 	bus_write: in std_logic;
-	addr: in std_logic_vector(C_addr_bits-1 downto 0); -- address max 8 registers of 32-bit
+	addr: in std_logic_vector(C_addr_unit_bits+C_addr_bits-1 downto 0); -- address for registers (32-bit each)
 	byte_sel: in std_logic_vector(3 downto 0);
 	bus_in: in std_logic_vector(31 downto 0);
 	bus_out: out std_logic_vector(31 downto 0);
@@ -53,11 +54,12 @@ entity pid is
 end pid;
 
 architecture arch of pid is
-    constant C_registers: integer := 2; -- total number of 32-bit pid memory registers
-
+    constant C_registers: integer := 2; -- total number of 32-bit memory registers for single PID
+    constant C_reg_addr_bits: integer := 1;
+    
     -- normal registers
     -- type pid_reg_type  is std_logic_vector(C_bits-1 downto 0);
-    type pid_regs_type is array (C_registers-1 downto 0) of std_logic_vector(C_bits-1 downto 0);
+    type pid_regs_type is array (C_pids*C_registers-1 downto 0) of std_logic_vector(C_bits-1 downto 0);
     signal R: pid_regs_type; -- register access from mmapped I/O  R: active register, Rtmp temporary
 
     -- *** REGISTERS ***
@@ -69,31 +71,46 @@ architecture arch of pid is
     constant C_output:     integer   := 2; -- output value to control the motor
     constant C_position:   integer   := 3; -- encoder counter
     
-    constant C_clkdivbits: integer   := 11; -- clock divider bits
+    constant C_clkdivbits: integer   := 11; -- clock divider bits, also used for PWM
     
     signal clkcounter : std_logic_vector(C_clkdivbits-1 downto 0);
     signal clk_pid : std_logic;
     signal sp: std_logic_vector(23 downto 0); -- set point
     signal cv: std_logic_vector(23 downto 0); -- current value
+    type counter_value_type is array (C_pids-1 downto 0) of std_logic_vector(23 downto 0);
+    signal counter_value: counter_value_type;
+    signal error_value: counter_value_type;
     signal error: std_logic_vector(23 downto 0); -- error = sp-cv
     signal reset   : std_logic := '0';
     signal m_k_out : std_logic_vector(11 downto 0);
-    signal pwm_compare : std_logic_vector(C_clkdivbits-1 downto 0); -- pwm signal
-    signal pwm_sign : std_logic; -- sign of output signal
-    signal pwm_out : std_logic; -- pwm output signal
-    signal bridge : std_logic_vector(1 downto 0); -- pwm LSB=formward MSB=reverse
-    signal bridge_f, bridge_r : std_logic; -- pwm bridge forward reverse
-    signal encoder_a, encoder_b : std_logic; -- rotary encoder signals
-    
+    type output_value_type is array (C_pids-1 downto 0) of std_logic_vector(11 downto 0);
+    signal output_value : output_value_type;
+    type pwm_compare_type is array (C_pids-1 downto 0) of std_logic_vector(C_clkdivbits-1 downto 0);
+    signal pwm_compare : pwm_compare_type; -- pwm signal
+    signal pwm_sign : std_logic_vector(C_pids-1 downto 0); -- sign of output signal
+    signal pwm_out : std_logic_vector(C_pids-1 downto 0); -- pwm output signal
+    type bridge_type is array (C_pids-1 downto 0) of std_logic_vector(1 downto 0);
+    signal bridge : bridge_type; -- pwm LSB=formward MSB=reverse
+    signal bridge_f, bridge_r : std_logic_vector(C_pids-1 downto 0); -- pwm bridge forward reverse
+    signal encoder_a, encoder_b : std_logic_vector(C_pids-1 downto 0); -- rotary encoder signals
+    signal kp, ki, kd: std_logic_vector(5 downto 0);
+
+    signal unit_addr : std_logic_vector(C_addr_unit_bits-1 downto 0);
+    signal unit_switch_addr : std_logic_vector(C_addr_unit_bits-1 downto 0) := (others => '0'); -- time sharing PID unit switch address
+    signal pid_reg_addr : std_logic_vector(C_reg_addr_bits-1 downto 0);
 begin
+    -- address of the PID unit
+    unit_addr <= addr(C_addr_unit_bits+C_addr_bits-1 downto C_addr_bits);
+    -- address of individual memory backed register within one PID unit
+    pid_reg_addr <= addr(C_addr_bits-2 downto 0);
     -- CPU core reads registers
-    with conv_integer(addr) select
+    with conv_integer(addr(C_addr_bits-1 downto 0)) select
       bus_out <= 
-        ext(cv, 32)
+        ext(counter_value(conv_integer(unit_addr)), 32)
           when C_position,
-        ext(m_k_out, 32)
+        ext(output_value(conv_integer(unit_addr)), 32)
           when C_output,
-        ext(R(conv_integer(addr)),32)
+        ext(R(conv_integer(unit_addr & pid_reg_addr)),32)
           when others;
 
     -- CPU core writes registers
@@ -104,7 +121,7 @@ begin
           if byte_sel(i) = '1' then
             if ce = '1' and bus_write = '1' then
               -- normal write for every other register
-              R(conv_integer(addr))(8*i+7 downto 8*i) <=  bus_in(8*i+7 downto 8*i);
+              R(conv_integer(unit_addr & pid_reg_addr))(8*i+7 downto 8*i) <=  bus_in(8*i+7 downto 8*i);
             end if;
           end if;
         end if;
@@ -120,38 +137,62 @@ begin
       end process;
     clk_pid <= clkcounter(C_clkdivbits-1);
 
-    -- rotary decoder provides cv
+    -- instantiate the PID controller
+    pid_inst: entity work.ctrlpid
+    port map(
+      clk_pid => clk_pid, -- slow clock
+      error => error,
+      reset => '0',
+      a => unit_switch_addr,
+      m_k_out => m_k_out,
+      KP => kp,
+      KI => ki, 
+      KD => kd
+    );
+    -- get currently switched error value    
+    error <= error_value(conv_integer(unit_switch_addr));
+    -- get currently switched PID parameters
+    kp <= R(conv_integer(unit_switch_addr)*C_registers + C_pid)(21 downto 16);
+    ki <= R(conv_integer(unit_switch_addr)*C_registers + C_pid)(13 downto 8);
+    kd <= R(conv_integer(unit_switch_addr)*C_registers + C_pid)(5 downto 0);
+
+    -- on falling (or rising?) edge of PID clock
+    -- (copy when m_k_out is stable)
+    -- memorize result (for pwm out and cpu read)
+    -- and switch to next PID unit
+    process(clk_pid)
+      begin
+        if rising_edge(clk_pid) then
+          -- why this doesn't work?
+          -- output_value(conv_integer(unit_switch_addr)) <= m_k_out;
+          -- why this works?
+          output_value(0) <= m_k_out;
+          -- unit_switch_addr <= unit_switch_addr + 1;
+        end if;
+      end process;
+
+    multiple_units: for i in 0 to C_pids-1 generate
+    -- rotary decoder provides cv (current value = counter value)
     rotary_decoder_inst: entity work.rotary_decoder
     port map(
       clk => clk,
       reset => '0',
-      a => encoder_a,
-      b => encoder_b,
-      counter => cv(23 downto 0)
+      a => encoder_a(i),
+      b => encoder_b(i),
+      counter => counter_value(i)
     );
-    sp <= R(C_setpoint)(23 downto 0);
-    error <= sp - cv;
-    
-    -- instantiate the PID controller
-    pid_inst: entity work.ctrlpid
-    port map(
-      clk_pid => clk_pid,
-      error => error,
-      reset => '0',
-      m_k_out => m_k_out,
-      KP => R(C_pid)(21 downto 16),
-      KI => R(C_pid)(13 downto 8), 
-      KD => R(C_pid)(5 downto 0)
-    );
-
+    error_value(i) <= R(C_registers*i + C_setpoint)(23 downto 0) - counter_value(i);
+ 
     -- PWM output
-    pwm_compare <= m_k_out(10 downto 0); -- compare value without sign bit of m_k_out
-    pwm_sign <= m_k_out(11); -- sign bit of m_k_out defines forward/reverse direction
+    --pwm_compare(i) <= m_k_out(10 downto 0); -- compare value without sign bit of m_k_out
+    --pwm_sign(i) <= m_k_out(11); -- sign bit of m_k_out defines forward/reverse direction
+    pwm_compare(i) <= output_value(i)(10 downto 0); -- compare value without sign bit of m_k_out
+    pwm_sign(i) <= output_value(i)(11); -- sign bit of m_k_out defines forward/reverse direction
     --pwm_compare <= R(C_testpwm)(10 downto 0); -- compare value without sign bit of m_k_out
     --pwm_sign <= R(C_testpwm)(11); -- sign bit of m_k_out defines forward/reverse direction
-    pwm_out <= '1' when clkcounter < pwm_compare else '0';
-    bridge <= '0' & pwm_out when pwm_sign = '0' -- forward: m_k_out is positive
-             else not(pwm_out) & '0';               -- reverse: m_k_out is negative
+    pwm_out(i) <= '1' when clkcounter < pwm_compare(i) else '0';
+    bridge(i) <= '0' & pwm_out(i) when pwm_sign(i) = '0' -- forward: m_k_out is positive
+             else not(pwm_out(i)) & '0';               -- reverse: m_k_out is negative
     -- bridge_out values description
     -- "00": power off (brake)
     -- "01": full power forward
@@ -170,10 +211,11 @@ begin
     )
     port map(
       clock => clk,
-      f => bridge(0), r => bridge(1),
-      a => encoder_a, b => encoder_b
+      f => bridge(i)(0), r => bridge(i)(1),
+      a => encoder_a(i), b => encoder_b(i)
     );
+    end generate;
     
-    encoder_out <= encoder_b & encoder_a; -- for encoder display on LED
-    bridge_out <= bridge;
+    encoder_out <= encoder_b(0) & encoder_a(0); -- for encoder display on LED
+    bridge_out <= bridge(0);
 end;
