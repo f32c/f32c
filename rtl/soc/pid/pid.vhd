@@ -76,14 +76,15 @@ architecture arch of pid is
     
     signal clkcounter : std_logic_vector(C_clkdivbits-1 downto 0);
     signal clk_pid : std_logic;
-    signal sp: std_logic_vector(23 downto 0) := 0; -- set point
-    signal cv: std_logic_vector(23 downto 0) := 0; -- current value
+    signal sp: std_logic_vector(23 downto 0); -- set point
+    signal cv: std_logic_vector(23 downto 0); -- current value
     signal error: std_logic_vector(23 downto 0); -- error = sp-cv
     signal reset   : std_logic := '0';
     signal m_k_out : std_logic_vector(11 downto 0);
     signal pwm_compare : std_logic_vector(C_clkdivbits-1 downto 0); -- pwm signal
     signal pwm_sign : std_logic; -- sign of output signal
     signal pwm_out : std_logic; -- pwm output signal
+    signal bridge : std_logic_vector(1 downto 0); -- pwm LSB=formward MSB=reverse
     signal bridge_f, bridge_r : std_logic; -- pwm bridge forward reverse
     signal encoder_a, encoder_b : std_logic; -- rotary encoder signals
     
@@ -152,7 +153,7 @@ begin
     --pwm_compare <= R(C_testpwm)(10 downto 0); -- compare value without sign bit of m_k_out
     --pwm_sign <= R(C_testpwm)(11); -- sign bit of m_k_out defines forward/reverse direction
     pwm_out <= '1' when clkcounter < pwm_compare else '0';
-    bridge_out <= '0' & pwm_out when pwm_sign = '0' -- forward: m_k_out is positive
+    bridge <= '0' & pwm_out when pwm_sign = '0' -- forward: m_k_out is positive
              else not(pwm_out) & '0';               -- reverse: m_k_out is negative
     -- bridge_out values description
     -- "00": power off (brake)
@@ -160,8 +161,8 @@ begin
     -- "10": full power reverse
     -- "11": power off (brake)
 
-    bridge_f <= bridge_out(0);
-    bridge_r <= bridge_out(1);
+    -- bridge_f <= bridge(0);
+    -- bridge_r <= bridge(1);
 
     -- simulated motor
     simulator_inst: entity work.simotor
@@ -172,9 +173,10 @@ begin
     )
     port map(
       clock => clk,
-      f => bridge_f, r => bridge_r,
+      f => bridge(0), r => bridge(1),
       a => encoder_a, b => encoder_b
     );
     
     encoder_out <= encoder_b & encoder_a; -- for encoder display on LED
+    bridge_out <= bridge;
 end;
