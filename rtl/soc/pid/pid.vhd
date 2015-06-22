@@ -97,9 +97,9 @@ architecture arch of pid is
     signal kp, ki, kd: std_logic_vector(5 downto 0);
 
     signal unit_addr : std_logic_vector(C_addr_unit_bits-1 downto 0);
-    signal unit_switch_addr : std_logic_vector(C_addr_unit_bits-1 downto 0) := (others => '0'); -- time sharing PID unit switch address
+    signal unit_switch_addr : std_logic_vector(C_addr_unit_bits-1 downto 0); -- time sharing PID unit switch address
     signal pid_reg_addr : std_logic_vector(C_reg_addr_bits-1 downto 0);
-    signal pid_enable, pid_copy, pid_switch : std_logic;
+    signal pid_available : std_logic;
     
 begin
     -- address of the PID unit
@@ -138,18 +138,15 @@ begin
           clkcounter <= clkcounter + 1;
         end if;
       end process;
-    pid_enable <= '1' when clkcounter = 0 else '0';
-    pid_copy   <= '1' when clkcounter = 16 else '0';
-    pid_switch <= '1' when clkcounter = 32 else '0';
 
     -- instantiate the PID controller
     pid_inst: entity work.ctrlpid
     port map(
       clk_pid => clk, -- system CPU clock
-      ce => pid_enable, -- used to run PID at slow clock
+      ce => pid_available, -- PID data available
       error => error,
       reset => '0',
-      a => unit_switch_addr,
+      a => unit_switch_addr, -- PID selects address
       m_k_out => m_k_out,
       KP => kp,
       KI => ki, 
@@ -169,22 +166,11 @@ begin
     process(clk)
       begin
         if rising_edge(clk) then
-          if(pid_copy = '1') then
+          if(pid_available = '1') then
             output_value(conv_integer(unit_switch_addr)) <= m_k_out;
           end if;
         end if;
       end process;
-
-    process(clk)
-      begin
-        if rising_edge(clk) then
-          if(pid_switch = '1') then
-            -- unit_switch_addr <= unit_switch_addr+1;
-          end if;
-        end if;
-      end process;
-    
-    unit_switch_addr(0) <= R(C_pid)(24);
 
     multiple_units: for i in 0 to C_pids-1 generate
     -- rotary decoder provides cv (current value = counter value)
