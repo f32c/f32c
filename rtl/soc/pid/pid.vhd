@@ -91,7 +91,7 @@ begin
     -- CPU core reads registers
     with conv_integer(addr) select
       bus_out <= 
-        ext(x"1234", 32)
+        ext(cv, 32)
           when C_position,
         ext(m_k_out, 32)
           when C_output,
