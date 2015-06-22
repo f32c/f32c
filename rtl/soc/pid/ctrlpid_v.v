@@ -43,8 +43,9 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  // limit of the unscaled output
  parameter signed [pw-1:0] antiwindup = 8'hFF << (precision + ow - 9);
 
- input clk_pid, ce, reset;
- input [aw-1:0] a; // the pid memory address
+ input clk_pid, reset;
+ output wire ce;
+ output [aw-1:0] a; // the pid memory address
  input signed [ew-1:0] error;
  input [cw-1:0] KP,KI,KD;  // input 2^n shifting -31..31
  output signed [ow-1:0] m_k_out; // motor power
@@ -87,17 +88,36 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
 
  reg [3:0] state=4'd0;
  reg [3:0] next_state;
+ 
+ reg [11:0] uswitch; // unit switch phase
+ 
+ always @(posedge clk_pid)
+   uswitch <= uswitch + 1;
+ /*
+ uswitch
+ [11:10] =  0  a++, next_state
+ [11:10] =  1  calculation
+ [11:10] =  2  a++
+ [11:10] =  3  calculation
+ */
+ // ce = data available for external reading
+ assign ce =  uswitch[10] == 1 && uswitch[9:0] == 0 ? 1 : 0;
 
+ wire sw_next;
+ assign sw_next =  uswitch == 0 ? 1 : 0;
+ 
+ // assign a = uswitch[11];
+ assign a = 0;
+ 
  always@(posedge clk_pid or posedge reset) // RTL logic for next state
      if (reset)
        begin
-         if (ce)
-           state<=E0;
+         state<=E0;
        end
      else
        begin
-	  if(ce)
-  	    state<=next_state;
+          if(ce)
+            state<=next_state;
        end
 
  // state machine to off-load arithmetic processing
