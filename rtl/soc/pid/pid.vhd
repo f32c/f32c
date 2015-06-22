@@ -36,8 +36,9 @@ use work.f32c_pack.all;
 
 entity pid is
     generic (
-        C_addr_bits: integer := 3; -- don't touch: number of address bits for the registers
-	C_bits: integer range 2 to 32 := 32  -- number of pid bits (pins)
+        C_addr_bits: integer := 2; -- don't touch: number of address bits for PID registers
+        C_bits: integer range 2 to 32 := 32; -- memory register bit width
+	C_pids: integer range 2 to 32 := 2  -- number of pid units
     );
     port (
 	ce, clk: in std_logic;
@@ -52,7 +53,7 @@ entity pid is
 end pid;
 
 architecture arch of pid is
-    constant C_registers: integer := 6; -- total number of pid registers
+    constant C_registers: integer := 2; -- total number of 32-bit pid memory registers
 
     -- normal registers
     -- type pid_reg_type  is std_logic_vector(C_bits-1 downto 0);
@@ -64,13 +65,9 @@ architecture arch of pid is
     -- this improves code readability
     -- and provides flexible register (re)numbering
     constant C_setpoint:   integer   := 0; -- set point value
-    constant C_undef1:     integer   := 1; -- undefined
-    constant C_pid:        integer   := 2; -- constants 0xPPIIDD
-    constant C_undef3:     integer   := 3; -- undefined
-    constant C_undef4:     integer   := 4; -- undefined
-    constant C_testpwm:    integer   := 5; -- undefined
-    constant C_output:     integer   := 6; -- output value to control the motor
-    constant C_position:   integer   := 7; -- encoder counter
+    constant C_pid:        integer   := 1; -- constants 0xPPIIDD
+    constant C_output:     integer   := 2; -- output value to control the motor
+    constant C_position:   integer   := 3; -- encoder counter
     
     constant C_clkdivbits: integer   := 11; -- clock divider bits
     
