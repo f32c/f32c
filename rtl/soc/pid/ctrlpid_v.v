@@ -13,12 +13,12 @@
 //////////////////////////////////////////////////////////////////////////////////
 module ctrlpid_v(clk_pid, error, a, m_k_out, reset, KP, KI, KD);
 
- parameter [4:0] aw = 1; // address width (number of bits in PID address)
- parameter [4:0] an = (1<<aw); // number of addressable PIDs = 2^aw
- parameter [4:0] ow = 12; // width of output bits (precision + ow >= 9)
- parameter [4:0] ew = 24; // number of error bits (ew < pw)
+ parameter       aw = 1; // address width (number of bits in PID address)
+ parameter       an = (1<<aw); // number of addressable PIDs = 2^aw
+ parameter       ow = 12; // width of output bits (precision + ow >= 9)
+ parameter       ew = 24; // number of error bits (ew < pw)
  parameter       pw = 32; // number of bits in pid calculation 
- parameter [4:0] cw =  6; // number of bits in pid coefficients
+ parameter       cw =  6; // number of bits in pid coefficients
 // **** iteration control loop frequency ****
 // clock_pid/number_of_states
 // number of states is number of clocks needed for calculation of PID
@@ -27,7 +27,7 @@ module ctrlpid_v(clk_pid, error, a, m_k_out, reset, KP, KI, KD);
 // 2560 Hz/10 = 256 Hz = control loop frequency
 // fp = 8 (2^8 = 256) // 8 used as f=2^fp for bit shift calculation
 // f(clk_pid) = 2^fp * number_of_states
- parameter signed [cw-1:0] fp = 6'd9;  // fp = log(f(clk_pid)/Number_of_states)/log(2)
+ parameter signed [cw-1:0] fp = 9;  // fp = log(f(clk_pid)/Number_of_states)/log(2)
 
 // ***** precision = log scaling for the fixed point arithmetics *****
 // defines precision of the calculation using fixed point arithmetics
@@ -49,7 +49,7 @@ module ctrlpid_v(clk_pid, error, a, m_k_out, reset, KP, KI, KD);
  input [cw-1:0] KP,KI,KD;  // input 2^n shifting -31..31
  output signed [ow-1:0] m_k_out; // motor power
 
- reg signed [ow-1:0] m_k[an-1:0] = 0;   //muestra actual
+ reg signed [ow-1:0] m_k[an-1:0];       //muestra actual
  reg signed [pw-1:0] e_k_0[an-1:0];     //error actual
  reg signed [pw-1:0] e_k_1[an-1:0];     //error 1 cycle before
  reg signed [pw-1:0] e_k_2[an-1:0];     //error 2 cycles before
