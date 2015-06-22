@@ -74,7 +74,6 @@ architecture arch of pid is
     constant C_clkdivbits: integer   := 11; -- clock divider bits, also used for PWM
     
     signal clkcounter : std_logic_vector(C_clkdivbits-1 downto 0);
-    signal clk_pid : std_logic;
     signal sp: std_logic_vector(23 downto 0); -- set point
     signal cv: std_logic_vector(23 downto 0); -- current value
     type counter_value_type is array (C_pids-1 downto 0) of std_logic_vector(23 downto 0);
@@ -100,6 +99,8 @@ architecture arch of pid is
     signal unit_addr : std_logic_vector(C_addr_unit_bits-1 downto 0);
     signal unit_switch_addr : std_logic_vector(C_addr_unit_bits-1 downto 0) := (others => '0'); -- time sharing PID unit switch address
     signal pid_reg_addr : std_logic_vector(C_reg_addr_bits-1 downto 0);
+    signal pid_enable : std_logic;
+    
 begin
     -- address of the PID unit
     unit_addr <= addr(C_addr_unit_bits+C_addr_bits-1 downto C_addr_bits);
@@ -130,19 +131,20 @@ begin
       end process;
     end generate;
     
-    -- PID clock (kHz range)
+    -- PID slow clock enable (kHz range)
     process(clk)
       begin
         if rising_edge(clk) then
           clkcounter <= clkcounter + 1;
         end if;
       end process;
-    clk_pid <= clkcounter(C_clkdivbits-1);
+    pid_enable <= '1' when clkcounter = 0 else '0';
 
     -- instantiate the PID controller
     pid_inst: entity work.ctrlpid
     port map(
-      clk_pid => clk_pid, -- slow clock
+      clk_pid => clk, -- system CPU clock
+      ce => pid_enable, -- used to run PID at slow clock
       error => error,
       reset => '0',
       a => unit_switch_addr,
@@ -162,14 +164,12 @@ begin
     -- (copy when m_k_out is stable)
     -- memorize result (for pwm out and cpu read)
     -- and switch to next PID unit
-    process(clk_pid)
+    process(clk)
       begin
-        if rising_edge(clk_pid) then
-          -- why this doesn't work?
-          -- output_value(conv_integer(unit_switch_addr)) <= m_k_out;
-          -- why this works?
-          output_value(0) <= m_k_out;
-          -- unit_switch_addr <= unit_switch_addr + 1;
+        if rising_edge(clk) then
+          if(pid_enable = '1') then
+            output_value(conv_integer(unit_switch_addr)) <= m_k_out;
+          end if;
         end if;
       end process;
 
