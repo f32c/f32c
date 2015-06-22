@@ -2,7 +2,7 @@
 // Copyright Davor Jadrijevic
 // Improved signed shift PID arithmetics
 //
-// Copyright EDGAR RODRIGO MANCIPE TOLOZA, UPB
+// Copyright EDGAR RODRIGO MANCIPE TOLOZA, UPB
 // Original PID module
 // 
 // LICENSE=BSD
@@ -17,7 +17,7 @@ module ctrlpid_v(clk_pid, error, a, m_k_out, reset, KP, KI, KD);
  parameter [4:0] an = (1<<aw); // number of addressable PIDs = 2^aw
  parameter [4:0] ow = 12; // width of output bits (precision + ow >= 9)
  parameter [4:0] ew = 24; // number of error bits (ew < pw)
- parameter [4:0] pw = 32; // number of bits in pid calculation 
+ parameter       pw = 32; // number of bits in pid calculation 
  parameter [4:0] cw =  6; // number of bits in pid coefficients
 // **** iteration control loop frequency ****
 // clock_pid/number_of_states
@@ -41,7 +41,7 @@ module ctrlpid_v(clk_pid, error, a, m_k_out, reset, KP, KI, KD);
  // then clamp slightly less than 11bit e.g. 32'h7D0 or 32'h7F0
  // 5 is for changing 16-bit pwm to 11-bit pwm 
  // limit of the unscaled output
- parameter signed [31:0] antiwindup = 8'hFF << (precision + ow - 9);
+ parameter signed [pw-1:0] antiwindup = 8'hFF << (precision + ow - 9);
 
  input clk_pid, reset;
  input [aw-1:0] a; // the pid memory address
@@ -49,15 +49,15 @@ module ctrlpid_v(clk_pid, error, a, m_k_out, reset, KP, KI, KD);
  input [cw-1:0] KP,KI,KD;  // input 2^n shifting -31..31
  output signed [ow-1:0] m_k_out; // motor power
 
- reg signed [ow-1:0] m_k[an-1:0] = 0; //muestra actual
- reg signed [31:0] e_k_0[an-1:0];     //error actual
- reg signed [31:0] e_k_1[an-1:0];     //error 1 cycle before
- reg signed [31:0] e_k_2[an-1:0];     //error 2 cycles before
- reg signed [31:0] u_k[an-1:0];       //resultado de la ecuacion PID
+ reg signed [ow-1:0] m_k[an-1:0] = 0;   //muestra actual
+ reg signed [pw-1:0] e_k_0[an-1:0];     //error actual
+ reg signed [pw-1:0] e_k_1[an-1:0];     //error 1 cycle before
+ reg signed [pw-1:0] e_k_2[an-1:0];     //error 2 cycles before
+ reg signed [pw-1:0] u_k[an-1:0];       //result of PID equation
 
- wire signed [cw-1:0] Kp;  //ganancia proporcional
- wire signed [cw-1:0] Ki;  //ganancia integral
- wire signed [cw-1:0] Kd;  //ganancia derivativa
+ wire signed [cw-1:0] Kp;  //proportional gain
+ wire signed [cw-1:0] Ki;  //integral gain
+ wire signed [cw-1:0] Kd;  //derivativative gain
 
  // those assigmnents make input PID parameters 
  // invariant to changing of precision
@@ -132,10 +132,10 @@ module ctrlpid_v(clk_pid, error, a, m_k_out, reset, KP, KI, KD);
               /* sign expansion */
               if(e_k_0[a][ew-1])
 	          // sign expansion for negative e(k) error
-	          e_k_0[a][31:ew] <= -8'd1;
+	          e_k_0[a][pw-1:ew] <= -8'd1;
               else
                   // expansion for positive e(k) error
-                  e_k_0[a][31:ew] <= 8'd0;
+                  e_k_0[a][pw-1:ew] <= 8'd0;
               end
           // discrete fixed point PID
           // m(k) = m(k-1) + (Kp + Kd/T + Ki*T/2)*e(k)

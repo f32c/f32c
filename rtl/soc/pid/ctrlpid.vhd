@@ -14,11 +14,11 @@ use work.f32c_pack.all;
 
 entity ctrlpid is
   generic(
-    --aw         : integer :=  1; -- address width (number of bits in PID address)
+    aw         : integer :=  1; -- address width (number of bits in PID address)
     ow         : integer := 12; -- width of output bits (precision + ow >= 9)
-    ew         : integer := 24  -- number of error bits (ew < pw)
-    --pw         : integer := 32; -- number of bits in pid calculation
-    --cw         : integer :=  6  -- number of bits in pid coefficients
+    ew         : integer := 24; -- number of error bits (ew < pw)
+    pw         : integer := 32; -- number of bits in pid calculation
+    cw         : integer :=  6  -- number of bits in pid coefficients
   );
   port
   (
@@ -33,11 +33,11 @@ end ctrlpid;
 architecture syn of ctrlpid is
   component ctrlpid_v
     generic (
-      --aw         : integer :=  1; -- address width (number of bits in PID address)
+      aw         : integer :=  1; -- address width (number of bits in PID address)
       ow         : integer := 12; -- width of output bits (precision + ow >= 9)
-      ew         : integer := 24  -- number of error bits (ew < pw)
-      --pw         : integer := 32; -- number of bits in pid calculation
-      --cw         : integer :=  6  -- number of bits in pid coefficients
+      ew         : integer := 24; -- number of error bits (ew < pw)
+      pw         : integer := 32; -- number of bits in pid calculation
+      cw         : integer :=  6  -- number of bits in pid coefficients
     );
     port (
       clk_pid    : in  std_logic;
@@ -52,11 +52,9 @@ architecture syn of ctrlpid is
 begin
   ctrlpid_inst: ctrlpid_v
   generic map(
-    --aw => aw,
-    ow => ow,
-    ew => ew
-    --pw => pw,
-    --cw => cw
+    aw => aw, ow => ow, ew => ew, 
+    pw => pw,
+    cw => cw
   )
   port map(
     clk_pid => clk_pid,
