@@ -11,7 +11,7 @@
 // Project Name: ControlPID
 // Target Devices: F32C FPGArduino
 //////////////////////////////////////////////////////////////////////////////////
-module ctrlpid_v(clk_pid, error, a, m_k_out, reset, KP, KI, KD);
+module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
 
  parameter       aw = 1; // address width (number of bits in PID address)
  parameter       an = (1<<aw); // number of addressable PIDs = 2^aw
@@ -43,7 +43,7 @@ module ctrlpid_v(clk_pid, error, a, m_k_out, reset, KP, KI, KD);
  // limit of the unscaled output
  parameter signed [pw-1:0] antiwindup = 8'hFF << (precision + ow - 9);
 
- input clk_pid, reset;
+ input clk_pid, ce, reset;
  input [aw-1:0] a; // the pid memory address
  input signed [ew-1:0] error;
  input [cw-1:0] KP,KI,KD;  // input 2^n shifting -31..31
@@ -89,12 +89,16 @@ module ctrlpid_v(clk_pid, error, a, m_k_out, reset, KP, KI, KD);
  reg [3:0] next_state;
 
  always@(posedge clk_pid or posedge reset) // RTL logic for next state
-  begin
-	if (reset)
-	  state<=E0;
-	else
-	  state<=next_state;
-  end
+     if (reset)
+       begin
+         if (ce)
+           state<=E0;
+       end
+     else
+       begin
+	  if(ce)
+  	    state<=next_state;
+       end
 
  // state machine to off-load arithmetic processing
  always @*	// sequential logic
@@ -114,6 +118,7 @@ module ctrlpid_v(clk_pid, error, a, m_k_out, reset, KP, KI, KD);
 	endcase
 
  always @(posedge clk_pid)
+   if(ce)
         case(state[3:0])
 	  E0: begin
 	        // reset all accumulated values

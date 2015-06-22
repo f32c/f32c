@@ -23,6 +23,7 @@ entity ctrlpid is
   port
   (
     clk_pid    : in  std_logic;
+    ce         : in  std_logic;
     error      : in  std_logic_vector(24-1 downto 0);
     a          : in  std_logic_vector(1-1 downto 0);
     m_k_out    : out std_logic_vector(12-1 downto 0);
@@ -42,6 +43,7 @@ architecture syn of ctrlpid is
     );
     port (
       clk_pid    : in  std_logic;
+      ce         : in  std_logic;
       error      : in  std_logic_vector(24-1 downto 0);
       a          : in  std_logic_vector(1-1 downto 0);
       m_k_out    : out std_logic_vector(12-1 downto 0);
@@ -59,6 +61,7 @@ begin
   )
   port map(
     clk_pid => clk_pid,
+    ce => ce,
     error => error(24-1 downto 0),
     m_k_out => m_k_out(12-1 downto 0),
     reset => reset,
