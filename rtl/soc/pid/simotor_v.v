@@ -1,9 +1,9 @@
 //-----------------------------------------------------
-// Design Name : simotor.v
-// File Name : simotor.v
-// Function : Simulates motor with encoder.
-// Input:  500kHz
-// Output: A,B encoder
+// Copyright: Davor Jadrijevic
+// License: BSD
+// Function: Simulates motor with encoder
+// Input: bridge forward/reverse PWM (F, R)
+// Output: encoder signals (A, B)
 //-----------------------------------------------------
 module simotor_v (
   CLOCK, //  fast clock (50 MHz) to scan the PWM
@@ -51,9 +51,9 @@ module simotor_v (
    // larger motor_speed values allow higher motor top speed
    parameter [31:0] motor_friction = 8*8; // static friction
    pid parameters
-   KP=11;
-   KI=15;
-   KD=5;
+   KP=2;
+   KI=7;
+   KD=-7;
 */
   
   parameter [9:0] motor_power = 512;  // acceleration
@@ -65,6 +65,9 @@ module simotor_v (
   wire [31:0] applied_power;
   assign applied_power = F == 1 && R == 0 ?  motor_power :
                          F == 0 && R == 1 ? -motor_power : 0;
+  
+  wire signed [7:0] sfriction;
+  assign sfriction = speed >= 0 ? motor_friction : -motor_friction;
 
   //------------Code Starts Here-------------------------
   // We trigger the below block with respect to positive
@@ -75,17 +78,10 @@ module simotor_v (
     // motor voltage 
     speed = speed + applied_power;
  
-    // absolute speed
-    aspeed = speed > 0 ? speed : -speed;
-   
-    // friction: proportional to speed,
-    // decreases absolute speed
-    // also has a constant component
-    // for static friction
-    aspeed = aspeed > motor_friction ? aspeed - (aspeed >> motor_speed) - motor_friction : 0;
+    // accelerate
+    speed = speed > motor_friction || speed < -motor_friction ? 
+            speed - (speed >>> motor_speed) - sfriction : 0;
 
-    // handle speed +/- sign
-    speed = speed > 0 ? aspeed : -aspeed;
     // add speed to the counter
     counter = counter + speed;
 
