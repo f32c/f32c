@@ -61,6 +61,6 @@ SRCS = \
 ../../../soc/pid/ctrlpid.vhd \
 ../../../soc/pid/simotor.vhd \
 ../../../soc/pid/rotary_decoder.vhd \
-../../../soc/pid/ctrlpid_dummy_v.v \
+../../../soc/pid/ctrlpid_v.v \
 ../../../soc/pid/simotor_v.v \
 ../../../soc/pid/rotary_decoder_v.v \
