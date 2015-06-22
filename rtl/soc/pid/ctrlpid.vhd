@@ -24,6 +24,7 @@ entity ctrlpid is
   (
     clk_pid    : in  std_logic;
     error      : in  std_logic_vector(24-1 downto 0);
+    a          : in  std_logic_vector(1-1 downto 0);
     m_k_out    : out std_logic_vector(12-1 downto 0);
     reset      : in  std_logic;
     KP, KI, KD : in  std_logic_vector(6-1 downto 0)
@@ -61,7 +62,7 @@ begin
     error => error(24-1 downto 0),
     m_k_out => m_k_out(12-1 downto 0),
     reset => reset,
-    a => (others => '0'),
+    a => a,
     KP => KP(5 downto 0),
     KI => KI(5 downto 0),
     KD => KD(5 downto 0)
