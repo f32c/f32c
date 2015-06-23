@@ -101,16 +101,16 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  [11:10] =  3  calculation
  */
  // ce = data available for external reading
- assign ce =  uswitch[11:10] == 0 && uswitch[9:0] == 0 ? 1 : 0;
+ assign ce =  uswitch[10] == 0 && uswitch[9:0] == 0 ? 1 : 0;
 
  wire sw_next;
  assign sw_next =  uswitch[11:10] == 0 && uswitch[9:0] == 0 ? 1 : 0;
  
- // assign a = uswitch[11];
- assign a = 0;
+ assign a = uswitch[11];
+ // assign a = 0;
  
  wire calc;
- assign calc = uswitch[11:10] == 0 && uswitch[9:0] == 0 ? 1 : 0;
+ assign calc = uswitch[10] == 1 && uswitch[9:0] == 0 ? 1 : 0;
  
  always@(posedge clk_pid or posedge reset) // RTL logic for next state
      if (reset)
@@ -205,6 +205,6 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
            end
         endcase
 
-        assign m_k_out = m_k[a]; // bit shifting, output scaling
+ assign m_k_out = m_k[a]; // bit shifting, output scaling
 
 endmodule
