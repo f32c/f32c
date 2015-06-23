@@ -104,10 +104,13 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  assign ce =  uswitch[10] == 1 && uswitch[9:0] == 0 ? 1 : 0;
 
  wire sw_next;
- assign sw_next =  uswitch == 0 ? 1 : 0;
+ assign sw_next =  uswitch[11:10] == 0 && uswitch[9:0] == 0 ? 1 : 0;
  
- // assign a = uswitch[11];
- assign a = 0;
+ assign a = uswitch[11];
+ // assign a = 0;
+ 
+ wire calc;
+ assign calc = uswitch[10] == 1 && uswitch[9:0] == 0 ? 1 : 0;
  
  always@(posedge clk_pid or posedge reset) // RTL logic for next state
      if (reset)
@@ -116,7 +119,7 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
        end
      else
        begin
-          if(ce)
+          if(sw_next)
             state<=next_state;
        end
 
@@ -138,7 +141,7 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
 	endcase
 
  always @(posedge clk_pid)
-   if(ce)
+   if(calc)
         case(state[3:0])
 	  E0: begin
 	        // reset all accumulated values
