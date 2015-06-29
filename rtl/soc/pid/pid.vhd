@@ -34,6 +34,9 @@ use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 use work.f32c_pack.all;
 
+library pid_library;
+use pid_library.types.all;
+
 entity pid is
     generic (
         C_addr_unit_bits: integer := 2; -- number of bits to address PID units
@@ -48,8 +51,10 @@ entity pid is
 	byte_sel: in std_logic_vector(3 downto 0);
 	bus_in: in std_logic_vector(31 downto 0);
 	bus_out: out std_logic_vector(31 downto 0);
-	encoder_out: out std_logic_vector(1 downto 0);
-	bridge_out: out std_logic_vector(1 downto 0) -- hardware output to full bridge
+	encoder_a_out: out std_logic_vector(C_pids-1 downto 0);
+	encoder_b_out: out std_logic_vector(C_pids-1 downto 0);
+	bridge_f_out: out std_logic_vector(C_pids-1 downto 0); -- hardware output to full bridge, forward
+	bridge_r_out: out std_logic_vector(C_pids-1 downto 0)  -- hardware output to full bridge, reverse
     );
 end pid;
 
@@ -217,8 +222,11 @@ begin
       bridge => bridge(i),
       encoder => encoder(i)
     );
+
+    bridge_f_out(i) <= bridge(i)(0);
+    bridge_r_out(i) <= bridge(i)(1);
+    encoder_a_out(i) <= encoder(i)(0);
+    encoder_b_out(i) <= encoder(i)(1);
+
     end generate;
-    
-    encoder_out <= encoder(0); -- for encoder display on LED
-    bridge_out <= bridge(0);
 end;
