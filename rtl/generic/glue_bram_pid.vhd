@@ -33,7 +33,6 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 use work.f32c_pack.all;
 
-
 entity glue_bram is
     generic (
 	C_clk_freq: integer;
@@ -75,6 +74,8 @@ entity glue_bram is
 	C_gpio: boolean := true;
 	C_timer: boolean := true;
 	C_pid: boolean := true;
+	C_pid_addr_unit_bits: integer := 2; -- address width of pid bus
+	C_pids: integer := 4;
 	C_leds_btns: boolean := true
     );
     port (
@@ -85,6 +86,8 @@ entity glue_bram is
 	sw: in std_logic_vector(15 downto 0);
 	gpio: inout std_logic_vector(31 downto 0);
 	leds: out std_logic_vector(15 downto 0);
+	-- pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0);
+	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
 	lcd_7seg: out std_logic_vector(15 downto 0)
     );
 end glue_bram;
@@ -119,8 +122,10 @@ architecture Behavioral of glue_bram is
     signal from_pid: std_logic_vector(31 downto 0);
     signal pid_ce: std_logic;
     signal pid_intr: std_logic; -- currently unused
-    signal pid_bridge_out: std_logic_vector(1 downto 0);
-    signal pid_encoder_out: std_logic_vector(1 downto 0);
+    signal pid_bridge_f_out: std_logic_vector(C_pids-1 downto 0);
+    signal pid_bridge_r_out: std_logic_vector(C_pids-1 downto 0);
+    signal pid_encoder_a_out: std_logic_vector(C_pids-1 downto 0);
+    signal pid_encoder_b_out: std_logic_vector(C_pids-1 downto 0);
     signal pid_led: std_logic_vector(3 downto 0); -- show on LEDs
 
     -- Serial I/O (RS232)
@@ -246,8 +251,9 @@ begin
     if C_timer = true or C_pid = true generate
       ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_leds(1);
       ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_leds(2);
-      pid_led(3 downto 0) <= pid_encoder_out(1 downto 0) 
-                           & pid_bridge_out(1 downto 0) when C_pid = true 
+      pid_led(3 downto 0) <= pid_encoder_b_out(0) & pid_encoder_a_out(0) 
+                           & pid_bridge_r_out(0)  & pid_bridge_f_out(0) 
+                        when C_pid = true 
                         else R_leds(7 downto 4);
       leds <= R_leds(15 downto 8) & pid_led & R_leds(3) & ocp_mux & R_leds(0) when C_leds_btns
         else (others => '-');
@@ -319,19 +325,26 @@ begin
     G_pid:
     if C_pid generate
     pid_inst: entity work.pid
+    generic map (
+	C_addr_unit_bits => C_pid_addr_unit_bits
+    )
     port map (
-	clk => clk, ce => pid_ce, addr => dmem_addr(5 downto 2),
+	clk => clk, ce => pid_ce, addr => dmem_addr(C_pid_addr_unit_bits+3 downto 2),
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
 	bus_in => cpu_to_dmem, bus_out => from_pid,
-	encoder_out => pid_encoder_out,
-	bridge_out => pid_bridge_out
+	encoder_a_out => pid_encoder_a_out,
+	encoder_b_out => pid_encoder_b_out,
+	bridge_f_out => pid_bridge_f_out,
+	bridge_r_out => pid_bridge_r_out
     );
     pid_ce <= io_addr_strobe when 
          io_addr(11 downto 4) = x"58"
       or io_addr(11 downto 4) = x"59"
       or io_addr(11 downto 4) = x"5A"
       or io_addr(11 downto 4) = x"5B"
-      else '0'; -- address 0xFFFFFD40
+      else '0'; -- address 0xFFFFFD80
+    pid_bridge_f <= pid_bridge_f_out;
+    pid_bridge_r <= pid_bridge_r_out;
     end generate;
 
     -- Timer
