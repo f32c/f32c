@@ -36,8 +36,8 @@ use work.f32c_pack.all;
 
 entity pid is
     generic (
-        C_addr_unit_bits: integer := 1; -- number of bits to address PID units
-	C_pids: integer range 2 to 32 := 2;  -- number of pid units
+        C_addr_unit_bits: integer := 2; -- number of bits to address PID units
+	C_pids: integer range 2 to 32 := 4;  -- number of pid units
         C_addr_bits: integer := 2; -- don't touch: number of address bits to address one PID unit
         C_bits: integer range 2 to 32 := 32 -- memory register bit width
     );
@@ -141,6 +141,9 @@ begin
 
     -- instantiate the PID controller
     pid_inst: entity work.ctrlpid
+    generic map(
+      aw => C_addr_unit_bits -- 1: 2 PID units, 2: 4 PID units
+    )
     port map(
       clk_pid => clk, -- system CPU clock
       ce => pid_available, -- PID data available

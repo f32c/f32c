@@ -320,7 +320,7 @@ begin
     if C_pid generate
     pid_inst: entity work.pid
     port map (
-	clk => clk, ce => pid_ce, addr => dmem_addr(4 downto 2),
+	clk => clk, ce => pid_ce, addr => dmem_addr(5 downto 2),
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
 	bus_in => cpu_to_dmem, bus_out => from_pid,
 	encoder_out => pid_encoder_out,
