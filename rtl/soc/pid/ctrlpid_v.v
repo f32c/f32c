@@ -89,7 +89,9 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  reg [3:0] state=4'd0;
  reg [3:0] next_state;
  
- reg [11:0] uswitch; // unit switch phase
+ parameter psc = 12; // prescaler number of bits
+ 
+ reg [psc-1:0] uswitch; // unit switch phase
  
  always @(posedge clk_pid)
    uswitch <= uswitch + 1;
@@ -101,16 +103,16 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  [11:10] =  3  calculation
  */
  // ce = data available for external reading
- assign ce =  uswitch[10] == 0 && uswitch[9:0] == 0 ? 1 : 0;
+ assign ce =  uswitch[psc-1-aw] == 0 && uswitch[psc-2-aw:0] == 0 ? 1 : 0;
 
  wire sw_next;
- assign sw_next =  uswitch[11:10] == 0 && uswitch[9:0] == 0 ? 1 : 0;
+ assign sw_next =  uswitch == 0 ? 1 : 0;
  
- assign a = uswitch[11];
+ assign a = uswitch[psc-1:psc-aw];
  // assign a = 0;
  
  wire calc;
- assign calc = uswitch[10] == 1 && uswitch[9:0] == 0 ? 1 : 0;
+ assign calc = uswitch[psc-1-aw] == 1 && uswitch[psc-2-aw:0] == 0 ? 1 : 0;
  
  always@(posedge clk_pid or posedge reset) // RTL logic for next state
      if (reset)
