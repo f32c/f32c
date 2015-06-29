@@ -25,7 +25,7 @@ entity ctrlpid is
     clk_pid    : in  std_logic;
     ce         : out std_logic;
     error      : in  std_logic_vector(24-1 downto 0);
-    a          : out std_logic_vector(1-1 downto 0);
+    a          : out std_logic_vector(aw-1 downto 0);
     m_k_out    : out std_logic_vector(12-1 downto 0);
     reset      : in  std_logic;
     KP, KI, KD : in  std_logic_vector(6-1 downto 0)
@@ -43,9 +43,9 @@ architecture syn of ctrlpid is
     );
     port (
       clk_pid    : in  std_logic;
-      ce         : out  std_logic;
+      ce         : out std_logic;
       error      : in  std_logic_vector(24-1 downto 0);
-      a          : out std_logic_vector(1-1 downto 0);
+      a          : out std_logic_vector(aw-1 downto 0);
       m_k_out    : out std_logic_vector(12-1 downto 0);
       reset      : in  std_logic;
       KP, KI, KD : in  std_logic_vector(6-1 downto 0)
