@@ -275,7 +275,7 @@ begin
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"54" | x"55" => -- address 0xFFFFFD40
+	when x"58" | x"59" | x"5A" | x"5B" => -- address 0xFFFFFD40
 	    if C_pid then
 		io_to_cpu <= from_pid;
 	    else
@@ -326,7 +326,12 @@ begin
 	encoder_out => pid_encoder_out,
 	bridge_out => pid_bridge_out
     );
-    pid_ce <= io_addr_strobe when io_addr(11 downto 4) = x"54" or io_addr(11 downto 4) = x"55" else '0'; -- address 0xFFFFFD40
+    pid_ce <= io_addr_strobe when 
+         io_addr(11 downto 4) = x"58"
+      or io_addr(11 downto 4) = x"59"
+      or io_addr(11 downto 4) = x"5A"
+      or io_addr(11 downto 4) = x"5B"
+      else '0'; -- address 0xFFFFFD40
     end generate;
 
     -- Timer
