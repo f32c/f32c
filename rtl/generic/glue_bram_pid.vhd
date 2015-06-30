@@ -86,7 +86,7 @@ entity glue_bram is
 	sw: in std_logic_vector(15 downto 0);
 	gpio: inout std_logic_vector(31 downto 0);
 	leds: out std_logic_vector(15 downto 0);
-	-- pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0);
+	pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
 	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
 	lcd_7seg: out std_logic_vector(15 downto 0)
     );
@@ -326,12 +326,15 @@ begin
     if C_pid generate
     pid_inst: entity work.pid
     generic map (
+        C_simulator => true,
 	C_addr_unit_bits => C_pid_addr_unit_bits
     )
     port map (
 	clk => clk, ce => pid_ce, addr => dmem_addr(C_pid_addr_unit_bits+3 downto 2),
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
 	bus_in => cpu_to_dmem, bus_out => from_pid,
+	encoder_a_in  => pid_encoder_a,
+	encoder_b_in  => pid_encoder_b,
 	encoder_a_out => pid_encoder_a_out,
 	encoder_b_out => pid_encoder_b_out,
 	bridge_f_out => pid_bridge_f_out,
