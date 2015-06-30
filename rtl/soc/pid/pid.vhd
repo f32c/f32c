@@ -41,6 +41,7 @@ entity pid is
     generic (
         C_addr_unit_bits: integer := 2; -- number of bits to address PID units
 	C_pids: integer range 2 to 32 := 4;  -- number of pid units
+	C_simulator: boolean := false; -- true: simulate motors (no real motors), false: normal mode for real motors
         C_addr_bits: integer := 2; -- don't touch: number of address bits to address one PID unit
         C_bits: integer range 2 to 32 := 32 -- memory register bit width
     );
@@ -51,10 +52,12 @@ entity pid is
 	byte_sel: in std_logic_vector(3 downto 0);
 	bus_in: in std_logic_vector(31 downto 0);
 	bus_out: out std_logic_vector(31 downto 0);
+	encoder_a_in:  in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
+	encoder_b_in:  in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
 	encoder_a_out: out std_logic_vector(C_pids-1 downto 0);
 	encoder_b_out: out std_logic_vector(C_pids-1 downto 0);
-	bridge_f_out: out std_logic_vector(C_pids-1 downto 0); -- hardware output to full bridge, forward
-	bridge_r_out: out std_logic_vector(C_pids-1 downto 0)  -- hardware output to full bridge, reverse
+	bridge_f_out:  out std_logic_vector(C_pids-1 downto 0); -- hardware output to full bridge, forward
+	bridge_r_out:  out std_logic_vector(C_pids-1 downto 0)  -- hardware output to full bridge, reverse
     );
 end pid;
 
@@ -211,6 +214,7 @@ begin
     -- bridge_r <= bridge(1);
 
     -- simulated motor
+    simulator: if C_simulator generate
     simulator_inst: entity work.simotor
     generic map(
       motor_power => 4,
@@ -222,6 +226,11 @@ begin
       bridge => bridge(i),
       encoder => encoder(i)
     );
+    end generate;
+
+    real: if not C_simulator generate
+      encoder(i) <= encoder_b_in(i) & encoder_a_in(i);
+    end generate;
 
     bridge_f_out(i) <= bridge(i)(0);
     bridge_r_out(i) <= bridge(i)(1);
