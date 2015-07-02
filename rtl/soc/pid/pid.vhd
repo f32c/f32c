@@ -41,7 +41,7 @@ entity pid is
     generic (
         C_addr_unit_bits: integer := 2; -- number of bits to address PID units
 	C_pids: integer range 2 to 32 := 4;  -- number of pid units
-	C_simulator: boolean := false; -- true: simulate motors (no real motors), false: normal mode for real motors
+	C_simulator: std_logic_vector(3 downto 0) := (others => '0'); -- 1: simulate motors (no real motors), 0: normal mode for real motors
         C_addr_bits: integer := 2; -- don't touch: number of address bits to address one PID unit
         C_bits: integer range 2 to 32 := 32 -- memory register bit width
     );
@@ -214,7 +214,7 @@ begin
     -- bridge_r <= bridge(1);
 
     -- simulated motor
-    simulator: if C_simulator generate
+    simulator: if C_simulator(i)='1' generate
     simulator_inst: entity work.simotor
     generic map(
       motor_power => 4,
@@ -228,7 +228,7 @@ begin
     );
     end generate;
 
-    real: if not C_simulator generate
+    real: if C_simulator(i)='0' generate
       encoder(i) <= encoder_b_in(i) & encoder_a_in(i);
     end generate;
 
