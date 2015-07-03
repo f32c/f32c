@@ -86,7 +86,7 @@ begin
 	C_pid => true,
 	C_pid_addr_unit_bits => 2,
 	C_pids => 4,
-	C_pid_simulator(3 downto 0) => "1100",
+	C_pid_simulator => "00001100",
 	C_debug => C_debug
     )
     port map (
