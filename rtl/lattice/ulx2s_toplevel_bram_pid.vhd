@@ -83,7 +83,10 @@ begin
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
-	C_pid_simulator => "1110",
+	C_pid => true,
+	C_pid_addr_unit_bits => 2,
+	C_pids => 4,
+	C_pid_simulator => "1100",
 	C_debug => C_debug
     )
     port map (
@@ -109,12 +112,10 @@ begin
 	gpio(17) => j2_3,
 	gpio(18) => j2_4,
 	gpio(19) => j2_5,
-	gpio(20) => j2_6,
-	gpio(21) => j2_7,
-	gpio(22) => j2_8,
-	gpio(23) => j2_9,
-	pid_encoder_a(0) => j2_10, pid_encoder_b(0) => j2_11,
-	pid_bridge_f(0) => j2_12, pid_bridge_r(0) => j2_13,
+	pid_encoder_a(0) => j2_6, pid_encoder_b(0) => j2_7,
+	pid_bridge_f(0) => j2_8, pid_bridge_r(0) => j2_9,
+	pid_encoder_a(1) => j2_10, pid_encoder_b(1) => j2_11,
+	pid_bridge_f(1) => j2_12, pid_bridge_r(1) => j2_13,
         gpio(28) => j2_16,
 	leds(7 downto 0) => led, leds(15 downto 8) => open,
 	btns(4 downto 0) => btns, btns(15 downto 5) => open,
