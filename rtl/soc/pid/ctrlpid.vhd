@@ -15,7 +15,7 @@ use work.f32c_pack.all;
 entity ctrlpid is
   generic(
     aw         : integer :=  1; -- address width (number of bits in PID address)
-    an         : integer :=  2; -- address width (number of bits in PID address)
+    an         : integer :=  2; -- number of PIDs
     ow         : integer := 12; -- width of output bits (precision + ow >= 9)
     ew         : integer := 24; -- number of error bits (ew < pw)
     pw         : integer := 32; -- number of bits in pid calculation
