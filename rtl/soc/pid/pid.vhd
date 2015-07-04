@@ -36,7 +36,6 @@ use ieee.math_real.all;
 use work.f32c_pack.all;
 
 library pid_library;
-use pid_library.types.all;
 
 entity pid is
     generic (
