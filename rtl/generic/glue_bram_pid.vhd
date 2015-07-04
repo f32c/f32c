@@ -253,11 +253,7 @@ begin
     if C_timer = true or C_pid = true generate
       ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_leds(1);
       ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_leds(2);
-      pid_led(3 downto 0) <= pid_encoder_b_out(0) & pid_encoder_a_out(0) 
-                           & pid_bridge_r_out(0)  & pid_bridge_f_out(0) 
-                        when C_pid = true 
-                        else R_leds(7 downto 4);
-      leds <= R_leds(15 downto 8) & pid_led & R_leds(3) & ocp_mux & R_leds(0) when C_leds_btns
+      leds <= R_leds(15 downto 3) & ocp_mux & R_leds(0) when C_leds_btns
         else (others => '-');
     end generate;
     lcd_7seg <= R_lcd_7seg when C_leds_btns else (others => '-');
