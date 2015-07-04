@@ -83,10 +83,13 @@ entity glue is
 	C_gpio: boolean := true;
 	C_flash: boolean := true;
 	C_sdcard: boolean := true;
-	C_framebuffer: boolean := true;
+	C_framebuffer: boolean := false;
 	C_pcm: boolean := true;
 	C_timer: boolean := true;
-	C_tx433: boolean := false; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+	C_tx433: boolean := true; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+        C_pid: boolean := true;
+        C_pids: integer := 4;
+        C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8); -- for each pid choose simulator/real 
 	C_dds: boolean := true
     );
     port (
@@ -194,6 +197,19 @@ architecture Behavioral of glue is
     signal gpio_ce: std_logic;
     signal gpio_intr: std_logic;
     signal gpio_28: std_logic;
+    -- gpio-pid switched pins
+    signal gpio_j2_2: std_logic;
+    signal gpio_j2_3: std_logic;
+    signal gpio_j2_4: std_logic;
+    signal gpio_j2_5: std_logic;
+    signal gpio_j2_6: std_logic;
+    signal gpio_j2_7: std_logic;
+    signal gpio_j2_8: std_logic;
+    signal gpio_j2_9: std_logic;
+    signal gpio_j2_10: std_logic;
+    signal gpio_j2_11: std_logic;
+    signal gpio_j2_12: std_logic;
+    signal gpio_j2_13: std_logic;
 
     -- Timer
     signal from_timer: std_logic_vector(31 downto 0);
@@ -203,9 +219,6 @@ architecture Behavioral of glue is
     signal timer_intr: std_logic;
     
     -- PID
-    constant C_pid: boolean := true;
-    constant C_pids: integer := 2;
-    constant C_pid_simulator: std_logic_vector(7 downto 0) := (others => '1'); -- for each pid choose simulator/real 
     signal from_pid: std_logic_vector(31 downto 0);
     signal pid_ce: std_logic;
     signal pid_intr: std_logic; -- currently unused
@@ -788,18 +801,18 @@ begin
         gpio_phys(13) =>   j1_21,
         gpio_phys(14) =>   j1_22,
         gpio_phys(15) =>   j1_23,
---       gpio_phys(16) =>   j2_2,
---       gpio_phys(17) =>   j2_3,
---        gpio_phys(18) =>   j2_4,
---        gpio_phys(19) =>   j2_5,
---        gpio_phys(20) =>   j2_6,
---        gpio_phys(21) =>   j2_7,
---        gpio_phys(22) =>   j2_8,
---        gpio_phys(23) =>   j2_9,
-        gpio_phys(24) =>   j2_10,
-        gpio_phys(25) =>   j2_11,
-        gpio_phys(26) =>   j2_12,
-        gpio_phys(27) =>   j2_13,
+        gpio_phys(16) => gpio_j2_2,
+        gpio_phys(17) => gpio_j2_3,
+        gpio_phys(18) => gpio_j2_4,
+        gpio_phys(19) => gpio_j2_5,
+        gpio_phys(20) => gpio_j2_6,
+        gpio_phys(21) => gpio_j2_7,
+        gpio_phys(22) => gpio_j2_8,
+        gpio_phys(23) => gpio_j2_9,
+        gpio_phys(24) => gpio_j2_10,
+        gpio_phys(25) => gpio_j2_11,
+        gpio_phys(26) => gpio_j2_12,
+        gpio_phys(27) => gpio_j2_13,
         gpio_phys(28) =>   gpio_28
     );
     gpio_ce <= io_addr_strobe(R_cur_io_port) when
@@ -850,10 +863,12 @@ begin
 	clk => clk, ce => pid_ce, addr => io_addr(C_pids_bits+3 downto 2),
 	bus_write => io_write, byte_sel => io_byte_sel,
 	bus_in => cpu_to_io, bus_out => from_pid,
-	encoder_a_in(0) => j2_2, encoder_b_in(0) => j2_3,
-	bridge_f_out(0) => j2_4, bridge_r_out(0) => j2_5,
-	encoder_a_in(1) => j2_6, encoder_b_in(1) => j2_7,
-	bridge_f_out(1) => j2_8, bridge_r_out(1) => j2_9
+	encoder_a_in(0) => j2_2,  encoder_b_in(0) => j2_3,
+	bridge_f_out(0) => j2_4,  bridge_r_out(0) => j2_5,
+	encoder_a_in(1) => j2_6,  encoder_b_in(1) => j2_7,
+	bridge_f_out(1) => j2_8,  bridge_r_out(1) => j2_9,
+	encoder_a_in(2) => j2_10, encoder_b_in(2) => j2_11,
+	bridge_f_out(2) => j2_12, bridge_r_out(2) => j2_13
     );
     pid_ce <= io_addr_strobe(R_cur_io_port) when 
          io_addr(11 downto 4) = x"58"
@@ -861,6 +876,18 @@ begin
       or io_addr(11 downto 4) = x"5A"
       or io_addr(11 downto 4) = x"5B"
       else '0'; -- address 0xFFFFFD80
+    end generate;
+
+    G_no_pid:
+    if not C_pid generate
+      j2_2 <= gpio_j2_2;
+      j2_3 <= gpio_j2_3;
+      j2_4 <= gpio_j2_4;
+      j2_5 <= gpio_j2_5;
+      j2_6 <= gpio_j2_6;
+      j2_7 <= gpio_j2_7;
+      j2_8 <= gpio_j2_8;
+      j2_9 <= gpio_j2_9;
     end generate;
 
     --
