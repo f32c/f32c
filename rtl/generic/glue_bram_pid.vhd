@@ -30,6 +30,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.MATH_REAL.ALL;
 
 use work.f32c_pack.all;
 
@@ -74,7 +75,7 @@ entity glue_bram is
 	C_gpio: boolean := true;
 	C_timer: boolean := true;
 	C_pid: boolean := true;
-	C_pid_addr_unit_bits: integer := 2; -- address width of pid bus
+	-- C_pid_addr_unit_bits: integer := 2; -- address width of pid bus
 	C_pids: integer := 4;
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real 
 	C_leds_btns: boolean := true
@@ -128,6 +129,7 @@ architecture Behavioral of glue_bram is
     signal pid_encoder_a_out: std_logic_vector(C_pids-1 downto 0);
     signal pid_encoder_b_out: std_logic_vector(C_pids-1 downto 0);
     signal pid_led: std_logic_vector(3 downto 0); -- show on LEDs
+    constant C_pids_bits: integer := integer(floor((log2(real(C_pids)))+0.5));
 
     -- Serial I/O (RS232)
     signal from_sio: std_logic_vector(31 downto 0);
@@ -328,10 +330,11 @@ begin
     pid_inst: entity work.pid
     generic map (
         C_simulator => C_pid_simulator,
-	C_addr_unit_bits => C_pid_addr_unit_bits
+        C_pids => C_pids,
+	C_addr_unit_bits => C_pids_bits
     )
     port map (
-	clk => clk, ce => pid_ce, addr => dmem_addr(C_pid_addr_unit_bits+3 downto 2),
+	clk => clk, ce => pid_ce, addr => dmem_addr(C_pids_bits+3 downto 2),
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
 	bus_in => cpu_to_dmem, bus_out => from_pid,
 	encoder_a_in  => pid_encoder_a,

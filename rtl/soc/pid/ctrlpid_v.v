@@ -109,7 +109,6 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  assign sw_next =  uswitch == 0 ? 1 : 0;
  
  assign a = uswitch[psc-1:psc-aw];
- // assign a = 0;
  
  wire calc;
  assign calc = uswitch[psc-1-aw] == 1 && uswitch[psc-2-aw:0] == 0 ? 1 : 0;

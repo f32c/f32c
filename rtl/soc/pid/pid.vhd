@@ -32,6 +32,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
+use ieee.math_real.all;
 use work.f32c_pack.all;
 
 library pid_library;
@@ -40,7 +41,7 @@ use pid_library.types.all;
 entity pid is
     generic (
         C_addr_unit_bits: integer := 2; -- number of bits to address PID units
-	C_pids: integer range 2 to 32 := 4;  -- number of pid units
+	C_pids: integer range 2 to 8 := 4;  -- number of pid units
 	C_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- 1: simulate motors (no real motors), 0: normal mode for real motors
         C_addr_bits: integer := 2; -- don't touch: number of address bits to address one PID unit
         C_bits: integer range 2 to 32 := 32 -- memory register bit width
@@ -150,6 +151,7 @@ begin
     -- instantiate the PID controller
     pid_inst: entity work.ctrlpid
     generic map(
+      an => C_pids,
       aw => C_addr_unit_bits -- 1: 2 PID units, 2: 4 PID units
     )
     port map(
