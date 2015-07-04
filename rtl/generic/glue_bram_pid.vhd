@@ -284,7 +284,7 @@ begin
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"58" | x"59" | x"5A" | x"5B" => -- address 0xFFFFFD40
+	when x"58" | x"59" | x"5A" | x"5B" => -- address 0xFFFFFD80
 	    if C_pid then
 		io_to_cpu <= from_pid;
 	    else
