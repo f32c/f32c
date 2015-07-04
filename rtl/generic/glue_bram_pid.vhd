@@ -75,8 +75,7 @@ entity glue_bram is
 	C_gpio: boolean := true;
 	C_timer: boolean := true;
 	C_pid: boolean := true;
-	-- C_pid_addr_unit_bits: integer := 2; -- address width of pid bus
-	C_pids: integer := 4;
+	C_pids: integer := 2;
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real 
 	C_leds_btns: boolean := true
     );

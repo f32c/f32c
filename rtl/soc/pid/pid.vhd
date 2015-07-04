@@ -39,8 +39,8 @@ library pid_library;
 
 entity pid is
     generic (
-        C_addr_unit_bits: integer := 2; -- number of bits to address PID units
-	C_pids: integer range 2 to 8 := 4;  -- number of pid units
+        C_addr_unit_bits: integer := 1; -- number of bits to address PID units
+	C_pids: integer range 2 to 8 := 2;  -- number of pid units
 	C_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- 1: simulate motors (no real motors), 0: normal mode for real motors
         C_addr_bits: integer := 2; -- don't touch: number of address bits to address one PID unit
         C_bits: integer range 2 to 32 := 32 -- memory register bit width
