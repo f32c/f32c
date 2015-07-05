@@ -39,7 +39,8 @@ library pid_library;
 
 entity pid is
     generic (
-        C_addr_unit_bits: integer := 1; -- number of bits to address PID units
+        C_pwm_bits: integer range 11 to 32 := 11; -- clock divider bits define PWM output frequency (min 11)
+        C_addr_unit_bits: integer range 1 to 3 := 1; -- number of bits to address PID units
 	C_pids: integer range 2 to 8 := 2;  -- number of pid units
 	C_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- 1: simulate motors (no real motors), 0: normal mode for real motors
         C_addr_bits: integer := 2; -- don't touch: number of address bits to address one PID unit
@@ -64,6 +65,7 @@ end pid;
 architecture arch of pid is
     constant C_registers: integer := 2; -- total number of 32-bit memory registers for single PID
     constant C_reg_addr_bits: integer := 1;
+    constant C_output_bits: integer := 12; -- number of bits in PID output value
     
     -- normal registers
     -- type pid_reg_type  is std_logic_vector(C_bits-1 downto 0);
@@ -79,9 +81,7 @@ architecture arch of pid is
     constant C_output:     integer   := 2; -- output value to control the motor
     constant C_position:   integer   := 3; -- encoder counter
     
-    constant C_clkdivbits: integer   := 11; -- clock divider bits, also used for PWM
-    
-    signal clkcounter : std_logic_vector(C_clkdivbits-1 downto 0);
+    signal clkcounter : std_logic_vector(C_pwm_bits-1 downto 0);
     signal sp: std_logic_vector(23 downto 0); -- set point
     signal cv: std_logic_vector(23 downto 0); -- current value
     type counter_value_type is array (C_pids-1 downto 0) of std_logic_vector(23 downto 0);
@@ -89,10 +89,10 @@ architecture arch of pid is
     signal error_value: counter_value_type;
     signal error: std_logic_vector(23 downto 0); -- error = sp-cv
     signal reset   : std_logic := '0';
-    signal m_k_out : std_logic_vector(11 downto 0);
-    type output_value_type is array (C_pids-1 downto 0) of std_logic_vector(11 downto 0);
+    signal m_k_out : std_logic_vector(C_output_bits-1 downto 0);
+    type output_value_type is array (C_pids-1 downto 0) of std_logic_vector(C_output_bits-1 downto 0);
     signal output_value : output_value_type;
-    type pwm_compare_type is array (C_pids-1 downto 0) of std_logic_vector(10 downto 0);
+    type pwm_compare_type is array (C_pids-1 downto 0) of std_logic_vector(C_output_bits-2 downto 0);
     signal pwm_compare : pwm_compare_type; -- pwm signal
     signal pwm_sign : std_logic_vector(C_pids-1 downto 0); -- sign of output signal
     signal pwm_out : std_logic_vector(C_pids-1 downto 0); -- pwm output signal
@@ -198,11 +198,11 @@ begin
     -- PWM output
     --pwm_compare(i) <= m_k_out(10 downto 0); -- compare value without sign bit of m_k_out
     --pwm_sign(i) <= m_k_out(11); -- sign bit of m_k_out defines forward/reverse direction
-    pwm_compare(i) <= output_value(i)(10 downto 0); -- compare value without sign bit of m_k_out
-    pwm_sign(i) <= output_value(i)(11); -- sign bit of m_k_out defines forward/reverse direction
+    pwm_compare(i) <= output_value(i)(C_output_bits-2 downto 0); -- compare value without sign bit of m_k_out
+    pwm_sign(i) <= output_value(i)(C_output_bits-1); -- sign bit of m_k_out defines forward/reverse direction
     --pwm_compare <= R(C_testpwm)(10 downto 0); -- compare value without sign bit of m_k_out
     --pwm_sign <= R(C_testpwm)(11); -- sign bit of m_k_out defines forward/reverse direction
-    pwm_out(i) <= '1' when clkcounter(10 downto 0) < pwm_compare(i) else '0';
+    pwm_out(i) <= '1' when clkcounter(C_pwm_bits-1 downto C_pwm_bits-C_output_bits+1) < pwm_compare(i) else '0';
     bridge(i) <= '0' & pwm_out(i) when pwm_sign(i) = '0' -- forward: m_k_out is positive
              else not(pwm_out(i)) & '0';               -- reverse: m_k_out is negative
     -- bridge_out values description
