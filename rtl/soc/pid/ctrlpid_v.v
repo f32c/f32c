@@ -22,9 +22,11 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
 // **** iteration control loop frequency ****
 // clock_pid/number_of_states
 // number of states is number of clocks needed for calculation of PID
-// number of states is 10 (not counting reset state executed only once)
-// choose freq = 2^n Hz, e.g. 
-// 2560 Hz/10 = 256 Hz = control loop frequency
+// number of states is 8 (not counting reset state executed only once)
+// choose freq = 2^n Hz, e.g.
+// clk=81.25MHz, psc = 12, states = 8
+// 81.25e6 / 2^12 / 8 = 2479 Hz = control loop frequency (too fast? should be about 256 Hz)
+// if control loop frequency is 256 Hz
 // fp = 8 (2^8 = 256) // 8 used as f=2^fp for bit shift calculation
 // f(clk_pid) = 2^fp * number_of_states
  parameter signed [cw-1:0] fp = 9;  // fp = log(f(clk_pid)/Number_of_states)/log(2)
@@ -47,7 +49,13 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  output wire ce;
  output [aw-1:0] a; // the pid memory address
  input signed [ew-1:0] error;
- input [cw-1:0] KP,KI,KD;  // input 2^n shifting -31..31
+ input signed [cw-1:0] KP,KI,KD; // input 2^n shifting -31..31
+ /*
+ valid range for precision=1
+ KP =  -1..30
+ KI = -30..30
+ KD = -30..30
+ */
  output signed [ow-1:0] m_k_out; // motor power
 
  reg signed [ow-1:0] m_k[an-1:0];       //muestra actual
@@ -55,6 +63,9 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  reg signed [pw-1:0] e_k_1[an-1:0];     //error 1 cycle before
  reg signed [pw-1:0] e_k_2[an-1:0];     //error 2 cycles before
  reg signed [pw-1:0] u_k[an-1:0];       //result of PID equation
+
+ wire signed [pw-1:0] xerror; // sign-extended error
+ assign xerror = { {(pw-ew){error[ew-1]}}, error };
 
  wire signed [cw-1:0] Kp;  //proportional gain
  wire signed [cw-1:0] Ki;  //integral gain
@@ -73,24 +84,11 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  wire signed [cw-1:0] Kd1fp;
  assign Kd1fp = Kd+1+fp;
 
-
- parameter [3:0] E0=4'd0;
- parameter [3:0] E1=4'd1;
- parameter [3:0] E2=4'd2;
- parameter [3:0] E3=4'd3;
- parameter [3:0] E4=4'd4;
- parameter [3:0] E5=4'd5;
- parameter [3:0] E6=4'd6;
- parameter [3:0] E7=4'd7;
- parameter [3:0] E8=4'd8;
- parameter [3:0] E9=4'd9;
- parameter [3:0] E10=4'd10;
-
- reg [3:0] state=4'd0;
- reg [3:0] next_state;
+ reg [2:0] state;
  
  parameter psc = 12; // prescaler number of bits
  
+ // **** TODO: extend uswitch bits to count the state ****
  reg [psc-1:0] uswitch; // unit switch phase
  
  always @(posedge clk_pid)
@@ -112,39 +110,15 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  
  wire calc;
  assign calc = uswitch[psc-1-aw] == 1 && uswitch[psc-2-aw:0] == 0 ? 1 : 0;
- 
- always@(posedge clk_pid or posedge reset) // RTL logic for next state
-     if (reset)
-       begin
-         state<=E0;
-       end
-     else
-       begin
-          if(sw_next)
-            state<=next_state;
-       end
 
- // state machine to off-load arithmetic processing
- always @*	// sequential logic
-	case(state[3:0])
-		E0: next_state[3:0]=E1;
-		E1: next_state[3:0]=E2;
-		E2: next_state[3:0]=E3;
-		E3: next_state[3:0]=E4;
-		E4: next_state[3:0]=E5;
-		E5: next_state[3:0]=E6;
-		E6: next_state[3:0]=E7;
-		E7: next_state[3:0]=E8;
-		E8: next_state[3:0]=E9;
-		E9: next_state[3:0]=E10;
-		E10: next_state[3:0]=E1;
-		default: next_state[3:0]=E0;
-	endcase
+ always @(posedge clk_pid)
+   if(sw_next)
+     state <= state + 1;
 
  always @(posedge clk_pid)
    if(calc)
-        case(state[3:0])
-	  E0: begin
+        case(state[2:0])
+                // *** reset logic removed ***
 	        // reset all accumulated values
 	        // this creates counter-direction
 	        // after step change of the setpoint
@@ -154,38 +128,27 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
                 e_k_1[a] <= 0;
                 e_k_2[a] <= 0;
                 */
-              end
-	  E1: // first copy minimal necessary data
-	      e_k_0[a][ew-1:0] = error;
-          E2: begin
-              /* sign expansion */
-              if(e_k_0[a][ew-1])
-	          // sign expansion for negative e(k) error
-	          e_k_0[a][pw-1:ew] <= -8'd1;
-              else
-                  // expansion for positive e(k) error
-                  e_k_0[a][pw-1:ew] <= 8'd0;
-              end
+	  0: e_k_0[a]   <= xerror; // copy sign extended error value
           // discrete fixed point PID
           // m(k) = m(k-1) + (Kp + Kd/T + Ki*T/2)*e(k)
           //               + (Ki*T/2 - Kp - 2Kd/T)*e(k-1) 
           //               + (Kd/T)*e(k-2)
           // T = 1/f
-          E3: u_k[a]    <= u_k[a] + (e_k_0[a]<<<Kp)        // +Kp * e(k)
+          1: u_k[a]     <= u_k[a] + (e_k_0[a]<<<Kp)        // +Kp * e(k)
                                   - (e_k_1[a]<<<Kp);       // -Kp * e(k-1)
-          E4: if(Kdfp >= 0)
+          2: if(Kdfp >= 0)
                 u_k[a]  <= u_k[a] + (e_k_0[a]<<<(Kdfp))    // +Kd / T * e(k)
                                   + (e_k_2[a]<<<(Kdfp));   // +Kd / T * e(k-2)
               else
                 u_k[a]  <= u_k[a] + (e_k_0[a]>>>(-Kdfp))   // +Kd / T * e(k)
                                   + (e_k_2[a]>>>(-Kdfp));  // +Kd / T * e(k-2)
-          E5: if(Ki1fp >= 0)
+          3: if(Ki1fp >= 0)
                 u_k[a]  <= u_k[a] + (e_k_0[a]<<<(Ki1fp))   // +Ki * T/2 * e(k)
                                   + (e_k_1[a]<<<(Ki1fp));  // +Ki * T/2 * e(k-1)
               else
                 u_k[a]  <= u_k[a] + (e_k_0[a]>>>(-Ki1fp))  // +Ki * T/2 * e(k)
                                   + (e_k_1[a]>>>(-Ki1fp)); // +Ki * T/2 * e(k-1)
-          E6: if(Kd1fp >= 0)
+          4: if(Kd1fp >= 0)
                 u_k[a]  <= u_k[a] - (e_k_1[a]<<<(Kd1fp));  // -Kd * 2/T * e(k-1)
               else
                 u_k[a]  <= u_k[a] - (e_k_1[a]>>>(-Kd1fp)); // -Kd * 2/T * e(k-1)
@@ -193,14 +156,16 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
               // u_k[a] <= e_k <<< Kp;
               // *****************
               // antiwindup
-	  E7: if(u_k[a] >   antiwindup)
+	  5: if(u_k[a] >   antiwindup)
                  u_k[a] <=  antiwindup;        // max positiva value
-          E8: if(u_k[a] <  -antiwindup)
+          6: if(u_k[a] <  -antiwindup)
                  u_k[a] <= -antiwindup;        // min negative value
-          // E9:  m_k[a] <= u_k[a] >>> precision; // m(k) = u(k)  output
-          E9:  m_k[a] <= u_k[a][precision+ow-1:precision]; // m(k) = u(k)  output
-	  E10: 
+          // E8: m_k[a] <= u_k[a] >>> precision; // m(k) = u(k)  output
+          // E8: m_k[a] <= u_k[a][precision+ow-1:precision]; // m(k) = u(k)  output
+	  7:
 	   begin
+            // m_k[a] <= u_k[a] >>> precision; // m(k) = u(k)  output
+            m_k[a] <= u_k[a][precision+ow-1:precision]; // m(k) = u(k)  output
 	    e_k_2[a] <= e_k_1[a];  //  e(k-2) = e(k-1)
 	    e_k_1[a] <= e_k_0[a];  //  e(k-1) = e(k)
            end
