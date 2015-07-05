@@ -62,7 +62,7 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  KI = 11
  KD =  1
  */
- output signed [ow-1:0] m_k_out; // motor power
+ output reg signed [ow-1:0] m_k_out; // motor power
 
  reg signed [pw-1:0] e_k_0[an-1:0];     //error actual
  reg signed [pw-1:0] e_k_1[an-1:0];     //error 1 cycle before
@@ -160,14 +160,13 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
           7: if(u_k[a] <  -antiwindup)
                  u_k[a] <= -antiwindup;        // min negative value
 	  8: begin
+               // m_k_out <= u_k[a] >>> precision; // m(k) = u(k)  output
+               m_k_out <= u_k[a][precision+ow-1:precision]; // bit shifting, output scaling
 	       e_k_2[a] <= e_k_1[a];  //  e(k-2) = e(k-1)
 	       e_k_1[a] <= e_k_0[a];  //  e(k-1) = e(k)
-	       ce <= 1; // output data available
              end
+          9: ce <= 1; // output data available
          15: ce <= 0; // output data not available
         endcase
-
- // m_k_out <= u_k[a] >>> precision; // m(k) = u(k)  output
- assign m_k_out = u_k[a][precision+ow-1:precision]; // bit shifting, output scaling
 
 endmodule
