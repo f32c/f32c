@@ -39,7 +39,7 @@ library pid_library;
 
 entity pid is
     generic (
-        C_pwm_bits: integer range 11 to 32 := 11; -- clock divider bits define PWM output frequency (min 11)
+        C_pwm_bits: integer range 11 to 32 := 12; -- clock divider bits define PWM output frequency (min 11 => 40kHz @ 81.25MHz)
         C_addr_unit_bits: integer range 1 to 3 := 1; -- number of bits to address PID units
 	C_pids: integer range 2 to 8 := 2;  -- number of pid units
 	C_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- 1: simulate motors (no real motors), 0: normal mode for real motors
