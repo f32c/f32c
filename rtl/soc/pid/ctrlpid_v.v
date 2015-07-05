@@ -58,9 +58,10 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  KI = -22..31
  KD = -31..22
  example values for simulation
+ (motor power = 5, speed = 17, friction = 2)
  KP = 6
- KI = 9
- KD = -5
+ KI = 13
+ KD = -3
  */
  output signed [ow-1:0] m_k_out; // motor power
 

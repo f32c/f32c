@@ -218,9 +218,9 @@ begin
     simulator: if C_simulator(i)='1' generate
     simulator_inst: entity work.simotor
     generic map(
-      motor_power => 4,
-      motor_speed => 21,
-      motor_friction => 1
+      motor_power => 5,
+      motor_speed => 17,
+      motor_friction => 2
     )
     port map(
       clock => clk,
