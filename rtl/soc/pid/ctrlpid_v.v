@@ -30,7 +30,7 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
 // fp = 8 (2^8 = 256) // 8 used as f=2^fp for bit shift calculation
 // f(clk_pid) = 2^fp = 2^8 = 256 Hz
 // PID values can stay the same:
-// after chaging control loop frequency adjust fp parameter
+// after changing control loop frequency adjust fp parameter
  parameter signed [cw-1:0] fp = 8;  // fp = log(f(clk_pid))/log(2)
 
 // ***** precision = log scaling for the fixed point arithmetics *****
@@ -53,14 +53,14 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  input signed [ew-1:0] error;
  input signed [cw-1:0] KP,KI,KD; // input 2^n shifting -31..31
  /*
- valid range for precision=1 fp=7
- KP =  -7..22
+ valid range for precision=1 fp=8
+ KP =  -8..22
  KI = -22..31
  KD = -31..22
  example values for simulation
- KP = 10
- KI = 11
- KD =  1
+ KP = 6
+ KI = 9
+ KD = -5
  */
  output signed [ow-1:0] m_k_out; // motor power
 
