@@ -13,7 +13,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
 
- parameter       psc = 15; // prescaler bits - defines control loop frequency
+ parameter       psc = 18; // prescaler bits - defines control loop frequency
  parameter       aw = 1;  // address width (number of bits in PID address)
  parameter       an = (1<<aw); // number of addressable PIDs = 2^aw (max an = psc-4)
  parameter       ow = 12; // width of output bits (precision + ow >= 9)
@@ -23,15 +23,15 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
 // **** iteration control loop frequency ****
 // clock_pid/number_of_states
 // number of states is number of clocks needed for calculation of PID
-// number of states is 16
-// clk=81.25MHz, psc = 15
-// 81.25e6 / 2^15 = 2479 Hz = f(clk_pid) control loop frequency (too fast? should be about 2 kHz)
+// number of states is 18
+// clk=81.25MHz, psc = 18
+// 81.25e6 / 2^18 = 310 Hz = f(clk_pid) control loop frequency (around 256 Hz)
 // find approx integer fp, closest to control loop frequency
-// fp = 7 (2^7 = 128) // 7 used as f=2^fp for bit shift calculation
-// f(clk_pid) = 2^fp * number_of_states = 2^7 * 16 = 2048 Hz
+// fp = 8 (2^8 = 256) // 8 used as f=2^fp for bit shift calculation
+// f(clk_pid) = 2^fp = 2^8 = 256 Hz
 // PID values can stay the same:
 // after chaging control loop frequency adjust fp parameter
- parameter signed [cw-1:0] fp = 7;  // fp = log(f(clk_pid)/Number_of_states)/log(2)
+ parameter signed [cw-1:0] fp = 8;  // fp = log(f(clk_pid))/log(2)
 
 // ***** precision = log scaling for the fixed point arithmetics *****
 // defines precision of the calculation using fixed point arithmetics
@@ -62,7 +62,7 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  KI = 11
  KD =  1
  */
- output reg signed [ow-1:0] m_k_out; // motor power
+ output signed [ow-1:0] m_k_out; // motor power
 
  reg signed [pw-1:0] e_k_0[an-1:0];     //error actual
  reg signed [pw-1:0] e_k_1[an-1:0];     //error 1 cycle before
@@ -161,12 +161,14 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
                  u_k[a] <= -antiwindup;        // min negative value
 	  8: begin
                // m_k_out <= u_k[a] >>> precision; // m(k) = u(k)  output
-               m_k_out <= u_k[a][precision+ow-1:precision]; // bit shifting, output scaling
+               // m_k_out <= u_k[a][precision+ow-1:precision]; // bit shifting, output scaling
 	       e_k_2[a] <= e_k_1[a];  //  e(k-2) = e(k-1)
 	       e_k_1[a] <= e_k_0[a];  //  e(k-1) = e(k)
+	       ce <= 1; // output data available
              end
-          9: ce <= 1; // output data available
          15: ce <= 0; // output data not available
         endcase
+
+   assign m_k_out = u_k[a][precision+ow-1:precision];
 
 endmodule
