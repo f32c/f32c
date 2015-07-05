@@ -13,7 +13,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
 
- parameter       aw = 1; // address width (number of bits in PID address)
+ parameter       psc = 12; // prescaler number of bits - defines control loop frequency
+ parameter       aw = 1;  // address width (number of bits in PID address)
  parameter       an = (1<<aw); // number of addressable PIDs = 2^aw
  parameter       ow = 12; // width of output bits (precision + ow >= 9)
  parameter       ew = 24; // number of error bits (ew < pw)
@@ -25,10 +26,12 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
 // number of states is 8 (not counting reset state executed only once)
 // choose freq = 2^n Hz, e.g.
 // clk=81.25MHz, psc = 12, states = 8
-// 81.25e6 / 2^12 / 8 = 2479 Hz = control loop frequency (too fast? should be about 256 Hz)
-// if control loop frequency is 256 Hz
+// 81.25e6 / 2^12 / 8 = 2479 Hz = f(clk_pid) control loop frequency (too fast? should be about 2 kHz)
+// find approx integer fp, closest to control loop frequency
 // fp = 8 (2^8 = 256) // 8 used as f=2^fp for bit shift calculation
-// f(clk_pid) = 2^fp * number_of_states
+// f(clk_pid) = 2^fp * number_of_states = 2^8 * 8 = 2048 Hz
+// PID values can stay the same:
+// after chaging control loop frequency adjust fp parameter
  parameter signed [cw-1:0] fp = 9;  // fp = log(f(clk_pid)/Number_of_states)/log(2)
 
 // ***** precision = log scaling for the fixed point arithmetics *****
@@ -84,12 +87,13 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  wire signed [cw-1:0] Kd1fp;
  assign Kd1fp = Kd+1+fp;
 
- reg [2:0] state;
- 
- parameter psc = 12; // prescaler number of bits
+ parameter statew = 3; // state bit width 3 bits -> 8 states
+ wire [statew-1:0] state;
  
  // **** TODO: extend uswitch bits to count the state ****
- reg [psc-1:0] uswitch; // unit switch phase
+ // reg [psc-1:0] uswitch; // unit switch phase
+ reg [statew+psc-1:0] uswitch; // unit switch phase
+ assign state = uswitch[statew+psc-1:psc];
  
  always @(posedge clk_pid)
    uswitch <= uswitch + 1;
@@ -104,20 +108,17 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  assign ce =  uswitch[psc-1-aw] == 0 && uswitch[psc-2-aw:0] == 0 ? 1 : 0;
 
  wire sw_next;
- assign sw_next =  uswitch == 0 ? 1 : 0;
+ assign sw_next =  uswitch[psc-1:0] == 0 ? 1 : 0;
  
  assign a = uswitch[psc-1:psc-aw];
  
  wire calc;
  assign calc = uswitch[psc-1-aw] == 1 && uswitch[psc-2-aw:0] == 0 ? 1 : 0;
 
- always @(posedge clk_pid)
-   if(sw_next)
-     state <= state + 1;
 
  always @(posedge clk_pid)
    if(calc)
-        case(state[2:0])
+        case(state[statew-1:0])
                 // *** reset logic removed ***
 	        // reset all accumulated values
 	        // this creates counter-direction
@@ -160,8 +161,6 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
                  u_k[a] <=  antiwindup;        // max positiva value
           6: if(u_k[a] <  -antiwindup)
                  u_k[a] <= -antiwindup;        // min negative value
-          // E8: m_k[a] <= u_k[a] >>> precision; // m(k) = u(k)  output
-          // E8: m_k[a] <= u_k[a][precision+ow-1:precision]; // m(k) = u(k)  output
 	  7:
 	   begin
             // m_k[a] <= u_k[a] >>> precision; // m(k) = u(k)  output
