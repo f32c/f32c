@@ -13,7 +13,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
 
- parameter       psc = 15; // prescaler number of bits - defines control loop frequency
+ parameter       psc = 15; // prescaler bits - defines control loop frequency
  parameter       aw = 1;  // address width (number of bits in PID address)
  parameter       an = (1<<aw); // number of addressable PIDs = 2^aw (max an = psc-4)
  parameter       ow = 12; // width of output bits (precision + ow >= 9)
@@ -24,15 +24,14 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
 // clock_pid/number_of_states
 // number of states is number of clocks needed for calculation of PID
 // number of states is 16
-// choose freq = 2^n Hz, e.g.
 // clk=81.25MHz, psc = 15
 // 81.25e6 / 2^15 = 2479 Hz = f(clk_pid) control loop frequency (too fast? should be about 2 kHz)
 // find approx integer fp, closest to control loop frequency
-// fp = 9 (2^9 = 512) // 9 used as f=2^fp for bit shift calculation
-// f(clk_pid) = 2^fp * number_of_states = 2^9 * 16 = 8192 Hz
+// fp = 7 (2^7 = 128) // 7 used as f=2^fp for bit shift calculation
+// f(clk_pid) = 2^fp * number_of_states = 2^7 * 16 = 2048 Hz
 // PID values can stay the same:
 // after chaging control loop frequency adjust fp parameter
- parameter signed [cw-1:0] fp = 9;  // fp = log(f(clk_pid)/Number_of_states)/log(2)
+ parameter signed [cw-1:0] fp = 7;  // fp = log(f(clk_pid)/Number_of_states)/log(2)
 
 // ***** precision = log scaling for the fixed point arithmetics *****
 // defines precision of the calculation using fixed point arithmetics
@@ -54,10 +53,14 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  input signed [ew-1:0] error;
  input signed [cw-1:0] KP,KI,KD; // input 2^n shifting -31..31
  /*
- valid range for precision=1 fp=9
- KP =   0..21
- KI = -21..21
- KD = -21..21
+ valid range for precision=1 fp=7
+ KP =  -7..22
+ KI = -22..31
+ KD = -31..22
+ example values for simulation
+ KP = 10
+ KI = 11
+ KD =  1
  */
  output signed [ow-1:0] m_k_out; // motor power
 
@@ -86,13 +89,10 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  wire signed [cw-1:0] Kd1fp;
  assign Kd1fp = Kd+1+fp;
 
- parameter statew = 4; // state bit width 4 bits -> 16 states
- wire [statew-1:0] state;
  
  // **** TODO: extend uswitch bits to count the state ****
  // reg [psc-1:0] uswitch; // unit switch phase
  reg [psc-1:0] uswitch; // unit switch phase
- assign state = uswitch[psc-aw-1:psc-aw-statew];
  
  always @(posedge clk_pid)
    uswitch <= uswitch + 1;
@@ -101,10 +101,14 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  assign state = uswitch[psc-aw-1:psc-aw-statew]; 
  ce = data available for external reading
  */
+
+ parameter statew = 4; // state bit width 4 bits -> 16 states
+ wire [statew-1:0] state;
+ assign state = uswitch[psc-aw-1:psc-aw-statew];
  
  assign a = uswitch[psc-1:psc-aw];
 
- // do one calculation step at each state increment 
+ // do one calculation step at each state increment
  wire calc;
  assign calc = uswitch[psc-aw-statew-1:0] == 0 ? 1 : 0;
 
@@ -156,8 +160,6 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
           7: if(u_k[a] <  -antiwindup)
                  u_k[a] <= -antiwindup;        // min negative value
 	  8: begin
-               // m_k_out <= u_k[a] >>> precision; // m(k) = u(k)  output
-               // m_k_out <= u_k[a][precision+ow-1:precision]; // m(k) = u(k)  output
 	       e_k_2[a] <= e_k_1[a];  //  e(k-2) = e(k-1)
 	       e_k_1[a] <= e_k_0[a];  //  e(k-1) = e(k)
 	       ce <= 1; // output data available
@@ -165,6 +167,7 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
          15: ce <= 0; // output data not available
         endcase
 
+ // m_k_out <= u_k[a] >>> precision; // m(k) = u(k)  output
  assign m_k_out = u_k[a][precision+ow-1:precision]; // bit shifting, output scaling
 
 endmodule
