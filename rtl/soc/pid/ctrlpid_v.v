@@ -61,7 +61,6 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
  */
  output signed [ow-1:0] m_k_out; // motor power
 
- reg signed [ow-1:0] m_k[an-1:0];       //muestra actual
  reg signed [pw-1:0] e_k_0[an-1:0];     //error actual
  reg signed [pw-1:0] e_k_1[an-1:0];     //error 1 cycle before
  reg signed [pw-1:0] e_k_2[an-1:0];     //error 2 cycles before
