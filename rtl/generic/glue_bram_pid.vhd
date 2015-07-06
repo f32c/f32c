@@ -77,9 +77,10 @@ entity glue_bram is
 	C_pid: boolean := true;
 	C_pids: integer := 2;
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real 
-	C_pid_prescaler: integer range 10 to 30 := 17; -- control loop frequency
+	C_pid_prescaler: integer range 10 to 26 := 18; -- control loop frequency
 	C_pid_precision: integer range 0 to 8 := 1; -- fixed point PID precision
         C_pid_pwm_bits: integer range 11 to 32 := 12; -- clock divider bits define PWM output frequency (min 11 => 40kHz @ 81.25MHz)
+        C_pid_fp: integer range 11 to 32 := 8; -- frequency in pid calc, use 26-C_pid_prescaler
 	C_leds_btns: boolean := true
     );
     port (
@@ -329,6 +330,7 @@ begin
     generic map (
         C_pwm_bits => C_pid_pwm_bits,
 	C_prescaler => C_pid_prescaler,
+	C_fp => C_pid_fp,
 	C_precision => C_pid_precision,
         C_simulator => C_pid_simulator,
         C_pids => C_pids,
