@@ -52,7 +52,7 @@ entity glue is
 	C_leds_btns: boolean := true
     );
     port (
-	clk_25m: in std_logic;
+	clk_100m: in std_logic;
 	rs232_dce_txd: out std_logic;
 	rs232_dce_rxd: in std_logic;
 	led: out std_logic_vector(7 downto 0);
@@ -68,7 +68,7 @@ begin
     -- clock synthesizer: Xilinx Spartan-6 specific
 
 clk100: if C_clk_freq = 100 generate
-clk <= clk_25m;
+clk <= clk_100m;
 end generate;
 
     -- reset hard-block: Xilinx Spartan-6 specific
