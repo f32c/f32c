@@ -43,8 +43,8 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: 81 or 112
-	C_clk_freq: integer := 81;
+	-- Main clock: 81 or 112 not used clock is 100Mhz
+	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
 	C_mem_size: integer := 32;
@@ -66,24 +66,15 @@ architecture Behavioral of glue is
     signal btns: std_logic_vector(1 downto 0);
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
-    
-    clk112: if C_clk_freq = 112 generate
-    clkgen112: entity work.pll_25M_112M5
-    port map(
-      clk_in1 => clk_25m, clk_out1 => clk
-    );
-    end generate;
 
-    clk81: if C_clk_freq = 81 generate
-    clkgen81: entity work.pll_25M_81M25
-    port map(
-      clk_in1 => clk_25m, clk_out1 => clk
-    );
-    end generate;
+clk100: if C_clk_freq = 100 generate
+clk <= clk_25m;
+end generate;
 
     -- reset hard-block: Xilinx Spartan-6 specific
     reset: startup_spartan6
     port map (
+	
 	clk => clk, gsr => rs232_break, gts => rs232_break,
 	keyclearb => '0'
     );
