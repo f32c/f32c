@@ -1,0 +1,1811 @@
+//! **************************************************************************
+// Written by: Map P.20131013 on Mon Jul 06 14:05:47 2015
+//! **************************************************************************
+
+SCHEMATIC START;
+CONFIG VCCAUX = "3.3";
+COMP "clk_25m" LOCATE = SITE "V10" LEVEL 1;
+COMP "led<0>" LOCATE = SITE "T18" LEVEL 1;
+COMP "led<1>" LOCATE = SITE "T17" LEVEL 1;
+COMP "led<2>" LOCATE = SITE "U18" LEVEL 1;
+COMP "led<3>" LOCATE = SITE "U17" LEVEL 1;
+COMP "led<4>" LOCATE = SITE "N16" LEVEL 1;
+COMP "led<5>" LOCATE = SITE "N15" LEVEL 1;
+COMP "led<6>" LOCATE = SITE "P16" LEVEL 1;
+COMP "led<7>" LOCATE = SITE "P15" LEVEL 1;
+COMP "btn_k2" LOCATE = SITE "K17" LEVEL 1;
+COMP "btn_k3" LOCATE = SITE "L17" LEVEL 1;
+COMP "rs232_dce_rxd" LOCATE = SITE "B8" LEVEL 1;
+COMP "rs232_dce_txd" LOCATE = SITE "A8" LEVEL 1;
+PIN reset_pins<0> = BEL "reset" PINNAME CLK;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_24_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_24" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_24_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_24" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_22_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_22" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_22_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_22" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_21_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_21" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_21_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_21" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_23_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_23" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_23_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_23" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_13_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_13" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_13_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_13" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_12_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_12" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_12_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_12" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_14_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_14" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_14_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_14" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_34_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_34" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_34_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_34" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_33_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_33" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_33_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_33" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_11_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_11" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_11_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_11" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_32_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_32" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_32_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_32" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_31_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_31" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_31_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_31" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_03_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_03" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_03_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_03" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_02_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_02" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_02_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_02" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_04_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_04" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_04_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_04" PINNAME CLKB;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_01_pins<26> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_01" PINNAME CLKA;
+PIN glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_01_pins<27> = BEL
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_01" PINNAME CLKB;
+PIN glue_bram/pipeline/G_bp_scoretable.bptrace/Mram_bptrace_pins<26> = BEL
+        "glue_bram/pipeline/G_bp_scoretable.bptrace/Mram_bptrace" PINNAME
+        CLKA;
+PIN glue_bram/pipeline/G_bp_scoretable.bptrace/Mram_bptrace_pins<27> = BEL
+        "glue_bram/pipeline/G_bp_scoretable.bptrace/Mram_bptrace" PINNAME
+        CLKB;
+PIN glue_bram/pipeline/Mmult_mul_res3_pins<110> = BEL
+        "glue_bram/pipeline/Mmult_mul_res3" PINNAME CLK;
+TIMEGRP sys_clk_pin = PIN "reset_pins<0>" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_0" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_1" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_2" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_3" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_4" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_5" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_6" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_7" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_8" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_9" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_10" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_11" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_12" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_13" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_14" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_15" BEL
+        "glue_bram/pipeline/Mmult_mul_res4_16" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_0" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_1" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_2" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_3" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_4" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_5" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_6" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_7" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_8" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_9" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_10" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_11" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_12" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_13" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_14" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_15" BEL
+        "glue_bram/pipeline/Mmult_mul_res5_16" BEL
+        "glue_bram/pipeline/R_cop0_count_31" BEL
+        "glue_bram/pipeline/R_cop0_count_30" BEL
+        "glue_bram/pipeline/R_cop0_count_29" BEL
+        "glue_bram/pipeline/R_cop0_count_28" BEL
+        "glue_bram/pipeline/R_cop0_count_27" BEL
+        "glue_bram/pipeline/R_cop0_count_26" BEL
+        "glue_bram/pipeline/R_cop0_count_25" BEL
+        "glue_bram/pipeline/R_cop0_count_24" BEL
+        "glue_bram/pipeline/R_cop0_count_23" BEL
+        "glue_bram/pipeline/R_cop0_count_22" BEL
+        "glue_bram/pipeline/R_cop0_count_21" BEL
+        "glue_bram/pipeline/R_cop0_count_20" BEL
+        "glue_bram/pipeline/R_cop0_count_19" BEL
+        "glue_bram/pipeline/R_cop0_count_18" BEL
+        "glue_bram/pipeline/R_cop0_count_17" BEL
+        "glue_bram/pipeline/R_cop0_count_16" BEL
+        "glue_bram/pipeline/R_cop0_count_15" BEL
+        "glue_bram/pipeline/R_cop0_count_14" BEL
+        "glue_bram/pipeline/R_cop0_count_13" BEL
+        "glue_bram/pipeline/R_cop0_count_12" BEL
+        "glue_bram/pipeline/R_cop0_count_11" BEL
+        "glue_bram/pipeline/R_cop0_count_10" BEL
+        "glue_bram/pipeline/R_cop0_count_9" BEL
+        "glue_bram/pipeline/R_cop0_count_8" BEL
+        "glue_bram/pipeline/R_cop0_count_7" BEL
+        "glue_bram/pipeline/R_cop0_count_6" BEL
+        "glue_bram/pipeline/R_cop0_count_5" BEL
+        "glue_bram/pipeline/R_cop0_count_4" BEL
+        "glue_bram/pipeline/R_cop0_count_3" BEL
+        "glue_bram/pipeline/R_cop0_count_2" BEL
+        "glue_bram/pipeline/R_cop0_count_1" BEL
+        "glue_bram/pipeline/R_cop0_count_0" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_31" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_30" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_29" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_28" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_27" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_26" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_25" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_24" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_23" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_22" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_21" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_20" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_19" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_18" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_17" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_16" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_15" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_14" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_13" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_12" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_11" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_10" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_9" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_8" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_7" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_6" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_5" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_4" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_3" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_2" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_1" BEL
+        "glue_bram/pipeline/EX_MEM_mem_data_out_0" BEL
+        "glue_bram/pipeline/EX_MEM_shamt_1_2_4_2" BEL
+        "glue_bram/pipeline/EX_MEM_shamt_1_2_4_1" BEL
+        "glue_bram/pipeline/EX_MEM_shamt_1_2_4_0" BEL
+        "glue_bram/pipeline/EX_MEM_shift_funct_1" BEL
+        "glue_bram/pipeline/EX_MEM_shift_funct_0" BEL
+        "glue_bram/pipeline/EX_MEM_latency" BEL
+        "glue_bram/pipeline/EX_MEM_op_major_1" BEL
+        "glue_bram/pipeline/EX_MEM_op_major_0" BEL
+        "glue_bram/pipeline/ID_EX_shift_funct_1" BEL
+        "glue_bram/pipeline/ID_EX_shift_funct_0" BEL
+        "glue_bram/pipeline/ID_EX_shift_variable" BEL
+        "glue_bram/pipeline/ID_EX_shift_amount_4" BEL
+        "glue_bram/pipeline/ID_EX_shift_amount_3" BEL
+        "glue_bram/pipeline/ID_EX_shift_amount_2" BEL
+        "glue_bram/pipeline/ID_EX_shift_amount_1" BEL
+        "glue_bram/pipeline/ID_EX_shift_amount_0" BEL
+        "glue_bram/pipeline/ID_EX_wait" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_31" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_30" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_29" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_28" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_27" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_26" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_25" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_24" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_23" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_22" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_21" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_20" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_19" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_18" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_17" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_16" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_15" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_14" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_13" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_12" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_11" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_10" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_9" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_8" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_7" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_6" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_5" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_4" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_3" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_2" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_1" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_0" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_31" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_30" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_29" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_28" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_27" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_26" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_25" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_24" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_23" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_22" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_21" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_20" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_19" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_18" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_17" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_16" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_15" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_14" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_13" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_12" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_11" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_10" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_9" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_8" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_7" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_6" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_5" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_4" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_3" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_2" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_1" BEL
+        "glue_bram/pipeline/MEM_WB_ex_data_0" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_31" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_30" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_29" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_28" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_27" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_26" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_25" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_24" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_23" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_22" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_21" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_20" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_19" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_18" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_17" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_16" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_15" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_14" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_13" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_12" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_11" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_10" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_9" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_8" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_7" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_6" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_5" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_4" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_3" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_2" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_1" BEL
+        "glue_bram/pipeline/EX_MEM_logic_data_0" BEL
+        "glue_bram/pipeline/R_cop0_intr_7" BEL
+        "glue_bram/pipeline/R_cop0_intr_5" BEL
+        "glue_bram/pipeline/R_cop0_intr_4" BEL
+        "glue_bram/pipeline/R_cop0_intr_3" BEL
+        "glue_bram/pipeline/R_cop0_intr_1" BEL
+        "glue_bram/pipeline/R_cop0_intr_0" BEL
+        "glue_bram/pipeline/R_cop0_EPC_16" BEL
+        "glue_bram/pipeline/R_cop0_EPC_15" BEL
+        "glue_bram/pipeline/R_cop0_EPC_14" BEL
+        "glue_bram/pipeline/R_cop0_EPC_13" BEL
+        "glue_bram/pipeline/R_cop0_EPC_12" BEL
+        "glue_bram/pipeline/R_cop0_EPC_11" BEL
+        "glue_bram/pipeline/R_cop0_EPC_10" BEL
+        "glue_bram/pipeline/R_cop0_EPC_9" BEL
+        "glue_bram/pipeline/R_cop0_EPC_8" BEL
+        "glue_bram/pipeline/R_cop0_EPC_7" BEL
+        "glue_bram/pipeline/R_cop0_EPC_6" BEL
+        "glue_bram/pipeline/R_cop0_EPC_5" BEL
+        "glue_bram/pipeline/R_cop0_EPC_4" BEL
+        "glue_bram/pipeline/R_cop0_EPC_3" BEL
+        "glue_bram/pipeline/R_cop0_EPC_2" BEL "glue_bram/pipeline/R_mul_b_32"
+        BEL "glue_bram/pipeline/R_mul_b_31" BEL
+        "glue_bram/pipeline/R_mul_b_30" BEL "glue_bram/pipeline/R_mul_b_29"
+        BEL "glue_bram/pipeline/R_mul_b_28" BEL
+        "glue_bram/pipeline/R_mul_b_27" BEL "glue_bram/pipeline/R_mul_b_26"
+        BEL "glue_bram/pipeline/R_mul_b_25" BEL
+        "glue_bram/pipeline/R_mul_b_24" BEL "glue_bram/pipeline/R_mul_b_23"
+        BEL "glue_bram/pipeline/R_mul_b_22" BEL
+        "glue_bram/pipeline/R_mul_b_21" BEL "glue_bram/pipeline/R_mul_b_20"
+        BEL "glue_bram/pipeline/R_mul_b_19" BEL
+        "glue_bram/pipeline/R_mul_b_18" BEL "glue_bram/pipeline/R_mul_b_17"
+        BEL "glue_bram/pipeline/R_mul_b_16" BEL
+        "glue_bram/pipeline/R_mul_b_15" BEL "glue_bram/pipeline/R_mul_b_14"
+        BEL "glue_bram/pipeline/R_mul_b_13" BEL
+        "glue_bram/pipeline/R_mul_b_12" BEL "glue_bram/pipeline/R_mul_b_11"
+        BEL "glue_bram/pipeline/R_mul_b_10" BEL "glue_bram/pipeline/R_mul_b_9"
+        BEL "glue_bram/pipeline/R_mul_b_8" BEL "glue_bram/pipeline/R_mul_b_7"
+        BEL "glue_bram/pipeline/R_mul_b_6" BEL "glue_bram/pipeline/R_mul_b_5"
+        BEL "glue_bram/pipeline/R_mul_b_4" BEL "glue_bram/pipeline/R_mul_b_3"
+        BEL "glue_bram/pipeline/R_mul_b_2" BEL "glue_bram/pipeline/R_mul_b_1"
+        BEL "glue_bram/pipeline/R_mul_b_0" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_score_1" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_score_0" BEL
+        "glue_bram/pipeline/R_cop0_EX_code_4" BEL
+        "glue_bram/pipeline/R_cop0_EX_code_3" BEL
+        "glue_bram/pipeline/R_cop0_EX_code_2" BEL
+        "glue_bram/pipeline/R_cop0_EX_code_1" BEL
+        "glue_bram/pipeline/R_cop0_EX_code_0" BEL
+        "glue_bram/pipeline/R_cop0_compare_31" BEL
+        "glue_bram/pipeline/R_cop0_compare_30" BEL
+        "glue_bram/pipeline/R_cop0_compare_29" BEL
+        "glue_bram/pipeline/R_cop0_compare_28" BEL
+        "glue_bram/pipeline/R_cop0_compare_27" BEL
+        "glue_bram/pipeline/R_cop0_compare_26" BEL
+        "glue_bram/pipeline/R_cop0_compare_25" BEL
+        "glue_bram/pipeline/R_cop0_compare_24" BEL
+        "glue_bram/pipeline/R_cop0_compare_23" BEL
+        "glue_bram/pipeline/R_cop0_compare_22" BEL
+        "glue_bram/pipeline/R_cop0_compare_21" BEL
+        "glue_bram/pipeline/R_cop0_compare_20" BEL
+        "glue_bram/pipeline/R_cop0_compare_19" BEL
+        "glue_bram/pipeline/R_cop0_compare_18" BEL
+        "glue_bram/pipeline/R_cop0_compare_17" BEL
+        "glue_bram/pipeline/R_cop0_compare_16" BEL
+        "glue_bram/pipeline/R_cop0_compare_15" BEL
+        "glue_bram/pipeline/R_cop0_compare_14" BEL
+        "glue_bram/pipeline/R_cop0_compare_13" BEL
+        "glue_bram/pipeline/R_cop0_compare_12" BEL
+        "glue_bram/pipeline/R_cop0_compare_11" BEL
+        "glue_bram/pipeline/R_cop0_compare_10" BEL
+        "glue_bram/pipeline/R_cop0_compare_9" BEL
+        "glue_bram/pipeline/R_cop0_compare_8" BEL
+        "glue_bram/pipeline/R_cop0_compare_7" BEL
+        "glue_bram/pipeline/R_cop0_compare_6" BEL
+        "glue_bram/pipeline/R_cop0_compare_5" BEL
+        "glue_bram/pipeline/R_cop0_compare_4" BEL
+        "glue_bram/pipeline/R_cop0_compare_3" BEL
+        "glue_bram/pipeline/R_cop0_compare_2" BEL
+        "glue_bram/pipeline/R_cop0_compare_1" BEL
+        "glue_bram/pipeline/R_cop0_compare_0" BEL
+        "glue_bram/pipeline/R_cop0_intr_mask_7" BEL
+        "glue_bram/pipeline/R_cop0_intr_mask_6" BEL
+        "glue_bram/pipeline/R_cop0_intr_mask_5" BEL
+        "glue_bram/pipeline/R_cop0_intr_mask_4" BEL
+        "glue_bram/pipeline/R_cop0_intr_mask_3" BEL
+        "glue_bram/pipeline/R_cop0_intr_mask_2" BEL
+        "glue_bram/pipeline/R_cop0_intr_mask_1" BEL
+        "glue_bram/pipeline/R_cop0_intr_mask_0" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_16" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_15" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_14" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_13" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_12" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_11" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_10" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_9" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_8" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_7" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_6" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_5" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_4" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_3" BEL
+        "glue_bram/pipeline/R_cop0_EBASE_2" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_index_12" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_index_11" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_index_10" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_index_9" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_index_8" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_index_7" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_index_6" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_index_5" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_index_4" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_index_3" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_index_2" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_index_1" BEL
+        "glue_bram/pipeline/EX_MEM_bpredict_index_0" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_31" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_30" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_29" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_28" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_27" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_26" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_25" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_24" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_23" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_22" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_21" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_20" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_19" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_18" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_17" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_16" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_15" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_14" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_13" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_12" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_11" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_10" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_9" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_8" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_7" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_6" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_5" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_4" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_3" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_2" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_1" BEL
+        "glue_bram/pipeline/MEM_WB_mem_data_0" BEL
+        "glue_bram/pipeline/IF_ID_bpredict_index_12" BEL
+        "glue_bram/pipeline/IF_ID_bpredict_index_11" BEL
+        "glue_bram/pipeline/IF_ID_bpredict_index_10" BEL
+        "glue_bram/pipeline/IF_ID_bpredict_index_9" BEL
+        "glue_bram/pipeline/IF_ID_bpredict_index_8" BEL
+        "glue_bram/pipeline/IF_ID_bpredict_index_7" BEL
+        "glue_bram/pipeline/ID_EX_EPC_16" BEL
+        "glue_bram/pipeline/ID_EX_EPC_15" BEL
+        "glue_bram/pipeline/ID_EX_EPC_14" BEL
+        "glue_bram/pipeline/ID_EX_EPC_13" BEL
+        "glue_bram/pipeline/ID_EX_EPC_12" BEL
+        "glue_bram/pipeline/ID_EX_EPC_11" BEL
+        "glue_bram/pipeline/ID_EX_EPC_10" BEL "glue_bram/pipeline/ID_EX_EPC_9"
+        BEL "glue_bram/pipeline/ID_EX_EPC_8" BEL
+        "glue_bram/pipeline/ID_EX_EPC_7" BEL "glue_bram/pipeline/ID_EX_EPC_6"
+        BEL "glue_bram/pipeline/ID_EX_EPC_5" BEL
+        "glue_bram/pipeline/ID_EX_EPC_4" BEL "glue_bram/pipeline/ID_EX_EPC_3"
+        BEL "glue_bram/pipeline/ID_EX_EPC_2" BEL
+        "glue_bram/pipeline/IF_ID_EPC_16" BEL
+        "glue_bram/pipeline/IF_ID_EPC_15" BEL
+        "glue_bram/pipeline/IF_ID_EPC_14" BEL
+        "glue_bram/pipeline/IF_ID_EPC_13" BEL
+        "glue_bram/pipeline/IF_ID_EPC_12" BEL
+        "glue_bram/pipeline/IF_ID_EPC_11" BEL
+        "glue_bram/pipeline/IF_ID_EPC_10" BEL "glue_bram/pipeline/IF_ID_EPC_9"
+        BEL "glue_bram/pipeline/IF_ID_EPC_8" BEL
+        "glue_bram/pipeline/IF_ID_EPC_7" BEL "glue_bram/pipeline/IF_ID_EPC_6"
+        BEL "glue_bram/pipeline/IF_ID_EPC_5" BEL
+        "glue_bram/pipeline/IF_ID_EPC_4" BEL "glue_bram/pipeline/IF_ID_EPC_3"
+        BEL "glue_bram/pipeline/IF_ID_EPC_2" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_16" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_15" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_14" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_13" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_12" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_11" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_10" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_9" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_8" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_7" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_6" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_5" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_4" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_3" BEL
+        "glue_bram/pipeline/IF_ID_PC_next_2" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_14" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_13" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_12" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_11" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_10" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_9" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_8" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_7" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_6" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_5" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_4" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_3" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_2" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_1" BEL
+        "glue_bram/pipeline/EX_MEM_branch_target_0" BEL
+        "glue_bram/pipeline/EX_MEM_branch_hist_5" BEL
+        "glue_bram/pipeline/EX_MEM_branch_hist_4" BEL
+        "glue_bram/pipeline/EX_MEM_branch_hist_3" BEL
+        "glue_bram/pipeline/EX_MEM_branch_hist_2" BEL
+        "glue_bram/pipeline/EX_MEM_branch_hist_1" BEL
+        "glue_bram/pipeline/EX_MEM_branch_hist_0" BEL
+        "glue_bram/pipeline/MEM_WB_mem_cycle" BEL
+        "glue_bram/EX_MEM_take_branch" BEL "glue_bram/EX_MEM_branch_taken" BEL
+        "glue_bram/pipeline/MEM_WB_writeback_addr_4" BEL
+        "glue_bram/pipeline/MEM_WB_writeback_addr_3" BEL
+        "glue_bram/pipeline/MEM_WB_writeback_addr_2" BEL
+        "glue_bram/pipeline/MEM_WB_writeback_addr_1" BEL
+        "glue_bram/pipeline/MEM_WB_writeback_addr_0" BEL
+        "glue_bram/pipeline/EX_MEM_logic_cycle" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_16" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_15" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_14" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_13" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_12" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_11" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_10" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_9" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_8" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_7" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_6" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_5" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_4" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_3" BEL
+        "glue_bram/pipeline/ID_EX_branch_target_2" BEL
+        "glue_bram/pipeline/MEM_WB_mem_read_sign_extend" BEL
+        "glue_bram/pipeline/MEM_WB_mem_size_1" BEL
+        "glue_bram/pipeline/MEM_WB_mem_size_0" BEL
+        "glue_bram/pipeline/R_mul_a_32" BEL "glue_bram/pipeline/R_mul_a_31"
+        BEL "glue_bram/pipeline/R_mul_a_30" BEL
+        "glue_bram/pipeline/R_mul_a_29" BEL "glue_bram/pipeline/R_mul_a_28"
+        BEL "glue_bram/pipeline/R_mul_a_27" BEL
+        "glue_bram/pipeline/R_mul_a_26" BEL "glue_bram/pipeline/R_mul_a_25"
+        BEL "glue_bram/pipeline/R_mul_a_24" BEL
+        "glue_bram/pipeline/R_mul_a_23" BEL "glue_bram/pipeline/R_mul_a_22"
+        BEL "glue_bram/pipeline/R_mul_a_21" BEL
+        "glue_bram/pipeline/R_mul_a_20" BEL "glue_bram/pipeline/R_mul_a_19"
+        BEL "glue_bram/pipeline/R_mul_a_18" BEL
+        "glue_bram/pipeline/R_mul_a_17" BEL "glue_bram/pipeline/R_mul_a_16"
+        BEL "glue_bram/pipeline/R_mul_a_15" BEL
+        "glue_bram/pipeline/R_mul_a_14" BEL "glue_bram/pipeline/R_mul_a_13"
+        BEL "glue_bram/pipeline/R_mul_a_12" BEL
+        "glue_bram/pipeline/R_mul_a_11" BEL "glue_bram/pipeline/R_mul_a_10"
+        BEL "glue_bram/pipeline/R_mul_a_9" BEL "glue_bram/pipeline/R_mul_a_8"
+        BEL "glue_bram/pipeline/R_mul_a_7" BEL "glue_bram/pipeline/R_mul_a_6"
+        BEL "glue_bram/pipeline/R_mul_a_5" BEL "glue_bram/pipeline/R_mul_a_4"
+        BEL "glue_bram/pipeline/R_mul_a_3" BEL "glue_bram/pipeline/R_mul_a_2"
+        BEL "glue_bram/pipeline/R_mul_a_1" BEL "glue_bram/pipeline/R_mul_a_0"
+        BEL "glue_bram/pipeline/EX_MEM_branch_cycle" BEL
+        "glue_bram/pipeline/EX_MEM_branch_likely" BEL
+        "glue_bram/pipeline/EX_MEM_writeback_addr_4" BEL
+        "glue_bram/pipeline/EX_MEM_writeback_addr_3" BEL
+        "glue_bram/pipeline/EX_MEM_writeback_addr_2" BEL
+        "glue_bram/pipeline/EX_MEM_writeback_addr_1" BEL
+        "glue_bram/pipeline/EX_MEM_writeback_addr_0" BEL
+        "glue_bram/pipeline/ID_EX_bubble" BEL "glue_bram/R_lcd_7seg_15" BEL
+        "glue_bram/R_lcd_7seg_14" BEL "glue_bram/R_lcd_7seg_13" BEL
+        "glue_bram/R_lcd_7seg_12" BEL "glue_bram/R_lcd_7seg_11" BEL
+        "glue_bram/R_lcd_7seg_10" BEL "glue_bram/R_lcd_7seg_9" BEL
+        "glue_bram/R_lcd_7seg_8" BEL "glue_bram/R_lcd_7seg_7" BEL
+        "glue_bram/R_lcd_7seg_6" BEL "glue_bram/R_lcd_7seg_5" BEL
+        "glue_bram/R_lcd_7seg_4" BEL "glue_bram/R_lcd_7seg_3" BEL
+        "glue_bram/R_lcd_7seg_2" BEL "glue_bram/R_lcd_7seg_1" BEL
+        "glue_bram/R_lcd_7seg_0" BEL "glue_bram/R_leds_15" BEL
+        "glue_bram/R_leds_14" BEL "glue_bram/R_leds_13" BEL
+        "glue_bram/R_leds_12" BEL "glue_bram/R_leds_11" BEL
+        "glue_bram/R_leds_10" BEL "glue_bram/R_leds_9" BEL
+        "glue_bram/R_leds_8" BEL "glue_bram/R_leds_7" BEL "glue_bram/R_leds_6"
+        BEL "glue_bram/R_leds_5" BEL "glue_bram/R_leds_4" BEL
+        "glue_bram/R_leds_3" BEL "glue_bram/R_leds_2" BEL "glue_bram/R_leds_1"
+        BEL "glue_bram/R_leds_0" BEL "glue_bram/pipeline/EX_MEM_mem_size_1"
+        BEL "glue_bram/pipeline/EX_MEM_mem_size_0" BEL
+        "glue_bram/pipeline/ID_EX_branch_delay_slot" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_16" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_15" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_14" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_13" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_12" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_11" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_10" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_9" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_8" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_7" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_6" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_5" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_4" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_3" BEL
+        "glue_bram/pipeline/IF_ID_PC_4_2" BEL
+        "glue_bram/pipeline/MEM_bpredict_score_1" BEL
+        "glue_bram/pipeline/MEM_bpredict_score_0" BEL
+        "glue_bram/pipeline/MEM_WB_mem_addr_offset_1" BEL
+        "glue_bram/pipeline/MEM_WB_mem_addr_offset_0" BEL
+        "glue_bram/pipeline/R_reset" BEL "glue_bram/pipeline/ID_EX_slt_signed"
+        BEL "glue_bram/pipeline/ID_EX_seb_seh_cycle" BEL
+        "glue_bram/pipeline/ID_EX_alt_sel_1" BEL
+        "glue_bram/pipeline/ID_EX_alt_sel_0" BEL
+        "glue_bram/pipeline/ID_EX_read_alt" BEL
+        "glue_bram/pipeline/ID_EX_fwd_ex_reg1" BEL
+        "glue_bram/pipeline/ID_EX_fwd_ex_reg2" BEL
+        "glue_bram/pipeline/ID_EX_fwd_ex_alu_op2" BEL
+        "glue_bram/pipeline/ID_EX_fwd_mem_reg1" BEL
+        "glue_bram/pipeline/ID_EX_fwd_mem_reg2" BEL
+        "glue_bram/pipeline/ID_EX_fwd_mem_alu_op2" BEL
+        "glue_bram/pipeline/EX_MEM_mem_byte_sel_3" BEL
+        "glue_bram/pipeline/EX_MEM_mem_byte_sel_2" BEL
+        "glue_bram/pipeline/EX_MEM_mem_byte_sel_1" BEL
+        "glue_bram/pipeline/EX_MEM_mem_byte_sel_0" BEL
+        "glue_bram/pipeline/ID_EX_branch_delay_follows" BEL
+        "glue_bram/R_btns_1" BEL "glue_bram/R_btns_0" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_31_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_30_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_29_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_28_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_26_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_25_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_27_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_24_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_23_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_21_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_20_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_22_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_19_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_18_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_16_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_15_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_17_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_14_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_13_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_11_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_10_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_12_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_9_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_8_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_6_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_5_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_7_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_4_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_3_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_1_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_0_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_2_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R_311" BEL
+        "glue_bram/G_gpio.gpio_inst/R_301" BEL
+        "glue_bram/G_gpio.gpio_inst/R_291" BEL
+        "glue_bram/G_gpio.gpio_inst/R_281" BEL
+        "glue_bram/G_gpio.gpio_inst/R_271" BEL
+        "glue_bram/G_gpio.gpio_inst/R_261" BEL
+        "glue_bram/G_gpio.gpio_inst/R_251" BEL
+        "glue_bram/G_gpio.gpio_inst/R_241" BEL
+        "glue_bram/G_gpio.gpio_inst/R_31" BEL
+        "glue_bram/G_gpio.gpio_inst/R_30" BEL
+        "glue_bram/G_gpio.gpio_inst/R_29" BEL
+        "glue_bram/G_gpio.gpio_inst/R_28" BEL
+        "glue_bram/G_gpio.gpio_inst/R_27" BEL
+        "glue_bram/G_gpio.gpio_inst/R_26" BEL
+        "glue_bram/G_gpio.gpio_inst/R_25" BEL
+        "glue_bram/G_gpio.gpio_inst/R_24" BEL
+        "glue_bram/G_gpio.gpio_inst/R_231" BEL
+        "glue_bram/G_gpio.gpio_inst/R_221" BEL
+        "glue_bram/G_gpio.gpio_inst/R_211" BEL
+        "glue_bram/G_gpio.gpio_inst/R_201" BEL
+        "glue_bram/G_gpio.gpio_inst/R_191" BEL
+        "glue_bram/G_gpio.gpio_inst/R_181" BEL
+        "glue_bram/G_gpio.gpio_inst/R_171" BEL
+        "glue_bram/G_gpio.gpio_inst/R_161" BEL
+        "glue_bram/G_gpio.gpio_inst/R_151" BEL
+        "glue_bram/G_gpio.gpio_inst/R_141" BEL
+        "glue_bram/G_gpio.gpio_inst/R_131" BEL
+        "glue_bram/G_gpio.gpio_inst/R_121" BEL
+        "glue_bram/G_gpio.gpio_inst/R_111" BEL
+        "glue_bram/G_gpio.gpio_inst/R_101" BEL
+        "glue_bram/G_gpio.gpio_inst/R_91" BEL
+        "glue_bram/G_gpio.gpio_inst/R_81" BEL
+        "glue_bram/G_gpio.gpio_inst/R_15" BEL
+        "glue_bram/G_gpio.gpio_inst/R_14" BEL
+        "glue_bram/G_gpio.gpio_inst/R_13" BEL
+        "glue_bram/G_gpio.gpio_inst/R_12" BEL
+        "glue_bram/G_gpio.gpio_inst/R_11" BEL
+        "glue_bram/G_gpio.gpio_inst/R_10" BEL "glue_bram/G_gpio.gpio_inst/R_9"
+        BEL "glue_bram/G_gpio.gpio_inst/R_8" BEL
+        "glue_bram/G_gpio.gpio_inst/R_23" BEL
+        "glue_bram/G_gpio.gpio_inst/R_22" BEL
+        "glue_bram/G_gpio.gpio_inst/R_21" BEL
+        "glue_bram/G_gpio.gpio_inst/R_20" BEL
+        "glue_bram/G_gpio.gpio_inst/R_19" BEL
+        "glue_bram/G_gpio.gpio_inst/R_18" BEL
+        "glue_bram/G_gpio.gpio_inst/R_17" BEL
+        "glue_bram/G_gpio.gpio_inst/R_16" BEL
+        "glue_bram/G_gpio.gpio_inst/R<2>_0" BEL
+        "glue_bram/G_gpio.gpio_inst/R<2>_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R<2>_3" BEL
+        "glue_bram/G_gpio.gpio_inst/R<2>_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R<2>_4" BEL
+        "glue_bram/G_gpio.gpio_inst/R<2>_5" BEL
+        "glue_bram/G_gpio.gpio_inst/R<2>_7" BEL
+        "glue_bram/G_gpio.gpio_inst/R<2>_6" BEL
+        "glue_bram/G_gpio.gpio_inst/R<4>_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R<4>_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R<4>_0" BEL
+        "glue_bram/G_gpio.gpio_inst/R<4>_3" BEL
+        "glue_bram/G_gpio.gpio_inst/R<4>_4" BEL
+        "glue_bram/G_gpio.gpio_inst/R<4>_6" BEL
+        "glue_bram/G_gpio.gpio_inst/R<4>_7" BEL
+        "glue_bram/G_gpio.gpio_inst/R<4>_5" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_7" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_24" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_26" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_27" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_25" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_28" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_29" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_31" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_24" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_30" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_25" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_26" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_28" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_29" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_27" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_30" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_31" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_25" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_26" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_24" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_27" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_28" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_29" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_30" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_31" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_24" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_26" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_27" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_25" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_28" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_29" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_31" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_16" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_30" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_17" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_18" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_20" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_21" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_19" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_22" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_23" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_17" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_18" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_16" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_19" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_20" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_22" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_23" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_21" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_16" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_17" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_19" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_20" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_18" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_21" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_22" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_16" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_17" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_23" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_18" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_19" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_20" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_21" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_22" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_23" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_9" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_10" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_8" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_11" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_12" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_14" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_15" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_13" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_8" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_9" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_11" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_12" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_10" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_13" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_14" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_8" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_9" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_15" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_10" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_11" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_13" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_14" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_12" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_15" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_8" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_10" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_11" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_9" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_12" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_13" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_15" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_0" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_14" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_3" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_4" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_5" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_6" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_0" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R<0>_7" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_3" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_5" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_6" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_4" BEL
+        "glue_bram/G_gpio.gpio_inst/R<1>_7" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_0" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_4" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_5" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_3" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_6" BEL
+        "glue_bram/G_gpio.gpio_inst/R<3>_7" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_0" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_2" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_3" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_4" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_5" BEL
+        "glue_bram/G_gpio.gpio_inst/R<5>_6" BEL
+        "glue_bram/G_sio.sio/rx_phase_3" BEL "glue_bram/G_sio.sio/rx_phase_2"
+        BEL "glue_bram/G_sio.sio/rx_phase_1" BEL
+        "glue_bram/G_sio.sio/rx_phase_0" BEL
+        "glue_bram/G_sio.sio/tx_tickcnt_3" BEL
+        "glue_bram/G_sio.sio/tx_tickcnt_2" BEL
+        "glue_bram/G_sio.sio/tx_tickcnt_1" BEL
+        "glue_bram/G_sio.sio/tx_tickcnt_0" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_23" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_22" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_21" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_20" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_19" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_18" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_17" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_16" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_15" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_14" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_13" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_12" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_11" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_10" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_9" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_8" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_7" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_6" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_5" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_4" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_3" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_2" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_1" BEL
+        "glue_bram/G_sio.sio/rx_break_tickcnt_0" BEL
+        "glue_bram/G_sio.sio/rx_tickcnt_3" BEL
+        "glue_bram/G_sio.sio/rx_tickcnt_2" BEL
+        "glue_bram/G_sio.sio/rx_tickcnt_1" BEL
+        "glue_bram/G_sio.sio/rx_tickcnt_0" BEL
+        "glue_bram/G_sio.sio/R_baudgen_16" BEL
+        "glue_bram/G_sio.sio/R_baudgen_15" BEL
+        "glue_bram/G_sio.sio/R_baudgen_14" BEL
+        "glue_bram/G_sio.sio/R_baudgen_13" BEL
+        "glue_bram/G_sio.sio/R_baudgen_12" BEL
+        "glue_bram/G_sio.sio/R_baudgen_11" BEL
+        "glue_bram/G_sio.sio/R_baudgen_10" BEL
+        "glue_bram/G_sio.sio/R_baudgen_9" BEL
+        "glue_bram/G_sio.sio/R_baudgen_8" BEL
+        "glue_bram/G_sio.sio/R_baudgen_7" BEL
+        "glue_bram/G_sio.sio/R_baudgen_6" BEL
+        "glue_bram/G_sio.sio/R_baudgen_5" BEL
+        "glue_bram/G_sio.sio/R_baudgen_4" BEL
+        "glue_bram/G_sio.sio/R_baudgen_3" BEL
+        "glue_bram/G_sio.sio/R_baudgen_2" BEL
+        "glue_bram/G_sio.sio/R_baudgen_1" BEL
+        "glue_bram/G_sio.sio/R_baudgen_0" BEL "glue_bram/G_sio.sio/tx_phase_3"
+        BEL "glue_bram/G_sio.sio/tx_phase_2" BEL
+        "glue_bram/G_sio.sio/tx_phase_1" BEL "glue_bram/G_sio.sio/tx_phase_0"
+        BEL "glue_bram/G_sio.sio/R_baudrate_15" BEL
+        "glue_bram/G_sio.sio/R_baudrate_14" BEL
+        "glue_bram/G_sio.sio/R_baudrate_13" BEL
+        "glue_bram/G_sio.sio/R_baudrate_12" BEL
+        "glue_bram/G_sio.sio/R_baudrate_11" BEL
+        "glue_bram/G_sio.sio/R_baudrate_10" BEL
+        "glue_bram/G_sio.sio/R_baudrate_9" BEL
+        "glue_bram/G_sio.sio/R_baudrate_8" BEL
+        "glue_bram/G_sio.sio/R_baudrate_7" BEL
+        "glue_bram/G_sio.sio/R_baudrate_6" BEL
+        "glue_bram/G_sio.sio/R_baudrate_5" BEL
+        "glue_bram/G_sio.sio/R_baudrate_4" BEL
+        "glue_bram/G_sio.sio/R_baudrate_3" BEL
+        "glue_bram/G_sio.sio/R_baudrate_2" BEL
+        "glue_bram/G_sio.sio/R_baudrate_1" BEL
+        "glue_bram/G_sio.sio/R_baudrate_0" BEL "glue_bram/G_sio.sio/rx_byte_7"
+        BEL "glue_bram/G_sio.sio/rx_byte_6" BEL
+        "glue_bram/G_sio.sio/rx_byte_5" BEL "glue_bram/G_sio.sio/rx_byte_4"
+        BEL "glue_bram/G_sio.sio/rx_byte_3" BEL
+        "glue_bram/G_sio.sio/rx_byte_2" BEL "glue_bram/G_sio.sio/rx_byte_1"
+        BEL "glue_bram/G_sio.sio/rx_byte_0" BEL "glue_bram/G_sio.sio/tx_ser_8"
+        BEL "glue_bram/G_sio.sio/tx_ser_7" BEL "glue_bram/G_sio.sio/tx_ser_6"
+        BEL "glue_bram/G_sio.sio/tx_ser_5" BEL "glue_bram/G_sio.sio/tx_ser_4"
+        BEL "glue_bram/G_sio.sio/tx_ser_3" BEL "glue_bram/G_sio.sio/tx_ser_2"
+        BEL "glue_bram/G_sio.sio/tx_ser_1" BEL "glue_bram/G_sio.sio/tx_ser_0"
+        BEL "glue_bram/G_sio.sio/rx_des_7" BEL "glue_bram/G_sio.sio/rx_des_6"
+        BEL "glue_bram/G_sio.sio/rx_des_5" BEL "glue_bram/G_sio.sio/rx_des_4"
+        BEL "glue_bram/G_sio.sio/rx_des_3" BEL "glue_bram/G_sio.sio/rx_des_2"
+        BEL "glue_bram/G_sio.sio/rx_des_1" BEL "glue_bram/G_sio.sio/rx_des_0"
+        BEL "glue_bram/G_sio.sio/R_rxd" BEL
+        "glue_bram/G_timer.timer/R_counter_21" BEL
+        "glue_bram/G_timer.timer/R_counter_20" BEL
+        "glue_bram/G_timer.timer/R_counter_19" BEL
+        "glue_bram/G_timer.timer/R_counter_18" BEL
+        "glue_bram/G_timer.timer/R_counter_17" BEL
+        "glue_bram/G_timer.timer/R_counter_16" BEL
+        "glue_bram/G_timer.timer/R_counter_15" BEL
+        "glue_bram/G_timer.timer/R_counter_14" BEL
+        "glue_bram/G_timer.timer/R_counter_13" BEL
+        "glue_bram/G_timer.timer/R_counter_12" BEL
+        "glue_bram/G_timer.timer/R_counter_11" BEL
+        "glue_bram/G_timer.timer/R_counter_10" BEL
+        "glue_bram/G_timer.timer/R_counter_9" BEL
+        "glue_bram/G_timer.timer/R_counter_8" BEL
+        "glue_bram/G_timer.timer/R_counter_7" BEL
+        "glue_bram/G_timer.timer/R_counter_6" BEL
+        "glue_bram/G_timer.timer/R_counter_5" BEL
+        "glue_bram/G_timer.timer/R_counter_4" BEL
+        "glue_bram/G_timer.timer/R_counter_3" BEL
+        "glue_bram/G_timer.timer/R_counter_2" BEL
+        "glue_bram/G_timer.timer/R_counter_1" BEL
+        "glue_bram/G_timer.timer/R_counter_0" BEL
+        "glue_bram/G_timer.timer/R_icp_1_11" BEL
+        "glue_bram/G_timer.timer/R_icp_1_10" BEL
+        "glue_bram/G_timer.timer/R_icp_1_9" BEL
+        "glue_bram/G_timer.timer/R_icp_1_8" BEL
+        "glue_bram/G_timer.timer/R_icp_1_7" BEL
+        "glue_bram/G_timer.timer/R_icp_1_6" BEL
+        "glue_bram/G_timer.timer/R_icp_1_5" BEL
+        "glue_bram/G_timer.timer/R_icp_1_4" BEL
+        "glue_bram/G_timer.timer/R_icp_1_3" BEL
+        "glue_bram/G_timer.timer/R_icp_1_2" BEL
+        "glue_bram/G_timer.timer/R_icp_1_1" BEL
+        "glue_bram/G_timer.timer/R_icp_1_0" BEL
+        "glue_bram/G_timer.timer/R_icp_0_11" BEL
+        "glue_bram/G_timer.timer/R_icp_0_10" BEL
+        "glue_bram/G_timer.timer/R_icp_0_9" BEL
+        "glue_bram/G_timer.timer/R_icp_0_8" BEL
+        "glue_bram/G_timer.timer/R_icp_0_7" BEL
+        "glue_bram/G_timer.timer/R_icp_0_6" BEL
+        "glue_bram/G_timer.timer/R_icp_0_5" BEL
+        "glue_bram/G_timer.timer/R_icp_0_4" BEL
+        "glue_bram/G_timer.timer/R_icp_0_3" BEL
+        "glue_bram/G_timer.timer/R_icp_0_2" BEL
+        "glue_bram/G_timer.timer/R_icp_0_1" BEL
+        "glue_bram/G_timer.timer/R_icp_0_0" BEL
+        "glue_bram/G_timer.timer/Rx<2>_9" BEL
+        "glue_bram/G_timer.timer/Rx<2>_8" BEL
+        "glue_bram/G_timer.timer/Rx<2>_7" BEL
+        "glue_bram/G_timer.timer/Rx<2>_6" BEL
+        "glue_bram/G_timer.timer/Rx<2>_5" BEL
+        "glue_bram/G_timer.timer/Rx<2>_4" BEL
+        "glue_bram/G_timer.timer/Rx<2>_3" BEL
+        "glue_bram/G_timer.timer/Rx<2>_2" BEL
+        "glue_bram/G_timer.timer/Rx<2>_1" BEL
+        "glue_bram/G_timer.timer/Rx<2>_0" BEL
+        "glue_bram/G_timer.timer/R<3>_11" BEL
+        "glue_bram/G_timer.timer/R<3>_10" BEL "glue_bram/G_timer.timer/R<3>_9"
+        BEL "glue_bram/G_timer.timer/R<3>_8" BEL
+        "glue_bram/G_timer.timer/R<3>_7" BEL "glue_bram/G_timer.timer/R<3>_6"
+        BEL "glue_bram/G_timer.timer/R<3>_5" BEL
+        "glue_bram/G_timer.timer/R<3>_4" BEL "glue_bram/G_timer.timer/R<3>_3"
+        BEL "glue_bram/G_timer.timer/R<3>_2" BEL
+        "glue_bram/G_timer.timer/R<3>_1" BEL "glue_bram/G_timer.timer/R<3>_0"
+        BEL "glue_bram/G_timer.timer/Rx<1>_9" BEL
+        "glue_bram/G_timer.timer/Rx<1>_8" BEL
+        "glue_bram/G_timer.timer/Rx<1>_7" BEL
+        "glue_bram/G_timer.timer/Rx<1>_6" BEL
+        "glue_bram/G_timer.timer/Rx<1>_5" BEL
+        "glue_bram/G_timer.timer/Rx<1>_4" BEL
+        "glue_bram/G_timer.timer/Rx<1>_3" BEL
+        "glue_bram/G_timer.timer/Rx<1>_2" BEL
+        "glue_bram/G_timer.timer/Rx<1>_1" BEL
+        "glue_bram/G_timer.timer/Rx<1>_0" BEL
+        "glue_bram/G_timer.timer/R<2>_11" BEL
+        "glue_bram/G_timer.timer/R<2>_10" BEL "glue_bram/G_timer.timer/R<2>_9"
+        BEL "glue_bram/G_timer.timer/R<2>_8" BEL
+        "glue_bram/G_timer.timer/R<2>_7" BEL "glue_bram/G_timer.timer/R<2>_6"
+        BEL "glue_bram/G_timer.timer/R<2>_5" BEL
+        "glue_bram/G_timer.timer/R<2>_4" BEL "glue_bram/G_timer.timer/R<2>_3"
+        BEL "glue_bram/G_timer.timer/R<2>_2" BEL
+        "glue_bram/G_timer.timer/R<2>_1" BEL "glue_bram/G_timer.timer/R<2>_0"
+        BEL "glue_bram/G_timer.timer/R_14_11" BEL
+        "glue_bram/G_timer.timer/R_14_10" BEL "glue_bram/G_timer.timer/R_14_9"
+        BEL "glue_bram/G_timer.timer/R_14_8" BEL
+        "glue_bram/G_timer.timer/R_14_7" BEL "glue_bram/G_timer.timer/R_14_6"
+        BEL "glue_bram/G_timer.timer/R_14_5" BEL
+        "glue_bram/G_timer.timer/R_14_4" BEL "glue_bram/G_timer.timer/R_11_11"
+        BEL "glue_bram/G_timer.timer/R_11_10" BEL
+        "glue_bram/G_timer.timer/R_11_9" BEL "glue_bram/G_timer.timer/R_11_8"
+        BEL "glue_bram/G_timer.timer/R_11_7" BEL
+        "glue_bram/G_timer.timer/R_11_6" BEL "glue_bram/G_timer.timer/R_11_5"
+        BEL "glue_bram/G_timer.timer/R_11_4" BEL
+        "glue_bram/G_timer.timer/R_11_3" BEL "glue_bram/G_timer.timer/R_11_2"
+        BEL "glue_bram/G_timer.timer/R_11_1" BEL
+        "glue_bram/G_timer.timer/R_11_0" BEL "glue_bram/G_timer.timer/R_10_11"
+        BEL "glue_bram/G_timer.timer/R_10_10" BEL
+        "glue_bram/G_timer.timer/R_10_9" BEL "glue_bram/G_timer.timer/R_10_8"
+        BEL "glue_bram/G_timer.timer/R_10_7" BEL
+        "glue_bram/G_timer.timer/R_10_6" BEL "glue_bram/G_timer.timer/R_10_5"
+        BEL "glue_bram/G_timer.timer/R_10_4" BEL
+        "glue_bram/G_timer.timer/R_10_3" BEL "glue_bram/G_timer.timer/R_10_2"
+        BEL "glue_bram/G_timer.timer/R_10_1" BEL
+        "glue_bram/G_timer.timer/R_10_0" BEL "glue_bram/G_timer.timer/R_9_11"
+        BEL "glue_bram/G_timer.timer/R_9_10" BEL
+        "glue_bram/G_timer.timer/R_9_9" BEL "glue_bram/G_timer.timer/R_9_8"
+        BEL "glue_bram/G_timer.timer/R_9_7" BEL
+        "glue_bram/G_timer.timer/R_9_6" BEL "glue_bram/G_timer.timer/R_9_5"
+        BEL "glue_bram/G_timer.timer/R_9_4" BEL
+        "glue_bram/G_timer.timer/R_9_3" BEL "glue_bram/G_timer.timer/R_9_2"
+        BEL "glue_bram/G_timer.timer/R_9_1" BEL
+        "glue_bram/G_timer.timer/R_9_0" BEL "glue_bram/G_timer.timer/R_8_11"
+        BEL "glue_bram/G_timer.timer/R_8_10" BEL
+        "glue_bram/G_timer.timer/R_8_9" BEL "glue_bram/G_timer.timer/R_8_8"
+        BEL "glue_bram/G_timer.timer/R_8_7" BEL
+        "glue_bram/G_timer.timer/R_8_6" BEL "glue_bram/G_timer.timer/R_8_5"
+        BEL "glue_bram/G_timer.timer/R_8_4" BEL
+        "glue_bram/G_timer.timer/R_8_3" BEL "glue_bram/G_timer.timer/R_8_2"
+        BEL "glue_bram/G_timer.timer/R_8_1" BEL
+        "glue_bram/G_timer.timer/R_8_0" BEL "glue_bram/G_timer.timer/R_6_11"
+        BEL "glue_bram/G_timer.timer/R_6_10" BEL
+        "glue_bram/G_timer.timer/R_6_9" BEL "glue_bram/G_timer.timer/R_6_8"
+        BEL "glue_bram/G_timer.timer/R_6_7" BEL
+        "glue_bram/G_timer.timer/R_6_6" BEL "glue_bram/G_timer.timer/R_6_5"
+        BEL "glue_bram/G_timer.timer/R_6_4" BEL
+        "glue_bram/G_timer.timer/R_6_3" BEL "glue_bram/G_timer.timer/R_6_2"
+        BEL "glue_bram/G_timer.timer/R_6_1" BEL
+        "glue_bram/G_timer.timer/R_6_0" BEL "glue_bram/G_timer.timer/R_5_11"
+        BEL "glue_bram/G_timer.timer/R_5_10" BEL
+        "glue_bram/G_timer.timer/R_5_9" BEL "glue_bram/G_timer.timer/R_5_8"
+        BEL "glue_bram/G_timer.timer/R_5_7" BEL
+        "glue_bram/G_timer.timer/R_5_6" BEL "glue_bram/G_timer.timer/R_5_5"
+        BEL "glue_bram/G_timer.timer/R_5_4" BEL
+        "glue_bram/G_timer.timer/R_5_3" BEL "glue_bram/G_timer.timer/R_5_2"
+        BEL "glue_bram/G_timer.timer/R_5_1" BEL
+        "glue_bram/G_timer.timer/R_5_0" BEL "glue_bram/G_timer.timer/R_7_11"
+        BEL "glue_bram/G_timer.timer/R_7_10" BEL
+        "glue_bram/G_timer.timer/R_7_9" BEL "glue_bram/G_timer.timer/R_7_8"
+        BEL "glue_bram/G_timer.timer/R_7_7" BEL
+        "glue_bram/G_timer.timer/R_7_6" BEL "glue_bram/G_timer.timer/R_7_5"
+        BEL "glue_bram/G_timer.timer/R_7_4" BEL
+        "glue_bram/G_timer.timer/R_7_3" BEL "glue_bram/G_timer.timer/R_7_2"
+        BEL "glue_bram/G_timer.timer/R_7_1" BEL
+        "glue_bram/G_timer.timer/R_7_0" BEL "glue_bram/G_timer.timer/R_4_11"
+        BEL "glue_bram/G_timer.timer/R_4_10" BEL
+        "glue_bram/G_timer.timer/R_4_9" BEL "glue_bram/G_timer.timer/R_4_8"
+        BEL "glue_bram/G_timer.timer/R_4_7" BEL
+        "glue_bram/G_timer.timer/R_4_6" BEL "glue_bram/G_timer.timer/R_4_5"
+        BEL "glue_bram/G_timer.timer/R_4_4" BEL
+        "glue_bram/G_timer.timer/R_4_3" BEL "glue_bram/G_timer.timer/R_4_2"
+        BEL "glue_bram/G_timer.timer/R_4_1" BEL
+        "glue_bram/G_timer.timer/R_4_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_0_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_0_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_0_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_0_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_0_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_0_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_0_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_0_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_0_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_0_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_0_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_0_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_1_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_1_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_1_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_1_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_1_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_1_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_1_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_1_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_1_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_1_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_1_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_1_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_2_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_2_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_2_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_2_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_2_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_2_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_2_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_2_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_2_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_2_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_2_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_2_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_3_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_3_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_3_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_3_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_3_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_3_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_3_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_3_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_3_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_3_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_3_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_3_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_4_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_4_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_4_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_4_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_4_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_4_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_4_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_4_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_4_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_4_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_4_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_4_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_5_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_5_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_5_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_5_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_5_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_5_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_5_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_5_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_5_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_5_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_5_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_5_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_6_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_6_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_6_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_6_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_6_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_6_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_6_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_6_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_6_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_6_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_6_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_6_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_7_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_7_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_7_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_7_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_7_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_7_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_7_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_7_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_7_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_7_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_7_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_7_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_9_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_9_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_9_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_9_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_9_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_9_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_9_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_9_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_9_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_9_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_9_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_9_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_10_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_10_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_10_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_10_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_10_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_10_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_10_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_10_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_10_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_10_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_10_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_10_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_8_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_8_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_8_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_8_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_8_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_8_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_8_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_8_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_8_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_8_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_8_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_8_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_11_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_11_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_11_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_11_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_11_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_11_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_11_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_11_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_11_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_11_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_11_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_11_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_12_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_12_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_12_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_12_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_12_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_12_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_12_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_12_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_12_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_12_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_12_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_12_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_13_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_13_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_13_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_13_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_13_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_13_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_13_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_13_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_13_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_13_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_13_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_13_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_14_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_14_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_14_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_14_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_14_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_14_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_14_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_14_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_14_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_14_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_14_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_14_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_15_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_15_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_15_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_15_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_15_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_15_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_15_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_15_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_15_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_15_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_15_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_15_0" BEL
+        "glue_bram/G_timer.timer/R_ctrl_ext_9" BEL
+        "glue_bram/G_timer.timer/R_ctrl_ext_8" BEL
+        "glue_bram/G_timer.timer/R_ctrl_ext_7" BEL
+        "glue_bram/G_timer.timer/R_ctrl_ext_6" BEL
+        "glue_bram/G_timer.timer/R_ctrl_ext_5" BEL
+        "glue_bram/G_timer.timer/R_ctrl_ext_4" BEL
+        "glue_bram/G_timer.timer/R_ctrl_ext_3" BEL
+        "glue_bram/G_timer.timer/R_ctrl_ext_2" BEL
+        "glue_bram/G_timer.timer/R_ctrl_ext_1" BEL
+        "glue_bram/G_timer.timer/R_ctrl_ext_0" BEL
+        "glue_bram/G_timer.timer/Rtmp_ctrl_ext_11" BEL
+        "glue_bram/G_timer.timer/Rtmp_ctrl_ext_10" BEL
+        "glue_bram/G_timer.timer/Rtmp_ctrl_ext_9" BEL
+        "glue_bram/G_timer.timer/Rtmp_ctrl_ext_8" BEL
+        "glue_bram/G_timer.timer/Rtmp_ctrl_ext_7" BEL
+        "glue_bram/G_timer.timer/Rtmp_ctrl_ext_6" BEL
+        "glue_bram/G_timer.timer/Rtmp_ctrl_ext_5" BEL
+        "glue_bram/G_timer.timer/Rtmp_ctrl_ext_4" BEL
+        "glue_bram/G_timer.timer/Rtmp_ctrl_ext_3" BEL
+        "glue_bram/G_timer.timer/Rtmp_ctrl_ext_2" BEL
+        "glue_bram/G_timer.timer/Rtmp_ctrl_ext_1" BEL
+        "glue_bram/G_timer.timer/Rtmp_ctrl_ext_0" BEL
+        "glue_bram/G_timer.timer/Rxtmp_2_9" BEL
+        "glue_bram/G_timer.timer/Rxtmp_2_8" BEL
+        "glue_bram/G_timer.timer/Rxtmp_2_7" BEL
+        "glue_bram/G_timer.timer/Rxtmp_2_6" BEL
+        "glue_bram/G_timer.timer/Rxtmp_2_5" BEL
+        "glue_bram/G_timer.timer/Rxtmp_2_4" BEL
+        "glue_bram/G_timer.timer/Rxtmp_2_3" BEL
+        "glue_bram/G_timer.timer/Rxtmp_2_2" BEL
+        "glue_bram/G_timer.timer/Rxtmp_2_1" BEL
+        "glue_bram/G_timer.timer/Rxtmp_2_0" BEL
+        "glue_bram/G_timer.timer/Rxtmp_1_9" BEL
+        "glue_bram/G_timer.timer/Rxtmp_1_8" BEL
+        "glue_bram/G_timer.timer/Rxtmp_1_7" BEL
+        "glue_bram/G_timer.timer/Rxtmp_1_6" BEL
+        "glue_bram/G_timer.timer/Rxtmp_1_5" BEL
+        "glue_bram/G_timer.timer/Rxtmp_1_4" BEL
+        "glue_bram/G_timer.timer/Rxtmp_1_3" BEL
+        "glue_bram/G_timer.timer/Rxtmp_1_2" BEL
+        "glue_bram/G_timer.timer/Rxtmp_1_1" BEL
+        "glue_bram/G_timer.timer/Rxtmp_1_0" BEL
+        "glue_bram/G_timer.timer/Rxtmp_0_9" BEL
+        "glue_bram/G_timer.timer/Rxtmp_0_8" BEL
+        "glue_bram/G_timer.timer/Rxtmp_0_7" BEL
+        "glue_bram/G_timer.timer/Rxtmp_0_6" BEL
+        "glue_bram/G_timer.timer/Rxtmp_0_5" BEL
+        "glue_bram/G_timer.timer/Rxtmp_0_4" BEL
+        "glue_bram/G_timer.timer/Rxtmp_0_3" BEL
+        "glue_bram/G_timer.timer/Rxtmp_0_2" BEL
+        "glue_bram/G_timer.timer/Rxtmp_0_1" BEL
+        "glue_bram/G_timer.timer/Rxtmp_0_0" BEL
+        "glue_bram/G_timer.timer/R_icp_sync_shift_1_2" BEL
+        "glue_bram/G_timer.timer/R_icp_sync_shift_0_2" BEL
+        "glue_bram/G_timer.timer/R_ocp_sync_shift_1_1" BEL
+        "glue_bram/G_timer.timer/R_ocp_sync_shift_1_0" BEL
+        "glue_bram/G_timer.timer/R_ocp_sync_shift_0_1" BEL
+        "glue_bram/G_timer.timer/R_ocp_sync_shift_0_0" BEL
+        "glue_bram/pipeline/ID_EX_exception" BEL
+        "glue_bram/pipeline/R_cop0_EI" BEL "glue_bram/pipeline/EX_MEM_EIP" BEL
+        "glue_bram/pipeline/EX_MEM_mem_cycle" BEL
+        "glue_bram/pipeline/EX_MEM_mem_write" BEL
+        "glue_bram/pipeline/R_cop0_BD" BEL "glue_bram/pipeline/ID_EX_EIP" BEL
+        "glue_bram/pipeline/MEM_WB_write_enable" BEL
+        "glue_bram/G_sio.sio/R_break" BEL
+        "glue_bram/pipeline/R_cop0_timer_intr" BEL
+        "glue_bram/pipeline/IF_ID_EIP" BEL
+        "glue_bram/pipeline/ID_EX_cancel_next" BEL
+        "glue_bram/G_timer.timer/Rintr_2" BEL
+        "glue_bram/G_timer.timer/Rintr_3" BEL
+        "glue_bram/G_timer.timer/Rintr_1" BEL
+        "glue_bram/G_timer.timer/Rintr_0" BEL
+        "glue_bram/pipeline/ID_EX_branch_likely" BEL
+        "glue_bram/pipeline/ID_EX_predict_taken" BEL
+        "glue_bram/G_sio.sio/rx_full" BEL
+        "glue_bram/pipeline/ID_EX_mem_read_sign_extend_BRB0" BEL
+        "glue_bram/pipeline/ID_EX_latency_1_BRB1" BEL
+        "glue_bram/pipeline/ID_EX_latency_1_BRB2" BEL
+        "glue_bram/pipeline/ID_EX_latency_1_BRB3" BEL
+        "glue_bram/pipeline/ID_EX_latency_1_BRB4" BEL
+        "glue_bram/Result<0>_FRB" BEL "glue_bram/Result<1>_FRB" BEL
+        "glue_bram/Result<2>_FRB" BEL "glue_bram/Result<3>_FRB" BEL
+        "glue_bram/Result<4>_FRB" BEL "glue_bram/Result<5>_FRB" BEL
+        "glue_bram/Result<6>_FRB" BEL "glue_bram/Result<7>_FRB" BEL
+        "glue_bram/Result<8>_FRB" BEL "glue_bram/Result<9>_FRB" BEL
+        "glue_bram/Result<10>_FRB" BEL "glue_bram/Result<11>_FRB" BEL
+        "glue_bram/Result<12>_FRB" BEL "glue_bram/Result<13>_FRB" BEL
+        "glue_bram/Result<14>_FRB" BEL "glue_bram/Result<15>_FRB" BEL
+        "glue_bram/Result<16>_FRB" BEL "glue_bram/Result<17>_FRB" BEL
+        "glue_bram/Result<18>_FRB" BEL "glue_bram/Result<19>_FRB" BEL
+        "glue_bram/Result<20>_FRB" BEL "glue_bram/Result<21>_FRB" BEL
+        "glue_bram/Result<22>_FRB" BEL "glue_bram/Result<23>_FRB" BEL
+        "glue_bram/Result<24>_FRB" BEL "glue_bram/Result<25>_FRB" BEL
+        "glue_bram/Result<26>_FRB" BEL "glue_bram/Result<27>_FRB" BEL
+        "glue_bram/Result<28>_FRB" BEL "glue_bram/Result<29>_FRB" BEL
+        "glue_bram/Result<30>_FRB" BEL "glue_bram/Result<31>_FRB" BEL
+        "glue_bram/pipeline/EX_MEM_mem_read_sign_extend_BRB0" BEL
+        "clk_25m_BUFGP/BUFG" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_24_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_24_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_22_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_22_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_21_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_21_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_23_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_23_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_13_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_13_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_12_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_12_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_14_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_14_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_34_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_34_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_33_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_33_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_11_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_11_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_32_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_32_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_31_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_31_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_03_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_03_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_02_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_02_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_04_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_04_pins<27>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_01_pins<26>" PIN
+        "glue_bram/G_bram_mi32_el.bram_mi32_el/Mram_bram_01_pins<27>" PIN
+        "glue_bram/pipeline/G_bp_scoretable.bptrace/Mram_bptrace_pins<26>" PIN
+        "glue_bram/pipeline/G_bp_scoretable.bptrace/Mram_bptrace_pins<27>" BEL
+        "glue_bram/pipeline/IF_ID_instruction_31" BEL
+        "glue_bram/pipeline/IF_ID_instruction_30" BEL
+        "glue_bram/pipeline/IF_ID_instruction_29" BEL
+        "glue_bram/pipeline/IF_ID_instruction_28" BEL
+        "glue_bram/pipeline/IF_ID_instruction_27" BEL
+        "glue_bram/pipeline/IF_ID_instruction_26" BEL
+        "glue_bram/pipeline/IF_ID_instruction_25" BEL
+        "glue_bram/pipeline/IF_ID_instruction_24" BEL
+        "glue_bram/pipeline/IF_ID_instruction_23" BEL
+        "glue_bram/pipeline/IF_ID_instruction_22" BEL
+        "glue_bram/pipeline/IF_ID_instruction_21" BEL
+        "glue_bram/pipeline/IF_ID_instruction_20" BEL
+        "glue_bram/pipeline/IF_ID_instruction_19" BEL
+        "glue_bram/pipeline/IF_ID_instruction_18" BEL
+        "glue_bram/pipeline/IF_ID_instruction_17" BEL
+        "glue_bram/pipeline/IF_ID_instruction_16" BEL
+        "glue_bram/pipeline/IF_ID_instruction_15" BEL
+        "glue_bram/pipeline/IF_ID_instruction_14" BEL
+        "glue_bram/pipeline/IF_ID_instruction_13" BEL
+        "glue_bram/pipeline/IF_ID_instruction_12" BEL
+        "glue_bram/pipeline/IF_ID_instruction_11" BEL
+        "glue_bram/pipeline/IF_ID_instruction_10" BEL
+        "glue_bram/pipeline/IF_ID_instruction_9" BEL
+        "glue_bram/pipeline/IF_ID_instruction_8" BEL
+        "glue_bram/pipeline/IF_ID_instruction_7" BEL
+        "glue_bram/pipeline/IF_ID_instruction_6" BEL
+        "glue_bram/pipeline/IF_ID_instruction_5" BEL
+        "glue_bram/pipeline/IF_ID_instruction_4" BEL
+        "glue_bram/pipeline/IF_ID_instruction_3" BEL
+        "glue_bram/pipeline/IF_ID_instruction_2" BEL
+        "glue_bram/pipeline/IF_ID_instruction_1" BEL
+        "glue_bram/pipeline/IF_ID_instruction_0" BEL
+        "glue_bram/G_timer.timer/Rx_0_9" BEL "glue_bram/G_timer.timer/Rx_0_8"
+        BEL "glue_bram/G_timer.timer/Rx_0_7" BEL
+        "glue_bram/G_timer.timer/Rx_0_6" BEL "glue_bram/G_timer.timer/Rx_0_5"
+        BEL "glue_bram/G_timer.timer/Rx_0_4" BEL
+        "glue_bram/G_timer.timer/Rx_0_3" BEL "glue_bram/G_timer.timer/Rx_0_2"
+        BEL "glue_bram/G_timer.timer/Rx_0_1" BEL
+        "glue_bram/G_timer.timer/Rx_0_0" BEL "glue_bram/pipeline/IF_ID_bubble"
+        BEL "glue_bram/G_timer.timer/R_1_11" BEL
+        "glue_bram/G_timer.timer/R_1_10" BEL "glue_bram/G_timer.timer/R_1_9"
+        BEL "glue_bram/G_timer.timer/R_1_8" BEL
+        "glue_bram/G_timer.timer/R_1_7" BEL "glue_bram/G_timer.timer/R_1_6"
+        BEL "glue_bram/G_timer.timer/R_1_5" BEL
+        "glue_bram/G_timer.timer/R_1_4" BEL "glue_bram/G_timer.timer/R_1_3"
+        BEL "glue_bram/G_timer.timer/R_1_2" BEL
+        "glue_bram/G_timer.timer/R_1_1" BEL "glue_bram/G_timer.timer/R_1_0"
+        BEL "glue_bram/pipeline/ID_EX_mult" BEL "glue_bram/pipeline/ID_EX_ei"
+        BEL "glue_bram/pipeline/ID_EX_di" BEL
+        "glue_bram/pipeline/ID_EX_op_major_1" BEL
+        "glue_bram/pipeline/ID_EX_op_major_0" BEL
+        "glue_bram/pipeline/ID_EX_latency_0" BEL
+        "glue_bram/pipeline/ID_EX_cop0_addr_4" BEL
+        "glue_bram/pipeline/ID_EX_cop0_addr_3" BEL
+        "glue_bram/pipeline/ID_EX_cop0_addr_2" BEL
+        "glue_bram/pipeline/ID_EX_cop0_addr_1" BEL
+        "glue_bram/pipeline/ID_EX_cop0_addr_0" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_14" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_13" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_12" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_11" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_10" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_9" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_8" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_7" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_6" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_5" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_4" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_3" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_2" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_1" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_0" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_score_1" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_score_0" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_index_12" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_index_11" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_index_10" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_index_9" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_index_8" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_index_7" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_index_6" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_index_5" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_index_4" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_index_3" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_index_2" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_index_1" BEL
+        "glue_bram/pipeline/ID_EX_bpredict_index_0" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_14" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_13" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_12" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_11" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_10" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_9" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_8" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_7" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_6" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_5" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_4" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_3" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_2" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_1" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_0" BEL
+        "glue_bram/pipeline/ID_EX_writeback_addr_4" BEL
+        "glue_bram/pipeline/ID_EX_writeback_addr_3" BEL
+        "glue_bram/pipeline/ID_EX_writeback_addr_2" BEL
+        "glue_bram/pipeline/ID_EX_writeback_addr_1" BEL
+        "glue_bram/pipeline/ID_EX_writeback_addr_0" BEL
+        "glue_bram/pipeline/ID_EX_mem_cycle" BEL
+        "glue_bram/pipeline/ID_EX_mem_write" BEL
+        "glue_bram/pipeline/ID_EX_branch_cycle" BEL
+        "glue_bram/pipeline/ID_EX_mult_signed" BEL
+        "glue_bram/pipeline/ID_EX_cop0_write" BEL
+        "glue_bram/pipeline/ID_EX_op_minor_2" BEL
+        "glue_bram/pipeline/ID_EX_op_minor_1" BEL
+        "glue_bram/pipeline/ID_EX_op_minor_0" BEL
+        "glue_bram/pipeline/ID_EX_mem_size_1" BEL
+        "glue_bram/pipeline/ID_EX_mem_size_0" BEL
+        "glue_bram/pipeline/ID_EX_branch_condition_2" BEL
+        "glue_bram/pipeline/ID_EX_branch_condition_1" BEL
+        "glue_bram/pipeline/ID_EX_branch_condition_0" BEL
+        "glue_bram/pipeline/ID_EX_latency_1_BRB0" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_15" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_15" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_31" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_30" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_29" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_28" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_27" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_26" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_25" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_24" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_23" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_22" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_21" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_20" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_19" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_18" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_17" BEL
+        "glue_bram/pipeline/ID_EX_reg1_data_16" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_30" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_29" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_28" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_27" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_26" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_25" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_24" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_23" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_22" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_21" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_20" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_19" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_18" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_17" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_16" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_30" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_29" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_28" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_27" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_26" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_25" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_24" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_23" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_22" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_21" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_20" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_19" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_18" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_31" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_17" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_16" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_6" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_5" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_4" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_3" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_2" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_1" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_0" BEL
+        "glue_bram/pipeline/IF_ID_instruction_16_1" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_14" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_13" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_12" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_11" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_10" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_9" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_8" BEL
+        "glue_bram/pipeline/IF_ID_instruction_20_1" BEL
+        "glue_bram/pipeline/ID_EX_reg2_data_31" BEL
+        "glue_bram/pipeline/IF_ID_instruction_21_1" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_15" BEL
+        "glue_bram/pipeline/ID_EX_alu_op2_7" BEL
+        "glue_bram/pipeline/MEM_WB_writeback_addr_3_1" BEL
+        "glue_bram/pipeline/MEM_WB_writeback_addr_2_1" BEL
+        "glue_bram/pipeline/IF_ID_instruction_22_1" BEL
+        "glue_bram/pipeline/IF_ID_instruction_24_1" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_2_1" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_5_1" BEL
+        "glue_bram/pipeline/EX_MEM_addsub_data_3_1" BEL
+        "glue_bram/pipeline/MEM_WB_mem_cycle_1" BEL
+        "glue_bram/pipeline/EX_MEM_logic_cycle_1" BEL
+        "glue_bram/pipeline/MEM_WB_mem_cycle_2" BEL
+        "glue_bram/pipeline/MEM_WB_mem_cycle_3" BEL
+        "glue_bram/pipeline/EX_MEM_logic_cycle_2" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_30_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_30_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_29_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_29_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_31_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_31_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_28_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_28_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_26_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_26_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_25_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_25_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_27_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_27_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_24_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_24_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_23_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_23_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_21_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_21_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_20_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_20_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_22_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_22_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_19_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_19_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_18_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_18_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_16_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_16_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_15_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_15_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_17_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_17_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_13_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_13_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_11_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_11_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_14_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_14_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_10_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_10_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_12_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_12_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_9_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_9_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_8_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_8_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_6_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_6_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_5_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_5_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_7_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_7_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_4_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_4_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_3_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_3_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_1_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_1_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_0_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_0_1" BEL
+        "glue_bram/G_gpio.gpio_inst/Mshreg_R_edge_sync_shift_2_1" BEL
+        "glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_2_1" BEL
+        "glue_bram/G_timer.timer/Mshreg_R_icp_sync_shift_1_1" BEL
+        "glue_bram/G_timer.timer/R_icp_sync_shift_1_1" BEL
+        "glue_bram/G_timer.timer/Mshreg_R_icp_sync_shift_0_1" BEL
+        "glue_bram/G_timer.timer/R_icp_sync_shift_0_1" BEL
+        "glue_bram/pipeline/regfile/Mram_R132/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R132/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R131/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R131/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R129/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R129/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R128/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R128/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R130/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R130/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R127/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R127/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R126/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R126/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R124/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R124/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R123/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R123/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R125/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R125/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R122/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R122/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R121/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R121/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R119/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R119/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R118/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R118/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R120/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R120/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R116/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R116/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R115/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R115/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R117/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R117/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R113/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R113/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R112/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R112/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R114/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R114/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R111/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R111/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R110/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R110/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R18/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R18/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R17/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R17/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R19/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R19/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R16/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R16/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R15/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R15/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R13/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R13/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R12/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R12/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R14/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R14/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R11/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R11/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R232/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R232/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R230/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R230/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R229/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R229/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R231/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R231/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R227/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R227/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R226/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R226/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R228/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R228/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R224/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R224/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R223/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R223/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R225/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R225/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R222/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R222/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R221/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R221/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R219/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R219/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R218/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R218/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R220/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R220/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R217/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R217/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R216/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R216/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R214/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R214/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R213/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R213/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R215/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R215/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R212/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R212/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R211/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R211/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R29/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R29/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R28/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R28/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R210/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R210/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R26/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R26/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R25/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R25/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R27/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R27/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R23/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R23/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R22/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R22/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R24/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R24/DP" BEL
+        "glue_bram/pipeline/regfile/Mram_R21/SP" BEL
+        "glue_bram/pipeline/regfile/Mram_R21/DP" PIN
+        "glue_bram/pipeline/Mmult_mul_res3_pins<110>";
+NET "clk_25m_BUFGP/IBUFG" PERIOD = 10 ns HIGH 50%;
+TS_sys_clk_pin = PERIOD TIMEGRP "sys_clk_pin" 100 MHz HIGH 50%;
+SCHEMATIC END;
+

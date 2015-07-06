@@ -1,0 +1,42 @@
+Release 14.7 ngdbuild P.20131013 (lin64)
+Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
+
+Command Line: /usr/local/xilinx/14.7/ISE_DS/ISE/bin/lin64/unwrapped/ngdbuild
+-intstyle ise -dd _ngo -nt timestamp -uc xc6slx9.ucf -p xc6slx9-csg324-2
+glue.ngc glue.ngd
+
+Reading NGO file
+"/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.ngc
+" ...
+Gathering constraint information from source properties...
+Done.
+
+Annotating constraints to design from ucf file "xc6slx9.ucf" ...
+Resolving constraint associations...
+Checking Constraint Associations...
+INFO:ConstraintSystem - The Period constraint <PERIOD = 100MHz ;>
+   [xc6slx9.ucf(10)], is specified using the Net Period method which is not
+   recommended. Please use the Timespec PERIOD method.
+
+Done...
+
+Checking expanded design ...
+
+Partition Implementation Status
+-------------------------------
+
+  No Partitions were found in this design.
+
+-------------------------------
+
+NGDBUILD Design Results Summary:
+  Number of errors:     0
+  Number of warnings:   0
+
+Total memory usage is 414728 kilobytes
+
+Writing NGD file "glue.ngd" ...
+Total REAL time to NGDBUILD completion:  26 sec
+Total CPU time to NGDBUILD completion:   8 sec
+
+Writing NGDBUILD log file "glue.bld"...

@@ -1,0 +1,204 @@
+Release 14.7 Map P.20131013 (lin64)
+Xilinx Map Application Log File for Design 'glue'
+
+Design Information
+------------------
+Command Line   : map -intstyle ise -p xc6slx9-csg324-2 -w -logic_opt off -ol
+high -xe n -t 1 -xt 0 -r 4 -global_opt speed -equivalent_register_removal on -mt
+2 -ir off -ignore_keep_hierarchy -pr i -lc auto -power off -o glue_map.ncd
+glue.ngd glue.pcf 
+Target Device  : xc6slx9
+Target Package : csg324
+Target Speed   : -2
+Mapper Version : spartan6 -- $Revision: 1.55 $
+Mapped Date    : Mon Jul  6 13:55:13 2015
+
+Running global optimization...
+Mapping design into LUTs...
+Running directed packing...
+Running delay-based LUT packing...
+Updating timing models...
+WARNING:Pack:1653 - At least one timing constraint is impossible to meet because component delays alone exceed the constraint. A timing
+   constraint summary below shows the failing constraints (preceded with an Asterisk (*)). Please use the Timing Analyzer (GUI) or TRCE
+   (command line) with the Mapped NCD and PCF files to identify which constraints and paths are failing because of the component delays
+   alone. If the failing path(s) is mapped to Xilinx components as expected, consider relaxing the constraint. If it is not mapped to
+   components as expected, re-evaluate your HDL and how synthesis is optimizing the path. To allow the tools to bypass this error, set the
+   environment variable XIL_TIMING_ALLOW_IMPOSSIBLE to 1.
+
+
+   For more information about the Timing Analyzer, consult the Xilinx Timing Analyzer Reference manual; for more information on TRCE,
+   consult the Xilinx Command Line Tools User Guide "TRACE" chapter.
+INFO:Timing:3284 - This timing report was generated using estimated delay 
+   information.  For accurate numbers, please refer to the post Place and Route 
+   timing report.
+Number of Timing Constraints that were not applied: 1
+
+Asterisk (*) preceding a constraint indicates it was not met.
+   This may be due to a setup or hold violation.
+
+----------------------------------------------------------------------------------------------------------
+  Constraint                                |    Check    | Worst Case |  Best Case | Timing |   Timing   
+                                            |             |    Slack   | Achievable | Errors |    Score   
+----------------------------------------------------------------------------------------------------------
+* NET "clk_25m_BUFGP/IBUFG" PERIOD = 10 ns  | SETUP       |    -2.981ns|    12.981ns|      65|      157453
+  HIGH 50%                                  | HOLD        |    -0.097ns|            |     256|       24576
+----------------------------------------------------------------------------------------------------------
+  TS_sys_clk_pin = PERIOD TIMEGRP "sys_clk_ | MINPERIOD   |     6.430ns|     3.570ns|       0|           0
+  pin" 100 MHz HIGH 50%                     |             |            |            |        |            
+----------------------------------------------------------------------------------------------------------
+
+
+1 constraint not met.
+
+
+INFO:Map:215 - The Interim Design Summary has been generated in the MAP Report
+   (.mrp).
+Running timing-driven placement...
+Total REAL time at the beginning of Placer: 5 mins 46 secs 
+Total CPU  time at the beginning of Placer: 1 mins 54 secs 
+
+Phase 1.1  Initial Placement Analysis
+Phase 1.1  Initial Placement Analysis (Checksum:1bf7156d) REAL time: 5 mins 53 secs 
+
+Phase 2.7  Design Feasibility Check
+INFO:Place:834 - Only a subset of IOs are locked. Out of 45 IOs, 13 are locked
+   and 32 are not locked. If you would like to print the names of these IOs,
+   please set the environment variable XIL_PAR_DESIGN_CHECK_VERBOSE to 1. 
+Phase 2.7  Design Feasibility Check (Checksum:1bf7156d) REAL time: 5 mins 55 secs 
+
+Phase 3.31  Local Placement Optimization
+Phase 3.31  Local Placement Optimization (Checksum:7c0f05ed) REAL time: 5 mins 55 secs 
+
+Phase 4.2  Initial Placement for Architecture Specific Features
+....
+Phase 4.2  Initial Placement for Architecture Specific Features
+(Checksum:7905ecdb) REAL time: 6 mins 35 secs 
+
+Phase 5.36  Local Placement Optimization
+Phase 5.36  Local Placement Optimization (Checksum:7905ecdb) REAL time: 6 mins 35 secs 
+
+Phase 6.30  Global Clock Region Assignment
+Phase 6.30  Global Clock Region Assignment (Checksum:7905ecdb) REAL time: 6 mins 35 secs 
+
+Phase 7.3  Local Placement Optimization
+....
+Phase 7.3  Local Placement Optimization (Checksum:c61a1403) REAL time: 6 mins 44 secs 
+
+Phase 8.5  Local Placement Optimization
+Phase 8.5  Local Placement Optimization (Checksum:c61a1403) REAL time: 6 mins 45 secs 
+
+Phase 9.8  Global Placement
+...................
+.................................
+.....................................................
+...........................................................................................
+....................
+Phase 9.8  Global Placement (Checksum:fc59efee) REAL time: 9 mins 20 secs 
+
+Phase 10.5  Local Placement Optimization
+Phase 10.5  Local Placement Optimization (Checksum:fc59efee) REAL time: 9 mins 21 secs 
+
+Phase 11.18  Placement Optimization
+Phase 11.18  Placement Optimization (Checksum:ec68ec2f) REAL time: 10 mins 24 secs 
+
+Phase 12.5  Local Placement Optimization
+Phase 12.5  Local Placement Optimization (Checksum:ec68ec2f) REAL time: 10 mins 24 secs 
+
+Phase 13.34  Placement Validation
+Phase 13.34  Placement Validation (Checksum:360cbd21) REAL time: 10 mins 25 secs 
+
+Total REAL time to Placer completion: 10 mins 27 secs 
+Total CPU  time to Placer completion: 3 mins 23 secs 
+Running post-placement packing...
+Writing output files...
+
+Design Summary
+--------------
+
+Design Summary:
+Number of errors:      0
+Number of warnings:    1
+Slice Logic Utilization:
+  Number of Slice Registers:                 1,651 out of  11,440   14%
+    Number used as Flip Flops:               1,651
+    Number used as Latches:                      0
+    Number used as Latch-thrus:                  0
+    Number used as AND/OR logics:                0
+  Number of Slice LUTs:                      2,270 out of   5,720   39%
+    Number used as logic:                    2,151 out of   5,720   37%
+      Number using O6 output only:           1,690
+      Number using O5 output only:              95
+      Number using O5 and O6:                  366
+      Number used as ROM:                        0
+    Number used as Memory:                      82 out of   1,440    5%
+      Number used as Dual Port RAM:             64
+        Number using O6 output only:             0
+        Number using O5 output only:             0
+        Number using O5 and O6:                 64
+      Number used as Single Port RAM:            0
+      Number used as Shift Register:            18
+        Number using O6 output only:             2
+        Number using O5 output only:             0
+        Number using O5 and O6:                 16
+    Number used exclusively as route-thrus:     37
+      Number with same-slice register load:     34
+      Number with same-slice carry load:         3
+      Number with other load:                    0
+
+Slice Logic Distribution:
+  Number of occupied Slices:                   836 out of   1,430   58%
+  Number of MUXCYs used:                       368 out of   2,860   12%
+  Number of LUT Flip Flop pairs used:        2,619
+    Number with an unused Flip Flop:         1,094 out of   2,619   41%
+    Number with an unused LUT:                 349 out of   2,619   13%
+    Number of fully used LUT-FF pairs:       1,176 out of   2,619   44%
+    Number of unique control sets:              77
+    Number of slice register sites lost
+      to control set restrictions:             179 out of  11,440    1%
+
+  A LUT Flip Flop pair for this architecture represents one LUT paired with
+  one Flip Flop within a slice.  A control set is a unique combination of
+  clock, reset, set, and enable signals for a registered element.
+  The Slice Logic Distribution report is not meaningful if the design is
+  over-mapped for a non-slice resource or if Placement fails.
+
+IO Utilization:
+  Number of bonded IOBs:                        45 out of     200   22%
+    Number of LOCed IOBs:                       13 out of      45   28%
+    IOB Flip Flops:                              3
+
+Specific Feature Utilization:
+  Number of RAMB16BWERs:                        17 out of      32   53%
+  Number of RAMB8BWERs:                          0 out of      64    0%
+  Number of BUFIO2/BUFIO2_2CLKs:                 0 out of      32    0%
+  Number of BUFIO2FB/BUFIO2FB_2CLKs:             0 out of      32    0%
+  Number of BUFG/BUFGMUXs:                       1 out of      16    6%
+    Number used as BUFGs:                        1
+    Number used as BUFGMUX:                      0
+  Number of DCM/DCM_CLKGENs:                     0 out of       4    0%
+  Number of ILOGIC2/ISERDES2s:                   3 out of     200    1%
+    Number used as ILOGIC2s:                     3
+    Number used as ISERDES2s:                    0
+  Number of IODELAY2/IODRP2/IODRP2_MCBs:         0 out of     200    0%
+  Number of OLOGIC2/OSERDES2s:                   0 out of     200    0%
+  Number of BSCANs:                              0 out of       4    0%
+  Number of BUFHs:                               0 out of     128    0%
+  Number of BUFPLLs:                             0 out of       8    0%
+  Number of BUFPLL_MCBs:                         0 out of       4    0%
+  Number of DSP48A1s:                            4 out of      16   25%
+  Number of ICAPs:                               0 out of       1    0%
+  Number of MCBs:                                0 out of       2    0%
+  Number of PCILOGICSEs:                         0 out of       2    0%
+  Number of PLL_ADVs:                            0 out of       2    0%
+  Number of PMVs:                                0 out of       1    0%
+  Number of STARTUPs:                            1 out of       1  100%
+  Number of SUSPEND_SYNCs:                       0 out of       1    0%
+
+Average Fanout of Non-Clock Nets:                4.23
+
+Peak Memory Usage:  844 MB
+Total REAL time to MAP completion:  10 mins 44 secs 
+Total CPU time to MAP completion (all processors):   3 mins 28 secs 
+
+Mapping completed.
+See MAP report file "glue_map.mrp" for details.

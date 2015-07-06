@@ -1,0 +1,8 @@
+Release 14.7 Drc P.20131013 (lin64)
+Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
+
+Mon Jul  6 14:15:56 2015
+
+drc -z glue.ncd glue.pcf
+
+DRC detected 0 errors and 0 warnings.

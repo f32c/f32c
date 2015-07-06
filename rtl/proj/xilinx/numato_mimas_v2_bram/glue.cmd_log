@@ -1,0 +1,18 @@
+xst -intstyle ise -ifn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.xst" -ofn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.syr" 
+xst -intstyle ise -ifn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.xst" -ofn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.syr" 
+ngdbuild -intstyle ise -dd _ngo -nt timestamp -uc xc6slx9.ucf -p xc6slx9-csg324-2 glue.ngc glue.ngd  
+map -intstyle ise -p xc6slx9-csg324-2 -w -logic_opt off -ol high -xe n -t 1 -xt 0 -r 4 -global_opt speed -equivalent_register_removal on -mt 2 -ir off -ignore_keep_hierarchy -pr i -lc auto -power off -o glue_map.ncd glue.ngd glue.pcf 
+par -w -intstyle ise -ol high -xe n -mt 2 glue_map.ncd glue.ncd glue.pcf 
+trce -intstyle ise -v 3 -s 2 -n 3 -fastpaths -xml glue.twx glue.ncd -o glue.twr glue.pcf -ucf xc6slx9.ucf 
+bitgen -intstyle ise -f glue.ut glue.ncd 
+xst -intstyle ise -ifn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.xst" -ofn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.syr" 
+xst -intstyle ise -ifn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.xst" -ofn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.syr" 
+xst -intstyle ise -ifn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.xst" -ofn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.syr" 
+xst -intstyle ise -ifn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.xst" -ofn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.syr" 
+xst -intstyle ise -ifn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.xst" -ofn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.syr" 
+xst -intstyle ise -ifn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.xst" -ofn "/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/glue.syr" 
+ngdbuild -intstyle ise -dd _ngo -nt timestamp -uc xc6slx9.ucf -p xc6slx9-csg324-2 glue.ngc glue.ngd  
+map -intstyle ise -p xc6slx9-csg324-2 -w -logic_opt off -ol high -xe n -t 1 -xt 0 -r 4 -global_opt speed -equivalent_register_removal on -mt 2 -ir off -ignore_keep_hierarchy -pr i -lc auto -power off -o glue_map.ncd glue.ngd glue.pcf 
+par -w -intstyle ise -ol high -xe n -mt 2 glue_map.ncd glue.ncd glue.pcf 
+trce -intstyle ise -v 3 -s 2 -n 3 -fastpaths -xml glue.twx glue.ncd -o glue.twr glue.pcf -ucf xc6slx9.ucf 
+bitgen -intstyle ise -f glue.ut glue.ncd 
