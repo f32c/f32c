@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<document OS="lin64" product="ISE" version="14.7">
+
+  <!--The data in this file is primarily intended for consumption by Xilinx tools.
+    The structure and the elements are likely to change over the next few releases.
+    This means code written to parse this file will need to be revisited each subsequent release.-->
+
+  <application stringID="NgdBuild" timeStamp="Mon Jul  6 09:32:59 2015">
+    <section stringID="User_Env">
+      <table stringID="User_EnvVar">
+        <column stringID="variable"/>
+        <column stringID="value"/>
+        <row stringID="row" value="0">
+          <item stringID="variable" value="PATH"/>
+          <item stringID="value" value="/home/mistery3/Downloads/Xilinx/14.7/ISE_DS/ISE//bin/lin64:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/home/mistery3/Downloads/Xilinx/14.7/ISE_DS/ISE/bin/lin64/"/>
+        </row>
+        <row stringID="row" value="1">
+          <item stringID="variable" value="XILINX"/>
+          <item stringID="value" value="/home/mistery3/Downloads/Xilinx/14.7/ISE_DS/ISE/"/>
+        </row>
+        <row stringID="row" value="2">
+          <item stringID="variable" value="LD_LIBRARY_PATH"/>
+          <item stringID="value" value="/home/mistery3/Downloads/Xilinx/14.7/ISE_DS/ISE//lib/lin64"/>
+        </row>
+      </table>
+      <item stringID="User_EnvOs" value="OS Information">
+        <item stringID="User_EnvOsname" value="Ubuntu"/>
+        <item stringID="User_EnvOsrelease" value="Ubuntu 14.04.2 LTS"/>
+      </item>
+      <item stringID="User_EnvHost" value="DockerOtvorenaMreza"/>
+      <table stringID="User_EnvCpu">
+        <column stringID="arch"/>
+        <column stringID="speed"/>
+        <row stringID="row" value="0">
+          <item stringID="arch" value="Intel(R) Xeon(R) CPU E5-2650L v3 @ 1.80GHz"/>
+          <item stringID="speed" value="1797.917 MHz"/>
+        </row>
+      </table>
+    </section>
+    <task stringID="NGDBUILD_OPTION_SUMMARY">
+      <section stringID="NGDBUILD_OPTION_SUMMARY"/>
+    </task>
+    <task stringID="NGDBUILD_REPORT">
+      <section stringID="NGDBUILD_DESIGN_SUMMARY">
+        <item dataType="int" stringID="NGDBUILD_NUM_ERRORS" value="0"/>
+        <item dataType="int" stringID="NGDBUILD_FILTERED_WARNINGS" value="0"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_WARNINGS" value="1"/>
+        <item dataType="int" stringID="NGDBUILD_FILTERED_INFOS" value="0"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_INFOS" value="2"/>
+      </section>
+      <section stringID="NGDBUILD_PRE_UNISIM_SUMMARY">
+        <item dataType="int" stringID="NGDBUILD_NUM_BUFG" value="1"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_DCM_SP" value="1"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_DSP48A1" value="4"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FD" value="258"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FDE" value="1023"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FDE_1" value="66"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FDR" value="2"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FDRE" value="246"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FDS" value="2"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FDSE" value="4"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FD_1" value="2"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_GND" value="1"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_IBUF" value="3"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_IBUFG" value="1"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_INV" value="60"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_IOBUF" value="32"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_LUT1" value="54"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_LUT2" value="87"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_LUT3" value="252"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_LUT4" value="542"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_LUT5" value="493"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_LUT6" value="697"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_MUXCY" value="307"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_MUXF7" value="32"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_MUXF8" value="12"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_OBUF" value="9"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_RAM32M" value="10"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_RAM32X1D" value="4"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_RAMB16BWER" value="17"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_SRLC16E" value="34"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_STARTUP_SPARTAN6" value="1"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_VCC" value="1"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_XORCY" value="201"/>
+      </section>
+      <section stringID="NGDBUILD_POST_UNISIM_SUMMARY">
+        <item dataType="int" stringID="NGDBUILD_NUM_BUFG" value="1"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_DCM_SP" value="1"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_DSP48A1" value="4"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FD" value="258"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FDE" value="1023"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FDE_1" value="66"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FDR" value="2"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FDRE" value="246"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FDS" value="2"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FDSE" value="4"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_FD_1" value="2"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_GND" value="1"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_IBUF" value="35"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_IBUFG" value="1"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_INV" value="60"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_LUT1" value="54"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_LUT2" value="87"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_LUT3" value="252"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_LUT4" value="542"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_LUT5" value="493"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_LUT6" value="697"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_MUXCY" value="307"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_MUXF7" value="32"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_MUXF8" value="12"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_OBUF" value="9"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_OBUFT" value="32"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_RAM32M" value="10"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_RAMB16BWER" value="17"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_SRLC16E" value="34"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_STARTUP_SPARTAN6" value="1"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_TS_TIMESPEC" value="1"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_VCC" value="1"/>
+        <item dataType="int" stringID="NGDBUILD_NUM_XORCY" value="201"/>
+      </section>
+      <section stringID="NGDBUILD_CORE_GENERATION_SUMMARY">
+        <section stringID="NGDBUILD_CORE_INSTANCES">
+          <scope stringID="NGDBUILD_CORE_INSTANCE" value="pll_25M_81M25">
+            <item stringID="NGDBUILD_CORE_INFO" type="clk_wiz_v3_6" value="pll_25M_81M25"/>
+            <item clkin1_period="40.0" clkin2_period="40.0" clock_mgr_type="AUTO" component_name="pll_25M_81M25" feedback_source="FDBK_AUTO" feedback_type="SINGLE" manual_override="false" num_out_clk="1" primtype_sel="DCM_SP" stringID="NGDBUILD_CORE_PARAMETERS" use_clk_valid="false" use_dyn_phase_shift="false" use_dyn_reconfig="false" use_freeze="false" use_inclk_stopped="false" use_inclk_switchover="false" use_locked="false" use_max_i_jitter="false" use_min_o_jitter="false" use_phase_alignment="false" use_power_down="false" use_reset="false" use_status="false" value="pll_25M_81M25"/>
+          </scope>
+        </section>
+      </section>
+    </task>
+  </application>
+
+</document>

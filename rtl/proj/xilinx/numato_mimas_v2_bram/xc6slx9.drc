@@ -1,0 +1,42 @@
+Release 14.7 Drc P.20131013 (lin64)
+Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
+
+Mon Jul  6 09:38:17 2015
+
+drc -z xc6slx9_par.ncd
+
+WARNING:PhysDesignRules:367 - The signal
+   <glue_bram/pipeline/regfile/Mram_R25_RAMD_D1_O> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_bram/pipeline/regfile/Mram_R15_RAMD_D1_O> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_bram/pipeline/regfile/Mram_R11_RAMD_D1_O> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_bram/pipeline/regfile/Mram_R14_RAMD_D1_O> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_bram/pipeline/regfile/Mram_R23_RAMD_D1_O> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_bram/pipeline/regfile/Mram_R22_RAMD_D1_O> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_bram/pipeline/regfile/Mram_R13_RAMD_D1_O> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_bram/pipeline/regfile/Mram_R21_RAMD_D1_O> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_bram/pipeline/regfile/Mram_R24_RAMD_D1_O> is incomplete. The signal
+   does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_bram/pipeline/regfile/Mram_R12_RAMD_D1_O> is incomplete. The signal
+   does not drive any load pins in the design.
+INFO:PhysDesignRules:1861 - To achieve optimal frequency synthesis performance
+   with the CLKFX and CLKFX180 outputs of the DCM comp
+   clk81.clkgen81/dcm_sp_inst, consult the device Data Sheet.
+DRC detected 0 errors and 10 warnings.  Please see the previously displayed
+individual error or warning messages for more details.

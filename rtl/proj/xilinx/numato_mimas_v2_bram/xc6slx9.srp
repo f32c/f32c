@@ -1,0 +1,1695 @@
+Release 14.7 - xst P.20131013 (lin64)
+Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
+--> 
+
+TABLE OF CONTENTS
+  1) Synthesis Options Summary
+  2) HDL Parsing
+  3) HDL Elaboration
+  4) HDL Synthesis
+       4.1) HDL Synthesis Report
+  5) Advanced HDL Synthesis
+       5.1) Advanced HDL Synthesis Report
+  6) Low Level Synthesis
+  7) Partition Report
+  8) Design Summary
+       8.1) Primitive and Black Box Usage
+       8.2) Device utilization summary
+       8.3) Partition Resource Summary
+       8.4) Timing Report
+            8.4.1) Clock Information
+            8.4.2) Asynchronous Control Signals Information
+            8.4.3) Timing Summary
+            8.4.4) Timing Details
+            8.4.5) Cross Clock Domains Report
+
+
+=========================================================================
+*                      Synthesis Options Summary                        *
+=========================================================================
+---- Source Parameters
+Input File Name                    : "xc6slx9.prj"
+Input Format                       : mixed
+Ignore Synthesis Constraint File   : NO
+
+---- Target Parameters
+Target Device                      : xc6slx9-csg324-2
+Output File Name                   : "xc6slx9.ngc"
+Output Format                      : NGC
+
+---- Source Options
+Top Module Name                    : glue
+Safe Implementation                : No
+Automatic FSM Extraction           : YES
+FSM Encoding Algorithm             : Auto
+FSM Style                          : lut
+RAM Extraction                     : Yes
+RAM Style                          : Auto
+ROM Extraction                     : Yes
+ROM Style                          : Auto
+Shift Register Extraction          : YES
+Resource Sharing                   : YES
+Asynchronous To Synchronous        : NO
+Automatic Register Balancing       : No
+
+---- Target Options
+Add IO Buffers                     : YES
+Global Maximum Fanout              : 500
+Register Duplication               : YES
+Optimize Instantiated Primitives   : NO
+Use Clock Enable                   : Auto
+Use Synchronous Set                : Auto
+Use Synchronous Reset              : Auto
+Pack IO Registers into IOBs        : auto
+Equivalent register Removal        : YES
+
+---- General Options
+Optimization Goal                  : speed
+Optimization Effort                : 1
+Keep Hierarchy                     : no
+Netlist Hierarchy                  : as_optimized
+RTL Output                         : no
+Global Optimization                : AllClockNets
+Read Cores                         : yes
+Write Timing Constraints           : NO
+Cross Clock Analysis               : NO
+Hierarchy Separator                : /
+Bus Delimiter                      : <>
+Case Specifier                     : maintain
+Slice Utilization Ratio            : 100
+BRAM Utilization Ratio             : 100
+Auto BRAM Packing                  : NO
+Slice Utilization Ratio Delta      : 5
+
+=========================================================================
+
+
+=========================================================================
+*                          HDL Parsing                                  *
+=========================================================================
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/cpu/alu.vhd" into library work
+Parsing entity <alu>.
+Parsing architecture <Behavioral> of entity <alu>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/cpu/defs_mi32.vhd" into library work
+Parsing package <mi32_pack>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/cpu/defs_rv32.vhd" into library work
+Parsing package <rv32_pack>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/cpu/defs_f32c.vhd" into library work
+Parsing package <f32c_pack>.
+Parsing package body <f32c_pack>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/cpu/debug.vhd" into library work
+Parsing entity <debug>.
+Parsing architecture <x> of entity <debug>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/cpu/idecode_mi32.vhd" into library work
+Parsing entity <idecode_mi32>.
+Parsing architecture <Behavioral> of entity <idecode_mi32>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/cpu/idecode_rv32.vhd" into library work
+Parsing entity <idecode_rv32>.
+Parsing architecture <Behavioral> of entity <idecode_rv32>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/cpu/loadalign.vhd" into library work
+Parsing entity <loadalign>.
+Parsing architecture <Behavioral> of entity <loadalign>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/generic/bptrace.vhd" into library work
+Parsing entity <bptrace>.
+Parsing architecture <Structure> of entity <bptrace>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/generic/reg1w2r.vhd" into library work
+Parsing entity <reg1w2r>.
+Parsing architecture <Behavioral> of entity <reg1w2r>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/cpu/shift.vhd" into library work
+Parsing entity <shift>.
+Parsing architecture <Behavioral> of entity <shift>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" into library work
+Parsing entity <pipeline>.
+Parsing architecture <Behavioral> of entity <pipeline>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/generic/bram_mi32_eb.vhd" into library work
+Parsing entity <bram_mi32_eb>.
+Parsing architecture <x> of entity <bram_mi32_eb>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/generic/bram_mi32_el.vhd" into library work
+Parsing entity <bram_mi32_el>.
+Parsing architecture <x> of entity <bram_mi32_el>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/generic/bram_rv32.vhd" into library work
+Parsing entity <bram_rv32>.
+Parsing architecture <x> of entity <bram_rv32>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/soc/sio.vhd" into library work
+Parsing entity <sio>.
+Parsing architecture <Behavioral> of entity <sio>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/soc/gpio.vhd" into library work
+Parsing entity <gpio>.
+Parsing architecture <arch> of entity <gpio>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/soc/timer.vhd" into library work
+Parsing entity <timer>.
+Parsing architecture <arch> of entity <timer>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" into library work
+Parsing entity <glue_bram>.
+Parsing architecture <Behavioral> of entity <glue_bram>.
+WARNING:HDLCompiler:701 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" Line 380: Partially associated formal bus_out cannot have actual OPEN
+WARNING:HDLCompiler:701 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" Line 381: Partially associated formal bus_out cannot have actual OPEN
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/xilinx/pll_25M_112M5.vhd" into library work
+Parsing entity <pll_25M_112M5>.
+Parsing architecture <xilinx> of entity <pll_25m_112m5>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/xilinx/pll_25M_81M25.vhd" into library work
+Parsing entity <pll_25M_81M25>.
+Parsing architecture <xilinx> of entity <pll_25m_81m25>.
+Parsing VHDL file "/home/mistery3/Downloads/git/f32c/rtl/xilinx/s6_numato_mimas_v2_toplevel_bram.vhd" into library work
+Parsing entity <glue>.
+Parsing architecture <Behavioral> of entity <glue>.
+WARNING:HDLCompiler:701 - "/home/mistery3/Downloads/git/f32c/rtl/xilinx/s6_numato_mimas_v2_toplevel_bram.vhd" Line 105: Partially associated formal leds cannot have actual OPEN
+
+=========================================================================
+*                            HDL Elaboration                            *
+=========================================================================
+
+Elaborating entity <glue> (architecture <Behavioral>) with generics from library <work>.
+
+Elaborating entity <pll_25M_81M25> (architecture <xilinx>) from library <work>.
+
+Elaborating entity <glue_bram> (architecture <Behavioral>) with generics from library <work>.
+
+Elaborating entity <pipeline> (architecture <Behavioral>) with generics from library <work>.
+WARNING:HDLCompiler:92 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" Line 400: clk_enable should be on the sensitivity list of the process
+
+Elaborating entity <bptrace> (architecture <Structure>) from library <work>.
+
+Elaborating entity <idecode_mi32> (architecture <Behavioral>) with generics from library <work>.
+WARNING:HDLCompiler:1127 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/idecode_mi32.vhd" Line 84: Assignment to unsupported_instr ignored, since the identifier is never used
+
+Elaborating entity <reg1w2r> (architecture <Behavioral>) with generics from library <work>.
+WARNING:HDLCompiler:92 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" Line 635: clk_enable should be on the sensitivity list of the process
+
+Elaborating entity <alu> (architecture <Behavioral>) with generics from library <work>.
+
+Elaborating entity <shift> (architecture <Behavioral>) with generics from library <work>.
+WARNING:HDLCompiler:92 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" Line 982: clk_enable should be on the sensitivity list of the process
+WARNING:HDLCompiler:92 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" Line 1216: clk_enable should be on the sensitivity list of the process
+INFO:HDLCompiler:679 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" Line 1227. Case statement is complete. others clause is never selected
+INFO:HDLCompiler:679 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" Line 1240. Case statement is complete. others clause is never selected
+WARNING:HDLCompiler:92 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" Line 1245: clk_enable should be on the sensitivity list of the process
+WARNING:HDLCompiler:92 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" Line 1279: clk_enable should be on the sensitivity list of the process
+
+Elaborating entity <loadalign> (architecture <Behavioral>) with generics from library <work>.
+WARNING:HDLCompiler:92 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" Line 1353: clk_enable should be on the sensitivity list of the process
+WARNING:HDLCompiler:92 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" Line 1380: clk_enable should be on the sensitivity list of the process
+WARNING:HDLCompiler:634 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" Line 242: Net <EX_MEM_flush_i_line> does not have a driver.
+WARNING:HDLCompiler:634 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" Line 295: Net <trace_addr[4]> does not have a driver.
+
+Elaborating entity <sio> (architecture <Behavioral>) with generics from library <work>.
+WARNING:HDLCompiler:92 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" Line 208: io_addr_strobe should be on the sensitivity list of the process
+WARNING:HDLCompiler:92 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" Line 274: r_lcd_7seg should be on the sensitivity list of the process
+
+Elaborating entity <gpio> (architecture <arch>) with generics from library <work>.
+
+Elaborating entity <timer> (architecture <arch>) with generics from library <work>.
+
+Elaborating entity <bram_mi32_el> (architecture <x>) with generics from library <work>.
+WARNING:HDLCompiler:634 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" Line 128: Net <sio_to_debug_data[7]> does not have a driver.
+WARNING:HDLCompiler:634 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" Line 130: Net <deb_sio_rx_done> does not have a driver.
+
+=========================================================================
+*                           HDL Synthesis                               *
+=========================================================================
+
+Synthesizing Unit <glue>.
+    Related source file is "/home/mistery3/Downloads/git/f32c/rtl/xilinx/s6_numato_mimas_v2_toplevel_bram.vhd".
+        C_arch = 0
+        C_debug = false
+        C_clk_freq = 81
+        C_mem_size = 32
+        C_sio = true
+        C_leds_btns = true
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/xilinx/s6_numato_mimas_v2_toplevel_bram.vhd" line 92: Output port <lcd_7seg> of the instance <glue_bram> is unconnected or connected to loadless signal.
+INFO:Xst:2774 - HDL ADVISOR - KEEP property attached to signal gpio<31:0> may hinder XST clustering optimizations.
+    Summary:
+	no macro.
+Unit <glue> synthesized.
+
+Synthesizing Unit <pll_25M_81M25>.
+    Related source file is "/home/mistery3/Downloads/git/f32c/rtl/xilinx/pll_25M_81M25.vhd".
+    Summary:
+	no macro.
+Unit <pll_25M_81M25> synthesized.
+
+Synthesizing Unit <glue_bram>.
+    Related source file is "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd".
+        C_clk_freq = 81
+        C_arch = 0
+        C_big_endian = false
+        C_mult_enable = true
+        C_branch_likely = true
+        C_sign_extend = true
+        C_ll_sc = false
+        C_PC_mask = "00000000000000011111111111111111"
+        C_exceptions = true
+        C_cop0_count = true
+        C_cop0_compare = true
+        C_cop0_config = true
+        C_branch_prediction = true
+        C_full_shifter = true
+        C_result_forwarding = true
+        C_load_aligner = true
+        C_register_technology = "generic"
+        C_movn_movz = false
+        C_debug = false
+        C_mem_size = 32
+        C_sio = true
+        C_sio_break_detect = true
+        C_gpio = true
+        C_timer = true
+        C_leds_btns = true
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" line 139: Output port <debug_out_data> of the instance <pipeline> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" line 139: Output port <debug_debug> of the instance <pipeline> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" line 139: Output port <imem_addr_strobe> of the instance <pipeline> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" line 139: Output port <flush_i_line> of the instance <pipeline> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" line 139: Output port <flush_d_line> of the instance <pipeline> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" line 139: Output port <debug_in_busy> of the instance <pipeline> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" line 139: Output port <debug_out_strobe> of the instance <pipeline> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" line 139: Output port <debug_active> of the instance <pipeline> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" line 304: Output port <icp_enable> of the instance <G_timer.timer> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/generic/glue_bram.vhd" line 304: Output port <sign> of the instance <G_timer.timer> is unconnected or connected to loadless signal.
+WARNING:Xst:653 - Signal <sio_to_debug_data> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <deb_sio_rx_done> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <deb_sio_tx_busy> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+    Found 16-bit register for signal <R_lcd_7seg>.
+    Found 16-bit register for signal <R_btns>.
+    Found 16-bit register for signal <R_leds>.
+    Summary:
+	inferred  48 D-type flip-flop(s).
+	inferred  40 Multiplexer(s).
+Unit <glue_bram> synthesized.
+
+Synthesizing Unit <pipeline>.
+    Related source file is "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd".
+        C_arch = 0
+        C_big_endian = false
+        C_mult_enable = true
+        C_branch_likely = true
+        C_sign_extend = true
+        C_movn_movz = false
+        C_ll_sc = false
+        C_exceptions = true
+        C_PC_mask = "00000000000000011111111111111111"
+        C_init_PC = "00000000000000000000000000000000"
+        C_clk_freq = 81
+        C_cache = false
+        C_cpuid = 0
+        C_cop0_count = true
+        C_cop0_compare = true
+        C_cop0_config = true
+        C_result_forwarding = true
+        C_branch_prediction = true
+        C_bp_global_depth = 6
+        C_load_aligner = true
+        C_full_shifter = true
+        C_reg_IF_PC = false
+        C_register_technology = "generic"
+        C_debug = false
+WARNING:Xst:647 - Input <snoop_addr> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <debug_in_data> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <snoop_cycle> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <debug_in_strobe> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <debug_out_busy> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" line 472: Output port <cmov_cycle> of the instance <G_idecode_mi32.idecode> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" line 472: Output port <cmov_condition> of the instance <G_idecode_mi32.idecode> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" line 472: Output port <ll> of the instance <G_idecode_mi32.idecode> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" line 472: Output port <sc> of the instance <G_idecode_mi32.idecode> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" line 472: Output port <flush_i_line> of the instance <G_idecode_mi32.idecode> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" line 472: Output port <flush_d_line> of the instance <G_idecode_mi32.idecode> is unconnected or connected to loadless signal.
+INFO:Xst:3210 - "/home/mistery3/Downloads/git/f32c/rtl/cpu/pipeline.vhd" line 541: Output port <rdd_data> of the instance <regfile> is unconnected or connected to loadless signal.
+WARNING:Xst:653 - Signal <debug_out_data> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <debug_debug> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <trace_addr<4:0>> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <debug_in_busy> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <debug_out_strobe> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <debug_active> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <EX_MEM_flush_i_line> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+WARNING:Xst:653 - Signal <EX_MEM_flush_d_line> is used but never assigned. This sourceless signal will be automatically connected to value GND.
+    Register <IF_ID_PC> equivalent to <IF_ID_PC_next> has been removed
+    Found 30-bit register for signal <IF_ID_PC_next>.
+    Found 1-bit register for signal <IF_ID_bubble>.
+    Found 32-bit register for signal <IF_ID_instruction>.
+    Found 30-bit register for signal <IF_ID_PC_4>.
+    Found 13-bit register for signal <IF_ID_bpredict_index>.
+    Found 30-bit register for signal <IF_ID_EPC>.
+    Found 1-bit register for signal <IF_ID_EIP>.
+    Found 5-bit register for signal <ID_EX_writeback_addr>.
+    Found 1-bit register for signal <ID_EX_mem_cycle>.
+    Found 1-bit register for signal <ID_EX_mem_write>.
+    Found 1-bit register for signal <ID_EX_multicycle_lh_lb>.
+    Found 1-bit register for signal <ID_EX_branch_cycle>.
+    Found 1-bit register for signal <ID_EX_branch_likely>.
+    Found 1-bit register for signal <ID_EX_predict_taken>.
+    Found 1-bit register for signal <ID_EX_cancel_next>.
+    Found 1-bit register for signal <ID_EX_mult>.
+    Found 1-bit register for signal <ID_EX_mult_signed>.
+    Found 1-bit register for signal <ID_EX_wait>.
+    Found 1-bit register for signal <ID_EX_bubble>.
+    Found 1-bit register for signal <ID_EX_cop0_write>.
+    Found 1-bit register for signal <ID_EX_exception>.
+    Found 1-bit register for signal <ID_EX_ei>.
+    Found 1-bit register for signal <ID_EX_di>.
+    Found 1-bit register for signal <ID_EX_EIP>.
+    Found 1-bit register for signal <ID_EX_branch_delay_slot>.
+    Found 1-bit register for signal <ID_EX_branch_delay_follows>.
+    Found 32-bit register for signal <ID_EX_reg1_data>.
+    Found 32-bit register for signal <ID_EX_reg2_data>.
+    Found 32-bit register for signal <ID_EX_alu_op2>.
+    Found 5-bit register for signal <ID_EX_cop0_addr>.
+    Found 2-bit register for signal <ID_EX_op_major>.
+    Found 3-bit register for signal <ID_EX_op_minor>.
+    Found 2-bit register for signal <ID_EX_mem_size>.
+    Found 3-bit register for signal <ID_EX_branch_condition>.
+    Found 2-bit register for signal <ID_EX_bpredict_score>.
+    Found 13-bit register for signal <ID_EX_bpredict_index>.
+    Found 2-bit register for signal <ID_EX_latency>.
+    Found 1-bit register for signal <ID_EX_slt_signed>.
+    Found 1-bit register for signal <ID_EX_mem_read_sign_extend>.
+    Found 30-bit register for signal <ID_EX_branch_target>.
+    Found 1-bit register for signal <ID_EX_seb_seh_cycle>.
+    Found 1-bit register for signal <ID_EX_seb_seh_select>.
+    Found 3-bit register for signal <ID_EX_alt_sel>.
+    Found 1-bit register for signal <ID_EX_read_alt>.
+    Found 2-bit register for signal <ID_EX_shift_funct>.
+    Found 1-bit register for signal <ID_EX_shift_variable>.
+    Found 5-bit register for signal <ID_EX_shift_amount>.
+    Found 30-bit register for signal <ID_EX_EPC>.
+    Found 1-bit register for signal <ID_EX_fwd_ex_reg1>.
+    Found 1-bit register for signal <ID_EX_fwd_ex_reg2>.
+    Found 1-bit register for signal <ID_EX_fwd_ex_alu_op2>.
+    Found 1-bit register for signal <ID_EX_fwd_mem_reg1>.
+    Found 1-bit register for signal <ID_EX_fwd_mem_reg2>.
+    Found 1-bit register for signal <ID_EX_fwd_mem_alu_op2>.
+    Found 1-bit register for signal <EX_MEM_EIP>.
+    Found 8-bit register for signal <R_cop0_intr>.
+    Found 1-bit register for signal <EX_MEM_take_branch>.
+    Found 1-bit register for signal <EX_MEM_branch_taken>.
+    Found 1-bit register for signal <EX_MEM_branch_cycle>.
+    Found 1-bit register for signal <EX_MEM_branch_likely>.
+    Found 5-bit register for signal <EX_MEM_writeback_addr>.
+    Found 1-bit register for signal <EX_MEM_mem_cycle>.
+    Found 1-bit register for signal <EX_MEM_latency>.
+    Found 32-bit register for signal <EX_MEM_mem_data_out>.
+    Found 32-bit register for signal <EX_MEM_addsub_data>.
+    Found 2-bit register for signal <EX_MEM_mem_size>.
+    Found 1-bit register for signal <EX_MEM_multicycle_lh_lb>.
+    Found 1-bit register for signal <EX_MEM_mem_write>.
+    Found 4-bit register for signal <EX_MEM_mem_byte_sel>.
+    Found 3-bit register for signal <EX_MEM_shamt_1_2_4>.
+    Found 2-bit register for signal <EX_MEM_shift_funct>.
+    Found 2-bit register for signal <EX_MEM_op_major>.
+    Found 2-bit register for signal <EX_MEM_bpredict_score>.
+    Found 13-bit register for signal <EX_MEM_bpredict_index>.
+    Found 30-bit register for signal <EX_MEM_branch_target>.
+    Found 1-bit register for signal <R_cop0_EI>.
+    Found 8-bit register for signal <R_cop0_intr_mask>.
+    Found 1-bit register for signal <R_cop0_BD>.
+    Found 5-bit register for signal <R_cop0_EX_code>.
+    Found 30-bit register for signal <R_cop0_EPC>.
+    Found 30-bit register for signal <R_cop0_EBASE>.
+    Found 32-bit register for signal <R_cop0_compare>.
+    Found 1-bit register for signal <R_cop0_timer_intr>.
+    Found 1-bit register for signal <EX_MEM_logic_cycle>.
+    Found 32-bit register for signal <EX_MEM_logic_data>.
+    Found 1-bit register for signal <EX_MEM_mem_read_sign_extend>.
+    Found 2-bit register for signal <MEM_bpredict_score>.
+    Found 6-bit register for signal <EX_MEM_branch_hist>.
+    Found 1-bit register for signal <MEM_WB_mem_cycle>.
+    Found 1-bit register for signal <MEM_WB_mem_read_sign_extend>.
+    Found 2-bit register for signal <MEM_WB_mem_addr_offset>.
+    Found 2-bit register for signal <MEM_WB_mem_size>.
+    Found 5-bit register for signal <MEM_WB_writeback_addr>.
+    Found 1-bit register for signal <MEM_WB_write_enable>.
+    Found 32-bit register for signal <MEM_WB_mem_data>.
+    Found 32-bit register for signal <MEM_WB_ex_data>.
+    Found 33-bit register for signal <R_mul_a>.
+    Found 33-bit register for signal <R_mul_b>.
+    Found 64-bit register for signal <R_hi_lo>.
+    Found 32-bit register for signal <R_cop0_count>.
+    Found 1-bit register for signal <R_reset>.
+    Found 30-bit adder for signal <IF_PC[31]_GND_19_o_add_3_OUT> created at line 391.
+    Found 30-bit adder for signal <IF_ID_PC_4[31]_ID_branch_offset[31]_add_55_OUT> created at line 619.
+    Found 2-bit adder for signal <EX_2bit_add> created at line 865.
+    Found 32-bit adder for signal <R_cop0_count[31]_R_cop0_count[31]_mux_302_OUT> created at line 1381.
+    Found 33x33-bit multiplier for signal <mul_res> created at line 1350.
+    Found 4x4-bit Read Only RAM for signal <_n1532>
+    Found 1-bit 7-to-1 multiplexer for signal <ID_EX_branch_condition[2]_EX_eff_reg1[31]_Mux_149_o> created at line 941.
+    Found 5-bit comparator equal for signal <n0079> created at line 562
+    Found 5-bit comparator not equal for signal <n0083> created at line 565
+    Found 5-bit comparator equal for signal <ID_reg1_addr[4]_EX_MEM_writeback_addr[4]_equal_44_o> created at line 574
+    Found 5-bit comparator equal for signal <ID_reg2_addr[4]_EX_MEM_writeback_addr[4]_equal_45_o> created at line 575
+    Found 5-bit comparator equal for signal <ID_reg1_addr[4]_ID_EX_writeback_addr[4]_equal_46_o> created at line 578
+    Found 5-bit comparator equal for signal <n0109> created at line 589
+    Found 32-bit comparator equal for signal <R_cop0_count[31]_R_cop0_compare[31]_equal_220_o> created at line 1171
+    WARNING:Xst:2404 -  FFs/Latches <IF_ID_fetch_in_progress<0:0>> (without init value) have a constant value of 0 in block <pipeline>.
+    WARNING:Xst:2404 -  FFs/Latches <MEM_WB_multicycle_lh_lb<0:0>> (without init value) have a constant value of 0 in block <pipeline>.
+    WARNING:Xst:2404 -  FFs/Latches <IF_ID_incomplete_branch<0:0>> (without init value) have a constant value of 0 in block <pipeline>.
+    Summary:
+	inferred   1 RAM(s).
+	inferred   1 Multiplier(s).
+	inferred   4 Adder/Subtractor(s).
+	inferred 903 D-type flip-flop(s).
+	inferred   7 Comparator(s).
+	inferred  66 Multiplexer(s).
+Unit <pipeline> synthesized.
+
+Synthesizing Unit <bptrace>.
+    Related source file is "/home/mistery3/Downloads/git/f32c/rtl/generic/bptrace.vhd".
+    Set property "syn_ramstyle = no_rw_check" for signal <bptrace>.
+    Found 8192x2-bit dual-port RAM <Mram_bptrace> for signal <bptrace>.
+    Found 2-bit register for signal <dout>.
+    Summary:
+	inferred   1 RAM(s).
+	inferred   2 D-type flip-flop(s).
+Unit <bptrace> synthesized.
+
+Synthesizing Unit <idecode_mi32>.
+    Related source file is "/home/mistery3/Downloads/git/f32c/rtl/cpu/idecode_mi32.vhd".
+        C_branch_likely = true
+        C_sign_extend = true
+        C_cache = false
+        C_ll_sc = false
+        C_movn_movz = false
+        C_exceptions = true
+    Found 32x3-bit Read Only RAM for signal <_n0558>
+    Found 64x4-bit Read Only RAM for signal <_n0623>
+    Summary:
+	inferred   2 RAM(s).
+	inferred  43 Multiplexer(s).
+Unit <idecode_mi32> synthesized.
+
+Synthesizing Unit <reg1w2r>.
+    Related source file is "/home/mistery3/Downloads/git/f32c/rtl/generic/reg1w2r.vhd".
+        C_register_technology = "generic"
+        C_debug = false
+    Set property "ram_style = distributed" for signal <R1>.
+    Set property "ram_style = distributed" for signal <R2>.
+    Set property "ram_style = distributed" for signal <RD>.
+WARNING:Xst:647 - Input <rdd_addr> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+    Found 32x32-bit dual-port RAM <Mram_R1> for signal <R1>.
+    Found 32x32-bit dual-port RAM <Mram_R2> for signal <R2>.
+    Summary:
+	inferred   2 RAM(s).
+Unit <reg1w2r> synthesized.
+
+Synthesizing Unit <alu>.
+    Related source file is "/home/mistery3/Downloads/git/f32c/rtl/cpu/alu.vhd".
+        C_sign_extend = true
+    Found 33-bit adder for signal <ex[32]_ey[32]_add_3_OUT> created at line 55.
+    Found 33-bit subtractor for signal <GND_23_o_GND_23_o_sub_3_OUT<32:0>> created at line 55.
+    Found 32-bit 4-to-1 multiplexer for signal <x_logic> created at line 60.
+    Found 32-bit comparator equal for signal <equal> created at line 90
+    Summary:
+	inferred   1 Adder/Subtractor(s).
+	inferred   1 Comparator(s).
+	inferred  33 Multiplexer(s).
+Unit <alu> synthesized.
+
+Synthesizing Unit <shift>.
+    Related source file is "/home/mistery3/Downloads/git/f32c/rtl/cpu/shift.vhd".
+        C_load_aligner = true
+WARNING:Xst:647 - Input <mem_multicycle_lh_lb> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <mem_read_sign_extend_multicycle> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <mem_size_multicycle> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+    Found 32-bit 4-to-1 multiplexer for signal <stage8> created at line 64.
+    Found 32-bit 4-to-1 multiplexer for signal <stage16> created at line 72.
+    Found 32-bit 4-to-1 multiplexer for signal <stage1> created at line 87.
+    Found 32-bit 4-to-1 multiplexer for signal <stage2> created at line 93.
+    Found 32-bit 4-to-1 multiplexer for signal <stage4> created at line 99.
+    Summary:
+	inferred  15 Multiplexer(s).
+Unit <shift> synthesized.
+
+Synthesizing Unit <loadalign>.
+    Related source file is "/home/mistery3/Downloads/git/f32c/rtl/cpu/loadalign.vhd".
+        C_big_endian = false
+    Found 8-bit 4-to-1 multiplexer for signal <mem_align_tmp_b> created at line 65.
+    Summary:
+	inferred   6 Multiplexer(s).
+Unit <loadalign> synthesized.
+
+Synthesizing Unit <sio>.
+    Related source file is "/home/mistery3/Downloads/git/f32c/rtl/soc/sio.vhd".
+        C_clk_freq = 81
+        C_big_endian = false
+        C_init_baudrate = 115200
+        C_fixed_baudrate = false
+        C_break_detect = true
+        C_break_resets_baudrate = true
+        C_tx_only = false
+        C_bypass = false
+WARNING:Xst:647 - Input <byte_sel<1:1>> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <byte_sel<3:3>> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <bus_in<15:8>> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+    Found 4-bit register for signal <tx_phase>.
+    Found 9-bit register for signal <tx_ser>.
+    Found 1-bit register for signal <rx_full>.
+    Found 17-bit register for signal <R_baudgen>.
+    Found 4-bit register for signal <tx_tickcnt>.
+    Found 1-bit register for signal <R_rxd>.
+    Found 4-bit register for signal <rx_phase>.
+    Found 4-bit register for signal <rx_tickcnt>.
+    Found 8-bit register for signal <rx_des>.
+    Found 8-bit register for signal <rx_byte>.
+    Found 24-bit register for signal <rx_break_tickcnt>.
+    Found 1-bit register for signal <R_break>.
+    Found 16-bit register for signal <R_baudrate>.
+    Found 17-bit adder for signal <GND_28_o_GND_28_o_add_13_OUT> created at line 154.
+    Found 4-bit adder for signal <tx_tickcnt[3]_GND_28_o_add_15_OUT> created at line 158.
+    Found 4-bit adder for signal <tx_phase[3]_GND_28_o_add_17_OUT> created at line 161.
+    Found 4-bit adder for signal <rx_tickcnt[3]_GND_28_o_add_33_OUT> created at line 184.
+    Found 4-bit adder for signal <rx_phase[3]_GND_28_o_add_35_OUT> created at line 187.
+    Found 24-bit adder for signal <rx_break_tickcnt[23]_GND_28_o_add_51_OUT> created at line 200.
+    Found 24-bit subtractor for signal <GND_28_o_GND_28_o_sub_55_OUT<23:0>> created at line 205.
+    Summary:
+	inferred   6 Adder/Subtractor(s).
+	inferred 101 D-type flip-flop(s).
+	inferred   8 Multiplexer(s).
+Unit <sio> synthesized.
+
+Synthesizing Unit <gpio>.
+    Related source file is "/home/mistery3/Downloads/git/f32c/rtl/soc/gpio.vhd".
+        C_addr_bits = 3
+        C_bits = 32
+    Found 1-bit register for signal <R<5><6>>.
+    Found 1-bit register for signal <R<5><5>>.
+    Found 1-bit register for signal <R<5><4>>.
+    Found 1-bit register for signal <R<5><3>>.
+    Found 1-bit register for signal <R<5><2>>.
+    Found 1-bit register for signal <R<5><1>>.
+    Found 1-bit register for signal <R<5><0>>.
+    Found 1-bit register for signal <R<4><7>>.
+    Found 1-bit register for signal <R<4><6>>.
+    Found 1-bit register for signal <R<4><5>>.
+    Found 1-bit register for signal <R<4><4>>.
+    Found 1-bit register for signal <R<4><3>>.
+    Found 1-bit register for signal <R<4><2>>.
+    Found 1-bit register for signal <R<4><1>>.
+    Found 1-bit register for signal <R<4><0>>.
+    Found 1-bit register for signal <R<3><7>>.
+    Found 1-bit register for signal <R<3><6>>.
+    Found 1-bit register for signal <R<3><5>>.
+    Found 1-bit register for signal <R<3><4>>.
+    Found 1-bit register for signal <R<3><3>>.
+    Found 1-bit register for signal <R<3><2>>.
+    Found 1-bit register for signal <R<3><1>>.
+    Found 1-bit register for signal <R<3><0>>.
+    Found 1-bit register for signal <R<2><7>>.
+    Found 1-bit register for signal <R<2><6>>.
+    Found 1-bit register for signal <R<2><5>>.
+    Found 1-bit register for signal <R<2><4>>.
+    Found 1-bit register for signal <R<2><3>>.
+    Found 1-bit register for signal <R<2><2>>.
+    Found 1-bit register for signal <R<2><1>>.
+    Found 1-bit register for signal <R<2><0>>.
+    Found 1-bit register for signal <R<1><7>>.
+    Found 1-bit register for signal <R<1><6>>.
+    Found 1-bit register for signal <R<1><5>>.
+    Found 1-bit register for signal <R<1><4>>.
+    Found 1-bit register for signal <R<1><3>>.
+    Found 1-bit register for signal <R<1><2>>.
+    Found 1-bit register for signal <R<1><1>>.
+    Found 1-bit register for signal <R<1><0>>.
+    Found 1-bit register for signal <R<0><7>>.
+    Found 1-bit register for signal <R<0><6>>.
+    Found 1-bit register for signal <R<0><5>>.
+    Found 1-bit register for signal <R<0><4>>.
+    Found 1-bit register for signal <R<0><3>>.
+    Found 1-bit register for signal <R<0><2>>.
+    Found 1-bit register for signal <R<0><1>>.
+    Found 1-bit register for signal <R<0><0>>.
+    Found 1-bit register for signal <R<5><15>>.
+    Found 1-bit register for signal <R<5><14>>.
+    Found 1-bit register for signal <R<5><13>>.
+    Found 1-bit register for signal <R<5><12>>.
+    Found 1-bit register for signal <R<5><11>>.
+    Found 1-bit register for signal <R<5><10>>.
+    Found 1-bit register for signal <R<5><9>>.
+    Found 1-bit register for signal <R<5><8>>.
+    Found 1-bit register for signal <R<4><15>>.
+    Found 1-bit register for signal <R<4><14>>.
+    Found 1-bit register for signal <R<4><13>>.
+    Found 1-bit register for signal <R<4><12>>.
+    Found 1-bit register for signal <R<4><11>>.
+    Found 1-bit register for signal <R<4><10>>.
+    Found 1-bit register for signal <R<4><9>>.
+    Found 1-bit register for signal <R<4><8>>.
+    Found 1-bit register for signal <R<3><15>>.
+    Found 1-bit register for signal <R<3><14>>.
+    Found 1-bit register for signal <R<3><13>>.
+    Found 1-bit register for signal <R<3><12>>.
+    Found 1-bit register for signal <R<3><11>>.
+    Found 1-bit register for signal <R<3><10>>.
+    Found 1-bit register for signal <R<3><9>>.
+    Found 1-bit register for signal <R<3><8>>.
+    Found 1-bit register for signal <R<2><15>>.
+    Found 1-bit register for signal <R<2><14>>.
+    Found 1-bit register for signal <R<2><13>>.
+    Found 1-bit register for signal <R<2><12>>.
+    Found 1-bit register for signal <R<2><11>>.
+    Found 1-bit register for signal <R<2><10>>.
+    Found 1-bit register for signal <R<2><9>>.
+    Found 1-bit register for signal <R<2><8>>.
+    Found 1-bit register for signal <R<1><15>>.
+    Found 1-bit register for signal <R<1><14>>.
+    Found 1-bit register for signal <R<1><13>>.
+    Found 1-bit register for signal <R<1><12>>.
+    Found 1-bit register for signal <R<1><11>>.
+    Found 1-bit register for signal <R<1><10>>.
+    Found 1-bit register for signal <R<1><9>>.
+    Found 1-bit register for signal <R<1><8>>.
+    Found 1-bit register for signal <R<0><15>>.
+    Found 1-bit register for signal <R<0><14>>.
+    Found 1-bit register for signal <R<0><13>>.
+    Found 1-bit register for signal <R<0><12>>.
+    Found 1-bit register for signal <R<0><11>>.
+    Found 1-bit register for signal <R<0><10>>.
+    Found 1-bit register for signal <R<0><9>>.
+    Found 1-bit register for signal <R<0><8>>.
+    Found 1-bit register for signal <R<5><23>>.
+    Found 1-bit register for signal <R<5><22>>.
+    Found 1-bit register for signal <R<5><21>>.
+    Found 1-bit register for signal <R<5><20>>.
+    Found 1-bit register for signal <R<5><19>>.
+    Found 1-bit register for signal <R<5><18>>.
+    Found 1-bit register for signal <R<5><17>>.
+    Found 1-bit register for signal <R<5><16>>.
+    Found 1-bit register for signal <R<4><23>>.
+    Found 1-bit register for signal <R<4><22>>.
+    Found 1-bit register for signal <R<4><21>>.
+    Found 1-bit register for signal <R<4><20>>.
+    Found 1-bit register for signal <R<4><19>>.
+    Found 1-bit register for signal <R<4><18>>.
+    Found 1-bit register for signal <R<4><17>>.
+    Found 1-bit register for signal <R<4><16>>.
+    Found 1-bit register for signal <R<3><23>>.
+    Found 1-bit register for signal <R<3><22>>.
+    Found 1-bit register for signal <R<3><21>>.
+    Found 1-bit register for signal <R<3><20>>.
+    Found 1-bit register for signal <R<3><19>>.
+    Found 1-bit register for signal <R<3><18>>.
+    Found 1-bit register for signal <R<3><17>>.
+    Found 1-bit register for signal <R<3><16>>.
+    Found 1-bit register for signal <R<2><23>>.
+    Found 1-bit register for signal <R<2><22>>.
+    Found 1-bit register for signal <R<2><21>>.
+    Found 1-bit register for signal <R<2><20>>.
+    Found 1-bit register for signal <R<2><19>>.
+    Found 1-bit register for signal <R<2><18>>.
+    Found 1-bit register for signal <R<2><17>>.
+    Found 1-bit register for signal <R<2><16>>.
+    Found 1-bit register for signal <R<1><23>>.
+    Found 1-bit register for signal <R<1><22>>.
+    Found 1-bit register for signal <R<1><21>>.
+    Found 1-bit register for signal <R<1><20>>.
+    Found 1-bit register for signal <R<1><19>>.
+    Found 1-bit register for signal <R<1><18>>.
+    Found 1-bit register for signal <R<1><17>>.
+    Found 1-bit register for signal <R<1><16>>.
+    Found 1-bit register for signal <R<0><23>>.
+    Found 1-bit register for signal <R<0><22>>.
+    Found 1-bit register for signal <R<0><21>>.
+    Found 1-bit register for signal <R<0><20>>.
+    Found 1-bit register for signal <R<0><19>>.
+    Found 1-bit register for signal <R<0><18>>.
+    Found 1-bit register for signal <R<0><17>>.
+    Found 1-bit register for signal <R<0><16>>.
+    Found 1-bit register for signal <R<5><31>>.
+    Found 1-bit register for signal <R<5><30>>.
+    Found 1-bit register for signal <R<5><29>>.
+    Found 1-bit register for signal <R<5><28>>.
+    Found 1-bit register for signal <R<5><27>>.
+    Found 1-bit register for signal <R<5><26>>.
+    Found 1-bit register for signal <R<5><25>>.
+    Found 1-bit register for signal <R<5><24>>.
+    Found 1-bit register for signal <R<4><31>>.
+    Found 1-bit register for signal <R<4><30>>.
+    Found 1-bit register for signal <R<4><29>>.
+    Found 1-bit register for signal <R<4><28>>.
+    Found 1-bit register for signal <R<4><27>>.
+    Found 1-bit register for signal <R<4><26>>.
+    Found 1-bit register for signal <R<4><25>>.
+    Found 1-bit register for signal <R<4><24>>.
+    Found 1-bit register for signal <R<3><31>>.
+    Found 1-bit register for signal <R<3><30>>.
+    Found 1-bit register for signal <R<3><29>>.
+    Found 1-bit register for signal <R<3><28>>.
+    Found 1-bit register for signal <R<3><27>>.
+    Found 1-bit register for signal <R<3><26>>.
+    Found 1-bit register for signal <R<3><25>>.
+    Found 1-bit register for signal <R<3><24>>.
+    Found 1-bit register for signal <R<2><31>>.
+    Found 1-bit register for signal <R<2><30>>.
+    Found 1-bit register for signal <R<2><29>>.
+    Found 1-bit register for signal <R<2><28>>.
+    Found 1-bit register for signal <R<2><27>>.
+    Found 1-bit register for signal <R<2><26>>.
+    Found 1-bit register for signal <R<2><25>>.
+    Found 1-bit register for signal <R<2><24>>.
+    Found 1-bit register for signal <R<1><31>>.
+    Found 1-bit register for signal <R<1><30>>.
+    Found 1-bit register for signal <R<1><29>>.
+    Found 1-bit register for signal <R<1><28>>.
+    Found 1-bit register for signal <R<1><27>>.
+    Found 1-bit register for signal <R<1><26>>.
+    Found 1-bit register for signal <R<1><25>>.
+    Found 1-bit register for signal <R<1><24>>.
+    Found 1-bit register for signal <R<0><31>>.
+    Found 1-bit register for signal <R<0><30>>.
+    Found 1-bit register for signal <R<0><29>>.
+    Found 1-bit register for signal <R<0><28>>.
+    Found 1-bit register for signal <R<0><27>>.
+    Found 1-bit register for signal <R<0><26>>.
+    Found 1-bit register for signal <R<0><25>>.
+    Found 1-bit register for signal <R<0><24>>.
+    Found 3-bit register for signal <R_edge_sync_shift<0>>.
+    Found 3-bit register for signal <R_edge_sync_shift<1>>.
+    Found 3-bit register for signal <R_edge_sync_shift<2>>.
+    Found 3-bit register for signal <R_edge_sync_shift<3>>.
+    Found 3-bit register for signal <R_edge_sync_shift<4>>.
+    Found 3-bit register for signal <R_edge_sync_shift<5>>.
+    Found 3-bit register for signal <R_edge_sync_shift<6>>.
+    Found 3-bit register for signal <R_edge_sync_shift<7>>.
+    Found 3-bit register for signal <R_edge_sync_shift<8>>.
+    Found 3-bit register for signal <R_edge_sync_shift<9>>.
+    Found 3-bit register for signal <R_edge_sync_shift<10>>.
+    Found 3-bit register for signal <R_edge_sync_shift<11>>.
+    Found 3-bit register for signal <R_edge_sync_shift<12>>.
+    Found 3-bit register for signal <R_edge_sync_shift<13>>.
+    Found 3-bit register for signal <R_edge_sync_shift<14>>.
+    Found 3-bit register for signal <R_edge_sync_shift<15>>.
+    Found 3-bit register for signal <R_edge_sync_shift<16>>.
+    Found 3-bit register for signal <R_edge_sync_shift<17>>.
+    Found 3-bit register for signal <R_edge_sync_shift<18>>.
+    Found 3-bit register for signal <R_edge_sync_shift<19>>.
+    Found 3-bit register for signal <R_edge_sync_shift<20>>.
+    Found 3-bit register for signal <R_edge_sync_shift<21>>.
+    Found 3-bit register for signal <R_edge_sync_shift<22>>.
+    Found 3-bit register for signal <R_edge_sync_shift<23>>.
+    Found 3-bit register for signal <R_edge_sync_shift<24>>.
+    Found 3-bit register for signal <R_edge_sync_shift<25>>.
+    Found 3-bit register for signal <R_edge_sync_shift<26>>.
+    Found 3-bit register for signal <R_edge_sync_shift<27>>.
+    Found 3-bit register for signal <R_edge_sync_shift<28>>.
+    Found 3-bit register for signal <R_edge_sync_shift<29>>.
+    Found 3-bit register for signal <R_edge_sync_shift<30>>.
+    Found 3-bit register for signal <R_edge_sync_shift<31>>.
+    Found 1-bit register for signal <R<5><7>>.
+    Found 32-bit 6-to-1 multiplexer for signal <addr[2]_X_21_o_wide_mux_0_OUT> created at line 85.
+    Found 1-bit tristate buffer for signal <gpio_phys<0>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<1>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<2>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<3>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<4>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<5>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<6>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<7>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<8>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<9>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<10>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<11>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<12>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<13>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<14>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<15>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<16>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<17>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<18>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<19>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<20>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<21>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<22>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<23>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<24>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<25>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<26>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<27>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<28>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<29>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<30>> created at line 49
+    Found 1-bit tristate buffer for signal <gpio_phys<31>> created at line 49
+    Summary:
+	inferred 288 D-type flip-flop(s).
+	inferred  98 Multiplexer(s).
+	inferred  32 Tristate(s).
+Unit <gpio> synthesized.
+
+Synthesizing Unit <timer>.
+    Related source file is "/home/mistery3/Downloads/git/f32c/rtl/soc/timer.vhd".
+        C_ocps = 2
+        C_icps = 2
+        C_period_frac = 0
+        C_have_afc = true
+        C_afc_immediate_sp = true
+        C_have_intr = true
+        C_pres = 10
+        C_bits = 12
+WARNING:Xst:647 - Input <byte_sel<3:2>> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <bus_in<31:24>> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+    Found 2-bit register for signal <R_ocp_sync_shift<0>>.
+    Found 1-bit register for signal <Rintr<0>>.
+    Found 2-bit register for signal <R_ocp_sync_shift<1>>.
+    Found 1-bit register for signal <Rintr<1>>.
+    Found 3-bit register for signal <R_icp_sync_shift<0>>.
+    Found 12-bit register for signal <R_icp<0>>.
+    Found 1-bit register for signal <Rintr<3>>.
+    Found 3-bit register for signal <R_icp_sync_shift<1>>.
+    Found 12-bit register for signal <R_icp<1>>.
+    Found 1-bit register for signal <Rintr<2>>.
+    Found 12-bit register for signal <R<1>>.
+    Found 12-bit register for signal <R<2>>.
+    Found 12-bit register for signal <R<3>>.
+    Found 12-bit register for signal <R<4>>.
+    Found 12-bit register for signal <R<5>>.
+    Found 12-bit register for signal <R<6>>.
+    Found 12-bit register for signal <R<7>>.
+    Found 12-bit register for signal <R<8>>.
+    Found 12-bit register for signal <R<9>>.
+    Found 12-bit register for signal <R<10>>.
+    Found 12-bit register for signal <R<11>>.
+    Found 12-bit register for signal <R<14>>.
+    Found 10-bit register for signal <Rx<0>>.
+    Found 10-bit register for signal <Rx<1>>.
+    Found 10-bit register for signal <Rx<2>>.
+    Found 12-bit register for signal <R_ctrl_ext>.
+    Found 12-bit register for signal <Rtmp<15>>.
+    Found 12-bit register for signal <Rtmp<14>>.
+    Found 12-bit register for signal <Rtmp<13>>.
+    Found 12-bit register for signal <Rtmp<12>>.
+    Found 12-bit register for signal <Rtmp<11>>.
+    Found 12-bit register for signal <Rtmp<10>>.
+    Found 12-bit register for signal <Rtmp<9>>.
+    Found 12-bit register for signal <Rtmp<8>>.
+    Found 12-bit register for signal <Rtmp<7>>.
+    Found 12-bit register for signal <Rtmp<6>>.
+    Found 12-bit register for signal <Rtmp<5>>.
+    Found 12-bit register for signal <Rtmp<4>>.
+    Found 12-bit register for signal <Rtmp<3>>.
+    Found 12-bit register for signal <Rtmp<2>>.
+    Found 12-bit register for signal <Rtmp<1>>.
+    Found 12-bit register for signal <Rtmp<0>>.
+    Found 10-bit register for signal <Rxtmp<0>>.
+    Found 10-bit register for signal <Rxtmp<1>>.
+    Found 10-bit register for signal <Rxtmp<2>>.
+    Found 12-bit register for signal <Rtmp_ctrl_ext>.
+    Found 22-bit register for signal <R_counter>.
+    Found 22-bit adder for signal <R_increment_faster> created at line 259.
+    Found 22-bit adder for signal <R_counter[21]_R_increment[21]_add_23_OUT> created at line 344.
+    Found 22-bit subtractor for signal <R_increment_slower> created at line 88.
+    Found 12-bit 16-to-1 multiplexer for signal <addr[3]_Rtmp[15][11]_wide_mux_0_OUT> created at line 214.
+    Found 22-bit comparator greater for signal <R_increment[21]_R_inc_max[21]_LessThan_18_o> created at line 279
+    Found 22-bit comparator greater for signal <R_inc_min[21]_R_increment[21]_LessThan_20_o> created at line 280
+    Found 12-bit comparator lessequal for signal <n0055> created at line 364
+    Found 12-bit comparator greater for signal <R_counter[21]_R[5][11]_LessThan_28_o> created at line 365
+    Found 12-bit comparator lessequal for signal <n0078> created at line 364
+    Found 12-bit comparator greater for signal <R_counter[21]_R[7][11]_LessThan_34_o> created at line 365
+    Found 12-bit comparator lessequal for signal <n0106> created at line 442
+    Found 12-bit comparator greater for signal <R_counter[21]_R[11][11]_LessThan_41_o> created at line 443
+    Found 12-bit comparator greater for signal <R_icp_lt_sp<0>> created at line 492
+    Found 12-bit comparator lessequal for signal <n0133> created at line 442
+    Found 12-bit comparator greater for signal <R_counter[21]_R[9][11]_LessThan_50_o> created at line 443
+    Found 12-bit comparator greater for signal <R_icp_lt_sp<1>> created at line 492
+    Summary:
+	inferred   3 Adder/Subtractor(s).
+	inferred 480 D-type flip-flop(s).
+	inferred  12 Comparator(s).
+	inferred 398 Multiplexer(s).
+Unit <timer> synthesized.
+
+Synthesizing Unit <bram_mi32_el>.
+    Related source file is "/home/mistery3/Downloads/git/f32c/rtl/generic/bram_mi32_el.vhd".
+        C_write_protect_bootloader = true
+        C_mem_size = 32
+    Set property "syn_ramstyle = no_rw_check" for signal <bram_0>.
+WARNING:Xst - Value "no_rw_check" of property "ram_style" is not applicable. List of valid values is "auto, block, block_power1, block_power2, distributed, pipe_block, pipe_distributed" 
+WARNING:Xst:37 - Detected unknown constraint/property "ramstyle". This constraint/property is not supported by the current software release and will be ignored.
+    Set property "syn_ramstyle = no_rw_check" for signal <bram_1>.
+WARNING:Xst - Value "no_rw_check" of property "ram_style" is not applicable. List of valid values is "auto, block, block_power1, block_power2, distributed, pipe_block, pipe_distributed" 
+WARNING:Xst:37 - Detected unknown constraint/property "ramstyle". This constraint/property is not supported by the current software release and will be ignored.
+    Set property "syn_ramstyle = no_rw_check" for signal <bram_2>.
+WARNING:Xst - Value "no_rw_check" of property "ram_style" is not applicable. List of valid values is "auto, block, block_power1, block_power2, distributed, pipe_block, pipe_distributed" 
+WARNING:Xst:37 - Detected unknown constraint/property "ramstyle". This constraint/property is not supported by the current software release and will be ignored.
+    Set property "syn_ramstyle = no_rw_check" for signal <bram_3>.
+WARNING:Xst - Value "no_rw_check" of property "ram_style" is not applicable. List of valid values is "auto, block, block_power1, block_power2, distributed, pipe_block, pipe_distributed" 
+WARNING:Xst:37 - Detected unknown constraint/property "ramstyle". This constraint/property is not supported by the current software release and will be ignored.
+WARNING:Xst:647 - Input <imem_addr<31:15>> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+WARNING:Xst:647 - Input <dmem_addr<31:15>> is never used. This port will be preserved and left unconnected if it belongs to a top-level block or it belongs to a sub-block and the hierarchy of this sub-block is preserved.
+    Found 8192x8-bit dual-port RAM <Mram_bram_0> for signal <bram_0>.
+    Found 8192x8-bit dual-port RAM <Mram_bram_1> for signal <bram_1>.
+    Found 8192x8-bit dual-port RAM <Mram_bram_2> for signal <bram_2>.
+    Found 8192x8-bit dual-port RAM <Mram_bram_3> for signal <bram_3>.
+    Found 8-bit register for signal <ibram_0>.
+    Found 8-bit register for signal <dbram_1>.
+    Found 8-bit register for signal <ibram_1>.
+    Found 8-bit register for signal <dbram_2>.
+    Found 8-bit register for signal <ibram_2>.
+    Found 8-bit register for signal <dbram_3>.
+    Found 8-bit register for signal <ibram_3>.
+    Found 8-bit register for signal <dbram_0>.
+    Summary:
+	inferred   4 RAM(s).
+	inferred  64 D-type flip-flop(s).
+Unit <bram_mi32_el> synthesized.
+
+=========================================================================
+HDL Synthesis Report
+
+Macro Statistics
+# RAMs                                                 : 10
+ 32x3-bit single-port Read Only RAM                    : 1
+ 32x32-bit dual-port RAM                               : 2
+ 4x4-bit single-port Read Only RAM                     : 1
+ 64x4-bit single-port Read Only RAM                    : 1
+ 8192x2-bit dual-port RAM                              : 1
+ 8192x8-bit dual-port RAM                              : 4
+# Multipliers                                          : 1
+ 33x33-bit multiplier                                  : 1
+# Adders/Subtractors                                   : 14
+ 17-bit adder                                          : 1
+ 2-bit adder                                           : 1
+ 22-bit adder                                          : 2
+ 22-bit subtractor                                     : 1
+ 24-bit addsub                                         : 1
+ 30-bit adder                                          : 2
+ 32-bit adder                                          : 1
+ 33-bit addsub                                         : 1
+ 4-bit adder                                           : 4
+# Registers                                            : 345
+ 1-bit register                                        : 199
+ 10-bit register                                       : 4
+ 12-bit register                                       : 30
+ 13-bit register                                       : 3
+ 16-bit register                                       : 2
+ 17-bit register                                       : 1
+ 2-bit register                                        : 16
+ 22-bit register                                       : 3
+ 24-bit register                                       : 1
+ 3-bit register                                        : 38
+ 30-bit register                                       : 8
+ 32-bit register                                       : 14
+ 33-bit register                                       : 2
+ 4-bit register                                        : 5
+ 5-bit register                                        : 6
+ 6-bit register                                        : 1
+ 64-bit register                                       : 1
+ 8-bit register                                        : 10
+ 9-bit register                                        : 1
+# Comparators                                          : 20
+ 12-bit comparator greater                             : 6
+ 12-bit comparator lessequal                           : 4
+ 22-bit comparator greater                             : 2
+ 32-bit comparator equal                               : 2
+ 5-bit comparator equal                                : 5
+ 5-bit comparator not equal                            : 1
+# Multiplexers                                         : 707
+ 1-bit 2-to-1 multiplexer                              : 608
+ 1-bit 7-to-1 multiplexer                              : 1
+ 10-bit 2-to-1 multiplexer                             : 2
+ 12-bit 16-to-1 multiplexer                            : 1
+ 12-bit 2-to-1 multiplexer                             : 2
+ 16-bit 2-to-1 multiplexer                             : 3
+ 2-bit 2-to-1 multiplexer                              : 6
+ 22-bit 2-to-1 multiplexer                             : 1
+ 3-bit 2-to-1 multiplexer                              : 9
+ 30-bit 2-to-1 multiplexer                             : 9
+ 32-bit 2-to-1 multiplexer                             : 41
+ 32-bit 4-to-1 multiplexer                             : 6
+ 32-bit 6-to-1 multiplexer                             : 1
+ 4-bit 2-to-1 multiplexer                              : 4
+ 5-bit 2-to-1 multiplexer                              : 10
+ 8-bit 4-to-1 multiplexer                              : 1
+ 9-bit 2-to-1 multiplexer                              : 2
+# Tristates                                            : 32
+ 1-bit tristate buffer                                 : 32
+# Xors                                                 : 15
+ 1-bit xor2                                            : 13
+ 32-bit xor2                                           : 1
+ 6-bit xor2                                            : 1
+
+=========================================================================
+
+=========================================================================
+*                       Advanced HDL Synthesis                          *
+=========================================================================
+
+WARNING:Xst:2404 -  FFs/Latches <IF_ID_PC_4<31:15>> (without init value) have a constant value of 0 in block <pipeline>.
+WARNING:Xst:2404 -  FFs/Latches <IF_ID_PC_next<31:15>> (without init value) have a constant value of 0 in block <pipeline>.
+WARNING:Xst:2404 -  FFs/Latches <R_cop0_EBASE<31:15>> (without init value) have a constant value of 0 in block <pipeline>.
+WARNING:Xst:2404 -  FFs/Latches <ID_EX_branch_target<31:15>> (without init value) have a constant value of 0 in block <pipeline>.
+
+Synthesizing (advanced) Unit <glue_bram>.
+INFO:Xst:3226 - The RAM <G_bram_mi32_el.bram_mi32_el/Mram_bram_0> will be implemented as a BLOCK RAM, absorbing the following register(s): <G_bram_mi32_el.bram_mi32_el/dbram_3,dbram_2,dbram_1,dbram_0_sliced> <G_bram_mi32_el.bram_mi32_el/ibram_3,ibram_2,ibram_1,ibram_0_sliced>
+    -----------------------------------------------------------------------
+    | ram_type           | Block                               |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 8192-word x 8-bit                   |          |
+    |     mode           | read-first                          |          |
+    |     clkA           | connected to signal <clk>           | fall     |
+    |     weA            | connected to internal node          | high     |
+    |     addrA          | connected to signal <dmem_addr<14:2>> |          |
+    |     diA            | connected to signal <cpu_to_dmem<7:0>> |          |
+    |     doA            | connected to signal <dmem_to_cpu>   |          |
+    -----------------------------------------------------------------------
+    | optimization       | speed                               |          |
+    -----------------------------------------------------------------------
+    | Port B                                                              |
+    |     aspect ratio   | 8192-word x 8-bit                   |          |
+    |     mode           | write-first                         |          |
+    |     clkB           | connected to signal <clk>           | fall     |
+    |     addrB          | connected to signal <imem_addr<14:2>> |          |
+    |     doB            | connected to signal <imem_data_read> |          |
+    -----------------------------------------------------------------------
+    | optimization       | speed                               |          |
+    -----------------------------------------------------------------------
+INFO:Xst:3226 - The RAM <pipeline/G_bp_scoretable.bptrace/Mram_bptrace> will be implemented as a BLOCK RAM, absorbing the following register(s): <pipeline/G_bp_scoretable.bptrace/dout>
+    -----------------------------------------------------------------------
+    | ram_type           | Block                               |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 8192-word x 2-bit                   |          |
+    |     mode           | read-first                          |          |
+    |     clkA           | connected to signal <clk>           | rise     |
+    |     weA            | connected to signal <pipeline/EX_MEM_branch_cycle> | high     |
+    |     addrA          | connected to signal <pipeline/EX_MEM_bpredict_index> |          |
+    |     diA            | connected to signal <pipeline/MEM_bpredict_score> |          |
+    -----------------------------------------------------------------------
+    | optimization       | speed                               |          |
+    -----------------------------------------------------------------------
+    | Port B                                                              |
+    |     aspect ratio   | 8192-word x 2-bit                   |          |
+    |     mode           | write-first                         |          |
+    |     clkB           | connected to signal <clk>           | rise     |
+    |     enB            | connected to signal <pipeline/ID_running> | high     |
+    |     addrB          | connected to signal <(pipeline/IF_bpredict_index,imem_addr<8:2>)> |          |
+    |     doB            | connected to signal <pipeline/IF_ID_bpredict_score> |          |
+    -----------------------------------------------------------------------
+    | optimization       | speed                               |          |
+    -----------------------------------------------------------------------
+INFO:Xst:3226 - The RAM <G_bram_mi32_el.bram_mi32_el/Mram_bram_3> will be implemented as a BLOCK RAM, absorbing the following register(s): <G_bram_mi32_el.bram_mi32_el/dbram_3,dbram_2,dbram_1,dbram_0_sliced_sliced_sliced> <G_bram_mi32_el.bram_mi32_el/ibram_3,ibram_2,ibram_1,ibram_0_sliced_sliced_sliced>
+    -----------------------------------------------------------------------
+    | ram_type           | Block                               |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 8192-word x 8-bit                   |          |
+    |     mode           | read-first                          |          |
+    |     clkA           | connected to signal <clk>           | fall     |
+    |     weA            | connected to internal node          | high     |
+    |     addrA          | connected to signal <dmem_addr<14:2>> |          |
+    |     diA            | connected to signal <cpu_to_dmem<31:24>> |          |
+    |     doA            | connected to signal <dmem_to_cpu>   |          |
+    -----------------------------------------------------------------------
+    | optimization       | speed                               |          |
+    -----------------------------------------------------------------------
+    | Port B                                                              |
+    |     aspect ratio   | 8192-word x 8-bit                   |          |
+    |     mode           | write-first                         |          |
+    |     clkB           | connected to signal <clk>           | fall     |
+    |     addrB          | connected to signal <imem_addr<14:2>> |          |
+    |     doB            | connected to signal <imem_data_read> |          |
+    -----------------------------------------------------------------------
+    | optimization       | speed                               |          |
+    -----------------------------------------------------------------------
+INFO:Xst:3226 - The RAM <G_bram_mi32_el.bram_mi32_el/Mram_bram_1> will be implemented as a BLOCK RAM, absorbing the following register(s): <G_bram_mi32_el.bram_mi32_el/dbram_3,dbram_2,dbram_1,dbram_0> <G_bram_mi32_el.bram_mi32_el/ibram_3,ibram_2,ibram_1,ibram_0>
+    -----------------------------------------------------------------------
+    | ram_type           | Block                               |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 8192-word x 8-bit                   |          |
+    |     mode           | read-first                          |          |
+    |     clkA           | connected to signal <clk>           | fall     |
+    |     weA            | connected to internal node          | high     |
+    |     addrA          | connected to signal <dmem_addr<14:2>> |          |
+    |     diA            | connected to signal <cpu_to_dmem<15:8>> |          |
+    |     doA            | connected to signal <dmem_to_cpu>   |          |
+    -----------------------------------------------------------------------
+    | optimization       | speed                               |          |
+    -----------------------------------------------------------------------
+    | Port B                                                              |
+    |     aspect ratio   | 8192-word x 8-bit                   |          |
+    |     mode           | write-first                         |          |
+    |     clkB           | connected to signal <clk>           | fall     |
+    |     addrB          | connected to signal <imem_addr<14:2>> |          |
+    |     doB            | connected to signal <imem_data_read> |          |
+    -----------------------------------------------------------------------
+    | optimization       | speed                               |          |
+    -----------------------------------------------------------------------
+INFO:Xst:3226 - The RAM <G_bram_mi32_el.bram_mi32_el/Mram_bram_2> will be implemented as a BLOCK RAM, absorbing the following register(s): <G_bram_mi32_el.bram_mi32_el/dbram_3,dbram_2,dbram_1,dbram_0_sliced_sliced> <G_bram_mi32_el.bram_mi32_el/ibram_3,ibram_2,ibram_1,ibram_0_sliced_sliced>
+    -----------------------------------------------------------------------
+    | ram_type           | Block                               |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 8192-word x 8-bit                   |          |
+    |     mode           | read-first                          |          |
+    |     clkA           | connected to signal <clk>           | fall     |
+    |     weA            | connected to internal node          | high     |
+    |     addrA          | connected to signal <dmem_addr<14:2>> |          |
+    |     diA            | connected to signal <cpu_to_dmem<23:16>> |          |
+    |     doA            | connected to signal <dmem_to_cpu>   |          |
+    -----------------------------------------------------------------------
+    | optimization       | speed                               |          |
+    -----------------------------------------------------------------------
+    | Port B                                                              |
+    |     aspect ratio   | 8192-word x 8-bit                   |          |
+    |     mode           | write-first                         |          |
+    |     clkB           | connected to signal <clk>           | fall     |
+    |     addrB          | connected to signal <imem_addr<14:2>> |          |
+    |     doB            | connected to signal <imem_data_read> |          |
+    -----------------------------------------------------------------------
+    | optimization       | speed                               |          |
+    -----------------------------------------------------------------------
+	Found pipelined multiplier on signal <pipeline/mul_res>:
+		- 1 pipeline level(s) found in a register connected to the multiplier macro output.
+		Pushing register(s) into the multiplier macro.
+INFO:Xst:3231 - The small RAM <pipeline/Mram__n1532> will be implemented on LUTs in order to maximize performance and save block RAM resources. If you want to force its implementation on block, use option/constraint ram_style.
+    -----------------------------------------------------------------------
+    | ram_type           | Distributed                         |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 4-word x 4-bit                      |          |
+    |     weA            | connected to signal <GND>           | high     |
+    |     addrA          | connected to signal <pipeline/EX_MEM_bpredict_score> |          |
+    |     diA            | connected to signal <GND>           |          |
+    |     doA            | connected to internal node          |          |
+    -----------------------------------------------------------------------
+INFO:Xst:2385 - HDL ADVISOR - You can improve the performance of the multiplier pipeline/Mmult_mul_res by adding 6 register level(s).
+Unit <glue_bram> synthesized (advanced).
+
+Synthesizing (advanced) Unit <idecode_mi32>.
+INFO:Xst:3218 - HDL ADVISOR - The RAM <Mram__n0558> will be implemented on LUTs either because you have described an asynchronous read or because of currently unsupported block RAM features. If you have described an asynchronous read, making it synchronous would allow you to take advantage of available block RAM resources, for optimized device usage and improved timings. Please refer to your documentation for coding guidelines.
+    -----------------------------------------------------------------------
+    | ram_type           | Distributed                         |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 32-word x 3-bit                     |          |
+    |     weA            | connected to signal <GND>           | high     |
+    |     addrA          | connected to signal <instruction<5:1>> |          |
+    |     diA            | connected to signal <GND>           |          |
+    |     doA            | connected to internal node          |          |
+    -----------------------------------------------------------------------
+INFO:Xst:3218 - HDL ADVISOR - The RAM <Mram__n0623> will be implemented on LUTs either because you have described an asynchronous read or because of currently unsupported block RAM features. If you have described an asynchronous read, making it synchronous would allow you to take advantage of available block RAM resources, for optimized device usage and improved timings. Please refer to your documentation for coding guidelines.
+    -----------------------------------------------------------------------
+    | ram_type           | Distributed                         |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 64-word x 4-bit                     |          |
+    |     weA            | connected to signal <GND>           | high     |
+    |     addrA          | connected to signal <instruction<31:26>> |          |
+    |     diA            | connected to signal <GND>           |          |
+    |     doA            | connected to internal node          |          |
+    -----------------------------------------------------------------------
+Unit <idecode_mi32> synthesized (advanced).
+
+Synthesizing (advanced) Unit <pipeline>.
+The following registers are absorbed into counter <R_cop0_count>: 1 register on signal <R_cop0_count>.
+Unit <pipeline> synthesized (advanced).
+
+Synthesizing (advanced) Unit <reg1w2r>.
+INFO:Xst:3216 - HDL ADVISOR - LUT implementation is currently selected for the RAM <Mram_R1>. If you want the register to be removed and the RAM to be implemented as block RAM, please change the RAM implementation style accordingly.
+    -----------------------------------------------------------------------
+    | ram_type           | Distributed                         |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 32-word x 32-bit                    |          |
+    |     clkA           | connected to signal <clk>           | rise     |
+    |     weA            | connected to signal <wr_enable>     | high     |
+    |     addrA          | connected to signal <wr_addr>       |          |
+    |     diA            | connected to signal <wr_data>       |          |
+    -----------------------------------------------------------------------
+    | Port B                                                              |
+    |     aspect ratio   | 32-word x 32-bit                    |          |
+    |     addrB          | connected to signal <rd1_addr>      |          |
+    |     doB            | connected to internal node          |          |
+    -----------------------------------------------------------------------
+INFO:Xst:3216 - HDL ADVISOR - LUT implementation is currently selected for the RAM <Mram_R2>. If you want the register to be removed and the RAM to be implemented as block RAM, please change the RAM implementation style accordingly.
+    -----------------------------------------------------------------------
+    | ram_type           | Distributed                         |          |
+    -----------------------------------------------------------------------
+    | Port A                                                              |
+    |     aspect ratio   | 32-word x 32-bit                    |          |
+    |     clkA           | connected to signal <clk>           | rise     |
+    |     weA            | connected to signal <wr_enable>     | high     |
+    |     addrA          | connected to signal <wr_addr>       |          |
+    |     diA            | connected to signal <wr_data>       |          |
+    -----------------------------------------------------------------------
+    | Port B                                                              |
+    |     aspect ratio   | 32-word x 32-bit                    |          |
+    |     addrB          | connected to signal <rd2_addr>      |          |
+    |     doB            | connected to internal node          |          |
+    -----------------------------------------------------------------------
+Unit <reg1w2r> synthesized (advanced).
+
+Synthesizing (advanced) Unit <sio>.
+The following registers are absorbed into counter <tx_tickcnt>: 1 register on signal <tx_tickcnt>.
+The following registers are absorbed into counter <rx_phase>: 1 register on signal <rx_phase>.
+The following registers are absorbed into counter <rx_break_tickcnt>: 1 register on signal <rx_break_tickcnt>.
+Unit <sio> synthesized (advanced).
+
+Synthesizing (advanced) Unit <timer>.
+The following registers are absorbed into accumulator <R_counter>: 1 register on signal <R_counter>.
+Unit <timer> synthesized (advanced).
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_17> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_18> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_19> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_20> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_21> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_22> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_23> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_24> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_25> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_26> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_27> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_28> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_29> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_30> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/IF_ID_EPC_31> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_17> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_18> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_19> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_20> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_21> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_22> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_23> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_24> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_25> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_26> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_27> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_28> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_29> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_30> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/ID_EX_EPC_31> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <R_14_0> of sequential type is unconnected in block <timer>.
+WARNING:Xst:2677 - Node <R_14_1> of sequential type is unconnected in block <timer>.
+WARNING:Xst:2677 - Node <R_14_2> of sequential type is unconnected in block <timer>.
+WARNING:Xst:2677 - Node <R_14_3> of sequential type is unconnected in block <timer>.
+
+=========================================================================
+Advanced HDL Synthesis Report
+
+Macro Statistics
+# RAMs                                                 : 10
+ 32x3-bit single-port distributed Read Only RAM        : 1
+ 32x32-bit dual-port distributed RAM                   : 2
+ 4x4-bit single-port distributed Read Only RAM         : 1
+ 64x4-bit single-port distributed Read Only RAM        : 1
+ 8192x2-bit dual-port block RAM                        : 1
+ 8192x8-bit dual-port block RAM                        : 4
+# Multipliers                                          : 1
+ 33x33-bit registered multiplier                       : 1
+# Adders/Subtractors                                   : 9
+ 15-bit adder                                          : 1
+ 17-bit adder                                          : 1
+ 2-bit adder                                           : 1
+ 22-bit adder                                          : 1
+ 22-bit subtractor                                     : 1
+ 30-bit adder                                          : 1
+ 33-bit addsub                                         : 1
+ 4-bit adder                                           : 2
+# Counters                                             : 4
+ 24-bit updown counter                                 : 1
+ 32-bit up counter                                     : 1
+ 4-bit up counter                                      : 2
+# Accumulators                                         : 1
+ 22-bit up loadable accumulator                        : 1
+# Registers                                            : 1576
+ Flip-Flops                                            : 1576
+# Comparators                                          : 20
+ 12-bit comparator greater                             : 6
+ 12-bit comparator lessequal                           : 4
+ 22-bit comparator greater                             : 2
+ 32-bit comparator equal                               : 2
+ 5-bit comparator equal                                : 5
+ 5-bit comparator not equal                            : 1
+# Multiplexers                                         : 859
+ 1-bit 2-to-1 multiplexer                              : 734
+ 1-bit 6-to-1 multiplexer                              : 32
+ 1-bit 7-to-1 multiplexer                              : 1
+ 10-bit 2-to-1 multiplexer                             : 2
+ 12-bit 16-to-1 multiplexer                            : 1
+ 12-bit 2-to-1 multiplexer                             : 2
+ 16-bit 2-to-1 multiplexer                             : 3
+ 2-bit 2-to-1 multiplexer                              : 6
+ 3-bit 2-to-1 multiplexer                              : 9
+ 30-bit 2-to-1 multiplexer                             : 9
+ 32-bit 2-to-1 multiplexer                             : 37
+ 32-bit 4-to-1 multiplexer                             : 6
+ 4-bit 2-to-1 multiplexer                              : 4
+ 5-bit 2-to-1 multiplexer                              : 10
+ 8-bit 4-to-1 multiplexer                              : 1
+ 9-bit 2-to-1 multiplexer                              : 2
+# Xors                                                 : 15
+ 1-bit xor2                                            : 13
+ 32-bit xor2                                           : 1
+ 6-bit xor2                                            : 1
+
+=========================================================================
+
+=========================================================================
+*                         Low Level Synthesis                           *
+=========================================================================
+WARNING:Xst:1710 - FF/Latch <pipeline/EX_MEM_multicycle_lh_lb> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_intr_2> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_intr_6> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/ID_EX_multicycle_lh_lb> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+INFO:Xst:2261 - The FF/Latch <pipeline/IF_ID_EPC_2> in Unit <glue_bram> is equivalent to the following FF/Latch, which will be removed : <pipeline/IF_ID_bpredict_index_0> 
+INFO:Xst:2261 - The FF/Latch <pipeline/IF_ID_EPC_3> in Unit <glue_bram> is equivalent to the following FF/Latch, which will be removed : <pipeline/IF_ID_bpredict_index_1> 
+INFO:Xst:2261 - The FF/Latch <pipeline/IF_ID_EPC_4> in Unit <glue_bram> is equivalent to the following FF/Latch, which will be removed : <pipeline/IF_ID_bpredict_index_2> 
+INFO:Xst:2261 - The FF/Latch <pipeline/IF_ID_EPC_5> in Unit <glue_bram> is equivalent to the following FF/Latch, which will be removed : <pipeline/IF_ID_bpredict_index_3> 
+INFO:Xst:2261 - The FF/Latch <pipeline/IF_ID_EPC_6> in Unit <glue_bram> is equivalent to the following FF/Latch, which will be removed : <pipeline/IF_ID_bpredict_index_4> 
+INFO:Xst:2261 - The FF/Latch <pipeline/IF_ID_EPC_7> in Unit <glue_bram> is equivalent to the following FF/Latch, which will be removed : <pipeline/IF_ID_bpredict_index_5> 
+INFO:Xst:2261 - The FF/Latch <pipeline/IF_ID_EPC_8> in Unit <glue_bram> is equivalent to the following FF/Latch, which will be removed : <pipeline/IF_ID_bpredict_index_6> 
+INFO:Xst:2261 - The FF/Latch <R_btns_2> in Unit <glue_bram> is equivalent to the following 13 FFs/Latches, which will be removed : <R_btns_3> <R_btns_4> <R_btns_5> <R_btns_6> <R_btns_7> <R_btns_8> <R_btns_9> <R_btns_10> <R_btns_11> <R_btns_12> <R_btns_13> <R_btns_14> <R_btns_15> 
+WARNING:Xst:1710 - FF/Latch <R_btns_2> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1710 - FF/Latch <pipeline/R_cop0_EPC_17> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_EPC_18> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_EPC_19> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_EPC_20> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_EPC_21> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_EPC_22> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_EPC_23> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_EPC_24> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_EPC_25> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_EPC_26> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_EPC_27> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_EPC_28> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_EPC_29> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_EPC_30> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:1895 - Due to other FF/Latch trimming, FF/Latch <pipeline/R_cop0_EPC_31> (without init value) has a constant value of 0 in block <glue_bram>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_15> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_16> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_17> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_18> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_19> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_20> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_21> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_22> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_23> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_24> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_25> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_26> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_27> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_28> of sequential type is unconnected in block <glue_bram>.
+WARNING:Xst:2677 - Node <pipeline/EX_MEM_branch_target_29> of sequential type is unconnected in block <glue_bram>.
+
+Optimizing unit <glue> ...
+
+Optimizing unit <alu> ...
+
+Optimizing unit <shift> ...
+
+Optimizing unit <idecode_mi32> ...
+
+Optimizing unit <sio> ...
+
+Optimizing unit <timer> ...
+WARNING:Xst:1710 - FF/Latch <glue_bram/pipeline/ID_EX_alt_sel_2> (without init value) has a constant value of 0 in block <glue>. This FF/Latch will be trimmed during the optimization process.
+WARNING:Xst:2677 - Node <glue_bram/G_timer.timer/R_ctrl_ext_11> of sequential type is unconnected in block <glue>.
+WARNING:Xst:2677 - Node <glue_bram/G_timer.timer/R_ctrl_ext_10> of sequential type is unconnected in block <glue>.
+INFO:Xst:2261 - The FF/Latch <glue_bram/pipeline/ID_EX_shift_amount_3> in Unit <glue> is equivalent to the following FF/Latch, which will be removed : <glue_bram/pipeline/ID_EX_seb_seh_select> 
+
+Mapping all equations...
+Building and optimizing final netlist ...
+Found area constraint ratio of 100 (+ 5) on block glue, actual ratio is 57.
+
+Final Macro Processing ...
+
+Processing Unit <glue> :
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_31_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_30_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_29_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_28_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_26_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_25_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_27_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_24_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_23_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_21_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_20_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_22_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_19_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_18_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_16_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_15_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_17_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_14_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_13_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_11_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_10_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_12_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_9_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_8_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_6_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_5_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_7_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_4_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_3_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_1_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_0_1>.
+	Found 2-bit shift register for signal <glue_bram/G_gpio.gpio_inst/R_edge_sync_shift_2_1>.
+	Found 2-bit shift register for signal <glue_bram/G_timer.timer/R_icp_sync_shift_1_1>.
+	Found 2-bit shift register for signal <glue_bram/G_timer.timer/R_icp_sync_shift_0_1>.
+Unit <glue> processed.
+
+=========================================================================
+Final Register Report
+
+Macro Statistics
+# Registers                                            : 1569
+ Flip-Flops                                            : 1569
+# Shift Registers                                      : 34
+ 2-bit shift register                                  : 34
+
+=========================================================================
+
+=========================================================================
+*                           Partition Report                            *
+=========================================================================
+
+Partition Implementation Status
+-------------------------------
+
+  No Partitions were found in this design.
+
+-------------------------------
+
+=========================================================================
+*                            Design Summary                             *
+=========================================================================
+
+Top Level Output File Name         : xc6slx9.ngc
+
+Primitive and Black Box Usage:
+------------------------------
+# BELS                             : 2739
+#      GND                         : 1
+#      INV                         : 60
+#      LUT1                        : 54
+#      LUT2                        : 87
+#      LUT3                        : 252
+#      LUT4                        : 542
+#      LUT5                        : 493
+#      LUT6                        : 697
+#      MUXCY                       : 307
+#      MUXF7                       : 32
+#      MUXF8                       : 12
+#      VCC                         : 1
+#      XORCY                       : 201
+# FlipFlops/Latches                : 1603
+#      FD                          : 258
+#      FD_1                        : 2
+#      FDE                         : 1023
+#      FDE_1                       : 66
+#      FDR                         : 2
+#      FDRE                        : 246
+#      FDS                         : 2
+#      FDSE                        : 4
+# RAMS                             : 31
+#      RAM32M                      : 10
+#      RAM32X1D                    : 4
+#      RAMB16BWER                  : 17
+# Shift Registers                  : 34
+#      SRLC16E                     : 34
+# Clock Buffers                    : 1
+#      BUFG                        : 1
+# IO Buffers                       : 45
+#      IBUF                        : 3
+#      IBUFG                       : 1
+#      IOBUF                       : 32
+#      OBUF                        : 9
+# DCMs                             : 1
+#      DCM_SP                      : 1
+# DSPs                             : 4
+#      DSP48A1                     : 4
+# Others                           : 1
+#      STARTUP_SPARTAN6            : 1
+
+Device utilization summary:
+---------------------------
+
+Selected Device : 6slx9csg324-2 
+
+
+Slice Logic Utilization: 
+ Number of Slice Registers:            1603  out of  11440    14%  
+ Number of Slice LUTs:                 2267  out of   5720    39%  
+    Number used as Logic:              2185  out of   5720    38%  
+    Number used as Memory:               82  out of   1440     5%  
+       Number used as RAM:               48
+       Number used as SRL:               34
+
+Slice Logic Distribution: 
+ Number of LUT Flip Flop pairs used:   3202
+   Number with an unused Flip Flop:    1599  out of   3202    49%  
+   Number with an unused LUT:           935  out of   3202    29%  
+   Number of fully used LUT-FF pairs:   668  out of   3202    20%  
+   Number of unique control sets:        76
+
+IO Utilization: 
+ Number of IOs:                          53
+ Number of bonded IOBs:                  45  out of    200    22%  
+
+Specific Feature Utilization:
+ Number of Block RAM/FIFO:               17  out of     32    53%  
+    Number using Block RAM only:         17
+ Number of BUFG/BUFGCTRLs:                1  out of     16     6%  
+ Number of DSP48A1s:                      4  out of     16    25%  
+
+---------------------------
+Partition Resource Summary:
+---------------------------
+
+  No Partitions were found in this design.
+
+---------------------------
+
+
+=========================================================================
+Timing Report
+
+NOTE: THESE TIMING NUMBERS ARE ONLY A SYNTHESIS ESTIMATE.
+      FOR ACCURATE TIMING INFORMATION PLEASE REFER TO THE TRACE REPORT
+      GENERATED AFTER PLACE-and-ROUTE.
+
+Clock Information:
+------------------
+-----------------------------------+------------------------+-------+
+Clock Signal                       | Clock buffer(FF name)  | Load  |
+-----------------------------------+------------------------+-------+
+clk_25m                            | DCM_SP:CLKFX           | 1669  |
+-----------------------------------+------------------------+-------+
+
+Asynchronous Control Signals Information:
+----------------------------------------
+No asynchronous control signals found in this design
+
+Timing Summary:
+---------------
+Speed Grade: -2
+
+   Minimum period: 55.191ns (Maximum Frequency: 18.119MHz)
+   Minimum input arrival time before clock: 3.689ns
+   Maximum output required time after clock: 8.673ns
+   Maximum combinational path delay: No path found
+
+Timing Details:
+---------------
+All values displayed in nanoseconds (ns)
+
+=========================================================================
+Timing constraint: Default period analysis for Clock 'clk_25m'
+  Clock period: 55.191ns (frequency: 18.119MHz)
+  Total number of paths / destination ports: 5331835 / 3940
+-------------------------------------------------------------------------
+Delay:               16.982ns (Levels of Logic = 3)
+  Source:            glue_bram/pipeline/R_mul_a_16 (FF)
+  Destination:       glue_bram/pipeline/Mmult_mul_res3 (DSP)
+  Source Clock:      clk_25m falling 3.2X
+  Destination Clock: clk_25m falling 3.2X
+
+  Data Path: glue_bram/pipeline/R_mul_a_16 to glue_bram/pipeline/Mmult_mul_res3
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     FDE_1:C->Q            2   0.525   0.725  glue_bram/pipeline/R_mul_a_16 (glue_bram/pipeline/R_mul_a_16)
+     DSP48A1:A16->P47     18   5.220   1.234  glue_bram/pipeline/Mmult_mul_res (glue_bram/pipeline/Mmult_mul_res_P47_to_pipeline/Mmult_mul_res1)
+     DSP48A1:C30->PCOUT47    1   3.149   0.000  glue_bram/pipeline/Mmult_mul_res1 (glue_bram/pipeline/Mmult_mul_res1_PCOUT_to_pipeline/Mmult_mul_res2_PCIN_47)
+     DSP48A1:PCIN47->P47   18   2.645   1.234  glue_bram/pipeline/Mmult_mul_res2 (glue_bram/pipeline/Mmult_mul_res2_P47_to_pipeline/Mmult_mul_res3)
+     DSP48A1:C30               2.250          glue_bram/pipeline/Mmult_mul_res3
+    ----------------------------------------
+    Total                     16.982ns (13.789ns logic, 3.193ns route)
+                                       (81.2% logic, 18.8% route)
+
+=========================================================================
+Timing constraint: Default OFFSET IN BEFORE for Clock 'clk_25m'
+  Total number of paths / destination ports: 67 / 67
+-------------------------------------------------------------------------
+Offset:              3.689ns (Levels of Logic = 4)
+  Source:            gpio<24> (PAD)
+  Destination:       glue_bram/pipeline/MEM_WB_mem_data_24 (FF)
+  Destination Clock: clk_25m rising 3.2X
+
+  Data Path: gpio<24> to glue_bram/pipeline/MEM_WB_mem_data_24
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     IOBUF:IO->O           2   1.328   0.834  gpio_24_IOBUF (N139)
+     LUT6:I4->O            1   0.250   0.000  glue_bram/Mmux_final_to_cpu17_SW0_F (N246)
+     MUXF7:I0->O           1   0.163   0.790  glue_bram/Mmux_final_to_cpu17_SW0 (N70)
+     LUT6:I4->O            1   0.250   0.000  glue_bram/Mmux_final_to_cpu17 (glue_bram/final_to_cpu<24>)
+     FD:D                      0.074          glue_bram/pipeline/MEM_WB_mem_data_24
+    ----------------------------------------
+    Total                      3.689ns (2.065ns logic, 1.624ns route)
+                                       (56.0% logic, 44.0% route)
+
+=========================================================================
+Timing constraint: Default OFFSET OUT AFTER for Clock 'clk_25m'
+  Total number of paths / destination ports: 257 / 43
+-------------------------------------------------------------------------
+Offset:              8.673ns (Levels of Logic = 9)
+  Source:            glue_bram/G_timer.timer/R_counter_11 (FF)
+  Destination:       led<2> (PAD)
+  Source Clock:      clk_25m rising 3.2X
+
+  Data Path: glue_bram/G_timer.timer/R_counter_11 to led<2>
+                                Gate     Net
+    Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
+    ----------------------------------------  ------------
+     FD:C->Q              21   0.525   1.586  glue_bram/G_timer.timer/R_counter_11 (glue_bram/G_timer.timer/R_counter_11)
+     LUT4:I0->O            0   0.254   0.000  glue_bram/G_timer.timer/Mcompar_R[4][11]_R_counter[21]_LessThan_27_o_lutdi (glue_bram/G_timer.timer/Mcompar_R[4][11]_R_counter[21]_LessThan_27_o_lutdi)
+     MUXCY:DI->O           1   0.181   0.000  glue_bram/G_timer.timer/Mcompar_R[4][11]_R_counter[21]_LessThan_27_o_cy<0> (glue_bram/G_timer.timer/Mcompar_R[4][11]_R_counter[21]_LessThan_27_o_cy<0>)
+     MUXCY:CI->O           1   0.023   0.000  glue_bram/G_timer.timer/Mcompar_R[4][11]_R_counter[21]_LessThan_27_o_cy<1> (glue_bram/G_timer.timer/Mcompar_R[4][11]_R_counter[21]_LessThan_27_o_cy<1>)
+     MUXCY:CI->O           1   0.023   0.000  glue_bram/G_timer.timer/Mcompar_R[4][11]_R_counter[21]_LessThan_27_o_cy<2> (glue_bram/G_timer.timer/Mcompar_R[4][11]_R_counter[21]_LessThan_27_o_cy<2>)
+     MUXCY:CI->O           1   0.023   0.000  glue_bram/G_timer.timer/Mcompar_R[4][11]_R_counter[21]_LessThan_27_o_cy<3> (glue_bram/G_timer.timer/Mcompar_R[4][11]_R_counter[21]_LessThan_27_o_cy<3>)
+     MUXCY:CI->O           1   0.235   0.790  glue_bram/G_timer.timer/Mcompar_R[4][11]_R_counter[21]_LessThan_27_o_cy<4> (glue_bram/G_timer.timer/Mcompar_R[4][11]_R_counter[21]_LessThan_27_o_cy<4>)
+     LUT5:I3->O            2   0.250   0.954  glue_bram/G_timer.timer/Mcompar_R[4][11]_R_counter[21]_LessThan_27_o_cy<5> (glue_bram/G_timer.timer/R[4][11]_R_counter[21]_LessThan_27_o)
+     LUT6:I3->O            1   0.235   0.681  glue_bram/Mmux_ocp_mux<0>11 (led_1_OBUF)
+     OBUF:I->O                 2.912          led_1_OBUF (led<1>)
+    ----------------------------------------
+    Total                      8.673ns (4.662ns logic, 4.011ns route)
+                                       (53.8% logic, 46.2% route)
+
+=========================================================================
+
+Cross Clock Domains Report:
+--------------------------
+
+Clock to Setup on destination clock clk_25m
+---------------+---------+---------+---------+---------+
+               | Src:Rise| Src:Fall| Src:Rise| Src:Fall|
+Source Clock   |Dest:Rise|Dest:Rise|Dest:Fall|Dest:Fall|
+---------------+---------+---------+---------+---------+
+clk_25m        |   13.494|    3.941|   16.982|         |
+---------------+---------+---------+---------+---------+
+
+=========================================================================
+
+
+Total REAL time to Xst completion: 44.00 secs
+Total CPU time to Xst completion: 42.99 secs
+ 
+--> 
+
+
+Total memory usage is 441464 kilobytes
+
+Number of errors   :    0 (   0 filtered)
+Number of warnings :  132 (   0 filtered)
+Number of infos    :   39 (   0 filtered)
+

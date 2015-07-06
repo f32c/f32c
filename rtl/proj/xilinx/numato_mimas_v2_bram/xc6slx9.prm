@@ -1,0 +1,14 @@
+PROMGEN: Xilinx Prom Generator P.20131013
+Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
+
+promgen -spi -w -s 512 -p mcs -o xc6slx9.mcs -u 0 xc6slx9.bit 
+
+PROM xc6slx9.prm map: Mon Jul  6 09:38:44 2015
+
+Format        Mcs86 (32-bit)
+Size          512K
+PROM start    0000:0000
+PROM end      0007:ffff
+
+        Addr1        Addr2                     Date File(s)
+    0000:0000    0005:327b     Jul  6 09:38:37 2015 xc6slx9.bit

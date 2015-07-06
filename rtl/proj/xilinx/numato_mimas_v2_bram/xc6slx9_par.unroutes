@@ -1,0 +1,22 @@
+Release 14.7 - par P.20131013 (lin64)
+Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
+
+Mon Jul  6 09:38:06 2015
+
+All signals are completely routed.
+
+WARNING:ParHelpers:361 - There are 10 loadless signals in this design. This design will cause Bitgen to issue DRC
+   warnings.
+
+   glue_bram/pipeline/regfile/Mram_R11_RAMD_D1_O
+   glue_bram/pipeline/regfile/Mram_R12_RAMD_D1_O
+   glue_bram/pipeline/regfile/Mram_R13_RAMD_D1_O
+   glue_bram/pipeline/regfile/Mram_R14_RAMD_D1_O
+   glue_bram/pipeline/regfile/Mram_R15_RAMD_D1_O
+   glue_bram/pipeline/regfile/Mram_R21_RAMD_D1_O
+   glue_bram/pipeline/regfile/Mram_R22_RAMD_D1_O
+   glue_bram/pipeline/regfile/Mram_R23_RAMD_D1_O
+   glue_bram/pipeline/regfile/Mram_R24_RAMD_D1_O
+   glue_bram/pipeline/regfile/Mram_R25_RAMD_D1_O
+
+
