@@ -14,6 +14,8 @@ use work.f32c_pack.all;
 
 entity ctrlpid is
   generic(
+    psc        : integer := 18; -- prescaler bits - sets control loop frequency
+    precision  : integer :=  1; -- fixed point precision
     aw         : integer :=  1; -- address width (number of bits in PID address)
     an         : integer :=  2; -- number of PIDs
     ow         : integer := 12; -- width of output bits (precision + ow >= 9)
@@ -36,6 +38,8 @@ end ctrlpid;
 architecture syn of ctrlpid is
   component ctrlpid_v
     generic (
+      psc        : integer := 18; -- prescaler bits - sets control loop frequency
+      precision  : integer :=  1; -- fixed point precision
       aw         : integer :=  1; -- address width (number of bits in PID address)
       an         : integer :=  2; -- number of PIDs
       ow         : integer := 12; -- width of output bits (precision + ow >= 9)
@@ -57,6 +61,8 @@ architecture syn of ctrlpid is
 begin
   ctrlpid_inst: ctrlpid_v
   generic map(
+    psc => psc,
+    precision => precision,
     aw => aw, an => an,
     ow => ow, ew => ew,
     pw => pw,
