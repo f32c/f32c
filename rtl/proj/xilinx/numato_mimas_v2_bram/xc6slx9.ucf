@@ -7,8 +7,8 @@ CONFIG VCCAUX = "3.3" ;
 
 ##Clock signal 25 MHz
 #Net "" LOC = P85 | IOSTANDARD=LVCMOS33;
-NET "clk_25m" LOC = V10 | IOSTANDARD = LVCMOS33 | PERIOD = 100MHz ;
-Net "clk_25m" TNM_NET = sys_clk_pin;
+NET "clk_100m" LOC = V10 | IOSTANDARD = LVCMOS33 | PERIOD = 100MHz ;
+Net "clk_100m" TNM_NET = sys_clk_pin;
 TIMESPEC TS_sys_clk_pin = PERIOD sys_clk_pin 100 MHz high 50%;
 
 
@@ -165,15 +165,6 @@ Net "Led<4>" LOC =  "N16" | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L15P
 Net "Led<5>" LOC =  "N15" | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L15N, Sch name = LD5
 Net "Led<6>" LOC =  "P16" | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16P, Sch name = LD6
 Net "Led<7>" LOC = "P15" | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16N_VREF, Sch name = LD7
-
-    #NET "LED[7]" LOC = P15     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D1
-    #NET "LED[6]" LOC = P16     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D2
-    #NET "LED[5]" LOC = N15     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D3
-    #NET "LED[4]" LOC = N16     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D4
-    #NET "LED[3]" LOC = U17     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D5
-    #NET "LED[2]" LOC = U18     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D6
-    #NET "LED[1]" LOC = T17     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D7
-    #NET "LED[0]" LOC = T18     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D8
 
 ## Switches
 #Net "sw<0>" LOC =  P11 | IOSTANDARD = LVCMOS33;
