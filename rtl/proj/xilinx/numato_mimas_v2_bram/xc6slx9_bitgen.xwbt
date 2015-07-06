@@ -1,7 +1,0 @@
-INFILE=/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/xc6slx9_par.ncd
-OUTFILE=/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram/xc6slx9.bit
-FAMILY=Spartan6
-PART=xc6slx9-2csg324
-WORKINGDIR=/home/mistery3/Downloads/git/f32c/rtl/proj/xilinx/numato_mimas_v2_bram
-LICENSE=WebPack
-USER_INFO=210919217_0_0_842
