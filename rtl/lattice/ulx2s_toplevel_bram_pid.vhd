@@ -30,6 +30,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.MATH_REAL.ALL;
 
 use work.f32c_pack.all;
 
@@ -47,6 +48,11 @@ entity glue is
 	C_mem_size: integer := 16;
 	C_sio: boolean := true;
 	C_pid: boolean := true;
+	C_pids: integer := 4;
+	C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8);
+	C_pid_prescaler: integer := 18;
+	C_pid_precision: integer := 1;
+	C_pid_pwm_bits: integer := 12;
 	C_leds_btns: boolean := true
     );
     port (
@@ -83,13 +89,13 @@ begin
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
-	C_pid => true,
-	C_pids => 4,
-	C_pid_simulator => ext("1000", 8),
-	C_pid_prescaler => 19, -- set control loop frequency
-	C_pid_fp => 26-19, -- freq in 2^n Hz for math, approx 26-C_pid_prescaler = log2(C_clk_freq*1e6)-C_pid_prescaler
-	C_pid_precision => 1, -- fixed point PID precision
-	C_pid_pwm_bits => 13, -- clock divider bits define PWM output frequency
+	C_pid => C_pid,
+	C_pids => C_pids,
+	C_pid_simulator => C_pid_simulator,
+	C_pid_prescaler => C_pid_prescaler, -- set control loop frequency
+	C_pid_fp => integer(floor((log2(real(C_clk_freq)*1e6))+0.5))-C_pid_prescaler, -- control loop approx freq in 2^n Hz for math, 26-C_pid_prescaler = 8
+	C_pid_precision => C_pid_precision, -- fixed point PID precision
+	C_pid_pwm_bits => C_pid_pwm_bits, -- clock divider bits define PWM output frequency
 	C_debug => C_debug
     )
     port map (
