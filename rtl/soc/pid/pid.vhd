@@ -43,7 +43,8 @@ entity pid is
         C_addr_unit_bits: integer range 1 to 3 := 1; -- number of bits to address PID units
 	C_pids: integer range 2 to 8 := 2;  -- number of pid units
 	C_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- 1: simulate motors (no real motors), 0: normal mode for real motors
-	C_prescaler: integer range 10 to 30 := 18; -- control loop frequency
+	C_prescaler: integer range 10 to 26 := 18; -- control loop frequency
+	C_fp: integer range 10 to 26 := 8; -- control loop frequency (26-C_prescaler)
 	C_precision: integer range 0 to 8 := 1; -- fixed point PID precision
         C_addr_bits: integer := 2; -- don't touch: number of address bits to address one PID unit
         C_bits: integer range 2 to 32 := 32 -- memory register bit width
@@ -154,6 +155,7 @@ begin
     generic map(
       psc => C_prescaler,
       precision => C_precision,
+      fp => C_fp,
       an => C_pids,
       aw => C_addr_unit_bits -- 1: 2 PID units, 2: 4 PID units
     )
