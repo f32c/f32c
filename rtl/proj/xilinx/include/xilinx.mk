@@ -148,6 +148,21 @@ $(project).bit: $(project)_par.ncd
 junk += $(project).bgn $(project).bit $(project).drc $(project)_bd.bmm
 junk += $(project)_bitgen.xwbt
 
+$(project).bin: $(project)_par.ncd
+	$(xil_env); \
+	bitgen $(intstyle) \
+          -g Binary:yes -g Compress -g CRC:Enable -g Reset_on_err:No \
+          -g ConfigRate:22 -g ProgPin:PullUp -g TckPin:PullUp -g TdiPin:PullUp \
+          -g TdoPin:PullUp -g TmsPin:PullUp -g UnusedPin:PullDown -g UserID:0xFFFFFFFF \
+          -g ExtMasterCclk_en:No -g SPI_buswidth:1 -g TIMER_CFG:0xFFFF -g multipin_wakeup:No \
+          -g StartUpClk:CClk -g DONE_cycle:4 -g GTS_cycle:5 -g GWE_cycle:6 \
+          -g LCK_cycle:NoWait -g Security:None -g DonePipe:Yes -g DriveDone:No \
+          -g en_sw_gsr:No -g drive_awake:No -g sw_clk:Startupclk -g sw_gwe_cycle:5 \
+          -g sw_gts_cycle:4 -w $(project)_par.ncd default.bit
+	mv default.bit $(project).bin
+junk += $(project).bgn $(project).bin $(project).drc $(project)_bd.bmm
+junk += $(project)_bitgen.xwbt
+
 
 $(project)_par.ncd: $(project).ncd
 	$(xil_env); \
