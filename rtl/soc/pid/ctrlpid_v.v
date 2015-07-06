@@ -31,7 +31,7 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
 // f(clk_pid) = 2^fp = 2^8 = 256 Hz
 // PID values can stay the same:
 // after changing control loop frequency adjust fp parameter
- parameter signed [cw-1:0] fp = 26-psc;  // fp = log(f(clk_pid))/log(2)
+ parameter signed [cw-1:0] fp = 8;  // fp = log(f(clk_pid))/log(2) = approx 26-psc
 
 // ***** precision = log scaling for the fixed point arithmetics *****
 // defines precision of the calculation using fixed point arithmetics
@@ -75,7 +75,7 @@ module ctrlpid_v(clk_pid, ce, error, a, m_k_out, reset, KP, KI, KD);
 
  wire signed [cw-1:0] Kp;  //proportional gain
  wire signed [cw-1:0] Ki;  //integral gain
- wire signed [cw-1:0] Kd;  //derivativative gain
+ wire signed [cw-1:0] Kd;  //derivative gain
 
  // those assigmnents make input PID parameters 
  // invariant to changing of precision

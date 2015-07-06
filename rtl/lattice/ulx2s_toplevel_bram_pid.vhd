@@ -86,6 +86,10 @@ begin
 	C_pid => true,
 	C_pids => 4,
 	C_pid_simulator => ext("1000", 8),
+	C_pid_prescaler => 19, -- set control loop frequency
+	C_pid_fp => 26-19, -- freq in 2^n Hz for math, approx 26-C_pid_prescaler = log2(C_clk_freq*1e6)-C_pid_prescaler
+	C_pid_precision => 1, -- fixed point PID precision
+	C_pid_pwm_bits => 13, -- clock divider bits define PWM output frequency
 	C_debug => C_debug
     )
     port map (
