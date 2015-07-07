@@ -57,13 +57,14 @@ entity glue is
 	rs232_dce_rxd: in std_logic;
 	led: out std_logic_vector(7 downto 0);
 	gpio: inout std_logic_vector(39 downto 0);
-	btn_k2, btn_k3: in std_logic
+	Switch: in std_logic_vector(5 downto 0);
+	sw: in std_logic_vector(7 downto 0)
     );
 end glue;
 
 architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
-    signal btns: std_logic_vector(1 downto 0);
+    signal btns: std_logic_vector(5 downto 0);
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
 
@@ -94,9 +95,11 @@ end generate;
 	gpio => gpio(31 downto 0),
 	leds(7 downto 0) => led,
 	leds(15 downto 8) => open,
-	btns(1 downto 0) => btns(1 downto 0),
-	btns(15 downto 2) => (others => '-'),
-	sw => (others => '-')
+	btns(5 downto 0) => btns, 
+	btns(15 downto 6) => open,
+   sw(7 downto 0) => sw,
+	sw(15 downto 8) => open
     );
-    btns <= btn_k3 & btn_k2;
+btns <= Switch(5 downto 0);
+
 end Behavioral;
