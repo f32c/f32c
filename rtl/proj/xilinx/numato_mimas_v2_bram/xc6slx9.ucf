@@ -157,29 +157,34 @@ Net "rs232_dce_txd" LOC = B8 | IOSTANDARD=LVCMOS33; #Bank = 1, pin name = IO_L48
 #Net "an<3>" LOC = P17 | IOSTANDARD = LVCMOS33; #Bank = 1, pin name = IO_L49P_M1DQ10, Sch name = AN3
 
 ## Leds
-Net "Led<0>" LOC =  "T18" | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L2P_CMPCLK, Sch name = LD0
-Net "Led<1>" LOC =  "T17" | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L2N_CMPMOSI, Sch name = LD1
-Net "Led<2>" LOC =  "U18" | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L5P, Sch name = LD2
-Net "Led<3>" LOC =  "U17" | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L5N, Sch name = LD3
-Net "Led<4>" LOC =  "N16" | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L15P, Sch name = LD4
-Net "Led<5>" LOC =  "N15" | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L15N, Sch name = LD5
-Net "Led<6>" LOC =  "P16" | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16P, Sch name = LD6
-Net "Led<7>" LOC = "P15" | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16N_VREF, Sch name = LD7
+NET "LED[7]" LOC = P15 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D1
+NET "LED[6]" LOC = P16 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D2
+NET "LED[5]" LOC = N15 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D3
+NET "LED[4]" LOC = N16 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D4
+NET "LED[3]" LOC = U17 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D5
+NET "LED[2]" LOC = U18 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D6
+NET "LED[1]" LOC = T17 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D7
+NET "LED[0]" LOC = T18 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  #D8
 
 ## Switches
-#Net "sw<0>" LOC =  P11 | IOSTANDARD = LVCMOS33;
-#Net "sw<1>" LOC =  P12 | IOSTANDARD = LVCMOS33;
-#Net "sw<2>" LOC =  P14 | IOSTANDARD = LVCMOS33;
-#Net "sw<3>" LOC =  P15 | IOSTANDARD = LVCMOS33;
-#Net "sw<4>" LOC =  P16 | IOSTANDARD = LVCMOS33;
-#Net "sw<5>" LOC =  P17 | IOSTANDARD = LVCMOS33;
-#Net "sw<6>" LOC =  P21 | IOSTANDARD = LVCMOS33;
-#Net "sw<7>" LOC =  P22 | IOSTANDARD = LVCMOS33;
+NET "sw[0]" LOC = C17 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP;  #DP 8
+NET "sw[1]" LOC = C18 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP;  #DP 7
+NET "sw[2]" LOC = D17 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP;  #DP 6
+NET "sw[3]" LOC = D18 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP;  #DP 5
+NET "sw[4]" LOC = E18 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP;  #DP 4
+NET "sw[5]" LOC = E16 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP;  #DP 3
+NET "sw[6]" LOC = F18 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP;  #DP 2
+NET "sw[7]" LOC = F17 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP;  #DP 1
 
-## Buttons
-#Net "btn_k1" LOC = "K18" | IOSTANDARD = LVCMOS33; # this is clock pin, marked N_GCLK
-Net "btn_k2" LOC = "K17" | IOSTANDARD = LVCMOS33;
-Net "btn_k3" LOC = "L17" | IOSTANDARD = LVCMOS33;
+###################################################################################################################################################
+#                                              Push Buttons Switches                                                                              #
+################################################################################################################################################### 
+NET "Switch[5]" LOC = M18 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP; #SW1
+NET "Switch[4]" LOC = L18 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP; #SW2
+NET "Switch[3]" LOC = M16 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP; #SW3
+NET "Switch[2]" LOC = L17 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP; #SW4
+NET "Switch[1]" LOC = K17 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP; #SW5
+NET "Switch[0]" LOC = K18 | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST | PULLUP; #SW6
 
 ## GPIO
 #Net "gpio<0>" LOC =  P12 | IOSTANDARD = LVCMOS33;
