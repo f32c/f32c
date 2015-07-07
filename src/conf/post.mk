@@ -34,6 +34,17 @@ ifndef LOADADDR
  endif
 endif
 
+ifeq (${ARCH},riscv)
+ ARCH_DIR = ${ARCH}
+else
+ ifdef NOMUL
+  ARCH_DIR = ${ARCH}_nomul
+  MK_CFLAGS += -mno-mul
+ else
+  ARCH_DIR = ${ARCH}
+ endif
+endif
+
 ifeq ($(findstring 0x8, ${LOADADDR}),)
 MK_CFLAGS += -DBRAM
 endif
@@ -43,7 +54,7 @@ MK_INCLUDES += -I${BASE_DIR}include
 MK_STDINC = -nostdinc -include sys/param.h
 
 # Libs
-LIBDIR = ${BASE_DIR}lib/${ARCH}
+LIBDIR = ${BASE_DIR}lib/${ARCH_DIR}
 
 ifndef WITHOUT_LIBS
  ifdef WITHOUT_FLOAT
@@ -85,7 +96,6 @@ else
 	endif
 
 	# f32c-specific flags
-	#MK_CFLAGS += -mno-mul
 	#MK_CFLAGS += -mno-div
 	#MK_CFLAGS += -mno-unaligned-load
 	#MK_CFLAGS += -mno-unaligned-store
@@ -173,7 +183,7 @@ MKDEP = ${CC} -MM
 #
 
 ifndef OBJDIR
-OBJDIR=./obj/${ARCH}
+OBJDIR=./obj/${ARCH_DIR}
 endif
 
 #
