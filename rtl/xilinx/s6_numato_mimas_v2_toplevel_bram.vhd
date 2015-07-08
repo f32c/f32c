@@ -57,14 +57,22 @@ entity glue is
 	rs232_dce_rxd: in std_logic;
 	led: out std_logic_vector(7 downto 0);
 	gpio: inout std_logic_vector(39 downto 0);
+--	lcd_7seg: out std_logic_vector(15 downto 0);
 	Switch: in std_logic_vector(5 downto 0);
-	sw: in std_logic_vector(7 downto 0)
+	sw: in std_logic_vector(7 downto 0);
+	IO_P6: inout std_logic_vector(7 downto 0);
+	IO_P7: inout std_logic_vector(7 downto 0);
+	IO_P8: inout std_logic_vector(7 downto 0);
+	IO_P9: inout std_logic_vector(7 downto 0);
+	SevenSegment: out std_logic_vector(7 downto 0); -- 7-segment display
+	SevenSegmentEnable: out std_logic_vector(2 downto 0) -- 7-segment display
     );
 end glue;
 
 architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
     signal btns: std_logic_vector(5 downto 0);
+	 signal lcd_7seg: std_logic_vector(15 downto 0);
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
 
@@ -98,8 +106,14 @@ end generate;
 	btns(5 downto 0) => btns, 
 	btns(15 downto 6) => open,
    sw(7 downto 0) => sw,
-	sw(15 downto 8) => open
+	sw(15 downto 8) => open,
+	IO_P6(7 downto 0)=> gpio(7 downto 0),
+	IO_P7(7 downto 0)=> gpio(15 downto 8),
+	IO_P8(7 downto 0)=> gpio(23 downto 16),
+	IO_P9(7 downto 0)=> gpio(31 downto 24),
+	lcd_7seg => lcd_7seg
     );
 btns <= Switch(5 downto 0);
-
+SevenSegment <= lcd_7seg(7 downto 0);
+SevenSegmentEnable <= lcd_7seg(10 downto 8);
 end Behavioral;
