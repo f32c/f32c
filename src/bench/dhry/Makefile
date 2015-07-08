@@ -28,8 +28,10 @@ include ${POST_MK}
 
 # Specialized build rules for dhry_*.c files
 
-./obj/${ARCH}/dhry_1.o: dhry_1.c
+./obj/${ARCH_DIR}/dhry_1.o: dhry_1.c
+	mkdir -p obj/${ARCH_DIR}
 	${CC} ${DHRY_CFLAGS} -o $@ dhry_1.c
 
-./obj/${ARCH}/dhry_2.o: dhry_2.c
+./obj/${ARCH_DIR}/dhry_2.o: dhry_2.c
+	mkdir -p obj/${ARCH_DIR}
 	${CC} ${DHRY_CFLAGS} -o $@ dhry_2.c
