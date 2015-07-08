@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 extern void *_end;
@@ -135,4 +136,23 @@ malloc(size_t size)
 	    used_cnt, free_cnt);
 #endif
 	return (&heap[best_i + 1]);
+}
+
+
+void *
+realloc(void *oldptr, size_t size)
+{
+	uint32_t i, copysize;
+	void *newptr;
+
+	newptr = malloc(size);
+	if (oldptr != NULL && newptr != NULL) {
+		i = ((uint32_t *) oldptr) - heap - 1;
+		copysize = GET_LEN(heap[i]);
+		if (size < copysize)
+			copysize = size;
+		memcpy(newptr, oldptr, copysize);
+	}
+	free(oldptr);
+	return (newptr);
 }
