@@ -72,7 +72,7 @@ entity glue_bram is
 	C_mem_size: integer := 16;	-- in KBytes
 	C_sio: boolean := true;
 	C_sio_break_detect: boolean := true;
-	C_gpio: boolean := true;
+	C_gpios: integer range 0 to 4 := 1; -- number of 32-bit gpio units
 	C_timer: boolean := true;
 	C_pid: boolean := true;
 	C_pids: integer := 2;
@@ -89,7 +89,7 @@ entity glue_bram is
 	rs232_tx, rs232_break: out std_logic;
 	btns: in std_logic_vector(15 downto 0);
 	sw: in std_logic_vector(15 downto 0);
-	gpio: inout std_logic_vector(31 downto 0);
+	gpio: inout std_logic_vector(127 downto 0);
 	leds: out std_logic_vector(15 downto 0);
 	pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
 	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
@@ -119,9 +119,11 @@ architecture Behavioral of glue_bram is
     signal timer_intr: std_logic;
     
     -- GPIO
-    signal from_gpio: std_logic_vector(31 downto 0);
-    signal gpio_ce: std_logic;
-    signal gpio_intr: std_logic;
+    type gpios_type is array (C_gpios-1 downto 0) of std_logic_vector(31 downto 0);
+    signal from_gpio, gpios: gpios_type;
+    signal gpio_ce: std_logic_vector(C_gpios-1 downto 0);
+    signal gpio_intr: std_logic_vector(C_gpios-1 downto 0);
+    signal gpio_intr_joint: std_logic := '0';
 
     -- PID
     signal from_pid: std_logic_vector(31 downto 0);
@@ -194,7 +196,7 @@ begin
 	debug_active => debug_active
     );
     final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
-    intr <= "00" & gpio_intr & timer_intr & from_sio(8) & '0';
+    intr <= "00" & gpio_intr_joint & timer_intr & from_sio(8) & '0';
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
@@ -266,11 +268,29 @@ begin
     begin
 	case io_addr(11 downto 4) is
 	when x"00" | x"01" =>
-	    if C_gpio then
-		io_to_cpu <= from_gpio;
+	    if C_gpios >= 1 then
+		io_to_cpu <= from_gpio(0);
 	    else
 		io_to_cpu <= (others => '-');
-	    end if;	
+	    end if;
+	when x"02" | x"03" =>
+	    if C_gpios >= 2 then
+		io_to_cpu <= from_gpio(1);
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
+	when x"04" | x"05" =>
+	    if C_gpios >= 3 then
+		io_to_cpu <= from_gpio(2);
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
+	when x"06" | x"07" =>
+	    if C_gpios >= 4 then
+		io_to_cpu <= from_gpio(3);
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
 	when x"10" | x"11" | x"12" | x"13"  =>
 	    if C_timer then
 		io_to_cpu <= from_timer;
@@ -308,19 +328,25 @@ begin
 
     -- GPIO
     G_gpio:
-    if C_gpio generate
+    for i in 0 to C_gpios-1 generate
     gpio_inst: entity work.gpio
     generic map (
 	C_bits => 32
     )
     port map (
-	clk => clk, ce => gpio_ce, addr => dmem_addr(4 downto 2),
+	clk => clk, ce => gpio_ce(i), addr => dmem_addr(4 downto 2),
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_gpio,
-	gpio_irq => gpio_intr,
-	gpio_phys => gpio -- physical input/output
+	bus_in => cpu_to_dmem, bus_out => from_gpio(i),
+	gpio_irq => gpio_intr(i),
+	gpio_phys => gpio(32*i+31 downto 32*i) -- physical input/output
     );
-    gpio_ce <= io_addr_strobe when io_addr(11 downto 8) = x"0" else '0';
+    gpio_ce(i) <= io_addr_strobe when conv_integer(io_addr(11 downto 5)) = i else '0';
+    end generate;
+    gpio_interrupt_collect: if C_gpios >= 1 generate
+      gpio_intr_joint <= gpio_intr(0);
+      -- TODO: currently only 32 gpio supported in fpgarduino core
+      -- when support for 128 gpio is there we should use this:
+      -- gpio_intr_joint <= '0' when conv_integer(gpio_intr) = 0 else '1';
     end generate;
 
     -- PID
