@@ -124,9 +124,9 @@ begin
 	pid_encoder_a(2) => j2_10, pid_encoder_b(2) => j2_11,
 	pid_bridge_f(2) => j2_12, pid_bridge_r(2) => j2_13,
         gpio(28) => j2_16,
-	leds(7 downto 0) => led, leds(15 downto 8) => open,
-	btns(4 downto 0) => btns, btns(15 downto 5) => open,
-	sw(3 downto 0) => sw
+	simple_out(7 downto 0) => led, simple_out(15 downto 8) => open,
+	simple_in(4 downto 0) => btns, simple_in(15 downto 5) => open,
+	simple_in(19 downto 16) => sw, simple_in(31 downto 20) => open
     );
     btns <= btn_left & btn_right & btn_up & btn_down & btn_center;
 end Behavioral;

@@ -81,19 +81,17 @@ entity glue_bram is
 	C_pid_precision: integer range 0 to 8 := 1; -- fixed point PID precision
         C_pid_pwm_bits: integer range 11 to 32 := 12; -- clock divider bits define PWM output frequency (min 11 => 40kHz @ 81.25MHz)
         C_pid_fp: integer range 11 to 32 := 8; -- frequency in pid calc, use 26-C_pid_prescaler
-	C_leds_btns: boolean := true
+        C_simple_io: boolean := true
     );
     port (
 	clk: in std_logic;
 	rs232_rx: in std_logic;
 	rs232_tx, rs232_break: out std_logic;
-	btns: in std_logic_vector(15 downto 0);
-	sw: in std_logic_vector(15 downto 0);
 	gpio: inout std_logic_vector(127 downto 0);
-	leds: out std_logic_vector(15 downto 0);
+	simple_in: in std_logic_vector(31 downto 0);
+	simple_out: out std_logic_vector(31 downto 0);
 	pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
-	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
-	lcd_7seg: out std_logic_vector(15 downto 0)
+	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0)
     );
 end glue_bram;
 
@@ -140,11 +138,8 @@ architecture Behavioral of glue_bram is
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_ce, sio_break, sio_tx: std_logic;
 
-    -- onboard LEDs, buttons and switches
-    signal R_leds: std_logic_vector(15 downto 0);
-    signal R_lcd_7seg: std_logic_vector(15 downto 0);
-    signal R_btns: std_logic_vector(15 downto 0);
-    signal R_sw: std_logic_vector(15 downto 0);
+    -- Simple I/O: onboard LEDs, buttons and switches
+    signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
    
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
@@ -228,43 +223,41 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) and io_addr_strobe = '1' and dmem_write = '1' then
-	    -- LEDs
-	    if C_leds_btns and io_addr(11 downto 4) = x"71" then
+	    -- simple out
+	    if C_simple_io and io_addr(11 downto 4) = x"71" then
 		if dmem_byte_sel(0) = '1' then
-		    R_leds(7 downto 0) <= cpu_to_dmem(7 downto 0);
+		    R_simple_out(7 downto 0) <= cpu_to_dmem(7 downto 0);
 		end if;
 		if dmem_byte_sel(1) = '1' then
-		    R_leds(15 downto 8) <= cpu_to_dmem(15 downto 8);
+		    R_simple_out(15 downto 8) <= cpu_to_dmem(15 downto 8);
 		end if;
 		if dmem_byte_sel(2) = '1' then
-		    R_lcd_7seg(7 downto 0) <= cpu_to_dmem(23 downto 16);
+		    R_simple_out(23 downto 16) <= cpu_to_dmem(23 downto 16);
 		end if;
 		if dmem_byte_sel(3) = '1' then
-		    R_lcd_7seg(15 downto 8) <= cpu_to_dmem(31 downto 24);
+		    R_simple_out(31 downto 24) <= cpu_to_dmem(31 downto 24);
 		end if;
 	    end if;
 	end if;
-	if C_leds_btns and rising_edge(clk) then
-	    R_sw <= sw;
-	    R_btns <= btns;
+	if C_simple_io and rising_edge(clk) then
+	    R_simple_in <= simple_in;
 	end if;
     end process;
 
-    G_led_standard:
+    G_simple_out_standard:
     if C_timer = false and C_pid = false generate
-      leds <= R_leds when C_leds_btns else (others => '-');
+      simple_out <= R_simple_out when C_simple_io else (others => '-');
     end generate;
     -- muxing LEDs to show PWM of timer or PID
-    G_led_timer:
+    G_simple_out_timer:
     if C_timer = true or C_pid = true generate
-      ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_leds(1);
-      ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_leds(2);
-      leds <= R_leds(15 downto 3) & ocp_mux & R_leds(0) when C_leds_btns
+      ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
+      ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
+      simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_io
         else (others => '-');
     end generate;
-    lcd_7seg <= R_lcd_7seg when C_leds_btns else (others => '-');
 
-    process(io_addr, R_sw, R_btns, from_sio, from_timer, from_gpio)
+    process(io_addr, R_simple_in, from_sio, from_timer, from_gpio)
     begin
 	case io_addr(11 downto 4) is
 	when x"00" | x"01" =>
@@ -310,14 +303,14 @@ begin
 		io_to_cpu <= (others => '-');
 	    end if;
 	when x"70"  =>
-	    if C_leds_btns then
-		io_to_cpu <= R_sw & R_btns;
+	    if C_simple_io then
+		io_to_cpu <= R_simple_in;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
 	when x"71"  =>
-	    if C_leds_btns then
-		io_to_cpu <= R_lcd_7seg & R_leds;
+	    if C_simple_io then
+		io_to_cpu <= R_simple_out;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
@@ -386,7 +379,7 @@ begin
     -- Timer
     G_timer:
     if C_timer generate
-    icp <= R_leds(3) & R_leds(0); -- during debug period, leds will serve as software-generated ICP
+    icp <= R_simple_out(3) & R_simple_out(0); -- during debug period, leds will serve as software-generated ICP
     timer: entity work.timer
     generic map (
 	C_pres => 10,
