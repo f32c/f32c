@@ -53,7 +53,7 @@ entity glue is
 	C_pid_prescaler: integer := 18;
 	C_pid_precision: integer := 1;
 	C_pid_pwm_bits: integer := 12;
-	C_leds_btns: boolean := true
+	C_simple_io: boolean := true
     );
     port (
 	clk_25m: in std_logic;
