@@ -45,7 +45,6 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
-	C_sio: boolean := true;
 	C_leds_btns: boolean := true
     );
     port (
