@@ -103,8 +103,8 @@ begin
     )
     port map (
 	clk => clk,
-	rs232_tx => rs232_dce_txd, rs232_rx => rs232_dce_rxd,
-	rs232_break => rs232_break,
+	sio_txd(0) => rs232_dce_txd, sio_txd(0) => rs232_dce_rxd,
+	sio_break(0) => rs232_break,
 	gpio(7 downto 0)   => IO_P1(7 downto 0),
 	gpio(15 downto 8)  => IO_P2(7 downto 0),
 	gpio(23 downto 16) => IO_P4(7 downto 0),

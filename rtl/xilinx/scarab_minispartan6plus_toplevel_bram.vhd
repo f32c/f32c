@@ -110,8 +110,8 @@ begin
     )
     port map (
 	clk => clk,
-	rs232_tx => rs232_tx, rs232_rx => rs232_rx,
-	rs232_break => rs232_break,
+	sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
+	sio_break(0) => rs232_break,
 	gpio(11 downto 0) => porta(11 downto 0),
 	gpio(23 downto 12) => portb(11 downto 0),
 	gpio(31 downto 24) => portc(7 downto 0),
