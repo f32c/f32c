@@ -23,8 +23,6 @@
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
 --
--- $Id$
---
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -32,6 +30,7 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 use work.f32c_pack.all;
+use work.f32c_soc.all;
 
 
 entity glue_bram is
@@ -70,7 +69,7 @@ entity glue_bram is
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;	-- in KBytes
-	C_sio: boolean := true;
+	C_sio: integer := 1;
 	C_sio_break_detect: boolean := true;
 	C_gpio: boolean := true;
 	C_timer: boolean := true;
@@ -78,8 +77,8 @@ entity glue_bram is
     );
     port (
 	clk: in std_logic;
-	rs232_rx: in std_logic;
-	rs232_tx, rs232_break: out std_logic;
+	sio_rxd: in std_logic_vector(0 to C_sio - 1);
+	sio_txd, sio_break: out std_logic_vector(0 to C_sio - 1);
 	btns: in std_logic_vector(15 downto 0);
 	sw: in std_logic_vector(15 downto 0);
 	gpio: inout std_logic_vector(31 downto 0);
@@ -115,8 +114,11 @@ architecture Behavioral of glue_bram is
     signal gpio_intr: std_logic;
 
     -- Serial I/O (RS232)
-    signal from_sio: std_logic_vector(31 downto 0);
-    signal sio_ce, sio_break, sio_tx: std_logic;
+    type from_sio_type is array (0 to C_sio - 1) of
+      std_logic_vector(31 downto 0);
+    signal from_sio: from_sio_type;
+    signal sio_ce, sio_tx, sio_rx: std_logic_vector(0 to C_sio - 1);
+    signal sio_break_internal: std_logic_vector(0 to C_sio - 1);
 
     -- onboard LEDs, buttons and switches
     signal R_leds: std_logic_vector(15 downto 0);
@@ -153,7 +155,7 @@ begin
 	C_debug => C_debug
     )
     port map (
-	clk => clk, reset => sio_break, intr => intr,
+	clk => clk, reset => sio_break_internal(0), intr => intr,
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,
@@ -174,7 +176,7 @@ begin
 	debug_active => debug_active
     );
     final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
-    intr <= "00" & gpio_intr & timer_intr & from_sio(8) & '0';
+    intr <= "00" & gpio_intr & timer_intr & from_sio(0)(8) & '0';
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
@@ -182,23 +184,25 @@ begin
     dmem_data_ready <= '1';
 
     -- RS232 sio
-    G_sio:
-    if C_sio generate
-    sio: entity work.sio
-    generic map (
-	C_clk_freq => C_clk_freq,
-	C_break_detect => C_sio_break_detect,
-	C_break_resets_baudrate => C_sio_break_detect,
-	C_big_endian => C_big_endian
-    )
-    port map (
-	clk => clk, ce => sio_ce, txd => sio_tx, rxd => rs232_rx,
-	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_sio, break => sio_break
-    );
-    sio_ce <= io_addr_strobe when io_addr(11 downto 4) = x"30" else '0';
-    rs232_break <= sio_break;
+    G_sio: for i in 0 to C_sio - 1 generate
+	sio_instance: entity work.sio
+	generic map (
+	    C_clk_freq => C_clk_freq,
+	    C_break_detect => C_sio_break_detect,
+	    C_break_resets_baudrate => C_sio_break_detect,
+	    C_big_endian => C_big_endian
+	)
+	port map (
+	    clk => clk, ce => sio_ce(i), txd => sio_tx(i), rxd => sio_rx(i),
+	    bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	    bus_in => cpu_to_dmem, bus_out => from_sio(i),
+	    break => sio_break_internal(i)
+	);
+	sio_ce(i) <= io_addr_strobe when io_addr(11 downto 4) = x"30" and
+	  io_addr(3 downto 2) = i else '0';
+	sio_break(i) <= sio_break_internal(i);
     end generate;
+    sio_rx(0) <= sio_rxd(0);
 
     --
     -- I/O
@@ -243,6 +247,7 @@ begin
     lcd_7seg <= R_lcd_7seg when C_leds_btns else (others => '-');
 
     process(io_addr, R_sw, R_btns, from_sio, from_timer, from_gpio)
+	variable i: integer;
     begin
 	case io_addr(11 downto 4) is
 	when x"00" | x"01" =>
@@ -258,11 +263,12 @@ begin
 		io_to_cpu <= (others => '-');
 	    end if;
 	when x"30"  =>
-	    if C_sio then
-		io_to_cpu <= from_sio;
-	    else
-		io_to_cpu <= (others => '-');
-	    end if;
+	    io_to_cpu <= (others => '-');
+	    for i in 0 to C_sio - 1 loop
+		if io_addr(3 downto 2) = i then
+		    io_to_cpu <= from_sio(0);
+		end if;
+	    end loop;
 	when x"70"  =>
 	    if C_leds_btns then
 		io_to_cpu <= R_sw & R_btns;
@@ -372,7 +378,7 @@ begin
 	C_big_endian => false
     )
     port map (
-	clk => clk, ce => '1', txd => deb_tx, rxd => rs232_rx,
+	clk => clk, ce => '1', txd => deb_tx, rxd => sio_rxd(0),
 	bus_write => deb_sio_tx_strobe, byte_sel => "0001",
 	bus_in(7 downto 0) => debug_to_sio_data,
 	bus_in(31 downto 8) => x"000000",
@@ -383,6 +389,6 @@ begin
     );
     end generate;
 
-    rs232_tx <= sio_tx when not C_debug or debug_active = '0' else deb_tx;
+    sio_txd(0) <= sio_tx(0) when not C_debug or debug_active = '0' else deb_tx;
 
 end Behavioral;

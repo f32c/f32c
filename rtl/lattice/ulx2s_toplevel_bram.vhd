@@ -23,8 +23,6 @@
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
 --
--- $Id$
---
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -45,7 +43,7 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
-	C_sio: boolean := true;
+	C_sio: integer := 1;
 	C_pid: boolean := true;
 	C_leds_btns: boolean := true
     );
@@ -83,11 +81,14 @@ begin
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
-	C_debug => C_debug
+	C_debug => C_debug,
+	C_sio => C_sio
     )
     port map (
 	clk => clk,
-	rs232_tx => rs232_tx, rs232_rx => rs232_rx, rs232_break => rs232_break,
+	sio_txd(0) => rs232_tx,
+	sio_rxd(0) => rs232_rx,
+	sio_break(0) => rs232_break,
 	gpio(0) => j1_2,
 	gpio(1) => j1_3,
 	gpio(2) => j1_4,
