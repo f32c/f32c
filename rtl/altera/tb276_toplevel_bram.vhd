@@ -86,7 +86,7 @@ begin
     )
     port map (
 	clk => clk,
-	rs232_tx => rs232_txd, rs232_rx => rs232_rxd,
+	sio_txd(0) => rs232_txd, sio_rxd(0) => rs232_rxd,
 	gpio => gpio(31 downto 0),
 	leds(7 downto 0) => led,
 	leds(15 downto 8) => open,
