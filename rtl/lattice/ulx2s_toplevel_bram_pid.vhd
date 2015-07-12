@@ -127,5 +127,5 @@ begin
 	simple_in(4 downto 0) => btns, simple_in(15 downto 5) => open,
 	simple_in(19 downto 16) => sw, simple_in(31 downto 20) => open
     );
-    btns <= btn_left & btn_right & btn_up & btn_down & btn_center;
+    btns <= btn_center & btn_up & btn_down & btn_left & btn_right;
 end Behavioral;
