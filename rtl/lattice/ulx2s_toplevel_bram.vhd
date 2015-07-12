@@ -43,6 +43,7 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
+	C_gpio: integer := 29;
 	C_sio: integer := 1;
 	C_pid: boolean := true;
 	C_leds_btns: boolean := true
@@ -82,6 +83,7 @@ begin
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
 	C_debug => C_debug,
+	C_gpio => C_gpio,
 	C_sio => C_sio
     )
     port map (
