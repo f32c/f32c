@@ -55,5 +55,6 @@ SRCS = \
 ../../../cpu/alu.vhd \
 ../../../cpu/debug.vhd \
 ../../../soc/sio.vhd \
+../../../soc/spi.vhd \
 ../../../soc/gpio.vhd \
 ../../../soc/timer.vhd \
