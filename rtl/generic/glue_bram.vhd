@@ -219,7 +219,8 @@ begin
     G_spi: for i in 0 to C_spi - 1 generate
 	spi_instance: entity work.spi
 	generic map (
-	    C_turbo_mode => C_spi_turbo_mode(i) = '1'
+	    C_turbo_mode => C_spi_turbo_mode(i) = '1',
+	    C_fixed_speed => C_spi_fixed_speed(i) = '1'
 	)
 	port map (
 	    clk => clk, ce => spi_ce(i),
