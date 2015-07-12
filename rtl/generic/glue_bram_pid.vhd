@@ -246,12 +246,12 @@ begin
     end process;
 
     G_simple_out_standard:
-    if C_timer = false and C_pid = false generate
+    if C_timer = false generate
       simple_out <= R_simple_out when C_simple_io else (others => '-');
     end generate;
     -- muxing LEDs to show PWM of timer or PID
     G_simple_out_timer:
-    if C_timer = true or C_pid = true generate
+    if C_timer = true generate
       ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
       ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
       simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_io
