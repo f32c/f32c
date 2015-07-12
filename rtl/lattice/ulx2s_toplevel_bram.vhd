@@ -89,6 +89,7 @@ begin
 	sio_txd(0) => rs232_tx,
 	sio_rxd(0) => rs232_rx,
 	sio_break(0) => rs232_break,
+	spi_sck => open, spi_ss => open, spi_mosi => open, spi_miso => "",
 	gpio(0) => j1_2,
 	gpio(1) => j1_3,
 	gpio(2) => j1_4,
