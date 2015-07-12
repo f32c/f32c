@@ -260,10 +260,9 @@ begin
 		io_to_cpu <= from_timer;
 	    end if;
 	when x"30"  =>
-	    io_to_cpu <= (others => '-');
 	    for i in 0 to C_sio - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
-		    io_to_cpu <= from_sio(0);
+		    io_to_cpu <= from_sio(i);
 		end if;
 	    end loop;
 	when x"70"  =>
