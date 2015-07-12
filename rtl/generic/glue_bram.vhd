@@ -218,13 +218,15 @@ begin
     -- SPI
     G_spi: for i in 0 to C_spi - 1 generate
 	spi_instance: entity work.spi
---	generic map ( )
+	generic map (
+	    C_turbo_mode => C_spi_turbo_mode(i) = '1'
+	)
 	port map (
 	    clk => clk, ce => spi_ce(i),
 	    bus_write => dmem_write, byte_sel => dmem_byte_sel,
 	    bus_in => cpu_to_dmem, bus_out => from_spi(i),
 	    spi_sck => spi_sck(i), spi_cen => spi_ss(i),
-	    spi_si => spi_miso(i), spi_so => spi_mosi(i)
+	    spi_miso => spi_miso(i), spi_mosi => spi_mosi(i)
 	);
 	spi_ce(i) <= io_addr_strobe when io_addr(11 downto 4) = x"34" and
 	  conv_integer(io_addr(3 downto 2)) = i else '0';
