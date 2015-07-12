@@ -35,6 +35,7 @@ vhdfiles = \
 ../../../cpu/idecode_rv32.vhd \
 ../../../cpu/debug.vhd \
 ../../../soc/sio.vhd \
+../../../soc/spi.vhd \
 ../../../soc/gpio.vhd \
 ../../../soc/timer.vhd 
 
