@@ -324,7 +324,7 @@ begin
 	bus_write => io_write, byte_sel => io_byte_sel,
 	bus_in => cpu_to_io, bus_out => from_flash,
 	spi_sck => flash_sck, spi_cen => flash_cen,
-	spi_si => flash_si, spi_so => flash_so
+	spi_mosi => flash_si, spi_miso => flash_so
     );
     flash_ce <= io_addr_strobe(R_cur_io_port) when
       io_addr(11 downto 4) = x"34" else '0';
