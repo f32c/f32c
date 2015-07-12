@@ -72,15 +72,15 @@ entity glue_bram is
 	C_mem_size: integer := 16;	-- in KBytes
 	C_sio: boolean := true;
 	C_sio_break_detect: boolean := true;
-	C_gpios: integer range 0 to 4 := 1; -- number of 32-bit gpio units
+	C_gpio: integer range 0 to 128 := 32; -- gpio pins, up to 32 fit in 1 GPIO instance
 	C_timer: boolean := true;
 	C_pid: boolean := true;
 	C_pids: integer := 2;
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real 
-	C_pid_prescaler: integer range 10 to 26 := 18; -- control loop frequency
+	C_pid_prescaler: integer range 10 to 26 := 18; -- control loop frequency f_clk/2^prescaler
 	C_pid_precision: integer range 0 to 8 := 1; -- fixed point PID precision
-        C_pid_pwm_bits: integer range 11 to 32 := 12; -- clock divider bits define PWM output frequency (min 11 => 40kHz @ 81.25MHz)
-        C_pid_fp: integer range 11 to 32 := 8; -- frequency in pid calc, use 26-C_pid_prescaler
+        C_pid_pwm_bits: integer range 11 to 32 := 12; -- PWM output frequency f_clk/2^pwmbits (min 11 => 40kHz @ 81.25MHz)
+        C_pid_fp: integer range 11 to 32 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
         C_simple_io: boolean := true
     );
     port (
@@ -117,6 +117,7 @@ architecture Behavioral of glue_bram is
     signal timer_intr: std_logic;
     
     -- GPIO
+    constant C_gpios: integer := (C_gpio-1)/32+1; -- number of gpio units
     type gpios_type is array (C_gpios-1 downto 0) of std_logic_vector(31 downto 0);
     signal from_gpio, gpios: gpios_type;
     signal gpio_ce: std_logic_vector(C_gpios-1 downto 0);
