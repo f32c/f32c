@@ -117,7 +117,7 @@ architecture Behavioral of glue_bram is
     signal timer_intr: std_logic;
     
     -- GPIO
-    constant C_gpios: integer := (C_gpio-1)/32+1; -- number of gpio units
+    constant C_gpios: integer := (C_gpio+31)/32; -- number of gpio units
     type gpios_type is array (C_gpios-1 downto 0) of std_logic_vector(31 downto 0);
     signal from_gpio, gpios: gpios_type;
     signal gpio_ce: std_logic_vector(C_gpios-1 downto 0);
