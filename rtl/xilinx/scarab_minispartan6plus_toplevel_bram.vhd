@@ -48,7 +48,9 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 64;
-	C_leds_btns: boolean := true
+	C_sio: integer := 1;
+	C_gpio: integer := 32;
+	C_simple_io: boolean := true
     );
     port (
 	clk_50MHz: in std_logic;
@@ -105,19 +107,21 @@ begin
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
+	C_gpio => C_gpio,
+	C_sio => C_sio,
 	C_debug => C_debug
     )
     port map (
 	clk => clk,
 	sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
 	sio_break(0) => rs232_break,
+	spi_sck => open, spi_ss => open, spi_mosi => open, spi_miso => "",
 	gpio(11 downto 0) => porta(11 downto 0),
 	gpio(23 downto 12) => portb(11 downto 0),
 	gpio(31 downto 24) => portc(7 downto 0),
-	leds(7 downto 0) => leds(7 downto 0),
-	leds(15 downto 8) => open,
-	btns(15 downto 0) => (others => '-'),
-	sw(3 downto 0) => sw(4 downto 1),
-	sw(15 downto 4) => (others => '-')
+	gpio(127 downto 32) => open,
+	simple_out(7 downto 0) => leds(7 downto 0), simple_out(31 downto 8) => open,
+	simple_in(15 downto 0) => open,
+	simple_in(19 downto 16) => sw(4 downto 1), simple_in(31 downto 20) => open
     );
 end Behavioral;
