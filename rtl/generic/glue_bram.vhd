@@ -71,14 +71,19 @@ entity glue_bram is
 	C_mem_size: integer := 16;	-- in KBytes
 	C_sio: integer := 1;
 	C_sio_break_detect: boolean := true;
+	C_spi: integer := 0;
+	C_spi_turbo_mode: std_logic_vector := "0000";
+	C_spi_fixed_speed: std_logic_vector := "0000";
 	C_gpio: boolean := true;
 	C_timer: boolean := true;
 	C_leds_btns: boolean := true
     );
     port (
 	clk: in std_logic;
-	sio_rxd: in std_logic_vector(0 to C_sio - 1);
-	sio_txd, sio_break: out std_logic_vector(0 to C_sio - 1);
+	sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
+	sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
+	spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
+	spi_miso: in std_logic_vector(C_spi - 1 downto 0);
 	btns: in std_logic_vector(15 downto 0);
 	sw: in std_logic_vector(15 downto 0);
 	gpio: inout std_logic_vector(31 downto 0);
@@ -117,8 +122,14 @@ architecture Behavioral of glue_bram is
     type from_sio_type is array (0 to C_sio - 1) of
       std_logic_vector(31 downto 0);
     signal from_sio: from_sio_type;
-    signal sio_ce, sio_tx, sio_rx: std_logic_vector(0 to C_sio - 1);
-    signal sio_break_internal: std_logic_vector(0 to C_sio - 1);
+    signal sio_ce, sio_tx, sio_rx: std_logic_vector(C_sio - 1 downto 0);
+    signal sio_break_internal: std_logic_vector(C_sio - 1 downto 0);
+
+    -- SPI (on-board Flash, SD card, others...)
+    type from_spi_type is array (0 to C_spi - 1) of
+      std_logic_vector(31 downto 0);
+    signal from_spi: from_spi_type;
+    signal spi_ce: std_logic_vector(C_sio - 1 downto 0);
 
     -- onboard LEDs, buttons and switches
     signal R_leds: std_logic_vector(15 downto 0);
@@ -204,6 +215,21 @@ begin
     end generate;
     sio_rx(0) <= sio_rxd(0);
 
+    -- SPI
+    G_spi: for i in 0 to C_spi - 1 generate
+	spi_instance: entity work.spi
+--	generic map ( )
+	port map (
+	    clk => clk, ce => spi_ce(i),
+	    bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	    bus_in => cpu_to_dmem, bus_out => from_spi(i),
+	    spi_sck => spi_sck(i), spi_cen => spi_ss(i),
+	    spi_si => spi_miso(i), spi_so => spi_mosi(i)
+	);
+	spi_ce(i) <= io_addr_strobe when io_addr(11 downto 4) = x"34" and
+	  conv_integer(io_addr(3 downto 2)) = i else '0';
+    end generate;
+
     --
     -- I/O
     --
@@ -263,6 +289,12 @@ begin
 	    for i in 0 to C_sio - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
 		    io_to_cpu <= from_sio(i);
+		end if;
+	    end loop;
+	when x"34"  =>
+	    for i in 0 to C_spi - 1 loop
+		if conv_integer(io_addr(3 downto 2)) = i then
+		    io_to_cpu <= from_spi(i);
 		end if;
 	    end loop;
 	when x"70"  =>
