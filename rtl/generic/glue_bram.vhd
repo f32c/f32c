@@ -199,7 +199,7 @@ begin
 	    break => sio_break_internal(i)
 	);
 	sio_ce(i) <= io_addr_strobe when io_addr(11 downto 4) = x"30" and
-	  io_addr(3 downto 2) = i else '0';
+	  conv_integer(io_addr(3 downto 2)) = i else '0';
 	sio_break(i) <= sio_break_internal(i);
     end generate;
     sio_rx(0) <= sio_rxd(0);
@@ -249,39 +249,32 @@ begin
     process(io_addr, R_sw, R_btns, from_sio, from_timer, from_gpio)
 	variable i: integer;
     begin
+	io_to_cpu <= (others => '-');
 	case io_addr(11 downto 4) is
 	when x"00" | x"01" =>
 	    if C_gpio then
 		io_to_cpu <= from_gpio;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;	
 	when x"10" | x"11" | x"12" | x"13"  =>
 	    if C_timer then
 		io_to_cpu <= from_timer;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
 	when x"30"  =>
 	    io_to_cpu <= (others => '-');
 	    for i in 0 to C_sio - 1 loop
-		if io_addr(3 downto 2) = i then
+		if conv_integer(io_addr(3 downto 2)) = i then
 		    io_to_cpu <= from_sio(0);
 		end if;
 	    end loop;
 	when x"70"  =>
 	    if C_leds_btns then
 		io_to_cpu <= R_sw & R_btns;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
 	when x"71"  =>
 	    if C_leds_btns then
 		io_to_cpu <= R_lcd_7seg & R_leds;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
-	when others =>
+	when others  =>
 	    io_to_cpu <= (others => '-');
 	end case;
     end process;
