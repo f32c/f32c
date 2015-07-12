@@ -42,8 +42,8 @@ entity spi is
 	byte_sel: in std_logic_vector(3 downto 0);
 	bus_in: in std_logic_vector(31 downto 0);
 	bus_out: out std_logic_vector(31 downto 0);
-	spi_sck, spi_si, spi_cen: out std_logic;
-	spi_so: in std_logic
+	spi_sck, spi_mosi, spi_cen: out std_logic;
+	spi_miso: in std_logic
     );
 end spi;
 
@@ -71,7 +71,7 @@ begin
 
     spi_cen <= R_cen;
     spi_sck <= not clk and not R_bit_cnt(3) when C_turbo_mode else R_clk_acc(7);
-    spi_si <= R_spi_byte(7);
+    spi_mosi <= R_spi_byte(7);
 
     process(clk)
 	variable clk_acc_next: std_logic_vector(7 downto 0);
@@ -104,12 +104,12 @@ begin
 	    -- tx / rx logic
 	    if R_bit_cnt(3) = '0' then
 		if C_turbo_mode then
-		    R_spi_byte <= R_spi_byte(6 downto 0) & spi_so;
+		    R_spi_byte <= R_spi_byte(6 downto 0) & spi_miso;
 		    R_bit_cnt <= R_bit_cnt + 1;
 		else
 		    -- sample input on falling clock edge
 		    if clk_acc_next(7) = '0' and R_clk_acc(7) = '1' then
-			R_spi_byte <= R_spi_byte(6 downto 0) & spi_so;
+			R_spi_byte <= R_spi_byte(6 downto 0) & spi_miso;
 			R_bit_cnt <= R_bit_cnt + 1;
 		    end if;
 		end if;
