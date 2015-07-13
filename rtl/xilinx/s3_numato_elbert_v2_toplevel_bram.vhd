@@ -23,8 +23,6 @@
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
 --
--- $Id$
---
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -55,9 +53,13 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 6;
+	C_PC_mask: std_logic_vector := x"00001fff"; -- 8 K
+	C_sio_fixed_baudrate: boolean := true;
 	C_sio_break_detect: boolean := false;
-	C_timer: boolean := false;
-	C_gpio: integer := 0
+	C_simple_in: integer := 0;
+	C_simple_out: integer := 4;
+	C_gpio: integer := 0;
+	C_timer: boolean := false
     );
     port (
 	Clk_12MHz: in std_logic;
@@ -96,7 +98,7 @@ begin
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
     generic map (
-	C_PC_mask => x"00003fff", -- 8 K
+	C_PC_mask => C_PC_mask,
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
 	C_mem_size => C_mem_size,
@@ -106,9 +108,12 @@ begin
 	C_result_forwarding => C_result_forwarding,
 	C_full_shifter => C_full_shifter,
 	C_exceptions => C_exceptions,
+	C_sio_fixed_baudrate => C_sio_fixed_baudrate,
 	C_sio_break_detect => C_sio_break_detect,
-	C_timer => C_timer,
-	C_gpio => C_gpio
+	C_simple_in => C_simple_in,
+	C_simple_out => C_simple_out,
+	C_gpio => C_gpio,
+	C_timer => C_timer
     )
     port map (
 	clk => clk,
@@ -119,9 +124,9 @@ begin
 --	gpio(23 downto 16) => IO_P4(7 downto 0),
 --	gpio(31 downto 24) => IO_P6(7 downto 0),
 	simple_out(7 downto 0) => LED,
-	simple_out(31 downto 8) => open
---	simple_out(15 downto 8) => SevenSegment(7 downto 0),
---	simple_out(18 downto 16) => Enable(2 downto 0),
+	simple_out(15 downto 8) => SevenSegment(7 downto 0),
+	simple_out(18 downto 16) => Enable(2 downto 0),
+	simple_out(31 downto 19) => open
 --	simple_in(5 downto 0) => Switch(5 downto 0),
 --	simple_in(23 downto 16) => DPSwitch(7 downto 0)
     );
