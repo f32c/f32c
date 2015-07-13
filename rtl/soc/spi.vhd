@@ -61,7 +61,8 @@ end spi;
 architecture Behavioral of spi is
     signal R_bit_cnt: std_logic_vector(3 downto 0);
     signal R_spi_byte: std_logic_vector(7 downto 0);
-    signal R_clk_div, R_clk_acc: std_logic_vector(7 downto 0);
+    signal R_clk_div: std_logic_vector(7 downto 0) := x"80";
+    signal R_clk_acc: std_logic_vector(7 downto 0);
     signal R_cen: std_logic;
 
 begin

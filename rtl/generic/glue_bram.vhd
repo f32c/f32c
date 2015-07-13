@@ -73,7 +73,7 @@ entity glue_bram is
 	C_sio_break_detect: boolean := true;
 	C_spi: integer := 0;
 	C_spi_turbo_mode: std_logic_vector := "0000";
-	C_spi_fixed_speed: std_logic_vector := "0000";
+	C_spi_fixed_speed: std_logic_vector := "1111";
 	C_gpio: integer range 0 to 128 := 32; -- gpio pins, up to 32 fit in 1 GPIO instance
 	C_timer: boolean := true;
 	C_simple_io: boolean := true
@@ -130,7 +130,7 @@ architecture Behavioral of glue_bram is
     type from_spi_type is array (0 to C_spi - 1) of
       std_logic_vector(31 downto 0);
     signal from_spi: from_spi_type;
-    signal spi_ce: std_logic_vector(C_sio - 1 downto 0);
+    signal spi_ce: std_logic_vector(C_spi - 1 downto 0);
 
     -- Simple I/O: onboard LEDs, buttons and switches
     signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
