@@ -120,8 +120,3 @@ NET "sdcard_so"                       LOC = K14     | IOSTANDARD = LVCMOS33 | DR
 NET "sdcard_cen"                       LOC = L13     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #CS
 NET "sdcard_si"                        LOC = G16     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #SI
 NET "sdcard_sck"                        LOC = L12     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #CLK
-
-#LOCATE COMP "sdcard_cen" SITE "15";	# OUT
-#LOCATE COMP "sdcard_sck" SITE "20";	# OUT
-#LOCATE COMP "sdcard_si" SITE "17";	# OUT
-#LOCATE COMP "sdcard_so" SITE "21";	# IN
