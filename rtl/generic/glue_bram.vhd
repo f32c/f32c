@@ -207,8 +207,8 @@ begin
 	    bus_in => cpu_to_dmem, bus_out => from_sio(i),
 	    break => sio_break_internal(i)
 	);
-	sio_ce(i) <= io_addr_strobe when io_addr(11 downto 4) = x"30" and
-	  conv_integer(io_addr(3 downto 2)) = i else '0';
+	sio_ce(i) <= io_addr_strobe when io_addr(11 downto 6) = x"3" & "00" and
+	  conv_integer(io_addr(5 downto 4)) = i else '0';
 	sio_break(i) <= sio_break_internal(i);
     end generate;
     sio_rx(0) <= sio_rxd(0);
@@ -227,8 +227,8 @@ begin
 	    spi_sck => spi_sck(i), spi_cen => spi_ss(i),
 	    spi_miso => spi_miso(i), spi_mosi => spi_mosi(i)
 	);
-	spi_ce(i) <= io_addr_strobe when io_addr(11 downto 4) = x"34" and
-	  conv_integer(io_addr(3 downto 2)) = i else '0';
+	spi_ce(i) <= io_addr_strobe when io_addr(11 downto 6) = x"3" & "01" and
+	  conv_integer(io_addr(5 downto 4)) = i else '0';
     end generate;
 
     --
@@ -279,40 +279,32 @@ begin
 	when x"00" | x"01" =>
 	    if C_gpios >= 1 then
 		io_to_cpu <= from_gpio(0);
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
 	when x"02" | x"03" =>
 	    if C_gpios >= 2 then
 		io_to_cpu <= from_gpio(1);
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
 	when x"04" | x"05" =>
 	    if C_gpios >= 3 then
 		io_to_cpu <= from_gpio(2);
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
 	when x"06" | x"07" =>
 	    if C_gpios >= 4 then
 		io_to_cpu <= from_gpio(3);
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
 	when x"10" | x"11" | x"12" | x"13"  =>
 	    if C_timer then
 		io_to_cpu <= from_timer;
 	    end if;
-	when x"30"  =>
+	when x"30" | x"31" | x"32" | x"33" =>
 	    for i in 0 to C_sio - 1 loop
-		if conv_integer(io_addr(3 downto 2)) = i then
+		if conv_integer(io_addr(5 downto 4)) = i then
 		    io_to_cpu <= from_sio(i);
 		end if;
 	    end loop;
-	when x"34"  =>
+	when x"34" | x"35" | x"36" | x"37" =>
 	    for i in 0 to C_spi - 1 loop
-		if conv_integer(io_addr(3 downto 2)) = i then
+		if conv_integer(io_addr(5 downto 4)) = i then
 		    io_to_cpu <= from_spi(i);
 		end if;
 	    end loop;
