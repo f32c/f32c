@@ -47,7 +47,10 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 32;
-	C_leds_btns: boolean := true
+	C_sio: integer := 1;
+ 	C_spi: integer := 1;
+	C_gpio: integer := 31;
+	C_simple_io: boolean := true
     );
     port (
 	clk_50m: in std_logic;
@@ -90,22 +93,32 @@ begin
     generic map (
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
-	C_mem_size => C_mem_size
+	C_mem_size => C_mem_size,
+	C_sio => C_sio,
+	C_gpio => C_gpio
     )
     port map (
 	clk => clk,
 	sio_txd(0) => rs232_dce_txd, sio_rxd(0) => rs232_dce_rxd,
 	sio_break(0) => rs232_break,
-	gpio(3 downto 0) => j1, gpio(7 downto 4) => j2,
-	gpio(31 downto 8) => open,
-	leds(7 downto 0) => led, leds(15 downto 8) => open,
-	lcd_7seg => lcd_7seg, btns => btns,
-	sw(15 downto 4) => x"000", sw(3 downto 0) => sw
-    );
-    lcd_db <= lcd_7seg(3 downto 0);
-    lcd_rs <= lcd_7seg(4);
-    lcd_e <= lcd_7seg(5);
-    lcd_rw <= '0';
-    btns <= x"00" & '0' & rot_a & rot_b & rot_center &
-      btn_north & btn_south & btn_west & btn_east;
+	spi_sck => open, spi_ss => open, spi_mosi => open, spi_miso => "",
+	gpio(3 downto 0) => j1(3 downto 0),
+	gpio(7 downto 4) => j2(3 downto 0),
+	gpio(127 downto 8) => open,
+	simple_out(7 downto 0) => led(7 downto 0),
+	simple_out(11 downto 8) => lcd_db(3 downto 0),
+   simple_out(12) => lcd_e,
+	simple_out(13) => lcd_rs,
+	simple_out(14) => lcd_rw,
+   simple_out(31 downto 15) => open,
+	simple_in(0) => rot_a,
+	simple_in(1) => rot_b, 
+	simple_in(2) => rot_center,
+	simple_in(3) => btn_south,
+	simple_in(4) => btn_north,
+	simple_in(5) => btn_east,
+	simple_in(6) => btn_west,
+	simple_in(10 downto 7) => sw(3 downto 0)
+   );
+
 end Behavioral;
