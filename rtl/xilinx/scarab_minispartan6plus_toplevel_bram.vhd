@@ -49,6 +49,7 @@ entity glue is
 	-- SoC configuration options
 	C_mem_size: integer := 64;
 	C_sio: integer := 1;
+	C_spi: integer := 2;
 	C_gpio: integer := 32;
 	C_simple_io: boolean := true
     );
@@ -56,6 +57,10 @@ entity glue is
 	clk_50MHz: in std_logic;
 	rs232_tx: out std_logic;
 	rs232_rx: in std_logic;
+	flash_cs, flash_cclk, flash_mosi: out std_logic;
+	flash_miso: in std_logic;
+	sd_clk, sd_cd_dat3, sd_cmd: out std_logic;
+	sd_dat0: in std_logic;
 	leds: out std_logic_vector(7 downto 0);
 	porta, portb: inout std_logic_vector(11 downto 0);
 	portc: inout std_logic_vector(7 downto 0);
@@ -109,13 +114,21 @@ begin
 	C_mem_size => C_mem_size,
 	C_gpio => C_gpio,
 	C_sio => C_sio,
+	C_spi => C_spi,
 	C_debug => C_debug
     )
     port map (
 	clk => clk,
 	sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
 	sio_break(0) => rs232_break,
-	spi_sck => open, spi_ss => open, spi_mosi => open, spi_miso => "",
+	spi_sck(0) => flash_cclk, 
+	spi_sck(1) => sd_clk, 	
+	spi_ss(0) => flash_cs, 
+	spi_ss(1) => sd_cd_dat3, 
+	spi_mosi(0) => flash_mosi, 
+	spi_mosi(1) => sd_cmd,
+	spi_miso(0) => flash_miso,
+	spi_miso(1) => sd_dat0,
 	gpio(11 downto 0) => porta(11 downto 0),
 	gpio(23 downto 12) => portb(11 downto 0),
 	gpio(31 downto 24) => portc(7 downto 0),
