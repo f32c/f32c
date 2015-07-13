@@ -70,13 +70,16 @@ entity glue_bram is
 	-- SoC configuration options
 	C_mem_size: integer := 16;	-- in KBytes
 	C_sio: integer := 1;
+	C_sio_init_baudrate: integer := 115200;
+	C_sio_fixed_baudrate: boolean := false;
 	C_sio_break_detect: boolean := true;
 	C_spi: integer := 0;
 	C_spi_turbo_mode: std_logic_vector := "0000";
 	C_spi_fixed_speed: std_logic_vector := "1111";
-	C_gpio: integer range 0 to 128 := 32; -- gpio pins, up to 32 fit in 1 GPIO instance
-	C_timer: boolean := true;
-	C_simple_io: boolean := true
+	C_simple_in: integer range 0 to 128 := 32;
+	C_simple_out: integer range 0 to 128 := 32;
+	C_gpio: integer range 0 to 128 := 32;
+	C_timer: boolean := true
     );
     port (
 	clk: in std_logic;
@@ -197,6 +200,8 @@ begin
 	sio_instance: entity work.sio
 	generic map (
 	    C_clk_freq => C_clk_freq,
+	    C_init_baudrate => C_sio_init_baudrate,
+	    C_fixed_baudrate => C_sio_fixed_baudrate,
 	    C_break_detect => C_sio_break_detect,
 	    C_break_resets_baudrate => C_sio_break_detect,
 	    C_big_endian => C_big_endian
@@ -238,7 +243,7 @@ begin
     begin
 	if rising_edge(clk) and io_addr_strobe = '1' and dmem_write = '1' then
 	    -- simple out
-	    if C_simple_io and io_addr(11 downto 4) = x"71" then
+	    if C_simple_out > 0 and io_addr(11 downto 4) = x"71" then
 		if dmem_byte_sel(0) = '1' then
 		    R_simple_out(7 downto 0) <= cpu_to_dmem(7 downto 0);
 		end if;
@@ -253,25 +258,27 @@ begin
 		end if;
 	    end if;
 	end if;
-	if C_simple_io and rising_edge(clk) then
-	    R_simple_in <= simple_in;
+	if rising_edge(clk) then
+	    R_simple_in(C_simple_in - 1 downto 0) <=
+	      simple_in(C_simple_in - 1 downto 0);
 	end if;
     end process;
 
     G_simple_out_standard:
     if C_timer = false generate
-      simple_out <= R_simple_out when C_simple_io else (others => '-');
+	simple_out(C_simple_out - 1 downto 0) <=
+	  R_simple_out(C_simple_out - 1 downto 0);
     end generate;
     -- muxing simple_io to show PWM of timer on LEDs
     G_simple_out_timer:
     if C_timer = true generate
       ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
       ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
-      simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_io
+      simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
         else (others => '-');
     end generate;
 
-    process(io_addr, R_simple_in, from_sio, from_timer, from_gpio)
+    process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio)
 	variable i: integer;
     begin
 	io_to_cpu <= (others => '-');
@@ -309,13 +316,19 @@ begin
 		end if;
 	    end loop;
 	when x"70"  =>
-	    if C_simple_io then
-		io_to_cpu <= R_simple_in;
-	    end if;
+	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
+		if conv_integer(io_addr(3 downto 2)) = i then
+		    io_to_cpu(C_simple_in - i * 32 - 1 downto i * 32) <=
+		      R_simple_in(C_simple_in - i * 32 - 1 downto i * 32);
+		end if;
+	    end loop;
 	when x"71"  =>
-	    if C_simple_io then
-		io_to_cpu <= R_simple_out;
-	    end if;
+	    for i in 0 to (C_simple_out + 31) / 4 - 1 loop
+		if conv_integer(io_addr(3 downto 2)) = i then
+		    io_to_cpu(C_simple_out - i * 32 - 1 downto i * 32) <=
+		      R_simple_out(C_simple_out - i * 32 - 1 downto i * 32);
+		end if;
+	    end loop;
 	when others  =>
 	    io_to_cpu <= (others => '-');
 	end case;
