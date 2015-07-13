@@ -1,3 +1,8 @@
+# HINTS
+# cd ../../tools
+# . ./makefiles.sh
+# for BRAM
+# make LOADADDR=0x400
 
 # Do not link standard libs
 WITHOUT_LIBS = true
@@ -21,3 +26,4 @@ CFILES = sdcard_test.c ${LIBSRC}/sio_poll.c \
 ASFILES = ${LIBSRC}/${ARCH}/start.S
 
 include ${POST_MK}
+
