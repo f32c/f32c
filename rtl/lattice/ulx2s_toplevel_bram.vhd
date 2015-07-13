@@ -44,6 +44,7 @@ entity glue is
 	-- SoC configuration options
 	C_mem_size: integer := 16;
 	C_sio: integer := 1;
+	C_spi: integer := 2;
 	C_gpio: integer := 29;
 	C_simple_io: boolean := true
     );
@@ -51,6 +52,10 @@ entity glue is
 	clk_25m: in std_logic;
 	rs232_tx: out std_logic;
 	rs232_rx: in std_logic;
+	flash_so: in std_logic;
+	flash_cen, flash_sck, flash_si: out std_logic;
+	sdcard_so: in std_logic;
+	sdcard_cen, sdcard_sck, sdcard_si: out std_logic;
 	j1_2, j1_3, j1_4, j1_8, j1_9, j1_13, j1_14, j1_15: inout std_logic;
 	j1_16, j1_17, j1_18, j1_19, j1_20, j1_21, j1_22, j1_23: inout std_logic;
 	j2_2, j2_3, j2_4, j2_5, j2_6, j2_7, j2_8, j2_9: inout std_logic;
@@ -82,15 +87,19 @@ begin
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
 	C_debug => C_debug,
-	C_gpio => C_gpio,
-	C_sio => C_sio
+	C_sio => C_sio,
+	C_spi => C_spi,
+	C_gpio => C_gpio
     )
     port map (
 	clk => clk,
 	sio_txd(0) => rs232_tx,
 	sio_rxd(0) => rs232_rx,
 	sio_break(0) => rs232_break,
-	spi_sck => open, spi_ss => open, spi_mosi => open, spi_miso => "",
+	spi_sck(0) => flash_sck, spi_ss(0) => flash_cen,
+	spi_mosi(0) => flash_si, spi_miso(0) => flash_so,
+	spi_sck(1) => sdcard_sck, spi_ss(1) => sdcard_cen,
+	spi_mosi(1) => sdcard_si, spi_miso(1) => sdcard_so,
 	gpio(0) => j1_2,
 	gpio(1) => j1_3,
 	gpio(2) => j1_4,
