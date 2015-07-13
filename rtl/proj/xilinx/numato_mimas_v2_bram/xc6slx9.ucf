@@ -109,3 +109,19 @@ NET "IO_P9[3]"                 LOC = K15      | IOSTANDARD = LVCMOS33 | DRIVE = 
 NET "IO_P9[2]"                 LOC = K16      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 6
 NET "IO_P9[1]"                 LOC = L15      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 7
 NET "IO_P9[0]"                 LOC = L16      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 8
+
+###################################################################################################################################################
+#                                                   Micro SD Card                                                                                 #
+###################################################################################################################################################
+
+NET "DAT0"                       LOC = K14     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #SO
+NET "DAT1"                       LOC = G18     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+NET "DAT2"                       LOC = J13     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+NET "DAT3"                       LOC = L13     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #CS
+NET "CMD"                        LOC = G16     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #SI
+NET "CLK"                        LOC = L12     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #CLK
+
+#LOCATE COMP "sdcard_cen" SITE "15";	# OUT
+#LOCATE COMP "sdcard_sck" SITE "20";	# OUT
+#LOCATE COMP "sdcard_si" SITE "17";	# OUT
+#LOCATE COMP "sdcard_so" SITE "21";	# IN
