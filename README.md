@@ -1,11 +1,17 @@
 # f32c
 
-f32c is a retargetable 32-bit scalar pipelined processor core
-which can execute subsets of either RISC-V
-or MIPS instruction sets.  It is implemented in parametrized
-VHDL which permits synthesis with different area / speed tradeoffs,
-and includes a branch predictor, exception handling control block,
-and optional direct-mapped caches.  There is no MMU.
+f32c is a retargetable 32-bit scalar pipelined processor core which
+can execute subsets of either RISC-V or MIPS instruction sets.
+It is implemented in parametrized VHDL which permits synthesis with
+different area / speed tradeoffs, and includes a branch predictor,
+exception handling control block, and optional direct-mapped caches.
+
+In synthetic integer benchmarks the core yields 1.63 DMIPS/Mhz and
+2.66 CoreMark/MHz.  A performance-tuned f32c SoC which includes a timer
+and a UART occupies only 1048 6-input LUTs, while still being able to
+execute gcc-generated code when synthesized in the most compact
+configuration which consumes just 697 LUTs (649 logic plus 48 memory).
+
 Configurable options include:
 
 ```
@@ -23,12 +29,6 @@ C_load_aligner 	     synthesize load aligner
 C_full_shifter 	     pipelined instead of iterative shifer
 C_debug              synthesize single-stepping debug module
 ```
-
-In synthetic integer benchmarks the core yields 1.63 DMIPS/Mhz and 2.66
-CoreMark/MHz.  A performance-tuned f32c SoC which includes a timer
-and a UART occupies only 1048 6-input LUTs, while still being able
-to execute gcc-generated code when synthesized in the most compact
-configuration which consumes just 697 LUTs.
 
 The RTL code also includes modules such as a multi-port SRAM
 controller, video framebuffer with PAL modulator, SPI, UART, PCM audio,
