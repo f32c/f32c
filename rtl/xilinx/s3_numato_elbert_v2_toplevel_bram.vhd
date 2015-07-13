@@ -45,9 +45,19 @@ entity glue is
 	-- Main clock: N * 10 MHz
 	C_clk_freq: integer := 60;
 
+	-- CPU configuration
+	C_mult_enable: boolean := false;
+	C_branch_prediction: boolean := false;
+	C_load_aligner: boolean := false;
+	C_result_forwarding: boolean := false;
+	C_full_shifter: boolean := false;
+	C_exceptions: boolean := false;
+
 	-- SoC configuration options
 	C_mem_size: integer := 6;
-	C_leds_btns: boolean := true
+	C_sio_break_detect: boolean := false;
+	C_timer: boolean := false;
+	C_gpio: integer := 0
     );
     port (
 	Clk_12MHz: in std_logic;
@@ -90,32 +100,29 @@ begin
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
 	C_mem_size => C_mem_size,
-	C_mult_enable => false,
-	C_branch_prediction => false,
-	C_load_aligner => false,
-	C_full_shifter => false,
-	C_exceptions => false,
---	C_result_forwarding => false,
---	C_sio_break_detect => false,
-	C_timer => false,
-	C_gpio => false
+	C_mult_enable => C_mult_enable,
+	C_branch_prediction => C_branch_prediction,
+	C_load_aligner => C_load_aligner,
+	C_result_forwarding => C_result_forwarding,
+	C_full_shifter => C_full_shifter,
+	C_exceptions => C_exceptions,
+	C_sio_break_detect => C_sio_break_detect,
+	C_timer => C_timer,
+	C_gpio => C_gpio
     )
     port map (
 	clk => clk,
-	sio_txd(0) => rs232_dce_txd, sio_txd(0) => rs232_dce_rxd,
+	sio_txd(0) => rs232_dce_txd, sio_rxd(0) => rs232_dce_rxd,
 	sio_break(0) => rs232_break,
-	gpio(7 downto 0)   => IO_P1(7 downto 0),
-	gpio(15 downto 8)  => IO_P2(7 downto 0),
-	gpio(23 downto 16) => IO_P4(7 downto 0),
-	gpio(31 downto 24) => IO_P6(7 downto 0),
-	leds(7 downto 0) => led, 
-	leds(15 downto 8) => open,
-	lcd_7seg(7 downto 0) => SevenSegment(7 downto 0),
-	lcd_7seg(10 downto 8) => Enable(2 downto 0),
-	lcd_7seg(15 downto 11) => open,
-	btns(5 downto 0) => Switch(5 downto 0),
-	btns(15 downto 6) => (x"00" & "00"),
-	sw(7 downto 0) => DPSwitch(7 downto 0),
-	sw(15 downto 8) => x"00"
+--	gpio(7 downto 0)   => IO_P1(7 downto 0),
+--	gpio(15 downto 8)  => IO_P2(7 downto 0),
+--	gpio(23 downto 16) => IO_P4(7 downto 0),
+--	gpio(31 downto 24) => IO_P6(7 downto 0),
+	simple_out(7 downto 0) => LED,
+	simple_out(31 downto 8) => open
+--	simple_out(15 downto 8) => SevenSegment(7 downto 0),
+--	simple_out(18 downto 16) => Enable(2 downto 0),
+--	simple_in(5 downto 0) => Switch(5 downto 0),
+--	simple_in(23 downto 16) => DPSwitch(7 downto 0)
     );
 end Behavioral;
