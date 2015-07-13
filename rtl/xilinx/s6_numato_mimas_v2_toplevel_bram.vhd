@@ -49,14 +49,16 @@ entity glue is
 	-- SoC configuration options
 	C_mem_size: integer := 32;
 	C_sio: integer := 1;
-	C_spi: integer := 2;
-	C_gpio: integer := 29;
+	C_spi: integer := 1;
+	C_gpio: integer := 31;
 	C_simple_io: boolean := true
     );
     port (
 	clk_100m: in std_logic;
 	rs232_dce_txd: out std_logic;
 	rs232_dce_rxd: in std_logic;
+	flash_so: in std_logic;
+	flash_cen, flash_sck, flash_si: out std_logic;
 	sdcard_so: in std_logic;
 	sdcard_cen, sdcard_sck, sdcard_si: out std_logic;
 	led: out std_logic_vector(7 downto 0);
@@ -75,7 +77,7 @@ architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
 --    signal btns: std_logic_vector(5 downto 0);
 --	 signal lcd_7seg: std_logic_vector(15 downto 0);
-	 signal gpio: std_logic_vector(64 downto 0);
+--	 signal gpio: std_logic_vector(31 downto 0);
 	 
 begin
     --  clock synthesizer: Xilinx Spartan-6 specific
@@ -105,10 +107,11 @@ end generate;
    )
    port map (
 	clk => clk,
-	sio_txd(0) => rs232_dce_txd, sio_rxd(0) => rs232_dce_rxd,
+	sio_txd(0) => rs232_dce_txd,
+	sio_rxd(0) => rs232_dce_rxd,
 	sio_break(0) => rs232_break,
-	spi_sck(1) => sdcard_sck, spi_ss(1) => sdcard_cen,
-	spi_mosi(1) => sdcard_si, spi_miso(1) => sdcard_so,
+	spi_sck(0) => sdcard_sck, spi_ss(0) => sdcard_cen,
+	spi_mosi(0) => sdcard_si, spi_miso(0) => sdcard_so,
 	simple_out(7 downto 0) => led(7 downto 0),
 	simple_out(15 downto 8) => SevenSegment(7 downto 0),
 	simple_out(18 downto 16) => SevenSegmentEnable(2 downto 0),
@@ -116,10 +119,11 @@ end generate;
 	simple_in(5 downto 0) => Switch(5 downto 0), 
 	simple_in(15 downto 6) => open,
 	simple_in(23 downto 16) => sw(7 downto 0), 
-	simple_in(31 downto 23) => open,
-	gpio(7 downto 0)=>IO_P6(7 downto 0),
+	simple_in(31 downto 24) => open,
+   gpio(7 downto 0)=>IO_P6(7 downto 0),
 	gpio(15 downto 8)=>IO_P7(7 downto 0),
 	gpio(23 downto 16)=>IO_P8(7 downto 0),
-	gpio(31 downto 24)=>IO_P9(7 downto 0)
+	gpio(31 downto 24)=>IO_P9(7 downto 0),
+	gpio(127 downto 32)=> open
     );
 end Behavioral;
