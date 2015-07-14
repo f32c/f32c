@@ -78,6 +78,27 @@
         <Source name="../../../soc/pid/rotary_decoder.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../soc/pid/pid.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/pid/ctrlpid_v.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/pid/ctrlpid.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/pid/simotor_v.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/pid/simotor.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/pid/rotary_decoder_v.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/pid/rotary_decoder.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../soc/timer.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
