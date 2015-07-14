@@ -326,6 +326,10 @@ begin
 		    io_to_cpu <= from_spi(i);
 		end if;
 	    end loop;
+	when 16#58# to 16#5B# => -- address 0xFFFFFD80
+	    if C_pid then
+		io_to_cpu <= from_pid;
+	    end if;
 	when 16#70#  =>
 	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
