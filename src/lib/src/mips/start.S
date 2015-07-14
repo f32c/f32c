@@ -28,7 +28,7 @@
 #include <mips/asm.h>
 #include <mips/regdef.h>
 #include <mips/cpuregs.h>
-#include <io.h>
+#include <dev/io.h>
 
 
 /*

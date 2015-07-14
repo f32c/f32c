@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <io.h>
+#include <dev/io.h>
 #include <sys/isr.h>
 #include <mips/asm.h>
 

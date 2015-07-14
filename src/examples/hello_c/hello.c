@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <io.h>
+#include <dev/io.h>
 
 #ifdef __mips__
 static const char *arch = "mips";

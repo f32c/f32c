@@ -25,8 +25,8 @@
  * $Id$
  */
 
-#include <io.h>
-#include <sio.h>
+#include <dev/io.h>
+#include <dev/sio.h>
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>

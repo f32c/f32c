@@ -392,7 +392,7 @@
 /* General definitions: */
 
 /* f32c */
-#include <io.h>			/* for RDTSC() */
+#include <dev/io.h>		/* for RDTSC() */
 #include <stdio.h>
 #include <string.h>		/* for strcpy, strcmp */
 #include <mips/asm.h>		

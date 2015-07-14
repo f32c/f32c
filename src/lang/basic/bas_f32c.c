@@ -30,8 +30,8 @@
 #include <string.h>
 #include <fatfs/ff.h>
 
-#include <io.h>
-#include <spi.h>
+#include <dev/io.h>
+#include <dev/spi.h>
 
 #include "bas.h"
 

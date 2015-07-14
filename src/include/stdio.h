@@ -30,7 +30,7 @@
 
 #include <sys/stdint.h>
 
-#include <sio.h>
+#include <dev/sio.h>
 
 
 #define	getchar()	sio_getchar(1)
