@@ -8,7 +8,7 @@
 
 #include <sys/param.h>
 #include <sys/stdint.h>
-#include <io.h>
+#include <dev/io.h>
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>

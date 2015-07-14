@@ -34,9 +34,9 @@
 #include <unistd.h>
 #include <time.h>
 
-#include <io.h>
-#include <sio.h>
-#include <lcd.h>
+#include <dev/io.h>
+#include <dev/sio.h>
+#include <dev/lcd.h>
 #include <sys/isr.h>
 #include <fatfs/ff.h>
 #include <mips/asm.h>

@@ -25,9 +25,9 @@
  * $Id$
  */
 
-#include <io.h>
-#include <sdcard.h>
-#include <spi.h>
+#include <dev/io.h>
+#include <dev/sdcard.h>
+#include <dev/spi.h>
 
 #include <fatfs/diskio.h>
 

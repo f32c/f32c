@@ -30,11 +30,11 @@
 #include <stdlib.h>
 
 #ifdef __mips__
-#include <io.h>
-#include <fb.h>
+#include <dev/io.h>
+#include <dev/fb.h>
 #else
 #include "../../include/sys/cdefs.h"
-#include "../../include/fb.h"
+#include "../../include/dev/fb.h"
 #endif
 
 typedef void plotfn_t(int x, int y, int mode_color, uint8_t *dp);

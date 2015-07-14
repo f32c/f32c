@@ -26,8 +26,8 @@
  */
 
 
-#include <io.h>
-#include <spi.h>
+#include <dev/io.h>
+#include <dev/spi.h>
 
 
 #if (_BYTE_ORDER == _LITTLE_ENDIAN)

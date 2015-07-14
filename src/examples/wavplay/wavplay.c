@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <io.h>
-#include <lcd.h>
+#include <dev/io.h>
+#include <dev/lcd.h>
 
 #include <fatfs/ff.h>
 

@@ -25,8 +25,8 @@
  * $Id$
  */
 
-#include <io.h>
-#include <sio.h>
+#include <dev/io.h>
+#include <dev/sio.h>
 
 #define	SIO_RXBUFSIZE	(1 << 3)
 #define	SIO_RXBUFMASK	(SIO_RXBUFSIZE - 1)

@@ -25,12 +25,12 @@
  * $Id$
  */
 
-#include <io.h>
 #include <fcntl.h>
-#include <spi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <dev/io.h>
+#include <dev/spi.h>
 
 #include <fatfs/diskio.h>
 

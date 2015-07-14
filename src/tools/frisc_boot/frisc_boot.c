@@ -6,10 +6,11 @@
 
 #include <ctype.h>
 #include <fcntl.h>
-#include <io.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <dev/io.h>
 #include <fatfs/ff.h>
 
 

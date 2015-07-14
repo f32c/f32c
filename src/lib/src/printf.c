@@ -36,7 +36,7 @@
  */
 
 
-#include <sio.h>
+#include <dev/sio.h>
 #include <stdarg.h>
 
 
