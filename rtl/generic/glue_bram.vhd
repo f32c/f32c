@@ -28,6 +28,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.MATH_REAL.ALL;
 
 use work.f32c_pack.all;
 -- use work.f32c_soc.all;
@@ -79,6 +80,12 @@ entity glue_bram is
 	C_simple_in: integer range 0 to 128 := 32;
 	C_simple_out: integer range 0 to 128 := 32;
 	C_gpio: integer range 0 to 128 := 32;
+	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
+	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
+	C_pid_prescaler: integer range 10 to 26 := 18; -- control loop frequency f_clk/2^prescaler
+	C_pid_precision: integer range 0 to 8 := 1; -- fixed point PID precision
+        C_pid_pwm_bits: integer range 11 to 32 := 12; -- PWM output frequency f_clk/2^pwmbits (min 11 => 40kHz @ 81.25MHz)
+        C_pid_fp: integer range 11 to 32 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
 	C_timer: boolean := true
     );
     port (
@@ -89,6 +96,8 @@ entity glue_bram is
 	spi_miso: in std_logic_vector(C_spi - 1 downto 0);
 	simple_in: in std_logic_vector(31 downto 0);
 	simple_out: out std_logic_vector(31 downto 0);
+	pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
+	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
 	gpio: inout std_logic_vector(127 downto 0)
     );
 end glue_bram;
@@ -121,6 +130,18 @@ architecture Behavioral of glue_bram is
     signal gpio_ce: std_logic_vector(C_gpios-1 downto 0);
     signal gpio_intr: std_logic_vector(C_gpios-1 downto 0);
     signal gpio_intr_joint: std_logic := '0';
+
+    -- PID
+    constant C_pid: boolean := C_pids >= 2; -- minimum is 2 PIDs, otherwise no PID
+    signal from_pid: std_logic_vector(31 downto 0);
+    signal pid_ce: std_logic;
+    signal pid_intr: std_logic; -- currently unused
+    signal pid_bridge_f_out: std_logic_vector(C_pids-1 downto 0);
+    signal pid_bridge_r_out: std_logic_vector(C_pids-1 downto 0);
+    signal pid_encoder_a_out: std_logic_vector(C_pids-1 downto 0);
+    signal pid_encoder_b_out: std_logic_vector(C_pids-1 downto 0);
+    signal pid_led: std_logic_vector(3 downto 0); -- show on LEDs
+    constant C_pids_bits: integer := integer(floor((log2(real(C_pids)))+0.5));
 
     -- Serial I/O (RS232)
     type from_sio_type is array (0 to C_sio - 1) of
@@ -282,47 +303,41 @@ begin
 	variable i: integer;
     begin
 	io_to_cpu <= (others => '-');
-	case io_addr(11 downto 4) is
-	when x"00" | x"01" =>
-	    if C_gpios >= 1 then
-		io_to_cpu <= from_gpio(0);
-	    end if;
-	when x"02" | x"03" =>
-	    if C_gpios >= 2 then
-		io_to_cpu <= from_gpio(1);
-	    end if;
-	when x"04" | x"05" =>
-	    if C_gpios >= 3 then
-		io_to_cpu <= from_gpio(2);
-	    end if;
-	when x"06" | x"07" =>
-	    if C_gpios >= 4 then
-		io_to_cpu <= from_gpio(3);
-	    end if;
-	when x"10" | x"11" | x"12" | x"13"  =>
+	case conv_integer(io_addr(11 downto 4)) is
+	when 16#00# to 16#07# =>
+	    for i in 0 to C_gpios - 1 loop
+		if conv_integer(io_addr(6 downto 5)) = i then
+		    io_to_cpu <= from_gpio(i);
+		end if;
+	    end loop;
+	when 16#10# to 16#13# =>
 	    if C_timer then
 		io_to_cpu <= from_timer;
 	    end if;
-	when x"30" | x"31" | x"32" | x"33" =>
+	when 16#30# to 16#33# =>
 	    for i in 0 to C_sio - 1 loop
 		if conv_integer(io_addr(5 downto 4)) = i then
 		    io_to_cpu <= from_sio(i);
 		end if;
 	    end loop;
-	when x"34" | x"35" | x"36" | x"37" =>
+	when 16#34# to 16#37# =>
 	    for i in 0 to C_spi - 1 loop
 		if conv_integer(io_addr(5 downto 4)) = i then
 		    io_to_cpu <= from_spi(i);
 		end if;
 	    end loop;
-	when x"70"  =>
+	when 16#58# to 16#5B# => -- address 0xFFFFFD80
+	    if C_pid then
+		io_to_cpu <= from_pid;
+	    end if;
+	when 16#70#  =>
 	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
 		    io_to_cpu(C_simple_in - i * 32 - 1 downto i * 32) <=
 		      R_simple_in(C_simple_in - i * 32 - 1 downto i * 32);
 		end if;
 	    end loop;
-	when x"71"  =>
+	when 16#71#  =>
 	    for i in 0 to (C_simple_out + 31) / 4 - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
 		    io_to_cpu(C_simple_out - i * 32 - 1 downto i * 32) <=
@@ -355,6 +370,40 @@ begin
       -- TODO: currently only 32 gpio supported in fpgarduino core
       -- when support for 128 gpio is there we should use this:
       -- gpio_intr_joint <= '0' when conv_integer(gpio_intr) = 0 else '1';
+    end generate;
+
+    -- PID
+    G_pid:
+    if C_pid generate
+    pid_inst: entity work.pid
+    generic map (
+        C_pwm_bits => C_pid_pwm_bits,
+	C_prescaler => C_pid_prescaler,
+	C_fp => C_pid_fp,
+	C_precision => C_pid_precision,
+        C_simulator => C_pid_simulator,
+        C_pids => C_pids,
+	C_addr_unit_bits => C_pids_bits
+    )
+    port map (
+	clk => clk, ce => pid_ce, addr => dmem_addr(C_pids_bits+3 downto 2),
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_pid,
+	encoder_a_in  => pid_encoder_a,
+	encoder_b_in  => pid_encoder_b,
+	encoder_a_out => pid_encoder_a_out,
+	encoder_b_out => pid_encoder_b_out,
+	bridge_f_out => pid_bridge_f_out,
+	bridge_r_out => pid_bridge_r_out
+    );
+    pid_ce <= io_addr_strobe when
+         io_addr(11 downto 4) = x"58"
+      or io_addr(11 downto 4) = x"59"
+      or io_addr(11 downto 4) = x"5A"
+      or io_addr(11 downto 4) = x"5B"
+      else '0'; -- address 0xFFFFFD80
+    pid_bridge_f <= pid_bridge_f_out;
+    pid_bridge_r <= pid_bridge_r_out;
     end generate;
 
     -- Timer

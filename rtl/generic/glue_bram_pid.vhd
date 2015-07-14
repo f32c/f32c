@@ -74,8 +74,7 @@ entity glue_bram is
 	C_sio_break_detect: boolean := true;
 	C_gpio: integer range 0 to 128 := 32; -- gpio pins, up to 32 fit in 1 GPIO instance
 	C_timer: boolean := true;
-	C_pid: boolean := false; -- by default disabled (PID module is LUT-hungry)
-	C_pids: integer := 2;
+	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real 
 	C_pid_prescaler: integer range 10 to 26 := 18; -- control loop frequency f_clk/2^prescaler
 	C_pid_precision: integer range 0 to 8 := 1; -- fixed point PID precision
@@ -133,6 +132,7 @@ architecture Behavioral of glue_bram is
     signal pid_encoder_a_out: std_logic_vector(C_pids-1 downto 0);
     signal pid_encoder_b_out: std_logic_vector(C_pids-1 downto 0);
     signal pid_led: std_logic_vector(3 downto 0); -- show on LEDs
+    constant C_pid: boolean := C_pids >= 2; -- minimum is 2 PIDs, otherwise no PID
     constant C_pids_bits: integer := integer(floor((log2(real(C_pids)))+0.5));
 
     -- Serial I/O (RS232)
