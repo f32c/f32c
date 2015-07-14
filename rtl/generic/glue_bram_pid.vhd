@@ -74,7 +74,7 @@ entity glue_bram is
 	C_sio_break_detect: boolean := true;
 	C_gpio: integer range 0 to 128 := 32; -- gpio pins, up to 32 fit in 1 GPIO instance
 	C_timer: boolean := true;
-	C_pid: boolean := true;
+	C_pid: boolean := false; -- by default disabled (PID module is LUT-hungry)
 	C_pids: integer := 2;
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real 
 	C_pid_prescaler: integer range 10 to 26 := 18; -- control loop frequency f_clk/2^prescaler
@@ -260,60 +260,32 @@ begin
 
     process(io_addr, R_simple_in, from_sio, from_timer, from_gpio)
     begin
-	case io_addr(11 downto 4) is
-	when x"00" | x"01" =>
-	    if C_gpios >= 1 then
-		io_to_cpu <= from_gpio(0);
-	    else
-		io_to_cpu <= (others => '-');
-	    end if;
-	when x"02" | x"03" =>
-	    if C_gpios >= 2 then
-		io_to_cpu <= from_gpio(1);
-	    else
-		io_to_cpu <= (others => '-');
-	    end if;
-	when x"04" | x"05" =>
-	    if C_gpios >= 3 then
-		io_to_cpu <= from_gpio(2);
-	    else
-		io_to_cpu <= (others => '-');
-	    end if;
-	when x"06" | x"07" =>
-	    if C_gpios >= 4 then
-		io_to_cpu <= from_gpio(3);
-	    else
-		io_to_cpu <= (others => '-');
-	    end if;
-	when x"10" | x"11" | x"12" | x"13"  =>
+	case conv_integer(io_addr(11 downto 4)) is
+	when 16#00# to 16#07# =>
+	    for i in 0 to C_gpios - 1 loop
+		if conv_integer(io_addr(6 downto 5)) = i then
+		    io_to_cpu <= from_gpio(i);
+		end if;
+	    end loop;
+	when 16#10# to 16#13# =>
 	    if C_timer then
 		io_to_cpu <= from_timer;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
-	when x"30"  =>
+	when 16#30# =>
 	    if C_sio then
 		io_to_cpu <= from_sio;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
-	when x"58" | x"59" | x"5A" | x"5B" => -- address 0xFFFFFD80
+	when 16#58# to 16#5B# => -- address 0xFFFFFD80
 	    if C_pid then
 		io_to_cpu <= from_pid;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
-	when x"70"  =>
+	when 16#70# =>
 	    if C_simple_io then
 		io_to_cpu <= R_simple_in;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
-	when x"71"  =>
+	when 16#71# =>
 	    if C_simple_io then
 		io_to_cpu <= R_simple_out;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
 	when others =>
 	    io_to_cpu <= (others => '-');
