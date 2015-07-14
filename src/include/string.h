@@ -193,10 +193,10 @@ strlen(const char *str)
 }
 
 
-#define	strchr(p, ch) index((p), (ch))
+#define	index(p, ch) strchr((p), (ch))
 
 static inline char *
-index(const char *p, int ch)
+strchr(const char *p, int ch)
 {
 	union {
 		const char *cp;
