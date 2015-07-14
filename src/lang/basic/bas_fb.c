@@ -33,13 +33,13 @@
 #include "bas.h"
 
 #ifdef f32c
-#include <io.h>
-#include <fb.h>
-#include <sprite.h>
+#include <dev/io.h>
+#include <dev/fb.h>
+#include <dev/sprite.h>
 #include <tjpgd.h>
 #else
-#include "../../include/fb.h"
-#include "../../include/sprite.h"
+#include "../../include/dev/fb.h"
+#include "../../include/dev/sprite.h"
 #include "tjpgd.h"
 #include <math.h>
 #include <sys/time.h>

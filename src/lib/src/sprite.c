@@ -34,12 +34,12 @@
 #include <sys/queue.h>
 
 #ifdef __mips__
-#include <fb.h>
+#include <dev/io.h>
+#include <dev/fb.h>
 #include <tjpgd.h>
-#include <io.h>
 #else
 #include <stdint.h>
-#include "../../include/fb.h"
+#include "../../include/dev/fb.h"
 #include "../../lang/basic/tjpgd.h"	/* XXX BASIC HACK, REVISIT! */
 #endif
 

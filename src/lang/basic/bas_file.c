@@ -31,7 +31,7 @@
 
 #ifdef f32c
 #include <fatfs/ff.h>
-#include <io.h>
+#include <dev/io.h>
 #else
 #include <sys/stat.h>
 #include <dirent.h>

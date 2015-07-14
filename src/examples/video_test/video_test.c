@@ -7,8 +7,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <io.h>
-#include <fb.h>
+#include <dev/io.h>
+#include <dev/fb.h>
 #include <sys/isr.h>
 #include <mips/asm.h>
 

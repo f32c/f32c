@@ -3,12 +3,12 @@ PROG = frisc_ld
 
 WITHOUT_LIBS = true
 
-CFILES = frisc_boot.c ../../lib/sio_poll.c ../../lib/sprintf.c \
-	../../lib/printf.c ../../lib/fatfs.c ../../lib/file.c \
-	../../lib/malloc.c ../../lib/spi.c ../../lib/sdcard.c \
-	../../lib/diskio.c ../../lib/mul.c ../../lib/div.c
+CFILES = frisc_boot.c ../../lib/src/sio_poll.c ../../lib/src/sprintf.c \
+	../../lib/src/printf.c ../../lib/src/fatfs.c ../../lib/src/file.c \
+	../../lib/src/malloc.c ../../lib/src/spi.c ../../lib/src/sdcard.c \
+	../../lib/src/diskio.c ../../lib/src/mul.c ../../lib/src/div.c
 
-ASFILES = ../../lib/${ARCH}/start.S
+ASFILES = ../../lib/src/${ARCH}/start.S
 
 # Use a non-default loadaddr
 LOADADDR = 0x800f0000

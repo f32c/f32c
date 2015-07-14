@@ -5,7 +5,7 @@
  * $Id$
  */
 
-#include <io.h>
+#include <dev/io.h>
 #ifdef __mips__
 #include <mips/asm.h>
 #endif

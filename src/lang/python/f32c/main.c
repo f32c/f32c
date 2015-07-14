@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <sio.h>
 
 #include "mpconfig.h"
 #include "nlr.h"
@@ -107,19 +106,6 @@ mp_import_stat_t mp_import_stat(const char *path) {
 
 void nlr_jump_fail(void *val) {
 	printf("\r\n%s %d\n", __FUNCTION__, __LINE__);
-}
-
-void *realloc(void *ptr, size_t size)
-{
-	void *n;
-
-	n = malloc(size);
-	if (n == NULL)
-		return NULL;
-	memcpy(n, ptr, size);
-	free(ptr);
-	printf("\r\nrealloc %p %d\r\n", ptr, size);
-	return n;
 }
 
 char *strcat(char *dest, const char *src) {
