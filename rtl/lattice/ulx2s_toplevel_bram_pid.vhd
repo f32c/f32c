@@ -46,11 +46,10 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
-	C_pid: boolean := true;
 	C_pids: integer := 4;
-	C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8);
+	C_pid_simulator: std_logic_vector(7 downto 0) := ext("1111", 8);
 	C_pid_prescaler: integer := 18;
-	C_pid_precision: integer := 1;
+	C_pid_precision: integer := 2;
 	C_pid_pwm_bits: integer := 12;
 	C_simple_io: boolean := true
     );
@@ -88,7 +87,6 @@ begin
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
-	C_pid => C_pid,
 	C_pids => C_pids,
 	C_pid_simulator => C_pid_simulator,
 	C_pid_prescaler => C_pid_prescaler, -- set control loop frequency
