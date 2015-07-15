@@ -97,10 +97,11 @@ begin
 	sio_txd(0) => rs232_dce_txd, sio_rxd(0) => rs232_dce_rxd,
 	sio_break(0) => rs232_break,
 	gpio(3 downto 0) => j1, gpio(7 downto 4) => j2,
-	gpio(31 downto 8) => open,
-	leds(7 downto 0) => led, leds(15 downto 8) => open,
-	lcd_7seg => lcd_7seg, btns => btns,
-	sw(15 downto 4) => x"000", sw(3 downto 0) => sw
+	gpio(127 downto 8) => open,
+	simple_out(7 downto 0) => led, simple_out(15 downto 8) => open,
+	simple_out(31 downto 16) => lcd_7seg,
+	simple_in(15 downto 0) => btns, simple_in(19 downto 16) => sw,
+	simple_in(31 downto 20) => x"000"
     );
     lcd_db <= lcd_7seg(3 downto 0);
     lcd_rs <= lcd_7seg(4);
