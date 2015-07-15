@@ -13,6 +13,12 @@ xc3sprog_interface = ftdi
 
 # ../../../xilinx/glue_xc6slx9.vhd \
 
+vfiles = \
+../../../soc/pid/ctrlpid_v.v \
+../../../soc/pid/simotor_v.v \
+../../../soc/pid/rotary_decoder_v.v \
+
+
 vhdfiles = \
 ../../../xilinx/scarab_minispartan6plus_toplevel_bram.vhd \
 ../../../xilinx/pll_50M_112M5.vhd \
@@ -37,6 +43,10 @@ vhdfiles = \
 ../../../soc/sio.vhd \
 ../../../soc/spi.vhd \
 ../../../soc/gpio.vhd \
-../../../soc/timer.vhd 
+../../../soc/timer.vhd \
+../../../soc/pid/pid.vhd \
+../../../soc/pid/ctrlpid.vhd \
+../../../soc/pid/simotor.vhd \
+../../../soc/pid/rotary_decoder.vhd \
 
 include ../include/xilinx.mk
