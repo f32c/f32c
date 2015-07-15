@@ -48,7 +48,10 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 128;
-	C_leds_btns: boolean := true
+	C_sio: integer := 1;
+	C_spi: integer := 2;
+	C_gpio: integer := 32;
+	C_simple_io: boolean := true
     );
     port (
 	clk_125m: in std_logic;
@@ -79,12 +82,19 @@ begin
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
+	C_gpio => C_gpio,
+	C_sio => C_sio,
+	C_spi => C_spi,
 	C_debug => C_debug
     )
     port map (
 	clk => clk,
 	sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
 	sio_break(0) => open,
+	spi_sck(0)  => open,  spi_sck(1)  => open,
+	spi_ss(0)   => open,  spi_ss(1)   => open,
+	spi_mosi(0) => open,  spi_mosi(1) => open,
+	spi_miso(0) => '-',   spi_miso(1) => '-',
 	gpio(3 downto 0) => ja_u(3 downto 0),
 	gpio(7 downto 4) => ja_d(3 downto 0),
 	gpio(11 downto 8) => jb_u(3 downto 0),
@@ -93,11 +103,12 @@ begin
 	gpio(23 downto 20) => jc_d(3 downto 0),
 	gpio(27 downto 24) => jd_u(3 downto 0),
 	gpio(31 downto 28) => jd_d(3 downto 0),
-	leds(3 downto 0) => led(3 downto 0),
-	leds(15 downto 4) => open,
-	btns(3 downto 0) => btn(3 downto 0),
-	btns(15 downto 4) => open,
-	sw(3 downto 0) => sw(3 downto 0),
-	sw(15 downto 4) => open
+	gpio(127 downto 32) => open,
+	simple_out(3 downto 0) => led(3 downto 0),
+	simple_out(31 downto 4) => open,
+	simple_in(3 downto 0) => btn(3 downto 0),
+	simple_in(15 downto 4) => open,
+	simple_in(19 downto 16) => sw(3 downto 0),
+	simple_in(31 downto 20) => open
     );
 end Behavioral;

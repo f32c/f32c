@@ -8,7 +8,10 @@ isedir = /usr/local/xilinx/14.7/ISE_DS
 openocd_interface = ftdi-zybo.ocd
 SHELL = /bin/bash
 
-# ../../../xilinx/glue_xc6slx9.vhd \
+vfiles = \
+../../../soc/pid/ctrlpid_v.v \
+../../../soc/pid/simotor_v.v \
+../../../soc/pid/rotary_decoder_v.v \
 
 vhdfiles = \
 ../../../xilinx/zybo_toplevel_bram.vhd \
@@ -29,7 +32,12 @@ vhdfiles = \
 ../../../cpu/idecode_rv32.vhd \
 ../../../cpu/debug.vhd \
 ../../../soc/sio.vhd \
+../../../soc/spi.vhd \
 ../../../soc/gpio.vhd \
-../../../soc/timer.vhd 
+../../../soc/timer.vhd \
+../../../soc/pid/pid.vhd \
+../../../soc/pid/ctrlpid.vhd \
+../../../soc/pid/simotor.vhd \
+../../../soc/pid/rotary_decoder.vhd \
 
 include ../include/xilinx.mk
