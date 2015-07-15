@@ -43,7 +43,7 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: 50/81/100112
+	-- Main clock: 50/81/100/112
 	C_clk_freq: integer := 81;
 
 	-- SoC configuration options
@@ -133,8 +133,10 @@ begin
 	gpio(23 downto 12) => portb(11 downto 0),
 	gpio(31 downto 24) => portc(7 downto 0),
 	gpio(127 downto 32) => open,
-	simple_out(7 downto 0) => leds(7 downto 0), simple_out(31 downto 8) => open,
+	simple_out(7 downto 0) => leds(7 downto 0),
+	simple_out(31 downto 8) => open,
 	simple_in(15 downto 0) => open,
-	simple_in(19 downto 16) => sw(4 downto 1), simple_in(31 downto 20) => open
+	simple_in(19 downto 16) => sw(4 downto 1),
+	simple_in(31 downto 20) => open
     );
 end Behavioral;
