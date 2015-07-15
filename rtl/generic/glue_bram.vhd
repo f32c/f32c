@@ -138,7 +138,7 @@ architecture Behavioral of glue_bram is
     signal pid_bridge_r_out: std_logic_vector(C_pids-1 downto 0);
     signal pid_encoder_a_out: std_logic_vector(C_pids-1 downto 0);
     signal pid_encoder_b_out: std_logic_vector(C_pids-1 downto 0);
-    constant C_pids_bits: integer := integer(floor((log2(real(C_pids)))+0.5));
+    constant C_pids_bits: integer := integer(floor((log2(real(C_pids)+0.001))+0.5));
 
     -- Serial I/O (RS232)
     type from_sio_type is array (0 to C_sio - 1) of
