@@ -35,12 +35,13 @@ library unisim;
 use unisim.vcomponents.all;
 
 use work.f32c_pack.all;
--- use work.techx_pkg.all;
+use work.techx_pkg.all;
 
 entity glue is
     generic (
 	-- ISA
 	C_arch: integer := ARCH_MI32;
+	C_debug: boolean := false;
 
 	-- Main clock: N * 10 MHz
 	C_clk_freq: integer := 100;
@@ -93,32 +94,32 @@ begin
     generic map (
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
-	C_mem_size => C_mem_size
+        C_mem_size => C_mem_size,
+        C_gpio => C_gpio,
+        C_sio => C_sio,
+        C_spi => C_spi,
+        C_debug => C_debug
     )
     port map (
 	clk => clk,
 	sio_txd(0) => UART1_TXD, 
 	sio_rxd(0) => UART1_RXD,
 	sio_break(0) => sio_break,
-        spi_sck(0) => open,
-        spi_sck(1) => FPGA_SD_SCLK,
-        spi_ss(0) => open,
-        spi_ss(1) => FPGA_SD_D3,
-        spi_mosi(0) => open,
-        spi_mosi(1) => FPGA_SD_CMD,
-        spi_miso(0) => '-',
-        spi_miso(1) => FPGA_SD_D0,
+        spi_sck(0)  => open,  spi_sck(1)  => FPGA_SD_SCLK,
+        spi_ss(0)   => open,  spi_ss(1)   => FPGA_SD_D3,
+        spi_mosi(0) => open,  spi_mosi(1) => FPGA_SD_CMD,
+        spi_miso(0) => '-',   spi_miso(1) => FPGA_SD_D0,
 	gpio(7 downto 0) => ja, gpio(15 downto 8) => jb,
 	gpio(23 downto 16) => jc, gpio(31 downto 24) => jd,
 	gpio(127 downto 32) => open,
 	simple_out(7 downto 0) => led, simple_out(15 downto 8) => seg, 
-	simple_out(19 downto 16) => an, simple_out(127 downto 20) => open,
+	simple_out(19 downto 16) => an, simple_out(31 downto 20) => open,
 	simple_in(0) => btn_south,
 	simple_in(1) => btn_north,
         simple_in(2) => btn_west,
         simple_in(3) => btn_east,
         simple_in(4) => '0',     -- will be center button one day,
-        simple_in(8 downto 5) => sw, 
-        simple_in(127 downto 9) => (others => '-')      
+        simple_in(8 downto 5) => sw,
+        simple_in(31 downto 9) => (others => '-')
     );
 end Behavioral;
