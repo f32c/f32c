@@ -44,6 +44,9 @@ entity glue is
 	C_clk_freq: integer := 60;
 
 	-- CPU configuration
+	C_big_endian: boolean := false;
+	C_sign_extend: boolean := false;
+	C_branch_likely: boolean := false;
 	C_mult_enable: boolean := false;
 	C_branch_prediction: boolean := false;
 	C_load_aligner: boolean := false;
@@ -101,6 +104,9 @@ begin
 	C_PC_mask => C_PC_mask,
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_branch_likely => C_branch_likely,
+	C_sign_extend => C_sign_extend,
 	C_mem_size => C_mem_size,
 	C_mult_enable => C_mult_enable,
 	C_branch_prediction => C_branch_prediction,
