@@ -23,8 +23,6 @@
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
 --
--- $Id$
---
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -49,14 +47,21 @@ entity glue is
 	C_pids: integer := 4;
 	C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8);
 	C_pid_prescaler: integer := 18;
-	C_pid_precision: integer := 2;
+	C_pid_precision: integer := 1;
 	C_pid_pwm_bits: integer := 12;
+	C_sio: integer := 1;
+	C_spi: integer := 2;
+	C_gpio: integer := 29;
 	C_simple_io: boolean := true
     );
     port (
 	clk_25m: in std_logic;
 	rs232_tx: out std_logic;
 	rs232_rx: in std_logic;
+	flash_so: in std_logic;
+	flash_cen, flash_sck, flash_si: out std_logic;
+	sdcard_so: in std_logic;
+	sdcard_cen, sdcard_sck, sdcard_si: out std_logic;
 	j1_2, j1_3, j1_4, j1_8, j1_9, j1_13, j1_14, j1_15: inout std_logic;
 	j1_16, j1_17, j1_18, j1_19, j1_20, j1_21, j1_22, j1_23: inout std_logic;
 	j2_2, j2_3, j2_4, j2_5, j2_6, j2_7, j2_8, j2_9: inout std_logic;
@@ -87,17 +92,26 @@ begin
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
+	C_debug => C_debug,
+	C_sio => C_sio,
+	C_spi => C_spi,
 	C_pids => C_pids,
 	C_pid_simulator => C_pid_simulator,
 	C_pid_prescaler => C_pid_prescaler, -- set control loop frequency
 	C_pid_fp => integer(floor((log2(real(C_clk_freq)*1e6))+0.5))-C_pid_prescaler, -- control loop approx freq in 2^n Hz for math, 26-C_pid_prescaler = 8
 	C_pid_precision => C_pid_precision, -- fixed point PID precision
 	C_pid_pwm_bits => C_pid_pwm_bits, -- clock divider bits define PWM output frequency
-	C_debug => C_debug
+	C_gpio => C_gpio
     )
     port map (
 	clk => clk,
-	rs232_tx => rs232_tx, rs232_rx => rs232_rx, rs232_break => rs232_break,
+	sio_txd(0) => rs232_tx,
+	sio_rxd(0) => rs232_rx,
+	sio_break(0) => rs232_break,
+	spi_sck(0) => flash_sck, spi_ss(0) => flash_cen,
+	spi_mosi(0) => flash_si, spi_miso(0) => flash_so,
+	spi_sck(1) => sdcard_sck, spi_ss(1) => sdcard_cen,
+	spi_mosi(1) => sdcard_si, spi_miso(1) => sdcard_so,
 	gpio(0) => j1_2,
 	gpio(1) => j1_3,
 	gpio(2) => j1_4,
@@ -120,7 +134,7 @@ begin
 	pid_bridge_f(1) => j2_8, pid_bridge_r(1) => j2_9,
 	pid_encoder_a(2) => j2_10, pid_encoder_b(2) => j2_11,
 	pid_bridge_f(2) => j2_12, pid_bridge_r(2) => j2_13,
-        gpio(28) => j2_16,
+	gpio(28) => j2_16,
 	simple_out(7 downto 0) => led, simple_out(31 downto 8) => open,
 	simple_in(4 downto 0) => btns, simple_in(15 downto 5) => open,
 	simple_in(19 downto 16) => sw, simple_in(31 downto 20) => open
