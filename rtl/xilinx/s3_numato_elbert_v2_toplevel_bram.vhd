@@ -119,15 +119,18 @@ begin
 	clk => clk,
 	sio_txd(0) => rs232_dce_txd, sio_rxd(0) => rs232_dce_rxd,
 	sio_break(0) => rs232_break,
---	gpio(7 downto 0)   => IO_P1(7 downto 0),
---	gpio(15 downto 8)  => IO_P2(7 downto 0),
---	gpio(23 downto 16) => IO_P4(7 downto 0),
---	gpio(31 downto 24) => IO_P6(7 downto 0),
+	gpio(7 downto 0)   => IO_P1(7 downto 0),
+	gpio(15 downto 8)  => IO_P2(7 downto 0),
+	gpio(23 downto 16) => IO_P4(7 downto 0),
+	gpio(31 downto 24) => IO_P6(7 downto 0),
+	gpio(127 downto 32) => open,
 	simple_out(7 downto 0) => LED,
 	simple_out(15 downto 8) => SevenSegment(7 downto 0),
 	simple_out(18 downto 16) => Enable(2 downto 0),
-	simple_out(31 downto 19) => open
---	simple_in(5 downto 0) => Switch(5 downto 0),
---	simple_in(23 downto 16) => DPSwitch(7 downto 0)
+	simple_out(31 downto 19) => open,
+	simple_in(5 downto 0) => Switch(5 downto 0),
+	simple_in(15 downto 6) => x"00" & "00",
+	simple_in(23 downto 16) => DPSwitch(7 downto 0),
+	simple_in(31 downto 24) => x"00"
     );
 end Behavioral;
