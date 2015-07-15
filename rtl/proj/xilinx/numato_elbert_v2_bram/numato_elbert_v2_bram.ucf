@@ -158,18 +158,6 @@ CONFIG VCCAUX = "3.3" ;
     NET "IO_P4[7]"           LOC = P132  | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 12;
 
 
-####################################################################################################
-# HEADER P5
-####################################################################################################
-# Two input PINs of P5 Header IO_P5[1] and IO_P5[7]. 
-    
-#    NET "IO_P5[0]"           LOC = P125  | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 12;
-#    NET "IO_P5[1]"           LOC = P123  | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 12 | PULLUP;
-#    NET "IO_P5[2]"           LOC = P127  | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 12;
-#    NET "IO_P5[3]"           LOC = P126  | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 12;
-#    NET "IO_P5[4]"           LOC = P131  | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 12;
-#    NET "IO_P5[5]"           LOC = P91   | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 12;
-#    NET "IO_P5[6]"           LOC = P142  | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 12;
-#    NET "IO_P5[7]"           LOC = P140  | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 12 | PULLUP;
-    NET "rs232_dce_txd"      LOC = P142  | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 12;
-    NET "rs232_dce_rxd"      LOC = P140  | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 12 | PULLUP;
+
+    NET "rs232_dce_txd"      LOC = P41  | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 12;
+    NET "rs232_dce_rxd"      LOC = P67  | IOSTANDARD = LVCMOS33 | SLEW = SLOW | DRIVE = 12 | PULLUP;
