@@ -148,6 +148,7 @@ architecture Behavioral of glue_bram is
     signal vga_mono: std_logic;
     signal vga_addr: std_logic_vector(12 downto 0);
     signal vga_data: std_logic_vector(7 downto 0);
+    signal video_bram_write: std_logic;
 
     -- Serial I/O (RS232)
     type from_sio_type is array (0 to C_sio - 1) of
@@ -457,8 +458,23 @@ begin
       vga_g(i) <= vga_mono;
       vga_b(i) <= vga_mono;
     end generate;
-    vga_data(7 downto 0) <= vga_addr(12 downto 5);
+    -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
     -- vga_data(7 downto 0) <= x"0F";
+    video_bram_write <=
+      dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "10" else '0';
+    videobram: entity work.bram_video
+    generic map (
+      C_mem_size => 4 -- KB
+    )
+    port map (
+	clk => clk,
+	imem_addr(13 downto 2) => vga_addr(11 downto 0), 
+	imem_addr(31 downto 14) => (others => '0'),
+	imem_data_out => vga_data,
+	dmem_write => video_bram_write,
+	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+	dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
+    );
     end generate;
 
     -- Block RAM
