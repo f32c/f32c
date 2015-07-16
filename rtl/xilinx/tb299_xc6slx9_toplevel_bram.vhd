@@ -48,21 +48,23 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 32;
-	C_leds_btns: boolean := true
+	C_sio: integer := 1;
+	C_spi: integer := 2;
+	C_gpio: integer := 32;
+	C_simple_io: boolean := true
     );
     port (
 	clk_25m: in std_logic;
 	rs232_dce_txd: out std_logic;
 	rs232_dce_rxd: in std_logic;
-	led: out std_logic_vector(7 downto 0);
-	gpio: inout std_logic_vector(39 downto 0);
+	Led: out std_logic_vector(7 downto 0);
+	IO: inout std_logic_vector(39 downto 0);
 	btn_k2, btn_k3: in std_logic
     );
 end glue;
 
 architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
-    signal btns: std_logic_vector(1 downto 0);
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
     
@@ -93,18 +95,25 @@ begin
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
+	C_gpio => C_gpio,
+	C_sio => C_sio,
+	C_spi => C_spi,
 	C_debug => C_debug
     )
     port map (
 	clk => clk,
 	sio_txd(0) => rs232_dce_txd, sio_rxd(0) => rs232_dce_rxd,
 	sio_break(0) => rs232_break,
-	gpio => gpio(31 downto 0),
-	leds(7 downto 0) => led,
-	leds(15 downto 8) => open,
-	btns(1 downto 0) => btns(1 downto 0),
-	btns(15 downto 2) => (others => '-'),
-	sw => (others => '-')
+	spi_sck(0)  => open,  spi_sck(1)  => open,
+	spi_ss(0)   => open,  spi_ss(1)   => open,
+	spi_mosi(0) => open,  spi_mosi(1) => open,
+	spi_miso(0) => '-',   spi_miso(1) => '-',
+	gpio(39 downto 0) => IO(39 downto 0),
+	gpio(127 downto 40) => open,
+	simple_out(7 downto 0) => Led(7 downto 0),
+	simple_out(31 downto 8) => open,
+	simple_in(0) => btn_k2,
+	simple_in(1) => btn_k3,
+	simple_in(31 downto 2) => open
     );
-    btns <= btn_k3 & btn_k2;
 end Behavioral;
