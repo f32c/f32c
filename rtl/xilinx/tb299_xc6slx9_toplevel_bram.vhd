@@ -109,7 +109,7 @@ begin
 	spi_mosi(0) => open,  spi_mosi(1) => open,
 	spi_miso(0) => '-',   spi_miso(1) => '-',
 	gpio(31 downto 0) => gpio(31 downto 0),
-	gpio(127 downto 40) => open,
+	gpio(127 downto 32) => open,
 	simple_out(7 downto 0) => Led(7 downto 0),
 	simple_out(31 downto 8) => open,
 	simple_in(0) => btn_k2,
