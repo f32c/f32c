@@ -10,7 +10,10 @@ SHELL = /bin/bash
 openocd_interface = ../include/ft2232-fpu1.ocd
 xc3sprog_interface = ftdi
 
-# ../../../xilinx/glue_xc6slx9.vhd \
+vfiles = \
+../../../soc/pid/ctrlpid_v.v \
+../../../soc/pid/simotor_v.v \
+../../../soc/pid/rotary_decoder_v.v \
 
 vhdfiles = \
 ../../../xilinx/tb299_xc6slx9_toplevel_bram.vhd \
@@ -34,6 +37,10 @@ vhdfiles = \
 ../../../cpu/debug.vhd \
 ../../../soc/sio.vhd \
 ../../../soc/gpio.vhd \
-../../../soc/timer.vhd 
+../../../soc/timer.vhd \
+../../../soc/pid/pid.vhd \
+../../../soc/pid/ctrlpid.vhd \
+../../../soc/pid/simotor.vhd \
+../../../soc/pid/rotary_decoder.vhd \
 
 include ../include/xilinx.mk
