@@ -41,33 +41,30 @@ entity glue is
     generic (
 	-- ISA
 	C_arch: integer := ARCH_MI32;
-
 	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 70;
+	C_clk_freq: integer := 50;
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
-	C_leds_btns: boolean := true
+	C_sio: integer := 1;
+	C_spi: integer := 1;
+	C_gpio: integer := 32;
+	C_simple_io: boolean := true
     );
     port (
 	clk_50m: in std_logic;
 	rs232_dce_txd: out std_logic;
 	rs232_dce_rxd: in std_logic;
-	lcd_db: out std_logic_vector(3 downto 0);
-	lcd_e, lcd_rs, lcd_rw: out std_logic;
-	j1, j2: inout std_logic_vector(3 downto 0);
-	led: out std_logic_vector(7 downto 0);
-	rot_a, rot_b, rot_center: in std_logic;
-	btn_south, btn_north, btn_east, btn_west: in std_logic;
-	sw: in std_logic_vector(3 downto 0)
+	flash_so: in std_logic;
+	flash_cen, flash_sck, flash_si: out std_logic;
+	LED: out std_logic_vector(1 downto 0);
+	WINGA: inout std_logic_vector(15 downto 0);
+	INPUT: in std_logic_vector(14 downto 0)
     );
 end glue;
 
 architecture Behavioral of glue is
-    signal clk: std_logic;
-    signal rs232_break: std_logic;
-    signal btns: std_logic_vector(15 downto 0);
-    signal lcd_7seg: std_logic_vector(15 downto 0);
+signal clk, rs232_break: std_logic;
 begin
 
     -- clock synthesizer
@@ -78,34 +75,35 @@ begin
     port map(
 	clk_50m => clk_50m, clk => clk
     );
-    
+	 
     -- reset hard-block: Xilinx Spartan-3 specific
     reset: startup_spartan3
     port map (
-        clk => clk, gsr => rs232_break, gts => rs232_break
+	clk => clk, gsr => rs232_break, gts => rs232_break
     );
-
-    -- generic BRAM glue
+     -- generic BRAM glue
     glue_bram: entity work.glue_bram
     generic map (
-	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
-	C_mem_size => C_mem_size
+	C_clk_freq => C_clk_freq,
+	C_mem_size => C_mem_size,
+	C_gpio => C_gpio,
+	C_sio => C_sio,
+	C_spi => C_spi
     )
     port map (
 	clk => clk,
-	sio_txd(0) => rs232_dce_txd, sio_rxd(0) => rs232_dce_rxd,
+	sio_txd(0) => rs232_dce_txd, 
+	sio_rxd(0) => rs232_dce_rxd,
 	sio_break(0) => rs232_break,
-	gpio(3 downto 0) => j1, gpio(7 downto 4) => j2,
-	gpio(31 downto 8) => open,
-	leds(7 downto 0) => led, leds(15 downto 8) => open,
-	lcd_7seg => lcd_7seg, btns => btns,
-	sw(15 downto 4) => x"000", sw(3 downto 0) => sw
+  	spi_sck(0) => flash_sck,
+  	spi_ss(0) => flash_cen,
+  	spi_mosi(0) => flash_si,
+  	spi_miso(0) => flash_so,
+	simple_out(1 downto 0) => LED(1 downto 0),
+	simple_out(31 downto 2) => open,
+	simple_in(14 downto 0) => INPUT(14 downto 0), 
+   gpio(15 downto 0) => WINGA(15 downto 0),
+	gpio(127 downto 16) => open
     );
-    lcd_db <= lcd_7seg(3 downto 0);
-    lcd_rs <= lcd_7seg(4);
-    lcd_e <= lcd_7seg(5);
-    lcd_rw <= '0';
-    btns <= x"00" & '0' & rot_a & rot_b & rot_center &
-      btn_north & btn_south & btn_west & btn_east;
 end Behavioral;
