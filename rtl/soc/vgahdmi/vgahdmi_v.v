@@ -3,6 +3,8 @@
 // Emard:
 // doubling x and y pixel size
 // adding both HDMI and VGA output
+// no vendor-specific modules here
+// (differential buffers, PLLs)
 
 // LICENSE=BSD
 
@@ -15,7 +17,8 @@ module vgahdmi_v(
         input wire clk_tmds, /* 250 MHz (set to 0 for VGA-only) */
         output reg [12:0] dispAddr,
         input wire [7:0] dispData,
-        output wire vga_video, vga_hsync, vga_vsync,
+        output wire vga_hsync, vga_vsync,
+        output wire [2:0] vga_r, vga_g, vga_b,
 	output wire [2:0] TMDS_out_RGB
 );
 
@@ -75,26 +78,29 @@ always @(posedge pixclk)
 wire [7:0] colorValue;
 assign colorValue = shiftData[0] == 0 ? 0 : 255;
 
-// attempt to generate monochrome VGA signal
-assign vga_video = shiftData[0];
-assign vga_hsync = hSync;
-assign vga_vsync = vSync;
-
 ////////////////
 wire [7:0] W = {8{CounterX[7:0]==CounterY[7:0]}};
 wire [7:0] A = {8{CounterX[7:5]==3'h2 && CounterY[7:5]==3'h2}};
-reg [7:0] red, green, blue;
-always @(posedge pixclk) red <= ({CounterX[5:0] & {6{CounterY[4:3]==~CounterX[4:3]}}, 2'b00} | W) & ~A;
-always @(posedge pixclk) green <= (CounterX[7:0] & {8{CounterY[6]}} | W) & ~A;
-always @(posedge pixclk) blue <= CounterY[7:0] | W | A;
+reg [7:0] test_red, test_green, test_blue;
+always @(posedge pixclk) test_red <= ({CounterX[5:0] & {6{CounterY[4:3]==~CounterX[4:3]}}, 2'b00} | W) & ~A;
+always @(posedge pixclk) test_green <= (CounterX[7:0] & {8{CounterY[6]}} | W) & ~A;
+always @(posedge pixclk) test_blue <= CounterY[7:0] | W | A;
 
+// generate VGA output, mixing with test picture if enabled
+assign vga_r = test_picture ? test_red[7:5] :  colorValue[7:5];
+assign vga_g =                                 colorValue[7:5];
+assign vga_b = test_picture ? test_blue[7:5] : colorValue[7:5];
+assign vga_hsync = hSync;
+assign vga_vsync = vSync;
+
+// generate HDMI output
 ////////////////////////////////////////////////////////////////////////
 wire [9:0] TMDS_red, TMDS_green, TMDS_blue;
 
 TMDS_encoder encode_R
 (
   .clk(pixclk), 
-  .VD(test_picture ? red : colorValue), 
+  .VD(test_picture ? test_red : colorValue), 
   .CD(2'b00),
   .VDE(DrawArea),
   .TMDS(TMDS_red)
@@ -110,7 +116,7 @@ TMDS_encoder encode_G
 TMDS_encoder encode_B
 (
   .clk(pixclk),
-  .VD(test_picture ? blue : colorValue),
+  .VD(test_picture ? test_blue : colorValue),
   .CD({vSync,hSync}),
   .VDE(DrawArea), 
   .TMDS(TMDS_blue)

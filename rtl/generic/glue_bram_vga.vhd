@@ -145,7 +145,6 @@ architecture Behavioral of glue_bram is
     constant C_pids_bits: integer := integer(floor((log2(real(C_pids)+0.001))+0.5));
     
     -- VGA/HDMI video
-    signal vga_mono: std_logic;
     signal vga_addr: std_logic_vector(12 downto 0);
     signal vga_data: std_logic_vector(7 downto 0);
     signal video_bram_write: std_logic;
@@ -442,22 +441,19 @@ begin
     generic map (
       dbl_x => 1,
       dbl_y => 1,
-      test_picture => 0
+      test_picture => 1
     )
     port map (
       clk_pixel => clk_25MHz,
       clk_tmds => '0',
       dispAddr => vga_addr,
       dispData => vga_data,
-      vga_video => vga_mono,
+      vga_r => vga_r,
+      vga_g => vga_g,
+      vga_b => vga_b,
       vga_hsync => vga_hsync,
       vga_vsync => vga_vsync
     );
-    mono2rgb: for i in 0 to 2 generate
-      vga_r(i) <= vga_mono;
-      vga_g(i) <= vga_mono;
-      vga_b(i) <= vga_mono;
-    end generate;
     -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
     -- vga_data(7 downto 0) <= x"0F";
     video_bram_write <=
