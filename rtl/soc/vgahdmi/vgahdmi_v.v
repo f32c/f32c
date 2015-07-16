@@ -34,11 +34,6 @@ wire pixclk;
 assign clk_TMDS = clk_tmds; // 250 MHz
 assign pixclk = clk_pixel;  //  25 MHz
 
-// 125MHz * 2 / 10 = 25 MHz
-// DCM_SP #(.CLKFX_MULTIPLY(2), .CLKFX_DIVIDE(10)) DCM_pixclk_inst(.CLKIN(clk_125m), .CLKFX(DCM_pixclk_CLKFX), .RST(1'b0));
-// DCM_CLKGEN #( .CLKFX_MULTIPLY(2), .CLKFX_DIVIDE(10) ) clockDivider_pixclk ( .CLKIN(clk_125m), .CLKFX(DCM_pixclk_CLKFX) );
-// BUFG BUFG_pixclk(.I(DCM_pixclk_CLKFX), .O(pixclk));
-
 reg [9:0] CounterX, CounterY;
 reg hSync, vSync, DrawArea;
 always @(posedge pixclk) DrawArea <= (CounterX<640) && (CounterY<480);
@@ -52,19 +47,27 @@ always @(posedge pixclk) vSync <= (CounterY>=490) && (CounterY<492);
 // managa address and fetch data
 always @(posedge pixclk)
   begin
-    if(CounterY[9:8+dbl_y] != 0)
+    if(CounterY >= 480)
       dispAddr <= 0;
     else
       begin
         // lower bits of address (32 bytes) always increment
         // when X counter is < 256 or 512 and modulo 8 or 16 = 0
-        if(CounterX[9:8+dbl_x] == 0 && CounterX[2+dbl_x:0] == 0)
-          dispAddr[4:0] <= dispAddr[4:0] + 1;
+        //if(CounterX[9:8+dbl_x] == 0 && CounterX[2+dbl_x:0] == 0)
+        //  dispAddr[4:0] <= dispAddr[4:0] + 1;
         // after 1 or 2 identical lines skip to next 32 bytes
         // choose any X pixel before next even Y line
         // as the moment to increment upper bits of address
-        if((dbl_y == 0 || CounterY[0] == 1) && CounterX == 512)
-          dispAddr[12:5] <= dispAddr[12:5] + 1;
+        //if((dbl_y == 0 || CounterY[0] == 1) && CounterX == 512)
+        //  dispAddr[12:5] <= dispAddr[12:5] + 1;
+        if(CounterX < 640 && CounterX[2+dbl_x:0] == 0)
+        begin
+          if( (dbl_y == 0 || (CounterY[0] == 0 || CounterX != 0)) )
+            dispAddr <= dispAddr+1;
+          else
+            dispAddr <= dispAddr-(dbl_x ? 39 : 79); // go back to scan same line again
+        end
+        
       end
   end
 
@@ -72,7 +75,7 @@ reg [7:0] shiftData;
 always @(posedge pixclk)
   begin
     if(dbl_x == 0 || CounterX[0] == 0)
-      shiftData <= (CounterX[2+dbl_x:0] == 0 && CounterX[9:8+dbl_x] == 0 && CounterY[9:8+dbl_y] == 0) ? dispData : shiftData[7:1];
+      shiftData <= (CounterX[2+dbl_x:0] == 0) ? dispData : shiftData[7:1];
   end
 
 wire [7:0] colorValue;
