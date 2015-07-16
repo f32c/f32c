@@ -14,6 +14,76 @@ Net "rs232_dce_rxd" LOC = A8 | IOSTANDARD=LVCMOS33; #Bank = 1, pin name = IO_L48
 Net "rs232_dce_txd" LOC = B8 | IOSTANDARD=LVCMOS33; #Bank = 1, pin name = IO_L48N_M1DQ9, Sch name = MCU-TX
 
 ###################################################################################################################################################
+#                                                   SPI Flash                                                                                     #
+###################################################################################################################################################
+NET "flash_si"                        LOC = T13     | IOSTANDARD = LVCMOS33 | SLEW = FAST | DRIVE = 8 ;  #MOSI
+NET "flash_so"                        LOC = R13     | IOSTANDARD = LVCMOS33 | SLEW = FAST | DRIVE = 8 ;  #MISO 
+NET "flash_sck"                       LOC = R15     | IOSTANDARD = LVCMOS33 | SLEW = FAST | DRIVE = 8 ;  #SCK
+NET "flash_cen"                       LOC = V3      | IOSTANDARD = LVCMOS33 | SLEW = FAST | DRIVE = 8 ;  #CS 
+
+###################################################################################################################################################
+#                                                   Micro SD Card                                                                                 #
+###################################################################################################################################################
+
+NET "sdcard_so"                       LOC = K14     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | PULLUP; #SO
+#NET "DAT1"                       LOC = G18     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+#NET "DAT2"                       LOC = J13     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+NET "sdcard_cen"                       LOC = L13     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #CS
+NET "sdcard_si"                        LOC = G16     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #SI
+NET "sdcard_sck"                        LOC = L12     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #CLK
+
+###################################################################################################################################################
+#                                                 LPDDR MT46H32M16XXXX-5                                                                          #
+################################################################################################################################################### 
+    #NET  "calib_done"                LOC = P15     | IOSTANDARD = LVCMOS33;
+    #NET  "error"                     LOC = P16     | IOSTANDARD = LVCMOS33;
+    #NET  "c3_sys_rst_n"              LOC = L15     | IOSTANDARD = LVCMOS33 | PULLDOWN;    # Pin 7 of Header P9
+   
+    #NET  "mcb3_dram_a[0]"            LOC = J7      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_a[10]"           LOC = F4      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_a[11]"           LOC = D3      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_a[12]"           LOC = G6      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_a[1]"            LOC = J6      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_a[2]"            LOC = H5      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_a[3]"            LOC = L7      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_a[4]"            LOC = F3      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_a[5]"            LOC = H4      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_a[6]"            LOC = H3      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_a[7]"            LOC = H6      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_a[8]"            LOC = D2      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_a[9]"            LOC = D1      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_ba[0]"           LOC = F2      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_ba[1]"           LOC = F1      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_cas_n"           LOC = K5      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_ck"              LOC = G3      | IOSTANDARD = DIFF_MOBILE_DDR;
+    #NET  "mcb3_dram_ck_n"            LOC = G1      | IOSTANDARD = DIFF_MOBILE_DDR;
+    #NET  "mcb3_dram_cke"             LOC = H7      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dm"              LOC = K3      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[0]"           LOC = L2      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[10]"          LOC = N2      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[11]"          LOC = N1      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[12]"          LOC = T2      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[13]"          LOC = T1      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[14]"          LOC = U2      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[15]"          LOC = U1      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[1]"           LOC = L1      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[2]"           LOC = K2      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[3]"           LOC = K1      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[4]"           LOC = H2      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[5]"           LOC = H1      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[6]"           LOC = J3      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[7]"           LOC = J1      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[8]"           LOC = M3      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dq[9]"           LOC = M1      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_dqs"             LOC = L4      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_ras_n"           LOC = L5      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_udm"             LOC = K4      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_udqs"            LOC = P2      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_dram_we_n"            LOC = E3      | IOSTANDARD = MOBILE_DDR;
+    #NET  "mcb3_rzq"                  LOC = N4      | IOSTANDARD = MOBILE_DDR;
+
+
+###################################################################################################################################################
 #                                               Seven Segment Display                                                                             #
 ################################################################################################################################################### 
 NET "SevenSegment[7]"            LOC = A3      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;   #a
@@ -109,3 +179,36 @@ NET "IO_P9[3]"                 LOC = K15      | IOSTANDARD = LVCMOS33 | DRIVE = 
 NET "IO_P9[2]"                 LOC = K16      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 6
 NET "IO_P9[1]"                 LOC = L15      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 7
 NET "IO_P9[0]"                 LOC = L16      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 8
+
+# Dampen noise on dangling MicroSD input pin, overriding defaults
+
+###################################################################################################################################################
+#                                                    Audio                                                                                        #
+################################################################################################################################################### 
+#NET "Audio1"                     LOC = B16     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  # Audio Left               
+#NET "Audio2"                     LOC = A16     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  # Audio Right
+ 
+# Phone jack - resistor network only on tip!
+#LOCATE COMP "p_ring" SITE "44";		# INOUT (75 Ohm)
+#LOCATE COMP "p_tip_0" SITE "32";	# INOUT (1330 Ohm) (shared with j2_21)
+#LOCATE COMP "p_tip_1" SITE "27";	# INOUT (665 Ohm) (shared with j2_22)
+#LOCATE COMP "p_tip_2" SITE "28";	# INOUT (330 Ohm) (shared with j2_23)
+#LOCATE COMP "p_tip_3" SITE "43";	# INOUT (160 Ohm)
+ 
+###################################################################################################################################################
+#                                                    VGA                                                                                          #
+################################################################################################################################################### 
+    #NET "HSync"                      LOC = B12     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    #NET "VSync"                      LOC = A12     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+
+    #NET "Red[2]"                     LOC = C9      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    #NET "Red[1]"                     LOC = B9      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    #NET "Red[0]"                     LOC = A9      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+
+    #NET "Green[2]"                   LOC = C11     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    #NET "Green[1]"                   LOC = A10     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    #NET "Green[0]"                   LOC = C10     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+
+    #NET "Blue[2]"                    LOC = A11     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    #NET "Blue[1]"                    LOC = B11     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+	 
