@@ -15,7 +15,7 @@
 module vgahdmi_v(
         input wire clk_pixel, /* 25 MHz */
         input wire clk_tmds, /* 250 MHz (set to 0 for VGA-only) */
-        output reg [12:0] dispAddr,
+        output reg [15:0] dispAddr,
         input wire [7:0] dispData,
         output wire vga_hsync, vga_vsync,
         output wire [2:0] vga_r, vga_g, vga_b,
@@ -51,21 +51,13 @@ always @(posedge pixclk)
       dispAddr <= 0;
     else
       begin
-        // lower bits of address (32 bytes) always increment
-        // when X counter is < 256 or 512 and modulo 8 or 16 = 0
-        //if(CounterX[9:8+dbl_x] == 0 && CounterX[2+dbl_x:0] == 0)
-        //  dispAddr[4:0] <= dispAddr[4:0] + 1;
-        // after 1 or 2 identical lines skip to next 32 bytes
-        // choose any X pixel before next even Y line
-        // as the moment to increment upper bits of address
-        //if((dbl_y == 0 || CounterY[0] == 1) && CounterX == 512)
-        //  dispAddr[12:5] <= dispAddr[12:5] + 1;
+        // change address every full byte over the displayed space of 640 X pixels
         if(CounterX < 640 && CounterX[2+dbl_x:0] == 0)
         begin
           if( (dbl_y == 0 || (CounterY[0] == 0 || CounterX != 0)) )
             dispAddr <= dispAddr+1;
           else
-            dispAddr <= dispAddr-(dbl_x ? 39 : 79); // go back to scan same line again
+            dispAddr <= dispAddr-(dbl_x ? 40-1 : 80-1); // go back to scan same line again
         end
         
       end
@@ -96,7 +88,7 @@ assign vga_b = test_picture ? test_blue[7:5] : colorValue[7:5];
 assign vga_hsync = hSync;
 assign vga_vsync = vSync;
 
-// generate HDMI output
+// generate HDMI output, mixing with test picture if enabled
 ////////////////////////////////////////////////////////////////////////
 wire [9:0] TMDS_red, TMDS_green, TMDS_blue;
 

@@ -145,7 +145,7 @@ architecture Behavioral of glue_bram is
     constant C_pids_bits: integer := integer(floor((log2(real(C_pids)+0.001))+0.5));
     
     -- VGA/HDMI video
-    signal vga_addr: std_logic_vector(12 downto 0);
+    signal vga_addr: std_logic_vector(15 downto 0);
     signal vga_data: std_logic_vector(7 downto 0);
     signal video_bram_write: std_logic;
 
