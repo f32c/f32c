@@ -61,7 +61,7 @@ entity glue is
 	flash_cen, flash_sck, flash_si: out std_logic;
 	sdcard_so: in std_logic;
 	sdcard_cen, sdcard_sck, sdcard_si: out std_logic;
-	led: out std_logic_vector(7 downto 0);
+	LED: out std_logic_vector(7 downto 0);
 	Switch: in std_logic_vector(5 downto 0);
 	sw: in std_logic_vector(7 downto 0);
 	IO_P6: inout std_logic_vector(7 downto 0);
@@ -110,7 +110,7 @@ end generate;
 	spi_ss(0) => flash_cen,spi_ss(1) => sdcard_cen,
 	spi_mosi(0) => flash_si,spi_mosi(1) => sdcard_si, 
 	spi_miso(0) => flash_so,spi_miso(1) => sdcard_so,
-	simple_out(7 downto 0) => led(7 downto 0),
+	simple_out(7 downto 0) => LED(7 downto 0),
 	simple_out(15 downto 8) => SevenSegment(7 downto 0),
 	simple_out(18 downto 16) => SevenSegmentEnable(2 downto 0),
 	simple_out(31 downto 19) => open,
