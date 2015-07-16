@@ -43,7 +43,7 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: 81 or 112
+	-- Main clock: 81/112
 	C_clk_freq: integer := 81;
 
 	-- SoC configuration options
@@ -58,7 +58,7 @@ entity glue is
 	rs232_dce_txd: out std_logic;
 	rs232_dce_rxd: in std_logic;
 	Led: out std_logic_vector(7 downto 0);
-	IO: inout std_logic_vector(39 downto 0);
+	gpio: inout std_logic_vector(39 downto 0);
 	btn_k2, btn_k3: in std_logic
     );
 end glue;
@@ -108,7 +108,7 @@ begin
 	spi_ss(0)   => open,  spi_ss(1)   => open,
 	spi_mosi(0) => open,  spi_mosi(1) => open,
 	spi_miso(0) => '-',   spi_miso(1) => '-',
-	gpio(39 downto 0) => IO(39 downto 0),
+	gpio(31 downto 0) => gpio(31 downto 0),
 	gpio(127 downto 40) => open,
 	simple_out(7 downto 0) => Led(7 downto 0),
 	simple_out(31 downto 8) => open,
