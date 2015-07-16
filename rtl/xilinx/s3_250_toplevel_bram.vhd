@@ -93,7 +93,7 @@ begin
     )
     port map (
 	clk => clk,
-	sio_txd(0) => rs232_dce_txd, 
+	sio_txd(0) => rs232_dce_txd,
 	sio_rxd(0) => rs232_dce_rxd,
 	sio_break(0) => rs232_break,
   	spi_sck(0) => flash_sck,
@@ -103,7 +103,8 @@ begin
 	simple_out(1 downto 0) => LED(1 downto 0),
 	simple_out(31 downto 2) => open,
 	simple_in(14 downto 0) => INPUT(14 downto 0), 
-   gpio(15 downto 0) => WINGA(15 downto 0),
+	simple_in(31 downto 15) => x"0000" & '0', 
+	gpio(15 downto 0) => WINGA(15 downto 0),
 	gpio(127 downto 16) => open
     );
 end Behavioral;
