@@ -24,7 +24,7 @@ entity vgahdmi is
     clk_tmds   : in std_logic := '0'; -- hdmi clock 250 MHz (or 0 if HDMI output is not used)
     dispAddr   : out std_logic_vector(12 downto 0); -- requested mem address
     dispData   : in  std_logic_vector(7 downto 0);  -- returned data
-    vga_video  : out std_logic; -- VGA video signal
+    vga_r, vga_g, vga_b:  out std_logic_vector(2 downto 0); -- VGA video signal
     vga_hsync, vga_vsync: out std_logic; -- VGA sync
     TMDS_out_RGB : out std_logic_vector(2 downto 0) -- HDMI output
   );
@@ -42,7 +42,7 @@ architecture syn of vgahdmi is
       clk_tmds   : in std_logic := '0'; -- hdmi clock 250 MHz (or 0 if HDMI output is not used)
       dispAddr   : out std_logic_vector(12 downto 0); -- requested mem address
       dispData   : in  std_logic_vector(7 downto 0);  -- returned data
-      vga_video  : out std_logic; -- VGA video signal
+      vga_r, vga_g, vga_b:  out std_logic_vector(2 downto 0); -- VGA video signal
       vga_hsync, vga_vsync: out std_logic; -- VGA sync
       TMDS_out_RGB : out std_logic_vector(2 downto 0) -- HDMI output
     );
@@ -60,7 +60,9 @@ begin
       clk_tmds  => clk_tmds,
       dispAddr  => dispAddr,
       dispData  => dispData,
-      vga_video => vga_video,
+      vga_r => vga_r,
+      vga_g => vga_g,
+      vga_b => vga_b,
       vga_hsync => vga_hsync,
       vga_vsync => vga_vsync,
       TMDS_out_RGB => TMDS_out_RGB
