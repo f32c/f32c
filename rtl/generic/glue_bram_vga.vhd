@@ -457,7 +457,7 @@ begin
       vga_g(i) <= vga_mono;
       vga_b(i) <= vga_mono;
     end generate;
-    vga_data(7 downto 0) <= vga_addr(11 downto 4);
+    vga_data(7 downto 0) <= vga_addr(12 downto 5);
     -- vga_data(7 downto 0) <= x"0F";
     end generate;
 
