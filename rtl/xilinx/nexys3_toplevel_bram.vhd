@@ -41,13 +41,16 @@ entity glue is
     generic (
 	-- ISA
 	C_arch: integer := ARCH_MI32;
-
+	C_debug: boolean := false;
 	-- Main clock: N * 10 MHz
 	C_clk_freq: integer := 80;
 
 	-- SoC configuration options
 	C_mem_size: integer := 32;
-	C_leds_btns: boolean := true
+	C_sio: integer := 1;
+	C_spi: integer := 2;
+	C_gpio: integer := 32;
+	C_simple_io: boolean := true
     );
     port (
 	clk_100m: in std_logic;
@@ -64,8 +67,6 @@ end glue;
 
 architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
-    signal btns: std_logic_vector(15 downto 0);
-    signal lcd_7seg: std_logic_vector(15 downto 0);
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
     clkgen: entity work.clkgen
@@ -88,20 +89,35 @@ begin
     generic map (
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
-	C_mem_size => C_mem_size
+	C_mem_size => C_mem_size,
+	C_gpio => C_gpio,
+	C_sio => C_sio,
+	C_spi => C_spi,
+	C_debug => C_debug
     )
     port map (
 	clk => clk,
 	sio_txd(0) => rs232_dce_txd, sio_rxd(0) => rs232_dce_rxd,
 	sio_break(0) => rs232_break,
-	gpio(7 downto 0) => ja, gpio(15 downto 8) => jb,
-	gpio(23 downto 16) => jc, gpio(31 downto 24) => jd,
-	leds(7 downto 0) => led, leds(15 downto 8) => open,
-	lcd_7seg => lcd_7seg, btns => btns,
-	sw(7 downto 0) => sw, sw(15 downto 8) => x"00"
+	spi_sck(0)  => open,  spi_sck(1)  => open,
+	spi_ss(0)   => open,  spi_ss(1)   => open,
+	spi_mosi(0) => open,  spi_mosi(1) => open,
+	spi_miso(0) => '-',   spi_miso(1) => '-',
+	gpio(7 downto 0) => ja(7 downto 0),
+	gpio(15 downto 8) => jb(7 downto 0),
+	gpio(23 downto 16) => jc(7 downto 0),
+	gpio(31 downto 24) => jd(7 downto 0),
+	gpio(127 downto 32) => open,
+	simple_out(7 downto 0) => led(7 downto 0),
+	simple_out(15 downto 8) => seg(7 downto 0),
+	simple_out(19 downto 16) => an(3 downto 0),
+	simple_out(31 downto 20) => open,
+	simple_in(0) => btn_west,
+	simple_in(1) => btn_east,
+	simple_in(2) => btn_north,
+	simple_in(3) => btn_south,
+	simple_in(4) => btn_center,
+	simple_in(12 downto 5) => sw(7 downto 0),
+	simple_in(31 downto 13) => open
     );
-    seg <= lcd_7seg(7 downto 0);
-    an <= lcd_7seg(11 downto 8);
-    btns <=
-      x"00" & "000" & btn_west & btn_east & btn_north & btn_south & btn_center;
 end Behavioral;
