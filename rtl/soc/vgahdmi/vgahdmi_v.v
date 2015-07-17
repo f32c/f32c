@@ -25,6 +25,7 @@ module vgahdmi_v(
 parameter test_picture = 0;
 parameter dbl_x = 0; // 0-normal X, 1-double X
 parameter dbl_y = 0; // 0-normal Y, 1-double Y
+parameter visible_y = 480; // depending on available RAM we can lower this
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -67,7 +68,7 @@ reg [7:0] shiftData;
 always @(posedge pixclk)
   begin
     if(dbl_x == 0 || CounterX[0] == 0)
-      shiftData <= (CounterX[2+dbl_x:0] == 0) ? dispData : shiftData[7:1];
+      shiftData <= (CounterX[2+dbl_x:0] == 0) ? (CounterY < visible_y ? dispData : 0) : shiftData[7:1];
   end
 
 wire [7:0] colorValue;
