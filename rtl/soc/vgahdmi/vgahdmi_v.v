@@ -54,7 +54,7 @@ always @(posedge pixclk)
         // change address every full byte over the displayed space of 640 X pixels
         if(CounterX < 640 && CounterX[2+dbl_x:0] == 0)
         begin
-          if( (dbl_y == 0 || (CounterY[0] == 0 || CounterX != 0)) )
+          if( (dbl_y == 0 || CounterY[0] == 0) )
             dispAddr <= dispAddr+1;
           else
             dispAddr <= dispAddr-(dbl_x ? 40-1 : 80-1); // go back to scan same line again
