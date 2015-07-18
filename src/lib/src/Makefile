@@ -130,7 +130,9 @@ libs:
 
 all_libs:
 	${MAKE} ARCH=riscv libs
-	${MAKE} ARCH=mips libs
-	${MAKE} ARCH=mips NOMUL=true libs
-	${MAKE} ARCH=mips MIN=true libs
-
+	${MAKE} ARCH=mips ENDIANFLAGS=-EL libs
+	${MAKE} ARCH=mips ENDIANFLAGS=-EL NOMUL=true libs
+	${MAKE} ARCH=mips ENDIANFLAGS=-EL MIN=true libs
+	${MAKE} ARCH=mips ENDIANFLAGS=-EB libs
+	${MAKE} ARCH=mips ENDIANFLAGS=-EB NOMUL=true libs
+	${MAKE} ARCH=mips ENDIANFLAGS=-EB MIN=true libs
