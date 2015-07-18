@@ -34,26 +34,36 @@ ifndef LOADADDR
  endif
 endif
 
+# -EB big-endian (mips-elf-gcc default); -EL little-endian
+ifndef ENDIANFLAGS
+	ENDIANFLAGS = -EL
+endif
+
 ifeq (${ARCH},riscv)
- ARCH_DIR = ${ARCH}
+	ARCH_DIR = ${ARCH}
 else
- ifdef MIN
-  ARCH_DIR = ${ARCH}_min
-  MK_CFLAGS += -mno-mul
-  MK_CFLAGS += -mno-branch-likely
-  MK_CFLAGS += -mno-sign-extend
- else
-  ifdef NOMUL
-   ARCH_DIR = ${ARCH}_nomul
-   MK_CFLAGS += -mno-mul
-  else
-   ARCH_DIR = ${ARCH}
-  endif
- endif
+	ifeq ($(findstring -EB, ${ENDIANFLAGS}),)
+		_ARCH_BASE = ${ARCH}el
+	else
+		_ARCH_BASE = ${ARCH}eb
+	endif
+	ifdef MIN
+		ARCH_DIR = ${_ARCH_BASE}_min
+		MK_CFLAGS += -mno-mul
+		MK_CFLAGS += -mno-branch-likely
+		MK_CFLAGS += -mno-sign-extend
+	else
+		ifdef NOMUL
+			ARCH_DIR = ${_ARCH_BASE}_nomul
+			MK_CFLAGS += -mno-mul
+		else
+			ARCH_DIR = ${_ARCH_BASE}
+		endif
+	endif
 endif
 
 ifeq ($(findstring 0x8, ${LOADADDR}),)
-MK_CFLAGS += -DBRAM
+	MK_CFLAGS += -DBRAM
 endif
 
 # Includes
@@ -64,11 +74,11 @@ MK_STDINC = -nostdinc -include sys/param.h
 LIBDIR = ${BASE_DIR}lib/${ARCH_DIR}
 
 ifndef WITHOUT_LIBS
- ifdef WITHOUT_FLOAT
-  MK_LIBS = ${LIBS} -lcint
- else
-  MK_LIBS = ${LIBS} -lc
- endif
+	ifdef WITHOUT_FLOAT
+		MK_LIBS = ${LIBS} -lcint
+	else
+		MK_LIBS = ${LIBS} -lc
+	endif
 endif
 
 ifeq (${ARCH},riscv)
@@ -87,10 +97,6 @@ ifeq (${ARCH},riscv)
 else
 	# MIPS-specific flags
 
-	# -EB big-endian (mips-elf-gcc default); -EL little-endian
-	ifndef ENDIANFLAGS
-		ENDIANFLAGS = -EL
-	endif
 
 	ifeq ($(findstring -march=,$(MK_CFLAGS)),)
 		MK_CFLAGS += -march=f32c
@@ -111,7 +117,7 @@ endif
 
 # Optimization options
 ifeq ($(findstring -O,$(CFLAGS)),)
-MK_CFLAGS += -Os -fpeel-loops
+	MK_CFLAGS += -Os -fpeel-loops
 endif
 
 # Do not try to link with libc and standard startup files
@@ -125,24 +131,24 @@ MK_CFLAGS += -ffunction-sections -fdata-sections
 
 # Default is to warn and abort on all standard errors and warnings
 ifndef WARNS
-WARNS = 2
+	WARNS = 2
 endif
 
 # Warning flags
 ifeq ($(findstring ${WARNS}, "01234"),)
-$(error Unsupportde WARNS level ${WARNS})
+	$(error Unsupportde WARNS level ${WARNS})
 endif
 ifneq ($(findstring ${WARNS}, "1234"),)
-MK_CFLAGS += -Wall
+	MK_CFLAGS += -Wall
 endif
 ifneq ($(findstring ${WARNS}, "234"),)
-MK_CFLAGS += -Werror
+	MK_CFLAGS += -Werror
 endif
 ifneq ($(findstring ${WARNS}, "34"),)
-MK_CFLAGS += -Wextra -Wsystem-headers -Wshadow
+	MK_CFLAGS += -Wextra -Wsystem-headers -Wshadow
 endif
 ifneq ($(findstring ${WARNS}, "4"),)
-MK_CFLAGS += -Winline
+	MK_CFLAGS += -Winline
 endif
 
 # Too strict to be practical:
@@ -159,7 +165,7 @@ MK_LDFLAGS += -N ${ENDIANFLAGS}
 MK_LDFLAGS += --section-start=.init=${LOADADDR}
 MK_LDFLAGS += --library-path=${LIBDIR}
 ifndef WITHOUT_LIBS
-MK_LDFLAGS += -lcrt0
+	MK_LDFLAGS += -lcrt0
 endif
 
 # Garbage-collect unused section (unreferenced functions)
@@ -178,9 +184,9 @@ LD = ${ARCH}-elf-ld ${MK_LDFLAGS}
 AR = ${ARCH}-elf-ar ${MK_ARFLAGS}
 OBJCOPY = ${ARCH}-elf-objcopy
 ifeq ($(shell uname -s), FreeBSD)
-ISA_CHECK = ${BASE_DIR}tools/isa_check.tcl
+	ISA_CHECK = ${BASE_DIR}tools/isa_check.tcl
 else
-ISA_CHECK = tclsh ${BASE_DIR}tools/isa_check.tcl
+	ISA_CHECK = tclsh ${BASE_DIR}tools/isa_check.tcl
 endif
 MKDEP = ${CC} -MM
 
@@ -190,7 +196,7 @@ MKDEP = ${CC} -MM
 #
 
 ifndef OBJDIR
-OBJDIR=./obj/${ARCH_DIR}
+	OBJDIR=./obj/${ARCH_DIR}
 endif
 
 #
@@ -198,9 +204,9 @@ endif
 #
 
 ifeq ($(PROG),)
- ifeq ($(LIB),)
-  .DEFAULT_GOAL := abort
- endif
+	ifeq ($(LIB),)
+		.DEFAULT_GOAL := abort
+	endif
 endif
 
 ASM_OBJS = $(addprefix ${OBJDIR}/,$(ASFILES:.S=.O))
