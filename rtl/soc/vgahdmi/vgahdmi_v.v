@@ -6,6 +6,8 @@
 // no vendor-specific modules here
 // (differential buffers, PLLs)
 
+// fixme: asymmetry at column 0; bits are 1 bit cycle-shifted
+
 // LICENSE=BSD
 
 // some code taken from
@@ -25,7 +27,9 @@ module vgahdmi_v(
 parameter test_picture = 0;
 parameter dbl_x = 0; // 0-normal X, 1-double X
 parameter dbl_y = 0; // 0-normal Y, 1-double Y
-parameter visible_y = 480; // depending on available RAM we can lower this
+parameter mem_size_kb = 4; // KB
+parameter mem_size_y = (mem_size_kb * 1024 / (640/8)) << (dbl_x + dbl_y); // depending on available RAM we can lower this
+
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -45,6 +49,10 @@ always @(posedge pixclk) if(CounterX==799) CounterY <= (CounterY==524) ? 0 : Cou
 always @(posedge pixclk) hSync <= (CounterX>=656) && (CounterX<752);
 always @(posedge pixclk) vSync <= (CounterY>=490) && (CounterY<492);
 
+// signal: when to get new data from memory
+wire getdata;
+assign getdata = CounterX[2+dbl_x:0] == 0;
+
 // managa address and fetch data
 always @(posedge pixclk)
   begin
@@ -52,15 +60,16 @@ always @(posedge pixclk)
       dispAddr <= 0;
     else
       begin
-        // change address every full byte over the displayed space of 640 X pixels
-        if(CounterX < 640 && CounterX[2+dbl_x:0] == 0)
+        // change address every full byte over the displayed space of 640 horizontal pixels
+        if(CounterX < 640 && getdata != 0)
         begin
-          if( (dbl_y == 0 || CounterY[0] == 0) )
-            dispAddr <= dispAddr+1;
+          if( (dbl_y == 0 || (CounterY[0] == 0 || CounterX[9:3+dbl_x] != 0 )) )
+            dispAddr <= dispAddr+1; // dbl_y: normal increment for each even Y line or not beginning of X line
           else
+            // dbl_y: odd Y line and beginning of X: return to previous line for double-scan
+            // dbl_x=0: 80 bytes per X line, dbl_x=1: 40 bytes per X line
             dispAddr <= dispAddr-(dbl_x ? 40-1 : 80-1); // go back to scan same line again
         end
-        
       end
   end
 
@@ -68,13 +77,13 @@ reg [7:0] shiftData;
 always @(posedge pixclk)
   begin
     if(dbl_x == 0 || CounterX[0] == 0)
-      shiftData <= (CounterX[2+dbl_x:0] == 0) ? (CounterY < visible_y ? dispData : 0) : shiftData[7:1];
+      shiftData <= getdata != 0 ? dispData : shiftData[7:1];
   end
 
 wire [7:0] colorValue;
-assign colorValue = shiftData[0] == 0 ? 0 : 255;
+assign colorValue = (mem_size_y < 480 ? CounterY < mem_size_y : 1) && shiftData[0] != 0 ? 255 : 0;
 
-////////////////
+// test picture generator
 wire [7:0] W = {8{CounterX[7:0]==CounterY[7:0]}};
 wire [7:0] A = {8{CounterX[7:5]==3'h2 && CounterY[7:5]==3'h2}};
 reg [7:0] test_red, test_green, test_blue;
@@ -90,13 +99,12 @@ assign vga_hsync = hSync;
 assign vga_vsync = vSync;
 
 // generate HDMI output, mixing with test picture if enabled
-////////////////////////////////////////////////////////////////////////
 wire [9:0] TMDS_red, TMDS_green, TMDS_blue;
 
 TMDS_encoder encode_R
 (
-  .clk(pixclk), 
-  .VD(test_picture ? test_red : colorValue), 
+  .clk(pixclk),
+  .VD(test_picture ? test_red : colorValue),
   .CD(2'b00),
   .VDE(DrawArea),
   .TMDS(TMDS_red)
@@ -114,14 +122,9 @@ TMDS_encoder encode_B
   .clk(pixclk),
   .VD(test_picture ? test_blue : colorValue),
   .CD({vSync,hSync}),
-  .VDE(DrawArea), 
+  .VDE(DrawArea),
   .TMDS(TMDS_blue)
 );
-
-////////////////////////////////////////////////////////////////////////
-// wire clk_TMDS, DCM_TMDS_CLKFX;  // 125MHz x 2 = 250MHz
-// DCM_SP #(.CLKFX_MULTIPLY(2)) DCM_TMDS_inst(.CLKIN(clk_125m), .CLKFX(DCM_TMDS_CLKFX), .RST(1'b0));
-// BUFG BUFG_TMDSp(.I(DCM_TMDS_CLKFX), .O(clk_TMDS));
 
 ////////////////////////////////////////////////////////////////////////
 reg [3:0] TMDS_mod10=0;  // modulus 10 counter
@@ -133,11 +136,11 @@ always @(posedge clk_TMDS)
 begin
 	TMDS_shift_red   <= TMDS_shift_load ? TMDS_red   : TMDS_shift_red  [9:1];
 	TMDS_shift_green <= TMDS_shift_load ? TMDS_green : TMDS_shift_green[9:1];
-	TMDS_shift_blue  <= TMDS_shift_load ? TMDS_blue  : TMDS_shift_blue [9:1];	
+	TMDS_shift_blue  <= TMDS_shift_load ? TMDS_blue  : TMDS_shift_blue [9:1];
 	TMDS_mod10 <= (TMDS_mod10==4'd9) ? 4'd0 : TMDS_mod10+4'd1;
 end
 
-// ******* OUTPUT ********
+// ******* HDMI OUTPUT ********
 assign TMDS_out_RGB = {TMDS_shift_red[0], TMDS_shift_green[0], TMDS_shift_blue[0]};
 endmodule
 
