@@ -41,6 +41,7 @@ else
   ARCH_DIR = ${ARCH}_min
   MK_CFLAGS += -mno-mul
   MK_CFLAGS += -mno-branch-likely
+  MK_CFLAGS += -mno-sign-extend
  else
   ifdef NOMUL
    ARCH_DIR = ${ARCH}_nomul
