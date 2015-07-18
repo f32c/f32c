@@ -54,7 +54,8 @@ ifeq ($(MAKECMDGOALS),ulx2s)
 endif
 
 ifeq ($(.DEFAULT_GOAL),)
-$(error Must specify library target: crt0 c cint m ulx2s)
+ LIB = none
+ .DEFAULT_GOAL = all_libs
 endif
 
 ifeq ($(LIB),crt0)
@@ -112,3 +113,24 @@ ifeq ($(LIB),ulx2s)
 endif
 
 include ${POST_MK}
+
+libs:
+	rm -fr ${LIBDIR}
+	mkdir -p ${LIBDIR}
+	rm -fr ${OBJDIR}
+	${MAKE} crt0
+	rm -fr ${OBJDIR}
+	${MAKE} c
+	rm -fr ${OBJDIR}
+	${MAKE} cint
+	rm -fr ${OBJDIR}
+	${MAKE} m
+	rm -fr ${OBJDIR}
+	${MAKE} ulx2s
+
+all_libs:
+	${MAKE} ARCH=riscv libs
+	${MAKE} ARCH=mips libs
+	${MAKE} ARCH=mips NOMUL=true libs
+	${MAKE} ARCH=mips MIN=true libs
+
