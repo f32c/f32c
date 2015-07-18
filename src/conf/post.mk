@@ -37,11 +37,17 @@ endif
 ifeq (${ARCH},riscv)
  ARCH_DIR = ${ARCH}
 else
- ifdef NOMUL
-  ARCH_DIR = ${ARCH}_nomul
+ ifdef MIN
+  ARCH_DIR = ${ARCH}_min
   MK_CFLAGS += -mno-mul
+  MK_CFLAGS += -mno-branch-likely
  else
-  ARCH_DIR = ${ARCH}
+  ifdef NOMUL
+   ARCH_DIR = ${ARCH}_nomul
+   MK_CFLAGS += -mno-mul
+  else
+   ARCH_DIR = ${ARCH}
+  endif
  endif
 endif
 
@@ -85,7 +91,7 @@ else
 		ENDIANFLAGS = -EL
 	endif
 
-	ifeq ($(findstring -march=,$(CFLAGS)),)
+	ifeq ($(findstring -march=,$(MK_CFLAGS)),)
 		MK_CFLAGS += -march=f32c
 	endif
 	MK_CFLAGS += ${ENDIANFLAGS}
@@ -166,7 +172,7 @@ MK_ARFLAGS = r
 
 CC = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
 CXX = ${ARCH}-elf-g++ ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES} -fno-rtti -fno-exceptions
-AS = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_INCLUDES}
+AS = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_ASFLAGS} ${MK_INCLUDES}
 LD = ${ARCH}-elf-ld ${MK_LDFLAGS}
 AR = ${ARCH}-elf-ar ${MK_ARFLAGS}
 OBJCOPY = ${ARCH}-elf-objcopy
@@ -234,7 +240,7 @@ abort:
 #
 $(addprefix ${OBJDIR}/,%.o) : %.c
 	@mkdir -p $(dir $@)
-	$(CC) -o $@ $<
+	${CC} -o $@ $<
 
 #
 # Rule for compiling C++ files
@@ -242,13 +248,13 @@ $(addprefix ${OBJDIR}/,%.o) : %.c
 #
 $(addprefix ${OBJDIR}/,%.o) : %.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) -o $@ $<
+	${CXX} -o $@ $<
 
 #
 # Rule for compiling ASM files
 #
 $(addprefix ${OBJDIR}/,%.O) : %.S
 	@mkdir -p $(dir $@)
-	$(AS) -o $@ $<
+	${AS} -o $@ $<
 
 -include .depend
