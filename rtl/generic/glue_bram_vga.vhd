@@ -439,9 +439,9 @@ begin
     if C_vgahdmi generate
     vgahdmi: entity work.vgahdmi
     generic map (
-      dbl_x => 1,
-      dbl_y => 1,
-      mem_size_kb => 4, -- small ram (204/2 = 102 lines, 102 * 40bytes * 4K)
+      dbl_x => 0,
+      dbl_y => 0,
+      mem_size_kb => 4, -- tell vgahdmi how much video ram do we have
       test_picture => 1
     )
     port map (
