@@ -16,7 +16,7 @@ entity vgahdmi is
   generic(
     dbl_x          : integer := 0;  -- 0-normal X, 1-double X
     dbl_y          : integer := 0;  -- 0-normal X, 1-double X
-    visible_y      : integer := 480;-- visible y (vertical size)
+    mem_size_kb    : integer := 40; -- small mem will limit visible y (vertical size)
     test_picture   : integer := 0   -- 0-don't, 1-show some test picture
   );
   port
@@ -36,7 +36,7 @@ architecture syn of vgahdmi is
     generic (
       dbl_x          : integer := 0;  -- 0-normal X, 1-double X
       dbl_y          : integer := 0;  -- 0-normal X, 1-double X
-      visible_y      : integer := 480;-- visible y (vertical size)
+      mem_size_kb    : integer := 40; -- small mem will limit visible y (vertical size)
       test_picture   : integer := 0   -- 0-don't, 1-show some test picture
     );
     port (
@@ -55,7 +55,7 @@ begin
   generic map(
     dbl_x => dbl_x,
     dbl_y => dbl_y,
-    visible_y => visible_y,
+    mem_size_kb => mem_size_kb,
     test_picture => test_picture
   )
   port map(
