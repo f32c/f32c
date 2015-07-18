@@ -118,14 +118,36 @@ architecture Behavioral of glue_bram is
     signal io_addr: std_logic_vector(11 downto 2);
     signal intr: std_logic_vector(5 downto 0); -- interrupt
 
+    -- io base
+    type T_iomap_range is array(1 downto 0) of std_logic_vector(15 downto 0);
+    constant iomap_range: T_iomap_range := (x"F800", x"FFFF"); -- actual range is 0xFFFFF800 .. 0xFFFFFFFF
+
+    function iomap_from(r: T_iomap_range; base: T_iomap_range) return integer is
+       variable a, b: std_logic_vector(15 downto 0);
+    begin
+       a := r(1);
+       b := base(1);
+       return conv_integer(a(11 downto 4) - b(11 downto 4));
+    end iomap_from;
+
+    function iomap_to(r: T_iomap_range; base: T_iomap_range) return integer is
+       variable a, b: std_logic_vector(15 downto 0);
+    begin
+       a := r(0);
+       b := base(1);
+       return conv_integer(a(11 downto 4) - b(11 downto 4));
+    end iomap_to;
+
     -- Timer
+    constant iomap_timer: T_iomap_range := (x"F900", x"F93F");
     signal from_timer: std_logic_vector(31 downto 0);
     signal timer_ce: std_logic;
     signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
     signal icp, icp_enable: std_logic_vector(1 downto 0);
     signal timer_intr: std_logic;
-    
+
     -- GPIO
+    constant iomap_gpio: T_iomap_range := (x"F800", x"F87F");
     constant C_gpios: integer := (C_gpio+31)/32; -- number of gpio units
     type gpios_type is array (C_gpios-1 downto 0) of std_logic_vector(31 downto 0);
     signal from_gpio, gpios: gpios_type;
@@ -134,6 +156,7 @@ architecture Behavioral of glue_bram is
     signal gpio_intr_joint: std_logic := '0';
 
     -- PID
+    constant iomap_pid: T_iomap_range := (x"FD80", x"FDBF");
     constant C_pid: boolean := C_pids >= 2; -- minimum is 2 PIDs, otherwise no PID
     signal from_pid: std_logic_vector(31 downto 0);
     signal pid_ce: std_logic;
@@ -150,6 +173,7 @@ architecture Behavioral of glue_bram is
     signal video_bram_write: std_logic;
 
     -- Serial I/O (RS232)
+    constant iomap_sio: T_iomap_range := (x"FB00", x"FB3F");
     type from_sio_type is array (0 to C_sio - 1) of
       std_logic_vector(31 downto 0);
     signal from_sio: from_sio_type;
@@ -157,12 +181,15 @@ architecture Behavioral of glue_bram is
     signal sio_break_internal: std_logic_vector(C_sio - 1 downto 0);
 
     -- SPI (on-board Flash, SD card, others...)
+    constant iomap_spi: T_iomap_range := (x"FB40", x"FB7F");
     type from_spi_type is array (0 to C_spi - 1) of
       std_logic_vector(31 downto 0);
     signal from_spi: from_spi_type;
     signal spi_ce: std_logic_vector(C_spi - 1 downto 0);
 
     -- Simple I/O: onboard LEDs, buttons and switches
+    constant iomap_simple_in: T_iomap_range := (x"FF00", x"FF0F");
+    constant iomap_simple_out: T_iomap_range := (x"FF10", x"FF1F");
     signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
    
     -- Debug
@@ -239,8 +266,11 @@ begin
 	    bus_in => cpu_to_dmem, bus_out => from_sio(i),
 	    break => sio_break_internal(i)
 	);
-	sio_ce(i) <= io_addr_strobe when io_addr(11 downto 6) = x"3" & "00" and
-	  conv_integer(io_addr(5 downto 4)) = i else '0';
+	sio_ce(i) <= io_addr_strobe
+	  when io_addr(11 downto 4) >= iomap_from(iomap_sio, iomap_range)
+          and  io_addr(11 downto 4) <= iomap_to(iomap_sio, iomap_range)
+	  and  conv_integer(io_addr(5 downto 4)) = i
+	  else '0';
 	sio_break(i) <= sio_break_internal(i);
     end generate;
     sio_rx(0) <= sio_rxd(0);
@@ -259,8 +289,11 @@ begin
 	    spi_sck => spi_sck(i), spi_cen => spi_ss(i),
 	    spi_miso => spi_miso(i), spi_mosi => spi_mosi(i)
 	);
-	spi_ce(i) <= io_addr_strobe when io_addr(11 downto 6) = x"3" & "01" and
-	  conv_integer(io_addr(5 downto 4)) = i else '0';
+	spi_ce(i) <= io_addr_strobe
+	  when io_addr(11 downto 4) >= iomap_from(iomap_spi, iomap_range)
+          and  io_addr(11 downto 4) <= iomap_to(iomap_spi, iomap_range)
+	  and conv_integer(io_addr(5 downto 4)) = i
+	  else '0';
     end generate;
 
     --
@@ -310,40 +343,40 @@ begin
     begin
 	io_to_cpu <= (others => '-');
 	case conv_integer(io_addr(11 downto 4)) is
-	when 16#00# to 16#07# =>
+	when iomap_from(iomap_gpio, iomap_range) to iomap_to(iomap_gpio, iomap_range) =>
 	    for i in 0 to C_gpios - 1 loop
 		if conv_integer(io_addr(6 downto 5)) = i then
 		    io_to_cpu <= from_gpio(i);
 		end if;
 	    end loop;
-	when 16#10# to 16#13# =>
+	when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range) =>
 	    if C_timer then
 		io_to_cpu <= from_timer;
 	    end if;
-	when 16#30# to 16#33# =>
+	when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range) =>
 	    for i in 0 to C_sio - 1 loop
 		if conv_integer(io_addr(5 downto 4)) = i then
 		    io_to_cpu <= from_sio(i);
 		end if;
 	    end loop;
-	when 16#34# to 16#37# =>
+	when iomap_from(iomap_spi, iomap_range) to iomap_to(iomap_spi, iomap_range) =>
 	    for i in 0 to C_spi - 1 loop
 		if conv_integer(io_addr(5 downto 4)) = i then
 		    io_to_cpu <= from_spi(i);
 		end if;
 	    end loop;
-	when 16#58# to 16#5B# => -- address 0xFFFFFD80
+	when iomap_from(iomap_pid, iomap_range) to iomap_to(iomap_pid, iomap_range) =>
 	    if C_pid then
 		io_to_cpu <= from_pid;
 	    end if;
-	when 16#70#  =>
+	when iomap_from(iomap_simple_in, iomap_range) to iomap_to(iomap_simple_in, iomap_range) =>
 	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
 		    io_to_cpu(C_simple_in - i * 32 - 1 downto i * 32) <=
 		      R_simple_in(C_simple_in - i * 32 - 1 downto i * 32);
 		end if;
 	    end loop;
-	when 16#71#  =>
+	when iomap_from(iomap_simple_out, iomap_range) to iomap_to(iomap_simple_out, iomap_range) =>
 	    for i in 0 to (C_simple_out + 31) / 4 - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
 		    io_to_cpu(C_simple_out - i * 32 - 1 downto i * 32) <=
@@ -369,7 +402,11 @@ begin
 	gpio_irq => gpio_intr(i),
 	gpio_phys => gpio(32*i+31 downto 32*i) -- physical input/output
     );
-    gpio_ce(i) <= io_addr_strobe when conv_integer(io_addr(11 downto 5)) = i else '0';
+    gpio_ce(i) <= io_addr_strobe
+      when io_addr(11 downto 4) >= iomap_from(iomap_gpio, iomap_range)
+      and  io_addr(11 downto 4) <= iomap_to(iomap_gpio, iomap_range)
+      and  conv_integer(io_addr(6 downto 5)) = i
+      else '0';
     end generate;
     gpio_interrupt_collect: if C_gpios >= 1 generate
       gpio_intr_joint <= gpio_intr(0);
@@ -402,12 +439,10 @@ begin
 	bridge_f_out => pid_bridge_f_out,
 	bridge_r_out => pid_bridge_r_out
     );
-    pid_ce <= io_addr_strobe when
-         io_addr(11 downto 4) = x"58"
-      or io_addr(11 downto 4) = x"59"
-      or io_addr(11 downto 4) = x"5A"
-      or io_addr(11 downto 4) = x"5B"
-      else '0'; -- address 0xFFFFFD80
+    pid_ce <= io_addr_strobe
+      when io_addr(11 downto 4) >= iomap_from(iomap_pid, iomap_range)
+      and  io_addr(11 downto 4) <= iomap_to(iomap_pid, iomap_range)
+      else '0';
     pid_bridge_f <= pid_bridge_f_out;
     pid_bridge_r <= pid_bridge_r_out;
     end generate;
@@ -431,7 +466,10 @@ begin
 	icp_enable => icp_enable, -- enable physical input
 	icp => icp -- input capture signal
     );
-    timer_ce <= io_addr_strobe when io_addr(11 downto 8) = x"1" else '0';
+    timer_ce <= io_addr_strobe
+      when io_addr(11 downto 4) >= iomap_from(iomap_timer, iomap_range)
+      and  io_addr(11 downto 4) <= iomap_to(iomap_timer, iomap_range)
+      else '0';
     end generate;
     
     -- VGA/HDMI
@@ -516,7 +554,6 @@ begin
 	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
     );
     end generate;
-
 
     -- Debugging SIO instance
     G_debug_sio:
