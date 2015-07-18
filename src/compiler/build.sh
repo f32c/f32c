@@ -57,7 +57,7 @@ fi
 if true
 then
  cd $GCC_DIR
- patch -p0 < ../patches/gcc-4.8.1.diff
+ patch -p0 < ../patches/gcc-4.8.4.diff
  cd ..
 fi
 
