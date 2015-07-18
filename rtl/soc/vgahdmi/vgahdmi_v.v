@@ -49,21 +49,31 @@ always @(posedge pixclk) if(CounterX==799) CounterY <= (CounterY==524) ? 0 : Cou
 always @(posedge pixclk) hSync <= (CounterX>=656) && (CounterX<752);
 always @(posedge pixclk) vSync <= (CounterY>=490) && (CounterY<492);
 
-// signal: when to get new data from memory
-wire getdata;
-assign getdata = CounterX[2+dbl_x:0] == 0;
+// signal when to change address (to get new data from the memory)
+// phase shifted some pixels after the data fetch
+// so memory will have enough time to select new address and
+// stabilize data on the bus
+wire changeaddr;
+assign changeaddr = CounterX[2+dbl_x:0] == 2;
 
-// managa address and fetch data
+// signal: when to shift pixel data and when to get new data from the memory
+wire getdata;
+assign getdata = CounterX[2+dbl_x:0] == (dbl_x == 0 ? 0 : 0);
+
+// manage memory address from where to fetch data
+// address should be set and stable before actual data fetch takes place
 always @(posedge pixclk)
   begin
     if(CounterY >= 480)
-      dispAddr <= 0;
+      dispAddr <= 0; // address is ready at 0 for next frame
     else
       begin
-        // change address every full byte over the displayed space of 640 horizontal pixels
-        if(CounterX < 640 && getdata != 0)
+        // change address every byte over the displayed space of 640 horizontal pixels
+        // column 0: data must be ready, don't change address, 
+        // the address change for col 0 has been done after the last column!
+        if((CounterX[9:4] < 40) && changeaddr != 0)
         begin
-          if( (dbl_y == 0 || (CounterY[0] == 0 || CounterX[9:3+dbl_x] != 0 )) )
+          if( (dbl_y == 0 || (CounterY[0] == 1 || CounterX[9:3+dbl_x] != 40-1 )) )
             dispAddr <= dispAddr+1; // dbl_y: normal increment for each even Y line or not beginning of X line
           else
             // dbl_y: odd Y line and beginning of X: return to previous line for double-scan
@@ -81,7 +91,7 @@ always @(posedge pixclk)
   end
 
 wire [7:0] colorValue;
-assign colorValue = (mem_size_y < 480 ? CounterY < mem_size_y : 1) && shiftData[0] != 0 ? 255 : 0;
+assign colorValue = (mem_size_y < 480 ? CounterY < mem_size_y-dbl_y : 1==1) && shiftData[0] != 0 ? 255 : 0;
 
 // test picture generator
 wire [7:0] W = {8{CounterX[7:0]==CounterY[7:0]}};
@@ -95,8 +105,8 @@ always @(posedge pixclk) test_blue <= CounterY[7:0] | W | A;
 assign vga_r = test_picture ? test_red[7:5] :  colorValue[7:5];
 assign vga_g =                                 colorValue[7:5];
 assign vga_b = test_picture ? test_blue[7:5] : colorValue[7:5];
-assign vga_hsync = hSync;
-assign vga_vsync = vSync;
+assign vga_hsync = ~hSync;
+assign vga_vsync = ~vSync;
 
 // generate HDMI output, mixing with test picture if enabled
 wire [9:0] TMDS_red, TMDS_green, TMDS_blue;
