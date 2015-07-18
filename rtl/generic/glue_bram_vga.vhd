@@ -439,8 +439,8 @@ begin
     if C_vgahdmi generate
     vgahdmi: entity work.vgahdmi
     generic map (
-      dbl_x => 0,
-      dbl_y => 0,
+      dbl_x => 1,
+      dbl_y => 1,
       mem_size_kb => 4, -- tell vgahdmi how much video ram do we have
       test_picture => 1
     )
@@ -465,8 +465,8 @@ begin
     )
     port map (
 	clk => clk,
-	imem_addr(13 downto 2) => vga_addr(11 downto 0), 
-	imem_addr(31 downto 14) => (others => '0'),
+	imem_addr(17 downto 2) => vga_addr(15 downto 0),
+	imem_addr(31 downto 18) => (others => '0'),
 	imem_data_out => vga_data,
 	dmem_write => video_bram_write,
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
