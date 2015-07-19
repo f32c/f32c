@@ -90,6 +90,7 @@ entity glue_bram is
     port (
 	clk: in std_logic;
 	clk_25MHz: in std_logic; -- VGA pixel clock 25 MHz
+	clk_250MHz: in std_logic := '0';
 	sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
 	sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
 	spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
@@ -100,6 +101,7 @@ entity glue_bram is
 	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
 	vga_hsync, vga_vsync: out std_logic;
 	vga_r, vga_g, vga_b: out std_logic_vector(2 downto 0);
+	tmds_out_rgb: out std_logic_vector(2 downto 0);
 	gpio: inout std_logic_vector(127 downto 0)
     );
 end glue_bram;
@@ -484,14 +486,15 @@ begin
     )
     port map (
       clk_pixel => clk_25MHz,
-      clk_tmds => '0',
+      clk_tmds => clk_250MHz,
       dispAddr => vga_addr,
       dispData => vga_data,
       vga_r => vga_r,
       vga_g => vga_g,
       vga_b => vga_b,
       vga_hsync => vga_hsync,
-      vga_vsync => vga_vsync
+      vga_vsync => vga_vsync,
+      tmds_out_rgb => tmds_out_rgb
     );
     -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
     -- vga_data(7 downto 0) <= x"0F";
