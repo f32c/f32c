@@ -253,6 +253,7 @@ begin
     imem_data_ready <= '1';
     dmem_data_ready <= '1';
 
+    -- big address decoder when CPU reads IO
     process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio)
 	variable i: integer;
     begin
@@ -303,6 +304,34 @@ begin
 	end case;
     end process;
 
+    --
+    -- simple_out is physical pin output, LUT-saving, smaller than GPIO
+    --
+    process(clk)
+    begin
+	if rising_edge(clk) and io_addr_strobe = '1' and dmem_write = '1' then
+	    -- simple out
+	    if C_simple_out > 0 and io_addr(11 downto 4) = iomap_from(iomap_simple_out, iomap_range) then
+		if dmem_byte_sel(0) = '1' then
+		    R_simple_out(7 downto 0) <= cpu_to_dmem(7 downto 0);
+		end if;
+		if dmem_byte_sel(1) = '1' then
+		    R_simple_out(15 downto 8) <= cpu_to_dmem(15 downto 8);
+		end if;
+		if dmem_byte_sel(2) = '1' then
+		    R_simple_out(23 downto 16) <= cpu_to_dmem(23 downto 16);
+		end if;
+		if dmem_byte_sel(3) = '1' then
+		    R_simple_out(31 downto 24) <= cpu_to_dmem(31 downto 24);
+		end if;
+	    end if;
+	end if;
+	if rising_edge(clk) then
+	    R_simple_in(C_simple_in - 1 downto 0) <=
+	      simple_in(C_simple_in - 1 downto 0);
+	end if;
+    end process;
+
     -- RS232 sio
     G_sio: for i in 0 to C_sio - 1 generate
 	sio_instance: entity work.sio
@@ -350,33 +379,6 @@ begin
 	  else '0';
     end generate;
 
-    --
-    -- I/O
-    --
-    process(clk)
-    begin
-	if rising_edge(clk) and io_addr_strobe = '1' and dmem_write = '1' then
-	    -- simple out
-	    if C_simple_out > 0 and io_addr(11 downto 4) = iomap_from(iomap_simple_out, iomap_range) then
-		if dmem_byte_sel(0) = '1' then
-		    R_simple_out(7 downto 0) <= cpu_to_dmem(7 downto 0);
-		end if;
-		if dmem_byte_sel(1) = '1' then
-		    R_simple_out(15 downto 8) <= cpu_to_dmem(15 downto 8);
-		end if;
-		if dmem_byte_sel(2) = '1' then
-		    R_simple_out(23 downto 16) <= cpu_to_dmem(23 downto 16);
-		end if;
-		if dmem_byte_sel(3) = '1' then
-		    R_simple_out(31 downto 24) <= cpu_to_dmem(31 downto 24);
-		end if;
-	    end if;
-	end if;
-	if rising_edge(clk) then
-	    R_simple_in(C_simple_in - 1 downto 0) <=
-	      simple_in(C_simple_in - 1 downto 0);
-	end if;
-    end process;
 
     G_simple_out_standard:
     if C_timer = false generate
