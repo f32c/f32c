@@ -20,7 +20,7 @@ vfiles = \
 
 
 vhdfiles = \
-../../../xilinx/scarab_minispartan6plus_toplevel_bram.vhd \
+../../../xilinx/scarab_ms6p_toplevel_bram.vhd \
 ../../../xilinx/pll_50M_112M5.vhd \
 ../../../xilinx/pll_50M_100M.vhd \
 ../../../xilinx/pll_50M_81M25.vhd \
