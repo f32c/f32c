@@ -30,6 +30,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.MATH_REAL.ALL;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -50,8 +51,11 @@ entity glue is
 	C_mem_size: integer := 64; -- KB
 	C_vgahdmi: boolean := true;
 	C_vgahdmi_mem_kb: integer := 10; -- KB
-	C_pids: integer := 4;
-	C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8);
+	-- warning long compile time on ISE 14.7
+	-- C_pids = 2: 1 hour
+	-- C_pids = 4: 4 hours
+	C_pids: integer := 0;
+	C_pid_simulator: std_logic_vector(7 downto 0) := ext("1111", 8);
 	C_pid_prescaler: integer := 18;
 	C_pid_precision: integer := 1;
 	C_pid_pwm_bits: integer := 12;
@@ -132,7 +136,7 @@ begin
 	C_pids => C_pids,
 	C_pid_simulator => C_pid_simulator,
 	C_pid_prescaler => C_pid_prescaler, -- set control loop frequency
-	C_pid_fp => integer(floor((log2(real(C_clk_freq)*1e6))+0.5))-C_pid_prescaler, -- control loop approx freq in 2^n Hz for math, 26-C_pid_prescaler = 8
+	C_pid_fp => integer(floor((log2(real(C_clk_freq)*1.0E6))+0.5))-C_pid_prescaler, -- control loop approx freq in 2^n Hz for math, 26-C_pid_prescaler = 8
 	C_pid_precision => C_pid_precision, -- fixed point PID precision
 	C_pid_pwm_bits => C_pid_pwm_bits, -- clock divider bits define PWM output frequency
 	C_debug => C_debug
@@ -159,35 +163,15 @@ begin
 	tmds_out_rgb => tmds_out_rgb
     );
     
-    -- vendor-specific differential output buffering for HDMI clock and video
-    
-    -- 25MHz tmds clock must be passed through oddr2 buffer
-    -- before it can become input for differential output buffer obufds
-    clockbuf: oddr2
-      generic map(
-        DDR_ALIGNMENT => "NONE", -- Sets output alignment to "NONE", "C0" or "C1"
-        INIT => '1',    -- Sets initial state of the Q output to 1'b0 or 1'b1
-        SRTYPE => "SYNC" -- Specifies "SYNC" or "ASYNC"  set/reset
-      )
-      port map  (
-        C0 => clk_25MHz, -- 1-bit clock input
-        C1 => not clk_25MHz, -- 1-bit clock input inverted
-        CE => '1', -- 1-bit clock enable input
-        D0 => '1', -- 1-bit data input (associated with C0)
-        D1 => '0', -- 1-bit data input (associated with C1)
-        R  => '0', -- 1-bit reset input
-        S  => '0', -- 1-bit set input
-        Q  => obuf_tmds_clock -- 1-bit DDR output data
+    -- differential output buffering for HDMI clock and video
+    hdmi_output: entity work.hdmi_out
+      port map (
+        tmds_in_clk => clk_25MHz,
+        tmds_out_clk_p => tmds_out_clk_p,
+        tmds_out_clk_n => tmds_out_clk_n,
+        tmds_in_rgb => tmds_out_rgb,
+        tmds_out_rgb_p => tmds_out_p,
+        tmds_out_rgb_n => tmds_out_n
       );
-
-    hdmi_clock: obufds
-      --generic map(IOSTANDARD => "DEFAULT")
-      port map(i => obuf_tmds_clock, o => tmds_out_clk_p, ob => tmds_out_clk_n);
-
-    hdmi_video: for i in 0 to 2 generate
-      tmds_video: obufds
-        --generic map(IOSTANDARD => "DEFAULT")
-        port map(i => tmds_out_rgb(i), o => tmds_out_p(i), ob => tmds_out_n(i));
-    end generate;
 
 end Behavioral;
