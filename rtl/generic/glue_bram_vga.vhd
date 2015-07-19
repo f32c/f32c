@@ -78,6 +78,7 @@ entity glue_bram is
 	C_simple_in: integer range 0 to 128 := 32;
 	C_simple_out: integer range 0 to 128 := 32;
 	C_vgahdmi: boolean := false;
+	C_vgahdmi_mem_kb: integer := 4; -- mem size of framebuffer
 	C_gpio: integer range 0 to 128 := 32;
 	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
@@ -481,7 +482,7 @@ begin
     generic map (
       dbl_x => 1,
       dbl_y => 1,
-      mem_size_kb => 4, -- tell vgahdmi how much video ram do we have
+      mem_size_kb => C_vgahdmi_mem_kb, -- tell vgahdmi how much video ram do we have
       test_picture => 1
     )
     port map (
@@ -502,7 +503,7 @@ begin
       dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "10" else '0';
     videobram: entity work.bram_video
     generic map (
-      C_mem_size => 4 -- KB
+      C_mem_size => C_vgahdmi_mem_kb -- KB
     )
     port map (
 	clk => clk,
