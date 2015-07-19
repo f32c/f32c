@@ -183,6 +183,7 @@ architecture Behavioral of glue_bram is
     signal from_sio: from_sio_type;
     signal sio_ce, sio_tx, sio_rx: std_logic_vector(C_sio - 1 downto 0);
     signal sio_break_internal: std_logic_vector(C_sio - 1 downto 0);
+    signal sio_range: std_logic;
 
     -- SPI (on-board Flash, SD card, others...)
     constant iomap_spi: T_iomap_range := (x"FB40", x"FB7F");
@@ -190,6 +191,7 @@ architecture Behavioral of glue_bram is
       std_logic_vector(31 downto 0);
     signal from_spi: from_spi_type;
     signal spi_ce: std_logic_vector(C_spi - 1 downto 0);
+    signal spi_range: std_logic;
 
     -- Simple I/O: onboard LEDs, buttons and switches
     constant iomap_simple_in: T_iomap_range := (x"FF00", x"FF0F");
@@ -305,7 +307,7 @@ begin
     end process;
 
     --
-    -- simple_out is physical pin output, LUT-saving, smaller than GPIO
+    -- simple_out is physical pin output, most efficient LUT-saving
     --
     process(clk)
     begin
@@ -349,13 +351,13 @@ begin
 	    bus_in => cpu_to_dmem, bus_out => from_sio(i),
 	    break => sio_break_internal(i)
 	);
-	sio_ce(i) <= io_addr_strobe
-	  when io_addr(11 downto 4) >= iomap_from(iomap_sio, iomap_range)
-          and  io_addr(11 downto 4) <= iomap_to(iomap_sio, iomap_range)
-	  and  conv_integer(io_addr(5 downto 4)) = i
-	  else '0';
+        sio_ce(i) <= io_addr_strobe when sio_range='1' and conv_integer(io_addr(5 downto 4)) = i
+                else '0';
 	sio_break(i) <= sio_break_internal(i);
     end generate;
+    with conv_integer(io_addr(11 downto 4)) select
+      sio_range <= '1' when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range),
+                   '0' when others;
     sio_rx(0) <= sio_rxd(0);
 
     -- SPI
@@ -372,12 +374,12 @@ begin
 	    spi_sck => spi_sck(i), spi_cen => spi_ss(i),
 	    spi_miso => spi_miso(i), spi_mosi => spi_mosi(i)
 	);
-	spi_ce(i) <= io_addr_strobe
-	  when io_addr(11 downto 4) >= iomap_from(iomap_spi, iomap_range)
-          and  io_addr(11 downto 4) <= iomap_to(iomap_spi, iomap_range)
-	  and conv_integer(io_addr(5 downto 4)) = i
-	  else '0';
+        spi_ce(i) <= io_addr_strobe when spi_range='1' and conv_integer(io_addr(5 downto 4)) = i
+                else '0';
     end generate;
+    with conv_integer(io_addr(11 downto 4)) select
+      spi_range <= '1' when iomap_from(iomap_spi, iomap_range) to iomap_to(iomap_spi, iomap_range),
+                   '0' when others;
 
 
     G_simple_out_standard:
