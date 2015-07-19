@@ -11,12 +11,17 @@ SHELL = /bin/bash
 openocd_interface = ../include/ft2232-generic.ocd
 xc3sprog_interface = ftdi
 
+vfiles = \
+../../../soc/pid/ctrlpid_v.v \
+../../../soc/pid/simotor_v.v \
+../../../soc/pid/rotary_decoder_v.v \
+
 vhdfiles = \
 ../../../xilinx/scarab_ms6p_toplevel_sdram.vhd \
 ../../../xilinx/pll_50M_112M5.vhd \
 ../../../xilinx/pll_50M_100M.vhd \
 ../../../xilinx/pll_50M_81M25.vhd \
-../../../generic/glue_sdram.vhd \
+../../../generic/glue_bram_sdram.vhd \
 ../../../generic/bram_mi32_eb.vhd \
 ../../../generic/bram_mi32_el.vhd \
 ../../../generic/bram_rv32.vhd \
@@ -34,7 +39,12 @@ vhdfiles = \
 ../../../cpu/debug.vhd \
 ../../../soc/sdram.vhd \
 ../../../soc/sio.vhd \
+../../../soc/spi.vhd \
 ../../../soc/gpio.vhd \
-../../../soc/timer.vhd 
+../../../soc/timer.vhd \
+../../../soc/pid/pid.vhd \
+../../../soc/pid/ctrlpid.vhd \
+../../../soc/pid/simotor.vhd \
+../../../soc/pid/rotary_decoder.vhd \
 
 include ../include/xilinx.mk
