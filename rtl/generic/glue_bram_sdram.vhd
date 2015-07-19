@@ -23,18 +23,16 @@
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
 --
--- $Id$
---
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.MATH_REAL.ALL;
 
 use work.f32c_pack.all;
 
-
-entity glue_sdram is
+entity glue_bram is
     generic (
 	C_clk_freq: integer;
 
@@ -75,34 +73,48 @@ entity glue_sdram is
 	C_sdram_cycles_per_refresh : integer := 1524;
 
 	-- SoC configuration options
-	C_mem_size: integer := 16; -- Block RAM size, in KBytes
+	C_mem_size: integer := 16;	-- in KBytes
 	C_sdram: boolean := true;
-	C_sio: boolean := true;
+	C_sio: integer := 1;
+	C_sio_init_baudrate: integer := 115200;
+	C_sio_fixed_baudrate: boolean := false;
 	C_sio_break_detect: boolean := true;
-	C_gpio: boolean := true;
-	C_timer: boolean := true;
-	C_leds_btns: boolean := true
+	C_spi: integer := 0;
+	C_spi_turbo_mode: std_logic_vector := "0000";
+	C_spi_fixed_speed: std_logic_vector := "1111";
+	C_simple_in: integer range 0 to 128 := 32;
+	C_simple_out: integer range 0 to 128 := 32;
+	C_gpio: integer range 0 to 128 := 32;
+	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
+	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
+	C_pid_prescaler: integer range 10 to 26 := 18; -- control loop frequency f_clk/2^prescaler
+	C_pid_precision: integer range 0 to 8 := 1; -- fixed point PID precision
+        C_pid_pwm_bits: integer range 11 to 32 := 12; -- PWM output frequency f_clk/2^pwmbits (min 11 => 40kHz @ 81.25MHz)
+        C_pid_fp: integer range 0 to 26 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
+	C_timer: boolean := true
     );
     port (
 	clk: in std_logic;
-	rs232_rx: in std_logic;
-	rs232_tx, rs232_break: out std_logic;
-	btns: in std_logic_vector(15 downto 0);
-	sw: in std_logic_vector(15 downto 0);
-	gpio: inout std_logic_vector(31 downto 0);
-	leds: out std_logic_vector(15 downto 0);
-	lcd_7seg: out std_logic_vector(15 downto 0);
 	sdram_addr: out std_logic_vector(12 downto 0);
 	sdram_data: inout std_logic_vector(15 downto 0);
 	sdram_ba: out std_logic_vector(1 downto 0);
 	sdram_dqm: out std_logic_vector(1 downto 0);
 	sdram_ras, sdram_cas: out std_logic;
 	sdram_cke, sdram_clk: out std_logic;
-	sdram_we, sdram_cs: out std_logic
+	sdram_we, sdram_cs: out std_logic;
+	sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
+	sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
+	spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
+	spi_miso: in std_logic_vector(C_spi - 1 downto 0);
+	simple_in: in std_logic_vector(31 downto 0);
+	simple_out: out std_logic_vector(31 downto 0);
+	pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
+	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
+	gpio: inout std_logic_vector(127 downto 0)
     );
-end glue_sdram;
+end glue_bram;
 
-architecture Behavioral of glue_sdram is
+architecture Behavioral of glue_bram is
     signal imem_addr: std_logic_vector(31 downto 2);
     signal imem_data_read: std_logic_vector(31 downto 0);
     signal imem_addr_strobe, imem_data_ready: std_logic;
@@ -128,19 +140,39 @@ architecture Behavioral of glue_sdram is
     signal timer_intr: std_logic;
     
     -- GPIO
-    signal from_gpio: std_logic_vector(31 downto 0);
-    signal gpio_ce: std_logic;
-    signal gpio_intr: std_logic;
-        
-    -- Serial I/O (RS232)
-    signal from_sio: std_logic_vector(31 downto 0);
-    signal sio_ce, sio_break, sio_tx: std_logic;
+    constant C_gpios: integer := (C_gpio+31)/32; -- number of gpio units
+    type gpios_type is array (C_gpios-1 downto 0) of std_logic_vector(31 downto 0);
+    signal from_gpio, gpios: gpios_type;
+    signal gpio_ce: std_logic_vector(C_gpios-1 downto 0);
+    signal gpio_intr: std_logic_vector(C_gpios-1 downto 0);
+    signal gpio_intr_joint: std_logic := '0';
 
-    -- onboard LEDs, buttons and switches
-    signal R_leds: std_logic_vector(15 downto 0);
-    signal R_lcd_7seg: std_logic_vector(15 downto 0);
-    signal R_btns: std_logic_vector(15 downto 0);
-    signal R_sw: std_logic_vector(15 downto 0);
+    -- PID
+    constant C_pid: boolean := C_pids >= 2; -- minimum is 2 PIDs, otherwise no PID
+    signal from_pid: std_logic_vector(31 downto 0);
+    signal pid_ce: std_logic;
+    signal pid_intr: std_logic; -- currently unused
+    signal pid_bridge_f_out: std_logic_vector(C_pids-1 downto 0);
+    signal pid_bridge_r_out: std_logic_vector(C_pids-1 downto 0);
+    signal pid_encoder_a_out: std_logic_vector(C_pids-1 downto 0);
+    signal pid_encoder_b_out: std_logic_vector(C_pids-1 downto 0);
+    constant C_pids_bits: integer := integer(floor((log2(real(C_pids)+0.001))+0.5));
+
+    -- Serial I/O (RS232)
+    type from_sio_type is array (0 to C_sio - 1) of
+      std_logic_vector(31 downto 0);
+    signal from_sio: from_sio_type;
+    signal sio_ce, sio_tx, sio_rx: std_logic_vector(C_sio - 1 downto 0);
+    signal sio_break_internal: std_logic_vector(C_sio - 1 downto 0);
+
+    -- SPI (on-board Flash, SD card, others...)
+    type from_spi_type is array (0 to C_spi - 1) of
+      std_logic_vector(31 downto 0);
+    signal from_spi: from_spi_type;
+    signal spi_ce: std_logic_vector(C_spi - 1 downto 0);
+
+    -- Simple I/O: onboard LEDs, buttons and switches
+    signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
    
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
@@ -171,7 +203,7 @@ begin
 	C_debug => C_debug
     )
     port map (
-	clk => clk, reset => sio_break, intr => intr,
+	clk => clk, reset => sio_break_internal(0), intr => intr,
 	imem_addr => imem_addr, imem_data_in => imem_data_read,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,
@@ -194,7 +226,7 @@ begin
     final_to_cpu <= io_to_cpu when io_addr_strobe = '1'
       else from_sdram when dmem_addr(31 downto 30) = "10"
       else dmem_to_cpu;
-    intr <= "00" & gpio_intr & timer_intr & from_sio(8) & '0';
+    intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & '0';
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
@@ -219,7 +251,7 @@ begin
 	cycles_per_refresh => C_sdram_cycles_per_refresh
     )
     port map (
-	clk => clk, reset => sio_break,
+	clk => clk, reset => sio_break_internal(0),
 	-- internal connections
 	cmd_ready => sdram_idle, cmd_enable => sdram_enable,
 	cmd_wr => dmem_write, cmd_byte_enable => dmem_byte_sel,
@@ -235,22 +267,44 @@ begin
     end generate;
 
     -- RS232 sio
-    G_sio:
-    if C_sio generate
-    sio: entity work.sio
-    generic map (
-	C_clk_freq => C_clk_freq,
-	C_break_detect => C_sio_break_detect,
-	C_break_resets_baudrate => C_sio_break_detect,
-	C_big_endian => C_big_endian
-    )
-    port map (
-	clk => clk, ce => sio_ce, txd => sio_tx, rxd => rs232_rx,
-	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_sio, break => sio_break
-    );
-    sio_ce <= io_addr_strobe when io_addr(11 downto 4) = x"30" else '0';
-    rs232_break <= sio_break;
+    G_sio: for i in 0 to C_sio - 1 generate
+	sio_instance: entity work.sio
+	generic map (
+	    C_clk_freq => C_clk_freq,
+	    C_init_baudrate => C_sio_init_baudrate,
+	    C_fixed_baudrate => C_sio_fixed_baudrate,
+	    C_break_detect => C_sio_break_detect,
+	    C_break_resets_baudrate => C_sio_break_detect,
+	    C_big_endian => C_big_endian
+	)
+	port map (
+	    clk => clk, ce => sio_ce(i), txd => sio_tx(i), rxd => sio_rx(i),
+	    bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	    bus_in => cpu_to_dmem, bus_out => from_sio(i),
+	    break => sio_break_internal(i)
+	);
+	sio_ce(i) <= io_addr_strobe when io_addr(11 downto 6) = x"3" & "00" and
+	  conv_integer(io_addr(5 downto 4)) = i else '0';
+	sio_break(i) <= sio_break_internal(i);
+    end generate;
+    sio_rx(0) <= sio_rxd(0);
+
+    -- SPI
+    G_spi: for i in 0 to C_spi - 1 generate
+	spi_instance: entity work.spi
+	generic map (
+	    C_turbo_mode => C_spi_turbo_mode(i) = '1',
+	    C_fixed_speed => C_spi_fixed_speed(i) = '1'
+	)
+	port map (
+	    clk => clk, ce => spi_ce(i),
+	    bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	    bus_in => cpu_to_dmem, bus_out => from_spi(i),
+	    spi_sck => spi_sck(i), spi_cen => spi_ss(i),
+	    spi_miso => spi_miso(i), spi_mosi => spi_mosi(i)
+	);
+	spi_ce(i) <= io_addr_strobe when io_addr(11 downto 6) = x"3" & "01" and
+	  conv_integer(io_addr(5 downto 4)) = i else '0';
     end generate;
 
     --
@@ -259,101 +313,153 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) and io_addr_strobe = '1' and dmem_write = '1' then
-	    -- LEDs
-	    if C_leds_btns and io_addr(11 downto 4) = x"71" then
+	    -- simple out
+	    if C_simple_out > 0 and io_addr(11 downto 4) = x"71" then
 		if dmem_byte_sel(0) = '1' then
-		    R_leds(7 downto 0) <= cpu_to_dmem(7 downto 0);
+		    R_simple_out(7 downto 0) <= cpu_to_dmem(7 downto 0);
 		end if;
 		if dmem_byte_sel(1) = '1' then
-		    R_leds(15 downto 8) <= cpu_to_dmem(15 downto 8);
+		    R_simple_out(15 downto 8) <= cpu_to_dmem(15 downto 8);
 		end if;
 		if dmem_byte_sel(2) = '1' then
-		    R_lcd_7seg(7 downto 0) <= cpu_to_dmem(23 downto 16);
+		    R_simple_out(23 downto 16) <= cpu_to_dmem(23 downto 16);
 		end if;
 		if dmem_byte_sel(3) = '1' then
-		    R_lcd_7seg(15 downto 8) <= cpu_to_dmem(31 downto 24);
+		    R_simple_out(31 downto 24) <= cpu_to_dmem(31 downto 24);
 		end if;
 	    end if;
 	end if;
-	if C_leds_btns and rising_edge(clk) then
-	    R_sw <= sw;
-	    R_btns <= btns;
+	if rising_edge(clk) then
+	    R_simple_in(C_simple_in - 1 downto 0) <=
+	      simple_in(C_simple_in - 1 downto 0);
 	end if;
     end process;
 
-    G_led_standard:
+    G_simple_out_standard:
     if C_timer = false generate
-    leds <= R_leds when C_leds_btns else (others => '-');
+	simple_out(C_simple_out - 1 downto 0) <=
+	  R_simple_out(C_simple_out - 1 downto 0);
     end generate;
-    G_led_timer:
+    -- muxing simple_io to show PWM of timer on LEDs
+    G_simple_out_timer:
     if C_timer = true generate
-    ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_leds(1);
-    ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_leds(2);
-    leds <= R_leds(15 downto 3) & ocp_mux & R_leds(0) when C_leds_btns
-      else (others => '-');
+      ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
+      ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
+      simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
+        else (others => '-');
     end generate;
-    lcd_7seg <= R_lcd_7seg when C_leds_btns else (others => '-');
 
-    process(io_addr, R_sw, R_btns, from_sio, from_timer, from_gpio)
+    process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio)
+	variable i: integer;
     begin
-	case io_addr(11 downto 4) is
-	when x"00" | x"01" =>
-	    if C_gpio then
-		io_to_cpu <= from_gpio;
-	    else
-		io_to_cpu <= (others => '-');
-	    end if;	
-	when x"10" | x"11" | x"12" | x"13"  =>
+	io_to_cpu <= (others => '-');
+	case conv_integer(io_addr(11 downto 4)) is
+	when 16#00# to 16#07# =>
+	    for i in 0 to C_gpios - 1 loop
+		if conv_integer(io_addr(6 downto 5)) = i then
+		    io_to_cpu <= from_gpio(i);
+		end if;
+	    end loop;
+	when 16#10# to 16#13# =>
 	    if C_timer then
 		io_to_cpu <= from_timer;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
-	when x"30"  =>
-	    if C_sio then
-		io_to_cpu <= from_sio;
-	    else
-		io_to_cpu <= (others => '-');
+	when 16#30# to 16#33# =>
+	    for i in 0 to C_sio - 1 loop
+		if conv_integer(io_addr(5 downto 4)) = i then
+		    io_to_cpu <= from_sio(i);
+		end if;
+	    end loop;
+	when 16#34# to 16#37# =>
+	    for i in 0 to C_spi - 1 loop
+		if conv_integer(io_addr(5 downto 4)) = i then
+		    io_to_cpu <= from_spi(i);
+		end if;
+	    end loop;
+	when 16#58# to 16#5B# => -- address 0xFFFFFD80
+	    if C_pid then
+		io_to_cpu <= from_pid;
 	    end if;
-	when x"70"  =>
-	    if C_leds_btns then
-		io_to_cpu <= R_sw & R_btns;
-	    else
-		io_to_cpu <= (others => '-');
-	    end if;
-	when x"71"  =>
-	    if C_leds_btns then
-		io_to_cpu <= R_lcd_7seg & R_leds;
-	    else
-		io_to_cpu <= (others => '-');
-	    end if;
-	when others =>
+	when 16#70#  =>
+	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
+		if conv_integer(io_addr(3 downto 2)) = i then
+		    io_to_cpu(C_simple_in - i * 32 - 1 downto i * 32) <=
+		      R_simple_in(C_simple_in - i * 32 - 1 downto i * 32);
+		end if;
+	    end loop;
+	when 16#71#  =>
+	    for i in 0 to (C_simple_out + 31) / 4 - 1 loop
+		if conv_integer(io_addr(3 downto 2)) = i then
+		    io_to_cpu(C_simple_out - i * 32 - 1 downto i * 32) <=
+		      R_simple_out(C_simple_out - i * 32 - 1 downto i * 32);
+		end if;
+	    end loop;
+	when others  =>
 	    io_to_cpu <= (others => '-');
 	end case;
     end process;
 
     -- GPIO
     G_gpio:
-    if C_gpio generate
+    for i in 0 to C_gpios-1 generate
     gpio_inst: entity work.gpio
     generic map (
 	C_bits => 32
     )
     port map (
-	clk => clk, ce => gpio_ce, addr => dmem_addr(4 downto 2),
+	clk => clk, ce => gpio_ce(i), addr => dmem_addr(4 downto 2),
 	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_gpio,
-	gpio_irq => gpio_intr,
-	gpio_phys => gpio -- physical input/output
+	bus_in => cpu_to_dmem, bus_out => from_gpio(i),
+	gpio_irq => gpio_intr(i),
+	gpio_phys => gpio(32*i+31 downto 32*i) -- physical input/output
     );
-    gpio_ce <= io_addr_strobe when io_addr(11 downto 8) = x"0" else '0';
+    gpio_ce(i) <= io_addr_strobe when conv_integer(io_addr(11 downto 5)) = i else '0';
+    end generate;
+    gpio_interrupt_collect: if C_gpios >= 1 generate
+      gpio_intr_joint <= gpio_intr(0);
+      -- TODO: currently only 32 gpio supported in fpgarduino core
+      -- when support for 128 gpio is there we should use this:
+      -- gpio_intr_joint <= '0' when conv_integer(gpio_intr) = 0 else '1';
     end generate;
 
+    -- PID
+    G_pid:
+    if C_pid generate
+    pid_inst: entity work.pid
+    generic map (
+        C_pwm_bits => C_pid_pwm_bits,
+	C_prescaler => C_pid_prescaler,
+	C_fp => C_pid_fp,
+	C_precision => C_pid_precision,
+        C_simulator => C_pid_simulator,
+        C_pids => C_pids,
+	C_addr_unit_bits => C_pids_bits
+    )
+    port map (
+	clk => clk, ce => pid_ce, addr => dmem_addr(C_pids_bits+3 downto 2),
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_pid,
+	encoder_a_in  => pid_encoder_a,
+	encoder_b_in  => pid_encoder_b,
+	encoder_a_out => pid_encoder_a_out,
+	encoder_b_out => pid_encoder_b_out,
+	bridge_f_out => pid_bridge_f_out,
+	bridge_r_out => pid_bridge_r_out
+    );
+    pid_ce <= io_addr_strobe when
+         io_addr(11 downto 4) = x"58"
+      or io_addr(11 downto 4) = x"59"
+      or io_addr(11 downto 4) = x"5A"
+      or io_addr(11 downto 4) = x"5B"
+      else '0'; -- address 0xFFFFFD80
+    pid_bridge_f <= pid_bridge_f_out;
+    pid_bridge_r <= pid_bridge_r_out;
+    end generate;
 
     -- Timer
     G_timer:
     if C_timer generate
-    icp <= R_leds(3) & R_leds(0); -- during debug period, leds will serve as software-generated ICP
+    icp <= R_simple_out(3) & R_simple_out(0); -- during debug period, leds will serve as software-generated ICP
     timer: entity work.timer
     generic map (
 	C_pres => 10,
@@ -425,7 +531,7 @@ begin
 	C_big_endian => false
     )
     port map (
-	clk => clk, ce => '1', txd => deb_tx, rxd => rs232_rx,
+	clk => clk, ce => '1', txd => deb_tx, rxd => sio_rxd(0),
 	bus_write => deb_sio_tx_strobe, byte_sel => "0001",
 	bus_in(7 downto 0) => debug_to_sio_data,
 	bus_in(31 downto 8) => x"000000",
@@ -436,6 +542,6 @@ begin
     );
     end generate;
 
-    rs232_tx <= sio_tx when not C_debug or debug_active = '0' else deb_tx;
+    sio_txd(0) <= sio_tx(0) when not C_debug or debug_active = '0' else deb_tx;
 
 end Behavioral;
