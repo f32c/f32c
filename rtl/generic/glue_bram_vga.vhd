@@ -119,22 +119,22 @@ architecture Behavioral of glue_bram is
     signal intr: std_logic_vector(5 downto 0); -- interrupt
 
     -- io base
-    type T_iomap_range is array(1 downto 0) of std_logic_vector(15 downto 0);
+    type T_iomap_range is array(0 to 1) of std_logic_vector(15 downto 0);
     constant iomap_range: T_iomap_range := (x"F800", x"FFFF"); -- actual range is 0xFFFFF800 .. 0xFFFFFFFF
 
     function iomap_from(r: T_iomap_range; base: T_iomap_range) return integer is
        variable a, b: std_logic_vector(15 downto 0);
     begin
-       a := r(1);
-       b := base(1);
+       a := r(0);
+       b := base(0);
        return conv_integer(a(11 downto 4) - b(11 downto 4));
     end iomap_from;
 
     function iomap_to(r: T_iomap_range; base: T_iomap_range) return integer is
        variable a, b: std_logic_vector(15 downto 0);
     begin
-       a := r(0);
-       b := base(1);
+       a := r(1);
+       b := base(0);
        return conv_integer(a(11 downto 4) - b(11 downto 4));
     end iomap_to;
 
