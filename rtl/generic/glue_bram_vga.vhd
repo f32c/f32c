@@ -155,6 +155,7 @@ architecture Behavioral of glue_bram is
     type gpios_type is array (C_gpios-1 downto 0) of std_logic_vector(31 downto 0);
     signal from_gpio, gpios: gpios_type;
     signal gpio_ce: std_logic_vector(C_gpios-1 downto 0);
+    signal gpio_range: std_logic;
     signal gpio_intr: std_logic_vector(C_gpios-1 downto 0);
     signal gpio_intr_joint: std_logic := '0';
 
@@ -405,12 +406,12 @@ begin
 	gpio_irq => gpio_intr(i),
 	gpio_phys => gpio(32*i+31 downto 32*i) -- physical input/output
     );
-    gpio_ce(i) <= io_addr_strobe
-      when io_addr(11 downto 4) >= iomap_from(iomap_gpio, iomap_range)
-      and  io_addr(11 downto 4) <= iomap_to(iomap_gpio, iomap_range)
-      and  conv_integer(io_addr(6 downto 5)) = i
-      else '0';
+    gpio_ce(i) <= io_addr_strobe when gpio_range='1' and conv_integer(io_addr(6 downto 5)) = i
+             else '0';
     end generate;
+    with conv_integer(io_addr(11 downto 4)) select
+      gpio_range <= '1' when iomap_from(iomap_gpio, iomap_range) to iomap_to(iomap_gpio, iomap_range),
+                    '0' when others;
     gpio_interrupt_collect: if C_gpios >= 1 generate
       gpio_intr_joint <= gpio_intr(0);
       -- TODO: currently only 32 gpio supported in fpgarduino core
@@ -442,10 +443,9 @@ begin
 	bridge_f_out => pid_bridge_f_out,
 	bridge_r_out => pid_bridge_r_out
     );
-    pid_ce <= io_addr_strobe
-      when io_addr(11 downto 4) >= iomap_from(iomap_pid, iomap_range)
-      and  io_addr(11 downto 4) <= iomap_to(iomap_pid, iomap_range)
-      else '0';
+    with conv_integer(io_addr(11 downto 4)) select
+      pid_ce <= io_addr_strobe when iomap_from(iomap_pid, iomap_range) to iomap_to(iomap_pid, iomap_range),
+                           '0' when others;
     pid_bridge_f <= pid_bridge_f_out;
     pid_bridge_r <= pid_bridge_r_out;
     end generate;
@@ -469,10 +469,9 @@ begin
 	icp_enable => icp_enable, -- enable physical input
 	icp => icp -- input capture signal
     );
-    timer_ce <= io_addr_strobe
-      when io_addr(11 downto 4) >= iomap_from(iomap_timer, iomap_range)
-      and  io_addr(11 downto 4) <= iomap_to(iomap_timer, iomap_range)
-      else '0';
+    with conv_integer(io_addr(11 downto 4)) select
+      timer_ce <= io_addr_strobe when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range),
+                             '0' when others;
     end generate;
     
     -- VGA/HDMI
