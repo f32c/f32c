@@ -47,8 +47,9 @@ entity glue is
 	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
-	C_mem_size: integer := 64;
+	C_mem_size: integer := 64; -- KB
 	C_vgahdmi: boolean := true;
+	C_vgahdmi_mem_kb: integer := 10; -- KB
 	C_sio: integer := 1;
 	C_spi: integer := 2;
 	C_gpio: integer := 32;
@@ -119,6 +120,7 @@ begin
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
 	C_vgahdmi => C_vgahdmi,
+	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
 	C_gpio => C_gpio,
 	C_sio => C_sio,
 	C_spi => C_spi,
