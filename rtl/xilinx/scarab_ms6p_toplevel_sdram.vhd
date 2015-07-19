@@ -48,8 +48,9 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 64;
-	C_sio: boolean := true;
-	C_leds_btns: boolean := true
+	C_sio: integer := 1;
+	C_spi: integer := 2;
+	C_gpio: integer := 32
     );
     port (
 	clk_50MHz: in std_logic;
@@ -65,6 +66,10 @@ entity glue is
         sdram_d     : inout std_logic_vector (15 downto 0);
 	rs232_tx: out std_logic;
 	rs232_rx: in std_logic;
+	flash_cs, flash_cclk, flash_mosi: out std_logic;
+	flash_miso: in std_logic;
+	sd_clk, sd_cd_dat3, sd_cmd: out std_logic;
+	sd_dat0: in std_logic;
 	leds: out std_logic_vector(7 downto 0);
 	porta, portb: inout std_logic_vector(11 downto 0);
 	portc: inout std_logic_vector(7 downto 0);
@@ -113,11 +118,14 @@ begin
     );
 
     -- generic SDRAM glue
-    glue_sdram: entity work.glue_sdram
+    glue_sdram: entity work.glue_bram
     generic map (
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
+	C_gpio => C_gpio,
+	C_sio => C_sio,
+	C_spi => C_spi,
 	C_sdram_address_width => 24,
 	C_sdram_column_bits => 9,
 	C_sdram_startup_cycles => 10100,
@@ -132,16 +140,21 @@ begin
 	sdram_ras => sdram_rasn, sdram_cas => sdram_casn,
 	sdram_cke => sdram_cke, sdram_clk => sdram_clk_internal,
 	sdram_we => sdram_wen, sdram_cs => sdram_csn,	
-	rs232_tx => rs232_tx, rs232_rx => rs232_rx,
-	rs232_break => rs232_break,
+	sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
+	sio_break(0) => rs232_break,
+	spi_sck(0)  => flash_cclk,  spi_sck(1)  => sd_clk,
+	spi_ss(0)   => flash_cs,    spi_ss(1)   => sd_cd_dat3,
+	spi_mosi(0) => flash_mosi,  spi_mosi(1) => sd_cmd,
+	spi_miso(0) => flash_miso,  spi_miso(1) => sd_dat0,
 	gpio(11 downto 0) => porta(11 downto 0),
 	gpio(23 downto 12) => portb(11 downto 0),
 	gpio(31 downto 24) => portc(7 downto 0),
-	leds(7 downto 0) => leds(7 downto 0),
-	leds(15 downto 8) => open,
-	btns(15 downto 0) => (others => '-'),
-	sw(3 downto 0) => sw(4 downto 1),
-	sw(15 downto 4) => (others => '-')
+	gpio(127 downto 32) => open,
+	simple_out(7 downto 0) => leds(7 downto 0),
+	simple_out(31 downto 8) => open,
+	simple_in(15 downto 0) => open,
+	simple_in(19 downto 16) => sw(4 downto 1),
+	simple_in(31 downto 20) => open
     );
 
     -- SDRAM clock output needs special routing on Spartan-6
