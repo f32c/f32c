@@ -141,8 +141,31 @@ architecture Behavioral of glue_bram is
        return conv_integer(a(11 downto 4) - b(11 downto 4));
     end iomap_to;
 
+    -- Simple I/O: onboard LEDs, buttons and switches
+    constant iomap_simple_in: T_iomap_range := (x"FF00", x"FF0F");
+    constant iomap_simple_out: T_iomap_range := (x"FF10", x"FF1F");
+    signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
+
+    -- Serial I/O (RS232)
+    constant iomap_sio: T_iomap_range := (x"FB00", x"FB3F");
+    signal sio_range: std_logic := '0';
+    type from_sio_type is array (0 to C_sio - 1) of
+      std_logic_vector(31 downto 0);
+    signal from_sio: from_sio_type;
+    signal sio_ce, sio_tx, sio_rx: std_logic_vector(C_sio - 1 downto 0);
+    signal sio_break_internal: std_logic_vector(C_sio - 1 downto 0);
+
+    -- SPI (on-board Flash, SD card, others...)
+    constant iomap_spi: T_iomap_range := (x"FB40", x"FB7F");
+    signal spi_range: std_logic := '0';
+    type from_spi_type is array (0 to C_spi - 1) of
+      std_logic_vector(31 downto 0);
+    signal from_spi: from_spi_type;
+    signal spi_ce: std_logic_vector(C_spi - 1 downto 0);
+
     -- Timer
     constant iomap_timer: T_iomap_range := (x"F900", x"F93F");
+    signal timer_range: std_logic := '0';
     signal from_timer: std_logic_vector(31 downto 0);
     signal timer_ce: std_logic;
     signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
@@ -151,16 +174,17 @@ architecture Behavioral of glue_bram is
 
     -- GPIO
     constant iomap_gpio: T_iomap_range := (x"F800", x"F87F");
+    signal gpio_range: std_logic := '0';
     constant C_gpios: integer := (C_gpio+31)/32; -- number of gpio units
     type gpios_type is array (C_gpios-1 downto 0) of std_logic_vector(31 downto 0);
     signal from_gpio, gpios: gpios_type;
     signal gpio_ce: std_logic_vector(C_gpios-1 downto 0);
-    signal gpio_range: std_logic;
     signal gpio_intr: std_logic_vector(C_gpios-1 downto 0);
     signal gpio_intr_joint: std_logic := '0';
 
     -- PID
     constant iomap_pid: T_iomap_range := (x"FD80", x"FDBF");
+    signal pid_range: std_logic := '0';
     constant C_pid: boolean := C_pids >= 2; -- minimum is 2 PIDs, otherwise no PID
     signal from_pid: std_logic_vector(31 downto 0);
     signal pid_ce: std_logic;
@@ -175,28 +199,6 @@ architecture Behavioral of glue_bram is
     signal vga_addr: std_logic_vector(15 downto 0);
     signal vga_data: std_logic_vector(7 downto 0);
     signal video_bram_write: std_logic;
-
-    -- Serial I/O (RS232)
-    constant iomap_sio: T_iomap_range := (x"FB00", x"FB3F");
-    type from_sio_type is array (0 to C_sio - 1) of
-      std_logic_vector(31 downto 0);
-    signal from_sio: from_sio_type;
-    signal sio_ce, sio_tx, sio_rx: std_logic_vector(C_sio - 1 downto 0);
-    signal sio_break_internal: std_logic_vector(C_sio - 1 downto 0);
-    signal sio_range: std_logic;
-
-    -- SPI (on-board Flash, SD card, others...)
-    constant iomap_spi: T_iomap_range := (x"FB40", x"FB7F");
-    type from_spi_type is array (0 to C_spi - 1) of
-      std_logic_vector(31 downto 0);
-    signal from_spi: from_spi_type;
-    signal spi_ce: std_logic_vector(C_spi - 1 downto 0);
-    signal spi_range: std_logic;
-
-    -- Simple I/O: onboard LEDs, buttons and switches
-    constant iomap_simple_in: T_iomap_range := (x"FF00", x"FF0F");
-    constant iomap_simple_out: T_iomap_range := (x"FF10", x"FF1F");
-    signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
    
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
@@ -306,9 +308,7 @@ begin
 	end case;
     end process;
 
-    --
-    -- simple_out is physical pin output, most efficient LUT-saving
-    --
+    -- simple_out: physical pin output, most efficient LUT-saving
     process(clk)
     begin
 	if rising_edge(clk) and io_addr_strobe = '1' and dmem_write = '1' then
@@ -334,6 +334,20 @@ begin
 	end if;
     end process;
 
+    G_simple_out_standard:
+    if C_timer = false generate
+	simple_out(C_simple_out - 1 downto 0) <=
+	  R_simple_out(C_simple_out - 1 downto 0);
+    end generate;
+    -- muxing simple_io to show PWM of timer on LEDs
+    G_simple_out_timer:
+    if C_timer = true generate
+      ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
+      ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
+      simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
+        else (others => '-');
+    end generate;
+
     -- RS232 sio
     G_sio: for i in 0 to C_sio - 1 generate
 	sio_instance: entity work.sio
@@ -355,9 +369,11 @@ begin
                 else '0';
 	sio_break(i) <= sio_break_internal(i);
     end generate;
+    G_sio_decoder: if C_sio > 0 generate
     with conv_integer(io_addr(11 downto 4)) select
       sio_range <= '1' when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range),
                    '0' when others;
+    end generate;
     sio_rx(0) <= sio_rxd(0);
 
     -- SPI
@@ -377,23 +393,10 @@ begin
         spi_ce(i) <= io_addr_strobe when spi_range='1' and conv_integer(io_addr(5 downto 4)) = i
                 else '0';
     end generate;
+    G_spi_decoder: if C_spi > 0 generate
     with conv_integer(io_addr(11 downto 4)) select
       spi_range <= '1' when iomap_from(iomap_spi, iomap_range) to iomap_to(iomap_spi, iomap_range),
                    '0' when others;
-
-
-    G_simple_out_standard:
-    if C_timer = false generate
-	simple_out(C_simple_out - 1 downto 0) <=
-	  R_simple_out(C_simple_out - 1 downto 0);
-    end generate;
-    -- muxing simple_io to show PWM of timer on LEDs
-    G_simple_out_timer:
-    if C_timer = true generate
-      ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
-      ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
-      simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
-        else (others => '-');
     end generate;
 
     -- GPIO
@@ -413,14 +416,38 @@ begin
     gpio_ce(i) <= io_addr_strobe when gpio_range='1' and conv_integer(io_addr(6 downto 5)) = i
              else '0';
     end generate;
+    G_gpio_decoder_intr: if C_gpios > 0 generate
     with conv_integer(io_addr(11 downto 4)) select
       gpio_range <= '1' when iomap_from(iomap_gpio, iomap_range) to iomap_to(iomap_gpio, iomap_range),
                     '0' when others;
-    gpio_interrupt_collect: if C_gpios >= 1 generate
-      gpio_intr_joint <= gpio_intr(0);
+    gpio_intr_joint <= gpio_intr(0);
       -- TODO: currently only 32 gpio supported in fpgarduino core
       -- when support for 128 gpio is there we should use this:
       -- gpio_intr_joint <= '0' when conv_integer(gpio_intr) = 0 else '1';
+    end generate;
+
+    -- Timer
+    G_timer:
+    if C_timer generate
+    icp <= R_simple_out(3) & R_simple_out(0); -- during debug period, leds will serve as software-generated ICP
+    timer: entity work.timer
+    generic map (
+	C_pres => 10,
+	C_bits => 12
+    )
+    port map (
+	clk => clk, ce => timer_ce, addr => dmem_addr(5 downto 2),
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_timer,
+	timer_irq => timer_intr,
+	ocp_enable => ocp_enable, -- enable physical output
+	ocp => ocp, -- output compare signal
+	icp_enable => icp_enable, -- enable physical input
+	icp => icp -- input capture signal
+    );
+    with conv_integer(io_addr(11 downto 4)) select
+      timer_ce <= io_addr_strobe when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range),
+                             '0' when others;
     end generate;
 
     -- PID
@@ -454,30 +481,6 @@ begin
     pid_bridge_r <= pid_bridge_r_out;
     end generate;
 
-    -- Timer
-    G_timer:
-    if C_timer generate
-    icp <= R_simple_out(3) & R_simple_out(0); -- during debug period, leds will serve as software-generated ICP
-    timer: entity work.timer
-    generic map (
-	C_pres => 10,
-	C_bits => 12
-    )
-    port map (
-	clk => clk, ce => timer_ce, addr => dmem_addr(5 downto 2),
-	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_timer,
-	timer_irq => timer_intr,
-	ocp_enable => ocp_enable, -- enable physical output
-	ocp => ocp, -- output compare signal
-	icp_enable => icp_enable, -- enable physical input
-	icp => icp -- input capture signal
-    );
-    with conv_integer(io_addr(11 downto 4)) select
-      timer_ce <= io_addr_strobe when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range),
-                             '0' when others;
-    end generate;
-    
     -- VGA/HDMI
     G_vgahdmi:
     if C_vgahdmi generate
