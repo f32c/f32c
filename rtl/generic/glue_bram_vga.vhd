@@ -253,6 +253,56 @@ begin
     imem_data_ready <= '1';
     dmem_data_ready <= '1';
 
+    process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio)
+	variable i: integer;
+    begin
+	io_to_cpu <= (others => '-');
+	case conv_integer(io_addr(11 downto 4)) is
+	when iomap_from(iomap_gpio, iomap_range) to iomap_to(iomap_gpio, iomap_range) =>
+	    for i in 0 to C_gpios - 1 loop
+		if conv_integer(io_addr(6 downto 5)) = i then
+		    io_to_cpu <= from_gpio(i);
+		end if;
+	    end loop;
+	when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range) =>
+	    if C_timer then
+		io_to_cpu <= from_timer;
+	    end if;
+	when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range) =>
+	    for i in 0 to C_sio - 1 loop
+		if conv_integer(io_addr(5 downto 4)) = i then
+		    io_to_cpu <= from_sio(i);
+		end if;
+	    end loop;
+	when iomap_from(iomap_spi, iomap_range) to iomap_to(iomap_spi, iomap_range) =>
+	    for i in 0 to C_spi - 1 loop
+		if conv_integer(io_addr(5 downto 4)) = i then
+		    io_to_cpu <= from_spi(i);
+		end if;
+	    end loop;
+	when iomap_from(iomap_pid, iomap_range) to iomap_to(iomap_pid, iomap_range) =>
+	    if C_pid then
+		io_to_cpu <= from_pid;
+	    end if;
+	when iomap_from(iomap_simple_in, iomap_range) to iomap_to(iomap_simple_in, iomap_range) =>
+	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
+		if conv_integer(io_addr(3 downto 2)) = i then
+		    io_to_cpu(C_simple_in - i * 32 - 1 downto i * 32) <=
+		      R_simple_in(C_simple_in - i * 32 - 1 downto i * 32);
+		end if;
+	    end loop;
+	when iomap_from(iomap_simple_out, iomap_range) to iomap_to(iomap_simple_out, iomap_range) =>
+	    for i in 0 to (C_simple_out + 31) / 4 - 1 loop
+		if conv_integer(io_addr(3 downto 2)) = i then
+		    io_to_cpu(C_simple_out - i * 32 - 1 downto i * 32) <=
+		      R_simple_out(C_simple_out - i * 32 - 1 downto i * 32);
+		end if;
+	    end loop;
+	when others  =>
+	    io_to_cpu <= (others => '-');
+	end case;
+    end process;
+
     -- RS232 sio
     G_sio: for i in 0 to C_sio - 1 generate
 	sio_instance: entity work.sio
@@ -341,56 +391,6 @@ begin
       simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
         else (others => '-');
     end generate;
-
-    process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio)
-	variable i: integer;
-    begin
-	io_to_cpu <= (others => '-');
-	case conv_integer(io_addr(11 downto 4)) is
-	when iomap_from(iomap_gpio, iomap_range) to iomap_to(iomap_gpio, iomap_range) =>
-	    for i in 0 to C_gpios - 1 loop
-		if conv_integer(io_addr(6 downto 5)) = i then
-		    io_to_cpu <= from_gpio(i);
-		end if;
-	    end loop;
-	when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range) =>
-	    if C_timer then
-		io_to_cpu <= from_timer;
-	    end if;
-	when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range) =>
-	    for i in 0 to C_sio - 1 loop
-		if conv_integer(io_addr(5 downto 4)) = i then
-		    io_to_cpu <= from_sio(i);
-		end if;
-	    end loop;
-	when iomap_from(iomap_spi, iomap_range) to iomap_to(iomap_spi, iomap_range) =>
-	    for i in 0 to C_spi - 1 loop
-		if conv_integer(io_addr(5 downto 4)) = i then
-		    io_to_cpu <= from_spi(i);
-		end if;
-	    end loop;
-	when iomap_from(iomap_pid, iomap_range) to iomap_to(iomap_pid, iomap_range) =>
-	    if C_pid then
-		io_to_cpu <= from_pid;
-	    end if;
-	when iomap_from(iomap_simple_in, iomap_range) to iomap_to(iomap_simple_in, iomap_range) =>
-	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
-		if conv_integer(io_addr(3 downto 2)) = i then
-		    io_to_cpu(C_simple_in - i * 32 - 1 downto i * 32) <=
-		      R_simple_in(C_simple_in - i * 32 - 1 downto i * 32);
-		end if;
-	    end loop;
-	when iomap_from(iomap_simple_out, iomap_range) to iomap_to(iomap_simple_out, iomap_range) =>
-	    for i in 0 to (C_simple_out + 31) / 4 - 1 loop
-		if conv_integer(io_addr(3 downto 2)) = i then
-		    io_to_cpu(C_simple_out - i * 32 - 1 downto i * 32) <=
-		      R_simple_out(C_simple_out - i * 32 - 1 downto i * 32);
-		end if;
-	    end loop;
-	when others  =>
-	    io_to_cpu <= (others => '-');
-	end case;
-    end process;
 
     -- GPIO
     G_gpio:
