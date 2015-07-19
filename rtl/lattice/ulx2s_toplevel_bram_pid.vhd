@@ -98,7 +98,7 @@ begin
 	C_pids => C_pids,
 	C_pid_simulator => C_pid_simulator,
 	C_pid_prescaler => C_pid_prescaler, -- set control loop frequency
-	C_pid_fp => integer(floor((log2(real(C_clk_freq)*1e6))+0.5))-C_pid_prescaler, -- control loop approx freq in 2^n Hz for math, 26-C_pid_prescaler = 8
+	C_pid_fp => integer(floor((log2(real(C_clk_freq)*1.0E6))+0.5))-C_pid_prescaler, -- control loop approx freq in 2^n Hz for math, 26-C_pid_prescaler = 8
 	C_pid_precision => C_pid_precision, -- fixed point PID precision
 	C_pid_pwm_bits => C_pid_pwm_bits, -- clock divider bits define PWM output frequency
 	C_gpio => C_gpio
