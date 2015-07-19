@@ -307,7 +307,7 @@ begin
     begin
 	if rising_edge(clk) and io_addr_strobe = '1' and dmem_write = '1' then
 	    -- simple out
-	    if C_simple_out > 0 and io_addr(11 downto 4) = x"71" then
+	    if C_simple_out > 0 and io_addr(11 downto 4) = iomap_from(iomap_simple_out, iomap_range) then
 		if dmem_byte_sel(0) = '1' then
 		    R_simple_out(7 downto 0) <= cpu_to_dmem(7 downto 0);
 		end if;
