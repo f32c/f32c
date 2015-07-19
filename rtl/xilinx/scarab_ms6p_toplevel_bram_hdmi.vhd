@@ -50,6 +50,11 @@ entity glue is
 	C_mem_size: integer := 64; -- KB
 	C_vgahdmi: boolean := true;
 	C_vgahdmi_mem_kb: integer := 10; -- KB
+	C_pids: integer := 4;
+	C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8);
+	C_pid_prescaler: integer := 18;
+	C_pid_precision: integer := 1;
+	C_pid_pwm_bits: integer := 12;
 	C_sio: integer := 1;
 	C_spi: integer := 2;
 	C_gpio: integer := 32;
@@ -124,6 +129,12 @@ begin
 	C_gpio => C_gpio,
 	C_sio => C_sio,
 	C_spi => C_spi,
+	C_pids => C_pids,
+	C_pid_simulator => C_pid_simulator,
+	C_pid_prescaler => C_pid_prescaler, -- set control loop frequency
+	C_pid_fp => integer(floor((log2(real(C_clk_freq)*1e6))+0.5))-C_pid_prescaler, -- control loop approx freq in 2^n Hz for math, 26-C_pid_prescaler = 8
+	C_pid_precision => C_pid_precision, -- fixed point PID precision
+	C_pid_pwm_bits => C_pid_pwm_bits, -- clock divider bits define PWM output frequency
 	C_debug => C_debug
     )
     port map (
@@ -164,9 +175,9 @@ begin
         CE => '1', -- 1-bit clock enable input
         D0 => '1', -- 1-bit data input (associated with C0)
         D1 => '0', -- 1-bit data input (associated with C1)
-        R => '0',  -- 1-bit reset input
-        S => '0',  -- 1-bit set input
-        Q => obuf_tmds_clock -- 1-bit DDR output data
+        R  => '0', -- 1-bit reset input
+        S  => '0', -- 1-bit set input
+        Q  => obuf_tmds_clock -- 1-bit DDR output data
       );
 
     hdmi_clock: obufds
