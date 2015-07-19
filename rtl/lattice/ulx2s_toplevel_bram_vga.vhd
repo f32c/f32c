@@ -44,6 +44,7 @@ entity glue is
 	-- SoC configuration options
 	C_mem_size: integer := 16;
 	C_vgahdmi: boolean := true;
+	C_vgahdmi_mem_kb: integer := 4; -- KB, very little BRAM available on lattice
 	C_sio: integer := 1;
 	C_spi: integer := 2;
 	C_gpio: integer := 16;
@@ -89,6 +90,7 @@ begin
 	C_mem_size => C_mem_size,
 	C_debug => C_debug,
 	C_vgahdmi => C_vgahdmi,
+	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
 	C_sio => C_sio,
 	C_spi => C_spi,
 	C_gpio => C_gpio
