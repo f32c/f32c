@@ -26,6 +26,7 @@ vhdfiles = \
 ../../../xilinx/pll_50M_100M.vhd \
 ../../../xilinx/pll_50M_100M_25M_250M.vhd \
 ../../../xilinx/pll_50M_81M25.vhd \
+../../../xilinx/hdmi_out.vhd \
 ../../../generic/glue_bram_vga.vhd \
 ../../../generic/bram_mi32_eb.vhd \
 ../../../generic/bram_mi32_el.vhd \
