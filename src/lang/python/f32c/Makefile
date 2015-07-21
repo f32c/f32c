@@ -43,7 +43,7 @@ endif
 LDFLAGS = -N -EL -nostdlib
 LDFLAGS += -gc-sections
 LDFLAGS += --section-start=.init=0x80000000
-LDFLAGS += --library-path=../../../lib/${ARCH}
+LDFLAGS += --library-path=../../../lib/${ARCH}el
 
 LIBS = -lcrt0 -lc -lm
 
