@@ -1,6 +1,6 @@
 diff -drup ../org/gcc-5.2.0/gcc/config/mips/mips-cpus.def gcc/config/mips/mips-cpus.def
 --- ../org/gcc-5.2.0/gcc/config/mips/mips-cpus.def	2015-01-05 13:33:28.000000000 +0100
-+++ gcc/config/mips/mips-cpus.def	2015-07-21 10:44:16.365674000 +0200
++++ gcc/config/mips/mips-cpus.def	2015-07-21 15:35:53.188157000 +0200
 @@ -102,6 +102,7 @@ MIPS_CPU ("4kp", PROCESSOR_4KP, 32, 0)
  MIPS_CPU ("4ksc", PROCESSOR_4KC, 32, 0)
  
@@ -11,7 +11,7 @@ diff -drup ../org/gcc-5.2.0/gcc/config/mips/mips-cpus.def gcc/config/mips/mips-c
  MIPS_CPU ("m14k", PROCESSOR_M4K, 33, 0)
 diff -drup ../org/gcc-5.2.0/gcc/config/mips/mips.c gcc/config/mips/mips.c
 --- ../org/gcc-5.2.0/gcc/config/mips/mips.c	2015-01-28 10:44:39.000000000 +0100
-+++ gcc/config/mips/mips.c	2015-07-21 10:33:04.701143000 +0200
++++ gcc/config/mips/mips.c	2015-07-21 15:58:53.056765000 +0200
 @@ -959,6 +959,15 @@ static const struct mips_rtx_cost_data
  		     1,           /* branch_cost */
  		     4            /* memory_latency */
@@ -39,9 +39,18 @@ diff -drup ../org/gcc-5.2.0/gcc/config/mips/mips.c gcc/config/mips/mips.c
        && MEM_ALIGN (dest) == BITS_PER_WORD / 2)
      bits = BITS_PER_WORD / 2;
    else
+@@ -7645,7 +7656,7 @@ bool
+ mips_expand_block_move (rtx dest, rtx src, rtx length)
+ {
+   /* Disable entirely for R6 initially.  */
+-  if (!ISA_HAS_LWL_LWR)
++  if (ISA_MIPS32R6 || ISA_MIPS64R6)
+     return false;
+ 
+   if (CONST_INT_P (length))
 diff -drup ../org/gcc-5.2.0/gcc/config/mips/mips.h gcc/config/mips/mips.h
 --- ../org/gcc-5.2.0/gcc/config/mips/mips.h	2015-01-20 00:05:41.000000000 +0100
-+++ gcc/config/mips/mips.h	2015-07-21 11:28:53.050823000 +0200
++++ gcc/config/mips/mips.h	2015-07-21 15:35:53.194743000 +0200
 @@ -228,6 +228,7 @@ struct mips_cpu_info {
  #define TARGET_LOONGSON_2F          (mips_arch == PROCESSOR_LOONGSON_2F)
  #define TARGET_LOONGSON_2EF         (TARGET_LOONGSON_2E || TARGET_LOONGSON_2F)
@@ -234,7 +243,7 @@ diff -drup ../org/gcc-5.2.0/gcc/config/mips/mips.h gcc/config/mips/mips.h
     ? TARGET_LLSC && !TARGET_MIPS16	\
 diff -drup ../org/gcc-5.2.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
 --- ../org/gcc-5.2.0/gcc/config/mips/mips.md	2015-03-03 01:07:19.000000000 +0100
-+++ gcc/config/mips/mips.md	2015-07-21 11:01:18.081400000 +0200
++++ gcc/config/mips/mips.md	2015-07-21 23:15:20.344280000 +0200
 @@ -35,6 +35,7 @@
    74kf2_1
    74kf1_1
@@ -763,7 +772,7 @@ diff -drup ../org/gcc-5.2.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
     (set_attr "mode" "<MODE>")])
 diff -drup ../org/gcc-5.2.0/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
 --- ../org/gcc-5.2.0/gcc/config/mips/mips.opt	2015-01-05 13:33:28.000000000 +0100
-+++ gcc/config/mips/mips.opt	2015-07-21 09:57:32.182613000 +0200
++++ gcc/config/mips/mips.opt	2015-07-21 15:35:53.197857000 +0200
 @@ -115,6 +115,26 @@ mdouble-float
  Target Report RejectNegative InverseMask(SINGLE_FLOAT, DOUBLE_FLOAT)
  Allow hardware floating-point instructions to cover both 32-bit and 64-bit operations
@@ -791,8 +800,8 @@ diff -drup ../org/gcc-5.2.0/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
  mdsp
  Target Report Var(TARGET_DSP)
  Use MIPS-DSP instructions
---- /dev/null	2015-07-21 12:33:00.000000000 +0200
-+++ gcc/config/mips/f32c.md	2015-07-21 09:58:08.878514000 +0200
+--- /dev/null	2015-07-21 23:15:48.000000000 +0200
++++ gcc/config/mips/f32c.md	2015-07-21 15:35:53.198228000 +0200
 @@ -0,0 +1,96 @@
 +;;
 +;; f32c pipeline description
@@ -891,7 +900,7 @@ diff -drup ../org/gcc-5.2.0/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
 +   (set_attr "mode" "<MODE>")])
 +
 --- ../org/gcc-5.2.0/configure	2015-05-03 19:29:57.000000000 +0200
-+++ configure	2015-07-21 09:58:54.485245000 +0200
++++ configure	2015-07-21 15:35:53.227028000 +0200
 @@ -2767,7 +2767,10 @@ target_libraries="target-libgcc \
  # note: any program that *uses* libraries that are in the "target_libraries"
  # list belongs in this list.
@@ -905,7 +914,7 @@ diff -drup ../org/gcc-5.2.0/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
  ################################################################################
  
 --- ../org/gcc-5.2.0/gcc/doc/invoke.texi	2015-07-03 11:33:17.000000000 +0200
-+++ gcc/doc/invoke.texi	2015-07-21 09:59:16.499324000 +0200
++++ gcc/doc/invoke.texi	2015-07-21 15:35:53.259063000 +0200
 @@ -16872,6 +16872,7 @@ The processor names are:
  @samp{34kc}, @samp{34kf2_1}, @samp{34kf1_1}, @samp{34kn},
  @samp{74kc}, @samp{74kf2_1}, @samp{74kf1_1}, @samp{74kf3_2},
