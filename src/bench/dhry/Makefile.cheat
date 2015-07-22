@@ -5,19 +5,17 @@ CSTD = KnR
 WARNS = 1
 
 DHRY_CFLAGS += -Ofast
-DHRY_CFLAGS += -finline-limit=128
+DHRY_CFLAGS += -finline-limit=1024
+DHRY_CFLAGS += -fselective-scheduling
+DHRY_CFLAGS += -fno-crossjumping
+DHRY_CFLAGS += -fipa-pta -fselective-scheduling2 -fira-algorithm=priority
 
-CFILES = dhry_cheat.c miscfn.c \
-	../lib/div.c ../lib/printf.c ../lib/sio.c
+# builtin_strcpy is faster than a handcrafted version
+DHRY_CFLAGS += -DUSE_BUILTIN_STRCPY
+DHRY_CFLAGS += -DFAST_STRCMP -DUNROLLED_STRCMP
 
-ASFILES = ../lib/start.S
+CFILES = dhry_cheat.c miscfn.c
 
-include ../conf/f32c.mk
+CFLAGS += ${DHRY_CFLAGS}
 
-../lib/div.o:	Makefile ../lib/div.c
-	${CC} -DOPTIMIZED_DIVSI3 -c -o ../lib/div.o ../lib/div.c
-
-# Specialized build options for dhry_*.c files
-
-dhry_cheat.o:	Makefile dhry.h ../include/string.h dhry_cheat.c
-	${CC} ${DHRY_CFLAGS} -c -o dhry_cheat.o dhry_cheat.c
+include ${POST_MK}
