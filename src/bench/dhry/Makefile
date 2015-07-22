@@ -8,6 +8,9 @@ DHRY_CFLAGS += -Ofast
 DHRY_CFLAGS += -fselective-scheduling
 DHRY_CFLAGS += -fno-crossjumping
 
+# 1.630 DMIPS/MHz with gcc-5.2
+DHRY_CFLAGS += -fipa-pta -fselective-scheduling2 -fira-algorithm=priority
+
 # Inlining functions is not permitted per Dhrystone rules!
 DHRY_CFLAGS += -fno-inline-functions -fno-inline-small-functions
 DHRY_CFLAGS += -finline-limit=0
