@@ -28,7 +28,7 @@ MK_INCLUDES += -I${BASE_DIR}include
 MK_STDINC = -nostdinc -include sys/param.h
 
 # Libs
-LIBDIR = ${BASE_DIR}lib/${ARCH}
+LIBDIR = ${BASE_DIR}lib/${ARCH}el
 
 ifndef WITHOUT_LIBS
  ifdef WITHOUT_FLOAT
@@ -41,9 +41,7 @@ endif
 # MIPS-specific flags
 ifeq ($(ARCH),mips)
  MK_CFLAGS += -march=f32c
- #MK_CFLAGS += -march=mips2 -mtune=f32c
  MK_CFLAGS += ${ENDIANFLAGS}
- #MK_CFLAGS += -mno-branch-likely
  MK_CFLAGS += -G 32768
 endif
 
@@ -59,14 +57,10 @@ MK_CFLAGS += -ffreestanding
 
 # Optimization options
 MK_CFLAGS += -O2
-MK_CFLAGS += -finline-functions
+MK_CFLAGS += -finline-functions -finline-limit=32
 MK_CFLAGS += -fpeel-loops -funroll-all-loops
-
-# Minor improvements
-MK_CFLAGS += -fipa-cp-clone
-MK_CFLAGS += -fipa-pta
-MK_CFLAGS += -finline-limit=0
-MK_CFLAGS += -fselective-scheduling2
+MK_CFLAGS += -fipa-cp-clone -fipa-pta
+MK_CFLAGS += -fselective-scheduling -fselective-scheduling2
 
 # Linker flags
 #MK_LDFLAHS += ${ENDIANFLAGS}

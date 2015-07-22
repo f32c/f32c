@@ -13,6 +13,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "coremark.h"
@@ -47,7 +48,8 @@
 	*/
 
 #undef	CLOCKS_PER_SEC
-#define	CLOCKS_PER_SEC 81250000	/* 81.25 Mhz */
+
+int CLOCKS_PER_SEC;
 
 #define NSECS_PER_SEC CLOCKS_PER_SEC
 #define CORETIMETYPE clock_t 
@@ -109,6 +111,8 @@ ee_u32 default_num_contexts=1;
 */
 void portable_init(core_portable *p, int *argc, char *argv[])
 {
+	uint32_t tmp;
+
 	if (sizeof(ee_ptr_int) != sizeof(ee_u8 *)) {
 		ee_printf("ERROR! Please define ee_ptr_int to a type that holds a pointer!\n");
 	}
@@ -116,12 +120,34 @@ void portable_init(core_portable *p, int *argc, char *argv[])
 		ee_printf("ERROR! Please define ee_u32 to a 32b unsigned type!\n");
 	}
 	p->portable_id=1;
+
+	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
+	CLOCKS_PER_SEC =
+	    ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1) * 1000;
+
+	printf("\nDetected %d.%03d MHz CPU.\n\n", CLOCKS_PER_SEC / 1000000,
+	    (CLOCKS_PER_SEC / 1000) % 1000);
+	printf("CoreMark starting, please wait for around 15 secs...\n\n");
 }
 /* Function : portable_fini
 	Target specific final code 
 */
 void portable_fini(core_portable *p)
 {
+	core_results *cr;
+	uint32_t cm;
+
+	cr = (void *)(((char *) p) - offsetof(core_results, port));
+
+	uint32_t tms =
+	    (stop_time_val - start_time_val) / (CLOCKS_PER_SEC / 1000);
+	cm = cr->iterations * 100000 /
+	  ((stop_time_val - start_time_val) / 10000);
+
+	printf("\nTiming loop completed in %d.%03d seconds.\n\n"
+	    "CoreMark/MHz: %d.%03d\n", tms / 1000, tms % 1000,
+	    cm / 1000, cm % 1000);
+
 	p->portable_id=0;
 }
 
