@@ -77,8 +77,9 @@ entity glue_bram is
 	C_spi_fixed_speed: std_logic_vector := "1111";
 	C_simple_in: integer range 0 to 128 := 32;
 	C_simple_out: integer range 0 to 128 := 32;
-	C_vgahdmi: boolean := false;
+	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
 	C_vgahdmi_mem_kb: integer := 4; -- mem size of framebuffer
+	C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
 	C_gpio: integer range 0 to 128 := 32;
 	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
@@ -92,6 +93,7 @@ entity glue_bram is
 	clk: in std_logic;
 	clk_25MHz: in std_logic; -- VGA pixel clock 25 MHz
 	clk_250MHz: in std_logic := '0';
+	clk_325MHz: in std_logic := '0';
 	sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
 	sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
 	spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
@@ -103,6 +105,7 @@ entity glue_bram is
 	vga_hsync, vga_vsync: out std_logic;
 	vga_r, vga_g, vga_b: out std_logic_vector(2 downto 0);
 	tmds_out_rgb: out std_logic_vector(2 downto 0);
+	fm_antenna: out std_logic;
 	gpio: inout std_logic_vector(127 downto 0)
     );
 end glue_bram;
@@ -199,7 +202,13 @@ architecture Behavioral of glue_bram is
     signal vga_addr: std_logic_vector(15 downto 0);
     signal vga_data: std_logic_vector(7 downto 0);
     signal video_bram_write: std_logic;
-   
+
+    -- FM/RDS RADIO
+    signal rds_pcm: signed(15 downto 0);
+    signal rds_addr: std_logic_vector(8 downto 0);
+    signal rds_data: std_logic_vector(7 downto 0);
+    signal rds_bram_write: std_logic;
+
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
     signal debug_to_sio_data: std_logic_vector(7 downto 0);
@@ -506,7 +515,7 @@ begin
     -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
     -- vga_data(7 downto 0) <= x"0F";
     video_bram_write <=
-      dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "10" else '0';
+      dmem_addr_strobe and dmem_write when dmem_addr(31 downto 28) = x"8" else '0';
     videobram: entity work.bram_video
     generic map (
       C_mem_size => C_vgahdmi_mem_kb -- KB
@@ -517,6 +526,47 @@ begin
 	imem_addr(31 downto 18) => (others => '0'),
 	imem_data_out => vga_data,
 	dmem_write => video_bram_write,
+	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+	dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
+    );
+    end generate;
+
+    -- FM/RDS
+    G_fmrds:
+    if C_fmrds generate
+    rds_modulator: entity work.rds
+    generic map (
+      c_rds_msg_len => 260
+      -- settings for 81.25 MHz clock
+      --c_rds_clock_multiply => 912,
+      --c_rds_clock_divide => 40625
+    )
+    port map (
+      clk => clk_25MHz, -- clock 25 MHz
+      addr => rds_addr,
+      data => rds_data,
+      pcm_in => (others => '0'),
+      pcm_out => rds_pcm
+    );
+    fm_modulator: entity work.fmgen
+    generic map (
+      c_fdds => 325000000.0
+    )
+    port map (
+      clk_25m => clk_25MHz, -- clock 25 MHz
+      clk_250m => clk_325MHz, -- clock 325 MHz
+      cw_freq => 108000000,
+      pcm_in => rds_pcm,
+      fm_out => fm_antenna
+    );
+    rds_bram_write <=
+      dmem_addr_strobe and dmem_write when dmem_addr(31 downto 28) = x"A" else '0';
+    rdsbram: entity work.bram_rds
+    port map (
+	clk => clk,
+	imem_addr => rds_addr,
+	imem_data_out => rds_data,
+	dmem_write => rds_bram_write,
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
 	dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
     );
