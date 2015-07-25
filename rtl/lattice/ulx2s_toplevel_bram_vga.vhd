@@ -43,8 +43,9 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
-	C_vgahdmi: boolean := true;
+	C_vgahdmi: boolean := false;
 	C_vgahdmi_mem_kb: integer := 4; -- KB, very little BRAM available on lattice
+	C_fmrds: boolean := true;
 	C_sio: integer := 1;
 	C_spi: integer := 2;
 	C_gpio: integer := 16;
@@ -70,6 +71,7 @@ end glue;
 
 architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
+    signal clk_325m: std_logic;
     signal btns: std_logic_vector(4 downto 0);
 begin
     -- clock synthesizer: Lattice XP2 specific
@@ -78,8 +80,8 @@ begin
 	C_clk_freq => C_clk_freq
     )
     port map (
-	clk_25m => clk_25m, clk => clk, clk_325m => open,
-	ena_325m => '0', res => rs232_break
+	clk_25m => clk_25m, clk => clk, clk_325m => clk_325m,
+	ena_325m => '1', res => rs232_break
     );
 
     -- generic BRAM glue
@@ -91,6 +93,7 @@ begin
 	C_debug => C_debug,
 	C_vgahdmi => C_vgahdmi,
 	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
+	C_fmrds => C_fmrds,
 	C_sio => C_sio,
 	C_spi => C_spi,
 	C_gpio => C_gpio
@@ -98,6 +101,7 @@ begin
     port map (
 	clk => clk,
 	clk_25MHz => clk_25m,
+	clk_325MHz => clk_325m,
 	sio_txd(0) => rs232_tx,
 	sio_rxd(0) => rs232_rx,
 	sio_break(0) => rs232_break,
@@ -126,6 +130,7 @@ begin
 	vga_b(0) => j2_5,  vga_b(1) => j2_6,  vga_b(2) => j2_7,
 	vga_g(0) => j2_8,  vga_g(1) => j2_9,  vga_g(2) => j2_10,
 	vga_r(0) => j2_11, vga_r(1) => j2_12, vga_r(2) => j2_13,
+	fm_antenna => j2_16,
 	simple_out(7 downto 0) => led, simple_out(31 downto 8) => open,
 	simple_in(4 downto 0) => btns, simple_in(15 downto 5) => open,
 	simple_in(19 downto 16) => sw, simple_in(31 downto 20) => open

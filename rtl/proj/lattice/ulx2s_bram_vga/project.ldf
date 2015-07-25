@@ -114,6 +114,18 @@
         <Source name="../../../soc/vgahdmi/vgahdmi.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../soc/fm/rds.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/fm/fmgen.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/fm/bram_rds.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/fm/message.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../lattice/clkgen.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
