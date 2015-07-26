@@ -23,8 +23,8 @@ generic (
 	C_fdds: real := 250000000.0 -- input clock frequency
 );
 port (
-        clk_25m: in std_logic;
-	clk_250m: in std_logic;
+        clk_pcm: in std_logic; -- PCM processing clock, any (e.g. 25 MHz)
+	clk_dds: in std_logic; -- DDS clock must be >2*cw_freq (e.g. 250 MHz)
 	cw_freq: in std_logic_vector(31 downto 0);
 	pcm_in: in signed(15 downto 0); -- FM swing +-2x this amplitude in Hz
 	fm_out: out std_logic
@@ -45,11 +45,11 @@ begin
     R_pcm <= pcm_in;
 
     -- Calculate signal average to remove DC offset
-    process(clk_25m)
+    process(clk_pcm)
     variable delta: std_logic_vector(15 downto 0);
     variable R_clk_div: std_logic_vector(3 downto 0);
     begin
-        if rising_edge(clk_25m) then
+        if rising_edge(clk_pcm) then
 	    R_clk_div := R_clk_div + 1;
 	    if R_clk_div = x"0" then
 		if (R_pcm - R_pcm_avg) > 0 then
@@ -66,9 +66,9 @@ begin
     -- Calculate current frequency of carrier wave (Frequency modulation)
     -- Removing DC offset
     --
-    process (clk_25m)
+    process (clk_pcm)
     begin
-	if (rising_edge(clk_25m)) then
+	if (rising_edge(clk_pcm)) then
 	    R_dds_mul_x1 <= cw_freq + std_logic_vector(resize((R_pcm-R_pcm_avg) & "0", 32)); -- "0" multiply by 2
 	end if;
     end process;
@@ -76,9 +76,9 @@ begin
     --
     -- Generate carrier wave
     --
-    process (clk_250m)
+    process (clk_dds)
     begin
-	if (rising_edge(clk_250m)) then
+	if (rising_edge(clk_dds)) then
 	    -- Cross clock domains
     	    R_dds_mul_x2 <= R_dds_mul_x1;
 	    R_dds_mul_res <= R_dds_mul_x2 * C_dds_mul_y;
