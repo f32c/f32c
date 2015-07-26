@@ -78,7 +78,7 @@ begin
     );
 
     -- generic SDRAM glue
-    glue_sdram: entity work.glue_sdram
+    glue_bram: entity work.glue_bram
     generic map (
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
@@ -86,12 +86,12 @@ begin
     )
     port map (
 	clk => clk,
-	rs232_tx => rs232_txd, rs232_rx => rs232_rxd,
-	rs232_break => open,
+	sio_txd(0) => rs232_txd, sio_rxd(0) => rs232_rxd, sio_break => open,
 	gpio => open,
-	leds(7 downto 0) => led,
-	btns => btns,
-	sw(3 downto 0) => sw,
+	spi_miso => "",
+	simple_out(7 downto 0) => led, simple_out(31 downto 8) => open,
+	simple_in(15 downto 0) => btns,
+	simple_in(19 downto 16) => sw, simple_in(31 downto 20) => open,
 	sdram_addr => dram_addr, sdram_data => dram_dq,
 	sdram_ba => dram_ba, sdram_dqm => dram_dqm,
 	sdram_ras => dram_ras_n, sdram_cas => dram_cas_n,
