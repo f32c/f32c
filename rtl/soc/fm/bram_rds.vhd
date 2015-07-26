@@ -36,7 +36,7 @@ use work.message.all; -- RDS message in file message.vhd
 
 entity bram_rds is
 --    generic(
---	c_mem_size: integer := 260 -- bytes (unused, taken from message.vhd)
+--        c_mem_bytes: integer := 260 -- bytes
 --    );
     port(
 	clk: in std_logic;

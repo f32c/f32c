@@ -536,13 +536,17 @@ begin
     if C_fmrds generate
     rds_modulator: entity work.rds
     generic map (
-      c_rds_msg_len => 260
+      -- settings for 25 MHz clock
+      --c_rds_clock_multiply => 228,
+      --c_rds_clock_divide => 3125,
       -- settings for 81.25 MHz clock
-      --c_rds_clock_multiply => 912,
-      --c_rds_clock_divide => 40625
+      c_rds_clock_multiply => 912,
+      c_rds_clock_divide => 40625,
+      c_rds_msg_len => 260
     )
     port map (
-      clk => clk_25MHz, -- clock 25 MHz
+      --clk => clk_25MHz, -- RDS and PCM processing clock 25 MHz
+      clk => clk, -- RDS and PCM processing clock 81.25 MHz
       addr => rds_addr,
       data => rds_data,
       pcm_in => (others => '0'),
@@ -553,8 +557,9 @@ begin
       c_fdds => 325000000.0
     )
     port map (
-      clk_25m => clk_25MHz, -- clock 25 MHz
-      clk_250m => clk_325MHz, -- clock 325 MHz
+      -- clk_pcm => clk_25MHz, -- PCM processing clock 25 MHz
+      clk_pcm => clk, -- PCM processing clock 81.25 MHz
+      clk_dds => clk_325MHz, -- DDS clock 325 MHz
       cw_freq => 108000000,
       pcm_in => rds_pcm,
       fm_out => fm_antenna
