@@ -147,7 +147,7 @@ architecture Behavioral of SDRAM_Controller is
     attribute FSM_ENCODING of state : signal is "ONE-HOT";
    
     -- dual purpose counter, it counts up during the startup phase, then is used to trigger refreshes.
-    constant startup_refresh_max   : unsigned(13 downto 0) := (others => '1');  
+    constant startup_refresh_max   : unsigned(13 downto 0) := (others => '1');
    signal   startup_refresh_count : unsigned(13 downto 0) := startup_refresh_max - to_unsigned(sdram_startup_cycles,14);
 
     -- logic to decide when to refresh
@@ -171,7 +171,6 @@ architecture Behavioral of SDRAM_Controller is
    
     -- control when new transactions are accepted
     signal ready_for_new    : std_logic := '0';
-    signal got_transaction  : std_logic := '0';
    
     signal can_back_to_back : std_logic := '0';
 
@@ -179,7 +178,7 @@ architecture Behavioral of SDRAM_Controller is
     signal iob_dq_hiz       : std_logic := '1';
 
     -- signals for when to read the data off of the bus
-    signal data_ready_delay : std_logic_vector(4 downto 0);   
+    signal data_ready_delay : std_logic_vector(3 downto 0);
    
     -- bit indexes used when splitting the address into row/colum/bank.
     constant start_of_col  : natural := 0;
@@ -199,7 +198,7 @@ begin
 
     -- tell the outside world when we can accept a new transaction;
     --cmd_ready <= ready_for_new;
-    cmd_ready <= ready_for_new when data_ready_delay = "00000" else '0';
+    cmd_ready <= ready_for_new when data_ready_delay = "0000" else '0';
 
     ----------------------------------------------------------------------------
     -- Seperate the address into row / bank / address
@@ -233,9 +232,9 @@ begin
     -- Explicitly set up the tristate I/O buffers on the DQ signals
     ---------------------------------------------------------------
     sdram_data <= iob_data when iob_dq_hiz = '0' else (others => 'Z');
-    data_out <= R_from_sdram_prev & R_from_sdram;
+    data_out <= R_from_sdram & R_from_sdram_prev;
     data_out_ready <= data_ready_delay(0);
-                                     
+
     capture_proc: process(clk) 
     begin
 	if falling_edge(clk) then
@@ -266,7 +265,7 @@ begin
 	    -------------------------------------------------------------------
 	    -- if ready_for_new = '1' and cmd_enable = '1' then
 	    if ready_for_new = '1' and cmd_enable = '1' and 
-	      data_ready_delay = "00000" then
+	      data_ready_delay = "0000" then
 		if save_bank = addr_bank and save_row = addr_row then
 		    can_back_to_back <= '1';
 		else
@@ -278,7 +277,6 @@ begin
 		save_wr          <= cmd_wr; 
 		save_data_in     <= cmd_data_in;
 		save_byte_enable <= cmd_byte_enable;
-		got_transaction  <= '1';
 		ready_for_new    <= '0';
 	    end if;
 
@@ -336,7 +334,6 @@ begin
 		if startup_refresh_count = 0 then
 		    state           <= s_idle;
 		    ready_for_new   <= '1';
-		    got_transaction <= '0';
 		    startup_refresh_count <= to_unsigned(2048 - cycles_per_refresh+1,14);
 		end if;
                
@@ -357,7 +354,7 @@ begin
 		    state       <= s_idle_in_6;
 		    iob_command <= CMD_REFRESH;
 		    startup_refresh_count <= startup_refresh_count - cycles_per_refresh+1;
-		elsif got_transaction = '1' then
+		elsif ready_for_new = '0' then
 		    --------------------------------
 		    -- Start the read or write cycle. 
 		    -- First task is to open the row
@@ -366,7 +363,7 @@ begin
 		    iob_command <= CMD_ACTIVE;
 		    iob_address <= save_row;
 		    iob_bank    <= save_bank;
-		end if;               
+		end if;
                
 	    --------------------------------------------
 	    -- Opening the row ready for reads or writes
@@ -385,7 +382,6 @@ begin
 		end if;
 		-- we will be ready for a new transaction next cycle!
 		ready_for_new   <= '1'; 
-		got_transaction <= '0';                  
 
 	    ----------------------------------
 	    -- Processing the read transaction
@@ -406,32 +402,29 @@ begin
                
 	    when s_read_2 =>
 		state <= s_read_3;
-		if forcing_refresh = '0' and got_transaction = '1' and can_back_to_back = '1' then
+		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
 		    if save_wr = '0' then
 			state           <= s_read_1;
 			ready_for_new   <= '1'; -- we will be ready for a new transaction next cycle!
-			got_transaction <= '0';
 		    end if;
 		end if;
                
 	    when s_read_3 => 
 		state <= s_read_4;
-		if forcing_refresh = '0' and got_transaction = '1' and can_back_to_back = '1' then
+		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
 		    if save_wr = '0' then
 			state           <= s_read_1;
 			ready_for_new   <= '1'; -- we will be ready for a new transaction next cycle!
-			got_transaction <= '0';
 		    end if;
 		end if;
 
 	    when s_read_4 => 
 		state <= s_precharge;
 		-- can we do back-to-back read?
-		if forcing_refresh = '0' and got_transaction = '1' and can_back_to_back = '1' then
+		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
 		    if save_wr = '0' then
 			state           <= s_read_1;
 			ready_for_new   <= '1'; -- we will be ready for a new transaction next cycle!
-			got_transaction <= '0';
 		    else
 			state <= s_open_in_2; -- we have to wait for the read data to come back before we swutch the bus into HiZ
 		    end if;
@@ -446,8 +439,8 @@ begin
 		iob_address        <= save_col; 
 		iob_address(prefresh_cmd)    <= '0'; -- A10 actually matters - it selects auto precharge
 		iob_bank           <= save_bank;
-		iob_dqm            <= NOT save_byte_enable(1 downto 0);    
-		dqm_sr(1 downto 0) <= NOT save_byte_enable(3 downto 2);    
+		iob_dqm            <= NOT save_byte_enable(1 downto 0);
+		dqm_sr(1 downto 0) <= NOT save_byte_enable(3 downto 2);
 		iob_data           <= save_data_in(15 downto 0);
 		iob_data_next      <= save_data_in(31 downto 16);
                
@@ -455,12 +448,11 @@ begin
 		state           <= s_write_3;
 		iob_data        <= iob_data_next;
 		-- can we do a back-to-back write?
-		if forcing_refresh = '0' and got_transaction = '1' and can_back_to_back = '1' then
+		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
 		    if save_wr = '1' then
 			-- back-to-back write?
 			state           <= s_write_1;
 			ready_for_new   <= '1';
-			got_transaction <= '0';
 		    end if;
 		    -- Although it looks right in simulation you can't go write-to-read 
 		    -- here due to bus contention, as iob_dq_hiz takes a few ns.
@@ -468,18 +460,16 @@ begin
          
 	    when s_write_3 =>  -- must wait tRDL, hence the extra idle state
 		-- back to back transaction?
-		if forcing_refresh = '0' and got_transaction = '1' and can_back_to_back = '1' then
+		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
 		    if save_wr = '1' then
 			-- back-to-back write?
 			state           <= s_write_1;
 			ready_for_new   <= '1';
-			got_transaction <= '0';
 		    else
 			-- write-to-read switch?
 			state           <= s_read_1;
 			iob_dq_hiz      <= '1';
 			ready_for_new   <= '1'; -- we will be ready for a new transaction next cycle!
-			got_transaction <= '0';                  
 		    end if;
 		else
 		    iob_dq_hiz         <= '1';
@@ -508,6 +498,6 @@ begin
 		ready_for_new         <= '0';
 		startup_refresh_count <= startup_refresh_max-to_unsigned(sdram_startup_cycles,14);
 	    end if;
-	end if;      
+	end if;
     end process;
 end Behavioral;
