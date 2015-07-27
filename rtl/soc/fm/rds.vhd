@@ -35,7 +35,7 @@ port (
     clk: in std_logic;
     addr: out std_logic_vector(8 downto 0); -- memory address 512 bytes
     data: in std_logic_vector(7 downto 0); -- memory data 8 bit
-    pcm_in_left, pcm_in_right: in signed(15 downto 0) := (others => '0'); -- from tone generator
+    pcm_in_left, pcm_in_right: in signed(15 downto 0); -- from tone generator
     pcm_out: out signed(15 downto 0) -- to FM transmitter
 );
 end rds;
@@ -49,17 +49,31 @@ architecture RTL of rds is
     -- and to generate sine wave for 57kHz subcarrier
     -- 48 elements of 7 bits (range 1..127) in lookup table 
     -- provide sufficient resolution for time and amplitude
-    constant C_dbpsk_bits: integer := 8;
+    constant C_dbpsk_bits: integer := 7;
 
     -- DBPSK wave lookup table
-    type dbpsk_wav_type is array(0 to 47) of std_logic_vector(7 downto 0);
-    constant dbpsk_wav_map: dbpsk_wav_type := (
-x"47",x"53",x"5e",x"67",x"6e",x"73",x"75",x"75",x"73",x"6f",x"6a",x"66",x"61",x"5e",x"5c",x"5c",
-x"5e",x"62",x"67",x"6d",x"73",x"79",x"7d",x"7f",x"7f",x"7d",x"78",x"71",x"68",x"5e",x"52",x"46",
-x"3a",x"2e",x"22",x"18",x"0f",x"08",x"03",x"01",x"01",x"03",x"08",x"0f",x"18",x"22",x"2e",x"3a"
+    type T_dbpsk_wav_integer is array(0 to 47) of integer;
+    constant dbpsk_wav_integer_map: T_dbpsk_wav_integer := (
+     7, 19, 30, 39, 46, 51, 53, 53, 51, 47, 42, 38, 33, 30, 28, 28,
+    30, 34, 39, 45, 51, 57, 61, 63, 63, 61, 56, 49, 40, 30, 18,  6,
+    -6,-18,-30,-40,-49,-56,-61,-63,-63,-61,-56,-49,-40,-30,-18, -6
     );
+    type T_dbpsk_wav_signed is array (0 to 47) of signed(C_dbpsk_bits-1 downto 0);
+    function dpbsk_int2sign(x: T_dbpsk_wav_integer)
+      return T_dbpsk_wav_signed is
+        variable i: integer;
+        variable y: T_dbpsk_wav_signed;
+    begin
+      for i in 0 to x'length - 1 loop
+        y(i) := to_signed(x(i), C_dbpsk_bits); -- converts integer to 7-bit signed number
+      end loop;
+      return y;
+    end dpbsk_int2sign;
+    constant dbpsk_wav_map: T_dbpsk_wav_signed
+                          := dpbsk_int2sign(dbpsk_wav_integer_map);
+
     signal R_rds_cdiv: std_logic_vector(5 downto 0); -- 6-bit divisor 0..47
-    signal R_rds_pcm: signed(7 downto 0); -- 8 bit ADC value for RDS waveform
+    signal R_rds_pcm: signed(C_dbpsk_bits-1 downto 0); -- 7 bit ADC value for RDS waveform
     signal R_rds_msg_index: std_logic_vector(8 downto 0); -- 9 bit index for message
     signal R_rds_byte: std_logic_vector(7 downto 0); -- current byte to send
     signal R_rds_bit_index: std_logic_vector(2 downto 0); -- current bit index 0..7
@@ -69,26 +83,26 @@ x"3a",x"2e",x"22",x"18",x"0f",x"08",x"03",x"01",x"01",x"03",x"08",x"0f",x"18",x"
     signal R_rds_counter: std_logic_vector(4 downto 0) := (others => '0'); -- 5-bit wav counter 0..31
     signal S_rds_sign: std_logic; -- current sign of waveform 0:(+) 1:(-)
     signal S_dbpsk_wav_index: std_logic_vector(5 downto 0); -- 6-bit index 0..63
-    signal S_dbpsk_wav_value: signed(7 downto 0);
-    signal S_rds_pcm: signed(7 downto 0); -- 8 bit ADC value for RDS waveform
-    signal S_rds_mod_pcm: signed(15 downto 0);
-    signal S_rds_coarse_pcm: signed(7 downto 0);
+    signal S_dbpsk_wav_value: signed(C_dbpsk_bits-1 downto 0);
+    signal S_rds_pcm: signed(C_dbpsk_bits-1 downto 0); -- 7 bit ADC value for RDS waveform
+    signal S_rds_mod_pcm: signed(2*C_dbpsk_bits-1 downto 0);
+    signal S_rds_coarse_pcm: signed(C_dbpsk_bits-1 downto 0);
 
     signal R_pilot_counter: std_logic_vector(4 downto 0) := (others => '0'); -- 5-bit wav counter 0..31
     signal R_pilot_cdiv: std_logic_vector(1 downto 0); -- 2-bit divisor 0..2
     signal S_pilot_wav_index: std_logic_vector(5 downto 0); -- 6-bit index 0..63
-    signal S_pilot_wav_value: signed(7 downto 0);
-    signal S_pilot_pcm: signed(7 downto 0) := (others => '0'); -- 8 bit ADC value
+    signal S_pilot_wav_value: signed(C_dbpsk_bits-1 downto 0);
+    signal S_pilot_pcm: signed(C_dbpsk_bits-1 downto 0) := (others => '0'); -- 7 bit ADC value
     signal S_stereo_wav_index: std_logic_vector(5 downto 0); -- 6-bit index 0..63
-    signal S_stereo_wav_value: signed(7 downto 0);
-    signal S_stereo_pcm: signed(7 downto 0) := (others => '0'); -- 8 bit ADC value
-    signal S_pcm_stereo: signed(23 downto 0);
+    signal S_stereo_wav_value: signed(C_dbpsk_bits-1 downto 0);
+    signal S_stereo_pcm: signed(C_dbpsk_bits-1 downto 0) := (others => '0'); -- 7 bit ADC value
+    signal S_pcm_stereo: signed(22 downto 0);
 
     signal R_subc_counter: std_logic_vector(4 downto 0) := (others => '0'); -- 5-bit wav counter 0..31
     signal R_subc_cdiv: std_logic_vector(4 downto 0) := (others => '0'); -- divide to 57kHz
-    signal S_subc_wav_index: std_logic_vector(5 downto 0); -- 6-bit index 0..63
-    signal S_subc_wav_value: signed(7 downto 0);
-    signal S_subc_pcm: signed(7 downto 0); -- 8 bit ADC value for 19kHz pilot sine wave
+    signal S_subc_wav_index: std_logic_vector(5 downto 0); -- 6-bit index used 0..47, max 63
+    signal S_subc_wav_value: signed(C_dbpsk_bits-1 downto 0);
+    signal S_subc_pcm: signed(C_dbpsk_bits-1 downto 0); -- 7 bit ADC value for 19kHz pilot sine wave
 
     -- clock multiply must be smaller than clock divide
     -- calculate number of bits for clock divide counter
@@ -151,7 +165,7 @@ begin
     -- phase warning: negative sine values at index 32..47
     -- pilot should be in phase with 57kHz subcarrier
     -- (rising slope cross 0 at the same point)
-    S_pilot_wav_value <= signed(dbpsk_wav_map(conv_integer(S_pilot_wav_index)) - x"40");
+    S_pilot_wav_value <= dbpsk_wav_map(conv_integer(S_pilot_wav_index));
     S_pilot_pcm <= S_pilot_wav_value when R_pilot_counter(4) = '1' -- sign at bit 4
              else -S_pilot_wav_value;
     -- S_pilot_pcm range: (-63 .. +63)
@@ -160,17 +174,17 @@ begin
     -- stereo 38kHz is generated by doubling the 19 kHz counter (shift left)
     -- every 2nd value of the sine table is used.
     -- if something better is ever needed
-    -- double strobe frequency can be doubled to 3.648 MHz
+    -- double strobe frequency can be generated at 3.648 MHz
     S_stereo_wav_index <= "10"                               -- or 32 (sine)
                        &  R_pilot_counter(2 downto 0) & "0"; -- 0..15 running
     -- dbpsk_wav_map has range 1..127, need to subtract 64
     -- phase warning: negative sine values at index 32..47
-    S_stereo_wav_value <= signed(dbpsk_wav_map(conv_integer(S_stereo_wav_index)) - x"40");
+    S_stereo_wav_value <= dbpsk_wav_map(conv_integer(S_stereo_wav_index));
     S_stereo_pcm <= S_stereo_wav_value when R_pilot_counter(3) = '1' -- sign at bit 3
               else -S_stereo_wav_value;
     -- S_stereo_pcm range: (-63 .. +63)
     end generate;
-    -- ****************** END PILOT 19kHz ***************************
+    -- *********** END PILOT 19kHz and 38kHz SUBCARRIER *************
 
     -- **************** FINE SUBCARRIER 57kHz ***********************
     fine_subcarrier_sine: if C_fine_subc generate
@@ -190,7 +204,7 @@ begin
                       &  R_subc_counter(3 downto 0); -- 0..15 running
     -- dbpsk_wav_map has range 1..127, need to subtract 64
     -- phase warning: negative sine values at index 32..47
-    S_subc_wav_value <= signed(dbpsk_wav_map(conv_integer(S_subc_wav_index)) - x"40");
+    S_subc_wav_value <= dbpsk_wav_map(conv_integer(S_subc_wav_index));
     S_subc_pcm <= S_subc_wav_value when R_subc_counter(4) = '1'
            else  -S_subc_wav_value;
     -- S_subc_pcm range: (-63 .. +63)
@@ -261,7 +275,7 @@ begin
     S_dbpsk_wav_index <= (not(R_rds_bit))                 -- 32 (sine)
                        & (R_rds_counter(4) and R_rds_bit) -- 0..15 (sine) or 0..31 (phase change)
                        &  R_rds_counter(3 downto 0);      -- 0..15 same for both
-    S_dbpsk_wav_value <= signed(dbpsk_wav_map(conv_integer(S_dbpsk_wav_index)) - x"40");
+    S_dbpsk_wav_value <= dbpsk_wav_map(conv_integer(S_dbpsk_wav_index));
 
     -- AM modulation of subcarrier with DBPSK wave
     -- do not overmodulate RDS signal
