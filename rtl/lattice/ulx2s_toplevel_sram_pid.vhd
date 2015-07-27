@@ -189,8 +189,10 @@ architecture Behavioral of glue is
     signal pcm_addr: std_logic_vector(19 downto 2);
     signal from_pcm: std_logic_vector(31 downto 0);
     signal pcm_ce, pcm_l, pcm_r: std_logic;
+    signal pcm_bus_l, pcm_bus_r: std_logic_vector(15 downto 0);
 
     -- FM/RDS RADIO
+    signal pcm_signed_l, pcm_signed_r: signed(15 downto 0);
     signal rds_pcm: signed(15 downto 0);
     signal rds_addr: std_logic_vector(8 downto 0);
     signal rds_data: std_logic_vector(7 downto 0);
@@ -773,6 +775,7 @@ begin
 	io_bus_in => cpu_to_io, io_bus_out => from_pcm,
 	addr_strobe => pcm_addr_strobe, data_ready => pcm_data_ready,
 	addr_out => pcm_addr, data_in => from_sram,
+	out_pcm_l => pcm_bus_l, out_pcm_r => pcm_bus_r,
 	out_r => pcm_r, out_l => pcm_l
     );
     pcm_ce <= io_addr_strobe(R_cur_io_port) when
@@ -788,6 +791,8 @@ begin
     -- FM/RDS
     G_fmrds:
     if C_fmrds generate
+    pcm_signed_l <= signed(pcm_bus_l - x"8000");
+    pcm_signed_r <= signed(pcm_bus_r - x"8000");
     rds_modulator: entity work.rds
     generic map (
       -- settings for 25 MHz clock
@@ -803,8 +808,8 @@ begin
       clk => clk, -- RDS and PCM processing clock 81.25 MHz
       addr => rds_addr,
       data => rds_data,
-      pcm_in_left => (others => '0'),
-      pcm_in_right => (others => '0'),
+      pcm_in_left => pcm_signed_l,
+      pcm_in_right => pcm_signed_r,
       pcm_out => rds_pcm
     );
     fm_modulator: entity work.fmgen
