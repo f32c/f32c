@@ -17,7 +17,7 @@ main(void)
 {
 	volatile int *mem_base = &_end;
 	volatile int *mem_end;
-	int i, len, speed, iter, tot_err, a, b;
+	int i, len, speed, iter, tot_err, a, b, c, d;
 	int size, tmp, freq_khz, start, end, seed, val;
 	volatile uint8_t *p8;
 	volatile uint16_t *p16;
@@ -107,7 +107,9 @@ again:
 		for (i = 0; i < 8; i++) {
 			a = *p32++;
 			b = *p32++;
-			if (a != val || b !=val)
+			if (a != val)
+				tmp++;
+			if (b != val)
 				tmp++;
 		}
 	printf("%d errors\n", tmp);
@@ -143,15 +145,19 @@ again:
 	val = seed;
 	tmp = 0;
 	for (p16 = (uint16_t *) mem_base; p16 < (uint16_t *) mem_end; 
-	    val += 0x137b5d51)
-		for (i = 0; i < 16; i++)
-			if ((i & 1) == 0) {
-				if (*p16++ != (val & 0xffff))
-					tmp++;
-			} else {
-				if (*p16++ != ((~val) & 0xffff))
-					tmp++;
-			}
+	    val += 0x137b5d51) {
+		c = val & 0xffff;
+		d = (~val) & 0xffff;
+		for (i = 0; i < 8; i++) {
+			*p16; // dummy read, provoke consecutive read bug
+			a = *p16++;
+			b = *p16++;
+			if (a != c)
+				tmp++;
+			if (b != d)
+				tmp++;
+		}
+	}
 	printf("%d errors\n", tmp);
 	tot_err += tmp;
 	
