@@ -44,7 +44,7 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
-	C_pids: integer := 4;
+	C_pids: integer := 0; -- 0 to disable, 4 can fit
 	C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8);
 	C_pid_prescaler: integer := 18;
 	C_pid_precision: integer := 1;
