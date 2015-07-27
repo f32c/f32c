@@ -48,6 +48,31 @@ main(void)
 	tot_err = 0;
 
 again:
+	tot_err = 0;
+	int csum = 0;
+	for (i = 0; i < 32 * 1024 * 1024 / 4; i++) {
+		mem_base[i] = i;
+		csum += i;
+	}
+	tmp = 0;
+	for (i = 0; i < 32 * 1024 * 1024 / 4; i++) {
+		tmp += mem_base[i];
+	}
+	if (csum == tmp)
+		printf("CSUM OK\n");
+	else
+		printf("CSUM mismatch: %08x %08x\n", csum, tmp);
+
+	int a, b;
+	for (i = 0; i < 32 * 1024 * 1024 / 4; i++) {
+		a = mem_base[i];
+		b = mem_base[i + 1];
+		if (b != a + 1)
+			tot_err++;
+	}
+	printf("%08x %08x\n", a, b);
+	printf("read errors: %d\n", tot_err);
+
 	RDTSC(seed);
 
 	val = seed;
