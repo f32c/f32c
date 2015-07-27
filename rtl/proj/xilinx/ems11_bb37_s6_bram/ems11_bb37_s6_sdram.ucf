@@ -1,0 +1,56 @@
+# Board:     EMS11-FPGA-S6-V1.0.brd
+# Part Name: FPGA
+# Part pkg:  BGA676
+# Created:   04.08.2014 20:00:20
+# Edited:	2014-08-06, by emu
+
+CONFIG VCCAUX=3.3;
+
+#
+#	SDR SDRAM MT48LC32M16ARP-75C
+#	
+NET "DR_A<0>" LOC = "W24";
+NET "DR_A<1>" LOC = "V23";
+NET "DR_A<2>" LOC = "U23";
+NET "DR_A<3>" LOC = "T24";
+NET "DR_A<4>" LOC = "N25";
+NET "DR_A<5>" LOC = "P26";
+NET "DR_A<6>" LOC = "P24";
+NET "DR_A<7>" LOC = "R26";
+NET "DR_A<8>" LOC = "R25";
+NET "DR_A<9>" LOC = "T26";
+NET "DR_A<10>" LOC = "Y22";
+NET "DR_A<11>" LOC = "U24";
+NET "DR_A<12>" LOC = "R23";
+NET "DR_BA<0>" LOC = "AA23";
+NET "DR_BA<1>" LOC = "Y24";
+NET "DR_CAS_N" LOC = "AC24";
+NET "DR_CKE" LOC = "R24";
+NET "DR_CLK_O" LOC = "U26";
+NET "DR_CLK_I" LOC = "U25";
+NET "DR_CS_N" LOC = "AA24";
+NET "DR_D<0>" LOC = "AE25";
+NET "DR_D<1>" LOC = "AD24";
+NET "DR_D<2>" LOC = "AC26";
+NET "DR_D<3>" LOC = "AB26";
+NET "DR_D<4>" LOC = "AA26";
+NET "DR_D<5>" LOC = "Y26";
+NET "DR_D<6>" LOC = "W26";
+NET "DR_D<7>" LOC = "V26";
+NET "DR_D<8>" LOC = "V24";
+NET "DR_D<9>" LOC = "W25";
+NET "DR_D<10>" LOC = "AA25";
+NET "DR_D<11>" LOC = "AB24";
+NET "DR_D<12>" LOC = "AC25";
+NET "DR_D<13>" LOC = "AD26";
+NET "DR_D<14>" LOC = "AE26";
+NET "DR_D<15>" LOC = "AF25";
+NET "DR_DQMH" LOC = "T23";
+NET "DR_DQML" LOC = "AE24";
+NET "DR_RAS_N" LOC = "AA22";
+NET "DR_WE_N" LOC = "AC23";
+
+
+NET DR_* IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST;
+NET DR_CLK_O BUFG = CLK;
+NET DR_D<*> NODELAY;

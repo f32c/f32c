@@ -825,15 +825,15 @@ begin
       fm_out => fm_antenna
     );
     rds_bram_write <=
-      io_addr_strobe(R_cur_io_port) and io_write when io_addr(11 downto 8) = x"6" else '0';
-    rds_bram_addr <= x"00000" & (io_addr(11 downto 8) xor x"6") & io_addr(7 downto 2);
+      dmem_addr_strobe(0) and dmem_write(0) when dmem_addr(0)(15 downto 11) = x"F" & "0" else '0';
+    -- rds_bram_addr <= dmem_addr(0)(10 downto 2);
     rdsbram: entity work.bram_rds
     port map (
 	clk => clk,
 	imem_addr => rds_addr,
 	imem_data_out => rds_data,
 	dmem_write => rds_bram_write,
-	dmem_byte_sel => io_byte_sel, dmem_addr => rds_bram_addr,
+	dmem_byte_sel => io_byte_sel, dmem_addr => dmem_addr(0)(10 downto 2),
 	dmem_data_out => open, dmem_data_in => cpu_to_io(7 downto 0)
     );
     end generate;
