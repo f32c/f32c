@@ -549,7 +549,8 @@ begin
       clk => clk, -- RDS and PCM processing clock 81.25 MHz
       addr => rds_addr,
       data => rds_data,
-      pcm_in => (others => '0'),
+      pcm_in_left => (others => '0'),
+      pcm_in_right => (others => '0'),
       pcm_out => rds_pcm
     );
     fm_modulator: entity work.fmgen
