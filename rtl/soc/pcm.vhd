@@ -43,6 +43,7 @@ entity pcm is
 	data_ready: in std_logic;
 	addr_out: out std_logic_vector(19 downto 2);
 	data_in: in std_logic_vector(31 downto 0);
+	out_pcm_l, out_pcm_r: out std_logic_vector(15 downto 0);
 	out_l, out_r: out std_logic
     );
 end pcm;
@@ -124,5 +125,8 @@ begin
 
     out_l <= R_dac_acc_l(16);
     out_r <= R_dac_acc_r(16);
+    
+    out_pcm_l <= R_pcm_data_l;
+    out_pcm_r <= R_pcm_data_r;
 
 end Behavioral;
