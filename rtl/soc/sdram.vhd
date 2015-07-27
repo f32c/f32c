@@ -60,7 +60,7 @@ entity SDRAM_Controller is
            
 	-- Interface to issue reads or write data
 	cmd_ready: out STD_LOGIC; -- '1' when a new command will be acted on
-	cmd_enable: in STD_LOGIC; -- Set to '1' to issue new command (only acted on when cmd_read = '1')
+	cmd_enable: in STD_LOGIC; -- Set to '1' to issue new command (only acted on when cmd_ready = '1')
 	cmd_wr: in STD_LOGIC; -- Is this a write?
 	cmd_address: in STD_LOGIC_VECTOR(sdram_address_width-2 downto 0); -- address to read/write
 	cmd_byte_enable: in STD_LOGIC_VECTOR(3 downto 0); -- byte masks for the write command
@@ -70,16 +70,16 @@ entity SDRAM_Controller is
 	data_out_ready: out STD_LOGIC; -- is new data ready?
 
 	-- SDRAM signals
-	SDRAM_CLK: out STD_LOGIC;
-	SDRAM_CKE: out STD_LOGIC;
-	SDRAM_CS: out STD_LOGIC;
-	SDRAM_RAS: out STD_LOGIC;
-	SDRAM_CAS: out STD_LOGIC;
-	SDRAM_WE: out STD_LOGIC;
-	SDRAM_DQM: out STD_LOGIC_VECTOR( 1 downto 0);
-	SDRAM_ADDR: out STD_LOGIC_VECTOR(12 downto 0);
-	SDRAM_BA: out STD_LOGIC_VECTOR( 1 downto 0);
-	SDRAM_DATA: inout STD_LOGIC_VECTOR(15 downto 0));
+	sdram_clk: out STD_LOGIC;
+	sdram_cke: out STD_LOGIC;
+	sdram_cs: out STD_LOGIC;
+	sdram_ras: out STD_LOGIC;
+	sdram_cas: out STD_LOGIC;
+	sdram_we: out STD_LOGIC;
+	sdram_dqm: out STD_LOGIC_VECTOR( 1 downto 0);
+	sdram_addr: out STD_LOGIC_VECTOR(12 downto 0);
+	sdram_ba: out STD_LOGIC_VECTOR( 1 downto 0);
+	sdram_data: inout STD_LOGIC_VECTOR(15 downto 0));
 end SDRAM_Controller;
 
 architecture Behavioral of SDRAM_Controller is
@@ -199,7 +199,9 @@ begin
     forcing_refresh <= startup_refresh_count(12);
 
     -- tell the outside world when we can accept a new transaction;
-    cmd_ready <= ready_for_new;
+    --cmd_ready <= ready_for_new;
+    cmd_ready <= ready_for_new when data_ready_delay = x"0" else '0';
+
     ----------------------------------------------------------------------------
     -- Seperate the address into row / bank / address
     ----------------------------------------------------------------------------
@@ -262,7 +264,9 @@ begin
 	    -- then accept it. Also remember what we are reading or writing,
 	    -- and if it can be back-to-backed with the last transaction
 	    -------------------------------------------------------------------
-	    if ready_for_new = '1' and cmd_enable = '1' then
+	    -- if ready_for_new = '1' and cmd_enable = '1' then
+	    if ready_for_new = '1' and cmd_enable = '1' and 
+	      data_ready_delay = x"0" then
 		if save_bank = addr_bank and save_row = addr_row then
 		    can_back_to_back <= '1';
 		else
