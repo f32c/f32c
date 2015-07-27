@@ -179,7 +179,7 @@ architecture Behavioral of SDRAM_Controller is
     signal iob_dq_hiz       : std_logic := '1';
 
     -- signals for when to read the data off of the bus
-    signal data_ready_delay : std_logic_vector(4 downto 0);   
+    signal data_ready_delay : std_logic_vector(3 downto 0);   
    
     -- bit indexes used when splitting the address into row/colum/bank.
     constant start_of_col  : natural := 0;
@@ -199,7 +199,7 @@ begin
 
     -- tell the outside world when we can accept a new transaction;
     --cmd_ready <= ready_for_new;
-    cmd_ready <= ready_for_new when data_ready_delay = "00000" else '0';
+    cmd_ready <= ready_for_new when data_ready_delay = "0000" else '0';
 
     ----------------------------------------------------------------------------
     -- Seperate the address into row / bank / address
@@ -233,7 +233,7 @@ begin
     -- Explicitly set up the tristate I/O buffers on the DQ signals
     ---------------------------------------------------------------
     sdram_data <= iob_data when iob_dq_hiz = '0' else (others => 'Z');
-    data_out <= R_from_sdram_prev & R_from_sdram;
+    data_out <= R_from_sdram & R_from_sdram_prev;
     data_out_ready <= data_ready_delay(0);
                                      
     capture_proc: process(clk) 
@@ -266,7 +266,7 @@ begin
 	    -------------------------------------------------------------------
 	    -- if ready_for_new = '1' and cmd_enable = '1' then
 	    if ready_for_new = '1' and cmd_enable = '1' and 
-	      data_ready_delay = "00000" then
+	      data_ready_delay = "0000" then
 		if save_bank = addr_bank and save_row = addr_row then
 		    can_back_to_back <= '1';
 		else
