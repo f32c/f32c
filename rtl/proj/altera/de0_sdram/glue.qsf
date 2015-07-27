@@ -180,10 +180,18 @@ set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON
 
 
 
+set_global_assignment -name VERILOG_FILE ../../../soc/pid/simotor_v.v
+set_global_assignment -name VHDL_FILE ../../../soc/pid/simotor.vhd
+set_global_assignment -name VERILOG_FILE ../../../soc/pid/rotary_decoder_v.v
+set_global_assignment -name VHDL_FILE ../../../soc/pid/rotary_decoder.vhd
+set_global_assignment -name VHDL_FILE ../../../soc/pid/pid.vhd
+set_global_assignment -name VERILOG_FILE ../../../soc/pid/ctrlpid_v.v
+set_global_assignment -name VHDL_FILE ../../../soc/pid/ctrlpid.vhd
+set_global_assignment -name VHDL_FILE ../../../soc/spi.vhd
+set_global_assignment -name VHDL_FILE ../../../generic/glue_bram_sdram.vhd
 set_global_assignment -name VHDL_FILE ../../../soc/sdram.vhd
 set_global_assignment -name VHDL_FILE ../../../generic/bram_mi32_el.vhd
 set_global_assignment -name VHDL_FILE ../../../generic/bram_mi32_eb.vhd
-set_global_assignment -name VHDL_FILE ../../../generic/glue_sdram.vhd
 set_global_assignment -name VHDL_FILE ../../../generic/bram_rv32.vhd
 set_global_assignment -name VHDL_FILE ../../../altera/pll_50m.vhd
 set_global_assignment -name VHDL_FILE ../../../cpu/debug.vhd
