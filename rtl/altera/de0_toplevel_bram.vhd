@@ -36,14 +36,13 @@ use work.f32c_pack.all;
 entity glue is
     generic (
 	-- ISA
-	C_arch: integer := ARCH_RV32;
+	C_arch: integer := ARCH_MI32;
 
 	-- Main clock freq, in multiples of 10 MHz
 	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
-	C_mem_size: integer := 32;
-	C_leds_btns: boolean := true
+	C_mem_size: integer := 32
     );
     port (
 	clk_50m: in std_logic;
@@ -81,9 +80,10 @@ begin
 	sio_txd(0) => rs232_txd, sio_rxd(0) => rs232_rxd,
 	sio_break(0) => open,
 	gpio => open,
-	leds(7 downto 0) => led,
-	btns => btns,
-	sw(3 downto 0) => sw
+	spi_miso => "",
+	simple_out(7 downto 0) => led, simple_out(31 downto 8) => open,
+	simple_in(15 downto 0) => btns,
+	simple_in(19 downto 16) => sw, simple_in(31 downto 20) => open
     );
 
     btns <= x"000" & "00" & btn_left & btn_right;
