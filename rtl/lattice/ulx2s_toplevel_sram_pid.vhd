@@ -78,6 +78,7 @@ entity glue is
 	C_sram: boolean := true;
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
+	C_fmrds: boolean := true;
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true;
 	C_gpio: boolean := true;
@@ -86,7 +87,8 @@ entity glue is
 	C_framebuffer: boolean := false;
 	C_pcm: boolean := true;
 	C_timer: boolean := true;
-	C_tx433: boolean := true; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+	C_tx433: boolean := false; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+	C_fmrds: boolean := true; -- either FM or tx433
         C_pid: boolean := true;
         C_pids: integer := 4;
         C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8); -- for each pid choose simulator/real 
@@ -187,6 +189,16 @@ architecture Behavioral of glue is
     signal pcm_addr: std_logic_vector(19 downto 2);
     signal from_pcm: std_logic_vector(31 downto 0);
     signal pcm_ce, pcm_l, pcm_r: std_logic;
+    signal pcm_bus_l, pcm_bus_r: std_logic_vector(15 downto 0);
+
+    -- FM/RDS RADIO
+    signal pcm_signed_l, pcm_signed_r: signed(15 downto 0);
+    signal rds_pcm: signed(15 downto 0);
+    signal rds_addr: std_logic_vector(8 downto 0);
+    signal rds_data: std_logic_vector(7 downto 0);
+    signal rds_bram_write: std_logic;
+    signal rds_bram_addr: std_logic_vector(31 downto 2);
+    signal fm_antenna: std_logic;
 
     -- DDS frequency synthesizer
     signal R_dds, R_dds_fast, R_dds_acc: std_logic_vector(31 downto 0);
@@ -252,7 +264,8 @@ begin
 	clk_25m => clk_25m, ena_325m => ena_325m,
 	clk => clk, clk_325m => clk_325m, res => '0'
     );
-    ena_325m <= R_dds_enable when R_fb_mode = "11" else '1';
+    -- ena_325m <= R_dds_enable when R_fb_mode = "11" else '1';
+    ena_325m <= '1';
     end generate;
 
     clk_81_433: if C_tx433 = true generate
@@ -762,6 +775,7 @@ begin
 	io_bus_in => cpu_to_io, io_bus_out => from_pcm,
 	addr_strobe => pcm_addr_strobe, data_ready => pcm_data_ready,
 	addr_out => pcm_addr, data_in => from_sram,
+	out_pcm_l => pcm_bus_l, out_pcm_r => pcm_bus_r,
 	out_r => pcm_r, out_l => pcm_l
     );
     pcm_ce <= io_addr_strobe(R_cur_io_port) when
@@ -773,6 +787,56 @@ begin
       else (others => pcm_l);
     p_ring <= R_dds_acc(31) when C_dds and R_dds_enable = '1'
       else pcm_r;
+
+    -- FM/RDS
+    G_fmrds:
+    if C_fmrds generate
+    pcm_signed_l <= signed(pcm_bus_l - x"8000");
+    pcm_signed_r <= signed(pcm_bus_r - x"8000");
+    rds_modulator: entity work.rds
+    generic map (
+      -- settings for 25 MHz clock
+      --c_rds_clock_multiply => 228,
+      --c_rds_clock_divide => 3125,
+      -- settings for 81.25 MHz clock
+      c_rds_clock_multiply => 912,
+      c_rds_clock_divide => 40625,
+      c_rds_msg_len => 260
+    )
+    port map (
+      --clk => clk_25MHz, -- RDS and PCM processing clock 25 MHz
+      clk => clk, -- RDS and PCM processing clock 81.25 MHz
+      addr => rds_addr,
+      data => rds_data,
+      pcm_in_left => pcm_signed_l,
+      pcm_in_right => pcm_signed_r,
+      pcm_out => rds_pcm
+    );
+    fm_modulator: entity work.fmgen
+    generic map (
+      c_fdds => 325000000.0
+    )
+    port map (
+      -- clk_pcm => clk_25MHz, -- PCM processing clock 25 MHz
+      clk_pcm => clk, -- PCM processing clock 81.25 MHz
+      clk_dds => clk_325m, -- DDS clock 325 MHz
+      cw_freq => 108000000,
+      pcm_in => rds_pcm,
+      fm_out => fm_antenna
+    );
+    rds_bram_write <=
+      io_addr_strobe(R_cur_io_port) and io_write when io_addr(11 downto 8) = x"6" else '0';
+    rds_bram_addr <= x"00000" & (io_addr(11 downto 8) xor x"6") & io_addr(7 downto 2);
+    rdsbram: entity work.bram_rds
+    port map (
+	clk => clk,
+	imem_addr => rds_addr,
+	imem_data_out => rds_data,
+	dmem_write => rds_bram_write,
+	dmem_byte_sel => io_byte_sel, dmem_addr => rds_bram_addr,
+	dmem_data_out => open, dmem_data_in => cpu_to_io(7 downto 0)
+    );
+    end generate;
 
     --
     -- GPIO
@@ -818,9 +882,13 @@ begin
     gpio_ce <= io_addr_strobe(R_cur_io_port) when
       io_addr(11 downto 8) = x"0" else '0';
     end generate;
-    normal_gpio_28: if C_tx433 = false generate
-    j2_16 <= gpio_28;
+    --normal_gpio_28: if C_tx433 = false generate
+    --j2_16 <= gpio_28;
+    --end generate;
+    signal_FM_to_gpio_28: if C_fmrds = true generate
+    j2_16 <= fm_antenna;
     end generate;
+
     signal_433MHz_to_gpio_28: if C_tx433 = true generate
     j2_16 <= gpio_28 and clk_433m;
     end generate;
