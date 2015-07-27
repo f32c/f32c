@@ -1,0 +1,200 @@
+# Board:     EMS11-FPGA-S6-V1.0.brd
+# Part Name: FPGA
+# Part pkg:  BGA676
+# Created:   04.08.2014 20:00:20
+# Edited:	2014-08-06, by emu
+
+CONFIG VCCAUX=3.3;
+
+#
+#	Clocks & Reset & Switches
+#
+#NET "RESET_N" LOC = "B24" | IOSTANDARD = "LVTTL";
+#NET "DIAG_N" LOC = "L17" | IOSTANDARD = "LVTTL";
+
+NET "i_50MHz" LOC = "C13" | IOSTANDARD = "LVTTL";
+NET "i_50MHz" TNM_NET = TN_50MHZ;
+TIMESPEC TS_i_50MHz = PERIOD "TN_50MHZ" 20 ns HIGH 50%;
+
+# NET "100MHZ_N" LOC = "P22";
+# NET "100MHZ_P" LOC = "P21";
+
+# NET "LED1" LOC = "L23"  | IOSTANDARD = "LVTTL" | DRIVE = 2; # 330R led to gnd 
+# NET "LED2" LOC = "N22"  | IOSTANDARD = "LVTTL" | DRIVE = 2; # 330R led to gnd 
+# NET "FPGA_LED3" LOC = "AF24" | IOSTANDARD = "LVTTL" | DRIVE = 2; # 330R led to gnd 
+
+# NET "CDCE_CLK1" LOC = "N20";
+# NET "CDCE_CLK2" LOC = "M21";
+# NET "CDCE_SCLK" LOC = "K19";
+# NET "CDCE_SDATA" LOC = "K18";
+
+#
+#	UARTs & USB
+#
+NET "UART1_RXD" LOC = "D6";
+NET "UART1_TXD" LOC = "A6";
+# NET "UART1_CTS_N" LOC = "C6";
+# NET "UART1_RTS_N" LOC = "C7";
+
+# NET "UART2_CTS_N" LOC = "A11";
+# NET "UART2_RTS_N" LOC = "A8";
+# NET "UART2_RXD" LOC = "B8";
+# NET "UART2_TXD" LOC = "A7";
+
+# NET "USB_DM" LOC = "F26";
+# NET "USB_DP" LOC = "F24";
+
+NET UART* IOSTANDARD = LVTTL | DRIVE = 8 ;
+# NET USB* IOSTANDARD = LVTTL | DRIVE = 8 ;
+#
+#	Audio
+#
+# NET "AUDIO_L" LOC = "C26";
+# NET "AUDIO_R" LOC = "B26";
+
+# NET AUDIO* IOSTANDARD = LVTTL | DRIVE = 8 ;
+
+#
+#	SDflash 1 & 2
+#
+#NET "FPGA_SD_CDET_N" LOC = "A2";
+NET "FPGA_SD_CMD" LOC = "C5";
+NET "FPGA_SD_D0" LOC = "A3";
+#NET "FPGA_SD_D1" LOC = "A4";
+#NET "FPGA_SD_D2" LOC = "A5";
+NET "FPGA_SD_D3" LOC = "B6";
+NET "FPGA_SD_SCLK" LOC = "B4";
+
+NET "FPGA_SD_*" IOSTANDARD = LVTTL;
+
+# NET "MCU_SD_CDET_N" LOC = "D24";
+# NET "MCU_SD_CMD" LOC = "C25";
+# NET "MCU_SD_D0" LOC = "A25";
+# NET "MCU_SD_D1" LOC = "D26";
+# NET "MCU_SD_D2" LOC = "E26";
+# NET "MCU_SD_D3" LOC = "E25";
+# NET "MCU_SD_SCLK" LOC = "B25";
+
+# NET "MCU_SD_*" IOSTANDARD = LVTTL;
+
+#
+#	EXPMOD1 & EXPMOD2, not used on baseboard
+#
+# NET "EXPMOD1<1>" LOC = "N24";
+# NET "EXPMOD1<2>" LOC = "J26";
+# NET "EXPMOD1<3>" LOC = "N26";
+# NET "EXPMOD1<4>" LOC = "J25";
+# NET "EXPMOD1<5>" LOC = "L26";
+# NET "EXPMOD1<6>" LOC = "L25";
+# NET "EXPMOD1<7>" LOC = "M26";
+# NET "EXPMOD1<8>" LOC = "K26";
+# NET "EXPMOD2<1>" LOC = "M18";
+# NET "EXPMOD2<2>" LOC = "R19";
+# NET "EXPMOD2<3>" LOC = "M19";
+# NET "EXPMOD2<4>" LOC = "T20";
+# NET "EXPMOD2<5>" LOC = "R20";
+# NET "EXPMOD2<6>" LOC = "T22";
+# NET "EXPMOD2<7>" LOC = "U19";
+# NET "EXPMOD2<8>" LOC = "U22";
+# NET EXPMOD_* IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = SLOW;
+
+
+#
+#	Ethernet LAN8720 --------------------------------------------------------
+#
+
+# NET "RMII_#INT/REFCLKO" LOC = "L24";
+# NET "RMII_CRS_DV/MODE2" LOC = "G26";
+# NET "RMII_MDC" LOC = "K24";
+# NET "RMII_MDIO" LOC = "H24";
+# NET "RMII_RXD0/MODE0" LOC = "H26";
+# NET "RMII_RXD1/MODE1" LOC = "G25";
+# NET "RMII_TXD0" LOC = "M24";
+# NET "RMII_TXD1" LOC = "N23";
+# NET "RMII_TXEN" LOC = "M23";
+
+# NET "RMII_*" IOSTANDARD = LVTTL;
+
+#
+#	VGA, on ADV7511 3x8bit DAC, PS/2 Mouse & keyboard ----------------------------
+#
+
+#NET "M1_VGA_BLANK_N" LOC = "A22";
+#NET "M1_VGA_BLUE<0>" LOC = "A19";
+#NET "M1_VGA_BLUE<1>" LOC = "C17";
+#NET "M1_VGA_BLUE<2>" LOC = "A20";
+#NET "M1_VGA_BLUE<3>" LOC = "A17";
+#NET "M1_VGA_BLUE<4>" LOC = "A21";
+#NET "M1_VGA_BLUE<5>" LOC = "B18";
+#NET "M1_VGA_BLUE<6>" LOC = "B22";
+#NET "M1_VGA_BLUE<7>" LOC = "D18";
+#NET "M1_VGA_CLOCK_N" LOC = "C20";
+#NET "M1_VGA_CLOCK_P" LOC = "D21";
+#NET "M1_VGA_CLOCK" LOC = "D21";
+#NET "M1_VGA_GREEN<0>" LOC = "A9";
+#NET "M1_VGA_GREEN<1>" LOC = "C9";
+#NET "M1_VGA_GREEN<2>" LOC = "C11";
+#NET "M1_VGA_GREEN<3>" LOC = "B12";
+#NET "M1_VGA_GREEN<4>" LOC = "B14";
+#NET "M1_VGA_GREEN<5>" LOC = "D14";
+#NET "M1_VGA_GREEN<6>" LOC = "B16";
+#NET "M1_VGA_GREEN<7>" LOC = "C15";
+#NET "M1_VGA_HSYNC" LOC = "C21";
+#NET "M1_PS2_A_CLK" LOC = "B23";
+#NET "M1_PS2_A_DATA" LOC = "A23";
+#NET "M1_PS2_B_CLK" LOC = "L19";
+#NET "M1_PS2_B_DATA" LOC = "L18";
+#NET "M1_VGA_RED<0>" LOC = "A12";
+#NET "M1_VGA_RED<1>" LOC = "A13";
+#NET "M1_VGA_RED<2>" LOC = "A14";
+#NET "M1_VGA_RED<3>" LOC = "C14";
+#NET "M1_VGA_RED<4>" LOC = "A15";
+#NET "M1_VGA_RED<5>" LOC = "A16";
+#NET "M1_VGA_RED<6>" LOC = "A18";
+#NET "M1_VGA_RED<7>" LOC = "C19";
+#NET "M1_VGA_SYNC_N" LOC = "C18";
+#NET "M1_VGA_VSYNC" LOC = "B20";
+
+#NET M1_* IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST;
+
+#
+#	Not used on QTE-Right ---------------------------------------------------
+#
+
+# NET "FU_23" LOC = "Y21";
+# NET "FU_24" LOC = "Y20";
+# NET "FU_25" LOC = "V19";
+# NET "FU_26" LOC = "V20";
+# NET "FU_27" LOC = "U21";
+#
+#	SDR SDRAM if used, is in ems11-bb37-s6-sdram.ucf ------------------------------------------
+#
+
+#
+#	DDR3 SDRAM if used, is in ems11-bb37-s6-ddr3.ucf ----------------------------------
+#
+
+#
+#	VG96 connector, please use the corresponding ems11-bb37-vg96.ucf file for the used module
+#
+
+
+#
+#	The usual remaining pins ;-) --------------------------------------------
+#
+
+# NET "FPGA_CCLK_INTERNAL" LOC = "AD22";
+# NET "FPGA_CSO" LOC = "AF4";
+# NET "FPGA_DONE" LOC = "AF23";
+# NET "FPGA_INIT" LOC = "AE4";
+
+# NET "FPGA_M0" LOC = "AF22";
+# NET "FPGA_M1" LOC = "AD16";
+# NET "FPGA_MISO_INTERNAL" LOC = "AD20";
+# NET "FPGA_MOSI" LOC = "AF20";
+# NET "FPGA_PROG" LOC = "AF3";
+
+# NET "FPGA_TCK" LOC = "E21";
+# NET "FPGA_TDI" LOC = "F20";
+# NET "FPGA_TDO" LOC = "A24";
+# NET "FPGA_TMS" LOC = "C23";

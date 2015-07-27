@@ -1,0 +1,118 @@
+# Board:     Y:/_EMS11/EMS11-BB/EMS11-BB-V3.0e.brd
+# Part Name: FPGA
+# Part pkg:  BGA676
+# Created:   05.02.2014 09:08:00
+
+#
+#	LEDs on User01, don't use the BB ones!
+#
+NET "LED<0>" LOC = "B1";  # we use the two LEDs from baseboard
+NET "LED<1>" LOC = "B2";  # we use the two LEDs from baseboard
+NET "LED<2>" LOC = "P3";
+NET "LED<3>" LOC = "M4";
+NET "LED<4>" LOC = "N3";
+NET "LED<5>" LOC = "V5";
+NET "LED<6>" LOC = "AF2";
+NET "LED<7>" LOC = "AE1";
+NET led* IOSTANDARD = LVTTL | DRIVE = 4 ;
+
+#
+#	EXPMOD1
+#
+NET "EXPMOD1<0>" LOC = "M6";
+NET "EXPMOD1<1>" LOC = "N6";
+NET "EXPMOD1<2>" LOC = "L7";
+NET "EXPMOD1<3>" LOC = "L6";
+NET "EXPMOD1<4>" LOC = "D3";
+NET "EXPMOD1<5>" LOC = "E3";
+NET "EXPMOD1<6>" LOC = "C3";
+NET "EXPMOD1<7>" LOC = "C4";
+NET EXPMOD1* IOSTANDARD = LVTTL | DRIVE = 4 ;
+
+#
+#	EXPMOD2
+#
+NET "EXPMOD2<0>" LOC = "L3";
+NET "EXPMOD2<1>" LOC = "N2";
+NET "EXPMOD2<2>" LOC = "L4";
+NET "EXPMOD2<3>" LOC = "M1";
+NET "EXPMOD2<4>" LOC = "P5";
+NET "EXPMOD2<5>" LOC = "M3";
+NET "EXPMOD2<6>" LOC = "N5";
+NET "EXPMOD2<7>" LOC = "N1";
+NET EXPMOD2* IOSTANDARD = LVTTL | DRIVE = 4 ;
+
+#
+#	EXPMOD3
+#
+NET "EXPMOD3<0>" LOC = "R1";
+NET "EXPMOD3<1>" LOC = "R3";
+NET "EXPMOD3<2>" LOC = "R2";
+NET "EXPMOD3<3>" LOC = "W3";
+NET "EXPMOD3<4>" LOC = "N4";
+NET "EXPMOD3<5>" LOC = "W5";
+NET "EXPMOD3<6>" LOC = "P1";
+NET "EXPMOD3<7>" LOC = "Y3";
+NET EXPMOD3* IOSTANDARD = LVTTL | DRIVE = 4 ;
+
+#
+#	EXPMOD4
+#
+NET "EXPMOD4<0>" LOC = "Y5";
+NET "EXPMOD4<1>" LOC = "AA4";
+NET "EXPMOD4<2>" LOC = "AA3";
+NET "EXPMOD4<3>" LOC = "AB3";
+NET "EXPMOD4<4>" LOC = "AB4";
+NET "EXPMOD4<5>" LOC = "AC3"; 
+NET "EXPMOD4<6>" LOC = "AC4";
+NET "EXPMOD4<7>" LOC = "AD3";
+NET EXPMOD4* IOSTANDARD = LVTTL | DRIVE = 4 ;
+
+
+#
+#	switches, buttons
+#
+
+
+NET "T1" LOC = "L1" | IOSTANDARD = LVTTL | DRIVE = 4 ;
+NET "T2" LOC = "K3" | IOSTANDARD = LVTTL | DRIVE = 4 ;
+NET "T4" LOC = "R6" | IOSTANDARD = LVTTL | DRIVE = 4 ;
+NET "T3" LOC = "R5" | IOSTANDARD = LVTTL | DRIVE = 4 ;
+
+#
+#	This part is weird, and has to be checked. Just here to get it going !!!
+#
+
+
+NET "seg<0>" LOC = "G1";
+NET "seg<1>" LOC = "F1";
+NET "seg<2>" LOC = "E2";
+NET "seg<3>" LOC = "C1";
+NET "seg<4>" LOC = "H1";
+NET "seg<5>" LOC = "G2";
+NET "seg<6>" LOC = "E1";
+NET "seg<7>" LOC = "D1";
+NET seg* IOSTANDARD = LVTTL | DRIVE = 4 ;
+
+NET "an<0>" LOC = "L2";
+NET "an<1>" LOC = "K1";
+NET "an<2>" LOC = "J1";
+NET "an<3>" LOC = "J2";
+NET an* IOSTANDARD = LVTTL | DRIVE = 4 ;
+
+NET "hex<0>" LOC = "W2";
+NET "hex<1>" LOC = "W1";
+NET "hex<2>" LOC = "V1";
+NET "hex<3>" LOC = "U2";
+#NET "sw<4>" LOC = "V3";
+#NET "sw<5>" LOC = "U3";
+#NET "sw<6>" LOC = "U4";
+#NET "sw<7>" LOC = "T3";
+NET hex* IOSTANDARD = LVTTL | DRIVE = 4 ;
+
+
+#
+#	Spare
+#
+# NET "C2" LOC = "AD4";
+# NET "C21" LOC = "P6";
