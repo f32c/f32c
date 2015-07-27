@@ -17,12 +17,13 @@ main(void)
 {
 	volatile int *mem_base = &_end;
 	volatile int *mem_end;
-	int i, len, speed, iter, tot_err;
+	int i, len, speed, iter, tot_err, a, b;
 	int size, tmp, freq_khz, start, end, seed, val;
 	volatile uint8_t *p8;
 	volatile uint16_t *p16;
 	volatile uint32_t *p32;
 
+again:
 	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
 	freq_khz = ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1);
 	printf("Detected %d.%03d MHz CPU\n\n",
@@ -47,7 +48,6 @@ main(void)
 	iter = 0;
 	tot_err = 0;
 
-again:
 	tot_err = 0;
 	int csum = 0;
 	for (i = 0; i < 32 * 1024 * 1024 / 4; i++) {
@@ -63,60 +63,56 @@ again:
 	else
 		printf("CSUM mismatch: %08x %08x\n", csum, tmp);
 
-	int a, b;
 	for (i = 0; i < 32 * 1024 * 1024 / 4; i++) {
 		a = mem_base[i];
 		b = mem_base[i + 1];
 		if (b != a + 1)
 			tot_err++;
 	}
+	RDTSC(seed);
 	printf("%08x %08x\n", a, b);
 	printf("read errors: %d\n", tot_err);
 
-	RDTSC(seed);
-
 	val = seed;
 	RDTSC(start);
-	for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end;
+	for (p32 = (uint32_t *) mem_base; p32 < (uint32_t *) mem_end;
 	    val += 0x137b5d51) {
-		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
-		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
-		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
-		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
+		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
+		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
+		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
+		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
 	}
 	RDTSC(end);
 	len = (end - start) / freq_khz;
 	speed = size / len;
-	printf("8-bit write done in %d.%03d s (%d.%03d MB/s)\n",
+	printf("32-bit write done in %d.%03d s (%d.%03d MB/s)\n",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	
 	RDTSC(start);
-	for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end;) {
-		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
-		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
-		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
-		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
+	for (p32 = (uint32_t *) mem_base; p32 < (uint32_t *) mem_end;) {
+		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
+		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
+		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
+		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
 	}
 	RDTSC(end);
 	len = (end - start) / freq_khz;
 	speed = size / len;
-	printf("8-bit read done in %d.%03d s (%d.%03d MB/s), ",
+	printf("32-bit read done in %d.%03d s (%d.%03d MB/s), ",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	val = seed;
 	tmp = 0;
-	for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end; 
+	for (p32 = (uint32_t *) mem_base; p32 < (uint32_t *) mem_end; 
 	    val += 0x137b5d51)
-		for (i = 0; i < 16; i++)
-			if ((i & 2) == 0) {
-				if (*p8++ != (val & 0xff))
-					tmp++;
-			} else {
-				if (*p8++ != ((~val) & 0xff))
-					tmp++;
-			}
+		for (i = 0; i < 8; i++) {
+			a = *p32++;
+			b = *p32++;
+			if (a != val || b !=val)
+				tmp++;
+		}
 	printf("%d errors\n", tmp);
 	tot_err += tmp;
-	
+
 	val = seed;
 	RDTSC(start);
 	for (p16 = (uint16_t *) mem_base; p16 < (uint16_t *) mem_end;
@@ -161,41 +157,46 @@ again:
 	
 	val = seed;
 	RDTSC(start);
-	for (p32 = (uint32_t *) mem_base; p32 < (uint32_t *) mem_end;
+	for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end;
 	    val += 0x137b5d51) {
-		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
-		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
-		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
-		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
+		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
+		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
+		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
+		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
 	}
 	RDTSC(end);
 	len = (end - start) / freq_khz;
 	speed = size / len;
-	printf("32-bit write done in %d.%03d s (%d.%03d MB/s)\n",
+	printf("8-bit write done in %d.%03d s (%d.%03d MB/s)\n",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	
 	RDTSC(start);
-	for (p32 = (uint32_t *) mem_base; p32 < (uint32_t *) mem_end;) {
-		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
-		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
-		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
-		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
+	for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end;) {
+		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
+		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
+		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
+		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
 	}
 	RDTSC(end);
 	len = (end - start) / freq_khz;
 	speed = size / len;
-	printf("32-bit read done in %d.%03d s (%d.%03d MB/s), ",
+	printf("8-bit read done in %d.%03d s (%d.%03d MB/s), ",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	val = seed;
 	tmp = 0;
-	for (p32 = (uint32_t *) mem_base; p32 < (uint32_t *) mem_end; 
+	for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end; 
 	    val += 0x137b5d51)
 		for (i = 0; i < 16; i++)
-			if (*p32++ != val)
-				tmp++;
+			if ((i & 2) == 0) {
+				if (*p8++ != (val & 0xff))
+					tmp++;
+			} else {
+				if (*p8++ != ((~val) & 0xff))
+					tmp++;
+			}
 	printf("%d errors\n", tmp);
 	tot_err += tmp;
-
+	
 	printf("Accumulated %d errors after %d iterations\n\n",
 	    tot_err, iter);
 
