@@ -171,7 +171,6 @@ architecture Behavioral of SDRAM_Controller is
    
     -- control when new transactions are accepted
     signal ready_for_new    : std_logic := '0';
-   
     signal can_back_to_back : std_logic := '0';
 
     -- signal to control the Hi-Z state of the DQ bus
@@ -197,8 +196,7 @@ begin
     forcing_refresh <= startup_refresh_count(12);
 
     -- tell the outside world when we can accept a new transaction;
-    --cmd_ready <= ready_for_new;
-    cmd_ready <= ready_for_new when data_ready_delay = "0000" else '0';
+    cmd_ready <= ready_for_new;
 
     ----------------------------------------------------------------------------
     -- Seperate the address into row / bank / address
@@ -263,9 +261,9 @@ begin
 	    -- then accept it. Also remember what we are reading or writing,
 	    -- and if it can be back-to-backed with the last transaction
 	    -------------------------------------------------------------------
-	    -- if ready_for_new = '1' and cmd_enable = '1' then
-	    if ready_for_new = '1' and cmd_enable = '1' and 
-	      data_ready_delay = "0000" then
+	    --if ready_for_new = '1' and cmd_enable = '1' then
+	    if ready_for_new = '1' and cmd_enable = '1' and (cmd_wr = '1' or
+	      save_wr = '1' or state = s_idle or state = s_idle_in_1) then
 		if save_bank = addr_bank and save_row = addr_row then
 		    can_back_to_back <= '1';
 		else
