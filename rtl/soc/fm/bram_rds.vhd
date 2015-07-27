@@ -44,7 +44,7 @@ entity bram_rds is
 	imem_data_out: out std_logic_vector(7 downto 0);
 	dmem_write: in std_logic;
 	dmem_byte_sel: in std_logic_vector(3 downto 0);
-	dmem_addr: in std_logic_vector(31 downto 2);
+	dmem_addr: in std_logic_vector(10 downto 2);
 	dmem_data_in: in std_logic_vector(7 downto 0);
 	dmem_data_out: out std_logic_vector(7 downto 0)
     );
