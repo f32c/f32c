@@ -1,0 +1,99 @@
+# Board:     Y:/_EMS11/EMS11-BB/EMS11-BB-V3.0e.brd
+# Part Name: FPGA
+# Part pkg:  xc6slx45-BGA676
+# Created:   24.02.2014 16:56:20
+# Edited:	 2014-06-10, by emu
+
+CONFIG VCCAUX=3.3;
+
+#
+#	Clocks & Config first ;-)
+#
+
+NET "i_50MHz" LOC = "U26" | IOSTANDARD = "LVTTL";
+NET "i_50MHz" TNM_NET = TN_50MHZ;
+TIMESPEC TS_i_50MHz = PERIOD "TN_50MHZ" 20 ns HIGH 50%;
+
+#
+#	LEDs
+#
+
+# NET "LED<0>" LOC = "M9" | IOSTANDARD = "LVTTL" | DRIVE = 2; # 330R led to gnd 
+# NET "LED<1>" LOC = "M8" | IOSTANDARD = "LVTTL"	| DRIVE = 2; # 330R led to gnd
+
+#
+#	Resets, Diagnostics, etc. ---------------------------------------
+#
+
+# NET "DIAG_N" LOC = "P22" | IOSTANDARD = "LVTTL";
+# NET "RESET_N" LOC = "U22" | IOSTANDARD = "LVTTL";
+
+# NET "i_RESET_n" LOC = "U22" | IOSTANDARD = "LVTTL";
+
+# 
+# serial lines ------------------------------------------------------
+#
+NET "UART1_TXD" LOC = "L18";
+NET "UART1_RXD" LOC = "F24";
+# NET "UART1_RTS_N" LOC = "K19";
+# NET "UART1_CTS_N" LOC = "H24";
+
+# NET "UART2_TXD" LOC = "K18";
+# NET "UART2_RXD" LOC = "N20";
+# NET "UART2_RTS_N" LOC = "A25";
+# NET "UART2_CTS_N" LOC = "K24";
+
+NET UART* IOSTANDARD = LVTTL | DRIVE = 8 ;
+
+#
+#	SD-Flash --------------------------------------------------------
+#
+# NET "FPGA_SD_CDET_N" LOC = "D24";
+NET "FPGA_SD_CMD" LOC = "B23";
+NET "FPGA_SD_D0" LOC = "B24";
+# NET "FPGA_SD_D1" LOC = "M18";
+# NET "FPGA_SD_D2" LOC = "A23";
+NET "FPGA_SD_D3" LOC = "L17";
+NET "FPGA_SD_SCLK" LOC = "N17";
+# NET "FPGA_SD_WPROT_N" LOC = "N18";
+
+NET "FPGA_SD_*" IOSTANDARD = LVTTL;
+
+
+#
+#	SDRAM if used, is in ems11-bb30-sdram.ucf ------------------------------------------
+#
+
+#
+#	SSRAM if used, is in ems11-bb30-ssram.ucf ----------------------------------
+#
+
+#
+#	VG96 connector, please use the corresponding .ucf file for the used module
+#
+
+#
+#	M1 Graphics connector module & MCU Module
+#	please use ems11-tm30-v0.0.ucf
+#
+
+#
+#	Weird auxilary pins, JTAG, etc. ---------------------------------
+#
+
+# NET "FPGA_CCLK_2" LOC = "AD22";
+# NET "FPGA_CSO" LOC = "AF4";
+# NET "FPGA_DONE_2" LOC = "AF23";
+# NET "FPGA_INIT_B_2" LOC = "AE4";
+
+# NET "FPGA_M0" LOC = "AF22";
+# NET "FPGA_M1" LOC = "AD16";
+# NET "FPGA_MISO1" LOC = "AD20";
+# NET "FPGA_MOSI0" LOC = "AF20";
+# NET "FPGA_PROGRAM_B_2" LOC = "AF3";
+
+# NET "FPGA_TCK" LOC = "E21";
+# NET "FPGA_TDI_FPGA" LOC = "F20";
+# NET "FPGA_TDO_FPGA" LOC = "A24";
+# NET "FPGA_TMS" LOC = "C23";
+
