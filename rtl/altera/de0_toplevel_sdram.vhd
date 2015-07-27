@@ -43,8 +43,10 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 32;
-	C_sio: boolean := true;
-	C_leds_btns: boolean := true
+	C_simple_in: integer := 0;
+	C_simple_out: integer := 8;
+	C_gpio: integer := 0;
+	C_timer: boolean := false
     );
     port (
 	clk_50m: in std_logic;
@@ -82,7 +84,11 @@ begin
     generic map (
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
-	C_mem_size => C_mem_size
+	C_mem_size => C_mem_size,
+	C_simple_in => C_simple_in,
+	C_simple_out => C_simple_out,
+	C_gpio => C_gpio,
+	C_timer => C_timer
     )
     port map (
 	clk => clk,
