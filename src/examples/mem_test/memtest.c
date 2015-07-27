@@ -24,6 +24,20 @@ main(void)
 	volatile uint32_t *p32;
 
 again:
+
+#if 0
+#define N 4
+#define K 16385
+	p32 = (void *) 0x80000000;
+	for (i = 0; i < N * K; i += K) {
+		p32[i] = i + (i << 24);
+	}
+	for (i = 0; i < N * K; i += K) {
+		printf("%08x\n", p32[i]);
+	}
+	printf("\n");
+#endif
+
 	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
 	freq_khz = ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1);
 	printf("Detected %d.%03d MHz CPU\n\n",
@@ -69,11 +83,12 @@ again:
 		if (b != a + 1)
 			tot_err++;
 	}
-	RDTSC(seed);
 	printf("%08x %08x\n", a, b);
-	printf("read errors: %d\n", tot_err);
+	printf("read errors (should be exactly 1): %d\n", tot_err);
 
+	RDTSC(seed);
 	val = seed;
+
 	RDTSC(start);
 	for (p32 = (uint32_t *) mem_base; p32 < (uint32_t *) mem_end;
 	    val += 0x137b5d51) {
