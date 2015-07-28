@@ -204,10 +204,12 @@ architecture Behavioral of glue_bram is
     signal video_bram_write: std_logic;
 
     -- FM/RDS RADIO
+    constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC03");
     signal rds_pcm: signed(15 downto 0);
     signal rds_addr: std_logic_vector(8 downto 0);
     signal rds_data: std_logic_vector(7 downto 0);
     signal rds_bram_write: std_logic;
+    signal from_fmrds: std_logic_vector(31 downto 0);
 
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
@@ -297,6 +299,10 @@ begin
 	when iomap_from(iomap_pid, iomap_range) to iomap_to(iomap_pid, iomap_range) =>
 	    if C_pid then
 		io_to_cpu <= from_pid;
+	    end if;
+	when iomap_from(iomap_fmrds, iomap_range) to iomap_to(iomap_fmrds, iomap_range) =>
+	    if C_fmrds then
+		io_to_cpu <= from_fmrds;
 	    end if;
 	when iomap_from(iomap_simple_in, iomap_range) to iomap_to(iomap_simple_in, iomap_range) =>
 	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
@@ -536,12 +542,16 @@ begin
     if C_fmrds generate
     rds_modulator: entity work.rds
     generic map (
+      -- multiply/divide to produce 1.824 MHz clock
       -- settings for 25 MHz clock
-      --c_rds_clock_multiply => 228,
-      --c_rds_clock_divide => 3125,
+      -- c_rds_clock_multiply => 228,
+      -- c_rds_clock_divide => 3125,
       -- settings for 81.25 MHz clock
       c_rds_clock_multiply => 912,
       c_rds_clock_divide => 40625,
+      -- settings for super slow (100Hz debug) clock
+      -- c_rds_clock_multiply => 1,
+      -- c_rds_clock_divide => 812500,
       c_rds_msg_len => 260
     )
     port map (
@@ -551,6 +561,7 @@ begin
       data => rds_data,
       pcm_in_left => (others => '0'),
       pcm_in_right => (others => '0'),
+      debug => from_fmrds,
       pcm_out => rds_pcm
     );
     fm_modulator: entity work.fmgen
@@ -573,7 +584,7 @@ begin
 	imem_addr => rds_addr,
 	imem_data_out => rds_data,
 	dmem_write => rds_bram_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr(10 downto 2),
 	dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
     );
     end generate;
