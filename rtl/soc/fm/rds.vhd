@@ -36,6 +36,7 @@ port (
     addr: out std_logic_vector(8 downto 0); -- memory address 512 bytes
     data: in std_logic_vector(7 downto 0); -- memory data 8 bit
     pcm_in_left, pcm_in_right: in signed(15 downto 0); -- from tone generator
+    debug: out std_logic_vector(31 downto 0);
     pcm_out: out signed(15 downto 0) -- to FM transmitter
 );
 end rds;
@@ -333,4 +334,9 @@ begin
              + S_pilot_pcm * 64 -- 16 is too weak, not sure of correct 19kHz pilot amplitude
              + S_rds_mod_pcm;
     end generate;
+    
+    debug <= x"00" 
+           & "0" & std_logic_vector(S_stereo_pcm) 
+           & "0" & std_logic_vector(S_pilot_pcm)
+           & "0" & std_logic_vector(S_rds_coarse_pcm);
 end;
