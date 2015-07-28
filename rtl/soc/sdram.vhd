@@ -49,6 +49,7 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity SDRAM_Controller is
     generic (
+	C_ras: integer range 2 to 3 := 2;
 	sdram_address_width: natural;
 	sdram_column_bits: natural;
 	sdram_startup_cycles: natural;
@@ -357,7 +358,11 @@ begin
 		    -- Start the read or write cycle. 
 		    -- First task is to open the row
 		    --------------------------------
-		    state       <= s_open_in_2;
+		    if C_ras = 2 then
+			state <= s_open_in_1;
+		    else
+			state <= s_open_in_2;
+		    end if;
 		    iob_command <= CMD_ACTIVE;
 		    iob_address <= save_row;
 		    iob_bank    <= save_bank;
