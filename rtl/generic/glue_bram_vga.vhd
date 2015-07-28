@@ -544,14 +544,14 @@ begin
     generic map (
       -- multiply/divide to produce 1.824 MHz clock
       -- settings for 25 MHz clock
-      --c_rds_clock_multiply => 228,
-      --c_rds_clock_divide => 3125,
+      -- c_rds_clock_multiply => 228,
+      -- c_rds_clock_divide => 3125,
       -- settings for 81.25 MHz clock
       c_rds_clock_multiply => 912,
       c_rds_clock_divide => 40625,
       -- settings for super slow (100Hz debug) clock
-      --c_rds_clock_multiply => 1,
-      --c_rds_clock_divide => 812500,
+      -- c_rds_clock_multiply => 1,
+      -- c_rds_clock_divide => 812500,
       c_rds_msg_len => 260
     )
     port map (
