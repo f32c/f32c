@@ -51,6 +51,7 @@ entity SDRAM_Controller is
     generic (
 	C_ras: integer range 2 to 3 := 2;
 	C_cas: integer range 2 to 3 := 2;
+	C_pre: integer range 2 to 3 := 2;
 	sdram_address_width: natural;
 	sdram_column_bits: natural;
 	sdram_startup_cycles: natural;
@@ -494,7 +495,11 @@ begin
 	    -- Closing the row off (this closes all banks)
 	    -------------------------------------------------------------------
 	    when s_precharge =>
-		state           <= s_idle_in_3;
+		if C_pre = 2 then
+		    state <= s_idle_in_2;
+		else
+		    state <= s_idle_in_3;
+		end if;
 		iob_command     <= CMD_PRECHARGE;
 		iob_address(prefresh_cmd) <= '1'; -- A10 actually matters - it selects all banks or just one
 
