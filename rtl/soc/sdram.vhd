@@ -50,6 +50,7 @@ use IEEE.NUMERIC_STD.ALL;
 entity SDRAM_Controller is
     generic (
 	C_ras: integer range 2 to 3 := 2;
+	C_cas: integer range 2 to 3 := 2;
 	sdram_address_width: natural;
 	sdram_column_bits: natural;
 	sdram_startup_cycles: natural;
@@ -109,9 +110,12 @@ architecture Behavioral of SDRAM_Controller is
     constant CMD_REFRESH       : std_logic_vector(3 downto 0) := "0001";
     constant CMD_LOAD_MODE_REG : std_logic_vector(3 downto 0) := "0000";
 
-    constant MODE_REG          : std_logic_vector(12 downto 0) := 
+    constant MODE_REG_CAS_2    : std_logic_vector(12 downto 0) := 
     -- Reserved, wr bust, OpMode, CAS Latency (2), Burst Type, Burst Length (2)
       "000" &   "0"  &  "00"  &    "010"      &     "0"    &   "001";
+    constant MODE_REG_CAS_3    : std_logic_vector(12 downto 0) := 
+    -- Reserved, wr bust, OpMode, CAS Latency (3), Burst Type, Burst Length (2)
+      "000" &   "0"  &  "00"  &    "011"      &     "0"    &   "001";
 
     signal iob_command     : std_logic_vector( 3 downto 0) := CMD_NOP;
     signal iob_address     : std_logic_vector(12 downto 0) := (others => '0');
@@ -178,7 +182,7 @@ architecture Behavioral of SDRAM_Controller is
     signal iob_dq_hiz: std_logic := '1';
 
     -- signals for when to read the data off of the bus
-    signal data_ready_delay: std_logic_vector(3 downto 0);
+    signal data_ready_delay: std_logic_vector(C_cas + 1 downto 0);
 
     -- bit indexes used when splitting the address into row/colum/bank.
     constant start_of_col: natural := 0;
@@ -322,11 +326,15 @@ begin
 		elsif startup_refresh_count = startup_refresh_max-7 then    
 		    -- Now load the mode register
 		    iob_command     <= CMD_LOAD_MODE_REG;
-		    iob_address     <= MODE_REG;
+		    if C_cas = 2 then
+			iob_address <= MODE_REG_CAS_2;
+		    else
+			iob_address <= MODE_REG_CAS_3;
+		    end if;
 		end if;
 
 		------------------------------------------------------
-		-- if startup is coomplete then go into idle mode,
+		-- if startup is complete then go into idle mode,
 		-- get prepared to accept a new command, and schedule
 		-- the first refresh cycle
 		------------------------------------------------------
