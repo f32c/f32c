@@ -413,6 +413,9 @@ begin
 
 	    when s_read_2 =>
 		state <= s_read_3;
+		if C_cas = 3 then
+		    dqm_sr(1 downto 0) <= (others => '0');
+		end if;
 		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
 		    if save_wr = '0' then
 			state           <= s_read_1;
