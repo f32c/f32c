@@ -94,13 +94,15 @@ architecture RTL of rds is
     signal S_pilot_wav_index: std_logic_vector(5 downto 0); -- 6-bit index 0..63
     signal S_pilot_wav_value: signed(C_dbpsk_bits-1 downto 0);
     signal S_pilot_pcm: signed(C_dbpsk_bits-1 downto 0) := (others => '0'); -- 7 bit ADC value
+    signal S_stereo_counter: std_logic_vector(4 downto 0) := (others => '0'); -- 5-bit wav counter 0..31
     signal S_stereo_wav_index: std_logic_vector(5 downto 0); -- 6-bit index 0..63
     signal S_stereo_wav_value: signed(C_dbpsk_bits-1 downto 0);
     signal S_stereo_pcm: signed(C_dbpsk_bits-1 downto 0) := (others => '0'); -- 7 bit ADC value
     signal S_pcm_stereo: signed(22 downto 0);
 
     signal R_subc_counter: std_logic_vector(4 downto 0) := (others => '0'); -- 5-bit wav counter 0..31
-    signal R_subc_cdiv: std_logic_vector(4 downto 0) := (others => '0'); -- divide to 57kHz
+    signal R_subc_cdiv: std_logic_vector(4 downto 0) := -- counter for 57kHz coarse subcarrier
+      std_logic_vector(to_unsigned(6, 5)); -- initial value 6 for phase adjust
     signal S_subc_wav_index: std_logic_vector(5 downto 0); -- 6-bit index used 0..47, max 63
     signal S_subc_wav_value: signed(C_dbpsk_bits-1 downto 0);
     signal S_subc_pcm: signed(C_dbpsk_bits-1 downto 0); -- 7 bit ADC value for 19kHz pilot sine wave
@@ -176,12 +178,14 @@ begin
     -- every 2nd value of the sine table is used.
     -- if something better is ever needed
     -- double strobe frequency can be generated at 3.648 MHz
+    -- S_stereo_counter <= R_pilot_counter + 1; -- +1 to adjust phase of stereo 38kHz
+    S_stereo_counter <= R_pilot_counter; -- phase ok
     S_stereo_wav_index <= "10"                               -- or 32 (sine)
-                       &  R_pilot_counter(2 downto 0) & "0"; -- 0..15 running
+                       &  S_stereo_counter(2 downto 0) & "0"; -- 0..15 running
     -- dbpsk_wav_map has range 1..127, need to subtract 64
     -- phase warning: negative sine values at index 32..47
     S_stereo_wav_value <= dbpsk_wav_map(conv_integer(S_stereo_wav_index));
-    S_stereo_pcm <= S_stereo_wav_value when R_pilot_counter(3) = '1' -- sign at bit 3
+    S_stereo_pcm <= S_stereo_wav_value when S_stereo_counter(3) = '1' -- sign at bit 3
               else -S_stereo_wav_value;
     -- S_stereo_pcm range: (-63 .. +63)
     end generate;
@@ -298,6 +302,7 @@ begin
     coarse_subcarrier: if not C_fine_subc generate
     -- sign manipulation with the multiplexer
     -- xor replaces calculating double minus
+    -- with ( '0' xor R_subc_cdiv(4)) & R_subc_cdiv(3 downto 3) select -- debug
     with (S_rds_sign xor R_subc_cdiv(4)) & R_subc_cdiv(3 downto 3) select
     S_rds_coarse_pcm <= S_dbpsk_wav_value when "11",
                        -S_dbpsk_wav_value when "01",
