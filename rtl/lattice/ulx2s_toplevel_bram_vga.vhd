@@ -46,7 +46,9 @@ entity glue is
 	C_vgahdmi: boolean := false;
 	C_vgahdmi_mem_kb: integer := 4; -- KB, very little BRAM available on lattice
 	C_fmrds: boolean := true;
-        C_rds_clock_multiply: integer := 912; -- multiply and divide cpu clk 81.25 MHz
+	C_fm_cw_hz: integer := 108000000; -- Hz FM station carrier wave frequency
+        C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
+        C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
         C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
 	C_sio: integer := 1;
 	C_spi: integer := 2;
@@ -96,6 +98,8 @@ begin
 	C_vgahdmi => C_vgahdmi,
 	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
 	C_fmrds => C_fmrds,
+	C_fm_cw_hz => C_fm_cw_hz,
+	C_fmdds_hz => C_fmdds_hz,
         C_rds_clock_multiply => C_rds_clock_multiply,
         C_rds_clock_divide => C_rds_clock_divide,
 	C_sio => C_sio,
@@ -105,7 +109,7 @@ begin
     port map (
 	clk => clk,
 	clk_25MHz => clk_25m,
-	clk_325MHz => clk_325m,
+	clk_fmdds => clk_325m,
 	sio_txd(0) => rs232_tx,
 	sio_rxd(0) => rs232_rx,
 	sio_break(0) => rs232_break,
