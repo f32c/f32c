@@ -35,14 +35,27 @@ use work.f32c_pack.all;
 
 entity glue is
     generic (
+	-- Main clock freq, in multiples of 10 MHz
+	C_clk_freq: integer := 130;
+
 	-- ISA
 	C_arch: integer := ARCH_MI32;
+	C_big_endian: boolean := false;
+	C_mult_enable: boolean := false;
+	C_branch_likely: boolean := false;
+	C_sign_extend: boolean := false;
+	C_movn_movz: boolean := false;
+	C_exceptions: boolean := false;
 
-	-- Main clock freq, in multiples of 10 MHz
-	C_clk_freq: integer := 100;
+	-- Optimization
+	C_branch_prediction: boolean := false;
+	C_result_forwarding: boolean := false;
+	C_load_aligner: boolean := true; -- XXX! false broken!
+	C_full_shifter: boolean := false;
 
 	-- SoC configuration options
-	C_mem_size: integer := 32;
+	C_PC_mask: std_logic_vector := x"00001fff";
+	C_mem_size: integer := 8;
 	C_simple_in: integer := 0;
 	C_simple_out: integer := 8;
 	C_gpio: integer := 0;
@@ -83,7 +96,24 @@ begin
     glue_bram: entity work.glue_bram
     generic map (
 	C_clk_freq => C_clk_freq,
+
+	-- ISA
 	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_branch_likely => C_branch_likely,
+	C_sign_extend => C_sign_extend,
+	C_movn_movz => C_movn_movz,
+	C_mult_enable => C_mult_enable,
+	C_exceptions => C_exceptions,
+
+	-- Optimization
+	C_branch_prediction => C_branch_prediction,
+	C_result_forwarding => C_result_forwarding,
+	C_load_aligner => C_load_aligner,
+	C_full_shifter => C_full_shifter,
+
+	-- SoC
+	C_PC_mask => C_PC_mask,
 	C_mem_size => C_mem_size,
 	C_simple_in => C_simple_in,
 	C_simple_out => C_simple_out,
