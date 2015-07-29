@@ -28,6 +28,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use ieee.numeric_std.all;
 use IEEE.MATH_REAL.ALL;
 
 use work.f32c_pack.all;
@@ -80,7 +81,9 @@ entity glue_bram is
 	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
 	C_vgahdmi_mem_kb: integer := 4; -- mem size of framebuffer
 	C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
-        C_rds_clock_multiply: integer := 912; -- multiply and divide cpu clk 81.25 MHz
+	C_fm_cw_hz: integer := 108000000; -- Hz FM station carrier wave frequency
+        C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
+        C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
         C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
 	C_gpio: integer range 0 to 128 := 32;
 	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
@@ -94,8 +97,8 @@ entity glue_bram is
     port (
 	clk: in std_logic;
 	clk_25MHz: in std_logic; -- VGA pixel clock 25 MHz
-	clk_250MHz: in std_logic := '0';
-	clk_325MHz: in std_logic := '0';
+	clk_250MHz: in std_logic := '0'; -- HDMI bit shift clock, default 0 if no HDMI
+	clk_fmdds: in std_logic := '0'; -- FM DDS clock
 	sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
 	sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
 	spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
@@ -567,13 +570,13 @@ begin
     );
     fm_modulator: entity work.fmgen
     generic map (
-      c_fdds => 325000000.0
+      c_fdds => real(C_fmdds_hz)
     )
     port map (
       -- clk_pcm => clk_25MHz, -- PCM processing clock 25 MHz
       clk_pcm => clk, -- PCM processing clock 81.25 MHz
-      clk_dds => clk_325MHz, -- DDS clock 325 MHz
-      cw_freq => 108000000,
+      clk_dds => clk_fmdds, -- DDS clock 325 MHz
+      cw_freq => std_logic_vector(to_unsigned(C_fm_cw_hz,32)), -- Hz FM carrier wave frequency, e.g. 108000000
       pcm_in => rds_pcm,
       fm_out => fm_antenna
     );
