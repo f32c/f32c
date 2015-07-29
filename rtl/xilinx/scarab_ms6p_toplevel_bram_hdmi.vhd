@@ -51,6 +51,11 @@ entity glue is
 	C_mem_size: integer := 64; -- KB
 	C_vgahdmi: boolean := true;
 	C_vgahdmi_mem_kb: integer := 10; -- KB
+	C_fmrds: boolean := true;
+	C_fm_cw_hz: integer := 108000000; -- Hz FM station carrier wave frequency
+        C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
+        C_rds_clock_multiply: integer := 57; -- multiply and divide from cpu clk 100 MHz
+        C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
 	-- warning long compile time on ISE 14.7
 	-- C_pids = 2: 1 hour
 	-- C_pids = 4: 4 hours
@@ -75,6 +80,7 @@ entity glue is
 	leds: out std_logic_vector(7 downto 0);
 	porta, portb: inout std_logic_vector(11 downto 0);
 	portc: inout std_logic_vector(7 downto 0);
+	portd: out std_logic_vector(0 downto 0); -- fm antenna is here
 	TMDS_out_P, TMDS_out_N: out std_logic_vector(2 downto 0);
 	TMDS_out_CLK_P, TMDS_out_CLK_N: out std_logic;
 	sw: in std_logic_vector(4 downto 1)
@@ -130,6 +136,11 @@ begin
 	C_mem_size => C_mem_size,
 	C_vgahdmi => C_vgahdmi,
 	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
+	C_fmrds => C_fmrds,
+	C_fm_cw_hz => C_fm_cw_hz,
+	C_fmdds_hz => C_fmdds_hz,
+        C_rds_clock_multiply => C_rds_clock_multiply,
+        C_rds_clock_divide => C_rds_clock_divide,
 	C_gpio => C_gpio,
 	C_sio => C_sio,
 	C_spi => C_spi,
@@ -145,6 +156,7 @@ begin
 	clk => clk,
 	clk_25MHz => clk_25MHz, -- pixel clock
 	clk_250MHz => clk_250MHz, -- tmds clock
+	clk_fmdds => clk_250MHz, -- FM/RDS clock
 	sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
 	sio_break(0) => rs232_break,
 	spi_sck(0)  => flash_cclk,  spi_sck(1)  => sd_clk,
@@ -160,6 +172,7 @@ begin
 	simple_in(15 downto 0) => open,
 	simple_in(19 downto 16) => sw(4 downto 1),
 	simple_in(31 downto 20) => open,
+	fm_antenna => portd(0),
 	tmds_out_rgb => tmds_out_rgb
     );
     

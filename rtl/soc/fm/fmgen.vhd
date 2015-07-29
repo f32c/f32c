@@ -12,7 +12,7 @@
 
 library IEEE;
 use IEEE.std_logic_1164.all;
-use ieee.std_logic_arith.all;
+-- use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.all;
 
@@ -38,7 +38,7 @@ architecture x of fmgen is
 	signal R_cnt: integer;
 	signal R_dds_mul_x1, R_dds_mul_x2: std_logic_vector(31 downto 0);
 	constant C_dds_mul_y: std_logic_vector(31 downto 0) :=
-	    std_logic_vector(conv_signed(integer(2.0**30 / C_fdds * 2.0**28), 32));
+	    std_logic_vector(to_signed(integer(2.0**30 / C_fdds * 2.0**28), 32));
 	signal R_dds_mul_res: std_logic_vector(63 downto 0);
 
 begin
