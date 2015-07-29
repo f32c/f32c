@@ -46,6 +46,8 @@ entity glue is
 	C_vgahdmi: boolean := false;
 	C_vgahdmi_mem_kb: integer := 4; -- KB, very little BRAM available on lattice
 	C_fmrds: boolean := true;
+        C_rds_clock_multiply: integer := 912; -- multiply and divide cpu clk 81.25 MHz
+        C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
 	C_sio: integer := 1;
 	C_spi: integer := 2;
 	C_gpio: integer := 16;
@@ -94,6 +96,8 @@ begin
 	C_vgahdmi => C_vgahdmi,
 	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
 	C_fmrds => C_fmrds,
+        C_rds_clock_multiply => C_rds_clock_multiply,
+        C_rds_clock_divide => C_rds_clock_divide,
 	C_sio => C_sio,
 	C_spi => C_spi,
 	C_gpio => C_gpio
