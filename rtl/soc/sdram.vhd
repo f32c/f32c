@@ -52,6 +52,7 @@ entity SDRAM_Controller is
 	C_ras: integer range 2 to 3 := 2;
 	C_cas: integer range 2 to 3 := 2;
 	C_pre: integer range 2 to 3 := 2;
+	C_clock_range: integer range 0 to 2 := 1;
 	sdram_address_width: natural;
 	sdram_column_bits: natural;
 	sdram_startup_cycles: natural;
@@ -183,7 +184,8 @@ architecture Behavioral of SDRAM_Controller is
     signal iob_dq_hiz: std_logic := '1';
 
     -- signals for when to read the data off of the bus
-    signal data_ready_delay: std_logic_vector(C_cas + 1 downto 0);
+    signal data_ready_delay:
+      std_logic_vector(C_clock_range / 2 + C_cas + 1 downto 0);
 
     -- bit indexes used when splitting the address into row/colum/bank.
     constant start_of_col: natural := 0;
@@ -241,7 +243,8 @@ begin
 
     capture_proc: process(clk) 
     begin
-	if falling_edge(clk) then
+	if (C_clock_range = 1 and falling_edge(clk)) or
+	  (C_clock_range /= 1 and rising_edge(clk)) then
 	    R_from_sdram <= sdram_data;
 	    R_from_sdram_prev <= R_from_sdram;
 	end if;
@@ -269,7 +272,8 @@ begin
 	    -------------------------------------------------------------------
 	    --if ready_for_new = '1' and cmd_enable = '1' then
 	    if ready_for_new = '1' and cmd_enable = '1' and (cmd_wr = '1' or
-	      save_wr = '1' or state = s_idle or state = s_idle_in_1) then
+	      save_wr = '1' or state = s_idle or
+		(C_clock_range /= 2 and state = s_idle_in_1)) then
 		if save_bank = addr_bank and save_row = addr_row then
 		    can_back_to_back <= '1';
 		else
