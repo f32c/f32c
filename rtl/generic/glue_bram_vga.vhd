@@ -80,6 +80,8 @@ entity glue_bram is
 	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
 	C_vgahdmi_mem_kb: integer := 4; -- mem size of framebuffer
 	C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
+        C_rds_clock_multiply: integer := 912; -- multiply and divide cpu clk 81.25 MHz
+        C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
 	C_gpio: integer range 0 to 128 := 32;
 	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
@@ -543,12 +545,11 @@ begin
     rds_modulator: entity work.rds
     generic map (
       -- multiply/divide to produce 1.824 MHz clock
-      -- settings for 25 MHz clock
+      c_rds_clock_multiply => C_rds_clock_multiply,
+      c_rds_clock_divide => C_rds_clock_divide,
+      -- example settings for 25 MHz clock
       -- c_rds_clock_multiply => 228,
       -- c_rds_clock_divide => 3125,
-      -- settings for 81.25 MHz clock
-      c_rds_clock_multiply => 912,
-      c_rds_clock_divide => 40625,
       -- settings for super slow (100Hz debug) clock
       -- c_rds_clock_multiply => 1,
       -- c_rds_clock_divide => 812500,
