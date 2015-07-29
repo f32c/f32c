@@ -1,0 +1,56 @@
+# Board:     EMS11-FPGA-S6-V1.0.brd
+# Part Name: FPGA
+# Part pkg:  BGA676
+# Created:   04.08.2014 20:00:20
+# Edited:	2014-08-06, by emu
+
+CONFIG VCCAUX=3.3;
+
+#
+#	SDR SDRAM MT48LC32M16ARP-75C
+#	
+NET "sdram_a<0>" LOC = "W24";
+NET "sdram_a<1>" LOC = "V23";
+NET "sdram_a<2>" LOC = "U23";
+NET "sdram_a<3>" LOC = "T24";
+NET "sdram_a<4>" LOC = "N25";
+NET "sdram_a<5>" LOC = "P26";
+NET "sdram_a<6>" LOC = "P24";
+NET "sdram_a<7>" LOC = "R26";
+NET "sdram_a<8>" LOC = "R25";
+NET "sdram_a<9>" LOC = "T26";
+NET "sdram_a<10>" LOC = "Y22";
+NET "sdram_a<11>" LOC = "U24";
+NET "sdram_a<12>" LOC = "R23";
+NET "sdram_ba<0>" LOC = "AA23";
+NET "sdram_ba<1>" LOC = "Y24";
+NET "sdram_casn" LOC = "AC24";
+NET "sdram_cke" LOC = "R24";
+NET "sdram_clk" LOC = "U26";
+#NET "sdram_CLK_I" LOC = "U25";
+NET "sdram_csn" LOC = "AA24";
+NET "sdram_d<0>" LOC = "AE25";
+NET "sdram_d<1>" LOC = "AD24";
+NET "sdram_d<2>" LOC = "AC26";
+NET "sdram_d<3>" LOC = "AB26";
+NET "sdram_d<4>" LOC = "AA26";
+NET "sdram_d<5>" LOC = "Y26";
+NET "sdram_d<6>" LOC = "W26";
+NET "sdram_d<7>" LOC = "V26";
+NET "sdram_d<8>" LOC = "V24";
+NET "sdram_d<9>" LOC = "W25";
+NET "sdram_d<10>" LOC = "AA25";
+NET "sdram_d<11>" LOC = "AB24";
+NET "sdram_d<12>" LOC = "AC25";
+NET "sdram_d<13>" LOC = "AD26";
+NET "sdram_d<14>" LOC = "AE26";
+NET "sdram_d<15>" LOC = "AF25";
+NET "sdram_dqm<1>" LOC = "T23";
+NET "sdram_dqm<0>" LOC = "AE24";
+NET "sdram_rasn" LOC = "AA22";
+NET "sdram_wen" LOC = "AC23";
+
+
+NET sdram_* IOSTANDARD = LVTTL | DRIVE = 8 | SLEW = FAST;
+NET sdram_clk BUFG = CLK;
+NET sdram_d<*> NODELAY;
