@@ -425,7 +425,11 @@ begin
 		end if;
 
 	    when s_read_3 => 
-		state <= s_read_4;
+		if C_cas = 2 then
+		    state <= s_precharge;
+		else
+		    state <= s_read_4;
+		end if;
 		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
 		    if save_wr = '0' then
 			state           <= s_read_1;
@@ -441,7 +445,8 @@ begin
 			state           <= s_read_1;
 			ready_for_new   <= '1'; -- we will be ready for a new transaction next cycle!
 		    else
-			state <= s_open_in_2; -- we have to wait for the read data to come back before we swutch the bus into HiZ
+			-- XXX can we do this with C_cas = 3? Revisit !!!
+			-- state <= s_open_in_2; -- we have to wait for the read data to come back before we switch the bus into HiZ
 		    end if;
 		end if;
 
