@@ -26,9 +26,9 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
+-- use IEEE.STD_LOGIC_ARITH.ALL; -- replaced by ieee.numeric_std.all
+use ieee.numeric_std.all; -- we need signed type
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use ieee.numeric_std.all;
 use IEEE.MATH_REAL.ALL;
 
 use work.f32c_pack.all;

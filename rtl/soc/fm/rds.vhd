@@ -8,9 +8,9 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
-use ieee.std_logic_unsigned.all;
+-- use ieee.std_logic_arith.all; -- replaced by ieee.numeric_std.all
 use ieee.numeric_std.all;
+use ieee.std_logic_unsigned.all;
 use ieee.math_real.all;
 
 -- use work.message.all; -- RDS message in file message.vhd
@@ -154,7 +154,7 @@ begin
 	    if S_rds_strobe = '1' then
 	        -- pilot 57/3 = 19 kHz generation
 	        if R_pilot_cdiv = 0 then
-	          R_pilot_cdiv <= 2;
+	          R_pilot_cdiv <= std_logic_vector(to_unsigned(2, R_pilot_cdiv'length));
 	          R_pilot_counter <= R_pilot_counter + 1;
 	        else
 	          R_pilot_cdiv <= R_pilot_cdiv - 1;
@@ -229,7 +229,7 @@ begin
 	      R_subc_cdiv <= R_subc_cdiv + 1;
 	      -- 0-47: divide by 48 to get 1187.5 Hz from 32-element lookup table
               if R_rds_cdiv = 0 then
-                R_rds_cdiv <= 47; -- countdown from 47 to 0
+                R_rds_cdiv <= std_logic_vector(to_unsigned(47, R_rds_cdiv'length)); -- countdown from 47 to 0
 	        -- RDS works on 1187.5 bit rate
 	        -- 57KHz subcarrier should be AM modulated using RDS
 	        -- adjust modulation to obtain
@@ -250,7 +250,7 @@ begin
                      -- (byte sending start at MSB bit pos 7)
                      R_rds_msg_index <= R_rds_msg_index + 1;
                      if R_rds_msg_index >= (C_rds_msg_len-1) then
-                       R_rds_msg_index <= 0;
+                       R_rds_msg_index <= (others => '0');
                      end if;
                   end if;
                   if R_rds_bit_index = 7 then
@@ -306,7 +306,7 @@ begin
     with (S_rds_sign xor R_subc_cdiv(4)) & R_subc_cdiv(3 downto 3) select
     S_rds_coarse_pcm <= S_dbpsk_wav_value when "11",
                        -S_dbpsk_wav_value when "01",
-                        0 when others;
+                        to_signed(0, S_rds_coarse_pcm'length) when others;
     S_rds_mod_pcm <= S_rds_coarse_pcm * 64;
     -- multiply with 2^n because it is
     -- simple, uses only bit shifting
