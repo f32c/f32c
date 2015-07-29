@@ -81,9 +81,10 @@ entity glue_bram is
 	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
 	C_vgahdmi_mem_kb: integer := 4; -- mem size of framebuffer
 	C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
-	C_fm_cw_hz: integer := 108000000; -- Hz FM station carrier wave frequency
-        C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
-        C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
+	C_rds_msg_len: integer := 260; -- bytes of circular sent message, typical 52 for PS or 260 PS+RT
+	C_fm_cw_hz: integer := 108000000; -- Hz FM station carrier wave frequency e.g. 108000000
+        C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250000000, 325000000)
+        C_rds_clock_multiply: integer := 912; -- multiply 912 and divide 40625 from cpu clk 81.25 MHz
         C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
 	C_gpio: integer range 0 to 128 := 32;
 	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
@@ -556,7 +557,7 @@ begin
       -- settings for super slow (100Hz debug) clock
       -- c_rds_clock_multiply => 1,
       -- c_rds_clock_divide => 812500,
-      c_rds_msg_len => 260
+      c_rds_msg_len => C_rds_msg_len
     )
     port map (
       --clk => clk_25MHz, -- RDS and PCM processing clock 25 MHz
