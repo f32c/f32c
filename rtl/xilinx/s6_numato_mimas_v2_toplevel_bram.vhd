@@ -48,6 +48,7 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 32;
+	C_vgahdmi: boolean := true; 
 	C_sio: integer := 1;
 	C_spi: integer := 2;
 	C_gpio: integer := 31;
@@ -61,6 +62,10 @@ entity glue is
 	flash_cen, flash_sck, flash_si: out std_logic;
 	sdcard_so: in std_logic;
 	sdcard_cen, sdcard_sck, sdcard_si: out std_logic;
+	HSync,VSync: out std_logic;
+	Red: out std_logic_vector(2 downto 0);
+	Green: out std_logic_vector(2 downto 0);
+	Blue: out std_logic_vector(2 downto 1);
 	LED: out std_logic_vector(7 downto 0);
 	Switch: in std_logic_vector(5 downto 0);
 	sw: in std_logic_vector(7 downto 0);
@@ -74,19 +79,21 @@ entity glue is
 end glue;
 
 architecture Behavioral of glue is
-    signal clk, rs232_break: std_logic;
+    signal clk, clk_25m, rs232_break: std_logic;
 	 
 begin
     --  clock synthesizer: Xilinx Spartan-6 specific
 
-clk100: if C_clk_freq = 100 generate
-clk <= clk_100m;
-end generate;
+    clk25: if C_clk_freq = 100 generate
+    clkgen25: entity work.clk_100_25m
+    port map(
+      clk_in1 => clk_100m, clk_out1 => clk_25m, clk_out2 => clk 
+    );
+    end generate;
 
     -- reset hard-block: Xilinx Spartan-6 specific
     reset: startup_spartan6
     port map (
-	
 	clk => clk, gsr => rs232_break, gts => rs232_break,
 	keyclearb => '0'
     );
@@ -98,18 +105,26 @@ end generate;
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
 	C_debug => C_debug,
+	C_vgahdmi => C_vgahdmi,
 	C_sio => C_sio,
 	C_spi => C_spi,
 	C_gpio => C_gpio
    )
    port map (
 	clk => clk,
+	clk_25MHz => clk_25m,
 	sio_txd(0) => rs232_dce_txd, sio_rxd(0) => rs232_dce_rxd,
 	sio_break(0) => rs232_break,
 	spi_sck(0) => flash_sck,spi_sck(1) => sdcard_sck,
 	spi_ss(0) => flash_cen,spi_ss(1) => sdcard_cen,
 	spi_mosi(0) => flash_si,spi_mosi(1) => sdcard_si, 
 	spi_miso(0) => flash_so,spi_miso(1) => sdcard_so,
+	vga_vsync => VSync,
+	vga_hsync => HSync,
+	vga_b(1 downto 0) => Blue(2 downto 1),
+	vga_b(2)=> open,
+	vga_g(2 downto 0) => Green(2 downto 0),
+	vga_r(2 downto 0) => Red(2 downto 0),
 	simple_out(7 downto 0) => LED(7 downto 0),
 	simple_out(15 downto 8) => SevenSegment(7 downto 0),
 	simple_out(18 downto 16) => SevenSegmentEnable(2 downto 0),
