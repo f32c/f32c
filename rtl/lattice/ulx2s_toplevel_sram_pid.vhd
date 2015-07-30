@@ -29,6 +29,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
+use ieee.numeric_std.all; -- we need signed type
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.MATH_REAL.ALL;
 
@@ -89,6 +90,13 @@ entity glue is
 	C_timer: boolean := true;
 	C_tx433: boolean := false; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
 	C_fmrds: boolean := true; -- either FM or tx433
+	C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
+	C_fm_cw_hz: integer := 108000000; -- Hz FM station carrier wave frequency
+        C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
+        --C_rds_clock_multiply: integer := 57; -- multiply and divide from cpu clk 100 MHz
+        --C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
+        C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
+        C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
         C_pid: boolean := true;
         C_pids: integer := 4;
         C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8); -- for each pid choose simulator/real 
@@ -197,7 +205,6 @@ architecture Behavioral of glue is
     signal rds_addr: std_logic_vector(8 downto 0);
     signal rds_data: std_logic_vector(7 downto 0);
     signal rds_bram_write: std_logic;
-    signal rds_bram_addr: std_logic_vector(31 downto 2);
     signal fm_antenna: std_logic;
 
     -- DDS frequency synthesizer
@@ -416,7 +423,7 @@ begin
 	variable i, j, t, cpu: integer;
     begin
 	for cpu in 0 to (C_cpus - 1) loop
-	    if dmem_addr(cpu)(31 downto 28) = x"f" then
+	    if dmem_addr(cpu)(31 downto 28) = x"F" and dmem_addr(cpu)(11) = '1' then
 		io_addr_strobe(cpu) <= dmem_addr_strobe(cpu);
 	    else
 		io_addr_strobe(cpu) <= '0';
@@ -799,9 +806,9 @@ begin
       --c_rds_clock_multiply => 228,
       --c_rds_clock_divide => 3125,
       -- settings for 81.25 MHz clock
-      c_rds_clock_multiply => 912,
-      c_rds_clock_divide => 40625,
-      c_rds_msg_len => 260
+      c_rds_clock_multiply => C_rds_clock_multiply,
+      c_rds_clock_divide => C_rds_clock_divide,
+      c_rds_msg_len => C_rds_msg_len
     )
     port map (
       --clk => clk_25MHz, -- RDS and PCM processing clock 25 MHz
@@ -814,27 +821,29 @@ begin
     );
     fm_modulator: entity work.fmgen
     generic map (
-      c_fdds => 325000000.0
+      c_fdds => real(C_fmdds_hz)
     )
     port map (
       -- clk_pcm => clk_25MHz, -- PCM processing clock 25 MHz
       clk_pcm => clk, -- PCM processing clock 81.25 MHz
       clk_dds => clk_325m, -- DDS clock 325 MHz
-      cw_freq => 108000000,
+      cw_freq => std_logic_vector(to_unsigned(C_fm_cw_hz,32)),
       pcm_in => rds_pcm,
       fm_out => fm_antenna
     );
+    -- RDS bram at 0xFFFFF000 .. 0xFFFFF7FF (data in LSB byte of 32-bit words)
     rds_bram_write <=
-      dmem_addr_strobe(0) and dmem_write(0) when dmem_addr(0)(15 downto 11) = x"F" & "0" else '0';
-    -- rds_bram_addr <= dmem_addr(0)(10 downto 2);
+      dmem_addr_strobe(0) and dmem_write(0) 
+        when dmem_addr(0)(31 downto 28) = x"F" and dmem_addr(0)(11) = '0'
+        else '0';
     rdsbram: entity work.bram_rds
     port map (
 	clk => clk,
 	imem_addr => rds_addr,
 	imem_data_out => rds_data,
 	dmem_write => rds_bram_write,
-	dmem_byte_sel => io_byte_sel, dmem_addr => dmem_addr(0)(10 downto 2),
-	dmem_data_out => open, dmem_data_in => cpu_to_io(7 downto 0)
+	dmem_byte_sel => dmem_byte_sel(0), dmem_addr => dmem_addr(0)(10 downto 2),
+	dmem_data_out => open, dmem_data_in => cpu_to_dmem(0)(7 downto 0)
     );
     end generate;
 
