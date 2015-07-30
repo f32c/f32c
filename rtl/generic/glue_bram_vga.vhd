@@ -268,7 +268,8 @@ begin
     );
     final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
     intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & '0';
-    io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
+    -- added bit dmem_addr(11) = '1' to distinguish from RDS memory placed at 0xFFFFF000
+    io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11" and dmem_addr(11) = '1'
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
     imem_data_ready <= '1';
@@ -581,8 +582,16 @@ begin
       pcm_in => rds_pcm,
       fm_out => fm_antenna
     );
+    -- note: RDS bram occupies 260 32-bit words.
+    -- from each word only lower 8 bits (byte) is used
+    -- this doesn't fit to I/O address space 0xFFFFF800
+    -- so we extend the address decoding to place RDS
+    -- memory at 0xFFFFF000, by comparing just one additional bit
+    -- dmem_addr(11) = '0'
     rds_bram_write <=
-      dmem_addr_strobe and dmem_write when dmem_addr(31 downto 28) = x"A" else '0';
+      dmem_addr_strobe and dmem_write
+      when dmem_addr(31 downto 30) = "11" and dmem_addr(11) = '0'
+      else '0';
     rdsbram: entity work.bram_rds
     port map (
 	clk => clk,
