@@ -185,7 +185,7 @@ NET "IO_P9[0]"                 LOC = L16      | IOSTANDARD = LVCMOS33 | DRIVE = 
 ###################################################################################################################################################
 #                                                    Audio                                                                                        #
 ################################################################################################################################################### 
-#NET "Audio1"                     LOC = B16     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  # Audio Left               
+NET "Audio1"                     LOC = B16     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  # Audio Left               
 #NET "Audio2"                     LOC = A16     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;  # Audio Right
  
 # Phone jack - resistor network only on tip!
