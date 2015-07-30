@@ -186,6 +186,7 @@ architecture Behavioral of SDRAM_Controller is
     -- signals for when to read the data off of the bus
     signal data_ready_delay:
       std_logic_vector(C_clock_range / 2 + C_cas + 1 downto 0);
+    signal read_done: boolean;
 
     -- bit indexes used when splitting the address into row/colum/bank.
     constant start_of_col: natural := 0;
@@ -272,8 +273,7 @@ begin
 	    -------------------------------------------------------------------
 	    --if ready_for_new = '1' and cmd_enable = '1' then
 	    if ready_for_new = '1' and cmd_enable = '1' and (cmd_wr = '1' or
-	      save_wr = '1' or state = s_idle or
-		(C_clock_range /= 2 and state = s_idle_in_1)) then
+	      save_wr = '1' or read_done) then
 		if save_bank = addr_bank and save_row = addr_row then
 		    can_back_to_back <= '1';
 		else
@@ -286,11 +286,15 @@ begin
 		save_data_in     <= cmd_data_in;
 		save_byte_enable <= cmd_byte_enable;
 		ready_for_new    <= '0';
+		read_done	 <= false;
 	    end if;
 
 	    ----------------------------------------------------------------------------
 	    -- update shift registers used to choose when to present data to/from memory
 	    ----------------------------------------------------------------------------
+	    if data_ready_delay(0) = '1' then
+		read_done <= true;
+	    end if;
 	    data_ready_delay <= '0' & data_ready_delay(data_ready_delay'high downto 1);
 	    iob_dqm <= dqm_sr(1 downto 0);
 	    dqm_sr <= "11" & dqm_sr(dqm_sr'high downto 2);
@@ -346,6 +350,7 @@ begin
 		if startup_refresh_count = 0 then
 		    state           <= s_idle;
 		    ready_for_new   <= '1';
+		    read_done	    <= true;
 		    startup_refresh_count <= to_unsigned(2048 - cycles_per_refresh+1,14);
 		end if;
 
