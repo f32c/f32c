@@ -49,6 +49,14 @@ entity glue is
 	-- SoC configuration options
 	C_mem_size: integer := 32;
 	C_vgahdmi: boolean := true; 
+	C_fmrds: boolean := true;
+	C_fm_cw_hz: integer := 108000000; -- Hz FM station carrier wave frequency
+   C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
+   C_rds_clock_multiply: integer := 57; -- multiply and divide from cpu clk 100 MHz
+   C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
+	-- warning long compile time on ISE 14.7
+	-- C_pids = 2: 1 hour
+	-- C_pids = 4: 4 hours
 	C_sio: integer := 1;
 	C_spi: integer := 2;
 	C_gpio: integer := 31;
@@ -74,6 +82,7 @@ entity glue is
 	IO_P8: inout std_logic_vector(7 downto 0);
 	IO_P9: inout std_logic_vector(7 downto 0);
 	SevenSegment: out std_logic_vector(7 downto 0); -- 7-segment display
+	Audio1: out std_logic; -- fm antenna is here
 	SevenSegmentEnable: out std_logic_vector(2 downto 0) -- 7-segment display
     );
 end glue;
@@ -104,6 +113,11 @@ begin
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
+	C_fmrds => C_fmrds,
+	C_fm_cw_hz => C_fm_cw_hz,
+	C_fmdds_hz => C_fmdds_hz,
+   C_rds_clock_multiply => C_rds_clock_multiply,
+   C_rds_clock_divide => C_rds_clock_divide,	
 	C_debug => C_debug,
 	C_vgahdmi => C_vgahdmi,
 	C_sio => C_sio,
@@ -137,6 +151,8 @@ begin
 	gpio(15 downto 8)=>IO_P7(7 downto 0),
 	gpio(23 downto 16)=>IO_P8(7 downto 0),
 	gpio(31 downto 24)=>IO_P9(7 downto 0),
-	gpio(127 downto 32)=> open
+	gpio(127 downto 32)=> open,
+	fm_antenna => Audio1
+
     );
 end Behavioral;
