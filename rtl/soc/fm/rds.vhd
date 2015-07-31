@@ -24,7 +24,7 @@ generic (
     c_rds_clock_multiply: integer := 228;
     c_rds_clock_divide: integer := 3125;
     -- 2ch stereo is not yet implemented, only pilot generator
-    c_stereo: boolean := true; -- true: use stereo mixing
+    c_stereo: boolean := false; -- true: use stereo mixing
     -- true: spend more LUTs to use 32-point sinewave and multiply 
     -- false: save LUTs, use 4-point multiplexer, no multiply
     c_fine_subc: boolean := false
@@ -328,6 +328,8 @@ begin
 
     mix_stereo:  if C_stereo generate
     -- mixing stereo input audio with RDS DBPSK
+    -- warning: stereo mixing without filtering
+    -- (some filtering is requred by the standard)
     S_pcm_stereo <= (pcm_in_left/2 - pcm_in_right/2) * S_stereo_pcm;
     -- S_stereo_pcm has range -63 .. +63
     -- pcm_in_left has range -32767 .. +32767
