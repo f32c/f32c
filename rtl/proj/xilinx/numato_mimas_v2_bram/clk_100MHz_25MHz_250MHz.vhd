@@ -1,4 +1,4 @@
--- file: clk_100_25m.vhd
+-- file: clk_100MHz_25MHz_250MHz.vhd
 -- 
 -- (c) Copyright 2008 - 2011 Xilinx, Inc. All rights reserved.
 -- 
@@ -57,6 +57,7 @@
 ------------------------------------------------------------------------------
 -- CLK_OUT1____25.000______0.000______50.0_____1000.000____150.000
 -- CLK_OUT2___100.000______0.000______50.0______200.000____150.000
+-- CLK_OUT3___200.000______0.000______50.0______300.000____150.000
 --
 ------------------------------------------------------------------------------
 -- "Input Clock   Freq (MHz)    Input Jitter (UI)"
@@ -72,25 +73,27 @@ use ieee.numeric_std.all;
 library unisim;
 use unisim.vcomponents.all;
 
-entity clk_100_25m is
+entity clk_100MHz_25MHz_250MHz is
 port
  (-- Clock in ports
-  clk_in1           : in     std_logic;
+  CLK_IN1           : in     std_logic;
   -- Clock out ports
-  clk_out1          : out    std_logic;
-  clk_out2          : out    std_logic
+  CLK_OUT1          : out    std_logic;
+  CLK_OUT2          : out    std_logic;
+  CLK_OUT3          : out    std_logic
  );
-end clk_100_25m;
+end clk_100MHz_25MHz_250MHz;
 
-architecture xilinx of clk_100_25m is
+architecture xilinx of clk_100MHz_25MHz_250MHz is
   attribute CORE_GENERATION_INFO : string;
-  attribute CORE_GENERATION_INFO of xilinx : architecture is "clk_100_25m,clk_wiz_v3_6,{component_name=clk_100_25m,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,feedback_source=FDBK_AUTO,primtype_sel=DCM_SP,num_out_clk=2,clkin1_period=10.0,clkin2_period=10.0,use_power_down=false,use_reset=false,use_locked=false,use_inclk_stopped=false,use_status=false,use_freeze=false,use_clk_valid=false,feedback_type=SINGLE,clock_mgr_type=AUTO,manual_override=false}";
+  attribute CORE_GENERATION_INFO of xilinx : architecture is "clk_100MHz_25MHz_250MHz,clk_wiz_v3_6,{component_name=clk_100MHz_25MHz_250MHz,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,feedback_source=FDBK_AUTO,primtype_sel=DCM_SP,num_out_clk=3,clkin1_period=10.0,clkin2_period=10.0,use_power_down=false,use_reset=false,use_locked=false,use_inclk_stopped=false,use_status=false,use_freeze=false,use_clk_valid=false,feedback_type=SINGLE,clock_mgr_type=AUTO,manual_override=false}";
 	  -- Input clock buffering / unused connectors
   signal clkin1            : std_logic;
   -- Output clock buffering
   signal clk_out2_internal : std_logic;
   signal clkfb             : std_logic;
   signal clk0              : std_logic;
+  signal clk2x             : std_logic;
   signal clkfx             : std_logic;
   signal clkfbout          : std_logic;
   signal locked_internal   : std_logic;
@@ -103,7 +106,7 @@ begin
   clkin1_buf : IBUFG
   port map
    (O => clkin1,
-    I => clk_in1);
+    I => CLK_IN1);
 
 
   -- Clocking primitive
@@ -133,7 +136,7 @@ begin
     CLK90                 => open,
     CLK180                => open,
     CLK270                => open,
-    CLK2X                 => open,
+    CLK2X                 => clk2x,
     CLK2X180              => open,
     CLKFX                 => clkfx,
     CLKFX180              => open,
@@ -160,7 +163,7 @@ begin
 
   clkout1_buf : BUFG
   port map
-   (O   => clk_out1,
+   (O   => CLK_OUT1,
     I   => clkfx);
 
 
@@ -170,6 +173,11 @@ begin
    (O   => clk_out2_internal,
     I   => clk0);
 
-  clk_out2 <= clk_out2_internal;
+  CLK_OUT2 <= clk_out2_internal;
+
+  clkout3_buf : BUFG
+  port map
+   (O   => CLK_OUT3,
+    I   => clk2x);
 
 end xilinx;
