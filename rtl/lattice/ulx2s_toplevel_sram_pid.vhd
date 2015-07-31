@@ -80,6 +80,7 @@ entity glue is
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
 	C_fmrds: boolean := true;
+	C_fm_stereo: boolean := false;
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true;
 	C_gpio: boolean := true;
@@ -197,7 +198,7 @@ architecture Behavioral of glue is
     signal pcm_addr: std_logic_vector(19 downto 2);
     signal from_pcm: std_logic_vector(31 downto 0);
     signal pcm_ce, pcm_l, pcm_r: std_logic;
-    signal pcm_bus_l, pcm_bus_r: std_logic_vector(15 downto 0);
+    signal pcm_bus_l, pcm_bus_r: signed(15 downto 0);
 
     -- FM/RDS RADIO
     signal pcm_signed_l, pcm_signed_r: signed(15 downto 0);
@@ -205,6 +206,7 @@ architecture Behavioral of glue is
     signal rds_addr: std_logic_vector(8 downto 0);
     signal rds_data: std_logic_vector(7 downto 0);
     signal rds_bram_write: std_logic;
+    signal from_fmrds: std_logic_vector(31 downto 0); -- current address
     signal fm_antenna: std_logic;
 
     -- DDS frequency synthesizer
@@ -557,6 +559,12 @@ begin
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
+	when x"40"  =>
+	    if C_fmrds then
+		io_to_cpu <= from_fmrds;
+	    else
+		io_to_cpu <= (others => '-');
+	    end if;
 	when x"70"  =>
 	    if C_leds_btns then
 		io_to_cpu <="------------" & R_sw & "-----------" & R_btns;
@@ -798,14 +806,16 @@ begin
     -- FM/RDS
     G_fmrds:
     if C_fmrds generate
-    pcm_signed_l <= signed(pcm_bus_l - x"8000");
-    pcm_signed_r <= signed(pcm_bus_r - x"8000");
+    -- FM considers PCM signals as signed 16 bit values
+    pcm_signed_l <= pcm_bus_l;
+    pcm_signed_r <= pcm_bus_r;
     rds_modulator: entity work.rds
     generic map (
       -- settings for 25 MHz clock
       --c_rds_clock_multiply => 228,
       --c_rds_clock_divide => 3125,
       -- settings for 81.25 MHz clock
+      c_stereo => C_fm_stereo,
       c_rds_clock_multiply => C_rds_clock_multiply,
       c_rds_clock_divide => C_rds_clock_divide,
       c_rds_msg_len => C_rds_msg_len
@@ -831,6 +841,8 @@ begin
       pcm_in => rds_pcm,
       fm_out => fm_antenna
     );
+    from_fmrds(8 downto 0) <= rds_addr; -- index of byte currently transmitter
+    from_fmrds(31 downto 9) <= (others => '0');
     -- RDS bram at 0xFFFFF000 .. 0xFFFFF7FF (data in LSB byte of 32-bit words)
     rds_bram_write <=
       dmem_addr_strobe(0) and dmem_write(0) 
