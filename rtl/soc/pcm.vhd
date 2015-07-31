@@ -43,7 +43,7 @@ entity pcm is
 	data_ready: in std_logic;
 	addr_out: out std_logic_vector(19 downto 2);
 	data_in: in std_logic_vector(31 downto 0);
-	out_pcm_l, out_pcm_r: out std_logic_vector(15 downto 0);
+	out_pcm_l, out_pcm_r: out signed(15 downto 0);
 	out_l, out_r: out std_logic
     );
 end pcm;
@@ -53,9 +53,10 @@ architecture Behavioral of pcm is
     signal R_dma_cur_addr: std_logic_vector(19 downto 2);
     signal R_dma_trigger_acc, R_dma_trigger_incr: std_logic_vector(23 downto 0);
     signal R_dma_needs_refill: boolean;
-    signal R_dma_data_l, R_dma_data_r: std_logic_vector(15 downto 0);
-    signal R_vol_l, R_vol_r: std_logic_vector(15 downto 0);
-    signal R_pcm_data_l, R_pcm_data_r: std_logic_vector(15 downto 0);
+    signal R_dma_data_l, R_dma_data_r: signed(15 downto 0);
+    signal R_vol_l, R_vol_r: signed(15 downto 0);
+    signal R_pcm_data_l, R_pcm_data_r: signed(15 downto 0);
+    signal R_pcm_unsigned_data_l, R_pcm_unsigned_data_r: std_logic_vector(15 downto 0);
     signal R_dac_acc_l, R_dac_acc_r: std_logic_vector(16 downto 0);
 
 begin
@@ -63,7 +64,7 @@ begin
     process(clk, R_dma_trigger_acc, R_dma_trigger_incr, R_vol_l, R_vol_r,
       R_dma_data_l, R_dma_data_r)
 	variable dma_trigger_next: std_logic_vector(23 downto 0);
-	variable mul_l, mul_r: std_logic_vector(31 downto 0);
+	variable mul_l, mul_r: signed(31 downto 0);
     begin
 	dma_trigger_next := R_dma_trigger_acc + R_dma_trigger_incr;
 
@@ -78,10 +79,14 @@ begin
 	    end if;
 
 	    -- Refill data from main memory
+	    -- input data: 2 channels, 16-bit signed value per channel
+	    -- DMA reads 32-bit -> 2 channels at once
+	    -- LSB 16 bits = left channel
+	    -- MSB 16 bits = right channel
 	    if data_ready = '1' then
 		R_dma_needs_refill <= false;
-		R_dma_data_l <= (not data_in(15)) & data_in(14 downto 0);
-		R_dma_data_r <= (not data_in(31)) & data_in(30 downto 16);
+		R_dma_data_l <= signed(data_in(15 downto 0));
+		R_dma_data_r <= signed(data_in(31 downto 16));
 		if R_dma_cur_addr = R_dma_last_addr then
 		    R_dma_cur_addr <= R_dma_first_addr;
 		else
@@ -89,7 +94,9 @@ begin
 		end if;
 	    end if;
 
-	    -- Apply volume settings
+	    -- Apply volume settings: hardware multiplication
+	    -- volume should be in 16-bit signed format
+	    -- sign allows phase inversion
 	    R_pcm_data_l <= mul_l(31 downto 16);
 	    R_pcm_data_r <= mul_r(31 downto 16);
 
@@ -105,16 +112,22 @@ begin
 		    R_dma_trigger_incr <= io_bus_in(23 downto 0);
 		end if;
 		if io_addr = "11" then	-- Volume control
-		    R_vol_l <= io_bus_in(15 downto 0);
-		    R_vol_r <= io_bus_in(31 downto 16);
+		    R_vol_l <= signed(io_bus_in(15 downto 0));
+		    R_vol_r <= signed(io_bus_in(31 downto 16));
 		else
 		    R_dma_cur_addr <= R_dma_first_addr;
 		end if;
 	    end if;
 
+	    -- PCM data from RAM normally should have average 0 (removed DC offset)
+            -- for purpose of PCM generation here is
+            -- conversion to unsigned std_logic_vector
+            -- by inverting MSB bit (effectively adding 0x8000)
+            R_pcm_unsigned_data_l <= std_logic_vector( (not R_pcm_data_l(15)) & R_pcm_data_l(14 downto 0) );
+            R_pcm_unsigned_data_r <= std_logic_vector( (not R_pcm_data_r(15)) & R_pcm_data_r(14 downto 0) );
 	    -- Output 1-bit DAC
-	    R_dac_acc_l <= (R_dac_acc_l(16) & R_pcm_data_l) + R_dac_acc_l;
-	    R_dac_acc_r <= (R_dac_acc_r(16) & R_pcm_data_r) + R_dac_acc_r;
+	    R_dac_acc_l <= (R_dac_acc_l(16) & R_pcm_unsigned_data_l) + R_dac_acc_l;
+	    R_dac_acc_r <= (R_dac_acc_r(16) & R_pcm_unsigned_data_r) + R_dac_acc_r;
 	end if;
     end process;
 
@@ -126,6 +139,7 @@ begin
     out_l <= R_dac_acc_l(16);
     out_r <= R_dac_acc_r(16);
     
+    -- signed values should be passed to output of this module
     out_pcm_l <= R_pcm_data_l;
     out_pcm_r <= R_pcm_data_r;
 
