@@ -48,7 +48,8 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 32;
-	C_vgahdmi: boolean := true; 
+	C_vgahdmi: boolean := true;
+	C_vgahdmi_mem_kb: integer := 10; -- KB	
 	C_fmrds: boolean := true;
 	C_fm_cw_hz: integer := 108000000; -- Hz FM station carrier wave frequency
    C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
@@ -82,21 +83,21 @@ entity glue is
 	IO_P8: inout std_logic_vector(7 downto 0);
 	IO_P9: inout std_logic_vector(7 downto 0);
 	SevenSegment: out std_logic_vector(7 downto 0); -- 7-segment display
-	Audio1: out std_logic; -- fm antenna is here
+ 	Audio1: out std_logic; -- fm antenna is here
 	SevenSegmentEnable: out std_logic_vector(2 downto 0) -- 7-segment display
     );
 end glue;
 
 architecture Behavioral of glue is
-    signal clk, clk_25m, rs232_break: std_logic;
-	 
+    signal clk, rs232_break: std_logic;
+	 signal clk_25MHz, clk_250MHz: std_logic := '0';
 begin
     --  clock synthesizer: Xilinx Spartan-6 specific
 
     clk25: if C_clk_freq = 100 generate
-    clkgen25: entity work.clk_100_25m
+    clkgen25: entity work.clk_100MHz_25MHz_250MHz
     port map(
-      clk_in1 => clk_100m, clk_out1 => clk_25m, clk_out2 => clk 
+      CLK_IN1 => clk_100m, CLK_OUT1 => clk_25MHz, CLK_OUT2 => clk , CLK_OUT3 => clk_250MHz
     );
     end generate;
 
@@ -120,13 +121,16 @@ begin
    C_rds_clock_divide => C_rds_clock_divide,	
 	C_debug => C_debug,
 	C_vgahdmi => C_vgahdmi,
+	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
 	C_sio => C_sio,
 	C_spi => C_spi,
 	C_gpio => C_gpio
    )
    port map (
 	clk => clk,
-	clk_25MHz => clk_25m,
+	clk_25MHz => clk_25MHz, -- pixel clock
+	clk_250MHz => clk_250MHz, -- tmds clock
+	clk_fmdds => clk_250MHz, -- FM/RDS clock
 	sio_txd(0) => rs232_dce_txd, sio_rxd(0) => rs232_dce_rxd,
 	sio_break(0) => rs232_break,
 	spi_sck(0) => flash_sck,spi_sck(1) => sdcard_sck,
@@ -153,6 +157,5 @@ begin
 	gpio(31 downto 24)=>IO_P9(7 downto 0),
 	gpio(127 downto 32)=> open,
 	fm_antenna => Audio1
-
     );
 end Behavioral;
