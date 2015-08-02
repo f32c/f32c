@@ -1,0 +1,16 @@
+# file options.ggo (gengetopt source)
+
+# Name of your program
+package "rdsmsg"       # don't use package if you're using automake
+# Version of your program
+version "0.0.2"         # don't use version if you're using automake
+
+purpose "rdsmsg generates binary RDS message in VHDL file"
+
+#       long         short    description              type   default              required
+option  "pi"         i "Program ID"                    int    default="0x1234"     no
+option  "ps"         d "Main display [TEXT], max 8"    string default="TEST1234"   no
+option  "rt"         l "Long display, max 64"          string default="ABCDEFGHIJKL" no
+option  "stereo"     s "Stereo"                        flag   off
+option  "ta"         t "Traffic Announcement"          flag   off
+option  "af"         f "AF frequency (87.5-107.9MHz), max 7"     float  optional multiple

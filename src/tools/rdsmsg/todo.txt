@@ -1,0 +1,6 @@
+[ ] improve commandline interface
+    rdsmsg "SHORT"
+    rdsmsg --pi 0x1234 "SHORT"
+    rdsmsg --pi 0x1234 "SHORT" --rt "LONG MESSAGE"
+    rdsmsg --pi 0x1234 "SHORT" --ct
+    rdsmsg --pi 0x1234 "SHORT" --ct "2015-02-03 04:05:06"
