@@ -20,13 +20,14 @@ entity fmgen is
 generic (
 	C_use_pcm_in: boolean := true;
 	C_fm_acclen: integer := 28;
-	C_fdds: real := 250000000.0 -- input clock frequency
+	C_remove_dc: boolean := true; -- remove DC offset
+	C_fdds: real -- Hz input clock frequency e.g. 250000000.0
 );
 port (
         clk_pcm: in std_logic; -- PCM processing clock, any (e.g. 25 MHz)
 	clk_dds: in std_logic; -- DDS clock must be >2*cw_freq (e.g. 250 MHz)
 	cw_freq: in std_logic_vector(31 downto 0);
-	pcm_in: in signed(15 downto 0); -- FM swing +-2x this amplitude in Hz
+	pcm_in: in signed(15 downto 0); -- FM swing: pcm_in * 4Hz
 	fm_out: out std_logic
 );
 end fmgen;
@@ -45,6 +46,7 @@ begin
     R_pcm <= pcm_in;
 
     -- Calculate signal average to remove DC offset
+    remove_dc_offset: if C_remove_dc generate
     process(clk_pcm)
     variable delta: std_logic_vector(15 downto 0);
     variable R_clk_div: std_logic_vector(3 downto 0);
@@ -54,13 +56,14 @@ begin
 	    if R_clk_div = x"0" then
 		if (R_pcm - R_pcm_avg) > 0 then
 		    R_pcm_avg <= R_pcm_avg + 1;
-		-- elsif R_pcm < R_pcm_avg then
+		elsif R_pcm < R_pcm_avg then
 		else
 		    R_pcm_avg <= R_pcm_avg - 1;
 		end if;
 	    end if;
         end if;
     end process;
+    end generate;
 
     --
     -- Calculate current frequency of carrier wave (Frequency modulation)
@@ -69,7 +72,8 @@ begin
     process (clk_pcm)
     begin
 	if (rising_edge(clk_pcm)) then
-	    R_dds_mul_x1 <= cw_freq + std_logic_vector(resize((R_pcm-R_pcm_avg) & "0", 32)); -- "0" multiply by 2
+	    R_dds_mul_x1 <= cw_freq
+	                  + std_logic_vector(resize((R_pcm-R_pcm_avg) & "00", 32)); -- "00" multiply by 4Hz
 	end if;
     end process;
 	

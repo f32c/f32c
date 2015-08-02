@@ -27,6 +27,7 @@ generic (
     c_stereo: boolean := false; -- true: use stereo mixing
     -- true: spend more LUTs to use 32-point sinewave and multiply 
     -- false: save LUTs, use 4-point multiplexer, no multiply
+    c_debug: boolean := false; -- output counters to check subcarriers phases
     c_fine_subc: boolean := false
 );
 port (
@@ -323,7 +324,7 @@ begin
 
     mix_mono:  if not C_stereo generate
     -- mixing mono input audio with RDS DBPSK
-    pcm_out <= pcm_in_left/2 + pcm_in_right/2 + S_rds_mod_pcm;
+    pcm_out <= pcm_in_left/2 + pcm_in_right/2 + S_rds_mod_pcm/2;
     end generate;
 
     mix_stereo:  if C_stereo generate
@@ -338,12 +339,14 @@ begin
     -- but we divide by 2 and hope for no clipping
     pcm_out <= (pcm_in_left/2 + pcm_in_right/2)
              + S_pcm_stereo(21 downto 6) -- normalize S_stereo_pcm, shift divide by 64
-             + S_pilot_pcm * 64 -- 16 is too weak, not sure of correct 19kHz pilot amplitude
-             + S_rds_mod_pcm;
+             + S_pilot_pcm * 32 -- 16 is too weak, not sure of correct 19kHz pilot amplitude
+             + S_rds_mod_pcm/2;
     end generate;
     
+    subcarriers_phases: if c_debug generate
     debug <= x"00" 
            & "0" & std_logic_vector(S_stereo_pcm) 
            & "0" & std_logic_vector(S_pilot_pcm)
            & "0" & std_logic_vector(S_rds_coarse_pcm);
+    end generate;
 end;
