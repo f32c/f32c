@@ -18,7 +18,7 @@ debianparts=$(debianproject) debian/DEBIAN/control debian/usr/share/doc/$(projec
 rds=rds
 objects=$(project).o $(parser).o $(rds).o
 includes=$(parser).h
-message=../message-custom.vhd
+message=../../../rtl/soc/fm/message.vhd
 
 all: $(project)
 
