@@ -23,6 +23,8 @@ main(void)
 	volatile uint16_t *p16;
 	volatile uint32_t *p32;
 
+	tot_err = 0;
+	iter = 1;
 again:
 
 #if 0
@@ -59,10 +61,6 @@ again:
 	printf("base %p end %p (size %d.%03d MB)\n", mem_base, mem_end,
 	    size >> 20, ((size & 0xfffff) * 1000) >> 20);
 
-	iter = 0;
-	tot_err = 0;
-
-	tot_err = 0;
 	int csum = 0;
 	for (i = 0; i < 32 * 1024 * 1024 / 4; i++) {
 		mem_base[i] = i;
@@ -77,14 +75,15 @@ again:
 	else
 		printf("CSUM mismatch: %08x %08x\n", csum, tmp);
 
+	tmp = 0;
 	for (i = 0; i < 32 * 1024 * 1024 / 4; i++) {
 		a = mem_base[i];
 		b = mem_base[i + 1];
 		if (b != a + 1)
-			tot_err++;
+			tmp++;
 	}
 	printf("%08x %08x\n", a, b);
-	printf("read errors (should be exactly 1): %d\n", tot_err);
+	printf("read errors (should be exactly 1): %d\n", tmp);
 
 	RDTSC(seed);
 	val = seed;
