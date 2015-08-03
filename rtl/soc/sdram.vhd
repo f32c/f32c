@@ -239,8 +239,11 @@ begin
 
     capture_proc: process(clk) 
     begin
-	if (C_clock_range = 1 and falling_edge(clk)) or
-	  (C_clock_range /= 1 and rising_edge(clk)) then
+	if C_clock_range = 1 and falling_edge(clk) then
+	    R_from_sdram <= sdram_data;
+	    R_from_sdram_prev <= R_from_sdram;
+	end if;
+	if C_clock_range /= 1 and rising_edge(clk) then
 	    R_from_sdram <= sdram_data;
 	    R_from_sdram_prev <= R_from_sdram;
 	end if;
