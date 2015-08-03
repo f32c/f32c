@@ -20,7 +20,13 @@ entity fmgen is
 generic (
 	c_use_pcm_in: boolean := true;
 	c_fm_acclen: integer := 28;
-	-- modulation: how many Hz CW will swing when input changes by 1
+	-- modulation: how many Hz CW will swing when input changes by 1:
+	-- by FM standard, max CW swing is 75 kHz. Channels are 100 kHz apart
+	-- 16-bit signed input values have full range in -32767..+32767, for
+	-- 2Hz/bit it makes 65 kHz swing and assures no overmodulation.
+	-- 4Hz/bit allows full use of 75 kHz band swing but input value must
+	-- stay in range -18750..+18750. When increasing to 4 Hz,
+	-- other RDS and pilot tone values must be scaled in rds.vhd
 	c_hz_per_bit: integer := 2; -- Hz FM modulation strength (2 or 4)
 	c_remove_dc: boolean := true; -- remove DC offset
 	c_fdds: real -- Hz input clock frequency e.g. 250000000.0
