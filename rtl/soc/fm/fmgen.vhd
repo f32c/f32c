@@ -18,34 +18,33 @@ use ieee.numeric_std.all;
 
 entity fmgen is
 generic (
-	C_use_pcm_in: boolean := true;
-	C_fm_acclen: integer := 28;
-	C_remove_dc: boolean := true; -- remove DC offset
-	C_fdds: real -- Hz input clock frequency e.g. 250000000.0
+	c_use_pcm_in: boolean := true;
+	c_fm_acclen: integer := 28;
+	-- modulation: how many Hz CW will swing when input changes by 1
+	c_hz_per_bit: integer := 2; -- Hz FM modulation strength (2 or 4)
+	c_remove_dc: boolean := true; -- remove DC offset
+	c_fdds: real -- Hz input clock frequency e.g. 250000000.0
 );
 port (
         clk_pcm: in std_logic; -- PCM processing clock, any (e.g. 25 MHz)
 	clk_dds: in std_logic; -- DDS clock must be >2*cw_freq (e.g. 250 MHz)
 	cw_freq: in std_logic_vector(31 downto 0);
-	pcm_in: in signed(15 downto 0); -- FM swing: pcm_in * 2Hz
+	pcm_in: in signed(15 downto 0); -- FM swing: pcm_in * hz_per_bit
 	fm_out: out std_logic
 );
 end fmgen;
 
 architecture x of fmgen is
 	signal fm_acc, fm_inc: std_logic_vector((C_fm_acclen - 1) downto 0);
-
-	signal R_pcm, R_pcm_avg, R_pcm_ac: signed(15 downto 0);
+	signal R_pcm_avg, R_pcm_ac: signed(15 downto 0);
 	signal R_cnt: integer;
-	signal R_dds_mul_x1, R_dds_mul_x2: std_logic_vector(31 downto 0);
-	constant C_dds_mul_y: std_logic_vector(31 downto 0) :=
-	    std_logic_vector(to_signed(integer(2.0**30 / C_fdds * 2.0**28), 32));
-	signal R_dds_mul_res: std_logic_vector(63 downto 0);
+	signal R_dds_mul_x1, R_dds_mul_x2: signed(31 downto 0);
+	constant C_dds_mul_y: signed(31 downto 0) :=
+	    to_signed(integer(2.0**30 / C_fdds * 2.0**28), 32);
+	signal R_dds_mul_res: signed(63 downto 0);
 
 begin
-    R_pcm <= pcm_in;
-
-    R_pcm_ac <= R_pcm - R_pcm_avg; -- subtract average to remove DC offset
+    R_pcm_ac <= pcm_in - R_pcm_avg; -- subtract average to remove DC offset
 
     -- Calculate signal average to remove DC offset
     remove_dc_offset: if C_remove_dc generate
@@ -73,8 +72,7 @@ begin
     process (clk_pcm)
     begin
 	if (rising_edge(clk_pcm)) then
-	    R_dds_mul_x1 <= cw_freq
-	                  + std_logic_vector(resize(R_pcm_ac & "0", 32)); -- "0" multiply by 2Hz
+	    R_dds_mul_x1 <= signed(cw_freq) + R_pcm_ac*c_hz_per_bit;
 	end if;
     end process;
 	
