@@ -79,8 +79,6 @@ entity glue is
 	C_sram: boolean := true;
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
-	C_fmrds: boolean := true;
-	C_fm_stereo: boolean := false;
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true;
 	C_gpio: boolean := true;
@@ -91,6 +89,7 @@ entity glue is
 	C_timer: boolean := true;
 	C_tx433: boolean := false; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
 	C_fmrds: boolean := true; -- either FM or tx433
+	C_fm_stereo: boolean := false;
 	C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
 	C_fm_cw_hz: integer := 107900000; -- Hz FM station carrier wave frequency
         C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
