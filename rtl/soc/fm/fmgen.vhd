@@ -27,7 +27,7 @@ port (
         clk_pcm: in std_logic; -- PCM processing clock, any (e.g. 25 MHz)
 	clk_dds: in std_logic; -- DDS clock must be >2*cw_freq (e.g. 250 MHz)
 	cw_freq: in std_logic_vector(31 downto 0);
-	pcm_in: in signed(15 downto 0); -- FM swing: pcm_in * 4Hz
+	pcm_in: in signed(15 downto 0); -- FM swing: pcm_in * 2Hz
 	fm_out: out std_logic
 );
 end fmgen;
@@ -35,7 +35,7 @@ end fmgen;
 architecture x of fmgen is
 	signal fm_acc, fm_inc: std_logic_vector((C_fm_acclen - 1) downto 0);
 
-	signal R_pcm, R_pcm_avg: signed(15 downto 0);
+	signal R_pcm, R_pcm_avg, R_pcm_ac: signed(15 downto 0);
 	signal R_cnt: integer;
 	signal R_dds_mul_x1, R_dds_mul_x2: std_logic_vector(31 downto 0);
 	constant C_dds_mul_y: std_logic_vector(31 downto 0) :=
@@ -44,6 +44,8 @@ architecture x of fmgen is
 
 begin
     R_pcm <= pcm_in;
+
+    R_pcm_ac <= R_pcm - R_pcm_avg; -- subtract average to remove DC offset
 
     -- Calculate signal average to remove DC offset
     remove_dc_offset: if C_remove_dc generate
@@ -54,9 +56,9 @@ begin
         if rising_edge(clk_pcm) then
 	    R_clk_div := R_clk_div + 1;
 	    if R_clk_div = x"0" then
-		if (R_pcm - R_pcm_avg) > 0 then
+		if R_pcm_ac > 0 then
 		    R_pcm_avg <= R_pcm_avg + 1;
-		elsif R_pcm < R_pcm_avg then
+		elsif R_pcm_ac < 0 then
 		else
 		    R_pcm_avg <= R_pcm_avg - 1;
 		end if;
@@ -73,7 +75,7 @@ begin
     begin
 	if (rising_edge(clk_pcm)) then
 	    R_dds_mul_x1 <= cw_freq
-	                  + std_logic_vector(resize((R_pcm-R_pcm_avg) & "00", 32)); -- "00" multiply by 4Hz
+	                  + std_logic_vector(resize(R_pcm_ac & "0", 32)); -- "0" multiply by 2Hz
 	end if;
     end process;
 	
