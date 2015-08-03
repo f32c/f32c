@@ -52,7 +52,7 @@ entity SDRAM_Controller is
 	C_ras: integer range 2 to 3 := 2;
 	C_cas: integer range 2 to 3 := 2;
 	C_pre: integer range 2 to 3 := 2;
-	C_clock_range: integer range 0 to 2 := 1;
+	C_clock_range: integer range 0 to 2 := 2;
 	sdram_address_width: natural;
 	sdram_column_bits: natural;
 	sdram_startup_cycles: natural;
@@ -63,15 +63,13 @@ entity SDRAM_Controller is
 	reset: in  STD_LOGIC;
 
 	-- Interface to issue reads or write data
-	cmd_ready: out STD_LOGIC; -- '1' when a new command will be acted on
-	cmd_enable: in STD_LOGIC; -- Set to '1' to issue new command (only acted on when cmd_ready = '1')
+	cmd_enable: in STD_LOGIC; -- Set to '1' to issue new command
 	cmd_wr: in STD_LOGIC; -- Is this a write?
-	cmd_address: in STD_LOGIC_VECTOR(sdram_address_width-2 downto 0); -- address to read/write
-	cmd_byte_enable: in STD_LOGIC_VECTOR(3 downto 0); -- byte masks for the write command
-	cmd_data_in: in STD_LOGIC_VECTOR(31 downto 0); -- data for the write command
-
-	data_out: out STD_LOGIC_VECTOR(31 downto 0); -- word read from SDRAM
-	data_out_ready: out STD_LOGIC; -- is new data ready?
+	cmd_address: in STD_LOGIC_VECTOR(sdram_address_width-2 downto 0);
+	cmd_byte_enable: in STD_LOGIC_VECTOR(3 downto 0);
+	cmd_data_in: in STD_LOGIC_VECTOR(31 downto 0);
+	data_out: out STD_LOGIC_VECTOR(31 downto 0);
+	data_out_ready: out STD_LOGIC;
 
 	-- SDRAM signals
 	sdram_clk: out STD_LOGIC;
@@ -204,9 +202,6 @@ begin
     pending_refresh <= startup_refresh_count(11);
     forcing_refresh <= startup_refresh_count(12);
 
-    -- tell the outside world when we can accept a new transaction;
-    cmd_ready <= ready_for_new;
-
     ----------------------------------------------------------------------------
     -- Seperate the address into row / bank / address
     ----------------------------------------------------------------------------
@@ -266,6 +261,16 @@ begin
 	    ------------------------------------------------
 	    startup_refresh_count <= startup_refresh_count+1;
 
+	    ----------------------------------------------------------------------------
+	    -- update shift registers used to choose when to present data to/from memory
+	    ----------------------------------------------------------------------------
+	    if data_ready_delay(0) = '1' then
+		read_done <= true;
+	    end if;
+	    data_ready_delay <= '0' & data_ready_delay(data_ready_delay'high downto 1);
+	    iob_dqm <= dqm_sr(1 downto 0);
+	    dqm_sr <= "11" & dqm_sr(dqm_sr'high downto 2);
+
 	    -------------------------------------------------------------------
 	    -- It we are ready for a new tranasction and one is being presented
 	    -- then accept it. Also remember what we are reading or writing,
@@ -287,17 +292,10 @@ begin
 		save_byte_enable <= cmd_byte_enable;
 		ready_for_new    <= '0';
 		read_done	 <= false;
+		if cmd_wr = '1' then
+		    data_ready_delay(0) <= '1';
+		end if;
 	    end if;
-
-	    ----------------------------------------------------------------------------
-	    -- update shift registers used to choose when to present data to/from memory
-	    ----------------------------------------------------------------------------
-	    if data_ready_delay(0) = '1' then
-		read_done <= true;
-	    end if;
-	    data_ready_delay <= '0' & data_ready_delay(data_ready_delay'high downto 1);
-	    iob_dqm <= dqm_sr(1 downto 0);
-	    dqm_sr <= "11" & dqm_sr(dqm_sr'high downto 2);
 
 	    case state is 
 	    when s_startup =>
