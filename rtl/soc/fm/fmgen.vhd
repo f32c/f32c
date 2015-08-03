@@ -59,7 +59,6 @@ begin
 		if R_pcm_ac > 0 then
 		    R_pcm_avg <= R_pcm_avg + 1;
 		elsif R_pcm_ac < 0 then
-		else
 		    R_pcm_avg <= R_pcm_avg - 1;
 		end if;
 	    end if;
