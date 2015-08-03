@@ -130,7 +130,7 @@ architecture Behavioral of glue_bram is
 
     -- SDRAM
     signal from_sdram: std_logic_vector(31 downto 0);
-    signal sdram_enable, sdram_idle, sdram_data_ready: std_logic;
+    signal sdram_enable, sdram_data_ready: std_logic;
 
     -- Timer
     signal from_timer: std_logic_vector(31 downto 0);
@@ -231,11 +231,7 @@ begin
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
     imem_data_ready <= '1';
-    dmem_data_ready <=
-      sdram_idle when dmem_addr(31 downto 30) = "10"
-	and dmem_write = '1'
-      else sdram_data_ready when dmem_addr(31 downto 30) = "10"
-	and dmem_write = '0'
+    dmem_data_ready <= sdram_data_ready when dmem_addr(31 downto 30) = "10"
       else '1'; -- I/O or BRAM have no wait states
 
     -- SDRAM
@@ -253,7 +249,7 @@ begin
     port map (
 	clk => clk, reset => sio_break_internal(0),
 	-- internal connections
-	cmd_ready => sdram_idle, cmd_enable => sdram_enable,
+	cmd_enable => sdram_enable,
 	cmd_wr => dmem_write, cmd_byte_enable => dmem_byte_sel,
 	cmd_address => dmem_addr(C_sdram_address_width downto 2), cmd_data_in => cpu_to_dmem,
 	data_out => from_sdram, data_out_ready => sdram_data_ready,
