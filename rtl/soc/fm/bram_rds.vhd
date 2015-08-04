@@ -83,7 +83,7 @@ begin
 
     process(clk)
     begin
-	if falling_edge(clk) then
+	if rising_edge(clk) then
 	    if dmem_byte_sel(0) = '1' and write_enable then
 		bram_0(conv_integer(dmem_addr)) <= dmem_data_in(7 downto 0);
 	    end if;
