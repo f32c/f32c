@@ -193,7 +193,6 @@ architecture Behavioral of glue_bram is
 
     -- PID
     constant iomap_pid: T_iomap_range := (x"FD80", x"FDBF");
-    signal pid_range: std_logic := '0';
     constant C_pid: boolean := C_pids >= 2; -- minimum is 2 PIDs, otherwise no PID
     signal from_pid: std_logic_vector(31 downto 0);
     signal pid_ce: std_logic;
@@ -549,7 +548,7 @@ begin
     G_fmrds:
     if C_fmrds generate
 
-    old_unglued_rdsfm: if true generate -- old, unglued stuff
+    old_unglued_rdsfm: if false generate -- old, unglued stuff
     rds_modulator: entity work.rds
     generic map (
       -- multiply/divide to produce 1.824 MHz clock
@@ -564,7 +563,6 @@ begin
       c_rds_msg_len => C_rds_msg_len
     )
     port map (
-      --clk => clk_25MHz, -- RDS and PCM processing clock 25 MHz
       clk => clk, -- RDS and PCM processing clock 81.25 MHz
       addr => rds_addr,
       data => rds_data,
@@ -578,7 +576,6 @@ begin
       c_fdds => real(C_fmdds_hz)
     )
     port map (
-      -- clk_pcm => clk_25MHz, -- PCM processing clock 25 MHz
       clk_pcm => clk, -- PCM processing clock 81.25 MHz
       clk_dds => clk_fmdds, -- DDS clock 325 MHz
       cw_freq => std_logic_vector(to_unsigned(C_fm_cw_hz,32)), -- Hz FM carrier wave frequency, e.g. 108000000
@@ -606,7 +603,7 @@ begin
     );
     end generate; -- end old, unglued stuff
 
-    new_glued_rdsfm: if false generate -- new, glued stuff
+    new_glued_rdsfm: if true generate -- new, glued stuff
     fm_tx: entity work.fm
     generic map (
       c_fmdds_hz => 325000000, -- Hz FMDDS clock frequency 
@@ -627,8 +624,8 @@ begin
       ce => fmrds_ce, addr => dmem_addr(3 downto 2),
       bus_write => dmem_write, byte_sel => dmem_byte_sel,
       bus_in => cpu_to_dmem, bus_out => from_fmrds,
---      pcm_in_left => (others => '0'),
---      pcm_in_right => (others => '0'),
+      pcm_in_left => (others => '0'),
+      pcm_in_right => (others => '0'),
 --      debug => from_fmrds,
       fm_antenna => fm_antenna
     );

@@ -185,6 +185,26 @@ architecture Behavioral of glue is
     -- CPU reset control
     signal R_cpu_reset: std_logic_vector(15 downto 0) := x"fffe";
 
+    -- io base
+    type T_iomap_range is array(0 to 1) of std_logic_vector(15 downto 0);
+    constant iomap_range: T_iomap_range := (x"F800", x"FFFF"); -- actual range is 0xFFFFF800 .. 0xFFFFFFFF
+
+    function iomap_from(r: T_iomap_range; base: T_iomap_range) return integer is
+       variable a, b: std_logic_vector(15 downto 0);
+    begin
+       a := r(0);
+       b := base(0);
+       return conv_integer(a(11 downto 4) - b(11 downto 4));
+    end iomap_from;
+
+    function iomap_to(r: T_iomap_range; base: T_iomap_range) return integer is
+       variable a, b: std_logic_vector(15 downto 0);
+    begin
+       a := r(1);
+       b := base(0);
+       return conv_integer(a(11 downto 4) - b(11 downto 4));
+    end iomap_to;
+
     -- Video framebuffer
     signal R_fb_intr: std_logic;
     signal video_dac: std_logic_vector(3 downto 0);
@@ -200,7 +220,8 @@ architecture Behavioral of glue is
     signal pcm_bus_l, pcm_bus_r: signed(15 downto 0);
 
     -- FM/RDS RADIO
-    signal pcm_signed_l, pcm_signed_r: signed(15 downto 0);
+    constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
+    signal fmrds_ce: std_logic;
     signal rds_pcm: signed(15 downto 0);
     signal rds_addr: std_logic_vector(8 downto 0);
     signal rds_data: std_logic_vector(7 downto 0);
@@ -212,7 +233,11 @@ architecture Behavioral of glue is
     signal R_dds, R_dds_fast, R_dds_acc: std_logic_vector(31 downto 0);
     signal R_dds_enable: std_logic;
 
+    -- serial I/O (RS232)
+    constant iomap_sio: T_iomap_range := (x"FB00", x"FB3F");
+
     -- GPIO
+    constant iomap_gpio: T_iomap_range := (x"F800", x"F87F");
     signal from_gpio: std_logic_vector(31 downto 0);
     signal gpio_ce: std_logic;
     signal gpio_intr: std_logic;
@@ -232,6 +257,7 @@ architecture Behavioral of glue is
     signal gpio_j2_13: std_logic;
 
     -- Timer
+    constant iomap_timer: T_iomap_range := (x"F900", x"F93F");
     signal from_timer: std_logic_vector(31 downto 0);
     signal timer_ce: std_logic;
     signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
@@ -239,6 +265,7 @@ architecture Behavioral of glue is
     signal timer_intr: std_logic;
     
     -- PID
+    constant iomap_pid: T_iomap_range := (x"FD80", x"FDBF");
     signal from_pid: std_logic_vector(31 downto 0);
     signal pid_ce: std_logic;
     signal pid_intr: std_logic; -- currently unused
@@ -515,62 +542,62 @@ begin
     process(io_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard,
       from_gpio, from_timer)
     begin
-	case io_addr(11 downto 4) is
-	when x"00" | x"01" =>
+	case conv_integer(io_addr(11 downto 4)) is
+	when iomap_from(iomap_gpio, iomap_range) to iomap_to(iomap_gpio, iomap_range) =>
 	    if C_gpio then
 		io_to_cpu <= from_gpio;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;	
-	when x"10" | x"11" | x"12" | x"13"  =>
+	when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range)  =>
 	    if C_timer then
 		io_to_cpu <= from_timer;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"30"  =>
+	when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range)  =>
 	    if C_sio then
 		io_to_cpu <= from_sio;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"58" | x"59" | x"5A" | x"5B" => -- address 0xFFFFFD80
+	when  iomap_from(iomap_pid, iomap_range) to iomap_to(iomap_pid, iomap_range) => -- address 0xFFFFFD80
 	    if C_pid then
 		io_to_cpu <= from_pid;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"34"  =>
+	when conv_integer(x"34")  =>
 	    if C_flash then
 		io_to_cpu <= from_flash;
             else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"35"  =>
+	when conv_integer(x"35")  =>
 	    if C_sdcard then
 		io_to_cpu <= from_sdcard;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"3A"  =>
+	when conv_integer(x"3A")  =>
 	    if C_pcm then
 		io_to_cpu <= from_pcm;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"40"  =>
+	when iomap_from(iomap_fmrds, iomap_range) to iomap_to(iomap_fmrds, iomap_range)  =>
 	    if C_fmrds then
 		io_to_cpu <= from_fmrds;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"70"  =>
+	when conv_integer(x"70")  =>
 	    if C_leds_btns then
 		io_to_cpu <="------------" & R_sw & "-----------" & R_btns;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when x"71"  =>
+	when conv_integer(x"71")  =>
 	    if C_leds_btns then
 		io_to_cpu <="------------------------" & R_led;
 	    else
@@ -805,9 +832,9 @@ begin
     -- FM/RDS
     G_fmrds:
     if C_fmrds generate
+
+    unglued_fmrds: if false generate
     -- FM considers PCM signals as signed 16 bit values
-    pcm_signed_l <= pcm_bus_l;
-    pcm_signed_r <= pcm_bus_r;
     rds_modulator: entity work.rds
     generic map (
       -- settings for 25 MHz clock
@@ -824,8 +851,8 @@ begin
       clk => clk, -- RDS and PCM processing clock 81.25 MHz
       addr => rds_addr,
       data => rds_data,
-      pcm_in_left => pcm_signed_l,
-      pcm_in_right => pcm_signed_r,
+      pcm_in_left => pcm_bus_l,
+      pcm_in_right => pcm_bus_r,
       pcm_out => rds_pcm
     );
     fm_modulator: entity work.fmgen
@@ -856,7 +883,33 @@ begin
 	dmem_byte_sel => dmem_byte_sel(0), dmem_addr => dmem_addr(0)(10 downto 2),
 	dmem_data_out => open, dmem_data_in => cpu_to_dmem(0)(7 downto 0)
     );
-    end generate;
+    end generate; -- unglued
+
+    glued_fmrds: if true generate
+    fm_tx: entity work.fm
+    generic map (
+      c_fmdds_hz => 325000000, -- Hz FMDDS clock frequency
+      -- multiply/divide to produce 1.824 MHz clock
+      c_rds_clock_multiply => C_rds_clock_multiply,
+      c_rds_clock_divide => C_rds_clock_divide,
+      c_rds_msg_len => C_rds_msg_len
+    )
+    port map (
+      clk => clk, -- RDS and PCM processing clock 81.25 MHz
+      clk_fmdds => clk_325m, -- DDS clock
+      ce => fmrds_ce, addr => io_addr(3 downto 2),
+      bus_write => io_write, byte_sel => io_byte_sel,
+      bus_in => cpu_to_io, bus_out => from_fmrds,
+      pcm_in_left => pcm_bus_l,
+      pcm_in_right => pcm_bus_r,
+      fm_antenna => fm_antenna
+    );
+    with conv_integer(io_addr(11 downto 4)) select
+      fmrds_ce <= io_addr_strobe(R_cur_io_port)
+                    when iomap_from(iomap_fmrds, iomap_range) to iomap_to(iomap_fmrds, iomap_range),
+                '0' when others;
+    end generate; -- glued
+    end generate; -- fm/rds general
 
     --
     -- GPIO
