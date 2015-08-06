@@ -210,12 +210,13 @@ architecture Behavioral of glue_bram is
     signal video_bram_write: std_logic;
 
     -- FM/RDS RADIO
-    constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC03");
+    constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
     signal rds_pcm: signed(15 downto 0);
     signal rds_addr: std_logic_vector(8 downto 0);
     signal rds_data: std_logic_vector(7 downto 0);
     signal rds_bram_write: std_logic;
     signal from_fmrds: std_logic_vector(31 downto 0);
+    signal fmrds_ce: std_logic;
 
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
@@ -547,6 +548,8 @@ begin
     -- FM/RDS
     G_fmrds:
     if C_fmrds generate
+
+    old_unglued_rdsfm: if true generate -- old, unglued stuff
     rds_modulator: entity work.rds
     generic map (
       -- multiply/divide to produce 1.824 MHz clock
@@ -601,6 +604,38 @@ begin
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr(10 downto 2),
 	dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
     );
+    end generate; -- end old, unglued stuff
+
+    new_glued_rdsfm: if false generate -- new, glued stuff
+    fm_tx: entity work.fm
+    generic map (
+      c_fmdds_hz => 325000000, -- Hz FMDDS clock frequency 
+      -- multiply/divide to produce 1.824 MHz clock
+      c_rds_clock_multiply => C_rds_clock_multiply,
+      c_rds_clock_divide => C_rds_clock_divide,
+      -- example settings for 25 MHz clock
+      -- c_rds_clock_multiply => 228,
+      -- c_rds_clock_divide => 3125,
+      -- settings for super slow (100Hz debug) clock
+      -- c_rds_clock_multiply => 1,
+      -- c_rds_clock_divide => 812500,
+      c_rds_msg_len => C_rds_msg_len
+    )
+    port map (
+      clk => clk, -- RDS and PCM processing clock 81.25 MHz
+      clk_fmdds => clk_fmdds,
+      ce => fmrds_ce, addr => dmem_addr(3 downto 2),
+      bus_write => dmem_write, byte_sel => dmem_byte_sel,
+      bus_in => cpu_to_dmem, bus_out => from_fmrds,
+--      pcm_in_left => (others => '0'),
+--      pcm_in_right => (others => '0'),
+--      debug => from_fmrds,
+      fm_antenna => fm_antenna
+    );
+    with conv_integer(io_addr(11 downto 4)) select
+      fmrds_ce <= io_addr_strobe when iomap_from(iomap_fmrds, iomap_range) to iomap_to(iomap_fmrds, iomap_range),
+                           '0' when others;
+    end generate; -- end new glued stuff
     end generate;
 
     -- Block RAM
