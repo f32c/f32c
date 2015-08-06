@@ -108,6 +108,9 @@
         <Source name="../../../soc/pid/rotary_decoder_v.v" type="Verilog" type_short="Verilog">
             <Options/>
         </Source>
+        <Source name="../../../soc/fm/fm.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../soc/fm/rds.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
