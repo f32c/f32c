@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2015 Davor Jadrijevic
+-- Copyright (c) Davor Jadrijevic
 -- All rights reserved.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@ use ieee.numeric_std.all; -- we need signed type from here
 
 entity fm is
     generic (
-        C_fm_stereo: boolean := false;
+        C_stereo: boolean := false;
         C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
         C_fmdds_hz: integer;           -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
         C_rds_clock_multiply: integer; -- multiply and divide from cpu clk 81.25 MHz
@@ -52,6 +52,7 @@ entity fm is
 	bus_out: out std_logic_vector(31 downto 0);
 	fm_irq: out std_logic; -- interrupt request line (active level high)
 	clk_fmdds: in std_logic; -- DDS clock, must be > 2x max cw_freq, normally > 216 MHz
+	pcm_in_left, pcm_in_right: signed(15 downto 0) := (others => '0'); -- PCM audio input
 	fm_antenna: out std_logic -- pyhsical output
     );
 end fm;
@@ -74,11 +75,14 @@ architecture arch of fm is
     constant C_rds_addr:   integer   := 2; -- output: address currently being sent by RDS
 
     -- FM/RDS RADIO
-    signal rds_pcm: signed(15 downto 0);
-    signal rds_addr: std_logic_vector(8 downto 0);
-    signal rds_data: std_logic_vector(7 downto 0);
-    signal rds_bram_write: std_logic := '0';
-    signal from_fmrds: std_logic_vector(31 downto 0);
+    signal rds_pcm: signed(15 downto 0); -- modulated PCM with audio and RDS
+    signal rds_addr: std_logic_vector(8 downto 0); -- RDS modulator reads BRAM from this addr during transmission
+    signal rds_data: std_logic_vector(7 downto 0); -- BRAM returns value to RDS for transmission
+    signal rds_bram_write: std_logic; -- decoded address -> write signal for BRAM
+    signal R_rds_bram_write: std_logic := '0'; -- 1 clock delayed write signal to offload timing constraints
+    signal from_fmrds: std_logic_vector(31 downto 0); -- debugging for subcarrier phase, not used
+
+    signal R_rds_addr: std_logic_vector(8 downto 0) := (others => '0'); -- circular RDS write address register
 
 begin
     -- CPU core reads registers
@@ -86,46 +90,46 @@ begin
       bus_out <= 
         ext(rds_addr, 32)
           when C_rds_addr,
-        ext(R(conv_integer(addr)),32)
+        ext(R(conv_integer(addr)), 32)
           when others;
 
     -- CPU core writes registers
-    -- and edge interrupt flags handling
-    -- interrupt flags can be written only 0, writing 1 is nop -> logical and
     writereg_intrflags: for i in 0 to C_bits/8-1 generate
       process(clk)
       begin
         if rising_edge(clk) then
-          if byte_sel(i) = '1' then
-            if ce = '1' and bus_write = '1' then
---              if conv_integer(addr) = C_rising_if
---              or conv_integer(addr) = C_falling_if
---              then -- logical and for interrupt flag registers
---                R(conv_integer(addr))(8*i+7 downto 8*i) <= -- only can clear intr. flag, never set
---                R(conv_integer(addr))(8*i+7 downto 8*i) and bus_in(8*i+7 downto 8*i);
---              else -- normal write for every other register
-                R(conv_integer(addr))(8*i+7 downto 8*i) <=  bus_in(8*i+7 downto 8*i);
---              end if;
---            else
---              R(C_rising_if)(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
---              R(C_rising_if)(8*i+7 downto 8*i) or R_rising_edge(8*i+7 downto 8*i);
---              R(C_falling_if)(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
---              R(C_falling_if)(8*i+7 downto 8*i) or R_falling_edge(8*i+7 downto 8*i);
-            end if;
+          if byte_sel(i) = '1' and ce = '1' and bus_write = '1' then
+            R(conv_integer(addr))(8*i+7 downto 8*i) <=  bus_in(8*i+7 downto 8*i);
           end if;
         end if;
       end process;
     end generate;
 
-    -- todo join all interrupt request(s) into one bit
-    -- stuff copied from gpio
---    fm_irq <= '1' when
---                    (  ( R(C_rising_ie)  and R(C_rising_if)  )
---                    or ( R(C_falling_ie) and R(C_falling_if) )
---                    ) /= ext("0",C_bits) else '0';
+    -- write to circular RDS memory
+    rds_bram_write <= '1'
+                 when byte_sel(0) = '1'
+                  and ce = '1'
+                  and bus_write = '1'
+                  and conv_integer(addr) = C_rds_data
+                 else '0';
+
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        R_rds_bram_write <= rds_bram_write;
+        if R_rds_bram_write = '1' then
+          if conv_integer(R_rds_addr) = C_rds_msg_len-1 then -- wraparound RDS message size
+            R_rds_addr <= (others => '0'); -- reset address (wraparound)
+          else
+            R_rds_addr <= R_rds_addr + 1; -- next address
+          end if;
+        end if;
+      end if;
+    end process;
 
     rds_modulator: entity work.rds
     generic map (
+      c_stereo => C_stereo,
       -- multiply/divide to produce 1.824 MHz clock
       c_rds_clock_multiply => C_rds_clock_multiply,
       c_rds_clock_divide => C_rds_clock_divide,
@@ -141,8 +145,8 @@ begin
       clk => clk, -- RDS and PCM processing clock, same as CPU clock
       addr => rds_addr,
       data => rds_data,
-      pcm_in_left => (others => '0'),
-      pcm_in_right => (others => '0'),
+      pcm_in_left => pcm_in_left,
+      pcm_in_right => pcm_in_left,
       debug => from_fmrds,
       pcm_out => rds_pcm
     );
@@ -154,31 +158,26 @@ begin
       clk_pcm => clk, -- PCM processing clock, same as CPU clock
       clk_dds => clk_fmdds, -- DDS clock must be > 2x cw_freq 
       cw_freq => R(C_cw_freq), -- Hz FM carrier wave frequency, e.g. 107900000
-      -- cw_freq => 107900000, -- Hz FM carrier wave frequency, e.g. 107900000
       pcm_in => rds_pcm,
       fm_out => fm_antenna
     );
-    -- note: RDS bram occupies 260 32-bit words.
-    -- from each word only lower 8 bits (byte) is used
-    -- this doesn't fit to I/O address space 0xFFFFF800
-    -- so we extend the address decoding to place RDS
-    -- memory at 0xFFFFF000, by comparing just one additional bit
-    -- dmem_addr(11) = '0'
---    rds_bram_write <=
---      dmem_addr_strobe and dmem_write
---      when dmem_addr(31 downto 30) = "11" and dmem_addr(11) = '0'
---      else '0';
+
     rdsbram: entity work.bram_rds
     port map (
 	clk => clk,
 	imem_addr => rds_addr,
 	imem_data_out => rds_data,
-	dmem_write => rds_bram_write,
-	dmem_byte_sel => (others => '0'), dmem_addr => (others => '0'),
-	dmem_data_out => open, dmem_data_in => (others => '0')
---	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr(10 downto 2),
---	dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
+	dmem_write => R_rds_bram_write,
+	dmem_byte_sel => x"1", dmem_addr => R_rds_addr,
+	dmem_data_out => open, dmem_data_in => R(C_rds_data)(7 downto 0)
     );
 
 end;
 -- todo:
+-- [ ] on/off RDS
+-- [ ] register to set number of RDS message bytes
+-- [ ] interrupt
+-- [ ] reading R(C_rds_data), like writing should increment R_rds_addr
+-- [ ] writing R(C_cw_freq) should reset R_rds_addr
+-- [ ] reading from circular memory
+-- [ ] complete readback optional
