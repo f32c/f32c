@@ -832,60 +832,6 @@ begin
     -- FM/RDS
     G_fmrds:
     if C_fmrds generate
-
-    unglued_fmrds: if false generate
-    -- FM considers PCM signals as signed 16 bit values
-    rds_modulator: entity work.rds
-    generic map (
-      -- settings for 25 MHz clock
-      --c_rds_clock_multiply => 228,
-      --c_rds_clock_divide => 3125,
-      -- settings for 81.25 MHz clock
-      c_stereo => C_fm_stereo,
-      c_rds_clock_multiply => C_rds_clock_multiply,
-      c_rds_clock_divide => C_rds_clock_divide
-    )
-    port map (
-      --clk => clk_25MHz, -- RDS and PCM processing clock 25 MHz
-      clk => clk, -- RDS and PCM processing clock 81.25 MHz
-      rds_msg_len => std_logic_vector(to_unsigned(C_rds_msg_len, 9)),
-      addr => rds_addr,
-      data => rds_data,
-      pcm_in_left => pcm_bus_l,
-      pcm_in_right => pcm_bus_r,
-      pcm_out => rds_pcm
-    );
-    fm_modulator: entity work.fmgen
-    generic map (
-      c_fdds => real(C_fmdds_hz)
-    )
-    port map (
-      -- clk_pcm => clk_25MHz, -- PCM processing clock 25 MHz
-      clk_pcm => clk, -- PCM processing clock 81.25 MHz
-      clk_dds => clk_325m, -- DDS clock 325 MHz
-      cw_freq => std_logic_vector(to_unsigned(C_fm_cw_hz,32)),
-      pcm_in => rds_pcm,
-      fm_out => fm_antenna
-    );
-    from_fmrds(8 downto 0) <= rds_addr; -- index of byte currently transmitter
-    from_fmrds(31 downto 9) <= (others => '0');
-    -- RDS bram at 0xFFFFF000 .. 0xFFFFF7FF (data in LSB byte of 32-bit words)
-    rds_bram_write <=
-      dmem_addr_strobe(0) and dmem_write(0) 
-        when dmem_addr(0)(31 downto 28) = x"F" and dmem_addr(0)(11) = '0'
-        else '0';
-    rdsbram: entity work.bram_rds
-    port map (
-	clk => clk,
-	imem_addr => rds_addr,
-	imem_data_out => rds_data,
-	dmem_write => rds_bram_write,
-	dmem_byte_sel => dmem_byte_sel(0), dmem_addr => dmem_addr(0)(10 downto 2),
-	dmem_data_out => open, dmem_data_in => cpu_to_dmem(0)(7 downto 0)
-    );
-    end generate; -- unglued
-
-    glued_fmrds: if true generate
     fm_tx: entity work.fm
     generic map (
       c_fmdds_hz => 325000000, -- Hz FMDDS clock frequency
@@ -895,7 +841,7 @@ begin
     )
     port map (
       clk => clk, -- RDS and PCM processing clock 81.25 MHz
-      clk_fmdds => clk_325m, -- DDS clock
+      clk_fmdds => clk_325m, -- DDS clock 325 MHz
       ce => fmrds_ce, addr => io_addr(3 downto 2),
       bus_write => io_write, byte_sel => io_byte_sel,
       bus_in => cpu_to_io, bus_out => from_fmrds,
@@ -907,8 +853,7 @@ begin
       fmrds_ce <= io_addr_strobe(R_cur_io_port)
                     when iomap_from(iomap_fmrds, iomap_range) to iomap_to(iomap_fmrds, iomap_range),
                 '0' when others;
-    end generate; -- glued
-    end generate; -- fm/rds general
+    end generate; -- end fm/rds
 
     --
     -- GPIO

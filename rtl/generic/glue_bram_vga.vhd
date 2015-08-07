@@ -547,63 +547,6 @@ begin
     -- FM/RDS
     G_fmrds:
     if C_fmrds generate
-
-    old_unglued_rdsfm: if false generate -- old, unglued stuff
-    rds_modulator: entity work.rds
-    generic map (
-      -- multiply/divide to produce 1.824 MHz clock
-      c_rds_clock_multiply => C_rds_clock_multiply,
-      c_rds_clock_divide => C_rds_clock_divide
-      -- example settings for 25 MHz clock
-      -- c_rds_clock_multiply => 228,
-      -- c_rds_clock_divide => 3125,
-      -- settings for super slow (100Hz debug) clock
-      -- c_rds_clock_multiply => 1,
-      -- c_rds_clock_divide => 812500,
-    )
-    port map (
-      clk => clk, -- RDS and PCM processing clock 81.25 MHz
-      rds_msg_len => to_unsigned(C_rds_msg_len-1),
-      addr => rds_addr,
-      data => rds_data,
-      pcm_in_left => (others => '0'),
-      pcm_in_right => (others => '0'),
-      debug => from_fmrds,
-      pcm_out => rds_pcm
-    );
-    fm_modulator: entity work.fmgen
-    generic map (
-      c_fdds => real(C_fmdds_hz)
-    )
-    port map (
-      clk_pcm => clk, -- PCM processing clock 81.25 MHz
-      clk_dds => clk_fmdds, -- DDS clock 325 MHz
-      cw_freq => std_logic_vector(to_unsigned(C_fm_cw_hz,32)), -- Hz FM carrier wave frequency, e.g. 108000000
-      pcm_in => rds_pcm,
-      fm_out => fm_antenna
-    );
-    -- note: RDS bram occupies 260 32-bit words.
-    -- from each word only lower 8 bits (byte) is used
-    -- this doesn't fit to I/O address space 0xFFFFF800
-    -- so we extend the address decoding to place RDS
-    -- memory at 0xFFFFF000, by comparing just one additional bit
-    -- dmem_addr(11) = '0'
-    rds_bram_write <=
-      dmem_addr_strobe and dmem_write
-      when dmem_addr(31 downto 30) = "11" and dmem_addr(11) = '0'
-      else '0';
-    rdsbram: entity work.bram_rds
-    port map (
-	clk => clk,
-	imem_addr => rds_addr,
-	imem_data_out => rds_data,
-	dmem_write => rds_bram_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr(10 downto 2),
-	dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
-    );
-    end generate; -- end old, unglued stuff
-
-    new_glued_rdsfm: if true generate -- new, glued stuff
     fm_tx: entity work.fm
     generic map (
       c_fmdds_hz => 325000000, -- Hz FMDDS clock frequency 
@@ -631,7 +574,6 @@ begin
     with conv_integer(io_addr(11 downto 4)) select
       fmrds_ce <= io_addr_strobe when iomap_from(iomap_fmrds, iomap_range) to iomap_to(iomap_fmrds, iomap_range),
                            '0' when others;
-    end generate; -- end new glued stuff
     end generate;
 
     -- Block RAM
