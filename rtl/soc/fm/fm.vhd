@@ -113,17 +113,11 @@ begin
                   and conv_integer(addr) = C_rds_data
                  else '0';
 
+    -- RAM write delay 1 clock cycle
     process(clk)
     begin
       if rising_edge(clk) then
         R_rds_bram_write <= rds_bram_write;
---        if R_rds_bram_write = '1' then
---          if conv_integer(R_rds_addr) = C_rds_msg_len-1 then -- wraparound RDS message size
---            R_rds_addr <= (others => '0'); -- reset address (wraparound)
---          else
---            R_rds_addr <= R_rds_addr + 1; -- next address
---          end if;
---        end if;
       end if;
     end process;
 
@@ -168,7 +162,7 @@ begin
 	imem_addr => rds_addr,
 	imem_data_out => rds_data,
 	dmem_write => R_rds_bram_write,
-	dmem_byte_sel => x"1", dmem_addr => R(C_rds_data)(24 downto 16),
+	dmem_addr => R(C_rds_data)(24 downto 16),
 	dmem_data_out => open, dmem_data_in => R(C_rds_data)(7 downto 0)
     );
 
