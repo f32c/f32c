@@ -843,12 +843,12 @@ begin
       -- settings for 81.25 MHz clock
       c_stereo => C_fm_stereo,
       c_rds_clock_multiply => C_rds_clock_multiply,
-      c_rds_clock_divide => C_rds_clock_divide,
-      c_rds_msg_len => C_rds_msg_len
+      c_rds_clock_divide => C_rds_clock_divide
     )
     port map (
       --clk => clk_25MHz, -- RDS and PCM processing clock 25 MHz
       clk => clk, -- RDS and PCM processing clock 81.25 MHz
+      rds_msg_len => std_logic_vector(to_unsigned(C_rds_msg_len, 9)),
       addr => rds_addr,
       data => rds_data,
       pcm_in_left => pcm_bus_l,
@@ -891,8 +891,7 @@ begin
       c_fmdds_hz => 325000000, -- Hz FMDDS clock frequency
       -- multiply/divide to produce 1.824 MHz clock
       c_rds_clock_multiply => C_rds_clock_multiply,
-      c_rds_clock_divide => C_rds_clock_divide,
-      c_rds_msg_len => C_rds_msg_len
+      c_rds_clock_divide => C_rds_clock_divide
     )
     port map (
       clk => clk, -- RDS and PCM processing clock 81.25 MHz

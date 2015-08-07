@@ -52,13 +52,13 @@ entity fm is
 	bus_out: out std_logic_vector(31 downto 0);
 	fm_irq: out std_logic; -- interrupt request line (active level high)
 	clk_fmdds: in std_logic; -- DDS clock, must be > 2x max cw_freq, normally > 216 MHz
-	pcm_in_left, pcm_in_right: signed(15 downto 0) := (others => '0'); -- PCM audio input
+	pcm_in_left, pcm_in_right: in signed(15 downto 0) := (others => '0'); -- PCM audio input
 	fm_antenna: out std_logic -- pyhsical output
     );
 end fm;
 
 architecture arch of fm is
-    constant C_registers: integer := 2; -- # of registers with memory <= (less or equal of) # of all registers
+    constant C_registers: integer := 3; -- # of registers with memory <= (less or equal of) # of all registers
     constant C_bits: integer := 32;     -- don't touch, default bit size of memory registers
 
     -- normal registers
@@ -72,7 +72,7 @@ architecture arch of fm is
     -- and provides flexible register (re)numbering
     constant C_cw_freq:    integer   := 0; -- input: 32-bit set cw frequency, writing resets rds_addr
     constant C_rds_data:   integer   := 1; -- input:  8-bit RDS data sent in circular C_rds_msg_len
-    constant C_rds_addr:   integer   := 2; -- output: address currently being sent by RDS
+    constant C_rds_addr:   integer   := 2; -- output: address currently being sent by RDS, input: address of wraparound
 
     -- FM/RDS RADIO
     signal rds_pcm: signed(15 downto 0); -- modulated PCM with audio and RDS
@@ -117,19 +117,18 @@ begin
     begin
       if rising_edge(clk) then
         R_rds_bram_write <= rds_bram_write;
-        if R_rds_bram_write = '1' then
-          if conv_integer(R_rds_addr) = C_rds_msg_len-1 then -- wraparound RDS message size
-            R_rds_addr <= (others => '0'); -- reset address (wraparound)
-          else
-            R_rds_addr <= R_rds_addr + 1; -- next address
-          end if;
-        end if;
+--        if R_rds_bram_write = '1' then
+--          if conv_integer(R_rds_addr) = C_rds_msg_len-1 then -- wraparound RDS message size
+--            R_rds_addr <= (others => '0'); -- reset address (wraparound)
+--          else
+--            R_rds_addr <= R_rds_addr + 1; -- next address
+--          end if;
+--        end if;
       end if;
     end process;
 
     rds_modulator: entity work.rds
     generic map (
-      c_stereo => C_stereo,
       -- multiply/divide to produce 1.824 MHz clock
       c_rds_clock_multiply => C_rds_clock_multiply,
       c_rds_clock_divide => C_rds_clock_divide,
@@ -139,10 +138,11 @@ begin
       -- settings for super slow (100Hz debug) clock
       -- c_rds_clock_multiply => 1,
       -- c_rds_clock_divide => 812500,
-      c_rds_msg_len => C_rds_msg_len
+      c_stereo => C_stereo
     )
     port map (
       clk => clk, -- RDS and PCM processing clock, same as CPU clock
+      rds_msg_len => R(C_rds_addr)(8 downto 0),
       addr => rds_addr,
       data => rds_data,
       pcm_in_left => pcm_in_left,
@@ -168,11 +168,19 @@ begin
 	imem_addr => rds_addr,
 	imem_data_out => rds_data,
 	dmem_write => R_rds_bram_write,
-	dmem_byte_sel => x"1", dmem_addr => R_rds_addr,
+	dmem_byte_sel => x"1", dmem_addr => R(C_rds_data)(24 downto 16),
 	dmem_data_out => open, dmem_data_in => R(C_rds_data)(7 downto 0)
     );
 
 end;
+-- registers:
+-- 0: 32-bit CW frequency (write only)
+-- 1: rds data (write only)
+--    byte 0:    8-bit address data to write
+--    byte 2-3: 11-bit address where to write
+-- 2: byte 0-1: 11-bit address of current byte send (read)
+--    byte 0-1: 11-bit RDS message length, address wraparound (write)
+
 -- todo:
 -- [ ] on/off RDS
 -- [ ] register to set number of RDS message bytes

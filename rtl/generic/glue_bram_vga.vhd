@@ -553,17 +553,17 @@ begin
     generic map (
       -- multiply/divide to produce 1.824 MHz clock
       c_rds_clock_multiply => C_rds_clock_multiply,
-      c_rds_clock_divide => C_rds_clock_divide,
+      c_rds_clock_divide => C_rds_clock_divide
       -- example settings for 25 MHz clock
       -- c_rds_clock_multiply => 228,
       -- c_rds_clock_divide => 3125,
       -- settings for super slow (100Hz debug) clock
       -- c_rds_clock_multiply => 1,
       -- c_rds_clock_divide => 812500,
-      c_rds_msg_len => C_rds_msg_len
     )
     port map (
       clk => clk, -- RDS and PCM processing clock 81.25 MHz
+      rds_msg_len => to_unsigned(C_rds_msg_len-1),
       addr => rds_addr,
       data => rds_data,
       pcm_in_left => (others => '0'),
@@ -609,14 +609,13 @@ begin
       c_fmdds_hz => 325000000, -- Hz FMDDS clock frequency 
       -- multiply/divide to produce 1.824 MHz clock
       c_rds_clock_multiply => C_rds_clock_multiply,
-      c_rds_clock_divide => C_rds_clock_divide,
+      c_rds_clock_divide => C_rds_clock_divide
       -- example settings for 25 MHz clock
       -- c_rds_clock_multiply => 228,
-      -- c_rds_clock_divide => 3125,
+      -- c_rds_clock_divide => 3125
       -- settings for super slow (100Hz debug) clock
       -- c_rds_clock_multiply => 1,
-      -- c_rds_clock_divide => 812500,
-      c_rds_msg_len => C_rds_msg_len
+      -- c_rds_clock_divide => 812500
     )
     port map (
       clk => clk, -- RDS and PCM processing clock 81.25 MHz

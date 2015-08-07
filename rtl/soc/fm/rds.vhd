@@ -17,7 +17,7 @@ use ieee.math_real.all;
 
 entity rds is
 generic (
-    c_rds_msg_len: integer range 1 to 512 := 260; -- circlar message length in bytes
+    -- c_rds_msg_len: integer range 1 to 512 := 260; -- circlar message length in bytes
     -- we need to generate 1.824 MHz for RDS clock strobe
     -- input clock frequency * multiply / divide = 1.824 MHz
     -- example 25 MHz * 228 / 3125 = 1.824 MHz
@@ -34,6 +34,7 @@ port (
     -- system clock, RDS verified working at 25 MHz
     -- for different clock change multiply/divide
     clk: in std_logic;
+    rds_msg_len: in std_logic_vector(8 downto 0) := std_logic_vector(to_unsigned(260, 9)); -- circular message length in bytes
     addr: out std_logic_vector(8 downto 0); -- memory address 512 bytes
     data: in std_logic_vector(7 downto 0); -- memory data 8 bit
     pcm_in_left, pcm_in_right: in signed(15 downto 0); -- from tone generator
@@ -250,7 +251,7 @@ begin
                      -- for next clock cycle prepare next byte
                      -- (byte sending start at MSB bit pos 7)
                      R_rds_msg_index <= R_rds_msg_index + 1;
-                     if R_rds_msg_index >= (C_rds_msg_len-1) then
+                     if R_rds_msg_index = rds_msg_len then
                        R_rds_msg_index <= (others => '0');
                      end if;
                   end if;
@@ -350,3 +351,5 @@ begin
            & "0" & std_logic_vector(S_rds_coarse_pcm);
     end generate;
 end;
+-- todo
+-- when rds_msg_len = 0 disable RDS (only mono/stereo mixing)
