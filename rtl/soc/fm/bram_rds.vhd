@@ -43,8 +43,7 @@ entity bram_rds is
 	imem_addr: in std_logic_vector(8 downto 0);
 	imem_data_out: out std_logic_vector(7 downto 0);
 	dmem_write: in std_logic;
-	dmem_byte_sel: in std_logic_vector(3 downto 0);
-	dmem_addr: in std_logic_vector(10 downto 2);
+	dmem_addr: in std_logic_vector(8 downto 0);
 	dmem_data_in: in std_logic_vector(7 downto 0);
 	dmem_data_out: out std_logic_vector(7 downto 0)
     );
@@ -72,19 +71,15 @@ architecture x of bram_rds is
     signal ibram_0: std_logic_vector(7 downto 0);
     signal dbram_0: std_logic_vector(7 downto 0);
 
-    signal write_enable: boolean;
-
 begin
 
     dmem_data_out <= dbram_0;
     imem_data_out <= ibram_0;
 
-    write_enable <= dmem_write = '1';
-
     process(clk)
     begin
 	if rising_edge(clk) then
-	    if dmem_byte_sel(0) = '1' and write_enable then
+	    if dmem_write = '1' then
 		bram_0(conv_integer(dmem_addr)) <= dmem_data_in(7 downto 0);
 	    end if;
 	    dbram_0 <= bram_0(conv_integer(dmem_addr));
