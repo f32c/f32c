@@ -28,14 +28,15 @@ generic (
     -- true: spend more LUTs to use 32-point sinewave and multiply 
     -- false: save LUTs, use 4-point multiplexer, no multiply
     c_debug: boolean := false; -- output counters to check subcarriers phases
-    c_fine_subc: boolean := false
+    c_addr_bits: integer range 1 to 11 := 9; -- number of address bits for RDS message RAM
+    c_fine_subc: boolean := false -- use sine and multiplier for 57kHz subcarrier (not needed, saving LUTs)
 );
 port (
     -- system clock, RDS verified working at 25 MHz
     -- for different clock change multiply/divide
     clk: in std_logic;
-    rds_msg_len: in std_logic_vector(8 downto 0) := std_logic_vector(to_unsigned(260, 9)); -- circular message length in bytes
-    addr: out std_logic_vector(8 downto 0); -- memory address 512 bytes
+    rds_msg_len: in std_logic_vector(c_addr_bits-1 downto 0) := std_logic_vector(to_unsigned(260, c_addr_bits)); -- circular message length in bytes
+    addr: out std_logic_vector(c_addr_bits-1 downto 0); -- memory address
     data: in std_logic_vector(7 downto 0); -- memory data 8 bit
     pcm_in_left, pcm_in_right: in signed(15 downto 0); -- from tone generator
     debug: out std_logic_vector(31 downto 0);
@@ -77,7 +78,7 @@ architecture RTL of rds is
 
     signal R_rds_cdiv: std_logic_vector(5 downto 0); -- 6-bit divisor 0..47
     signal R_rds_pcm: signed(C_dbpsk_bits-1 downto 0); -- 7 bit ADC value for RDS waveform
-    signal R_rds_msg_index: std_logic_vector(8 downto 0); -- 9 bit index for message
+    signal R_rds_msg_index: std_logic_vector(c_addr_bits-1 downto 0); -- addr index for message
     signal R_rds_byte: std_logic_vector(7 downto 0); -- current byte to send
     signal R_rds_bit_index: std_logic_vector(2 downto 0); -- current bit index 0..7
     signal R_rds_bit: std_logic; -- current bit to send
@@ -250,9 +251,10 @@ begin
                      -- when bit index is at LSB bit pos 0
                      -- for next clock cycle prepare next byte
                      -- (byte sending start at MSB bit pos 7)
-                     R_rds_msg_index <= R_rds_msg_index + 1;
-                     if R_rds_msg_index = rds_msg_len then
+                     if R_rds_msg_index >= rds_msg_len then
                        R_rds_msg_index <= (others => '0');
+                     else
+                       R_rds_msg_index <= R_rds_msg_index + 1;
                      end if;
                   end if;
                   if R_rds_bit_index = 7 then
@@ -294,7 +296,8 @@ begin
     S_rds_pcm <= S_dbpsk_wav_value when S_rds_sign = '1'
            else -S_dbpsk_wav_value;
     -- S_rds_pcm range: (-63 .. +63)
-    S_rds_mod_pcm <= S_subc_pcm * S_rds_pcm;
+    S_rds_mod_pcm <= S_subc_pcm * S_rds_pcm when conv_integer(rds_msg_len) /= 0
+                else (others => '0');
     -- S_rds_mod_pcm range: 63*63 = (-3969 .. +3969)
     end generate;
 
@@ -309,7 +312,8 @@ begin
     S_rds_coarse_pcm <= S_dbpsk_wav_value when "11",
                        -S_dbpsk_wav_value when "01",
                         to_signed(0, S_rds_coarse_pcm'length) when others;
-    S_rds_mod_pcm <= S_rds_coarse_pcm * 64;
+    S_rds_mod_pcm <= S_rds_coarse_pcm * 64 when conv_integer(rds_msg_len) /= 0
+                else (others => '0');
     -- multiply with 2^n because it is
     -- simple, uses only bit shifting
     -- for *64: S_rds_mod_pcm range: 63*64 = (-4032 .. +4032)
@@ -322,7 +326,6 @@ begin
     -- ****************** END RDS MODULATOR **************
 
     -- output mixing audio and RDS
-
     mix_mono:  if not C_stereo generate
     -- mixing mono input audio with RDS DBPSK
     pcm_out <= pcm_in_left/2 + pcm_in_right/2 + S_rds_mod_pcm;
@@ -352,4 +355,5 @@ begin
     end generate;
 end;
 -- todo
--- when rds_msg_len = 0 disable RDS (only mono/stereo mixing)
+-- [x] when rds_msg_len = 0 disable RDS (only mono/stereo mixing)
+-- [x] compare rds with <= when size changes, it will reset if out of range

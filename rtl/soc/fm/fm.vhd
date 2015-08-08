@@ -34,11 +34,22 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 use ieee.numeric_std.all; -- we need signed type from here
+use ieee.math_real.all; -- to calculate log2 bit size
 
 entity fm is
     generic (
         C_stereo: boolean := false;
-        C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
+        C_rds_msg_len: integer range 2 to 2048 := 273; -- allocates RAM for RDS binary message
+        -- some useful values for C_rds_msg_len
+        --  13 =        1*13 (CT)
+        --  52 =        4*13 (PS)
+        -- 260 =   (16+4)*13 (PS+RT)
+        -- 273 = (16+4+1)*13 (PS+RT+CT)
+        -- PS:  4 groups, main display 8 characters
+        -- RT: 16 groups, long display 64 characters
+        -- CT:  1 group,  time information
+        -- 1 group is 13 bytes long
+        C_readable_reg: boolean := false; -- make registers readable (can work without, LUT saving)
         C_fmdds_hz: integer;           -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
         C_rds_clock_multiply: integer; -- multiply and divide from cpu clk 81.25 MHz
         C_rds_clock_divide: integer    -- to get 1.824 MHz for RDS logic
@@ -61,6 +72,8 @@ architecture arch of fm is
     constant C_registers: integer := 3; -- # of registers with memory <= (less or equal of) # of all registers
     constant C_bits: integer := 32;     -- don't touch, default bit size of memory registers
 
+    constant C_addr_bits: integer := integer(ceil((log2(real(C_rds_msg_len)))+1.0E-16));
+
     -- normal registers
     -- type fm_reg_type  is std_logic_vector(C_bits-1 downto 0);
     type fm_regs_type is array (C_registers-1 downto 0) of std_logic_vector(C_bits-1 downto 0);
@@ -76,22 +89,22 @@ architecture arch of fm is
 
     -- FM/RDS RADIO
     signal rds_pcm: signed(15 downto 0); -- modulated PCM with audio and RDS
-    signal rds_addr: std_logic_vector(8 downto 0); -- RDS modulator reads BRAM from this addr during transmission
+    signal rds_addr: std_logic_vector(C_addr_bits-1 downto 0); -- RDS modulator reads BRAM from this addr during transmission
     signal rds_data: std_logic_vector(7 downto 0); -- BRAM returns value to RDS for transmission
     signal rds_bram_write: std_logic; -- decoded address -> write signal for BRAM
     signal R_rds_bram_write: std_logic := '0'; -- 1 clock delayed write signal to offload timing constraints
     signal from_fmrds: std_logic_vector(31 downto 0); -- debugging for subcarrier phase, not used
 
-    signal R_rds_addr: std_logic_vector(8 downto 0) := (others => '0'); -- circular RDS write address register
-
 begin
     -- CPU core reads registers
+    readable_registers: if C_readable_reg generate -- LUT saving
     with conv_integer(addr) select
       bus_out <= 
         ext(rds_addr, 32)
           when C_rds_addr,
         ext(R(conv_integer(addr)), 32)
           when others;
+    end generate;
 
     -- CPU core writes registers
     writereg_intrflags: for i in 0 to C_bits/8-1 generate
@@ -123,6 +136,7 @@ begin
 
     rds_modulator: entity work.rds
     generic map (
+      c_addr_bits => C_addr_bits, -- number of address bits for RDS message RAM
       -- multiply/divide to produce 1.824 MHz clock
       c_rds_clock_multiply => C_rds_clock_multiply,
       c_rds_clock_divide => C_rds_clock_divide,
@@ -136,7 +150,7 @@ begin
     )
     port map (
       clk => clk, -- RDS and PCM processing clock, same as CPU clock
-      rds_msg_len => R(C_rds_addr)(8 downto 0),
+      rds_msg_len => R(C_rds_addr)(C_addr_bits-1 downto 0),
       addr => rds_addr,
       data => rds_data,
       pcm_in_left => pcm_in_left,
@@ -157,12 +171,16 @@ begin
     );
 
     rdsbram: entity work.bram_rds
+    generic map (
+	c_mem_bytes => C_rds_msg_len, -- allocate RAM for max message size
+        c_addr_bits => C_addr_bits -- number of address bits for RDS message RAM
+    )
     port map (
 	clk => clk,
 	imem_addr => rds_addr,
 	imem_data_out => rds_data,
 	dmem_write => R_rds_bram_write,
-	dmem_addr => R(C_rds_data)(24 downto 16),
+	dmem_addr => R(C_rds_data)(16+C_addr_bits-1 downto 16),
 	dmem_data_out => open, dmem_data_in => R(C_rds_data)(7 downto 0)
     );
 
@@ -176,10 +194,5 @@ end;
 --    byte 0-1: 11-bit RDS message length, address wraparound (write)
 
 -- todo:
--- [ ] on/off RDS
--- [ ] register to set number of RDS message bytes
 -- [ ] interrupt
--- [ ] reading R(C_rds_data), like writing should increment R_rds_addr
--- [ ] writing R(C_cw_freq) should reset R_rds_addr
 -- [ ] reading from circular memory
--- [ ] complete readback optional
