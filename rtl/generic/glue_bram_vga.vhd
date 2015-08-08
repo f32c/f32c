@@ -81,6 +81,7 @@ entity glue_bram is
 	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
 	C_vgahdmi_mem_kb: integer := 4; -- mem size of framebuffer
 	C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
+	C_fm_stereo: boolean := false;
 	C_rds_msg_len: integer := 260; -- bytes of circular sent message, typical 52 for PS or 260 PS+RT
 	C_fm_cw_hz: integer := 108000000; -- Hz FM station carrier wave frequency e.g. 108000000
         C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250000000, 325000000)
@@ -210,10 +211,6 @@ architecture Behavioral of glue_bram is
 
     -- FM/RDS RADIO
     constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
-    signal rds_pcm: signed(15 downto 0);
-    signal rds_addr: std_logic_vector(8 downto 0);
-    signal rds_data: std_logic_vector(7 downto 0);
-    signal rds_bram_write: std_logic;
     signal from_fmrds: std_logic_vector(31 downto 0);
     signal fmrds_ce: std_logic;
 
@@ -550,6 +547,8 @@ begin
     fm_tx: entity work.fm
     generic map (
       c_fmdds_hz => 325000000, -- Hz FMDDS clock frequency 
+      C_rds_msg_len => C_rds_msg_len, -- allocate RAM for RDS message
+      C_stereo => C_fm_stereo,
       -- multiply/divide to produce 1.824 MHz clock
       c_rds_clock_multiply => C_rds_clock_multiply,
       c_rds_clock_divide => C_rds_clock_divide
