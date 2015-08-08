@@ -79,6 +79,7 @@ architecture RTL of rds is
     signal R_rds_cdiv: std_logic_vector(5 downto 0); -- 6-bit divisor 0..47
     signal R_rds_pcm: signed(C_dbpsk_bits-1 downto 0); -- 7 bit ADC value for RDS waveform
     signal R_rds_msg_index: std_logic_vector(c_addr_bits-1 downto 0); -- addr index for message
+    constant C_rds_msg_disable: std_logic_vector(c_addr_bits-1 downto 0) := (others => '1'); -- message len -1 disables
     signal R_rds_byte: std_logic_vector(7 downto 0); -- current byte to send
     signal R_rds_bit_index: std_logic_vector(2 downto 0); -- current bit index 0..7
     signal R_rds_bit: std_logic; -- current bit to send
@@ -296,7 +297,7 @@ begin
     S_rds_pcm <= S_dbpsk_wav_value when S_rds_sign = '1'
            else -S_dbpsk_wav_value;
     -- S_rds_pcm range: (-63 .. +63)
-    S_rds_mod_pcm <= S_subc_pcm * S_rds_pcm when conv_integer(rds_msg_len) /= 0
+    S_rds_mod_pcm <= S_subc_pcm * S_rds_pcm when rds_msg_len /= C_rds_msg_disable
                 else (others => '0');
     -- S_rds_mod_pcm range: 63*63 = (-3969 .. +3969)
     end generate;
@@ -312,7 +313,7 @@ begin
     S_rds_coarse_pcm <= S_dbpsk_wav_value when "11",
                        -S_dbpsk_wav_value when "01",
                         to_signed(0, S_rds_coarse_pcm'length) when others;
-    S_rds_mod_pcm <= S_rds_coarse_pcm * 64 when conv_integer(rds_msg_len) /= 0
+    S_rds_mod_pcm <= S_rds_coarse_pcm * 64 when rds_msg_len /= C_rds_msg_disable
                 else (others => '0');
     -- multiply with 2^n because it is
     -- simple, uses only bit shifting
