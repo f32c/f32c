@@ -222,10 +222,6 @@ architecture Behavioral of glue is
     -- FM/RDS RADIO
     constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
     signal fmrds_ce: std_logic;
-    signal rds_pcm: signed(15 downto 0);
-    signal rds_addr: std_logic_vector(8 downto 0);
-    signal rds_data: std_logic_vector(7 downto 0);
-    signal rds_bram_write: std_logic;
     signal from_fmrds: std_logic_vector(31 downto 0); -- current address
     signal fm_antenna: std_logic;
 
@@ -835,6 +831,8 @@ begin
     fm_tx: entity work.fm
     generic map (
       c_fmdds_hz => 325000000, -- Hz FMDDS clock frequency
+      C_rds_msg_len => C_rds_msg_len, -- allocate RAM for RDS message
+      C_stereo => C_fm_stereo,
       -- multiply/divide to produce 1.824 MHz clock
       c_rds_clock_multiply => C_rds_clock_multiply,
       c_rds_clock_divide => C_rds_clock_divide
