@@ -35,26 +35,42 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use work.message.all; -- RDS message in file message.vhd
 
 entity bram_rds is
---    generic(
---        c_mem_bytes: integer := 260 -- bytes
---    );
+    generic(
+        c_mem_bytes: integer range 2 to 2048 := 260; -- bytes
+        c_addr_bits: integer range 1 to 11 := 9 -- address bits of BRAM
+    );
     port(
 	clk: in std_logic;
-	imem_addr: in std_logic_vector(8 downto 0);
+	imem_addr: in std_logic_vector(c_addr_bits-1 downto 0);
 	imem_data_out: out std_logic_vector(7 downto 0);
 	dmem_write: in std_logic;
-	dmem_addr: in std_logic_vector(8 downto 0);
+	dmem_addr: in std_logic_vector(c_addr_bits-1 downto 0);
 	dmem_data_in: in std_logic_vector(7 downto 0);
 	dmem_data_out: out std_logic_vector(7 downto 0)
     );
 end bram_rds;
 
 architecture x of bram_rds is
---    type bram_type is array(0 to (260 - 1))
---      of std_logic_vector(7 downto 0);
---    signal bram_0: bram_type;
+    type bram_type is array(0 to (c_mem_bytes - 1))
+      of std_logic_vector(7 downto 0);
 
-    signal bram_0: rds_msg_type := rds_msg_map;
+    -- function to convert initial RDS message type to bram_type
+    function init_bram(x: rds_msg_type; lmax: integer)
+      return bram_type is
+        variable i, n: integer;
+        variable y: bram_type;
+    begin
+      n := x'length;
+      if n > lmax then
+        n := lmax;
+      end if;
+      for i in 0 to n - 1 loop
+        y(i) := x(i);
+      end loop;
+      return y;
+    end init_bram;
+
+    signal bram_0: bram_type := init_bram(rds_msg_map, c_mem_bytes);
 
     -- Lattice Diamond attributes
     attribute syn_ramstyle: string;
