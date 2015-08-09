@@ -97,8 +97,10 @@ begin
 	    -- Apply volume settings: hardware multiplication
 	    -- volume should be in 16-bit signed format
 	    -- sign allows phase inversion
-	    R_pcm_data_l <= mul_l(31 downto 16);
-	    R_pcm_data_r <= mul_r(31 downto 16);
+	    -- when multiplying 2 signed 16 bit values (1 bit sign + 15 bit values)
+	    -- result is 31-bit (1 bit sign + 30 bit value)
+	    R_pcm_data_l <= mul_l(30 downto 15);
+	    R_pcm_data_r <= mul_r(30 downto 15);
 
 	    -- Write to control registers when requested
 	    if io_ce = '1' and  io_bus_write = '1' then
