@@ -83,7 +83,6 @@ entity glue_bram is
 	C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
 	C_fm_stereo: boolean := false;
 	C_rds_msg_len: integer := 260; -- bytes of circular sent message, typical 52 for PS or 260 PS+RT
-	C_fm_cw_hz: integer := 108000000; -- Hz FM station carrier wave frequency e.g. 108000000
         C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250000000, 325000000)
         C_rds_clock_multiply: integer := 912; -- multiply 912 and divide 40625 from cpu clk 81.25 MHz
         C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
