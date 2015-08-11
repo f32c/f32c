@@ -31,6 +31,8 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.MATH_REAL.ALL;
 
 use work.f32c_pack.all;
+use work.sram_pack.all;
+
 
 entity glue_bram is
     generic (
@@ -66,7 +68,7 @@ entity glue_bram is
 	-- CPU debugging
 	C_debug: boolean := false;
 
-        -- SDRAM parameters
+	-- SDRAM parameters
 	C_sdram_address_width : integer := 24;
 	C_sdram_column_bits : integer := 9;
 	C_sdram_startup_cycles : integer := 10100;
@@ -89,8 +91,8 @@ entity glue_bram is
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
 	C_pid_prescaler: integer range 10 to 26 := 18; -- control loop frequency f_clk/2^prescaler
 	C_pid_precision: integer range 0 to 8 := 1; -- fixed point PID precision
-        C_pid_pwm_bits: integer range 11 to 32 := 12; -- PWM output frequency f_clk/2^pwmbits (min 11 => 40kHz @ 81.25MHz)
-        C_pid_fp: integer range 0 to 26 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
+	C_pid_pwm_bits: integer range 11 to 32 := 12; -- PWM output frequency f_clk/2^pwmbits (min 11 => 40kHz @ 81.25MHz)
+	C_pid_fp: integer range 0 to 26 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
 	C_timer: boolean := true
     );
     port (
@@ -129,8 +131,11 @@ architecture Behavioral of glue_bram is
     signal intr: std_logic_vector(5 downto 0); -- interrupt
 
     -- SDRAM
+    signal to_sdram: sram_port_array;
+    signal sdram_ready: sram_ready_array;
     signal from_sdram: std_logic_vector(31 downto 0);
-    signal sdram_enable, sdram_data_ready: std_logic;
+    signal snoop_cycle: std_logic;
+    signal snoop_addr: std_logic_vector(31 downto 2);
 
     -- Timer
     signal from_timer: std_logic_vector(31 downto 0);
@@ -231,16 +236,21 @@ begin
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
     imem_data_ready <= '1';
-    dmem_data_ready <= sdram_data_ready when dmem_addr(31 downto 30) = "10"
+    dmem_data_ready <= sdram_ready(0) when dmem_addr(31 downto 30) = "10"
       else '1'; -- I/O or BRAM have no wait states
 
     -- SDRAM
     G_sdram:
     if C_sdram generate
-    sdram_enable <= dmem_addr_strobe and not sdram_data_ready when
+    to_sdram(0).addr_strobe <= dmem_addr_strobe and not sdram_ready(0) when
       dmem_addr(31 downto 30) = "10" else '0';
+    to_sdram(0).addr <= dmem_addr(19 downto 2);
+    to_sdram(0).data_in <= cpu_to_dmem;
+    to_sdram(0).write <= dmem_write;
+    to_sdram(0).byte_sel <= dmem_byte_sel;
     sdram: entity work.sdram_controller
     generic map (
+	C_ports => 1, -- XXX revisit
 	sdram_address_width => C_sdram_address_width,
 	sdram_column_bits => C_sdram_column_bits,
 	sdram_startup_cycles => C_sdram_startup_cycles,
@@ -249,10 +259,8 @@ begin
     port map (
 	clk => clk, reset => sio_break_internal(0),
 	-- internal connections
-	cmd_enable => sdram_enable,
-	cmd_wr => dmem_write, cmd_byte_enable => dmem_byte_sel,
-	cmd_address => dmem_addr(C_sdram_address_width downto 2), cmd_data_in => cpu_to_dmem,
-	data_out => from_sdram, data_out_ready => sdram_data_ready,
+	data_out => from_sdram, bus_in => to_sdram, ready_out => sdram_ready,
+	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
 	-- external SDRAM interface
 	sdram_addr => sdram_addr, sdram_data => sdram_data,
 	sdram_ba => sdram_ba, sdram_dqm => sdram_dqm,
@@ -342,7 +350,7 @@ begin
       ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
       ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
       simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
-        else (others => '-');
+      else (others => '-');
     end generate;
 
     process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio)
@@ -423,12 +431,12 @@ begin
     if C_pid generate
     pid_inst: entity work.pid
     generic map (
-        C_pwm_bits => C_pid_pwm_bits,
+	C_pwm_bits => C_pid_pwm_bits,
 	C_prescaler => C_pid_prescaler,
 	C_fp => C_pid_fp,
 	C_precision => C_pid_precision,
-        C_simulator => C_pid_simulator,
-        C_pids => C_pids,
+	C_simulator => C_pid_simulator,
+	C_pids => C_pids,
 	C_addr_unit_bits => C_pids_bits
     )
     port map (
