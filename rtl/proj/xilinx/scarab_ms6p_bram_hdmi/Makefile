@@ -52,6 +52,7 @@ vhdfiles = \
 ../../../soc/pid/ctrlpid.vhd \
 ../../../soc/pid/simotor.vhd \
 ../../../soc/pid/rotary_decoder.vhd \
+../../../soc/fm/fm.vhd \
 ../../../soc/fm/fmgen.vhd \
 ../../../soc/fm/rds.vhd \
 ../../../soc/fm/bram_rds.vhd \

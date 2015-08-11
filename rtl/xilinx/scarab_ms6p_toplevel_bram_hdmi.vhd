@@ -52,7 +52,7 @@ entity glue is
 	C_vgahdmi: boolean := true;
 	C_vgahdmi_mem_kb: integer := 10; -- KB
 	C_fmrds: boolean := true;
-	C_fm_cw_hz: integer := 107900000; -- Hz FM station carrier wave frequency
+	C_rds_msg_len: integer := 260; -- bytes of RAM for RDS binary message
         C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
         C_rds_clock_multiply: integer := 57; -- multiply and divide from cpu clk 100 MHz
         C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
@@ -137,8 +137,8 @@ begin
 	C_vgahdmi => C_vgahdmi,
 	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
 	C_fmrds => C_fmrds,
-	C_fm_cw_hz => C_fm_cw_hz,
 	C_fmdds_hz => C_fmdds_hz,
+	C_rds_msg_len => C_rds_msg_len,
         C_rds_clock_multiply => C_rds_clock_multiply,
         C_rds_clock_divide => C_rds_clock_divide,
 	C_gpio => C_gpio,
