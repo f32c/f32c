@@ -46,9 +46,13 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
+use work.sram_pack.all;
+
 
 entity SDRAM_Controller is
     generic (
+	C_ports: integer;
+	C_prio_port: integer := -1;
 	C_ras: integer range 2 to 3 := 2;
 	C_cas: integer range 2 to 3 := 2;
 	C_pre: integer range 2 to 3 := 2;
@@ -62,14 +66,13 @@ entity SDRAM_Controller is
 	clk: in  STD_LOGIC;
 	reset: in  STD_LOGIC;
 
-	-- Interface to issue reads or write data
-	cmd_enable: in STD_LOGIC; -- Set to '1' to issue new command
-	cmd_wr: in STD_LOGIC; -- Is this a write?
-	cmd_address: in STD_LOGIC_VECTOR(sdram_address_width-2 downto 0);
-	cmd_byte_enable: in STD_LOGIC_VECTOR(3 downto 0);
-	cmd_data_in: in STD_LOGIC_VECTOR(31 downto 0);
-	data_out: out STD_LOGIC_VECTOR(31 downto 0);
-	data_out_ready: out STD_LOGIC;
+	-- To internal bus / logic blocks
+	data_out: out std_logic_vector(31 downto 0); -- XXX rename to bus_out!
+	ready_out: out sram_ready_array; -- one bit per port
+	snoop_addr: out std_logic_vector(31 downto 2);
+	snoop_cycle: out std_logic;
+	-- Inbound multi-port bus connections
+	bus_in: in sram_port_array;
 
 	-- SDRAM signals
 	sdram_clk: out STD_LOGIC;
@@ -195,7 +198,29 @@ architecture Behavioral of SDRAM_Controller is
     constant end_of_row: natural := sdram_address_width-2;
     constant prefresh_cmd: natural := 10;
 
+    -- Bus interface signals (resolved from bus_in record via R_cur_port)
+    signal addr_strobe: std_logic;                      -- from CPU bus
+    signal write: std_logic;                            -- from CPU bus
+    signal byte_sel: std_logic_vector(3 downto 0);      -- from CPU bus
+    signal addr: std_logic_vector(31 downto 0);         -- from CPU bus
+    signal data_in: std_logic_vector(31 downto 0);      -- from CPU bus
+
+    -- Arbiter registers
+    signal R_cur_port, R_next_port: integer range 0 to (C_ports - 1);
+
+    -- Arbiter internal signals
+    signal next_port: integer;
+
 begin
+    -- Mux for input ports
+    addr_strobe <= bus_in(R_next_port).addr_strobe;
+    write <= bus_in(R_next_port).write;
+    byte_sel <= bus_in(R_next_port).byte_sel;
+    addr(17 downto 0) <= bus_in(R_next_port).addr; -- XXX revisit, widen!
+    data_in <= bus_in(R_next_port).data_in;
+
+    next_port <= 0; -- XXX temporary, arbiter should set this!
+
     -- Indicate the need to refresh when the counter is 2048,
     -- Force a refresh when the counter is 4096 - (if a refresh is forced, 
     -- multiple refresshes will be forced until the counter is below 2048
@@ -205,9 +230,9 @@ begin
     ----------------------------------------------------------------------------
     -- Seperate the address into row / bank / address
     ----------------------------------------------------------------------------
-    addr_row(end_of_row-start_of_row downto 0) <= cmd_address(end_of_row  downto start_of_row); -- 12:0 <=  22:10
-    addr_bank                                  <= cmd_address(end_of_bank downto start_of_bank);      -- 1:0  <=  9:8
-    addr_col(sdram_column_bits-1 downto 0)     <= cmd_address(end_of_col  downto start_of_col) & '0'; -- 8:0  <=  7:0 & '0'
+    addr_row(end_of_row-start_of_row downto 0) <= addr(end_of_row  downto start_of_row); -- 12:0 <=  22:10
+    addr_bank                                  <= addr(end_of_bank downto start_of_bank);      -- 1:0  <=  9:8
+    addr_col(sdram_column_bits-1 downto 0)     <= addr(end_of_col  downto start_of_col) & '0'; -- 8:0  <=  7:0 & '0'
 
     -----------------------------------------------------------
     -- Forward the SDRAM clock to the SDRAM chip - 180 degress 
@@ -235,7 +260,9 @@ begin
     ---------------------------------------------------------------
     sdram_data <= iob_data when iob_dq_hiz = '0' else (others => 'Z');
     data_out <= R_from_sdram & R_from_sdram_prev;
-    data_out_ready <= data_ready_delay(0);
+
+--    data_out_ready <= data_ready_delay(0); -- XXX FIX THIS
+    ready_out(R_cur_port) <= data_ready_delay(0);
 
     capture_proc: process(clk) 
     begin
@@ -252,6 +279,8 @@ begin
     main_proc: process(clk) 
     begin
 	if rising_edge(clk) then
+	    R_next_port <= next_port;
+
 	    ------------------------------------------------
 	    -- Default state is to do nothing
 	    ------------------------------------------------
@@ -279,9 +308,9 @@ begin
 	    -- then accept it. Also remember what we are reading or writing,
 	    -- and if it can be back-to-backed with the last transaction
 	    -------------------------------------------------------------------
-	    --if ready_for_new = '1' and cmd_enable = '1' then
-	    if ready_for_new = '1' and cmd_enable = '1' and (cmd_wr = '1' or
+	    if ready_for_new = '1' and addr_strobe = '1' and (write = '1' or
 	      save_wr = '1' or read_done) then
+		R_cur_port <= R_next_port;
 		if save_bank = addr_bank and save_row = addr_row then
 		    can_back_to_back <= '1';
 		else
@@ -290,12 +319,12 @@ begin
 		save_row         <= addr_row;
 		save_bank        <= addr_bank;
 		save_col         <= addr_col;
-		save_wr          <= cmd_wr; 
-		save_data_in     <= cmd_data_in;
-		save_byte_enable <= cmd_byte_enable;
+		save_wr          <= write;
+		save_data_in     <= data_in;
+		save_byte_enable <= byte_sel;
 		ready_for_new    <= '0';
 		read_done	 <= false;
-		if cmd_wr = '1' then
+		if write = '1' then
 		    data_ready_delay(0) <= '1';
 		end if;
 	    end if;
@@ -403,7 +432,7 @@ begin
 		    state       <= s_read_1;
 		end if;
 		-- we will be ready for a new transaction next cycle!
-		ready_for_new   <= '1'; 
+		ready_for_new   <= '1';
 
 	    ----------------------------------
 	    -- Processing the read transaction
@@ -411,7 +440,7 @@ begin
 	    when s_read_1 =>
 		state           <= s_read_2;
 		iob_command     <= CMD_READ;
-		iob_address     <= save_col; 
+		iob_address     <= save_col;
 		iob_bank        <= save_bank;
 		iob_address(prefresh_cmd) <= '0'; -- A10 actually matters - it selects auto precharge
 
@@ -466,7 +495,7 @@ begin
 	    when s_write_1 =>
 		state              <= s_write_2;
 		iob_command        <= CMD_WRITE;
-		iob_address        <= save_col; 
+		iob_address        <= save_col;
 		iob_address(prefresh_cmd)    <= '0'; -- A10 actually matters - it selects auto precharge
 		iob_bank           <= save_bank;
 		iob_dqm            <= NOT save_byte_enable(1 downto 0);
