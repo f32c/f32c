@@ -63,7 +63,7 @@ entity fm is
 	bus_out: out std_logic_vector(31 downto 0);
 	fm_irq: out std_logic; -- interrupt request line (active level high)
 	clk_fmdds: in std_logic; -- DDS clock, must be > 2x max cw_freq, normally > 216 MHz
-	pcm_in_left, pcm_in_right: in signed(15 downto 0) := (others => '0'); -- PCM audio input
+	pcm_in_left, pcm_in_right: in ieee.numeric_std.signed(15 downto 0) := (others => '0'); -- PCM audio input
 	fm_antenna: out std_logic -- pyhsical output
     );
 end fm;
@@ -88,7 +88,7 @@ architecture arch of fm is
     constant C_rds_addr:   integer   := 2; -- output: address currently being sent by RDS, input: address of wraparound
 
     -- FM/RDS RADIO
-    signal rds_pcm: signed(15 downto 0); -- modulated PCM with audio and RDS
+    signal rds_pcm: ieee.numeric_std.signed(15 downto 0); -- modulated PCM with audio and RDS
     signal rds_addr: std_logic_vector(C_addr_bits-1 downto 0); -- RDS modulator reads BRAM from this addr during transmission
     signal rds_data: std_logic_vector(7 downto 0); -- BRAM returns value to RDS for transmission
     signal rds_bram_write: std_logic; -- decoded address -> write signal for BRAM

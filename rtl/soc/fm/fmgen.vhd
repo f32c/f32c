@@ -42,7 +42,7 @@ port (
 end fmgen;
 
 architecture x of fmgen is
-	signal fm_acc, fm_inc: std_logic_vector((C_fm_acclen - 1) downto 0);
+	signal fm_acc, fm_inc: signed((C_fm_acclen - 1) downto 0);
 	signal R_pcm_avg, R_pcm_ac: signed(15 downto 0);
 	signal R_cnt: integer;
 	signal R_dds_mul_x1, R_dds_mul_x2: signed(31 downto 0);
