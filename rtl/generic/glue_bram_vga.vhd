@@ -83,9 +83,9 @@ entity glue_bram is
 	C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
 	C_fm_stereo: boolean := false;
 	C_rds_msg_len: integer := 260; -- bytes of circular sent message, typical 52 for PS or 260 PS+RT
-        C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250000000, 325000000)
-        C_rds_clock_multiply: integer := 912; -- multiply 912 and divide 40625 from cpu clk 81.25 MHz
-        C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
+        C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250000000, 325000000)
+        C_rds_clock_multiply: integer := 57; -- multiply 57 and divide 3125 from cpu clk 100 MHz
+        C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
 	C_gpio: integer range 0 to 128 := 32;
 	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
@@ -545,7 +545,7 @@ begin
     if C_fmrds generate
     fm_tx: entity work.fm
     generic map (
-      c_fmdds_hz => 325000000, -- Hz FMDDS clock frequency 
+      c_fmdds_hz => C_fmdds_hz, -- Hz FMDDS clock frequency
       C_rds_msg_len => C_rds_msg_len, -- allocate RAM for RDS message
       C_stereo => C_fm_stereo,
       -- multiply/divide to produce 1.824 MHz clock
