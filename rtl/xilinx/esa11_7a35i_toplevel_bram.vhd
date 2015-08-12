@@ -35,7 +35,6 @@ library unisim;
 use unisim.vcomponents.all;
 
 use work.f32c_pack.all;
-use work.techx_pkg.all;
 
 entity glue is
     generic (
@@ -77,7 +76,7 @@ architecture Behavioral of glue is
     
 begin
     -- make single ended clock
-    clk100in: inp_ds_port
+    clk100in: entity work.inp_ds_port
     port map(i_in_p => i_100MHz_P,
            i_in_n => i_100MHz_N,
            o_out  => clk);
