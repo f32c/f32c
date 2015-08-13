@@ -30,6 +30,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.MATH_REAL.ALL;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -49,18 +50,23 @@ entity glue is
 	-- SoC configuration options
 	C_mem_size: integer := 32;
 	C_vgahdmi: boolean := true;
-	C_vgahdmi_mem_kb: integer := 10; -- KB	
+	C_vgahdmi_mem_kb: integer := 10; -- KB
 	C_fmrds: boolean := true;
-	C_fm_cw_hz: integer := 108000000; -- Hz FM station carrier wave frequency
+	C_rds_msg_len: integer := 260; -- bytes of RAM for RDS binary message
    C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
    C_rds_clock_multiply: integer := 57; -- multiply and divide from cpu clk 100 MHz
    C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
 	-- warning long compile time on ISE 14.7
 	-- C_pids = 2: 1 hour
 	-- C_pids = 4: 4 hours
+	C_pids: integer := 0;
+	C_pid_simulator: std_logic_vector(7 downto 0) := ext("1111", 8);
+	C_pid_prescaler: integer := 18;
+	C_pid_precision: integer := 1;
+	C_pid_pwm_bits: integer := 12;
 	C_sio: integer := 1;
 	C_spi: integer := 2;
-	C_gpio: integer := 31;
+	C_gpio: integer := 32;
 	C_simple_io: boolean := true
     );
     port (
@@ -79,11 +85,14 @@ entity glue is
 	Switch: in std_logic_vector(5 downto 0);
 	sw: in std_logic_vector(7 downto 0);
 	IO_P6: inout std_logic_vector(7 downto 0);
-	IO_P7: inout std_logic_vector(7 downto 0);
+-- P7 is used by HDMI
+--	IO_P7: inout std_logic_vector(7 downto 0);
 	IO_P8: inout std_logic_vector(7 downto 0);
 	IO_P9: inout std_logic_vector(7 downto 0);
 	SevenSegment: out std_logic_vector(7 downto 0); -- 7-segment display
  	Audio1: out std_logic; -- fm antenna is here
+	TMDS_out_P, TMDS_out_N: out std_logic_vector(2 downto 0);
+	TMDS_out_CLK_P, TMDS_out_CLK_N: out std_logic;
 	SevenSegmentEnable: out std_logic_vector(2 downto 0) -- 7-segment display
     );
 end glue;
@@ -91,6 +100,8 @@ end glue;
 architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
 	 signal clk_25MHz, clk_250MHz: std_logic := '0';
+    signal obuf_tmds_clock: std_logic;
+    signal tmds_out_rgb: std_logic_vector(2 downto 0);
 begin
     --  clock synthesizer: Xilinx Spartan-6 specific
 
@@ -114,17 +125,23 @@ begin
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
-	C_fmrds => C_fmrds,
-	C_fm_cw_hz => C_fm_cw_hz,
-	C_fmdds_hz => C_fmdds_hz,
-   C_rds_clock_multiply => C_rds_clock_multiply,
-   C_rds_clock_divide => C_rds_clock_divide,	
-	C_debug => C_debug,
 	C_vgahdmi => C_vgahdmi,
 	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
+	C_fmrds => C_fmrds,
+	C_fmdds_hz => C_fmdds_hz,
+	C_rds_msg_len => C_rds_msg_len,
+   C_rds_clock_multiply => C_rds_clock_multiply,
+   C_rds_clock_divide => C_rds_clock_divide,
+	C_gpio => C_gpio,
 	C_sio => C_sio,
 	C_spi => C_spi,
-	C_gpio => C_gpio
+	C_pids => C_pids,
+	C_pid_simulator => C_pid_simulator,
+	C_pid_prescaler => C_pid_prescaler, -- set control loop frequency
+	C_pid_fp => integer(floor((log2(real(C_clk_freq)*1.0E6))+0.5))-C_pid_prescaler, -- control loop approx freq in 2^n Hz for math, 26-C_pid_prescaler = 8
+	C_pid_precision => C_pid_precision, -- fixed point PID precision
+	C_pid_pwm_bits => C_pid_pwm_bits, -- clock divider bits define PWM output frequency
+	C_debug => C_debug
    )
    port map (
 	clk => clk,
@@ -152,10 +169,21 @@ begin
 	simple_in(23 downto 16) => sw(7 downto 0), 
 	simple_in(31 downto 24) => open,
    gpio(7 downto 0)=>IO_P6(7 downto 0),
-	gpio(15 downto 8)=>IO_P7(7 downto 0),
-	gpio(23 downto 16)=>IO_P8(7 downto 0),
-	gpio(31 downto 24)=>IO_P9(7 downto 0),
-	gpio(127 downto 32)=> open,
+	gpio(15 downto 8)=>IO_P8(7 downto 0),
+	gpio(23 downto 16)=>IO_P9(7 downto 0),
+	gpio(127 downto 24)=> open,
+	tmds_out_rgb => tmds_out_rgb,
 	fm_antenna => Audio1
     );
+
+    -- differential output buffering for HDMI clock and video
+    hdmi_output: entity work.hdmi_out
+      port map (
+        tmds_in_clk => clk_25MHz,
+        tmds_out_clk_p => tmds_out_clk_p,
+        tmds_out_clk_n => tmds_out_clk_n,
+        tmds_in_rgb => tmds_out_rgb,
+        tmds_out_rgb_p => tmds_out_p,
+        tmds_out_rgb_n => tmds_out_n
+      );
 end Behavioral;
