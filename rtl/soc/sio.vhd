@@ -30,10 +30,11 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all; -- to calculate log2 bit size
 
 entity sio is
     generic (
-	C_clk_freq: integer;
+	C_clk_freq: integer; -- MHz clock frequency
 	C_big_endian: boolean := false;
 	C_init_baudrate: integer := 115200;
 	C_fixed_baudrate: boolean := false;
@@ -71,7 +72,15 @@ architecture Behavioral of sio is
     constant C_baud_init: std_logic_vector(15 downto 0) :=
       std_logic_vector(to_unsigned(
 	C_init_baudrate * 2**10 / 1000 * 2**10 / C_clk_freq / 1000, 16));
-    constant C_break_detect_incr: integer := 1 + 50 / C_clk_freq;
+    -- break detection math
+    constant C_break_detect_delay_ms: integer := 200; -- ms (milliseconds) serial break
+    constant C_break_detect_bits: integer := integer(ceil((log2(real(C_break_detect_delay_ms * C_clk_freq * 1000 * 8/7)))+1.0E-16));
+    constant C_break_detect_count: integer := 7 * 2**(C_break_detect_bits-3); -- number of clock ticks for break detection
+    constant C_break_detect_delay_ticks: integer := C_break_detect_delay_ms * C_clk_freq * 1000;
+    constant C_break_detect_incr: integer := 1;
+    constant C_break_detect_start: std_logic_vector(C_break_detect_bits-1 downto 0) :=
+      std_logic_vector(to_unsigned(C_break_detect_count-C_break_detect_delay_ticks, C_break_detect_bits)); 
+      -- counter resets to this value (fine tuning parameter for break detect delay) 
 
     -- baud * 16 impulse generator
     signal R_baudrate: std_logic_vector(15 downto 0) := C_baud_init;
@@ -90,7 +99,7 @@ architecture Behavioral of sio is
     signal rx_phase: std_logic_vector(3 downto 0);
     signal rx_byte: std_logic_vector(7 downto 0);
     signal rx_full: std_logic;
-    signal rx_break_tickcnt: std_logic_vector(23 downto 0);
+    signal rx_break_tickcnt: std_logic_vector(C_break_detect_bits-1 downto 0) := C_break_detect_start;
 begin
 
     G_bypass:
@@ -196,11 +205,11 @@ begin
 
 	    -- break detect logic
 	    if C_break_detect and R_rxd = '0' then
-		if rx_break_tickcnt(23 downto 20) /= x"f" then
+		if rx_break_tickcnt(C_break_detect_bits-1 downto C_break_detect_bits-4) /= x"f" then
 		    rx_break_tickcnt <= rx_break_tickcnt + C_break_detect_incr;
 		end if;
 	    elsif C_break_detect then
-		if rx_break_tickcnt(23 downto 21) = "111" then
+		if rx_break_tickcnt(C_break_detect_bits-1 downto C_break_detect_bits-3) = "111" then
 		    R_break <= '1';
 		    rx_break_tickcnt <= rx_break_tickcnt - C_break_detect_incr;
 		    if C_break_resets_baudrate then
@@ -208,7 +217,7 @@ begin
 		    end if;
 		else
 		    R_break <= '0';
-		    rx_break_tickcnt <= (others => '0');
+		    rx_break_tickcnt <= C_break_detect_start;
 		end if;
 	    end if;
 	end if;
