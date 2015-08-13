@@ -147,14 +147,27 @@ NET "IO_P6[0]"                   LOC = T3      | IOSTANDARD = LVCMOS33 | DRIVE =
 ###################################################################################################################################################
 #                                                   HEADER P7                                                                                     #
 ###################################################################################################################################################  
-NET "IO_P7[7]"                   LOC = U8      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 1
-NET "IO_P7[6]"                   LOC = V8      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 2
-NET "IO_P7[5]"                   LOC = R8      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 3
-NET "IO_P7[4]"                   LOC = T8      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 4
-NET "IO_P7[3]"                   LOC = R5      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 5
-NET "IO_P7[2]"                   LOC = T5      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 6
-NET "IO_P7[1]"                   LOC = T9      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 7
-NET "IO_P7[0]"                   LOC = V9      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 8
+#NET "IO_P7[7]"                   LOC = U8      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 1
+#NET "IO_P7[6]"                   LOC = V8      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 2
+#NET "IO_P7[5]"                   LOC = R8      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 3
+#NET "IO_P7[4]"                   LOC = T8      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 4
+#NET "IO_P7[3]"                   LOC = R5      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 5
+#NET "IO_P7[2]"                   LOC = T5      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 6
+#NET "IO_P7[1]"                   LOC = T9      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 7
+#NET "IO_P7[0]"                   LOC = V9      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ; #Pin 8
+
+####################################################################################################################################################
+#                              Expansion Connector's HEADER P7 when Expansion Connector LED is OFF	                                               #
+####################################################################################################################################################
+	
+NET "TMDS_out_P(0)"     LOC = "U8"   | IOSTANDARD = TMDS_33 | DRIVE = 8  | SLEW = FAST; # Blue
+NET "TMDS_out_N(0)"    LOC = "V8"   | IOSTANDARD = TMDS_33 | DRIVE = 8  | SLEW = FAST;
+NET "TMDS_out_P(1)"     LOC = "R8"   | IOSTANDARD = TMDS_33 | DRIVE = 8  | SLEW = FAST; # Green    
+NET "TMDS_out_N(1)"    LOC = "T8"   | IOSTANDARD = TMDS_33 | DRIVE = 8  | SLEW = FAST;
+NET "TMDS_out_P(2)"     LOC = "R5"   | IOSTANDARD = TMDS_33 | DRIVE = 8  | SLEW = FAST; # Red  
+NET "TMDS_out_N(2)"    LOC = "T5"   | IOSTANDARD = TMDS_33 | DRIVE = 8  | SLEW = FAST; 
+NET "TMDS_out_CLK_P"     LOC = "T9"   | IOSTANDARD = TMDS_33 | DRIVE = 8  | SLEW = FAST; # CLK
+NET "TMDS_out_CLK_N"    LOC = "V9"   | IOSTANDARD = TMDS_33 | DRIVE = 8  | SLEW = FAST;
 
 ###################################################################################################################################################
 #                                                   HEADER P8                                                                                     #
