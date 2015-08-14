@@ -261,8 +261,6 @@ begin
 
     process(R_next_port, data_ready_delay)
     begin
-	ready_out <= (others => '0');
-	ready_out(R_cur_port) <= data_ready_delay(0);
     end process;
 
     -- Arbiter: round-robin port selection combinatorial logic
@@ -328,6 +326,8 @@ begin
 	    -- then accept it. Also remember what we are reading or writing,
 	    -- and if it can be back-to-backed with the last transaction
 	    -------------------------------------------------------------------
+	    ready_out <= (others => '0');
+	    ready_out(R_cur_port) <= data_ready_delay(1);
 	    if ready_for_new = '1' and addr_strobe = '1' and (write = '1' or
 	      save_wr = '1' or read_done) then
 		R_cur_port <= R_next_port;
@@ -346,6 +346,7 @@ begin
 		read_done	 <= false;
 		if write = '1' then
 		    data_ready_delay(0) <= '1';
+		    ready_out(R_cur_port) <= '1';
 		end if;
 	    end if;
 
