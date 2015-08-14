@@ -75,7 +75,9 @@ entity glue_bram is
 	C_sdram_cycles_per_refresh : integer := 1524;
 
 	-- SoC configuration options
-	C_mem_size: integer := 16;	-- in KBytes
+	C_mem_size: integer := 2;	-- in KBytes
+	C_icache_size: integer := 0;	-- 0, 2, 4 or 8 KBytes
+	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_sdram: boolean := true;
 	C_sio: integer := 1;
 	C_sio_init_baudrate: integer := 115200;
@@ -192,9 +194,9 @@ architecture Behavioral of glue_bram is
 begin
 
     -- f32c core
-    pipeline: entity work.pipeline
+    pipeline: entity work.cache
     generic map (
-	C_arch => C_arch, C_clk_freq => C_clk_freq,
+	C_arch => C_arch, C_cpuid => 0, C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
 	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
@@ -205,6 +207,7 @@ begin
 	C_load_aligner => C_load_aligner, C_full_shifter => C_full_shifter,
 	C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
 	C_register_technology => C_register_technology,
+	C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
 	-- debugging only
 	C_debug => C_debug
     )
@@ -218,7 +221,6 @@ begin
 	dmem_data_in => final_to_cpu_d, dmem_data_out => cpu_to_dmem,
 	dmem_data_ready => dmem_data_ready,
 	snoop_cycle => '0', snoop_addr => "------------------------------",
-	flush_i_line => open, flush_d_line => open,
 	-- debugging
 	debug_in_data => sio_to_debug_data,
 	debug_in_strobe => deb_sio_rx_done,
@@ -239,7 +241,7 @@ begin
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
     imem_data_ready <= sdram_ready(0) when imem_addr(31 downto 30) = "10"
-      else '1'; -- BRAM has no wait states;
+      else '1';
     dmem_data_ready <= sdram_ready(1) when dmem_addr(31 downto 30) = "10"
       else '1'; -- I/O or BRAM have no wait states
 
