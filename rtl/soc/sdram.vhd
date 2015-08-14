@@ -21,7 +21,7 @@
 --
 -- Module Name:	SDRAM_Controller - Behavioral 
 -- Description:	Simple SDRAM controller for a Micron 48LC16M16A2-7E
---		or Micron 48LC4M16A2-7E @ 100MHz      
+--		or Micron 48LC4M16A2-7E @ 100MHz
 -- Revision: 
 -- Revision 0.1	- Initial version
 -- Revision 0.2	- Removed second clock signal that isn't needed.
@@ -199,11 +199,11 @@ architecture Behavioral of SDRAM_Controller is
     constant prefresh_cmd: natural := 10;
 
     -- Bus interface signals (resolved from bus_in record via R_cur_port)
-    signal addr_strobe: std_logic;                      -- from CPU bus
-    signal write: std_logic;                            -- from CPU bus
-    signal byte_sel: std_logic_vector(3 downto 0);      -- from CPU bus
-    signal addr: std_logic_vector(31 downto 0);         -- from CPU bus
-    signal data_in: std_logic_vector(31 downto 0);      -- from CPU bus
+    signal addr_strobe: std_logic;			-- from CPU bus
+    signal write: std_logic;				-- from CPU bus
+    signal byte_sel: std_logic_vector(3 downto 0);	-- from CPU bus
+    signal addr: std_logic_vector(31 downto 0);		-- from CPU bus
+    signal data_in: std_logic_vector(31 downto 0);	-- from CPU bus
 
     -- Arbiter registers
     signal R_cur_port, R_next_port: integer range 0 to (C_ports - 1);
@@ -267,20 +267,20 @@ begin
 
     -- Arbiter: round-robin port selection combinatorial logic
     process(bus_in, R_next_port, R_cur_port)
-        variable i, j, t, n: integer;
+	variable i, j, t, n: integer;
     begin
-        t := R_cur_port;
-        for i in 0 to (C_ports - 1) loop
-            for j in 1 to C_ports loop
-                if R_cur_port = i then
-                    n := (i + j) mod C_ports;
-                    if bus_in(n).addr_strobe = '1' and n /= C_prio_port then
-                        t := n;
-                        exit;
-                    end if;
-                end if;
-            end loop;
-        end loop;
+	t := R_cur_port;
+	for i in 0 to (C_ports - 1) loop
+	    for j in 1 to C_ports loop
+		if R_cur_port = i then
+		    n := (i + j) mod C_ports;
+		    if bus_in(n).addr_strobe = '1' and n /= C_prio_port then
+			t := n;
+			exit;
+		    end if;
+		end if;
+	    end loop;
+	end loop;
 	next_port <= t;
     end process;
 
@@ -372,7 +372,7 @@ begin
 		iob_CKE <= '1';
 
 		-- All the commands during the startup are NOPS, except these
-		if startup_refresh_count = startup_refresh_max-31 then      
+		if startup_refresh_count = startup_refresh_max-31 then
 		    -- ensure all rows are closed
 		    iob_command     <= CMD_PRECHARGE;
 		    iob_address(prefresh_cmd) <= '1';  -- all banks
