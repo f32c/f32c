@@ -219,8 +219,6 @@ begin
     addr(17 downto 0) <= bus_in(R_next_port).addr; -- XXX revisit, widen!
     data_in <= bus_in(R_next_port).data_in;
 
-    next_port <= 0; -- XXX temporary, arbiter should set this!
-
     -- Indicate the need to refresh when the counter is 2048,
     -- Force a refresh when the counter is 4096 - (if a refresh is forced, 
     -- multiple refresshes will be forced until the counter is below 2048
@@ -261,8 +259,30 @@ begin
     sdram_data <= iob_data when iob_dq_hiz = '0' else (others => 'Z');
     data_out <= R_from_sdram & R_from_sdram_prev;
 
---    data_out_ready <= data_ready_delay(0); -- XXX FIX THIS
-    ready_out(R_cur_port) <= data_ready_delay(0);
+    process(R_next_port, data_ready_delay)
+    begin
+	ready_out <= (others => '0');
+	ready_out(R_cur_port) <= data_ready_delay(0);
+    end process;
+
+    -- Arbiter: round-robin port selection combinatorial logic
+    process(bus_in, R_next_port, R_cur_port)
+        variable i, j, t, n: integer;
+    begin
+        t := R_cur_port;
+        for i in 0 to (C_ports - 1) loop
+            for j in 1 to C_ports loop
+                if R_cur_port = i then
+                    n := (i + j) mod C_ports;
+                    if bus_in(n).addr_strobe = '1' and n /= C_prio_port then
+                        t := n;
+                        exit;
+                    end if;
+                end if;
+            end loop;
+        end loop;
+	next_port <= t;
+    end process;
 
     capture_proc: process(clk) 
     begin
