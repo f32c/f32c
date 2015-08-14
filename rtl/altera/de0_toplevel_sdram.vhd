@@ -36,25 +36,25 @@ use work.f32c_pack.all;
 entity glue is
     generic (
 	-- Main clock freq, in multiples of 10 MHz
-	C_clk_freq: integer := 130;
+	C_clk_freq: integer := 80;
 
 	-- ISA
 	C_arch: integer := ARCH_MI32;
 	C_big_endian: boolean := false;
-	C_mult_enable: boolean := false;
-	C_branch_likely: boolean := false;
-	C_sign_extend: boolean := false;
+	C_mult_enable: boolean := true;
+	C_branch_likely: boolean := true;
+	C_sign_extend: boolean := true;
 	C_movn_movz: boolean := false;
-	C_exceptions: boolean := false;
+	C_exceptions: boolean := true;
 
 	-- Optimization
-	C_branch_prediction: boolean := false;
-	C_result_forwarding: boolean := false;
+	C_branch_prediction: boolean := true;
+	C_result_forwarding: boolean := true;
 	C_load_aligner: boolean := true; -- XXX! false broken!
-	C_full_shifter: boolean := false;
+	C_full_shifter: boolean := true;
 
 	-- SoC configuration options
-	C_PC_mask: std_logic_vector := x"00001fff";
+	C_PC_mask: std_logic_vector := x"800fffff"; -- 1 MB
 	C_mem_size: integer := 8;
 	C_simple_in: integer := 0;
 	C_simple_out: integer := 8;

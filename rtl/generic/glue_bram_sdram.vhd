@@ -45,7 +45,7 @@ entity glue_bram is
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
 	C_ll_sc: boolean := false;
-	C_PC_mask: std_logic_vector(31 downto 0) := x"0001ffff"; -- 128 K
+	C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff"; -- 1 MB
 	C_exceptions: boolean := true;
 
 	-- COP0 options
@@ -125,7 +125,8 @@ architecture Behavioral of glue_bram is
     signal dmem_bram_write, dmem_data_ready: std_logic;
     signal dmem_byte_sel: std_logic_vector(3 downto 0);
     signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
-    signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
+    signal final_to_cpu_i, final_to_cpu_d: std_logic_vector(31 downto 0);
+    signal io_to_cpu: std_logic_vector(31 downto 0);
     signal io_addr_strobe: std_logic;
     signal io_addr: std_logic_vector(11 downto 2);
     signal intr: std_logic_vector(5 downto 0); -- interrupt
@@ -209,12 +210,12 @@ begin
     )
     port map (
 	clk => clk, reset => sio_break_internal(0), intr => intr,
-	imem_addr => imem_addr, imem_data_in => imem_data_read,
+	imem_addr => imem_addr, imem_data_in => final_to_cpu_i,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,
 	dmem_addr_strobe => dmem_addr_strobe, dmem_addr => dmem_addr,
 	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
-	dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
+	dmem_data_in => final_to_cpu_d, dmem_data_out => cpu_to_dmem,
 	dmem_data_ready => dmem_data_ready,
 	snoop_cycle => '0', snoop_addr => "------------------------------",
 	flush_i_line => open, flush_d_line => open,
@@ -228,29 +229,40 @@ begin
 	debug_debug => debug_debug,
 	debug_active => debug_active
     );
-    final_to_cpu <= io_to_cpu when io_addr_strobe = '1'
+    final_to_cpu_i <= from_sdram when imem_addr(31 downto 30) = "10"
+      else imem_data_read;
+    final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
       else from_sdram when dmem_addr(31 downto 30) = "10"
       else dmem_to_cpu;
     intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & '0';
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
-    imem_data_ready <= '1';
-    dmem_data_ready <= sdram_ready(0) when dmem_addr(31 downto 30) = "10"
+    imem_data_ready <= sdram_ready(0) when imem_addr(31 downto 30) = "10"
+      else '1'; -- BRAM has no wait states;
+    dmem_data_ready <= sdram_ready(1) when dmem_addr(31 downto 30) = "10"
       else '1'; -- I/O or BRAM have no wait states
 
     -- SDRAM
     G_sdram:
     if C_sdram generate
-    to_sdram(0).addr_strobe <= dmem_addr_strobe and not sdram_ready(0) when
+    -- port 0: instruction bus
+    to_sdram(0).addr_strobe <= imem_addr_strobe and not sdram_ready(0) when
+      imem_addr(31 downto 30) = "10" else '0';
+    to_sdram(0).addr <= imem_addr(19 downto 2);
+    to_sdram(0).data_in <= (others => '-');
+    to_sdram(0).write <= '0';
+    to_sdram(0).byte_sel <= (others => '1');
+    -- port 1: data bus
+    to_sdram(1).addr_strobe <= dmem_addr_strobe and not sdram_ready(1) when
       dmem_addr(31 downto 30) = "10" else '0';
-    to_sdram(0).addr <= dmem_addr(19 downto 2);
-    to_sdram(0).data_in <= cpu_to_dmem;
-    to_sdram(0).write <= dmem_write;
-    to_sdram(0).byte_sel <= dmem_byte_sel;
+    to_sdram(1).addr <= dmem_addr(19 downto 2);
+    to_sdram(1).data_in <= cpu_to_dmem;
+    to_sdram(1).write <= dmem_write;
+    to_sdram(1).byte_sel <= dmem_byte_sel;
     sdram: entity work.sdram_controller
     generic map (
-	C_ports => 1, -- XXX revisit
+	C_ports => 2,
 	sdram_address_width => C_sdram_address_width,
 	sdram_column_bits => C_sdram_column_bits,
 	sdram_startup_cycles => C_sdram_startup_cycles,
