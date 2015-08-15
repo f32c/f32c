@@ -88,6 +88,8 @@ entity glue_bram is
 	C_spi_fixed_speed: std_logic_vector := "1111";
 	C_simple_in: integer range 0 to 128 := 32;
 	C_simple_out: integer range 0 to 128 := 32;
+	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
+	C_vgahdmi_mem_kb: integer := 4; -- mem size of framebuffer
 	C_gpio: integer range 0 to 128 := 32;
 	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
@@ -99,6 +101,8 @@ entity glue_bram is
     );
     port (
 	clk: in std_logic;
+	clk_25MHz: in std_logic; -- VGA pixel clock 25 MHz
+	clk_250MHz: in std_logic := '0'; -- HDMI bit shift clock, default 0 if no HDMI
 	sdram_addr: out std_logic_vector(12 downto 0);
 	sdram_data: inout std_logic_vector(15 downto 0);
 	sdram_ba: out std_logic_vector(1 downto 0);
@@ -114,6 +118,9 @@ entity glue_bram is
 	simple_out: out std_logic_vector(31 downto 0);
 	pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
 	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
+	vga_hsync, vga_vsync: out std_logic;
+	vga_r, vga_g, vga_b: out std_logic_vector(2 downto 0);
+	tmds_out_rgb: out std_logic_vector(2 downto 0);
 	gpio: inout std_logic_vector(127 downto 0)
     );
 end glue_bram;
@@ -168,6 +175,11 @@ architecture Behavioral of glue_bram is
     signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
     signal icp, icp_enable: std_logic_vector(1 downto 0);
     signal timer_intr: std_logic;
+
+    -- VGA/HDMI video
+    signal vga_addr: std_logic_vector(15 downto 0);
+    signal vga_data: std_logic_vector(7 downto 0);
+    signal video_bram_write: std_logic;
     
     -- GPIO
     constant iomap_gpio: T_iomap_range := (x"F800", x"F87F");
@@ -538,6 +550,47 @@ begin
     with conv_integer(io_addr(11 downto 4)) select
       timer_ce <= io_addr_strobe when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range),
                              '0' when others;
+    end generate;
+
+    -- VGA/HDMI
+    G_vgahdmi:
+    if C_vgahdmi generate
+    vgahdmi: entity work.vgahdmi
+    generic map (
+      dbl_x => 1,
+      dbl_y => 1,
+      mem_size_kb => C_vgahdmi_mem_kb, -- tell vgahdmi how much video ram do we have
+      test_picture => 1
+    )
+    port map (
+      clk_pixel => clk_25MHz,
+      clk_tmds => clk_250MHz,
+      dispAddr => vga_addr,
+      dispData => vga_data,
+      vga_r => vga_r,
+      vga_g => vga_g,
+      vga_b => vga_b,
+      vga_hsync => vga_hsync,
+      vga_vsync => vga_vsync,
+      tmds_out_rgb => tmds_out_rgb
+    );
+    -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
+    -- vga_data(7 downto 0) <= x"0F";
+    video_bram_write <=
+      dmem_addr_strobe and dmem_write when dmem_addr(31 downto 28) = x"8" else '0';
+    videobram: entity work.bram_video
+    generic map (
+      C_mem_size => C_vgahdmi_mem_kb -- KB
+    )
+    port map (
+	clk => clk,
+	imem_addr(17 downto 2) => vga_addr(15 downto 0),
+	imem_addr(31 downto 18) => (others => '0'),
+	imem_data_out => vga_data,
+	dmem_write => video_bram_write,
+	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+	dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
+    );
     end generate;
 
     -- Block RAM
