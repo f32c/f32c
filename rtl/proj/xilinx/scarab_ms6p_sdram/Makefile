@@ -20,7 +20,9 @@ vhdfiles = \
 ../../../xilinx/scarab_ms6p_toplevel_sdram.vhd \
 ../../../xilinx/pll_50M_112M5.vhd \
 ../../../xilinx/pll_50M_100M.vhd \
+../../../xilinx/pll_50M_100M_25M_250M.vhd \
 ../../../xilinx/pll_50M_81M25.vhd \
+../../../xilinx/hdmi_out.vhd \
 ../../../generic/glue_bram_sdram.vhd \
 ../../../generic/bram_mi32_eb.vhd \
 ../../../generic/bram_mi32_el.vhd \
@@ -28,6 +30,7 @@ vhdfiles = \
 ../../../generic/bram_rv32.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
+../../../generic/bram_video.vhd \
 ../../../cpu/alu.vhd \
 ../../../cpu/loadalign.vhd \
 ../../../cpu/pipeline.vhd \
@@ -49,5 +52,6 @@ vhdfiles = \
 ../../../soc/pid/ctrlpid.vhd \
 ../../../soc/pid/simotor.vhd \
 ../../../soc/pid/rotary_decoder.vhd \
+../../../soc/vgahdmi/vgahdmi.vhd \
 
 include ../include/xilinx.mk
