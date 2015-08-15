@@ -24,6 +24,7 @@ vhdfiles = \
 ../../../generic/glue_bram_sdram.vhd \
 ../../../generic/bram_mi32_eb.vhd \
 ../../../generic/bram_mi32_el.vhd \
+../../../generic/bram_true2p_1clk.vhd \
 ../../../generic/bram_rv32.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
@@ -36,8 +37,10 @@ vhdfiles = \
 ../../../cpu/defs_rv32.vhd \
 ../../../cpu/idecode_mi32.vhd \
 ../../../cpu/idecode_rv32.vhd \
+../../../cpu/cache_generic.vhd \
 ../../../cpu/debug.vhd \
 ../../../soc/sdram.vhd \
+../../../soc/sram_pack.vhd \
 ../../../soc/sio.vhd \
 ../../../soc/spi.vhd \
 ../../../soc/gpio.vhd \
