@@ -73,6 +73,7 @@ entity glue_bram is
 	C_sio_init_baudrate: integer := 115200;
 	C_sio_fixed_baudrate: boolean := false;
 	C_sio_break_detect: boolean := true;
+        C_sio_break_detect_delay_ms: integer := 200; -- ms (milliseconds) serial break
 	C_spi: integer := 0;
 	C_spi_turbo_mode: std_logic_vector := "0000";
 	C_spi_fixed_speed: std_logic_vector := "1111";
@@ -375,6 +376,7 @@ begin
 	    C_fixed_baudrate => C_sio_fixed_baudrate,
 	    C_break_detect => C_sio_break_detect,
 	    C_break_resets_baudrate => C_sio_break_detect,
+	    C_break_detect_delay_ms => C_sio_break_detect_delay_ms,
 	    C_big_endian => C_big_endian
 	)
 	port map (
