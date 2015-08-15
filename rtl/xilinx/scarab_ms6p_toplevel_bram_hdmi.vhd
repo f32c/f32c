@@ -91,7 +91,6 @@ architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
     signal btns: std_logic_vector(1 downto 0);
     signal clk_25MHz, clk_250MHz: std_logic := '0';
-    signal obuf_tmds_clock: std_logic;
     signal tmds_out_rgb: std_logic_vector(2 downto 0);
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
