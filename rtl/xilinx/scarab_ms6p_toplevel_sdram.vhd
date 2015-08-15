@@ -135,6 +135,8 @@ begin
 	C_sdram_column_bits => 9,
 	C_sdram_startup_cycles => 10100,
 	C_sdram_cycles_per_refresh => 1524,
+        C_vgahdmi => C_vgahdmi,
+        C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
 	C_debug => C_debug
     )
     port map (
