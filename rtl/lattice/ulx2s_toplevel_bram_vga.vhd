@@ -53,6 +53,7 @@ entity glue is
         C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
         C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
 	C_sio: integer := 1;
+	C_sio_break_detect_delay_ms: integer := 200; -- ms (milliseconds) serial break
 	C_spi: integer := 2;
 	C_gpio: integer := 16;
 	C_simple_io: boolean := true
@@ -104,7 +105,7 @@ begin
 	C_rds_msg_len => C_rds_msg_len,
         C_rds_clock_multiply => C_rds_clock_multiply,
         C_rds_clock_divide => C_rds_clock_divide,
-	C_sio => C_sio,
+	C_sio => C_sio, C_sio_break_detect_delay_ms => C_sio_break_detect_delay_ms,
 	C_spi => C_spi,
 	C_gpio => C_gpio
     )
