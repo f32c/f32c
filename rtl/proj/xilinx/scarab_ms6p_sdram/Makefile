@@ -15,6 +15,7 @@ vfiles = \
 ../../../soc/pid/ctrlpid_v.v \
 ../../../soc/pid/simotor_v.v \
 ../../../soc/pid/rotary_decoder_v.v \
+../../../soc/vgahdmi/vgahdmi_v.v \
 
 vhdfiles = \
 ../../../xilinx/scarab_ms6p_toplevel_sdram.vhd \
