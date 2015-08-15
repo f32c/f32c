@@ -190,14 +190,10 @@ architecture Behavioral of toplevel is
 	sdcard_si => sdcard_si;
 	p_ring => p_ring;
 	p_tip => p_tip;
-	led => led;
-	btn_left => btn_left;
-	btn_right => btn_right;
-	btn_up => btn_up;
-	btn_down => btn_down;
-	btn_center => btn_center;
-	sw => sw;
-	j1_2 => j1_2; j1_3 => j1_3; j1_4 => j1_4; j1_8 => j1_8;
+	simple_out(7 downto 0) => led;
+	simple_in(4 downto 0) => btn_left & btn_right & btn_up & btn_down & btn_center;
+	simple_in(19 downto 16) => sw;
+        j1_2 => j1_2; j1_3 => j1_3; j1_4 => j1_4; j1_8 => j1_8;
 	j1_9 => j1_9; j1_13 => j1_4; j1_14 => j1_14; j1_15 => j1_15;
 	j1_16 => j1_16; j1_17 => j1_17; j1_18 => j1_18; j1_19 => j1_19;
 	j1_20 => j1_20; j1_21 => j1_21; j1_22 => j1_22; j1_23 => j1_23;

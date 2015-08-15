@@ -80,7 +80,7 @@ entity glue_sram is
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
 	C_sio: boolean := true;
-	C_leds_btns: boolean := true;
+	C_simple_io: boolean := true;
 	C_gpio: boolean := true;
 	C_flash: boolean := true;
 	C_sdcard: boolean := true;
@@ -112,9 +112,9 @@ entity glue_sram is
 	sdcard_cen, sdcard_sck, sdcard_si: out std_logic;
 	p_ring: out std_logic;
 	p_tip: out std_logic_vector(3 downto 0);
-	led: out std_logic_vector(7 downto 0);
+	simple_out: out std_logic_vector(31 downto 0);
 	btn_left, btn_right, btn_up, btn_down, btn_center: in std_logic;
-	sw: in std_logic_vector(3 downto 0);
+	simple_in: in std_logic_vector(31 downto 0);
 	j1_2, j1_3, j1_4, j1_8, j1_9, j1_13, j1_14, j1_15: inout std_logic;
 	j1_16, j1_17, j1_18, j1_19, j1_20, j1_21, j1_22, j1_23: inout std_logic;
 	j2_2, j2_3, j2_4, j2_5, j2_6, j2_7, j2_8, j2_9: inout std_logic;
@@ -176,8 +176,8 @@ architecture Behavioral of glue_sram is
     signal io_addr_strobe: std_logic_vector((C_io_ports - 1) downto 0);
     signal next_io_port: integer range 0 to (C_io_ports - 1);
     signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
-    signal R_led: std_logic_vector(7 downto 0);
-    signal R_sw: std_logic_vector(3 downto 0);
+    signal R_simple_out: std_logic_vector(31 downto 0);
+    signal R_simple_in: std_logic_vector(31 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
     signal R_fb_base_addr: std_logic_vector(19 downto 2);
@@ -269,7 +269,7 @@ architecture Behavioral of glue_sram is
     signal pid_bridge_r: std_logic_vector(C_pids-1 downto 0);
     signal pid_encoder_a: std_logic_vector(C_pids-1 downto 0);
     signal pid_encoder_b: std_logic_vector(C_pids-1 downto 0);
-    signal pid_led: std_logic_vector(3 downto 0); -- show on LEDs
+    signal pid_simple_out: std_logic_vector(3 downto 0); -- show on LEDs
     constant C_pids_bits: integer := integer(floor((log2(real(C_pids)))+0.5));
 
     -- debugging only
@@ -482,9 +482,9 @@ begin
 	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
 	  and io_write = '1' then
 	    -- LEDs
-	    if C_leds_btns and io_addr(11 downto 4) = x"71" and
+	    if C_simple_io and io_addr(11 downto 4) = x"71" and
 	      io_byte_sel(0) = '1' then
-		R_led <= cpu_to_io(7 downto 0);
+		R_simple_out <= cpu_to_io(7 downto 0);
 	    end if;
 	    -- DDS
 	    if C_dds and io_addr(11 downto 4) = x"7D" then
@@ -517,25 +517,25 @@ begin
 		R_fb_intr <= '1';
 	    end if;
 	end if;
-	if C_leds_btns and rising_edge(clk) then
-	    R_sw <= sw;
+	if C_simple_io and rising_edge(clk) then
+	    R_simple_in <= simple_in;
 	    R_btns <= btn_center & btn_up & btn_down & btn_left & btn_right;
 	end if;
     end process;
-    G_led_standard:
+    G_simple_out_standard:
     if C_timer = false generate
-    led <= R_led when C_leds_btns else (others => '-');
+    simple_out <= R_simple_out when C_simple_io else (others => '-');
     end generate;
-    G_led_timer:
+    G_simple_out_timer:
     if C_timer = true generate
-    ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_led(1);
-    ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_led(2);
-    led <= R_led(7 downto 3) & ocp_mux & R_led(0) when C_leds_btns
+    ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
+    ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
+    simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_io
       else (others => '-');
     end generate;
 
     -- XXX replace with a balanced multiplexer
-    process(io_addr, R_sw, R_btns, from_sio, from_flash, from_sdcard,
+    process(io_addr, R_simple_in, R_btns, from_sio, from_flash, from_sdcard,
       from_gpio, from_timer)
     begin
 	case conv_integer(io_addr(11 downto 4)) is
@@ -588,14 +588,14 @@ begin
 		io_to_cpu <= (others => '-');
 	    end if;
 	when conv_integer(x"70")  =>
-	    if C_leds_btns then
-		io_to_cpu <="------------" & R_sw & "-----------" & R_btns;
+	    if C_simple_io then
+		io_to_cpu <= R_simple_in;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
 	when conv_integer(x"71")  =>
-	    if C_leds_btns then
-		io_to_cpu <="------------------------" & R_led;
+	    if C_simple_io then
+		io_to_cpu <= R_simple_out;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
@@ -913,7 +913,7 @@ begin
     --
     G_timer:
     if C_timer generate
-    icp <= R_led(3) & R_led(0); -- during debug period, leds will serve as software-generated ICP
+    icp <= R_simple_out(3) & R_simple_out(0); -- during debug period, leds will serve as software-generated ICP
     timer: entity work.timer
     generic map (
         C_pres => 10,
