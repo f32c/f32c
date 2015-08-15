@@ -20,12 +20,12 @@ entity bram_true2p_1clk is
 		clk		: in std_logic;
 		addr_a	: in natural range 0 to 2**addr_width - 1;
 		addr_b	: in natural range 0 to 2**addr_width - 1;
-		data_a	: in std_logic_vector((data_width-1) downto 0);
-		data_b	: in std_logic_vector((data_width-1) downto 0);
 		we_a	: in std_logic := '1';
 		we_b	: in std_logic := '1';
-		q_a		: out std_logic_vector((data_width -1) downto 0);
-		q_b		: out std_logic_vector((data_width -1) downto 0)
+		data_in_a	: in std_logic_vector((data_width-1) downto 0);
+		data_in_b	: in std_logic_vector((data_width-1) downto 0);
+		data_out_a		: out std_logic_vector((data_width -1) downto 0);
+		data_out_b		: out std_logic_vector((data_width -1) downto 0)
 	);
 end bram_true2p_1clk;
 
@@ -42,9 +42,9 @@ begin
 	begin
 	if(rising_edge(clk)) then 
 		if(we_a = '1') then
-			ram(addr_a) := data_a;
+			ram(addr_a) := data_in_a;
 		end if;
-		q_a <= ram(addr_a);
+		data_out_a <= ram(addr_a);
 	end if;
 	end process;
 
@@ -53,9 +53,9 @@ begin
 	begin
 	if(rising_edge(clk)) then 
 		if(we_b = '1') then
-			ram(addr_b) := data_b;
+			ram(addr_b) := data_in_b;
 		end if;
-  	    q_b <= ram(addr_b);
+  	    data_out_b <= ram(addr_b);
 	end if;
 	end process;
 end rtl;
