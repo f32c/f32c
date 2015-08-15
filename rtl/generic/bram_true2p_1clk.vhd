@@ -8,24 +8,25 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
 
 entity bram_true2p_1clk is
 	generic 
 	(
-		data_width : natural := 8;
-		addr_width : natural := 6
+		data_width: natural := 8;
+		addr_width: natural := 6
 	);
 	port 
 	(
-		clk		: in std_logic;
-		addr_a	: in natural range 0 to 2**addr_width - 1;
-		addr_b	: in natural range 0 to 2**addr_width - 1;
-		we_a	: in std_logic := '1';
-		we_b	: in std_logic := '1';
-		data_in_a	: in std_logic_vector((data_width-1) downto 0);
-		data_in_b	: in std_logic_vector((data_width-1) downto 0);
-		data_out_a		: out std_logic_vector((data_width -1) downto 0);
-		data_out_b		: out std_logic_vector((data_width -1) downto 0)
+		clk: in std_logic;
+		addr_a: in std_logic_vector((addr_width-1) downto 0);
+		addr_b: in std_logic_vector((addr_width-1) downto 0);
+		we_a: in std_logic := '1';
+		we_b: in std_logic := '1';
+		data_in_a: in std_logic_vector((data_width-1) downto 0);
+		data_in_b: in std_logic_vector((data_width-1) downto 0);
+		data_out_a: out std_logic_vector((data_width -1) downto 0);
+		data_out_b: out std_logic_vector((data_width -1) downto 0)
 	);
 end bram_true2p_1clk;
 
@@ -35,16 +36,16 @@ architecture rtl of bram_true2p_1clk is
 	type memory_t is array(2**addr_width-1 downto 0) of word_t;
 
 	-- Declare the RAM 
-	shared variable ram : memory_t;
+	shared variable ram: memory_t;
 begin
 	-- Port A
 	process(clk)
 	begin
 	if(rising_edge(clk)) then 
 		if(we_a = '1') then
-			ram(addr_a) := data_in_a;
+			ram(conv_integer(addr_a)) := data_in_a;
 		end if;
-		data_out_a <= ram(addr_a);
+		data_out_a <= ram(conv_integer(addr_a));
 	end if;
 	end process;
 
@@ -53,9 +54,9 @@ begin
 	begin
 	if(rising_edge(clk)) then 
 		if(we_b = '1') then
-			ram(addr_b) := data_in_b;
+			ram(conv_integer(addr_b)) := data_in_b;
 		end if;
-  	    data_out_b <= ram(addr_b);
+  	    data_out_b <= ram(conv_integer(addr_b));
 	end if;
 	end process;
 end rtl;
