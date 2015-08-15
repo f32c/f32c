@@ -39,6 +39,7 @@ entity sio is
 	C_init_baudrate: integer := 115200;
 	C_fixed_baudrate: boolean := false;
 	C_break_detect: boolean := false;
+        C_break_detect_delay_ms: integer := 200; -- ms (milliseconds) serial break
 	C_break_resets_baudrate: boolean := false;
 	C_tx_only: boolean := false;
 	C_bypass: boolean := false
@@ -73,7 +74,6 @@ architecture Behavioral of sio is
       std_logic_vector(to_unsigned(
 	C_init_baudrate * 2**10 / 1000 * 2**10 / C_clk_freq / 1000, 16));
     -- break detection math
-    constant C_break_detect_delay_ms: integer := 200; -- ms (milliseconds) serial break
     constant C_break_detect_bits: integer := integer(ceil((log2(real(C_break_detect_delay_ms * C_clk_freq * 1000 * 8/7)))+1.0E-16));
     constant C_break_detect_count: integer := 7 * 2**(C_break_detect_bits-3); -- number of clock ticks for break detection
     constant C_break_detect_delay_ticks: integer := C_break_detect_delay_ms * C_clk_freq * 1000;
