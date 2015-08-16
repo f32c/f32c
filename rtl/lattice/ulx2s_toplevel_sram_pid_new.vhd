@@ -126,8 +126,43 @@ entity toplevel is
 end toplevel;
 
 architecture Behavioral of toplevel is
+  signal clk, clk_325m, ena_325m: std_logic;
+  signal clk_433m: std_logic;
   signal btn: std_logic_vector(4 downto 0);
 begin
+
+    --
+    -- Clock synthesizer
+    --
+    clk_81_325: if C_tx433 = false generate
+    clkgen_video: entity work.clkgen
+    generic map (
+	C_clk_freq => C_clk_freq
+    )
+    port map (
+	clk_25m => clk_25m, ena_325m => ena_325m,
+	clk => clk, clk_325m => clk_325m, res => '0'
+    );
+    -- ena_325m <= R_dds_enable when R_fb_mode = "11" else '1';
+    ena_325m <= '1';
+    end generate;
+
+    clk_81_433: if C_tx433 = true generate
+    clkgen_tx433: entity work.clkgen
+    generic map (
+	C_clk_freq => C_clk_freq
+    )
+    port map (
+	clk_25m => clk_25m, ena_325m => '0',
+	clk => clk, clk_325m => open, res => '0'
+    );
+    ena_325m <= '0';
+    clk433gen: entity work.pll_81M25_433M33
+    port map (
+      CLK => clk, CLKOP => clk_433m
+    );
+    end generate;
+
   btn <= btn_left & btn_right & btn_up & btn_down & btn_center;
   inst_glue_sram: entity work.glue_sram
     generic map (
@@ -179,7 +214,10 @@ begin
 	C_dds => C_dds
     )
     port map (
+        clk => clk,
 	clk_25m => clk_25m,
+	clk_325m => clk_325m,
+	clk_433m => clk_433m,
 	rs232_tx => rs232_tx,
 	rs232_rx => rs232_rx,
 	flash_so => flash_so,
