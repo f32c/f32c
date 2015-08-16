@@ -284,7 +284,7 @@ begin
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
     imem_data_ready <= sdram_ready(0) when imem_addr(31 downto 30) = "10"
-      else '1';
+      else imem_addr_strobe; -- MUST deassert ACK when strobe is low!!!
     dmem_data_ready <= sdram_ready(1) when dmem_addr(31 downto 30) = "10"
       else '1'; -- I/O or BRAM have no wait states
 
