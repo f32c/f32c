@@ -13,6 +13,7 @@ use ieee.std_logic_unsigned.all;
 entity bram_true2p_1clk is
 	generic 
 	(
+	        dual_port: boolean := True; -- set to False for single port A
 		data_width: natural := 8;
 		addr_width: natural := 6
 	);
@@ -50,6 +51,7 @@ begin
 	end process;
 
 	-- Port B 
+	G_dual_port: if dual_port generate
 	process(clk)
 	begin
 	if(rising_edge(clk)) then 
@@ -59,4 +61,5 @@ begin
   	    data_out_b <= ram(conv_integer(addr_b));
 	end if;
 	end process;
+	end generate;
 end rtl;
