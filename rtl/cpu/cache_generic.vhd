@@ -188,7 +188,7 @@ begin
 	we_a => icache_write, we_b => flush_i_line,
 	addr_a(10 downto 9) => "00",
 	addr_a(8 downto 0) => i_addr(10 downto 2),
-	addr_b(10 downto 0) => "00",
+	addr_b(10 downto 9) => "00",
 	addr_b(8 downto 0) => d_addr(10 downto 2),
 	data_in_a => to_i_bram(44 downto 36),
 	data_in_b => (others => '0'),
