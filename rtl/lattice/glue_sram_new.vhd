@@ -103,7 +103,10 @@ entity glue_sram is
 	C_dds: boolean := true
     );
     port (
-	clk_25m: in std_logic;
+        clk: in std_logic; -- main clock CPU and I/O
+	clk_25m: in std_logic := '0'; -- VGA pixel clock 25 MHz
+        clk_325m: in std_logic := '0'; -- TV composite video 325 MHz
+        clk_433m: in std_logic := '0'; -- CW transmitter 433.92 MHz
 	rs232_tx: out std_logic;
 	rs232_rx: in std_logic;
 	flash_so: in std_logic;
@@ -136,10 +139,6 @@ architecture Behavioral of glue_sram is
     type f32c_intr is array(0 to (C_cpus - 1)) of std_logic_vector(5 downto 0);
     type f32c_debug_addr is array(0 to (C_cpus - 1)) of
       std_logic_vector(5 downto 0);
-
-    -- synthesized clocks
-    signal clk, clk_325m, ena_325m: std_logic;
-    signal clk_433m: std_logic;
 
     -- signals to / from f32c cores(s)
     signal res: f32c_std_logic;
@@ -267,37 +266,6 @@ architecture Behavioral of glue_sram is
 
 begin
 
-    --
-    -- Clock synthesizer
-    --
-    clk_81_325: if C_tx433 = false generate
-    clkgen_video: entity work.clkgen
-    generic map (
-	C_clk_freq => C_clk_freq
-    )
-    port map (
-	clk_25m => clk_25m, ena_325m => ena_325m,
-	clk => clk, clk_325m => clk_325m, res => '0'
-    );
-    -- ena_325m <= R_dds_enable when R_fb_mode = "11" else '1';
-    ena_325m <= '1';
-    end generate;
-
-    clk_81_433: if C_tx433 = true generate
-    clkgen_tx433: entity work.clkgen
-    generic map (
-	C_clk_freq => C_clk_freq
-    )
-    port map (
-	clk_25m => clk_25m, ena_325m => '0',
-	clk => clk, clk_325m => open, res => '0'
-    );
-    ena_325m <= '0';
-    clk433gen: entity work.pll_81M25_433M33
-    port map (
-      CLK => clk, CLKOP => clk_433m
-    );
-    end generate;
 
     --
     -- f32c core(s)
