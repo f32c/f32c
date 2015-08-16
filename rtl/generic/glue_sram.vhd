@@ -436,7 +436,7 @@ begin
 	end if;
     end process;
 
-    -- remains of old IO
+    -- remains of old IO (CPU writes to IO)
     process(clk)
     begin
 	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
@@ -481,7 +481,7 @@ begin
     begin
 	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1' and io_write = '1' then
 	    -- simple out
-	    if C_simple_out > 0 and io_addr(11 downto 4) = x"71" then
+	    if C_simple_out > 0 and io_addr(11 downto 4) = iomap_from(iomap_simple_out, iomap_range) then
 		if io_byte_sel(0) = '1' then
 		    R_simple_out(7 downto 0) <= cpu_to_io(7 downto 0);
 		end if;
