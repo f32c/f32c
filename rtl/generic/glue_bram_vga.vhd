@@ -81,6 +81,8 @@ entity glue_bram is
 	C_simple_out: integer range 0 to 128 := 32;
 	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
 	C_vgahdmi_mem_kb: integer := 4; -- mem size of framebuffer
+	C_cw: boolean := false; -- CW modulation, used for 433.92 MHz transmitter
+	C_cw_pin: integer := 28; -- simple out pin for CW modulation
 	C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
 	C_fm_stereo: boolean := false;
 	C_rds_msg_len: integer := 260; -- bytes of circular sent message, typical 52 for PS or 260 PS+RT
@@ -100,7 +102,8 @@ entity glue_bram is
 	clk: in std_logic;
 	clk_25MHz: in std_logic; -- VGA pixel clock 25 MHz
 	clk_250MHz: in std_logic := '0'; -- HDMI bit shift clock, default 0 if no HDMI
-	clk_fmdds: in std_logic := '0'; -- FM DDS clock
+	clk_fmdds: in std_logic := '0'; -- FM DDS clock (>216 MHz)
+	clk_cw: in std_logic := '0'; -- CW clock (433.92 MHz)
 	sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
 	sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
 	spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
@@ -112,7 +115,7 @@ entity glue_bram is
 	vga_hsync, vga_vsync: out std_logic;
 	vga_r, vga_g, vga_b: out std_logic_vector(2 downto 0);
 	tmds_out_rgb: out std_logic_vector(2 downto 0);
-	fm_antenna: out std_logic;
+	fm_antenna, cw_antenna: out std_logic;
 	gpio: inout std_logic_vector(127 downto 0)
     );
 end glue_bram;
@@ -365,6 +368,14 @@ begin
       ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
       simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
         else (others => '-');
+    end generate;
+
+    -- simple_out(28) enables carrier (CW modulation)
+    -- used for carriers of higher frequency than FM DDS
+    -- can handle: 433.92 MHz
+    G_cw_antenna:
+    if C_cw and C_simple_out >= C_cw_pin generate
+      cw_antenna <= simple_out(C_cw_pin) and clk_cw;
     end generate;
 
     -- RS232 sio
