@@ -126,84 +126,89 @@ entity toplevel is
 end toplevel;
 
 architecture Behavioral of toplevel is
-
+  signal btn: std_logic_vector(4 downto 0);
+begin
+  btn <= btn_left & btn_right & btn_up & btn_down & btn_center;
   inst_glue_sram: entity work.glue_sram
     generic map (
-	C_clk_freq => C_clk_freq;
-	C_arch => C_arch;
-	C_big_endian => C_big_endian;
-	C_mult_enable => C_mult_enable;
-	C_branch_likely => C_branch_likely;
-	C_sign_extend => C_sign_extend;
-	C_ll_sc => C_ll_sc;
-	C_PC_mask => C_PC_mask;
-	C_exceptions => C_exceptions;
-	C_cop0_count => C_cop0_count;
-	C_cop0_compare => C_cop0_compare;
-	C_cop0_config => C_cop0_config;
-	C_branch_prediction => C_branch_prediction;
-	C_full_shifter => C_full_shifter;
-	C_result_forwarding => C_result_forwarding;
-	C_load_aligner => C_load_aligner;
-	C_register_technology => C_register_technology;
-	C_movn_movz => C_movn_movz;
-	C_debug => C_debug;
-	C_cpus => C_cpus;
-	C_bram_size => C_bram_size;
-	C_i_rom_only => C_i_rom_only;
-	C_icache_size => C_icache_size;	-- 0, 2, 4 or 8 KBytes
-	C_dcache_size => C_dcache_size;	-- 0, 2, 4 or 8 KBytes
-	C_sram => C_sram;
-	C_sram_wait_cycles => C_sram_wait_cycles; -- ISSI, OK do 87.5 MHz
-	C_pipelined_read => C_pipelined_read; -- works only at 81.25 MHz !!!
-	C_sio => C_sio;
-	C_leds_btns => C_leds_btns;
-	C_gpio => C_gpio;
-	C_flash => C_flash;
-	C_sdcard => C_sdcard;
-	C_framebuffer => C_framebuffer;
-	C_pcm => C_pcm;
-	C_timer => C_timer;
-	C_tx433 => C_tx433; -- set (C_framebuffer => false, C_dds => false) for 433MHz transmitter
-	C_fmrds => C_fmrds; -- either FM or tx433
-	C_fm_stereo => C_fm_stereo;
-	C_rds_msg_len => C_rds_msg_len; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
-        C_fmdds_hz => C_fmdds_hz; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
-        C_rds_clock_multiply => C_rds_clock_multiply; -- multiply and divide from cpu clk 81.25 MHz
-        C_rds_clock_divide => C_rds_clock_divide; -- to get 1.824 MHz for RDS logic
-        C_pid => C_pid;
-        C_pids => C_pids;
-        C_pid_simulator => C_pid_simulator; -- for each pid choose simulator/real 
+	C_clk_freq => C_clk_freq,
+	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_mult_enable => C_mult_enable,
+	C_branch_likely => C_branch_likely,
+	C_sign_extend => C_sign_extend,
+	C_ll_sc => C_ll_sc,
+	C_PC_mask => C_PC_mask,
+	C_exceptions => C_exceptions,
+	C_cop0_count => C_cop0_count,
+	C_cop0_compare => C_cop0_compare,
+	C_cop0_config => C_cop0_config,
+	C_branch_prediction => C_branch_prediction,
+	C_full_shifter => C_full_shifter,
+	C_result_forwarding => C_result_forwarding,
+	C_load_aligner => C_load_aligner,
+	C_register_technology => C_register_technology,
+	C_movn_movz => C_movn_movz,
+	C_debug => C_debug,
+	C_cpus => C_cpus,
+	C_bram_size => C_bram_size,
+	C_i_rom_only => C_i_rom_only,
+	C_icache_size => C_icache_size,	-- 0, 2, 4 or 8 KBytes
+	C_dcache_size => C_dcache_size,	-- 0, 2, 4 or 8 KBytes
+	C_sram => C_sram,
+	C_sram_wait_cycles => C_sram_wait_cycles, -- ISSI, OK do 87.5 MHz
+	C_pipelined_read => C_pipelined_read, -- works only at 81.25 MHz !!!
+	C_sio => C_sio,
+	C_simple_io => C_leds_btns,
+	C_gpio => C_gpio,
+	C_flash => C_flash,
+	C_sdcard => C_sdcard,
+	C_framebuffer => C_framebuffer,
+	C_pcm => C_pcm,
+	C_timer => C_timer,
+	C_tx433 => C_tx433, -- set (C_framebuffer => false, C_dds => false) for 433MHz transmitter
+	C_fmrds => C_fmrds, -- either FM or tx433
+	C_fm_stereo => C_fm_stereo,
+	C_rds_msg_len => C_rds_msg_len, -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
+        C_fmdds_hz => C_fmdds_hz, -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
+        C_rds_clock_multiply => C_rds_clock_multiply, -- multiply and divide from cpu clk 81.25 MHz
+        C_rds_clock_divide => C_rds_clock_divide, -- to get 1.824 MHz for RDS logic
+        C_pid => C_pid,
+        C_pids => C_pids,
+        C_pid_simulator => C_pid_simulator, -- for each pid choose simulator/real 
 	C_dds => C_dds
     )
     port map (
-	clk_25m => clk_25m;
-	rs232_tx => rs232_tx;
-	rs232_rx => rs232_rx;
-	flash_so => flash_so;
-	flash_cen => flash_cen;
-	flash_sck => flash_sck;
-	flash_si => flash_si;
-	sdcard_so => sdcard_so;
-	sdcard_cen => sdcard_cen;
-	sdcard_sck => sdcard_sck;
-	sdcard_si => sdcard_si;
-	p_ring => p_ring;
-	p_tip => p_tip;
-	simple_out(7 downto 0) => led;
-	simple_in(4 downto 0) => btn_left & btn_right & btn_up & btn_down & btn_center;
-	simple_in(19 downto 16) => sw;
-        j1_2 => j1_2; j1_3 => j1_3; j1_4 => j1_4; j1_8 => j1_8;
-	j1_9 => j1_9; j1_13 => j1_4; j1_14 => j1_14; j1_15 => j1_15;
-	j1_16 => j1_16; j1_17 => j1_17; j1_18 => j1_18; j1_19 => j1_19;
-	j1_20 => j1_20; j1_21 => j1_21; j1_22 => j1_22; j1_23 => j1_23;
-	j2_2 => j2_2; j2_3 => j2_3; j2_4 => j2_4; j2_5 => j2_5;
-	j2_6 => j2_6; j2_7 => j2_7; j2_8 => j2_8; j2_9 => j2_9;
-	j2_10 => j2_10; j2_11 => j2_11; j2_12 => j2_12; j2_13 => j2_13;
-	j2_16 => j2_16;
-	sram_a => sram_a; sram_d => sram_d;
-	sram_lbl => sram_lbl; sram_ubl => sram_ubl;
+	clk_25m => clk_25m,
+	rs232_tx => rs232_tx,
+	rs232_rx => rs232_rx,
+	flash_so => flash_so,
+	flash_cen => flash_cen,
+	flash_sck => flash_sck,
+	flash_si => flash_si,
+	sdcard_so => sdcard_so,
+	sdcard_cen => sdcard_cen,
+	sdcard_sck => sdcard_sck,
+	sdcard_si => sdcard_si,
+	p_ring => p_ring,
+	p_tip => p_tip,
+	simple_out(7 downto 0) => led,
+	simple_in(4 downto 0) => btn,
+	simple_in(19 downto 16) => sw,
+        gpio(0)  => j1_2,  gpio(1)  => j1_3,  gpio(2)  => j1_4,   gpio(3)  => j1_8,
+	gpio(4)  => j1_9,  gpio(5)  => j1_4,  gpio(6)  => j1_14,  gpio(7)  => j1_15,
+	gpio(8)  => j1_16, gpio(9)  => j1_17, gpio(10) => j1_18,  gpio(11) => j1_19,
+	gpio(12) => j1_20, gpio(13) => j1_21, gpio(14) => j1_22,  gpio(15) => j1_23,
+	--  gpio(27 downto 16) multifunciton: PID
+	--  encoder_in_a       encoder_in_b       bridge_f_out        bridge_r_out
+	gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
+	gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1 
+	gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
+	--  gpio(28) multifunction: antenna
+	gpio(28) => j2_16, -- output 87-108MHz or 433MHz
+	sram_a => sram_a, sram_d => sram_d,
+	sram_lbl => sram_lbl, sram_ubl => sram_ubl,
 	sram_wel => sram_wel
     );
-
+    
 end Behavioral;
