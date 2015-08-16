@@ -26,6 +26,14 @@
 -- $Id$
 --
 
+-- Features:
+--
+-- MIPS CPU 81.25 MHz
+-- 1MB SDRAM
+-- PCM audio (2 channels 3.5 mm jack)
+-- FM/RDS transmitter 87-108 MHz
+-- PID controller (3 HW channels + 1 SW simulation)
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
@@ -87,8 +95,8 @@ entity toplevel is
 	C_framebuffer: boolean := false;
 	C_pcm: boolean := true;
 	C_timer: boolean := true;
-	C_tx433: boolean := false; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
-	C_fmrds: boolean := true; -- either FM or tx433
+	C_tx433: boolean := true; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+	C_fmrds: boolean := false; -- either FM or tx433
 	C_fm_stereo: boolean := false;
 	C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
         C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
@@ -96,10 +104,10 @@ entity toplevel is
         --C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
         C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
         C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
-        C_pid: boolean := true;
+        C_pid: boolean := false;
         C_pids: integer := 4;
         C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8); -- for each pid choose simulator/real 
-	C_dds: boolean := true
+	C_dds: boolean := false
     );
     port (
 	clk_25m: in std_logic;
@@ -127,14 +135,14 @@ end toplevel;
 
 architecture Behavioral of toplevel is
   signal clk, clk_325m, ena_325m: std_logic;
-  signal clk_433m: std_logic;
+  signal clk_112M5, clk_433m: std_logic;
   signal btn: std_logic_vector(4 downto 0);
 begin
 
     --
     -- Clock synthesizer
     --
-    clk_81_325: if C_tx433 = false generate
+    clk_81_325: if C_clk_freq > 25 and C_tx433 = false generate
     clkgen_video: entity work.clkgen
     generic map (
 	C_clk_freq => C_clk_freq
@@ -147,7 +155,7 @@ begin
     ena_325m <= '1';
     end generate;
 
-    clk_81_433: if C_tx433 = true generate
+    clk_81_433: if C_clk_freq = 81 and C_tx433 = true generate
     clkgen_tx433: entity work.clkgen
     generic map (
 	C_clk_freq => C_clk_freq
@@ -160,6 +168,23 @@ begin
     clk433gen: entity work.pll_81M25_433M33
     port map (
       CLK => clk, CLKOP => clk_433m
+    );
+    end generate;
+
+    clk_25_112_433: if C_clk_freq = 25 and C_tx433 = true generate
+    clk <= clk_25m;
+    clkgen_tx433: entity work.clkgen
+    generic map (
+	C_clk_freq => 112
+    )
+    port map (
+	clk_25m => clk_25m, ena_325m => '0',
+	clk => clk_112M5, clk_325m => open, res => '0'
+    );
+    ena_325m <= '0';
+    clk433gen: entity work.pll_112M5_433M92
+    port map (
+      CLK => clk_112M5, CLKOP => clk_433m
     );
     end generate;
 
