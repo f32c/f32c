@@ -103,7 +103,10 @@ entity glue_sram is
 	C_dds: boolean := true
     );
     port (
-	clk_25m: in std_logic;
+        clk: in std_logic; -- main clock CPU and I/O
+	clk_25m: in std_logic := '0'; -- VGA pixel clock 25 MHz
+        clk_325m: in std_logic := '0'; -- TV composite video 325 MHz
+        clk_433m: in std_logic := '0'; -- CW transmitter 433.92 MHz
 	rs232_tx: out std_logic;
 	rs232_rx: in std_logic;
 	flash_so: in std_logic;
@@ -113,12 +116,8 @@ entity glue_sram is
 	p_ring: out std_logic;
 	p_tip: out std_logic_vector(3 downto 0);
 	simple_out: out std_logic_vector(31 downto 0);
-	btn_left, btn_right, btn_up, btn_down, btn_center: in std_logic;
 	simple_in: in std_logic_vector(31 downto 0);
-	j1_2, j1_3, j1_4, j1_8, j1_9, j1_13, j1_14, j1_15: inout std_logic;
-	j1_16, j1_17, j1_18, j1_19, j1_20, j1_21, j1_22, j1_23: inout std_logic;
-	j2_2, j2_3, j2_4, j2_5, j2_6, j2_7, j2_8, j2_9: inout std_logic;
-	j2_10, j2_11, j2_12, j2_13, j2_16: inout std_logic;
+	gpio: inout std_logic_vector(31 downto 0);
 	sram_a: out std_logic_vector(18 downto 0);
 	sram_d: inout std_logic_vector(15 downto 0);
 	sram_wel, sram_lbl, sram_ubl: out std_logic
@@ -140,10 +139,6 @@ architecture Behavioral of glue_sram is
     type f32c_intr is array(0 to (C_cpus - 1)) of std_logic_vector(5 downto 0);
     type f32c_debug_addr is array(0 to (C_cpus - 1)) of
       std_logic_vector(5 downto 0);
-
-    -- synthesized clocks
-    signal clk, clk_325m, ena_325m: std_logic;
-    signal clk_433m: std_logic;
 
     -- signals to / from f32c cores(s)
     signal res: f32c_std_logic;
@@ -178,7 +173,6 @@ architecture Behavioral of glue_sram is
     signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
     signal R_simple_out: std_logic_vector(31 downto 0);
     signal R_simple_in: std_logic_vector(31 downto 0);
-    signal R_btns: std_logic_vector(4 downto 0);
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
     signal R_fb_base_addr: std_logic_vector(19 downto 2);
 
@@ -237,20 +231,9 @@ architecture Behavioral of glue_sram is
     signal from_gpio: std_logic_vector(31 downto 0);
     signal gpio_ce: std_logic;
     signal gpio_intr: std_logic;
-    signal gpio_28: std_logic;
-    -- gpio-pid switched pins
-    signal gpio_j2_2: std_logic;
-    signal gpio_j2_3: std_logic;
-    signal gpio_j2_4: std_logic;
-    signal gpio_j2_5: std_logic;
-    signal gpio_j2_6: std_logic;
-    signal gpio_j2_7: std_logic;
-    signal gpio_j2_8: std_logic;
-    signal gpio_j2_9: std_logic;
-    signal gpio_j2_10: std_logic;
-    signal gpio_j2_11: std_logic;
-    signal gpio_j2_12: std_logic;
-    signal gpio_j2_13: std_logic;
+    signal gpio_28: std_logic; -- tx433 multifunction shated pin
+    -- gpio-pid multifunction shared pins
+    signal gpio_pid: std_logic_vector(11+16 downto 16);
 
     -- Timer
     constant iomap_timer: T_iomap_range := (x"F900", x"F93F");
@@ -283,37 +266,6 @@ architecture Behavioral of glue_sram is
 
 begin
 
-    --
-    -- Clock synthesizer
-    --
-    clk_81_325: if C_tx433 = false generate
-    clkgen_video: entity work.clkgen
-    generic map (
-	C_clk_freq => C_clk_freq
-    )
-    port map (
-	clk_25m => clk_25m, ena_325m => ena_325m,
-	clk => clk, clk_325m => clk_325m, res => '0'
-    );
-    -- ena_325m <= R_dds_enable when R_fb_mode = "11" else '1';
-    ena_325m <= '1';
-    end generate;
-
-    clk_81_433: if C_tx433 = true generate
-    clkgen_tx433: entity work.clkgen
-    generic map (
-	C_clk_freq => C_clk_freq
-    )
-    port map (
-	clk_25m => clk_25m, ena_325m => '0',
-	clk => clk, clk_325m => open, res => '0'
-    );
-    ena_325m <= '0';
-    clk433gen: entity work.pll_81M25_433M33
-    port map (
-      CLK => clk, CLKOP => clk_433m
-    );
-    end generate;
 
     --
     -- f32c core(s)
@@ -484,7 +436,7 @@ begin
 	    -- LEDs
 	    if C_simple_io and io_addr(11 downto 4) = x"71" and
 	      io_byte_sel(0) = '1' then
-		R_simple_out <= cpu_to_io(7 downto 0);
+		R_simple_out(7 downto 0) <= cpu_to_io(7 downto 0);
 	    end if;
 	    -- DDS
 	    if C_dds and io_addr(11 downto 4) = x"7D" then
@@ -519,7 +471,6 @@ begin
 	end if;
 	if C_simple_io and rising_edge(clk) then
 	    R_simple_in <= simple_in;
-	    R_btns <= btn_center & btn_up & btn_down & btn_left & btn_right;
 	end if;
     end process;
     G_simple_out_standard:
@@ -535,7 +486,7 @@ begin
     end generate;
 
     -- XXX replace with a balanced multiplexer
-    process(io_addr, R_simple_in, R_btns, from_sio, from_flash, from_sdcard,
+    process(io_addr, R_simple_in, from_sio, from_flash, from_sdcard,
       from_gpio, from_timer)
     begin
 	case conv_integer(io_addr(11 downto 4)) is
@@ -864,48 +815,25 @@ begin
 	bus_write => io_write, byte_sel => io_byte_sel,
 	bus_in => cpu_to_io, bus_out => from_gpio,
 	gpio_irq => gpio_intr,
-        gpio_phys(0)  =>   j1_2,
-        gpio_phys(1)  =>   j1_3,
-        gpio_phys(2)  =>   j1_4,
-        gpio_phys(3)  =>   j1_8,
-        gpio_phys(4)  =>   j1_9,
-        gpio_phys(5)  =>   j1_13,
-        gpio_phys(6)  =>   j1_14,
-        gpio_phys(7)  =>   j1_15,
-        gpio_phys(8)  =>   j1_16,
-        gpio_phys(9)  =>   j1_17,
-        gpio_phys(10) =>   j1_18,
-        gpio_phys(11) =>   j1_19,
-        gpio_phys(12) =>   j1_20,
-        gpio_phys(13) =>   j1_21,
-        gpio_phys(14) =>   j1_22,
-        gpio_phys(15) =>   j1_23,
-        gpio_phys(16) => gpio_j2_2,
-        gpio_phys(17) => gpio_j2_3,
-        gpio_phys(18) => gpio_j2_4,
-        gpio_phys(19) => gpio_j2_5,
-        gpio_phys(20) => gpio_j2_6,
-        gpio_phys(21) => gpio_j2_7,
-        gpio_phys(22) => gpio_j2_8,
-        gpio_phys(23) => gpio_j2_9,
-        gpio_phys(24) => gpio_j2_10,
-        gpio_phys(25) => gpio_j2_11,
-        gpio_phys(26) => gpio_j2_12,
-        gpio_phys(27) => gpio_j2_13,
-        gpio_phys(28) =>   gpio_28
+        gpio_phys(15 downto 0)  => gpio(15 downto 0),
+        gpio_phys(27 downto 16) => gpio_pid(27 downto 16),
+        gpio_phys(28) => gpio_28
     );
     gpio_ce <= io_addr_strobe(R_cur_io_port) when
       io_addr(11 downto 8) = x"0" else '0';
     end generate;
-    --normal_gpio_28: if C_tx433 = false generate
-    --j2_16 <= gpio_28;
-    --end generate;
+    
+    -- antenna pin: gpio 28
     signal_FM_to_gpio_28: if C_fmrds = true generate
-    j2_16 <= fm_antenna;
+    gpio(28) <= fm_antenna;
     end generate;
 
     signal_433MHz_to_gpio_28: if C_tx433 = true generate
-    j2_16 <= gpio_28 and clk_433m;
+    gpio(28) <= gpio_28 and clk_433m;
+    end generate;
+
+    normal_gpio_28: if C_tx433 = false and C_fmrds = false generate
+    gpio(28) <= gpio_28;
     end generate;
 
     --
@@ -946,12 +874,12 @@ begin
 	clk => clk, ce => pid_ce, addr => io_addr(C_pids_bits+3 downto 2),
 	bus_write => io_write, byte_sel => io_byte_sel,
 	bus_in => cpu_to_io, bus_out => from_pid,
-	encoder_a_in(0) => j2_2,  encoder_b_in(0) => j2_3,
-	bridge_f_out(0) => j2_4,  bridge_r_out(0) => j2_5,
-	encoder_a_in(1) => j2_6,  encoder_b_in(1) => j2_7,
-	bridge_f_out(1) => j2_8,  bridge_r_out(1) => j2_9,
-	encoder_a_in(2) => j2_10, encoder_b_in(2) => j2_11,
-	bridge_f_out(2) => j2_12, bridge_r_out(2) => j2_13
+	encoder_a_in(0) => gpio(16),  encoder_b_in(0) => gpio(17),
+	bridge_f_out(0) => gpio(18),  bridge_r_out(0) => gpio(19),
+	encoder_a_in(1) => gpio(20),  encoder_b_in(1) => gpio(21),
+	bridge_f_out(1) => gpio(22),  bridge_r_out(1) => gpio(23),
+	encoder_a_in(2) => gpio(24),  encoder_b_in(2) => gpio(25),
+	bridge_f_out(2) => gpio(26),  bridge_r_out(2) => gpio(27)
     );
     pid_ce <= io_addr_strobe(R_cur_io_port) when 
          io_addr(11 downto 4) = x"58"
@@ -963,14 +891,7 @@ begin
 
     G_no_pid:
     if not C_pid generate
-      j2_2 <= gpio_j2_2;
-      j2_3 <= gpio_j2_3;
-      j2_4 <= gpio_j2_4;
-      j2_5 <= gpio_j2_5;
-      j2_6 <= gpio_j2_6;
-      j2_7 <= gpio_j2_7;
-      j2_8 <= gpio_j2_8;
-      j2_9 <= gpio_j2_9;
+      gpio(27 downto 16) <= gpio_pid(27 downto 16);
     end generate;
 
     --
