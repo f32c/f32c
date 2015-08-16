@@ -122,6 +122,7 @@ begin
     )
     port map (
 	clk => clk,
+	clk_25mhz => '0', -- XXX vgadhmi needs this
 	sio_txd(0) => rs232_txd, sio_rxd(0) => rs232_rxd, sio_break => open,
 	gpio => open,
 	spi_miso => "",
