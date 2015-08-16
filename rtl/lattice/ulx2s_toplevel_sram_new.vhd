@@ -30,7 +30,8 @@
 --
 -- MIPS CPU 81.25 MHz
 -- 1MB SDRAM
--- PCM audio (2 channels 3.5 mm jack)
+-- TV framebuffer (tip of 3.5 mm jack)
+-- PCM audio (ring of 3.5 mm jack)
 -- FM/RDS transmitter 87-108 MHz
 -- PID controller (3 HW channels + 1 SW simulation)
 
@@ -92,11 +93,11 @@ entity toplevel is
 	C_simple_in: integer := 20; -- buttons and switches (not all used)
 	C_gpio: boolean := true;
 	C_spi: integer := 2;
-	C_framebuffer: boolean := false;
+	C_framebuffer: boolean := true;
 	C_pcm: boolean := true;
 	C_timer: boolean := true;
-	C_tx433: boolean := true; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
-	C_fmrds: boolean := false; -- either FM or tx433
+	C_tx433: boolean := false; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+	C_fmrds: boolean := true; -- either FM or tx433
 	C_fm_stereo: boolean := false;
 	C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
         C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
@@ -104,7 +105,7 @@ entity toplevel is
         --C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
         C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
         C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
-        C_pid: boolean := false;
+        C_pid: boolean := true;
         C_pids: integer := 4;
         C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8); -- for each pid choose simulator/real 
 	C_dds: boolean := false
