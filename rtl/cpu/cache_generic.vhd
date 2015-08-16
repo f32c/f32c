@@ -179,6 +179,7 @@ begin
     if C_icache_size = 2 generate
     tag_dp_bram: entity work.bram_true2p_1clk
     generic map (
+        dual_port => True,
         data_width => 9,
         addr_width => 11
     )
@@ -196,6 +197,7 @@ begin
     );
     i_dp_bram: entity work.bram_true2p_1clk
     generic map (
+        dual_port => True,
         data_width => 18,
         addr_width => 10
     )
@@ -217,6 +219,7 @@ begin
     if C_icache_size = 4 generate
     tag_dp_bram: entity work.bram_true2p_1clk
     generic map (
+        dual_port => True,
         data_width => 9,
         addr_width => 11
     )
@@ -234,6 +237,7 @@ begin
     begin
     i_dp_bram: entity work.bram_true2p_1clk
     generic map (
+        dual_port => False,
         data_width => 18,
         addr_width => 10
     )
@@ -253,6 +257,7 @@ begin
     if C_icache_size = 8 generate
     tag_dp_bram: entity work.bram_true2p_1clk
     generic map (
+        dual_port => True,
         data_width => 9,
         addr_width => 11
     )
@@ -270,6 +275,7 @@ begin
     begin
     i_dp_bram: entity work.bram_true2p_1clk
     generic map (
+        dual_port => False,
         data_width => 9,
         addr_width => 11
     )
@@ -418,21 +424,23 @@ begin
     if C_dcache_size = 2 generate
     tag_dp_bram_d: entity work.bram_true2p_1clk
     generic map (
+        dual_port => False,
         data_width => 9,
         addr_width => 11
     )
     port map (
 	clk => clk,
-	we_a => '0', we_b => dcache_write,
-	addr_a => (others => '0'),
-	addr_b => "00" & d_addr(10 downto 2),
-	data_in_a => (others => '0'),
-	data_in_b => to_d_bram(44 downto 36),
-	data_out_a => open,
-	data_out_b => from_d_bram(44 downto 36)
+	we_b => '0', we_a => dcache_write,
+	addr_b => (others => '0'),
+	addr_a => "00" & d_addr(10 downto 2),
+	data_in_b => (others => '0'),
+	data_in_a => to_d_bram(44 downto 36),
+	data_out_b => open,
+	data_out_a => from_d_bram(44 downto 36)
     );
     d_dp_bram: entity work.bram_true2p_1clk
     generic map (
+        dual_port => True,
         data_width => 18,
         addr_width => 10
     )
@@ -452,23 +460,25 @@ begin
     if C_dcache_size = 4 generate
     tag_dp_bram_d: entity work.bram_true2p_1clk
     generic map (
+        dual_port => False,
         data_width => 9,
         addr_width => 11
     )
     port map (
 	clk => clk,
-	we_a => '0', we_b => dcache_write,
-	addr_a => (others => '0'),
-	addr_b => '0' & d_addr(11 downto 2),
-	data_in_a => (others => '0'),
-	data_in_b => to_d_bram(44 downto 36),
-	data_out_a => open,
-	data_out_b => from_d_bram(44 downto 36)
+	we_b => '0', we_a => dcache_write,
+	addr_b => (others => '0'),
+	addr_a => '0' & d_addr(11 downto 2),
+	data_in_b => (others => '0'),
+	data_in_a => to_d_bram(44 downto 36),
+	data_out_b => open,
+	data_out_a => from_d_bram(44 downto 36)
     );
     d_block_iter: for b in 0 to 1 generate
     begin
     d_dp_bram: entity work.bram_true2p_1clk
     generic map (
+        dual_port => False,
         data_width => 18,
         addr_width => 10
     )
@@ -488,23 +498,25 @@ begin
     if C_dcache_size = 8 generate
     tag_dp_bram_d: entity work.bram_true2p_1clk
     generic map (
+        dual_port => False,
         data_width => 9,
         addr_width => 11
     )
     port map (
 	clk => clk,
-	we_a => '0', we_b => dcache_write,
-	addr_a => (others => '0'),
-	addr_b => d_addr(12 downto 2),
-	data_in_a => (others => '0'),
-	data_in_b => to_d_bram(44 downto 36),
-	data_out_a => open,
-	data_out_b => from_d_bram(44 downto 36)
+	we_b => '0', we_a => dcache_write,
+	addr_b => (others => '0'),
+	addr_a => d_addr(12 downto 2),
+	data_in_b => (others => '0'),
+	data_in_a => to_d_bram(44 downto 36),
+	data_out_b => open,
+	data_out_a => from_d_bram(44 downto 36)
     );
     d_block_iter: for b in 0 to 3 generate
     begin
     d_dp_bram: entity work.bram_true2p_1clk
     generic map (
+        dual_port => False,
         data_width => 9,
         addr_width => 11
     )
