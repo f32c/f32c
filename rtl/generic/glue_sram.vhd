@@ -80,10 +80,12 @@ entity glue_sram is
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
 	C_sio: boolean := true;
-	C_simple_io: boolean := true;
+	C_simple_in: integer range 0 to 128 := 32;
+	C_simple_out: integer range 0 to 128 := 32;
 	C_gpio: boolean := true;
-	C_flash: boolean := true;
-	C_sdcard: boolean := true;
+	C_spi: integer := 0;
+	C_spi_turbo_mode: std_logic_vector := "0000";
+	C_spi_fixed_speed: std_logic_vector := "1111";
 	C_framebuffer: boolean := false;
 	C_pcm: boolean := true;
 	C_timer: boolean := true;
@@ -109,10 +111,8 @@ entity glue_sram is
         clk_433m: in std_logic := '0'; -- CW transmitter 433.92 MHz
 	rs232_tx: out std_logic;
 	rs232_rx: in std_logic;
-	flash_so: in std_logic;
-	flash_cen, flash_sck, flash_si: out std_logic;
-	sdcard_so: in std_logic;
-	sdcard_cen, sdcard_sck, sdcard_si: out std_logic;
+	spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
+	spi_miso: in std_logic_vector(C_spi - 1 downto 0);
 	p_ring: out std_logic;
 	p_tip: out std_logic_vector(3 downto 0);
 	simple_out: out std_logic_vector(31 downto 0);
@@ -165,14 +165,11 @@ architecture Behavioral of glue_sram is
     signal io_byte_sel: std_logic_vector(3 downto 0);
     signal io_addr: std_logic_vector(11 downto 2);
     signal cpu_to_io, io_to_cpu: std_logic_vector(31 downto 0);
-    signal from_flash, from_sdcard, from_sio: std_logic_vector(31 downto 0);
+    signal from_sio: std_logic_vector(31 downto 0);
     signal sio_txd, sio_ce, sio_break: std_logic;
-    signal flash_ce, sdcard_ce: std_logic;
     signal io_addr_strobe: std_logic_vector((C_io_ports - 1) downto 0);
     signal next_io_port: integer range 0 to (C_io_ports - 1);
     signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
-    signal R_simple_out: std_logic_vector(31 downto 0);
-    signal R_simple_in: std_logic_vector(31 downto 0);
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
     signal R_fb_base_addr: std_logic_vector(19 downto 2);
 
@@ -207,10 +204,12 @@ architecture Behavioral of glue_sram is
     signal fb_tick: std_logic;
 
     -- PCM audio
+    constant iomap_pcm: T_iomap_range := (x"FBA0", x"FBAF");
+    signal pcm_ce: std_logic;
     signal pcm_addr_strobe, pcm_data_ready: std_logic;
     signal pcm_addr: std_logic_vector(19 downto 2);
     signal from_pcm: std_logic_vector(31 downto 0);
-    signal pcm_ce, pcm_l, pcm_r: std_logic;
+    signal pcm_l, pcm_r: std_logic;
     signal pcm_bus_l, pcm_bus_r: signed(15 downto 0);
 
     -- FM/RDS RADIO
@@ -223,11 +222,26 @@ architecture Behavioral of glue_sram is
     signal R_dds, R_dds_fast, R_dds_acc: std_logic_vector(31 downto 0);
     signal R_dds_enable: std_logic;
 
+    -- Simple I/O: onboard LEDs, buttons and switches
+    constant iomap_simple_in: T_iomap_range := (x"FF00", x"FF0F");
+    constant iomap_simple_out: T_iomap_range := (x"FF10", x"FF1F");
+    signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
+
     -- serial I/O (RS232)
     constant iomap_sio: T_iomap_range := (x"FB00", x"FB3F");
+    signal sio_range: std_logic := '0';
+
+    -- SPI (on-board Flash, SD card, others...)
+    constant iomap_spi: T_iomap_range := (x"FB40", x"FB7F");
+    signal spi_range: std_logic := '0';
+    type from_spi_type is array (0 to C_spi - 1) of
+      std_logic_vector(31 downto 0);
+    signal from_spi: from_spi_type;
+    signal spi_ce: std_logic_vector(C_spi - 1 downto 0);
 
     -- GPIO
     constant iomap_gpio: T_iomap_range := (x"F800", x"F87F");
+    signal gpio_range: std_logic := '0';
     signal from_gpio: std_logic_vector(31 downto 0);
     signal gpio_ce: std_logic;
     signal gpio_intr: std_logic;
@@ -335,40 +349,29 @@ begin
     end generate;
 
     --
-    -- On-board SPI flash
+    -- On-board SPI flash and sdcard
     --
-    G_flash:
-    if C_flash generate
-    flash: entity work.spi
-    generic map (
-	C_turbo_mode => true
-    )
-    port map (
-	clk => clk, ce => flash_ce,
-	bus_write => io_write, byte_sel => io_byte_sel,
-	bus_in => cpu_to_io, bus_out => from_flash,
-	spi_sck => flash_sck, spi_cen => flash_cen,
-	spi_mosi => flash_si, spi_miso => flash_so
-    );
-    flash_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 4) = x"34" else '0';
+    -- SPI
+    G_spi: for i in 0 to C_spi - 1 generate
+	spi_instance: entity work.spi
+	generic map (
+	    C_turbo_mode => C_spi_turbo_mode(i) = '1',
+	    C_fixed_speed => C_spi_fixed_speed(i) = '1'
+	)
+	port map (
+	    clk => clk, ce => spi_ce(i),
+	    bus_write => io_write, byte_sel => io_byte_sel,
+	    bus_in => cpu_to_io, bus_out => from_spi(i),
+	    spi_sck => spi_sck(i), spi_cen => spi_ss(i),
+	    spi_miso => spi_miso(i), spi_mosi => spi_mosi(i)
+	);
+	spi_ce(i) <= io_addr_strobe(R_cur_io_port) when io_addr(11 downto 6) = x"3" & "01" and
+	  conv_integer(io_addr(5 downto 4)) = i else '0';
     end generate;
-
-    --
-    -- MicroSD card
-    --
-    G_sdcard:
-    if C_sdcard generate
-    sdcard: entity work.spi
-    port map (
-	clk => clk, ce => sdcard_ce,
-	bus_write => io_write, byte_sel => io_byte_sel,
-	bus_in => cpu_to_io, bus_out => from_sdcard,
-	spi_sck => sdcard_sck, spi_cen => sdcard_cen,
-	spi_mosi => sdcard_si, spi_miso => sdcard_so
-    );
-    sdcard_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 4) = x"35" else '0';
+    G_spi_decoder: if C_spi > 0 generate
+    with conv_integer(io_addr(11 downto 4)) select
+      spi_range <= '1' when iomap_from(iomap_spi, iomap_range) to iomap_to(iomap_spi, iomap_range),
+                   '0' when others;
     end generate;
 
     -- Memory map:
@@ -431,13 +434,13 @@ begin
 	if rising_edge(clk) then
 	    R_cur_io_port <= next_io_port;
 	end if;
+    end process;
+
+    -- remains of old IO
+    process(clk)
+    begin
 	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
 	  and io_write = '1' then
-	    -- LEDs
-	    if C_simple_io and io_addr(11 downto 4) = x"71" and
-	      io_byte_sel(0) = '1' then
-		R_simple_out(7 downto 0) <= cpu_to_io(7 downto 0);
-	    end if;
 	    -- DDS
 	    if C_dds and io_addr(11 downto 4) = x"7D" then
 		R_dds <= cpu_to_io;
@@ -469,24 +472,52 @@ begin
 		R_fb_intr <= '1';
 	    end if;
 	end if;
-	if C_simple_io and rising_edge(clk) then
-	    R_simple_in <= simple_in;
+    end process;
+
+    --
+    -- Simple I/O
+    --
+    process(clk)
+    begin
+	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1' and io_write = '1' then
+	    -- simple out
+	    if C_simple_out > 0 and io_addr(11 downto 4) = x"71" then
+		if io_byte_sel(0) = '1' then
+		    R_simple_out(7 downto 0) <= cpu_to_io(7 downto 0);
+		end if;
+		if io_byte_sel(1) = '1' then
+		    R_simple_out(15 downto 8) <= cpu_to_io(15 downto 8);
+		end if;
+		if io_byte_sel(2) = '1' then
+		    R_simple_out(23 downto 16) <= cpu_to_io(23 downto 16);
+		end if;
+		if io_byte_sel(3) = '1' then
+		    R_simple_out(31 downto 24) <= cpu_to_io(31 downto 24);
+		end if;
+	    end if;
+	end if;
+	if rising_edge(clk) then
+	    R_simple_in(C_simple_in - 1 downto 0) <=
+	      simple_in(C_simple_in - 1 downto 0);
 	end if;
     end process;
+
     G_simple_out_standard:
     if C_timer = false generate
-    simple_out <= R_simple_out when C_simple_io else (others => '-');
+	simple_out(C_simple_out - 1 downto 0) <=
+	  R_simple_out(C_simple_out - 1 downto 0);
     end generate;
+
     G_simple_out_timer:
     if C_timer = true generate
     ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
     ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
-    simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_io
+    simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
       else (others => '-');
     end generate;
 
-    -- XXX replace with a balanced multiplexer
-    process(io_addr, R_simple_in, from_sio, from_flash, from_sdcard,
+    -- big address decoder when CPU reads IO
+    process(io_addr, R_simple_in, from_sio, from_spi,
       from_gpio, from_timer)
     begin
 	case conv_integer(io_addr(11 downto 4)) is
@@ -514,19 +545,27 @@ begin
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
-	when conv_integer(x"34")  =>
-	    if C_flash then
-		io_to_cpu <= from_flash;
-            else
-		io_to_cpu <= (others => '-');
-	    end if;
-	when conv_integer(x"35")  =>
-	    if C_sdcard then
-		io_to_cpu <= from_sdcard;
-	    else
-		io_to_cpu <= (others => '-');
-	    end if;
-	when conv_integer(x"3A")  =>
+	when iomap_from(iomap_spi, iomap_range) to iomap_to(iomap_spi, iomap_range) =>
+	    for i in 0 to C_spi - 1 loop
+		if conv_integer(io_addr(5 downto 4)) = i then
+		    io_to_cpu <= from_spi(i);
+		end if;
+	    end loop;
+	when iomap_from(iomap_simple_in, iomap_range) to iomap_to(iomap_simple_in, iomap_range) =>
+	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
+		if conv_integer(io_addr(3 downto 2)) = i then
+		    io_to_cpu(C_simple_in - i * 32 - 1 downto i * 32) <=
+		      R_simple_in(C_simple_in - i * 32 - 1 downto i * 32);
+		end if;
+	    end loop;
+	when iomap_from(iomap_simple_out, iomap_range) to iomap_to(iomap_simple_out, iomap_range) =>
+	    for i in 0 to (C_simple_out + 31) / 4 - 1 loop
+		if conv_integer(io_addr(3 downto 2)) = i then
+		    io_to_cpu(C_simple_out - i * 32 - 1 downto i * 32) <=
+		      R_simple_out(C_simple_out - i * 32 - 1 downto i * 32);
+		end if;
+	    end loop;
+	when iomap_from(iomap_pcm, iomap_range) to iomap_to(iomap_pcm, iomap_range) =>
 	    if C_pcm then
 		io_to_cpu <= from_pcm;
 	    else
@@ -535,18 +574,6 @@ begin
 	when iomap_from(iomap_fmrds, iomap_range) to iomap_to(iomap_fmrds, iomap_range)  =>
 	    if C_fmrds then
 		io_to_cpu <= from_fmrds;
-	    else
-		io_to_cpu <= (others => '-');
-	    end if;
-	when conv_integer(x"70")  =>
-	    if C_simple_io then
-		io_to_cpu <= R_simple_in;
-	    else
-		io_to_cpu <= (others => '-');
-	    end if;
-	when conv_integer(x"71")  =>
-	    if C_simple_io then
-		io_to_cpu <= R_simple_out;
 	    else
 		io_to_cpu <= (others => '-');
 	    end if;
@@ -766,8 +793,9 @@ begin
 	out_pcm_l => pcm_bus_l, out_pcm_r => pcm_bus_r,
 	out_r => pcm_r, out_l => pcm_l
     );
-    pcm_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 4) = x"3A" else '0';
+    with conv_integer(io_addr(11 downto 4)) select
+      pcm_ce <= io_addr_strobe(R_cur_io_port) when iomap_from(iomap_pcm, iomap_range) to iomap_to(iomap_pcm, iomap_range),
+                                          '0' when others;
     end generate;
 
     p_tip <= (others => R_dds_acc(31)) when C_dds and R_dds_enable = '1'

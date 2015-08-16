@@ -80,10 +80,10 @@ entity toplevel is
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
 	C_sio: boolean := true;
-	C_leds_btns: boolean := true;
+	C_simple_out: integer := 8; -- LEDs
+	C_simple_in: integer := 20; -- buttons and switches (not all used)
 	C_gpio: boolean := true;
-	C_flash: boolean := true;
-	C_sdcard: boolean := true;
+	C_spi: integer := 2;
 	C_framebuffer: boolean := false;
 	C_pcm: boolean := true;
 	C_timer: boolean := true;
@@ -194,10 +194,10 @@ begin
 	C_sram_wait_cycles => C_sram_wait_cycles, -- ISSI, OK do 87.5 MHz
 	C_pipelined_read => C_pipelined_read, -- works only at 81.25 MHz !!!
 	C_sio => C_sio,
-	C_simple_io => C_leds_btns,
+	C_spi => C_spi,
+	C_simple_out => C_simple_out,
+	C_simple_in => C_simple_in,
 	C_gpio => C_gpio,
-	C_flash => C_flash,
-	C_sdcard => C_sdcard,
 	C_framebuffer => C_framebuffer,
 	C_pcm => C_pcm,
 	C_timer => C_timer,
@@ -220,14 +220,10 @@ begin
 	clk_433m => clk_433m,
 	rs232_tx => rs232_tx,
 	rs232_rx => rs232_rx,
-	flash_so => flash_so,
-	flash_cen => flash_cen,
-	flash_sck => flash_sck,
-	flash_si => flash_si,
-	sdcard_so => sdcard_so,
-	sdcard_cen => sdcard_cen,
-	sdcard_sck => sdcard_sck,
-	sdcard_si => sdcard_si,
+	spi_sck(0) => flash_sck, spi_ss(0) => flash_cen,
+	spi_mosi(0) => flash_si, spi_miso(0) => flash_so,
+	spi_sck(1) => sdcard_sck, spi_ss(1) => sdcard_cen,
+	spi_mosi(1) => sdcard_si, spi_miso(1) => sdcard_so,
 	p_ring => p_ring,
 	p_tip => p_tip,
 	simple_out(7 downto 0) => led,
