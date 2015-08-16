@@ -48,7 +48,7 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 32;
-	C_icache_size: integer := 8;	-- 0, 2, 4 or 8 KBytes
+	C_icache_size: integer := 0;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_vgahdmi: boolean := true;
 	C_vgahdmi_mem_kb: integer := 10; -- KB
