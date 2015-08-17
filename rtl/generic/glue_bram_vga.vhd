@@ -81,8 +81,7 @@ entity glue_bram is
 	C_simple_out: integer range 0 to 128 := 32;
 	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
 	C_vgahdmi_mem_kb: integer := 4; -- mem size of framebuffer
-	C_cw: boolean := false; -- CW modulation, used for 433.92 MHz transmitter
-	C_cw_pin: integer := 28; -- simple out pin for CW modulation
+	C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
 	C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
 	C_fm_stereo: boolean := false;
 	C_rds_msg_len: integer := 260; -- bytes of circular sent message, typical 52 for PS or 260 PS+RT
@@ -374,8 +373,8 @@ begin
     -- used for carriers of higher frequency than FM DDS
     -- can handle: 433.92 MHz
     G_cw_antenna:
-    if C_cw and C_simple_out >= C_cw_pin generate
-      cw_antenna <= simple_out(C_cw_pin) and clk_cw;
+    if C_cw_simple_out >= 0 and C_simple_out > C_cw_simple_out generate
+      cw_antenna <= simple_out(C_cw_simple_out) and clk_cw;
     end generate;
 
     -- RS232 sio
