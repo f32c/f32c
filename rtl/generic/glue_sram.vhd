@@ -89,8 +89,8 @@ entity glue_sram is
 	C_framebuffer: boolean := false;
 	C_pcm: boolean := true;
 	C_timer: boolean := true;
-	C_tx433: boolean := false; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
-	C_fmrds: boolean := true; -- either FM or tx433
+	C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
+	C_fmrds: boolean := true;
 	C_fm_stereo: boolean := false;
 	C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
 	C_fm_cw_hz: integer := 107900000; -- Hz FM station carrier wave frequency
@@ -108,7 +108,7 @@ entity glue_sram is
         clk: in std_logic; -- main clock CPU and I/O
 	clk_25m: in std_logic := '0'; -- VGA pixel clock 25 MHz
         clk_325m: in std_logic := '0'; -- TV composite video 325 MHz
-        clk_433m: in std_logic := '0'; -- CW transmitter 433.92 MHz
+        clk_cw: in std_logic := '0'; -- CW transmitter 433.92 MHz
 	rs232_tx: out std_logic;
 	rs232_rx: in std_logic;
 	spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
@@ -117,6 +117,7 @@ entity glue_sram is
 	p_tip: out std_logic_vector(3 downto 0);
 	simple_out: out std_logic_vector(31 downto 0);
 	simple_in: in std_logic_vector(31 downto 0);
+	fm_antenna, cw_antenna: out std_logic;
 	gpio: inout std_logic_vector(31 downto 0);
 	sram_a: out std_logic_vector(18 downto 0);
 	sram_d: inout std_logic_vector(15 downto 0);
@@ -216,7 +217,6 @@ architecture Behavioral of glue_sram is
     constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
     signal fmrds_ce: std_logic;
     signal from_fmrds: std_logic_vector(31 downto 0); -- current address
-    signal fm_antenna: std_logic;
 
     -- DDS frequency synthesizer
     signal R_dds, R_dds_fast, R_dds_acc: std_logic_vector(31 downto 0);
@@ -245,7 +245,6 @@ architecture Behavioral of glue_sram is
     signal from_gpio: std_logic_vector(31 downto 0);
     signal gpio_ce: std_logic;
     signal gpio_intr: std_logic;
-    signal gpio_28: std_logic; -- tx433 multifunction shated pin
     -- gpio-pid multifunction shared pins
     signal gpio_pid: std_logic_vector(11+16 downto 16);
 
@@ -845,23 +844,18 @@ begin
 	gpio_irq => gpio_intr,
         gpio_phys(15 downto 0)  => gpio(15 downto 0),
         gpio_phys(27 downto 16) => gpio_pid(27 downto 16),
-        gpio_phys(28) => gpio_28
+        gpio_phys(31 downto 28) => gpio(31 downto 28)
     );
     gpio_ce <= io_addr_strobe(R_cur_io_port) when
       io_addr(11 downto 8) = x"0" else '0';
     end generate;
-    
-    -- antenna pin: gpio 28
-    signal_FM_to_gpio_28: if C_fmrds = true generate
-    gpio(28) <= fm_antenna;
-    end generate;
 
-    signal_433MHz_to_gpio_28: if C_tx433 = true generate
-    gpio(28) <= gpio_28 and clk_433m;
-    end generate;
-
-    normal_gpio_28: if C_tx433 = false and C_fmrds = false generate
-    gpio(28) <= gpio_28;
+    -- one selected simple_out enables carrier (CW modulation)
+    -- used for carriers of higher frequency than FM DDS
+    -- can produce (433 MHz)
+    G_cw_antenna:
+    if C_cw_simple_out >= 0 and C_simple_out > C_cw_simple_out generate
+      cw_antenna <= simple_out(C_cw_simple_out) and clk_cw;
     end generate;
 
     --
