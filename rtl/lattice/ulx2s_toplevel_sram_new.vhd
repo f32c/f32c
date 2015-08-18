@@ -26,12 +26,15 @@
 -- $Id$
 --
 
--- Features:
+-- this is new and potentially buggy
+-- variant of standard ULX2S SRAM
+-- with most features
 --
 -- MIPS CPU 81.25 MHz
 -- 1MB SDRAM
 -- TV framebuffer (tip of 3.5 mm jack)
 -- PCM audio (ring of 3.5 mm jack)
+-- 2 SPI ports (flash and SD card)
 -- FM/RDS transmitter 87-108 MHz
 -- PID controller (3 HW channels + 1 SW simulation)
 
@@ -46,10 +49,24 @@ use work.f32c_pack.all;
 use work.sram_pack.all;
 
 
+-- this is new and potentially buggy
+-- variant of feature-rich ULX2S SRAM
+--
+-- 1MB SRAM
+-- TV framebuffer
+-- 16 GPIO with interrupts
+-- 1 timer (2xPWM, 2xICP)
+-- 1 channel PCM audio out
+-- 2 SPI ports (flash and SD card)
+-- PCM audio with DMA
+-- FM RDS transmitter 87-108MHz (FM plays PCM audio)
+-- 4 PID controllers (3 hardware, 1 simulation)
+-- 8 LEDs, 5 buttons, 4 switches
+
 entity toplevel is
     generic (
-	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-	C_clk_freq: integer := 81;
+	-- Main clock: 25, 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
+	C_clk_freq: integer := 25;
 
 	-- ISA options
 	C_arch: integer := ARCH_MI32;
@@ -87,7 +104,7 @@ entity toplevel is
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_sram: boolean := true;
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
-	C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
+	-- C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!! defined below as constant
 	C_sio: boolean := true;
 	C_simple_out: integer := 8; -- LEDs
 	C_simple_in: integer := 20; -- buttons and switches (not all used)
@@ -96,7 +113,7 @@ entity toplevel is
 	C_framebuffer: boolean := true;
 	C_pcm: boolean := true;
 	C_timer: boolean := true;
-	C_tx433: boolean := false; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+	C_cw_simple_out: integer := 7; -- simple_out bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
 	C_fmrds: boolean := true; -- either FM or tx433
 	C_fm_stereo: boolean := false;
 	C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
@@ -135,15 +152,18 @@ entity toplevel is
 end toplevel;
 
 architecture Behavioral of toplevel is
+  constant C_pipelined_read: boolean := C_clk_freq = 81; -- works only at 81.25 MHz !!!
   signal clk, clk_325m, ena_325m: std_logic;
   signal clk_112M5, clk_433m: std_logic;
   signal btn: std_logic_vector(4 downto 0);
+  signal gpio_28, fm_antenna, cw_antenna: std_logic;
 begin
 
     --
     -- Clock synthesizer
     --
-    clk_81_325: if C_clk_freq > 25 and C_tx433 = false generate
+    clk_81_325: if C_clk_freq > 25 and C_cw_simple_out < 0 generate
+    -- no CW output (FM possible if enabled)
     clkgen_video: entity work.clkgen
     generic map (
 	C_clk_freq => C_clk_freq
@@ -154,10 +174,16 @@ begin
     );
     -- ena_325m <= R_dds_enable when R_fb_mode = "11" else '1';
     ena_325m <= '1';
+    G_normal_gpio28: if not C_fmrds generate
+    j2_16 <= gpio_28;
+    end generate; -- G_normal_gpio28
+    G_fm_antenna: if C_fmrds generate
+    j2_16 <= fm_antenna;
+    end generate; -- G_fm_antenna
     end generate;
 
-    clk_81_433: if C_clk_freq = 81 and C_tx433 = true generate
-    clkgen_tx433: entity work.clkgen
+    clk_81_433: if C_clk_freq = 81 and C_cw_simple_out >= 0 generate
+    clkgen_tx433M33: entity work.clkgen
     generic map (
 	C_clk_freq => C_clk_freq
     )
@@ -166,28 +192,32 @@ begin
 	clk => clk, clk_325m => open, res => '0'
     );
     ena_325m <= '0';
-    clk433gen: entity work.pll_81M25_433M33
+    -- warning: from 81.25 MHz PLL produes 433.33 MHz
+    -- correct frequency should be 433.92 MHz
+    -- the difference results in reduced range
+    clk433M33gen: entity work.pll_81M25_433M33
     port map (
       CLK => clk, CLKOP => clk_433m
     );
+    j2_16 <= cw_antenna;
     end generate;
 
-    clk_25_112_433: if C_clk_freq = 25 and C_tx433 = true generate
+    G_clk_25: if C_clk_freq = 25 generate -- 25 MHz CPU clock
     clk <= clk_25m;
-    clkgen_tx433: entity work.clkgen
-    generic map (
-	C_clk_freq => 112
-    )
+    -- latice XP2 using 2 PLLs can generate correct frequency
+    -- 25 MHz -> 112.5 MHz -> 433.92 MHz
+    G_clk_25_112_433: if C_cw_simple_out >= 0 generate
+    clk112M5gen: entity work.pll_25M_112M5
     port map (
-	clk_25m => clk_25m, ena_325m => '0',
-	clk => clk_112M5, clk_325m => open, res => '0'
+      CLK => clk_25m, CLKOP => clk_112m5
     );
-    ena_325m <= '0';
-    clk433gen: entity work.pll_112M5_433M92
+    clk433M92gen: entity work.pll_112M5_433M92
     port map (
-      CLK => clk_112M5, CLKOP => clk_433m
+      CLK => clk_112m5, CLKOP => clk_433m
     );
+    j2_16 <= cw_antenna;
     end generate;
+    end generate; -- 25 MHz clock
 
   btn <= btn_left & btn_right & btn_up & btn_down & btn_center;
   inst_glue_sram: entity work.glue_sram
@@ -227,7 +257,7 @@ begin
 	C_framebuffer => C_framebuffer,
 	C_pcm => C_pcm,
 	C_timer => C_timer,
-	C_tx433 => C_tx433, -- set (C_framebuffer => false, C_dds => false) for 433MHz transmitter
+	C_cw_simple_out => C_cw_simple_out, -- CW is for 433 MHz. -1 to disable. set (C_framebuffer => false, C_dds => false) for 433MHz transmitter
 	C_fmrds => C_fmrds, -- either FM or tx433
 	C_fm_stereo => C_fm_stereo,
 	C_rds_msg_len => C_rds_msg_len, -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
@@ -243,7 +273,7 @@ begin
         clk => clk,
 	clk_25m => clk_25m,
 	clk_325m => clk_325m,
-	clk_433m => clk_433m,
+	clk_cw => clk_433m,
 	rs232_tx => rs232_tx,
 	rs232_rx => rs232_rx,
 	spi_sck(0) => flash_sck, spi_ss(0) => flash_cen,
@@ -264,8 +294,10 @@ begin
 	gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
 	gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1 
 	gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
+	gpio(28) => gpio_28, -- j2_16
 	--  gpio(28) multifunction: antenna
-	gpio(28) => j2_16, -- output 87-108MHz or 433MHz
+	cw_antenna => cw_antenna, -- output 433MHz
+	fm_antenna => fm_antenna, -- output 87-108MHz
 	sram_a => sram_a, sram_d => sram_d,
 	sram_lbl => sram_lbl, sram_ubl => sram_ubl,
 	sram_wel => sram_wel
