@@ -369,9 +369,9 @@ begin
         else (others => '-');
     end generate;
 
-    -- simple_out(28) enables carrier (CW modulation)
+    -- one selected simple_out enables carrier (CW modulation)
     -- used for carriers of higher frequency than FM DDS
-    -- can handle: 433.92 MHz
+    -- can produce (433 MHz)
     G_cw_antenna:
     if C_cw_simple_out >= 0 and C_simple_out > C_cw_simple_out generate
       cw_antenna <= simple_out(C_cw_simple_out) and clk_cw;
