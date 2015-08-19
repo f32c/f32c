@@ -110,7 +110,7 @@ entity toplevel is
 	C_simple_in: integer := 20; -- buttons and switches (not all used)
 	C_gpio: boolean := true;
 	C_spi: integer := 2;
-	C_framebuffer: boolean := true;
+	C_framebuffer: boolean := false;
 	C_pcm: boolean := true;
 	C_timer: boolean := true;
 	C_cw_simple_out: integer := 7; -- simple_out bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
@@ -122,7 +122,7 @@ entity toplevel is
         --C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
         C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
         C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
-        C_pid: boolean := true;
+        C_pid: boolean := false;
         C_pids: integer := 4;
         C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8); -- for each pid choose simulator/real 
 	C_dds: boolean := false
