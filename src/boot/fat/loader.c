@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <io.h>
+#include <dev/io.h>
 
 
 static const char *bootfiles[] = {
