@@ -25,7 +25,7 @@
  * $Id$
  */
 
-#include <io.h>
+#include <dev/io.h>
 
 extern __dead2 void binboot(void);
 
