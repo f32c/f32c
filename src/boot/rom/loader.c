@@ -25,9 +25,9 @@
  * $Id$
  */
 
-#include <io.h>
-#include <spi.h>
-#include <sio.h>
+#include <dev/io.h>
+#include <dev/spi.h>
+#include <dev/sio.h>
 #include <stdio.h>
 
 

@@ -31,7 +31,7 @@
 #include <mips/cpuregs.h>
 #endif
 
-#include <io.h>
+#include <dev/io.h>
 
 
 	.section .init
