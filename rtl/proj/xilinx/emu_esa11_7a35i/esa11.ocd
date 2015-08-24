@@ -9,9 +9,9 @@ gdb_port 3333
 adapter_khz 1000
 
 # JTAG TAPs
-jtag newtap xc6slx25 tap -expected-id 0x24004093 -irlen 6
+jtag newtap xc7a35i tap -expected-id 0x0362d093 -irlen 6 -ircapture 0x1 -irmask 0x03
 
 init
 scan_chain
-svf -tap xc6slx25.tap miniSpartan6-plus.svf
+svf -tap xc7a35i.tap bitstream.svf
 shutdown
