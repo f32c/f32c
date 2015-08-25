@@ -6,10 +6,7 @@ LOADADDR = 0x00000000
 WITHOUT_LIBS = true
 
 # No optional instructions in the loader
-ifeq ($(ARCH),mips)
- CFLAGS += -march=mips3 -mtune=f32c -mno-div -mno-mul
- CFLAGS += -mno-branch-likely
-endif
+MIN = true
 
 # Omit useless initializers to fit into 2 K of ROM
 ifeq ($(ARCH),mips)
