@@ -395,7 +395,7 @@ begin
       IF_PC_next and C_PC_mask(31 downto 2) when IF_data_ready
       else IF_ID_PC; -- i.e. do not change
 
-    process(clk)
+    process(clk, clk_enable)
     begin
 	if rising_edge(clk) and clk_enable = '1' then
 	    R_reset <= reset;
@@ -630,7 +630,7 @@ begin
       and not ID_jump_cycle
       else IF_ID_PC_4(31 downto 28) & IF_ID_instruction(25 downto 0);
 
-    process(clk)
+    process(clk, clk_enable)
     begin
 	if rising_edge(clk) and clk_enable = '1' then
 	    if EX_running then
@@ -977,7 +977,7 @@ begin
     EX_branch_target <= IF_ID_PC_4 when ID_EX_predict_taken
       else ID_EX_branch_target;
 
-    process(clk)
+    process(clk, clk_enable)
     begin
 	if rising_edge(clk) and clk_enable = '1' then
 	    if C_ll_sc then
@@ -1211,7 +1211,7 @@ begin
     G_bp_update_score:
     if C_branch_prediction and C_arch /= ARCH_RV32 generate
     MEM_bpredict_we <= '1' when EX_MEM_branch_cycle else '0';
-    process(clk)
+    process(clk, clk_enable)
     begin
 	if falling_edge(clk) and clk_enable = '1' then
 	    if EX_MEM_take_branch then
@@ -1274,7 +1274,7 @@ begin
       dmem_data_in(23 downto 16) & dmem_data_in(31 downto 24) when C_big_endian
       else dmem_data_in;
 
-    process(clk)
+    process(clk, clk_enable)
     begin
 	if rising_edge(clk) and clk_enable = '1' then
 	    if MEM_running then
@@ -1348,7 +1348,7 @@ begin
     G_multiplier:
     if C_mult_enable and C_arch = ARCH_MI32 generate
     mul_res <= R_mul_a * R_mul_b; -- infer asynchronous signed multiplier
-    process (clk)
+    process(clk, clk_enable)
     begin
 	if falling_edge(clk) and clk_enable = '1' then
 	    if not EX_MEM_EIP and ID_EX_mult then
@@ -1375,7 +1375,7 @@ begin
     -- COP0
     G_cop0_count:
     if C_cop0_count generate
-    process(clk)
+    process(clk, clk_enable)
     begin
 	if rising_edge(clk) and clk_enable = '1' then
 	    R_cop0_count <= R_cop0_count + 1;
@@ -1482,7 +1482,7 @@ begin
 	(others => '-')		when others;
 
     -- performance counters
-    process(clk)
+    process(clk, clk_enable)
     begin
 	if rising_edge(clk) and clk_enable = '1' then
 	    if EX_MEM_branch_cycle then
