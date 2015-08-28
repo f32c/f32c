@@ -207,7 +207,7 @@ architecture Behavioral of glue_bram is
     constant C_pids_bits: integer := integer(floor((log2(real(C_pids)+0.001))+0.5));
     
     -- VGA/HDMI video
-    signal vga_fetch_next: std_logic; -- display requests next data from fifo
+    signal vga_fetch_next: std_logic; -- video module requests next data from fifo
     signal vga_addr: std_logic_vector(15 downto 0); -- from fifo to RAM
     signal vga_data, vga_data_from_fifo: std_logic_vector(7 downto 0);
     signal video_bram_write: std_logic; -- from CPU to RAM
@@ -548,8 +548,8 @@ begin
       data_ready => '1', -- data valid for read acknowledge from RAM (BRAM is eveready)
       data_in => vga_data, -- from memory
       base_addr => x"80000000",
-      data_out => vga_data_from_fifo,
       start => vga_vsync,
+      data_out => vga_data_from_fifo,
       fetch_next => vga_fetch_next
     );
     
