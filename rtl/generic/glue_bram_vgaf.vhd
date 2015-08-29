@@ -523,8 +523,8 @@ begin
     if C_vgahdmi generate
     vgahdmi: entity work.vgahdmi
     generic map (
-      dbl_x => 1,
-      dbl_y => 1,
+      dbl_x => 0,
+      dbl_y => 0,
       mem_size_kb => C_vgahdmi_mem_kb, -- tell vgahdmi how much video ram do we have
       test_picture => 1
     )
@@ -553,6 +553,9 @@ begin
       addr_out => vga_addr,
       data_ready => '1', -- data valid for read acknowledge from RAM (BRAM is eveready)
       data_in => vga_data, -- from memory
+      -- data_in => x"00000055", -- some debug constant
+      -- data_in(7 downto 0) => vga_addr(9 downto 2), -- see if address resets correctly
+      -- data_in(31 downto 8) => (others => '0'),
       base_addr => (others => '0'),
       start => vga_n_vsync,
       data_out => vga_data_from_fifo,
