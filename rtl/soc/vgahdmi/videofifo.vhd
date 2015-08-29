@@ -58,18 +58,10 @@ architecture behavioral of videofifo is
     type pixbuf_dpram_type is array(0 to C_length-1) of std_logic_vector(31 downto 0);
 
     -- Internal state
-    --signal R_pixclk: std_logic_vector(4 downto 0);
-    --signal R_hpos: std_logic_vector(11 downto 0);
     signal R_pixbuf: pixbuf_dpram_type;
     signal R_sram_addr: std_logic_vector(19 downto 2);
     signal R_pixbuf_rd_addr, R_pixbuf_wr_addr, S_pixbuf_wr_addr_next: std_logic_vector(C_width-1 downto 0);
-    signal R_pixbuf_rd_byte: std_logic_vector(1 downto 0);
-    --signal R_scan_line_high: std_logic_vector(1 downto 0);
-    --signal R_tick: std_logic;
-
     signal need_refill: boolean;
-    --signal from_pixbuf: std_logic_vector(31 downto 0);
-    --signal pixel_data: std_logic_vector(16 downto 0);
 begin
     S_pixbuf_wr_addr_next <= R_pixbuf_wr_addr + 1;
     --
@@ -82,7 +74,7 @@ begin
             R_sram_addr <= base_addr;
             R_pixbuf_wr_addr <= (others => '0');
           else
-	    if data_ready = '1' then
+	    if data_ready = '1' and need_refill then
               R_pixbuf(TO_INTEGER(UNSIGNED(R_pixbuf_wr_addr))) <= data_in;
               R_sram_addr <= R_sram_addr + 1;
               R_pixbuf_wr_addr <= S_pixbuf_wr_addr_next;
@@ -105,7 +97,7 @@ begin
             R_pixbuf_rd_addr <= (others => '0');
           else
             if fetch_next = '1' then
-		R_pixbuf_rd_addr <= R_pixbuf_rd_addr + 1;
+              R_pixbuf_rd_addr <= R_pixbuf_rd_addr + 1;
 	    end if;
           end if;
         end if;
