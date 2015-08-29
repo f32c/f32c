@@ -77,7 +77,7 @@ entity glue_bram is
 	-- SoC configuration options
 	C_mem_size: integer := 2;	-- in KBytes
 	C_icache_size: integer := 0;	-- 0, 2, 4 or 8 KBytes
-	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
+	C_dcache_size: integer := 8;	-- 0, 2, 4 or 8 KBytes
 	C_sdram: boolean := true;
 	C_sio: integer := 1;
 	C_sio_init_baudrate: integer := 115200;
@@ -182,9 +182,9 @@ architecture Behavioral of glue_bram is
     signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
     signal vga_data_bram: std_logic_vector(7 downto 0);
     signal video_bram_write: std_logic;
-    signal vga_addr_strobe: std_logic; -- request from fifo to RAM
-    constant C_vga_fifo_width: integer := 7; -- size od FIFO
-    signal vga_data_ready: std_logic;
+    constant C_vga_fifo_width: integer := 4; -- size od FIFO 2^width
+    signal vga_addr_strobe: std_logic; -- FIFO requests to read from RAM
+    signal vga_data_ready: std_logic; -- RAM responds to FIFO
     signal vga_n_vsync, vga_n_hsync: std_logic; -- intermediate signals for xilinx to be happy
     constant C_vga_use_bram: boolean := false;
 
@@ -313,8 +313,8 @@ begin
     to_sdram(1).write <= dmem_write;
     to_sdram(1).byte_sel <= dmem_byte_sel;
     -- port 2: VGA/HDMI video read
-    to_sdram(2).addr_strobe <= vga_addr_strobe and not sdram_ready(2) when
-      dmem_addr(31 downto 30) = "10" else '0';
+    to_sdram(2).addr_strobe <= vga_addr_strobe and not sdram_ready(2);
+      -- when dmem_addr(31 downto 30) = "10" else '0';
     to_sdram(2).addr <= vga_addr;
     to_sdram(2).data_in <= (others => '-');
     to_sdram(2).write <= '0';
@@ -323,6 +323,11 @@ begin
     sdram: entity work.sdram_controller
     generic map (
 	C_ports => 3,
+	--C_prio_port => 2, -- VGA priority port
+	--C_ras => 3,
+	--C_cas => 3,
+	--C_pre => 3,
+	--C_clock_range => 2,
 	sdram_address_width => C_sdram_address_width,
 	sdram_column_bits => C_sdram_column_bits,
 	sdram_startup_cycles => C_sdram_startup_cycles,
