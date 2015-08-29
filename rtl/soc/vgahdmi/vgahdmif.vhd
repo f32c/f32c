@@ -24,7 +24,6 @@ entity vgahdmi is
     clk        : in std_logic;  -- CPU clock
     clk_pixel  : in std_logic;  -- pixel clock, 25 MHz
     clk_tmds   : in std_logic := '0'; -- hdmi clock 250 MHz (or 0 if HDMI output is not used)
-    -- dispAddr   : out std_logic_vector(15 downto 0); -- requested mem address
     rd         : out std_logic; -- read cycle
     dispData   : in  std_logic_vector(7 downto 0);  -- returned data
     vga_r, vga_g, vga_b:  out std_logic_vector(2 downto 0); -- VGA video signal
@@ -45,7 +44,6 @@ architecture syn of vgahdmi is
       clk        : in std_logic;  -- CPU clock
       clk_pixel  : in std_logic;  -- pixel clock, 25 MHz
       clk_tmds   : in std_logic := '0'; -- hdmi clock 250 MHz (or 0 if HDMI output is not used)
-      -- dispAddr   : out std_logic_vector(15 downto 0); -- requested mem address
       rd         : out std_logic; -- read cycle
       dispData   : in  std_logic_vector(7 downto 0);  -- returned data
       vga_r, vga_g, vga_b:  out std_logic_vector(2 downto 0); -- VGA video signal
@@ -66,7 +64,6 @@ begin
       clk       => clk,
       clk_pixel => clk_pixel,
       clk_tmds  => clk_tmds,
-      -- dispAddr  => dispAddr,
       rd => rd,
       dispData  => dispData,
       vga_r => vga_r,
