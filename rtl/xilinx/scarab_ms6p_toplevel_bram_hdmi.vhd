@@ -48,9 +48,9 @@ entity glue is
 	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
-	C_mem_size: integer := 64; -- KB
+	C_mem_size: integer := 16; -- KB
 	C_vgahdmi: boolean := true;
-	C_vgahdmi_mem_kb: integer := 10; -- KB
+	C_vgahdmi_mem_kb: integer := 38; -- KB 38K full mono 640x480
 	C_fmrds: boolean := true;
 	C_rds_msg_len: integer := 260; -- bytes of RAM for RDS binary message
         C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
