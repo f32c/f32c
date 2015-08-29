@@ -17,8 +17,7 @@ module vgahdmi_v(
         input wire clk_pixel, /* 25 MHz */
         input wire clk_tmds, /* 250 MHz (set to 0 for VGA-only) */
         input wire [7:0] dispData, // get data from fifo
-        output wire rd, // video reads data during clock cycle when rd=1
-        // next cycle: free time for fifo to prepare new data
+        output wire rd, // rd=1: read cycle is complete, fetch next data
         output wire vga_hsync, vga_vsync, // active low, vsync will reset fifo
         output wire [2:0] vga_r, vga_g, vga_b,
 	output wire [2:0] TMDS_out_RGB
@@ -71,9 +70,16 @@ assign getdata = CounterX[2+dbl_x:0] == 0 && DrawArea;
 ** for various clk and pixclk ratios, synclen may need to be adjusted
 ** in order not to change dispData before content is copied to shiftData register
 */
-always @(posedge clk)
-  clksync <= {clksync[synclen-2:0], pixclk}; // at bit 0 enter new pixclk value
-assign rd = clksync[synclen-2] == 0 && clksync[synclen-1] == 1;  // rd = pixclk rising edge
+reg toggle_read_complete;
+always @(posedge pixclk)
+  if(getdata != 0)
+    toggle_read_complete <= ~toggle_read_complete; // changes when read data is complete
+// synchronize pixclk to clk
+always @(posedge clk) // clk > pixclk/8 for this to work
+  clksync <= {clksync[synclen-2:0], toggle_read_complete}; // at bit 0 enter new pixclk value
+// XOR: difference in 2 consecutive clksync values create a short rd pulse
+// lasting one clk period and requesting new data fetch
+assign rd = clksync[synclen-2] ^ clksync[synclen-1];  // rd = read cycle complete
 
 reg [7:0] shiftData;
 always @(posedge pixclk)
