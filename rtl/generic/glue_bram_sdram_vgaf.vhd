@@ -311,7 +311,7 @@ begin
     to_sdram(1).write <= dmem_write;
     to_sdram(1).byte_sel <= dmem_byte_sel;
     -- port 2: VGA/HDMI video read
-    to_sdram(2).addr_strobe <= vga_addr_strobe and not sdram_ready(1) when
+    to_sdram(2).addr_strobe <= vga_addr_strobe and not sdram_ready(2) when
       dmem_addr(31 downto 30) = "10" else '0';
     to_sdram(2).addr <= vga_addr;
     to_sdram(2).data_in <= (others => '-');
