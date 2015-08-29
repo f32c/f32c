@@ -178,12 +178,13 @@ architecture Behavioral of glue_bram is
 
     -- VGA/HDMI video
     signal vga_fetch_next: std_logic; -- video module requests next data from fifo
-    signal vga_addr: std_logic_vector(15 downto 0);
-    signal vga_data: std_logic_vector(7 downto 0);
+    signal vga_addr: std_logic_vector(19 downto 2);
+    signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
     signal video_bram_write: std_logic;
     signal vga_addr_strobe: std_logic; -- request from fifo to RAM
     constant C_vga_fifo_width: integer := 4; -- size od FIFO
-    signal vga_data_ready: std_logic_vector;
+    signal vga_data_ready: std_logic;
+    signal vga_n_vsync, vga_n_hsync: std_logic; -- intermediate signals for xilinx to be happy
     
     -- GPIO
     constant iomap_gpio: T_iomap_range := (x"F800", x"F87F");
@@ -569,23 +570,26 @@ begin
     if C_vgahdmi generate
     vgahdmi: entity work.vgahdmi
     generic map (
-      dbl_x => 1,
-      dbl_y => 1,
+      dbl_x => 0,
+      dbl_y => 0,
       mem_size_kb => C_vgahdmi_mem_kb, -- tell vgahdmi how much video ram do we have
       test_picture => 1
     )
     port map (
+      clk => clk,
       clk_pixel => clk_25MHz,
       clk_tmds => clk_250MHz,
-      dispAddr => vga_addr,
-      dispData => vga_data,
+      rd => vga_fetch_next,
+      dispData => vga_data(7 downto 0),
       vga_r => vga_r,
       vga_g => vga_g,
       vga_b => vga_b,
-      vga_hsync => vga_hsync,
-      vga_vsync => vga_vsync,
+      vga_hsync => vga_n_hsync,
+      vga_vsync => vga_n_vsync,
       tmds_out_rgb => tmds_out_rgb
     );
+    vga_vsync <= vga_n_vsync;
+    vga_hsync <= vga_n_hsync;
     videofifo: entity work.videofifo
     generic map (
       C_width => C_vga_fifo_width -- bits
@@ -596,8 +600,8 @@ begin
       addr_out => vga_addr,
       data_ready => vga_data_ready, -- data valid for read acknowledge from RAM (BRAM is eveready)
       data_in => from_sdram, -- from memory
-      base_addr => x"80000000",
-      start => vga_vsync,
+      base_addr => (others => '0'),
+      start => vga_n_vsync,
       data_out => vga_data_from_fifo,
       fetch_next => vga_fetch_next
     );
