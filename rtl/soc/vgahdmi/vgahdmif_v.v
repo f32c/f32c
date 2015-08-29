@@ -43,7 +43,7 @@ reg hSync, vSync, DrawArea;
 always @(posedge pixclk) DrawArea <= (CounterX<640) && (CounterY<480);
 
 wire fetchdata; // when to fetch data, must be earlier than draw area
-assign fetchdata = (CounterX<640 || CounterX>=799-8) && (CounterY<480-1 || CounterY==524);
+assign fetchdata = (CounterX[9:3]<79 || CounterX[9:3]==99) && (CounterY<480);
 
 always @(posedge pixclk) CounterX <= (CounterX==799) ? 0 : CounterX+1;
 always @(posedge pixclk) if(CounterX==799) CounterY <= (CounterY==524) ? 0 : CounterY+1;
