@@ -74,7 +74,8 @@ begin
             R_sram_addr <= base_addr;
             R_pixbuf_wr_addr <= (others => '0');
           else
-	    if data_ready = '1' and need_refill then
+	    if data_ready = '1' and need_refill then -- BRAM must use this
+	    -- if data_ready = '1' then -- may work with SDRAM?
               R_pixbuf(TO_INTEGER(UNSIGNED(R_pixbuf_wr_addr))) <= data_in;
               R_sram_addr <= R_sram_addr + 1;
               R_pixbuf_wr_addr <= S_pixbuf_wr_addr_next;
