@@ -552,7 +552,7 @@ begin
       clk => clk,
       addr_strobe => vga_strobe,
       addr_out => vga_addr,
-      debug_rd_addr => vga_debug_rd_addr,
+      -- debug_rd_addr => vga_debug_rd_addr,
       data_ready => '1', -- data valid for read acknowledge from RAM (BRAM is eveready)
       data_in => vga_data, -- from memory
       -- data_in => x"00000055", -- some debug constant
@@ -563,7 +563,6 @@ begin
       start => vga_n_vsync,
       data_out => vga_data_from_fifo,
       fetch_next => vga_fetch_next
-      -- fetch_next => '0'
     );
     
     -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
