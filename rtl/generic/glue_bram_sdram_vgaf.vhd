@@ -89,7 +89,7 @@ entity glue_bram is
 	C_simple_in: integer range 0 to 128 := 32;
 	C_simple_out: integer range 0 to 128 := 32;
 	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
-	C_vgahdmi_mem_kb: integer := 4; -- mem size of framebuffer
+	C_vgahdmi_mem_kb: integer := 10; -- mem size of framebuffer
 	C_gpio: integer range 0 to 128 := 32;
 	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
@@ -180,12 +180,14 @@ architecture Behavioral of glue_bram is
     signal vga_fetch_next: std_logic; -- video module requests next data from fifo
     signal vga_addr: std_logic_vector(19 downto 2);
     signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
+    signal vga_data_bram: std_logic_vector(7 downto 0);
     signal video_bram_write: std_logic;
     signal vga_addr_strobe: std_logic; -- request from fifo to RAM
-    constant C_vga_fifo_width: integer := 4; -- size od FIFO
+    constant C_vga_fifo_width: integer := 6; -- size od FIFO
     signal vga_data_ready: std_logic;
     signal vga_n_vsync, vga_n_hsync: std_logic; -- intermediate signals for xilinx to be happy
-    
+    constant C_vga_use_bram: boolean := false;
+
     -- GPIO
     constant iomap_gpio: T_iomap_range := (x"F800", x"F87F");
     signal gpio_range: std_logic := '0';
@@ -316,8 +318,9 @@ begin
     to_sdram(2).addr <= vga_addr;
     to_sdram(2).data_in <= (others => '-');
     to_sdram(2).write <= '0';
-    to_sdram(2).byte_sel <= x"f"; -- 32 bits at once
-    vga_data_ready <= sdram_ready(2);
+    to_sdram(2).byte_sel <= "0001"; -- 8 bits at once
+    vga_data_ready <= sdram_ready(2) when dmem_addr(31 downto 30) = "10"
+      else '1'; -- I/O or BRAM have no wait states
     sdram: entity work.sdram_controller
     generic map (
 	C_ports => 2,
@@ -572,7 +575,7 @@ begin
     generic map (
       dbl_x => 0,
       dbl_y => 0,
-      mem_size_kb => C_vgahdmi_mem_kb, -- tell vgahdmi how much video ram do we have
+      mem_size_kb => 40, -- 40K is unlimited full 640x480
       test_picture => 1
     )
     port map (
@@ -592,14 +595,19 @@ begin
     vga_hsync <= vga_n_hsync;
     videofifo: entity work.videofifo
     generic map (
-      C_width => C_vga_fifo_width -- bits
+      C_width => C_vga_fifo_width -- length = 4 * 2^width
     )
     port map (
       clk => clk,
       addr_strobe => vga_addr_strobe,
       addr_out => vga_addr,
-      data_ready => vga_data_ready, -- data valid for read acknowledge from RAM (BRAM is eveready)
-      data_in => from_sdram, -- from memory
+      data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
+      -- data_ready => '1', -- BRAM is eveready
+      -- data_in => from_sdram, -- from memory
+      data_in => vga_data, -- from memory or BRAM
+      -- data_in => x"00000001", -- test pattern vertical lines
+      -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
+      -- data_in(31 downto 8) => (others => '0'),
       base_addr => (others => '0'),
       start => vga_n_vsync,
       data_out => vga_data_from_fifo,
@@ -607,7 +615,10 @@ begin
     );
     -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
     -- vga_data(7 downto 0) <= x"0F";
-    no_video_bram: if false generate
+    vga_from_sdram: if not C_vga_use_bram generate
+      vga_data <= from_sdram;
+    end generate;
+    vga_from_bram: if C_vga_use_bram generate
     video_bram_write <=
       dmem_addr_strobe and dmem_write when dmem_addr(31 downto 28) = x"8" else '0';
     videobram: entity work.bram_video
@@ -616,14 +627,16 @@ begin
     )
     port map (
 	clk => clk,
-	imem_addr(17 downto 2) => vga_addr(15 downto 0),
+	imem_addr(17 downto 2) => vga_addr(17 downto 2),
 	imem_addr(31 downto 18) => (others => '0'),
-	imem_data_out => vga_data,
+	imem_data_out => vga_data_bram,
 	dmem_write => video_bram_write,
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
 	dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
     );
-    end generate; -- no_video_bram
+    vga_data(7 downto 0) <= vga_data_bram;
+    vga_data(31 downto 8) <= (others => '-');
+    end generate; -- vga_from_bram
     end generate;
 
     -- Block RAM
