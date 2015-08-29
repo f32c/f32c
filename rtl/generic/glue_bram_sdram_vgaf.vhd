@@ -89,7 +89,9 @@ entity glue_bram is
 	C_simple_in: integer range 0 to 128 := 32;
 	C_simple_out: integer range 0 to 128 := 32;
 	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
-	C_vgahdmi_mem_kb: integer := 10; -- mem size of framebuffer
+        C_vga_fifo_width: integer := 4; -- width of FIFO address space (default=4) len = 2^width * 4 byte
+        C_vga_use_bram: boolean := false;
+	C_vgahdmi_mem_kb: integer := 10; -- mem size of BRAM framebuffer if BRAM is used
 	C_gpio: integer range 0 to 128 := 32;
 	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
@@ -146,6 +148,9 @@ architecture Behavioral of glue_bram is
     signal from_sdram: std_logic_vector(31 downto 0);
     signal snoop_cycle: std_logic;
     signal snoop_addr: std_logic_vector(31 downto 2);
+    constant instr_port: integer := 0;
+    constant data_port: integer := 1;
+    constant fb_port: integer := 2;
 
     -- io base
     type T_iomap_range is array(0 to 1) of std_logic_vector(15 downto 0);
@@ -182,11 +187,9 @@ architecture Behavioral of glue_bram is
     signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
     signal vga_data_bram: std_logic_vector(7 downto 0);
     signal video_bram_write: std_logic;
-    constant C_vga_fifo_width: integer := 4; -- size od FIFO 2^width
     signal vga_addr_strobe: std_logic; -- FIFO requests to read from RAM
     signal vga_data_ready: std_logic; -- RAM responds to FIFO
     signal vga_n_vsync, vga_n_hsync: std_logic; -- intermediate signals for xilinx to be happy
-    constant C_vga_use_bram: boolean := false;
 
     -- GPIO
     constant iomap_gpio: T_iomap_range := (x"F800", x"F87F");
@@ -290,40 +293,40 @@ begin
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
-    imem_data_ready <= sdram_ready(0) when imem_addr(31 downto 30) = "10"
+    imem_data_ready <= sdram_ready(instr_port) when imem_addr(31 downto 30) = "10"
       else imem_addr_strobe; -- MUST deassert ACK when strobe is low!!!
-    dmem_data_ready <= sdram_ready(1) when dmem_addr(31 downto 30) = "10"
+    dmem_data_ready <= sdram_ready(data_port) when dmem_addr(31 downto 30) = "10"
       else '1'; -- I/O or BRAM have no wait states
 
     -- SDRAM
     G_sdram:
     if C_sdram generate
     -- port 0: instruction bus
-    to_sdram(0).addr_strobe <= imem_addr_strobe and not sdram_ready(0) when
+    to_sdram(instr_port).addr_strobe <= imem_addr_strobe and not sdram_ready(instr_port) when
       imem_addr(31 downto 30) = "10" else '0';
-    to_sdram(0).addr <= imem_addr(19 downto 2);
-    to_sdram(0).data_in <= (others => '-');
-    to_sdram(0).write <= '0';
-    to_sdram(0).byte_sel <= (others => '1');
+    to_sdram(instr_port).addr <= imem_addr(19 downto 2);
+    to_sdram(instr_port).data_in <= (others => '-');
+    to_sdram(instr_port).write <= '0';
+    to_sdram(instr_port).byte_sel <= (others => '1');
     -- port 1: data bus
-    to_sdram(1).addr_strobe <= dmem_addr_strobe and not sdram_ready(1) when
+    to_sdram(data_port).addr_strobe <= dmem_addr_strobe and not sdram_ready(data_port) when
       dmem_addr(31 downto 30) = "10" else '0';
-    to_sdram(1).addr <= dmem_addr(19 downto 2);
-    to_sdram(1).data_in <= cpu_to_dmem;
-    to_sdram(1).write <= dmem_write;
-    to_sdram(1).byte_sel <= dmem_byte_sel;
+    to_sdram(data_port).addr <= dmem_addr(19 downto 2);
+    to_sdram(data_port).data_in <= cpu_to_dmem;
+    to_sdram(data_port).write <= dmem_write;
+    to_sdram(data_port).byte_sel <= dmem_byte_sel;
     -- port 2: VGA/HDMI video read
-    to_sdram(2).addr_strobe <= vga_addr_strobe and not sdram_ready(2);
-      -- when dmem_addr(31 downto 30) = "10" else '0';
-    to_sdram(2).addr <= vga_addr;
-    to_sdram(2).data_in <= (others => '-');
-    to_sdram(2).write <= '0';
-    to_sdram(2).byte_sel <= "0001"; -- 8 bits at once
-    vga_data_ready <= sdram_ready(2);
+    to_sdram(fb_port).addr_strobe <= vga_addr_strobe and not sdram_ready(fb_port);
+    to_sdram(fb_port).addr <= vga_addr;
+    to_sdram(fb_port).data_in <= (others => '-');
+    to_sdram(fb_port).write <= '0';
+    -- to_sdram(fb_port).byte_sel <= "0001"; -- 8 bits read (LSB byte used)
+    to_sdram(fb_port).byte_sel <= "1111"; -- 32 bits read for RGB
+    vga_data_ready <= sdram_ready(fb_port);
     sdram: entity work.sdram_controller
     generic map (
 	C_ports => 3,
-	--C_prio_port => 2, -- VGA priority port
+	--C_prio_port => 2, -- VGA priority port not yet implemented
 	--C_ras => 3,
 	--C_cas => 3,
 	--C_pre => 3,
@@ -580,7 +583,7 @@ begin
       dbl_x => 0,
       dbl_y => 0,
       mem_size_kb => 40, -- 40K is unlimited full 640x480
-      test_picture => 1
+      test_picture => 1  -- show test picture in background
     )
     port map (
       clk => clk,
