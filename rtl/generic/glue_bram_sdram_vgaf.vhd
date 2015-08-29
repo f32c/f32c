@@ -610,8 +610,7 @@ begin
       addr_out => vga_addr,
       data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
       -- data_ready => '1', -- BRAM is eveready
-      -- data_in => from_sdram, -- from memory
-      data_in => vga_data, -- from memory or BRAM
+      data_in => vga_data, -- from SDRAM or BRAM
       -- data_in => x"00000001", -- test pattern vertical lines
       -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
       -- data_in(31 downto 8) => (others => '0'),
