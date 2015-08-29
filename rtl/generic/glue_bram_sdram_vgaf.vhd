@@ -580,7 +580,7 @@ begin
       clk_pixel => clk_25MHz,
       clk_tmds => clk_250MHz,
       rd => vga_fetch_next,
-      dispData => vga_data(7 downto 0),
+      dispData => vga_data_from_fifo(7 downto 0),
       vga_r => vga_r,
       vga_g => vga_g,
       vga_b => vga_b,
