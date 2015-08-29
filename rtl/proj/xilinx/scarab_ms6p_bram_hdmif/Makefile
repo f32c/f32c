@@ -21,13 +21,13 @@ vfiles = \
 
 
 vhdfiles = \
-../../../xilinx/scarab_ms6p_toplevel_bram_hdmif.vhd \
+../../../xilinx/scarab_ms6p_toplevel_bram_hdmi.vhd \
 ../../../xilinx/pll_50M_112M5.vhd \
 ../../../xilinx/pll_50M_100M.vhd \
 ../../../xilinx/pll_50M_100M_25M_250M.vhd \
 ../../../xilinx/pll_50M_81M25.vhd \
 ../../../xilinx/hdmi_out.vhd \
-../../../generic/glue_bram_vga.vhd \
+../../../generic/glue_bram_vgaf.vhd \
 ../../../generic/bram_mi32_eb.vhd \
 ../../../generic/bram_mi32_el.vhd \
 ../../../generic/bram_rv32.vhd \
