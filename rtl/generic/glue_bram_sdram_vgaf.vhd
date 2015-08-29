@@ -183,7 +183,7 @@ architecture Behavioral of glue_bram is
     signal vga_data_bram: std_logic_vector(7 downto 0);
     signal video_bram_write: std_logic;
     signal vga_addr_strobe: std_logic; -- request from fifo to RAM
-    constant C_vga_fifo_width: integer := 6; -- size od FIFO
+    constant C_vga_fifo_width: integer := 7; -- size od FIFO
     signal vga_data_ready: std_logic;
     signal vga_n_vsync, vga_n_hsync: std_logic; -- intermediate signals for xilinx to be happy
     constant C_vga_use_bram: boolean := false;
@@ -319,8 +319,7 @@ begin
     to_sdram(2).data_in <= (others => '-');
     to_sdram(2).write <= '0';
     to_sdram(2).byte_sel <= "0001"; -- 8 bits at once
-    vga_data_ready <= sdram_ready(2) when dmem_addr(31 downto 30) = "10"
-      else '1'; -- I/O or BRAM have no wait states
+    vga_data_ready <= sdram_ready(2);
     sdram: entity work.sdram_controller
     generic map (
 	C_ports => 3,
