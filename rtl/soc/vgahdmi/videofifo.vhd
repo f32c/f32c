@@ -42,9 +42,9 @@ entity videofifo is
 	clk: in std_logic;
 	addr_strobe: out std_logic;
 	addr_out: out std_logic_vector(19 downto 2);
+	base_addr: in std_logic_vector(19 downto 2);
 	data_ready: in std_logic;
 	data_in: in std_logic_vector(31 downto 0);
-	base_addr: in std_logic_vector(19 downto 2);
 	data_out: out std_logic_vector(31 downto 0);
 	start: in std_logic; -- value 0 will reset fifo RAM to base address, value 1 allows start of reading
 	fetch_next: in std_logic -- fetch next value (current data consumed)
@@ -53,7 +53,7 @@ end videofifo;
 
 architecture behavioral of videofifo is
     -- Types
-    constant C_length: integer := 1 sll C_width; -- sll - shift logical left
+    constant C_length: integer := 16; -- 1 sll C_width - shift logical left
     type pixbuf_dpram_type is array(0 to C_length-1) of std_logic_vector(31 downto 0);
 
     -- Internal state

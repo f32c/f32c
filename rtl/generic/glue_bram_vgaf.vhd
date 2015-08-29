@@ -108,10 +108,10 @@ entity glue_bram is
 	spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
 	spi_miso: in std_logic_vector(C_spi - 1 downto 0);
 	simple_in: in std_logic_vector(31 downto 0);
-	simple_out: out std_logic_vector(31 downto 0);
+	simple_out: out std_logic_vector(31 downto 0); -- it is always OUT but xilinx compiles only if inout
 	pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
 	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
-	vga_hsync, vga_vsync: out std_logic;
+	vga_hsync, vga_vsync: out std_logic; -- it is always out but xilinx compiles if inout
 	vga_r, vga_g, vga_b: out std_logic_vector(2 downto 0);
 	tmds_out_rgb: out std_logic_vector(2 downto 0);
 	fm_antenna, cw_antenna: out std_logic;
@@ -208,16 +208,20 @@ architecture Behavioral of glue_bram is
     
     -- VGA/HDMI video
     signal vga_fetch_next: std_logic; -- video module requests next data from fifo
-    signal vga_addr: std_logic_vector(15 downto 0); -- from fifo to RAM
-    signal vga_data, vga_data_from_fifo: std_logic_vector(7 downto 0);
+    signal vga_addr: std_logic_vector(19 downto 2); -- from fifo to RAM
+    signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
     signal video_bram_write: std_logic; -- from CPU to RAM
     signal vga_strobe: std_logic; -- request from fifo to RAM
     constant C_vga_fifo_width: integer := 4; -- size od FIFO
+    signal vga_n_vsync, vga_n_hsync: std_logic; -- intermediate signals for xilinx to be happy
 
     -- FM/RDS RADIO
     constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
     signal from_fmrds: std_logic_vector(31 downto 0);
     signal fmrds_ce: std_logic;
+
+    -- 433 MHz
+    signal simple_out_cw: std_logic;
 
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
@@ -377,7 +381,7 @@ begin
     -- can produce (433 MHz)
     G_cw_antenna:
     if C_cw_simple_out >= 0 and C_simple_out > C_cw_simple_out generate
-      cw_antenna <= simple_out(C_cw_simple_out) and clk_cw;
+      cw_antenna <= R_simple_out(C_cw_simple_out) and clk_cw;
     end generate;
 
     -- RS232 sio
@@ -525,18 +529,20 @@ begin
       test_picture => 1
     )
     port map (
+      clk => clk,
       clk_pixel => clk_25MHz,
       clk_tmds => clk_250MHz,
       rd => vga_fetch_next,
-      dispData => vga_data_from_fifo,
+      dispData => vga_data_from_fifo(7 downto 0),
       vga_r => vga_r,
       vga_g => vga_g,
       vga_b => vga_b,
-      vga_hsync => vga_hsync,
-      vga_vsync => vga_vsync,
+      vga_hsync => vga_n_hsync,
+      vga_vsync => vga_n_vsync,
       tmds_out_rgb => tmds_out_rgb
     );
-
+    vga_vsync <= vga_n_vsync;
+    vga_hsync <= vga_n_hsync;
     videofifo: entity work.videofifo
     generic map (
       C_width => C_vga_fifo_width -- bits
@@ -547,8 +553,8 @@ begin
       addr_out => vga_addr,
       data_ready => '1', -- data valid for read acknowledge from RAM (BRAM is eveready)
       data_in => vga_data, -- from memory
-      base_addr => x"80000000",
-      start => vga_vsync,
+      base_addr => (others => '0'),
+      start => vga_n_vsync,
       data_out => vga_data_from_fifo,
       fetch_next => vga_fetch_next
     );
@@ -563,9 +569,9 @@ begin
     )
     port map (
 	clk => clk,
-	imem_addr(17 downto 2) => vga_addr(15 downto 0),
+	imem_addr(17 downto 2) => vga_addr(17 downto 2),
 	imem_addr(31 downto 18) => (others => '0'),
-	imem_data_out => vga_data,
+	imem_data_out => vga_data(7 downto 0),
 	dmem_write => video_bram_write,
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
 	dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
