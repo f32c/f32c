@@ -43,7 +43,7 @@ reg hSync, vSync, DrawArea;
 always @(posedge pixclk) DrawArea <= (CounterX<640) && (CounterY<480);
 
 wire fetchdata; // when to fetch data, must be earlier than draw area
-assign fetchdata = (CounterX<640-8 || CounterX>=799-8) && (CounterY<480-1 || CounterY==524);
+assign fetchdata = (CounterX<640 || CounterX>=799-8) && (CounterY<480-1 || CounterY==524);
 
 always @(posedge pixclk) CounterX <= (CounterX==799) ? 0 : CounterX+1;
 always @(posedge pixclk) if(CounterX==799) CounterY <= (CounterY==524) ? 0 : CounterY+1;
@@ -63,7 +63,7 @@ reg [synclen-1:0] clksync; /* fifo to clock synchronizer shift register */
 
 // signal: when to shift pixel data and when to get new data from the memory
 wire getdata;
-assign getdata = CounterX[2+dbl_x:0] == 0 && fetchdata;
+assign getdata = CounterX[2+dbl_x:0] == 0 && fetchdata != 0;
 
 /* clk-to-pixclk synchronizer:
 ** pixclk rising edge is detected using shift register
@@ -83,6 +83,7 @@ always @(posedge clk) // clk > pixclk/8 for this to work
 // XOR: difference in 2 consecutive clksync values create a short rd pulse
 // lasting one clk period and requesting new data fetch
 assign rd = clksync[synclen-2] ^ clksync[synclen-1];  // rd = read cycle complete
+// assign rd = 0;
 
 reg [7:0] shiftData;
 always @(posedge pixclk)
