@@ -323,7 +323,7 @@ begin
       else '1'; -- I/O or BRAM have no wait states
     sdram: entity work.sdram_controller
     generic map (
-	C_ports => 2,
+	C_ports => 3,
 	sdram_address_width => C_sdram_address_width,
 	sdram_column_bits => C_sdram_column_bits,
 	sdram_startup_cycles => C_sdram_startup_cycles,
