@@ -209,6 +209,7 @@ architecture Behavioral of glue_bram is
     -- VGA/HDMI video
     signal vga_fetch_next: std_logic; -- video module requests next data from fifo
     signal vga_addr: std_logic_vector(19 downto 2); -- from fifo to RAM
+    signal vga_debug_rd_addr: std_logic_vector(19 downto 2); -- from fifo to RAM
     signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
     signal video_bram_write: std_logic; -- from CPU to RAM
     signal vga_strobe: std_logic; -- request from fifo to RAM
@@ -551,15 +552,18 @@ begin
       clk => clk,
       addr_strobe => vga_strobe,
       addr_out => vga_addr,
+      debug_rd_addr => vga_debug_rd_addr,
       data_ready => '1', -- data valid for read acknowledge from RAM (BRAM is eveready)
       data_in => vga_data, -- from memory
       -- data_in => x"00000055", -- some debug constant
       -- data_in(7 downto 0) => vga_addr(9 downto 2), -- see if address resets correctly
+      -- data_in(7 downto 0) => vga_debug_rd_addr(9 downto 2), -- see if address resets correctly
       -- data_in(31 downto 8) => (others => '0'),
       base_addr => (others => '0'),
       start => vga_n_vsync,
       data_out => vga_data_from_fifo,
       fetch_next => vga_fetch_next
+      -- fetch_next => '0'
     );
     
     -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
