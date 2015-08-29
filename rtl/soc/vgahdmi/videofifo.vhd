@@ -43,7 +43,7 @@ entity videofifo is
 	addr_strobe: out std_logic;
 	addr_out: out std_logic_vector(19 downto 2);
 	base_addr: in std_logic_vector(19 downto 2);
-	debug_rd_addr: out std_logic_vector(19 downto 2);
+	-- debug_rd_addr: out std_logic_vector(19 downto 2);
 	data_ready: in std_logic;
 	data_in: in std_logic_vector(31 downto 0);
 	data_out: out std_logic_vector(31 downto 0);
@@ -103,6 +103,6 @@ begin
         end if;
       end process;
     data_out <= R_pixbuf(TO_INTEGER(UNSIGNED(R_pixbuf_rd_addr)));
-    debug_rd_addr(5 downto 2) <= R_pixbuf_rd_addr;
-    debug_rd_addr(19 downto 6) <= (others => '0');
+    -- debug_rd_addr(5 downto 2) <= R_pixbuf_rd_addr;
+    -- debug_rd_addr(19 downto 6) <= (others => '0');
 end;
