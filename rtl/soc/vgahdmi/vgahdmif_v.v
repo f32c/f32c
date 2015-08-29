@@ -42,8 +42,8 @@ reg [9:0] CounterX, CounterY;
 reg hSync, vSync, DrawArea;
 always @(posedge pixclk) DrawArea <= (CounterX<640) && (CounterY<480);
 
-wire fetchdata; // when to fetch data, must be earlier than draw area
-assign fetchdata = (CounterX[9:3]<79 || CounterX[9:3]==99) && (CounterY<480);
+wire fetcharea; // when to fetch data, must be earlier than draw area
+assign fetcharea = (CounterX[9:3]<79 || CounterX[9:3]==99) && (CounterY<480);
 
 always @(posedge pixclk) CounterX <= (CounterX==799) ? 0 : CounterX+1;
 always @(posedge pixclk) if(CounterX==799) CounterY <= (CounterY==524) ? 0 : CounterY+1;
@@ -62,8 +62,8 @@ parameter synclen = 3; // >=3, bit length of the clock synchronizer shift regist
 reg [synclen-1:0] clksync; /* fifo to clock synchronizer shift register */
 
 // signal: when to shift pixel data and when to get new data from the memory
-wire getdata;
-assign getdata = CounterX[2+dbl_x:0] == 0 && fetchdata != 0;
+wire getbyte;
+assign getbyte = CounterX[2+dbl_x:0] == 0;
 
 /* clk-to-pixclk synchronizer:
 ** pixclk rising edge is detected using shift register
@@ -71,11 +71,11 @@ assign getdata = CounterX[2+dbl_x:0] == 0 && fetchdata != 0;
 ** then rd is set high for one clk cycle
 ** intiating fetch from new data from RAM fifo
 ** for various clk and pixclk ratios, synclen may need to be adjusted
-** in order not to change dispData before content is copied to shiftData register
+** in order not to change dispData before content is copied to shiftPixels register
 */
 reg toggle_read_complete;
 always @(posedge pixclk)
-  if(getdata != 0)
+  if(getbyte != 0 && fetcharea != 0)
     toggle_read_complete <= ~toggle_read_complete; // changes when read data is complete
 // synchronize pixclk to clk
 always @(posedge clk) // clk > pixclk/8 for this to work
@@ -85,15 +85,15 @@ always @(posedge clk) // clk > pixclk/8 for this to work
 assign rd = clksync[synclen-2] ^ clksync[synclen-1];  // rd = read cycle complete
 // assign rd = 0;
 
-reg [7:0] shiftData;
+reg [7:0] shiftPixels;
 always @(posedge pixclk)
   begin
     if(dbl_x == 0 || CounterX[0] == 0)
-      shiftData <= getdata != 0 ? dispData : shiftData[7:1];
+      shiftPixels <= getbyte != 0 ? dispData : shiftPixels[7:1];
   end
 
 wire [7:0] colorValue;
-assign colorValue = (mem_size_y < 480 ? CounterY < mem_size_y-dbl_y : 1==1) && shiftData[0] != 0 ? 255 : 0;
+assign colorValue = (mem_size_y < 480 ? CounterY < mem_size_y-dbl_y : 1==1) && shiftPixels[0] != 0 ? 255 : 0;
 
 // test picture generator
 wire [7:0] W = {8{CounterX[7:0]==CounterY[7:0]}};
