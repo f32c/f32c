@@ -80,10 +80,10 @@ always @(posedge pixclk)
 // synchronize pixclk to clk
 always @(posedge clk) // clk > pixclk/8 for this to work
   clksync <= {clksync[synclen-2:0], toggle_read_complete}; // at bit 0 enter new pixclk value
-// XOR: difference in 2 consecutive clksync values create a short rd pulse
-// lasting one clk period and requesting new data fetch
+// XOR: difference in 2 consecutive clksync values
+// create a short rd pulse that lasts one clk period.
+// This signal is request to fetch new data
 assign rd = clksync[synclen-2] ^ clksync[synclen-1];  // rd = read cycle complete
-// assign rd = 0;
 
 reg [7:0] shiftPixels;
 always @(posedge pixclk)
