@@ -43,7 +43,7 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
-	C_vgahdmi: boolean := false;
+	C_vgahdmi: boolean := true;
 	C_vgahdmi_mem_kb: integer := 4; -- KB, very little BRAM available on lattice
 	C_fmrds: boolean := true;
 	C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
