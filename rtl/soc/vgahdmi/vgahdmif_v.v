@@ -16,7 +16,7 @@ module vgahdmi_v(
         input wire clk, /* CPU clock */
         input wire clk_pixel, /* 25 MHz */
         input wire clk_tmds, /* 250 MHz (set to 0 for VGA-only) */
-        input wire [7:0] dispData, // get data from fifo
+        input wire [7:0] red_byte, green_byte, blue_byte, bright_byte, // get data from fifo
         output wire rd, // rd=1: read cycle is complete, fetch next data
         output wire vga_hsync, vga_vsync, // active low, vsync will reset fifo
         output wire [2:0] vga_r, vga_g, vga_b,
@@ -71,7 +71,7 @@ assign getbyte = CounterX[2+dbl_x:0] == 0;
 ** then rd is set high for one clk cycle
 ** intiating fetch from new data from RAM fifo
 ** for various clk and pixclk ratios, synclen may need to be adjusted
-** in order not to change dispData before content is copied to shiftPixels register
+** in order not to change dispData before content is copied to shift_red register
 */
 reg toggle_read_complete;
 always @(posedge pixclk)
@@ -85,15 +85,23 @@ always @(posedge clk) // clk > pixclk/8 for this to work
 // This signal is request to fetch new data
 assign rd = clksync[synclen-2] ^ clksync[synclen-1];  // rd = read cycle complete
 
-reg [7:0] shiftPixels;
+reg [7:0] shift_red, shift_green, shift_blue, shift_bright;
 always @(posedge pixclk)
   begin
     if(dbl_x == 0 || CounterX[0] == 0)
-      shiftPixels <= getbyte != 0 ? dispData : shiftPixels[7:1];
+      begin
+        shift_red     <= getbyte != 0 ?    red_byte : shift_red[7:1];
+        shift_green   <= getbyte != 0 ?  green_byte : shift_green[7:1];
+        shift_blue    <= getbyte != 0 ?   blue_byte : shift_blue[7:1];
+        shift_bright  <= getbyte != 0 ? bright_byte : shift_bright[7:1];
+      end
   end
 
-wire [7:0] colorValue;
-assign colorValue = (mem_size_y < 480 ? CounterY < mem_size_y-dbl_y : 1==1) && shiftPixels[0] != 0 ? 255 : 0;
+wire [7:0] colorValue[0:3];
+assign colorValue[0] = shift_red[0]    != 0 ? colorValue[3] : 0;
+assign colorValue[1] = shift_green[0]  != 0 ? colorValue[3] : 0;
+assign colorValue[2] = shift_blue[0]   != 0 ? colorValue[3] : 0;
+assign colorValue[3] = shift_bright[3] != 0 ? 255 : 127;
 
 // test picture generator
 wire [7:0] W = {8{CounterX[7:0]==CounterY[7:0]}};
@@ -104,9 +112,9 @@ always @(posedge pixclk) test_green <= (CounterX[7:0] & {8{CounterY[6]}} | W) & 
 always @(posedge pixclk) test_blue <= CounterY[7:0] | W | A;
 
 // generate VGA output, mixing with test picture if enabled
-assign vga_r = test_picture ? test_red[7:5] :  colorValue[7:5];
-assign vga_g =                                 colorValue[7:5];
-assign vga_b = test_picture ? test_blue[7:5] : colorValue[7:5];
+assign vga_r = test_picture ? test_red[7:5] :  colorValue[0][7:5];
+assign vga_g =                                 colorValue[1][7:5];
+assign vga_b = test_picture ? test_blue[7:5] : colorValue[2][7:5];
 assign vga_hsync = ~hSync;
 assign vga_vsync = ~vSync;
 
@@ -116,7 +124,7 @@ wire [9:0] TMDS_red, TMDS_green, TMDS_blue;
 TMDS_encoder encode_R
 (
   .clk(pixclk),
-  .VD(test_picture ? test_red : colorValue),
+  .VD(test_picture ? test_red : colorValue[0]),
   .CD(2'b00),
   .VDE(DrawArea),
   .TMDS(TMDS_red)
@@ -124,7 +132,7 @@ TMDS_encoder encode_R
 TMDS_encoder encode_G
 (
   .clk(pixclk),
-  .VD(colorValue),
+  .VD(colorValue[1]),
   .CD(2'b00),
   .VDE(DrawArea),
   .TMDS(TMDS_green)
@@ -132,7 +140,7 @@ TMDS_encoder encode_G
 TMDS_encoder encode_B
 (
   .clk(pixclk),
-  .VD(test_picture ? test_blue : colorValue),
+  .VD(test_picture ? test_blue : colorValue[2]),
   .CD({vSync,hSync}),
   .VDE(DrawArea),
   .TMDS(TMDS_blue)
