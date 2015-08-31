@@ -99,9 +99,9 @@ always @(posedge pixclk)
 
 wire [7:0] colorValue[0:3];
 assign colorValue[0] = shift_red[0]    != 0 ? colorValue[3] : 0;
-assign colorValue[1] = shift_green[0]  != 0 ? colorValue[3] : 0;
+assign colorValue[1] = shift_green[0]  != 0 ? 255 : 0;
 assign colorValue[2] = shift_blue[0]   != 0 ? colorValue[3] : 0;
-assign colorValue[3] = shift_bright[3] != 0 ? 255 : 127;
+assign colorValue[3] = shift_bright[0] != 0 ? 255 : 127;
 
 // test picture generator
 wire [7:0] W = {8{CounterX[7:0]==CounterY[7:0]}};
