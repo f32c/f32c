@@ -534,7 +534,10 @@ begin
       clk_pixel => clk_25MHz,
       clk_tmds => clk_250MHz,
       rd => vga_fetch_next,
-      dispData => vga_data_from_fifo(7 downto 0),
+      red_byte => vga_data_from_fifo(7 downto 0),
+      green_byte => vga_data_from_fifo(15 downto 8),
+      blue_byte => vga_data_from_fifo(23 downto 16),
+      bright_byte => vga_data_from_fifo(31 downto 24),
       vga_r => vga_r,
       vga_g => vga_g,
       vga_b => vga_b,
@@ -583,6 +586,9 @@ begin
 	dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
     );
     end generate;
+    vga_data(15 downto 8)  <= vga_data(7 downto 0);
+    vga_data(23 downto 16) <= vga_data(7 downto 0);
+    vga_data(31 downto 24) <= vga_data(7 downto 0);
 
     -- FM/RDS
     G_fmrds:

@@ -25,7 +25,7 @@ entity vgahdmi is
     clk_pixel  : in std_logic;  -- pixel clock, 25 MHz
     clk_tmds   : in std_logic := '0'; -- hdmi clock 250 MHz (or 0 if HDMI output is not used)
     rd         : out std_logic; -- read cycle
-    dispData   : in  std_logic_vector(7 downto 0);  -- returned data
+    red_byte, green_byte, blue_byte, bright_byte: in  std_logic_vector(7 downto 0);  -- memory data
     vga_r, vga_g, vga_b:  out std_logic_vector(2 downto 0); -- VGA video signal
     vga_hsync, vga_vsync: out std_logic; -- VGA sync
     TMDS_out_RGB : out std_logic_vector(2 downto 0) -- HDMI output
@@ -45,7 +45,7 @@ architecture syn of vgahdmi is
       clk_pixel  : in std_logic;  -- pixel clock, 25 MHz
       clk_tmds   : in std_logic := '0'; -- hdmi clock 250 MHz (or 0 if HDMI output is not used)
       rd         : out std_logic; -- read cycle
-      dispData   : in  std_logic_vector(7 downto 0);  -- returned data
+      red_byte, green_byte, blue_byte, bright_byte: in  std_logic_vector(7 downto 0);  -- memory data
       vga_r, vga_g, vga_b:  out std_logic_vector(2 downto 0); -- VGA video signal
       vga_hsync, vga_vsync: out std_logic; -- VGA sync, negative logic: active LOW
       TMDS_out_RGB : out std_logic_vector(2 downto 0) -- HDMI output
@@ -65,7 +65,10 @@ begin
       clk_pixel => clk_pixel,
       clk_tmds  => clk_tmds,
       rd => rd,
-      dispData  => dispData,
+      red_byte => red_byte,
+      green_byte => green_byte,
+      blue_byte => blue_byte,
+      bright_byte => bright_byte,
       vga_r => vga_r,
       vga_g => vga_g,
       vga_b => vga_b,
