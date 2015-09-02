@@ -38,7 +38,7 @@ SRCS = \
 ../../../altera/pll_25M_112M5.vhd \
 ../../../altera/pll_25M_81M25.vhd \
 ../../../altera/pll_112M5_433M92.vhd \
-../../../generic/glue_bram_pid.vhd \
+../../../generic/glue_bram.vhd \
 ../../../generic/bram_mi32_eb.vhd \
 ../../../generic/bram_mi32_el.vhd \
 ../../../generic/bram_rv32.vhd \
@@ -55,6 +55,7 @@ SRCS = \
 ../../../cpu/alu.vhd \
 ../../../cpu/debug.vhd \
 ../../../soc/sio.vhd \
+../../../soc/spi.vhd \
 ../../../soc/gpio.vhd \
 ../../../soc/timer.vhd \
 ../../../soc/pid/pid.vhd \
