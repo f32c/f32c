@@ -92,6 +92,7 @@ entity glue_bram is
         C_vga_fifo_width: integer := 4; -- width of FIFO address space (default=4) len = 2^width * 4 byte
         C_vga_use_bram: boolean := false;
 	C_vgahdmi_mem_kb: integer := 10; -- mem size of BRAM framebuffer if BRAM is used
+	C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
 	C_gpio: integer range 0 to 128 := 32;
 	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
@@ -583,7 +584,7 @@ begin
       dbl_x => 0,
       dbl_y => 0,
       mem_size_kb => 40, -- 40K is unlimited full 640x480
-      test_picture => 1  -- show test picture in background
+      test_picture => C_vgahdmi_test_picture  -- show test picture in background
     )
     port map (
       clk => clk,
