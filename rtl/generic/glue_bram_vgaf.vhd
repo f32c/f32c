@@ -81,6 +81,7 @@ entity glue_bram is
 	C_simple_out: integer range 0 to 128 := 32;
 	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
 	C_vgahdmi_mem_kb: integer := 4; -- mem size of framebuffer
+	C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
 	C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
 	C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
 	C_fm_stereo: boolean := false;
@@ -527,7 +528,7 @@ begin
       dbl_x => 0,
       dbl_y => 0,
       mem_size_kb => C_vgahdmi_mem_kb, -- tell vgahdmi how much video ram do we have
-      test_picture => 1
+      test_picture => C_vgahdmi_test_picture
     )
     port map (
       clk => clk,
