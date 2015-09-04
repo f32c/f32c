@@ -2,9 +2,11 @@
 #*******************************************************************************
 # Simple script to control vivado project via command line
 #
-# It takes one argument
+# It takes 2 arguments
+#   arg 1 either.
 #   clean   cleans project files
 #   build   build all output files
+#   arg 2 project_name.xpr
 
 # usage
 # #!/bin/sh
@@ -17,7 +19,8 @@
 
 #*******************************************************************************
 # Open project
-open_project esa11_7a35i_bram.xpr
+#open_project esa11_7a35i_bram.xpr
+open_project [lindex $argv 1]
 
 
 #*******************************************************************************
