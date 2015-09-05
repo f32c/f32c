@@ -15,7 +15,7 @@ clean:
 	# $(vivado) -mode tcl -source run_vivado.tcl -tclargs clean
 	# faster to remove project files
 	rm -rf *~ vivado.jou vivado.log webtalk*
-	rm -rf $(project).cache $(project).hw $(project).runs $(project).sim
+	rm -rf $(project).cache $(project).hw $(project).runs $(project).sim $(project).srcs
 
 program:
 	xc3sprog -c $(xc3sprog_interface) $(bitfile)
