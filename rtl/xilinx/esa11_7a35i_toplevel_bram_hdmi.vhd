@@ -131,6 +131,8 @@ begin
         C_gpio => C_gpio,
         C_sio => C_sio,
         C_spi => C_spi,
+	C_vgahdmi => C_vgahdmi,
+	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
         C_debug => C_debug
     )
     port map (
