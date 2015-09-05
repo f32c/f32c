@@ -41,6 +41,7 @@ xil_env ?= . $(isedir)/settings32.sh
 #xil_env ?= . $(isedir)/settings64.sh
 openocd_interface ?= interface/altera-usb-blaster.cfg
 xc3sprog_interface ?= xpc
+xc3sprog_device ?= 0
 jtag_spi_bridge ?= ../include/bscan_xc6s_ftg256_blink.bit.xz
 flashsize ?= 8192
 
@@ -123,14 +124,14 @@ programming_files: $(project).bit $(project).mcs $(project).svf $(project).xsvf
 junk += _xmsgs usage_statistics_webtalk.html
 
 xc3sprog: $(project).bit
-	xc3sprog -c $(xc3sprog_interface) $(project).bit
+	xc3sprog -c $(xc3sprog_interface) -p $(xc3sprog_device) $(project).bit
 
 xc3sprog_flash: $(project).bit
 	xz -cd $(jtag_spi_bridge) > /tmp/jtag_spi_bridge.bit
-	xc3sprog -c $(xc3sprog_interface) /tmp/jtag_spi_bridge.bit
+	xc3sprog -c $(xc3sprog_interface) -p $(xc3sprog_device) /tmp/jtag_spi_bridge.bit
 	rm /tmp/jtag_spi_bridge.bit
-	xc3sprog -c $(xc3sprog_interface) -I $(project).bit
-	xc3sprog -c $(xc3sprog_interface) -R
+	xc3sprog -c $(xc3sprog_interface) -p $(xc3sprog_device) -I $(project).bit
+	xc3sprog -c $(xc3sprog_interface) -p $(xc3sprog_device) -R
 
 program: $(project).svf
 	openocd --file=$(openocd_interface) --file=$(project).ocd
