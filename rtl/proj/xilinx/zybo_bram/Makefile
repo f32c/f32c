@@ -4,8 +4,12 @@ family = zinq
 part = xc7z010-clg400-1 # last number -1 is speed grade
 flashsize = 8192 # KB (kilobytes) - SPI flash device is M25P40
 top_module = glue
-isedir = /usr/local/xilinx/14.7/ISE_DS
+#isedir = /usr/local/xilinx/14.7/ISE_DS
+isedir = /opt/Xilinx/ISE/14.7/ISE_DS
+xil_env = . $(isedir)/settings64.sh
 openocd_interface = ftdi-zybo.ocd
+xc3sprog_interface = jtaghs1_fast
+xc3sprog_device = 1
 SHELL = /bin/bash
 
 vfiles = \
