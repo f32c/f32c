@@ -1,0 +1,1494 @@
+#-----------------------------------------------------------
+# Vivado v2015.2 (64-bit)
+# SW Build 1266856 on Fri Jun 26 16:35:25 MDT 2015
+# IP Build 1264090 on Wed Jun 24 14:22:01 MDT 2015
+# Start of session at: Sat Sep  5 13:24:36 2015
+# Process ID: 15927
+# Log file: /tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/vivado.log
+# Journal file: /tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/vivado.jou
+#-----------------------------------------------------------
+source run_vivado.tcl
+# open_project [lindex $argv 1]
+Scanning sources...
+Finished scanning sources
+WARNING: [Project 1-509] GeneratedRun file for 'synth_1' not found
+# update_compile_order -fileset sources_1
+# if {[lindex $argv 0] == "clean"} {
+#    ## clean implementation
+#    reset_run impl_1
+# 
+#    ## clean synthesis
+#    reset_run synth_1
+# 
+#    ## clean PS project configuration
+#    # reset_target all [get_files  ./vivado/ps_scripts.srcs/sources_1/bd/system/system.bd]
+# }
+# if {[lindex $argv 0] == "build"} {
+# 
+#    ## export PS configuration
+# #   generate_target all [get_files  ./vivado/ps_scripts.srcs/sources_1/bd/system/system.bd]
+# #   open_bd_design ./vivado/ps_scripts.srcs/sources_1/bd/system/system.bd
+# #   export_hardware [get_files ./vivado/ps_scripts.srcs/sources_1/bd/system/system.bd]
+# #   close_bd_design system
+# 
+#    ## do synthesis
+#    launch_runs synth_1
+#    wait_on_run synth_1
+# 
+#    ## do implementation
+#    launch_runs impl_1
+#    wait_on_run impl_1
+# 
+#    ## make bit file
+#    launch_runs impl_1 -to_step write_bitstream
+#    wait_on_run impl_1
+# }
+[Sat Sep  5 13:24:47 2015] Launched synth_1...
+Run output will be captured here: /tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/esa11_7a35i_bram.runs/synth_1/runme.log
+[Sat Sep  5 13:24:47 2015] Waiting for synth_1 to finish...
+
+*** Running vivado
+    with args -log glue.vds -m64 -mode batch -messageDb vivado.pb -notrace -source glue.tcl
+
+WARNING: Default location for XILINX_VIVADO_HLS not found: 
+
+****** Vivado v2015.2 (64-bit)
+  **** SW Build 1266856 on Fri Jun 26 16:35:25 MDT 2015
+  **** IP Build 1264090 on Wed Jun 24 14:22:01 MDT 2015
+    ** Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
+
+source glue.tcl -notrace
+Command: synth_design -top glue -part xc7a35tfgg484-2
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7a35t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7a35t'
+WARNING: [Synth 8-1935] empty port in module declaration [/tmp/f32c/rtl/soc/pid/simotor_v.v:13]
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 951.988 ; gain = 148.551 ; free physical = 10590 ; free virtual = 17330
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-2519] partially associated formal bus_out cannot have actual OPEN [/tmp/f32c/rtl/generic/glue_bram.vhd:486]
+WARNING: [Synth 8-2519] partially associated formal bus_out cannot have actual OPEN [/tmp/f32c/rtl/generic/glue_bram.vhd:487]
+WARNING: [Synth 8-2519] partially associated formal spi_sck cannot have actual OPEN [/tmp/f32c/rtl/xilinx/esa11_7a35i_toplevel_bram.vhd:135]
+WARNING: [Synth 8-2519] partially associated formal spi_ss cannot have actual OPEN [/tmp/f32c/rtl/xilinx/esa11_7a35i_toplevel_bram.vhd:136]
+WARNING: [Synth 8-2519] partially associated formal spi_mosi cannot have actual OPEN [/tmp/f32c/rtl/xilinx/esa11_7a35i_toplevel_bram.vhd:137]
+WARNING: [Synth 8-2519] partially associated formal gpio cannot have actual OPEN [/tmp/f32c/rtl/xilinx/esa11_7a35i_toplevel_bram.vhd:141]
+WARNING: [Synth 8-2519] partially associated formal simple_out cannot have actual OPEN [/tmp/f32c/rtl/xilinx/esa11_7a35i_toplevel_bram.vhd:142]
+WARNING: [Synth 8-2519] partially associated formal simple_out cannot have actual OPEN [/tmp/f32c/rtl/xilinx/esa11_7a35i_toplevel_bram.vhd:143]
+WARNING: [Synth 8-2519] partially associated formal simple_out cannot have actual OPEN [/tmp/f32c/rtl/xilinx/esa11_7a35i_toplevel_bram.vhd:143]
+INFO: [Synth 8-638] synthesizing module 'glue' [/tmp/f32c/rtl/xilinx/esa11_7a35i_toplevel_bram.vhd:71]
+	Parameter C_arch bound to: 0 - type: integer 
+	Parameter C_debug bound to: 0 - type: bool 
+	Parameter C_clk_freq bound to: 100 - type: integer 
+	Parameter C_mem_size bound to: 16 - type: integer 
+	Parameter C_sio bound to: 1 - type: integer 
+	Parameter C_spi bound to: 2 - type: integer 
+	Parameter C_gpio bound to: 32 - type: integer 
+	Parameter C_simple_io bound to: 1 - type: bool 
+INFO: [Synth 8-638] synthesizing module 'pll_d100M_250M_100M_25M' [/tmp/f32c/rtl/xilinx/pll_d100M_250M_100M_25M.vhd:88]
+INFO: [Synth 8-637] synthesizing blackbox instance 'U0' of component 'pll_d100M_250M_100M_25M_clk_wiz' [/tmp/f32c/rtl/xilinx/pll_d100M_250M_100M_25M.vhd:106]
+INFO: [Synth 8-256] done synthesizing module 'pll_d100M_250M_100M_25M' (1#1) [/tmp/f32c/rtl/xilinx/pll_d100M_250M_100M_25M.vhd:88]
+	Parameter PROG_USR bound to: FALSE - type: string 
+	Parameter SIM_CCLK_FREQ bound to: 0.000000 - type: float 
+INFO: [Synth 8-113] binding component instance 'reset' to cell 'STARTUPE2' [/tmp/f32c/rtl/xilinx/esa11_7a35i_toplevel_bram.vhd:103]
+INFO: [Synth 8-638] synthesizing module 'glue_bram' [/tmp/f32c/rtl/generic/glue_bram.vhd:103]
+	Parameter C_clk_freq bound to: 100 - type: integer 
+	Parameter C_arch bound to: 0 - type: integer 
+	Parameter C_big_endian bound to: 0 - type: bool 
+	Parameter C_mult_enable bound to: 1 - type: bool 
+	Parameter C_branch_likely bound to: 1 - type: bool 
+	Parameter C_sign_extend bound to: 1 - type: bool 
+	Parameter C_ll_sc bound to: 0 - type: bool 
+	Parameter C_PC_mask bound to: 32'b00000000000000011111111111111111 
+	Parameter C_exceptions bound to: 1 - type: bool 
+	Parameter C_cop0_count bound to: 1 - type: bool 
+	Parameter C_cop0_compare bound to: 1 - type: bool 
+	Parameter C_cop0_config bound to: 1 - type: bool 
+	Parameter C_branch_prediction bound to: 1 - type: bool 
+	Parameter C_full_shifter bound to: 1 - type: bool 
+	Parameter C_result_forwarding bound to: 1 - type: bool 
+	Parameter C_load_aligner bound to: 1 - type: bool 
+	Parameter C_register_technology bound to: generic - type: string 
+	Parameter C_movn_movz bound to: 0 - type: bool 
+	Parameter C_debug bound to: 0 - type: bool 
+	Parameter C_mem_size bound to: 16 - type: integer 
+	Parameter C_sio bound to: 1 - type: integer 
+	Parameter C_sio_init_baudrate bound to: 115200 - type: integer 
+	Parameter C_sio_fixed_baudrate bound to: 0 - type: bool 
+	Parameter C_sio_break_detect bound to: 1 - type: bool 
+	Parameter C_spi bound to: 2 - type: integer 
+	Parameter C_spi_turbo_mode bound to: 4'b0000 
+	Parameter C_spi_fixed_speed bound to: 4'b1111 
+	Parameter C_simple_in bound to: 32 - type: integer 
+	Parameter C_simple_out bound to: 32 - type: integer 
+	Parameter C_gpio bound to: 32 - type: integer 
+	Parameter C_pids bound to: 0 - type: integer 
+	Parameter C_pid_simulator bound to: 8'b00000000 
+	Parameter C_pid_prescaler bound to: 18 - type: integer 
+	Parameter C_pid_precision bound to: 1 - type: integer 
+	Parameter C_pid_pwm_bits bound to: 12 - type: integer 
+	Parameter C_pid_fp bound to: 8 - type: integer 
+	Parameter C_timer bound to: 1 - type: bool 
+WARNING: [Synth 8-506] null port 'pid_encoder_a' ignored [/tmp/f32c/rtl/generic/glue_bram.vhd:97]
+WARNING: [Synth 8-506] null port 'pid_encoder_b' ignored [/tmp/f32c/rtl/generic/glue_bram.vhd:97]
+WARNING: [Synth 8-506] null port 'pid_bridge_f' ignored [/tmp/f32c/rtl/generic/glue_bram.vhd:98]
+WARNING: [Synth 8-506] null port 'pid_bridge_r' ignored [/tmp/f32c/rtl/generic/glue_bram.vhd:98]
+INFO: [Synth 8-638] synthesizing module 'pipeline' [/tmp/f32c/rtl/cpu/pipeline.vhd:102]
+	Parameter C_arch bound to: 0 - type: integer 
+	Parameter C_big_endian bound to: 0 - type: bool 
+	Parameter C_mult_enable bound to: 1 - type: bool 
+	Parameter C_branch_likely bound to: 1 - type: bool 
+	Parameter C_sign_extend bound to: 1 - type: bool 
+	Parameter C_movn_movz bound to: 0 - type: bool 
+	Parameter C_ll_sc bound to: 0 - type: bool 
+	Parameter C_exceptions bound to: 1 - type: bool 
+	Parameter C_PC_mask bound to: 131071 - type: integer 
+	Parameter C_init_PC bound to: 32'b00000000000000000000000000000000 
+	Parameter C_clk_freq bound to: 100 - type: integer 
+	Parameter C_cache bound to: 0 - type: bool 
+	Parameter C_cpuid bound to: 0 - type: integer 
+	Parameter C_cop0_count bound to: 1 - type: bool 
+	Parameter C_cop0_compare bound to: 1 - type: bool 
+	Parameter C_cop0_config bound to: 1 - type: bool 
+	Parameter C_result_forwarding bound to: 1 - type: bool 
+	Parameter C_branch_prediction bound to: 1 - type: bool 
+	Parameter C_bp_global_depth bound to: 6 - type: integer 
+	Parameter C_load_aligner bound to: 1 - type: bool 
+	Parameter C_full_shifter bound to: 1 - type: bool 
+	Parameter C_reg_IF_PC bound to: 0 - type: bool 
+	Parameter C_register_technology bound to: generic - type: string 
+	Parameter C_debug bound to: 0 - type: bool 
+INFO: [Synth 8-638] synthesizing module 'bptrace' [/tmp/f32c/rtl/generic/bptrace.vhd:45]
+INFO: [Synth 8-256] done synthesizing module 'bptrace' (2#1) [/tmp/f32c/rtl/generic/bptrace.vhd:45]
+INFO: [Synth 8-638] synthesizing module 'idecode_mi32' [/tmp/f32c/rtl/cpu/idecode_mi32.vhd:80]
+	Parameter C_branch_likely bound to: 1 - type: bool 
+	Parameter C_sign_extend bound to: 1 - type: bool 
+	Parameter C_cache bound to: 0 - type: bool 
+	Parameter C_ll_sc bound to: 0 - type: bool 
+	Parameter C_movn_movz bound to: 0 - type: bool 
+	Parameter C_exceptions bound to: 1 - type: bool 
+INFO: [Synth 8-256] done synthesizing module 'idecode_mi32' (3#1) [/tmp/f32c/rtl/cpu/idecode_mi32.vhd:80]
+INFO: [Synth 8-638] synthesizing module 'reg1w2r' [/tmp/f32c/rtl/generic/reg1w2r.vhd:50]
+	Parameter C_register_technology bound to: generic - type: string 
+	Parameter C_debug bound to: 0 - type: bool 
+INFO: [Synth 8-5534] Detected attribute (* ram_style = "distributed" *) [/tmp/f32c/rtl/generic/reg1w2r.vhd:52]
+INFO: [Synth 8-5534] Detected attribute (* ram_style = "distributed" *) [/tmp/f32c/rtl/generic/reg1w2r.vhd:52]
+INFO: [Synth 8-5534] Detected attribute (* ram_style = "distributed" *) [/tmp/f32c/rtl/generic/reg1w2r.vhd:52]
+INFO: [Synth 8-256] done synthesizing module 'reg1w2r' (4#1) [/tmp/f32c/rtl/generic/reg1w2r.vhd:50]
+INFO: [Synth 8-638] synthesizing module 'alu' [/tmp/f32c/rtl/cpu/alu.vhd:48]
+	Parameter C_sign_extend bound to: 1 - type: bool 
+INFO: [Synth 8-256] done synthesizing module 'alu' (5#1) [/tmp/f32c/rtl/cpu/alu.vhd:48]
+INFO: [Synth 8-638] synthesizing module 'shift' [/tmp/f32c/rtl/cpu/shift.vhd:51]
+	Parameter C_load_aligner bound to: 1 - type: bool 
+INFO: [Synth 8-256] done synthesizing module 'shift' (6#1) [/tmp/f32c/rtl/cpu/shift.vhd:51]
+INFO: [Synth 8-226] default block is never used [/tmp/f32c/rtl/cpu/pipeline.vhd:1218]
+INFO: [Synth 8-226] default block is never used [/tmp/f32c/rtl/cpu/pipeline.vhd:1231]
+INFO: [Synth 8-638] synthesizing module 'loadalign' [/tmp/f32c/rtl/cpu/loadalign.vhd:47]
+	Parameter C_big_endian bound to: 0 - type: bool 
+INFO: [Synth 8-256] done synthesizing module 'loadalign' (7#1) [/tmp/f32c/rtl/cpu/loadalign.vhd:47]
+WARNING: [Synth 8-3848] Net EX_MEM_flush_i_line in module/entity pipeline does not have driver. [/tmp/f32c/rtl/cpu/pipeline.vhd:242]
+WARNING: [Synth 8-3848] Net EX_MEM_flush_d_line in module/entity pipeline does not have driver. [/tmp/f32c/rtl/cpu/pipeline.vhd:242]
+WARNING: [Synth 8-3848] Net debug_in_busy in module/entity pipeline does not have driver. [/tmp/f32c/rtl/cpu/pipeline.vhd:93]
+WARNING: [Synth 8-3848] Net debug_out_data in module/entity pipeline does not have driver. [/tmp/f32c/rtl/cpu/pipeline.vhd:94]
+WARNING: [Synth 8-3848] Net debug_out_strobe in module/entity pipeline does not have driver. [/tmp/f32c/rtl/cpu/pipeline.vhd:95]
+WARNING: [Synth 8-3848] Net debug_debug in module/entity pipeline does not have driver. [/tmp/f32c/rtl/cpu/pipeline.vhd:97]
+WARNING: [Synth 8-3848] Net debug_active in module/entity pipeline does not have driver. [/tmp/f32c/rtl/cpu/pipeline.vhd:98]
+WARNING: [Synth 8-3848] Net trace_addr in module/entity pipeline does not have driver. [/tmp/f32c/rtl/cpu/pipeline.vhd:295]
+INFO: [Synth 8-256] done synthesizing module 'pipeline' (8#1) [/tmp/f32c/rtl/cpu/pipeline.vhd:102]
+INFO: [Synth 8-638] synthesizing module 'sio' [/tmp/f32c/rtl/soc/sio.vhd:72]
+	Parameter C_clk_freq bound to: 100 - type: integer 
+	Parameter C_big_endian bound to: 0 - type: bool 
+	Parameter C_init_baudrate bound to: 115200 - type: integer 
+	Parameter C_fixed_baudrate bound to: 0 - type: bool 
+	Parameter C_break_detect bound to: 1 - type: bool 
+	Parameter C_break_detect_delay_ms bound to: 200 - type: integer 
+	Parameter C_break_resets_baudrate bound to: 1 - type: bool 
+	Parameter C_tx_only bound to: 0 - type: bool 
+	Parameter C_bypass bound to: 0 - type: bool 
+INFO: [Synth 8-256] done synthesizing module 'sio' (9#1) [/tmp/f32c/rtl/soc/sio.vhd:72]
+INFO: [Synth 8-638] synthesizing module 'spi' [/tmp/f32c/rtl/soc/spi.vhd:61]
+	Parameter C_fixed_speed bound to: 1 - type: bool 
+	Parameter C_turbo_mode bound to: 0 - type: bool 
+WARNING: [Synth 8-614] signal 'R_clk_acc' is read in the process but is not in the sensitivity list [/tmp/f32c/rtl/soc/spi.vhd:77]
+INFO: [Synth 8-256] done synthesizing module 'spi' (10#1) [/tmp/f32c/rtl/soc/spi.vhd:61]
+WARNING: [Synth 8-614] signal 'dmem_write' is read in the process but is not in the sensitivity list [/tmp/f32c/rtl/generic/glue_bram.vhd:260]
+WARNING: [Synth 8-614] signal 'io_addr_strobe' is read in the process but is not in the sensitivity list [/tmp/f32c/rtl/generic/glue_bram.vhd:260]
+WARNING: [Synth 8-3919] null assignment ignored [/tmp/f32c/rtl/generic/glue_bram.vhd:333]
+WARNING: [Synth 8-3919] null assignment ignored [/tmp/f32c/rtl/generic/glue_bram.vhd:333]
+WARNING: [Synth 8-3919] null assignment ignored [/tmp/f32c/rtl/generic/glue_bram.vhd:333]
+WARNING: [Synth 8-3919] null assignment ignored [/tmp/f32c/rtl/generic/glue_bram.vhd:340]
+WARNING: [Synth 8-3919] null assignment ignored [/tmp/f32c/rtl/generic/glue_bram.vhd:340]
+WARNING: [Synth 8-3919] null assignment ignored [/tmp/f32c/rtl/generic/glue_bram.vhd:340]
+WARNING: [Synth 8-614] signal 'from_spi' is read in the process but is not in the sensitivity list [/tmp/f32c/rtl/generic/glue_bram.vhd:299]
+INFO: [Synth 8-638] synthesizing module 'gpio' [/tmp/f32c/rtl/soc/gpio.vhd:53]
+	Parameter C_addr_bits bound to: 3 - type: integer 
+	Parameter C_bits bound to: 32 - type: integer 
+INFO: [Synth 8-256] done synthesizing module 'gpio' (11#1) [/tmp/f32c/rtl/soc/gpio.vhd:53]
+INFO: [Synth 8-638] synthesizing module 'timer' [/tmp/f32c/rtl/soc/timer.vhd:66]
+	Parameter C_ocps bound to: 2 - type: integer 
+	Parameter C_icps bound to: 2 - type: integer 
+	Parameter C_period_frac bound to: 0 - type: integer 
+	Parameter C_have_afc bound to: 1 - type: bool 
+	Parameter C_afc_immediate_sp bound to: 1 - type: bool 
+	Parameter C_have_intr bound to: 1 - type: bool 
+	Parameter C_pres bound to: 10 - type: integer 
+	Parameter C_bits bound to: 12 - type: integer 
+INFO: [Synth 8-256] done synthesizing module 'timer' (12#1) [/tmp/f32c/rtl/soc/timer.vhd:66]
+INFO: [Synth 8-638] synthesizing module 'bram_mi32_el' [/tmp/f32c/rtl/generic/bram_mi32_el.vhd:53]
+	Parameter C_write_protect_bootloader bound to: 1 - type: bool 
+	Parameter C_mem_size bound to: 16 - type: integer 
+INFO: [Synth 8-5534] Detected attribute (* ram_style = "no_rw_check" *) [/tmp/f32c/rtl/generic/bram_mi32_el.vhd:218]
+INFO: [Synth 8-5534] Detected attribute (* ram_style = "no_rw_check" *) [/tmp/f32c/rtl/generic/bram_mi32_el.vhd:219]
+INFO: [Synth 8-5534] Detected attribute (* ram_style = "no_rw_check" *) [/tmp/f32c/rtl/generic/bram_mi32_el.vhd:220]
+INFO: [Synth 8-5534] Detected attribute (* ram_style = "no_rw_check" *) [/tmp/f32c/rtl/generic/bram_mi32_el.vhd:221]
+INFO: [Synth 8-256] done synthesizing module 'bram_mi32_el' (13#1) [/tmp/f32c/rtl/generic/bram_mi32_el.vhd:53]
+WARNING: [Synth 8-3848] Net sio_to_debug_data in module/entity glue_bram does not have driver. [/tmp/f32c/rtl/generic/glue_bram.vhd:160]
+WARNING: [Synth 8-3848] Net deb_sio_rx_done in module/entity glue_bram does not have driver. [/tmp/f32c/rtl/generic/glue_bram.vhd:162]
+WARNING: [Synth 8-3848] Net deb_sio_tx_busy in module/entity glue_bram does not have driver. [/tmp/f32c/rtl/generic/glue_bram.vhd:162]
+INFO: [Synth 8-256] done synthesizing module 'glue_bram' (14#1) [/tmp/f32c/rtl/generic/glue_bram.vhd:103]
+INFO: [Synth 8-256] done synthesizing module 'glue' (15#1) [/tmp/f32c/rtl/xilinx/esa11_7a35i_toplevel_bram.vhd:71]
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:16 ; elapsed = 00:00:17 . Memory (MB): peak = 1011.246 ; gain = 207.809 ; free physical = 10529 ; free virtual = 17270
+---------------------------------------------------------------------------------
+
+Report Check Netlist: 
++------+------------------+-------+---------+-------+------------------+
+|      |Item              |Errors |Warnings |Status |Description       |
++------+------------------+-------+---------+-------+------------------+
+|1     |multi_driven_nets |      0|        0|Passed |Multi driven nets |
++------+------------------+-------+---------+-------+------------------+
+WARNING: [Synth 8-3295] tying undriven pin regfile:rdd_addr[4] to constant 0 [/tmp/f32c/rtl/cpu/pipeline.vhd:541]
+WARNING: [Synth 8-3295] tying undriven pin regfile:rdd_addr[3] to constant 0 [/tmp/f32c/rtl/cpu/pipeline.vhd:541]
+WARNING: [Synth 8-3295] tying undriven pin regfile:rdd_addr[2] to constant 0 [/tmp/f32c/rtl/cpu/pipeline.vhd:541]
+WARNING: [Synth 8-3295] tying undriven pin regfile:rdd_addr[1] to constant 0 [/tmp/f32c/rtl/cpu/pipeline.vhd:541]
+WARNING: [Synth 8-3295] tying undriven pin regfile:rdd_addr[0] to constant 0 [/tmp/f32c/rtl/cpu/pipeline.vhd:541]
+WARNING: [Synth 8-3295] tying undriven pin pipeline:debug_in_data[7] to constant 0 [/tmp/f32c/rtl/generic/glue_bram.vhd:171]
+WARNING: [Synth 8-3295] tying undriven pin pipeline:debug_in_data[6] to constant 0 [/tmp/f32c/rtl/generic/glue_bram.vhd:171]
+WARNING: [Synth 8-3295] tying undriven pin pipeline:debug_in_data[5] to constant 0 [/tmp/f32c/rtl/generic/glue_bram.vhd:171]
+WARNING: [Synth 8-3295] tying undriven pin pipeline:debug_in_data[4] to constant 0 [/tmp/f32c/rtl/generic/glue_bram.vhd:171]
+WARNING: [Synth 8-3295] tying undriven pin pipeline:debug_in_data[3] to constant 0 [/tmp/f32c/rtl/generic/glue_bram.vhd:171]
+WARNING: [Synth 8-3295] tying undriven pin pipeline:debug_in_data[2] to constant 0 [/tmp/f32c/rtl/generic/glue_bram.vhd:171]
+WARNING: [Synth 8-3295] tying undriven pin pipeline:debug_in_data[1] to constant 0 [/tmp/f32c/rtl/generic/glue_bram.vhd:171]
+WARNING: [Synth 8-3295] tying undriven pin pipeline:debug_in_data[0] to constant 0 [/tmp/f32c/rtl/generic/glue_bram.vhd:171]
+WARNING: [Synth 8-3295] tying undriven pin pipeline:debug_in_strobe to constant 0 [/tmp/f32c/rtl/generic/glue_bram.vhd:171]
+WARNING: [Synth 8-3295] tying undriven pin pipeline:debug_out_busy to constant 0 [/tmp/f32c/rtl/generic/glue_bram.vhd:171]
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:17 ; elapsed = 00:00:17 . Memory (MB): peak = 1011.246 ; gain = 207.809 ; free physical = 10530 ; free virtual = 17270
+---------------------------------------------------------------------------------
+INFO: [Netlist 29-17] Analyzing 1 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Device 21-403] Loading part xc7a35tfgg484-2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc]
+WARNING: [Vivado 12-584] No ports matched 'RESET_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:16]
+WARNING: [Vivado 12-584] No ports matched 'RESET_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:17]
+WARNING: [Vivado 12-584] No ports matched 'UART1_CTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:43]
+WARNING: [Vivado 12-584] No ports matched 'UART1_CTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:44]
+WARNING: [Vivado 12-584] No ports matched 'UART1_CTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:45]
+WARNING: [Vivado 12-584] No ports matched 'UART1_RTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:46]
+WARNING: [Vivado 12-584] No ports matched 'UART1_RTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:47]
+WARNING: [Vivado 12-584] No ports matched 'UART1_RTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:48]
+WARNING: [Vivado 12-584] No ports matched 'UART2_CTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:56]
+WARNING: [Vivado 12-584] No ports matched 'UART2_CTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:57]
+WARNING: [Vivado 12-584] No ports matched 'UART2_CTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:58]
+WARNING: [Vivado 12-584] No ports matched 'UART2_RTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:59]
+WARNING: [Vivado 12-584] No ports matched 'UART2_RTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:60]
+WARNING: [Vivado 12-584] No ports matched 'UART2_RTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:61]
+WARNING: [Vivado 12-584] No ports matched 'UART2_RXD'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:62]
+WARNING: [Vivado 12-584] No ports matched 'UART2_RXD'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:63]
+WARNING: [Vivado 12-584] No ports matched 'UART2_RXD'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:64]
+WARNING: [Vivado 12-584] No ports matched 'UART2_TXD'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:65]
+WARNING: [Vivado 12-584] No ports matched 'UART2_TXD'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:66]
+WARNING: [Vivado 12-584] No ports matched 'UART2_TXD'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:67]
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_D1'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:79]
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_D1'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:80]
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_D1'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:81]
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_D2'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:82]
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_D2'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:83]
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_D2'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:84]
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_CDET_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:91]
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_CDET_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:92]
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_CDET_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:93]
+WARNING: [Vivado 12-508] No pins matched 'clk100in/IBUFDS_1/O'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:112]
+WARNING: [Vivado 12-508] No pins matched 'sys_clock_dll/dcm_inst/CLKIN1'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:125]
+WARNING: [Vivado 12-508] No pins matched 'sys_clock_dll/dcm_inst/CLKFBOUT'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:125]
+WARNING: [Vivado 12-508] No pins matched 'sys_clock_dll/dcm_inst/CLKIN1'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:126]
+WARNING: [Vivado 12-508] No pins matched 'sys_clock_dll/dcm_inst/CLKOUT1'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:126]
+WARNING: [Vivado 12-508] No pins matched 'sys_clock_dll/dcm_inst/CLKIN1'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:127]
+WARNING: [Vivado 12-508] No pins matched 'sys_clock_dll/dcm_inst/CLKOUT4'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:127]
+Finished Parsing XDC File [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc]
+WARNING: [Project 1-498] One or more constraints failed evaluation while reading constraint file [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc] and the design contains unresolved black boxes. These constraints will be read post-synthesis (as long as their source constraint file is marked as used_in_implementation) and should be applied correctly then. You should review the constraints listed in the file [.Xil/glue_propImpl.xdc] and check the run log file to verify that these constraints were correctly applied.
+Parsing XDC File [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc]
+WARNING: [Vivado 12-584] No ports matched 'VID_CLK_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:298]
+WARNING: [Vivado 12-584] No ports matched 'VID_CLK_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:299]
+WARNING: [Vivado 12-584] No ports matched 'VID_CLK_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:300]
+WARNING: [Vivado 12-584] No ports matched 'VID_CLK_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:301]
+WARNING: [Vivado 12-584] No ports matched 'VID_CLK_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:302]
+WARNING: [Vivado 12-584] No ports matched 'VID_CLK_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:303]
+WARNING: [Vivado 12-584] No ports matched 'VID_D0_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:304]
+WARNING: [Vivado 12-584] No ports matched 'VID_D0_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:305]
+WARNING: [Vivado 12-584] No ports matched 'VID_D0_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:306]
+WARNING: [Vivado 12-584] No ports matched 'VID_D0_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:307]
+WARNING: [Vivado 12-584] No ports matched 'VID_D0_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:308]
+WARNING: [Vivado 12-584] No ports matched 'VID_D0_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:309]
+WARNING: [Vivado 12-584] No ports matched 'VID_D1_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:310]
+WARNING: [Vivado 12-584] No ports matched 'VID_D1_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:311]
+WARNING: [Vivado 12-584] No ports matched 'VID_D1_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:312]
+WARNING: [Vivado 12-584] No ports matched 'VID_D1_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:313]
+WARNING: [Vivado 12-584] No ports matched 'VID_D1_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:314]
+WARNING: [Vivado 12-584] No ports matched 'VID_D1_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:315]
+WARNING: [Vivado 12-584] No ports matched 'VID_D2_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:316]
+WARNING: [Vivado 12-584] No ports matched 'VID_D2_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:317]
+WARNING: [Vivado 12-584] No ports matched 'VID_D2_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:318]
+WARNING: [Vivado 12-584] No ports matched 'VID_D2_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:319]
+WARNING: [Vivado 12-584] No ports matched 'VID_D2_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:320]
+WARNING: [Vivado 12-584] No ports matched 'VID_D2_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:321]
+WARNING: [Vivado 12-584] No ports matched 'VID_RSCL'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:322]
+WARNING: [Vivado 12-584] No ports matched 'VID_RSCL'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:323]
+WARNING: [Vivado 12-584] No ports matched 'VID_RSCL'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:324]
+WARNING: [Vivado 12-584] No ports matched 'VID_RSDA'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:325]
+WARNING: [Vivado 12-584] No ports matched 'VID_RSDA'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:326]
+WARNING: [Vivado 12-584] No ports matched 'VID_RSDA'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:327]
+Finished Parsing XDC File [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc]
+WARNING: [Project 1-498] One or more constraints failed evaluation while reading constraint file [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc] and the design contains unresolved black boxes. These constraints will be read post-synthesis (as long as their source constraint file is marked as used_in_implementation) and should be applied correctly then. You should review the constraints listed in the file [.Xil/glue_propImpl.xdc] and check the run log file to verify that these constraints were correctly applied.
+Parsing XDC File [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc]
+WARNING: [Vivado 12-584] No ports matched 'M_BTN[4]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:22]
+WARNING: [Vivado 12-584] No ports matched 'M_BTN[4]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:23]
+WARNING: [Vivado 12-584] No ports matched 'M_BTN[4]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:24]
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[0]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:83]
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[0]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:84]
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[0]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:85]
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:87]
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:88]
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:89]
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[2]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:91]
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[2]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:92]
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[2]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:93]
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[3]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:95]
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[3]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:96]
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[3]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:97]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_A'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:244]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_A'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:245]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_A'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:246]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_B'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:248]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_B'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:249]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_B'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:250]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_C'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:252]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_C'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:253]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_C'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:254]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:256]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:257]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:258]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[0]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:260]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[0]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:261]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[0]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:262]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:264]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:265]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:266]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[2]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:268]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[2]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:269]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[2]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:270]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[3]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:272]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[3]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:273]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[3]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:274]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_DP'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:276]
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_DP'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:277]
+INFO: [Common 17-14] Message 'Vivado 12-584' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:277]
+Finished Parsing XDC File [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc]
+WARNING: [Project 1-498] One or more constraints failed evaluation while reading constraint file [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc] and the design contains unresolved black boxes. These constraints will be read post-synthesis (as long as their source constraint file is marked as used_in_implementation) and should be applied correctly then. You should review the constraints listed in the file [.Xil/glue_propImpl.xdc] and check the run log file to verify that these constraints were correctly applied.
+Completed Processing XDC Constraints
+
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 1298.332 ; gain = 0.000 ; free physical = 10371 ; free virtual = 17111
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 1298.336 ; gain = 494.898 ; free physical = 10369 ; free virtual = 17109
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7a35tfgg484-2
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 1298.336 ; gain = 494.898 ; free physical = 10369 ; free virtual = 17109
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 1298.336 ; gain = 494.898 ; free physical = 10369 ; free virtual = 17109
+---------------------------------------------------------------------------------
+INFO: [Synth 8-3537] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the inputs of the operator [/tmp/f32c/rtl/cpu/alu.vhd:55]
+INFO: [Synth 8-5546] ROM "jump_cycle" won't be mapped to RAM because it is too sparse
+ROM size is below threshold of ROM address width. It will be mapped to LUTs
+INFO: [Synth 8-5546] ROM "slt_signed" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "op_major" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "alt_sel" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "read_alt" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mult" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mult_signed" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "seb_seh_cycle" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "exception" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5544] ROM "EX_MEM_writeback_addr" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "EX_MEM_writeback_addr" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "EX_MEM_logic_data" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "MEM_bpredict_score" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "MEM_bpredict_score" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "R_reg[5]" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "R_reg[4]" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "R_reg[3]" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "R_reg[2]" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "R_reg[1]" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "R_reg[0]" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[15]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[14]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[13]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[12]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[11]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[10]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[9]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[8]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[7]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[6]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[5]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[4]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[3]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[2]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[1]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[0]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[15]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[14]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[13]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[12]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[11]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[10]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[9]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[8]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[7]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[6]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[5]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[4]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[3]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[2]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[1]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Rtmp_reg[0]" won't be mapped to Block RAM because address size (4) smaller than threshold (5)
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:32 ; elapsed = 00:00:33 . Memory (MB): peak = 1298.336 ; gain = 494.898 ; free physical = 10356 ; free virtual = 17096
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   3 Input     33 Bit       Adders := 1     
+	   2 Input     30 Bit       Adders := 2     
+	   2 Input     22 Bit       Adders := 2     
+	   2 Input     17 Bit       Adders := 1     
+	   2 Input      4 Bit       Adders := 6     
+	   2 Input      2 Bit       Adders := 1     
++---XORs : 
+	   2 Input     32 Bit         XORs := 1     
+	   2 Input      8 Bit         XORs := 2     
+	   2 Input      6 Bit         XORs := 1     
+	   3 Input      1 Bit         XORs := 1     
+	   2 Input      1 Bit         XORs := 9     
++---Registers : 
+	               32 Bit    Registers := 12    
+	               30 Bit    Registers := 9     
+	               22 Bit    Registers := 1     
+	               17 Bit    Registers := 1     
+	               16 Bit    Registers := 1     
+	               13 Bit    Registers := 3     
+	               12 Bit    Registers := 32    
+	               10 Bit    Registers := 6     
+	                9 Bit    Registers := 1     
+	                8 Bit    Registers := 40    
+	                6 Bit    Registers := 1     
+	                5 Bit    Registers := 6     
+	                4 Bit    Registers := 7     
+	                3 Bit    Registers := 38    
+	                2 Bit    Registers := 14    
+	                1 Bit    Registers := 62    
++---Multipliers : 
+	                33x33  Multipliers := 1     
++---RAMs : 
+	              32K Bit         RAMs := 4     
+	              16K Bit         RAMs := 1     
++---Muxes : 
+	   2 Input     33 Bit        Muxes := 1     
+	   4 Input     32 Bit        Muxes := 8     
+	   2 Input     32 Bit        Muxes := 32    
+	   3 Input     32 Bit        Muxes := 1     
+	   5 Input     32 Bit        Muxes := 1     
+	   2 Input     30 Bit        Muxes := 6     
+	   4 Input     24 Bit        Muxes := 1     
+	   2 Input     22 Bit        Muxes := 1     
+	   3 Input     16 Bit        Muxes := 1     
+	   2 Input     16 Bit        Muxes := 2     
+	   2 Input     12 Bit        Muxes := 18    
+	   2 Input     10 Bit        Muxes := 2     
+	   3 Input      9 Bit        Muxes := 1     
+	   2 Input      9 Bit        Muxes := 5     
+	   4 Input      8 Bit        Muxes := 1     
+	   2 Input      8 Bit        Muxes := 16    
+	   3 Input      8 Bit        Muxes := 16    
+	   2 Input      5 Bit        Muxes := 4     
+	   9 Input      5 Bit        Muxes := 1     
+	   8 Input      5 Bit        Muxes := 1     
+	   3 Input      5 Bit        Muxes := 1     
+	   2 Input      4 Bit        Muxes := 7     
+	   4 Input      4 Bit        Muxes := 1     
+	   3 Input      4 Bit        Muxes := 16    
+	  37 Input      3 Bit        Muxes := 3     
+	  27 Input      3 Bit        Muxes := 1     
+	   6 Input      3 Bit        Muxes := 1     
+	   3 Input      3 Bit        Muxes := 1     
+	   2 Input      3 Bit        Muxes := 2     
+	   2 Input      2 Bit        Muxes := 12    
+	  37 Input      2 Bit        Muxes := 9     
+	  27 Input      2 Bit        Muxes := 3     
+	   3 Input      2 Bit        Muxes := 2     
+	   8 Input      2 Bit        Muxes := 1     
+	   4 Input      2 Bit        Muxes := 1     
+	  37 Input      1 Bit        Muxes := 3     
+	   9 Input      1 Bit        Muxes := 1     
+	   4 Input      1 Bit        Muxes := 1     
+	  27 Input      1 Bit        Muxes := 6     
+	   3 Input      1 Bit        Muxes := 5     
+	   2 Input      1 Bit        Muxes := 57    
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Hierarchical Component Statistics 
+---------------------------------------------------------------------------------
+Hierarchical RTL Component report 
+Module alu 
+Detailed RTL Component Info : 
++---Adders : 
+	   3 Input     33 Bit       Adders := 1     
++---XORs : 
+	   2 Input     32 Bit         XORs := 1     
++---Muxes : 
+	   2 Input     33 Bit        Muxes := 1     
+	   4 Input     32 Bit        Muxes := 1     
+	   2 Input     32 Bit        Muxes := 2     
+Module shift 
+Detailed RTL Component Info : 
++---Muxes : 
+	   4 Input     32 Bit        Muxes := 6     
+	   2 Input      2 Bit        Muxes := 6     
+Module bptrace 
+Detailed RTL Component Info : 
++---Registers : 
+	                2 Bit    Registers := 1     
++---RAMs : 
+	              16K Bit         RAMs := 1     
+Module idecode_mi32 
+Detailed RTL Component Info : 
++---Muxes : 
+	   3 Input     32 Bit        Muxes := 1     
+	   2 Input      5 Bit        Muxes := 1     
+	   9 Input      5 Bit        Muxes := 1     
+	   8 Input      5 Bit        Muxes := 1     
+	  37 Input      3 Bit        Muxes := 3     
+	  27 Input      3 Bit        Muxes := 1     
+	   6 Input      3 Bit        Muxes := 1     
+	  37 Input      2 Bit        Muxes := 9     
+	  27 Input      2 Bit        Muxes := 3     
+	   3 Input      2 Bit        Muxes := 2     
+	   2 Input      2 Bit        Muxes := 1     
+	  37 Input      1 Bit        Muxes := 3     
+	   9 Input      1 Bit        Muxes := 1     
+	   4 Input      1 Bit        Muxes := 1     
+	  27 Input      1 Bit        Muxes := 6     
+	   3 Input      1 Bit        Muxes := 3     
+	   2 Input      1 Bit        Muxes := 1     
+Module loadalign 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 6     
+	   3 Input     16 Bit        Muxes := 1     
+	   4 Input      8 Bit        Muxes := 1     
+Module pipeline 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     30 Bit       Adders := 2     
+	   2 Input      2 Bit       Adders := 1     
++---XORs : 
+	   2 Input      6 Bit         XORs := 1     
+	   3 Input      1 Bit         XORs := 1     
+	   2 Input      1 Bit         XORs := 1     
++---Registers : 
+	               32 Bit    Registers := 10    
+	               30 Bit    Registers := 9     
+	               13 Bit    Registers := 3     
+	                8 Bit    Registers := 2     
+	                6 Bit    Registers := 1     
+	                5 Bit    Registers := 6     
+	                4 Bit    Registers := 1     
+	                3 Bit    Registers := 4     
+	                2 Bit    Registers := 11    
+	                1 Bit    Registers := 53    
++---Multipliers : 
+	                33x33  Multipliers := 1     
++---Muxes : 
+	   5 Input     32 Bit        Muxes := 1     
+	   2 Input     32 Bit        Muxes := 18    
+	   4 Input     32 Bit        Muxes := 1     
+	   2 Input     30 Bit        Muxes := 6     
+	   3 Input      5 Bit        Muxes := 1     
+	   2 Input      5 Bit        Muxes := 3     
+	   3 Input      3 Bit        Muxes := 1     
+	   2 Input      2 Bit        Muxes := 5     
+	   8 Input      2 Bit        Muxes := 1     
+	   2 Input      1 Bit        Muxes := 22    
+Module sio 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     17 Bit       Adders := 1     
+	   2 Input      4 Bit       Adders := 4     
++---Registers : 
+	               17 Bit    Registers := 1     
+	               16 Bit    Registers := 1     
+	                9 Bit    Registers := 1     
+	                8 Bit    Registers := 2     
+	                4 Bit    Registers := 4     
+	                1 Bit    Registers := 3     
++---Muxes : 
+	   2 Input     16 Bit        Muxes := 2     
+	   3 Input      9 Bit        Muxes := 1     
+	   2 Input      9 Bit        Muxes := 5     
+	   2 Input      4 Bit        Muxes := 3     
+	   4 Input      4 Bit        Muxes := 1     
+	   2 Input      1 Bit        Muxes := 14    
+Module spi 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input      4 Bit       Adders := 1     
++---XORs : 
+	   2 Input      8 Bit         XORs := 1     
++---Registers : 
+	                8 Bit    Registers := 2     
+	                4 Bit    Registers := 1     
+	                1 Bit    Registers := 1     
++---Muxes : 
+	   2 Input      8 Bit        Muxes := 2     
+	   2 Input      4 Bit        Muxes := 2     
+	   2 Input      3 Bit        Muxes := 1     
+	   2 Input      1 Bit        Muxes := 5     
+Module gpio 
+Detailed RTL Component Info : 
++---Registers : 
+	                8 Bit    Registers := 24    
+	                3 Bit    Registers := 32    
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 1     
+	   2 Input      8 Bit        Muxes := 12    
+	   2 Input      1 Bit        Muxes := 4     
+	   3 Input      1 Bit        Muxes := 2     
+Module timer 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     22 Bit       Adders := 2     
++---XORs : 
+	   2 Input      1 Bit         XORs := 8     
++---Registers : 
+	               22 Bit    Registers := 1     
+	               12 Bit    Registers := 32    
+	               10 Bit    Registers := 6     
+	                3 Bit    Registers := 2     
+	                2 Bit    Registers := 2     
+	                1 Bit    Registers := 4     
++---Muxes : 
+	   4 Input     24 Bit        Muxes := 1     
+	   2 Input     22 Bit        Muxes := 1     
+	   2 Input     12 Bit        Muxes := 18    
+	   2 Input     10 Bit        Muxes := 2     
+	   3 Input      8 Bit        Muxes := 16    
+	   3 Input      4 Bit        Muxes := 16    
+	   4 Input      2 Bit        Muxes := 1     
+	   2 Input      1 Bit        Muxes := 4     
+Module bram_mi32_el 
+Detailed RTL Component Info : 
++---Registers : 
+	                8 Bit    Registers := 8     
++---RAMs : 
+	              32K Bit         RAMs := 4     
+Module glue_bram 
+Detailed RTL Component Info : 
++---Registers : 
+	               32 Bit    Registers := 2     
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 5     
+	   2 Input      1 Bit        Muxes := 2     
+---------------------------------------------------------------------------------
+Finished RTL Hierarchical Component Statistics
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 120 (col length:60)
+BRAMs: 150 (col length: RAMB18 60 RAMB36 30)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+Start Parallel Synthesis Optimization  : Time (s): cpu = 00:00:32 ; elapsed = 00:00:33 . Memory (MB): peak = 1298.336 ; gain = 494.898 ; free physical = 10356 ; free virtual = 17096
+---------------------------------------------------------------------------------
+Start Cross Boundary Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-3936] Found unconnected internal register 'ID_EX_EPC_reg' and it is trimmed from '30' to '15' bits. [/tmp/f32c/rtl/cpu/pipeline.vhd:785]
+WARNING: [Synth 8-3936] Found unconnected internal register 'IF_ID_EPC_reg' and it is trimmed from '30' to '15' bits. [/tmp/f32c/rtl/cpu/pipeline.vhd:422]
+DSP Report: Generating DSP multOp, operation Mode is: A*B.
+DSP Report: operator multOp is absorbed into DSP multOp.
+DSP Report: operator multOp is absorbed into DSP multOp.
+DSP Report: Generating DSP multOp, operation Mode is: (PCIN>>17)+A*B.
+DSP Report: operator multOp is absorbed into DSP multOp.
+DSP Report: operator multOp is absorbed into DSP multOp.
+DSP Report: Generating DSP multOp, operation Mode is: A*B.
+DSP Report: operator multOp is absorbed into DSP multOp.
+DSP Report: operator multOp is absorbed into DSP multOp.
+DSP Report: Generating DSP multOp, operation Mode is: (PCIN>>17)+A*B.
+DSP Report: operator multOp is absorbed into DSP multOp.
+DSP Report: operator multOp is absorbed into DSP multOp.
+---------------------------------------------------------------------------------
+Finished Cross Boundary Optimization : Time (s): cpu = 00:00:37 ; elapsed = 00:00:38 . Memory (MB): peak = 1298.336 ; gain = 494.898 ; free physical = 10356 ; free virtual = 17096
+---------------------------------------------------------------------------------
+Finished Parallel Reinference  : Time (s): cpu = 00:00:37 ; elapsed = 00:00:38 . Memory (MB): peak = 1298.336 ; gain = 494.898 ; free physical = 10356 ; free virtual = 17096
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+INFO: [Synth 8-4652] Swapped enable and write-enable on 1 RAM instances of RAM G_bp_scoretable.bptrace/bptrace_reg to conserve power
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP and Shift Register Reporting
+---------------------------------------------------------------------------------
+
+Block RAM:
++------------+--------------------------------------------------+------------------------+---+---+------------------------+---+---+--------------+--------+--------+-------------------------+
+|Module Name | RTL Object                                       | PORT A (Depth x Width) | W | R | PORT B (Depth x Width) | W | R | OUT_REG      | RAMB18 | RAMB36 | Hierarchical Name       | 
++------------+--------------------------------------------------+------------------------+---+---+------------------------+---+---+--------------+--------+--------+-------------------------+
+|glue        | G_bp_scoretable.bptrace/bptrace_reg              | 8 K x 2(READ_FIRST)    | W |   | 8 K x 2(WRITE_FIRST)   |   | R | Port A and B | 1      | 0      | glue/pipeline/extram__6 | 
+|glue        | glue_bram/G_bram_mi32_el.bram_mi32_el/bram_0_reg | 4 K x 8(READ_FIRST)    | W | R | 4 K x 8(WRITE_FIRST)   |   | R | Port A and B | 0      | 1      | glue/extram__8          | 
+|glue        | glue_bram/G_bram_mi32_el.bram_mi32_el/bram_1_reg | 4 K x 8(READ_FIRST)    | W | R | 4 K x 8(WRITE_FIRST)   |   | R | Port A and B | 0      | 1      | glue/extram__10         | 
+|glue        | glue_bram/G_bram_mi32_el.bram_mi32_el/bram_2_reg | 4 K x 8(READ_FIRST)    | W | R | 4 K x 8(WRITE_FIRST)   |   | R | Port A and B | 0      | 1      | glue/extram__12         | 
+|glue        | glue_bram/G_bram_mi32_el.bram_mi32_el/bram_3_reg | 4 K x 8(READ_FIRST)    | W | R | 4 K x 8(WRITE_FIRST)   |   | R | Port A and B | 0      | 1      | glue/extram__14         | 
++------------+--------------------------------------------------+------------------------+---+---+------------------------+---+---+--------------+--------+--------+-------------------------+
+
+Note: The table shows the Block RAMs at the current stage of the synthesis flow. Some Block RAMs may be reimplemented as non Block RAM primitives later in the synthesis flow. Multiple instantiated Block RAMs are reported only once. "Hierarchical Name" reflects the Block RAM name as it appears in the hierarchical module and only part of it is displayed.
+Distributed RAM: 
++------------+----------------+----------------+----------------------+--------------+----------------------+
+|Module Name | RTL Object     | Inference      | Size (Depth x Width) | Primitives   | Hierarchical Name    | 
++------------+----------------+----------------+----------------------+--------------+----------------------+
+|glue        | regfile/R2_reg | User Attribute | 32 x 32              | RAM32M x 6   | glue/pipeline/ram__4 | 
+|glue        | regfile/R1_reg | User Attribute | 32 x 32              | RAM32M x 6   | glue/pipeline/ram__6 | 
++------------+----------------+----------------+----------------------+--------------+----------------------+
+
+Note: The table shows the Distributed RAMs at the current stage of the synthesis flow. Some Distributed RAMs may be reimplemented as non Distributed RAM primitives later in the synthesis flow. Multiple instantiated RAMs are reported only once. "Hierarchical Name" reflects the Distributed RAM name as it appears in the hierarchical module and only part of it is displayed.
+DSP:
++------------+----------------+--------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name | DSP Mapping    | Neg Edge Clk | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++------------+----------------+--------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|pipeline    | A*B            | No           | 18     | 16     | 48     | 25     | 48     | 0    | 0    | 1    | 1    | 1     | 0    | 0    | 
+|pipeline    | (PCIN>>17)+A*B | No           | 16     | 16     | 48     | 25     | 48     | 0    | 0    | 1    | 1    | 1     | 0    | 0    | 
+|pipeline    | A*B            | No           | 18     | 18     | 48     | 25     | 48     | 0    | 0    | 1    | 1    | 1     | 0    | 0    | 
+|pipeline    | (PCIN>>17)+A*B | No           | 18     | 16     | 48     | 25     | 48     | 0    | 0    | 1    | 1    | 1     | 0    | 0    | 
++------------+----------------+--------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+Note: The table shows the DSPs inferred at the current stage of the synthesis flow. Some DSP may be reimplemented as non DSP primitives later in the synthesis flow. Multiple instantiated DSPs are reported only once.
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP and Shift Register Reporting
+---------------------------------------------------------------------------------
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\glue_bram/pipeline /IF_ID_fetch_in_progress_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\glue_bram/pipeline /\R_cop0_EBASE_reg[30] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\glue_bram/R_simple_in_reg[9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\glue_bram/pipeline /\ID_EX_alt_sel_reg[2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\glue_bram/pipeline /ID_EX_multicycle_lh_lb_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\glue_bram/pipeline /EX_MEM_multicycle_lh_lb_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\glue_bram/pipeline /MEM_WB_multicycle_lh_lb_reg)
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\glue_bram/pipeline /\R_cop0_intr_reg[6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\glue_bram/pipeline /IF_ID_incomplete_branch_reg)
+WARNING: [Synth 8-3332] Sequential element (ID_EX_multicycle_lh_lb_reg) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (IF_ID_fetch_in_progress_reg) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (IF_ID_incomplete_branch_reg) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\ID_EX_alt_sel_reg[2] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_intr_reg[6] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_intr_reg[2] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[31] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[30] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[29] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[28] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[27] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[26] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[25] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[24] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[23] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[22] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[21] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[20] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[19] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[18] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\R_cop0_EBASE_reg[17] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (EX_MEM_multicycle_lh_lb_reg) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (MEM_WB_multicycle_lh_lb_reg) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\IF_ID_bpredict_index_reg[0] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\IF_ID_bpredict_index_reg[1] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\IF_ID_bpredict_index_reg[2] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\IF_ID_bpredict_index_reg[3] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\IF_ID_bpredict_index_reg[4] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\IF_ID_bpredict_index_reg[5] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\IF_ID_bpredict_index_reg[6] ) is unused and will be removed from module pipeline.
+WARNING: [Synth 8-3332] Sequential element (\commit_Rtmp_to_R[14].R_reg[14][3] ) is unused and will be removed from module timer.
+WARNING: [Synth 8-3332] Sequential element (\commit_Rtmp_to_R[14].R_reg[14][2] ) is unused and will be removed from module timer.
+WARNING: [Synth 8-3332] Sequential element (\commit_Rtmp_to_R[14].R_reg[14][1] ) is unused and will be removed from module timer.
+WARNING: [Synth 8-3332] Sequential element (\commit_Rtmp_to_R[14].R_reg[14][0] ) is unused and will be removed from module timer.
+WARNING: [Synth 8-3332] Sequential element (\commit_extra_control_bits.R_ctrl_ext_reg[11] ) is unused and will be removed from module timer.
+WARNING: [Synth 8-3332] Sequential element (\commit_extra_control_bits.R_ctrl_ext_reg[10] ) is unused and will be removed from module timer.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/G_spi[0].spi_instance/R_clk_acc_reg[6] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/G_spi[0].spi_instance/R_clk_acc_reg[5] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/G_spi[0].spi_instance/R_clk_acc_reg[4] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/G_spi[0].spi_instance/R_clk_acc_reg[3] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/G_spi[0].spi_instance/R_clk_acc_reg[2] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/G_spi[0].spi_instance/R_clk_acc_reg[1] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/G_spi[0].spi_instance/R_clk_acc_reg[0] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/G_spi[1].spi_instance/R_clk_acc_reg[6] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/G_spi[1].spi_instance/R_clk_acc_reg[5] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/G_spi[1].spi_instance/R_clk_acc_reg[4] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/G_spi[1].spi_instance/R_clk_acc_reg[3] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/G_spi[1].spi_instance/R_clk_acc_reg[2] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/G_spi[1].spi_instance/R_clk_acc_reg[1] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/G_spi[1].spi_instance/R_clk_acc_reg[0] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[31] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[30] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[29] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[28] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[27] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[26] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[25] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[24] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[23] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[22] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[21] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[20] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[19] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[18] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[17] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[16] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[15] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[14] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[13] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[12] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[11] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[10] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[9] ) is unused and will be removed from module glue.
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/R_simple_in_reg[4] ) is unused and will be removed from module glue.
+---------------------------------------------------------------------------------
+Start Area Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Area Optimization : Time (s): cpu = 00:00:47 ; elapsed = 00:00:48 . Memory (MB): peak = 1298.340 ; gain = 494.902 ; free physical = 10321 ; free virtual = 17061
+---------------------------------------------------------------------------------
+Finished Parallel Area Optimization  : Time (s): cpu = 00:00:47 ; elapsed = 00:00:48 . Memory (MB): peak = 1298.340 ; gain = 494.902 ; free physical = 10321 ; free virtual = 17061
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+Finished Parallel Synthesis Optimization  : Time (s): cpu = 00:00:47 ; elapsed = 00:00:48 . Memory (MB): peak = 1298.340 ; gain = 494.902 ; free physical = 10321 ; free virtual = 17061
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:01:07 ; elapsed = 00:01:08 . Memory (MB): peak = 1340.332 ; gain = 536.895 ; free physical = 10232 ; free virtual = 16973
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:01:07 ; elapsed = 00:01:08 . Memory (MB): peak = 1343.332 ; gain = 539.895 ; free physical = 10230 ; free virtual = 16970
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-3332] Sequential element (\glue_bram/pipeline/ID_EX_seb_seh_select_reg ) is unused and will be removed from module glue.
+INFO: [Synth 8-4480] The timing for the instance \glue_bram/pipeline/G_bp_scoretable.bptrace/bptrace_reg  (implemented as a block RAM) might be sub-optimal as no optional output register could be merged into the block ram. Providing additional output register may help in improving timing.
+INFO: [Synth 8-4480] The timing for the instance \glue_bram/G_bram_mi32_el.bram_mi32_el/bram_0_reg  (implemented as a block RAM) might be sub-optimal as no optional output register could be merged into the block ram. Providing additional output register may help in improving timing.
+INFO: [Synth 8-4480] The timing for the instance \glue_bram/G_bram_mi32_el.bram_mi32_el/bram_0_reg  (implemented as a block RAM) might be sub-optimal as no optional output register could be merged into the block ram. Providing additional output register may help in improving timing.
+INFO: [Synth 8-4480] The timing for the instance \glue_bram/G_bram_mi32_el.bram_mi32_el/bram_1_reg  (implemented as a block RAM) might be sub-optimal as no optional output register could be merged into the block ram. Providing additional output register may help in improving timing.
+INFO: [Synth 8-4480] The timing for the instance \glue_bram/G_bram_mi32_el.bram_mi32_el/bram_1_reg  (implemented as a block RAM) might be sub-optimal as no optional output register could be merged into the block ram. Providing additional output register may help in improving timing.
+INFO: [Synth 8-4480] The timing for the instance \glue_bram/G_bram_mi32_el.bram_mi32_el/bram_2_reg  (implemented as a block RAM) might be sub-optimal as no optional output register could be merged into the block ram. Providing additional output register may help in improving timing.
+INFO: [Synth 8-4480] The timing for the instance \glue_bram/G_bram_mi32_el.bram_mi32_el/bram_2_reg  (implemented as a block RAM) might be sub-optimal as no optional output register could be merged into the block ram. Providing additional output register may help in improving timing.
+INFO: [Synth 8-4480] The timing for the instance \glue_bram/G_bram_mi32_el.bram_mi32_el/bram_3_reg  (implemented as a block RAM) might be sub-optimal as no optional output register could be merged into the block ram. Providing additional output register may help in improving timing.
+INFO: [Synth 8-4480] The timing for the instance \glue_bram/G_bram_mi32_el.bram_mi32_el/bram_3_reg  (implemented as a block RAM) might be sub-optimal as no optional output register could be merged into the block ram. Providing additional output register may help in improving timing.
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:01:10 ; elapsed = 00:01:10 . Memory (MB): peak = 1390.910 ; gain = 587.473 ; free physical = 10183 ; free virtual = 16923
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:01:10 ; elapsed = 00:01:11 . Memory (MB): peak = 1390.910 ; gain = 587.473 ; free physical = 10183 ; free virtual = 16923
+---------------------------------------------------------------------------------
+
+Report Check Netlist: 
++------+------------------+-------+---------+-------+------------------+
+|      |Item              |Errors |Warnings |Status |Description       |
++------+------------------+-------+---------+-------+------------------+
+|1     |multi_driven_nets |      0|        0|Passed |Multi driven nets |
++------+------------------+-------+---------+-------+------------------+
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:01:11 ; elapsed = 00:01:11 . Memory (MB): peak = 1390.910 ; gain = 587.473 ; free physical = 10183 ; free virtual = 16923
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:01:11 ; elapsed = 00:01:12 . Memory (MB): peak = 1390.910 ; gain = 587.473 ; free physical = 10183 ; free virtual = 16923
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports : Time (s): cpu = 00:01:11 ; elapsed = 00:01:12 . Memory (MB): peak = 1390.910 ; gain = 587.473 ; free physical = 10183 ; free virtual = 16923
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:01:11 ; elapsed = 00:01:12 . Memory (MB): peak = 1390.910 ; gain = 587.473 ; free physical = 10183 ; free virtual = 16923
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++------+--------------------------------+----------+
+|      |BlackBox name                   |Instances |
++------+--------------------------------+----------+
+|1     |pll_d100M_250M_100M_25M_clk_wiz |         1|
++------+--------------------------------+----------+
+
+Report Cell Usage: 
++------+-------------------------------------+------+
+|      |Cell                                 |Count |
++------+-------------------------------------+------+
+|1     |pll_d100M_250M_100M_25M_clk_wiz_bbox |     1|
+|2     |CARRY4                               |    99|
+|3     |DSP48E1                              |     4|
+|4     |LUT1                                 |   150|
+|5     |LUT2                                 |   223|
+|6     |LUT3                                 |   369|
+|7     |LUT4                                 |   339|
+|8     |LUT5                                 |   509|
+|9     |LUT6                                 |   703|
+|10    |MUXF7                                |    57|
+|11    |RAM32M                               |    12|
+|12    |RAMB18E1                             |     1|
+|13    |RAMB36E1                             |     1|
+|14    |RAMB36E1_1                           |     1|
+|15    |RAMB36E1_2                           |     1|
+|16    |RAMB36E1_3                           |     1|
+|17    |STARTUPE2                            |     1|
+|18    |FDRE                                 |  1698|
+|19    |FDSE                                 |    20|
+|20    |IBUF                                 |    12|
+|21    |IOBUF                                |    32|
+|22    |OBUF                                 |    12|
++------+-------------------------------------+------+
+
+Report Instance Areas: 
++------+----------------------------------+------------------------+------+
+|      |Instance                          |Module                  |Cells |
++------+----------------------------------+------------------------+------+
+|1     |top                               |                        |  4248|
+|2     |  glue_bram                       |glue_bram               |  4187|
+|3     |    \G_bram_mi32_el.bram_mi32_el  |bram_mi32_el            |    36|
+|4     |    \G_gpio[0].gpio_inst          |gpio                    |   506|
+|5     |    \G_sio[0].sio_instance        |sio                     |   201|
+|6     |    \G_spi[0].spi_instance        |spi                     |    26|
+|7     |    \G_spi[1].spi_instance        |spi_0                   |    27|
+|8     |    \G_timer.timer                |timer                   |   821|
+|9     |    pipeline                      |pipeline                |  2519|
+|10    |      \G_bp_scoretable.bptrace    |bptrace                 |    42|
+|11    |      regfile                     |reg1w2r                 |   202|
+|12    |  pll100in_out250_100_25          |pll_d100M_250M_100M_25M |     3|
++------+----------------------------------+------------------------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:01:11 ; elapsed = 00:01:12 . Memory (MB): peak = 1390.910 ; gain = 587.473 ; free physical = 10183 ; free virtual = 16923
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 77 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:01:01 ; elapsed = 00:01:01 . Memory (MB): peak = 1390.910 ; gain = 183.863 ; free physical = 10183 ; free virtual = 16923
+Synthesis Optimization Complete : Time (s): cpu = 00:01:11 ; elapsed = 00:01:12 . Memory (MB): peak = 1390.910 ; gain = 587.473 ; free physical = 10183 ; free virtual = 16923
+INFO: [Project 1-571] Translating synthesized netlist
+INFO: [Netlist 29-17] Analyzing 165 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 2 inverter(s) to 140 load pin(s).
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 44 instances were transformed.
+  IOBUF => IOBUF (IBUF, OBUFT): 32 instances
+  RAM32M => RAM32M (RAMD32, RAMD32, RAMD32, RAMD32, RAMD32, RAMD32, RAMS32, RAMS32): 12 instances
+
+INFO: [Common 17-83] Releasing license: Synthesis
+127 Infos, 237 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:01:11 ; elapsed = 00:01:12 . Memory (MB): peak = 1390.914 ; gain = 478.957 ; free physical = 10183 ; free virtual = 16923
+report_utilization: Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 1422.930 ; gain = 0.000 ; free physical = 10182 ; free virtual = 16923
+INFO: [Common 17-206] Exiting Vivado at Sat Sep  5 13:26:13 2015...
+[Sat Sep  5 13:26:14 2015] synth_1 finished
+wait_on_run: Time (s): cpu = 00:00:00.16 ; elapsed = 00:01:27 . Memory (MB): peak = 912.207 ; gain = 0.000 ; free physical = 10774 ; free virtual = 17514
+[Sat Sep  5 13:26:14 2015] Launched impl_1...
+Run output will be captured here: /tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/esa11_7a35i_bram.runs/impl_1/runme.log
+[Sat Sep  5 13:26:14 2015] Waiting for impl_1 to finish...
+
+*** Running vivado
+    with args -log glue.vdi -applog -m64 -messageDb vivado.pb -mode batch -source glue.tcl -notrace
+
+WARNING: Default location for XILINX_VIVADO_HLS not found: 
+
+****** Vivado v2015.2 (64-bit)
+  **** SW Build 1266856 on Fri Jun 26 16:35:25 MDT 2015
+  **** IP Build 1264090 on Wed Jun 24 14:22:01 MDT 2015
+    ** Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
+
+source glue.tcl -notrace
+Design is defaulting to srcset: sources_1
+Design is defaulting to constrset: constrs_1
+INFO: [Netlist 29-17] Analyzing 165 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2015.2
+INFO: [Device 21-403] Loading part xc7a35tfgg484-2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc]
+WARNING: [Vivado 12-584] No ports matched 'RESET_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:16]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:16]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'RESET_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:17]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:17]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART1_CTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:43]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:43]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART1_CTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:44]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:44]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART1_CTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:45]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:45]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART1_RTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:46]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:46]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART1_RTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:47]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:47]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART1_RTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:48]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:48]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART2_CTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:56]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:56]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART2_CTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:57]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:57]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART2_CTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:58]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:58]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART2_RTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:59]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:59]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART2_RTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:60]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:60]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART2_RTS_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:61]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:61]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART2_RXD'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:62]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:62]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART2_RXD'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:63]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:63]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART2_RXD'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:64]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:64]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART2_TXD'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:65]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:65]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART2_TXD'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:66]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:66]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'UART2_TXD'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:67]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:67]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_D1'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:79]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:79]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_D1'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:80]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:80]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_D1'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:81]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:81]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_D2'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:82]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:82]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_D2'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:83]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:83]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_D2'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:84]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:84]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_CDET_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:91]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:91]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_CDET_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:92]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:92]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'FPGA_SD_CDET_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:93]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:93]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-508] No pins matched 'clk100in/IBUFDS_1/O'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:112]
+CRITICAL WARNING: [Vivado 12-1387] No valid object(s) found for create_clock constraint with option '-objects [get_pins clk100in/IBUFDS_1/O]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:112]
+Resolution: Check if the specified object(s) exists in the current design. If it does, ensure that the correct design hierarchy was specified for the object. If you are working with clocks, make sure create_clock was used to create the clock object before it is referenced.
+WARNING: [Vivado 12-508] No pins matched 'sys_clock_dll/dcm_inst/CLKIN1'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:125]
+WARNING: [Vivado 12-508] No pins matched 'sys_clock_dll/dcm_inst/CLKFBOUT'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:125]
+CRITICAL WARNING: [Vivado 12-1387] No valid object(s) found for create_generated_clock constraint with option '-source [get_pins sys_clock_dll/dcm_inst/CLKIN1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:125]
+Resolution: Check if the specified object(s) exists in the current design. If it does, ensure that the correct design hierarchy was specified for the object. If you are working with clocks, make sure create_clock was used to create the clock object before it is referenced.
+WARNING: [Vivado 12-508] No pins matched 'sys_clock_dll/dcm_inst/CLKIN1'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:126]
+WARNING: [Vivado 12-508] No pins matched 'sys_clock_dll/dcm_inst/CLKOUT1'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:126]
+CRITICAL WARNING: [Vivado 12-1387] No valid object(s) found for create_generated_clock constraint with option '-source [get_pins sys_clock_dll/dcm_inst/CLKIN1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:126]
+Resolution: Check if the specified object(s) exists in the current design. If it does, ensure that the correct design hierarchy was specified for the object. If you are working with clocks, make sure create_clock was used to create the clock object before it is referenced.
+WARNING: [Vivado 12-508] No pins matched 'sys_clock_dll/dcm_inst/CLKIN1'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:127]
+WARNING: [Vivado 12-508] No pins matched 'sys_clock_dll/dcm_inst/CLKOUT4'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:127]
+CRITICAL WARNING: [Vivado 12-1387] No valid object(s) found for create_generated_clock constraint with option '-source [get_pins sys_clock_dll/dcm_inst/CLKIN1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc:127]
+Resolution: Check if the specified object(s) exists in the current design. If it does, ensure that the correct design hierarchy was specified for the object. If you are working with clocks, make sure create_clock was used to create the clock object before it is referenced.
+Finished Parsing XDC File [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_phys.xdc]
+Parsing XDC File [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc]
+WARNING: [Vivado 12-584] No ports matched 'VID_CLK_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:298]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:298]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_CLK_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:299]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:299]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_CLK_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:300]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:300]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_CLK_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:301]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:301]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_CLK_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:302]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:302]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_CLK_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:303]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:303]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D0_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:304]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:304]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D0_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:305]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:305]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D0_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:306]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:306]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D0_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:307]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:307]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D0_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:308]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:308]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D0_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:309]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:309]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D1_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:310]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:310]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D1_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:311]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:311]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D1_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:312]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:312]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D1_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:313]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:313]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D1_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:314]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:314]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D1_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:315]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:315]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D2_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:316]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:316]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D2_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:317]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:317]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D2_N'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:318]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:318]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D2_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:319]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:319]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D2_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:320]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:320]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_D2_P'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:321]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:321]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_RSCL'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:322]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:322]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_RSCL'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:323]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:323]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_RSCL'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:324]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:324]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_RSDA'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:325]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:325]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_RSDA'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:326]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:326]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'VID_RSDA'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:327]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc:327]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+Finished Parsing XDC File [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7A35i-V0.1_other.xdc]
+Parsing XDC File [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc]
+WARNING: [Vivado 12-584] No ports matched 'M_BTN[4]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:22]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:22]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_BTN[4]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:23]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:23]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_BTN[4]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:24]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:24]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[0]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:83]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:83]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[0]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:84]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:84]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[0]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:85]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:85]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:87]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:87]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:88]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:88]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:89]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:89]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[2]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:91]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:91]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[2]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:92]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:92]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[2]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:93]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:93]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[3]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:95]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:95]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[3]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:96]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:96]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_DIP[3]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:97]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:97]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_A'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:244]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:244]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_A'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:245]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:245]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_A'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:246]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:246]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_B'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:248]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:248]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_B'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:249]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:249]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_B'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:250]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:250]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_C'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:252]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:252]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_C'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:253]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:253]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_C'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:254]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:254]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:256]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:256]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:257]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:257]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:258]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:258]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[0]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:260]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:260]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[0]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:261]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:261]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[0]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:262]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:262]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:264]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:264]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:265]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:265]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[1]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:266]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:266]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[2]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:268]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:268]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[2]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:269]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:269]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[2]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:270]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:270]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[3]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:272]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:272]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[3]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:273]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:273]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_D[3]'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:274]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:274]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_DP'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:276]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:276]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'M_7SEG_DP'. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:277]
+INFO: [Common 17-14] Message 'Vivado 12-584' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:277]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:277]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+INFO: [Common 17-14] Message 'Common 17-55' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings. [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc:277]
+Finished Parsing XDC File [/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/ESA11-7a35-ESA11-USER02.xdc]
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+CRITICAL WARNING: [Project 1-486] Could not resolve non-primitive black box cell 'pll_d100M_250M_100M_25M_clk_wiz' instantiated as 'pll100in_out250_100_25/U0' [/tmp/f32c/rtl/xilinx/pll_d100M_250M_100M_25M.vhd:106]
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 44 instances were transformed.
+  IOBUF => IOBUF (IBUF, OBUFT): 32 instances
+  RAM32M => RAM32M (RAMD32, RAMD32, RAMD32, RAMD32, RAMD32, RAMD32, RAMS32, RAMS32): 12 instances
+
+link_design: Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 1135.516 ; gain = 223.555 ; free physical = 10432 ; free virtual = 17172
+Command: opt_design
+Attempting to get a license for feature 'Implementation' and/or device 'xc7a35t'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7a35t'
+Running DRC as a precondition to command opt_design
+
+Starting DRC Task
+INFO: [DRC 23-27] Running DRC with 4 threads
+INFO: [Project 1-461] DRC finished with 0 Errors
+INFO: [Project 1-462] Please refer to the DRC report (report_drc) for more information.
+
+Time (s): cpu = 00:00:00.28 ; elapsed = 00:00:00.28 . Memory (MB): peak = 1150.531 ; gain = 7.012 ; free physical = 10427 ; free virtual = 17168
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+
+Starting Logic Optimization Task
+
+Phase 1 Retarget
+
+INFO: [Opt 31-138] Pushed 32 inverter(s) to 32 load pin(s).
+INFO: [Opt 31-49] Retargeted 0 cell(s).
+Phase 1 Retarget | Checksum: 1c9891e0e
+
+Time (s): cpu = 00:00:00.34 ; elapsed = 00:00:00.32 . Memory (MB): peak = 1553.977 ; gain = 0.000 ; free physical = 10089 ; free virtual = 16829
+
+Phase 2 Constant Propagation
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+INFO: [Opt 31-10] Eliminated 0 cells.
+Phase 2 Constant Propagation | Checksum: 1c9891e0e
+
+Time (s): cpu = 00:00:00.53 ; elapsed = 00:00:00.51 . Memory (MB): peak = 1553.977 ; gain = 0.000 ; free physical = 10089 ; free virtual = 16829
+
+Phase 3 Sweep
+INFO: [Opt 31-12] Eliminated 336 unconnected nets.
+INFO: [Opt 31-11] Eliminated 0 unconnected cells.
+Phase 3 Sweep | Checksum: 1e56df3e4
+
+Time (s): cpu = 00:00:00.81 ; elapsed = 00:00:00.79 . Memory (MB): peak = 1553.977 ; gain = 0.000 ; free physical = 10089 ; free virtual = 16829
+
+Starting Connectivity Check Task
+ERROR: [Opt 31-30] Blackbox pll100in_out250_100_25/U0 (pll_d100M_250M_100M_25M_clk_wiz) is driving pin C of primitive cell glue_bram/R_simple_in_reg[0]. This blackbox cannot be found in the existing library.
+Resolution: Please check the input design and ensure that the specific blackbox module is defined. Once the design is modified, then re-run the Vivado flow.
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 1553.977 ; gain = 0.000 ; free physical = 10089 ; free virtual = 16829
+Implement Debug Cores | Checksum: 14aea5da4
+Logic Optimization | Checksum: 14aea5da4
+Ending Logic Optimization Task | Checksum: 1e56df3e4
+
+Time (s): cpu = 00:00:00.81 ; elapsed = 00:00:00.80 . Memory (MB): peak = 1553.977 ; gain = 0.000 ; free physical = 10089 ; free virtual = 16829
+INFO: [Common 17-83] Releasing license: Implementation
+21 Infos, 107 Warnings, 105 Critical Warnings and 2 Errors encountered.
+opt_design failed
+ERROR: [Opt 31-236] Found primitives driven by Empty Hierarchy Cells/Black boxes.
+INFO: [Common 17-206] Exiting Vivado at Sat Sep  5 13:26:51 2015...
+[Sat Sep  5 13:26:52 2015] impl_1 finished
+wait_on_run: Time (s): cpu = 00:00:00.14 ; elapsed = 00:00:37 . Memory (MB): peak = 912.207 ; gain = 0.000 ; free physical = 10776 ; free virtual = 17517
+[Sat Sep  5 13:26:52 2015] Launched impl_1...
+Run output will be captured here: /tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/esa11_7a35i_bram.runs/impl_1/runme.log
+[Sat Sep  5 13:26:52 2015] Waiting for impl_1 to finish...
+[Sat Sep  5 13:26:52 2015] impl_1 finished
+# close_project
+****** Webtalk v2015.2 (64-bit)
+  **** SW Build 1266856 on Fri Jun 26 16:35:25 MDT 2015
+  **** IP Build 1264090 on Wed Jun 24 14:22:01 MDT 2015
+    ** Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
+
+source /tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/esa11_7a35i_bram.hw/webtalk/labtool_webtalk.tcl -notrace
+INFO: [Common 17-186] '/tmp/f32c/rtl/proj/xilinx/esa11_7a35i_bram/esa11_7a35i_bram.hw/webtalk/usage_statistics_ext_labtool.xml' has been successfully sent to Xilinx on Sat Sep  5 13:26:55 2015. For additional details about this file, please refer to the WebTalk help file at /opt/Xilinx/Vivado/2015.2/doc/webtalk_introduction.html.
+INFO: [Common 17-206] Exiting Webtalk at Sat Sep  5 13:26:55 2015...
+# exit
+INFO: [Common 17-206] Exiting Vivado at Sat Sep  5 13:26:55 2015...
