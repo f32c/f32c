@@ -49,6 +49,7 @@ entity glue is
 	C_mem_size: integer := 16;
 	C_vgahdmi: boolean := true;
 	C_vgahdmi_mem_kb: integer := 38; -- KB 38K full mono 640x480
+	C_vgahdmi_test_picture: integer := 1; -- enable test picture
 	C_sio: integer := 1;   -- 1 UART channel
 	C_spi: integer := 2;   -- 2 SPI channels (ch0 not connected, ch1 SD card)
 	C_gpio: integer := 32; -- 32 GPIO bits
@@ -133,6 +134,7 @@ begin
         C_spi => C_spi,
 	C_vgahdmi => C_vgahdmi,
 	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
+	C_vgahdmi_test_picture => C_vgahdmi_test_picture,
         C_debug => C_debug
     )
     port map (
