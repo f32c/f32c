@@ -36,8 +36,9 @@
 coregen_work_dir ?= ./coregen-tmp
 map_opts ?= -timing -ol high -detail -pr b -register_duplication -w
 par_opts ?= -ol high
-isedir ?= /opt/Xilinx/11.1/ISE
+isedir ?= /opt/Xilinx/ISE/14.7/ISE_DS
 xil_env ?= . $(isedir)/settings32.sh
+#xil_env ?= . $(isedir)/settings64.sh
 openocd_interface ?= interface/altera-usb-blaster.cfg
 xc3sprog_interface ?= xpc
 jtag_spi_bridge ?= ../include/bscan_xc6s_ftg256_blink.bit.xz
