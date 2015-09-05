@@ -6,7 +6,9 @@ xc3sprog_interface ?= ftdi
 # name of the resulting bitstream file (*.bit)
 bitfile=$(project).runs/impl_1/glue.bit
 
-build: clean
+build: $(bitfile)
+
+$(bitfile): clean
 	# $(vivado) -mode tcl -source run_vivado.tcl -tclargs build
 	$(vivado) -mode tcl -source run_vivado.tcl -tclargs build -tclargs $(project).xpr
 
@@ -17,5 +19,5 @@ clean:
 	rm -rf *~ vivado.jou vivado.log webtalk*
 	rm -rf $(project).cache $(project).hw $(project).runs $(project).sim $(project).srcs
 
-program:
+program: $(bitfile)
 	xc3sprog -c $(xc3sprog_interface) $(bitfile)
