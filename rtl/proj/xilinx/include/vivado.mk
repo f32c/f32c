@@ -18,4 +18,4 @@ clean:
 	rm -rf $(project).cache $(project).hw $(project).runs $(project).sim
 
 program:
-	xc3sprog xc3sprog -c $(xc3sprog_interface) $(bitfile)
+	xc3sprog -c $(xc3sprog_interface) $(bitfile)
