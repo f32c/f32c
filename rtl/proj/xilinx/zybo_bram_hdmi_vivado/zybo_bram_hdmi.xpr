@@ -267,6 +267,12 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../../xilinx/mmcm_125M_81M25_250M521_25M052.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../../xilinx/hdmi_out_xc7.vhd">
         <FileInfo>
           <Attr Name="Library" Val="xil_defaultlib"/>
