@@ -43,8 +43,8 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 100;
+	-- Main clock: 81/100/125 MHz
+	C_clk_freq: integer := 81;
 
 	-- SoC configuration options
 	C_mem_size: integer := 128;
@@ -84,6 +84,13 @@ architecture Behavioral of glue is
     signal rs232_break: std_logic;
     signal tmds_out_rgb: std_logic_vector(2 downto 0);
 begin
+
+    clk81: if C_clk_freq = 81 generate
+    clkgen100: entity work.mmcm_125M_81M25_250M521_25M052
+    port map(
+      clk_in1 => clk_125m, clk_out1 => clk, clk_out2 => clk_250MHz, clk_out3 => clk_25MHz
+    );
+    end generate;
 
     clk100: if C_clk_freq = 100 generate
     clkgen100: entity work.pll_125M_250M_100M_25M
