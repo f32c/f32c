@@ -214,7 +214,7 @@ architecture Behavioral of glue_bram is
     signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
     signal video_bram_write: std_logic; -- from CPU to RAM
     signal vga_strobe: std_logic; -- request from fifo to RAM
-    constant C_vga_fifo_width: integer := 4; -- size od FIFO
+    constant C_vga_fifo_width: integer := 4; -- size of FIFO
     signal vga_n_vsync, vga_n_hsync: std_logic; -- intermediate signals for xilinx to be happy
 
     -- FM/RDS RADIO
