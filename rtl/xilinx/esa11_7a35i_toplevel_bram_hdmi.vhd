@@ -65,10 +65,13 @@ entity glue is
 --	seg: out std_logic_vector(7 downto 0); -- 7-segment display
 --	an: out std_logic_vector(3 downto 0); -- 7-segment display
 	M_LED: out std_logic_vector(7 downto 0);
-
+        -- HDMI
 	VID_D_P, VID_D_N: out std_logic_vector(2 downto 0);
 	VID_CLK_P, VID_CLK_N: out std_logic;
-
+        -- VGA
+        VGA_RED, VGA_GREEN, VGA_BLUE: out std_logic_vector(7 downto 0);
+        VGA_SYNC_N, VGA_BLANK_N, VGA_CLOCK_P: out std_logic;
+        VGA_HSYNC, VGA_VSYNC: out std_logic;
 	M_BTN: in std_logic_vector(3 downto 0);
 	M_HEX: in std_logic_vector(3 downto 0)
     );
@@ -81,7 +84,7 @@ architecture Behavioral of glue is
     signal simple_in: std_logic_vector(31 downto 0);
     signal simple_out: std_logic_vector(31 downto 0);
     signal tmds_out_rgb: std_logic_vector(2 downto 0);
-    
+    signal vga_vsync_n, vga_hsync_n: std_logic;
 begin
     -- make single ended clock
     --clk100in: entity work.inp_ds_port
@@ -152,6 +155,11 @@ begin
 	gpio(23 downto 16) => M_EXPMOD2, gpio(31 downto 24) => M_EXPMOD3,
 	gpio(127 downto 32) => open,
 	tmds_out_rgb => tmds_out_rgb,
+	vga_vsync => vga_vsync_n,
+	vga_hsync => vga_hsync_n,
+	vga_r(2 downto 0) => VGA_RED(7 downto 5),
+	vga_g(2 downto 0) => VGA_GREEN(7 downto 5),
+	vga_b(2 downto 0) => VGA_BLUE(7 downto 5),
 	simple_out(7 downto 0) => M_LED, simple_out(15 downto 8) => open, 
 	simple_out(19 downto 16) => open, simple_out(31 downto 20) => open,
 	simple_in(0) => M_BTN(0),
@@ -167,11 +175,19 @@ begin
     hdmi_output: entity work.hdmi_out
       port map (
         tmds_in_clk => clk_25MHz,
-        tmds_out_clk_p => vid_clk_p,
-        tmds_out_clk_n => vid_clk_n,
+        tmds_out_clk_p => VID_CLK_P,
+        tmds_out_clk_n => VID_CLK_N,
         tmds_in_rgb => tmds_out_rgb,
-        tmds_out_rgb_p => vid_d_p,
-        tmds_out_rgb_n => vid_d_n
+        tmds_out_rgb_p => VID_D_P,
+        tmds_out_rgb_n => VID_D_N
       );
+    VGA_RED(4 downto 0) <= (others => '0');
+    VGA_GREEN(4 downto 0) <= (others => '0');
+    VGA_BLUE(4 downto 0) <= (others => '0');
+    VGA_SYNC_N <= '1';
+    VGA_BLANK_N <= '1';
+    VGA_CLOCK_P <= clk_25MHz;
+    VGA_VSYNC <= vga_vsync_n;
+    VGA_HSYNC <= vga_hsync_n;
 
 end Behavioral;
