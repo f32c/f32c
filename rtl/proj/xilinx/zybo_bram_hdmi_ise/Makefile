@@ -53,6 +53,7 @@ vhdfiles = \
 ../../../soc/vgahdmi/videofifo.vhd \
 ../../../xilinx/hdmi_out_xc7.vhd \
 ../../../xilinx/pll_125M_250M_100M_25M.vhd \
+../../../xilinx/mmcm_125M_81M25_250M521_25M052.vhd \
 ../../../generic/bram_video.vhd \
 
 include ../include/xilinx.mk
