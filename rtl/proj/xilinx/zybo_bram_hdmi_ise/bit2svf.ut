@@ -1,0 +1,5 @@
+setMode -bs
+setCable -port svf -file "default.svf"
+addDevice -p 1 -file "default.bit"
+Program -p 1
+exit
