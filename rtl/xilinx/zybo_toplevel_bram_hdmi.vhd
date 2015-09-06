@@ -44,7 +44,8 @@ entity glue is
 	C_debug: boolean := false;
 
 	-- Main clock: 81/100/125 MHz
-	C_clk_freq: integer := 81;
+	-- at 81: flickers, fetch 1 byte late?
+	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
 	C_mem_size: integer := 128;
