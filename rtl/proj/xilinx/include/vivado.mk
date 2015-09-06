@@ -3,6 +3,7 @@ vivado  ?= /opt/Xilinx/Vivado/2015.2/bin/vivado
 project ?= project
 # xc3sprog interface name
 xc3sprog_interface ?= ftdi
+xc3sprog_device ?= 0
 # name of the resulting bitstream file (*.bit)
 bitfile=$(project).runs/impl_1/glue.bit
 
@@ -20,4 +21,4 @@ clean:
 	rm -rf $(project).cache $(project).hw $(project).runs $(project).sim $(project).srcs
 
 program:
-	xc3sprog -c $(xc3sprog_interface) $(bitfile)
+	xc3sprog -c $(xc3sprog_interface) -p $(xc3sprog_device) $(bitfile)
