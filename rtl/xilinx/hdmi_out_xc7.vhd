@@ -55,25 +55,6 @@ architecture Behavioral of hdmi_out is
 begin
     -- vendor-specific differential output buffering for HDMI clock and video
     
-    -- 25MHz tmds clock must be passed through oddr2 buffer
-    -- before it can become input for differential output buffer obufds
---    clockbuf: oddr
-      --generic map(
-        -- DDR_ALIGNMENT => "NONE", -- Sets output alignment to "NONE", "C0" or "C1"
-        -- INIT => '1',    -- Sets initial state of the Q output to 1'b0 or 1'b1
-        -- SRTYPE => "SYNC" -- Specifies "SYNC" or "ASYNC"  set/reset
-      --)
---      port map  (
---        C  => tmds_in_clk, -- 1-bit clock input
-        -- C1 => not tmds_in_clk, -- 1-bit clock input inverted
---        CE => '1', -- 1-bit clock enable input
---        D1 => '1', -- 1-bit data input (associated with C0)
---        D2 => '0', -- 1-bit data input (associated with C1)
---        R  => '0', -- 1-bit reset input
---        S  => '0', -- 1-bit set input
---        Q  => obuf_tmds_clock -- 1-bit DDR output data
---      );
-
     hdmi_clock: obufds
       --generic map(IOSTANDARD => "DEFAULT")
       port map(i => tmds_in_clk, o => tmds_out_clk_p, ob => tmds_out_clk_n);
