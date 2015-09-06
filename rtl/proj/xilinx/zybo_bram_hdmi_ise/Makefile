@@ -51,7 +51,7 @@ vhdfiles = \
 ../../../soc/fm/message.vhd \
 ../../../soc/vgahdmi/vgahdmif.vhd \
 ../../../soc/vgahdmi/videofifo.vhd \
-../../../xilinx/hdmi_out_vivado.vhd \
+../../../xilinx/hdmi_out_xc7.vhd \
 ../../../xilinx/pll_125M_250M_100M_25M.vhd \
 ../../../generic/bram_video.vhd \
 
