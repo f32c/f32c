@@ -1,6 +1,6 @@
 vivado=/opt/Xilinx/Vivado/2015.2/bin/vivado
 project=esa11_7a35i_bram
-xc3sprog_interface = ft4232h
+xc3sprog_interface = ft4232h_fast
 # name of resulting bitstream file (*.bit)
 bitfile=$(project).runs/impl_1/glue.bit
 
