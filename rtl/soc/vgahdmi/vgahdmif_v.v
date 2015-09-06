@@ -26,10 +26,20 @@ module vgahdmi_v(
 parameter test_picture = 0;
 parameter dbl_x = 0; // 0-normal X, 1-double X
 parameter dbl_y = 0; // 0-normal Y, 1-double Y
-parameter mem_size_kb = 4; // KB
-parameter mem_size_y = (mem_size_kb * 1024 / (640/8)) << (dbl_x + dbl_y); // depending on available RAM we can lower this
 
-
+parameter resolution_x = 640;
+parameter hsync_front_porch = 16;
+parameter hsync_pulse = 96;
+parameter hsync_back_porch = 44; // 48
+parameter frame_x = resolution_x + hsync_front_porch + hsync_pulse + hsync_back_porch;
+// frame_x = 640 + 16 + 96 + 48 = 800;
+parameter resolution_y = 480;
+parameter vsync_front_porch = 10;
+parameter vsync_pulse = 2;
+parameter vsync_back_porch = 31; // 33
+parameter frame_y = resolution_y + vsync_front_porch + vsync_pulse + vsync_back_porch;
+// frame_y = 480 + 10 + 2 + 33 = 525;
+// refresh_rate = pixel_clock/(frame_x*frame_y) = 25MHz / (800*525) = 59.52Hz
 ////////////////////////////////////////////////////////////////////////
 
 wire clk_TMDS;
@@ -40,16 +50,16 @@ assign pixclk = clk_pixel;  //  25 MHz
 
 reg [9:0] CounterX, CounterY;
 reg hSync, vSync, DrawArea;
-always @(posedge pixclk) DrawArea <= (CounterX<640) && (CounterY<480);
+always @(posedge pixclk) DrawArea <= (CounterX<resolution_x) && (CounterY<resolution_y);
 
-wire fetcharea; // when to fetch data, must be earlier than draw area
-assign fetcharea = (CounterX[9:3]<79 || CounterX[9:3]==99) && (CounterY<480);
+wire fetcharea; // when to fetch data, must be 1 byte earlier than draw area
+assign fetcharea = (CounterX[9:3]<(resolution_x/8-1) || CounterX[9:3]==(frame_x/8-1)) && (CounterY<resolution_y);
 
-always @(posedge pixclk) CounterX <= (CounterX==799) ? 0 : CounterX+1;
-always @(posedge pixclk) if(CounterX==799) CounterY <= (CounterY==524) ? 0 : CounterY+1;
+always @(posedge pixclk) CounterX <= (CounterX==frame_x-1) ? 0 : CounterX+1;
+always @(posedge pixclk) if(CounterX==frame_x-1) CounterY <= (CounterY==frame_y-1) ? 0 : CounterY+1;
 
-always @(posedge pixclk) hSync <= (CounterX>=656) && (CounterX<752);
-always @(posedge pixclk) vSync <= (CounterY>=490) && (CounterY<492);
+always @(posedge pixclk) hSync <= (CounterX>=resolution_x + hsync_front_porch) && (CounterX<resolution_x + hsync_front_porch + hsync_pulse);
+always @(posedge pixclk) vSync <= (CounterY>=resolution_y + vsync_front_porch) && (CounterY<resolution_y + vsync_front_porch + vsync_pulse);
 
 // signal when to change address (to get new data from the memory)
 // phase shifted some pixels after the data fetch
@@ -78,7 +88,7 @@ always @(posedge pixclk)
   if(getbyte != 0 && fetcharea != 0)
     toggle_read_complete <= ~toggle_read_complete; // changes when read data is complete
 // synchronize pixclk to clk
-always @(posedge clk) // clk > pixclk/8 for this to work
+always @(negedge clk) // clk > pixclk/8 for this to work
   clksync <= {clksync[synclen-2:0], toggle_read_complete}; // at bit 0 enter new pixclk value
 // XOR: difference in 2 consecutive clksync values
 // create a short rd pulse that lasts one clk period.
@@ -103,7 +113,8 @@ wire [7:0] colorValue[0:3];
 assign colorValue[0] = shift_red[0]    != 0 ? colorValue[3] : 0;
 assign colorValue[1] = shift_green[0]  != 0 ? colorValue[3] : 0;
 assign colorValue[2] = shift_blue[0]   != 0 ? colorValue[3] : 0;
-assign colorValue[3] = shift_bright[0] != 0 ? 255 : 127;
+assign colorValue[3][7]   = shift_bright[0];
+assign colorValue[3][6:0] = 7'h7F;
 
 // test picture generator
 wire [7:0] W = {8{CounterX[7:0]==CounterY[7:0]}};
