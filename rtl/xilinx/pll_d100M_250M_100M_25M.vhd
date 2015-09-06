@@ -1,6 +1,6 @@
--- file: pll_125M_250M_100M_25M.vhd
+-- file: pll_d100M_250M_100M_25M.vhd
 -- 
--- (c) Copyright 2008 - 2011 Xilinx, Inc. All rights reserved.
+-- (c) Copyright 2008 - 2013 Xilinx, Inc. All rights reserved.
 -- 
 -- This file contains confidential and proprietary information
 -- of Xilinx, Inc. and is protected under U.S. and
@@ -52,17 +52,17 @@
 -- None
 --
 ------------------------------------------------------------------------------
--- "Output    Output      Phase     Duty      Pk-to-Pk        Phase"
--- "Clock    Freq (MHz) (degrees) Cycle (%) Jitter (ps)  Error (ps)"
+--  Output     Output      Phase    Duty Cycle   Pk-to-Pk     Phase
+--   Clock     Freq (MHz)  (degrees)    (%)     Jitter (ps)  Error (ps)
 ------------------------------------------------------------------------------
--- CLK_OUT1___250.000______0.000______50.0______104.759_____96.948
--- CLK_OUT2___100.000______0.000______50.0______124.615_____96.948
--- CLK_OUT3____25.000______0.000______50.0______165.419_____96.948
+-- CLK_OUT1___250.000______0.000______50.0______110.209_____98.575
+-- CLK_OUT2___100.000______0.000______50.0______130.958_____98.575
+-- CLK_OUT3____25.000______0.000______50.0______175.402_____98.575
 --
 ------------------------------------------------------------------------------
--- "Input Clock   Freq (MHz)    Input Jitter (UI)"
+-- Input Clock   Freq (MHz)    Input Jitter (UI)
 ------------------------------------------------------------------------------
--- __primary_________125.000____________0.010
+-- __primary_________100.000____________0.010
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -73,32 +73,30 @@ use ieee.numeric_std.all;
 library unisim;
 use unisim.vcomponents.all;
 
-entity pll_125M_250M_100M_25M is
+entity pll_d100M_250M_100M_25M is
 port
  (-- Clock in ports
-  CLK_IN1           : in     std_logic;
+  clk_in1_p         : in     std_logic;
+  clk_in1_n         : in     std_logic;
   -- Clock out ports
-  CLK_OUT1          : out    std_logic;
-  CLK_OUT2          : out    std_logic;
-  CLK_OUT3          : out    std_logic
+  clk_out1          : out    std_logic;
+  clk_out2          : out    std_logic;
+  clk_out3          : out    std_logic
  );
-end pll_125M_250M_100M_25M;
+end pll_d100M_250M_100M_25M;
 
-architecture xilinx of pll_125M_250M_100M_25M is
-  attribute CORE_GENERATION_INFO : string;
-  attribute CORE_GENERATION_INFO of xilinx : architecture is "pll_125M_250M_100M_25M,clk_wiz_v3_6,{component_name=pll_125M_250M_100M_25M,use_phase_alignment=true,use_min_o_jitter=false,use_max_i_jitter=false,use_dyn_phase_shift=false,use_inclk_switchover=false,use_dyn_reconfig=false,feedback_source=FDBK_AUTO,primtype_sel=MMCM_ADV,num_out_clk=3,clkin1_period=8.000,clkin2_period=10.000,use_power_down=false,use_reset=false,use_locked=false,use_inclk_stopped=false,use_status=false,use_freeze=false,use_clk_valid=false,feedback_type=SINGLE,clock_mgr_type=MANUAL,manual_override=false}";
+architecture xilinx of pll_d100M_250M_100M_25M is
   -- Input clock buffering / unused connectors
-  signal clkin1      : std_logic;
+  signal clk_in1_pll_d100M_250M_100M_25M      : std_logic;
   -- Output clock buffering / unused connectors
-  signal clkfbout         : std_logic;
-  signal clkfbout_buf     : std_logic;
+  signal clkfbout_pll_d100M_250M_100M_25M         : std_logic;
   signal clkfboutb_unused : std_logic;
-  signal clkout0          : std_logic;
-  signal clkout0b_unused  : std_logic;
-  signal clkout1          : std_logic;
-  signal clkout1b_unused  : std_logic;
-  signal clkout2          : std_logic;
-  signal clkout2b_unused  : std_logic;
+  signal clk_out1_pll_d100M_250M_100M_25M          : std_logic;
+  signal clkout0b_unused         : std_logic;
+  signal clk_out2_pll_d100M_250M_100M_25M          : std_logic;
+  signal clkout1b_unused         : std_logic;
+  signal clk_out3_pll_d100M_250M_100M_25M          : std_logic;
+  signal clkout2b_unused         : std_logic;
   signal clkout3_unused   : std_logic;
   signal clkout3b_unused  : std_logic;
   signal clkout4_unused   : std_logic;
@@ -109,66 +107,62 @@ architecture xilinx of pll_125M_250M_100M_25M is
   signal drdy_unused      : std_logic;
   -- Dynamic phase shift unused signals
   signal psdone_unused    : std_logic;
+  signal locked_int : std_logic;
   -- Unused status signals
-  signal locked_unused    : std_logic;
   signal clkfbstopped_unused : std_logic;
   signal clkinstopped_unused : std_logic;
+
 begin
+
 
   -- Input buffering
   --------------------------------------
-  clkin1_buf : IBUFG
+  clkin1_ibufgds : IBUFDS
   port map
-   (O => clkin1,
-    I => CLK_IN1);
+   (O  => clk_in1_pll_d100M_250M_100M_25M,
+    I  => clk_in1_p,
+    IB => clk_in1_n);
 
-  -- Clocking primitive
+
+
+  -- Clocking PRIMITIVE
   --------------------------------------
-  -- Instantiation of the MMCM primitive
+
+  -- Instantiation of the MMCM PRIMITIVE
   --    * Unused inputs are tied off
   --    * Unused outputs are labeled unused
-  mmcm_adv_inst : MMCME2_ADV
+  plle2_adv_inst : PLLE2_ADV
   generic map
    (BANDWIDTH            => "OPTIMIZED",
-    CLKOUT4_CASCADE      => FALSE,
+
+    
     COMPENSATION         => "ZHOLD",
-    STARTUP_WAIT         => FALSE,
     DIVCLK_DIVIDE        => 1,
-    CLKFBOUT_MULT_F      => 8.000,
+    CLKFBOUT_MULT        => 10,
     CLKFBOUT_PHASE       => 0.000,
-    CLKFBOUT_USE_FINE_PS => FALSE,
-    CLKOUT0_DIVIDE_F     => 4.000,
+    CLKOUT0_DIVIDE       => 4,
     CLKOUT0_PHASE        => 0.000,
     CLKOUT0_DUTY_CYCLE   => 0.500,
-    CLKOUT0_USE_FINE_PS  => FALSE,
     CLKOUT1_DIVIDE       => 10,
     CLKOUT1_PHASE        => 0.000,
     CLKOUT1_DUTY_CYCLE   => 0.500,
-    CLKOUT1_USE_FINE_PS  => FALSE,
     CLKOUT2_DIVIDE       => 40,
     CLKOUT2_PHASE        => 0.000,
     CLKOUT2_DUTY_CYCLE   => 0.500,
-    CLKOUT2_USE_FINE_PS  => FALSE,
-    CLKIN1_PERIOD        => 8.000,
-    REF_JITTER1          => 0.010)
+    CLKIN1_PERIOD        => 10.0)
   port map
     -- Output clocks
-   (CLKFBOUT            => clkfbout,
-    CLKFBOUTB           => clkfboutb_unused,
-    CLKOUT0             => clkout0,
-    CLKOUT0B            => clkout0b_unused,
-    CLKOUT1             => clkout1,
-    CLKOUT1B            => clkout1b_unused,
-    CLKOUT2             => clkout2,
-    CLKOUT2B            => clkout2b_unused,
+   (
+    CLKFBOUT            => clkfbout_pll_d100M_250M_100M_25M,
+    CLKOUT0             => clk_out1_pll_d100M_250M_100M_25M,
+    CLKOUT1             => clk_out2_pll_d100M_250M_100M_25M,
+    CLKOUT2             => clk_out3_pll_d100M_250M_100M_25M,
     CLKOUT3             => clkout3_unused,
-    CLKOUT3B            => clkout3b_unused,
     CLKOUT4             => clkout4_unused,
     CLKOUT5             => clkout5_unused,
-    CLKOUT6             => clkout6_unused,
     -- Input clock control
-    CLKFBIN             => clkfbout_buf,
-    CLKIN1              => clkin1,
+    CLKFBIN             => clkfbout_pll_d100M_250M_100M_25M,
+    CLKIN1              => clk_in1_pll_d100M_250M_100M_25M,
     CLKIN2              => '0',
     -- Tied to always select the primary input clock
     CLKINSEL            => '1',
@@ -180,38 +174,32 @@ begin
     DO                  => do_unused,
     DRDY                => drdy_unused,
     DWE                 => '0',
-    -- Ports for dynamic phase shift
-    PSCLK               => '0',
-    PSEN                => '0',
-    PSINCDEC            => '0',
-    PSDONE              => psdone_unused,
     -- Other control and status signals
-    LOCKED              => locked_unused,
-    CLKINSTOPPED        => clkinstopped_unused,
-    CLKFBSTOPPED        => clkfbstopped_unused,
+    LOCKED              => locked_int,
     PWRDWN              => '0',
     RST                 => '0');
 
+
   -- Output buffering
   -------------------------------------
-  clkf_buf : BUFG
-  port map
-   (O => clkfbout_buf,
-    I => clkfbout);
+
+
 
   clkout1_buf : BUFG
   port map
-   (O   => CLK_OUT1,
-    I   => clkout0);
+   (O   => clk_out1,
+    I   => clk_out1_pll_d100M_250M_100M_25M);
+
+
 
   clkout2_buf : BUFG
   port map
-   (O   => CLK_OUT2,
-    I   => clkout1);
+   (O   => clk_out2,
+    I   => clk_out2_pll_d100M_250M_100M_25M);
 
   clkout3_buf : BUFG
   port map
-   (O   => CLK_OUT3,
-    I   => clkout2);
+   (O   => clk_out3,
+    I   => clk_out3_pll_d100M_250M_100M_25M);
 
 end xilinx;
