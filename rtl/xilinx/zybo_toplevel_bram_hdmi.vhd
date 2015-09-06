@@ -44,7 +44,9 @@ entity glue is
 	C_debug: boolean := false;
 
 	-- Main clock: 81/100/125 MHz
-	-- at 81: flickers, fetch 1 byte late?
+	-- vivado at 81MHz: screen flickers, fetch 1 byte late?
+	-- ise at 81MHz: no flicker
+	-- at 100MHz both ISE and Vivado don't flicker 
 	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
