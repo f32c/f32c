@@ -43,7 +43,7 @@ entity glue is
 	C_debug: boolean := false;
 
 	-- Main clock: 81/100 MHz
-	C_clk_freq: integer := 81;
+	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
