@@ -42,8 +42,8 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: N * 10 MHz
-	C_clk_freq: integer := 100;
+	-- Main clock: 81/100 MHz
+	C_clk_freq: integer := 81;
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
@@ -93,15 +93,28 @@ begin
     --       o_out  => clk);
 
     -- PLL with differential input: 100MHz
+    -- single-ended outputs 81.25MHz, 250MHz, 25MHz
+    cpu_81MHz: if C_clk_freq = 81 generate
+    pll100in_out81_250_25: entity work.mmcm_d100M_81M25_250M521_25M052
+    port map(clk_in1_p => i_100MHz_P,
+             clk_in1_n => i_100MHz_N,
+             clk_out1  => clk, -- 81.25 MHz
+             clk_out2  => clk_250MHz,
+             clk_out3  => clk_25MHz
+             );
+    end generate;
+
+    -- PLL with differential input: 100MHz
     -- single-ended outputs 250MHz, 100MHz, 25MHz
+    cpu100MHz: if C_clk_freq = 100 generate
     pll100in_out250_100_25: entity work.pll_d100M_250M_100M_25M
     port map(clk_in1_p => i_100MHz_P,
              clk_in1_n => i_100MHz_N,
              clk_out1  => clk_250MHz,
-             clk_out2  => clk_100MHz,
+             clk_out2  => clk, -- 100 MHz
              clk_out3  => clk_25MHz
              );
-    clk <= clk_100MHz;
+    end generate;
 
     -- reset hard-block: Xilinx Spartan-6 specific
 --  reset: startup_spartan6
