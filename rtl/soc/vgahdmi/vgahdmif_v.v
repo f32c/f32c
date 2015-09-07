@@ -1,7 +1,7 @@
 // 640x480 video display
 
 // Emard:
-// doubling x and y pixel size
+// fetch data from FIFO
 // adding both HDMI and VGA output
 // no vendor-specific modules here
 // (differential buffers, PLLs)
@@ -24,6 +24,7 @@ module vgahdmi_v(
 );
 
 parameter test_picture = 0;
+// pixel doubling may not work (long time not maintained)
 parameter dbl_x = 0; // 0-normal X, 1-double X
 parameter dbl_y = 0; // 0-normal Y, 1-double Y
 
@@ -125,9 +126,9 @@ always @(posedge pixclk) test_green <= (CounterX[7:0] & {8{CounterY[6]}} | W) & 
 always @(posedge pixclk) test_blue <= CounterY[7:0] | W | A;
 
 // generate VGA output, mixing with test picture if enabled
-assign vga_r = test_picture ? test_red[7:5] :  colorValue[0][7:5];
-assign vga_g =                                 colorValue[1][7:5];
-assign vga_b = test_picture ? test_blue[7:5] : colorValue[2][7:5];
+assign vga_r = DrawArea ? (test_picture ? test_red[7:5]  : colorValue[0][7:5]) : 0;
+assign vga_g = DrawArea ? (                                colorValue[1][7:5]) : 0;
+assign vga_b = DrawArea ? (test_picture ? test_blue[7:5] : colorValue[2][7:5]) : 0;
 assign vga_hsync = ~hSync;
 assign vga_vsync = ~vSync;
 
