@@ -207,7 +207,13 @@ architecture Behavioral of glue_bram is
     signal pid_encoder_b_out: std_logic_vector(C_pids-1 downto 0);
     constant C_pids_bits: integer := integer(floor((log2(real(C_pids)+0.001))+0.5));
     
+    -- Framebuffer
+    signal R_fb_base_addr: std_logic_vector(19 downto 2);
+    signal R_fb_intr: std_logic;
+    
     -- VGA/HDMI video
+    constant iomap_vga: T_iomap_range := (x"FB80", x"FB8F"); -- VGA/HDMI should be (x"FB90", x"FB9F")
+    signal vga_ce: std_logic; -- '1' when address is in iomap_vga range
     signal vga_fetch_next: std_logic; -- video module requests next data from fifo
     signal vga_addr: std_logic_vector(19 downto 2); -- from fifo to RAM
     -- signal vga_debug_rd_addr: std_logic_vector(19 downto 2); -- from fifo to RAM
@@ -275,7 +281,8 @@ begin
 	debug_active => debug_active
     );
     final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
-    intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & '0';
+    -- warning: only sio 0 generates interrupt
+    intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;
     -- added bit dmem_addr(11) = '1' to distinguish from RDS memory placed at 0xFFFFF000
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11" and dmem_addr(11) = '1'
       else '0';
@@ -525,9 +532,9 @@ begin
     if C_vgahdmi generate
     vgahdmi: entity work.vgahdmi
     generic map (
-      dbl_x => 0,
-      dbl_y => 0,
-      mem_size_kb => C_vgahdmi_mem_kb, -- tell vgahdmi how much video ram do we have
+      --dbl_x => 0,
+      --dbl_y => 0,
+      --mem_size_kb => C_vgahdmi_mem_kb, -- tell vgahdmi how much video ram do we have
       test_picture => C_vgahdmi_test_picture
     )
     port map (
@@ -563,7 +570,7 @@ begin
       -- data_in(7 downto 0) => vga_addr(9 downto 2), -- see if address resets correctly
       -- data_in(7 downto 0) => vga_debug_rd_addr(9 downto 2), -- see if address resets correctly
       -- data_in(31 downto 8) => (others => '0'),
-      base_addr => (others => '0'),
+      base_addr => R_fb_base_addr,
       start => vga_n_vsync,
       data_out => vga_data_from_fifo,
       fetch_next => vga_fetch_next
@@ -571,6 +578,7 @@ begin
 
     -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
     -- vga_data(7 downto 0) <= x"0F";
+    -- WARNING: video BRAM is write-only
     video_bram_write <=
       dmem_addr_strobe and dmem_write when dmem_addr(31 downto 28) = x"8" else '0';
     videobram: entity work.bram_video
@@ -586,10 +594,41 @@ begin
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
 	dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
     );
-    end generate;
     vga_data(15 downto 8)  <= vga_data(7 downto 0);
     vga_data(23 downto 16) <= vga_data(7 downto 0);
     vga_data(31 downto 24) <= vga_data(7 downto 0);
+
+    -- address decoder to set base address and clear interrupts
+    with conv_integer(io_addr(11 downto 4)) select
+      vga_ce <= io_addr_strobe when iomap_from(iomap_vga, iomap_range) to iomap_to(iomap_vga, iomap_range),
+                           '0' when others;
+    process(clk)
+    begin
+	if rising_edge(clk) then
+	    if vga_ce = '1' and dmem_write = '1' then
+	        -- cpu write: writes Framebuffer base
+		if C_big_endian then
+		   -- R_fb_mode <= cpu_to_dmem(25 downto 24);
+		    R_fb_base_addr <=
+		      cpu_to_dmem(11 downto 8) &
+		      cpu_to_dmem(23 downto 16) &
+		      cpu_to_dmem(31 downto 26);
+		else
+		    -- R_fb_mode <= cpu_to_dmem(1 downto 0);
+		    R_fb_base_addr <= cpu_to_dmem(19 downto 2);
+		end if;
+            end if;
+            -- interrupt handling: (CPU read or write will clear interrupt)
+	    if vga_ce = '1' then -- and dmem_write = '0' then
+	        R_fb_intr <= '0';
+            else
+                if vga_n_vsync = '0' then -- fixme: vsync is long, should be 1-clock tick here
+                    R_fb_intr <= '1';
+                end if;
+            end if;
+	end if; -- end rising edge
+    end process;
+    end generate;
 
     -- FM/RDS
     G_fmrds:
