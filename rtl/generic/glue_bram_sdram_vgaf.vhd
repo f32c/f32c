@@ -182,7 +182,13 @@ architecture Behavioral of glue_bram is
     signal icp, icp_enable: std_logic_vector(1 downto 0);
     signal timer_intr: std_logic;
 
+    -- Framebuffer
+    signal R_fb_base_addr: std_logic_vector(19 downto 2);
+    signal R_fb_intr: std_logic;
+
     -- VGA/HDMI video
+    constant iomap_vga: T_iomap_range := (x"FB80", x"FB8F"); -- VGA/HDMI should be (x"FB90", x"FB9F")
+    signal vga_ce: std_logic; -- '1' when address is in iomap_vga range
     signal vga_fetch_next: std_logic; -- video module requests next data from fifo
     signal vga_addr: std_logic_vector(19 downto 2);
     signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
@@ -290,7 +296,7 @@ begin
     final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
       else from_sdram when dmem_addr(31 downto 30) = "10"
       else dmem_to_cpu;
-    intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & '0';
+    intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
@@ -618,7 +624,7 @@ begin
       -- data_in => x"00000001", -- test pattern vertical lines
       -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
       -- data_in(31 downto 8) => (others => '0'),
-      base_addr => (others => '0'),
+      base_addr => R_fb_base_addr,
       start => vga_n_vsync,
       data_out => vga_data_from_fifo,
       fetch_next => vga_fetch_next
@@ -647,6 +653,38 @@ begin
     vga_data(7 downto 0) <= vga_data_bram;
     vga_data(31 downto 8) <= (others => '-');
     end generate; -- vga_from_bram
+
+    -- address decoder to set base address and clear interrupts
+    with conv_integer(io_addr(11 downto 4)) select
+      vga_ce <= io_addr_strobe when iomap_from(iomap_vga, iomap_range) to iomap_to(iomap_vga, iomap_range),
+                           '0' when others;
+    process(clk)
+    begin
+	if rising_edge(clk) then
+	    if vga_ce = '1' and dmem_write = '1' then
+	        -- cpu write: writes Framebuffer base
+		if C_big_endian then
+		   -- R_fb_mode <= cpu_to_dmem(25 downto 24);
+		    R_fb_base_addr <=
+		      cpu_to_dmem(11 downto 8) &
+		      cpu_to_dmem(23 downto 16) &
+		      cpu_to_dmem(31 downto 26);
+		else
+		    -- R_fb_mode <= cpu_to_dmem(1 downto 0);
+		    R_fb_base_addr <= cpu_to_dmem(19 downto 2);
+		end if;
+            end if;
+            -- interrupt handling: (CPU read or write will clear interrupt)
+	    if vga_ce = '1' then -- and dmem_write = '0' then
+	        R_fb_intr <= '0';
+            else
+                if vga_n_vsync = '0' then -- fixme: vsync is long, should be 1-clock tick here
+                    R_fb_intr <= '1';
+                end if;
+            end if;
+	end if; -- end rising edge
+    end process;
+
     end generate;
 
     -- Block RAM
