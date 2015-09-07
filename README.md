@@ -12,6 +12,8 @@ A performance-tuned f32c SoC which includes a timer
 and a UART occupies only 1048 6-input LUTs, while still being able to
 execute gcc-generated code when synthesized in the most compact
 configuration which consumes just 697 (649 logic plus 48 memory) LUTs.
+From old to new FPGAs that we have tested, max stable clock ranges
+from 70 MHz (Spartan 3E-500) to 125 MHz (Zinq Z-7010).
 
 Configurable options include:
 
