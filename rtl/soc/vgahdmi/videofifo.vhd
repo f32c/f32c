@@ -62,15 +62,24 @@ architecture behavioral of videofifo is
     signal R_sram_addr: std_logic_vector(19 downto 2);
     signal R_pixbuf_rd_addr, R_pixbuf_wr_addr, S_pixbuf_wr_addr_next: std_logic_vector(C_width-1 downto 0);
     signal need_refill: boolean;
+    signal start2: std_logic;
 begin
     S_pixbuf_wr_addr_next <= R_pixbuf_wr_addr + 1;
+
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        start2 <= start;
+      end if;
+    end process;
+
     --
     -- Refill the circular buffer with fresh data from SRAM-a
     --
     process(clk)
     begin
 	if rising_edge(clk) then
-          if start = '0' then
+          if start2 = '0' then
             R_sram_addr <= base_addr;
             R_pixbuf_wr_addr <= (others => '0');
           else
@@ -84,7 +93,7 @@ begin
 	end if;
     end process;
 
-    need_refill <= start = '1' and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr;
+    need_refill <= start2 = '1' and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr;
     addr_strobe <= '1' when need_refill else '0';
     addr_out <= R_sram_addr;
     
@@ -94,7 +103,7 @@ begin
     process(clk)
       begin
         if rising_edge(clk) then
-          if start = '0' then
+          if start2 = '0' then
             R_pixbuf_rd_addr <= (others => '0');
           else
             if fetch_next = '1' then
