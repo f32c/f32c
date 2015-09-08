@@ -626,9 +626,9 @@ and
 .B SPRLOAD spr_id, path {, downscaling_factor}
 Create a sprite uniquely identified by a positive integer
 .I spr_id
-and populate it with JPEG image loaded from a file at
+and populate it with an image loaded from a JPEG or PNG file at
 .IR path .
-An optional integer parameter
+For JPEG images an optional integer parameter
 .I downscaling_factor
 in range between 0 and 3 may be specified to reduce the size of the
 sprite.  Note that creating sprites bigger than the framebuffer
@@ -1118,6 +1118,8 @@ other loops apparently do not work.
 The MOD operator is implemented using
 .IR fmod(3) ,
 so the result may or may not include a fractional part.
+
+The JPEG decoder is picky with respect to image format and options.
 .SH DISCLAIMER
 THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
