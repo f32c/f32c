@@ -86,7 +86,7 @@ main(int argc, char **argv)
 #endif
 	program = 0;
 	clear();
-	prints("Rabbit BASIC version 2.1.2 (built " __DATE__ ")\n");
+	prints("Rabbit BASIC version 2.1.3 (built " __DATE__ ")\n");
 	if(setexit() == ERR_RESET){
 		drop_fns();
 		execute();	/* execute the line */
