@@ -85,16 +85,14 @@ wire getbyte = CounterX[2+dbl_x:0] == 0;
 ** pixclk rising edge is detected using shift register
 ** edge detection happens after delay (clk * synclen)
 ** then rd is set high for one clk cycle
-** intiating fetch from new data from RAM fifo
-** for various clk and pixclk ratios, synclen may need to be adjusted
-** in order not to change dispData before content is copied to shift_red register
+** intiating fetch of new data from RAM fifo
 */
 reg toggle_read_complete;
 always @(posedge pixclk)
   if(getbyte != 0 && fetcharea != 0)
     toggle_read_complete <= ~toggle_read_complete; // changes when read data is complete
 // synchronize pixclk to clk
-always @(negedge clk) // clk > pixclk/8 for this to work
+always @(posedge clk) // clk > pixclk/8 for this to work
   clksync <= {clksync[synclen-2:0], toggle_read_complete}; // at bit 0 enter new pixclk value
 // XOR: difference in 2 consecutive clksync values
 // create a short rd pulse that lasts one clk period.
