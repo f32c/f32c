@@ -64,14 +64,14 @@ always @(posedge pixclk)
   begin
     if(CounterX == resolution_x + hsync_front_porch)
       hSync <= 1;
-    if(CounterX == resolution_x + hsync_front_porch + hsync_pulse - 1)
+    if(CounterX == resolution_x + hsync_front_porch + hsync_pulse)
       hSync <= 0;
   end
 always @(posedge pixclk)
   begin
     if(CounterY == resolution_y + vsync_front_porch)
       vSync <= 1;
-    if(CounterY == resolution_y + vsync_front_porch + vsync_pulse - 1)
+    if(CounterY == resolution_y + vsync_front_porch + vsync_pulse)
       vSync <= 0;
   end
 
