@@ -98,7 +98,6 @@ assign rd = clksync[synclen-2] ^ clksync[synclen-1];  // rd = read cycle complet
 
 reg [7:0] shift_red, shift_green, shift_blue, shift_bright;
 always @(posedge pixclk)
-  begin
     if(dbl_x == 0 || CounterX[0] == 0)
       begin
         shift_red     <= getbyte != 0 ?    red_byte : shift_red[7:1];
@@ -106,7 +105,6 @@ always @(posedge pixclk)
         shift_blue    <= getbyte != 0 ?   blue_byte : shift_blue[7:1];
         shift_bright  <= getbyte != 0 ? bright_byte : shift_bright[7:1];
       end
-  end
 
 wire [7:0] colorValue[0:3];
 // todo: 2 same black colors, introduce a table
