@@ -26,20 +26,23 @@
  */
 
 #include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <sys/queue.h>
 
 #ifdef __mips__
 #include <dev/io.h>
 #include <dev/fb.h>
 #include <tjpgd.h>
+#include <upng.h>
 #else
 #include <stdint.h>
 #include "../../include/dev/fb.h"
+#include "../../include/upng.h"
 #include "../../lang/basic/tjpgd.h"	/* XXX BASIC HACK, REVISIT! */
 #endif
 
@@ -100,6 +103,8 @@ spr_alloc(int id, int bufsize)
 
 	spr_free(id);
 	sp = malloc(sizeof(struct sprite) + bufsize);
+	if (sp == NULL)
+		return (sp);
 	SLIST_INSERT_HEAD(&spr_head, sp, spr_le);
 	sp->spr_data = (void *) &sp->buf;
 	sp->spr_id = id;
@@ -331,32 +336,82 @@ spr_load(int id, char *name, int descale)
 {
 	char work_buf[8192];
 	JDEC jdec;
-	JRESULT r;
+	JRESULT jr;
 	jdecomp_handle jh;
 	struct sprite *sp;
+	upng_t *up;
+	uint8_t *rgbsrc;
+	uint16_t *u16dst;
+	uint8_t *u8dst;
+	int i, sx, sy, r, g, b;
 
 	if (fb_mode > 1)
 		return (-1);
+
+	/* Attempt JPEG decoding first */
 	jh.fh = open(name, O_RDONLY);
 	if (jh.fh < 0)
 		return (-1);
-	r = jd_prepare(&jdec, jpeg_fetch_encoded, work_buf,
+	jr = jd_prepare(&jdec, jpeg_fetch_encoded, work_buf,
 	    sizeof(work_buf), &jh);
-	if (r == JDR_OK) {
+	if (jr == JDR_OK) {
 		sp = spr_alloc(id,
-		   jdec.width * jdec.height * (fb_mode +1) >> (descale * 2));
+		   jdec.width * jdec.height * (fb_mode + 1) >> (descale * 2));
+		if (sp == NULL) {
+			close(jh.fh);
+			return (ENOMEM);
+		}
 		sp->spr_size_x = jdec.width >> descale;
 		sp->spr_size_y = jdec.height >> descale;
 		jh.sp = sp;
 		r = jd_decomp(&jdec, jpeg_dump_decoded, descale);
+		close(jh.fh);
 		if (r != JDR_OK) {
 			spr_free(id);
 			printf("Failed to decompress: rc=%d\n", r);
-		}
-	} else {
-		printf("Failed to prepare: rc=%d\n", r);
+			return (-1);
+		} else
+			return (0);
 	}
 	close(jh.fh);
+
+	/* Not a JPG image, perhaps it's a PNG? */
+	up = upng_new_from_file(name);
+	if (upng_decode(up) != UPNG_EOK || upng_get_format(up) != 3) {
+		upng_free(up);
+		return(-1);
+	}
+	sx = upng_get_height(up);
+	sy = upng_get_width(up);
+	sp = spr_alloc(id, (sx * sy) << fb_mode);
+	sp->spr_size_x = sx;
+	sp->spr_size_y = sy;
+	if (sp == NULL) {
+		upng_free(up);
+		return (ENOMEM);
+	}
+	if (fb_mode == 0) {
+		u8dst = (void *) sp->spr_data;
+		rgbsrc = (void *) upng_get_buffer(up);
+		for (i = upng_get_size(up) / 4; i > 0; i--) {
+			r = *rgbsrc++;
+			g = *rgbsrc++;
+			b = *rgbsrc++;
+			rgbsrc++;
+			*u8dst++ = fb_rgb2pal((r << 16) + (g << 8) + b);
+		}
+	} else {
+		u16dst = (void *) sp->spr_data;
+		rgbsrc = (void *) upng_get_buffer(up);
+		for (i = upng_get_size(up) / 4; i > 0; i--) {
+			r = *rgbsrc++;
+			g = *rgbsrc++;
+			b = *rgbsrc++;
+			rgbsrc++;
+			*u16dst++ = fb_rgb2pal((r << 16) + (g << 8) + b);
+		}
+	}
+	upng_free(up);
 	return (0);
 }
 

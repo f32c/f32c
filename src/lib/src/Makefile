@@ -109,7 +109,7 @@ ifeq ($(LIB),m)
 endif
 
 ifeq ($(LIB),ulx2s)
- CFILES = fb.c tjpgd.c sprite.c lcd.c
+ CFILES = fb.c tjpgd.c upng.c sprite.c lcd.c
 endif
 
 include ${POST_MK}
