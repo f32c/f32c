@@ -51,30 +51,35 @@ assign pixclk = clk_pixel;  //  25 MHz
 
 reg [9:0] CounterX, CounterY;
 reg hSync, vSync, DrawArea;
-always @(posedge pixclk) DrawArea <= (CounterX<resolution_x) && (CounterY<resolution_y);
 
-wire fetcharea; // when to fetch data, must be 1 byte earlier than draw area
-assign fetcharea = (CounterX[9:3]<(resolution_x/8-1) || CounterX[9:3]==(frame_x/8-1)) && (CounterY<resolution_y);
-
+// wire fetcharea; // when to fetch data, must be 1 byte earlier than draw area
+wire fetcharea = (CounterX<resolution_x) && (CounterY<resolution_y);
+// DrawArea is fetcharea delayed one clock later
+always @(posedge pixclk) DrawArea <= fetcharea;
+// reset X and Y counters at frame boundary
 always @(posedge pixclk) CounterX <= (CounterX==frame_x-1) ? 0 : CounterX+1;
 always @(posedge pixclk) if(CounterX==frame_x-1) CounterY <= (CounterY==frame_y-1) ? 0 : CounterY+1;
 
-always @(posedge pixclk) hSync <= (CounterX>=resolution_x + hsync_front_porch) && (CounterX<resolution_x + hsync_front_porch + hsync_pulse);
-always @(posedge pixclk) vSync <= (CounterY>=resolution_y + vsync_front_porch) && (CounterY<resolution_y + vsync_front_porch + vsync_pulse);
-
-// signal when to change address (to get new data from the memory)
-// phase shifted some pixels after the data fetch
-// so memory will have enough time to select new address and
-// stabilize data on the bus
-//wire changeaddr;
-//assign changeaddr = CounterX[2+dbl_x:0] == 2;
+always @(posedge pixclk)
+  begin
+    if(CounterX == resolution_x + hsync_front_porch)
+      hSync <= 1;
+    if(CounterX == resolution_x + hsync_front_porch + hsync_pulse - 1)
+      hSync <= 0;
+  end
+always @(posedge pixclk)
+  begin
+    if(CounterY == resolution_y + vsync_front_porch)
+      vSync <= 1;
+    if(CounterY == resolution_y + vsync_front_porch + vsync_pulse - 1)
+      vSync <= 0;
+  end
 
 parameter synclen = 3; // >=3, bit length of the clock synchronizer shift register
 reg [synclen-1:0] clksync; /* fifo to clock synchronizer shift register */
 
 // signal: when to shift pixel data and when to get new data from the memory
-wire getbyte;
-assign getbyte = CounterX[2+dbl_x:0] == 0;
+wire getbyte = CounterX[2+dbl_x:0] == 0;
 
 /* clk-to-pixclk synchronizer:
 ** pixclk rising edge is detected using shift register
