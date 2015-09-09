@@ -13,7 +13,6 @@
 
 ////////////////////////////////////////////////////////////////////////
 module vgahdmi_v(
-        input wire clk, /* CPU clock */
         input wire clk_pixel, /* 25 MHz */
         input wire clk_tmds, /* 250 MHz (set to 0 for VGA-only) */
         input wire [7:0] red_byte, green_byte, blue_byte, bright_byte, // get data from fifo
@@ -81,23 +80,8 @@ reg [synclen-1:0] clksync; /* fifo to clock synchronizer shift register */
 // signal: when to shift pixel data and when to get new data from the memory
 wire getbyte = CounterX[2+dbl_x:0] == 0;
 
-/* clk-to-pixclk synchronizer:
-** pixclk rising edge is detected using shift register
-** edge detection happens after delay (clk * synclen)
-** then rd is set high for one clk cycle
-** intiating fetch of new data from RAM fifo
-*/
-reg toggle_read_complete;
-always @(posedge pixclk)
-  if(getbyte != 0 && fetcharea != 0)
-    toggle_read_complete <= ~toggle_read_complete; // changes when read data is complete
-// synchronize pixclk to clk
-always @(posedge clk) // clk > pixclk/8 for this to work
-  clksync <= {clksync[synclen-2:0], toggle_read_complete}; // at bit 0 enter new pixclk value
-// XOR: difference in 2 consecutive clksync values
-// create a short rd pulse that lasts one clk period.
-// This signal is request to fetch new data
-assign rd = clksync[synclen-2] ^ clksync[synclen-1];  // rd = read cycle complete
+// fetch new data
+assign rd = getbyte & fetcharea;
 
 reg [7:0] shift_red, shift_green, shift_blue, shift_bright;
 always @(posedge pixclk)

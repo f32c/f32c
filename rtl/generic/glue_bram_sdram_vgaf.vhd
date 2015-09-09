@@ -593,7 +593,6 @@ begin
       test_picture => C_vgahdmi_test_picture  -- show test picture in background
     )
     port map (
-      clk => clk,
       clk_pixel => clk_25MHz,
       clk_tmds => clk_250MHz,
       rd => vga_fetch_next,
@@ -616,6 +615,7 @@ begin
     )
     port map (
       clk => clk,
+      clk_pixel => clk_25MHz,
       addr_strobe => vga_addr_strobe,
       addr_out => vga_addr,
       data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
