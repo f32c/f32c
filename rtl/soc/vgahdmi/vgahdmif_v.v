@@ -6,6 +6,13 @@
 // no vendor-specific modules here
 // (differential buffers, PLLs)
 
+// the pixel data in *_byte registers
+// should be present ahead of time
+// signal 'fetch_next' is set high for 1 clk_pixel
+// period as soon as current pixel data is consumed
+// there should be enough time for fifo to fetch
+// new data
+
 // LICENSE=BSD
 
 // some code taken from
@@ -16,7 +23,7 @@ module vgahdmi_v(
         input wire clk_pixel, /* 25 MHz */
         input wire clk_tmds, /* 250 MHz (set to 0 for VGA-only) */
         input wire [7:0] red_byte, green_byte, blue_byte, bright_byte, // get data from fifo
-        output wire rd, // rd=1: read cycle is complete, fetch next data
+        output wire fetch_next, // fetch_next=1: read cycle is complete, fetch next data
         output wire vga_hsync, vga_vsync, // active low, vsync will reset fifo
         output wire [2:0] vga_r, vga_g, vga_b,
 	output wire [2:0] TMDS_out_RGB
@@ -81,7 +88,7 @@ reg [synclen-1:0] clksync; /* fifo to clock synchronizer shift register */
 wire getbyte = CounterX[2+dbl_x:0] == 0;
 
 // fetch new data
-assign rd = getbyte & fetcharea;
+assign fetch_next = getbyte & fetcharea;
 
 reg [7:0] shift_red, shift_green, shift_blue, shift_bright;
 always @(posedge pixclk)
