@@ -17,7 +17,7 @@ vfiles = \
 ../../../soc/pid/ctrlpid_v.v \
 ../../../soc/pid/simotor_v.v \
 ../../../soc/pid/rotary_decoder_v.v \
-../../../soc/vgahdmi/vgahdmi_v.v \
+../../../soc/vgahdmi/vgahdmif_v.v \
 
 
 vhdfiles = \
@@ -27,7 +27,7 @@ vhdfiles = \
 ../../../xilinx/pll_50M_100M_25M_250M.vhd \
 ../../../xilinx/pll_50M_81M25.vhd \
 ../../../xilinx/hdmi_out.vhd \
-../../../generic/glue_bram_vga.vhd \
+../../../generic/glue_bram_vgaf.vhd \
 ../../../generic/bram_mi32_eb.vhd \
 ../../../generic/bram_mi32_el.vhd \
 ../../../generic/bram_rv32.vhd \
@@ -57,7 +57,8 @@ vhdfiles = \
 ../../../soc/fm/rds.vhd \
 ../../../soc/fm/bram_rds.vhd \
 ../../../soc/fm/message.vhd \
-../../../soc/vgahdmi/vgahdmi.vhd \
+../../../soc/vgahdmi/vgahdmif.vhd \
+../../../soc/vgahdmi/videofifo.vhd \
 
 
 include ../include/xilinx.mk
