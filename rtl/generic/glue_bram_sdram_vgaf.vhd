@@ -587,15 +587,12 @@ begin
     if C_vgahdmi generate
     vgahdmi: entity work.vgahdmi
     generic map (
-      dbl_x => 0,
-      dbl_y => 0,
-      mem_size_kb => 40, -- 40K is unlimited full 640x480
       test_picture => C_vgahdmi_test_picture  -- show test picture in background
     )
     port map (
       clk_pixel => clk_25MHz,
       clk_tmds => clk_250MHz,
-      rd => vga_fetch_next,
+      fetch_next => vga_fetch_next,
       red_byte    => vga_data_from_fifo( 7 downto 0),
       green_byte  => vga_data_from_fifo(15 downto 8),
       blue_byte   => vga_data_from_fifo(23 downto 16),
