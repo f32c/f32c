@@ -21,7 +21,6 @@ entity vgahdmi is
   );
   port
   (
-    clk        : in std_logic;  -- CPU clock
     clk_pixel  : in std_logic;  -- pixel clock, 25 MHz
     clk_tmds   : in std_logic := '0'; -- hdmi clock 250 MHz (or 0 if HDMI output is not used)
     rd         : out std_logic; -- read cycle
@@ -40,7 +39,6 @@ architecture syn of vgahdmi is
       test_picture   : integer := 0   -- 0-don't, 1-show some test picture
     );
     port (
-      clk        : in std_logic;  -- CPU clock
       clk_pixel  : in std_logic;  -- pixel clock, 25 MHz
       clk_tmds   : in std_logic := '0'; -- hdmi clock 250 MHz (or 0 if HDMI output is not used)
       rd         : out std_logic; -- read cycle
@@ -59,7 +57,6 @@ begin
     test_picture => test_picture
   )
   port map(
-      clk       => clk,
       clk_pixel => clk_pixel,
       clk_tmds  => clk_tmds,
       rd => rd,
