@@ -27,6 +27,12 @@
 -- $Id$
 --
 
+-- asynchronous FIFO adapter from system memory
+-- running at CPU clock (around 100 MHz) with
+-- unpredictable access time to
+-- to video system, running at pixel clock (25 MHz)
+-- which must have constant data rate
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
@@ -34,12 +40,13 @@ use ieee.numeric_std.all;
 
 entity videofifo is
     generic (
+        C_synclen: integer := 3; -- bits in cpu-to-pixel clock synchronizer
         C_width: integer := 4 -- bits width of fifo address
         -- defines the length of the FIFO: 4 * 2^C_length bytes
         -- default value of 4: length = 16 * 32 bits = 16 * 4 bytes = 64 bytes
     );
     port (
-	clk: in std_logic;
+	clk, clk_pixel: in std_logic;
 	addr_strobe: out std_logic;
 	addr_out: out std_logic_vector(19 downto 2);
 	base_addr: in std_logic_vector(19 downto 2);
@@ -62,9 +69,23 @@ architecture behavioral of videofifo is
     signal R_sram_addr: std_logic_vector(19 downto 2);
     signal R_pixbuf_rd_addr, R_pixbuf_wr_addr, S_pixbuf_wr_addr_next: std_logic_vector(C_width-1 downto 0);
     signal need_refill: boolean;
-    signal clean_start: std_logic;
+    signal toggle_read_complete: std_logic;
+    signal clksync: std_logic_vector(C_synclen-1 downto 0);
+    signal clean_start, clean_fetch: std_logic;
 begin
     S_pixbuf_wr_addr_next <= R_pixbuf_wr_addr + 1;
+
+    -- clk-to-clk_pixel synchronizer:
+    -- clk_pixel rising edge is detected using shift register
+    -- edge detection happens after delay (clk * synclen)
+    -- then rd is set high for one clk cycle
+    -- intiating fetch of new data from RAM fifo
+    process(clk_pixel)
+    begin
+      if rising_edge(clk_pixel) and fetch_next = '1' then
+        toggle_read_complete <= not toggle_read_complete;
+      end if;
+    end process;
 
     -- start signal which resets fifo
     -- can be clock asynchronous and may
@@ -77,8 +98,15 @@ begin
     begin
       if rising_edge(clk) then
         clean_start <= start;
+        -- synchronize clk_pixel to clk with shift register
+        clksync <= clksync(C_synclen-2 downto 0) & toggle_read_complete;
       end if;
     end process;
+
+    -- XOR: difference in 2 consecutive clksync values
+    -- create a short pulse that lasts one CPU clk period.
+    -- This signal is request to fetch new data
+    clean_fetch <= clksync(C_synclen-2) xor clksync(C_synclen-1);
 
     --
     -- Refill the circular buffer with fresh data from SRAM-a
@@ -113,7 +141,7 @@ begin
           if clean_start = '0' then
             R_pixbuf_rd_addr <= (others => '0');
           else
-            if fetch_next = '1' then
+            if clean_fetch = '1' then
               R_pixbuf_rd_addr <= R_pixbuf_rd_addr + 1;
 	    end if;
           end if;

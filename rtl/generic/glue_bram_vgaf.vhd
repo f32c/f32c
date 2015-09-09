@@ -532,13 +532,9 @@ begin
     if C_vgahdmi generate
     vgahdmi: entity work.vgahdmi
     generic map (
-      --dbl_x => 0,
-      --dbl_y => 0,
-      --mem_size_kb => C_vgahdmi_mem_kb, -- tell vgahdmi how much video ram do we have
       test_picture => C_vgahdmi_test_picture
     )
     port map (
-      clk => clk,
       clk_pixel => clk_25MHz,
       clk_tmds => clk_250MHz,
       rd => vga_fetch_next,
@@ -561,6 +557,7 @@ begin
     )
     port map (
       clk => clk,
+      clk_pixel => clk_25MHz,
       addr_strobe => vga_strobe,
       addr_out => vga_addr,
       -- debug_rd_addr => vga_debug_rd_addr,
