@@ -69,12 +69,6 @@ entity cache is
 
 	-- bit widths
 	C_addr_bits: integer := 20; -- bit width of cached RAM
-	C_tag_bits: integer := 13;  -- bit width of cache tag
-
--- 13 je ispalo tak da je od 45 (2 * 18 + 9) oduzeto 32 bita za podatkovni
--- dio cachea, dakle preostalih 13 bitova se moze koristiti za tag.
--- Ali koristi se zapravo manje - za 2 K cache koristi se 11 bitova, za 4 K
--- cache 10, za 8 K cache samo 9 bitova.
 
 	-- debugging options
 	C_debug: boolean
@@ -113,11 +107,19 @@ architecture x of cache is
     constant C_D_READ: std_logic_vector := "10";
     constant C_D_FETCH: std_logic_vector := "11";
 
-    constant C_icache_addr_bits: integer := integer(ceil((log2(real(1024*C_icache_size)))-1.0E-6));
-    constant C_dcache_addr_bits: integer := integer(ceil((log2(real(1024*C_dcache_size)))-1.0E-6));
+    constant C_icache_addr_bits: integer := integer(ceil((log2(real(1024*C_icache_size)+1.0E-6))-1.0E-6));
+    constant C_dcache_addr_bits: integer := integer(ceil((log2(real(1024*C_dcache_size)+1.0E-6))-1.0E-6));
+
+    constant C_tag_bits: integer := 13;  -- bit width of cache tag
+    -- constant C_tag_bits: integer := 22-C_icache_addr_bits;  -- bit width of cache tag
+
+-- 13 je ispalo tak da je od 45 (2 * 18 + 9) oduzeto 32 bita za podatkovni
+-- dio cachea, dakle preostalih 13 bitova se moze koristiti za tag.
+-- Ali koristi se zapravo manje - za 2 K cache koristi se 11 bitova, za 4 K
+-- cache 10, za 8 K cache samo 9 bitova.
     
     -- number of zero filler bits
-    constant C_icache_addr_0_bits: integer := C_tag_bits - 2 - (C_addr_bits-C_icache_addr_bits);
+    -- constant C_icache_addr_0_bits: integer := C_tag_bits - 2 - (C_addr_bits-C_icache_addr_bits);
     -- constant C_icache_addr_0: std_logic_vector(C_icache_addr_0_bits-1 downto 0) := (others => '0');
         
     signal i_addr, d_addr: std_logic_vector(31 downto 2);
@@ -311,17 +313,18 @@ begin
     instr_ready <= imem_data_ready when not iaddr_cacheable else
       '1' when icache_line_valid else '0';
 
-    iaddr_cacheable <=
-      (C_icache_size = 2 or C_icache_size = 4 or C_icache_size = 8) and
-      true; -- XXX kseg0: R_i_addr(31 downto 29) = "100";
+    iaddr_cacheable <= C_icache_size > 0; -- XXX kseg0: R_i_addr(31 downto 29) = "100";
     icache_write <= imem_data_ready when R_i_strobe = '1' else '0';
+    itag_valid: if C_icache_size > 0 generate
     icache_tag_in(C_tag_bits-1 downto C_tag_bits-2) <= '1' & R_i_addr(31);
+    -- todo: C_tag_bits should be shorted and this 0s should be removed -> unused
     icache_tag_in(C_tag_bits-3 downto C_addr_bits-C_icache_addr_bits) <= (others => '0');
     icache_tag_in(C_addr_bits-C_icache_addr_bits-1 downto 0) <= R_i_addr(C_addr_bits-1 downto C_icache_addr_bits);
     icache_line_valid <= iaddr_cacheable 
       and icache_tag_out(C_tag_bits-1) = '1' 
       and icache_tag_in(C_tag_bits-2) = icache_tag_out(C_tag_bits-2)
-      and icache_tag_in(C_tag_bits-C_icache_addr_bits+6 downto 0) = icache_tag_out(C_tag_bits-C_icache_addr_bits+6 downto 0);
+      and icache_tag_in(C_addr_bits-C_icache_addr_bits-1 downto 0) = icache_tag_out(C_addr_bits-C_icache_addr_bits-1 downto 0);
+    end generate;
 
     process(clk)
     begin
@@ -379,20 +382,14 @@ begin
       (R_d_state = C_D_WRITE or R_d_state = C_D_FETCH) else '0';
     d_tag_valid_bit <= '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111"
       and not dcache_line_valid else '1';
-    dcache_tag_in <=
-      d_tag_valid_bit & "000" & d_addr(C_addr_bits-1 downto 11)
-      when C_dcache_size = 2 else
-      d_tag_valid_bit & "0000" & d_addr(C_addr_bits-1 downto 12)
-      when C_dcache_size = 4 else
-      d_tag_valid_bit & "00000" & d_addr(C_addr_bits-1 downto 13);
-    dcache_line_valid <=
-      dcache_tag_out(12) = '1' and
-      ((C_dcache_size = 2 and
-      dcache_tag_in(8 downto 0) = dcache_tag_out(8 downto 0)) or
-      (C_dcache_size = 4 and
-      dcache_tag_in(7 downto 0) = dcache_tag_out(7 downto 0)) or
-      (C_dcache_size = 8 and
-      dcache_tag_in(6 downto 0) = dcache_tag_out(6 downto 0)));
+    dtag_valid: if C_dcache_size > 0 generate
+    dcache_tag_in(C_tag_bits-1) <= d_tag_valid_bit;
+    -- todo: C_tag_bits should be shorted and this 0s should be removed -> unused
+    dcache_tag_in(C_tag_bits-2 downto C_addr_bits-C_dcache_addr_bits) <= (others => '0');
+    dcache_tag_in(C_addr_bits-C_dcache_addr_bits-1 downto 0) <= d_addr(C_addr_bits-1 downto C_dcache_addr_bits);
+    dcache_line_valid <= dcache_tag_out(C_tag_bits-1) = '1' 
+      and dcache_tag_in(C_addr_bits-C_dcache_addr_bits-1 downto 0) = dcache_tag_out(C_addr_bits-C_dcache_addr_bits-1 downto 0);
+    end generate;
 
     dcache_tag_out <= from_d_bram(C_tag_bits+31 downto 32);
     dcache_data_out <= from_d_bram(31 downto 0);
