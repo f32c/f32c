@@ -84,9 +84,9 @@ entity glue is
 	C_sdcard: boolean := true;
 	C_framebuffer: boolean := true;
 	C_pcm: boolean := true;
-	C_timer: boolean := true;
+	C_timer: boolean := false;
 	C_tx433: boolean := false; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
-	C_dds: boolean := true
+	C_dds: boolean := false
     );
     port (
 	clk_25m: in std_logic;
@@ -341,7 +341,7 @@ begin
 	bus_write => io_write, byte_sel => io_byte_sel,
 	bus_in => cpu_to_io, bus_out => from_sdcard,
 	spi_sck => sdcard_sck, spi_cen => sdcard_cen,
-	spi_si => sdcard_si, spi_so => sdcard_so
+	spi_mosi => sdcard_si, spi_miso => sdcard_so
     );
     sdcard_ce <= io_addr_strobe(R_cur_io_port) when
       io_addr(11 downto 4) = x"35" else '0';
