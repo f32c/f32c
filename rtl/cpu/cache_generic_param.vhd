@@ -110,8 +110,8 @@ architecture x of cache is
     constant C_icache_addr_bits: integer := integer(ceil((log2(real(1024*C_icache_size)+1.0E-6))-1.0E-6));
     constant C_dcache_addr_bits: integer := integer(ceil((log2(real(1024*C_dcache_size)+1.0E-6))-1.0E-6));
 
-    constant C_itag_bits: integer := C_cached_addr_bits+2-C_icache_addr_bits;  -- bit width of cache tag
-    constant C_dtag_bits: integer := C_cached_addr_bits+2-C_dcache_addr_bits;  -- bit width of cache tag
+    constant C_itag_bits: integer := C_cached_addr_bits+2-C_icache_addr_bits;  -- bit width of cache tag 1 extra bit stores data valid, 2 extra stores addr(31)
+    constant C_dtag_bits: integer := C_cached_addr_bits+1-C_dcache_addr_bits;  -- bit width of cache tag 1 extra bit stores data valid
 
 -- 13 je ispalo tak da je od 45 (2 * 18 + 9) oduzeto 32 bita za podatkovni
 -- dio cachea, dakle preostalih 13 bitova se moze koristiti za tag.
@@ -328,8 +328,6 @@ begin
     icache_write <= imem_data_ready when R_i_strobe = '1' else '0';
     itag_valid: if C_icache_size > 0 generate
     icache_tag_in(C_itag_bits-1 downto C_itag_bits-2) <= '1' & R_i_addr(31);
-    -- todo: C_itag_bits should be shorted and this 0s should be removed -> unused
-    -- icache_tag_in(C_itag_bits-3 downto C_cached_addr_bits-C_icache_addr_bits) <= (others => '0');
     icache_tag_in(C_cached_addr_bits-C_icache_addr_bits-1 downto 0) <= R_i_addr(C_cached_addr_bits-1 downto C_icache_addr_bits);
     icache_line_valid <= iaddr_cacheable
       and icache_tag_out(C_itag_bits-1) = '1'
@@ -395,8 +393,6 @@ begin
       and not dcache_line_valid else '1';
     dtag_valid: if C_dcache_size > 0 generate
     dcache_tag_in(C_dtag_bits-1) <= d_tag_valid_bit;
-    -- todo: C_dtag_bits should be shorted and this 0s should be removed -> unused
-    --dcache_tag_in(C_dtag_bits-2 downto C_cached_addr_bits-C_dcache_addr_bits) <= (others => '0');
     dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) <= d_addr(C_cached_addr_bits-1 downto C_dcache_addr_bits);
     dcache_line_valid <= dcache_tag_out(C_dtag_bits-1) = '1' 
       and dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) = dcache_tag_out(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0);
