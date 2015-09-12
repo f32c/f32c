@@ -268,7 +268,7 @@ begin
 	C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
 	C_register_technology => C_register_technology,
 	C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
-	C_cached_addr_bits => C_sdram_address_width, -- +1 ?
+	C_cached_addr_bits => C_sdram_address_width, -- +1 ? e.g. 20 bits will cache 1MB
 	-- debugging only
 	C_debug => C_debug
     )
