@@ -146,7 +146,6 @@ architecture x of cache is
     signal cpu_d_strobe, cpu_d_write, cpu_d_ready: std_logic;
     signal cpu_d_byte_sel: std_logic_vector(3 downto 0);
     signal d_tag_valid_bit: std_logic;
-
 begin
 
     pipeline: entity work.pipeline
@@ -342,8 +341,8 @@ begin
 	-- instruction cache FSM
 	--
 	R_i_addr <= i_addr;
-	if iaddr_cacheable and
-	  not icache_line_valid and imem_data_ready = '0' then
+	if iaddr_cacheable
+	  and (not icache_line_valid) and imem_data_ready = '0' then
 	    R_i_strobe <= '1';
 	else
 	    R_i_strobe <= '0';
@@ -376,7 +375,7 @@ begin
     dmem_data_out <= cpu_d_data_out;
 
     dmem_addr_strobe <=
-      cpu_d_strobe when not daddr_cacheable or cpu_d_write = '1'
+      cpu_d_strobe when (not daddr_cacheable) or cpu_d_write = '1'
       else '0' when R_d_state = C_D_READ and dcache_line_valid
       else '0' when R_d_state = C_D_IDLE else cpu_d_strobe;
     cpu_d_data_in <= dcache_data_out when R_d_state = C_D_READ
