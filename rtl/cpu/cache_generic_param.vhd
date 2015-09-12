@@ -68,7 +68,7 @@ entity cache is
 	C_dcache_size: integer;
 
 	-- bit widths
-	C_cached_addr_bits: integer := 20; -- address bits of cached RAM
+	C_cached_addr_bits: integer := 20; -- address bits of cached RAM 20->1MB 25->32MB
 
 	-- debugging options
 	C_debug: boolean
