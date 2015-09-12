@@ -207,8 +207,8 @@ begin
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => flush_i_line,
-	addr_a(8 downto 0) => i_addr(10 downto 2),
-	addr_b(8 downto 0) => d_addr(10 downto 2),
+	addr_a(C_icache_addr_bits-3 downto 0) => i_addr(C_icache_addr_bits-1 downto 2),
+	addr_b(C_icache_addr_bits-3 downto 0) => d_addr(C_icache_addr_bits-1 downto 2),
 	data_in_a => to_i_bram(C_itag_bits+31 downto 36),
 	data_in_b => (others => '0'),
 	data_out_a => from_i_bram(C_itag_bits+31 downto 36),
@@ -217,16 +217,16 @@ begin
     i_dp_bram: entity work.bram_true2p_1clk
     generic map (
         dual_port => True,
-        data_width => 18,
-        addr_width => 10
+        data_width => 18, -- double size: 2-port 18-bit bram used as 1-port 36-bit
+        addr_width => C_icache_addr_bits-1
     )
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => icache_write,
-	addr_a(9) => '0',
-	addr_a(8 downto 0) => i_addr(10 downto 2),
-	addr_b(9) => '1',
-	addr_b(8 downto 0) => i_addr(10 downto 2),
+	addr_a(C_icache_addr_bits-2) => '0',
+	addr_a(C_icache_addr_bits-3 downto 0) => i_addr(C_icache_addr_bits-1 downto 2),
+	addr_b(C_icache_addr_bits-2) => '1',
+	addr_b(C_icache_addr_bits-3 downto 0) => i_addr(C_icache_addr_bits-1 downto 2),
 	data_in_a => to_i_bram(0 * 18 + 17 downto 0 * 18),
 	data_in_b => to_i_bram(1 * 18 + 17 downto 1 * 18),
 	data_out_a => from_i_bram(0 * 18 + 17 downto 0 * 18),
@@ -248,8 +248,8 @@ begin
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => flush_i_line,
-	addr_a => i_addr(11 downto 2),
-	addr_b => d_addr(11 downto 2),
+	addr_a => i_addr(C_icache_addr_bits-1 downto 2),
+	addr_b => d_addr(C_icache_addr_bits-1 downto 2),
 	data_in_a => to_i_bram(C_itag_bits+31 downto 36),
 	data_in_b => (others => '0'),
 	data_out_a => from_i_bram(C_itag_bits+31 downto 36),
@@ -261,12 +261,13 @@ begin
     generic map (
         dual_port => False,
         data_width => 18,
-        addr_width => 10
+        addr_width => C_icache_addr_bits-2
     )
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => '0',
-	addr_a => i_addr(11 downto 2), addr_b => (others => '-'),
+	addr_a => i_addr(C_icache_addr_bits-1 downto 2),
+	addr_b => (others => '-'),
 	data_in_a => to_i_bram(b * 18 + 17 downto b * 18),
 	data_in_b => (others => '-'),
 	data_out_a => from_i_bram(b * 18 + 17 downto b * 18),
@@ -289,8 +290,8 @@ begin
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => flush_i_line,
-	addr_a => i_addr(12 downto 2),
-	addr_b => d_addr(12 downto 2),
+	addr_a => i_addr(C_icache_addr_bits-1 downto 2),
+	addr_b => d_addr(C_icache_addr_bits-1 downto 2),
 	data_in_a => to_i_bram(C_itag_bits+31 downto 36),
 	data_in_b => (others => '0'),
 	data_out_a => from_i_bram(C_itag_bits+31 downto 36),
@@ -307,7 +308,8 @@ begin
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => '0',
-	addr_a => i_addr(12 downto 2), addr_b => (others => '-'),
+	addr_a => i_addr(C_icache_addr_bits-1 downto 2),
+	addr_b => (others => '-'),
 	data_in_a => to_i_bram(b * 9 + 8 downto b * 9),
 	data_in_b => (others => '-'),
 	data_out_a => from_i_bram(b * 9 + 8 downto b * 9),
@@ -428,13 +430,13 @@ begin
         -- 32: CPU data bus width
         -- 36-32=4: we have 4 extra bits of other BRAM to use for tag
         data_width => C_dtag_bits-(36-32), 
-        addr_width => 11
+        addr_width => C_dcache_addr_bits-2
     )
     port map (
 	clk => clk,
 	we_b => '0', we_a => dcache_write,
 	addr_b => (others => '0'),
-	addr_a => "00" & d_addr(10 downto 2),
+	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_b => (others => '0'),
 	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
@@ -444,13 +446,13 @@ begin
     generic map (
         dual_port => True,
         data_width => 18,
-        addr_width => 10
+        addr_width => C_dcache_addr_bits-1
     )
     port map (
 	clk => clk,
 	we_a => dcache_write, we_b => dcache_write,
-	addr_a => '0' & d_addr(10 downto 2),
-	addr_b => '1' & d_addr(10 downto 2),
+	addr_a => '0' & d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_b => '1' & d_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_a => to_d_bram(0 * 18 + 17 downto 0 * 18),
 	data_in_b => to_d_bram(1 * 18 + 17 downto 1 * 18),
 	data_out_a => from_d_bram(0 * 18 + 17 downto 0 * 18),
@@ -467,13 +469,13 @@ begin
         -- 32: CPU data bus width
         -- 36-32=4: we have 4 extra bits of other BRAM to use for tag
         data_width => C_dtag_bits-(36-32), 
-        addr_width => 11
+        addr_width => C_dcache_addr_bits-2
     )
     port map (
 	clk => clk,
 	we_b => '0', we_a => dcache_write,
 	addr_b => (others => '0'),
-	addr_a => '0' & d_addr(11 downto 2),
+	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_b => (others => '0'),
 	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
@@ -485,12 +487,13 @@ begin
     generic map (
         dual_port => False,
         data_width => 18,
-        addr_width => 10
+        addr_width => C_dcache_addr_bits-2
     )
     port map (
 	clk => clk,
 	we_a => dcache_write, we_b => '0',
-	addr_a => d_addr(11 downto 2), addr_b => (others => '0'),
+	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_b => (others => '0'),
 	data_in_a => to_d_bram(b * 18 + 17 downto b * 18),
 	data_in_b => (others => '0'),
 	data_out_a => from_d_bram(b * 18 + 17 downto b * 18),
@@ -514,7 +517,7 @@ begin
 	clk => clk,
 	we_b => '0', we_a => dcache_write,
 	addr_b => (others => '0'),
-	addr_a => d_addr(12 downto 2),
+	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_b => (others => '0'),
 	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
@@ -531,7 +534,8 @@ begin
     port map (
 	clk => clk,
 	we_a => dcache_write, we_b => '0',
-	addr_a => d_addr(12 downto 2), addr_b => (others => '0'),
+	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_b => (others => '0'),
 	data_in_a => to_d_bram(b * 9 + 8 downto b * 9),
 	data_in_b => (others => '0'),
 	data_out_a => from_d_bram(b * 9 + 8 downto b * 9),
