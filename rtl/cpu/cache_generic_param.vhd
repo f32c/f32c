@@ -68,7 +68,7 @@ entity cache is
 	C_dcache_size: integer;
 
 	-- bit widths
-	C_addr_bits: integer := 20; -- address bits of cached RAM
+	C_cached_addr_bits: integer := 20; -- address bits of cached RAM
 
 	-- debugging options
 	C_debug: boolean
@@ -110,8 +110,8 @@ architecture x of cache is
     constant C_icache_addr_bits: integer := integer(ceil((log2(real(1024*C_icache_size)+1.0E-6))-1.0E-6));
     constant C_dcache_addr_bits: integer := integer(ceil((log2(real(1024*C_dcache_size)+1.0E-6))-1.0E-6));
 
-    constant C_itag_bits: integer := C_addr_bits+2-C_icache_addr_bits;  -- bit width of cache tag
-    constant C_dtag_bits: integer := C_addr_bits+2-C_dcache_addr_bits;  -- bit width of cache tag
+    constant C_itag_bits: integer := C_cached_addr_bits+2-C_icache_addr_bits;  -- bit width of cache tag
+    constant C_dtag_bits: integer := C_cached_addr_bits+2-C_dcache_addr_bits;  -- bit width of cache tag
 
 -- 13 je ispalo tak da je od 45 (2 * 18 + 9) oduzeto 32 bita za podatkovni
 -- dio cachea, dakle preostalih 13 bitova se moze koristiti za tag.
@@ -119,7 +119,7 @@ architecture x of cache is
 -- cache 10, za 8 K cache samo 9 bitova.
     
     -- number of zero filler bits
-    -- constant C_icache_addr_0_bits: integer := C_itag_bits - 2 - (C_addr_bits-C_icache_addr_bits);
+    -- constant C_icache_addr_0_bits: integer := C_itag_bits - 2 - (C_cached_addr_bits-C_icache_addr_bits);
     -- constant C_icache_addr_0: std_logic_vector(C_icache_addr_0_bits-1 downto 0) := (others => '0');
 
     signal i_addr, d_addr: std_logic_vector(31 downto 2);
@@ -329,12 +329,12 @@ begin
     itag_valid: if C_icache_size > 0 generate
     icache_tag_in(C_itag_bits-1 downto C_itag_bits-2) <= '1' & R_i_addr(31);
     -- todo: C_itag_bits should be shorted and this 0s should be removed -> unused
-    -- icache_tag_in(C_itag_bits-3 downto C_addr_bits-C_icache_addr_bits) <= (others => '0');
-    icache_tag_in(C_addr_bits-C_icache_addr_bits-1 downto 0) <= R_i_addr(C_addr_bits-1 downto C_icache_addr_bits);
+    -- icache_tag_in(C_itag_bits-3 downto C_cached_addr_bits-C_icache_addr_bits) <= (others => '0');
+    icache_tag_in(C_cached_addr_bits-C_icache_addr_bits-1 downto 0) <= R_i_addr(C_cached_addr_bits-1 downto C_icache_addr_bits);
     icache_line_valid <= iaddr_cacheable
       and icache_tag_out(C_itag_bits-1) = '1'
       and icache_tag_in(C_itag_bits-2) = icache_tag_out(C_itag_bits-2)
-      and icache_tag_in(C_addr_bits-C_icache_addr_bits-1 downto 0) = icache_tag_out(C_addr_bits-C_icache_addr_bits-1 downto 0);
+      and icache_tag_in(C_cached_addr_bits-C_icache_addr_bits-1 downto 0) = icache_tag_out(C_cached_addr_bits-C_icache_addr_bits-1 downto 0);
     end generate;
 
     process(clk)
@@ -388,7 +388,7 @@ begin
 
     daddr_cacheable <= C_dcache_size > 0
       and d_addr(31 downto 29) = "100"
-      and d_addr(C_addr_bits) = '0';
+      and d_addr(C_cached_addr_bits) = '0';
     dcache_write <= dmem_data_ready when
       (R_d_state = C_D_WRITE or R_d_state = C_D_FETCH) else '0';
     d_tag_valid_bit <= '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111"
@@ -396,10 +396,10 @@ begin
     dtag_valid: if C_dcache_size > 0 generate
     dcache_tag_in(C_dtag_bits-1) <= d_tag_valid_bit;
     -- todo: C_dtag_bits should be shorted and this 0s should be removed -> unused
-    --dcache_tag_in(C_dtag_bits-2 downto C_addr_bits-C_dcache_addr_bits) <= (others => '0');
-    dcache_tag_in(C_addr_bits-C_dcache_addr_bits-1 downto 0) <= d_addr(C_addr_bits-1 downto C_dcache_addr_bits);
+    --dcache_tag_in(C_dtag_bits-2 downto C_cached_addr_bits-C_dcache_addr_bits) <= (others => '0');
+    dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) <= d_addr(C_cached_addr_bits-1 downto C_dcache_addr_bits);
     dcache_line_valid <= dcache_tag_out(C_dtag_bits-1) = '1' 
-      and dcache_tag_in(C_addr_bits-C_dcache_addr_bits-1 downto 0) = dcache_tag_out(C_addr_bits-C_dcache_addr_bits-1 downto 0);
+      and dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) = dcache_tag_out(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0);
     end generate;
 
     dcache_tag_out <= from_d_bram(C_dtag_bits+31 downto 32);
