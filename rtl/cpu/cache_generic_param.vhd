@@ -68,7 +68,7 @@ entity cache is
 	C_dcache_size: integer;
 
 	-- bit widths
-	C_addr_bits: integer := 20; -- bit width of cached RAM
+	C_addr_bits: integer := 20; -- address bits of cached RAM
 
 	-- debugging options
 	C_debug: boolean
@@ -110,8 +110,9 @@ architecture x of cache is
     constant C_icache_addr_bits: integer := integer(ceil((log2(real(1024*C_icache_size)+1.0E-6))-1.0E-6));
     constant C_dcache_addr_bits: integer := integer(ceil((log2(real(1024*C_dcache_size)+1.0E-6))-1.0E-6));
 
-    constant C_tag_bits: integer := 13;  -- bit width of cache tag
-    -- constant C_tag_bits: integer := 22-C_icache_addr_bits;  -- bit width of cache tag
+    -- constant C_tag_bits: integer := 11;  -- bit width of cache tag
+    constant C_itag_bits: integer := 22-C_icache_addr_bits;  -- bit width of cache tag
+    constant C_dtag_bits: integer := 22-C_dcache_addr_bits;  -- bit width of cache tag
 
 -- 13 je ispalo tak da je od 45 (2 * 18 + 9) oduzeto 32 bita za podatkovni
 -- dio cachea, dakle preostalih 13 bitova se moze koristiti za tag.
@@ -119,23 +120,23 @@ architecture x of cache is
 -- cache 10, za 8 K cache samo 9 bitova.
     
     -- number of zero filler bits
-    -- constant C_icache_addr_0_bits: integer := C_tag_bits - 2 - (C_addr_bits-C_icache_addr_bits);
+    -- constant C_icache_addr_0_bits: integer := C_itag_bits - 2 - (C_addr_bits-C_icache_addr_bits);
     -- constant C_icache_addr_0: std_logic_vector(C_icache_addr_0_bits-1 downto 0) := (others => '0');
-        
+
     signal i_addr, d_addr: std_logic_vector(31 downto 2);
     signal i_data: std_logic_vector(31 downto 0);
     signal cpu_d_data_in, cpu_d_data_out: std_logic_vector(31 downto 0);
     signal icache_data_in, icache_data_out: std_logic_vector(31 downto 0);
     signal dcache_data_in: std_logic_vector(31 downto 0);
-    signal icache_tag_in, icache_tag_out: std_logic_vector(C_tag_bits-1 downto 0);
-    signal dcache_tag_in, dcache_tag_out: std_logic_vector(C_tag_bits-1 downto 0);
+    signal icache_tag_in, icache_tag_out: std_logic_vector(C_itag_bits-1 downto 0);
+    signal dcache_tag_in, dcache_tag_out: std_logic_vector(C_dtag_bits-1 downto 0);
     signal iaddr_cacheable, icache_line_valid: boolean;
     signal daddr_cacheable, dcache_line_valid: boolean;
     signal icache_write, instr_ready: std_logic;
     signal dcache_write, data_ready: std_logic;
     signal flush_i_line, flush_d_line: std_logic;
-    signal to_i_bram, from_i_bram: std_logic_vector(C_tag_bits+31 downto 0);
-    signal to_d_bram, from_d_bram: std_logic_vector(C_tag_bits+31 downto 0);
+    signal to_i_bram, from_i_bram: std_logic_vector(C_itag_bits+31 downto 0);
+    signal to_d_bram, from_d_bram: std_logic_vector(C_dtag_bits+31 downto 0);
 
     signal R_i_strobe: std_logic;
     signal R_i_addr: std_logic_vector(31 downto 2);
@@ -189,26 +190,29 @@ begin
     );
 
     icache_data_out <= from_i_bram(31 downto 0);
-    icache_tag_out <= from_i_bram(C_tag_bits+31 downto 32);
+    icache_tag_out <= from_i_bram(C_itag_bits+31 downto 32);
     to_i_bram(31 downto 0) <= imem_data_in;
-    to_i_bram(C_tag_bits+31 downto 32) <= icache_tag_in;
+    to_i_bram(C_itag_bits+31 downto 32) <= icache_tag_in;
 
     G_icache_2k:
     if C_icache_size = 2 generate
     tag_dp_bram: entity work.bram_true2p_1clk
     generic map (
         dual_port => True,
-        data_width => 9,
-        addr_width => 9
+        -- 36: bram consists of 4 9-bit blocks
+        -- 32: CPU data bus width
+        -- 36-32=4: we have 4 extra bits of other BRAM to use for tag
+        data_width => C_itag_bits-(36-32), 
+        addr_width => C_icache_addr_bits-2
     )
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => flush_i_line,
 	addr_a(8 downto 0) => i_addr(10 downto 2),
 	addr_b(8 downto 0) => d_addr(10 downto 2),
-	data_in_a => to_i_bram(C_tag_bits+31 downto 36),
+	data_in_a => to_i_bram(C_itag_bits+31 downto 36),
 	data_in_b => (others => '0'),
-	data_out_a => from_i_bram(C_tag_bits+31 downto 36),
+	data_out_a => from_i_bram(C_itag_bits+31 downto 36),
 	data_out_b => open
     );
     i_dp_bram: entity work.bram_true2p_1clk
@@ -236,17 +240,20 @@ begin
     tag_dp_bram: entity work.bram_true2p_1clk
     generic map (
         dual_port => True,
-        data_width => 9,
-        addr_width => 10
+        -- 36: bram consists of 4 9-bit blocks
+        -- 32: CPU data bus width
+        -- 36-32=4: we have 4 extra bits of other BRAM to use for tag
+        data_width => C_itag_bits-(36-32), 
+        addr_width => C_icache_addr_bits-2
     )
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => flush_i_line,
 	addr_a => i_addr(11 downto 2),
 	addr_b => d_addr(11 downto 2),
-	data_in_a => to_i_bram(C_tag_bits+31 downto 36),
+	data_in_a => to_i_bram(C_itag_bits+31 downto 36),
 	data_in_b => (others => '0'),
-	data_out_a => from_i_bram(C_tag_bits+31 downto 36),
+	data_out_a => from_i_bram(C_itag_bits+31 downto 36),
 	data_out_b => open
     );
     i_block_iter: for b in 0 to 1 generate
@@ -274,17 +281,20 @@ begin
     tag_dp_bram: entity work.bram_true2p_1clk
     generic map (
         dual_port => True,
-        data_width => 9,
-        addr_width => 11
+        -- 36: bram consists of 4 9-bit blocks
+        -- 32: CPU data bus width
+        -- 36-32=4: we have 4 extra bits of other BRAM to use for tag
+        data_width => C_itag_bits-(36-32), 
+        addr_width => C_icache_addr_bits-2
     )
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => flush_i_line,
 	addr_a => i_addr(12 downto 2),
 	addr_b => d_addr(12 downto 2),
-	data_in_a => to_i_bram(C_tag_bits+31 downto 36),
+	data_in_a => to_i_bram(C_itag_bits+31 downto 36),
 	data_in_b => (others => '0'),
-	data_out_a => from_i_bram(C_tag_bits+31 downto 36),
+	data_out_a => from_i_bram(C_itag_bits+31 downto 36),
 	data_out_b => open
     );
     i_block_iter: for b in 0 to 3 generate
@@ -293,7 +303,7 @@ begin
     generic map (
         dual_port => False,
         data_width => 9,
-        addr_width => 11
+        addr_width => C_icache_addr_bits-2
     )
     port map (
 	clk => clk,
@@ -316,13 +326,13 @@ begin
     iaddr_cacheable <= C_icache_size > 0; -- XXX kseg0: R_i_addr(31 downto 29) = "100";
     icache_write <= imem_data_ready when R_i_strobe = '1' else '0';
     itag_valid: if C_icache_size > 0 generate
-    icache_tag_in(C_tag_bits-1 downto C_tag_bits-2) <= '1' & R_i_addr(31);
-    -- todo: C_tag_bits should be shorted and this 0s should be removed -> unused
-    icache_tag_in(C_tag_bits-3 downto C_addr_bits-C_icache_addr_bits) <= (others => '0');
+    icache_tag_in(C_itag_bits-1 downto C_itag_bits-2) <= '1' & R_i_addr(31);
+    -- todo: C_itag_bits should be shorted and this 0s should be removed -> unused
+    -- icache_tag_in(C_itag_bits-3 downto C_addr_bits-C_icache_addr_bits) <= (others => '0');
     icache_tag_in(C_addr_bits-C_icache_addr_bits-1 downto 0) <= R_i_addr(C_addr_bits-1 downto C_icache_addr_bits);
     icache_line_valid <= iaddr_cacheable 
-      and icache_tag_out(C_tag_bits-1) = '1' 
-      and icache_tag_in(C_tag_bits-2) = icache_tag_out(C_tag_bits-2)
+      and icache_tag_out(C_itag_bits-1) = '1' 
+      and icache_tag_in(C_itag_bits-2) = icache_tag_out(C_itag_bits-2)
       and icache_tag_in(C_addr_bits-C_icache_addr_bits-1 downto 0) = icache_tag_out(C_addr_bits-C_icache_addr_bits-1 downto 0);
     end generate;
 
@@ -383,17 +393,17 @@ begin
     d_tag_valid_bit <= '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111"
       and not dcache_line_valid else '1';
     dtag_valid: if C_dcache_size > 0 generate
-    dcache_tag_in(C_tag_bits-1) <= d_tag_valid_bit;
-    -- todo: C_tag_bits should be shorted and this 0s should be removed -> unused
-    dcache_tag_in(C_tag_bits-2 downto C_addr_bits-C_dcache_addr_bits) <= (others => '0');
+    dcache_tag_in(C_dtag_bits-1) <= d_tag_valid_bit;
+    -- todo: C_dtag_bits should be shorted and this 0s should be removed -> unused
+    --dcache_tag_in(C_dtag_bits-2 downto C_addr_bits-C_dcache_addr_bits) <= (others => '0');
     dcache_tag_in(C_addr_bits-C_dcache_addr_bits-1 downto 0) <= d_addr(C_addr_bits-1 downto C_dcache_addr_bits);
-    dcache_line_valid <= dcache_tag_out(C_tag_bits-1) = '1' 
+    dcache_line_valid <= dcache_tag_out(C_dtag_bits-1) = '1' 
       and dcache_tag_in(C_addr_bits-C_dcache_addr_bits-1 downto 0) = dcache_tag_out(C_addr_bits-C_dcache_addr_bits-1 downto 0);
     end generate;
 
-    dcache_tag_out <= from_d_bram(C_tag_bits+31 downto 32);
+    dcache_tag_out <= from_d_bram(C_dtag_bits+31 downto 32);
     dcache_data_out <= from_d_bram(31 downto 0);
-    to_d_bram(C_tag_bits+31 downto 32) <= dcache_tag_in;
+    to_d_bram(C_dtag_bits+31 downto 32) <= dcache_tag_in;
     to_d_bram(31 downto 0) <= R_dcache_wbuf when R_d_state = C_D_WRITE
       else dmem_data_in;
 
@@ -415,7 +425,10 @@ begin
     tag_dp_bram_d: entity work.bram_true2p_1clk
     generic map (
         dual_port => False,
-        data_width => 9,
+        -- 36: bram consists of 4 9-bit blocks
+        -- 32: CPU data bus width
+        -- 36-32=4: we have 4 extra bits of other BRAM to use for tag
+        data_width => C_dtag_bits-(36-32), 
         addr_width => 11
     )
     port map (
@@ -424,9 +437,9 @@ begin
 	addr_b => (others => '0'),
 	addr_a => "00" & d_addr(10 downto 2),
 	data_in_b => (others => '0'),
-	data_in_a => to_d_bram(C_tag_bits+31 downto 36),
+	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
-	data_out_a => from_d_bram(C_tag_bits+31 downto 36)
+	data_out_a => from_d_bram(C_dtag_bits+31 downto 36)
     );
     d_dp_bram: entity work.bram_true2p_1clk
     generic map (
@@ -451,7 +464,10 @@ begin
     tag_dp_bram_d: entity work.bram_true2p_1clk
     generic map (
         dual_port => False,
-        data_width => 9,
+        -- 36: bram consists of 4 9-bit blocks
+        -- 32: CPU data bus width
+        -- 36-32=4: we have 4 extra bits of other BRAM to use for tag
+        data_width => C_dtag_bits-(36-32), 
         addr_width => 11
     )
     port map (
@@ -460,9 +476,9 @@ begin
 	addr_b => (others => '0'),
 	addr_a => '0' & d_addr(11 downto 2),
 	data_in_b => (others => '0'),
-	data_in_a => to_d_bram(C_tag_bits+31 downto 36),
+	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
-	data_out_a => from_d_bram(C_tag_bits+31 downto 36)
+	data_out_a => from_d_bram(C_dtag_bits+31 downto 36)
     );
     d_block_iter: for b in 0 to 1 generate
     begin
@@ -489,8 +505,11 @@ begin
     tag_dp_bram_d: entity work.bram_true2p_1clk
     generic map (
         dual_port => False,
-        data_width => 9,
-        addr_width => 11
+        -- 36: bram consists of 4 9-bit blocks
+        -- 32: CPU data bus width
+        -- 36-32=4: we have 4 extra bits of other BRAM to use for tag
+        data_width => C_dtag_bits-(36-32), 
+        addr_width => C_dcache_addr_bits-2
     )
     port map (
 	clk => clk,
@@ -498,9 +517,9 @@ begin
 	addr_b => (others => '0'),
 	addr_a => d_addr(12 downto 2),
 	data_in_b => (others => '0'),
-	data_in_a => to_d_bram(C_tag_bits+31 downto 36),
+	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
-	data_out_a => from_d_bram(C_tag_bits+31 downto 36)
+	data_out_a => from_d_bram(C_dtag_bits+31 downto 36)
     );
     d_block_iter: for b in 0 to 3 generate
     begin
@@ -508,7 +527,7 @@ begin
     generic map (
         dual_port => False,
         data_width => 9,
-        addr_width => 11
+        addr_width => C_dcache_addr_bits-2
     )
     port map (
 	clk => clk,
@@ -521,5 +540,4 @@ begin
     );
     end generate d_block_iter;
     end generate; -- dcache_8k
-
 end x;
