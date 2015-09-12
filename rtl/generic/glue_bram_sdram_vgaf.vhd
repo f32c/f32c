@@ -268,6 +268,7 @@ begin
 	C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
 	C_register_technology => C_register_technology,
 	C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
+	C_cached_addr_bits => C_sdram_address_width, -- +1 ?
 	-- debugging only
 	C_debug => C_debug
     )
