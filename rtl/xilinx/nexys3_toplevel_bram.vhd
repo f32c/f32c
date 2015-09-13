@@ -112,10 +112,8 @@ begin
 	simple_out(15 downto 8) => seg(7 downto 0),
 	simple_out(19 downto 16) => an(3 downto 0),
 	simple_out(31 downto 20) => open,
-	simple_in(0) => btn_west,
-	simple_in(1) => btn_east,
-	simple_in(2) => btn_north,
-	simple_in(3) => btn_south,
+	simple_in(0) => btn_west, simple_in(1) => btn_east,
+	simple_in(2) => btn_north, simple_in(3) => btn_south,
 	simple_in(4) => btn_center,
 	simple_in(12 downto 5) => sw(7 downto 0),
 	simple_in(31 downto 13) => open
