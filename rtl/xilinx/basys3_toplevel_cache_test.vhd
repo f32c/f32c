@@ -67,6 +67,13 @@ architecture Behavioral of glue is
     signal btns: std_logic_vector(15 downto 0);
     signal lcd_7seg: std_logic_vector(15 downto 0);
     signal sio_break: std_logic;
+    signal sram_a: std_logic_vector(18 downto 0);
+    signal sram_d: std_logic_vector(15 downto 0);
+    signal sram_wel, sram_lbl, sram_ubl: std_logic;
+
+    -- SRAM emulation
+    signal sram_we_lower, sram_we_upper: std_logic;
+    signal from_sram_lower, from_sram_upper: std_logic_vector(7 downto 0);
 begin
     -- generic BRAM glue
     glue_sram: entity work.glue_sram
@@ -82,7 +89,9 @@ begin
 	simple_out(15 downto 0) => led, simple_out(22 downto 16) => seg,
 	simple_out(23) => dp, simple_out(27 downto 24) => an,
 	simple_out(31 downto 28) => open,
-	simple_in(15 downto 0) => btns, simple_in(31 downto 16) => sw
+	simple_in(15 downto 0) => btns, simple_in(31 downto 16) => sw,
+	sram_a => sram_a, sram_d => sram_d, sram_wel => sram_wel,
+	sram_lbl => sram_lbl, sram_ubl => sram_ubl
     );
     btns <= x"00" & "000" & btnc & btnu & btnd & btnl & btnr;
 
@@ -101,5 +110,42 @@ begin
 	usrdoneo => '1',
 	usrdonets => '0'
     );
+
+    sram_emul_lower: entity work.bram_true2p_1clk
+    generic map (
+        dual_port => false,
+        data_width => 8,
+        addr_width => 12
+    )
+    port map (
+        clk => not clk,
+        we_a => sram_we_lower,
+        addr_a => sram_a(11 downto 0),
+        data_in_a => sram_d(7 downto 0), data_out_a => from_sram_lower,
+	we_b => '0', addr_b => (others => '0'),
+        data_in_b => (others => '0'), data_out_b => open
+    );
+
+    sram_emul_upper: entity work.bram_true2p_1clk
+    generic map (
+        dual_port => false,
+        data_width => 8,
+        addr_width => 12
+    )
+    port map (
+        clk => not clk,
+        we_a => sram_we_upper,
+        addr_a => sram_a(11 downto 0),
+        data_in_a => sram_d(15 downto 8), data_out_a => from_sram_upper,
+	we_b => '0', addr_b => (others => '0'),
+        data_in_b => (others => '0'), data_out_b => open
+    );
+
+    sram_d(7 downto 0) <= from_sram_lower when sram_wel = '1'
+      else (others => 'Z');
+    sram_d(15 downto 8) <= from_sram_upper when sram_wel = '1'
+      else (others => 'Z');
+    sram_we_lower <= not (sram_wel or sram_lbl);
+    sram_we_upper <= not (sram_wel or sram_ubl);
 
 end Behavioral;
