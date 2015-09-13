@@ -74,22 +74,6 @@ _start(void)
 	__asm __volatile__("nop");
 #endif
 
-#ifndef BRAM
-	/* Flush I-cache, clear DRAM */
-	for (cp = (void *) 0x80000000; cp < (char *) 0x80100000;  cp += 4) {
-		__asm (
-#ifdef __mips__
-			"cache	0, 0(%0);"
-			"sw	$0, 0(%0)"
-#else
-			"sw	zero, 0(%0)"
-#endif
-			:
-			: "r" (cp)
-		);
-	}
-#endif
-
 	cp = NULL;	/* shut up uninitialized use warnings */
 
 prompt:
@@ -180,8 +164,17 @@ loop:
 			__asm __volatile__(
 			".set noreorder;"
 			"lui $4, 0x8000;"	/* stack mask */
-			"lui $5, 0x0010;"	/* top of the initial stack */
+			"lui $5, 0x1000;"	/* top of the initial stack */
 			"and $29, %0, $4;"	/* clr low bits of the stack */
+ 
+			"beqz $29, cache_skip;" /* BRAM: no cache invalidate */
+			"li $2, 0x4000;"	/* max. I-cache size: 16 K */
+			"icache_flush:;"
+			"cache 0, 0($2);"
+			"bnez $2, icache_flush;"
+			"addiu $2, $2, -4;"
+			"cache_skip:;"
+
 			"move $31, $0;"		/* ra <- zero */
 			"jr %0;"
 			"or $29, $29, $5;"	/* set stack */
