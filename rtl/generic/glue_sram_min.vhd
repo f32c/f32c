@@ -28,10 +28,8 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.STD_LOGIC_ARITH.ALL;
-use ieee.numeric_std.all; -- we need signed type
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
-use IEEE.MATH_REAL.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
 
 use work.f32c_pack.all;
 use work.sram_pack.all;
@@ -78,42 +76,17 @@ entity glue_sram is
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_sram: boolean := true;
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
-	C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
+	C_pipelined_read: boolean := false; -- works only at 81.25 MHz !!!
 	C_sio: boolean := true;
 	C_simple_in: integer range 0 to 128 := 32;
-	C_simple_out: integer range 0 to 128 := 32;
-	C_gpio: boolean := true;
-	C_spi: integer := 0;
-	C_spi_turbo_mode: std_logic_vector := "0000";
-	C_spi_fixed_speed: std_logic_vector := "1111";
-	C_framebuffer: boolean := false;
-	C_pcm: boolean := true;
-	C_timer: boolean := true;
-	C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
-	C_fmrds: boolean := true;
-	C_fm_stereo: boolean := false;
-	C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
-	C_fm_cw_hz: integer := 107900000; -- Hz FM station carrier wave frequency
-        C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
-        --C_rds_clock_multiply: integer := 57; -- multiply and divide from cpu clk 100 MHz
-        --C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
-        C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
-        C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
-        C_pid: boolean := true;
-        C_pids: integer := 4;
-        C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8); -- for each pid choose simulator/real 
-	C_dds: boolean := true
+	C_simple_out: integer range 0 to 128 := 32
     );
     port (
         clk: in std_logic; -- main clock CPU and I/O
-	clk_25m: in std_logic := '0'; -- VGA pixel clock 25 MHz
-        clk_325m: in std_logic := '0'; -- TV composite video 325 MHz
-        clk_cw: in std_logic := '0'; -- CW transmitter 433.92 MHz
-	rs232_tx: out std_logic;
-	rs232_rx: in std_logic;
-	spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
-	spi_miso: in std_logic_vector(C_spi - 1 downto 0);
-	gpio: inout std_logic_vector(31 downto 0);
+	sio_tx, sio_break: out std_logic;
+	sio_rx: in std_logic;
+	simple_in: in std_logic_vector(31 downto 0);
+	simple_out: out std_logic_vector(31 downto 0);
 	sram_a: out std_logic_vector(18 downto 0);
 	sram_d: inout std_logic_vector(15 downto 0);
 	sram_wel, sram_lbl, sram_ubl: out std_logic
@@ -149,8 +122,6 @@ architecture Behavioral of glue_sram is
     signal to_sram: sram_port_array;
     signal sram_ready: sram_ready_array;
     signal from_sram: std_logic_vector(31 downto 0);
-    signal snoop_cycle: std_logic;
-    signal snoop_addr: std_logic_vector(31 downto 2);
 
     -- Block RAM
     signal bram_i_to_cpu, bram_d_to_cpu: std_logic_vector(31 downto 0);
@@ -162,7 +133,7 @@ architecture Behavioral of glue_sram is
     signal io_addr: std_logic_vector(11 downto 2);
     signal cpu_to_io, io_to_cpu: std_logic_vector(31 downto 0);
     signal from_sio: std_logic_vector(31 downto 0);
-    signal sio_txd, sio_ce, sio_break: std_logic;
+    signal sio_txd, sio_ce: std_logic;
     signal io_addr_strobe: std_logic_vector((C_io_ports - 1) downto 0);
     signal next_io_port: integer range 0 to (C_io_ports - 1);
     signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
@@ -247,7 +218,7 @@ begin
 	dmem_write => dmem_write(i), dmem_byte_sel => dmem_byte_sel(i),
 	dmem_data_in => final_to_cpu_d(i), dmem_data_out => cpu_to_dmem(i),
 	dmem_data_ready => dmem_data_ready(i),
-	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
+	snoop_cycle => '0', snoop_addr => (others => '0'),
 	-- debugging
 	debug_in_data => sio_to_debug_data,
 	debug_in_strobe => deb_sio_rx_done,
@@ -271,7 +242,7 @@ begin
 	C_clk_freq => C_clk_freq
     )
     port map (
-	clk => clk, ce => sio_ce, txd => sio_txd, rxd => rs232_rx,
+	clk => clk, ce => sio_ce, txd => sio_txd, rxd => sio_rx,
 	bus_write => io_write, byte_sel => io_byte_sel,
 	bus_in => cpu_to_io, bus_out => from_sio, break => sio_break
     );
@@ -368,22 +339,17 @@ begin
 	      simple_in(C_simple_in - 1 downto 0);
 	end if;
     end process;
-
-    G_simple_out_standard:
-    if C_timer = false generate
-	simple_out(C_simple_out - 1 downto 0) <=
-	  R_simple_out(C_simple_out - 1 downto 0);
-    end generate;
+    simple_out(C_simple_out - 1 downto 0) <=
+      R_simple_out(C_simple_out - 1 downto 0);
 
     -- big address decoder when CPU reads IO
     process(io_addr, R_simple_in, from_sio)
     begin
+	io_to_cpu <= (others => '-'); -- default, overrided later
 	case conv_integer(io_addr(11 downto 4)) is
 	when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range)  =>
 	    if C_sio then
 		io_to_cpu <= from_sio;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
 	when iomap_from(iomap_simple_in, iomap_range) to iomap_to(iomap_simple_in, iomap_range) =>
 	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
@@ -419,8 +385,8 @@ begin
 	dmem_byte_sel => dmem_byte_sel(0), dmem_addr => dmem_addr(0),
 	dmem_data_out => bram_d_to_cpu, dmem_data_in => cpu_to_dmem(0)
     );
-    bram_i_ready <= '1';
-    bram_d_ready <= '1';
+    bram_i_ready <= imem_addr_strobe(0);
+    bram_d_ready <= dmem_addr_strobe(0);
 
     --
     -- SRAM
@@ -521,8 +487,7 @@ begin
     if C_sram generate
     sram: entity work.sram
     generic map (
-	C_ports => 2 * C_cpus + 2, -- extra ports: framebuffer and PCM audio
-	C_prio_port => 2 * C_cpus, -- framebuffer
+	C_ports => 2 * C_cpus,
 	C_wait_cycles => C_sram_wait_cycles,
 	C_pipelined_read => C_pipelined_read
     )
@@ -530,7 +495,7 @@ begin
 	clk => clk, sram_a => sram_a, sram_d => sram_d,
 	sram_wel => sram_wel, sram_lbl => sram_lbl, sram_ubl => sram_ubl,
 	data_out => from_sram,
-	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
+	snoop_cycle => open, snoop_addr => open,
 	-- Multi-port connections:
 	bus_in => to_sram, ready_out => sram_ready
     );
@@ -545,7 +510,7 @@ begin
 	C_big_endian => false
     )
     port map (
-	clk => clk, ce => '1', txd => deb_tx, rxd => rs232_rx,
+	clk => clk, ce => '1', txd => deb_tx, rxd => sio_rx,
 	bus_write => deb_sio_tx_strobe, byte_sel => "0001",
 	bus_in(7 downto 0) => debug_to_sio_data,
 	bus_out(7 downto 0) => sio_to_debug_data,
@@ -554,6 +519,6 @@ begin
     );
     end generate;
 
-    rs232_tx <= sio_txd when not C_debug or debug_active = '0' else deb_tx;
+    sio_tx <= sio_txd when not C_debug or debug_active = '0' else deb_tx;
 
 end Behavioral;
