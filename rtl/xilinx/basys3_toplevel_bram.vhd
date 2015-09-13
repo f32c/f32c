@@ -40,14 +40,13 @@ use work.f32c_pack.all;
 entity glue is
     generic (
 	-- ISA
-	C_arch: integer := ARCH_RV32;
+	C_arch: integer := ARCH_MI32;
 
 	-- Main clock: N * 10 MHz
 	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
-	C_mem_size: integer := 128;
-	C_leds_btns: boolean := true
+	C_mem_size: integer := 128
     );
     port (
 	clk: in std_logic; -- 100 MHz
@@ -79,13 +78,13 @@ begin
 	clk => clk,
 	sio_txd(0) => rstx, sio_rxd(0) => rsrx, sio_break(0) => rs232_break,
 	gpio(7 downto 0) => ja, gpio(15 downto 8) => jb,
-	gpio(23 downto 16) => jc, gpio(31 downto 24) => open,
-	leds => led, lcd_7seg => lcd_7seg,
-	btns => btns, sw => sw
+	gpio(23 downto 16) => jc, gpio(127 downto 24) => open,
+	simple_out(15 downto 0) => led, simple_out(22 downto 16) => seg,
+	simple_out(23) => dp, simple_out(27 downto 24) => an,
+	simple_out(31 downto 28) => open,
+	simple_in(15 downto 0) => btns, simple_in(31 downto 16) => sw,
+	spi_miso => (others => '0')
     );
-    seg <= lcd_7seg(6 downto 0);
-    dp <= lcd_7seg(7);
-    an <= lcd_7seg(11 downto 8);
     btns <= x"00" & "000" & btnc & btnu & btnd & btnl & btnr;
 
     res: startupe2
