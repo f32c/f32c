@@ -63,9 +63,9 @@ entity glue is
 end glue;
 
 architecture Behavioral of glue is
-    signal rs232_break: std_logic;
     signal btns: std_logic_vector(15 downto 0);
     signal lcd_7seg: std_logic_vector(15 downto 0);
+    signal sio_break: std_logic;
 begin
     -- generic BRAM glue
     glue_sram: entity work.glue_sram
@@ -76,14 +76,11 @@ begin
     )
     port map (
 	clk => clk,
-	rs232_tx => rstx, rs232_rx => rsrx, -- rs232_break => rs232_break,
-	gpio(7 downto 0) => ja, gpio(15 downto 8) => jb,
-	gpio(23 downto 16) => jc, gpio(31 downto 24) => open,
+	sio_tx => rstx, sio_rx => rsrx, sio_break => sio_break,
 	simple_out(15 downto 0) => led, simple_out(22 downto 16) => seg,
 	simple_out(23) => dp, simple_out(27 downto 24) => an,
 	simple_out(31 downto 28) => open,
-	simple_in(15 downto 0) => btns, simple_in(31 downto 16) => sw,
-	spi_miso => (others => '0')
+	simple_in(15 downto 0) => btns, simple_in(31 downto 16) => sw
     );
     btns <= x"00" & "000" & btnc & btnu & btnd & btnl & btnr;
 
@@ -93,7 +90,7 @@ begin
     )
     port map (
 	clk => clk,
-	gsr => rs232_break,
+	gsr => sio_break,
 	gts => '0',
 	keyclearb => '0',
 	pack => '1',
