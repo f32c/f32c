@@ -24,7 +24,7 @@
 -- SUCH DAMAGE.
 --
 -- Modifications
--- Davor Jadrijevic: instantiation of generic bram modules
+-- Davor Jadrijevic: instantiation of generic bram modules, parametrization
 --
 -- $Id$
 --
@@ -68,7 +68,7 @@ entity cache is
 	C_dcache_size: integer;
 
 	-- bit widths
-	C_cached_addr_bits: integer := 20; -- address bits of cached RAM 20->1MB 25->32MB
+	C_cached_addr_bits: integer := 20; -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
 
 	-- debugging options
 	C_debug: boolean
@@ -107,20 +107,15 @@ architecture x of cache is
     constant C_D_READ: std_logic_vector := "10";
     constant C_D_FETCH: std_logic_vector := "11";
 
+    -- 1.0E-6 is small delta to prevent floating point errors
+    -- aborting compilation when C_icache_size = 0
+    -- delta value is insignificant for the result converted to integer
     constant C_icache_addr_bits: integer := integer(ceil((log2(real(1024*C_icache_size)+1.0E-6))-1.0E-6));
     constant C_dcache_addr_bits: integer := integer(ceil((log2(real(1024*C_dcache_size)+1.0E-6))-1.0E-6));
 
-    constant C_itag_bits: integer := C_cached_addr_bits+2-C_icache_addr_bits;  -- bit width of cache tag 1 extra bit stores data valid, 2 extra stores addr(31)
-    constant C_dtag_bits: integer := C_cached_addr_bits+1-C_dcache_addr_bits;  -- bit width of cache tag 1 extra bit stores data valid
-
--- 13 je ispalo tak da je od 45 (2 * 18 + 9) oduzeto 32 bita za podatkovni
--- dio cachea, dakle preostalih 13 bitova se moze koristiti za tag.
--- Ali koristi se zapravo manje - za 2 K cache koristi se 11 bitova, za 4 K
--- cache 10, za 8 K cache samo 9 bitova.
-    
-    -- number of zero filler bits
-    -- constant C_icache_addr_0_bits: integer := C_itag_bits - 2 - (C_cached_addr_bits-C_icache_addr_bits);
-    -- constant C_icache_addr_0: std_logic_vector(C_icache_addr_0_bits-1 downto 0) := (others => '0');
+    -- bit widths of cache tags
+    constant C_itag_bits: integer := C_cached_addr_bits-C_icache_addr_bits+2;  -- +2 = 1 extra bit for data valid + 1 extra bit for addr(31)
+    constant C_dtag_bits: integer := C_cached_addr_bits-C_dcache_addr_bits+1;  -- +1 = 1 extra bit for data valid
 
     signal i_addr, d_addr: std_logic_vector(31 downto 2);
     signal i_data: std_logic_vector(31 downto 0);
