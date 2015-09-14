@@ -61,7 +61,12 @@ entity glue is
 	an: out std_logic_vector(3 downto 0); -- 7-segment display
 	led: out std_logic_vector(7 downto 0);
 	btn_center, btn_south, btn_north, btn_east, btn_west: in std_logic;
-	sw: in std_logic_vector(7 downto 0)
+	sw: in std_logic_vector(7 downto 0);
+	MemOE, MemWR, MemAdv, MemWait, MemClk: out std_logic;
+	RamCS, RamCRE, RamUB, RamLB: out std_logic;
+	FlashCS, FlashRp, QuadSpiFlashCS, QuadSpiFlashSck: out std_logic;
+	MemAdr: out std_logic_vector(26 downto 1);
+	MemDB: inout std_logic_vector(15 downto 0)
     );
 end glue;
 
@@ -118,4 +123,22 @@ begin
 	simple_in(12 downto 5) => sw(7 downto 0),
 	simple_in(31 downto 13) => open
     );
+
+    -- Assign unused signals
+    MemAdr <= (others => '0');
+    MemDB <= (others => 'Z');
+    MemOE <= '1';
+    MemWR <= '1';
+    MemAdv <= '0';
+    MemWait <= 'Z';
+    MemClk <= '0';
+    RamCS <= '1';
+    RamCRE <= '0';
+    RamUB <= '1';
+    RamLB <= '1';
+    FlashCS <= '1';
+    FlashRp <= 'Z';
+    QuadSpiFlashCS <= '1';
+    QuadSpiFlashSck <= '0';
+    
 end Behavioral;
