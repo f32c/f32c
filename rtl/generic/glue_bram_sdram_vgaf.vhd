@@ -76,6 +76,7 @@ entity glue_bram is
 
 	-- SoC configuration options
 	C_mem_size: integer := 2;	-- in KBytes
+	C_icache_expire: boolean := false; -- when true i-cache will just pass data, won't keep them
 	C_icache_size: integer := 0;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_sdram: boolean := true;
@@ -267,6 +268,7 @@ begin
 	C_load_aligner => C_load_aligner, C_full_shifter => C_full_shifter,
 	C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
 	C_register_technology => C_register_technology,
+	C_icache_expire => C_icache_expire,
 	C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
 	C_cached_addr_bits => C_sdram_address_width, -- +1 ? e.g. 20 bits will cache 1MB
 	-- debugging only
