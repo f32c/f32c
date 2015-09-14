@@ -48,8 +48,8 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 32;
-        -- C_icache_expire: boolean := true; -- i-cache is buggy
-	C_icache_size: integer := 0;	-- 0, 2, 4 or 8 KBytes
+        C_icache_expire: boolean := true; -- passthru buggy i-cache
+	C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_vgahdmi: boolean := true;
 	C_vgahdmi_mem_kb: integer := 40; -- KB
@@ -131,6 +131,7 @@ begin
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
+	C_icache_expire => C_icache_expire,
 	C_icache_size => C_icache_size,
 	C_dcache_size => C_dcache_size,
 	C_gpio => C_gpio,
