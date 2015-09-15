@@ -119,8 +119,6 @@ architecture x of cache is
     constant C_dtag_bits: integer := C_cached_addr_bits-C_dcache_addr_bits+1;  -- +1 = 1 extra bit for data valid
 
     signal i_addr, d_addr: std_logic_vector(31 downto 2);
-    signal i_addr_expire: std_logic_vector(31 downto 2); -- to debug i-cache
-    signal icache_write_expire: std_logic; -- to debug i-cache
     signal i_data: std_logic_vector(31 downto 0);
     signal cpu_d_data_in, cpu_d_data_out: std_logic_vector(31 downto 0);
     signal icache_data_in, icache_data_out: std_logic_vector(31 downto 0);
@@ -193,7 +191,7 @@ begin
     to_i_bram(C_itag_bits+31 downto 32) <= icache_tag_in;
 
     normal_icache: if not C_icache_expire generate
-      flush_i_line <= cpu_flush_i_line; -- original
+      flush_i_line <= cpu_flush_i_line;
       flush_i_addr <= d_addr;
     end generate;
 
@@ -203,12 +201,10 @@ begin
         if rising_edge(clk) then
           -- once used i_addr cache line immediately discarded on the next clock
           -- pass i-data from SDRAM thru cache and expire
-          icache_write_expire <= icache_write;
-          i_addr_expire <= i_addr;
+          flush_i_line <= icache_write;
+          flush_i_addr <= i_addr;
         end if;
       end process;
-      flush_i_line <= icache_write_expire;
-      flush_i_addr <= i_addr_expire;
     end generate;
 
     G_icache_2k:
