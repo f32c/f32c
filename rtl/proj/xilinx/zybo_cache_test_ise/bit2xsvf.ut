@@ -1,0 +1,5 @@
+setMode -bs
+setCable -port xsvf -file "default.xsvf"
+addDevice -p 1 -file "default.bit"
+Program -p 1
+exit
