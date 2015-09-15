@@ -71,6 +71,7 @@ entity cache is
 	C_cached_addr_bits: integer := 20; -- unused value (hardcoded 20 bits)
 
 	-- debugging options
+	C_icache_expire: boolean := false; -- unused value
 	C_debug: boolean
     );
     port (
