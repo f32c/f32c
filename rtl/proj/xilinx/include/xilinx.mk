@@ -245,4 +245,4 @@ junk += $(project)_err.twr $(project)_err.twx
 	echo programming_files $(junk) | sed 's, ,\n,g' > .gitignore
 
 clean::
-	rm -rf $(junk)
+	rm -rf $(junk) *~
