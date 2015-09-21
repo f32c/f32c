@@ -43,16 +43,16 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: 50/81/100/112
-	C_clk_freq: integer := 100;
+	-- Main clock: 50/81/83/100/112
+	C_clk_freq: integer := 83;
 
 	-- SoC configuration options
-	C_mem_size: integer := 32;
+	C_mem_size: integer := 16;
         C_icache_expire: boolean := true; -- passthru buggy i-cache
 	C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_vgahdmi: boolean := true;
-	C_vgahdmi_mem_kb: integer := 40; -- KB
+	C_vgahdmi_mem_kb: integer := 4; -- KB
 	C_sio: integer := 1;
 	C_spi: integer := 2;
 	C_gpio: integer := 32
@@ -111,6 +111,13 @@ begin
     clkgen81: entity work.pll_50M_81M25
     port map(
       clk_in1 => clk_50MHz, clk_out1 => clk
+    );
+    end generate;
+
+    clk83: if C_clk_freq = 83 generate
+    clkgen83: entity work.pll_50M_25M_83M33_250M
+    port map(
+      clk_in1 => clk_50MHz, clk_out1 => clk_25MHz, clk_out2 => clk, clk_out3 => clk_250MHz
     );
     end generate;
 
