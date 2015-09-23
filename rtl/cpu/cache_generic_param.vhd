@@ -91,6 +91,9 @@ entity cache is
 	snoop_addr: in std_logic_vector(31 downto 2);
 	intr: in std_logic_vector(5 downto 0);
 	-- debugging only
+	icache_write_enable: in std_logic := '1'; -- icache write enable
+	icache_flush_enable: in std_logic := '1'; -- icache flush enable
+
 	debug_in_data: in std_logic_vector(7 downto 0);
 	debug_in_strobe: in std_logic;
 	debug_in_busy: out std_logic;
@@ -191,7 +194,7 @@ begin
     to_i_bram(C_itag_bits+31 downto 32) <= icache_tag_in;
 
     normal_icache: if not C_icache_expire generate
-      flush_i_line <= cpu_flush_i_line;
+      flush_i_line <= cpu_flush_i_line and icache_flush_enable;
       flush_i_addr <= d_addr;
     end generate;
 
@@ -201,7 +204,7 @@ begin
         if rising_edge(clk) then
           -- once used i_addr cache line immediately discarded on the next clock
           -- pass i-data from SDRAM thru cache and expire
-          flush_i_line <= icache_write;
+          flush_i_line <= icache_write and icache_flush_enable;
           flush_i_addr <= i_addr;
         end if;
       end process;
@@ -339,14 +342,13 @@ begin
       '1' when icache_line_valid else '0';
 
     iaddr_cacheable <= C_icache_size > 0; -- XXX kseg0: R_i_addr(31 downto 29) = "100";
-    icache_write <= imem_data_ready when R_i_strobe = '1' else '0';
+    icache_write <= imem_data_ready and R_i_strobe and icache_write_enable;
     itag_valid: if C_icache_size > 0 generate
-    icache_tag_in(C_itag_bits-1 downto C_itag_bits-2) <= '1' & R_i_addr(31);
-    icache_tag_in(C_cached_addr_bits-C_icache_addr_bits-1 downto 0) <= R_i_addr(C_cached_addr_bits-1 downto C_icache_addr_bits);
+    icache_tag_in(1+C_cached_addr_bits-C_icache_addr_bits downto 0) 
+      <= '1' & R_i_addr(31) & R_i_addr(C_cached_addr_bits-1 downto C_icache_addr_bits);
     icache_line_valid <= iaddr_cacheable
-      and icache_tag_out(C_itag_bits-1) = '1'
-      and icache_tag_in(C_itag_bits-2) = icache_tag_out(C_itag_bits-2)
-      and icache_tag_in(C_cached_addr_bits-C_icache_addr_bits-1 downto 0) = icache_tag_out(C_cached_addr_bits-C_icache_addr_bits-1 downto 0);
+      and '1' & icache_tag_in(C_cached_addr_bits-C_icache_addr_bits downto 0) 
+           = icache_tag_out(1+C_cached_addr_bits-C_icache_addr_bits downto 0);
     end generate;
 
     process(clk)
