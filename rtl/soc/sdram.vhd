@@ -57,6 +57,7 @@ entity SDRAM_Controller is
 	C_cas: integer range 2 to 3 := 2;
 	C_pre: integer range 2 to 3 := 2;
 	C_clock_range: integer range 0 to 2 := 2;
+	C_shift_read: boolean := true; -- if false use phase read (no shifting)
 	sdram_address_width: natural;
 	sdram_column_bits: natural;
 	sdram_startup_cycles: natural;
@@ -136,7 +137,7 @@ architecture Behavioral of SDRAM_Controller is
     attribute IOB of iob_data   : signal is "true";
    
     signal iob_data_next: std_logic_vector(15 downto 0) := (others => '0');
-    signal R_from_sdram_prev, R_from_sdram: std_logic_vector(15 downto 0);
+    signal R_from_sdram: std_logic_vector(31 downto 0);
     attribute IOB of R_from_sdram: signal is "true";
    
     type fsm_state is (
@@ -257,7 +258,7 @@ begin
     -- Explicitly set up the tristate I/O buffers on the DQ signals
     ---------------------------------------------------------------
     sdram_data <= iob_data when iob_dq_hiz = '0' else (others => 'Z');
-    data_out <= R_from_sdram & R_from_sdram_prev;
+    data_out <= R_from_sdram;
 
     process(R_next_port, data_ready_delay)
     begin
@@ -282,17 +283,46 @@ begin
 	next_port <= t;
     end process;
 
+    shift_read: if C_shift_read generate
+    -- with shift read data_out is valid on
+    -- one specific cycle. CPU must read data at exactly this cycle
     capture_proc: process(clk) 
     begin
 	if C_clock_range = 1 and falling_edge(clk) then
-	    R_from_sdram <= sdram_data;
-	    R_from_sdram_prev <= R_from_sdram;
+	    R_from_sdram(31 downto 16) <= sdram_data;
+	    R_from_sdram(15 downto 0) <= R_from_sdram(31 downto 16);
 	end if;
 	if C_clock_range /= 1 and rising_edge(clk) then
-	    R_from_sdram <= sdram_data;
-	    R_from_sdram_prev <= R_from_sdram;
+	    R_from_sdram(31 downto 16) <= sdram_data;
+	    R_from_sdram(15 downto 0) <= R_from_sdram(31 downto 16);
 	end if;
     end process;
+    end generate;
+
+    phased_read: if not C_shift_read generate
+    -- with phased read data_out keeps valid a
+    -- until next read, CPU can read it at any later
+    -- time
+    phase_proc: process(clk)
+    begin
+	if C_clock_range = 1 and falling_edge(clk) then
+            if data_ready_delay(2) = '1' then
+	        R_from_sdram(15 downto 0) <= sdram_data;
+            end if;
+            if data_ready_delay(1) = '1' then
+	        R_from_sdram(31 downto 16) <= sdram_data;
+            end if;
+	end if;
+	if C_clock_range /= 1 and rising_edge(clk) then
+            if data_ready_delay(2) = '1' then
+	        R_from_sdram(15 downto 0) <= sdram_data;
+            end if;
+            if data_ready_delay(1) = '1' then
+	        R_from_sdram(31 downto 16) <= sdram_data;
+            end if;
+	end if;
+    end process;
+    end generate;
 
     main_proc: process(clk) 
     begin
