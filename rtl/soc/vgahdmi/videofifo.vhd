@@ -70,7 +70,7 @@ architecture behavioral of videofifo is
     signal R_pixbuf_rd_addr, R_pixbuf_wr_addr, S_pixbuf_wr_addr_next: std_logic_vector(C_width-1 downto 0);
     signal need_refill: boolean;
     signal toggle_read_complete: std_logic;
-    signal clksync: std_logic_vector(C_synclen-1 downto 0);
+    signal clksync, startsync: std_logic_vector(C_synclen-1 downto 0);
     signal clean_start, clean_fetch: std_logic;
 begin
     S_pixbuf_wr_addr_next <= R_pixbuf_wr_addr + 1;
@@ -97,9 +97,9 @@ begin
     process(clk)
     begin
       if rising_edge(clk) then
-        clean_start <= start;
         -- synchronize clk_pixel to clk with shift register
         clksync <= clksync(C_synclen-2 downto 0) & toggle_read_complete;
+        startsync <= startsync(C_synclen-2 downto 0) & start;
       end if;
     end process;
 
@@ -107,6 +107,9 @@ begin
     -- create a short pulse that lasts one CPU clk period.
     -- This signal is request to fetch new data
     clean_fetch <= clksync(C_synclen-2) xor clksync(C_synclen-1);
+
+    -- clean start is a delay thru clock synchronous shift register
+    clean_start <= startsync(C_synclen-1);
 
     --
     -- Refill the circular buffer with fresh data from SRAM-a
