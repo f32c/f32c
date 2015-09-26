@@ -74,6 +74,11 @@ entity glue_bram is
 	C_sdram_startup_cycles : integer := 10100;
 	C_sdram_cycles_per_refresh : integer := 1524;
 
+	-- RAM emulation
+	-- 0: normal SDRAM, no emulation
+	-- 11:8K, 12:16K, 13:32K ... RAM emulation
+	C_ram_emu_addr_width: integer := 0;
+
 	-- SoC configuration options
 	C_mem_size: integer := 2;	-- in KBytes
 	C_icache_expire: boolean := false; -- when true i-cache will just pass data, won't keep them
@@ -333,6 +338,8 @@ begin
     -- to_sdram(fb_port).byte_sel <= "0001"; -- 8 bits read (LSB byte used)
     to_sdram(fb_port).byte_sel <= "1111"; -- 32 bits read for RGB
     vga_data_ready <= sdram_ready(fb_port);
+
+    use_sdram: if C_ram_emu_addr_width = 0 generate
     sdram: entity work.sdram_controller
     generic map (
 	C_ports => 3,
@@ -358,6 +365,31 @@ begin
 	sdram_cke => sdram_cke, sdram_clk => sdram_clk,
 	sdram_we => sdram_we, sdram_cs => sdram_cs
     );
+    end generate; -- sdram
+
+    use_ramemu: if C_ram_emu_addr_width > 0 generate
+    ramemu: entity work.ramemu
+    generic map (
+	C_ports => 3,
+	C_addr_width => C_ram_emu_addr_width
+    )
+    port map (
+	clk => clk, reset => sio_break_internal(0),
+	-- internal connections
+	bus_out => from_sdram, bus_in => to_sdram, ready_out => sdram_ready,
+	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr
+    );
+    sdram_addr <= (others => '-');
+    sdram_data <= (others => 'Z');
+    sdram_ba <= (others => '-');
+    sdram_dqm <= (others => '-');
+    sdram_ras <= '1';
+    sdram_cas <= '1';
+    sdram_cke <= '1';
+    sdram_clk <= '0';
+    sdram_we <= '1';
+    sdram_cs <= '1';
+    end generate; -- end ramemu
     end generate;
 
     -- RS232 sio

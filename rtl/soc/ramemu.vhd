@@ -30,7 +30,8 @@ use work.sram_pack.all;
 entity ramemu is
     generic (
 	C_ports: integer;
-	C_prio_port: integer := -1
+	C_prio_port: integer := -1;
+	C_addr_width: integer := 11 -- BRAM size alloc bytes = 2^(n+3)
     );
     port (
 	clk: in  STD_LOGIC;
@@ -62,9 +63,6 @@ architecture Behavioral of ramemu is
     -- Arbiter internal signals
     signal next_port: integer;
     
-    -- BRAM size alloc bytes = 2^(n+3)
-    constant bram_addr_width: integer := 11;
-
 begin
     -- Mux for input ports
     addr_strobe <= bus_in(R_next_port).addr_strobe;
@@ -74,6 +72,7 @@ begin
     data_in <= bus_in(R_next_port).data_in;
 
     -- Arbiter: round-robin port selection combinatorial logic
+    no_priority_arbiter: if C_prio_port < 0 generate
     process(bus_in, R_next_port, R_cur_port)
 	variable i, j, t, n: integer;
     begin
@@ -82,7 +81,7 @@ begin
 	    for j in 1 to C_ports loop
 		if R_cur_port = i then
 		    n := (i + j) mod C_ports;
-		    if bus_in(n).addr_strobe = '1' then -- and n /= C_prio_port then
+		    if bus_in(n).addr_strobe = '1' then
 			t := n;
 			exit;
 		    end if;
@@ -91,6 +90,7 @@ begin
 	end loop;
 	next_port <= t;
     end process;
+    end generate; -- end of no_priority_arbiter
     
     ready_out <= R_ready_out;
 
@@ -100,29 +100,27 @@ begin
             R_next_port <= next_port;
 	    R_ready_out <= (others => '0');
 	    R_ready_out(next_port) <= '1';
-	    -- R_data_out <= data_out;
         end if;
     end process;
     
-    -- bus_out <= R_data_out;
-    
-    -- the bram itself
+    -- BRAM storage: 4 blocks of 8 bits
+    -- each block separately writeable
     four_bytes: for i in 0 to 3 generate
     write_byte(i) <= write and byte_sel(i); -- and addr_strobe;
     ram_emu_bram: entity work.bram_true2p_1clk
     generic map (
         dual_port => false,
         data_width => 8,
-        addr_width => bram_addr_width
+        addr_width => C_addr_width
     )
     port map (
         clk => not clk,
         we_a => write_byte(i),
-        addr_a => addr(bram_addr_width-1 downto 0),
+        addr_a => addr(C_addr_width-1 downto 0),
         data_in_a => data_in(8*i+7 downto 8*i),
-        data_out_a => bus_out(8*i+7 downto 8*i),
-        we_b => '0', addr_b => (others => '0'),
-        data_in_b => (others => '0'), data_out_b => open
+        data_out_a => bus_out(8*i+7 downto 8*i)
+        --we_b => '0', addr_b => (others => '0'),
+        --data_in_b => (others => '0'), data_out_b => open
     );
     end generate;
 end Behavioral;
