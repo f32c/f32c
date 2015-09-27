@@ -83,7 +83,7 @@ begin
     out_narrow: if not C_output_always generate
     -- for debug, to provoke eventual problems
     -- instead of always otputting data
-    -- output data only during 1 cycles
+    -- output data only during 1 cycle
     -- after wait states. otherwise output 0
     out_enable: process(clk)
     begin
