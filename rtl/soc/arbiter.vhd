@@ -100,7 +100,7 @@ begin
     begin
         if rising_edge(clk) then
             R_next_port <= next_port;
-            if S_addr_strobe = '1' then
+            if ready_next_cycle = '1' then
                 R_cur_port <= R_next_port;
             end if;
 	    R_ready_out <= (others => '0'); -- decoder all 0
