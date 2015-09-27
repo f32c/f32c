@@ -78,6 +78,7 @@ entity glue_bram is
 	-- 0: normal SDRAM, no emulation
 	-- 11:8K, 12:16K, 13:32K ... RAM emulation
 	C_ram_emu_addr_width: integer := 0;
+	C_ram_emu_wait_states: integer := 0;
 
 	-- SoC configuration options
 	C_mem_size: integer := 2;	-- in KBytes
@@ -371,6 +372,7 @@ begin
     ramemu: entity work.ramemu
     generic map (
 	C_ports => 3,
+	C_wait_states => C_ram_emu_wait_states,
 	C_addr_width => C_ram_emu_addr_width
     )
     port map (

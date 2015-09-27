@@ -31,6 +31,7 @@ entity ramemu is
     generic (
 	C_ports: integer;
 	C_prio_port: integer := -1;
+	C_wait_states: integer := 0; -- extra wait states (CPU fails at 3 or above)
 	C_addr_width: integer := 11 -- BRAM size alloc bytes = 2^(n+3)
     );
     port (
@@ -62,6 +63,15 @@ architecture Behavioral of ramemu is
 
     -- Arbiter internal signals
     signal next_port: integer;
+
+    -- ready signal becomes 1 when data will be
+    -- ready for reading in the nex clock cycle
+    -- or current write will complete
+    -- in the next clock cycle
+    signal ready_next_cycle: std_logic := '0';
+
+    -- delay ready signal to simulate slow ram
+    signal wait_states: std_logic_vector(C_wait_states-1 downto 0);
     
 begin
     -- Mux for input ports
@@ -91,18 +101,20 @@ begin
 	next_port <= t;
     end process;
     end generate; -- end of no_priority_arbiter
-    
-    ready_out <= R_ready_out;
 
     ramport_fsm: process(clk)
     begin
         if rising_edge(clk) then
             R_next_port <= next_port;
-	    R_ready_out <= (others => '0');
-	    R_ready_out(next_port) <= '1';
+            if addr_strobe = '1' then
+                R_cur_port <= R_next_port;
+            end if;
+	    R_ready_out <= (others => '0'); -- decoder all 0
+	    R_ready_out(next_port) <= ready_next_cycle; -- decoder one 1
         end if;
     end process;
-    
+    ready_out <= R_ready_out;
+
     -- BRAM storage: 4 blocks of 8 bits
     -- each block separately writeable
     four_bytes: for i in 0 to 3 generate
@@ -119,8 +131,32 @@ begin
         addr_a => addr(C_addr_width-1 downto 0),
         data_in_a => data_in(8*i+7 downto 8*i),
         data_out_a => bus_out(8*i+7 downto 8*i)
-        --we_b => '0', addr_b => (others => '0'),
-        --data_in_b => (others => '0'), data_out_b => open
     );
     end generate;
+
+    no_wait_states: if C_wait_states = 0 generate
+        ready_next_cycle <= '1';
+    end generate;
+
+    have_wait_states: if C_wait_states > 0 generate
+    slowdown: process(clk)
+    begin
+        if rising_edge(clk) then
+            if ready_next_cycle = '0' then
+              -- shift register
+              wait_states <= addr_strobe
+                  & wait_states(wait_states'high downto 1);
+            else
+              -- after each ready out, reset whole shift register
+              -- this is not needed
+              -- for C_wait_states = 0-2
+              -- but without reseting it, ramemu will work when
+              -- C_wait_states = 3 or more and icache disabled or constantly expired
+              wait_states <= (others => '0');
+            end if;
+        end if;
+    end process;
+    ready_next_cycle <= wait_states(0);
+    end generate;
+
 end Behavioral;
