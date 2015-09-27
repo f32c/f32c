@@ -31,7 +31,7 @@ entity ramemu is
     generic (
 	C_ports: integer;
 	C_prio_port: integer := -1;
-	C_wait_states: integer := 0; -- extra wait states (CPU fails at 3 or above)
+	C_wait_states: integer := 0; -- extra wait states
 	C_addr_width: integer := 11 -- BRAM size alloc bytes = 2^(n+3)
     );
     port (
