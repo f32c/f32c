@@ -126,6 +126,9 @@ junk += _xmsgs usage_statistics_webtalk.html
 xc3sprog: $(project).bit
 	xc3sprog -c $(xc3sprog_interface) -p $(xc3sprog_device) $(project).bit
 
+xc3sprog_force:
+	xc3sprog -c $(xc3sprog_interface) -p $(xc3sprog_device) $(project).bit
+
 xc3sprog_flash: $(project).bit
 	xz -cd $(jtag_spi_bridge) > /tmp/jtag_spi_bridge.bit
 	xc3sprog -c $(xc3sprog_interface) -p $(xc3sprog_device) /tmp/jtag_spi_bridge.bit
