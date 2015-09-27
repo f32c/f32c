@@ -45,6 +45,7 @@ vhdfiles = \
 ../../../cpu/idecode_rv32.vhd \
 ../../../cpu/cache_generic_param.vhd \
 ../../../cpu/debug.vhd \
+../../../soc/ramemu.vhd \
 ../../../soc/sdram.vhd \
 ../../../soc/sram_pack.vhd \
 ../../../soc/sio.vhd \
