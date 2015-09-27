@@ -48,7 +48,7 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 8; -- bootloader area
-        C_icache_expire: boolean := false; -- passthru buggy i-cache
+        C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
 	C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_ram_emu_addr_width: integer := 11; -- RAM emulation (0:disable, 11:8K, 12:16K ...)

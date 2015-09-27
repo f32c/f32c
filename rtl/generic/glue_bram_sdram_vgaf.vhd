@@ -248,7 +248,14 @@ architecture Behavioral of glue_bram is
     constant iomap_simple_in: T_iomap_range := (x"FF00", x"FF0F");
     constant iomap_simple_out: T_iomap_range := (x"FF10", x"FF1F");
     signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
-   
+
+    -- external RAM signals (currently only used for RAM emulation)
+    signal xram_request, xram_write: std_logic;
+    signal xram_addr: std_logic_vector(27 downto 0);
+    signal xram_byte_sel: std_logic_vector(3 downto 0);
+    signal xram_data_in, xram_data_out: std_logic_vector(31 downto 0);
+    signal xram_ready_next_cycle: std_logic;
+
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
     signal debug_to_sio_data: std_logic_vector(7 downto 0);
@@ -368,19 +375,39 @@ begin
     );
     end generate; -- sdram
 
-    use_ramemu: if C_ram_emu_addr_width > 0 generate
-    ramemu: entity work.ramemu
+    -- for debugging SDRAM and i-cache issues
+    -- here is simple arbiter and BRAM based RAM emulation
+    use_arbiter_ramemu: if C_ram_emu_addr_width > 0 generate
+    inst_arbiter: entity work.arbiter
     generic map (
-	C_ports => 3,
-	C_wait_states => C_ram_emu_wait_states,
-	C_addr_width => C_ram_emu_addr_width
+	C_ports => 3
     )
     port map (
 	clk => clk, reset => sio_break_internal(0),
 	-- internal connections
 	bus_out => from_sdram, bus_in => to_sdram, ready_out => sdram_ready,
-	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr
+	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
+	-- external RAM connection
+	addr_strobe => xram_request, write => xram_write,
+	addr => xram_addr, byte_sel => xram_byte_sel,
+	data_in => xram_data_in, data_out => xram_data_out,
+	ready_next_cycle => xram_ready_next_cycle
     );
+    inst_ram_emu: entity work.ram_emu
+    generic map (
+	C_wait_states => C_ram_emu_wait_states,
+	C_addr_width => C_ram_emu_addr_width
+    )
+    port map (
+	clk => clk, reset => sio_break_internal(0),
+	request => xram_request, write => xram_write,
+	addr => xram_addr, byte_sel => xram_byte_sel,
+	data_in => xram_data_in, data_out => xram_data_out,
+	ready_next_cycle => xram_ready_next_cycle
+    );
+    -- disable SDRAM, but we need to
+    -- use external signals here so
+    -- xilinx compiler will be happy
     sdram_addr <= (others => '-');
     sdram_data <= (others => 'Z');
     sdram_ba <= (others => '-');
@@ -391,7 +418,7 @@ begin
     sdram_clk <= '0';
     sdram_we <= '1';
     sdram_cs <= '1';
-    end generate; -- end ramemu
+    end generate; -- end arbiter_ramemu
     end generate;
 
     -- RS232 sio
