@@ -534,7 +534,7 @@ main_proc: process(clk)
                end if;
          
             when s_write_3 =>  -- must wait tRDL, hence the extra idle state
-               data_ready_delay(0) <= '1'; -- f32c hack to acknowledge write with ready_next_cycle
+               data_ready_delay(1) <= '1'; -- f32c hack to acknowledge write with ready_next_cycle
                -- back to back transaction?
                if forcing_refresh = '0' and got_transaction = '1' and can_back_to_back = '1' then
                   if save_wr = '1' then
