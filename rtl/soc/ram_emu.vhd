@@ -80,21 +80,18 @@ begin
       data_out <= S_data_out;
     end generate;
 
-    out_narrow: if not C_output_always generate
     -- for debug, to provoke eventual problems
     -- instead of always otputting data
     -- output data only during 1 cycle
     -- after wait states. otherwise output 0
+    out_narrow: if not C_output_always generate
     out_enable: process(clk)
     begin
       if rising_edge(clk) then
           R_ready_this_cycle <= S_ready_next_cycle;
       end if;
     end process;
-    data_out <= S_data_out when
-           R_ready_this_cycle = '1'
-           -- or
-           -- S_ready_next_cycle = '1'
+    data_out <= S_data_out when R_ready_this_cycle = '1'
            else (others => '0');
     end generate;
 
