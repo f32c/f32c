@@ -63,7 +63,6 @@ architecture Behavioral of arbiter is
 
     -- Arbiter internal signals
     signal next_port: integer;
-
 begin
     -- Mux for input ports
     S_addr_strobe <= bus_in(R_next_port).addr_strobe;
@@ -74,7 +73,6 @@ begin
     addr(17 downto 0) <= bus_in(R_next_port).addr; -- XXX revisit, widen!
     data_in <= bus_in(R_next_port).data_in;
     bus_out <= data_out;
-
     -- Arbiter: round-robin port selection combinatorial logic
     no_priority_arbiter: if C_prio_port < 0 generate
     process(bus_in, R_next_port, R_cur_port)
