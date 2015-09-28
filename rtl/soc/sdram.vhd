@@ -57,7 +57,7 @@ entity SDRAM_Controller is
 	C_cas: integer range 2 to 3 := 2;
 	C_pre: integer range 2 to 3 := 2;
 	C_clock_range: integer range 0 to 2 := 2;
-	C_shift_read: boolean := true; -- if false use phase read (no shifting)
+	C_shift_read: boolean := false; -- if false use phase read (no shifting)
 	sdram_address_width: natural;
 	sdram_column_bits: natural;
 	sdram_startup_cycles: natural;
