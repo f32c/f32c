@@ -77,6 +77,7 @@ entity glue is
 	C_sram: boolean := true;
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
+	C_psram_refresh: boolean := true;
 	C_sio: boolean := true;
 	C_leds_btns: boolean := true;
 	C_gpio: boolean := true;
@@ -146,6 +147,10 @@ architecture Behavioral of glue is
     signal from_sram: std_logic_vector(31 downto 0);
     signal snoop_cycle: std_logic;
     signal snoop_addr: std_logic_vector(31 downto 2);
+    signal R_refresh_strobe: std_logic;
+    signal R_refresh_addr: std_logic_vector(17 downto 0);
+    signal R_refresh_cnt: integer;
+    signal refresh_data_ready: std_logic;
 
     -- Block RAM
     signal bram_i_to_cpu, bram_d_to_cpu: std_logic_vector(31 downto 0);
@@ -567,6 +572,7 @@ begin
       dmem_addr_strobe, imem_addr_strobe, fb_addr_strobe, fb_addr,
       sram_ready, io_to_cpu, from_sram)
 	variable data_port, instr_port, fb_port, pcm_port: integer;
+	variable refresh_port: integer;
 	variable sram_data_strobe, sram_instr_strobe: std_logic;
     begin
 	for cpu in 0 to (C_cpus - 1) loop
@@ -673,13 +679,22 @@ begin
 	    to_sram(pcm_port).data_in <= (others => '-');
 	    pcm_data_ready <= sram_ready(pcm_port);
 	end if;
+	if C_psram_refresh then
+	    refresh_port := 2 * C_cpus + 2;
+	    to_sram(refresh_port).addr_strobe <= R_refresh_strobe;
+	    to_sram(refresh_port).write <= '0';
+	    to_sram(refresh_port).byte_sel <= x"f";
+	    to_sram(refresh_port).addr <= R_refresh_addr;
+	    to_sram(refresh_port).data_in <= (others => '-');
+	    refresh_data_ready <= sram_ready(refresh_port);
+	end if;
     end process;
 
     G_sram:
     if C_sram generate
     sram: entity work.sram
     generic map (
-	C_ports => 2 * C_cpus + 2, -- extra ports: framebuffer and PCM audio
+	C_ports => 2 * C_cpus + 3, -- extras: framebuffer, PCM, PSRAM refresh
 	C_prio_port => 2 * C_cpus, -- framebuffer
 	C_wait_cycles => C_sram_wait_cycles,
 	C_pipelined_read => C_pipelined_read
@@ -692,6 +707,28 @@ begin
 	-- Multi-port connections:
 	bus_in => to_sram, ready_out => sram_ready
     );
+    end generate;
+
+    -- Buggy ISSI IS66WV51216DBLL PSRAM silicon from 2015 needs this!
+    G_psram_refresh:
+    if C_psram_refresh generate
+    process(clk)
+    begin
+	if rising_edge(clk) then
+	    if refresh_data_ready = '1' then
+		-- DRAM page size is apparently 512 bytes, our bus width is 4B
+		R_refresh_addr <= R_refresh_addr + 512 / 4;
+		-- Refresh all 2048 pages every 32 ms, per IS42S16100E specs
+		R_refresh_cnt <= C_clk_freq * 1000000 / 32 / 2048;
+	    end if;
+	    if R_refresh_cnt /= 0 then
+		R_refresh_cnt <= R_refresh_cnt - 1;
+		R_refresh_strobe <= '0';
+	    else
+		R_refresh_strobe <= not refresh_data_ready;
+	    end if;
+	end if;
+    end process;
     end generate;
 
     --
