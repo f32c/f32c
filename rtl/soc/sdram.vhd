@@ -288,11 +288,7 @@ begin
     -- one specific cycle. CPU must read data at exactly this cycle
     capture_proc: process(clk) 
     begin
-	if C_clock_range = 1 and falling_edge(clk) then
-	    R_from_sdram(31 downto 16) <= sdram_data;
-	    R_from_sdram(15 downto 0) <= R_from_sdram(31 downto 16);
-	end if;
-	if C_clock_range /= 1 and rising_edge(clk) then
+	if falling_edge(clk) then
 	    R_from_sdram(31 downto 16) <= sdram_data;
 	    R_from_sdram(15 downto 0) <= R_from_sdram(31 downto 16);
 	end if;
@@ -305,15 +301,7 @@ begin
     -- time
     phase_proc: process(clk)
     begin
-	if C_clock_range = 1 and falling_edge(clk) then
-            if data_ready_delay(2) = '1' then
-	        R_from_sdram(15 downto 0) <= sdram_data;
-            end if;
-            if data_ready_delay(1) = '1' then
-	        R_from_sdram(31 downto 16) <= sdram_data;
-            end if;
-	end if;
-	if C_clock_range /= 1 and rising_edge(clk) then
+	if falling_edge(clk) then
             if data_ready_delay(2) = '1' then
 	        R_from_sdram(15 downto 0) <= sdram_data;
             end if;

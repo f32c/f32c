@@ -21,11 +21,11 @@ entity bram_true2p_1clk is
 	(
 		clk: in std_logic;
 		addr_a: in std_logic_vector((addr_width-1) downto 0);
-		addr_b: in std_logic_vector((addr_width-1) downto 0);
-		we_a: in std_logic := '1';
-		we_b: in std_logic := '1';
+		addr_b: in std_logic_vector((addr_width-1) downto 0) := (others => '-');
+		we_a: in std_logic := '0';
+		we_b: in std_logic := '0';
 		data_in_a: in std_logic_vector((data_width-1) downto 0);
-		data_in_b: in std_logic_vector((data_width-1) downto 0);
+		data_in_b: in std_logic_vector((data_width-1) downto 0) := (others => '-');
 		data_out_a: out std_logic_vector((data_width -1) downto 0);
 		data_out_b: out std_logic_vector((data_width -1) downto 0)
 	);

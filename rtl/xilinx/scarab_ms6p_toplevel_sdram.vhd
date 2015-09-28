@@ -47,10 +47,13 @@ entity glue is
 	C_clk_freq: integer := 83;
 
 	-- SoC configuration options
-	C_mem_size: integer := 16;
-        C_icache_expire: boolean := true; -- passthru buggy i-cache
+	C_mem_size: integer := 8; -- bootloader area
+        C_icache_expire: boolean := true; -- false: normal i-cache, true: passthru buggy i-cache
 	C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
+	C_sdram_separate_arbiter: boolean := false;
+	C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
+	C_ram_emu_wait_states: integer := 3;
 	C_vgahdmi: boolean := true;
 	C_vgahdmi_mem_kb: integer := 4; -- KB
 	C_sio: integer := 1;
@@ -148,6 +151,9 @@ begin
 	C_sdram_column_bits => 9,
 	C_sdram_startup_cycles => 10100,
 	C_sdram_cycles_per_refresh => 1524,
+	C_sdram_separate_arbiter => C_sdram_separate_arbiter,
+	C_ram_emu_addr_width => C_ram_emu_addr_width,
+	C_ram_emu_wait_states => C_ram_emu_wait_states,
         C_vgahdmi => C_vgahdmi,
         C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
 	C_debug => C_debug
