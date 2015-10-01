@@ -53,7 +53,7 @@ entity glue is
         C_dcache_size: integer := 0; -- 0, 2, 4 or 8 KBytes
         C_sdram_separate_arbiter: boolean := false;
 	C_ram_emu_addr_width: integer := 11; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
-	C_ram_emu_wait_states: integer := 2;
+	C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
         C_vgahdmi: boolean := true;
 	C_vgahdmi_mem_kb: integer := 4; -- KB
 	C_sio: integer := 1;
