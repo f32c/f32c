@@ -34,7 +34,7 @@ entity arbiter is
 
     generic (
 	C_ports: integer;
-	C_back2back: boolean := true;
+	C_back2back: boolean := true; -- true:  back2back enabled (only this works for now).
 	C_prio_port: integer := -1
     );
     port (
@@ -65,7 +65,7 @@ architecture Behavioral of arbiter is
     -- Arbiter registers
     signal R_cur_port, R_hold_cur_port: integer range 0 to (C_ports - 1);
     signal R_ready_out: sram_ready_array;
-
+    signal request_completed: boolean := false;
     -- Arbiter internal signals
     signal next_port: integer;
 begin
@@ -100,28 +100,25 @@ begin
     end generate; -- end of no_priority_arbiter
 
     dont_back2back: if not C_back2back generate
+    -- due to currently unclear reason
+    -- this arbiter without back-2-back doesn't work
     ramport_fsm_dont_b2b: process(clk)
     begin
-        R_ready_out <= (others => '0');
-        R_hold_cur_port <= R_cur_port;
         if rising_edge(clk) then
-            if S_addr_strobe = '0' then
-              -- if no request on current port, switch to next port
+            R_ready_out <= (others => '0');
+            if request_completed then
+              -- upon completed request switch to next port
+              -- this line enforces servicing of the next port
+              -- and prevents starvation
               R_cur_port <= next_port;
+              request_completed <= false;
             else
               -- if request is pending on current port
               -- wait for ready signal and when it arrives
-              -- send it back to current port which requested it
+              -- send it back to current port, which requested it
               if ready_next_cycle = '1' then
-                -- another register is required to hold content of R_cur_cur
-                -- port because R_cur_cur will change on next cycle and
-                -- expression
-                -- R_ready_out(R_cur_port) <= ready_next_cycle;
-                -- will result in setting a wrong ready bit
-                R_ready_out(R_hold_cur_port) <= ready_next_cycle;
-                -- this line enforces servicing of the next port
-                -- and prevents starvation
-                R_cur_port <= next_port;
+                R_ready_out(R_cur_port) <= ready_next_cycle;
+                request_completed <= true;
               end if;
             end if;
         end if;
@@ -129,10 +126,15 @@ begin
     end generate;
 
     do_back2back: if C_back2back generate
+    -- rudimental priority - if reuqests keep recurring
+    -- on current port, it will be serviced all the way
+    -- until there's no request on that that port
+    -- this policy can lead to starvation of requests
+    -- pending on other ports
     ramport_fsm_do_b2b: process(clk)
     begin
-        R_ready_out <= (others => '0');
         if rising_edge(clk) then
+            R_ready_out <= (others => '0');
             if S_addr_strobe = '0' then
               -- if no request on current port, switch to next port
               R_cur_port <= next_port;
