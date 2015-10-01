@@ -346,7 +346,7 @@ begin
 		read_done	 <= false;
 		if write = '1' then
 		    data_ready_delay(0) <= '1';
-		    ready_out(R_cur_port) <= '1';
+		    ready_out(R_next_port) <= '1';
 		end if;
 	    end if;
 
