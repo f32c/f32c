@@ -33,7 +33,7 @@ C_full_shifter 	     pipelined instead of iterative shifer
 C_debug              synthesize single-stepping debug module
 ```
 
-The RTL code also includes modules such as a multi-port SRAM
+The RTL code also includes modules such as a multi-port SDRAM and SRAM
 controller, video framebuffer with PAL modulator, SPI, UART, PCM audio,
 GPIO, PWM outputs and a timer, as well as glue logic tailored for
 numerous popular FPGA development boards from various manufacturers.
