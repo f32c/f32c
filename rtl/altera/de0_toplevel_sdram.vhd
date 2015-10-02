@@ -35,8 +35,8 @@ use work.f32c_pack.all;
 
 entity glue is
     generic (
-	-- Main clock freq, in multiples of 10 MHz
-	C_clk_freq: integer := 80;
+	-- Main clock freq, in multiples of 10 MHz, or 81
+	C_clk_freq: integer := 81;
 
 	-- ISA
 	C_arch: integer := ARCH_MI32;
@@ -83,7 +83,9 @@ architecture Behavioral of glue is
     signal btns: std_logic_vector(15 downto 0);
 begin
 
-    clock: entity work.pll_50m
+    G_generic_clk:
+    if C_clk_freq /= 81 generate
+    clock_generic: entity work.pll_50m
     generic map (
 	C_clk_freq => C_clk_freq
     )
@@ -91,6 +93,18 @@ begin
 	clk_50m => clk_50m,
 	clk => clk
     );
+    end generate;
+
+    G_81m_clk:
+    if C_clk_freq = 81 generate
+    clock_81m25: entity work.pll_50m_81m25
+    port map (
+	inclk0 => clk_50m,
+	c0 => clk,	-- 81.25 MHz
+	c1 => open,	-- 325.0 MHz
+	c2 => open	-- 162.5 Mhz
+    );
+    end generate;
 
     -- generic SDRAM glue
     glue_bram: entity work.glue_bram
