@@ -57,6 +57,8 @@ entity SDRAM_Controller is
 	C_cas: integer range 2 to 3 := 2;
 	C_pre: integer range 2 to 3 := 2;
 	C_clock_range: integer range 0 to 2 := 2;
+        C_shift_read: boolean := false; -- if false use phase read (no shifting)
+        C_allow_back2back: boolean := true;
 	sdram_address_width: natural;
 	sdram_column_bits: natural;
 	sdram_startup_cycles: natural;
@@ -136,7 +138,7 @@ architecture Behavioral of SDRAM_Controller is
     attribute IOB of iob_data   : signal is "true";
    
     signal iob_data_next: std_logic_vector(15 downto 0) := (others => '0');
-    signal R_from_sdram_prev, R_from_sdram: std_logic_vector(15 downto 0);
+    signal R_from_sdram: std_logic_vector(31 downto 0);
     attribute IOB of R_from_sdram: signal is "true";
    
     type fsm_state is (
@@ -180,6 +182,7 @@ architecture Behavioral of SDRAM_Controller is
     -- control when new transactions are accepted
     signal ready_for_new: std_logic := '0';
     signal can_back_to_back: std_logic := '0';
+    signal S_let_back2back: boolean := false;
 
     -- signal to control the Hi-Z state of the DQ bus
     signal iob_dq_hiz: std_logic := '1';
@@ -257,7 +260,12 @@ begin
     -- Explicitly set up the tristate I/O buffers on the DQ signals
     ---------------------------------------------------------------
     sdram_data <= iob_data when iob_dq_hiz = '0' else (others => 'Z');
-    data_out <= R_from_sdram & R_from_sdram_prev;
+    -- data_out <= R_from_sdram & R_from_sdram_prev;
+
+    S_let_back2back <= C_allow_back2back
+      and forcing_refresh = '0'
+      and ready_for_new = '0' 
+      and can_back_to_back = '1';
 
     process(R_next_port, data_ready_delay)
     begin
@@ -268,11 +276,11 @@ begin
 	variable i, j, t, n: integer;
     begin
 	t := R_cur_port;
-	for i in 0 to (C_ports - 1) loop
+	for i in 0 to C_ports-1 loop
 	    for j in 1 to C_ports loop
 		if R_cur_port = i then
 		    n := (i + j) mod C_ports;
-		    if bus_in(n).addr_strobe = '1' and n /= C_prio_port then
+		    if bus_in(n).addr_strobe = '1' then -- and n /= C_prio_port then
 			t := n;
 			exit;
 		    end if;
@@ -282,19 +290,39 @@ begin
 	next_port <= t;
     end process;
 
+    shift_read: if C_shift_read generate
     capture_proc: process(clk) 
     begin
 	if C_clock_range = 1 and falling_edge(clk) then
-	    R_from_sdram <= sdram_data;
-	    R_from_sdram_prev <= R_from_sdram;
+	    R_from_sdram(15 downto 0) <= sdram_data;
+	    R_from_sdram(31 downto 16) <= R_from_sdram(15 downto 0);
 	end if;
 	if C_clock_range /= 1 and rising_edge(clk) then
-	    R_from_sdram <= sdram_data;
-	    R_from_sdram_prev <= R_from_sdram;
+	    R_from_sdram(15 downto 0) <= sdram_data;
+	    R_from_sdram(31 downto 16) <= R_from_sdram(15 downto 0);
 	end if;
     end process;
+    end generate;
 
-    main_proc: process(clk) 
+    phased_read: if not C_shift_read generate
+    -- with phased read data_out keeps valid a
+    -- until next read, CPU can read it at any later
+    -- time
+    phase_proc: process(clk)
+    begin
+	if falling_edge(clk) then
+            if data_ready_delay(2) = '1' then
+	        R_from_sdram(15 downto 0) <= sdram_data;
+            end if;
+            if data_ready_delay(1) = '1' then
+	        R_from_sdram(31 downto 16) <= sdram_data;
+            end if;
+	end if;
+    end process;
+    end generate;
+    data_out <= R_from_sdram;
+
+    main_proc: process(clk)
     begin
 	if rising_edge(clk) then
 	    R_next_port <= next_port;
@@ -327,9 +355,11 @@ begin
 	    -- and if it can be back-to-backed with the last transaction
 	    -------------------------------------------------------------------
 	    ready_out <= (others => '0');
-	    ready_out(R_cur_port) <= data_ready_delay(1);
-	    if ready_for_new = '1' and addr_strobe = '1' and (write = '1' or
-	      save_wr = '1' or read_done) then
+	    ready_out(R_cur_port) <= data_ready_delay(0);
+	    if ready_for_new = '1' and addr_strobe = '1'
+	      and read_done
+	      -- and (write = '1' or save_wr = '1' or read_done) 
+	      then
 		R_cur_port <= R_next_port;
 		if save_bank = addr_bank and save_row = addr_row then
 		    can_back_to_back <= '1';
@@ -343,10 +373,12 @@ begin
 		save_data_in     <= data_in;
 		save_byte_enable <= byte_sel;
 		ready_for_new    <= '0';
-		read_done	 <= false;
 		if write = '1' then
-		    data_ready_delay(0) <= '1';
-		    ready_out(R_next_port) <= '1';
+		    data_ready_delay(3) <= '1';
+		    read_done <= false;
+		    --ready_out(R_next_port) <= '1';
+                else
+		    read_done <= false;
 		end if;
 	    end if;
 
@@ -477,7 +509,7 @@ begin
 		if C_cas = 3 then
 		    dqm_sr(1 downto 0) <= (others => '0');
 		end if;
-		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
+		if S_let_back2back then
 		    if save_wr = '0' then
 			state           <= s_read_1;
 			ready_for_new   <= '1'; -- we will be ready for a new transaction next cycle!
@@ -490,7 +522,7 @@ begin
 		else
 		    state <= s_read_4;
 		end if;
-		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
+		if S_let_back2back then
 		    if save_wr = '0' then
 			state           <= s_read_1;
 			ready_for_new   <= '1'; -- we will be ready for a new transaction next cycle!
@@ -500,7 +532,7 @@ begin
 	    when s_read_4 => 
 		state <= s_precharge;
 		-- can we do back-to-back read?
-		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
+		if S_let_back2back then
 		    if save_wr = '0' then
 			state           <= s_read_1;
 			ready_for_new   <= '1'; -- we will be ready for a new transaction next cycle!
@@ -521,14 +553,18 @@ begin
 		iob_bank           <= save_bank;
 		iob_dqm            <= NOT save_byte_enable(1 downto 0);
 		dqm_sr(1 downto 0) <= NOT save_byte_enable(3 downto 2);
+                --iob_dq_hiz  <= '0';
 		iob_data           <= save_data_in(15 downto 0);
 		iob_data_next      <= save_data_in(31 downto 16);
+                --data_ready_delay(1) <= '1';
 
 	    when s_write_2 =>
 		state           <= s_write_3;
 		iob_data        <= iob_data_next;
+		--iob_data           <= save_data_in(31 downto 16);
+		--iob_dqm <= NOT save_byte_enable(3 downto 2);
 		-- can we do a back-to-back write?
-		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
+		if S_let_back2back then
 		    if save_wr = '1' then
 			-- back-to-back write?
 			state           <= s_write_1;
@@ -540,7 +576,7 @@ begin
 
 	    when s_write_3 =>  -- must wait tRDL, hence the extra idle state
 		-- back to back transaction?
-		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
+		if S_let_back2back then
 		    if save_wr = '1' then
 			-- back-to-back write?
 			state           <= s_write_1;
