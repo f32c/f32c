@@ -185,6 +185,7 @@ set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name OPTIMIZATION_MODE "HIGH PERFORMANCE EFFORT"
 set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE SPEED
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
+set_global_assignment -name VHDL_FILE ../../../altera/pll_50m_81m25.vhd
 set_global_assignment -name VHDL_FILE ../../../generic/bram_video.vhd
 set_global_assignment -name VERILOG_FILE ../../../soc/vgahdmi/vgahdmi_v.v
 set_global_assignment -name VHDL_FILE ../../../soc/vgahdmi/vgahdmi.vhd
