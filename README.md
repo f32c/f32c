@@ -13,7 +13,7 @@ and a UART occupies only 1048 6-input LUTs, while still being able to
 execute gcc-generated code when synthesized in the most compact
 configuration which consumes just 697 (649 logic plus 48 memory) LUTs.
 From old to new FPGAs that we have tested, max stable clock ranges
-from 70 MHz (Spartan 3E-500) to 125 MHz (Zinq Z-7010).
+from 70 MHz (Spartan 3E-500) to 125 MHz (Zynq Z-7010).
 
 Configurable options include:
 
@@ -34,7 +34,7 @@ C_debug              synthesize single-stepping debug module
 ```
 
 The RTL code also includes modules such as a multi-port SDRAM and SRAM
-controller, video framebuffer with PAL modulator, SPI, UART, PCM audio,
+controllers, video framebuffer with PAL modulator, SPI, UART, PCM audio,
 GPIO, PWM outputs and a timer, as well as glue logic tailored for
 numerous popular FPGA development boards from various manufacturers.
 
