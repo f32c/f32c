@@ -137,6 +137,7 @@ architecture Behavioral of SDRAM_Controller is
    
     signal iob_data_next: std_logic_vector(15 downto 0) := (others => '0');
     signal R_from_sdram_prev, R_from_sdram: std_logic_vector(15 downto 0);
+    signal R_ready_out: sram_ready_array; -- one bit per port
     attribute IOB of R_from_sdram: signal is "true";
    
     type fsm_state is (
@@ -218,6 +219,7 @@ begin
     byte_sel <= bus_in(R_next_port).byte_sel;
     addr(17 downto 0) <= bus_in(R_next_port).addr; -- XXX revisit, widen!
     data_in <= bus_in(R_next_port).data_in;
+    ready_out <= R_ready_out;
 
     -- Indicate the need to refresh when the counter is 2048,
     -- Force a refresh when the counter is 4096 - (if a refresh is forced, 
@@ -326,10 +328,11 @@ begin
 	    -- then accept it. Also remember what we are reading or writing,
 	    -- and if it can be back-to-backed with the last transaction
 	    -------------------------------------------------------------------
-	    ready_out <= (others => '0');
-	    ready_out(R_cur_port) <= data_ready_delay(1);
-	    if ready_for_new = '1' and addr_strobe = '1' and (write = '1' or
-	      save_wr = '1' or read_done) then
+	    R_ready_out <= (others => '0');
+	    R_ready_out(R_cur_port) <= data_ready_delay(1);
+	    if ready_for_new = '1' and addr_strobe = '1'
+	      and (write = '1' or save_wr = '1' or read_done)
+	      and R_ready_out(R_next_port) = '0' then
 		R_cur_port <= R_next_port;
 		if save_bank = addr_bank and save_row = addr_row then
 		    can_back_to_back <= '1';
@@ -346,7 +349,7 @@ begin
 		read_done	 <= false;
 		if write = '1' then
 		    data_ready_delay(0) <= '1';
-		    ready_out(R_next_port) <= '1';
+		    R_ready_out(R_next_port) <= '1';
 		end if;
 	    end if;
 
