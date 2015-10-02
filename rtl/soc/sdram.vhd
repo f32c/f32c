@@ -305,9 +305,27 @@ begin
     end generate;
 
     phased_read: if not C_shift_read generate
-    -- with phased read data_out keeps valid a
-    -- until next read, CPU can read it at any later
-    -- time
+    -- with phased read data_out keeps valid longer
+    -- CPU can read it at any later time,
+    -- although it must read exactly during 1 clock cycle when 
+    -- ready_out(R_cur_port) = '1'
+    -- CPU reads at rising_edge(clk)
+    -- while sdram data transition is at falling_edge(clk)
+    -- Register R_from_sdram keeps valid data
+    -- to allow CPU clean read at rising_edge(clk)
+    -- datasheet states that read data must be
+    -- read at rising edge of chip clock.
+    -- our chip is clocked with inverted clk:
+    -- sdram_clk <= not clk;
+    -- thus we must sample data at falling_edge(clk)
+    -- data_ready_delay is shift register which
+    -- shift right at each rising_edge(clk)
+    -- and into which we set some higher bit to 1 when we
+    -- accept write or when we expect valid read
+    -- this bit is shifted down and when it is at
+    -- position (2) we have lower 16 bits availabe
+    -- and when it is at position (1) we have higher
+    -- 16 bits available to read
     phase_proc: process(clk)
     begin
 	if falling_edge(clk) then
@@ -355,10 +373,9 @@ begin
 	    -- and if it can be back-to-backed with the last transaction
 	    -------------------------------------------------------------------
 	    ready_out <= (others => '0');
-	    ready_out(R_cur_port) <= data_ready_delay(0);
+	    ready_out(R_cur_port) <= data_ready_delay(1);
 	    if ready_for_new = '1' and addr_strobe = '1'
-	      and read_done
-	      -- and (write = '1' or save_wr = '1' or read_done) 
+	      and read_done -- don't allow new transaction until previous one completes
 	      then
 		R_cur_port <= R_next_port;
 		if save_bank = addr_bank and save_row = addr_row then
@@ -373,12 +390,9 @@ begin
 		save_data_in     <= data_in;
 		save_byte_enable <= byte_sel;
 		ready_for_new    <= '0';
+                read_done <= false; -- this is mis-nomer, used also as write done
 		if write = '1' then
-		    data_ready_delay(3) <= '1';
-		    read_done <= false;
-		    --ready_out(R_next_port) <= '1';
-                else
-		    read_done <= false;
+		    data_ready_delay(2) <= '1'; -- schedule write acknowledge
 		end if;
 	    end if;
 
@@ -561,8 +575,7 @@ begin
 	    when s_write_2 =>
 		state           <= s_write_3;
 		iob_data        <= iob_data_next;
-		--iob_data           <= save_data_in(31 downto 16);
-		--iob_dqm <= NOT save_byte_enable(3 downto 2);
+		--iob_data <= save_data_in(31 downto 16); -- why this doesn't work?
 		-- can we do a back-to-back write?
 		if S_let_back2back then
 		    if save_wr = '1' then
