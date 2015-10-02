@@ -74,12 +74,13 @@ entity glue is
 	dram_dqm: out std_logic_vector(1 downto 0);
 	dram_ras_n, dram_cas_n: out std_logic;
 	dram_cke, dram_clk: out std_logic;
-	dram_we_n, dram_cs_n: out std_logic
+	dram_we_n, dram_cs_n: out std_logic;
+	video_dac: out std_logic_vector(3 downto 0)
     );
 end glue;
 
 architecture Behavioral of glue is
-    signal clk: std_logic;
+    signal clk, clk_325m: std_logic;
     signal btns: std_logic_vector(15 downto 0);
 begin
 
@@ -101,7 +102,7 @@ begin
     port map (
 	inclk0 => clk_50m,
 	c0 => clk,	-- 81.25 MHz
-	c1 => open,	-- 325.0 MHz
+	c1 => clk_325m,	-- 325.0 MHz
 	c2 => open	-- 162.5 Mhz
     );
     end generate;
@@ -135,7 +136,7 @@ begin
 	C_timer => C_timer
     )
     port map (
-	clk => clk,
+	clk => clk, clk_325m => clk_325m,
 	clk_25mhz => '0', -- XXX vgadhmi needs this
 	sio_txd(0) => rs232_txd, sio_rxd(0) => rs232_rxd, sio_break => open,
 	gpio => open,
