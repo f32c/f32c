@@ -290,7 +290,7 @@ begin
     final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
       else from_sdram when dmem_addr(31 downto 30) = "10"
       else dmem_to_cpu;
-    intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & '0';
+    intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
