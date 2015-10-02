@@ -5,6 +5,11 @@ can execute subsets of either RISC-V or MIPS instruction sets.
 It is implemented in parametrized VHDL which permits synthesis with
 different area / speed tradeoffs, and includes a branch predictor,
 exception handling control block, and optional direct-mapped caches.
+The RTL code also includes modules such as a multi-port SDRAM and SRAM
+controllers, video framebuffers with composite (PAL), HDMI and VGA
+outputs, SPI, UART, PCM audio, GPIO, PWM outputs and a timer, as well
+as glue logic tailored for numerous popular FPGA development boards
+from various manufacturers.
 
 In synthetic integer benchmarks the core yields 3.06 CoreMark/MHz
 and 1.63 DMIPS/MHz (1.81 DMIPS/MHz with function inlining).
@@ -32,11 +37,6 @@ C_load_aligner 	     synthesize load aligner
 C_full_shifter 	     pipelined instead of iterative shifer
 C_debug              synthesize single-stepping debug module
 ```
-
-The RTL code also includes modules such as a multi-port SDRAM and SRAM
-controllers, video framebuffer with PAL modulator, SPI, UART, PCM audio,
-GPIO, PWM outputs and a timer, as well as glue logic tailored for
-numerous popular FPGA development boards from various manufacturers.
 
 Pre-compiled gcc-based toolchains for Windows, OS-X and Linux can be
 found at the [FPGArduino page](http://www.nxlab.fer.hr/fpgarduino),
