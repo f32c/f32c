@@ -56,7 +56,9 @@ entity SDRAM_Controller is
 	C_ras: integer range 2 to 3 := 2;
 	C_cas: integer range 2 to 3 := 2;
 	C_pre: integer range 2 to 3 := 2;
-	C_clock_range: integer range 0 to 2 := 2;
+	C_clock_range: integer range 0 to 5 := 2; -- default:2
+	C_ready_point: integer range 0 to 1 := 1; -- shift delay reg bit that represents data ready, default:1
+	C_write_ready_delay: integer range 1 to 3 := 2; -- shift delay reg bit to set for write, default:2
         C_shift_read: boolean := false; -- if false use phase read (no shifting)
         C_allow_back2back: boolean := true;
 	sdram_address_width: natural;
@@ -293,11 +295,11 @@ begin
     shift_read: if C_shift_read generate
     capture_proc: process(clk) 
     begin
-	if C_clock_range = 1 and falling_edge(clk) then
+	if (C_clock_range mod 2) = 0 and rising_edge(clk) then
 	    R_from_sdram(15 downto 0) <= sdram_data;
 	    R_from_sdram(31 downto 16) <= R_from_sdram(15 downto 0);
 	end if;
-	if C_clock_range /= 1 and rising_edge(clk) then
+	if (C_clock_range mod 2) = 1 and falling_edge(clk) then
 	    R_from_sdram(15 downto 0) <= sdram_data;
 	    R_from_sdram(31 downto 16) <= R_from_sdram(15 downto 0);
 	end if;
@@ -309,26 +311,23 @@ begin
     -- CPU can read it at any later time,
     -- although it must read exactly during 1 clock cycle when 
     -- ready_out(R_cur_port) = '1'
-    -- CPU reads at rising_edge(clk)
-    -- while sdram data transition is at falling_edge(clk)
-    -- Register R_from_sdram keeps valid data
-    -- to allow CPU clean read at rising_edge(clk)
-    -- datasheet states that read data must be
-    -- read at rising edge of chip clock.
-    -- our chip is clocked with inverted clk:
-    -- sdram_clk <= not clk;
-    -- thus we must sample data at falling_edge(clk)
-    -- data_ready_delay is shift register which
-    -- shift right at each rising_edge(clk)
-    -- and into which we set some higher bit to 1 when we
-    -- accept write or when we expect valid read
-    -- this bit is shifted down and when it is at
-    -- position (2) we have lower 16 bits availabe
-    -- and when it is at position (1) we have higher
-    -- 16 bits available to read
+    -- this allows configurable sampling of data
+    -- at either rising or falling edge to accomodate
+    -- fine tuning of timing delays from FPGA signals to the
+    -- chip. We need to sample data at correct time instance when
+    -- phisical data lines are stable - correct timing
+    -- needs to be experimentally determined
     phase_proc: process(clk)
     begin
-	if falling_edge(clk) then
+	if (C_clock_range mod 2) = 0 and rising_edge(clk) then
+            if data_ready_delay(2) = '1' then
+	        R_from_sdram(15 downto 0) <= sdram_data;
+            end if;
+            if data_ready_delay(1) = '1' then
+	        R_from_sdram(31 downto 16) <= sdram_data;
+            end if;
+	end if;
+	if (C_clock_range mod 2) = 1 and falling_edge(clk) then
             if data_ready_delay(2) = '1' then
 	        R_from_sdram(15 downto 0) <= sdram_data;
             end if;
@@ -373,7 +372,7 @@ begin
 	    -- and if it can be back-to-backed with the last transaction
 	    -------------------------------------------------------------------
 	    ready_out <= (others => '0');
-	    ready_out(R_cur_port) <= data_ready_delay(1);
+	    ready_out(R_cur_port) <= data_ready_delay(C_ready_point);
 	    if ready_for_new = '1' and addr_strobe = '1'
 	      and read_done -- don't allow new transaction until previous one completes
 	      then
@@ -392,7 +391,7 @@ begin
 		ready_for_new    <= '0';
                 read_done <= false; -- this is mis-nomer, used also as write done
 		if write = '1' then
-		    data_ready_delay(2) <= '1'; -- schedule write acknowledge
+		    data_ready_delay(C_write_ready_delay) <= '1'; -- schedule write acknowledge
 		end if;
 	    end if;
 
