@@ -326,14 +326,14 @@ begin
     G_sdram:
     if C_sdram generate
     -- port 0: instruction bus
-    to_sdram(instr_port).addr_strobe <= imem_addr_strobe and not sdram_ready(instr_port) when
+    to_sdram(instr_port).addr_strobe <= imem_addr_strobe when
       imem_addr(31 downto 30) = "10" else '0';
     to_sdram(instr_port).addr <= imem_addr(to_sdram(instr_port).addr'high downto 2);
     to_sdram(instr_port).data_in <= (others => '-');
     to_sdram(instr_port).write <= '0';
     to_sdram(instr_port).byte_sel <= (others => '1');
     -- port 1: data bus
-    to_sdram(data_port).addr_strobe <= dmem_addr_strobe and not sdram_ready(data_port) when
+    to_sdram(data_port).addr_strobe <= dmem_addr_strobe when
       dmem_addr(31 downto 30) = "10" else '0';
     to_sdram(data_port).addr <= dmem_addr(to_sdram(data_port).addr'high downto 2);
     to_sdram(data_port).data_in <= cpu_to_dmem;
