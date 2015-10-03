@@ -42,11 +42,11 @@ entity fb is
     port (
 	clk, clk_dac: in std_logic;
 	addr_strobe: out std_logic;
-	addr_out: out std_logic_vector(19 downto 2);
+	addr_out: out std_logic_vector(29 downto 2);
 	data_ready: in std_logic;
 	data_in: in std_logic_vector(31 downto 0);
 	mode: in std_logic_vector(1 downto 0);
-	base_addr: in std_logic_vector(19 downto 2);
+	base_addr: in std_logic_vector(29 downto 2);
 	dac_out: out std_logic_vector(3 downto 0);
 	tick_out: out std_logic
     );
@@ -68,7 +68,7 @@ architecture behavioral of fb is
     signal R_pixclk: std_logic_vector(4 downto 0);
     signal R_hpos: std_logic_vector(11 downto 0);
     signal R_pixbuf: pixbuf_dpram_type;
-    signal R_sram_addr: std_logic_vector(19 downto 2);
+    signal R_sram_addr: std_logic_vector(29 downto 2);
     signal R_pixbuf_rd_addr, R_pixbuf_wr_addr: std_logic_vector(3 downto 0);
     signal R_pixbuf_rd_byte: std_logic_vector(1 downto 0);
     signal R_scan_line_high: std_logic_vector(1 downto 0);

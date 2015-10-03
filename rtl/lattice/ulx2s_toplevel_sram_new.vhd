@@ -114,7 +114,7 @@ entity toplevel is
 	C_framebuffer: boolean := true;
 	C_pcm: boolean := true;
 	C_timer: boolean := true;
-	C_cw_simple_out: integer := 7; -- simple_out bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+	C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
 	C_fmrds: boolean := true; -- either FM or tx433
 	C_fm_stereo: boolean := false;
 	C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
