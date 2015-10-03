@@ -217,7 +217,7 @@ begin
     addr_strobe <= bus_in(R_next_port).addr_strobe;
     write <= bus_in(R_next_port).write;
     byte_sel <= bus_in(R_next_port).byte_sel;
-    addr(17 downto 0) <= bus_in(R_next_port).addr; -- XXX revisit, widen!
+    addr(bus_in(0).addr'high - 2 downto 0) <= bus_in(R_next_port).addr;
     data_in <= bus_in(R_next_port).data_in;
     ready_out <= R_ready_out;
 
