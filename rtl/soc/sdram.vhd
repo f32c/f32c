@@ -142,6 +142,7 @@ architecture Behavioral of SDRAM_Controller is
    
     signal iob_data_next: std_logic_vector(15 downto 0) := (others => '0');
     signal R_from_sdram: std_logic_vector(31 downto 0);
+    signal R_ready_out: sram_ready_array; -- one bit per port
     attribute IOB of R_from_sdram: signal is "true";
    
     type fsm_state is (
@@ -224,6 +225,7 @@ begin
     byte_sel <= bus_in(R_next_port).byte_sel;
     addr(bus_in(R_next_port).addr'high-2 downto 0) <= bus_in(R_next_port).addr;
     data_in <= bus_in(R_next_port).data_in;
+    ready_out <= R_ready_out;
 
     -- Indicate the need to refresh when the counter is 2048,
     -- Force a refresh when the counter is 4096 - (if a refresh is forced, 
@@ -307,7 +309,7 @@ begin
     -- with phased read data_out keeps valid longer
     -- CPU can read it at any later time,
     -- although it must read exactly during 1 clock cycle when 
-    -- ready_out(R_cur_port) = '1'
+    -- R_ready_out(R_cur_port) = '1'
     -- this allows configurable sampling of data
     -- at either rising or falling edge to accomodate
     -- fine tuning of timing delays from FPGA signals to the
@@ -368,11 +370,10 @@ begin
 	    -- then accept it. Also remember what we are reading or writing,
 	    -- and if it can be back-to-backed with the last transaction
 	    -------------------------------------------------------------------
-	    ready_out <= (others => '0');
-	    ready_out(R_cur_port) <= data_ready_delay(C_ready_point);
+	    R_ready_out <= (others => '0');
+	    R_ready_out(R_cur_port) <= data_ready_delay(C_ready_point);
 	    if ready_for_new = '1' and addr_strobe = '1'
-	      and request_done -- don't allow new transaction until previous one completes
-	      then
+	      and request_done and R_ready_out(R_next_port) = '0' then
 		R_cur_port <= R_next_port;
 		if save_bank = addr_bank and save_row = addr_row then
 		    can_back_to_back <= '1';
