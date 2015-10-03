@@ -39,7 +39,7 @@
 -- Reads  17 cycles = 5,882,352 reads/sec  = 23.5MB/s (excl. refresh overhead)
 --
 -- For 1:1 mixed reads and writes into the same row it is around 88MB/s 
--- For reads or wries to the same it is can be as high as 184MB/s 
+-- For reads or writes to the same it can be as high as 184MB/s 
 ----------------------------------------------------------------------------------
 
 library IEEE;
@@ -268,10 +268,6 @@ begin
       and forcing_refresh = '0'
       and ready_for_new = '0' 
       and can_back_to_back = '1';
-
-    process(R_next_port, data_ready_delay)
-    begin
-    end process;
 
     -- Arbiter: round-robin port selection combinatorial logic
     process(bus_in, R_next_port, R_cur_port)
