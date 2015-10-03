@@ -48,9 +48,9 @@ entity videofifo is
     port (
 	clk, clk_pixel: in std_logic;
 	addr_strobe: out std_logic;
-	addr_out: out std_logic_vector(19 downto 2);
-	base_addr: in std_logic_vector(19 downto 2);
-	-- debug_rd_addr: out std_logic_vector(19 downto 2);
+	addr_out: out std_logic_vector(29 downto 2);
+	base_addr: in std_logic_vector(29 downto 2);
+	-- debug_rd_addr: out std_logic_vector(29 downto 2);
 	data_ready: in std_logic;
 	data_in: in std_logic_vector(31 downto 0);
 	data_out: out std_logic_vector(31 downto 0);
@@ -66,7 +66,7 @@ architecture behavioral of videofifo is
 
     -- Internal state
     signal R_pixbuf: pixbuf_dpram_type;
-    signal R_sram_addr: std_logic_vector(19 downto 2);
+    signal R_sram_addr: std_logic_vector(29 downto 2);
     signal R_pixbuf_rd_addr, R_pixbuf_wr_addr, S_pixbuf_wr_addr_next: std_logic_vector(C_width-1 downto 0);
     signal need_refill: boolean;
     signal toggle_read_complete: std_logic;
@@ -152,5 +152,5 @@ begin
       end process;
     data_out <= R_pixbuf(TO_INTEGER(UNSIGNED(R_pixbuf_rd_addr)));
     -- debug_rd_addr(5 downto 2) <= R_pixbuf_rd_addr;
-    -- debug_rd_addr(19 downto 6) <= (others => '0');
+    -- debug_rd_addr(29 downto 6) <= (others => '0');
 end;
