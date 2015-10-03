@@ -44,7 +44,7 @@ entity glue is
 	C_debug: boolean := false;
 
 	-- Main clock: 50/81/83/100/112
-	C_clk_freq: integer := 83;
+	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
 	C_mem_size: integer := 8; -- bootloader area
