@@ -193,7 +193,7 @@ architecture Behavioral of SDRAM_Controller is
     -- signals for when to read the data off of the bus
     signal data_ready_delay:
       std_logic_vector(C_clock_range / 2 + C_cas + 1 downto 0);
-    signal read_done: boolean;
+    signal request_done: boolean;
 
     -- bit indexes used when splitting the address into row/colum/bank.
     constant start_of_col: natural := 0;
@@ -357,7 +357,7 @@ begin
 	    -- update shift registers used to choose when to present data to/from memory
 	    ----------------------------------------------------------------------------
 	    if data_ready_delay(C_done_point) = '1' then
-		read_done <= true;
+		request_done <= true;
 	    end if;
 	    data_ready_delay <= '0' & data_ready_delay(data_ready_delay'high downto 1);
 	    iob_dqm <= dqm_sr(1 downto 0);
@@ -371,7 +371,7 @@ begin
 	    ready_out <= (others => '0');
 	    ready_out(R_cur_port) <= data_ready_delay(C_ready_point);
 	    if ready_for_new = '1' and addr_strobe = '1'
-	      and read_done -- don't allow new transaction until previous one completes
+	      and request_done -- don't allow new transaction until previous one completes
 	      then
 		R_cur_port <= R_next_port;
 		if save_bank = addr_bank and save_row = addr_row then
@@ -386,7 +386,7 @@ begin
 		save_data_in     <= data_in;
 		save_byte_enable <= byte_sel;
 		ready_for_new    <= '0';
-                read_done <= false; -- this is mis-nomer, used also as write done
+                request_done <= false;
 		if write = '1' then
 		    data_ready_delay(C_write_ready_delay) <= '1'; -- schedule write acknowledge
 		end if;
@@ -443,7 +443,7 @@ begin
 		if startup_refresh_count = 0 then
 		    state           <= s_idle;
 		    ready_for_new   <= '1';
-		    read_done	    <= true;
+		    request_done    <= true;
 		    startup_refresh_count <= to_unsigned(2048 - cycles_per_refresh+1,14);
 		end if;
 
