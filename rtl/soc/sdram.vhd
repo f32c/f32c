@@ -296,12 +296,12 @@ begin
     capture_proc: process(clk) 
     begin
 	if (C_clock_range mod 2) = 0 and rising_edge(clk) then
-	    R_from_sdram(15 downto 0) <= sdram_data;
-	    R_from_sdram(31 downto 16) <= R_from_sdram(15 downto 0);
+	    R_from_sdram(31 downto 16) <= sdram_data;
+	    R_from_sdram(15 downto 0) <= R_from_sdram(31 downto 16);
 	end if;
 	if (C_clock_range mod 2) = 1 and falling_edge(clk) then
-	    R_from_sdram(15 downto 0) <= sdram_data;
-	    R_from_sdram(31 downto 16) <= R_from_sdram(15 downto 0);
+	    R_from_sdram(31 downto 16) <= sdram_data;
+	    R_from_sdram(15 downto 0) <= R_from_sdram(31 downto 16);
 	end if;
     end process;
     end generate;
