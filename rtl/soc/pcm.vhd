@@ -41,7 +41,7 @@ entity pcm is
 	io_bus_out: out std_logic_vector(31 downto 0);
 	addr_strobe: out std_logic;
 	data_ready: in std_logic;
-	addr_out: out std_logic_vector(19 downto 2);
+	addr_out: out std_logic_vector(29 downto 2);
 	data_in: in std_logic_vector(31 downto 0);
 	out_pcm_l, out_pcm_r: out signed(15 downto 0);
 	out_l, out_r: out std_logic
@@ -49,8 +49,8 @@ entity pcm is
 end pcm;
 
 architecture Behavioral of pcm is
-    signal R_dma_first_addr, R_dma_last_addr: std_logic_vector(19 downto 2);
-    signal R_dma_cur_addr: std_logic_vector(19 downto 2);
+    signal R_dma_first_addr, R_dma_last_addr: std_logic_vector(29 downto 2);
+    signal R_dma_cur_addr: std_logic_vector(29 downto 2);
     signal R_dma_trigger_acc, R_dma_trigger_incr: std_logic_vector(23 downto 0);
     signal R_dma_needs_refill: boolean;
     signal R_dma_data_l, R_dma_data_r: signed(15 downto 0);
@@ -105,10 +105,10 @@ begin
 	    -- Write to control registers when requested
 	    if io_ce = '1' and  io_bus_write = '1' then
 		if io_addr = "00" then	-- DMA region first addr
-		    R_dma_first_addr <= io_bus_in(19 downto 2);
+		    R_dma_first_addr <= io_bus_in(29 downto 2);
 		end if;
 		if io_addr = "01" then	-- DMA region last addr
-		    R_dma_last_addr <= io_bus_in(19 downto 2);
+		    R_dma_last_addr <= io_bus_in(29 downto 2);
 		end if;
 		if io_addr = "10" then	-- DMA frequency control
 		    R_dma_trigger_incr <= io_bus_in(23 downto 0);
@@ -136,7 +136,7 @@ begin
     addr_out <= R_dma_cur_addr;
     addr_strobe <= '1' when R_dma_needs_refill else '0';
 
-    io_bus_out <= "------------" & R_dma_cur_addr & "--";
+    io_bus_out <= "--" & R_dma_cur_addr & "--";
 
     out_l <= R_dac_acc_l(16);
     out_r <= R_dac_acc_r(16);
