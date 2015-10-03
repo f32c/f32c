@@ -48,7 +48,7 @@ vhdfiles = \
 ../../../cpu/cache_generic_param.vhd \
 ../../../cpu/debug.vhd \
 ../../../soc/sram_pack.vhd \
-../../../soc/arbiter_ibug.vhd \
+../../../soc/arbiter.vhd \
 ../../../soc/sdram_ctrl.vhd \
 ../../../soc/ram_emu.vhd \
 ../../../soc/sdram.vhd \

@@ -19,7 +19,10 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 -- THE SOFTWARE.
 --
--- simple multiport RAM arbiter (no priority)
+-- Simple multiport RAM arbiter (no priority)
+-- This arbiter works only with d-cache.
+-- It doesn't work for instructions,
+-- no matter if i-cache is enabled or not
 --
 ----------------------------------------------------------------------------------
 library IEEE;
@@ -28,8 +31,10 @@ use IEEE.NUMERIC_STD.ALL;
 use work.sram_pack.all;
 
 entity arbiter is
+
     generic (
 	C_ports: integer;
+	C_back2back: boolean := true; -- true:  back2back enabled (only this works for now).
 	C_prio_port: integer := -1
     );
     port (
@@ -58,24 +63,24 @@ architecture Behavioral of arbiter is
     signal S_addr_strobe: std_logic;			-- from CPU bus
 
     -- Arbiter registers
-    signal R_cur_port, R_next_port: integer range 0 to (C_ports - 1);
+    signal R_cur_port, R_hold_cur_port: integer range 0 to (C_ports - 1);
     signal R_ready_out: sram_ready_array;
-
+    signal request_completed: boolean := false;
     -- Arbiter internal signals
     signal next_port: integer;
 begin
     -- Mux for input ports
-    S_addr_strobe <= bus_in(R_next_port).addr_strobe;
+    S_addr_strobe <= bus_in(R_cur_port).addr_strobe;
     addr_strobe <= S_addr_strobe;
-    write <= bus_in(R_next_port).write;
-    byte_sel <= bus_in(R_next_port).byte_sel;
+    write <= bus_in(R_cur_port).write;
+    byte_sel <= bus_in(R_cur_port).byte_sel;
     -- addr(27 downto 18) <= '-';
-    addr(17 downto 0) <= bus_in(R_next_port).addr; -- XXX revisit, widen!
-    data_in <= bus_in(R_next_port).data_in;
+    addr(bus_in(R_cur_port).addr'high-2 downto 0) <= bus_in(R_cur_port).addr;
+    data_in <= bus_in(R_cur_port).data_in;
     bus_out <= data_out;
     -- Arbiter: round-robin port selection combinatorial logic
     no_priority_arbiter: if C_prio_port < 0 generate
-    process(bus_in, R_next_port, R_cur_port)
+    process(bus_in, R_cur_port)
 	variable i, j, t, n: integer;
     begin
 	t := R_cur_port;
@@ -94,17 +99,63 @@ begin
     end process;
     end generate; -- end of no_priority_arbiter
 
-    ramport_fsm: process(clk)
+    dont_back2back: if not C_back2back generate
+    -- due to currently unclear reason
+    -- this arbiter without back-2-back doesn't work
+    ramport_fsm_dont_b2b: process(clk)
     begin
         if rising_edge(clk) then
-            R_next_port <= next_port;
-            if ready_next_cycle = '1' then
-                R_cur_port <= R_next_port;
+            R_ready_out <= (others => '0');
+            if request_completed then
+              -- upon completed request switch to next port
+              -- this line enforces servicing of the next port
+              -- and prevents starvation
+              R_cur_port <= next_port;
+              request_completed <= false;
+            else
+              -- if request is pending on current port
+              -- wait for ready signal and when it arrives
+              -- send it back to current port, which requested it
+              if ready_next_cycle = '1' then
+                R_ready_out(R_cur_port) <= ready_next_cycle;
+                request_completed <= true;
+              end if;
             end if;
-	    R_ready_out <= (others => '0'); -- decoder all 0
-	    R_ready_out(next_port) <= ready_next_cycle; -- decoder one 1
         end if;
     end process;
-    ready_out <= R_ready_out;
+    end generate;
 
+    do_back2back: if C_back2back generate
+    -- rudimental priority - if reuqests keep recurring
+    -- on current port, it will be serviced all the way
+    -- until there's no request on that that port
+    -- this policy can lead to starvation of requests
+    -- pending on other ports
+    ramport_fsm_do_b2b: process(clk)
+    begin
+        if rising_edge(clk) then
+            R_ready_out <= (others => '0');
+            R_ready_out(R_cur_port) <= ready_next_cycle;
+            if S_addr_strobe = '0' then
+              -- if no request on current port, switch to next port
+              R_cur_port <= next_port;
+            --else
+              -- if request is pending on current port
+              -- wait for ready signal and when it arrives
+              -- send it back to current port which requested it
+              --if ready_next_cycle = '1' then
+              --  R_ready_out(R_cur_port) <= '1';
+                -- if we don't change here R_cur_port <= next port
+                -- that will allow back2back requests
+                -- that will keep servicing transactions at the current port
+                -- this leads to risk of starvation - if requests
+                -- persist on current port, other ports will not get chance
+                -- to be serviced.
+              --end if;
+            end if;
+        end if;
+    end process;
+    end generate;
+
+    ready_out <= R_ready_out;
 end Behavioral;
