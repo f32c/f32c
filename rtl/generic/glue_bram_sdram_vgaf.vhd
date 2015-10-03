@@ -331,7 +331,7 @@ begin
     to_sdram(instr_port).addr <= imem_addr(to_sdram(instr_port).addr'high downto 2);
     to_sdram(instr_port).data_in <= (others => '-');
     to_sdram(instr_port).write <= '0';
-    to_sdram(instr_port).byte_sel <= (others => '1');
+    to_sdram(instr_port).byte_sel <= "1111";
     -- port 1: data bus
     to_sdram(data_port).addr_strobe <= dmem_addr_strobe when
       dmem_addr(31 downto 30) = "10" else '0';
@@ -340,11 +340,10 @@ begin
     to_sdram(data_port).write <= dmem_write;
     to_sdram(data_port).byte_sel <= dmem_byte_sel;
     -- port 2: VGA/HDMI video read
-    to_sdram(fb_port).addr_strobe <= vga_addr_strobe and not sdram_ready(fb_port);
+    to_sdram(fb_port).addr_strobe <= vga_addr_strobe;
     to_sdram(fb_port).addr <= vga_addr(to_sdram(fb_port).addr'high downto 2);
     to_sdram(fb_port).data_in <= (others => '-');
     to_sdram(fb_port).write <= '0';
-    -- to_sdram(fb_port).byte_sel <= "0001"; -- 8 bits read (LSB byte used)
     to_sdram(fb_port).byte_sel <= "1111"; -- 32 bits read for RGB
     vga_data_ready <= sdram_ready(fb_port);
 
