@@ -37,7 +37,8 @@ entity sdram_ctrl is
       C_cas: integer range 2 to 3 := 2;
       C_pre: integer range 2 to 3 := 2;
       C_clock_range: integer range 0 to 5 := 2; -- default:2
-      C_ready_point: integer range 0 to 2 := 2; -- shift delay reg bit that represents data ready, default:1
+      C_ready_point: integer range 0 to 2 := 1; -- shift delay reg bit that represents data ready, default:1
+      C_done_point: integer range 0 to 1 := 1; -- shift delay reg bit index when new transaction is accepted, default:1
       C_write_ready_delay: integer range 1 to 3 := 2; -- shift delay reg bit to set for write, default:2
       C_shift_read: boolean := false; -- if false use phase read (no shifting)
       C_allow_back_to_back: boolean := true;
@@ -68,10 +69,10 @@ entity sdram_ctrl is
            SDRAM_RAS     : out   STD_LOGIC;
            SDRAM_CAS     : out   STD_LOGIC;
            SDRAM_WE      : out   STD_LOGIC;
-           SDRAM_DQM     : out   STD_LOGIC_VECTOR( 1 downto 0);
+           sdram_dqm     : out   STD_LOGIC_VECTOR( 1 downto 0);
            SDRAM_ADDR    : out   STD_LOGIC_VECTOR(12 downto 0);
            SDRAM_BA      : out   STD_LOGIC_VECTOR( 1 downto 0);
-           SDRAM_DATA    : inout STD_LOGIC_VECTOR(15 downto 0));
+           sdram_data    : inout STD_LOGIC_VECTOR(15 downto 0));
 end sdram_ctrl;
 
 architecture Behavioral of sdram_ctrl is
@@ -171,7 +172,7 @@ architecture Behavioral of sdram_ctrl is
 
    -- signals for when to read the data off of the bus
    signal data_ready_delay: std_logic_vector(C_clock_range/2+C_cas+1 downto 0);
-   signal read_done: boolean;
+   signal request_done: boolean;
 
    -- bit indexes used when splitting the address into row/colum/bank.
    constant start_of_col  : natural := 0;
@@ -206,9 +207,6 @@ begin
    -- as clock is inverted, then data must be sampled at falling
    -- edge and commands must be issued at rising edge of clk
    -----------------------------------------------------------
--- sdram_clk_forward : ODDR2
---   generic map(DDR_ALIGNMENT => "NONE", INIT => '0', SRTYPE => "SYNC")
---   port map (Q => sdram_clk, C0 => clk, C1 => not clk, CE => '1', R => '0', S => '0', D0 => '0', D1 => '1');
    sdram_clk <= not clk;
 
    -----------------------------------------------
@@ -276,8 +274,7 @@ begin
    end process;
    end generate;
    data_out <= R_from_sdram;
-   -- ready_next_cycle <= data_ready_delay(0); -- or '1';
-   -- ready_next_cycle <= '0'; -- default, changed in FSM
+   ready_next_cycle <= data_ready_delay(C_ready_point);
    
    main_proc: process(clk)
    begin
@@ -301,8 +298,8 @@ begin
          -- then accept it. Also remember what we are reading or writing,
          -- and if it can be back-to-backed with the last transaction
          -------------------------------------------------------------------
-         if ready_for_new = '1' and cmd_enable = '1' -- and (cmd_wr = '1' or save_wr = '1' or got_transaction = '0')
-           and read_done -- don't allow new transaction until previous one completes
+         if ready_for_new = '1' and cmd_enable = '1'
+           and request_done -- don't allow new transaction until previous one completes
            then
             if save_bank = addr_bank and save_row = addr_row then
                can_back_to_back <= '1';
@@ -316,7 +313,7 @@ begin
             save_data_in     <= cmd_data_in;
             save_byte_enable <= cmd_byte_enable;
             ready_for_new    <= '0';
-            read_done <= false; -- this is mis-nomer, used also as write done
+            request_done <= false; -- this is mis-nomer, used also as write done
             if cmd_wr = '1' then
 	       data_ready_delay(C_write_ready_delay) <= '1'; -- schedule write acknowledge
             end if;
@@ -326,15 +323,15 @@ begin
          -- Handle the data coming back from the
          -- SDRAM for the Read transaction
          ------------------------------------------------
-         if data_ready_delay(0) = '1' then
-	    read_done <= true;
+         if data_ready_delay(C_done_point) = '1' then
+	    request_done <= true;
          end if;
          
          ----------------------------------------------------------------------------
          -- update shift registers used to choose when to present data to/from memory
          ----------------------------------------------------------------------------
          data_ready_delay <= '0' & data_ready_delay(data_ready_delay'high downto 1);
-         ready_next_cycle <= data_ready_delay(C_ready_point);
+         --ready_next_cycle <= data_ready_delay(C_ready_point);
          iob_dqm          <= dqm_sr(1 downto 0);
          dqm_sr           <= "11" & dqm_sr(dqm_sr'high downto 2);
          
@@ -389,7 +386,7 @@ begin
                if startup_refresh_count = 0 then
                   state           <= s_idle;
                   ready_for_new   <= '1';
-                  read_done	  <= true;
+                  request_done	  <= true;
                   startup_refresh_count <= to_unsigned(2048 - cycles_per_refresh+1,14);
                end if;
                
@@ -402,7 +399,6 @@ begin
                state <= s_idle;
 
             when s_idle =>
-               ready_next_cycle <= '0';
                -- Priority is to issue a refresh if one is outstanding
                if pending_refresh = '1' or forcing_refresh = '1' then
                  ------------------------------------------------------------------------
@@ -444,7 +440,6 @@ begin
                end if;
                -- we will be ready for a new transaction next cycle!
                ready_for_new   <= '1';
-               --got_transaction <= '0';
 
             ----------------------------------
             -- Processing the read transaction
@@ -530,17 +525,15 @@ begin
          
             when s_write_3 =>  -- must wait tRDL, hence the extra idle state
                -- back to back transaction?
-               --data_ready_delay(0) <= '1';
                if S_let_back_to_back then
+                  ready_for_new   <= '1'; -- we will be ready for a new transaction next cycle!
                   if save_wr = '1' then
                      -- back-to-back write?
                      state           <= s_write_1;
-                     ready_for_new   <= '1';
                   else
                      -- write-to-read switch?
                      state           <= s_read_1;
                      iob_dq_hiz      <= '1';
-                     ready_for_new   <= '1'; -- we will be ready for a new transaction next cycle!
                   end if;
                else
                   iob_dq_hiz         <= '1';
