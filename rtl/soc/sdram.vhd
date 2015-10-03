@@ -56,8 +56,9 @@ entity SDRAM_Controller is
 	C_ras: integer range 2 to 3 := 2;
 	C_cas: integer range 2 to 3 := 2;
 	C_pre: integer range 2 to 3 := 2;
-	C_clock_range: integer range 0 to 5 := 2; -- default:2
-	C_ready_point: integer range 0 to 1 := 1; -- shift delay reg bit that represents data ready, default:1
+	C_clock_range: integer range 0 to 5 := 2; -- default:2, (read delay, for every 2 shift delay line increases by 1)
+	C_ready_point: integer range 0 to 1 := 1; -- shift delay reg bit index when data ready is sent, default:1
+	C_done_point: integer range 0 to 1 := 1; -- shift delay reg bit index when new transaction is accepted, default:1
 	C_write_ready_delay: integer range 1 to 3 := 2; -- shift delay reg bit to set for write, default:2
         C_shift_read: boolean := false; -- if false use phase read (no shifting)
         C_allow_back2back: boolean := true;
@@ -355,7 +356,7 @@ begin
 	    ----------------------------------------------------------------------------
 	    -- update shift registers used to choose when to present data to/from memory
 	    ----------------------------------------------------------------------------
-	    if data_ready_delay(0) = '1' then
+	    if data_ready_delay(C_done_point) = '1' then
 		read_done <= true;
 	    end if;
 	    data_ready_delay <= '0' & data_ready_delay(data_ready_delay'high downto 1);
