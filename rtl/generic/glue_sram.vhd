@@ -173,7 +173,7 @@ architecture Behavioral of glue_sram is
     signal next_io_port: integer range 0 to (C_io_ports - 1);
     signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
-    signal R_fb_base_addr: std_logic_vector(19 downto 2);
+    signal R_fb_base_addr: std_logic_vector(29 downto 2);
 
     -- CPU reset control
     signal R_cpu_reset: std_logic_vector(15 downto 0) := x"fffe";
@@ -202,14 +202,14 @@ architecture Behavioral of glue_sram is
     signal R_fb_intr: std_logic;
     signal video_dac: std_logic_vector(3 downto 0);
     signal fb_addr_strobe, fb_data_ready: std_logic;
-    signal fb_addr: std_logic_vector(19 downto 2);
+    signal fb_addr: std_logic_vector(29 downto 2);
     signal fb_tick: std_logic;
 
     -- PCM audio
     constant iomap_pcm: T_iomap_range := (x"FBA0", x"FBAF");
     signal pcm_ce: std_logic;
     signal pcm_addr_strobe, pcm_data_ready: std_logic;
-    signal pcm_addr: std_logic_vector(19 downto 2);
+    signal pcm_addr: std_logic_vector(29 downto 2);
     signal from_pcm: std_logic_vector(31 downto 0);
     signal pcm_l, pcm_r: std_logic;
     signal pcm_bus_l, pcm_bus_r: signed(15 downto 0);
@@ -460,7 +460,7 @@ begin
 		      cpu_to_io(31 downto 26);
 		else
 		    R_fb_mode <= cpu_to_io(1 downto 0);
-		    R_fb_base_addr <= cpu_to_io(19 downto 2);
+		    R_fb_base_addr <= cpu_to_io(29 downto 2);
 		end if;
 	    end if;
 	end if;
@@ -708,11 +708,11 @@ begin
 	    to_sram(data_port).addr_strobe <= sram_data_strobe;
 	    to_sram(data_port).write <= dmem_write(cpu);
 	    to_sram(data_port).byte_sel <= dmem_byte_sel(cpu);
-	    to_sram(data_port).addr <= dmem_addr(cpu)(19 downto 2);
+	    to_sram(data_port).addr <= dmem_addr(cpu)(to_sram(data_port).addr'high downto 2);
 	    to_sram(data_port).data_in <= cpu_to_dmem(cpu);
 	    -- CPU, instruction bus
 	    to_sram(instr_port).addr_strobe <= sram_instr_strobe;
-	    to_sram(instr_port).addr <= imem_addr(cpu)(19 downto 2);
+	    to_sram(instr_port).addr <= imem_addr(cpu)(to_sram(instr_port).addr'high downto 2);
 	    to_sram(instr_port).data_in <= (others => '-');
 	    to_sram(instr_port).write <= '0';
 	    to_sram(instr_port).byte_sel <= x"f";

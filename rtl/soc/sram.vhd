@@ -100,7 +100,7 @@ begin
     addr_strobe <= bus_in(R_next_port).addr_strobe;
     write <= bus_in(R_next_port).write;
     byte_sel <= bus_in(R_next_port).byte_sel;
-    addr <= bus_in(R_next_port).addr;
+    addr <= bus_in(R_next_port).addr(addr'high downto 2);
     data_in <= bus_in(R_next_port).data_in;
 
     -- Demux for outbound ready signals

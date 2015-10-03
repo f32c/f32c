@@ -36,8 +36,8 @@ package sram_pack is
 --
 type sram_port_type is
     record
-	addr: std_logic_vector(19 downto 2);
-	-- addr: std_logic_vector(29 downto 2);
+	-- addr: std_logic_vector(19 downto 2);
+	addr: std_logic_vector(29 downto 2);
 	data_in: std_logic_vector(31 downto 0);
 	byte_sel: std_logic_vector(3 downto 0);
 	addr_strobe: std_logic;
