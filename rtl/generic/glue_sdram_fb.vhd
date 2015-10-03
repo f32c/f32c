@@ -186,10 +186,10 @@ architecture Behavioral of glue_bram is
     
     -- Composite video framebuffer
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
-    signal R_fb_base_addr: std_logic_vector(19 downto 2);
+    signal R_fb_base_addr: std_logic_vector(29 downto 2);
     signal R_fb_intr: std_logic;
     signal fb_addr_strobe, fb_data_ready: std_logic;
-    signal fb_addr: std_logic_vector(19 downto 2);
+    signal fb_addr: std_logic_vector(29 downto 2);
     signal fb_tick: std_logic;
 
     -- GPIO
@@ -305,14 +305,14 @@ begin
     -- port 0: instruction bus
     to_sdram(0).addr_strobe <= imem_addr_strobe when
       imem_addr(31 downto 30) = "10" else '0';
-    to_sdram(0).addr <= imem_addr(19 downto 2);
+    to_sdram(0).addr <= imem_addr(29 downto 2);
     to_sdram(0).data_in <= (others => '-');
     to_sdram(0).write <= '0';
     to_sdram(0).byte_sel <= (others => '1');
     -- port 1: data bus
     to_sdram(1).addr_strobe <= dmem_addr_strobe when
       dmem_addr(31 downto 30) = "10" else '0';
-    to_sdram(1).addr <= dmem_addr(19 downto 2);
+    to_sdram(1).addr <= dmem_addr(29 downto 2);
     to_sdram(1).data_in <= cpu_to_dmem;
     to_sdram(1).write <= dmem_write;
     to_sdram(1).byte_sel <= dmem_byte_sel;
@@ -443,12 +443,13 @@ begin
 		if C_big_endian then
 		    R_fb_mode <= cpu_to_dmem(25 downto 24);
 		    R_fb_base_addr <=
-		      cpu_to_dmem(11 downto 8) &
+		      cpu_to_dmem(5 downto 0) &
+		      cpu_to_dmem(15 downto 8) &
 		      cpu_to_dmem(23 downto 16) &
 		      cpu_to_dmem(31 downto 26);
 		else
 		    R_fb_mode <= cpu_to_dmem(1 downto 0);
-		    R_fb_base_addr <= cpu_to_dmem(19 downto 2);
+		    R_fb_base_addr <= cpu_to_dmem(29 downto 2);
 		end if;
 	    end if;
 	end if;
