@@ -88,6 +88,7 @@ entity glue_bram is
 	C_spi_fixed_speed: std_logic_vector := "1111";
 	C_simple_in: integer range 0 to 128 := 32;
 	C_simple_out: integer range 0 to 128 := 32;
+	C_framebuffer: boolean := true;
 	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
 	C_vgahdmi_mem_kb: integer := 4; -- mem size of framebuffer
 	C_gpio: integer range 0 to 128 := 32;
@@ -101,6 +102,7 @@ entity glue_bram is
     );
     port (
 	clk: in std_logic;
+	clk_325m: in std_logic; -- PAL video DAC clock, 325 MHz
 	clk_25MHz: in std_logic; -- VGA pixel clock 25 MHz
 	clk_250MHz: in std_logic := '0'; -- HDMI bit shift clock, default 0 if no HDMI
 	sdram_addr: out std_logic_vector(12 downto 0);
@@ -121,6 +123,7 @@ entity glue_bram is
 	vga_hsync, vga_vsync: out std_logic;
 	vga_r, vga_g, vga_b: out std_logic_vector(2 downto 0);
 	tmds_out_rgb: out std_logic_vector(2 downto 0);
+	video_dac: out std_logic_vector(3 downto 0);
 	gpio: inout std_logic_vector(127 downto 0)
     );
 end glue_bram;
@@ -181,6 +184,14 @@ architecture Behavioral of glue_bram is
     signal vga_data: std_logic_vector(7 downto 0);
     signal video_bram_write: std_logic;
     
+    -- Composite video framebuffer
+    signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
+    signal R_fb_base_addr: std_logic_vector(19 downto 2);
+    signal R_fb_intr: std_logic;
+    signal fb_addr_strobe, fb_data_ready: std_logic;
+    signal fb_addr: std_logic_vector(19 downto 2);
+    signal fb_tick: std_logic;
+
     -- GPIO
     constant iomap_gpio: T_iomap_range := (x"F800", x"F87F");
     signal gpio_range: std_logic := '0';
@@ -279,7 +290,7 @@ begin
     final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
       else from_sdram when dmem_addr(31 downto 30) = "10"
       else dmem_to_cpu;
-    intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & '0';
+    intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
@@ -305,9 +316,17 @@ begin
     to_sdram(1).data_in <= cpu_to_dmem;
     to_sdram(1).write <= dmem_write;
     to_sdram(1).byte_sel <= dmem_byte_sel;
+    -- composite video framebuffer
+    to_sdram(2).addr_strobe <= fb_addr_strobe;
+    to_sdram(2).write <= '0';
+    to_sdram(2).byte_sel <= x"f";
+    to_sdram(2).addr <= fb_addr;
+    to_sdram(2).data_in <= (others => '-');
+    fb_data_ready <= sdram_ready(2);
+
     sdram: entity work.sdram_controller
     generic map (
-	C_ports => 2,
+	C_ports => 3,
 	sdram_address_width => C_sdram_address_width,
 	sdram_column_bits => C_sdram_column_bits,
 	sdram_startup_cycles => C_sdram_startup_cycles,
@@ -324,6 +343,26 @@ begin
 	sdram_ras => sdram_ras, sdram_cas => sdram_cas,
 	sdram_cke => sdram_cke, sdram_clk => sdram_clk,
 	sdram_we => sdram_we, sdram_cs => sdram_cs
+    );
+    end generate;
+
+    -- Composite video framebuffer
+    G_framebuffer:
+    if C_framebuffer generate
+    fb: entity work.fb
+    generic map (
+        C_big_endian => C_big_endian
+    )
+    port map (
+        clk => clk, clk_dac => clk_325m,
+        addr_strobe => fb_addr_strobe,
+        addr_out => fb_addr,
+        data_ready => fb_data_ready,
+        data_in => from_sdram,
+        mode => R_fb_mode,
+        base_addr => R_fb_base_addr,
+        dac_out => video_dac,
+        tick_out => fb_tick
     );
     end generate;
 
@@ -399,7 +438,29 @@ begin
 		    R_simple_out(31 downto 24) <= cpu_to_dmem(31 downto 24);
 		end if;
 	    end if;
+	    -- Composite video framebuffer
+	    if C_framebuffer and io_addr(11 downto 4) = x"38" then
+		if C_big_endian then
+		    R_fb_mode <= cpu_to_dmem(25 downto 24);
+		    R_fb_base_addr <=
+		      cpu_to_dmem(11 downto 8) &
+		      cpu_to_dmem(23 downto 16) &
+		      cpu_to_dmem(31 downto 26);
+		else
+		    R_fb_mode <= cpu_to_dmem(1 downto 0);
+		    R_fb_base_addr <= cpu_to_dmem(19 downto 2);
+		end if;
+	    end if;
 	end if;
+	if C_framebuffer and rising_edge(clk) then
+	    if io_addr_strobe = '1' and
+	      io_addr(11 downto 4) = x"38" then
+		R_fb_intr <= '0';
+	    end if;
+	    if fb_tick = '1' then
+		R_fb_intr <= '1';
+	    end if;
+        end if;
 	if rising_edge(clk) then
 	    R_simple_in(C_simple_in - 1 downto 0) <=
 	      simple_in(C_simple_in - 1 downto 0);
