@@ -43,9 +43,8 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: 50/81/83/100/112
+	-- Main clock: 50/81/83/100/111/112/125
 	C_clk_freq: integer := 100;
-
 	-- SoC configuration options
 	C_mem_size: integer := 8; -- bootloader area
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
@@ -95,10 +94,24 @@ architecture Behavioral of glue is
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
     
+    clk125: if C_clk_freq = 125 generate
+    clkgen125: entity work.pll_50M_250M_125M_25M
+    port map(
+      clk_in1 => clk_50MHz, clk_out1 => clk_250MHz, clk_out2 => clk, clk_out3 => clk_25MHz
+    );
+    end generate;
+
     clk112: if C_clk_freq = 112 generate
     clkgen112: entity work.pll_50M_112M5
     port map(
       clk_in1 => clk_50MHz, clk_out1 => clk
+    );
+    end generate;
+
+    clk111: if C_clk_freq = 111 generate
+    clkgen111: entity work.pll_50M_250M_111M11_25M
+    port map(
+      clk_in1 => clk_50MHz, clk_out1 => clk_250MHz, clk_out2 => clk, clk_out3 => clk_25MHz
     );
     end generate;
 
@@ -109,17 +122,17 @@ begin
     );
     end generate;
 
-    clk81: if C_clk_freq = 81 generate
-    clkgen81: entity work.pll_50M_81M25
-    port map(
-      clk_in1 => clk_50MHz, clk_out1 => clk
-    );
-    end generate;
-
     clk83: if C_clk_freq = 83 generate
     clkgen83: entity work.pll_50M_25M_83M33_250M
     port map(
       clk_in1 => clk_50MHz, clk_out1 => clk_25MHz, clk_out2 => clk, clk_out3 => clk_250MHz
+    );
+    end generate;
+
+    clk81: if C_clk_freq = 81 generate
+    clkgen81: entity work.pll_50M_81M25
+    port map(
+      clk_in1 => clk_50MHz, clk_out1 => clk
     );
     end generate;
 
