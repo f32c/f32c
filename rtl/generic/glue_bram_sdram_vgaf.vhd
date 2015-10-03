@@ -191,14 +191,14 @@ architecture Behavioral of glue_bram is
     signal timer_intr: std_logic;
 
     -- Framebuffer
-    signal R_fb_base_addr: std_logic_vector(19 downto 2);
+    signal R_fb_base_addr: std_logic_vector(29 downto 2);
     signal R_fb_intr: std_logic;
 
     -- VGA/HDMI video
     constant iomap_vga: T_iomap_range := (x"FB80", x"FB8F"); -- VGA/HDMI should be (x"FB90", x"FB9F")
     signal vga_ce: std_logic; -- '1' when address is in iomap_vga range
     signal vga_fetch_next: std_logic; -- video module requests next data from fifo
-    signal vga_addr: std_logic_vector(19 downto 2);
+    signal vga_addr: std_logic_vector(29 downto 2);
     signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
     signal vga_data_bram: std_logic_vector(7 downto 0);
     signal video_bram_write: std_logic;
@@ -328,20 +328,20 @@ begin
     -- port 0: instruction bus
     to_sdram(instr_port).addr_strobe <= imem_addr_strobe and not sdram_ready(instr_port) when
       imem_addr(31 downto 30) = "10" else '0';
-    to_sdram(instr_port).addr <= imem_addr(19 downto 2);
+    to_sdram(instr_port).addr <= imem_addr(to_sdram(instr_port).addr'high downto 2);
     to_sdram(instr_port).data_in <= (others => '-');
     to_sdram(instr_port).write <= '0';
     to_sdram(instr_port).byte_sel <= (others => '1');
     -- port 1: data bus
     to_sdram(data_port).addr_strobe <= dmem_addr_strobe and not sdram_ready(data_port) when
       dmem_addr(31 downto 30) = "10" else '0';
-    to_sdram(data_port).addr <= dmem_addr(19 downto 2);
+    to_sdram(data_port).addr <= dmem_addr(to_sdram(data_port).addr'high downto 2);
     to_sdram(data_port).data_in <= cpu_to_dmem;
     to_sdram(data_port).write <= dmem_write;
     to_sdram(data_port).byte_sel <= dmem_byte_sel;
     -- port 2: VGA/HDMI video read
     to_sdram(fb_port).addr_strobe <= vga_addr_strobe and not sdram_ready(fb_port);
-    to_sdram(fb_port).addr <= vga_addr;
+    to_sdram(fb_port).addr <= vga_addr(to_sdram(fb_port).addr'high downto 2);
     to_sdram(fb_port).data_in <= (others => '-');
     to_sdram(fb_port).write <= '0';
     -- to_sdram(fb_port).byte_sel <= "0001"; -- 8 bits read (LSB byte used)
@@ -771,13 +771,13 @@ begin
 	        -- cpu write: writes Framebuffer base
 		if C_big_endian then
 		   -- R_fb_mode <= cpu_to_dmem(25 downto 24);
-		    R_fb_base_addr <=
+		    R_fb_base_addr <= -- XXX: revisit, probably wrong;
 		      cpu_to_dmem(11 downto 8) &
 		      cpu_to_dmem(23 downto 16) &
 		      cpu_to_dmem(31 downto 26);
 		else
 		    -- R_fb_mode <= cpu_to_dmem(1 downto 0);
-		    R_fb_base_addr <= cpu_to_dmem(19 downto 2);
+		    R_fb_base_addr <= cpu_to_dmem(29 downto 2);
 		end if;
             end if;
             -- interrupt handling: (CPU read or write will clear interrupt)
