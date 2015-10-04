@@ -162,7 +162,8 @@ architecture Behavioral of SDRAM_Controller is
 
     -- dual purpose counter, it counts up during the startup phase, then is used to trigger refreshes.
     constant startup_refresh_max   : unsigned(13 downto 0) := (others => '1');
-    signal   startup_refresh_count : unsigned(13 downto 0) := startup_refresh_max - to_unsigned(sdram_startup_cycles,14);
+    constant startup_refresh_init  : unsigned(13 downto 0) := startup_refresh_max - to_unsigned(sdram_startup_cycles,14);
+    signal   startup_refresh_count : unsigned(13 downto 0) := startup_refresh_init;
 
     -- logic to decide when to refresh
     signal pending_refresh: std_logic := '0';
@@ -387,9 +388,11 @@ begin
 		save_data_in     <= data_in;
 		save_byte_enable <= byte_sel;
 		ready_for_new    <= '0';
-                request_done <= false;
 		if write = '1' then
-		    data_ready_delay(C_write_ready_delay) <= '1'; -- schedule write acknowledge
+		    -- data_ready_delay(C_write_ready_delay) <= '1'; -- schedule write acknowledge
+		    R_ready_out(R_next_port) <= '1';
+                else
+                    request_done <= false;
 		end if;
 	    end if;
 
@@ -413,10 +416,10 @@ begin
 		--  * LOAD_MODE_REG 
 		--  * 2 cycles wait
 		------------------------------------------------------------------------
-		iob_CKE <= '1';
-
+		if startup_refresh_count = startup_refresh_max-47 then
+		    iob_CKE <= '1';
 		-- All the commands during the startup are NOPS, except these
-		if startup_refresh_count = startup_refresh_max-31 then
+		elsif startup_refresh_count = startup_refresh_max-31 then
 		    -- ensure all rows are closed
 		    iob_command     <= CMD_PRECHARGE;
 		    iob_address(prefresh_cmd) <= '1';  -- all banks
@@ -426,7 +429,7 @@ begin
 		    iob_command     <= CMD_REFRESH;
 		elsif startup_refresh_count = startup_refresh_max-15 then
 		    iob_command     <= CMD_REFRESH;
-		elsif startup_refresh_count = startup_refresh_max-7 then    
+		elsif startup_refresh_count = startup_refresh_max-7 then
 		    -- Now load the mode register
 		    iob_command     <= CMD_LOAD_MODE_REG;
 		    if C_cas = 2 then
@@ -617,16 +620,18 @@ begin
 	    -------------------------------------------------------------------
 	    -- We should never get here, but if we do then reset the memory
 	    -------------------------------------------------------------------
-	    when others => 
+	    when others =>
 		state                 <= s_startup;
 		ready_for_new         <= '0';
-		startup_refresh_count <= startup_refresh_max-to_unsigned(sdram_startup_cycles,14);
+		iob_cke               <= '0';
+		startup_refresh_count <= startup_refresh_init;
 	    end case;
 
 	    if reset = '1' then  -- Sync reset
 		state                 <= s_startup;
 		ready_for_new         <= '0';
-		startup_refresh_count <= startup_refresh_max-to_unsigned(sdram_startup_cycles,14);
+		iob_cke               <= '0';
+		startup_refresh_count <= startup_refresh_init;
 	    end if;
 	end if;
     end process;
