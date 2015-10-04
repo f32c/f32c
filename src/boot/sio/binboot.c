@@ -119,6 +119,15 @@ binboot(void)
 			"lui $4, 0x8000;"	/* stack mask */
 			"lui $5, 0x0010;"	/* top of the initial stack */
 			"and $29, %0, $4;"	/* clr low bits of the stack */
+
+			"beqz $29, cache_skip;"	/* skip cache invalidate for BRAM */
+			"li $2, 0x4000;"	/* max. I-cache size: 16 K */
+			"icache_flush:;"
+			"cache 0, 0($2);"
+			"bnez $2, icache_flush;"
+			"addiu $2, $2, -4;"
+			"cache_skip:;"
+
 			"move $31, $0;"		/* ra <- zero */
 			"jr %0;"
 			"or $29, $29, $5;"	/* set stack */
