@@ -51,7 +51,7 @@ vhdfiles = \
 ../../../soc/arbiter.vhd \
 ../../../soc/sdram_ctrl.vhd \
 ../../../soc/ram_emu.vhd \
-../../../soc/sdram_mz.vhd \
+../../../soc/sdram.vhd \
 ../../../soc/sio.vhd \
 ../../../soc/spi.vhd \
 ../../../soc/gpio.vhd \
