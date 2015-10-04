@@ -331,8 +331,7 @@ begin
 	    R_ready_out <= (others => '0');
 	    R_ready_out(R_cur_port) <= data_ready_delay(1);
 	    if ready_for_new = '1' and addr_strobe = '1'
-	      and (write = '1' or save_wr = '1' or read_done)
-	      and R_ready_out(R_next_port) = '0' then
+	      and read_done and R_ready_out(R_next_port) = '0' then
 		R_cur_port <= R_next_port;
 		if save_bank = addr_bank and save_row = addr_row then
 		    can_back_to_back <= '1';
@@ -346,10 +345,10 @@ begin
 		save_data_in     <= data_in;
 		save_byte_enable <= byte_sel;
 		ready_for_new    <= '0';
-		read_done	 <= false;
 		if write = '1' then
-		    data_ready_delay(0) <= '1';
 		    R_ready_out(R_next_port) <= '1';
+		else
+		    read_done <= false;
 		end if;
 	    end if;
 
