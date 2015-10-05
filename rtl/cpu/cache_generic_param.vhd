@@ -400,9 +400,7 @@ begin
     cpu_d_ready <= '1' when R_d_state = C_D_READ and dcache_line_valid
       else dmem_data_ready;
 
-    daddr_cacheable <= C_dcache_size > 0
-      and d_addr(31 downto 29) = "100"
-      and d_addr(C_cached_addr_bits) = '0';
+    daddr_cacheable <= C_dcache_size > 0 and d_addr(31 downto 29) = "100";
     dcache_write <= dmem_data_ready when
       (R_d_state = C_D_WRITE or R_d_state = C_D_FETCH) else '0';
     d_tag_valid_bit <= '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111"
