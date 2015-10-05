@@ -149,6 +149,13 @@ architecture x of cache is
     signal d_tag_valid_bit: std_logic;
 begin
 
+    assert (C_icache_size = 0 or C_icache_size = 2 or C_icache_size = 4
+      or C_icache_size = 8 or C_icache_size = 16 or C_icache_size = 32)
+      report "Invalid instruction cache size" severity failure;
+    assert (C_dcache_size = 0 or C_dcache_size = 2 or C_dcache_size = 4
+      or C_dcache_size = 8 or C_dcache_size = 16 or C_dcache_size = 32)
+      report "Invalid data cache size" severity failure;
+
     pipeline: entity work.pipeline
     generic map (
 	C_arch => C_arch, C_cache => true, C_reg_IF_PC => true,
@@ -293,8 +300,8 @@ begin
     end generate i_block_iter;
     end generate; -- icache_4k
 
-    G_icache_8k:
-    if C_icache_size = 8 generate
+    G_icache_big:
+    if C_icache_size >= 8 generate
     tag_dp_bram: entity work.bram_true2p_1clk
     generic map (
         dual_port => True,
@@ -333,7 +340,7 @@ begin
 	data_out_b => open
     );
     end generate i_block_iter;
-    end generate; -- icache_8k
+    end generate; -- icache_big
 
     imem_addr <= R_i_addr;
     imem_addr_strobe <= '1' when not iaddr_cacheable else R_i_strobe;
@@ -512,8 +519,8 @@ begin
     end generate d_block_iter;
     end generate; -- dcache_4k
 
-    G_dcache_8k:
-    if C_dcache_size = 8 generate
+    G_dcache_big:
+    if C_dcache_size >= 8 generate
     tag_dp_bram_d: entity work.bram_true2p_1clk
     generic map (
         dual_port => False,
@@ -552,5 +559,5 @@ begin
 	data_out_b => open
     );
     end generate d_block_iter;
-    end generate; -- dcache_8k
+    end generate; -- dcache_big
 end x;
