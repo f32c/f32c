@@ -29,6 +29,12 @@ vhdfiles = \
 ../../../xilinx/pll_50M_250M_111M11_25M.vhd \
 ../../../xilinx/hdmi_out.vhd \
 ../../../generic/glue_bram_sdram_vgaf.vhd \
+../../../generic/bram.vhd \
+../../../generic/boot_block_pack.vhd \
+../../../generic/bootloader_sio_binhex_mi32el.vhd \
+../../../generic/bootloader_sio_binhex_mi32eb.vhd \
+../../../generic/bootloader_sio_binhex_rv32el.vhd \
+../../../generic/bootloader_sio_binhex_rv32eb.vhd \
 ../../../generic/bram_mi32_eb.vhd \
 ../../../generic/bram_mi32_el.vhd \
 ../../../generic/bram_true2p_1clk.vhd \
