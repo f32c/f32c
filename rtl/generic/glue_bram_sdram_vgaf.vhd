@@ -32,7 +32,11 @@ use IEEE.MATH_REAL.ALL;
 
 use work.f32c_pack.all;
 use work.sram_pack.all;
-
+use work.boot_block_pack.all;
+use work.bootloader_sio_binhex_mi32el.all;
+use work.bootloader_sio_binhex_mi32eb.all;
+use work.bootloader_sio_binhex_rv32el.all;
+use work.bootloader_sio_binhex_rv32eb.all;
 
 entity glue_bram is
     generic (
@@ -160,6 +164,20 @@ architecture Behavioral of glue_bram is
     constant instr_port: integer := 0;
     constant data_port: integer := 1;
     constant fb_port: integer := 2;
+
+    type T_endian_select is array(boolean) of integer;
+    constant select_big_endian: T_endian_select := (false => 0, true => 2);
+
+    type T_boot_block_select is array(0 to 3) of boot_block_type;
+    constant boot_block_select: T_boot_block_select :=
+      (  --  (arch, big endian)
+        (ARCH_MI32+select_big_endian(false)) => bootloader_sio_binhex_mi32el,
+        (ARCH_MI32+select_big_endian(true))  => bootloader_sio_binhex_mi32eb,
+        (ARCH_RV32+select_big_endian(false)) => bootloader_sio_binhex_rv32el,
+        (ARCH_RV32+select_big_endian(true))  => bootloader_sio_binhex_rv32eb
+      );
+
+    constant boot_block: boot_block_type := boot_block_select(C_arch + select_big_endian(C_big_endian));
 
     -- io base
     type T_iomap_range is array(0 to 1) of std_logic_vector(15 downto 0);
@@ -795,46 +813,18 @@ begin
     -- Block RAM
     dmem_bram_write <=
       dmem_addr_strobe and dmem_write when dmem_addr(31) /= '1' else '0';
-    G_bram_mi32_el:
-    if C_arch = ARCH_MI32 and not C_big_endian generate
-    bram_mi32_el: entity work.bram_mi32_el
-    generic map (
-	C_mem_size => C_mem_size
-    )
-    port map (
-	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_write => dmem_bram_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
-    );
-    end generate;
-    G_bram_mi32_eb:
-    if C_arch = ARCH_MI32 and C_big_endian generate
-    bram_mi32_eb: entity work.bram_mi32_eb
-    generic map (
-	C_mem_size => C_mem_size
-    )
-    port map (
-	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_write => dmem_bram_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
-    );
-    end generate;
-    G_bram_rv32:
-    if C_arch = ARCH_RV32 generate
-    bram_rv32: entity work.bram_rv32
-    generic map (
-	C_mem_size => C_mem_size
-    )
-    port map (
-	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_write => dmem_bram_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
-    );
-    end generate;
 
+    bram: entity work.bram
+    generic map (
+        boot_block => boot_block,
+	C_mem_size => C_mem_size
+    )
+    port map (
+	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
+	dmem_write => dmem_bram_write,
+	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
+    );
 
     -- Debugging SIO instance
     G_debug_sio:
