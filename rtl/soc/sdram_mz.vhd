@@ -316,7 +316,7 @@ begin
 	    ----------------------------------------------------------------------------
 	    -- update shift registers used to choose when to present data to/from memory
 	    ----------------------------------------------------------------------------
-	    if data_ready_delay(0) = '1' then
+	    if data_ready_delay(1) = '1' then
 		read_done <= true;
 	    end if;
 	    data_ready_delay <= '0' & data_ready_delay(data_ready_delay'high downto 1);
