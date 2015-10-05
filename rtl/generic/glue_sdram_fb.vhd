@@ -45,7 +45,7 @@ entity glue_bram is
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
 	C_ll_sc: boolean := false;
-	C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff"; -- 1 MB
+	C_PC_mask: std_logic_vector(31 downto 0) := x"81ffffff"; -- 32 MB
 	C_exceptions: boolean := true;
 
 	-- COP0 options
@@ -78,6 +78,7 @@ entity glue_bram is
 	C_mem_size: integer := 2;	-- in KBytes
 	C_icache_size: integer := 8;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
+	C_cached_addr_bits: integer := 25; -- 32MB
 	C_sdram: boolean := true;
 	C_sio: integer := 1;
 	C_sio_init_baudrate: integer := 115200;
@@ -262,6 +263,7 @@ begin
 	C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
 	C_register_technology => C_register_technology,
 	C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
+	C_cached_addr_bits => C_cached_addr_bits,
 	-- debugging only
 	C_debug => C_debug
     )
