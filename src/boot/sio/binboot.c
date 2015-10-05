@@ -117,7 +117,7 @@ binboot(void)
 			__asm __volatile__(
 			".set noreorder;"
 			"lui $4, 0x8000;"	/* stack mask */
-			"lui $5, 0x0010;"	/* top of the initial stack */
+			"lui $5, 0x1000;"	/* top of the initial stack */
 			"and $29, %0, $4;"	/* clr low bits of the stack */
 
 			"beqz $29, cache_skip;"	/* skip cache invalidate for BRAM */
@@ -138,7 +138,7 @@ binboot(void)
 #else /* riscv */
 			__asm __volatile__(
 			"lui s0, 0x8000;"	/* stack mask */
-			"lui s1, 0x0010;"	/* top of the initial stack */
+			"lui s1, 0x1000;"	/* top of the initial stack */
 			"and sp, %0, s0;"	/* clr low bits of the stack */
 			"or sp, sp, s1;"	/* set stack */
 			"mv ra, zero;"		/* ra <- zero */
