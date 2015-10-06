@@ -261,12 +261,8 @@ begin
     sdram_data <= iob_data when iob_dq_hiz = '0' else (others => 'Z');
     data_out <= R_from_sdram & R_from_sdram_prev;
 
-    process(R_next_port, data_ready_delay)
-    begin
-    end process;
-
     -- Arbiter: round-robin port selection combinatorial logic
-    process(bus_in, R_next_port, R_cur_port)
+    process(bus_in, R_cur_port)
 	variable i, j, t, n: integer;
     begin
 	t := R_cur_port;
