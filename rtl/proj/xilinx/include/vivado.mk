@@ -20,5 +20,7 @@ clean:
 	rm -rf *~ vivado.jou vivado.log webtalk* vivado_*.backup.???
 	rm -rf $(project).cache $(project).hw $(project).runs $(project).sim $(project).srcs
 
-program:
+program: xc3sprog
+
+xc3sprog:
 	xc3sprog -c $(xc3sprog_interface) -p $(xc3sprog_device) $(bitfile)
