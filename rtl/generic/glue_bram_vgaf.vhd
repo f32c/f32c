@@ -208,14 +208,14 @@ architecture Behavioral of glue_bram is
     constant C_pids_bits: integer := integer(floor((log2(real(C_pids)+0.001))+0.5));
     
     -- Framebuffer
-    signal R_fb_base_addr: std_logic_vector(19 downto 2);
+    signal R_fb_base_addr: std_logic_vector(29 downto 2);
     signal R_fb_intr: std_logic;
     
     -- VGA/HDMI video
     constant iomap_vga: T_iomap_range := (x"FB80", x"FB8F"); -- VGA/HDMI should be (x"FB90", x"FB9F")
     signal vga_ce: std_logic; -- '1' when address is in iomap_vga range
     signal vga_fetch_next: std_logic; -- video module requests next data from fifo
-    signal vga_addr: std_logic_vector(19 downto 2); -- from fifo to RAM
+    signal vga_addr: std_logic_vector(29 downto 2); -- from fifo to RAM
     -- signal vga_debug_rd_addr: std_logic_vector(19 downto 2); -- from fifo to RAM
     signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
     signal video_bram_write: std_logic; -- from CPU to RAM
@@ -612,7 +612,7 @@ begin
 		      cpu_to_dmem(31 downto 26);
 		else
 		    -- R_fb_mode <= cpu_to_dmem(1 downto 0);
-		    R_fb_base_addr <= cpu_to_dmem(19 downto 2);
+		    R_fb_base_addr <= cpu_to_dmem(29 downto 2);
 		end if;
             end if;
             -- interrupt handling: (CPU read or write will clear interrupt)
