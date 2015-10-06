@@ -1,4 +1,4 @@
-ALTERAPATH=/usr/local/altera/13.0sp1
+ALTERAPATH=/opt/altera/quartus2/13.0sp1
 
 if [ -d ${ALTERAPATH}/quartus/bin/ ] ; then
   export PATH=${ALTERAPATH}/quartus/bin/:"${PATH}"
