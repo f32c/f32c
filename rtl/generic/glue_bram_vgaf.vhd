@@ -105,7 +105,7 @@ entity glue_bram is
     );
     port (
 	clk: in std_logic;
-	clk_25MHz: in std_logic; -- VGA pixel clock 25 MHz
+	clk_25MHz: in std_logic := '0'; -- VGA pixel clock 25 MHz
 	clk_250MHz: in std_logic := '0'; -- HDMI bit shift clock, default 0 if no HDMI
 	clk_fmdds: in std_logic := '0'; -- FM DDS clock (>216 MHz)
 	clk_cw: in std_logic := '0'; -- CW clock (433.92 MHz)
