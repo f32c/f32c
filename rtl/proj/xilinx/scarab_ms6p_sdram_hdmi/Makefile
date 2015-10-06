@@ -31,9 +31,9 @@ vhdfiles = \
 ../../../generic/glue_bram_sdram_vgaf.vhd \
 ../../../generic/bram.vhd \
 ../../../generic/boot_block_pack.vhd \
-../../../generic/bootloader/bootloader_sio_binhex_mi32el.vhd \
-../../../generic/bootloader/bootloader_sio_binhex_mi32eb.vhd \
-../../../generic/bootloader/bootloader_sio_binhex_rv32el.vhd \
+../../../generic/bootloader/boot_sio_mi32el.vhd \
+../../../generic/bootloader/boot_sio_mi32eb.vhd \
+../../../generic/bootloader/boot_sio_rv32el.vhd \
 ../../../generic/bram_true2p_1clk.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \

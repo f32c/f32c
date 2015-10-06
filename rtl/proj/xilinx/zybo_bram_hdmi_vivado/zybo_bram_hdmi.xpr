@@ -247,21 +247,21 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../generic/bootloader/bootloader_sio_binhex_mi32el.vhd">
+      <File Path="$PPRDIR/../../../generic/bootloader/boot_sio_mi32el.vhd">
         <FileInfo>
           <Attr Name="Library" Val="xil_defaultlib"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../generic/bootloader/bootloader_sio_binhex_mi32eb.vhd">
+      <File Path="$PPRDIR/../../../generic/bootloader/boot_sio_mi32eb.vhd">
         <FileInfo>
           <Attr Name="Library" Val="xil_defaultlib"/>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../generic/bootloader/bootloader_sio_binhex_rv32el.vhd">
+      <File Path="$PPRDIR/../../../generic/bootloader/boot_sio_rv32el.vhd">
         <FileInfo>
           <Attr Name="Library" Val="xil_defaultlib"/>
           <Attr Name="UsedIn" Val="synthesis"/>

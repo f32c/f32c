@@ -4,9 +4,9 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use work.boot_block_pack.all;
 
-package bootloader_sio_binhex_rv32el is
+package boot_sio_rv32el is
 
-constant bootloader_sio_binhex_rv32el : boot_block_type := (
+constant boot_sio_rv32el : boot_block_type := (
 	x"13", x"01", x"01", x"fe", x"23", x"2e", x"11", x"00", 
 	x"23", x"2c", x"81", x"00", x"23", x"2a", x"91", x"00", 
 	x"23", x"28", x"21", x"01", x"23", x"26", x"31", x"01", 
@@ -138,4 +138,4 @@ constant bootloader_sio_binhex_rv32el : boot_block_type := (
 	others => (others => '0')
     );
 
-end bootloader_sio_binhex_rv32el;
+end boot_sio_rv32el;
