@@ -34,8 +34,6 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-library unisim;
-use unisim.vcomponents.all;
 use work.f32c_pack.all;
 
 entity hdmi_out is
