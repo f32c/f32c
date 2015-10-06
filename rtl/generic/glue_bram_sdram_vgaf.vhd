@@ -116,7 +116,7 @@ entity glue_bram is
     );
     port (
 	clk: in std_logic;
-	clk_25MHz: in std_logic; -- VGA pixel clock 25 MHz
+	clk_25MHz: in std_logic := '0'; -- VGA pixel clock 25 MHz
 	clk_250MHz: in std_logic := '0'; -- HDMI bit shift clock, default 0 if no HDMI
 	sdram_addr: out std_logic_vector(12 downto 0);
 	sdram_data: inout std_logic_vector(15 downto 0);
