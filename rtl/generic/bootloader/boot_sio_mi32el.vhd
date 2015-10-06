@@ -4,9 +4,9 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use work.boot_block_pack.all;
 
-package bootloader_sio_binhex_mi32el is
+package boot_sio_mi32el is
 
-constant bootloader_sio_binhex_mi32el : boot_block_type := (
+constant boot_sio_mi32el : boot_block_type := (
 x"00", x"00", x"00", x"00", x"21", x"40", x"00", x"00",
 x"21", x"30", x"00", x"00", x"21", x"10", x"00", x"00",
 x"6D", x"33", x"0A", x"3C", x"3E", x"20", x"0B", x"3C",
@@ -138,4 +138,4 @@ x"00", x"00", x"00", x"00", x"00", x"00", x"00", x"00",
 	others => (others => '0')
     );
 
-end bootloader_sio_binhex_mi32el;
+end boot_sio_mi32el;

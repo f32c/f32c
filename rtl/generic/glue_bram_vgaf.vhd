@@ -33,10 +33,10 @@ use IEEE.MATH_REAL.ALL;
 
 use work.f32c_pack.all;
 use work.boot_block_pack.all;
-use work.bootloader_sio_binhex_mi32el.all;
-use work.bootloader_sio_binhex_mi32eb.all;
-use work.bootloader_sio_binhex_rv32el.all;
--- use work.bootloader_sio_binhex_rv32eb.all;
+use work.boot_sio_mi32el.all;
+use work.boot_sio_mi32eb.all;
+use work.boot_sio_rv32el.all;
+-- use work.boot_sio_rv32eb.all;
 
 entity glue_bram is
     generic (
@@ -145,9 +145,9 @@ architecture Behavioral of glue_bram is
     type T_boot_block_select is array(0 to 3) of boot_block_type;
     constant boot_block_select: T_boot_block_select :=
       (  --  (arch, big endian)
-        (ARCH_MI32+select_big_endian(false)) => bootloader_sio_binhex_mi32el,
-        (ARCH_MI32+select_big_endian(true))  => bootloader_sio_binhex_mi32eb,
-        (ARCH_RV32+select_big_endian(false)) => bootloader_sio_binhex_rv32el,
+        (ARCH_MI32+select_big_endian(false)) => boot_sio_mi32el,
+        (ARCH_MI32+select_big_endian(true))  => boot_sio_mi32eb,
+        (ARCH_RV32+select_big_endian(false)) => boot_sio_rv32el,
         (ARCH_RV32+select_big_endian(true))  => (others => (others => '0')) -- RISC-V currently has no big endian support
       );
 

@@ -19,4 +19,4 @@ copy-paste loader.vhd.include into appropriate file here
 using text editor, copy paste lines like this:
 x"00", x"00", x"00", x"00", x"21", x"40", x"00", x"00",
 into bootloader vhd file:
-bootloader_sio_binhex_mi32el.vhd
+boot_sio_mi32el.vhd
