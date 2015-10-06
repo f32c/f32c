@@ -21,9 +21,11 @@ vfiles = \
 vhdfiles = \
 ../../../xilinx/zybo_toplevel_bram_hdmi.vhd \
 ../../../generic/glue_bram_vgaf.vhd \
-../../../generic/bram_mi32_eb.vhd \
-../../../generic/bram_mi32_el.vhd \
-../../../generic/bram_rv32.vhd \
+../../../generic/bram.vhd \
+../../../generic/boot_block_pack.vhd \
+../../../generic/bootloader/bootloader_sio_binhex_mi32el.vhd \
+../../../generic/bootloader/bootloader_sio_binhex_mi32eb.vhd \
+../../../generic/bootloader/bootloader_sio_binhex_rv32el.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
 ../../../cpu/alu.vhd \
