@@ -898,9 +898,8 @@ begin
       ce => fmrds_ce, addr => dmem_addr(3 downto 2),
       bus_write => dmem_write, byte_sel => dmem_byte_sel,
       bus_in => cpu_to_dmem, bus_out => from_fmrds,
-      pcm_in_left => (others => '0'),
-      pcm_in_right => (others => '0'),
---      debug => from_fmrds,
+      pcm_in_left => pcm_bus_l,
+      pcm_in_right => pcm_bus_r,
       fm_antenna => fm_antenna
     );
     with conv_integer(io_addr(11 downto 4)) select
