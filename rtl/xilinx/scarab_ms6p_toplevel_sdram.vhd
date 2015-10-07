@@ -54,6 +54,7 @@ entity glue is
 	C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
 	C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
         C_vgahdmi: boolean := true;
+	C_fmrds: boolean := true;
 	C_sio: integer := 1;
 	C_spi: integer := 2;
 	C_gpio: integer := 32
@@ -79,6 +80,7 @@ entity glue is
 	leds: out std_logic_vector(7 downto 0);
 	porta, portb: inout std_logic_vector(11 downto 0);
 	portc: inout std_logic_vector(7 downto 0);
+	portd: out std_logic_vector(0 downto 0); -- fm antenna is here
 	TMDS_out_P, TMDS_out_N: out std_logic_vector(2 downto 0);
 	TMDS_out_CLK_P, TMDS_out_CLK_N: out std_logic;
 	sw: in std_logic_vector(4 downto 1)
@@ -148,7 +150,7 @@ begin
     );
 
     -- generic SDRAM glue
-    glue_sdram: entity work.glue_bram
+    glue_sdram: entity work.glue_sdram
     generic map (
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
@@ -167,12 +169,14 @@ begin
 	C_ram_emu_addr_width => C_ram_emu_addr_width,
 	C_ram_emu_wait_states => C_ram_emu_wait_states,
         C_vgahdmi => C_vgahdmi,
+	C_fmrds => C_fmrds,
 	C_debug => C_debug
     )
     port map (
 	clk => clk,
 	clk_25MHz => clk_25MHz, -- pixel clock
 	clk_250MHz => clk_250MHz, -- tmds clock
+	clk_fmdds => clk_250MHz, -- FM/RDS clock
 	-- external SDRAM interface
 	sdram_addr => sdram_a, sdram_data => sdram_d,
 	sdram_ba => sdram_ba, sdram_dqm => sdram_dqm,
@@ -186,6 +190,7 @@ begin
 	spi_mosi(0) => flash_mosi,  spi_mosi(1) => sd_cmd,
 	spi_miso(0) => flash_miso,  spi_miso(1) => sd_dat0,
 	tmds_out_rgb => tmds_out_rgb,
+	fm_antenna => portd(0),
 	gpio(11 downto 0) => porta(11 downto 0),
 	gpio(23 downto 12) => portb(11 downto 0),
 	gpio(31 downto 24) => portc(7 downto 0),
