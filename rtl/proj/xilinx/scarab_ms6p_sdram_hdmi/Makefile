@@ -28,7 +28,7 @@ vhdfiles = \
 ../../../xilinx/pll_50M_250M_125M_25M.vhd \
 ../../../xilinx/pll_50M_250M_111M11_25M.vhd \
 ../../../xilinx/hdmi_out.vhd \
-../../../generic/glue_bram_sdram_vgaf.vhd \
+../../../generic/glue_sdram.vhd \
 ../../../generic/bram.vhd \
 ../../../generic/boot_block_pack.vhd \
 ../../../generic/bootloader/boot_sio_mi32el.vhd \
@@ -58,10 +58,16 @@ vhdfiles = \
 ../../../soc/spi.vhd \
 ../../../soc/gpio.vhd \
 ../../../soc/timer.vhd \
+../../../soc/pcm.vhd \
 ../../../soc/pid/pid.vhd \
 ../../../soc/pid/ctrlpid.vhd \
 ../../../soc/pid/simotor.vhd \
 ../../../soc/pid/rotary_decoder.vhd \
+../../../soc/fm/fm.vhd \
+../../../soc/fm/fmgen.vhd \
+../../../soc/fm/rds.vhd \
+../../../soc/fm/bram_rds.vhd \
+../../../soc/fm/message.vhd \
 ../../../soc/vgahdmi/vgahdmif.vhd \
 ../../../soc/vgahdmi/videofifo.vhd \
 
