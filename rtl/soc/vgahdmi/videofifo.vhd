@@ -55,6 +55,7 @@ entity videofifo is
 	data_in: in std_logic_vector(31 downto 0);
 	data_out: out std_logic_vector(31 downto 0);
 	start: in std_logic; -- value 0 will reset fifo RAM to base address, value 1 allows start of reading
+	frame: out std_logic; -- CPU clock synchronous start edge detection
 	fetch_next: in std_logic -- fetch next value (current data consumed)
     );
 end videofifo;
@@ -110,6 +111,11 @@ begin
 
     -- clean start is a delay thru clock synchronous shift register
     clean_start <= startsync(C_synclen-1);
+
+    -- at start of frame generate pulse of 1 CPU clock
+    -- rising edge detection of start signal
+    -- useful for VSYNC frame interrupt
+    frame <= startsync(C_synclen-2) and not startsync(C_synclen-1);
 
     --
     -- Refill the circular buffer with fresh data from SRAM-a
