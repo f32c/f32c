@@ -234,6 +234,7 @@ architecture Behavioral of glue_sdram is
     signal vga_addr_strobe: std_logic; -- FIFO requests to read from RAM
     signal vga_data_ready: std_logic; -- RAM responds to FIFO
     signal vga_n_vsync, vga_n_hsync: std_logic; -- intermediate signals for xilinx to be happy
+    signal vga_frame: std_logic;
 
     -- PCM audio
     constant iomap_pcm: T_iomap_range := (x"FBA0", x"FBAF");
@@ -793,6 +794,7 @@ begin
       -- data_in(31 downto 8) => (others => '0'),
       base_addr => R_fb_base_addr,
       start => vga_n_vsync,
+      frame => vga_frame,
       data_out => vga_data_from_fifo,
       fetch_next => vga_fetch_next
     );
@@ -845,7 +847,7 @@ begin
 	    if vga_ce = '1' then -- and dmem_write = '0' then
 	        R_fb_intr <= '0';
             else
-                if vga_n_vsync = '0' then -- fixme: vsync is long, should be 1-clock tick here
+                if vga_frame = '1' then
                     R_fb_intr <= '1';
                 end if;
             end if;
