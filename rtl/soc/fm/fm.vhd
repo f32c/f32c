@@ -72,7 +72,7 @@ architecture arch of fm is
     constant C_registers: integer := 3; -- # of registers with memory <= (less or equal of) # of all registers
     constant C_bits: integer := 32;     -- don't touch, default bit size of memory registers
 
-    constant C_addr_bits: integer := integer(ceil((log2(real(C_rds_msg_len)))+1.0E-16));
+    constant C_addr_bits: integer := integer(ceil((log2(real(C_rds_msg_len)+1.0E-6))-1.0E-6));
 
     -- normal registers
     -- type fm_reg_type  is std_logic_vector(C_bits-1 downto 0);
