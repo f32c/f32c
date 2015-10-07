@@ -882,15 +882,9 @@ begin
       c_fmdds_hz => C_fmdds_hz, -- Hz FMDDS clock frequency
       C_rds_msg_len => C_rds_msg_len, -- allocate RAM for RDS message
       C_stereo => C_fm_stereo,
-      -- multiply/divide to produce 1.824 MHz clock
+      -- multiply/divide CPU clock to produce 1.824 MHz clock
       c_rds_clock_multiply => C_rds_clock_multiply,
       c_rds_clock_divide => C_rds_clock_divide
-      -- example settings for 25 MHz clock
-      -- c_rds_clock_multiply => 228,
-      -- c_rds_clock_divide => 3125
-      -- settings for super slow (100Hz debug) clock
-      -- c_rds_clock_multiply => 1,
-      -- c_rds_clock_divide => 812500
     )
     port map (
       clk => clk, -- RDS and PCM processing clock 81.25 MHz
