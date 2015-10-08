@@ -63,7 +63,7 @@ architecture Behavioral of arbiter is
     signal S_addr_strobe: std_logic;			-- from CPU bus
 
     -- Arbiter registers
-    signal R_cur_port, R_hold_cur_port: integer range 0 to (C_ports - 1);
+    signal R_cur_port, R_next_port: integer range 0 to (C_ports - 1);
     signal R_ready_out: sram_ready_array;
     signal request_completed: boolean := false;
     -- Arbiter internal signals
@@ -136,22 +136,9 @@ begin
         if rising_edge(clk) then
             R_ready_out <= (others => '0');
             R_ready_out(R_cur_port) <= ready_next_cycle;
-            if S_addr_strobe = '0' then
-              -- if no request on current port, switch to next port
-              R_cur_port <= next_port;
-            --else
-              -- if request is pending on current port
-              -- wait for ready signal and when it arrives
-              -- send it back to current port which requested it
-              --if ready_next_cycle = '1' then
-              --  R_ready_out(R_cur_port) <= '1';
-                -- if we don't change here R_cur_port <= next port
-                -- that will allow back2back requests
-                -- that will keep servicing transactions at the current port
-                -- this leads to risk of starvation - if requests
-                -- persist on current port, other ports will not get chance
-                -- to be serviced.
-              --end if;
+            if S_addr_strobe = '0' or ready_next_cycle = '1' then
+                -- if no request on current port, switch to next port
+                R_cur_port <= next_port;
             end if;
         end if;
     end process;
