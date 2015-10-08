@@ -121,7 +121,7 @@ binboot(void)
 			"and $29, %0, $4;"	/* clr low bits of the stack */
 
 			"beqz $29, cache_skip;"	/* skip cache invalidate for BRAM */
-			"li $2, 0x4000;"	/* max. I-cache size: 16 K */
+			"li $2, 0x10000;"	/* max. I-cache size: 64 K */
 			"icache_flush:;"
 			"cache 0, 0($2);"
 			"bnez $2, icache_flush;"
