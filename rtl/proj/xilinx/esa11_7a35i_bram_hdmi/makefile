@@ -1,4 +1,4 @@
-vivado=/opt/Xilinx/Vivado/2015.2/bin/vivado
+#vivado=/opt/Xilinx/Vivado/2015.3/bin/vivado
 project=esa11_7a35i_bram
 xc3sprog_interface = ft4232h_fast
 # name of resulting bitstream file (*.bit)
