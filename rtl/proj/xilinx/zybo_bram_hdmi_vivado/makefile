@@ -1,4 +1,4 @@
-vivado=/opt/Xilinx/Vivado/2015.2/bin/vivado
+vivado=/opt/Xilinx/Vivado/2015.3/bin/vivado
 project=zybo_bram_hdmi
 xc3sprog_interface = jtaghs1_fast
 xc3sprog_device = 1
