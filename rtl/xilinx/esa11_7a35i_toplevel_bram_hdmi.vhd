@@ -116,14 +116,8 @@ begin
              );
     end generate;
 
-    -- reset hard-block: Xilinx Spartan-6 specific
---  reset: startup_spartan6
---    port map (
---	   clk => clk, gsr => sio_break, gts => sio_break,
---	   keyclearb => '0'
---  ;
-	 -- reset hard-block: Xilinx Artix-7 specific
-	 reset: startupe2
+    -- reset hard-block: Xilinx Artix-7 specific
+    reset: startupe2
     generic map (
 		prog_usr => "FALSE"
     )
