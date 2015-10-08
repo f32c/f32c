@@ -1,4 +1,4 @@
-vivado  ?= /opt/Xilinx/Vivado/2015.2/bin/vivado
+vivado  ?= /opt/Xilinx/Vivado/2015.3/bin/vivado
 # basename of the file some_project.xpr
 project ?= project
 # xc3sprog interface name
