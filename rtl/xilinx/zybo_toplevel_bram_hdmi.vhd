@@ -84,6 +84,7 @@ end glue;
 
 architecture Behavioral of glue is
     signal clk, clk_250MHz, clk_25MHz: std_logic;
+    signal sio_break: std_logic;
     signal rs232_break: std_logic;
     signal tmds_out_rgb: std_logic_vector(2 downto 0);
 begin
@@ -106,6 +107,22 @@ begin
     clk <= clk_125m;
     end generate;
 
+    reset: startupe2
+    generic map (
+		prog_usr => "FALSE"
+    )
+    port map (
+		clk => clk,
+		gsr => sio_break,
+		gts => '0',
+		keyclearb => '0',
+		pack => '1',
+		usrcclko => clk,
+		usrcclkts => '0',
+		usrdoneo => '1',
+		usrdonets => '0'
+   );
+
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
     generic map (
@@ -125,7 +142,7 @@ begin
 	clk_25MHz => clk_25MHz, -- pixel clock
 	clk_250MHz => clk_250MHz, -- tmds clock
 	sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
-	sio_break(0) => open,
+	sio_break(0) => sio_break,
 	spi_sck(0)  => open,  spi_sck(1)  => open,
 	spi_ss(0)   => open,  spi_ss(1)   => open,
 	spi_mosi(0) => open,  spi_mosi(1) => open,
