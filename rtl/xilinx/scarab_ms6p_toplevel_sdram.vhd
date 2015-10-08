@@ -48,8 +48,8 @@ entity glue is
 	-- SoC configuration options
 	C_mem_size: integer := 8; -- bootloader area
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
-        C_icache_size: integer := 16; -- 0, 2, 4, 8, 16 KBytes
-        C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16 KBytes
+        C_icache_size: integer := 32; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
         C_sdram_separate_arbiter: boolean := false;
 	C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
 	C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works

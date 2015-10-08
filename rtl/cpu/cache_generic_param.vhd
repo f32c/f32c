@@ -150,12 +150,10 @@ architecture x of cache is
 begin
 
     assert (C_icache_size = 0 or C_icache_size = 2 or C_icache_size = 4
-      or C_icache_size = 8 or C_icache_size = 16 or C_icache_size = 32
-      or C_icache_size = 64)
+      or C_icache_size = 8 or C_icache_size = 16 or C_icache_size = 32)
       report "Invalid instruction cache size" severity failure;
     assert (C_dcache_size = 0 or C_dcache_size = 2 or C_dcache_size = 4
-      or C_dcache_size = 8 or C_dcache_size = 16 or C_dcache_size = 32
-      or C_dcache_size = 64)
+      or C_dcache_size = 8 or C_dcache_size = 16 or C_dcache_size = 32)
       report "Invalid data cache size" severity failure;
 
     pipeline: entity work.pipeline
