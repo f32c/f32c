@@ -33,6 +33,10 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 
 use work.f32c_pack.all;
 use work.sram_pack.all;
+use work.boot_block_pack.all;
+use work.boot_sio_mi32el.all;
+use work.boot_sio_mi32eb.all;
+use work.boot_sio_rv32el.all;
 
 
 entity glue_sram is
@@ -122,6 +126,20 @@ architecture Behavioral of glue_sram is
     signal to_sram: sram_port_array;
     signal sram_ready: sram_ready_array;
     signal from_sram: std_logic_vector(31 downto 0);
+
+    type T_endian_select is array(boolean) of integer;
+    constant select_big_endian: T_endian_select := (false => 0, true => 2);
+
+    type T_boot_block_select is array(0 to 3) of boot_block_type;
+    constant boot_block_select: T_boot_block_select :=
+      (  --  (arch, big endian)
+        (ARCH_MI32+select_big_endian(false)) => boot_sio_mi32el,
+        (ARCH_MI32+select_big_endian(true))  => boot_sio_mi32eb,
+        (ARCH_RV32+select_big_endian(false)) => boot_sio_rv32el,
+        (ARCH_RV32+select_big_endian(true))  => (others => (others => '0')) -- RISC-V currently has no big endian support
+      );
+
+    constant boot_block: boot_block_type := boot_block_select(C_arch + select_big_endian(C_big_endian));
 
     -- Block RAM
     signal bram_i_to_cpu, bram_d_to_cpu: std_logic_vector(31 downto 0);
@@ -375,8 +393,9 @@ begin
     --
     dmem_bram_enable <= dmem_addr_strobe(0) when dmem_addr(0)(31) /= '1'
       else '0';
-    bram: entity work.bram_mi32_el
+    bram: entity work.bram
     generic map (
+        boot_block => boot_block,
 	C_mem_size => C_bram_size
     )
     port map (
@@ -472,11 +491,11 @@ begin
 	    to_sram(data_port).addr_strobe <= sram_data_strobe;
 	    to_sram(data_port).write <= dmem_write(cpu);
 	    to_sram(data_port).byte_sel <= dmem_byte_sel(cpu);
-	    to_sram(data_port).addr <= dmem_addr(cpu)(19 downto 2);
+	    to_sram(data_port).addr <= "0000000000" & dmem_addr(cpu)(19 downto 2);
 	    to_sram(data_port).data_in <= cpu_to_dmem(cpu);
 	    -- CPU, instruction bus
 	    to_sram(instr_port).addr_strobe <= sram_instr_strobe;
-	    to_sram(instr_port).addr <= imem_addr(cpu)(19 downto 2);
+	    to_sram(instr_port).addr <= "0000000000" & imem_addr(cpu)(19 downto 2);
 	    to_sram(instr_port).data_in <= (others => '-');
 	    to_sram(instr_port).write <= '0';
 	    to_sram(instr_port).byte_sel <= x"f";

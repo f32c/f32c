@@ -21,9 +21,11 @@ vfiles = \
 vhdfiles = \
 ../../../xilinx/scarab_ms6p_toplevel_cache_test.vhd \
 ../../../generic/glue_sram_min.vhd \
-../../../generic/bram_mi32_eb.vhd \
-../../../generic/bram_mi32_el.vhd \
-../../../generic/bram_rv32.vhd \
+../../../generic/bram.vhd \
+../../../generic/boot_block_pack.vhd \
+../../../generic/bootloader/boot_sio_mi32el.vhd \
+../../../generic/bootloader/boot_sio_mi32eb.vhd \
+../../../generic/bootloader/boot_sio_rv32el.vhd \
 ../../../generic/bram_true2p_1clk.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
