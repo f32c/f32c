@@ -108,7 +108,7 @@ set_property DRIVE 4 [get_ports FPGA_SD_CDET_N]
 # 1001 : create_clock -name {clk100} [get_nets {clk100in.o_out}] -period {10} -add 
 # line 16 in e:/daten/ems11_ddr/synplify/rev_1/mlite.fdc
 
-create_clock -name {clk100}  [get_pins {clk100in/IBUFDS_1/O}] -period {8.000}  -add 
+create_clock -name {clk100}  [get_pins {clk100in/IBUFDS_1/O}] -period {10.000}  -add 
 
 # 1002 : define_clock [get_nets {sys_clock_dll.clk0}] -name {clock_dll|clk0_derived_clock} -ref_rise {0.000000} -ref_fall {5.000000} -uncertainty {0.000000} -period {10.000000} -clockgroup {default_clkgroup} -rise {0.000000} -fall {5.000000} 
 
