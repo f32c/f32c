@@ -62,6 +62,8 @@ entity glue is
 	FPGA_SD_SCLK, FPGA_SD_CMD, FPGA_SD_D3: out std_logic;
 	FPGA_SD_D0: in std_logic;
 	M_EXPMOD0, M_EXPMOD1, M_EXPMOD2, M_EXPMOD3: inout std_logic_vector(7 downto 0); -- EXPMODs
+	M_7SEG_A, M_7SEG_B, M_7SEG_C, M_7SEG_D, M_7SEG_E, M_7SEG_F, M_7SEG_G, M_7SEG_DP: out std_logic;
+	M_7SEG_DIGIT: out std_logic_vector(3 downto 0);
 --	seg: out std_logic_vector(7 downto 0); -- 7-segment display
 --	an: out std_logic_vector(3 downto 0); -- 7-segment display
 	M_LED: out std_logic_vector(7 downto 0);
@@ -85,6 +87,7 @@ architecture Behavioral of glue is
     signal simple_out: std_logic_vector(31 downto 0);
     signal tmds_out_rgb: std_logic_vector(2 downto 0);
     signal vga_vsync_n, vga_hsync_n: std_logic;
+    signal disp_7seg_segment: std_logic_vector(7 downto 0);
 begin
     -- make single ended clock
     --clk100in: entity work.inp_ds_port
@@ -167,8 +170,8 @@ begin
 	vga_r(2 downto 0) => VGA_RED(7 downto 5),
 	vga_g(2 downto 0) => VGA_GREEN(7 downto 5),
 	vga_b(2 downto 0) => VGA_BLUE(7 downto 5),
-	simple_out(7 downto 0) => M_LED, simple_out(15 downto 8) => open, 
-	simple_out(19 downto 16) => open, simple_out(31 downto 20) => open,
+	simple_out(7 downto 0) => M_LED, simple_out(15 downto 8) => disp_7seg_segment,
+	simple_out(19 downto 16) => M_7SEG_DIGIT, simple_out(31 downto 20) => open,
 	simple_in(0) => M_BTN(0),
 	simple_in(1) => M_BTN(1),
         simple_in(2) => M_BTN(2),
@@ -177,6 +180,15 @@ begin
         simple_in(8 downto 5) => M_HEX,
         simple_in(31 downto 9) => (others => '-')
     );
+
+    m_7seg_a  <= disp_7seg_segment(0);
+    m_7seg_b  <= disp_7seg_segment(1);
+    m_7seg_c  <= disp_7seg_segment(2);
+    m_7seg_d  <= disp_7seg_segment(3);
+    m_7seg_e  <= disp_7seg_segment(4);
+    m_7seg_f  <= disp_7seg_segment(5);
+    m_7seg_g  <= disp_7seg_segment(6);
+    m_7seg_dp <= disp_7seg_segment(7);
 
     -- differential output buffering for HDMI clock and video
     hdmi_output: entity work.hdmi_out
