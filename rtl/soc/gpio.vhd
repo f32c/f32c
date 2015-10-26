@@ -36,7 +36,8 @@ use ieee.std_logic_arith.all;
 entity gpio is
     generic (
         C_addr_bits: integer := 3; -- don't touch: number of address bits for the registers
-	C_bits: integer range 2 to 32 := 32  -- number of gpio bits (pins)
+		C_bits: integer range 2 to 32 := 32;  -- number of gpio bits (pins)
+		C_pullup: boolean := false
     );
     port (
 	ce, clk: in std_logic;
@@ -46,7 +47,8 @@ entity gpio is
 	bus_in: in std_logic_vector(31 downto 0);
 	bus_out: out std_logic_vector(31 downto 0);
 	gpio_irq: out std_logic; -- interrupt request line (active level high)
-	gpio_phys: inout std_logic_vector(C_bits-1 downto 0) -- pyhsical gpio pins
+	gpio_phys: inout std_logic_vector(C_bits-1 downto 0); -- pyhsical gpio pins
+	gpio_pullup: inout std_logic_vector(C_bits-1 downto 0) -- pyhsical gpio pull-up pins
     );
 end gpio;
 
@@ -68,7 +70,7 @@ architecture arch of gpio is
     constant C_rising_ie:  integer   := 3; -- rising edge interrupt enable
     constant C_falling_if: integer   := 4; -- falling edge interrupt flag
     constant C_falling_ie: integer   := 5; -- falling edge interrupt enable
-    constant C_input:      integer   := 0; -- input value (overlay at output register value) 
+    constant C_input:      integer   := 6; -- input value
 
     -- edge detection related registers
     constant C_edge_sync_depth: integer := 3; -- number of shift register stages (default 3) for icp clock synchronization
@@ -99,6 +101,8 @@ begin
               then -- logical and for interrupt flag registers
                 R(conv_integer(addr))(8*i+7 downto 8*i) <= -- only can clear intr. flag, never set
                 R(conv_integer(addr))(8*i+7 downto 8*i) and bus_in(8*i+7 downto 8*i);
+              elsif conv_integer(addr) = C_input then	-- toggle output bit when input set (like ATmega328)
+                R(C_output)(8*i+7 downto 8*i) <= R(C_output)(8*i+7 downto 8*i) XOR bus_in(8*i+7 downto 8*i);
               else -- normal write for every other register
                 R(conv_integer(addr))(8*i+7 downto 8*i) <=  bus_in(8*i+7 downto 8*i);
               end if;
@@ -116,6 +120,9 @@ begin
     each_bit: for i in 0 to C_bits-1 generate
       -- physical output to pins with 3-state handling
       gpio_phys(i) <= R(C_output)(i) when R(C_direction)(i) = '1' else 'Z';
+      each_pullup: if C_pullup generate
+        gpio_pullup(i) <= '1' when R(C_output)(i) = '1' AND R(C_direction)(i) = '0' else 'Z';	-- set programmatic pull-up (like ATmega328)
+      end generate;
 
       -- *** edge detect synchronizer (3-stage shift register) ***
       -- here is theory and schematics about 3-stage shift register
