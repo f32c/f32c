@@ -148,7 +148,7 @@ architecture Behavioral of glue is
     signal snoop_cycle: std_logic;
     signal snoop_addr: std_logic_vector(31 downto 2);
     signal R_refresh_strobe: std_logic;
-    signal R_refresh_addr: std_logic_vector(17 downto 0);
+    signal R_refresh_addr: std_logic_vector(27 downto 0);
     signal R_refresh_cnt: integer;
     signal refresh_data_ready: std_logic;
 
@@ -171,7 +171,7 @@ architecture Behavioral of glue is
     signal R_sw: std_logic_vector(3 downto 0);
     signal R_btns: std_logic_vector(4 downto 0);
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
-    signal R_fb_base_addr: std_logic_vector(19 downto 2);
+    signal R_fb_base_addr: std_logic_vector(29 downto 2);
 
     -- CPU reset control
     signal R_cpu_reset: std_logic_vector(15 downto 0) := x"fffe";
@@ -180,12 +180,12 @@ architecture Behavioral of glue is
     signal R_fb_intr: std_logic;
     signal video_dac: std_logic_vector(3 downto 0);
     signal fb_addr_strobe, fb_data_ready: std_logic;
-    signal fb_addr: std_logic_vector(19 downto 2);
+    signal fb_addr: std_logic_vector(29 downto 2);
     signal fb_tick: std_logic;
 
     -- PCM audio
     signal pcm_addr_strobe, pcm_data_ready: std_logic;
-    signal pcm_addr: std_logic_vector(19 downto 2);
+    signal pcm_addr: std_logic_vector(29 downto 2);
     signal from_pcm: std_logic_vector(31 downto 0);
     signal pcm_ce, pcm_l, pcm_r: std_logic;
 
@@ -437,7 +437,7 @@ begin
 		      cpu_to_io(31 downto 26);
 		else
 		    R_fb_mode <= cpu_to_io(1 downto 0);
-		    R_fb_base_addr <= cpu_to_io(19 downto 2);
+		    R_fb_base_addr <= cpu_to_io(29 downto 2);
 		end if;
 	    end if;
 	end if;
@@ -651,11 +651,11 @@ begin
 	    to_sram(data_port).addr_strobe <= sram_data_strobe;
 	    to_sram(data_port).write <= dmem_write(cpu);
 	    to_sram(data_port).byte_sel <= dmem_byte_sel(cpu);
-	    to_sram(data_port).addr <= dmem_addr(cpu)(19 downto 2);
+	    to_sram(data_port).addr <= dmem_addr(cpu)(29 downto 2);
 	    to_sram(data_port).data_in <= cpu_to_dmem(cpu);
 	    -- CPU, instruction bus
 	    to_sram(instr_port).addr_strobe <= sram_instr_strobe;
-	    to_sram(instr_port).addr <= imem_addr(cpu)(19 downto 2);
+	    to_sram(instr_port).addr <= imem_addr(cpu)(29 downto 2);
 	    to_sram(instr_port).data_in <= (others => '-');
 	    to_sram(instr_port).write <= '0';
 	    to_sram(instr_port).byte_sel <= x"f";
