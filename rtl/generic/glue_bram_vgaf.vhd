@@ -95,6 +95,7 @@ entity glue_bram is
         C_rds_clock_multiply: integer := 57; -- multiply 57 and divide 3125 from cpu clk 100 MHz
         C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
 	C_gpio: integer range 0 to 128 := 32;
+	C_ps2: boolean := false;
 	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
 	C_pid_prescaler: integer range 10 to 26 := 18; -- control loop frequency f_clk/2^prescaler
@@ -121,6 +122,11 @@ entity glue_bram is
 	vga_r, vga_g, vga_b: out std_logic_vector(2 downto 0);
 	tmds_out_rgb: out std_logic_vector(2 downto 0);
 	fm_antenna, cw_antenna: out std_logic;
+        -- PS/2 Keyboard
+	ps2_clk_in : in std_logic;
+	ps2_dat_in : in std_logic;
+	ps2_clk_out : out std_logic;
+	ps2_dat_out : out std_logic;
 	gpio: inout std_logic_vector(127 downto 0)
     );
 end glue_bram;
@@ -213,6 +219,11 @@ architecture Behavioral of glue_bram is
     signal gpio_ce: std_logic_vector(C_gpios-1 downto 0);
     signal gpio_intr: std_logic_vector(C_gpios-1 downto 0);
     signal gpio_intr_joint: std_logic := '0';
+
+    -- PS/2 Keyboard port
+    constant iomap_ps2: T_iomap_range := (x"FF20", x"FF2F");
+    signal ps2_ce: std_logic := '0';
+    signal from_ps2: std_logic_vector(31 downto 0);
 
     -- PID
     constant iomap_pid: T_iomap_range := (x"FD80", x"FDBF");
@@ -310,7 +321,7 @@ begin
     dmem_data_ready <= '1';
 
     -- big address decoder when CPU reads IO
-    process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio)
+    process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio, from_ps2)
 	variable i: integer;
     begin
 	io_to_cpu <= (others => '-');
@@ -345,6 +356,10 @@ begin
 	    if C_fmrds then
 		io_to_cpu <= from_fmrds;
 	    end if;
+	when iomap_from(iomap_ps2, iomap_range) to iomap_to(iomap_ps2, iomap_range) =>
+            if C_ps2 then
+		io_to_cpu <= from_ps2;
+            end if;
 	when iomap_from(iomap_simple_in, iomap_range) to iomap_to(iomap_simple_in, iomap_range) =>
 	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
@@ -513,6 +528,28 @@ begin
     with conv_integer(io_addr(11 downto 4)) select
       timer_ce <= io_addr_strobe when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range),
                              '0' when others;
+    end generate;
+
+    -- PS2 keyboard/mouse port
+    G_ps2:
+    if C_ps2 generate
+    ps2_inst: entity work.ps2
+    generic map (
+      C_clk_freq => C_clk_freq
+    )
+    port map (
+      clk => clk, ce => ps2_ce,
+      reset => sio_break_internal(0),
+      bus_write => dmem_write, byte_sel => dmem_byte_sel,
+      bus_in => cpu_to_dmem, bus_out => from_ps2,
+      ps2_clk_in => ps2_clk_in,
+      ps2_dat_in => ps2_dat_in,
+      ps2_clk_out => ps2_clk_out,
+      ps2_dat_out => ps2_dat_out
+    );
+    with conv_integer(io_addr(11 downto 4)) select
+        ps2_ce <= io_addr_strobe when iomap_from(iomap_ps2, iomap_range) to iomap_to(iomap_ps2, iomap_range),
+                  '0' when others;
     end generate;
 
     -- PID
