@@ -53,6 +53,7 @@ entity glue is
 	C_sio: integer := 1;   -- 1 UART channel
 	C_spi: integer := 2;   -- 2 SPI channels (ch0 not connected, ch1 SD card)
 	C_gpio: integer := 32; -- 32 GPIO bits
+	C_ps2: boolean := true; -- PS/2 keyboard
         C_simple_io: boolean := true -- includes 31 simple inputs and 32 simple outputs
     );
     port (
@@ -67,6 +68,8 @@ entity glue is
 --	seg: out std_logic_vector(7 downto 0); -- 7-segment display
 --	an: out std_logic_vector(3 downto 0); -- 7-segment display
 	M_LED: out std_logic_vector(7 downto 0);
+	-- PS/2 keyboard
+	PS2_A_DATA, PS2_A_CLK, PS2_B_DATA, PS2_B_CLK: inout std_logic;
         -- HDMI
 	VID_D_P, VID_D_N: out std_logic_vector(2 downto 0);
 	VID_CLK_P, VID_CLK_N: out std_logic;
@@ -87,6 +90,10 @@ architecture Behavioral of glue is
     signal simple_out: std_logic_vector(31 downto 0);
     signal tmds_out_rgb: std_logic_vector(2 downto 0);
     signal vga_vsync_n, vga_hsync_n: std_logic;
+    signal ps2_clk_in : std_logic;
+    signal ps2_clk_out : std_logic;
+    signal ps2_dat_in : std_logic;
+    signal ps2_dat_out : std_logic;
     signal disp_7seg_segment: std_logic_vector(7 downto 0);
 begin
     -- make single ended clock
@@ -134,7 +141,12 @@ begin
 		usrcclkts => '0',
 		usrdoneo => '1',
 		usrdonets => '0'
-   );
+    );
+
+    ps2_dat_in	<= PS2_A_DATA;
+    PS2_A_DATA	<= '0' when ps2_dat_out='0' else 'Z';
+    ps2_clk_in	<= PS2_A_CLK;
+    PS2_A_CLK	<= '0' when ps2_clk_out='0' else 'Z';
 
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
@@ -145,6 +157,7 @@ begin
         C_gpio => C_gpio,
         C_sio => C_sio,
         C_spi => C_spi,
+        C_ps2 => C_ps2,
 	C_vgahdmi => C_vgahdmi,
 	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
 	C_vgahdmi_test_picture => C_vgahdmi_test_picture,
@@ -164,12 +177,19 @@ begin
 	gpio(7 downto 0) => M_EXPMOD0, gpio(15 downto 8) => M_EXPMOD1,
 	gpio(23 downto 16) => M_EXPMOD2, gpio(31 downto 24) => M_EXPMOD3,
 	gpio(127 downto 32) => open,
+        -- PS/2 Keyboard
+        ps2_clk_in   => ps2_clk_in,
+        ps2_dat_in   => ps2_dat_in,
+        ps2_clk_out  => ps2_clk_out,
+        ps2_dat_out  => ps2_dat_out,
+        -- VGA/HDMI
 	tmds_out_rgb => tmds_out_rgb,
 	vga_vsync => vga_vsync_n,
 	vga_hsync => vga_hsync_n,
 	vga_r(2 downto 0) => VGA_RED(7 downto 5),
 	vga_g(2 downto 0) => VGA_GREEN(7 downto 5),
 	vga_b(2 downto 0) => VGA_BLUE(7 downto 5),
+	-- simple I/O
 	simple_out(7 downto 0) => M_LED, simple_out(15 downto 8) => disp_7seg_segment,
 	simple_out(19 downto 16) => M_7SEG_DIGIT, simple_out(31 downto 20) => open,
 	simple_in(0) => M_BTN(0),

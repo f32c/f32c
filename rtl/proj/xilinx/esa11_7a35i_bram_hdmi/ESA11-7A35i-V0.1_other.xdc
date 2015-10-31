@@ -101,18 +101,18 @@ set_property DRIVE 4 [get_ports VGA_VSYNC]
 #	PS/2
 #
 
-# set_property PACKAGE_PIN G17 [get_ports VGA_PS2_A_CLK]
-# set_property IOSTANDARD LVTTL [get_ports VGA_PS2_A_CLK]
-# set_property DRIVE 4 [get_ports VGA_PS2_A_CLK]
-# set_property PACKAGE_PIN G18 [get_ports VGA_PS2_A_DATA]
-# set_property IOSTANDARD LVTTL [get_ports VGA_PS2_A_DATA]
-# set_property DRIVE 4 [get_ports VGA_PS2_A_DATA]
-# set_property PACKAGE_PIN H18 [get_ports VGA_PS2_B_CLK]
-# set_property IOSTANDARD LVTTL [get_ports VGA_PS2_B_CLK]
-# set_property DRIVE 4 [get_ports VGA_PS2_B_CLK]
-# set_property PACKAGE_PIN H17 [get_ports VGA_PS2_B_DATA]
-# set_property IOSTANDARD LVTTL [get_ports VGA_PS2_B_DATA]
-# set_property DRIVE 4 [get_ports VGA_PS2_B_DATA]
+set_property PACKAGE_PIN G17 [get_ports PS2_A_CLK]
+set_property IOSTANDARD LVTTL [get_ports PS2_A_CLK]
+set_property DRIVE 4 [get_ports PS2_A_CLK]
+set_property PACKAGE_PIN G18 [get_ports PS2_A_DATA]
+set_property IOSTANDARD LVTTL [get_ports PS2_A_DATA]
+set_property DRIVE 4 [get_ports PS2_A_DATA]
+set_property PACKAGE_PIN H18 [get_ports PS2_B_CLK]
+set_property IOSTANDARD LVTTL [get_ports PS2_B_CLK]
+set_property DRIVE 4 [get_ports PS2_B_CLK]
+set_property PACKAGE_PIN H17 [get_ports PS2_B_DATA]
+set_property IOSTANDARD LVTTL [get_ports PS2_B_DATA]
+set_property DRIVE 4 [get_ports PS2_B_DATA]
 
 
 
