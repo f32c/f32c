@@ -73,6 +73,7 @@ SRCS = \
 ../../../soc/fm/message.vhd \
 ../../../soc/vgahdmi/vgahdmif.vhd \
 ../../../soc/vgahdmi/videofifo.vhd \
+../../../soc/ps2.vhd \
 ../../../soc/pid/ctrlpid_v.v \
 ../../../soc/pid/simotor_v.v \
 ../../../soc/pid/rotary_decoder_v.v \

@@ -123,8 +123,8 @@ entity glue_bram is
 	tmds_out_rgb: out std_logic_vector(2 downto 0);
 	fm_antenna, cw_antenna: out std_logic;
         -- PS/2 Keyboard
-	ps2_clk_in : in std_logic;
-	ps2_dat_in : in std_logic;
+	ps2_clk_in : in std_logic := '1';
+	ps2_dat_in : in std_logic := '1';
 	ps2_clk_out : out std_logic;
 	ps2_dat_out : out std_logic;
 	gpio: inout std_logic_vector(127 downto 0)
