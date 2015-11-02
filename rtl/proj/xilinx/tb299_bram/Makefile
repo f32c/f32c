@@ -7,7 +7,8 @@ top_module = glue
 isedir = /usr/local/xilinx/14.7/ISE_DS
 SHELL = /bin/bash
 # openocd_interface = interface/altera-usb-blaster.cfg
-openocd_interface = ../include/ft2232-fpu1.ocd
+# openocd_interface = ../include/ft2232-fpu1.ocd
+openocd_interface = ../include/remote.ocd
 xc3sprog_interface = ftdi
 
 vfiles = \
@@ -40,6 +41,7 @@ vhdfiles = \
 ../../../cpu/idecode_mi32.vhd \
 ../../../cpu/idecode_rv32.vhd \
 ../../../cpu/debug.vhd \
+../../../soc/ps2.vhd \
 ../../../soc/sio.vhd \
 ../../../soc/spi.vhd \
 ../../../soc/gpio.vhd \
