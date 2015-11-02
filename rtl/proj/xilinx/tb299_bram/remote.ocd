@@ -3,6 +3,5 @@
 #
 
 interface remote_bitbang
-#remote_bitbang_host jtag.lan
-remote_bitbang_host ESP_FE3FA8.lan
+remote_bitbang_host jtag.lan
 remote_bitbang_port 3335
