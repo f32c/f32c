@@ -19,9 +19,9 @@ set_property PACKAGE_PIN U7 [get_ports M_BTN[3]]
 set_property IOSTANDARD LVTTL  [get_ports M_BTN[3]]
 set_property DRIVE 4  [get_ports M_BTN[3]]
 
-set_property PACKAGE_PIN R6 [get_ports M_BTN[4]]
-set_property IOSTANDARD LVTTL  [get_ports M_BTN[4]]
-set_property DRIVE 4  [get_ports M_BTN[4]]
+# set_property PACKAGE_PIN R6 [get_ports M_BTN[4]]
+# set_property IOSTANDARD LVTTL  [get_ports M_BTN[4]]
+# set_property DRIVE 4  [get_ports M_BTN[4]]
 
 #
 #	Hex-Switch ----------------------------------------------------------------
@@ -80,21 +80,21 @@ set_property DRIVE 4  [get_ports M_LED[7]]
 #
 #	DIP Switch ---------------------------------------------------------------
 #
-set_property PACKAGE_PIN Y22 [get_ports M_DIP[0]]
-set_property IOSTANDARD LVTTL  [get_ports M_DIP[0]]
-set_property DRIVE 4  [get_ports M_DIP[0]]
+# set_property PACKAGE_PIN Y22 [get_ports M_DIP[0]]
+# set_property IOSTANDARD LVTTL  [get_ports M_DIP[0]]
+# set_property DRIVE 4  [get_ports M_DIP[0]]
 
-set_property PACKAGE_PIN V19 [get_ports M_DIP[1]]
-set_property IOSTANDARD LVTTL  [get_ports M_DIP[1]]
-set_property DRIVE 4  [get_ports M_DIP[1]]
+# set_property PACKAGE_PIN V19 [get_ports M_DIP[1]]
+# set_property IOSTANDARD LVTTL  [get_ports M_DIP[1]]
+# set_property DRIVE 4  [get_ports M_DIP[1]]
 
-set_property PACKAGE_PIN W21 [get_ports M_DIP[2]]
-set_property IOSTANDARD LVTTL  [get_ports M_DIP[2]]
-set_property DRIVE 4  [get_ports M_DIP[2]]
+# set_property PACKAGE_PIN W21 [get_ports M_DIP[2]]
+# set_property IOSTANDARD LVTTL  [get_ports M_DIP[2]]
+# set_property DRIVE 4  [get_ports M_DIP[2]]
 
-set_property PACKAGE_PIN W22 [get_ports M_DIP[3]]
-set_property IOSTANDARD LVTTL  [get_ports M_DIP[3]]
-set_property DRIVE 4  [get_ports M_DIP[3]]
+# set_property PACKAGE_PIN W22 [get_ports M_DIP[3]]
+# set_property IOSTANDARD LVTTL  [get_ports M_DIP[3]]
+# set_property DRIVE 4  [get_ports M_DIP[3]]
 
 #
 #	EXPMODs -------------------------------------------------------------------
