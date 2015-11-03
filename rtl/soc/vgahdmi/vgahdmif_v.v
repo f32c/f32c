@@ -127,7 +127,7 @@ assign vga_vsync = ~vSync;
 // generate HDMI output, mixing with test picture if enabled
 wire [9:0] TMDS_red, TMDS_green, TMDS_blue;
 
-TMDS_encoder encode_R
+TMDS_encoder_v encode_R
 (
   .clk(pixclk),
   .VD(test_picture ? test_red : colorValue[0]),
@@ -135,7 +135,7 @@ TMDS_encoder encode_R
   .VDE(DrawArea),
   .TMDS(TMDS_red)
 );
-TMDS_encoder encode_G
+TMDS_encoder_v encode_G
 (
   .clk(pixclk),
   .VD(colorValue[1]),
@@ -143,7 +143,7 @@ TMDS_encoder encode_G
   .VDE(DrawArea),
   .TMDS(TMDS_green)
 );
-TMDS_encoder encode_B
+TMDS_encoder_v encode_B
 (
   .clk(pixclk),
   .VD(test_picture ? test_blue : colorValue[2]),
@@ -171,7 +171,7 @@ assign TMDS_out_RGB = {TMDS_shift_red[0], TMDS_shift_green[0], TMDS_shift_blue[0
 endmodule
 
 ////////////////////////////////////////////////////////////////////////
-module TMDS_encoder(
+module TMDS_encoder_v(
 	input clk,
 	input [7:0] VD,  // video data (red, green or blue)
 	input [1:0] CD,  // control data
