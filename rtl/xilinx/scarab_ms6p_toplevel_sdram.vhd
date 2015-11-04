@@ -55,7 +55,7 @@ entity glue is
 	C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
         C_vgahdmi: boolean := false;
 
-	C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core ~100MHz 32MB SDRAM";
+	C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";
 
 	C_fmrds: boolean := true;
 	C_sio: integer := 1;

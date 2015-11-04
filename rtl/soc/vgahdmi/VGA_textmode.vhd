@@ -36,33 +36,35 @@ entity VGA_textmode is
 		C_vgatext_char_height: integer := 19;		-- font cell height (text lines will be vmode(C_vgatext_mode).visible_height / C_vgatext_char_height rounded down, 19=25 lines on 480p)
 		C_vgatext_monochrome: boolean := false;		-- 4K ram mode (one color byte for entire screen)
 		C_vgatext_palette: boolean := true;			-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
-		C_vgatext_sram_bitmap: boolean := true		-- true for monochrome bitmap from sram (or other RAM with low enough latency)
+		C_vgatext_bitmap: boolean := true;			-- true for bitmap from sram/sdram
+		C_vgatext_bitmap_fifo: boolean := true;		-- true to use videofifo, else SRAM port
+		C_vgatext_bitmap_depth: integer := 1		-- bits per pixel (1, 4, 8)
 	);
 	Port (
 		clk:		in std_logic;
 		ce:			in std_logic;
 		bus_write:	in std_logic;
-		addr:		in std_logic_vector(1 downto 0); -- address 4 registers
+		addr:		in std_logic_vector(1 downto 0); 		-- address space for 4 registers
 		byte_sel:	in std_logic_vector(3 downto 0);
 		bus_in:		in std_logic_vector(31 downto 0);
 		bus_out:	out std_logic_vector(31 downto 0);
 
-		clk_pixel	: in std_logic;							-- VGA pixel clock (25MHz)
+		clk_pixel:	in std_logic;							-- VGA pixel clock (25MHz)
 
-		vga_textmode_addr : out std_logic_vector(12 downto 2); -- text buffer address
-		vga_textmode_data : in std_logic_vector(31 downto 0);
-		
-		sram_addr	: out std_logic_vector(29 downto 2); -- bitmap buffer
-		sram_data	: in std_logic_vector(31 downto 0);
-		sram_strobe	: out std_logic;
-        sram_ready	: in std_logic;
+		vga_textmode_addr:	out std_logic_vector(12 downto 2); -- text buffer address
+		vga_textmode_data:	in std_logic_vector(31 downto 0);
 
-		hsync		: out std_logic;
-		vsync		: out std_logic;
-		R			: out STD_LOGIC_VECTOR (7 downto 8-C_vgatext_bits);
-		G			: out STD_LOGIC_VECTOR (7 downto 8-C_vgatext_bits);
-		B			: out STD_LOGIC_VECTOR (7 downto 8-C_vgatext_bits);
-		nblank		: out std_logic		
+		bitmap_addr:	out std_logic_vector(29 downto 2);	-- bitmap buffer (start address with fifo)
+		bitmap_data:	in std_logic_vector(31 downto 0);	-- from sram or fifo
+		bitmap_strobe:	out std_logic;						-- request data (or fetch next with fifo)
+        bitmap_ready:	in std_logic;						-- sram data ready (not used with fifo)
+
+		hsync:	out std_logic;
+		vsync:	out std_logic;
+		R:		out STD_LOGIC_VECTOR (7 downto 8-C_vgatext_bits);
+		G:		out STD_LOGIC_VECTOR (7 downto 8-C_vgatext_bits);
+		B:		out STD_LOGIC_VECTOR (7 downto 8-C_vgatext_bits);
+		nblank:	out std_logic
 	);
 end VGA_textmode;
 
@@ -107,7 +109,7 @@ architecture Behavioral of VGA_textmode is
 	constant C_total_width:		integer			:= (vmode(C_vgatext_mode).h_front_porch+vmode(C_vgatext_mode).h_sync_pulse+vmode(C_vgatext_mode).h_back_porch+vmode(C_vgatext_mode).visible_width);
 	constant C_total_height:	integer			:= (vmode(C_vgatext_mode).v_front_porch+vmode(C_vgatext_mode).v_sync_pulse+vmode(C_vgatext_mode).v_back_porch+vmode(C_vgatext_mode).visible_height);
 	constant C_char_width:		integer			:= 8;
-	
+
 	-- constants for the VGA textmode registers
 	constant C_cntrl:		std_logic_vector		:= "00";	-- 0 [rw 8-bit]  (31) enable, (30) text enable, (29)=bitmap enable, (28)=cursor enable, (20-16)=frame count, (15-8)=cursory, (7-0)=cursorx
 	constant C_bmap_addr:	std_logic_vector		:= "01";	-- 1 [rw 32-bit] address in SRAM for bitmap start
@@ -137,7 +139,7 @@ architecture Behavioral of VGA_textmode is
 	signal	bmap_addr_r: std_logic_vector(31 downto 0);	-- SRAM bitmap start address
 	signal	bmap_color_r: std_logic_vector(23 downto 0);
 	signal	baddr_r	:	unsigned(27 downto 0);			-- current SRAM bitmap address
-	signal	req_sram_strobe	: std_logic;
+	signal	req_bitmap_strobe	: std_logic;
 	signal	bitmap_r: std_logic_vector(31 downto 0);
 	signal	bitmap_n_r: std_logic_vector(31 downto 0);
 
@@ -146,9 +148,9 @@ architecture Behavioral of VGA_textmode is
 	signal	color_n_r:	std_logic_vector(7 downto 0) := x"1F";
 	signal	fontdata_r	:	std_logic_vector(7 downto 0);
 	signal	fontdata_n_r :	std_logic_vector(7 downto 0);
-	
+
 	signal	cursoron :	std_logic;
-	
+
     type palette_t is array(0 to 15) of std_logic_vector(23 downto 0);	-- x"RRGGBB"
 	signal palette: palette_t :=
 	(
@@ -200,11 +202,11 @@ begin
 							cntrl_r <= bus_in(31 downto 28);
 						end if;
 					when C_bmap_addr =>
-						if C_vgatext_sram_bitmap then
+						if C_vgatext_bitmap then
 							bmap_addr_r <= bus_in;
 						end if;
 					when C_bmap_color =>
-						if C_vgatext_sram_bitmap then
+						if C_vgatext_bitmap then
 							bmap_color_r <= bus_in(23 downto 0);
 						end if;
 					when C_palette_reg =>
@@ -216,30 +218,34 @@ begin
 			end if;
 		end if;
 	end process;
-	
+
 	monoflag <= '1' when C_vgatext_monochrome else '0';
-	bitmapflag <= '1' when C_vgatext_sram_bitmap else '0';
+	bitmapflag <= '1' when C_vgatext_bitmap else '0';
 	modeflag <= "01" when C_vgatext_mode = 1 else
 				"10" when C_vgatext_mode = 2 else
 				"11" when C_vgatext_mode = 3 else
 				"00";
-	
+
 	bus_out <= std_logic_vector(bmap_addr_r) when addr="01" else
 			   cntrl_r & monoflag & bitmapflag & modeflag & "0000" & std_logic_vector(fcount) & std_logic_vector(cury_r) & std_logic_vector(curx_r);
 
-	G_sram_bitmap_proc:
-	if C_vgatext_sram_bitmap generate
+	G_bitmap_sram:
+	if C_vgatext_bitmap AND NOT C_vgatext_bitmap_fifo generate
 	bitmap_proc: process(clk)
 	begin
 		if rising_edge(clk) then
-			if (sram_ready = '1') then
-				bitmap_n_r <= sram_data;
-				sram_strobe <= '0';
-			elsif (req_sram_strobe = '1') then
-				sram_strobe <= '1';
+			if (bitmap_ready = '1') then
+				bitmap_n_r <= bitmap_data;
+				bitmap_strobe <= '0';
+			elsif (req_bitmap_strobe = '1') then
+				bitmap_strobe <= '1';
 			end if;
 		end if;
 	end process;
+	end generate;
+
+	G_bitmap_fifo: if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
+	bitmap_strobe <= req_bitmap_strobe;
 	end generate;
 
 	pixel_proc: process(clk_pixel)
@@ -273,13 +279,13 @@ begin
 				else
 					vsync_r <= NOT vmode(C_vgatext_mode).v_sync_polarity;
 				end if;
-			
+
 				if (hcount >= 0 AND vcount >= 0) then
 					visible_r	<= '1';
 				else
 					visible_r	<= '0';
 				end if;
-				
+
 				r_r <= (others => '0');
 				g_r <= (others => '0');
 				b_r <= (others => '0');
@@ -441,21 +447,32 @@ begin
 						end case;
 					end if;
 
-					req_sram_strobe <= '0';
-					if C_vgatext_sram_bitmap AND cntrl_r(1)='1' then
-					if (cntrl_r(1)='1' AND hcount = -33) then
-						req_sram_strobe <= '1';
-					end if;
-					
-					if (hcount >= -1 AND hcount(4 downto 0) = "11111") then
-						req_sram_strobe <= '1';
-						bitmap_r <= bitmap_n_r;
-						if (hcount /= vmode(C_vgatext_mode).visible_width-33) then
-							baddr_r <= baddr_r + 1;
+					req_bitmap_strobe <= '0';
+					if C_vgatext_bitmap then
+						if cntrl_r(1)='1' then
+							if C_vgatext_bitmap_fifo then
+								if (hcount >= -1 AND hcount < vmode(C_vgatext_mode).visible_width-1 AND hcount(4 downto 0) = "11111") then
+									req_bitmap_strobe <= '1';
+									bitmap_r <= bitmap_data;
+								else
+									bitmap_r <= bitmap_r(30 downto 0) & "0";
+								end if;
+							else
+								if (hcount = -33) then
+									req_bitmap_strobe <= '1';
+								end if;
+
+								if (hcount >= -1 AND hcount(4 downto 0) = "11111") then
+									req_bitmap_strobe <= '1';
+									bitmap_r <= bitmap_n_r;
+									if (hcount /= vmode(C_vgatext_mode).visible_width-33) then
+										baddr_r <= baddr_r + 1;
+									end if;
+								else
+									bitmap_r <= bitmap_r(30 downto 0) & "0";
+								end if;
+							end if;
 						end if;
-					else
-						bitmap_r <= bitmap_r(30 downto 0) & "0";
-					end if;
 					end if;
 
 					pixcolor := color_r;
@@ -464,7 +481,7 @@ begin
 					if (curx_r = unsigned(hcount(10 downto 3)) AND cury_r = cy AND cursoron = '1') then
 						fontpix := NOT fontpix;
 					end if;
-				
+
 					if (cntrl_r(2)='1' AND fontpix = '1') then
 						if C_vgatext_palette then
 						r_r <= palette(to_integer(unsigned(pixcolor(3 downto 0))))(23 downto 16);
@@ -476,7 +493,7 @@ begin
 						b_r <= pixcolor(0) & pixcolor(3) & pixcolor(0) & pixcolor(3) & pixcolor(0) & pixcolor(3) & pixcolor(0) & pixcolor(3);
 						end if;
 					else
-						if (C_vgatext_sram_bitmap AND cntrl_r(1)='1' AND bitmap_r(31) = '1') then
+						if (C_vgatext_bitmap AND cntrl_r(1)='1' AND bitmap_r(31) = '1') then
 							r_r <= bmap_color_r(23 downto 16);
 							g_r <= bmap_color_r(15 downto 8);
 							b_r <= bmap_color_r(7 downto 0);
@@ -497,9 +514,9 @@ begin
 					fonty <= (others => '0');
 					cy <= (others => '0');
 
-					if C_vgatext_sram_bitmap then
+					if C_vgatext_bitmap then
 					baddr_r <= unsigned(bmap_addr_r(29 downto 2));
-					req_sram_strobe <= '0';
+					req_bitmap_strobe <= '0';
 					end if;
 				end if;
 			end if;
@@ -507,7 +524,7 @@ begin
 	end process;
 
 	cursoron <= fcount(3) AND cntrl_r(0);
-	sram_addr <= std_logic_vector(baddr_r(27 downto 0));
+	bitmap_addr <= std_logic_vector(baddr_r(27 downto 0));
 	hsync <= hsync_r;
 	vsync <= vsync_r;
 	nblank <= '0' when visible_r = '1' else '1';
