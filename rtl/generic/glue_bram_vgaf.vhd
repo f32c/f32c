@@ -726,118 +726,117 @@ begin
     -- VGA textmode
     G_vgatext:
     if C_vgatext generate
-	vga_video: entity work.VGA_textmode	-- vga80x40
-	generic map (
-		C_vgatext_mode			=>	C_vgatext_mode,
-		C_vgatext_bits			=>	C_vgatext_bits,
-		C_vgatext_font_height	=>	C_vgatext_font_height,
-		C_vgatext_font_depth	=>	C_vgatext_font_depth,
-		C_vgatext_char_height	=>	C_vgatext_char_height,
-		C_vgatext_monochrome	=>	C_vgatext_monochrome,
-		C_vgatext_palette		=>	C_vgatext_palette,
-		C_vgatext_bitmap		=>	C_vgatext_bitmap,
-		C_vgatext_bitmap_fifo	=>	C_vgatext_bitmap_fifo,
-		C_vgatext_bitmap_depth	=>	C_vgatext_bitmap_depth
-	)
-	port map (
-		clk => clk, ce => vga_textmode_ce, addr => dmem_addr(3 downto 2),
-		bus_write => dmem_write, byte_sel => dmem_byte_sel,
-		bus_in => cpu_to_dmem, bus_out => from_vga_textmode,
-		--
-		clk_pixel	=> clk_25MHz,
-		--
-		vga_textmode_addr	=>	vga_textmode_addr,
-		vga_textmode_data	=>	vga_textmode_data,
-		--
-		bitmap_strobe	=> vga_textmode_bitmap_addr_strobe,
-		bitmap_addr		=> vga_textmode_bitmap_addr,
-		bitmap_ready	=> vga_textmode_bitmap_ready,
-		bitmap_data		=> vga_data_from_fifo,
-		--
-		R			=>	vga_textmode_R,
-		G			=>	vga_textmode_G,
-		B			=>	vga_textmode_B,
-		hsync		=>	vga_textmode_hsync,
-		vsync		=>	vga_textmode_vsync,
-		nblank		=>	vga_textmode_blank
-	);
+      vga_video: entity work.VGA_textmode	-- vga80x40
+      generic map (
+        C_vgatext_mode          => C_vgatext_mode,
+        C_vgatext_bits          => C_vgatext_bits,
+        C_vgatext_font_height   => C_vgatext_font_height,
+        C_vgatext_font_depth    => C_vgatext_font_depth,
+        C_vgatext_char_height   => C_vgatext_char_height,
+        C_vgatext_monochrome    => C_vgatext_monochrome,
+        C_vgatext_palette       => C_vgatext_palette,
+        C_vgatext_bitmap        => C_vgatext_bitmap,
+        C_vgatext_bitmap_fifo   => C_vgatext_bitmap_fifo,
+        C_vgatext_bitmap_depth  => C_vgatext_bitmap_depth
+      )
+      port map (
+        clk => clk, ce => vga_textmode_ce, addr => dmem_addr(3 downto 2),
+        bus_write => dmem_write, byte_sel => dmem_byte_sel,
+        bus_in => cpu_to_dmem, bus_out => from_vga_textmode,
+        --
+        clk_pixel => clk_25MHz,
+        --
+        vga_textmode_addr => vga_textmode_addr,
+        vga_textmode_data => vga_textmode_data,
+        --
+        bitmap_strobe => vga_textmode_bitmap_addr_strobe,
+        bitmap_addr => vga_textmode_bitmap_addr,
+        bitmap_ready => vga_textmode_bitmap_ready,
+        bitmap_data => vga_data_from_fifo,
+        --
+        R => vga_textmode_R,
+        G => vga_textmode_G,
+        B => vga_textmode_B,
+        hsync => vga_textmode_hsync,
+        vsync => vga_textmode_vsync,
+        nblank => vga_textmode_blank
+      );
 
-	-- video FIFO for bitmap
-	G_vgatext_fifo:
-	if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
-    vga_vsync <= vga_n_vsync;
-    vga_hsync <= vga_n_hsync;
-    videofifo: entity work.videofifo
-    generic map (
-      C_width => C_vga_fifo_width -- length = 4 * 2^width
-    )
-    port map (
-      clk => clk,
-      clk_pixel => clk_25MHz,
-      addr_strobe => vga_addr_strobe,
-      addr_out => vga_addr,
-      data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
-      -- data_in => from_sdram, -- from SDRAM or BRAM
-      data_in => x"00000001", -- test pattern vertical lines
-      base_addr => vga_textmode_bitmap_addr,
-      start => vga_textmode_vsync,
-      frame => vga_frame,
-      data_out => vga_data_from_fifo,
-      fetch_next => vga_textmode_bitmap_addr_strobe
-    );
-	end generate;
+      -- video FIFO for bitmap
+      G_vgatext_fifo:
+      if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
+      vga_vsync <= vga_n_vsync;
+      vga_hsync <= vga_n_hsync;
+      videofifo: entity work.videofifo
+      generic map (
+        C_width => C_vga_fifo_width -- length = 4 * 2^width
+      )
+      port map (
+        clk => clk,
+        clk_pixel => clk_25MHz,
+        addr_strobe => vga_addr_strobe,
+        addr_out => vga_addr,
+        data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
+        -- data_in => from_sdram, -- from SDRAM or BRAM
+        data_in => x"00000001", -- test pattern vertical lines
+        base_addr => vga_textmode_bitmap_addr,
+        start => vga_textmode_vsync,
+        frame => vga_frame,
+        data_out => vga_data_from_fifo,
+        fetch_next => vga_textmode_bitmap_addr_strobe
+      );
+      end generate;
 
-	-- DVI-D Encoder Block (Thanks Hamster ;-)
-	G_vgatext_dvid: entity work.dvid_out
-	generic map (
-		C_depth	=>	C_vgatext_bits
-	)
-	port map (
-		clk_pixel => clk_25MHz,
-		clk_tmds  => clk_250MHz,
+      -- DVI-D Encoder Block (Thanks Hamster ;-)
+      G_vgatext_dvid: entity work.dvid_out
+      generic map (
+        C_depth	=>	C_vgatext_bits
+      )
+      port map (
+        clk_pixel => clk_25MHz,
+        clk_tmds  => clk_250MHz,
 
-		red_p	=> vga_textmode_R(C_vgatext_bits-1 downto 0),
-		green_p	=> vga_textmode_G(C_vgatext_bits-1 downto 0),
-		blue_p	=> vga_textmode_B(C_vgatext_bits-1 downto 0),
+        red_p   => vga_textmode_R(C_vgatext_bits-1 downto 0),
+        green_p	=> vga_textmode_G(C_vgatext_bits-1 downto 0),
+        blue_p	=> vga_textmode_B(C_vgatext_bits-1 downto 0),
 
-		blank	=> vga_textmode_blank,
-		hsync	=> vga_textmode_hsync,
-		vsync	=> vga_textmode_vsync,
+        blank	=> vga_textmode_blank,
+        hsync	=> vga_textmode_hsync,
+        vsync	=> vga_textmode_vsync,
 
-		-- outputs to TMDS drivers
-		tmds_out_rgb => tmds_out_rgb
-	);
-	-- analog vga output
-	vga_r(7 downto 8-C_vgatext_bits) <= vga_textmode_R(C_vgatext_bits-1 downto 0);
-	vga_r(7-C_vgatext_bits downto 0) <= (others => '0');
-	vga_g(7 downto 8-C_vgatext_bits) <= vga_textmode_G(C_vgatext_bits-1 downto 0);
-	vga_g(7-C_vgatext_bits downto 0) <= (others => '0');
-	vga_b(7 downto 8-C_vgatext_bits) <= vga_textmode_B(C_vgatext_bits-1 downto 0);
-	vga_b(7-C_vgatext_bits downto 0) <= (others => '0');
-	vga_vsync <= vga_textmode_vsync;
-	vga_hsync <= vga_textmode_hsync;
+        -- outputs to TMDS drivers
+        tmds_out_rgb => tmds_out_rgb
+      );
+      -- analog vga output
+      vga_r(7 downto 8-C_vgatext_bits) <= vga_textmode_R(C_vgatext_bits-1 downto 0);
+      vga_r(7-C_vgatext_bits downto 0) <= (others => '0');
+      vga_g(7 downto 8-C_vgatext_bits) <= vga_textmode_G(C_vgatext_bits-1 downto 0);
+      vga_g(7-C_vgatext_bits downto 0) <= (others => '0');
+      vga_b(7 downto 8-C_vgatext_bits) <= vga_textmode_B(C_vgatext_bits-1 downto 0);
+      vga_b(7-C_vgatext_bits downto 0) <= (others => '0');
+      vga_vsync <= vga_textmode_vsync;
+      vga_hsync <= vga_textmode_hsync;
 
-	-- 8KB VGA textmode BRAM (for text+attribute bytes and font)
-	G_vgatext_bram: entity work.VGA_textmode_bram
-	generic map (
-		C_mem_size		=> C_vgatext_mem,
-		C_label			=> C_vgatext_label,
-		C_monochrome	=> C_vgatext_monochrome,
-		C_font_height	=> C_vgatext_font_height,
-		C_font_depth	=> C_vgatext_font_depth
-	)
-	port map (
-		clk => clk, imem_addr => vga_textmode_addr, imem_data_out => vga_textmode_data,
-		dmem_write => vga_textmode_dmem_write,
-		dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-		dmem_data_out => vga_textmode_dmem_to_cpu, dmem_data_in => cpu_to_dmem
-	);
+      -- 8KB VGA textmode BRAM (for text+attribute bytes and font)
+      G_vgatext_bram: entity work.VGA_textmode_bram
+      generic map (
+        C_mem_size    => C_vgatext_mem,
+        C_label	      => C_vgatext_label,
+        C_monochrome  => C_vgatext_monochrome,
+        C_font_height => C_vgatext_font_height,
+        C_font_depth  => C_vgatext_font_depth
+      )
+      port map (
+        clk => clk, imem_addr => vga_textmode_addr, imem_data_out => vga_textmode_data,
+        dmem_write => vga_textmode_dmem_write,
+        dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+        dmem_data_out => vga_textmode_dmem_to_cpu, dmem_data_in => cpu_to_dmem
+      );
 
-	vga_textmode_dmem_write <= dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "01" else '0';
-	with conv_integer(io_addr(11 downto 4)) select
-		vga_textmode_ce <= io_addr_strobe when iomap_from(iomap_vga_textmode, iomap_range) to iomap_to(iomap_vga_textmode, iomap_range),
-		'0' when others;
-
+      vga_textmode_dmem_write <= dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "01" else '0';
+      with conv_integer(io_addr(11 downto 4)) select
+            vga_textmode_ce <= io_addr_strobe when iomap_from(iomap_vga_textmode, iomap_range) to iomap_to(iomap_vga_textmode, iomap_range),
+                               '0' when others;
     end generate; -- end VGA textmode
 
     -- FM/RDS
