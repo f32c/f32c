@@ -25,7 +25,7 @@ entity vgahdmi is
     clk_tmds   : in std_logic := '0'; -- hdmi clock 250 MHz (or 0 if HDMI output is not used)
     fetch_next : out std_logic; -- request FIFO to fetch next data
     red_byte, green_byte, blue_byte, bright_byte: in  std_logic_vector(7 downto 0); -- pixel data from FIFO
-    vga_r, vga_g, vga_b:  out std_logic_vector(2 downto 0); -- VGA video signal
+    vga_r, vga_g, vga_b:  out std_logic_vector(7 downto 0); -- VGA video signal
     vga_hsync, vga_vsync: out std_logic; -- VGA sync
     TMDS_out_RGB : out std_logic_vector(2 downto 0) -- HDMI output
   );
@@ -43,7 +43,7 @@ architecture syn of vgahdmi is
       clk_tmds   : in std_logic := '0'; -- hdmi clock 250 MHz (or 0 if HDMI output is not used)
       fetch_next : out std_logic; -- request FIFO to fetch next data
       red_byte, green_byte, blue_byte, bright_byte: in  std_logic_vector(7 downto 0); -- pixel data from FIFO
-      vga_r, vga_g, vga_b:  out std_logic_vector(2 downto 0); -- VGA video signal
+      vga_r, vga_g, vga_b:  out std_logic_vector(7 downto 0); -- VGA video signal
       vga_hsync, vga_vsync: out std_logic; -- VGA sync, negative logic: active LOW
       TMDS_out_RGB : out std_logic_vector(2 downto 0) -- HDMI output
     );

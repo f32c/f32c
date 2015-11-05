@@ -132,7 +132,7 @@ entity glue_bram is
 	pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
 	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
 	vga_hsync, vga_vsync: out std_logic; -- it is always out but xilinx compiles if inout
-	vga_r, vga_g, vga_b: out std_logic_vector(2 downto 0);
+	vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0);
 	tmds_out_rgb: out std_logic_vector(2 downto 0);
 	fm_antenna, cw_antenna: out std_logic;
         -- PS/2 Keyboard
@@ -808,9 +808,12 @@ begin
 		tmds_out_rgb => tmds_out_rgb
 	);
 	-- analog vga output
-	vga_r <= vga_textmode_R(C_vgatext_bits-1 downto C_vgatext_bits-3);
-	vga_g <= vga_textmode_G(C_vgatext_bits-1 downto C_vgatext_bits-3);
-	vga_b <= vga_textmode_B(C_vgatext_bits-1 downto C_vgatext_bits-3);
+	vga_r(7 downto 8-C_vgatext_bits) <= vga_textmode_R(C_vgatext_bits-1 downto 0);
+	vga_r(7-C_vgatext_bits downto 0) <= (others => '0');
+	vga_g(7 downto 8-C_vgatext_bits) <= vga_textmode_G(C_vgatext_bits-1 downto 0);
+	vga_g(7-C_vgatext_bits downto 0) <= (others => '0');
+	vga_b(7 downto 8-C_vgatext_bits) <= vga_textmode_B(C_vgatext_bits-1 downto 0);
+	vga_b(7-C_vgatext_bits downto 0) <= (others => '0');
 	vga_vsync <= vga_textmode_vsync;
 	vga_hsync <= vga_textmode_hsync;
 
