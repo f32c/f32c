@@ -106,6 +106,22 @@ entity glue_sdram is
         C_vga_use_bram: boolean := false;
 	C_vgahdmi_mem_kb: integer := 10; -- mem size of BRAM framebuffer if BRAM is used
 	C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
+
+	C_vgatext: boolean := true;
+	C_vgatext_label: string := "f32c";
+	C_vgatext_mode: integer := 0;	-- 0=640x480, 1=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
+	C_vgatext_bits: integer := 4;
+	C_vgatext_mem: integer := 8;		-- 4 or 8 (4=80x25 mono, 8=up to 100x30 16 color)
+	C_vgatext_font_height: integer := 16;		-- font data height 8 (doubled vertically) or 16
+	C_vgatext_font_depth: integer := 7;			-- font char bits (7=128, 8=256 characters)
+	C_vgatext_char_height: integer := 16;		-- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
+	C_vgatext_monochrome: boolean := false;		-- 4K ram mode
+	C_vgatext_palette: boolean := true;			-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
+	C_vgatext_bitmap: boolean := true;			-- true for bitmap from sram/sdram
+	C_vgatext_bitmap_fifo: boolean := true;		-- true to use videofifo, else SRAM port
+	C_vgatext_bitmap_depth: integer := 8;		-- bits per pixel (1, 2, 4, 8)
+
+
 	C_pcm: boolean := true;
 	C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
 	C_fm_stereo: boolean := false;
@@ -236,6 +252,25 @@ architecture Behavioral of glue_sdram is
     signal vga_n_vsync, vga_n_hsync: std_logic; -- intermediate signals for xilinx to be happy
     signal vga_frame: std_logic;
 
+	-- VGA_textmode VGA/HDMI video (text and font in BRAM, bitmap in sdram)
+    constant iomap_vga_textmode: T_iomap_range := (x"FF30", x"FF3F");
+	signal vga_textmode_ce: std_logic;
+	signal from_vga_textmode: std_logic_vector(31 downto 0);
+	signal vga_textmode_dmem_write: std_logic;
+	signal vga_textmode_dmem_to_cpu: std_logic_vector(31 downto 0);
+	signal vga_textmode_addr: std_logic_vector(12 downto 2);
+	signal vga_textmode_data: std_logic_vector(31 downto 0);
+	signal vga_textmode_R: std_logic_vector(C_vgatext_bits-1 downto 0);
+	signal vga_textmode_G: std_logic_vector(C_vgatext_bits-1 downto 0);
+	signal vga_textmode_B: std_logic_vector(C_vgatext_bits-1 downto 0);
+	signal vga_textmode_hsync: std_logic;
+	signal vga_textmode_vsync: std_logic;
+	signal vga_textmode_blank: std_logic;
+
+	-- VGA_textmode SRAM bitmap access
+	signal vga_textmode_bitmap_addr_strobe: std_logic;				-- vga_fetch_next
+	signal vga_textmode_bitmap_addr: std_logic_vector(29 downto 2);	-- vga_addr
+	signal vga_textmode_bitmap_ready: std_logic;					-- not used with FIFO
     -- PCM audio
     constant iomap_pcm: T_iomap_range := (x"FBA0", x"FBAF");
     signal pcm_ce: std_logic;
@@ -355,6 +390,7 @@ begin
     final_to_cpu_i <= from_sdram when imem_addr(31 downto 30) = "10"
       else imem_data_read;
     final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
+      else vga_textmode_dmem_to_cpu when C_vgatext AND dmem_addr(31 downto 30) = "01"
       else from_sdram when dmem_addr(31 downto 30) = "10"
       else dmem_to_cpu;
     intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;
@@ -661,6 +697,10 @@ begin
 		      R_simple_out(C_simple_out - i * 32 - 1 downto i * 32);
 		end if;
 	    end loop;
+	when iomap_from(iomap_vga_textmode, iomap_range) to iomap_to(iomap_vga_textmode, iomap_range) =>
+		if C_vgatext then
+		io_to_cpu <= from_vga_textmode;
+		end if;
 	when iomap_from(iomap_pcm, iomap_range) to iomap_to(iomap_pcm, iomap_range) =>
 	    if C_pcm then
 		io_to_cpu <= from_pcm;
@@ -855,6 +895,114 @@ begin
     end process;
     end generate; -- end vgahdmi
 
+	-- VGA textmode
+	G_vgatext:
+	if C_vgatext generate
+	vga_video: entity work.VGA_textmode	-- vga80x40
+	generic map (
+		C_vgatext_mode			=>	C_vgatext_mode,
+		C_vgatext_bits			=>	C_vgatext_bits,
+		C_vgatext_font_height	=>	C_vgatext_font_height,
+		C_vgatext_font_depth	=>	C_vgatext_font_depth,
+		C_vgatext_char_height	=>	C_vgatext_char_height,
+		C_vgatext_monochrome	=>	C_vgatext_monochrome,
+		C_vgatext_palette		=>	C_vgatext_palette,
+		C_vgatext_bitmap		=>	C_vgatext_bitmap,
+		C_vgatext_bitmap_fifo	=>	C_vgatext_bitmap_fifo,
+		C_vgatext_bitmap_depth	=>	C_vgatext_bitmap_depth
+	)
+	port map (
+		clk => clk, ce => vga_textmode_ce, addr => dmem_addr(3 downto 2),
+		bus_write => dmem_write, byte_sel => dmem_byte_sel,
+		bus_in => cpu_to_dmem, bus_out => from_vga_textmode,
+		--
+		clk_pixel	=> clk_25MHz,
+		--
+		vga_textmode_addr	=>	vga_textmode_addr,
+		vga_textmode_data	=>	vga_textmode_data,
+		--
+		bitmap_strobe	=> vga_textmode_bitmap_addr_strobe,
+		bitmap_addr		=> vga_textmode_bitmap_addr,
+		bitmap_ready	=> vga_textmode_bitmap_ready,
+		bitmap_data		=> vga_data_from_fifo,
+		--
+		R			=>	vga_textmode_R,
+		G			=>	vga_textmode_G,
+		B			=>	vga_textmode_B,
+		hsync		=>	vga_textmode_hsync,
+		vsync		=>	vga_textmode_vsync,
+		nblank		=>	vga_textmode_blank
+	);
+
+	-- video FIFO for bitmap
+	G_vgatext_fifo:
+	if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
+    vga_vsync <= vga_n_vsync;
+    vga_hsync <= vga_n_hsync;
+    videofifo: entity work.videofifo
+    generic map (
+      C_width => C_vga_fifo_width -- length = 4 * 2^width
+    )
+    port map (
+      clk => clk,
+      clk_pixel => clk_25MHz,
+      addr_strobe => vga_addr_strobe,
+      addr_out => vga_addr,
+      data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
+      data_in => from_sdram, -- from SDRAM or BRAM
+      -- data_in => x"00000001", -- test pattern vertical lines
+      base_addr => vga_textmode_bitmap_addr,
+      start => vga_textmode_vsync,
+      frame => vga_frame,
+      data_out => vga_data_from_fifo,
+      fetch_next => vga_textmode_bitmap_addr_strobe
+    );
+	end generate;
+
+	-- DVI-D Encoder Block (Thanks Hamster ;-)
+	G_vgatext_dvid: entity work.dvid_out
+	generic map (
+		C_depth	=>	C_vgatext_bits
+	)
+	port map (
+		clk_pixel => clk_25MHz,
+		clk_tmds  => clk_250MHz,
+
+		red_p	=> vga_textmode_R(C_vgatext_bits-1 downto 0),
+		green_p	=> vga_textmode_G(C_vgatext_bits-1 downto 0),
+		blue_p	=> vga_textmode_B(C_vgatext_bits-1 downto 0),
+
+		blank	=> vga_textmode_blank,
+		hsync	=> vga_textmode_hsync,
+		vsync	=> vga_textmode_vsync,
+
+		-- outputs to TMDS drivers
+		tmds_out_rgb => tmds_out_rgb
+	);
+
+	-- 8KB VGA textmode BRAM (for text+attribute bytes and font)
+	G_vgatext_bram: entity work.VGA_textmode_bram
+	generic map (
+		C_mem_size		=> C_vgatext_mem,
+		C_label			=> C_vgatext_label,
+		C_monochrome	=> C_vgatext_monochrome,
+		C_font_height	=> C_vgatext_font_height,
+		C_font_depth	=> C_vgatext_font_depth
+	)
+	port map (
+		clk => clk, imem_addr => vga_textmode_addr, imem_data_out => vga_textmode_data,
+		dmem_write => vga_textmode_dmem_write,
+		dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+		dmem_data_out => vga_textmode_dmem_to_cpu, dmem_data_in => cpu_to_dmem
+	);
+
+	vga_textmode_dmem_write <= dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "01" else '0';
+	with conv_integer(io_addr(11 downto 4)) select
+		vga_textmode_ce <= io_addr_strobe when iomap_from(iomap_vga_textmode, iomap_range) to iomap_to(iomap_vga_textmode, iomap_range),
+		'0' when others;
+
+	end generate;	-- end VGA textmode
+
     --
     -- PCM audio
     --
@@ -905,8 +1053,8 @@ begin
 
 
     -- Block RAM
-    dmem_bram_write <=
-      dmem_addr_strobe and dmem_write when dmem_addr(31) /= '1' else '0';
+	dmem_bram_write <=
+		dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "00" else '0';
 
     bram: entity work.bram
     generic map (
@@ -943,3 +1091,4 @@ begin
     sio_txd(0) <= sio_tx(0) when not C_debug or debug_active = '0' else deb_tx;
 
 end Behavioral;
+

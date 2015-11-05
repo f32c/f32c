@@ -4,8 +4,8 @@ family = spartan6
 part = xc6slx25-ftg256-3 # last number -3 is speed grade
 flashsize = 8192 # KB (kilobytes) - SPI flash device is M25P40
 top_module = glue
-isedir = /opt/Xilinx/ISE/14.7/ISE_DS
-#xil_env = . $(isedir)/settings64.sh
+isedir = /opt/Xilinx/14.7/ISE_DS
+xil_env = . $(isedir)/settings64.sh
 SHELL = /bin/bash
 # openocd_interface = interface/altera-usb-blaster.cfg
 # openocd_interface = ../include/ft2232-fpu1.ocd
@@ -68,7 +68,12 @@ vhdfiles = \
 ../../../soc/fm/rds.vhd \
 ../../../soc/fm/bram_rds.vhd \
 ../../../soc/fm/message.vhd \
-../../../soc/vgahdmi/vgahdmif.vhd \
 ../../../soc/vgahdmi/videofifo.vhd \
+../../../soc/vgahdmi/vgahdmif.vhd \
+../../../soc/vgahdmi/VGA_textmode.vhd \
+../../../soc/vgahdmi/VGA_textmode_bram.vhd \
+../../../soc/vgahdmi/TMDS_encoder.vhd \
+../../../soc/vgahdmi/dvid_out.vhd \
+
 
 include ../include/xilinx.mk
