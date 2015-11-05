@@ -373,7 +373,7 @@ set_property DRIVE 4 [get_ports FPGA_SD_SCLK]
 # set_property IOSTANDARD LVTTL [get_ports FPGA_TMS]
 # set_property DRIVE 4 [get_ports FPGA_TMS]
 
-
+#
 #	Other constraints ........................................................
 #
 
