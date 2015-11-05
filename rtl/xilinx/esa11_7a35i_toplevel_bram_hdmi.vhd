@@ -194,9 +194,9 @@ begin
 	tmds_out_rgb => tmds_out_rgb,
 	vga_vsync => vga_vsync_n,
 	vga_hsync => vga_hsync_n,
-	vga_r(2 downto 0) => VGA_RED(7 downto 5),
-	vga_g(2 downto 0) => VGA_GREEN(7 downto 5),
-	vga_b(2 downto 0) => VGA_BLUE(7 downto 5),
+	vga_r => VGA_RED,
+	vga_g => VGA_GREEN,
+	vga_b => VGA_BLUE,
 	-- simple I/O
 	simple_out(7 downto 0) => M_LED, simple_out(15 downto 8) => disp_7seg_segment,
 	simple_out(19 downto 16) => M_7SEG_DIGIT, simple_out(31 downto 20) => open,
@@ -228,9 +228,6 @@ begin
         tmds_out_rgb_p => VID_D_P,
         tmds_out_rgb_n => VID_D_N
       );
-    VGA_RED(4 downto 0) <= (others => '0');
-    VGA_GREEN(4 downto 0) <= (others => '0');
-    VGA_BLUE(4 downto 0) <= (others => '0');
     VGA_SYNC_N <= '1';
     VGA_BLANK_N <= '1';
     VGA_CLOCK_P <= clk_25MHz;
