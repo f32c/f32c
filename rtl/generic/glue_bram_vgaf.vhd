@@ -726,7 +726,7 @@ begin
     -- VGA textmode
     G_vgatext:
     if C_vgatext generate
-      vga_video: entity work.VGA_textmode	-- vga80x40
+      vga_video: entity work.VGA_textmode -- vga 80x40
       generic map (
         C_vgatext_mode          => C_vgatext_mode,
         C_vgatext_bits          => C_vgatext_bits,
@@ -875,7 +875,7 @@ begin
 
     -- Block RAM
     dmem_bram_write <=
-      dmem_addr_strobe and dmem_write when dmem_addr(31) /= '1' else '0';
+      dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "00" else '0';
 
     bram: entity work.bram
     generic map (
