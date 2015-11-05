@@ -13,7 +13,7 @@
 -- Tweaked by Xark (https://hackaday.io/Xark) for use in f32c project.
 --
 -- See: http://hamsterworks.co.nz/mediawiki/index.php/Dvid_test
---      http://hamsterworks.co.nz/mediawiki/index.php/MiniSpartan6%2B_DVID_Output
+--		http://hamsterworks.co.nz/mediawiki/index.php/MiniSpartan6%2B_DVID_Output
 --		http://hamsterworks.co.nz/mediawiki/index.php/FPGA_Projects
 --
 -- Copyright (c) 2012-2015 Mike Field <hamster@snap.net.nz>
@@ -51,7 +51,7 @@ entity dvid_out is
 		-- Pixel data
 		red_p:		in std_logic_vector(C_depth-1 downto 0);
 		green_p:	in std_logic_vector(C_depth-1 downto 0);
-		blue_p: 	in std_logic_vector(C_depth-1 downto 0);
+		blue_p:		in std_logic_vector(C_depth-1 downto 0);
 		blank:		in std_logic;
 		hsync:		in std_logic;
 		vsync:		in std_logic;

@@ -110,7 +110,7 @@ entity glue_sdram is
 	C_vgatext: boolean := true;
 	C_vgatext_label: string := "f32c";
 	C_vgatext_mode: integer := 0;	-- 0=640x480, 1=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
-	C_vgatext_bits: integer := 2;
+	C_vgatext_bits: integer := 4;
 	C_vgatext_mem: integer := 8;		-- 4 or 8 (4=80x25 mono, 8=up to 100x30 16 color)
 	C_vgatext_font_height: integer := 16;		-- font data height 8 (doubled vertically) or 16
 	C_vgatext_font_depth: integer := 7;			-- font char bits (7=128, 8=256 characters)
@@ -119,7 +119,7 @@ entity glue_sdram is
 	C_vgatext_palette: boolean := true;			-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
 	C_vgatext_bitmap: boolean := true;			-- true for bitmap from sram/sdram
 	C_vgatext_bitmap_fifo: boolean := true;		-- true to use videofifo, else SRAM port
-	C_vgatext_bitmap_depth: integer := 1;		-- bits per pixel (1, 4, 8)
+	C_vgatext_bitmap_depth: integer := 8;		-- bits per pixel (1, 2, 4, 8)
 
 
 	C_pcm: boolean := true;

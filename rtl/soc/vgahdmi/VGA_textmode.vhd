@@ -21,7 +21,7 @@
 -- THE SOFTWARE.
 --
 
--- VGA/DVI/HDMI color text mode with optional SRAM monochrome bitmap
+-- VGA/DVI/HDMI color text mode with optional SRAM/SDRAM bitmap
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -29,7 +29,7 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity VGA_textmode is
 	Generic (
-		C_vgatext_mode: integer := 0;		-- 0=640x480, 1=800x600 (you must still provide proper pixel clock for mode)
+		C_vgatext_mode: integer := 0;				-- 0=640x480, 1=800x600 (you must still provide proper pixel clock for mode)
 		C_vgatext_bits: integer := 2;
 		C_vgatext_font_height: integer := 8;		-- font data height 8 (doubled vertically) or 16
 		C_vgatext_font_depth: integer := 7;			-- font char bits (7=128, 8=256 characters)
@@ -38,13 +38,13 @@ entity VGA_textmode is
 		C_vgatext_palette: boolean := true;			-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
 		C_vgatext_bitmap: boolean := true;			-- true for bitmap from sram/sdram
 		C_vgatext_bitmap_fifo: boolean := true;		-- true to use videofifo, else SRAM port
-		C_vgatext_bitmap_depth: integer := 1		-- bits per pixel (1, 4, 8)
+		C_vgatext_bitmap_depth: integer := 8		-- bits per pixel (1, 2, 4, 8)
 	);
 	Port (
 		clk:		in std_logic;
 		ce:			in std_logic;
 		bus_write:	in std_logic;
-		addr:		in std_logic_vector(1 downto 0); 		-- address space for 4 registers
+		addr:		in std_logic_vector(1 downto 0);		-- address space for 4 registers
 		byte_sel:	in std_logic_vector(3 downto 0);
 		bus_in:		in std_logic_vector(31 downto 0);
 		bus_out:	out std_logic_vector(31 downto 0);
@@ -57,7 +57,7 @@ entity VGA_textmode is
 		bitmap_addr:	out std_logic_vector(29 downto 2);	-- bitmap buffer (start address with fifo)
 		bitmap_data:	in std_logic_vector(31 downto 0);	-- from sram or fifo
 		bitmap_strobe:	out std_logic;						-- request data (or fetch next with fifo)
-        bitmap_ready:	in std_logic;						-- sram data ready (not used with fifo)
+		bitmap_ready:	in std_logic;						-- sram data ready (not used with fifo)
 
 		hsync:	out std_logic;
 		vsync:	out std_logic;
@@ -72,7 +72,7 @@ architecture Behavioral of VGA_textmode is
 	type video_mode_t is
 	record
 		pixel_clock_Hz:								integer;
-		visible_width, 	visible_height:				integer;
+		visible_width,	visible_height:				integer;
 		h_front_porch, h_sync_pulse, h_back_porch:	integer;
 		v_front_porch, v_sync_pulse, v_back_porch:	integer;
 		h_sync_polarity, v_sync_polarity:			std_logic;
@@ -111,8 +111,8 @@ architecture Behavioral of VGA_textmode is
 	constant C_char_width:		integer			:= 8;
 
 	-- constants for the VGA textmode registers
-	constant C_cntrl:		std_logic_vector		:= "00";	-- 0 [rw 8-bit]  (31) enable, (30) text enable, (29)=bitmap enable, (28)=cursor enable, (20-16)=frame count, (15-8)=cursory, (7-0)=cursorx
-	constant C_bmap_addr:	std_logic_vector		:= "01";	-- 1 [rw 32-bit] address in SRAM for bitmap start
+	constant C_cntrl:		std_logic_vector		:= "00";	-- 0 [rw 8-bit]	 (31) enable, (30) text enable, (29)=bitmap enable, (28)=cursor enable, (20-16)=frame count, (15-8)=cursory, (7-0)=cursorx
+	constant C_bmap_addr:	std_logic_vector		:= "01";	-- 1 [rw 32-bit] address in SRAM/SDRAM for bitmap start
 	constant C_bmap_color:	std_logic_vector		:= "10";	-- 2 [-w 32-bit] (23 downto 0)=0xRRGGBB 24-bit color for bitmap
 	constant C_palette_reg:	std_logic_vector		:= "11";	-- 3 [-w 32-bit] (27 down 24)=palette reg, (23 downto 0)=0xRRGGBB 24-bit color
 
@@ -125,7 +125,8 @@ architecture Behavioral of VGA_textmode is
 	signal	cury_r	:	unsigned(7 downto 0);			-- cursor Y position
 	signal	monoflag:	std_logic;
 	signal	bitmapflag:	std_logic;
-	signal	modeflag:	std_logic_vector(1 downto 0);
+	signal	resolution:	std_logic_vector(1 downto 0);
+	signal	colors:		std_logic_vector(2 downto 0);
 
 	signal	r_r		:	std_logic_vector(7 downto 0);	-- registered outputs from clocked process
 	signal	g_r		:	std_logic_vector(7 downto 0);	-- registered outputs from clocked process
@@ -136,7 +137,7 @@ architecture Behavioral of VGA_textmode is
 
 	signal	addr_r	:	unsigned(12 downto 0);			-- address in BRAM to fetch character+color
 	signal	cy		:	unsigned(7 downto 0);			-- current text line
-	signal	bmap_addr_r: std_logic_vector(31 downto 0);	-- SRAM bitmap start address
+	signal	bmap_addr_r: std_logic_vector(31 downto 0);	-- SRAM/SDRAM bitmap start address
 	signal	bmap_color_r: std_logic_vector(23 downto 0);
 	signal	baddr_r	:	unsigned(27 downto 0);			-- current SRAM bitmap address
 	signal	req_bitmap_strobe	: std_logic;
@@ -151,7 +152,7 @@ architecture Behavioral of VGA_textmode is
 
 	signal	cursoron :	std_logic;
 
-    type palette_t is array(0 to 15) of std_logic_vector(23 downto 0);	-- x"RRGGBB"
+	type palette_t is array(0 to 15) of std_logic_vector(23 downto 0);	-- x"RRGGBB"
 	signal palette: palette_t :=
 	(
 		x"000000",
@@ -221,13 +222,18 @@ begin
 
 	monoflag <= '1' when C_vgatext_monochrome else '0';
 	bitmapflag <= '1' when C_vgatext_bitmap else '0';
-	modeflag <= "01" when C_vgatext_mode = 1 else
-				"10" when C_vgatext_mode = 2 else
-				"11" when C_vgatext_mode = 3 else
-				"00";
+	resolution <= "01" when C_vgatext_mode = 1 else
+				  "10" when C_vgatext_mode = 2 else
+				  "11" when C_vgatext_mode = 3 else
+				  "00";
+	colors	<= "001" when C_vgatext_bitmap_depth = 1 else
+			   "010" when C_vgatext_bitmap_depth = 2 else
+			   "011" when C_vgatext_bitmap_depth = 4 else
+			   "100" when C_vgatext_bitmap_depth = 8 else
+			   "000";
 
 	bus_out <= std_logic_vector(bmap_addr_r) when addr="01" else
-			   cntrl_r & monoflag & bitmapflag & modeflag & "0000" & std_logic_vector(fcount) & std_logic_vector(cury_r) & std_logic_vector(curx_r);
+			   cntrl_r & monoflag & bitmapflag & resolution & colors & "0" & std_logic_vector(fcount) & std_logic_vector(cury_r) & std_logic_vector(curx_r);
 
 	G_bitmap_sram:
 	if C_vgatext_bitmap AND NOT C_vgatext_bitmap_fifo generate
@@ -251,6 +257,7 @@ begin
 	pixel_proc: process(clk_pixel)
 		variable fontpix: std_logic;
 		variable pixcolor: std_logic_vector(7 downto 0);
+		variable bitmap_pix: std_logic_vector(C_vgatext_bitmap_depth-1 downto 0);
 	begin
 		if rising_edge(clk_pixel) then
 			if cntrl_r(3)='1' then
@@ -361,7 +368,7 @@ begin
 									end case;
 								else
 								if (addr_r(1) = '0') then
-									color_n_r 	<= vga_textmode_data(15 downto 8);
+									color_n_r	<= vga_textmode_data(15 downto 8);
 									if C_vgatext_font_height=8 then
 									if (fonty < 16) then
 										vga_textmode_addr(C_vgatext_font_depth+2 downto 2) <= vga_textmode_data(C_vgatext_font_depth-1 downto 0) & fonty(3);
@@ -447,15 +454,42 @@ begin
 						end case;
 					end if;
 
+					bitmap_pix := (others => '0');
 					req_bitmap_strobe <= '0';
 					if C_vgatext_bitmap then
 						if cntrl_r(1)='1' then
+							bitmap_pix := bitmap_r(31 downto 32-C_vgatext_bitmap_depth);
 							if C_vgatext_bitmap_fifo then
-								if (hcount >= -1 AND hcount < vmode(C_vgatext_mode).visible_width-1 AND hcount(4 downto 0) = "11111") then
-									req_bitmap_strobe <= '1';
-									bitmap_r <= bitmap_data;
-								else
-									bitmap_r <= bitmap_r(30 downto 0) & "0";
+								if (hcount >= -1 AND hcount < vmode(C_vgatext_mode).visible_width-1) then
+									if C_vgatext_bitmap_depth = 8 then			-- 256 color
+									if (hcount(1 downto 0) = "11") then
+										req_bitmap_strobe <= '1';
+										bitmap_r <= bitmap_data;
+									else
+										bitmap_r <= bitmap_r(23 downto 0) & x"00";
+									end if;
+									elsif C_vgatext_bitmap_depth = 4 then		-- 16 color
+									if (hcount(3 downto 0) = "111") then
+										req_bitmap_strobe <= '1';
+										bitmap_r <= bitmap_data;
+									else
+										bitmap_r <= bitmap_r(27 downto 0) & "0000";
+									end if;
+									elsif C_vgatext_bitmap_depth = 4 then		-- 4 color
+									if (hcount(3 downto 0) = "1111") then
+										req_bitmap_strobe <= '1';
+										bitmap_r <= bitmap_data;
+									else
+										bitmap_r <= bitmap_r(29 downto 0) & "00";
+									end if;
+									else										-- 2 color
+									if (hcount(4 downto 0) = "11111") then
+										req_bitmap_strobe <= '1';
+										bitmap_r <= bitmap_data;
+									else
+										bitmap_r <= bitmap_r(30 downto 0) & "0";
+									end if;
+									end if;
 								end if;
 							else
 								if (hcount = -33) then
@@ -493,10 +527,36 @@ begin
 						b_r <= pixcolor(0) & pixcolor(3) & pixcolor(0) & pixcolor(3) & pixcolor(0) & pixcolor(3) & pixcolor(0) & pixcolor(3);
 						end if;
 					else
-						if (C_vgatext_bitmap AND cntrl_r(1)='1' AND bitmap_r(31) = '1') then
-							r_r <= bmap_color_r(23 downto 16);
+						if (C_vgatext_bitmap AND unsigned(bitmap_pix) /= 0) then
+							if C_vgatext_bitmap_depth = 8 then			-- 8bpp RRR GGG BB
+							r_r <= bitmap_pix(7 downto 5) & bitmap_pix(7 downto 5) & bitmap_pix(7 downto 6);
+							g_r <= bitmap_pix(4 downto 2) & bitmap_pix(4 downto 2) & bitmap_pix(4 downto 3);
+							b_r <= bitmap_pix(1 downto 0) & bitmap_pix(1 downto 0) & bitmap_pix(1 downto 0) & bitmap_pix(1 downto 0);
+							elsif C_vgatext_bitmap_depth = 4 then
+							if C_vgatext_palette then						-- 4bpp palletized
+							r_r <= palette(to_integer(unsigned(bitmap_pix)))(23 downto 16);
+							g_r <= palette(to_integer(unsigned(bitmap_pix)))(15 downto 8);
+							b_r <= palette(to_integer(unsigned(bitmap_pix)))(7 downto 0);
+							else											-- 4bpp IRGB
+							r_r <= bitmap_pix(2) & bitmap_pix(3) & bitmap_pix(2) & bitmap_pix(3) & bitmap_pix(2) & bitmap_pix(3) & bitmap_pix(2) & bitmap_pix(3);
+							g_r <= bitmap_pix(1) & bitmap_pix(3) & bitmap_pix(1) & bitmap_pix(3) & bitmap_pix(1) & bitmap_pix(3) & bitmap_pix(1) & bitmap_pix(3);
+							b_r <= bitmap_pix(0) & bitmap_pix(3) & bitmap_pix(0) & bitmap_pix(3) & bitmap_pix(0) & bitmap_pix(3) & bitmap_pix(0) & bitmap_pix(3);
+							end if;
+							elsif C_vgatext_bitmap_depth = 2 then
+							if C_vgatext_palette then						-- 2bpp palletized
+							r_r <= palette(to_integer(unsigned(bitmap_pix)))(23 downto 16);
+							g_r <= palette(to_integer(unsigned(bitmap_pix)))(15 downto 8);
+							b_r <= palette(to_integer(unsigned(bitmap_pix)))(7 downto 0);
+							else											-- 2bpp fixed black, blue, red, white
+							if bitmap_pix(1)='1' then	r_r <= x"ff"; end if;
+							if bitmap_pix = "11" then	g_r <= x"ff"; end if;
+							if bitmap_pix(0)='1' then	b_r <= x"ff"; end if;
+							end if;
+							else
+							r_r <= bmap_color_r(23 downto 16);				-- 1bpp bitmap color
 							g_r <= bmap_color_r(15 downto 8);
 							b_r <= bmap_color_r(7 downto 0);
+							end if;
 						else
 							if C_vgatext_palette then
 							r_r <= palette(to_integer(unsigned(pixcolor(7 downto 4))))(23 downto 16);
