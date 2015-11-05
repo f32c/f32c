@@ -51,9 +51,13 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 128;
-	C_vgahdmi: boolean := true;
+	C_vgahdmi: boolean := false;
 	C_vgahdmi_mem_kb: integer := 38; -- KB 38K full mono 640x480
 	C_vgahdmi_test_picture: integer := 1; -- enable test picture
+	C_vgatext: boolean := true; -- Xark's feature-ritch bitmap+textmode VGA
+	C_vgatext_label: string := "f32c: ZYBO MIPS compatible soft-core 100MHz 128KB BRAM";
+	C_vgatext_bitmap: boolean := false;
+	C_vgatext_bitmap_fifo: boolean := false;		-- true to use videofifo, else SRAM port
 	C_sio: integer := 1;
 	C_spi: integer := 2;
 	C_gpio: integer := 32;
@@ -132,6 +136,10 @@ begin
 	C_vgahdmi => C_vgahdmi,
 	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
 	C_vgahdmi_test_picture => C_vgahdmi_test_picture,
+        C_vgatext => C_vgatext,
+	C_vgatext_label => C_vgatext_label,
+        C_vgatext_bitmap => C_vgatext_bitmap,
+	C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
 	C_gpio => C_gpio,
 	C_sio => C_sio,
 	C_spi => C_spi,
@@ -159,9 +167,12 @@ begin
 	tmds_out_rgb => tmds_out_rgb,
 	vga_vsync => vga_vs,
 	vga_hsync => vga_hs,
-	vga_r(2 downto 0) => vga_r(4 downto 2),
-	vga_g(2 downto 0) => vga_g(5 downto 3),
-	vga_b(2 downto 0) => vga_b(4 downto 2),
+	vga_r(7 downto 3) => vga_r(4 downto 0),
+	vga_r(2 downto 0) => open,
+	vga_g(7 downto 2) => vga_g(5 downto 0),
+	vga_g(1 downto 0) => open,
+	vga_b(7 downto 3) => vga_b(4 downto 0),
+	vga_b(2 downto 0) => open,
 	simple_out(3 downto 0) => led(3 downto 0),
 	simple_out(31 downto 4) => open,
 	simple_in(3 downto 0) => btn(3 downto 0),
@@ -169,9 +180,6 @@ begin
 	simple_in(19 downto 16) => sw(3 downto 0),
 	simple_in(31 downto 20) => open
     );
-    vga_r(1 downto 0) <= (others => '0');
-    vga_g(2 downto 0) <= (others => '0');
-    vga_b(1 downto 0) <= (others => '0');
 
     -- differential output buffering for HDMI clock and video
     hdmi_output: entity work.hdmi_out
