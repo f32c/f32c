@@ -107,7 +107,7 @@ entity glue_sdram is
 	C_vgahdmi_mem_kb: integer := 10; -- mem size of BRAM framebuffer if BRAM is used
 	C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
 
-	C_vgatext: boolean := true;
+	C_vgatext: boolean := false;
 	C_vgatext_label: string := "f32c";
 	C_vgatext_mode: integer := 0;	-- 0=640x480, 1=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
 	C_vgatext_bits: integer := 4;

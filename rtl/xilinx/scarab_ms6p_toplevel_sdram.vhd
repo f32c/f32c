@@ -53,10 +53,9 @@ entity glue is
         C_sdram_separate_arbiter: boolean := false;
 	C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
 	C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
-        C_vgahdmi: boolean := false;
-
+        C_vgahdmi: boolean := false; -- old Emard's bitmap-only VGA
+	C_vgatext: boolean := true; -- Xark's feature-ritch bitmap+textmode VGA
 	C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";
-
 	C_fmrds: boolean := true;
 	C_sio: integer := 1;
 	C_spi: integer := 2;
@@ -172,9 +171,8 @@ begin
 	C_ram_emu_addr_width => C_ram_emu_addr_width,
 	C_ram_emu_wait_states => C_ram_emu_wait_states,
         C_vgahdmi => C_vgahdmi,
-
+        C_vgatext => C_vgatext,
 	C_vgatext_label => C_vgatext_label,
-
 	C_fmrds => C_fmrds,
 	C_debug => C_debug
     )
