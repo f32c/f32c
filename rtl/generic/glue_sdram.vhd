@@ -102,7 +102,8 @@ entity glue_sdram is
 	C_simple_in: integer range 0 to 128 := 32;
 	C_simple_out: integer range 0 to 128 := 32;
 	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
-        C_vga_fifo_width: integer := 4; -- width of FIFO address space (default=4) len = 2^width * 4 byte
+        C_vga_fifo_step: integer := 80; -- step for the fifo refill and rewind
+        C_vga_fifo_width: integer := 6; -- width of FIFO address space (default=4) len = 2^width * 4 byte
         C_vga_use_bram: boolean := false;
 	C_vgahdmi_mem_kb: integer := 10; -- mem size of BRAM framebuffer if BRAM is used
 	C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
@@ -159,7 +160,7 @@ entity glue_sdram is
 	pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
 	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
 	vga_hsync, vga_vsync: out std_logic;
-	vga_r, vga_g, vga_b: out std_logic_vector(2 downto 0);
+	vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0);
 	tmds_out_rgb: out std_logic_vector(2 downto 0);
 	fm_antenna, cw_antenna: out std_logic;
 	gpio: inout std_logic_vector(127 downto 0)
@@ -819,6 +820,7 @@ begin
     vga_hsync <= vga_n_hsync;
     videofifo: entity work.videofifo
     generic map (
+      C_step => C_vga_fifo_step,
       C_width => C_vga_fifo_width -- length = 4 * 2^width
     )
     port map (
