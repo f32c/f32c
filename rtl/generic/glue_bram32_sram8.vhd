@@ -49,7 +49,7 @@
 	-- 0xf****F40: (4B, RW) : ADC 0-5
 	-- 0xf****F60: (4B, RW) : 73
 	-- 0xf****F70: (4B, RW) : 77
-	
+
 	-- 0xf****FF0: (1B, WR) : CPU reset bitmap
 
 library IEEE;
@@ -158,7 +158,7 @@ entity glue_bram_sram8 is
 	clk_dvin: in std_logic:= '0';			-- HDMI clock (125MHz 90 deg offset)
 	sram_addr: out std_logic_vector(19 downto 0);
 	sram_data: inout std_logic_vector(7 downto 0);
-	sram_we: out std_logic; 
+	sram_we: out std_logic;
 	sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
 	sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
 	spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
@@ -176,15 +176,15 @@ entity glue_bram_sram8 is
 	--ADC ports
 	ADC_Error_out	: inout		std_logic_vector(5 downto 0);
 	--Digital video out
-	LVDS_Red: out std_logic;	
-	LVDS_Green: out std_logic;	
+	LVDS_Red: out std_logic;
+	LVDS_Green: out std_logic;
 	LVDS_Blue: out std_logic;
 	LVDS_ck: out std_logic;
-	-- PS/2 Keyboard			
+	-- PS/2 Keyboard
 	ps2_clk_in : in std_logic;
 	ps2_dat_in : in std_logic;
 	ps2_clk_out : out std_logic;
-	ps2_dat_out : out std_logic 	
+	ps2_dat_out : out std_logic
 	);
 end glue_bram_sram8;
 
@@ -202,7 +202,7 @@ architecture Behavioral of glue_bram_sram8 is
 	signal io_addr_strobe: std_logic;
 	signal io_addr: std_logic_vector(11 downto 2);
 	signal intr: std_logic_vector(5 downto 0); -- interrupt
-	
+
 	-- SRAM
 	signal to_sram: sram_port_array;
 	signal sram_ready: sram_ready_array;
@@ -312,13 +312,13 @@ architecture Behavioral of glue_bram_sram8 is
 	signal video_sram_bitmap_addr_strobe: std_logic;
 	signal video_sram_bitmap_addr: std_logic_vector(29 downto 2);
 	signal video_sram_bitmap_ready: std_logic;
-	
+
 	-- ADC
 	constant iomap_adc: T_iomap_range := (x"FF40", x"FF5F");
 	signal adc_range: std_logic := '0';
 	type adcs_type is array (0 to C_gpio_adc-1) of std_logic_vector(15 downto 0);
 	signal from_adc: adcs_type;
- 
+
 	-- PS/2 Keyboard port
 	constant iomap_ps2: T_iomap_range := (x"FF20", x"FF2F");
 	signal ps2_ce: std_logic := '0';
@@ -357,7 +357,7 @@ architecture Behavioral of glue_bram_sram8 is
 	constant iomap_simple_in: T_iomap_range := (x"FF00", x"FF0F");
 	constant iomap_simple_out: T_iomap_range := (x"FF10", x"FF1F");
 	signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
-	
+
 	-- Debug
 	signal sio_to_debug_data: std_logic_vector(7 downto 0);
 	signal debug_to_sio_data: std_logic_vector(7 downto 0);
@@ -481,7 +481,8 @@ begin
 		C_vgatext_mode			=>  C_vgatext_mode,
 		C_vgatext_text			=>	C_vgatext_text,
 		C_vgatext_bits			=>  C_vgatext_bits,
-		C_vgatext_font_height	=>	C_vgatext_font_height,		C_vgatext_font_depth	=>  C_vgatext_font_depth,
+		C_vgatext_font_height	=>	C_vgatext_font_height,
+		C_vgatext_font_depth	=>  C_vgatext_font_depth,
 		C_vgatext_char_height	=>  C_vgatext_char_height,
 		C_vgatext_monochrome	=>  C_vgatext_monochrome,
 		C_vgatext_palette		=>  C_vgatext_palette,
@@ -510,7 +511,7 @@ begin
 		hsync		=>	hsync,
 		vsync		=>	vsync,
 		nblank		=>	blank
-	);	
+	);
 
 	-- DVI-D Encoder Block (Thanks Hamster ;-)
 	u100 : entity work.dvid
@@ -519,16 +520,16 @@ begin
 	)
 	port map(
 		clk		=> clk_dvi,
-		clk_n	=> clk_dvin, 
+		clk_n	=> clk_dvin,
 		clk_pixel => clk_25MHz,
-		
+
 		red_p	=> R(C_vgatext_bits-1 downto 0),
 		green_p	=> G(C_vgatext_bits-1 downto 0),
 		blue_p	=> B(C_vgatext_bits-1 downto 0),
-		
+
 		blank	=> blank,
 		hsync	=> hsync,
-		vsync	=> vsync, 
+		vsync	=> vsync,
 
 		-- outputs to TMDS drivers
 		red_s	=> LVDS_Red,
@@ -760,7 +761,7 @@ begin
 	ps2_inst: entity work.ps2
 	generic map (
 		C_clk_freq => C_clk_freq
-	) 
+	)
 	port map (
 		clk => clk, ce => ps2_ce,
 		reset => sio_break_internal(0),
