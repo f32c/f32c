@@ -136,7 +136,8 @@ entity glue_bram_sram8 is
 		C_pid_fp: integer range 0 to 26 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
 	C_timer: boolean := true;
 	-- VGA textmode
-	C_vgatext: boolean := true;
+	C_vgatext: boolean := false;
+	C_vgatext_text: boolean := false;			-- enable text generation
 	C_vgatext_label: string := "f32c";
 	C_vgatext_mode: integer := 0;	-- 0=640x480, 1=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
 	C_vgatext_bits: integer := 2;
@@ -145,8 +146,10 @@ entity glue_bram_sram8 is
 	C_vgatext_font_depth: integer := 7;			-- font char bits (7=128, 8=256 characters)
 	C_vgatext_char_height: integer := 16;		-- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
 	C_vgatext_monochrome: boolean := false;		-- 4K ram mode
-	C_vgatext_palette: boolean := true;			-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
-	C_vgatext_sram_bitmap: boolean := true		-- true for monochrome bitmap from sram (or other RAM with low enough latency)
+	C_vgatext_palette: boolean := false;			-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
+	C_vgatext_bitmap: boolean := false;			-- true for bitmap from sram/sdram
+	C_vgatext_bitmap_fifo: boolean := false;		-- true to use videofifo, else SRAM port
+	C_vgatext_bitmap_depth: integer := 1		-- bits per pixel (1, 2, 4, 8)	C_vgatext_sram_bitmap: boolean := true		-- true for monochrome bitmap from sram (or other RAM with low enough latency)
 	);
 	port (
 	clk: in std_logic;
@@ -437,7 +440,7 @@ begin
 	to_sram(data_port).write <= dmem_write;
 	to_sram(data_port).byte_sel <= dmem_byte_sel;
 	-- port 2: video bus DMA
-	G_bitmap_sram: if C_vgatext_sram_bitmap generate
+	G_bitmap_sram: if C_vgatext_bitmap generate
 		to_sram(fb_port).addr_strobe <= video_sram_bitmap_addr_strobe;
 		to_sram(fb_port).addr <= video_sram_bitmap_addr;
 		to_sram(fb_port).data_in <= (others => '-');
@@ -476,12 +479,15 @@ begin
 	vga_video: entity work.VGA_textmode	-- vga80x40
 	generic map (
 		C_vgatext_mode			=>  C_vgatext_mode,
+		C_vgatext_text			=>	C_vgatext_text,
 		C_vgatext_bits			=>  C_vgatext_bits,
 		C_vgatext_font_height	=>	C_vgatext_font_height,		C_vgatext_font_depth	=>  C_vgatext_font_depth,
 		C_vgatext_char_height	=>  C_vgatext_char_height,
 		C_vgatext_monochrome	=>  C_vgatext_monochrome,
 		C_vgatext_palette		=>  C_vgatext_palette,
-		C_vgatext_sram_bitmap	=>  C_vgatext_sram_bitmap
+		C_vgatext_bitmap		=>	C_vgatext_bitmap,
+		C_vgatext_bitmap_fifo	=>	C_vgatext_bitmap_fifo,
+		C_vgatext_bitmap_depth	=>	C_vgatext_bitmap_depth
 	)
 	port map (
 		clk => clk, ce => vga_textmode_ce, addr => dmem_addr(3 downto 2),
@@ -493,10 +499,10 @@ begin
 		vga_textmode_addr	=>	vga_textmode_addr,
 		vga_textmode_data	=>	vga_textmode_data,
 		--
-		sram_strobe	=> video_sram_bitmap_addr_strobe,
-		sram_addr	=> video_sram_bitmap_addr,
-		sram_ready	=> video_sram_bitmap_ready,
-		sram_data	=> from_sram,
+		bitmap_strobe	=> video_sram_bitmap_addr_strobe,
+		bitmap_addr		=> video_sram_bitmap_addr,
+		bitmap_ready	=> video_sram_bitmap_ready,
+		bitmap_data		=> from_sram,
 		--
 		R			=>	R,
 		G			=>	G,
@@ -532,6 +538,7 @@ begin
 	);
 
 	-- 8KB VGA textmode BRAM
+	G_vga_textmode_bram: if C_vgatext_text generate
 	vga_bram: entity work.VGA_textmode_bram
 	generic map (
 		C_mem_size		=> C_vgatext_mem,
@@ -546,6 +553,7 @@ begin
 		dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
 		dmem_data_out => vga_textmode_dmem_to_cpu, dmem_data_in => cpu_to_dmem
 	);
+	end generate;
 
 	vga_textmode_dmem_write <= dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "01" else '0';
 	with conv_integer(io_addr(11 downto 4)) select
