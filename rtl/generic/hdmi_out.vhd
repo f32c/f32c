@@ -26,8 +26,8 @@
 -- $Id$
 --
 
--- vendor-specific module for differential HDMI output 
--- on Xilinx (Spartan-6) 
+-- vendor-independent module for simulating differential HDMI output
+-- this module is untested and probably will not work
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
