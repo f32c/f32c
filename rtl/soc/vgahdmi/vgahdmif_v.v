@@ -24,6 +24,7 @@ module vgahdmi_v(
         input wire clk_tmds, /* 250 MHz (set to 0 for VGA-only) */
         input wire [7:0] red_byte, green_byte, blue_byte, bright_byte, // get data from fifo
         output wire fetch_next, // fetch_next=1: read cycle is complete, fetch next data
+        output wire line_repeat, // repeat video line
         output wire vga_hsync, vga_vsync, // active low, vsync will reset fifo
         output wire [7:0] vga_r, vga_g, vga_b,
 	output wire [2:0] TMDS_out_RGB
@@ -123,6 +124,7 @@ assign vga_g = DrawArea ? (                                colorValue[1][7:0]) :
 assign vga_b = DrawArea ? (test_picture ? test_blue[7:0] : colorValue[2][7:0]) : 0;
 assign vga_hsync = hSync;
 assign vga_vsync = vSync;
+assign line_repeat = dbl_y ? vga_hsync & ~CounterY[0] : 0;
 
 // generate HDMI output, mixing with test picture if enabled
 wire [9:0] TMDS_red, TMDS_green, TMDS_blue;
