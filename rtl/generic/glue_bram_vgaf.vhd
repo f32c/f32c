@@ -86,6 +86,10 @@ entity glue_bram is
 	C_simple_out: integer range 0 to 128 := 32;
 	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
 	C_vgahdmi_mem_kb: integer := 4; -- mem size of framebuffer
+	C_vgahdmi_dbl_x: integer := 0; -- double-size x pixel
+	C_vgahdmi_dbl_y: integer := 0; -- double-size y-pixel
+	C_vgahdmi_fifo_step: integer := 0; -- 0 (dbl_y = 0), 40 (dbl_x = 1, dbl_y = 1), 80 (dbl_x = 0, dbl_y = 1)
+	C_vgahdmi_fifo_width: integer := 4; -- 4 (dbl_y = 0),  6 (dbl_x = 1, dbl_y = 1),  7 (dbl_x = 0, dbl_y = 1)
 	C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
 	C_vgatext: boolean := false;
 	C_vgatext_label: string := "f32c";
@@ -99,6 +103,7 @@ entity glue_bram is
 	C_vgatext_palette: boolean := true;			-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
 	C_vgatext_bitmap: boolean := true;			-- true for bitmap from sram/sdram
 	C_vgatext_bitmap_fifo: boolean := true;		-- true to use videofifo, else SRAM port
+	C_vgatext_bitmap_fifo_width: integer := 4;
 	C_vgatext_bitmap_depth: integer := 8;		-- bits per pixel (1, 2, 4, 8)
 	C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
 	C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
@@ -262,10 +267,10 @@ architecture Behavioral of glue_bram is
     -- signal vga_debug_rd_addr: std_logic_vector(19 downto 2); -- from fifo to RAM
     signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
     signal video_bram_write: std_logic; -- from CPU to RAM
-    constant C_vga_fifo_width: integer := 4; -- size of FIFO
     signal vga_addr_strobe: std_logic; -- FIFO requests to read from RAM
     signal vga_data_ready: std_logic; -- RAM responds to FIFO
     signal vga_n_vsync, vga_n_hsync: std_logic; -- intermediate signals for xilinx to be happy
+    signal vga_line_repeat: std_logic;
     signal vga_frame: std_logic;
 
     -- VGA_textmode VGA/HDMI video (text and font in BRAM, bitmap in sdram)
@@ -628,6 +633,8 @@ begin
     if C_vgahdmi generate
     vgahdmi: entity work.vgahdmi
     generic map (
+      dbl_x => C_vgahdmi_dbl_x,
+      dbl_y => C_vgahdmi_dbl_y,
       test_picture => C_vgahdmi_test_picture
     )
     port map (
@@ -643,13 +650,15 @@ begin
       vga_b => vga_b,
       vga_hsync => vga_n_hsync,
       vga_vsync => vga_n_vsync,
+      line_repeat => vga_line_repeat,
       tmds_out_rgb => tmds_out_rgb
     );
     vga_vsync <= vga_n_vsync;
     vga_hsync <= vga_n_hsync;
     videofifo: entity work.videofifo
     generic map (
-      C_width => C_vga_fifo_width -- bits
+      C_step => C_vgahdmi_fifo_step,
+      C_width => C_vgahdmi_fifo_width -- bits
     )
     port map (
       clk => clk,
@@ -665,6 +674,7 @@ begin
       -- data_in(31 downto 8) => (others => '0'),
       base_addr => R_fb_base_addr,
       start => vga_n_vsync,
+      rewind => vga_line_repeat,
       data_out => vga_data_from_fifo,
       fetch_next => vga_fetch_next
     );
@@ -769,7 +779,8 @@ begin
       vga_hsync <= vga_n_hsync;
       videofifo: entity work.videofifo
       generic map (
-        C_width => C_vga_fifo_width -- length = 4 * 2^width
+        -- C_step => C_vgatext_bitmap_fifo_step,
+        C_width => C_vgatext_bitmap_fifo_width -- bits
       )
       port map (
         clk => clk,
