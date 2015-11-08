@@ -83,6 +83,8 @@ entity glue is
 	porta, portb: inout std_logic_vector(11 downto 0);
 	portc: inout std_logic_vector(7 downto 0);
 	portd: out std_logic_vector(0 downto 0); -- fm antenna is here
+	TMDS_in_P, TMDS_in_N: out std_logic_vector(2 downto 0);
+	TMDS_in_CLK_P, TMDS_in_CLK_N: out std_logic;
 	TMDS_out_P, TMDS_out_N: out std_logic_vector(2 downto 0);
 	TMDS_out_CLK_P, TMDS_out_CLK_N: out std_logic;
 	sw: in std_logic_vector(4 downto 1)
@@ -217,14 +219,24 @@ begin
     );
 
     -- differential output buffering for HDMI clock and video
-    hdmi_output: entity work.hdmi_out
+    hdmi_output1: entity work.hdmi_out
       port map (
-        tmds_in_clk => clk_25MHz,
+        tmds_in_clk    => clk_25MHz,
         tmds_out_clk_p => tmds_out_clk_p,
         tmds_out_clk_n => tmds_out_clk_n,
-        tmds_in_rgb => tmds_out_rgb,
+        tmds_in_rgb    => tmds_out_rgb,
         tmds_out_rgb_p => tmds_out_p,
         tmds_out_rgb_n => tmds_out_n
+      );
+
+    hdmi_output2: entity work.hdmi_out
+      port map (
+        tmds_in_clk    => clk_25MHz,
+        tmds_out_clk_p => tmds_in_clk_p,
+        tmds_out_clk_n => tmds_in_clk_n,
+        tmds_in_rgb    => tmds_out_rgb,
+        tmds_out_rgb_p => tmds_in_p,
+        tmds_out_rgb_n => tmds_in_n
       );
 
 end Behavioral;
