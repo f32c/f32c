@@ -30,15 +30,16 @@ use IEEE.NUMERIC_STD.ALL;
 entity VGA_textmode is
 	Generic (
 		C_vgatext_mode: integer := 0;				-- 0=640x480, 1=800x600 (you must still provide proper pixel clock for mode)
-		C_vgatext_bits: integer := 2;
+		C_vgatext_bits: integer := 2;				-- bits per R G B for output (1 to 8)
+		C_vgatext_text: boolean := true;			-- enable text generation
 		C_vgatext_font_height: integer := 8;		-- font data height 8 (doubled vertically) or 16
 		C_vgatext_font_depth: integer := 7;			-- font char bits (7=128, 8=256 characters)
 		C_vgatext_char_height: integer := 19;		-- font cell height (text lines will be vmode(C_vgatext_mode).visible_height / C_vgatext_char_height rounded down, 19=25 lines on 480p)
 		C_vgatext_monochrome: boolean := false;		-- 4K ram mode (one color byte for entire screen)
-		C_vgatext_palette: boolean := true;			-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
-		C_vgatext_bitmap: boolean := true;			-- true for bitmap from sram/sdram
-		C_vgatext_bitmap_fifo: boolean := true;		-- true to use videofifo, else SRAM port
-		C_vgatext_bitmap_depth: integer := 8		-- bits per pixel (1, 2, 4, 8)
+		C_vgatext_palette: boolean := false;		-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
+		C_vgatext_bitmap: boolean := false;			-- true for bitmap from sram/sdram
+		C_vgatext_bitmap_fifo: boolean := false;	-- true to use videofifo, else SRAM port
+		C_vgatext_bitmap_depth: integer := 1		-- bits per pixel (1, 2, 4, 8)
 	);
 	Port (
 		clk:		in std_logic;
@@ -121,8 +122,8 @@ architecture Behavioral of VGA_textmode is
 	signal	fcount	:	unsigned(3 downto 0);			-- frame counter (incremented once per frame)
 
 	signal	cntrl_r	:	std_logic_vector(3 downto 0) := "1100";	-- (3)=enable, (2)=text enable, (1)=bitmap enable, (0)=cursor enable
-	signal	curx_r	:	unsigned(7 downto 0);			-- cursor X position
-	signal	cury_r	:	unsigned(7 downto 0);			-- cursor Y position
+	signal	curx_r	:	unsigned(7 downto 0) := (others => '0');	-- cursor X position
+	signal	cury_r	:	unsigned(7 downto 0) := (others => '0');	-- cursor Y position
 	signal	monoflag:	std_logic;
 	signal	bitmapflag:	std_logic;
 	signal	resolution:	std_logic_vector(1 downto 0);
@@ -181,17 +182,21 @@ begin
 				case addr is
 					when C_cntrl =>
 						if byte_sel(0)='1' then
+							if C_vgatext_text then
 							if unsigned(bus_in(7 downto 0)) < (vmode(C_vgatext_mode).visible_width/8) then
 								curx_r <= unsigned(bus_in(7 downto 0));
 							else
 								curx_r <= to_unsigned(vmode(C_vgatext_mode).visible_width/8, curx_r'length);	-- NOTE: this allows software to query text columns
 							end if;
+							end if;
 						end if;
 						if byte_sel(1)='1' then
+							if C_vgatext_text then
 							if unsigned(bus_in(15 downto 8)) < (vmode(C_vgatext_mode).visible_height/C_vgatext_char_height) then
 								cury_r <= unsigned(bus_in(15 downto 8));
 							else
 								cury_r <= to_unsigned((vmode(C_vgatext_mode).visible_height/C_vgatext_char_height), cury_r'length);	-- NOTE: this allows software to query text lines
+							end if;
 							end if;
 						end if;
 						if byte_sel(2)='1' then
@@ -300,7 +305,7 @@ begin
 				fontdata_r <= fontdata_r(6 downto 0) & "0";
 
 				if (vcount >= 0) then
-					if (cntrl_r(2)='1' AND hcount >= -8 AND vcount < ((vmode(C_vgatext_mode).visible_height/C_vgatext_char_height)*C_vgatext_char_height)) then
+					if (C_vgatext_text AND cntrl_r(2)='1' AND hcount >= -8 AND vcount < ((vmode(C_vgatext_mode).visible_height/C_vgatext_char_height)*C_vgatext_char_height)) then
 						case hcount(2 downto 0) is
 							when "100" =>
 								vga_textmode_addr	<= std_logic_vector(addr_r(12 downto 2));
@@ -469,13 +474,13 @@ begin
 										bitmap_r <= bitmap_r(23 downto 0) & x"00";
 									end if;
 									elsif C_vgatext_bitmap_depth = 4 then		-- 16 color
-									if (hcount(3 downto 0) = "111") then
+									if (hcount(2 downto 0) = "111") then
 										req_bitmap_strobe <= '1';
 										bitmap_r <= bitmap_data;
 									else
 										bitmap_r <= bitmap_r(27 downto 0) & "0000";
 									end if;
-									elsif C_vgatext_bitmap_depth = 4 then		-- 4 color
+									elsif C_vgatext_bitmap_depth = 2 then		-- 4 color
 									if (hcount(3 downto 0) = "1111") then
 										req_bitmap_strobe <= '1';
 										bitmap_r <= bitmap_data;
@@ -496,14 +501,47 @@ begin
 									req_bitmap_strobe <= '1';
 								end if;
 
-								if (hcount >= -1 AND hcount(4 downto 0) = "11111") then
-									req_bitmap_strobe <= '1';
-									bitmap_r <= bitmap_n_r;
-									if (hcount /= vmode(C_vgatext_mode).visible_width-33) then
-										baddr_r <= baddr_r + 1;
+								bitmap_pix := bitmap_r(31 downto 32-C_vgatext_bitmap_depth);
+								if C_vgatext_bitmap_depth = 8 then
+									if (hcount >= -1 AND hcount(1 downto 0) = "11") then
+										req_bitmap_strobe <= '1';
+										bitmap_r <= bitmap_n_r;
+										if (hcount /= vmode(C_vgatext_mode).visible_width-5) then
+											baddr_r <= baddr_r + 1;
+										end if;
+									else
+										bitmap_r <= bitmap_r(23 downto 0) & x"00";
+									end if;
+								elsif C_vgatext_bitmap_depth = 4 then
+									if (hcount >= -1 AND hcount(2 downto 0) = "111") then
+										req_bitmap_strobe <= '1';
+										bitmap_r <= bitmap_n_r;
+										if (hcount /= vmode(C_vgatext_mode).visible_width-9) then
+											baddr_r <= baddr_r + 1;
+										end if;
+									else
+										bitmap_r <= bitmap_r(27 downto 0) & x"0";
+									end if;
+								elsif C_vgatext_bitmap_depth = 2 then
+									if (hcount >= -1 AND hcount(3 downto 0) = "1111") then
+										req_bitmap_strobe <= '1';
+										bitmap_r <= bitmap_n_r;
+										if (hcount /= vmode(C_vgatext_mode).visible_width-17) then
+											baddr_r <= baddr_r + 1;
+										end if;
+									else
+										bitmap_r <= bitmap_r(29 downto 0) & "00";
 									end if;
 								else
-									bitmap_r <= bitmap_r(30 downto 0) & "0";
+									if (hcount >= -1 AND hcount(4 downto 0) = "11111") then
+										req_bitmap_strobe <= '1';
+										bitmap_r <= bitmap_n_r;
+										if (hcount /= vmode(C_vgatext_mode).visible_width-33) then
+											baddr_r <= baddr_r + 1;
+										end if;
+									else
+										bitmap_r <= bitmap_r(30 downto 0) & "0";
+									end if;
 								end if;
 							end if;
 						end if;
@@ -512,7 +550,7 @@ begin
 					pixcolor := color_r;
 					fontpix := fontdata_r(7);
 
-					if (curx_r = unsigned(hcount(10 downto 3)) AND cury_r = cy AND cursoron = '1') then
+					if (C_vgatext_text AND curx_r = unsigned(hcount(10 downto 3)) AND cury_r = cy AND cursoron = '1') then
 						fontpix := NOT fontpix;
 					end if;
 
