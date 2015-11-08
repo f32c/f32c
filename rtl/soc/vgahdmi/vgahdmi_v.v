@@ -105,8 +105,8 @@ always @(posedge pixclk) test_blue <= CounterY[7:0] | W | A;
 assign vga_r = test_picture ? test_red[7:5] :  colorValue[7:5];
 assign vga_g =                                 colorValue[7:5];
 assign vga_b = test_picture ? test_blue[7:5] : colorValue[7:5];
-assign vga_hsync = ~hSync;
-assign vga_vsync = ~vSync;
+assign vga_hsync = hSync;
+assign vga_vsync = vSync;
 
 // generate HDMI output, mixing with test picture if enabled
 wire [9:0] TMDS_red, TMDS_green, TMDS_blue;

@@ -25,7 +25,7 @@ module vgahdmi_v(
         input wire [7:0] red_byte, green_byte, blue_byte, bright_byte, // get data from fifo
         output wire fetch_next, // fetch_next=1: read cycle is complete, fetch next data
         output wire vga_hsync, vga_vsync, // active low, vsync will reset fifo
-        output wire [2:0] vga_r, vga_g, vga_b,
+        output wire [7:0] vga_r, vga_g, vga_b,
 	output wire [2:0] TMDS_out_RGB
 );
 
@@ -118,11 +118,11 @@ always @(posedge pixclk) test_green <= (CounterX[7:0] & {8{CounterY[6]}} | W) & 
 always @(posedge pixclk) test_blue <= CounterY[7:0] | W | A;
 
 // generate VGA output, mixing with test picture if enabled
-assign vga_r = DrawArea ? (test_picture ? test_red[7:5]  : colorValue[0][7:5]) : 0;
-assign vga_g = DrawArea ? (                                colorValue[1][7:5]) : 0;
-assign vga_b = DrawArea ? (test_picture ? test_blue[7:5] : colorValue[2][7:5]) : 0;
-assign vga_hsync = ~hSync;
-assign vga_vsync = ~vSync;
+assign vga_r = DrawArea ? (test_picture ? test_red[7:0]  : colorValue[0][7:0]) : 0;
+assign vga_g = DrawArea ? (                                colorValue[1][7:0]) : 0;
+assign vga_b = DrawArea ? (test_picture ? test_blue[7:0] : colorValue[2][7:0]) : 0;
+assign vga_hsync = hSync;
+assign vga_vsync = vSync;
 
 // generate HDMI output, mixing with test picture if enabled
 wire [9:0] TMDS_red, TMDS_green, TMDS_blue;
