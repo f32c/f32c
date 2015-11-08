@@ -124,7 +124,7 @@ assign vga_g = DrawArea ? (                                colorValue[1][7:0]) :
 assign vga_b = DrawArea ? (test_picture ? test_blue[7:0] : colorValue[2][7:0]) : 0;
 assign vga_hsync = hSync;
 assign vga_vsync = vSync;
-assign line_repeat = dbl_y ? CounterY[0] & vga_hsync : 0;
+assign line_repeat = dbl_y ? vga_hsync & ~CounterY[0] : 0;
 
 // generate HDMI output, mixing with test picture if enabled
 wire [9:0] TMDS_red, TMDS_green, TMDS_blue;
