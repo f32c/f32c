@@ -102,9 +102,9 @@ entity glue_sdram is
 	C_simple_in: integer range 0 to 128 := 32;
 	C_simple_out: integer range 0 to 128 := 32;
 	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
-        C_vga_fifo_step: integer := 80; -- step for the fifo refill and rewind
-        C_vga_fifo_width: integer := 6; -- width of FIFO address space (default=4) len = 2^width * 4 byte
-        C_vga_use_bram: boolean := false;
+        C_vgahdmi_fifo_step: integer := 0; -- step for the fifo refill and rewind
+        C_vgahdmi_fifo_width: integer := 4; -- width of FIFO address space (default=4) len = 2^width * 4 byte
+        C_vgahdmi_use_bram: boolean := false;
 	C_vgahdmi_mem_kb: integer := 10; -- mem size of BRAM framebuffer if BRAM is used
 	C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
 
@@ -120,6 +120,8 @@ entity glue_sdram is
 	C_vgatext_palette: boolean := true;			-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
 	C_vgatext_bitmap: boolean := true;			-- true for bitmap from sram/sdram
 	C_vgatext_bitmap_fifo: boolean := true;		-- true to use videofifo, else SRAM port
+        C_vgatext_bitmap_fifo_step: integer := 0; -- step for the fifo refill and rewind
+        C_vgatext_bitmap_fifo_width: integer := 4; -- width of FIFO address space (default=4) len = 2^width * 4 byte
 	C_vgatext_bitmap_depth: integer := 8;		-- bits per pixel (1, 2, 4, 8)
 
 
@@ -250,7 +252,7 @@ architecture Behavioral of glue_sdram is
     signal video_bram_write: std_logic;
     signal vga_addr_strobe: std_logic; -- FIFO requests to read from RAM
     signal vga_data_ready: std_logic; -- RAM responds to FIFO
-    signal vga_n_vsync, vga_n_hsync: std_logic; -- intermediate signals for xilinx to be happy
+    signal S_vga_vsync, S_vga_hsync: std_logic; -- intermediate signals for xilinx to be happy
     signal vga_frame: std_logic;
 
 	-- VGA_textmode VGA/HDMI video (text and font in BRAM, bitmap in sdram)
@@ -812,16 +814,16 @@ begin
       vga_r => vga_r,
       vga_g => vga_g,
       vga_b => vga_b,
-      vga_hsync => vga_n_hsync,
-      vga_vsync => vga_n_vsync,
+      vga_hsync => S_vga_hsync,
+      vga_vsync => S_vga_vsync,
       tmds_out_rgb => tmds_out_rgb
     );
-    vga_vsync <= vga_n_vsync;
-    vga_hsync <= vga_n_hsync;
+    vga_vsync <= not S_vga_vsync;
+    vga_hsync <= not S_vga_hsync;
     videofifo: entity work.videofifo
     generic map (
-      C_step => C_vga_fifo_step,
-      C_width => C_vga_fifo_width -- length = 4 * 2^width
+      C_step => C_vgahdmi_fifo_step,
+      C_width => C_vgahdmi_fifo_width -- length = 4 * 2^width
     )
     port map (
       clk => clk,
@@ -835,17 +837,17 @@ begin
       -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
       -- data_in(31 downto 8) => (others => '0'),
       base_addr => R_fb_base_addr,
-      start => vga_n_vsync,
+      start => S_vga_vsync,
       frame => vga_frame,
       data_out => vga_data_from_fifo,
       fetch_next => vga_fetch_next
     );
     -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
     -- vga_data(7 downto 0) <= x"0F";
-    vga_from_sdram: if not C_vga_use_bram generate
+    vga_from_sdram: if not C_vgahdmi_use_bram generate
       vga_data <= from_sdram;
     end generate;
-    vga_from_bram: if C_vga_use_bram generate
+    vga_from_bram: if C_vgahdmi_use_bram generate
     video_bram_write <=
       dmem_addr_strobe and dmem_write when dmem_addr(31 downto 28) = x"8" else '0';
     videobram: entity work.bram_video
@@ -939,11 +941,12 @@ begin
 	-- video FIFO for bitmap
 	G_vgatext_fifo:
 	if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
-    vga_vsync <= vga_n_vsync;
-    vga_hsync <= vga_n_hsync;
+    vga_vsync <= S_vga_vsync;
+    vga_hsync <= S_vga_hsync;
     videofifo: entity work.videofifo
     generic map (
-      C_width => C_vga_fifo_width -- length = 4 * 2^width
+      C_step => C_vgatext_bitmap_fifo_step,
+      C_width => C_vgatext_bitmap_fifo_width -- length = 4 * 2^width
     )
     port map (
       clk => clk,
