@@ -117,6 +117,9 @@
         <Source name="../../../soc/spi.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../soc/ps2.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../soc/vgahdmi/vgahdmif_v.v" type="Verilog" type_short="Verilog">
             <Options/>
         </Source>
@@ -124,6 +127,18 @@
             <Options/>
         </Source>
         <Source name="../../../soc/vgahdmi/videofifo.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/vgahdmi/VGA_textmode.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/vgahdmi/VGA_textmode_bram.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/vgahdmi/TMDS_encoder.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/vgahdmi/dvid_out.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../soc/fm/fm.vhd" type="VHDL" type_short="VHDL">
