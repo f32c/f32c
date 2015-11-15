@@ -881,8 +881,9 @@ begin
 	icp_enable => icp_enable, -- enable physical input
 	icp => icp -- input capture signal
     );
-    timer_ce <= io_addr_strobe(R_cur_io_port) when
-      io_addr(11 downto 8) = x"1" else '0';
+    with conv_integer(io_addr(11 downto 4)) select
+      timer_ce <= io_addr_strobe(R_cur_io_port) when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range),
+                             '0' when others;
     end generate;
 
     -- PID
@@ -905,12 +906,9 @@ begin
 	encoder_a_in(2) => gpio(24),  encoder_b_in(2) => gpio(25),
 	bridge_f_out(2) => gpio(26),  bridge_r_out(2) => gpio(27)
     );
-    pid_ce <= io_addr_strobe(R_cur_io_port) when 
-         io_addr(11 downto 4) = x"58"
-      or io_addr(11 downto 4) = x"59"
-      or io_addr(11 downto 4) = x"5A"
-      or io_addr(11 downto 4) = x"5B"
-      else '0'; -- address 0xFFFFFD80
+    with conv_integer(io_addr(11 downto 4)) select
+      pid_ce <= io_addr_strobe(R_cur_io_port) when iomap_from(iomap_pid, iomap_range) to iomap_to(iomap_pid, iomap_range),
+                           '0' when others;
     end generate;
 
     G_no_pid:
