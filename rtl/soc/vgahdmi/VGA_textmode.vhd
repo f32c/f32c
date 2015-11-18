@@ -32,6 +32,7 @@ entity VGA_textmode is
 		C_vgatext_mode: integer := 0;				-- 0=640x480, 1=800x600 (you must still provide proper pixel clock for mode)
 		C_vgatext_bits: integer := 2;				-- bits per R G B for output (1 to 8)
 		C_vgatext_text: boolean := true;			-- enable text generation
+		C_vgatext_text_fifo: boolean := false;		-- true to use videofifo, else SRAM port
 		C_vgatext_font_height: integer := 8;		-- font data height 8 (doubled vertically) or 16
 		C_vgatext_font_depth: integer := 7;			-- font char bits (7=128, 8=256 characters)
 		C_vgatext_char_height: integer := 19;		-- font cell height (text lines will be vmode(C_vgatext_mode).visible_height / C_vgatext_char_height rounded down, 19=25 lines on 480p)
@@ -45,15 +46,20 @@ entity VGA_textmode is
 		clk:		in std_logic;
 		ce:			in std_logic;
 		bus_write:	in std_logic;
-		addr:		in std_logic_vector(1 downto 0);		-- address space for 4 registers
+		addr:		in std_logic_vector(2 downto 0);		-- address space for 8 registers
 		byte_sel:	in std_logic_vector(3 downto 0);
 		bus_in:		in std_logic_vector(31 downto 0);
 		bus_out:	out std_logic_vector(31 downto 0);
 
 		clk_pixel:	in std_logic;							-- VGA pixel clock (25MHz)
 
-		vga_textmode_addr:	out std_logic_vector(12 downto 2); -- text buffer address
-		vga_textmode_data:	in std_logic_vector(31 downto 0);
+		text_addr:	out std_logic_vector(29 downto 2); 		-- text+color buffer fifo start address
+		text_data:	in std_logic_vector(31 downto 0);		-- data from text+color fifo
+		text_strobe:	out std_logic;						-- fetch next data from fifo
+		text_rewind:	out std_logic;						-- "rewind" fifo to replay last scan-line data
+
+		bram_addr:	out std_logic_vector(12 downto 2); 		-- font (or text+color) bram address
+		bram_data:	in std_logic_vector(31 downto 0);		-- font (or text+color) bram data
 
 		bitmap_addr:	out std_logic_vector(29 downto 2);	-- bitmap buffer (start address with fifo)
 		bitmap_data:	in std_logic_vector(31 downto 0);	-- from sram or fifo
@@ -112,10 +118,13 @@ architecture Behavioral of VGA_textmode is
 	constant C_char_width:		integer			:= 8;
 
 	-- constants for the VGA textmode registers
-	constant C_cntrl:		std_logic_vector		:= "00";	-- 0 [rw 8-bit]	 (31) enable, (30) text enable, (29)=bitmap enable, (28)=cursor enable, (20-16)=frame count, (15-8)=cursory, (7-0)=cursorx
-	constant C_bmap_addr:	std_logic_vector		:= "01";	-- 1 [rw 32-bit] address in SRAM/SDRAM for bitmap start
-	constant C_bmap_color:	std_logic_vector		:= "10";	-- 2 [-w 32-bit] (23 downto 0)=0xRRGGBB 24-bit color for bitmap
-	constant C_palette_reg:	std_logic_vector		:= "11";	-- 3 [-w 32-bit] (27 down 24)=palette reg, (23 downto 0)=0xRRGGBB 24-bit color
+	constant C_cntrl:		std_logic_vector		:= "000";	-- 0 [rw 8-bit]	 (31) enable, (30) text enable, (29)=bitmap enable, (28)=cursor enable, (20-16)=frame count, (15-8)=cursory, (7-0)=cursorx
+	constant C_bmap_addr:	std_logic_vector		:= "001";	-- 1 [rw 32-bit] address in SRAM/SDRAM for bitmap start
+	constant C_bmap_color:	std_logic_vector		:= "010";	-- 2 [-w 32-bit] (23 downto 0)=0xRRGGBB 24-bit color for bitmap
+	constant C_palette_reg:	std_logic_vector		:= "011";	-- 3 [-w 32-bit] (27 down 24)=palette reg, (23 downto 0)=0xRRGGBB 24-bit color
+	constant C_text_addr:	std_logic_vector		:= "100";	-- 4 [rw 32-bit] address in SRAM/SDRAM for text+color start
+	constant C_mem_addr:	std_logic_vector		:= "101";	-- 5 [-w 32-bit] (23 downto 0)=0xRRGGBB 24-bit color for bitmap
+	constant C_mem_data:	std_logic_vector		:= "110";	-- 6 [-w 32-bit] (27 down 24)=palette reg, (23 downto 0)=0xRRGGBB 24-bit color
 
 	signal	hcount	:	signed(11 downto 0);			-- horizontal pixel counter (negative is off visible area)
 	signal	vcount	:	signed(11 downto 0);			-- vertical pixel counter (negative is off visible area)
@@ -136,7 +145,8 @@ architecture Behavioral of VGA_textmode is
 	signal	vsync_r	:	std_logic;
 	signal	visible_r :	std_logic;						-- 1 if in visible area
 
-	signal	addr_r	:	unsigned(12 downto 0);			-- address in BRAM to fetch character+color
+	signal	text_addr_r: std_logic_vector(31 downto 0) := x"80100000";	-- SRAM/SDRAM text start address
+	signal	addr_r	:	unsigned(29 downto 0); -- address in BRAM to fetch character+color
 	signal	cy		:	unsigned(7 downto 0);			-- current text line
 	signal	bmap_addr_r: std_logic_vector(31 downto 0);	-- SRAM/SDRAM bitmap start address
 	signal	bmap_color_r: std_logic_vector(23 downto 0);
@@ -219,6 +229,10 @@ begin
 						if C_vgatext_palette then
 							palette(to_integer(unsigned(bus_in(27 downto 24)))) <= bus_in(23 downto 0);
 						end if;
+					when C_text_addr =>
+						if C_vgatext_text then
+							text_addr_r <= bus_in;
+						end if;
 					when others => null;
 				end case;
 			end if;
@@ -237,8 +251,9 @@ begin
 			   "100" when C_vgatext_bitmap_depth = 8 else
 			   "000";
 
-	bus_out <= std_logic_vector(bmap_addr_r) when addr="01" else
-			   cntrl_r & monoflag & bitmapflag & resolution & colors & "0" & std_logic_vector(fcount) & std_logic_vector(cury_r) & std_logic_vector(curx_r);
+	bus_out <=	std_logic_vector(bmap_addr_r) when addr=C_bmap_addr else
+				std_logic_vector(text_addr_r) when addr=C_text_addr else
+				cntrl_r & monoflag & bitmapflag & resolution & colors & "0" & std_logic_vector(fcount) & std_logic_vector(cury_r) & std_logic_vector(curx_r);
 
 	G_bitmap_sram:
 	if C_vgatext_bitmap AND NOT C_vgatext_bitmap_fifo generate
@@ -263,6 +278,8 @@ begin
 		variable fontpix: std_logic;
 		variable pixcolor: std_logic_vector(7 downto 0);
 		variable bitmap_pix: std_logic_vector(C_vgatext_bitmap_depth-1 downto 0);
+		variable char_data: std_logic_vector(7 downto 0);
+		variable color_data: std_logic_vector(7 downto 0);
 	begin
 		if rising_edge(clk_pixel) then
 			if cntrl_r(3)='1' then
@@ -303,133 +320,106 @@ begin
 				b_r <= (others => '0');
 
 				fontdata_r <= fontdata_r(6 downto 0) & "0";
+				
+				if C_vgatext_text_fifo then
+					text_strobe <= '0';
+					text_rewind <= '0';
+				end if;
+				if C_vgatext_bitmap then
+					req_bitmap_strobe <= '0';
+				end if;
 
 				if (vcount >= 0) then
 					if (C_vgatext_text AND cntrl_r(2)='1' AND hcount >= -8 AND vcount < ((vmode(C_vgatext_mode).visible_height/C_vgatext_char_height)*C_vgatext_char_height)) then
 						case hcount(2 downto 0) is
 							when "100" =>
-								vga_textmode_addr	<= std_logic_vector(addr_r(12 downto 2));
+								if NOT C_vgatext_text_fifo then
+									bram_addr 	<= std_logic_vector(addr_r(12 downto 2));
+								end if;
 							when "101" =>
-								vga_textmode_addr <= (others => '1');	-- assume unset bits are 1 to place font at high end of vga_textmode memory
-								if C_vgatext_monochrome then
-									case addr_r(1 downto 0) is
-										when "00" =>
-											if C_vgatext_font_height=8 then
-											if (fonty < 16) then
-												vga_textmode_addr(C_vgatext_font_depth+2 downto 2) <= vga_textmode_data(C_vgatext_font_depth-1 downto 0) & fonty(3);
-											else
-												vga_textmode_addr(C_vgatext_font_depth+2 downto 2) <= (others => '0');
-											end if;
-											else
-											if (fonty < 16) then
-												vga_textmode_addr(C_vgatext_font_depth+3 downto 2) <= vga_textmode_data(C_vgatext_font_depth-1 downto 0) & std_logic_vector(fonty(3 downto 2));
-											else
-												vga_textmode_addr(C_vgatext_font_depth+3 downto 2) <= vga_textmode_data(C_vgatext_font_depth-1 downto 0) & "11";
-											end if;
-											end if;
-										when "01" =>
-											if C_vgatext_font_height=8 then
-											if (fonty < 16) then
-												vga_textmode_addr(C_vgatext_font_depth+2 downto 2) <= vga_textmode_data(8+C_vgatext_font_depth-1 downto 8) & fonty(3);
-											else
-												vga_textmode_addr(C_vgatext_font_depth+2 downto 2) <= (others => '0');
-											end if;
-											else
-											if (fonty < 16) then
-												vga_textmode_addr(C_vgatext_font_depth+3 downto 2) <= vga_textmode_data(8+C_vgatext_font_depth-1 downto 8) & std_logic_vector(fonty(3 downto 2));
-											else
-												vga_textmode_addr(C_vgatext_font_depth+3 downto 2) <= vga_textmode_data(8+C_vgatext_font_depth-1 downto 8) & "11";
-											end if;
-											end if;
-										when "10" =>
-											if C_vgatext_font_height=8 then
-											if (fonty < 16) then
-												vga_textmode_addr(C_vgatext_font_depth+2 downto 2) <= vga_textmode_data(16+C_vgatext_font_depth-1 downto 16) & fonty(3);
-											else
-												vga_textmode_addr(C_vgatext_font_depth+2 downto 2) <= (others => '0');
-											end if;
-											else
-											if (fonty < 16) then
-												vga_textmode_addr(C_vgatext_font_depth+3 downto 2) <= vga_textmode_data(16+C_vgatext_font_depth-1 downto 16) & std_logic_vector(fonty(3 downto 2));
-											else
-												vga_textmode_addr(C_vgatext_font_depth+3 downto 2) <= vga_textmode_data(16+C_vgatext_font_depth-1 downto 16) & "11";
-											end if;
-											end if;
-										when "11" =>
-											if C_vgatext_font_height=8 then
-											if (fonty < 16) then
-												vga_textmode_addr(C_vgatext_font_depth+2 downto 2) <= vga_textmode_data(24+C_vgatext_font_depth-1 downto 24) & fonty(3);
-											else
-												vga_textmode_addr(C_vgatext_font_depth+2 downto 2) <= (others => '0');
-											end if;
-											else
-											if (fonty < C_vgatext_font_height) then
-												vga_textmode_addr(C_vgatext_font_depth+3 downto 2) <= vga_textmode_data(24+C_vgatext_font_depth-1 downto 24) & std_logic_vector(fonty(3 downto 2));
-											else
-												vga_textmode_addr(C_vgatext_font_depth+3 downto 2) <= vga_textmode_data(24+C_vgatext_font_depth-1 downto 24) & "11";
-											end if;
-											end if;
+								char_data := (others => '0');
+								if C_vgatext_text_fifo then
+									if C_vgatext_monochrome then
+									case addr_r(1 downto 0) is	-- extract proper byte for char (no color byte)
+										when "00" =>	char_data(C_vgatext_font_depth-1 downto 0) := text_data( 0+C_vgatext_font_depth-1 downto 0);
+										when "01" =>	char_data(C_vgatext_font_depth-1 downto 0) := text_data( 8+C_vgatext_font_depth-1 downto 8);
+										when "10" =>	char_data(C_vgatext_font_depth-1 downto 0) := text_data(16+C_vgatext_font_depth-1 downto 16);
+										when "11" =>	char_data(C_vgatext_font_depth-1 downto 0) := text_data(24+C_vgatext_font_depth-1 downto 24);
+														text_strobe <= '1';
 										when others => null;
 									end case;
-								else
-								if (addr_r(1) = '0') then
-									color_n_r	<= vga_textmode_data(15 downto 8);
-									if C_vgatext_font_height=8 then
-									if (fonty < 16) then
-										vga_textmode_addr(C_vgatext_font_depth+2 downto 2) <= vga_textmode_data(C_vgatext_font_depth-1 downto 0) & fonty(3);
 									else
-										vga_textmode_addr(C_vgatext_font_depth+2 downto 2) <= (others => '0');
-									end if;
-									else
-									if (fonty < 16) then
-										vga_textmode_addr(C_vgatext_font_depth+3 downto 2) <= vga_textmode_data(C_vgatext_font_depth-1 downto 0) & std_logic_vector(fonty(3 downto 2));
-									else
-										vga_textmode_addr(C_vgatext_font_depth+3 downto 2) <= vga_textmode_data(C_vgatext_font_depth-1 downto 0) & "11";
-									end if;
+									case addr_r(1) is			-- extract proper word and low byte for char, high byte for color
+										when '0' =>	char_data(C_vgatext_font_depth-1 downto 0) := text_data( 0+C_vgatext_font_depth-1 downto 0);
+													color_n_r <= text_data(15 downto 8);
+										when '1' =>	char_data(C_vgatext_font_depth-1 downto 0) := text_data(16+C_vgatext_font_depth-1 downto 16);
+													color_n_r <= text_data(31 downto 24);
+													text_strobe <= '1';
+										when others => null;
+									end case;
 									end if;
 								else
-									color_n_r <= vga_textmode_data(31 downto 24);
-									if C_vgatext_font_height=8 then
-									if (fonty < 16) then
-										vga_textmode_addr(C_vgatext_font_depth+2 downto 2) <= vga_textmode_data(16+(C_vgatext_font_depth-1) downto 16) & fonty(3);
+									if C_vgatext_monochrome then
+									case addr_r(1 downto 0) is	-- extract proper byte for char (no color byte)
+										when "00" =>	char_data(C_vgatext_font_depth-1 downto 0) := bram_data( 0+C_vgatext_font_depth-1 downto 0);
+										when "01" =>	char_data(C_vgatext_font_depth-1 downto 0) := bram_data( 8+C_vgatext_font_depth-1 downto 8);
+										when "10" =>	char_data(C_vgatext_font_depth-1 downto 0) := bram_data(16+C_vgatext_font_depth-1 downto 16);
+										when "11" =>	char_data(C_vgatext_font_depth-1 downto 0) := bram_data(24+C_vgatext_font_depth-1 downto 24);
+										when others => null;
+									end case;
 									else
-										vga_textmode_addr(C_vgatext_font_depth+2 downto 2) <= (others => '0');
+									case addr_r(1) is			-- extract proper word and low byte for char, high byte for color
+										when '0' =>	char_data(C_vgatext_font_depth-1 downto 0) := bram_data( 0+C_vgatext_font_depth-1 downto 0);
+													color_n_r <= text_data(15 downto 8);
+										when '1' =>	char_data(C_vgatext_font_depth-1 downto 0) := bram_data(16+C_vgatext_font_depth-1 downto 16);
+													color_n_r <= text_data(31 downto 24);
+										when others => null;
+									end case;
 									end if;
-									else
-									if (fonty < 16) then
-										vga_textmode_addr(C_vgatext_font_depth+3 downto 2) <= vga_textmode_data(16+(C_vgatext_font_depth-1) downto 16) & std_logic_vector(fonty(3 downto 2));
-									else
-										vga_textmode_addr(C_vgatext_font_depth+3 downto 2) <= vga_textmode_data(16+(C_vgatext_font_depth-1) downto 16) & "11";
-									end if;
-									end if;
+								end if;
+								
+								bram_addr <= (others => '1');	-- assume unset bits are 1 to place font at high end of vga_textmode memory
+								if C_vgatext_font_height=8 then
+								if (fonty < 16) then
+									bram_addr(C_vgatext_font_depth+2 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & fonty(3);
+								else
+									bram_addr(C_vgatext_font_depth+2 downto 2) <= (others => '0');
+								end if;
+								else
+								if (fonty < 16) then
+									bram_addr(C_vgatext_font_depth+3 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & std_logic_vector(fonty(3 downto 2));
+								else
+									bram_addr(C_vgatext_font_depth+3 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & "11";
 								end if;
 								end if;
 							when "110" =>
 								if (fonty < 16) then
 									if C_vgatext_font_height=8 then
 									case fonty(2 downto 1) is
-										when "00" => fontdata_n_r <= vga_textmode_data( 7 downto  0);
-										when "01" => fontdata_n_r <= vga_textmode_data(15 downto  8);
-										when "10" => fontdata_n_r <= vga_textmode_data(23 downto 16);
-										when "11" => fontdata_n_r <= vga_textmode_data(31 downto 24);
-										when others =>
-											null;
+										when "00" => fontdata_n_r <= bram_data( 7 downto  0);
+										when "01" => fontdata_n_r <= bram_data(15 downto  8);
+										when "10" => fontdata_n_r <= bram_data(23 downto 16);
+										when "11" => fontdata_n_r <= bram_data(31 downto 24);
+										when others => null;
 									end case;
 									else
 									case fonty(1 downto 0) is
-										when "00" => fontdata_n_r <= vga_textmode_data( 7 downto  0);
-										when "01" => fontdata_n_r <= vga_textmode_data(15 downto  8);
-										when "10" => fontdata_n_r <= vga_textmode_data(23 downto 16);
-										when "11" => fontdata_n_r <= vga_textmode_data(31 downto 24);
-										when others =>
-											null;
+										when "00" => fontdata_n_r <= bram_data( 7 downto  0);
+										when "01" => fontdata_n_r <= bram_data(15 downto  8);
+										when "10" => fontdata_n_r <= bram_data(23 downto 16);
+										when "11" => fontdata_n_r <= bram_data(31 downto 24);
+										when others => null;
 									end case;
 									end if;
 								else
-									fontdata_n_r <= vga_textmode_data(31 downto 24);
+									fontdata_n_r <= text_data(31 downto 24);
 								end if;
+
 								if (hcount = vmode(C_vgatext_mode).visible_width-2) then
 									if (fonty /= C_vgatext_char_height-1) then
+										if C_vgatext_text_fifo then
+											text_rewind <= '1';
+										end if;
 										if C_vgatext_monochrome then
 											addr_r <= addr_r - (vmode(C_vgatext_mode).visible_width/C_char_width);
 										else
@@ -437,7 +427,7 @@ begin
 										end if;
 									end if;
 								else
-									if C_vgatext_monochrome then
+								if C_vgatext_monochrome then
 										addr_r <= addr_r + 1;
 									else
 										addr_r <= addr_r + 2;
@@ -460,7 +450,6 @@ begin
 					end if;
 
 					bitmap_pix := (others => '0');
-					req_bitmap_strobe <= '0';
 					if C_vgatext_bitmap then
 						if cntrl_r(1)='1' then
 							bitmap_pix := bitmap_r(31 downto 32-C_vgatext_bitmap_depth);
@@ -608,9 +597,11 @@ begin
 						end if;
 					end if;
 				else
-					addr_r <= (others => '0');
+					if C_vgatext_text then
+ 					addr_r <= unsigned(text_addr_r(29 downto 0));
 					fonty <= (others => '0');
 					cy <= (others => '0');
+					end if;
 
 					if C_vgatext_bitmap then
 					baddr_r <= unsigned(bmap_addr_r(29 downto 2));
@@ -623,6 +614,8 @@ begin
 
 	cursoron <= fcount(3) AND cntrl_r(0);
 	bitmap_addr <= std_logic_vector(baddr_r(27 downto 0));
+	text_addr <= text_addr_r(29 downto 2);
+	
 	hsync <= hsync_r;
 	vsync <= vsync_r;
 	nblank <= '0' when visible_r = '1' else '1';
