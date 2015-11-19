@@ -41,9 +41,16 @@ use ieee.numeric_std.all;
 entity videofifo is
     generic (
         C_synclen: integer := 3; -- bits in cpu-to-pixel clock synchronizer
-        C_width: integer := 4 -- bits width of fifo address
+        -- (0: disable rewind and be ordinary sequential fifo)
+        -- (>0: fifo will be loaded from RAM in full steps
+        -- each full step is a count of 32-bit words.
+        -- rewind signal can again output data stream from fifo
+        -- starting from last full step it was filled from RAM,
+        -- saves RAM bandwidth during text mode or bitmap vertial line doubling
+        C_step: integer := 0;
         -- defines the length of the FIFO: 4 * 2^C_length bytes
         -- default value of 4: length = 16 * 32 bits = 16 * 4 bytes = 64 bytes
+        C_width: integer := 4 -- bits width of fifo address
     );
     port (
 	clk, clk_pixel: in std_logic;
@@ -54,9 +61,13 @@ entity videofifo is
 	data_ready: in std_logic;
 	data_in: in std_logic_vector(31 downto 0);
 	data_out: out std_logic_vector(31 downto 0);
-	start: in std_logic; -- value 0 will reset fifo RAM to base address, value 1 allows start of reading
-	frame: out std_logic; -- CPU clock synchronous start edge detection
-	fetch_next: in std_logic -- fetch next value (current data consumed)
+	start: in std_logic; -- rising edge sensitive will reset fifo RAM to base address, value 1 allows start of reading
+	frame: out std_logic; -- output CPU clock synchronous start edge detection (1 CPU-clock wide pulse for FB interrupt)
+	rewind: in std_logic := '0'; -- rising edge sets output data pointer to the start of last full step
+	-- rewind is useful to re-read text line, saving RAM bandwidth.
+	-- rewind is possible at any time but is be normally issued
+	-- during H-blank period - connected to hsync signal.
+	fetch_next: in std_logic -- edge sensitive fetch next value (current data consumed)
     );
 end videofifo;
 
@@ -69,10 +80,17 @@ architecture behavioral of videofifo is
     signal R_pixbuf: pixbuf_dpram_type;
     signal R_sram_addr: std_logic_vector(29 downto 2);
     signal R_pixbuf_rd_addr, R_pixbuf_wr_addr, S_pixbuf_wr_addr_next: std_logic_vector(C_width-1 downto 0);
+    signal R_pixbuf_out_addr: std_logic_vector(C_width-1 downto 0);
+    signal R_delay_fetch: integer range 0 to 2*C_step;
     signal need_refill: boolean;
     signal toggle_read_complete: std_logic;
-    signal clksync, startsync: std_logic_vector(C_synclen-1 downto 0);
+    signal clksync, startsync, rewindsync: std_logic_vector(C_synclen-1 downto 0);
+    -- clean start: '1' will reset fifo to its base address
+    --              '0' will allow fifo normal sequential operation
     signal clean_start, clean_fetch: std_logic;
+    -- clean rewind: '1' will rewind fifo to its last full step
+    --               '0' will allow fifo normal sequential operation
+    signal clean_rewind: std_logic;
 begin
     S_pixbuf_wr_addr_next <= R_pixbuf_wr_addr + 1;
 
@@ -101,6 +119,7 @@ begin
         -- synchronize clk_pixel to clk with shift register
         clksync <= clksync(C_synclen-2 downto 0) & toggle_read_complete;
         startsync <= startsync(C_synclen-2 downto 0) & start;
+        rewindsync <= rewindsync(C_synclen-2 downto 0) & rewind;
       end if;
     end process;
 
@@ -109,13 +128,14 @@ begin
     -- This signal is request to fetch new data
     clean_fetch <= clksync(C_synclen-2) xor clksync(C_synclen-1);
 
-    -- clean start is a delay thru clock synchronous shift register
-    clean_start <= startsync(C_synclen-1);
+    -- clean start produced from a delay thru clock synchronous shift register
+    -- clean_start <= startsync(C_synclen-1); -- level
+    clean_start <= startsync(C_synclen-2) and not startsync(C_synclen-1); -- rising edge
 
     -- at start of frame generate pulse of 1 CPU clock
     -- rising edge detection of start signal
     -- useful for VSYNC frame interrupt
-    frame <= startsync(C_synclen-2) and not startsync(C_synclen-1);
+    frame <= clean_start; -- must be rising edge for CPU interrupt, not level
 
     --
     -- Refill the circular buffer with fresh data from SRAM-a
@@ -123,7 +143,7 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) then
-          if clean_start = '0' then
+          if clean_start = '1' then
             R_sram_addr <= base_addr;
             R_pixbuf_wr_addr <= (others => '0');
           else
@@ -137,7 +157,7 @@ begin
 	end if;
     end process;
 
-    need_refill <= clean_start = '1' and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr;
+    need_refill <= clean_start = '0' and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr;
     addr_strobe <= '1' when need_refill else '0';
     addr_out <= R_sram_addr;
     
@@ -147,16 +167,53 @@ begin
     process(clk)
       begin
         if rising_edge(clk) then
-          if clean_start = '0' then
-            R_pixbuf_rd_addr <= (others => '0');
+          if clean_start = '1' then
+            R_pixbuf_rd_addr <= (others => '0');  -- this will read data from RAM
+            if C_step /= 0 then
+              R_pixbuf_out_addr <= (others => '0'); -- this will output buffered data
+              R_delay_fetch <= 2*C_step-1;
+            end if;
           else
             if clean_fetch = '1' then
-              R_pixbuf_rd_addr <= R_pixbuf_rd_addr + 1;
+              if C_step = 0 then
+                R_pixbuf_rd_addr <= R_pixbuf_rd_addr + 1; -- R_pixbuf_out_addr + 1 ??
+              end if;
+              if C_step /= 0 then
+                R_pixbuf_out_addr <= R_pixbuf_out_addr + 1;
+                if R_delay_fetch = 0 then
+                  R_delay_fetch <= C_step - 1; -- delay fetch will actually delay C_step+1 steps
+                else
+                  R_delay_fetch <= R_delay_fetch - 1;
+                end if;
+                if R_delay_fetch = C_step - 2 then
+                  -- old line consumed, new line currently displayed
+                  -- rd_addr is also rewind point,
+                  -- incrementing it will discard old data from fifo
+                  R_pixbuf_rd_addr <= R_pixbuf_rd_addr + C_step; -- R_pixbuf_out_addr + 1 ??
+                end if;
+              end if;
 	    end if;
+            if C_step /= 0 then
+              if clean_rewind = '1' then
+                R_pixbuf_out_addr <= R_pixbuf_rd_addr; -- R_pixbuf_rd_addr-1 ??
+                R_delay_fetch <= 2 * C_step - 1;
+              -- delay fetch will actually delay C_step+1 steps
+              -- we should be allowed to rewind after we fetch complete line
+              -- and fifo pointer jumps to next line
+              -- take care not to discard old data immediately after we jump
+              -- I'm not sure where to put correct +1 now...
+	      end if;
+            end if;
           end if;
         end if;
       end process;
-    data_out <= R_pixbuf(TO_INTEGER(UNSIGNED(R_pixbuf_rd_addr)));
+    rewind_disabled: if C_step = 0 generate
+      data_out <= R_pixbuf(TO_INTEGER(UNSIGNED(R_pixbuf_rd_addr)));
+    end generate;
+    rewind_enabled: if C_step /= 0 generate
+      clean_rewind <= rewindsync(C_synclen-2) and not rewindsync(C_synclen-1); -- rising edge
+      data_out <= R_pixbuf(TO_INTEGER(UNSIGNED(R_pixbuf_out_addr)));
+    end generate;
     -- debug_rd_addr(5 downto 2) <= R_pixbuf_rd_addr;
     -- debug_rd_addr(29 downto 6) <= (others => '0');
 end;
