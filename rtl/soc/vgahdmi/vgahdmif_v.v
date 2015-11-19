@@ -24,8 +24,9 @@ module vgahdmi_v(
         input wire clk_tmds, /* 250 MHz (set to 0 for VGA-only) */
         input wire [7:0] red_byte, green_byte, blue_byte, bright_byte, // get data from fifo
         output wire fetch_next, // fetch_next=1: read cycle is complete, fetch next data
+        output wire line_repeat, // repeat video line
         output wire vga_hsync, vga_vsync, // active low, vsync will reset fifo
-        output wire [2:0] vga_r, vga_g, vga_b,
+        output wire [7:0] vga_r, vga_g, vga_b,
 	output wire [2:0] TMDS_out_RGB
 );
 
@@ -118,16 +119,17 @@ always @(posedge pixclk) test_green <= (CounterX[7:0] & {8{CounterY[6]}} | W) & 
 always @(posedge pixclk) test_blue <= CounterY[7:0] | W | A;
 
 // generate VGA output, mixing with test picture if enabled
-assign vga_r = DrawArea ? (test_picture ? test_red[7:5]  : colorValue[0][7:5]) : 0;
-assign vga_g = DrawArea ? (                                colorValue[1][7:5]) : 0;
-assign vga_b = DrawArea ? (test_picture ? test_blue[7:5] : colorValue[2][7:5]) : 0;
-assign vga_hsync = ~hSync;
-assign vga_vsync = ~vSync;
+assign vga_r = DrawArea ? (test_picture ? test_red[7:0]  : colorValue[0][7:0]) : 0;
+assign vga_g = DrawArea ? (                                colorValue[1][7:0]) : 0;
+assign vga_b = DrawArea ? (test_picture ? test_blue[7:0] : colorValue[2][7:0]) : 0;
+assign vga_hsync = hSync;
+assign vga_vsync = vSync;
+assign line_repeat = dbl_y ? vga_hsync & ~CounterY[0] : 0;
 
 // generate HDMI output, mixing with test picture if enabled
 wire [9:0] TMDS_red, TMDS_green, TMDS_blue;
 
-TMDS_encoder encode_R
+TMDS_encoder_v encode_R
 (
   .clk(pixclk),
   .VD(test_picture ? test_red : colorValue[0]),
@@ -135,7 +137,7 @@ TMDS_encoder encode_R
   .VDE(DrawArea),
   .TMDS(TMDS_red)
 );
-TMDS_encoder encode_G
+TMDS_encoder_v encode_G
 (
   .clk(pixclk),
   .VD(colorValue[1]),
@@ -143,7 +145,7 @@ TMDS_encoder encode_G
   .VDE(DrawArea),
   .TMDS(TMDS_green)
 );
-TMDS_encoder encode_B
+TMDS_encoder_v encode_B
 (
   .clk(pixclk),
   .VD(test_picture ? test_blue : colorValue[2]),
@@ -171,7 +173,7 @@ assign TMDS_out_RGB = {TMDS_shift_red[0], TMDS_shift_green[0], TMDS_shift_blue[0
 endmodule
 
 ////////////////////////////////////////////////////////////////////////
-module TMDS_encoder(
+module TMDS_encoder_v(
 	input clk,
 	input [7:0] VD,  // video data (red, green or blue)
 	input [1:0] CD,  // control data
