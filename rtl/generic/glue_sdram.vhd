@@ -125,7 +125,7 @@ entity glue_sdram is
 	C_vgatext_bitmap: boolean := true;			-- true for bitmap from sram/sdram
 	C_vgatext_bitmap_fifo: boolean := true;		-- true to use videofifo for bitmap, else SRAM port
         C_vgatext_bitmap_fifo_step: integer := 0; -- step for the fifo refill and rewind
-        C_vgatext_bitmap_fifo_width: integer := 4; -- width of FIFO address space (default=4) len = 2^width * 4 byte
+        C_vgatext_bitmap_fifo_width: integer := 8; -- width of FIFO address space (default=4) len = 2^width * 4 byte
 	C_vgatext_bitmap_depth: integer := 8;		-- bits per pixel (1, 2, 4, 8)
 
 	C_pcm: boolean := true;
