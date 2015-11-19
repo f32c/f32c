@@ -274,7 +274,7 @@ architecture Behavioral of glue_bram is
     signal vga_frame: std_logic;
 
     -- VGA_textmode VGA/HDMI video (text and font in BRAM, bitmap in sdram)
-    constant iomap_vga_textmode: T_iomap_range := (x"FF30", x"FF3F");
+    constant iomap_vga_textmode: T_iomap_range := (x"FB80", x"FB9F");
     signal vga_textmode_ce: std_logic;
     signal from_vga_textmode: std_logic_vector(31 downto 0);
     signal vga_textmode_dmem_write: std_logic;
@@ -750,14 +750,16 @@ begin
         C_vgatext_bitmap_depth  => C_vgatext_bitmap_depth
       )
       port map (
-        clk => clk, ce => vga_textmode_ce, addr => dmem_addr(3 downto 2),
+        clk => clk, ce => vga_textmode_ce, addr => dmem_addr(4 downto 2),
         bus_write => dmem_write, byte_sel => dmem_byte_sel,
         bus_in => cpu_to_dmem, bus_out => from_vga_textmode,
         --
         clk_pixel => clk_25MHz,
+        
+        text_data => vga_textmode_data,
         --
-        vga_textmode_addr => vga_textmode_addr,
-        vga_textmode_data => vga_textmode_data,
+        bram_addr => vga_textmode_addr,
+        bram_data => vga_textmode_data,
         --
         bitmap_strobe => vga_textmode_bitmap_addr_strobe,
         bitmap_addr => vga_textmode_bitmap_addr,
