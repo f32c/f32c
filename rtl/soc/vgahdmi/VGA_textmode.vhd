@@ -130,7 +130,7 @@ architecture Behavioral of VGA_textmode is
 	signal	vcount	:	signed(11 downto 0);			-- vertical pixel counter (negative is off visible area)
 	signal	fcount	:	unsigned(3 downto 0);			-- frame counter (incremented once per frame)
 
-	signal	cntrl_r	:	std_logic_vector(3 downto 0) := "1100";	-- (3)=enable, (2)=text enable, (1)=bitmap enable, (0)=cursor enable
+	signal	cntrl_r	:	std_logic_vector(3 downto 0) := "1000";	-- (3)=enable, (2)=text enable, (1)=bitmap enable, (0)=cursor enable
 	signal	curx_r	:	unsigned(7 downto 0) := (others => '0');	-- cursor X position
 	signal	cury_r	:	unsigned(7 downto 0) := (others => '0');	-- cursor Y position
 	signal	monoflag:	std_logic;
@@ -145,7 +145,7 @@ architecture Behavioral of VGA_textmode is
 	signal	vsync_r	:	std_logic;
 	signal	visible_r :	std_logic;						-- 1 if in visible area
 
-	signal	text_addr_r: std_logic_vector(31 downto 0) := x"80100000";	-- SRAM/SDRAM text start address
+	signal	text_addr_r: std_logic_vector(31 downto 0);	-- SRAM/SDRAM text start address
 	signal	addr_r	:	unsigned(29 downto 0); -- address in BRAM to fetch character+color
 	signal	cy		:	unsigned(7 downto 0);			-- current text line
 	signal	bmap_addr_r: std_logic_vector(31 downto 0);	-- SRAM/SDRAM bitmap start address
@@ -450,87 +450,93 @@ begin
 					end if;
 
 					bitmap_pix := (others => '0');
-					if C_vgatext_bitmap then
-						if cntrl_r(1)='1' then
-							bitmap_pix := bitmap_r(31 downto 32-C_vgatext_bitmap_depth);
-							if C_vgatext_bitmap_fifo then
-								if (hcount >= -1 AND hcount < vmode(C_vgatext_mode).visible_width-1) then
-									if C_vgatext_bitmap_depth = 8 then			-- 256 color
-									if (hcount(1 downto 0) = "11") then
-										req_bitmap_strobe <= '1';
-										bitmap_r <= bitmap_data;
-									else
-										bitmap_r <= bitmap_r(23 downto 0) & x"00";
-									end if;
-									elsif C_vgatext_bitmap_depth = 4 then		-- 16 color
-									if (hcount(2 downto 0) = "111") then
-										req_bitmap_strobe <= '1';
-										bitmap_r <= bitmap_data;
-									else
-										bitmap_r <= bitmap_r(27 downto 0) & "0000";
-									end if;
-									elsif C_vgatext_bitmap_depth = 2 then		-- 4 color
-									if (hcount(3 downto 0) = "1111") then
-										req_bitmap_strobe <= '1';
-										bitmap_r <= bitmap_data;
-									else
-										bitmap_r <= bitmap_r(29 downto 0) & "00";
-									end if;
-									else										-- 2 color
-									if (hcount(4 downto 0) = "11111") then
-										req_bitmap_strobe <= '1';
-										bitmap_r <= bitmap_data;
-									else
-										bitmap_r <= bitmap_r(30 downto 0) & "0";
-									end if;
-									end if;
-								end if;
-							else
-								if (hcount = -33) then
-									req_bitmap_strobe <= '1';
-								end if;
-
-								bitmap_pix := bitmap_r(31 downto 32-C_vgatext_bitmap_depth);
 								if C_vgatext_bitmap_depth = 8 then
-									if (hcount >= -1 AND hcount(1 downto 0) = "11") then
-										req_bitmap_strobe <= '1';
-										bitmap_r <= bitmap_n_r;
-										if (hcount /= vmode(C_vgatext_mode).visible_width-5) then
-											baddr_r <= baddr_r + 1;
-										end if;
-									else
-										bitmap_r <= bitmap_r(23 downto 0) & x"00";
-									end if;
-								elsif C_vgatext_bitmap_depth = 4 then
-									if (hcount >= -1 AND hcount(2 downto 0) = "111") then
-										req_bitmap_strobe <= '1';
-										bitmap_r <= bitmap_n_r;
-										if (hcount /= vmode(C_vgatext_mode).visible_width-9) then
-											baddr_r <= baddr_r + 1;
-										end if;
-									else
-										bitmap_r <= bitmap_r(27 downto 0) & x"0";
-									end if;
-								elsif C_vgatext_bitmap_depth = 2 then
-									if (hcount >= -1 AND hcount(3 downto 0) = "1111") then
-										req_bitmap_strobe <= '1';
-										bitmap_r <= bitmap_n_r;
-										if (hcount /= vmode(C_vgatext_mode).visible_width-17) then
-											baddr_r <= baddr_r + 1;
-										end if;
-									else
-										bitmap_r <= bitmap_r(29 downto 0) & "00";
+								bitmap_pix := bitmap_r(C_vgatext_bitmap_depth-1 downto 0);	-- little-endian byte order
+								else
+								bitmap_pix := bitmap_r(31 downto 32-C_vgatext_bitmap_depth);
+								end if;
+					if C_vgatext_bitmap AND cntrl_r(1)='1' then
+						if C_vgatext_bitmap_depth = 8 then
+						bitmap_pix := bitmap_r(C_vgatext_bitmap_depth-1 downto 0);	-- little-endian byte order
+						else
+						bitmap_pix := bitmap_r(31 downto 32-C_vgatext_bitmap_depth);
+						end if;
+						if C_vgatext_bitmap_fifo then						-- FIFO
+							if (hcount >= -1 AND hcount < vmode(C_vgatext_mode).visible_width-1) then
+								if C_vgatext_bitmap_depth = 8 then			-- 256 color
+								if (hcount(1 downto 0) = "11") then
+									req_bitmap_strobe <= '1';
+									bitmap_r <= bitmap_data;
+								else
+									bitmap_r <=  x"00" & bitmap_r(31 downto 8);	-- little-endian byte order
+								end if;
+								elsif C_vgatext_bitmap_depth = 4 then		-- 16 color
+								if (hcount(2 downto 0) = "111") then
+									req_bitmap_strobe <= '1';
+									bitmap_r <= bitmap_data;
+								else
+									bitmap_r <= bitmap_r(27 downto 0) & "0000";
+								end if;
+								elsif C_vgatext_bitmap_depth = 2 then		-- 4 color
+								if (hcount(3 downto 0) = "1111") then
+									req_bitmap_strobe <= '1';
+									bitmap_r <= bitmap_data;
+								else
+									bitmap_r <= bitmap_r(29 downto 0) & "00";
+								end if;
+								else										-- 2 color
+								if (hcount(4 downto 0) = "11111") then
+									req_bitmap_strobe <= '1';
+									bitmap_r <= bitmap_data;
+								else
+									bitmap_r <= bitmap_r(30 downto 0) & "0";
+								end if;
+								end if;
+							end if;
+						else											-- SRAM port
+							if (hcount = -33) then
+								req_bitmap_strobe <= '1';
+							end if;
+
+							if C_vgatext_bitmap_depth = 8 then			-- 256 color
+								if (hcount >= -1 AND hcount(1 downto 0) = "11") then
+									req_bitmap_strobe <= '1';
+									bitmap_r <= bitmap_n_r;
+									if (hcount /= vmode(C_vgatext_mode).visible_width-5) then
+										baddr_r <= baddr_r + 1;
 									end if;
 								else
-									if (hcount >= -1 AND hcount(4 downto 0) = "11111") then
-										req_bitmap_strobe <= '1';
-										bitmap_r <= bitmap_n_r;
-										if (hcount /= vmode(C_vgatext_mode).visible_width-33) then
-											baddr_r <= baddr_r + 1;
-										end if;
-									else
-										bitmap_r <= bitmap_r(30 downto 0) & "0";
+									bitmap_r <=  x"00" & bitmap_r(31 downto 8);	-- little-endian byte order
+								end if;
+							elsif C_vgatext_bitmap_depth = 4 then		-- 16 color
+								if (hcount >= -1 AND hcount(2 downto 0) = "111") then
+									req_bitmap_strobe <= '1';
+									bitmap_r <= bitmap_n_r;
+									if (hcount /= vmode(C_vgatext_mode).visible_width-9) then
+										baddr_r <= baddr_r + 1;
 									end if;
+								else
+									bitmap_r <= bitmap_r(27 downto 0) & x"0";
+								end if;
+							elsif C_vgatext_bitmap_depth = 2 then		-- 4 color
+								if (hcount >= -1 AND hcount(3 downto 0) = "1111") then
+									req_bitmap_strobe <= '1';
+									bitmap_r <= bitmap_n_r;
+									if (hcount /= vmode(C_vgatext_mode).visible_width-17) then
+										baddr_r <= baddr_r + 1;
+									end if;
+								else
+									bitmap_r <= bitmap_r(29 downto 0) & "00";
+								end if;
+							else										-- 2 color
+								if (hcount >= -1 AND hcount(4 downto 0) = "11111") then
+									req_bitmap_strobe <= '1';
+									bitmap_r <= bitmap_n_r;
+									if (hcount /= vmode(C_vgatext_mode).visible_width-33) then
+										baddr_r <= baddr_r + 1;
+									end if;
+								else
+									bitmap_r <= bitmap_r(30 downto 0) & "0";
 								end if;
 							end if;
 						end if;
