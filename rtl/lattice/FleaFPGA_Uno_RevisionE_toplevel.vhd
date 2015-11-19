@@ -55,14 +55,17 @@ entity glue is
 	C_vgatext: boolean := true;
 	C_vgatext_label: string := "FleaFPGA-Uno f32c: 50MHz MIPS-compatible soft-core, 512KB SRAM";
 	C_vgatext_mode: integer := 0;	-- 0=640x480, 1=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
-	C_vgatext_bits: integer := 2;	-- bits per RGB
+	C_vgatext_text: boolean := true;
+	C_vgatext_bits: integer := 4;	-- bits per RGB
 	C_vgatext_mem: integer := 4;	-- 4 or 8 (4=~80x25 2 color, 8=~80x25+ 16 color)
 	C_vgatext_font_height: integer := 16;		-- font data height 8 (doubled vertically) or 16
 	C_vgatext_font_depth: integer := 7;			-- font char bits (7=128, 8=256 characters)
 	C_vgatext_char_height: integer := 19;		-- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
 	C_vgatext_monochrome: boolean := true;		-- 4K ram mode
-	C_vgatext_palette: boolean := true;			-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
-	C_vgatext_sram_bitmap: boolean := true		-- true for monochrome bitmap from sram (or other RAM with low enough latency)
+	C_vgatext_palette: boolean := false;		-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
+	C_vgatext_bitmap: boolean := true;			-- true for bitmap from sram/sdram
+	C_vgatext_bitmap_fifo: boolean := false;	-- true to use videofifo, else SRAM port
+	C_vgatext_bitmap_depth: integer := 1		-- bits per pixel (1, 2, 4, 8)	C_vgatext_sram_bitmap: boolean := true		-- true for monochrome bitmap from sram (or other RAM with low enough latency)
     );
     port (
 	sys_clock		: in		std_logic;	-- main clock input from 25MHz clock source
@@ -157,15 +160,18 @@ begin
 	C_gpio_adc => C_gpio_adc,
 	C_branch_prediction => C_branch_prediction,
 	C_vgatext =>	C_vgatext,
-	C_vgatext_label => C_vgatext_label,
 	C_vgatext_mode => C_vgatext_mode,
+	C_vgatext_text => C_vgatext_text,
+	C_vgatext_label => C_vgatext_label,
 	C_vgatext_mem => C_vgatext_mem,
 	C_vgatext_font_height => C_vgatext_font_height,
 	C_vgatext_font_depth => C_vgatext_font_depth,
 	C_vgatext_char_height => C_vgatext_char_height,
 	C_vgatext_monochrome => C_vgatext_monochrome,
 	C_vgatext_palette => C_vgatext_palette,
-	C_vgatext_sram_bitmap => C_vgatext_sram_bitmap
+	C_vgatext_bitmap => C_vgatext_bitmap,
+	C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
+	C_vgatext_bitmap_depth => C_vgatext_bitmap_depth
     )
     port map (
 		clk => clk,

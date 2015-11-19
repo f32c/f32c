@@ -51,8 +51,13 @@ vhdfiles = \
 ../../../soc/fm/rds.vhd \
 ../../../soc/fm/bram_rds.vhd \
 ../../../soc/fm/message.vhd \
+../../../soc/ps2.vhd \
 ../../../soc/vgahdmi/vgahdmif.vhd \
 ../../../soc/vgahdmi/videofifo.vhd \
+../../../soc/vgahdmi/VGA_textmode.vhd \
+../../../soc/vgahdmi/VGA_textmode_bram.vhd \
+../../../soc/vgahdmi/TMDS_encoder.vhd \
+../../../soc/vgahdmi/dvid_out.vhd \
 ../../../xilinx/hdmi_out_xc7.vhd \
 ../../../xilinx/pll_125M_250M_100M_25M.vhd \
 ../../../xilinx/mmcm_125M_81M25_250M521_25M052.vhd \

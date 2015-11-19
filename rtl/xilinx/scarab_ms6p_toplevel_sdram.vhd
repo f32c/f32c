@@ -53,7 +53,9 @@ entity glue is
         C_sdram_separate_arbiter: boolean := false;
 	C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
 	C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
-        C_vgahdmi: boolean := true;
+        C_vgahdmi: boolean := false; -- old Emard's bitmap-only VGA
+	C_vgatext: boolean := true; -- Xark's feature-ritch bitmap+textmode VGA
+	C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";
 	C_fmrds: boolean := true;
 	C_sio: integer := 1;
 	C_spi: integer := 2;
@@ -81,6 +83,8 @@ entity glue is
 	porta, portb: inout std_logic_vector(11 downto 0);
 	portc: inout std_logic_vector(7 downto 0);
 	portd: out std_logic_vector(0 downto 0); -- fm antenna is here
+	TMDS_in_P, TMDS_in_N: out std_logic_vector(2 downto 0);
+	TMDS_in_CLK_P, TMDS_in_CLK_N: out std_logic;
 	TMDS_out_P, TMDS_out_N: out std_logic_vector(2 downto 0);
 	TMDS_out_CLK_P, TMDS_out_CLK_N: out std_logic;
 	sw: in std_logic_vector(4 downto 1)
@@ -95,7 +99,7 @@ architecture Behavioral of glue is
     signal tmds_out_rgb: std_logic_vector(2 downto 0);
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
-    
+
     clk125: if C_clk_freq = 125 generate
     clkgen125: entity work.pll_50M_250M_125M_25M
     port map(
@@ -169,6 +173,8 @@ begin
 	C_ram_emu_addr_width => C_ram_emu_addr_width,
 	C_ram_emu_wait_states => C_ram_emu_wait_states,
         C_vgahdmi => C_vgahdmi,
+        C_vgatext => C_vgatext,
+	C_vgatext_label => C_vgatext_label,
 	C_fmrds => C_fmrds,
 	C_debug => C_debug
     )
@@ -182,7 +188,7 @@ begin
 	sdram_ba => sdram_ba, sdram_dqm => sdram_dqm,
 	sdram_ras => sdram_rasn, sdram_cas => sdram_casn,
 	sdram_cke => sdram_cke, sdram_clk => sdram_clk_internal,
-	sdram_we => sdram_wen, sdram_cs => sdram_csn,	
+	sdram_we => sdram_wen, sdram_cs => sdram_csn,
 	sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
 	sio_break(0) => rs232_break,
 	spi_sck(0)  => flash_cclk,  spi_sck(1)  => sd_clk,
@@ -213,14 +219,24 @@ begin
     );
 
     -- differential output buffering for HDMI clock and video
-    hdmi_output: entity work.hdmi_out
+    hdmi_output1: entity work.hdmi_out
       port map (
-        tmds_in_clk => clk_25MHz,
+        tmds_in_clk    => clk_25MHz,
         tmds_out_clk_p => tmds_out_clk_p,
         tmds_out_clk_n => tmds_out_clk_n,
-        tmds_in_rgb => tmds_out_rgb,
+        tmds_in_rgb    => tmds_out_rgb,
         tmds_out_rgb_p => tmds_out_p,
         tmds_out_rgb_n => tmds_out_n
+      );
+
+    hdmi_output2: entity work.hdmi_out
+      port map (
+        tmds_in_clk    => clk_25MHz,
+        tmds_out_clk_p => tmds_in_clk_p,
+        tmds_out_clk_n => tmds_in_clk_n,
+        tmds_in_rgb    => tmds_out_rgb,
+        tmds_out_rgb_p => tmds_in_p,
+        tmds_out_rgb_n => tmds_in_n
       );
 
 end Behavioral;
