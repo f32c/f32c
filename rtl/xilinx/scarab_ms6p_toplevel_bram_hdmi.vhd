@@ -48,9 +48,13 @@ entity glue is
 	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
-	C_mem_size: integer := 16; -- KB
-	C_vgahdmi: boolean := true;
+	C_mem_size: integer := 32; -- KB
+	C_vgahdmi: boolean := false;
 	C_vgahdmi_mem_kb: integer := 38; -- KB 38K full mono 640x480
+	C_vgatext: boolean := true; -- Xark's feature-ritch bitmap+textmode VGA
+	C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32KB BRAM";
+	C_vgatext_bitmap: boolean := false;
+	C_vgatext_bitmap_fifo: boolean := false;		-- true to use videofifo, else SRAM port
 	C_fmrds: boolean := true;
 	C_rds_msg_len: integer := 260; -- bytes of RAM for RDS binary message
         C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
@@ -135,6 +139,10 @@ begin
 	C_mem_size => C_mem_size,
 	C_vgahdmi => C_vgahdmi,
 	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
+        C_vgatext => C_vgatext,
+	C_vgatext_label => C_vgatext_label,
+        C_vgatext_bitmap => C_vgatext_bitmap,
+	C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
 	C_fmrds => C_fmrds,
 	C_fmdds_hz => C_fmdds_hz,
 	C_rds_msg_len => C_rds_msg_len,

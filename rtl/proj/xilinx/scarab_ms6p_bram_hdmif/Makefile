@@ -28,9 +28,12 @@ vhdfiles = \
 ../../../xilinx/pll_50M_81M25.vhd \
 ../../../xilinx/hdmi_out.vhd \
 ../../../generic/glue_bram_vgaf.vhd \
-../../../generic/bram_mi32_eb.vhd \
-../../../generic/bram_mi32_el.vhd \
-../../../generic/bram_rv32.vhd \
+../../../generic/bram.vhd \
+../../../generic/boot_block_pack.vhd \
+../../../generic/bootloader/boot_sio_mi32el.vhd \
+../../../generic/bootloader/boot_sio_mi32eb.vhd \
+../../../generic/bootloader/boot_sio_rv32el.vhd \
+../../../generic/bram_true2p_1clk.vhd \
 ../../../generic/bram_video.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
@@ -46,6 +49,7 @@ vhdfiles = \
 ../../../cpu/debug.vhd \
 ../../../soc/sio.vhd \
 ../../../soc/spi.vhd \
+../../../soc/ps2.vhd \
 ../../../soc/gpio.vhd \
 ../../../soc/timer.vhd \
 ../../../soc/pid/pid.vhd \
@@ -59,6 +63,13 @@ vhdfiles = \
 ../../../soc/fm/message.vhd \
 ../../../soc/vgahdmi/vgahdmif.vhd \
 ../../../soc/vgahdmi/videofifo.vhd \
+../../../soc/vgahdmi/VGA_textmode.vhd \
+../../../soc/vgahdmi/font_block_pack.vhd \
+../../../soc/vgahdmi/font8x8_xark.vhd \
+../../../soc/vgahdmi/font8x16_xark.vhd \
+../../../soc/vgahdmi/VGA_textmode_bram.vhd \
+../../../soc/vgahdmi/TMDS_encoder.vhd \
+../../../soc/vgahdmi/dvid_out.vhd \
 
 
 include ../include/xilinx.mk
