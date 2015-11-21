@@ -55,6 +55,9 @@ vhdfiles = \
 ../../../soc/vgahdmi/vgahdmif.vhd \
 ../../../soc/vgahdmi/videofifo.vhd \
 ../../../soc/vgahdmi/VGA_textmode.vhd \
+../../../soc/vgahdmi/font_block_pack.vhd \
+../../../soc/vgahdmi/font8x8_xark.vhd \
+../../../soc/vgahdmi/font8x16_xark.vhd \
 ../../../soc/vgahdmi/VGA_textmode_bram.vhd \
 ../../../soc/vgahdmi/TMDS_encoder.vhd \
 ../../../soc/vgahdmi/dvid_out.vhd \
