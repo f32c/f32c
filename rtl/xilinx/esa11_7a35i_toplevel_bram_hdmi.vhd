@@ -81,7 +81,7 @@ entity glue is
         VGA_RED, VGA_GREEN, VGA_BLUE: out std_logic_vector(7 downto 0);
         VGA_SYNC_N, VGA_BLANK_N, VGA_CLOCK_P: out std_logic;
         VGA_HSYNC, VGA_VSYNC: out std_logic;
-	M_BTN: in std_logic_vector(3 downto 0);
+	M_BTN: in std_logic_vector(4 downto 0);
 	M_HEX: in std_logic_vector(3 downto 0)
     );
 end glue;
@@ -200,11 +200,7 @@ begin
 	-- simple I/O
 	simple_out(7 downto 0) => M_LED, simple_out(15 downto 8) => disp_7seg_segment,
 	simple_out(19 downto 16) => M_7SEG_DIGIT, simple_out(31 downto 20) => open,
-	simple_in(0) => M_BTN(0),
-	simple_in(1) => M_BTN(1),
-        simple_in(2) => M_BTN(2),
-        simple_in(3) => M_BTN(3),
-        simple_in(4) => '0',     -- will be center button one day,
+	simple_in(4 downto 0) => M_BTN,
         simple_in(8 downto 5) => M_HEX,
         simple_in(31 downto 9) => (others => '-')
     );
