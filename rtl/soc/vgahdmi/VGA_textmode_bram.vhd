@@ -44,7 +44,7 @@ entity VGA_textmode_bram is
     );
     port(
 	clk: in std_logic;
-	imem_addr: in std_logic_vector(12 downto 2);
+	imem_addr: in std_logic_vector(15 downto 2);
 	imem_data_out: out std_logic_vector(31 downto 0);
 	dmem_write: in std_logic;
 	dmem_byte_sel: in std_logic_vector(3 downto 0);
