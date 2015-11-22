@@ -110,7 +110,7 @@ entity glue_sdram is
 
 	C_vgatext: boolean := false;
 	C_vgatext_text: boolean := true;			-- enable text generation	
-	C_vgatext_mode: integer := 0;				-- 0=640x480, 1=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
+	C_vgatext_mode: integer := 0;				-- 0=640x480, 1=640x400, 2=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
 	C_vgatext_bits: integer := 4;
 	C_vgatext_label: string := "f32c";
 	C_vgatext_mem: integer := 4;				-- 4 or 8 (4=80x25 mono, 8=up to 100x30 16 color)
@@ -270,7 +270,7 @@ architecture Behavioral of glue_sdram is
 	signal vga_textmode_text_rewind: std_logic;
 	signal vga_textmode_dmem_write: std_logic;
 	signal vga_textmode_dmem_to_cpu: std_logic_vector(31 downto 0);
-	signal vga_textmode_bram_addr: std_logic_vector(12 downto 2);
+	signal vga_textmode_bram_addr: std_logic_vector(15 downto 2);
 	signal vga_textmode_bram_data: std_logic_vector(31 downto 0);
 	signal vga_textmode_R: std_logic_vector(C_vgatext_bits-1 downto 0);
 	signal vga_textmode_G: std_logic_vector(C_vgatext_bits-1 downto 0);
