@@ -95,10 +95,11 @@ entity glue_bram is
 	C_vgatext_label: string := "f32c";
 	C_vgatext_mode: integer := 0;	-- 0=640x480, 1=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
 	C_vgatext_bits: integer := 4;
-	C_vgatext_mem: integer := 8;		-- 4 or 8 (4=80x25 mono, 8=up to 100x30 16 color)
-	C_vgatext_font_height: integer := 16;		-- font data height 8 (doubled vertically) or 16
-	C_vgatext_font_depth: integer := 7;			-- font char bits (7=128, 8=256 characters)
-	C_vgatext_char_height: integer := 16;		-- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
+	C_vgatext_mem: integer := 16;		-- 4 or 8 (4=80x25 mono, 8=up to 100x30 16 color)
+	C_vgatext_font_height: integer := 8;		-- font data height 8 (doubled vertically) or 16
+	C_vgatext_font_depth: integer := 8;			-- font char bits (7=128, 8=256 characters)
+	C_vgatext_font_linedouble: boolean := false;-- double each line of font (e.g. 8x8 font fills 8x16 cell)
+	C_vgatext_char_height: integer := 8;		-- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
 	C_vgatext_monochrome: boolean := false;		-- 4K ram mode
 	C_vgatext_palette: boolean := true;			-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
 	C_vgatext_bitmap: boolean := true;			-- true for bitmap from sram/sdram
@@ -279,7 +280,7 @@ architecture Behavioral of glue_bram is
     signal from_vga_textmode: std_logic_vector(31 downto 0);
     signal vga_textmode_dmem_write: std_logic;
     signal vga_textmode_dmem_to_cpu: std_logic_vector(31 downto 0);
-    signal vga_textmode_addr: std_logic_vector(12 downto 2);
+    signal vga_textmode_addr: std_logic_vector(15 downto 2);
     signal vga_textmode_data: std_logic_vector(31 downto 0);
     signal vga_textmode_R: std_logic_vector(C_vgatext_bits-1 downto 0);
     signal vga_textmode_G: std_logic_vector(C_vgatext_bits-1 downto 0);
@@ -742,6 +743,7 @@ begin
         C_vgatext_bits          => C_vgatext_bits,
         C_vgatext_font_height   => C_vgatext_font_height,
         C_vgatext_font_depth    => C_vgatext_font_depth,
+		C_vgatext_font_linedouble => C_vgatext_font_linedouble,
         C_vgatext_char_height   => C_vgatext_char_height,
         C_vgatext_monochrome    => C_vgatext_monochrome,
         C_vgatext_palette       => C_vgatext_palette,
