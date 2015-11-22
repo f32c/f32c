@@ -29,12 +29,13 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity VGA_textmode is
 	Generic (
-		C_vgatext_mode: integer := 0;				-- 0=640x480, 1=800x600 (you must still provide proper pixel clock for mode)
+		C_vgatext_mode: integer := 0;				-- 0=640x480, 1=640x400, 2=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
 		C_vgatext_bits: integer := 2;				-- bits per R G B for output (1 to 8)
 		C_vgatext_text: boolean := true;			-- enable text generation
 		C_vgatext_text_fifo: boolean := false;		-- true to use videofifo, else SRAM port
 		C_vgatext_font_height: integer := 8;		-- font data height 8 (doubled vertically) or 16
 		C_vgatext_font_depth: integer := 7;			-- font char bits (7=128, 8=256 characters)
+		C_vgatext_font_linedouble: boolean := true;	-- double each line of font (e.g. 8x8 font fills 8x16 cell)
 		C_vgatext_char_height: integer := 19;		-- font cell height (text lines will be vmode(C_vgatext_mode).visible_height / C_vgatext_char_height rounded down, 19=25 lines on 480p)
 		C_vgatext_monochrome: boolean := false;		-- 4K ram mode (one color byte for entire screen)
 		C_vgatext_palette: boolean := false;		-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
@@ -58,7 +59,7 @@ entity VGA_textmode is
 		text_strobe:	out std_logic;						-- fetch next data from fifo
 		text_rewind:	out std_logic;						-- "rewind" fifo to replay last scan-line data
 
-		bram_addr:	out std_logic_vector(12 downto 2); 		-- font (or text+color) bram address
+		bram_addr:	out std_logic_vector(15 downto 2); 		-- font (or text+color) bram address
 		bram_data:	in std_logic_vector(31 downto 0);		-- font (or text+color) bram data
 
 		bitmap_addr:	out std_logic_vector(29 downto 2);	-- bitmap buffer (start address with fifo)
@@ -84,10 +85,11 @@ architecture Behavioral of VGA_textmode is
 		v_front_porch, v_sync_pulse, v_back_porch:	integer;
 		h_sync_polarity, v_sync_polarity:			std_logic;
 	end record;
-	type video_mode_array_t is array (0 to 1) of video_mode_t;
+	type video_mode_array_t is array (0 to 2) of video_mode_t;
 	constant vmode: video_mode_array_t :=
 	(
-		(	pixel_clock_Hz	=>	25000000,	-- actually 25175000, but 25Mhz is more common with FPGAs (and works on virtually all monitors)
+		(	-- 640x480 @ ~60Hz 
+			pixel_clock_Hz	=>	25000000,	-- 640x480 @ ~60Hz actually 25175000, but 25Mhz is more common with FPGAs (and works on virtually all monitors)
 			visible_width	=>	640,
 			visible_height	=>	480,
 			h_front_porch	=>	16,
@@ -99,7 +101,21 @@ architecture Behavioral of VGA_textmode is
 			h_sync_polarity	=>	'0',
 			v_sync_polarity	=>	'0'
 		),
-		(	pixel_clock_Hz	=>	40000000,
+		(	-- 640x400 @ ~70Hz
+			pixel_clock_Hz	=>	25000000,	-- 640x400 @ ~70Hz (actually 25175000, but 25Mhz is more common with FPGAs (and works on virtually all monitors)
+			visible_width	=>	640,
+			visible_height	=>	400,
+			h_front_porch	=>	16,
+			h_sync_pulse	=>	96,
+			h_back_porch	=>	48,
+			v_front_porch	=>	12,
+			v_sync_pulse	=>	2,
+			v_back_porch	=>	35,
+			h_sync_polarity	=>	'0',
+			v_sync_polarity	=>	'1'
+		),
+		(	-- 800x600 @ ~60Hz
+			pixel_clock_Hz	=>	40000000,
 			visible_width	=>	800,
 			visible_height	=>	600,
 			h_front_porch	=>	40,
@@ -334,7 +350,7 @@ begin
 						case hcount(2 downto 0) is
 							when "100" =>
 								if NOT C_vgatext_text_fifo then
-									bram_addr 	<= std_logic_vector(addr_r(12 downto 2));
+									bram_addr 	<= std_logic_vector(addr_r(15 downto 2));
 								end if;
 							when "101" =>
 								char_data := (others => '0');
@@ -379,11 +395,19 @@ begin
 								end if;
 								
 								bram_addr <= (others => '1');	-- assume unset bits are 1 to place font at high end of vga_textmode memory
-								if C_vgatext_font_height=8 then
+								if C_vgatext_font_height = 8 then
+								if C_vgatext_font_linedouble then
 								if (fonty < 16) then
 									bram_addr(C_vgatext_font_depth+2 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & fonty(3);
 								else
 									bram_addr(C_vgatext_font_depth+2 downto 2) <= (others => '0');
+								end if;
+								else
+								if (fonty < 8) then
+									bram_addr(C_vgatext_font_depth+2 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & fonty(2);
+								else
+									bram_addr(C_vgatext_font_depth+2 downto 2) <= (others => '0');
+								end if;
 								end if;
 								else
 								if (fonty < 16) then
@@ -394,7 +418,7 @@ begin
 								end if;
 							when "110" =>
 								if (fonty < 16) then
-									if C_vgatext_font_height=8 then
+									if C_vgatext_font_linedouble then
 									case fonty(2 downto 1) is
 										when "00" => fontdata_n_r <= bram_data( 7 downto  0);
 										when "01" => fontdata_n_r <= bram_data(15 downto  8);
@@ -450,11 +474,11 @@ begin
 					end if;
 
 					bitmap_pix := (others => '0');
-								if C_vgatext_bitmap_depth = 8 then
-								bitmap_pix := bitmap_r(C_vgatext_bitmap_depth-1 downto 0);	-- little-endian byte order
-								else
-								bitmap_pix := bitmap_r(31 downto 32-C_vgatext_bitmap_depth);
-								end if;
+					if C_vgatext_bitmap_depth = 8 then
+					bitmap_pix := bitmap_r(C_vgatext_bitmap_depth-1 downto 0);	-- little-endian byte order
+					else
+					bitmap_pix := bitmap_r(31 downto 32-C_vgatext_bitmap_depth);
+					end if;
 					if C_vgatext_bitmap AND cntrl_r(1)='1' then
 						if C_vgatext_bitmap_depth = 8 then
 						bitmap_pix := bitmap_r(C_vgatext_bitmap_depth-1 downto 0);	-- little-endian byte order
