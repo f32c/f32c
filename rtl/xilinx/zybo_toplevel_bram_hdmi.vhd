@@ -56,6 +56,11 @@ entity glue is
 	C_vgahdmi_test_picture: integer := 1; -- enable test picture
 	C_vgatext: boolean := true; -- Xark's feature-ritch bitmap+textmode VGA
 	C_vgatext_label: string := "f32c: ZYBO MIPS compatible soft-core 100MHz 128KB BRAM";
+	C_vgatext_mem: integer := 8;		-- 4, 8, 16 (4=80x25 mono, 8=up to 100x30 16 color)
+	C_vgatext_font_height: integer := 16;		-- font data height 8 (doubled vertically) or 16
+	C_vgatext_font_depth: integer := 7;			-- font char bits (7=128, 8=256 characters)
+	C_vgatext_font_linedouble: boolean := false;-- double each line of font (e.g. 8x8 font fills 8x16 cell)
+	C_vgatext_char_height: integer := 16;		-- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
 	C_vgatext_bitmap: boolean := false;
 	C_vgatext_bitmap_fifo: boolean := false;		-- true to use videofifo, else SRAM port
 	C_sio: integer := 1;
@@ -138,6 +143,11 @@ begin
 	C_vgahdmi_test_picture => C_vgahdmi_test_picture,
         C_vgatext => C_vgatext,
 	C_vgatext_label => C_vgatext_label,
+	C_vgatext_mem => C_vgatext_mem,
+        C_vgatext_font_height => C_vgatext_font_height,
+	C_vgatext_font_depth => C_vgatext_font_depth,
+	C_vgatext_font_linedouble => C_vgatext_font_linedouble,
+	C_vgatext_char_height => C_vgatext_char_height,
         C_vgatext_bitmap => C_vgatext_bitmap,
 	C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
 	C_gpio => C_gpio,
