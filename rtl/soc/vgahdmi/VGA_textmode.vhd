@@ -29,7 +29,7 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity VGA_textmode is
 	Generic (
-		C_vgatext_mode: integer := 0;				-- 0=640x480, 1=800x600 (you must still provide proper pixel clock for mode)
+		C_vgatext_mode: integer := 0;				-- 0=640x480, 1=640x400, 2=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
 		C_vgatext_bits: integer := 2;				-- bits per R G B for output (1 to 8)
 		C_vgatext_text: boolean := true;			-- enable text generation
 		C_vgatext_text_fifo: boolean := false;		-- true to use videofifo, else SRAM port
@@ -85,10 +85,11 @@ architecture Behavioral of VGA_textmode is
 		v_front_porch, v_sync_pulse, v_back_porch:	integer;
 		h_sync_polarity, v_sync_polarity:			std_logic;
 	end record;
-	type video_mode_array_t is array (0 to 1) of video_mode_t;
+	type video_mode_array_t is array (0 to 2) of video_mode_t;
 	constant vmode: video_mode_array_t :=
 	(
-		(	pixel_clock_Hz	=>	25000000,	-- actually 25175000, but 25Mhz is more common with FPGAs (and works on virtually all monitors)
+		(	-- 640x480 @ ~60Hz 
+			pixel_clock_Hz	=>	25000000,	-- 640x480 @ ~60Hz actually 25175000, but 25Mhz is more common with FPGAs (and works on virtually all monitors)
 			visible_width	=>	640,
 			visible_height	=>	480,
 			h_front_porch	=>	16,
@@ -100,7 +101,21 @@ architecture Behavioral of VGA_textmode is
 			h_sync_polarity	=>	'0',
 			v_sync_polarity	=>	'0'
 		),
-		(	pixel_clock_Hz	=>	40000000,
+		(	-- 640x400 @ ~70Hz
+			pixel_clock_Hz	=>	25000000,	-- 640x400 @ ~70Hz (actually 25175000, but 25Mhz is more common with FPGAs (and works on virtually all monitors)
+			visible_width	=>	640,
+			visible_height	=>	400,
+			h_front_porch	=>	16,
+			h_sync_pulse	=>	96,
+			h_back_porch	=>	48,
+			v_front_porch	=>	12,
+			v_sync_pulse	=>	2,
+			v_back_porch	=>	35,
+			h_sync_polarity	=>	'0',
+			v_sync_polarity	=>	'1'
+		),
+		(	-- 800x600 @ ~60Hz
+			pixel_clock_Hz	=>	40000000,
 			visible_width	=>	800,
 			visible_height	=>	600,
 			h_front_porch	=>	40,
