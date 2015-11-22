@@ -3,7 +3,8 @@
 #
 #	Buttons -------------------------------------------------------------------
 #
-set_property PACKAGE_PIN U5 [get_ports M_BTN[0]]
+#set_property PACKAGE_PIN U5 [get_ports M_BTN[0]]
+set_property PACKAGE_PIN U7 [get_ports M_BTN[0]]
 set_property IOSTANDARD LVTTL  [get_ports M_BTN[0]]
 set_property PULLUP TRUE [get_ports M_BTN[0]]
 set_property DRIVE 4  [get_ports M_BTN[0]]
@@ -18,12 +19,15 @@ set_property IOSTANDARD LVTTL  [get_ports M_BTN[2]]
 set_property PULLUP TRUE [get_ports M_BTN[2]]
 set_property DRIVE 4  [get_ports M_BTN[2]]
 
-set_property PACKAGE_PIN U7 [get_ports M_BTN[3]]
+#set_property PACKAGE_PIN U7 [get_ports M_BTN[3]]
+set_property PACKAGE_PIN R6 [get_ports M_BTN[3]]
 set_property IOSTANDARD LVTTL  [get_ports M_BTN[3]]
 set_property PULLUP TRUE [get_ports M_BTN[3]]
 set_property DRIVE 4  [get_ports M_BTN[3]]
 
-set_property PACKAGE_PIN R6 [get_ports M_BTN[4]]
+#set_property PACKAGE_PIN R6 [get_ports M_BTN[4]]
+#set_property PACKAGE_PIN U7 [get_ports M_BTN[4]]
+set_property PACKAGE_PIN U5 [get_ports M_BTN[4]]
 set_property IOSTANDARD LVTTL  [get_ports M_BTN[4]]
 set_property PULLUP TRUE [get_ports M_BTN[4]]
 set_property DRIVE 4  [get_ports M_BTN[4]]
