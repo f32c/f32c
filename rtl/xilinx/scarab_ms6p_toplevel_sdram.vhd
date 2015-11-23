@@ -67,6 +67,7 @@ entity glue is
         C_vgatext_char_height: integer := 16; -- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
         C_vgatext_font_linedouble: boolean := false; -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
         C_vgatext_font_depth: integer := 8; -- font char bits 7 for 128 characters or 8 for 256 characters
+        C_vgatext_bus_read: boolean := false; -- false: bram write only, true: bram read/write (but may lower fmax)
         C_vgatext_text_fifo: boolean := true; -- true to use videofifo for text+color, else BRAM for text+color memory
           C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the fifo refill and rewind
           C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) len = 2^width * 4 byte
@@ -214,6 +215,7 @@ begin
       C_vgatext_char_height => C_vgatext_char_height,
       C_vgatext_font_linedouble => C_vgatext_font_linedouble,
       C_vgatext_font_depth => C_vgatext_font_depth,
+      C_vgatext_bus_read => C_vgatext_bus_read,
       C_vgatext_text_fifo => C_vgatext_text_fifo,
       C_vgatext_text_fifo_step => C_vgatext_text_fifo_step,
       C_vgatext_text_fifo_width => C_vgatext_text_fifo_width,
