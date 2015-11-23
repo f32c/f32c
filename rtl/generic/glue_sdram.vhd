@@ -88,7 +88,7 @@ entity glue_sdram is
 	-- SoC configuration options
 	C_mem_size: integer := 2;	-- in KBytes
 	C_icache_expire: boolean := false; -- when true i-cache will just pass data, won't keep them
-	C_icache_size: integer := 0;	-- 0, 2, 4 or 8 KBytes
+	C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_sdram: boolean := true;
 	C_sdram_separate_arbiter: boolean := false;
