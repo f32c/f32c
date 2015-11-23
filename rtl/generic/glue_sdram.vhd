@@ -120,6 +120,7 @@ entity glue_sdram is
 			C_vgatext_char_height: integer := 16;		-- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
 			C_vgatext_font_linedouble: boolean := false; -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
 			C_vgatext_font_depth: integer := 8;			-- font char bits 7 for 128 characters or 8 for 256 characters
+			C_vgatext_bus_read: boolean := false;		-- true: allow reading vgatext bram from CPU bus (may affect fmax). false: write only
 			C_vgatext_text_fifo: boolean := true;		-- true to use videofifo for text+color, else BRAM for text+color memory
 				C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the fifo refill and rewind
 				C_vgatext_text_fifo_width: integer := 6; 	-- width of FIFO address space (default=4) len = 2^width * 4 byte
@@ -408,7 +409,7 @@ begin
     final_to_cpu_i <= from_sdram when imem_addr(31 downto 30) = "10"
       else imem_data_read;
     final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
---      else vga_textmode_dmem_to_cpu when C_vgatext AND dmem_addr(31 downto 30) = "01"
+      else vga_textmode_dmem_to_cpu when C_vgatext and C_vgatext_bus_read and dmem_addr(31 downto 30) = "01" -- address 0x40000000
       else from_sdram when dmem_addr(31 downto 30) = "10"
       else dmem_to_cpu;
     intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;
