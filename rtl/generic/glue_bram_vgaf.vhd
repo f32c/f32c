@@ -91,21 +91,28 @@ entity glue_bram is
 	C_vgahdmi_fifo_step: integer := 0; -- 0 (dbl_y = 0), 40 (dbl_x = 1, dbl_y = 1), 80 (dbl_x = 0, dbl_y = 1)
 	C_vgahdmi_fifo_width: integer := 4; -- 4 (dbl_y = 0),  6 (dbl_x = 1, dbl_y = 1),  7 (dbl_x = 0, dbl_y = 1)
 	C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
-	C_vgatext: boolean := false;
-	C_vgatext_label: string := "f32c";
-	C_vgatext_mode: integer := 0;	-- 0=640x480, 1=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
-	C_vgatext_bits: integer := 4;
-	C_vgatext_mem: integer := 16;		-- 4 or 8 (4=80x25 mono, 8=up to 100x30 16 color)
-	C_vgatext_font_height: integer := 8;		-- font data height 8 (doubled vertically) or 16
-	C_vgatext_font_depth: integer := 8;			-- font char bits (7=128, 8=256 characters)
-	C_vgatext_font_linedouble: boolean := false;-- double each line of font (e.g. 8x8 font fills 8x16 cell)
-	C_vgatext_char_height: integer := 8;		-- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
-	C_vgatext_monochrome: boolean := false;		-- 4K ram mode
-	C_vgatext_palette: boolean := true;			-- false=fixed 16 color VGA palette or 16 writable 24-bit palette registers
-	C_vgatext_bitmap: boolean := true;			-- true for bitmap from sram/sdram
-	C_vgatext_bitmap_fifo: boolean := true;		-- true to use videofifo, else SRAM port
-	C_vgatext_bitmap_fifo_width: integer := 4;
-	C_vgatext_bitmap_depth: integer := 8;		-- bits per pixel (1, 2, 4, 8)
+
+	C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
+		C_vgatext_label: string := "f32c";			-- default banner in screen memory
+		C_vgatext_mode: integer := 1;				-- 0=640x480, 1=640x400, 2=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
+		C_vgatext_bits: integer := 2;				-- bits of VGA color per red, green, blue gun (e.g., 1=8, 2=64 and 4=4096 total colors possible)
+		C_vgatext_mem: integer := 4;				-- BRAM size 1, 2, 4, 8 or 16 depending on font and screen size/memory
+		C_vgatext_palette: boolean := false;			-- true for run-time color look-up table, else 16 fixed VGA color palette
+		C_vgatext_text: boolean := true;			-- enable text generation	
+			C_vgatext_monochrome: boolean := true;		-- true for 2-color text for whole screen, else additional color attribute byte per character
+			C_vgatext_font_height: integer := 8;		-- font data height 8 or 16 for 8x8 or 8x16 font
+			C_vgatext_char_height: integer := 16;		-- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
+			C_vgatext_font_linedouble: boolean := false; -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
+			C_vgatext_font_depth: integer := 7;			-- font char bits 7 for 128 characters or 8 for 256 characters
+			C_vgatext_text_fifo: boolean := false;		-- true to use videofifo for text+color, else BRAM for text+color memory
+				C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the fifo refill and rewind
+				C_vgatext_text_fifo_width: integer := 6; 	-- width of FIFO address space (default=4) len = 2^width * 4 byte
+		C_vgatext_bitmap: boolean := false;			-- true to enable bitmap generation
+		C_vgatext_bitmap_depth: integer := 8;		-- bitmap bits per pixel (1, 2, 4, 8)
+			C_vgatext_bitmap_fifo: boolean := false;		-- true to use videofifo, else SRAM port for bitmap memory
+				C_vgatext_bitmap_fifo_step: integer := 0;	-- bitmap step for the fifo refill and rewind (0 unless repeating lines)
+				C_vgatext_bitmap_fifo_width: integer := 8;	-- bitmap width of FIFO address space len = 2^width * 4 byte
+
 	C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
 	C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
 	C_fm_stereo: boolean := false;
@@ -739,17 +746,19 @@ begin
     if C_vgatext generate
       vga_video: entity work.VGA_textmode -- vga 80x40
       generic map (
-        C_vgatext_mode          => C_vgatext_mode,
-        C_vgatext_bits          => C_vgatext_bits,
-        C_vgatext_font_height   => C_vgatext_font_height,
-        C_vgatext_font_depth    => C_vgatext_font_depth,
+		C_vgatext_mode			=>	C_vgatext_mode,
+		C_vgatext_bits			=>	C_vgatext_bits,
+		C_vgatext_palette		=>	C_vgatext_palette,
+		C_vgatext_text			=>	C_vgatext_text,
+		C_vgatext_monochrome	=>	C_vgatext_monochrome,
+		C_vgatext_font_height	=>	C_vgatext_font_height,
+		C_vgatext_char_height	=>	C_vgatext_char_height,
 		C_vgatext_font_linedouble => C_vgatext_font_linedouble,
-        C_vgatext_char_height   => C_vgatext_char_height,
-        C_vgatext_monochrome    => C_vgatext_monochrome,
-        C_vgatext_palette       => C_vgatext_palette,
-        C_vgatext_bitmap        => C_vgatext_bitmap,
-        C_vgatext_bitmap_fifo   => C_vgatext_bitmap_fifo,
-        C_vgatext_bitmap_depth  => C_vgatext_bitmap_depth
+		C_vgatext_font_depth	=>	C_vgatext_font_depth,
+		C_vgatext_text_fifo		=>	C_vgatext_text_fifo,
+		C_vgatext_bitmap		=>	C_vgatext_bitmap,
+		C_vgatext_bitmap_depth	=>	C_vgatext_bitmap_depth,
+		C_vgatext_bitmap_fifo	=>	C_vgatext_bitmap_fifo
       )
       port map (
         clk => clk, ce => vga_textmode_ce, addr => dmem_addr(4 downto 2),
