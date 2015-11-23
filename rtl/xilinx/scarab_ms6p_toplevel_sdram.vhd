@@ -36,245 +36,259 @@ use unisim.vcomponents.all;
 
 use work.f32c_pack.all;
 
-
 entity glue is
-	generic (
-	-- ISA: either ARCH_MI32 or ARCH_RV32
-	C_arch: integer := ARCH_MI32;
-	C_debug: boolean := false;
+  generic
+  (
+    -- ISA: either ARCH_MI32 or ARCH_RV32
+    C_arch: integer := ARCH_MI32;
+    C_debug: boolean := false;
 
-	-- Main clock: 50/81/83/100/111/112/125
-	C_clk_freq: integer := 100;
-	-- SoC configuration options
-	C_mem_size: integer := 8; -- bootloader area
-		C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
-		C_icache_size: integer := 32; -- 0, 2, 4, 8, 16, 32 KBytes
-		C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
-		C_sdram_separate_arbiter: boolean := false;
-	C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
-	C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
-		C_vgahdmi: boolean := false; -- old Emard's bitmap-only VGA
+    -- Main clock: 50/81/83/100/111/112/125
+    C_clk_freq: integer := 100;
+    -- SoC configuration options
+    C_mem_size: integer := 8; -- bootloader area
+    C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
+    C_icache_size: integer := 32; -- 0, 2, 4, 8, 16, 32 KBytes
+    C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
+    C_sdram_separate_arbiter: boolean := false;
+    C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
+    C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
+    C_vgahdmi: boolean := false; -- old Emard's bitmap-only VGA
 
-	C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
-		C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
-		C_vgatext_mode: integer := 0;				-- 0=640x480, 1=640x400, 2=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
-		C_vgatext_bits: integer := 4;				-- bits of VGA color per red, green, blue gun (e.g., 1=8, 2=64 and 4=4096 total colors possible)
-		C_vgatext_mem: integer := 4;				-- BRAM size 1, 2, 4, 8 or 16 depending on font and screen size/memory
-		C_vgatext_palette: boolean := true;			-- true for run-time color look-up table, else 16 fixed VGA color palette
-		C_vgatext_text: boolean := true;			-- enable text generation	
-			C_vgatext_monochrome: boolean := false;		-- true for 2-color text for whole screen, else additional color attribute byte per character
-			C_vgatext_font_height: integer := 16;		-- font data height 8 or 16 for 8x8 or 8x16 font
-			C_vgatext_char_height: integer := 16;		-- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
-			C_vgatext_font_linedouble: boolean := false; -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
-			C_vgatext_font_depth: integer := 8;			-- font char bits 7 for 128 characters or 8 for 256 characters
-			C_vgatext_text_fifo: boolean := true;		-- true to use videofifo for text+color, else BRAM for text+color memory
-				C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the fifo refill and rewind
-				C_vgatext_text_fifo_width: integer := 6; 	-- width of FIFO address space (default=4) len = 2^width * 4 byte
-		C_vgatext_bitmap: boolean := true;			-- true to enable bitmap generation
-		C_vgatext_bitmap_depth: integer := 8;		-- bitmap bits per pixel (1, 2, 4, 8)
-			C_vgatext_bitmap_fifo: boolean := true;		-- true to use videofifo, else SRAM port for bitmap memory
-				C_vgatext_bitmap_fifo_step: integer := 0;	-- bitmap step for the fifo refill and rewind (0 unless repeating lines)
-				C_vgatext_bitmap_fifo_width: integer := 8;	-- bitmap width of FIFO address space len = 2^width * 4 byte
+    C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
+      C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
+      C_vgatext_mode: integer := 0; -- 0=640x480, 1=640x400, 2=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
+      C_vgatext_bits: integer := 4; -- bits of VGA color per red, green, blue gun (e.g., 1=8, 2=64 and 4=4096 total colors possible)
+      C_vgatext_mem: integer := 4; -- BRAM size (1, 2, 4, 8, 16) depending on font and screen size/memory
+      C_vgatext_palette: boolean := true; -- true for run-time color look-up table, else 16 fixed VGA color palette
+      C_vgatext_text: boolean := true; -- enable text generation
+        C_vgatext_monochrome: boolean := false; -- true for 2-color text for whole screen, else additional color attribute byte per character
+        C_vgatext_font_height: integer := 16; -- font data height 8 or 16 for 8x8 or 8x16 font
+        C_vgatext_char_height: integer := 16; -- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
+        C_vgatext_font_linedouble: boolean := false; -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
+        C_vgatext_font_depth: integer := 8; -- font char bits 7 for 128 characters or 8 for 256 characters
+        C_vgatext_text_fifo: boolean := true; -- true to use videofifo for text+color, else BRAM for text+color memory
+          C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the fifo refill and rewind
+          C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) len = 2^width * 4 byte
+        C_vgatext_bitmap: boolean := true; -- true to enable bitmap generation
+        C_vgatext_bitmap_depth: integer := 8; -- bitmap bits per pixel (1, 2, 4, 8)
+        C_vgatext_bitmap_fifo: boolean := true; -- true to use videofifo, else SRAM port for bitmap memory
+          C_vgatext_bitmap_fifo_step: integer := 0; -- bitmap step for the fifo refill and rewind (0 unless repeating lines)
+          C_vgatext_bitmap_fifo_width: integer := 8; -- bitmap width of FIFO address space len = 2^width * 4 byte
 
-	C_fmrds: boolean := true;
-	C_sio: integer := 1;
-	C_spi: integer := 2;
-	C_gpio: integer := 32
-	);
-	port (
-	clk_50MHz: in std_logic;
-		sdram_clk   : out std_logic;
-		sdram_cke   : out std_logic;
-		sdram_csn   : out std_logic;
-		sdram_rasn  : out std_logic;
-		sdram_casn  : out std_logic;
-		sdram_wen   : out std_logic;
-		sdram_a     : out std_logic_vector (12 downto 0);
-		sdram_ba    : out std_logic_vector(1 downto 0);
-		sdram_dqm   : out std_logic_vector(1 downto 0);
-		sdram_d     : inout std_logic_vector (15 downto 0);
-	rs232_tx: out std_logic;
-	rs232_rx: in std_logic;
-	flash_cs, flash_cclk, flash_mosi: out std_logic;
-	flash_miso: in std_logic;
-	sd_clk, sd_cd_dat3, sd_cmd: out std_logic;
-	sd_dat0: in std_logic;
-	leds: out std_logic_vector(7 downto 0);
-	porta, portb: inout std_logic_vector(11 downto 0);
-	portc: inout std_logic_vector(7 downto 0);
-	portd: out std_logic_vector(0 downto 0); -- fm antenna is here
-	TMDS_in_P, TMDS_in_N: out std_logic_vector(2 downto 0);
-	TMDS_in_CLK_P, TMDS_in_CLK_N: out std_logic;
-	TMDS_out_P, TMDS_out_N: out std_logic_vector(2 downto 0);
-	TMDS_out_CLK_P, TMDS_out_CLK_N: out std_logic;
-	sw: in std_logic_vector(4 downto 1)
-	);
+      C_fmrds: boolean := true;
+      C_sio: integer := 1;
+      C_spi: integer := 2;
+      C_gpio: integer := 32
+  );
+  port
+  (
+    clk_50MHz: in std_logic;
+    sdram_clk: out std_logic;
+    sdram_cke: out std_logic;
+    sdram_csn: out std_logic;
+    sdram_rasn: out std_logic;
+    sdram_casn: out std_logic;
+    sdram_wen: out std_logic;
+    sdram_a: out std_logic_vector (12 downto 0);
+    sdram_ba: out std_logic_vector(1 downto 0);
+    sdram_dqm: out std_logic_vector(1 downto 0);
+    sdram_d: inout std_logic_vector (15 downto 0);
+    rs232_tx: out std_logic;
+    rs232_rx: in std_logic;
+    flash_cs, flash_cclk, flash_mosi: out std_logic;
+    flash_miso: in std_logic;
+    sd_clk, sd_cd_dat3, sd_cmd: out std_logic;
+    sd_dat0: in std_logic;
+    leds: out std_logic_vector(7 downto 0);
+    porta, portb: inout std_logic_vector(11 downto 0);
+    portc: inout std_logic_vector(7 downto 0);
+    portd: out std_logic_vector(0 downto 0); -- fm antenna is here
+    TMDS_in_P, TMDS_in_N: out std_logic_vector(2 downto 0);
+    TMDS_in_CLK_P, TMDS_in_CLK_N: out std_logic;
+    TMDS_out_P, TMDS_out_N: out std_logic_vector(2 downto 0);
+    TMDS_out_CLK_P, TMDS_out_CLK_N: out std_logic;
+    sw: in std_logic_vector(4 downto 1)
+  );
 end glue;
 
 architecture Behavioral of glue is
-	signal clk, sdram_clk_internal: std_logic;
-	signal clk_25MHz, clk_250MHz: std_logic := '0';
-	signal rs232_break: std_logic;
-	signal btns: std_logic_vector(1 downto 0);
-	signal tmds_out_rgb: std_logic_vector(2 downto 0);
+  signal clk, sdram_clk_internal: std_logic;
+  signal clk_25MHz, clk_250MHz: std_logic := '0';
+  signal rs232_break: std_logic;
+  signal btns: std_logic_vector(1 downto 0);
+  signal tmds_out_rgb: std_logic_vector(2 downto 0);
 begin
-	-- clock synthesizer: Xilinx Spartan-6 specific
+  -- clock synthesizer: Xilinx Spartan-6 specific
 
-	clk125: if C_clk_freq = 125 generate
-	clkgen125: entity work.pll_50M_250M_125M_25M
-	port map(
-	  clk_in1 => clk_50MHz, clk_out1 => clk_250MHz, clk_out2 => clk, clk_out3 => clk_25MHz
-	);
-	end generate;
+  clk125: if C_clk_freq = 125 generate
+    clkgen125: entity work.pll_50M_250M_125M_25M
+      port map
+      (
+        clk_in1 => clk_50MHz, clk_out1 => clk_250MHz, clk_out2 => clk, clk_out3 => clk_25MHz
+      );
+  end generate;
 
-	clk112: if C_clk_freq = 112 generate
-	clkgen112: entity work.pll_50M_112M5
-	port map(
-	  clk_in1 => clk_50MHz, clk_out1 => clk
-	);
-	end generate;
+  clk112: if C_clk_freq = 112 generate
+    clkgen112: entity work.pll_50M_112M5
+      port map
+      (
+        clk_in1 => clk_50MHz, clk_out1 => clk
+      );
+  end generate;
 
-	clk111: if C_clk_freq = 111 generate
-	clkgen111: entity work.pll_50M_250M_111M11_25M
-	port map(
-	  clk_in1 => clk_50MHz, clk_out1 => clk_250MHz, clk_out2 => clk, clk_out3 => clk_25MHz
-	);
-	end generate;
+  clk111: if C_clk_freq = 111 generate
+    clkgen111: entity work.pll_50M_250M_111M11_25M
+      port map
+      (
+        clk_in1 => clk_50MHz, clk_out1 => clk_250MHz, clk_out2 => clk, clk_out3 => clk_25MHz
+      );
+  end generate;
 
-	clk100: if C_clk_freq = 100 generate
-	clkgen100: entity work.pll_50M_100M_25M_250M
-	port map(
-	  clk_in1 => clk_50MHz, clk_out1 => clk, clk_out2 => clk_25MHz, clk_out3 => clk_250MHz
-	);
-	end generate;
+  clk100: if C_clk_freq = 100 generate
+    clkgen100: entity work.pll_50M_100M_25M_250M
+      port map
+      (
+        clk_in1 => clk_50MHz, clk_out1 => clk, clk_out2 => clk_25MHz, clk_out3 => clk_250MHz
+      );
+  end generate;
 
-	clk83: if C_clk_freq = 83 generate
-	clkgen83: entity work.pll_50M_25M_83M33_250M
-	port map(
-	  clk_in1 => clk_50MHz, clk_out1 => clk_25MHz, clk_out2 => clk, clk_out3 => clk_250MHz
-	);
-	end generate;
+  clk83: if C_clk_freq = 83 generate
+    clkgen83: entity work.pll_50M_25M_83M33_250M
+      port map
+      (
+        clk_in1 => clk_50MHz, clk_out1 => clk_25MHz, clk_out2 => clk, clk_out3 => clk_250MHz
+      );
+  end generate;
 
-	clk81: if C_clk_freq = 81 generate
-	clkgen81: entity work.pll_50M_81M25
-	port map(
-	  clk_in1 => clk_50MHz, clk_out1 => clk
-	);
-	end generate;
+  clk81: if C_clk_freq = 81 generate
+    clkgen81: entity work.pll_50M_81M25
+      port map
+      (
+        clk_in1 => clk_50MHz, clk_out1 => clk
+      );
+  end generate;
 
-	clk50: if C_clk_freq = 50 generate
-	  clk <= clk_50MHz;
-	end generate;
+  clk50: if C_clk_freq = 50 generate
+    clk <= clk_50MHz;
+  end generate;
 
-	-- reset hard-block: Xilinx Spartan-6 specific
-	reset: startup_spartan6
-	port map (
-	clk => clk, gsr => rs232_break, gts => rs232_break,
-	keyclearb => '0'
-	);
+  -- reset hard-block: Xilinx Spartan-6 specific
+  reset: startup_spartan6
+    port map
+    (
+      clk => clk, gsr => rs232_break, gts => rs232_break,
+      keyclearb => '0'
+    );
 
-	-- generic SDRAM glue
-	glue_sdram: entity work.glue_sdram
-	generic map (
-	C_arch => C_arch,
-	C_clk_freq => C_clk_freq,
-	C_mem_size => C_mem_size,
-	C_icache_expire => C_icache_expire,
-	C_icache_size => C_icache_size,
-	C_dcache_size => C_dcache_size,
-	C_gpio => C_gpio,
-	C_sio => C_sio,
-	C_spi => C_spi,
-	C_sdram_address_width => 24,
-	C_sdram_column_bits => 9,
-	C_sdram_startup_cycles => 10100,
-	C_sdram_cycles_per_refresh => 1524,
-	C_sdram_separate_arbiter => C_sdram_separate_arbiter,
-	C_ram_emu_addr_width => C_ram_emu_addr_width,
-	C_ram_emu_wait_states => C_ram_emu_wait_states,
-	C_vgahdmi => C_vgahdmi,
-	C_vgatext => C_vgatext,
-	C_vgatext_label => C_vgatext_label,
-	C_vgatext_mode => C_vgatext_mode,
-	C_vgatext_bits => C_vgatext_bits,
-	C_vgatext_mem => C_vgatext_mem,
-	C_vgatext_palette => C_vgatext_palette,
-	C_vgatext_text => C_vgatext_text,
-	C_vgatext_monochrome => C_vgatext_monochrome,
-	C_vgatext_font_height => C_vgatext_font_height,
-	C_vgatext_char_height => C_vgatext_char_height,
-	C_vgatext_font_linedouble => C_vgatext_font_linedouble,
-	C_vgatext_font_depth => C_vgatext_font_depth,
-	C_vgatext_text_fifo => C_vgatext_text_fifo,
-	C_vgatext_text_fifo_step => C_vgatext_text_fifo_step,
-	C_vgatext_text_fifo_width => C_vgatext_text_fifo_width,
-	C_vgatext_bitmap => C_vgatext_bitmap,
-	C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
-	C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
-	C_vgatext_bitmap_fifo_step => C_vgatext_bitmap_fifo_step,
-	C_vgatext_bitmap_fifo_width => C_vgatext_bitmap_fifo_width,
-	C_fmrds => C_fmrds,
-	C_debug => C_debug
-	)
-	port map (
-	clk => clk,
-	clk_25MHz => clk_25MHz, -- pixel clock
-	clk_250MHz => clk_250MHz, -- tmds clock
-	clk_fmdds => clk_250MHz, -- FM/RDS clock
-	-- external SDRAM interface
-	sdram_addr => sdram_a, sdram_data => sdram_d,
-	sdram_ba => sdram_ba, sdram_dqm => sdram_dqm,
-	sdram_ras => sdram_rasn, sdram_cas => sdram_casn,
-	sdram_cke => sdram_cke, sdram_clk => sdram_clk_internal,
-	sdram_we => sdram_wen, sdram_cs => sdram_csn,
-	sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
-	sio_break(0) => rs232_break,
-	spi_sck(0)  => flash_cclk,  spi_sck(1)  => sd_clk,
-	spi_ss(0)   => flash_cs,    spi_ss(1)   => sd_cd_dat3,
-	spi_mosi(0) => flash_mosi,  spi_mosi(1) => sd_cmd,
-	spi_miso(0) => flash_miso,  spi_miso(1) => sd_dat0,
-	tmds_out_rgb => tmds_out_rgb,
-	fm_antenna => portd(0),
-	gpio(11 downto 0) => porta(11 downto 0),
-	gpio(23 downto 12) => portb(11 downto 0),
-	gpio(31 downto 24) => portc(7 downto 0),
-	gpio(127 downto 32) => open,
-	simple_out(7 downto 0) => leds(7 downto 0),
-	simple_out(31 downto 8) => open,
-	simple_in(15 downto 0) => open,
-	simple_in(19 downto 16) => sw(4 downto 1),
-	simple_in(31 downto 20) => open
-	);
+  -- generic SDRAM glue
+  glue_sdram: entity work.glue_sdram
+    generic map
+    (
+      C_arch => C_arch,
+      C_clk_freq => C_clk_freq,
+      C_mem_size => C_mem_size,
+      C_icache_expire => C_icache_expire,
+      C_icache_size => C_icache_size,
+      C_dcache_size => C_dcache_size,
+      C_gpio => C_gpio,
+      C_sio => C_sio,
+      C_spi => C_spi,
+      C_sdram_address_width => 24,
+      C_sdram_column_bits => 9,
+      C_sdram_startup_cycles => 10100,
+      C_sdram_cycles_per_refresh => 1524,
+      C_sdram_separate_arbiter => C_sdram_separate_arbiter,
+      C_ram_emu_addr_width => C_ram_emu_addr_width,
+      C_ram_emu_wait_states => C_ram_emu_wait_states,
+      C_vgahdmi => C_vgahdmi,
+      C_vgatext => C_vgatext,
+      C_vgatext_label => C_vgatext_label,
+      C_vgatext_mode => C_vgatext_mode,
+      C_vgatext_bits => C_vgatext_bits,
+      C_vgatext_mem => C_vgatext_mem,
+      C_vgatext_palette => C_vgatext_palette,
+      C_vgatext_text => C_vgatext_text,
+      C_vgatext_monochrome => C_vgatext_monochrome,
+      C_vgatext_font_height => C_vgatext_font_height,
+      C_vgatext_char_height => C_vgatext_char_height,
+      C_vgatext_font_linedouble => C_vgatext_font_linedouble,
+      C_vgatext_font_depth => C_vgatext_font_depth,
+      C_vgatext_text_fifo => C_vgatext_text_fifo,
+      C_vgatext_text_fifo_step => C_vgatext_text_fifo_step,
+      C_vgatext_text_fifo_width => C_vgatext_text_fifo_width,
+      C_vgatext_bitmap => C_vgatext_bitmap,
+      C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
+      C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
+      C_vgatext_bitmap_fifo_step => C_vgatext_bitmap_fifo_step,
+      C_vgatext_bitmap_fifo_width => C_vgatext_bitmap_fifo_width,
+      C_fmrds => C_fmrds,
+      C_debug => C_debug
+    )
+    port map
+    (
+      clk => clk,
+      clk_25MHz => clk_25MHz, -- pixel clock
+      clk_250MHz => clk_250MHz, -- tmds clock
+      clk_fmdds => clk_250MHz, -- FM/RDS clock
+      -- external SDRAM interface
+      sdram_addr => sdram_a, sdram_data => sdram_d,
+      sdram_ba => sdram_ba, sdram_dqm => sdram_dqm,
+      sdram_ras => sdram_rasn, sdram_cas => sdram_casn,
+      sdram_cke => sdram_cke, sdram_clk => sdram_clk_internal,
+      sdram_we => sdram_wen, sdram_cs => sdram_csn,
+      sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
+      sio_break(0) => rs232_break,
+      spi_sck(0)  => flash_cclk,  spi_sck(1)  => sd_clk,
+      spi_ss(0)   => flash_cs,    spi_ss(1)   => sd_cd_dat3,
+      spi_mosi(0) => flash_mosi,  spi_mosi(1) => sd_cmd,
+      spi_miso(0) => flash_miso,  spi_miso(1) => sd_dat0,
+      tmds_out_rgb => tmds_out_rgb,
+      fm_antenna => portd(0),
+      gpio(11 downto 0) => porta(11 downto 0),
+      gpio(23 downto 12) => portb(11 downto 0),
+      gpio(31 downto 24) => portc(7 downto 0),
+      gpio(127 downto 32) => open,
+      simple_out(7 downto 0) => leds(7 downto 0),
+      simple_out(31 downto 8) => open,
+      simple_in(15 downto 0) => open,
+      simple_in(19 downto 16) => sw(4 downto 1),
+      simple_in(31 downto 20) => open
+    );
 
-	-- SDRAM clock output needs special routing on Spartan-6
-	sdram_clk_forward : ODDR2
-	generic map(
-	DDR_ALIGNMENT => "NONE", INIT => '0', SRTYPE => "SYNC"
-	)
-	port map (
-	Q => sdram_clk, C0 => clk, C1 => sdram_clk_internal, CE => '1',
-	R => '0', S => '0', D0 => '0', D1 => '1'
-	);
+    -- SDRAM clock output needs special routing on Spartan-6
+    sdram_clk_forward : ODDR2
+      generic map
+      (
+        DDR_ALIGNMENT => "NONE", INIT => '0', SRTYPE => "SYNC"
+      )
+      port map
+      (
+        Q => sdram_clk, C0 => clk, C1 => sdram_clk_internal, CE => '1',
+        R => '0', S => '0', D0 => '0', D1 => '1'
+      );
 
-	-- differential output buffering for HDMI clock and video
-	hdmi_output1: entity work.hdmi_out
-	  port map (
-		tmds_in_clk    => clk_25MHz,
-		tmds_out_clk_p => tmds_out_clk_p,
-		tmds_out_clk_n => tmds_out_clk_n,
-		tmds_in_rgb    => tmds_out_rgb,
-		tmds_out_rgb_p => tmds_out_p,
-		tmds_out_rgb_n => tmds_out_n
-	  );
+    -- differential output buffering for HDMI clock and video
+    hdmi_output1: entity work.hdmi_out
+      port map
+      (
+        tmds_in_clk    => clk_25MHz,
+        tmds_out_clk_p => tmds_out_clk_p,
+        tmds_out_clk_n => tmds_out_clk_n,
+        tmds_in_rgb    => tmds_out_rgb,
+        tmds_out_rgb_p => tmds_out_p,
+        tmds_out_rgb_n => tmds_out_n
+      );
 
-	hdmi_output2: entity work.hdmi_out
-	  port map (
-		tmds_in_clk    => clk_25MHz,
-		tmds_out_clk_p => tmds_in_clk_p,
-		tmds_out_clk_n => tmds_in_clk_n,
-		tmds_in_rgb    => tmds_out_rgb,
-		tmds_out_rgb_p => tmds_in_p,
-		tmds_out_rgb_n => tmds_in_n
-	  );
+    hdmi_output2: entity work.hdmi_out
+      port map
+      (
+        tmds_in_clk    => clk_25MHz,
+        tmds_out_clk_p => tmds_in_clk_p,
+        tmds_out_clk_n => tmds_in_clk_n,
+        tmds_in_rgb    => tmds_out_rgb,
+        tmds_out_rgb_p => tmds_in_p,
+        tmds_out_rgb_n => tmds_in_n
+      );
 
 end Behavioral;
