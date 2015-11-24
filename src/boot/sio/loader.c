@@ -167,7 +167,7 @@ loop:
 			"lui $5, 0x1000;"	/* top of the initial stack */
 			"and $29, %0, $4;"	/* clr low bits of the stack */
  
-			"beqz $29, cache_skip;" /* BRAM: no cache invalidate */
+			/* "beqz $29, cache_skip;" */ /* BRAM: no cache invalidate */
 			"li $2, 0x4000;"	/* max. I-cache size: 16 K */
 			"icache_flush:;"
 			"cache 0, 0($2);"
