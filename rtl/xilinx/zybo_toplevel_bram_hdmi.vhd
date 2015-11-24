@@ -60,7 +60,7 @@ entity glue is
 	C_vgatext_mem: integer := 8; -- 4, 8, 16 (4=80x25 mono, 8=up to 100x30 16 color)
 	C_vgatext_font_height: integer := 16; -- font data height 8 (doubled vertically) or 16
 	C_vgatext_font_depth: integer := 7; -- font char bits (7=128, 8=256 characters)
-	C_vgatext_font_linedouble: boolean := false; - double each line of font (e.g. 8x8 font fills 8x16 cell)
+	C_vgatext_font_linedouble: boolean := false; -- double each line of font (e.g. 8x8 font fills 8x16 cell)
 	C_vgatext_char_height: integer := 16; -- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
 	-- 80x60 8x8 text at 0x40000000, font at 0x40003800
 	--C_vgatext_mem: integer := 16; -- 4, 8, 16 (4=80x25 mono, 8=up to 100x30 16 color)
