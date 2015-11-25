@@ -5,6 +5,7 @@ part = xc6slx9-csg324-2 # last number -2 is speed grade
 flashsize = 512 # KB (kilobytes) - SPI flash device is M25P40
 top_module = glue
 isedir = /opt/Xilinx/ISE/14.7/ISE_DS
+# xil_env = . $(isedir)/settings64.sh
 SHELL = /bin/bash
 # openocd_interface = interface/altera-usb-blaster.cfg
 openocd_interface = ../include/ft2232-fpu1.ocd
