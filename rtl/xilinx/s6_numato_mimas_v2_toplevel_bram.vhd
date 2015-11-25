@@ -53,7 +53,7 @@ entity glue is
 	C_vgahdmi_mem_kb: integer := 10; -- KB
 
     C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
-      C_vgatext_label: string :=  "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32KB BRAM";	-- default banner in screen memory
+      C_vgatext_label: string :=  "f32c: numato mimas v2 MIPS compatible soft-core 100MHz 32KB BRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0; -- 0=640x480, 1=640x400, 2=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
       C_vgatext_bits: integer := 2; -- bits of VGA color per red, green, blue gun (e.g., 1=8, 2=64 and 4=4096 total colors possible)
       C_vgatext_mem: integer := 8; -- BRAM size 1, 2, 4, 8 or 16 depending on font and screen size/memory
