@@ -294,7 +294,7 @@ architecture Behavioral of glue_bram_sram8 is
 	signal gpio_intr_joint: std_logic := '0';
 
 	-- VGA_textmode VGA/HDMI video
-    constant iomap_vga_textmode: T_iomap_range := (x"FF30", x"FF3F");
+    constant iomap_vga_textmode: T_iomap_range := (x"FB80", x"FB9F");
 	signal vga_textmode_ce: std_logic;
 	signal from_vga_textmode: std_logic_vector(31 downto 0);
 	signal vga_textmode_dmem_write: std_logic;
