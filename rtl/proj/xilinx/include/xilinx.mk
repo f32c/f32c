@@ -55,7 +55,7 @@ vfiles += $(foreach core,$(xilinx_cores),$(core:.xco=.v))
 junk += $(local_corengcs)
 
 .PHONY: default xilinx_cores clean twr etwr
-default: $(project).bit $(project).mcs $(project).svf $(project).xsvf
+default: $(project).bit $(project).bin $(project).mcs $(project).svf $(project).xsvf
 xilinx_cores: $(corengcs)
 twr: $(project).twr
 etwr: $(project)_err.twr
@@ -115,7 +115,7 @@ $(project).xsvf: $(project).bit
 junk += $(project).xsvf
 
 
-programming_files: $(project).bit $(project).mcs $(project).svf $(project).xsvf
+programming_files: $(project).bit $(project).bin $(project).mcs $(project).svf $(project).xsvf
 	mkdir -p $@/$(date)
 	mkdir -p $@/latest
 	for x in .svf .bit .mcs; do cp $(project)$$x $@/$(date)/$(project)$$x; cp $(project)$$x $@/latest/$(project)$$x; done
@@ -164,7 +164,7 @@ $(project).bin: $(project)_par.ncd
           -g LCK_cycle:NoWait -g Security:None -g DonePipe:Yes -g DriveDone:No \
           -g en_sw_gsr:No -g drive_awake:No -g sw_clk:Startupclk -g sw_gwe_cycle:5 \
           -g sw_gts_cycle:4 -w $(project)_par.ncd default.bit
-	mv default.bit $(project).bin
+	mv default.bin $(project).bin
 junk += $(project).bgn $(project).bin $(project).drc $(project)_bd.bmm
 junk += $(project)_bitgen.xwbt
 
