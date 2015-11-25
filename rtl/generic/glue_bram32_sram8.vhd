@@ -299,7 +299,7 @@ architecture Behavioral of glue_bram_sram8 is
 	signal from_vga_textmode: std_logic_vector(31 downto 0);
 	signal vga_textmode_dmem_write: std_logic;
 	signal vga_textmode_dmem_to_cpu: std_logic_vector(31 downto 0);
-	signal vga_textmode_addr: std_logic_vector(12 downto 2); -- vram buffer addr (8KB for text+color and 2KB font @ 0x1800)
+	signal vga_textmode_addr: std_logic_vector(15 downto 2); -- vram buffer addr (8KB for text+color and 2KB font @ 0x1800)
 	signal vga_textmode_data: std_logic_vector(31 downto 0);
 	signal R: std_logic_vector(C_vgatext_bits-1 downto 0);
 	signal G: std_logic_vector(C_vgatext_bits-1 downto 0);
@@ -491,14 +491,16 @@ begin
 		C_vgatext_bitmap_depth	=>	C_vgatext_bitmap_depth
 	)
 	port map (
-		clk => clk, ce => vga_textmode_ce, addr => dmem_addr(3 downto 2),
+		clk => clk, ce => vga_textmode_ce, addr => dmem_addr(4 downto 2),
 		bus_write => dmem_write, byte_sel => dmem_byte_sel,
 		bus_in => cpu_to_dmem, bus_out => from_vga_textmode,
 		--
 		clk_pixel	=> clk_25MHz,
 		--
-		vga_textmode_addr	=>	vga_textmode_addr,
-		vga_textmode_data	=>	vga_textmode_data,
+		text_data       => vga_textmode_data,
+		--
+		bram_addr	=>	vga_textmode_addr,
+		bram_data	=>	vga_textmode_data,
 		--
 		bitmap_strobe	=> video_sram_bitmap_addr_strobe,
 		bitmap_addr		=> video_sram_bitmap_addr,
