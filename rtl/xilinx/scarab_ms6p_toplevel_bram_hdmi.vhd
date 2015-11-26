@@ -60,9 +60,6 @@ entity glue is
       C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
       C_vgatext_palette: boolean := false;  -- no color palette
       C_vgatext_text: boolean := true;    -- enable optional text generation
-        C_vgatext_text_fifo: boolean := false;  -- disable text memory FIFO
-          C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the FIFO refill and rewind
-          C_vgatext_text_fifo_width: integer := 6; 	-- width of FIFO address space (default=4) length = 2^width * 4 bytes
         C_vgatext_char_height: integer := 16;   -- character cell height
         C_vgatext_font_height: integer := 16;    -- font height
         C_vgatext_font_depth: integer := 7;			-- font char depth, 7=128 characters or 8=256 characters
@@ -72,6 +69,9 @@ entity glue is
         C_vgatext_finescroll: boolean := false;   -- true for pixel level character scrolling and line length modulo             
         C_vgatext_cursor: boolean := true;    -- true for optional text cursor                 
         C_vgatext_cursor_blink: boolean := true;    -- true for optional blinking text cursor
+        C_vgatext_text_fifo: boolean := false;  -- disable text memory FIFO
+          C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the FIFO refill and rewind
+          C_vgatext_text_fifo_width: integer := 6; 	-- width of FIFO address space (default=4) length = 2^width * 4 bytes
       C_vgatext_bitmap: boolean := false;     -- true for optional bitmap generation                 
         C_vgatext_bitmap_depth: integer := 8;   -- 8-bpp 256-color bitmap
         C_vgatext_bitmap_fifo: boolean := false;  -- disable bitmap FIFO

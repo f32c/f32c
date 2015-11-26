@@ -94,25 +94,26 @@ entity glue_bram is
 
 	C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
 		C_vgatext_label: string := "f32c";    -- default banner in screen memory
-    C_vgatext_mode: integer := 0;   -- 640x480                   
+    C_vgatext_mode: integer := 0;   -- 640x480
     C_vgatext_bits: integer := 2;   -- 64 possible colors
     C_vgatext_bram_mem: integer := 4;   -- 4KB text+font  memory
     C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
     C_vgatext_palette: boolean := false;  -- no color palette
     C_vgatext_text: boolean := true;    -- enable optional text generation
-      C_vgatext_text_fifo: boolean := false;  -- disable text memory FIFO
-        C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the FIFO refill and rewind
-        C_vgatext_text_fifo_width: integer := 6; 	-- width of FIFO address space (default=4) length = 2^width * 4 bytes
       C_vgatext_char_height: integer := 16;   -- character cell height
       C_vgatext_font_height: integer := 8;    -- font height
       C_vgatext_font_depth: integer := 7;			-- font char depth, 7=128 characters or 8=256 characters
-      C_vgatext_font_linedouble: boolean := true;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)        
-      C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)       
-      C_vgatext_monochrome: boolean := true;    -- true for 2-color text for whole screen, else additional color attribute byte per character             
-      C_vgatext_finescroll: boolean := false;   -- true for pixel level character scrolling and line length modulo             
-      C_vgatext_cursor: boolean := true;    -- true for optional text cursor                 
+      C_vgatext_font_linedouble: boolean := true;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
+      C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)
+      C_vgatext_monochrome: boolean := true;    -- true for 2-color text for whole screen, else additional color attribute byte per character
+      C_vgatext_finescroll: boolean := false;   -- true for pixel level character scrolling and line length modulo
+      C_vgatext_cursor: boolean := true;    -- true for optional text cursor
       C_vgatext_cursor_blink: boolean := true;    -- true for optional blinking text cursor
-    C_vgatext_bitmap: boolean := false;     -- true for optional bitmap generation                 
+      C_vgatext_bus_read: boolean := false; -- true: allow reading vgatext BRAM from CPU bus (may affect fmax). false: write only
+      C_vgatext_text_fifo: boolean := false;  -- disable text memory FIFO
+        C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the FIFO refill and rewind
+        C_vgatext_text_fifo_width: integer := 6; 	-- width of FIFO address space (default=4) length = 2^width * 4 bytes
+    C_vgatext_bitmap: boolean := false;     -- true for optional bitmap generation
       C_vgatext_bitmap_depth: integer := 8;   -- 8-bpp 256-color bitmap
       C_vgatext_bitmap_fifo: boolean := false;  -- disable bitmap FIFO
         C_vgatext_bitmap_fifo_step: integer := 0;	-- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
@@ -267,11 +268,11 @@ architecture Behavioral of glue_bram is
     signal pid_encoder_a_out: std_logic_vector(C_pids-1 downto 0);
     signal pid_encoder_b_out: std_logic_vector(C_pids-1 downto 0);
     constant C_pids_bits: integer := integer(floor((log2(real(C_pids)+0.001))+0.5));
-    
+
     -- Framebuffer
     signal R_fb_base_addr: std_logic_vector(29 downto 2);
     signal R_fb_intr: std_logic;
-    
+
     -- VGA/HDMI video
     constant iomap_vga: T_iomap_range := (x"FB80", x"FB8F"); -- VGA/HDMI should be (x"FB90", x"FB9F")
     signal vga_ce: std_logic; -- '1' when address is in iomap_vga range
@@ -363,7 +364,7 @@ begin
 	debug_active => debug_active
     );
     final_to_cpu <= io_to_cpu when io_addr_strobe = '1'
-      else vga_textmode_dmem_to_cpu when C_vgatext AND dmem_addr(31 downto 30) = "01"
+      else vga_textmode_dmem_to_cpu when C_vgatext AND C_vgatext_bus_read AND dmem_addr(31 downto 30) = "01" -- address 0x40000000
       else dmem_to_cpu;
     -- warning: only sio 0 generates interrupt
     intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;

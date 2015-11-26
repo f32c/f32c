@@ -59,7 +59,7 @@ architecture x of VGA_textmode_bram is
     type bram_type is array(0 to (C_mem_size*256)-1) of std_logic_vector(7 downto 0);
 
     --
-    -- Xilinx ISE 14.7 for Spartan-3 will abort with error about loop 
+    -- Xilinx ISE 14.7 for Spartan-3 will abort with error about loop
     -- iteration limit >64 exceeded.  We need 128 iterations here.
     -- If buiding with makefile, edit file xilinx.opt file and
     -- append this line (give sufficiently large limit):
