@@ -73,6 +73,7 @@ entity glue is
         C_vgatext_finescroll: boolean := true;   -- true for pixel level character scrolling and line length modulo             
         C_vgatext_cursor: boolean := true;    -- true for optional text cursor                 
         C_vgatext_cursor_blink: boolean := true;    -- true for optional blinking text cursor
+        C_vgatext_bus_read: boolean := true; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
         C_vgatext_text_fifo: boolean := true;  -- enable text memory FIFO
           C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the FIFO refill and rewind
           C_vgatext_text_fifo_width: integer := 6; 	-- width of FIFO address space (default=4) length = 2^width * 4 bytes
