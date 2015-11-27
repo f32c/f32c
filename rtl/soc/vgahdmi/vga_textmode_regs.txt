@@ -1,0 +1,98 @@
+            +---------------+---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---------------+---------------+
+Config:     |           0xFFFFFB83          |           0xFFFFFB82          |           0xFFFFFB81          |           0xFFFFFB80          |
+            |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
+            +---------------+---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---------------+---------------+
+            | BRAM mem size |Font size/type |VGC|BGC|TGC|TCC|CBC|CPC|MTC| - |VGE|BME|TME|TCE|CBE| - | - | - | Backgnd color | Foregnd color |
+            +---------------+---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---------------+---------------+
+BRAM mem size:      RO  0000=0K BRAM, 0001=1K, 0010=2K, 0011=4K, 0100=8K, 0101=16K, 0110=32K, 0111=64K (others reserved)
+Font size/type:     RO  0000=no font, 0010=8x8x128, 0011=8x8x256, 0100=8x16x128, 0101=8x16x256 (others reserved)
+VGC:                RO  Video Generation Configured,    0=no, 1=yes
+BGC:                RO  Bitmap Generation Configured,   0=no, 1=yes
+TGC:                RO  Text Generation Configured,     0=no, 1=yes
+TCC:                RO  Text Cursor Configured,         0=no, 1=yes
+CBC:                RO  Cursor Blink Configured,        0=no, 1=yes
+CPC:                RO  Color Palette Configured,       0=no, 1=yes
+MTC:                RO  Monochrome Text Configured,     0=no, 1=yes
+VGE:                RW  Video Generation Enabled,       0=off, 1=on (always off if not configured)
+BGE:                RW  Bitmap Generation Enabled,      0=off, 1=on (always off if not configured)
+TGE:                RW  Text Generation Enabled,        0=off, 1=on (always off if not configured)
+TCE:                RW  Text Cursor Enabled,            0=off, 1=on (always off if not configured)
+CBE:                RW  Cursor Blink Enabled,           0=off, 1=on (always off if not configured)
+Backgnd:            RW  4-bit text background color (either IRGB or palette index, if palette enabled)
+Foregnd:            RW  4-bit text foreground color (either IRGB or palette index, if palette enabled)
+
+            +---------------+-----------------------------------------------+---------------+-----------------------------------------------+
+Config2:    |           0xFFFFFB87          |           0xFFFFFB86          |           0xFFFFFB85          |           0xFFFFFB84          |
+            |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
+            +-------+---+---+-----------------------------------------------+---------------+-----------------------------------------------+
+(read)      | 0   0 |Y2 |X2 |              screen height                    |  Bitmap bpp   |                 screen width                  |
+(write)     | 0   0 |Y2 |X2 | 0   0   0   0   0   0   0   0   0   0   0   0 | 0   0   0   0 |              text width modulo                |
+            +-------+---+---+-----------------------------------------------+---------------+-----------------------------------------------+
+Y2:                 RW  double font data vertically (16 or 32 pixel high font)
+X2:                 RW  double font data horizontally (16 pixel wide font)
+screen height:      RO  0-4095 pixels high
+bitmap bpp:         RO  0000=1 bpp, 0001=2 bpp, 0010=4 bpp, 0011=8 bpp (others reserved)
+screen width:       RO  0-4095 pixels wide
+text width modulo:  WO  0-4095 additional offset at end of each text line
+
+            +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
+Cursor:     |           0xFFFFFB8B          |           0xFFFFFB8A          |           0xFFFFFB89          |           0xFFFFFB88          |
+            |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
+            +---------------+---------------+-----------------------+-------+-------------------------------+-------------------------------+
+(read)      |       text cell height        |   text font address   | 0   0 |       cursor Y position       |       cursor X position       |
+(write)     | Y fine scroll | X fine scroll |   text font address   | 0   0 |       cursor Y position       |       cursor X position       |
+            +---------------+---------------+-----------------------+-------+-------------------------------+-------------------------------+
+text cell height:   RO  0x00-0xFF text cell height
+text fine Y scroll: WO  0x00-(char_cell_height) pixel Y fine scroll
+text fine X scroll: WO  0x00-(char_cell_width) pixel X fine scroll
+text font address:  RW  0x00-0xFC upper 8-bits of BRAM font address (on 1K or 2K boundary, depending on font size)
+cursor Y:           RW  0x00-0xFF cursor position
+cursor X:           RW  0x00-0xFF cursor position
+
+            +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
+TextAddr:   |           0xFFFFFB8F          |           0xFFFFFB8E          |           0xFFFFFB8D          |           0xFFFFFB8C          |
+            |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
+            +---------------+---------------+-------------------------------+-------------------------------+-----------------------+-------+
+            |    Mem Type   |                                           TextAddr                                                    | 0   0 |
+            +---------------+---------------+-------------------------------+-------------------------------+-----------------------+-------+
+Mem Type:           RO  0100 = BRAM, 1000 = SDRAM/SRAM (others reserved)
+TextAddr:           RW  Text/color attribute screen memory address  (27 downto 2)
+
+            +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
+BitmapAddr: |           0xFFFFFB93          |           0xFFFFFB92          |           0xFFFFFB91          |           0xFFFFFB90          |
+            |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
+            +---------------+---------------+-------------------------------+-------------------------------+-----------------------+-------+
+            |    Mem Type   |                                           BitmapAddr                                                  | 0   0 |
+            +---------------+---------------+-------------------------------+-------------------------------+-----------------------+-------+
+Mem Type:           RO  0100 = BRAM, 1000 = SDRAM/SRAM (others reserved)
+BitmapAddr:         RW  Bitmap screen memory address (27 downto 2)
+
+            +---------------+---------------+-------------------------------+-------------------------------+-------------------------------+
+SetPalette: |           0xFFFFFF97          |           0xFFFFFB96          |           0xFFFFFB95          |           0xFFFFFB94          |
+            |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
+            +---+-----------+---------------+-------------------------------+-------------------------------+-------------------------------+
+            |BM | 0   0   0 |     index     |               red             |             green             |             blue              |
+            +---+-----------+---------------+-------------------------------+-------------------------------+-------------------------------+
+BM:                 WO  BM=1, set bitmap color (only when bitmap bits per pixel = 1)
+index:              WO  0x0-0xF palette index
+red:                WO  0x00-0xFF red gun (only configured significant bits will be kept)
+green:              WO  0x00-0xFF green gun (only configured significant bits will be kept)
+blue:               WO  0x00-0xFF blue gun (only configured significant bits will be kept)
+
+            +---+-----------+---------------+-------------------------------+-------------------------------+-----------------------+-------+
+BRAMAddr:   |           0xFFFFFB9B          |           0xFFFFFB9A          |           0xFFFFFB99          |           0xFFFFFB98          |
+            |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
+            +---------------+---------------+-------------------------------+-------------------------------+-----------------------+---+---+
+(write)     | 0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 |                           BRAMAddr                    | 0   0 |
+(read)      | 0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 | 0   0   0   0   0   0   0   0   0   0   0   0   0   0 | 0 |WAI|
+            +---------------+---------------+-------------------------------+-------------------------------+-----------------------+---+---+
+BRAMAddr:           Wr  BRAM memory address to read
+WAI:                Rd  WAI=1 when BRAMData data not valid yet
+
+            +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
+BRAMData:   |           0xFFFFFB9F          |           0xFFFFFB9E          |           0xFFFFFB9D          |           0xFFFFFB9C          |
+            |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
+            +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
+            |                                                           BRAMData                                                            |
+            +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
+BRAMData:           RO  BRAM data at address BRAMAddr (when BRAMAddr(0)=0)
