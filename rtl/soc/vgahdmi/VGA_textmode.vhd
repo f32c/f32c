@@ -250,7 +250,7 @@ architecture Behavioral of VGA_textmode is
   signal  vg_enable:          std_logic   := '1';                 -- video generation
   signal  bg_enable:          std_logic   := '0';                 -- bitmap generation
   signal  tg_enable:          std_logic   := bool_to_sl(C_vgatext_text);  -- text generation
-  signal  tc_enable:          std_logic   := '0';                 -- text cursor generation
+  signal  tc_enable:          std_logic   := bool_to_sl(C_vgatext_cursor);    -- text cursor generation
   signal  cb_enable:          std_logic   := bool_to_sl(C_vgatext_cursor_blink);  -- text cursor blink
 
   -- video generation signals
@@ -266,12 +266,12 @@ architecture Behavioral of VGA_textmode is
   -- text generation signals
   signal  text_start_addr:    std_logic_vector(29 downto 0) := "00" & x"0100000";  -- text start address
   signal  font_start_addr:    std_logic_vector(5 downto 0);       -- font base address (1K boundaries) address in BRAM
-  signal  fine_scrollx:       unsigned(3 downto 0);               -- X fine scroll
-  signal  fine_scrolly:       unsigned(3 downto 0);               -- Y fine scroll
-  signal  text_modulo:        unsigned(11 downto 0);              -- text line width module (added at end of each line)
   signal  text_addr:          unsigned(29 downto 0);              -- address to fetch character+color attribute
   signal  char_y:             unsigned(4 downto 0);               -- current line of font cell
   signal  text_line:          unsigned(7 downto 0);               -- current text line
+  signal  fine_scrollx:       unsigned(3 downto 0);               -- X fine scroll
+  signal  fine_scrolly:       unsigned(3 downto 0);               -- Y fine scroll
+  signal  text_modulo:        unsigned(11 downto 0);              -- text line width module (added at end of each line)
   signal  font_data:          std_logic_vector(7 downto 0);       -- bit pattern shifting out for current font character line
   signal  font_data_next:     std_logic_vector(7 downto 0);       -- bit pattern for next font character line
   signal  text_color:         std_logic_vector(7 downto 0);       -- background/foreground color attribute for current character
@@ -383,7 +383,7 @@ begin
   --             |MemTyp |                                                   TextAddr                                                    | 0   0 |
   --             +-------+-----------------------+-------------------------------+-------------------------------+-----------------------+-------+
           when C_textaddr_reg =>
-            if C_vgatext_text then
+            if C_vgatext_text AND byte_sel_i = "1111" then
               text_start_addr(29 downto 2) <= bus_data_i(29 downto 2) ;
             end if;
   --             +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
@@ -392,7 +392,7 @@ begin
   --             |MemTyp |                                                   BitmapAddr                                                  | 0   0 |
   --             +-------+-----------------------+-------------------------------+-------------------------------+-----------------------+-------+
           when C_bitmapaddr_reg =>
-            if C_vgatext_text then
+            if C_vgatext_text AND byte_sel_i = "1111" then
               bitmap_start_addr(29 downto 2) <= bus_data_i(29 downto 2);
             end if;
   --             +---------------+---------------+-------------------------------+-------------------------------+-------------------------------+
@@ -401,12 +401,12 @@ begin
   --             |BM | 0   0   0 |     index     |               red             |             green             |             blue              |
   --             +---+-----------+---------------+-------------------------------+-------------------------------+-------------------------------+
           when C_palette_reg =>
-            if C_vgatext_palette AND bus_data_i(31) = '0' then
+            if C_vgatext_palette AND byte_sel_i = "1111" AND bus_data_i(31) = '0' then
               palette_r(to_integer(unsigned(bus_data_i(27 downto 24))))(23 downto 24-C_vgatext_bits) <= bus_data_i(23 downto 24-C_vgatext_bits);
               palette_r(to_integer(unsigned(bus_data_i(27 downto 24))))(15 downto 16-C_vgatext_bits) <= bus_data_i(15 downto 16-C_vgatext_bits);
               palette_r(to_integer(unsigned(bus_data_i(27 downto 24))))(7 downto 8-C_vgatext_bits) <= bus_data_i(7 downto 8-C_vgatext_bits);
             end if;
-            if C_vgatext_bitmap AND C_vgatext_bitmap_depth = 1 AND bus_data_i(31) = '1' then
+            if C_vgatext_bitmap AND byte_sel_i = "1111" AND C_vgatext_bitmap_depth = 1 AND bus_data_i(31) = '1' then
               bitmap_color(23 downto 24-C_vgatext_bits) <= bus_data_i(23 downto 24-C_vgatext_bits);
               bitmap_color(15 downto 16-C_vgatext_bits) <= bus_data_i(15 downto 16-C_vgatext_bits);
               bitmap_color(7 downto 8-C_vgatext_bits) <= bus_data_i(7 downto 8-C_vgatext_bits);
@@ -433,21 +433,21 @@ begin
   -- (write)     | Y fine scroll | X fine scroll |   text font address   | 0   0 |       cursor Y position       |       cursor X position       |
   --             +---------------+---------------+-----------------------+-------+-------------------------------+-------------------------------+
     else std_logic_vector(to_unsigned(C_vgatext_char_height,8)) & font_start_addr & "00" & std_logic_vector(cursory) & std_logic_vector(cursorx)
-    when bus_addr_i = C_cursor_reg
+    when C_vgatext_text AND bus_addr_i = C_cursor_reg
   --             +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
   -- TextAddr:   |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
   --             +-------+-----------------------+-------------------------------+-------------------------------+-----------------------+-------+
   --             |MemTyp |                                                   TextAddr                                                    | 0   0 |
   --             +-------+-----------------------+-------------------------------+-------------------------------+-----------------------+-------+
     else bool_to_sl(C_vgatext_text_fifo) & bool_to_sl(NOT C_vgatext_text_fifo) & text_start_addr(29 downto 2) & "00"
-    when bus_addr_i = C_textaddr_reg
+    when C_vgatext_text AND bus_addr_i = C_textaddr_reg
   --             +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
   -- BitmapAddr: |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
   --             +-------+-----------------------+-------------------------------+-------------------------------+-----------------------+-------+
   --             |MemTyp |                                                   BitmapAddr                                                  | 0   0 |
   --             +-------+-----------------------+-------------------------------+-------------------------------+-----------------------+-------+
     else "10" & bitmap_start_addr(29 downto 2) & "00"
-    when bus_addr_i = C_bitmapaddr_reg
+    when C_vgatext_bitmap AND bus_addr_i = C_bitmapaddr_reg
   --             +---------------+---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---------------+---------------+
   -- Config:     |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
   --             +---------------+---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---------------+---------------+
@@ -744,14 +744,17 @@ begin
     bitmap_addr_o <= std_logic_vector(bitmap_addr(29 downto 2));  -- output SRAM address for bitmap word
   end generate;
 
-  -- bitmap FIFO strobe output
-  G_bitmap_fifo: if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
-    bitmap_strobe_o <= bitmap_strobe;
-  end generate;
-
+  -- text FIFO output
   G_text_fifo: if C_vgatext_text AND C_vgatext_text_fifo generate
     textfifo_addr_o <= text_start_addr(29 downto 2);             -- output SDRAM FIFO start address
   end generate;
+
+  -- bitmap FIFO outputs
+  G_bitmap_fifo: if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
+    bitmap_addr_o <= bitmap_start_addr(29 downto 2);          -- output SDRAM bitmap FIFO start address
+    bitmap_strobe_o <= bitmap_strobe;
+  end generate;
+
 
   -- output VGA/DVI/HDMI signals
   hsync_o <= hsync;
