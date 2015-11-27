@@ -120,7 +120,7 @@ binboot(void)
 			"lui $5, 0x1000;"	/* top of the initial stack */
 			"and $29, %0, $4;"	/* clr low bits of the stack */
 
-			"beqz $29, cache_skip;"	/* skip cache invalidate for BRAM */
+			/* "beqz $29, cache_skip;" */	/* skip cache invalidate for BRAM */
 			"li $2, 0x10000;"	/* max. I-cache size: 64 K */
 			"icache_flush:;"
 			"cache 0, 0($2);"
