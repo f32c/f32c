@@ -264,7 +264,7 @@ architecture Behavioral of VGA_textmode is
   signal  vsync:              std_logic;                          -- vertical sync signal
 
   -- text generation signals
-  signal  text_start_addr:    std_logic_vector(29 downto 0) := "00" & x"0100000";  -- text start address
+  signal  text_start_addr:    std_logic_vector(29 downto 2);      -- text start address
   signal  font_start_addr:    std_logic_vector(5 downto 0);       -- font base address (1K boundaries) address in BRAM
   signal  text_addr:          unsigned(29 downto 0);              -- address to fetch character+color attribute
   signal  char_y:             unsigned(4 downto 0);               -- current line of font cell
@@ -283,7 +283,7 @@ architecture Behavioral of VGA_textmode is
   signal  fcount:             unsigned(3 downto 0);               -- frame counter (incremented once per frame for blink)
 
   -- bitmap generation signals
-  signal  bitmap_start_addr:  std_logic_vector(29 downto 0) := "00" & x"0200000";  -- bitmap start address
+  signal  bitmap_start_addr:  std_logic_vector(29 downto 2);  -- bitmap start address
   signal  bitmap_addr:        unsigned(29 downto 2);              -- current bitmap address
   signal  bitmap_color:       std_logic_vector(23 downto 0);      -- monochrome bitmap color register (xRRGGBB)
   signal  bitmap_data:        std_logic_vector(31 downto 0);      -- bit pattern shifting out for current bitmap word
