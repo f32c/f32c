@@ -48,6 +48,9 @@ entity videofifo is
         -- starting from last full step it was filled from RAM,
         -- saves RAM bandwidth during text mode or bitmap vertial line doubling
         C_step: integer := 0;
+        -- postpone step fetch by N 32-bit words
+        -- set it to 1-3 for bandwidth saving with soft scroll
+        C_postpone_step: integer := 0;
         -- defines the length of the FIFO: 4 * 2^C_length bytes
         -- default value of 4: length = 16 * 32 bits = 16 * 4 bytes = 64 bytes
         C_width: integer := 4 -- bits width of fifo address
@@ -185,7 +188,10 @@ begin
                 else
                   R_delay_fetch <= R_delay_fetch - 1;
                 end if;
-                if R_delay_fetch = C_step - 2 then
+                if R_delay_fetch = C_step - 2 - C_postpone_step then
+                  -- C_step-2 will fetch at begin of new line
+                  -- C_step-3 will fetch 1 word after begin of new line.
+                  -- that is for soft scroll bandiwdth saving.
                   -- old line consumed, new line currently displayed
                   -- rd_addr is also rewind point,
                   -- incrementing it will discard old data from fifo
