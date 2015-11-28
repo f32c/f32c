@@ -96,6 +96,7 @@ entity glue is
 	jc_d: inout std_logic_vector(3 downto 0);
 	jd_u: inout std_logic_vector(3 downto 0);
 	jd_d: inout std_logic_vector(3 downto 0);
+	hdmi_out_en : out std_logic;
 	hdmi_clk_p, hdmi_clk_n: out std_logic;
 	hdmi_d_p, hdmi_d_n: out std_logic_vector(2 downto 0);
 	vga_g: out std_logic_vector(5 downto 0);
@@ -130,21 +131,21 @@ begin
     clk <= clk_125m;
     end generate;
 
-    reset: startupe2
-    generic map (
-		prog_usr => "FALSE"
-    )
-    port map (
-		clk => clk,
-		gsr => sio_break,
-		gts => '0',
-		keyclearb => '0',
-		pack => '1',
-		usrcclko => clk,
-		usrcclkts => '0',
-		usrdoneo => '1',
-		usrdonets => '0'
-   );
+--    reset: startupe2
+--    generic map (
+--		prog_usr => "FALSE"
+--    )
+--    port map (
+--		clk => clk,
+--		gsr => sio_break,
+--		gts => '0',
+--		keyclearb => '0',
+--		pack => '1',
+--		usrcclko => clk,
+--		usrcclkts => '0',
+--		usrdoneo => '1',
+--		usrdonets => '0'
+--   );
 
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
@@ -218,6 +219,7 @@ begin
     );
 
     -- differential output buffering for HDMI clock and video
+    hdmi_out_en <= '1';
     hdmi_output: entity work.hdmi_out
       port map (
         tmds_in_clk => clk_25MHz,
@@ -227,4 +229,6 @@ begin
         tmds_out_rgb_p => hdmi_d_p,
         tmds_out_rgb_n => hdmi_d_n
       );
+      
+      
 end Behavioral;
