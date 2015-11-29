@@ -58,6 +58,7 @@ entity glue is
       C_vgatext_bits: integer := 2;   -- 64 possible colors
       C_vgatext_bram_mem: integer := 8;   -- 8KB text+font  memory
       C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
+      C_vgatext_reset: boolean := true;   -- reset registers to default with async reset
       C_vgatext_palette: boolean := false;  -- no color palette
       C_vgatext_text: boolean := true;    -- enable optional text generation
         C_vgatext_char_height: integer := 16;   -- character cell height
@@ -177,6 +178,7 @@ begin
       C_vgatext_bits => C_vgatext_bits,
       C_vgatext_bram_mem => C_vgatext_bram_mem,
       C_vgatext_external_mem => C_vgatext_external_mem,
+      C_vgatext_reset => C_vgatext_reset,
       C_vgatext_palette => C_vgatext_palette,
       C_vgatext_text => C_vgatext_text,
       C_vgatext_text_fifo => C_vgatext_text_fifo,
