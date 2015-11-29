@@ -149,8 +149,8 @@ set_property IOSTANDARD TMDS_33 [get_ports {hdmi_d_p[2]}]
 #set_property IOSTANDARD LVCMOS33 [get_ports hdmi_hpd]
 
 ##IO_L6N_T0_VREF_35
-#set_property PACKAGE_PIN F17 [get_ports hdmi_out_en]
-#set_property IOSTANDARD LVCMOS33 [get_ports hdmi_out_en]
+set_property PACKAGE_PIN F17 [get_ports hdmi_out_en]
+set_property IOSTANDARD LVCMOS33 [get_ports hdmi_out_en]
 
 ##IO_L16P_T2_35
 #set_property PACKAGE_PIN G17 [get_ports hdmi_scl]
@@ -509,6 +509,7 @@ set_property IOSTANDARD LVCMOS33 [get_ports {jd_d[3]}]
 ##IO_L9N_T1_DQS_34
 set_property PACKAGE_PIN U17 [get_ports {rs232_rx}]
 set_property IOSTANDARD LVCMOS33 [get_ports {rs232_rx}]
+set_property PULLUP true [get_ports {rs232_rx}]
 
 ##IO_L3N_T0_DQS_34
 set_property PACKAGE_PIN V13 [get_ports {rs232_tx}]
