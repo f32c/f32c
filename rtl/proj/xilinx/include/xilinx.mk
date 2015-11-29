@@ -165,7 +165,7 @@ $(project).bin: $(project)_par.ncd
           -g en_sw_gsr:No -g drive_awake:No -g sw_clk:Startupclk -g sw_gwe_cycle:5 \
           -g sw_gts_cycle:4 -w $(project)_par.ncd default.bit
 	mv default.bin $(project).bin
-junk += $(project).bgn $(project).bin $(project).drc $(project)_bd.bmm
+junk += $(project).bgn default.bgn $(project).bin $(project).drc $(project)_bd.bmm
 junk += $(project)_bitgen.xwbt
 
 
