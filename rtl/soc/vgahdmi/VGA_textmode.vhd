@@ -587,23 +587,22 @@ begin
         if C_vgatext_bitmap then
           bitmap_strobe <= '0';
         end if;
-        
-        if bram_read_wait = '1' then
-          bram_read_value <= bram_data_i;
-          bram_read_wait <= '0';
-        end if;
 
+        -- handle BRAM register based reads
+        if C_vgatext_reg_read then
+          if bram_read_wait = '1' then
+            bram_read_value <= bram_data_i;
+            bram_read_wait <= '0';
+          elsif (vcount < 0 OR hcount(2) = '0') AND bram_read_request = '1' then
+            bram_addr_o <= bram_read_addr;
+            bram_read_wait <= '1';
+          end if;
+        end if;
+        
         if vcount >= 0 then           -- if on a visible scan-line
           -- text character generation
           if tg_enable = '1' AND hcount >= -8 AND vcount < ((visible_height/C_vgatext_char_height)*C_vgatext_char_height) then
             case hcount(2 downto 0) is
-              when "000" | "001" | "010" | "011" =>
-                if C_vgatext_reg_read then
-                  if bram_read_request = '1' then
-                    bram_read_wait <= '1';
-                    bram_addr_o <= bram_read_addr;
-                   end if;
-                end if;
               when "100" =>             -- put text address on bus (if not using text FIFO)
                 if NOT C_vgatext_text_fifo then
                 bram_addr_o   <= std_logic_vector(text_addr(15 downto 2));
