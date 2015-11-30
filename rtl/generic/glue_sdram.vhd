@@ -119,6 +119,7 @@ generic (
     C_vgatext_bits: integer := 2;   -- 64 possible colors
     C_vgatext_bram_mem: integer := 4;   -- 4KB text+font  memory
     C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
+    C_vgatext_reset: boolean := true;   -- reset registers to default with async reset
     C_vgatext_palette: boolean := false;  -- no color palette
     C_vgatext_text: boolean := true;    -- enable optional text generation
       C_vgatext_char_height: integer := 16;   -- character cell height
@@ -131,8 +132,10 @@ generic (
       C_vgatext_cursor: boolean := true;    -- true for optional text cursor
       C_vgatext_cursor_blink: boolean := true;    -- true for optional blinking text cursor
       C_vgatext_bus_read: boolean := false; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
+      C_vgatext_reg_read: boolean := false; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
       C_vgatext_text_fifo: boolean := true;  -- enable text memory FIFO
-        C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the FIFO refill and rewind
+      C_vgatext_text_fifo_postpone_step: integer := 0;
+      C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the FIFO refill and rewind
         C_vgatext_text_fifo_width: integer := 6; 	-- width of FIFO address space (default=4) length = 2^width * 4 bytes
     C_vgatext_bitmap: boolean := false;     -- true for optional bitmap generation
       C_vgatext_bitmap_depth: integer := 8;   -- 8-bpp 256-color bitmap
@@ -943,8 +946,10 @@ begin
     C_vgatext_bits => C_vgatext_bits,
     C_vgatext_bram_mem => C_vgatext_bram_mem,
     C_vgatext_external_mem => C_vgatext_external_mem,
+    C_vgatext_reset => C_vgatext_reset,
     C_vgatext_palette => C_vgatext_palette,
     C_vgatext_text => C_vgatext_text,
+    C_vgatext_reg_read => C_vgatext_reg_read,
     C_vgatext_text_fifo => C_vgatext_text_fifo,
     C_vgatext_char_height => C_vgatext_char_height,
     C_vgatext_font_height => C_vgatext_font_height,
@@ -960,6 +965,7 @@ begin
     C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo
 	)
 	port map (
+    reset_i => sio_break_internal(0),
     clk_i => clk, ce_i => vga_textmode_ce, bus_addr_i => dmem_addr(4 downto 2),
     bus_write_i => dmem_write, byte_sel_i => dmem_byte_sel,
     bus_data_i => cpu_to_dmem, bus_data_o => from_vga_textmode,
@@ -996,6 +1002,7 @@ begin
 	if C_vgatext_text AND C_vgatext_text_fifo generate
     videofifo: entity work.videofifo
     generic map (
+      C_postpone_step => C_vgatext_text_fifo_postpone_step,
       C_step => C_vgatext_text_fifo_step,
       C_width => C_vgatext_text_fifo_width -- length = 4 * 2^width
     )
