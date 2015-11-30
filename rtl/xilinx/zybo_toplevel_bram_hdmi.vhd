@@ -55,6 +55,10 @@ entity glue is
 	C_vgahdmi_mem_kb: integer := 38; -- KB 38K full mono 640x480
 	C_vgahdmi_test_picture: integer := 1; -- enable test picture
 
+        -- hard startup for xc7 series doesn't work on some boards
+        -- reason unknown, disabled by default
+        C_hard_startup: boolean := false;
+
     C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string :=  "f32c: ZYBO xc7z010 MIPS compatible soft-core 100MHz 128KB BRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0; -- 0=640x480, 1=640x400, 2=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
@@ -96,6 +100,7 @@ entity glue is
 	jc_d: inout std_logic_vector(3 downto 0);
 	jd_u: inout std_logic_vector(3 downto 0);
 	jd_d: inout std_logic_vector(3 downto 0);
+	hdmi_out_en : out std_logic;
 	hdmi_clk_p, hdmi_clk_n: out std_logic;
 	hdmi_d_p, hdmi_d_n: out std_logic_vector(2 downto 0);
 	vga_g: out std_logic_vector(5 downto 0);
@@ -130,21 +135,23 @@ begin
     clk <= clk_125m;
     end generate;
 
-    reset: startupe2
-    generic map (
-		prog_usr => "FALSE"
-    )
-    port map (
-		clk => clk,
-		gsr => sio_break,
-		gts => '0',
-		keyclearb => '0',
-		pack => '1',
-		usrcclko => clk,
-		usrcclkts => '0',
-		usrdoneo => '1',
-		usrdonets => '0'
-   );
+    hard_startup: if C_hard_startup generate
+        reset: startupe2
+        generic map (
+          prog_usr => "FALSE"
+        )
+        port map (
+          clk => clk,
+          gsr => sio_break,
+          gts => '0',
+          keyclearb => '0',
+          pack => '1',
+          usrcclko => clk,
+          usrcclkts => '0',
+          usrdoneo => '1',
+          usrdonets => '0'
+        );
+   end generate;
 
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
@@ -218,6 +225,7 @@ begin
     );
 
     -- differential output buffering for HDMI clock and video
+    hdmi_out_en <= '1';
     hdmi_output: entity work.hdmi_out
       port map (
         tmds_in_clk => clk_25MHz,
@@ -227,4 +235,6 @@ begin
         tmds_out_rgb_p => hdmi_d_p,
         tmds_out_rgb_n => hdmi_d_n
       );
+      
+      
 end Behavioral;
