@@ -67,10 +67,13 @@ entity glue is
         C_vgatext_font_linedouble: boolean := false;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)        
         C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)       
         C_vgatext_monochrome: boolean := false;    -- true for 2-color text for whole screen, else additional color attribute byte per character             
-        C_vgatext_finescroll: boolean := false;   -- true for pixel level character scrolling and line length modulo             
+        C_vgatext_finescroll: boolean := true;   -- true for pixel level character scrolling and line length modulo             
         C_vgatext_cursor: boolean := true;    -- true for optional text cursor                 
         C_vgatext_cursor_blink: boolean := true;    -- true for optional blinking text cursor
+        C_vgatext_bus_read: boolean := false; -- true: allow reading vgatext BRAM from CPU bus (may affect fmax). false: write only
+        C_vgatext_reg_read: boolean := true; -- true: allow reading vgatext BRAM from CPU bus (may affect fmax). false: write only
         C_vgatext_text_fifo: boolean := false;  -- disable text memory FIFO
+          C_vgatext_text_fifo_postpone_step: integer := 1;
           C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the FIFO refill and rewind
           C_vgatext_text_fifo_width: integer := 6; 	-- width of FIFO address space (default=4) length = 2^width * 4 bytes
       C_vgatext_bitmap: boolean := false;     -- true for optional bitmap generation                 
@@ -180,6 +183,8 @@ begin
       C_vgatext_external_mem => C_vgatext_external_mem,
       C_vgatext_reset => C_vgatext_reset,
       C_vgatext_palette => C_vgatext_palette,
+      C_vgatext_bus_read => C_vgatext_bus_read,
+      C_vgatext_reg_read => C_vgatext_reg_read,
       C_vgatext_text => C_vgatext_text,
       C_vgatext_text_fifo => C_vgatext_text_fifo,
       C_vgatext_text_fifo_step => C_vgatext_text_fifo_step,
