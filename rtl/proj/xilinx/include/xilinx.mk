@@ -44,6 +44,7 @@ xc3sprog_interface ?= xpc
 xc3sprog_device ?= 0
 jtag_spi_bridge ?= ../include/bscan_xc6s_ftg256_blink.bit.xz
 flashsize ?= 8192
+bitstream_bin ?= 
 
 libmks = $(patsubst %,$(libdir)/%/module.mk,$(libs)) 
 mkfiles = Makefile $(libmks) # xilinx.mk
@@ -55,7 +56,7 @@ vfiles += $(foreach core,$(xilinx_cores),$(core:.xco=.v))
 junk += $(local_corengcs)
 
 .PHONY: default xilinx_cores clean twr etwr
-default: $(project).bit $(project).bin $(project).mcs $(project).svf $(project).xsvf
+default: $(project).bit $(bitstream_bin) $(project).mcs $(project).svf $(project).xsvf
 xilinx_cores: $(corengcs)
 twr: $(project).twr
 etwr: $(project)_err.twr
