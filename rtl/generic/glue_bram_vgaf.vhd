@@ -111,7 +111,9 @@ entity glue_bram is
       C_vgatext_cursor: boolean := true;    -- true for optional text cursor
       C_vgatext_cursor_blink: boolean := true;    -- true for optional blinking text cursor
       C_vgatext_bus_read: boolean := false; -- true: allow reading vgatext BRAM from CPU bus (may affect fmax). false: write only
+      C_vgatext_reg_read: boolean := false; -- true: allow reading vgatext BRAM from CPU bus (may affect fmax). false: write only
       C_vgatext_text_fifo: boolean := false;  -- disable text memory FIFO
+        C_vgatext_text_fifo_postpone_step: integer := 1;
         C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the FIFO refill and rewind
         C_vgatext_text_fifo_width: integer := 6; 	-- width of FIFO address space (default=4) length = 2^width * 4 bytes
     C_vgatext_bitmap: boolean := false;     -- true for optional bitmap generation
@@ -760,6 +762,7 @@ begin
         C_vgatext_reset => C_vgatext_reset,
         C_vgatext_palette => C_vgatext_palette,
         C_vgatext_text => C_vgatext_text,
+        C_vgatext_reg_read => C_vgatext_reg_read,
         C_vgatext_text_fifo => C_vgatext_text_fifo,
         C_vgatext_char_height => C_vgatext_char_height,
         C_vgatext_font_height => C_vgatext_font_height,

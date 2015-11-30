@@ -36,6 +36,7 @@ entity VGA_textmode is
     C_vgatext_reset: boolean;                       -- reset registers to default with async reset
     C_vgatext_palette: boolean;                     -- true to enable 16 entry color look-up table (else 16 fixed VGA text colors)
     C_vgatext_text: boolean;                        -- enable text character generation
+    C_vgatext_reg_read: boolean;                    -- true: allow reading vgatext BRAM via register interface
     C_vgatext_text_fifo: boolean;                   -- true to use videofifo for text+attribute buffer, else BRAM
     C_vgatext_char_height: integer;                 -- font cell height (may be different than font height for more vertical spacing)
     C_vgatext_font_height: integer;                 -- font data height 8 or 16
@@ -43,7 +44,7 @@ entity VGA_textmode is
     C_vgatext_font_linedouble: boolean;             -- double each line of font (e.g. 8x8 font fills 8x16 cell)
     C_vgatext_font_widthdouble: boolean;            -- double width of each pixel of font (font width 16 instead of 8 pixels)
     C_vgatext_monochrome: boolean;                  -- true to disable color+attribute byte in buffer (one color register for entire screen)
-    C_vgatext_finescroll: boolean;                  -- true to enable text screen fine scroll and line length modulo
+    C_vgatext_finescroll: boolean;                  -- true to enable text screen fine scroll
     C_vgatext_cursor: boolean;                      -- enable hardware text cursor
     C_vgatext_cursor_blink: boolean;                -- enable hardware text cursor blinking
     C_vgatext_bitmap: boolean;                      -- true for bitmap from SRAM/SDRAM
@@ -223,6 +224,7 @@ architecture Behavioral of VGA_textmode is
 
   constant char_width:        integer   := 8;
   constant bytes_per_char:    integer   := bool_select(C_vgatext_monochrome, 1, 2);
+  constant bytes_per_line:    integer   := (bool_select(C_vgatext_finescroll, 0, 4/bytes_per_char)+(visible_width/char_width)) * bytes_per_char;
   constant font_size:         integer   := ((2**C_vgatext_font_depth) * C_vgatext_font_height)/1024;
   constant font_bits:         integer   := C_vgatext_font_depth + bool_select(C_vgatext_font_height = 8, 3, 4);
 
@@ -247,6 +249,7 @@ architecture Behavioral of VGA_textmode is
   signal  cb_config:          std_logic                     := bool_to_sl(C_vgatext_cursor_blink);
   signal  cp_config:          std_logic                     := bool_to_sl(C_vgatext_palette);
   signal  mt_config:          std_logic                     := bool_to_sl(C_vgatext_monochrome);
+  signal  br_config:          std_logic                     := bool_to_sl(C_vgatext_reg_read);
 
   -- feature enable signals (constant '0' when feature not configured)
   signal  vg_enable:          std_logic   := '1';                 -- video generation
@@ -264,6 +267,7 @@ architecture Behavioral of VGA_textmode is
   signal  blue:               std_logic_vector(7 downto 0);       -- blue gun data
   signal  hsync:              std_logic;                          -- horizontal sync signal
   signal  vsync:              std_logic;                          -- vertical sync signal
+  signal  vblank:             std_logic;                          -- true when outside of vertical visible area
 
   -- text generation signals
   signal  text_start_addr:    std_logic_vector(29 downto 2);      -- text start address
@@ -314,6 +318,12 @@ architecture Behavioral of VGA_textmode is
     x"FFFF55",    -- yellow
     x"FFFFFF"     -- white
   );
+  
+  -- BRAM read register interface
+  signal  bram_read_request:  std_logic;                      -- true when reg read requests for bram_read_addr to be read
+  signal  bram_read_wait:     std_logic;                      -- true when waiting for bram read
+  signal  bram_read_addr:     std_logic_vector(15 downto 2);  -- address to read
+  signal  bram_read_value:    std_logic_vector(31 downto 0);  -- data read when wait goes to false
 
 begin
 
@@ -348,12 +358,15 @@ begin
         end if;
       end if;
     elsif rising_edge(clk_i) then
+      if C_vgatext_reg_read AND bram_read_request = '1' AND bram_read_wait = '1' then
+        bram_read_request <= '0';
+      end if;
       if ce_i = '1' and bus_write_i = '1' then
         case bus_addr_i is
 --             +---------------+---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---------------+---------------+
 -- Config:     |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
 --             +---------------+---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---------------+---------------+
---             | BRAM mem size |Font size/type |VGC|BGC|TGC|TCC|CBC|CPC|MTC| - |VGE|BME|TME|TCE|CBE| - | - | - | Backgnd color | Foregnd color |
+--             | BRAM mem size |Font size/type |VGC|BGC|TGC|TCC|CBC|CPC|MTC|BRC|VGE|BME|TME|TCE|CBE| - | - | - | Backgnd color | Foregnd color |
 --             +---------------+---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---------------+---------------+
           when C_config_reg =>
             if C_vgatext_monochrome AND byte_sel_i(0) = '1' then
@@ -377,16 +390,11 @@ begin
   --             +---------------+-----------------------------------------------+---------------+-----------------------------------------------+
   -- Config2:    |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
   --             +---------------+---------------+-------------------------------+---------------+---------------+-------------------------------+
-  -- (read)      | 0 | 0 |Y2 |X2 |              screen height                    |  Bitmap bpp   |                 screen width                  |
-  -- (write)     | 0 | 0 |Y2 |X2 | 0   0   0   0   0   0   0   0   0   0   0   0 | 0   0   0   0 |           text width scroll modulo            |
+  -- (read)      |VBL| 0 |Y2 |X2 |              screen height                    |  Bitmap bpp   |                 screen width                  |
+  -- (write)     | 0 | 0 |Y2 |X2 | 0   0   0   0   0   0   0   0   0   0   0   0 | 0   0   0   0 | 0   0   0   0   0   0   0   0   0   0   0   0 |
   --             +---------------+---------------+-------------------------------+---------------+---------------+-------------------------------+
           when C_config2_reg =>
-            if C_vgatext_finescroll AND byte_sel_i(0) = '1' then
-              text_modulo(7 downto 0) <= unsigned(bus_data_i(7 downto 0));
-            end if;
-            if C_vgatext_finescroll AND byte_sel_i(1) = '1' then
-              text_modulo(11 downto 8) <= unsigned(bus_data_i(11 downto 8));
-            end if;
+            null;
   --             +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
   -- Cursor:     |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
   --             +---------------+---------------+-----------------------+-------+-------------------------------+-------------------------------+
@@ -441,6 +449,17 @@ begin
               bitmap_color(15 downto 16-C_vgatext_bits) <= bus_data_i(15 downto 16-C_vgatext_bits);
               bitmap_color(7 downto 8-C_vgatext_bits) <= bus_data_i(7 downto 8-C_vgatext_bits);
             end if;
+  --             +---+-----------+---------------+-------------------------------+-------------------------------+-----------------------+-------+
+  -- BRAMAddr:   |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
+  --             +---------------+---------------+-------------------------------+-------------------------------+-----------------------+---+---+
+  -- (write)     | 0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 |                           BRAMAddr                    | 0   0 |
+  -- (read)      | 0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 | 0   0   0   0   0   0   0   0   0   0   0   0   0   0 | 0 |WAI|
+  --             +---------------+---------------+-------------------------------+-------------------------------+-----------------------+---+---+
+          when C_bramaddr_reg =>
+          if C_vgatext_reg_read AND byte_sel_i(1 downto 0) = "11" then
+            bram_read_addr <= bus_data_i(15 downto 2);
+            bram_read_request <= '1';
+          end if;
           when others => null;
         end case;
       end if;
@@ -448,14 +467,22 @@ begin
   end process;
 
   -- handle CPU register read requests
+  --             +---------------+---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---------------+---------------+
+  -- Config:     |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
+  --             +---------------+---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---------------+---------------+
+  --             | BRAM mem size |Font size/type |VGC|BGC|TGC|TCC|CBC|CPC|MTC|BRC|VGE|BME|TME|TCE|CBE| - | - | - | Backgnd color | Foregnd color |
+  --             +---------------+---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---------------+---------------+
+     bus_data_o <= bram_size & font_info & vg_config & bg_config & tg_config & tc_config & cb_config & cp_config & mt_config & br_config &
+          vg_enable & bg_enable & tg_enable & tc_enable & cb_enable & "000" & mono_color
+      when bus_addr_i = C_config_reg
   --             +---------------+-----------------------------------------------+---------------+-----------------------------------------------+
   -- Config2:    |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
-  --             +---------------+-----------------------------------------------+---------------+-----------------------------------------------+
-  -- (read)      | 0 | 0 |Y2 |X2 |              screen height                    |  Bitmap bpp   |                 screen width                  |
-  -- (write)     | 0 | 0 |Y2 |X2 | 0   0   0   0   0   0   0   0   0   0   0   0 | 0   0   0   0 |           text width scroll modulo            |
-  --             +---------------+-----------------------------------------------+---------------+-----------------------------------------------+
-  bus_data_o <= "0000" & std_logic_vector(to_unsigned(visible_height,12)) & bm_depth & std_logic_vector(to_unsigned(visible_width,12))
-    when bus_addr_i = C_config2_reg
+  --             +---+---+---+---+-----------------------------------------------+---------------+-----------------------------------------------+
+  -- (read)      |VBL| 0 |Y2 |X2 |              screen height                    |  Bitmap bpp   |                 screen width                  |
+  -- (write)     | 0 | 0 |Y2 |X2 | 0   0   0   0   0   0   0   0   0   0   0   0 | 0   0   0   0 | 0   0   0   0   0   0   0   0   0   0   0   0 |
+  --             +---+---+---+---+-----------------------------------------------+---------------+-----------------------------------------------+
+    else vblank & "000" & std_logic_vector(to_unsigned(visible_height,12)) & bm_depth & std_logic_vector(to_unsigned(visible_width,12))
+      when bus_addr_i = C_config2_reg
   --             +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
   -- Cursor:     |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
   --             +---------------+---------------+-----------------------+-------+-------------------------------+-------------------------------+
@@ -463,28 +490,37 @@ begin
   -- (write)     | Y fine scroll | X fine scroll |   text font address   | 0   0 |       cursor Y position       |       cursor X position       |
   --             +---------------+---------------+-----------------------+-------+-------------------------------+-------------------------------+
     else std_logic_vector(to_unsigned(C_vgatext_char_height,8)) & font_start_addr & "00" & std_logic_vector(cursory) & std_logic_vector(cursorx)
-    when C_vgatext_text AND bus_addr_i = C_cursor_reg
+      when C_vgatext_text AND bus_addr_i = C_cursor_reg
   --             +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
   -- TextAddr:   |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
   --             +-------+-----------------------+-------------------------------+-------------------------------+-----------------------+-------+
   --             |MemTyp |                                                   TextAddr                                                    | 0   0 |
   --             +-------+-----------------------+-------------------------------+-------------------------------+-----------------------+-------+
     else bool_to_sl(C_vgatext_text_fifo) & bool_to_sl(NOT C_vgatext_text_fifo) & text_start_addr(29 downto 2) & "00"
-    when C_vgatext_text AND bus_addr_i = C_textaddr_reg
+      when C_vgatext_text AND bus_addr_i = C_textaddr_reg
   --             +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
   -- BitmapAddr: |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
   --             +-------+-----------------------+-------------------------------+-------------------------------+-----------------------+-------+
   --             |MemTyp |                                                   BitmapAddr                                                  | 0   0 |
   --             +-------+-----------------------+-------------------------------+-------------------------------+-----------------------+-------+
     else "10" & bitmap_start_addr(29 downto 2) & "00"
-    when C_vgatext_bitmap AND bus_addr_i = C_bitmapaddr_reg
-  --             +---------------+---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---------------+---------------+
-  -- Config:     |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
-  --             +---------------+---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---------------+---------------+
-  --             | BRAM mem size |Font size/type |VGC|BGC|TGC|TCC|CBC|CPC|MTC| - |VGE|BME|TME|TCE|CBE| - | - | - | Backgnd color | Foregnd color |
-  --             +---------------+---------------+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---------------+---------------+
-     else bram_size & font_info & vg_config & bg_config & tg_config & tc_config & cb_config & cp_config & mt_config & "0" &
-          vg_enable & bg_enable & tg_enable & tc_enable & cb_enable & "000" & mono_color;
+      when C_vgatext_bitmap AND bus_addr_i = C_bitmapaddr_reg
+  --             +---+-----------+---------------+-------------------------------+-------------------------------+-----------------------+-------+
+  -- BRAMAddr:   |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
+  --             +---------------+---------------+-------------------------------+-------------------------------+-----------------------+---+---+
+  -- (write)     | 0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 |                           BRAMAddr                    | 0   0 |
+  -- (read)      | 0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 | 0   0   0   0   0   0   0   0   0   0   0   0   0   0 | 0 |WAI|
+  --             +---------------+---------------+-------------------------------+-------------------------------+-----------------------+---+---+
+    else x"0000000" & "000" & (bram_read_wait OR bram_read_request)
+      when C_vgatext_reg_read AND bus_addr_i = C_bramaddr_reg
+  --             +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
+  -- BRAMData:   |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
+  --             +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
+  --             |                                                           BRAMData                                                            |
+  --             +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
+    else bram_read_value
+      when C_vgatext_reg_read AND bus_addr_i = C_bramdata_reg
+    else (others => '0');
 
   -- display generation process
   display_proc: process(clk_pixel_i)
@@ -492,7 +528,6 @@ begin
     variable forecolor: std_logic_vector(3 downto 0);
     variable backcolor: std_logic_vector(3 downto 0);
     variable mem_data: std_logic_vector(31 downto 0);
-    variable scroll_hc: signed(11 downto 0);
     variable font_offset: unsigned(11 downto 0);
     variable char_data: std_logic_vector(7 downto 0);
     variable color_data: std_logic_vector(7 downto 0);
@@ -552,15 +587,23 @@ begin
         if C_vgatext_bitmap then
           bitmap_strobe <= '0';
         end if;
+        
+        if bram_read_wait = '1' then
+          bram_read_value <= bram_data_i;
+          bram_read_wait <= '0';
+        end if;
 
         if vcount >= 0 then           -- if on a visible scan-line
           -- text character generation
-          scroll_hc := hcount;
-          if C_vgatext_finescroll then
-            scroll_hc := scroll_hc + signed("0" & fine_scrollx(2 downto 0)); -- effective hcount after X fine scroll
-          end if;
-          if tg_enable = '1' AND scroll_hc >= -8 AND vcount < ((visible_height/C_vgatext_char_height)*C_vgatext_char_height) then
-            case scroll_hc(2 downto 0) is
+          if tg_enable = '1' AND hcount >= -8 AND vcount < ((visible_height/C_vgatext_char_height)*C_vgatext_char_height) then
+            case hcount(2 downto 0) is
+              when "000" | "001" | "010" | "011" =>
+                if C_vgatext_reg_read then
+                  if bram_read_request = '1' then
+                    bram_read_wait <= '1';
+                    bram_addr_o <= bram_read_addr;
+                   end if;
+                end if;
               when "100" =>             -- put text address on bus (if not using text FIFO)
                 if NOT C_vgatext_text_fifo then
                 bram_addr_o   <= std_logic_vector(text_addr(15 downto 2));
@@ -632,7 +675,7 @@ begin
                     if C_vgatext_text_fifo then
                       textfifo_rewind_o <= '1';                -- rewind FIFO to reuse data for text line
                     end if;
-                    text_addr <= text_addr - ((visible_width/char_width) * bytes_per_char); -- back up text address
+                    text_addr <= text_addr - bytes_per_line; -- back up text address
                   end if;
                 else
                   text_addr <= text_addr + bytes_per_char;     -- else, increment text address
@@ -791,6 +834,9 @@ begin
     bitmap_addr_o <= bitmap_start_addr(29 downto 2);          -- output SDRAM bitmap FIFO start address
     bitmap_strobe_o <= bitmap_strobe;
   end generate;
+  
+  -- vertical blank indicator
+  vblank  <= '1' when vcount <-0 else '0';
 
   -- output VGA/DVI/HDMI signals
   hsync_o <= hsync;
