@@ -100,7 +100,7 @@ architecture Behavioral of VGA_textmode is
   return r;
   end bool_to_sl;
 
-  function bool_select(flag: boolean; trueval: integer; falseval: integer)  -- select values with boolean
+  function select_t_f(flag: boolean; trueval: integer; falseval: integer)  -- select values with boolean
     return integer is
   variable r: integer;
   begin
@@ -110,7 +110,7 @@ architecture Behavioral of VGA_textmode is
       r := falseval;
     end if;
   return r;
-  end bool_select;
+  end select_t_f;
 
   function po2_to_slv4(size: integer)     -- power-of-two integer to std_logic_vector(3 downto 0)
     return std_logic_vector is
@@ -223,10 +223,10 @@ architecture Behavioral of VGA_textmode is
   constant visible_height:    integer   := vmode(C_vgatext_mode).visible_height;
 
   constant char_width:        integer   := 8;
-  constant bytes_per_char:    integer   := bool_select(C_vgatext_monochrome, 1, 2);
-  constant bytes_per_line:    integer   := (bool_select(C_vgatext_finescroll, 0, 4/bytes_per_char)+(visible_width/char_width)) * bytes_per_char;
+  constant bytes_per_char:    integer   := select_t_f(C_vgatext_monochrome, 1, 2);
+  constant bytes_per_line:    integer   := (select_t_f(C_vgatext_finescroll, (4/bytes_per_char), 0)+(visible_width/char_width)) * bytes_per_char;
   constant font_size:         integer   := ((2**C_vgatext_font_depth) * C_vgatext_font_height)/1024;
-  constant font_bits:         integer   := C_vgatext_font_depth + bool_select(C_vgatext_font_height = 8, 3, 4);
+  constant font_bits:         integer   := C_vgatext_font_depth + select_t_f(C_vgatext_font_height = 8, 3, 4);
 
   -- constants for the VGA textmode register addresses (8 32-bit words)
   constant C_config_reg:      std_logic_vector  := "000";         -- 0xFFFFFB80
@@ -250,6 +250,7 @@ architecture Behavioral of VGA_textmode is
   signal  cp_config:          std_logic                     := bool_to_sl(C_vgatext_palette);
   signal  mt_config:          std_logic                     := bool_to_sl(C_vgatext_monochrome);
   signal  br_config:          std_logic                     := bool_to_sl(C_vgatext_reg_read);
+  signal  fs_config:          std_logic                     := bool_to_sl(C_vgatext_finescroll);
 
   -- feature enable signals (constant '0' when feature not configured)
   signal  vg_enable:          std_logic   := '1';                 -- video generation
@@ -260,6 +261,7 @@ architecture Behavioral of VGA_textmode is
 
   -- video generation signals
   signal  hcount:             signed(11 downto 0);                -- horizontal pixel counter (negative is off visible area)
+  signal  shcount:            signed(11 downto 0);                -- scrolled horizontal pixel counter (negative is off visible area)
   signal  vcount:             signed(11 downto 0);                -- vertical pixel counter (negative is off visible area)
   signal  visible:            std_logic;                          -- 1 if in visible area
   signal  red:                std_logic_vector(7 downto 0);       -- red gun data
@@ -273,9 +275,10 @@ architecture Behavioral of VGA_textmode is
   signal  text_start_addr:    std_logic_vector(29 downto 2);      -- text start address
   signal  font_start_addr:    std_logic_vector(5 downto 0);       -- font base address (1K boundaries) address in BRAM
   signal  text_addr:          unsigned(29 downto 0);              -- address to fetch character+color attribute
+  signal  text_line_addr:     unsigned(29 downto 0);              -- address to of start of character+color attribute line
   signal  char_y:             unsigned(4 downto 0);               -- current line of font cell
   signal  text_line:          unsigned(7 downto 0);               -- current text line
-  signal  fine_scrollx:       unsigned(3 downto 0);               -- X fine scroll
+  signal  fine_scrollx:       unsigned(2 downto 0);               -- X fine scroll
   signal  fine_scrolly:       unsigned(3 downto 0);               -- Y fine scroll
   signal  text_modulo:        unsigned(11 downto 0);              -- text line width module (added at end of each line)
   signal  font_data:          std_logic_vector(7 downto 0);       -- bit pattern shifting out for current font character line
@@ -390,7 +393,7 @@ begin
   --             +---------------+-----------------------------------------------+---------------+-----------------------------------------------+
   -- Config2:    |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
   --             +---------------+---------------+-------------------------------+---------------+---------------+-------------------------------+
-  -- (read)      |VBL| 0 |Y2 |X2 |              screen height                    |  Bitmap bpp   |                 screen width                  |
+  -- (read)      |VBL|FSC|Y2 |X2 |              screen height                    |  Bitmap bpp   |                 screen width                  |
   -- (write)     | 0 | 0 |Y2 |X2 | 0   0   0   0   0   0   0   0   0   0   0   0 | 0   0   0   0 | 0   0   0   0   0   0   0   0   0   0   0   0 |
   --             +---------------+---------------+-------------------------------+---------------+---------------+-------------------------------+
           when C_config2_reg =>
@@ -412,7 +415,7 @@ begin
               font_start_addr <= bus_data_i(23 downto 18);
             end if;
             if C_vgatext_text AND C_vgatext_finescroll AND byte_sel_i(3) = '1' then
-              fine_scrollx <= unsigned(bus_data_i(27 downto 24));
+              fine_scrollx <= unsigned(bus_data_i(26 downto 24));
               fine_scrolly <= unsigned(bus_data_i(31 downto 28));
             end if;
   --             +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
@@ -478,10 +481,10 @@ begin
   --             +---------------+-----------------------------------------------+---------------+-----------------------------------------------+
   -- Config2:    |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
   --             +---+---+---+---+-----------------------------------------------+---------------+-----------------------------------------------+
-  -- (read)      |VBL| 0 |Y2 |X2 |              screen height                    |  Bitmap bpp   |                 screen width                  |
+  -- (read)      |VBL|FSC|Y2 |X2 |              screen height                    |  Bitmap bpp   |                 screen width                  |
   -- (write)     | 0 | 0 |Y2 |X2 | 0   0   0   0   0   0   0   0   0   0   0   0 | 0   0   0   0 | 0   0   0   0   0   0   0   0   0   0   0   0 |
   --             +---+---+---+---+-----------------------------------------------+---------------+-----------------------------------------------+
-    else vblank & "000" & std_logic_vector(to_unsigned(visible_height,12)) & bm_depth & std_logic_vector(to_unsigned(visible_width,12))
+    else vblank & fs_config & "00" & std_logic_vector(to_unsigned(visible_height,12)) & bm_depth & std_logic_vector(to_unsigned(visible_width,12))
       when bus_addr_i = C_config2_reg
   --             +-------------------------------+-------------------------------+-------------------------------+-------------------------------+
   -- Cursor:     |31  30  29  28  27  26  25  24 |23  22  21  20  19  18  17  16 |15  14  13  12  11  10   9   8 | 7   6   5   4   3   2   1   0 |
@@ -539,6 +542,9 @@ begin
         -- timing generation
         if hcount = (visible_width-1) then        -- are we at the end of a horizontal line?
           hcount <= to_signed((visible_width-total_width), 12);   -- yes, reset hcount
+          if C_vgatext_finescroll then
+            shcount <= to_signed((visible_width-total_width), 12) + signed("000000000" & fine_scrollx);  -- better way?
+          end if;
           if vcount = (visible_height-1) then     -- are we at the bottom of the frame also?
             vcount <= to_signed((visible_height-total_height), 12); -- yes, reset vcount
             if C_vgatext_text AND C_vgatext_cursor AND C_vgatext_cursor_blink then
@@ -549,6 +555,9 @@ begin
           end if;
         else
           hcount <= hcount + 1;           -- increment hcount pixel counter
+          if C_vgatext_finescroll then
+            shcount <= shcount + 1;
+          end if;
         end if;
 
         -- if hcount is in the proper range, generate hsync output
@@ -593,7 +602,7 @@ begin
           if bram_read_wait = '1' then
             bram_read_value <= bram_data_i;
             bram_read_wait <= '0';
-          elsif (vcount < 0 OR hcount(2) = '0') AND bram_read_request = '1' then
+          elsif (vcount < 0 OR shcount(2) = '0') AND bram_read_request = '1' then
             bram_addr_o <= bram_read_addr;
             bram_read_wait <= '1';
           end if;
@@ -601,8 +610,8 @@ begin
         
         if vcount >= 0 then           -- if on a visible scan-line
           -- text character generation
-          if tg_enable = '1' AND hcount >= -8 AND vcount < ((visible_height/C_vgatext_char_height)*C_vgatext_char_height) then
-            case hcount(2 downto 0) is
+          if tg_enable = '1' AND shcount >= -8 AND vcount < ((visible_height/C_vgatext_char_height)*C_vgatext_char_height) then
+            case shcount(2 downto 0) is
               when "100" =>             -- put text address on bus (if not using text FIFO)
                 if NOT C_vgatext_text_fifo then
                 bram_addr_o   <= std_logic_vector(text_addr(15 downto 2));
@@ -640,8 +649,8 @@ begin
                 -- put font data address on BRAM bus (using variables so same cycle as is read)
                 bram_addr_o(15 downto 10) <= font_start_addr;
                 if C_vgatext_font_height = 8 then
-                  if char_y < C_vgatext_font_height * bool_select(C_vgatext_font_linedouble, 2, 1) then
-                    bram_addr_o(C_vgatext_font_depth+2 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & char_y(bool_select(C_vgatext_font_linedouble, 3, 2));
+                  if char_y < C_vgatext_font_height * select_t_f(C_vgatext_font_linedouble, 2, 1) then
+                    bram_addr_o(C_vgatext_font_depth+2 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & char_y(select_t_f(C_vgatext_font_linedouble, 3, 2));
                   else
                     bram_addr_o(C_vgatext_font_depth+2 downto 2) <= (others => '0');
                   end if;
@@ -654,7 +663,7 @@ begin
                 end if;
               when "110" =>               -- extract proper byte of font data from word read from BRAM
                 if char_y < C_vgatext_font_height then
-                  case char_y(bool_select(C_vgatext_font_linedouble, 2, 1) downto bool_select(C_vgatext_font_linedouble, 1, 0)) is
+                  case char_y(select_t_f(C_vgatext_font_linedouble, 2, 1) downto select_t_f(C_vgatext_font_linedouble, 1, 0)) is
                     when "00" => font_data_next <= bram_data_i( 7 downto  0);
                     when "01" => font_data_next <= bram_data_i(15 downto  8);
                     when "10" => font_data_next <= bram_data_i(23 downto 16);
@@ -669,28 +678,26 @@ begin
                   end if;
                 end if;
 
-                if hcount = visible_width-2 then               -- if this is one cycle ahead of end of scan-line
-                  if char_y /= C_vgatext_char_height-1 then    -- if this was not the last scan line of text line
-                    if C_vgatext_text_fifo then
-                      textfifo_rewind_o <= '1';                -- rewind FIFO to reuse data for text line
-                    end if;
-                    text_addr <= text_addr - bytes_per_line; -- back up text address
-                  end if;
-                else
-                  text_addr <= text_addr + bytes_per_char;     -- else, increment text address
-                end if;
               when "111" =>               -- switch to new character data for next pixel
                 font_data <= font_data_next;                   -- use next font data byte
                 text_color <= text_color_next;                 -- use next font color byte (screen color if monochrome)
-                if hcount = visible_width-1 then
-                  if char_y = C_vgatext_char_height-1 then     -- if last pixel of scan-line
+                if shcount = visible_width-1 then              -- if last pixel of scan-line 
+                  if char_y = C_vgatext_char_height-1 then     -- if last line of char cell
                     char_y <= (others => '0');                 -- reset font line
                     if C_vgatext_cursor then
-                      text_line <= text_line + 1;              -- update text line (if cursor confugured)
+                      text_line <= text_line + 1;              -- update text line (if cursor configured)
                     end if;
+                    text_line_addr <= text_line_addr + bytes_per_line; -- back to line start address
+                    text_addr <= text_line_addr + bytes_per_line; -- back to line start address
                   else
-                    char_y <= char_y + 1;
+                    char_y <= char_y + 1;                      -- next char cell line
+                    if C_vgatext_text_fifo then
+                      textfifo_rewind_o <= '1';                -- rewind FIFO to reuse data for text line
+                    end if;
+                    text_addr <= text_line_addr;               -- back to line start address
                   end if;
+                else
+                  text_addr <= text_addr + bytes_per_char;     -- next char+attribute on line
                 end if;
               when others => null;
             end case;
@@ -797,6 +804,7 @@ begin
             end if;
             font_data <= (others => '0');                   -- make sure data cleared for next frame
             text_addr <= unsigned(text_start_addr(29 downto 2)) & "00";  -- reset to start of text data
+            text_line_addr  <= unsigned(text_start_addr(29 downto 2)) & "00";  -- reset to start of text data
           end if;
           if C_vgatext_bitmap then
             bitmap_data <= (others => '0');                 -- make sure data cleared for next frame
@@ -832,6 +840,11 @@ begin
   G_bitmap_fifo: if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
     bitmap_addr_o <= bitmap_start_addr(29 downto 2);          -- output SDRAM bitmap FIFO start address
     bitmap_strobe_o <= bitmap_strobe;
+  end generate;
+
+  -- no fine scroll
+  G_no_fine_scroll: if NOT C_vgatext_finescroll generate
+  shcount <= hcount;
   end generate;
   
   -- vertical blank indicator
