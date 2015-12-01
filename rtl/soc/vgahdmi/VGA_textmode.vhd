@@ -687,6 +687,9 @@ begin
                     if C_vgatext_cursor then
                       text_line <= text_line + 1;              -- update text line (if cursor configured)
                     end if;
+                    if C_vgatext_text_fifo AND C_vgatext_finescroll then
+                      textfifo_strobe_o <= '1';                -- consume extra word when scrolling
+                    end if;
                     text_line_addr <= text_line_addr + bytes_per_line; -- back to line start address
                     text_addr <= text_line_addr + bytes_per_line; -- back to line start address
                   else
