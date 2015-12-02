@@ -147,19 +147,6 @@ architecture Behavioral of VGA_textmode is
   return r;
   end font_to_slv4;
 
-  function pixel_count(hcount: signed)      -- integer to hcount bits to check for new pixel
-    return signed is
-  variable r: signed(4 downto 0);
-  begin
-    case C_vgatext_bitmap_depth is
-      when 1    =>  r := hcount(4 downto 0);
-      when 2    =>  r := "0" & hcount(3 downto 0);
-      when 4    =>  r := "00" & hcount(2 downto 0);
-      when 8    =>  r := "000" & hcount(1 downto 0);
-      when others =>  r := "00000";
-    end case;
-  return r;
-  end pixel_count;
   type video_mode_t is
   record
     pixel_clock_Hz:                             integer;    -- currently informational (not used)
@@ -280,7 +267,6 @@ architecture Behavioral of VGA_textmode is
   signal  text_line:          unsigned(7 downto 0);               -- current text line
   signal  fine_scrollx:       unsigned(2 downto 0);               -- X fine scroll
   signal  fine_scrolly:       unsigned(3 downto 0);               -- Y fine scroll
-  signal  text_modulo:        unsigned(11 downto 0);              -- text line width module (added at end of each line)
   signal  font_data:          std_logic_vector(7 downto 0);       -- bit pattern shifting out for current font character line
   signal  font_data_next:     std_logic_vector(7 downto 0);       -- bit pattern for next font character line
   signal  mono_color:         std_logic_vector(7 downto 0) := x"1F"; -- background/foreground color for next character (or all characters)
@@ -337,7 +323,7 @@ begin
       vg_enable <= '1';
       if C_vgatext_bitmap then
         bg_enable <= '0';
-        bitmap_start_addr <= (others => '0');
+        bitmap_start_addr <= "00" & x"006000" & "00";
       end if;
       if C_vgatext_text then
         tg_enable <= '1';
@@ -357,7 +343,6 @@ begin
         if C_vgatext_finescroll then
           fine_scrollx <= (others => '0');
           fine_scrolly <= (others => '0');
-          text_modulo  <= (others => '0');
         end if;
       end if;
     elsif rising_edge(clk_i) then
@@ -712,20 +697,21 @@ begin
             bitmap_pix := bitmap_data(C_vgatext_bitmap_depth-1 downto 0);
             bitmap_data(31-C_vgatext_bitmap_depth downto 0) <= bitmap_data(31 downto C_vgatext_bitmap_depth); -- shift current bitmap data right
             if NOT C_vgatext_bitmap_fifo then
-              if hcount = -33 then                      -- fetch first word early from SRAM
+              if hcount = -64 AND vcount = 0 then                      -- fetch first word early from SRAM
                 bitmap_strobe <= '1';
-              end if;
-              if hcount /= visible_width-((32/C_vgatext_bitmap_depth)+1) then -- increment unless last word
-                bitmap_addr <= bitmap_addr + 1;
               end if;
             end if;
             if hcount >= -1 AND hcount < visible_width-1 then             -- one cycle before needed
-              if pixel_count(hcount) = (32/C_vgatext_bitmap_depth)-1 then -- load new bitmap data at last pixel of current bitmap data
-                bitmap_strobe <= '1';
+							if (C_vgatext_bitmap_depth = 1 AND hcount(4 downto 0) = "11111") OR -- load new bitmap data at last pixel of current bitmap data
+								 (C_vgatext_bitmap_depth = 2 AND hcount(3 downto 0) = "1111") OR
+								 (C_vgatext_bitmap_depth = 4 AND hcount(2 downto 0) = "111") OR
+								 (C_vgatext_bitmap_depth = 8 AND hcount(1 downto 0) = "11") then
+								bitmap_strobe <= '1';
                 if C_vgatext_bitmap_fifo then
                   bitmap_data <= bitmap_data_i;
                 else
                   bitmap_data <= bitmap_data_next;
+									bitmap_addr <= bitmap_addr + 1;
                 end if;
               end if;
             end if;
@@ -824,14 +810,14 @@ begin
     begin
       if rising_edge(clk_i) then
         if bitmap_ready_i = '1' then
-          bitmap_data_next <= bitmap_data_i;
+          bitmap_data_next <= bitmap_data_i;	-- save new data (for next word)
           bitmap_strobe_o <= '0';
         elsif bitmap_strobe = '1' then
           bitmap_strobe_o <= '1';
         end if;
       end if;
     end process;
-    bitmap_addr_o <= std_logic_vector(bitmap_addr(29 downto 2));  -- output SRAM address for bitmap word
+    bitmap_addr_o <= std_logic_vector(bitmap_addr);  -- output SRAM address for bitmap word
   end generate;
 
   -- text FIFO output
