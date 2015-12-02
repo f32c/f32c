@@ -122,21 +122,14 @@ entity glue_bram_sram8 is
 	C_simple_out: integer range 0 to 128 := 32;
 	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
 	C_vgahdmi_mem_kb: integer := 0; -- mem size of framebuffer
+	C_vgahdmi_dbl_x: integer := 0; -- double-size x pixel
+	C_vgahdmi_dbl_y: integer := 0; -- double-size y-pixel
+	C_vgahdmi_fifo_step: integer := 0; -- 0 (dbl_y = 0), 40 (dbl_x = 1, dbl_y = 1), 80 (dbl_x = 0, dbl_y = 1)
+	C_vgahdmi_fifo_width: integer := 4; -- 4 (dbl_y = 0),  6 (dbl_x = 1, dbl_y = 1),  7 (dbl_x = 0, dbl_y = 1)
 	C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
 	C_pcm: boolean := false;
-	C_gpio: integer range 0 to 128 := 32;
-	C_gpio_pullup: boolean := false;
-	C_gpio_adc: integer range 0 to 6 := 6;	-- number of gpio ports setup for ADC (FleaFPGA-Uno)
-	C_ps2: boolean := true;
-	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
-	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
-	C_pid_prescaler: integer range 10 to 26 := 18; -- control loop frequency f_clk/2^prescaler
-	C_pid_precision: integer range 0 to 8 := 1; -- fixed point PID precision
-		C_pid_pwm_bits: integer range 11 to 32 := 12; -- PWM output frequency f_clk/2^pwmbits (min 11 => 40kHz @ 81.25MHz)
-		C_pid_fp: integer range 0 to 26 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
-	C_timer: boolean := true;
-	-- VGA textmode
-	C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA (so says Davor...)
+
+	C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
 		C_vgatext_label: string := "f32c";    -- default banner in screen memory
     C_vgatext_mode: integer := 0;   -- 640x480
     C_vgatext_bits: integer := 2;   -- 64 possible colors
@@ -161,10 +154,21 @@ entity glue_bram_sram8 is
         C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the FIFO refill and rewind
         C_vgatext_text_fifo_width: integer := 6; 	-- width of FIFO address space (default=4) length = 2^width * 4 bytes
     C_vgatext_bitmap: boolean := false;     -- true for optional bitmap generation
-      C_vgatext_bitmap_depth: integer := 8;   -- 8-bpp 256-color bitmap
+      C_vgatext_bitmap_depth: integer := 1;   -- 8-bpp 256-color bitmap
       C_vgatext_bitmap_fifo: boolean := false;  -- disable bitmap FIFO
         C_vgatext_bitmap_fifo_step: integer := 0;	-- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
-        C_vgatext_bitmap_fifo_width: integer := 8	-- bitmap width of FIFO address space length = 2^width * 4 byte
+        C_vgatext_bitmap_fifo_width: integer := 8;	-- bitmap width of FIFO address space length = 2^width * 4 byte
+	C_gpio: integer range 0 to 128 := 32;
+	C_gpio_pullup: boolean := false;
+	C_gpio_adc: integer range 0 to 6 := 6;	-- number of gpio ports setup for ADC (FleaFPGA-Uno)
+	C_ps2: boolean := true;
+	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
+	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
+	C_pid_prescaler: integer range 10 to 26 := 18; -- control loop frequency f_clk/2^prescaler
+	C_pid_precision: integer range 0 to 8 := 1; -- fixed point PID precision
+		C_pid_pwm_bits: integer range 11 to 32 := 12; -- PWM output frequency f_clk/2^pwmbits (min 11 => 40kHz @ 81.25MHz)
+		C_pid_fp: integer range 0 to 26 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
+	C_timer: boolean := true
 	);
 	port (
 	clk: in std_logic;
@@ -263,76 +267,10 @@ architecture Behavioral of glue_bram_sram8 is
 		return conv_integer(a(11 downto 4) - b(11 downto 4));
 	end iomap_to;
 
-	-- Timer
-	constant iomap_timer: T_iomap_range := (x"F900", x"F93F");
-	signal timer_range: std_logic := '0';
-	signal from_timer: std_logic_vector(31 downto 0);
-	signal timer_ce: std_logic;
-	signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
-	signal icp, icp_enable: std_logic_vector(1 downto 0);
-	signal timer_intr: std_logic;
-
-    -- PCM audio
-    constant iomap_pcm: T_iomap_range := (x"FBA0", x"FBAF");
-    signal pcm_ce: std_logic;
-    signal pcm_addr_strobe, pcm_data_ready: std_logic;
-    signal pcm_addr: std_logic_vector(29 downto 2);
-    signal from_pcm: std_logic_vector(31 downto 0);
-    signal pcm_l, pcm_r: std_logic;
-    signal pcm_bus_l, pcm_bus_r: ieee.numeric_std.signed(15 downto 0);
-
-	-- GPIO
-	constant iomap_gpio: T_iomap_range := (x"F800", x"F87F");
-	signal gpio_range: std_logic := '0';
-	constant C_gpios: integer := (C_gpio+31)/32; -- number of gpio units
-	type gpios_type is array (C_gpios-1 downto 0) of std_logic_vector(31 downto 0);
-	signal from_gpio, gpios: gpios_type;
-	signal gpio_ce: std_logic_vector(C_gpios-1 downto 0);
-	signal gpio_intr: std_logic_vector(C_gpios-1 downto 0);
-	signal gpio_intr_joint: std_logic := '0';
-
-	-- VGA_textmode VGA/HDMI video
-    constant iomap_vga_textmode: T_iomap_range := (x"FB80", x"FB9F");
-	signal vga_textmode_ce: std_logic;
-	signal from_vga_textmode: std_logic_vector(31 downto 0);
-	signal vga_textmode_dmem_write: std_logic;
-	signal vga_textmode_dmem_to_cpu: std_logic_vector(31 downto 0);
-	signal vga_textmode_addr: std_logic_vector(15 downto 2); -- vram buffer addr (8KB for text+color and 2KB font @ 0x1800)
-	signal vga_textmode_data: std_logic_vector(31 downto 0);
-	signal vga_textmode_red: std_logic_vector(C_vgatext_bits-1 downto 0);
-	signal vga_textmode_green: std_logic_vector(C_vgatext_bits-1 downto 0);
-	signal vga_textmode_blue: std_logic_vector(C_vgatext_bits-1 downto 0);
-	signal vga_textmode_hsync: std_logic;
-	signal vga_textmode_vsync: std_logic;
-	signal vga_textmode_blank: std_logic;
-
-	-- VGA_textmode SRAM bitmap access
-	signal vga_textmode_bitmap_addr_strobe: std_logic;
-	signal vga_textmode_bitmap_addr: std_logic_vector(29 downto 2);
-	signal vga_textmode_bitmap_ready: std_logic;
-
-	-- ADC
-	constant iomap_adc: T_iomap_range := (x"FF40", x"FF5F");
-	signal adc_range: std_logic := '0';
-	type adcs_type is array (0 to C_gpio_adc-1) of std_logic_vector(15 downto 0);
-	signal from_adc: adcs_type;
-
-	-- PS/2 Keyboard port
-	constant iomap_ps2: T_iomap_range := (x"FF20", x"FF2F");
-	signal ps2_ce: std_logic := '0';
-	signal from_ps2: std_logic_vector(31 downto 0);
-
-	-- PID
-	constant iomap_pid: T_iomap_range := (x"FD80", x"FDBF");
-	constant C_pid: boolean := C_pids >= 2; -- minimum is 2 PIDs, otherwise no PID
-	signal from_pid: std_logic_vector(31 downto 0);
-	signal pid_ce: std_logic;
-	signal pid_intr: std_logic; -- currently unused
-	signal pid_bridge_f_out: std_logic_vector(C_pids-1 downto 0);
-	signal pid_bridge_r_out: std_logic_vector(C_pids-1 downto 0);
-	signal pid_encoder_a_out: std_logic_vector(C_pids-1 downto 0);
-	signal pid_encoder_b_out: std_logic_vector(C_pids-1 downto 0);
-	constant C_pids_bits: integer := integer(floor((log2(real(C_pids)+0.001))+0.5));
+	-- Simple I/O: onboard LEDs, buttons and switches
+	constant iomap_simple_in: T_iomap_range := (x"FF00", x"FF0F");
+	constant iomap_simple_out: T_iomap_range := (x"FF10", x"FF1F");
+	signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
 
 	-- Serial I/O (RS232)
 	constant iomap_sio: T_iomap_range := (x"FB00", x"FB3F");
@@ -351,10 +289,77 @@ architecture Behavioral of glue_bram_sram8 is
 	signal from_spi: from_spi_type;
 	signal spi_ce: std_logic_vector(C_spi - 1 downto 0);
 
-	-- Simple I/O: onboard LEDs, buttons and switches
-	constant iomap_simple_in: T_iomap_range := (x"FF00", x"FF0F");
-	constant iomap_simple_out: T_iomap_range := (x"FF10", x"FF1F");
-	signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
+	-- Timer
+	constant iomap_timer: T_iomap_range := (x"F900", x"F93F");
+	signal timer_range: std_logic := '0';
+	signal from_timer: std_logic_vector(31 downto 0);
+	signal timer_ce: std_logic;
+	signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
+	signal icp, icp_enable: std_logic_vector(1 downto 0);
+	signal timer_intr: std_logic;
+
+	-- GPIO
+	constant iomap_gpio: T_iomap_range := (x"F800", x"F87F");
+	signal gpio_range: std_logic := '0';
+	constant C_gpios: integer := (C_gpio+31)/32; -- number of gpio units
+	type gpios_type is array (C_gpios-1 downto 0) of std_logic_vector(31 downto 0);
+	signal from_gpio, gpios: gpios_type;
+	signal gpio_ce: std_logic_vector(C_gpios-1 downto 0);
+	signal gpio_intr: std_logic_vector(C_gpios-1 downto 0);
+	signal gpio_intr_joint: std_logic := '0';
+
+	-- PS/2 Keyboard port
+	constant iomap_ps2: T_iomap_range := (x"FF20", x"FF2F");
+	signal ps2_ce: std_logic := '0';
+	signal from_ps2: std_logic_vector(31 downto 0);
+
+	-- PID
+	constant iomap_pid: T_iomap_range := (x"FD80", x"FDBF");
+	constant C_pid: boolean := C_pids >= 2; -- minimum is 2 PIDs, otherwise no PID
+	signal from_pid: std_logic_vector(31 downto 0);
+	signal pid_ce: std_logic;
+	signal pid_intr: std_logic; -- currently unused
+	signal pid_bridge_f_out: std_logic_vector(C_pids-1 downto 0);
+	signal pid_bridge_r_out: std_logic_vector(C_pids-1 downto 0);
+	signal pid_encoder_a_out: std_logic_vector(C_pids-1 downto 0);
+	signal pid_encoder_b_out: std_logic_vector(C_pids-1 downto 0);
+	constant C_pids_bits: integer := integer(floor((log2(real(C_pids)+0.001))+0.5));
+
+	-- VGA_textmode VGA/HDMI video
+    constant iomap_vga_textmode: T_iomap_range := (x"FB80", x"FB9F");
+	signal vga_textmode_ce: std_logic;
+	signal from_vga_textmode: std_logic_vector(31 downto 0);
+	signal vga_textmode_dmem_write: std_logic;
+	signal vga_textmode_dmem_to_cpu: std_logic_vector(31 downto 0);
+	signal vga_textmode_addr: std_logic_vector(15 downto 2);
+	signal vga_textmode_data: std_logic_vector(31 downto 0);
+	signal vga_textmode_red: std_logic_vector(C_vgatext_bits-1 downto 0);
+	signal vga_textmode_green: std_logic_vector(C_vgatext_bits-1 downto 0);
+	signal vga_textmode_blue: std_logic_vector(C_vgatext_bits-1 downto 0);
+	signal vga_textmode_hsync: std_logic;
+	signal vga_textmode_vsync: std_logic;
+	signal vga_textmode_blank: std_logic;
+
+	-- VGA_textmode SRAM bitmap access
+	signal vga_textmode_bitmap_addr_strobe: std_logic;
+	signal vga_textmode_bitmap_addr: std_logic_vector(29 downto 2);
+	signal vga_textmode_bitmap_ready: std_logic;
+
+    -- PCM audio
+    constant iomap_pcm: T_iomap_range := (x"FBA0", x"FBAF");
+    signal pcm_ce: std_logic;
+    signal pcm_addr_strobe, pcm_data_ready: std_logic;
+    signal pcm_addr: std_logic_vector(29 downto 2);
+    signal from_pcm: std_logic_vector(31 downto 0);
+    signal pcm_l, pcm_r: std_logic;
+    signal pcm_bus_l, pcm_bus_r: ieee.numeric_std.signed(15 downto 0);
+
+	-- ADC
+	constant iomap_adc: T_iomap_range := (x"FF40", x"FF5F");
+	signal adc_range: std_logic := '0';
+	type adcs_type is array (0 to C_gpio_adc-1) of std_logic_vector(15 downto 0);
+	signal from_adc: adcs_type;
+
 
 	-- Debug
 	signal sio_to_debug_data: std_logic_vector(7 downto 0);
@@ -471,201 +476,6 @@ begin
 	);
 	end generate;
 
-	-- VGA textmode
-	G_vga_textmode:
-	if C_vgatext generate
-	vga_video: entity work.VGA_textmode
-	generic map (
-        C_vgatext_mode => C_vgatext_mode,
-        C_vgatext_bits => C_vgatext_bits,
-        C_vgatext_bram_mem => C_vgatext_bram_mem,
-        C_vgatext_external_mem => C_vgatext_external_mem,
-        C_vgatext_reset => C_vgatext_reset,
-        C_vgatext_palette => C_vgatext_palette,
-        C_vgatext_text => C_vgatext_text,
-        C_vgatext_reg_read => C_vgatext_reg_read,
-        C_vgatext_text_fifo => C_vgatext_text_fifo,
-        C_vgatext_char_height => C_vgatext_char_height,
-        C_vgatext_font_height => C_vgatext_font_height,
-        C_vgatext_font_depth => C_vgatext_font_depth,
-        C_vgatext_font_linedouble => C_vgatext_font_linedouble,
-        C_vgatext_font_widthdouble => C_vgatext_font_widthdouble,
-        C_vgatext_monochrome => C_vgatext_monochrome,
-        C_vgatext_finescroll => C_vgatext_finescroll,
-        C_vgatext_cursor => C_vgatext_cursor,
-        C_vgatext_cursor_blink => C_vgatext_cursor_blink,
-        C_vgatext_bitmap => C_vgatext_bitmap,
-        C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
-        C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo
-	)
-      port map (
-        reset_i => sio_break_internal(0),
-        clk_i => clk, ce_i => vga_textmode_ce, bus_addr_i => dmem_addr(4 downto 2),
-        bus_write_i => dmem_write, byte_sel_i => dmem_byte_sel,
-        bus_data_i => cpu_to_dmem, bus_data_o => from_vga_textmode,
-        --
-        clk_pixel_i => clk_25MHz,
-        --
-        textfifo_data_i => vga_textmode_data,
-        bram_addr_o => vga_textmode_addr,
-        bram_data_i => vga_textmode_data,
-        --
-        bitmap_strobe_o => vga_textmode_bitmap_addr_strobe,
-        bitmap_addr_o => vga_textmode_bitmap_addr,
-        bitmap_ready_i => vga_textmode_bitmap_ready,
-        bitmap_data_i => from_sram,
-        --
-        red_o => vga_textmode_red,
-        green_o => vga_textmode_green,
-        blue_o => vga_textmode_blue,
-        hsync_o => vga_textmode_hsync,
-        vsync_o => vga_textmode_vsync,
-        blank_o => vga_textmode_blank
-      );
-
-	-- DVI-D Encoder Block (Thanks Hamster ;-)
-	u100 : entity work.dvid
-	generic map(
-		C_depth	=>	C_vgatext_bits
-	)
-	port map(
-		clk		=> clk_dvi,
-		clk_n	=> clk_dvin,
-		clk_pixel => clk_25MHz,
-
-		red_p	=> vga_textmode_red(C_vgatext_bits-1 downto 0),
-		green_p	=> vga_textmode_green(C_vgatext_bits-1 downto 0),
-		blue_p	=> vga_textmode_blue(C_vgatext_bits-1 downto 0),
-
-		blank	=> vga_textmode_blank,
-		hsync	=> vga_textmode_hsync,
-		vsync	=> vga_textmode_vsync,
-
-		-- outputs to TMDS drivers
-		red_s	=> LVDS_Red,
-		green_s	=> LVDS_Green,
-		blue_s	=> LVDS_Blue,
-		clock_s	=> LVDS_ck
-	);
-
-	-- 8KB VGA textmode BRAM
-	G_vga_textmode_bram: if C_vgatext_text generate
-	vga_bram: entity work.VGA_textmode_bram
-	generic map (
-        C_mem_size    => C_vgatext_bram_mem,
-        C_label	      => C_vgatext_label,
-        C_monochrome  => C_vgatext_monochrome,
-        C_font_height => C_vgatext_font_height,
-        C_font_depth  => C_vgatext_font_depth
-	)
-	port map (
-        clk => clk, imem_addr => vga_textmode_addr, imem_data_out => vga_textmode_data,
-        dmem_write => vga_textmode_dmem_write,
-        dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-        dmem_data_out => vga_textmode_dmem_to_cpu, dmem_data_in => cpu_to_dmem
-	);
-	end generate;
-
-	vga_textmode_dmem_write <= dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "01" else '0';
-	with conv_integer(io_addr(11 downto 4)) select
-		vga_textmode_ce <= io_addr_strobe when iomap_from(iomap_vga_textmode, iomap_range) to iomap_to(iomap_vga_textmode, iomap_range),
-		'0' when others;
-	end generate;
-
-	-- RS232 sio
-	G_sio: for i in 0 to C_sio - 1 generate
-	sio_instance: entity work.sio
-	generic map (
-		C_clk_freq => C_clk_freq,
-		C_init_baudrate => C_sio_init_baudrate,
-		C_fixed_baudrate => C_sio_fixed_baudrate,
-		C_break_detect => C_sio_break_detect,
-		C_break_resets_baudrate => C_sio_break_detect,
-		C_break_detect_delay_ms => C_sio_break_detect_delay_ms,
-		C_big_endian => C_big_endian
-	)
-	port map (
-		clk => clk, ce => sio_ce(i), txd => sio_tx(i), rxd => sio_rx(i),
-		bus_write => dmem_write, byte_sel => dmem_byte_sel,
-		bus_in => cpu_to_dmem, bus_out => from_sio(i),
-		break => sio_break_internal(i)
-	);
-		sio_ce(i) <= io_addr_strobe when sio_range='1' and conv_integer(io_addr(5 downto 4)) = i
-				else '0';
-	sio_break(i) <= sio_break_internal(i);
-	end generate;
-	G_sio_decoder: if C_sio > 0 generate
-	with conv_integer(io_addr(11 downto 4)) select
-		sio_range <= '1' when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range),
-					'0' when others;
-	end generate;
-
-	-- SPI
-	G_spi: for i in 0 to C_spi - 1 generate
-	spi_instance: entity work.spi
-	generic map (
-		C_turbo_mode => C_spi_turbo_mode(i) = '1',
-		C_fixed_speed => C_spi_fixed_speed(i) = '1'
-	)
-	port map (
-		clk => clk, ce => spi_ce(i),
-		bus_write => dmem_write, byte_sel => dmem_byte_sel,
-		bus_in => cpu_to_dmem, bus_out => from_spi(i),
-		spi_sck => spi_sck(i), spi_cen => spi_ss(i),
-		spi_miso => spi_miso(i), spi_mosi => spi_mosi(i)
-	);
-		spi_ce(i) <= io_addr_strobe when spi_range='1' and conv_integer(io_addr(5 downto 4)) = i
-				else '0';
-	end generate;
-	G_spi_decoder: if C_spi > 0 generate
-	with conv_integer(io_addr(11 downto 4)) select
-		spi_range <= '1' when iomap_from(iomap_spi, iomap_range) to iomap_to(iomap_spi, iomap_range),
-					'0' when others;
-	end generate;
-
-    --
-    -- I/O
-    --
-	-- simple_out: physical pin output, most efficient LUT-saving
-	process(clk)
-	begin
-	if rising_edge(clk) and io_addr_strobe = '1' and dmem_write = '1' then
-		-- simple out
-		if C_simple_out > 0 and io_addr(11 downto 4) = iomap_from(iomap_simple_out, iomap_range) then
-		if dmem_byte_sel(0) = '1' then
-			R_simple_out(7 downto 0) <= cpu_to_dmem(7 downto 0);
-		end if;
-		if dmem_byte_sel(1) = '1' then
-			R_simple_out(15 downto 8) <= cpu_to_dmem(15 downto 8);
-		end if;
-		if dmem_byte_sel(2) = '1' then
-			R_simple_out(23 downto 16) <= cpu_to_dmem(23 downto 16);
-		end if;
-		if dmem_byte_sel(3) = '1' then
-			R_simple_out(31 downto 24) <= cpu_to_dmem(31 downto 24);
-		end if;
-		end if;
-	end if;
-	if rising_edge(clk) then
-		R_simple_in(C_simple_in - 1 downto 0) <=
-			simple_in(C_simple_in - 1 downto 0);
-	end if;
-	end process;
-
-	G_simple_out_standard:
-	if C_timer = false generate
-	simple_out(C_simple_out - 1 downto 0) <=
-		R_simple_out(C_simple_out - 1 downto 0);
-	end generate;
-	-- muxing simple_io to show PWM of timer on LEDs
-	G_simple_out_timer:
-	if C_timer = true generate
-		ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
-		ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
-		simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
-		else (others => '-');
-	end generate;
-
 	-- big address decoder when CPU reads IO
 	process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio, from_vga_textmode, from_ps2, from_adc)
 	variable i: integer;
@@ -724,6 +534,98 @@ begin
 	end case;
 	end process;
 
+	-- simple_out: physical pin output, most efficient LUT-saving
+	process(clk)
+	begin
+	if rising_edge(clk) and io_addr_strobe = '1' and dmem_write = '1' then
+		-- simple out
+		if C_simple_out > 0 and io_addr(11 downto 4) = iomap_from(iomap_simple_out, iomap_range) then
+		if dmem_byte_sel(0) = '1' then
+			R_simple_out(7 downto 0) <= cpu_to_dmem(7 downto 0);
+		end if;
+		if dmem_byte_sel(1) = '1' then
+			R_simple_out(15 downto 8) <= cpu_to_dmem(15 downto 8);
+		end if;
+		if dmem_byte_sel(2) = '1' then
+			R_simple_out(23 downto 16) <= cpu_to_dmem(23 downto 16);
+		end if;
+		if dmem_byte_sel(3) = '1' then
+			R_simple_out(31 downto 24) <= cpu_to_dmem(31 downto 24);
+		end if;
+		end if;
+	end if;
+	if rising_edge(clk) then
+		R_simple_in(C_simple_in - 1 downto 0) <=
+			simple_in(C_simple_in - 1 downto 0);
+	end if;
+	end process;
+
+	G_simple_out_standard:
+	if C_timer = false generate
+	simple_out(C_simple_out - 1 downto 0) <=
+		R_simple_out(C_simple_out - 1 downto 0);
+	end generate;
+	-- muxing simple_io to show PWM of timer on LEDs
+	G_simple_out_timer:
+	if C_timer = true generate
+		ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
+		ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
+		simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
+		else (others => '-');
+	end generate;
+
+
+	-- RS232 sio
+	G_sio: for i in 0 to C_sio - 1 generate
+	sio_instance: entity work.sio
+	generic map (
+		C_clk_freq => C_clk_freq,
+		C_init_baudrate => C_sio_init_baudrate,
+		C_fixed_baudrate => C_sio_fixed_baudrate,
+		C_break_detect => C_sio_break_detect,
+		C_break_resets_baudrate => C_sio_break_detect,
+		C_break_detect_delay_ms => C_sio_break_detect_delay_ms,
+		C_big_endian => C_big_endian
+	)
+	port map (
+		clk => clk, ce => sio_ce(i), txd => sio_tx(i), rxd => sio_rx(i),
+		bus_write => dmem_write, byte_sel => dmem_byte_sel,
+		bus_in => cpu_to_dmem, bus_out => from_sio(i),
+		break => sio_break_internal(i)
+	);
+		sio_ce(i) <= io_addr_strobe when sio_range='1' and conv_integer(io_addr(5 downto 4)) = i
+				else '0';
+	sio_break(i) <= sio_break_internal(i);
+	end generate;
+	G_sio_decoder: if C_sio > 0 generate
+	with conv_integer(io_addr(11 downto 4)) select
+		sio_range <= '1' when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range),
+					'0' when others;
+	end generate;
+
+	-- SPI
+	G_spi: for i in 0 to C_spi - 1 generate
+	spi_instance: entity work.spi
+	generic map (
+		C_turbo_mode => C_spi_turbo_mode(i) = '1',
+		C_fixed_speed => C_spi_fixed_speed(i) = '1'
+	)
+	port map (
+		clk => clk, ce => spi_ce(i),
+		bus_write => dmem_write, byte_sel => dmem_byte_sel,
+		bus_in => cpu_to_dmem, bus_out => from_spi(i),
+		spi_sck => spi_sck(i), spi_cen => spi_ss(i),
+		spi_miso => spi_miso(i), spi_mosi => spi_mosi(i)
+	);
+		spi_ce(i) <= io_addr_strobe when spi_range='1' and conv_integer(io_addr(5 downto 4)) = i
+				else '0';
+	end generate;
+	G_spi_decoder: if C_spi > 0 generate
+	with conv_integer(io_addr(11 downto 4)) select
+		spi_range <= '1' when iomap_from(iomap_spi, iomap_range) to iomap_to(iomap_spi, iomap_range),
+					'0' when others;
+	end generate;
+
 	-- GPIO
 	G_gpio:
 	for i in 0 to C_gpios-1 generate
@@ -753,16 +655,28 @@ begin
 		-- gpio_intr_joint <= '0' when conv_integer(gpio_intr) = 0 else '1';
 	end generate;
 
-	-- FleaFPGA-Uno ADC input
-	G_gpio_adc: for i in 0 to C_gpio_adc -1 generate
-	gpio_adc_instance : entity work.simple_ADC
-	port map(
-		clk => clk_dvi,			-- use handy 125MHz DVI clock
-		reset => sio_break_internal(0),
-		adc_output => from_adc(i),
-		Sampler_Q => ADC_Error_out(i),
-		Sampler_D => gpio(16+i)	-- map to PORTC range
+	-- Timer
+	G_timer:
+	if C_timer generate
+	icp <= R_simple_out(3) & R_simple_out(0); -- during debug period, leds will serve as software-generated ICP
+	timer: entity work.timer
+	generic map (
+	C_pres => 10,
+	C_bits => 12
+	)
+	port map (
+	clk => clk, ce => timer_ce, addr => dmem_addr(5 downto 2),
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_timer,
+	timer_irq => timer_intr,
+	ocp_enable => ocp_enable, -- enable physical output
+	ocp => ocp, -- output compare signal
+	icp_enable => icp_enable, -- enable physical input
+	icp => icp -- input capture signal
 	);
+	with conv_integer(io_addr(11 downto 4)) select
+		timer_ce <= io_addr_strobe when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range),
+							'0' when others;
 	end generate;
 
 	-- PS2 keyboard/mouse port
@@ -818,29 +732,120 @@ begin
 	pid_bridge_r <= pid_bridge_r_out;
 	end generate;
 
-	-- Timer
-	G_timer:
-	if C_timer generate
-	icp <= R_simple_out(3) & R_simple_out(0); -- during debug period, leds will serve as software-generated ICP
-	timer: entity work.timer
+
+
+	-- VGA textmode
+    G_vgatext:	if C_vgatext generate
+	vga_video: entity work.VGA_textmode
 	generic map (
-	C_pres => 10,
-	C_bits => 12
+        C_vgatext_mode => C_vgatext_mode,
+        C_vgatext_bits => C_vgatext_bits,
+        C_vgatext_bram_mem => C_vgatext_bram_mem,
+        C_vgatext_external_mem => C_vgatext_external_mem,
+        C_vgatext_reset => C_vgatext_reset,
+        C_vgatext_palette => C_vgatext_palette,
+        C_vgatext_text => C_vgatext_text,
+        C_vgatext_reg_read => C_vgatext_reg_read,
+        C_vgatext_text_fifo => C_vgatext_text_fifo,
+        C_vgatext_char_height => C_vgatext_char_height,
+        C_vgatext_font_height => C_vgatext_font_height,
+        C_vgatext_font_depth => C_vgatext_font_depth,
+        C_vgatext_font_linedouble => C_vgatext_font_linedouble,
+        C_vgatext_font_widthdouble => C_vgatext_font_widthdouble,
+        C_vgatext_monochrome => C_vgatext_monochrome,
+        C_vgatext_finescroll => C_vgatext_finescroll,
+        C_vgatext_cursor => C_vgatext_cursor,
+        C_vgatext_cursor_blink => C_vgatext_cursor_blink,
+        C_vgatext_bitmap => C_vgatext_bitmap,
+        C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
+        C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo
+	)
+      port map (
+        reset_i => sio_break_internal(0),
+        clk_i => clk, ce_i => vga_textmode_ce, bus_addr_i => dmem_addr(4 downto 2),
+        bus_write_i => dmem_write, byte_sel_i => dmem_byte_sel,
+        bus_data_i => cpu_to_dmem, bus_data_o => from_vga_textmode,
+        --
+        clk_pixel_i => clk_25MHz,
+        --
+        textfifo_data_i => vga_textmode_data,
+        bram_addr_o => vga_textmode_addr,
+        bram_data_i => vga_textmode_data,
+        --
+        bitmap_strobe_o => vga_textmode_bitmap_addr_strobe,
+        bitmap_addr_o => vga_textmode_bitmap_addr,
+        bitmap_ready_i => vga_textmode_bitmap_ready,
+        bitmap_data_i => from_sram,
+        --
+        red_o => vga_textmode_red,
+        green_o => vga_textmode_green,
+        blue_o => vga_textmode_blue,
+        hsync_o => vga_textmode_hsync,
+        vsync_o => vga_textmode_vsync,
+        blank_o => vga_textmode_blank
+      );
+
+	-- DVI-D Encoder Block (Thanks Hamster ;-)
+      G_vgatext_dvid: entity work.dvid
+      generic map (
+		C_depth	=>	C_vgatext_bits
+	)
+	port map(
+		clk		=> clk_dvi,
+		clk_n	=> clk_dvin,
+		clk_pixel => clk_25MHz,
+
+		red_p	=> vga_textmode_red(C_vgatext_bits-1 downto 0),
+		green_p	=> vga_textmode_green(C_vgatext_bits-1 downto 0),
+		blue_p	=> vga_textmode_blue(C_vgatext_bits-1 downto 0),
+
+		blank	=> vga_textmode_blank,
+		hsync	=> vga_textmode_hsync,
+		vsync	=> vga_textmode_vsync,
+
+		-- outputs to TMDS drivers
+		red_s	=> LVDS_Red,
+		green_s	=> LVDS_Green,
+		blue_s	=> LVDS_Blue,
+		clock_s	=> LVDS_ck
+	);
+
+      -- 8KB VGA textmode BRAM (for text+attribute bytes and font)
+	G_vga_textmode_bram: if C_vgatext_text generate
+      G_vgatext_bram: entity work.VGA_textmode_bram
+	generic map (
+        C_mem_size    => C_vgatext_bram_mem,
+        C_label	      => C_vgatext_label,
+        C_monochrome  => C_vgatext_monochrome,
+        C_font_height => C_vgatext_font_height,
+        C_font_depth  => C_vgatext_font_depth
 	)
 	port map (
-	clk => clk, ce => timer_ce, addr => dmem_addr(5 downto 2),
-	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_timer,
-	timer_irq => timer_intr,
-	ocp_enable => ocp_enable, -- enable physical output
-	ocp => ocp, -- output compare signal
-	icp_enable => icp_enable, -- enable physical input
-	icp => icp -- input capture signal
+        clk => clk, imem_addr => vga_textmode_addr, imem_data_out => vga_textmode_data,
+        dmem_write => vga_textmode_dmem_write,
+        dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+        dmem_data_out => vga_textmode_dmem_to_cpu, dmem_data_in => cpu_to_dmem
 	);
-	with conv_integer(io_addr(11 downto 4)) select
-		timer_ce <= io_addr_strobe when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range),
-							'0' when others;
 	end generate;
+
+	vga_textmode_dmem_write <= dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "01" else '0';
+	with conv_integer(io_addr(11 downto 4)) select
+		vga_textmode_ce <= io_addr_strobe when iomap_from(iomap_vga_textmode, iomap_range) to iomap_to(iomap_vga_textmode, iomap_range),
+		'0' when others;
+    end generate; -- end VGA textmode
+
+	-- FleaFPGA-Uno ADC input
+	G_gpio_adc: for i in 0 to C_gpio_adc -1 generate
+	gpio_adc_instance : entity work.simple_ADC
+	port map(
+		clk => clk_dvi,			-- use handy 125MHz DVI clock
+		reset => sio_break_internal(0),
+		adc_output => from_adc(i),
+		Sampler_Q => ADC_Error_out(i),
+		Sampler_D => gpio(16+i)	-- map to PORTC range
+	);
+	end generate;
+
 
 	-- Block RAM
 	dmem_bram_write <=
