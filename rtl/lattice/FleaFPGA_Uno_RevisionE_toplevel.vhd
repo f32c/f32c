@@ -148,7 +148,11 @@ begin
 	SRAM_n_cs <= '0'; 
 	SRAM_n_oe <= '0'; 
 	shield_reset <= 'Z';	-- ignore for now
-	
+
+	-- un-comment following two lines for WiFi option
+  gpio_pullup(0) <= '1';	-- Wifi gpio
+  User_LED2			 <= '1';	-- Wifi reset
+
 	u0 : entity work.clkgen
 	port map( 
 		CLKI			=>	sys_clock,
@@ -249,7 +253,7 @@ begin
 
 		gpio_pullup(127 downto 32) => open,	
 		
-		gpio_pullup(24) => gpio_pullup(0),	-- PORTD0 pin D0 pullup
+--Wifi		gpio_pullup(24) => gpio_pullup(0),	-- PORTD0 pin D0 pullup -- Not available if WiFi option installed
 		gpio_pullup(25) => gpio_pullup(1),	-- PORTD1 pin D1 pullup
 		gpio_pullup(26) => gpio_pullup(2),	-- PORTD2 pin D2 pullup
 		gpio_pullup(27) => gpio_pullup(3),	-- PORTD3 pin D3 pullup
@@ -275,7 +279,7 @@ begin
 		gpio_pullup(7 downto 0) => open,
 
 		simple_out(0) => User_LED1,		
-		simple_out(1) => User_LED2, -- Not used if WiFi option installed
+--Wifi		simple_out(1) => User_LED2, -- Not available if WiFi option installed
 		simple_out(31 downto 2) => open,
 		simple_in(0) => NOT User_n_PB1,
 		simple_in(31 downto 1) => open,
