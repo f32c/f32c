@@ -77,6 +77,8 @@ entity VGA_textmode is
     bitmap_rewind_o:    out std_logic;                      -- "rewind" FIFO to replay last scan-line data
     bitmap_ready_i:     in std_logic;                       -- bitmap data ready (not used with FIFO)
 
+    display_active_o:           out std_logic;                      -- true when not on visible scan-line
+
     hsync_o:            out std_logic;                      -- horizontal sync output (polarity depends on video mode)
     vsync_o:            out std_logic;                      -- vertical sync output (polarity depends on video mode)
     blank_o:            out std_logic;                      -- blanked output (true when not scanning visible area)
@@ -702,16 +704,16 @@ begin
               end if;
             end if;
             if hcount >= -1 AND hcount < visible_width-1 then             -- one cycle before needed
-							if (C_vgatext_bitmap_depth = 1 AND hcount(4 downto 0) = "11111") OR -- load new bitmap data at last pixel of current bitmap data
-								 (C_vgatext_bitmap_depth = 2 AND hcount(3 downto 0) = "1111") OR
-								 (C_vgatext_bitmap_depth = 4 AND hcount(2 downto 0) = "111") OR
-								 (C_vgatext_bitmap_depth = 8 AND hcount(1 downto 0) = "11") then
-								bitmap_strobe <= '1';
+              if (C_vgatext_bitmap_depth = 1 AND hcount(4 downto 0) = "11111") OR -- load new bitmap data at last pixel of current bitmap data
+                 (C_vgatext_bitmap_depth = 2 AND hcount(3 downto 0) = "1111") OR
+                 (C_vgatext_bitmap_depth = 4 AND hcount(2 downto 0) = "111") OR
+                 (C_vgatext_bitmap_depth = 8 AND hcount(1 downto 0) = "11") then
+                bitmap_strobe <= '1';
                 if C_vgatext_bitmap_fifo then
                   bitmap_data <= bitmap_data_i;
                 else
                   bitmap_data <= bitmap_data_next;
-									bitmap_addr <= bitmap_addr + 1;
+                  bitmap_addr <= bitmap_addr + 1;
                 end if;
               end if;
             end if;
@@ -810,7 +812,7 @@ begin
     begin
       if rising_edge(clk_i) then
         if bitmap_ready_i = '1' then
-          bitmap_data_next <= bitmap_data_i;	-- save new data (for next word)
+          bitmap_data_next <= bitmap_data_i;  -- save new data (for next word)
           bitmap_strobe_o <= '0';
         elsif bitmap_strobe = '1' then
           bitmap_strobe_o <= '1';
@@ -837,8 +839,8 @@ begin
   end generate;
   
   -- vertical blank indicator
-  vblank  <= '1' when vcount <-0 else '0';
-
+  vblank  <= '1' when vcount < 0 else '0';
+  display_active_o <= '1' when vcount >= 0 else '0';
   -- output VGA/DVI/HDMI signals
   hsync_o <= hsync;
   vsync_o <= vsync;
