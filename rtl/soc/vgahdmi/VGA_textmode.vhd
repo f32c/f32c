@@ -65,6 +65,7 @@ entity VGA_textmode is
 
     bram_addr_o:        out std_logic_vector(15 downto 2);  -- font (or text+color) BRAM address
     bram_data_i:        in std_logic_vector(31 downto 0);   -- font (or text+color) BRAM data
+    text_active_o:      out std_logic;                      -- true when not on visible scan-line
 
     textfifo_addr_o:    out std_logic_vector(29 downto 2);  -- text+color buffer FIFO start address
     textfifo_data_i:    in std_logic_vector(31 downto 0);   -- data from text+color FIFO
@@ -76,6 +77,7 @@ entity VGA_textmode is
     bitmap_strobe_o:    out std_logic;                      -- request data (or request next word with FIFO)
     bitmap_rewind_o:    out std_logic;                      -- "rewind" FIFO to replay last scan-line data
     bitmap_ready_i:     in std_logic;                       -- bitmap data ready (not used with FIFO)
+    bitmap_active_o:    out std_logic;                      -- true when not on visible scan-line
 
     hsync_o:            out std_logic;                      -- horizontal sync output (polarity depends on video mode)
     vsync_o:            out std_logic;                      -- vertical sync output (polarity depends on video mode)
@@ -157,7 +159,7 @@ architecture Behavioral of VGA_textmode is
   end record;
 
   -- video mode array
-  type video_mode_array_t is array (0 to 2) of video_mode_t;
+  type video_mode_array_t is array (0 to 3) of video_mode_t;
   constant vmode: video_mode_array_t :=
   (
     ( -- 640x480 @ ~60Hz
@@ -198,6 +200,19 @@ architecture Behavioral of VGA_textmode is
       v_back_porch    =>  23,
       h_sync_polarity =>  '1',
       v_sync_polarity =>  '1'
+    ),
+    (-- 1024x768@60  (clk_pixel 65.00Mhz - good luck!)
+      pixel_clock_Hz  =>  65000000,
+      visible_width   =>  1024,
+      visible_height  =>  768,
+      h_front_porch   =>  24,
+      h_sync_pulse    =>  136,
+      h_back_porch    =>  160,
+      v_front_porch   =>  3,
+      v_sync_pulse    =>  6,
+      v_back_porch    =>  29,
+      h_sync_polarity =>  '0',
+      v_sync_polarity =>  '0'
     )
   );
 
@@ -307,7 +322,7 @@ architecture Behavioral of VGA_textmode is
     x"FFFF55",    -- yellow
     x"FFFFFF"     -- white
   );
-  
+
   -- BRAM read register interface
   signal  bram_read_request:  std_logic;                      -- true when reg read requests for bram_read_addr to be read
   signal  bram_read_wait:     std_logic;                      -- true when waiting for bram read
@@ -516,7 +531,6 @@ begin
     variable forecolor: std_logic_vector(3 downto 0);
     variable backcolor: std_logic_vector(3 downto 0);
     variable mem_data: std_logic_vector(31 downto 0);
-    variable font_offset: unsigned(11 downto 0);
     variable char_data: std_logic_vector(7 downto 0);
     variable color_data: std_logic_vector(7 downto 0);
     variable byte_sel_i: std_logic_vector(1 downto 0);
@@ -526,12 +540,12 @@ begin
       if vg_enable = '1' then
         -- timing generation
         if hcount = (visible_width-1) then        -- are we at the end of a horizontal line?
-          hcount <= to_signed((visible_width-total_width), 12);   -- yes, reset hcount
+          hcount <= to_signed(visible_width-total_width, hcount'length);   -- yes, reset hcount
           if C_vgatext_finescroll then
-            shcount <= to_signed((visible_width-total_width), 12) + signed("000000000" & fine_scrollx);  -- better way?
+            shcount <= to_signed(visible_width-total_width, shcount'length) + to_signed(to_integer(fine_scrollx), shcount'length);
           end if;
           if vcount = (visible_height-1) then     -- are we at the bottom of the frame also?
-            vcount <= to_signed((visible_height-total_height), 12); -- yes, reset vcount
+            vcount <= to_signed(visible_height-total_height, vcount'length); -- yes, reset vcount
             if C_vgatext_text AND C_vgatext_cursor AND C_vgatext_cursor_blink then
               fcount <= fcount + 1;       -- increment fcount frame counter
             end if;
@@ -592,7 +606,7 @@ begin
             bram_read_wait <= '1';
           end if;
         end if;
-        
+
         if vcount >= 0 then           -- if on a visible scan-line
           -- text character generation
           if tg_enable = '1' AND shcount >= -8 AND vcount < ((visible_height/C_vgatext_char_height)*C_vgatext_char_height) then
@@ -666,7 +680,7 @@ begin
               when "111" =>               -- switch to new character data for next pixel
                 font_data <= font_data_next;                   -- use next font data byte
                 text_color <= text_color_next;                 -- use next font color byte (screen color if monochrome)
-                if shcount = visible_width-1 then              -- if last pixel of scan-line 
+                if shcount = visible_width-1 then              -- if last pixel of scan-line
                   if char_y = C_vgatext_char_height-1 then     -- if last line of char cell
                     char_y <= (others => '0');                 -- reset font line
                     if C_vgatext_cursor then
@@ -702,16 +716,16 @@ begin
               end if;
             end if;
             if hcount >= -1 AND hcount < visible_width-1 then             -- one cycle before needed
-							if (C_vgatext_bitmap_depth = 1 AND hcount(4 downto 0) = "11111") OR -- load new bitmap data at last pixel of current bitmap data
-								 (C_vgatext_bitmap_depth = 2 AND hcount(3 downto 0) = "1111") OR
-								 (C_vgatext_bitmap_depth = 4 AND hcount(2 downto 0) = "111") OR
-								 (C_vgatext_bitmap_depth = 8 AND hcount(1 downto 0) = "11") then
-								bitmap_strobe <= '1';
+              if (C_vgatext_bitmap_depth = 1 AND hcount(4 downto 0) = "11111") OR -- load new bitmap data at last pixel of current bitmap data
+                 (C_vgatext_bitmap_depth = 2 AND hcount(3 downto 0) = "1111") OR
+                 (C_vgatext_bitmap_depth = 4 AND hcount(2 downto 0) = "111") OR
+                 (C_vgatext_bitmap_depth = 8 AND hcount(1 downto 0) = "11") then
+                bitmap_strobe <= '1';
                 if C_vgatext_bitmap_fifo then
                   bitmap_data <= bitmap_data_i;
                 else
                   bitmap_data <= bitmap_data_next;
-									bitmap_addr <= bitmap_addr + 1;
+                  bitmap_addr <= bitmap_addr + 1;
                 end if;
               end if;
             end if;
@@ -810,7 +824,7 @@ begin
     begin
       if rising_edge(clk_i) then
         if bitmap_ready_i = '1' then
-          bitmap_data_next <= bitmap_data_i;	-- save new data (for next word)
+          bitmap_data_next <= bitmap_data_i;  -- save new data (for next word)
           bitmap_strobe_o <= '0';
         elsif bitmap_strobe = '1' then
           bitmap_strobe_o <= '1';
@@ -835,9 +849,11 @@ begin
   G_no_fine_scroll: if NOT C_vgatext_finescroll generate
   shcount <= hcount;
   end generate;
-  
+
   -- vertical blank indicator
-  vblank  <= '1' when vcount <-0 else '0';
+  vblank  <= '1' when vcount < 0 else '0';
+  text_active_o <= '0' when vcount < 0 else tg_enable;
+  bitmap_active_o <= '0' when vcount < 0 else bg_enable;
 
   -- output VGA/DVI/HDMI signals
   hsync_o <= hsync;
