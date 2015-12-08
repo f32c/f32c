@@ -327,20 +327,25 @@ architecture Behavioral of glue_bram_sram8 is
   signal pid_encoder_b_out: std_logic_vector(C_pids-1 downto 0);
   constant C_pids_bits: integer := integer(floor((log2(real(C_pids)+0.001))+0.5));
 
-  -- VGA FIFO signals
-  signal vga_addr: std_logic_vector(29 downto 2);
-  signal vga_addr_strobe: std_logic; -- FIFO requests to read from RAM
-  signal vga_data_ready: std_logic; -- RAM responds to FIFO
-  signal vga_frame: std_logic;
-
   -- VGA_textmode VGA/HDMI video (text and font in BRAM, bitmap in sdram)
   constant iomap_vga_textmode: T_iomap_range := (x"FB80", x"FB9F");
   signal vga_textmode_ce: std_logic;
   signal from_vga_textmode: std_logic_vector(31 downto 0);
+  signal vga_textmode_intr: std_logic;
+  signal vga_textmode_red: std_logic_vector(C_vgatext_bits-1 downto 0);
+  signal vga_textmode_green: std_logic_vector(C_vgatext_bits-1 downto 0);
+  signal vga_textmode_blue: std_logic_vector(C_vgatext_bits-1 downto 0);
+  signal vga_textmode_hsync: std_logic;
+  signal vga_textmode_vsync: std_logic;
+  signal vga_textmode_blank: std_logic;
+
+  -- VGA_textmode BRAM access
   signal vga_textmode_dmem_write: std_logic;
   signal vga_textmode_dmem_to_cpu: std_logic_vector(31 downto 0);
   signal vga_textmode_bram_addr: std_logic_vector(15 downto 2);
   signal vga_textmode_bram_data: std_logic_vector(31 downto 0);
+
+  -- VGA_textmode SRAM/FIFO text access
   signal vga_textmode_text_addr: std_logic_vector(29 downto 2);
   signal vga_textmode_text_data: std_logic_vector(31 downto 0);
   signal vga_textmode_text_strobe: std_logic;
@@ -349,13 +354,8 @@ architecture Behavioral of glue_bram_sram8 is
   signal vga_textmode_text_sram_addr: std_logic_vector(29 downto 2);
   signal vga_textmode_text_sram_strobe: std_logic; -- FIFO requests to read from RAM
   signal vga_textmode_text_sram_ready: std_logic; -- RAM responds to FIFO
-  signal vga_textmode_red: std_logic_vector(C_vgatext_bits-1 downto 0);
-  signal vga_textmode_green: std_logic_vector(C_vgatext_bits-1 downto 0);
-  signal vga_textmode_blue: std_logic_vector(C_vgatext_bits-1 downto 0);
-  signal vga_textmode_hsync: std_logic;
-  signal vga_textmode_vsync: std_logic;
-  signal vga_textmode_blank: std_logic;
-  signal vga_textmode_display_active: std_logic;  -- true when visible scan-line, false in vertical blanking period
+  signal vga_textmode_text_active: std_logic;  -- true when visible scan-line, false in vertical blanking period
+  signal vga_textmode_text_frame: std_logic;
 
   -- VGA_textmode SRAM/FIFO bitmap access
   signal vga_textmode_bitmap_addr: std_logic_vector(29 downto 2); -- FIFO start or SRAM address
@@ -363,6 +363,11 @@ architecture Behavioral of glue_bram_sram8 is
   signal vga_textmode_bitmap_strobe: std_logic;         -- FIFO fetch next word
   signal vga_textmode_bitmap_rewind: std_logic;         -- rewind FIFO
   signal vga_textmode_bitmap_ready: std_logic;          -- SRAM data ready
+  signal vga_textmode_bitmap_sram_addr: std_logic_vector(29 downto 2);
+  signal vga_textmode_bitmap_sram_strobe: std_logic; -- FIFO requests to read from RAM
+  signal vga_textmode_bitmap_sram_ready: std_logic; -- RAM responds to FIFO
+  signal vga_textmode_bitmap_active: std_logic;  -- true when visible scan-line, false in vertical blanking period
+  signal vga_textmode_bitmap_frame: std_logic;
 
   -- PCM audio
   constant iomap_pcm: T_iomap_range := (x"FBA0", x"FBAF");
@@ -434,7 +439,7 @@ begin
     else vga_textmode_dmem_to_cpu when C_vgatext AND C_vgatext_bus_read AND dmem_addr(31 downto 30) = "01" -- address 0x40000000
     else from_sram when C_sram AND dmem_addr(31 downto 30) = "10"
     else dmem_to_cpu;
-  intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & '0';
+  intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & vga_textmode_intr;
   io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
     else '0';
   io_addr <= '0' & dmem_addr(10 downto 2);
@@ -462,12 +467,12 @@ begin
   to_sram(data_port).byte_sel <= dmem_byte_sel;
   -- port 2: VGA/HDMI video bitmap
   G_bitmap_sram: if C_vgatext AND C_vgatext_bitmap generate
-  to_sram(fb_port).addr_strobe <= vga_addr_strobe;
-  to_sram(fb_port).addr <= vga_addr(to_sram(fb_port).addr'high downto 2);
+  to_sram(fb_port).addr_strobe <= vga_textmode_bitmap_sram_strobe;
+  to_sram(fb_port).addr <= vga_textmode_bitmap_sram_addr(to_sram(fb_port).addr'high downto 2);
   to_sram(fb_port).data_in <= (others => '-');
   to_sram(fb_port).write <= '0';
   to_sram(fb_port).byte_sel <= (others => '1');
-  vga_data_ready <= sram_ready(fb_port);
+  vga_textmode_bitmap_sram_ready <= sram_ready(fb_port);
   end generate;
   -- port 3: VGA/HDMI video text+color
   G_text_sram: if C_vgatext AND C_vgatext_text_fifo generate
@@ -794,6 +799,7 @@ begin
     --
     bram_addr_o => vga_textmode_bram_addr,
     bram_data_i => vga_textmode_bram_data,
+    text_active_o => vga_textmode_text_active,
     --
     textfifo_addr_o => vga_textmode_text_addr,
     textfifo_data_i => vga_textmode_text_data,
@@ -804,8 +810,8 @@ begin
     bitmap_addr_o => vga_textmode_bitmap_addr,
     bitmap_ready_i => vga_textmode_bitmap_ready,
     bitmap_data_i => vga_textmode_bitmap_data,
+    bitmap_active_o => vga_textmode_bitmap_active,
     --
-    display_active_o => vga_textmode_display_active,
     red_o => vga_textmode_red,
     green_o => vga_textmode_green,
     blue_o => vga_textmode_blue,
@@ -831,7 +837,8 @@ begin
       data_ready => vga_textmode_text_sram_ready, -- data valid for read acknowledge from RAM
       data_in => from_sram, -- from SRAM
       base_addr => vga_textmode_text_addr,
-      start => vga_textmode_display_active,
+      start => vga_textmode_text_active,
+      frame => vga_textmode_text_frame,
       data_out => vga_textmode_text_data,
       fetch_next => vga_textmode_text_strobe,
       rewind => vga_textmode_text_rewind
@@ -849,22 +856,22 @@ begin
   port map (
     clk => clk,
     clk_pixel => clk_25MHz,
-    addr_strobe => vga_addr_strobe,
-    addr_out => vga_addr,
-    data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
+    addr_strobe => vga_textmode_bitmap_sram_strobe,
+    addr_out => vga_textmode_bitmap_sram_addr,
+    data_ready => vga_textmode_bitmap_sram_ready, -- data valid for read acknowledge from RAM
     data_in => from_sram,
     base_addr => vga_textmode_bitmap_addr,
-    start => vga_textmode_display_active,
-    frame => vga_frame,
+    start => vga_textmode_bitmap_active,
+    frame => vga_textmode_bitmap_frame,
     data_out => vga_textmode_bitmap_data,
     fetch_next => vga_textmode_bitmap_strobe
   );
   end generate;
   G_vgatext_nofifo:
   if C_vgatext_bitmap AND NOT C_vgatext_bitmap_fifo generate
-    vga_addr_strobe          <= vga_textmode_bitmap_strobe;
-    vga_addr                 <= vga_textmode_bitmap_addr;
-    vga_textmode_bitmap_ready<= vga_data_ready;
+    vga_textmode_bitmap_sram_strobe          <= vga_textmode_bitmap_strobe;
+    vga_textmode_bitmap_sram_addr                 <= vga_textmode_bitmap_addr;
+    vga_textmode_bitmap_ready<= vga_textmode_bitmap_sram_ready;
     vga_textmode_bitmap_data <= from_sram;
   end generate;
 
@@ -910,6 +917,19 @@ begin
     dmem_data_out => vga_textmode_dmem_to_cpu, dmem_data_in => cpu_to_dmem
   );
   end generate;
+
+  vgatext_intr: process(clk)
+  begin
+    if rising_edge(clk) then
+        if vga_textmode_ce = '1' then -- interrupt handling: (CPU read or write will clear interrupt)
+          vga_textmode_intr <= '0';
+        else
+          if vga_textmode_text_frame = '1' OR vga_textmode_bitmap_frame = '1' then
+          vga_textmode_intr <= '1';
+        end if;
+      end if;
+    end if; -- end rising edge
+  end process;
 
   vga_textmode_dmem_write <= dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "01" else '0';
   with conv_integer(io_addr(11 downto 4)) select
