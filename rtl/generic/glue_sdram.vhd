@@ -142,6 +142,10 @@ generic (
       C_vgatext_bitmap_fifo: boolean := false;  -- disable bitmap FIFO
         C_vgatext_bitmap_fifo_step: integer := 0;	-- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
         C_vgatext_bitmap_fifo_width: integer := 8;	-- bitmap width of FIFO address space length = 2^width * 4 byte
+        C_vgatext_bitmap_fifo_compositing_length: integer := 0;	-- compositing length (0 disabled)
+        -- compositing for typical values 9 or 17 use with step 640/4 and width 9)
+        -- compositing length 9: 1 word for offset, 8 words for bitmap (thin h-sprites 32x1 of 8bpp pixels)
+        -- compositing length 17: 1 word for offset, 16 words for bitmap (thin h-sprites 64x1 of 8bpp pixels)
 
     C_pcm: boolean := true;
     C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
@@ -1043,6 +1047,7 @@ begin
     bitmap_videofifo: entity work.videofifo
     generic map (
       C_step => C_vgatext_bitmap_fifo_step,
+      C_compositing_length => C_vgatext_bitmap_fifo_compositing_length,
       C_width => C_vgatext_bitmap_fifo_width -- length = 4 * 2^width
     )
     port map (
