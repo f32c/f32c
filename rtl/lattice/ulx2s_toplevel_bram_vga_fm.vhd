@@ -43,8 +43,43 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
-	C_vgahdmi: boolean := true;
+	C_vgahdmi: boolean := false;
 	C_vgahdmi_mem_kb: integer := 4; -- KB, very little BRAM available on lattice
+
+    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
+      C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 81.25MHz 8KB BRAM"; -- default banner in screen memory
+      C_vgatext_mode: integer := 0; -- 640x480
+      C_vgatext_bits: integer := 4; -- 64 possible colors
+      C_vgatext_bram_mem: integer := 8; -- 8KB text+font  memory
+      C_vgatext_external_mem: integer := 0; -- no external SRAM/SDRAM
+      C_vgatext_reset: boolean := true; -- reset registers to default with async reset
+      C_vgatext_palette: boolean := true; -- no color palette
+      C_vgatext_text: boolean := true;  -- enable optional text generation
+        C_vgatext_char_height: integer := 16; -- character cell height
+        C_vgatext_font_height: integer := 16; -- font height
+        C_vgatext_font_depth: integer := 7; -- font char depth, 7=128 characters or 8=256 characters
+        C_vgatext_font_linedouble: boolean := false; -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)        
+        C_vgatext_font_widthdouble: boolean := false; -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)       
+        C_vgatext_monochrome: boolean := false; -- true for 2-color text for whole screen, else additional color attribute byte per character             
+        C_vgatext_finescroll: boolean := true; -- true for pixel level character scrolling and line length modulo             
+        C_vgatext_cursor: boolean := true; -- true for optional text cursor                 
+        C_vgatext_cursor_blink: boolean := true; -- true for optional blinking text cursor
+        C_vgatext_bus_read: boolean := false; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
+        C_vgatext_reg_read: boolean := true; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
+        C_vgatext_text_fifo: boolean := false;  -- enable text memory FIFO
+          C_vgatext_text_fifo_postpone_step: integer := 0;
+          C_vgatext_text_fifo_step: integer := (82*2)/4; -- step for the FIFO refill and rewind
+          C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) length = 2^width * 4 bytes
+      C_vgatext_bitmap: boolean := false; -- true for optional bitmap generation                 
+        C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
+        C_vgatext_bitmap_fifo: boolean := false; -- enable bitmap FIFO
+          --C_vgatext_bitmap_fifo_step: integer := 640/4; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
+          --C_vgatext_bitmap_compositing_length: integer := 17; -- word length for H-compositing slice, including offset word (tiny sprites one pixel high)
+          --C_vgatext_bitmap_fifo_width: integer := 9; -- bitmap width of FIFO address space length = 2^width * 4 byte
+          C_vgatext_bitmap_fifo_step: integer := 0; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
+          C_vgatext_bitmap_compositing_length: integer := 0; -- word length for H-compositing slice, including offset word (tiny sprites one pixel high)
+          C_vgatext_bitmap_fifo_width: integer := 4; -- bitmap width of FIFO address space length = 2^width * 4 byte
+
 	C_fmrds: boolean := true;
 	C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
         C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
@@ -100,6 +135,36 @@ begin
 	C_debug => C_debug,
 	C_vgahdmi => C_vgahdmi,
 	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
+	-- vga textmode
+        C_vgatext => C_vgatext,
+        C_vgatext_label => C_vgatext_label,
+        C_vgatext_mode => C_vgatext_mode,
+        C_vgatext_bits => C_vgatext_bits,
+        C_vgatext_bram_mem => C_vgatext_bram_mem,
+        C_vgatext_external_mem => C_vgatext_external_mem,
+        C_vgatext_reset => C_vgatext_reset,
+        C_vgatext_palette => C_vgatext_palette,
+        C_vgatext_text => C_vgatext_text,
+        C_vgatext_bus_read => C_vgatext_bus_read,
+        C_vgatext_reg_read => C_vgatext_reg_read,
+        C_vgatext_text_fifo => C_vgatext_text_fifo,
+        C_vgatext_text_fifo_step => C_vgatext_text_fifo_step,
+        C_vgatext_text_fifo_width => C_vgatext_text_fifo_width,
+        C_vgatext_char_height => C_vgatext_char_height,
+        C_vgatext_font_height => C_vgatext_font_height,
+        C_vgatext_font_depth => C_vgatext_font_depth,
+        C_vgatext_font_linedouble => C_vgatext_font_linedouble,
+        C_vgatext_font_widthdouble => C_vgatext_font_widthdouble,
+        C_vgatext_monochrome => C_vgatext_monochrome,
+        C_vgatext_finescroll => C_vgatext_finescroll,
+        C_vgatext_cursor => C_vgatext_cursor,
+        C_vgatext_cursor_blink => C_vgatext_cursor_blink,
+        C_vgatext_bitmap => C_vgatext_bitmap,
+        C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
+        C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
+        C_vgatext_bitmap_fifo_step => C_vgatext_bitmap_fifo_step,
+        --C_vgatext_bitmap_compositing_length => C_vgatext_bitmap_compositing_length,
+        C_vgatext_bitmap_fifo_width => C_vgatext_bitmap_fifo_width,
 	C_fmrds => C_fmrds,
 	C_fmdds_hz => C_fmdds_hz,
 	C_rds_msg_len => C_rds_msg_len,
@@ -138,9 +203,9 @@ begin
 	gpio(15) => j1_23,
 	vga_vsync => j2_3,
 	vga_hsync => j2_4,
-	vga_b(0) => j2_5,  vga_b(1) => j2_6,  vga_b(2) => j2_7,
-	vga_g(0) => j2_8,  vga_g(1) => j2_9,  vga_g(2) => j2_10,
-	vga_r(0) => j2_11, vga_r(1) => j2_12, vga_r(2) => j2_13,
+	vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
+	vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
+	vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
 	fm_antenna => j2_16,
 	simple_out(7 downto 0) => led, simple_out(31 downto 8) => open,
 	simple_in(4 downto 0) => btns, simple_in(15 downto 5) => open,
