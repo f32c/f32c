@@ -7,6 +7,7 @@ top_module = glue
 isedir = /opt/Xilinx/ISE/14.7/ISE_DS
 # xil_env = . $(isedir)/settings64.sh
 SHELL = /bin/bash
+bitstream_bin = $(project).bin
 # openocd_interface = interface/altera-usb-blaster.cfg
 openocd_interface = ../include/ft2232-fpu1.ocd
 xc3sprog_interface = ftdi
