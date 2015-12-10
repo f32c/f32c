@@ -32,11 +32,32 @@
 -- unpredictable access time to
 -- to video system, running at pixel clock (25 MHz)
 -- which must have constant data rate
--- allows compositing:
+-- allows compositing (thin h-sprites)
 -- every 16th word is compositing word it can
 -- be either positive or negative, it will be added to fifo
--- write address for the following 16 words which will
--- appear as horizontally hardware moved on the screen 
+-- write address for the following words (typically 16 words) which will
+-- effectively horizontally displace thin sprite left or right
+-- on the 640x480 8bpp it can be 9600 thin h-sprites
+
+-- memory map (continuously repats this pattern):
+-- +---------+---------+-------------+-------------+
+-- | x-offset| x-offset| bitmap      | bitmap      |
+-- | sprite 0| sprite 1| sprite 0    | sprite 1    |
+-- | int16_t | int16_t | uint32_t[8] | uint32_t[8] |
+-- +---------+---------+-------------+-------------+
+
+-- when x-offset is set to 0 the bitmap will be on its
+-- original position. Negative value moves it to the left,
+-- positive values to the right.
+-- priority when overlapping depend on which position
+-- bitmap original has on the screen (when offset=0)
+-- lowest priority:  left side of the screen
+-- highest priority: right side of the screen
+
+-- offsets are in bytes, but currently only 32-bit
+-- moves are implemented (lowest 2 bits of offset ignored)
+-- TODO: increase x-offset resolution using finer grain
+-- 16-bit or 8-bit compositing.
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -100,7 +121,7 @@ architecture behavioral of videofifo is
     signal S_need_refill: std_logic;
     signal S_fetch_compositing_offset: std_logic := '0';
     signal S_compositing_erase: std_logic := '0';
-    signal R_compositing_offset: std_logic_vector(C_width-1 downto 0) := (others => '0');
+    signal R_compositing_offset: std_logic_vector(2*C_width-1 downto 0) := (others => '0');
     signal R_compositing_countdown: integer range 0 to C_compositing_length := 0;
     -- signal need_refill: boolean;
     signal toggle_read_complete: std_logic;
@@ -159,7 +180,6 @@ begin
 
     when_compositing_enabled:
     if C_compositing_length /= 0 generate
-      S_fetch_compositing_offset <= '1' when R_compositing_countdown = 0 else '0';
     end generate;
     --
     -- Refill the circular buffer with fresh data from SRAM-a
@@ -178,10 +198,18 @@ begin
                 -- compositing enabled
                 if S_fetch_compositing_offset = '1' then
                   R_compositing_countdown <= C_compositing_length - 1; -- init countdown to fetch bitmap
-                  R_compositing_offset <= data_in(C_width-1 downto 0); -- store the offset
+                  -- lower 2 bits are ignored for future increasing h-resolution
+                  -- using 8-bit offsets. Currently compositing uses 32-bit offsets.
+                  -- compositing movement will snap to full 32-bit word.
+                  R_compositing_offset(C_width-1 downto 0) <= data_in(C_width+1 downto 2); -- store the offset
+                  R_compositing_offset(2*C_width-1 downto C_width) <= data_in(C_width+17 downto 18);
                 else
                   R_compositing_countdown <= R_compositing_countdown - 1; -- bitmap fetching countdown
                   R_pixbuf_wr_addr <= S_pixbuf_wr_addr_next; -- next address to store bitmap (compositing offset added in combinatorial logic)
+                end if;
+                if R_compositing_countdown = C_compositing_length/2 + 1 then
+                  -- on half of the compositing width switch offset to other thin sprite
+                  R_compositing_offset(C_width-1 downto 0) <= R_compositing_offset(2*C_width-1 downto C_width);
                 end if;
               else
                 R_pixbuf_wr_addr <= S_pixbuf_wr_addr_next; -- no compositing
@@ -246,24 +274,28 @@ begin
         end if;
       end process;
 
-    -- writing to buffer (when compositing disabled: R_compositing_offset = 0)
-    S_pixbuf_in_mem_addr <= R_pixbuf_wr_addr + R_compositing_offset;
 
     we_no_compositing: if C_compositing_length = 0 generate
       -- S_compositing_erase <= '0'; -- never erase (allows rewind to used data)
       S_bram_write <= data_ready and S_need_refill and not clean_start;
+      -- writing to buffer sequentially
+      S_pixbuf_in_mem_addr <= R_pixbuf_wr_addr;
     end generate;
 
+    -- writing to line memory
     we_with_compositing: if C_compositing_length /= 0 generate
+      S_fetch_compositing_offset <= '1' when R_compositing_countdown = 0 else '0';
       -- compositing must erase stale data after use
       -- (as soon as it reveives clean fetch signal)
       -- in order to clean memory for compositing next line
       -- rewind can not work together with compositing
       S_compositing_erase <= clean_fetch; -- erase immediately after use
       S_bram_write <= data_ready and S_need_refill and (not S_fetch_compositing_offset) and (not clean_start);
+      -- writing to buffer (when compositing disabled: R_compositing_offset = 0)
+      S_pixbuf_in_mem_addr <= R_pixbuf_wr_addr + R_compositing_offset(C_width-1 downto 0);
     end generate;
 
-    -- when reading from fifo
+    -- reading from line memory
     rewind_disabled: if C_step = 0 generate
       S_pixbuf_out_mem_addr <= R_pixbuf_rd_addr;
     end generate;
