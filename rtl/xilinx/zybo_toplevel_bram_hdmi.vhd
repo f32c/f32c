@@ -55,11 +55,16 @@ entity glue is
 	C_vgahdmi_mem_kb: integer := 38; -- KB 38K full mono 640x480
 	C_vgahdmi_test_picture: integer := 1; -- enable test picture
 
+        -- hard startup for xc7 series doesn't work on some boards
+        -- reason unknown, disabled by default
+        C_hard_startup: boolean := false;
+
     C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string :=  "f32c: ZYBO xc7z010 MIPS compatible soft-core 100MHz 128KB BRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0; -- 0=640x480, 1=640x400, 2=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
       C_vgatext_bits: integer := 2; -- bits of VGA color per red, green, blue gun (e.g., 1=8, 2=64 and 4=4096 total colors possible)
       C_vgatext_bram_mem: integer := 8; -- BRAM size 1, 2, 4, 8 or 16 depending on font and screen size/memory
+      C_vgatext_reset: boolean := true;   -- reset registers to default with async reset
       C_vgatext_palette: boolean := false; -- true for run-time color look-up table, else 16 fixed VGA color palette
       C_vgatext_text: boolean := true; -- enable text generation
         C_vgatext_monochrome: boolean := false;	-- true for 2-color text for whole screen, else additional color attribute byte per character
@@ -68,8 +73,11 @@ entity glue is
         C_vgatext_font_linedouble: boolean := false; -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
         C_vgatext_font_depth: integer := 7; -- font char bits 7 for 128 characters or 8 for 256 characters
         C_vgatext_bus_read: boolean := false; -- true: enable reading of the font (ant text). false: write only
+        C_vgatext_reg_read: boolean := true; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
+        C_vgatext_finescroll: boolean := true;   -- true for pixel level character scrolling and line length modulo
         C_vgatext_text_fifo: boolean := false; -- true to use videofifo for text+color, else BRAM for text+color memory
-          C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the fifo refill and rewind
+          C_vgatext_text_fifo_postpone_step: integer := 0;
+          C_vgatext_text_fifo_step: integer := (82*2)/4; -- step for the fifo refill and rewind
           C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) len = 2^width * 4 byte
         C_vgatext_bitmap: boolean := false; -- true to enable bitmap generation
           C_vgatext_bitmap_depth: integer := 8;	-- bitmap bits per pixel (1, 2, 4, 8)
@@ -131,21 +139,23 @@ begin
     clk <= clk_125m;
     end generate;
 
---    reset: startupe2
---    generic map (
---		prog_usr => "FALSE"
---    )
---    port map (
---		clk => clk,
---		gsr => sio_break,
---		gts => '0',
---		keyclearb => '0',
---		pack => '1',
---		usrcclko => clk,
---		usrcclkts => '0',
---		usrdoneo => '1',
---		usrdonets => '0'
---   );
+    hard_startup: if C_hard_startup generate
+        reset: startupe2
+        generic map (
+          prog_usr => "FALSE"
+        )
+        port map (
+          clk => clk,
+          gsr => sio_break,
+          gts => '0',
+          keyclearb => '0',
+          pack => '1',
+          usrcclko => clk,
+          usrcclkts => '0',
+          usrdoneo => '1',
+          usrdonets => '0'
+        );
+   end generate;
 
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
@@ -161,6 +171,7 @@ begin
       C_vgatext_mode => C_vgatext_mode,
       C_vgatext_bits => C_vgatext_bits,
       C_vgatext_bram_mem => C_vgatext_bram_mem,
+      C_vgatext_reset => C_vgatext_reset,
       C_vgatext_palette => C_vgatext_palette,
       C_vgatext_text => C_vgatext_text,
       C_vgatext_monochrome => C_vgatext_monochrome,
@@ -169,6 +180,8 @@ begin
       C_vgatext_font_linedouble => C_vgatext_font_linedouble,
       C_vgatext_font_depth => C_vgatext_font_depth,
       C_vgatext_bus_read => C_vgatext_bus_read,
+      C_vgatext_reg_read => C_vgatext_reg_read,
+      C_vgatext_finescroll => C_vgatext_finescroll,
       C_vgatext_text_fifo => C_vgatext_text_fifo,
       C_vgatext_text_fifo_step => C_vgatext_text_fifo_step,
       C_vgatext_text_fifo_width => C_vgatext_text_fifo_width,
