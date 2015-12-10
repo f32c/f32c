@@ -178,11 +178,9 @@ begin
     -- useful for VSYNC frame interrupt
     frame <= clean_start; -- must be rising edge for CPU interrupt, not level
 
-    when_compositing_enabled:
-    if C_compositing_length /= 0 generate
-    end generate;
     --
     -- Refill the circular buffer with fresh data from SRAM-a
+    -- h-compositing of thin sprites on the fly
     --
     process(clk)
     begin
@@ -198,17 +196,28 @@ begin
                 -- compositing enabled
                 if S_fetch_compositing_offset = '1' then
                   R_compositing_countdown <= C_compositing_length - 1; -- init countdown to fetch bitmap
-                  -- lower 2 bits are ignored for future increasing h-resolution
-                  -- using 8-bit offsets. Currently compositing uses 32-bit offsets.
-                  -- compositing movement will snap to full 32-bit word.
-                  R_compositing_offset(C_width-1 downto 0) <= data_in(C_width+1 downto 2); -- store the offset
+                  -- at this point we will fetch a 32-bit word that
+                  -- contains 2 offsets for following 2 thin sprites
+                  -- each offset is max 16 bits long and it points
+                  -- to a byte address.
+                  -- lower 2 bits are currently ignored
+                  -- which means that compositing movement will snap to
+                  -- a full 32-bit word (4 pixels of 8bpp)
+                  -- reserved for future enhancement of h-resolution
+                  -- 2 thin sprites can easily join together because
+                  -- both offsets having equal value can be written with single 32-bit CPU write
+                  -- if offsets are 0 it defaults to standard bitmap
+                  -- offest for first sprite (active offset):
+                  R_compositing_offset(C_width-1 downto 0) <= data_in(C_width+1 downto 2);
+                  -- offset for second sprite (later it will be copied to active offset):
                   R_compositing_offset(2*C_width-1 downto C_width) <= data_in(C_width+17 downto 18);
                 else
                   R_compositing_countdown <= R_compositing_countdown - 1; -- bitmap fetching countdown
                   R_pixbuf_wr_addr <= S_pixbuf_wr_addr_next; -- next address to store bitmap (compositing offset added in combinatorial logic)
                 end if;
                 if R_compositing_countdown = C_compositing_length/2 + 1 then
-                  -- on half of the compositing width switch offset to other thin sprite
+                  -- when countdown reaches half of the compositing width,
+                  -- copy second thin sprite offset to the active offset
                   R_compositing_offset(C_width-1 downto 0) <= R_compositing_offset(2*C_width-1 downto C_width);
                 end if;
               else
@@ -220,7 +229,7 @@ begin
         end if;
     end process;
 
-    S_need_refill <= '1' when clean_start = '0' and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr else '0'; -- convert boolean to std_logic
+    S_need_refill <= '1' when clean_start = '0' and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr else '0';
     addr_strobe <= S_need_refill;
     addr_out <= R_sram_addr;
     
@@ -286,12 +295,12 @@ begin
     we_with_compositing: if C_compositing_length /= 0 generate
       S_fetch_compositing_offset <= '1' when R_compositing_countdown = 0 else '0';
       -- compositing must erase stale data after use
-      -- (as soon as it reveives clean fetch signal)
-      -- in order to clean memory for compositing next line
-      -- rewind can not work together with compositing
+      -- needs clean memory for compositing fresh data
+      -- (erasing is done when clean_fetch signal is detected)
+      -- rewind can not work together with compositing (data erased)
       S_compositing_erase <= clean_fetch; -- erase immediately after use
       S_bram_write <= data_ready and S_need_refill and (not S_fetch_compositing_offset) and (not clean_start);
-      -- writing to buffer (when compositing disabled: R_compositing_offset = 0)
+      -- writing to buffer randomly (compositing)
       S_pixbuf_in_mem_addr <= R_pixbuf_wr_addr + R_compositing_offset(C_width-1 downto 0);
     end generate;
 
