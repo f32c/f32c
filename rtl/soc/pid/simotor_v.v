@@ -10,7 +10,7 @@ module simotor_v (
   F,     //  pwm forward input
   R,     //  pwm reverse input
   A,     //  encoder output A
-  B,     //  encoder output B
+  B      //  encoder output B
 ); // End of port list
   //-------------Input Ports-----------------------------
   input CLOCK;
