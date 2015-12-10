@@ -101,7 +101,7 @@ architecture behavioral of videofifo is
     signal S_compositing_erase: std_logic := '0';
     signal R_compositing_offset: std_logic_vector(C_width-1 downto 0) := (others => '0');
     signal R_compositing_countdown: integer range 0 to C_compositing_length := 0;
-    signal need_refill: boolean;
+    -- signal need_refill: boolean;
     signal toggle_read_complete: std_logic;
     signal clksync, startsync, rewindsync: std_logic_vector(C_synclen-1 downto 0);
     -- clean start: '1' will reset fifo to its base address
@@ -168,7 +168,7 @@ begin
             R_pixbuf_wr_addr <= (others => '0');
             R_compositing_countdown <= 0;
           else
-            if data_ready = '1' and need_refill then -- BRAM must use this
+            if data_ready = '1' and S_need_refill = '1' then -- BRAM must use this
 	    -- if data_ready = '1' then -- may work with SDRAM?
               if C_compositing_length > 0 then
                 -- compositing enabled
@@ -188,8 +188,7 @@ begin
         end if;
     end process;
 
-    need_refill <= clean_start = '0' and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr;
-    S_need_refill <= '1' when need_refill else '0'; -- convert boolean to std_logic
+    S_need_refill <= '1' when clean_start = '0' and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr else '0'; -- convert boolean to std_logic
     addr_strobe <= S_need_refill;
     addr_out <= R_sram_addr;
     
@@ -244,14 +243,21 @@ begin
       end process;
 
     rewind_disabled: if C_step = 0 generate
-      R_pixbuf_out_bram_addr <= R_pixbuf_rd_addr;
+      -- compositing almoest works with C_step = 0
+      -- flikcers sometimes
+      no_rewind_use_compositing: if C_compositing_length /= 0 generate
+        R_pixbuf_out_bram_addr <= R_pixbuf_rd_addr + R_compositing_offset;
+      end generate;
+      no_rewind_no_compositing: if C_compositing_length = 0 generate
+        R_pixbuf_out_bram_addr <= R_pixbuf_rd_addr;
+      end generate;
     end generate;
     rewind_enabled: if C_step /= 0 generate
       clean_rewind <= rewindsync(C_synclen-2) and not rewindsync(C_synclen-1); -- rising edge
-      use_compositing: if C_compositing_length /= 0 generate
+      rewind_use_compositing: if C_compositing_length /= 0 generate
         R_pixbuf_out_bram_addr <= R_pixbuf_out_addr + R_compositing_offset;
       end generate;
-      no_compositing: if C_compositing_length = 0 generate
+      rewind_no_compositing: if C_compositing_length = 0 generate
         R_pixbuf_out_bram_addr <= R_pixbuf_out_addr;
       end generate;
     end generate;
