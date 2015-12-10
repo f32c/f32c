@@ -83,15 +83,15 @@ entity glue is
       C_vgatext_bitmap: boolean := true; -- true for optional bitmap generation
         C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
         C_vgatext_bitmap_fifo: boolean := true; -- enable bitmap FIFO
-          C_vgatext_bitmap_fifo_step: integer := 0; -- disabled
-          C_vgatext_bitmap_fifo_postpone_step: integer := 0; -- disabled
-          C_vgatext_bitmap_fifo_compositing_length: integer := 0; -- disabled
-          C_vgatext_bitmap_fifo_width: integer := 8; -- bitmap width of FIFO address space length = 2^width * 4 byte
-          
-          --C_vgatext_bitmap_fifo_step: integer := 10*17; -- step=10*length make 680 bytes and 640 pixels for compositing
-          --C_vgatext_bitmap_fifo_postpone_step: integer := 0; -- postpone step = width*length?
-          --C_vgatext_bitmap_fifo_compositing_length: integer := 17; -- word length for H-compositing slice, including offset word (tiny sprites one pixel high)
-          --C_vgatext_bitmap_fifo_width: integer := 9; -- bitmap width of FIFO address space length = 2^width * 4 byte
+          --C_vgatext_bitmap_fifo_step: integer := 0; -- disabled
+          --C_vgatext_bitmap_fifo_postpone_step: integer := 0; -- disabled
+          --C_vgatext_bitmap_fifo_compositing_length: integer := 0; -- disabled
+          --C_vgatext_bitmap_fifo_width: integer := 8; -- bitmap width of FIFO address space length = 2^width * 4 byte
+
+          C_vgatext_bitmap_fifo_step: integer := 10*17; -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
+          C_vgatext_bitmap_fifo_postpone_step: integer := 0; -- postpone step = width*length?
+          C_vgatext_bitmap_fifo_compositing_length: integer := 17; -- word length for H-compositing slice, including offset word (tiny sprites one pixel high)
+          C_vgatext_bitmap_fifo_width: integer := 10; -- bitmap width of FIFO address space length = 2^width * 4 byte
 
       C_fmrds: boolean := true;
       C_sio: integer := 1;
