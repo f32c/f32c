@@ -93,7 +93,8 @@ architecture behavioral of videofifo is
     signal R_sram_addr: std_logic_vector(29 downto 2);
     signal R_pixbuf_rd_addr, R_pixbuf_wr_addr, S_pixbuf_wr_addr_next: std_logic_vector(C_width-1 downto 0);
     signal R_pixbuf_out_addr: std_logic_vector(C_width-1 downto 0);
-    signal R_pixbuf_out_bram_addr: std_logic_vector(C_width-1 downto 0);
+    signal S_pixbuf_out_mem_addr: std_logic_vector(C_width-1 downto 0);
+    signal S_pixbuf_in_mem_addr: std_logic_vector(C_width-1 downto 0);
     signal R_delay_fetch: integer range 0 to 2*C_step;
     signal S_bram_write: std_logic;
     signal S_need_refill: std_logic;
@@ -156,7 +157,10 @@ begin
     -- useful for VSYNC frame interrupt
     frame <= clean_start; -- must be rising edge for CPU interrupt, not level
 
-    S_fetch_compositing_offset <= '1' when R_compositing_countdown = 0 else '0';
+    when_compositing_enabled:
+    if C_compositing_length /= 0 generate
+      S_fetch_compositing_offset <= '1' when R_compositing_countdown = 0 else '0';
+    end generate;
     --
     -- Refill the circular buffer with fresh data from SRAM-a
     --
@@ -242,38 +246,30 @@ begin
         end if;
       end process;
 
-    rewind_disabled: if C_step = 0 generate
-      -- compositing almoest works with C_step = 0
-      -- flikcers sometimes
-      no_rewind_use_compositing: if C_compositing_length /= 0 generate
-        R_pixbuf_out_bram_addr <= R_pixbuf_rd_addr + R_compositing_offset;
-      end generate;
-      no_rewind_no_compositing: if C_compositing_length = 0 generate
-        R_pixbuf_out_bram_addr <= R_pixbuf_rd_addr;
-      end generate;
-    end generate;
-    rewind_enabled: if C_step /= 0 generate
-      clean_rewind <= rewindsync(C_synclen-2) and not rewindsync(C_synclen-1); -- rising edge
-      rewind_use_compositing: if C_compositing_length /= 0 generate
-        R_pixbuf_out_bram_addr <= R_pixbuf_out_addr + R_compositing_offset;
-      end generate;
-      rewind_no_compositing: if C_compositing_length = 0 generate
-        R_pixbuf_out_bram_addr <= R_pixbuf_out_addr;
-      end generate;
-    end generate;
-    
-    write_no_compositing: if C_compositing_length = 0 generate
+    -- writing to buffer (when compositing disabled: R_compositing_offset = 0)
+    S_pixbuf_in_mem_addr <= R_pixbuf_wr_addr + R_compositing_offset;
+
+    we_no_compositing: if C_compositing_length = 0 generate
       -- S_compositing_erase <= '0'; -- never erase (allows rewind to used data)
       S_bram_write <= data_ready and S_need_refill and not clean_start;
     end generate;
 
-    write_with_compositing: if C_compositing_length /= 0 generate
+    we_with_compositing: if C_compositing_length /= 0 generate
       -- compositing must erase stale data after use
       -- (as soon as it reveives clean fetch signal)
       -- in order to clean memory for compositing next line
       -- rewind can not work together with compositing
       S_compositing_erase <= clean_fetch; -- erase immediately after use
       S_bram_write <= data_ready and S_need_refill and (not S_fetch_compositing_offset) and (not clean_start);
+    end generate;
+
+    -- when reading from fifo
+    rewind_disabled: if C_step = 0 generate
+      S_pixbuf_out_mem_addr <= R_pixbuf_rd_addr;
+    end generate;
+    rewind_enabled: if C_step /= 0 generate
+      clean_rewind <= rewindsync(C_synclen-2) and not rewindsync(C_synclen-1); -- rising edge
+      S_pixbuf_out_mem_addr <= R_pixbuf_out_addr;
     end generate;
 
     linememory: entity work.bram_true2p_1clk
@@ -286,8 +282,8 @@ begin
         clk => clk,
         we_a => S_bram_write,
         we_b => S_compositing_erase, -- compositing must erase after use (rewind won't work with compositing)
-        addr_a => R_pixbuf_wr_addr,
-        addr_b => R_pixbuf_out_bram_addr,
+        addr_a => S_pixbuf_in_mem_addr,
+        addr_b => S_pixbuf_out_mem_addr,
         data_in_a => data_in,
         data_in_b => (others => '0'), -- erase value for compositing
         data_out_a => open,
