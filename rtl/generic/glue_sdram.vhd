@@ -140,7 +140,8 @@ generic (
     C_vgatext_bitmap: boolean := false;     -- true for optional bitmap generation
       C_vgatext_bitmap_depth: integer := 8;   -- 8-bpp 256-color bitmap
       C_vgatext_bitmap_fifo: boolean := false;  -- disable bitmap FIFO
-        C_vgatext_bitmap_fifo_step: integer := 0;	-- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
+        C_vgatext_bitmap_fifo_step: integer := 0; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
+        C_vgatext_bitmap_fifo_postpone_step: integer := 0; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
         C_vgatext_bitmap_fifo_width: integer := 8;	-- bitmap width of FIFO address space length = 2^width * 4 byte
         C_vgatext_bitmap_fifo_compositing_length: integer := 0;	-- compositing length (0 disabled)
         -- compositing for typical values 9 or 17 use with step 640/4 and width 9)
@@ -1047,6 +1048,7 @@ begin
     bitmap_videofifo: entity work.videofifo
     generic map (
       C_step => C_vgatext_bitmap_fifo_step,
+      C_postpone_step => C_vgatext_bitmap_fifo_postpone_step,
       C_compositing_length => C_vgatext_bitmap_fifo_compositing_length,
       C_width => C_vgatext_bitmap_fifo_width -- length = 4 * 2^width
     )
