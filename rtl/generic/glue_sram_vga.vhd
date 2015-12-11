@@ -206,6 +206,8 @@ architecture Behavioral of glue_sram is
     signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
     signal R_fb_base_addr: std_logic_vector(29 downto 2);
+    
+    signal Rblink: std_logic_vector(31 downto 0);
 
     -- CPU reset control
     signal R_cpu_reset: std_logic_vector(15 downto 0) := x"fffe";
@@ -807,7 +809,6 @@ begin
 	end if;
 	if C_vgatext then
 	    fb_port := 2 * C_cpus + 0;
-	    fb_text_port := 2 * C_cpus + 1;
             if C_vgatext_bitmap then
               to_sram(fb_port).addr_strobe <= vga_textmode_bitmap_sram_strobe;
               to_sram(fb_port).addr <= vga_textmode_bitmap_sram_addr(to_sram(fb_port).addr'high downto 2);
@@ -816,6 +817,7 @@ begin
               to_sram(fb_port).byte_sel <= (others => '1');
               vga_textmode_bitmap_sram_ready <= sram_ready(fb_port);
             end if;
+	    fb_text_port := 2 * C_cpus + 1;
             if C_vgatext_text then
               to_sram(fb_text_port).addr_strobe <= vga_textmode_text_sram_strobe;
               to_sram(fb_text_port).addr <= vga_textmode_text_sram_addr(to_sram(fb_text_port).addr'high downto 2);
@@ -877,6 +879,7 @@ begin
     );
     end generate;
 
+
   -- VGA textmode
   G_vgatext:  if C_vgatext generate
   vga_video: entity work.VGA_textmode
@@ -936,9 +939,19 @@ begin
 
   vga_vsync <= vga_textmode_vsync;
   vga_hsync <= vga_textmode_hsync;
-  vga_r <= vga_textmode_red;
-  vga_g <= vga_textmode_green;
-  vga_b <= vga_textmode_blue;
+  --process(clk)
+  --begin
+  --  Rblink <= Rblink+1;
+  --end process;
+  --vga_vsync <= Rblink(29);
+  --vga_hsync <= Rblink(29);
+
+      -- analog vga output
+      vga_r <= vga_textmode_red;
+      vga_g <= vga_textmode_green;
+      vga_b <= vga_textmode_blue;
+      vga_vsync <= vga_textmode_vsync;
+      vga_hsync <= vga_textmode_hsync;
 
   -- video FIFO for text+color
   G_vgatext_text_fifo:
