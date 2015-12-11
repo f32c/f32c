@@ -32,32 +32,63 @@
 -- unpredictable access time to
 -- to video system, running at pixel clock (25 MHz)
 -- which must have constant data rate
+
 -- allows compositing (thin h-sprites)
--- every 16th word is compositing word it can
--- be either positive or negative, it will be added to fifo
--- write address for the following words (typically 16 words) which will
+
+-- every 17th 32-bit word is compositing word. 
+-- it can be either positive or negative, it will be added to fifo
+-- write address for 16 following 32-bit words, which will
 -- effectively horizontally displace thin sprite left or right
 -- on the 640x480 8bpp it can be 9600 thin h-sprites
 
--- memory map (continuously repats this pattern):
+-- memory map (continuously repeats this pattern):
 -- +---------+---------+-------------+-------------+
 -- | x-offset| x-offset| bitmap      | bitmap      |
 -- | sprite 0| sprite 1| sprite 0    | sprite 1    |
 -- | int16_t | int16_t | uint32_t[8] | uint32_t[8] |
 -- +---------+---------+-------------+-------------+
 
+-- or in C:
+-- struct thin_sprite
+-- {
+--   int16_t[2] offset;
+--   uint32_t[2][8] bitmap;
+-- };
+
 -- when x-offset is set to 0 the bitmap will be on its
--- original position. Negative value moves it to the left,
--- positive values to the right.
--- priority when overlapping depend on which position
--- bitmap original has on the screen (when offset=0)
+-- original sequential position on the screen
+-- pixel plot routine should just skip offset words
+-- and leave them at 0
+
+-- offset values:
+-- Negative value: move to the left,
+-- positive value: move to the right.
+
+-- priority:
+
+-- visual overlapping priority of thin sprites:
+-- compositing reads data from external RAM sequentially.
+-- first are placed data from the lowest RAM address
+-- then they may be overwritten with another data
+-- which are read after,
+-- so higher memory addresses have higher priority.
+ 
+-- by looking at original position of the bitmap
+-- on the screen (when offset=0) then
 -- lowest priority:  left side of the screen
 -- highest priority: right side of the screen
 
--- offsets are in bytes, but currently only 32-bit
+-- 2 thin sprites can easily join and move together by writing
+-- both offsets with equal 16-bit value
+-- in a single 32-bit CPU write cycle.
+
+-- offsets refer to a move in bytes, but currently only 32-bit
 -- moves are implemented (lowest 2 bits of offset ignored)
+-- so move will snap to a full 4-byte position
+
 -- TODO: increase x-offset resolution using finer grain
--- 16-bit or 8-bit compositing.
+-- 16-bit or 8-bit compositing. (looking for some efficient
+-- way to do that, please contribute :-)
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -73,15 +104,17 @@ entity videofifo is
         -- rewind signal can again output data stream from fifo
         -- starting from last full step it was filled from RAM,
         -- saves RAM bandwidth during text mode or bitmap vertial line doubling
+        -- set it to 17*10 = 170 for compositing 640x480 with 17 word length
         C_step: integer := 0;
         -- postpone step fetch by N 32-bit words
         -- set it to 1-3 for bandwidth saving with soft scroll
+        -- set it a few words than step for when compositing e.g. 17*10-4=166
         C_postpone_step: integer := 0;
         -- define the length of horizontal compositing slice (words)
         -- word count includes offset word and following bitmap data
         -- this option should be used together with C_width of sufficient
         -- size for 2 scan lines and C_postpone_step for 1 scan line
-        -- 0 to disable
+        -- 0 to disable, 17 is standard value
         C_compositing_length: integer := 0;
         -- defines the length of the FIFO: 4 * 2^C_length bytes
         -- default value of 4: length = 16 * 32 bits = 16 * 4 bytes = 64 bytes
@@ -121,7 +154,8 @@ architecture behavioral of videofifo is
     signal S_need_refill: std_logic;
     signal S_fetch_compositing_offset: std_logic := '0';
     signal S_compositing_erase: std_logic := '0';
-    signal R_compositing_offset: std_logic_vector(2*C_width-1 downto 0) := (others => '0');
+    signal R_compositing_active_offset: std_logic_vector(C_width-1 downto 0) := (others => '0');
+    signal R_compositing_second_offset: std_logic_vector(C_width-1 downto 0) := (others => '0');
     signal R_compositing_countdown: integer range 0 to C_compositing_length := 0;
     -- signal need_refill: boolean;
     signal toggle_read_complete: std_logic;
@@ -178,10 +212,8 @@ begin
     -- useful for VSYNC frame interrupt
     frame <= clean_start; -- must be rising edge for CPU interrupt, not level
 
-    --
     -- Refill the circular buffer with fresh data from SRAM-a
     -- h-compositing of thin sprites on the fly
-    --
     process(clk)
     begin
         if rising_edge(clk) then
@@ -198,27 +230,26 @@ begin
                   R_compositing_countdown <= C_compositing_length - 1; -- init countdown to fetch bitmap
                   -- at this point we will fetch a 32-bit word that
                   -- contains 2 offsets for following 2 thin sprites
-                  -- each offset is max 16 bits long and it points
-                  -- to a byte address.
-                  -- lower 2 bits are currently ignored
+                  -- each offset is max 16 bits long
+                  -- intented to point to a 8-bit (byte) address.
+                  -- lower 2 bits are currently ignored,
                   -- which means that compositing movement will snap to
-                  -- a full 32-bit word (4 pixels of 8bpp)
-                  -- reserved for future enhancement of h-resolution
-                  -- 2 thin sprites can easily join together because
-                  -- both offsets having equal value can be written with single 32-bit CPU write
-                  -- if offsets are 0 it defaults to standard bitmap
+                  -- a full 32-bit word (4 bytes = 4 pixels of 8bpp)
+                  -- (reserved for future enhancement of h-resolution)
+
                   -- offest for first sprite (active offset):
-                  R_compositing_offset(C_width-1 downto 0) <= data_in(C_width+1 downto 2);
+                  R_compositing_active_offset <= data_in(C_width+1 downto 2);
                   -- offset for second sprite (later it will be copied to active offset):
-                  R_compositing_offset(2*C_width-1 downto C_width) <= data_in(C_width+17 downto 18);
+                  R_compositing_second_offset <= data_in(C_width+17 downto 18);
                 else
                   R_compositing_countdown <= R_compositing_countdown - 1; -- bitmap fetching countdown
-                  R_pixbuf_wr_addr <= S_pixbuf_wr_addr_next; -- next address to store bitmap (compositing offset added in combinatorial logic)
+                  R_pixbuf_wr_addr <= S_pixbuf_wr_addr_next; -- next sequential address to store bitmap
+                  -- compositing offset will be added to this address
                 end if;
                 if R_compositing_countdown = C_compositing_length/2 + 1 then
                   -- when countdown reaches half of the compositing width,
                   -- copy second thin sprite offset to the active offset
-                  R_compositing_offset(C_width-1 downto 0) <= R_compositing_offset(2*C_width-1 downto C_width);
+                  R_compositing_active_offset <= R_compositing_second_offset;
                 end if;
               else
                 R_pixbuf_wr_addr <= S_pixbuf_wr_addr_next; -- no compositing
@@ -235,7 +266,6 @@ begin
     
     -- Dequeue pixel data from the circular buffer
     -- by incrementing R_pixbuf_rd_addr on rising edge of clk
-    --
     process(clk)
       begin
         if rising_edge(clk) then
@@ -272,11 +302,10 @@ begin
               if clean_rewind = '1' then
                 R_pixbuf_out_addr <= R_pixbuf_rd_addr; -- R_pixbuf_rd_addr-1 ??
                 R_delay_fetch <= 2 * C_step - 1;
-              -- delay fetch will actually delay C_step+1 steps
-              -- we should be allowed to rewind after we fetch complete line
-              -- and fifo pointer jumps to next line
-              -- take care not to discard old data immediately after we jump
-              -- I'm not sure where to put correct +1 now...
+                -- delay fetch will actually delay C_step+1 steps
+                -- we should be allowed to rewind after we fetch complete line
+                -- and fifo pointer jumps to next line
+                -- take care not to discard old data immediately after we jump
 	      end if;
             end if;
           end if;
@@ -301,7 +330,7 @@ begin
       S_compositing_erase <= clean_fetch; -- erase immediately after use
       S_bram_write <= data_ready and S_need_refill and (not S_fetch_compositing_offset) and (not clean_start);
       -- writing to buffer randomly (compositing)
-      S_pixbuf_in_mem_addr <= R_pixbuf_wr_addr + R_compositing_offset(C_width-1 downto 0);
+      S_pixbuf_in_mem_addr <= R_pixbuf_wr_addr + R_compositing_active_offset;
     end generate;
 
     -- reading from line memory
