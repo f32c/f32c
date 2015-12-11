@@ -152,6 +152,7 @@ architecture behavioral of videofifo is
     signal R_delay_fetch: integer range 0 to 2*C_step;
     signal S_bram_write: std_logic;
     signal S_need_refill: std_logic;
+    signal S_data_opaque: std_logic;
     signal S_fetch_compositing_offset: std_logic := '0';
     signal S_compositing_erase: std_logic := '0';
     signal R_compositing_active_offset: std_logic_vector(C_width-1 downto 0) := (others => '0');
@@ -322,13 +323,23 @@ begin
 
     -- writing to line memory
     we_with_compositing: if C_compositing_length /= 0 generate
+      -- signal used in Refill process that every 17th word
+      -- fetched is offset word, not bitmap 
       S_fetch_compositing_offset <= '1' when R_compositing_countdown = 0 else '0';
       -- compositing must erase stale data after use
       -- needs clean memory for compositing fresh data
       -- (erasing is done when clean_fetch signal is detected)
       -- rewind can not work together with compositing (data erased)
       S_compositing_erase <= clean_fetch; -- erase immediately after use
-      S_bram_write <= data_ready and S_need_refill and (not S_fetch_compositing_offset) and (not clean_start);
+      -- write signal with handling transparency:
+      -- if word to be written is 0 then don't write, allow it to
+      -- "see through" lower priority sprites
+      -- todo: this 32-bit transparency should be fine-grained as 8-bit
+      S_data_opaque <= '0' when to_integer(unsigned(data_in)) = 0 else '1';
+      S_bram_write <= data_ready and S_need_refill 
+                  and (not S_fetch_compositing_offset) -- only bitmap is written 
+                  and S_data_opaque -- content is not transparent
+                  and (not clean_start); -- not in frame start cycle
       -- writing to buffer randomly (compositing)
       S_pixbuf_in_mem_addr <= R_pixbuf_wr_addr + R_compositing_active_offset;
     end generate;
