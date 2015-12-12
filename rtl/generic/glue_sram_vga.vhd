@@ -88,6 +88,13 @@ entity glue_sram is
 	C_spi_turbo_mode: std_logic_vector := "0000";
 	C_spi_fixed_speed: std_logic_vector := "1111";
 	C_framebuffer: boolean := false;
+
+  -- VGA/HDMI simple 640x480 bitmap only
+  C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
+  C_vgahdmi_fifo_step: integer := 0; -- step for the fifo refill and rewind
+  C_vgahdmi_fifo_width: integer := 4; -- width of FIFO address space (default=4) len = 2^width * 4 byte
+  C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
+
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c";    -- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480
@@ -145,7 +152,8 @@ entity glue_sram is
 	spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
 	spi_miso: in std_logic_vector(C_spi - 1 downto 0);
 	vga_hsync, vga_vsync: out std_logic;
-	vga_r, vga_g, vga_b: out std_logic_vector(C_vgatext_bits-1 downto 0);
+	-- vga_r, vga_g, vga_b: out std_logic_vector(C_vgatext_bits-1 downto 0);
+	vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0);
 	p_ring: out std_logic;
 	p_tip: out std_logic_vector(3 downto 0);
 	simple_out: out std_logic_vector(31 downto 0);
@@ -205,7 +213,7 @@ architecture Behavioral of glue_sram is
     signal next_io_port: integer range 0 to (C_io_ports - 1);
     signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
-    signal R_fb_base_addr: std_logic_vector(29 downto 2);
+    signal R_fb_base_addr: std_logic_vector(29 downto 2) := (others => '0');
     
     signal Rblink: std_logic_vector(31 downto 0);
 
@@ -238,6 +246,19 @@ architecture Behavioral of glue_sram is
     signal fb_addr_strobe, fb_data_ready: std_logic;
     signal fb_addr: std_logic_vector(29 downto 2);
     signal fb_tick: std_logic;
+
+    -- VGA/HDMI video
+    constant iomap_vga: T_iomap_range := (x"FB80", x"FB8F"); -- VGA/HDMI should be (x"FB90", x"FB9F")
+    signal vga_ce: std_logic; -- '1' when address is in iomap_vga range
+    signal vga_fetch_next: std_logic; -- video module requests next data from fifo
+    signal vga_addr: std_logic_vector(29 downto 2);
+    signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
+    signal vga_data_bram: std_logic_vector(7 downto 0);
+    signal video_bram_write: std_logic;
+    signal vga_addr_strobe: std_logic; -- FIFO requests to read from RAM
+    signal vga_data_ready: std_logic; -- RAM responds to FIFO
+    signal S_vga_vsync, S_vga_hsync: std_logic; -- intermediate signals for xilinx to be happy
+    signal vga_frame: std_logic;
 
     -- VGA_textmode VGA/HDMI video (text and font in BRAM, bitmap in sdram)
     constant iomap_vga_textmode: T_iomap_range := (x"FB80", x"FB9F");
@@ -798,7 +819,7 @@ begin
 	    to_sram(instr_port).byte_sel <= x"f";
 	end loop;
 	-- video framebuffer
-	if C_framebuffer then
+	if C_framebuffer or C_vgahdmi then
 	    fb_port := 2 * C_cpus;
 	    to_sram(fb_port).addr_strobe <= fb_addr_strobe;
 	    to_sram(fb_port).write <= '0';
@@ -878,6 +899,89 @@ begin
 	tick_out => fb_tick
     );
     end generate;
+
+    -- VGA/HDMI
+    G_vgahdmi:
+    if C_vgahdmi generate
+    vgahdmi: entity work.vgahdmi
+    generic map (
+      test_picture => C_vgahdmi_test_picture  -- show test picture in background
+    )
+    port map (
+      clk_pixel => clk_25m,
+      -- clk_tmds => clk_250MHz,
+      fetch_next => vga_fetch_next,
+      red_byte    => vga_data_from_fifo( 7 downto 0),
+      green_byte  => vga_data_from_fifo(15 downto 8),
+      blue_byte   => vga_data_from_fifo(23 downto 16),
+      bright_byte => vga_data_from_fifo(31 downto 24),
+      vga_r => vga_r,
+      vga_g => vga_g,
+      vga_b => vga_b,
+      vga_hsync => S_vga_hsync,
+      vga_vsync => S_vga_vsync
+      -- tmds_out_rgb => tmds_out_rgb
+    );
+    vga_vsync <= not S_vga_vsync;
+    vga_hsync <= not S_vga_hsync;
+    videofifo: entity work.videofifo
+    generic map (
+      C_step => C_vgahdmi_fifo_step,
+      C_width => C_vgahdmi_fifo_width -- length = 4 * 2^width
+    )
+    port map (
+      clk => clk,
+      clk_pixel => clk_25m,
+      addr_strobe => fb_addr_strobe,
+      addr_out => fb_addr,
+      data_ready => fb_data_ready, -- data valid for read acknowledge from RAM
+      -- data_ready => '1', -- BRAM is eveready
+      data_in => vga_data, -- from SDRAM or BRAM
+      -- data_in => x"00000001", -- test pattern vertical lines
+      -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
+      -- data_in(31 downto 8) => (others => '0'),
+      base_addr => R_fb_base_addr,
+      start => S_vga_vsync,
+      frame => vga_frame,
+      data_out => vga_data_from_fifo,
+      fetch_next => vga_fetch_next
+    );
+
+    -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
+    -- vga_data(7 downto 0) <= x"0F";
+    vga_data <= from_sram;
+
+    -- address decoder to set base address and clear interrupts
+    with conv_integer(io_addr(11 downto 4)) select
+      vga_ce <= io_addr_strobe(R_cur_io_port) when iomap_from(iomap_vga, iomap_range) to iomap_to(iomap_vga, iomap_range),
+                                          '0' when others;
+    process(clk)
+    begin
+        if rising_edge(clk) then
+            if vga_ce = '1' and io_write = '1' then
+                -- cpu write: writes Framebuffer base
+                if C_big_endian then
+                     -- R_fb_mode <= cpu_to_dmem(25 downto 24);
+                     R_fb_base_addr <= -- XXX: revisit, probably wrong;
+                      cpu_to_io(11 downto 8) &
+                      cpu_to_io(23 downto 16) &
+                      cpu_to_io(31 downto 26);
+                else
+                    -- R_fb_mode <= cpu_to_dmem(1 downto 0);
+                    R_fb_base_addr <= cpu_to_io(29 downto 2);
+                end if;
+            end if;
+            -- interrupt handling: (CPU read or write will clear interrupt)
+            if vga_ce = '1' then -- and dmem_write = '0' then
+                R_fb_intr <= '0';
+            else
+                if vga_frame = '1' then
+                    R_fb_intr <= '1';
+                end if;
+            end if;
+        end if; -- end rising edge
+    end process;
+    end generate; -- end vgahdmi
 
 
   -- VGA textmode
