@@ -61,7 +61,7 @@ architecture x of VGA_textmode_bram is
     --
     -- Xilinx ISE 14.7 for Spartan-3 will abort with error about loop
     -- iteration limit >64 exceeded.  We need 128 iterations here.
-    -- If buiding with makefile, edit file xilinx.opt file and
+    -- If building with makefile, edit file xilinx.opt file and
     -- append this line (give sufficiently large limit):
     -- -loop_iteration_limit 2048
     -- In ISE GUI, open the Design tab, right click on Synthesize - XST,
