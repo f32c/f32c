@@ -113,7 +113,29 @@ entity toplevel is
 	C_spi: integer := 2;
 	C_framebuffer: boolean := false;
 	C_vgahdmi: boolean := true;
-	C_vgahdmi_test_picture: integer := 1;
+	C_vgahdmi_test_picture: integer := 0;
+        -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
+        C_vgahdmi_fifo_step: integer := 0;
+          -- postpone step as much as possible to avoid flickering of a left sprite moved right
+        C_vgahdmi_fifo_postpone_step: integer := 0;
+        -- word length for H-compositing thin sprite, including offset word (tiny sprites one pixel high)
+        C_vgahdmi_fifo_compositing_length: integer := 0;
+        -- output data width select: 8 bits
+        C_vgahdmi_fifo_data_log2_width: integer range 0 to 5 := 5;
+        -- bitmap width of FIFO address space length = 2^width * 4 byte
+        C_vgahdmi_fifo_width: integer := 4;
+
+        -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
+        --C_vgahdmi_fifo_step: integer := 10*17;
+          -- postpone step as much as possible to avoid flickering of a left sprite moved right
+        --C_vgahdmi_fifo_postpone_step: integer := 10*17-4;
+        -- word length for H-compositing thin sprite, including offset word (tiny sprites one pixel high)
+        --C_vgahdmi_fifo_compositing_length: integer := 17;
+        -- output data width select: 8 bits
+        --C_vgahdmi_fifo_data_log2_width: integer range 0 to 5 := 3;
+        -- bitmap width of FIFO address space length = 2^width * 4 byte
+        --C_vgahdmi_fifo_width: integer := 10;
+
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 81.25MHz 1MB SRAM"; -- default banner in screen memory
@@ -148,7 +170,7 @@ entity toplevel is
           C_vgatext_bitmap_fifo_step: integer := 0; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
           C_vgatext_bitmap_compositing_length: integer := 0; -- word length for H-compositing slice, including offset word (tiny sprites one pixel high)
           C_vgatext_bitmap_fifo_width: integer := 4; -- bitmap width of FIFO address space length = 2^width * 4 byte
-	C_pcm: boolean := true;
+	C_pcm: boolean := false;
 	C_timer: boolean := true;
 	C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
 	C_fmrds: boolean := false; -- either FM or tx433
@@ -296,6 +318,11 @@ begin
 	-- vga simple bitmap
 	C_vgahdmi => C_vgahdmi,
 	C_vgahdmi_test_picture => C_vgahdmi_test_picture,
+        C_vgahdmi_fifo_step => C_vgahdmi_fifo_step,
+        C_vgahdmi_fifo_postpone_step => C_vgahdmi_fifo_postpone_step,
+        C_vgahdmi_fifo_compositing_length => C_vgahdmi_fifo_compositing_length,
+        C_vgahdmi_fifo_data_log2_width => C_vgahdmi_fifo_data_log2_width,
+        C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
 	-- vga textmode
         C_vgatext => C_vgatext,
         C_vgatext_label => C_vgatext_label,
