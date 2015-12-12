@@ -89,11 +89,17 @@ entity glue_sram is
 	C_spi_fixed_speed: std_logic_vector := "1111";
 	C_framebuffer: boolean := false;
 
-  -- VGA/HDMI simple 640x480 bitmap only
-  C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
-  C_vgahdmi_fifo_step: integer := 0; -- step for the fifo refill and rewind
-  C_vgahdmi_fifo_width: integer := 4; -- width of FIFO address space (default=4) len = 2^width * 4 byte
-  C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
+        -- VGA/HDMI simple 640x480 bitmap only
+        C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
+        C_vgahdmi_fifo_step: integer := 0; -- step for the fifo refill and rewind
+        C_vgahdmi_fifo_width: integer := 4; -- width of FIFO address space (default=4) len = 2^width * 4 byte
+        C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
+
+        C_vgahdmi_fifo_step: integer := 10*17;
+        C_vgahdmi_fifo_postpone_step: integer := 10*17-4;
+        C_vgahdmi_fifo_compositing_length: integer := 17;
+        C_vgahdmi_fifo_data_log2_width: integer range 0 to 5 := 5;
+        C_vgahdmi_fifo_width: integer := 10;
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c";    -- default banner in screen memory
@@ -827,6 +833,8 @@ begin
 	    to_sram(fb_port).addr <= fb_addr;
 	    to_sram(fb_port).data_in <= (others => '-');
 	    fb_data_ready <= sram_ready(fb_port);
+	    --fb_text_port := 2 * C_cpus + 1;
+	    --to_sram(fb_text_port).addr_strobe <= '0';
 	end if;
 	if C_vgatext then
 	    fb_port := 2 * C_cpus + 0;
@@ -915,6 +923,10 @@ begin
       green_byte  => vga_data_from_fifo(15 downto 8),
       blue_byte   => vga_data_from_fifo(23 downto 16),
       bright_byte => vga_data_from_fifo(31 downto 24),
+      --red_byte    => vga_data_from_fifo(7 downto 0),
+      --green_byte  => vga_data_from_fifo(7 downto 0),
+      --blue_byte   => vga_data_from_fifo(7 downto 0),
+      --bright_byte => vga_data_from_fifo(7 downto 0),
       vga_r => vga_r,
       vga_g => vga_g,
       vga_b => vga_b,
@@ -927,6 +939,9 @@ begin
     videofifo: entity work.videofifo
     generic map (
       C_step => C_vgahdmi_fifo_step,
+      C_postpone_step => C_vgahdmi_fifo_postpone_step,
+      C_compositing_length => C_vgahdmi_fifo_compositing_length,
+      C_data_log2_width => C_vgahdmi_fifo_data_log2_width,
       C_width => C_vgahdmi_fifo_width -- length = 4 * 2^width
     )
     port map (
@@ -943,7 +958,7 @@ begin
       base_addr => R_fb_base_addr,
       start => S_vga_vsync,
       frame => vga_frame,
-      data_out => vga_data_from_fifo,
+      data_out => vga_data_from_fifo(2**C_vgahdmi_fifo_data_log2_width-1 downto 0),
       fetch_next => vga_fetch_next
     );
 
