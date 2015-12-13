@@ -109,15 +109,15 @@ entity videofifo is
         C_synclen: integer := 3; -- bits in cpu-to-pixel clock synchronizer
         -- (0: disable rewind and be ordinary sequential fifo)
         -- (>0: fifo will be loaded from RAM in full steps
-        -- each full step is a count of 32-bit words.
+        -- each full step is a count of output words.
         -- rewind signal can again output data stream from fifo
         -- starting from last full step it was filled from RAM,
         -- saves RAM bandwidth during text mode or bitmap vertial line doubling
-        -- set it to 17*10 = 170 for compositing 640x480 with 17 word length
+        -- set it to 4*17*10 = 4*170 for compositing 640x480 with 17 word length
         C_step: integer := 0;
-        -- postpone step fetch by N 32-bit words
+        -- postpone step fetch by N output words
         -- set it to 1-3 for bandwidth saving with soft scroll
-        -- set it a few words than step for when compositing e.g. 17*10-4=166
+        -- set it a few words than step for when compositing e.g. 4*17*10-4=4*166
         C_postpone_step: integer := 0;
         -- define the length of horizontal compositing slice (words)
         -- word count includes offset word and following bitmap data
@@ -130,8 +130,8 @@ entity videofifo is
         -- for compositing: use 2^C_data_width = bits per pixel
         -- 0: 1bit, 1: 2bit, 2:4bit 3:8bit, 4:16bit, 5:32bit
         C_data_log2_width: integer range 0 to 5 := 5;
-        -- defines the length of the FIFO: 4 * 2^C_length bytes
-        -- default value of 4: length = 16 * 32 bits = 16 * 4 bytes = 64 bytes
+        -- defines the length of the FIFO output words: 2^C_width words
+        -- default value of 4 and word 32bit: length = 16 * 32 bits = 16 * 4 bytes = 64 bytes
         -- this constant should be renamed to C_addr_width
         -- and should represent addressing of variable C_data_width
         C_width: integer := 4 -- bits width of fifo address
@@ -167,7 +167,7 @@ architecture behavioral of videofifo is
 
     -- Internal state
     signal R_sram_addr: std_logic_vector(29 downto 2);
-    signal R_pixbuf_wr_addr, S_pixbuf_wr_addr_next: std_logic_vector(C_addr_width-1 downto 0);
+    signal R_pixbuf_wr_addr, S_pixbuf_wr_addr_next: std_logic_vector(C_addr_width+C_shift_addr_width-1 downto C_shift_addr_width);
     signal R_pixbuf_rd_addr, R_pixbuf_out_addr: std_logic_vector(C_addr_width+C_shift_addr_width-1 downto 0);
     signal S_pixbuf_out_mem_addr: std_logic_vector(C_addr_width+C_shift_addr_width-1 downto 0);
     signal S_pixbuf_in_mem_addr: std_logic_vector(C_addr_width+C_shift_addr_width-1 downto 0);
@@ -178,8 +178,8 @@ architecture behavioral of videofifo is
     signal S_data_opaque: std_logic;
     signal S_fetch_compositing_offset: std_logic := '0';
     signal S_compositing_erase: std_logic := '0';
-    signal R_compositing_active_offset: std_logic_vector(C_addr_width-1 downto 0) := (others => '0');
-    signal R_compositing_second_offset: std_logic_vector(C_addr_width-1 downto 0) := (others => '0');
+    signal R_compositing_active_offset: std_logic_vector(C_addr_width+C_shift_addr_width-1 downto 0) := (others => '0');
+    signal R_compositing_second_offset: std_logic_vector(C_addr_width+C_shift_addr_width-1 downto 0) := (others => '0');
     signal R_compositing_countdown: integer range 0 to C_compositing_length := 0;
     signal R_shifting_counter: std_logic_vector(C_shift_addr_width downto 0) := (others => '0'); -- counts shift cycles and adds address
     signal R_data_in_shift: std_logic_vector(31 downto 0); -- data in shift buffer to bram
@@ -239,7 +239,7 @@ begin
     -- useful for VSYNC frame interrupt
     frame <= clean_start; -- must be rising edge for CPU interrupt, not level
 
-    -- Refill the circular buffer with fresh data from SRAM-a
+    -- Refill the circular buffer with fresh data from external RAM
     -- h-compositing of thin sprites on the fly
     process(clk)
     begin
@@ -265,9 +265,9 @@ begin
                   -- (reserved for future enhancement of h-resolution)
 
                   -- offest for first sprite (active offset):
-                  R_compositing_active_offset <= data_in(C_addr_width+1 downto 2);
+                  R_compositing_active_offset <= data_in(C_addr_width+C_shift_addr_width-1 downto 0);
                   -- offset for second sprite (later it will be copied to active offset):
-                  R_compositing_second_offset <= data_in(C_addr_width+17 downto 18);
+                  R_compositing_second_offset <= data_in(C_addr_width+C_shift_addr_width+15 downto 16);
                 else
                   R_compositing_countdown <= R_compositing_countdown - 1; -- bitmap fetching countdown
                   R_pixbuf_wr_addr <= S_pixbuf_wr_addr_next; -- next sequential address to store bitmap
@@ -379,34 +379,46 @@ begin
       R_bram_in_addr <= S_pixbuf_in_mem_addr; -- not a register but pass-thru signal
     end generate;
 
-    buffer_shifting: if C_bits_out < 32 generate
+    -- for debugging, instead of shifting just delay with registers
+    buffer_direct_debug: if C_bits_out < 32 and false generate
+      process(clk)
+        begin
+          S_bram_data_in <= data_in(C_bits_out-1 downto 0);
+          S_bram_write <= S_data_write;
+          R_bram_in_addr <= S_pixbuf_in_mem_addr; -- not a register but pass-thru signal
+        end process;
+    end generate;
+
+    buffer_shifting: if C_bits_out < 32 and true generate
+    -- buffer_shifting: if false generate
       -- for less than 32 bits e.g. 8:
       -- it will start 4-cycle writing from 32-bit 
       -- from data_in to compositing bram
       -- writing to buffer randomly (compositing)
-      process(clk)
-        begin
-          if S_data_write = '1'
-          and to_integer(unsigned(R_shifting_counter)) >= C_shift_cycles-1 then
-            R_data_in_shift <= data_in; -- store data in temporary shift register
-            -- for later storing into compositing bram)
-            R_shifting_counter <= (others => '0'); -- start shift counter
-            -- the starting address for storage
-            R_bram_in_addr <= S_pixbuf_in_mem_addr;
-          end if;
-          -- shift the data and increment bram address
+      process(clk) begin
+        if S_data_write = '1' then
+          -- new data arrive, unconditionaly start them
+          -- discard old data currently being shifted
+          -- the incoming rate should not be so fast to
+          -- discard old data otherwise intermediate fifo is needed
+          R_data_in_shift <= data_in; -- store data in temporary shift register
+          -- for later storing into compositing bram)
+          R_shifting_counter <= (others => '0'); -- start shift counter
+          -- the starting address for storage
+          R_bram_in_addr <= S_pixbuf_in_mem_addr;
+        else
           if S_bram_write = '1' then
-            R_data_in_shift <= C_data_pad & R_data_in_shift(31 downto C_bits_out);
-            R_shifting_counter <= R_shifting_counter + 1;
-            R_bram_in_addr <= R_bram_in_addr + 1;
+            -- shift the data and increment address
+            R_data_in_shift <= C_data_pad & R_data_in_shift(31 downto C_bits_out); -- shift next data
+            R_shifting_counter <= R_shifting_counter + 1; -- increment counter, when msb is 1 shifting stops
+            R_bram_in_addr <= R_bram_in_addr + 1; -- next data to next address
           end if;
-        end process;
-
+        end if;
+      end process;
       -- bram will be written when MSB of the shifting counter is 0
       -- MSB allows shifting to stop when complete
       -- this provides signal to bram to store data
       S_bram_write <= not R_shifting_counter(C_shift_addr_width);
-
       S_bram_data_in <= R_data_in_shift(C_bits_out-1 downto 0);
     end generate;
 
