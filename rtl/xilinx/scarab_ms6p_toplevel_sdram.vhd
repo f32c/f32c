@@ -95,7 +95,7 @@ entity glue is
           -- word length for H-compositing thin sprite, including offset word (tiny sprites one pixel high)
           C_vgatext_bitmap_fifo_compositing_length: integer := 17;
           -- bitmap width of FIFO address space length = 2^width * 4 byte
-          C_vgatext_bitmap_fifo_width: integer := 10;
+          C_vgatext_bitmap_fifo_width: integer := 9;
 
       C_fmrds: boolean := true;
       C_sio: integer := 1;
