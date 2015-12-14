@@ -175,6 +175,7 @@ architecture behavioral of videofifo is
     signal R_delay_fetch: integer range 0 to 2*C_step;
     signal S_bram_write, S_data_write: std_logic;
     signal S_need_refill: std_logic;
+    signal R_need_refill_cpu: std_logic := '0';
     signal S_data_opaque: std_logic;
     signal S_fetch_compositing_offset: std_logic := '0';
     signal S_compositing_erase: std_logic := '0';
@@ -287,25 +288,43 @@ begin
         end if;
     end process;
 
+    junk_code: if false generate
     S_need_refill <= '1' when clean_start = '0'
                           and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr(C_addr_width+C_shift_addr_width-1 downto C_shift_addr_width)
                 else '0';
+    end generate;
+
+    -- need refill signal must be cpu synchronous
+    process(clk) begin
+      if rising_edge(clk) then
+        if clean_start = '0'
+          and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr(C_addr_width+C_shift_addr_width-1 downto C_shift_addr_width)
+          then
+            R_need_refill_cpu <= '1';
+        else
+            R_need_refill_cpu <= '0';
+        end if;
+      end if;
+    end process;
+    S_need_refill <= R_need_refill_cpu;
+
+    -- addr_strobe must be cpu CLK synchronous!
     addr_strobe <= S_need_refill;
     addr_out <= R_sram_addr;
-    
+
     -- Dequeue pixel data from the circular buffer
     -- by incrementing R_pixbuf_rd_addr on rising edge of clk
-    process(clk)
+    process(clk_pixel)
       begin
-        if rising_edge(clk) then
-          if clean_start = '1' then
+        if rising_edge(clk_pixel) then
+          if start = '1' then
             R_pixbuf_rd_addr <= (others => '0');  -- this will read data from RAM
             if C_step /= 0 then
               R_pixbuf_out_addr <= (others => '0'); -- this will output buffered data
               R_delay_fetch <= 2*C_step-1;
             end if;
           else
-            if clean_fetch = '1' then
+            if fetch_next = '1' then
               if C_step = 0 then
                 R_pixbuf_rd_addr <= R_pixbuf_rd_addr + 1; -- R_pixbuf_out_addr + 1 ??
               end if;
@@ -328,7 +347,7 @@ begin
               end if;
 	    end if;
             if C_step /= 0 then
-              if clean_rewind = '1' then
+              if rewind = '1' then
                 R_pixbuf_out_addr <= R_pixbuf_rd_addr; -- R_pixbuf_rd_addr-1 ??
                 R_delay_fetch <= 2 * C_step - 1;
                 -- delay fetch will actually delay C_step+1 steps
@@ -372,7 +391,6 @@ begin
 
     -- data_in is always 32-bits
     -- buffer can have less than 32 bits
-
     buffer_direct: if C_bits_out = 32 generate
       S_bram_data_in <= data_in;
       S_bram_write <= S_data_write;
@@ -431,14 +449,15 @@ begin
       S_pixbuf_out_mem_addr <= R_pixbuf_out_addr;
     end generate;
 
-    linememory: entity work.bram_true2p_1clk
+    linememory: entity work.bram_true2p_2clk
     generic map (
         dual_port => True, -- one port takes data from RAM, other port outputs to video
         data_width => C_bits_out,
         addr_width => C_addr_width+C_shift_addr_width
     )
     port map (
-        clk => clk,
+        clk_a => clk,
+        clk_b => clk_pixel,
         we_a => S_bram_write,
         we_b => S_compositing_erase, -- compositing must erase after use (rewind won't work with compositing)
         addr_a => R_bram_in_addr,
