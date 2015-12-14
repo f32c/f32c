@@ -36,9 +36,9 @@ parameter dbl_x = 0; // 0-normal X, 1-double X
 parameter dbl_y = 0; // 0-normal Y, 1-double Y
 
 parameter resolution_x = 640;
-parameter hsync_front_porch = 16;
-parameter hsync_pulse = 96;
-parameter hsync_back_porch = 44; // 48
+parameter hsync_front_porch = 12; // was 16
+parameter hsync_pulse = 96; // was 96
+parameter hsync_back_porch = 48; // 48
 parameter frame_x = resolution_x + hsync_front_porch + hsync_pulse + hsync_back_porch;
 // frame_x = 640 + 16 + 96 + 48 = 800;
 parameter resolution_y = 480;
