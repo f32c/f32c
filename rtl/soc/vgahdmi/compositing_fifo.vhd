@@ -163,7 +163,7 @@ architecture behavioral of videofifo is
     constant C_addr_width: integer := C_width; -- more descriptive name in the code, keep generic compatible for now
     constant C_length: integer := 2**C_addr_width; -- 1 sll C_addr_width - shift logical left
     constant C_addr_pad: std_logic_vector(C_shift_addr_width-1 downto 0) := (others => '0'); -- warning fixme degenerate range (-1 downto 0) for 32bit
-    constant C_data_pad: std_logic_vector(C_bits_out-1 downto 0) := (others => '0'); -- when shifting
+    constant C_data_pad: std_logic_vector(C_bits_out-1 downto 0) := (others => '-'); -- when shifting
 
     -- Internal state
     signal R_sram_addr: std_logic_vector(29 downto 2);
@@ -381,7 +381,8 @@ begin
       -- if word to be written is 0 then don't write, allow it to
       -- "see through" lower priority sprites
       -- todo: this 32-bit transparency should be fine-grained as 8-bit
-      S_data_opaque <= '0' when to_integer(unsigned(data_in)) = 0 else '1';
+      -- S_data_opaque <= '0' when to_integer(unsigned(data_in)) = 0 else '1'; -- fixme for 8bpp
+      S_data_opaque <= '1';
       S_data_write <= data_ready and S_need_refill
                   and (not S_fetch_compositing_offset) -- only bitmap is written 
                   and S_data_opaque -- content is not transparent
@@ -408,30 +409,37 @@ begin
     end generate;
 
     buffer_shifting: if C_bits_out < 32 and true generate
-    -- buffer_shifting: if false generate
+      -- buffer_shifting: if false generate
       -- for less than 32 bits e.g. 8:
       -- it will start 4-cycle writing from 32-bit 
       -- from data_in to compositing bram
       -- writing to buffer randomly (compositing)
       process(clk) begin
-        if S_data_write = '1' then
-          -- new data arrive, unconditionaly start them
-          -- discard old data currently being shifted
-          -- the incoming rate should not be so fast to
-          -- discard old data otherwise intermediate fifo is needed
-          R_data_in_shift <= data_in; -- store data in temporary shift register
-          -- for later storing into compositing bram)
-          R_shifting_counter <= (others => '0'); -- start shift counter
-          -- the starting address for storage
-          R_bram_in_addr <= S_pixbuf_in_mem_addr;
-        else
-          if S_bram_write = '1' then
+        if rising_edge(clk) then
+          if R_shifting_counter(C_shift_addr_width-1 downto 0) = (not C_addr_pad)
+          or R_shifting_counter(C_shift_addr_width) = '1' then
+            if S_data_write = '1' then
+            -- new data arrive, unconditionaly start them
+            -- discard old data currently being shifted
+            -- the incoming rate should not be so fast to
+            -- discard old data otherwise intermediate fifo is needed
+            R_data_in_shift <= data_in; -- store data in temporary shift register
+            --R_data_in_shift <= x"aa5511ff";
+            -- for later storing into compositing bram)
+            R_shifting_counter <= (others => '0'); -- start shift counter
+            -- the starting address for storage
+            R_bram_in_addr <= S_pixbuf_in_mem_addr;
+            end if;
+          end if;
+          if R_shifting_counter(C_shift_addr_width) /= '1' then
+          --if S_bram_write = '1' then
             -- shift the data and increment address
             R_data_in_shift <= C_data_pad & R_data_in_shift(31 downto C_bits_out); -- shift next data
             R_shifting_counter <= R_shifting_counter + 1; -- increment counter, when msb is 1 shifting stops
             R_bram_in_addr <= R_bram_in_addr + 1; -- next data to next address
+          --end if;
           end if;
-        end if;
+        end if; -- rising edge(clk)
       end process;
       -- bram will be written when MSB of the shifting counter is 0
       -- MSB allows shifting to stop when complete
