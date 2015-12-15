@@ -82,29 +82,26 @@
 -- both offsets with equal 16-bit value
 -- in a single 32-bit CPU write cycle.
 
--- offsets refer to a move in bytes, but currently only 32-bit
--- moves are implemented (lowest 2 bits of offset ignored)
--- so move will snap to a full 4-byte position
+-- offsets refer to a move in pixels
 
--- TODO: increase x-offset resolution using finer grain
--- 16-bit or 8-bit compositing. (looking for some efficient
--- way to do that, please contribute :-)
-
--- switch compositing to 8bit bram buffer
 -- important assumption: 32-bit RAM data will
 -- not come faster than one 32-bit word each 4 cycles
 -- we need 4 cycles to shift out 32-bits into 4 bytes
 -- for compositing
 
+-- for normal compositing use
 -- output data will be 8-bit (suitable for 8bpp)
 
+-- 16 and 32 bit per fetch are possible,
+-- RAM bandwidth is the limit
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
+use ieee.math_real.all; -- to calculate log2 bit size
 use ieee.numeric_std.all;
 
-entity videofifo is
+entity compositing_fifo is
     generic (
         C_synclen: integer := 3; -- bits in cpu-to-pixel clock synchronizer
         -- (0: disable rewind and be ordinary sequential fifo)
@@ -113,28 +110,32 @@ entity videofifo is
         -- rewind signal can again output data stream from fifo
         -- starting from last full step it was filled from RAM,
         -- saves RAM bandwidth during text mode or bitmap vertial line doubling
-        -- set it to 4*17*10 = 4*170 for compositing 640x480 with 17 word length
+        -- set it to 4*17*10 = 680 for compositing 640x480 with 17 word length
         C_step: integer := 0;
         -- postpone step fetch by N output words
         -- set it to 1-3 for bandwidth saving with soft scroll
-        -- set it a few words than step for when compositing e.g. 4*17*10-4=4*166
+        -- set it a few words less than step for
+        -- compositing e.g. 4*17*10-8=672
         C_postpone_step: integer := 0;
         -- define the length of horizontal compositing slice (words)
         -- word count includes offset word and following bitmap data
         -- this option should be used together with C_width of sufficient
         -- size for 2 scan lines and C_postpone_step for 1 scan line
-        -- 0 to disable, 17 is standard value
+        -- 0 to disable, 17 is standard value for compositing
         C_compositing_length: integer := 0;
         -- select bit width for data output
-        -- also selects data bus width of fifo buffer
-        -- for compositing: use 2^C_data_width = bits per pixel
-        -- 0: 1bit, 1: 2bit, 2:4bit 3:8bit, 4:16bit, 5:32bit
-        C_data_log2_width: integer range 0 to 5 := 5;
-        -- defines the length of the FIFO output words: 2^C_width words
-        -- default value of 4 and word 32bit: length = 16 * 32 bits = 16 * 4 bytes = 64 bytes
-        -- this constant should be renamed to C_addr_width
-        -- and should represent addressing of variable C_data_width
-        C_width: integer := 4 -- bits width of fifo address
+        -- should be equal to bits per pixel for compositing
+        -- this is data bus width of fifo buffer
+        -- values allowed: 8, 16 or 32
+        -- lower bpp won't work because incomding
+        -- 32bit data from RAM cannot be serialized into
+        -- narrow bus buffer
+        -- compositing: 8
+        C_data_width: integer range 8 to 32 := 32;
+        -- defines the bus length of the FIFO for pixel buffering
+        -- for 8bpp no compositing, default value of 6: 64 pixels
+        -- compositing: 9
+        C_addr_width: integer := 4 -- bits width of fifo address
     );
     port (
 	clk, clk_pixel: in std_logic;
@@ -144,7 +145,7 @@ entity videofifo is
 	-- debug_rd_addr: out std_logic_vector(29 downto 2);
 	data_ready: in std_logic;
 	data_in: in std_logic_vector(31 downto 0);
-	data_out: out std_logic_vector(2**C_data_log2_width-1 downto 0);
+	data_out: out std_logic_vector(C_data_width-1 downto 0);
 	start: in std_logic; -- rising edge sensitive will reset fifo RAM to base address, value 1 allows start of reading
 	frame: out std_logic; -- output CPU clock synchronous start edge detection (1 CPU-clock wide pulse for FB interrupt)
 	rewind: in std_logic := '0'; -- rising edge sets output data pointer to the start of last full step
@@ -153,14 +154,16 @@ entity videofifo is
 	-- during H-blank period - connected to hsync signal.
 	fetch_next: in std_logic -- edge sensitive fetch next value (current data consumed)
     );
-end videofifo;
+end compositing_fifo;
 
-architecture behavioral of videofifo is
+architecture behavioral of compositing_fifo is
     -- Constants
-    constant C_bits_out: integer := 2**C_data_log2_width; -- how many bits we have in output
+    -- constant C_bits_out: integer := 2**C_data_log2_width; -- how many bits we have in output
+    constant C_bits_out: integer := C_data_width; -- just renaming
+    constant C_data_log2_width: integer := integer(ceil((log2(real(C_bits_out)+1.0E-6))-1.0E-6));
     constant C_shift_addr_width: integer := 5-C_data_log2_width;
     constant C_shift_cycles: integer := 32/C_bits_out; -- how many cpu cycles to shift from 32bit to reduced size bram
-    constant C_addr_width: integer := C_width; -- more descriptive name in the code, keep generic compatible for now
+    -- constant C_addr_width: integer := C_width; -- more descriptive name in the code, keep generic compatible for now
     constant C_length: integer := 2**C_addr_width; -- 1 sll C_addr_width - shift logical left
     constant C_addr_pad: std_logic_vector(C_shift_addr_width-1 downto 0) := (others => '0'); -- warning fixme degenerate range (-1 downto 0) for 32bit
     constant C_data_pad: std_logic_vector(C_bits_out-1 downto 0) := (others => '-'); -- when shifting
