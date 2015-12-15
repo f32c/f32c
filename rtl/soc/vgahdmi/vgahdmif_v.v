@@ -85,20 +85,16 @@ always @(posedge pixclk)
 parameter synclen = 3; // >=3, bit length of the clock synchronizer shift register
 reg [synclen-1:0] clksync; /* fifo to clock synchronizer shift register */
 
-// signal: when to shift pixel data and when to get new data from the memory
-wire getbyte = CounterX[2+dbl_x:0] == 0;
-
 // fetch new data every pixel
 assign fetch_next = fetcharea;
 
-reg [7:0] shift_red, shift_green, shift_blue, shift_bright;
+reg [7:0] shift_red, shift_green, shift_blue;
 always @(posedge pixclk)
     if(dbl_x == 0 || CounterX[0] == 0)
       begin
         shift_red     <= red_byte;
         shift_green   <= green_byte;
         shift_blue    <= blue_byte;
-        shift_bright  <= bright_byte;
       end
 
 // test picture generator
