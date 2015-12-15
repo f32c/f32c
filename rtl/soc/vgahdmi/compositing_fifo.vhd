@@ -445,7 +445,7 @@ begin
       -- MSB=1 allows shifting to stop when complete
       -- this provides signal to bram to store data
       -- fixme: here transparency doesn't work?
-      S_bram_write <= '1' when -- to_integer(unsigned(S_bram_data_in)) /= 0 and
+      S_bram_write <= '1' when to_integer(unsigned(S_bram_data_in)) /= 0 and
                    R_shifting_counter(C_shift_addr_width) = '0'
                    else '0';
       S_bram_data_in <= R_data_in_shift(C_bits_out-1 downto 0);
