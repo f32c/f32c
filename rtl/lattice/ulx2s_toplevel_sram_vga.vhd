@@ -114,16 +114,22 @@ entity toplevel is
 	C_framebuffer: boolean := false;
 	C_vgahdmi: boolean := true;
 	C_vgahdmi_test_picture: integer := 0;
-        -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
-        C_vgahdmi_fifo_step: integer := 0;
-          -- postpone step as much as possible to avoid flickering of a left sprite moved right
-        C_vgahdmi_fifo_postpone_step: integer := 0;
-        -- word length for H-compositing thin sprite, including offset word (tiny sprites one pixel high)
-        C_vgahdmi_fifo_compositing_length: integer := 0;
-        -- output data width select: 8 bits
+        -- number of pixels for line step 640 for no compositing
+        -- 680 for comositing
+        C_vgahdmi_fifo_step: integer := 680;
+        -- number of pixels to postpone step
+        -- postpone step as much as possible to avoid flickering of a left sprite moved right
+        C_vgahdmi_fifo_postpone_step: integer := 672;
+        -- number of 32 bit words used for H-compositing dual thin sprite,
+        -- first 32-bit word contains 2 offsets and the rest is bitmap
+        -- usual value for this is 17
+        -- (tiny sprites are one pixel high)
+        C_vgahdmi_fifo_compositing_length: integer := 17;
+        -- output data width select: 8 bits = 3
+        -- normally this should be  actual bits per pixel
         C_vgahdmi_fifo_data_log2_width: integer range 0 to 5 := 3;
         -- bitmap width of FIFO address space length = 2^width * 4 byte
-        C_vgahdmi_fifo_width: integer := 4;
+        C_vgahdmi_fifo_width: integer := 9;
 
         -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
         --C_vgahdmi_fifo_step: integer := 10*17;
