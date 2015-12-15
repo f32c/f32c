@@ -95,7 +95,7 @@ entity glue_sram is
         C_vgahdmi_fifo_step: integer := 4*10*17;
         C_vgahdmi_fifo_postpone_step: integer := 4*10*17-8;
         C_vgahdmi_fifo_compositing_length: integer := 17;
-        C_vgahdmi_fifo_data_width: integer range 0 to 5 := 8;
+        C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
         C_vgahdmi_fifo_addr_width: integer := 9;
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
@@ -929,7 +929,7 @@ begin
     );
     vga_vsync <= not S_vga_vsync;
     vga_hsync <= not S_vga_hsync;
-    videofifo: entity work.compositing_fifo
+    comp_fifo: entity work.compositing_fifo
     generic map (
       C_step => C_vgahdmi_fifo_step,
       C_postpone_step => C_vgahdmi_fifo_postpone_step,
