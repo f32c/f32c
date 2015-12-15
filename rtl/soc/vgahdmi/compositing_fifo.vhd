@@ -416,28 +416,28 @@ begin
       -- writing to buffer randomly (compositing)
       process(clk) begin
         if rising_edge(clk) then
-          if R_shifting_counter(C_shift_addr_width-1 downto 0) = (not C_addr_pad)
-          or R_shifting_counter(C_shift_addr_width) = '1' then
-            if S_data_write = '1' then
-            -- new data arrive, unconditionaly start them
-            -- discard old data currently being shifted
-            -- the incoming rate should not be so fast to
-            -- discard old data otherwise intermediate fifo is needed
+          if S_data_write = '1' then
+            -- new data arrived: unconditionaly start them
+            -- this may overwrite data currently being shifted, but
+            -- assumed is slow RAM with the incoming S_data_write rate
+            -- slow enough to be completely shifted.
+            -- usually SRAM or SDRAM can't fetch faster than 4 CPU cycles
+            -- so it fits to shift 8 bit per pixel output
+            -- for lower than 8 we won't have time to shift
+            -- in that case: FIXME :-)
             R_data_in_shift <= data_in; -- store data in temporary shift register
             --R_data_in_shift <= x"aa5511ff";
             -- for later storing into compositing bram)
             R_shifting_counter <= (others => '0'); -- start shift counter
             -- the starting address for storage
             R_bram_in_addr <= S_pixbuf_in_mem_addr;
+          else
+            if S_bram_write = '1' then
+              -- shift the data and increment address
+              R_data_in_shift <= C_data_pad & R_data_in_shift(31 downto C_bits_out); -- shift next data
+              R_shifting_counter <= R_shifting_counter + 1; -- increment counter, when msb is 1 shifting stops
+              R_bram_in_addr <= R_bram_in_addr + 1; -- next data to next address
             end if;
-          end if;
-          if R_shifting_counter(C_shift_addr_width) /= '1' then
-          --if S_bram_write = '1' then
-            -- shift the data and increment address
-            R_data_in_shift <= C_data_pad & R_data_in_shift(31 downto C_bits_out); -- shift next data
-            R_shifting_counter <= R_shifting_counter + 1; -- increment counter, when msb is 1 shifting stops
-            R_bram_in_addr <= R_bram_in_addr + 1; -- next data to next address
-          --end if;
           end if;
         end if; -- rising edge(clk)
       end process;
