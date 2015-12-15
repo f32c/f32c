@@ -376,7 +376,13 @@ begin
       -- needs clean memory for compositing fresh data
       -- (erasing is done when clean_fetch signal is detected)
       -- rewind can not work together with compositing (data erased)
-      S_compositing_erase <= clean_fetch; -- erase immediately after use
+      --process(clk_pixel) begin
+        -- R_pixbuf_out_addr the fetch address is 1clock delayed,
+        -- so we must delay also erasing signal
+        --if rising_edge(clk_pixel) then
+        --  S_compositing_erase <= fetch_next; -- erase immediately after use, pixel clock synchronous
+        --end if;
+      --end process;
       -- write signal with handling transparency:
       -- if word to be written is 0 then don't write, allow it to
       -- "see through" lower priority sprites
@@ -443,8 +449,8 @@ begin
       -- this provides signal to bram to store data
       -- fixme: here transparency doesn't work?
       S_bram_write <= '1' when -- to_integer(unsigned(S_bram_data_in)) /= 0 and
-                  R_shifting_counter(C_shift_addr_width) = '0'
-                  else '0';
+                   R_shifting_counter(C_shift_addr_width) = '0'
+                   else '0';
       S_bram_data_in <= R_data_in_shift(C_bits_out-1 downto 0);
     end generate;
 
