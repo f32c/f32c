@@ -128,7 +128,8 @@ entity toplevel is
         -- output data width select: 8 bits = 3
         -- normally this should be  actual bits per pixel
         C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
-        -- bitmap width of FIFO address space length = 2^width * 4 byte
+        -- width of FIFO address space -> size of fifo
+        -- for 8bpp compositing use 9 -> 512 bytes
         C_vgahdmi_fifo_addr_width: integer := 9;
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
