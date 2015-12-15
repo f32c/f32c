@@ -64,14 +64,15 @@ entity glue is
     C_vgahdmi_fifo_postpone_step: integer := 672;
     -- number of 32 bit words used for H-compositing dual thin sprite,
     -- first 32-bit word contains 2 offsets and the rest is bitmap
-    -- normal value for this is 17
+    -- usual value for this is 17
     -- (tiny sprites are one pixel high)
     C_vgahdmi_fifo_compositing_length: integer := 17;
-    -- output data width select: 8 bits pixel -> width = 3
+    -- output data width select: 8 bits = 3
     -- normally this should be  actual bits per pixel
-    C_vgahdmi_fifo_data_log2_width: integer range 0 to 5 := 3;
-    -- bitmap width of FIFO address space length = 2^width * 4 byte
-    C_vgahdmi_fifo_width: integer := 9;
+    C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
+    -- width of FIFO address space -> size of fifo
+    -- for 8bpp compositing use 9 -> 512 bytes
+    C_vgahdmi_fifo_addr_width: integer := 9;
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
@@ -245,8 +246,8 @@ begin
       C_vgahdmi_fifo_step => C_vgahdmi_fifo_step,
       C_vgahdmi_fifo_postpone_step => C_vgahdmi_fifo_postpone_step,
       C_vgahdmi_fifo_compositing_length => C_vgahdmi_fifo_compositing_length,
-      C_vgahdmi_fifo_data_log2_width => C_vgahdmi_fifo_data_log2_width,
-      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
+      C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
+      C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
       C_vgatext_label => C_vgatext_label,
