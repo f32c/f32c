@@ -381,11 +381,8 @@ begin
       -- if word to be written is 0 then don't write, allow it to
       -- "see through" lower priority sprites
       -- todo: this 32-bit transparency should be fine-grained as 8-bit
-      -- S_data_opaque <= '0' when to_integer(unsigned(data_in)) = 0 else '1'; -- fixme for 8bpp
-      S_data_opaque <= '1';
       S_data_write <= data_ready and S_need_refill
                   and (not S_fetch_compositing_offset) -- only bitmap is written 
-                  and S_data_opaque -- content is not transparent
                   and (not clean_start); -- not in frame start cycle
       S_pixbuf_in_mem_addr <= (R_pixbuf_wr_addr & C_addr_pad) + R_compositing_active_offset;
     end generate;
@@ -432,7 +429,7 @@ begin
             -- the starting address for storage
             R_bram_in_addr <= S_pixbuf_in_mem_addr;
           else
-            if S_bram_write = '1' then
+            if R_shifting_counter(C_shift_addr_width) = '0' then
               -- shift the data and increment address
               R_data_in_shift <= C_data_pad & R_data_in_shift(31 downto C_bits_out); -- shift next data
               R_shifting_counter <= R_shifting_counter + 1; -- increment counter, when msb is 1 shifting stops
@@ -442,9 +439,12 @@ begin
         end if; -- rising edge(clk)
       end process;
       -- bram will be written when MSB of the shifting counter is 0
-      -- MSB allows shifting to stop when complete
+      -- MSB=1 allows shifting to stop when complete
       -- this provides signal to bram to store data
-      S_bram_write <= not R_shifting_counter(C_shift_addr_width);
+      -- fixme: here transparency doesn't work?
+      S_bram_write <= '1' when -- to_integer(unsigned(S_bram_data_in)) /= 0 and
+                  R_shifting_counter(C_shift_addr_width) = '0'
+                  else '0';
       S_bram_data_in <= R_data_in_shift(C_bits_out-1 downto 0);
     end generate;
 
