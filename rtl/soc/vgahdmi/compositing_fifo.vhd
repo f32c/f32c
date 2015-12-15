@@ -35,30 +35,37 @@
 
 -- allows compositing (thin h-sprites)
 
--- every 17th 32-bit word is compositing word. 
--- it can be either positive or negative, it will be added to fifo
--- write address for 16 following 32-bit words, which will
--- effectively horizontally displace thin sprite left or right
--- on the 640x480 8bpp it can be 9600 thin h-sprites
+-- every 17th 32-bit word contains 2 16-but compositing words.
+-- each can be either positive or negative, it will be added to fifo
+-- write address for the bitmap of 16 following 32-bit words, which will
+-- can horizontally displace like thin sprite,, left or right.
+-- 640x480 8bpp bitmap can hold 9600 thin sprites
 
 -- memory map (continuously repeats this pattern):
 -- +---------+---------+-------------+-------------+
 -- | x-offset| x-offset| bitmap      | bitmap      |
 -- | sprite 0| sprite 1| sprite 0    | sprite 1    |
--- | int16_t | int16_t | uint32_t[8] | uint32_t[8] |
+-- | int16_t | int16_t | uint8_t[32] | uint8_t[32] |
 -- +---------+---------+-------------+-------------+
 
 -- or in C:
 -- struct thin_sprite
 -- {
---   int16_t[2] offset;
---   uint32_t[2][8] bitmap;
+--   int16_t[2] x; // horizontal offset
+--   uint8_t[2][32] color; // pixel color
 -- };
 
 -- when x-offset is set to 0 the bitmap will be on its
 -- original sequential position on the screen
 -- pixel plot routine should just skip offset words
 -- and leave them at 0
+
+-- plot example in C
+-- #define F32C_VGA_WIDTH  640
+-- #define F32C_VGA_HEIGHT 480
+-- #define F32C_VGA_COMPOSITING 17
+-- pixel_ram[(y * (F32C_VGA_WIDTH + 4*((F32C_VGA_WIDTH/4)/(F32C_VGA_COMPOSITING-1)) ))
+--           + x + 4*(1+(x/4)/((F32C_VGA_COMPOSITING-1)))] = pixel_color;
 
 -- offset values:
 -- Negative value: move to the left,
