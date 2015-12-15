@@ -121,7 +121,7 @@ entity toplevel is
         -- word length for H-compositing thin sprite, including offset word (tiny sprites one pixel high)
         C_vgahdmi_fifo_compositing_length: integer := 0;
         -- output data width select: 8 bits
-        C_vgahdmi_fifo_data_log2_width: integer range 0 to 5 := 5;
+        C_vgahdmi_fifo_data_log2_width: integer range 0 to 5 := 3;
         -- bitmap width of FIFO address space length = 2^width * 4 byte
         C_vgahdmi_fifo_width: integer := 4;
 
