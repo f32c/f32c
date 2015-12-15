@@ -376,13 +376,10 @@ begin
       -- needs clean memory for compositing fresh data
       -- (erasing is done when clean_fetch signal is detected)
       -- rewind can not work together with compositing (data erased)
-      --process(clk_pixel) begin
-        -- R_pixbuf_out_addr the fetch address is 1clock delayed,
-        -- so we must delay also erasing signal
-        --if rising_edge(clk_pixel) then
-        --  S_compositing_erase <= fetch_next; -- erase immediately after use, pixel clock synchronous
-        --end if;
-      --end process;
+      -- at the same time read out data and erase
+      -- a registered, non-pass-through BRAM block
+      -- is required for this to work
+      S_compositing_erase <= fetch_next;
       -- write signal with handling transparency:
       -- if word to be written is 0 then don't write, allow it to
       -- "see through" lower priority sprites
@@ -466,6 +463,8 @@ begin
     linememory: entity work.bram_true2p_2clk
     generic map (
         dual_port => True, -- one port takes data from RAM, other port outputs to video
+        pass_thru_a => False, -- allow simultaneous reading and erasing of old data
+        pass_thru_b => False, -- allow simultaneous reading and erasing of old data
         data_width => C_bits_out,
         addr_width => C_addr_width+C_shift_addr_width
     )
