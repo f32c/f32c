@@ -103,17 +103,13 @@ generic (
   C_simple_out: integer range 0 to 128 := 32;
   -- VGA/HDMI simple 640x480 bitmap only
   C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
---  C_vgahdmi_fifo_step: integer := 0; -- step for the fifo refill and rewind
---  C_vgahdmi_fifo_width: integer := 4; -- width of FIFO address space (default=4) len = 2^width * 4 byte
   C_vgahdmi_use_bram: boolean := false;
-  C_vgahdmi_mem_kb: integer := 10; -- mem size of BRAM framebuffer if BRAM is used
   C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
-        C_vgahdmi_fifo_step: integer := 10*17;
-        C_vgahdmi_fifo_postpone_step: integer := 10*17-4;
-        C_vgahdmi_fifo_compositing_length: integer := 17;
-        C_vgahdmi_fifo_data_log2_width: integer range 0 to 5 := 5;
-        C_vgahdmi_fifo_width: integer := 10;
-
+  C_vgahdmi_fifo_step: integer := 4*10*17;
+  C_vgahdmi_fifo_postpone_step: integer := 4*10*17-8;
+  C_vgahdmi_fifo_compositing_length: integer := 17;
+  C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
+  C_vgahdmi_fifo_addr_width: integer := 9;
   -- Xark's feature-rich bitmap+textmode VGA
   -- it can mix 8bpp bitmap and tiled graphics on the same screen
   -- choice of many of video modes
@@ -867,10 +863,6 @@ begin
       clk_pixel => clk_25MHz,
       clk_tmds => clk_250MHz,
       fetch_next => vga_fetch_next,
-      --red_byte    => vga_data_from_fifo( 7 downto 0),
-      --green_byte  => vga_data_from_fifo(15 downto 8),
-      --blue_byte   => vga_data_from_fifo(23 downto 16),
-      --bright_byte => vga_data_from_fifo(31 downto 24),
       red_byte    => vga_data_from_fifo(7 downto 5) & "00000",
       green_byte  => vga_data_from_fifo(4 downto 2) & "00000",
       blue_byte   => vga_data_from_fifo(1 downto 0) & "000000",
@@ -884,13 +876,13 @@ begin
     );
     vga_vsync <= not S_vga_vsync;
     vga_hsync <= not S_vga_hsync;
-    videofifo: entity work.videofifo
+    comp_fifo: entity work.compositing_fifo
     generic map (
       C_step => C_vgahdmi_fifo_step,
       C_postpone_step => C_vgahdmi_fifo_postpone_step,
       C_compositing_length => C_vgahdmi_fifo_compositing_length,
-      C_data_log2_width => C_vgahdmi_fifo_data_log2_width,
-      C_width => C_vgahdmi_fifo_width -- length = 4 * 2^width
+      C_data_width => C_vgahdmi_fifo_data_width,
+      C_addr_width => C_vgahdmi_fifo_addr_width
     )
     port map (
       clk => clk,
@@ -906,33 +898,12 @@ begin
       base_addr => R_fb_base_addr,
       start => S_vga_vsync,
       frame => vga_frame,
-      data_out => vga_data_from_fifo(2**C_vgahdmi_fifo_data_log2_width-1 downto 0),
+      data_out => vga_data_from_fifo(C_vgahdmi_fifo_data_width-1 downto 0),
       fetch_next => vga_fetch_next
     );
     -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
     -- vga_data(7 downto 0) <= x"0F";
-    vga_from_sdram: if not C_vgahdmi_use_bram generate
-      vga_data <= from_sdram;
-    end generate;
-    vga_from_bram: if C_vgahdmi_use_bram generate
-    video_bram_write <=
-      dmem_addr_strobe and dmem_write when dmem_addr(31 downto 28) = x"8" else '0';
-    videobram: entity work.bram_video
-    generic map (
-      C_mem_size => C_vgahdmi_mem_kb -- KB
-    )
-    port map (
-      clk => clk,
-      imem_addr(17 downto 2) => vga_addr(17 downto 2),
-      imem_addr(31 downto 18) => (others => '0'),
-      imem_data_out => vga_data_bram,
-      dmem_write => video_bram_write,
-      dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-      dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
-    );
-    vga_data(7 downto 0) <= vga_data_bram;
-    vga_data(31 downto 8) <= (others => '-');
-    end generate; -- vga_from_bram
+    vga_data <= from_sdram;
 
     -- address decoder to set base address and clear interrupts
     with conv_integer(io_addr(11 downto 4)) select
