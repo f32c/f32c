@@ -108,6 +108,9 @@
         <Source name="../../../soc/vgahdmi/compositing_fifo.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../soc/vgahdmi/videofifo.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../soc/pcm.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
