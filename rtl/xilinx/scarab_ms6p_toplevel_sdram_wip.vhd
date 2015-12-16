@@ -54,7 +54,7 @@ entity glue is
     C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
     C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
 
-    C_vgahdmi: boolean := true;
+    C_vgahdmi: boolean := false;
     C_vgahdmi_test_picture: integer := 0;
     -- number of pixels for line step 640 for no compositing
     -- 680 for comositing
@@ -74,7 +74,7 @@ entity glue is
     -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
     C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480                   
       C_vgatext_bits: integer := 4;   -- 64 possible colors
@@ -107,15 +107,15 @@ entity glue is
           --C_vgatext_bitmap_fifo_addr_width: integer := 8; -- bitmap width of FIFO address space length = 2^width * 4 byte
 
           -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
-          C_vgatext_bitmap_fifo_step: integer := 10*17;
+          C_vgatext_bitmap_fifo_step: integer := 4*10*17;
           -- postpone step as much as possible to avoid flickering of a left sprite moved right
-          C_vgatext_bitmap_fifo_postpone_step: integer := 10*17-8;
+          C_vgatext_bitmap_fifo_postpone_step: integer := 4*10*17-8;
           -- word length for H-compositing thin sprite, including offset word (tiny sprites one pixel high)
           C_vgatext_bitmap_fifo_compositing_length: integer := 17;
           -- output data width 8bpp
-          C_vgatext_bitmap_fifo_data_width: integer := 8;
+          C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
           -- bitmap width of FIFO address space length = 2^width * 4 byte
-          C_vgatext_bitmap_fifo_addr_width: integer := 10;
+          C_vgatext_bitmap_fifo_addr_width: integer := 11;
 
       C_fmrds: boolean := true;
       C_sio: integer := 1;
