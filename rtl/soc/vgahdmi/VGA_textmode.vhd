@@ -39,6 +39,7 @@ entity VGA_textmode is
     C_vgatext_text: boolean;                        -- enable text character generation
     C_vgatext_reg_read: boolean;                    -- true: allow reading vgatext BRAM via register interface
     C_vgatext_text_fifo: boolean;                   -- true to use videofifo for text+attribute buffer, else BRAM
+    C_vgatext_font_bram8: boolean;                  -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
     C_vgatext_char_height: integer;                 -- font cell height (may be different than font height for more vertical spacing)
     C_vgatext_font_height: integer;                 -- font data height 8 or 16
     C_vgatext_font_depth: integer;                  -- font char bits (7=128, 8=256 characters)
@@ -67,6 +68,7 @@ entity VGA_textmode is
 
     bram_addr_o:        out std_logic_vector(15 downto 2);  -- font (or text+color) BRAM address
     bram_data_i:        in std_logic_vector(31 downto 0);   -- font (or text+color) BRAM data
+    bram_font_o:        out std_logic;                      -- indicates font BRAM access (for C_vgatext_font_bram8)
     text_active_o:      out std_logic;                      -- true when not on visible scan-line
 
     textfifo_addr_o:    out std_logic_vector(29 downto 2);  -- text+color buffer FIFO start address
@@ -231,6 +233,7 @@ architecture Behavioral of VGA_textmode is
   constant bytes_per_line:    integer   := (select_t_f(C_vgatext_finescroll, (4/bytes_per_char), 0)+(visible_width/char_width)) * bytes_per_char;
   constant font_size:         integer   := ((2**C_vgatext_font_depth) * C_vgatext_font_height)/1024;
   constant font_bits:         integer   := C_vgatext_font_depth + select_t_f(C_vgatext_font_height = 8, 3, 4);
+  constant font_base_bit:     integer   := select_t_f(C_vgatext_font_bram8, 0, 2);
 
   -- this will calculate log2, number of bits that can address the pixel bit depth and fifo data
   constant C_vgatext_bitmap_depth_log2: integer := integer(ceil((log2(real(C_vgatext_bitmap_depth)+1.0E-6))-1.0E-6));
@@ -603,6 +606,11 @@ begin
           bitmap_strobe <= '0';
         end if;
 
+        -- assume non font access (if C_vgatext_font_bram8)
+        if C_vgatext_font_bram8 then
+          bram_font_o <= '0';
+        end if;
+
         -- handle BRAM register based reads
         if C_vgatext_reg_read then
           if bram_read_wait = '1' then
@@ -653,34 +661,55 @@ begin
                   end case;
                 end if;
                 -- put font data address on BRAM bus (using variables so same cycle as is read)
-                bram_addr_o(15 downto 10) <= font_start_addr;
+                if C_vgatext_font_bram8 then
+                  bram_addr_o(15 downto 10) <= (others => '0');
+                  bram_font_o <= '1';
+                else
+                  bram_addr_o(15 downto 10) <= font_start_addr;
+                end if;
                 if C_vgatext_font_height = 8 then
-                  if char_y < C_vgatext_font_height * select_t_f(C_vgatext_font_linedouble, 2, 1) then
-                    bram_addr_o(C_vgatext_font_depth+2 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & char_y(select_t_f(C_vgatext_font_linedouble, 3, 2));
+                  if C_vgatext_font_bram8 then
+                    bram_addr_o(C_vgatext_font_depth+4 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & std_logic_vector(char_y(select_t_f(C_vgatext_font_linedouble, 3, 2) downto select_t_f(C_vgatext_font_linedouble, 1, 0)));
                   else
-                    bram_addr_o(C_vgatext_font_depth+2 downto 2) <= (others => '0');
+                    bram_addr_o(C_vgatext_font_depth+2 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & char_y(select_t_f(C_vgatext_font_linedouble, 3, 2));
                   end if;
                 else
                   if char_y < C_vgatext_font_height then
-                    bram_addr_o(C_vgatext_font_depth+3 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & std_logic_vector(char_y(3 downto 2));
+                    if C_vgatext_font_bram8 then
+                      bram_addr_o(C_vgatext_font_depth+5 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & std_logic_vector(char_y(3 downto 0));
+                    else
+                      bram_addr_o(C_vgatext_font_depth+3 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & std_logic_vector(char_y(3 downto 2));
+                    end if;
                   else
-                    bram_addr_o(C_vgatext_font_depth+3 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & "11";
+                    if C_vgatext_font_bram8 then
+                      bram_addr_o(C_vgatext_font_depth+5 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & "1111";
+                    else
+                      bram_addr_o(C_vgatext_font_depth+3 downto 2) <= char_data(C_vgatext_font_depth-1 downto 0) & "11";
+                    end if;
                   end if;
                 end if;
               when "110" =>               -- extract proper byte of font data from word read from BRAM
-                if char_y < C_vgatext_font_height then
-                  case char_y(select_t_f(C_vgatext_font_linedouble, 2, 1) downto select_t_f(C_vgatext_font_linedouble, 1, 0)) is
-                    when "00" => font_data_next <= bram_data_i( 7 downto  0);
-                    when "01" => font_data_next <= bram_data_i(15 downto  8);
-                    when "10" => font_data_next <= bram_data_i(23 downto 16);
-                    when "11" => font_data_next <= bram_data_i(31 downto 24);
-                    when others => null;
-                  end case;
+                if char_y < select_t_f(C_vgatext_font_linedouble, C_vgatext_font_height*2, C_vgatext_font_height) then
+                  if C_vgatext_font_bram8 then
+                    font_data_next <= bram_data_i(7 downto  0);
+                  else
+                    case char_y(select_t_f(C_vgatext_font_linedouble, 2, 1) downto select_t_f(C_vgatext_font_linedouble, 1, 0)) is
+                      when "00" => font_data_next <= bram_data_i( 7 downto  0);
+                      when "01" => font_data_next <= bram_data_i(15 downto  8);
+                      when "10" => font_data_next <= bram_data_i(23 downto 16);
+                      when "11" => font_data_next <= bram_data_i(31 downto 24);
+                      when others => null;
+                    end case;
+                  end if;
                 else
                   if C_vgatext_font_height = 8 then
                     font_data_next <= (others => '0');          -- use blank between characters
                   else
-                    font_data_next <= bram_data_i(31 downto 24);  -- repeat last line of character
+                    if C_vgatext_font_bram8 then
+                      font_data_next <= bram_data_i(7 downto 0);  -- repeat last line of character
+                    else
+                      font_data_next <= bram_data_i(31 downto 24);  -- repeat last line of character
+                    end if;
                   end if;
                 end if;
 
