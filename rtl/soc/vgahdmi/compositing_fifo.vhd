@@ -155,7 +155,7 @@ entity compositing_fifo is
 	data_ready: in std_logic;
 	data_in: in std_logic_vector(31 downto 0);
 	data_out: out std_logic_vector(C_data_width-1 downto 0);
-	start: in std_logic; -- rising edge sensitive will reset fifo RAM to base address, value 1 allows start of reading
+	active: in std_logic; -- rising edge sensitive will reset fifo RAM to base address, value 1 allows start of reading
 	frame: out std_logic; -- output CPU clock synchronous start edge detection (1 CPU-clock wide pulse for FB interrupt)
 	-- rewind is useful to re-read text line, saving RAM bandwidth.
 	-- rewind is possible at any time but is be normally issued
@@ -233,7 +233,7 @@ begin
       if rising_edge(clk) then
         -- synchronize clk_pixel to clk with shift register
         clksync <= clksync(C_synclen-2 downto 0) & toggle_read_complete;
-        startsync <= startsync(C_synclen-2 downto 0) & start;
+        startsync <= startsync(C_synclen-2 downto 0) & active;
         rewindsync <= rewindsync(C_synclen-2 downto 0) & rewind;
       end if;
     end process;
@@ -302,6 +302,7 @@ begin
 
     junk_code: if false generate
     S_need_refill <= '1' when clean_start = '0'
+                          -- and active='1'
                           and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr(C_addr_width-1 downto C_shift_addr_width)
                 else '0';
     end generate;
@@ -329,7 +330,7 @@ begin
     process(clk_pixel)
       begin
         if rising_edge(clk_pixel) then
-          if start = '1' then
+          if active = '0' then
             R_pixbuf_rd_addr <= (others => '0');  -- this will read data from RAM
             if C_step /= 0 then
               R_pixbuf_out_addr <= (others => '0'); -- this will output buffered data
