@@ -26,6 +26,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
+use ieee.math_real.all; -- to calculate log2 bit size
 
 entity VGA_textmode is
   generic (
@@ -49,6 +50,7 @@ entity VGA_textmode is
     C_vgatext_cursor_blink: boolean;                -- enable hardware text cursor blinking
     C_vgatext_bitmap: boolean;                      -- true for bitmap from SRAM/SDRAM
     C_vgatext_bitmap_depth: integer;                -- bitmap bits per pixel (1, 2, 4, 8)
+    C_vgatext_bitmap_fifo_data_width: integer := 32;-- fifo output bits
     C_vgatext_bitmap_fifo: boolean                  -- true to use videofifo for bitmap, else uses SRAM port
   );
   port (
@@ -73,7 +75,7 @@ entity VGA_textmode is
     textfifo_rewind_o:  out std_logic;                      -- "rewind" FIFO to replay last text-line data
 
     bitmap_addr_o:      out std_logic_vector(29 downto 2);  -- bitmap buffer address (or start address with FIFO)
-    bitmap_data_i:      in std_logic_vector(31 downto 0);   -- bitmap data from SRAM or FIFO
+    bitmap_data_i:      in std_logic_vector(C_vgatext_bitmap_fifo_data_width-1 downto 0);   -- bitmap data from SRAM or FIFO
     bitmap_strobe_o:    out std_logic;                      -- request data (or request next word with FIFO)
     bitmap_rewind_o:    out std_logic;                      -- "rewind" FIFO to replay last scan-line data
     bitmap_ready_i:     in std_logic;                       -- bitmap data ready (not used with FIFO)
@@ -230,6 +232,11 @@ architecture Behavioral of VGA_textmode is
   constant font_size:         integer   := ((2**C_vgatext_font_depth) * C_vgatext_font_height)/1024;
   constant font_bits:         integer   := C_vgatext_font_depth + select_t_f(C_vgatext_font_height = 8, 3, 4);
 
+  -- this will calculate log2, number of bits that can address the pixel bit depth and fifo data
+  constant C_vgatext_bitmap_depth_log2: integer := integer(ceil((log2(real(C_vgatext_bitmap_depth)+1.0E-6))-1.0E-6));
+  constant C_vgatext_bitmap_fifo_data_width_log2: integer := integer(ceil((log2(real(C_vgatext_bitmap_fifo_data_width)+1.0E-6))-1.0E-6));
+  constant C_vgatext_bitmap_strobe_point: signed(C_vgatext_bitmap_fifo_data_width_log2-C_vgatext_bitmap_depth_log2-1 downto 0) := (others => '1');
+
   -- constants for the VGA textmode register addresses (8 32-bit words)
   constant C_config_reg:      std_logic_vector  := "000";         -- 0xFFFFFB80
   constant C_config2_reg:     std_logic_vector  := "001";         -- 0xFFFFFB84
@@ -297,7 +304,7 @@ architecture Behavioral of VGA_textmode is
   signal  bitmap_start_addr:  std_logic_vector(29 downto 2);  -- bitmap start address
   signal  bitmap_addr:        unsigned(29 downto 2);              -- current bitmap address
   signal  bitmap_color:       std_logic_vector(23 downto 0);      -- monochrome bitmap color register (xRRGGBB)
-  signal  bitmap_data:        std_logic_vector(31 downto 0);      -- bit pattern shifting out for current bitmap word
+  signal  bitmap_data:        std_logic_vector(C_vgatext_bitmap_fifo_data_width-1 downto 0);      -- bit pattern shifting out for current bitmap word
   signal  bitmap_data_next:   std_logic_vector(31 downto 0);      -- bit pattern shifting out for current bitmap word
   signal  bitmap_strobe:      std_logic;                          -- request next bitmap word
 
@@ -709,17 +716,16 @@ begin
           bitmap_pix := (others => '0');
           if bg_enable = '1' then
             bitmap_pix := bitmap_data(C_vgatext_bitmap_depth-1 downto 0);
-            bitmap_data(31-C_vgatext_bitmap_depth downto 0) <= bitmap_data(31 downto C_vgatext_bitmap_depth); -- shift current bitmap data right
+            bitmap_data(C_vgatext_bitmap_fifo_data_width-1-C_vgatext_bitmap_depth downto 0) <= bitmap_data(C_vgatext_bitmap_fifo_data_width-1 downto C_vgatext_bitmap_depth); -- shift current bitmap data right
             if NOT C_vgatext_bitmap_fifo then
               if hcount = -64 AND vcount = 0 then                      -- fetch first word early from SRAM
                 bitmap_strobe <= '1';
               end if;
             end if;
             if hcount >= -1 AND hcount < visible_width-1 then             -- one cycle before needed
-              if (C_vgatext_bitmap_depth = 1 AND hcount(4 downto 0) = "11111") OR -- load new bitmap data at last pixel of current bitmap data
-                 (C_vgatext_bitmap_depth = 2 AND hcount(3 downto 0) = "1111") OR
-                 (C_vgatext_bitmap_depth = 4 AND hcount(2 downto 0) = "111") OR
-                 (C_vgatext_bitmap_depth = 8 AND hcount(1 downto 0) = "11") then
+              if hcount(C_vgatext_bitmap_fifo_data_width_log2-C_vgatext_bitmap_depth_log2-1 downto 0) = C_vgatext_bitmap_strobe_point then
+              -- if hcount(5-3-1 downto 0) = "11" then
+                -- load new bitmap data at last pixel of current bitmap data
                 bitmap_strobe <= '1';
                 if C_vgatext_bitmap_fifo then
                   bitmap_data <= bitmap_data_i;
