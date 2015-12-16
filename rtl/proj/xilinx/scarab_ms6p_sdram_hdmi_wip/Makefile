@@ -77,6 +77,7 @@ vhdfiles = \
 ../../../soc/vgahdmi/font8x8_xark.vhd \
 ../../../soc/vgahdmi/font8x16_xark.vhd \
 ../../../soc/vgahdmi/VGA_textmode_bram.vhd \
+../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../soc/vgahdmi/TMDS_encoder.vhd \
 ../../../soc/vgahdmi/dvid_out.vhd \
 
