@@ -143,7 +143,8 @@ generic (
       C_vgatext_bitmap_fifo: boolean := false;  -- disable bitmap FIFO
         C_vgatext_bitmap_fifo_step: integer := 0; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
         C_vgatext_bitmap_fifo_postpone_step: integer := 0; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
-        C_vgatext_bitmap_fifo_width: integer := 8;	-- bitmap width of FIFO address space length = 2^width * 4 byte
+        C_vgatext_bitmap_fifo_addr_width: integer := 8;	-- bitmap width of FIFO address space length = 2^width * 4 byte
+        C_vgatext_bitmap_fifo_data_width: integer := 32; -- data width from the fifo
         C_vgatext_bitmap_fifo_compositing_length: integer := 0;	-- compositing length (0 disabled)
         -- compositing for typical values 9 or 17 use with step 640/4 and width 9)
         -- compositing length 9: 1 word for offset, 8 words for bitmap (thin h-sprites 32x1 of 8bpp pixels)
@@ -312,7 +313,7 @@ architecture Behavioral of glue_sdram is
 
     -- VGA_textmode SRAM/FIFO bitmap access
     signal vga_textmode_bitmap_addr: std_logic_vector(29 downto 2); -- FIFO start or SRAM address
-    signal vga_textmode_bitmap_data: std_logic_vector(31 downto 0); -- data from FIFO or SRAM
+    signal vga_textmode_bitmap_data: std_logic_vector(C_vgatext_bitmap_fifo_data_width-1 downto 0); -- data from FIFO or SRAM
     signal vga_textmode_bitmap_strobe: std_logic;				  -- FIFO fetch next word
     signal vga_textmode_bitmap_rewind: std_logic;         -- rewind FIFO
     signal vga_textmode_bitmap_ready: std_logic;					-- SRAM data ready
@@ -896,7 +897,7 @@ begin
       -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
       -- data_in(31 downto 8) => (others => '0'),
       base_addr => R_fb_base_addr,
-      start => S_vga_vsync,
+      active => not S_vga_vsync,
       frame => vga_frame,
       data_out => vga_data_from_fifo(C_vgahdmi_fifo_data_width-1 downto 0),
       fetch_next => vga_fetch_next
@@ -962,6 +963,7 @@ begin
     C_vgatext_cursor_blink => C_vgatext_cursor_blink,
     C_vgatext_bitmap => C_vgatext_bitmap,
     C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
+    C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
     C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo
 	)
 	port map (
@@ -1028,13 +1030,13 @@ begin
 	-- video FIFO for bitmap
 	G_vgatext_bitmap_fifo:
 	if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
-    bitmap_videofifo: entity work.videofifo
+    bitmap_videofifo: entity work.compositing_fifo
     generic map (
       C_step => C_vgatext_bitmap_fifo_step,
       C_postpone_step => C_vgatext_bitmap_fifo_postpone_step,
       C_compositing_length => C_vgatext_bitmap_fifo_compositing_length,
-      -- C_data_log2_width => 5, -- 32 bit output data
-      C_width => C_vgatext_bitmap_fifo_width -- length = 4 * 2^width
+      C_data_width => C_vgatext_bitmap_fifo_data_width,
+      C_addr_width => C_vgatext_bitmap_fifo_addr_width
     )
     port map (
       clk => clk,
@@ -1045,7 +1047,7 @@ begin
       data_in => from_sdram, -- from SDRAM or BRAM
       -- data_in => x"00000001", -- test pattern vertical lines
       base_addr => vga_textmode_bitmap_addr,
-      start => vga_textmode_bitmap_active,
+      active => vga_textmode_bitmap_active,
       frame => vga_textmode_bitmap_frame,
       data_out => vga_textmode_bitmap_data,
       fetch_next => vga_textmode_bitmap_strobe
