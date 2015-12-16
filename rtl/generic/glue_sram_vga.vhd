@@ -949,7 +949,7 @@ begin
       -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
       -- data_in(31 downto 8) => (others => '0'),
       base_addr => R_fb_base_addr,
-      start => S_vga_vsync,
+      active => S_vga_vsync,
       frame => vga_frame,
       data_out => vga_data_from_fifo(C_vgahdmi_fifo_data_width-1 downto 0),
       fetch_next => vga_fetch_next
