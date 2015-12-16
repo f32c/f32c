@@ -155,10 +155,12 @@ entity compositing_fifo is
 	data_out: out std_logic_vector(C_data_width-1 downto 0);
 	start: in std_logic; -- rising edge sensitive will reset fifo RAM to base address, value 1 allows start of reading
 	frame: out std_logic; -- output CPU clock synchronous start edge detection (1 CPU-clock wide pulse for FB interrupt)
-	rewind: in std_logic := '0'; -- rising edge sets output data pointer to the start of last full step
 	-- rewind is useful to re-read text line, saving RAM bandwidth.
 	-- rewind is possible at any time but is be normally issued
 	-- during H-blank period - connected to hsync signal.
+	rewind: in std_logic := '0'; -- rising edge sets output data pointer to the start of last full step
+        -- transparent and background color (default 0, black)
+        color_transparent, color_background: in std_logic_vector(C_data_width-1 downto 0) := (others => '0');
 	fetch_next: in std_logic -- edge sensitive fetch next value (current data consumed)
     );
 end compositing_fifo;
@@ -455,9 +457,9 @@ begin
       -- MSB=1 allows shifting to stop when complete
       -- this provides signal to bram to store data
       -- fixme: here transparency doesn't work?
-      S_bram_write <= '1' when to_integer(unsigned(S_bram_data_in)) /= 0 and
-                   R_shifting_counter(C_shift_addr_width) = '0'
-                   else '0';
+      S_bram_write <= '1' when S_bram_data_in /= color_transparent
+                           and R_shifting_counter(C_shift_addr_width) = '0'
+                 else '0';
       S_bram_data_in <= R_data_in_shift(C_bits_out-1 downto 0);
     end generate;
 
@@ -486,7 +488,7 @@ begin
         addr_a => R_bram_in_addr,
         addr_b => S_pixbuf_out_mem_addr,
         data_in_a => S_bram_data_in,
-        data_in_b => (others => '0'), -- erase value for compositing
+        data_in_b => color_background, -- erase value for compositing
         data_out_a => open,
         data_out_b => data_out
     );
