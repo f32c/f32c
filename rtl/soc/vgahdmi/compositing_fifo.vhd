@@ -128,7 +128,7 @@ entity compositing_fifo is
         -- word count includes offset word and following bitmap data
         -- this option should be used together with C_width of sufficient
         -- size for 2 scan lines and C_postpone_step for 1 scan line
-        -- 0 to disable, 17 is standard value for compositing
+        -- 0 to disable, 17 is standard value for compositing 1 word offsets + 16 words bitmaps
         C_compositing_length: integer := 0;
         -- select bit width for data output
         -- should be equal to bits per pixel for compositing
@@ -139,10 +139,12 @@ entity compositing_fifo is
         -- narrow bus buffer
         -- compositing: 8
         C_data_width: integer range 8 to 32 := 32;
-        -- defines the bus length of the FIFO for pixel buffering
-        -- for 8bpp no compositing, default value of 6: 64 pixels
-        -- compositing: 9
-        C_addr_width: integer := 4 -- bits width of fifo address
+        -- defines the address bus length of the FIFO for pixel buffering
+        -- thus it defines size of the BRAM for buffering and compositing
+        -- for 32bpp no compositing, default value is 6: 64 32-bit words
+        -- for compositing buffer size must be more than 2 horizontal scan lines
+        -- compositing: 11 (2^11 = 2048 bytes for 640x480 8bpp)
+        C_addr_width: integer := 6 -- bits width of fifo address
     );
     port (
 	clk, clk_pixel: in std_logic;
@@ -167,23 +169,21 @@ end compositing_fifo;
 
 architecture behavioral of compositing_fifo is
     -- Constants
-    -- constant C_bits_out: integer := 2**C_data_log2_width; -- how many bits we have in output
-    constant C_bits_out: integer := C_data_width; -- just renaming
-    constant C_data_log2_width: integer := integer(ceil((log2(real(C_bits_out)+1.0E-6))-1.0E-6));
+    constant C_data_log2_width: integer := integer(ceil((log2(real(C_data_width)+1.0E-6))-1.0E-6));
     constant C_shift_addr_width: integer := 5-C_data_log2_width;
-    constant C_shift_cycles: integer := 32/C_bits_out; -- how many cpu cycles to shift from 32bit to reduced size bram
+    constant C_shift_cycles: integer := 32/C_data_width; -- how many cpu cycles to shift from 32bit to reduced size bram
     -- constant C_addr_width: integer := C_width; -- more descriptive name in the code, keep generic compatible for now
     constant C_length: integer := 2**C_addr_width; -- 1 sll C_addr_width - shift logical left
     constant C_addr_pad: std_logic_vector(C_shift_addr_width-1 downto 0) := (others => '0'); -- warning fixme degenerate range (-1 downto 0) for 32bit
-    constant C_data_pad: std_logic_vector(C_bits_out-1 downto 0) := (others => '-'); -- when shifting
+    constant C_data_pad: std_logic_vector(C_data_width-1 downto 0) := (others => '-'); -- when shifting
 
     -- Internal state
     signal R_sram_addr: std_logic_vector(29 downto 2);
-    signal R_pixbuf_wr_addr, S_pixbuf_wr_addr_next: std_logic_vector(C_addr_width+C_shift_addr_width-1 downto C_shift_addr_width);
-    signal R_pixbuf_rd_addr, R_pixbuf_out_addr: std_logic_vector(C_addr_width+C_shift_addr_width-1 downto 0);
-    signal S_pixbuf_out_mem_addr: std_logic_vector(C_addr_width+C_shift_addr_width-1 downto 0);
-    signal S_pixbuf_in_mem_addr: std_logic_vector(C_addr_width+C_shift_addr_width-1 downto 0);
-    signal R_bram_in_addr: std_logic_vector(C_addr_width+C_shift_addr_width-1 downto 0);
+    signal R_pixbuf_wr_addr, S_pixbuf_wr_addr_next: std_logic_vector(C_addr_width-1 downto C_shift_addr_width);
+    signal R_pixbuf_rd_addr, R_pixbuf_out_addr: std_logic_vector(C_addr_width-1 downto 0);
+    signal S_pixbuf_out_mem_addr: std_logic_vector(C_addr_width-1 downto 0);
+    signal S_pixbuf_in_mem_addr: std_logic_vector(C_addr_width-1 downto 0);
+    signal R_bram_in_addr: std_logic_vector(C_addr_width-1 downto 0);
     signal R_delay_fetch: integer range 0 to 2*C_step;
     signal S_bram_write, S_data_write: std_logic;
     signal S_need_refill: std_logic;
@@ -191,12 +191,12 @@ architecture behavioral of compositing_fifo is
     signal S_data_opaque: std_logic;
     signal S_fetch_compositing_offset: std_logic := '0';
     signal S_compositing_erase: std_logic := '0';
-    signal R_compositing_active_offset: std_logic_vector(C_addr_width+C_shift_addr_width-1 downto 0) := (others => '0');
-    signal R_compositing_second_offset: std_logic_vector(C_addr_width+C_shift_addr_width-1 downto 0) := (others => '0');
+    signal R_compositing_active_offset: std_logic_vector(C_addr_width-1 downto 0) := (others => '0');
+    signal R_compositing_second_offset: std_logic_vector(C_addr_width-1 downto 0) := (others => '0');
     signal R_compositing_countdown: integer range 0 to C_compositing_length := 0;
     signal R_shifting_counter: std_logic_vector(C_shift_addr_width downto 0) := (others => '0'); -- counts shift cycles and adds address
     signal R_data_in_shift: std_logic_vector(31 downto 0); -- data in shift buffer to bram
-    signal S_bram_data_in: std_logic_vector(C_bits_out-1 downto 0);
+    signal S_bram_data_in: std_logic_vector(C_data_width-1 downto 0);
     -- signal need_refill: boolean;
     signal toggle_read_complete: std_logic;
     signal clksync, startsync, rewindsync: std_logic_vector(C_synclen-1 downto 0);
@@ -278,9 +278,9 @@ begin
                   -- (reserved for future enhancement of h-resolution)
 
                   -- offest for first sprite (active offset):
-                  R_compositing_active_offset <= data_in(C_addr_width+C_shift_addr_width-1 downto 0);
+                  R_compositing_active_offset <= data_in(C_addr_width-1 downto 0);
                   -- offset for second sprite (later it will be copied to active offset):
-                  R_compositing_second_offset <= data_in(C_addr_width+C_shift_addr_width+15 downto 16);
+                  R_compositing_second_offset <= data_in(C_addr_width+15 downto 16);
                 else
                   R_compositing_countdown <= R_compositing_countdown - 1; -- bitmap fetching countdown
                   R_pixbuf_wr_addr <= S_pixbuf_wr_addr_next; -- next sequential address to store bitmap
@@ -302,7 +302,7 @@ begin
 
     junk_code: if false generate
     S_need_refill <= '1' when clean_start = '0'
-                          and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr(C_addr_width+C_shift_addr_width-1 downto C_shift_addr_width)
+                          and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr(C_addr_width-1 downto C_shift_addr_width)
                 else '0';
     end generate;
 
@@ -310,7 +310,7 @@ begin
     process(clk) begin
       if rising_edge(clk) then
         if clean_start = '0'
-          and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr(C_addr_width+C_shift_addr_width-1 downto C_shift_addr_width)
+          and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr(C_addr_width-1 downto C_shift_addr_width)
           then
             R_need_refill_cpu <= '1';
         else
@@ -404,23 +404,23 @@ begin
 
     -- data_in is always 32-bits
     -- buffer can have less than 32 bits
-    buffer_direct: if C_bits_out = 32 generate
+    buffer_direct: if C_data_width = 32 generate
       S_bram_data_in <= data_in;
       S_bram_write <= S_data_write;
       R_bram_in_addr <= S_pixbuf_in_mem_addr; -- not a register but pass-thru signal
     end generate;
 
     -- for debugging, instead of shifting just delay with registers
-    buffer_direct_debug: if C_bits_out < 32 and false generate
+    buffer_direct_debug: if C_data_width < 32 and false generate
       process(clk)
         begin
-          S_bram_data_in <= data_in(C_bits_out-1 downto 0);
+          S_bram_data_in <= data_in(C_data_width-1 downto 0);
           S_bram_write <= S_data_write;
           R_bram_in_addr <= S_pixbuf_in_mem_addr; -- not a register but pass-thru signal
         end process;
     end generate;
 
-    buffer_shifting: if C_bits_out < 32 and true generate
+    buffer_shifting: if C_data_width < 32 and true generate
       -- buffer_shifting: if false generate
       -- for less than 32 bits e.g. 8:
       -- it will start 4-cycle writing from 32-bit 
@@ -446,7 +446,7 @@ begin
           else
             if R_shifting_counter(C_shift_addr_width) = '0' then
               -- shift the data and increment address
-              R_data_in_shift <= C_data_pad & R_data_in_shift(31 downto C_bits_out); -- shift next data
+              R_data_in_shift <= C_data_pad & R_data_in_shift(31 downto C_data_width); -- shift next data
               R_shifting_counter <= R_shifting_counter + 1; -- increment counter, when msb is 1 shifting stops
               R_bram_in_addr <= R_bram_in_addr + 1; -- next data to next address
             end if;
@@ -460,7 +460,7 @@ begin
       S_bram_write <= '1' when S_bram_data_in /= color_transparent
                            and R_shifting_counter(C_shift_addr_width) = '0'
                  else '0';
-      S_bram_data_in <= R_data_in_shift(C_bits_out-1 downto 0);
+      S_bram_data_in <= R_data_in_shift(C_data_width-1 downto 0);
     end generate;
 
     -- reading from line memory
@@ -477,8 +477,8 @@ begin
         dual_port => True, -- one port takes data from RAM, other port outputs to video
         pass_thru_a => False, -- allow simultaneous reading and erasing of old data
         pass_thru_b => False, -- allow simultaneous reading and erasing of old data
-        data_width => C_bits_out,
-        addr_width => C_addr_width+C_shift_addr_width
+        data_width => C_data_width,
+        addr_width => C_addr_width
     )
     port map (
         clk_a => clk,
