@@ -68,7 +68,6 @@ entity VGA_textmode is
 
     bram_addr_o:        out std_logic_vector(15 downto 2);  -- font (or text+color) BRAM address
     bram_data_i:        in std_logic_vector(31 downto 0);   -- font (or text+color) BRAM data
-    bram_font_o:        out std_logic;                      -- indicates font BRAM access (for C_vgatext_font_bram8)
     text_active_o:      out std_logic;                      -- true when not on visible scan-line
 
     textfifo_addr_o:    out std_logic_vector(29 downto 2);  -- text+color buffer FIFO start address
@@ -606,11 +605,6 @@ begin
           bitmap_strobe <= '0';
         end if;
 
-        -- assume non font access (if C_vgatext_font_bram8)
-        if C_vgatext_font_bram8 then
-          bram_font_o <= '0';
-        end if;
-
         -- handle BRAM register based reads
         if C_vgatext_reg_read then
           if bram_read_wait = '1' then
@@ -662,8 +656,7 @@ begin
                 end if;
                 -- put font data address on BRAM bus (using variables so same cycle as is read)
                 if C_vgatext_font_bram8 then
-                  bram_addr_o(15 downto 10) <= (others => '0');
-                  bram_font_o <= '1';
+                  bram_addr_o(15 downto 10) <= "100000";  -- bit 15 indicates 8-bit font BRAM (if C_vgatext_font_bram8)
                 else
                   bram_addr_o(15 downto 10) <= font_start_addr;
                 end if;
