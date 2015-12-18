@@ -744,7 +744,7 @@ begin
                 bitmap_strobe <= '1';
               end if;
             end if;
-            if hcount >= -1 AND hcount < visible_width-1 then             -- one cycle before needed
+            if hcount >= -3 AND hcount < visible_width-3 then             -- one cycle before needed
               if hcount(C_vgatext_bitmap_fifo_data_width_log2-C_vgatext_bitmap_depth_log2-1 downto 0) = C_vgatext_bitmap_strobe_point then
               -- if hcount(5-3-1 downto 0) = "11" then
                 -- load new bitmap data at last pixel of current bitmap data
