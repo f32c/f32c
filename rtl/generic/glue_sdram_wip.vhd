@@ -271,7 +271,7 @@ architecture Behavioral of glue_sdram is
     signal R_fb_intr: std_logic;
 
     -- VGA/HDMI video
-    constant iomap_vga: T_iomap_range := (x"FB80", x"FB8F"); -- VGA/HDMI should be (x"FB90", x"FB9F")
+    constant iomap_vga: T_iomap_range := (x"FB90", x"FB9F");
     signal vga_ce: std_logic; -- '1' when address is in iomap_vga range
     signal vga_fetch_next: std_logic; -- video module requests next data from fifo
     signal vga_addr: std_logic_vector(29 downto 2);
