@@ -311,6 +311,7 @@ begin
     process(clk) begin
       if rising_edge(clk) then
         if clean_start = '0'
+          and active = '1'
           and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr(C_addr_width-1 downto C_shift_addr_width)
           then
             R_need_refill_cpu <= '1';
