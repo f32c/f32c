@@ -189,7 +189,7 @@ begin
         C_vgatext_bus_read => C_vgatext_bus_read,
         C_vgatext_reg_read => C_vgatext_reg_read,
         C_vgatext_text => C_vgatext_text,
-				C_vgatext_font_bram8 => C_vgatext_font_bram8,
+        C_vgatext_font_bram8 => C_vgatext_font_bram8,
         C_vgatext_text_fifo => C_vgatext_text_fifo,
         C_vgatext_text_fifo_step => C_vgatext_text_fifo_step,
         C_vgatext_text_fifo_width => C_vgatext_text_fifo_width,
