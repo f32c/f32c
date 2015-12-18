@@ -78,7 +78,7 @@ entity glue is
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480                   
       C_vgatext_bits: integer := 4;   -- 64 possible colors
-      C_vgatext_bram_mem: integer := 4;   -- 4KB text+font  memory
+      C_vgatext_bram_mem: integer := 0;   -- 4KB text+font  memory
       C_vgatext_external_mem: integer := 32768; -- 32MB external SRAM/SDRAM
       C_vgatext_reset: boolean := true; -- reset registers to default with async reset
       C_vgatext_palette: boolean := true; -- no color palette

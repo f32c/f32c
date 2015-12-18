@@ -980,7 +980,7 @@ begin
     clk_pixel_i => clk_25MHz,
     --
     bram_addr_o => vga_textmode_bram_addr,
-    bram_data_i => vga_textmode_bram_data,
+    bram_data_i => vga_textmode_bram_data_in,
     text_active_o => vga_textmode_text_active,
     --
     textfifo_addr_o => vga_textmode_text_addr,
@@ -1081,11 +1081,11 @@ begin
 	);
 
 	-- 8KB VGA textmode BRAM (for text+attribute bytes and font)
-  G_vga_textmode_bram: if C_vgatext_text generate
+  G_vga_textmode_bram: if C_vgatext_text and C_vgatext_bram_mem > 0 generate
 	G_vgatext_bram: entity work.vga_textmode_bram
 	generic map (
-		C_mem_size		=> C_vgatext_bram_mem,
-		C_label			  => C_vgatext_label,
+		C_mem_size	=> C_vgatext_bram_mem,
+		C_label		=> C_vgatext_label,
 		C_monochrome	=> C_vgatext_monochrome,
 		C_font_height	=> C_vgatext_font_height,
 		C_font_depth	=> C_vgatext_font_depth
@@ -1126,8 +1126,13 @@ begin
     end if; -- end rising edge
   end process;
 
-  vga_textmode_bram_data_in <= vga_textmode_bram_data when (NOT C_vgatext_font_bram8 OR vga_textmode_bram_addr(15) = '0') else
-    vga_textmode_bram_data(31 downto 8) & vga_textmode_bram8_data;
+  pass_bram8_data: if C_vgatext_font_bram8 generate
+    vga_textmode_bram_data_in <= vga_textmode_bram_data(31 downto 8) & vga_textmode_bram8_data;
+  end generate;
+  
+  pass_bram32_data: if not C_vgatext_font_bram8 generate
+    vga_textmode_bram_data_in <= vga_textmode_bram_data;
+  end generate;
 
   vga_textmode_dmem_write <= dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "01" AND (NOT C_vgatext_font_bram8 OR dmem_addr(15) = '0') else '0';
 
