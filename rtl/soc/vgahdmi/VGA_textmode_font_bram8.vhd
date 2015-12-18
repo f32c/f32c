@@ -74,7 +74,7 @@ architecture x of VGA_textmode_font_bram8 is
     variable y: bram_type;
     variable i: integer;
   begin
-		for i in 0 to C_mem_size-1 loop
+    for i in 0 to C_mem_size-1 loop
       if C_font_height = 8 then
         y(i) := font8(i);
       else
