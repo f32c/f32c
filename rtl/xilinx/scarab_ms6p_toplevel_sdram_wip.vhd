@@ -80,12 +80,13 @@ entity glue is
       C_vgatext_bits: integer := 4;   -- 64 possible colors
       C_vgatext_bram_mem: integer := 4;   -- 4KB text+font  memory
       C_vgatext_external_mem: integer := 32768; -- 32MB external SRAM/SDRAM
-      C_vgatext_reset: boolean := true;   -- reset registers to default with async reset
-      C_vgatext_palette: boolean := true;  -- no color palette
-      C_vgatext_text: boolean := true;    -- enable optional text generation
-        C_vgatext_char_height: integer := 16;   -- character cell height
-        C_vgatext_font_height: integer := 16;    -- font height
-        C_vgatext_font_depth: integer := 8;			-- font char depth, 7=128 characters or 8=256 characters
+      C_vgatext_reset: boolean := true; -- reset registers to default with async reset
+      C_vgatext_palette: boolean := true; -- no color palette
+      C_vgatext_text: boolean := true; -- enable optional text generation
+        C_vgatext_font_bram8: boolean := true; -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
+        C_vgatext_char_height: integer := 16; -- character cell height
+        C_vgatext_font_height: integer := 16; -- font height
+        C_vgatext_font_depth: integer := 8; -- font char depth, 7=128 characters or 8=256 characters
         C_vgatext_font_linedouble: boolean := false;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)        
         C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)       
         C_vgatext_monochrome: boolean := false;    -- true for 2-color text for whole screen, else additional color attribute byte per character             
@@ -260,6 +261,7 @@ begin
       C_vgatext_reset => C_vgatext_reset,
       C_vgatext_palette => C_vgatext_palette,
       C_vgatext_text => C_vgatext_text,
+      C_vgatext_font_bram8 => C_vgatext_font_bram8,
       C_vgatext_bus_read => C_vgatext_bus_read,
       C_vgatext_reg_read => C_vgatext_reg_read,
       C_vgatext_text_fifo => C_vgatext_text_fifo,
