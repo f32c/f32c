@@ -35,6 +35,11 @@ use IEEE.MATH_REAL.ALL;
 
 use work.f32c_pack.all;
 use work.sram_pack.all;
+use work.boot_block_pack.all;
+use work.boot_sio_mi32el.all;
+use work.boot_sio_mi32eb.all;
+use work.boot_sio_rv32el.all;
+-- use work.boot_sio_rv32eb.all;
 
 
 entity glue_sram is
@@ -204,6 +209,7 @@ architecture Behavioral of glue_sram is
     -- Block RAM
     signal bram_i_to_cpu, bram_d_to_cpu: std_logic_vector(31 downto 0);
     signal bram_i_ready, bram_d_ready, dmem_bram_enable: std_logic;
+    signal dmem_bram_write: std_logic;
 
     -- I/O
     signal io_write: std_logic;
@@ -222,6 +228,18 @@ architecture Behavioral of glue_sram is
 
     -- CPU reset control
     signal R_cpu_reset: std_logic_vector(15 downto 0) := x"fffe";
+
+    type T_endian_select is array(boolean) of integer;
+    constant select_big_endian: T_endian_select := (false => 0, true => 2);
+    type T_boot_block_select is array(0 to 3) of boot_block_type;
+    constant boot_block_select: T_boot_block_select :=
+      (  --  (arch, big endian)
+        (ARCH_MI32+select_big_endian(false)) => boot_sio_mi32el,
+        (ARCH_MI32+select_big_endian(true))  => boot_sio_mi32eb,
+        (ARCH_RV32+select_big_endian(false)) => boot_sio_rv32el,
+        (ARCH_RV32+select_big_endian(true))  => (others => (others => '0')) -- RISC-V currently has no big endian support
+      );
+    constant boot_block: boot_block_type := boot_block_select(C_arch + select_big_endian(C_big_endian));
 
     -- io base
     type T_iomap_range is array(0 to 1) of std_logic_vector(15 downto 0);
@@ -690,41 +708,22 @@ begin
     --
     -- Block RAM (only CPU #0)
     --
-    G_i_d_ram:
-    if not C_i_rom_only generate
-    begin
-    dmem_bram_enable <= dmem_addr_strobe(0) when dmem_addr(0)(31 downto 28) = x"0"
-      else '0';
+    -- dmem_addr_strobe(0) and dmem_write(0) when dmem_addr(0)(31 downto 30) = "00" else '0';
+    dmem_bram_enable <= dmem_addr_strobe(0) when dmem_addr(0)(31 downto 30) = "00" else '0';
+    dmem_bram_write <= dmem_write(0) and dmem_bram_enable;
     bram: entity work.bram
     generic map (
-	C_mem_size => C_bram_size
+      boot_block => boot_block,
+      C_mem_size => C_bram_size
     )
     port map (
-	clk => clk, imem_addr_strobe => imem_addr_strobe(0),
-	imem_addr => imem_addr(0), imem_data_out => bram_i_to_cpu,
-	imem_data_ready => bram_i_ready, dmem_data_ready => bram_d_ready,
-	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write(0),
-	dmem_byte_sel => dmem_byte_sel(0), dmem_addr => dmem_addr(0),
-	dmem_data_out => bram_d_to_cpu, dmem_data_in => cpu_to_dmem(0)
+      clk => clk, imem_addr => imem_addr(0), imem_data_out => bram_i_to_cpu,
+      dmem_write => dmem_bram_write,
+      dmem_byte_sel => dmem_byte_sel(0), dmem_addr => dmem_addr(0),
+      dmem_data_out => bram_d_to_cpu, dmem_data_in => cpu_to_dmem(0)
     );
-    end generate;
-
-    G_i_rom:
-    if C_i_rom_only generate
-    begin
-    bram: entity work.bram
-    generic map (
-	C_mem_size => C_bram_size
-    )
-    port map (
-	clk => clk, imem_addr_strobe => imem_addr_strobe(0),
-	imem_addr => imem_addr(0), imem_data_out => bram_i_to_cpu,
-	imem_data_ready => bram_i_ready, dmem_data_ready => open,
-	dmem_addr_strobe => '0', dmem_write => '0',
-	dmem_byte_sel => x"0", dmem_addr => (others => '0'),
-	dmem_data_out => open, dmem_data_in => (others => '0')
-    );
-    end generate;
+    bram_i_ready <= not dmem_bram_enable;
+    bram_d_ready <= '1';
 
 
     --
