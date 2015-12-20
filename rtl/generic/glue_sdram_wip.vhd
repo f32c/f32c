@@ -940,211 +940,216 @@ begin
             end if;
         end if; -- end rising edge
     end process;
-    end generate; -- end vgahdmi
+    end generate; -- G_vgahdmi
 
-	-- VGA textmode
-	G_vgatext:
-	if C_vgatext generate
-	vga_video: entity work.VGA_textmode
-	generic map (
-    C_vgatext_mode => C_vgatext_mode,
-    C_vgatext_bits => C_vgatext_bits,
-    C_vgatext_bram_mem => C_vgatext_bram_mem,
-    C_vgatext_external_mem => C_vgatext_external_mem,
-    C_vgatext_reset => C_vgatext_reset,
-    C_vgatext_palette => C_vgatext_palette,
-    C_vgatext_text => C_vgatext_text,
-    C_vgatext_font_bram8 => C_vgatext_font_bram8,
-    C_vgatext_reg_read => C_vgatext_reg_read,
-    C_vgatext_text_fifo => C_vgatext_text_fifo,
-    C_vgatext_char_height => C_vgatext_char_height,
-    C_vgatext_font_height => C_vgatext_font_height,
-    C_vgatext_font_depth => C_vgatext_font_depth,
-    C_vgatext_font_linedouble => C_vgatext_font_linedouble,
-    C_vgatext_font_widthdouble => C_vgatext_font_widthdouble,
-    C_vgatext_monochrome => C_vgatext_monochrome,
-    C_vgatext_finescroll => C_vgatext_finescroll,
-    C_vgatext_cursor => C_vgatext_cursor,
-    C_vgatext_cursor_blink => C_vgatext_cursor_blink,
-    C_vgatext_bitmap => C_vgatext_bitmap,
-    C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
-    C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
-    C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo
-	)
-	port map (
-    reset_i => sio_break_internal(0),
-    clk_i => clk, ce_i => vga_textmode_ce, bus_addr_i => dmem_addr(4 downto 2),
-    bus_write_i => dmem_write, byte_sel_i => dmem_byte_sel,
-    bus_data_i => cpu_to_dmem, bus_data_o => from_vga_textmode,
-    --
-    clk_pixel_i => clk_25MHz,
-    --
-    bram_addr_o => vga_textmode_bram_addr,
-    bram_data_i => vga_textmode_bram_data_in,
-    text_active_o => vga_textmode_text_active,
-    --
-    textfifo_addr_o => vga_textmode_text_addr,
-    textfifo_data_i => vga_textmode_text_data,
-    textfifo_strobe_o => vga_textmode_text_strobe,
-    textfifo_rewind_o =>vga_textmode_text_rewind,
-    --
-    bitmap_strobe_o => vga_textmode_bitmap_strobe,
-    bitmap_addr_o => vga_textmode_bitmap_addr,
-    bitmap_ready_i => vga_textmode_bitmap_ready,
-    bitmap_data_i => vga_textmode_bitmap_data,
-    bitmap_rewind_o => vga_textmode_bitmap_rewind,
-    bitmap_active_o => vga_textmode_bitmap_active,
-    --
-    red_o => vga_textmode_red,
-    green_o => vga_textmode_green,
-    blue_o => vga_textmode_blue,
-    hsync_o => vga_textmode_hsync,
-    vsync_o => vga_textmode_vsync,
-    blank_o => vga_textmode_blank
-	);
+    -- VGA textmode
+    G_vgatext:
+    if C_vgatext generate
+      vga_video: entity work.VGA_textmode
+      generic map (
+        C_vgatext_mode => C_vgatext_mode,
+        C_vgatext_bits => C_vgatext_bits,
+        C_vgatext_bram_mem => C_vgatext_bram_mem,
+        C_vgatext_external_mem => C_vgatext_external_mem,
+        C_vgatext_reset => C_vgatext_reset,
+        C_vgatext_palette => C_vgatext_palette,
+        C_vgatext_text => C_vgatext_text,
+        C_vgatext_font_bram8 => C_vgatext_font_bram8,
+        C_vgatext_reg_read => C_vgatext_reg_read,
+        C_vgatext_text_fifo => C_vgatext_text_fifo,
+        C_vgatext_char_height => C_vgatext_char_height,
+        C_vgatext_font_height => C_vgatext_font_height,
+        C_vgatext_font_depth => C_vgatext_font_depth,
+        C_vgatext_font_linedouble => C_vgatext_font_linedouble,
+        C_vgatext_font_widthdouble => C_vgatext_font_widthdouble,
+        C_vgatext_monochrome => C_vgatext_monochrome,
+        C_vgatext_finescroll => C_vgatext_finescroll,
+        C_vgatext_cursor => C_vgatext_cursor,
+        C_vgatext_cursor_blink => C_vgatext_cursor_blink,
+        C_vgatext_bitmap => C_vgatext_bitmap,
+        C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
+        C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
+        C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo
+      )
+      port map (
+        reset_i => sio_break_internal(0),
+        clk_i => clk, ce_i => vga_textmode_ce, bus_addr_i => dmem_addr(4 downto 2),
+        bus_write_i => dmem_write, byte_sel_i => dmem_byte_sel,
+        bus_data_i => cpu_to_dmem, bus_data_o => from_vga_textmode,
 
-    vga_vsync <= vga_textmode_vsync;
-    vga_hsync <= vga_textmode_hsync;
+        clk_pixel_i => clk_25MHz,
 
-	-- video FIFO for text+color
-	G_vgatext_fifo:
-	if C_vgatext_text AND C_vgatext_text_fifo generate
-    videofifo: entity work.videofifo
-    generic map (
-      C_postpone_step => C_vgatext_text_fifo_postpone_step,
-      C_step => C_vgatext_text_fifo_step,
-      C_width => C_vgatext_text_fifo_width -- length = 4 * 2^width
-    )
-    port map (
-      clk => clk,
-      clk_pixel => clk_25MHz,
-      addr_strobe => vga_textmode_text_sdram_strobe,
-      addr_out => vga_textmode_text_sdram_addr,
-      data_ready => vga_textmode_text_sdram_ready, -- data valid for read acknowledge from RAM
-      data_in => from_sdram, -- from SDRAM or BRAM
-      -- data_in => x"00000001", -- test pattern vertical lines
-      base_addr => vga_textmode_text_addr,
-      start => vga_textmode_text_active,
-      frame => vga_textmode_text_frame,
-      data_out => vga_textmode_text_data,
-      fetch_next => vga_textmode_text_strobe,
-      rewind => vga_textmode_text_rewind
-    );
-	end generate;
+        bram_addr_o => vga_textmode_bram_addr,
+        bram_data_i => vga_textmode_bram_data_in,
+        text_active_o => vga_textmode_text_active,
 
-	-- video FIFO for bitmap
-	G_vgatext_bitmap_fifo:
-	if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
-    bitmap_videofifo: entity work.compositing_fifo
-    generic map (
-      C_step => C_vgatext_bitmap_fifo_step,
-      C_postpone_step => C_vgatext_bitmap_fifo_postpone_step,
-      C_compositing_length => C_vgatext_bitmap_fifo_compositing_length,
-      C_data_width => C_vgatext_bitmap_fifo_data_width,
-      C_addr_width => C_vgatext_bitmap_fifo_addr_width
-    )
-    port map (
-      clk => clk,
-      clk_pixel => clk_25MHz,
-      addr_strobe => vga_addr_strobe,
-      addr_out => vga_addr,
-      data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
-      data_in => from_sdram, -- from SDRAM or BRAM
-      -- data_in => x"00000001", -- test pattern vertical lines
-      base_addr => vga_textmode_bitmap_addr,
-      active => vga_textmode_bitmap_active,
-      frame => vga_textmode_bitmap_frame,
-      data_out => vga_textmode_bitmap_data,
-      fetch_next => vga_textmode_bitmap_strobe
-    );
-	end generate;
+        textfifo_addr_o => vga_textmode_text_addr,
+        textfifo_data_i => vga_textmode_text_data,
+        textfifo_strobe_o => vga_textmode_text_strobe,
+        textfifo_rewind_o =>vga_textmode_text_rewind,
 
-	-- DVI-D Encoder Block (Thanks Hamster ;-)
-	G_vgatext_dvid: entity work.dvid_out
-	generic map (
-		C_depth	=>	C_vgatext_bits
-	)
-	port map (
-		clk_pixel => clk_25MHz,
-		clk_tmds  => clk_250MHz,
+        bitmap_strobe_o => vga_textmode_bitmap_strobe,
+        bitmap_addr_o => vga_textmode_bitmap_addr,
+        bitmap_ready_i => vga_textmode_bitmap_ready,
+        bitmap_data_i => vga_textmode_bitmap_data,
+        bitmap_rewind_o => vga_textmode_bitmap_rewind,
+        bitmap_active_o => vga_textmode_bitmap_active,
 
-		red_p	=> vga_textmode_red(C_vgatext_bits-1 downto 0),
-		green_p	=> vga_textmode_green(C_vgatext_bits-1 downto 0),
-		blue_p	=> vga_textmode_blue(C_vgatext_bits-1 downto 0),
+        red_o => vga_textmode_red,
+        green_o => vga_textmode_green,
+        blue_o => vga_textmode_blue,
+        hsync_o => vga_textmode_hsync,
+        vsync_o => vga_textmode_vsync,
+        blank_o => vga_textmode_blank
+      );
 
-		blank	=> vga_textmode_blank,
-		hsync	=> vga_textmode_hsync,
-		vsync	=> vga_textmode_vsync,
+      vga_vsync <= vga_textmode_vsync;
+      vga_hsync <= vga_textmode_hsync;
 
-		-- outputs to TMDS drivers
-		tmds_out_rgb => tmds_out_rgb
-	);
+      -- video FIFO for text+color
+      G_vgatext_fifo:
+      if C_vgatext_text AND C_vgatext_text_fifo generate
+        videofifo: entity work.videofifo
+          generic map (
+            C_postpone_step => C_vgatext_text_fifo_postpone_step,
+            C_step => C_vgatext_text_fifo_step,
+            C_width => C_vgatext_text_fifo_width -- length = 4 * 2^width
+          )
+          port map (
+            clk => clk,
+            clk_pixel => clk_25MHz,
+            addr_strobe => vga_textmode_text_sdram_strobe,
+            addr_out => vga_textmode_text_sdram_addr,
+            data_ready => vga_textmode_text_sdram_ready, -- data valid for read acknowledge from RAM
+            data_in => from_sdram, -- from SDRAM or BRAM
+            -- data_in => x"00000001", -- test pattern vertical lines
+            base_addr => vga_textmode_text_addr,
+            start => vga_textmode_text_active,
+            frame => vga_textmode_text_frame,
+            data_out => vga_textmode_text_data,
+            fetch_next => vga_textmode_text_strobe,
+            rewind => vga_textmode_text_rewind
+          );
+      end generate; -- G_vgatext_fifo
 
-	-- 8KB VGA textmode BRAM (for text+attribute bytes and font)
-  G_vga_textmode_bram: if C_vgatext_text and C_vgatext_bram_mem > 0 generate
-	G_vgatext_bram: entity work.vga_textmode_bram
-	generic map (
-		C_mem_size	=> C_vgatext_bram_mem,
-		C_label		=> C_vgatext_label,
-		C_monochrome	=> C_vgatext_monochrome,
-		C_font_height	=> C_vgatext_font_height,
-		C_font_depth	=> C_vgatext_font_depth
-	)
-	port map (
-          clk => clk, imem_addr => vga_textmode_bram_addr, imem_data_out => vga_textmode_bram_data,
-          dmem_write => vga_textmode_dmem_write,
-          dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-          dmem_data_out => vga_textmode_dmem_to_cpu, dmem_data_in => cpu_to_dmem
-	);
-  end generate;
+      -- video FIFO for bitmap
+      G_vgatext_bitmap_fifo:
+      if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
+        bitmap_videofifo: entity work.compositing_fifo
+          generic map (
+            C_step => C_vgatext_bitmap_fifo_step,
+            C_postpone_step => C_vgatext_bitmap_fifo_postpone_step,
+            C_compositing_length => C_vgatext_bitmap_fifo_compositing_length,
+            C_data_width => C_vgatext_bitmap_fifo_data_width,
+            C_addr_width => C_vgatext_bitmap_fifo_addr_width
+          )
+          port map (
+            clk => clk,
+            clk_pixel => clk_25MHz,
+            addr_strobe => vga_addr_strobe,
+            addr_out => vga_addr,
+            data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
+            data_in => from_sdram, -- from SDRAM or BRAM
+            -- data_in => x"00000001", -- test pattern vertical lines
+            base_addr => vga_textmode_bitmap_addr,
+            active => vga_textmode_bitmap_active,
+            frame => vga_textmode_bitmap_frame,
+            data_out => vga_textmode_bitmap_data,
+            fetch_next => vga_textmode_bitmap_strobe
+          );
+      end generate; -- G_vgatext_bitmap_fifo
 
-  -- VGA textmode font BRAM (8-bit)
-  G_vga_textmode_bram8: if C_vgatext_font_bram8 generate
-  G_vgatext_bram8: entity work.VGA_textmode_font_bram8
-  generic map (
-    C_font_height => C_vgatext_font_height,
-    C_font_depth  => C_vgatext_font_depth
-  )
-  port map (
-    clk => clk, imem_addr => vga_textmode_bram_addr, imem_data_out => vga_textmode_bram8_data,
-    dmem_write => vga_textmode_dmem_write,
-    dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr(15 downto 2),
-    dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
-  );
-  end generate;
+      -- VGA textmode BRAM (for text+attribute bytes and font)
+      G_vga_textmode_bram: if C_vgatext_text and C_vgatext_bram_mem > 0 generate
+        G_vgatext_bram: entity work.vga_textmode_bram
+          generic map (
+            C_mem_size     => C_vgatext_bram_mem,
+            C_label        => C_vgatext_label,
+            C_monochrome   => C_vgatext_monochrome,
+            C_font_height  => C_vgatext_font_height,
+            C_font_depth   => C_vgatext_font_depth
+          )
+          port map (
+            clk => clk, imem_addr => vga_textmode_bram_addr, imem_data_out => vga_textmode_bram_data,
+            dmem_write => vga_textmode_dmem_write,
+            dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+            dmem_data_out => vga_textmode_dmem_to_cpu, dmem_data_in => cpu_to_dmem
+          );
+      end generate; -- G_vga_textmode_bram
 
-  vgatext_intr: process(clk)
-  begin
-    if rising_edge(clk) then
-      if vga_textmode_ce = '1' then -- interrupt handling: (CPU read or write will clear interrupt)
-        R_fb_intr <= '0';
-      else
-        if vga_textmode_text_frame = '1' OR vga_textmode_bitmap_frame = '1' then
-          R_fb_intr <= '1';
-        end if;
-      end if;
-    end if; -- end rising edge
-  end process;
+      -- VGA textmode font BRAM (8-bit)
+      G_vga_textmode_bram8: if C_vgatext_font_bram8 generate
+        G_vgatext_bram8: entity work.VGA_textmode_font_bram8
+          generic map (
+            C_font_height => C_vgatext_font_height,
+            C_font_depth  => C_vgatext_font_depth
+          )
+          port map (
+            clk => clk, imem_addr => vga_textmode_bram_addr, imem_data_out => vga_textmode_bram8_data,
+            dmem_write => vga_textmode_dmem_write,
+            dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr(15 downto 2),
+            dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
+          );
+      end generate; -- G_vga_textmode_bram8
 
-  pass_bram8_data: if C_vgatext_font_bram8 generate
-    vga_textmode_bram_data_in <= vga_textmode_bram_data(31 downto 8) & vga_textmode_bram8_data;
-  end generate;
+      -- DVI-D Encoder Block (Thanks Hamster ;-)
+      G_vgatext_dvid: entity work.dvid_out
+        generic map (
+          C_depth   => C_vgatext_bits
+        )
+        port map (
+          clk_pixel => clk_25MHz,
+          clk_tmds  => clk_250MHz,
+
+          red_p     => vga_textmode_red(C_vgatext_bits-1 downto 0),
+          green_p   => vga_textmode_green(C_vgatext_bits-1 downto 0),
+          blue_p    => vga_textmode_blue(C_vgatext_bits-1 downto 0),
+
+          blank     => vga_textmode_blank,
+          hsync     => vga_textmode_hsync,
+          vsync     => vga_textmode_vsync,
+
+          -- outputs to TMDS drivers
+          tmds_out_rgb => tmds_out_rgb
+        );
+
+      vgatext_intr:
+      process(clk) begin
+        if rising_edge(clk) then
+            if vga_textmode_ce = '1' then -- interrupt handling: (CPU read or write will clear interrupt)
+              R_fb_intr <= '0';
+            else
+              if vga_textmode_text_frame = '1' OR vga_textmode_bitmap_frame = '1' then
+                R_fb_intr <= '1';
+              end if;
+            end if;
+        end if; -- end rising edge
+      end process;
+
+      pass_bram8_data: if C_vgatext_font_bram8 generate
+        vga_textmode_bram_data_in <= vga_textmode_bram_data(31 downto 8) & vga_textmode_bram8_data;
+      end generate; -- pass_bram8_data
   
-  pass_bram32_data: if not C_vgatext_font_bram8 generate
-    vga_textmode_bram_data_in <= vga_textmode_bram_data;
-  end generate;
+      pass_bram32_data: if not C_vgatext_font_bram8 generate
+        vga_textmode_bram_data_in <= vga_textmode_bram_data;
+      end generate; -- pass_bram32_data
 
-  vga_textmode_dmem_write <= dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "01" AND (NOT C_vgatext_font_bram8 OR dmem_addr(15) = '0') else '0';
+      vga_textmode_dmem_write <= dmem_addr_strobe and dmem_write
+                            when dmem_addr(31 downto 30) = "01"
+                             AND (NOT C_vgatext_font_bram8 OR dmem_addr(15) = '0')
+                            else '0';
 
-  G_vgatext_bram8_wr: if C_vgatext_font_bram8 generate
-    vga_textmode_dmem8_write <= dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "01" AND dmem_addr(15) = '1' else '0';
-  end generate;
+      G_vgatext_bram8_wr: if C_vgatext_font_bram8 generate
+        vga_textmode_dmem8_write <= dmem_addr_strobe and dmem_write
+                               when dmem_addr(31 downto 30) = "01" AND dmem_addr(15) = '1'
+                               else '0';
+      end generate; -- G_vgatext_bram8_wr
 
-  with conv_integer(io_addr(11 downto 4)) select
-    vga_textmode_ce <= io_addr_strobe when iomap_from(iomap_vga_textmode, iomap_range) to iomap_to(iomap_vga_textmode, iomap_range),
-    '0' when others;
+      with conv_integer(io_addr(11 downto 4)) select
+        vga_textmode_ce <= io_addr_strobe when iomap_from(iomap_vga_textmode, iomap_range) to iomap_to(iomap_vga_textmode, iomap_range),
+        '0' when others;
 
-  end generate; -- end VGA textmode
+    end generate; -- G_vgatext
 
     --
     -- PCM audio
