@@ -1231,7 +1231,7 @@ begin
         end if; -- end rising edge
       end process;
 
-      vga_textmode_dmem_write <= dmem_addr_strobe(0) and dmem_write(0) when dmem_addr(0)(31 downto 28) = x"4" else '0';
+      vga_textmode_dmem_write <= dmem_addr_strobe(0) and dmem_write(0) when dmem_addr(0)(31 downto 30) = "01" else '0';
       with conv_integer(io_addr(11 downto 4)) select
         vga_textmode_ce <= io_addr_strobe(R_cur_io_port) when iomap_from(iomap_vga_textmode, iomap_range) to iomap_to(iomap_vga_textmode, iomap_range),
         '0' when others;
