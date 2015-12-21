@@ -129,7 +129,7 @@ generic (
       C_vgatext_font_depth: integer := 8;			-- font char depth, 7=128 characters or 8=256 characters
       C_vgatext_font_linedouble: boolean := true;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
       C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)
-      C_vgatext_monochrome: boolean := true;    -- true for 2-color text for whole screen, else additional color attribute byte per character
+      C_vgatext_monochrome: boolean := false;    -- true for 2-color text for whole screen, else additional color attribute byte per character
       C_vgatext_finescroll: boolean := false;   -- true for pixel level character scrolling and line length modulo
       C_vgatext_cursor: boolean := true;    -- true for optional text cursor
       C_vgatext_cursor_blink: boolean := true;    -- true for optional blinking text cursor
