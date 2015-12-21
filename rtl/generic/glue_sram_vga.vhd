@@ -122,6 +122,7 @@ entity glue_sram is
         C_vgatext_finescroll: boolean := false;   -- true for pixel level character scrolling and line length modulo
         C_vgatext_cursor: boolean := true;    -- true for optional text cursor
         C_vgatext_cursor_blink: boolean := true;    -- true for optional blinking text cursor
+        C_vgatext_bus_write: boolean := true; -- true: allow writing vgatext BRAM from CPU bus. false: no write
         C_vgatext_bus_read: boolean := false; -- true: allow reading vgatext BRAM from CPU bus (may affect fmax). false: write only
         C_vgatext_reg_read: boolean := false; -- true: allow reading vgatext BRAM from CPU bus (may affect fmax). false: write only
         C_vgatext_text_fifo: boolean := false;  -- disable text memory FIFO
@@ -300,7 +301,7 @@ architecture Behavioral of glue_sram is
     signal vga_textmode_blank: std_logic;
 
     -- VGA_textmode BRAM access
-    signal vga_textmode_dmem_write: std_logic;
+    signal vga_textmode_dmem_write: std_logic := '0';
     signal vga_textmode_dmem_to_cpu: std_logic_vector(31 downto 0);
     signal vga_textmode_bram_addr: std_logic_vector(15 downto 2);
     signal vga_textmode_bram_data: std_logic_vector(31 downto 0);
@@ -1231,7 +1232,9 @@ begin
         end if; -- end rising edge
       end process;
 
-      vga_textmode_dmem_write <= dmem_addr_strobe(0) and dmem_write(0) when dmem_addr(0)(31 downto 30) = "01" else '0';
+      bus_write_bram: if C_vgatext_bus_write generate
+        vga_textmode_dmem_write <= dmem_addr_strobe(0) and dmem_write(0) when dmem_addr(0)(31 downto 30) = "01" else '0';
+      end generate;
       with conv_integer(io_addr(11 downto 4)) select
         vga_textmode_ce <= io_addr_strobe(R_cur_io_port) when iomap_from(iomap_vga_textmode, iomap_range) to iomap_to(iomap_vga_textmode, iomap_range),
         '0' when others;
