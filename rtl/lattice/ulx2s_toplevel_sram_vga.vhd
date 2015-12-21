@@ -119,7 +119,7 @@ entity toplevel is
         C_vgahdmi_fifo_step: integer := 4*10*17;
         -- number of pixels to postpone step
         -- postpone step as much as possible to avoid flickering of a left sprite moved right
-        C_vgahdmi_fifo_postpone_step: integer := 4*(10*17-2);
+        C_vgahdmi_fifo_postpone_step: integer := 4*(10*17-1);
         -- number of 32 bit words used for H-compositing dual thin sprite,
         -- first 32-bit word contains 2 offsets and the rest is bitmap
         -- usual value for this is 17
@@ -151,7 +151,8 @@ entity toplevel is
         C_vgatext_finescroll: boolean := true; -- true for pixel level character scrolling and line length modulo
         C_vgatext_cursor: boolean := true; -- true for optional text cursor
         C_vgatext_cursor_blink: boolean := true; -- true for optional blinking text cursor
-        C_vgatext_bus_read: boolean := true; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
+        C_vgatext_bus_write: boolean := true; -- true to allow writing vgatext BRAM from CPU bus. false: no writing
+        C_vgatext_bus_read: boolean := false; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
         C_vgatext_reg_read: boolean := false; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
         C_vgatext_text_fifo: boolean := true;  -- enable text memory FIFO
           C_vgatext_text_fifo_postpone_step: integer := 0;
@@ -335,6 +336,7 @@ begin
         C_vgatext_palette => C_vgatext_palette,
         C_vgatext_text => C_vgatext_text,
         C_vgatext_font_bram8 => C_vgatext_font_bram8,
+        C_vgatext_bus_write => C_vgatext_bus_write,
         C_vgatext_bus_read => C_vgatext_bus_read,
         C_vgatext_reg_read => C_vgatext_reg_read,
         C_vgatext_text_fifo => C_vgatext_text_fifo,
