@@ -135,9 +135,9 @@ entity toplevel is
     C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 81.25MHz 1MB SRAM"; -- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480                   
-      C_vgatext_bits: integer := 3;   -- 64 possible colors
-      C_vgatext_bram_mem: integer := 4;   -- 4KB text+font  memory
-      C_vgatext_external_mem: integer := 0; -- 1MB external SRAM/SDRAM
+      C_vgatext_bits: integer := 4;   -- 64 possible colors
+      C_vgatext_bram_mem: integer := 0;   -- 4KB text+font  memory
+      C_vgatext_external_mem: integer := 1024; -- 1MB external SRAM/SDRAM
       C_vgatext_reset: boolean := true;   -- reset registers to default with async reset
       C_vgatext_palette: boolean := true;  -- no color palette
       C_vgatext_text: boolean := true;    -- enable optional text generation
