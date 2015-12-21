@@ -90,6 +90,9 @@
         <Source name="../../../soc/vgahdmi/VGA_textmode_bram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../soc/vgahdmi/TMDS_encoder.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>

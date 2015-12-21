@@ -112,6 +112,7 @@ entity glue_sram is
       C_vgatext_reset: boolean := true;   -- reset registers to default with async reset
       C_vgatext_palette: boolean := false;  -- no color palette
       C_vgatext_text: boolean := true;    -- enable optional text generation
+        C_vgatext_font_bram8: boolean := false;  -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
         C_vgatext_char_height: integer := 16;   -- character cell height
         C_vgatext_font_height: integer := 8;    -- font height
         C_vgatext_font_depth: integer := 7;      -- font char depth, 7=128 characters or 8=256 characters
@@ -298,6 +299,8 @@ architecture Behavioral of glue_sram is
     signal vga_textmode_dmem_to_cpu: std_logic_vector(31 downto 0);
     signal vga_textmode_bram_addr: std_logic_vector(15 downto 2);
     signal vga_textmode_bram_data: std_logic_vector(31 downto 0);
+    signal vga_textmode_bram8_data: std_logic_vector(7 downto 0);
+    signal vga_textmode_dmem8_write: std_logic;
 
     -- VGA_textmode SRAM/FIFO text access
     signal vga_textmode_text_addr: std_logic_vector(29 downto 2);
@@ -1041,6 +1044,7 @@ begin
     C_vgatext_reset => C_vgatext_reset,
     C_vgatext_palette => C_vgatext_palette,
     C_vgatext_text => C_vgatext_text,
+    C_vgatext_font_bram8 => C_vgatext_font_bram8,
     C_vgatext_reg_read => C_vgatext_reg_read,
     C_vgatext_text_fifo => C_vgatext_text_fifo,
     C_vgatext_char_height => C_vgatext_char_height,
@@ -1097,9 +1101,9 @@ begin
   --vga_hsync <= Rblink(29);
 
       -- analog vga output
-      vga_r <= vga_textmode_red;
-      vga_g <= vga_textmode_green;
-      vga_b <= vga_textmode_blue;
+      vga_r(7 downto 8-C_vgatext_bits) <= vga_textmode_red;
+      vga_g(7 downto 8-C_vgatext_bits) <= vga_textmode_green;
+      vga_b(7 downto 8-C_vgatext_bits) <= vga_textmode_blue;
       vga_vsync <= vga_textmode_vsync;
       vga_hsync <= vga_textmode_hsync;
 
@@ -1159,7 +1163,7 @@ begin
     vga_textmode_bitmap_data <= from_sram;
   end generate;
 
-      -- 8KB VGA textmode BRAM (for text+attribute bytes and font)
+  -- VGA textmode BRAM (for text+attribute bytes and font)
   G_vga_textmode_bram: if C_vgatext_text generate
   G_vgatext_bram: entity work.VGA_textmode_bram
   generic map (
@@ -1176,6 +1180,21 @@ begin
     dmem_data_out => vga_textmode_dmem_to_cpu, dmem_data_in => cpu_to_dmem(0)
   );
   end generate;
+
+  -- VGA textmode font BRAM (8-bit)
+  G_vga_textmode_bram8: if C_vgatext_font_bram8 generate
+        G_vgatext_bram8: entity work.VGA_textmode_font_bram8
+          generic map (
+            C_font_height => C_vgatext_font_height,
+            C_font_depth  => C_vgatext_font_depth
+          )
+          port map (
+            clk => clk, imem_addr => vga_textmode_bram_addr, imem_data_out => vga_textmode_bram8_data,
+            dmem_write => vga_textmode_dmem_write,
+            dmem_byte_sel => dmem_byte_sel(0), dmem_addr => dmem_addr(0)(15 downto 2),
+            dmem_data_out => open, dmem_data_in => cpu_to_dmem(0)(7 downto 0)
+          );
+  end generate; -- G_vga_textmode_bram8
 
   vgatext_intr: process(clk)
   begin
