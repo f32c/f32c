@@ -154,7 +154,7 @@ entity toplevel is
         C_vgatext_bus_write: boolean := true; -- true to allow writing vgatext BRAM from CPU bus. false: no writing
         C_vgatext_bus_read: boolean := false; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
         C_vgatext_reg_read: boolean := false; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
-        C_vgatext_text_fifo: boolean := true;  -- enable text memory FIFO
+        C_vgatext_text_fifo: boolean := true; -- enable text memory FIFO
           C_vgatext_text_fifo_postpone_step: integer := 0;
           C_vgatext_text_fifo_step: integer := (82*2)/4; -- step for the FIFO refill and rewind
           C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) length = 2^width * 4 bytes
@@ -164,7 +164,7 @@ entity toplevel is
           -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
           C_vgatext_bitmap_fifo_step: integer := 4*10*17;
           -- postpone step as much as possible to avoid flickering of a left sprite moved right
-          C_vgatext_bitmap_fifo_postpone_step: integer := 4*10*17-8;
+          C_vgatext_bitmap_fifo_postpone_step: integer := 4*(10*17-1);
           -- word length for H-compositing thin sprite, including offset word (tiny sprites one pixel high)
           C_vgatext_bitmap_fifo_compositing_length: integer := 17;
           -- output data width 8bpp
