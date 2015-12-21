@@ -960,63 +960,57 @@ begin
     -- VGA/HDMI
     G_vgahdmi:
     if C_vgahdmi generate
-    vgahdmi: entity work.vgahdmi
-    generic map (
-      test_picture => C_vgahdmi_test_picture  -- show test picture in background
-    )
-    port map (
-      clk_pixel => clk_25m,
-      -- clk_tmds => clk_250MHz,
-      fetch_next => vga_fetch_next,
-      red_byte    => vga_data_from_fifo(7 downto 5) & "00000",
-      green_byte  => vga_data_from_fifo(4 downto 2) & "00000",
-      blue_byte   => vga_data_from_fifo(1 downto 0) & "000000",
-      bright_byte => (others => '0'),
-      vga_r => vga_r,
-      vga_g => vga_g,
-      vga_b => vga_b,
-      vga_hsync => S_vga_hsync,
-      vga_vsync => S_vga_vsync
-      -- tmds_out_rgb => tmds_out_rgb
-    );
-    vga_vsync <= not S_vga_vsync;
-    vga_hsync <= not S_vga_hsync;
-    comp_fifo: entity work.compositing_fifo
-    generic map (
-      C_step => C_vgahdmi_fifo_step,
-      C_postpone_step => C_vgahdmi_fifo_postpone_step,
-      C_compositing_length => C_vgahdmi_fifo_compositing_length,
-      C_data_width => C_vgahdmi_fifo_data_width,
-      C_addr_width => C_vgahdmi_fifo_addr_width
-    )
-    port map (
-      clk => clk,
-      clk_pixel => clk_25m,
-      addr_strobe => fb_addr_strobe,
-      addr_out => fb_addr,
-      data_ready => fb_data_ready, -- data valid for read acknowledge from RAM
-      -- data_ready => '1', -- BRAM is eveready
-      data_in => vga_data, -- from SDRAM or BRAM
-      -- data_in => x"00000001", -- test pattern vertical lines
-      -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
-      -- data_in(31 downto 8) => (others => '0'),
-      base_addr => R_fb_base_addr,
-      active => not S_vga_vsync,
-      frame => vga_frame,
-      data_out => vga_data_from_fifo(C_vgahdmi_fifo_data_width-1 downto 0),
-      fetch_next => vga_fetch_next
-    );
+      vgahdmi: entity work.vgahdmi
+        generic map (
+          test_picture => C_vgahdmi_test_picture  -- show test picture in background
+        )
+        port map (
+          clk_pixel => clk_25m,
+          -- clk_tmds => clk_250MHz,
+          fetch_next => vga_fetch_next,
+          red_byte    => vga_data_from_fifo(7 downto 5) & "00000",
+          green_byte  => vga_data_from_fifo(4 downto 2) & "00000",
+          blue_byte   => vga_data_from_fifo(1 downto 0) & "000000",
+          bright_byte => (others => '0'),
+          vga_r => vga_r,
+          vga_g => vga_g,
+          vga_b => vga_b,
+          vga_hsync => S_vga_hsync,
+          vga_vsync => S_vga_vsync
+          -- tmds_out_rgb => tmds_out_rgb
+        );
+      vga_vsync <= not S_vga_vsync;
+      vga_hsync <= not S_vga_hsync;
+      comp_fifo: entity work.compositing_fifo
+        generic map (
+          C_step => C_vgahdmi_fifo_step,
+          C_postpone_step => C_vgahdmi_fifo_postpone_step,
+          C_compositing_length => C_vgahdmi_fifo_compositing_length,
+          C_data_width => C_vgahdmi_fifo_data_width,
+          C_addr_width => C_vgahdmi_fifo_addr_width
+        )
+        port map (
+          clk => clk,
+          clk_pixel => clk_25m,
+          addr_strobe => fb_addr_strobe,
+          addr_out => fb_addr,
+          data_ready => fb_data_ready, -- data valid for read acknowledge from RAM
+          data_in => vga_data, -- from SRAM
+          base_addr => R_fb_base_addr,
+          active => not S_vga_vsync,
+          frame => vga_frame,
+          data_out => vga_data_from_fifo(C_vgahdmi_fifo_data_width-1 downto 0),
+          fetch_next => vga_fetch_next
+        );
 
-    -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
-    -- vga_data(7 downto 0) <= x"0F";
-    vga_data <= from_sram;
+      vga_data <= from_sram;
 
-    -- address decoder to set base address and clear interrupts
-    with conv_integer(io_addr(11 downto 4)) select
-      vga_ce <= io_addr_strobe(R_cur_io_port) when iomap_from(iomap_vga, iomap_range) to iomap_to(iomap_vga, iomap_range),
-                                          '0' when others;
-    process(clk)
-    begin
+      -- address decoder to set base address and clear interrupts
+      with conv_integer(io_addr(11 downto 4)) select
+        vga_ce <= io_addr_strobe(R_cur_io_port) when iomap_from(iomap_vga, iomap_range) to iomap_to(iomap_vga, iomap_range),
+                                            '0' when others;
+      process(clk)
+      begin
         if rising_edge(clk) then
             if vga_ce = '1' and io_write = '1' then
                 -- cpu write: writes Framebuffer base
@@ -1040,7 +1034,7 @@ begin
                 end if;
             end if;
         end if; -- end rising edge
-    end process;
+      end process;
     end generate; -- end vgahdmi
 
 
