@@ -112,14 +112,14 @@ entity toplevel is
 	C_gpio: boolean := true;
 	C_spi: integer := 2;
 	C_framebuffer: boolean := false;
-	C_vgahdmi: boolean := false;
+	C_vgahdmi: boolean := true;
 	C_vgahdmi_test_picture: integer := 0;
         -- number of pixels for line step 640 for no compositing
-        -- 680 for comositing
-        C_vgahdmi_fifo_step: integer := 680;
+        -- 680 for compositing
+        C_vgahdmi_fifo_step: integer := 4*10*17;
         -- number of pixels to postpone step
         -- postpone step as much as possible to avoid flickering of a left sprite moved right
-        C_vgahdmi_fifo_postpone_step: integer := 672;
+        C_vgahdmi_fifo_postpone_step: integer := 4*(10*17-2);
         -- number of 32 bit words used for H-compositing dual thin sprite,
         -- first 32-bit word contains 2 offsets and the rest is bitmap
         -- usual value for this is 17
@@ -132,7 +132,7 @@ entity toplevel is
         -- for 8bpp compositing use 11 -> 2048 bytes
         C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 81.25MHz 1MB SRAM"; -- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480                   
       C_vgatext_bits: integer := 4;   -- 64 possible colors
@@ -157,12 +157,9 @@ entity toplevel is
           C_vgatext_text_fifo_postpone_step: integer := 0;
           C_vgatext_text_fifo_step: integer := (82*2)/4; -- step for the FIFO refill and rewind
           C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) length = 2^width * 4 bytes
-      C_vgatext_bitmap: boolean := true; -- true for optional bitmap generation
+      C_vgatext_bitmap: boolean := false; -- true for optional bitmap generation
         C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
         C_vgatext_bitmap_fifo: boolean := true; -- enable bitmap FIFO
-          --C_vgatext_bitmap_fifo_step: integer := 0; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
-          --C_vgatext_bitmap_compositing_length: integer := 0; -- word length for H-compositing slice, including offset word (tiny sprites one pixel high)
-          --C_vgatext_bitmap_fifo_width: integer := 4; -- bitmap width of FIFO address space length = 2^width * 4 byte
           -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
           C_vgatext_bitmap_fifo_step: integer := 4*10*17;
           -- postpone step as much as possible to avoid flickering of a left sprite moved right
