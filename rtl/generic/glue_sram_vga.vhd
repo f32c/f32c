@@ -134,6 +134,8 @@ entity glue_sram is
           C_vgatext_bitmap_fifo_step: integer := 0;  -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
           C_vgatext_bitmap_compositing_length: integer := 0; -- H-compositing (tiny sprites, words size, 1 pixel high)
           C_vgatext_bitmap_fifo_width: integer := 8;  -- bitmap width of FIFO address space length = 2^width * 4 byte
+      C_vgatext_sync_debug: boolean := false; -- override 2 onboard leds with vsync based blinkie
+
 	C_pcm: boolean := true;
 	C_timer: boolean := true;
 	C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
@@ -225,7 +227,8 @@ architecture Behavioral of glue_sram is
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
     signal R_fb_base_addr: std_logic_vector(29 downto 2) := (others => '0');
     
-    signal Rblink: std_logic_vector(31 downto 0);
+    signal R_syncdebug_blink: std_logic_vector(31 downto 0);
+    signal R_syncdebug_edge: std_logic_vector(2 downto 0);
 
     -- CPU reset control
     signal R_cpu_reset: std_logic_vector(15 downto 0) := x"fffe";
@@ -631,11 +634,16 @@ begin
     end generate;
 
     G_simple_out_timer:
-    if C_timer = true generate
+    if C_timer = true and C_vgatext_sync_debug = false generate
     ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
     ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
     simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
       else (others => '-');
+    end generate;
+
+    G_simple_out_vsync_debug:
+    if C_vgatext_sync_debug = true generate
+      simple_out <= R_simple_out(31 downto 3) & R_syncdebug_blink(5 downto 4) & R_simple_out(0);
     end generate;
 
     -- big address decoder when CPU reads IO
@@ -1093,12 +1101,17 @@ begin
 
   vga_vsync <= vga_textmode_vsync;
   vga_hsync <= vga_textmode_hsync;
-  --process(clk)
-  --begin
-  --  Rblink <= Rblink+1;
-  --end process;
-  --vga_vsync <= Rblink(29);
-  --vga_hsync <= Rblink(29);
+
+  vgasync_blink_count: if C_vgatext_sync_debug generate
+    process(clk_25m) begin
+      if rising_edge(clk_25m) then
+        R_syncdebug_edge <= vga_textmode_vsync & R_syncdebug_edge(2 downto 1);
+        if R_syncdebug_edge(1) = '0' and R_syncdebug_edge(0) = '1' then
+          R_syncdebug_blink <= R_syncdebug_blink+1;
+        end if;
+      end if;
+    end process;
+  end generate; -- vgasync_blink_count
 
       -- analog vga output
       vga_r(7 downto 8-C_vgatext_bits) <= vga_textmode_red;
