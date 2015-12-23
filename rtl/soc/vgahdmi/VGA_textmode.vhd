@@ -738,15 +738,19 @@ begin
           bitmap_pix := (others => '0');
           if bg_enable = '1' then
             bitmap_pix := bitmap_data(C_vgatext_bitmap_depth-1 downto 0);
-            bitmap_data(C_vgatext_bitmap_fifo_data_width-1-C_vgatext_bitmap_depth downto 0) <= bitmap_data(C_vgatext_bitmap_fifo_data_width-1 downto C_vgatext_bitmap_depth); -- shift current bitmap data right
+            if C_vgatext_bitmap_fifo_data_width > C_vgatext_bitmap_depth then
+              bitmap_data(C_vgatext_bitmap_fifo_data_width-1-C_vgatext_bitmap_depth downto 0) <= bitmap_data(C_vgatext_bitmap_fifo_data_width-1 downto C_vgatext_bitmap_depth); -- shift current bitmap data right
+            end if;
             if NOT C_vgatext_bitmap_fifo then
               if hcount = -64 AND vcount = 0 then                      -- fetch first word early from SRAM
                 bitmap_strobe <= '1';
               end if;
             end if;
             if hcount >= -3 AND hcount < visible_width-3 then             -- one cycle before needed
-              if hcount(C_vgatext_bitmap_fifo_data_width_log2-C_vgatext_bitmap_depth_log2-1 downto 0) = C_vgatext_bitmap_strobe_point then
-              -- if hcount(5-3-1 downto 0) = "11" then
+              if C_vgatext_bitmap_fifo_data_width_log2 = C_vgatext_bitmap_depth_log2
+               or hcount(C_vgatext_bitmap_fifo_data_width_log2-C_vgatext_bitmap_depth_log2-1 downto 0)
+                  = C_vgatext_bitmap_strobe_point
+              then
                 -- load new bitmap data at last pixel of current bitmap data
                 bitmap_strobe <= '1';
                 if C_vgatext_bitmap_fifo then
