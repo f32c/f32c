@@ -152,6 +152,15 @@ architecture Behavioral of VGA_textmode is
   return r;
   end font_to_slv4;
 
+  -- function integer ceiling log2
+  -- returns how many bits are needed to represent a number of states
+  -- example ceil_log2(255) = 8,  ceil_log2(256) = 8, ceil_log2(257) = 9
+  function ceil_log2(x: integer)
+    return integer is
+  begin
+    return integer(ceil((log2(real(x)+1.0E-6))-1.0E-6));
+  end ceil_log2;
+
   type video_mode_t is
   record
     pixel_clock_Hz:                             integer;    -- currently informational (not used)
@@ -235,8 +244,8 @@ architecture Behavioral of VGA_textmode is
   constant font_base_bit:     integer   := select_t_f(C_vgatext_font_bram8, 0, 2);
 
   -- this will calculate log2, number of bits that can address the pixel bit depth and fifo data
-  constant C_vgatext_bitmap_depth_log2: integer := integer(ceil((log2(real(C_vgatext_bitmap_depth)+1.0E-6))-1.0E-6));
-  constant C_vgatext_bitmap_fifo_data_width_log2: integer := integer(ceil((log2(real(C_vgatext_bitmap_fifo_data_width)+1.0E-6))-1.0E-6));
+  constant C_vgatext_bitmap_depth_log2: integer := ceil_log2(C_vgatext_bitmap_depth);
+  constant C_vgatext_bitmap_fifo_data_width_log2: integer := ceil_log2(C_vgatext_bitmap_fifo_data_width);
   constant C_vgatext_bitmap_strobe_point: signed(C_vgatext_bitmap_fifo_data_width_log2-C_vgatext_bitmap_depth_log2-1 downto 0) := (others => '1');
 
   -- constants for the VGA textmode register addresses (8 32-bit words)
