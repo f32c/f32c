@@ -169,6 +169,8 @@ end compositing_fifo;
 
 architecture behavioral of compositing_fifo is
     -- function integer ceiling log2
+    -- returns how many bits are needed to represent a number of states
+    -- example ceil_log2(255) = 8,  ceil_log2(256) = 8, ceil_log2(257) = 9
     function ceil_log2(x: integer) return integer is
     begin
       return integer(ceil((log2(real(C_data_width)+1.0E-6))-1.0E-6));
