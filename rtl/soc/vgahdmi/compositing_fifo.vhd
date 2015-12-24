@@ -168,8 +168,14 @@ entity compositing_fifo is
 end compositing_fifo;
 
 architecture behavioral of compositing_fifo is
+    -- function integer ceiling log2
+    function ceil_log2(x: integer) return integer is
+    begin
+      return integer(ceil((log2(real(C_data_width)+1.0E-6))-1.0E-6));
+    end ceil_log2;
+
     -- Constants
-    constant C_data_log2_width: integer := integer(ceil((log2(real(C_data_width)+1.0E-6))-1.0E-6));
+    constant C_data_log2_width: integer := ceil_log2(C_data_width);
     constant C_shift_addr_width: integer := 5-C_data_log2_width;
     constant C_shift_cycles: integer := 32/C_data_width; -- how many cpu cycles to shift from 32bit to reduced size bram
     -- constant C_addr_width: integer := C_width; -- more descriptive name in the code, keep generic compatible for now
