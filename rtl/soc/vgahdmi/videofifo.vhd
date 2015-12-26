@@ -40,6 +40,7 @@ use ieee.numeric_std.all;
 
 entity videofifo is
     generic (
+        C_bram: boolean := false; -- true: use bram as fifo storage, false: use luts
         C_synclen: integer := 3; -- bits in cpu-to-pixel clock synchronizer
         -- (0: disable rewind and be ordinary sequential fifo)
         -- (>0: fifo will be loaded from RAM in full steps
@@ -83,9 +84,14 @@ architecture behavioral of videofifo is
     signal R_pixbuf: pixbuf_dpram_type;
     signal R_sram_addr: std_logic_vector(29 downto 2);
     signal R_pixbuf_rd_addr, R_pixbuf_wr_addr, S_pixbuf_wr_addr_next: std_logic_vector(C_width-1 downto 0);
+    signal S_pixbuf_out_mem_addr: std_logic_vector(C_width-1 downto 0);
+    signal S_pixbuf_in_mem_addr: std_logic_vector(C_width-1 downto 0);
+    signal S_bram_write, S_data_write: std_logic;
+    signal S_bram_data_in: std_logic_vector(31 downto 0);
+    signal R_bram_in_addr: std_logic_vector(C_width-1 downto 0);
     signal R_pixbuf_out_addr: std_logic_vector(C_width-1 downto 0);
     signal R_delay_fetch: integer range 0 to 2*C_step;
-    signal need_refill: boolean;
+    signal need_refill: std_logic;
     signal toggle_read_complete: std_logic;
     signal clksync, startsync, rewindsync: std_logic_vector(C_synclen-1 downto 0);
     -- clean start: '1' will reset fifo to its base address
@@ -150,9 +156,11 @@ begin
             R_sram_addr <= base_addr;
             R_pixbuf_wr_addr <= (others => '0');
           else
-	    if data_ready = '1' and need_refill then -- BRAM must use this
+	    if data_ready = '1' and need_refill = '1' then -- BRAM must use this
 	    -- if data_ready = '1' then -- may work with SDRAM?
-              R_pixbuf(TO_INTEGER(UNSIGNED(R_pixbuf_wr_addr))) <= data_in;
+	      if not C_bram then
+                R_pixbuf(TO_INTEGER(UNSIGNED(R_pixbuf_wr_addr))) <= data_in;
+              end if;
               R_sram_addr <= R_sram_addr + 1;
               R_pixbuf_wr_addr <= S_pixbuf_wr_addr_next;
 	    end if;
@@ -160,8 +168,8 @@ begin
 	end if;
     end process;
 
-    need_refill <= clean_start = '0' and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr;
-    addr_strobe <= '1' when need_refill else '0';
+    need_refill <='1' when clean_start = '0' and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr else '0';
+    addr_strobe <= '1' when need_refill = '1' else '0';
     addr_out <= R_sram_addr;
     
     -- Dequeue pixel data from the circular buffer
@@ -213,13 +221,48 @@ begin
           end if;
         end if;
       end process;
-    rewind_disabled: if C_step = 0 generate
-      data_out <= R_pixbuf(TO_INTEGER(UNSIGNED(R_pixbuf_rd_addr)));
-    end generate;
-    rewind_enabled: if C_step /= 0 generate
-      clean_rewind <= rewindsync(C_synclen-2) and not rewindsync(C_synclen-1); -- rising edge
-      data_out <= R_pixbuf(TO_INTEGER(UNSIGNED(R_pixbuf_out_addr)));
-    end generate;
-    -- debug_rd_addr(5 downto 2) <= R_pixbuf_rd_addr;
-    -- debug_rd_addr(29 downto 6) <= (others => '0');
+
+    G_no_bram: if not C_bram generate
+      rewind_disabled_no_bram: if C_step = 0 generate
+        data_out <= R_pixbuf(TO_INTEGER(UNSIGNED(R_pixbuf_rd_addr)));
+      end generate; -- rewind_disabled_no_bram
+      rewind_enabled_no_bram: if C_step /= 0 generate
+        clean_rewind <= rewindsync(C_synclen-2) and not rewindsync(C_synclen-1); -- rising edge
+        data_out <= R_pixbuf(TO_INTEGER(UNSIGNED(R_pixbuf_out_addr)));
+      end generate; -- rewind_enabled_no_bram
+    end generate; -- G_no_bram
+
+    G_bram: if C_bram generate
+      -- S_compositing_erase <= '0'; -- never erase (allows rewind to used data)
+      S_data_write <= data_ready and need_refill and not clean_start;
+      -- writing to buffer sequentially
+      S_pixbuf_in_mem_addr <= R_pixbuf_wr_addr;
+      S_bram_data_in <= data_in;
+      S_bram_write <= S_data_write;
+      R_bram_in_addr <= S_pixbuf_in_mem_addr; -- not a register but pass-thru signal
+      rewind_disabled: if C_step = 0 generate
+        S_pixbuf_out_mem_addr <= R_pixbuf_rd_addr;
+      end generate;
+      rewind_enabled: if C_step /= 0 generate
+        clean_rewind <= rewindsync(C_synclen-2) and not rewindsync(C_synclen-1); -- rising edge
+        S_pixbuf_out_mem_addr <= R_pixbuf_out_addr;
+      end generate;
+      linememory: entity work.bram_true2p_1clk
+      generic map (
+        dual_port => True, -- one port takes data from RAM, other port outputs to video
+        data_width => 32,
+        addr_width => C_width
+      )
+      port map (
+        clk => clk,
+        we_a => S_bram_write,
+        we_b => '0',
+        addr_a => R_bram_in_addr,
+        addr_b => S_pixbuf_out_mem_addr,
+        data_in_a => S_bram_data_in,
+        data_in_b => (others => '0'), -- erase value for compositing
+        data_out_a => open,
+        data_out_b => data_out
+      );
+    end generate; -- G_bram
 end;
