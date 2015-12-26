@@ -119,6 +119,13 @@ entity glue is
           C_vgatext_bitmap_fifo_addr_width: integer := 11;
 
       C_fmrds: boolean := true;
+        C_fm_stereo: boolean := false;
+        C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
+        C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
+        C_rds_clock_multiply: integer := 57; -- multiply and divide from cpu clk 100 MHz
+        C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
+        --C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
+        --C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
       C_sio: integer := 1;
       C_spi: integer := 2;
       C_gpio: integer := 32
@@ -285,6 +292,11 @@ begin
       C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
       C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
       C_fmrds => C_fmrds,
+      C_fm_stereo => C_fm_stereo,
+      C_rds_msg_len => C_rds_msg_len, -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
+      C_fmdds_hz => C_fmdds_hz, -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz)
+      C_rds_clock_multiply => C_rds_clock_multiply, -- multiply and divide from cpu clk 100 MHz
+      C_rds_clock_divide => C_rds_clock_divide, -- to get 1.824 MHz for RDS logic
       C_debug => C_debug
     )
     port map
