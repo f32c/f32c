@@ -610,8 +610,16 @@ begin
           textfifo_strobe_o <= '0';
           textfifo_rewind_o <= '0';
         end if;
-        if C_vgatext_bitmap then
-          bitmap_strobe <= '0';
+        -- emard
+        -- trying to avoid such default signal settings
+        -- currently I removed this for special case
+        -- when fifo width equals pixel depth in order
+        -- not to break other code, in future
+        -- bitmap_strobe <= '0'; should be removed
+        if C_vgatext_bitmap_fifo_data_width /= C_vgatext_bitmap_depth then
+          if C_vgatext_bitmap then
+            bitmap_strobe <= '0';
+          end if;
         end if;
 
         -- handle BRAM register based reads
@@ -745,32 +753,45 @@ begin
 
           -- bitmap generation
           bitmap_pix := (others => '0');
-          if bg_enable = '1' then
-            bitmap_pix := bitmap_data(C_vgatext_bitmap_depth-1 downto 0);
-            if C_vgatext_bitmap_fifo_data_width > C_vgatext_bitmap_depth then
-              bitmap_data(C_vgatext_bitmap_fifo_data_width-1-C_vgatext_bitmap_depth downto 0) <= bitmap_data(C_vgatext_bitmap_fifo_data_width-1 downto C_vgatext_bitmap_depth); -- shift current bitmap data right
-            end if;
-            if NOT C_vgatext_bitmap_fifo then
-              if hcount = -64 AND vcount = 0 then                      -- fetch first word early from SRAM
+          if C_vgatext_bitmap_fifo_data_width = C_vgatext_bitmap_depth then
+            -- special case: fifo width equal to pixel width
+            if bg_enable = '1' then
+              bitmap_pix := bitmap_data_i;
+              if hcount = -2 and vcount >= 0 then
                 bitmap_strobe <= '1';
               end if;
-            end if;
-            if hcount >= -3 AND hcount < visible_width-3 then             -- one cycle before needed
-              if C_vgatext_bitmap_fifo_data_width_log2 = C_vgatext_bitmap_depth_log2
-               or hcount(C_vgatext_bitmap_fifo_data_width_log2-C_vgatext_bitmap_depth_log2-1 downto 0)
-                  = C_vgatext_bitmap_strobe_point
-              then
-                -- load new bitmap data at last pixel of current bitmap data
-                bitmap_strobe <= '1';
-                if C_vgatext_bitmap_fifo then
-                  bitmap_data <= bitmap_data_i;
-                else
-                  bitmap_data <= bitmap_data_next;
-                  bitmap_addr <= bitmap_addr + 1;
+              if hcount = visible_width-2 then
+                bitmap_strobe <= '0';
+              end if;
+            end if; --. bg_enable
+          else
+            -- fifo width different than pixel depth
+            if bg_enable = '1' then
+              bitmap_pix := bitmap_data(C_vgatext_bitmap_depth-1 downto 0);
+              -- shift current bitmap data right
+              bitmap_data(C_vgatext_bitmap_fifo_data_width-1-C_vgatext_bitmap_depth downto 0) 
+               <= bitmap_data(C_vgatext_bitmap_fifo_data_width-1 downto C_vgatext_bitmap_depth);
+              if NOT C_vgatext_bitmap_fifo then
+                if hcount = -64 AND vcount = 0 then -- fetch first word early from SRAM
+                  bitmap_strobe <= '1';
                 end if;
               end if;
-            end if;
-          end if;
+              if hcount >= -1 AND hcount < visible_width-1 then -- one cycle before needed
+                if hcount(C_vgatext_bitmap_fifo_data_width_log2-C_vgatext_bitmap_depth_log2-1 downto 0)
+                    = C_vgatext_bitmap_strobe_point
+                then
+                  -- load new bitmap data at last pixel of current bitmap data
+                  bitmap_strobe <= '1';
+                  if C_vgatext_bitmap_fifo then
+                    bitmap_data <= bitmap_data_i;
+                  else
+                    bitmap_data <= bitmap_data_next;
+                    bitmap_addr <= bitmap_addr + 1;
+                  end if;
+                end if;
+              end if;
+            end if; -- bg_enable
+          end if; -- end fifo width different than pixel depth
 
           -- prepare to output pixel
           fontpix := font_data(7);                -- current pixel from font
@@ -894,7 +915,10 @@ begin
   -- vertical blank indicator
   vblank  <= '1' when vcount < 0 else '0';
   text_active_o <= '0' when vcount < 0 else tg_enable;
-  bitmap_active_o <= '0' when vcount < 0 else bg_enable;
+  -- bitmap_active_o activates compositing_fifo early
+  -- 3 scan ahead of time to start fetching
+  -- to prepare line data on time
+  bitmap_active_o <= '0' when vcount < -3 else bg_enable;
 
   -- output VGA/DVI/HDMI signals
   hsync_o <= hsync;
