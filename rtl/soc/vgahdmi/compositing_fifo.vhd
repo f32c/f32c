@@ -271,7 +271,6 @@ begin
             R_compositing_countdown <= 0;
           else
             if data_ready = '1' and S_need_refill = '1' then -- BRAM must use this
-	    -- if data_ready = '1' then -- may work with SDRAM?
               if C_compositing_length > 0 then
                 -- compositing enabled
                 if S_fetch_compositing_offset = '1' then
@@ -318,10 +317,9 @@ begin
     -- need refill signal must be cpu synchronous
     process(clk) begin
       if rising_edge(clk) then
-        if clean_start = '0'
-          and active = '1'
-          and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr(C_addr_width-1 downto C_shift_addr_width)
-          then
+        if S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr(C_addr_width-1 downto C_shift_addr_width)
+        -- and clean_start = '0' and active = '1'
+        then
             R_need_refill_cpu <= '1';
         else
             R_need_refill_cpu <= '0';
