@@ -307,13 +307,6 @@ begin
         end if;
     end process;
 
-    junk_code: if false generate
-    S_need_refill <= '1' when clean_start = '0'
-                          -- and active='1'
-                          and S_pixbuf_wr_addr_next /= R_pixbuf_rd_addr(C_addr_width-1 downto C_shift_addr_width)
-                else '0';
-    end generate;
-
     -- need refill signal must be cpu synchronous
     process(clk) begin
       if rising_edge(clk) then
