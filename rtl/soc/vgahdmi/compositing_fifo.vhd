@@ -90,6 +90,8 @@
 -- in a single 32-bit CPU write cycle.
 
 -- offsets refer to a move in pixels
+-- large negative offsets e.g. -32768 (2 MSB bits = 10xxx)
+-- make thin sprite invisible (not shown on screen)
 
 -- important assumption: 32-bit RAM data will
 -- not come faster than one 32-bit word each 4 cycles
@@ -199,9 +201,10 @@ architecture behavioral of compositing_fifo is
     signal S_data_opaque: std_logic;
     signal S_fetch_compositing_offset: std_logic := '0';
     signal S_compositing_erase: std_logic := '0';
-    signal R_compositing_active_offset: std_logic_vector(C_addr_width-1 downto 0) := (others => '0');
-    signal R_compositing_second_offset: std_logic_vector(C_addr_width-1 downto 0) := (others => '0');
+    signal R_compositing_active_offset: std_logic_vector(15 downto 0) := (others => '0');
+    signal R_compositing_second_offset: std_logic_vector(15 downto 0) := (others => '0');
     signal R_compositing_countdown: integer range 0 to C_compositing_length := 0;
+    signal S_offset_visible: std_logic := '1';
     signal R_shifting_counter: std_logic_vector(C_shift_addr_width downto 0) := (others => '0'); -- counts shift cycles and adds address
     signal R_data_in_shift: std_logic_vector(31 downto 0); -- data in shift buffer to bram
     signal S_bram_data_in: std_logic_vector(C_data_width-1 downto 0);
@@ -285,9 +288,9 @@ begin
                   -- (reserved for future enhancement of h-resolution)
 
                   -- offest for first sprite (active offset):
-                  R_compositing_active_offset <= data_in(C_addr_width-1 downto 0);
+                  R_compositing_active_offset <= data_in(15 downto 0);
                   -- offset for second sprite (later it will be copied to active offset):
-                  R_compositing_second_offset <= data_in(C_addr_width+15 downto 16);
+                  R_compositing_second_offset <= data_in(31 downto 16);
                 else
                   R_compositing_countdown <= R_compositing_countdown - 1; -- bitmap fetching countdown
                   R_pixbuf_wr_addr <= S_pixbuf_wr_addr_next; -- next sequential address to store bitmap
@@ -393,14 +396,18 @@ begin
       -- a registered, non-pass-through BRAM block
       -- is required for this to work
       S_compositing_erase <= fetch_next;
+      -- sprite with large negative offset is invisble
+      S_offset_visible <= '0' when R_compositing_active_offset(15 downto 14) = "10" else '1';
       -- write signal with handling transparency:
       -- if word to be written is 0 then don't write, allow it to
       -- "see through" lower priority sprites
-      -- todo: this 32-bit transparency should be fine-grained as 8-bit
       S_data_write <= data_ready and S_need_refill
                   and (not S_fetch_compositing_offset) -- only bitmap is written 
-                  and (not clean_start); -- not in frame start cycle
-      S_pixbuf_in_mem_addr <= (R_pixbuf_wr_addr & C_addr_pad) + R_compositing_active_offset;
+                  and S_offset_visible
+                  --and active
+                  --and (not clean_start); -- not in frame start cycle
+                  ;
+      S_pixbuf_in_mem_addr <= (R_pixbuf_wr_addr & C_addr_pad) + R_compositing_active_offset(C_addr_width-1 downto 0);
     end generate;
 
     -- data_in is always 32-bits
