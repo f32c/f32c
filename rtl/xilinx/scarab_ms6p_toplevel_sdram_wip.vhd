@@ -44,7 +44,7 @@ entity glue is
     C_debug: boolean := false;
 
     -- Main clock: 50/81/83/100/111/112/125
-    C_clk_freq: integer := 83;
+    C_clk_freq: integer := 100;
     -- SoC configuration options
     C_mem_size: integer := 8; -- bootloader area
     C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
@@ -102,22 +102,23 @@ entity glue is
       C_vgatext_bitmap: boolean := true; -- true for optional bitmap generation
         C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
         C_vgatext_bitmap_fifo: boolean := true; -- enable bitmap FIFO
-          --C_vgatext_bitmap_fifo_step: integer := 0; -- disabled
-          --C_vgatext_bitmap_fifo_postpone_step: integer := 0; -- disabled
-          --C_vgatext_bitmap_fifo_compositing_length: integer := 0; -- disabled
-          --C_vgatext_bitmap_fifo_addr_width: integer := 8; -- bitmap width of FIFO address space length = 2^width * 4 byte
+--        C_vgatext_bitmap_fifo_step: integer := 0; -- disabled
+--        C_vgatext_bitmap_fifo_postpone_step: integer := 0; -- disabled
+--        C_vgatext_bitmap_fifo_compositing_length: integer := 0; -- disabled
+--        C_vgatext_bitmap_fifo_data_width: integer := 32;
+--        C_vgatext_bitmap_fifo_addr_width: integer := 8; -- bitmap width of FIFO address space length = 2^width * 4 byte
 
           -- 32 bpp compositing
           -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
-          --C_vgatext_bitmap_fifo_step: integer := 10*17;
+--        C_vgatext_bitmap_fifo_step: integer := 10*17;
           -- postpone step as much as possible to avoid flickering of a left sprite moved right
-          --C_vgatext_bitmap_fifo_postpone_step: integer := 10*17-1;
+--        C_vgatext_bitmap_fifo_postpone_step: integer := 10*17-1;
           -- 32bit word length for H-compositing thin sprite, including offset word (tiny sprites one pixel high)
-          --C_vgatext_bitmap_fifo_compositing_length: integer := 17;
+--        C_vgatext_bitmap_fifo_compositing_length: integer := 17;
           -- output data width 8bpp
-          --C_vgatext_bitmap_fifo_data_width: integer := 32; -- should be equal to bitmap depth
+--        C_vgatext_bitmap_fifo_data_width: integer := 32; -- should be equal to bitmap depth
           -- bitmap width of FIFO address space length = 2^width * 4 byte
-          --C_vgatext_bitmap_fifo_addr_width: integer := 9;
+--        C_vgatext_bitmap_fifo_addr_width: integer := 9;
 
           -- 8 bpp compositing
           -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
