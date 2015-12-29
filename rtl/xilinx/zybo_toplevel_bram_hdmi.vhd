@@ -62,16 +62,17 @@ entity glue is
     C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string :=  "f32c: ZYBO xc7z010 MIPS compatible soft-core 100MHz 128KB BRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0; -- 0=640x480, 1=640x400, 2=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
-      C_vgatext_bits: integer := 2; -- bits of VGA color per red, green, blue gun (e.g., 1=8, 2=64 and 4=4096 total colors possible)
-      C_vgatext_bram_mem: integer := 8; -- BRAM size 1, 2, 4, 8 or 16 depending on font and screen size/memory
+      C_vgatext_bits: integer := 4; -- bits of VGA color per red, green, blue gun (e.g., 1=8, 2=64 and 4=4096 total colors possible)
+      C_vgatext_bram_mem: integer := 16; -- BRAM size 1, 2, 4, 8 or 16 depending on font and screen size/memory
       C_vgatext_reset: boolean := true;   -- reset registers to default with async reset
       C_vgatext_palette: boolean := false; -- true for run-time color look-up table, else 16 fixed VGA color palette
       C_vgatext_text: boolean := true; -- enable text generation
+        C_vgatext_font_bram8: boolean := false; -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
         C_vgatext_monochrome: boolean := false;	-- true for 2-color text for whole screen, else additional color attribute byte per character
-        C_vgatext_font_height: integer := 16; -- font data height 8 or 16 for 8x8 or 8x16 font
-        C_vgatext_char_height: integer := 16; -- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
+        C_vgatext_font_height: integer := 8; -- font data height 8 or 16 for 8x8 or 8x16 font
+        C_vgatext_char_height: integer := 8; -- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
         C_vgatext_font_linedouble: boolean := false; -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
-        C_vgatext_font_depth: integer := 7; -- font char bits 7 for 128 characters or 8 for 256 characters
+        C_vgatext_font_depth: integer := 8; -- font char bits 7 for 128 characters or 8 for 256 characters
         C_vgatext_bus_read: boolean := false; -- true: enable reading of the font (ant text). false: write only
         C_vgatext_reg_read: boolean := true; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
         C_vgatext_finescroll: boolean := true;   -- true for pixel level character scrolling and line length modulo
@@ -174,6 +175,7 @@ begin
       C_vgatext_reset => C_vgatext_reset,
       C_vgatext_palette => C_vgatext_palette,
       C_vgatext_text => C_vgatext_text,
+      C_vgatext_font_bram8 => C_vgatext_font_bram8,
       C_vgatext_monochrome => C_vgatext_monochrome,
       C_vgatext_font_height => C_vgatext_font_height,
       C_vgatext_char_height => C_vgatext_char_height,

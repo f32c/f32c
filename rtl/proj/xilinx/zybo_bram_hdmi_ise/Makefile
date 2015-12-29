@@ -26,6 +26,8 @@ vhdfiles = \
 ../../../generic/bootloader/boot_sio_mi32el.vhd \
 ../../../generic/bootloader/boot_sio_mi32eb.vhd \
 ../../../generic/bootloader/boot_sio_rv32el.vhd \
+../../../generic/bram_true2p_1clk.vhd \
+../../../generic/bram_true2p_2clk.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
 ../../../cpu/alu.vhd \
@@ -59,6 +61,7 @@ vhdfiles = \
 ../../../soc/vgahdmi/font8x8_xark.vhd \
 ../../../soc/vgahdmi/font8x16_xark.vhd \
 ../../../soc/vgahdmi/VGA_textmode_bram.vhd \
+../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../soc/vgahdmi/TMDS_encoder.vhd \
 ../../../soc/vgahdmi/dvid_out.vhd \
 ../../../xilinx/hdmi_out_xc7.vhd \
