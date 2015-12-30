@@ -256,11 +256,11 @@ begin
       port map (
         clk => clk,
         we_a => S_bram_write,
-        we_b => '0',
+        -- we_b => '0',
         addr_a => R_bram_in_addr,
         addr_b => S_pixbuf_out_mem_addr,
         data_in_a => S_bram_data_in,
-        data_in_b => (others => '0'), -- erase value for compositing
+        -- data_in_b => (others => '0'),
         data_out_a => open,
         data_out_b => data_out
       );
