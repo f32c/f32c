@@ -35,6 +35,7 @@ vhdfiles = \
 ../../../generic/bootloader/boot_sio_mi32eb.vhd \
 ../../../generic/bootloader/boot_sio_rv32el.vhd \
 ../../../generic/bram_true2p_1clk.vhd \
+../../../generic/bram_true2p_2clk.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
 ../../../generic/bram_video.vhd \
@@ -68,15 +69,16 @@ vhdfiles = \
 ../../../soc/fm/rds.vhd \
 ../../../soc/fm/bram_rds.vhd \
 ../../../soc/fm/message.vhd \
-../../../soc/vgahdmi/videofifo_bram.vhd \
+../../../soc/vgahdmi/compositing_fifo.vhd \
+../../../soc/vgahdmi/videofifo.vhd \
 ../../../soc/vgahdmi/vgahdmif.vhd \
 ../../../soc/vgahdmi/VGA_textmode.vhd \
 ../../../soc/vgahdmi/font_block_pack.vhd \
 ../../../soc/vgahdmi/font8x8_xark.vhd \
 ../../../soc/vgahdmi/font8x16_xark.vhd \
 ../../../soc/vgahdmi/VGA_textmode_bram.vhd \
+../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../soc/vgahdmi/TMDS_encoder.vhd \
 ../../../soc/vgahdmi/dvid_out.vhd \
-
 
 include ../include/xilinx.mk

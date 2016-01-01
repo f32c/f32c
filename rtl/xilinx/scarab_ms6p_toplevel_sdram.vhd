@@ -53,21 +53,40 @@ entity glue is
     C_sdram_separate_arbiter: boolean := false;
     C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
     C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
-    C_vgahdmi: boolean := false; -- old Emard's bitmap-only VGA
 
+    C_vgahdmi: boolean := false;
+    C_vgahdmi_test_picture: integer := 0;
+    -- number of pixels for line step 640 for no compositing
+    -- 680 for comositing
+    C_vgahdmi_fifo_step: integer := 680;
+    -- number of pixels to postpone step
+    -- postpone step as much as possible to avoid flickering of a left sprite moved right
+    C_vgahdmi_fifo_postpone_step: integer := 672;
+    -- number of 32 bit words used for H-compositing dual thin sprite,
+    -- first 32-bit word contains 2 offsets and the rest is bitmap
+    -- usual value for this is 17
+    -- (tiny sprites are one pixel high)
+    C_vgahdmi_fifo_compositing_length: integer := 17;
+    -- output data width select: 8 bits = 3
+    -- normally this should be  actual bits per pixel
+    C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
+    -- width of FIFO address space -> size of fifo
+    -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
+    C_vgahdmi_fifo_addr_width: integer := 11;
 
     C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480                   
       C_vgatext_bits: integer := 4;   -- 64 possible colors
-      C_vgatext_bram_mem: integer := 4;   -- 4KB text+font  memory
+      C_vgatext_bram_mem: integer := 0;   -- 4KB text+font  memory
       C_vgatext_external_mem: integer := 32768; -- 32MB external SRAM/SDRAM
-      C_vgatext_reset: boolean := true;   -- reset registers to default with async reset
-      C_vgatext_palette: boolean := true;  -- no color palette
-      C_vgatext_text: boolean := true;    -- enable optional text generation
-        C_vgatext_char_height: integer := 16;   -- character cell height
-        C_vgatext_font_height: integer := 16;    -- font height
-        C_vgatext_font_depth: integer := 8;			-- font char depth, 7=128 characters or 8=256 characters
+      C_vgatext_reset: boolean := true; -- reset registers to default with async reset
+      C_vgatext_palette: boolean := true; -- no color palette
+      C_vgatext_text: boolean := true; -- enable optional text generation
+        C_vgatext_font_bram8: boolean := true; -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
+        C_vgatext_char_height: integer := 16; -- character cell height
+        C_vgatext_font_height: integer := 16; -- font height
+        C_vgatext_font_depth: integer := 8; -- font char depth, 7=128 characters or 8=256 characters
         C_vgatext_font_linedouble: boolean := false;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)        
         C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)       
         C_vgatext_monochrome: boolean := false;    -- true for 2-color text for whole screen, else additional color attribute byte per character             
@@ -83,21 +102,44 @@ entity glue is
       C_vgatext_bitmap: boolean := true; -- true for optional bitmap generation
         C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
         C_vgatext_bitmap_fifo: boolean := true; -- enable bitmap FIFO
-          --C_vgatext_bitmap_fifo_step: integer := 0; -- disabled
-          --C_vgatext_bitmap_fifo_postpone_step: integer := 0; -- disabled
-          --C_vgatext_bitmap_fifo_compositing_length: integer := 0; -- disabled
-          --C_vgatext_bitmap_fifo_width: integer := 8; -- bitmap width of FIFO address space length = 2^width * 4 byte
+--        C_vgatext_bitmap_fifo_step: integer := 0; -- disabled
+--        C_vgatext_bitmap_fifo_postpone_step: integer := 0; -- disabled
+--        C_vgatext_bitmap_fifo_compositing_length: integer := 0; -- disabled
+--        C_vgatext_bitmap_fifo_data_width: integer := 32;
+--        C_vgatext_bitmap_fifo_addr_width: integer := 8; -- bitmap width of FIFO address space length = 2^width * 4 byte
 
+          -- 32 bpp compositing
           -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
-          C_vgatext_bitmap_fifo_step: integer := 10*17;
+--        C_vgatext_bitmap_fifo_step: integer := 10*17;
           -- postpone step as much as possible to avoid flickering of a left sprite moved right
-          C_vgatext_bitmap_fifo_postpone_step: integer := 10*17-4;
-          -- word length for H-compositing thin sprite, including offset word (tiny sprites one pixel high)
-          C_vgatext_bitmap_fifo_compositing_length: integer := 17;
+--        C_vgatext_bitmap_fifo_postpone_step: integer := 10*17-1;
+          -- 32bit word length for H-compositing thin sprite, including offset word (tiny sprites one pixel high)
+--        C_vgatext_bitmap_fifo_compositing_length: integer := 17;
+          -- output data width 8bpp
+--        C_vgatext_bitmap_fifo_data_width: integer := 32; -- should be equal to bitmap depth
           -- bitmap width of FIFO address space length = 2^width * 4 byte
-          C_vgatext_bitmap_fifo_width: integer := 9;
+--        C_vgatext_bitmap_fifo_addr_width: integer := 9;
+
+          -- 8 bpp compositing
+          -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
+          C_vgatext_bitmap_fifo_step: integer := 4*10*17;
+          -- postpone step as much as possible to avoid flickering of a left sprite moved right
+          C_vgatext_bitmap_fifo_postpone_step: integer := 4*(10*17-1);
+          -- 32bit word length for H-compositing thin sprite, including offset word (tiny sprites one pixel high)
+          C_vgatext_bitmap_fifo_compositing_length: integer := 17;
+          -- output data width 8bpp
+          C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
+          -- bitmap width of FIFO address space length = 2^width * 4 byte
+          C_vgatext_bitmap_fifo_addr_width: integer := 11;
 
       C_fmrds: boolean := true;
+        C_fm_stereo: boolean := false;
+        C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
+        C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
+        C_rds_clock_multiply: integer := 57; -- multiply and divide from cpu clk 100 MHz
+        C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
+        --C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
+        --C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
       C_sio: integer := 1;
       C_spi: integer := 2;
       C_gpio: integer := 32
@@ -222,7 +264,15 @@ begin
       C_sdram_separate_arbiter => C_sdram_separate_arbiter,
       C_ram_emu_addr_width => C_ram_emu_addr_width,
       C_ram_emu_wait_states => C_ram_emu_wait_states,
+      -- vga simple compositing bitmap only graphics
       C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_test_picture => C_vgahdmi_test_picture,
+      C_vgahdmi_fifo_step => C_vgahdmi_fifo_step,
+      C_vgahdmi_fifo_postpone_step => C_vgahdmi_fifo_postpone_step,
+      C_vgahdmi_fifo_compositing_length => C_vgahdmi_fifo_compositing_length,
+      C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
+      C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
+      -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
       C_vgatext_label => C_vgatext_label,
       C_vgatext_mode => C_vgatext_mode,
@@ -232,6 +282,7 @@ begin
       C_vgatext_reset => C_vgatext_reset,
       C_vgatext_palette => C_vgatext_palette,
       C_vgatext_text => C_vgatext_text,
+      C_vgatext_font_bram8 => C_vgatext_font_bram8,
       C_vgatext_bus_read => C_vgatext_bus_read,
       C_vgatext_reg_read => C_vgatext_reg_read,
       C_vgatext_text_fifo => C_vgatext_text_fifo,
@@ -252,8 +303,14 @@ begin
       C_vgatext_bitmap_fifo_step => C_vgatext_bitmap_fifo_step,
       C_vgatext_bitmap_fifo_postpone_step => C_vgatext_bitmap_fifo_postpone_step,
       C_vgatext_bitmap_fifo_compositing_length => C_vgatext_bitmap_fifo_compositing_length,
-      C_vgatext_bitmap_fifo_width => C_vgatext_bitmap_fifo_width,
+      C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
+      C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
       C_fmrds => C_fmrds,
+      C_fm_stereo => C_fm_stereo,
+      C_rds_msg_len => C_rds_msg_len, -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
+      C_fmdds_hz => C_fmdds_hz, -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz)
+      C_rds_clock_multiply => C_rds_clock_multiply, -- multiply and divide from cpu clk 100 MHz
+      C_rds_clock_divide => C_rds_clock_divide, -- to get 1.824 MHz for RDS logic
       C_debug => C_debug
     )
     port map
