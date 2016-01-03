@@ -50,7 +50,7 @@ generic (
   C_branch_likely: boolean := true;
   C_sign_extend: boolean := true;
   C_ll_sc: boolean := false;
-  C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff"; -- 1 MB
+  C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff"; -- full 4GB
   C_exceptions: boolean := true;
 
   -- COP0 options
@@ -91,6 +91,7 @@ generic (
   C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
   C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
   C_sdram: boolean := true;
+  C_sdram_base: std_logic_vector(31 downto 28) := x"8"; -- x"8" maps RAM to 0x80000000
   C_sdram_separate_arbiter: boolean := false;
   C_sio: integer := 1;
   C_sio_init_baudrate: integer := 115200;
@@ -197,9 +198,11 @@ end glue_sdram;
 
 architecture Behavioral of glue_sdram is
     signal imem_addr: std_logic_vector(31 downto 2);
+    signal S_imem_addr_in_xram: std_logic;
     signal imem_data_read: std_logic_vector(31 downto 0);
     signal imem_addr_strobe, imem_data_ready: std_logic;
     signal dmem_addr: std_logic_vector(31 downto 2);
+    signal S_dmem_addr_in_xram: std_logic;
     signal dmem_addr_strobe, dmem_write: std_logic;
     signal dmem_bram_write, dmem_data_ready: std_logic;
     signal dmem_byte_sel: std_logic_vector(3 downto 0);
@@ -415,6 +418,7 @@ begin
       C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
       C_register_technology => C_register_technology,
       C_icache_expire => C_icache_expire,
+      C_xram_base => C_sdram_base, -- hacky part of address decoding in the cache
       C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_sdram_address_width, -- +1 ? e.g. 20 bits will cache 1MB
       -- debugging only
@@ -422,7 +426,8 @@ begin
     )
     port map (
       clk => clk, reset => sio_break_internal(0), intr => intr,
-      imem_addr => imem_addr, imem_data_in => final_to_cpu_i,
+      imem_addr => imem_addr,
+      imem_data_in => final_to_cpu_i,
       imem_addr_strobe => imem_addr_strobe,
       imem_data_ready => imem_data_ready,
       dmem_addr_strobe => dmem_addr_strobe, dmem_addr => dmem_addr,
@@ -440,19 +445,28 @@ begin
       debug_debug => debug_debug,
       debug_active => debug_active
     );
-    final_to_cpu_i <= from_sdram when imem_addr(31 downto 30) = "10"
-      else imem_data_read;
+    -- both internal bram and external RAM are cached
+    -- the cache must distinguish between them so
+    -- RAM base address must be passed to cache module
+    -- it is not enough to only decode them here
+    S_imem_addr_in_xram <= '1' when imem_addr(31 downto 28) = C_sdram_base else '0';
+    S_dmem_addr_in_xram <= '1' when dmem_addr(31 downto 28) = C_sdram_base else '0';
+    -- f32c 'standard' RAM hardcoded at 0x80000000
+    -- using most significant address bit (bit 32), which is
+    --S_imem_addr_in_xram <= imem_addr(31);
+    --S_dmem_addr_in_xram <= dmem_addr(31);
+    final_to_cpu_i <= from_sdram when S_imem_addr_in_xram = '1' else imem_data_read;
     final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
-      else vga_textmode_dmem_to_cpu when C_vgatext AND C_vgatext_bus_read AND dmem_addr(31 downto 30) = "01" -- address 0x40000000
-      else from_sdram when dmem_addr(31 downto 30) = "10"
+      else vga_textmode_dmem_to_cpu when C_vgatext AND C_vgatext_bus_read AND dmem_addr(31 downto 28) = x"4" -- address 0x40000000
+      else from_sdram when S_dmem_addr_in_xram = '1'
       else dmem_to_cpu;
     intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;
-    io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
+    io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"F" -- iomap at 0xFxxxxxxx
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
-    imem_data_ready <= sdram_ready(instr_port) when imem_addr(31 downto 30) = "10"
+    imem_data_ready <= sdram_ready(instr_port) when S_imem_addr_in_xram = '1'
       else imem_addr_strobe; -- MUST deassert ACK when strobe is low!!!
-    dmem_data_ready <= sdram_ready(data_port) when dmem_addr(31 downto 30) = "10"
+    dmem_data_ready <= sdram_ready(data_port) when S_dmem_addr_in_xram = '1'
       else '1'; -- I/O or BRAM have no wait states
 
     -- SDRAM
@@ -460,14 +474,14 @@ begin
     if C_sdram generate
     -- port 0: instruction bus
     to_sdram(instr_port).addr_strobe <= imem_addr_strobe when
-      imem_addr(31 downto 30) = "10" else '0';
+      S_imem_addr_in_xram = '1' else '0';
     to_sdram(instr_port).addr <= imem_addr(to_sdram(instr_port).addr'high downto 2);
     to_sdram(instr_port).data_in <= (others => '-');
     to_sdram(instr_port).write <= '0';
     to_sdram(instr_port).byte_sel <= "1111";
     -- port 1: data bus
     to_sdram(data_port).addr_strobe <= dmem_addr_strobe when
-      dmem_addr(31 downto 30) = "10" else '0';
+      S_dmem_addr_in_xram = '1' else '0';
     to_sdram(data_port).addr <= dmem_addr(to_sdram(data_port).addr'high downto 2);
     to_sdram(data_port).data_in <= cpu_to_dmem;
     to_sdram(data_port).write <= dmem_write;
@@ -1135,13 +1149,13 @@ begin
       end generate; -- pass_bram32_data
 
       vga_textmode_dmem_write <= dmem_addr_strobe and dmem_write
-                            when dmem_addr(31 downto 30) = "01"
+                            when dmem_addr(31 downto 28) = x"4"
                              AND (NOT C_vgatext_font_bram8 OR dmem_addr(15) = '0')
                             else '0';
 
       G_vgatext_bram8_wr: if C_vgatext_font_bram8 generate
         vga_textmode_dmem8_write <= dmem_addr_strobe and dmem_write
-                               when dmem_addr(31 downto 30) = "01" AND dmem_addr(15) = '1'
+                               when dmem_addr(31 downto 28) = x"4" AND dmem_addr(15) = '1'
                                else '0';
       end generate; -- G_vgatext_bram8_wr
 
@@ -1202,7 +1216,7 @@ begin
 
     -- Block RAM
     dmem_bram_write <=
-      dmem_addr_strobe and dmem_write when dmem_addr(31 downto 30) = "00" else '0';
+      dmem_addr_strobe and dmem_write when dmem_addr(31 downto 28) = x"0" else '0';
 
     bram: entity work.bram
     generic map (

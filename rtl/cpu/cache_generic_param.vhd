@@ -67,6 +67,10 @@ entity cache is
 	C_icache_size: integer;
 	C_dcache_size: integer;
 
+	-- address decoding to distinguish RAM/BRAM
+	-- MSB 4 bits of address of external RAM
+	C_xram_base: std_logic_vector(31 downto 28) := x"8";
+
 	-- bit widths
 	C_cached_addr_bits: integer := 20; -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
 
@@ -140,6 +144,7 @@ architecture x of cache is
 
     signal R_i_strobe: std_logic;
     signal R_i_addr: std_logic_vector(31 downto 2);
+    signal R_i_addr_in_xram: std_logic; -- hacky distinguish XRAM/BRAM
     signal R_dcache_wbuf: std_logic_vector(31 downto 0);
     signal R_d_state: std_logic_vector(1 downto 0);
     signal dcache_data_out: std_logic_vector(31 downto 0);
@@ -351,8 +356,11 @@ begin
     iaddr_cacheable <= C_icache_size > 0; -- XXX kseg0: R_i_addr(31 downto 29) = "100";
     icache_write <= imem_data_ready and R_i_strobe and icache_write_enable;
     itag_valid: if C_icache_size > 0 generate
+    R_i_addr_in_xram <= '1' when R_i_addr(31 downto 28) = C_xram_base else '0';
     icache_tag_in(1+C_cached_addr_bits-C_icache_addr_bits downto 0) 
-      <= '1' & R_i_addr(31) & R_i_addr(C_cached_addr_bits-1 downto C_icache_addr_bits);
+      <= '1'
+      & R_i_addr_in_xram -- dirty address decoding: external RAM or internal BRAM
+      & R_i_addr(C_cached_addr_bits-1 downto C_icache_addr_bits);
     icache_line_valid <= iaddr_cacheable
       and '1' & icache_tag_in(C_cached_addr_bits-C_icache_addr_bits downto 0) 
            = icache_tag_out(1+C_cached_addr_bits-C_icache_addr_bits downto 0);
@@ -407,7 +415,7 @@ begin
     cpu_d_ready <= '1' when R_d_state = C_D_READ and dcache_line_valid
       else dmem_data_ready;
 
-    daddr_cacheable <= C_dcache_size > 0 and d_addr(31 downto 29) = "100";
+    daddr_cacheable <= C_dcache_size > 0 and d_addr(31 downto 28) = C_xram_base;
     dcache_write <= dmem_data_ready when
       (R_d_state = C_D_WRITE or R_d_state = C_D_FETCH) else '0';
     d_tag_valid_bit <= '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111"
