@@ -35,10 +35,10 @@
 
 -- allows compositing (thin h-sprites)
 
--- every 17th 32-bit word contains 2 16-but compositing words.
+-- every 17th 32-bit word contains 2 16-bit compositing words.
 -- each can be either positive or negative, it will be added to fifo
--- write address for the bitmap of 16 following 32-bit words, which will
--- can horizontally displace like thin sprite,, left or right.
+-- write address for the bitmap of 16 following 32-bit words, which
+-- can horizontally displace like thin sprite, left or right.
 -- 640x480 8bpp bitmap can hold 9600 thin sprites
 
 -- memory map (continuously repeats this pattern):
