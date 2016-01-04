@@ -120,6 +120,7 @@ generic (
     C_vgatext_mode: integer := 0;   -- 640x480
     C_vgatext_bits: integer := 2;   -- 64 possible colors
     C_vgatext_bram_mem: integer := 4;   -- 4KB text+font  memory
+    C_vgatext_bram_base: std_logic_vector(31 downto 28) := x"4"; -- start address of textmode bram x"4" -> 0x40000000
     C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
     C_vgatext_reset: boolean := true;   -- reset registers to default with async reset
     C_vgatext_palette: boolean := false;  -- no color palette
@@ -457,7 +458,7 @@ begin
     --S_dmem_addr_in_xram <= dmem_addr(31);
     final_to_cpu_i <= from_sdram when S_imem_addr_in_xram = '1' else imem_data_read;
     final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
-      else vga_textmode_dmem_to_cpu when C_vgatext AND C_vgatext_bus_read AND dmem_addr(31 downto 28) = x"4" -- address 0x40000000
+      else vga_textmode_dmem_to_cpu when C_vgatext AND C_vgatext_bus_read AND dmem_addr(31 downto 28) = C_vgatext_bram_base -- address 0x40000000
       else from_sdram when S_dmem_addr_in_xram = '1'
       else dmem_to_cpu;
     intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;
@@ -1149,13 +1150,13 @@ begin
       end generate; -- pass_bram32_data
 
       vga_textmode_dmem_write <= dmem_addr_strobe and dmem_write
-                            when dmem_addr(31 downto 28) = x"4"
+                            when dmem_addr(31 downto 28) = C_vgatext_bram_base
                              AND (NOT C_vgatext_font_bram8 OR dmem_addr(15) = '0')
                             else '0';
 
       G_vgatext_bram8_wr: if C_vgatext_font_bram8 generate
         vga_textmode_dmem8_write <= dmem_addr_strobe and dmem_write
-                               when dmem_addr(31 downto 28) = x"4" AND dmem_addr(15) = '1'
+                               when dmem_addr(31 downto 28) = C_vgatext_bram_base AND dmem_addr(15) = '1'
                                else '0';
       end generate; -- G_vgatext_bram8_wr
 
