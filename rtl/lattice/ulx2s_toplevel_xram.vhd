@@ -182,10 +182,10 @@ entity toplevel is
           -- bitmap width of FIFO address space length = 2^width * 4 byte
           C_vgatext_bitmap_fifo_addr_width: integer := 11;
 
-    C_pcm: boolean := false;
+    C_pcm: boolean := true;
     C_timer: boolean := true;
-    C_cw_simple_out: integer := 7; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
-    C_fmrds: boolean := false; -- either FM or tx433
+    C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+    C_fmrds: boolean := true; -- either FM or tx433
     C_fm_stereo: boolean := false;
     C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
     C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
@@ -389,7 +389,7 @@ begin
     port map (
       clk => clk,
       clk_25MHz => clk_25m,
-      -- clk_325m => clk_325m,
+      clk_fmdds => clk_325m,
       clk_cw => clk_433m,
       sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx, sio_break(0) => rs232_break,
       spi_sck(0) => flash_sck, spi_ss(0) => flash_cen,
