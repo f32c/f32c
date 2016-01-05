@@ -28,7 +28,7 @@ vhdfiles = \
 ../../../xilinx/pll_50M_250M_125M_25M.vhd \
 ../../../xilinx/pll_50M_250M_111M11_25M.vhd \
 ../../../xilinx/hdmi_out.vhd \
-../../../generic/glue_sdram.vhd \
+../../../generic/glue_xram.vhd \
 ../../../generic/bram.vhd \
 ../../../generic/boot_block_pack.vhd \
 ../../../generic/bootloader/boot_sio_mi32el.vhd \
@@ -51,6 +51,7 @@ vhdfiles = \
 ../../../cpu/cache_generic_param.vhd \
 ../../../cpu/debug.vhd \
 ../../../soc/sram_pack.vhd \
+../../../soc/sram.vhd \
 ../../../soc/arbiter.vhd \
 ../../../soc/sdram_ctrl.vhd \
 ../../../soc/ram_emu.vhd \
