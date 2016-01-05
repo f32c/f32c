@@ -119,35 +119,35 @@ generic (
   -- it can mix 8bpp bitmap and tiled graphics on the same screen
   -- choice of many of video modes
   -- minimal mode needs only 4K BRAM
-	C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
-		C_vgatext_label: string := "f32c";    -- default banner in screen memory
-    C_vgatext_mode: integer := 0;   -- 640x480
-    C_vgatext_bits: integer := 2;   -- 64 possible colors
-    C_vgatext_bram_mem: integer := 4;   -- 4KB text+font  memory
+  C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext_label: string := "f32c";    -- default banner in screen memory
+    C_vgatext_mode: integer := 0; -- 640x480
+    C_vgatext_bits: integer := 2; -- 64 possible colors
+    C_vgatext_bram_mem: integer := 4; -- 4KB text+font  memory
     C_vgatext_bram_base: std_logic_vector(31 downto 28) := x"4"; -- start address of textmode bram x"4" -> 0x40000000
     C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
-    C_vgatext_reset: boolean := true;   -- reset registers to default with async reset
-    C_vgatext_palette: boolean := false;  -- no color palette
-    C_vgatext_text: boolean := true;    -- enable optional text generation
-      C_vgatext_font_bram8: boolean := false;  -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
-      C_vgatext_char_height: integer := 16;   -- character cell height
-      C_vgatext_font_height: integer := 8;    -- font height
-      C_vgatext_font_depth: integer := 8;			-- font char depth, 7=128 characters or 8=256 characters
-      C_vgatext_font_linedouble: boolean := true;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
-      C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)
-      C_vgatext_monochrome: boolean := false;    -- true for 2-color text for whole screen, else additional color attribute byte per character
-      C_vgatext_finescroll: boolean := false;   -- true for pixel level character scrolling and line length modulo
-      C_vgatext_cursor: boolean := true;    -- true for optional text cursor
-      C_vgatext_cursor_blink: boolean := true;    -- true for optional blinking text cursor
+    C_vgatext_reset: boolean := true; -- reset registers to default with async reset
+    C_vgatext_palette: boolean := false; -- no color palette
+    C_vgatext_text: boolean := true; -- enable optional text generation
+      C_vgatext_font_bram8: boolean := false; -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
+      C_vgatext_char_height: integer := 16; -- character cell height
+      C_vgatext_font_height: integer := 8; -- font height
+      C_vgatext_font_depth: integer := 8; -- font char depth, 7=128 characters or 8=256 characters
+      C_vgatext_font_linedouble: boolean := true; -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
+      C_vgatext_font_widthdouble: boolean := false; -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)
+      C_vgatext_monochrome: boolean := false; -- true for 2-color text for whole screen, else additional color attribute byte per character
+      C_vgatext_finescroll: boolean := false; -- true for pixel level character scrolling and line length modulo
+      C_vgatext_cursor: boolean := true; -- true for optional text cursor
+      C_vgatext_cursor_blink: boolean := true; -- true for optional blinking text cursor
       C_vgatext_bus_read: boolean := false; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
       C_vgatext_reg_read: boolean := false; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
       C_vgatext_text_fifo: boolean := true;  -- enable text memory FIFO
       C_vgatext_text_fifo_postpone_step: integer := 0;
       C_vgatext_text_fifo_step: integer := (80*2)/4; -- step for the FIFO refill and rewind
-        C_vgatext_text_fifo_width: integer := 6; 	-- width of FIFO address space (default=4) length = 2^width * 4 bytes
-    C_vgatext_bitmap: boolean := false;     -- true for optional bitmap generation
-      C_vgatext_bitmap_depth: integer := 8;   -- 8-bpp 256-color bitmap
-      C_vgatext_bitmap_fifo: boolean := false;  -- disable bitmap FIFO
+        C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) length = 2^width * 4 bytes
+    C_vgatext_bitmap: boolean := false; -- true for optional bitmap generation
+      C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
+      C_vgatext_bitmap_fifo: boolean := false; -- disable bitmap FIFO
         C_vgatext_bitmap_fifo_step: integer := 0; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
         C_vgatext_bitmap_fifo_postpone_step: integer := 0; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
         C_vgatext_bitmap_fifo_addr_width: integer := 8;	-- bitmap width of FIFO address space length = 2^width * 4 byte
@@ -322,20 +322,20 @@ architecture Behavioral of glue_xram is
     signal vga_textmode_text_data: std_logic_vector(31 downto 0);
     signal vga_textmode_text_strobe: std_logic;
     signal vga_textmode_text_rewind: std_logic;
-    signal vga_textmode_text_ready: std_logic;					-- SDRAM data ready
+    signal vga_textmode_text_ready: std_logic; -- SDRAM data ready
     signal vga_textmode_text_sdram_addr: std_logic_vector(29 downto 2);
     signal vga_textmode_text_sdram_strobe: std_logic; -- FIFO requests to read from RAM
     signal vga_textmode_text_sdram_ready: std_logic; -- RAM responds to FIFO
-    signal vga_textmode_text_active: std_logic;  -- true when visible scan-line, false in vertical blanking period
+    signal vga_textmode_text_active: std_logic; -- true when visible scan-line, false in vertical blanking period
     signal vga_textmode_text_frame: std_logic;
 
     -- VGA_textmode SRAM/FIFO bitmap access
     signal vga_textmode_bitmap_addr: std_logic_vector(29 downto 2); -- FIFO start or SRAM address
     signal vga_textmode_bitmap_data: std_logic_vector(C_vgatext_bitmap_fifo_data_width-1 downto 0); -- data from FIFO or SRAM
-    signal vga_textmode_bitmap_strobe: std_logic;				  -- FIFO fetch next word
-    signal vga_textmode_bitmap_rewind: std_logic;         -- rewind FIFO
-    signal vga_textmode_bitmap_ready: std_logic;					-- SRAM data ready
-    signal vga_textmode_bitmap_active: std_logic;  -- true when visible scan-line, false in vertical blanking period
+    signal vga_textmode_bitmap_strobe: std_logic; -- FIFO fetch next word
+    signal vga_textmode_bitmap_rewind: std_logic; -- rewind FIFO
+    signal vga_textmode_bitmap_ready: std_logic; -- SRAM data ready
+    signal vga_textmode_bitmap_active: std_logic; -- true when visible scan-line, false in vertical blanking period
     signal vga_textmode_bitmap_frame: std_logic;
 
     -- PCM audio
@@ -1232,7 +1232,7 @@ begin
     );
     with conv_integer(io_addr(11 downto 4)) select
       pcm_ce <= io_addr_strobe when iomap_from(iomap_pcm, iomap_range) to iomap_to(iomap_pcm, iomap_range),
-                                          '0' when others;
+                           '0' when others;
     end generate;
 
     -- CW transmitter
@@ -1268,7 +1268,7 @@ begin
     );
     with conv_integer(io_addr(11 downto 4)) select
       fmrds_ce <= io_addr_strobe when iomap_from(iomap_fmrds, iomap_range) to iomap_to(iomap_fmrds, iomap_range),
-                           '0' when others;
+                             '0' when others;
     end generate;
 
 
