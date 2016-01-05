@@ -193,7 +193,6 @@ entity toplevel is
     --C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
     C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
     C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
-    C_pid: boolean := false;
     C_pids: integer := 4;
     C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8); -- for each pid choose simulator/real 
     C_dds: boolean := false
@@ -374,6 +373,8 @@ begin
       C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
       C_pcm => C_pcm,
       C_timer => C_timer,
+      C_pids => C_pids,
+      C_pid_simulator => C_pid_simulator, -- for each pid choose simulator/real
       C_cw_simple_out => C_cw_simple_out, -- CW is for 433 MHz. -1 to disable. set (C_framebuffer => false, C_dds => false) for 433MHz transmitter
       C_fmrds => C_fmrds, -- either FM or tx433
       C_fm_stereo => C_fm_stereo,
@@ -381,9 +382,6 @@ begin
       C_fmdds_hz => C_fmdds_hz, -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
       C_rds_clock_multiply => C_rds_clock_multiply, -- multiply and divide from cpu clk 81.25 MHz
       C_rds_clock_divide => C_rds_clock_divide  -- to get 1.824 MHz for RDS logic
-      --C_pid => C_pid,
-      --C_pids => C_pids,
-      --C_pid_simulator => C_pid_simulator, -- for each pid choose simulator/real 
       --C_dds => C_dds
     )
     port map (
