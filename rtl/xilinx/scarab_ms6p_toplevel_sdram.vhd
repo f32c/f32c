@@ -248,7 +248,7 @@ begin
     );
 
   -- generic SDRAM glue
-  glue_sdram: entity work.glue_sdram
+  glue_xram: entity work.glue_xram
     generic map
     (
       C_arch => C_arch,
