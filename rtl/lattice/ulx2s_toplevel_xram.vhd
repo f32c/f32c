@@ -68,7 +68,7 @@ entity toplevel is
   -- Main clock: 25, 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
   C_clk_freq: integer := 81;
 
-	-- ISA options
+  -- ISA options
 	C_arch: integer := ARCH_MI32;
 	C_big_endian: boolean := false;
 	C_mult_enable: boolean := true;
@@ -77,13 +77,13 @@ entity toplevel is
 	C_ll_sc: boolean := false;
 	C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff";
 
-	-- COP0 options
+  -- COP0 options
 	C_exceptions: boolean := true;
 	C_cop0_count: boolean := true;
 	C_cop0_compare: boolean := true;
 	C_cop0_config: boolean := true;
 
-	-- CPU core configuration options
+  -- CPU core configuration options
 	C_branch_prediction: boolean := true;
 	C_full_shifter: boolean := true;
 	C_result_forwarding: boolean := true;
@@ -182,7 +182,7 @@ entity toplevel is
 
 	C_pcm: boolean := false;
 	C_timer: boolean := true;
-	C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+	C_cw_simple_out: integer := 7; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
 	C_fmrds: boolean := false; -- either FM or tx433
 	C_fm_stereo: boolean := false;
 	C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
@@ -374,7 +374,7 @@ begin
         C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
 	C_pcm => C_pcm,
 	C_timer => C_timer,
-	-- C_cw_simple_out => C_cw_simple_out, -- CW is for 433 MHz. -1 to disable. set (C_framebuffer => false, C_dds => false) for 433MHz transmitter
+	C_cw_simple_out => C_cw_simple_out, -- CW is for 433 MHz. -1 to disable. set (C_framebuffer => false, C_dds => false) for 433MHz transmitter
 	C_fmrds => C_fmrds, -- either FM or tx433
 	C_fm_stereo => C_fm_stereo,
 	C_rds_msg_len => C_rds_msg_len, -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
@@ -390,7 +390,7 @@ begin
         clk => clk,
 	clk_25MHz => clk_25m,
 	-- clk_325m => clk_325m,
-	-- clk_cw => clk_433m,
+	clk_cw => clk_433m,
 	sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx, sio_break(0) => rs232_break,
 	spi_sck(0) => flash_sck, spi_ss(0) => flash_cen,
 	spi_mosi(0) => flash_si, spi_miso(0) => flash_so,

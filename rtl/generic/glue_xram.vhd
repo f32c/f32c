@@ -158,6 +158,7 @@ generic (
         -- compositing length 17: 1 word for offset, 16 words for bitmap (thin h-sprites 64x1 of 8bpp pixels)
 
     C_pcm: boolean := true;
+    C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
     C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
       C_fm_stereo: boolean := false;
       C_rds_msg_len: integer := 260; -- bytes of circular sent message, typical 52 for PS or 260 PS+RT
@@ -178,6 +179,7 @@ port (
   clk_25MHz: in std_logic := '0'; -- VGA pixel clock 25 MHz
   clk_250MHz: in std_logic := '0'; -- HDMI bit shift clock, default 0 if no HDMI
   clk_fmdds: in std_logic := '0'; -- FM DDS clock (>216 MHz)
+  clk_cw: in std_logic := '0'; -- CW transmitter 433.92 MHz
   sram_a: out std_logic_vector(18 downto 0);
   sram_d: inout std_logic_vector(15 downto 0);
   sram_wel, sram_lbl, sram_ubl: out std_logic;
@@ -1233,6 +1235,14 @@ begin
                                           '0' when others;
     end generate;
 
+    -- CW transmitter
+    -- one selected simple_out enables carrier wave (CW) modulation
+    -- used for carriers of higher frequency than FM DDS
+    -- can produce (433 MHz)
+    G_cw_antenna:
+    if C_cw_simple_out >= 0 and C_simple_out > C_cw_simple_out generate
+      cw_antenna <= simple_out(C_cw_simple_out) and clk_cw;
+    end generate;
 
     -- FM/RDS
     G_fmrds:
