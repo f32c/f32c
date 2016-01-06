@@ -87,7 +87,7 @@ generic (
   C_ram_emu_wait_states: integer := 0;
 
   -- SoC configuration options
-  C_mem_size: integer := 2;	-- in KBytes
+  C_bram_size: integer := 2;	-- in KBytes
   C_icache_expire: boolean := false; -- when true i-cache will just pass data, won't keep them
   C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
   C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
@@ -1279,7 +1279,7 @@ begin
     bram: entity work.bram
     generic map (
       boot_block => boot_block,
-      C_mem_size => C_mem_size
+      C_mem_size => C_bram_size
     )
     port map (
       clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,

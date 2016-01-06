@@ -311,7 +311,7 @@ begin
       C_register_technology => C_register_technology,
       C_movn_movz => C_movn_movz,
       C_debug => C_debug,
-      C_mem_size => C_bram_size,
+      C_bram_size => C_bram_size,
       -- C_i_rom_only => C_i_rom_only,
       C_icache_expire => C_icache_expire,
       C_icache_size => C_icache_size,	-- 0, 2, 4 or 8 KBytes
