@@ -352,13 +352,13 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../xilinx/pll_125M_250M_100M_25M.vhd">
+      <File Path="$PPRDIR/../../../xilinx/clocks/zybo/pll_125M_250M_100M_25M.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../xilinx/mmcm_125M_81M25_250M521_25M052.vhd">
+      <File Path="$PPRDIR/../../../xilinx/clocks/zybo/mmcm_125M_81M25_250M521_25M052.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
