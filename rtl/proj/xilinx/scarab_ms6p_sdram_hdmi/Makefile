@@ -20,13 +20,15 @@ vfiles = \
 
 vhdfiles = \
 ../../../xilinx/scarab_ms6p_toplevel_sdram.vhd \
-../../../xilinx/pll_50M_112M5.vhd \
-../../../xilinx/pll_50M_100M.vhd \
-../../../xilinx/pll_50M_100M_25M_250M.vhd \
-../../../xilinx/pll_50M_81M25.vhd \
-../../../xilinx/pll_50M_25M_83M33_250M.vhd \
-../../../xilinx/pll_50M_250M_125M_25M.vhd \
-../../../xilinx/pll_50M_250M_111M11_25M.vhd \
+../../../xilinx/clocks/scarab/pll_50M_112M5.vhd \
+../../../xilinx/clocks/scarab/pll_50M_100M.vhd \
+../../../xilinx/clocks/scarab/pll_50M_100M_25M_250M.vhd \
+../../../xilinx/clocks/scarab/pll_50M_81M25.vhd \
+../../../xilinx/clocks/scarab/pll_50M_25M_83M33_250M.vhd \
+../../../xilinx/clocks/scarab/pll_50M_250M_125M_25M.vhd \
+../../../xilinx/clocks/scarab/pll_50M_250M_111M11_25M.vhd \
+../../../xilinx/clocks/scarab/pll_50M_96M43.vhd \
+../../../xilinx/clocks/scarab/pll_96M43_433M9_289M3_28M93.vhd \
 ../../../xilinx/hdmi_out.vhd \
 ../../../generic/glue_xram.vhd \
 ../../../generic/bram.vhd \

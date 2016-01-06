@@ -43,10 +43,10 @@ entity glue is
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
 
-    -- Main clock: 50/81/83/100/111/112/125
-    C_clk_freq: integer := 100;
+    -- Main clock: 50/81/83/96/100/111/112/125
+    C_clk_freq: integer := 96;
     -- SoC configuration options
-    C_mem_size: integer := 8; -- bootloader area
+    C_bram_size: integer := 8; -- bootloader area
     C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
     C_icache_size: integer := 32; -- 0, 2, 4, 8, 16, 32 KBytes
     C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
@@ -135,6 +135,9 @@ entity glue is
           -- bitmap width of FIFO address space length = 2^width * 4 byte
           C_vgatext_bitmap_fifo_addr_width: integer := 11;
 
+
+    C_cw_simple_out: integer := 7; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+
       C_fmrds: boolean := true;
         C_fm_stereo: boolean := false;
         C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
@@ -169,7 +172,7 @@ entity glue is
     leds: out std_logic_vector(7 downto 0);
     porta, portb: inout std_logic_vector(11 downto 0);
     portc: inout std_logic_vector(7 downto 0);
-    portd: out std_logic_vector(0 downto 0); -- fm antenna is here
+    portd: out std_logic_vector(1 downto 0); -- fm and cw antennas are here
     TMDS_in_P, TMDS_in_N: out std_logic_vector(2 downto 0);
     TMDS_in_CLK_P, TMDS_in_CLK_N: out std_logic;
     TMDS_out_P, TMDS_out_N: out std_logic_vector(2 downto 0);
@@ -180,8 +183,9 @@ end glue;
 
 architecture Behavioral of glue is
   signal clk, sdram_clk_internal: std_logic;
-  signal clk_25MHz, clk_250MHz: std_logic := '0';
+  signal clk_25MHz, clk_250MHz, clk_433M92Hz: std_logic := '0';
   signal rs232_break: std_logic;
+  signal cw_antenna, fm_antenna: std_logic;
   signal btns: std_logic_vector(1 downto 0);
   signal tmds_out_rgb: std_logic_vector(2 downto 0);
 begin
@@ -193,6 +197,7 @@ begin
       (
         clk_in1 => clk_50MHz, clk_out1 => clk_250MHz, clk_out2 => clk, clk_out3 => clk_25MHz
       );
+    portd(0) <= fm_antenna;
   end generate;
 
   clk112: if C_clk_freq = 112 generate
@@ -209,6 +214,7 @@ begin
       (
         clk_in1 => clk_50MHz, clk_out1 => clk_250MHz, clk_out2 => clk, clk_out3 => clk_25MHz
       );
+    portd(0) <= fm_antenna;
   end generate;
 
   clk100: if C_clk_freq = 100 generate
@@ -217,6 +223,22 @@ begin
       (
         clk_in1 => clk_50MHz, clk_out1 => clk, clk_out2 => clk_25MHz, clk_out3 => clk_250MHz
       );
+    portd(0) <= fm_antenna;
+  end generate;
+
+  clk96: if C_clk_freq = 96 generate
+    clkgen96: entity work.pll_50M_96M43
+      port map
+      (
+        clk_in_50M => clk_50MHz, clk_out_96M43 => clk
+      );
+    clkgen433: entity work.pll_96M43_433M9_289M3_28M93
+      port map
+      (
+        clk_in_96M43 => clk, clk_out_433M9 => clk_433M92Hz, clk_out_289M3 => clk_250MHz, clk_out_28M93 => clk_25MHz
+      );
+    portd(0) <= fm_antenna;
+    portd(1) <= cw_antenna;
   end generate;
 
   clk83: if C_clk_freq = 83 generate
@@ -225,6 +247,7 @@ begin
       (
         clk_in1 => clk_50MHz, clk_out1 => clk_25MHz, clk_out2 => clk, clk_out3 => clk_250MHz
       );
+    portd(0) <= fm_antenna;
   end generate;
 
   clk81: if C_clk_freq = 81 generate
@@ -253,7 +276,7 @@ begin
     (
       C_arch => C_arch,
       C_clk_freq => C_clk_freq,
-      C_mem_size => C_mem_size,
+      C_bram_size => C_bram_size,
       C_icache_expire => C_icache_expire,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
@@ -311,6 +334,7 @@ begin
       C_vgatext_bitmap_fifo_compositing_length => C_vgatext_bitmap_fifo_compositing_length,
       C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
       C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
+      C_cw_simple_out => C_cw_simple_out, -- CW is for 433 MHz. -1 to disable. set (C_framebuffer => false, C_dds => false) for 433MHz transmitter
       C_fmrds => C_fmrds,
       C_fm_stereo => C_fm_stereo,
       C_rds_msg_len => C_rds_msg_len, -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
@@ -324,6 +348,7 @@ begin
       clk => clk,
       clk_25MHz => clk_25MHz, -- pixel clock
       clk_250MHz => clk_250MHz, -- tmds clock
+      clk_cw => clk_433M92Hz, -- CW clock for 433.92MHz transmitter
       clk_fmdds => clk_250MHz, -- FM/RDS clock
       -- external SDRAM interface
       sdram_addr => sdram_a, sdram_data => sdram_d,
@@ -338,7 +363,8 @@ begin
       spi_mosi(0) => flash_mosi,  spi_mosi(1) => sd_cmd,
       spi_miso(0) => flash_miso,  spi_miso(1) => sd_dat0,
       tmds_out_rgb => tmds_out_rgb,
-      fm_antenna => portd(0),
+      cw_antenna => cw_antenna,
+      fm_antenna => fm_antenna,
       gpio(11 downto 0) => porta(11 downto 0),
       gpio(23 downto 12) => portb(11 downto 0),
       gpio(31 downto 24) => portc(7 downto 0),
