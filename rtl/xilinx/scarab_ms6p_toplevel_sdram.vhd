@@ -44,7 +44,7 @@ entity glue is
     C_debug: boolean := false;
 
     -- Main clock: 50/81/83/96/100/111/112/125
-    C_clk_freq: integer := 96;
+    C_clk_freq: integer := 100;
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
     C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
@@ -136,7 +136,7 @@ entity glue is
           C_vgatext_bitmap_fifo_addr_width: integer := 11;
 
 
-    C_cw_simple_out: integer := 7; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+    C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
 
       C_fmrds: boolean := true;
         C_fm_stereo: boolean := false;
@@ -148,7 +148,7 @@ entity glue is
         --C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
       C_sio: integer := 1;
       C_spi: integer := 2;
-      C_gpio: integer := 32
+      C_gpio: integer := 64
   );
   port
   (
@@ -170,11 +170,14 @@ entity glue is
     sd_clk, sd_cd_dat3, sd_cmd: out std_logic;
     sd_dat0: in std_logic;
     leds: out std_logic_vector(7 downto 0);
-    porta, portb: inout std_logic_vector(11 downto 0);
-    portc: inout std_logic_vector(7 downto 0);
-    portd: out std_logic_vector(1 downto 0); -- fm and cw antennas are here
+    porta, portb, portc: inout std_logic_vector(11 downto 0);
+    portd: inout std_logic_vector(3 downto 0); -- fm and cw antennas are here
+    porte, portf: inout std_logic_vector(11 downto 0);
+    audio1, audio2: out std_logic; -- 3.5mm audio jack
+    -- warning TMDS_in is used as output
     TMDS_in_P, TMDS_in_N: out std_logic_vector(2 downto 0);
     TMDS_in_CLK_P, TMDS_in_CLK_N: out std_logic;
+    FPGA_SDA, FPGA_SCL: inout std_logic; -- i2c on TMDS_in
     TMDS_out_P, TMDS_out_N: out std_logic_vector(2 downto 0);
     TMDS_out_CLK_P, TMDS_out_CLK_N: out std_logic;
     sw: in std_logic_vector(4 downto 1)
@@ -185,7 +188,7 @@ architecture Behavioral of glue is
   signal clk, sdram_clk_internal: std_logic;
   signal clk_25MHz, clk_250MHz, clk_433M92Hz: std_logic := '0';
   signal rs232_break: std_logic;
-  signal cw_antenna, fm_antenna: std_logic;
+  signal cw_antenna, fm_antenna: std_logic := '0';
   signal btns: std_logic_vector(1 downto 0);
   signal tmds_out_rgb: std_logic_vector(2 downto 0);
 begin
@@ -198,6 +201,7 @@ begin
         clk_in1 => clk_50MHz, clk_out1 => clk_250MHz, clk_out2 => clk, clk_out3 => clk_25MHz
       );
     portd(0) <= fm_antenna;
+    portd(1) <= cw_antenna;
   end generate;
 
   clk112: if C_clk_freq = 112 generate
@@ -206,6 +210,8 @@ begin
       (
         clk_in1 => clk_50MHz, clk_out1 => clk
       );
+    portd(0) <= fm_antenna;
+    portd(1) <= cw_antenna;
   end generate;
 
   clk111: if C_clk_freq = 111 generate
@@ -215,6 +221,7 @@ begin
         clk_in1 => clk_50MHz, clk_out1 => clk_250MHz, clk_out2 => clk, clk_out3 => clk_25MHz
       );
     portd(0) <= fm_antenna;
+    portd(1) <= cw_antenna;
   end generate;
 
   clk100: if C_clk_freq = 100 generate
@@ -224,6 +231,7 @@ begin
         clk_in1 => clk_50MHz, clk_out1 => clk, clk_out2 => clk_25MHz, clk_out3 => clk_250MHz
       );
     portd(0) <= fm_antenna;
+    portd(1) <= cw_antenna;
   end generate;
 
   clk96: if C_clk_freq = 96 generate
@@ -248,6 +256,7 @@ begin
         clk_in1 => clk_50MHz, clk_out1 => clk_25MHz, clk_out2 => clk, clk_out3 => clk_250MHz
       );
     portd(0) <= fm_antenna;
+    portd(1) <= cw_antenna;
   end generate;
 
   clk81: if C_clk_freq = 81 generate
@@ -256,10 +265,14 @@ begin
       (
         clk_in1 => clk_50MHz, clk_out1 => clk
       );
+    portd(0) <= fm_antenna;
+    portd(1) <= cw_antenna;
   end generate;
 
   clk50: if C_clk_freq = 50 generate
     clk <= clk_50MHz;
+    portd(0) <= fm_antenna;
+    portd(1) <= cw_antenna;
   end generate;
 
   -- reset hard-block: Xilinx Spartan-6 specific
@@ -363,18 +376,27 @@ begin
       spi_mosi(0) => flash_mosi,  spi_mosi(1) => sd_cmd,
       spi_miso(0) => flash_miso,  spi_miso(1) => sd_dat0,
       tmds_out_rgb => tmds_out_rgb,
+      jack_ring(3) => audio1, jack_ring(2 downto 0) => open,
+      jack_tip(3)  => audio2, jack_tip(2 downto 0)  => open,
       cw_antenna => cw_antenna,
       fm_antenna => fm_antenna,
-      gpio(11 downto 0) => porta(11 downto 0),
+      gpio(11 downto  0) => porta(11 downto 0),
       gpio(23 downto 12) => portb(11 downto 0),
-      gpio(31 downto 24) => portc(7 downto 0),
-      gpio(127 downto 32) => open,
+      gpio(35 downto 24) => portc(11 downto 0),
+      gpio(37 downto 36) => open, -- because cw/fm antennas on portd(1 downto 0)
+      gpio(39 downto 38) => portd( 3 downto 2), -- tx antennas
+      gpio(51 downto 40) => porte(11 downto 0), 
+      gpio(63 downto 52) => portf(11 downto 0), 
+      gpio(127 downto 64) => open,
       simple_out(7 downto 0) => leds(7 downto 0),
       simple_out(31 downto 8) => open,
       simple_in(15 downto 0) => open,
       simple_in(19 downto 16) => sw(4 downto 1),
       simple_in(31 downto 20) => open
     );
+    -- unused pins
+    FPGA_SDA <= 'Z';
+    FPGA_SCL <= 'Z';
 
     -- SDRAM clock output needs special routing on Spartan-6
     sdram_clk_forward : ODDR2

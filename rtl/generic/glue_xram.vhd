@@ -202,6 +202,7 @@ port (
   vga_hsync, vga_vsync: out std_logic;
   vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0);
   tmds_out_rgb: out std_logic_vector(2 downto 0);
+  jack_tip, jack_ring: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, 4-bit simple DAC
   fm_antenna, cw_antenna: out std_logic;
   gpio: inout std_logic_vector(127 downto 0)
 );
@@ -1233,6 +1234,8 @@ begin
     with conv_integer(io_addr(11 downto 4)) select
       pcm_ce <= io_addr_strobe when iomap_from(iomap_pcm, iomap_range) to iomap_to(iomap_pcm, iomap_range),
                            '0' when others;
+    jack_tip  <= (others => pcm_l);
+    jack_ring <= (others => pcm_r);
     end generate;
 
     -- CW transmitter
