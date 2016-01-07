@@ -54,6 +54,7 @@ vhdfiles = \
 ../../../cpu/debug.vhd \
 ../../../soc/sram_pack.vhd \
 ../../../soc/sram.vhd \
+../../../soc/sram8.vhd \
 ../../../soc/arbiter.vhd \
 ../../../soc/sdram_ctrl.vhd \
 ../../../soc/ram_emu.vhd \
