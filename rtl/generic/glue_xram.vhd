@@ -91,10 +91,11 @@ generic (
   C_icache_expire: boolean := false; -- when true i-cache will just pass data, won't keep them
   C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
   C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
-  C_sram: boolean := false;
+  C_sram: boolean := false; -- 16-bit SRAM
+  C_sram8: boolean := false; -- 8-bit SRAM
   C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
   C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
-  C_sdram: boolean := true;
+  C_sdram: boolean := false;
   C_sdram_base: std_logic_vector(31 downto 28) := x"8"; -- x"8" maps RAM to 0x80000000
   C_sdram_separate_arbiter: boolean := false;
   C_sio: integer := 1;
@@ -526,7 +527,7 @@ begin
     end generate;
     end generate; -- G_xram
     
-    G_sram:
+    G_sram16bit:
     if C_sram generate
     sram: entity work.sram
     generic map (
@@ -543,8 +544,25 @@ begin
 	-- Multi-port connections:
 	bus_in => to_xram, ready_out => xram_ready
     );
-    end generate; -- G_sram
-    
+    end generate; -- G_sram16bit
+
+    G_sram8bit:
+    if C_sram8 generate
+    sram8: entity work.sram8_controller
+    generic map (
+        C_ports => C_xram_ports, -- extra ports: framebuffer, textmode and PCM audio
+        C_prio_port => fb_port, -- framebuffer
+        C_wait_cycles => C_sram_wait_cycles,
+        C_pipelined_read => C_pipelined_read
+    )
+    port map (
+        clk => clk,
+        -- internal connections
+        data_out => from_xram, bus_in => to_xram, ready_out => xram_ready,
+        sram_wel => sram_wel, sram_addr => sram_a, sram_data => sram_d(7 downto 0),
+        snoop_cycle => snoop_cycle, snoop_addr => snoop_addr
+    );
+    end generate; -- G_sram8bit
 
     G_sdram:
     if C_sdram generate
