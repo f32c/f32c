@@ -71,6 +71,7 @@ vhdfiles = \
 ../../../soc/fm/fm.vhd \
 ../../../soc/fm/fmgen.vhd \
 ../../../soc/fm/rds.vhd \
+../../../soc/fm/fir.vhd \
 ../../../soc/fm/bram_rds.vhd \
 ../../../soc/fm/message.vhd \
 ../../../soc/vgahdmi/compositing_fifo.vhd \
