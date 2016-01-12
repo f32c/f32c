@@ -26,6 +26,7 @@ generic (
     -- 2ch stereo is not yet implemented, only pilot generator
     c_stereo: boolean := false; -- true: use stereo mixing
     -- true: spend more LUTs to use 32-point sinewave and multiply 
+    c_filter: boolean := false; -- true: input low pass filter for stereo
     -- false: save LUTs, use 4-point multiplexer, no multiply
     c_debug: boolean := false; -- output counters to check subcarriers phases
     c_addr_bits: integer range 1 to 11 := 9; -- number of address bits for RDS message RAM
@@ -110,6 +111,9 @@ architecture RTL of rds is
     signal S_subc_wav_index: std_logic_vector(5 downto 0); -- 6-bit index used 0..47, max 63
     signal S_subc_wav_value: signed(C_dbpsk_bits-1 downto 0);
     signal S_subc_pcm: signed(C_dbpsk_bits-1 downto 0); -- 7 bit ADC value for 19kHz pilot sine wave
+
+    -- signal S_pcm_in_left_atten, S_pcm_in_right_atten: signed(11 downto 0); -- 12-bit attenuated input
+    signal S_pcm_in_left_filtered, S_pcm_in_right_filtered: signed(11 downto 0); -- 12-bit low pass filtered
 
     -- clock multiply must be smaller than clock divide
     -- calculate number of bits for clock divide counter
@@ -334,19 +338,56 @@ begin
 
     mix_stereo:  if C_stereo generate
     -- mixing stereo input audio with RDS DBPSK
-    -- warning: stereo mixing without filtering
     -- (some filtering is requred by the standard)
-    S_pcm_stereo <= (pcm_in_left/2 - pcm_in_right/2) * S_stereo_pcm;
+    stereo_filtered: if C_filter generate
+      -- S_pcm_in_left_atten <= pcm_in_left/16; -- reduce to 12 bits
+      filter_left: entity work.fir
+      generic map (
+        C_bits_x => 12,
+        C_fir_stages => 16
+      )
+      port map (
+        clock => clk,
+        enable => S_rds_strobe, -- 1.824 MHz
+        reset => '0',
+        data_in => pcm_in_left(15 downto 4), -- reduce from 16 to 12 bits
+        data_out => S_pcm_in_left_filtered
+      );
+      -- S_pcm_in_right_atten <= pcm_in_right/16; -- reduce to 12 bits
+      filter_right: entity work.fir
+      generic map (
+        C_bits_x => 12,
+        C_fir_stages => 16
+      )
+      port map (
+        clock => clk,
+        enable => S_rds_strobe, -- 1.824 MHz
+        reset => '0',
+        data_in => pcm_in_right(15 downto 4), -- reduce from 16 to 12 bits
+        data_out => S_pcm_in_right_filtered
+      );
+      S_pcm_stereo <= ((S_pcm_in_left_filtered - S_pcm_in_right_filtered) & "0000") * S_stereo_pcm;
+    end generate; -- stereo_filtered
+
+    -- warning: stereo mixing without filtering!
+    -- good to save LUTs when CPU generates PCM
+    -- data without higher harmonics
+    stereo_unfiltered: if not C_filter generate
+      S_pcm_in_left_filtered <= pcm_in_left(15 downto 4)/2;
+      S_pcm_in_right_filtered <= pcm_in_rightt(15 downto 4)/2;
+      S_pcm_stereo <= ((S_pcm_in_left_filtered - S_pcm_in_right_filtered) & "0000") * S_stereo_pcm;
+    end generate; -- stereo_unfiltered
+
     -- S_stereo_pcm has range -63 .. +63
     -- pcm_in_left has range -32767 .. +32767
     -- stereo mixing: we should divide by 4 because
     -- we mix L+R + (L-R)*sin(38kHz), that rises max amplitude 4 times
     -- but we divide by 2 and hope for no clipping
-    pcm_out <= (pcm_in_left/2 + pcm_in_right/2)
+    pcm_out <= ((S_pcm_in_left_filtered + S_pcm_in_right_filtered) & "0000")
              + S_pcm_stereo(21 downto 6) -- normalize S_stereo_pcm, shift divide by 64
              + S_pilot_pcm * 64 -- 16 is too weak, not sure of correct 19kHz pilot amplitude
              + S_rds_mod_pcm;
-    end generate;
+    end generate; -- mix_stereo
     
     subcarriers_phases: if c_debug generate
     debug <= x"00" 
