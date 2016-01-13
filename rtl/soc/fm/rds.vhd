@@ -374,7 +374,7 @@ begin
     -- data without higher harmonics
     stereo_unfiltered: if not C_filter generate
       S_pcm_in_left_filtered <= pcm_in_left(15 downto 4)/2;
-      S_pcm_in_right_filtered <= pcm_in_rightt(15 downto 4)/2;
+      S_pcm_in_right_filtered <= pcm_in_right(15 downto 4)/2;
       S_pcm_stereo <= ((S_pcm_in_left_filtered - S_pcm_in_right_filtered) & "0000") * S_stereo_pcm;
     end generate; -- stereo_unfiltered
 
