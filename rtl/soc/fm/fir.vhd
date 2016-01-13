@@ -61,8 +61,8 @@ begin
         for i in 1 to d'length-1 loop
             d(i) <= d(i-1);
         end loop;
-        sum <= F_sum(d) srl (C_bits_i-C_bits_x);
-        data_out <= sum(C_bits_x-1 downto 0);
+        sum <= sum + d(0) - d(C_fir_stages-1); -- add first, subtract last
+        data_out <= sum(C_bits_i-1 downto C_bits_i-C_bits_x);
     end if;
   end process;
 end behavior;	
