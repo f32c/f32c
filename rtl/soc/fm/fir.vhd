@@ -34,20 +34,9 @@ architecture behavior of FIR is
   end ceil_log2;
   constant C_bits_i: integer := C_bits_x + ceil_log2(C_fir_stages); -- internal sum bits: log2(16) = 4
   type T_d is array(0 to C_fir_stages-1) of signed(C_bits_i-1 downto 0);
-  signal d: T_d;
-  function F_sum(x: T_d)
-    return signed is
-      variable i: integer;
-      variable s: signed(C_bits_i-1 downto 0);
-  begin
-    s := (others => '0');
-    for i in 0 to x'length-1 loop
-      s := s + x(i);
-    end loop;
-    return s;
-  end F_sum;
-  signal sum: signed(C_bits_i-1 downto 0);
+  signal d: T_d := (others => (others => '0'));
   signal sign_expand: signed(C_bits_i-C_bits_x-1 downto 0);
+  signal sum: signed(C_bits_i-1 downto 0);
 begin 
   process(reset,clock,enable)
   begin
@@ -56,13 +45,15 @@ begin
         sum <= (others => '0');
         data_out <= (others => '0');
     elsif rising_edge(clock) and enable='1' then
-        sign_expand <= (others => data_in(C_bits_x-1));
-        d(0) <= sign_expand & data_in; -- fill up MSB bits
+        -- shifting
         for i in 1 to d'length-1 loop
             d(i) <= d(i-1);
         end loop;
-        sum <= sum + d(0) - d(C_fir_stages-1); -- add first, subtract last
+        sign_expand <= (others => data_in(C_bits_x-1));
+        d(0) <= sign_expand & data_in; -- fill up MSB bits
+        sum <= sum + d(0) - d(C_fir_stages-1); -- add first entry, subtract last
         data_out <= sum(C_bits_i-1 downto C_bits_i-C_bits_x);
+        --data_out <= sum;
     end if;
   end process;
 end behavior;	

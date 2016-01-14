@@ -26,7 +26,7 @@ generic (
     -- 2ch stereo is not yet implemented, only pilot generator
     c_stereo: boolean := false; -- true: use stereo mixing
     -- true: spend more LUTs to use 32-point sinewave and multiply 
-    c_filter: boolean := false; -- true: input low pass filter for stereo
+    c_filter: boolean := false; -- true: pass input thru FIR low pass filter
     -- false: save LUTs, use 4-point multiplexer, no multiply
     c_debug: boolean := false; -- output counters to check subcarriers phases
     c_addr_bits: integer range 1 to 11 := 9; -- number of address bits for RDS message RAM
@@ -40,6 +40,7 @@ port (
     addr: out std_logic_vector(c_addr_bits-1 downto 0); -- memory address
     data: in std_logic_vector(7 downto 0); -- memory data 8 bit
     pcm_in_left, pcm_in_right: in signed(15 downto 0); -- from tone generator
+    out_l, out_r: out std_logic; -- filtered outputs for debugging
     debug: out std_logic_vector(31 downto 0);
     pcm_out: out signed(15 downto 0) -- to FM transmitter
 );
@@ -112,8 +113,13 @@ architecture RTL of rds is
     signal S_subc_wav_value: signed(C_dbpsk_bits-1 downto 0);
     signal S_subc_pcm: signed(C_dbpsk_bits-1 downto 0); -- 7 bit ADC value for 19kHz pilot sine wave
 
-    -- signal S_pcm_in_left_atten, S_pcm_in_right_atten: signed(11 downto 0); -- 12-bit attenuated input
-    signal S_pcm_in_left_filtered, S_pcm_in_right_filtered: signed(11 downto 0); -- 12-bit low pass filtered
+    -- debug PWM output for audible test of internal low pass filter
+    signal R_pcm_unsigned_data_l, R_pcm_unsigned_data_r: std_logic_vector(15 downto 0);
+    signal R_dac_acc_l, R_dac_acc_r: std_logic_vector(16 downto 0);
+
+    signal S_fir_strobe: std_logic;
+    signal S_pcm_in_left_filter, S_pcm_in_right_filter: signed(15 downto 0); -- 16-bit low pass filtered
+    signal R_pcm_in_left_lowpass, R_pcm_in_right_lowpass: signed(15 downto 0); -- 16-bit low pass filtered
 
     -- clock multiply must be smaller than clock divide
     -- calculate number of bits for clock divide counter
@@ -330,17 +336,16 @@ begin
     end generate;
     -- ****************** END RDS MODULATOR **************
 
-    -- output mixing audio and RDS
-    mix_mono:  if not C_stereo generate
-    -- mixing mono input audio with RDS DBPSK
-    pcm_out <= pcm_in_left/2 + pcm_in_right/2 + S_rds_mod_pcm;
-    end generate;
+    filter_not: if not C_filter generate
+            S_pcm_in_left_filter <= pcm_in_left/2;
+            S_pcm_in_right_filter <= pcm_in_right/2;
+    end generate; -- filter_not
 
-    mix_stereo:  if C_stereo generate
-    -- mixing stereo input audio with RDS DBPSK
-    -- (some filtering is requred by the standard)
-    stereo_filtered: if C_filter generate
-      -- S_pcm_in_left_atten <= pcm_in_left/16; -- reduce to 12 bits
+    -- ************** LOW PASS FILTER **************
+    filter_fir: if C_filter generate
+      S_fir_strobe <= '1' when S_rds_strobe = '1' and R_pilot_counter(1 downto 0) = "00" else '0';
+      -- S_fir_strobe at 152 kHz
+      -- 16 stage FIR makes lowpass cutoff at 9.5 kHz
       filter_left: entity work.fir
       generic map (
         C_bits_x => 12,
@@ -348,12 +353,12 @@ begin
       )
       port map (
         clock => clk,
-        enable => S_rds_strobe, -- 1.824 MHz
+        enable => S_fir_strobe, -- 152 kHz
         reset => '0',
-        data_in => pcm_in_left(15 downto 4), -- reduce from 16 to 12 bits
-        data_out => S_pcm_in_left_filtered
+        data_in => pcm_in_left(15) & pcm_in_left(15 downto 5), -- reduce from 16 to 12 bits
+        data_out => S_pcm_in_left_filter(15 downto 4)
       );
-      -- S_pcm_in_right_atten <= pcm_in_right/16; -- reduce to 12 bits
+      S_pcm_in_left_filter(3 downto 0) <= (others => '0'); 
       filter_right: entity work.fir
       generic map (
         C_bits_x => 12,
@@ -361,36 +366,78 @@ begin
       )
       port map (
         clock => clk,
-        enable => S_rds_strobe, -- 1.824 MHz
+        enable => S_fir_strobe, -- 152 kHz
         reset => '0',
-        data_in => pcm_in_right(15 downto 4), -- reduce from 16 to 12 bits
-        data_out => S_pcm_in_right_filtered
+        data_in => pcm_in_right(15) & pcm_in_right(15 downto 5), -- reduce from 16 to 12 bits
+        data_out => S_pcm_in_right_filter(15 downto 4)
       );
-      S_pcm_stereo <= ((S_pcm_in_left_filtered - S_pcm_in_right_filtered) & "0000") * S_stereo_pcm;
-    end generate; -- stereo_filtered
+      S_pcm_in_right_filter(3 downto 0) <= (others => '0'); 
+    end generate; -- filter_fir
+    -- ************** END LOW PASS FILTER **************
 
-    -- warning: stereo mixing without filtering!
-    -- good to save LUTs when CPU generates PCM
-    -- data without higher harmonics
-    stereo_unfiltered: if not C_filter generate
-      S_pcm_in_left_filtered <= pcm_in_left(15 downto 4)/2;
-      S_pcm_in_right_filtered <= pcm_in_right(15 downto 4)/2;
-      S_pcm_stereo <= ((S_pcm_in_left_filtered - S_pcm_in_right_filtered) & "0000") * S_stereo_pcm;
-    end generate; -- stereo_unfiltered
+    -- **************** DOWNSAMPLE ***************
+    process(clk)
+    begin
+        if rising_edge(clk) then
+          if S_rds_strobe = '1' and R_pilot_counter(4 downto 0) = "11111" then
+            -- pilot counter compared to a constant holds true at 19 kHz rate,
+            -- constant is chosen to match sampling with pilot phase.
+            -- at 19 kHz we downsample input PCM signal.
+            -- effectively this makes a crude low pass filter,
+            -- which aliases frequencies above 9.5 kHz (nyquist freq)
+            -- instead of downsampling a lowpass filter should be applied
+            -- to remove freqs above nyquist and get rid off aliases
+            -- input is divided by 2 to prevent overflow later, at RDS mixing
+            R_pcm_in_left_lowpass <= S_pcm_in_left_filter;
+            R_pcm_in_right_lowpass <= S_pcm_in_right_filter;
+          end if;
+        end if;
+    end process;
+    --R_pcm_in_left_lowpass <= pcm_in_left/2;
+    --R_pcm_in_right_lowpass <= pcm_in_right/2;
+    -- ************ END DOWNSAMPLE ***************
+
+    -- output mixing audio and RDS
+    mix_mono:  if not C_stereo generate
+    -- mixing mono input audio with RDS DBPSK
+    pcm_out <= R_pcm_in_left_lowpass + R_pcm_in_right_lowpass + S_rds_mod_pcm;
+    end generate;
+
+    mix_stereo:  if C_stereo generate
+    -- mixing stereo input audio with RDS DBPSK
+    -- (some filtering is requred by the standard)
+    S_pcm_stereo <= (R_pcm_in_left_lowpass - R_pcm_in_right_lowpass) * S_stereo_pcm;
 
     -- S_stereo_pcm has range -63 .. +63
     -- pcm_in_left has range -32767 .. +32767
     -- stereo mixing: we should divide by 4 because
     -- we mix L+R + (L-R)*sin(38kHz), that rises max amplitude 4 times
     -- but we divide by 2 and hope for no clipping
-    pcm_out <= ((S_pcm_in_left_filtered + S_pcm_in_right_filtered) & "0000")
+    pcm_out <= (R_pcm_in_left_lowpass + R_pcm_in_right_lowpass)
              + S_pcm_stereo(21 downto 6) -- normalize S_stereo_pcm, shift divide by 64
              + S_pilot_pcm * 64 -- 16 is too weak, not sure of correct 19kHz pilot amplitude
              + S_rds_mod_pcm;
     end generate; -- mix_stereo
-    
+
     subcarriers_phases: if c_debug generate
-    debug <= x"00" 
+      process(clk)
+      begin
+        if rising_edge(clk) then
+	    -- PCM data from RAM normally should have average 0 (removed DC offset)
+            -- for purpose of PCM generation here is
+            -- conversion to unsigned std_logic_vector
+            -- by inverting MSB bit (effectively adding 0x8000)
+            R_pcm_unsigned_data_l <= std_logic_vector( (not R_pcm_in_left_lowpass(15)) & (R_pcm_in_left_lowpass(14 downto 0) ) );
+            R_pcm_unsigned_data_r <= std_logic_vector( (not R_pcm_in_right_lowpass(15)) & (R_pcm_in_right_lowpass(14 downto 0) ) );
+	    -- Output 1-bit DAC
+	    R_dac_acc_l <= (R_dac_acc_l(16) & R_pcm_unsigned_data_l) + R_dac_acc_l;
+	    R_dac_acc_r <= (R_dac_acc_r(16) & R_pcm_unsigned_data_r) + R_dac_acc_r;
+	end if;
+      end process;
+      out_l <= R_dac_acc_l(16);
+      out_r <= R_dac_acc_r(16);
+
+      debug <= x"00"
            & "0" & std_logic_vector(S_stereo_pcm) 
            & "0" & std_logic_vector(S_pilot_pcm)
            & "0" & std_logic_vector(S_rds_coarse_pcm);

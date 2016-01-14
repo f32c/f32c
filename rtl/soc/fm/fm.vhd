@@ -64,6 +64,7 @@ entity fm is
 	fm_irq: out std_logic; -- interrupt request line (active level high)
 	clk_fmdds: in std_logic; -- DDS clock, must be > 2x max cw_freq, normally > 216 MHz
 	pcm_in_left, pcm_in_right: in ieee.numeric_std.signed(15 downto 0) := (others => '0'); -- PCM audio input
+	pwm_out_left, pwm_out_right: out std_logic;
 	fm_antenna: out std_logic -- pyhsical output
     );
 end fm;
@@ -154,8 +155,10 @@ begin
       addr => rds_addr,
       data => rds_data,
       pcm_in_left => pcm_in_left,
-      pcm_in_right => pcm_in_left,
+      pcm_in_right => pcm_in_right,
       debug => from_fmrds,
+      out_l => pwm_out_left,
+      out_r => pwm_out_right,
       pcm_out => rds_pcm
     );
     fm_modulator: entity work.fmgen
