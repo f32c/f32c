@@ -348,6 +348,7 @@ architecture Behavioral of glue_xram is
     signal from_pcm: std_logic_vector(31 downto 0);
     signal pcm_l, pcm_r: std_logic;
     signal pcm_bus_l, pcm_bus_r: ieee.numeric_std.signed(15 downto 0);
+    signal pwm_filt_l, pwm_filt_r: std_logic;
 
     -- FM/RDS RADIO
     constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
@@ -1252,6 +1253,9 @@ begin
     with conv_integer(io_addr(11 downto 4)) select
       pcm_ce <= io_addr_strobe when iomap_from(iomap_pcm, iomap_range) to iomap_to(iomap_pcm, iomap_range),
                            '0' when others;
+    -- audible debugging of RDS internal filters
+    --jack_tip  <= (others => pwm_filt_l);
+    --jack_ring <= (others => pwm_filt_r);
     jack_tip  <= (others => pcm_l);
     jack_ring <= (others => pcm_r);
     end generate;
@@ -1285,6 +1289,8 @@ begin
       bus_in => cpu_to_dmem, bus_out => from_fmrds,
       pcm_in_left => pcm_bus_l,
       pcm_in_right => pcm_bus_r,
+      pwm_out_left => pwm_filt_l,
+      pwm_out_right => pwm_filt_r,
       fm_antenna => fm_antenna
     );
     with conv_integer(io_addr(11 downto 4)) select
