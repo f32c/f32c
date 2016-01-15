@@ -39,6 +39,8 @@ use ieee.math_real.all; -- to calculate log2 bit size
 entity fm is
     generic (
         C_stereo: boolean := false;
+        C_filter: boolean := false;
+        C_downsample: boolean := false; -- LO-FI LUT-saving option as default
         C_rds_msg_len: integer range 2 to 2048 := 273; -- allocates RAM for RDS binary message
         -- some useful values for C_rds_msg_len
         --  13 =        1*13 (CT)
@@ -147,6 +149,8 @@ begin
       -- settings for super slow (100Hz debug) clock
       -- c_rds_clock_multiply => 1,
       -- c_rds_clock_divide => 812500,
+      c_filter => C_filter,
+      c_downsample => C_downsample,
       c_stereo => C_stereo
     )
     port map (
