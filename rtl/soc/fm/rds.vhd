@@ -375,7 +375,7 @@ begin
       port map (
         clock => clk,
         enable => S_fir_strobe, -- 152 kHz
-        data_in => pcm_in_left(15 downto 4), -- reduce from 16 to 12 bits
+        data_in => pcm_in_left(15) & pcm_in_left(15 downto 5), -- divide by 2 and reduce from 16 to 12 bits
         data_out => S_pcm_in_left_filter
       );
       filter_right: entity work.lowpass
@@ -386,7 +386,7 @@ begin
       port map (
         clock => clk,
         enable => S_fir_strobe, -- 152 kHz
-        data_in => pcm_in_right(15 downto 4), -- reduce from 16 to 12 bits
+        data_in => pcm_in_left(15) & pcm_in_right(15 downto 5), -- divide by 2 reduce from 16 to 12 bits
         data_out => S_pcm_in_right_filter
       );
     end generate; -- lowpass_filter
@@ -396,7 +396,7 @@ begin
     no_downsample_38kHz: if not C_downsample generate
       -- signal pass-through (direct wire)
       R_pcm_in_left_downsample <= S_pcm_in_left_filter;
-      R_pcm_in_right_downsample <= S_pcm_in_left_filter;
+      R_pcm_in_right_downsample <= S_pcm_in_right_filter;
     end generate; -- no_downsample_38kHz
 
     downsample_38kHz: if C_downsample generate
