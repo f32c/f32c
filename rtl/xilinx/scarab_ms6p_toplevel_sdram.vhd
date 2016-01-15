@@ -139,7 +139,9 @@ entity glue is
     C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
 
       C_fmrds: boolean := true;
-        C_fm_stereo: boolean := false;
+        C_fm_stereo: boolean := true;
+        C_fm_filter: boolean := true;
+        C_fm_downsample: boolean := false; -- although simpler this causes synthesis problems on xilinx
         C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
         C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
         C_rds_clock_multiply: integer := 57; -- multiply and divide from cpu clk 100 MHz
@@ -350,6 +352,8 @@ begin
       C_cw_simple_out => C_cw_simple_out, -- CW is for 433 MHz. -1 to disable. set (C_framebuffer => false, C_dds => false) for 433MHz transmitter
       C_fmrds => C_fmrds,
       C_fm_stereo => C_fm_stereo,
+      C_fm_filter => C_fm_filter,
+      C_fm_downsample => C_fm_downsample,
       C_rds_msg_len => C_rds_msg_len, -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
       C_fmdds_hz => C_fmdds_hz, -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz)
       C_rds_clock_multiply => C_rds_clock_multiply, -- multiply and divide from cpu clk 100 MHz

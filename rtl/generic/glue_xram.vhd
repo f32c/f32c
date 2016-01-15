@@ -162,6 +162,8 @@ generic (
     C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
     C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
       C_fm_stereo: boolean := false;
+      C_fm_filter: boolean := false;
+      C_fm_downsample: boolean := false;
       C_rds_msg_len: integer := 260; -- bytes of circular sent message, typical 52 for PS or 260 PS+RT
       C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250000000, 325000000)
       C_rds_clock_multiply: integer := 57; -- multiply 57 and divide 3125 from cpu clk 100 MHz
@@ -1277,6 +1279,8 @@ begin
       c_fmdds_hz => C_fmdds_hz, -- Hz FMDDS clock frequency
       C_rds_msg_len => C_rds_msg_len, -- allocate RAM for RDS message
       C_stereo => C_fm_stereo,
+      C_filter => C_fm_filter,
+      C_downsample => C_fm_downsample,
       -- multiply/divide CPU clock to produce 1.824 MHz clock
       c_rds_clock_multiply => C_rds_clock_multiply,
       c_rds_clock_divide => C_rds_clock_divide
