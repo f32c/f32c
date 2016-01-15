@@ -46,12 +46,13 @@ begin
         data_out <= (others => '0');
     elsif rising_edge(clock) and enable='1' then
         -- shifting
-        for i in 1 to d'length-1 loop
-            d(i) <= d(i-1);
-        end loop;
-        sign_expand <= (others => data_in(C_bits_x-1));
-        d(0) <= sign_expand & data_in; -- fill up MSB bits
-        sum <= sum + d(0) - d(C_fir_stages-1); -- add first entry, subtract last
+        --for i in 1 to d'length-1 loop
+        --    d(i) <= d(i-1);
+        --end loop;
+        --sign_expand <= (others => data_in(C_bits_x-1));
+        --d(0) <= sign_expand & data_in; -- fill up MSB bits
+        --sum <= sum + d(0) - d(C_fir_stages-1); -- add first entry, subtract last
+        sum <= sum + (data_in - sum(C_bits_i-1 downto C_bits_i-C_bits_x));
         data_out <= sum(C_bits_i-1 downto C_bits_i-C_bits_x);
         --data_out <= sum;
     end if;
