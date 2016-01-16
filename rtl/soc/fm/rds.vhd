@@ -33,7 +33,7 @@ generic (
     --    with less LUTs than lowpass filter but sacrifices audio quality.
     --    input freqs above 19 kHz are aliased in range below 19 kHz)
     -- both C_filter and C_downsample can be enabled.
-    c_filter: boolean := false; -- true: low pass filter
+    c_filter: boolean := false; -- true: low pass filter (fixme: glitches)
     c_downsample: boolean := false; -- true: downsample to 38kHz before stereo mixing
     c_debug: boolean := false; -- output counters to check subcarriers phases
     c_addr_bits: integer range 1 to 11 := 9; -- number of address bits for RDS message RAM
@@ -356,8 +356,8 @@ begin
     -- FM standard requires low pass filter for audio
     -- channels to cut off frequencies above 17kHz
     -- we'll try to approximate.
-    -- Filtering also attenuates signal (about x2),
-    -- this is good to aviod overflows at stereo mixing
+    -- besides filtering we have to attenuate signal (about x2),
+    -- this is to aviod overflows at stereo mixing
     lowpass_filter: if C_filter generate
       S_fir_strobe <= '1' when S_rds_strobe = '1' and R_pilot_cdiv = 0 and R_pilot_counter(1 downto 0) = 0 else '0';
       -- select S_fir_strobe frequency:
@@ -365,28 +365,31 @@ begin
       -- R_pilot_counter(1 downto 0) = 0 -> 152 kHz
       -- R_pilot_counter(2 downto 0) = 0 ->  76 kHz
       -- R_pilot_counter(3 downto 0) = 0 ->  38 kHz
-      -- 4-bit difference lowpass using 152 kHz strobe:
+      -- bit difference and strobe frequecy
+      -- define lowpass cutoff f_lowpass = f_strobe/2^bit_difference
       -- cutoff at 152/2^4 = 152/16 = 9.5 kHz
       filter_left: entity work.lowpass
       generic map (
         C_bits_in => 12,
+        C_attenuation => 1, -- attenuation 2^1 = 2x
         C_bits_out => 16 -- 16-12 = 4-bit difference
       )
       port map (
         clock => clk,
         enable => S_fir_strobe, -- 152 kHz
-        data_in => pcm_in_left(15) & pcm_in_left(15 downto 5), -- divide by 2 and reduce from 16 to 12 bits
+        data_in => pcm_in_left(15 downto 4),
         data_out => S_pcm_in_left_filter
       );
       filter_right: entity work.lowpass
       generic map (
         C_bits_in => 12,
-        C_bits_out => 16 -- 16-12 = 4-bit diffrenece
+        C_attenuation => 1, -- attenuation 2^1 = 2x
+        C_bits_out => 16 -- 16-12 = 4-bit difference
       )
       port map (
         clock => clk,
         enable => S_fir_strobe, -- 152 kHz
-        data_in => pcm_in_left(15) & pcm_in_right(15 downto 5), -- divide by 2 reduce from 16 to 12 bits
+        data_in => pcm_in_right(15 downto 4),
         data_out => S_pcm_in_right_filter
       );
     end generate; -- lowpass_filter

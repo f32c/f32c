@@ -28,6 +28,7 @@ USE IEEE.numeric_std.ALL;
 entity lowpass is
   generic(
     C_bits_in: integer := 12; -- input bits, must be less than C_bits_out
+    C_attenuation: integer := 0; -- attenuation factor 2^n
     C_bits_out: integer := 16 -- output bits (integrator sum)
   );
   port(
@@ -43,8 +44,8 @@ begin
   process(clock,enable)
   begin
     if rising_edge(clock) and enable='1' then
-      sum <= sum + data_in - sum(C_bits_out-1 downto C_bits_out-C_bits_in);
-      data_out <= sum;
+      sum <= sum + data_in / 2**C_attenuation - sum / 2**(C_bits_out-C_bits_in);
     end if;
   end process;
+  data_out <= sum;
 end behavior;	
