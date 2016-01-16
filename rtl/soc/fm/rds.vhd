@@ -126,7 +126,7 @@ architecture RTL of rds is
     signal R_pcm_unsigned_data_l, R_pcm_unsigned_data_r: std_logic_vector(15 downto 0);
     signal R_dac_acc_l, R_dac_acc_r: std_logic_vector(16 downto 0);
 
-    signal S_fir_strobe: std_logic;
+    signal S_filter_strobe: std_logic;
     signal S_pcm_in_left_filter, S_pcm_in_right_filter: signed(15 downto 0); -- 16-bit low pass filtered
     signal R_pcm_in_left_downsample, R_pcm_in_right_downsample: signed(15 downto 0); -- 16-bit low pass filtered
 
@@ -359,8 +359,8 @@ begin
     -- besides filtering we have to attenuate signal (about x2),
     -- this is to aviod overflows at stereo mixing
     lowpass_filter: if C_filter generate
-      S_fir_strobe <= '1' when S_rds_strobe = '1' and R_pilot_cdiv = 0 and R_pilot_counter(1 downto 0) = 0 else '0';
-      -- select S_fir_strobe frequency:
+      S_filter_strobe <= '1' when S_rds_strobe = '1' and R_pilot_cdiv = 2 and R_pilot_counter(1 downto 0) = 0 else '0';
+      -- select S_filter_strobe frequency:
       -- R_pilot_counter(0 downto 0) = 0 -> 304 kHz
       -- R_pilot_counter(1 downto 0) = 0 -> 152 kHz
       -- R_pilot_counter(2 downto 0) = 0 ->  76 kHz
@@ -376,7 +376,7 @@ begin
       )
       port map (
         clock => clk,
-        enable => S_fir_strobe, -- 152 kHz
+        enable => S_filter_strobe, -- 152 kHz
         data_in => pcm_in_left(15 downto 4),
         data_out => S_pcm_in_left_filter
       );
@@ -388,7 +388,7 @@ begin
       )
       port map (
         clock => clk,
-        enable => S_fir_strobe, -- 152 kHz
+        enable => S_filter_strobe, -- 152 kHz
         data_in => pcm_in_right(15 downto 4),
         data_out => S_pcm_in_right_filter
       );
@@ -406,7 +406,7 @@ begin
       process(clk)
       begin
         if rising_edge(clk) then
-          if S_rds_strobe = '1' and R_pilot_cdiv = 0 and R_pilot_counter(3 downto 0) = 0 then
+          if S_rds_strobe = '1' and R_pilot_cdiv = 1 and R_pilot_counter(1 downto 0) = 0 then
             -- pilot counter 4 LSB bits compared to a constant holds true at 38 kHz rate,
             -- at 38 kHz we downsample input PCM signal.
             -- effectively this makes a crude low pass filter,
