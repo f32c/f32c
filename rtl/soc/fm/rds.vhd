@@ -359,7 +359,7 @@ begin
     -- besides filtering we have to attenuate signal (about x2),
     -- this is to aviod overflows at stereo mixing
     lowpass_filter: if C_filter generate
-      S_filter_strobe <= '1' when S_rds_strobe = '1' and R_pilot_cdiv = 2 and R_pilot_counter(1 downto 0) = 0 else '0';
+      S_filter_strobe <= '1' when S_rds_strobe = '1' and R_pilot_cdiv = 0 and R_pilot_counter(1 downto 0) = 0 else '0';
       -- select S_filter_strobe frequency:
       -- R_pilot_counter(0 downto 0) = 0 -> 304 kHz
       -- R_pilot_counter(1 downto 0) = 0 -> 152 kHz
@@ -406,7 +406,7 @@ begin
       process(clk)
       begin
         if rising_edge(clk) then
-          if S_rds_strobe = '1' and R_pilot_cdiv = 1 and R_pilot_counter(1 downto 0) = 0 then
+          if S_rds_strobe = '1' and R_pilot_cdiv = 0 and R_pilot_counter(1 downto 0) = 0 then
             -- pilot counter 4 LSB bits compared to a constant holds true at 38 kHz rate,
             -- at 38 kHz we downsample input PCM signal.
             -- effectively this makes a crude low pass filter,
