@@ -39,13 +39,15 @@ entity lowpass is
   );
 end lowpass;
 architecture behavior of lowpass is
+  signal R_data_in: signed(C_bits_in-1 downto 0);
   signal sum: signed(C_bits_out-1 downto 0);
 begin 
   process(clock,enable)
   begin
     if rising_edge(clock) and enable='1' then
-      sum <= sum + data_in / 2**C_attenuation - sum / 2**(C_bits_out-C_bits_in);
+      R_data_in <= data_in;
+      sum <= sum + R_data_in / 2**C_attenuation - sum / 2**(C_bits_out-C_bits_in);
+      data_out <= sum;
     end if;
   end process;
-  data_out <= sum;
 end behavior;	
