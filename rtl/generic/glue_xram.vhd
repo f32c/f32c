@@ -158,7 +158,7 @@ generic (
         -- compositing length 9: 1 word for offset, 8 words for bitmap (thin h-sprites 32x1 of 8bpp pixels)
         -- compositing length 17: 1 word for offset, 16 words for bitmap (thin h-sprites 64x1 of 8bpp pixels)
 
-    C_pcm: boolean := true;
+    C_pcm: boolean := false;
     C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
     C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
       C_fm_stereo: boolean := false;

@@ -186,7 +186,9 @@ entity toplevel is
     C_timer: boolean := true;
     C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
     C_fmrds: boolean := true; -- either FM or tx433
-    C_fm_stereo: boolean := false;
+    C_fm_stereo: boolean := true;
+    C_fm_filter: boolean := true;
+    C_fm_downsample: boolean := false;
     C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
     C_fmdds_hz: integer := 325000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
     --C_rds_clock_multiply: integer := 57; -- multiply and divide from cpu clk 100 MHz
@@ -378,6 +380,8 @@ begin
       C_cw_simple_out => C_cw_simple_out, -- CW is for 433 MHz. -1 to disable. set (C_framebuffer => false, C_dds => false) for 433MHz transmitter
       C_fmrds => C_fmrds, -- either FM or tx433
       C_fm_stereo => C_fm_stereo,
+      C_fm_filter => C_fm_filter,
+      C_fm_downsample => C_fm_downsample,
       C_rds_msg_len => C_rds_msg_len, -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
       C_fmdds_hz => C_fmdds_hz, -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
       C_rds_clock_multiply => C_rds_clock_multiply, -- multiply and divide from cpu clk 81.25 MHz
@@ -394,8 +398,8 @@ begin
       spi_mosi(0) => flash_si, spi_miso(0) => flash_so,
       spi_sck(1) => sdcard_sck, spi_ss(1) => sdcard_cen,
       spi_mosi(1) => sdcard_si, spi_miso(1) => sdcard_so,
-      --p_ring => p_ring,
-      --p_tip => p_tip,
+      jack_ring(3) => p_ring,
+      jack_tip => p_tip,
       simple_out(7 downto 0) => led,
       simple_in(4 downto 0) => btn,
       simple_in(19 downto 16) => sw,

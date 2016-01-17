@@ -138,6 +138,7 @@ entity glue is
 
     C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
 
+      C_pcm: boolean := true;
       C_fmrds: boolean := true;
         C_fm_stereo: boolean := true;
         C_fm_filter: boolean := true;
@@ -350,6 +351,7 @@ begin
       C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
       C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
       C_cw_simple_out => C_cw_simple_out, -- CW is for 433 MHz. -1 to disable. set (C_framebuffer => false, C_dds => false) for 433MHz transmitter
+      C_pcm => C_pcm,
       C_fmrds => C_fmrds,
       C_fm_stereo => C_fm_stereo,
       C_fm_filter => C_fm_filter,
