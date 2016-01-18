@@ -71,6 +71,7 @@ entity toplevel is
     -- ISA options
     C_arch: integer := ARCH_MI32;
     C_big_endian: boolean := false;
+    C_boot_rom: boolean := true; -- true: bootloader will try to chainboot SPI flash ROM, false: serial bootloader only
     C_mult_enable: boolean := true;
     C_branch_likely: boolean := true;
     C_sign_extend: boolean := true;
@@ -104,6 +105,7 @@ entity toplevel is
       C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 
     C_sram: boolean := true;
+      C_sram_refresh: boolean := true; -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
       C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
       -- C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!! defined below as constant
 
@@ -297,6 +299,7 @@ begin
       C_clk_freq => C_clk_freq,
       C_arch => C_arch,
       C_big_endian => C_big_endian,
+      C_boot_rom => C_boot_rom,
       C_mult_enable => C_mult_enable,
       C_branch_likely => C_branch_likely,
       C_sign_extend => C_sign_extend,
@@ -319,6 +322,7 @@ begin
       C_icache_size => C_icache_size,	-- 0, 2, 4 or 8 KBytes
       C_dcache_size => C_dcache_size,	-- 0, 2, 4 or 8 KBytes
       C_sram => C_sram,
+      C_sram_refresh => C_sram_refresh,
       C_sram_wait_cycles => C_sram_wait_cycles, -- ISSI, OK do 87.5 MHz
       C_pipelined_read => C_pipelined_read, -- works only at 81.25 MHz !!!
       C_sdram => C_sdram,
@@ -409,14 +413,14 @@ begin
       gpio(12) => j1_20, gpio(13) => j1_21, gpio(14) => j1_22,  gpio(15) => j1_23,
       --  gpio(27 downto 16) multifunciton: PID
       --  encoder_in_a       encoder_in_b       bridge_f_out        bridge_r_out
-      --gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
-      --gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1 
-      --gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
-      vga_vsync => j2_3,
-      vga_hsync => j2_4,
-      vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
-      vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
-      vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
+      gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
+      gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1 
+      gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
+      --vga_vsync => j2_3,
+      --vga_hsync => j2_4,
+      --vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
+      --vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
+      --vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
       gpio(28) => gpio_28, -- j2_16
       --  gpio(28) multifunction: antenna
       cw_antenna => cw_antenna, -- output 433MHz
