@@ -1,5 +1,6 @@
 --
 -- Copyright (c) 2015 Marko Zec, University of Zagreb
+-- Copyright (c) 2016 Emard
 -- All rights reserved.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -92,6 +93,7 @@ generic (
   C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
   C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
   C_sram: boolean := false; -- 16-bit SRAM
+  C_sram_refresh: boolean := false; -- sram refresh workaround (RED ULX2S boards need this)
   C_sram8: boolean := false; -- 8-bit SRAM
   C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
   C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
@@ -238,6 +240,10 @@ architecture Behavioral of glue_xram is
     constant data_port: integer := 1;
     constant fb_port: integer := 2;
     constant fb_text_port: integer := 3;
+    -- currently either text mode or refresh can be enabled, not both
+    -- port number is the same as fb_text port because textmode is
+    -- not yet working on ULX2S
+    constant refresh_port: integer := 3;
     constant pcm_port: integer := 4;
     constant C_xram_ports: integer := 5;
 
@@ -408,6 +414,11 @@ architecture Behavioral of glue_xram is
     signal xram_data_in, xram_data_out: std_logic_vector(31 downto 0);
     signal xram_ready_next_cycle: std_logic;
 
+    -- external SRAM refresh workaround
+    signal refresh_addr: std_logic_vector(29 downto 2);
+    signal refresh_strobe: std_logic;
+    signal refresh_data_ready: std_logic;
+
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
     signal debug_to_sio_data: std_logic_vector(7 downto 0);
@@ -519,6 +530,14 @@ begin
     to_xram(fb_text_port).byte_sel <= "1111"; -- 32 bits read for RGB
     vga_textmode_text_sdram_ready <= xram_ready(fb_text_port);
     end generate;
+    G_refresh_port: if C_sram_refresh generate
+    to_xram(refresh_port).addr_strobe <= refresh_strobe;
+    to_xram(refresh_port).addr <= refresh_addr;
+    to_xram(refresh_port).data_in <= (others => '-');
+    to_xram(refresh_port).write <= '0';
+    to_xram(refresh_port).byte_sel <= "1111"; -- 32 bits read
+    refresh_data_ready <= xram_ready(refresh_port);
+    end generate;
     -- port 4: PCM audio DMA
     G_pcm_sdram: if C_pcm generate
         to_xram(pcm_port).addr_strobe <= pcm_addr_strobe;
@@ -548,6 +567,26 @@ begin
 	bus_in => to_xram, ready_out => xram_ready
     );
     end generate; -- G_sram16bit
+
+    G_sram_refresh: if C_sram_refresh generate
+    sram_refresh: entity work.sram_refresh
+    generic map (
+        C_clk_freq => C_clk_freq, -- MHz cpu clock frequency
+        -- DRAM page size is apparently 512 bytes, our bus width is 4B
+        C_page_size_bytes => 512, -- bytes per page
+        C_bus_width_bytes => 4, -- bytes on internal bus
+        C_page_count => 2048, -- number of pages to refresh
+        C_addr_bits => 28, -- max address range (bytes)
+        -- Refresh all 2048 pages every 32 ms, per IS42S16100E specs
+        C_refresh_cycle_ms => 32 -- milliseconds
+    )
+    port map (
+      clk => clk,
+      refresh_addr => refresh_addr,
+      refresh_strobe => refresh_strobe,
+      refresh_data_ready => refresh_data_ready
+    );
+    end generate; -- G_sram_refresh
 
     G_sram8bit:
     if C_sram8 generate

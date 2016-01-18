@@ -120,7 +120,7 @@
         <Source name="../../../soc/vgahdmi/font8x16_xark.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../soc/vgahdmi/compositing_fifo.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../soc/vgahdmi/compositing_fifo2.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../soc/vgahdmi/videofifo.vhd" type="VHDL" type_short="VHDL">
@@ -136,6 +136,9 @@
             <Options/>
         </Source>
         <Source name="../../../soc/sram.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/sram_refresh.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../soc/sram8.vhd" type="VHDL" type_short="VHDL">
