@@ -71,7 +71,9 @@ entity toplevel is
     -- ISA options
     C_arch: integer := ARCH_MI32;
     C_big_endian: boolean := false;
-    C_boot_rom: boolean := true; -- true: bootloader will try to chainboot SPI flash ROM, false: serial bootloader only
+    -- C_boot_rom = true: bootloader will try to chainboot SPI flash ROM, fallback to serial
+    -- C_boot_rom = false: serial bootloader only
+    C_boot_rom: boolean := false;
     C_mult_enable: boolean := true;
     C_branch_likely: boolean := true;
     C_sign_extend: boolean := true;
@@ -104,6 +106,8 @@ entity toplevel is
       C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
       C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 
+    C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
+
     C_sram: boolean := true;
       C_sram_refresh: boolean := true; -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
       C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
@@ -124,7 +128,7 @@ entity toplevel is
 
     C_framebuffer: boolean := false; -- TV framebuffer (not yet supported in glue_xram)
 
-    C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
+    C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
       C_vgahdmi_test_picture: integer := 0;
       -- number of pixels for line step 640 for no compositing
       -- 680 for compositing
@@ -321,12 +325,12 @@ begin
       C_icache_expire => C_icache_expire,
       C_icache_size => C_icache_size,	-- 0, 2, 4 or 8 KBytes
       C_dcache_size => C_dcache_size,	-- 0, 2, 4 or 8 KBytes
+      C_xram_base => C_xram_base,
       C_sram => C_sram,
       C_sram_refresh => C_sram_refresh,
       C_sram_wait_cycles => C_sram_wait_cycles, -- ISSI, OK do 87.5 MHz
       C_pipelined_read => C_pipelined_read, -- works only at 81.25 MHz !!!
       C_sdram => C_sdram,
-      C_sdram_base => C_sdram_base,
       C_sdram_separate_arbiter => C_sdram_separate_arbiter,
       C_sdram_address_width => 24,
       C_sio => C_sio,

@@ -50,8 +50,8 @@ entity glue is
     C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
     C_icache_size: integer := 32; -- 0, 2, 4, 8, 16, 32 KBytes
     C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
+    C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
     C_sdram: boolean := true;
-    C_sdram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
     C_sdram_separate_arbiter: boolean := false;
     C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
     C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
@@ -299,8 +299,8 @@ begin
       C_gpio => C_gpio,
       C_sio => C_sio,
       C_spi => C_spi,
+      C_xram_base => C_xram_base,
       C_sdram => C_sdram,
-      C_sdram_base => C_sdram_base,
       C_sdram_separate_arbiter => C_sdram_separate_arbiter,
       C_sdram_address_width => 24,
       C_sdram_column_bits => 9,

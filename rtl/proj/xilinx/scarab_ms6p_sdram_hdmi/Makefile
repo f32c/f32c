@@ -36,6 +36,7 @@ vhdfiles = \
 ../../../generic/bootloader/boot_sio_mi32el.vhd \
 ../../../generic/bootloader/boot_sio_mi32eb.vhd \
 ../../../generic/bootloader/boot_sio_rv32el.vhd \
+../../../generic/bootloader/boot_rom_mi32el.vhd \
 ../../../generic/bram_true2p_1clk.vhd \
 ../../../generic/bram_true2p_2clk.vhd \
 ../../../generic/bptrace.vhd \
@@ -54,6 +55,7 @@ vhdfiles = \
 ../../../cpu/debug.vhd \
 ../../../soc/sram_pack.vhd \
 ../../../soc/sram.vhd \
+../../../soc/sram_refresh.vhd \
 ../../../soc/sram8.vhd \
 ../../../soc/arbiter.vhd \
 ../../../soc/sdram_ctrl.vhd \
