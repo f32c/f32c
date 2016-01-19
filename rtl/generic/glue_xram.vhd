@@ -94,13 +94,13 @@ generic (
   C_icache_expire: boolean := false; -- when true i-cache will just pass data, won't keep them
   C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
   C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
+  C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- x"8" maps RAM to 0x80000000
   C_sram: boolean := false; -- 16-bit SRAM
   C_sram_refresh: boolean := false; -- sram refresh workaround (RED ULX2S boards need this)
   C_sram8: boolean := false; -- 8-bit SRAM
   C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
   C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
   C_sdram: boolean := false;
-  C_sdram_base: std_logic_vector(31 downto 28) := x"8"; -- x"8" maps RAM to 0x80000000
   C_sdram_separate_arbiter: boolean := false;
   C_sio: integer := 1;
   C_sio_init_baudrate: integer := 115200;
@@ -424,8 +424,8 @@ architecture Behavioral of glue_xram is
     signal xram_ready_next_cycle: std_logic;
 
     -- external SRAM refresh workaround
-    signal refresh_addr: std_logic_vector(29 downto 2);
-    signal refresh_strobe: std_logic;
+    signal refresh_addr: std_logic_vector(29 downto 2) := (others => '0');
+    signal refresh_strobe: std_logic := '0';
     signal refresh_data_ready: std_logic;
 
     -- Debug
@@ -454,7 +454,7 @@ begin
       C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
       C_register_technology => C_register_technology,
       C_icache_expire => C_icache_expire,
-      C_xram_base => C_sdram_base, -- hacky part of address decoding in the cache
+      C_xram_base => C_xram_base, -- hacky part of address decoding in the cache
       C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_sdram_address_width, -- +1 ? e.g. 20 bits will cache 1MB
       -- debugging only
@@ -485,8 +485,8 @@ begin
     -- the cache must distinguish between them so
     -- RAM base address must be passed to cache module
     -- it is not enough to only decode them here
-    S_imem_addr_in_xram <= '1' when imem_addr(31 downto 28) = C_sdram_base else '0';
-    S_dmem_addr_in_xram <= '1' when dmem_addr(31 downto 28) = C_sdram_base else '0';
+    S_imem_addr_in_xram <= '1' when imem_addr(31 downto 28) = C_xram_base else '0';
+    S_dmem_addr_in_xram <= '1' when dmem_addr(31 downto 28) = C_xram_base else '0';
     -- f32c 'standard' RAM hardcoded at 0x80000000
     -- using most significant address bit (bit 32), which is
     --S_imem_addr_in_xram <= imem_addr(31);
@@ -582,16 +582,13 @@ begin
     generic map (
         C_clk_freq => C_clk_freq, -- MHz cpu clock frequency
         -- DRAM page size is apparently 512 bytes, our bus width is 4B
-        C_page_size_bytes => 512, -- bytes per page
-        C_bus_width_bytes => 4, -- bytes on internal bus
-        C_page_count => 2048, -- number of pages to refresh
-        C_addr_bits => 28, -- max address range (bytes)
+        C_addr_bits => 11, -- address range to refresh (pages)
         -- Refresh all 2048 pages every 32 ms, per IS42S16100E specs
         C_refresh_cycle_ms => 32 -- milliseconds
     )
     port map (
       clk => clk,
-      refresh_addr => refresh_addr,
+      refresh_addr => refresh_addr(19 downto 9), -- 1MB paged, 512 bytes per page
       refresh_strobe => refresh_strobe,
       refresh_data_ready => refresh_data_ready
     );
