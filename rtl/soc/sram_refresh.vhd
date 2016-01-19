@@ -50,10 +50,8 @@ entity sram_refresh is
 generic (
   C_clk_freq: integer; -- MHz cpu clock frequency
   -- DRAM page size is apparently 512 bytes, our bus width is 4B
-  C_page_size_bytes: integer := 512; -- bytes per page
-  C_bus_width_bytes: integer := 4; -- bytes on internal bus
-  C_page_count: integer := 2048; -- number of pages to refresh
-  C_addr_bits: integer := 28; -- max address range (bytes)
+  -- 1MB contains 2048 pages to refresh, needs 11 bits to address pages
+  C_addr_bits: integer := 11; -- address bits to circulate
   -- Refresh all 2048 pages every 32 ms, per IS42S16100E specs
   C_refresh_cycle_ms: integer := 32 -- milliseconds
 );
@@ -74,10 +72,9 @@ begin
     begin
 	if rising_edge(clk) then
 	    if refresh_data_ready = '1' then
-		-- DRAM page size is apparently 512 bytes, our bus width is 4B
-		R_refresh_addr <= R_refresh_addr + C_page_size_bytes / C_bus_width_bytes;
+		R_refresh_addr <= R_refresh_addr + 1;
 		-- Refresh all 2048 pages every 32 ms, per IS42S16100E specs
-		R_refresh_cnt <= C_clk_freq * 1000000 / C_refresh_cycle_ms / C_page_count;
+		R_refresh_cnt <= C_clk_freq * 1000000 / C_refresh_cycle_ms / 2**C_addr_bits;
 	    end if;
 	    if R_refresh_cnt /= 0 then
 		R_refresh_cnt <= R_refresh_cnt - 1;
