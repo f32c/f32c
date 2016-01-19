@@ -120,7 +120,7 @@ entity compositing2_fifo is
         -- for 32bpp no compositing, default value is 6: 64 32-bit words
         -- for compositing buffer size must be more than 2 horizontal scan lines
         -- compositing: 11 (2^11 = 2048 bytes for 640x480 8bpp)
-        C_addr_width: integer := 6 -- bits width of fifo address
+        C_addr_width: integer := 11 -- bits width of fifo address
     );
     port (
 	clk, clk_pixel: in std_logic;
@@ -260,7 +260,6 @@ begin
             R_compositing_countdown <= 0;
           else
             if data_ready = '1' and S_need_refill = '1' then -- BRAM must use this
-              --if C_compositing_length > 0 then
                 case R_state is
                   when 0 => -- read pointer to line start
                     -- R_sram_addr points to one of array of start addresses
@@ -272,8 +271,8 @@ begin
                     R_sram_addr <= R_sram_addr + 1; -- next sequential read
                     R_state <= 2;
                   when 2 => -- read position and pixel count
-                    R_position <= data_in(31 downto 16); -- compositing position (pixels)
-                    R_word_count <= data_in(15 downto 0); -- number of 32-bit words (n*4 pixels)
+                    R_position <= data_in(15 downto 0); -- compositing position (pixels)
+                    R_word_count <= data_in(31 downto 16); -- number of 32-bit words (n*4 pixels)
                     R_sram_addr <= R_sram_addr + 1;  -- next sequential read
                     R_state <= 3;
                   when others => -- read pixels and prepare to exit
@@ -295,8 +294,6 @@ begin
                       R_word_count <= R_word_count - 1; -- 4 pixels less to process
                     end if;
                 end case;
-	      --end if;
-              R_sram_addr <= R_sram_addr + 1; -- sequential read from external RAM
             end if;
           end if;
         end if;
@@ -437,8 +434,8 @@ begin
     linememory: entity work.bram_true2p_2clk
     generic map (
         dual_port => True, -- one port takes data from RAM, other port outputs to video
-        pass_thru_a => False, -- allow simultaneous reading and erasing of old data
-        pass_thru_b => False, -- allow simultaneous reading and erasing of old data
+        pass_thru_a => False, -- false allows simultaneous reading and erasing of old data
+        pass_thru_b => False, -- false allows simultaneous reading and erasing of old data
         data_width => C_data_width,
         addr_width => C_addr_width
     )
