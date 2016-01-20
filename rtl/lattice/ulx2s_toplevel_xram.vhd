@@ -73,7 +73,7 @@ entity toplevel is
     C_big_endian: boolean := false;
     -- C_boot_rom = true: bootloader will try to chainboot SPI flash ROM, fallback to serial
     -- C_boot_rom = false: serial bootloader only
-    C_boot_rom: boolean := false;
+    C_boot_rom: boolean := true;
     C_mult_enable: boolean := true;
     C_branch_likely: boolean := true;
     C_sign_extend: boolean := true;
@@ -114,7 +114,6 @@ entity toplevel is
       -- C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!! defined below as constant
 
     C_sdram: boolean := false;
-      C_sdram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
       C_sdram_separate_arbiter: boolean := false;
       C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
       C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
@@ -128,7 +127,7 @@ entity toplevel is
 
     C_framebuffer: boolean := false; -- TV framebuffer (not yet supported in glue_xram)
 
-    C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
+    C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
       C_vgahdmi_test_picture: integer := 0;
       -- number of pixels for line; 640
       C_vgahdmi_fifo_step: integer := 640;
@@ -139,7 +138,7 @@ entity toplevel is
       C_vgahdmi_fifo_addr_width: integer := 11;
 
     C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
-      C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 81.25MHz 1MB SRAM"; -- default banner in screen memory
+      C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 50MHz 1MB SRAM"; -- default banner in screen memory
       C_vgatext_mode: integer := 0; -- 640x480
       C_vgatext_bits: integer := 4; -- 64 possible colors
       C_vgatext_bram_mem: integer := 0; -- 4KB text+font  memory
@@ -181,8 +180,8 @@ entity toplevel is
     C_pcm: boolean := true;
     C_timer: boolean := true;
     C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
-    C_fmrds: boolean := true; -- either FM or tx433
-    C_fm_stereo: boolean := false;
+    C_fmrds: boolean := false; -- either FM or tx433
+    C_fm_stereo: boolean := true;
     C_fm_filter: boolean := true;
     C_fm_downsample: boolean := false;
     C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
@@ -191,7 +190,8 @@ entity toplevel is
     --C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
     C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
     C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
-    C_pids: integer := 0; -- 4 PIDs can fit but it will pose routing/timing problems in lattice XP2 so disabled
+    C_pids: integer := 0; -- 4 PIDs can fit but it will other modules like video
+    -- can pose routing/timing problems in lattice XP2 so enable them as needed
     -- manifestation of timing problems is that f32c CPU erraticaly slows down
     -- or speeds up while executing arduino delay(1000);
     C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8); -- for each pid choose simulator/real 
@@ -407,14 +407,14 @@ begin
       gpio(12) => j1_20, gpio(13) => j1_21, gpio(14) => j1_22,  gpio(15) => j1_23,
       --  gpio(27 downto 16) multifunciton: PID
       --  encoder_in_a       encoder_in_b       bridge_f_out        bridge_r_out
-      --gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
-      --gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1 
-      --gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
-      vga_vsync => j2_3,
-      vga_hsync => j2_4,
-      vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
-      vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
-      vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
+      gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
+      gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1 
+      gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
+      --vga_vsync => j2_3,
+      --vga_hsync => j2_4,
+      --vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
+      --vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
+      --vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
       gpio(28) => gpio_28, -- j2_16
       --  gpio(28) multifunction: antenna
       cw_antenna => cw_antenna, -- output 433MHz
