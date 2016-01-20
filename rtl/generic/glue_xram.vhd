@@ -115,9 +115,7 @@ generic (
   C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
   C_vgahdmi_use_bram: boolean := false;
   C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
-  C_vgahdmi_fifo_step: integer := 4*10*17;
-  C_vgahdmi_fifo_postpone_step: integer := 4*10*17-8;
-  C_vgahdmi_fifo_compositing_length: integer := 17;
+  C_vgahdmi_fifo_step: integer := 640;
   C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
   C_vgahdmi_fifo_addr_width: integer := 9;
   -- Xark's feature-rich bitmap+textmode VGA
@@ -1012,11 +1010,9 @@ begin
     );
     vga_vsync <= not S_vga_vsync;
     vga_hsync <= not S_vga_hsync;
-    comp_fifo: entity work.compositing_fifo
+    comp_fifo: entity work.compositing2_fifo
     generic map (
       C_step => C_vgahdmi_fifo_step,
-      C_postpone_step => C_vgahdmi_fifo_postpone_step,
-      C_compositing_length => C_vgahdmi_fifo_compositing_length,
       C_data_width => C_vgahdmi_fifo_data_width,
       C_addr_width => C_vgahdmi_fifo_addr_width
     )
@@ -1026,7 +1022,6 @@ begin
       addr_strobe => vga_addr_strobe,
       addr_out => vga_addr,
       data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
-      -- data_ready => '1', -- BRAM is eveready
       data_in => vga_data, -- from SDRAM or BRAM
       -- data_in => x"00000001", -- test pattern vertical lines
       -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
@@ -1051,14 +1046,12 @@ begin
             if vga_ce = '1' and dmem_write = '1' then
                 -- cpu write: writes Framebuffer base
                 if C_big_endian then
-                     -- R_fb_mode <= cpu_to_dmem(25 downto 24);
-                     R_fb_base_addr <= -- XXX: revisit, probably wrong;
+                   R_fb_base_addr <= -- XXX: revisit, probably wrong;
                       cpu_to_dmem(11 downto 8) &
                       cpu_to_dmem(23 downto 16) &
                       cpu_to_dmem(31 downto 26);
                 else
-                    -- R_fb_mode <= cpu_to_dmem(1 downto 0);
-                    R_fb_base_addr <= cpu_to_dmem(29 downto 2);
+                   R_fb_base_addr <= cpu_to_dmem(29 downto 2);
                 end if;
             end if;
             -- interrupt handling: (CPU read or write will clear interrupt)
