@@ -1,5 +1,6 @@
 -- Copyright (c) 2016 Davor Jadrijevic
 -- All rights reserved.
+-- Idea about full 2D compositing proposed by Marko Zec
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -31,7 +32,24 @@
 -- to video system, running at pixel clock (25 MHz)
 -- which must have constant data rate
 
--- new compositing v2 (full 2D acceleration)
+-- features compositing v2 (full 2D acceleration)
+
+-- displays linked list of horizontal lines
+-- compositeed into 2D bitmap picture with sprites
+-- sprites features;
+
+-- any number of sprites
+-- any size
+-- any geometry
+-- transparency
+-- priority
+-- RAM space saving: same content can appear many times
+-- RAM bandwidth saving: (less content displayed, less RAM bandwidth)
+-- no need to move bitmap content across the video RAM,
+-- no need to refresh "dirty" video RAM areas.
+
+-- Sprites can move in horizontal or vertial direction just by
+-- manipulating the offsets and pointers
 
 -- list of vectors of line starts
 -- struct line_start
@@ -43,7 +61,7 @@
 -- struct compositing_line
 -- {
 --   struct compositing_line *next; // 32-bit continuation of the same structure, NULL if no more
---   int16_t x; // where to start on screen (can be negative)
+--   int16_t x; // x-offset where to start on screen (can be negative)
 --   uint16_t n; // number of pixels contained here (could be 0 to skip this struct to the next)
 --   uint8_t pixel[1]; // array of pixels continued here (could be more than 1 element)
 -- };
@@ -89,36 +107,13 @@ entity compositing2_fifo is
         C_synclen: integer := 3; -- bits in cpu-to-pixel clock synchronizer
         -- (0: disable rewind and be ordinary sequential fifo)
         -- (>0: fifo will be loaded from RAM in full steps
-        -- each full step is a count of output words.
-        -- rewind signal can again output data stream from fifo
-        -- starting from last full step it was filled from RAM,
-        -- saves RAM bandwidth during text mode or bitmap vertial line doubling
-        -- set it to 4*17*10 = 680 for compositing 640x480 with 17 word length
+        -- number of pixels per horizontal line
+        -- C_position_clipping = false -- handles only small out of screen positions
+        -- C_position_clipping = true -- handles large out of screen gracefully (LUT eater)
+        C_position_clipping: boolean := false; 
         C_step: integer := 640; -- pixels per line
-        -- postpone step fetch by N output words
-        -- set it to 1-3 for bandwidth saving with soft scroll
-        -- set it a few words less than step for
-        -- compositing e.g. 4*17*10-8=672
-        C_postpone_step: integer := 0;
-        -- define the length of horizontal compositing slice (words)
-        -- word count includes offset word and following bitmap data
-        -- this option should be used together with C_width of sufficient
-        -- size for 2 scan lines and C_postpone_step for 1 scan line
-        -- 0 to disable, 17 is standard value for compositing 1 word offsets + 16 words bitmaps
-        C_compositing_length: integer := 0;
-        -- select bit width for data output
-        -- should be equal to bits per pixel for compositing
-        -- this is data bus width of fifo buffer
-        -- values allowed: 8, 16 or 32
-        -- lower bpp won't work because incomding
-        -- 32bit data from RAM cannot be serialized into
-        -- narrow bus buffer
-        -- compositing: 8
-        C_data_width: integer range 8 to 32 := 8;
-        -- defines the address bus length of the FIFO for pixel buffering
-        -- thus it defines size of the BRAM for buffering and compositing
-        -- for 32bpp no compositing, default value is 6: 64 32-bit words
-        -- for compositing buffer size must be more than 2 horizontal scan lines
+        C_data_width: integer range 8 to 32 := 8; -- bits per pixel
+        -- fifo buffer size (number of address bits that refer to pixels)
         -- compositing: 11 (2^11 = 2048 bytes for 640x480 8bpp)
         C_addr_width: integer := 11 -- bits width of fifo address
     );
@@ -172,12 +167,12 @@ architecture behavioral of compositing2_fifo is
     signal S_bram_write, S_data_write: std_logic;
     signal S_need_refill: std_logic;
     signal R_need_refill_cpu: std_logic := '0';
-    signal S_data_opaque: std_logic;
-    signal S_fetch_compositing_offset: std_logic := '0';
+    --signal S_data_opaque: std_logic;
+    --signal S_fetch_compositing_offset: std_logic := '0';
     signal S_compositing_erase: std_logic := '0';
-    signal R_compositing_active_offset: std_logic_vector(15 downto 0) := (others => '0');
-    signal R_compositing_second_offset: std_logic_vector(15 downto 0) := (others => '0');
-    signal R_compositing_countdown: integer range 0 to C_compositing_length := 0;
+    --signal R_compositing_active_offset: std_logic_vector(15 downto 0) := (others => '0');
+    --signal R_compositing_second_offset: std_logic_vector(15 downto 0) := (others => '0');
+    --signal R_compositing_countdown: integer range 0 to C_compositing_length := 0;
     signal S_offset_visible: std_logic := '1';
     signal R_shifting_counter: std_logic_vector(C_shift_addr_width downto 0) := (others => '0'); -- counts shift cycles and adds address
     signal R_data_in_shift: std_logic_vector(31 downto 0); -- data in shift buffer to bram
@@ -186,6 +181,8 @@ architecture behavioral of compositing2_fifo is
     signal R_line_start, R_seg_next: std_logic_vector(29 downto 2);
     signal R_state: integer range 0 to 3;
     signal R_position, R_word_count: std_logic_vector(15 downto 0);
+    signal S_position, S_pixel_count: std_logic_vector(15 downto 0);
+    signal S_pixels_remaining: std_logic_vector(15 downto 0);
     constant C_state_read_line_start: integer := 0;
     signal R_line_rd, R_line_wr: std_logic := '0'; -- simple 1-bit index of line
     -- indicates which line in buffer (containing 2 lines) is written (compositing from RAM)
@@ -246,6 +243,9 @@ begin
     -- useful for VSYNC frame interrupt
     frame <= clean_start; -- must be rising edge for CPU interrupt, not level
 
+    S_position <= data_in(15 downto 0);
+    S_pixel_count <= data_in(31 downto 16);
+    S_pixels_remaining <= S_pixel_count + S_position; -- used if S_position is negative
     -- Refill the circular buffer with fresh data from external RAM
     -- h-compositing of thin sprites on the fly
     process(clk)
@@ -257,7 +257,6 @@ begin
             R_state <= 0;
             R_line_wr <= '0';
             R_pixbuf_wr_addr <= (others => '0');
-            R_compositing_countdown <= 0;
           else
             if data_ready = '1' and S_need_refill = '1' then -- BRAM must use this
                 case R_state is
@@ -271,9 +270,50 @@ begin
                     R_sram_addr <= R_sram_addr + 1; -- next sequential read
                     R_state <= 2;
                   when 2 => -- read position and pixel count
-                    R_position <= data_in(15 downto 0); -- compositing position (pixels)
-                    R_word_count <= data_in(31 downto 16); -- number of 32-bit words (n*4 pixels)
-                    R_sram_addr <= R_sram_addr + 1;  -- next sequential read
+                    if C_position_clipping = false then
+                      R_position <= S_position; -- compositing position (pixels)
+                      R_word_count <= "00" & S_pixel_count(15 downto 2); -- number of 32-bit words (n*4 pixels)
+                      R_sram_addr <= R_sram_addr + 1;  -- next sequential read (data)
+                    else
+                      -- C_position_clipping = true
+                      if S_position(15) = '0' then
+                        -- S_position is positive
+                        if S_position < C_step then
+                          R_position <= S_position; -- compositing position (pixels)
+                          R_word_count <= "00" & S_pixel_count(15 downto 2); -- number of 32-bit words (n*4 pixels)
+                          R_sram_addr <= R_sram_addr + 1;  -- next sequential read (data)
+                        else
+                          -- out of visible compositing range, skip to the next segment or line
+                          if R_seg_next = 0 then
+                            R_state <= 0;
+                            R_line_wr <= not R_line_wr; -- + 1;
+                            R_sram_addr <= R_line_start; -- jump to start of the next line
+                          else
+                            R_state <= 1;
+                            R_sram_addr <= R_seg_next; -- jump to next compositing segment
+                          end if;
+                        end if;
+                      else
+                        -- S_position is negative
+                        if S_pixels_remaining(15) = '0' then
+                          -- few pixels still remaining from compositing line
+                          R_position <= (others => '0');
+                          R_word_count <= "00" & S_pixels_remaining(15 downto 2);
+                          -- skip forward (convert negative position into positive)
+                          R_sram_addr <= R_sram_addr + (x"0001" - ("11" & S_position(15 downto 2)));
+                        else
+                          -- out of visible compositing range, skip to the next segment or line
+                          if R_seg_next = 0 then
+                            R_state <= 0;
+                            R_line_wr <= not R_line_wr; -- + 1;
+                            R_sram_addr <= R_line_start; -- jump to start of the next line
+                          else
+                            R_state <= 1;
+                            R_sram_addr <= R_seg_next; -- jump to next compositing segment
+                          end if;
+                        end if;
+                      end if; -- C_position negative?
+                    end if; -- C_position_clipping
                     R_state <= 3;
                   when others => -- read pixels and prepare to exit
                     -- data to compositing (written from another process)
