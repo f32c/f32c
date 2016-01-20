@@ -130,18 +130,8 @@ entity toplevel is
 
     C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
       C_vgahdmi_test_picture: integer := 0;
-      -- number of pixels for line step 640 for no compositing
-      -- 680 for compositing
-      C_vgahdmi_fifo_step: integer := 4*10*17;
-      -- number of pixels to postpone step
-      -- postpone step as much as possible to avoid flickering of a left sprite moved right
-      C_vgahdmi_fifo_postpone_step: integer := 4*(10*17-1);
-      -- number of 32 bit words used for H-compositing dual thin sprite,
-      -- first 32-bit word contains 2 offsets and the rest is bitmap
-      -- usual value for this is 17
-      -- (tiny sprites are one pixel high)
-      C_vgahdmi_fifo_compositing_length: integer := 17;
-      -- output data width select: 8 bits = 3
+      -- number of pixels for line; 640
+      C_vgahdmi_fifo_step: integer := 640;
       -- normally this should be  actual bits per pixel
       C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
       -- width of FIFO address space -> size of fifo
@@ -192,7 +182,7 @@ entity toplevel is
     C_timer: boolean := true;
     C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
     C_fmrds: boolean := true; -- either FM or tx433
-    C_fm_stereo: boolean := true;
+    C_fm_stereo: boolean := false;
     C_fm_filter: boolean := true;
     C_fm_downsample: boolean := false;
     C_rds_msg_len: integer := 260; -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
@@ -201,7 +191,9 @@ entity toplevel is
     --C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
     C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
     C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
-    C_pids: integer := 4;
+    C_pids: integer := 0; -- 4 PIDs can fit but it will pose routing/timing problems in lattice XP2 so disabled
+    -- manifestation of timing problems is that f32c CPU erraticaly slows down
+    -- or speeds up while executing arduino delay(1000);
     C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8); -- for each pid choose simulator/real 
     C_dds: boolean := false
   );
@@ -343,8 +335,6 @@ begin
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_test_picture => C_vgahdmi_test_picture,
       C_vgahdmi_fifo_step => C_vgahdmi_fifo_step,
-      C_vgahdmi_fifo_postpone_step => C_vgahdmi_fifo_postpone_step,
-      C_vgahdmi_fifo_compositing_length => C_vgahdmi_fifo_compositing_length,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
       -- vga textmode
@@ -417,14 +407,14 @@ begin
       gpio(12) => j1_20, gpio(13) => j1_21, gpio(14) => j1_22,  gpio(15) => j1_23,
       --  gpio(27 downto 16) multifunciton: PID
       --  encoder_in_a       encoder_in_b       bridge_f_out        bridge_r_out
-      gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
-      gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1 
-      gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
-      --vga_vsync => j2_3,
-      --vga_hsync => j2_4,
-      --vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
-      --vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
-      --vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
+      --gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
+      --gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1 
+      --gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
+      vga_vsync => j2_3,
+      vga_hsync => j2_4,
+      vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
+      vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
+      vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
       gpio(28) => gpio_28, -- j2_16
       --  gpio(28) multifunction: antenna
       cw_antenna => cw_antenna, -- output 433MHz
