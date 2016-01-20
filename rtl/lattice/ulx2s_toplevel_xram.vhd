@@ -190,7 +190,7 @@ entity toplevel is
     --C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
     C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
     C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
-    C_pids: integer := 0; -- 4 PIDs can fit but it will other modules like video
+    C_pids: integer := 0; -- 4 PIDs can fit but with other modules like video
     -- can pose routing/timing problems in lattice XP2 so enable them as needed
     -- manifestation of timing problems is that f32c CPU erraticaly slows down
     -- or speeds up while executing arduino delay(1000);
@@ -262,7 +262,7 @@ begin
 	clk => clk, clk_325m => open, res => '0'
     );
     ena_325m <= '0';
-    -- warning: from 81.25 MHz PLL produes 433.33 MHz
+    -- warning: from 81.25 MHz PLL produces 433.33 MHz
     -- correct frequency should be 433.92 MHz
     -- the difference results in reduced range
     clk433M33gen: entity work.pll_81M25_433M33
