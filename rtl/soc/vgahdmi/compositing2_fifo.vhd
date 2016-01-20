@@ -51,13 +51,10 @@
 -- Sprites can move in horizontal or vertial direction just by
 -- manipulating the offsets and pointers
 
--- list of vectors of line starts
--- struct line_start
--- {
---   struct compositing_line **start; // 32-bit memory address of start of each line
--- };
+-- video base points to first element of array of pointers to compositing lines
+-- each line is linked list of bitmap content, should have at least one member.
+-- for 640x480 there will be 480 vectors, each 32-bit
 
--- the compositing line
 -- struct compositing_line
 -- {
 --   struct compositing_line *next; // 32-bit continuation of the same structure, NULL if no more
@@ -65,6 +62,13 @@
 --   uint16_t n; // number of pixels contained here (could be 0 to skip this struct to the next)
 --   uint8_t pixel[1]; // array of pixels continued here (could be more than 1 element)
 -- };
+-- struct compositing_line *lines[480]; // 32-bit memory address of start of each line
+
+-- there can be large number of compositing_line objects linked one to each other.
+-- Only limitation is the RAM bandwidth, if the full content
+-- can't be read from RAM in time of one video scan line,
+-- the rest of the list will be discarded, compositing will
+-- then display incomplete and flickery lines
 
 -- states
 -- 0: C_read_line_start: read line start, increment ptr to start
