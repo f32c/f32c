@@ -890,7 +890,11 @@ begin
                       R_simple_out(C_simple_out - i * 32 - 1 downto i * 32);
                 end if;
             end loop;
+        --when iomap_from(iomap_vga, iomap_range) to iomap_to(iomap_vga, iomap_range) =>
         when iomap_from(iomap_vga_textmode, iomap_range) to iomap_to(iomap_vga_textmode, iomap_range) =>
+            if C_vgahdmi then
+                io_to_cpu <= (others => S_vga_vsync); -- vertical blank: all bits the same
+            end if;
             if C_vgatext then
                 io_to_cpu <= from_vga_textmode;
             end if;
