@@ -298,13 +298,13 @@ architecture Behavioral of glue_xram is
     signal timer_intr: std_logic;
 
     -- Framebuffer
-    signal R_fb_base_addr: std_logic_vector(29 downto 2);
+    signal R_fb_base_addr: std_logic_vector(31 downto 2) := (others => '0');
     signal R_fb_intr: std_logic;
 
     -- VGA/HDMI video
     constant iomap_vga: T_iomap_range := (x"FB90", x"FB9F");
     signal vga_ce: std_logic; -- '1' when address is in iomap_vga range
-    signal vga_fetch_next: std_logic; -- video module requests next data from fifo
+    signal vga_fetch_next, vga_fetch_enable: std_logic; -- video module requests next data from fifo
     signal vga_addr: std_logic_vector(29 downto 2);
     signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
     signal vga_data_bram: std_logic_vector(7 downto 0);
@@ -1010,6 +1010,7 @@ begin
     );
     vga_vsync <= not S_vga_vsync;
     vga_hsync <= not S_vga_hsync;
+    vga_fetch_enable <= '1' when R_fb_base_addr(31 downto 28) = C_xram_base else '0';
     comp_fifo: entity work.compositing2_fifo
     generic map (
       C_step => C_vgahdmi_fifo_step,
@@ -1026,11 +1027,13 @@ begin
       -- data_in => x"00000001", -- test pattern vertical lines
       -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
       -- data_in(31 downto 8) => (others => '0'),
-      base_addr => R_fb_base_addr,
+      base_addr => R_fb_base_addr(29 downto 2),
       active => not S_vga_vsync,
       frame => vga_frame,
       data_out => vga_data_from_fifo(C_vgahdmi_fifo_data_width-1 downto 0),
-      fetch_next => vga_fetch_next
+      fetch_next => vga_fetch_next and vga_fetch_enable
+      -- dirty hack upper bit of base enables fetching
+      -- works if RAM is mapped to 0x80000000 or above
     );
     -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
     -- vga_data(7 downto 0) <= x"0F";
@@ -1051,7 +1054,7 @@ begin
                       cpu_to_dmem(23 downto 16) &
                       cpu_to_dmem(31 downto 26);
                 else
-                   R_fb_base_addr <= cpu_to_dmem(29 downto 2);
+                   R_fb_base_addr <= cpu_to_dmem(31 downto 2);
                 end if;
             end if;
             -- interrupt handling: (CPU read or write will clear interrupt)
