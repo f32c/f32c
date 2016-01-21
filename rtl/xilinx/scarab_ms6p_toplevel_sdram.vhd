@@ -56,27 +56,17 @@ entity glue is
     C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
     C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
 
-    C_vgahdmi: boolean := false;
+    C_vgahdmi: boolean := true;
     C_vgahdmi_test_picture: integer := 0;
-    -- number of pixels for line step 640 for no compositing
-    -- 680 for comositing
-    C_vgahdmi_fifo_step: integer := 680;
-    -- number of pixels to postpone step
-    -- postpone step as much as possible to avoid flickering of a left sprite moved right
-    C_vgahdmi_fifo_postpone_step: integer := 672;
-    -- number of 32 bit words used for H-compositing dual thin sprite,
-    -- first 32-bit word contains 2 offsets and the rest is bitmap
-    -- usual value for this is 17
-    -- (tiny sprites are one pixel high)
-    C_vgahdmi_fifo_compositing_length: integer := 17;
-    -- output data width select: 8 bits = 3
+    -- number of pixels for line step 640
+    C_vgahdmi_fifo_step: integer := 640;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
     -- width of FIFO address space -> size of fifo
     -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
     C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480                   
       C_vgatext_bits: integer := 4;   -- 64 possible colors
@@ -102,7 +92,7 @@ entity glue is
           C_vgatext_text_fifo_postpone_step: integer := 0;
           C_vgatext_text_fifo_step: integer := (82*2)/4; -- step for the FIFO refill and rewind
           C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) length = 2^width * 4 bytes
-      C_vgatext_bitmap: boolean := true; -- true for optional bitmap generation
+      C_vgatext_bitmap: boolean := false; -- true for optional bitmap generation
         C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
         C_vgatext_bitmap_fifo: boolean := true; -- enable bitmap FIFO
 --        C_vgatext_bitmap_fifo_step: integer := 0; -- disabled
@@ -312,8 +302,6 @@ begin
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_test_picture => C_vgahdmi_test_picture,
       C_vgahdmi_fifo_step => C_vgahdmi_fifo_step,
-      C_vgahdmi_fifo_postpone_step => C_vgahdmi_fifo_postpone_step,
-      C_vgahdmi_fifo_compositing_length => C_vgahdmi_fifo_compositing_length,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
       -- vga advanced graphics text+compositing bitmap
