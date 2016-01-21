@@ -60,7 +60,7 @@
 --   struct compositing_line *next; // 32-bit continuation of the same structure, NULL if no more
 --   int16_t x; // x-offset where to start on screen (can be negative)
 --   uint16_t n; // number of pixels contained here (could be 0 to skip this struct to the next)
---   uint8_t pixel[1]; // array of pixels continued here (could be more than 1 element)
+--   uint8_t *pixel; // 32-bit pointer to array of pixels (lower 2 bits discarded, 4-byte aligned)
 -- };
 -- struct compositing_line *lines[480]; // 32-bit memory address of start of each line
 
@@ -83,7 +83,9 @@
 -- 2: C_read_position: read start on screen and no. of pixels in single 32-bit read and store it
 --    R_position & R_px_count <= data(addr)
 --    addr <= addr + 1
--- 3: C_read_data: read all pixels and composite'm when done go to 
+-- 3. read pointer to data and jump there
+--    addr <= data(addr)
+-- 4: C_read_data: read all pixels and composite'm when done go to 
 --    pixel_data <= data(addr)
 --    addr <= addr + 1
 --      when all pixels done: if R_line_next = 0 then state<=0 else state<=1
@@ -183,7 +185,7 @@ architecture behavioral of compositing2_fifo is
     signal S_bram_data_in: std_logic_vector(C_data_width-1 downto 0);
     -- compositing 2
     signal R_line_start, R_seg_next: std_logic_vector(29 downto 2);
-    signal R_state: integer range 0 to 3;
+    signal R_state: integer range 0 to 4;
     signal R_position, R_word_count: std_logic_vector(15 downto 0);
     signal S_position, S_pixel_count: std_logic_vector(15 downto 0);
     signal S_pixels_remaining: std_logic_vector(15 downto 0);
@@ -275,6 +277,9 @@ begin
                     R_state <= 2;
                   when 2 => -- read position and pixel count
                     if C_position_clipping = false then
+                      -- simple variant: no arithmetic clipping
+                      -- use a bigger bram and wirite to unused
+                      -- area, thus make a short range clipping
                       R_position <= S_position; -- compositing position (pixels)
                       R_word_count <= "00" & S_pixel_count(15 downto 2); -- number of 32-bit words (n*4 pixels)
                       R_sram_addr <= R_sram_addr + 1;  -- next sequential read (data)
@@ -319,6 +324,9 @@ begin
                       end if; -- C_position negative?
                     end if; -- C_position_clipping
                     R_state <= 3;
+                  when 3 => -- read pointer to data and jump there
+                    R_sram_addr <= data_in(29 downto 2);
+                    R_state <= 4;
                   when others => -- read pixels and prepare to exit
                     -- data to compositing (written from another process)
                     -- pixeldata = data_in(31 downto 16);
@@ -401,7 +409,7 @@ begin
       -- if word to be written is 0 then don't write, allow it to
       -- "see through" lower priority sprites
       S_data_write <= '1' when data_ready='1' and S_need_refill='1'
-                           and R_state = 3 -- write only during state 3 - bitmap data reading
+                           and R_state = 4 -- write only during state 4 - bitmap data reading
                   --and S_offset_visible
                   --and active
                   --and (not clean_start); -- not in frame start cycle
