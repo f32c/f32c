@@ -59,7 +59,7 @@
 -- {
 --   struct compositing_line *next; // 32-bit continuation of the same structure, NULL if no more
 --   int16_t x; // x-offset where to start on screen (can be negative)
---   uint16_t n; // number of pixels contained here (could be 0 to skip this struct to the next)
+--   uint16_t n; // number of pixels following (4 pixels minimum)
 --   uint8_t *pixel; // 32-bit pointer to array of pixels (lower 2 bits discarded, 4-byte aligned)
 -- };
 -- struct compositing_line *lines[480]; // 32-bit memory address of start of each line
@@ -331,7 +331,7 @@ begin
                     -- data to compositing (written from another process)
                     -- pixeldata = data_in(31 downto 16);
                     -- check range if within the line
-                    if R_word_count = 0 then
+                    if R_word_count = 1 then
                       if R_seg_next = 0 then
                         R_state <= 0;
                         R_line_wr <= not R_line_wr; -- + 1;
@@ -504,3 +504,17 @@ begin
         data_out_b => data_out
     );
 end;
+
+-- todo
+
+-- [ ] advanced bandwidth saving:
+--     don't fetch low priority or clipped out content.
+--     compisite highest priority pixels first.
+--     read back composited data or have extra bram that
+--     will memorize opacity
+--     and skip fetching of any
+--     lower priority which will appear "under" already
+--     composited pixels and thus result in no visual difference
+
+-- [ ] allow content to have 0 pixels currently this is not possible
+--     minimum content is 4 pixels (32-bit word)
