@@ -311,7 +311,8 @@ architecture Behavioral of glue_xram is
     signal video_bram_write: std_logic;
     signal vga_addr_strobe: std_logic; -- FIFO requests to read from RAM
     signal vga_data_ready: std_logic; -- RAM responds to FIFO
-    signal S_vga_vsync, S_vga_hsync: std_logic; -- intermediate signals for xilinx to be happy
+    signal S_vga_vsync, S_vga_hsync: std_logic;
+    signal S_vga_vblank: std_logic;
     signal vga_frame: std_logic;
 
     -- VGA_textmode VGA/HDMI video (text and font in BRAM, bitmap in sdram)
@@ -893,7 +894,7 @@ begin
         --when iomap_from(iomap_vga, iomap_range) to iomap_to(iomap_vga, iomap_range) =>
         when iomap_from(iomap_vga_textmode, iomap_range) to iomap_to(iomap_vga_textmode, iomap_range) =>
             if C_vgahdmi then
-                io_to_cpu <= (others => S_vga_vsync); -- vertical blank: all bits the same
+                io_to_cpu <= (others => S_vga_vblank); -- vertical blank: all bits the same
             end if;
             if C_vgatext then
                 io_to_cpu <= from_vga_textmode;
@@ -1010,11 +1011,12 @@ begin
       vga_b => vga_b,
       vga_hsync => S_vga_hsync,
       vga_vsync => S_vga_vsync,
+      vga_vblank => S_vga_vblank,
       tmds_out_rgb => tmds_out_rgb
     );
     vga_vsync <= not S_vga_vsync;
     vga_hsync <= not S_vga_hsync;
-    vga_fetch_enable <= '1' when R_fb_base_addr(31 downto 28) = C_xram_base else '0';
+    vga_fetch_enable <= vga_fetch_next when R_fb_base_addr(31 downto 28) = C_xram_base else '0';
     comp_fifo: entity work.compositing2_fifo
     generic map (
       C_step => C_vgahdmi_fifo_step,
@@ -1035,7 +1037,7 @@ begin
       active => not S_vga_vsync,
       frame => vga_frame,
       data_out => vga_data_from_fifo(C_vgahdmi_fifo_data_width-1 downto 0),
-      fetch_next => vga_fetch_next and vga_fetch_enable
+      fetch_next => vga_fetch_enable
       -- dirty hack upper bit of base enables fetching
       -- works if RAM is mapped to 0x80000000 or above
     );
