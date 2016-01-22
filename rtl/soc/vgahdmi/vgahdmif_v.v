@@ -26,6 +26,7 @@ module vgahdmi_v(
         output wire fetch_next, // fetch_next=1: read cycle is complete, fetch next data
         output wire line_repeat, // repeat video line
         output wire vga_hsync, vga_vsync, // active low, vsync will reset fifo
+        output wire vga_vblank, // vertical blank signal
         output wire [7:0] vga_r, vga_g, vga_b,
 	output wire [2:0] TMDS_out_RGB
 );
@@ -58,6 +59,7 @@ assign pixclk = clk_pixel;  //  25 MHz
 
 reg [9:0] CounterX, CounterY;
 reg hSync, vSync, DrawArea;
+reg vBlank;
 
 // wire fetcharea; // when to fetch data, must be 1 byte earlier than draw area
 wire fetcharea = (CounterX<resolution_x) && (CounterY<resolution_y);
@@ -76,10 +78,15 @@ always @(posedge pixclk)
   end
 always @(posedge pixclk)
   begin
+    if(CounterY == resolution_y)
+      vBlank <= 1;
     if(CounterY == resolution_y + vsync_front_porch)
       vSync <= 1;
     if(CounterY == resolution_y + vsync_front_porch + vsync_pulse)
+    begin
       vSync <= 0;
+      vBlank <= 0;
+    end
   end
 
 parameter synclen = 3; // >=3, bit length of the clock synchronizer shift register
@@ -111,6 +118,7 @@ assign vga_g = DrawArea ? (                               green_byte[7:0]) : 0;
 assign vga_b = DrawArea ? (test_picture ? test_blue[7:0] : blue_byte[7:0]) : 0;
 assign vga_hsync = hSync;
 assign vga_vsync = vSync;
+assign vga_vblank = vBlank;
 assign line_repeat = dbl_y ? vga_hsync & ~CounterY[0] : 0;
 
 // generate HDMI output, mixing with test picture if enabled
