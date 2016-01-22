@@ -93,14 +93,18 @@
 -- for simplicity, use alternate 2-line buffering
 -- one line is displayed while other line is fetched
 
--- problem: when we have 1 bit to indentify which line
--- is read/written, the reset state sets both to 0 and
--- then it will not fetch the initial line?
+-- destructive reading of displayed data automatically
+-- erases to background actually displayed pixels so the
+-- BRAM is clean for the next line
 
 -- we need to composit on every full line
 -- 2K buffer will 3 composited lines
 -- one line is currently displayed and erased
 -- another 2 lines can be filled up when during displaying
+
+-- RAM fetch cycle should take at least 4 CPU clocks
+-- to be able to shift 32-bit word into 8-bit bram
+
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -518,3 +522,13 @@ end;
 
 -- [ ] allow content to have 0 pixels currently this is not possible
 --     minimum content is 4 pixels (32-bit word)
+
+-- [ ] first 1-2 horizonal lines show wrong content last line missing
+--     introudce either 2-bit "even/odd line needs refill flags"
+
+-- [ ] gracefully handle low bandwidth - if some lines
+--     can't be fetched in time, resume to correct line
+--     to minimize visual degradation of the picture
+--     some improvement for 2 chasing pointers
+
+-- [ ] font and text data fetching during video blank
