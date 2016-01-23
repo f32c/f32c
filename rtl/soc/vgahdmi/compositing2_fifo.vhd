@@ -262,8 +262,7 @@ begin
     begin
         if rising_edge(clk) then
           if clean_start = '1' then
-            R_sram_addr <= base_addr;
-            R_line_start <= base_addr;
+            R_sram_addr <= R_line_start;
             R_state <= 0;
             R_line_wr <= '0';
             R_pixbuf_wr_addr <= (others => '0');
@@ -273,7 +272,6 @@ begin
                   when 0 => -- read pointer to line start
                     -- R_sram_addr points to one of array of start addresses
                     R_sram_addr <= data_in(29 downto 2); -- read address of first segment start
-                    R_line_start <= R_line_start + 1; -- prepare to get next line
                     R_state <= 1;
                   when 1 => -- read next line segment
                     R_seg_next <= data_in(29 downto 2); -- read next segment start address
@@ -381,11 +379,13 @@ begin
           if active = '0' then
             R_pixbuf_rd_addr <= (others => '0');  -- this will read data from RAM
             R_line_rd <= '0'; -- reset line to read from
+            R_line_start <= base_addr;
           else
             if fetch_next = '1' then
               if R_pixbuf_rd_addr = C_step-1 then -- next line in buffer
                 R_pixbuf_rd_addr <= (others => '0');
                 R_line_rd <= not R_line_rd; -- + 1;
+                R_line_start <= R_line_start + 1;
               else
                 R_pixbuf_rd_addr <= R_pixbuf_rd_addr + 1; -- R_pixbuf_out_addr + 1 ??
               end if;
@@ -523,10 +523,13 @@ end;
 -- [ ] allow content to have 0 pixels currently this is not possible
 --     minimum content is 4 pixels (32-bit word)
 
--- [ ] first 1-2 horizonal lines show wrong content last line missing
---     introudce either 2-bit "even/odd line needs refill flags"
+-- [ ] first 2 horizonal lines show wrong content from bottom
+--     could be left as-is, fixed from CPU C code as 2 lines are delayed
 
--- [ ] gracefully handle low bandwidth - if some lines
+-- [ ] first 3 vertical lines are transparent while they shoudn't be
+--     probably next line switched in wrong time (different cloks)
+
+-- [x] gracefully handle low bandwidth - if some lines
 --     can't be fetched in time, resume to correct line
 --     to minimize visual degradation of the picture
 --     some improvement for 2 chasing pointers
