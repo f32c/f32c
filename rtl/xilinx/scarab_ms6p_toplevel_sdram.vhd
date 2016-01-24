@@ -56,7 +56,7 @@ entity glue is
     C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
     C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
 
-    C_vgahdmi: boolean := true;
+    C_vgahdmi: boolean := false;
     C_vgahdmi_test_picture: integer := 0;
     -- number of pixels for line step 640
     C_vgahdmi_fifo_step: integer := 640;
@@ -66,7 +66,7 @@ entity glue is
     -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
     C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480                   
       C_vgatext_bits: integer := 4;   -- 64 possible colors
@@ -92,34 +92,14 @@ entity glue is
           C_vgatext_text_fifo_postpone_step: integer := 0;
           C_vgatext_text_fifo_step: integer := (82*2)/4; -- step for the FIFO refill and rewind
           C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) length = 2^width * 4 bytes
-      C_vgatext_bitmap: boolean := false; -- true for optional bitmap generation
+      C_vgatext_bitmap: boolean := true; -- true for optional bitmap generation
         C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
         C_vgatext_bitmap_fifo: boolean := true; -- enable bitmap FIFO
---        C_vgatext_bitmap_fifo_step: integer := 0; -- disabled
---        C_vgatext_bitmap_fifo_postpone_step: integer := 0; -- disabled
---        C_vgatext_bitmap_fifo_compositing_length: integer := 0; -- disabled
---        C_vgatext_bitmap_fifo_data_width: integer := 32;
---        C_vgatext_bitmap_fifo_addr_width: integer := 8; -- bitmap width of FIFO address space length = 2^width * 4 byte
-
-          -- 32 bpp compositing
-          -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
---        C_vgatext_bitmap_fifo_step: integer := 10*17;
-          -- postpone step as much as possible to avoid flickering of a left sprite moved right
---        C_vgatext_bitmap_fifo_postpone_step: integer := 10*17-1;
-          -- 32bit word length for H-compositing thin sprite, including offset word (tiny sprites one pixel high)
---        C_vgatext_bitmap_fifo_compositing_length: integer := 17;
-          -- output data width 8bpp
---        C_vgatext_bitmap_fifo_data_width: integer := 32; -- should be equal to bitmap depth
-          -- bitmap width of FIFO address space length = 2^width * 4 byte
---        C_vgatext_bitmap_fifo_addr_width: integer := 9;
-
           -- 8 bpp compositing
-          -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
-          C_vgatext_bitmap_fifo_step: integer := 4*10*17;
-          -- postpone step as much as possible to avoid flickering of a left sprite moved right
-          C_vgatext_bitmap_fifo_postpone_step: integer := 4*(10*17-1);
-          -- 32bit word length for H-compositing thin sprite, including offset word (tiny sprites one pixel high)
-          C_vgatext_bitmap_fifo_compositing_length: integer := 17;
+          -- step=horizontal width in pixels
+          C_vgatext_bitmap_fifo_step: integer := 640;
+          -- height=vertical height in pixels
+          C_vgatext_bitmap_fifo_height: integer := 480;
           -- output data width 8bpp
           C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
           -- bitmap width of FIFO address space length = 2^width * 4 byte
@@ -334,8 +314,7 @@ begin
       C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
       C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
       C_vgatext_bitmap_fifo_step => C_vgatext_bitmap_fifo_step,
-      C_vgatext_bitmap_fifo_postpone_step => C_vgatext_bitmap_fifo_postpone_step,
-      C_vgatext_bitmap_fifo_compositing_length => C_vgatext_bitmap_fifo_compositing_length,
+      C_vgatext_bitmap_fifo_height => C_vgatext_bitmap_fifo_height,
       C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
       C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
       C_cw_simple_out => C_cw_simple_out, -- CW is for 433 MHz. -1 to disable. set (C_framebuffer => false, C_dds => false) for 433MHz transmitter
