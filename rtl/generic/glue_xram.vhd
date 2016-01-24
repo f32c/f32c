@@ -116,8 +116,9 @@ generic (
   C_vgahdmi_use_bram: boolean := false;
   C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
   C_vgahdmi_fifo_step: integer := 640;
+  C_vgahdmi_fifo_height: integer := 480;
   C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
-  C_vgahdmi_fifo_addr_width: integer := 9;
+  C_vgahdmi_fifo_addr_width: integer := 11;
   -- Xark's feature-rich bitmap+textmode VGA
   -- it can mix 8bpp bitmap and tiled graphics on the same screen
   -- choice of many of video modes
@@ -151,14 +152,10 @@ generic (
     C_vgatext_bitmap: boolean := false; -- true for optional bitmap generation
       C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
       C_vgatext_bitmap_fifo: boolean := false; -- disable bitmap FIFO
-        C_vgatext_bitmap_fifo_step: integer := 0; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
-        C_vgatext_bitmap_fifo_postpone_step: integer := 0; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
-        C_vgatext_bitmap_fifo_addr_width: integer := 8;	-- bitmap width of FIFO address space length = 2^width * 4 byte
-        C_vgatext_bitmap_fifo_data_width: integer := 32; -- data width from the fifo
-        C_vgatext_bitmap_fifo_compositing_length: integer := 0;	-- compositing length (0 disabled)
-        -- compositing for typical values 9 or 17 use with step 640/4 and width 9)
-        -- compositing length 9: 1 word for offset, 8 words for bitmap (thin h-sprites 32x1 of 8bpp pixels)
-        -- compositing length 17: 1 word for offset, 16 words for bitmap (thin h-sprites 64x1 of 8bpp pixels)
+        C_vgatext_bitmap_fifo_step: integer := 640; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
+        C_vgatext_bitmap_fifo_height: integer := 480; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
+        C_vgatext_bitmap_fifo_addr_width: integer := 11; -- bitmap width of FIFO address space length = 2^width * 4 byte
+        C_vgatext_bitmap_fifo_data_width: integer := 8; -- data width from the fifo
 
     C_pcm: boolean := false;
     C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
@@ -1024,6 +1021,7 @@ begin
     comp_fifo: entity work.compositing2_fifo
     generic map (
       C_step => C_vgahdmi_fifo_step,
+      C_height => C_vgahdmi_fifo_height,
       C_data_width => C_vgahdmi_fifo_data_width,
       C_addr_width => C_vgahdmi_fifo_addr_width
     )
@@ -1169,14 +1167,16 @@ begin
           );
       end generate; -- G_vgatext_fifo
 
+      S_vga_enable <= '1' when vga_textmode_bitmap_addr /= 0 else '0'; -- XXX fixme apply it like on vghadmi
+      S_vga_fetch_enabled <= S_vga_enable and vga_textmode_bitmap_strobe; -- drain fifo into display
+
       -- video FIFO for bitmap
       G_vgatext_bitmap_fifo:
       if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
-        bitmap_videofifo: entity work.compositing_fifo
+        bitmap_videofifo: entity work.compositing2_fifo
           generic map (
             C_step => C_vgatext_bitmap_fifo_step,
-            C_postpone_step => C_vgatext_bitmap_fifo_postpone_step,
-            C_compositing_length => C_vgatext_bitmap_fifo_compositing_length,
+            C_height => C_vgatext_bitmap_fifo_height,
             C_data_width => C_vgatext_bitmap_fifo_data_width,
             C_addr_width => C_vgatext_bitmap_fifo_addr_width
           )
@@ -1192,7 +1192,7 @@ begin
             active => vga_textmode_bitmap_active,
             frame => vga_textmode_bitmap_frame,
             data_out => vga_textmode_bitmap_data,
-            fetch_next => vga_textmode_bitmap_strobe
+            fetch_next => S_vga_fetch_enabled -- vga_textmode_bitmap_strobe
           );
       end generate; -- G_vgatext_bitmap_fifo
 
