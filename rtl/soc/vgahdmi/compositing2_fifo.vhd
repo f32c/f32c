@@ -194,9 +194,9 @@ architecture behavioral of compositing2_fifo is
     signal S_position, S_pixel_count: std_logic_vector(15 downto 0);
     signal S_pixels_remaining: std_logic_vector(15 downto 0);
     constant C_state_read_line_start: integer := 0;
-    signal R_line_rd, R_line_wr: std_logic := '0'; -- simple 1-bit index of line
     -- indicates which line in buffer (containing 2 lines) is written (compositing from RAM)
     -- and which line is read (by display output)
+    signal R_line_rd, R_line_wr: std_logic := '0'; -- simple 1-bit index of line
     
     -- signal need_refill: boolean;
     signal toggle_read_complete: std_logic;
@@ -267,7 +267,8 @@ begin
             R_line_wr <= '0';
             R_pixbuf_wr_addr <= (others => '0');
           else
-            if data_ready = '1' and S_need_refill = '1' then -- BRAM must use this
+            if data_ready = '1' and S_need_refill = '1'
+            then -- BRAM must use this
                 case R_state is
                   when 0 => -- read pointer to line start
                     -- R_sram_addr points to one of array of start addresses
@@ -283,7 +284,8 @@ begin
                       -- use a bigger bram and wirite to unused
                       -- area, thus make a short range clipping
                       R_position <= S_position; -- compositing position (pixels)
-                      R_word_count <= "00" & S_pixel_count(15 downto 2); -- number of 32-bit words (n*4 pixels)
+                      -- addr pad for 8bpp is "00"
+                      R_word_count <= C_addr_pad & S_pixel_count(15 downto C_shift_addr_width); -- number of 32-bit words (n*4 pixels)
                       R_sram_addr <= R_sram_addr + 1;  -- next sequential read (data)
                     else
                       -- C_position_clipping = true
@@ -291,7 +293,7 @@ begin
                         -- S_position is positive
                         if S_position < C_step then
                           R_position <= S_position; -- compositing position (pixels)
-                          R_word_count <= "00" & S_pixel_count(15 downto 2); -- number of 32-bit words (n*4 pixels)
+                          R_word_count <= C_addr_pad & S_pixel_count(15 downto C_shift_addr_width); -- number of 32-bit words (n*4 pixels)
                           R_sram_addr <= R_sram_addr + 1;  -- next sequential read (data)
                         else
                           -- out of visible compositing range, skip to the next segment or line
@@ -309,7 +311,7 @@ begin
                         if S_pixels_remaining(15) = '0' then
                           -- few pixels still remaining from compositing line
                           R_position <= (others => '0');
-                          R_word_count <= "00" & S_pixels_remaining(15 downto 2);
+                          R_word_count <= C_addr_pad & S_pixels_remaining(15 downto C_shift_addr_width);
                           -- skip forward (convert negative position into positive)
                           R_sram_addr <= R_sram_addr + (x"0001" - ("11" & S_position(15 downto 2)));
                         else
@@ -334,11 +336,18 @@ begin
                     -- pixeldata = data_in(31 downto 16);
                     -- check range if within the line
                     if R_word_count = 1 then
+                      -- word count decrements
+                      -- last element in segment is now being composited
+                      -- from this state
+                      -- we can either jump to next segment or
+                      -- if no more segments then complete the line
                       if R_seg_next = 0 then
+                        -- no more segments, line completed
                         R_state <= 0;
                         R_line_wr <= not R_line_wr; -- + 1;
                         R_sram_addr <= R_line_start; -- jump to start of the next line
                       else
+                        -- next segment
                         R_state <= 1;
                         R_sram_addr <= R_seg_next; -- jump to next compositing segment
                       end if;
@@ -383,6 +392,7 @@ begin
           else
             if fetch_next = '1' then
               if R_pixbuf_rd_addr = C_step-1 then -- next line in buffer
+                -- this is executed once at the end of line (right of screen)
                 R_pixbuf_rd_addr <= (others => '0');
                 R_line_rd <= not R_line_rd; -- + 1;
                 R_line_start <= R_line_start + 1;
@@ -412,13 +422,9 @@ begin
       -- write signal with handling transparency:
       -- if word to be written is 0 then don't write, allow it to
       -- "see through" lower priority sprites
-      S_data_write <= '1' when data_ready='1' and S_need_refill='1'
+      S_data_write <= '1' when data_ready='1'
                            and R_state = 4 -- write only during state 4 - bitmap data reading
-                  --and S_offset_visible
-                  --and active
-                  --and (not clean_start); -- not in frame start cycle
-                          else '0'
-                  ;
+                          else '0';
       -- calculate the compositing address where pixel data go (byte address)
       S_pixbuf_in_mem_addr <= R_line_wr & R_position(C_addr_width-2 downto 0);
     --end generate;
@@ -429,16 +435,6 @@ begin
       S_bram_data_in <= data_in;
       S_bram_write <= S_data_write;
       R_bram_in_addr <= S_pixbuf_in_mem_addr; -- not a register but pass-thru signal
-    end generate;
-
-    -- for debugging, instead of shifting just delay with registers
-    buffer_direct_debug: if C_data_width < 32 and false generate
-      process(clk)
-        begin
-          S_bram_data_in <= data_in(C_data_width-1 downto 0);
-          S_bram_write <= S_data_write;
-          R_bram_in_addr <= S_pixbuf_in_mem_addr; -- not a register but pass-thru signal
-        end process;
     end generate;
 
     buffer_shifting: if C_data_width < 32 generate
@@ -469,7 +465,9 @@ begin
               -- shift the data and increment address
               R_data_in_shift <= C_data_pad & R_data_in_shift(31 downto C_data_width); -- shift next data
               R_shifting_counter <= R_shifting_counter + 1; -- increment counter, when msb is 1 shifting stops
-              R_bram_in_addr <= R_bram_in_addr + 1; -- next data to next address
+              -- C_addr_width-2 wraparound within the same compositing line
+              -- MSB selects line (2 lines in buffer)
+              R_bram_in_addr(C_addr_width-2 downto 0) <= R_bram_in_addr(C_addr_width-2 downto 0) + 1; -- next data to next address
             end if;
           end if;
         end if; -- rising edge(clk)
@@ -526,8 +524,8 @@ end;
 -- [ ] first 2 horizonal lines show wrong content from bottom
 --     could be left as-is, fixed from CPU C code as 2 lines are delayed
 
--- [ ] first 3 vertical lines are transparent while they shoudn't be
---     probably next line switched in wrong time (different cloks)
+-- [x] first 3 vertical lines are transparent while they shoudn't be
+--     solution: during shifiting, use 1 bit less for bram write address
 
 -- [x] gracefully handle low bandwidth - if some lines
 --     can't be fetched in time, resume to correct line
