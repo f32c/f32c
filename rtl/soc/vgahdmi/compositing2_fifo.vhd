@@ -253,9 +253,9 @@ begin
     -- useful for VSYNC frame interrupt
     frame <= clean_start; -- must be rising edge for CPU interrupt, not level
 
-    S_position <= data_in(15 downto 0);
-    S_pixel_count <= data_in(31 downto 16);
-    S_pixels_remaining <= S_pixel_count + S_position; -- used if S_position is negative
+    --S_position <= data_in(15 downto 0);
+    --S_pixel_count <= data_in(31 downto 16);
+    S_pixels_remaining <= data_in(31 downto 16) + data_in(15 downto 0); -- used if data_in(15 downto 0) is negative
     -- Refill the circular buffer with fresh data from external RAM
     -- h-compositing of thin sprites on the fly
     process(clk)
@@ -283,17 +283,17 @@ begin
                       -- simple variant: no arithmetic clipping
                       -- use a bigger bram and wirite to unused
                       -- area, thus make a short range clipping
-                      R_position <= S_position; -- compositing position (pixels)
+                      R_position <= data_in(15 downto 0); -- compositing position (pixels)
                       -- addr pad for 8bpp is "00"
-                      R_word_count <= C_addr_pad & S_pixel_count(15 downto C_shift_addr_width); -- number of 32-bit words (n*4 pixels)
+                      R_word_count <= C_addr_pad & data_in(31 downto 16+C_shift_addr_width); -- number of 32-bit words (n*4 pixels)
                       R_sram_addr <= R_sram_addr + 1;  -- next sequential read (data)
                     else
                       -- C_position_clipping = true
-                      if S_position(15) = '0' then
-                        -- S_position is positive
-                        if S_position < C_step then
-                          R_position <= S_position; -- compositing position (pixels)
-                          R_word_count <= C_addr_pad & S_pixel_count(15 downto C_shift_addr_width); -- number of 32-bit words (n*4 pixels)
+                      if data_in(15) = '0' then
+                        -- data_in(15 downto 0) is positive
+                        if data_in(15 downto 0) < C_step then
+                          R_position <= data_in(15 downto 0); -- compositing position (pixels)
+                          R_word_count <= C_addr_pad & data_in(31 downto 16+C_shift_addr_width); -- number of 32-bit words (n*4 pixels)
                           R_sram_addr <= R_sram_addr + 1;  -- next sequential read (data)
                         else
                           -- out of visible compositing range, skip to the next segment or line
@@ -307,13 +307,13 @@ begin
                           end if;
                         end if;
                       else
-                        -- S_position is negative
+                        -- data_in(15 downto 0) is negative
                         if S_pixels_remaining(15) = '0' then
                           -- few pixels still remaining from compositing line
                           R_position <= (others => '0');
                           R_word_count <= C_addr_pad & S_pixels_remaining(15 downto C_shift_addr_width);
                           -- skip forward (convert negative position into positive)
-                          R_sram_addr <= R_sram_addr + (x"0001" - ("11" & S_position(15 downto 2)));
+                          R_sram_addr <= R_sram_addr + (x"0001" - ("11" & data_in(15 downto 2)));
                         else
                           -- out of visible compositing range, skip to the next segment or line
                           if R_seg_next = 0 then
