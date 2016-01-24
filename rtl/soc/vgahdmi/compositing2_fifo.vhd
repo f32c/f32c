@@ -35,8 +35,12 @@
 -- features compositing v2 (full 2D acceleration)
 
 -- displays linked list of horizontal lines
--- compositeed into 2D bitmap picture with sprites
--- sprites features;
+-- composited into 2D bitmap picture which
+-- consists of horizonal line segments with
+-- transparency and priorty. Groups of such
+-- lines can form sprites
+
+-- sprites features:
 
 -- any number of sprites
 -- any size
@@ -52,8 +56,12 @@
 -- manipulating the offsets and pointers
 
 -- video base points to first element of array of pointers to compositing lines
--- each line is linked list of bitmap content, should have at least one member.
+-- each line is linked list of bitmap content
+-- each line should have at least one member.
 -- for 640x480 there will be 480 vectors, each 32-bit
+-- each content should have at least 4 pixels
+-- each pixel can be either opque (coloured)
+-- or transparent (a special color)
 
 -- struct compositing_line
 -- {
@@ -64,17 +72,22 @@
 -- };
 -- struct compositing_line *lines[480]; // 32-bit memory address of start of each line
 
--- there can be large number of compositing_line objects linked one to each other.
+-- there can be large number of compositing_line objects linked
+-- one to each other.
 -- Only limitation is the RAM bandwidth, if the full content
 -- can't be read from RAM in time of one video scan line,
 -- the rest of the list will be discarded, compositing will
--- then display incomplete and flickery lines
+-- then display some horizontal lines incomplete or flickery.
 
--- states
+-- states executed in tight RAM read cycle loop
+-- this is approximate explaination, read the code
+-- to understand the real_thing :)
 -- 0: C_read_line_start: read line start, increment ptr to start
 --    addr <= R_line_start
+--    R_line_start is updated during dequeue cycle
+--    so if bandwidth can't supply it will jump over
+--    over some content to minimize screen distortion
 --    R_line_next <= data(addr)
---    R_line_start <= R_line_start + 1
 --    when restart R_line_start <= base
 -- 1: C_read_next: at line start, read next line pointer and store
 --    addr <= R_line_next
@@ -83,28 +96,22 @@
 -- 2: C_read_position: read start on screen and no. of pixels in single 32-bit read and store it
 --    R_position & R_px_count <= data(addr)
 --    addr <= addr + 1
--- 3. read pointer to data and jump there
+-- 3. read pointer to pixel data and jump to data
 --    addr <= data(addr)
--- 4: C_read_data: read all pixels and composite'm when done go to 
+-- 4: C_read_data: read all pixels and composite'm 
 --    pixel_data <= data(addr)
 --    addr <= addr + 1
---      when all pixels done: if R_line_next = 0 then state<=0 else state<=1
+--    when all pixels done: if R_line_next = 0 then state<=0 else state<=1
+-- RAM fetch cycle should take at least 4 CPU clocks
+-- to be able to shift 32-bit word into 8bpp pixel bram
 
 -- for simplicity, use alternate 2-line buffering
 -- one line is displayed while other line is fetched
+-- and composited
 
 -- destructive reading of displayed data automatically
 -- erases to background actually displayed pixels so the
 -- BRAM is clean for the next line
-
--- we need to composit on every full line
--- 2K buffer will 3 composited lines
--- one line is currently displayed and erased
--- another 2 lines can be filled up when during displaying
-
--- RAM fetch cycle should take at least 4 CPU clocks
--- to be able to shift 32-bit word into 8-bit bram
-
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -115,12 +122,11 @@ use ieee.numeric_std.all;
 entity compositing2_fifo is
     generic (
         C_synclen: integer := 3; -- bits in cpu-to-pixel clock synchronizer
-        -- (0: disable rewind and be ordinary sequential fifo)
-        -- (>0: fifo will be loaded from RAM in full steps
-        -- number of pixels per horizontal line
-        -- C_position_clipping = false -- handles only small out of screen positions
+        -- C_position_clipping = false -- (default) handles only small out of screen positions
         -- C_position_clipping = true -- handles large out of screen gracefully (LUT eater)
+        -- for average use it can be left disabled (false)
         C_position_clipping: boolean := false; 
+        -- number of pixels per horizontal line
         C_step: integer := 640; -- pixels per line
         C_height: integer := 480; -- number of vertical lines
         C_vscroll: integer := 3; -- vertical scroll that fixes fifo delay
