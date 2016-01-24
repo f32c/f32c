@@ -122,6 +122,7 @@ entity compositing2_fifo is
         -- C_position_clipping = true -- handles large out of screen gracefully (LUT eater)
         C_position_clipping: boolean := false; 
         C_step: integer := 640; -- pixels per line
+        C_height: integer := 480; -- number of vertical lines
         C_data_width: integer range 8 to 32 := 8; -- bits per pixel
         -- fifo buffer size (number of address bits that refer to pixels)
         -- compositing: 11 (2^11 = 2048 bytes for 640x480 8bpp)
@@ -189,6 +190,8 @@ architecture behavioral of compositing2_fifo is
     signal S_bram_data_in: std_logic_vector(C_data_width-1 downto 0);
     -- compositing 2
     signal R_line_start, R_seg_next: std_logic_vector(29 downto 2);
+    signal R_line_start_fix, S_line_start_fix_next: integer range 0 to C_height-1; -- y-position scroll fix
+    signal S_line_start_fixed: std_logic_vector(29 downto 2);
     signal R_state: integer range 0 to 4;
     signal R_position, R_word_count: std_logic_vector(15 downto 0);
     signal S_position, S_pixel_count: std_logic_vector(15 downto 0);
@@ -388,14 +391,16 @@ begin
           if active = '0' then
             R_pixbuf_rd_addr <= (others => '0');  -- this will read data from RAM
             R_line_rd <= '0'; -- reset line to read from
-            R_line_start <= base_addr;
+            R_line_start <= S_line_start_fixed;
+            R_line_start_fix <= 3; -- vertical scroll to fix fifo delay
           else
             if fetch_next = '1' then
               if R_pixbuf_rd_addr = C_step-1 then -- next line in buffer
                 -- this is executed once at the end of line (right of screen)
                 R_pixbuf_rd_addr <= (others => '0');
                 R_line_rd <= not R_line_rd; -- + 1;
-                R_line_start <= R_line_start + 1;
+                R_line_start_fix <= S_line_start_fix_next;
+                R_line_start <= S_line_start_fixed;
               else
                 R_pixbuf_rd_addr <= R_pixbuf_rd_addr + 1; -- R_pixbuf_out_addr + 1 ??
               end if;
@@ -403,6 +408,10 @@ begin
           end if;
         end if;
       end process;
+
+    S_line_start_fixed <= base_addr+R_line_start_fix;
+    S_line_start_fix_next <= 0 when R_line_start_fix = C_height-1
+                               else R_line_start_fix+1;
 
     -- writing to line memory
     --we_with_compositing: if C_compositing_length /= 0 generate
@@ -521,7 +530,8 @@ end;
 -- [ ] allow content to have 0 pixels currently this is not possible
 --     minimum content is 4 pixels (32-bit word)
 
--- [ ] first 2 horizonal lines show wrong content from bottom
+-- [x] 2 horizonal lines on top should be on the bottom
+--     this is because of FIFO system delays output for 2 lines
 --     could be left as-is, fixed from CPU C code as 2 lines are delayed
 
 -- [x] first 3 vertical lines are transparent while they shoudn't be
