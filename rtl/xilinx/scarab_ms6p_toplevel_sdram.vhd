@@ -60,6 +60,8 @@ entity glue is
     C_vgahdmi_test_picture: integer := 0;
     -- number of pixels for line step 640
     C_vgahdmi_fifo_step: integer := 640;
+    -- number of scan lines: 480
+    C_vgahdmi_fifo_height: integer := 480;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
     -- width of FIFO address space -> size of fifo
@@ -282,6 +284,7 @@ begin
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_test_picture => C_vgahdmi_test_picture,
       C_vgahdmi_fifo_step => C_vgahdmi_fifo_step,
+      C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
       -- vga advanced graphics text+compositing bitmap
