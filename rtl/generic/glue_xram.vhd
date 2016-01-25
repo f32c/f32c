@@ -126,7 +126,7 @@ generic (
   C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
     C_vgatext_label: string := "f32c";    -- default banner in screen memory
     C_vgatext_mode: integer := 0; -- 640x480
-    C_vgatext_bits: integer := 2; -- 64 possible colors
+    C_vgatext_bits: integer := 2; -- 4 possible colors
     C_vgatext_bram_mem: integer := 4; -- 4KB text+font  memory
     C_vgatext_bram_base: std_logic_vector(31 downto 28) := x"4"; -- start address of textmode bram x"4" -> 0x40000000
     C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
@@ -205,7 +205,7 @@ port (
   pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
   pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
   vga_hsync, vga_vsync: out std_logic;
-  vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0);
+  vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0) := (others => '0');
   tmds_out_rgb: out std_logic_vector(2 downto 0);
   tmds_out_clk: out std_logic := '0'; -- XXX fixme not connected
   jack_tip, jack_ring: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, 4-bit simple DAC
@@ -1150,6 +1150,9 @@ begin
         blank_o => vga_textmode_blank
       );
 
+      vga_r(7 downto 8-C_vgatext_bits) <= vga_textmode_red;
+      vga_g(7 downto 8-C_vgatext_bits) <= vga_textmode_green;
+      vga_b(7 downto 8-C_vgatext_bits) <= vga_textmode_blue;
       vga_vsync <= vga_textmode_vsync;
       vga_hsync <= vga_textmode_hsync;
 
@@ -1181,6 +1184,7 @@ begin
 
       S_vga_enable <= '1' when vga_textmode_bitmap_addr /= 0 else '0'; -- XXX fixme apply it like on vghadmi
       S_vga_fetch_enabled <= S_vga_enable and vga_textmode_bitmap_strobe; -- drain fifo into display
+      S_vga_active_enabled <= S_vga_enable and vga_textmode_bitmap_active; -- frame active, pre-fill fifo
 
       -- video FIFO for bitmap
       G_vgatext_bitmap_fifo:
@@ -1201,7 +1205,7 @@ begin
             data_in => from_xram, -- from SDRAM or BRAM
             -- data_in => x"00000001", -- test pattern vertical lines
             base_addr => vga_textmode_bitmap_addr,
-            active => vga_textmode_bitmap_active,
+            active => S_vga_active_enabled,
             frame => vga_textmode_bitmap_frame,
             data_out => vga_textmode_bitmap_data,
             fetch_next => S_vga_fetch_enabled -- vga_textmode_bitmap_strobe
