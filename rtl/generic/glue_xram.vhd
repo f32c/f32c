@@ -168,6 +168,8 @@ generic (
       C_rds_clock_multiply: integer := 57; -- multiply 57 and divide 3125 from cpu clk 100 MHz
       C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
     C_gpio: integer range 0 to 128 := 32;
+    C_gpio_pullup: boolean := false; -- XXX fixme not connected
+    C_gpio_adc: integer range 0 to 6 := 6;  -- XXX fixme not connected number of gpio ports setup for ADC (FleaFPGA-Uno)
     C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
       C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
       C_pid_prescaler: integer range 10 to 26 := 18; -- control loop frequency f_clk/2^prescaler
@@ -180,9 +182,10 @@ port (
   clk: in std_logic;
   clk_25MHz: in std_logic := '0'; -- VGA pixel clock 25 MHz
   clk_250MHz: in std_logic := '0'; -- HDMI bit shift clock, default 0 if no HDMI
+  clk_dvip, clk_dvin: in std_logic := '0'; -- XXX fixme not connected HDMI differential clock 125MHz for 640x480
   clk_fmdds: in std_logic := '0'; -- FM DDS clock (>216 MHz)
   clk_cw: in std_logic := '0'; -- CW transmitter 433.92 MHz
-  sram_a: out std_logic_vector(18 downto 0);
+  sram_a: out std_logic_vector(19 downto 0);
   sram_d: inout std_logic_vector(15 downto 0);
   sram_wel, sram_lbl, sram_ubl: out std_logic;
   -- sram_oel: out std_logic; -- XXX the old ULXP2 board needs this!
@@ -204,9 +207,18 @@ port (
   vga_hsync, vga_vsync: out std_logic;
   vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0);
   tmds_out_rgb: out std_logic_vector(2 downto 0);
+  tmds_out_clk: out std_logic := '0'; -- XXX fixme not connected
   jack_tip, jack_ring: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, 4-bit simple DAC
   fm_antenna, cw_antenna: out std_logic;
-  gpio: inout std_logic_vector(127 downto 0)
+  gpio: inout std_logic_vector(127 downto 0);
+  gpio_pullup: inout std_logic_vector(127 downto 0);  -- XXX fixme not connected optional (set C_gpio_pullup false)
+  --ADC ports
+  ADC_Error_out: inout std_logic_vector(5 downto 0); -- XXX fixme not connected
+  -- PS/2 Keyboard
+  ps2_clk_in: in std_logic := '0'; -- XXX fixme not connected
+  ps2_dat_in: in std_logic := '0';
+  ps2_clk_out: out std_logic;
+  ps2_dat_out: out std_logic
 );
 end glue_xram;
 
@@ -566,7 +578,7 @@ begin
 	C_pipelined_read => C_pipelined_read
     )
     port map (
-	clk => clk, sram_a => sram_a, sram_d => sram_d,
+	clk => clk, sram_a => sram_a(18 downto 0), sram_d => sram_d,
 	sram_wel => sram_wel, sram_lbl => sram_lbl, sram_ubl => sram_ubl,
 	data_out => from_xram,
 	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,

@@ -127,10 +127,12 @@ entity toplevel is
 
     C_framebuffer: boolean := false; -- TV framebuffer (not yet supported in glue_xram)
 
-    C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
+    C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
       C_vgahdmi_test_picture: integer := 0;
       -- number of pixels for line; 640
       C_vgahdmi_fifo_step: integer := 640;
+      -- number of scan lines: 480
+      C_vgahdmi_fifo_height: integer := 480;
       -- normally this should be  actual bits per pixel
       C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
       -- width of FIFO address space -> size of fifo
@@ -166,12 +168,11 @@ entity toplevel is
       C_vgatext_bitmap: boolean := false; -- true for optional bitmap generation
         C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
         C_vgatext_bitmap_fifo: boolean := true; -- enable bitmap FIFO
-          -- step=10*length make 680 bytes, contains 640 pixels and 20 16-bit offsets for compositing
-          C_vgatext_bitmap_fifo_step: integer := 4*10*17;
-          -- postpone step as much as possible to avoid flickering of a left sprite moved right
-          C_vgatext_bitmap_fifo_postpone_step: integer := 4*(10*17-1);
-          -- word length for H-compositing thin sprite, including offset word (tiny sprites one pixel high)
-          C_vgatext_bitmap_fifo_compositing_length: integer := 17;
+          -- 8 bpp compositing
+          -- step=horizontal width in pixels
+          C_vgatext_bitmap_fifo_step: integer := 640;
+          -- height=vertical height in pixels
+          C_vgatext_bitmap_fifo_height: integer := 480;
           -- output data width 8bpp
           C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
           -- bitmap width of FIFO address space length = 2^width * 4 byte
@@ -335,6 +336,7 @@ begin
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_test_picture => C_vgahdmi_test_picture,
       C_vgahdmi_fifo_step => C_vgahdmi_fifo_step,
+      C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
       -- vga textmode
@@ -367,8 +369,7 @@ begin
       C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
       C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
       C_vgatext_bitmap_fifo_step => C_vgatext_bitmap_fifo_step,
-      C_vgatext_bitmap_fifo_postpone_step => C_vgatext_bitmap_fifo_postpone_step,
-      C_vgatext_bitmap_fifo_compositing_length => C_vgatext_bitmap_fifo_compositing_length,
+      C_vgatext_bitmap_fifo_height => C_vgatext_bitmap_fifo_height,
       C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
       C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
       C_pcm => C_pcm,
@@ -407,19 +408,19 @@ begin
       gpio(12) => j1_20, gpio(13) => j1_21, gpio(14) => j1_22,  gpio(15) => j1_23,
       --  gpio(27 downto 16) multifunciton: PID
       --  encoder_in_a       encoder_in_b       bridge_f_out        bridge_r_out
-      gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
-      gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1 
-      gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
-      --vga_vsync => j2_3,
-      --vga_hsync => j2_4,
-      --vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
-      --vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
-      --vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
+      --gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
+      --gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1 
+      --gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
+      vga_vsync => j2_3,
+      vga_hsync => j2_4,
+      vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
+      vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
+      vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
       gpio(28) => gpio_28, -- j2_16
       --  gpio(28) multifunction: antenna
       cw_antenna => cw_antenna, -- output 433MHz
       fm_antenna => fm_antenna, -- output 87-108MHz
-      sram_a => sram_a, sram_d => sram_d,
+      sram_a(18 downto 0) => sram_a, sram_d => sram_d,
       sram_lbl => sram_lbl, sram_ubl => sram_ubl,
       sram_wel => sram_wel
     );
