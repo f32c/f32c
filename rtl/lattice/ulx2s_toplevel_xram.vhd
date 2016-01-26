@@ -142,15 +142,16 @@ entity toplevel is
     C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 50MHz 1MB SRAM"; -- default banner in screen memory
       C_vgatext_mode: integer := 0; -- 640x480
-      C_vgatext_bits: integer := 4; -- 64 possible colors
+      C_vgatext_bits: integer := 4; -- 16 possible colors
       C_vgatext_bram_mem: integer := 0; -- 4KB text+font  memory
+      C_vgatext_bram_base: std_logic_vector(31 downto 28) := x"4"; -- textmode bram at 0x40000000
       C_vgatext_external_mem: integer := 1024; -- 1MB external SRAM/SDRAM
       C_vgatext_reset: boolean := true; -- reset registers to default with async reset
-      C_vgatext_palette: boolean := false; -- no color palette
+      C_vgatext_palette: boolean := true; -- yes, color palette
       C_vgatext_text: boolean := true; -- enable optional text generation
         C_vgatext_font_bram8: boolean := true; -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
-        C_vgatext_char_height: integer := 16; -- character cell height
-        C_vgatext_font_height: integer := 16; -- font height
+        C_vgatext_char_height: integer := 8; -- character cell height
+        C_vgatext_font_height: integer := 8; -- font height
         C_vgatext_font_depth: integer := 8; -- font char depth, 7=128 characters or 8=256 characters
         C_vgatext_font_linedouble: boolean := false; -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
         C_vgatext_font_widthdouble: boolean := false; -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)
@@ -165,7 +166,7 @@ entity toplevel is
           C_vgatext_text_fifo_postpone_step: integer := 0;
           C_vgatext_text_fifo_step: integer := (82*2)/4; -- step for the FIFO refill and rewind
           C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) length = 2^width * 4 bytes
-      C_vgatext_bitmap: boolean := false; -- true for optional bitmap generation
+      C_vgatext_bitmap: boolean := true; -- true for optional bitmap generation
         C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
         C_vgatext_bitmap_fifo: boolean := true; -- enable bitmap FIFO
           -- 8 bpp compositing
@@ -345,6 +346,7 @@ begin
       C_vgatext_mode => C_vgatext_mode,
       C_vgatext_bits => C_vgatext_bits,
       C_vgatext_bram_mem => C_vgatext_bram_mem,
+      C_vgatext_bram_base => C_vgatext_bram_base,
       C_vgatext_external_mem => C_vgatext_external_mem,
       C_vgatext_reset => C_vgatext_reset,
       C_vgatext_palette => C_vgatext_palette,
