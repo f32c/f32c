@@ -79,8 +79,8 @@ entity glue is
       C_vgatext_palette: boolean := true; -- no color palette
       C_vgatext_text: boolean := true; -- enable optional text generation
         C_vgatext_font_bram8: boolean := true; -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
-        C_vgatext_char_height: integer := 8; -- character cell height
-        C_vgatext_font_height: integer := 8; -- font height
+        C_vgatext_char_height: integer := 16; -- character cell height
+        C_vgatext_font_height: integer := 16; -- font height
         C_vgatext_font_depth: integer := 8; -- font char depth, 7=128 characters or 8=256 characters
         C_vgatext_font_linedouble: boolean := false;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)        
         C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)       
@@ -108,7 +108,7 @@ entity glue is
           C_vgatext_bitmap_fifo_addr_width: integer := 11;
 
 
-    C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+    C_cw_simple_out: integer := 7; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable.
 
       C_pcm: boolean := true;
       C_fmrds: boolean := true;
