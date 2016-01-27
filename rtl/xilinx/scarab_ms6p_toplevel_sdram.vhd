@@ -108,7 +108,7 @@ entity glue is
           C_vgatext_bitmap_fifo_addr_width: integer := 11;
 
 
-    C_cw_simple_out: integer := 7; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable.
+    C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable.
 
       C_pcm: boolean := true;
       C_fmrds: boolean := true;
