@@ -48,6 +48,9 @@ use IEEE.MATH_REAL.ALL;
 use work.f32c_pack.all;
 use work.sram_pack.all;
 
+-- vendor specific libs (lattice)
+library xp2;
+use xp2.components.all;
 
 -- this is new and potentially buggy
 -- variant of feature-rich ULX2S SRAM
@@ -66,7 +69,7 @@ use work.sram_pack.all;
 entity toplevel is
   generic (
     -- Main clock: 25, 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-    C_clk_freq: integer := 81;
+    C_clk_freq: integer := 25;
 
     -- ISA options
     C_arch: integer := ARCH_MI32;
@@ -127,7 +130,7 @@ entity toplevel is
 
     C_framebuffer: boolean := false; -- TV framebuffer (not yet supported in glue_xram)
 
-    C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
+    C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
       C_vgahdmi_test_picture: integer := 0;
       -- number of pixels for line; 640
       C_vgahdmi_fifo_step: integer := 640;
@@ -181,7 +184,7 @@ entity toplevel is
 
     C_pcm: boolean := true;
     C_timer: boolean := true;
-    C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+    C_cw_simple_out: integer := 7; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
     C_fmrds: boolean := false; -- either FM or tx433
     C_fm_stereo: boolean := true;
     C_fm_filter: boolean := true;
@@ -227,6 +230,8 @@ architecture Behavioral of toplevel is
   constant C_pipelined_read: boolean := C_clk_freq = 81; -- works only at 81.25 MHz !!!
   signal clk, clk_325m, ena_325m: std_logic;
   signal clk_112M5, clk_433m: std_logic;
+  signal pll_lock: std_logic;
+  signal reset_when_clock_stable: std_logic;
   signal rs232_break: std_logic;
   signal btn: std_logic_vector(4 downto 0);
   signal gpio_28, fm_antenna, cw_antenna: std_logic;
@@ -281,7 +286,15 @@ begin
     G_clk_25_112_433: if C_cw_simple_out >= 0 generate
     clk112M5gen: entity work.pll_25M_112M5
     port map (
-      CLK => clk_25m, CLKOP => clk_112m5
+      CLK => clk_25m, CLKOP => clk_112m5,
+      lock => pll_lock
+    );
+    reset_when_clock_stable <= pll_lock;
+    -- reset assures clean start at power up
+    -- not only after upload of bitstream
+    gsr_inst_25MHz: GSR
+    port map (
+		gsr => reset_when_clock_stable
     );
     clk433M92gen: entity work.pll_112M5_433M92
     port map (
@@ -410,14 +423,14 @@ begin
       gpio(12) => j1_20, gpio(13) => j1_21, gpio(14) => j1_22,  gpio(15) => j1_23,
       --  gpio(27 downto 16) multifunciton: PID
       --  encoder_in_a       encoder_in_b       bridge_f_out        bridge_r_out
-      --gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
-      --gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1 
-      --gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
-      vga_vsync => j2_3,
-      vga_hsync => j2_4,
-      vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
-      vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
-      vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
+      gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
+      gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1
+      gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
+      --vga_vsync => j2_3,
+      --vga_hsync => j2_4,
+      --vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
+      --vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
+      --vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
       gpio(28) => gpio_28, -- j2_16
       --  gpio(28) multifunction: antenna
       cw_antenna => cw_antenna, -- output 433MHz
