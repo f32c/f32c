@@ -69,7 +69,7 @@ use xp2.components.all;
 entity toplevel is
   generic (
     -- Main clock: 25, 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-    C_clk_freq: integer := 25;
+    C_clk_freq: integer := 81;
 
     -- ISA options
     C_arch: integer := ARCH_MI32;
@@ -184,7 +184,7 @@ entity toplevel is
 
     C_pcm: boolean := true;
     C_timer: boolean := true;
-    C_cw_simple_out: integer := 7; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
+    C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
     C_fmrds: boolean := false; -- either FM or tx433
     C_fm_stereo: boolean := true;
     C_fm_filter: boolean := true;
@@ -195,7 +195,7 @@ entity toplevel is
     --C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
     C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
     C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
-    C_pids: integer := 0; -- 4 PIDs can fit but with other modules like video
+    C_pids: integer := 4; -- 4 PIDs can fit but with other modules like video
     -- can pose routing/timing problems in lattice XP2 so enable them as needed
     -- manifestation of timing problems is that f32c CPU erraticaly slows down
     -- or speeds up while executing arduino delay(1000);
@@ -421,18 +421,24 @@ begin
       gpio(4)  => j1_9,  gpio(5)  => j1_4,  gpio(6)  => j1_14,  gpio(7)  => j1_15,
       gpio(8)  => j1_16, gpio(9)  => j1_17, gpio(10) => j1_18,  gpio(11) => j1_19,
       gpio(12) => j1_20, gpio(13) => j1_21, gpio(14) => j1_22,  gpio(15) => j1_23,
-      --  gpio(27 downto 16) multifunciton: PID
-      --  encoder_in_a       encoder_in_b       bridge_f_out        bridge_r_out
-      gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
-      gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1
-      gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
+      -- gpio(27 downto 16) multifuncition GPIO/VGA/PID
+      -- **** GPIO **** gpio(27 downto 16)
+      --gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
+      --gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1
+      --gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
+      --  **** PID **** gpio(27 downto 16)
+      pid_encoder_a(0) => j2_2,  pid_encoder_b(0) => j2_3,  pid_bridge_f(0) => j2_4,  pid_bridge_r(0) => j2_5,  -- PID0
+      pid_encoder_a(1) => j2_6,  pid_encoder_b(1) => j2_7,  pid_bridge_f(1) => j2_8,  pid_bridge_r(1) => j2_9,  -- PID1
+      pid_encoder_a(2) => j2_10, pid_encoder_b(2) => j2_11, pid_bridge_f(2) => j2_12, pid_bridge_r(2) => j2_13, -- PID2
+      --  **** VGA **** gpio(27 downto 16)
       --vga_vsync => j2_3,
       --vga_hsync => j2_4,
       --vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
       --vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
       --vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
-      gpio(28) => gpio_28, -- j2_16
+
       --  gpio(28) multifunction: antenna
+      gpio(28) => gpio_28, -- j2_16
       cw_antenna => cw_antenna, -- output 433MHz
       fm_antenna => fm_antenna, -- output 87-108MHz
       sram_a(18 downto 0) => sram_a, sram_d => sram_d,
