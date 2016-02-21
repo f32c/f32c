@@ -115,10 +115,17 @@ generic (
   C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
   C_vgahdmi_use_bram: boolean := false;
   C_vgahdmi_test_picture: integer := 0; -- 0: disable 1:show test picture in Red and Blue channel
-  C_vgahdmi_fifo_step: integer := 640;
+  C_vgahdmi_fifo_width: integer := 640;
   C_vgahdmi_fifo_height: integer := 480;
   C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
   C_vgahdmi_fifo_addr_width: integer := 11;
+  -- LED strip ws2812 POV simple 144x480 bitmap only
+  C_ledstrip: boolean := false; -- enable dual channel ws2812b output
+  C_ledstrip_fifo_step: integer := 144;
+  C_ledstrip_fifo_height: integer := 480;
+  C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;
+  C_ledstrip_fifo_addr_width: integer := 11;
+  C_ledstrip_fifo_interlace: integer := 2; -- interlace for 2 parallel channels
   -- Xark's feature-rich bitmap+textmode VGA
   -- it can mix 8bpp bitmap and tiled graphics on the same screen
   -- choice of many of video modes
@@ -532,7 +539,7 @@ begin
     to_xram(data_port).write <= dmem_write;
     to_xram(data_port).byte_sel <= dmem_byte_sel;
     -- port 2: VGA/HDMI video read
-    G_bitmap_sram: if C_vgahdmi OR (C_vgatext AND C_vgatext_bitmap) generate
+    G_bitmap_sram: if C_vgahdmi OR C_ledstrip OR (C_vgatext AND C_vgatext_bitmap) generate
     to_xram(fb_port).addr_strobe <= vga_addr_strobe;
     to_xram(fb_port).addr <= vga_addr(to_xram(fb_port).addr'high downto 2);
     to_xram(fb_port).data_in <= (others => '-');
@@ -907,6 +914,9 @@ begin
             if C_vgahdmi then
                 io_to_cpu <= (others => S_vga_vblank); -- vertical blank: all bits the same
             end if;
+            if C_ledstrip then
+                io_to_cpu <= (others => S_vga_vblank); -- vertical blank: all bits the same
+            end if;
             if C_vgatext then
                 io_to_cpu <= from_vga_textmode;
             end if;
@@ -1032,7 +1042,7 @@ begin
     S_vga_active_enabled <= S_vga_enable and not S_vga_vsync; -- frame active, pre-fill fifo
     comp_fifo: entity work.compositing2_fifo
     generic map (
-      C_step => C_vgahdmi_fifo_step,
+      C_width => C_vgahdmi_fifo_width,
       C_height => C_vgahdmi_fifo_height,
       C_data_width => C_vgahdmi_fifo_data_width,
       C_addr_width => C_vgahdmi_fifo_addr_width
@@ -1191,7 +1201,7 @@ begin
       if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
         bitmap_videofifo: entity work.compositing2_fifo
           generic map (
-            C_step => C_vgatext_bitmap_fifo_step,
+            C_width => C_vgatext_bitmap_fifo_step,
             C_height => C_vgatext_bitmap_fifo_height,
             C_data_width => C_vgatext_bitmap_fifo_data_width,
             C_addr_width => C_vgatext_bitmap_fifo_addr_width

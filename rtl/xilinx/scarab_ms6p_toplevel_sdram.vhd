@@ -30,6 +30,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.MATH_REAL.ALL; -- floor(), log2()
 
 library unisim;
 use unisim.vcomponents.all;
@@ -56,10 +57,10 @@ entity glue is
     C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
     C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
 
-    C_vgahdmi: boolean := false;
+    C_vgahdmi: boolean := true;
     C_vgahdmi_test_picture: integer := 0;
     -- number of pixels for line step 640
-    C_vgahdmi_fifo_step: integer := 640;
+    C_vgahdmi_fifo_width: integer := 640;
     -- number of scan lines: 480
     C_vgahdmi_fifo_height: integer := 480;
     -- normally this should be  actual bits per pixel
@@ -68,7 +69,7 @@ entity glue is
     -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
     C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480                   
       C_vgatext_bits: integer := 4;   -- 64 possible colors
@@ -107,7 +108,6 @@ entity glue is
           -- bitmap width of FIFO address space length = 2^width * 4 byte
           C_vgatext_bitmap_fifo_addr_width: integer := 11;
 
-
     C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable.
 
       C_pcm: boolean := true;
@@ -123,6 +123,16 @@ entity glue is
         --C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
       C_sio: integer := 1;
       C_spi: integer := 2;
+
+      -- warning long compile time on ISE 14.7
+      -- C_pids = 2: 1 hour
+      -- C_pids = 4: 4 hours
+      C_pids: integer := 0;
+        C_pid_simulator: std_logic_vector(7 downto 0) := ext("1111", 8);
+        C_pid_prescaler: integer := 18;
+        C_pid_precision: integer := 1;
+        C_pid_pwm_bits: integer := 12;
+
       C_gpio: integer := 64
   );
   port
@@ -283,7 +293,7 @@ begin
       -- vga simple compositing bitmap only graphics
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_test_picture => C_vgahdmi_test_picture,
-      C_vgahdmi_fifo_step => C_vgahdmi_fifo_step,
+      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
       C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
@@ -330,6 +340,13 @@ begin
       C_fmdds_hz => C_fmdds_hz, -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz)
       C_rds_clock_multiply => C_rds_clock_multiply, -- multiply and divide from cpu clk 100 MHz
       C_rds_clock_divide => C_rds_clock_divide, -- to get 1.824 MHz for RDS logic
+      C_pids => C_pids,
+      C_pid_simulator => C_pid_simulator,
+      C_pid_prescaler => C_pid_prescaler, -- set control loop frequency
+      C_pid_fp => integer(floor((log2(real(C_clk_freq)*1.0E6))+0.5))-C_pid_prescaler, -- control loop approx freq in 2^n Hz for math, 26-C_pid_prescaler = 8
+      C_pid_precision => C_pid_precision, -- fixed point PID precision
+      C_pid_pwm_bits => C_pid_pwm_bits, -- clock divider bits define PWM output frequency
+      -- CPU debugging with serial port
       C_debug => C_debug
     )
     port map
@@ -362,8 +379,17 @@ begin
       gpio(37 downto 36) => open, -- because cw/fm antennas on portd(1 downto 0)
       gpio(39 downto 38) => portd( 3 downto 2), -- tx antennas
       gpio(51 downto 40) => porte(11 downto 0), 
+      -- portf: GPIO
       gpio(63 downto 52) => portf(11 downto 0), 
+      --gpio(63 downto 52) => open,
       gpio(127 downto 64) => open,
+      -- portf: PID
+      --              PID0                           PID1                           PID2
+      --pid_encoder_a(0) => portf(0),  pid_encoder_a(1) => portf(4), -- pid_encoder_a(2) => portf(8),
+      --pid_encoder_b(0) => portf(1),  pid_encoder_b(1) => portf(5), -- pid_encoder_b(2) => portf(9),
+      --pid_bridge_f(0)  => portf(2),  pid_bridge_f(1)  => portf(6), -- pid_bridge_f(2)  => portf(10),
+      --pid_bridge_r(0)  => portf(3),  pid_bridge_r(1)  => portf(7), -- pid_bridge_r(2)  => portf(11),
+      --
       simple_out(7 downto 0) => leds(7 downto 0),
       simple_out(31 downto 8) => open,
       simple_in(15 downto 0) => open,
