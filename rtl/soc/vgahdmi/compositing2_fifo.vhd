@@ -127,7 +127,7 @@ entity compositing2_fifo is
         -- for average use it can be left disabled (false)
         C_position_clipping: boolean := false; 
         -- number of pixels per horizontal line
-        C_step: integer := 640; -- pixels per line
+        C_width: integer := 640; -- pixels per line
         C_height: integer := 480; -- number of vertical lines
         C_vscroll: integer := 3; -- vertical scroll that fixes fifo delay
         C_data_width: integer range 8 to 32 := 8; -- bits per pixel
@@ -181,7 +181,7 @@ architecture behavioral of compositing2_fifo is
     signal S_pixbuf_out_mem_addr: std_logic_vector(C_addr_width-1 downto 0);
     signal S_pixbuf_in_mem_addr: std_logic_vector(C_addr_width-1 downto 0);
     signal R_bram_in_addr: std_logic_vector(C_addr_width-1 downto 0);
-    signal R_delay_fetch: integer range 0 to 2*C_step;
+    signal R_delay_fetch: integer range 0 to 2*C_width;
     signal S_bram_write, S_data_write: std_logic;
     signal S_need_refill: std_logic;
     signal R_need_refill_cpu: std_logic := '0';
@@ -302,7 +302,7 @@ begin
                       -- C_position_clipping = true
                       if data_in(15) = '0' then
                         -- data_in(15 downto 0) is positive
-                        if data_in(15 downto 0) < C_step then
+                        if data_in(15 downto 0) < C_width then
                           R_position <= data_in(15 downto 0); -- compositing position (pixels)
                           R_word_count <= C_addr_pad & data_in(31 downto 16+C_shift_addr_width); -- number of 32-bit words (n*4 pixels)
                           R_sram_addr <= R_sram_addr + 1;  -- next sequential read (data)
@@ -403,7 +403,7 @@ begin
             R_vertical_scroll <= C_vscroll; -- vertical scroll to fix fifo delay
           else
             if fetch_next = '1' then
-              if R_pixbuf_rd_addr = C_step-1 then -- next line in buffer
+              if R_pixbuf_rd_addr = C_width-1 then -- next line in buffer
                 -- this is executed once at the end of line (right of screen)
                 R_pixbuf_rd_addr <= (others => '0');
                 R_line_rd <= not R_line_rd; -- + 1;
