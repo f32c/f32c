@@ -121,11 +121,10 @@ generic (
   C_vgahdmi_fifo_addr_width: integer := 11;
   -- LED strip ws2812 POV simple 144x480 bitmap only
   C_ledstrip: boolean := false; -- enable dual channel ws2812b output
-  C_ledstrip_fifo_step: integer := 144;
+  C_ledstrip_fifo_width: integer := 144;
   C_ledstrip_fifo_height: integer := 480;
   C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;
   C_ledstrip_fifo_addr_width: integer := 11;
-  C_ledstrip_fifo_interlace: integer := 2; -- interlace for 2 parallel channels
   -- Xark's feature-rich bitmap+textmode VGA
   -- it can mix 8bpp bitmap and tiled graphics on the same screen
   -- choice of many of video modes
@@ -215,6 +214,8 @@ port (
   vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0) := (others => '0');
   tmds_out_rgb: out std_logic_vector(2 downto 0);
   tmds_out_clk: out std_logic := '0'; -- XXX fixme not connected
+  ledstrip_rotation: in std_logic := '0'; -- input from motor rotation encoder
+  ledstrip_out: out std_logic_vector(1 downto 0); -- 2 channels out
   jack_tip, jack_ring: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, 4-bit simple DAC
   fm_antenna, cw_antenna: out std_logic;
   gpio: inout std_logic_vector(127 downto 0);
@@ -331,7 +332,10 @@ architecture Behavioral of glue_xram is
     signal vga_data_ready: std_logic; -- RAM responds to FIFO
     signal S_vga_vsync, S_vga_hsync: std_logic;
     signal S_vga_vblank: std_logic;
-    signal vga_frame: std_logic;
+    signal vga_frame: std_logic; -- fifo outputs signal for frame interrupt
+    signal S_ledstrip_active: std_logic;
+    signal S_ledstrip_pixel_data: std_logic_vector(23 downto 0) := (others => '0');
+    signal S_ledstrip_counter: std_logic_vector(23 downto 0);
 
     -- VGA_textmode VGA/HDMI video (text and font in BRAM, bitmap in sdram)
     constant iomap_vga_textmode: T_iomap_range := (x"FB80", x"FB9F");
@@ -915,7 +919,9 @@ begin
                 io_to_cpu <= (others => S_vga_vblank); -- vertical blank: all bits the same
             end if;
             if C_ledstrip then
-                io_to_cpu <= (others => S_vga_vblank); -- vertical blank: all bits the same
+                --if io_addr(3 downto 2) = "01" then -- XXX fixme: compatible registers with vgahdmi and vgatext
+                io_to_cpu <= S_ledstrip_active & "000" & x"0" & S_ledstrip_counter;
+                --end if;
             end if;
             if C_vgatext then
                 io_to_cpu <= from_vga_textmode;
@@ -1098,6 +1104,109 @@ begin
         end if; -- end rising edge
     end process;
     end generate; -- G_vgahdmi
+
+    -- LED strip rotating POV
+    G_ledstrip:
+    if C_ledstrip generate
+
+    -- pulse counter from the motor that rotates
+    -- the led strip
+    ledstrip_counter: entity work.pulse_counter
+    generic map
+    (
+      C_bits => 24,
+      C_wraparound => 999999999 -- number of pulses per rotation
+    )
+    port map
+    (
+      clk => clk,
+      pulse => ledstrip_rotation,
+      count => S_ledstrip_counter
+    );
+
+    -- expand RRRGGGBB to 24-bit true color for led strip
+    -- note that due to slow PWM on individual ledstrip leds
+    -- true color is not useable for POV
+    S_ledstrip_pixel_data(15 downto 13) <= vga_data_from_fifo(7 downto 5); -- R
+    S_ledstrip_pixel_data(23 downto 21) <= vga_data_from_fifo(4 downto 2); -- G
+    S_ledstrip_pixel_data(7 downto 6)   <= vga_data_from_fifo(1 downto 0); -- B
+
+    led_strip: entity work.ws2812b
+    generic map
+    (
+      -- C_clk_Hz => C_clk_freq*1000000, -- module timing needs to know clk freq in Hz
+      C_clk_Hz => 25000000,
+      -- C_t0h => 10, -- reduce 0 width to better view visually the led
+      C_striplen => C_ledstrip_fifo_width,
+      C_lines_per_frame => C_vgahdmi_fifo_height
+    )
+    port map
+    (
+      clk => clk_25MHz,
+      fetch_next => vga_fetch_next,
+      active => S_ledstrip_active,
+      input_data => S_ledstrip_pixel_data,
+      dout => ledstrip_out(0)
+    );
+
+    S_vga_enable <= '1' when R_fb_base_addr(31 downto 28) = C_xram_base else '0';
+    S_vga_fetch_enabled <= S_vga_enable and vga_fetch_next; -- drain fifo into display
+    S_vga_active_enabled <= S_vga_enable and S_ledstrip_active; -- frame active, pre-fill fifo
+    ledstrip_comp_fifo: entity work.compositing2_fifo
+    generic map (
+      C_width => C_ledstrip_fifo_width,
+      C_height => C_ledstrip_fifo_height,
+      C_data_width => C_ledstrip_fifo_data_width,
+      C_addr_width => C_ledstrip_fifo_addr_width
+    )
+    port map (
+      clk => clk,
+      clk_pixel => clk_25MHz,
+      addr_strobe => vga_addr_strobe,
+      addr_out => vga_addr,
+      data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
+      data_in => vga_data, -- from SDRAM or BRAM
+      -- data_in => x"00000001", -- test pattern vertical lines
+      -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
+      -- data_in(31 downto 8) => (others => '0'),
+      base_addr => R_fb_base_addr(29 downto 2),
+      active => S_vga_active_enabled,
+      frame => vga_frame,
+      data_out => vga_data_from_fifo(C_vgahdmi_fifo_data_width-1 downto 0),
+      fetch_next => S_vga_fetch_enabled
+    );
+
+    vga_data <= from_xram; -- pulls content data from xram
+
+    -- address decoder to set base address and clear interrupts
+    with conv_integer(io_addr(11 downto 4)) select
+      vga_ce <= io_addr_strobe when iomap_from(iomap_vga, iomap_range) to iomap_to(iomap_vga, iomap_range),
+                           '0' when others;
+    process(clk)
+    begin
+        if rising_edge(clk) then
+            if vga_ce = '1' and dmem_write = '1' then
+                -- cpu write: writes Framebuffer base
+                if C_big_endian then
+                   R_fb_base_addr <= -- XXX: revisit, probably wrong;
+                      cpu_to_dmem(11 downto 8) &
+                      cpu_to_dmem(23 downto 16) &
+                      cpu_to_dmem(31 downto 26);
+                else
+                   R_fb_base_addr <= cpu_to_dmem(31 downto 2);
+                end if;
+            end if;
+            -- interrupt handling: (CPU read or write will clear interrupt)
+            if vga_ce = '1' then -- and dmem_write = '0' then
+                R_fb_intr <= '0';
+            else
+                if vga_frame = '1' then
+                    R_fb_intr <= '1';
+                end if;
+            end if;
+        end if; -- end rising edge
+    end process;
+    end generate; -- G_ledstrip
 
     -- VGA textmode
     G_vgatext:
