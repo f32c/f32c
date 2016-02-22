@@ -133,7 +133,7 @@ entity toplevel is
     C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
       C_vgahdmi_test_picture: integer := 0;
       -- number of pixels for line; 640
-      C_vgahdmi_fifo_step: integer := 640;
+      C_vgahdmi_fifo_width: integer := 640;
       -- number of scan lines: 480
       C_vgahdmi_fifo_height: integer := 480;
       -- normally this should be  actual bits per pixel
@@ -141,6 +141,17 @@ entity toplevel is
       -- width of FIFO address space -> size of fifo
       -- for 8bpp compositing use 11 -> 2048 bytes
       C_vgahdmi_fifo_addr_width: integer := 11;
+
+    C_ledstrip: boolean := true;
+    -- number of pixels for line step 144
+    C_ledstrip_fifo_width: integer := 144;
+    -- number of scan lines: 480
+    C_ledstrip_fifo_height: integer := 480;
+    -- normally this should be  actual bits per pixel
+    C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;
+    -- width of FIFO address space -> size of fifo
+    -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
+    C_ledstrip_fifo_addr_width: integer := 11;
 
     C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 50MHz 1MB SRAM"; -- default banner in screen memory
@@ -195,7 +206,7 @@ entity toplevel is
     --C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
     C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
     C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
-    C_pids: integer := 4; -- 4 PIDs can fit but with other modules like video
+    C_pids: integer := 0; -- 4 PIDs can fit but with other modules like video
     -- can pose routing/timing problems in lattice XP2 so enable them as needed
     -- manifestation of timing problems is that f32c CPU erraticaly slows down
     -- or speeds up while executing arduino delay(1000);
@@ -235,6 +246,7 @@ architecture Behavioral of toplevel is
   signal rs232_break: std_logic;
   signal btn: std_logic_vector(4 downto 0);
   signal gpio_28, fm_antenna, cw_antenna: std_logic;
+  signal motor_bridge, motor_encoder: std_logic_vector(1 downto 0);
 begin
   --
   -- Clock synthesizer
@@ -349,10 +361,16 @@ begin
       -- vga simple bitmap
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_test_picture => C_vgahdmi_test_picture,
-      C_vgahdmi_fifo_step => C_vgahdmi_fifo_step,
+      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
       C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
+      -- led strip simple compositing bitmap only graphics
+      C_ledstrip => C_ledstrip,
+      C_ledstrip_fifo_width => C_ledstrip_fifo_width,
+      C_ledstrip_fifo_height => C_ledstrip_fifo_height,
+      C_ledstrip_fifo_data_width => C_ledstrip_fifo_data_width,
+      C_ledstrip_fifo_addr_width => C_ledstrip_fifo_addr_width,
       -- vga textmode
       C_vgatext => C_vgatext,
       C_vgatext_label => C_vgatext_label,
@@ -414,7 +432,7 @@ begin
       spi_mosi(1) => sdcard_si, spi_miso(1) => sdcard_so,
       jack_ring(3) => p_ring,
       jack_tip => p_tip,
-      simple_out(7 downto 0) => led,
+      simple_out(3 downto 0) => led(3 downto 0),
       simple_in(4 downto 0) => btn,
       simple_in(19 downto 16) => sw,
       gpio(0)  => j1_2,  gpio(1)  => j1_3,  gpio(2)  => j1_4,   gpio(3)  => j1_8,
@@ -427,16 +445,26 @@ begin
       --gpio(20) => j2_6,  gpio(21) => j2_7,  gpio(22) => j2_8,   gpio(23) => j2_9,  -- PID1
       --gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13, -- PID2
       --  **** PID **** gpio(27 downto 16)
-      pid_encoder_a(0) => j2_2,  pid_encoder_b(0) => j2_3,  pid_bridge_f(0) => j2_4,  pid_bridge_r(0) => j2_5,  -- PID0
-      pid_encoder_a(1) => j2_6,  pid_encoder_b(1) => j2_7,  pid_bridge_f(1) => j2_8,  pid_bridge_r(1) => j2_9,  -- PID1
-      pid_encoder_a(2) => j2_10, pid_encoder_b(2) => j2_11, pid_bridge_f(2) => j2_12, pid_bridge_r(2) => j2_13, -- PID2
+      --pid_encoder_a(0) => j2_2,  pid_encoder_b(0) => j2_3,  pid_bridge_f(0) => j2_4,  pid_bridge_r(0) => j2_5,  -- PID0
+      --pid_encoder_a(1) => j2_6,  pid_encoder_b(1) => j2_7,  pid_bridge_f(1) => j2_8,  pid_bridge_r(1) => j2_9,  -- PID1
+      --pid_encoder_a(2) => j2_10, pid_encoder_b(2) => j2_11, pid_bridge_f(2) => j2_12, pid_bridge_r(2) => j2_13, -- PID2
+      --  **** LEDSTRIP ****, gpio the rest
+      --ledstrip_rotation => j2_2,
+      ledstrip_rotation => motor_encoder(0), -- from motor simulator to module counter
+      -- pid_encoder_a(0) => j2_2, pid_encoder_b(0) => j2_3, -- connect PID0 to real motor count roation
+      -- problem: real motor has no AB phase output for bidirectional encoder, only for the counter
+      -- pid_encoder_a(0) => motor_encoder(0), pid_encoder_b(0) => motor_encoder(1), -- connect PID1 to simulation count roation
+      ledstrip_out(0) => led(4), ledstrip_out(1) => led(5), -- ws2812b outputs
+      -- ledstrip_out(0) => j2_6, ledstrip_out(1) => j2_7, -- ws2812b outputs
+      gpio(16) => open,  gpio(17) => open,  gpio(18) => j2_4,   gpio(19) => j2_5,
+      gpio(20) => open,  gpio(21) => open,  gpio(22) => j2_8,   gpio(23) => j2_9,
+      gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13,
       --  **** VGA **** gpio(27 downto 16)
       --vga_vsync => j2_3,
       --vga_hsync => j2_4,
       --vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
       --vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
       --vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
-
       --  gpio(28) multifunction: antenna
       gpio(28) => gpio_28, -- j2_16
       cw_antenna => cw_antenna, -- output 433MHz
@@ -445,4 +473,23 @@ begin
       sram_lbl => sram_lbl, sram_ubl => sram_ubl,
       sram_wel => sram_wel
     );
+
+    -- simulation for the ledstrip motor (forward-only motor)
+    motor_bridge <= '0' & led(1); -- led(1) is PWM out (arduino pin 9 in Fade example)
+    motor: entity work.simotor
+    generic map
+    (
+      prescaler => 7,
+      motor_power => 4, -- acceleration
+      motor_speed => 21,  -- inverse log2 friction proportional to speed
+      -- larger motor_speed values allow higher motor top speed
+      motor_friction => 1   -- static friction
+    )
+    port map
+    (
+      clock => clk,
+      bridge => motor_bridge,
+      encoder => motor_encoder
+    );
+    
 end Behavioral;

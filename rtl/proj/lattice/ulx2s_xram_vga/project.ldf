@@ -132,6 +132,12 @@
         <Source name="../../../soc/vgahdmi/videofifo.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../soc/vgahdmi/ws2812b.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../soc/vgahdmi/pulse_counter.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../soc/pcm.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
