@@ -57,7 +57,7 @@ entity glue is
     C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
     C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
 
-    C_vgahdmi: boolean := true;
+    C_vgahdmi: boolean := false;
     C_vgahdmi_test_picture: integer := 0;
     -- number of pixels for line step 640
     C_vgahdmi_fifo_width: integer := 640;
@@ -68,6 +68,17 @@ entity glue is
     -- width of FIFO address space -> size of fifo
     -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
     C_vgahdmi_fifo_addr_width: integer := 11;
+
+    C_ledstrip: boolean := true;
+    -- number of pixels for line step 144
+    C_ledstrip_fifo_width: integer := 144;
+    -- number of scan lines: 480
+    C_ledstrip_fifo_height: integer := 480;
+    -- normally this should be  actual bits per pixel
+    C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;
+    -- width of FIFO address space -> size of fifo
+    -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
+    C_ledstrip_fifo_addr_width: integer := 11;
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
@@ -297,6 +308,12 @@ begin
       C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
+      -- led strip simple compositing bitmap only graphics
+      C_ledstrip => C_ledstrip,
+      C_ledstrip_fifo_width => C_ledstrip_fifo_width,
+      C_ledstrip_fifo_height => C_ledstrip_fifo_height,
+      C_ledstrip_fifo_data_width => C_ledstrip_fifo_data_width,
+      C_ledstrip_fifo_addr_width => C_ledstrip_fifo_addr_width,
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
       C_vgatext_label => C_vgatext_label,
@@ -380,8 +397,8 @@ begin
       gpio(39 downto 38) => portd( 3 downto 2), -- tx antennas
       gpio(51 downto 40) => porte(11 downto 0), 
       -- portf: GPIO
-      gpio(63 downto 52) => portf(11 downto 0), 
-      --gpio(63 downto 52) => open,
+      -- gpio(63 downto 52) => portf(11 downto 0),
+      gpio(63 downto 52) => open,
       gpio(127 downto 64) => open,
       -- portf: PID
       --              PID0                           PID1                           PID2
@@ -390,6 +407,9 @@ begin
       --pid_bridge_f(0)  => portf(2),  pid_bridge_f(1)  => portf(6), -- pid_bridge_f(2)  => portf(10),
       --pid_bridge_r(0)  => portf(3),  pid_bridge_r(1)  => portf(7), -- pid_bridge_r(2)  => portf(11),
       --
+      -- portf: LEDSTRIP and POV ball motor
+      ledstrip_out(1 downto 0) => portf(1 downto 0),
+
       simple_out(7 downto 0) => leds(7 downto 0),
       simple_out(31 downto 8) => open,
       simple_in(15 downto 0) => open,
