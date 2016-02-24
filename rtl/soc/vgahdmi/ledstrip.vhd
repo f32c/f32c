@@ -55,9 +55,9 @@ entity ledstrip is
     bus_out: out std_logic_vector(31 downto 0);
 
     -- interface to multiport RAM arbiter
-    vga_addr_strobe: out std_logic; -- FIFO requests to read from external RAM
-    vga_addr: out std_logic_vector(29 downto 2); -- address where to read
-    vga_data_ready: in std_logic; -- RAM responds data ready -> FIFO should read
+    video_addr_strobe: out std_logic; -- FIFO requests to read from external RAM
+    video_addr: out std_logic_vector(29 downto 2); -- address where to read
+    video_data_ready: in std_logic; -- RAM responds data ready -> FIFO should read
     from_xram: in std_logic_vector(31 downto 0); -- data from external RAM
 
     -- interface to led strip POV hardware
@@ -83,7 +83,7 @@ architecture behavioral of ledstrip is
     constant C_counter:    integer   := 2; -- output motor pulse counter
 
     -- internal signals
-    signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
+    signal video_data, video_data_from_fifo: std_logic_vector(31 downto 0);
     signal vga_frame: std_logic; -- fifo outputs signal for frame interrupt
     signal vga_fetch_next, S_vga_fetch_enabled: std_logic; -- video module requests next data from fifo
     signal S_vga_active_enabled: std_logic;
@@ -171,9 +171,9 @@ begin
     -- expand RRRGGGBB to 24-bit true color for led strip
     -- note that due to slow PWM on individual ledstrip leds
     -- true color is not useable for POV
-    S_ledstrip_pixel_data(15 downto 13) <= vga_data_from_fifo(7 downto 5); -- R
-    S_ledstrip_pixel_data(23 downto 21) <= vga_data_from_fifo(4 downto 2); -- G
-    S_ledstrip_pixel_data(7 downto 6)   <= vga_data_from_fifo(1 downto 0); -- B
+    S_ledstrip_pixel_data(15 downto 13) <= video_data_from_fifo(7 downto 5); -- R
+    S_ledstrip_pixel_data(23 downto 21) <= video_data_from_fifo(4 downto 2); -- G
+    S_ledstrip_pixel_data(7 downto 6)   <= video_data_from_fifo(1 downto 0); -- B
 
     led_strip: entity work.ws2812b
     generic map
@@ -214,20 +214,18 @@ begin
       clk => clk,
       -- clk_pixel => clk_25MHz,
       clk_pixel => clk,
-      addr_strobe => vga_addr_strobe,
-      addr_out => vga_addr,
-      data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
-      data_in => vga_data, -- from SDRAM or BRAM
+      addr_strobe => video_addr_strobe,
+      addr_out => video_addr,
+      data_ready => video_data_ready, -- data valid for read acknowledge from RAM
+      data_in => video_data, -- from SDRAM or BRAM
       -- data_in => x"00000001", -- test pattern vertical lines
-      -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
+      -- data_in(7 downto 0) => video_addr(9 downto 2), -- test if address is in sync with video frame
       -- data_in(31 downto 8) => (others => '0'),
       base_addr => R(C_base)(29 downto 2),
       active => S_vga_active_enabled,
       frame => vga_frame,
-      data_out => vga_data_from_fifo(C_data_width-1 downto 0),
+      data_out => video_data_from_fifo(C_data_width-1 downto 0),
       fetch_next => S_vga_fetch_enabled
     );
-
-    vga_data <= from_xram; -- pulls content data from xram
-  
+    video_data <= from_xram; -- pulls content data from xram
 end;

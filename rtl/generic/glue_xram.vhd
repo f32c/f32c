@@ -1141,9 +1141,9 @@ begin
       bus_write => dmem_write, byte_sel => dmem_byte_sel,
       bus_in => cpu_to_dmem, bus_out => from_ledstrip,
       
-      vga_addr_strobe => vga_addr_strobe,
-      vga_addr => vga_addr,
-      vga_data_ready => vga_data_ready,
+      video_addr_strobe => vga_addr_strobe,
+      video_addr => vga_addr,
+      video_data_ready => vga_data_ready,
       from_xram => from_xram,
       
       rotation_sensor => ledstrip_rotation,
