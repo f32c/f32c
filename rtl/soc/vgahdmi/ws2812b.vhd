@@ -6,7 +6,8 @@ entity ws2812b is
   generic
   (
     C_clk_Hz: integer := 25000000; -- Hz
-    C_striplen: integer := 64; -- line width: number of LED pixels in the strip
+    C_channels: integer range 1 to 2 := 1; -- number of output channels (not yet implemented)
+    C_striplen: integer := 64; -- channel line width: number of LED pixels in the strip
     C_lines_per_frame: integer := 64; -- number of strip lines per frame to flash
     -- timing setup by datasheet (unequal 0/1)
     --  t0h 350+-150 ns, t0l 800+-150 ns  ----_________
@@ -24,6 +25,8 @@ entity ws2812b is
     clk: in std_Logic;
     active, fetch_next: out std_logic;
     input_data: in std_logic_vector(23 downto 0); -- 24bpp input
+    line: out std_logic_vector(15 downto 0); -- current line counter
+    bit: out std_logic_vector(15 downto 0); -- current bit counter
     dout: out std_logic
   );
 end ws2812b;
@@ -102,5 +105,9 @@ begin
   dout <= '1'        when state = 0
     else data(C_bpp-1) when state = 1
     else '0';
+
+  -- output internal line and bit counters
+  line <= std_logic_vector(to_unsigned(line_count,16));
+  bit <= std_logic_vector(to_unsigned(bit_count,16));
 
 end Behavioral;
