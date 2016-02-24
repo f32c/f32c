@@ -1145,6 +1145,7 @@ begin
       video_data_ready => vga_data_ready,
       from_xram => from_xram,
       
+      video_frame => vga_frame,
       rotation_sensor => ledstrip_rotation,
       ledstrip_out => ledstrip_out(0)
     );
