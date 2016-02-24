@@ -54,6 +54,9 @@ entity ledstrip is
     bus_in: in std_logic_vector(31 downto 0);
     bus_out: out std_logic_vector(31 downto 0);
 
+    -- video frame interrupt output
+    video_frame: out std_logic;
+
     -- interface to multiport RAM arbiter
     video_addr_strobe: out std_logic; -- FIFO requests to read from external RAM
     video_addr: out std_logic_vector(29 downto 2); -- address where to read
@@ -84,7 +87,6 @@ architecture behavioral of ledstrip is
 
     -- internal signals
     signal video_data, video_data_from_fifo: std_logic_vector(31 downto 0);
-    signal vga_frame: std_logic; -- fifo outputs signal for frame interrupt
     signal vga_fetch_next, S_vga_fetch_enabled: std_logic; -- video module requests next data from fifo
     signal S_vga_active_enabled: std_logic;
     signal S_vga_enable: std_logic;
@@ -220,7 +222,7 @@ begin
       -- data_in(31 downto 8) => (others => '0'),
       base_addr => R(C_base)(29 downto 2),
       active => S_vga_active_enabled,
-      frame => vga_frame,
+      frame => video_frame,
       data_out => video_data_from_fifo(C_data_width-1 downto 0),
       fetch_next => S_vga_fetch_enabled
     );
