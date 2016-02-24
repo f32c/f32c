@@ -122,7 +122,6 @@ generic (
   -- LED strip ws2812 POV simple 144x480 bitmap only
   C_ledstrip: boolean := false; -- enable dual channel ws2812b output
   C_ledstrip_full_circle: integer := 100; -- count of pulses per full circle of rotation
-  C_ledstrip_channels: integer := 1;
   C_ledstrip_fifo_width: integer := 72;
   C_ledstrip_fifo_height: integer := 36;
   C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;

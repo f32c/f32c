@@ -145,11 +145,9 @@ entity toplevel is
     C_ledstrip: boolean := true;
     -- input number of counts per full circle
     C_ledstrip_full_circle: integer := 100; -- counts
-    -- channel outputs
-    C_ledstrip_channels: integer := 1;
     -- number of pixels in each channel: 72
     C_ledstrip_fifo_width: integer := 72;
-    -- number of scan lines: 480
+    -- number of scan lines: 36
     C_ledstrip_fifo_height: integer := 36;
     -- normally this should be  actual bits per pixel
     C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;
@@ -372,7 +370,6 @@ begin
       -- led strip simple compositing bitmap only graphics
       C_ledstrip => C_ledstrip,
       C_ledstrip_full_circle => C_ledstrip_full_circle,
-      C_ledstrip_channels => C_ledstrip_channels,
       C_ledstrip_fifo_width => C_ledstrip_fifo_width,
       C_ledstrip_fifo_height => C_ledstrip_fifo_height,
       C_ledstrip_fifo_data_width => C_ledstrip_fifo_data_width,
