@@ -121,8 +121,10 @@ generic (
   C_vgahdmi_fifo_addr_width: integer := 11;
   -- LED strip ws2812 POV simple 144x480 bitmap only
   C_ledstrip: boolean := false; -- enable dual channel ws2812b output
-  C_ledstrip_fifo_width: integer := 144;
-  C_ledstrip_fifo_height: integer := 480;
+  C_ledstrip_full_circle: integer := 100; -- count of pulses per full circle of rotation
+  C_ledstrip_channels: integer := 1;
+  C_ledstrip_fifo_width: integer := 72;
+  C_ledstrip_fifo_height: integer := 36;
   C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;
   C_ledstrip_fifo_addr_width: integer := 11;
   -- Xark's feature-rich bitmap+textmode VGA
@@ -333,9 +335,18 @@ architecture Behavioral of glue_xram is
     signal S_vga_vsync, S_vga_hsync: std_logic;
     signal S_vga_vblank: std_logic;
     signal vga_frame: std_logic; -- fifo outputs signal for frame interrupt
+
+
+    constant iomap_ledstrip: T_iomap_range := (x"FB90", x"FB9F");
+    signal ledstrip_ce: std_logic;
     signal S_ledstrip_active: std_logic;
     signal S_ledstrip_pixel_data: std_logic_vector(23 downto 0) := (others => '0');
-    signal S_ledstrip_counter: std_logic_vector(23 downto 0);
+    signal S_ledstrip_counter, S_ledstrip_counter2: std_logic_vector(23 downto 0);
+    signal S_ledstrip_line, S_ledstrip_bit: std_logic_vector(15 downto 0);
+    signal S_ledstrip_wraparound: std_logic;
+    signal R_ledstrip_wraparound_shift: std_logic_vector(2 downto 0);
+    signal R_ledstrip_capture: std_logic_vector(31 downto 0);
+    signal from_ledstrip: std_logic_vector(31 downto 0);
 
     -- VGA_textmode VGA/HDMI video (text and font in BRAM, bitmap in sdram)
     constant iomap_vga_textmode: T_iomap_range := (x"FB80", x"FB9F");
@@ -913,15 +924,23 @@ begin
                       R_simple_out(C_simple_out - i * 32 - 1 downto i * 32);
                 end if;
             end loop;
+        -- vgahdmi, ledstrip and textmode share the same iomap addresses
+        -- we can specify only one otherwise error confilict will be generated
         --when iomap_from(iomap_vga, iomap_range) to iomap_to(iomap_vga, iomap_range) =>
+        --when iomap_from(iomap_ledstrip, iomap_range) to iomap_to(iomap_ledstrip, iomap_range) =>
         when iomap_from(iomap_vga_textmode, iomap_range) to iomap_to(iomap_vga_textmode, iomap_range) =>
             if C_vgahdmi then
                 io_to_cpu <= (others => S_vga_vblank); -- vertical blank: all bits the same
             end if;
+            if C_ledstrip and false then
+                if io_addr(3 downto 2) = "00" then -- XXX fixme: compatible registers with vgahdmi and vgatext
+                  io_to_cpu <= S_ledstrip_active & "000" & x"0" & S_ledstrip_counter2;
+                else
+                  io_to_cpu <= R_ledstrip_capture;
+                end if;
+            end if;
             if C_ledstrip then
-                --if io_addr(3 downto 2) = "01" then -- XXX fixme: compatible registers with vgahdmi and vgatext
-                io_to_cpu <= S_ledstrip_active & "000" & x"0" & S_ledstrip_counter;
-                --end if;
+                io_to_cpu <= from_ledstrip;
             end if;
             if C_vgatext then
                 io_to_cpu <= from_vga_textmode;
@@ -1107,7 +1126,7 @@ begin
 
     -- LED strip rotating POV
     G_ledstrip:
-    if C_ledstrip generate
+    if C_ledstrip and false generate
 
     -- pulse counter from the motor that rotates
     -- the led strip
@@ -1115,7 +1134,7 @@ begin
     generic map
     (
       C_bits => 24,
-      C_wraparound => 999999999 -- number of pulses per rotation
+      C_wraparound => C_ledstrip_full_circle -- number of pulses per rotation
     )
     port map
     (
@@ -1124,6 +1143,39 @@ begin
       count => S_ledstrip_counter
     );
 
+    ledstrip_counter_nowrap: entity work.pulse_counter
+    generic map
+    (
+      C_bits => 24,
+      C_wraparound => 65536 -- number of pulses per rotation
+    )
+    port map
+    (
+      clk => clk,
+      pulse => ledstrip_rotation,
+      count => S_ledstrip_counter2
+    );
+
+    -- condition which detects full rotation cycle
+    S_ledstrip_wraparound <= '1' when S_ledstrip_counter = 0 else '0'; 
+
+    -- counter capture as feedback for synchronizer
+    -- motor power should be adjusted to keep this
+    -- value fluctuate around arbitrary constant value 
+    -- (0 for example), which will indicate a sync condition
+    -- when rotation speed is locked to the video frame rate
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        -- the rising edge synchronizer detector
+        R_ledstrip_wraparound_shift <= S_ledstrip_wraparound & R_ledstrip_wraparound_shift(2 downto 1);
+        -- on the rising edge capture
+        if R_ledstrip_wraparound_shift(0) = '0' and R_ledstrip_wraparound_shift(1) = '1' then
+          R_ledstrip_capture <= S_ledstrip_line & S_ledstrip_bit;
+        end if;
+      end if;
+    end process;
+        
     -- expand RRRGGGBB to 24-bit true color for led strip
     -- note that due to slow PWM on individual ledstrip leds
     -- true color is not useable for POV
@@ -1134,24 +1186,31 @@ begin
     led_strip: entity work.ws2812b
     generic map
     (
-      -- C_clk_Hz => C_clk_freq*1000000, -- module timing needs to know clk freq in Hz
-      C_clk_Hz => 25000000,
-      -- C_t0h => 10, -- reduce 0 width to better view visually the led
+      -- C_clk_Hz => 25000000,
+      C_clk_Hz => C_clk_freq*1000000, -- module timing needs to know clk freq in Hz
+      -- C_t0h => 20, -- modified intentially to visually "see" the led dtc
+      -- C_t1h => 1000,
+      C_channels => C_ledstrip_channels, -- dual channel output
       C_striplen => C_ledstrip_fifo_width,
-      C_lines_per_frame => C_vgahdmi_fifo_height
+      C_lines_per_frame => C_ledstrip_fifo_height
     )
     port map
     (
-      clk => clk_25MHz,
+      -- clk => clk_25MHz,
+      clk => clk,
       fetch_next => vga_fetch_next,
       active => S_ledstrip_active,
       input_data => S_ledstrip_pixel_data,
+      line => S_ledstrip_line, -- output line counter
+      bit => S_ledstrip_bit, -- output bit counter
       dout => ledstrip_out(0)
     );
 
     S_vga_enable <= '1' when R_fb_base_addr(31 downto 28) = C_xram_base else '0';
     S_vga_fetch_enabled <= S_vga_enable and vga_fetch_next; -- drain fifo into display
     S_vga_active_enabled <= S_vga_enable and S_ledstrip_active; -- frame active, pre-fill fifo
+    --S_vga_fetch_enabled <= S_vga_enable and vga_fetch_next; -- drain fifo into display
+    --S_vga_active_enabled <= S_vga_enable; -- frame active, pre-fill fifo
     ledstrip_comp_fifo: entity work.compositing2_fifo
     generic map (
       C_width => C_ledstrip_fifo_width,
@@ -1161,7 +1220,8 @@ begin
     )
     port map (
       clk => clk,
-      clk_pixel => clk_25MHz,
+      -- clk_pixel => clk_25MHz,
+      clk_pixel => clk,
       addr_strobe => vga_addr_strobe,
       addr_out => vga_addr,
       data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
@@ -1172,7 +1232,7 @@ begin
       base_addr => R_fb_base_addr(29 downto 2),
       active => S_vga_active_enabled,
       frame => vga_frame,
-      data_out => vga_data_from_fifo(C_vgahdmi_fifo_data_width-1 downto 0),
+      data_out => vga_data_from_fifo(C_ledstrip_fifo_data_width-1 downto 0),
       fetch_next => S_vga_fetch_enabled
     );
 
@@ -1206,6 +1266,40 @@ begin
             end if;
         end if; -- end rising edge
     end process;
+    end generate; -- G_ledstrip
+
+    G_ledstrip_module:
+    if C_ledstrip generate
+
+    -- address decoder to handle mmaped io registers
+    with conv_integer(io_addr(11 downto 4)) select
+      ledstrip_ce <= io_addr_strobe when iomap_from(iomap_ledstrip, iomap_range) to iomap_to(iomap_ledstrip, iomap_range),
+                                '0' when others;
+    ledstrip_driver: entity work.ledstrip
+    generic map (
+      C_clk_Hz => C_clk_freq*1000000, -- module timing needs to know clk freq in Hz
+      C_xram_base => C_xram_base,
+      C_ledstrip_full_circle => C_ledstrip_full_circle, -- number of sensor pulses per full rotation
+      C_width => C_ledstrip_fifo_width,
+      C_height => C_ledstrip_fifo_height,
+      C_data_width => C_ledstrip_fifo_data_width,
+      C_addr_width => C_ledstrip_fifo_addr_width
+    )
+    port map (
+      clk => clk,
+      ce => ledstrip_ce,
+      addr => dmem_addr(3 downto 2),
+      bus_write => dmem_write, byte_sel => dmem_byte_sel,
+      bus_in => cpu_to_dmem, bus_out => from_ledstrip,
+      
+      vga_addr_strobe => vga_addr_strobe,
+      vga_addr => vga_addr,
+      vga_data_ready => vga_data_ready,
+      from_xram => from_xram,
+      
+      rotation_sensor => ledstrip_rotation,
+      ledstrip_out => ledstrip_out(0)
+    );
     end generate; -- G_ledstrip
 
     -- VGA textmode

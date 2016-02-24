@@ -143,10 +143,14 @@ entity toplevel is
       C_vgahdmi_fifo_addr_width: integer := 11;
 
     C_ledstrip: boolean := true;
-    -- number of pixels for line step 144
-    C_ledstrip_fifo_width: integer := 144;
+    -- input number of counts per full circle
+    C_ledstrip_full_circle: integer := 100; -- counts
+    -- channel outputs
+    C_ledstrip_channels: integer := 1;
+    -- number of pixels in each channel: 72
+    C_ledstrip_fifo_width: integer := 72;
     -- number of scan lines: 480
-    C_ledstrip_fifo_height: integer := 480;
+    C_ledstrip_fifo_height: integer := 36;
     -- normally this should be  actual bits per pixel
     C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;
     -- width of FIFO address space -> size of fifo
@@ -367,6 +371,8 @@ begin
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
       -- led strip simple compositing bitmap only graphics
       C_ledstrip => C_ledstrip,
+      C_ledstrip_full_circle => C_ledstrip_full_circle,
+      C_ledstrip_channels => C_ledstrip_channels,
       C_ledstrip_fifo_width => C_ledstrip_fifo_width,
       C_ledstrip_fifo_height => C_ledstrip_fifo_height,
       C_ledstrip_fifo_data_width => C_ledstrip_fifo_data_width,
@@ -454,8 +460,8 @@ begin
       -- pid_encoder_a(0) => j2_2, pid_encoder_b(0) => j2_3, -- connect PID0 to real motor count roation
       -- problem: real motor has no AB phase output for bidirectional encoder, only for the counter
       -- pid_encoder_a(0) => motor_encoder(0), pid_encoder_b(0) => motor_encoder(1), -- connect PID1 to simulation count roation
-      ledstrip_out(0) => led(4), ledstrip_out(1) => led(5), -- ws2812b outputs
-      -- ledstrip_out(0) => j2_6, ledstrip_out(1) => j2_7, -- ws2812b outputs
+      -- ledstrip_out(0) => led(4), ledstrip_out(1) => led(5), -- ws2812b outputs
+      ledstrip_out(0) => j2_6, ledstrip_out(1) => j2_7, -- ws2812b outputs
       gpio(16) => open,  gpio(17) => open,  gpio(18) => j2_4,   gpio(19) => j2_5,
       gpio(20) => open,  gpio(21) => open,  gpio(22) => j2_8,   gpio(23) => j2_9,
       gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13,
@@ -479,9 +485,9 @@ begin
     motor: entity work.simotor
     generic map
     (
-      prescaler => 7,
+      prescaler => 4,
       motor_power => 4, -- acceleration
-      motor_speed => 21,  -- inverse log2 friction proportional to speed
+      motor_speed => 20,  -- inverse log2 friction proportional to speed
       -- larger motor_speed values allow higher motor top speed
       motor_friction => 1   -- static friction
     )
@@ -491,5 +497,5 @@ begin
       bridge => motor_bridge,
       encoder => motor_encoder
     );
-    
+
 end Behavioral;
