@@ -180,9 +180,6 @@ begin
     (
       -- C_clk_Hz => 25000000,
       C_clk_Hz => C_clk_Hz, -- module timing needs to know clk freq in Hz
-      -- C_t0h => 20, -- modified intentially to visually "see" the led dtc
-      -- C_t1h => 1000,
-      -- C_channels => C_ledstrip_channels, -- dual channel output
       C_striplen => C_width,
       C_lines_per_frame => C_height
     )
