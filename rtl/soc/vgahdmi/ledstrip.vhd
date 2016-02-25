@@ -185,6 +185,10 @@ begin
     (
       -- C_clk_Hz => 25000000,
       C_clk_Hz => C_clk_Hz, -- module timing needs to know clk freq in Hz
+      C_t0h => 420, -- ns
+      C_t1h => 820, -- ns
+      C_tbit => 1450, -- ns
+      C_tres => 51, -- us
       C_striplen => C_width,
       C_lines_per_frame => C_height
     )
@@ -203,8 +207,8 @@ begin
     S_vga_enable <= '1' when R(C_base)(31 downto 28) = C_xram_base else '0';
     S_vga_fetch_enabled <= S_vga_enable and vga_fetch_next; -- drain fifo into display
     S_vga_active_enabled <= S_vga_enable and S_ledstrip_active; -- frame active, pre-fill fifo
-    --S_vga_fetch_enabled <= S_vga_enable and vga_fetch_next; -- drain fifo into display
-    --S_vga_active_enabled <= S_vga_enable; -- frame active, pre-fill fifo
+    -- S_vga_fetch_enabled <= S_vga_enable and vga_fetch_next; -- drain fifo into display
+    -- S_vga_active_enabled <= S_vga_enable; -- frame active, pre-fill fifo
     ledstrip_comp_fifo: entity work.compositing2_fifo
     generic map (
       C_width => C_width,
