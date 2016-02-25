@@ -216,6 +216,7 @@ port (
   tmds_out_rgb: out std_logic_vector(2 downto 0);
   tmds_out_clk: out std_logic := '0'; -- XXX fixme not connected
   ledstrip_rotation: in std_logic := '0'; -- input from motor rotation encoder
+  S_ledstrip_out: out std_logic;
   ledstrip_out: out std_logic_vector(1 downto 0); -- 2 channels out
   jack_tip, jack_ring: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, 4-bit simple DAC
   fm_antenna, cw_antenna: out std_logic;
@@ -1147,8 +1148,9 @@ begin
       
       video_frame => vga_frame,
       rotation_sensor => ledstrip_rotation,
-      ledstrip_out => ledstrip_out(0)
+      ledstrip_out => S_ledstrip_out
     );
+    ledstrip_out <= (others => S_ledstrip_out);
     end generate; -- G_ledstrip
 
     -- VGA textmode

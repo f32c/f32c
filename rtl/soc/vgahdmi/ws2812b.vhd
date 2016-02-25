@@ -84,6 +84,8 @@ begin
           line_count <= 0;
           active <= '0'; -- output de-activate frame, fifo will reset
         end if;
+      elsif count = C_clk_Hz*C_tbit/C_ns + 6 then
+        active <= '1';
       elsif count = C_clk_Hz*C_tres/C_us then
         -- state = 2, dout = 0
         -- long dout=0 resets the protocol

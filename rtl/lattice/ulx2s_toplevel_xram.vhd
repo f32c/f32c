@@ -452,8 +452,8 @@ begin
       --pid_encoder_a(1) => j2_6,  pid_encoder_b(1) => j2_7,  pid_bridge_f(1) => j2_8,  pid_bridge_r(1) => j2_9,  -- PID1
       --pid_encoder_a(2) => j2_10, pid_encoder_b(2) => j2_11, pid_bridge_f(2) => j2_12, pid_bridge_r(2) => j2_13, -- PID2
       --  **** LEDSTRIP ****, gpio the rest
-      --ledstrip_rotation => j2_2,
-      ledstrip_rotation => motor_encoder(0), -- from motor simulator to module counter
+      ledstrip_rotation => j2_2,
+      --ledstrip_rotation => motor_encoder(0), -- from motor simulator to module counter
       -- pid_encoder_a(0) => j2_2, pid_encoder_b(0) => j2_3, -- connect PID0 to real motor count roation
       -- problem: real motor has no AB phase output for bidirectional encoder, only for the counter
       -- pid_encoder_a(0) => motor_encoder(0), pid_encoder_b(0) => motor_encoder(1), -- connect PID1 to simulation count roation
