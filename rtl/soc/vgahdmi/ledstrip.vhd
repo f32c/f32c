@@ -174,8 +174,11 @@ begin
     -- note that due to slow PWM on individual ledstrip leds
     -- true color is not useable for POV
     S_ledstrip_pixel_data(15 downto 13) <= video_data_from_fifo(7 downto 5); -- R
+    S_ledstrip_pixel_data(12 downto 8)  <= (others => video_data_from_fifo(5)); -- R lsb expand
     S_ledstrip_pixel_data(23 downto 21) <= video_data_from_fifo(4 downto 2); -- G
-    S_ledstrip_pixel_data(7 downto 6)   <= video_data_from_fifo(1 downto 0); -- B
+    S_ledstrip_pixel_data(20 downto 16) <= (others => video_data_from_fifo(2)); -- G lsb expand
+    S_ledstrip_pixel_data(7  downto 6)  <= video_data_from_fifo(1 downto 0); -- B
+    S_ledstrip_pixel_data(5  downto 0)  <= (others => video_data_from_fifo(0)); -- B lsb expand
 
     led_strip: entity work.ws2812b
     generic map
