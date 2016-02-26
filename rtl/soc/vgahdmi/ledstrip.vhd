@@ -189,6 +189,7 @@ begin
       C_t1h => 820, -- ns
       C_tbit => 1450, -- ns
       C_tres => 51, -- us
+      C_free_running => false,
       C_striplen => C_width,
       C_lines_per_frame => C_height
     )
@@ -197,6 +198,7 @@ begin
       -- clk => clk_25MHz,
       clk => clk,
       fetch_next => vga_fetch_next,
+      external_trigger => rotation_sensor,
       active => S_ledstrip_active,
       input_data => S_ledstrip_pixel_data,
       line => S_ledstrip_line, -- output line counter
