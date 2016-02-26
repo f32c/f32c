@@ -148,7 +148,7 @@ entity toplevel is
     -- number of pixels in each channel: 72
     C_ledstrip_fifo_width: integer := 72;
     -- number of scan lines: 36
-    C_ledstrip_fifo_height: integer := 36;
+    C_ledstrip_fifo_height: integer := 50;
     -- normally this should be  actual bits per pixel
     C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;
     -- width of FIFO address space -> size of fifo
