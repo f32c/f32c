@@ -40,8 +40,8 @@ entity ledstrip is
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- x"8" maps RAM to 0x80000000
     -- LED strip ws2812 POV simple 144x480 bitmap only
     C_ledstrip_full_circle: integer := 100; -- count of pulses per full circle of rotation
-    C_width: integer := 72;
-    C_height: integer := 36;
+    C_width: integer; -- example 72 strip length
+    C_height: integer; -- example 50 number of scan lines
     C_data_width: integer range 8 to 32 := 8;
     C_addr_width: integer := 11
   );
@@ -92,7 +92,7 @@ architecture behavioral of ledstrip is
     signal S_vga_enable: std_logic;
     signal S_ledstrip_active: std_logic;
     signal S_ledstrip_pixel_data: std_logic_vector(23 downto 0) := (others => '0');
-    signal S_ledstrip_counter, S_ledstrip_counter2: std_logic_vector(23 downto 0);
+    signal S_ledstrip_counter, S_ledstrip_counter2: std_logic_vector(15 downto 0);
     signal S_ledstrip_line, S_ledstrip_bit: std_logic_vector(15 downto 0);
     signal S_ledstrip_wraparound: std_logic;
     signal R_ledstrip_wraparound_shift: std_logic_vector(2 downto 0);
@@ -127,7 +127,7 @@ begin
     ledstrip_counter: entity work.pulse_counter
     generic map
     (
-      C_bits => 24,
+      C_bits => 16,
       C_wraparound => C_ledstrip_full_circle -- number of pulses per rotation
     )
     port map
@@ -140,7 +140,7 @@ begin
     ledstrip_counter_nowrap: entity work.pulse_counter
     generic map
     (
-      C_bits => 24,
+      C_bits => 16,
       C_wraparound => 65536 -- number of pulses per rotation
     )
     port map
@@ -185,10 +185,10 @@ begin
     (
       -- C_clk_Hz => 25000000,
       C_clk_Hz => C_clk_Hz, -- module timing needs to know clk freq in Hz
-      C_t0h => 420, -- ns
-      C_t1h => 820, -- ns
-      C_tbit => 1450, -- ns
-      C_tres => 51, -- us
+      --C_t0h => 420, -- ns
+      --C_t1h => 820, -- ns
+      --C_tbit => 1450, -- ns
+      C_tres => 60, -- us
       C_free_running => false,
       C_striplen => C_width,
       C_lines_per_frame => C_height
