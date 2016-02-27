@@ -1120,37 +1120,48 @@ begin
     -- rotating LED strip POV
     G_ledstrip_module:
     if C_ledstrip generate
-    -- address decoder to handle mmaped io registers
-    with conv_integer(io_addr(11 downto 4)) select
-      ledstrip_ce <= io_addr_strobe when iomap_from(iomap_ledstrip, iomap_range) to iomap_to(iomap_ledstrip, iomap_range),
-                                '0' when others;
-    ledstrip_driver: entity work.ledstrip
-    generic map (
-      C_clk_Hz => C_clk_freq*1000000, -- module timing needs to know clk freq in Hz
-      C_xram_base => C_xram_base,
-      C_ledstrip_full_circle => C_ledstrip_full_circle, -- number of sensor pulses per full rotation
-      C_width => C_ledstrip_fifo_width,
-      C_height => C_ledstrip_fifo_height,
-      C_data_width => C_ledstrip_fifo_data_width,
-      C_addr_width => C_ledstrip_fifo_addr_width
-    )
-    port map (
-      clk => clk,
-      ce => ledstrip_ce,
-      addr => dmem_addr(3 downto 2),
-      bus_write => dmem_write, byte_sel => dmem_byte_sel,
-      bus_in => cpu_to_dmem, bus_out => from_ledstrip,
+      -- address decoder to handle mmaped io registers
+      with conv_integer(io_addr(11 downto 4)) select
+        ledstrip_ce <= io_addr_strobe when iomap_from(iomap_ledstrip, iomap_range) to iomap_to(iomap_ledstrip, iomap_range),
+                                  '0' when others;
+      ledstrip_driver: entity work.ledstrip
+      generic map (
+        C_clk_Hz => C_clk_freq*1000000, -- module timing needs to know clk freq in Hz
+        C_xram_base => C_xram_base,
+        C_ledstrip_full_circle => C_ledstrip_full_circle, -- number of sensor pulses per full rotation
+        C_width => C_ledstrip_fifo_width,
+        C_height => C_ledstrip_fifo_height,
+        C_data_width => C_ledstrip_fifo_data_width,
+        C_addr_width => C_ledstrip_fifo_addr_width
+      )
+      port map (
+        clk => clk,
+        ce => ledstrip_ce,
+        addr => dmem_addr(3 downto 2),
+        bus_write => dmem_write, byte_sel => dmem_byte_sel,
+        bus_in => cpu_to_dmem, bus_out => from_ledstrip,
       
-      video_addr_strobe => vga_addr_strobe,
-      video_addr => vga_addr,
-      video_data_ready => vga_data_ready,
-      from_xram => from_xram,
+        video_addr_strobe => vga_addr_strobe,
+        video_addr => vga_addr,
+        video_data_ready => vga_data_ready,
+        from_xram => from_xram,
       
-      video_frame => vga_frame,
-      rotation_sensor => ledstrip_rotation,
-      ledstrip_out => S_ledstrip_out
-    );
-    ledstrip_out <= (others => S_ledstrip_out);
+        video_frame => vga_frame,
+        rotation_sensor => ledstrip_rotation,
+        ledstrip_out => S_ledstrip_out
+      );
+      ledstrip_out <= (others => S_ledstrip_out);
+      process(clk)
+      begin
+        -- simple interrupt handling: (any CPU read or write will clear interrupt)
+        if ledstrip_ce = '1' then
+          R_fb_intr <= '0';
+        else
+          if vga_frame = '1' then
+            R_fb_intr <= '1';
+          end if;
+        end if;
+      end process;
     end generate; -- G_ledstrip
 
     -- VGA textmode
