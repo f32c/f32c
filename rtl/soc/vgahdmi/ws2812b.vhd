@@ -7,8 +7,8 @@ entity ws2812b is
   (
     C_clk_Hz: integer := 25000000; -- Hz
     C_channels: integer range 1 to 2 := 1; -- number of output channels (not yet implemented)
-    C_striplen: integer := 64; -- channel line width: number of LED pixels in the strip
-    C_lines_per_frame: integer := 64; -- number of strip lines per frame to flash
+    C_striplen: integer; -- channel line width: number of LED pixels in the strip example 72
+    C_lines_per_frame: integer; -- number of strip lines per frame to flash example 50
     C_free_running: boolean := true; -- false: external line trigger
     -- timing setup by datasheet (unequal 0/1)
     --  t0h 350+-150 ns, t0l 800+-150 ns  ----_________
@@ -50,9 +50,9 @@ begin
   begin
     if rising_edge(clk) then
       puls_shift <= external_trigger & puls_shift(2 downto 1);
-      --if count /= C_clk_Hz*C_tres/C_us then
-        count <= count + 1;
-      --end if;
+      if count /= C_clk_Hz*C_tres/C_us then
+        count <= count + 1; -- sequential, changed later
+      end if;
       if count = C_clk_Hz*C_t0h/C_ns then
         if pixel_bit = 0 then
           data <= input_data;
@@ -91,21 +91,21 @@ begin
           active <= '0'; -- output de-activate frame, fifo will reset
         end if;
       -- shortens inactive period, fifo will refill early ahead of time
-      elsif count = C_clk_Hz*C_tbit/C_ns + 6 then
-        active <= '1';
+      --elsif count = C_clk_Hz*C_tbit/C_ns + 6 then
+      --  active <= '1';
       elsif count = C_clk_Hz*C_tres/C_us then
         -- state = 2, dout = 0
         -- long dout=0 resets the protocol
         -- set address from where to load new data
-        bit_count <= C_bpp*C_striplen-1;
-        pixel_bit <= 0;
         if C_free_running or (puls_shift(0)='0' and puls_shift(1)='1') then
+          bit_count <= C_bpp*C_striplen-1;
+          pixel_bit <= 0;
           count <= 0;
-        else
-          count <= C_clk_Hz*C_tres/C_us; -- stay here until external trigger
+          state <= 0;
+          active <= '1'; -- output active (frame starts)
+        --else
+        --  count <= C_clk_Hz*C_tres/C_us; -- stay here until external trigger
         end if;
-        state <= 0;
-        active <= '1'; -- output active (frame starts)
       end if;
     end if;
   end process;
