@@ -188,7 +188,7 @@ begin
       --C_t0h => 420, -- ns
       --C_t1h => 820, -- ns
       --C_tbit => 1450, -- ns
-      C_tres => 60, -- us
+      --C_tres => 60, -- us
       C_free_running => false,
       C_striplen => C_width,
       C_lines_per_frame => C_height
