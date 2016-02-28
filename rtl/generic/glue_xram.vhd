@@ -833,25 +833,19 @@ begin
     end generate;
 
     --
-    -- I/O
+    -- Simple I/O
     --
     process(clk)
     begin
         if rising_edge(clk) and io_addr_strobe = '1' and dmem_write = '1' then
             -- simple out
-            if C_simple_out > 0 and io_addr(11 downto 4) = x"71" then
-                if dmem_byte_sel(0) = '1' then
-                    R_simple_out(7 downto 0) <= cpu_to_dmem(7 downto 0);
+            -- currently limted to 32 simple out bits (fixme for more)
+            if C_simple_out > 0 and conv_integer(io_addr(11 downto 4)) = iomap_from(iomap_simple_out, iomap_range) then
+              for i in 0 to 3 loop
+                if dmem_byte_sel(i) = '1' then
+                  R_simple_out(i*8+7 downto i*8) <= cpu_to_dmem(i*8+7 downto i*8);
                 end if;
-                if dmem_byte_sel(1) = '1' then
-                    R_simple_out(15 downto 8) <= cpu_to_dmem(15 downto 8);
-		end if;
-                if dmem_byte_sel(2) = '1' then
-                    R_simple_out(23 downto 16) <= cpu_to_dmem(23 downto 16);
-                end if;
-                if dmem_byte_sel(3) = '1' then
-                    R_simple_out(31 downto 24) <= cpu_to_dmem(31 downto 24);
-                end if;
+              end loop;
             end if;
         end if;
         if rising_edge(clk) then
@@ -878,7 +872,7 @@ begin
     process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio, from_vga_textmode)
         variable i: integer;
     begin
-        io_to_cpu <= (others => '-');
+        -- io_to_cpu <= (others => '-');
         case conv_integer(io_addr(11 downto 4)) is
         when iomap_from(iomap_gpio, iomap_range) to iomap_to(iomap_gpio, iomap_range) =>
             for i in 0 to C_gpios - 1 loop
@@ -911,17 +905,15 @@ begin
                 io_to_cpu <= from_fmrds;
             end if;
         when iomap_from(iomap_simple_in, iomap_range) to iomap_to(iomap_simple_in, iomap_range) =>
-            for i in 0 to (C_simple_in + 31) / 4 - 1 loop
+            for i in 0 to (C_simple_in + 31) / 32 - 1 loop
                 if conv_integer(io_addr(3 downto 2)) = i then
-                    io_to_cpu(C_simple_in - i * 32 - 1 downto i * 32) <=
-                      R_simple_in(C_simple_in - i * 32 - 1 downto i * 32);
+                  io_to_cpu <= R_simple_in(32*i+31 downto 32*i);
                 end if;
             end loop;
         when iomap_from(iomap_simple_out, iomap_range) to iomap_to(iomap_simple_out, iomap_range) =>
-            for i in 0 to (C_simple_out + 31) / 4 - 1 loop
+            for i in 0 to (C_simple_out + 31) / 32 - 1 loop
                 if conv_integer(io_addr(3 downto 2)) = i then
-                    io_to_cpu(C_simple_out - i * 32 - 1 downto i * 32) <=
-                      R_simple_out(C_simple_out - i * 32 - 1 downto i * 32);
+                  io_to_cpu <= R_simple_out(32*i+31 downto 32*i);
                 end if;
             end loop;
         -- vgahdmi, ledstrip and textmode share the same iomap addresses
