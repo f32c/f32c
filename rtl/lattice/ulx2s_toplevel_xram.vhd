@@ -123,8 +123,8 @@ entity toplevel is
 
     C_sio: integer := 1; -- number of rs232 serial ports
 
-    C_simple_out: integer := 8; -- LEDs
-    C_simple_in: integer := 20; -- buttons and switches (not all used)
+    C_simple_out: integer := 32; -- LEDs (only 8 used but quantized to 32)
+    C_simple_in: integer := 32; -- buttons and switches (not all used)
     C_gpio: integer := 32; -- number of GPIO pins
     C_spi: integer := 2; -- number of SPI interfaces
 
@@ -435,7 +435,7 @@ begin
       spi_mosi(1) => sdcard_si, spi_miso(1) => sdcard_so,
       jack_ring(3) => p_ring,
       jack_tip => p_tip,
-      simple_out(3 downto 0) => led(3 downto 0),
+      simple_out(7 downto 0) => led(7 downto 0),
       simple_in(4 downto 0) => btn,
       simple_in(19 downto 16) => sw,
       gpio(0)  => j1_2,  gpio(1)  => j1_3,  gpio(2)  => j1_4,   gpio(3)  => j1_8,
