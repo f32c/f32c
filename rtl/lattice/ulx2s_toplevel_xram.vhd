@@ -144,10 +144,10 @@ entity toplevel is
 
     C_ledstrip: boolean := true;
     -- input number of counts per full circle
-    C_ledstrip_full_circle: integer := 100; -- counts
+    C_ledstrip_full_circle: integer := 200; -- counts
     -- number of pixels in each channel: 72
     C_ledstrip_fifo_width: integer := 72;
-    -- number of scan lines: 36
+    -- number of scan lines: 50
     C_ledstrip_fifo_height: integer := 50;
     -- normally this should be  actual bits per pixel
     C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;
@@ -459,6 +459,7 @@ begin
       -- pid_encoder_a(0) => motor_encoder(0), pid_encoder_b(0) => motor_encoder(1), -- connect PID1 to simulation count roation
       -- ledstrip_out(0) => led(4), ledstrip_out(1) => led(5), -- ws2812b outputs
       ledstrip_out(0) => j2_6, ledstrip_out(1) => j2_7, -- ws2812b outputs
+      --ledstrip_out(0) => j2_6, ledstrip_out(1) => open, -- ws2812b outputs
       gpio(16) => open,  gpio(17) => open,  gpio(18) => j2_4,   gpio(19) => j2_5,
       gpio(20) => open,  gpio(21) => open,  gpio(22) => j2_8,   gpio(23) => j2_9,
       gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13,
