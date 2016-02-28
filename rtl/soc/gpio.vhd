@@ -36,8 +36,8 @@ use ieee.std_logic_arith.all;
 entity gpio is
     generic (
         C_addr_bits: integer := 3; -- don't touch: number of address bits for the registers
-		C_bits: integer range 2 to 32 := 32;  -- number of gpio bits (pins)
-		C_pullup: boolean := false
+        C_bits: integer range 2 to 32 := 32;  -- number of gpio bits (pins)
+        C_pullup: boolean := false
     );
     port (
 	ce, clk: in std_logic;
