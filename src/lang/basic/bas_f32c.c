@@ -87,13 +87,18 @@ bas_sleep(void)
 	end = start + (uint64_t) (res.f * 1000.0 * freq_khz);
 
 	do {
+		RDTSC(c);
+		if (c < tsc_lo)
+			tsc_hi++;
+		tsc_lo = c;
+
 		now = tsc_hi;
 		now = (now << 32) + tsc_lo;
 		c = sio_getchar(0);
 		if (now >= end)
 			break;
 #ifdef __mips__
-		asm("wait"); /* Low-power mode */
+//		asm("wait"); /* Low-power mode */
 #endif
 	} while (c != 3);
 
