@@ -185,10 +185,10 @@ begin
     (
       -- C_clk_Hz => 25000000,
       C_clk_Hz => C_clk_Hz, -- module timing needs to know clk freq in Hz
-      --C_t0h => 420, -- ns
-      --C_t1h => 820, -- ns
-      --C_tbit => 1450, -- ns
-      --C_tres => 60, -- us
+      --C_t0h => 320, -- ns
+      --C_t1h => 640, -- ns
+      --C_tbit => 1000, -- ns
+      --C_tres => 51, -- us
       C_free_running => false,
       C_striplen => C_width,
       C_lines_per_frame => C_height
