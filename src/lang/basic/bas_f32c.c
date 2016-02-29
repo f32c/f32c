@@ -74,29 +74,28 @@ bauds(void)
 int
 bas_sleep(void)
 {
-	uint64_t start, end, now;
-	int c;
+	int c = 0;
+	int t, target;
 
-	start = tsc_hi;
-	start = (start << 32) + tsc_lo;
+	RDTSC(target);
 
 	evalreal();
 	check();
 	if (res.f < ZERO)
 		error(33);	/* argument error */
-	end = start + (uint64_t) (res.f * 1000.0 * freq_khz);
+
+	target += (int) (res.f * 1000.0 * freq_khz);
 
 	do {
-		RDTSC(c);
-		if (c < tsc_lo)
+		RDTSC(t);
+		if (t < tsc_lo)
 			tsc_hi++;
-		tsc_lo = c;
+		tsc_lo = t;
 
-		now = tsc_hi;
-		now = (now << 32) + tsc_lo;
+		if(t - target > 0)
+		  break;
+
 		c = sio_getchar(0);
-		if (now >= end)
-			break;
 #ifdef __mips__
 //		asm("wait"); /* Low-power mode */
 #endif
