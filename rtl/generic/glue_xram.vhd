@@ -216,7 +216,6 @@ port (
   tmds_out_rgb: out std_logic_vector(2 downto 0);
   tmds_out_clk: out std_logic := '0'; -- XXX fixme not connected
   ledstrip_rotation: in std_logic := '0'; -- input from motor rotation encoder
-  S_ledstrip_out: out std_logic;
   ledstrip_out: out std_logic_vector(1 downto 0); -- 2 channels out
   jack_tip, jack_ring: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, 4-bit simple DAC
   fm_antenna, cw_antenna: out std_logic;
@@ -343,6 +342,7 @@ architecture Behavioral of glue_xram is
     signal S_ledstrip_pixel_data: std_logic_vector(23 downto 0) := (others => '0');
     signal S_ledstrip_counter, S_ledstrip_counter2: std_logic_vector(23 downto 0);
     signal S_ledstrip_line, S_ledstrip_bit: std_logic_vector(15 downto 0);
+    signal S_ledstrip_out: std_logic;
     signal S_ledstrip_wraparound: std_logic;
     signal R_ledstrip_wraparound_shift: std_logic_vector(2 downto 0);
     signal R_ledstrip_capture: std_logic_vector(31 downto 0);
