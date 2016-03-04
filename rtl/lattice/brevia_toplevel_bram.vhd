@@ -45,7 +45,11 @@ entity glue is
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
-	C_leds_btns: boolean := true
+	C_sio: integer := 1;
+	C_spi: integer := 0;
+	C_gpio: integer := 0;
+	C_simple_io: boolean := true;
+	C_timer: boolean := false
     );
     port (
 	clk_25m: in std_logic;
@@ -77,17 +81,20 @@ begin
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_mem_size => C_mem_size,
-	C_debug => C_debug
+	C_sio => C_sio,
+	C_spi => C_spi,
+	C_gpio => C_gpio,
+	C_timer => C_timer
     )
     port map (
 	clk => clk,
 	sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
 	sio_break(0) => rs232_break,
-	spi_sck => open, spi_ss => open, spi_mosi => open, spi_miso => "",
-	gpio => open, lcd_7seg => open,
-	leds(7 downto 0) => led, leds(15 downto 8) => open,
-	btns(4 downto 0) => btns, btns(15 downto 5) => open,
-	sw(3 downto 0) => sw
+	spi_sck => open, spi_ss => open, spi_mosi => open, spi_miso => open,
+	gpio => open,
+	simple_out(7 downto 0) => led, simple_out(31 downto 8) => open,
+	simple_in(4 downto 0) => btns, simple_in(15 downto 5) => open,
+	simple_in(19 downto 16) => sw, simple_in(31 downto 20) => open
     );
-    btns <= btn_left & btn_right & btn_up & btn_down & btn_center;
+    btns <= not (btn_left & btn_right & btn_up & btn_down & btn_center);
 end Behavioral;
