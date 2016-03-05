@@ -75,7 +75,7 @@ entity toplevel is
     C_arch: integer := ARCH_MI32;
     C_big_endian: boolean := false;
     -- C_boot_rom = true: bootloader will try to chainboot SPI flash ROM, fallback to serial
-    -- C_boot_rom = false: serial bootloader only
+    -- C_boot_rom = false: -- serial bootloader only
     C_boot_rom: boolean := true;
     C_mult_enable: boolean := true;
     C_branch_likely: boolean := true;
@@ -110,6 +110,7 @@ entity toplevel is
       C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
+    C_cached_addr_bits: integer := 20; -- number of lower RAM address bits 2^20 -> 1MB to be cached
 
     C_sram: boolean := true;
       C_sram_refresh: boolean := true; -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
@@ -130,7 +131,7 @@ entity toplevel is
 
     C_framebuffer: boolean := false; -- TV framebuffer (not yet supported in glue_xram)
 
-    C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
+    C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
       C_vgahdmi_test_picture: integer := 0;
       -- number of pixels for line; 640
       C_vgahdmi_fifo_width: integer := 640;
@@ -142,7 +143,7 @@ entity toplevel is
       -- for 8bpp compositing use 11 -> 2048 bytes
       C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_ledstrip: boolean := true;
+    C_ledstrip: boolean := false;
     -- input number of counts per full circle
     C_ledstrip_full_circle: integer := 200; -- counts
     -- number of pixels in each channel: 72
@@ -347,6 +348,7 @@ begin
       C_icache_size => C_icache_size,	-- 0, 2, 4 or 8 KBytes
       C_dcache_size => C_dcache_size,	-- 0, 2, 4 or 8 KBytes
       C_xram_base => C_xram_base,
+      C_cached_addr_bits => C_cached_addr_bits,
       C_sram => C_sram,
       C_sram_refresh => C_sram_refresh,
       C_sram_wait_cycles => C_sram_wait_cycles, -- ISSI, OK do 87.5 MHz
@@ -452,23 +454,17 @@ begin
       --pid_encoder_a(1) => j2_6,  pid_encoder_b(1) => j2_7,  pid_bridge_f(1) => j2_8,  pid_bridge_r(1) => j2_9,  -- PID1
       --pid_encoder_a(2) => j2_10, pid_encoder_b(2) => j2_11, pid_bridge_f(2) => j2_12, pid_bridge_r(2) => j2_13, -- PID2
       --  **** LEDSTRIP ****, gpio the rest
-      ledstrip_rotation => j2_2,
-      --ledstrip_rotation => motor_encoder(0), -- from motor simulator to module counter
-      -- pid_encoder_a(0) => j2_2, pid_encoder_b(0) => j2_3, -- connect PID0 to real motor count roation
-      -- problem: real motor has no AB phase output for bidirectional encoder, only for the counter
-      -- pid_encoder_a(0) => motor_encoder(0), pid_encoder_b(0) => motor_encoder(1), -- connect PID1 to simulation count roation
-      -- ledstrip_out(0) => led(4), ledstrip_out(1) => led(5), -- ws2812b outputs
-      ledstrip_out(0) => j2_6, ledstrip_out(1) => j2_7, -- ws2812b outputs
-      --ledstrip_out(0) => j2_6, ledstrip_out(1) => open, -- ws2812b outputs
-      gpio(16) => open,  gpio(17) => open,  gpio(18) => j2_4,   gpio(19) => j2_5,
-      gpio(20) => open,  gpio(21) => open,  gpio(22) => j2_8,   gpio(23) => j2_9,
-      gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13,
+      --ledstrip_rotation => j2_2, -- motor provides only a single channel pulse for the counter
+      --ledstrip_out(0) => j2_6, ledstrip_out(1) => j2_7, -- ws2812b outputs
+      --gpio(16) => open,  gpio(17) => open,  gpio(18) => j2_4,   gpio(19) => j2_5,
+      --gpio(20) => open,  gpio(21) => open,  gpio(22) => j2_8,   gpio(23) => j2_9,
+      --gpio(24) => j2_10, gpio(25) => j2_11, gpio(26) => j2_12,  gpio(27) => j2_13,
       --  **** VGA **** gpio(27 downto 16)
-      --vga_vsync => j2_3,
-      --vga_hsync => j2_4,
-      --vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
-      --vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
-      --vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
+      vga_vsync => j2_3,
+      vga_hsync => j2_4,
+      vga_b(5) => j2_5,  vga_b(6) => j2_6,  vga_b(7) => j2_7,
+      vga_g(5) => j2_8,  vga_g(6) => j2_9,  vga_g(7) => j2_10,
+      vga_r(5) => j2_11, vga_r(6) => j2_12, vga_r(7) => j2_13,
       --  gpio(28) multifunction: antenna
       gpio(28) => gpio_28, -- j2_16
       cw_antenna => cw_antenna, -- output 433MHz
@@ -479,6 +475,7 @@ begin
     );
 
     -- simulation for the ledstrip motor (forward-only motor)
+    ledstrip_motor_simulation: if false generate
     motor_bridge <= '0' & led(1); -- led(1) is PWM out (arduino pin 9 in Fade example)
     motor: entity work.simotor
     generic map
@@ -495,5 +492,6 @@ begin
       bridge => motor_bridge,
       encoder => motor_encoder
     );
+    end generate; -- ledstrip_motor_simulation
 
 end Behavioral;
