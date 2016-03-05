@@ -41,7 +41,7 @@ entity glue is
 	C_debug: boolean := false;
 
 	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-	C_clk_freq: integer := 81;
+	C_clk_freq: integer := 50;
 
 	-- SoC configuration options
 	C_mem_size: integer := 16;
@@ -52,7 +52,8 @@ entity glue is
 	C_timer: boolean := false
     );
     port (
-	clk_25m: in std_logic;
+	clk_50m: in std_logic;
+	clk_ena: out std_logic;
 	rs232_tx: out std_logic;
 	rs232_rx: in std_logic;
 	led: out std_logic_vector(7 downto 0);
@@ -66,14 +67,16 @@ architecture Behavioral of glue is
     signal btns: std_logic_vector(4 downto 0);
 begin
     -- clock synthesizer: Lattice XP2 specific
-    clkgen: entity work.clkgen
-    generic map (
-	C_clk_freq => C_clk_freq
-    )
-    port map (
-	clk_25m => clk_25m, clk => clk, clk_325m => open,
-	ena_325m => '0', res => rs232_break
-    );
+--    clkgen: entity work.clkgen
+--    generic map (
+--	C_clk_freq => C_clk_freq
+--    )
+--    port map (
+--	clk_50m => clk_50m, clk => clk, clk_325m => open,
+--	ena_325m => '0', res => rs232_break
+--    );
+    clk_ena <= '1';
+    clk <= clk_50m;
 
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
