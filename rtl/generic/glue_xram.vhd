@@ -75,7 +75,6 @@ generic (
 
   -- CPU debugging
   C_debug: boolean := false;
-  
 
   -- SDRAM parameters
   C_sdram_address_width : integer := 24;
@@ -95,6 +94,7 @@ generic (
   C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
   C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
   C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- x"8" maps RAM to 0x80000000
+  C_cached_addr_bits: integer; -- := 20; -- number of lower RAM address bits to be cached
   C_sram: boolean := false; -- 16-bit SRAM
   C_sram_refresh: boolean := false; -- sram refresh workaround (RED ULX2S boards need this)
   C_sram8: boolean := false; -- 8-bit SRAM
@@ -488,7 +488,7 @@ begin
       C_icache_expire => C_icache_expire,
       C_xram_base => C_xram_base, -- hacky part of address decoding in the cache
       C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
-      C_cached_addr_bits => C_sdram_address_width, -- +1 ? e.g. 20 bits will cache 1MB
+      C_cached_addr_bits => C_cached_addr_bits, -- +1 ? e.g. 20 bits will cache 1MB
       -- debugging only
       C_debug => C_debug
     )
@@ -639,14 +639,14 @@ begin
         clk => clk,
         -- internal connections
         data_out => from_xram, bus_in => to_xram, ready_out => xram_ready,
-        sram_wel => sram_wel, sram_addr => sram_a, sram_data => sram_d(7 downto 0),
+        sram_wel => sram_wel, sram_addr => sram_a(19 downto 0), sram_data => sram_d(7 downto 0),
         snoop_cycle => snoop_cycle, snoop_addr => snoop_addr
     );
     end generate; -- G_sram8bit
 
     G_sdram:
     if C_sdram generate
-    
+
     use_sdram: if (not C_sdram_separate_arbiter) and C_ram_emu_addr_width = 0 generate
     sdram: entity work.sdram_controller
     generic map (
