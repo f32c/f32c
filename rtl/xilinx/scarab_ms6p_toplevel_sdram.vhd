@@ -51,7 +51,8 @@ entity glue is
     C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
     C_icache_size: integer := 32; -- 0, 2, 4, 8, 16, 32 KBytes
     C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
-    C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
+    C_cached_addr_bits: integer := 25; -- number of lower RAM address bits 2^25 -> 32MB to be cached
+    C_xram_base: std_logic_vector(31 downto 28) := x"1"; -- RAM start address e.g. x"8" -> 0x80000000
     C_sdram: boolean := true;
     C_sdram_separate_arbiter: boolean := false;
     C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
@@ -289,6 +290,7 @@ begin
       C_icache_expire => C_icache_expire,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
+      C_cached_addr_bits => C_cached_addr_bits,
       C_gpio => C_gpio,
       C_sio => C_sio,
       C_spi => C_spi,
