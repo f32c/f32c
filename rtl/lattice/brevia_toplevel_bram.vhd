@@ -64,7 +64,9 @@ end glue;
 
 architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
-    signal btns: std_logic_vector(4 downto 0);
+    signal btns_n: std_logic_vector(4 downto 0);
+    signal sw_n: std_logic_vector(3 downto 0);
+    signal led_n: std_logic_vector(7 downto 0);
 begin
     -- clock synthesizer: Lattice XP2 specific
 --    clkgen: entity work.clkgen
@@ -95,9 +97,11 @@ begin
 	sio_break(0) => rs232_break,
 	spi_sck => open, spi_ss => open, spi_mosi => open, spi_miso => open,
 	gpio => open,
-	simple_out(7 downto 0) => led, simple_out(31 downto 8) => open,
-	simple_in(4 downto 0) => btns, simple_in(15 downto 5) => open,
-	simple_in(19 downto 16) => sw, simple_in(31 downto 20) => open
+	simple_out(7 downto 0) => led_n, simple_out(31 downto 8) => open,
+	simple_in(4 downto 0) => btns_n, simple_in(15 downto 5) => open,
+	simple_in(19 downto 16) => sw_n, simple_in(31 downto 20) => open
     );
-    btns <= not (btn_left & btn_right & btn_up & btn_down & btn_center);
+    btns_n <= not (btn_left & btn_right & btn_up & btn_down & btn_center);
+    sw_n <= not sw;
+    led <= not led_n;
 end Behavioral;
