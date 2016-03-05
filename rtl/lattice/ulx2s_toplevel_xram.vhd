@@ -81,7 +81,8 @@ entity toplevel is
     C_branch_likely: boolean := true;
     C_sign_extend: boolean := true;
     C_ll_sc: boolean := false;
-    C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff"; -- 1MB limit
+    C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff"; -- 1MB limit from 0x80000000
+    -- C_PC_mask: std_logic_vector(31 downto 0) := x"100fffff"; -- 1MB limit from 0x10000000
 
     -- COP0 options
     C_exceptions: boolean := true;
@@ -109,7 +110,8 @@ entity toplevel is
       C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
       C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 
-    C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
+    C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address x"8" -> 0x80000000 (need C_PC_mask := x"800fffff")
+    -- C_xram_base: std_logic_vector(31 downto 28) := x"1"; -- RAM start address x"1" -> 0x10000000 (need C_PC_mask := x"100fffff")
     C_cached_addr_bits: integer := 20; -- number of lower RAM address bits 2^20 -> 1MB to be cached
 
     C_sram: boolean := true;
