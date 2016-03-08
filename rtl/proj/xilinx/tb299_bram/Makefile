@@ -19,8 +19,8 @@ vfiles = \
 
 vhdfiles = \
 ../../../xilinx/tb299_xc6slx9_toplevel_bram.vhd \
-../../../xilinx/pll_25M_112M5.vhd \
-../../../xilinx/pll_25M_81M25.vhd \
+../../../xilinx/clocks/tb299/pll_25M_112M5.vhd \
+../../../xilinx/clocks/tb299/pll_25M_81M25.vhd \
 ../../../xilinx/hdmi_out.vhd \
 ../../../generic/glue_bram_vgaf.vhd \
 ../../../generic/bram.vhd \
@@ -30,6 +30,7 @@ vhdfiles = \
 ../../../generic/bootloader/boot_sio_rv32el.vhd \
 ../../../generic/bram_video.vhd \
 ../../../generic/bptrace.vhd \
+../../../generic/bram_true2p_1clk.vhd \
 ../../../generic/reg1w2r.vhd \
 ../../../cpu/alu.vhd \
 ../../../cpu/loadalign.vhd \
@@ -55,7 +56,16 @@ vhdfiles = \
 ../../../soc/fm/rds.vhd \
 ../../../soc/fm/bram_rds.vhd \
 ../../../soc/fm/message.vhd \
+../../../soc/fm/lowpass.vhd \
 ../../../soc/vgahdmi/vgahdmif.vhd \
 ../../../soc/vgahdmi/videofifo.vhd \
+../../../soc/vgahdmi/VGA_textmode.vhd \
+../../../soc/vgahdmi/font_block_pack.vhd \
+../../../soc/vgahdmi/font8x8_xark.vhd \
+../../../soc/vgahdmi/font8x16_xark.vhd \
+../../../soc/vgahdmi/VGA_textmode_bram.vhd \
+../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
+../../../soc/vgahdmi/TMDS_encoder.vhd \
+../../../soc/vgahdmi/dvid_out.vhd \
 
 include ../include/xilinx.mk
