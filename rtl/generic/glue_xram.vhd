@@ -94,7 +94,7 @@ generic (
   C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
   C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
   C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- x"8" maps RAM to 0x80000000
-  C_cached_addr_bits: integer; -- := 20; -- number of lower RAM address bits to be cached
+  C_cached_addr_bits: integer := 20; -- number of lower RAM address bits to be cached
   C_sram: boolean := false; -- 16-bit SRAM
   C_sram_refresh: boolean := false; -- sram refresh workaround (RED ULX2S boards need this)
   C_sram8: boolean := false; -- 8-bit SRAM
@@ -206,7 +206,7 @@ port (
   sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
   sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
   spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
-  spi_miso: in std_logic_vector(C_spi - 1 downto 0);
+  spi_miso: in std_logic_vector(C_spi - 1 downto 0) := (others => '-');
   simple_in: in std_logic_vector(31 downto 0);
   simple_out: out std_logic_vector(31 downto 0);
   pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
