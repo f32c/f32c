@@ -32,6 +32,11 @@ use IEEE.MATH_REAL.ALL;
 
 use work.f32c_pack.all;
 
+use work.boot_block_pack.all;
+use work.boot_sio_mi32el.all;
+use work.boot_sio_mi32eb.all;
+use work.boot_sio_rv32el.all;
+
 entity glue_bram is
     generic (
 	C_clk_freq: integer;
@@ -78,12 +83,6 @@ entity glue_bram is
 	C_simple_in: integer range 0 to 128 := 32;
 	C_simple_out: integer range 0 to 128 := 32;
 	C_gpio: integer range 0 to 128 := 32;
-	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
-	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
-	C_pid_prescaler: integer range 10 to 26 := 18; -- control loop frequency f_clk/2^prescaler
-	C_pid_precision: integer range 0 to 8 := 1; -- fixed point PID precision
-        C_pid_pwm_bits: integer range 11 to 32 := 12; -- PWM output frequency f_clk/2^pwmbits (min 11 => 40kHz @ 81.25MHz)
-        C_pid_fp: integer range 0 to 26 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
 	C_timer: boolean := true
     );
     port (
@@ -94,8 +93,6 @@ entity glue_bram is
 	spi_miso: in std_logic_vector(C_spi - 1 downto 0);
 	simple_in: in std_logic_vector(31 downto 0);
 	simple_out: out std_logic_vector(31 downto 0);
-	pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
-	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
 	gpio: inout std_logic_vector(127 downto 0)
     );
 end glue_bram;
@@ -114,6 +111,20 @@ architecture Behavioral of glue_bram is
     signal io_addr: std_logic_vector(11 downto 2);
     signal intr: std_logic_vector(5 downto 0); -- interrupt
 
+    type T_endian_select is array(boolean) of integer;
+    constant select_big_endian: T_endian_select := (false => 0, true => 2);
+
+    type T_boot_block_select is array(0 to 7) of boot_block_type;
+    constant boot_block_select: T_boot_block_select :=
+      (  --  (arch, big endian, rom)
+        (ARCH_MI32+select_big_endian(false)) => boot_sio_mi32el,
+        (ARCH_MI32+select_big_endian(true))  => boot_sio_mi32eb,
+        (ARCH_RV32+select_big_endian(false)) => boot_sio_rv32el,
+        (ARCH_RV32+select_big_endian(true))  => (others => (others => '0')) -- RISC-V currently has no big endian support
+      );
+
+    constant boot_block: boot_block_type := boot_block_select(C_arch + select_big_endian(C_big_endian));
+
     -- Timer
     signal from_timer: std_logic_vector(31 downto 0);
     signal timer_ce: std_logic;
@@ -128,17 +139,6 @@ architecture Behavioral of glue_bram is
     signal gpio_ce: std_logic_vector(C_gpios-1 downto 0);
     signal gpio_intr: std_logic_vector(C_gpios-1 downto 0);
     signal gpio_intr_joint: std_logic := '0';
-
-    -- PID
-    constant C_pid: boolean := C_pids >= 2; -- minimum is 2 PIDs, otherwise no PID
-    signal from_pid: std_logic_vector(31 downto 0);
-    signal pid_ce: std_logic;
-    signal pid_intr: std_logic; -- currently unused
-    signal pid_bridge_f_out: std_logic_vector(C_pids-1 downto 0);
-    signal pid_bridge_r_out: std_logic_vector(C_pids-1 downto 0);
-    signal pid_encoder_a_out: std_logic_vector(C_pids-1 downto 0);
-    signal pid_encoder_b_out: std_logic_vector(C_pids-1 downto 0);
-    constant C_pids_bits: integer := integer(floor((log2(real(C_pids)+0.001))+0.5));
 
     -- Serial I/O (RS232)
     type from_sio_type is array (0 to C_sio - 1) of
@@ -299,7 +299,6 @@ begin
     process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio)
 	variable i: integer;
     begin
-	io_to_cpu <= (others => '-');
 	case conv_integer(io_addr(11 downto 4)) is
 	when 16#00# to 16#07# =>
 	    for i in 0 to C_gpios - 1 loop
@@ -323,22 +322,18 @@ begin
 		    io_to_cpu <= from_spi(i);
 		end if;
 	    end loop;
-	when 16#58# to 16#5B# => -- address 0xFFFFFD80
-	    if C_pid then
-		io_to_cpu <= from_pid;
-	    end if;
 	when 16#70#  =>
-	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
+	    for i in 0 to (C_simple_in + 31) / 32 - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
-		    io_to_cpu(C_simple_in - i * 32 - 1 downto i * 32) <=
-		      R_simple_in(C_simple_in - i * 32 - 1 downto i * 32);
+		    io_to_cpu(i * 32 + 31 downto i * 32) <=
+		      R_simple_in(i * 32 + 31 downto i * 32);
 		end if;
 	    end loop;
 	when 16#71#  =>
-	    for i in 0 to (C_simple_out + 31) / 4 - 1 loop
+	    for i in 0 to (C_simple_out + 31) / 32 - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
-		    io_to_cpu(C_simple_out - i * 32 - 1 downto i * 32) <=
-		      R_simple_out(C_simple_out - i * 32 - 1 downto i * 32);
+		    io_to_cpu(i * 32 + 31 downto i * 32) <=
+		      R_simple_out(i * 32 + 31 downto i * 32);
 		end if;
 	    end loop;
 	when others  =>
@@ -369,40 +364,6 @@ begin
       -- gpio_intr_joint <= '0' when conv_integer(gpio_intr) = 0 else '1';
     end generate;
 
-    -- PID
-    G_pid:
-    if C_pid generate
-    pid_inst: entity work.pid
-    generic map (
-        C_pwm_bits => C_pid_pwm_bits,
-	C_prescaler => C_pid_prescaler,
-	C_fp => C_pid_fp,
-	C_precision => C_pid_precision,
-        C_simulator => C_pid_simulator,
-        C_pids => C_pids,
-	C_addr_unit_bits => C_pids_bits
-    )
-    port map (
-	clk => clk, ce => pid_ce, addr => dmem_addr(C_pids_bits+3 downto 2),
-	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_pid,
-	encoder_a_in  => pid_encoder_a,
-	encoder_b_in  => pid_encoder_b,
-	encoder_a_out => pid_encoder_a_out,
-	encoder_b_out => pid_encoder_b_out,
-	bridge_f_out => pid_bridge_f_out,
-	bridge_r_out => pid_bridge_r_out
-    );
-    pid_ce <= io_addr_strobe when
-         io_addr(11 downto 4) = x"58"
-      or io_addr(11 downto 4) = x"59"
-      or io_addr(11 downto 4) = x"5A"
-      or io_addr(11 downto 4) = x"5B"
-      else '0'; -- address 0xFFFFFD80
-    pid_bridge_f <= pid_bridge_f_out;
-    pid_bridge_r <= pid_bridge_r_out;
-    end generate;
-
     -- Timer
     G_timer:
     if C_timer generate
@@ -428,46 +389,18 @@ begin
     -- Block RAM
     dmem_bram_write <=
       dmem_addr_strobe and dmem_write when dmem_addr(31) /= '1' else '0';
-    G_bram_mi32_el:
-    if C_arch = ARCH_MI32 and not C_big_endian generate
-    bram_mi32_el: entity work.bram_mi32_el
-    generic map (
-	C_mem_size => C_mem_size
-    )
-    port map (
-	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_write => dmem_bram_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
-    );
-    end generate;
-    G_bram_mi32_eb:
-    if C_arch = ARCH_MI32 and C_big_endian generate
-    bram_mi32_eb: entity work.bram_mi32_eb
-    generic map (
-	C_mem_size => C_mem_size
-    )
-    port map (
-	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_write => dmem_bram_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
-    );
-    end generate;
-    G_bram_rv32:
-    if C_arch = ARCH_RV32 generate
-    bram_rv32: entity work.bram_rv32
-    generic map (
-	C_mem_size => C_mem_size
-    )
-    port map (
-	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_write => dmem_bram_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
-    );
-    end generate;
 
+    bram: entity work.bram
+    generic map (
+        boot_block => boot_block,
+	C_mem_size => C_mem_size
+    )
+    port map (
+	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
+	dmem_write => dmem_bram_write,
+	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
+    );
 
     -- Debugging SIO instance
     G_debug_sio:
