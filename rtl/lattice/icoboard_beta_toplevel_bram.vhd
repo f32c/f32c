@@ -99,7 +99,7 @@ entity top is
     C_debug: boolean := false;
 
     -- SoC configuration options
-    C_bram_size: integer := 4;	-- 2 or 16 KBytes
+    C_bram_size: integer := 8;	-- KBytes
       C_i_rom_only: boolean := true;
 
     C_sio: integer := 1; -- number of rs232 serial ports
