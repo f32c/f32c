@@ -116,8 +116,8 @@ architecture Behavioral of glue_bram is
 
     type T_boot_block_select is array(0 to 7) of boot_block_type;
 
-    -- Spartan 3 ISE compiler will abort with automaitic choice of
-    -- preloaded bootloader, comment next 2 constants and replace with this:
+    -- Spartan 3 workaround: ISE 14.7 will throw error here about
+    -- bootloader choice, comment next 2 constants and replace with this:
     --constant boot_block: boot_block_type := boot_sio_mi32el;
 
     constant boot_block_select: T_boot_block_select :=
