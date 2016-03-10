@@ -14,9 +14,11 @@ vhdfiles = \
 ../../../xilinx/s3_toplevel_bram.vhd \
 ../../../xilinx/dcm_s3_50m.vhd \
 ../../../generic/glue_bram.vhd \
-../../../generic/bram_mi32_eb.vhd \
-../../../generic/bram_mi32_el.vhd \
-../../../generic/bram_rv32.vhd \
+../../../generic/bram.vhd \
+../../../generic/boot_block_pack.vhd \
+../../../generic/bootloader/boot_sio_mi32el.vhd \
+../../../generic/bootloader/boot_sio_mi32eb.vhd \
+../../../generic/bootloader/boot_sio_rv32el.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
 ../../../cpu/alu.vhd \
@@ -30,6 +32,7 @@ vhdfiles = \
 ../../../cpu/idecode_rv32.vhd \
 ../../../cpu/debug.vhd \
 ../../../soc/sio.vhd \
+../../../soc/spi.vhd \
 ../../../soc/gpio.vhd \
 ../../../soc/timer.vhd 
 
