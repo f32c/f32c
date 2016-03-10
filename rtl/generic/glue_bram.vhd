@@ -115,6 +115,11 @@ architecture Behavioral of glue_bram is
     constant select_big_endian: T_endian_select := (false => 0, true => 2);
 
     type T_boot_block_select is array(0 to 7) of boot_block_type;
+
+    -- Spartan 3 ISE compiler will abort with automaitic choice of
+    -- preloaded bootloader, comment next 2 constants and replace with this:
+    --constant boot_block: boot_block_type := boot_sio_mi32el;
+
     constant boot_block_select: T_boot_block_select :=
       (  --  (arch, big endian, rom)
         (ARCH_MI32+select_big_endian(false)) => boot_sio_mi32el,
