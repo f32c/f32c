@@ -4,4 +4,6 @@ xc3sprog_interface = ft4232h_fast
 # name of resulting bitstream file (*.bit)
 bitfile=$(project).runs/impl_1/glue.bit
 
+junk=$(project).ip_user_files
+
 include ../include/vivado.mk
