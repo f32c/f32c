@@ -139,7 +139,7 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="41"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="17"/>
     </file>
-    <file xil_pn:name="../../../xilinx/clk_100MHz_25MHz_250MHz.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../../xilinx/clocks/mimas_v2/clk_100MHz_25MHz_250MHz.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="45"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="49"/>
     </file>
