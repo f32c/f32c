@@ -264,20 +264,15 @@ architecture Behavioral of glue is
    signal l02_axi_rvalid       :  std_logic;
    signal l02_axi_rready       :  std_logic;
 
-   signal address       : std_logic_vector(31 downto 0);
-   signal data_write    : std_logic_vector(31 downto 0);
-   signal data_read     : std_logic_vector(31 downto 0);
-   signal data_rd_ram   : std_logic_vector(31 downto 0);
-   signal byte_we       : std_logic_vector(3 downto 0);
-   signal ram_en        : std_logic;
-
-   signal ram_wbe        : std_logic_vector(3 downto 0);
-   signal cache_debug    : std_logic_vector(7 downto 0);
-   signal cache_hitcnt   : std_logic_vector(31 downto 0);
-   signal cache_readcnt  : std_logic_vector(31 downto 0);
-
-   signal write_enable  : std_logic;
-   signal pause_ram     : std_logic;
+    signal ram_en             : std_logic;
+    signal ram_byte_we        : std_logic_vector(3 downto 0);
+    signal ram_address        : std_logic_vector(31 downto 0);
+    signal ram_data_write     : std_logic_vector(31 downto 0);
+    signal ram_data_read      : std_logic_vector(31 downto 0);
+    signal ram_read_busy      : std_logic;
+    signal ram_cache_debug    : std_logic_vector(7 downto 0);
+    signal ram_cache_hitcnt   : std_logic_vector(31 downto 0);
+    signal ram_cache_readcnt  : std_logic_vector(31 downto 0);
    
     signal gpio: std_logic_vector(127 downto 0);
     signal simple_in: std_logic_vector(31 downto 0);
@@ -489,19 +484,19 @@ begin
         m_axi_rlast        => l00_axi_rlast,
         m_axi_rvalid       => l00_axi_rvalid,
         m_axi_rready       => l00_axi_rready,
-     --
+        -- simple RAM bus interface
         addr_next          => (others => '0'),
         addr(31 downto 30) => "00",
-        addr(29 downto 2)  => address(29 downto 2),
+        addr(29 downto 2)  => ram_address(29 downto 2),
         addr(1 downto 0)   => "00",
-        din                => data_write,
-        wbe                => ram_wbe,
+        din                => ram_data_write,
+        wbe                => ram_byte_we,
         i_en               => ram_en,
-        dout               => data_rd_ram,
-        readBusy           => pause_ram,
-        hitcount           => cache_hitcnt,
-        readcount          => cache_readcnt,
-        debug              => cache_debug
+        dout               => ram_data_read,
+        readBusy           => ram_read_busy,
+        hitcount           => ram_cache_hitcnt,
+        readcount          => ram_cache_readcnt,
+        debug              => ram_cache_debug
      );
 
      u_ddr_mem : entity work.axi_mpmc
