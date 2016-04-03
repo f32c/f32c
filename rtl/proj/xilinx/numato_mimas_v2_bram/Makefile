@@ -22,11 +22,10 @@ vfiles = \
 
 vhdfiles = \
 ../../../xilinx/s6_numato_mimas_v2_toplevel_bram.vhd \
-../../../xilinx/pll_25M_112M5.vhd \
-../../../xilinx/pll_25M_81M25.vhd \
-../../../xilinx/clk_100MHz_25MHz_250MHz.vhd \
+../../../xilinx/clocks/mimas_v2/clk_100MHz_25MHz_250MHz.vhd \
 ../../../generic/glue_bram_vgaf.vhd \
 ../../../generic/bram.vhd \
+../../../generic/bram_true2p_1clk.vhd \
 ../../../generic/boot_block_pack.vhd \
 ../../../generic/bootloader/boot_sio_mi32el.vhd \
 ../../../generic/bootloader/boot_sio_mi32eb.vhd \
@@ -56,6 +55,7 @@ vhdfiles = \
 ../../../soc/fm/rds.vhd \
 ../../../soc/fm/bram_rds.vhd \
 ../../../soc/fm/message.vhd \
+../../../soc/fm/lowpass.vhd \
 ../../../soc/ps2.vhd \
 ../../../soc/vgahdmi/vgahdmif.vhd \
 ../../../soc/vgahdmi/videofifo.vhd \
