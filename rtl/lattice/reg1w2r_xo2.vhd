@@ -37,7 +37,6 @@ use machxo2.components.all;
 
 entity reg1w2r is
     generic(
-	C_register_technology: string := "DPR16X4C";
 	C_debug: boolean := false
     );
     port(
