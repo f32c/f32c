@@ -787,6 +787,7 @@ begin
 	sram_data_rd => acram_data_rd, sram_data_wr => acram_data_wr,
 	-- sram_wel => sram_wel, sram_lbl => sram_lbl, sram_ubl => sram_ubl,
 	acram_byte_we => acram_byte_we,
+	acram_en => acram_en,
 	data_out => from_xram,
 	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
 	-- Multi-port connections:
