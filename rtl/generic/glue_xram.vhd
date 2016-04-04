@@ -207,8 +207,8 @@ port (
   -- axi cache ram (shared signaling with sdram)
   acram_en: out std_logic;
   acram_addr: out std_logic_vector(18 downto 0);
-  acram_read_busy: in std_logic;
-  acram_data_rd: in std_logic_vector(15 downto 0);
+  acram_read_busy: in std_logic := '0';
+  acram_data_rd: in std_logic_vector(15 downto 0) := (others => '0');
   acram_data_wr: out std_logic_vector(15 downto 0);
   acram_byte_we: out std_logic_vector(1 downto 0);
   --
