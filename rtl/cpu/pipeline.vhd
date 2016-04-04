@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2008 - 2015 Marko Zec, University of Zagreb
+-- Copyright (c) 2008 - 2016 Marko Zec, University of Zagreb
 -- All rights reserved.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -558,10 +558,14 @@ begin
     --
     WB_clk <= clk when C_load_aligner else not clk;
     ID_reg1_eff_data <= IF_ID_EPC & "00" when C_arch = ARCH_RV32 and ID_reg1_pc
-      else ID_reg1_data when not C_load_aligner or
+      else ID_reg1_data when (not C_load_aligner and
+      (not C_regfile_synchronous_read or
+      ID_reg1_zero or ID_reg1_addr /= MEM_WB_writeback_addr)) or
       ID_reg1_zero or ID_reg1_addr /= MEM_WB_writeback_addr
       else WB_writeback_data;
-    ID_reg2_eff_data <= ID_reg2_data when not C_load_aligner or
+    ID_reg2_eff_data <= ID_reg2_data when (not C_load_aligner and
+      (not C_regfile_synchronous_read or
+      ID_reg2_zero or ID_reg2_addr /= MEM_WB_writeback_addr)) or
       ID_reg2_zero or ID_reg2_addr /= MEM_WB_writeback_addr else
       WB_writeback_data;
 
@@ -625,7 +629,10 @@ begin
 
     -- compute jump target
     ID_jump_target <=
-      ID_reg1_data(31 downto 2) when C_arch = ARCH_MI32 and ID_jump_register
+      ID_reg1_eff_data(31 downto 2) when not C_load_aligner and
+      C_regfile_synchronous_read and C_arch = ARCH_MI32 and ID_jump_register
+      else ID_reg1_data(31 downto 2) when C_arch = ARCH_MI32
+      and ID_jump_register
       else ID_branch_target when C_branch_prediction and C_arch /= ARCH_RV32
       and not ID_jump_cycle
       else IF_ID_PC_4(31 downto 28) & IF_ID_instruction(25 downto 0);
