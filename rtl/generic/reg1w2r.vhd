@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2011 Marko Zec, University of Zagreb 
+-- Copyright (c) 2011, 2016 Marko Zec, University of Zagreb 
 -- All rights reserved.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@ use ieee.numeric_std.all;
 
 entity reg1w2r is
     generic(
-	C_register_technology: string := "generic";
+	C_synchronous_read: boolean := false;
 	C_debug: boolean := false
     );
     port(
@@ -43,7 +43,7 @@ entity reg1w2r is
 	rd1_data, rd2_data, rdd_data: out std_logic_vector(31 downto 0);
 	wr_data: in std_logic_vector(31 downto 0);
 	wr_enable: in std_logic;
-	clk: in std_logic
+	rd_clk, wr_clk: in std_logic
     );
 end reg1w2r;
 
@@ -58,9 +58,9 @@ architecture Behavioral of reg1w2r is
     attribute ram_style of RD: signal is "distributed";
 
 begin
-    process(clk)
+    process(wr_clk)
     begin
-	if rising_edge(clk) then
+	if rising_edge(wr_clk) then
 	    if wr_enable = '1' then
 		R1(conv_integer(wr_addr)) <= wr_data;
 		R2(conv_integer(wr_addr)) <= wr_data;
@@ -71,7 +71,12 @@ begin
 	end if;
     end process;
 
-    rd1_data <= R1(conv_integer(rd1_addr));
-    rd2_data <= R2(conv_integer(rd2_addr));
-    rdd_data <= RD(conv_integer(rdd_addr)) when C_debug else x"00000000";
+    process(rd_clk, rd1_addr, rd2_addr, rdd_addr)
+    begin
+	if falling_edge(rd_clk) or not C_synchronous_read then
+	    rd1_data <= R1(conv_integer(rd1_addr));
+	    rd2_data <= R2(conv_integer(rd2_addr));
+	    rdd_data <= RD(conv_integer(rdd_addr));
+	end if;
+    end process;
 end Behavioral;

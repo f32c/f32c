@@ -59,9 +59,6 @@ entity glue_bram is
 	C_result_forwarding: boolean := true;
 	C_load_aligner: boolean := true;
 
-	-- FPGA platform-specific options
-	C_register_technology: string := "generic";
-
 	-- Negatively influences timing closure, hence disabled
 	C_movn_movz: boolean := false;
 
@@ -261,7 +258,6 @@ begin
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner, C_full_shifter => C_full_shifter,
 	C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
-	C_register_technology => C_register_technology,
 	C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
 	C_cached_addr_bits => C_cached_addr_bits,
 	-- debugging only
