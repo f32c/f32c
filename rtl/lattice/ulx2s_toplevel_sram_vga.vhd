@@ -88,7 +88,6 @@ entity toplevel is
 	C_full_shifter: boolean := true;
 	C_result_forwarding: boolean := true;
 	C_load_aligner: boolean := true;
-	C_register_technology: string := "lattice";
 
 	-- This may negatively influence timing closure:
 	C_movn_movz: boolean := false; -- true: +16 LUT4, -DMIPS, incomplete
@@ -299,7 +298,6 @@ begin
 	C_full_shifter => C_full_shifter,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner,
-	C_register_technology => C_register_technology,
 	C_movn_movz => C_movn_movz,
 	C_debug => C_debug,
 	C_cpus => C_cpus,
