@@ -173,7 +173,7 @@ begin
 		R_wel <= '1';
 		R_ubl <= '0';
 		R_lbl <= '0';
-		R_d <= (others => '0');
+		-- R_d <= (others => '0');
 		if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
 		    -- idle
 		    R_cur_port <= next_port;
@@ -253,7 +253,7 @@ begin
 		R_wel <= '1';
 		R_ubl <= '1';
 		R_lbl <= '1';
-		R_d <= (others => '0');
+		-- R_d <= (others => '0');
 	    elsif R_write_cycle and R_phase = C_phase_write_upper_half then
 		R_phase <= R_phase + 1;
 		-- physical signals to SRAM: bump addr, refill data
@@ -271,7 +271,7 @@ begin
 		R_wel <= '1';
 		R_ubl <= '1';
 		R_lbl <= '1';
-		R_d <= (others => '0');
+		-- R_d <= (others => '0');
 	    else
 		R_phase <= R_phase + 1;
 	    end if;
@@ -284,11 +284,9 @@ begin
     sram_lbl <= R_lbl;
     sram_ubl <= R_ubl;
     
-    acram_byte_we <= "00" when R_wel = '1'
-                else not(R_ubl & R_lbl);
+    acram_byte_we <= "00" when R_wel = '1' else not(R_ubl & R_lbl);
 
-    acram_en <= '0' when R_lbl='1' and R_ubl='1' and R_wel='1'
-           else '1';
+    acram_en <= '0' when R_lbl='1' and R_ubl='1' and R_wel='1' else '1';
 
     data_out <= R_bus_out;
     snoop_addr <= R_snoop_addr;
