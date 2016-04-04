@@ -543,7 +543,7 @@ begin
       else '1'; -- I/O or BRAM have no wait states
     
     G_xram:
-    if C_sdram or C_sram generate
+    if C_sdram or C_sram or C_sram8 or C_acram generate
     -- port 0: instruction bus
     to_xram(instr_port).addr_strobe <= imem_addr_strobe when
       S_imem_addr_in_xram = '1' else '0';
