@@ -91,4 +91,19 @@ junk+=../../../xilinx/esa11/ram/blk_ram/doc
 junk+=../../../xilinx/esa11/ram/blk_ram/sim
 junk+=../../../xilinx/esa11/ram/blk_ram/synth
 
+junk+=../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/*.upgrade_log
+junk+=../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/*.v
+junk+=../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/*.vhdl
+junk+=../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/*.dcp
+junk+=../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/*.xml
+junk+=../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/*.xdc
+junk+=../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/*.veo
+junk+=../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/*.vho
+junk+=../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/*.tcl
+junk+=../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/*.ncf
+junk+=../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/*.log
+junk+=../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/doc
+junk+=../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/sim
+junk+=../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/synth
+
 include ../include/vivado.mk
