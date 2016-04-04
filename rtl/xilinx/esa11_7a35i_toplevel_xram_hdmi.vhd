@@ -142,10 +142,22 @@ end glue;
 
 architecture Behavioral of glue is
     signal clk, sio_break: std_logic;
-    signal clk_25MHz, clk_100MHz, clk_250MHz: std_logic;
+    signal clk_25MHz, clk_100MHz, clk_200MHz, clk_250MHz: std_logic;
+
+    component clk_d100_100_200_250_25MHz is
+    Port (
+    clk_100mhz_in_p : in STD_LOGIC;
+    clk_100mhz_in_n : in STD_LOGIC;
+    clk_100mhz : out STD_LOGIC;
+    clk_200mhz : out STD_LOGIC;
+    clk_250mhz : out STD_LOGIC;
+    clk_25mhz : out STD_LOGIC;
+    reset : in STD_LOGIC;
+    locked : out STD_LOGIC
+    );
+    end component clk_d100_100_200_250_25MHz;
 
    signal   calib_done           : std_logic;
-
 
    signal l00_axi_areset_n     :  std_logic;
    signal l00_axi_aclk         :  std_logic;
@@ -308,13 +320,25 @@ begin
 
     -- PLL with differential input: 100MHz
     -- single-ended outputs 250MHz, 100MHz, 25MHz
-    cpu100MHz: if C_clk_freq = 100 generate
+    cpu101MHz: if C_clk_freq = 101 generate
     pll100in_out250_100_25: entity work.pll_d100M_250M_100M_25M
     port map(clk_in1_p => i_100MHz_P,
              clk_in1_n => i_100MHz_N,
              clk_out1  => clk_250MHz,
              clk_out2  => clk, -- 100 MHz
              clk_out3  => clk_25MHz
+             );
+    end generate;
+
+    cpu100MHz: if C_clk_freq = 100 generate
+    clk100in_out100_200_250_25: clk_d100_100_200_250_25MHz
+    port map(clk_100mhz_in_p => i_100MHz_P,
+             clk_100mhz_in_n => i_100MHz_N,
+             reset => '0',
+             clk_100mhz => clk,
+             clk_200mhz => clk_200MHz,
+             clk_250mhz => clk_250MHz,
+             clk_25mhz  => clk_25MHz
              );
     end generate;
 
@@ -527,7 +551,7 @@ begin
       ddr3_odt(0)          => ddr_odt,
 
       sys_rst              => sio_break,
-      sys_clk_i            => clk_250MHz, -- should be clk_200
+      sys_clk_i            => clk_200MHz, -- should be 200MHz
       init_calib_complete  => calib_done,
 
       s00_axi_areset_out_n => l00_axi_areset_n,
