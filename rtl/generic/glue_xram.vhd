@@ -85,8 +85,8 @@ generic (
   -- RAM emulation
   -- 0: normal SDRAM, no emulation
   -- 11:8K, 12:16K, 13:32K ... RAM emulation
-  C_ram_emu_addr_width: integer := 0;
-  C_ram_emu_wait_states: integer := 0;
+  --C_ram_emu_addr_width: integer := 0;
+  --C_ram_emu_wait_states: integer := 0;
 
   -- SoC configuration options
   C_bram_size: integer := 2;	-- in KBytes
@@ -102,6 +102,7 @@ generic (
   C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
   C_sdram: boolean := false;
   C_sdram_separate_arbiter: boolean := false;
+  C_acram: boolean := false; -- AXI CACHE RAM
   C_sio: integer := 1;
   C_sio_init_baudrate: integer := 115200;
   C_sio_fixed_baudrate: boolean := false;
@@ -203,6 +204,14 @@ port (
   sdram_ras, sdram_cas: out std_logic;
   sdram_cke, sdram_clk: out std_logic;
   sdram_we, sdram_cs: out std_logic;
+  -- axi cache ram (shared signaling with sdram)
+  acram_en: out std_logic;
+  acram_addr: out std_logic_vector(18 downto 0);
+  acram_read_busy: in std_logic;
+  acram_data_rd: in std_logic_vector(15 downto 0);
+  acram_data_wr: out std_logic_vector(15 downto 0);
+  acram_byte_we: out std_logic_vector(1 downto 0);
+  --
   sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
   sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
   spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
@@ -646,8 +655,7 @@ begin
 
     G_sdram:
     if C_sdram generate
-
-    use_sdram: if (not C_sdram_separate_arbiter) and C_ram_emu_addr_width = 0 generate
+    --use_sdram: if (not C_sdram_separate_arbiter) and C_ram_emu_addr_width = 0 generate
     sdram: entity work.sdram_controller
     generic map (
       C_ports => C_xram_ports,
@@ -673,7 +681,7 @@ begin
       sdram_cke => sdram_cke, sdram_clk => sdram_clk,
       sdram_we => sdram_we, sdram_cs => sdram_cs
     );
-    end generate; -- sdram
+    --end generate; -- sdram
 
 --    use_arbiter_sdram: if C_sdram_separate_arbiter and C_ram_emu_addr_width = 0 generate
 --    inst_sdram_arbiter: entity work.arbiter
@@ -764,6 +772,27 @@ begin
 --    sdram_cs <= '1';
 --    end generate; -- end arbiter_ramemu
     end generate; -- end final G_sdram
+
+    G_acram:
+    if C_acram generate
+    acram: entity work.acram
+    generic map (
+	C_ports => C_xram_ports, -- extra ports: framebuffer, textmode and PCM audio
+	C_prio_port => fb_port, -- framebuffer
+	C_wait_cycles => 4,
+	C_pipelined_read => false
+    )
+    port map (
+	clk => clk, sram_a => acram_addr(18 downto 0),
+	sram_data_rd => acram_data_rd, sram_data_wr => acram_data_wr,
+	-- sram_wel => sram_wel, sram_lbl => sram_lbl, sram_ubl => sram_ubl,
+	acram_byte_we => acram_byte_we,
+	data_out => from_xram,
+	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
+	-- Multi-port connections:
+	bus_in => to_xram, ready_out => xram_ready
+    );
+    end generate; -- G_acram
     
     G_no_sdram: if not C_sdram generate
     -- disable SDRAM, but we need to

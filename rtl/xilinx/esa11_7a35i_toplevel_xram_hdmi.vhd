@@ -48,6 +48,9 @@ entity glue is
 	-- SoC configuration options
 	C_bram_size: integer := 128;
 
+        -- axi cache ram
+	C_acram: boolean := true;
+
         C3_NUM_DQ_PINS        : integer := 16;
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
@@ -265,10 +268,10 @@ architecture Behavioral of glue is
    signal l02_axi_rready       :  std_logic;
 
     signal ram_en             : std_logic;
-    signal ram_byte_we        : std_logic_vector(3 downto 0);
-    signal ram_address        : std_logic_vector(31 downto 0);
-    signal ram_data_write     : std_logic_vector(31 downto 0);
-    signal ram_data_read      : std_logic_vector(31 downto 0);
+    signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
+    signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
+    signal ram_data_write     : std_logic_vector(31 downto 0) := (others => '0');
+    signal ram_data_read      : std_logic_vector(31 downto 0) := (others => '0');
     signal ram_read_busy      : std_logic;
     signal ram_cache_debug    : std_logic_vector(7 downto 0);
     signal ram_cache_hitcnt   : std_logic_vector(31 downto 0);
@@ -343,6 +346,7 @@ begin
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
         C_bram_size => C_bram_size,
+        C_acram => C_acram,
         C_gpio => C_gpio,
         C_sio => C_sio,
         C_spi => C_spi,
@@ -385,6 +389,11 @@ begin
 	clk => clk,
 	clk_25MHz => clk_25MHz,
 	clk_250MHz => clk_250MHz,
+	acram_addr(18 downto 0) => ram_address(20 downto 2),
+	acram_byte_we(1 downto 0) => ram_byte_we(1 downto 0),
+	acram_data_rd(15 downto 0) => ram_data_read(15 downto 0),
+	acram_data_wr(15 downto 0) => ram_data_write(15 downto 0),
+	acram_read_busy => ram_read_busy,
 	sio_txd(0) => UART1_TXD, 
 	sio_rxd(0) => UART1_RXD,
 	sio_break(0) => sio_break,
