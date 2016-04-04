@@ -74,7 +74,7 @@ entity top is
     C_arch: integer := ARCH_MI32;
     C_big_endian: boolean := false;
 
-    C_mult_enable: boolean := true;
+    C_mult_enable: boolean := false;
     C_branch_likely: boolean := true;
     C_sign_extend: boolean := true;
     C_ll_sc: boolean := false;
@@ -99,7 +99,7 @@ entity top is
     C_debug: boolean := false;
 
     -- SoC configuration options
-    C_bram_size: integer := 8;	-- KBytes
+    C_bram_size: integer := 4;	-- KBytes
       C_i_rom_only: boolean := true;
 
     C_sio: integer := 1; -- number of rs232 serial ports
