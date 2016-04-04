@@ -58,9 +58,7 @@ entity glue is
 	C_full_shifter: boolean := true;
 	C_result_forwarding: boolean := true;
 	C_load_aligner: boolean := true;
-
-	-- FPGA platform-specific options
-	C_register_technology: string := "lattice";
+	C_regfile_synchronous_read: boolean := true;
 
 	-- These may negatively influence timing closure:
 	C_movn_movz: boolean := false;
@@ -119,7 +117,7 @@ begin
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner, C_full_shifter => C_full_shifter,
 	C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
-	C_register_technology => C_register_technology,
+	C_regfile_synchronous_read => C_regfile_synchronous_read,
 	-- debugging only
 	C_debug => false
     )

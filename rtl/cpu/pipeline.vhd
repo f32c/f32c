@@ -65,7 +65,7 @@ entity pipeline is
 	C_load_aligner: boolean := true;
 	C_full_shifter: boolean := true;
 	C_reg_IF_PC: boolean := false;
-	C_register_technology: string := "unknown";
+	C_regfile_synchronous_read: boolean := false;
 
 	-- debugging options
 	C_debug: boolean := false
@@ -540,7 +540,7 @@ begin
     -- three- or four-ported register file: 2(3) async reads, 1 sync write
     regfile: entity work.reg1w2r
     generic map (
-	C_register_technology => C_register_technology,
+	C_synchronous_read => C_regfile_synchronous_read,
 	C_debug => C_debug
     )
     port map (
@@ -548,7 +548,7 @@ begin
 	rdd_addr => trace_addr(4 downto 0), wr_addr => MEM_WB_writeback_addr,
 	rd1_data => ID_reg1_data, rd2_data => ID_reg2_data,
 	rdd_data => reg_trace_data, wr_data => WB_writeback_data,
-	wr_enable => MEM_WB_write_enable, clk => WB_clk
+	wr_enable => MEM_WB_write_enable, rd_clk => clk, wr_clk => WB_clk
     );
 
     --
