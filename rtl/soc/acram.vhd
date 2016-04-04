@@ -57,6 +57,7 @@ entity acram is
 	sram_data_wr: out std_logic_vector(15 downto 0);
 	sram_data_rd: in std_logic_vector(15 downto 0);
 	acram_byte_we: out std_logic_vector(1 downto 0); -- wel/lbl/ubl combination
+	acram_en: out std_logic;
 	sram_wel, sram_lbl, sram_ubl: out std_logic
     );
 end acram;
@@ -285,6 +286,9 @@ begin
     
     acram_byte_we <= "00" when R_wel = '1'
                 else not(R_ubl & R_lbl);
+
+    acram_en <= '0' when R_lbl='1' and R_ubl='1' and R_wel='1'
+           else '1';
 
     data_out <= R_bus_out;
     snoop_addr <= R_snoop_addr;
