@@ -29,6 +29,7 @@ vhdfiles = \
 ../../../generic/bram_true2p_1clk.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
+../../../generic/sram_emu.vhd \
 ../../../cpu/cache_generic_param.vhd \
 ../../../cpu/alu.vhd \
 ../../../cpu/loadalign.vhd \
