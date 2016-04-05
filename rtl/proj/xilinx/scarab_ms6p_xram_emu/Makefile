@@ -42,6 +42,7 @@ vhdfiles = \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
 ../../../generic/bram_video.vhd \
+../../../generic/sram_emu.vhd \
 ../../../cpu/alu.vhd \
 ../../../cpu/loadalign.vhd \
 ../../../cpu/pipeline.vhd \
