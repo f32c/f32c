@@ -118,11 +118,6 @@ entity toplevel is
       C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
       -- C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!! defined below as constant
 
-    C_sdram: boolean := false;
-      C_sdram_separate_arbiter: boolean := false;
-      C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
-      C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
-
     C_sio: integer := 1; -- number of rs232 serial ports
 
     C_simple_out: integer := 32; -- LEDs (only 8 used but quantized to 32)
@@ -353,9 +348,6 @@ begin
       C_sram_refresh => C_sram_refresh,
       C_sram_wait_cycles => C_sram_wait_cycles, -- ISSI, OK do 87.5 MHz
       C_pipelined_read => C_pipelined_read, -- works only at 81.25 MHz !!!
-      C_sdram => C_sdram,
-      C_sdram_separate_arbiter => C_sdram_separate_arbiter,
-      C_sdram_address_width => 24,
       C_sio => C_sio,
       C_spi => C_spi,
       C_simple_out => C_simple_out,
