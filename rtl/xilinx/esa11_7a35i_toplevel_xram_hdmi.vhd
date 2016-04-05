@@ -103,22 +103,22 @@ entity glue is
 	UART1_RXD: in std_logic;
 	FPGA_SD_SCLK, FPGA_SD_CMD, FPGA_SD_D3: out std_logic;
 	FPGA_SD_D0: in std_logic;
-      -- DDR3 ------------------------------------------------------------------
-      DDR_DQ                  : inout  std_logic_vector(C3_NUM_DQ_PINS-1 downto 0);       -- mcb3_dram_dq
-      DDR_A                   : out    std_logic_vector(C3_MEM_ADDR_WIDTH-1 downto 0);    -- mcb3_dram_a
-      DDR_BA                  : out    std_logic_vector(C3_MEM_BANKADDR_WIDTH-1 downto 0);-- mcb3_dram_ba
-      DDR_RAS_N               : out    std_logic;                                         -- mcb3_dram_ras_n
-      DDR_CAS_N               : out    std_logic;                                         -- mcb3_dram_cas_n
-      DDR_WE_N                : out    std_logic;                                         -- mcb3_dram_we_n
-      DDR_ODT                 : out    std_logic;                                         -- mcb3_dram_odt
-      DDR_CKE                 : out    std_logic;                                         -- mcb3_dram_cke
-      DDR_LDM                 : out    std_logic;                                         -- mcb3_dram_dm
-      DDR_DQS_P               : inout  std_logic_vector(1 downto 0);                      -- mcb3_dram_udqs
-      DDR_DQS_N               : inout  std_logic_vector(1 downto 0);                      -- mcb3_dram_udqs_n
-      DDR_UDM                 : out    std_logic;                                         -- mcb3_dram_udm
-      DDR_CK_P                : out    std_logic;                                         -- mcb3_dram_ck
-      DDR_CK_N                : out    std_logic;                                         -- mcb3_dram_ck_n
-      DDR_RESET_N             : out    std_logic;
+        -- DDR3 ------------------------------------------------------------------
+        DDR_DQ                  : inout  std_logic_vector(C3_NUM_DQ_PINS-1 downto 0);       -- mcb3_dram_dq
+        DDR_A                   : out    std_logic_vector(C3_MEM_ADDR_WIDTH-1 downto 0);    -- mcb3_dram_a
+        DDR_BA                  : out    std_logic_vector(C3_MEM_BANKADDR_WIDTH-1 downto 0);-- mcb3_dram_ba
+        DDR_RAS_N               : out    std_logic;                                         -- mcb3_dram_ras_n
+        DDR_CAS_N               : out    std_logic;                                         -- mcb3_dram_cas_n
+        DDR_WE_N                : out    std_logic;                                         -- mcb3_dram_we_n
+        DDR_ODT                 : out    std_logic;                                         -- mcb3_dram_odt
+        DDR_CKE                 : out    std_logic;                                         -- mcb3_dram_cke
+        DDR_LDM                 : out    std_logic;                                         -- mcb3_dram_dm
+        DDR_DQS_P               : inout  std_logic_vector(1 downto 0);                      -- mcb3_dram_udqs
+        DDR_DQS_N               : inout  std_logic_vector(1 downto 0);                      -- mcb3_dram_udqs_n
+        DDR_UDM                 : out    std_logic;                                         -- mcb3_dram_udm
+        DDR_CK_P                : out    std_logic;                                         -- mcb3_dram_ck
+        DDR_CK_N                : out    std_logic;                                         -- mcb3_dram_ck_n
+        DDR_RESET_N             : out    std_logic;
       
 	M_EXPMOD0, M_EXPMOD1, M_EXPMOD2, M_EXPMOD3: inout std_logic_vector(7 downto 0); -- EXPMODs
 	M_7SEG_A, M_7SEG_B, M_7SEG_C, M_7SEG_D, M_7SEG_E, M_7SEG_F, M_7SEG_G, M_7SEG_DP: out std_logic;
@@ -146,138 +146,138 @@ architecture Behavioral of glue is
 
     component clk_d100_100_200_250_25MHz is
     Port (
-    clk_100mhz_in_p : in STD_LOGIC;
-    clk_100mhz_in_n : in STD_LOGIC;
-    clk_100mhz : out STD_LOGIC;
-    clk_200mhz : out STD_LOGIC;
-    clk_250mhz : out STD_LOGIC;
-    clk_25mhz : out STD_LOGIC;
-    reset : in STD_LOGIC;
-    locked : out STD_LOGIC
+      clk_100mhz_in_p : in STD_LOGIC;
+      clk_100mhz_in_n : in STD_LOGIC;
+      clk_100mhz : out STD_LOGIC;
+      clk_200mhz : out STD_LOGIC;
+      clk_250mhz : out STD_LOGIC;
+      clk_25mhz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
     );
     end component clk_d100_100_200_250_25MHz;
 
-   signal   calib_done           : std_logic;
+    signal calib_done           : std_logic;
 
-   signal l00_axi_areset_n     :  std_logic;
-   signal l00_axi_aclk         :  std_logic;
-   signal l00_axi_awid         :  std_logic_vector(0 downto 0);
-   signal l00_axi_awaddr       :  std_logic_vector(31 downto 0);
-   signal l00_axi_awlen        :  std_logic_vector(7 downto 0);
-   signal l00_axi_awsize       :  std_logic_vector(2 downto 0);
-   signal l00_axi_awburst      :  std_logic_vector(1 downto 0);
-   signal l00_axi_awlock       :  std_logic;
-   signal l00_axi_awcache      :  std_logic_vector(3 downto 0);
-   signal l00_axi_awprot       :  std_logic_vector(2 downto 0);
-   signal l00_axi_awqos        :  std_logic_vector(3 downto 0);
-   signal l00_axi_awvalid      :  std_logic;
-   signal l00_axi_awready      :  std_logic;
-   signal l00_axi_wdata        :  std_logic_vector(31 downto 0);
-   signal l00_axi_wstrb        :  std_logic_vector(3 downto 0);
-   signal l00_axi_wlast        :  std_logic;
-   signal l00_axi_wvalid       :  std_logic;
-   signal l00_axi_wready       :  std_logic;
-   signal l00_axi_bid          :  std_logic_vector(0 downto 0);
-   signal l00_axi_bresp        :  std_logic_vector(1 downto 0);
-   signal l00_axi_bvalid       :  std_logic;
-   signal l00_axi_bready       :  std_logic;
-   signal l00_axi_arid         :  std_logic_vector(0 downto 0);
-   signal l00_axi_araddr       :  std_logic_vector(31 downto 0);
-   signal l00_axi_arlen        :  std_logic_vector(7 downto 0);
-   signal l00_axi_arsize       :  std_logic_vector(2 downto 0);
-   signal l00_axi_arburst      :  std_logic_vector(1 downto 0);
-   signal l00_axi_arlock       :  std_logic;
-   signal l00_axi_arcache      :  std_logic_vector(3 downto 0);
-   signal l00_axi_arprot       :  std_logic_vector(2 downto 0);
-   signal l00_axi_arqos        :  std_logic_vector(3 downto 0);
-   signal l00_axi_arvalid      :  std_logic;
-   signal l00_axi_arready      :  std_logic;
-   signal l00_axi_rid          :  std_logic_vector(0 downto 0);
-   signal l00_axi_rdata        :  std_logic_vector(31 downto 0);
-   signal l00_axi_rresp        :  std_logic_vector(1 downto 0);
-   signal l00_axi_rlast        :  std_logic;
-   signal l00_axi_rvalid       :  std_logic;
-   signal l00_axi_rready       :  std_logic;
+    signal l00_axi_areset_n     :  std_logic;
+    signal l00_axi_aclk         :  std_logic;
+    signal l00_axi_awid         :  std_logic_vector(0 downto 0);
+    signal l00_axi_awaddr       :  std_logic_vector(31 downto 0);
+    signal l00_axi_awlen        :  std_logic_vector(7 downto 0);
+    signal l00_axi_awsize       :  std_logic_vector(2 downto 0);
+    signal l00_axi_awburst      :  std_logic_vector(1 downto 0);
+    signal l00_axi_awlock       :  std_logic;
+    signal l00_axi_awcache      :  std_logic_vector(3 downto 0);
+    signal l00_axi_awprot       :  std_logic_vector(2 downto 0);
+    signal l00_axi_awqos        :  std_logic_vector(3 downto 0);
+    signal l00_axi_awvalid      :  std_logic;
+    signal l00_axi_awready      :  std_logic;
+    signal l00_axi_wdata        :  std_logic_vector(31 downto 0);
+    signal l00_axi_wstrb        :  std_logic_vector(3 downto 0);
+    signal l00_axi_wlast        :  std_logic;
+    signal l00_axi_wvalid       :  std_logic;
+    signal l00_axi_wready       :  std_logic;
+    signal l00_axi_bid          :  std_logic_vector(0 downto 0);
+    signal l00_axi_bresp        :  std_logic_vector(1 downto 0);
+    signal l00_axi_bvalid       :  std_logic;
+    signal l00_axi_bready       :  std_logic;
+    signal l00_axi_arid         :  std_logic_vector(0 downto 0);
+    signal l00_axi_araddr       :  std_logic_vector(31 downto 0);
+    signal l00_axi_arlen        :  std_logic_vector(7 downto 0);
+    signal l00_axi_arsize       :  std_logic_vector(2 downto 0);
+    signal l00_axi_arburst      :  std_logic_vector(1 downto 0);
+    signal l00_axi_arlock       :  std_logic;
+    signal l00_axi_arcache      :  std_logic_vector(3 downto 0);
+    signal l00_axi_arprot       :  std_logic_vector(2 downto 0);
+    signal l00_axi_arqos        :  std_logic_vector(3 downto 0);
+    signal l00_axi_arvalid      :  std_logic;
+    signal l00_axi_arready      :  std_logic;
+    signal l00_axi_rid          :  std_logic_vector(0 downto 0);
+    signal l00_axi_rdata        :  std_logic_vector(31 downto 0);
+    signal l00_axi_rresp        :  std_logic_vector(1 downto 0);
+    signal l00_axi_rlast        :  std_logic;
+    signal l00_axi_rvalid       :  std_logic;
+    signal l00_axi_rready       :  std_logic;
 
-   signal l01_axi_areset_n     :  std_logic;
-   signal l01_axi_aclk         :  std_logic;
-   signal l01_axi_awid         :  std_logic_vector(0 downto 0);
-   signal l01_axi_awaddr       :  std_logic_vector(31 downto 0);
-   signal l01_axi_awlen        :  std_logic_vector(7 downto 0);
-   signal l01_axi_awsize       :  std_logic_vector(2 downto 0);
-   signal l01_axi_awburst      :  std_logic_vector(1 downto 0);
-   signal l01_axi_awlock       :  std_logic;
-   signal l01_axi_awcache      :  std_logic_vector(3 downto 0);
-   signal l01_axi_awprot       :  std_logic_vector(2 downto 0);
-   signal l01_axi_awqos        :  std_logic_vector(3 downto 0);
-   signal l01_axi_awvalid      :  std_logic;
-   signal l01_axi_awready      :  std_logic;
-   signal l01_axi_wdata        :  std_logic_vector(31 downto 0);
-   signal l01_axi_wstrb        :  std_logic_vector(3 downto 0);
-   signal l01_axi_wlast        :  std_logic;
-   signal l01_axi_wvalid       :  std_logic;
-   signal l01_axi_wready       :  std_logic;
-   signal l01_axi_bid          :  std_logic_vector(0 downto 0);
-   signal l01_axi_bresp        :  std_logic_vector(1 downto 0);
-   signal l01_axi_bvalid       :  std_logic;
-   signal l01_axi_bready       :  std_logic;
-   signal l01_axi_arid         :  std_logic_vector(0 downto 0);
-   signal l01_axi_araddr       :  std_logic_vector(31 downto 0);
-   signal l01_axi_arlen        :  std_logic_vector(7 downto 0);
-   signal l01_axi_arsize       :  std_logic_vector(2 downto 0);
-   signal l01_axi_arburst      :  std_logic_vector(1 downto 0);
-   signal l01_axi_arlock       :  std_logic;
-   signal l01_axi_arcache      :  std_logic_vector(3 downto 0);
-   signal l01_axi_arprot       :  std_logic_vector(2 downto 0);
-   signal l01_axi_arqos        :  std_logic_vector(3 downto 0);
-   signal l01_axi_arvalid      :  std_logic;
-   signal l01_axi_arready      :  std_logic;
-   signal l01_axi_rid          :  std_logic_vector(0 downto 0);
-   signal l01_axi_rdata        :  std_logic_vector(31 downto 0);
-   signal l01_axi_rresp        :  std_logic_vector(1 downto 0);
-   signal l01_axi_rlast        :  std_logic;
-   signal l01_axi_rvalid       :  std_logic;
-   signal l01_axi_rready       :  std_logic;
+    signal l01_axi_areset_n     :  std_logic;
+    signal l01_axi_aclk         :  std_logic;
+    signal l01_axi_awid         :  std_logic_vector(0 downto 0);
+    signal l01_axi_awaddr       :  std_logic_vector(31 downto 0);
+    signal l01_axi_awlen        :  std_logic_vector(7 downto 0);
+    signal l01_axi_awsize       :  std_logic_vector(2 downto 0);
+    signal l01_axi_awburst      :  std_logic_vector(1 downto 0);
+    signal l01_axi_awlock       :  std_logic;
+    signal l01_axi_awcache      :  std_logic_vector(3 downto 0);
+    signal l01_axi_awprot       :  std_logic_vector(2 downto 0);
+    signal l01_axi_awqos        :  std_logic_vector(3 downto 0);
+    signal l01_axi_awvalid      :  std_logic;
+    signal l01_axi_awready      :  std_logic;
+    signal l01_axi_wdata        :  std_logic_vector(31 downto 0);
+    signal l01_axi_wstrb        :  std_logic_vector(3 downto 0);
+    signal l01_axi_wlast        :  std_logic;
+    signal l01_axi_wvalid       :  std_logic;
+    signal l01_axi_wready       :  std_logic;
+    signal l01_axi_bid          :  std_logic_vector(0 downto 0);
+    signal l01_axi_bresp        :  std_logic_vector(1 downto 0);
+    signal l01_axi_bvalid       :  std_logic;
+    signal l01_axi_bready       :  std_logic;
+    signal l01_axi_arid         :  std_logic_vector(0 downto 0);
+    signal l01_axi_araddr       :  std_logic_vector(31 downto 0);
+    signal l01_axi_arlen        :  std_logic_vector(7 downto 0);
+    signal l01_axi_arsize       :  std_logic_vector(2 downto 0);
+    signal l01_axi_arburst      :  std_logic_vector(1 downto 0);
+    signal l01_axi_arlock       :  std_logic;
+    signal l01_axi_arcache      :  std_logic_vector(3 downto 0);
+    signal l01_axi_arprot       :  std_logic_vector(2 downto 0);
+    signal l01_axi_arqos        :  std_logic_vector(3 downto 0);
+    signal l01_axi_arvalid      :  std_logic;
+    signal l01_axi_arready      :  std_logic;
+    signal l01_axi_rid          :  std_logic_vector(0 downto 0);
+    signal l01_axi_rdata        :  std_logic_vector(31 downto 0);
+    signal l01_axi_rresp        :  std_logic_vector(1 downto 0);
+    signal l01_axi_rlast        :  std_logic;
+    signal l01_axi_rvalid       :  std_logic;
+    signal l01_axi_rready       :  std_logic;
 
-   signal l02_axi_areset_n     :  std_logic;
-   signal l02_axi_aclk         :  std_logic;
-   signal l02_axi_awid         :  std_logic_vector(0 downto 0);
-   signal l02_axi_awaddr       :  std_logic_vector(31 downto 0);
-   signal l02_axi_awlen        :  std_logic_vector(7 downto 0);
-   signal l02_axi_awsize       :  std_logic_vector(2 downto 0);
-   signal l02_axi_awburst      :  std_logic_vector(1 downto 0);
-   signal l02_axi_awlock       :  std_logic;
-   signal l02_axi_awcache      :  std_logic_vector(3 downto 0);
-   signal l02_axi_awprot       :  std_logic_vector(2 downto 0);
-   signal l02_axi_awqos        :  std_logic_vector(3 downto 0);
-   signal l02_axi_awvalid      :  std_logic;
-   signal l02_axi_awready      :  std_logic;
-   signal l02_axi_wdata        :  std_logic_vector(31 downto 0);
-   signal l02_axi_wstrb        :  std_logic_vector(3 downto 0);
-   signal l02_axi_wlast        :  std_logic;
-   signal l02_axi_wvalid       :  std_logic;
-   signal l02_axi_wready       :  std_logic;
-   signal l02_axi_bid          :  std_logic_vector(0 downto 0);
-   signal l02_axi_bresp        :  std_logic_vector(1 downto 0);
-   signal l02_axi_bvalid       :  std_logic;
-   signal l02_axi_bready       :  std_logic;
-   signal l02_axi_arid         :  std_logic_vector(0 downto 0);
-   signal l02_axi_araddr       :  std_logic_vector(31 downto 0);
-   signal l02_axi_arlen        :  std_logic_vector(7 downto 0);
-   signal l02_axi_arsize       :  std_logic_vector(2 downto 0);
-   signal l02_axi_arburst      :  std_logic_vector(1 downto 0);
-   signal l02_axi_arlock       :  std_logic;
-   signal l02_axi_arcache      :  std_logic_vector(3 downto 0);
-   signal l02_axi_arprot       :  std_logic_vector(2 downto 0);
-   signal l02_axi_arqos        :  std_logic_vector(3 downto 0);
-   signal l02_axi_arvalid      :  std_logic;
-   signal l02_axi_arready      :  std_logic;
-   signal l02_axi_rid          :  std_logic_vector(0 downto 0);
-   signal l02_axi_rdata        :  std_logic_vector(31 downto 0);
-   signal l02_axi_rresp        :  std_logic_vector(1 downto 0);
-   signal l02_axi_rlast        :  std_logic;
-   signal l02_axi_rvalid       :  std_logic;
-   signal l02_axi_rready       :  std_logic;
+    signal l02_axi_areset_n     :  std_logic;
+    signal l02_axi_aclk         :  std_logic;
+    signal l02_axi_awid         :  std_logic_vector(0 downto 0);
+    signal l02_axi_awaddr       :  std_logic_vector(31 downto 0);
+    signal l02_axi_awlen        :  std_logic_vector(7 downto 0);
+    signal l02_axi_awsize       :  std_logic_vector(2 downto 0);
+    signal l02_axi_awburst      :  std_logic_vector(1 downto 0);
+    signal l02_axi_awlock       :  std_logic;
+    signal l02_axi_awcache      :  std_logic_vector(3 downto 0);
+    signal l02_axi_awprot       :  std_logic_vector(2 downto 0);
+    signal l02_axi_awqos        :  std_logic_vector(3 downto 0);
+    signal l02_axi_awvalid      :  std_logic;
+    signal l02_axi_awready      :  std_logic;
+    signal l02_axi_wdata        :  std_logic_vector(31 downto 0);
+    signal l02_axi_wstrb        :  std_logic_vector(3 downto 0);
+    signal l02_axi_wlast        :  std_logic;
+    signal l02_axi_wvalid       :  std_logic;
+    signal l02_axi_wready       :  std_logic;
+    signal l02_axi_bid          :  std_logic_vector(0 downto 0);
+    signal l02_axi_bresp        :  std_logic_vector(1 downto 0);
+    signal l02_axi_bvalid       :  std_logic;
+    signal l02_axi_bready       :  std_logic;
+    signal l02_axi_arid         :  std_logic_vector(0 downto 0);
+    signal l02_axi_araddr       :  std_logic_vector(31 downto 0);
+    signal l02_axi_arlen        :  std_logic_vector(7 downto 0);
+    signal l02_axi_arsize       :  std_logic_vector(2 downto 0);
+    signal l02_axi_arburst      :  std_logic_vector(1 downto 0);
+    signal l02_axi_arlock       :  std_logic;
+    signal l02_axi_arcache      :  std_logic_vector(3 downto 0);
+    signal l02_axi_arprot       :  std_logic_vector(2 downto 0);
+    signal l02_axi_arqos        :  std_logic_vector(3 downto 0);
+    signal l02_axi_arvalid      :  std_logic;
+    signal l02_axi_arready      :  std_logic;
+    signal l02_axi_rid          :  std_logic_vector(0 downto 0);
+    signal l02_axi_rdata        :  std_logic_vector(31 downto 0);
+    signal l02_axi_rresp        :  std_logic_vector(1 downto 0);
+    signal l02_axi_rlast        :  std_logic;
+    signal l02_axi_rvalid       :  std_logic;
+    signal l02_axi_rready       :  std_logic;
 
     signal ram_en             : std_logic;
     signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
@@ -459,14 +459,14 @@ begin
 
     -- differential output buffering for HDMI clock and video
     hdmi_output: entity work.hdmi_out
-      port map (
+    port map (
         tmds_in_clk => clk_25MHz,
         tmds_out_clk_p => VID_CLK_P,
         tmds_out_clk_n => VID_CLK_N,
         tmds_in_rgb => tmds_out_rgb,
         tmds_out_rgb_p => VID_D_P,
         tmds_out_rgb_n => VID_D_N
-      );
+    );
     VGA_SYNC_N <= '1';
     VGA_BLANK_N <= '1';
     VGA_CLOCK_P <= clk_25MHz;
@@ -474,7 +474,7 @@ begin
     VGA_HSYNC <= vga_hsync_n;
 
     u3_memCache : entity work.axi_cache -- D-Memory
-      port map (
+    port map (
         sys_clk            => clk,
         reset              => sio_break,
 
@@ -530,149 +530,147 @@ begin
         hitcount           => ram_cache_hitcnt,
         readcount          => ram_cache_readcnt,
         debug              => ram_cache_debug
-     );
+    );
 
-     u_ddr_mem : entity work.axi_mpmc
-       port map(
-      ddr3_dq              => ddr_dq,
-      ddr3_dqs_n           => ddr_dqs_n,
-      ddr3_dqs_p           => ddr_dqs_p,
-      ddr3_addr            => ddr_a,
-      ddr3_ba              => ddr_ba,
-      ddr3_ras_n           => ddr_ras_n,
-      ddr3_cas_n           => ddr_cas_n,
-      ddr3_we_n            => ddr_we_n,
-      ddr3_reset_n         => ddr_reset_n,
-      ddr3_ck_p(0)         => ddr_ck_p,
-      ddr3_ck_n(0)         => ddr_ck_n,
-      ddr3_cke(0)          => ddr_cke,
-      ddr3_dm(1)           => ddr_udm,
-      ddr3_dm(0)           => ddr_ldm,
-      ddr3_odt(0)          => ddr_odt,
+    u_ddr_mem : entity work.axi_mpmc
+    port map(
+        ddr3_dq              => ddr_dq,
+        ddr3_dqs_n           => ddr_dqs_n,
+        ddr3_dqs_p           => ddr_dqs_p,
+        ddr3_addr            => ddr_a,
+        ddr3_ba              => ddr_ba,
+        ddr3_ras_n           => ddr_ras_n,
+        ddr3_cas_n           => ddr_cas_n,
+        ddr3_we_n            => ddr_we_n,
+        ddr3_reset_n         => ddr_reset_n,
+        ddr3_ck_p(0)         => ddr_ck_p,
+        ddr3_ck_n(0)         => ddr_ck_n,
+        ddr3_cke(0)          => ddr_cke,
+        ddr3_dm(1)           => ddr_udm,
+        ddr3_dm(0)           => ddr_ldm,
+        ddr3_odt(0)          => ddr_odt,
+        sys_rst              => sio_break,
+        sys_clk_i            => clk_200MHz, -- should be 200MHz
+        init_calib_complete  => calib_done,
+        s00_axi_areset_out_n => l00_axi_areset_n,
+        s00_axi_aclk         => l00_axi_aclk,
+        s00_axi_awid         => l00_axi_awid,
+        s00_axi_awaddr       => l00_axi_awaddr,
+        s00_axi_awlen        => l00_axi_awlen,
+        s00_axi_awsize       => l00_axi_awsize,
+        s00_axi_awburst      => l00_axi_awburst,
+        s00_axi_awlock       => l00_axi_awlock,
+        s00_axi_awcache      => l00_axi_awcache,
+        s00_axi_awprot       => l00_axi_awprot,
+        s00_axi_awqos        => l00_axi_awqos,
+        s00_axi_awvalid      => l00_axi_awvalid,
+        s00_axi_awready      => l00_axi_awready,
+        s00_axi_wdata        => l00_axi_wdata,
+        s00_axi_wstrb        => l00_axi_wstrb,
+        s00_axi_wlast        => l00_axi_wlast,
+        s00_axi_wvalid       => l00_axi_wvalid,
+        s00_axi_wready       => l00_axi_wready,
+        s00_axi_bid          => l00_axi_bid,
+        s00_axi_bresp        => l00_axi_bresp,
+        s00_axi_bvalid       => l00_axi_bvalid,
+        s00_axi_bready       => l00_axi_bready,
+        s00_axi_arid         => l00_axi_arid,
+        s00_axi_araddr       => l00_axi_araddr,
+        s00_axi_arlen        => l00_axi_arlen,
+        s00_axi_arsize       => l00_axi_arsize,
+        s00_axi_arburst      => l00_axi_arburst,
+        s00_axi_arlock       => l00_axi_arlock,
+        s00_axi_arcache      => l00_axi_arcache,
+        s00_axi_arprot       => l00_axi_arprot,
+        s00_axi_arqos        => l00_axi_arqos,
+        s00_axi_arvalid      => l00_axi_arvalid,
+        s00_axi_arready      => l00_axi_arready,
+        s00_axi_rid          => l00_axi_rid,
+        s00_axi_rdata        => l00_axi_rdata,
+        s00_axi_rresp        => l00_axi_rresp,
+        s00_axi_rlast        => l00_axi_rlast,
+        s00_axi_rvalid       => l00_axi_rvalid,
+        s00_axi_rready       => l00_axi_rready,
 
-      sys_rst              => sio_break,
-      sys_clk_i            => clk_200MHz, -- should be 200MHz
-      init_calib_complete  => calib_done,
+        s01_axi_areset_out_n => l01_axi_areset_n,
+        s01_axi_aclk         => l01_axi_aclk,
+        s01_axi_awid         => l01_axi_awid,
+        s01_axi_awaddr       => l01_axi_awaddr,
+        s01_axi_awlen        => l01_axi_awlen,
+        s01_axi_awsize       => l01_axi_awsize,
+        s01_axi_awburst      => l01_axi_awburst,
+        s01_axi_awlock       => l01_axi_awlock,
+        s01_axi_awcache      => l01_axi_awcache,
+        s01_axi_awprot       => l01_axi_awprot,
+        s01_axi_awqos        => l01_axi_awqos,
+        s01_axi_awvalid      => l01_axi_awvalid,
+        s01_axi_awready      => l01_axi_awready,
+        s01_axi_wdata        => l01_axi_wdata,
+        s01_axi_wstrb        => l01_axi_wstrb,
+        s01_axi_wlast        => l01_axi_wlast,
+        s01_axi_wvalid       => l01_axi_wvalid,
+        s01_axi_wready       => l01_axi_wready,
+        s01_axi_bid          => l01_axi_bid,
+        s01_axi_bresp        => l01_axi_bresp,
+        s01_axi_bvalid       => l01_axi_bvalid,
+        s01_axi_bready       => l01_axi_bready,
+        s01_axi_arid         => l01_axi_arid,
+        s01_axi_araddr       => l01_axi_araddr,
+        s01_axi_arlen        => l01_axi_arlen,
+        s01_axi_arsize       => l01_axi_arsize,
+        s01_axi_arburst      => l01_axi_arburst,
+        s01_axi_arlock       => l01_axi_arlock,
+        s01_axi_arcache      => l01_axi_arcache,
+        s01_axi_arprot       => l01_axi_arprot,
+        s01_axi_arqos        => l01_axi_arqos,
+        s01_axi_arvalid      => l01_axi_arvalid,
+        s01_axi_arready      => l01_axi_arready,
+        s01_axi_rid          => l01_axi_rid,
+        s01_axi_rdata        => l01_axi_rdata,
+        s01_axi_rresp        => l01_axi_rresp,
+        s01_axi_rlast        => l01_axi_rlast,
+        s01_axi_rvalid       => l01_axi_rvalid,
+        s01_axi_rready       => l01_axi_rready,
 
-      s00_axi_areset_out_n => l00_axi_areset_n,
-      s00_axi_aclk         => l00_axi_aclk,
-      s00_axi_awid         => l00_axi_awid,
-      s00_axi_awaddr       => l00_axi_awaddr,
-      s00_axi_awlen        => l00_axi_awlen,
-      s00_axi_awsize       => l00_axi_awsize,
-      s00_axi_awburst      => l00_axi_awburst,
-      s00_axi_awlock       => l00_axi_awlock,
-      s00_axi_awcache      => l00_axi_awcache,
-      s00_axi_awprot       => l00_axi_awprot,
-      s00_axi_awqos        => l00_axi_awqos,
-      s00_axi_awvalid      => l00_axi_awvalid,
-      s00_axi_awready      => l00_axi_awready,
-      s00_axi_wdata        => l00_axi_wdata,
-      s00_axi_wstrb        => l00_axi_wstrb,
-      s00_axi_wlast        => l00_axi_wlast,
-      s00_axi_wvalid       => l00_axi_wvalid,
-      s00_axi_wready       => l00_axi_wready,
-      s00_axi_bid          => l00_axi_bid,
-      s00_axi_bresp        => l00_axi_bresp,
-      s00_axi_bvalid       => l00_axi_bvalid,
-      s00_axi_bready       => l00_axi_bready,
-      s00_axi_arid         => l00_axi_arid,
-      s00_axi_araddr       => l00_axi_araddr,
-      s00_axi_arlen        => l00_axi_arlen,
-      s00_axi_arsize       => l00_axi_arsize,
-      s00_axi_arburst      => l00_axi_arburst,
-      s00_axi_arlock       => l00_axi_arlock,
-      s00_axi_arcache      => l00_axi_arcache,
-      s00_axi_arprot       => l00_axi_arprot,
-      s00_axi_arqos        => l00_axi_arqos,
-      s00_axi_arvalid      => l00_axi_arvalid,
-      s00_axi_arready      => l00_axi_arready,
-      s00_axi_rid          => l00_axi_rid,
-      s00_axi_rdata        => l00_axi_rdata,
-      s00_axi_rresp        => l00_axi_rresp,
-      s00_axi_rlast        => l00_axi_rlast,
-      s00_axi_rvalid       => l00_axi_rvalid,
-      s00_axi_rready       => l00_axi_rready,
-
-      s01_axi_areset_out_n => l01_axi_areset_n,
-      s01_axi_aclk         => l01_axi_aclk,
-      s01_axi_awid         => l01_axi_awid,
-      s01_axi_awaddr       => l01_axi_awaddr,
-      s01_axi_awlen        => l01_axi_awlen,
-      s01_axi_awsize       => l01_axi_awsize,
-      s01_axi_awburst      => l01_axi_awburst,
-      s01_axi_awlock       => l01_axi_awlock,
-      s01_axi_awcache      => l01_axi_awcache,
-      s01_axi_awprot       => l01_axi_awprot,
-      s01_axi_awqos        => l01_axi_awqos,
-      s01_axi_awvalid      => l01_axi_awvalid,
-      s01_axi_awready      => l01_axi_awready,
-      s01_axi_wdata        => l01_axi_wdata,
-      s01_axi_wstrb        => l01_axi_wstrb,
-      s01_axi_wlast        => l01_axi_wlast,
-      s01_axi_wvalid       => l01_axi_wvalid,
-      s01_axi_wready       => l01_axi_wready,
-      s01_axi_bid          => l01_axi_bid,
-      s01_axi_bresp        => l01_axi_bresp,
-      s01_axi_bvalid       => l01_axi_bvalid,
-      s01_axi_bready       => l01_axi_bready,
-      s01_axi_arid         => l01_axi_arid,
-      s01_axi_araddr       => l01_axi_araddr,
-      s01_axi_arlen        => l01_axi_arlen,
-      s01_axi_arsize       => l01_axi_arsize,
-      s01_axi_arburst      => l01_axi_arburst,
-      s01_axi_arlock       => l01_axi_arlock,
-      s01_axi_arcache      => l01_axi_arcache,
-      s01_axi_arprot       => l01_axi_arprot,
-      s01_axi_arqos        => l01_axi_arqos,
-      s01_axi_arvalid      => l01_axi_arvalid,
-      s01_axi_arready      => l01_axi_arready,
-      s01_axi_rid          => l01_axi_rid,
-      s01_axi_rdata        => l01_axi_rdata,
-      s01_axi_rresp        => l01_axi_rresp,
-      s01_axi_rlast        => l01_axi_rlast,
-      s01_axi_rvalid       => l01_axi_rvalid,
-      s01_axi_rready       => l01_axi_rready,
-
-      s02_axi_areset_out_n => l02_axi_areset_n,
-      s02_axi_aclk         => l02_axi_aclk,
-      s02_axi_awid         => l02_axi_awid,
-      s02_axi_awaddr       => l02_axi_awaddr,
-      s02_axi_awlen        => l02_axi_awlen,
-      s02_axi_awsize       => l02_axi_awsize,
-      s02_axi_awburst      => l02_axi_awburst,
-      s02_axi_awlock       => l02_axi_awlock,
-      s02_axi_awcache      => l02_axi_awcache,
-      s02_axi_awprot       => l02_axi_awprot,
-      s02_axi_awqos        => l02_axi_awqos,
-      s02_axi_awvalid      => l02_axi_awvalid,
-      s02_axi_awready      => l02_axi_awready,
-      s02_axi_wdata        => l02_axi_wdata,
-      s02_axi_wstrb        => l02_axi_wstrb,
-      s02_axi_wlast        => l02_axi_wlast,
-      s02_axi_wvalid       => l02_axi_wvalid,
-      s02_axi_wready       => l02_axi_wready,
-      s02_axi_bid          => l02_axi_bid,
-      s02_axi_bresp        => l02_axi_bresp,
-      s02_axi_bvalid       => l02_axi_bvalid,
-      s02_axi_bready       => l02_axi_bready,
-      s02_axi_arid         => l02_axi_arid,
-      s02_axi_araddr       => l02_axi_araddr,
-      s02_axi_arlen        => l02_axi_arlen,
-      s02_axi_arsize       => l02_axi_arsize,
-      s02_axi_arburst      => l02_axi_arburst,
-      s02_axi_arlock       => l02_axi_arlock,
-      s02_axi_arcache      => l02_axi_arcache,
-      s02_axi_arprot       => l02_axi_arprot,
-      s02_axi_arqos        => l02_axi_arqos,
-      s02_axi_arvalid      => l02_axi_arvalid,
-      s02_axi_arready      => l02_axi_arready,
-      s02_axi_rid          => l02_axi_rid,
-      s02_axi_rdata        => l02_axi_rdata,
-      s02_axi_rresp        => l02_axi_rresp,
-      s02_axi_rlast        => l02_axi_rlast,
-      s02_axi_rvalid       => l02_axi_rvalid,
-      s02_axi_rready       => l02_axi_rready
-   );
+        s02_axi_areset_out_n => l02_axi_areset_n,
+        s02_axi_aclk         => l02_axi_aclk,
+        s02_axi_awid         => l02_axi_awid,
+        s02_axi_awaddr       => l02_axi_awaddr,
+        s02_axi_awlen        => l02_axi_awlen,
+        s02_axi_awsize       => l02_axi_awsize,
+        s02_axi_awburst      => l02_axi_awburst,
+        s02_axi_awlock       => l02_axi_awlock,
+        s02_axi_awcache      => l02_axi_awcache,
+        s02_axi_awprot       => l02_axi_awprot,
+        s02_axi_awqos        => l02_axi_awqos,
+        s02_axi_awvalid      => l02_axi_awvalid,
+        s02_axi_awready      => l02_axi_awready,
+        s02_axi_wdata        => l02_axi_wdata,
+        s02_axi_wstrb        => l02_axi_wstrb,
+        s02_axi_wlast        => l02_axi_wlast,
+        s02_axi_wvalid       => l02_axi_wvalid,
+        s02_axi_wready       => l02_axi_wready,
+        s02_axi_bid          => l02_axi_bid,
+        s02_axi_bresp        => l02_axi_bresp,
+        s02_axi_bvalid       => l02_axi_bvalid,
+        s02_axi_bready       => l02_axi_bready,
+        s02_axi_arid         => l02_axi_arid,
+        s02_axi_araddr       => l02_axi_araddr,
+        s02_axi_arlen        => l02_axi_arlen,
+        s02_axi_arsize       => l02_axi_arsize,
+        s02_axi_arburst      => l02_axi_arburst,
+        s02_axi_arlock       => l02_axi_arlock,
+        s02_axi_arcache      => l02_axi_arcache,
+        s02_axi_arprot       => l02_axi_arprot,
+        s02_axi_arqos        => l02_axi_arqos,
+        s02_axi_arvalid      => l02_axi_arvalid,
+        s02_axi_arready      => l02_axi_arready,
+        s02_axi_rid          => l02_axi_rid,
+        s02_axi_rdata        => l02_axi_rdata,
+        s02_axi_rresp        => l02_axi_rresp,
+        s02_axi_rlast        => l02_axi_rlast,
+        s02_axi_rvalid       => l02_axi_rvalid,
+        s02_axi_rready       => l02_axi_rready
+    );
 
 end Behavioral;
