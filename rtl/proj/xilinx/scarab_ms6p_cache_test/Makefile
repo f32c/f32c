@@ -55,13 +55,14 @@ vhdfiles = \
 ../../../soc/fm/rds.vhd \
 ../../../soc/fm/bram_rds.vhd \
 ../../../soc/fm/message.vhd \
+../../../soc/fm/lowpass.vhd \
 ../../../soc/vgahdmi/vgahdmif.vhd \
 ../../../soc/vgahdmi/videofifo.vhd \
 ../../../xilinx/hdmi_out.vhd \
-../../../xilinx/pll_50M_112M5.vhd \
-../../../xilinx/pll_50M_100M.vhd \
-../../../xilinx/pll_50M_100M_25M_250M.vhd \
-../../../xilinx/pll_50M_81M25.vhd \
+../../../xilinx/clocks/scarab/pll_50M_112M5.vhd \
+../../../xilinx/clocks/scarab/pll_50M_100M.vhd \
+../../../xilinx/clocks/scarab/pll_50M_100M_25M_250M.vhd \
+../../../xilinx/clocks/scarab/pll_50M_81M25.vhd \
 ../../../generic/bram_video.vhd \
 
 include ../include/xilinx.mk
