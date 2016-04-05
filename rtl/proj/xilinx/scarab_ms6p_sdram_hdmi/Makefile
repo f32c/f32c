@@ -57,9 +57,7 @@ vhdfiles = \
 ../../../soc/sram.vhd \
 ../../../soc/sram_refresh.vhd \
 ../../../soc/sram8.vhd \
-../../../soc/arbiter.vhd \
-../../../soc/sdram_ctrl.vhd \
-../../../soc/ram_emu.vhd \
+../../../soc/acram.vhd \
 ../../../soc/sdram.vhd \
 ../../../soc/sio.vhd \
 ../../../soc/spi.vhd \
