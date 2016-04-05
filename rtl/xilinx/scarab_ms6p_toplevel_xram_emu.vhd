@@ -108,10 +108,6 @@ architecture Behavioral of glue is
     signal sram_a: std_logic_vector(11 downto 0);
     signal sram_d: std_logic_vector(15 downto 0);
     signal sram_wel, sram_lbl, sram_ubl: std_logic;
-
-    -- SRAM emulation
-    signal sram_we_lower, sram_we_upper: std_logic;
-    signal from_sram_lower, from_sram_upper: std_logic_vector(7 downto 0);
 begin
     -- clock synthesizer: Xilinx Spartan-6 specific
     
@@ -215,44 +211,21 @@ begin
         tmds_out_rgb_p => tmds_in_p,
         tmds_out_rgb_n => tmds_in_n
       );
-
-    sram_emul_lower: entity work.bram_true2p_1clk
-    generic map (
-        dual_port => false,
-        data_width => 8,
-        addr_width => 12
+    
+    sram_chip_emulation: entity work.sram_emu
+    generic map
+    (
+      C_addr_width => 12
     )
-    port map (
-        clk => not clk,
-        we_a => sram_we_lower,
-        addr_a => sram_a(11 downto 0),
-        data_in_a => sram_d(7 downto 0), data_out_a => from_sram_lower,
-	we_b => '0', addr_b => (others => '0'),
-        data_in_b => (others => '0'), data_out_b => open
+    port map
+    (
+      clk => clk,
+      sram_a => sram_a(11 downto 0), sram_d => sram_d,
+      sram_wel => sram_wel,
+      sram_lbl => sram_lbl, sram_ubl => sram_ubl
     );
 
-    sram_emul_upper: entity work.bram_true2p_1clk
-    generic map (
-        dual_port => false,
-        data_width => 8,
-        addr_width => 12
-    )
-    port map (
-        clk => not clk,
-        we_a => sram_we_upper,
-        addr_a => sram_a(11 downto 0),
-        data_in_a => sram_d(15 downto 8), data_out_a => from_sram_upper,
-	we_b => '0', addr_b => (others => '0'),
-        data_in_b => (others => '0'), data_out_b => open
-    );
-
-    sram_d(7 downto 0) <= from_sram_lower when sram_wel = '1'
-      else (others => 'Z');
-    sram_d(15 downto 8) <= from_sram_upper when sram_wel = '1'
-      else (others => 'Z');
-    sram_we_lower <= not (sram_wel or sram_lbl);
-    sram_we_upper <= not (sram_wel or sram_ubl);
-
+    -- disable onboard sdram chip
     sdram_clk <= '0';
     sdram_cke <= '0';
     sdram_csn <= '1';
