@@ -55,8 +55,6 @@ entity glue is
     C_xram_base: std_logic_vector(31 downto 28) := x"1"; -- RAM start address e.g. x"8" -> 0x80000000
     C_sdram: boolean := true;
     C_sdram_separate_arbiter: boolean := false;
-    C_ram_emu_addr_width: integer := 0; -- RAM emulation (0:disable, 11:8K, 12:16K ...)
-    C_ram_emu_wait_states: integer := 2; -- 0 doesn't work, 1 and more works
 
     C_vgahdmi: boolean := false;
     C_vgahdmi_test_picture: integer := 0;
@@ -301,8 +299,6 @@ begin
       C_sdram_column_bits => 9,
       C_sdram_startup_cycles => 10100,
       C_sdram_cycles_per_refresh => 1524,
-      C_ram_emu_addr_width => C_ram_emu_addr_width,
-      C_ram_emu_wait_states => C_ram_emu_wait_states,
       -- vga simple compositing bitmap only graphics
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_test_picture => C_vgahdmi_test_picture,
