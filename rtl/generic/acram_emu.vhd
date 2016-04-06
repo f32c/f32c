@@ -58,6 +58,7 @@ begin
     ram_emu_8bit: entity work.bram_true2p_1clk
     generic map (
         dual_port => false,
+        pass_thru_a => false,
         data_width => 8,
         addr_width => C_addr_width
     )
