@@ -779,11 +779,12 @@ begin
 	C_pipelined_read => false
     )
     port map (
-	clk => clk, acram_a => acram_addr(29 downto 2),
-	acram_data_rd => acram_data_rd, acram_data_wr => acram_data_wr,
-	-- sram_wel => sram_wel, sram_lbl => sram_lbl, sram_ubl => sram_ubl,
-	acram_byte_we => acram_byte_we,
+	clk => clk,
 	acram_en => acram_en,
+	acram_a => acram_addr(29 downto 2),
+	acram_data_rd => acram_data_rd,
+	acram_data_wr => acram_data_wr,
+	acram_byte_we => acram_byte_we,
 	data_out => from_xram,
 	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
 	-- Multi-port connections:
