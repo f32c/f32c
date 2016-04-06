@@ -71,12 +71,8 @@ architecture Structure of acram is
 
     -- Physical interface registers
     signal R_a: std_logic_vector(29 downto 2);		-- to SRAM
-    --signal R_d: std_logic_vector(31 downto 0);		-- to SRAM
-    --signal R_wel, R_lbl, R_ubl: std_logic;		-- to SRAM
     signal R_we: std_logic;
     signal R_write_cycle: boolean;			-- internal
-    --signal R_byte_sel_hi: std_logic_vector(1 downto 0);	-- internal
-    --signal R_byte_sel_lo: std_logic_vector(1 downto 0);	-- internal
     signal R_byte_sel: std_logic_vector(3 downto 0);	-- internal
     signal R_out_word: std_logic_vector(31 downto 0);	-- internal
 
@@ -177,7 +173,6 @@ begin
 		    R_a <= addr;
 		    if write = '1' then
 			R_write_cycle <= true;
-			--R_wel <= '0';
 			R_we <= '1';
 			R_out_word <= data_in;
 			-- we can safely acknowledge the write immediately
@@ -196,7 +191,6 @@ begin
 		    R_a <= addr;
 		    if write = '1' then
 			R_write_cycle <= true;
-			--R_wel <= '0';
 			R_we <= '1';
 			R_out_word <= data_in;
 			-- we can safely acknowledge the write immediately
