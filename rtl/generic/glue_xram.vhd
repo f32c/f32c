@@ -203,11 +203,11 @@ port (
   sdram_we, sdram_cs: out std_logic;
   -- axi cache ram (shared signaling with sdram)
   acram_en: out std_logic;
-  acram_addr: out std_logic_vector(18 downto 0);
+  acram_addr: out std_logic_vector(29 downto 2);
   acram_read_busy: in std_logic := '0';
-  acram_data_rd: in std_logic_vector(15 downto 0) := (others => '0');
-  acram_data_wr: out std_logic_vector(15 downto 0);
-  acram_byte_we: out std_logic_vector(1 downto 0);
+  acram_data_rd: in std_logic_vector(31 downto 0) := (others => '0');
+  acram_data_wr: out std_logic_vector(31 downto 0);
+  acram_byte_we: out std_logic_vector(3 downto 0);
   --
   sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
   sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
@@ -779,8 +779,8 @@ begin
 	C_pipelined_read => false
     )
     port map (
-	clk => clk, sram_a => acram_addr(18 downto 0),
-	sram_data_rd => acram_data_rd, sram_data_wr => acram_data_wr,
+	clk => clk, acram_a => acram_addr(29 downto 2),
+	acram_data_rd => acram_data_rd, acram_data_wr => acram_data_wr,
 	-- sram_wel => sram_wel, sram_lbl => sram_lbl, sram_ubl => sram_ubl,
 	acram_byte_we => acram_byte_we,
 	acram_en => acram_en,

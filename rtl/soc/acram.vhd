@@ -53,12 +53,11 @@ entity acram is
 	-- Inbound multi-port bus connections
 	bus_in: in sram_port_array;
 	-- To physical SRAM signals
-	sram_a: out std_logic_vector(18 downto 0);
-	sram_data_wr: out std_logic_vector(15 downto 0);
-	sram_data_rd: in std_logic_vector(15 downto 0);
-	acram_byte_we: out std_logic_vector(1 downto 0); -- wel/lbl/ubl combination
-	acram_en: out std_logic;
-	sram_wel, sram_lbl, sram_ubl: out std_logic
+	acram_a: out std_logic_vector(29 downto 2);
+	acram_data_wr: out std_logic_vector(31 downto 0);
+	acram_data_rd: in std_logic_vector(31 downto 0);
+	acram_byte_we: out std_logic_vector(3 downto 0);
+	acram_en: out std_logic
     );
 end acram;
 
@@ -71,11 +70,14 @@ architecture Structure of acram is
     constant C_phase_write_terminate: integer := C_wait_cycles * 2 - 1;
 
     -- Physical interface registers
-    signal R_a: std_logic_vector(18 downto 0);		-- to SRAM
-    signal R_d: std_logic_vector(15 downto 0);		-- to SRAM
-    signal R_wel, R_lbl, R_ubl: std_logic;		-- to SRAM
+    signal R_a: std_logic_vector(29 downto 2);		-- to SRAM
+    --signal R_d: std_logic_vector(31 downto 0);		-- to SRAM
+    --signal R_wel, R_lbl, R_ubl: std_logic;		-- to SRAM
+    signal R_we: std_logic;
     signal R_write_cycle: boolean;			-- internal
-    signal R_byte_sel_hi: std_logic_vector(1 downto 0);	-- internal
+    --signal R_byte_sel_hi: std_logic_vector(1 downto 0);	-- internal
+    --signal R_byte_sel_lo: std_logic_vector(1 downto 0);	-- internal
+    signal R_byte_sel: std_logic_vector(3 downto 0);	-- internal
     signal R_out_word: std_logic_vector(31 downto 0);	-- internal
 
     -- Bus interface registers
@@ -85,7 +87,7 @@ architecture Structure of acram is
     signal addr_strobe: std_logic;			-- from CPU bus
     signal write: std_logic;				-- from CPU bus
     signal byte_sel: std_logic_vector(3 downto 0);	-- from CPU bus
-    signal addr: std_logic_vector(19 downto 2);		-- from CPU bus
+    signal addr: std_logic_vector(29 downto 2);		-- from CPU bus
     signal data_in: std_logic_vector(31 downto 0);	-- from CPU bus
 
     -- Arbiter registers
@@ -143,17 +145,11 @@ begin
     process(clk)
     begin
 	if C_pipelined_read and falling_edge(clk) then
-	    if R_phase = C_phase_read_upper_half + 2 then
-		R_bus_out(15 downto 0) <= sram_data_rd;
-	    end if;
-	    R_bus_out(31 downto 16) <= sram_data_rd;
+	    R_bus_out(31 downto 0) <= acram_data_rd;
 	end if;
 
 	if not C_pipelined_read and rising_edge(clk) then
-	    if R_phase = C_phase_read_upper_half then
-		R_bus_out(15 downto 0) <= sram_data_rd;
-	    end if;
-	    R_bus_out(31 downto 16) <= sram_data_rd;
+	    R_bus_out(31 downto 0) <= acram_data_rd;
 	end if;
 
 	if rising_edge(clk) then
@@ -170,123 +166,63 @@ begin
 	    R_next_port <= next_port;
 	    if R_phase = C_phase_idle then
 		R_write_cycle <= false;
-		R_wel <= '1';
-		R_ubl <= '0';
-		R_lbl <= '0';
-		-- R_d <= (others => '0');
+		R_we <= '0';
 		if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
 		    -- idle
 		    R_cur_port <= next_port;
-		    R_ubl <= '1';
-		    R_lbl <= '1';
 		else
 		    -- start a new transaction
 		    R_phase <= C_phase_idle + 1;
-		    R_byte_sel_hi <= byte_sel(3 downto 2);
-		    R_a <= addr & '0';
+		    R_byte_sel <= byte_sel;
+		    R_a <= addr;
 		    if write = '1' then
 			R_write_cycle <= true;
-			R_wel <= '0';
+			--R_wel <= '0';
+			R_we <= '1';
 			R_out_word <= data_in;
-			if byte_sel(1 downto 0) /= "00" then
-			    R_ubl <= not byte_sel(1);
-			    R_lbl <= not byte_sel(0);
-			else
-			    R_a <= addr & '1';
-			    R_ubl <= not byte_sel(3);
-			    R_lbl <= not byte_sel(2);
-			    R_phase <= C_phase_write_upper_half;
-			end if;
 			-- we can safely acknowledge the write immediately
 			R_ack_bitmap(R_cur_port) <= '1';
-			R_snoop_addr(19 downto 2) <= addr; -- XXX
+			R_snoop_addr(29 downto 2) <= addr; -- XXX
 			R_snoop_cycle <= '1';
 		    end if;
 		end if;
-	    elsif not R_write_cycle and R_phase = C_phase_read_upper_half then
-		R_phase <= R_phase + 1;
-		-- physical signals to SRAM: bump addr
-		R_a(0) <= '1';
 	    elsif not R_write_cycle and R_phase = C_phase_read_terminate then
 		R_ack_bitmap(R_cur_port) <= '1';
 		if R_cur_port /= R_next_port and addr_strobe = '1' then
 		    -- jump-start a new transaction
 		    R_cur_port <= R_next_port;
 		    R_phase <= C_phase_idle + 1;
-		    R_byte_sel_hi <= byte_sel(3 downto 2);
-		    R_a <= addr & '0';
+		    R_byte_sel <= byte_sel;
+		    R_a <= addr;
 		    if write = '1' then
 			R_write_cycle <= true;
-			R_wel <= '0';
+			--R_wel <= '0';
+			R_we <= '1';
 			R_out_word <= data_in;
-			if byte_sel(1 downto 0) /= "00" then
-			    R_ubl <= not byte_sel(1);
-			    R_lbl <= not byte_sel(0);
-			else
-			    R_a <= addr & '1';
-			    R_ubl <= not byte_sel(3);
-			    R_lbl <= not byte_sel(2);
-			    R_phase <= C_phase_write_upper_half;
-			end if;
 			-- we can safely acknowledge the write immediately
 			R_ack_bitmap(R_next_port) <= '1';
-			R_snoop_addr(19 downto 2) <= addr; -- XXX
+			R_snoop_addr(29 downto 2) <= addr; -- XXX
 			R_snoop_cycle <= '1';
 		    end if;
 		else
 		    R_phase <= C_phase_idle;
 		    R_cur_port <= next_port;
-		    R_ubl <= '1';
-		    R_lbl <= '1';
 		end if;
-	    elsif R_write_cycle and R_phase = C_phase_idle + 1 then
-		R_phase <= R_phase + 1;
-		R_d <= R_out_word(15 downto 0);
-	    elsif R_write_cycle and R_phase = C_phase_write_upper_half - 1 then
-		if R_byte_sel_hi /= "00" then
-		    R_phase <= R_phase + 1;
-		else
-		    R_phase <= C_phase_idle;
-		    R_cur_port <= next_port;
-		end if;
-		-- physical signals to SRAM: terminate 16-bit write
-		R_wel <= '1';
-		R_ubl <= '1';
-		R_lbl <= '1';
-		-- R_d <= (others => '0');
-	    elsif R_write_cycle and R_phase = C_phase_write_upper_half then
-		R_phase <= R_phase + 1;
-		-- physical signals to SRAM: bump addr, refill data
-		R_a(0) <= '1';
-		R_ubl <= not R_byte_sel_hi(1);
-		R_lbl <= not R_byte_sel_hi(0);
-		R_wel <= '0';
-	    elsif R_write_cycle and R_phase = C_phase_write_upper_half + 1 then
-		R_phase <= R_phase + 1;
-		R_d <= R_out_word(31 downto 16);
 	    elsif R_write_cycle and R_phase = C_phase_write_terminate then
 		R_phase <= C_phase_idle;
 		R_cur_port <= next_port;
-		-- physical signals to SRAM: terminate 16-bit write
-		R_wel <= '1';
-		R_ubl <= '1';
-		R_lbl <= '1';
-		-- R_d <= (others => '0');
+		-- physical signals to SRAM: terminate write
+		R_we <= '0';
 	    else
 		R_phase <= R_phase + 1;
 	    end if;
 	end if;
     end process;
 
-    sram_data_wr <= R_d;
-    sram_a <= R_a;
-    sram_wel <= R_wel;
-    sram_lbl <= R_lbl;
-    sram_ubl <= R_ubl;
-    
-    acram_byte_we <= "00" when R_wel = '1' else not(R_ubl & R_lbl);
-
-    acram_en <= '0' when R_lbl='1' and R_ubl='1' and R_wel='1' else '1';
+    acram_data_wr <= R_out_word;
+    acram_a <= R_a;
+    acram_byte_we <= R_byte_sel;
+    acram_en <= R_we;
 
     data_out <= R_bus_out;
     snoop_addr <= R_snoop_addr;
