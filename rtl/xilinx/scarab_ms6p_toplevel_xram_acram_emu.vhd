@@ -56,11 +56,6 @@ entity glue is
         -- axi cache ram
 	C_acram: boolean := true;
 
-        --C_sram: boolean := true;
-        --C_sram_refresh: boolean := false; -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
-        --C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
-        --C_sram_pipelined_read: boolean := false;
-
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         C_icache_size: integer := 2; -- 0, 2, 4, 8, 16, 32 KBytes
         C_dcache_size: integer := 2; -- 0, 2, 4, 8, 16, 32 KBytes
@@ -159,14 +154,7 @@ begin
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
 	C_bram_size => C_bram_size,
-
-        --C_sram => C_sram,
-        --C_sram_refresh => C_sram_refresh, -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
-        --C_sram_wait_cycles => C_sram_wait_cycles, -- ISSI, OK do 87.5 MHz
-        --C_pipelined_read => C_sram_pipelined_read, -- works only at 81.25 MHz !!!
-        
         C_acram => C_acram,
-        
         C_icache_expire => C_icache_expire,
         C_icache_size => C_icache_size,
         C_dcache_size => C_dcache_size,
@@ -228,7 +216,7 @@ begin
         tmds_out_rgb_n => tmds_in_n
       );
     
-    sram_chip_emulation: entity work.acram_emu
+    acram_emulation: entity work.acram_emu
     generic map
     (
       C_addr_width => 12
@@ -236,7 +224,7 @@ begin
     port map
     (
       clk => clk,
-      acram_a => ram_address(11 downto 0), 
+      acram_a => ram_address(13 downto 2),
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
