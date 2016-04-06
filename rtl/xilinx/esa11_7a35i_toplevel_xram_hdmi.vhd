@@ -46,50 +46,61 @@ entity glue is
 	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
-	C_bram_size: integer := 128;
+	C_bram_size: integer := 16;
 
         -- axi cache ram
 	C_acram: boolean := true;
+
+        C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
+        C_icache_size: integer := 2; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_dcache_size: integer := 2; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_cached_addr_bits: integer := 20; -- number of lower RAM address bits 2^25 -> 32MB to be cached
 
         C3_NUM_DQ_PINS        : integer := 16;
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
 
 	C_vgahdmi: boolean := false;
-	C_vgahdmi_mem_kb: integer := 38; -- KB 38K full mono 640x480
 	C_vgahdmi_test_picture: integer := 1; -- enable test picture
 
-    C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
-      C_vgatext_label: string :=  "f32c: ESA11-7a35i MIPS compatible soft-core 100MHz 128KB BRAM";	-- default banner in screen memory
-      C_vgatext_mode: integer := 0; -- 0=640x480, 1=640x400, 2=800x600 (you must still provide proper pixel clock [25MHz or 40Mhz])
-      C_vgatext_bits: integer := 2; -- bits of VGA color per red, green, blue gun (e.g., 1=8, 2=64 and 4=4096 total colors possible)
-      C_vgatext_bram_mem: integer := 8; -- BRAM size 1, 2, 4, 8 or 16 depending on font and screen size/memory
-      C_vgatext_reset: boolean := true;   -- reset registers to default with async reset
-      C_vgatext_palette: boolean := false; -- true for run-time color look-up table, else 16 fixed VGA color palette
-      C_vgatext_text: boolean := true; -- enable text generation
-        C_vgatext_monochrome: boolean := false;	-- true for 2-color text for whole screen, else additional color attribute byte per character
-        C_vgatext_font_height: integer := 16; -- font data height 8 or 16 for 8x8 or 8x16 font
-        C_vgatext_char_height: integer := 16; -- font cell height (text lines will be C_visible_height / C_CHAR_HEIGHT rounded down, 19=25 lines on 480p)
-        C_vgatext_font_linedouble: boolean := false; -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
-        C_vgatext_font_depth: integer := 7; -- font char bits 7 for 128 characters or 8 for 256 characters
-        C_vgatext_bus_read: boolean := false; -- true: enable reading of the font (ant text). false: write only
-        C_vgatext_reg_read: boolean := true; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
+    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
+      C_vgatext_label: string := "f32c: ESA11-7a35i MIPS compatible soft-core 100MHz 32MB DDR3"; -- default banner in screen memory
+      C_vgatext_mode: integer := 0;   -- 640x480
+      C_vgatext_bits: integer := 4;   -- 64 possible colors
+      C_vgatext_bram_mem: integer := 0;   -- KB (0: bram disabled -> use RAM)
+      C_vgatext_bram_base: std_logic_vector(31 downto 28) := x"4"; -- textmode bram at 0x40000000
+      C_vgatext_external_mem: integer := 32768; -- 32MB external SRAM/SDRAM
+      C_vgatext_reset: boolean := true; -- reset registers to default with async reset
+      C_vgatext_palette: boolean := true; -- no color palette
+      C_vgatext_text: boolean := true; -- enable optional text generation
+        C_vgatext_font_bram8: boolean := true; -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
+        C_vgatext_char_height: integer := 16; -- character cell height
+        C_vgatext_font_height: integer := 16; -- font height
+        C_vgatext_font_depth: integer := 8; -- font char depth, 7=128 characters or 8=256 characters
+        C_vgatext_font_linedouble: boolean := false;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
+        C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)
+        C_vgatext_monochrome: boolean := false;    -- true for 2-color text for whole screen, else additional color attribute byte per character
         C_vgatext_finescroll: boolean := true;   -- true for pixel level character scrolling and line length modulo
-        C_vgatext_text_fifo: boolean := false; -- true to use videofifo for text+color, else BRAM for text+color memory
+        C_vgatext_cursor: boolean := true;    -- true for optional text cursor
+        C_vgatext_cursor_blink: boolean := true;    -- true for optional blinking text cursor
+        C_vgatext_bus_read: boolean := false; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
+        C_vgatext_reg_read: boolean := true; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
+        C_vgatext_text_fifo: boolean := true;  -- enable text memory FIFO
           C_vgatext_text_fifo_postpone_step: integer := 0;
-          C_vgatext_text_fifo_step: integer := (82*2)/4; -- step for the fifo refill and rewind
-          C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) len = 2^width * 4 byte
-        C_vgatext_bitmap: boolean := false; -- true to enable bitmap generation
-          C_vgatext_bitmap_depth: integer := 8;	-- bitmap bits per pixel (1, 2, 4, 8)
-            C_vgatext_bitmap_fifo: boolean := false; -- true to use videofifo, else SRAM port for bitmap memory
-            -- step=horizontal width in pixels
-            C_vgatext_bitmap_fifo_step: integer := 640;
-            -- height=vertical height in pixels
-            C_vgatext_bitmap_fifo_height: integer := 480;
-            -- output data width 8bpp
-            C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
-            -- bitmap width of FIFO address space length = 2^width * 4 byte
-            C_vgatext_bitmap_fifo_addr_width: integer := 11;
+          C_vgatext_text_fifo_step: integer := (82*2)/4; -- step for the FIFO refill and rewind
+          C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) length = 2^width * 4 bytes
+      C_vgatext_bitmap: boolean := true; -- true for optional bitmap generation
+        C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
+        C_vgatext_bitmap_fifo: boolean := true; -- enable bitmap FIFO
+          -- 8 bpp compositing
+          -- step=horizontal width in pixels
+          C_vgatext_bitmap_fifo_step: integer := 640;
+          -- height=vertical height in pixels
+          C_vgatext_bitmap_fifo_height: integer := 480;
+          -- output data width 8bpp
+          C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
+          -- bitmap width of FIFO address space length = 2^width * 4 byte
+          C_vgatext_bitmap_fifo_addr_width: integer := 11;
 
 	C_sio: integer := 1;   -- 1 UART channel
 	C_spi: integer := 2;   -- 2 SPI channels (ch0 not connected, ch1 SD card)
@@ -280,10 +291,10 @@ architecture Behavioral of glue is
     signal l02_axi_rready       :  std_logic;
 
     signal ram_en             : std_logic;
-    signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
-    signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
-    signal ram_data_write     : std_logic_vector(31 downto 0) := (others => '0');
-    signal ram_data_read      : std_logic_vector(31 downto 0) := (others => '0');
+    signal ram_byte_we        : std_logic_vector(3 downto 0);
+    signal ram_address        : std_logic_vector(29 downto 2);
+    signal ram_data_write     : std_logic_vector(31 downto 0);
+    signal ram_data_read      : std_logic_vector(31 downto 0);
     signal ram_read_busy      : std_logic;
     signal ram_cache_debug    : std_logic_vector(7 downto 0);
     signal ram_cache_hitcnt   : std_logic_vector(31 downto 0);
@@ -300,12 +311,6 @@ architecture Behavioral of glue is
     signal ps2_dat_out : std_logic;
     signal disp_7seg_segment: std_logic_vector(7 downto 0);
 begin
-    -- make single ended clock
-    --clk100in: entity work.inp_ds_port
-    --port map(i_in_p => i_100MHz_P,
-    --       i_in_n => i_100MHz_N,
-    --       o_out  => clk);
-
     -- PLL with differential input: 100MHz
     -- single-ended outputs 81.25MHz, 250MHz, 25MHz
     cpu_81MHz: if C_clk_freq = 81 generate
@@ -314,18 +319,6 @@ begin
              clk_in1_n => i_100MHz_N,
              clk_out1  => clk, -- 81.25 MHz
              clk_out2  => clk_250MHz,
-             clk_out3  => clk_25MHz
-    );
-    end generate;
-
-    -- PLL with differential input: 100MHz
-    -- single-ended outputs 250MHz, 100MHz, 25MHz
-    cpu101MHz: if C_clk_freq = 101 generate
-    pll100in_out250_100_25: entity work.pll_d100M_250M_100M_25M
-    port map(clk_in1_p => i_100MHz_P,
-             clk_in1_n => i_100MHz_N,
-             clk_out1  => clk_250MHz,
-             clk_out2  => clk, -- 100 MHz
              clk_out3  => clk_25MHz
     );
     end generate;
@@ -367,50 +360,60 @@ begin
     -- generic BRAM glue
     glue_bram: entity work.glue_xram
     generic map (
-        C_clk_freq => C_clk_freq,
-        C_arch => C_arch,
-        C_bram_size => C_bram_size,
-        C_acram => C_acram,
-        C_gpio => C_gpio,
-        C_sio => C_sio,
-        C_spi => C_spi,
-        --C_ps2 => C_ps2,
+      C_clk_freq => C_clk_freq,
+      C_arch => C_arch,
+      C_bram_size => C_bram_size,
+      C_acram => C_acram,
+      C_icache_expire => C_icache_expire,
+      C_icache_size => C_icache_size,
+      C_dcache_size => C_dcache_size,
+      C_cached_addr_bits => C_cached_addr_bits,
+      C_gpio => C_gpio,
+      C_sio => C_sio,
+      C_spi => C_spi,
+      --C_ps2 => C_ps2,
 
-        C_vgahdmi => C_vgahdmi,
-        --C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
-        C_vgahdmi_test_picture => C_vgahdmi_test_picture,
+      C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_test_picture => C_vgahdmi_test_picture,
 
-        C_vgatext => C_vgatext,
-        C_vgatext_label => C_vgatext_label,
-        C_vgatext_mode => C_vgatext_mode,
-        C_vgatext_bits => C_vgatext_bits,
-        C_vgatext_bram_mem => C_vgatext_bram_mem,
-        C_vgatext_reset => C_vgatext_reset,
-        C_vgatext_palette => C_vgatext_palette,
-        C_vgatext_text => C_vgatext_text,
-        C_vgatext_monochrome => C_vgatext_monochrome,
-        C_vgatext_font_height => C_vgatext_font_height,
-        C_vgatext_char_height => C_vgatext_char_height,
-        C_vgatext_font_linedouble => C_vgatext_font_linedouble,
-        C_vgatext_font_depth => C_vgatext_font_depth,
-        C_vgatext_bus_read => C_vgatext_bus_read,
-        C_vgatext_reg_read => C_vgatext_reg_read,
-        C_vgatext_finescroll => C_vgatext_finescroll,
-        C_vgatext_text_fifo => C_vgatext_text_fifo,
-        C_vgatext_text_fifo_step => C_vgatext_text_fifo_step,
-        C_vgatext_text_fifo_width => C_vgatext_text_fifo_width,
-        C_vgatext_bitmap => C_vgatext_bitmap,
-        C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
-        C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
-        C_vgatext_bitmap_fifo_step => C_vgatext_bitmap_fifo_step,
-        C_vgatext_bitmap_fifo_height => C_vgatext_bitmap_fifo_height,
-        C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
-        C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
+      -- vga advanced graphics text+compositing bitmap
+      C_vgatext => C_vgatext,
+      C_vgatext_label => C_vgatext_label,
+      C_vgatext_mode => C_vgatext_mode,
+      C_vgatext_bits => C_vgatext_bits,
+      C_vgatext_bram_mem => C_vgatext_bram_mem,
+      C_vgatext_bram_base => C_vgatext_bram_base,
+      C_vgatext_external_mem => C_vgatext_external_mem,
+      C_vgatext_reset => C_vgatext_reset,
+      C_vgatext_palette => C_vgatext_palette,
+      C_vgatext_text => C_vgatext_text,
+      C_vgatext_font_bram8 => C_vgatext_font_bram8,
+      C_vgatext_bus_read => C_vgatext_bus_read,
+      C_vgatext_reg_read => C_vgatext_reg_read,
+      C_vgatext_text_fifo => C_vgatext_text_fifo,
+      C_vgatext_text_fifo_step => C_vgatext_text_fifo_step,
+      C_vgatext_text_fifo_width => C_vgatext_text_fifo_width,
+      C_vgatext_char_height => C_vgatext_char_height,
+      C_vgatext_font_height => C_vgatext_font_height,
+      C_vgatext_font_depth => C_vgatext_font_depth,
+      C_vgatext_font_linedouble => C_vgatext_font_linedouble,
+      C_vgatext_font_widthdouble => C_vgatext_font_widthdouble,
+      C_vgatext_monochrome => C_vgatext_monochrome,
+      C_vgatext_finescroll => C_vgatext_finescroll,
+      C_vgatext_cursor => C_vgatext_cursor,
+      C_vgatext_cursor_blink => C_vgatext_cursor_blink,
+      C_vgatext_bitmap => C_vgatext_bitmap,
+      C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
+      C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
+      C_vgatext_bitmap_fifo_step => C_vgatext_bitmap_fifo_step,
+      C_vgatext_bitmap_fifo_height => C_vgatext_bitmap_fifo_height,
+      C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
+      C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
 
-        C_debug => C_debug
+      C_debug => C_debug
     )
     port map (
-	clk => clk,
+        clk => clk,
 	clk_25MHz => clk_25MHz,
 	clk_250MHz => clk_250MHz,
 	acram_en => ram_en,
@@ -474,11 +477,42 @@ begin
     VGA_VSYNC <= vga_vsync_n;
     VGA_HSYNC <= vga_hsync_n;
 
+    acram_emulation: entity work.acram_emu
+    generic map
+    (
+      C_addr_width => 12
+    )
+    port map
+    (
+      clk => clk,
+      acram_a => ram_address(13 downto 2),
+      acram_d_wr => ram_data_write,
+      --acram_d_rd => ram_data_read,
+      acram_byte_we => ram_byte_we,
+      acram_en => ram_en
+    );
+    --ram_data_read <= x"01234567"; -- debug purpose
+
     u3_memCache : entity work.axi_cache -- D-Memory
     port map (
         sys_clk            => clk,
         reset              => sio_break,
 
+        -- simple RAM bus interface
+        i_en               => ram_en,
+        addr_next          => (others => '0'),
+        addr(31 downto 30) => "00",
+        addr(29 downto 2)  => ram_address(29 downto 2),
+        addr(1 downto 0)   => "00",
+        wbe                => ram_byte_we,
+        din                => ram_data_write,
+        dout               => ram_data_read,
+        readBusy           => ram_read_busy,
+        hitcount           => ram_cache_hitcnt,
+        readcount          => ram_cache_readcnt,
+        debug              => ram_cache_debug,
+
+        -- axi port
         m_axi_aresetn      => l00_axi_areset_n,
         m_axi_aclk         => l00_axi_aclk,
         m_axi_awid         => l00_axi_awid,
@@ -517,20 +551,7 @@ begin
         m_axi_rresp        => l00_axi_rresp,
         m_axi_rlast        => l00_axi_rlast,
         m_axi_rvalid       => l00_axi_rvalid,
-        m_axi_rready       => l00_axi_rready,
-        -- simple RAM bus interface
-        addr_next          => (others => '0'),
-        addr(31 downto 30) => "00",
-        addr(29 downto 2)  => ram_address(29 downto 2),
-        addr(1 downto 0)   => "00",
-        din                => ram_data_write,
-        wbe                => ram_byte_we,
-        i_en               => ram_en,
-        dout               => ram_data_read,
-        readBusy           => ram_read_busy,
-        hitcount           => ram_cache_hitcnt,
-        readcount          => ram_cache_readcnt,
-        debug              => ram_cache_debug
+        m_axi_rready       => l00_axi_rready
     );
 
     u_ddr_mem : entity work.axi_mpmc
