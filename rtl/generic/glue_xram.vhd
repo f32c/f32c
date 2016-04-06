@@ -96,7 +96,7 @@ generic (
   C_sram_refresh: boolean := false; -- sram refresh workaround (RED ULX2S boards need this)
   C_sram8: boolean := false; -- 8-bit SRAM
   C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
-  C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
+  C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!! XXX rename to C_sram_pipelined_read
   C_sdram: boolean := false;
   C_sdram_separate_arbiter: boolean := false;
   C_acram: boolean := false; -- AXI CACHE RAM
