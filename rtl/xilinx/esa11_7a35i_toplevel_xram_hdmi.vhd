@@ -315,7 +315,7 @@ begin
              clk_out1  => clk, -- 81.25 MHz
              clk_out2  => clk_250MHz,
              clk_out3  => clk_25MHz
-             );
+    );
     end generate;
 
     -- PLL with differential input: 100MHz
@@ -327,7 +327,7 @@ begin
              clk_out1  => clk_250MHz,
              clk_out2  => clk, -- 100 MHz
              clk_out3  => clk_25MHz
-             );
+    );
     end generate;
 
     cpu100MHz: if C_clk_freq = 100 generate
@@ -339,24 +339,24 @@ begin
              clk_200mhz => clk_200MHz,
              clk_250mhz => clk_250MHz,
              clk_25mhz  => clk_25MHz
-             );
+    );
     end generate;
 
     -- reset hard-block: Xilinx Artix-7 specific
     reset: startupe2
     generic map (
-		prog_usr => "FALSE"
+      prog_usr => "FALSE"
     )
     port map (
-		clk => clk,
-		gsr => sio_break,
-		gts => '0',
-		keyclearb => '0',
-		pack => '1',
-		usrcclko => clk,
-		usrcclkts => '0',
-		usrdoneo => '1',
-		usrdonets => '0'
+      clk => clk,
+      gsr => sio_break,
+      gts => '0',
+      keyclearb => '0',
+      pack => '1',
+      usrcclko => clk,
+      usrcclkts => '0',
+      usrdoneo => '1',
+      usrdonets => '0'
     );
 
     ps2_dat_in	<= PS2_A_DATA;
@@ -367,8 +367,8 @@ begin
     -- generic BRAM glue
     glue_bram: entity work.glue_xram
     generic map (
-	C_clk_freq => C_clk_freq,
-	C_arch => C_arch,
+        C_clk_freq => C_clk_freq,
+        C_arch => C_arch,
         C_bram_size => C_bram_size,
         C_acram => C_acram,
         C_gpio => C_gpio,
@@ -376,36 +376,36 @@ begin
         C_spi => C_spi,
         --C_ps2 => C_ps2,
 
-	C_vgahdmi => C_vgahdmi,
-	--C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
-	C_vgahdmi_test_picture => C_vgahdmi_test_picture,
+        C_vgahdmi => C_vgahdmi,
+        --C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
+        C_vgahdmi_test_picture => C_vgahdmi_test_picture,
 
-      C_vgatext => C_vgatext,
-      C_vgatext_label => C_vgatext_label,
-      C_vgatext_mode => C_vgatext_mode,
-      C_vgatext_bits => C_vgatext_bits,
-      C_vgatext_bram_mem => C_vgatext_bram_mem,
-      C_vgatext_reset => C_vgatext_reset,
-      C_vgatext_palette => C_vgatext_palette,
-      C_vgatext_text => C_vgatext_text,
-      C_vgatext_monochrome => C_vgatext_monochrome,
-      C_vgatext_font_height => C_vgatext_font_height,
-      C_vgatext_char_height => C_vgatext_char_height,
-      C_vgatext_font_linedouble => C_vgatext_font_linedouble,
-      C_vgatext_font_depth => C_vgatext_font_depth,
-      C_vgatext_bus_read => C_vgatext_bus_read,
-      C_vgatext_reg_read => C_vgatext_reg_read,
-      C_vgatext_finescroll => C_vgatext_finescroll,
-      C_vgatext_text_fifo => C_vgatext_text_fifo,
-      C_vgatext_text_fifo_step => C_vgatext_text_fifo_step,
-      C_vgatext_text_fifo_width => C_vgatext_text_fifo_width,
-      C_vgatext_bitmap => C_vgatext_bitmap,
-      C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
-      C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
-      C_vgatext_bitmap_fifo_step => C_vgatext_bitmap_fifo_step,
-      C_vgatext_bitmap_fifo_height => C_vgatext_bitmap_fifo_height,
-      C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
-      C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
+        C_vgatext => C_vgatext,
+        C_vgatext_label => C_vgatext_label,
+        C_vgatext_mode => C_vgatext_mode,
+        C_vgatext_bits => C_vgatext_bits,
+        C_vgatext_bram_mem => C_vgatext_bram_mem,
+        C_vgatext_reset => C_vgatext_reset,
+        C_vgatext_palette => C_vgatext_palette,
+        C_vgatext_text => C_vgatext_text,
+        C_vgatext_monochrome => C_vgatext_monochrome,
+        C_vgatext_font_height => C_vgatext_font_height,
+        C_vgatext_char_height => C_vgatext_char_height,
+        C_vgatext_font_linedouble => C_vgatext_font_linedouble,
+        C_vgatext_font_depth => C_vgatext_font_depth,
+        C_vgatext_bus_read => C_vgatext_bus_read,
+        C_vgatext_reg_read => C_vgatext_reg_read,
+        C_vgatext_finescroll => C_vgatext_finescroll,
+        C_vgatext_text_fifo => C_vgatext_text_fifo,
+        C_vgatext_text_fifo_step => C_vgatext_text_fifo_step,
+        C_vgatext_text_fifo_width => C_vgatext_text_fifo_width,
+        C_vgatext_bitmap => C_vgatext_bitmap,
+        C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
+        C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
+        C_vgatext_bitmap_fifo_step => C_vgatext_bitmap_fifo_step,
+        C_vgatext_bitmap_fifo_height => C_vgatext_bitmap_fifo_height,
+        C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
+        C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
 
         C_debug => C_debug
     )
