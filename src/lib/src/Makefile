@@ -128,6 +128,11 @@ libs:
 	rm -fr ${OBJDIR}
 	${MAKE} ulx2s
 
+clean: clean_lib_objs
+
+clean_lib_objs:
+	rm -fr ${OBJDIR}
+
 all_libs:
 	${MAKE} ARCH=riscv libs
 	${MAKE} ARCH=mips ENDIANFLAGS=-EL libs
