@@ -1,0 +1,17 @@
+#
+# ZYBO ft2232hq usbserial jtag
+#
+
+interface ftdi
+ftdi_device_desc "Digilent Adept USB Device"
+ftdi_vid_pid 0x0403 0x6010
+
+ftdi_layout_init 0x3088 0x1f8b
+#ftdi_layout_signal nTRST -data 0x1000 -oe 0x1000
+# 0x2000 is reset
+ftdi_layout_signal nSRST -data 0x3000 -oe 0x1000
+# green MIO7 LED
+ftdi_layout_signal LED -data 0x0010
+#ftdi_layout_signal LED -data 0x1000
+
+reset_config srst_pulls_trst
