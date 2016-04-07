@@ -75,7 +75,7 @@ entity glue_sram is
 	C_cpus: integer := 1;
 	C_bram_size: integer := 2;	-- 2 or 16 KBytes
 	C_i_rom_only: boolean := true;
-	C_icache_size: integer := 8;	-- 0, 2, 4 or 8 KBytes
+	C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_sram: boolean := true;
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
