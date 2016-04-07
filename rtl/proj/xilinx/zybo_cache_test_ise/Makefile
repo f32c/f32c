@@ -21,9 +21,11 @@ vfiles = \
 vhdfiles = \
 ../../../xilinx/zybo_toplevel_cache_test.vhd \
 ../../../generic/glue_sram_min.vhd \
-../../../generic/bram_mi32_eb.vhd \
-../../../generic/bram_mi32_el.vhd \
-../../../generic/bram_rv32.vhd \
+../../../generic/bram.vhd \
+../../../generic/boot_block_pack.vhd \
+../../../generic/bootloader/boot_sio_mi32el.vhd \
+../../../generic/bootloader/boot_sio_mi32eb.vhd \
+../../../generic/bootloader/boot_sio_rv32el.vhd \
 ../../../generic/bram_true2p_1clk.vhd \
 ../../../generic/bptrace.vhd \
 ../../../generic/reg1w2r.vhd \
@@ -53,11 +55,12 @@ vhdfiles = \
 ../../../soc/fm/rds.vhd \
 ../../../soc/fm/bram_rds.vhd \
 ../../../soc/fm/message.vhd \
+../../../soc/fm/lowpass.vhd \
 ../../../soc/vgahdmi/vgahdmif.vhd \
 ../../../soc/vgahdmi/videofifo.vhd \
 ../../../xilinx/hdmi_out_xc7.vhd \
-../../../xilinx/pll_125M_250M_100M_25M.vhd \
-../../../xilinx/mmcm_125M_81M25_250M521_25M052.vhd \
+../../../xilinx/clocks/zybo/pll_125M_250M_100M_25M.vhd \
+../../../xilinx/clocks/zybo/mmcm_125M_81M25_250M521_25M052.vhd \
 ../../../generic/bram_video.vhd \
 
 include ../include/xilinx.mk
