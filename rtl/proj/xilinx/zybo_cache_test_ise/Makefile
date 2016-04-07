@@ -12,15 +12,16 @@ xc3sprog_interface = jtaghs1_fast
 xc3sprog_device = 1
 SHELL = /bin/bash
 
-vfiles = \
-../../../soc/pid/ctrlpid_v.v \
-../../../soc/pid/simotor_v.v \
-../../../soc/pid/rotary_decoder_v.v \
-../../../soc/vgahdmi/vgahdmif_v.v \
+#vfiles = \
+#../../../soc/pid/ctrlpid_v.v \
+#../../../soc/pid/simotor_v.v \
+#../../../soc/pid/rotary_decoder_v.v \
+#../../../soc/vgahdmi/vgahdmif_v.v \
 
 vhdfiles = \
 ../../../xilinx/zybo_toplevel_cache_test.vhd \
 ../../../generic/glue_sram_min.vhd \
+../../../generic/sram_emu.vhd \
 ../../../generic/bram.vhd \
 ../../../generic/boot_block_pack.vhd \
 ../../../generic/bootloader/boot_sio_mi32el.vhd \
@@ -46,21 +47,7 @@ vhdfiles = \
 ../../../soc/spi.vhd \
 ../../../soc/gpio.vhd \
 ../../../soc/timer.vhd \
-../../../soc/pid/pid.vhd \
-../../../soc/pid/ctrlpid.vhd \
-../../../soc/pid/simotor.vhd \
-../../../soc/pid/rotary_decoder.vhd \
-../../../soc/fm/fm.vhd \
-../../../soc/fm/fmgen.vhd \
-../../../soc/fm/rds.vhd \
-../../../soc/fm/bram_rds.vhd \
-../../../soc/fm/message.vhd \
-../../../soc/fm/lowpass.vhd \
-../../../soc/vgahdmi/vgahdmif.vhd \
-../../../soc/vgahdmi/videofifo.vhd \
-../../../xilinx/hdmi_out_xc7.vhd \
 ../../../xilinx/clocks/zybo/pll_125M_250M_100M_25M.vhd \
 ../../../xilinx/clocks/zybo/mmcm_125M_81M25_250M521_25M052.vhd \
-../../../generic/bram_video.vhd \
 
 include ../include/xilinx.mk

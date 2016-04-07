@@ -43,15 +43,16 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: 81/100/125 MHz
-	-- vivado at 81MHz: screen flickers, fetch 1 byte late?
-	-- ise at 81MHz: no flicker
-	-- at 100MHz both ISE and Vivado don't flicker 
-	C_clk_freq: integer := 100;
+	-- Main clock: 25/81/100/125 MHz
+	C_clk_freq: integer := 25;
 
 	-- SoC configuration options
-	C_bram_size: integer := 16;
+	C_bram_size: integer := 8;
 	C_i_rom_only: boolean := false;
+        C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
+        C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 25bits -> 2^25 -> 32MB to be cached
 	C_sio: integer := 1;
 	C_spi: integer := 2;
 	C_gpio: integer := 32;
@@ -92,6 +93,14 @@ architecture Behavioral of glue is
     signal sram_we_lower, sram_we_upper: std_logic;
     signal from_sram_lower, from_sram_upper: std_logic_vector(7 downto 0);
 begin
+
+    clk25: if C_clk_freq = 25 generate
+    clkgen25: entity work.pll_125M_250M_100M_25M
+    port map(
+      clk_in1 => clk_125m, clk_out1 => clk_250MHz, clk_out2 => open, clk_out3 => clk_25MHz
+    );
+    clk <= clk_25MHz;
+    end generate;
 
     clk81: if C_clk_freq = 81 generate
     clkgen100: entity work.mmcm_125M_81M25_250M521_25M052
@@ -146,41 +155,17 @@ begin
 	sram_lbl => sram_lbl, sram_ubl => sram_ubl
     );
 
-    sram_emul_lower: entity work.bram_true2p_1clk
-    generic map (
-        dual_port => false,
-        data_width => 8,
-        addr_width => 12
+    sram_chip_emulation: entity work.sram_emu
+    generic map
+    (
+      C_addr_width => 12
     )
-    port map (
-        clk => not clk,
-        we_a => sram_we_lower,
-        addr_a => sram_a(11 downto 0),
-        data_in_a => sram_d(7 downto 0), data_out_a => from_sram_lower,
-	we_b => '0', addr_b => (others => '0'),
-        data_in_b => (others => '0'), data_out_b => open
+    port map
+    (
+      clk => clk,
+      sram_a => sram_a(11 downto 0), sram_d => sram_d,
+      sram_wel => sram_wel,
+      sram_lbl => sram_lbl, sram_ubl => sram_ubl
     );
-
-    sram_emul_upper: entity work.bram_true2p_1clk
-    generic map (
-        dual_port => false,
-        data_width => 8,
-        addr_width => 12
-    )
-    port map (
-        clk => not clk,
-        we_a => sram_we_upper,
-        addr_a => sram_a(11 downto 0),
-        data_in_a => sram_d(15 downto 8), data_out_a => from_sram_upper,
-	we_b => '0', addr_b => (others => '0'),
-        data_in_b => (others => '0'), data_out_b => open
-    );
-
-    sram_d(7 downto 0) <= from_sram_lower when sram_wel = '1'
-      else (others => 'Z');
-    sram_d(15 downto 8) <= from_sram_upper when sram_wel = '1'
-      else (others => 'Z');
-    sram_we_lower <= not (sram_wel or sram_lbl);
-    sram_we_upper <= not (sram_wel or sram_ubl);
 
 end Behavioral;
