@@ -218,7 +218,8 @@ begin
     acram_byte_we <= R_byte_sel;
     acram_en <= R_we;
 
-    data_out <= R_bus_out;
+    --data_out <= R_bus_out;
+    data_out <= acram_data_rd;
     snoop_addr <= R_snoop_addr;
     snoop_cycle <= R_snoop_cycle;
 
