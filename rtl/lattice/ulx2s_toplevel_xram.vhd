@@ -116,7 +116,7 @@ entity toplevel is
     C_sram: boolean := true;
       C_sram_refresh: boolean := true; -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
       C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
-      -- C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!! defined below as constant
+      -- C_sram_pipelined_read: boolean := true; -- works only at 81.25 MHz !!! defined below as constant
 
     C_sio: integer := 1; -- number of rs232 serial ports
 
@@ -237,7 +237,7 @@ entity toplevel is
 end toplevel;
 
 architecture Behavioral of toplevel is
-  constant C_pipelined_read: boolean := C_clk_freq = 81; -- works only at 81.25 MHz !!!
+  constant C_sram_pipelined_read: boolean := C_clk_freq = 81; -- works only at 81.25 MHz !!!
   signal clk, clk_325m, ena_325m: std_logic;
   signal clk_112M5, clk_433m: std_logic;
   signal pll_lock: std_logic;
@@ -347,7 +347,7 @@ begin
       C_sram => C_sram,
       C_sram_refresh => C_sram_refresh,
       C_sram_wait_cycles => C_sram_wait_cycles, -- ISSI, OK do 87.5 MHz
-      C_pipelined_read => C_pipelined_read, -- works only at 81.25 MHz !!!
+      C_sram_pipelined_read => C_sram_pipelined_read, -- works only at 81.25 MHz !!!
       C_sio => C_sio,
       C_spi => C_spi,
       C_simple_out => C_simple_out,
