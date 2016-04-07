@@ -50,11 +50,11 @@ entity glue is
 
         -- axi cache ram
 	C_acram: boolean := true;
-	C_acram_emu: boolean := true;
+	C_acram_emu: boolean := false;
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
-        C_icache_size: integer := 2; -- 0, 2, 4, 8, 16, 32 KBytes
-        C_dcache_size: integer := 2; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
         C_cached_addr_bits: integer := 20; -- number of lower RAM address bits 2^25 -> 32MB to be cached
 
         C3_NUM_DQ_PINS        : integer := 16;
