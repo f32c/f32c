@@ -44,7 +44,7 @@ entity glue is
 	C_debug: boolean := false;
 
 	-- Main clock: 25/81/100/125 MHz
-	C_clk_freq: integer := 25;
+	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
 	C_bram_size: integer := 8;
@@ -88,10 +88,6 @@ architecture Behavioral of glue is
     signal sram_a: std_logic_vector(18 downto 0);
     signal sram_d: std_logic_vector(15 downto 0);
     signal sram_wel, sram_lbl, sram_ubl: std_logic;
-
-    -- SRAM emulation
-    signal sram_we_lower, sram_we_upper: std_logic;
-    signal from_sram_lower, from_sram_upper: std_logic_vector(7 downto 0);
 begin
 
     clk25: if C_clk_freq = 25 generate
