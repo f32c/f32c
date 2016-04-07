@@ -50,6 +50,7 @@ entity glue is
 
         -- axi cache ram
 	C_acram: boolean := true;
+	C_acram_emu: boolean := true;
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         C_icache_size: integer := 2; -- 0, 2, 4, 8, 16, 32 KBytes
@@ -63,7 +64,7 @@ entity glue is
 	C_vgahdmi: boolean := false;
 	C_vgahdmi_test_picture: integer := 1; -- enable test picture
 
-    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: ESA11-7a35i MIPS compatible soft-core 100MHz 32MB DDR3"; -- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480
       C_vgatext_bits: integer := 4;   -- 64 possible colors
@@ -105,8 +106,8 @@ entity glue is
 	C_sio: integer := 1;   -- 1 UART channel
 	C_spi: integer := 2;   -- 2 SPI channels (ch0 not connected, ch1 SD card)
 	C_gpio: integer := 32; -- 32 GPIO bits
-	C_ps2: boolean := true; -- PS/2 keyboard
-        C_simple_io: boolean := true -- includes 31 simple inputs and 32 simple outputs
+	C_ps2: boolean := false; -- PS/2 keyboard
+    C_simple_io: boolean := true -- includes 31 simple inputs and 32 simple outputs
     );
     port (
 	i_100MHz_P, i_100MHz_N: in std_logic;
@@ -358,7 +359,7 @@ begin
     PS2_A_CLK	<= '0' when ps2_clk_out='0' else 'Z';
 
     -- generic BRAM glue
-    glue_bram: entity work.glue_xram
+    glue_xram: entity work.glue_xram
     generic map (
       C_clk_freq => C_clk_freq,
       C_arch => C_arch,
@@ -417,10 +418,10 @@ begin
 	clk_25MHz => clk_25MHz,
 	clk_250MHz => clk_250MHz,
 	acram_en => ram_en,
-	acram_addr(29 downto 2) => ram_address(29 downto 2),
-	acram_byte_we(3 downto 0) => ram_byte_we(3 downto 0),
-	acram_data_rd(31 downto 0) => ram_data_read(31 downto 0),
-	acram_data_wr(31 downto 0) => ram_data_write(31 downto 0),
+	acram_addr => ram_address,
+	acram_byte_we => ram_byte_we,
+	acram_data_rd => ram_data_read,
+	acram_data_wr => ram_data_write,
 	acram_read_busy => ram_read_busy,
 	sio_txd(0) => UART1_TXD, 
 	sio_rxd(0) => UART1_RXD,
@@ -477,6 +478,7 @@ begin
     VGA_VSYNC <= vga_vsync_n;
     VGA_HSYNC <= vga_hsync_n;
 
+    acram_emu_gen: if C_acram_emu generate
     acram_emulation: entity work.acram_emu
     generic map
     (
@@ -487,13 +489,15 @@ begin
       clk => clk,
       acram_a => ram_address(13 downto 2),
       acram_d_wr => ram_data_write,
-      --acram_d_rd => ram_data_read,
+      acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
       acram_en => ram_en
     );
     --ram_data_read <= x"01234567"; -- debug purpose
+    end generate;
 
-    u3_memCache : entity work.axi_cache -- D-Memory
+    acram_real_gen: if not C_acram_emu generate
+    axi_cache_ram: entity work.axi_cache -- D-Memory
     port map (
         sys_clk            => clk,
         reset              => sio_break,
@@ -694,5 +698,6 @@ begin
         s02_axi_rvalid       => l02_axi_rvalid,
         s02_axi_rready       => l02_axi_rready
     );
+    end generate;
 
 end Behavioral;
