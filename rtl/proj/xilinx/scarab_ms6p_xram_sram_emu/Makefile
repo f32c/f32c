@@ -19,7 +19,7 @@ vfiles = \
 ../../../soc/vgahdmi/vgahdmif_v.v \
 
 vhdfiles = \
-../../../xilinx/scarab_ms6p_toplevel_xram_emu.vhd \
+../../../xilinx/scarab_ms6p_toplevel_xram_sram_emu.vhd \
 ../../../xilinx/clocks/scarab/pll_50M_112M5.vhd \
 ../../../xilinx/clocks/scarab/pll_50M_100M.vhd \
 ../../../xilinx/clocks/scarab/pll_50M_100M_25M_250M.vhd \
