@@ -57,8 +57,8 @@ entity glue is
 	C_acram: boolean := true;
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
-        C_icache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
-        C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 25bits -> 2^25 -> 32MB to be cached
 
 	C_sio: integer := 1;
@@ -219,12 +219,12 @@ begin
     acram_emulation: entity work.acram_emu
     generic map
     (
-      C_addr_width => 12
+      C_addr_width => 14
     )
     port map
     (
       clk => clk,
-      acram_a => ram_address(13 downto 2),
+      acram_a => ram_address(15 downto 2),
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
