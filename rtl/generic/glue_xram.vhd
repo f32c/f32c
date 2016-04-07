@@ -96,9 +96,8 @@ generic (
   C_sram_refresh: boolean := false; -- sram refresh workaround (RED ULX2S boards need this)
   C_sram8: boolean := false; -- 8-bit SRAM
   C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
-  C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!! XXX rename to C_sram_pipelined_read
+  C_sram_pipelined_read: boolean := false; -- works only at 81.25 MHz !!!
   C_sdram: boolean := false;
-  C_sdram_separate_arbiter: boolean := false;
   C_acram: boolean := false; -- AXI CACHE RAM
   C_sio: integer := 1;
   C_sio_init_baudrate: integer := 115200;
@@ -602,7 +601,7 @@ begin
 	C_ports => C_xram_ports, -- extra ports: framebuffer, textmode and PCM audio
 	C_prio_port => fb_port, -- framebuffer
 	C_wait_cycles => C_sram_wait_cycles,
-	C_pipelined_read => C_pipelined_read
+	C_pipelined_read => C_sram_pipelined_read
     )
     port map (
 	clk => clk, sram_a => sram_a(18 downto 0), sram_d => sram_d,
@@ -638,7 +637,7 @@ begin
         C_ports => C_xram_ports, -- extra ports: framebuffer, textmode and PCM audio
         C_prio_port => fb_port, -- framebuffer
         C_wait_cycles => C_sram_wait_cycles,
-        C_pipelined_read => C_pipelined_read
+        C_pipelined_read => C_sram_pipelined_read
     )
     port map (
         clk => clk,
@@ -651,7 +650,6 @@ begin
 
     G_sdram:
     if C_sdram generate
-    --use_sdram: if (not C_sdram_separate_arbiter) and C_ram_emu_addr_width = 0 generate
     sdram: entity work.sdram_controller
     generic map (
       C_ports => C_xram_ports,
@@ -677,97 +675,23 @@ begin
       sdram_cke => sdram_cke, sdram_clk => sdram_clk,
       sdram_we => sdram_we, sdram_cs => sdram_cs
     );
-    --end generate; -- sdram
-
---    use_arbiter_sdram: if C_sdram_separate_arbiter and C_ram_emu_addr_width = 0 generate
---    inst_sdram_arbiter: entity work.arbiter
---    generic map (
---      C_ports => C_xram_ports
---    )
---    port map (
---      clk => clk, reset => sio_break_internal(0),
---      -- internal connections
---      bus_out => from_xram, bus_in => to_xram, ready_out => xram_ready,
---      snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
---      -- arbiter-RAM connection
---      addr_strobe => xram_request, write => xram_write,
---      addr => xram_addr, byte_sel => xram_byte_sel,
---      data_in => xram_data_in, data_out => xram_data_out,
---      ready_next_cycle => xram_ready_next_cycle
---    );
---    inst_sdram: entity work.sdram_ctrl
---    generic map (
---      --C_ras => 3,
---      --C_cas => 3,
---      --C_pre => 3,
---      --C_clock_range => 2,
---      sdram_address_width => C_sdram_address_width,
---      sdram_column_bits => C_sdram_column_bits,
---      sdram_startup_cycles => C_sdram_startup_cycles,
---      cycles_per_refresh => C_sdram_cycles_per_refresh
---    )
---    port map (
---      clk => clk, reset => sio_break_internal(0),
---      -- arbiter-RAM connection
---      cmd_enable => xram_request, cmd_wr => xram_write,
---      cmd_address => xram_addr(C_sdram_address_width-2 downto 0),
---      cmd_byte_enable => xram_byte_sel,
---      cmd_data_in => xram_data_in, data_out => xram_data_out,
---      ready_next_cycle => xram_ready_next_cycle,
---      -- physical SDRAM interface
---      sdram_addr => sdram_addr, sdram_data => sdram_data,
---      sdram_ba => sdram_ba, sdram_dqm => sdram_dqm,
---      sdram_ras => sdram_ras, sdram_cas => sdram_cas,
---      sdram_cke => sdram_cke, sdram_clk => sdram_clk,
---      sdram_we => sdram_we, sdram_cs => sdram_cs
---    );
---    end generate; -- end arbiter_sdram
-
-    -- for debugging SDRAM and i-cache issues
-    -- here is simple arbiter and BRAM based RAM emulation
---    use_arbiter_ramemu: if C_ram_emu_addr_width > 0 generate
---    inst_emu_arbiter: entity work.arbiter
---    generic map (
---      C_ports => C_xram_ports
---    )
---    port map (
---      clk => clk, reset => sio_break_internal(0),
---      -- internal connections
---      bus_out => from_xram, bus_in => to_xram, ready_out => xram_ready,
---      snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
---      -- external RAM connection
---      addr_strobe => xram_request, write => xram_write,
---      addr => xram_addr, byte_sel => xram_byte_sel,
---      data_in => xram_data_in, data_out => xram_data_out,
---      ready_next_cycle => xram_ready_next_cycle
---    );
---    inst_ram_emu: entity work.ram_emu
---    generic map (
---      C_wait_states => C_ram_emu_wait_states,
---      C_addr_width => C_ram_emu_addr_width
---    )
---    port map (
---      clk => clk, reset => sio_break_internal(0),
---      request => xram_request, write => xram_write,
---      addr => xram_addr, byte_sel => xram_byte_sel,
---      data_in => xram_data_in, data_out => xram_data_out,
---      ready_next_cycle => xram_ready_next_cycle
---    );
---    -- disable SDRAM, but we need to
---    -- use external signals here so
---    -- xilinx compiler will be happy
---    sdram_addr <= (others => '-');
---    sdram_data <= (others => 'Z');
---    sdram_ba <= (others => '-');
---    sdram_dqm <= (others => '-');
---    sdram_ras <= '1';
---    sdram_cas <= '1';
---    sdram_cke <= '1';
---    sdram_clk <= '0';
---    sdram_we <= '1';
---    sdram_cs <= '1';
---    end generate; -- end arbiter_ramemu
     end generate; -- end final G_sdram
+
+    G_no_sdram: if not C_sdram generate
+    -- disable SDRAM, but we need to
+    -- use external signals here so
+    -- xilinx compiler will be happy
+    sdram_addr <= (others => '-');
+    sdram_data <= (others => 'Z');
+    sdram_ba <= (others => '-');
+    sdram_dqm <= (others => '-');
+    sdram_ras <= '1';
+    sdram_cas <= '1';
+    sdram_cke <= '1';
+    sdram_clk <= '0';
+    sdram_we <= '1';
+    sdram_cs <= '1';
+    end generate; -- G_no_sdram
 
     G_acram:
     if C_acram generate
@@ -791,22 +715,6 @@ begin
 	bus_in => to_xram, ready_out => xram_ready
     );
     end generate; -- G_acram
-    
-    G_no_sdram: if not C_sdram generate
-    -- disable SDRAM, but we need to
-    -- use external signals here so
-    -- xilinx compiler will be happy
-    sdram_addr <= (others => '-');
-    sdram_data <= (others => 'Z');
-    sdram_ba <= (others => '-');
-    sdram_dqm <= (others => '-');
-    sdram_ras <= '1';
-    sdram_cas <= '1';
-    sdram_cke <= '1';
-    sdram_clk <= '0';
-    sdram_we <= '1';
-    sdram_cs <= '1';
-    end generate; -- G_no_sdram
 
     -- RS232 sio
     G_sio: for i in 0 to C_sio - 1 generate
