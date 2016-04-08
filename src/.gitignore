@@ -1,0 +1,6 @@
+*.o
+*.kdev4
+*~
+*.bin
+*.hex
+*.kate-swp
