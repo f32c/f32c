@@ -1,10 +1,10 @@
 [Project]
 ProjectVersion=2.0
-Version=Lattice Semiconductor Corporation iCEcube - Release: 2015.08.27744 - Build Date: Oct 14 2015 17:07:49
+Version=Lattice Semiconductor Corporation iCEcube - Release: 2016.02.27810 - Build Date: Jan 28 2016 18:12:42
 ProjectName=blink
 Vendor=SiliconBlue
 Synthesis=synplify
-ProjectVFiles=../../../generic/bram.vhd=work,../../../generic/boot_block_pack.vhd=work,../../../generic/bootloader/boot_sio_mi32eb.vhd=work,../../../generic/bootloader/boot_sio_mi32el.vhd=work,../../../generic/bootloader/boot_sio_rv32el.vhd=work,../../../generic/bptrace.vhd=work,../../../generic/reg1w2r.vhd=work,../../../cpu/alu.vhd=work,../../../cpu/loadalign.vhd=work,../../../cpu/shift.vhd=work,../../../cpu/defs_f32c.vhd=work,../../../cpu/defs_mi32.vhd=work,../../../cpu/defs_rv32.vhd=work,../../../cpu/idecode_mi32.vhd=work,../../../cpu/idecode_rv32.vhd=work,../../../cpu/debug.vhd=work,../../../soc/sio.vhd=work,../../../soc/spi.vhd=work,../../../soc/gpio.vhd=work,../../../soc/timer.vhd=work,../../../cpu/pipeline.vhd=work,../../../generic/glue_bram.vhd=work,../../../lattice/icoboard_beta_toplevel_bram.vhd
+ProjectVFiles=../../../generic/bram.vhd=work,../../../generic/boot_block_pack.vhd=work,../../../generic/bootloader/boot_sio_mi32eb.vhd=work,../../../generic/bootloader/boot_sio_mi32el.vhd=work,../../../generic/bootloader/boot_sio_rv32el.vhd=work,../../../generic/bptrace.vhd=work,../../../cpu/alu.vhd=work,../../../cpu/loadalign.vhd=work,../../../cpu/shift.vhd=work,../../../cpu/defs_f32c.vhd=work,../../../cpu/defs_mi32.vhd=work,../../../cpu/defs_rv32.vhd=work,../../../cpu/idecode_mi32.vhd=work,../../../cpu/idecode_rv32.vhd=work,../../../cpu/debug.vhd=work,../../../soc/sio.vhd=work,../../../soc/spi.vhd=work,../../../soc/gpio.vhd=work,../../../soc/timer.vhd=work,../../../cpu/pipeline.vhd=work,../../../generic/glue_bram.vhd=work,../../../lattice/icoboard_beta_toplevel_bram.vhd=work,../../../lattice/reg1w2r_ice40.vhd
 ProjectCFiles=
 CurImplementation=blink_Implmnt
 Implementations=blink_Implmnt
@@ -19,13 +19,13 @@ DevicePower=
 NetlistFile=blink_Implmnt/blink.edf
 AdditionalEDIFFile=
 IPEDIFFile=
-DesignLib=blink_Implmnt/sbt/netlist/oadb-top
-DesignView=_ep
-DesignCell=top
+DesignLib=
+DesignView=
+DesignCell=
 SynthesisSDCFile=blink_Implmnt/blink.scf
 UserPinConstraintFile=
 UserSDCFile=
-PhysicalConstraintFile=icoboard_beta.pcf
+PhysicalConstraintFile=
 BackendImplPathName=
 Devicevoltage=1.14
 DevicevoltagePerformance=+/-5%(datasheet default)
