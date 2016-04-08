@@ -36,6 +36,11 @@ static uint8_t sio_rxbuf_head;
 static uint8_t sio_rxbuf_tail;
 static uint8_t sio_tx_xoff;
 
+int sio_rxempty() {
+    return sio_rxbuf_head == sio_rxbuf_tail;
+}
+
+
 
 __attribute__((optimize("-Os"))) int
 sio_probe_rx(void)

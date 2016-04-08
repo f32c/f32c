@@ -34,5 +34,7 @@ int sio_getchar(int);
 int sio_putchar(int, int);
 void sio_setbaud(int);
 
+int sio_rxempty();
+
 #endif /* !_IO_H_ */
 

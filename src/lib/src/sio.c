@@ -44,6 +44,10 @@ static uint8_t sio_rxbuf_tail;	/* Managed by sio_getchar() */
 static uint8_t sio_tx_xoff;
 static uint8_t sio_isr_registered;
 
+int sio_rxempty() {
+    return sio_rxbuf_head == sio_rxbuf_tail;
+}
+
 
 static __attribute__((optimize("-Os"))) int
 sio_rx_isr(void)
