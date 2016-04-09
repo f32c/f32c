@@ -33,8 +33,6 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 use work.f32c_pack.all;
 use work.sram_pack.all;
-use work.boot_block_pack.all;
-use work.boot_rom_mi32el.all;
 
 
 entity glue is
@@ -86,7 +84,7 @@ entity glue is
 	C_sdcard: boolean := true;
 	C_framebuffer: boolean := true;
 	C_pcm: boolean := true;
-	C_timer: boolean := true;
+	C_timer: boolean := false;
 	C_tx433: boolean := false; -- set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
 	C_dds: boolean := false
     );
@@ -155,7 +153,7 @@ architecture Behavioral of glue is
 
     -- Block RAM
     signal bram_i_to_cpu, bram_d_to_cpu: std_logic_vector(31 downto 0);
-    signal bram_i_ready, bram_d_ready, dmem_bram_enable, dmem_bram_write: std_logic;
+    signal bram_i_ready, bram_d_ready, dmem_bram_enable: std_logic;
 
     -- I/O
     signal io_write: std_logic;
@@ -531,19 +529,17 @@ begin
     G_i_d_ram:
     if not C_i_rom_only generate
     begin
-    dmem_bram_write <= dmem_addr_strobe(0) and dmem_write(0) when dmem_addr(0)(31) /= '1'
+    dmem_bram_enable <= dmem_addr_strobe(0) when dmem_addr(0)(31) /= '1'
       else '0';
-    bram_i_ready <= imem_addr_strobe(0);
-    bram_d_ready <= dmem_addr_strobe(0);
     bram: entity work.bram
     generic map (
-        boot_block => boot_rom_mi32el,
 	C_mem_size => C_bram_size
     )
     port map (
-	clk => clk,
+	clk => clk, imem_addr_strobe => imem_addr_strobe(0),
 	imem_addr => imem_addr(0), imem_data_out => bram_i_to_cpu,
-	dmem_write => dmem_bram_write,
+	imem_data_ready => bram_i_ready, dmem_data_ready => bram_d_ready,
+	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write(0),
 	dmem_byte_sel => dmem_byte_sel(0), dmem_addr => dmem_addr(0),
 	dmem_data_out => bram_d_to_cpu, dmem_data_in => cpu_to_dmem(0)
     );
@@ -552,17 +548,15 @@ begin
     G_i_rom:
     if C_i_rom_only generate
     begin
-    bram_i_ready <= imem_addr_strobe(0);
-    bram_d_ready <= '1';
     bram: entity work.bram
     generic map (
-        boot_block => boot_rom_mi32el,
 	C_mem_size => C_bram_size
     )
     port map (
-	clk => clk,
+	clk => clk, imem_addr_strobe => imem_addr_strobe(0),
 	imem_addr => imem_addr(0), imem_data_out => bram_i_to_cpu,
-	dmem_write => '0',
+	imem_data_ready => bram_i_ready, dmem_data_ready => open,
+	dmem_addr_strobe => '0', dmem_write => '0',
 	dmem_byte_sel => x"0", dmem_addr => (others => '0'),
 	dmem_data_out => open, dmem_data_in => (others => '0')
     );
