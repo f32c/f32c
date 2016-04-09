@@ -1,6 +1,6 @@
 [Project]
 ProjectVersion=2.0
-Version=Lattice Semiconductor Corporation iCEcube - Release: 2016.02.27810 - Build Date: Jan 28 2016 18:12:42
+Version=Lattice Semiconductor Corporation iCEcube - Release: 2016.02.27810 - Build Date: Jan 29 2016 02:09:56
 ProjectName=blink
 Vendor=SiliconBlue
 Synthesis=synplify
@@ -25,7 +25,7 @@ DesignCell=top
 SynthesisSDCFile=blink_Implmnt/blink.scf
 UserPinConstraintFile=
 UserSDCFile=
-PhysicalConstraintFile=
+PhysicalConstraintFile=icoboard_beta.pcf
 BackendImplPathName=
 Devicevoltage=1.14
 DevicevoltagePerformance=+/-5%(datasheet default)
