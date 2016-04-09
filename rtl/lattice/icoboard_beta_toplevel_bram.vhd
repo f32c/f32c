@@ -180,19 +180,21 @@ begin
 	spi_miso(0) => '-',  -- spi_miso(1) => '-',
 	--gpio(31 downto 0) => gpio(31 downto 0),
 	--gpio(127 downto 32) => open,
-	simple_out(2 downto 0) => led(3 downto 1),
+	--simple_out(2 downto 0) => led(3 downto 1),
+        simple_out(1 downto 0) => led(2 downto 1),
 	simple_out(31 downto 3) => open,
 	--simple_in(0) => btn_k2,
 	--simple_in(1) => btn_k3,
 	simple_in(31 downto 0) => open
     );
     
-    --process(clk)
-    --begin
-    --  if rising_edge(clk) then
-    --    counter <= counter+1;
-    --  end if;
-    --end process;
-    --led(3) <= counter(23);
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        counter <= counter+1;
+      end if;
+    end process;
+    led(3) <= counter(23);
+    --led(3 downto 1) <= counter(23 downto 21);
   
 end Behavioral;
