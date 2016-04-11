@@ -159,6 +159,7 @@ endif
 
 # Pull in any module-specific compiler flags
 MK_CFLAGS += ${CFLAGS}
+MK_CXXFLAGS += ${CXXFLAGS}
 
 # Linker flags
 MK_LDFLAGS += -N ${ENDIANFLAGS}
@@ -181,7 +182,7 @@ MK_ARFLAGS = r
 OBJFLAGS = -R .rel.dyn -R .MIPS.abiflags
 
 CC = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
-CXX = ${ARCH}-elf-g++ ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES} -fno-rtti -fno-exceptions
+CXX = ${ARCH}-elf-g++ ${MK_CFLAGS} ${MK_CXXFLAGS} ${MK_STDINC} ${MK_INCLUDES} -fno-rtti -fno-exceptions
 AS = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_ASFLAGS} ${MK_INCLUDES}
 LD = ${ARCH}-elf-ld ${MK_LDFLAGS}
 AR = ${ARCH}-elf-ar ${MK_ARFLAGS}
