@@ -147,8 +147,8 @@ begin
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
     io_to_cpu <= from_sio;
-    imem_data_ready <= '1';
-    dmem_data_ready <= '1';
+    imem_data_ready <= bram_i_ready;
+    dmem_data_ready <= bram_d_ready when dmem_addr(31) = '0' else '1';
 
     -- RS232 sio
     G_sio:
