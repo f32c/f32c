@@ -99,7 +99,7 @@ architecture Behavioral of glue_bram is
     signal imem_addr_strobe, dmem_addr_strobe, dmem_write: std_logic;
     signal imem_data_ready, dmem_data_ready: std_logic;
     signal dmem_byte_sel: std_logic_vector(3 downto 0);
-    signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
+    signal cpu_to_dmem: std_logic_vector(31 downto 0);
     signal io_to_cpu, final_to_cpu_d: std_logic_vector(31 downto 0);
     signal io_addr_strobe: std_logic;
     signal io_addr: std_logic_vector(11 downto 2);
@@ -187,7 +187,7 @@ begin
 	debug_debug => debug_debug,
 	debug_active => debug_active
     );
-    final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
+    final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1' else bram_d_to_cpu;
     intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & '0';
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
