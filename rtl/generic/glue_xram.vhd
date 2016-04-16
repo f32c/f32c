@@ -34,12 +34,6 @@ use ieee.numeric_std.all; -- we need signed type
 
 use work.f32c_pack.all;
 use work.sram_pack.all;
-use work.boot_block_pack.all;
-use work.boot_sio_mi32el.all;
-use work.boot_sio_mi32eb.all;
-use work.boot_sio_rv32el.all;
--- use work.boot_sio_rv32eb.all;
-use work.boot_rom_mi32el.all;
 
 entity glue_xram is
 generic (
@@ -48,7 +42,6 @@ generic (
   -- ISA options
   C_arch: integer := ARCH_MI32;
   C_big_endian: boolean := false;
-  C_boot_rom: boolean := false; -- use bootloader for SPI FLASH ROM (MI32 low endian only)
   C_mult_enable: boolean := true;
   C_branch_likely: boolean := true;
   C_sign_extend: boolean := true;
@@ -87,6 +80,7 @@ generic (
 
   -- SoC configuration options
   C_bram_size: integer := 2;	-- in KBytes
+  C_boot_spi: boolean := false;
   C_icache_expire: boolean := false; -- when true i-cache will just pass data, won't keep them
   C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
   C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
@@ -269,27 +263,6 @@ architecture Behavioral of glue_xram is
     constant refresh_port: integer := 3;
     constant pcm_port: integer := 4;
     constant C_xram_ports: integer := 5;
-
-    type T_endian_select is array(boolean) of integer;
-    constant select_big_endian: T_endian_select := (false => 0, true => 2);
-
-    type T_rom_select is array(boolean) of integer;
-    constant select_rom: T_rom_select := (false => 0, true => 4);
-
-    type T_boot_block_select is array(0 to 7) of boot_block_type;
-    constant boot_block_select: T_boot_block_select :=
-      (  --  (arch, big endian, rom)
-        (ARCH_MI32+select_big_endian(false))+select_rom(false) => boot_sio_mi32el,
-        (ARCH_MI32+select_big_endian(true)) +select_rom(false) => boot_sio_mi32eb,
-        (ARCH_RV32+select_big_endian(false))+select_rom(false) => boot_sio_rv32el,
-        (ARCH_RV32+select_big_endian(true)) +select_rom(false) => (others => (others => '0')), -- RISC-V currently has no big endian support
-        (ARCH_MI32+select_big_endian(false))+select_rom(true) => boot_rom_mi32el,
-        (ARCH_MI32+select_big_endian(true)) +select_rom(true) => (others => (others => '0')),
-        (ARCH_RV32+select_big_endian(false))+select_rom(true) => (others => (others => '0')),
-        (ARCH_RV32+select_big_endian(true)) +select_rom(true) => (others => (others => '0')) -- RISC-V currently has no big endian support
-      );
-
-    constant boot_block: boot_block_type := boot_block_select(C_arch + select_big_endian(C_big_endian) + select_rom(C_boot_rom));
 
     -- io base
     type T_iomap_range is array(0 to 1) of std_logic_vector(15 downto 0);
@@ -1378,8 +1351,10 @@ begin
 
     bram: entity work.bram
     generic map (
-      boot_block => boot_block,
-      C_mem_size => C_bram_size
+	C_bram_size => C_bram_size,
+	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_boot_spi => C_boot_spi
     )
     port map (
       clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,

@@ -28,9 +28,8 @@
 --
 
 -- BRAM block from address 0
--- contains 1K bootloader for f32c
--- BRAM is initialized with bootloader content
--- at loading of FPGA bitstream
+-- contains f32c bootloader, either 512 (SIO) or 1024 (SIO + SPI) bytes long
+-- BRAM is initialized with bootloader content at loading of FPGA bitstream
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -39,17 +38,29 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 use work.f32c_pack.all;
 use work.boot_block_pack.all;
+use work.boot_block_pack.all;
+use work.boot_sio_mi32el.all;
+use work.boot_sio_mi32eb.all;
+use work.boot_sio_rv32el.all;
+use work.boot_rom_mi32el.all;
+
 
 entity bram is
     generic(
-	boot_block: boot_block_type := (others => (others => '0'));
-	C_write_protect_bootloader: boolean := true;
-	C_mem_size: integer
+	C_bram_size: integer; -- in KBytes
+	C_arch: integer; -- ARCH_MI32 or ARCH_RV32
+	C_big_endian: boolean;
+	C_boot_spi: boolean;
+	C_write_protect_bootloader: boolean := true
     );
     port(
 	clk: in std_logic;
+	imem_addr_strobe: in std_logic;
+	imem_data_ready: out std_logic;
 	imem_addr: in std_logic_vector(31 downto 2);
 	imem_data_out: out std_logic_vector(31 downto 0);
+	dmem_addr_strobe: in std_logic;
+	dmem_data_ready: out std_logic;
 	dmem_write: in std_logic;
 	dmem_byte_sel: in std_logic_vector(3 downto 0);
 	dmem_addr: in std_logic_vector(31 downto 2);
@@ -59,7 +70,28 @@ entity bram is
 end bram;
 
 architecture x of bram is
-    type bram_type is array(0 to (C_mem_size * 256 - 1))
+    type T_sel_endian is array(boolean) of integer;
+    constant sel_endian: T_sel_endian := (false => 0, true => 2);
+
+    type T_sel_spi is array(boolean) of integer;
+    constant sel_spi: T_sel_spi := (false => 0, true => 4);
+
+    type T_boot_block_select is array(0 to 7) of boot_block_type;
+    constant boot_block_select: T_boot_block_select := (
+	 --  (arch, big endian, spi)
+	(ARCH_MI32 + sel_endian(false)) + sel_spi(false) => boot_sio_mi32el,
+	(ARCH_MI32 + sel_endian(true)) + sel_spi(false) => boot_sio_mi32eb,
+	(ARCH_RV32 + sel_endian(false)) + sel_spi(false) => boot_sio_rv32el,
+	(ARCH_RV32 + sel_endian(true)) + sel_spi(false) => (others => (others => '0')), -- RISC-V currently has no big endian support
+	(ARCH_MI32 + sel_endian(false)) + sel_spi(true) => boot_rom_mi32el,
+	(ARCH_MI32 + sel_endian(true)) + sel_spi(true) => (others => (others => '0')),
+	(ARCH_RV32 + sel_endian(false)) + sel_spi(true) => (others => (others => '0')),
+	(ARCH_RV32 + sel_endian(true)) + sel_spi(true) => (others => (others => '0')) -- RISC-V currently has no big endian support
+    );
+
+    constant boot_block: boot_block_type := boot_block_select(C_arch + sel_endian(C_big_endian) + sel_spi(C_boot_spi));
+
+    type bram_type is array(0 to (C_bram_size * 256 - 1))
       of std_logic_vector(7 downto 0);
 
     --
@@ -127,7 +159,7 @@ begin
 
     G_rom_protection:
     if C_write_protect_bootloader generate
-    with C_mem_size select write_enable <=
+    with C_bram_size select write_enable <=
 	dmem_addr(10 downto 10) /= 0 and dmem_write = '1' when 2,
 	dmem_addr(11 downto 10) /= 0 and dmem_write = '1' when 4,
 	dmem_addr(12 downto 10) /= 0 and dmem_write = '1' when 8,
@@ -188,4 +220,7 @@ begin
 	    ibram_3 <= bram_3(conv_integer(imem_addr));
 	end if;
     end process;
+
+    imem_data_ready <= '1';
+    dmem_data_ready <= '1';
 end x;
