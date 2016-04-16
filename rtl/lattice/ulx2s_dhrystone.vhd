@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2014 Marko Zec, University of Zagreb
+-- Copyright (c) 2014, 2016 Marko Zec, University of Zagreb
 -- All rights reserved.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,8 @@ entity glue is
 	C_movn_movz: boolean := false;
 
 	-- SoC configuration options
-	C_mem_size: integer := 16;
+	C_bram_size: integer := 16;
+	C_boot_spi: boolean := false;
 	C_write_protect_bootloader: boolean := false;
 	C_sio: boolean := true
     );
@@ -77,18 +78,21 @@ end glue;
 
 architecture Behavioral of glue is
     signal clk: std_logic;
-    signal imem_addr: std_logic_vector(31 downto 2);
-    signal imem_data_read: std_logic_vector(31 downto 0);
-    signal imem_addr_strobe, imem_data_ready: std_logic;
-    signal dmem_addr: std_logic_vector(31 downto 2);
-    signal dmem_addr_strobe, dmem_write: std_logic;
-    signal dmem_bram_write, dmem_data_ready: std_logic;
+
+    -- signals to / from f32c cores
+    signal imem_addr, dmem_addr: std_logic_vector(31 downto 2);
+    signal imem_addr_strobe, dmem_addr_strobe, dmem_write: std_logic;
+    signal imem_data_ready, dmem_data_ready: std_logic;
     signal dmem_byte_sel: std_logic_vector(3 downto 0);
-    signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
-    signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
-    signal io_addr: std_logic_vector(11 downto 2);
+    signal cpu_to_dmem: std_logic_vector(31 downto 0);
+    signal io_to_cpu, final_to_cpu_d: std_logic_vector(31 downto 0);
+
+    -- Block RAM
+    signal bram_i_to_cpu, bram_d_to_cpu: std_logic_vector(31 downto 0);
+    signal bram_i_ready, bram_d_ready, dmem_bram_enable: std_logic;
 
     -- I/O
+    signal io_addr: std_logic_vector(11 downto 2);
     signal io_addr_strobe: std_logic;
     signal from_sio: std_logic_vector(31 downto 0);
     signal sio_ce: std_logic;
@@ -123,12 +127,12 @@ begin
     )
     port map (
 	clk => clk, reset => '0', intr => "000000",
-	imem_addr => imem_addr, imem_data_in => imem_data_read,
+	imem_addr => imem_addr, imem_data_in => bram_i_to_cpu,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,
 	dmem_addr_strobe => dmem_addr_strobe, dmem_addr => dmem_addr,
 	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
-	dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
+	dmem_data_in => final_to_cpu_d, dmem_data_out => cpu_to_dmem,
 	dmem_data_ready => dmem_data_ready,
 	snoop_cycle => '0', snoop_addr => "------------------------------",
 	flush_i_line => open, flush_d_line => open,
@@ -138,7 +142,7 @@ begin
 	debug_out_strobe => open, debug_out_busy => '0',
 	debug_debug => open, debug_active => open
     );
-    final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
+    final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1' else bram_d_to_cpu;
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
@@ -163,48 +167,21 @@ begin
     end generate;
 
     -- Block RAM
-    dmem_bram_write <=
-      dmem_addr_strobe and dmem_write when dmem_addr(31) /= '1' else '0';
-    G_bram_mi32_eb:
-    if C_arch = ARCH_MI32 and C_big_endian generate
-    bram_mi32_eb: entity work.bram_mi32_eb
+    dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
+    bram: entity work.bram
     generic map (
-	C_write_protect_bootloader => C_write_protect_bootloader,
-	C_mem_size => C_mem_size
+	C_bram_size => C_bram_size,
+	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_boot_spi => C_boot_spi
     )
     port map (
-	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_write => dmem_bram_write,
+	clk => clk, imem_addr_strobe => imem_addr_strobe,
+	imem_addr => imem_addr, imem_data_out => bram_i_to_cpu,
+	imem_data_ready => bram_i_ready, dmem_data_ready => bram_d_ready,
+	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write,
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
+	dmem_data_out => bram_d_to_cpu, dmem_data_in => cpu_to_dmem
     );
-    end generate;
-    G_bram_mi32_el:
-    if C_arch = ARCH_MI32 and not C_big_endian generate
-    bram_mi32_el: entity work.bram_mi32_el
-    generic map (
-	C_write_protect_bootloader => C_write_protect_bootloader,
-	C_mem_size => C_mem_size
-    )
-    port map (
-	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_write => dmem_bram_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
-    );
-    end generate;
-    G_bram_rv32:
-    if C_arch = ARCH_RV32 generate
-    bram_rv32: entity work.bram_rv32
-    generic map (
-	C_mem_size => C_mem_size
-    )
-    port map (
-	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_write => dmem_bram_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
-    );
-    end generate;
 
 end Behavioral;

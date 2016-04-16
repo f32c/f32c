@@ -41,7 +41,7 @@ entity glue is
     C_clk_freq: integer := 50;
 
     -- SoC configuration options
-    C_mem_size: integer := 2;
+    C_bram_size: integer := 2;
     C_icache_size: integer := 2;
     C_dcache_size: integer := 2;
     C_branch_prediction: boolean := false;
@@ -174,7 +174,7 @@ begin
   generic map (
     C_arch => C_arch,
     C_clk_freq => C_clk_freq,
-    C_mem_size => C_mem_size,
+    C_bram_size => C_bram_size,
     C_icache_size => C_icache_size,
     C_dcache_size => C_dcache_size,
     C_debug => C_debug,
