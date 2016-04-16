@@ -32,11 +32,6 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.MATH_REAL.ALL;
 
 use work.f32c_pack.all;
-use work.boot_block_pack.all;
-use work.boot_sio_mi32el.all;
-use work.boot_sio_mi32eb.all;
-use work.boot_sio_rv32el.all;
--- use work.boot_sio_rv32eb.all;
 
 entity glue_bram is
     generic (
@@ -70,7 +65,8 @@ entity glue_bram is
 	C_debug: boolean := false;
 
 	-- SoC configuration options
-	C_mem_size: integer := 16;	-- in KBytes
+	C_bram_size: integer := 16;	-- in KBytes
+	C_boot_spi: boolean := false;
 	C_sio: integer := 1;
 	C_sio_init_baudrate: integer := 115200;
 	C_sio_fixed_baudrate: boolean := false;
@@ -183,20 +179,6 @@ architecture Behavioral of glue_bram is
     signal io_addr_strobe: std_logic;
     signal io_addr: std_logic_vector(11 downto 2);
     signal intr: std_logic_vector(5 downto 0); -- interrupt
-
-    type T_endian_select is array(boolean) of integer;
-    constant select_big_endian: T_endian_select := (false => 0, true => 2);
-
-    type T_boot_block_select is array(0 to 3) of boot_block_type;
-    constant boot_block_select: T_boot_block_select :=
-      (  --  (arch, big endian)
-        (ARCH_MI32+select_big_endian(false)) => boot_sio_mi32el,
-        (ARCH_MI32+select_big_endian(true))  => boot_sio_mi32eb,
-        (ARCH_RV32+select_big_endian(false)) => boot_sio_rv32el,
-        (ARCH_RV32+select_big_endian(true))  => (others => (others => '0')) -- RISC-V currently has no big endian support
-      );
-
-    constant boot_block: boot_block_type := boot_block_select(C_arch + select_big_endian(C_big_endian));
 
     -- io base
     type T_iomap_range is array(0 to 1) of std_logic_vector(15 downto 0);
@@ -1001,8 +983,10 @@ begin
 
     bram: entity work.bram
     generic map (
-        boot_block => boot_block,
-	C_mem_size => C_mem_size
+	C_bram_size => C_bram_size,
+	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_boot_spi => C_boot_spi
     )
     port map (
 	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,

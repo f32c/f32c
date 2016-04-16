@@ -33,10 +33,6 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 
 use work.f32c_pack.all;
 use work.sram_pack.all;
-use work.boot_block_pack.all;
-use work.boot_sio_mi32el.all;
-use work.boot_sio_mi32eb.all;
-use work.boot_sio_rv32el.all;
 
 
 entity glue_sram is
@@ -74,6 +70,7 @@ entity glue_sram is
 	-- SoC configuration options
 	C_cpus: integer := 1;
 	C_bram_size: integer := 2;	-- 2 or 16 KBytes
+	C_boot_spi: boolean := false;
 	C_i_rom_only: boolean := true;
 	C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
@@ -125,20 +122,6 @@ architecture Behavioral of glue_sram is
     signal to_sram: sram_port_array;
     signal sram_ready: sram_ready_array;
     signal from_sram: std_logic_vector(31 downto 0);
-
-    type T_endian_select is array(boolean) of integer;
-    constant select_big_endian: T_endian_select := (false => 0, true => 2);
-
-    type T_boot_block_select is array(0 to 3) of boot_block_type;
-    constant boot_block_select: T_boot_block_select :=
-      (  --  (arch, big endian)
-        (ARCH_MI32+select_big_endian(false)) => boot_sio_mi32el,
-        (ARCH_MI32+select_big_endian(true))  => boot_sio_mi32eb,
-        (ARCH_RV32+select_big_endian(false)) => boot_sio_rv32el,
-        (ARCH_RV32+select_big_endian(true))  => (others => (others => '0')) -- RISC-V currently has no big endian support
-      );
-
-    constant boot_block: boot_block_type := boot_block_select(C_arch + select_big_endian(C_big_endian));
 
     -- Block RAM
     signal bram_i_to_cpu, bram_d_to_cpu: std_logic_vector(31 downto 0);
@@ -393,8 +376,10 @@ begin
       else '0';
     bram: entity work.bram
     generic map (
-        boot_block => boot_block,
-	C_mem_size => C_bram_size
+	C_bram_size => C_bram_size,
+	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_boot_spi => C_boot_spi
     )
     port map (
 	clk => clk, imem_addr => imem_addr(0),
