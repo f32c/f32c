@@ -27,15 +27,12 @@
 #
 
 
-if {$argc == 0} {
-    puts "Usage: ./hex2bram.tcl ifile \[ofile\]"
+if {$argc != 2} {
+    puts "Usage: ./hex2bram.tcl ifile ofile"
     exit 1
-} elseif {$argc == 1} {
-    set ofile bram.vhd
-} else {
-    set ofile [lindex $argv 1]
 }
 
+set ofile [lindex $argv 1]
 set hexfile [open "[lindex $argv 0]"]
 set linenum 0
 set addr 0
