@@ -192,8 +192,8 @@ begin
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
-    imem_data_ready <= '1';
-    dmem_data_ready <= '1';
+    imem_data_ready <= bram_i_ready;
+    dmem_data_ready <= bram_d_ready when dmem_addr(31) = '0' else '1';
 
     -- RS232 sio
     G_sio: for i in 0 to C_sio - 1 generate
