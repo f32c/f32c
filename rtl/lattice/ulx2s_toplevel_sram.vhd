@@ -70,6 +70,7 @@ entity glue is
 	-- SoC configuration options
 	C_cpus: integer := 1;
 	C_bram_size: integer := 2;	-- 2 or 16 KBytes
+	C_boot_spi: boolean := true;
 	C_i_rom_only: boolean := true;
 	C_icache_size: integer := 8;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
@@ -533,7 +534,10 @@ begin
       else '0';
     bram: entity work.bram
     generic map (
-	C_mem_size => C_bram_size
+	C_bram_size => C_bram_size,
+	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_boot_spi => C_boot_spi
     )
     port map (
 	clk => clk, imem_addr_strobe => imem_addr_strobe(0),
@@ -550,7 +554,10 @@ begin
     begin
     bram: entity work.bram
     generic map (
-	C_mem_size => C_bram_size
+	C_bram_size => C_bram_size,
+	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_boot_spi => C_boot_spi
     )
     port map (
 	clk => clk, imem_addr_strobe => imem_addr_strobe(0),

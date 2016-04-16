@@ -35,11 +35,6 @@ use IEEE.MATH_REAL.ALL;
 
 use work.f32c_pack.all;
 use work.sram_pack.all;
-use work.boot_block_pack.all;
-use work.boot_sio_mi32el.all;
-use work.boot_sio_mi32eb.all;
-use work.boot_sio_rv32el.all;
--- use work.boot_sio_rv32eb.all;
 
 
 entity glue_sram is
@@ -77,6 +72,7 @@ entity glue_sram is
 	-- SoC configuration options
 	C_cpus: integer := 1;
 	C_bram_size: integer := 2;	-- 2 or 16 KBytes
+	C_boot_spi: boolean := true;
 	C_i_rom_only: boolean := true;
 	C_icache_expire: boolean := false; -- when true i-cache will just pass data, won't keep them
 	C_icache_size: integer := 8;	-- 0, 2, 4 or 8 KBytes
@@ -234,18 +230,6 @@ architecture Behavioral of glue_sram is
 
     -- CPU reset control
     signal R_cpu_reset: std_logic_vector(15 downto 0) := x"fffe";
-
---    type T_endian_select is array(boolean) of integer;
---    constant select_big_endian: T_endian_select := (false => 0, true => 2);
---    type T_boot_block_select is array(0 to 3) of boot_block_type;
---    constant boot_block_select: T_boot_block_select :=
---      (  --  (arch, big endian)
---        (ARCH_MI32+select_big_endian(false)) => boot_sio_mi32el,
---        (ARCH_MI32+select_big_endian(true))  => boot_sio_mi32eb,
---        (ARCH_RV32+select_big_endian(false)) => boot_sio_rv32el,
---        (ARCH_RV32+select_big_endian(true))  => (others => (others => '0')) -- RISC-V currently has no big endian support
---      );
---    constant boot_block: boot_block_type := boot_block_select(C_arch + select_big_endian(C_big_endian));
 
     -- io base
     type T_iomap_range is array(0 to 1) of std_logic_vector(15 downto 0);
@@ -721,24 +705,6 @@ begin
     --
     -- Block RAM (only CPU #0)
     --
---    new_bram: if false generate
---    dmem_bram_enable <= dmem_addr_strobe(0) when dmem_addr(0)(31 downto 30) = "00" else '0';
---    dmem_bram_write <= dmem_write(0) and dmem_bram_enable;
---    bram: entity work.bram
---    generic map (
---      boot_block => boot_block,
---      C_mem_size => C_bram_size
---    )
---    port map (
---      clk => clk, imem_addr => imem_addr(0), imem_data_out => bram_i_to_cpu,
---      dmem_write => dmem_bram_write,
---      dmem_byte_sel => dmem_byte_sel(0), dmem_addr => dmem_addr(0),
---      dmem_data_out => bram_d_to_cpu, dmem_data_in => cpu_to_dmem(0)
---    );
---    bram_i_ready <= not dmem_bram_enable;
---    bram_d_ready <= '1';
---    end generate; -- new_bram
-
     old_bram: if true generate
     G_i_d_ram:
     if not C_i_rom_only generate
@@ -747,7 +713,10 @@ begin
       else '0';
     bram: entity work.bram
     generic map (
-	C_mem_size => C_bram_size
+	C_bram_size => C_bram_size,
+	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_boot_spi => C_boot_spi
     )
     port map (
 	clk => clk, imem_addr_strobe => imem_addr_strobe(0),
@@ -764,7 +733,10 @@ begin
     begin
     bram: entity work.bram
     generic map (
-	C_mem_size => C_bram_size
+	C_bram_size => C_bram_size,
+	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_boot_spi => C_boot_spi
     )
     port map (
 	clk => clk, imem_addr_strobe => imem_addr_strobe(0),
