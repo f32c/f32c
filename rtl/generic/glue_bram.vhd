@@ -92,18 +92,21 @@ entity glue_bram is
 end glue_bram;
 
 architecture Behavioral of glue_bram is
-    signal imem_addr: std_logic_vector(31 downto 2);
-    signal imem_data_read: std_logic_vector(31 downto 0);
-    signal imem_addr_strobe, imem_data_ready: std_logic;
-    signal dmem_addr: std_logic_vector(31 downto 2);
-    signal dmem_addr_strobe, dmem_write: std_logic;
-    signal dmem_bram_write, dmem_data_ready: std_logic;
+
+    -- signals to / from f32c cores(s)
+    signal intr: std_logic_vector(5 downto 0);
+    signal imem_addr, dmem_addr: std_logic_vector(31 downto 2);
+    signal imem_addr_strobe, dmem_addr_strobe, dmem_write: std_logic;
+    signal imem_data_ready, dmem_data_ready: std_logic;
     signal dmem_byte_sel: std_logic_vector(3 downto 0);
     signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
-    signal io_to_cpu, final_to_cpu: std_logic_vector(31 downto 0);
+    signal io_to_cpu, final_to_cpu_d: std_logic_vector(31 downto 0);
     signal io_addr_strobe: std_logic;
     signal io_addr: std_logic_vector(11 downto 2);
-    signal intr: std_logic_vector(5 downto 0); -- interrupt
+
+    -- Block RAM
+    signal bram_i_to_cpu, bram_d_to_cpu: std_logic_vector(31 downto 0);
+    signal bram_i_ready, bram_d_ready, dmem_bram_enable: std_logic;
 
     -- Timer
     signal from_timer: std_logic_vector(31 downto 0);
@@ -165,12 +168,12 @@ begin
     )
     port map (
 	clk => clk, reset => sio_break_internal(0), intr => intr,
-	imem_addr => imem_addr, imem_data_in => imem_data_read,
+	imem_addr => imem_addr, imem_data_in => bram_i_to_cpu,
 	imem_addr_strobe => imem_addr_strobe,
 	imem_data_ready => imem_data_ready,
 	dmem_addr_strobe => dmem_addr_strobe, dmem_addr => dmem_addr,
 	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
-	dmem_data_in => final_to_cpu, dmem_data_out => cpu_to_dmem,
+	dmem_data_in => final_to_cpu_d, dmem_data_out => cpu_to_dmem,
 	dmem_data_ready => dmem_data_ready,
 	snoop_cycle => '0', snoop_addr => "------------------------------",
 	flush_i_line => open, flush_d_line => open,
@@ -184,7 +187,7 @@ begin
 	debug_debug => debug_debug,
 	debug_active => debug_active
     );
-    final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
+    final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
     intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & '0';
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
@@ -366,9 +369,7 @@ begin
     end generate;
 
     -- Block RAM
-    dmem_bram_write <=
-      dmem_addr_strobe and dmem_write when dmem_addr(31) /= '1' else '0';
-
+    dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
     bram: entity work.bram
     generic map (
 	C_bram_size => C_bram_size,
@@ -377,10 +378,12 @@ begin
 	C_boot_spi => C_boot_spi
     )
     port map (
-	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_write => dmem_bram_write,
+	clk => clk, imem_addr_strobe => imem_addr_strobe,
+	imem_addr => imem_addr, imem_data_out => bram_i_to_cpu,
+	imem_data_ready => bram_i_ready, dmem_data_ready => bram_d_ready,
+	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write,
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
+	dmem_data_out => bram_d_to_cpu, dmem_data_in => cpu_to_dmem
     );
 
     -- Debugging SIO instance
