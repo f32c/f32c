@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2013 Marko Zec, University of Zagreb
+-- Copyright (c) 2013, 2016 Marko Zec, University of Zagreb
 -- All rights reserved.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,11 @@ use xp2.components.all;
 
 entity bram is
     generic(
-	C_mem_size: integer
+	C_bram_size: integer; -- in KBytes
+	C_arch: integer; -- ARCH_MI32 or ARCH_RV32
+	C_big_endian: boolean;
+	C_boot_spi: boolean;
+	C_write_protect_bootloader: boolean := true
     );
     port(
 	clk: in std_logic;
@@ -68,7 +72,7 @@ begin
     dmem_data_ready <= '1';
 
     G_2k:
-    if C_mem_size = 2 generate
+    if C_bram_size = 2 generate
     we <= dmem_addr_strobe and dmem_write;
     byte_en <= "1111" when we = '0' else dmem_byte_sel;
     addr <= dmem_addr(10 downto 2) when dmem_addr_strobe = '1'
@@ -210,7 +214,7 @@ begin
     end generate; -- 2k
 
     G_16k:
-    if C_mem_size = 16 generate
+    if C_bram_size = 16 generate
     imem_data_ready <= '1';
     ram_16_0: DP16KB
     generic map (
