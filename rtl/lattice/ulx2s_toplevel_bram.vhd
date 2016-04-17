@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2015 Marko Zec, University of Zagreb
+-- Copyright (c) 2015, 2016 Marko Zec, University of Zagreb
 -- All rights reserved.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,8 @@ use work.f32c_pack.all;
 
 entity glue is
     generic (
-	-- ISA: either ARCH_MI32 or ARCH_RV32
-	C_arch: integer := ARCH_MI32;
+	C_arch: integer := ARCH_MI32; -- either ARCH_MI32 or ARCH_RV32
+	C_big_endian: boolean := false;
 	C_debug: boolean := false;
 
 	-- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
@@ -84,6 +84,7 @@ begin
     glue_bram: entity work.glue_bram
     generic map (
 	C_arch => C_arch,
+	C_big_endian => C_big_endian,
 	C_clk_freq => C_clk_freq,
 	C_bram_size => C_bram_size,
 	C_debug => C_debug,
@@ -100,34 +101,20 @@ begin
 	spi_mosi(0) => flash_si, spi_miso(0) => flash_so,
 	spi_sck(1) => sdcard_sck, spi_ss(1) => sdcard_cen,
 	spi_mosi(1) => sdcard_si, spi_miso(1) => sdcard_so,
-	gpio(0) => j1_2,
-	gpio(1) => j1_3,
-	gpio(2) => j1_4,
-	gpio(3) => j1_8,
-	gpio(4) => j1_9,
-	gpio(5) => j1_13,
-	gpio(6) => j1_14,
-	gpio(7) => j1_15,
-	gpio(8) => j1_16,
-	gpio(9) => j1_17,
-	gpio(10) => j1_18,
-	gpio(11) => j1_19,
-	gpio(12) => j1_20,
-	gpio(13) => j1_21,
-	gpio(14) => j1_22,
-	gpio(15) => j1_23,
-	gpio(16) => j2_2,
-	gpio(17) => j2_3,
-	gpio(18) => j2_4,
-	gpio(19) => j2_5,
-	gpio(20) => j2_6,
-	gpio(21) => j2_7,
-	gpio(22) => j2_8,
-	gpio(23) => j2_9,
-	gpio(24) => j2_10,
-	gpio(25) => j2_11,
-	gpio(26) => j2_12,
-	gpio(27) => j2_13,
+	gpio(0) => j1_2, gpio(1) => j1_3,
+	gpio(2) => j1_4, gpio(3) => j1_8,
+	gpio(4) => j1_9, gpio(5) => j1_13,
+	gpio(6) => j1_14, gpio(7) => j1_15,
+	gpio(8) => j1_16, gpio(9) => j1_17,
+	gpio(10) => j1_18, gpio(11) => j1_19,
+	gpio(12) => j1_20, gpio(13) => j1_21,
+	gpio(14) => j1_22, gpio(15) => j1_23,
+	gpio(16) => j2_2, gpio(17) => j2_3,
+	gpio(18) => j2_4, gpio(19) => j2_5,
+	gpio(20) => j2_6, gpio(21) => j2_7,
+	gpio(22) => j2_8, gpio(23) => j2_9,
+	gpio(24) => j2_10, gpio(25) => j2_11,
+	gpio(26) => j2_12, gpio(27) => j2_13,
 	gpio(28) => j2_16,
 	simple_out(7 downto 0) => led, simple_out(31 downto 8) => open,
 	simple_in(4 downto 0) => btns, simple_in(15 downto 5) => open,
