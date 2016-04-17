@@ -223,7 +223,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../generic/boot_block_pack.vhd">
+      <File Path="$PPRDIR/../../../generic/bootloader/defs_bootblock.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
