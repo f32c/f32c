@@ -54,7 +54,6 @@ entity glue is
     C_cached_addr_bits: integer := 25; -- number of lower RAM address bits 2^25 -> 32MB to be cached
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
     C_sdram: boolean := true;
-    C_sdram_separate_arbiter: boolean := false;
 
     C_vgahdmi: boolean := false;
     C_vgahdmi_test_picture: integer := 0;
@@ -294,7 +293,6 @@ begin
       C_spi => C_spi,
       C_xram_base => C_xram_base,
       C_sdram => C_sdram,
-      C_sdram_separate_arbiter => C_sdram_separate_arbiter,
       C_sdram_address_width => 24,
       C_sdram_column_bits => 9,
       C_sdram_startup_cycles => 10100,

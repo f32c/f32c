@@ -153,7 +153,7 @@ begin
         C_sram => C_sram,
         C_sram_refresh => C_sram_refresh, -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
         C_sram_wait_cycles => C_sram_wait_cycles, -- ISSI, OK do 87.5 MHz
-        C_pipelined_read => C_sram_pipelined_read, -- works only at 81.25 MHz !!!
+        C_sram_pipelined_read => C_sram_pipelined_read, -- works only at 81.25 MHz !!!
         C_icache_expire => C_icache_expire,
         C_icache_size => C_icache_size,
         C_dcache_size => C_dcache_size,
