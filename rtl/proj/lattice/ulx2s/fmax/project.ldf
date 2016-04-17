@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<BaliProject version="3.2" title="ulx2s_bram" device="LFXP2-8E-6TN144C" default_implementation="ulx2s_bram">
+<BaliProject version="3.2" title="ulx2s_fmax" device="LFXP2-8E-6TN144C" default_implementation="ulx2s_fmax">
     <Options/>
-    <Implementation title="ulx2s_bram" dir="project" description="ulx2s_bram" synthesis="synplify" default_strategy="Strategy1">
+    <Implementation title="ulx2s_fmax" dir="project" description="ulx2s_fmax" synthesis="synplify" default_strategy="Strategy1">
         <Options def_top="glue"/>
         <Source name="../../../../cpu/alu.vhd" type="VHDL" type_short="VHDL">
             <Options/>
@@ -33,9 +33,6 @@
         <Source name="../../../../cpu/shift.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../lattice/ulx2s/top_bram.vhd" type="VHDL" type_short="VHDL">
-            <Options top_module="glue"/>
-        </Source>
         <Source name="../../../../lattice/bptrace.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -48,19 +45,10 @@
         <Source name="../../../../lattice/ulx2s/pll_xp2_25m.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../generic/glue_bram.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
+        <Source name="../../../../lattice/ulx2s/top_fmax.vhd" type="VHDL" type_short="VHDL">
+            <Options top_module="glue"/>
         </Source>
         <Source name="../../../../soc/sio.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/spi.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/gpio.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/timer.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../generic/bram.vhd" type="VHDL" type_short="VHDL">
@@ -85,5 +73,5 @@
             <Options/>
         </Source>
     </Implementation>
-    <Strategy name="Strategy1" file="ulx2s_bram.sty"/>
+    <Strategy name="Strategy1" file="project1.sty"/>
 </BaliProject>
