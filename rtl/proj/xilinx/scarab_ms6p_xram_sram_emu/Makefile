@@ -19,20 +19,20 @@ vfiles = \
 ../../../soc/vgahdmi/vgahdmif_v.v \
 
 vhdfiles = \
-../../../xilinx/scarab_ms6p_toplevel_xram_sram_emu.vhd \
-../../../xilinx/clocks/scarab/pll_50M_112M5.vhd \
-../../../xilinx/clocks/scarab/pll_50M_100M.vhd \
-../../../xilinx/clocks/scarab/pll_50M_100M_25M_250M.vhd \
-../../../xilinx/clocks/scarab/pll_50M_81M25.vhd \
-../../../xilinx/clocks/scarab/pll_50M_25M_83M33_250M.vhd \
-../../../xilinx/clocks/scarab/pll_50M_250M_125M_25M.vhd \
-../../../xilinx/clocks/scarab/pll_50M_250M_111M11_25M.vhd \
-../../../xilinx/clocks/scarab/pll_50M_96M43.vhd \
-../../../xilinx/clocks/scarab/pll_96M43_433M9_289M3_28M93.vhd \
+../../../xilinx/scarab_ms6p/top/top_xram_sram_emu.vhd \
+../../../xilinx/scarab_ms6p/clocks/pll_50M_112M5.vhd \
+../../../xilinx/scarab_ms6p/clocks/pll_50M_100M.vhd \
+../../../xilinx/scarab_ms6p/clocks/pll_50M_100M_25M_250M.vhd \
+../../../xilinx/scarab_ms6p/clocks/pll_50M_81M25.vhd \
+../../../xilinx/scarab_ms6p/clocks/pll_50M_25M_83M33_250M.vhd \
+../../../xilinx/scarab_ms6p/clocks/pll_50M_250M_125M_25M.vhd \
+../../../xilinx/scarab_ms6p/clocks/pll_50M_250M_111M11_25M.vhd \
+../../../xilinx/scarab_ms6p/clocks/pll_50M_96M43.vhd \
+../../../xilinx/scarab_ms6p/clocks/pll_96M43_433M9_289M3_28M93.vhd \
 ../../../xilinx/hdmi_out.vhd \
 ../../../generic/glue_xram.vhd \
 ../../../generic/bram.vhd \
-../../../generic/boot_block_pack.vhd \
+../../../generic/bootloader/defs_bootblock.vhd \
 ../../../generic/bootloader/boot_sio_mi32el.vhd \
 ../../../generic/bootloader/boot_sio_mi32eb.vhd \
 ../../../generic/bootloader/boot_sio_rv32el.vhd \

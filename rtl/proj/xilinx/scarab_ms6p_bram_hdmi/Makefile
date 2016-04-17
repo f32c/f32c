@@ -21,18 +21,19 @@ vfiles = \
 
 
 vhdfiles = \
-../../../xilinx/scarab_ms6p_toplevel_bram_hdmi.vhd \
-../../../xilinx/pll_50M_112M5.vhd \
-../../../xilinx/pll_50M_100M.vhd \
-../../../xilinx/pll_50M_100M_25M_250M.vhd \
-../../../xilinx/pll_50M_81M25.vhd \
+../../../xilinx/scarab_ms6p/top/top_bram_hdmi.vhd \
+../../../xilinx/scarab_ms6p/clocks/pll_50M_112M5.vhd \
+../../../xilinx/scarab_ms6p/clocks/pll_50M_100M.vhd \
+../../../xilinx/scarab_ms6p/clocks/pll_50M_100M_25M_250M.vhd \
+../../../xilinx/scarab_ms6p/clocks/pll_50M_81M25.vhd \
 ../../../xilinx/hdmi_out.vhd \
 ../../../generic/glue_bram_vgaf.vhd \
 ../../../generic/bram.vhd \
-../../../generic/boot_block_pack.vhd \
+../../../generic/bootloader/defs_bootblock.vhd \
 ../../../generic/bootloader/boot_sio_mi32el.vhd \
 ../../../generic/bootloader/boot_sio_mi32eb.vhd \
 ../../../generic/bootloader/boot_sio_rv32el.vhd \
+../../../generic/bootloader/boot_rom_mi32el.vhd \
 ../../../generic/bram_true2p_1clk.vhd \
 ../../../generic/bram_video.vhd \
 ../../../generic/bptrace.vhd \
@@ -61,6 +62,7 @@ vhdfiles = \
 ../../../soc/fm/rds.vhd \
 ../../../soc/fm/bram_rds.vhd \
 ../../../soc/fm/message.vhd \
+../../../soc/fm/lowpass.vhd \
 ../../../soc/vgahdmi/vgahdmif.vhd \
 ../../../soc/vgahdmi/videofifo.vhd \
 ../../../soc/vgahdmi/VGA_textmode.vhd \
