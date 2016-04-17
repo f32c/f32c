@@ -244,7 +244,7 @@ begin
     ena_325m <= '0';
     clk433gen: entity work.pll_81M25_433M33
     port map (
-      CLK => clk, CLKOP => clk_433m
+	CLK => clk, CLKOP => clk_433m
     );
     end generate;
 
@@ -492,7 +492,7 @@ begin
 	when x"34"  =>
 	    if C_flash then
 		io_to_cpu <= from_flash;
-            else
+	    else
 		io_to_cpu <= (others => '-');
 	    end if;
 	when x"35"  =>
@@ -793,35 +793,35 @@ begin
 	bus_write => io_write, byte_sel => io_byte_sel,
 	bus_in => cpu_to_io, bus_out => from_gpio,
 	gpio_irq => gpio_intr,
-        gpio_phys(0)  =>   j1_2,
-        gpio_phys(1)  =>   j1_3,
-        gpio_phys(2)  =>   j1_4,
-        gpio_phys(3)  =>   j1_8,
-        gpio_phys(4)  =>   j1_9,
-        gpio_phys(5)  =>   j1_13,
-        gpio_phys(6)  =>   j1_14,
-        gpio_phys(7)  =>   j1_15,
-        gpio_phys(8)  =>   j1_16,
-        gpio_phys(9)  =>   j1_17,
-        gpio_phys(10) =>   j1_18,
-        gpio_phys(11) =>   j1_19,
-        gpio_phys(12) =>   j1_20,
-        gpio_phys(13) =>   j1_21,
-        gpio_phys(14) =>   j1_22,
-        gpio_phys(15) =>   j1_23,
-        gpio_phys(16) =>   j2_2,
-        gpio_phys(17) =>   j2_3,
-        gpio_phys(18) =>   j2_4,
-        gpio_phys(19) =>   j2_5,
-        gpio_phys(20) =>   j2_6,
-        gpio_phys(21) =>   j2_7,
-        gpio_phys(22) =>   j2_8,
-        gpio_phys(23) =>   j2_9,
-        gpio_phys(24) =>   j2_10,
-        gpio_phys(25) =>   j2_11,
-        gpio_phys(26) =>   j2_12,
-        gpio_phys(27) =>   j2_13,
-        gpio_phys(28) =>   gpio_28
+	gpio_phys(0)  =>   j1_2,
+	gpio_phys(1)  =>   j1_3,
+	gpio_phys(2)  =>   j1_4,
+	gpio_phys(3)  =>   j1_8,
+	gpio_phys(4)  =>   j1_9,
+	gpio_phys(5)  =>   j1_13,
+	gpio_phys(6)  =>   j1_14,
+	gpio_phys(7)  =>   j1_15,
+	gpio_phys(8)  =>   j1_16,
+	gpio_phys(9)  =>   j1_17,
+	gpio_phys(10) =>   j1_18,
+	gpio_phys(11) =>   j1_19,
+	gpio_phys(12) =>   j1_20,
+	gpio_phys(13) =>   j1_21,
+	gpio_phys(14) =>   j1_22,
+	gpio_phys(15) =>   j1_23,
+	gpio_phys(16) =>   j2_2,
+	gpio_phys(17) =>   j2_3,
+	gpio_phys(18) =>   j2_4,
+	gpio_phys(19) =>   j2_5,
+	gpio_phys(20) =>   j2_6,
+	gpio_phys(21) =>   j2_7,
+	gpio_phys(22) =>   j2_8,
+	gpio_phys(23) =>   j2_9,
+	gpio_phys(24) =>   j2_10,
+	gpio_phys(25) =>   j2_11,
+	gpio_phys(26) =>   j2_12,
+	gpio_phys(27) =>   j2_13,
+	gpio_phys(28) =>   gpio_28
     );
     gpio_ce <= io_addr_strobe(R_cur_io_port) when
       io_addr(11 downto 8) = x"0" else '0';
@@ -841,11 +841,11 @@ begin
     icp <= R_led(3) & R_led(0); -- during debug period, leds will serve as software-generated ICP
     timer: entity work.timer
     generic map (
-        C_pres => 10,
-        C_bits => 12
+	C_pres => 10,
+	C_bits => 12
     )
     port map (
-        clk => clk, ce => timer_ce, addr => io_addr(5 downto 2),
+	clk => clk, ce => timer_ce, addr => io_addr(5 downto 2),
 	bus_write => io_write, byte_sel => io_byte_sel,
 	bus_in => cpu_to_io, bus_out => from_timer,
 	timer_irq => timer_intr,
