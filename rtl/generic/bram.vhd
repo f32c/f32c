@@ -38,7 +38,6 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 use work.f32c_pack.all;
 use work.boot_block_pack.all;
-use work.boot_block_pack.all;
 use work.boot_sio_mi32el.all;
 use work.boot_sio_mi32eb.all;
 use work.boot_sio_rv32el.all;
