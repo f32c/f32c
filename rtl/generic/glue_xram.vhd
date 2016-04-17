@@ -80,6 +80,7 @@ generic (
 
   -- SoC configuration options
   C_bram_size: integer := 2;	-- in KBytes
+  C_boot_rom: boolean := false;
   C_boot_spi: boolean := false;
   C_icache_expire: boolean := false; -- when true i-cache will just pass data, won't keep them
   C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
@@ -233,15 +234,16 @@ end glue_xram;
 architecture Behavioral of glue_xram is
     signal imem_addr: std_logic_vector(31 downto 2);
     signal S_imem_addr_in_xram: std_logic;
-    signal imem_data_read: std_logic_vector(31 downto 0);
-    signal imem_addr_strobe, imem_data_ready: std_logic;
+    signal imem_addr_strobe, imem_data_ready, dmem_bram_enable: std_logic;
     signal dmem_addr: std_logic_vector(31 downto 2);
     signal S_dmem_addr_in_xram: std_logic;
     signal dmem_addr_strobe, dmem_write: std_logic;
-    signal dmem_bram_write, dmem_data_ready: std_logic;
+    signal dmem_data_ready: std_logic;
     signal dmem_byte_sel: std_logic_vector(3 downto 0);
-    signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
+    signal cpu_to_dmem: std_logic_vector(31 downto 0);
     signal final_to_cpu_i, final_to_cpu_d: std_logic_vector(31 downto 0);
+    signal bram_d_to_cpu, bram_i_to_cpu: std_logic_vector(31 downto 0);
+    signal bram_i_ready, bram_d_ready: std_logic;
     signal io_to_cpu: std_logic_vector(31 downto 0);
     signal io_addr_strobe: std_logic;
     signal io_addr: std_logic_vector(11 downto 2);
@@ -500,19 +502,19 @@ begin
     -- using most significant address bit (bit 32), which is
     --S_imem_addr_in_xram <= imem_addr(31);
     --S_dmem_addr_in_xram <= dmem_addr(31);
-    final_to_cpu_i <= from_xram when S_imem_addr_in_xram = '1' else imem_data_read;
+    final_to_cpu_i <= from_xram when S_imem_addr_in_xram = '1' else bram_i_to_cpu;
     final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
       else vga_textmode_dmem_to_cpu when C_vgatext AND C_vgatext_bus_read AND dmem_addr(31 downto 28) = C_vgatext_bram_base -- address 0x40000000
       else from_xram when S_dmem_addr_in_xram = '1'
-      else dmem_to_cpu;
+      else bram_d_to_cpu;
     intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"F" -- iomap at 0xFxxxxxxx
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
     imem_data_ready <= xram_ready(instr_port) when S_imem_addr_in_xram = '1'
-      else imem_addr_strobe; -- MUST deassert ACK when strobe is low!!!
+      else bram_i_ready;
     dmem_data_ready <= xram_ready(data_port) when S_dmem_addr_in_xram = '1'
-      else '1'; -- I/O or BRAM have no wait states
+      else io_addr_strobe or bram_d_ready;
     
     G_xram:
     if C_sdram or C_sram or C_sram8 or C_acram generate
@@ -1346,9 +1348,8 @@ begin
 
 
     -- Block RAM
-    dmem_bram_write <=
-      dmem_addr_strobe and dmem_write when dmem_addr(31 downto 28) = x"0" else '0';
-
+    dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"0"
+      else '0';
     bram: entity work.bram
     generic map (
 	C_bram_size => C_bram_size,
@@ -1357,10 +1358,12 @@ begin
 	C_boot_spi => C_boot_spi
     )
     port map (
-      clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
-      dmem_write => dmem_bram_write,
-      dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-      dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
+	clk => clk, imem_addr_strobe => imem_addr_strobe,
+	imem_addr => imem_addr, imem_data_out => bram_i_to_cpu,
+	imem_data_ready => bram_i_ready, dmem_data_ready => bram_d_ready,
+	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write,
+	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
+	dmem_data_out => bram_d_to_cpu, dmem_data_in => cpu_to_dmem
     );
 
     -- Debugging SIO instance

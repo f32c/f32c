@@ -221,6 +221,6 @@ begin
 	end if;
     end process;
 
-    imem_data_ready <= '1';
-    dmem_data_ready <= '1';
+    imem_data_ready <= imem_addr_strobe;
+    dmem_data_ready <= dmem_addr_strobe;
 end x;
