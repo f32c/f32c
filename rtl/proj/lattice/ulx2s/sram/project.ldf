@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<BaliProject version="3.2" title="ulx2s_sram" device="LFXP2-8E-6TN144C" default_implementation="project">
+<BaliProject version="3.2" title="ulx2s_sram" device="LFXP2-8E-6TN144C" default_implementation="ulx2s_sram">
     <Options/>
-    <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Strategy1">
+    <Implementation title="ulx2s_sram" dir="project" description="ulx2s_sram" synthesis="synplify" default_strategy="Strategy1">
         <Options def_top="glue"/>
         <Source name="../../../../cpu/alu.vhd" type="VHDL" type_short="VHDL">
             <Options/>
