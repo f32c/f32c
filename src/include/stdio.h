@@ -28,6 +28,11 @@
 #ifndef _STDIO_H_
 #define	_STDIO_H_
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <sys/stdint.h>
 
 #include <dev/sio.h>
@@ -56,5 +61,10 @@ int	vsscanf(const char * __restrict, const char * __restrict, __va_list)
 #endif
 
 int	gets(char *, int);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_STDIO_H_ */
