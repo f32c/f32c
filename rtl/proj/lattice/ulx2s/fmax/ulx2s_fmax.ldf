@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<BaliProject version="3.2" title="project" device="LFXP2-8E-6TN144C" default_implementation="project">
+<BaliProject version="3.2" title="ulx2s_fmax" device="LFXP2-8E-6TN144C" default_implementation="impl1">
     <Options/>
-    <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Timing">
+    <Implementation title="impl1" dir="impl1" description="ulx2s_fmax" synthesis="synplify" default_strategy="Timing">
         <Options def_top="glue"/>
         <Source name="../../../../cpu/alu.vhd" type="VHDL" type_short="VHDL">
             <Options/>
