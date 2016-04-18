@@ -213,7 +213,15 @@ ifeq ($(PROG),)
 endif
 
 ASM_OBJS = $(addprefix ${OBJDIR}/,$(ASFILES:.S=.O))
-CXX_OBJS = $(addprefix ${OBJDIR}/,$(CXXFILES:.cpp=.o))
+
+CXX_OBJS = $(CXXFILES)
+CXX_OBJS := $(CXX_OBJS:.cc=.o)
+CXX_OBJS := $(CXX_OBJS:.cpp=.o)
+CXX_OBJS := $(CXX_OBJS:.c++=.o)
+CXX_OBJS := $(CXX_OBJS:.cxx=.o)
+
+CXX_OBJS := $(addprefix ${OBJDIR}/,$(CXX_OBJS))
+
 C_OBJS = $(addprefix ${OBJDIR}/,$(CFILES:.c=.o))
 OBJS = ${ASM_OBJS} ${C_OBJS} ${CXX_OBJS}
 
@@ -257,6 +265,18 @@ $(addprefix ${OBJDIR}/,%.o) : %.c
 # XXX fixme extensions: .cc, .cxx, .c++ etc.
 #
 $(addprefix ${OBJDIR}/,%.o) : %.cpp
+	@mkdir -p $(dir $@)
+	${CXX} -o $@ $<
+
+$(addprefix ${OBJDIR}/,%.o) : %.cc
+	@mkdir -p $(dir $@)
+	${CXX} -o $@ $<
+
+$(addprefix ${OBJDIR}/,%.o) : %.cxx
+	@mkdir -p $(dir $@)
+	${CXX} -o $@ $<
+
+$(addprefix ${OBJDIR}/,%.o) : %.c++
 	@mkdir -p $(dir $@)
 	${CXX} -o $@ $<
 
