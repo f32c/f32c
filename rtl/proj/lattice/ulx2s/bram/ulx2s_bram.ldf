@@ -42,7 +42,7 @@
         <Source name="../../../../lattice/reg1w2r_xp2.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../lattice/ulx2s/clkgen.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../lattice/ulx2s/clocks/clkgen.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../generic/glue_bram.vhd" type="VHDL" type_short="VHDL">
