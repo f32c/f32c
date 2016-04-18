@@ -182,7 +182,7 @@ bzero(void *dst, int len)
 }
 
 
-static inline int
+static inline size_t
 strlen(const char *str)
 {
 	const char *cp;
