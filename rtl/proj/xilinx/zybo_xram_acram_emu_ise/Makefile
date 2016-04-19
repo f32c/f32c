@@ -25,7 +25,7 @@ vhdfiles = \
 ../../../xilinx/hdmi_out.vhd \
 ../../../generic/glue_xram.vhd \
 ../../../generic/bram.vhd \
-../../../generic/boot_block_pack.vhd \
+../../../generic/bootloader/defs_bootblock.vhd \
 ../../../generic/bootloader/boot_sio_mi32el.vhd \
 ../../../generic/bootloader/boot_sio_mi32eb.vhd \
 ../../../generic/bootloader/boot_sio_rv32el.vhd \
