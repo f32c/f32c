@@ -5,8 +5,8 @@ IMPL_NAME := $(shell fgrep default_implementation ${PROJ_FILE} | cut -d'"' -f 8)
 IMPL_DIR := $(shell fgrep default_strategy ${PROJ_FILE} | cut -d'"' -f 4)
 
 DIAMOND_BASE := /usr/local/diamond
-DIAMOND_BIN :=  $(shell find ${DIAMOND_BASE} -maxdepth 2 -name bin | sort -rn | head -1)
-DIAMONDC := $(shell find ${DIAMOND_BIN} -name diamondc)
+DIAMOND_BIN :=  $(shell find ${DIAMOND_BASE}/ -maxdepth 2 -name bin | sort -rn | head -1)
+DIAMONDC := $(shell find ${DIAMOND_BIN}/ -name diamondc)
 
 
 all:
