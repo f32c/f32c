@@ -76,7 +76,7 @@ entity toplevel is
     C_debug: boolean := false;
 
     -- SoC configuration options
-    C_bram_size: integer := 16;	-- 2 or 16 KBytes
+    C_bram_size: integer := 8;	-- 2 or 16 KBytes
     C_i_rom_only: boolean := true; -- protect bootloader
 
     C_sio: integer := 1; -- number of rs232 serial ports (min 1, leave unconnected to disable)
