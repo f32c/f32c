@@ -83,8 +83,8 @@ generic (
   C_boot_rom: boolean := false;
   C_boot_spi: boolean := false;
   C_icache_expire: boolean := false; -- when true i-cache will just pass data, won't keep them
-  C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
-  C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
+  C_icache_size: integer := 0;	-- 0, 2, 4, 8, 16 or 32 KBytes
+  C_dcache_size: integer := 0;	-- 0, 2, 4, 8, 16 or 32 KBytes
   C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- x"8" maps RAM to 0x80000000
   C_cached_addr_bits: integer := 20; -- number of lower RAM address bits to be cached
   C_sram: boolean := false; -- 16-bit SRAM
