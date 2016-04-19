@@ -103,7 +103,7 @@ entity toplevel is
     C_debug: boolean := false;
 
     -- SoC configuration options
-    C_bram_size: integer := 8;	-- 2 or 16 KBytes
+    C_bram_size: integer := 8;	-- 8 or 16 KBytes
       C_i_rom_only: boolean := true;
       C_icache_expire: boolean := false; -- passthru buggy i-cache
       C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
