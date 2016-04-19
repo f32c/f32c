@@ -15,9 +15,3 @@ all:
 
 clean:
 	rm -rf ${IMPL_DIR}
-
-program:
-	ujprog ${IMPL_DIR}/${PROJ_NAME}_${IMPL_NAME}.jed
-
-flash:
-	ujprog -j flash ${IMPL_DIR}/${PROJ_NAME}_${IMPL_NAME}.jed
