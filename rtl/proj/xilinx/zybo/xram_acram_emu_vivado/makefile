@@ -10,4 +10,4 @@ junk+=.Xil vivado.log vivado.jou
 junk+=$(project).ip_user_files
 junk+=$(project).sim
 
-include ../include/vivado.mk
+include ../../include/vivado.mk

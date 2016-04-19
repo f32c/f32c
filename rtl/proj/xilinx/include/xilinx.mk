@@ -95,7 +95,7 @@ junk += *.xrpt
 
 $(project).svf: $(project).bit
 	cp $< default.bit
-	$(xil_env); impact -batch ../include/bit2svf.ut
+	$(xil_env); impact -batch ../../include/bit2svf.ut
 	mv default.svf $@
 	rm default.bit
 junk += $(project).svf _impactbatch.log
@@ -110,7 +110,7 @@ junk += $(project)_flash.svf
 
 $(project).xsvf: $(project).bit
 	cp $< default.bit
-	$(xil_env); impact -batch ../include/bit2xsvf.ut
+	$(xil_env); impact -batch ../../include/bit2xsvf.ut
 	mv default.xsvf $@
 	rm default.bit
 junk += $(project).xsvf

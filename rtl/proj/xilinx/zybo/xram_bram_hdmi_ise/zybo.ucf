@@ -1,0 +1,199 @@
+## This file is a general .ucf for the ZYBO Rev B board
+## To use it in a project:
+## - uncomment the lines corresponding to used pins
+## - rename the used signals according to the project
+
+## Clock signal
+NET "clk_125m"        LOC=L16 | IOSTANDARD=LVCMOS33; #IO_L11P_T1_SRCC_35	
+NET "clk_125m" TNM_NET = sys_clk_pin;
+TIMESPEC TS_sys_clk_pin = PERIOD sys_clk_pin 125 MHz HIGH 50%; 
+
+## Switches
+NET "sw<0>"         LOC=G15 | IOSTANDARD=LVCMOS33; #IO_L19N_T3_VREF_35
+NET "sw<1>"         LOC=P15 | IOSTANDARD=LVCMOS33; #IO_L24P_T3_34
+NET "sw<2>"         LOC=W13 | IOSTANDARD=LVCMOS33; #IO_L4N_T0_34
+NET "sw<3>"         LOC=T16 | IOSTANDARD=LVCMOS33; #IO_L9P_T1_DQS_34
+
+## Buttons
+NET "btn<0>"        LOC=R18 | IOSTANDARD=LVCMOS33; #IO_L20N_T3_34
+NET "btn<1>"        LOC=P16 | IOSTANDARD=LVCMOS33; #IO_L24N_T3_34
+NET "btn<2>"        LOC=V16 | IOSTANDARD=LVCMOS33; #IO_L18P_T2_34
+NET "btn<3>"        LOC=Y16 | IOSTANDARD=LVCMOS33; #IO_L7P_T1_34
+
+## LEDs
+NET "led<0>"        LOC=M14 | IOSTANDARD=LVCMOS33; #IO_L23P_T3_35
+NET "led<1>"        LOC=M15 | IOSTANDARD=LVCMOS33; #IO_L23N_T3_35
+NET "led<2>"        LOC=G14 | IOSTANDARD=LVCMOS33; #IO_0_35
+NET "led<3>"        LOC=D18 | IOSTANDARD=LVCMOS33; #IO_L3N_T0_DQS_AD1N_35
+
+## I2S Audio Codec
+#NET "ac_bclk"       LOC=K18 | IOSTANDARD=LVCMOS33; #IO_L12N_T1_MRCC_35
+#NET "ac_mclk"       LOC=T19 | IOSTANDARD=LVCMOS33; #IO_25_34
+#NET "ac_muten"      LOC=P18 | IOSTANDARD=LVCMOS33; #IO_L23N_T3_34
+#NET "ac_pbdat"      LOC=M17 | IOSTANDARD=LVCMOS33; #IO_L8P_T1_AD10P_35
+#NET "ac_pblrc"      LOC=L17 | IOSTANDARD=LVCMOS33; #IO_L11N_T1_SRCC_35
+#NET "ac_recdat"     LOC=K17 | IOSTANDARD=LVCMOS33; #IO_L12P_T1_MRCC_35
+#NET "ac_reclrc"     LOC=M18 | IOSTANDARD=LVCMOS33; #IO_L8N_T1_AD10N_35
+
+## Audio Codec/external EEPROM IIC bus
+#NET "ac_scl"        LOC=N18 | IOSTANDARD=LVCMOS33; #IO_L13P_T2_MRCC_34
+#NET "ac_sda"        LOC=N17 | IOSTANDARD=LVCMOS33; #IO_L23P_T3_34
+
+## Additional Ethernet signals
+#NET "eth_int_b"     LOC=F16 | IOSTANDARD=LVCMOS33; #IO_L6P_T0_35
+#NET "eth_rst_b"     LOC=E17 | IOSTANDARD=LVCMOS33; #IO_L3P_T0_DQS_AD1P_35
+
+# warning this is from original file - JA..JD strange pin order 
+## Pmod Header JA (XADC)
+#NET "ja_n<0>"       LOC=N16 | IOSTANDARD=LVCMOS33; #IO_L21N_T3_DQS_AD14N_35
+#NET "ja_p<0>"       LOC=N15 | IOSTANDARD=LVCMOS33; #IO_L21P_T3_DQS_AD14P_35
+#NET "ja_n<1>"       LOC=L15 | IOSTANDARD=LVCMOS33; #IO_L22N_T3_AD7N_35
+#NET "ja_p<1>"       LOC=L14 | IOSTANDARD=LVCMOS33; #IO_L22P_T3_AD7P_35
+#NET "ja_n<2>"       LOC=J16 | IOSTANDARD=LVCMOS33; #IO_L24N_T3_AD15N_35
+#NET "ja_p<2>"       LOC=K16 | IOSTANDARD=LVCMOS33; #IO_L24P_T3_AD15P_35
+#NET "ja_n<3>"       LOC=J14 | IOSTANDARD=LVCMOS33; #IO_L20N_T3_AD6N_35
+#NET "ja_p<3>"       LOC=K14 | IOSTANDARD=LVCMOS33; #IO_L20P_T3_AD6P_35
+
+## Pmod Header JB
+#NET "jb_n<0>"       LOC=U20 | IOSTANDARD=LVCMOS33; #IO_L15N_T2_DQS_34
+#NET "jb_p<0>"       LOC=T20 | IOSTANDARD=LVCMOS33; #IO_L15P_T2_DQS_34
+#NET "jb_n<1>"       LOC=W20 | IOSTANDARD=LVCMOS33; #IO_L16N_T2_34
+#NET "jb_p<1>"       LOC=V20 | IOSTANDARD=LVCMOS33; #IO_L16P_T2_34
+#NET "jb_n<2>"       LOC=Y19 | IOSTANDARD=LVCMOS33; #IO_L17N_T2_34
+#NET "jb_p<2>"       LOC=Y18 | IOSTANDARD=LVCMOS33; #IO_L17P_T2_34
+#NET "jb_n<3>"       LOC=W19 | IOSTANDARD=LVCMOS33; #IO_L22N_T3_34
+#NET "jb_p<3>"       LOC=W18 | IOSTANDARD=LVCMOS33; #IO_L22P_T3_34
+
+## Pmod Header JC
+#NET "jc_n<0>"       LOC=W15 | IOSTANDARD=LVCMOS33; #IO_L10N_T1_34
+#NET "jc_p<0>"       LOC=V15 | IOSTANDARD=LVCMOS33; #IO_L10P_T1_34
+#NET "jc_n<1>"       LOC=T10 | IOSTANDARD=LVCMOS33; #IO_L1N_T0_34
+#NET "jc_p<1>"       LOC=T11 | IOSTANDARD=LVCMOS33; #IO_L1P_T0_34
+#NET "jc_n<2>"       LOC=Y14 | IOSTANDARD=LVCMOS33; #IO_L8N_T1_34
+#NET "jc_p<2>"       LOC=W14 | IOSTANDARD=LVCMOS33; #IO_L8P_T1_34
+#NET "jc_n<3>"       LOC=U12 | IOSTANDARD=LVCMOS33; #IO_L2N_T0_34
+#NET "jc_p<3>"       LOC=T12 | IOSTANDARD=LVCMOS33; #IO_L2P_T0_34
+
+## Pmod Header JD
+#NET "jd_n<0>"       LOC=T15 | IOSTANDARD=LVCMOS33; #IO_L5N_T0_34
+#NET "jd_p<0>"       LOC=T14 | IOSTANDARD=LVCMOS33; #IO_L5P_T0_34
+#NET "jd_n<1>"       LOC=R14 | IOSTANDARD=LVCMOS33; #IO_L6N_T0_VREF_34
+#NET "jd_p<1>"       LOC=P14 | IOSTANDARD=LVCMOS33; #IO_L6P_T0_34
+#NET "jd_n<2>"       LOC=U15 | IOSTANDARD=LVCMOS33; #IO_L11N_T1_SRCC_34
+#NET "jd_p<2>"       LOC=U14 | IOSTANDARD=LVCMOS33; #IO_L11P_T1_SRCC_34
+#NET "jd_n<3>"       LOC=V18 | IOSTANDARD=LVCMOS33; #IO_L21N_T3_DQS_34
+#NET "jd_p<3>"       LOC=V17 | IOSTANDARD=LVCMOS33; #IO_L21P_T3_DQS_34
+
+# Pmod headers
+# simplified pins order
+# legend:
+# jx_u is upper row
+# jx_d is lower row
+# pinout: (looking at holes, left to right)
+# 3V3 GND jx_u<0> jx_u<1> jx_u<2> jx_u<3>
+# 3V3 GND jx_d<0> jx_d<1> jx_d<2> jx_d<3>
+
+## Pmod Header JA - untested, pins may be wrong
+NET "ja_u<0>"       LOC=N16 | IOSTANDARD=LVCMOS33;
+NET "ja_u<1>"       LOC=N15 | IOSTANDARD=LVCMOS33;
+NET "ja_u<2>"       LOC=L15 | IOSTANDARD=LVCMOS33;
+NET "ja_u<3>"       LOC=L14 | IOSTANDARD=LVCMOS33;
+NET "ja_d<0>"       LOC=J16 | IOSTANDARD=LVCMOS33;
+NET "ja_d<1>"       LOC=K16 | IOSTANDARD=LVCMOS33;
+NET "ja_d<2>"       LOC=J14 | IOSTANDARD=LVCMOS33;
+NET "ja_d<3>"       LOC=K14 | IOSTANDARD=LVCMOS33;
+
+## Pmod Header JB
+NET "jb_u<0>"       LOC=W20 | IOSTANDARD=LVCMOS33;
+NET "jb_u<1>"       LOC=V20 | IOSTANDARD=LVCMOS33;
+NET "jb_u<2>"       LOC=U20 | IOSTANDARD=LVCMOS33;
+NET "jb_u<3>"       LOC=T20 | IOSTANDARD=LVCMOS33;
+NET "jb_d<0>"       LOC=W19 | IOSTANDARD=LVCMOS33;
+NET "jb_d<1>"       LOC=W18 | IOSTANDARD=LVCMOS33;
+NET "jb_d<2>"       LOC=Y19 | IOSTANDARD=LVCMOS33;
+NET "jb_d<3>"       LOC=Y18 | IOSTANDARD=LVCMOS33;
+
+## Pmod Header JC
+NET "jc_u<0>"       LOC=T10 | IOSTANDARD=LVCMOS33;
+NET "jc_u<1>"       LOC=T11 | IOSTANDARD=LVCMOS33;
+NET "jc_u<2>"       LOC=W15 | IOSTANDARD=LVCMOS33;
+NET "jc_u<3>"       LOC=V15 | IOSTANDARD=LVCMOS33;
+NET "jc_d<0>"       LOC=U12 | IOSTANDARD=LVCMOS33;
+NET "jc_d<1>"       LOC=T12 | IOSTANDARD=LVCMOS33;
+NET "jc_d<2>"       LOC=Y14 | IOSTANDARD=LVCMOS33;
+NET "jc_d<3>"       LOC=W14 | IOSTANDARD=LVCMOS33;
+
+## Pmod Header JD
+NET "jd_u<0>"       LOC=R14 | IOSTANDARD=LVCMOS33;
+NET "jd_u<1>"       LOC=P14 | IOSTANDARD=LVCMOS33;
+NET "jd_u<2>"       LOC=T15 | IOSTANDARD=LVCMOS33;
+NET "jd_u<3>"       LOC=T14 | IOSTANDARD=LVCMOS33;
+NET "jd_d<0>"       LOC=V18 | IOSTANDARD=LVCMOS33;
+NET "jd_d<1>"       LOC=V17 | IOSTANDARD=LVCMOS33;
+NET "jd_d<2>"       LOC=U15 | IOSTANDARD=LVCMOS33;
+NET "jd_d<3>"       LOC=U14 | IOSTANDARD=LVCMOS33;
+
+## Pmod Header JE
+#NET "je_u<0>"         LOC=H15 | IOSTANDARD=LVCMOS33;
+#NET "je_u<1>"         LOC=J15 | IOSTANDARD=LVCMOS33;
+#NET "je_u<2>"         LOC=W16 | IOSTANDARD=LVCMOS33;
+#NET "je_u<3>"         LOC=V12 | IOSTANDARD=LVCMOS33;
+#NET "je_d<0>"         LOC=Y17 | IOSTANDARD=LVCMOS33;
+#NET "je_d<1>"         LOC=T17 | IOSTANDARD=LVCMOS33;
+#NET "je_d<2>"         LOC=U17 | IOSTANDARD=LVCMOS33;
+#NET "je_d<3>"         LOC=V13 | IOSTANDARD=LVCMOS33;
+
+# JE Pmod header, protected with 200 ohm resistors
+# connectors up, looking at the holes:
+# 3V3 GND H15 J15 W16 V12
+# 3V3 GND Y17 T17 U17 V13
+# plug usbserial 3V3 in JE lower row,
+# align usbserial 1st pin (GND) to 2nd pin in lower row of JE (GND)
+# last pin of usbserial must remain unplugged
+Net "rs232_rx" LOC = U17 | IOSTANDARD = LVCMOS33;
+Net "rs232_tx" LOC = V13 | IOSTANDARD = LVCMOS33;
+
+# onboard MIO band 501, 
+# PS_MIO48=B12 is TX (zinq sends),
+# PS_MIO49=C12 is RX (zinq receives)
+# we don't know how to use this
+#Net "rs232_tx" LOC = B12 | IOSTANDARD = LVCMOS18;
+#Net "rs232_rx" LOC = C12 | IOSTANDARD = LVCMOS18;
+
+## USB-OTG overcurrent detect pin
+#NET "otg_oc"        LOC=U13 | IOSTANDARD=LVCMOS33; #IO_L3P_T0_DQS_PUDC_B_34
+
+## VGA Connector
+NET "vga_r<0>"      LOC=M19 | IOSTANDARD=LVCMOS33; #IO_L7P_T1_AD2P_35
+NET "vga_r<1>"      LOC=L20 | IOSTANDARD=LVCMOS33; #IO_L9N_T1_DQS_AD3N_35
+NET "vga_r<2>"      LOC=J20 | IOSTANDARD=LVCMOS33; #IO_L17P_T2_AD5P_35
+NET "vga_r<3>"      LOC=G20 | IOSTANDARD=LVCMOS33; #IO_L18N_T2_AD13N_35
+NET "vga_r<4>"      LOC=F19 | IOSTANDARD=LVCMOS33; #IO_L15P_T2_DQS_AD12P_35
+NET "vga_g<0>"      LOC=H18 | IOSTANDARD=LVCMOS33; #IO_L14N_T2_AD4N_SRCC_35
+NET "vga_g<1>"      LOC=N20 | IOSTANDARD=LVCMOS33; #IO_L14P_T2_SRCC_34
+NET "vga_g<2>"      LOC=L19 | IOSTANDARD=LVCMOS33; #IO_L9P_T1_DQS_AD3P_35
+NET "vga_g<3>"      LOC=J19 | IOSTANDARD=LVCMOS33; #IO_L10N_T1_AD11N_35
+NET "vga_g<4>"      LOC=H20 | IOSTANDARD=LVCMOS33; #IO_L17N_T2_AD5N_35
+NET "vga_g<5>"      LOC=F20 | IOSTANDARD=LVCMOS33; #IO_L15N_T2_DQS_AD12N_35
+NET "vga_b<0>"      LOC=P20 | IOSTANDARD=LVCMOS33; #IO_L14N_T2_SRCC_34
+NET "vga_b<1>"      LOC=M20 | IOSTANDARD=LVCMOS33; #IO_L7N_T1_AD2N_35
+NET "vga_b<2>"      LOC=K19 | IOSTANDARD=LVCMOS33; #IO_L10P_T1_AD11P_35
+NET "vga_b<3>"      LOC=J18 | IOSTANDARD=LVCMOS33; #IO_L14P_T2_AD4P_SRCC_35
+NET "vga_b<4>"      LOC=G19 | IOSTANDARD=LVCMOS33; #IO_L18P_T2_AD13P_35
+NET "vga_hs"        LOC=P19 | IOSTANDARD=LVCMOS33; #IO_L13N_T2_MRCC_34
+NET "vga_vs"        LOC=R19 | IOSTANDARD=LVCMOS33; #IO_0_34
+
+## HDMI Signals
+NET "hdmi_clk_n"    LOC=H17 | IOSTANDARD=TMDS_33; #IO_L13N_T2_MRCC_35
+NET "hdmi_clk_p"    LOC=H16 | IOSTANDARD=TMDS_33; #IO_L13P_T2_MRCC_35
+NET "hdmi_d_n<0>"   LOC=D20 | IOSTANDARD=TMDS_33; #IO_L4N_T0_35
+NET "hdmi_d_p<0>"   LOC=D19 | IOSTANDARD=TMDS_33; #IO_L4P_T0_35
+NET "hdmi_d_n<1>"   LOC=B20 | IOSTANDARD=TMDS_33; #IO_L1N_T0_AD0N_35
+NET "hdmi_d_p<1>"   LOC=C20 | IOSTANDARD=TMDS_33; #IO_L1P_T0_AD0P_35
+NET "hdmi_d_n<2>"   LOC=A20 | IOSTANDARD=TMDS_33; #IO_L2N_T0_AD8N_35
+NET "hdmi_d_p<2>"   LOC=B19 | IOSTANDARD=TMDS_33; #IO_L2P_T0_AD8P_35
+#NET "hdmi_cec"      LOC=E19 | IOSTANDARD=LVCMOS33; #IO_L5N_T0_AD9N_35
+#NET "hdmi_hpd"      LOC=E18 | IOSTANDARD=LVCMOS33; #IO_L5P_T0_AD9P_35
+NET "hdmi_out_en"   LOC=F17 | IOSTANDARD=LVCMOS33; #IO_L6N_T0_VREF_35
+#NET "hdmi_scl"      LOC=G17 | IOSTANDARD=LVCMOS33; #IO_L16P_T2_35
+#NET "hdmi_sda"      LOC=G18 | IOSTANDARD=LVCMOS33; #IO_L16N_T2_35

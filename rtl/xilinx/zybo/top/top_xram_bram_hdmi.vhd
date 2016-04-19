@@ -50,7 +50,7 @@ entity glue is
 	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
-	C_mem_size: integer := 128;
+	C_bram_size: integer := 128;
 	C_vgahdmi: boolean := false;
 	C_vgahdmi_mem_kb: integer := 38; -- KB 38K full mono 640x480
 	C_vgahdmi_test_picture: integer := 1; -- enable test picture
@@ -82,9 +82,16 @@ entity glue is
           C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) len = 2^width * 4 byte
         C_vgatext_bitmap: boolean := false; -- true to enable bitmap generation
           C_vgatext_bitmap_depth: integer := 8;	-- bitmap bits per pixel (1, 2, 4, 8)
-            C_vgatext_bitmap_fifo: boolean := false; -- true to use videofifo, else SRAM port for bitmap memory
-            C_vgatext_bitmap_fifo_step: integer := 0; -- bitmap step for the fifo refill and rewind (0 unless repeating lines)
-            C_vgatext_bitmap_fifo_width: integer := 8; -- bitmap width of FIFO address space len = 2^width * 4 byte
+          C_vgatext_bitmap_fifo: boolean := false; -- true to use videofifo, else SRAM port for bitmap memory
+          -- 8 bpp compositing
+          -- step=horizontal width in pixels
+          C_vgatext_bitmap_fifo_step: integer := 640;
+          -- height=vertical height in pixels
+          C_vgatext_bitmap_fifo_height: integer := 480;
+          -- output data width 8bpp
+          C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
+          -- bitmap width of FIFO address space length = 2^width * 4 byte
+          C_vgatext_bitmap_fifo_addr_width: integer := 11;
 
 	C_sio: integer := 1;
 	C_spi: integer := 2;
@@ -159,14 +166,13 @@ begin
    end generate;
 
     -- generic BRAM glue
-    glue_bram: entity work.glue_bram
+    glue_xram: entity work.glue_xram
     generic map (
-	C_arch => C_arch,
-	C_clk_freq => C_clk_freq,
-	C_mem_size => C_mem_size,
-	C_vgahdmi => C_vgahdmi,
-	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
-	C_vgahdmi_test_picture => C_vgahdmi_test_picture,
+      C_arch => C_arch,
+      C_clk_freq => C_clk_freq,
+      C_bram_size => C_bram_size,
+      C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_test_picture => C_vgahdmi_test_picture,
       C_vgatext => C_vgatext,
       C_vgatext_label => C_vgatext_label,
       C_vgatext_mode => C_vgatext_mode,
@@ -191,59 +197,60 @@ begin
       C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
       C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
       C_vgatext_bitmap_fifo_step => C_vgatext_bitmap_fifo_step,
-      C_vgatext_bitmap_fifo_width => C_vgatext_bitmap_fifo_width,
-	C_gpio => C_gpio,
-	C_sio => C_sio,
-	C_spi => C_spi,
-	C_debug => C_debug
+      C_vgatext_bitmap_fifo_height => C_vgatext_bitmap_fifo_height,
+      C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
+      C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
+      C_gpio => C_gpio,
+      C_sio => C_sio,
+      C_spi => C_spi,
+      C_debug => C_debug
     )
     port map (
-	clk => clk,
-	clk_25MHz => clk_25MHz, -- pixel clock
-	clk_250MHz => clk_250MHz, -- tmds clock
-	sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
-	sio_break(0) => sio_break,
-	spi_sck(0)  => open,  spi_sck(1)  => open,
-	spi_ss(0)   => open,  spi_ss(1)   => open,
-	spi_mosi(0) => open,  spi_mosi(1) => open,
-	spi_miso(0) => '-',   spi_miso(1) => '-',
-	gpio(3 downto 0) => ja_u(3 downto 0),
-	gpio(7 downto 4) => ja_d(3 downto 0),
-	gpio(11 downto 8) => jb_u(3 downto 0),
-	gpio(15 downto 12) => jb_d(3 downto 0),
-	gpio(19 downto 16) => jc_u(3 downto 0),
-	gpio(23 downto 20) => jc_d(3 downto 0),
-	gpio(27 downto 24) => jd_u(3 downto 0),
-	gpio(31 downto 28) => jd_d(3 downto 0),
-	gpio(127 downto 32) => open,
-	tmds_out_rgb => tmds_out_rgb,
-	vga_vsync => vga_vs,
-	vga_hsync => vga_hs,
-	vga_r(7 downto 3) => vga_r(4 downto 0),
-	vga_r(2 downto 0) => open,
-	vga_g(7 downto 2) => vga_g(5 downto 0),
-	vga_g(1 downto 0) => open,
-	vga_b(7 downto 3) => vga_b(4 downto 0),
-	vga_b(2 downto 0) => open,
-	simple_out(3 downto 0) => led(3 downto 0),
-	simple_out(31 downto 4) => open,
-	simple_in(3 downto 0) => btn(3 downto 0),
-	simple_in(15 downto 4) => open,
-	simple_in(19 downto 16) => sw(3 downto 0),
-	simple_in(31 downto 20) => open
+      clk => clk,
+      clk_25MHz => clk_25MHz, -- pixel clock
+      clk_250MHz => clk_250MHz, -- tmds clock
+      sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
+      sio_break(0) => sio_break,
+      spi_sck(0)  => open,  spi_sck(1)  => open,
+      spi_ss(0)   => open,  spi_ss(1)   => open,
+      spi_mosi(0) => open,  spi_mosi(1) => open,
+      spi_miso(0) => '-',   spi_miso(1) => '-',
+      gpio(3 downto 0) => ja_u(3 downto 0),
+      gpio(7 downto 4) => ja_d(3 downto 0),
+      gpio(11 downto 8) => jb_u(3 downto 0),
+      gpio(15 downto 12) => jb_d(3 downto 0),
+      gpio(19 downto 16) => jc_u(3 downto 0),
+      gpio(23 downto 20) => jc_d(3 downto 0),
+      gpio(27 downto 24) => jd_u(3 downto 0),
+      gpio(31 downto 28) => jd_d(3 downto 0),
+      gpio(127 downto 32) => open,
+      tmds_out_rgb => tmds_out_rgb,
+      vga_vsync => vga_vs,
+      vga_hsync => vga_hs,
+      vga_r(7 downto 3) => vga_r(4 downto 0),
+      vga_r(2 downto 0) => open,
+      vga_g(7 downto 2) => vga_g(5 downto 0),
+      vga_g(1 downto 0) => open,
+      vga_b(7 downto 3) => vga_b(4 downto 0),
+      vga_b(2 downto 0) => open,
+      simple_out(3 downto 0) => led(3 downto 0),
+      simple_out(31 downto 4) => open,
+      simple_in(3 downto 0) => btn(3 downto 0),
+      simple_in(15 downto 4) => open,
+      simple_in(19 downto 16) => sw(3 downto 0),
+      simple_in(31 downto 20) => open
     );
 
     -- differential output buffering for HDMI clock and video
     hdmi_out_en <= '1';
     hdmi_output: entity work.hdmi_out
-      port map (
-        tmds_in_clk => clk_25MHz,
-        tmds_out_clk_p => hdmi_clk_p,
-        tmds_out_clk_n => hdmi_clk_n,
-        tmds_in_rgb => tmds_out_rgb,
-        tmds_out_rgb_p => hdmi_d_p,
-        tmds_out_rgb_n => hdmi_d_n
-      );
-      
-      
+    port map (
+      tmds_in_clk => clk_25MHz,
+      tmds_out_clk_p => hdmi_clk_p,
+      tmds_out_clk_n => hdmi_clk_n,
+      tmds_in_rgb => tmds_out_rgb,
+      tmds_out_rgb_p => hdmi_d_p,
+      tmds_out_rgb_n => hdmi_d_n
+    );
+
 end Behavioral;
