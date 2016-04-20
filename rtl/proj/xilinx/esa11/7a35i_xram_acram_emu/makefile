@@ -10,4 +10,4 @@ junk+=$(project).ip_user_files
 junk+=$(project).sim
 junk+=$(project).cache
 
-include ../include/vivado.mk
+include ../../include/vivado.mk
