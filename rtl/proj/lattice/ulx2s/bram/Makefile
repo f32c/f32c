@@ -14,7 +14,7 @@ all:
 	@echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
 
 clean:
-	rm -rf ${IMPL_DIR}
+	rm -rf ${IMPL_DIR} .recovery *~
 
 program:
 	ujprog ${IMPL_DIR}/${PROJ_NAME}_${IMPL_NAME}.jed
