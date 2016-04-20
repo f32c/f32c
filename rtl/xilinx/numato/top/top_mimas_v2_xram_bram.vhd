@@ -48,9 +48,8 @@ entity glue is
 	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
-	C_mem_size: integer := 32;
+	C_bram_size: integer := 32;
 	C_vgahdmi: boolean := false;
-	C_vgahdmi_mem_kb: integer := 10; -- KB
 
     C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string :=  "f32c: numato mimas v2 MIPS compatible soft-core 100MHz 32KB BRAM";	-- default banner in screen memory
@@ -69,9 +68,16 @@ entity glue is
           C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) len = 2^width * 4 byte
         C_vgatext_bitmap: boolean := false; -- true to enable bitmap generation
           C_vgatext_bitmap_depth: integer := 8;	-- bitmap bits per pixel (1, 2, 4, 8)
-            C_vgatext_bitmap_fifo: boolean := false; -- true to use videofifo, else SRAM port for bitmap memory
-            C_vgatext_bitmap_fifo_step: integer := 0; -- bitmap step for the fifo refill and rewind (0 unless repeating lines)
-            C_vgatext_bitmap_fifo_width: integer := 8; -- bitmap width of FIFO address space len = 2^width * 4 byte
+          C_vgatext_bitmap_fifo: boolean := false; -- true to use videofifo, else SRAM port for bitmap memory
+            -- 8 bpp compositing
+            -- step=horizontal width in pixels
+            C_vgatext_bitmap_fifo_step: integer := 640;
+            -- height=vertical height in pixels
+            C_vgatext_bitmap_fifo_height: integer := 480;
+            -- output data width 8bpp
+            C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
+            -- bitmap width of FIFO address space length = 2^width * 4 byte
+            C_vgatext_bitmap_fifo_addr_width: integer := 11;
 
 	C_fmrds: boolean := true;
 	C_rds_msg_len: integer := 260; -- bytes of RAM for RDS binary message
@@ -142,13 +148,12 @@ begin
     );
 
     -- generic BRAM glue
-    glue_bram: entity work.glue_bram
+    glue_xram: entity work.glue_xram
     generic map (
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
-	C_mem_size => C_mem_size,
+	C_bram_size => C_bram_size,
 	C_vgahdmi => C_vgahdmi,
-	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
       C_vgatext => C_vgatext,
       C_vgatext_label => C_vgatext_label,
       C_vgatext_mode => C_vgatext_mode,
@@ -168,7 +173,9 @@ begin
       C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
       C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
       C_vgatext_bitmap_fifo_step => C_vgatext_bitmap_fifo_step,
-      C_vgatext_bitmap_fifo_width => C_vgatext_bitmap_fifo_width,
+      C_vgatext_bitmap_fifo_height => C_vgatext_bitmap_fifo_height,
+      C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
+      C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
 
 	C_fmrds => C_fmrds,
 	C_fmdds_hz => C_fmdds_hz,
@@ -213,7 +220,7 @@ begin
 	simple_in(15 downto 6) => open,
 	simple_in(23 downto 16) => sw(7 downto 0), 
 	simple_in(31 downto 24) => open,
-   gpio(7 downto 0)=>IO_P6(7 downto 0),
+	gpio(7 downto 0)=>IO_P6(7 downto 0),
 	gpio(15 downto 8)=>IO_P8(7 downto 0),
 	gpio(23 downto 16)=>IO_P9(7 downto 0),
 	gpio(127 downto 24)=> open,
