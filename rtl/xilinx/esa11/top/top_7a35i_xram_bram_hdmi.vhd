@@ -46,7 +46,7 @@ entity glue is
 	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
-	C_mem_size: integer := 128;
+	C_bram_size: integer := 128;
 
 	C_vgahdmi: boolean := false;
 	C_vgahdmi_mem_kb: integer := 38; -- KB 38K full mono 640x480
@@ -177,15 +177,15 @@ begin
     PS2_A_CLK	<= '0' when ps2_clk_out='0' else 'Z';
 
     -- generic BRAM glue
-    glue_bram: entity work.glue_bram
+    glue_xram: entity work.glue_xram
     generic map (
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
-        C_mem_size => C_mem_size,
+        C_bram_size => C_bram_size,
         C_gpio => C_gpio,
         C_sio => C_sio,
         C_spi => C_spi,
-        C_ps2 => C_ps2,
+        --C_ps2 => C_ps2,
 
 	C_vgahdmi => C_vgahdmi,
 	C_vgahdmi_mem_kb => C_vgahdmi_mem_kb,
