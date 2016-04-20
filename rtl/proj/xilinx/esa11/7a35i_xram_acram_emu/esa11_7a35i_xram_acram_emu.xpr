@@ -404,7 +404,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../xilinx/esa11_7a35i_toplevel_xram_acram_emu.vhd">
+      <File Path="$PPRDIR/../../../../xilinx/esa11/top/top_7a35i_xram_acram_emu.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
