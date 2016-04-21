@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DiamondModule name="clkgen" module="clkgen" VendorName="Lattice Semiconductor Corporation" generator="IPexpress" date="2015 10 25 04:37:23.406" version="5.8" type="Module" synthesis="synplify" source_format="VHDL">
+  <Package>
+		<File name="clkgen.lpc" type="lpc" modified="2015 10 25 04:37:20.897"/>
+		<File name="clkgen.vhd" type="top_level_vhdl" modified="2015 10 25 04:37:20.966"/>
+		<File name="clkgen_tmpl.vhd" type="template_vhdl" modified="2015 10 25 04:37:20.969"/>
+  </Package>
+</DiamondModule>
