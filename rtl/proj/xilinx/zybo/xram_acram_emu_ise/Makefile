@@ -19,9 +19,9 @@ vfiles = \
 ../../../../soc/vgahdmi/vgahdmif_v.v \
 
 vhdfiles = \
-../../../../xilinx/zybo_toplevel_xram_acram_emu.vhd \
-../../../../xilinx/clocks/zybo/pll_125M_250M_100M_25M.vhd \
-../../../../xilinx/clocks/zybo/mmcm_125M_81M25_250M521_25M052.vhd \
+../../../../xilinx/zybo/top/top_xram_acram_emu.vhd \
+../../../../xilinx/zybo/clocks/pll_125M_250M_100M_25M.vhd \
+../../../../xilinx/zybo/clocks/mmcm_125M_81M25_250M521_25M052.vhd \
 ../../../../xilinx/hdmi_out.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \
@@ -79,7 +79,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/VGA_textmode_bram.vhd \
 ../../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../../soc/vgahdmi/TMDS_encoder.vhd \
-../../../../soc/vgahdmi/dvid_out.vhd \
+../../../../soc/vgahdmi/vga2dvid.vhd \
 ../../../../soc/vgahdmi/ledstrip.vhd \
 ../../../../soc/vgahdmi/ws2812b.vhd \
 ../../../../soc/vgahdmi/pulse_counter.vhd \
