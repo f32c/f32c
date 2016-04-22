@@ -19,8 +19,8 @@ vfiles = \
 
 vhdfiles = \
 ../../../../xilinx/tb299/top/top_xc6slx9_xram_bram.vhd \
-../../../../xilinx/clocks/tb299/pll_25M_112M5.vhd \
-../../../../xilinx/clocks/tb299/pll_25M_81M25.vhd \
+../../../../xilinx/tb299/clocks/pll_25M_112M5.vhd \
+../../../../xilinx/tb299/clocks/pll_25M_81M25.vhd \
 ../../../../xilinx/hdmi_out.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \
@@ -77,7 +77,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/VGA_textmode_bram.vhd \
 ../../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../../soc/vgahdmi/TMDS_encoder.vhd \
-../../../../soc/vgahdmi/dvid_out.vhd \
+../../../../soc/vgahdmi/vga2dvid.vhd \
 ../../../../soc/vgahdmi/ledstrip.vhd \
 ../../../../soc/vgahdmi/ws2812b.vhd \
 ../../../../soc/vgahdmi/pulse_counter.vhd \

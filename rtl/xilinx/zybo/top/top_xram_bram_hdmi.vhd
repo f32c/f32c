@@ -207,8 +207,8 @@ begin
     )
     port map (
       clk => clk,
-      clk_25MHz => clk_25MHz, -- pixel clock
-      clk_250MHz => clk_250MHz, -- tmds clock
+      clk_pixel => clk_25MHz, -- pixel clock
+      clk_pixel_shift => clk_250MHz, -- tmds clock
       sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
       sio_break(0) => sio_break,
       spi_sck(0)  => open,  spi_sck(1)  => open,
