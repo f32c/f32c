@@ -186,10 +186,7 @@
         <Source name="../../../../soc/vgahdmi/TMDS_encoder.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../soc/vgahdmi/vga2dvid_sdr.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/vgahdmi/vga2dvid_ddr.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../soc/vgahdmi/vga2dvid.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../soc/simple_ADC.vhd" type="VHDL" type_short="VHDL">

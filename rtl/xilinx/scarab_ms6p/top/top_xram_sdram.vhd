@@ -181,10 +181,11 @@ end glue;
 architecture Behavioral of glue is
   signal clk, sdram_clk_internal: std_logic;
   signal clk_25MHz, clk_250MHz, clk_433M92Hz: std_logic := '0';
+  signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
+  signal tmds_rgb: std_logic_vector(2 downto 0);
   signal rs232_break: std_logic;
   signal cw_antenna, fm_antenna: std_logic := '0';
   signal btns: std_logic_vector(1 downto 0);
-  signal tmds_out_rgb: std_logic_vector(2 downto 0);
 begin
   -- clock synthesizer: Xilinx Spartan-6 specific
 
@@ -365,8 +366,8 @@ begin
     port map
     (
       clk => clk,
-      clk_25MHz => clk_25MHz, -- pixel clock
-      clk_250MHz => clk_250MHz, -- tmds clock
+      clk_pixel => clk_25MHz, -- pixel clock
+      clk_pixel_shift => clk_250MHz, -- tmds clock 10x pixel clock
       clk_cw => clk_433M92Hz, -- CW clock for 433.92MHz transmitter
       clk_fmdds => clk_250MHz, -- FM/RDS clock
       -- external SDRAM interface
@@ -381,7 +382,10 @@ begin
       spi_ss(0)   => flash_cs,    spi_ss(1)   => sd_cd_dat3,
       spi_mosi(0) => flash_mosi,  spi_mosi(1) => sd_cmd,
       spi_miso(0) => flash_miso,  spi_miso(1) => sd_dat0,
-      tmds_out_rgb => tmds_out_rgb,
+      dvid_red(0)   => tmds_rgb(2), dvid_red(1)   => open,
+      dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
+      dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
+      dvid_clock => open, -- clk_25MHz used directly
       jack_ring(3) => audio1, jack_ring(2 downto 0) => open,
       jack_tip(3)  => audio2, jack_tip(2 downto 0)  => open,
       cw_antenna => cw_antenna,
@@ -435,7 +439,7 @@ begin
         tmds_in_clk    => clk_25MHz,
         tmds_out_clk_p => tmds_out_clk_p,
         tmds_out_clk_n => tmds_out_clk_n,
-        tmds_in_rgb    => tmds_out_rgb,
+        tmds_in_rgb    => tmds_rgb,
         tmds_out_rgb_p => tmds_out_p,
         tmds_out_rgb_n => tmds_out_n
       );
@@ -446,9 +450,9 @@ begin
         tmds_in_clk    => clk_25MHz,
         tmds_out_clk_p => tmds_in_clk_p,
         tmds_out_clk_n => tmds_in_clk_n,
-        tmds_in_rgb    => tmds_out_rgb,
-        tmds_out_rgb_p => tmds_in_p,
-        tmds_out_rgb_n => tmds_in_n
+        tmds_in_rgb    => tmds_rgb,
+        tmds_out_rgb_p => tmds_in_p, -- in port used as 2nd output
+        tmds_out_rgb_n => tmds_in_n  -- in port used as 2nd output
       );
 
 end Behavioral;
