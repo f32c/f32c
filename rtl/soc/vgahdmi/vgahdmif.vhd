@@ -16,13 +16,13 @@ entity vgahdmi is
   generic(
     dbl_x          : integer := 0;  -- 0-normal X, 1-double X
     dbl_y          : integer := 0;  -- 0-normal X, 1-double X
-    mem_size_kb    : integer := 40; -- unused
-    test_picture   : integer := 0   -- 0-don't, 1-show some test picture
+    mem_size_kb    : integer := 40 -- unused
   );
   port
   (
     clk_pixel  : in std_logic;  -- pixel clock, 25 MHz
     clk_tmds   : in std_logic := '0'; -- hdmi clock 250 MHz (or 0 if HDMI output is not used)
+    test_picture : in std_logic := '0'; -- show test picture
     fetch_next : out std_logic; -- request FIFO to fetch next data
     red_byte, green_byte, blue_byte, bright_byte: in  std_logic_vector(7 downto 0); -- pixel data from FIFO
     vga_r, vga_g, vga_b:  out std_logic_vector(7 downto 0); -- VGA video signal
@@ -37,12 +37,12 @@ architecture syn of vgahdmi is
   component vgahdmi_v
     generic (
       dbl_x          : integer := 0;  -- 0-normal X, 1-double X
-      dbl_y          : integer := 0;  -- 0-normal X, 1-double X
-      test_picture   : integer := 0   -- 0-don't, 1-show some test picture
+      dbl_y          : integer := 0   -- 0-normal X, 1-double X
     );
     port (
       clk_pixel  : in std_logic;  -- pixel clock, 25 MHz
       clk_tmds   : in std_logic := '0'; -- hdmi clock 250 MHz (or 0 if HDMI output is not used)
+      test_picture : in std_logic := '0'; -- show test picture
       fetch_next : out std_logic; -- request FIFO to fetch next data
       red_byte, green_byte, blue_byte, bright_byte: in  std_logic_vector(7 downto 0); -- pixel data from FIFO
       vga_r, vga_g, vga_b:  out std_logic_vector(7 downto 0); -- VGA video signal
@@ -57,12 +57,12 @@ begin
   vgahdmi_inst: vgahdmi_v
   generic map(
     dbl_x => dbl_x,
-    dbl_y => dbl_y,
-    test_picture => test_picture
+    dbl_y => dbl_y
   )
   port map(
       clk_pixel => clk_pixel,
       clk_tmds  => clk_tmds,
+      test_picture => test_picture,
       fetch_next => fetch_next,
       red_byte => red_byte,
       green_byte => green_byte,

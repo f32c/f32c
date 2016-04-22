@@ -22,6 +22,7 @@
 module vgahdmi_v(
         input wire clk_pixel, /* 25 MHz */
         input wire clk_tmds, /* 250 MHz (set to 0 for VGA-only) */
+        input wire test_picture, // show test picture instead of bitmap
         input wire [7:0] red_byte, green_byte, blue_byte, bright_byte, // get data from fifo
         output wire fetch_next, // fetch_next=1: read cycle is complete, fetch next data
         output wire line_repeat, // repeat video line
@@ -31,7 +32,6 @@ module vgahdmi_v(
 	output wire [2:0] TMDS_out_RGB
 );
 
-parameter test_picture = 0;
 // pixel doubling may not work (long time not maintained)
 parameter dbl_x = 0; // 0-normal X, 1-double X
 parameter dbl_y = 0; // 0-normal Y, 1-double Y
@@ -113,9 +113,9 @@ always @(posedge pixclk) test_green <= (CounterX[7:0] & {8{CounterY[6]}} | W) & 
 always @(posedge pixclk) test_blue <= CounterY[7:0] | W | A;
 
 // generate VGA output, mixing with test picture if enabled
-assign vga_r = DrawArea ? (test_picture ? test_red[7:0]  :  red_byte[7:0]) : 0;
-assign vga_g = DrawArea ? (                               green_byte[7:0]) : 0;
-assign vga_b = DrawArea ? (test_picture ? test_blue[7:0] : blue_byte[7:0]) : 0;
+assign vga_r = DrawArea ? (test_picture ? test_red[7:0]   : red_byte[7:0]  ) : 0;
+assign vga_g = DrawArea ? (test_picture ? test_green[7:0] : green_byte[7:0]) : 0;
+assign vga_b = DrawArea ? (test_picture ? test_blue[7:0]  : blue_byte[7:0] ) : 0;
 assign vga_hsync = hSync;
 assign vga_vsync = vSync;
 assign vga_vblank = vBlank;
