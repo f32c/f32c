@@ -55,7 +55,7 @@ entity glue is
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
     C_sdram: boolean := true;
 
-    C_vgahdmi: boolean := false;
+    C_vgahdmi: boolean := true;
     C_vgahdmi_test_picture: integer := 0;
     -- number of pixels for line step 640
     C_vgahdmi_fifo_width: integer := 640;
@@ -78,7 +78,7 @@ entity glue is
     -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
     C_ledstrip_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480                   
       C_vgatext_bits: integer := 4;   -- 64 possible colors

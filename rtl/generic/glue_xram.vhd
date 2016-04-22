@@ -312,8 +312,9 @@ architecture Behavioral of glue_xram is
     signal video_bram_write: std_logic;
     signal vga_addr_strobe: std_logic; -- FIFO requests to read from RAM
     signal vga_data_ready: std_logic; -- RAM responds to FIFO
+    signal S_vga_r, S_vga_g, S_vga_b: std_logic_vector(7 downto 0);
     signal S_vga_vsync, S_vga_hsync: std_logic;
-    signal S_vga_vblank: std_logic;
+    signal S_vga_vblank, S_vga_blank: std_logic;
     signal vga_frame: std_logic; -- fifo outputs signal for frame interrupt
 
 
@@ -947,20 +948,49 @@ begin
       clk_pixel => clk_pixel,
       clk_tmds => clk_pixel_shift,
       fetch_next => vga_fetch_next,
-      red_byte    => vga_data_from_fifo(7 downto 5) & "00000",
-      green_byte  => vga_data_from_fifo(4 downto 2) & "00000",
-      blue_byte   => vga_data_from_fifo(1 downto 0) & "000000",
+      red_byte    => vga_data_from_fifo(7 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5),
+      green_byte  => vga_data_from_fifo(4 downto 2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2),
+      blue_byte   => vga_data_from_fifo(1 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0),
       bright_byte => (others => '0'),
-      vga_r => vga_r,
-      vga_g => vga_g,
-      vga_b => vga_b,
+      vga_r => S_vga_r,
+      vga_g => S_vga_g,
+      vga_b => S_vga_b,
       vga_hsync => S_vga_hsync,
       vga_vsync => S_vga_vsync,
-      vga_vblank => S_vga_vblank,
-      tmds_out_rgb => tmds_out_rgb
+      vga_blank => S_vga_blank, -- '1' when outside of horizontal or vertical graphics area
+      vga_vblank => S_vga_vblank -- '1' when outside of vertical graphics area (used for vblank interrupt)
+      -- tmds_out_rgb => tmds_out_rgb -- not used any more
     );
+    vga_r <= S_vga_r;
+    vga_g <= S_vga_g;
+    vga_b <= S_vga_b;
     vga_vsync <= not S_vga_vsync;
     vga_hsync <= not S_vga_hsync;
+
+    -- DVI-D Encoder Block
+    -- XXX Fixme: unify this block with vgatextmode (use same signal names)
+    G_vgahdmi_dvid: entity work.vga2dvid
+    generic map (
+      C_ddr     => C_dvid_ddr,
+      C_depth   => 8 -- 8bpp (8 bit per pixel)
+    )
+    port map (
+      clk_pixel => clk_pixel, clk_shift => clk_pixel_shift,
+
+      in_red   => S_vga_r,
+      in_green => S_vga_g,
+      in_blue  => S_vga_b,
+
+      in_blank => S_vga_blank,
+      in_hsync => S_vga_hsync,
+      in_vsync => S_vga_vsync,
+
+      -- single-ended output ready for differential buffers
+      out_red   => dvid_red,
+      out_green => dvid_green,
+      out_blue  => dvid_blue,
+      out_clock => dvid_clock
+    );
     S_vga_enable <= '1' when R_fb_base_addr(31 downto 28) = C_xram_base else '0';
     S_vga_fetch_enabled <= S_vga_enable and vga_fetch_next; -- drain fifo into display
     S_vga_active_enabled <= S_vga_enable and not S_vga_vsync; -- frame active, pre-fill fifo

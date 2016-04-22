@@ -419,7 +419,7 @@ begin
     )
     port map (
       clk => clk,
-      clk_25MHz => clk_25m,
+      clk_pixel => clk_25m,
       clk_fmdds => clk_325m,
       clk_cw => clk_433m,
       sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx, sio_break(0) => rs232_break,
