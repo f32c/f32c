@@ -19,7 +19,7 @@ vfiles = \
 ../../../../soc/vgahdmi/vgahdmif_v.v \
 
 vhdfiles = \
-../../../../xilinx/scarab_ms6p/top/top_sdram.vhd \
+../../../../xilinx/scarab_ms6p/top/top_xram_sdram.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_112M5.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_100M.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_100M_25M_250M.vhd \
@@ -42,6 +42,7 @@ vhdfiles = \
 ../../../../generic/bptrace.vhd \
 ../../../../generic/reg1w2r.vhd \
 ../../../../generic/bram_video.vhd \
+../../../../generic/ddr_out.vhd \
 ../../../../cpu/alu.vhd \
 ../../../../cpu/loadalign.vhd \
 ../../../../cpu/pipeline.vhd \
@@ -86,6 +87,8 @@ vhdfiles = \
 ../../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../../soc/vgahdmi/TMDS_encoder.vhd \
 ../../../../soc/vgahdmi/dvid_out.vhd \
+../../../../soc/vgahdmi/vga2dvid_ddr.vhd \
+../../../../soc/vgahdmi/ddr_dvid_out_se.vhd \
 ../../../../soc/vgahdmi/ledstrip.vhd \
 ../../../../soc/vgahdmi/ws2812b.vhd \
 ../../../../soc/vgahdmi/pulse_counter.vhd \
