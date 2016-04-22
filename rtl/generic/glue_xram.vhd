@@ -180,9 +180,8 @@ generic (
 );
 port (
   clk: in std_logic;
-  clk_25MHz: in std_logic := '0'; -- VGA pixel clock 25 MHz
-  clk_250MHz: in std_logic := '0'; -- HDMI bit shift clock, default 0 if no HDMI
-  clkp_125MHz, clkn_125MHz: in std_logic := '0'; -- HDMI differential clock 125MHz for 640x480
+  clk_pixel: in std_logic := '0'; -- VGA pixel clock 25 MHz
+  clk_pixel_shift: in std_logic := '0'; -- digital video (DVID/HDMI) bit shift clock, for SDR 10x clk_pixel, for DDR 5x clk_pixel, default 0 if no digital video
   clk_fmdds: in std_logic := '0'; -- FM DDS clock (>216 MHz)
   clk_cw: in std_logic := '0'; -- CW transmitter 433.92 MHz
   sram_a: out std_logic_vector(19 downto 0);
@@ -216,6 +215,7 @@ port (
   vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0) := (others => '0');
   tmds_out_rgb: out std_logic_vector(2 downto 0);
   tmds_out_clk: out std_logic := '0'; -- used for DDR output
+  dvid_red, dvid_green, dvid_blue, dvid_clock: out std_logic_vector(1 downto 0);
   ledstrip_rotation: in std_logic := '0'; -- input from motor rotation encoder
   ledstrip_out: out std_logic_vector(1 downto 0); -- 2 channels out
   jack_tip, jack_ring: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, 4-bit simple DAC
@@ -944,8 +944,8 @@ begin
       test_picture => C_vgahdmi_test_picture  -- show test picture in background
     )
     port map (
-      clk_pixel => clk_25MHz,
-      clk_tmds => clk_250MHz,
+      clk_pixel => clk_pixel,
+      clk_tmds => clk_pixel_shift,
       fetch_next => vga_fetch_next,
       red_byte    => vga_data_from_fifo(7 downto 5) & "00000",
       green_byte  => vga_data_from_fifo(4 downto 2) & "00000",
@@ -973,7 +973,7 @@ begin
     )
     port map (
       clk => clk,
-      clk_pixel => clk_25MHz,
+      clk_pixel => clk_pixel,
       addr_strobe => vga_addr_strobe,
       addr_out => vga_addr,
       data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
@@ -1105,7 +1105,7 @@ begin
         bus_write_i => dmem_write, byte_sel_i => dmem_byte_sel,
         bus_data_i => cpu_to_dmem, bus_data_o => from_vga_textmode,
 
-        clk_pixel_i => clk_25MHz,
+        clk_pixel_i => clk_pixel,
 
         bram_addr_o => vga_textmode_bram_addr,
         bram_data_i => vga_textmode_bram_data_in,
@@ -1148,7 +1148,7 @@ begin
           )
           port map (
             clk => clk,
-            clk_pixel => clk_25MHz,
+            clk_pixel => clk_pixel,
             addr_strobe => vga_textmode_text_sdram_strobe,
             addr_out => vga_textmode_text_sdram_addr,
             data_ready => vga_textmode_text_sdram_ready, -- data valid for read acknowledge from RAM
@@ -1179,7 +1179,7 @@ begin
           )
           port map (
             clk => clk,
-            clk_pixel => clk_25MHz,
+            clk_pixel => clk_pixel,
             addr_strobe => vga_addr_strobe,
             addr_out => vga_addr,
             data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
@@ -1227,13 +1227,13 @@ begin
       end generate; -- G_vga_textmode_bram8
 
       -- DVI-D Encoder Block (Thanks Hamster ;-)
-      G_dvid_sdr: if not C_dvid_ddr generate
-      G_vgatext_dvid_sdr: entity work.vga2dvid_sdr
+      G_vgatext_dvid: entity work.vga2dvid
         generic map (
+          C_ddr     => C_dvid_ddr,
           C_depth   => C_vgatext_bits
         )
         port map (
-          clk_pixel => clk_25MHz, clk_pixel_x10 => clk_250MHz,
+          clk_pixel => clk_pixel, clk_shift => clk_pixel_shift,
 
           in_red   => vga_textmode_red(C_vgatext_bits-1 downto 0),
           in_green => vga_textmode_green(C_vgatext_bits-1 downto 0),
@@ -1243,48 +1243,12 @@ begin
           in_hsync => vga_textmode_hsync,
           in_vsync => vga_textmode_vsync,
           
-          -- outputs to TMDS drivers
-          out_rgb => tmds_out_rgb
+          -- single-ended output for differential buffers
+          out_red   => dvid_red,
+          out_green => dvid_green,
+          out_blue  => dvid_blue,
+          out_clock => dvid_clock
         );
-      end generate; -- G_dvid_sdr
-
-      G_dvid_ddr: if C_dvid_ddr generate
-      G_vgatext_dvid_ddr: entity work.vga2dvid_ddr
-        generic map (
-          C_depth   => C_vgatext_bits
-        )
-        port map (
-          clk_pixel    => clk_25MHz,
-          clk_pixel_x5 => clkp_125MHz,
-
-          in_red    => vga_textmode_red(C_vgatext_bits-1 downto 0),
-          in_green  => vga_textmode_green(C_vgatext_bits-1 downto 0),
-          in_blue   => vga_textmode_blue(C_vgatext_bits-1 downto 0),
-
-          in_blank  => vga_textmode_blank,
-          in_hsync  => vga_textmode_hsync,
-          in_vsync  => vga_textmode_vsync,
-
-          -- outputs to TMDS drivers
-          out_red   => dvid_red_ddr,
-          out_green => dvid_green_ddr,
-          out_blue  => dvid_blue_ddr,
-          out_clock => dvid_clock_ddr
-        );
-      G_vgatext_ddrout: entity work.ddr_dvid_out_se
-        port map (
-          clk       => clkp_125MHz,
-          clk_n     => clkn_125MHz,
-          in_red    => dvid_red_ddr,
-          in_green  => dvid_green_ddr,
-          in_blue   => dvid_blue_ddr,
-          in_clock  => dvid_clock_ddr,
-          out_red   => tmds_out_rgb(0),
-          out_green => tmds_out_rgb(1),
-          out_blue  => tmds_out_rgb(2),
-          out_clock => tmds_out_clk
-        );
-      end generate; -- G_hdmi_ddr
 
       vgatext_intr:
       process(clk) begin

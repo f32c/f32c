@@ -2,7 +2,8 @@
 -- Engineer:		Mike Field <hamster@snap.net.nz>
 -- Description:	Converts VGA signals into DVID bitstreams.
 --
---	'clk' should be 5x clk_pixel.
+--	'clk_shift' 10x clk_pixel for SDR
+--      'clk_shift'  5x clk_pixel for DDR
 --
 --	'blank' should be asserted during the non-display 
 --	portions of the frame
@@ -30,23 +31,26 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 -- THE SOFTWARE.
 --
--- this file came from splitting dvid.vhd in 2 parts
 
--- this part takes VGA input and prepares output
--- ready for DDR buffers, which sends 2 bits at 1 clock period
+-- takes VGA input and prepares output
 
--- signals are renamed to be more discriptive
+
+-- for SDR buffer, which send 1 bit per 1 clock period output out_red(0), out_green(0), ... etc.
+-- for DDR buffers, which send 2 bits per 1 clock period output out_red(1 downto 0), ...
+
+-- EMARD unified SDR and DDR into one module
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
-entity vga2dvid_ddr is
+entity vga2dvid is
 	Generic (
+		C_ddr: boolean := false; -- by default use SDR
 		C_depth	: integer := 8
 	);
 	Port (
 		clk_pixel    : in STD_LOGIC; -- VGA pixel clock, 25 MHz for 640x480
-		clk_pixel_x5 : in STD_LOGIC; -- 5x higher freq in phase with clk_pixel, 125 MHz for 640x480
+		clk_shift    : in STD_LOGIC; -- SDR: 10x clk_pixel, DDR: 5x clk_pixel, in phase with clk_pixel
 		in_red       : in STD_LOGIC_VECTOR (C_depth-1 downto 0);
 		in_green     : in STD_LOGIC_VECTOR (C_depth-1 downto 0);
 		in_blue      : in STD_LOGIC_VECTOR (C_depth-1 downto 0);
@@ -58,9 +62,9 @@ entity vga2dvid_ddr is
 		out_blue     : out STD_LOGIC_VECTOR(1 downto 0);
 		out_clock    : out STD_LOGIC_VECTOR(1 downto 0)
 	);
-end vga2dvid_ddr;
+end vga2dvid;
 
-architecture Behavioral of vga2dvid_ddr is
+architecture Behavioral of vga2dvid is
 
 	signal encoded_red, encoded_green, encoded_blue : std_logic_vector(9 downto 0);
 	signal latched_red, latched_green, latched_blue : std_logic_vector(9 downto 0) := (others => '0');
@@ -101,9 +105,28 @@ begin
 		end if;
 	end process;
 
-	process(clk_pixel_x5)
+	G_SDR: if not C_ddr generate
+	process(clk_shift)
 	begin
-		if rising_edge(clk_pixel_x5) then 
+		if rising_edge(clk_shift) then
+		if shift_clock = "0000011111" then
+			shift_red	<= latched_red;
+			shift_green <= latched_green;
+			shift_blue	<= latched_blue;
+		else
+			shift_red	<= "0" & shift_red	(9 downto 1);
+			shift_green <= "0" & shift_green(9 downto 1);
+			shift_blue	<= "0" & shift_blue (9 downto 1);
+		end if;
+		shift_clock <= shift_clock(0) & shift_clock(9 downto 1);
+		end if;
+	end process;
+	end generate;
+
+	G_DDR: if C_ddr generate
+	process(clk_shift)
+	begin
+		if rising_edge(clk_shift) then 
 		if shift_clock = "0000011111" then
 			shift_red   <= latched_red;
 			shift_green <= latched_green;
@@ -116,10 +139,11 @@ begin
 		shift_clock <= shift_clock(1 downto 0) & shift_clock(9 downto 2);
 		end if;
 	end process;
+	end generate;
 
-	-- output ready for DDR vendor specific primitives
-	-- which output 2 bits per 1 clock period,
-	-- one bit output on rising edge, other on falling edge of clk_pixel_x5
+	-- SDR: use only bit 0 from each out_* channel 
+	-- DDR: 2 bits per 1 clock period,
+	-- (one bit output on rising edge, other on falling edge of clk_shift)
 	out_red   <= shift_red(1 downto 0);
 	out_green <= shift_green(1 downto 0);
 	out_blue  <= shift_blue(1 downto 0);

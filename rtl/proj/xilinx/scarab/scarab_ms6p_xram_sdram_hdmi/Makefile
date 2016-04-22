@@ -42,7 +42,6 @@ vhdfiles = \
 ../../../../generic/bptrace.vhd \
 ../../../../generic/reg1w2r.vhd \
 ../../../../generic/bram_video.vhd \
-../../../../generic/ddr_out.vhd \
 ../../../../cpu/alu.vhd \
 ../../../../cpu/loadalign.vhd \
 ../../../../cpu/pipeline.vhd \
@@ -86,9 +85,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/VGA_textmode_bram.vhd \
 ../../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../../soc/vgahdmi/TMDS_encoder.vhd \
-../../../../soc/vgahdmi/vga2dvid_sdr.vhd \
-../../../../soc/vgahdmi/vga2dvid_ddr.vhd \
-../../../../soc/vgahdmi/ddr_dvid_out_se.vhd \
+../../../../soc/vgahdmi/vga2dvid.vhd \
 ../../../../soc/vgahdmi/ledstrip.vhd \
 ../../../../soc/vgahdmi/ws2812b.vhd \
 ../../../../soc/vgahdmi/pulse_counter.vhd \

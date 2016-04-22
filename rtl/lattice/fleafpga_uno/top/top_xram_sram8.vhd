@@ -142,11 +142,11 @@ end glue;
 architecture Behavioral of glue is
   signal clk, rs232_break, rs232_break2: std_logic;
   signal clk_dvi, clk_dvin, clk_pixel: std_logic;
+  signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
   signal ps2_clk_in : std_logic;
   signal ps2_clk_out : std_logic;
   signal ps2_dat_in : std_logic;
   signal ps2_dat_out : std_logic;
-
 begin
   --ps2_dat_in  <= PS2_data1;
   --PS2_data1   <= '0' when ps2_dat_out='0' else 'Z';
@@ -220,9 +220,8 @@ begin
   )
   port map (
     clk => clk,
-    clk_25MHz => clk_pixel,
-    clkp_125MHz => clk_dvi,
-    clkn_125MHz => clk_dvin,
+    clk_pixel => clk_pixel,
+    clk_pixel_shift => clk_dvi,
     sio_rxd(0) => slave_rx_i,
     sio_rxd(1) => wifi_tx_o,
     sio_txd(0) => slave_tx_o,
@@ -303,10 +302,27 @@ begin
     --ps2_dat_in      => ps2_dat_in,
     --ps2_clk_out     => ps2_clk_out,
     --ps2_dat_out     => ps2_dat_out,
-    -- Digital Video (HDMI) out
-    tmds_out_rgb(0) => LVDS_Red,
-    tmds_out_rgb(1) => LVDS_Green,
-    tmds_out_rgb(2) => LVDS_Blue,
-    tmds_out_clk    => LVDS_ck
+    -- Digital Video out (singled ended DDR)
+    dvid_red   => dvid_red,
+    dvid_green => dvid_green,
+    dvid_blue  => dvid_blue,
+    dvid_clock => dvid_clock
   );
+
+  -- vendor specific modules to
+  -- convert single ended DDR to phyisical output signals
+  G_vgatext_ddrout: entity work.ddr_dvid_out_se
+  port map (
+    clk       => clk_dvi,
+    clk_n     => clk_dvin,
+    in_red    => dvid_red,
+    in_green  => dvid_green,
+    in_blue   => dvid_blue,
+    in_clock  => dvid_clock,
+    out_red   => LVDS_Red,
+    out_green => LVDS_Green,
+    out_blue  => LVDS_Blue,
+    out_clock => LVDS_ck
+  );
+
 end Behavioral;
