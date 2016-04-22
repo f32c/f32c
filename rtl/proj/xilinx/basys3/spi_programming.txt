@@ -1,0 +1,16 @@
+From cristian.ignat @ forums.digilentinc.com on 2015/01/16:
+
+1. Open "Bitstream Settings", check "-bin_file*" checkbox and click OK.
+
+2. Click on "Generate Bitstream" to generate your bit and bin file.
+
+3. Open "Hardware Manager"
+   -> Open Target -> Open New Target...
+
+4. Add your memory. For this, right click on device (xc7a35t_0)
+   -> Add Configuration Memory Device
+   -> write on Search "S25FL032" -> click OK
+
+5. Right click on the flash memory
+   -> Program Configuration Memory Device
+   -> add configuration file (.bin file) -> click OK
