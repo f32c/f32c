@@ -1228,29 +1228,28 @@ begin
 
       -- DVI-D Encoder Block (Thanks Hamster ;-)
       G_dvid_sdr: if not C_dvid_ddr generate
-      G_vgatext_dvid: entity work.dvid_out
+      G_vgatext_dvid_sdr: entity work.vga2dvid_sdr
         generic map (
           C_depth   => C_vgatext_bits
         )
         port map (
-          clk_pixel => clk_25MHz,
-          clk_tmds  => clk_250MHz,
+          clk_pixel => clk_25MHz, clk_pixel_x10 => clk_250MHz,
 
-          red_p     => vga_textmode_red(C_vgatext_bits-1 downto 0),
-          green_p   => vga_textmode_green(C_vgatext_bits-1 downto 0),
-          blue_p    => vga_textmode_blue(C_vgatext_bits-1 downto 0),
+          in_red   => vga_textmode_red(C_vgatext_bits-1 downto 0),
+          in_green => vga_textmode_green(C_vgatext_bits-1 downto 0),
+          in_blue  => vga_textmode_blue(C_vgatext_bits-1 downto 0),
 
-          blank     => vga_textmode_blank,
-          hsync     => vga_textmode_hsync,
-          vsync     => vga_textmode_vsync,
-
+          in_blank => vga_textmode_blank,
+          in_hsync => vga_textmode_hsync,
+          in_vsync => vga_textmode_vsync,
+          
           -- outputs to TMDS drivers
-          tmds_out_rgb => tmds_out_rgb
+          out_rgb => tmds_out_rgb
         );
       end generate; -- G_dvid_sdr
 
       G_dvid_ddr: if C_dvid_ddr generate
-      G_vgatext_dvid: entity work.vga2dvid_ddr
+      G_vgatext_dvid_ddr: entity work.vga2dvid_ddr
         generic map (
           C_depth   => C_vgatext_bits
         )
