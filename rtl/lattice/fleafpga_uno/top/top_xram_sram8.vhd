@@ -52,7 +52,8 @@ entity glue is
     C_gpio_pullup: boolean := true;
     C_gpio_adc: integer := 6;       -- number of analog ports for ADC (on A0-A5 pins)
     C_ps2: boolean := false;
-    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
+    C_dvid_ddr: boolean := true; -- generate HDMI with DDR
+    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
     C_vgatext_label: string := "FleaFPGA-Uno f32c: 50MHz MIPS-compatible soft-core, 512KB SRAM";
     C_vgatext_mode: integer := 0;   -- 640x480
     C_vgatext_bits: integer := 4;   -- 4096 possible colors
@@ -185,6 +186,7 @@ begin
     C_gpio_pullup => C_gpio_pullup,
     C_gpio_adc => C_gpio_adc,
     C_branch_prediction => C_branch_prediction,
+    C_dvid_ddr => C_dvid_ddr,
         C_vgatext => C_vgatext,
         C_vgatext_label => C_vgatext_label,
         C_vgatext_mode => C_vgatext_mode,
@@ -218,9 +220,9 @@ begin
   )
   port map (
     clk => clk,
-    --clk_dvi => clk_dvi,
-    --clk_dvin => clk_dvin,
     clk_25MHz => clk_pixel,
+    clkp_125MHz => clk_dvi,
+    clkn_125MHz => clk_dvin,
     sio_rxd(0) => slave_rx_i,
     sio_rxd(1) => wifi_tx_o,
     sio_txd(0) => slave_tx_o,
@@ -295,16 +297,16 @@ begin
     simple_in(31 downto 1) => open,
     sram_a(18 downto 0) => SRAM_Addr,
     sram_d(7 downto 0) => SRAM_Data,
-    sram_wel => SRAM_n_we
+    sram_wel => SRAM_n_we,
     -- PS/2 Keyboard
     --ps2_clk_in      => ps2_clk_in,
     --ps2_dat_in      => ps2_dat_in,
     --ps2_clk_out     => ps2_clk_out,
     --ps2_dat_out     => ps2_dat_out,
-    -- Digital Video out
-    --LVDS_Red => LVDS_Red,
-    --LVDS_Green => LVDS_Green,
-    --LVDS_Blue => LVDS_Blue,
-    --LVDS_ck => LVDS_ck
+    -- Digital Video (HDMI) out
+    tmds_out_rgb(0) => LVDS_Red,
+    tmds_out_rgb(1) => LVDS_Green,
+    tmds_out_rgb(2) => LVDS_Blue,
+    tmds_out_clk    => LVDS_ck
   );
 end Behavioral;

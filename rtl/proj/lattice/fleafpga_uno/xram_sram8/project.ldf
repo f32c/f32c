@@ -33,10 +33,13 @@
         <Source name="../../../../generic/reg1w2r.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../lattice/FleaFPGA_Uno_clkgen.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../lattice/fleafpga_uno/clocks/FleaFPGA_Uno_clkgen.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../lattice/ddr_out.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../lattice/chip/xo2/ddr_out.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../lattice/chip/xo2/ddr_dvid_out_se.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../generic/bram_true2p_1clk.vhd" type="VHDL" type_short="VHDL">
@@ -184,6 +187,9 @@
             <Options/>
         </Source>
         <Source name="../../../../soc/vgahdmi/DVI_D.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vgahdmi/vga2dvid_ddr.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../soc/vgahdmi/dvid_out.vhd" type="VHDL" type_short="VHDL">
