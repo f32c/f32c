@@ -36,41 +36,44 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 -- THE SOFTWARE.
 --
+-- vga to digital video
+-- outputs single ended, single data rate
+-- ready for TMDS/LVDS vendor specific output buffers
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
-entity dvid_out is
+entity vga2dvid_sdr is
 	Generic (
 		C_depth:	integer := 8	-- 1 to 8 bit color depth for 8 to 16.7-million colors
 	);
 	Port (
 		-- Clocking
 		clk_pixel:	in std_logic;		-- 25 MHz for 640x480 @ 60Hz
-		clk_tmds:	in std_logic;		-- 250 MHz (or 10x pixel clock)
+		clk_pixel_x10:	in std_logic;		-- 250 MHz (or 10x pixel clock)
 		-- Pixel data
-		red_p:		in std_logic_vector(C_depth-1 downto 0);
-		green_p:	in std_logic_vector(C_depth-1 downto 0);
-		blue_p:		in std_logic_vector(C_depth-1 downto 0);
-		blank:		in std_logic;
-		hsync:		in std_logic;
-		vsync:		in std_logic;
-		-- TMDS output
-		TMDS_out_RGB : out std_logic_vector(2 downto 0)
+		in_red:	  in std_logic_vector(C_depth-1 downto 0);
+		in_green: in std_logic_vector(C_depth-1 downto 0);
+		in_blue:  in std_logic_vector(C_depth-1 downto 0);
+		in_blank: in std_logic;
+		in_hsync: in std_logic;
+		in_vsync: in std_logic;
+		-- single ended, single data rate, output for TMDS/LVDS hardware
+		out_rgb : out std_logic_vector(2 downto 0)
 	);
-end dvid_out;
+end vga2dvid_sdr;
 
-architecture Behavioral of dvid_out is
+architecture Behavioral of vga2dvid_sdr is
 
 	signal encoded_red, encoded_green, encoded_blue: std_logic_vector(9 downto 0);
-	signal latched_red, latched_green, latched_blue : std_logic_vector(9 downto 0) := (others => '0');
-	signal shift_red,	shift_green,	shift_blue	: std_logic_vector(9 downto 0) := (others => '0');
+	signal latched_red, latched_green, latched_blue: std_logic_vector(9 downto 0) := (others => '0');
+	signal shift_red, shift_green, shift_blue      : std_logic_vector(9 downto 0) := (others => '0');
 
 	signal shift_clock	: std_logic_vector(9 downto 0) := "0000011111";
 
 	constant c_red: std_logic_vector(1 downto 0) := (others => '0');
 	constant c_green: std_logic_vector(1 downto 0) := (others => '0');
-	signal	c_blue: std_logic_vector(1 downto 0);
+	signal	 c_blue: std_logic_vector(1 downto 0);
 
 	signal red_s: std_logic;
 	signal green_s: std_logic;
@@ -83,25 +86,22 @@ architecture Behavioral of dvid_out is
 
 begin
 	-- compute 8-bit color as C_depth may be less (by doing it as last step here saves LUTs)
-	red_d(7 downto 8-C_depth) <= red_p(C_depth-1 downto 0);
-	green_d(7 downto 8-C_depth) <= green_p(C_depth-1 downto 0);
-	blue_d(7 downto 8-C_depth) <= blue_p(C_depth-1 downto 0);
+	red_d(7 downto 8-C_depth) <= in_red(C_depth-1 downto 0);
+	green_d(7 downto 8-C_depth) <= in_green(C_depth-1 downto 0);
+	blue_d(7 downto 8-C_depth) <= in_blue(C_depth-1 downto 0);
 
 	-- fill any unset low-bits with value repeated (so value is mapped to full 8-bit range)
 	G_bits: for i in 8-C_depth-1 downto 0 generate
-		red_d(i) <= red_p((C_depth-1-i) MOD C_depth);
-		green_d(i) <= green_p((C_depth-1-i) MOD C_depth);
-		blue_d(i) <= blue_p((C_depth-1-i) MOD C_depth);
+		red_d(i) <= in_red((C_depth-1-i) MOD C_depth);
+		green_d(i) <= in_green((C_depth-1-i) MOD C_depth);
+		blue_d(i) <= in_blue((C_depth-1-i) MOD C_depth);
 	end generate;
 
 	-- Send the pixels to the encoder
-	c_blue <= vsync & hsync;
-	TMDS_encoder_red:	entity work.TMDS_encoder port map (clk => clk_pixel, data => red_d, c => c_red, blank => blank, encoded => encoded_red);
-	TMDS_encoder_green: entity work.TMDS_encoder port map (clk => clk_pixel, data => green_d, c => c_green, blank => blank, encoded => encoded_green);
-	TMDS_encoder_blue:	entity work.TMDS_encoder port map (clk => clk_pixel, data => blue_d, c => c_blue, blank => blank, encoded => encoded_blue);
-
-	-- TMDS encoded serial output
-	TMDS_out_RGB <= shift_red(0) & shift_green(0) & shift_blue(0);
+	c_blue <= in_vsync & in_hsync;
+	tmds_encoder_red:   entity work.tmds_encoder port map (clk => clk_pixel, data => red_d, c => c_red, blank => in_blank, encoded => encoded_red);
+	tmds_encoder_green: entity work.tmds_encoder port map (clk => clk_pixel, data => green_d, c => c_green, blank => in_blank, encoded => encoded_green);
+	tmds_encoder_blue:  entity work.tmds_encoder port map (clk => clk_pixel, data => blue_d, c => c_blue, blank => in_blank, encoded => encoded_blue);
 
 	-- latch newly encoded pixels to be shifted out
 	process(clk_pixel)
@@ -114,9 +114,9 @@ begin
 	end process;
 
 	-- shift out TMDS encoded pixels
-	process(clk_tmds)
+	process(clk_pixel_x10)
 	begin
-		if rising_edge(clk_tmds) then
+		if rising_edge(clk_pixel_x10) then
 		if shift_clock = "0000011111" then
 			shift_red	<= latched_red;
 			shift_green <= latched_green;
@@ -129,4 +129,8 @@ begin
 		shift_clock <= shift_clock(0) & shift_clock(9 downto 1);
 		end if;
 	end process;
+
+	-- TMDS encoded serial output
+	out_rgb <= shift_red(0) & shift_green(0) & shift_blue(0);
+
 end Behavioral;

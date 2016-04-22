@@ -86,7 +86,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/VGA_textmode_bram.vhd \
 ../../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../../soc/vgahdmi/TMDS_encoder.vhd \
-../../../../soc/vgahdmi/dvid_out.vhd \
+../../../../soc/vgahdmi/vga2dvid_sdr.vhd \
 ../../../../soc/vgahdmi/vga2dvid_ddr.vhd \
 ../../../../soc/vgahdmi/ddr_dvid_out_se.vhd \
 ../../../../soc/vgahdmi/ledstrip.vhd \
