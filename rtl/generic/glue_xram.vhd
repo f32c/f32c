@@ -941,12 +941,10 @@ begin
     G_vgahdmi:
     if C_vgahdmi generate
     vgahdmi: entity work.vgahdmi
-    generic map (
-      test_picture => C_vgahdmi_test_picture  -- show test picture in background
-    )
     port map (
       clk_pixel => clk_pixel,
       clk_tmds => clk_pixel_shift,
+      test_picture => not S_vga_enable, -- shows test picture on statup when VGA is disabled
       fetch_next => vga_fetch_next,
       red_byte    => vga_data_from_fifo(7 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5),
       green_byte  => vga_data_from_fifo(4 downto 2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2),
@@ -959,7 +957,6 @@ begin
       vga_vsync => S_vga_vsync,
       vga_blank => S_vga_blank, -- '1' when outside of horizontal or vertical graphics area
       vga_vblank => S_vga_vblank -- '1' when outside of vertical graphics area (used for vblank interrupt)
-      -- tmds_out_rgb => tmds_out_rgb -- not used any more
     );
     vga_r <= S_vga_r;
     vga_g <= S_vga_g;
