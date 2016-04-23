@@ -28,8 +28,7 @@ entity vgahdmi is
     vga_r, vga_g, vga_b:  out std_logic_vector(7 downto 0); -- VGA video signal
     vga_hsync, vga_vsync: out std_logic; -- VGA sync
     vga_vblank, vga_blank: out std_logic; -- Video blank
-    line_repeat: out std_logic;
-    TMDS_out_RGB : out std_logic_vector(2 downto 0) -- HDMI output
+    line_repeat: out std_logic
   );
 end vgahdmi;
 
@@ -48,8 +47,7 @@ architecture syn of vgahdmi is
       vga_r, vga_g, vga_b:  out std_logic_vector(7 downto 0); -- VGA video signal
       vga_hsync, vga_vsync: out std_logic; -- VGA sync, positive logic: active HIGH
       vga_vblank, vga_blank: out std_logic; -- VGA vertical blank, positive logic: active HIGH
-      line_repeat: out std_logic;
-      TMDS_out_RGB : out std_logic_vector(2 downto 0) -- HDMI output
+      line_repeat: out std_logic
     );
   end component;
 
@@ -75,7 +73,6 @@ begin
       vga_vsync => vga_vsync,
       vga_vblank => vga_vblank,
       vga_blank => vga_blank,
-      line_repeat => line_repeat,
-      TMDS_out_RGB => TMDS_out_RGB
+      line_repeat => line_repeat
   );
 end syn;
