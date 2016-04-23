@@ -27,7 +27,7 @@
 --
 
 -- vendor-independent module for simulating differential HDMI output
--- this module is untested and probably will not work
+-- this module tested on scarab and it works :)
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
