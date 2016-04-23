@@ -28,8 +28,7 @@ module vgahdmi_v(
         output wire line_repeat, // repeat video line
         output wire vga_hsync, vga_vsync, // active low, vsync will reset fifo
         output wire vga_vblank, vga_blank, // vertical and combined v+h blank signal
-        output wire [7:0] vga_r, vga_g, vga_b,
-	output wire [2:0] TMDS_out_RGB
+        output wire [7:0] vga_r, vga_g, vga_b
 );
 
 // pixel doubling may not work (long time not maintained)
@@ -51,10 +50,8 @@ parameter frame_y = resolution_y + vsync_front_porch + vsync_pulse + vsync_back_
 // refresh_rate = pixel_clock/(frame_x*frame_y) = 25MHz / (800*525) = 59.52Hz
 ////////////////////////////////////////////////////////////////////////
 
-wire clk_TMDS;
 wire pixclk;
 
-assign clk_TMDS = clk_tmds; // 250 MHz
 assign pixclk = clk_pixel;  //  25 MHz
 
 reg [9:0] CounterX, CounterY;
