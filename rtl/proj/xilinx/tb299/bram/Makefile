@@ -21,7 +21,7 @@ vhdfiles = \
 ../../../../xilinx/tb299/top/top_xc6slx9_xram_bram.vhd \
 ../../../../xilinx/tb299/clocks/pll_25M_112M5.vhd \
 ../../../../xilinx/tb299/clocks/pll_25M_81M25.vhd \
-../../../../xilinx/hdmi_out.vhd \
+../../../../xilinx/chip/xc6/hdmi_out_xc6.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \
 ../../../../generic/bootloader/defs_bootblock.vhd \

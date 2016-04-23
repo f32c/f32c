@@ -126,7 +126,7 @@ architecture Behavioral of glue is
     signal clk, clk_250MHz, clk_25MHz: std_logic;
     signal sio_break: std_logic;
     signal rs232_break: std_logic;
-    signal tmds_out_rgb: std_logic_vector(2 downto 0);
+    signal tmds_rgb: std_logic_vector(2 downto 0);
 begin
 
     clk81: if C_clk_freq = 81 generate
@@ -224,7 +224,9 @@ begin
       gpio(27 downto 24) => jd_u(3 downto 0),
       gpio(31 downto 28) => jd_d(3 downto 0),
       gpio(127 downto 32) => open,
-      tmds_out_rgb => tmds_out_rgb,
+      dvid_red(0)   => tmds_rgb(2), dvid_red(1)   => open,
+      dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
+      dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
       vga_vsync => vga_vs,
       vga_hsync => vga_hs,
       vga_r(7 downto 3) => vga_r(4 downto 0),
@@ -248,7 +250,7 @@ begin
       tmds_in_clk => clk_25MHz,
       tmds_out_clk_p => hdmi_clk_p,
       tmds_out_clk_n => hdmi_clk_n,
-      tmds_in_rgb => tmds_out_rgb,
+      tmds_in_rgb => tmds_rgb,
       tmds_out_rgb_p => hdmi_d_p,
       tmds_out_rgb_n => hdmi_d_n
     );

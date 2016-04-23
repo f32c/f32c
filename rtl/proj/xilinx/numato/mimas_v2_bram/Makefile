@@ -23,7 +23,7 @@ vfiles = \
 vhdfiles = \
 ../../../../xilinx/numato/top/top_mimas_v2_xram_bram.vhd \
 ../../../../xilinx/numato/clocks/mimas_v2/clk_100MHz_25MHz_250MHz.vhd \
-../../../../xilinx/hdmi_out.vhd \
+../../../../xilinx/chip/xc6/hdmi_out_xc6.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \
 ../../../../generic/bram_true2p_1clk.vhd \
@@ -80,7 +80,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/VGA_textmode_bram.vhd \
 ../../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../../soc/vgahdmi/TMDS_encoder.vhd \
-../../../../soc/vgahdmi/dvid_out.vhd \
+../../../../soc/vgahdmi/vga2dvid.vhd \
 ../../../../soc/vgahdmi/ledstrip.vhd \
 ../../../../soc/vgahdmi/ws2812b.vhd \
 ../../../../soc/vgahdmi/pulse_counter.vhd \
