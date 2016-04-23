@@ -40,8 +40,6 @@ use unisim.vcomponents.all;
 use work.f32c_pack.all;
 
 entity hdmi_out is
---    generic (
---    );
     port (
 	tmds_in_clk: in std_logic; -- 25 MHz pixel clock single ended
 	tmds_out_clk_p, tmds_out_clk_n: out std_logic; -- output 25 MHz differential

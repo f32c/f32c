@@ -127,9 +127,9 @@ end glue;
 
 architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
-	 signal clk_25MHz, clk_250MHz: std_logic := '0';
+    signal clk_25MHz, clk_250MHz: std_logic := '0';
     signal obuf_tmds_clock: std_logic;
-    signal tmds_out_rgb: std_logic_vector(2 downto 0);
+    signal tmds_rgb: std_logic_vector(2 downto 0);
 begin
     --  clock synthesizer: Xilinx Spartan-6 specific
 
@@ -195,8 +195,8 @@ begin
    )
    port map (
 	clk => clk,
-	clk_25MHz => clk_25MHz, -- pixel clock
-	clk_250MHz => clk_250MHz, -- tmds clock
+	clk_pixel => clk_25MHz, -- pixel clock
+	clk_pixel_shift => clk_250MHz, -- tmds clock
 	clk_fmdds => clk_250MHz, -- FM/RDS clock
 	sio_txd(0) => rs232_dce_txd, sio_rxd(0) => rs232_dce_rxd,
 	sio_break(0) => rs232_break,
@@ -224,7 +224,10 @@ begin
 	gpio(15 downto 8)=>IO_P8(7 downto 0),
 	gpio(23 downto 16)=>IO_P9(7 downto 0),
 	gpio(127 downto 24)=> open,
-	tmds_out_rgb => tmds_out_rgb,
+        dvid_red(0)   => tmds_rgb(2), dvid_red(1)   => open,
+        dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
+        dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
+        dvid_clock => open, -- clk_25MHz used directly
 	fm_antenna => Audio1
     );
 
@@ -234,7 +237,7 @@ begin
         tmds_in_clk => clk_25MHz,
         tmds_out_clk_p => tmds_out_clk_p,
         tmds_out_clk_n => tmds_out_clk_n,
-        tmds_in_rgb => tmds_out_rgb,
+        tmds_in_rgb => tmds_rgb,
         tmds_out_rgb_p => tmds_out_p,
         tmds_out_rgb_n => tmds_out_n
       );

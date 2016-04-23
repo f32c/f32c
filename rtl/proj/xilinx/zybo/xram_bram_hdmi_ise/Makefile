@@ -20,9 +20,9 @@ vfiles = \
 
 vhdfiles = \
 ../../../../xilinx/zybo/top/top_xram_bram_hdmi.vhd \
-../../../../xilinx/clocks/zybo/pll_125M_250M_100M_25M.vhd \
-../../../../xilinx/clocks/zybo/mmcm_125M_81M25_250M521_25M052.vhd \
-../../../../xilinx/hdmi_out_xc7.vhd \
+../../../../xilinx/zybo/clocks/pll_125M_250M_100M_25M.vhd \
+../../../../xilinx/zybo/clocks/mmcm_125M_81M25_250M521_25M052.vhd \
+../../../../xilinx/chip/xc7/hdmi_out_xc7.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \
 ../../../../generic/bootloader/defs_bootblock.vhd \

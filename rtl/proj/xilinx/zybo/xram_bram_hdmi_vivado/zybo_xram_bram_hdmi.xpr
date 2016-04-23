@@ -332,7 +332,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../soc/vgahdmi/dvid_out.vhd">
+      <File Path="$PPRDIR/../../../../soc/vgahdmi/vga2dvid.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -380,13 +380,13 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../xilinx/clocks/zybo/pll_125M_250M_100M_25M.vhd">
+      <File Path="$PPRDIR/../../../../xilinx/zybo/clocks/pll_125M_250M_100M_25M.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../xilinx/clocks/zybo/mmcm_125M_81M25_250M521_25M052.vhd">
+      <File Path="$PPRDIR/../../../../xilinx/zybo/clocks/mmcm_125M_81M25_250M521_25M052.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -410,7 +410,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../xilinx/hdmi_out_xc7.vhd">
+      <File Path="$PPRDIR/../../../../xilinx/chip/xc7/hdmi_out_xc7.vhd">
         <FileInfo>
           <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="UsedIn" Val="synthesis"/>

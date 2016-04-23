@@ -29,7 +29,7 @@ vhdfiles = \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_250M_111M11_25M.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_96M43.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_96M43_433M9_289M3_28M93.vhd \
-../../../../xilinx/hdmi_out.vhd \
+../../../../xilinx/chip/xc6/hdmi_out_xc6.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \
 ../../../../generic/bootloader/defs_bootblock.vhd \
