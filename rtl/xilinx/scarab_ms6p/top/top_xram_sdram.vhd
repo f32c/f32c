@@ -183,6 +183,7 @@ architecture Behavioral of glue is
   signal clk_25MHz, clk_250MHz, clk_433M92Hz: std_logic := '0';
   signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
   signal tmds_rgb: std_logic_vector(2 downto 0);
+  signal tmds_clk: std_logic;
   signal rs232_break: std_logic;
   signal cw_antenna, fm_antenna: std_logic := '0';
   signal btns: std_logic_vector(1 downto 0);
@@ -385,7 +386,7 @@ begin
       dvid_red(0)   => tmds_rgb(2), dvid_red(1)   => open,
       dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
       dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
-      dvid_clock => open, -- clk_25MHz used directly
+      dvid_clock(0) => tmds_clk,    dvid_clock(1) => open,
       jack_ring(3) => audio1, jack_ring(2 downto 0) => open,
       jack_tip(3)  => audio2, jack_tip(2 downto 0)  => open,
       cw_antenna => cw_antenna,
@@ -436,7 +437,7 @@ begin
     hdmi_output1: entity work.hdmi_out
       port map
       (
-        tmds_in_clk    => clk_25MHz,
+        tmds_in_clk    => tmds_clk, -- clk_25MHz or tmds_clk
         tmds_out_clk_p => tmds_out_clk_p,
         tmds_out_clk_n => tmds_out_clk_n,
         tmds_in_rgb    => tmds_rgb,
@@ -444,15 +445,17 @@ begin
         tmds_out_rgb_n => tmds_out_n
       );
 
+    -- hdmi "in" port can be used as second output
+    -- so user don't need to think which one works :)
     hdmi_output2: entity work.hdmi_out
       port map
       (
-        tmds_in_clk    => clk_25MHz,
+        tmds_in_clk    => tmds_clk, -- clk_25MHz or tmds_clk
         tmds_out_clk_p => tmds_in_clk_p,
         tmds_out_clk_n => tmds_in_clk_n,
         tmds_in_rgb    => tmds_rgb,
-        tmds_out_rgb_p => tmds_in_p, -- in port used as 2nd output
-        tmds_out_rgb_n => tmds_in_n  -- in port used as 2nd output
+        tmds_out_rgb_p => tmds_in_p,
+        tmds_out_rgb_n => tmds_in_n
       );
 
 end Behavioral;
