@@ -635,6 +635,10 @@ begin
 
         if vcount >= 0 then           -- if on a visible scan-line
           -- text character generation
+          if tg_enable = '0' then
+            font_data <= (others => '0');
+            text_color <= (others => '0');
+          end if;
           if tg_enable = '1' AND shcount >= -8 AND vcount < ((visible_height/C_vgatext_char_height)*C_vgatext_char_height) then
             case shcount(2 downto 0) is
               when "100" =>             -- put text address on bus (if not using text FIFO)
