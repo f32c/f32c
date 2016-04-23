@@ -1,0 +1,5 @@
+- Synplify scripts have to be adjusted to use bash instead of dash, see ubuntu-lattice-dash-fix.sh
+
+- Ubuntu 16.04: eth0 does not longer exist (interfaces are named e.g. enp0s25) which fails with Macrovision Licensing system, solution: create /etc/udev/rules.d/10-rename-network.rules with the following contents (replace xx with MAC):
+
+SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="xx:xx:xx:xx:xx:xx", NAME="eth0"
