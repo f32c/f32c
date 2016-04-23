@@ -310,6 +310,7 @@ architecture Behavioral of glue_xram is
     signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
     signal vga_data_bram: std_logic_vector(7 downto 0);
     signal video_bram_write: std_logic;
+    signal video_bram_addr_strobe: std_logic;
     signal vga_addr_strobe: std_logic; -- FIFO requests to read from RAM
     signal vga_data_ready: std_logic; -- RAM responds to FIFO
     signal S_vga_r, S_vga_g, S_vga_b: std_logic_vector(7 downto 0);
@@ -515,11 +516,13 @@ begin
     intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"F" -- iomap at 0xFxxxxxxx
       else '0';
+    video_bram_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 28) = C_vgatext_bram_base -- default at 0x4xxxxxxx
+      else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
     imem_data_ready <= xram_ready(instr_port) when S_imem_addr_in_xram = '1'
       else bram_i_ready;
     dmem_data_ready <= xram_ready(data_port) when S_dmem_addr_in_xram = '1'
-      else io_addr_strobe or bram_d_ready;
+      else io_addr_strobe or video_bram_addr_strobe or bram_d_ready;
     
     G_xram:
     if C_sdram or C_sram or C_sram8 or C_acram generate
@@ -1247,7 +1250,7 @@ begin
           )
           port map (
             clk => clk, imem_addr => vga_textmode_bram_addr, imem_data_out => vga_textmode_bram8_data,
-            dmem_write => vga_textmode_dmem_write,
+            dmem_write => vga_textmode_dmem8_write,
             dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr(15 downto 2),
             dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
           );
