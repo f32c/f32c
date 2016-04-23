@@ -42,7 +42,7 @@ xil_env ?= . $(isedir)/settings32.sh
 openocd_interface ?= interface/altera-usb-blaster.cfg
 xc3sprog_interface ?= xpc
 xc3sprog_device ?= 0
-jtag_spi_bridge ?= ../include/bscan_xc6s_ftg256_blink.bit.xz
+jtag_spi_bridge ?= ../../include/bscan_xc6s_ftg256_blink.bit.xz
 flashsize ?= 8192
 bitstream_bin ?= 
 
