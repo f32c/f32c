@@ -368,7 +368,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../soc/vgahdmi/dvid_out.vhd">
+      <File Path="$PPRDIR/../../../../soc/vgahdmi/vga2dvid.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -410,7 +410,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../xilinx/hdmi_out_xc7.vhd">
+      <File Path="$PPRDIR/../../../../xilinx/chip/xc7/hdmi_out_xc7.vhd">
         <FileInfo>
           <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="UsedIn" Val="synthesis"/>

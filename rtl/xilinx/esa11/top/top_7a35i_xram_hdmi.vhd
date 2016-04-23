@@ -306,7 +306,8 @@ architecture Behavioral of glue is
     signal gpio: std_logic_vector(127 downto 0);
     signal simple_in: std_logic_vector(31 downto 0);
     signal simple_out: std_logic_vector(31 downto 0);
-    signal tmds_out_rgb: std_logic_vector(2 downto 0);
+    signal tmds_rgb: std_logic_vector(2 downto 0);
+    signal tmds_clk: std_logic;
     signal vga_vsync_n, vga_hsync_n: std_logic;
     signal ps2_clk_in : std_logic;
     signal ps2_clk_out : std_logic;
@@ -417,8 +418,8 @@ begin
     )
     port map (
         clk => clk,
-	clk_25MHz => clk_25MHz,
-	clk_250MHz => clk_250MHz,
+	clk_pixel => clk_25MHz,
+	clk_pixel_shift => clk_250MHz,
 	acram_en => ram_en,
 	acram_addr => ram_address,
 	acram_byte_we => ram_byte_we,
@@ -441,12 +442,15 @@ begin
         ps2_clk_out  => ps2_clk_out,
         ps2_dat_out  => ps2_dat_out,
         -- VGA/HDMI
-	tmds_out_rgb => tmds_out_rgb,
 	vga_vsync => vga_vsync_n,
 	vga_hsync => vga_hsync_n,
 	vga_r => VGA_RED,
 	vga_g => VGA_GREEN,
 	vga_b => VGA_BLUE,
+        dvid_red(0)   => tmds_rgb(2), dvid_red(1)   => open,
+        dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
+        dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
+        dvid_clock(0) => tmds_clk,    dvid_clock(1) => open,
 	-- simple I/O
 	simple_out(7 downto 0) => M_LED, simple_out(15 downto 8) => disp_7seg_segment,
 	simple_out(19 downto 16) => M_7SEG_DIGIT, simple_out(31 downto 20) => open,
@@ -467,10 +471,10 @@ begin
     -- differential output buffering for HDMI clock and video
     hdmi_output: entity work.hdmi_out
     port map (
-        tmds_in_clk => clk_25MHz,
+        tmds_in_clk => clk_25MHz, -- clk_25MHz or tmds_clk
         tmds_out_clk_p => VID_CLK_P,
         tmds_out_clk_n => VID_CLK_N,
-        tmds_in_rgb => tmds_out_rgb,
+        tmds_in_rgb => tmds_rgb,
         tmds_out_rgb_p => VID_D_P,
         tmds_out_rgb_n => VID_D_N
     );
