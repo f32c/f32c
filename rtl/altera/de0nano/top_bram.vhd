@@ -42,7 +42,7 @@ entity glue is
 	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
-	C_mem_size: integer := 32
+	C_bram_size: integer := 32
     );
     port (
 	clk_50m: in std_logic;
@@ -73,7 +73,7 @@ begin
     generic map (
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
-	C_mem_size => C_mem_size
+	C_bram_size => C_bram_size
     )
     port map (
 	clk => clk,
