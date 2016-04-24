@@ -16,7 +16,6 @@ vfiles = \
 ../../../../soc/pid/ctrlpid_v.v \
 ../../../../soc/pid/simotor_v.v \
 ../../../../soc/pid/rotary_decoder_v.v \
-../../../../soc/vgahdmi/vgahdmif_v.v \
 
 vhdfiles = \
 ../../../../xilinx/zybo/top/top_xram_acram_emu.vhd \
@@ -71,7 +70,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/compositing_fifo.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
-../../../../soc/vgahdmi/vgahdmif.vhd \
+../../../../soc/vgahdmi/vga.vhd \
 ../../../../soc/vgahdmi/VGA_textmode.vhd \
 ../../../../soc/vgahdmi/font_block_pack.vhd \
 ../../../../soc/vgahdmi/font8x8_xark.vhd \
