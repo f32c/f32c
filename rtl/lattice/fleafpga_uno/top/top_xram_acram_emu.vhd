@@ -41,8 +41,8 @@ entity glue is
 
     -- SoC configuration options
     C_bram_size: integer := 2;
-    C_icache_size: integer := 0;
-    C_dcache_size: integer := 0;
+    C_icache_size: integer := 2;
+    C_dcache_size: integer := 2;
     C_sram8: boolean := false;
     -- axi cache ram
     C_acram: boolean := true;
