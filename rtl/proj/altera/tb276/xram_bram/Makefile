@@ -26,10 +26,10 @@ OPENOCD_INTERFACE=remote.ocd
 #
 ###################################################################
 
-quartus_env ?= . ../include/quartus_env.sh
+quartus_env ?= . ../../include/quartus_env.sh
 
 # include makefile which does it all
-include ../include/altera.mk
+include ../../include/altera.mk
 
 ###################################################################
 # Setup your sources here
@@ -90,7 +90,7 @@ SRCS = \
 ../../../../soc/vgahdmi/compositing_fifo.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
-../../../../soc/vgahdmi/vgahdmif.vhd \
+../../../../soc/vgahdmi/vga.vhd \
 ../../../../soc/vgahdmi/VGA_textmode.vhd \
 ../../../../soc/vgahdmi/font_block_pack.vhd \
 ../../../../soc/vgahdmi/font8x8_xark.vhd \
