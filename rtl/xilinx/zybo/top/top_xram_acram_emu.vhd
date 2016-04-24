@@ -91,7 +91,6 @@ end glue;
 architecture Behavioral of glue is
     signal clk, clk_250MHz, clk_25MHz: std_logic;
     signal rs232_break: std_logic;
-    signal tmds_rgb: std_logic_vector(2 downto 0);
     signal ram_en             : std_logic;
     signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
     signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
