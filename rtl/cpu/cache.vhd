@@ -62,6 +62,7 @@ entity cache is
 	-- cache options
 	C_icache_size: integer;
 	C_dcache_size: integer;
+	C_cached_addr_bits: integer := 20; -- unused value (hardcoded 20 bits)
 
 	-- debugging options
 	C_debug: boolean
