@@ -943,16 +943,14 @@ begin
     -- VGA/HDMI
     G_vgahdmi:
     if C_vgahdmi generate
-    vgahdmi: entity work.vgahdmi
+    vgabitmap: entity work.vga
     port map (
       clk_pixel => clk_pixel,
-      clk_tmds => clk_pixel_shift,
-      test_picture => not S_vga_enable, -- shows test picture on statup when VGA is disabled
+      test_picture => not S_vga_enable, -- shows test picture when VGA is disabled (on startup)
       fetch_next => vga_fetch_next,
       red_byte    => vga_data_from_fifo(7 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5),
       green_byte  => vga_data_from_fifo(4 downto 2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2),
       blue_byte   => vga_data_from_fifo(1 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0),
-      bright_byte => (others => '0'),
       vga_r => S_vga_r,
       vga_g => S_vga_g,
       vga_b => S_vga_b,
