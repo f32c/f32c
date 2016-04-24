@@ -113,7 +113,7 @@ begin
   vga_hsync <= hSync;
   vga_vsync <= vSync;
   vga_vblank <= vBlank;
-  line_repeat <= '0' when C_dbl_y = 0 else vga_hsync and not CounterY(0);
+  line_repeat <= '0' when C_dbl_y = 0 else hSync and not CounterY(0);
 
   -- test picture generator
   A <= (others => '1') when CounterX(7 downto 5) = "010" and CounterY(7 downto 5) = "010" else (others => '0');
