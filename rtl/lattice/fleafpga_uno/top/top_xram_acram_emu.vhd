@@ -162,7 +162,7 @@ architecture Behavioral of glue is
   signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_data_write     : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_data_read      : std_logic_vector(31 downto 0) := (others => '0');
-  signal ram_read_busy      : std_logic;
+  signal ram_read_busy      : std_logic := '0';
   signal ram_cache_debug    : std_logic_vector(7 downto 0);
   signal ram_cache_hitcnt   : std_logic_vector(31 downto 0);
   signal ram_cache_readcnt  : std_logic_vector(31 downto 0);
