@@ -26,15 +26,15 @@ OPENOCD_INTERFACE=remote.ocd
 #
 ###################################################################
 
-quartus_env ?= . ../include/quartus_env.sh
+quartus_env ?= . ../../include/quartus_env.sh
 
 # include makefile which does it all
-include ../include/altera.mk
+include ../../include/altera.mk
 
 ###################################################################
 # Setup your sources here
 SRCS = \
-../../../../altera/tb276/top/top_tb276_xram_bram.vhd \
+../../../../altera/tb276/top/top_tb276_xram_acram_emu.vhd \
 ../../../../altera/tb276/clocks/pll_25M_112M5.vhd \
 ../../../../altera/tb276/clocks/pll_25M_81M25.vhd \
 ../../../../altera/tb276/clocks/pll_112M5_433M92.vhd \
@@ -50,6 +50,7 @@ SRCS = \
 ../../../../generic/bram_true2p_2clk.vhd \
 ../../../../generic/bptrace.vhd \
 ../../../../generic/reg1w2r.vhd \
+../../../../generic/acram_emu.vhd \
 ../../../../generic/bram_video.vhd \
 ../../../../cpu/idecode_rv32.vhd \
 ../../../../cpu/idecode_mi32.vhd \
@@ -90,7 +91,7 @@ SRCS = \
 ../../../../soc/vgahdmi/compositing_fifo.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
-../../../../soc/vgahdmi/vgahdmif.vhd \
+../../../../soc/vgahdmi/vga.vhd \
 ../../../../soc/vgahdmi/VGA_textmode.vhd \
 ../../../../soc/vgahdmi/font_block_pack.vhd \
 ../../../../soc/vgahdmi/font8x8_xark.vhd \

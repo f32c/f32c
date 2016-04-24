@@ -1,27 +1,44 @@
-project = zybo
-vendor = xilinx
-family = zinq
-part = xc7z010-clg400-1 # last number -1 is speed grade
-flashsize = 8192 # KB (kilobytes) - SPI flash device is M25P40
-top_module = glue
-#isedir = /usr/local/xilinx/14.7/ISE_DS
-isedir = /opt/Xilinx/ISE/14.7/ISE_DS
-xil_env = . $(isedir)/settings64.sh
-openocd_interface = ftdi-zybo.ocd
-xc3sprog_interface = jtaghs1_fast
-xc3sprog_device = 1
-SHELL = /bin/bash
+###################################################################
+# Project Configuration: 
+# 
+# Specify the name of the design (project) and the Quartus II
+# Settings File (.qsf)
+###################################################################
 
-vfiles = \
-../../../../soc/pid/ctrlpid_v.v \
-../../../../soc/pid/simotor_v.v \
-../../../../soc/pid/rotary_decoder_v.v \
+PROJECT = project
+TOP_LEVEL_ENTITY = glue
+ASSIGNMENT_FILES = $(PROJECT).qpf $(PROJECT).qsf
 
-vhdfiles = \
-../../../../xilinx/zybo/top/top_xram_acram_emu.vhd \
-../../../../xilinx/zybo/clocks/pll_125M_250M_100M_25M.vhd \
-../../../../xilinx/zybo/clocks/mmcm_125M_81M25_250M521_25M052.vhd \
-../../../../xilinx/chip/xc7/hdmi_out_xc7.vhd \
+###################################################################
+# Part, Family, Boardfile
+FAMILY = "Cyclone IV E"
+PART = EP4CE6E22C8
+BOARDFILE = tb276.board
+CONFIG_DEVICE = EPCS4
+SERIAL_FLASH_LOADER_DEVICE = EP4CE6
+# OPENOCD_INTERFACE=interface/altera-usb-blaster.cfg
+# OPENOCD_INTERFACE=ftdi-fpu1.ocd
+OPENOCD_INTERFACE=remote.ocd
+
+###################################################################
+#
+# Quartus shell environment vars
+#
+###################################################################
+
+quartus_env ?= . ../../include/quartus_env.sh
+
+# include makefile which does it all
+include ../../include/altera.mk
+
+###################################################################
+# Setup your sources here
+SRCS = \
+../../../../altera/tb276/top/top_tb276_xram_bram.vhd \
+../../../../altera/tb276/clocks/pll_25M_112M5.vhd \
+../../../../altera/tb276/clocks/pll_25M_81M25.vhd \
+../../../../altera/tb276/clocks/pll_112M5_433M92.vhd \
+../../../../generic/hdmi_out.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \
 ../../../../generic/bootloader/defs_bootblock.vhd \
@@ -34,17 +51,16 @@ vhdfiles = \
 ../../../../generic/bptrace.vhd \
 ../../../../generic/reg1w2r.vhd \
 ../../../../generic/bram_video.vhd \
-../../../../generic/acram_emu.vhd \
-../../../../cpu/alu.vhd \
-../../../../cpu/loadalign.vhd \
-../../../../cpu/pipeline.vhd \
-../../../../cpu/shift.vhd \
-../../../../cpu/defs_f32c.vhd \
-../../../../cpu/defs_mi32.vhd \
-../../../../cpu/defs_rv32.vhd \
-../../../../cpu/idecode_mi32.vhd \
 ../../../../cpu/idecode_rv32.vhd \
+../../../../cpu/idecode_mi32.vhd \
 ../../../../cpu/cache_generic_param.vhd \
+../../../../cpu/defs_rv32.vhd \
+../../../../cpu/defs_mi32.vhd \
+../../../../cpu/defs_f32c.vhd \
+../../../../cpu/shift.vhd \
+../../../../cpu/pipeline.vhd \
+../../../../cpu/loadalign.vhd \
+../../../../cpu/alu.vhd \
 ../../../../cpu/debug.vhd \
 ../../../../soc/sram_pack.vhd \
 ../../../../soc/sram.vhd \
@@ -64,9 +80,13 @@ vhdfiles = \
 ../../../../soc/fm/fm.vhd \
 ../../../../soc/fm/fmgen.vhd \
 ../../../../soc/fm/rds.vhd \
-../../../../soc/fm/lowpass.vhd \
 ../../../../soc/fm/bram_rds.vhd \
 ../../../../soc/fm/message.vhd \
+../../../../soc/fm/lowpass.vhd \
+../../../../soc/ps2.vhd \
+../../../../soc/pid/ctrlpid_v.v \
+../../../../soc/pid/simotor_v.v \
+../../../../soc/pid/rotary_decoder_v.v \
 ../../../../soc/vgahdmi/compositing_fifo.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
@@ -82,5 +102,3 @@ vhdfiles = \
 ../../../../soc/vgahdmi/ledstrip.vhd \
 ../../../../soc/vgahdmi/ws2812b.vhd \
 ../../../../soc/vgahdmi/pulse_counter.vhd \
-
-include ../../include/xilinx.mk

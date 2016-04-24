@@ -16,7 +16,6 @@ vfiles = \
 ../../../../soc/pid/ctrlpid_v.v \
 ../../../../soc/pid/simotor_v.v \
 ../../../../soc/pid/rotary_decoder_v.v \
-../../../../soc/vgahdmi/vgahdmif_v.v \
 
 vhdfiles = \
 ../../../../xilinx/scarab_ms6p/top/top_xram_acram_emu.vhd \
@@ -29,7 +28,7 @@ vhdfiles = \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_250M_111M11_25M.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_96M43.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_96M43_433M9_289M3_28M93.vhd \
-../../../../xilinx/hdmi_out.vhd \
+../../../../xilinx/chip/xc6/hdmi_out_xc6.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \
 ../../../../generic/bootloader/defs_bootblock.vhd \
@@ -79,7 +78,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/compositing_fifo.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
-../../../../soc/vgahdmi/vgahdmif.vhd \
+../../../../soc/vgahdmi/vga.vhd \
 ../../../../soc/vgahdmi/VGA_textmode.vhd \
 ../../../../soc/vgahdmi/font_block_pack.vhd \
 ../../../../soc/vgahdmi/font8x8_xark.vhd \
@@ -87,8 +86,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/VGA_textmode_bram.vhd \
 ../../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../../soc/vgahdmi/TMDS_encoder.vhd \
-../../../../soc/vgahdmi/dvid_out.vhd \
-../../../../soc/vgahdmi/vga2dvid_ddr.vhd \
+../../../../soc/vgahdmi/vga2dvid.vhd \
 ../../../../soc/vgahdmi/ddr_dvid_out_se.vhd \
 ../../../../soc/vgahdmi/ledstrip.vhd \
 ../../../../soc/vgahdmi/ws2812b.vhd \
