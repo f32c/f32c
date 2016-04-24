@@ -13,8 +13,8 @@ use ieee.std_logic_unsigned.all;
 entity bram_true2p_1clk is
 	generic 
 	(
-	        dual_port: boolean := True; -- set to False for single port A
-	        pass_thru_a, pass_thru_b: boolean := True;
+		dual_port: boolean := True; -- set to False for single port A
+		pass_thru_a, pass_thru_b: boolean := True;
 		data_width: natural := 8;
 		addr_width: natural := 6
 	);
@@ -44,15 +44,15 @@ begin
 	process(clk)
 	begin
 	if(rising_edge(clk)) then 
-            if not pass_thru_a then
-                data_out_a <= ram(conv_integer(addr_a));
-            end if;
+	    if not pass_thru_a then
+		data_out_a <= ram(conv_integer(addr_a));
+	    end if;
 	    if(we_a = '1') then
 		ram(conv_integer(addr_a)) := data_in_a;
 	    end if;
-            if pass_thru_a then
-                data_out_a <= ram(conv_integer(addr_a));
-            end if;
+	    if pass_thru_a then
+		data_out_a <= ram(conv_integer(addr_a));
+	    end if;
 	end if;
 	end process;
 
@@ -61,15 +61,15 @@ begin
 	process(clk)
 	begin
 	if(rising_edge(clk)) then 
-            if not pass_thru_b then
-                data_out_b <= ram(conv_integer(addr_b));
-            end if;
+	    if not pass_thru_b then
+		data_out_b <= ram(conv_integer(addr_b));
+	    end if;
 	    if(we_b = '1') then
 		ram(conv_integer(addr_b)) := data_in_b;
 	    end if;
-            if pass_thru_b then
-                data_out_b <= ram(conv_integer(addr_b));
-            end if;
+	    if pass_thru_b then
+		data_out_b <= ram(conv_integer(addr_b));
+	    end if;
 	end if;
 	end process;
 	end generate;

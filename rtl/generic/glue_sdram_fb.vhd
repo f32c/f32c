@@ -72,7 +72,8 @@ entity glue_bram is
 	C_sdram_cycles_per_refresh : integer := 1524;
 
 	-- SoC configuration options
-	C_mem_size: integer := 2;	-- in KBytes
+	C_bram_size: integer := 2;	-- in KBytes
+	C_boot_spi: boolean := false;
 	C_icache_size: integer := 8;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_cached_addr_bits: integer := 25; -- 32MB
@@ -87,8 +88,6 @@ entity glue_bram is
 	C_simple_in: integer range 0 to 128 := 32;
 	C_simple_out: integer range 0 to 128 := 32;
 	C_framebuffer: boolean := true;
-	C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
-	C_vgahdmi_mem_kb: integer := 4; -- mem size of framebuffer
 	C_gpio: integer range 0 to 128 := 32;
 	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
 	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
@@ -118,28 +117,28 @@ entity glue_bram is
 	simple_out: out std_logic_vector(31 downto 0);
 	pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
 	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
-	vga_hsync, vga_vsync: out std_logic;
-	vga_r, vga_g, vga_b: out std_logic_vector(2 downto 0);
-	tmds_out_rgb: out std_logic_vector(2 downto 0);
 	video_dac: out std_logic_vector(3 downto 0);
 	gpio: inout std_logic_vector(127 downto 0)
     );
 end glue_bram;
 
 architecture Behavioral of glue_bram is
-    signal imem_addr: std_logic_vector(31 downto 2);
-    signal imem_data_read: std_logic_vector(31 downto 0);
-    signal imem_addr_strobe, imem_data_ready: std_logic;
-    signal dmem_addr: std_logic_vector(31 downto 2);
-    signal dmem_addr_strobe, dmem_write: std_logic;
-    signal dmem_bram_write, dmem_data_ready: std_logic;
+
+    -- signals to / from f32c cores(s)
+    signal intr: std_logic_vector(5 downto 0);
+    signal imem_addr, dmem_addr: std_logic_vector(31 downto 2);
+    signal imem_addr_strobe, dmem_addr_strobe, dmem_write: std_logic;
+    signal imem_data_ready, dmem_data_ready: std_logic;
     signal dmem_byte_sel: std_logic_vector(3 downto 0);
-    signal dmem_to_cpu, cpu_to_dmem: std_logic_vector(31 downto 0);
+    signal cpu_to_dmem: std_logic_vector(31 downto 0);
     signal final_to_cpu_i, final_to_cpu_d: std_logic_vector(31 downto 0);
     signal io_to_cpu: std_logic_vector(31 downto 0);
     signal io_addr_strobe: std_logic;
     signal io_addr: std_logic_vector(11 downto 2);
-    signal intr: std_logic_vector(5 downto 0); -- interrupt
+
+    -- Block RAM
+    signal bram_i_to_cpu, bram_d_to_cpu: std_logic_vector(31 downto 0);
+    signal bram_i_ready, bram_d_ready, dmem_bram_enable: std_logic;
 
     -- SDRAM
     signal to_sdram: sram_port_array;
@@ -153,19 +152,19 @@ architecture Behavioral of glue_bram is
     constant iomap_range: T_iomap_range := (x"F800", x"FFFF"); -- actual range is 0xFFFFF800 .. 0xFFFFFFFF
 
     function iomap_from(r: T_iomap_range; base: T_iomap_range) return integer is
-       variable a, b: std_logic_vector(15 downto 0);
+	variable a, b: std_logic_vector(15 downto 0);
     begin
-       a := r(0);
-       b := base(0);
-       return conv_integer(a(11 downto 4) - b(11 downto 4));
+	a := r(0);
+	b := base(0);
+	return conv_integer(a(11 downto 4) - b(11 downto 4));
     end iomap_from;
 
     function iomap_to(r: T_iomap_range; base: T_iomap_range) return integer is
-       variable a, b: std_logic_vector(15 downto 0);
+	variable a, b: std_logic_vector(15 downto 0);
     begin
-       a := r(1);
-       b := base(0);
-       return conv_integer(a(11 downto 4) - b(11 downto 4));
+	a := r(1);
+	b := base(0);
+	return conv_integer(a(11 downto 4) - b(11 downto 4));
     end iomap_to;
 
     -- Timer
@@ -177,11 +176,6 @@ architecture Behavioral of glue_bram is
     signal icp, icp_enable: std_logic_vector(1 downto 0);
     signal timer_intr: std_logic;
 
-    -- VGA/HDMI video
-    signal vga_addr: std_logic_vector(15 downto 0);
-    signal vga_data: std_logic_vector(7 downto 0);
-    signal video_bram_write: std_logic;
-    
     -- Composite video framebuffer
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
     signal R_fb_base_addr: std_logic_vector(29 downto 2);
@@ -284,18 +278,19 @@ begin
 	debug_active => debug_active
     );
     final_to_cpu_i <= from_sdram when imem_addr(31 downto 30) = "10"
-      else imem_data_read;
+      else bram_i_to_cpu;
     final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
       else from_sdram when dmem_addr(31 downto 30) = "10"
-      else dmem_to_cpu;
+      else bram_d_to_cpu;
     intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
     imem_data_ready <= sdram_ready(0) when imem_addr(31 downto 30) = "10"
-      else imem_addr_strobe; -- MUST deassert ACK when strobe is low!!!
+      else bram_i_ready;
     dmem_data_ready <= sdram_ready(1) when dmem_addr(31 downto 30) = "10"
-      else '1'; -- I/O or BRAM have no wait states
+      else bram_d_ready when dmem_addr(31) = '0'
+      else '1'; -- I/O
 
     -- SDRAM
     G_sdram:
@@ -349,18 +344,18 @@ begin
     if C_framebuffer generate
     fb: entity work.fb
     generic map (
-        C_big_endian => C_big_endian
+	C_big_endian => C_big_endian
     )
     port map (
-        clk => clk, clk_dac => clk_325m,
-        addr_strobe => fb_addr_strobe,
-        addr_out => fb_addr,
-        data_ready => fb_data_ready,
-        data_in => from_sdram,
-        mode => R_fb_mode,
-        base_addr => R_fb_base_addr,
-        dac_out => video_dac,
-        tick_out => fb_tick
+	clk => clk, clk_dac => clk_325m,
+	addr_strobe => fb_addr_strobe,
+	addr_out => fb_addr,
+	data_ready => fb_data_ready,
+	data_in => from_sdram,
+	mode => R_fb_mode,
+	base_addr => R_fb_base_addr,
+	dac_out => video_dac,
+	tick_out => fb_tick
     );
     end generate;
 
@@ -388,7 +383,7 @@ begin
     G_sio_decoder: if C_sio > 0 generate
     with conv_integer(io_addr(11 downto 4)) select
       sio_range <= '1' when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range),
-                   '0' when others;
+		   '0' when others;
     end generate;
     sio_rx(0) <= sio_rxd(0);
 
@@ -412,7 +407,7 @@ begin
     G_spi_decoder: if C_spi > 0 generate
     with conv_integer(io_addr(11 downto 4)) select
       spi_range <= '1' when iomap_from(iomap_spi, iomap_range) to iomap_to(iomap_spi, iomap_range),
-                   '0' when others;
+		   '0' when others;
     end generate;
 
     --
@@ -459,7 +454,7 @@ begin
 	    if fb_tick = '1' then
 		R_fb_intr <= '1';
 	    end if;
-        end if;
+	end if;
 	if rising_edge(clk) then
 	    R_simple_in(C_simple_in - 1 downto 0) <=
 	      simple_in(C_simple_in - 1 downto 0);
@@ -474,10 +469,10 @@ begin
     -- muxing simple_io to show PWM of timer on LEDs
     G_simple_out_timer:
     if C_timer = true generate
-      ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
-      ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
-      simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
-      else (others => '-');
+	ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
+	ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
+	simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0)
+	  when C_simple_out > 0 else (others => '-');
     end generate;
 
     -- big address decoder when CPU reads IO
@@ -550,11 +545,11 @@ begin
     G_gpio_decoder_intr: if C_gpios > 0 generate
     with conv_integer(io_addr(11 downto 4)) select
       gpio_range <= '1' when iomap_from(iomap_gpio, iomap_range) to iomap_to(iomap_gpio, iomap_range),
-                    '0' when others;
+		    '0' when others;
     gpio_intr_joint <= gpio_intr(0);
-      -- TODO: currently only 32 gpio supported in fpgarduino core
-      -- when support for 128 gpio is there we should use this:
-      -- gpio_intr_joint <= '0' when conv_integer(gpio_intr) = 0 else '1';
+    -- TODO: currently only 32 gpio supported in fpgarduino core
+    -- when support for 128 gpio is there we should use this:
+    -- gpio_intr_joint <= '0' when conv_integer(gpio_intr) = 0 else '1';
     end generate;
 
     -- PID
@@ -583,7 +578,7 @@ begin
     );
     with conv_integer(io_addr(11 downto 4)) select
       pid_ce <= io_addr_strobe when iomap_from(iomap_pid, iomap_range) to iomap_to(iomap_pid, iomap_range),
-                           '0' when others;
+	'0' when others;
     pid_bridge_f <= pid_bridge_f_out;
     pid_bridge_r <= pid_bridge_r_out;
     end generate;
@@ -609,93 +604,26 @@ begin
     );
     with conv_integer(io_addr(11 downto 4)) select
       timer_ce <= io_addr_strobe when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range),
-                             '0' when others;
-    end generate;
-
-    -- VGA/HDMI
-    G_vgahdmi:
-    if C_vgahdmi generate
-    vgahdmi: entity work.vgahdmi
-    generic map (
-      dbl_x => 1,
-      dbl_y => 1,
-      mem_size_kb => C_vgahdmi_mem_kb, -- tell vgahdmi how much video ram do we have
-      test_picture => 1
-    )
-    port map (
-      clk_pixel => clk_25MHz,
-      clk_tmds => clk_250MHz,
-      dispAddr => vga_addr,
-      dispData => vga_data,
-      vga_r => vga_r,
-      vga_g => vga_g,
-      vga_b => vga_b,
-      vga_hsync => vga_hsync,
-      vga_vsync => vga_vsync,
-      tmds_out_rgb => tmds_out_rgb
-    );
-    -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
-    -- vga_data(7 downto 0) <= x"0F";
-    video_bram_write <=
-      dmem_addr_strobe and dmem_write when dmem_addr(31 downto 28) = x"8" else '0';
-    videobram: entity work.bram_video
-    generic map (
-      C_mem_size => C_vgahdmi_mem_kb -- KB
-    )
-    port map (
-	clk => clk,
-	imem_addr(17 downto 2) => vga_addr(15 downto 0),
-	imem_addr(31 downto 18) => (others => '0'),
-	imem_data_out => vga_data,
-	dmem_write => video_bram_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => open, dmem_data_in => cpu_to_dmem(7 downto 0)
-    );
+	'0' when others;
     end generate;
 
     -- Block RAM
-    dmem_bram_write <=
-      dmem_addr_strobe and dmem_write when dmem_addr(31) /= '1' else '0';
-    G_bram_mi32_el:
-    if C_arch = ARCH_MI32 and not C_big_endian generate
-    bram_mi32_el: entity work.bram_mi32_el
+    dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
+    bram: entity work.bram
     generic map (
-	C_mem_size => C_mem_size
+	C_bram_size => C_bram_size,
+	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_boot_spi => C_boot_spi
     )
     port map (
-	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_write => dmem_bram_write,
+	clk => clk, imem_addr_strobe => imem_addr_strobe,
+	imem_addr => imem_addr, imem_data_out => bram_i_to_cpu,
+	imem_data_ready => bram_i_ready, dmem_data_ready => bram_d_ready,
+	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write,
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
+	dmem_data_out => bram_d_to_cpu, dmem_data_in => cpu_to_dmem
     );
-    end generate;
-    G_bram_mi32_eb:
-    if C_arch = ARCH_MI32 and C_big_endian generate
-    bram_mi32_eb: entity work.bram_mi32_eb
-    generic map (
-	C_mem_size => C_mem_size
-    )
-    port map (
-	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_write => dmem_bram_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
-    );
-    end generate;
-    G_bram_rv32:
-    if C_arch = ARCH_RV32 generate
-    bram_rv32: entity work.bram_rv32
-    generic map (
-	C_mem_size => C_mem_size
-    )
-    port map (
-	clk => clk, imem_addr => imem_addr, imem_data_out => imem_data_read,
-	dmem_write => dmem_bram_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => dmem_to_cpu, dmem_data_in => cpu_to_dmem
-    );
-    end generate;
-
 
     -- Debugging SIO instance
     G_debug_sio:
