@@ -55,7 +55,7 @@ entity glue is
 
 	-- SoC configuration options
 	C_PC_mask: std_logic_vector := x"800fffff"; -- 1 MB
-	C_bram_size: integer := 8;
+	C_bram_size: integer := 2;
 	C_simple_in: integer := 0;
 	C_simple_out: integer := 8;
 	C_gpio: integer := 0

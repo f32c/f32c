@@ -187,8 +187,9 @@ set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE SPEED
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 
 
-set_global_assignment -name VHDL_FILE ../../../../cpu/cache_generic.vhd
-set_global_assignment -name VHDL_FILE ../../../../generic/bram_true2p_1clk.vhd
+set_global_assignment -name VHDL_FILE ../../../../altera/chip/cyclone4/bram_dp_x18.vhd
+set_global_assignment -name VHDL_FILE ../../../../altera/chip/cyclone4/bram_dp_x9.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/cache.vhd
 set_global_assignment -name VHDL_FILE ../../../../altera/de0nano/clocks/pll_50m.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bram.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/defs_bootblock.vhd
@@ -218,4 +219,5 @@ set_global_assignment -name VHDL_FILE ../../../../cpu/pipeline.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/loadalign.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/debug.vhd
 set_global_assignment -name VHDL_FILE ../../../../altera/de0nano/top_sdram.vhd
+set_global_assignment -name CDF_FILE output_files/Chain1.cdf
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

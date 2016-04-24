@@ -63,7 +63,7 @@ entity glue_bram is
 	C_movn_movz: boolean := false;
 
 	-- CPU debugging
-	C_debug: boolean := false;
+	C_debug: boolean := true;
 
 	-- SDRAM parameters
 	C_sdram_address_width : integer := 24;
@@ -74,8 +74,8 @@ entity glue_bram is
 	-- SoC configuration options
 	C_bram_size: integer := 8;	-- in KBytes
 	C_boot_spi: boolean := false;
-	C_icache_size: integer := 8;	-- 0, 2, 4 or 8 KBytes
-	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
+	C_icache_size: integer := 0;	-- 0, 2, 4 or 8 KBytes
+	C_dcache_size: integer := 0;	-- 0, 2, 4 or 8 KBytes
 	C_cached_addr_bits: integer := 25; -- 32MB
 	C_sdram: boolean := true;
 	C_sio: integer := 1;
