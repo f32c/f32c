@@ -43,7 +43,10 @@ entity glue is
 	C_clk_freq: integer := 81;
 
 	-- SoC configuration options
-	C_bram_size: integer := 16;
+	C_bram_size: integer := 8;
+        C_icache_size: integer := 0;
+        C_dcache_size: integer := 0;
+        C_acram: boolean := true;
 	C_sio: integer := 1;
 	C_gpio: integer := 32;
 	C_simple_io: boolean := true
@@ -89,6 +92,9 @@ begin
       C_arch => C_arch,
       C_clk_freq => C_clk_freq,
       C_bram_size => C_bram_size,
+      C_icache_size => C_icache_size,
+      C_dcache_size => C_dcache_size,
+      C_acram => C_acram,
       C_debug => C_debug
     )
     port map (
