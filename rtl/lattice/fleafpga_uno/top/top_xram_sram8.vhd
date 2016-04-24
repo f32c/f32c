@@ -50,9 +50,21 @@ entity glue is
     C_simple_io: boolean := true;
     C_gpio: integer := 29;
     C_gpio_pullup: boolean := true;
-    C_gpio_adc: integer := 6;       -- number of analog ports for ADC (on A0-A5 pins)
+    C_gpio_adc: integer := 6; -- number of analog ports for ADC (on A0-A5 pins)
     C_ps2: boolean := false;
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
+    C_vgahdmi: boolean := false;
+    C_vgahdmi_test_picture: integer := 0;
+    -- number of pixels for line step 640
+    C_vgahdmi_fifo_width: integer := 640;
+    -- number of scan lines: 480
+    C_vgahdmi_fifo_height: integer := 480;
+    -- normally this should be  actual bits per pixel
+    C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
+    -- width of FIFO address space -> size of fifo
+    -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
+    C_vgahdmi_fifo_addr_width: integer := 11;
+    -- VGA textmode and graphics, full featured
     C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
     C_vgatext_label: string := "FleaFPGA-Uno f32c: 50MHz MIPS-compatible soft-core, 512KB SRAM";
     C_vgatext_mode: integer := 0;   -- 640x480
@@ -187,7 +199,15 @@ begin
     C_gpio_adc => C_gpio_adc,
     C_branch_prediction => C_branch_prediction,
     C_dvid_ddr => C_dvid_ddr,
-        C_vgatext => C_vgatext,
+    -- vga simple compositing bitmap only graphics
+    C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_test_picture => C_vgahdmi_test_picture,
+      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
+      C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
+      C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
+      C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
+    -- vga textmode + bitmap full feature graphics
+    C_vgatext => C_vgatext,
         C_vgatext_label => C_vgatext_label,
         C_vgatext_mode => C_vgatext_mode,
         C_vgatext_bits => C_vgatext_bits,
