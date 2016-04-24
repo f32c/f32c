@@ -43,7 +43,9 @@ entity glue is
     C_bram_size: integer := 2;
     C_icache_size: integer := 2;
     C_dcache_size: integer := 2;
-    C_sram8: boolean := true;
+    C_sram8: boolean := false;
+    -- axi cache ram
+    C_acram: boolean := true;
     C_branch_prediction: boolean := false;
     C_sio: integer := 2;
     C_spi: integer := 2;
@@ -65,7 +67,7 @@ entity glue is
     -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
     C_vgahdmi_fifo_addr_width: integer := 11;
     -- VGA textmode and graphics, full featured
-    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
     C_vgatext_label: string := "FleaFPGA-Uno f32c: 50MHz MIPS-compatible soft-core, 512KB SRAM";
     C_vgatext_mode: integer := 0;   -- 640x480
     C_vgatext_bits: integer := 4;   -- 4096 possible colors
@@ -155,6 +157,15 @@ architecture Behavioral of glue is
   signal clk, rs232_break, rs232_break2: std_logic;
   signal clk_dvi, clk_dvin, clk_pixel: std_logic;
   signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
+  signal ram_en             : std_logic;
+  signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
+  signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
+  signal ram_data_write     : std_logic_vector(31 downto 0) := (others => '0');
+  signal ram_data_read      : std_logic_vector(31 downto 0) := (others => '0');
+  signal ram_read_busy      : std_logic := '0';
+  signal ram_cache_debug    : std_logic_vector(7 downto 0);
+  signal ram_cache_hitcnt   : std_logic_vector(31 downto 0);
+  signal ram_cache_readcnt  : std_logic_vector(31 downto 0);
   signal ps2_clk_in : std_logic;
   signal ps2_clk_out : std_logic;
   signal ps2_dat_in : std_logic;
@@ -191,6 +202,7 @@ begin
     C_icache_size => C_icache_size,
     C_dcache_size => C_dcache_size,
     C_sram8 => C_sram8,
+    C_acram => C_acram,
     C_debug => C_debug,
     C_sio => C_sio,
     C_spi => C_spi,
@@ -317,6 +329,14 @@ begin
     sram_a(18 downto 0) => SRAM_Addr,
     sram_d(7 downto 0) => SRAM_Data,
     sram_wel => SRAM_n_we,
+
+    acram_en => ram_en,
+    acram_addr(29 downto 2) => ram_address(29 downto 2),
+    acram_byte_we(3 downto 0) => ram_byte_we(3 downto 0),
+    acram_data_rd(31 downto 0) => ram_data_read(31 downto 0),
+    acram_data_wr(31 downto 0) => ram_data_write(31 downto 0),
+    acram_read_busy => ram_read_busy,
+    
     -- PS/2 Keyboard
     --ps2_clk_in      => ps2_clk_in,
     --ps2_dat_in      => ps2_dat_in,
@@ -344,5 +364,20 @@ begin
     out_blue  => LVDS_Blue,
     out_clock => LVDS_ck
   );
+
+    acram_emulation: entity work.acram_emu
+    generic map
+    (
+      C_addr_width => 12
+    )
+    port map
+    (
+      clk => clk,
+      acram_a => ram_address(13 downto 2),
+      acram_d_wr => ram_data_write,
+      acram_d_rd => ram_data_read,
+      acram_byte_we => ram_byte_we,
+      acram_en => ram_en
+    );
 
 end Behavioral;
