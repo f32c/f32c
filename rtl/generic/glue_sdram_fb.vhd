@@ -72,7 +72,7 @@ entity glue_bram is
 	C_sdram_cycles_per_refresh : integer := 1524;
 
 	-- SoC configuration options
-	C_bram_size: integer := 2;	-- in KBytes
+	C_bram_size: integer := 8;	-- in KBytes
 	C_boot_spi: boolean := false;
 	C_icache_size: integer := 8;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
@@ -87,21 +87,13 @@ entity glue_bram is
 	C_spi_fixed_speed: std_logic_vector := "1111";
 	C_simple_in: integer range 0 to 128 := 32;
 	C_simple_out: integer range 0 to 128 := 32;
-	C_framebuffer: boolean := true;
-	C_gpio: integer range 0 to 128 := 32;
-	C_pids: integer range 0 to 8 := 0; -- number of pids 0:disable, 2-8:enable
-	C_pid_simulator: std_logic_vector(7 downto 0) := (others => '0'); -- for each pid choose simulator/real
-	C_pid_prescaler: integer range 10 to 26 := 18; -- control loop frequency f_clk/2^prescaler
-	C_pid_precision: integer range 0 to 8 := 1; -- fixed point PID precision
-	C_pid_pwm_bits: integer range 11 to 32 := 12; -- PWM output frequency f_clk/2^pwmbits (min 11 => 40kHz @ 81.25MHz)
-	C_pid_fp: integer range 0 to 26 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
-	C_timer: boolean := true
+	C_framebuffer: boolean := false;
+	C_gpio: integer range 0 to 128 := 32
     );
     port (
 	clk: in std_logic;
 	clk_325m: in std_logic; -- PAL video DAC clock, 325 MHz
 	clk_25MHz: in std_logic; -- VGA pixel clock 25 MHz
-	clk_250MHz: in std_logic := '0'; -- HDMI bit shift clock, default 0 if no HDMI
 	sdram_addr: out std_logic_vector(12 downto 0);
 	sdram_data: inout std_logic_vector(15 downto 0);
 	sdram_ba: out std_logic_vector(1 downto 0);
@@ -115,8 +107,6 @@ entity glue_bram is
 	spi_miso: in std_logic_vector(C_spi - 1 downto 0);
 	simple_in: in std_logic_vector(31 downto 0);
 	simple_out: out std_logic_vector(31 downto 0);
-	pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
-	pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
 	video_dac: out std_logic_vector(3 downto 0);
 	gpio: inout std_logic_vector(127 downto 0)
     );
@@ -167,15 +157,6 @@ architecture Behavioral of glue_bram is
 	return conv_integer(a(11 downto 4) - b(11 downto 4));
     end iomap_to;
 
-    -- Timer
-    constant iomap_timer: T_iomap_range := (x"F900", x"F93F");
-    signal timer_range: std_logic := '0';
-    signal from_timer: std_logic_vector(31 downto 0);
-    signal timer_ce: std_logic;
-    signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
-    signal icp, icp_enable: std_logic_vector(1 downto 0);
-    signal timer_intr: std_logic;
-
     -- Composite video framebuffer
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
     signal R_fb_base_addr: std_logic_vector(29 downto 2);
@@ -193,18 +174,6 @@ architecture Behavioral of glue_bram is
     signal gpio_ce: std_logic_vector(C_gpios-1 downto 0);
     signal gpio_intr: std_logic_vector(C_gpios-1 downto 0);
     signal gpio_intr_joint: std_logic := '0';
-
-    -- PID
-    constant iomap_pid: T_iomap_range := (x"FD80", x"FDBF");
-    constant C_pid: boolean := C_pids >= 2; -- minimum is 2 PIDs, otherwise no PID
-    signal from_pid: std_logic_vector(31 downto 0);
-    signal pid_ce: std_logic;
-    signal pid_intr: std_logic; -- currently unused
-    signal pid_bridge_f_out: std_logic_vector(C_pids-1 downto 0);
-    signal pid_bridge_r_out: std_logic_vector(C_pids-1 downto 0);
-    signal pid_encoder_a_out: std_logic_vector(C_pids-1 downto 0);
-    signal pid_encoder_b_out: std_logic_vector(C_pids-1 downto 0);
-    constant C_pids_bits: integer := integer(floor((log2(real(C_pids)+0.001))+0.5));
 
     -- Serial I/O (RS232)
     constant iomap_sio: T_iomap_range := (x"FB00", x"FB3F");
@@ -282,7 +251,7 @@ begin
     final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
       else from_sdram when dmem_addr(31 downto 30) = "10"
       else bram_d_to_cpu;
-    intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;
+    intr <= "00" & gpio_intr_joint & '0' & from_sio(0)(8) & R_fb_intr;
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
@@ -461,22 +430,11 @@ begin
 	end if;
     end process;
 
-    G_simple_out_standard:
-    if C_timer = false generate
-	simple_out(C_simple_out - 1 downto 0) <=
-	  R_simple_out(C_simple_out - 1 downto 0);
-    end generate;
-    -- muxing simple_io to show PWM of timer on LEDs
-    G_simple_out_timer:
-    if C_timer = true generate
-	ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
-	ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
-	simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0)
-	  when C_simple_out > 0 else (others => '-');
-    end generate;
+    simple_out(C_simple_out - 1 downto 0) <=
+      R_simple_out(C_simple_out - 1 downto 0);
 
     -- big address decoder when CPU reads IO
-    process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio)
+    process(io_addr, R_simple_in, R_simple_out, from_sio, from_gpio)
 	variable i: integer;
     begin
 	io_to_cpu <= (others => '-');
@@ -487,10 +445,6 @@ begin
 		    io_to_cpu <= from_gpio(i);
 		end if;
 	    end loop;
-	when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range) =>
-	    if C_timer then
-		io_to_cpu <= from_timer;
-	    end if;
 	when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range) =>
 	    for i in 0 to C_sio - 1 loop
 		if conv_integer(io_addr(5 downto 4)) = i then
@@ -503,10 +457,6 @@ begin
 		    io_to_cpu <= from_spi(i);
 		end if;
 	    end loop;
-	when iomap_from(iomap_pid, iomap_range) to iomap_to(iomap_pid, iomap_range) =>
-	    if C_pid then
-		io_to_cpu <= from_pid;
-	    end if;
 	when iomap_from(iomap_simple_in, iomap_range) to iomap_to(iomap_simple_in, iomap_range) =>
 	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
@@ -550,61 +500,6 @@ begin
     -- TODO: currently only 32 gpio supported in fpgarduino core
     -- when support for 128 gpio is there we should use this:
     -- gpio_intr_joint <= '0' when conv_integer(gpio_intr) = 0 else '1';
-    end generate;
-
-    -- PID
-    G_pid:
-    if C_pid generate
-    pid_inst: entity work.pid
-    generic map (
-	C_pwm_bits => C_pid_pwm_bits,
-	C_prescaler => C_pid_prescaler,
-	C_fp => C_pid_fp,
-	C_precision => C_pid_precision,
-	C_simulator => C_pid_simulator,
-	C_pids => C_pids,
-	C_addr_unit_bits => C_pids_bits
-    )
-    port map (
-	clk => clk, ce => pid_ce, addr => dmem_addr(C_pids_bits+3 downto 2),
-	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_pid,
-	encoder_a_in  => pid_encoder_a,
-	encoder_b_in  => pid_encoder_b,
-	encoder_a_out => pid_encoder_a_out,
-	encoder_b_out => pid_encoder_b_out,
-	bridge_f_out => pid_bridge_f_out,
-	bridge_r_out => pid_bridge_r_out
-    );
-    with conv_integer(io_addr(11 downto 4)) select
-      pid_ce <= io_addr_strobe when iomap_from(iomap_pid, iomap_range) to iomap_to(iomap_pid, iomap_range),
-	'0' when others;
-    pid_bridge_f <= pid_bridge_f_out;
-    pid_bridge_r <= pid_bridge_r_out;
-    end generate;
-
-    -- Timer
-    G_timer:
-    if C_timer generate
-    icp <= R_simple_out(3) & R_simple_out(0); -- during debug period, leds will serve as software-generated ICP
-    timer: entity work.timer
-    generic map (
-	C_pres => 10,
-	C_bits => 12
-    )
-    port map (
-	clk => clk, ce => timer_ce, addr => dmem_addr(5 downto 2),
-	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_timer,
-	timer_irq => timer_intr,
-	ocp_enable => ocp_enable, -- enable physical output
-	ocp => ocp, -- output compare signal
-	icp_enable => icp_enable, -- enable physical input
-	icp => icp -- input capture signal
-    );
-    with conv_integer(io_addr(11 downto 4)) select
-      timer_ce <= io_addr_strobe when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range),
-	'0' when others;
     end generate;
 
     -- Block RAM

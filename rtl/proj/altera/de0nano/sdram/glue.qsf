@@ -187,8 +187,9 @@ set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE SPEED
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 
 
-set_global_assignment -name VHDL_FILE ../../../../altera/de0nano/clocks/pll_50m.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/cache_generic.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bram_true2p_1clk.vhd
+set_global_assignment -name VHDL_FILE ../../../../altera/de0nano/clocks/pll_50m.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bram.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/defs_bootblock.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/boot_sio_rv32el.vhd
@@ -201,15 +202,7 @@ set_global_assignment -name VHDL_FILE ../../../../soc/fb.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/cvbs.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/glue_sdram_fb.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/sram_pack.vhd
-set_global_assignment -name VERILOG_FILE ../../../../soc/pid/simotor_v.v
-set_global_assignment -name VHDL_FILE ../../../../soc/pid/simotor.vhd
-set_global_assignment -name VERILOG_FILE ../../../../soc/pid/rotary_decoder_v.v
-set_global_assignment -name VHDL_FILE ../../../../soc/pid/rotary_decoder.vhd
-set_global_assignment -name VHDL_FILE ../../../../soc/pid/pid.vhd
-set_global_assignment -name VERILOG_FILE ../../../../soc/pid/ctrlpid_v.v
-set_global_assignment -name VHDL_FILE ../../../../soc/pid/ctrlpid.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/spi.vhd
-set_global_assignment -name VHDL_FILE ../../../../soc/timer.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/sio.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/gpio.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/reg1w2r.vhd
@@ -224,6 +217,5 @@ set_global_assignment -name VHDL_FILE ../../../../cpu/shift.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/pipeline.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/loadalign.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/debug.vhd
-set_global_assignment -name VHDL_FILE ../../../../cpu/cache_generic_param.vhd
 set_global_assignment -name VHDL_FILE ../../../../altera/de0nano/top_sdram.vhd
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

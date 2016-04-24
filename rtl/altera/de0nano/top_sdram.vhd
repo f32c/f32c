@@ -58,8 +58,7 @@ entity glue is
 	C_bram_size: integer := 8;
 	C_simple_in: integer := 0;
 	C_simple_out: integer := 8;
-	C_gpio: integer := 0;
-	C_timer: boolean := false
+	C_gpio: integer := 0
     );
     port (
 	clk_50m: in std_logic;
@@ -132,8 +131,7 @@ begin
 	C_bram_size => C_bram_size,
 	C_simple_in => C_simple_in,
 	C_simple_out => C_simple_out,
-	C_gpio => C_gpio,
-	C_timer => C_timer
+	C_gpio => C_gpio
     )
     port map (
 	clk => clk, clk_325m => clk_325m,
