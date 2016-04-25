@@ -43,9 +43,9 @@ entity glue is
 	C_clk_freq: integer := 81;
 
 	-- SoC configuration options
-	C_bram_size: integer := 8;
-        C_icache_size: integer := 0;
-        C_dcache_size: integer := 0;
+	C_bram_size: integer := 2;
+        C_icache_size: integer := 2;
+        C_dcache_size: integer := 2;
         C_acram: boolean := true;
 	C_sio: integer := 1;
 	C_gpio: integer := 32;
