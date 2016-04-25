@@ -239,6 +239,16 @@ begin
       acram_byte_we => ram_byte_we,
       acram_en => ram_en
     );
-    --ram_data_read <= x"01234567"; -- debug purpose
 
+    -- If ram_data_read is tied to a constant, any
+    -- read from ACRAM locations from 0x80000000 must
+    -- show this constant. axi_cache is bypassed
+    -- and the constant is just placed on multiport bus.
+
+    -- check it:
+    -- Serial.println(*((uint32_t *) 0x80000000), HEX);
+    -- must print
+    -- 01234567
+
+    --ram_data_read <= x"01234567"; -- debug purpose
 end Behavioral;
