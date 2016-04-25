@@ -3,7 +3,7 @@
 <!--                                                         -->
 <!-- Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="10" Path="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/esa11/7a35i_xram_bram_hdmi/esa11_7a35i_xram_bram.xpr">
+<Project Version="7" Minor="10" Path="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/esa11_7a35i_xram_acram_emu/esa11_7a35i_xram_acram_emu.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="d9ae0350734544abb1e2d9bc160aee96"/>
@@ -451,8 +451,8 @@
         <Option Name="SrcSet" Val="sources_1"/>
       </Config>
     </FileSet>
-    <FileSet Name="clk_d100_100_200_250_25MHz" Type="BlockSrcs" RelSrcDir="$PSRCDIR/clk_d100_100_200_250_25MHz">
-      <File Path="$PPRDIR/../../../../xilinx/esa11/clock/clk_d100_100_200_250_25MHz/clk_d100_100_200_250_25MHz.xci">
+    <FileSet Name="clk_d100_100_200_250_25MHz" Type="BlockSrcs" RelSrcDir="$PSRCDIR/clk_d100_100_200_250_25MHz_vivado_2016.1">
+      <File Path="$PPRDIR/../../../../xilinx/esa11/clocks/clk_d100_100_200_250_25MHz_vivado2016.1/clk_d100_100_200_250_25MHz.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
