@@ -109,14 +109,15 @@ begin
 	process(clk_shift)
 	begin
 		if rising_edge(clk_shift) then
-		if shift_clock = "0000011111" then
-			shift_red	<= latched_red;
+		--if shift_clock = "0000011111" then
+		if shift_clock(5 downto 4) = "01" then -- simplified above
+			shift_red <= latched_red;
 			shift_green <= latched_green;
-			shift_blue	<= latched_blue;
+			shift_blue <= latched_blue;
 		else
-			shift_red	<= "0" & shift_red	(9 downto 1);
+			shift_red <= "0" & shift_red	(9 downto 1);
 			shift_green <= "0" & shift_green(9 downto 1);
-			shift_blue	<= "0" & shift_blue (9 downto 1);
+			shift_blue <= "0" & shift_blue (9 downto 1);
 		end if;
 		shift_clock <= shift_clock(0) & shift_clock(9 downto 1);
 		end if;
@@ -127,7 +128,8 @@ begin
 	process(clk_shift)
 	begin
 		if rising_edge(clk_shift) then 
-		if shift_clock = "0000011111" then
+		--if shift_clock = "0000011111" then
+		if shift_clock(5 downto 4) = "01" then -- simplified above
 			shift_red   <= latched_red;
 			shift_green <= latched_green;
 			shift_blue  <= latched_blue;
