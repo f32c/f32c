@@ -103,7 +103,12 @@ generic (
   C_spi_fixed_speed: std_logic_vector := "1111";
   C_simple_in: integer range 0 to 128 := 32;
   C_simple_out: integer range 0 to 128 := 32;
+  -- video hardware output settings
   C_dvid_ddr: boolean := false; -- false: generate digital video from 250MHz SDR single edge, true: digital video from 125MHz DDR double edge
+  -- C_lvds_display:
+  -- false: normal monitors, DVI-D/HDMI 10-bit TMDS (25MHz pixel clock, 250MHz shift clock)
+  -- true:  bare wired LCD panel, 7-bit LVDS (36MHz pixel clock, 252MHz shift clock and does only SDR, not DDR)
+  C_lvds_display: boolean := false; -- false: normal DVI-D/HDMI, true: bare LCD panel
   -- VGA/HDMI simple 640x480 bitmap only
   C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
   C_vgahdmi_use_bram: boolean := false;
@@ -967,6 +972,7 @@ begin
 
     -- DVI-D Encoder Block
     -- XXX Fixme: unify this block with vgatextmode (use same signal names)
+    G_vgahdmi_tmds_display: if not C_lvds_display generate
     G_vgahdmi_dvid: entity work.vga2dvid
     generic map (
       C_ddr     => C_dvid_ddr,
@@ -989,6 +995,30 @@ begin
       out_blue  => dvid_blue,
       out_clock => dvid_clock
     );
+    end generate;
+    G_vgahdmi_lvds_display: if C_lvds_display generate
+    G_vgahdmi_lcd: entity work.vga2lcd
+    generic map (
+      C_depth => 8 -- 8bpp (8 bit per pixel)
+    )
+    port map (
+      clk_pixel => clk_pixel, clk_shift => clk_pixel_shift,
+
+      in_red   => S_vga_r,
+      in_green => S_vga_g,
+      in_blue  => S_vga_b,
+
+      in_blank => S_vga_blank,
+      in_hsync => S_vga_hsync,
+      in_vsync => S_vga_vsync,
+
+      -- single-ended output ready for differential buffers
+      out_red_green  => dvid_red,
+      out_green_blue => dvid_green,
+      out_blue_sync  => dvid_blue,
+      out_clock      => dvid_clock
+    );
+    end generate;
     S_vga_enable <= '1' when R_fb_base_addr(31 downto 28) = C_xram_base else '0';
     S_vga_fetch_enabled <= S_vga_enable and vga_fetch_next; -- drain fifo into display
     S_vga_active_enabled <= S_vga_enable and not S_vga_vsync; -- frame active, pre-fill fifo
@@ -1255,6 +1285,7 @@ begin
       end generate; -- G_vga_textmode_bram8
 
       -- DVI-D Encoder Block (Thanks Hamster ;-)
+      G_vgatext_tmds_display: if not C_lvds_display generate
       G_vgatext_dvid: entity work.vga2dvid
         generic map (
           C_ddr     => C_dvid_ddr,
@@ -1270,13 +1301,37 @@ begin
           in_blank => vga_textmode_blank,
           in_hsync => vga_textmode_hsync,
           in_vsync => vga_textmode_vsync,
-          
+
           -- single-ended output for differential buffers
           out_red   => dvid_red,
           out_green => dvid_green,
           out_blue  => dvid_blue,
           out_clock => dvid_clock
         );
+      end generate;
+      G_vgatext_lvds_display: if C_lvds_display generate
+      G_vgatext_lcd: entity work.vga2lcd
+        generic map (
+          C_depth   => C_vgatext_bits
+        )
+        port map (
+          clk_pixel => clk_pixel, clk_shift => clk_pixel_shift,
+
+          in_red   => vga_textmode_red(C_vgatext_bits-1 downto 0),
+          in_green => vga_textmode_green(C_vgatext_bits-1 downto 0),
+          in_blue  => vga_textmode_blue(C_vgatext_bits-1 downto 0),
+
+          in_blank => vga_textmode_blank,
+          in_hsync => vga_textmode_hsync,
+          in_vsync => vga_textmode_vsync,
+
+          -- single-ended output for differential buffers
+          out_red_green  => dvid_red,
+          out_green_blue => dvid_green,
+          out_blue_sync  => dvid_blue,
+          out_clock      => dvid_clock
+        );
+      end generate;
 
       vgatext_intr:
       process(clk) begin

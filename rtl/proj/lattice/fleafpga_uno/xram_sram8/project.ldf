@@ -183,6 +183,9 @@
         <Source name="../../../../soc/vgahdmi/vga2dvid.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../../soc/vgahdmi/vga2lcd.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../../soc/simple_ADC.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
