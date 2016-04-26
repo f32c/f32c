@@ -18,7 +18,6 @@ vfiles = \
 ../../../../soc/pid/ctrlpid_v.v \
 ../../../../soc/pid/simotor_v.v \
 ../../../../soc/pid/rotary_decoder_v.v \
-../../../../soc/vgahdmi/vgahdmif_v.v \
 
 vhdfiles = \
 ../../../../xilinx/numato/top/top_mimas_v2_xram_bram.vhd \
@@ -69,7 +68,7 @@ vhdfiles = \
 ../../../../soc/fm/bram_rds.vhd \
 ../../../../soc/fm/message.vhd \
 ../../../../soc/fm/lowpass.vhd \
-../../../../soc/vgahdmi/vgahdmif.vhd \
+../../../../soc/vgahdmi/vga.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
 ../../../../soc/vgahdmi/compositing_fifo.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
@@ -81,6 +80,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../../soc/vgahdmi/TMDS_encoder.vhd \
 ../../../../soc/vgahdmi/vga2dvid.vhd \
+../../../../soc/vgahdmi/vga2lcd.vhd \
 ../../../../soc/vgahdmi/ledstrip.vhd \
 ../../../../soc/vgahdmi/ws2812b.vhd \
 ../../../../soc/vgahdmi/pulse_counter.vhd \
