@@ -63,8 +63,7 @@ begin
 	process(clk_shift)
 	begin
 	  if rising_edge(clk_shift) then
-		--if shift_clock = "1100011" then
-		if shift_clock(2 downto 1) = "01" then -- simplified above
+		if shift_clock(1 downto 0) = "01" then
 			shift_red_green  <= latched_red_green;
 			shift_green_blue <= latched_green_blue;
 			shift_blue_sync  <= latched_blue_sync;
