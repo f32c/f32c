@@ -94,6 +94,7 @@ generic (
   C_sram_pipelined_read: boolean := false; -- works only at 81.25 MHz !!!
   C_sdram: boolean := false;
   C_acram: boolean := false; -- AXI CACHE RAM
+  C_acram_wait_cycles: integer := 4; -- wait cycles for acram
   C_sio: integer := 1;
   C_sio_init_baudrate: integer := 115200;
   C_sio_fixed_baudrate: boolean := false;
@@ -687,7 +688,7 @@ begin
     generic map (
 	C_ports => C_xram_ports, -- extra ports: framebuffer, textmode and PCM audio
 	C_prio_port => fb_port, -- framebuffer
-	C_wait_cycles => 4,
+	C_wait_cycles => C_acram_wait_cycles,
 	C_pipelined_read => false
     )
     port map (

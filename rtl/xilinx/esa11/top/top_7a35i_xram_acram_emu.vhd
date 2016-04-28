@@ -54,14 +54,16 @@ entity esa11_acram_emu is
 
         -- axi cache ram
 	C_acram: boolean := true;
+	C_acram_wait_cycles: integer := 2;
 	-- axi cache emulation memory size KB (power of 2 kilobytes of BRAM)
 	C_acram_emu_kb: integer := 128; -- KB
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         -- warning: 2K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
-        -- no errors for 4K or 8K
-        C_icache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
-        C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
+        -- but works at 100 MHz regardless of warnings
+        -- no such warnings for 4K or 8K
+        C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 2^29 -> 512MB to be cached
 
         C3_NUM_DQ_PINS        : integer := 16;
@@ -238,6 +240,7 @@ begin
       C_arch => C_arch,
       C_bram_size => C_bram_size,
       C_acram => C_acram,
+      C_acram_wait_cycles => C_acram_wait_cycles,
       C_icache_expire => C_icache_expire,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
