@@ -33,13 +33,14 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use ieee.math_real.all; -- to calculate log2 bit size
 
 library unisim;
 use unisim.vcomponents.all;
 
 use work.f32c_pack.all;
 
-entity glue is
+entity esa11_acram_emu is
     generic (
 	-- ISA
 	C_arch: integer := ARCH_MI32;
@@ -53,6 +54,8 @@ entity glue is
 
         -- axi cache ram
 	C_acram: boolean := true;
+	-- axi cache emulation memory size KB (power of 2 kilobytes of BRAM)
+	C_acram_emu_kb: integer := 128; -- KB
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         -- warning: 2K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
@@ -153,9 +156,16 @@ entity glue is
 	M_BTN: in std_logic_vector(4 downto 0);
 	M_HEX: in std_logic_vector(3 downto 0)
     );
-end glue;
+end esa11_acram_emu;
 
-architecture Behavioral of glue is
+architecture Behavioral of esa11_acram_emu is
+    -- useful for conversion from KB to number of address bits
+    function ceil_log2(x: integer)
+      return integer is
+    begin
+      return integer(ceil((log2(real(x)+1.0E-6))-1.0E-6));
+    end ceil_log2;
+
     signal clk, sio_break: std_logic;
     signal clk_25MHz, clk_100MHz, clk_200MHz, clk_250MHz: std_logic;
 
@@ -171,6 +181,7 @@ architecture Behavioral of glue is
       locked : out STD_LOGIC
     );
     end component clk_d100_100_200_250_25MHz;
+
 
     signal ram_en             : std_logic;
     signal ram_byte_we        : std_logic_vector(3 downto 0);
@@ -337,16 +348,15 @@ begin
     VGA_VSYNC <= vga_vsync_n;
     VGA_HSYNC <= vga_hsync_n;
 
-
     acram_emulation: entity work.acram_emu
     generic map
     (
-      C_addr_width => 14
+      C_addr_width => 8 + ceil_log2(C_acram_emu_kb)
     )
     port map
     (
       clk => clk,
-      acram_a => ram_address(15 downto 2),
+      acram_a => ram_address(9 + ceil_log2(C_acram_emu_kb) downto 2),
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
@@ -355,7 +365,7 @@ begin
 
     -- If ram_data_read is tied to a constant, any
     -- read from ACRAM locations from 0x80000000 must
-    -- show this constant. axi_cache is bypassed
+    -- show this constant. acram_emu internal BRAM is bypassed
     -- and the constant is just placed on multiport bus.
 
     -- check it:
