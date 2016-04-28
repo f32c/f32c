@@ -49,6 +49,8 @@ entity esa11_acram_emu is
 	-- Main clock: 81/100 MHz
 	C_clk_freq: integer := 100;
 
+	C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
+
 	-- SoC configuration options
 	C_bram_size: integer := 16;
 
@@ -217,6 +219,7 @@ begin
     end generate;
 
     -- reset hard-block: Xilinx Artix-7 specific
+    G_vendor_specific_startup: if C_vendor_specific_startup generate
     reset: startupe2
     generic map (
       prog_usr => "FALSE"
@@ -232,6 +235,7 @@ begin
       usrdoneo => '1',
       usrdonets => '0'
     );
+    end generate;
 
     -- generic BRAM glue
     glue_xram: entity work.glue_xram
