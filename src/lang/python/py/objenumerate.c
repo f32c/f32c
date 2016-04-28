@@ -41,11 +41,13 @@ typedef struct _mp_obj_enumerate_t {
 
 STATIC mp_obj_t enumerate_iternext(mp_obj_t self_in);
 
+#if MICROPY_CPYTHON_COMPAT
 STATIC const mp_arg_t enumerate_make_new_args[] = {
     { MP_QSTR_iterable, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
     { MP_QSTR_start, MP_ARG_INT, {.u_int = 0} },
 };
 #define ENUMERATE_MAKE_NEW_NUM_ARGS MP_ARRAY_SIZE(enumerate_make_new_args)
+#endif
 
 STATIC mp_obj_t enumerate_make_new(mp_obj_t type_in, mp_uint_t n_args, mp_uint_t n_kw, const mp_obj_t *args) {
 #if MICROPY_CPYTHON_COMPAT
