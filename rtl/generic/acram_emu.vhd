@@ -47,6 +47,7 @@ entity acram_emu is
 	acram_d_wr: in std_logic_vector(31 downto 0);
 	acram_d_rd: out std_logic_vector(31 downto 0);
 	acram_byte_we: in std_logic_vector(3 downto 0);
+	acram_ready: out std_logic;
 	acram_en: in std_logic
     );
 end acram_emu;
@@ -70,5 +71,11 @@ begin
         data_out_a => acram_d_rd(7+i*8 downto i*8)
     );
     bram_we(i) <= acram_en and acram_byte_we(i);
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        acram_ready <= acram_en;
+      end if;
+    end process;
     end generate;
 end Structure;

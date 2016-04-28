@@ -57,6 +57,7 @@ entity acram is
 	acram_data_wr: out std_logic_vector(31 downto 0);
 	acram_data_rd: in std_logic_vector(31 downto 0);
 	acram_byte_we: out std_logic_vector(3 downto 0);
+	--acram_ready: in std_logic; -- currently not used, but a fixed C_wait_cycles timing
 	acram_en: out std_logic
     );
 end acram;
