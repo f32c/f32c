@@ -698,6 +698,7 @@ begin
 	acram_data_rd => acram_data_rd,
 	acram_data_wr => acram_data_wr,
 	acram_byte_we => acram_byte_we,
+	acram_ready => not acram_read_busy,
 	data_out => from_xram,
 	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
 	-- Multi-port connections:
