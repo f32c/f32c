@@ -50,7 +50,7 @@ entity glue is
 
         -- axi cache ram
 	C_acram: boolean := true;
-	C_acram_emu: boolean := true;
+	C_acram_emu: boolean := false;
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         -- warning: 2K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
@@ -317,15 +317,15 @@ architecture Behavioral of glue is
 begin
     -- PLL with differential input: 100MHz
     -- single-ended outputs 81.25MHz, 250MHz, 25MHz
-    cpu_81MHz: if C_clk_freq = 81 generate
-    pll100in_out81_250_25: entity work.mmcm_d100M_81M25_250M521_25M052
-    port map(clk_in1_p => i_100MHz_P,
-             clk_in1_n => i_100MHz_N,
-             clk_out1  => clk, -- 81.25 MHz
-             clk_out2  => clk_250MHz,
-             clk_out3  => clk_25MHz
-    );
-    end generate;
+    --cpu_81MHz: if C_clk_freq = 81 generate
+    --pll100in_out81_250_25: entity work.mmcm_d100M_81M25_250M521_25M052
+    --port map(clk_in1_p => i_100MHz_P,
+    --         clk_in1_n => i_100MHz_N,
+    --         clk_out1  => clk, -- 81.25 MHz
+    --         clk_out2  => clk_250MHz,
+    --         clk_out3  => clk_25MHz
+    --);
+    --end generate;
 
     cpu100MHz: if C_clk_freq = 100 generate
     clk100in_out100_200_250_25: clk_d100_100_200_250_25MHz
