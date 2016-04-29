@@ -46,15 +46,16 @@ entity esa11_acram_ddr3 is
 	-- Main clock: 81/100 MHz
 	C_clk_freq: integer := 100;
 
+	C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
+
 	-- SoC configuration options
 	C_bram_size: integer := 16;
 
         -- axi cache ram
 	C_acram: boolean := true;
-	C_acram_wait_cycles: integer := 256;
-	C_acram_emu: boolean := false;
-	-- axi cache emulation memory size KB (power of 2 kilobytes of BRAM)
-	C_acram_emu_kb: integer := 64; -- KB
+	C_acram_wait_cycles: integer := 4;
+
+	C_acram_emu_kb: integer := 0; -- KB axi_cache emulation (0 to disable, power of 2, MAX 128)
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         -- warning: 2K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
@@ -70,7 +71,7 @@ entity esa11_acram_ddr3 is
 	C_vgahdmi: boolean := false;
 	C_vgahdmi_test_picture: integer := 1; -- enable test picture
 
-    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: ESA11-7a35i MIPS compatible soft-core 100MHz 32MB DDR3"; -- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480
       C_vgatext_bits: integer := 4;   -- 64 possible colors
@@ -121,7 +122,7 @@ entity esa11_acram_ddr3 is
 	UART1_RXD: in std_logic;
 	FPGA_SD_SCLK, FPGA_SD_CMD, FPGA_SD_D3: out std_logic;
 	FPGA_SD_D0: in std_logic;
-	-- two onboard green LEDs near amber and red
+	-- two onboard green LEDs next to yellow and red
         FPGA_LED2, FPGA_LED3: out std_logic;
         -- DDR3 ------------------------------------------------------------------
         DDR_DQ                  : inout  std_logic_vector(C3_NUM_DQ_PINS-1 downto 0);       -- mcb3_dram_dq
@@ -165,10 +166,11 @@ architecture Behavioral of esa11_acram_ddr3 is
     function ceil_log2(x: integer)
       return integer is
     begin
-      return integer(ceil((log2(real(x)+1.0E-6))-1.0E-6));
+      return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
     end ceil_log2;
     signal clk, sio_break: std_logic;
     signal clk_25MHz, clk_100MHz, clk_200MHz, clk_250MHz: std_logic;
+    signal clk_locked: std_logic := '0';
 
     component clk_d100_100_200_250_25MHz is
     Port (
@@ -327,23 +329,12 @@ architecture Behavioral of esa11_acram_ddr3 is
     signal ps2_dat_out : std_logic;
     signal disp_7seg_segment: std_logic_vector(7 downto 0);
 begin
-    -- PLL with differential input: 100MHz
-    -- single-ended outputs 81.25MHz, 250MHz, 25MHz
-    --cpu_81MHz: if C_clk_freq = 81 generate
-    --pll100in_out81_250_25: entity work.mmcm_d100M_81M25_250M521_25M052
-    --port map(clk_in1_p => i_100MHz_P,
-    --         clk_in1_n => i_100MHz_N,
-    --         clk_out1  => clk, -- 81.25 MHz
-    --         clk_out2  => clk_250MHz,
-    --         clk_out3  => clk_25MHz
-    --);
-    --end generate;
-
     cpu100MHz: if C_clk_freq = 100 generate
     clk100in_out100_200_250_25: clk_d100_100_200_250_25MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
+             locked => clk_locked,
              clk_100mhz => clk,
              clk_200mhz => clk_200MHz,
              clk_250mhz => clk_250MHz,
@@ -351,6 +342,7 @@ begin
     );
     end generate;
 
+    G_vendor_specific_startup: if C_vendor_specific_startup generate
     -- reset hard-block: Xilinx Artix-7 specific
     reset: startupe2
     generic map (
@@ -367,6 +359,7 @@ begin
       usrdoneo => '1',
       usrdonets => '0'
     );
+    end generate;
 
     ps2_dat_in	<= PS2_A_DATA;
     PS2_A_DATA	<= '0' when ps2_dat_out='0' else 'Z';
@@ -497,7 +490,7 @@ begin
     VGA_VSYNC <= vga_vsync_n;
     VGA_HSYNC <= vga_hsync_n;
 
-    acram_emu_gen: if C_acram_emu generate
+    acram_emu_gen: if C_acram_emu_kb > 0 generate
     acram_emulation: entity work.acram_emu
     generic map
     (
@@ -515,11 +508,11 @@ begin
     --ram_data_read <= x"01234567"; -- debug purpose
     end generate;
 
-    acram_real_gen: if not C_acram_emu generate
+    acram_real_gen: if C_acram_emu_kb = 0 generate
     axi_cache_ram: entity work.axi_cache -- D-Memory
     port map (
         sys_clk            => clk,
-        reset              => sio_break,
+        reset              => not clk_locked, -- not calib_done
 
         -- simple RAM bus interface
         i_en               => ram_en,
@@ -580,7 +573,7 @@ begin
     axi_cache_ram_01: entity work.axi_cache -- unused port
     port map (
         sys_clk            => clk,
-        reset              => sio_break,
+        reset              => not clk_locked, -- not calib_done
 
         -- simple RAM bus interface
         i_en               => '0', -- never enabled
@@ -641,7 +634,7 @@ begin
     axi_cache_ram_02: entity work.axi_cache -- unused port
     port map (
         sys_clk            => clk,
-        reset              => sio_break,
+        reset              => not clk_locked, -- not calib_done
 
         -- simple RAM bus interface
         i_en               => '0', -- never enabled
@@ -701,6 +694,10 @@ begin
 
     u_ddr_mem : entity work.axi_mpmc
     port map(
+        sys_rst              => not clk_locked, -- release reset when clock is stable
+        sys_clk_i            => clk_200MHz, -- should be 200MHz
+        init_calib_complete  => calib_done, -- becomes high cca 0.3 seconds after startup
+        -- physical signals to RAM chip
         ddr3_dq              => ddr_dq,
         ddr3_dqs_n           => ddr_dqs_n,
         ddr3_dqs_p           => ddr_dqs_p,
@@ -716,9 +713,7 @@ begin
         ddr3_dm(1)           => ddr_udm,
         ddr3_dm(0)           => ddr_ldm,
         ddr3_odt(0)          => ddr_odt,
-        sys_rst              => sio_break,
-        sys_clk_i            => clk_200MHz, -- should be 200MHz
-        init_calib_complete  => calib_done,
+        -- port 0
         s00_axi_areset_out_n => l00_axi_areset_n,
         s00_axi_aclk         => l00_axi_aclk,
         s00_axi_awid         => l00_axi_awid,
@@ -758,7 +753,7 @@ begin
         s00_axi_rlast        => l00_axi_rlast,
         s00_axi_rvalid       => l00_axi_rvalid,
         s00_axi_rready       => l00_axi_rready,
-
+        -- port 1
         s01_axi_areset_out_n => l01_axi_areset_n,
         s01_axi_aclk         => l01_axi_aclk,
         s01_axi_awid         => l01_axi_awid,
@@ -798,7 +793,7 @@ begin
         s01_axi_rlast        => l01_axi_rlast,
         s01_axi_rvalid       => l01_axi_rvalid,
         s01_axi_rready       => l01_axi_rready,
-
+        -- port 2
         s02_axi_areset_out_n => l02_axi_areset_n,
         s02_axi_aclk         => l02_axi_aclk,
         s02_axi_awid         => l02_axi_awid,
