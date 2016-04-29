@@ -2,7 +2,7 @@
 project=esa11_f32c
 xc3sprog_interface = ft4232h_fast
 # name of resulting bitstream file (*.bit)
-bitfile=$(project).runs/impl_1/glue.bit
+bitfile=$(project).runs/impl_1/esa11_acram_ddr3.bit
 
 junk=*~
 junk+=.Xil vivado.log vivado.jou
