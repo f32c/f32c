@@ -72,7 +72,8 @@ architecture Structure of acram is
 
     -- Physical interface registers
     signal R_a: std_logic_vector(29 downto 2);		-- to SRAM
-    signal R_we: std_logic;
+    signal R_we: std_logic := '0';
+    signal R_en: std_logic := '0';
     signal R_write_cycle: boolean;			-- internal
     signal R_byte_sel: std_logic_vector(3 downto 0);	-- internal
     signal R_out_word: std_logic_vector(31 downto 0);	-- internal
@@ -164,6 +165,7 @@ begin
 	    if R_phase = C_phase_idle then
 		R_write_cycle <= false;
 		R_we <= '0';
+		R_en <= '0';
 		if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
 		    -- idle
 		    R_cur_port <= next_port;
@@ -172,6 +174,7 @@ begin
 		    R_phase <= C_phase_idle + 1;
 		    R_byte_sel <= byte_sel;
 		    R_a <= addr;
+		    R_en <= '1';
 		    if write = '1' then
 			R_write_cycle <= true;
 			R_we <= '1';
@@ -190,6 +193,7 @@ begin
 		    R_phase <= C_phase_idle + 1;
 		    R_byte_sel <= byte_sel;
 		    R_a <= addr;
+		    R_en <= '1';
 		    if write = '1' then
 			R_write_cycle <= true;
 			R_we <= '1';
@@ -202,12 +206,14 @@ begin
 		else
 		    R_phase <= C_phase_idle;
 		    R_cur_port <= next_port;
+		    R_en <= '0';
 		end if;
 	    elsif R_write_cycle and R_phase = C_phase_write_terminate then
 		R_phase <= C_phase_idle;
 		R_cur_port <= next_port;
 		-- physical signals to SRAM: terminate write
 		R_we <= '0';
+		R_en <= '0';
 	    else
 		R_phase <= R_phase + 1;
 	    end if;
@@ -216,8 +222,8 @@ begin
 
     acram_data_wr <= R_out_word;
     acram_a <= R_a;
-    acram_byte_we <= R_byte_sel;
-    acram_en <= R_we;
+    acram_byte_we <= R_byte_sel when R_we='1' else x"0";
+    acram_en <= R_en;  -- R_we
 
     --data_out <= R_bus_out;
     data_out <= acram_data_rd;
