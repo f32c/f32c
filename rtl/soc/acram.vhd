@@ -57,7 +57,7 @@ entity acram is
 	acram_data_wr: out std_logic_vector(31 downto 0);
 	acram_data_rd: in std_logic_vector(31 downto 0);
 	acram_byte_we: out std_logic_vector(3 downto 0);
-	--acram_ready: in std_logic; -- currently not used, but a fixed C_wait_cycles timing
+	acram_ready: in std_logic := '0';
 	acram_en: out std_logic
     );
 end acram;
@@ -183,7 +183,8 @@ begin
 			R_snoop_cycle <= '1';
 		    end if;
 		end if;
-	    elsif not R_write_cycle and R_phase = C_phase_read_terminate then
+	    --elsif not R_write_cycle and R_phase = C_phase_read_terminate then
+	    elsif not R_write_cycle and acram_ready='1' then
 		R_ack_bitmap(R_cur_port) <= '1';
 		if R_cur_port /= R_next_port and addr_strobe = '1' then
 		    -- jump-start a new transaction
@@ -206,6 +207,7 @@ begin
 		    R_cur_port <= next_port;
 		    R_en <= '0';
 		end if;
+	    --elsif R_write_cycle and R_phase = C_phase_write_terminate then
 	    elsif R_write_cycle and R_phase = C_phase_write_terminate then
 		R_phase <= C_phase_idle;
 		R_cur_port <= next_port;
