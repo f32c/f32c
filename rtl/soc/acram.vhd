@@ -65,10 +65,8 @@ end acram;
 architecture Structure of acram is
     -- State machine constants
     constant C_phase_idle: integer := 0;
-    constant C_phase_read_upper_half: integer := C_wait_cycles - 1;
-    constant C_phase_read_terminate: integer := C_wait_cycles * 2 - 1;
-    constant C_phase_write_upper_half: integer := C_wait_cycles;
-    constant C_phase_write_terminate: integer := C_wait_cycles * 2 - 1;
+    constant C_phase_read_terminate: integer := C_wait_cycles - 1;
+    constant C_phase_write_terminate: integer := C_wait_cycles - 1;
 
     -- Physical interface registers
     signal R_a: std_logic_vector(29 downto 2);		-- to SRAM
@@ -89,7 +87,7 @@ architecture Structure of acram is
     signal data_in: std_logic_vector(31 downto 0);	-- from CPU bus
 
     -- Arbiter registers
-    signal R_phase: integer range 0 to C_phase_read_terminate;
+    signal R_phase: integer range 0 to C_phase_read_terminate; -- assuming C_phase_read_terminate >= C_phase_write_terminate
     signal R_cur_port, R_next_port: integer range 0 to (C_ports - 1);
     signal R_last_port: integer range 0 to (C_ports - 1);
     signal R_prio_pending: boolean;
@@ -223,7 +221,7 @@ begin
     acram_data_wr <= R_out_word;
     acram_a <= R_a;
     acram_byte_we <= R_byte_sel when R_we='1' else x"0";
-    acram_en <= R_en;  -- R_we
+    acram_en <= R_en;
 
     --data_out <= R_bus_out;
     data_out <= acram_data_rd;
