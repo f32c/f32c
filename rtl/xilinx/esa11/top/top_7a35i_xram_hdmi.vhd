@@ -30,13 +30,14 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use ieee.math_real.all; -- to calculate log2 bit size
 
 library unisim;
 use unisim.vcomponents.all;
 
 use work.f32c_pack.all;
 
-entity glue is
+entity esa11_acram_ddr3 is
     generic (
 	-- ISA
 	C_arch: integer := ARCH_MI32;
@@ -50,13 +51,16 @@ entity glue is
 
         -- axi cache ram
 	C_acram: boolean := true;
+	C_acram_wait_cycles: integer := 256;
 	C_acram_emu: boolean := false;
+	-- axi cache emulation memory size KB (power of 2 kilobytes of BRAM)
+	C_acram_emu_kb: integer := 64; -- KB
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         -- warning: 2K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
         -- no errors for 4K or 8K
-        C_icache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
-        C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 2^29 -> 512MB to be cached
 
         C3_NUM_DQ_PINS        : integer := 16;
@@ -117,6 +121,8 @@ entity glue is
 	UART1_RXD: in std_logic;
 	FPGA_SD_SCLK, FPGA_SD_CMD, FPGA_SD_D3: out std_logic;
 	FPGA_SD_D0: in std_logic;
+	-- two onboard green LEDs near amber and red
+        FPGA_LED2, FPGA_LED3: out std_logic;
         -- DDR3 ------------------------------------------------------------------
         DDR_DQ                  : inout  std_logic_vector(C3_NUM_DQ_PINS-1 downto 0);       -- mcb3_dram_dq
         DDR_A                   : out    std_logic_vector(C3_MEM_ADDR_WIDTH-1 downto 0);    -- mcb3_dram_a
@@ -152,9 +158,15 @@ entity glue is
 	M_BTN: in std_logic_vector(4 downto 0);
 	M_HEX: in std_logic_vector(3 downto 0)
     );
-end glue;
+end esa11_acram_ddr3;
 
-architecture Behavioral of glue is
+architecture Behavioral of esa11_acram_ddr3 is
+    -- useful for conversion from KB to number of address bits
+    function ceil_log2(x: integer)
+      return integer is
+    begin
+      return integer(ceil((log2(real(x)+1.0E-6))-1.0E-6));
+    end ceil_log2;
     signal clk, sio_break: std_logic;
     signal clk_25MHz, clk_100MHz, clk_200MHz, clk_250MHz: std_logic;
 
@@ -173,8 +185,8 @@ architecture Behavioral of glue is
 
     signal calib_done           : std_logic;
 
-    signal l00_axi_areset_n     :  std_logic;
-    signal l00_axi_aclk         :  std_logic;
+    signal l00_axi_areset_n     :  std_logic := '1';
+    signal l00_axi_aclk         :  std_logic := '0';
     signal l00_axi_awid         :  std_logic_vector(0 downto 0);
     signal l00_axi_awaddr       :  std_logic_vector(31 downto 0);
     signal l00_axi_awlen        :  std_logic_vector(7 downto 0);
@@ -213,8 +225,8 @@ architecture Behavioral of glue is
     signal l00_axi_rvalid       :  std_logic;
     signal l00_axi_rready       :  std_logic;
 
-    signal l01_axi_areset_n     :  std_logic;
-    signal l01_axi_aclk         :  std_logic;
+    signal l01_axi_areset_n     :  std_logic := '1';
+    signal l01_axi_aclk         :  std_logic := '0';
     signal l01_axi_awid         :  std_logic_vector(0 downto 0);
     signal l01_axi_awaddr       :  std_logic_vector(31 downto 0);
     signal l01_axi_awlen        :  std_logic_vector(7 downto 0);
@@ -253,8 +265,8 @@ architecture Behavioral of glue is
     signal l01_axi_rvalid       :  std_logic;
     signal l01_axi_rready       :  std_logic;
 
-    signal l02_axi_areset_n     :  std_logic;
-    signal l02_axi_aclk         :  std_logic;
+    signal l02_axi_areset_n     :  std_logic := '1';
+    signal l02_axi_aclk         :  std_logic := '0';
     signal l02_axi_awid         :  std_logic_vector(0 downto 0);
     signal l02_axi_awaddr       :  std_logic_vector(31 downto 0);
     signal l02_axi_awlen        :  std_logic_vector(7 downto 0);
@@ -298,7 +310,7 @@ architecture Behavioral of glue is
     signal ram_address        : std_logic_vector(29 downto 2);
     signal ram_data_write     : std_logic_vector(31 downto 0);
     signal ram_data_read      : std_logic_vector(31 downto 0);
-    signal ram_read_busy      : std_logic;
+    signal ram_read_busy      : std_logic := '0';
     signal ram_cache_debug    : std_logic_vector(7 downto 0);
     signal ram_cache_hitcnt   : std_logic_vector(31 downto 0);
     signal ram_cache_readcnt  : std_logic_vector(31 downto 0);
@@ -368,6 +380,7 @@ begin
       C_arch => C_arch,
       C_bram_size => C_bram_size,
       C_acram => C_acram,
+      C_acram_wait_cycles => C_acram_wait_cycles,
       C_icache_expire => C_icache_expire,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
@@ -471,7 +484,7 @@ begin
     -- differential output buffering for HDMI clock and video
     hdmi_output: entity work.hdmi_out
     port map (
-        tmds_in_clk => clk_25MHz, -- clk_25MHz or tmds_clk
+        tmds_in_clk => tmds_clk, -- clk_25MHz or tmds_clk
         tmds_out_clk_p => VID_CLK_P,
         tmds_out_clk_n => VID_CLK_N,
         tmds_in_rgb => tmds_rgb,
@@ -488,12 +501,12 @@ begin
     acram_emulation: entity work.acram_emu
     generic map
     (
-      C_addr_width => 12
+      C_addr_width => 8 + ceil_log2(C_acram_emu_kb)
     )
     port map
     (
       clk => clk,
-      acram_a => ram_address(13 downto 2),
+      acram_a => ram_address(9 + ceil_log2(C_acram_emu_kb) downto 2),
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
@@ -562,6 +575,128 @@ begin
         m_axi_rlast        => l00_axi_rlast,
         m_axi_rvalid       => l00_axi_rvalid,
         m_axi_rready       => l00_axi_rready
+    );
+
+    axi_cache_ram_01: entity work.axi_cache -- unused port
+    port map (
+        sys_clk            => clk,
+        reset              => sio_break,
+
+        -- simple RAM bus interface
+        i_en               => '0', -- never enabled
+        addr_next          => (others => '0'),
+        addr(31 downto 30) => "00",
+        addr(29 downto 2)  => ram_address(29 downto 2),
+        addr(1 downto 0)   => "00",
+        wbe                => (others => '0'), -- never enabled
+        din                => ram_data_write,
+        dout               => open,
+        readBusy           => open,
+        hitcount           => open,
+        readcount          => open,
+        debug              => open,
+
+        -- axi port
+        m_axi_aresetn      => l01_axi_areset_n,
+        m_axi_aclk         => l01_axi_aclk,
+        m_axi_awid         => l01_axi_awid,
+        m_axi_awaddr       => l01_axi_awaddr,
+        m_axi_awlen        => l01_axi_awlen,
+        m_axi_awsize       => l01_axi_awsize,
+        m_axi_awburst      => l01_axi_awburst,
+        m_axi_awlock       => l01_axi_awlock,
+        m_axi_awcache      => l01_axi_awcache,
+        m_axi_awprot       => l01_axi_awprot,
+        m_axi_awqos        => l01_axi_awqos,
+        m_axi_awvalid      => l01_axi_awvalid,
+        m_axi_awready      => l01_axi_awready,
+        m_axi_wdata        => l01_axi_wdata,
+        m_axi_wstrb        => l01_axi_wstrb,
+        m_axi_wlast        => l01_axi_wlast,
+        m_axi_wvalid       => l01_axi_wvalid,
+        m_axi_wready       => l01_axi_wready,
+        m_axi_bid          => l01_axi_bid,
+        m_axi_bresp        => l01_axi_bresp,
+        m_axi_bvalid       => l01_axi_bvalid,
+        m_axi_bready       => l01_axi_bready,
+        m_axi_arid         => l01_axi_arid,
+        m_axi_araddr       => l01_axi_araddr,
+        m_axi_arlen        => l01_axi_arlen,
+        m_axi_arsize       => l01_axi_arsize,
+        m_axi_arburst      => l01_axi_arburst,
+        m_axi_arlock       => l01_axi_arlock,
+        m_axi_arcache      => l01_axi_arcache,
+        m_axi_arprot       => l01_axi_arprot,
+        m_axi_arqos        => l01_axi_arqos,
+        m_axi_arvalid      => l01_axi_arvalid,
+        m_axi_arready      => l01_axi_arready,
+        m_axi_rid          => l01_axi_rid,
+        m_axi_rdata        => l01_axi_rdata,
+        m_axi_rresp        => l01_axi_rresp,
+        m_axi_rlast        => l01_axi_rlast,
+        m_axi_rvalid       => l01_axi_rvalid,
+        m_axi_rready       => l01_axi_rready
+    );
+
+    axi_cache_ram_02: entity work.axi_cache -- unused port
+    port map (
+        sys_clk            => clk,
+        reset              => sio_break,
+
+        -- simple RAM bus interface
+        i_en               => '0', -- never enabled
+        addr_next          => (others => '0'),
+        addr(31 downto 30) => "00",
+        addr(29 downto 2)  => ram_address(29 downto 2),
+        addr(1 downto 0)   => "00",
+        wbe                => (others => '0'), -- never enabled
+        din                => ram_data_write,
+        dout               => open,
+        readBusy           => open,
+        hitcount           => open,
+        readcount          => open,
+        debug              => open,
+
+        -- axi port
+        m_axi_aresetn      => l02_axi_areset_n,
+        m_axi_aclk         => l02_axi_aclk,
+        m_axi_awid         => l02_axi_awid,
+        m_axi_awaddr       => l02_axi_awaddr,
+        m_axi_awlen        => l02_axi_awlen,
+        m_axi_awsize       => l02_axi_awsize,
+        m_axi_awburst      => l02_axi_awburst,
+        m_axi_awlock       => l02_axi_awlock,
+        m_axi_awcache      => l02_axi_awcache,
+        m_axi_awprot       => l02_axi_awprot,
+        m_axi_awqos        => l02_axi_awqos,
+        m_axi_awvalid      => l02_axi_awvalid,
+        m_axi_awready      => l02_axi_awready,
+        m_axi_wdata        => l02_axi_wdata,
+        m_axi_wstrb        => l02_axi_wstrb,
+        m_axi_wlast        => l02_axi_wlast,
+        m_axi_wvalid       => l02_axi_wvalid,
+        m_axi_wready       => l02_axi_wready,
+        m_axi_bid          => l02_axi_bid,
+        m_axi_bresp        => l02_axi_bresp,
+        m_axi_bvalid       => l02_axi_bvalid,
+        m_axi_bready       => l02_axi_bready,
+        m_axi_arid         => l02_axi_arid,
+        m_axi_araddr       => l02_axi_araddr,
+        m_axi_arlen        => l02_axi_arlen,
+        m_axi_arsize       => l02_axi_arsize,
+        m_axi_arburst      => l02_axi_arburst,
+        m_axi_arlock       => l02_axi_arlock,
+        m_axi_arcache      => l02_axi_arcache,
+        m_axi_arprot       => l02_axi_arprot,
+        m_axi_arqos        => l02_axi_arqos,
+        m_axi_arvalid      => l02_axi_arvalid,
+        m_axi_arready      => l02_axi_arready,
+        m_axi_rid          => l02_axi_rid,
+        m_axi_rdata        => l02_axi_rdata,
+        m_axi_rresp        => l02_axi_rresp,
+        m_axi_rlast        => l02_axi_rlast,
+        m_axi_rvalid       => l02_axi_rvalid,
+        m_axi_rready       => l02_axi_rready
     );
 
     u_ddr_mem : entity work.axi_mpmc
@@ -705,5 +840,7 @@ begin
         s02_axi_rready       => l02_axi_rready
     );
     end generate;
+    FPGA_LED2 <= calib_done;
+    FPGA_LED3 <= ram_read_busy;
 
 end Behavioral;
