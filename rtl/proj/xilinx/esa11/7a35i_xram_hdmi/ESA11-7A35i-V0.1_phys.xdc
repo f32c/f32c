@@ -30,12 +30,12 @@ set_property IOSTANDARD LVDS_25 [get_ports i_100MHz_P]
 #
 #	On board LEDs
 #
-# set_property PACKAGE_PIN N15 [get_ports FPGA_LED3]
-# set_property IOSTANDARD LVTTL [get_ports FPGA_LED3]
-# set_property DRIVE 4 [get_ports FPGA_LED1]
-# set_property PACKAGE_PIN C13 [get_ports FPGA_LED2]
-# set_property IOSTANDARD LVTTL [get_ports FPGA_LED2]
-# set_property DRIVE 4 [get_ports FPGA_LED2]
+set_property PACKAGE_PIN N15 [get_ports FPGA_LED3]
+set_property IOSTANDARD LVTTL [get_ports FPGA_LED3]
+set_property DRIVE 4 [get_ports FPGA_LED1]
+set_property PACKAGE_PIN C13 [get_ports FPGA_LED2]
+set_property IOSTANDARD LVTTL [get_ports FPGA_LED2]
+set_property DRIVE 4 [get_ports FPGA_LED2]
 
 #
 #	UARTs
