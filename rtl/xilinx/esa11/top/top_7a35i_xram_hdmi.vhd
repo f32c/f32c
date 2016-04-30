@@ -53,8 +53,7 @@ entity esa11_acram_ddr3 is
 
         -- axi cache ram
 	C_acram: boolean := true;
-	C_acram_wait_cycles: integer := 4;
-
+	C_acram_wait_cycles: integer := 4; -- min 3 works, why doesn't 2 ?
 	C_acram_emu_kb: integer := 0; -- KB axi_cache emulation (0 to disable, power of 2, MAX 128)
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
@@ -508,7 +507,7 @@ begin
     --ram_data_read <= x"01234567"; -- debug purpose
     end generate;
 
-    acram_real_gen: if C_acram_emu_kb = 0 generate
+    G_acram_real: if C_acram_emu_kb = 0 generate
     axi_cache_ram: entity work.axi_cache -- D-Memory
     port map (
         sys_clk            => clk,
@@ -570,6 +569,7 @@ begin
         m_axi_rready       => l00_axi_rready
     );
 
+    G_cache_p1: if false generate
     axi_cache_ram_01: entity work.axi_cache -- unused port
     port map (
         sys_clk            => clk,
@@ -630,7 +630,9 @@ begin
         m_axi_rvalid       => l01_axi_rvalid,
         m_axi_rready       => l01_axi_rready
     );
+    end generate; -- G_cache_p1
 
+    G_cache_p2: if false generate
     axi_cache_ram_02: entity work.axi_cache -- unused port
     port map (
         sys_clk            => clk,
@@ -691,6 +693,7 @@ begin
         m_axi_rvalid       => l02_axi_rvalid,
         m_axi_rready       => l02_axi_rready
     );
+    end generate; -- G_cache_p2
 
     u_ddr_mem : entity work.axi_mpmc
     port map(
@@ -834,7 +837,8 @@ begin
         s02_axi_rvalid       => l02_axi_rvalid,
         s02_axi_rready       => l02_axi_rready
     );
-    end generate;
+    end generate; -- G_acram_real
+
     FPGA_LED2 <= calib_done; -- should light up 0.3 seconds after startup
     FPGA_LED3 <= ram_read_busy; -- very short blinks mostly invisible
 
