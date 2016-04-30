@@ -204,7 +204,7 @@ port (
   -- axi cache ram (shared signaling with sdram)
   acram_en: out std_logic;
   acram_addr: out std_logic_vector(29 downto 2);
-  acram_read_busy: in std_logic := '0';
+  acram_ready: in std_logic := '1';
   acram_data_rd: in std_logic_vector(31 downto 0) := (others => '0');
   acram_data_wr: out std_logic_vector(31 downto 0);
   acram_byte_we: out std_logic_vector(3 downto 0);
@@ -698,7 +698,7 @@ begin
 	acram_data_rd => acram_data_rd,
 	acram_data_wr => acram_data_wr,
 	acram_byte_we => acram_byte_we,
-	acram_ready => not acram_read_busy,
+	acram_ready => acram_ready,
 	data_out => from_xram,
 	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
 	-- Multi-port connections:
