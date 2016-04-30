@@ -3,7 +3,7 @@ vendor = xilinx
 family = spartan6
 part = xc6slx25-ftg256-3 # last number -3 is speed grade
 flashsize = 8192 # KB (kilobytes) - SPI flash device is M25P40
-top_module = glue
+top_module = scarab_xram_acram_emu
 isedir = /opt/Xilinx/ISE/14.7/ISE_DS
 xil_env = . $(isedir)/settings64.sh
 SHELL = /bin/bash
@@ -87,6 +87,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../../soc/vgahdmi/TMDS_encoder.vhd \
 ../../../../soc/vgahdmi/vga2dvid.vhd \
+../../../../soc/vgahdmi/vga2lcd.vhd \
 ../../../../soc/vgahdmi/ddr_dvid_out_se.vhd \
 ../../../../soc/vgahdmi/ledstrip.vhd \
 ../../../../soc/vgahdmi/ws2812b.vhd \
