@@ -41,6 +41,7 @@ entity acram is
 	C_ports: integer;
 	C_prio_port: integer := -1;
 	C_wait_cycles: integer;
+	C_read_b2b_new: boolean := true; -- new transaction can start back-to-back after read
 	C_pipelined_read: boolean
     );
     port (
@@ -72,8 +73,8 @@ architecture Structure of acram is
     signal R_a: std_logic_vector(29 downto 2);		-- to SRAM
     signal R_we: std_logic := '0';
     signal R_en: std_logic := '0';
-    signal R_write_cycle: boolean;			-- internal
-    signal R_byte_sel: std_logic_vector(3 downto 0);	-- internal
+    signal R_write_cycle: boolean := false;			-- internal
+    signal R_byte_sel: std_logic_vector(3 downto 0) := x"0";	-- internal
     signal R_out_word: std_logic_vector(31 downto 0);	-- internal
 
     -- Bus interface registers
@@ -87,7 +88,7 @@ architecture Structure of acram is
     signal data_in: std_logic_vector(31 downto 0);	-- from CPU bus
 
     -- Arbiter registers
-    signal R_phase: integer range 0 to C_phase_read_terminate; -- assuming C_phase_read_terminate >= C_phase_write_terminate
+    signal R_phase: integer range 0 to C_phase_write_terminate;
     signal R_cur_port, R_next_port: integer range 0 to (C_ports - 1);
     signal R_last_port: integer range 0 to (C_ports - 1);
     signal R_prio_pending: boolean;
@@ -161,16 +162,16 @@ begin
 
 	    R_next_port <= next_port;
 	    if R_phase = C_phase_idle then
-		R_write_cycle <= false;
-		R_we <= '0';
-		R_en <= '0';
+		--R_write_cycle <= false; --- xxx obsolete?
+		--R_we <= '0'; -- xxx obsolete?
+		--R_en <= '0'; -- xxx obsolete?
 		if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
 		    -- idle
 		    R_cur_port <= next_port;
 		else
 		    -- start a new transaction
 		    R_phase <= C_phase_idle + 1;
-		    R_byte_sel <= byte_sel;
+		    -- R_byte_sel <= byte_sel;
 		    R_a <= addr;
 		    R_en <= '1';
 		    if write = '1' then
@@ -181,16 +182,21 @@ begin
 			R_ack_bitmap(R_cur_port) <= '1';
 			R_snoop_addr(29 downto 2) <= addr; -- XXX
 			R_snoop_cycle <= '1';
+			R_byte_sel <= byte_sel; -- write cycle for axi_cache nas non-zero byte_sel
+		    else
+			R_write_cycle <= false;
+		        R_we <= '0';
+		        R_byte_sel <= x"0"; -- read cycle for axi_cache is with byte_sel=0
 		    end if;
 		end if;
-	    --elsif not R_write_cycle and R_phase = C_phase_read_terminate then
+	    --elsif not R_write_cycle and (R_phase = C_phase_read_terminate or acram_ready='1') then
 	    elsif not R_write_cycle and acram_ready='1' then
 		R_ack_bitmap(R_cur_port) <= '1';
-		if R_cur_port /= R_next_port and addr_strobe = '1' then
+		if R_cur_port /= R_next_port and addr_strobe = '1' and C_read_b2b_new then
 		    -- jump-start a new transaction
 		    R_cur_port <= R_next_port;
 		    R_phase <= C_phase_idle + 1;
-		    R_byte_sel <= byte_sel;
+		    --R_byte_sel <= byte_sel;
 		    R_a <= addr;
 		    R_en <= '1';
 		    if write = '1' then
@@ -201,14 +207,19 @@ begin
 			R_ack_bitmap(R_next_port) <= '1';
 			R_snoop_addr(29 downto 2) <= addr; -- XXX
 			R_snoop_cycle <= '1';
+			R_byte_sel <= byte_sel; -- write cycle for axi_cache nas non-zero byte_sel
+		    else
+			R_write_cycle <= false;
+		        R_we <= '0';
+		        R_byte_sel <= x"0"; -- read cycle for axi_cache is with byte_sel= 0
 		    end if;
 		else
 		    R_phase <= C_phase_idle;
 		    R_cur_port <= next_port;
 		    R_en <= '0';
 		end if;
-	    --elsif R_write_cycle and R_phase = C_phase_write_terminate then
-	    elsif R_write_cycle and R_phase = C_phase_write_terminate then
+	    --elsif R_write_cycle and (R_phase = C_phase_write_terminate or acram_ready='1') then
+	    elsif R_write_cycle and acram_ready='1' then
 		R_phase <= C_phase_idle;
 		R_cur_port <= next_port;
 		-- physical signals to SRAM: terminate write
@@ -222,7 +233,7 @@ begin
 
     acram_data_wr <= R_out_word;
     acram_a <= R_a;
-    acram_byte_we <= R_byte_sel when R_we='1' else x"0";
+    acram_byte_we <= R_byte_sel;
     acram_en <= R_en;
 
     --data_out <= R_bus_out;
