@@ -58,7 +58,7 @@ entity esa11_acram_emu is
 	C_acram: boolean := true;
 	C_acram_wait_cycles: integer := 2;
 	-- axi cache emulation memory size KB (power of 2 kilobytes of BRAM)
-	C_acram_emu_kb: integer := 128; -- KB
+	C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2, MAX 128)
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         -- warning: 2K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
@@ -167,7 +167,7 @@ architecture Behavioral of esa11_acram_emu is
     function ceil_log2(x: integer)
       return integer is
     begin
-      return integer(ceil((log2(real(x)+1.0E-6))-1.0E-6));
+      return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
     end ceil_log2;
 
     signal clk, sio_break: std_logic;
