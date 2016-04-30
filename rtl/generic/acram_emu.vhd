@@ -53,6 +53,8 @@ entity acram_emu is
 end acram_emu;
 
 architecture Structure of acram_emu is
+    signal R_acram_ready: std_logic := '0';
+    signal S_acram_d_rd, R_acram_d_rd: std_logic_vector(31 downto 0);
     signal bram_we: std_logic_vector(3 downto 0);
 begin
     ram_emu_4bytes: for i in 0 to 3 generate
@@ -68,14 +70,19 @@ begin
         we_a => bram_we(i),
         addr_a => acram_a(C_addr_width-1 downto 0),
         data_in_a => acram_d_wr(7+i*8 downto i*8), 
-        data_out_a => acram_d_rd(7+i*8 downto i*8)
+        data_out_a => S_acram_d_rd(7+i*8 downto i*8)
     );
     bram_we(i) <= acram_en and acram_byte_we(i);
     process(clk)
     begin
       if rising_edge(clk) then
-        acram_ready <= acram_en;
+        if acram_en = '1' then
+          R_acram_d_rd <= S_acram_d_rd;
+        end if;
+        R_acram_ready <= acram_en; -- 1 cycle delay
       end if;
     end process;
+    acram_ready <= R_acram_ready and acram_en;
+    acram_d_rd <= R_acram_d_rd;
     end generate;
 end Structure;
