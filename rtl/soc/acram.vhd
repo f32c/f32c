@@ -41,8 +41,8 @@ entity acram is
 	C_ports: integer;
 	C_prio_port: integer := -1;
 	C_wait_cycles: integer;
-	C_read_b2b_new: boolean := true; -- new transaction can start back-to-back after read
-	C_pipelined_read: boolean
+	C_read_b2b_new: boolean := false; -- new transaction can start back-to-back after read
+	C_pipelined_read: boolean -- defunct
     );
     port (
 	clk: in std_logic;
@@ -117,7 +117,7 @@ begin
     end process;
 
     -- Arbiter: round-robin port selection combinatorial logic
-    process(bus_in, R_next_port, R_last_port)
+    process(bus_in, R_next_port, R_last_port, R_prio_pending)
 	variable i, j, t, n: integer;
     begin
 	t := R_last_port;
@@ -141,14 +141,6 @@ begin
 
     process(clk)
     begin
-	if C_pipelined_read and falling_edge(clk) then
-	    R_bus_out(31 downto 0) <= acram_data_rd;
-	end if;
-
-	if not C_pipelined_read and rising_edge(clk) then
-	    R_bus_out(31 downto 0) <= acram_data_rd;
-	end if;
-
 	if rising_edge(clk) then
 	    R_ack_bitmap <= (others => '0');
 	    R_snoop_cycle <= '0';
@@ -162,9 +154,6 @@ begin
 
 	    R_next_port <= next_port;
 	    if R_phase = C_phase_idle then
-		--R_write_cycle <= false; --- xxx obsolete?
-		--R_we <= '0'; -- xxx obsolete?
-		--R_en <= '0'; -- xxx obsolete?
 		if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
 		    -- idle
 		    R_cur_port <= next_port;
@@ -189,9 +178,11 @@ begin
 		        R_byte_sel <= x"0"; -- read cycle for axi_cache is with byte_sel=0
 		    end if;
 		end if;
+	    --elsif not R_write_cycle and R_phase = C_phase_read_terminate then
 	    --elsif not R_write_cycle and (R_phase = C_phase_read_terminate or acram_ready='1') then
 	    elsif not R_write_cycle and acram_ready='1' then
 		R_ack_bitmap(R_cur_port) <= '1';
+		R_bus_out <= acram_data_rd;
 		if R_cur_port /= R_next_port and addr_strobe = '1' and C_read_b2b_new then
 		    -- jump-start a new transaction
 		    R_cur_port <= R_next_port;
@@ -218,6 +209,7 @@ begin
 		    R_cur_port <= next_port;
 		    R_en <= '0';
 		end if;
+	    --elsif R_write_cycle and R_phase = C_phase_write_terminate then
 	    --elsif R_write_cycle and (R_phase = C_phase_write_terminate or acram_ready='1') then
 	    elsif R_write_cycle and acram_ready='1' then
 		R_phase <= C_phase_idle;
@@ -225,8 +217,9 @@ begin
 		-- physical signals to SRAM: terminate write
 		R_we <= '0';
 		R_en <= '0';
-	    else
-		R_phase <= R_phase + 1;
+	    -- commented out: do not advance but wait indefinitely until acram_ready='1'
+	    --else
+	    --	R_phase <= R_phase + 1;
 	    end if;
 	end if;
     end process;
