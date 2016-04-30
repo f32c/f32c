@@ -512,7 +512,7 @@ begin
     axi_cache_ram: entity work.axi_cache -- D-Memory
     port map (
         sys_clk            => clk,
-        reset              => not clk_locked, -- not calib_done
+        reset              => not calib_done,
 
         -- simple RAM bus interface
         i_en               => ram_en,
@@ -573,7 +573,7 @@ begin
     axi_cache_ram_01: entity work.axi_cache -- unused port
     port map (
         sys_clk            => clk,
-        reset              => not clk_locked, -- not calib_done
+        reset              => not calib_done,
 
         -- simple RAM bus interface
         i_en               => '0', -- never enabled
@@ -634,7 +634,7 @@ begin
     axi_cache_ram_02: entity work.axi_cache -- unused port
     port map (
         sys_clk            => clk,
-        reset              => not clk_locked, -- not calib_done
+        reset              => not calib_done,
 
         -- simple RAM bus interface
         i_en               => '0', -- never enabled
@@ -835,7 +835,7 @@ begin
         s02_axi_rready       => l02_axi_rready
     );
     end generate;
-    FPGA_LED2 <= calib_done;
-    FPGA_LED3 <= ram_read_busy;
+    FPGA_LED2 <= calib_done; -- should light up 0.3 seconds after startup
+    FPGA_LED3 <= ram_read_busy; -- very short blinks mostly invisible
 
 end Behavioral;
