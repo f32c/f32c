@@ -90,9 +90,9 @@ begin
         end if;
       end if;
     end process;
-    --acram_ready <= '1' when R_ready_shift=C_ready_high or R_ready_shift=C_ready_low else '0';
+    acram_ready <= '1' when R_ready_shift=C_ready_high or R_ready_shift=C_ready_low else '0';
     -- at the same time when data sample is latched, output ready signal as delayed rising edge detection of acram_en
-    acram_ready <= '1' when R_ready_shift(0)='0' and R_ready_shift(1)='1' else '0'; -- transition 0->1
+    --acram_ready <= '1' when R_ready_shift(0)='0' and R_ready_shift(1)='1' else '0'; -- transition 0->1
     acram_d_rd <= R_acram_d_rd;
     end generate;
 end Structure;
