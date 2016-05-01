@@ -38,6 +38,7 @@ use ieee.numeric_std.all;
 
 entity acram_emu is
     generic (
+        C_ready_delay: integer := 2; -- min 2
 	C_addr_width: integer := 11 -- address width defines RAM size 11 bits -> 2^11 * 4 byte = 2048*4 = 8K
     );
     port (
@@ -55,6 +56,10 @@ end acram_emu;
 architecture Structure of acram_emu is
     signal R_acram_ready: std_logic := '0';
     signal S_acram_d_rd, R_acram_d_rd: std_logic_vector(31 downto 0);
+    signal S_ready_rising_edge: std_logic;
+    constant C_ready_high: std_logic_vector(C_ready_delay downto 0) := (others => '1');
+    constant C_ready_low: std_logic_vector(C_ready_delay downto 0) := (others => '0');
+    signal R_ready_shift: std_logic_vector(C_ready_delay downto 0);
     signal bram_we: std_logic_vector(3 downto 0);
 begin
     ram_emu_4bytes: for i in 0 to 3 generate
@@ -76,13 +81,18 @@ begin
     process(clk)
     begin
       if rising_edge(clk) then
-        if acram_en = '1' then
+        R_ready_shift <= acram_en & R_ready_shift(C_ready_delay downto 1);
+        if R_ready_shift(1)='0' and R_ready_shift(2)='1' then -- transition 0->1
+          -- note that indexes 1 and 2 in sequential logic
+          -- correspond in time with indexes 0 and 1 in
+          -- combinatorial logic (lines below, outside of process)
           R_acram_d_rd <= S_acram_d_rd;
         end if;
-        R_acram_ready <= acram_en; -- 1 cycle delay
       end if;
     end process;
-    acram_ready <= R_acram_ready and acram_en;
+    --acram_ready <= '1' when R_ready_shift=C_ready_high or R_ready_shift=C_ready_low else '0';
+    -- at the same time when data sample is latched, output ready signal as delayed rising edge detection of acram_en
+    acram_ready <= '1' when R_ready_shift(0)='0' and R_ready_shift(1)='1' else '0'; -- transition 0->1
     acram_d_rd <= R_acram_d_rd;
     end generate;
 end Structure;
