@@ -53,7 +53,7 @@ entity esa11_acram_ddr3 is
 
         -- axi cache ram
 	C_acram: boolean := true;
-	C_acram_wait_cycles: integer := 1000; -- min 3 works, why doesn't 2 ?
+	C_acram_wait_cycles: integer := 4; -- min 4 works for axi_cache
 	C_acram_emu_kb: integer := 0; -- KB axi_cache emulation (0 to disable, power of 2, MAX 128)
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
@@ -81,8 +81,8 @@ entity esa11_acram_ddr3 is
       C_vgatext_palette: boolean := true; -- no color palette
       C_vgatext_text: boolean := true; -- enable optional text generation
         C_vgatext_font_bram8: boolean := true; -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
-        C_vgatext_char_height: integer := 8; -- character cell height
-        C_vgatext_font_height: integer := 8; -- font height
+        C_vgatext_char_height: integer := 16; -- character cell height
+        C_vgatext_font_height: integer := 16; -- font height
         C_vgatext_font_depth: integer := 8; -- font char depth, 7=128 characters or 8=256 characters
         C_vgatext_font_linedouble: boolean := false;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
         C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)
@@ -491,7 +491,7 @@ begin
     VGA_HSYNC <= vga_hsync_n;
 
     acram_emu_gen: if C_acram_emu_kb > 0 generate
-    acram_emulation: entity work.acram_emu
+    axi_cache_emulation: entity work.acram_emu
     generic map
     (
       C_addr_width => 8 + ceil_log2(C_acram_emu_kb)
@@ -510,10 +510,10 @@ begin
     end generate;
 
     G_acram_real: if C_acram_emu_kb = 0 generate
-    axi_cache_ram: entity work.axi_cache -- D-Memory
+    axi_cache_ram: entity work.axi_cache
     port map (
         sys_clk            => clk,
-        reset              => not calib_done,
+        reset              => not calib_done, -- release reset when DDR3 is ready
 
         -- simple RAM bus interface
         i_en               => ram_en,
@@ -529,7 +529,7 @@ begin
         readcount          => ram_cache_readcnt,
         debug              => ram_cache_debug,
 
-        -- axi port
+        -- axi port l00
         m_axi_aresetn      => l00_axi_areset_n,
         m_axi_aclk         => l00_axi_aclk,
         m_axi_awid         => l00_axi_awid,
@@ -572,132 +572,6 @@ begin
     );
     ram_ready <= not ram_read_busy;
 
-    G_cache_p1: if false generate
-    axi_cache_ram_01: entity work.axi_cache -- unused port
-    port map (
-        sys_clk            => clk,
-        reset              => not calib_done,
-
-        -- simple RAM bus interface
-        i_en               => '0', -- never enabled
-        addr_next          => (others => '0'),
-        addr(31 downto 30) => "00",
-        addr(29 downto 2)  => ram_address(29 downto 2),
-        addr(1 downto 0)   => "00",
-        wbe                => (others => '0'), -- never enabled
-        din                => ram_data_write,
-        dout               => open,
-        readBusy           => open,
-        hitcount           => open,
-        readcount          => open,
-        debug              => open,
-
-        -- axi port
-        m_axi_aresetn      => l01_axi_areset_n,
-        m_axi_aclk         => l01_axi_aclk,
-        m_axi_awid         => l01_axi_awid,
-        m_axi_awaddr       => l01_axi_awaddr,
-        m_axi_awlen        => l01_axi_awlen,
-        m_axi_awsize       => l01_axi_awsize,
-        m_axi_awburst      => l01_axi_awburst,
-        m_axi_awlock       => l01_axi_awlock,
-        m_axi_awcache      => l01_axi_awcache,
-        m_axi_awprot       => l01_axi_awprot,
-        m_axi_awqos        => l01_axi_awqos,
-        m_axi_awvalid      => l01_axi_awvalid,
-        m_axi_awready      => l01_axi_awready,
-        m_axi_wdata        => l01_axi_wdata,
-        m_axi_wstrb        => l01_axi_wstrb,
-        m_axi_wlast        => l01_axi_wlast,
-        m_axi_wvalid       => l01_axi_wvalid,
-        m_axi_wready       => l01_axi_wready,
-        m_axi_bid          => l01_axi_bid,
-        m_axi_bresp        => l01_axi_bresp,
-        m_axi_bvalid       => l01_axi_bvalid,
-        m_axi_bready       => l01_axi_bready,
-        m_axi_arid         => l01_axi_arid,
-        m_axi_araddr       => l01_axi_araddr,
-        m_axi_arlen        => l01_axi_arlen,
-        m_axi_arsize       => l01_axi_arsize,
-        m_axi_arburst      => l01_axi_arburst,
-        m_axi_arlock       => l01_axi_arlock,
-        m_axi_arcache      => l01_axi_arcache,
-        m_axi_arprot       => l01_axi_arprot,
-        m_axi_arqos        => l01_axi_arqos,
-        m_axi_arvalid      => l01_axi_arvalid,
-        m_axi_arready      => l01_axi_arready,
-        m_axi_rid          => l01_axi_rid,
-        m_axi_rdata        => l01_axi_rdata,
-        m_axi_rresp        => l01_axi_rresp,
-        m_axi_rlast        => l01_axi_rlast,
-        m_axi_rvalid       => l01_axi_rvalid,
-        m_axi_rready       => l01_axi_rready
-    );
-    end generate; -- G_cache_p1
-
-    G_cache_p2: if false generate
-    axi_cache_ram_02: entity work.axi_cache -- unused port
-    port map (
-        sys_clk            => clk,
-        reset              => not calib_done,
-
-        -- simple RAM bus interface
-        i_en               => '0', -- never enabled
-        addr_next          => (others => '0'),
-        addr(31 downto 30) => "00",
-        addr(29 downto 2)  => ram_address(29 downto 2),
-        addr(1 downto 0)   => "00",
-        wbe                => (others => '0'), -- never enabled
-        din                => ram_data_write,
-        dout               => open,
-        readBusy           => open,
-        hitcount           => open,
-        readcount          => open,
-        debug              => open,
-
-        -- axi port
-        m_axi_aresetn      => l02_axi_areset_n,
-        m_axi_aclk         => l02_axi_aclk,
-        m_axi_awid         => l02_axi_awid,
-        m_axi_awaddr       => l02_axi_awaddr,
-        m_axi_awlen        => l02_axi_awlen,
-        m_axi_awsize       => l02_axi_awsize,
-        m_axi_awburst      => l02_axi_awburst,
-        m_axi_awlock       => l02_axi_awlock,
-        m_axi_awcache      => l02_axi_awcache,
-        m_axi_awprot       => l02_axi_awprot,
-        m_axi_awqos        => l02_axi_awqos,
-        m_axi_awvalid      => l02_axi_awvalid,
-        m_axi_awready      => l02_axi_awready,
-        m_axi_wdata        => l02_axi_wdata,
-        m_axi_wstrb        => l02_axi_wstrb,
-        m_axi_wlast        => l02_axi_wlast,
-        m_axi_wvalid       => l02_axi_wvalid,
-        m_axi_wready       => l02_axi_wready,
-        m_axi_bid          => l02_axi_bid,
-        m_axi_bresp        => l02_axi_bresp,
-        m_axi_bvalid       => l02_axi_bvalid,
-        m_axi_bready       => l02_axi_bready,
-        m_axi_arid         => l02_axi_arid,
-        m_axi_araddr       => l02_axi_araddr,
-        m_axi_arlen        => l02_axi_arlen,
-        m_axi_arsize       => l02_axi_arsize,
-        m_axi_arburst      => l02_axi_arburst,
-        m_axi_arlock       => l02_axi_arlock,
-        m_axi_arcache      => l02_axi_arcache,
-        m_axi_arprot       => l02_axi_arprot,
-        m_axi_arqos        => l02_axi_arqos,
-        m_axi_arvalid      => l02_axi_arvalid,
-        m_axi_arready      => l02_axi_arready,
-        m_axi_rid          => l02_axi_rid,
-        m_axi_rdata        => l02_axi_rdata,
-        m_axi_rresp        => l02_axi_rresp,
-        m_axi_rlast        => l02_axi_rlast,
-        m_axi_rvalid       => l02_axi_rvalid,
-        m_axi_rready       => l02_axi_rready
-    );
-    end generate; -- G_cache_p2
-
     u_ddr_mem : entity work.axi_mpmc
     port map(
         sys_rst              => not clk_locked, -- release reset when clock is stable
@@ -719,7 +593,7 @@ begin
         ddr3_dm(1)           => ddr_udm,
         ddr3_dm(0)           => ddr_ldm,
         ddr3_odt(0)          => ddr_odt,
-        -- port 0
+        -- port l00
         s00_axi_areset_out_n => l00_axi_areset_n,
         s00_axi_aclk         => l00_axi_aclk,
         s00_axi_awid         => l00_axi_awid,
@@ -759,7 +633,7 @@ begin
         s00_axi_rlast        => l00_axi_rlast,
         s00_axi_rvalid       => l00_axi_rvalid,
         s00_axi_rready       => l00_axi_rready,
-        -- port 1
+        -- port l01
         s01_axi_areset_out_n => l01_axi_areset_n,
         s01_axi_aclk         => l01_axi_aclk,
         s01_axi_awid         => l01_axi_awid,
@@ -799,7 +673,7 @@ begin
         s01_axi_rlast        => l01_axi_rlast,
         s01_axi_rvalid       => l01_axi_rvalid,
         s01_axi_rready       => l01_axi_rready,
-        -- port 2
+        -- port l02
         s02_axi_areset_out_n => l02_axi_areset_n,
         s02_axi_aclk         => l02_axi_aclk,
         s02_axi_awid         => l02_axi_awid,
@@ -841,11 +715,11 @@ begin
         s02_axi_rready       => l02_axi_rready
     );
     l00_axi_aclk <= clk; -- 100 MHz
-    l01_axi_aclk <= '0'; -- disabled
-    l02_axi_aclk <= '0'; -- disabled
+    l01_axi_aclk <= '0'; -- port l01 not used
+    l02_axi_aclk <= '0'; -- port l02 not used
     end generate; -- G_acram_real
 
-    FPGA_LED2 <= calib_done; -- should light up 0.3 seconds after startup
-    FPGA_LED3 <= ram_read_busy; -- very short blinks mostly invisible
+    FPGA_LED2 <= calib_done; -- should turn on 0.3 seconds after startup and remain on
+    FPGA_LED3 <= ram_read_busy; -- more RAM traffic -> more LED brightness
 
 end Behavioral;
