@@ -86,8 +86,8 @@ entity esa11_acram_emu is
       C_vgatext_palette: boolean := true; -- no color palette
       C_vgatext_text: boolean := true; -- enable optional text generation
         C_vgatext_font_bram8: boolean := true; -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
-        C_vgatext_char_height: integer := 16; -- character cell height
-        C_vgatext_font_height: integer := 16; -- font height
+        C_vgatext_char_height: integer := 8; -- character cell height
+        C_vgatext_font_height: integer := 8; -- font height
         C_vgatext_font_depth: integer := 8; -- font char depth, 7=128 characters or 8=256 characters
         C_vgatext_font_linedouble: boolean := false;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
         C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)
@@ -192,7 +192,7 @@ architecture Behavioral of esa11_acram_emu is
     signal ram_address        : std_logic_vector(29 downto 2);
     signal ram_data_write     : std_logic_vector(31 downto 0);
     signal ram_data_read      : std_logic_vector(31 downto 0);
-    signal ram_read_busy      : std_logic := '0';
+    signal ram_ready          : std_logic := '0';
     signal ram_cache_debug    : std_logic_vector(7 downto 0);
     signal ram_cache_hitcnt   : std_logic_vector(31 downto 0);
     signal ram_cache_readcnt  : std_logic_vector(31 downto 0);
@@ -218,8 +218,8 @@ begin
     );
     end generate;
 
-    -- reset hard-block: Xilinx Artix-7 specific
     G_vendor_specific_startup: if C_vendor_specific_startup generate
+    -- reset hard-block: Xilinx Artix-7 specific
     reset: startupe2
     generic map (
       prog_usr => "FALSE"
@@ -301,7 +301,7 @@ begin
 	acram_byte_we => ram_byte_we,
 	acram_data_rd => ram_data_read,
 	acram_data_wr => ram_data_write,
-	acram_read_busy => ram_read_busy,
+	acram_ready => ram_ready,
         --spi_sck(0)  => open,  spi_sck(1)  => FPGA_SD_SCLK,
         --spi_ss(0)   => open,  spi_ss(1)   => FPGA_SD_D3,
         --spi_mosi(0) => open,  spi_mosi(1) => FPGA_SD_CMD,
@@ -367,6 +367,7 @@ begin
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
+      acram_ready => ram_ready,
       acram_en => ram_en
     );
 

@@ -54,7 +54,7 @@ entity esa11_acram_ddr3 is
         -- axi cache ram
 	C_acram: boolean := true;
 	C_acram_wait_cycles: integer := 4; -- min 3 works, why doesn't 2 ?
-	C_acram_emu_kb: integer := 0; -- KB axi_cache emulation (0 to disable, power of 2, MAX 128)
+	C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (0 to disable, power of 2, MAX 128)
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         -- warning: 2K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
@@ -81,8 +81,8 @@ entity esa11_acram_ddr3 is
       C_vgatext_palette: boolean := true; -- no color palette
       C_vgatext_text: boolean := true; -- enable optional text generation
         C_vgatext_font_bram8: boolean := true; -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
-        C_vgatext_char_height: integer := 16; -- character cell height
-        C_vgatext_font_height: integer := 16; -- font height
+        C_vgatext_char_height: integer := 8; -- character cell height
+        C_vgatext_font_height: integer := 8; -- font height
         C_vgatext_font_depth: integer := 8; -- font char depth, 7=128 characters or 8=256 characters
         C_vgatext_font_linedouble: boolean := false;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
         C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)
@@ -312,6 +312,7 @@ architecture Behavioral of esa11_acram_ddr3 is
     signal ram_data_write     : std_logic_vector(31 downto 0);
     signal ram_data_read      : std_logic_vector(31 downto 0);
     signal ram_read_busy      : std_logic := '0';
+    signal ram_ready          : std_logic := '1';
     signal ram_cache_debug    : std_logic_vector(7 downto 0);
     signal ram_cache_hitcnt   : std_logic_vector(31 downto 0);
     signal ram_cache_readcnt  : std_logic_vector(31 downto 0);
@@ -430,7 +431,7 @@ begin
 	acram_byte_we => ram_byte_we,
 	acram_data_rd => ram_data_read,
 	acram_data_wr => ram_data_write,
-	acram_read_busy => ram_read_busy,
+	acram_ready => ram_ready,
 	sio_txd(0) => UART1_TXD, 
 	sio_rxd(0) => UART1_RXD,
 	sio_break(0) => sio_break,
@@ -502,6 +503,7 @@ begin
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
+      acram_ready => ram_ready,
       acram_en => ram_en
     );
     --ram_data_read <= x"01234567"; -- debug purpose
@@ -568,6 +570,7 @@ begin
         m_axi_rvalid       => l00_axi_rvalid,
         m_axi_rready       => l00_axi_rready
     );
+    ram_ready <= not ram_read_busy;
 
     G_cache_p1: if false generate
     axi_cache_ram_01: entity work.axi_cache -- unused port
