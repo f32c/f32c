@@ -69,12 +69,14 @@ ifeq ($(LIB),c)
 
  CFILES = assert.c atoi.c diskio.c div.c div64.c fatfs.c \
 	file.c gets.c malloc.c memcmp.c memcpy.c memmove.c \
-	memset.c mul.c printf.c qsort.c random.c sdcard.c sio_poll.c \
+	memset.c mul.c printf.c qsort.c random.c sdcard.c \
 	spi.c sprintf.c strcasecmp.c strcpy.c strncpy.c \
 	strstr.c strtol.c
 
  ifneq ($(ARCH),riscv)
   CFILES += sio.c sio_baud.c setjmperr.c isr.c
+ else
+  CFILES += sio_poll.c
  endif
 
  ifeq ($(INT_LIBC),true)
