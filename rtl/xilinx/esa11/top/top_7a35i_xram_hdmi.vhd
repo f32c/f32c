@@ -53,8 +53,8 @@ entity esa11_acram_ddr3 is
 
         -- axi cache ram
 	C_acram: boolean := true;
-	C_acram_wait_cycles: integer := 4; -- min 3 works, why doesn't 2 ?
-	C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (0 to disable, power of 2, MAX 128)
+	C_acram_wait_cycles: integer := 1000; -- min 3 works, why doesn't 2 ?
+	C_acram_emu_kb: integer := 0; -- KB axi_cache emulation (0 to disable, power of 2, MAX 128)
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         -- warning: 2K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
@@ -840,6 +840,9 @@ begin
         s02_axi_rvalid       => l02_axi_rvalid,
         s02_axi_rready       => l02_axi_rready
     );
+    l00_axi_aclk <= clk; -- 100 MHz
+    l01_axi_aclk <= '0'; -- disabled
+    l02_axi_aclk <= '0'; -- disabled
     end generate; -- G_acram_real
 
     FPGA_LED2 <= calib_done; -- should light up 0.3 seconds after startup
