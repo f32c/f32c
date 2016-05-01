@@ -688,8 +688,7 @@ begin
     generic map (
 	C_ports => C_xram_ports, -- extra ports: framebuffer, textmode and PCM audio
 	C_prio_port => fb_port, -- framebuffer
-	C_wait_cycles => C_acram_wait_cycles,
-	C_pipelined_read => false
+	C_wait_cycles => C_acram_wait_cycles
     )
     port map (
 	clk => clk,
