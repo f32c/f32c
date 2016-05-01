@@ -154,7 +154,7 @@ begin
             R_cur_port <= next_port;
           else
             -- start a new transaction when ready
-            --if acram_ready='1' then
+            if acram_ready='1' then
               R_phase <= C_phase_idle + 1;
               R_a <= addr;
               R_en <= '1';
@@ -170,27 +170,29 @@ begin
                 R_write_cycle <= false;
                 R_byte_sel <= x"0"; -- read cycle for axi_cache is with byte_sel=0
               end if;
-            --end if;
+            end if;
           end if;
         --elsif not R_write_cycle and R_phase = C_phase_read_terminate then
         --elsif not R_write_cycle and (R_phase = C_phase_read_terminate or acram_ready='1') then
-        elsif not R_write_cycle and acram_ready='1' then
-          R_bus_out <= acram_data_rd;
+        elsif not R_write_cycle and acram_ready='1' and R_phase > 100 then
+          -- end of read cycle
+          R_bus_out <= acram_data_rd; -- latch data and place on the bus
           R_ack_bitmap(R_cur_port) <= '1';
-          R_byte_sel <= x"0"; -- prevent any further write
+          --R_byte_sel <= x"0"; -- should be already 0, read cycle has byte_sel=0
           R_en <= '0';
           R_cur_port <= next_port;
           R_phase <= C_phase_idle;
         --elsif R_write_cycle and R_phase = C_phase_write_terminate then
-	--elsif R_write_cycle and (R_phase = C_phase_write_terminate and acram_ready='1') then
-	elsif R_write_cycle and acram_ready='1' then
-          -- physical signals to SRAM: terminate write
+        --elsif R_write_cycle and (R_phase = C_phase_write_terminate and acram_ready='1') then
+        --elsif R_write_cycle and acram_ready='1' and R_phase > 100 then
+        elsif R_write_cycle and R_phase > 100 then
+          -- end of write cycle
           R_ack_bitmap(R_cur_port) <= '1';
-          --R_byte_sel <= x"0"; -- should be already 0
+          R_byte_sel <= x"0";
           R_en <= '0';
           R_cur_port <= next_port;
           R_phase <= C_phase_idle;
-	else
+        else
           if R_phase /= C_phase_write_terminate then -- prevent wraparound
              R_phase <= R_phase + 1;
           end if;
