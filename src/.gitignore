@@ -4,3 +4,4 @@
 *.bin
 *.hex
 *.kate-swp
+.kdev_include_paths
