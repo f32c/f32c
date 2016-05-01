@@ -153,35 +153,37 @@ begin
             -- idle
             R_cur_port <= next_port;
           else
-            -- start a new transaction
-            R_phase <= C_phase_idle + 1;
-            R_a <= addr;
-            R_en <= '1';
-            if write = '1' then
-              R_write_cycle <= true;
-              R_out_word <= data_in;
-              -- we can safely acknowledge the write immediately
-              --R_ack_bitmap(R_cur_port) <= '1';
-              R_snoop_addr(29 downto 2) <= addr; -- XXX
-              --R_snoop_cycle <= '1';
-              R_byte_sel <= byte_sel; -- write cycle for axi_cache nas non-zero byte_sel        
-            else
-              R_write_cycle <= false;
-              R_byte_sel <= x"0"; -- read cycle for axi_cache is with byte_sel=0
-            end if;
+            -- start a new transaction when ready
+            --if acram_ready='1' then
+              R_phase <= C_phase_idle + 1;
+              R_a <= addr;
+              R_en <= '1';
+              if write = '1' then
+                R_write_cycle <= true;
+                R_out_word <= data_in;
+                -- we can safely acknowledge the write immediately
+                --R_ack_bitmap(R_cur_port) <= '1';
+                R_snoop_addr(29 downto 2) <= addr; -- XXX
+                --R_snoop_cycle <= '1';
+                R_byte_sel <= byte_sel; -- write cycle for axi_cache nas non-zero byte_sel        
+              else
+                R_write_cycle <= false;
+                R_byte_sel <= x"0"; -- read cycle for axi_cache is with byte_sel=0
+              end if;
+            --end if;
           end if;
-        elsif not R_write_cycle and R_phase = C_phase_read_terminate then
+        --elsif not R_write_cycle and R_phase = C_phase_read_terminate then
         --elsif not R_write_cycle and (R_phase = C_phase_read_terminate or acram_ready='1') then
-        --elsif not R_write_cycle and acram_ready='1' then
+        elsif not R_write_cycle and acram_ready='1' then
           R_bus_out <= acram_data_rd;
           R_ack_bitmap(R_cur_port) <= '1';
           R_byte_sel <= x"0"; -- prevent any further write
           R_en <= '0';
           R_cur_port <= next_port;
           R_phase <= C_phase_idle;
-        elsif R_write_cycle and R_phase = C_phase_write_terminate then
+        --elsif R_write_cycle and R_phase = C_phase_write_terminate then
 	--elsif R_write_cycle and (R_phase = C_phase_write_terminate and acram_ready='1') then
-	--elsif R_write_cycle and acram_ready='1' then
+	elsif R_write_cycle and acram_ready='1' then
           -- physical signals to SRAM: terminate write
           R_ack_bitmap(R_cur_port) <= '1';
           --R_byte_sel <= x"0"; -- should be already 0
