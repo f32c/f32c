@@ -193,7 +193,7 @@ begin
 			    R_phase <= C_phase_write_upper_half;
 			end if;
 			-- we can safely acknowledge the write immediately
-			R_ack_bitmap(R_cur_port) <= '1';
+			R_ack_bitmap(R_next_port) <= '1';
 			R_snoop_addr(19 downto 2) <= addr; -- XXX
 			R_snoop_cycle <= '1';
 		    end if;
