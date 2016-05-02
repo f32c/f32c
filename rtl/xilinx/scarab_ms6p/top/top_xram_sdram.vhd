@@ -46,6 +46,7 @@ entity glue is
 
     -- Main clock: 50/81/83/96/100/111/112/125
     C_clk_freq: integer := 100;
+    C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
     C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
@@ -56,7 +57,7 @@ entity glue is
     C_sdram: boolean := true;
 
     C_vgahdmi: boolean := false;
-    C_vgahdmi_test_picture: integer := 0;
+    C_vgahdmi_test_picture: integer := 1;
     -- number of pixels for line step 640
     C_vgahdmi_fifo_width: integer := 640;
     -- number of scan lines: 480
@@ -271,6 +272,7 @@ begin
     portd(1) <= cw_antenna;
   end generate;
 
+  G_vendor_specific_startup: if C_vendor_specific_startup generate
   -- reset hard-block: Xilinx Spartan-6 specific
   reset: startup_spartan6
     port map
@@ -278,6 +280,7 @@ begin
       clk => clk, gsr => rs232_break, gts => rs232_break,
       keyclearb => '0'
     );
+  end generate; -- G_vendor_specific_startup
 
   -- generic SDRAM glue
   glue_xram: entity work.glue_xram
@@ -437,7 +440,7 @@ begin
     hdmi_output1: entity work.hdmi_out
       port map
       (
-        tmds_in_clk    => tmds_clk, -- clk_25MHz or tmds_clk
+        tmds_in_clk    => clk_25MHz, -- clk_25MHz or tmds_clk
         tmds_out_clk_p => tmds_out_clk_p,
         tmds_out_clk_n => tmds_out_clk_n,
         tmds_in_rgb    => tmds_rgb,
