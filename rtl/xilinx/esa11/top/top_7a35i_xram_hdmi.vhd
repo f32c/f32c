@@ -53,7 +53,7 @@ entity esa11_acram_ddr3 is
 
         -- axi cache ram
 	C_acram: boolean := true;
-	C_acram_wait_cycles: integer := 4; -- min 4 works for axi_cache
+	C_acram_wait_cycles: integer := 2;
 	C_acram_emu_kb: integer := 0; -- KB axi_cache emulation (0 to disable, power of 2, MAX 128)
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
@@ -170,6 +170,7 @@ architecture Behavioral of esa11_acram_ddr3 is
     signal clk, sio_break: std_logic;
     signal clk_25MHz, clk_100MHz, clk_200MHz, clk_250MHz: std_logic;
     signal clk_locked: std_logic := '0';
+    signal cfgmclk: std_logic;
 
     component clk_d100_100_200_250_25MHz is
     Port (
@@ -349,7 +350,8 @@ begin
       prog_usr => "FALSE"
     )
     port map (
-      clk => clk,
+      cfgmclk => cfgmclk,
+      clk => cfgmclk,
       gsr => sio_break,
       gts => '0',
       keyclearb => '0',

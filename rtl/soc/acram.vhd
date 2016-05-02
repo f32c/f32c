@@ -39,7 +39,7 @@ use work.sram_pack.all;
 entity acram is
     generic (
 	C_ports: integer;
-	C_wait_cycles: integer;
+	C_wait_cycles: integer range 2 to 65535 := 2; -- wait cycles before expecting acram_ready=1
 	C_prio_port: integer := -1
     );
     port (
@@ -64,8 +64,7 @@ end acram;
 architecture Structure of acram is
     -- State machine constants
     constant C_phase_idle: integer := 0;
-    constant C_phase_read_terminate: integer := C_wait_cycles - 1;
-    constant C_phase_write_terminate: integer := C_wait_cycles - 1;
+    constant C_phase_terminate: integer := C_wait_cycles - 1;
 
     -- Physical interface registers
     signal R_a: std_logic_vector(29 downto 2);		-- to SRAM
@@ -85,7 +84,7 @@ architecture Structure of acram is
     signal data_in: std_logic_vector(31 downto 0);	-- from CPU bus
 
     -- Arbiter registers
-    signal R_phase: integer range 0 to C_phase_write_terminate;
+    signal R_phase: integer range 0 to C_phase_terminate;
     signal R_cur_port: integer range 0 to (C_ports - 1);
     signal R_last_port: integer range 0 to (C_ports - 1);
     signal R_prio_pending: boolean;
@@ -170,9 +169,7 @@ begin
               end if;
             end if;
           end if;
-        --elsif not R_write_cycle and R_phase = C_phase_read_terminate then
-        --elsif not R_write_cycle and (R_phase = C_phase_read_terminate or acram_ready='1') then
-        elsif not R_write_cycle and acram_ready='1' and R_phase = C_phase_read_terminate then
+        elsif not R_write_cycle and acram_ready='1' and R_phase = C_phase_terminate then
           -- end of read cycle
           R_bus_out <= acram_data_rd; -- latch data and place on the bus
           R_ack_bitmap(R_cur_port) <= '1';
@@ -180,10 +177,7 @@ begin
           R_en <= '0';
           R_cur_port <= next_port;
           R_phase <= C_phase_idle;
-        --elsif R_write_cycle and R_phase = C_phase_write_terminate then
-        --elsif R_write_cycle and (R_phase = C_phase_write_terminate and acram_ready='1') then
-        --elsif R_write_cycle and acram_ready='1' and R_phase > 100 then
-        elsif R_write_cycle and R_phase = C_phase_write_terminate then
+        elsif R_write_cycle and acram_ready='1' and R_phase = C_phase_terminate then
           -- end of write cycle
           R_ack_bitmap(R_cur_port) <= '1';
           R_byte_sel <= x"0";
@@ -191,7 +185,7 @@ begin
           R_cur_port <= next_port;
           R_phase <= C_phase_idle;
         else
-          if R_phase /= C_phase_write_terminate then -- prevent wraparound
+          if R_phase /= C_phase_terminate then -- prevent wraparound
              R_phase <= R_phase + 1;
           end if;
 	end if;
