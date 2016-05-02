@@ -56,7 +56,7 @@ entity esa11_acram_emu is
 
         -- axi cache ram
 	C_acram: boolean := true;
-	C_acram_wait_cycles: integer := 2;
+	C_acram_wait_cycles: integer := 3;
 	-- axi cache emulation memory size KB (power of 2 kilobytes of BRAM)
 	C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2, MAX 128)
 
@@ -172,6 +172,7 @@ architecture Behavioral of esa11_acram_emu is
 
     signal clk, sio_break: std_logic;
     signal clk_25MHz, clk_100MHz, clk_200MHz, clk_250MHz: std_logic;
+    signal cfgmclk: std_logic;
 
     component clk_d100_100_200_250_25MHz is
     Port (
@@ -225,7 +226,8 @@ begin
       prog_usr => "FALSE"
     )
     port map (
-      clk => clk,
+      cfgmclk => cfgmclk,
+      clk => cfgmclk,
       gsr => sio_break,
       gts => '0',
       keyclearb => '0',
