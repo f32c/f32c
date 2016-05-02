@@ -43,6 +43,7 @@ openocd_interface ?= interface/altera-usb-blaster.cfg
 xc3sprog_interface ?= xpc
 xc3sprog_device ?= 0
 jtag_spi_bridge ?= ../../include/bscan_xc6s_ftg256_blink.bit.xz
+mimasv2_device ?= /dev/ttyACM0
 flashsize ?= 8192
 bitstream_bin ?= 
 
@@ -136,6 +137,9 @@ xc3sprog_flash: $(project).bit
 	rm /tmp/jtag_spi_bridge.bit
 	xc3sprog -c $(xc3sprog_interface) -p $(xc3sprog_device) -I $(project).bit
 	xc3sprog -c $(xc3sprog_interface) -p $(xc3sprog_device) -R
+
+mimasv2_flash: $(project).bin
+	MimasV2Config.py $(mimasv2_device) $(project).bin
 
 program: $(project).svf
 	openocd --file=$(openocd_interface) --file=$(project).ocd

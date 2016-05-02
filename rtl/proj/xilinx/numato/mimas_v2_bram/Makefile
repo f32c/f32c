@@ -11,6 +11,7 @@ bitstream_bin = $(project).bin
 # openocd_interface = interface/altera-usb-blaster.cfg
 openocd_interface = ../../include/ft2232-fpu1.ocd
 xc3sprog_interface = ftdi
+mimasv2_device = /dev/ttyACM0
 
 # ../../../xilinx/glue_xc6slx9.vhd \
 
