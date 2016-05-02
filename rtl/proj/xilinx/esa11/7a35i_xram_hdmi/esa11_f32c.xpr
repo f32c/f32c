@@ -451,15 +451,15 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/ip/mig_7series_1/mig_a.prj">
+      <File Path="$PPRDIR/../../../../xilinx/esa11/ram/mig/mig_7series_1/mig_a.prj">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/ip/axi_interconnect_0/axi_interconnect_0.upgrade_log"/>
+      <File Path="$PPRDIR/../../../../xilinx/esa11/ram/axi_interconnect/axi_interconnect_0/axi_interconnect_0.upgrade_log"/>
       <File Path="$PPRDIR/../../../../VCores/blk_ram/blk_ram.upgrade_log"/>
       <File Path="$PPRDIR/../../../../VCores/cache_fifo/cache_fifo.upgrade_log"/>
-      <File Path="$PSRCDIR/sources_1/ip/mig_7series_1/mig_7series_1.upgrade_log"/>
+      <File Path="$PPRDIR/../../../../xilinx/esa11/ram/mig/mig_7series_1/mig_7series_1.upgrade_log"/>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
         <Option Name="TopModule" Val="glue"/>
@@ -773,8 +773,8 @@
         <Option Name="SrcSet" Val="sources_1"/>
       </Config>
     </FileSet>
-    <FileSet Name="mig_7series_1" Type="BlockSrcs" RelSrcDir="$PSRCDIR/mig_7series_1">
-      <File Path="$PSRCDIR/sources_1/ip/mig_7series_1/mig_7series_1.xci">
+    <FileSet Name="mig_7series_1" Type="BlockSrcs" RelSrcDir="$PPRDIR/../../../../xilinx/esa11/ram/mig_7series_1">
+      <File Path="$PPRDIR/../../../../xilinx/esa11/ram/mig/mig_7series_1/mig_7series_1.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -786,8 +786,8 @@
         <Option Name="UseBlackboxStub" Val="1"/>
       </Config>
     </FileSet>
-    <FileSet Name="axi_interconnect_0" Type="BlockSrcs" RelSrcDir="$PSRCDIR/axi_interconnect_0">
-      <File Path="$PSRCDIR/sources_1/ip/axi_interconnect_0/axi_interconnect_0.xci">
+    <FileSet Name="axi_interconnect_0" Type="BlockSrcs" RelSrcDir="$PPRDIR/../../../../xilinx/esa11/ram/axi_interconnect_0">
+      <File Path="$PPRDIR/../../../../xilinx/esa11/ram/axi_interconnect/axi_interconnect_0/axi_interconnect_0.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
