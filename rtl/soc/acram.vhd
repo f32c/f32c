@@ -159,7 +159,7 @@ begin
                 R_write_cycle <= true;
                 R_out_word <= data_in;
                 -- we can safely acknowledge the write immediately
-                --R_ack_bitmap(R_cur_port) <= '1';
+                R_ack_bitmap(R_cur_port) <= '1';
                 R_snoop_addr(29 downto 2) <= addr; -- XXX
                 --R_snoop_cycle <= '1';
                 R_byte_sel <= byte_sel; -- write cycle for axi_cache nas non-zero byte_sel        
@@ -179,7 +179,7 @@ begin
           R_phase <= C_phase_idle;
         elsif R_write_cycle and acram_ready='1' and R_phase = C_phase_terminate then
           -- end of write cycle
-          R_ack_bitmap(R_cur_port) <= '1';
+          --R_ack_bitmap(R_cur_port) <= '1'; -- already acknowledged at start of write cycle
           R_byte_sel <= x"0";
           R_en <= '0';
           R_cur_port <= next_port;
