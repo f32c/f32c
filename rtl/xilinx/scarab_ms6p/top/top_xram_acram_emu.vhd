@@ -58,7 +58,7 @@ entity scarab_xram_acram_emu is
 
         -- axi cache ram
         C_acram: boolean := true;
-        C_acram_wait_cycles: integer := 4; -- min 3 works for acram_emu, but min 4 works for real axi_cache
+        C_acram_wait_cycles: integer := 3; -- real axi_cache works with 2, acram_emu needs 3 (should be fixed)
 	C_acram_emu_kb: integer := 64; -- KB axi_cache emulation (power of 2, MAX 64)
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
