@@ -155,7 +155,8 @@ begin
 	    R_ack_bitmap <= (others => '0');
 	    R_snoop_cycle <= '0';
 
-	    R_prio_pending <= R_cur_port /= C_prio_port and
+	    R_prio_pending <=
+	      (R_cur_port /= C_prio_port or R_phase = C_phase_idle) and
 	      C_prio_port >= 0 and bus_in(C_prio_port).addr_strobe = '1';
 
 	    if R_phase = C_phase_idle + 1 and R_cur_port /= C_prio_port then
