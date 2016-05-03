@@ -76,7 +76,7 @@ architecture Structure of sram is
     -- Bus interface registers
     signal R_bus_out: std_logic_vector(31 downto 0);	-- to CPU bus
 
-    -- Bus interface signals (resolved from bus_in record via R_cur_port)
+    -- Bus interface signals (resolved from bus_in record via R_next_port)
     signal addr_strobe: std_logic;			-- from CPU bus
     signal write: std_logic;				-- from CPU bus
     signal byte_sel: std_logic_vector(3 downto 0);	-- from CPU bus
@@ -169,13 +169,13 @@ begin
 		R_ubl <= '0';
 		R_lbl <= '0';
 		R_d <= (others => 'Z');
-		if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
+		if R_ack_bitmap(R_next_port) = '1' or addr_strobe = '0' then
 		    -- idle
-		    R_cur_port <= next_port;
 		    R_ubl <= '1';
 		    R_lbl <= '1';
 		else
 		    -- start a new transaction
+		    R_cur_port <= R_next_port;
 		    R_phase <= C_phase_idle + 1;
 		    R_byte_sel_hi <= byte_sel(3 downto 2);
 		    R_a <= addr & '0';
@@ -230,7 +230,6 @@ begin
 		    end if;
 		else
 		    R_phase <= C_phase_idle;
-		    R_cur_port <= next_port;
 		    R_ubl <= '1';
 		    R_lbl <= '1';
 		end if;
@@ -242,7 +241,6 @@ begin
 		    R_phase <= R_phase + 1;
 		else
 		    R_phase <= C_phase_idle;
-		    R_cur_port <= next_port;
 		end if;
 		-- physical signals to SRAM: terminate 16-bit write
 		R_wel <= '1';
@@ -261,7 +259,6 @@ begin
 		R_d <= R_out_word(31 downto 16);
 	    elsif R_write_cycle and R_phase = C_phase_write_terminate then
 		R_phase <= C_phase_idle;
-		R_cur_port <= next_port;
 		-- physical signals to SRAM: terminate 16-bit write
 		R_wel <= '1';
 		R_ubl <= '1';
