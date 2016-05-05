@@ -1,0 +1,79 @@
+Copyright 1986-2016 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2016.1 (lin64) Build 1538259 Fri Apr  8 15:45:23 MDT 2016
+| Date         : Tue May  3 19:32:14 2016
+| Host         : ssd running 64-bit Debian GNU/Linux testing/unstable
+| Command      : upgrade_ip
+| Device       : xc7z010clg400-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'axi_interconnect_0'
+
+1. Summary
+----------
+
+SUCCESS in the update of axi_interconnect_0 (xilinx.com:ip:axi_interconnect:1.7 (Rev. 9)) to current project options.
+
+
+
+
+
+
+Copyright 1986-2016 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2016.1 (lin64) Build 1538259 Fri Apr  8 15:45:23 MDT 2016
+| Date         : Tue May  3 19:31:43 2016
+| Host         : ssd running 64-bit Debian GNU/Linux testing/unstable
+| Command      : upgrade_ip
+| Device       : xc7z010clg400-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'mig_7series_1'
+
+1. Summary
+----------
+
+SUCCESS in the update of mig_7series_1 (xilinx.com:ip:mig_7series:3.0) to current project options.
+
+
+
+
+
+
+Copyright 1986-2016 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2016.1 (lin64) Build 1538259 Fri Apr  8 15:45:23 MDT 2016
+| Date         : Tue May  3 19:30:46 2016
+| Host         : ssd running 64-bit Debian GNU/Linux testing/unstable
+| Command      : upgrade_ip
+| Device       : xc7z010clg400-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'blk_ram'
+
+1. Summary
+----------
+
+SUCCESS in the update of blk_ram (xilinx.com:ip:blk_mem_gen:8.3 (Rev. 2)) to current project options.
+
+
+
+
+
+
+Copyright 1986-2016 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2016.1 (lin64) Build 1538259 Fri Apr  8 15:45:23 MDT 2016
+| Date         : Tue May  3 19:25:12 2016
+| Host         : ssd running 64-bit Debian GNU/Linux testing/unstable
+| Command      : upgrade_ip
+| Device       : xc7z010clg400-1
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'clk_d100_100_200_250_25MHz'
+
+1. Summary
+----------
+
+SUCCESS in the update of clk_d100_100_200_250_25MHz (xilinx.com:ip:clk_wiz:5.3) to current project options.
+
