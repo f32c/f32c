@@ -149,31 +149,33 @@ architecture x of bram is
     signal ibram_0, ibram_1, ibram_2, ibram_3: std_logic_vector(7 downto 0);
     signal dbram_0, dbram_1, dbram_2, dbram_3: std_logic_vector(7 downto 0);
 
-    signal write_enable: boolean;
+    signal write_enable, write_strobe: boolean;
 
 begin
 
     dmem_data_out <= dbram_3 & dbram_2 & dbram_1 & dbram_0;
     imem_data_out <= ibram_3 & ibram_2 & ibram_1 & ibram_0;
 
+    write_strobe <= dmem_addr_strobe = '1' and dmem_write = '1';
+
     G_rom_protection:
     if C_write_protect_bootloader generate
     with C_bram_size select write_enable <=
-	dmem_addr(10 downto 10) /= 0 and dmem_write = '1' when 2,
-	dmem_addr(11 downto 10) /= 0 and dmem_write = '1' when 4,
-	dmem_addr(12 downto 10) /= 0 and dmem_write = '1' when 8,
-	dmem_addr(13 downto 10) /= 0 and dmem_write = '1' when 16,
-	dmem_addr(14 downto 10) /= 0 and dmem_write = '1' when 32,
-	dmem_addr(15 downto 10) /= 0 and dmem_write = '1' when 64,
-	dmem_addr(16 downto 10) /= 0 and dmem_write = '1' when 128,
-	dmem_addr(17 downto 10) /= 0 and dmem_write = '1' when 256,
-	dmem_addr(18 downto 10) /= 0 and dmem_write = '1' when 512,
-	dmem_addr(19 downto 10) /= 0 and dmem_write = '1' when 1024,
+	dmem_addr(10 downto 10) /= 0 and write_strobe when 2,
+	dmem_addr(11 downto 10) /= 0 and write_strobe when 4,
+	dmem_addr(12 downto 10) /= 0 and write_strobe when 8,
+	dmem_addr(13 downto 10) /= 0 and write_strobe when 16,
+	dmem_addr(14 downto 10) /= 0 and write_strobe when 32,
+	dmem_addr(15 downto 10) /= 0 and write_strobe when 64,
+	dmem_addr(16 downto 10) /= 0 and write_strobe when 128,
+	dmem_addr(17 downto 10) /= 0 and write_strobe when 256,
+	dmem_addr(18 downto 10) /= 0 and write_strobe when 512,
+	dmem_addr(19 downto 10) /= 0 and write_strobe when 1024,
 	dmem_write = '1' when others;
     end generate;
     G_flat_ram:
     if not C_write_protect_bootloader generate
-	write_enable <= dmem_write = '1';
+	write_enable <= write_strobe;
     end generate;
 
     process(clk)
