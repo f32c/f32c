@@ -68,7 +68,6 @@ entity esa11_acram_ddr3 is
         C3_MEM_BANKADDR_WIDTH : integer := 3;
 
 	C_vgahdmi: boolean := false;
-	C_vgahdmi_test_picture: integer := 1; -- enable test picture
 
     C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: ESA11-7a35i MIPS compatible soft-core 100MHz 32MB DDR3"; -- default banner in screen memory
@@ -386,7 +385,6 @@ begin
       --C_ps2 => C_ps2,
 
       C_vgahdmi => C_vgahdmi,
-      C_vgahdmi_test_picture => C_vgahdmi_test_picture,
 
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,

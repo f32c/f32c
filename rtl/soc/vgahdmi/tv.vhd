@@ -46,7 +46,7 @@ entity tv is
 	mode: in std_logic_vector(1 downto 0) := "10"; -- default display test picture
 	dac_out: out std_logic_vector(3 downto 0);
 	-- vsync: out std_logic;
-	tick_out: out std_logic -- active = not tick_out
+	vsync: out std_logic -- active = not vsync
     );
 end tv;
 
@@ -70,46 +70,29 @@ architecture behavioral of tv is
     --signal R_pixbuf_rd_addr, R_pixbuf_wr_addr: std_logic_vector(3 downto 0);
     --signal R_pixbuf_rd_byte: std_logic_vector(1 downto 0);
     signal R_scan_line_high: std_logic_vector(1 downto 0);
-    signal R_tick: std_logic;
+    signal R_vsync: std_logic;
     signal R_fetch_next: std_logic;
 
 begin
-
-    CVBS: entity work.cvbs
-    generic map (
-	C_interlaced => false,
-	C_clk_freq => C_clk_freq,
-	C_dac_freq => 325000000
-    )
-    port map (
-	clk => clk, clk_dac => clk_dac,
-	luma => R_luma, chroma_phase => R_chroma_phase,
-	chroma_sat => R_chroma_sat, active_pixel => active_pixel,
-	scan_line => scan_line, dac_out => dac_out
-    );
-
-    --
-    -- Refill the circular buffer with fresh data from SRAM-a
-    --
+    -- Vertical SYNC generation
+    -- takes scan_line input, generated from output module
     process(clk)
     begin
 	if rising_edge(clk) then
 	    R_scan_line_high <= scan_line(9 downto 8);
 	    if R_scan_line_high /= "00" and scan_line = "00" & x"01" then
-		R_tick <= '1';
+		R_vsync <= '1';
 	    else
-		R_tick <= '0';
+		R_vsync <= '0';
 	    end if;
 	end if;
     end process;
 
-    --
-    -- Dequeue pixel data from the circular buffer
-    --
+    -- FIFO signaling: when to fetch new pixel_data
     process(clk)
-	variable vpos: std_logic_vector(9 downto 0) := scan_line - 40;
     begin
 	if rising_edge(clk) then
+	    -- when to fetch new pixel
 	    R_fetch_next <= '0'; -- default
 	    if active_pixel = '0' then
 		R_pixclk <= (others => '0');
@@ -124,10 +107,12 @@ begin
 		--R_fetch_next <= '0';
 	    else
 		R_pixclk <= (others => '0');
+                -- XXX: symplify R_hpos arithmetic comapre < >
+                -- rather use = and register change
 		if R_hpos /= C_hpos_last then
 		    R_hpos <= R_hpos + 1;
 		    if R_hpos < C_hpos_first then
-		        R_fetch_next <= '0';
+		        --R_fetch_next <= '0';
 		    else
 			-- get new pixel
 			R_fetch_next <= '1';
@@ -136,7 +121,16 @@ begin
 		--  R_fetch_next <= '0';
 		end if;
 	    end if;
+	end if;
+    end process;
+    fetch_next <= R_fetch_next; -- signal for upstream FIFO to fetch next pixel data
+    vsync <= R_vsync; -- before start of new frame: short 1, otherwise: long 0
 
+    -- conversion pixel_data -> luma/chroma
+    process(clk)
+	variable vpos: std_logic_vector(9 downto 0) := scan_line - 40;
+    begin
+	if rising_edge(clk) then
 	    if mode = "10" then
 		-- test pattern
 		R_luma <= vpos(5 downto 0) & '0';
@@ -196,7 +190,8 @@ begin
 		    end if;
 		end if;
 	    end if;
-	    -- Supress displaying anything past the last horizontal pixel
+	    -- Suppress displaying anything past the last horizontal pixel
+	    -- XXX: simplify this by replacing arithmetic compare < with = and register
 	    if R_hpos < C_hpos_first or R_hpos = C_hpos_last then
 		R_luma <= (others => '0');
 		R_chroma_sat <= (others => '0');
@@ -204,6 +199,22 @@ begin
 	    end if;
 	end if;
     end process;
-    fetch_next <= R_fetch_next;
-    tick_out <= R_tick; -- at start of each frame short 1 otherwise long 0
+
+    -- Composite Signal Output Module
+    -- this module takes luma/chroma as input
+    -- and outputs dac_out for composite out hardware.
+    -- It also outputs local incrementing scan_line, to
+    -- which rest of the logic here need to synchronize
+    PAL: entity work.cvbs
+    generic map (
+	C_interlaced => false,
+	C_clk_freq => C_clk_freq,
+	C_dac_freq => 325000000
+    )
+    port map (
+	clk => clk, clk_dac => clk_dac,
+	luma => R_luma, chroma_phase => R_chroma_phase,
+	chroma_sat => R_chroma_sat, active_pixel => active_pixel,
+	scan_line => scan_line, dac_out => dac_out
+    );
 end;
