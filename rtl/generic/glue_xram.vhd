@@ -952,7 +952,7 @@ begin
       timer_ce <= io_addr_strobe when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range),
                              '0' when others;
     end generate;
-    
+
     -- TV PAL composite signal generation
     G_tv: if C_tv generate
     -- data source (compositing2 fifo)
@@ -984,7 +984,7 @@ begin
       -- dirty hack upper bit of base enables fetching
       -- works if RAM is mapped to 0x80000000 or above
     );
-    -- composite video signal generator    
+    -- composite video signal generator
     S_tv_mode <= "00" when S_vga_enable='1' else "10";
     tvbitmap: entity work.tv
     port map
