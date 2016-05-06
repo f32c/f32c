@@ -46,7 +46,7 @@ entity tv is
 	mode: in std_logic_vector(1 downto 0) := "10"; -- default display test picture
 	dac_out: out std_logic_vector(3 downto 0);
 	-- vsync: out std_logic;
-	vsync: out std_logic -- active = not vsync
+	vblank, vsync: out std_logic -- fifo active = not vsync
     );
 end tv;
 
@@ -72,6 +72,7 @@ architecture behavioral of tv is
     signal R_scan_line_high: std_logic_vector(1 downto 0);
     signal R_vsync: std_logic;
     signal R_fetch_next: std_logic;
+    signal R_vblank: std_logic;
 
 begin
     -- Vertical SYNC generation
@@ -85,8 +86,15 @@ begin
 	    else
 		R_vsync <= '0';
 	    end if;
+	    if conv_integer(scan_line) = 1 then
+	      R_vblank <= '1';
+	    end if;
+	    if conv_integer(scan_line) = 40 then
+	      R_vblank <= '0';
+	    end if;
 	end if;
     end process;
+    vblank <= R_vblank;
 
     -- FIFO signaling: when to fetch new pixel_data
     process(clk)
