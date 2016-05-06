@@ -953,9 +953,7 @@ begin
                              '0' when others;
     end generate;
     
-    -- TV currently it doesn't work correctly, some picture is shown
-    -- from RAM but lines are skipped or rarified, pixels are big...
-    -- check compositing constants and do we fetch more than 1 pixel...
+    -- TV PAL composite signal generation
     G_tv: if C_tv generate
     -- data source (compositing2 fifo)
     S_vga_enable <= '1' when R_fb_base_addr(31 downto 28) = C_xram_base else '0';
@@ -987,7 +985,7 @@ begin
       -- works if RAM is mapped to 0x80000000 or above
     );
     -- composite video signal generator    
-    S_tv_mode <= "01" when S_vga_enable='1' else "10";
+    S_tv_mode <= "00" when S_vga_enable='1' else "10";
     tvbitmap: entity work.tv
     port map
     (
@@ -997,7 +995,7 @@ begin
       pixel_data => vga_data_from_fifo(15 downto 0),
       mode => S_tv_mode, -- "00" is 8-bit mode, "01" is 16-bit mode, "10" is test picture
       dac_out => S_tv_dac,
-      tick_out => S_tv_frame
+      vsync => S_tv_frame
     );
     -- address decoder to set base address and clear interrupts
     with conv_integer(io_addr(11 downto 4)) select
