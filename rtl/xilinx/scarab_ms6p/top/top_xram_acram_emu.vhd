@@ -67,7 +67,6 @@ entity scarab_xram_acram_emu is
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 25bits -> 2^25 -> 32MB to be cached
 
 	C_vgahdmi: boolean := false;
-	C_vgahdmi_test_picture: integer := 1; -- enable test picture
 
     C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: ESA11-7a35i MIPS compatible soft-core 100MHz 32MB DDR3"; -- default banner in screen memory
@@ -218,7 +217,6 @@ begin
         C_cached_addr_bits => C_cached_addr_bits,
 
       C_vgahdmi => C_vgahdmi,
-      C_vgahdmi_test_picture => C_vgahdmi_test_picture,
 
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
