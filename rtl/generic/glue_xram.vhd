@@ -310,7 +310,8 @@ architecture Behavioral of glue_xram is
     signal R_fb_base_addr: std_logic_vector(31 downto 2) := (others => '0');
     signal R_fb_intr: std_logic;
     signal S_tv_dac: std_logic_vector(3 downto 0);
-    signal S_tv_fetch_next, S_tv_frame: std_logic;
+    signal S_tv_fetch_next: std_logic;
+    signal S_tv_vsync: std_logic;
     signal S_tv_mode: std_logic_vector(1 downto 0) := "10";
 
     -- VGA/HDMI video
@@ -852,6 +853,9 @@ begin
         --when iomap_from(iomap_vga, iomap_range) to iomap_to(iomap_vga, iomap_range) =>
         --when iomap_from(iomap_ledstrip, iomap_range) to iomap_to(iomap_ledstrip, iomap_range) =>
         when iomap_from(iomap_vga_textmode, iomap_range) to iomap_to(iomap_vga_textmode, iomap_range) =>
+            if C_tv then
+                io_to_cpu <= (others => S_vga_vblank); -- XXX fixme sync too short, get correct blank
+            end if;
             if C_vgahdmi then
                 io_to_cpu <= (others => S_vga_vblank); -- vertical blank: all bits the same
             end if;
@@ -956,9 +960,10 @@ begin
     -- TV PAL composite signal generation
     G_tv: if C_tv generate
     -- data source (compositing2 fifo)
+    -- misnomer warning: we use "vga" signal names although no VGA here but TV
     S_vga_enable <= '1' when R_fb_base_addr(31 downto 28) = C_xram_base else '0';
     S_vga_fetch_enabled <= S_vga_enable and vga_fetch_next; -- drain fifo into display
-    S_vga_active_enabled <= S_vga_enable and not S_tv_frame; -- frame active, pre-fill fifo
+    S_vga_active_enabled <= S_vga_enable and not S_tv_vsync; -- frame active, pre-fill fifo
     comp_fifo: entity work.compositing2_fifo
     generic map (
       C_width => C_tv_fifo_width,
@@ -978,7 +983,7 @@ begin
       -- data_in(31 downto 8) => (others => '0'),
       base_addr => R_fb_base_addr(29 downto 2),
       active => S_vga_active_enabled,
-      frame => vga_frame,
+      frame => vga_frame, -- output, for interrupt, 1 cpu clock pulse wide exactly
       data_out => vga_data_from_fifo(C_tv_fifo_data_width-1 downto 0),
       fetch_next => S_vga_fetch_enabled
       -- dirty hack upper bit of base enables fetching
@@ -995,7 +1000,8 @@ begin
       pixel_data => vga_data_from_fifo(15 downto 0),
       mode => S_tv_mode, -- "00" is 8-bit mode, "01" is 16-bit mode, "10" is test picture
       dac_out => S_tv_dac,
-      vsync => S_tv_frame
+      vblank => S_vga_vblank,
+      vsync => S_tv_vsync -- output, 1 short pulse before every new frame
     );
     -- address decoder to set base address and clear interrupts
     with conv_integer(io_addr(11 downto 4)) select
@@ -1019,7 +1025,7 @@ begin
             if vga_ce = '1' then -- and dmem_write = '0' then
                 R_fb_intr <= '0';
             else
-                if vga_frame = '1' then
+                if vga_frame = '1' then -- vga_frame (should last 1 cpu clock exactly)
                     R_fb_intr <= '1';
                 end if;
             end if;
