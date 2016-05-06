@@ -137,6 +137,11 @@ architecture Behavioral of glue_bram is
     signal snoop_cycle: std_logic;
     signal snoop_addr: std_logic_vector(31 downto 2);
 
+    constant C_sdram_ports: integer := 3;
+    constant C_i_port: integer := 0;
+    constant C_d_port: integer := 1;
+    constant C_fb_port: integer := 2;
+
     -- io base
     type T_iomap_range is array(0 to 1) of std_logic_vector(15 downto 0);
     constant iomap_range: T_iomap_range := (x"F800", x"FFFF"); -- actual range is 0xFFFFF800 .. 0xFFFFFFFF
@@ -255,42 +260,41 @@ begin
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
-    -- XXX sdram port 0 unusable!!!
-    imem_data_ready <= sdram_ready(1) when imem_addr(31 downto 30) = "10"
-      else imem_addr_strobe;
-    dmem_data_ready <= sdram_ready(2) when dmem_addr(31 downto 30) = "10"
-      else dmem_addr_strobe when dmem_addr(31) = '0'
-      else dmem_addr_strobe; -- I/O
+    imem_data_ready <= sdram_ready(C_i_port) when imem_addr(31 downto 30) = "10"
+      else bram_i_ready;
+    dmem_data_ready <= sdram_ready(C_d_port) when dmem_addr(31 downto 30) = "10"
+      else bram_d_ready when dmem_addr(31) = '0'
+      else '1'; -- I/O
 
     -- SDRAM
     G_sdram:
     if C_sdram generate
-    -- XXX sdram port 0 unusable!!!
-    -- port 1: instruction bus
-    to_sdram(1).addr_strobe <= imem_addr_strobe when
+    -- instruction bus
+    to_sdram(C_i_port).addr_strobe <= imem_addr_strobe when
       imem_addr(31 downto 30) = "10" else '0';
-    to_sdram(1).addr <= imem_addr(29 downto 2);
-    to_sdram(1).data_in <= (others => '-');
-    to_sdram(1).write <= '0';
-    to_sdram(1).byte_sel <= (others => '1');
-    -- port 2: data bus
-    to_sdram(2).addr_strobe <= dmem_addr_strobe when
+    to_sdram(C_i_port).addr <= imem_addr(29 downto 2);
+    to_sdram(C_i_port).data_in <= (others => '-');
+    to_sdram(C_i_port).write <= '0';
+    to_sdram(C_i_port).byte_sel <= (others => '1');
+    -- data bus
+    to_sdram(C_d_port).addr_strobe <= dmem_addr_strobe when
       dmem_addr(31 downto 30) = "10" else '0';
-    to_sdram(2).addr <= dmem_addr(29 downto 2);
-    to_sdram(2).data_in <= cpu_to_dmem;
-    to_sdram(2).write <= dmem_write;
-    to_sdram(2).byte_sel <= dmem_byte_sel;
+    to_sdram(C_d_port).addr <= dmem_addr(29 downto 2);
+    to_sdram(C_d_port).data_in <= cpu_to_dmem;
+    to_sdram(C_d_port).write <= dmem_write;
+    to_sdram(C_d_port).byte_sel <= dmem_byte_sel;
     -- composite video framebuffer
-    to_sdram(0).addr_strobe <= '0'; -- XXX: should be fb_addr_strobe;
-    to_sdram(0).write <= '0';
-    to_sdram(0).byte_sel <= x"f";
-    to_sdram(0).addr <= fb_addr;
-    to_sdram(0).data_in <= (others => '-');
-    fb_data_ready <= sdram_ready(0);
+    to_sdram(C_fb_port).addr_strobe <= fb_addr_strobe when C_framebuffer
+      else '0';
+    to_sdram(C_fb_port).write <= '0';
+    to_sdram(C_fb_port).byte_sel <= x"f";
+    to_sdram(C_fb_port).addr <= fb_addr;
+    to_sdram(C_fb_port).data_in <= (others => '-');
+    fb_data_ready <= sdram_ready(C_fb_port);
 
     sdram: entity work.sdram_controller
     generic map (
-	C_ports => 3,
+	C_ports => C_sdram_ports,
 	sdram_address_width => C_sdram_address_width,
 	sdram_column_bits => C_sdram_column_bits,
 	sdram_startup_cycles => C_sdram_startup_cycles,
@@ -434,7 +438,8 @@ begin
 
     simple_out(C_simple_out - 1 downto 0) <=
       R_simple_out(C_simple_out - 1 downto 0);
---    simple_out(7 downto 0) <= to_sdram(2).addr_strobe & sdram_ready(2) & to_sdram(1).addr_strobe & sdram_ready(1) & imem_addr(31 downto 28);
+-- XXX Marko debugging sdram's arbiter:
+--    simple_out(7 downto 0) <= to_sdram(C_i_port).addr_strobe & sdram_ready(C_i_port) & to_sdram(C_d_port).addr_strobe & sdram_ready(C_d_port) & R_simple_out(3 downto 0);
 
     -- big address decoder when CPU reads IO
     process(io_addr, R_simple_in, R_simple_out, from_sio, from_gpio)
