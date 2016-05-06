@@ -57,7 +57,6 @@ entity glue is
     C_sdram: boolean := true;
 
     C_vgahdmi: boolean := false;
-    C_vgahdmi_test_picture: integer := 1;
     -- number of pixels for line step 640
     C_vgahdmi_fifo_width: integer := 640;
     -- number of scan lines: 480
@@ -304,7 +303,6 @@ begin
       C_sdram_cycles_per_refresh => 1524,
       -- vga simple compositing bitmap only graphics
       C_vgahdmi => C_vgahdmi,
-      C_vgahdmi_test_picture => C_vgahdmi_test_picture,
       C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
       C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,

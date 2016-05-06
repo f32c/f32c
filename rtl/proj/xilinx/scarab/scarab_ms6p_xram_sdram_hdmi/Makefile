@@ -63,6 +63,7 @@ vhdfiles = \
 ../../../../soc/gpio.vhd \
 ../../../../soc/timer.vhd \
 ../../../../soc/pcm.vhd \
+../../../../soc/cvbs.vhd \
 ../../../../soc/pid/pid.vhd \
 ../../../../soc/pid/ctrlpid.vhd \
 ../../../../soc/pid/simotor.vhd \
@@ -77,6 +78,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
 ../../../../soc/vgahdmi/vga.vhd \
+../../../../soc/vgahdmi/tv.vhd \
 ../../../../soc/vgahdmi/VGA_textmode.vhd \
 ../../../../soc/vgahdmi/font_block_pack.vhd \
 ../../../../soc/vgahdmi/font8x8_xark.vhd \
