@@ -31,7 +31,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.MATH_REAL.ALL;
 
 use work.f32c_pack.all;
-use work.sram_pack.all;
+use work.sdram_pack.all;
 
 
 entity glue_bram is
@@ -131,9 +131,7 @@ architecture Behavioral of glue_bram is
     signal bram_i_ready, bram_d_ready, dmem_bram_enable: std_logic;
 
     -- SDRAM
-    signal to_sdram: sram_port_array;
-    signal sdram_ready: sram_ready_array;
-    signal from_sdram: std_logic_vector(31 downto 0);
+    signal sdram_bus: sdram_port_array;
     signal snoop_cycle: std_logic;
     signal snoop_addr: std_logic_vector(31 downto 2);
 
@@ -164,10 +162,10 @@ architecture Behavioral of glue_bram is
 
     -- Composite video framebuffer
     signal R_fb_mode: std_logic_vector(1 downto 0) := "11";
-    signal R_fb_base_addr: std_logic_vector(29 downto 2);
+    signal R_fb_base_addr: std_logic_vector(31 downto 2);
     signal R_fb_intr: std_logic;
-    signal fb_addr_strobe, fb_data_ready: std_logic;
-    signal fb_addr: std_logic_vector(29 downto 2);
+    signal fb_addr_strobe: std_logic;
+    signal fb_addr: std_logic_vector(31 downto 2);
     signal fb_tick: std_logic;
 
     -- GPIO
@@ -251,18 +249,21 @@ begin
 	debug_debug => debug_debug,
 	debug_active => debug_active
     );
-    final_to_cpu_i <= from_sdram when imem_addr(31 downto 30) = "10"
+    final_to_cpu_i <=
+      sdram_bus(C_i_port).data_out when imem_addr(31 downto 30) = "10"
       else bram_i_to_cpu;
     final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
-      else from_sdram when dmem_addr(31 downto 30) = "10"
+      else sdram_bus(C_d_port).data_out when dmem_addr(31 downto 30) = "10"
       else bram_d_to_cpu;
     intr <= "00" & gpio_intr_joint & '0' & from_sio(0)(8) & R_fb_intr;
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
-    imem_data_ready <= sdram_ready(C_i_port) when imem_addr(31 downto 30) = "10"
+    imem_data_ready <=
+      sdram_bus(C_i_port).data_ready when imem_addr(31 downto 30) = "10"
       else bram_i_ready;
-    dmem_data_ready <= sdram_ready(C_d_port) when dmem_addr(31 downto 30) = "10"
+    dmem_data_ready <=
+      sdram_bus(C_d_port).data_ready when dmem_addr(31 downto 30) = "10"
       else bram_d_ready when dmem_addr(31) = '0'
       else '1'; -- I/O
 
@@ -270,27 +271,26 @@ begin
     G_sdram:
     if C_sdram generate
     -- instruction bus
-    to_sdram(C_i_port).addr_strobe <= imem_addr_strobe when
+    sdram_bus(C_i_port).addr_strobe <= imem_addr_strobe when
       imem_addr(31 downto 30) = "10" else '0';
-    to_sdram(C_i_port).addr <= imem_addr(29 downto 2);
-    to_sdram(C_i_port).data_in <= (others => '-');
-    to_sdram(C_i_port).write <= '0';
-    to_sdram(C_i_port).byte_sel <= (others => '1');
+    sdram_bus(C_i_port).addr <= imem_addr;
+    sdram_bus(C_i_port).data_in <= (others => '-');
+    sdram_bus(C_i_port).write <= '0';
+    sdram_bus(C_i_port).byte_sel <= (others => '1');
     -- data bus
-    to_sdram(C_d_port).addr_strobe <= dmem_addr_strobe when
+    sdram_bus(C_d_port).addr_strobe <= dmem_addr_strobe when
       dmem_addr(31 downto 30) = "10" else '0';
-    to_sdram(C_d_port).addr <= dmem_addr(29 downto 2);
-    to_sdram(C_d_port).data_in <= cpu_to_dmem;
-    to_sdram(C_d_port).write <= dmem_write;
-    to_sdram(C_d_port).byte_sel <= dmem_byte_sel;
+    sdram_bus(C_d_port).addr <= dmem_addr;
+    sdram_bus(C_d_port).data_in <= cpu_to_dmem;
+    sdram_bus(C_d_port).write <= dmem_write;
+    sdram_bus(C_d_port).byte_sel <= dmem_byte_sel;
     -- composite video framebuffer
-    to_sdram(C_fb_port).addr_strobe <= fb_addr_strobe when C_framebuffer
+    sdram_bus(C_fb_port).addr_strobe <= fb_addr_strobe when C_framebuffer
       else '0';
-    to_sdram(C_fb_port).write <= '0';
-    to_sdram(C_fb_port).byte_sel <= x"f";
-    to_sdram(C_fb_port).addr <= fb_addr;
-    to_sdram(C_fb_port).data_in <= (others => '-');
-    fb_data_ready <= sdram_ready(C_fb_port);
+    sdram_bus(C_fb_port).write <= '0';
+    sdram_bus(C_fb_port).byte_sel <= x"f";
+    sdram_bus(C_fb_port).addr <= fb_addr;
+    sdram_bus(C_fb_port).data_in <= (others => '-');
 
     sdram: entity work.sdram_controller
     generic map (
@@ -303,7 +303,7 @@ begin
     port map (
 	clk => clk, reset => sio_break_internal(0),
 	-- internal connections
-	data_out => from_sdram, bus_in => to_sdram, ready_out => sdram_ready,
+	mpbus => sdram_bus,
 	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
 	-- external SDRAM interface
 	sdram_addr => sdram_addr, sdram_data => sdram_data,
@@ -325,8 +325,8 @@ begin
 	clk => clk, clk_dac => clk_325m,
 	addr_strobe => fb_addr_strobe,
 	addr_out => fb_addr,
-	data_ready => fb_data_ready,
-	data_in => from_sdram,
+	data_ready => sdram_bus(C_fb_port).data_ready,
+	data_in => sdram_bus(C_fb_port).data_out,
 	mode => R_fb_mode,
 	base_addr => R_fb_base_addr,
 	dac_out => video_dac,
@@ -439,7 +439,7 @@ begin
     simple_out(C_simple_out - 1 downto 0) <=
       R_simple_out(C_simple_out - 1 downto 0);
 -- XXX Marko debugging sdram's arbiter:
---    simple_out(7 downto 0) <= to_sdram(C_i_port).addr_strobe & sdram_ready(C_i_port) & to_sdram(C_d_port).addr_strobe & sdram_ready(C_d_port) & R_simple_out(3 downto 0);
+--    simple_out(7 downto 0) <= sdram_bus(C_i_port).addr_strobe & sdram_bus(C_i_port).data_ready & sdram_bus(C_d_port).addr_strobe & sdram_bus(C_d_port).data_ready & R_simple_out(3 downto 0);
 
     -- big address decoder when CPU reads IO
     process(io_addr, R_simple_in, R_simple_out, from_sio, from_gpio)

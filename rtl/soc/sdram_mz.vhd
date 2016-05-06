@@ -46,7 +46,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-use work.sram_pack.all;
+use work.sdram_pack.all;
 
 
 entity SDRAM_Controller is
@@ -67,12 +67,9 @@ entity SDRAM_Controller is
 	reset: in  STD_LOGIC;
 
 	-- To internal bus / logic blocks
-	data_out: out std_logic_vector(31 downto 0); -- XXX rename to bus_out!
-	ready_out: out sram_ready_array; -- one bit per port
+	mpbus: inout sdram_port_array;
 	snoop_addr: out std_logic_vector(31 downto 2);
 	snoop_cycle: out std_logic;
-	-- Inbound multi-port bus connections
-	bus_in: in sram_port_array;
 
 	-- SDRAM signals
 	sdram_clk: out STD_LOGIC;
@@ -137,7 +134,7 @@ architecture Behavioral of SDRAM_Controller is
    
     signal iob_data_next: std_logic_vector(15 downto 0) := (others => '0');
     signal R_from_sdram_prev, R_from_sdram: std_logic_vector(15 downto 0);
-    signal R_ready_out: sram_ready_array; -- one bit per port
+    signal R_ready_out: std_logic_vector(C_ports - 1 downto 0); -- one-hot
     attribute IOB of R_from_sdram: signal is "true";
    
     type fsm_state is (
@@ -199,7 +196,7 @@ architecture Behavioral of SDRAM_Controller is
     constant end_of_row: natural := sdram_address_width-2;
     constant prefresh_cmd: natural := 10;
 
-    -- Bus interface signals (resolved from bus_in record via R_cur_port)
+    -- Bus interface signals (resolved from mpbus record via R_cur_port)
     signal addr_strobe: std_logic;			-- from CPU bus
     signal write: std_logic;				-- from CPU bus
     signal byte_sel: std_logic_vector(3 downto 0);	-- from CPU bus
@@ -213,13 +210,22 @@ architecture Behavioral of SDRAM_Controller is
     signal next_port: integer;
 
 begin
-    -- Mux for input ports
-    addr_strobe <= bus_in(R_next_port).addr_strobe;
-    write <= bus_in(R_next_port).write;
-    byte_sel <= bus_in(R_next_port).byte_sel;
-    addr(bus_in(0).addr'high - 2 downto 0) <= bus_in(R_next_port).addr;
-    data_in <= bus_in(R_next_port).data_in;
-    ready_out <= R_ready_out;
+    -- Inbound multiport mux
+    addr_strobe <= mpbus(R_next_port).addr_strobe;
+    write <= mpbus(R_next_port).write;
+    byte_sel <= mpbus(R_next_port).byte_sel;
+    addr(mpbus(0).addr'high - 2 downto 0) <= mpbus(R_next_port).addr;
+    data_in <= mpbus(R_next_port).data_in;
+
+    -- Outbound multiport demux
+    process(R_ready_out, R_from_sdram)
+	variable i: integer;
+    begin
+	for i in 0 to (C_ports - 1) loop
+	    mpbus(i).data_ready <= R_ready_out(i);
+	    mpbus(i).data_out <= R_from_sdram & R_from_sdram_prev;
+	end loop;
+    end process;
 
     -- Indicate the need to refresh when the counter is 2048,
     -- Force a refresh when the counter is 4096 - (if a refresh is forced, 
@@ -259,10 +265,9 @@ begin
     -- Explicitly set up the tristate I/O buffers on the DQ signals
     ---------------------------------------------------------------
     sdram_data <= iob_data when iob_dq_hiz = '0' else (others => 'Z');
-    data_out <= R_from_sdram & R_from_sdram_prev;
 
     -- Arbiter: round-robin port selection combinatorial logic
-    process(bus_in, R_cur_port)
+    process(mpbus, R_cur_port)
 	variable i, j, t, n: integer;
     begin
 	t := R_cur_port;
@@ -270,7 +275,7 @@ begin
 	    for j in 1 to C_ports loop
 		if R_cur_port = i then
 		    n := (i + j) mod C_ports;
-		    if bus_in(n).addr_strobe = '1' and n /= C_prio_port then
+		    if mpbus(n).addr_strobe = '1' and n /= C_prio_port then
 			t := n;
 			exit;
 		    end if;
