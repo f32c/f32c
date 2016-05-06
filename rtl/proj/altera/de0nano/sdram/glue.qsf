@@ -175,11 +175,6 @@ set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING ON
 set_global_assignment -name PHYSICAL_SYNTHESIS_ASYNCHRONOUS_SIGNAL_PIPELINING ON
 set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON
 
-
-
-
-
-
 set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name OPTIMIZATION_MODE "HIGH PERFORMANCE EFFORT"
@@ -187,9 +182,9 @@ set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE SPEED
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 
 
-set_global_assignment -name VHDL_FILE ../../../../altera/chip/cyclone4/bram_dp_x18.vhd
-set_global_assignment -name VHDL_FILE ../../../../altera/chip/cyclone4/bram_dp_x9.vhd
-set_global_assignment -name VHDL_FILE ../../../../cpu/cache.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sdram_mz.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bram_true2p_1clk.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/cache_generic_param.vhd
 set_global_assignment -name VHDL_FILE ../../../../altera/de0nano/clocks/pll_50m.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bram.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/defs_bootblock.vhd
@@ -198,7 +193,6 @@ set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/boot_sio_mi
 set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/boot_sio_mi32eb.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/boot_rom_mi32el.vhd
 set_global_assignment -name VHDL_FILE ../../../../altera/de0nano/clocks/pll_50m_81m25.vhd
-set_global_assignment -name VHDL_FILE ../../../../soc/sdram_mz.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/fb.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/cvbs.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/glue_sdram_fb.vhd
