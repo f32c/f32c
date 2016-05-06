@@ -55,8 +55,8 @@ entity glue is
 
 	-- SoC configuration options
 	C_PC_mask: std_logic_vector := x"800fffff"; -- 1 MB
-	C_bram_size: integer := 2;
-	C_simple_in: integer := 0;
+	C_bram_size: integer := 8;
+	C_simple_in: integer := 32;
 	C_simple_out: integer := 8;
 	C_gpio: integer := 0
     );
@@ -149,5 +149,5 @@ begin
 	sdram_we => dram_we_n, sdram_cs => dram_cs_n
     );
 
-    btns <= x"000" & "00" & btn_left & btn_right;
+    btns <= x"000" & "00" & not btn_left & not btn_right;
 end Behavioral;
