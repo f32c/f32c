@@ -74,9 +74,9 @@ entity glue_bram is
 	-- SoC configuration options
 	C_bram_size: integer := 8;	-- in KBytes
 	C_boot_spi: boolean := false;
-	C_icache_size: integer := 0;	-- 0, 2, 4 or 8 KBytes
-	C_dcache_size: integer := 0;	-- 0, 2, 4 or 8 KBytes
-	C_cached_addr_bits: integer := 25; -- 32MB
+	C_icache_size: integer := 8;	-- 0, 2, 4 or 8 KBytes
+	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
+	C_cached_addr_bits: integer := 25; -- 32 MB
 	C_sdram: boolean := true;
 	C_sio: integer := 1;
 	C_sio_init_baudrate: integer := 115200;
@@ -255,36 +255,38 @@ begin
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
-    imem_data_ready <= sdram_ready(0) when imem_addr(31 downto 30) = "10"
-      else bram_i_ready;
-    dmem_data_ready <= sdram_ready(1) when dmem_addr(31 downto 30) = "10"
-      else bram_d_ready when dmem_addr(31) = '0'
-      else '1'; -- I/O
+    -- XXX sdram port 0 unusable!!!
+    imem_data_ready <= sdram_ready(1) when imem_addr(31 downto 30) = "10"
+      else imem_addr_strobe;
+    dmem_data_ready <= sdram_ready(2) when dmem_addr(31 downto 30) = "10"
+      else dmem_addr_strobe when dmem_addr(31) = '0'
+      else dmem_addr_strobe; -- I/O
 
     -- SDRAM
     G_sdram:
     if C_sdram generate
-    -- port 0: instruction bus
-    to_sdram(0).addr_strobe <= imem_addr_strobe when
+    -- XXX sdram port 0 unusable!!!
+    -- port 1: instruction bus
+    to_sdram(1).addr_strobe <= imem_addr_strobe when
       imem_addr(31 downto 30) = "10" else '0';
-    to_sdram(0).addr <= imem_addr(29 downto 2);
-    to_sdram(0).data_in <= (others => '-');
-    to_sdram(0).write <= '0';
-    to_sdram(0).byte_sel <= (others => '1');
-    -- port 1: data bus
-    to_sdram(1).addr_strobe <= dmem_addr_strobe when
+    to_sdram(1).addr <= imem_addr(29 downto 2);
+    to_sdram(1).data_in <= (others => '-');
+    to_sdram(1).write <= '0';
+    to_sdram(1).byte_sel <= (others => '1');
+    -- port 2: data bus
+    to_sdram(2).addr_strobe <= dmem_addr_strobe when
       dmem_addr(31 downto 30) = "10" else '0';
-    to_sdram(1).addr <= dmem_addr(29 downto 2);
-    to_sdram(1).data_in <= cpu_to_dmem;
-    to_sdram(1).write <= dmem_write;
-    to_sdram(1).byte_sel <= dmem_byte_sel;
+    to_sdram(2).addr <= dmem_addr(29 downto 2);
+    to_sdram(2).data_in <= cpu_to_dmem;
+    to_sdram(2).write <= dmem_write;
+    to_sdram(2).byte_sel <= dmem_byte_sel;
     -- composite video framebuffer
-    to_sdram(2).addr_strobe <= fb_addr_strobe;
-    to_sdram(2).write <= '0';
-    to_sdram(2).byte_sel <= x"f";
-    to_sdram(2).addr <= fb_addr;
-    to_sdram(2).data_in <= (others => '-');
-    fb_data_ready <= sdram_ready(2);
+    to_sdram(0).addr_strobe <= '0'; -- XXX: should be fb_addr_strobe;
+    to_sdram(0).write <= '0';
+    to_sdram(0).byte_sel <= x"f";
+    to_sdram(0).addr <= fb_addr;
+    to_sdram(0).data_in <= (others => '-');
+    fb_data_ready <= sdram_ready(0);
 
     sdram: entity work.sdram_controller
     generic map (
@@ -432,6 +434,7 @@ begin
 
     simple_out(C_simple_out - 1 downto 0) <=
       R_simple_out(C_simple_out - 1 downto 0);
+--    simple_out(7 downto 0) <= to_sdram(2).addr_strobe & sdram_ready(2) & to_sdram(1).addr_strobe & sdram_ready(1) & imem_addr(31 downto 28);
 
     -- big address decoder when CPU reads IO
     process(io_addr, R_simple_in, R_simple_out, from_sio, from_gpio)
