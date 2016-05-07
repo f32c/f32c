@@ -121,7 +121,7 @@ use ieee.numeric_std.all;
 
 entity compositing2_fifo is
     generic (
-        C_synclen: integer := 3; -- bits in cpu-to-pixel clock synchronizer
+        C_synclen: integer := 2; -- bits in cpu-to-pixel clock synchronizer
         -- C_position_clipping = false -- (default) handles only small out of screen positions
         -- C_position_clipping = true -- handles large out of screen gracefully (LUT eater)
         -- for average use it can be left disabled (false)
@@ -549,6 +549,8 @@ end;
 --     can't be fetched in time, resume to correct line
 --     to minimize visual degradation of the picture
 --     some improvement for 2 chasing pointers
+
+-- [ ] around vertical lines 3-5, lines skipped or duplicated? (see slash char in c2_font)
 
 -- [ ] font and text data fetching during video blank
 
