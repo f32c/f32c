@@ -551,3 +551,8 @@ end;
 --     some improvement for 2 chasing pointers
 
 -- [ ] font and text data fetching during video blank
+
+-- [ ] 16bpp test: does it work correctly?
+--     In 16bpp mode it looks like pixel step is still 8bpp
+
+-- [ ] cache support (save bandwidth when displaying font using tiled sprites)
