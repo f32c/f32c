@@ -90,6 +90,9 @@
         <Source name="../../../../soc/cvbs.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../../soc/vgahdmi/video_cache.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../../soc/vgahdmi/tv.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
