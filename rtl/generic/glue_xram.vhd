@@ -110,6 +110,7 @@ generic (
   -- false: normal monitors, DVI-D/HDMI 10-bit TMDS (25MHz pixel clock, 250MHz shift clock)
   -- true:  bare wired LCD panel, 7-bit LVDS (36MHz pixel clock, 252MHz shift clock and does only SDR, not DDR)
   C_lvds_display: boolean := false; -- false: normal DVI-D/HDMI, true: bare LCD panel
+  C_video_cache_size: integer := 0; -- KB
   -- TV simple 512x512 bitmap
   C_tv: boolean := false; -- enable TV output
   C_tv_fifo_width: integer := 512;
@@ -320,13 +321,20 @@ architecture Behavioral of glue_xram is
     signal S_vga_enable: std_logic;
     signal S_vga_active_enabled: std_logic;
     signal vga_fetch_next, S_vga_fetch_enabled: std_logic; -- video module requests next data from fifo
+    signal vga_data_from_fifo: std_logic_vector(31 downto 0);
+    -- VGA RAM port
     signal vga_addr: std_logic_vector(29 downto 2);
-    signal vga_data, vga_data_from_fifo: std_logic_vector(31 downto 0);
-    signal vga_data_bram: std_logic_vector(7 downto 0);
-    signal video_bram_write: std_logic;
-    signal video_bram_addr_strobe: std_logic;
     signal vga_addr_strobe: std_logic; -- FIFO requests to read from RAM
     signal vga_data_ready: std_logic; -- RAM responds to FIFO
+    signal vga_data: std_logic_vector(31 downto 0);
+    -- Video FIFO data bus
+    signal video_fifo_addr: std_logic_vector(29 downto 2);
+    signal video_fifo_addr_strobe: std_logic; -- FIFO requests to read from RAM
+    signal video_fifo_data_ready: std_logic; -- RAM responds to FIFO
+    signal video_fifo_data: std_logic_vector(31 downto 0);
+
+    signal video_bram_write: std_logic;
+    signal video_bram_addr_strobe: std_logic;
     signal S_vga_r, S_vga_g, S_vga_b: std_logic_vector(7 downto 0);
     signal S_vga_vsync, S_vga_hsync: std_logic;
     signal S_vga_vblank, S_vga_blank: std_logic;
@@ -1036,6 +1044,109 @@ begin
     -- VGA/HDMI
     G_vgahdmi:
     if C_vgahdmi generate
+    S_vga_enable <= '1' when R_fb_base_addr(31 downto 28) = C_xram_base else '0';
+    S_vga_fetch_enabled <= S_vga_enable and vga_fetch_next; -- drain fifo into display
+    S_vga_active_enabled <= S_vga_enable and not S_vga_vsync; -- frame active, pre-fill fifo
+
+    -- data source: cache cpu clock synchronous
+    G_no_video_cache: if C_video_cache_size=0 generate
+      -- bypass the cache
+      vga_addr_strobe <= video_fifo_addr_strobe;
+      vga_addr <= video_fifo_addr;
+      video_fifo_data_ready <= vga_data_ready; -- data valid for read acknowledge from RAM
+      video_fifo_data <= vga_data; -- from XRAM
+    end generate;
+
+    G_yes_video_cache_i: if false and C_video_cache_size > 0 generate
+    video_cache_i: entity work.video_cache
+    generic map
+    (
+        C_icache_size => C_video_cache_size,
+        C_dcache_size => 0,
+        C_xram_base => x"8",
+        C_cached_addr_bits => 29, -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
+        C_icache_expire => false -- true: i-cache will immediately expire every cached data
+    )
+    port map
+    (
+      clk => clk,
+      --addr_strobe => video_fifo_addr_strobe,
+      i_addr(31 downto 30) => "10",
+      i_addr(29 downto 2) => video_fifo_addr,
+      instr_ready => video_fifo_data_ready, -- output to fifo
+      i_data => video_fifo_data, -- output from cache to fifo
+
+      imem_addr_strobe => vga_addr_strobe,
+      imem_addr(31 downto 30) => open,
+      imem_addr(29 downto 2) => vga_addr,
+      imem_data_in => vga_data, -- input from XRAM
+      imem_data_ready => vga_data_ready -- input from XRAM
+    );
+    end generate;
+
+    G_yes_video_cache_d: if C_video_cache_size > 0 generate
+    video_cache_d: entity work.video_cache
+    generic map
+    (
+        C_icache_size => 0,
+        C_dcache_size => C_video_cache_size,
+        C_xram_base => x"8",
+        C_cached_addr_bits => 29, -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
+        C_icache_expire => false -- true: i-cache will immediately expire every cached data
+    )
+    port map
+    (
+      clk => clk,
+      cpu_d_strobe => video_fifo_addr_strobe,
+      d_addr(31 downto 30) => "10",
+      d_addr(29 downto 2) => video_fifo_addr,
+      cpu_d_ready => video_fifo_data_ready, -- output to fifo
+      cpu_d_byte_sel => "1111",
+      cpu_d_data_in => video_fifo_data, -- output from cache to fifo
+
+      dmem_addr_strobe => vga_addr_strobe,
+      dmem_addr(31 downto 30) => open,
+      dmem_addr(29 downto 2) => vga_addr,
+      dmem_data_in => vga_data, -- input from XRAM
+      dmem_data_ready => vga_data_ready -- input from XRAM
+    );
+    end generate;
+
+    -- data source: FIFO - cross clock domain cpu-pixel
+    -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
+    -- vga_data(7 downto 0) <= x"0F";
+    vga_data <= from_xram;
+    comp_fifo: entity work.compositing2_fifo
+    generic map (
+      C_width => C_vgahdmi_fifo_width,
+      C_height => C_vgahdmi_fifo_height,
+      C_data_width => C_vgahdmi_fifo_data_width,
+      C_addr_width => C_vgahdmi_fifo_addr_width
+    )
+    port map (
+      clk => clk,
+      clk_pixel => clk_pixel,
+      addr_strobe => video_fifo_addr_strobe,
+      addr_out => video_fifo_addr,
+      data_ready => video_fifo_data_ready, -- data valid for read acknowledge from RAM
+      data_in => video_fifo_data, -- from cache
+      --addr_strobe => vga_addr_strobe,
+      --addr_out => vga_addr,
+      --data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
+      --data_in => vga_data, -- from cache
+      -- data_in => x"00000001", -- test pattern vertical lines
+      -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
+      -- data_in(31 downto 8) => (others => '0'),
+      base_addr => R_fb_base_addr(29 downto 2),
+      active => S_vga_active_enabled,
+      frame => vga_frame,
+      data_out => vga_data_from_fifo(C_vgahdmi_fifo_data_width-1 downto 0),
+      fetch_next => S_vga_fetch_enabled
+      -- dirty hack upper bit of base enables fetching
+      -- works if RAM is mapped to 0x80000000 or above
+    );
+
+    -- VGA video generator - pixel clock synchronous
     vgabitmap: entity work.vga
     port map (
       clk_pixel => clk_pixel,
@@ -1058,9 +1169,9 @@ begin
     vga_vsync <= not S_vga_vsync;
     vga_hsync <= not S_vga_hsync;
 
-    -- DVI-D Encoder Block
-    -- XXX Fixme: unify this block with vgatextmode (use same signal names)
     G_vgahdmi_tmds_display: if not C_lvds_display generate
+    -- DVI-D TMDS Encoder Block
+    -- XXX Fixme: unify this block with vgatextmode (use same signal names)
     G_vgahdmi_dvid: entity work.vga2dvid
     generic map (
       C_ddr     => C_dvid_ddr,
@@ -1084,7 +1195,10 @@ begin
       out_clock => dvid_clock
     );
     end generate;
+
     G_vgahdmi_lvds_display: if C_lvds_display generate
+    -- LCD LVDS Encoder Block
+    -- XXX Fixme: unify this block with vgatextmode (use same signal names)
     G_vgahdmi_lcd: entity work.vga2lcd
     generic map (
       C_depth => 8 -- 8bpp (8 bit per pixel)
@@ -1107,37 +1221,6 @@ begin
       out_clock      => dvid_clock
     );
     end generate;
-    S_vga_enable <= '1' when R_fb_base_addr(31 downto 28) = C_xram_base else '0';
-    S_vga_fetch_enabled <= S_vga_enable and vga_fetch_next; -- drain fifo into display
-    S_vga_active_enabled <= S_vga_enable and not S_vga_vsync; -- frame active, pre-fill fifo
-    -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
-    -- vga_data(7 downto 0) <= x"0F";
-    vga_data <= from_xram;
-    comp_fifo: entity work.compositing2_fifo
-    generic map (
-      C_width => C_vgahdmi_fifo_width,
-      C_height => C_vgahdmi_fifo_height,
-      C_data_width => C_vgahdmi_fifo_data_width,
-      C_addr_width => C_vgahdmi_fifo_addr_width
-    )
-    port map (
-      clk => clk,
-      clk_pixel => clk_pixel,
-      addr_strobe => vga_addr_strobe,
-      addr_out => vga_addr,
-      data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
-      data_in => vga_data, -- from SDRAM or BRAM
-      -- data_in => x"00000001", -- test pattern vertical lines
-      -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
-      -- data_in(31 downto 8) => (others => '0'),
-      base_addr => R_fb_base_addr(29 downto 2),
-      active => S_vga_active_enabled,
-      frame => vga_frame,
-      data_out => vga_data_from_fifo(C_vgahdmi_fifo_data_width-1 downto 0),
-      fetch_next => S_vga_fetch_enabled
-      -- dirty hack upper bit of base enables fetching
-      -- works if RAM is mapped to 0x80000000 or above
-    );
 
     -- address decoder to set base address and clear interrupts
     with conv_integer(io_addr(11 downto 4)) select

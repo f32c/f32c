@@ -128,7 +128,6 @@ entity toplevel is
     C_framebuffer: boolean := false; -- TV framebuffer (not yet supported in glue_xram)
 
     C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
-      C_vgahdmi_test_picture: integer := 0;
       -- number of pixels for line; 640
       C_vgahdmi_fifo_width: integer := 640;
       -- number of scan lines: 480
@@ -356,7 +355,6 @@ begin
       -- C_framebuffer => C_framebuffer,
       -- vga simple bitmap
       C_vgahdmi => C_vgahdmi,
-      C_vgahdmi_test_picture => C_vgahdmi_test_picture,
       C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
       C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
