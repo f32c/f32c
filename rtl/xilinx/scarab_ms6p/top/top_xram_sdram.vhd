@@ -50,14 +50,14 @@ entity glue is
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
     C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
-    C_icache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
-    C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
+    C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
+    C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
     C_cached_addr_bits: integer := 25; -- number of lower RAM address bits 2^25 -> 32MB to be cached
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
     C_sdram: boolean := true;
 
     -- insert cache between RAM and compositing2 video fifo
-    C_video_cache_size: integer := 0;  -- KB size 0:disable 2,4,8,16,32:enable
+    C_video_cache_size: integer := 32;  -- KB size 0:disable 2,4,8,16,32:enable
 
     C_vgahdmi: boolean := true;
     -- number of pixels for line step 640
@@ -304,6 +304,7 @@ begin
       C_sdram_column_bits => 9,
       C_sdram_startup_cycles => 10100,
       C_sdram_cycles_per_refresh => 1524,
+      C_video_cache_size => C_video_cache_size,
       -- vga simple compositing bitmap only graphics
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
