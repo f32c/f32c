@@ -453,9 +453,7 @@ begin
       S_compositing_erase <= fetch_next;
       -- sprite with large negative offset is invisble
       -- S_offset_visible <= '0' when R_compositing_active_offset(15 downto 14) = "10" else '1';
-      -- write signal with handling transparency:
-      -- if word to be written is 0 then don't write, allow it to
-      -- "see through" lower priority sprites
+      -- write to buffer during state 4 (fetching of pixel data)
       S_data_write <= '1' when data_ready='1'
                            and R_state = 4 -- write only during state 4 - bitmap data reading
                           else '0';
@@ -508,10 +506,14 @@ begin
           end if;
         end if; -- rising edge(clk)
       end process;
+
       -- bram will be written when MSB of the shifting counter is 0
       -- MSB=1 allows shifting to stop when complete
       -- this provides signal to bram to store data
-      -- fixme: here transparency doesn't work?
+      -- write signal with handling transparency:
+      -- if pixel to be written is of transparent color (default 0 = black)
+      -- then don't write, allow it to
+      -- "see through" lower priority sprites
       S_bram_write <= '1' when S_bram_data_in /= color_transparent
                            and R_shifting_counter(C_shift_addr_width) = '0'
                  else '0';
