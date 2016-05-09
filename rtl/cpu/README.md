@@ -1,13 +1,25 @@
-# f32c bus
+# f32c core
+
+Here's the core of f32c CPU. 
+pipeline.vhd is the most complex part which
+gives true speed to the the processor. 
+
+The bus behaviour is coming from the pipeline
+and understanding its signaling is important
+in order to make a SOC that will connect to f32c bus.
+
+# f32c bus signaling
 
 The memory access is done using 32-bit synchronous
 bus with simple signaling and tight timing.
 
+Usually f32c uses multiport RAM arbiter which
+has signal bus towards phyisical RAM and multiple
+ports for CPU and SOC like video or DMA.
+
 Valid data "live" on the wire during a single data
 ready clock cycle. Exactly in time when ready
 signal is high, data have to be sampled.
-
-# memory port signaling
 
     dmem_addr_strobe: std_logic;
 Strobe is memory cycle request signal.
