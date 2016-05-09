@@ -384,8 +384,25 @@ begin
         end if;
       end if;
     end process;
-    
+
+    permanent_strobe: if C_data_width = 32 generate
     S_need_refill <= R_need_refill_cpu;
+    end generate;
+
+    intermittent_strobe: if C_data_width < 32 generate
+    S_need_refill <= '1' when R_need_refill_cpu='1' and
+            (
+              -- effectively this does
+              -- R_shifting_counter >= C_shift_cycles-1
+              -- it prevents too early request of new data from cache or fast RAM
+              -- before shifting process has completed.
+              -- if new data arrive too early it will be unconditionally accepted
+              -- and data which entered shifting process will be overwritten.
+              conv_integer(not R_shifting_counter(C_shift_addr_width-1 downto 0)) = 0 -- during last shift cycle we can start new data
+              or R_shifting_counter(C_shift_addr_width) = '1' -- past last shift cycle, shift fully complete, start new data
+            )
+            else '0';
+    end generate;
     
     -- addr_strobe must be cpu CLK synchronous!
     addr_strobe <= S_need_refill;
@@ -471,6 +488,8 @@ begin
             -- so it fits to shift 8 bit per pixel output
             -- for lower than 8 we won't have time to shift
             -- in that case: FIXME :-)
+            -- currently it is fixed by masking out addr_stobe
+            -- until shifting is finished
             R_data_in_shift <= data_in; -- store data in temporary shift register
             --R_data_in_shift <= x"aa5511ff";
             -- for later storing into compositing bram)
@@ -528,7 +547,7 @@ end;
 
 -- [ ] advanced bandwidth saving:
 --     don't fetch low priority or clipped out content.
---     compisite highest priority pixels first.
+--     composite highest priority pixels first.
 --     read back composited data or have extra bram that
 --     will memorize opacity
 --     and skip fetching of any
@@ -538,9 +557,13 @@ end;
 -- [ ] allow content to have 0 pixels currently this is not possible
 --     minimum content is 4 pixels (32-bit word)
 
+-- [ ] allow empty line (NULL pointer to content)
+
 -- [x] 2 horizonal lines on top should be on the bottom
 --     this is because of FIFO system delays output for 2 lines
---     could be left as-is, fixed from CPU C code as 2 lines are delayed
+--     could be left as-is, fixed with vertical scroll.
+
+-- [ ] around vertical lines 3-5, lines skipped or duplicated? (see slash char in c2_font)
 
 -- [x] first 3 vertical lines are transparent while they shoudn't be
 --     solution: during shifiting, use 1 bit less for bram write address
@@ -550,11 +573,7 @@ end;
 --     to minimize visual degradation of the picture
 --     some improvement for 2 chasing pointers
 
--- [ ] around vertical lines 3-5, lines skipped or duplicated? (see slash char in c2_font)
-
--- [ ] font and text data fetching during video blank
-
 -- [ ] 16bpp test: does it work correctly?
 --     In 16bpp mode it looks like pixel step is still 8bpp
 
--- [ ] cache support (save bandwidth when displaying font using tiled sprites)
+-- [x] cache support (save bandwidth when displaying font using tiled sprites)

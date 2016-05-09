@@ -42,10 +42,6 @@ entity video_cache is
 	C_icache_size: integer;
 	C_dcache_size: integer;
 
-	-- address decoding to distinguish RAM/BRAM
-	-- MSB 4 bits of address of external RAM
-	C_xram_base: std_logic_vector(31 downto 28) := x"8";
-
 	-- bit widths
 	C_cached_addr_bits: integer := 20; -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
 
@@ -64,7 +60,7 @@ entity video_cache is
         cpu_d_data_in: out std_logic_vector(31 downto 0);
         cpu_d_data_out: in std_logic_vector(31 downto 0) := (others => '0');
         cpu_d_strobe, cpu_d_write: in std_logic := '0'; -- disabled if unconnected
-        cpu_d_byte_sel: in std_logic_vector(3 downto 0) := x"0";
+        cpu_d_byte_sel: in std_logic_vector(3 downto 0) := "1111";
         cpu_d_ready: out std_logic;
         cpu_flush_d_line: in std_logic := '0';
         -- RAM port side
@@ -290,7 +286,6 @@ begin
     icache_write <= imem_data_ready and R_i_strobe and icache_write_enable;
     itag_valid: if C_icache_size > 0 generate
     R_i_addr_in_xram <= '1';
-    -- R_i_addr_in_xram <= '1' when R_i_addr(31 downto 28) = C_xram_base else '0';
     icache_tag_in(1+C_cached_addr_bits-C_icache_addr_bits downto 0) 
       <= '1'
       & R_i_addr_in_xram -- dirty address decoding: external RAM or internal BRAM
@@ -349,7 +344,7 @@ begin
     cpu_d_ready <= '1' when R_d_state = C_D_READ and dcache_line_valid
       else dmem_data_ready;
 
-    daddr_cacheable <= C_dcache_size > 0 and d_addr(31 downto 28) = C_xram_base;
+    daddr_cacheable <= C_dcache_size > 0;
     dcache_write <= dmem_data_ready when
       (R_d_state = C_D_WRITE or R_d_state = C_D_FETCH) else '0';
     d_tag_valid_bit <= '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111"
