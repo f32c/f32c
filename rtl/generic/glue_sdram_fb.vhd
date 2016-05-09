@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2015 Marko Zec, University of Zagreb
+-- Copyright (c) 2015, 2016 Marko Zec, University of Zagreb
 -- All rights reserved.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@ use work.f32c_pack.all;
 use work.sdram_pack.all;
 
 
-entity glue_bram is
+entity glue_sdram_fb is
     generic (
 	C_clk_freq: integer;
 
@@ -63,7 +63,7 @@ entity glue_bram is
 	C_movn_movz: boolean := false;
 
 	-- CPU debugging
-	C_debug: boolean := true;
+	C_debug: boolean := false;
 
 	-- SDRAM parameters
 	C_sdram_address_width : integer := 24;
@@ -72,8 +72,10 @@ entity glue_bram is
 	C_sdram_cycles_per_refresh : integer := 1524;
 
 	-- SoC configuration options
+	C_cpus: integer := 1;
 	C_bram_size: integer := 8;	-- in KBytes
 	C_boot_spi: boolean := false;
+	C_i_rom_only: boolean := false;
 	C_icache_size: integer := 8;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_cached_addr_bits: integer := 25; -- 32 MB
@@ -110,21 +112,32 @@ entity glue_bram is
 	video_dac: out std_logic_vector(3 downto 0);
 	gpio: inout std_logic_vector(127 downto 0)
     );
-end glue_bram;
+end glue_sdram_fb;
 
-architecture Behavioral of glue_bram is
+architecture Behavioral of glue_sdram_fb is
+    constant C_io_ports: integer := C_cpus;
+    constant C_fb_port: integer := C_cpus * 2;
+
+    -- types for signals going to / from f32c core(s)
+    type f32c_addr_bus is array(0 to (C_cpus - 1)) of
+      std_logic_vector(31 downto 2);
+    type f32c_byte_sel is array(0 to (C_cpus - 1)) of
+      std_logic_vector(3 downto 0);
+    type f32c_data_bus is array(0 to (C_cpus - 1)) of
+      std_logic_vector(31 downto 0);
+    type f32c_std_logic is array(0 to (C_cpus - 1)) of std_logic;
+    type f32c_intr is array(0 to (C_cpus - 1)) of std_logic_vector(5 downto 0);
+    type f32c_debug_addr is array(0 to (C_cpus - 1)) of
+      std_logic_vector(5 downto 0);
 
     -- signals to / from f32c cores(s)
-    signal intr: std_logic_vector(5 downto 0);
-    signal imem_addr, dmem_addr: std_logic_vector(31 downto 2);
-    signal imem_addr_strobe, dmem_addr_strobe, dmem_write: std_logic;
-    signal imem_data_ready, dmem_data_ready: std_logic;
-    signal dmem_byte_sel: std_logic_vector(3 downto 0);
-    signal cpu_to_dmem: std_logic_vector(31 downto 0);
-    signal final_to_cpu_i, final_to_cpu_d: std_logic_vector(31 downto 0);
-    signal io_to_cpu: std_logic_vector(31 downto 0);
-    signal io_addr_strobe: std_logic;
-    signal io_addr: std_logic_vector(11 downto 2);
+    signal res: f32c_std_logic;
+    signal intr: f32c_intr;
+    signal imem_addr, dmem_addr: f32c_addr_bus;
+    signal final_to_cpu_i, final_to_cpu_d, cpu_to_dmem: f32c_data_bus;
+    signal imem_addr_strobe, dmem_addr_strobe, dmem_write: f32c_std_logic;
+    signal imem_data_ready, dmem_data_ready: f32c_std_logic;
+    signal dmem_byte_sel: f32c_byte_sel;
 
     -- Block RAM
     signal bram_i_to_cpu, bram_d_to_cpu: std_logic_vector(31 downto 0);
@@ -135,10 +148,17 @@ architecture Behavioral of glue_bram is
     signal snoop_cycle: std_logic;
     signal snoop_addr: std_logic_vector(31 downto 2);
 
-    constant C_sdram_ports: integer := 3;
-    constant C_i_port: integer := 0;
-    constant C_d_port: integer := 1;
-    constant C_fb_port: integer := 2;
+    -- I/O
+    signal io_write: std_logic;
+    signal io_byte_sel: std_logic_vector(3 downto 0);
+    signal io_addr: std_logic_vector(11 downto 2);
+    signal cpu_to_io, io_to_cpu: std_logic_vector(31 downto 0);
+    signal io_addr_strobe: std_logic_vector((C_io_ports - 1) downto 0);
+    signal next_io_port: integer range 0 to (C_io_ports - 1);
+    signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
+
+    -- CPU reset control
+    signal R_cpu_reset: std_logic_vector(15 downto 0) := x"fffe";
 
     -- io base
     type T_iomap_range is array(0 to 1) of std_logic_vector(15 downto 0);
@@ -211,10 +231,17 @@ architecture Behavioral of glue_bram is
 
 begin
 
-    -- f32c core
-    pipeline: entity work.cache
+    --
+    -- f32c core(s)
+    --
+    G_CPU: for i in 0 to (C_cpus - 1) generate
+    begin
+    intr(i) <= "00" & gpio_intr_joint & '0' & from_sio(0)(8) & R_fb_intr
+      when i = 0 else "000000";
+    res(i) <= R_cpu_reset(i);
+    cpu: entity work.cache
     generic map (
-	C_arch => C_arch, C_cpuid => 0, C_clk_freq => C_clk_freq,
+	C_arch => C_arch, C_cpuid => i, C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
 	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
@@ -230,15 +257,16 @@ begin
 	C_debug => C_debug
     )
     port map (
-	clk => clk, reset => sio_break_internal(0), intr => intr,
-	imem_addr => imem_addr, imem_data_in => final_to_cpu_i,
-	imem_addr_strobe => imem_addr_strobe,
-	imem_data_ready => imem_data_ready,
-	dmem_addr_strobe => dmem_addr_strobe, dmem_addr => dmem_addr,
-	dmem_write => dmem_write, dmem_byte_sel => dmem_byte_sel,
-	dmem_data_in => final_to_cpu_d, dmem_data_out => cpu_to_dmem,
-	dmem_data_ready => dmem_data_ready,
-	snoop_cycle => '0', snoop_addr => "------------------------------",
+	clk => clk, reset => res(i), intr => intr(i),
+	imem_addr => imem_addr(i), imem_data_in => final_to_cpu_i(i),
+	imem_addr_strobe => imem_addr_strobe(i),
+	imem_data_ready => imem_data_ready(i),
+	dmem_addr_strobe => dmem_addr_strobe(i),
+	dmem_addr => dmem_addr(i),
+	dmem_write => dmem_write(i), dmem_byte_sel => dmem_byte_sel(i),
+	dmem_data_in => final_to_cpu_d(i), dmem_data_out => cpu_to_dmem(i),
+	dmem_data_ready => dmem_data_ready(i),
+	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
 	-- debugging
 	debug_in_data => sio_to_debug_data,
 	debug_in_strobe => deb_sio_rx_done,
@@ -249,52 +277,109 @@ begin
 	debug_debug => debug_debug,
 	debug_active => debug_active
     );
-    final_to_cpu_i <=
-      sdram_bus(C_i_port).data_out when imem_addr(31 downto 30) = "10"
-      else bram_i_to_cpu;
-    final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
-      else sdram_bus(C_d_port).data_out when dmem_addr(31 downto 30) = "10"
-      else bram_d_to_cpu;
-    intr <= "00" & gpio_intr_joint & '0' & from_sio(0)(8) & R_fb_intr;
-    io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
-      else '0';
-    io_addr <= '0' & dmem_addr(10 downto 2);
-    imem_data_ready <=
-      sdram_bus(C_i_port).data_ready when imem_addr(31 downto 30) = "10"
-      else bram_i_ready;
-    dmem_data_ready <=
-      sdram_bus(C_d_port).data_ready when dmem_addr(31 downto 30) = "10"
-      else bram_d_ready when dmem_addr(31) = '0'
-      else '1'; -- I/O
+    end generate;
 
-    -- SDRAM
-    G_sdram:
-    if C_sdram generate
-    -- instruction bus
-    sdram_bus(C_i_port).addr_strobe <= imem_addr_strobe when
-      imem_addr(31 downto 30) = "10" else '0';
-    sdram_bus(C_i_port).addr <= imem_addr;
-    sdram_bus(C_i_port).data_in <= (others => '-');
-    sdram_bus(C_i_port).write <= '0';
-    sdram_bus(C_i_port).byte_sel <= (others => '1');
-    -- data bus
-    sdram_bus(C_d_port).addr_strobe <= dmem_addr_strobe when
-      dmem_addr(31 downto 30) = "10" else '0';
-    sdram_bus(C_d_port).addr <= dmem_addr;
-    sdram_bus(C_d_port).data_in <= cpu_to_dmem;
-    sdram_bus(C_d_port).write <= dmem_write;
-    sdram_bus(C_d_port).byte_sel <= dmem_byte_sel;
-    -- composite video framebuffer
-    sdram_bus(C_fb_port).addr_strobe <= fb_addr_strobe when C_framebuffer
-      else '0';
-    sdram_bus(C_fb_port).write <= '0';
-    sdram_bus(C_fb_port).byte_sel <= x"f";
-    sdram_bus(C_fb_port).addr <= fb_addr;
-    sdram_bus(C_fb_port).data_in <= (others => '-');
+
+    --
+    -- SRAM
+    --
+    process(imem_addr, dmem_addr, dmem_byte_sel, cpu_to_dmem, dmem_write,
+      dmem_addr_strobe, imem_addr_strobe, fb_addr_strobe, fb_addr,
+      sdram_bus, io_to_cpu)
+	variable data_port, instr_port: integer;
+	variable sdram_data_strobe, sdram_instr_strobe: std_logic;
+    begin
+    for cpu in 0 to (C_cpus - 1) loop
+	data_port := cpu;
+	instr_port := C_cpus + cpu;
+
+	if dmem_addr(cpu)(31 downto 28) = x"8" then
+	    sdram_data_strobe := dmem_addr_strobe(cpu);
+	else
+	    sdram_data_strobe := '0';
+	end if;
+	if imem_addr(cpu)(31 downto 28) = x"8" then
+	    sdram_instr_strobe := imem_addr_strobe(cpu);
+	else
+	    sdram_instr_strobe := '0';
+	end if;
+	if cpu = 0 then
+	    -- CPU, data bus
+	    if io_addr_strobe(cpu) = '1' then
+		if R_cur_io_port = cpu then
+		    dmem_data_ready(cpu) <= '1';
+		else
+		    dmem_data_ready(cpu) <= '0';
+		end if;
+		final_to_cpu_d(cpu) <= io_to_cpu;
+	    elsif sdram_data_strobe = '1' then
+		dmem_data_ready(cpu) <= sdram_bus(data_port).data_ready;
+		final_to_cpu_d(cpu) <= sdram_bus(data_port).data_out;
+	    elsif C_i_rom_only then
+		-- XXX assert address eror signal?
+		dmem_data_ready(cpu) <= dmem_addr_strobe(cpu);
+		final_to_cpu_d(cpu) <= (others => '-');
+	    else
+		dmem_data_ready(cpu) <= bram_d_ready;
+		final_to_cpu_d(cpu) <= bram_d_to_cpu; -- BRAM
+	    end if;
+	    -- CPU, instruction bus
+	    if sdram_instr_strobe = '1' then
+		imem_data_ready(cpu) <= sdram_bus(instr_port).data_ready;
+		final_to_cpu_i(cpu) <= sdram_bus(instr_port).data_out;
+	    elsif imem_addr_strobe(cpu) = '0' then
+		imem_data_ready(cpu) <= '0';
+		final_to_cpu_i(cpu) <= bram_i_to_cpu;
+	    else
+		imem_data_ready(cpu) <= bram_i_ready;
+		final_to_cpu_i(cpu) <= bram_i_to_cpu;
+	    end if;
+	else -- CPU #1, CPU #2...
+	    -- CPU, data bus
+	    if io_addr_strobe(cpu) = '1' then
+		if R_cur_io_port = cpu then
+		    dmem_data_ready(cpu) <= '1';
+		else
+		    dmem_data_ready(cpu) <= '0';
+		end if;
+		final_to_cpu_d(cpu) <= io_to_cpu;
+	    elsif sdram_data_strobe = '1' then
+		dmem_data_ready(cpu) <= sdram_bus(data_port).data_ready;
+		final_to_cpu_d(cpu) <= sdram_bus(data_port).data_out;
+	    else
+		-- XXX assert address eror signal?
+		dmem_data_ready(cpu) <= '1';
+		final_to_cpu_d(cpu) <= (others => '-');
+	    end if;
+	    -- CPU, instruction bus
+	    if sdram_instr_strobe = '1' then
+		imem_data_ready(cpu) <= sdram_bus(instr_port).data_ready;
+		final_to_cpu_i(cpu) <= sdram_bus(instr_port).data_out;
+	    else
+		-- XXX assert address eror signal?
+		-- XXX hack for avoiding a deadlock in i-cache FSM
+		imem_data_ready(cpu) <= imem_addr_strobe(cpu);
+		final_to_cpu_i(cpu) <= (others => '-');
+	    end if;
+	end if;
+	-- CPU, data bus
+	sdram_bus(data_port).addr_strobe <= sdram_data_strobe;
+	sdram_bus(data_port).write <= dmem_write(cpu);
+	sdram_bus(data_port).byte_sel <= dmem_byte_sel(cpu);
+	sdram_bus(data_port).addr <= dmem_addr(cpu);
+	sdram_bus(data_port).data_in <= cpu_to_dmem(cpu);
+	-- CPU, instruction bus
+	sdram_bus(instr_port).addr_strobe <= sdram_instr_strobe;
+	sdram_bus(instr_port).addr <= imem_addr(cpu);
+	sdram_bus(instr_port).data_in <= (others => '-');
+	sdram_bus(instr_port).write <= '0';
+	sdram_bus(instr_port).byte_sel <= x"f";
+    end loop;
+    end process;
 
     sdram: entity work.sdram_controller
     generic map (
-	C_ports => C_sdram_ports,
+	C_ports => 2 * C_cpus + 1, -- extras: framebuffer
 	sdram_address_width => C_sdram_address_width,
 	sdram_column_bits => C_sdram_column_bits,
 	sdram_startup_cycles => C_sdram_startup_cycles,
@@ -312,9 +397,86 @@ begin
 	sdram_cke => sdram_cke, sdram_clk => sdram_clk,
 	sdram_we => sdram_we, sdram_cs => sdram_cs
     );
-    end generate;
 
+    --
+    -- I/O arbiter
+    --
+    process(R_cur_io_port, dmem_addr, dmem_addr_strobe)
+	variable i, j, t, cpu: integer;
+    begin
+    for cpu in 0 to (C_cpus - 1) loop
+	if dmem_addr(cpu)(31 downto 28) = x"f" then
+	    io_addr_strobe(cpu) <= dmem_addr_strobe(cpu);
+	else
+	    io_addr_strobe(cpu) <= '0';
+	end if;
+    end loop;
+    t := R_cur_io_port;
+    for i in 0 to (C_io_ports - 1) loop
+	for j in 1 to C_io_ports loop
+	    if R_cur_io_port = i then
+		t := (i + j) mod C_io_ports;
+		if io_addr_strobe(t) = '1' then
+		    exit;
+		end if;
+	    end if;
+	end loop;
+    end loop;
+    next_io_port <= t;
+    end process;
+
+
+    --
+    -- I/O access
+    --
+    io_write <= dmem_write(R_cur_io_port);
+    io_addr <=  '0' & dmem_addr(R_cur_io_port)(10 downto 2);
+    io_byte_sel <= dmem_byte_sel(R_cur_io_port);
+    cpu_to_io <= cpu_to_dmem(R_cur_io_port);
+    process(clk)
+    begin
+	if rising_edge(clk) then
+	    R_cur_io_port <= next_io_port;
+	    if C_simple_in > 0 then
+		R_simple_in(C_simple_in - 1 downto 0) <=
+		  simple_in(C_simple_in - 1 downto 0);
+	    end if;
+            if C_framebuffer and fb_tick = '1' then
+                R_fb_intr <= '1';
+            end if;
+	end if;
+        if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
+	  and io_write = '1' then
+	    -- simple out
+	    if C_simple_out > 0 and io_addr(11 downto 4) = x"71" then
+		if io_byte_sel(0) = '1' then
+		    R_simple_out(7 downto 0) <= cpu_to_io(7 downto 0);
+		end if;
+		if io_byte_sel(1) = '1' then
+		    R_simple_out(15 downto 8) <= cpu_to_io(15 downto 8);
+		end if;
+		if io_byte_sel(2) = '1' then
+		    R_simple_out(23 downto 16) <= cpu_to_io(23 downto 16);
+		end if;
+		if io_byte_sel(3) = '1' then
+		    R_simple_out(31 downto 24) <= cpu_to_io(31 downto 24);
+		end if;
+	    end if;
+	    -- framebuffer
+	    if C_framebuffer and io_addr(11 downto 4) = x"38" then
+                R_fb_intr <= '0';
+            end if;
+	    -- CPU reset control
+	    if C_cpus /= 1 and io_addr(11 downto 4) = x"7F" then
+		R_cpu_reset <= cpu_to_io(15 downto 0);
+	    end if;
+        end if;
+    end process;
+
+
+    --
     -- Composite video framebuffer
+    --
     G_framebuffer:
     if C_framebuffer generate
     fb: entity work.fb
@@ -323,8 +485,8 @@ begin
     )
     port map (
 	clk => clk, clk_dac => clk_325m,
-	addr_strobe => fb_addr_strobe,
-	addr_out => fb_addr,
+	addr_strobe => sdram_bus(C_fb_port).addr_strobe,
+	addr_out => sdram_bus(C_fb_port).addr,
 	data_ready => sdram_bus(C_fb_port).data_ready,
 	data_in => sdram_bus(C_fb_port).data_out,
 	mode => R_fb_mode,
@@ -332,9 +494,14 @@ begin
 	dac_out => video_dac,
 	tick_out => fb_tick
     );
+    sdram_bus(C_fb_port).write <= '0';
+    sdram_bus(C_fb_port).byte_sel <= x"f";
+    sdram_bus(C_fb_port).data_in <= (others => '-');
     end generate;
 
+    --
     -- RS232 sio
+    --
     G_sio: for i in 0 to C_sio - 1 generate
 	sio_instance: entity work.sio
 	generic map (
@@ -347,11 +514,12 @@ begin
 	)
 	port map (
 	    clk => clk, ce => sio_ce(i), txd => sio_tx(i), rxd => sio_rx(i),
-	    bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	    bus_in => cpu_to_dmem, bus_out => from_sio(i),
+	    bus_write => io_write, byte_sel => io_byte_sel,
+	    bus_in => cpu_to_io, bus_out => from_sio(i),
 	    break => sio_break_internal(i)
 	);
-	sio_ce(i) <= io_addr_strobe when io_addr(11 downto 6) = x"3" & "00" and
+	sio_ce(i) <= io_addr_strobe(R_cur_io_port)
+	  when io_addr(11 downto 6) = x"3" & "00" and
 	  conv_integer(io_addr(5 downto 4)) = i else '0';
 	sio_break(i) <= sio_break_internal(i);
     end generate;
@@ -362,7 +530,9 @@ begin
     end generate;
     sio_rx(0) <= sio_rxd(0);
 
+    --
     -- SPI
+    --
     G_spi: for i in 0 to C_spi - 1 generate
 	spi_instance: entity work.spi
 	generic map (
@@ -371,12 +541,13 @@ begin
 	)
 	port map (
 	    clk => clk, ce => spi_ce(i),
-	    bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	    bus_in => cpu_to_dmem, bus_out => from_spi(i),
+	    bus_write => io_write, byte_sel => io_byte_sel,
+	    bus_in => cpu_to_io, bus_out => from_spi(i),
 	    spi_sck => spi_sck(i), spi_cen => spi_ss(i),
 	    spi_miso => spi_miso(i), spi_mosi => spi_mosi(i)
 	);
-	spi_ce(i) <= io_addr_strobe when io_addr(11 downto 6) = x"3" & "01" and
+	spi_ce(i) <= io_addr_strobe(R_cur_io_port)
+	  when io_addr(11 downto 6) = x"3" & "01" and
 	  conv_integer(io_addr(5 downto 4)) = i else '0';
     end generate;
     G_spi_decoder: if C_spi > 0 generate
@@ -384,57 +555,6 @@ begin
       spi_range <= '1' when iomap_from(iomap_spi, iomap_range) to iomap_to(iomap_spi, iomap_range),
 		   '0' when others;
     end generate;
-
-    --
-    -- I/O
-    --
-    process(clk)
-    begin
-	if rising_edge(clk) and io_addr_strobe = '1' and dmem_write = '1' then
-	    -- simple out
-	    if C_simple_out > 0 and io_addr(11 downto 4) = x"71" then
-		if dmem_byte_sel(0) = '1' then
-		    R_simple_out(7 downto 0) <= cpu_to_dmem(7 downto 0);
-		end if;
-		if dmem_byte_sel(1) = '1' then
-		    R_simple_out(15 downto 8) <= cpu_to_dmem(15 downto 8);
-		end if;
-		if dmem_byte_sel(2) = '1' then
-		    R_simple_out(23 downto 16) <= cpu_to_dmem(23 downto 16);
-		end if;
-		if dmem_byte_sel(3) = '1' then
-		    R_simple_out(31 downto 24) <= cpu_to_dmem(31 downto 24);
-		end if;
-	    end if;
-	    -- Composite video framebuffer
-	    if C_framebuffer and io_addr(11 downto 4) = x"38" then
-		if C_big_endian then
-		    R_fb_mode <= cpu_to_dmem(25 downto 24);
-		    R_fb_base_addr <=
-		      cpu_to_dmem(5 downto 0) &
-		      cpu_to_dmem(15 downto 8) &
-		      cpu_to_dmem(23 downto 16) &
-		      cpu_to_dmem(31 downto 26);
-		else
-		    R_fb_mode <= cpu_to_dmem(1 downto 0);
-		    R_fb_base_addr <= cpu_to_dmem(29 downto 2);
-		end if;
-	    end if;
-	end if;
-	if C_framebuffer and rising_edge(clk) then
-	    if io_addr_strobe = '1' and
-	      io_addr(11 downto 4) = x"38" then
-		R_fb_intr <= '0';
-	    end if;
-	    if fb_tick = '1' then
-		R_fb_intr <= '1';
-	    end if;
-	end if;
-	if rising_edge(clk) then
-	    R_simple_in(C_simple_in - 1 downto 0) <=
-	      simple_in(C_simple_in - 1 downto 0);
-	end if;
-    end process;
 
     simple_out(C_simple_out - 1 downto 0) <=
       R_simple_out(C_simple_out - 1 downto 0);
@@ -484,7 +604,9 @@ begin
 	end case;
     end process;
 
+    --
     -- GPIO
+    --
     G_gpio:
     for i in 0 to C_gpios-1 generate
     gpio_inst: entity work.gpio
@@ -492,13 +614,14 @@ begin
 	C_bits => 32
     )
     port map (
-	clk => clk, ce => gpio_ce(i), addr => dmem_addr(4 downto 2),
-	bus_write => dmem_write, byte_sel => dmem_byte_sel,
-	bus_in => cpu_to_dmem, bus_out => from_gpio(i),
+	clk => clk, ce => gpio_ce(i), addr => io_addr(4 downto 2),
+	bus_write => io_write, byte_sel => io_byte_sel,
+	bus_in => cpu_to_io, bus_out => from_gpio(i),
 	gpio_irq => gpio_intr(i),
 	gpio_phys => gpio(32*i+31 downto 32*i) -- physical input/output
     );
-    gpio_ce(i) <= io_addr_strobe when conv_integer(io_addr(11 downto 5)) = i else '0';
+    gpio_ce(i) <= io_addr_strobe(R_cur_io_port)
+      when conv_integer(io_addr(11 downto 5)) = i else '0';
     end generate;
     G_gpio_decoder_intr: if C_gpios > 0 generate
     with conv_integer(io_addr(11 downto 4)) select
@@ -510,8 +633,14 @@ begin
     -- gpio_intr_joint <= '0' when conv_integer(gpio_intr) = 0 else '1';
     end generate;
 
-    -- Block RAM
-    dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31) /= '1' else '0';
+    --
+    -- Block RAM (only CPU #0)
+    --
+    G_i_d_ram:
+    if not C_i_rom_only generate
+    begin
+    dmem_bram_enable <= dmem_addr_strobe(0) when dmem_addr(0)(31) /= '1'
+      else '0';
     bram: entity work.bram
     generic map (
 	C_bram_size => C_bram_size,
@@ -520,15 +649,38 @@ begin
 	C_boot_spi => C_boot_spi
     )
     port map (
-	clk => clk, imem_addr_strobe => imem_addr_strobe,
-	imem_addr => imem_addr, imem_data_out => bram_i_to_cpu,
+	clk => clk, imem_addr_strobe => imem_addr_strobe(0),
+	imem_addr => imem_addr(0), imem_data_out => bram_i_to_cpu,
 	imem_data_ready => bram_i_ready, dmem_data_ready => bram_d_ready,
-	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write,
-	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
-	dmem_data_out => bram_d_to_cpu, dmem_data_in => cpu_to_dmem
+	dmem_addr_strobe => dmem_bram_enable, dmem_write => dmem_write(0),
+	dmem_byte_sel => dmem_byte_sel(0), dmem_addr => dmem_addr(0),
+	dmem_data_out => bram_d_to_cpu, dmem_data_in => cpu_to_dmem(0)
     );
+    end generate;
 
+    G_i_rom:
+    if C_i_rom_only generate
+    begin
+    bram: entity work.bram
+    generic map (
+	C_bram_size => C_bram_size,
+	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_boot_spi => C_boot_spi
+    )
+    port map (
+	clk => clk, imem_addr_strobe => imem_addr_strobe(0),
+	imem_addr => imem_addr(0), imem_data_out => bram_i_to_cpu,
+	imem_data_ready => bram_i_ready, dmem_data_ready => open,
+	dmem_addr_strobe => '0', dmem_write => '0',
+	dmem_byte_sel => x"0", dmem_addr => (others => '0'),
+	dmem_data_out => open, dmem_data_in => (others => '0')
+    );
+    end generate;
+
+    --
     -- Debugging SIO instance
+    --
     G_debug_sio:
     if C_debug generate
     debug_sio: entity work.sio

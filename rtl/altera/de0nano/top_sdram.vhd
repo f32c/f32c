@@ -107,7 +107,7 @@ begin
     end generate;
 
     -- generic SDRAM glue
-    glue_bram: entity work.glue_bram
+    glue_sdram: entity work.glue_sdram_fb
     generic map (
 	C_clk_freq => C_clk_freq,
 
