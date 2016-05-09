@@ -18,11 +18,16 @@ it receives ready signal
 The ready signal will become logic 1 during a single CPU 
 clock cycle and exactly at that time instance data
 can be read from the bus (if doing read cycle).
-If doing write cycle, appearance of logic 1 during a
-single clock cycle indicates completion of the write cycle.
 
 Ready signal and valid data will not wait on the bus 
 indefinitely!
+
+If doing write cycle, appearance of logic 1 during a
+single clock cycle indicates completion of the write cycle.
+
+After data_ready becomes logic 1, in the next CPU clock cycle 
+address_strobe must be set to logic 0 otherwise a
+new write cycle will be started.
 
     dmem_write: std_logic;
 Write signal logic 1 defines that it will be a write cycle.
