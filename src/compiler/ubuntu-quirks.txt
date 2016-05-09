@@ -1,5 +1,20 @@
-- Synplify scripts have to be adjusted to use bash instead of dash, see ubuntu-lattice-dash-fix.sh
+Lattice Diamond 3.7 and Ubuntu 16.04
+====================================
 
-- Ubuntu 16.04: eth0 does not longer exist (interfaces are named e.g. enp0s25) which fails with Macrovision Licensing system, solution: create /etc/udev/rules.d/10-rename-network.rules with the following contents (replace xx with MAC):
+- First, get some dependencies: sudo apt-get install alien csh
+
+- Call sudo dpkg-reconfigure dash, answer No (don't use dash)
+
+- Install with sudo rpm -i diamond.rpm --nodeps
+
+- Synplify scripts have to be adjusted to use bash instead of dash and to allow Linux 4.x (in config/platform_check), to do this run ubuntu-synplify-fix.sh
+
+- Ubuntu 16.04: eth0 does not longer exist (interfaces are named e.g. enp0s25) which fails with Macrovision Licensing system, solution: create /etc/udev/rules.d/10-rename-network.rules with the following contents (replace xx with MAC, run ifconfig to get it):
 
 SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="xx:xx:xx:xx:xx:xx", NAME="eth0"
+
+- Remove /usr/local/diamond/3.7_x64/bin/lin64/libusb*, else Diamond will hang when ULX2S is connected
+
+- Install eventual Lattice updates/service packs with sudo rpm -i update.rpm --nodeps
+
+- Call sudo dpkg-reconfigure dash, answer Yes (use dash)
