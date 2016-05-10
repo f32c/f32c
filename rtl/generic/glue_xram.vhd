@@ -111,6 +111,7 @@ generic (
   -- true:  bare wired LCD panel, 7-bit LVDS (36MHz pixel clock, 252MHz shift clock and does only SDR, not DDR)
   C_lvds_display: boolean := false; -- false: normal DVI-D/HDMI, true: bare LCD panel
   C_video_cache_size: integer := 0; -- KB
+  C_video_cache_use_i: boolean := false; -- true: use instruction cache (faster, maybe buggy), false: use data cache (slower, works)
   -- TV simple 512x512 bitmap
   C_tv: boolean := false; -- enable TV output
   C_tv_fifo_width: integer := 512;
@@ -1058,7 +1059,7 @@ begin
       video_fifo_data <= vga_data; -- from XRAM
     end generate;
 
-    G_yes_video_cache_i: if false and C_video_cache_size > 0 generate
+    G_yes_video_cache_i: if C_video_cache_use_i and C_video_cache_size > 0 generate
     -- currently i-cache can't do constant streaming for video
     -- until it is fixed, use d-cache
     video_cache_i: entity work.video_cache
@@ -1088,7 +1089,7 @@ begin
     );
     end generate;
 
-    G_yes_video_cache_d: if true and C_video_cache_size > 0 generate
+    G_yes_video_cache_d: if (not C_video_cache_use_i) and C_video_cache_size > 0 generate
     video_cache_d: entity work.video_cache
     generic map
     (
