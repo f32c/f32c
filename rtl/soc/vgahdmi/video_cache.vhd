@@ -51,7 +51,7 @@ entity video_cache is
     port (
         clk: in std_logic;
         -- video_fifo side read-only port
-        i_addr: in std_logic_vector(31 downto 2) := x"8000000" & "00";
+        i_addr: in std_logic_vector(31 downto 2) := (others => '0');
         i_data: out std_logic_vector(31 downto 0);
         instr_ready: out std_logic;
         cpu_flush_i_line: in std_logic := '0'; -- disabled if unconnected
