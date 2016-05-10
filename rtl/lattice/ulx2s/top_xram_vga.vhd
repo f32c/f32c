@@ -125,7 +125,7 @@ entity toplevel is
     C_gpio: integer := 32; -- number of GPIO pins
     C_spi: integer := 2; -- number of SPI interfaces
 
-    C_framebuffer: boolean := false; -- TV framebuffer (not yet supported in glue_xram)
+    C_video_cache_size: integer := 2; -- KB (0 to disable, 2,4,8,16,32 to enable)
 
     C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
       -- number of pixels for line; 640
@@ -137,19 +137,6 @@ entity toplevel is
       -- width of FIFO address space -> size of fifo
       -- for 8bpp compositing use 11 -> 2048 bytes
       C_vgahdmi_fifo_addr_width: integer := 11;
-
-    C_ledstrip: boolean := false;
-    -- input number of counts per full circle
-    C_ledstrip_full_circle: integer := 200; -- counts
-    -- number of pixels in each channel: 72
-    C_ledstrip_fifo_width: integer := 72;
-    -- number of scan lines: 50
-    C_ledstrip_fifo_height: integer := 50;
-    -- normally this should be  actual bits per pixel
-    C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;
-    -- width of FIFO address space -> size of fifo
-    -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
-    C_ledstrip_fifo_addr_width: integer := 11;
 
     C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 50MHz 1MB SRAM"; -- default banner in screen memory
@@ -190,6 +177,20 @@ entity toplevel is
           C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
           -- bitmap width of FIFO address space length = 2^width * 4 byte
           C_vgatext_bitmap_fifo_addr_width: integer := 11;
+
+    C_ledstrip: boolean := false;
+    -- input number of counts per full circle
+    C_ledstrip_full_circle: integer := 200; -- counts
+    -- number of pixels in each channel: 72
+    C_ledstrip_fifo_width: integer := 72;
+    -- number of scan lines: 50
+    C_ledstrip_fifo_height: integer := 50;
+    -- normally this should be  actual bits per pixel
+    C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;
+    -- width of FIFO address space -> size of fifo
+    -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
+    C_ledstrip_fifo_addr_width: integer := 11;
+
 
     C_pcm: boolean := true;
     C_timer: boolean := true;
@@ -352,7 +353,8 @@ begin
       C_simple_out => C_simple_out,
       C_simple_in => C_simple_in,
       C_gpio => C_gpio,
-      -- C_framebuffer => C_framebuffer,
+
+      C_video_cache_size => C_video_cache_size,
       -- vga simple bitmap
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
