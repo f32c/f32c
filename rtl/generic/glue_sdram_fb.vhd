@@ -327,7 +327,7 @@ begin
 		final_to_cpu_d(cpu) <= sdram_bus(data_port).data_out;
 	    elsif C_i_rom_only then
 		-- XXX assert address eror signal?
-		dmem_data_ready(cpu) <= dmem_addr_strobe(cpu);
+		dmem_data_ready(cpu) <= '1';
 		final_to_cpu_d(cpu) <= (others => '-');
 	    else
 		dmem_data_ready(cpu) <= bram_d_ready;
@@ -337,9 +337,6 @@ begin
 	    if sdram_instr_strobe = '1' then
 		imem_data_ready(cpu) <= sdram_bus(instr_port).data_ready;
 		final_to_cpu_i(cpu) <= sdram_bus(instr_port).data_out;
-	    elsif imem_addr_strobe(cpu) = '0' then
-		imem_data_ready(cpu) <= '0';
-		final_to_cpu_i(cpu) <= bram_i_to_cpu;
 	    else
 		imem_data_ready(cpu) <= bram_i_ready;
 		final_to_cpu_i(cpu) <= bram_i_to_cpu;
@@ -367,8 +364,7 @@ begin
 		final_to_cpu_i(cpu) <= sdram_bus(instr_port).data_out;
 	    else
 		-- XXX assert address eror signal?
-		-- XXX hack for avoiding a deadlock in i-cache FSM
-		imem_data_ready(cpu) <= imem_addr_strobe(cpu);
+		imem_data_ready(cpu) <= '1';
 		final_to_cpu_i(cpu) <= (others => '-');
 	    end if;
 	end if;
