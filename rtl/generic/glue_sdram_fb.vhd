@@ -72,7 +72,7 @@ entity glue_sdram_fb is
 	C_sdram_cycles_per_refresh : integer := 1524;
 
 	-- SoC configuration options
-	C_cpus: integer := 1;
+	C_cpus: integer := 2;
 	C_bram_size: integer := 8;	-- in KBytes
 	C_boot_spi: boolean := false;
 	C_i_rom_only: boolean := false;
@@ -159,6 +159,15 @@ architecture Behavioral of glue_sdram_fb is
 
     -- CPU reset control
     signal R_cpu_reset: std_logic_vector(15 downto 0) := x"fffe";
+
+    function F_init_PC(cpuid: integer) return std_logic_vector is
+    begin
+	if cpuid = 0 then
+	    return x"00000000";
+	else
+	    return x"80000000";
+	end if;
+    end F_init_PC;
 
     -- io base
     type T_iomap_range is array(0 to 1) of std_logic_vector(15 downto 0);
@@ -253,6 +262,7 @@ begin
 	C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
 	C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
 	C_cached_addr_bits => C_cached_addr_bits,
+	C_init_PC => F_init_PC(i),
 	-- debugging only
 	C_debug => C_debug
     )
