@@ -1064,16 +1064,18 @@ begin
         C_icache_size => C_video_cache_size,
         C_dcache_size => 0,
         C_cached_addr_bits => C_cached_addr_bits, -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
-        C_icache_expire => false -- true: i-cache will immediately expire every cached data
+        C_icache_expire => true -- true: i-cache will immediately expire every cached data
     )
     port map
     (
       clk => clk,
+      -- to external RAM
       imem_addr_strobe => vga_addr_strobe,
       imem_addr(31 downto 30) => open,
       imem_addr(29 downto 2) => vga_addr,
       imem_data_in => vga_data, -- input from XRAM
       imem_data_ready => vga_data_ready, -- input from XRAM
+      -- to video FIFO
       --addr_strobe => video_fifo_addr_strobe,
       i_addr(31 downto 30) => "10",
       i_addr(29 downto 2) => video_fifo_addr,
@@ -1100,12 +1102,13 @@ begin
       dmem_data_in => vga_data, -- input from XRAM
       dmem_data_ready => vga_data_ready, -- input from XRAM
       -- to video FIFO
-      cpu_d_strobe => video_fifo_addr_strobe,
+      --cpu_d_strobe => video_fifo_addr_strobe,
+      cpu_d_strobe => '1',
       d_addr(31 downto 30) => "10",
       d_addr(29 downto 2) => video_fifo_addr,
       cpu_d_ready => video_fifo_data_ready, -- output to fifo
-      cpu_d_byte_sel => "1111",
-      cpu_d_write => '0',
+      --cpu_d_byte_sel => "1111",
+      --cpu_d_write => '0',
       cpu_d_data_in => video_fifo_data -- output from cache to fifo
     );
     end generate;
