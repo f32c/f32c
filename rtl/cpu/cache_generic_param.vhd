@@ -40,38 +40,39 @@ entity cache is
     generic (
 	-- ISA options
 	C_arch: integer;
-	C_big_endian: boolean;
-	C_mult_enable: boolean;
-	C_branch_likely: boolean;
-	C_sign_extend: boolean;
-	C_ll_sc: boolean;
-	C_movn_movz: boolean;
-	C_exceptions: boolean;
-	C_PC_mask: std_logic_vector(31 downto 0);
+	C_big_endian: boolean;		-- MI32 only
+	C_mult_enable: boolean;		-- MI32 only
+	C_branch_likely: boolean;	-- MI32 only
+	C_sign_extend: boolean;		-- MI32 only
+	C_movn_movz: boolean := false;	-- MI32 only
+	C_ll_sc: boolean := false;
+	C_exceptions: boolean := false;
+	C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff";
+	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
 
 	-- COP0 options
 	C_clk_freq: integer;
-	C_cpuid: integer;
-	C_cop0_count: boolean;
-	C_cop0_compare: boolean;
-	C_cop0_config: boolean;
+	C_cpuid: integer := 0;
+	C_cop0_count: boolean := false;
+	C_cop0_compare: boolean := false;
+	C_cop0_config: boolean := false;
 
 	-- optimization options
-	C_result_forwarding: boolean;
-	C_full_shifter: boolean;
-	C_branch_prediction: boolean;
-	C_load_aligner: boolean;
+	C_result_forwarding: boolean := true;
+	C_branch_prediction: boolean := true;
+	C_bp_global_depth: integer := 6; -- range 2 to 12
+	C_load_aligner: boolean := true;
+	C_full_shifter: boolean := true;
+	C_regfile_synchronous_read: boolean := false;
 
 	-- cache options
-	C_icache_size: integer;
-	C_dcache_size: integer;
+	C_icache_size: integer := 8;
+	C_dcache_size: integer := 2;
+	C_cached_addr_bits: integer := 20; -- 1 MB
 
 	-- address decoding to distinguish RAM/BRAM
 	-- MSB 4 bits of address of external RAM
 	C_xram_base: std_logic_vector(31 downto 28) := x"8";
-
-	-- bit widths
-	C_cached_addr_bits: integer := 20; -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
 
 	-- debugging options
 	C_icache_expire: boolean := false; -- true: i-cache will immediately expire every cached data
@@ -167,11 +168,13 @@ begin
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
 	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
-	C_branch_prediction => C_branch_prediction,
+	C_init_PC => C_init_PC, C_branch_prediction => C_branch_prediction,
+	C_bp_global_depth => C_bp_global_depth,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner, C_full_shifter => C_full_shifter,
 	C_cop0_count => C_cop0_count, C_cop0_compare => C_cop0_compare,
 	C_cop0_config => C_cop0_config, C_exceptions => C_exceptions,
+	C_regfile_synchronous_read => C_regfile_synchronous_read,
 	-- debugging only
 	C_debug => C_debug
     )
