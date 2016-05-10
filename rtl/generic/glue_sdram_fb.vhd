@@ -72,12 +72,12 @@ entity glue_sdram_fb is
 	C_sdram_cycles_per_refresh : integer := 1524;
 
 	-- SoC configuration options
-	C_cpus: integer := 2;
-	C_bram_size: integer := 8;	-- in KBytes
+	C_cpus: integer := 4;
+	C_bram_size: integer := 2;	-- in KBytes
 	C_boot_spi: boolean := false;
-	C_i_rom_only: boolean := false;
-	C_icache_size: integer := 8;	-- 0, 2, 4 or 8 KBytes
-	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
+	C_i_rom_only: boolean := true;	-- improves Fmax if true
+	C_icache_size: integer := 4;	-- 0, 2, 4 or 8 KBytes
+	C_dcache_size: integer := 4;	-- 0, 2, 4 or 8 KBytes
 	C_cached_addr_bits: integer := 25; -- 32 MB
 	C_sdram: boolean := true;
 	C_sio: integer := 1;
@@ -566,10 +566,8 @@ begin
 		   '0' when others;
     end generate;
 
-    simple_out(C_simple_out - 1 downto 0) <=
-      R_simple_out(C_simple_out - 1 downto 0);
--- XXX Marko debugging sdram's arbiter:
---    simple_out(7 downto 0) <= sdram_bus(C_i_port).addr_strobe & sdram_bus(C_i_port).data_ready & sdram_bus(C_d_port).addr_strobe & sdram_bus(C_d_port).data_ready & R_simple_out(3 downto 0);
+    simple_out(3 downto 0) <= R_simple_out(3 downto 0);
+    simple_out(7 downto 4) <= R_cpu_reset(3 downto 0);
 
     -- big address decoder when CPU reads IO
     process(io_addr, R_simple_in, R_simple_out, from_sio, from_gpio)
