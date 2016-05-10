@@ -140,6 +140,7 @@ entity compositing2_fifo is
 	clk, clk_pixel: in std_logic;
 	addr_strobe: out std_logic; -- if using cache discard this strobe, and give strobe='1' to cache
 	addr_out: out std_logic_vector(29 downto 2);
+	suggest_cache: out std_logic;
 	base_addr: in std_logic_vector(29 downto 2);
 	data_ready: in std_logic;
 	data_in: in std_logic_vector(31 downto 0);
@@ -198,6 +199,7 @@ architecture behavioral of compositing2_fifo is
     signal R_position, R_word_count: std_logic_vector(15 downto 0);
     signal S_position, S_pixel_count: std_logic_vector(15 downto 0);
     signal S_pixels_remaining: std_logic_vector(15 downto 0);
+    signal R_suggest_cache: std_logic := '0';
     constant C_state_read_line_start: integer := 0;
     -- indicates which line in buffer (containing 2 lines) is written (compositing from RAM)
     -- and which line is read (by display output)
@@ -313,6 +315,7 @@ begin
                   when 3 => -- read pointer to data and jump there
                     R_sram_addr <= data_in(29 downto 2);
                     R_state <= 4;
+                    R_suggest_cache <= '1'; -- suggest cacheing bitmap content
                   when others => -- read pixels and prepare to exit
                     -- data to compositing (written from another process)
                     -- pixeldata = data_in(31 downto 16);
@@ -333,6 +336,7 @@ begin
                         R_state <= 1;
                         R_sram_addr <= R_seg_next; -- jump to next compositing segment
                       end if;
+                      R_suggest_cache <= '0'; -- suggest no cacheing of metadata
                     else
                       R_position <= R_position + C_shift_cycles; -- 4 pixel skip (1 word)
                       R_sram_addr <= R_sram_addr + 1;  -- next sequential read
@@ -343,6 +347,8 @@ begin
           end if;
         end if;
     end process;
+
+    suggest_cache <= R_suggest_cache;
 
     -- need refill signal must be CPU synchronous
     process(clk) begin

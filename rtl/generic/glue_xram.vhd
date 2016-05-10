@@ -328,6 +328,7 @@ architecture Behavioral of glue_xram is
     signal vga_data_ready: std_logic; -- RAM responds to FIFO
     signal vga_data: std_logic_vector(31 downto 0);
     -- Video FIFO data bus
+    signal video_fifo_suggest_cache: std_logic;
     signal video_fifo_addr: std_logic_vector(29 downto 2);
     signal video_fifo_addr_strobe: std_logic; -- FIFO requests to read from RAM
     signal video_fifo_data_ready: std_logic; -- RAM responds to FIFO
@@ -1064,7 +1065,7 @@ begin
         C_icache_size => C_video_cache_size,
         C_dcache_size => 0,
         C_cached_addr_bits => C_cached_addr_bits, -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
-        C_icache_expire => true -- true: i-cache will immediately expire every cached data
+        C_icache_expire => false -- true: i-cache will immediately expire every cached data
     )
     port map
     (
@@ -1077,6 +1078,7 @@ begin
       imem_data_ready => vga_data_ready, -- input from XRAM
       -- to video FIFO
       --addr_strobe => video_fifo_addr_strobe,
+      i_cacheable => video_fifo_suggest_cache,
       i_addr(31 downto 30) => "10",
       i_addr(29 downto 2) => video_fifo_addr,
       instr_ready => video_fifo_data_ready, -- output to fifo
@@ -1103,6 +1105,7 @@ begin
       dmem_data_ready => vga_data_ready, -- input from XRAM
       -- to video FIFO
       --cpu_d_strobe => video_fifo_addr_strobe,
+      d_cacheable => video_fifo_suggest_cache,
       cpu_d_strobe => '1',
       d_addr(31 downto 30) => "10",
       d_addr(29 downto 2) => video_fifo_addr,
@@ -1127,6 +1130,7 @@ begin
     port map (
       clk => clk,
       clk_pixel => clk_pixel,
+      suggest_cache => video_fifo_suggest_cache,
       addr_strobe => video_fifo_addr_strobe,
       addr_out => video_fifo_addr,
       data_ready => video_fifo_data_ready, -- data valid for read acknowledge from RAM
