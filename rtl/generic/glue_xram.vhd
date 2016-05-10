@@ -1059,6 +1059,8 @@ begin
     end generate;
 
     G_yes_video_cache_i: if false and C_video_cache_size > 0 generate
+    -- currently i-cache can't do constant streaming for video
+    -- until it is fixed, use d-cache
     video_cache_i: entity work.video_cache
     generic map
     (
