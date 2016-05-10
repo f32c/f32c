@@ -47,6 +47,6 @@ type sdram_port_type is
 	data_ready: std_logic;
     end record;
 
-type sdram_port_array is array(0 to 7) of sdram_port_type;
+type sdram_port_array is array(0 to 15) of sdram_port_type;
 
 end;
