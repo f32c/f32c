@@ -327,8 +327,8 @@ begin
 	-- instruction cache FSM
 	--
 	R_i_addr <= i_addr;
-	if iaddr_cacheable and
-	  not icache_line_valid and imem_data_ready = '0' then
+	if iaddr_cacheable and (not icache_line_valid)
+	  and (imem_data_ready and R_i_strobe) = '0' then
 	    R_i_strobe <= '1';
 	else
 	    R_i_strobe <= '0';
