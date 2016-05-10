@@ -51,11 +51,13 @@ entity video_cache is
     port (
         clk: in std_logic;
         -- video_fifo side read-only port
+        i_cacheable: in std_logic := '1';
         i_addr: in std_logic_vector(31 downto 2) := (others => '0');
         i_data: out std_logic_vector(31 downto 0);
         instr_ready: out std_logic;
         cpu_flush_i_line: in std_logic := '0'; -- disabled if unconnected
         -- video_fifo side, read-write port
+        d_cacheable: in std_logic := '1';
         d_addr: in std_logic_vector(31 downto 2) := (others => '0');
         cpu_d_data_in: out std_logic_vector(31 downto 0);
         cpu_d_data_out: in std_logic_vector(31 downto 0) := (others => '0');
@@ -277,12 +279,13 @@ begin
     end generate; -- icache_big
 
     imem_addr <= R_i_addr;
-    imem_addr_strobe <= '1' when not iaddr_cacheable else R_i_strobe;
+    --imem_addr_strobe <= '1' when not iaddr_cacheable else R_i_strobe;
+    imem_addr_strobe <= R_i_strobe;
     i_data <= icache_data_out when iaddr_cacheable else imem_data_in;
     instr_ready <= imem_data_ready when not iaddr_cacheable else
       '1' when icache_line_valid else '0';
 
-    iaddr_cacheable <= C_icache_size > 0; -- XXX kseg0: R_i_addr(31 downto 29) = "100";
+    iaddr_cacheable <= C_icache_size > 0 and i_cacheable = '1'; -- XXX kseg0: R_i_addr(31 downto 29) = "100";
     icache_write <= imem_data_ready and R_i_strobe and icache_write_enable;
     itag_valid: if C_icache_size > 0 generate
     R_i_addr_in_xram <= '1';
@@ -302,8 +305,9 @@ begin
 	-- instruction cache FSM
 	--
 	R_i_addr <= i_addr;
-	if iaddr_cacheable
-	  and (not icache_line_valid) and imem_data_ready = '0' then
+	if --iaddr_cacheable
+           --and 
+	    (not icache_line_valid) and imem_data_ready = '0' then
 	    R_i_strobe <= '1';
 	else
 	    R_i_strobe <= '0';
@@ -344,7 +348,7 @@ begin
     cpu_d_ready <= '1' when R_d_state = C_D_READ and dcache_line_valid
       else dmem_data_ready;
 
-    daddr_cacheable <= C_dcache_size > 0;
+    daddr_cacheable <= C_dcache_size > 0 and d_cacheable = '1';
     dcache_write <= dmem_data_ready when
       (R_d_state = C_D_WRITE or R_d_state = C_D_FETCH) else '0';
     d_tag_valid_bit <= '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111"
