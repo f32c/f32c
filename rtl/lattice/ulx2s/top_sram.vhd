@@ -617,9 +617,6 @@ begin
 		if sram_instr_strobe = '1' then
 		    imem_data_ready(cpu) <= sram_ready(instr_port);
 		    final_to_cpu_i(cpu) <= from_sram;
-		elsif imem_addr_strobe(cpu) = '0' then
-		    imem_data_ready(cpu) <= '0';
-		    final_to_cpu_i(cpu) <= bram_i_to_cpu;
 		else
 		    imem_data_ready(cpu) <= bram_i_ready;
 		    final_to_cpu_i(cpu) <= bram_i_to_cpu;
@@ -647,8 +644,7 @@ begin
 		    final_to_cpu_i(cpu) <= from_sram;
 		else
 		    -- XXX assert address eror signal?
-		    -- XXX hack for avoiding a deadlock in i-cache FSM
-		    imem_data_ready(cpu) <= imem_addr_strobe(cpu);
+		    imem_data_ready(cpu) <= '1';
 		    final_to_cpu_i(cpu) <= (others => '-');
 		end if;
 	    end if;
