@@ -122,6 +122,7 @@ use ieee.numeric_std.all;
 entity compositing2_fifo is
     generic (
         C_synclen: integer := 2; -- bits in cpu-to-pixel clock synchronizer
+        C_fast_ram: boolean := true; -- set to true if RAM can be faster then shifting period (4 cycles for 8bpp) but beware of deadlock bug
         -- C_position_clipping = false -- (default) handles only small out of screen positions
         -- C_position_clipping = true -- handles large out of screen gracefully (LUT eater)
         -- for average use it can be left disabled (false)
@@ -137,10 +138,9 @@ entity compositing2_fifo is
     );
     port (
 	clk, clk_pixel: in std_logic;
-	addr_strobe: out std_logic;
+	addr_strobe: out std_logic; -- if using cache discard this strobe, and give strobe='1' to cache
 	addr_out: out std_logic_vector(29 downto 2);
 	base_addr: in std_logic_vector(29 downto 2);
-	-- debug_rd_addr: out std_logic_vector(29 downto 2);
 	data_ready: in std_logic;
 	data_in: in std_logic_vector(31 downto 0);
 	data_out: out std_logic_vector(C_data_width-1 downto 0);
@@ -176,23 +176,17 @@ architecture behavioral of compositing2_fifo is
 
     -- Internal state
     signal R_sram_addr: std_logic_vector(29 downto 2);
-    signal R_pixbuf_wr_addr, S_pixbuf_wr_addr_next: std_logic_vector(C_addr_width-1 downto C_shift_addr_width);
     signal R_pixbuf_rd_addr, R_pixbuf_out_addr: std_logic_vector(C_addr_width-1 downto 0);
     signal S_pixbuf_out_mem_addr: std_logic_vector(C_addr_width-1 downto 0);
     signal S_pixbuf_in_mem_addr: std_logic_vector(C_addr_width-1 downto 0);
     signal R_bram_in_addr: std_logic_vector(C_addr_width-1 downto 0);
-    signal R_delay_fetch: integer range 0 to 2*C_width;
     signal S_bram_write, S_data_write: std_logic;
     signal S_need_refill: std_logic;
     signal R_need_refill_cpu: std_logic := '0';
-    --signal S_data_opaque: std_logic;
-    --signal S_fetch_compositing_offset: std_logic := '0';
     signal S_compositing_erase: std_logic := '0';
-    --signal R_compositing_active_offset: std_logic_vector(15 downto 0) := (others => '0');
-    --signal R_compositing_second_offset: std_logic_vector(15 downto 0) := (others => '0');
-    --signal R_compositing_countdown: integer range 0 to C_compositing_length := 0;
     signal S_offset_visible: std_logic := '1';
-    signal R_shifting_counter: std_logic_vector(C_shift_addr_width downto 0) := (others => '0'); -- counts shift cycles and adds address
+    -- for C_fast_ram=true, R_shifting_counter must start with MSB='1' otherwise it will start in deadlock mode
+    signal R_shifting_counter: std_logic_vector(C_shift_addr_width downto 0) := (others => '1'); -- counts shift cycles and adds address
     signal R_data_in_shift: std_logic_vector(31 downto 0); -- data in shift buffer to bram
     signal S_bram_data_in: std_logic_vector(C_data_width-1 downto 0);
     -- compositing 2
@@ -209,30 +203,11 @@ architecture behavioral of compositing2_fifo is
     -- and which line is read (by display output)
     signal R_line_rd, R_line_wr: std_logic := '0'; -- simple 1-bit index of line
     
-    -- signal need_refill: boolean;
-    signal toggle_read_complete: std_logic;
-    signal clksync, startsync, rewindsync: std_logic_vector(C_synclen-1 downto 0);
+    signal startsync: std_logic_vector(C_synclen-1 downto 0);
     -- clean start: '1' will reset fifo to its base address
     --              '0' will allow fifo normal sequential operation
-    signal clean_start, clean_fetch: std_logic;
-    -- clean rewind: '1' will rewind fifo to its last full step
-    --               '0' will allow fifo normal sequential operation
-    signal clean_rewind: std_logic;
+    signal clean_start: std_logic;
 begin
-    S_pixbuf_wr_addr_next <= R_pixbuf_wr_addr + 1;
-
-    -- clk-to-clk_pixel synchronizer:
-    -- clk_pixel rising edge is detected using shift register
-    -- edge detection happens after delay (clk * synclen)
-    -- then rd is set high for one clk cycle
-    -- intiating fetch of new data from RAM fifo
-    process(clk_pixel)
-    begin
-      if rising_edge(clk_pixel) and fetch_next = '1' then
-        toggle_read_complete <= not toggle_read_complete;
-      end if;
-    end process;
-
     -- start signal which resets fifo
     -- can be clock asynchronous and may
     -- lead to unclean or partial fifo reset which results
@@ -244,16 +219,9 @@ begin
     begin
       if rising_edge(clk) then
         -- synchronize clk_pixel to clk with shift register
-        clksync <= clksync(C_synclen-2 downto 0) & toggle_read_complete;
         startsync <= startsync(C_synclen-2 downto 0) & active;
-        rewindsync <= rewindsync(C_synclen-2 downto 0) & rewind;
       end if;
     end process;
-
-    -- XOR: difference in 2 consecutive clksync values
-    -- create a short pulse that lasts one CPU clk period.
-    -- This signal is request to fetch new data
-    clean_fetch <= clksync(C_synclen-2) xor clksync(C_synclen-1);
 
     -- clean start produced from a delay thru clock synchronous shift register
     -- clean_start <= startsync(C_synclen-1); -- level
@@ -264,8 +232,6 @@ begin
     -- useful for VSYNC frame interrupt
     frame <= clean_start; -- must be rising edge for CPU interrupt, not level
 
-    --S_position <= data_in(15 downto 0);
-    --S_pixel_count <= data_in(31 downto 16);
     S_pixels_remaining <= data_in(31 downto 16) + data_in(15 downto 0); -- used if data_in(15 downto 0) is negative
     -- Refill the circular buffer with fresh data from external RAM
     -- h-compositing of thin sprites on the fly
@@ -276,15 +242,20 @@ begin
             R_sram_addr <= R_line_start;
             R_state <= 0;
             R_line_wr <= '0';
-            R_pixbuf_wr_addr <= (others => '0');
           else
             if data_ready = '1' and S_need_refill = '1'
             then -- BRAM must use this
                 case R_state is
                   when 0 => -- read pointer to line start
                     -- R_sram_addr points to one of array of start addresses
-                    R_sram_addr <= data_in(29 downto 2); -- read address of first segment start
-                    R_state <= 1;
+                    if conv_integer(data_in) = 0 then
+                      -- NULL pointer: this line is empty, jump to next line
+                      R_line_wr <= not R_line_wr; -- + 1;
+                      R_sram_addr <= R_line_start; -- jump to start of the next line
+                    else
+                      R_sram_addr <= data_in(29 downto 2); -- read address of first segment start
+                      R_state <= 1;
+                    end if;
                   when 1 => -- read next line segment
                     R_seg_next <= data_in(29 downto 2); -- read next segment start address
                     R_sram_addr <= R_sram_addr + 1; -- next sequential read
@@ -390,20 +361,31 @@ begin
     end generate;
 
     intermittent_strobe: if C_data_width < 32 generate
-    S_need_refill <= '1' when R_need_refill_cpu='1' and
+      no_fast_ram: if C_fast_ram = false generate
+        S_need_refill <= R_need_refill_cpu;
+      end generate; -- no_fast_ram
+      yes_fast_ram: if C_fast_ram = true generate
+        -- warning this is workaround and can cause deadlock
+        S_need_refill <= '1' when R_need_refill_cpu='1' and
             (
+              -- conservative request delay:
               -- effectively this does
-              -- R_shifting_counter >= C_shift_cycles-1
+              --R_shifting_counter >= C_shift_cycles-1
               -- it prevents too early request of new data from cache or fast RAM
               -- before shifting process has completed.
               -- if new data arrive too early it will be unconditionally accepted
               -- and data which entered shifting process will be overwritten.
+              -- XXX FIXME:
+              -- ready signal can be missed and this will lead to deadlock
+              -- and screen will freeze.
               conv_integer(not R_shifting_counter(C_shift_addr_width-1 downto 0)) = 0 -- during last shift cycle we can start new data
-              or R_shifting_counter(C_shift_addr_width) = '1' -- past last shift cycle, shift fully complete, start new data
+              or
+              R_shifting_counter(C_shift_addr_width) = '1' -- past last shift cycle, shift fully complete, start new data
             )
             else '0';
+      end generate; -- yes_fast_ram
     end generate;
-    
+
     -- addr_strobe must be cpu CLK synchronous!
     addr_strobe <= S_need_refill;
     addr_out <= R_sram_addr;
@@ -438,28 +420,29 @@ begin
     S_vertical_scroll_next <= 0 when R_vertical_scroll = C_height-1
                                 else R_vertical_scroll+1;
 
-    -- writing to line memory
-    --we_with_compositing: if C_compositing_length /= 0 generate
-      -- signal used in Refill process that every 17th word
-      -- fetched is offset word, not bitmap 
-      --S_fetch_compositing_offset <= '1' when R_compositing_countdown = 0 else '0';
-      -- compositing must erase stale data after use
-      -- needs clean memory for compositing fresh data
-      -- (erasing is done when clean_fetch signal is detected)
-      -- rewind can not work together with compositing (data erased)
-      -- at the same time read out data and erase
-      -- a registered, non-pass-through BRAM block
-      -- is required for this to work
-      S_compositing_erase <= fetch_next;
-      -- sprite with large negative offset is invisble
-      -- S_offset_visible <= '0' when R_compositing_active_offset(15 downto 14) = "10" else '1';
-      -- write to buffer during state 4 (fetching of pixel data)
-      S_data_write <= '1' when data_ready='1'
-                           and R_state = 4 -- write only during state 4 - bitmap data reading
-                          else '0';
-      -- calculate the compositing address where pixel data go (byte address)
-      S_pixbuf_in_mem_addr <= R_line_wr & R_position(C_addr_width-2 downto 0);
-    --end generate;
+    -- compositing must erase stale data after use
+    -- needs clean memory for compositing fresh data
+    -- (erasing is done with fetch_next signal)
+    -- a registered, non-pass-through BRAM block
+    -- is required for this to work
+    S_compositing_erase <= fetch_next;
+    -- sprite with large negative offset is invisble
+    -- S_offset_visible <= '0' when R_compositing_active_offset(15 downto 14) = "10" else '1';
+    -- write to buffer during state 4 (fetching of pixel data)
+    S_data_write <= '1' when data_ready='1'
+                         and S_need_refill='1' -- only if we have requested data (ignore stray ready)
+                         and R_state = 4 -- write only during state 4 - bitmap data reading
+                         -- below conditions in () are already in the S_need_refill:
+                         --and R_shifting_counter >= C_shift_cycles-1
+                         and
+                           (
+                             conv_integer(not R_shifting_counter(C_shift_addr_width-1 downto 0)) = 0 -- during last shift cycle we can start new data
+                             or
+                             R_shifting_counter(C_shift_addr_width) = '1' -- past last shift cycle, shift fully complete, start new data
+                           )
+                        else '0';
+    -- calculate the compositing address where pixel data go (byte address for 8bpp)
+    S_pixbuf_in_mem_addr <= R_line_wr & R_position(C_addr_width-2 downto 0);
 
     -- data_in is always 32-bits
     -- buffer can have less than 32 bits
