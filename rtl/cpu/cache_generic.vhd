@@ -337,7 +337,8 @@ begin
 	--
 	-- data cache FSM
 	--
-	if cpu_d_strobe = '0' or dmem_data_ready = '1' then
+	if (dmem_data_ready = '1' and R_d_state /= C_D_IDLE)
+	  or cpu_d_strobe = '0' then
 	    R_d_state <= C_D_IDLE;
 	elsif R_d_state = C_D_READ and dcache_line_valid then
 	    R_d_state <= C_D_IDLE;
@@ -367,7 +368,8 @@ begin
     cpu_d_data_in <= dcache_data_out when R_d_state = C_D_READ
       else dmem_data_in;
     cpu_d_ready <= '1' when R_d_state = C_D_READ and dcache_line_valid
-      else dmem_data_ready;
+      else dmem_data_ready when not daddr_cacheable or cpu_d_write = '1'
+      else '0';
 
     daddr_cacheable <=
       (C_dcache_size = 2 or C_dcache_size = 4 or C_dcache_size = 8) and
