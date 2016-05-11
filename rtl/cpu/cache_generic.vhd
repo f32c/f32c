@@ -368,7 +368,7 @@ begin
     cpu_d_data_in <= dcache_data_out when R_d_state = C_D_READ
       else dmem_data_in;
     cpu_d_ready <= '1' when R_d_state = C_D_READ and dcache_line_valid
-      else dmem_data_ready when not daddr_cacheable or cpu_d_write = '1'
+      else dmem_data_ready when not daddr_cacheable or R_d_state /= C_D_IDLE
       else '0';
 
     daddr_cacheable <=
