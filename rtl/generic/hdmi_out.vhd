@@ -34,8 +34,6 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-use work.f32c_pack.all;
-
 entity hdmi_out is
     port (
 	tmds_in_clk: in std_logic; -- 25 MHz pixel clock single ended
