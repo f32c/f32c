@@ -62,6 +62,12 @@ entity glue_sdram_fb is
 	-- Negatively influences timing closure, hence disabled
 	C_movn_movz: boolean := false;
 
+	-- CPU's caches
+	C_icache_size: integer := 4;	-- 0, 2, 4 or 8 KBytes
+	C_dcache_size: integer := 4;	-- 0, 2, 4 or 8 KBytes
+	C_cached_addr_bits: integer := 25; -- 32 MB
+	C_cache_bursts: boolean := true;
+
 	-- CPU debugging
 	C_debug: boolean := false;
 
@@ -72,13 +78,10 @@ entity glue_sdram_fb is
 	C_sdram_cycles_per_refresh : integer := 1524;
 
 	-- SoC configuration options
-	C_cpus: integer := 4;
-	C_bram_size: integer := 2;	-- in KBytes
+	C_cpus: integer := 1;
+	C_bram_size: integer := 8;	-- in KBytes
 	C_boot_spi: boolean := false;
-	C_i_rom_only: boolean := true;	-- improves Fmax if true
-	C_icache_size: integer := 4;	-- 0, 2, 4 or 8 KBytes
-	C_dcache_size: integer := 4;	-- 0, 2, 4 or 8 KBytes
-	C_cached_addr_bits: integer := 25; -- 32 MB
+	C_i_rom_only: boolean := false;	-- improves Fmax if true
 	C_sdram: boolean := true;
 	C_sio: integer := 1;
 	C_sio_init_baudrate: integer := 115200;
@@ -262,6 +265,7 @@ begin
 	C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
 	C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
 	C_cached_addr_bits => C_cached_addr_bits,
+	C_cache_bursts => C_cache_bursts,
 	C_init_PC => F_init_PC(i),
 	-- debugging only
 	C_debug => C_debug
