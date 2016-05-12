@@ -41,6 +41,7 @@ type sdram_port_type is
 	data_in: std_logic_vector(31 downto 0);
 	byte_sel: std_logic_vector(3 downto 0);
 	addr_strobe: std_logic;
+	burst_len: std_logic_vector(2 downto 0);
 	write: std_logic;
 	-- DRAM -> consumer
 	data_out: std_logic_vector(31 downto 0);
