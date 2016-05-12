@@ -174,6 +174,7 @@ architecture Behavioral of SDRAM_Controller is
     signal save_col: std_logic_vector(12 downto 0);
     signal save_data_in: std_logic_vector(31 downto 0);
     signal save_byte_enable: std_logic_vector( 3 downto 0);
+    signal save_burst_len: std_logic_vector(2 downto 0);
 
     -- control when new transactions are accepted
     signal ready_for_new: std_logic := '0';
@@ -202,6 +203,7 @@ architecture Behavioral of SDRAM_Controller is
     signal byte_sel: std_logic_vector(3 downto 0);	-- from CPU bus
     signal addr: std_logic_vector(31 downto 0);		-- from CPU bus
     signal data_in: std_logic_vector(31 downto 0);	-- from CPU bus
+    signal burst_len: std_logic_vector(2 downto 0);	-- from CPU bus
 
     -- Arbiter registers
     signal R_cur_port, R_next_port: integer range 0 to (C_ports - 1);
@@ -216,6 +218,7 @@ begin
     byte_sel <= mpbus(R_next_port).byte_sel;
     addr(mpbus(0).addr'high - 2 downto 0) <= mpbus(R_next_port).addr;
     data_in <= mpbus(R_next_port).data_in;
+    burst_len <= mpbus(R_next_port).burst_len;
 
     -- Outbound multiport demux
     process(R_ready_out, R_from_sdram)
@@ -317,7 +320,7 @@ begin
 	    ----------------------------------------------------------------------------
 	    -- update shift registers used to choose when to present data to/from memory
 	    ----------------------------------------------------------------------------
-	    if data_ready_delay(1) = '1' then
+	    if data_ready_delay(3 downto 1) = "001" then
 		read_done <= true;
 	    end if;
 	    data_ready_delay <= '0' & data_ready_delay(data_ready_delay'high downto 1);
@@ -345,6 +348,7 @@ begin
 		save_wr          <= write;
 		save_data_in     <= data_in;
 		save_byte_enable <= byte_sel;
+		save_burst_len	 <= burst_len;
 		ready_for_new    <= '0';
 		if write = '1' then
 		    R_ready_out(R_next_port) <= '1';
@@ -476,7 +480,14 @@ begin
 		dqm_sr(1 downto 0) <= (others => '0');
 
 	    when s_read_2 =>
-		state <= s_read_3;
+		if unsigned(save_burst_len) /= 0 then
+		    state <= s_read_1;
+		    save_burst_len <=
+		      std_logic_vector(unsigned(save_burst_len) - 1);
+		    save_col <= std_logic_vector(unsigned(save_col) + 2);
+		else
+		    state <= s_read_3;
+		end if;
 		if C_cas = 3 then
 		    dqm_sr(1 downto 0) <= (others => '0');
 		end if;
