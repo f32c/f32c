@@ -69,6 +69,7 @@ entity cache is
 	C_icache_size: integer := 8;
 	C_dcache_size: integer := 2;
 	C_cached_addr_bits: integer := 20; -- 1 MB
+	C_cache_bursts: boolean := false;
 
 	-- address decoding to distinguish RAM/BRAM
 	-- MSB 4 bits of address of external RAM
@@ -82,12 +83,14 @@ entity cache is
 	clk, reset: in std_logic;
 	imem_addr_strobe: out std_logic;
 	imem_addr: out std_logic_vector(31 downto 2);
+	imem_burst_len: out std_logic_vector(3 downto 0);
 	imem_data_in: in std_logic_vector(31 downto 0);
 	imem_data_ready: in std_logic;
 	dmem_addr_strobe: out std_logic;
 	dmem_write: out std_logic;
 	dmem_byte_sel: out std_logic_vector(3 downto 0);
 	dmem_addr: out std_logic_vector(31 downto 2);
+	dmem_burst_len: out std_logic_vector(3 downto 0);
 	dmem_data_in: in std_logic_vector(31 downto 0);
 	dmem_data_out: out std_logic_vector(31 downto 0);
 	dmem_data_ready: in std_logic;
@@ -144,7 +147,10 @@ architecture x of cache is
 
     signal R_i_strobe: std_logic;
     signal R_i_addr: std_logic_vector(31 downto 2);
+    signal R_i_burst_len: std_logic_vector(3 downto 0);
     signal R_i_addr_in_xram: std_logic; -- hacky distinguish XRAM/BRAM
+    signal R_d_addr: std_logic_vector(31 downto 2);
+    signal R_d_burst_len: std_logic_vector(3 downto 0);
     signal R_dcache_wbuf: std_logic_vector(31 downto 0);
     signal R_d_state: std_logic_vector(1 downto 0);
     signal dcache_data_out: std_logic_vector(31 downto 0);
@@ -349,6 +355,7 @@ begin
     end generate; -- icache_big
 
     imem_addr <= R_i_addr;
+    imem_burst_len <= R_i_burst_len when iaddr_cacheable else (others => '0');
     imem_addr_strobe <= '1' when not iaddr_cacheable else R_i_strobe;
     i_data <= icache_data_out when iaddr_cacheable else imem_data_in;
     instr_ready <= imem_data_ready when not iaddr_cacheable else
@@ -374,6 +381,7 @@ begin
 	-- instruction cache FSM
 	--
 	R_i_addr <= i_addr;
+	R_i_burst_len <= (others => '0');
 	if iaddr_cacheable and (not icache_line_valid)
 	  and (imem_data_ready and R_i_strobe) = '0' then
 	    R_i_strobe <= '1';
@@ -384,7 +392,14 @@ begin
 	--
 	-- data cache FSM
 	--
-	if (dmem_data_ready = '1' and R_d_state /= C_D_IDLE)
+	if R_d_state = C_D_IDLE then
+	    R_d_addr <= d_addr;
+	end if;
+	if R_d_burst_len /= 0 then
+	    if dmem_data_ready = '1' then
+		R_d_burst_len <= R_d_burst_len - 1;
+	    end if;
+	elsif (dmem_data_ready = '1' and R_d_state /= C_D_IDLE)
 	  or cpu_d_strobe = '0' then
 	    R_d_state <= C_D_IDLE;
 	elsif R_d_state = C_D_READ and dcache_line_valid then
@@ -403,7 +418,8 @@ begin
     end if;
     end process;
 
-    dmem_addr <= d_addr;
+    dmem_addr <= R_d_addr when R_d_state /= C_D_IDLE else d_addr;
+    dmem_burst_len <= R_d_burst_len when daddr_cacheable else (others => '0');
     dmem_write <= cpu_d_write;
     dmem_byte_sel <= cpu_d_byte_sel;
     dmem_data_out <= cpu_d_data_out;
