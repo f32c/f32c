@@ -69,7 +69,7 @@ use xp2.components.all;
 entity toplevel is
   generic (
     -- Main clock: 25, 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-    C_clk_freq: integer := 50;
+    C_clk_freq: integer := 81;
 
     -- ISA options
     C_arch: integer := ARCH_MI32;
@@ -128,7 +128,7 @@ entity toplevel is
     C_video_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
 
     C_hdmi_out: boolean := true;
-    C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
+    C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
       -- number of pixels for line; 640
       C_vgahdmi_fifo_width: integer := 640;
       -- number of scan lines: 480
@@ -139,7 +139,7 @@ entity toplevel is
       -- for 8bpp compositing use 11 -> 2048 bytes
       C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 50MHz 1MB SRAM"; -- default banner in screen memory
       C_vgatext_mode: integer := 0; -- 640x480
       C_vgatext_bits: integer := 4; -- 16 possible colors
@@ -247,6 +247,7 @@ architecture Behavioral of toplevel is
   signal btn: std_logic_vector(4 downto 0);
   signal tmds_rgb: std_logic_vector(2 downto 0);
   signal tmds_clk: std_logic;
+  signal blink1, blink2, blink3: std_logic_vector(25 downto 0);
   signal gpio_28, fm_antenna, cw_antenna: std_logic;
   signal motor_bridge, motor_encoder: std_logic_vector(1 downto 0);
 begin
@@ -265,7 +266,7 @@ begin
     ena_325m <= '0';
     clk250Mgen: entity work.pll_25M_250M
     port map (
-      CLK => clk, CLKOP => clk_250m
+      CLK => clk_25m, CLKOP => clk_250m
     );
   end generate;
 
@@ -430,16 +431,16 @@ begin
     hdmi_output1: entity work.hdmi_out
       port map
       (
-        tmds_in_clk    => tmds_clk,
-        tmds_out_clk_p => j2_3, -- clock
-        tmds_out_clk_n => j2_4,
         tmds_in_rgb    => tmds_rgb,
-        tmds_out_rgb_p(2) => j2_5,  -- red
-        tmds_out_rgb_n(2) => j2_6,
-        tmds_out_rgb_p(1) => j2_7,  -- green
-        tmds_out_rgb_n(1) => j2_8,
-        tmds_out_rgb_p(0) => j2_9,  -- blue
-        tmds_out_rgb_n(0) => j2_10
+        tmds_out_rgb_p(2) => j2_2,  -- blue
+        tmds_out_rgb_n(2) => j2_3,
+        tmds_out_rgb_p(1) => j2_4,  -- green
+        tmds_out_rgb_n(1) => j2_5,
+        tmds_out_rgb_p(0) => j2_6,  -- red
+        tmds_out_rgb_n(0) => j2_7,
+        tmds_in_clk    => tmds_clk,
+        tmds_out_clk_p => j2_8, -- clock
+        tmds_out_clk_n => j2_9
       );
 
     -- simulation for the ledstrip motor (forward-only motor)
