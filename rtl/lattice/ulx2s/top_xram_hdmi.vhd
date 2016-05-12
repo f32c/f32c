@@ -127,6 +127,7 @@ entity toplevel is
 
     C_video_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
 
+    C_hdmi_out: boolean := true;
     C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
       -- number of pixels for line; 640
       C_vgahdmi_fifo_width: integer := 640;
@@ -239,7 +240,7 @@ end toplevel;
 architecture Behavioral of toplevel is
   constant C_sram_pipelined_read: boolean := C_clk_freq = 81; -- works only at 81.25 MHz !!!
   signal clk, clk_325m, ena_325m: std_logic;
-  signal clk_112M5, clk_433m: std_logic;
+  signal clk_112m5, clk_433m, clk_250m: std_logic;
   signal pll_lock: std_logic;
   signal reset_when_clock_stable: std_logic;
   signal rs232_break: std_logic;
@@ -252,28 +253,8 @@ begin
   --
   -- Clock synthesizer
   --
-  clk_81_325: if C_clk_freq > 25 and C_cw_simple_out < 0 generate
-    -- no CW output (FM possible if enabled)
-    clkgen_video: entity work.clkgen
-    generic map (
-	C_clk_freq => C_clk_freq
-    )
-    port map (
-	clk_25m => clk_25m, ena_325m => ena_325m,
-	clk => clk, clk_325m => clk_325m, res => '0'
-    );
-    -- ena_325m <= R_dds_enable when R_fb_mode = "11" else '1';
-    ena_325m <= '1';
-    G_normal_gpio28: if not C_fmrds generate
-    j2_16 <= gpio_28;
-    end generate; -- G_normal_gpio28
-    G_fm_antenna: if C_fmrds generate
-    j2_16 <= fm_antenna;
-    end generate; -- G_fm_antenna
-  end generate;
-
-  clk_81_433: if C_clk_freq = 81 and C_cw_simple_out >= 0 generate
-    clkgen_tx433M33: entity work.clkgen
+  clk_x_250: if C_hdmi_out generate
+    clkgen_x: entity work.clkgen
     generic map (
 	C_clk_freq => C_clk_freq
     )
@@ -282,40 +263,11 @@ begin
 	clk => clk, clk_325m => open, res => '0'
     );
     ena_325m <= '0';
-    -- warning: from 81.25 MHz PLL produces 433.33 MHz
-    -- correct frequency should be 433.92 MHz
-    -- the difference results in reduced range
-    clk433M33gen: entity work.pll_81M25_433M33
+    clk250Mgen: entity work.pll_25M_250M
     port map (
-      CLK => clk, CLKOP => clk_433m
+      CLK => clk, CLKOP => clk_250m
     );
-    j2_16 <= cw_antenna;
   end generate;
-
-  G_clk_25: if C_clk_freq = 25 generate -- 25 MHz CPU clock
-    clk <= clk_25m;
-    -- latice XP2 using 2 PLLs can generate correct frequency
-    -- 25 MHz -> 112.5 MHz -> 433.92 MHz
-    G_clk_25_112_433: if C_cw_simple_out >= 0 generate
-    clk112M5gen: entity work.pll_25M_112M5
-    port map (
-      CLK => clk_25m, CLKOP => clk_112m5,
-      lock => pll_lock
-    );
-    reset_when_clock_stable <= pll_lock;
-    -- reset assures clean start at power up
-    -- not only after upload of bitstream
-    gsr_inst_25MHz: GSR
-    port map (
-		gsr => reset_when_clock_stable
-    );
-    clk433M92gen: entity work.pll_112M5_433M92
-    port map (
-      CLK => clk_112m5, CLKOP => clk_433m
-    );
-    j2_16 <= cw_antenna;
-    end generate;
-  end generate; -- 25 MHz clock
 
   btn <= btn_left & btn_right & btn_up & btn_down & btn_center;
   inst_glue_xram: entity work.glue_xram
@@ -422,6 +374,7 @@ begin
     port map (
       clk => clk,
       clk_pixel => clk_25m,
+      clk_pixel_shift => clk_250m,
       clk_fmdds => clk_325m,
       clk_cw => clk_433m,
       sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx, sio_break(0) => rs232_break,
