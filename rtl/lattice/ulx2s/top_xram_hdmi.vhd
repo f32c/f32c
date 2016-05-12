@@ -209,7 +209,7 @@ entity toplevel is
     -- can pose routing/timing problems in lattice XP2 so enable them as needed
     -- manifestation of timing problems is that f32c CPU erraticaly slows down
     -- or speeds up while executing arduino delay(1000);
-    C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8); -- for each pid choose simulator/real 
+    C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8); -- for each pid choose simulator/real
     C_dds: boolean := false
   );
   port (
@@ -463,7 +463,7 @@ begin
       dvid_red(0)   => tmds_rgb(2), dvid_red(1)   => open,
       dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
       dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
-      dvid_clock(0) => tmds_clk,    dvid_clock(1) => open,      
+      dvid_clock(0) => tmds_clk,    dvid_clock(1) => open,
       --  gpio(28) multifunction: antenna
       gpio(28) => gpio_28, -- j2_16
       cw_antenna => cw_antenna, -- output 433MHz
