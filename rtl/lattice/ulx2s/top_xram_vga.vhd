@@ -69,7 +69,7 @@ use xp2.components.all;
 entity toplevel is
   generic (
     -- Main clock: 25, 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-    C_clk_freq: integer := 81;
+    C_clk_freq: integer := 50;
 
     -- ISA options
     C_arch: integer := ARCH_MI32;
@@ -114,7 +114,7 @@ entity toplevel is
     C_cached_addr_bits: integer := 20; -- number of lower RAM address bits 2^20 -> 1MB to be cached
 
     C_sram: boolean := true;
-      C_sram_refresh: boolean := true; -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
+      C_sram_refresh: boolean := false; -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
       C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
       -- C_sram_pipelined_read: boolean := true; -- works only at 81.25 MHz !!! defined below as constant
 
@@ -125,9 +125,9 @@ entity toplevel is
     C_gpio: integer := 32; -- number of GPIO pins
     C_spi: integer := 2; -- number of SPI interfaces
 
-    C_video_cache_size: integer := 2; -- KB (0 to disable, 2,4,8,16,32 to enable)
+    C_video_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
 
-    C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
+    C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
       -- number of pixels for line; 640
       C_vgahdmi_fifo_width: integer := 640;
       -- number of scan lines: 480
@@ -138,7 +138,7 @@ entity toplevel is
       -- for 8bpp compositing use 11 -> 2048 bytes
       C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 50MHz 1MB SRAM"; -- default banner in screen memory
       C_vgatext_mode: integer := 0; -- 640x480
       C_vgatext_bits: integer := 4; -- 16 possible colors
@@ -149,8 +149,8 @@ entity toplevel is
       C_vgatext_palette: boolean := true; -- yes, color palette
       C_vgatext_text: boolean := true; -- enable optional text generation
         C_vgatext_font_bram8: boolean := true; -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
-        C_vgatext_char_height: integer := 8; -- character cell height
-        C_vgatext_font_height: integer := 8; -- font height
+        C_vgatext_char_height: integer := 16; -- character cell height
+        C_vgatext_font_height: integer := 16; -- font height
         C_vgatext_font_depth: integer := 8; -- font char depth, 7=128 characters or 8=256 characters
         C_vgatext_font_linedouble: boolean := false; -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
         C_vgatext_font_widthdouble: boolean := false; -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)
@@ -209,7 +209,7 @@ entity toplevel is
     -- can pose routing/timing problems in lattice XP2 so enable them as needed
     -- manifestation of timing problems is that f32c CPU erraticaly slows down
     -- or speeds up while executing arduino delay(1000);
-    C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8); -- for each pid choose simulator/real 
+    C_pid_simulator: std_logic_vector(7 downto 0) := ext("1000", 8); -- for each pid choose simulator/real
     C_dds: boolean := false
   );
   port (
