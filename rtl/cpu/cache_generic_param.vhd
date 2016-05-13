@@ -83,14 +83,14 @@ entity cache is
 	clk, reset: in std_logic;
 	imem_addr_strobe: out std_logic;
 	imem_addr: out std_logic_vector(31 downto 2);
-	imem_burst_len: out std_logic_vector(3 downto 0);
+	imem_burst_len: out std_logic_vector(2 downto 0);
 	imem_data_in: in std_logic_vector(31 downto 0);
 	imem_data_ready: in std_logic;
 	dmem_addr_strobe: out std_logic;
 	dmem_write: out std_logic;
 	dmem_byte_sel: out std_logic_vector(3 downto 0);
 	dmem_addr: out std_logic_vector(31 downto 2);
-	dmem_burst_len: out std_logic_vector(3 downto 0);
+	dmem_burst_len: out std_logic_vector(2 downto 0);
 	dmem_data_in: in std_logic_vector(31 downto 0);
 	dmem_data_out: out std_logic_vector(31 downto 0);
 	dmem_data_ready: in std_logic;
@@ -149,10 +149,10 @@ architecture x of cache is
 
     signal R_i_strobe: std_logic;
     signal R_i_addr: std_logic_vector(31 downto 2);
-    signal R_i_burst_len: std_logic_vector(3 downto 0);
+    signal R_i_burst_len: std_logic_vector(2 downto 0);
     signal R_i_addr_in_xram: std_logic; -- hacky distinguish XRAM/BRAM
     signal R_d_addr: std_logic_vector(31 downto 2);
-    signal R_d_burst_len: std_logic_vector(3 downto 0);
+    signal R_d_burst_len: std_logic_vector(2 downto 0);
     signal R_dcache_wbuf: std_logic_vector(31 downto 0);
     signal R_d_state: std_logic_vector(2 downto 0);
     signal dcache_data_out: std_logic_vector(31 downto 0);
