@@ -113,10 +113,11 @@ entity cache is
 end cache;
 
 architecture x of cache is
-    constant C_D_IDLE: std_logic_vector := "00";
-    constant C_D_WRITE: std_logic_vector := "01";
-    constant C_D_READ: std_logic_vector := "10";
-    constant C_D_FETCH: std_logic_vector := "11";
+    constant C_D_IDLE: std_logic_vector := "000";
+    constant C_D_WRITE: std_logic_vector := "001";
+    constant C_D_READ: std_logic_vector := "010";
+    constant C_D_FETCH: std_logic_vector := "011";
+    constant C_D_BURST: std_logic_vector := "111";
 
     -- 1.0E-6 is small delta to prevent floating point errors
     -- aborting compilation when C_icache_size = 0
@@ -153,7 +154,7 @@ architecture x of cache is
     signal R_d_addr: std_logic_vector(31 downto 2);
     signal R_d_burst_len: std_logic_vector(3 downto 0);
     signal R_dcache_wbuf: std_logic_vector(31 downto 0);
-    signal R_d_state: std_logic_vector(1 downto 0);
+    signal R_d_state: std_logic_vector(2 downto 0);
     signal dcache_data_out: std_logic_vector(31 downto 0);
 
     signal cpu_d_strobe, cpu_d_write, cpu_d_ready: std_logic;
@@ -396,22 +397,39 @@ begin
 	if R_d_state = C_D_IDLE then
 	    R_d_addr <= cpu_d_addr;
 	end if;
-	if R_d_burst_len /= 0 then
+	if R_d_state = C_D_BURST then
 	    if dmem_data_ready = '1' then
-		R_d_burst_len <= R_d_burst_len - 1;
+		if R_d_burst_len /= 0 then
+		    R_d_burst_len <= R_d_burst_len - 1;
+		    R_d_addr <= R_d_addr + 1;
+		else
+		    R_d_state <= C_D_IDLE;
+		end if;
+	    end if;
+	elsif R_d_state = C_D_FETCH then
+	    if dmem_data_ready = '1' then
+		if R_d_burst_len /= 0 then
+		    R_d_state <= C_D_BURST;
+		    R_d_burst_len <= R_d_burst_len - 1;
+		    R_d_addr <= R_d_addr + 1;
+		else
+		    R_d_state <= C_D_IDLE;
+		end if;
+	    end if;
+	elsif R_d_state = C_D_READ then
+	    if dcache_line_valid then
+		R_d_state <= C_D_IDLE;
+	    else
+		R_d_state <= C_D_FETCH;
 	    end if;
 	elsif (dmem_data_ready = '1' and R_d_state /= C_D_IDLE)
 	  or cpu_d_strobe = '0' then
-	    R_d_state <= C_D_IDLE;
-	elsif R_d_state = C_D_READ and dcache_line_valid then
 	    R_d_state <= C_D_IDLE;
 	elsif cpu_d_strobe = '1' and daddr_cacheable then
 	    if cpu_d_write = '1' then
 		R_d_state <= C_D_WRITE;
 	    elsif R_d_state = C_D_IDLE then
 		R_d_state <= C_D_READ;
-	    else
-		R_d_state <= C_D_FETCH;
 	    end if;
 	else
 	    R_d_state <= C_D_IDLE;
