@@ -415,7 +415,7 @@ begin
 	    end if;
 	elsif R_d_state = C_D_FETCH then
 	    if dmem_data_ready = '1' then
-		if R_d_burst_len /= 0 then
+		if C_cache_bursts and R_d_burst_len /= 0 then
 		    R_d_state <= C_D_BURST;
 		    R_d_burst_len <= R_d_burst_len - 1;
 		    R_d_addr <= R_d_addr + 1;
@@ -423,7 +423,7 @@ begin
 		    R_d_state <= C_D_IDLE;
 		end if;
 	    end if;
-	elsif R_d_state = C_D_BURST then
+	elsif C_cache_bursts and R_d_state = C_D_BURST then
 	    if dmem_data_ready = '1' then
 		if R_d_burst_len /= 0 then
 		    R_d_burst_len <= R_d_burst_len - 1;
@@ -458,10 +458,10 @@ begin
       else '0';
 
     daddr_cacheable <= C_dcache_size > 0 and cpu_d_addr(31 downto 28) = C_xram_base;
-    dcache_write <= dmem_data_ready when
-      (R_d_state = C_D_WRITE or R_d_state = C_D_FETCH) else '0';
-    d_tag_valid_bit <= '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111"
-      and not dcache_line_valid else '1';
+    dcache_write <= dmem_data_ready when (R_d_state = C_D_WRITE
+      or R_d_state = C_D_FETCH or R_d_state = C_D_BURST) else '0';
+    d_tag_valid_bit <= '0' when R_d_state = C_D_WRITE
+      and cpu_d_byte_sel /= "1111" and not dcache_line_valid else '1';
     dtag_valid: if C_dcache_size > 0 generate
     dcache_tag_in(C_dtag_bits-1) <= d_tag_valid_bit;
     dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) <= cache_d_addr(C_cached_addr_bits-1 downto C_dcache_addr_bits);
