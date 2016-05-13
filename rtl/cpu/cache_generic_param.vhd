@@ -413,7 +413,7 @@ begin
 	    else
 		R_d_state <= C_D_FETCH;
 		if C_cache_bursts then
---		    R_d_burst_len(0) <= not R_d_addr(2);
+		    R_d_burst_len(2 downto 0) <= "11" - R_d_addr(3 downto 2);
 		end if;
 	    end if;
 	elsif R_d_state = C_D_FETCH then
@@ -421,7 +421,7 @@ begin
 		if C_cache_bursts and R_d_burst_len /= 0 then
 		    R_d_state <= C_D_BURST;
 		    R_d_burst_len <= R_d_burst_len - 1;
-		    R_d_addr <= R_d_addr + 1;
+		    R_d_addr(4 downto 2) <= R_d_addr(4 downto 2) + 1;
 		else
 		    R_d_state <= C_D_IDLE;
 		end if;
@@ -430,7 +430,7 @@ begin
 	    if dmem_data_ready = '1' then
 		if R_d_burst_len /= 0 then
 		    R_d_burst_len <= R_d_burst_len - 1;
-		    R_d_addr <= R_d_addr + 1;
+		    R_d_addr(4 downto 2) <= R_d_addr(4 downto 2) + 1;
 		else
 		    R_d_state <= C_D_IDLE;
 		end if;
@@ -449,19 +449,19 @@ begin
     dmem_byte_sel <= cpu_d_byte_sel;
     dmem_data_out <= cpu_d_data_out;
 
-    dmem_addr_strobe <=
-      cpu_d_strobe when (not daddr_cacheable) or cpu_d_write = '1'
+    dmem_addr_strobe <= '1' when C_cache_bursts and R_d_state = C_D_BURST
+      else cpu_d_strobe when (not daddr_cacheable) or cpu_d_write = '1'
       else '0' when R_d_state = C_D_READ and dcache_line_valid
       else '0' when R_d_state = C_D_IDLE else cpu_d_strobe;
     cpu_d_data_in <= dcache_data_out when R_d_state = C_D_READ
       else dmem_data_in;
     cpu_d_ready <= '1' when R_d_state = C_D_READ and dcache_line_valid
-      else dmem_data_ready when not daddr_cacheable or R_d_state /= C_D_IDLE
-      else '0';
+      else dmem_data_ready when (not daddr_cacheable and R_d_state = C_D_IDLE)
+      or R_d_state = C_D_FETCH or R_d_state = C_D_WRITE else '0';
 
     daddr_cacheable <= C_dcache_size > 0 and cpu_d_addr(31 downto 28) = C_xram_base;
     dcache_addr <= cpu_d_addr when not C_cache_bursts or
-      (R_d_state = C_D_IDLE or dmem_data_ready = '0') else R_d_addr;
+      R_d_state = C_D_IDLE else R_d_addr;
     dcache_write <= dmem_data_ready when (R_d_state = C_D_WRITE
       or R_d_state = C_D_FETCH or R_d_state = C_D_BURST) else '0';
     d_tag_valid_bit <= '0' when R_d_state = C_D_WRITE
