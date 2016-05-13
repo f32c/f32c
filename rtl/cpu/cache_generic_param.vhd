@@ -395,16 +395,23 @@ begin
 	-- data cache FSM
 	--
 	if R_d_state = C_D_IDLE then
-	    R_d_addr <= cpu_d_addr;
-	end if;
-	if R_d_state = C_D_BURST then
-	    if dmem_data_ready = '1' then
-		if R_d_burst_len /= 0 then
-		    R_d_burst_len <= R_d_burst_len - 1;
-		    R_d_addr <= R_d_addr + 1;
+	    if cpu_d_strobe = '1' and daddr_cacheable then
+		R_d_addr <= cpu_d_addr;
+		if cpu_d_write = '1' then
+		    R_d_state <= C_D_WRITE;
 		else
-		    R_d_state <= C_D_IDLE;
+		    R_d_state <= C_D_READ;
 		end if;
+	    end if;
+	elsif R_d_state = C_D_WRITE then
+	    if dmem_data_ready = '1' then
+		R_d_state <= C_D_IDLE;
+	    end if;
+	elsif R_d_state = C_D_READ then
+	    if dcache_line_valid then
+		R_d_state <= C_D_IDLE;
+	    else
+		R_d_state <= C_D_FETCH;
 	    end if;
 	elsif R_d_state = C_D_FETCH then
 	    if dmem_data_ready = '1' then
@@ -416,22 +423,17 @@ begin
 		    R_d_state <= C_D_IDLE;
 		end if;
 	    end if;
-	elsif R_d_state = C_D_READ then
-	    if dcache_line_valid then
-		R_d_state <= C_D_IDLE;
-	    else
-		R_d_state <= C_D_FETCH;
-	    end if;
-	elsif (dmem_data_ready = '1' and R_d_state /= C_D_IDLE)
-	  or cpu_d_strobe = '0' then
-	    R_d_state <= C_D_IDLE;
-	elsif cpu_d_strobe = '1' and daddr_cacheable then
-	    if cpu_d_write = '1' then
-		R_d_state <= C_D_WRITE;
-	    elsif R_d_state = C_D_IDLE then
-		R_d_state <= C_D_READ;
+	elsif R_d_state = C_D_BURST then
+	    if dmem_data_ready = '1' then
+		if R_d_burst_len /= 0 then
+		    R_d_burst_len <= R_d_burst_len - 1;
+		    R_d_addr <= R_d_addr + 1;
+		else
+		    R_d_state <= C_D_IDLE;
+		end if;
 	    end if;
 	else
+	    -- This should be unreachable, but just in case return to idle.
 	    R_d_state <= C_D_IDLE;
 	end if;
     end if;
@@ -440,7 +442,7 @@ begin
     cache_d_addr <= cpu_d_addr;
 
     dmem_addr <= R_d_addr when R_d_state /= C_D_IDLE else cpu_d_addr;
-    dmem_burst_len <= R_d_burst_len when daddr_cacheable else (others => '0');
+    dmem_burst_len <= R_d_burst_len;
     dmem_write <= cpu_d_write;
     dmem_byte_sel <= cpu_d_byte_sel;
     dmem_data_out <= cpu_d_data_out;
