@@ -130,7 +130,7 @@ architecture x of cache is
     constant C_dtag_bits: integer := C_cached_addr_bits-C_dcache_addr_bits+1;  -- +1 = 1 extra bit for data valid
 
     signal i_addr: std_logic_vector(31 downto 2);
-    signal cpu_d_addr, cache_d_addr: std_logic_vector(31 downto 2);
+    signal cpu_d_addr, dcache_addr: std_logic_vector(31 downto 2);
     signal i_data: std_logic_vector(31 downto 0);
     signal cpu_d_data_in, cpu_d_data_out: std_logic_vector(31 downto 0);
     signal icache_data_in, icache_data_out: std_logic_vector(31 downto 0);
@@ -442,11 +442,9 @@ begin
     end if;
     end process;
 
-    cache_d_addr <= cpu_d_addr;
-
     dmem_addr <= R_d_addr when R_d_state /= C_D_IDLE else cpu_d_addr;
     dmem_burst_len <= R_d_burst_len;
-    dmem_write <= cpu_d_write when R_d_state = C_D_IDLE
+    dmem_write <= cpu_d_write when not C_cache_bursts or R_d_state = C_D_IDLE
       else '1' when R_d_state = C_D_WRITE else '0';
     dmem_byte_sel <= cpu_d_byte_sel;
     dmem_data_out <= cpu_d_data_out;
@@ -462,13 +460,15 @@ begin
       else '0';
 
     daddr_cacheable <= C_dcache_size > 0 and cpu_d_addr(31 downto 28) = C_xram_base;
+    dcache_addr <= cpu_d_addr when not C_cache_bursts or
+      (R_d_state = C_D_IDLE or dmem_data_ready = '0') else R_d_addr;
     dcache_write <= dmem_data_ready when (R_d_state = C_D_WRITE
       or R_d_state = C_D_FETCH or R_d_state = C_D_BURST) else '0';
     d_tag_valid_bit <= '0' when R_d_state = C_D_WRITE
       and cpu_d_byte_sel /= "1111" and not dcache_line_valid else '1';
     dtag_valid: if C_dcache_size > 0 generate
     dcache_tag_in(C_dtag_bits-1) <= d_tag_valid_bit;
-    dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) <= cache_d_addr(C_cached_addr_bits-1 downto C_dcache_addr_bits);
+    dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) <= dcache_addr(C_cached_addr_bits-1 downto C_dcache_addr_bits);
     dcache_line_valid <= dcache_tag_out(C_dtag_bits-1) = '1' 
       and dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) = dcache_tag_out(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0);
     end generate;
@@ -507,7 +507,7 @@ begin
 	clk => clk,
 	we_b => '0', we_a => dcache_write,
 	addr_b => (others => '0'),
-	addr_a => cache_d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => dcache_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_b => (others => '0'),
 	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
@@ -522,8 +522,8 @@ begin
     port map (
 	clk => clk,
 	we_a => dcache_write, we_b => dcache_write,
-	addr_a => '0' & cache_d_addr(C_dcache_addr_bits-1 downto 2),
-	addr_b => '1' & cache_d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => '0' & dcache_addr(C_dcache_addr_bits-1 downto 2),
+	addr_b => '1' & dcache_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_a => to_d_bram(0 * 18 + 17 downto 0 * 18),
 	data_in_b => to_d_bram(1 * 18 + 17 downto 1 * 18),
 	data_out_a => from_d_bram(0 * 18 + 17 downto 0 * 18),
@@ -546,7 +546,7 @@ begin
 	clk => clk,
 	we_b => '0', we_a => dcache_write,
 	addr_b => (others => '0'),
-	addr_a => cache_d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => dcache_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_b => (others => '0'),
 	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
@@ -563,7 +563,7 @@ begin
     port map (
 	clk => clk,
 	we_a => dcache_write, we_b => '0',
-	addr_a => cache_d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => dcache_addr(C_dcache_addr_bits-1 downto 2),
 	addr_b => (others => '0'),
 	data_in_a => to_d_bram(b * 18 + 17 downto b * 18),
 	data_in_b => (others => '0'),
@@ -588,7 +588,7 @@ begin
 	clk => clk,
 	we_b => '0', we_a => dcache_write,
 	addr_b => (others => '0'),
-	addr_a => cache_d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => dcache_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_b => (others => '0'),
 	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
@@ -605,7 +605,7 @@ begin
     port map (
 	clk => clk,
 	we_a => dcache_write, we_b => '0',
-	addr_a => cache_d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => dcache_addr(C_dcache_addr_bits-1 downto 2),
 	addr_b => (others => '0'),
 	data_in_a => to_d_bram(b * 9 + 8 downto b * 9),
 	data_in_b => (others => '0'),
