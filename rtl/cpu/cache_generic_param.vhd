@@ -128,7 +128,8 @@ architecture x of cache is
     constant C_itag_bits: integer := C_cached_addr_bits-C_icache_addr_bits+2;  -- +2 = 1 extra bit for data valid + 1 extra bit for addr(31)
     constant C_dtag_bits: integer := C_cached_addr_bits-C_dcache_addr_bits+1;  -- +1 = 1 extra bit for data valid
 
-    signal i_addr, d_addr: std_logic_vector(31 downto 2);
+    signal i_addr: std_logic_vector(31 downto 2);
+    signal cpu_d_addr, cache_d_addr: std_logic_vector(31 downto 2);
     signal i_data: std_logic_vector(31 downto 0);
     signal cpu_d_data_in, cpu_d_data_out: std_logic_vector(31 downto 0);
     signal icache_data_in, icache_data_out: std_logic_vector(31 downto 0);
@@ -190,7 +191,7 @@ begin
 	imem_addr_strobe => open,
 	imem_data_ready => instr_ready,
 	dmem_addr_strobe => cpu_d_strobe,
-	dmem_addr => d_addr,
+	dmem_addr => cpu_d_addr,
 	dmem_write => cpu_d_write, dmem_byte_sel => cpu_d_byte_sel,
 	dmem_data_in => cpu_d_data_in, dmem_data_out => cpu_d_data_out,
 	dmem_data_ready => cpu_d_ready,
@@ -214,7 +215,7 @@ begin
 
     normal_icache: if not C_icache_expire generate
       flush_i_line <= cpu_flush_i_line and icache_flush_enable;
-      flush_i_addr <= d_addr;
+      flush_i_addr <= cpu_d_addr;
     end generate;
 
     debug_icache: if C_icache_expire generate
@@ -393,7 +394,7 @@ begin
 	-- data cache FSM
 	--
 	if R_d_state = C_D_IDLE then
-	    R_d_addr <= d_addr;
+	    R_d_addr <= cpu_d_addr;
 	end if;
 	if R_d_burst_len /= 0 then
 	    if dmem_data_ready = '1' then
@@ -418,7 +419,9 @@ begin
     end if;
     end process;
 
-    dmem_addr <= R_d_addr when R_d_state /= C_D_IDLE else d_addr;
+    cache_d_addr <= cpu_d_addr;
+
+    dmem_addr <= R_d_addr when R_d_state /= C_D_IDLE else cpu_d_addr;
     dmem_burst_len <= R_d_burst_len when daddr_cacheable else (others => '0');
     dmem_write <= cpu_d_write;
     dmem_byte_sel <= cpu_d_byte_sel;
@@ -434,14 +437,14 @@ begin
       else dmem_data_ready when not daddr_cacheable or R_d_state /= C_D_IDLE
       else '0';
 
-    daddr_cacheable <= C_dcache_size > 0 and d_addr(31 downto 28) = C_xram_base;
+    daddr_cacheable <= C_dcache_size > 0 and cpu_d_addr(31 downto 28) = C_xram_base;
     dcache_write <= dmem_data_ready when
       (R_d_state = C_D_WRITE or R_d_state = C_D_FETCH) else '0';
     d_tag_valid_bit <= '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111"
       and not dcache_line_valid else '1';
     dtag_valid: if C_dcache_size > 0 generate
     dcache_tag_in(C_dtag_bits-1) <= d_tag_valid_bit;
-    dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) <= d_addr(C_cached_addr_bits-1 downto C_dcache_addr_bits);
+    dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) <= cache_d_addr(C_cached_addr_bits-1 downto C_dcache_addr_bits);
     dcache_line_valid <= dcache_tag_out(C_dtag_bits-1) = '1' 
       and dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) = dcache_tag_out(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0);
     end generate;
@@ -480,7 +483,7 @@ begin
 	clk => clk,
 	we_b => '0', we_a => dcache_write,
 	addr_b => (others => '0'),
-	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => cache_d_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_b => (others => '0'),
 	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
@@ -495,8 +498,8 @@ begin
     port map (
 	clk => clk,
 	we_a => dcache_write, we_b => dcache_write,
-	addr_a => '0' & d_addr(C_dcache_addr_bits-1 downto 2),
-	addr_b => '1' & d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => '0' & cache_d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_b => '1' & cache_d_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_a => to_d_bram(0 * 18 + 17 downto 0 * 18),
 	data_in_b => to_d_bram(1 * 18 + 17 downto 1 * 18),
 	data_out_a => from_d_bram(0 * 18 + 17 downto 0 * 18),
@@ -519,7 +522,7 @@ begin
 	clk => clk,
 	we_b => '0', we_a => dcache_write,
 	addr_b => (others => '0'),
-	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => cache_d_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_b => (others => '0'),
 	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
@@ -536,7 +539,7 @@ begin
     port map (
 	clk => clk,
 	we_a => dcache_write, we_b => '0',
-	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => cache_d_addr(C_dcache_addr_bits-1 downto 2),
 	addr_b => (others => '0'),
 	data_in_a => to_d_bram(b * 18 + 17 downto b * 18),
 	data_in_b => (others => '0'),
@@ -561,7 +564,7 @@ begin
 	clk => clk,
 	we_b => '0', we_a => dcache_write,
 	addr_b => (others => '0'),
-	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => cache_d_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_b => (others => '0'),
 	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
@@ -578,7 +581,7 @@ begin
     port map (
 	clk => clk,
 	we_a => dcache_write, we_b => '0',
-	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => cache_d_addr(C_dcache_addr_bits-1 downto 2),
 	addr_b => (others => '0'),
 	data_in_a => to_d_bram(b * 9 + 8 downto b * 9),
 	data_in_b => (others => '0'),
