@@ -412,6 +412,9 @@ begin
 		R_d_state <= C_D_IDLE;
 	    else
 		R_d_state <= C_D_FETCH;
+		if C_cache_bursts then
+--		    R_d_burst_len(0) <= not R_d_addr(2);
+		end if;
 	    end if;
 	elsif R_d_state = C_D_FETCH then
 	    if dmem_data_ready = '1' then
@@ -443,7 +446,8 @@ begin
 
     dmem_addr <= R_d_addr when R_d_state /= C_D_IDLE else cpu_d_addr;
     dmem_burst_len <= R_d_burst_len;
-    dmem_write <= cpu_d_write;
+    dmem_write <= cpu_d_write when R_d_state = C_D_IDLE
+      else '1' when R_d_state = C_D_WRITE else '0';
     dmem_byte_sel <= cpu_d_byte_sel;
     dmem_data_out <= cpu_d_data_out;
 
