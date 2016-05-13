@@ -124,6 +124,8 @@ architecture Behavioral of glue_sdram_fb is
     -- types for signals going to / from f32c core(s)
     type f32c_addr_bus is array(0 to (C_cpus - 1)) of
       std_logic_vector(31 downto 2);
+    type f32c_burst_len is array(0 to (C_cpus - 1)) of
+      std_logic_vector(2 downto 0);
     type f32c_byte_sel is array(0 to (C_cpus - 1)) of
       std_logic_vector(3 downto 0);
     type f32c_data_bus is array(0 to (C_cpus - 1)) of
@@ -137,6 +139,7 @@ architecture Behavioral of glue_sdram_fb is
     signal res: f32c_std_logic;
     signal intr: f32c_intr;
     signal imem_addr, dmem_addr: f32c_addr_bus;
+    signal imem_burst_len, dmem_burst_len: f32c_burst_len;
     signal final_to_cpu_i, final_to_cpu_d, cpu_to_dmem: f32c_data_bus;
     signal imem_addr_strobe, dmem_addr_strobe, dmem_write: f32c_std_logic;
     signal imem_data_ready, dmem_data_ready: f32c_std_logic;
@@ -274,9 +277,11 @@ begin
 	clk => clk, reset => res(i), intr => intr(i),
 	imem_addr => imem_addr(i), imem_data_in => final_to_cpu_i(i),
 	imem_addr_strobe => imem_addr_strobe(i),
+	imem_burst_len => imem_burst_len(i),
 	imem_data_ready => imem_data_ready(i),
 	dmem_addr_strobe => dmem_addr_strobe(i),
 	dmem_addr => dmem_addr(i),
+	dmem_burst_len => dmem_burst_len(i),
 	dmem_write => dmem_write(i), dmem_byte_sel => dmem_byte_sel(i),
 	dmem_data_in => final_to_cpu_d(i), dmem_data_out => cpu_to_dmem(i),
 	dmem_data_ready => dmem_data_ready(i),
@@ -374,12 +379,14 @@ begin
 	end if;
 	-- CPU, data bus
 	sdram_bus(data_port).addr_strobe <= sdram_data_strobe;
+	sdram_bus(data_port).burst_len <= dmem_burst_len(cpu);
 	sdram_bus(data_port).write <= dmem_write(cpu);
 	sdram_bus(data_port).byte_sel <= dmem_byte_sel(cpu);
 	sdram_bus(data_port).addr <= dmem_addr(cpu);
 	sdram_bus(data_port).data_in <= cpu_to_dmem(cpu);
 	-- CPU, instruction bus
 	sdram_bus(instr_port).addr_strobe <= sdram_instr_strobe;
+	sdram_bus(instr_port).burst_len <= imem_burst_len(cpu);
 	sdram_bus(instr_port).addr <= imem_addr(cpu);
 	sdram_bus(instr_port).data_in <= (others => '-');
 	sdram_bus(instr_port).write <= '0';
