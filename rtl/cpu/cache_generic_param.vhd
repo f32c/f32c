@@ -113,11 +113,12 @@ entity cache is
 end cache;
 
 architecture x of cache is
-    constant C_D_IDLE: std_logic_vector := "000";
-    constant C_D_WRITE: std_logic_vector := "001";
-    constant C_D_READ: std_logic_vector := "010";
-    constant C_D_FETCH: std_logic_vector := "100";
-    constant C_D_BURST: std_logic_vector := "101";
+    -- one-hot state encoding
+    constant C_D_IDLE: integer := 0;
+    constant C_D_WRITE: integer := 1;
+    constant C_D_READ: integer := 2;
+    constant C_D_FETCH: integer := 3;
+    constant C_D_BURST: integer := 4; 
 
     -- 1.0E-6 is small delta to prevent floating point errors
     -- aborting compilation when C_icache_size = 0
@@ -154,7 +155,7 @@ architecture x of cache is
     signal R_d_addr: std_logic_vector(31 downto 2);
     signal R_d_burst_len: std_logic_vector(2 downto 0);
     signal R_dcache_wbuf: std_logic_vector(31 downto 0);
-    signal R_d_state: std_logic_vector(2 downto 0);
+    signal R_d_state: std_logic_vector(4 downto 0);
     signal dcache_data_out: std_logic_vector(31 downto 0);
 
     signal cpu_d_strobe, cpu_d_write, cpu_d_ready: std_logic;
@@ -394,69 +395,75 @@ begin
 	--
 	-- data cache FSM
 	--
-	if R_d_state = C_D_IDLE then
+	if R_d_state(C_D_IDLE) = '1' then
 	    if cpu_d_strobe = '1' and daddr_cacheable then
 		R_d_addr <= cpu_d_addr;
+		R_d_state <= (others => '0');
 		if cpu_d_write = '1' then
-		    R_d_state <= C_D_WRITE;
+		    R_d_state(C_D_WRITE) <= '1';
 		else
-		    R_d_state <= C_D_READ;
+		    R_d_state(C_D_READ) <= '1';
 		end if;
 	    end if;
-	elsif R_d_state = C_D_WRITE then
+	elsif R_d_state(C_D_WRITE) = '1' then
 	    if dmem_data_ready = '1' then
-		R_d_state <= C_D_IDLE;
+		R_d_state <= (others => '0');
+		R_d_state(C_D_IDLE) <= '1';
 	    end if;
-	elsif R_d_state = C_D_READ then
+	elsif R_d_state(C_D_READ) = '1' then
+	    R_d_state <= (others => '0');
 	    if dcache_line_valid then
-		R_d_state <= C_D_IDLE;
+		R_d_state(C_D_IDLE) <= '1';
 	    else
-		R_d_state <= C_D_FETCH;
+		R_d_state(C_D_FETCH) <= '1';
 		if C_cache_bursts then
 		    R_d_burst_len <= "111" - R_d_addr(4 downto 2);
 		end if;
 	    end if;
-	elsif R_d_state = C_D_FETCH
-	  or (C_cache_bursts and R_d_state = C_D_BURST) then
+	elsif R_d_state(C_D_FETCH) = '1'
+	  or (C_cache_bursts and R_d_state(C_D_BURST) = '1') then
 	    if dmem_data_ready = '1' then
+		R_d_state <= (others => '0');
 		if C_cache_bursts and R_d_burst_len /= 0 then
-		    R_d_state <= C_D_BURST;
+		    R_d_state(C_D_BURST) <= '1';
 		    R_d_burst_len <= R_d_burst_len - 1;
 		    R_d_addr(4 downto 2) <= R_d_addr(4 downto 2) + 1;
 		else
-		    R_d_state <= C_D_IDLE;
+		    R_d_state(C_D_IDLE) <= '1';
 		end if;
 	    end if;
 	else
-	    -- This should be unreachable, but just in case return to idle.
-	    R_d_state <= C_D_IDLE;
+	    R_d_state <= (others => '0');
+	    R_d_state(C_D_IDLE) <= '1';
 	end if;
     end if;
     end process;
 
-    dmem_addr <= R_d_addr when R_d_state /= C_D_IDLE else cpu_d_addr;
+    dmem_addr <= R_d_addr when R_d_state(C_D_IDLE) = '0' else cpu_d_addr;
     dmem_burst_len <= R_d_burst_len;
-    dmem_write <= cpu_d_write when not C_cache_bursts or R_d_state = C_D_IDLE
-      else '1' when R_d_state = C_D_WRITE else '0';
+    dmem_write <=
+      cpu_d_write when not C_cache_bursts or R_d_state(C_D_IDLE) = '1'
+      else '1' when R_d_state(C_D_WRITE) = '1' else '0';
     dmem_byte_sel <= cpu_d_byte_sel;
     dmem_data_out <= cpu_d_data_out;
 
-    dmem_addr_strobe <= '1' when C_cache_bursts and R_d_state = C_D_BURST
+    dmem_addr_strobe <= '1' when C_cache_bursts and R_d_state(C_D_BURST) = '1'
       else cpu_d_strobe when (not daddr_cacheable) or cpu_d_write = '1'
-      else '0' when R_d_state = C_D_READ and dcache_line_valid
-      else '0' when R_d_state = C_D_IDLE else cpu_d_strobe;
-    cpu_d_data_in <= dcache_data_out when R_d_state = C_D_READ
+      else '0' when R_d_state(C_D_READ) = '1' and dcache_line_valid
+      else '0' when R_d_state(C_D_IDLE) = '1' else cpu_d_strobe;
+    cpu_d_data_in <= dcache_data_out when R_d_state(C_D_READ) = '1'
       else dmem_data_in;
-    cpu_d_ready <= '1' when R_d_state = C_D_READ and dcache_line_valid
-      else dmem_data_ready when (not daddr_cacheable and R_d_state = C_D_IDLE)
-      or R_d_state = C_D_FETCH or R_d_state = C_D_WRITE else '0';
+    cpu_d_ready <= '1' when R_d_state(C_D_READ) = '1' and dcache_line_valid
+      else dmem_data_ready
+	when (not daddr_cacheable and R_d_state(C_D_IDLE) = '1')
+      or R_d_state(C_D_FETCH) = '1' or R_d_state(C_D_WRITE) = '1' else '0';
 
     daddr_cacheable <= C_dcache_size > 0 and cpu_d_addr(31 downto 28) = C_xram_base;
     dcache_addr <= cpu_d_addr when not C_cache_bursts or
-      R_d_state = C_D_IDLE else R_d_addr;
-    dcache_write <= dmem_data_ready when (R_d_state = C_D_WRITE
-      or R_d_state = C_D_FETCH or R_d_state = C_D_BURST) else '0';
-    d_tag_valid_bit <= '0' when R_d_state = C_D_WRITE
+      R_d_state(C_D_IDLE) = '1' else R_d_addr;
+    dcache_write <= dmem_data_ready when (R_d_state(C_D_WRITE) = '1'
+      or R_d_state(C_D_FETCH) = '1' or R_d_state(C_D_BURST) = '1') else '0';
+    d_tag_valid_bit <= '0' when R_d_state(C_D_WRITE) = '1'
       and cpu_d_byte_sel /= "1111" and not dcache_line_valid else '1';
     dtag_valid: if C_dcache_size > 0 generate
     dcache_tag_in(C_dtag_bits-1) <= d_tag_valid_bit;
@@ -468,7 +475,7 @@ begin
     dcache_tag_out <= from_d_bram(C_dtag_bits+31 downto 32);
     dcache_data_out <= from_d_bram(31 downto 0);
     to_d_bram(C_dtag_bits+31 downto 32) <= dcache_tag_in;
-    to_d_bram(31 downto 0) <= R_dcache_wbuf when R_d_state = C_D_WRITE
+    to_d_bram(31 downto 0) <= R_dcache_wbuf when R_d_state(C_D_WRITE) = '1'
       else dmem_data_in;
 
     each_byte: for i in 0 to 3 generate
