@@ -413,7 +413,7 @@ begin
 	    else
 		R_d_state <= C_D_FETCH;
 		if C_cache_bursts then
-		    R_d_burst_len(2 downto 0) <= "11" - R_d_addr(3 downto 2);
+		    R_d_burst_len <= "111" - R_d_addr(4 downto 2);
 		end if;
 	    end if;
 	elsif R_d_state = C_D_FETCH then
