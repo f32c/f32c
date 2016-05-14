@@ -58,7 +58,7 @@ entity esa11_acram_emu is
 	C_acram: boolean := true;
 	C_acram_wait_cycles: integer := 3;
 	-- axi cache emulation memory size KB (power of 2 kilobytes of BRAM)
-	C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2, MAX 128)
+	C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2, MAX 128-7a35i, 256-7a102t)
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         -- warning: 2K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
@@ -73,7 +73,7 @@ entity esa11_acram_emu is
         C3_MEM_BANKADDR_WIDTH : integer := 3;
 
 	C_vgahdmi: boolean := false;
-	C_vgahdmi_test_picture: integer := 1; -- enable test picture
+	C_video_cache_size: integer := 32; -- enable test picture
 
     C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: ESA11-7a35i MIPS compatible soft-core 100MHz 32MB DDR3"; -- default banner in screen memory
@@ -253,7 +253,7 @@ begin
       C_cached_addr_bits => C_cached_addr_bits,
 
       C_vgahdmi => C_vgahdmi,
-      C_vgahdmi_test_picture => C_vgahdmi_test_picture,
+      C_video_cache_size => C_video_cache_size,
 
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
