@@ -116,8 +116,8 @@ architecture x of cache is
     constant C_D_IDLE: std_logic_vector := "000";
     constant C_D_WRITE: std_logic_vector := "001";
     constant C_D_READ: std_logic_vector := "010";
-    constant C_D_FETCH: std_logic_vector := "011";
-    constant C_D_BURST: std_logic_vector := "111";
+    constant C_D_FETCH: std_logic_vector := "100";
+    constant C_D_BURST: std_logic_vector := "101";
 
     -- 1.0E-6 is small delta to prevent floating point errors
     -- aborting compilation when C_icache_size = 0
@@ -416,19 +416,11 @@ begin
 		    R_d_burst_len <= "111" - R_d_addr(4 downto 2);
 		end if;
 	    end if;
-	elsif R_d_state = C_D_FETCH then
+	elsif R_d_state = C_D_FETCH
+	  or (C_cache_bursts and R_d_state = C_D_BURST) then
 	    if dmem_data_ready = '1' then
 		if C_cache_bursts and R_d_burst_len /= 0 then
 		    R_d_state <= C_D_BURST;
-		    R_d_burst_len <= R_d_burst_len - 1;
-		    R_d_addr(4 downto 2) <= R_d_addr(4 downto 2) + 1;
-		else
-		    R_d_state <= C_D_IDLE;
-		end if;
-	    end if;
-	elsif C_cache_bursts and R_d_state = C_D_BURST then
-	    if dmem_data_ready = '1' then
-		if R_d_burst_len /= 0 then
 		    R_d_burst_len <= R_d_burst_len - 1;
 		    R_d_addr(4 downto 2) <= R_d_addr(4 downto 2) + 1;
 		else
