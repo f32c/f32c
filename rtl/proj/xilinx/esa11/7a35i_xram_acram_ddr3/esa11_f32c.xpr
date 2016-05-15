@@ -3,19 +3,19 @@
 <!--                                                         -->
 <!-- Copyright 1986-2016 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="12" Path="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/esa11/7a35i_xram_hdmi/esa11_f32c.xpr">
+<Project Version="7" Minor="12" Path="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/esa11/7a35i_xram_acram_ddr3/esa11_f32c.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="194bc42b8c8f49328288c86964539b6c"/>
     <Option Name="Part" Val="xc7a35tfgg484-2"/>
     <Option Name="CompiledLibDir" Val="$PCACHEDIR/compile_simlib"/>
     <Option Name="CompiledLibDirXSim" Val=""/>
-    <Option Name="CompiledLibDirModelSim" Val="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/modelsim"/>
-    <Option Name="CompiledLibDirQuesta" Val="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/questa"/>
-    <Option Name="CompiledLibDirIES" Val="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/ies"/>
-    <Option Name="CompiledLibDirVCS" Val="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/vcs"/>
-    <Option Name="CompiledLibDirRiviera" Val="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/riviera"/>
-    <Option Name="CompiledLibDirActivehdl" Val="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/activehdl"/>
+    <Option Name="CompiledLibDirModelSim" Val="$PPRDIR/$PPRDIR/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/modelsim"/>
+    <Option Name="CompiledLibDirQuesta" Val="$PPRDIR/$PPRDIR/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/questa"/>
+    <Option Name="CompiledLibDirIES" Val="$PPRDIR/$PPRDIR/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/ies"/>
+    <Option Name="CompiledLibDirVCS" Val="$PPRDIR/$PPRDIR/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/vcs"/>
+    <Option Name="CompiledLibDirRiviera" Val="$PPRDIR/$PPRDIR/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/riviera"/>
+    <Option Name="CompiledLibDirActivehdl" Val="$PPRDIR/$PPRDIR/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/activehdl"/>
     <Option Name="BoardPart" Val=""/>
     <Option Name="ActiveSimSet" Val="sim_fpga"/>
     <Option Name="DefaultLib" Val="xil_defaultlib"/>
@@ -264,6 +264,12 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../../../soc/cvbs.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../../../soc/vgahdmi/videofifo.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -420,12 +426,6 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../soc/cvbs.vhd">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PPRDIR/../../../../xilinx/esa11/ram/blk_ram/blk_ram.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -463,7 +463,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../xilinx/esa11/top/top_7a35i_xram_hdmi.vhd">
+      <File Path="$PPRDIR/../../../../xilinx/esa11/top/top_7a35i_xram_acram_ddr3.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -474,13 +474,9 @@
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/ip/axi_interconnect_0/axi_interconnect_0.upgrade_log"/>
-      <File Path="$PPRDIR/../../../../VCores/blk_ram/blk_ram.upgrade_log"/>
-      <File Path="$PPRDIR/../../../../VCores/cache_fifo/cache_fifo.upgrade_log"/>
-      <File Path="$PSRCDIR/sources_1/ip/mig_7series_1/mig_7series_1.upgrade_log"/>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopModule" Val="glue"/>
+        <Option Name="TopModule" Val="esa11_acram_ddr3"/>
         <Option Name="TopAutoSet" Val="TRUE"/>
       </Config>
     </FileSet>
@@ -511,284 +507,15 @@
     </FileSet>
     <FileSet Name="sim_fpga" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_fpga">
       <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/../../../../../../esa11/esa11_f32c_2016_01_27/vivado/esa11_f32c.srcs/sources_1/ip/mig_7series_1/mig_7series_1/example_design/sim/ddr3_model_parameters.vh">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../../../esa11/esa11_f32c_2016_01_27/vivado/esa11_f32c.srcs/sources_1/ip/mig_7series_1/mig_7series_1/example_design/sim/ddr3_model.sv">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/Testbench/ddr3_model_pkg.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/Testbench/simple_uart.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/Testbench/fpga_tb.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../../../esa11/esa11_f32c_2016_01_27/vivado/fpga_tb_behav.wcfg">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sim_fpga/imports/Testbench/cache_tb.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="ImportPath" Val="$PPRDIR/../../../../Source/Testbench/cache_tb.vhd"/>
-          <Attr Name="ImportTime" Val="1429853784"/>
-        </FileInfo>
-      </File>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopModule" Val="glue"/>
+        <Option Name="TopModule" Val="esa11_acram_ddr3"/>
         <Option Name="TopLib" Val="xil_defaultlib"/>
         <Option Name="TopAutoSet" Val="TRUE"/>
         <Option Name="TransportPathDelay" Val="0"/>
         <Option Name="TransportIntDelay" Val="0"/>
         <Option Name="SrcSet" Val="sources_1"/>
         <Option Name="XSimWcfgFile" Val="$PPRDIR/../../../../../../esa11/esa11_f32c_2016_01_27/vivado/fpga_tb_behav.wcfg"/>
-      </Config>
-    </FileSet>
-    <FileSet Name="sim_axi_cache" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_axi_cache">
-      <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/../../../../Source/Testbench/mem_gen.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/Testbench/cache_tb.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <Config>
-        <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopModule" Val="glue"/>
-        <Option Name="TopLib" Val="xil_defaultlib"/>
-        <Option Name="TopAutoSet" Val="TRUE"/>
-        <Option Name="TransportPathDelay" Val="0"/>
-        <Option Name="TransportIntDelay" Val="0"/>
-        <Option Name="SimMode" Val="post-implementation"/>
-        <Option Name="SrcSet" Val="sources_1"/>
-      </Config>
-    </FileSet>
-    <FileSet Name="sim_axi_dma" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_axi_dma">
-      <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/../../../../VCores/cache_fifo/synth/cache_fifo.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/DMACache_pkg.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/Testbench/mem_gen.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sources_1/ip/axi_bram_ctrl_0/axi_bram_ctrl_0_funcsim.vhdl">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/DMACache.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/Testbench/testmem.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/Testbench/DMACache_ref.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/Testbench/dma_tb.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/fifo_conf.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../../../esa11/esa11_f32c_2016_01_27/vivado/dma_tb_behav.wcfg">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <Config>
-        <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopAutoSet" Val="TRUE"/>
-        <Option Name="TransportPathDelay" Val="0"/>
-        <Option Name="TransportIntDelay" Val="0"/>
-        <Option Name="SimMode" Val="post-implementation"/>
-        <Option Name="SrcSet" Val=""/>
-        <Option Name="XSimWcfgFile" Val="$PPRDIR/../../../../../../esa11/esa11_f32c_2016_01_27/vivado/dma_tb_behav.wcfg"/>
-      </Config>
-    </FileSet>
-    <FileSet Name="sim_edge_lock" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_edge_lock">
-      <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/../../../../Source/edge_lock.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/Testbench/edge_lock_tb.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <Config>
-        <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopAutoSet" Val="TRUE"/>
-        <Option Name="TransportPathDelay" Val="0"/>
-        <Option Name="TransportIntDelay" Val="0"/>
-        <Option Name="SimMode" Val="post-implementation"/>
-        <Option Name="SrcSet" Val=""/>
-      </Config>
-    </FileSet>
-    <FileSet Name="sim_rst_sync" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_rst_sync">
-      <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/../../../../Source/rst_sync.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/Testbench/rst_sync_tb.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../../../esa11/esa11_f32c_2016_01_27/vivado/rst_sync_tb_behav.wcfg">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <Config>
-        <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopAutoSet" Val="TRUE"/>
-        <Option Name="TransportPathDelay" Val="0"/>
-        <Option Name="TransportIntDelay" Val="0"/>
-        <Option Name="SimMode" Val="post-implementation"/>
-        <Option Name="SrcSet" Val=""/>
-        <Option Name="XSimWcfgFile" Val="$PPRDIR/../../../../../../esa11/esa11_f32c_2016_01_27/vivado/rst_sync_tb_behav.wcfg"/>
-      </Config>
-    </FileSet>
-    <FileSet Name="sim_dummy_tb" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_dummy_tb">
-      <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/../../../../Source/Testbench/dummy_tb.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../../../esa11/esa11_f32c_2016_01_27/vivado/dummy_tb_behav.wcfg">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <Config>
-        <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopAutoSet" Val="TRUE"/>
-        <Option Name="TransportPathDelay" Val="0"/>
-        <Option Name="TransportIntDelay" Val="0"/>
-        <Option Name="SimMode" Val="post-implementation"/>
-        <Option Name="SrcSet" Val=""/>
-        <Option Name="XSimWcfgFile" Val="$PPRDIR/../../../../../../esa11/esa11_f32c_2016_01_27/vivado/dummy_tb_behav.wcfg"/>
-      </Config>
-    </FileSet>
-    <FileSet Name="sim_fifo" Type="SimulationSrcs" RelSrcDir="$PSRCDIR/sim_fifo">
-      <Filter Type="Srcs"/>
-      <File Path="$PPRDIR/../../../../Source/fifo_conf.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/Testbench/fifo_tb.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../Source/atlys_ddr_sim/fifo64x8N.vhd">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../../../esa11/esa11_f32c_2016_01_27/vivado/fifo_tb_behav.wcfg">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <Config>
-        <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopModule" Val="glue"/>
-        <Option Name="TopLib" Val="xil_defaultlib"/>
-        <Option Name="TopAutoSet" Val="TRUE"/>
-        <Option Name="TransportPathDelay" Val="0"/>
-        <Option Name="TransportIntDelay" Val="0"/>
-        <Option Name="SimMode" Val="post-implementation"/>
-        <Option Name="SrcSet" Val="sources_1"/>
       </Config>
     </FileSet>
     <FileSet Name="mig_7series_1" Type="BlockSrcs" RelSrcDir="$PSRCDIR/mig_7series_1">
