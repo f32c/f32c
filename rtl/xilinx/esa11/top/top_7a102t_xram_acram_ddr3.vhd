@@ -57,10 +57,9 @@ entity esa11_xram_acram_ddr3 is
 	C_acram_emu_kb: integer := 0; -- KB axi_cache emulation (0 to disable, power of 2, MAX 128)
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
-        -- warning: 2K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
-        -- no errors for 4K or 8K
-        C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
-        C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
+        -- warning: 2K, 4K, 8K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
+        C_icache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 2^29 -> 512MB to be cached
 
         C3_NUM_DQ_PINS        : integer := 16;
