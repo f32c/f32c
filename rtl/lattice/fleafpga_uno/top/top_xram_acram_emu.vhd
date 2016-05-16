@@ -56,7 +56,7 @@ entity glue is
     C_ps2: boolean := false;
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
     C_vgahdmi: boolean := false;
-    C_vgahdmi_test_picture: integer := 0;
+    C_video_cache_size: integer := 0;
     -- number of pixels for line step 640
     C_vgahdmi_fifo_width: integer := 640;
     -- number of scan lines: 480
@@ -162,7 +162,7 @@ architecture Behavioral of glue is
   signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_data_write     : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_data_read      : std_logic_vector(31 downto 0) := (others => '0');
-  signal ram_read_busy      : std_logic := '0';
+  signal ram_ready          : std_logic := '1';
   signal ram_cache_debug    : std_logic_vector(7 downto 0);
   signal ram_cache_hitcnt   : std_logic_vector(31 downto 0);
   signal ram_cache_readcnt  : std_logic_vector(31 downto 0);
@@ -213,7 +213,7 @@ begin
     C_dvid_ddr => C_dvid_ddr,
     -- vga simple compositing bitmap only graphics
     C_vgahdmi => C_vgahdmi,
-      C_vgahdmi_test_picture => C_vgahdmi_test_picture,
+      C_video_cache_size => C_video_cache_size,
       C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
       C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
@@ -335,7 +335,7 @@ begin
     acram_byte_we(3 downto 0) => ram_byte_we(3 downto 0),
     acram_data_rd(31 downto 0) => ram_data_read(31 downto 0),
     acram_data_wr(31 downto 0) => ram_data_write(31 downto 0),
-    acram_read_busy => ram_read_busy,
+    acram_ready => ram_ready,
     
     -- PS/2 Keyboard
     --ps2_clk_in      => ps2_clk_in,
@@ -377,6 +377,7 @@ begin
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
+      acram_ready => ram_ready,
       acram_en => ram_en
     );
 

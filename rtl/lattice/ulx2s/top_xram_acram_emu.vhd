@@ -126,7 +126,7 @@ architecture Behavioral of toplevel is
   signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_data_write     : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_data_read      : std_logic_vector(31 downto 0) := (others => '0');
-  signal ram_read_busy      : std_logic := '0';
+  signal ram_ready      : std_logic := '0';
   signal btn: std_logic_vector(4 downto 0);
 begin
   
@@ -172,7 +172,7 @@ begin
       acram_byte_we(3 downto 0) => ram_byte_we(3 downto 0),
       acram_data_rd(31 downto 0) => ram_data_read(31 downto 0),
       acram_data_wr(31 downto 0) => ram_data_write(31 downto 0),
-      acram_read_busy => ram_read_busy,
+      acram_ready => ram_ready,
       simple_out(7 downto 0) => led(7 downto 0),
       simple_in(4 downto 0) => btn,
       simple_in(19 downto 16) => sw,
@@ -198,6 +198,7 @@ begin
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
+      acram_ready => ram_ready,
       acram_en => ram_en
   );
 
