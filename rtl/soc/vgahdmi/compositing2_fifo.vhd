@@ -147,10 +147,6 @@ entity compositing2_fifo is
 	data_out: out std_logic_vector(C_data_width-1 downto 0);
 	active: in std_logic; -- rising edge sensitive will reset fifo RAM to base address, value 1 allows start of reading
 	frame: out std_logic; -- output CPU clock synchronous start edge detection (1 CPU-clock wide pulse for FB interrupt)
-	-- rewind is useful to re-read text line, saving RAM bandwidth.
-	-- rewind is possible at any time but is be normally issued
-	-- during H-blank period - connected to hsync signal.
-	rewind: in std_logic := '0'; -- rising edge sets output data pointer to the start of last full step
         -- transparent and background color (default 0, black)
         color_transparent, color_background: in std_logic_vector(C_data_width-1 downto 0) := (others => '0');
 	fetch_next: in std_logic -- edge sensitive fetch next value (current data consumed)
@@ -204,7 +200,7 @@ architecture behavioral of compositing2_fifo is
     -- indicates which line in buffer (containing 2 lines) is written (compositing from RAM)
     -- and which line is read (by display output)
     signal R_line_rd, R_line_wr: std_logic := '0'; -- simple 1-bit index of line
-    
+
     signal startsync: std_logic_vector(C_synclen-1 downto 0);
     -- clean start: '1' will reset fifo to its base address
     --              '0' will allow fifo normal sequential operation
@@ -221,13 +217,13 @@ begin
     begin
       if rising_edge(clk) then
         -- synchronize clk_pixel to clk with shift register
-        startsync <= startsync(C_synclen-2 downto 0) & active;
+        startsync <= active & startsync(C_synclen-1 downto 1);
       end if;
     end process;
 
     -- clean start produced from a delay thru clock synchronous shift register
     -- clean_start <= startsync(C_synclen-1); -- level
-    clean_start <= startsync(C_synclen-2) and not startsync(C_synclen-1); -- rising edge
+    clean_start <= startsync(1) and not startsync(0); -- rising edge
 
     -- at start of frame generate pulse of 1 CPU clock
     -- rising edge detection of start signal
