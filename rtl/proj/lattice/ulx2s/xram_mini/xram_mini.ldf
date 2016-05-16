@@ -165,13 +165,7 @@
         <Source name="../../../../soc/sdram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../soc/sdram_ctrl.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../soc/acram.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/arbiter.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../soc/timer.vhd" type="VHDL" type_short="VHDL">
