@@ -79,6 +79,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/compositing_fifo.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
+../../../../soc/vgahdmi/video_cache.vhd \
 ../../../../soc/vgahdmi/vga.vhd \
 ../../../../soc/vgahdmi/tv.vhd \
 ../../../../soc/vgahdmi/VGA_textmode.vhd \
