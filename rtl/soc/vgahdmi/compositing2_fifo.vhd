@@ -400,7 +400,6 @@ begin
           if active = '0' then
             R_pixbuf_rd_addr <= (others => '0');  -- this will read data from RAM
             R_line_rd <= '0'; -- reset line to read from
-            R_line_start <= S_vertical_scrolled;
             R_vertical_scroll <= C_vscroll; -- vertical scroll to fix fifo delay
           else
             if fetch_next = '1' then
@@ -550,7 +549,7 @@ end;
 --     this is because of FIFO system delays output for 2 lines
 --     could be left as-is, fixed with vertical scroll.
 
--- [ ] around vertical lines 3-5, lines skipped or duplicated? (see slash char in c2_font)
+-- [x] around vertical lines 3-5, lines skipped or duplicated? (see slash char in c2_font)
 
 -- [x] first 3 vertical lines are transparent while they shoudn't be
 --     solution: during shifiting, use 1 bit less for bram write address
