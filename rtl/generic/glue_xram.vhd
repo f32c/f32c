@@ -322,6 +322,7 @@ architecture Behavioral of glue_xram is
     signal S_vga_enable: std_logic;
     signal S_vga_active_enabled: std_logic;
     signal vga_fetch_next, S_vga_fetch_enabled: std_logic; -- video module requests next data from fifo
+    signal vga_line_repeat: std_logic;
     signal vga_data_from_fifo: std_logic_vector(31 downto 0);
     -- VGA RAM port
     signal vga_addr: std_logic_vector(29 downto 2);
@@ -329,7 +330,7 @@ architecture Behavioral of glue_xram is
     signal vga_data_ready: std_logic; -- RAM responds to FIFO
     signal vga_data: std_logic_vector(31 downto 0);
     -- Video FIFO data bus
-    signal video_fifo_suggest_cache: std_logic;
+    signal video_fifo_suggest_cache: std_logic := '0';
     signal video_fifo_addr: std_logic_vector(29 downto 2);
     signal video_fifo_addr_strobe: std_logic; -- FIFO requests to read from RAM
     signal video_fifo_data_ready: std_logic; -- RAM responds to FIFO
@@ -1050,6 +1051,10 @@ begin
     S_vga_fetch_enabled <= S_vga_enable and vga_fetch_next; -- drain fifo into display
     S_vga_active_enabled <= S_vga_enable and not S_vga_vsync; -- frame active, pre-fill fifo
 
+    -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
+    -- vga_data(7 downto 0) <= x"0F";
+    vga_data <= from_xram;
+
     -- data source: cache cpu clock synchronous
     G_no_video_cache: if C_video_cache_size=0 generate
       -- bypass the cache
@@ -1062,11 +1067,10 @@ begin
     G_yes_video_cache_i: if C_video_cache_use_i and C_video_cache_size > 0 generate
     -- currently i-cache can't do constant streaming for video
     -- until it is fixed, use d-cache
-    video_cache_i: entity work.video_cache
+    video_cache_i: entity work.video_cache_i
     generic map
     (
         C_icache_size => C_video_cache_size,
-        C_dcache_size => 0,
         C_cached_addr_bits => C_cached_addr_bits, -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
         C_icache_expire => false -- true: i-cache will immediately expire every cached data
     )
@@ -1080,20 +1084,19 @@ begin
       imem_data_in => vga_data, -- input from XRAM
       imem_data_ready => vga_data_ready, -- input from XRAM
       -- to video FIFO
-      --addr_strobe => video_fifo_addr_strobe,
+      i_addr_strobe => video_fifo_addr_strobe,
       i_cacheable => video_fifo_suggest_cache,
       i_addr(31 downto 30) => "10",
       i_addr(29 downto 2) => video_fifo_addr,
-      instr_ready => video_fifo_data_ready, -- output to fifo
+      i_ready => video_fifo_data_ready, -- output to fifo
       i_data => video_fifo_data -- output from cache to fifo
     );
     end generate;
 
     G_yes_video_cache_d: if (not C_video_cache_use_i) and C_video_cache_size > 0 generate
-    video_cache_d: entity work.video_cache
+    video_cache_d: entity work.video_cache_d
     generic map
     (
-        C_icache_size => 0,
         C_dcache_size => C_video_cache_size,
         C_cached_addr_bits => C_cached_addr_bits -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
     )
@@ -1107,8 +1110,8 @@ begin
       dmem_data_in => vga_data, -- input from XRAM
       dmem_data_ready => vga_data_ready, -- input from XRAM
       -- to video FIFO
-      --cpu_d_strobe => video_fifo_addr_strobe,
       d_cacheable => video_fifo_suggest_cache,
+      --cpu_d_strobe => video_fifo_addr_strobe,
       cpu_d_strobe => '1',
       d_addr(31 downto 30) => "10",
       d_addr(29 downto 2) => video_fifo_addr,
@@ -1120,9 +1123,8 @@ begin
     end generate;
 
     -- data source: FIFO - cross clock domain cpu-pixel
-    -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
-    -- vga_data(7 downto 0) <= x"0F";
-    vga_data <= from_xram;
+    G_vgabit_c2: if true generate
+    -- compositing2 video accelerator, shows linked list of pixel data
     comp_fifo: entity work.compositing2_fifo
     generic map (
       C_width => C_vgahdmi_fifo_width,
@@ -1150,16 +1152,46 @@ begin
       frame => vga_frame,
       data_out => vga_data_from_fifo(C_vgahdmi_fifo_data_width-1 downto 0),
       fetch_next => S_vga_fetch_enabled
-      -- dirty hack upper bit of base enables fetching
-      -- works if RAM is mapped to 0x80000000 or above
     );
+    end generate;
+
+    G_vgabit_linear: if false generate
+    -- linear bitmap - shows linear memory block
+      video_fifo_suggest_cache <= '1';
+      linear_fifo: entity work.videofifo
+          generic map (
+            C_bram => true,
+            C_step => C_vgahdmi_fifo_width,
+            C_postpone_step => 0,
+            C_width => C_vgahdmi_fifo_addr_width -- buffer size = 4 * 2^width bytes
+          )
+          port map (
+            clk => clk,
+            clk_pixel => clk_pixel,
+            addr_strobe => video_fifo_addr_strobe,
+            addr_out => video_fifo_addr,
+            data_ready => video_fifo_data_ready, -- data valid for read acknowledge from cache
+            data_in => video_fifo_data, -- from cache
+            -- data_in => x"00000001", -- test pattern vertical lines
+            base_addr => R_fb_base_addr(29 downto 2),
+            start => S_vga_active_enabled,
+            frame => vga_frame,
+            data_out => vga_data_from_fifo(31 downto 0),
+            rewind => vga_line_repeat,
+            fetch_next => S_vga_fetch_enabled
+          );
+    end generate;
 
     -- VGA video generator - pixel clock synchronous
     vgabitmap: entity work.vga
+    --generic map (
+    --  C_dbl_y => 1
+    --)
     port map (
       clk_pixel => clk_pixel,
       test_picture => not S_vga_enable, -- shows test picture when VGA is disabled (on startup)
       fetch_next => vga_fetch_next,
+      line_repeat => vga_line_repeat,
       red_byte    => vga_data_from_fifo(7 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5),
       green_byte  => vga_data_from_fifo(4 downto 2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2),
       blue_byte   => vga_data_from_fifo(1 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0),
