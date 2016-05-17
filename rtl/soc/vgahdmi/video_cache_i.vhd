@@ -77,7 +77,6 @@ architecture x of video_cache_i is
     signal icache_data_in, icache_data_out: std_logic_vector(31 downto 0);
     signal icache_tag_in, icache_tag_out: std_logic_vector(C_itag_bits-1 downto 0);
     signal iaddr_cacheable, icache_line_valid: std_logic;
-    --signal R_icache_line_valid: std_logic := '0';
     signal icache_write: std_logic;
     signal flush_i_line: std_logic;
     signal flush_i_addr: std_logic_vector(31 downto 2);
@@ -116,8 +115,6 @@ begin
     tag_data_dp_bram: entity work.bram_true2p_1clk
     generic map (
         dual_port => True,
-        --pass_thru_a => False,
-        --pass_thru_b => False,
         data_width => C_itag_bits+32,
         addr_width => C_icache_addr_bits-2
     )
@@ -133,9 +130,6 @@ begin
     );
 
     iaddr_cacheable <= i_cacheable when C_icache_size > 0 else '0';
-    --iaddr_cacheable <= i_addr(4);
-    --iaddr_cacheable <= '0';
-
     imem_addr <= R_i_addr;
     imem_addr_strobe <= R_i_strobe when iaddr_cacheable='1' else i_addr_strobe;
     i_data <= icache_data_out when iaddr_cacheable='1' else imem_data_in;
@@ -151,30 +145,31 @@ begin
            else '0';
     end generate;
 
-    G_no_fsm: if true generate
-    R_i_addr <= i_addr;
-    R_i_strobe <= not icache_line_valid;
+    G_no_fsm: if false generate
+      -- this almost works but has problems
+      -- (first word incorrect, following OK)
+      R_i_addr <= i_addr;
+      R_i_strobe <= not icache_line_valid;
     end generate;
 
-    G_fsm: if false generate
-    process(clk)
-    begin
-    if rising_edge(clk) then
-	--
-	-- instruction cache FSM
-	--
-	R_i_addr <= i_addr;
-	if --iaddr_cacheable
-           --and 
-          icache_line_valid = '0'
+    G_yes_fsm: if true generate
+      -- it uses register to stabilize data
+      -- also more response delay than above
+      -- but this works
+      process(clk)
+      begin
+        if rising_edge(clk) then
+          -- cache FSM
+          R_i_addr <= i_addr;
+          if icache_line_valid = '0'
           and (imem_data_ready = '0' or R_i_strobe = '0')
           then
-	    R_i_strobe <= '1';
-	else
-	    R_i_strobe <= '0';
-	end if;
-    end if;
-    end process;
+            R_i_strobe <= '1';
+          else
+            R_i_strobe <= '0';
+          end if;
+        end if;
+      end process;
     end generate;
 
 end x;
