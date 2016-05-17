@@ -353,7 +353,12 @@
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../soc/vgahdmi/video_cache.vhd">
+      <File Path="$PPRDIR/../../../../soc/vgahdmi/video_cache_i.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/vgahdmi/video_cache_d.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
