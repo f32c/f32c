@@ -26,6 +26,10 @@
 -- Modifications
 -- Davor Jadrijevic: instantiation of generic bram modules, parametrization
 --
+-- master should hold i_addr until ready, if this is not the
+-- case then arrived data from external RAM will be written
+-- in wrong place in the cache
+--
 -- $Id$
 --
 
@@ -50,6 +54,9 @@ entity video_cache_i is
     port (
         clk: in std_logic;
         -- video_fifo side read-only port
+        -- i_cacheable allows selective cacheing for each read cycle
+        -- '1'-read from cache if found valid data or read from RAM with storing in cache for later read
+        -- '0'-directly read from RAM, bypassing cache
         i_cacheable: in std_logic := '1';
         i_addr: in std_logic_vector(31 downto 2) := (others => '0');
         i_addr_strobe: in std_logic := '0';
@@ -82,7 +89,7 @@ architecture x of video_cache_i is
     signal flush_i_addr: std_logic_vector(31 downto 2);
 
     signal to_i_bram, from_i_bram: std_logic_vector(C_itag_bits+31 downto 0);
-
+    --signal R_iaddr_cacheable: std_logic := '0';
     signal R_i_strobe: std_logic;
     signal R_i_addr: std_logic_vector(31 downto 2);
 begin
@@ -135,7 +142,7 @@ begin
     i_data <= icache_data_out when iaddr_cacheable='1' else imem_data_in;
     i_ready <= icache_line_valid when iaddr_cacheable='1' else imem_data_ready;
 
-    icache_write <= imem_data_ready and not icache_line_valid;
+    icache_write <= iaddr_cacheable and imem_data_ready and not icache_line_valid;
     itag_valid: if C_icache_size > 0 generate
     icache_tag_in(C_cached_addr_bits-C_icache_addr_bits downto 0)
           <= '1' & R_i_addr(C_cached_addr_bits-1 downto C_icache_addr_bits);
@@ -149,7 +156,7 @@ begin
       -- this almost works but has problems
       -- (first word incorrect, following OK)
       R_i_addr <= i_addr;
-      R_i_strobe <= not icache_line_valid;
+      R_i_strobe <= iaddr_cacheable and not icache_line_valid;
     end generate;
 
     G_yes_fsm: if true generate
@@ -160,8 +167,15 @@ begin
       begin
         if rising_edge(clk) then
           -- cache FSM
+          --if R_i_strobe = '0'
+          --then
           R_i_addr <= i_addr;
-          if icache_line_valid = '0'
+          --R_iaddr_cacheable <= iaddr_cacheable;
+          --end if;
+          if iaddr_cacheable = '1'
+          and icache_line_valid = '0'
+          --and R_i_strobe = '0'
+          --and imem_data_ready = '0'
           and (imem_data_ready = '0' or R_i_strobe = '0')
           then
             R_i_strobe <= '1';
