@@ -68,7 +68,7 @@ coherence between data and instruction cache.
 
 Also the cache, as it is implemented now for
 simplicity instruction fetch cycle must complete
-(receive ready) before chaning address for next
+(receive ready) before changing address for next
 fetch. 
 
 If there is read cycle with cache miss, cache will
@@ -76,6 +76,9 @@ start fetching data from slow RAM
 If address is changed before read cycle is complete, 
 cache will pull old data from RAM and store in a
 new (wrong) address, which leads to corruption.
+
+So once address strobe is asserted to the cache,
+don't change address until ready signal is received.
 
 # cache coherence
 
