@@ -8,7 +8,7 @@ The bus behaviour is coming from the pipeline
 and understanding its signaling is important
 in order to make a SOC that will connect to f32c bus.
 
-# f32c bus signaling
+# bus signaling
 
 The memory access is done using 32-bit synchronous
 bus with simple signaling and tight timing.
@@ -59,3 +59,35 @@ bus because f32c does 32-bit aligned memory transfers only.
     dmem_data_out: std_logic_vector(31 downto 0);
 Input and output of 32-bit data are routed separately,
 f32c never does 3-state bus transfers.
+
+# cache
+
+There is separate instruction and data cache.
+For f32c bootloader to work, cache must support
+coherence between data and instruction cache.
+
+Also the cache, as it is implemented now for
+simplicity instruction fetch cycle must complete
+(receive ready) before chaning address for next
+fetch. 
+
+If there is read cycle with cache miss, cache will
+start fetching data from slow RAM
+If address is changed before read cycle is complete, 
+cache will pull old data from RAM and store in a
+new (wrong) address, which leads to corruption.
+
+# cache coherence
+
+Self modifying code needs cache coherence.
+
+When bootloader receives new compiled code over the serial port, 
+before jumping to new (self-modified) code, it will try to flush 
+instruction cache using asm cache instructions which use a separate
+cpu signal line which starts write cycle of 0 to instruction cache 
+data valid bits. After that jump to new code can work.
+
+The instruction-cache and data-cache could be implemented differently
+e.g. using vendor specific modules which assure
+automatic coherence so this flush instruction will be a NOP with
+cache flush signal line disconnected.
