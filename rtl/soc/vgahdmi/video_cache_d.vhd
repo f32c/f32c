@@ -33,8 +33,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.math_real.all; -- to calculate log2 bit size
-use work.f32c_pack.all;
-
 
 entity video_cache_d is
     generic (
@@ -47,8 +45,8 @@ entity video_cache_d is
     port (
         clk: in std_logic;
         -- video_fifo side, read-write port
-        d_cacheable: in std_logic := '1';
-        d_addr: in std_logic_vector(31 downto 2) := (others => '0');
+        cpu_d_cacheable: in std_logic := '1';
+        cpu_d_addr: in std_logic_vector(31 downto 2) := (others => '0');
         cpu_d_data_in: out std_logic_vector(31 downto 0);
         cpu_d_data_out: in std_logic_vector(31 downto 0) := (others => '0');
         cpu_d_strobe, cpu_d_write: in std_logic := '0'; -- disabled if unconnected
@@ -123,7 +121,7 @@ begin
     end if;
     end process;
 
-    dmem_addr <= d_addr;
+    dmem_addr <= cpu_d_addr;
     dmem_write <= cpu_d_write;
     dmem_byte_sel <= cpu_d_byte_sel;
     dmem_data_out <= cpu_d_data_out;
@@ -137,14 +135,14 @@ begin
     cpu_d_ready <= '1' when R_d_state = C_D_READ and dcache_line_valid
       else dmem_data_ready;
 
-    daddr_cacheable <= C_dcache_size > 0 and d_cacheable = '1';
+    daddr_cacheable <= C_dcache_size > 0 and cpu_d_cacheable = '1';
     dcache_write <= dmem_data_ready when
       (R_d_state = C_D_WRITE or R_d_state = C_D_FETCH) else '0';
     d_tag_valid_bit <= '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111"
       and not dcache_line_valid else '1';
     dtag_valid: if C_dcache_size > 0 generate
     dcache_tag_in(C_dtag_bits-1) <= d_tag_valid_bit;
-    dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) <= d_addr(C_cached_addr_bits-1 downto C_dcache_addr_bits);
+    dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) <= cpu_d_addr(C_cached_addr_bits-1 downto C_dcache_addr_bits);
     dcache_line_valid <= dcache_tag_out(C_dtag_bits-1) = '1' 
       and dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) = dcache_tag_out(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0);
     end generate;
@@ -183,7 +181,7 @@ begin
 	clk => clk,
 	we_b => '0', we_a => dcache_write,
 	addr_b => (others => '0'),
-	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => cpu_d_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_b => (others => '0'),
 	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
@@ -198,8 +196,8 @@ begin
     port map (
 	clk => clk,
 	we_a => dcache_write, we_b => dcache_write,
-	addr_a => '0' & d_addr(C_dcache_addr_bits-1 downto 2),
-	addr_b => '1' & d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => '0' & cpu_d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_b => '1' & cpu_d_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_a => to_d_bram(0 * 18 + 17 downto 0 * 18),
 	data_in_b => to_d_bram(1 * 18 + 17 downto 1 * 18),
 	data_out_a => from_d_bram(0 * 18 + 17 downto 0 * 18),
@@ -222,7 +220,7 @@ begin
 	clk => clk,
 	we_b => '0', we_a => dcache_write,
 	addr_b => (others => '0'),
-	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => cpu_d_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_b => (others => '0'),
 	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
@@ -239,7 +237,7 @@ begin
     port map (
 	clk => clk,
 	we_a => dcache_write, we_b => '0',
-	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => cpu_d_addr(C_dcache_addr_bits-1 downto 2),
 	addr_b => (others => '0'),
 	data_in_a => to_d_bram(b * 18 + 17 downto b * 18),
 	data_in_b => (others => '0'),
@@ -264,7 +262,7 @@ begin
 	clk => clk,
 	we_b => '0', we_a => dcache_write,
 	addr_b => (others => '0'),
-	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => cpu_d_addr(C_dcache_addr_bits-1 downto 2),
 	data_in_b => (others => '0'),
 	data_in_a => to_d_bram(C_dtag_bits+31 downto 36),
 	data_out_b => open,
@@ -281,7 +279,7 @@ begin
     port map (
 	clk => clk,
 	we_a => dcache_write, we_b => '0',
-	addr_a => d_addr(C_dcache_addr_bits-1 downto 2),
+	addr_a => cpu_d_addr(C_dcache_addr_bits-1 downto 2),
 	addr_b => (others => '0'),
 	data_in_a => to_d_bram(b * 9 + 8 downto b * 9),
 	data_in_b => (others => '0'),

@@ -111,6 +111,7 @@ generic (
   -- true:  bare wired LCD panel, 7-bit LVDS (36MHz pixel clock, 252MHz shift clock and does only SDR, not DDR)
   C_lvds_display: boolean := false; -- false: normal DVI-D/HDMI, true: bare LCD panel
   C_video_cache_size: integer := 0; -- KB
+  --C_video_cache_all: std_logic := '0'; -- 0 cache pixel content only, 1 cache everything (all c2 pointers and content)
   C_video_cache_use_i: boolean := false; -- true: use instruction cache (faster, maybe buggy), false: use data cache (slower, works)
   -- TV simple 512x512 bitmap
   C_tv: boolean := false; -- enable TV output
@@ -1110,11 +1111,11 @@ begin
       dmem_data_in => vga_data, -- input from XRAM
       dmem_data_ready => vga_data_ready, -- input from XRAM
       -- to video FIFO
-      d_cacheable => video_fifo_suggest_cache,
+      cpu_d_cacheable => video_fifo_suggest_cache,
       --cpu_d_strobe => video_fifo_addr_strobe,
       cpu_d_strobe => '1',
-      d_addr(31 downto 30) => "10",
-      d_addr(29 downto 2) => video_fifo_addr,
+      cpu_d_addr(31 downto 30) => "10",
+      cpu_d_addr(29 downto 2) => video_fifo_addr,
       cpu_d_ready => video_fifo_data_ready, -- output to fifo
       --cpu_d_byte_sel => "1111",
       --cpu_d_write => '0',

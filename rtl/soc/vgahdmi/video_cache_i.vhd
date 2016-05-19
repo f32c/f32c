@@ -37,8 +37,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.math_real.all; -- to calculate log2 bit size
-use work.f32c_pack.all;
-
 
 entity video_cache_i is
     generic (
@@ -119,7 +117,8 @@ begin
       end process;
     end generate;
 
-    tag_data_dp_bram: entity work.bram_true2p_1clk
+    G_icache: if C_icache_size > 0 generate
+    icache_bram: entity work.bram_true2p_1clk
     generic map (
         dual_port => True,
         data_width => C_itag_bits+32,
@@ -135,9 +134,10 @@ begin
 	data_out_a => from_i_bram,
 	data_out_b => open
     );
+    end generate;
 
     iaddr_cacheable <= i_cacheable when C_icache_size > 0 else '0';
-    imem_addr <= R_i_addr;
+    imem_addr <= i_addr;
     imem_addr_strobe <= R_i_strobe when iaddr_cacheable='1' else i_addr_strobe;
     i_data <= icache_data_out when iaddr_cacheable='1' else imem_data_in;
     i_ready <= icache_line_valid when iaddr_cacheable='1' else imem_data_ready;
