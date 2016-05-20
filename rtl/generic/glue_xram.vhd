@@ -1112,13 +1112,14 @@ begin
       dmem_data_ready => vga_data_ready, -- input from XRAM
       -- to video FIFO
       cpu_d_cacheable => video_fifo_suggest_cache,
-      --cpu_d_strobe => video_fifo_addr_strobe,
-      cpu_d_strobe => '1',
-      cpu_d_addr(31 downto 30) => "10",
+      -- cpu_d_strobe => video_fifo_addr_strobe,
+      cpu_d_strobe => '1', -- permanent strobe works better
+      cpu_d_addr(31 downto 30) => "--", -- random MSB, ignored
       cpu_d_addr(29 downto 2) => video_fifo_addr,
       cpu_d_ready => video_fifo_data_ready, -- output to fifo
-      --cpu_d_byte_sel => "1111",
-      --cpu_d_write => '0',
+      cpu_d_byte_sel => "1111", -- always 32 bit fetch
+      cpu_d_write => '0', -- never write
+      cpu_d_data_out => (others => '-'), -- input random data
       cpu_d_data_in => video_fifo_data -- output from cache to fifo
     );
     end generate;
