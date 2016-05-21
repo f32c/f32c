@@ -36,13 +36,26 @@
 #include "bas.h"
 
 
-#define	SRAM_BASE	0x80000000
-#define	LOADER_BASE	0x800f8000
+#define	RAM_BASE	0x80000000
+#define	LOADER_BASE	0x81ff8000
 
 #define	LOAD_COOKIE	0x10adc0de
-#define	LOADADDR	SRAM_BASE
+#define	LOADADDR	RAM_BASE
+
+/*
+ * If compiling with EMBEDDED_LOADER first prepare loader_bin.h using:
+ * hexdump -v -e '1/1 "%u,\n"' ../../boot/fat/loader.bin > loader_bin.h
+ * and set LOADER_LEN to the exact length of the loader.bin file.
+ */
+#ifdef EMBEDDED_LOADER
+#define LOADER_LEN 9688
+static char loader_bin[] = {
+#include "loader_bin.h"
+};
+#endif
 
 
+#ifndef EMBEDDED_LOADER
 static void
 flash_read_block(char *buf, uint32_t addr, uint32_t len)
 {
@@ -55,6 +68,7 @@ flash_read_block(char *buf, uint32_t addr, uint32_t len)
 	spi_byte(IO_SPI_FLASH, 0xff); /* dummy byte, ignored */
 	spi_block_in(IO_SPI_FLASH, buf, len);
 }
+#endif
 
 
 int
@@ -112,9 +126,14 @@ bas_exec(void)
 {
 	char buf[256];
 	STR st;
-	uint32_t *up = (void *) SRAM_BASE;
+	uint32_t *up = (void *) RAM_BASE;
 	uint8_t *cp = (void *) LOADER_BASE;
-	int res_sec, sec_size, len;
+	int len;
+#ifndef EMBEDDED_LOADER
+	int res_sec, sec_size;
+#else
+	int i;
+#endif
 
 	st = stringeval();
 	NULL_TERMINATE(st);
@@ -142,6 +161,13 @@ bas_exec(void)
 	*up = LOAD_COOKIE;
 	strcpy((void *) &up[1], buf);
 
+#ifdef EMBEDDED_LOADER
+	cp = (void *) LOADER_BASE;
+	for (i = 0; i < LOADER_LEN; i++)
+		*cp++ = loader_bin[i];
+	/* Clear loaders' BSS, just in case... */
+	bzero(cp, 10000);
+#else /* !EMBEDDED_LOADER */
 	flash_read_block((void *) cp, 0, 512);
 	sec_size = (cp[0xc] << 8) + cp[0xb];
 	res_sec = (cp[0xf] << 8) + cp[0xe];
@@ -153,6 +179,7 @@ bas_exec(void)
 
 	len = sec_size * res_sec - 512;
 	flash_read_block((void *) cp, 512, len);
+#endif
 
 #ifdef __mips__
 	__asm __volatile__(
