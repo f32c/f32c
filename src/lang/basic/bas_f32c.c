@@ -131,8 +131,6 @@ bas_exec(void)
 	int len;
 #ifndef EMBEDDED_LOADER
 	int res_sec, sec_size;
-#else
-	int i;
 #endif
 
 	st = stringeval();
@@ -162,9 +160,7 @@ bas_exec(void)
 	strcpy((void *) &up[1], buf);
 
 #ifdef EMBEDDED_LOADER
-	cp = (void *) LOADER_BASE;
-	for (i = 0; i < LOADER_LEN; i++)
-		*cp++ = loader_bin[i];
+	bcopy(loader_bin, (void *) LOADER_BASE, LOADER_LEN);
 	/* Clear loaders' BSS, just in case... */
 	bzero(cp, 10000);
 #else /* !EMBEDDED_LOADER */
