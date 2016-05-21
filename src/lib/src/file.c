@@ -210,16 +210,15 @@ lseek(int d, off_t offset, int whence)
 int
 unlink(const char *path)
 {
+#if !defined(_FS_READONLY) || (_FS_READONLY == 0)
 	FRESULT f_res;
 
-#if !defined(_FS_READONLY) || (_FS_READONLY == 0)
 	f_res = f_unlink(path);
 	if (f_res != FR_OK)
 		return (-1);
 	return (0);
 #else
-	f_res = (path == path) - 2;	/* shut up unused arg warning */
-	return (f_res);
+	return (-1);
 #endif
 }
 
