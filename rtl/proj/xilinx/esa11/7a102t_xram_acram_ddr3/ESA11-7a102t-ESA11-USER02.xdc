@@ -3,11 +3,11 @@
 #
 #	Buttons	-------------------------------------------------------------------
 #
-set_property -dict {PACKAGE_PIN K16 IOSTANDARD LVTTL} [get_ports {M_BTN[0]}]
+set_property -dict {PACKAGE_PIN J15 IOSTANDARD LVTTL} [get_ports {M_BTN[0]}]
 set_property -dict {PACKAGE_PIN H22 IOSTANDARD LVTTL} [get_ports {M_BTN[1]}]
 set_property -dict {PACKAGE_PIN H20 IOSTANDARD LVTTL} [get_ports {M_BTN[2]}]
-set_property -dict {PACKAGE_PIN J15 IOSTANDARD LVTTL} [get_ports {M_BTN[3]}]
-set_property -dict {PACKAGE_PIN J14 IOSTANDARD LVTTL} [get_ports {M_BTN[4]}]
+set_property -dict {PACKAGE_PIN J14 IOSTANDARD LVTTL} [get_ports {M_BTN[3]}]
+set_property -dict {PACKAGE_PIN F16 IOSTANDARD LVTTL} [get_ports {M_BTN[4]}]
 
 #
 #	DIP Switch ----------------------------------------------------------------
