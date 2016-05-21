@@ -1,6 +1,6 @@
 
 # Bootloader uses a non-default loadaddr
-LOADADDR = 0x800f8000
+LOADADDR = 0x81ff8000
 
 # Do not link standard libs
 WITHOUT_LIBS = true
@@ -13,7 +13,7 @@ CFLAGS += -DNO_PRINTF_FLOAT
 
 # Reduce FATFS code size
 CFLAGS += -D_FS_MINIMIZE=1 -D_FS_READONLY=1 -D_USE_ERASE=0
-CFLAGS += -D_FS_TINY=1 -D_FS_RPATH=0 -D_USE_LFN=0
+CFLAGS += -D_FS_TINY=1 -D_FS_RPATH=0 -D_USE_LFN=0 -D_CODE_PAGE=1
 
 # SPI flash image name
 SPI_IMG_NAME = ulx2s_4m.img
