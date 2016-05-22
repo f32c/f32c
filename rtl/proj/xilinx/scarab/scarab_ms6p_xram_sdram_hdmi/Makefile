@@ -58,6 +58,9 @@ vhdfiles = \
 ../../../../soc/sram8.vhd \
 ../../../../soc/acram.vhd \
 ../../../../soc/sdram.vhd \
+../../../../soc/sdram_mz.vhd \
+../../../../soc/sdram_pack.vhd \
+../../../../soc/sdram_mz_wrap.vhd \
 ../../../../soc/sio.vhd \
 ../../../../soc/spi.vhd \
 ../../../../soc/gpio.vhd \
