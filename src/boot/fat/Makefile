@@ -1,6 +1,6 @@
 
 # Bootloader uses a non-default loadaddr
-LOADADDR = 0x81ff8000
+LOADADDR = 0x8fff8000
 
 # Do not link standard libs
 WITHOUT_LIBS = true
