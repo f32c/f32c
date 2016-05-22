@@ -143,6 +143,10 @@ main(void)
 	int i;
 	char *loadaddr = (void *) RAM_BASE;
 
+	/* Dummy open, just to force-mount SD card */
+	i = open("d:", O_RDONLY);
+	close(i);
+
 	if (*((int *) loadaddr) == LOAD_COOKIE)
 		loadaddr = load_bin(&loadaddr[4], 0);
 	else {
