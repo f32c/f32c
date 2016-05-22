@@ -659,7 +659,7 @@ begin
 
     G_sdram:
     if C_sdram generate
-    sdram: entity work.sdram_controller
+    sdram: entity work.sdram
     generic map (
       C_ports => C_xram_ports,
       --C_prio_port => 2, -- VGA priority port not yet implemented
