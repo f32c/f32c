@@ -44,8 +44,6 @@
 #include "bas.h"
 
 
-extern int _end;
-
 int errno;
 uint32_t freq_khz, tsc_hi, tsc_lo;
 
