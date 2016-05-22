@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec
+ * Copyright (c) 2013, 2016 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
 
 
 #define	RAM_BASE	0x80000000
-#define	LOADER_BASE	0x81ff8000
+#define	LOADER_BASE	0x8fff8000
 
 #define	LOAD_COOKIE	0x10adc0de
 #define	LOADADDR	RAM_BASE
@@ -47,9 +47,10 @@
  * hexdump -v -e '1/1 "%u,\n"' ../../boot/fat/loader.bin > loader_bin.h
  * and set LOADER_LEN to the exact length of the loader.bin file.
  */
+#define EMBEDDED_LOADER
 #ifdef EMBEDDED_LOADER
 #define LOADER_LEN 9688
-static char loader_bin[] = {
+static char loader_bin[LOADER_LEN] = {
 #include "loader_bin.h"
 };
 #endif
@@ -159,10 +160,11 @@ bas_exec(void)
 	*up = LOAD_COOKIE;
 	strcpy((void *) &up[1], buf);
 
-#ifdef EMBEDDED_LOADER
-	bcopy(loader_bin, (void *) LOADER_BASE, LOADER_LEN);
 	/* Clear loaders' BSS, just in case... */
-	bzero(cp, 10000);
+	bzero(cp, 32768);
+
+#ifdef EMBEDDED_LOADER
+	memcpy(cp, loader_bin, LOADER_LEN);
 #else /* !EMBEDDED_LOADER */
 	flash_read_block((void *) cp, 0, 512);
 	sec_size = (cp[0xc] << 8) + cp[0xb];
@@ -180,9 +182,10 @@ bas_exec(void)
 #ifdef __mips__
 	__asm __volatile__(
 		".set noreorder;"
-		"mtc0 $0, $12;"		/* Mask and disable all interrupts */
+		"di;"			/* Disable all interrupts */
+		"mtc0 $0, $12;"		/* Mask all interrupts */
 		"lui $4, 0x8000;"       /* stack mask */
-		"lui $5, 0x0010;"       /* top of the initial stack */
+		"lui $5, 0x1000;"       /* top of the initial stack */
 		"and $29, %0, $4;"      /* clear low bits of the stack */
 		"move $31, $0;"         /* return to ROM loader when done */
 		"jr %0;"
