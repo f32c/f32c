@@ -70,8 +70,11 @@ vhdfiles = \
 ../../../../soc/fm/message.vhd \
 ../../../../soc/fm/lowpass.vhd \
 ../../../../soc/vgahdmi/vga.vhd \
+../../../../soc/vgahdmi/tv.vhd \
+../../../../soc/cvbs.vhd \
+../../../../soc/vgahdmi/video_cache_i.vhd \
+../../../../soc/vgahdmi/video_cache_d.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
-../../../../soc/vgahdmi/compositing_fifo.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/VGA_textmode.vhd \
 ../../../../soc/vgahdmi/font_block_pack.vhd \
