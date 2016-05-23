@@ -36,6 +36,8 @@ library unisim;
 use unisim.vcomponents.all;
 
 use work.f32c_pack.all;
+use work.dmacache_pkg.all;
+use work.techx_pkg.all;
 
 entity esa11_xram_acram_ddr3 is
     generic (
@@ -65,6 +67,8 @@ entity esa11_xram_acram_ddr3 is
         C3_NUM_DQ_PINS        : integer := 16;
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
+        
+        C_vgadma: boolean := false; -- false: use glue's vgabit or vgatxt, true: use plasma's dma-axi bitmap
 
 	C_vgahdmi: boolean := false;
 	C_video_cache_size: integer := 8; -- KB video cache (vgahdmi) (0: disable, 2,4,8,16,32:enable) 
@@ -316,13 +320,39 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     signal ram_cache_debug    : std_logic_vector(7 downto 0);
     signal ram_cache_hitcnt   : std_logic_vector(31 downto 0);
     signal ram_cache_readcnt  : std_logic_vector(31 downto 0);
-   
+
+    signal dma_data : std_logic_vector(15 downto 0);
+    signal cche_debug : std_logic_vector(7 downto 0) := (others => '0');
+    signal cche_busy : std_logic := '0';
+    signal vgachannel_fromhost : DMAChannel_FromHost;
+    signal vgachannel_tohost : DMAChannel_ToHost;
+    signal spr0channel_fromhost : DMAChannel_FromHost;
+    signal dummy_fromhost : DMAChannel_FromHost;
+    signal spr0channel_tohost : DMAChannel_ToHost;
+    signal vga_clk: std_logic;
+    signal vga_refresh: std_logic;
+    signal vga_reg_dtack: std_logic; -- low active, ack from VGA reg access
+    signal vga_ackback: std_logic := '0'; -- clear for ack_d, sys_clk domai
+    signal vreg_en: std_logic := '1'; -- active high
+    signal vreg_uds: std_logic := '0'; -- even byte-addr, data bits 8-15, low active
+    signal vreg_lds: std_logic := '0'; -- odd byte-addr, data bits 0-7, low active
+--   signal vreg_wbe : std_logic_vector(3 downto 0);
+    signal vreg_we: std_logic := '1'; -- write enable, active low
+    signal vreg_wait: std_logic := '0'; -- mem_pause from VGA reg acces
+    signal vga_read : std_logic_vector(15 downto 0) := (others => '0');
+    signal vga_window : std_logic;
+    signal vblank_int : std_logic;
+
+    -- to switch glue/plasma vga
+    signal glue_vga_vsync_n, glue_vga_hsync_n: std_logic;
+    signal glue_vga_red, glue_vga_green, glue_vga_blue: std_logic_vector(7 downto 0);
+
     signal gpio: std_logic_vector(127 downto 0);
     signal simple_in: std_logic_vector(31 downto 0);
     signal simple_out: std_logic_vector(31 downto 0);
     signal tmds_rgb: std_logic_vector(2 downto 0);
     signal tmds_clk: std_logic;
-    signal vga_vsync_n, vga_hsync_n: std_logic;
+    --signal vga_vsync_n, vga_hsync_n: std_logic;
     signal ps2_clk_in : std_logic;
     signal ps2_clk_out : std_logic;
     signal ps2_dat_in : std_logic;
@@ -450,11 +480,11 @@ begin
         ps2_clk_out  => ps2_clk_out,
         ps2_dat_out  => ps2_dat_out,
         -- VGA/HDMI
-	vga_vsync => vga_vsync_n,
-	vga_hsync => vga_hsync_n,
-	vga_r => VGA_RED,
-	vga_g => VGA_GREEN,
-	vga_b => VGA_BLUE,
+	vga_vsync => glue_vga_vsync_n,
+	vga_hsync => glue_vga_hsync_n,
+	vga_r => glue_vga_red,
+	vga_g => glue_vga_green,
+	vga_b => glue_vga_blue,
         dvid_red(0)   => tmds_rgb(2), dvid_red(1)   => open,
         dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
         dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
@@ -486,11 +516,7 @@ begin
         tmds_out_rgb_p => VID_D_P,
         tmds_out_rgb_n => VID_D_N
     );
-    VGA_SYNC_N <= '1';
-    VGA_BLANK_N <= '1';
-    VGA_CLOCK_P <= clk_25MHz;
-    VGA_VSYNC <= vga_vsync_n;
-    VGA_HSYNC <= vga_hsync_n;
+    
 
     acram_emu_gen: if C_acram_emu_kb > 0 generate
     axi_cache_emulation: entity work.acram_emu
@@ -717,11 +743,144 @@ begin
         s02_axi_rready       => l02_axi_rready
     );
     l00_axi_aclk <= clk; -- 100 MHz
-    l01_axi_aclk <= '0'; -- port l01 not used
+    l01_axi_aclk <= clk; -- port l01 not used
     l02_axi_aclk <= '0'; -- port l02 not used
     end generate; -- G_acram_real
 
     --FPGA_LED2 <= calib_done; -- should turn on 0.3 seconds after startup and remain on
     --FPGA_LED3 <= ram_read_busy; -- more RAM traffic -> more LED brightness
+
+    vga_f32c: if not C_vgadma generate
+    VGA_SYNC_N <= '1';
+    VGA_BLANK_N <= '1';
+    VGA_CLOCK_P <= clk_25MHz;
+    VGA_VSYNC <= glue_vga_vsync_n;
+    VGA_HSYNC <= glue_vga_hsync_n;
+    vga_red <= glue_vga_red;
+    vga_green <= glue_vga_green;
+    vga_blue <= glue_vga_blue;
+    end generate;
+
+    vga_plasma: if C_vgadma generate
+    -- DMA controller
+    dmacache : entity work.dmaCache
+      port map
+      (
+        clk               => clk, -- 100MHz system and mcb_cmd clk
+        reset             => not calib_done,
+        tst_dbg(3)         => '0', -- gpio0_out(6),
+        tst_dbg(2)         => '0', -- gpio0_out(5),
+        tst_dbg(1)         => '0', -- gpio0_out(4),
+        tst_dbg(0)         => '0', -- key_s1_d,
+
+        m_axi_aresetn      => l01_axi_areset_n,
+        m_axi_aclk         => l01_axi_aclk,
+        m_axi_awid         => l01_axi_awid,
+        m_axi_awaddr       => l01_axi_awaddr,
+        m_axi_awlen        => l01_axi_awlen,
+        m_axi_awsize       => l01_axi_awsize,
+        m_axi_awburst      => l01_axi_awburst,
+        m_axi_awlock       => l01_axi_awlock,
+        m_axi_awcache      => l01_axi_awcache,
+        m_axi_awprot       => l01_axi_awprot,
+        m_axi_awqos        => l01_axi_awqos,
+        m_axi_awvalid      => l01_axi_awvalid,
+        m_axi_awready      => l01_axi_awready,
+        m_axi_wdata        => l01_axi_wdata,
+        m_axi_wstrb        => l01_axi_wstrb,
+        m_axi_wlast        => l01_axi_wlast,
+        m_axi_wvalid       => l01_axi_wvalid,
+        m_axi_wready       => l01_axi_wready,
+        m_axi_bid          => l01_axi_bid,
+        m_axi_bresp        => l01_axi_bresp,
+        m_axi_bvalid       => l01_axi_bvalid,
+        m_axi_bready       => l01_axi_bready,
+        m_axi_arid         => l01_axi_arid,
+        m_axi_araddr       => l01_axi_araddr,
+        m_axi_arlen        => l01_axi_arlen,
+        m_axi_arsize       => l01_axi_arsize,
+        m_axi_arburst      => l01_axi_arburst,
+        m_axi_arlock       => l01_axi_arlock,
+        m_axi_arcache      => l01_axi_arcache,
+        m_axi_arprot       => l01_axi_arprot,
+        m_axi_arqos        => l01_axi_arqos,
+        m_axi_arvalid      => l01_axi_arvalid,
+        m_axi_arready      => l01_axi_arready,
+        m_axi_rid          => l01_axi_rid,
+        m_axi_rdata        => l01_axi_rdata,
+        m_axi_rresp        => l01_axi_rresp,
+        m_axi_rlast        => l01_axi_rlast,
+        m_axi_rvalid       => l01_axi_rvalid,
+        m_axi_rready       => l01_axi_rready,
+
+        chns_from_host(0) => vgachannel_fromhost,
+        chns_from_host(1) => spr0channel_fromhost,
+--       channels_from_host(2) => aud0_fromhost,
+--       channels_from_host(3) => aud1_fromhost,
+--       channels_from_host(4) => aud2_fromhost,
+--       channels_from_host(5) => aud3_fromhost,
+
+        channels_to_host(0) => vgachannel_tohost,
+        channels_to_host(1) => spr0channel_tohost,
+--       channels_to_host(2) => aud0_tohost,
+--       channels_to_host(3) => aud1_tohost,
+--       channels_to_host(4) => aud2_tohost,
+--       channels_to_host(5) => aud3_tohost,
+        data_out => dma_data,
+        readBusy => cche_busy,
+        debug => cche_debug
+    );
+    
+    --vreg_en  <= '1' when ram_address(31 downto 28) = B"1110" else '0';
+    --vreg_uds <= '0' when vreg_we = '1' else
+    --            '0' when ram_byte_we(0) = '1' or ram_byte_we(2) = '1' else '1';
+    --vreg_lds <= '0' when vreg_we = '1' else
+    --            '0' when ram_byte_we(1) = '1' or ram_byte_we(3) = '1' else '1';
+    --vreg_we  <= '0' when ram_byte_we(3 downto 0) /= "0000" else '1'; -- 0 means write
+
+    myvga : entity work.vga_controller
+    port map 
+    (
+      clk => clk, -- 100 MHz
+      reset => not calib_done,
+
+      reg_addr_in => (others => '0'), -- address(11 downto 0),
+      reg_data_in => (others => '0'), -- data_write(15 downto 0),
+--      reg_data_in => data_write(31 downto 16),
+      reg_data_out => vga_read,
+      reg_rw => vreg_we,
+      reg_uds => vreg_uds,
+      reg_lds => vreg_lds,
+      reg_dtack => vga_reg_dtack,
+      reg_req => vreg_en,
+
+      sdr_refresh => vga_refresh,  -- end of line
+
+      dma_data => dma_data,
+      vgachannel_fromhost => vgachannel_fromhost,
+      vgachannel_tohost => vgachannel_tohost,
+      spr0channel_fromhost => spr0channel_fromhost,
+      spr0channel_tohost => spr0channel_tohost,
+
+      hsync => VGA_HSYNC,
+      vsync => VGA_VSYNC,
+      vblank_int => vblank_int,
+      red => VGA_RED,
+      green => VGA_GREEN,
+      blue => VGA_BLUE,
+      vga_window => vga_window,
+      pixelclock => vga_clk
+   );
+
+   VGA_BLANK_N <= vga_window; -- when SW_S1 = '1' else not vga_window;
+   VGA_SYNC_N <= '0';
+--   VGA_CLOCK_N <= '0';
+   vga_clockbuf: clk_port
+   port map
+   (
+      i_in     => vga_clk,
+      o_out    => VGA_CLOCK_P
+   );
+   end generate;
 
 end Behavioral;
