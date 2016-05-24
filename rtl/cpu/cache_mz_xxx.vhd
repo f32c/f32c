@@ -177,6 +177,7 @@ begin
     process(clk)
     begin
     if rising_edge(clk) and (not C_debug or clk_enable = '1') then
+	R_d_from_bram <= d_from_bram;
 	R_d_fetch_done <= d_miss_cycle and dmem_data_ready = '1';
 	if not d_miss_cycle then
 	    R_d_rd_addr <= cpu_d_addr;
@@ -202,6 +203,8 @@ begin
       else '0' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
 
     d_miss_cycle <= R_d_cacheable_cycle and not R_d_fetch_done;
+--      and R_d_from_bram(R_d_from_bram'high downto 32) /=
+--      '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
 
     dmem_addr <= R_d_rd_addr when d_miss_cycle else cpu_d_addr;
     dmem_addr_strobe <= '1' when d_miss_cycle
@@ -213,7 +216,7 @@ begin
     dmem_data_out <= cpu_d_data_out;
 
     cpu_d_data_in <= dmem_data_in when d_miss_cycle
-      else d_from_bram(31 downto 0) when d_cacheable else dmem_data_in;
+      else R_d_from_bram(31 downto 0) when d_cacheable else dmem_data_in;
     cpu_d_ready <= '1' when d_cacheable and cpu_d_write = '0'
       else dmem_data_ready;
     cpu_d_wait <= '1' when d_miss_cycle else '0';
