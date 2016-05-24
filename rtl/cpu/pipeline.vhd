@@ -94,6 +94,7 @@ entity pipeline is
 	debug_out_data: out std_logic_vector(7 downto 0);
 	debug_out_strobe: out std_logic;
 	debug_out_busy: in std_logic;
+	debug_clk_ena: out std_logic;
 	debug_debug: out std_logic_vector(7 downto 0);
 	debug_active: out std_logic
     );
@@ -1514,6 +1515,8 @@ begin
     if not C_debug generate
 	clk_enable <= '1';
     end generate;
+
+    debug_clk_ena <= clk_enable;
 
 end Behavioral;
 
