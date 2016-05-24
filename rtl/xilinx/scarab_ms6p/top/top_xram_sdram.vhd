@@ -165,7 +165,7 @@ entity glue is
     flash_cs, flash_cclk, flash_mosi: out std_logic;
     flash_miso: in std_logic;
     sd_clk, sd_cd_dat3, sd_cmd: out std_logic;
-    sd_dat0: in std_logic;
+    sd_dat0, sd_dat1, sd_dat2: in std_logic;
     leds: out std_logic_vector(7 downto 0);
     porta, portb, portc: inout std_logic_vector(11 downto 0);
     portd: inout std_logic_vector(3 downto 0); -- fm and cw antennas are here
