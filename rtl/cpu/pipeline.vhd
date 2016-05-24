@@ -1201,7 +1201,7 @@ begin
     -- ===============================
     --
 
-    MEM_running <= dmem_cache_wait = '0'
+    MEM_running <= (dmem_cache_wait = '0' or not C_cache)
       and (EX_MEM_mem_cycle = '0' or dmem_data_ready = '1')
       and not (not C_full_shifter and EX_MEM_shift_blocked);
 
@@ -1287,7 +1287,7 @@ begin
     process(clk, clk_enable)
     begin
 	if rising_edge(clk) and clk_enable = '1' then
-	    if MEM_running or dmem_cache_wait = '1' then
+	    if MEM_running or (C_cache and dmem_cache_wait = '1') then
 		MEM_WB_mem_data <= MEM_data_in;
 	    end if;
 	    if MEM_running then
@@ -1318,7 +1318,7 @@ begin
 		    MEM_WB_PC <= EX_MEM_PC;
 		    MEM_WB_instruction <= EX_MEM_instruction;
 		end if;
-	    elsif dmem_cache_wait = '0' then
+	    elsif not C_cache or dmem_cache_wait = '0' then
 		MEM_WB_write_enable <= '0';
 	    end if;
 	end if;
