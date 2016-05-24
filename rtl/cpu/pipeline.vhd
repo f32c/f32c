@@ -1502,9 +1502,9 @@ begin
     end process;
 
     -- extra registers for reducing timing pressure on debug mux
-    process(clk)
+    process(clk, clk_enable)
     begin
-	if rising_edge(clk) then
+	if rising_edge(clk) and clk_enable = '1' then
 	    R_d_imem_data_in <= imem_data_in;
 	end if;
     end process;
