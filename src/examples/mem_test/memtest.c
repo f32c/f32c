@@ -17,7 +17,8 @@ main(void)
 {
 	volatile int *mem_base = &_end;
 	volatile int *mem_end;
-	int i, len, speed, iter, tot_err, a, b, c, d;
+	int i, len, speed, iter, tot_err;
+	int a = 0, b = 0, c, d;
 	int size, tmp, freq_khz, start, end, seed, val;
 	volatile uint8_t *p8;
 	volatile uint16_t *p16;
@@ -95,7 +96,7 @@ again:
 		printf("CSUM mismatch: %08x %08x\n", csum, tmp);
 
 	tmp = 0;
-	for (i = 0; i < 32 * 1024 * 1024 / 4; i++) {
+	for (i = 0; i < size / 4; i++) {
 		a = mem_base[i];
 		b = mem_base[i + 1];
 		if (b != a + 1)
