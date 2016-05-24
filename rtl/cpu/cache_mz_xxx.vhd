@@ -198,6 +198,8 @@ begin
     d_to_bram(d_to_bram'high downto 32) <=
       '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
       when d_miss_cycle
+      else '1' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
+      when cpu_d_byte_sel = x"f"
       else '0' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
 
     d_miss_cycle <= R_d_cacheable_cycle and not R_d_fetch_done
