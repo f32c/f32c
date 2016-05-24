@@ -83,6 +83,7 @@ entity pipeline is
 	dmem_data_in: in std_logic_vector(31 downto 0);
 	dmem_data_out: out std_logic_vector(31 downto 0);
 	dmem_data_ready: in std_logic;
+	dmem_cache_wait: in std_logic := '0';
 	snoop_cycle: in std_logic;
 	snoop_addr: in std_logic_vector(31 downto 2);
 	flush_i_line, flush_d_line: out std_logic;
@@ -1200,7 +1201,8 @@ begin
     -- ===============================
     --
 
-    MEM_running <= (EX_MEM_mem_cycle = '0' or dmem_data_ready = '1')
+    MEM_running <= dmem_cache_wait = '0'
+      and (EX_MEM_mem_cycle = '0' or dmem_data_ready = '1')
       and not (not C_full_shifter and EX_MEM_shift_blocked);
 
     MEM_eff_data <= EX_MEM_logic_data when EX_MEM_logic_cycle = '1'
@@ -1285,6 +1287,9 @@ begin
     process(clk, clk_enable)
     begin
 	if rising_edge(clk) and clk_enable = '1' then
+	    if MEM_running or dmem_cache_wait = '1' then
+		MEM_WB_mem_data <= MEM_data_in;
+	    end if;
 	    if MEM_running then
 		if C_ll_sc and EX_MEM_sc then
 		    MEM_WB_mem_cycle <= '0';
@@ -1302,7 +1307,6 @@ begin
 		else
 		    MEM_WB_write_enable <= '1';
 		end if;
-		MEM_WB_mem_data <= MEM_data_in;
 		if EX_MEM_op_major = OP_MAJOR_SHIFT then
 		    MEM_WB_ex_data <= MEM_from_shift;
 		elsif C_ll_sc and EX_MEM_sc then
@@ -1314,7 +1318,7 @@ begin
 		    MEM_WB_PC <= EX_MEM_PC;
 		    MEM_WB_instruction <= EX_MEM_instruction;
 		end if;
-	    else
+	    elsif dmem_cache_wait = '0' then
 		MEM_WB_write_enable <= '0';
 	    end if;
 	end if;
