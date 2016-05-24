@@ -132,8 +132,6 @@ architecture x of cache is
 	return bits;
     end F_kb_to_addrlen;
 
-    constant C_d_addr_bits: integer := F_kb_to_addrlen(C_dcache_size);
-
     -- Data-side CPU interface
     signal cpu_d_addr: std_logic_vector(31 downto 2);
     signal cpu_d_data_in, cpu_d_data_out: std_logic_vector(31 downto 0);
@@ -141,13 +139,13 @@ architecture x of cache is
     signal cpu_d_byte_sel: std_logic_vector(3 downto 0);
 
     -- Data cache
-    constant C_d_tag_bits: integer := C_cached_addr_bits
-      - F_kb_to_addrlen(C_dcache_size) + 1; -- extra bit: valid
+    constant C_d_addr_bits: integer := F_kb_to_addrlen(C_dcache_size);
+    constant C_d_tag_bits: integer := C_cached_addr_bits - C_d_addr_bits + 1;
     type T_dcache_bram is array(0 to (C_dcache_size * 512 - 1))
       of std_logic_vector(C_d_tag_bits + 32 - 1 downto 0);
 
     signal M_d_bram: T_dcache_bram;
-    signal R_d_from_bram: std_logic_vector(C_d_tag_bits + 32 - 1 downto 0);
+    signal R_d_tag_from_bram: std_logic_vector(C_d_tag_bits - 1 downto 0);
     signal R_d_cacheable_cycle, R_d_fetch_done: boolean;
     signal R_d_rd_addr: std_logic_vector(31 downto 2);
 
@@ -177,7 +175,7 @@ begin
     process(clk)
     begin
     if rising_edge(clk) and (not C_debug or clk_enable = '1') then
-	R_d_from_bram <= d_from_bram;
+	R_d_tag_from_bram <= d_from_bram(d_from_bram'high downto 32);
 	R_d_fetch_done <= d_miss_cycle and dmem_data_ready = '1';
 	if not d_miss_cycle then
 	    R_d_rd_addr <= cpu_d_addr;
@@ -202,9 +200,9 @@ begin
       when d_miss_cycle
       else '0' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
 
-    d_miss_cycle <= R_d_cacheable_cycle and not R_d_fetch_done;
---      and R_d_from_bram(R_d_from_bram'high downto 32) /=
---      '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
+    d_miss_cycle <= R_d_cacheable_cycle and not R_d_fetch_done
+      and R_d_tag_from_bram /=
+      '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
 
     dmem_addr <= R_d_rd_addr when d_miss_cycle else cpu_d_addr;
     dmem_addr_strobe <= '1' when d_miss_cycle
@@ -216,7 +214,7 @@ begin
     dmem_data_out <= cpu_d_data_out;
 
     cpu_d_data_in <= dmem_data_in when d_miss_cycle
-      else R_d_from_bram(31 downto 0) when d_cacheable else dmem_data_in;
+      else d_from_bram(31 downto 0) when d_cacheable else dmem_data_in;
     cpu_d_ready <= '1' when d_cacheable and cpu_d_write = '0'
       else dmem_data_ready;
     cpu_d_wait <= '1' when d_miss_cycle else '0';
