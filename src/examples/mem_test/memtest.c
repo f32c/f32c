@@ -61,6 +61,25 @@ again:
 	printf("base %p end %p (size %d.%03d MB)\n", mem_base, mem_end,
 	    size >> 20, ((size & 0xfffff) * 1000) >> 20);
 
+	size = 128 * 1024 * 1024;
+	RDTSC(start);
+	for (i = 0; i < size / (512 * 4); i++)
+		for (p32 = (uint32_t *) mem_base;
+		    p32 < (uint32_t *) &mem_base[512];) {
+			val = *p32++; val = *p32++; val = *p32++; val = *p32++;
+			val = *p32++; val = *p32++; val = *p32++; val = *p32++;
+			val = *p32++; val = *p32++; val = *p32++; val = *p32++;
+			val = *p32++; val = *p32++; val = *p32++; val = *p32++;
+		}
+	RDTSC(end);
+	len = (end - start) / freq_khz;
+	speed = size / len;
+	printf("Cache speed: %d MB 32-bit read done in"
+	    " %d.%03d s (%d.%03d MB/s)\n", size / 1024 / 1024,
+	    len / 1000, len % 1000, speed / 1000, speed % 1000);
+
+	size = (int) mem_end - (int) mem_base;
+
 	int csum = 0;
 	for (i = 0; i < 32 * 1024 * 1024 / 4; i++) {
 		mem_base[i] = i;
