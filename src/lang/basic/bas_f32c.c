@@ -49,7 +49,7 @@
  */
 #define EMBEDDED_LOADER
 #ifdef EMBEDDED_LOADER
-#define LOADER_LEN 9688
+#define LOADER_LEN 9716
 static char loader_bin[LOADER_LEN] = {
 #include "loader_bin.h"
 };
@@ -102,13 +102,15 @@ bas_sleep(void)
 	target += (int) (res.f * 1000.0 * freq_khz);
 
 	do {
+		__asm("di");
 		RDTSC(t);
 		if (t < tsc_lo)
 			tsc_hi++;
 		tsc_lo = t;
+		__asm("ei");
 
 		if(t - target > 0)
-		  break;
+			break;
 
 		c = sio_getchar(0);
 #ifdef __mips__
