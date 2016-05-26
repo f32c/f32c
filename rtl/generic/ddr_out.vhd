@@ -11,13 +11,13 @@ use IEEE.std_logic_1164.all;
 
 entity ddr_out is
     port (
-        clkop: in std_logic; 
-        clkos: in std_logic; 
-        clkout: out std_logic := '0'; 
-        reset: in std_logic; 
-        sclk: out std_logic := '0'; 
-        dataout: in std_logic_vector(1 downto 0); 
-        dout: out std_logic_vector(0 downto 0) := (others => '0')
+        iclkp: in std_logic;
+        iclkn: in std_logic;
+        --clkout: out std_logic := '0';
+        ireset: in std_logic;
+        --sclk: out std_logic := '0';
+        idata: in std_logic_vector(1 downto 0);
+        odata: out std_logic_vector(0 downto 0) := (others => '0')
     );
 end ddr_out;
 

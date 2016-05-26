@@ -23,22 +23,35 @@ entity ddr_dvid_out_se is
 end ddr_dvid_out_se;
 
 architecture Behavioral of ddr_dvid_out_se is
-begin	
-	-- DDR vendor specific primitives
-	ddr_out_red : entity work.ddr_out
-	port map (clkop=>clk, clkos=>clk_n, clkout=>open, reset=>'0', sclk=>open, 
-		dataout(1 downto 0)=>in_red(1 downto 0), dout(0)=>out_red);
-		
-	ddr_out_green : entity work.ddr_out
-	port map (clkop=>clk, clkos=>clk_n, clkout=>open, reset=>'0', sclk=>open, 
-		dataout(1 downto 0)=>in_green(1 downto 0), dout(0)=>out_green);		
-		
-	ddr_out_blue : entity work.ddr_out
-	port map (clkop=>clk, clkos=>clk_n, clkout=>open, reset=>'0', sclk=>open, 
-		dataout(1 downto 0)=>in_blue(1 downto 0), dout(0)=>out_blue);			
+begin
 
-	ddr_out_clock : entity work.ddr_out
-	port map (clkop=>clk, clkos=>clk_n, clkout=>open, reset=>'0', sclk=>open, 
-		dataout(1 downto 0)=>in_clock(1 downto 0), dout(0)=>out_clock);	
+  -- DDR vendor specific primitives
+  ddr_out_red: entity work.ddr_out
+  port map
+  (
+    iclkp=>clk, iclkn=>clk_n, ireset=>'0',
+    idata(1 downto 0)=>in_red(1 downto 0), odata(0)=>out_red
+  );
+
+  ddr_out_green: entity work.ddr_out
+  port map
+  (
+    iclkp=>clk, iclkn=>clk_n, ireset=>'0',
+    idata(1 downto 0)=>in_green(1 downto 0), odata(0)=>out_green
+  );
+
+  ddr_out_blue: entity work.ddr_out
+  port map
+  (
+    iclkp=>clk, iclkn=>clk_n, ireset=>'0',
+    idata(1 downto 0)=>in_blue(1 downto 0), odata(0)=>out_blue
+  );
+
+  ddr_out_clock: entity work.ddr_out
+  port map
+  (
+    iclkp=>clk, iclkn=>clk_n, ireset=>'0',
+    idata(1 downto 0)=>in_clock(1 downto 0), odata(0)=>out_clock
+  );
 
 end Behavioral;
