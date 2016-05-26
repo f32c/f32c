@@ -1142,13 +1142,7 @@ begin
       addr_out => video_fifo_addr,
       data_ready => video_fifo_data_ready, -- data valid for read acknowledge from RAM
       data_in => video_fifo_data, -- from cache
-      --addr_strobe => vga_addr_strobe,
-      --addr_out => vga_addr,
-      --data_ready => vga_data_ready, -- data valid for read acknowledge from RAM
-      --data_in => vga_data, -- from cache
-      -- data_in => x"00000001", -- test pattern vertical lines
-      -- data_in(7 downto 0) => vga_addr(9 downto 2), -- test if address is in sync with video frame
-      -- data_in(31 downto 8) => (others => '0'),
+      -- data_in => x"00AA00AA", -- test pattern gray vertical line over whole screen
       base_addr => R_fb_base_addr(29 downto 2),
       active => S_vga_active_enabled,
       frame => vga_frame,
