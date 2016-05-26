@@ -121,6 +121,7 @@ generic (
   C_tv_fifo_addr_width: integer := 11;
   -- VGA/HDMI simple 640x480 bitmap only
   C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
+  C_vgahdmi_fifo_timeout: integer := 0; -- abort compositing at N pixels before end of line (0 disabled)
   C_vgahdmi_fifo_width: integer := 640;
   C_vgahdmi_fifo_height: integer := 480;
   C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
@@ -165,6 +166,7 @@ generic (
     C_vgatext_bitmap: boolean := false; -- true for optional bitmap generation
       C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
       C_vgatext_bitmap_fifo: boolean := false; -- disable bitmap FIFO
+        C_vgatext_bitmap_fifo_timeout: integer := 0; -- abort compositing at N pixels before end of line (0 disabled)
         C_vgatext_bitmap_fifo_step: integer := 640; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
         C_vgatext_bitmap_fifo_height: integer := 480; -- bitmap step for the FIFO refill and rewind (0 unless repeating lines)
         C_vgatext_bitmap_fifo_addr_width: integer := 11; -- bitmap width of FIFO address space length = 2^width * 4 byte
@@ -1129,6 +1131,7 @@ begin
     -- compositing2 video accelerator, shows linked list of pixel data
     comp_fifo: entity work.compositing2_fifo
     generic map (
+      C_timeout => C_vgahdmi_fifo_timeout,
       C_width => C_vgahdmi_fifo_width,
       C_height => C_vgahdmi_fifo_height,
       C_data_width => C_vgahdmi_fifo_data_width,
@@ -1437,6 +1440,7 @@ begin
       if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
         bitmap_videofifo: entity work.compositing2_fifo
           generic map (
+            C_timeout => C_vgatext_bitmap_fifo_timeout,
             C_width => C_vgatext_bitmap_fifo_step,
             C_height => C_vgatext_bitmap_fifo_height,
             C_data_width => C_vgatext_bitmap_fifo_data_width,

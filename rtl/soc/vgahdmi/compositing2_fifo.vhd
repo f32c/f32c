@@ -113,6 +113,17 @@
 -- erases to background actually displayed pixels so the
 -- BRAM is clean for the next line
 
+-- debug example: to show 640x480 full screen of RGB vertical strips
+-- every 2nd line will be empty because compositing timeout will occur as
+-- there's no NULL pointer to indicate last segment
+-- without RAM:
+-- fetch_next <= vga_fetch_next,
+-- active <= not vga_sync,
+-- suggest_cache => suggest_cache,
+-- data_ready => '1',
+-- data_in => x"02800000" when suggest_cache='0' else x"031CE000",
+
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
@@ -127,6 +138,10 @@ entity compositing2_fifo is
         -- C_position_clipping = true -- handles large out of screen gracefully (LUT eater)
         -- for average use it can be left disabled (false)
         C_position_clipping: boolean := false; 
+        -- graceful bandwidth control: at the N pixels before the end of horizontal line
+        -- prevent further compositing (instead of starting new segment, skip to next line)
+        C_timeout: integer := 48; -- 0:disable, >=1 enable
+        C_timeout_incomplete: boolean := false; -- true: allow timeout to abort incomplete segment (check if burst allows that)
         -- number of pixels per horizontal line
         C_width: integer := 640; -- pixels per line
         C_height: integer := 480; -- number of vertical lines
@@ -196,6 +211,7 @@ architecture behavioral of compositing2_fifo is
     signal S_position, S_pixel_count: std_logic_vector(15 downto 0);
     signal S_pixels_remaining: std_logic_vector(15 downto 0);
     signal R_suggest_cache: std_logic := '0';
+    signal R_timeout: std_logic := '0';
     constant C_state_read_line_start: integer := 0;
     -- indicates which line in buffer (containing 2 lines) is written (compositing from RAM)
     -- and which line is read (by display output)
@@ -316,13 +332,13 @@ begin
                     -- data to compositing (written from another process)
                     -- pixeldata = data_in(31 downto 16);
                     -- check range if within the line
-                    if R_word_count = 1 then
+                    if R_word_count = 1 or (R_timeout = '1' and C_timeout_incomplete) then
                       -- word count decrements
                       -- last element in segment is now being composited
                       -- from this state
                       -- we can either jump to next segment or
                       -- if no more segments then complete the line
-                      if R_seg_next = 0 then
+                      if R_seg_next = 0 or R_timeout = '1' then
                         -- no more segments, line completed
                         R_state <= 0;
                         R_line_wr <= not R_line_wr; -- + 1;
@@ -410,7 +426,7 @@ begin
                 R_vertical_scroll <= S_vertical_scroll_next;
                 R_line_start <= S_vertical_scrolled;
               else
-                R_pixbuf_rd_addr <= R_pixbuf_rd_addr + 1; -- R_pixbuf_out_addr + 1 ??
+                R_pixbuf_rd_addr <= R_pixbuf_rd_addr + 1;
               end if;
 	    end if;
           end if;
@@ -420,6 +436,20 @@ begin
     S_vertical_scrolled <= base_addr+R_vertical_scroll;
     S_vertical_scroll_next <= 0 when R_vertical_scroll = C_height-1
                                 else R_vertical_scroll+1;
+
+    G_timeout: if C_timeout > 0 generate
+      process(clk_pixel)
+        begin
+          if rising_edge(clk_pixel) then
+            if R_pixbuf_rd_addr = 0 then
+              R_timeout <= '0';
+            end if;
+            if R_pixbuf_rd_addr = C_width-C_timeout then
+              R_timeout <= '1';
+            end if;
+          end if;
+        end process;
+    end generate;
 
     -- compositing must erase stale data after use
     -- needs clean memory for compositing fresh data
