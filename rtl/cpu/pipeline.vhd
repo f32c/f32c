@@ -399,7 +399,8 @@ begin
 
     process(clk, clk_enable)
     begin
-	if rising_edge(clk) and clk_enable = '1' then
+	if rising_edge(clk) and clk_enable = '1'
+	  and (not C_cache or dmem_cache_wait = '0') then
 	    R_reset <= reset;
 	    IF_ID_PC_next <= IF_PC_next and C_PC_mask(31 downto 2);
 	    IF_ID_PC <= IF_PC_ext_next;
@@ -641,7 +642,8 @@ begin
 
     process(clk, clk_enable)
     begin
-	if rising_edge(clk) and clk_enable = '1' then
+	if rising_edge(clk) and clk_enable = '1'
+	  and (not C_cache or dmem_cache_wait = '0') then
 	    if EX_running then
 		if not C_load_aligner and ID_EX_multicycle_lh_lb and
 		  not MEM_cancel_EX and not EX_MEM_EIP then
@@ -988,7 +990,8 @@ begin
 
     process(clk, clk_enable)
     begin
-	if rising_edge(clk) and clk_enable = '1' then
+	if rising_edge(clk) and clk_enable = '1'
+	  and (not C_cache or dmem_cache_wait = '0') then
 	    if C_ll_sc then
 		if ID_EX_ll then
 		    EX_MEM_ll_bit <= '1';
@@ -1223,7 +1226,8 @@ begin
     MEM_bpredict_we <= '1' when EX_MEM_branch_cycle else '0';
     process(clk, clk_enable)
     begin
-	if falling_edge(clk) and clk_enable = '1' then
+	if falling_edge(clk) and clk_enable = '1'
+	  and (not C_cache or dmem_cache_wait = '0') then
 	    if EX_MEM_take_branch then
 		case EX_MEM_bpredict_score is
 		    when BP_STRONG_NOT_TAKEN =>
@@ -1252,7 +1256,8 @@ begin
 		end case;
 	    end if;
 	end if;
-	if rising_edge(clk) and clk_enable = '1' then
+	if rising_edge(clk) and clk_enable = '1'
+	  and (not C_cache or dmem_cache_wait = '0') then
 	    if EX_MEM_branch_cycle then
 		EX_MEM_branch_hist((C_bp_global_depth - 2) downto 0) <=
 		  EX_MEM_branch_hist((C_bp_global_depth - 1) downto 1);
@@ -1286,10 +1291,12 @@ begin
 
     process(clk, clk_enable)
     begin
-	if rising_edge(clk) and clk_enable = '1' then
-	    if MEM_running or (C_cache and dmem_cache_wait = '1') then
-		MEM_WB_mem_data <= MEM_data_in;
-	    end if;
+	if rising_edge(clk) and clk_enable = '1'
+	  and (MEM_running or (C_cache and dmem_cache_wait = '1')) then
+	    MEM_WB_mem_data <= MEM_data_in;
+	end if;
+	if rising_edge(clk) and clk_enable = '1'
+	  and (not C_cache or dmem_cache_wait = '0') then
 	    if MEM_running then
 		if C_ll_sc and EX_MEM_sc then
 		    MEM_WB_mem_cycle <= '0';
@@ -1318,7 +1325,7 @@ begin
 		    MEM_WB_PC <= EX_MEM_PC;
 		    MEM_WB_instruction <= EX_MEM_instruction;
 		end if;
-	    elsif not C_cache or dmem_cache_wait = '0' then
+	    else
 		MEM_WB_write_enable <= '0';
 	    end if;
 	end if;
@@ -1362,7 +1369,8 @@ begin
     mul_res <= R_mul_a * R_mul_b; -- infer asynchronous signed multiplier
     process(clk, clk_enable)
     begin
-	if falling_edge(clk) and clk_enable = '1' then
+	if falling_edge(clk) and clk_enable = '1'
+	  and (not C_cache or dmem_cache_wait = '0') then
 	    if not EX_MEM_EIP and ID_EX_mult then
 		R_mul_a(31 downto 0) <= CONV_SIGNED(UNSIGNED(EX_eff_reg1), 32);
 		R_mul_b(31 downto 0) <= CONV_SIGNED(UNSIGNED(EX_eff_reg2), 32);
@@ -1496,7 +1504,8 @@ begin
     -- performance counters
     process(clk, clk_enable)
     begin
-	if rising_edge(clk) and clk_enable = '1' then
+	if rising_edge(clk) and clk_enable = '1'
+	  and (not C_cache or dmem_cache_wait = '0') then
 	    if EX_MEM_branch_cycle then
 		D_b_instr <= D_b_instr + 1;
 	    end if;
