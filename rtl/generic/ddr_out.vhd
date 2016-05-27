@@ -17,7 +17,7 @@ entity ddr_out is
         ireset: in std_logic;
         --sclk: out std_logic := '0';
         idata: in std_logic_vector(1 downto 0);
-        odata: out std_logic_vector(0 downto 0) := (others => '0')
+        odata: out std_logic := '0'
     );
 end ddr_out;
 

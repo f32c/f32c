@@ -20,7 +20,7 @@ entity ddr_out is
     ireset: in  std_logic;
     --sclk: out  std_logic;
     idata: in  std_logic_vector(1 downto 0);
-    odata: out  std_logic_vector(0 downto 0)
+    odata: out std_logic
   );
 end ddr_out;
 
@@ -75,7 +75,7 @@ begin
             Q=>buf_clkout);
 
     Inst1_OB0: OB
-        port map (I=>buf_douto0, O=>odata(0));
+        port map (I=>buf_douto0, O=>odata);
 
     --sclk <= iclkp;
     db0 <= idata(1);
