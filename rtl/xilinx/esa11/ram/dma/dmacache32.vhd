@@ -134,7 +134,7 @@ architecture rtl of dmacache32 is
    signal tmp_rst            : std_logic_vector(DMACache_MaxChannel-1 downto 0);
    signal tmp_dout           : arr_slv_31_0(DMACache_MaxChannel-1 downto 0);
    signal fifo_din           : arr_slv_31_0(DMACache_MaxChannel-1 downto 0);
-   signal tmp_cnt            : arr_slv_15_0(DMACache_MaxChannel-1 downto 0) := (others => (others => '0'));
+   --signal tmp_cnt            : arr_slv_15_0(DMACache_MaxChannel-1 downto 0) := (others => (others => '0'));
    signal tmp_split          : std_logic_vector(DMACache_MaxChannel-1 downto 0); -- workaround
    signal serv_act_d         : std_logic;
    signal valid_d            : std_logic;
@@ -143,7 +143,7 @@ architecture rtl of dmacache32 is
 begin
    m_axi_arid     <= "0";    -- not used
     -- burst length, data beats-1 should match ddr_rd_len adjusted by arsize
-   m_axi_arlen    <= X"1F";  -- burst length, data beats-1 should match ddr_rd_len
+   m_axi_arlen    <= std_logic_vector(to_unsigned(ddr_rd_len-1,8));  -- burst length, data beats-1 should match ddr_rd_len
 --	m_axi_arlen    <= std_logic_vector(to_unsigned((ddr_rd_len/2)-1, m_axi_arlen'length));
    m_axi_arsize   <= "010";  -- 32 bits, resp. 4 bytes
    m_axi_arburst  <= "01";  -- burst type INCR - Incrementing address
@@ -168,58 +168,58 @@ begin
    readBusy  <= busy;
 
    -- count read cycles, update busy flag
-   cache_mbi_read : process(m_axi_aclk)
-   begin
-      if rising_edge(m_axi_aclk) then
-         if m_axi_aresetn = '0' then
+  cache_mbi_read : process(m_axi_aclk)
+  begin
+    if rising_edge(m_axi_aclk) then
+      if m_axi_aresetn = '0' then
             mbi_read_busy <= '0';
             mbi_rd_count  <= (others => '0');
             axi_araddr    <= (others => '0');
             axi_arvalid   <= '0';
             axi_rready    <= '0';
-         else
-            ddr_re_rc2     <= ddr_re_rck;
-         if ddr_re_rck = '1' and ddr_re_rc2 = '0'
-                              and axi_arvalid <= '0' then -- start DDR read
+      else
+        ddr_re_rc2 <= ddr_re_rck;
+        if ddr_re_rck = '1' and ddr_re_rc2 = '0'
+                            and axi_arvalid <= '0' then -- start DDR read
             mbi_read_busy <= '1';
             mbi_rd_count  <= (others => '0');
-            axi_araddr       <= "00" & addr(29 downto 2) & "00";
-            axi_arvalid <= '1';
-         elsif m_axi_arready = '1' and axi_arvalid = '1' then
-            axi_arvalid <= '0';
-         end if;
+            axi_araddr    <= "00" & addr(29 downto 2) & "00";
+            axi_arvalid   <= '1';
+        elsif m_axi_arready = '1' and axi_arvalid = '1' then
+            axi_arvalid   <= '0';
+        end if;
 
          -- read completed
 --	      if mbi_rd_count = to_unsigned(ddr_rd_len /4 -1, mbi_rd_count'length) then  -- read length
-         if  m_axi_rvalid = '1' and m_axi_rlast = '1' then
+        if  m_axi_rvalid = '1' and m_axi_rlast = '1' then
            mbi_read_busy <= '0';
-         end if;
+        end if;
 
-         -- write to chache control
-         if m_axi_rvalid = '1' and m_axi_rlast = '0' then
+         -- write to cache control
+        if m_axi_rvalid = '1' and m_axi_rlast = '0' then
             mbi_rd_count <= unsigned(mbi_rd_count) + "1";
-         end if;
+        end if;
    
          -- axi read handshake
 --	        if m_axi_rvalid = '1' and axi_rready = '0' then
 --	      	   axi_rready <= '1';
 --	        elsif axi_rready = '1' and m_axi_rlast = '1' then
-         if axi_rready = '1' and m_axi_rvalid = '1' 
+        if axi_rready = '1' and m_axi_rvalid = '1' 
                           and m_axi_rlast = '1' then
             axi_rready <= '0';
-         else
+        else
             axi_rready <= '1';
-         end if;
+        end if;
 
-         if mbi_read_busy = '0' then
+        if mbi_read_busy = '0' then
             mbi_rd_count <= (others => '0');
-         end if;
+        end if;
    
          -- target chache line
    --      cache_pb_addr <= mbi_addr_offset(16 downto 6) & mbi_rd_count(5 downto 0);
    --      mbi_rd_dout <= mcb_rd_data;
-       end if;
-   end if;                           -- clk
+      end if;
+    end if;                           -- clk
   end process cache_mbi_read;
 
   m_axi_rready  <= axi_rready; -- handshake (could also be activated before rvalid)
@@ -449,15 +449,15 @@ begin
          end loop; -- every channel
 
          valid_d <= tmp_valid(0);
-         
+
          if tmp_valid(0) = '1' and valid_d = '0' then
             update_fwft <= '1';
          end if;
-         
+
          if serv_ch /= 0 then
             serv_act_d <= tmp_valid(0);
          end if;
-         
+
          -- active channel
          if serviceactive='1' then
             if serv_ch = 0 then
@@ -473,7 +473,7 @@ begin
             --      channels_to_host(serv_ch).valid <= '1'; -- FIFO valid
             --   end if;
             --else
-            -- fix to split fifo output in to words, until fifo is updated to do the conversion
+            -- fix to split fifo output in two words, until fifo is updated to do the conversion
                if tmp_valid(serv_ch) = '1' and tmp_drain(serv_ch) = '0' then -- FWFT: read data available if valid
                   tmp_drain(serv_ch) <= '1';              -- get next data from fifo
                   tmp_pend(serv_ch) <= '0';
