@@ -437,7 +437,7 @@
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../xilinx/esa11/ram/dma/dmacache.vhd">
+      <File Path="$PPRDIR/../../../../xilinx/esa11/ram/dma/dmacache32.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
