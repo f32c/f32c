@@ -69,11 +69,14 @@ entity esa11_xram_acram_ddr3 is
         C3_MEM_BANKADDR_WIDTH : integer := 3;
         
         C_vgadma: boolean := false; -- false: use glue's vgabit or vgatxt, true: use plasma's dma-axi bitmap
+        C_vgadma_c2: boolean := true;
 
-	C_vgahdmi: boolean := false;
+        C_dvid_ddr: boolean := false; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
+	C_vgahdmi: boolean := true;
 	C_video_cache_size: integer := 8; -- KB video cache (vgahdmi) (0: disable, 2,4,8,16,32:enable) 
+	C_vgahdmi_fifo_timeout: integer := 48;
 
-    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: ESA11-7a35i MIPS compatible soft-core 100MHz 32MB DDR3"; -- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480
       C_vgatext_bits: integer := 4;   -- 64 possible colors
@@ -102,6 +105,7 @@ entity esa11_xram_acram_ddr3 is
       C_vgatext_bitmap: boolean := true; -- true for optional bitmap generation
         C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
         C_vgatext_bitmap_fifo: boolean := true; -- enable bitmap FIFO
+          C_vgatext_bitmap_fifo_timeout: integer := 48; -- abort compositing 48 pixels before end of line
           -- 8 bpp compositing
           -- step=horizontal width in pixels
           C_vgatext_bitmap_fifo_step: integer := 640;
@@ -172,6 +176,8 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     end ceil_log2;
     signal clk, sio_break: std_logic;
     signal clk_25MHz, clk_100MHz, clk_200MHz, clk_250MHz: std_logic;
+    signal clk_125MHz: std_logic := '0';
+    signal clk_pixel_shift: std_logic;
     signal clk_locked: std_logic := '0';
     signal cfgmclk: std_logic;
 
@@ -187,6 +193,19 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
       locked : out STD_LOGIC
     );
     end component clk_d100_100_200_250_25MHz;
+
+    component clk_d100_100_200_125_25MHz is
+    Port (
+      clk_100mhz_in_p : in STD_LOGIC;
+      clk_100mhz_in_n : in STD_LOGIC;
+      clk_100mhz : out STD_LOGIC;
+      clk_200mhz : out STD_LOGIC;
+      clk_125mhz : out STD_LOGIC;
+      clk_25mhz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
+    );
+    end component clk_d100_100_200_125_25MHz;
 
     signal calib_done           : std_logic := '0';
 
@@ -330,6 +349,14 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     signal dummy_fromhost : DMAChannel_FromHost;
     signal spr0channel_tohost : DMAChannel_ToHost;
     signal vga_clk: std_logic;
+    signal S_vga_blank: std_logic;
+    signal S_vga_vsync, S_vga_hsync: std_logic;
+    signal S_vga_fetch_next, S_vga_line_repeat: std_logic;
+    signal S_vga_active_enabled: std_logic;
+    signal S_vga_addr: std_logic_vector(29 downto 2);
+    signal S_vga_suggest_cache: std_logic;
+    signal S_vga_data: std_logic_vector(31 downto 0);
+    signal vga_data_from_fifo: std_logic_vector(7 downto 0);
     signal vga_refresh: std_logic;
     signal vga_reg_dtack: std_logic; -- low active, ack from VGA reg access
     signal vga_ackback: std_logic := '0'; -- clear for ack_d, sys_clk domai
@@ -350,6 +377,7 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     signal gpio: std_logic_vector(127 downto 0);
     signal simple_in: std_logic_vector(31 downto 0);
     signal simple_out: std_logic_vector(31 downto 0);
+    signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
     signal tmds_rgb: std_logic_vector(2 downto 0);
     signal tmds_clk: std_logic;
     --signal vga_vsync_n, vga_hsync_n: std_logic;
@@ -360,7 +388,7 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     signal disp_7seg_segment: std_logic_vector(7 downto 0);
 begin
 
-    cpu100_200MHz: if C_clk_freq = 100 generate
+    cpu100_200_250_25MHz: if C_clk_freq = 100 and not C_dvid_ddr generate
     clk100in_out100_200_250_25: clk_d100_100_200_250_25MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
@@ -371,6 +399,21 @@ begin
              clk_250mhz => clk_250MHz,
              clk_25mhz  => clk_25MHz
     );
+    clk_pixel_shift <= clk_250MHz;
+    end generate;
+
+    cpu100_200_125_25MHz: if C_clk_freq = 100 and C_dvid_ddr generate
+    clk100in_out100_200_125_25: clk_d100_100_200_125_25MHz
+    port map(clk_100mhz_in_p => i_100MHz_P,
+             clk_100mhz_in_n => i_100MHz_N,
+             reset => '0',
+             locked => clk_locked,
+             clk_100mhz => clk,
+             clk_200mhz => clk_200MHz,
+             clk_125mhz => clk_125MHz,
+             clk_25mhz  => clk_25MHz
+    );
+    clk_pixel_shift <= clk_125MHz;
     end generate;
 
     G_vendor_specific_startup: if C_vendor_specific_startup generate
@@ -414,9 +457,10 @@ begin
       C_sio => C_sio,
       C_spi => C_spi,
       --C_ps2 => C_ps2,
-
-      C_video_cache_size => C_video_cache_size,
+      C_dvid_ddr => C_dvid_ddr,
       C_vgahdmi => C_vgahdmi,
+      C_video_cache_size => C_video_cache_size,
+      C_vgahdmi_fifo_timeout => C_vgahdmi_fifo_timeout,
 
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
@@ -447,6 +491,7 @@ begin
       C_vgatext_bitmap => C_vgatext_bitmap,
       C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
       C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
+      C_vgatext_bitmap_fifo_timeout => C_vgatext_bitmap_fifo_timeout,
       C_vgatext_bitmap_fifo_step => C_vgatext_bitmap_fifo_step,
       C_vgatext_bitmap_fifo_height => C_vgatext_bitmap_fifo_height,
       C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
@@ -457,7 +502,7 @@ begin
     port map (
         clk => clk,
 	clk_pixel => clk_25MHz,
-	clk_pixel_shift => clk_250MHz,
+	clk_pixel_shift => clk_pixel_shift,
 	acram_en => ram_en,
 	acram_addr => ram_address,
 	acram_byte_we => ram_byte_we,
@@ -485,10 +530,10 @@ begin
 	vga_r => glue_vga_red,
 	vga_g => glue_vga_green,
 	vga_b => glue_vga_blue,
-        dvid_red(0)   => tmds_rgb(2), dvid_red(1)   => open,
-        dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
-        dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
-        dvid_clock(0) => tmds_clk,    dvid_clock(1) => open,
+        dvid_red   => dvid_red,
+        dvid_green => dvid_green,
+        dvid_blue  => dvid_blue,
+        dvid_clock => dvid_clock,
 	-- simple I/O
 	simple_out(7 downto 0) => M_LED, simple_out(15 downto 8) => disp_7seg_segment,
 	simple_out(19 downto 16) => M_7SEG_DIGIT, simple_out(31 downto 20) => open,
@@ -506,6 +551,29 @@ begin
     m_7seg_g  <= disp_7seg_segment(6);
     m_7seg_dp <= disp_7seg_segment(7);
 
+    G_dvi_sdr: if not C_dvid_ddr generate
+      tmds_rgb <= dvid_red(0) & dvid_green(0) & dvid_blue(0);
+      tmds_clk <= dvid_clock(0);
+    end generate;
+
+    G_dvi_ddr: if C_dvid_ddr generate
+    -- vendor specific modules to
+    -- convert 2-bit pairs to DDR 1-bit
+    G_vga_ddrout: entity work.ddr_dvid_out_se
+    port map (
+      clk       => clk_pixel_shift,
+      clk_n     => '0', -- inverted shift clock not needed on xilinx
+      in_red    => dvid_red,
+      in_green  => dvid_green,
+      in_blue   => dvid_blue,
+      in_clock  => dvid_clock,
+      out_red   => tmds_rgb(2),
+      out_green => tmds_rgb(1),
+      out_blue  => tmds_rgb(0),
+      out_clock => tmds_clk
+    );
+    end generate;
+
     -- differential output buffering for HDMI clock and video
     hdmi_output: entity work.hdmi_out
     port map (
@@ -516,7 +584,6 @@ begin
         tmds_out_rgb_p => VID_D_P,
         tmds_out_rgb_n => VID_D_N
     );
-    
 
     acram_emu_gen: if C_acram_emu_kb > 0 generate
     axi_cache_emulation: entity work.acram_emu
@@ -831,6 +898,7 @@ begin
         debug => cche_debug
     );
     
+    G_vga_plasma_gen: if not C_vgadma_c2 generate
     --vreg_en  <= '1' when ram_address(31 downto 28) = B"1110" else '0';
     --vreg_uds <= '0' when vreg_we = '1' else
     --            '0' when ram_byte_we(0) = '1' or ram_byte_we(2) = '1' else '1';
@@ -870,17 +938,86 @@ begin
       blue => VGA_BLUE,
       vga_window => vga_window,
       pixelclock => vga_clk
-   );
+    );
 
-   VGA_BLANK_N <= vga_window; -- when SW_S1 = '1' else not vga_window;
-   VGA_SYNC_N <= '0';
+    VGA_BLANK_N <= vga_window; -- when SW_S1 = '1' else not vga_window;
+    VGA_SYNC_N <= '0';
 --   VGA_CLOCK_N <= '0';
-   vga_clockbuf: clk_port
-   port map
-   (
+    vga_clockbuf: clk_port
+    port map
+    (
       i_in     => vga_clk,
       o_out    => VGA_CLOCK_P
-   );
-   end generate;
+    );
+    end generate; -- G_vga_plasma_gen not C_vgadma_c2
+
+    G_vga_c2_gen: if C_vgadma_c2 generate
+    -- data source: FIFO - cross clock domain cpu-pixel
+    G_vgabit_c2: if true generate
+    -- compositing2 video accelerator, shows linked list of pixel data
+    comp_fifo: entity work.compositing2_fifo
+    generic map
+    (
+      C_width => 640,
+      C_height => 480,
+      C_data_width => 8,
+      C_addr_width => 11
+    )
+    port map
+    (
+      clk => clk,
+      clk_pixel => clk_25MHz,
+      suggest_cache => S_vga_suggest_cache, -- video_fifo_suggest_cache,
+      addr_strobe => open, -- video_fifo_addr_strobe,
+      addr_out => S_vga_addr, -- video_fifo_addr,
+      data_ready => '1', -- video_fifo_data_ready, -- data valid for read acknowledge from RAM
+      --data_in => x"00AA00AA", -- video_fifo_data, -- from cache
+      data_in => S_vga_data,
+      base_addr => x"0000000", -- R_fb_base_addr(29 downto 2),
+      active => S_vga_active_enabled,
+      frame => open, -- vga_frame,
+      data_out => vga_data_from_fifo(7 downto 0),
+      fetch_next => S_vga_fetch_next
+    );
+    end generate;
+    S_vga_active_enabled <= not S_vga_vsync;
+    S_vga_data <= x"02800000" when S_vga_suggest_cache='0' else x"031CE000";
+
+    vgachannel_fromhost.addr <= x"10000000";
+    vgachannel_fromhost.setaddr <= '0';
+    vgachannel_fromhost.reqlen <= x"0000";
+    vgachannel_fromhost.setreqlen <= '0';
+    vgachannel_fromhost.req <= '0';
+
+    -- VGA video generator - pixel clock synchronous
+    vgabitmap: entity work.vga
+    --generic map (
+    --  C_dbl_y => 1
+    --)
+    port map
+    (
+      clk_pixel => clk_25MHz,
+      test_picture => '0', -- shows test picture when VGA is disabled (on startup)
+      fetch_next  => S_vga_fetch_next,
+      line_repeat => S_vga_line_repeat,
+      red_byte    => vga_data_from_fifo(7 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5),
+      green_byte  => vga_data_from_fifo(4 downto 2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2),
+      blue_byte   => vga_data_from_fifo(1 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0),
+      vga_r => vga_red,
+      vga_g => vga_green,
+      vga_b => vga_blue,
+      vga_hsync => S_vga_hsync,
+      vga_vsync => S_vga_vsync,
+      vga_blank => S_vga_blank, -- '1' when outside of horizontal or vertical graphics area
+      vga_vblank => open -- '1' when outside of vertical graphics area (used for vblank interrupt)
+    );
+    vga_sync_n <= '1';
+    vga_blank_n <= not S_vga_blank;
+    vga_hsync <= not S_vga_hsync;
+    vga_vsync <= not S_vga_vsync;
+    vga_clock_p <= clk_25MHz;
+    end generate; -- G_vga_c2_gen C_vgadma_c2
+
+    end generate; -- C_vgadma
 
 end Behavioral;

@@ -30,28 +30,28 @@ begin
   port map
   (
     iclkp=>clk, iclkn=>clk_n, ireset=>'0',
-    idata(1 downto 0)=>in_red(1 downto 0), odata(0)=>out_red
+    idata(1 downto 0)=>in_red(1 downto 0), odata=>out_red
   );
 
   ddr_out_green: entity work.ddr_out
   port map
   (
     iclkp=>clk, iclkn=>clk_n, ireset=>'0',
-    idata(1 downto 0)=>in_green(1 downto 0), odata(0)=>out_green
+    idata(1 downto 0)=>in_green(1 downto 0), odata=>out_green
   );
 
   ddr_out_blue: entity work.ddr_out
   port map
   (
     iclkp=>clk, iclkn=>clk_n, ireset=>'0',
-    idata(1 downto 0)=>in_blue(1 downto 0), odata(0)=>out_blue
+    idata(1 downto 0)=>in_blue(1 downto 0), odata=>out_blue
   );
 
   ddr_out_clock: entity work.ddr_out
   port map
   (
     iclkp=>clk, iclkn=>clk_n, ireset=>'0',
-    idata(1 downto 0)=>in_clock(1 downto 0), odata(0)=>out_clock
+    idata(1 downto 0)=>in_clock(1 downto 0), odata=>out_clock
   );
 
 end Behavioral;

@@ -72,6 +72,22 @@ junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_25MHz/sim
 junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_25MHz/synth
 junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_25MHz/clk_wiz_v5_3_0
 
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/*.upgrade_log
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/*.v
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/*.vhdl
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/*.dcp
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/*.xml
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/*.xdc
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/*.veo
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/*.vho
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/*.tcl
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/*.ncf
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/*.log
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/doc
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/sim
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/synth
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_125_25MHz/clk_wiz_v5_3_0
+
 junk+=$(project).srcs/sources_1/ip/cache_fifo/*.upgrade_log
 junk+=$(project).srcs/sources_1/ip/cache_fifo/*.v
 junk+=$(project).srcs/sources_1/ip/cache_fifo/*.vhdl
