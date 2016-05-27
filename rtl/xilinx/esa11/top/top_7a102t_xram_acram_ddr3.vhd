@@ -68,8 +68,8 @@ entity esa11_xram_acram_ddr3 is
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
         
-        C_vgadma: boolean := false; -- false: use glue's vgabit or vgatxt, true: use plasma's dma-axi bitmap
-        C_vgadma_c2: boolean := true;
+        C_vgadma: boolean := true; -- false: use glue's vgabit or vgatxt, true: use plasma's dma-axi bitmap
+        C_vgadma_c2: boolean := false;
 
         C_dvid_ddr: boolean := false; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
 	C_vgahdmi: boolean := true;
@@ -340,7 +340,7 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     signal ram_cache_hitcnt   : std_logic_vector(31 downto 0);
     signal ram_cache_readcnt  : std_logic_vector(31 downto 0);
 
-    signal dma_data : std_logic_vector(15 downto 0);
+    signal dma_data : std_logic_vector(31 downto 0);
     signal cche_debug : std_logic_vector(7 downto 0) := (others => '0');
     signal cche_busy : std_logic := '0';
     signal vgachannel_fromhost : DMAChannel_FromHost;
@@ -830,7 +830,7 @@ begin
 
     vga_plasma: if C_vgadma generate
     -- DMA controller
-    dmacache : entity work.dmaCache
+    dmacache: entity work.dmaCache32
       port map
       (
         clk               => clk, -- 100MHz system and mcb_cmd clk
@@ -924,7 +924,7 @@ begin
 
       sdr_refresh => vga_refresh,  -- end of line
 
-      dma_data => dma_data,
+      dma_data => dma_data(15 downto 0),
       vgachannel_fromhost => vgachannel_fromhost,
       vgachannel_tohost => vgachannel_tohost,
       spr0channel_fromhost => spr0channel_fromhost,
