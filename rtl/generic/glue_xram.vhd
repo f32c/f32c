@@ -113,6 +113,7 @@ generic (
   C_video_cache_size: integer := 0; -- KB
   --C_video_cache_all: std_logic := '0'; -- 0 cache pixel content only, 1 cache everything (all c2 pointers and content)
   C_video_cache_use_i: boolean := false; -- true: use instruction cache (faster, maybe buggy), false: use data cache (slower, works)
+  C_video_base_addr_out: boolean := true;
   -- TV simple 512x512 bitmap
   C_tv: boolean := false; -- enable TV output
   C_tv_fifo_width: integer := 512;
@@ -231,6 +232,7 @@ port (
   tmds_out_rgb: out std_logic_vector(2 downto 0);
   tmds_out_clk: out std_logic := '0'; -- used for DDR output
   dvid_red, dvid_green, dvid_blue, dvid_clock: out std_logic_vector(1 downto 0);
+  video_base_addr: out std_logic_vector(31 downto 2) := (others => '0'); -- video base address
   ledstrip_rotation: in std_logic := '0'; -- input from motor rotation encoder
   ledstrip_out: out std_logic_vector(1 downto 0); -- 2 channels out
   jack_tip, jack_ring: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, 4-bit simple DAC
@@ -1046,6 +1048,40 @@ begin
         end if; -- end rising edge
     end process;
     end generate; -- C_tv
+
+    -- for external video driver, just obtain output address
+    G_video_base_addr_out:
+    if C_video_base_addr_out generate
+    -- address decoder to set base address and clear interrupts
+    with conv_integer(io_addr(11 downto 4)) select
+      vga_ce <= io_addr_strobe when iomap_from(iomap_vga, iomap_range) to iomap_to(iomap_vga, iomap_range),
+                           '0' when others;
+    process(clk)
+    begin
+        if rising_edge(clk) then
+            if vga_ce = '1' and dmem_write = '1' then
+                -- cpu write: writes Framebuffer base
+                if C_big_endian then
+                   R_fb_base_addr <= -- XXX: revisit, probably wrong;
+                      cpu_to_dmem(11 downto 8) &
+                      cpu_to_dmem(23 downto 16) &
+                      cpu_to_dmem(31 downto 26);
+                else
+                   R_fb_base_addr <= cpu_to_dmem(31 downto 2);
+                end if;
+            end if;
+            -- interrupt handling: (CPU read or write will clear interrupt)
+            if vga_ce = '1' then -- and dmem_write = '0' then
+                R_fb_intr <= '0';
+            else
+                if vga_frame = '1' then
+                    R_fb_intr <= '1';
+                end if;
+            end if;
+        end if; -- end rising edge
+    end process;
+    video_base_addr <= R_fb_base_addr;
+    end generate;
 
     -- VGA/HDMI
     G_vgahdmi:
