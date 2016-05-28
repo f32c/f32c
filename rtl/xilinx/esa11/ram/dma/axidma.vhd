@@ -3,14 +3,13 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use ieee.std_logic_unsigned.all;
 use IEEE.numeric_std.ALL;
 
 use work.sram_pack.all;
 
 entity axidma is
    port(
-      clk                  : in std_logic;                     -- system and MCB cmd clk
-
       -- AXI4 Master IF
       m_axi_aresetn        : in  std_logic;
       m_axi_aclk           : in  std_logic;
@@ -64,6 +63,7 @@ entity axidma is
       -- f32c bus
       iaddr: in std_logic_vector(29 downto 2);
       iaddr_strobe: in std_logic;
+      iburst: in std_logic_vector(7 downto 0);
       oready: out std_logic;
       odata: out std_logic_vector(31 downto 0);
       iread_done: in std_logic
@@ -107,13 +107,17 @@ architecture rtl of axidma is
   signal axi_araddr       : std_logic_vector(31 downto 0);
   signal axi_arvalid      : std_logic;
   signal axi_rready       : std_logic;
+  signal axi_arlen        : std_logic_vector(7 downto 0) := x"00"; -- burst length, x"00":1x32bit, x"01":2x32bit etc..
+
+  --signal R_oready: std_logic := '0';
+  --signal R_odata: std_logic_vector(31 downto 0) := (others => '0');
 
 begin
 
   m_axi_arid     <= "0";    -- not used
   -- burst length, data beats-1 should match ddr_rd_len adjusted by arsize
   -- m_axi_arlen    <= std_logic_vector(to_unsigned(ddr_rd_len-1,8));  -- burst length, data beats-1 should match ddr_rd_len
-  m_axi_arlen    <= x"00";  -- no burst, just read single 32bit word
+  --m_axi_arlen    <= axi_arlen;  -- no burst, just read single 32bit word
   m_axi_arsize   <= "010";  -- 32 bits, resp. 4 bytes
   m_axi_arburst  <= "01";   -- burst type INCR - Incrementing address
   m_axi_arlock   <= '0';    -- Exclusive access not supported
@@ -152,12 +156,14 @@ begin
             axi_araddr    <= (others => '0');
             axi_arvalid   <= '0';
             axi_rready    <= '0';
+            axi_arlen     <= (others => '0');
       else
         if ddr_re = '1' and mbi_read_busy = '0' then -- when previos request is finished, start new DDR read
             mbi_read_busy <= '1';
             mbi_rd_count  <= (others => '0');
             axi_araddr    <= "00" & iaddr(29 downto 2) & "00";
             axi_arvalid   <= '1'; -- read request: address valid (similar to f32c strobe)
+            --axi_arlen     <= iburst-1;
         end if;
         if m_axi_arready = '1' and axi_arvalid = '1' then
             axi_arvalid   <= '0'; -- we got address accepted signal, remove read request
@@ -173,7 +179,7 @@ begin
         -- not yet end of burst, more data to follow
         -- increment number of words transferred
         if m_axi_rvalid = '1' and m_axi_rlast = '0' then
-            mbi_rd_count <= unsigned(mbi_rd_count) + "1";
+            mbi_rd_count <= unsigned(mbi_rd_count) + 1;
         end if;
 
         if axi_rready = '1' and m_axi_rvalid = '1'
@@ -182,12 +188,6 @@ begin
         else
             axi_rready <= '1'; -- the acknowledge to memory controller during burst
         end if;
-
-        --if m_axi_rvalid = '1' and axi_rready = '0' then
-        --  axi_rready <= '1';
-        --else
-        --  axi_rready <= '0';
-        --end if;
 
         if mbi_read_busy = '0' then
             mbi_rd_count <= (others => '0'); -- idle, keep counter at 0
@@ -198,9 +198,9 @@ begin
   end process cache_mbi_read;
 
   m_axi_rready  <= axi_rready; -- reader ready: acknowledge for each word to memory controller (could also be activated before rvalid)
-  --m_axi_rready <= iread_done;
   m_axi_arvalid <= axi_arvalid; -- read request. address to read from is valid
   m_axi_araddr  <= axi_araddr; -- address to read from
+  m_axi_arlen   <= axi_arlen;  -- no burst, just read single 32bit word
 
   odata <= m_axi_rdata; -- output data to f32c: read data
   oready <= m_axi_rvalid; -- acknowledge to f32c: read data valid
