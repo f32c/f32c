@@ -65,7 +65,8 @@ entity axidma is
       iaddr: in std_logic_vector(29 downto 2);
       iaddr_strobe: in std_logic;
       oready: out std_logic;
-      odata: out std_logic_vector(31 downto 0)
+      odata: out std_logic_vector(31 downto 0);
+      iread_done: in std_logic
    );
 end entity;
 
@@ -159,7 +160,7 @@ begin
             axi_arvalid   <= '1'; -- read request: address valid (similar to f32c strobe)
         end if;
         if m_axi_arready = '1' and axi_arvalid = '1' then
-            axi_arvalid   <= '0'; -- we got ready signal, remove read request
+            axi_arvalid   <= '0'; -- we got address accepted signal, remove read request
         end if;
 
         -- read completed
@@ -175,12 +176,18 @@ begin
             mbi_rd_count <= unsigned(mbi_rd_count) + "1";
         end if;
 
-        if axi_rready = '1' and m_axi_rvalid = '1' 
+        if axi_rready = '1' and m_axi_rvalid = '1'
                             and m_axi_rlast = '1' then
-            axi_rready <= '0'; -- end of burst, no acknowledge
+            axi_rready <= '0'; -- end of burst, remove the acknowledge
         else
-            axi_rready <= '1'; -- the acknowledge during burst to memory controller
+            axi_rready <= '1'; -- the acknowledge to memory controller during burst
         end if;
+
+        --if m_axi_rvalid = '1' and axi_rready = '0' then
+        --  axi_rready <= '1';
+        --else
+        --  axi_rready <= '0';
+        --end if;
 
         if mbi_read_busy = '0' then
             mbi_rd_count <= (others => '0'); -- idle, keep counter at 0
@@ -191,6 +198,7 @@ begin
   end process cache_mbi_read;
 
   m_axi_rready  <= axi_rready; -- reader ready: acknowledge for each word to memory controller (could also be activated before rvalid)
+  --m_axi_rready <= iread_done;
   m_axi_arvalid <= axi_arvalid; -- read request. address to read from is valid
   m_axi_araddr  <= axi_araddr; -- address to read from
 
