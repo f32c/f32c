@@ -68,15 +68,15 @@ entity esa11_xram_acram_ddr3 is
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
         
-        C_vgadma: boolean := true; -- false: use glue's vgabit or vgatxt, true: use plasma's dma-axi bitmap
-        C_vgadma_c2: boolean := false;
+        C_vgadma: boolean := false; -- false: use glue's vgabit or vgatxt, true: use plasma's dma-axi bitmap
+        C_axidma_c2: boolean := false;
 
         C_dvid_ddr: boolean := false; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
-	C_vgahdmi: boolean := true;
-	C_video_cache_size: integer := 8; -- KB video cache (vgahdmi) (0: disable, 2,4,8,16,32:enable) 
+	C_vgahdmi: boolean := false;
+        C_video_cache_size: integer := 8; -- KB video cache (vgahdmi) (0: disable, 2,4,8,16,32:enable)
 	C_vgahdmi_fifo_timeout: integer := 48;
 
-    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: ESA11-7a35i MIPS compatible soft-core 100MHz 32MB DDR3"; -- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480
       C_vgatext_bits: integer := 4;   -- 64 possible colors
@@ -354,8 +354,11 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     signal S_vga_fetch_next, S_vga_line_repeat: std_logic;
     signal S_vga_active_enabled: std_logic;
     signal S_vga_addr: std_logic_vector(29 downto 2);
+    constant C_vga_base: std_logic_vector(31 downto 0) := x"80010000"; -- byte address
+    signal S_vga_addr_strobe: std_logic;
     signal S_vga_suggest_cache: std_logic;
-    signal S_vga_data: std_logic_vector(31 downto 0);
+    signal S_vga_data, S_vga_data_debug: std_logic_vector(31 downto 0);
+    signal S_vga_data_ready: std_logic;
     signal vga_data_from_fifo: std_logic_vector(7 downto 0);
     signal vga_refresh: std_logic;
     signal vga_reg_dtack: std_logic; -- low active, ack from VGA reg access
@@ -817,7 +820,7 @@ begin
     --FPGA_LED2 <= calib_done; -- should turn on 0.3 seconds after startup and remain on
     --FPGA_LED3 <= ram_read_busy; -- more RAM traffic -> more LED brightness
 
-    vga_f32c: if not C_vgadma generate
+    vga_f32c: if C_vgahdmi or C_vgatext generate
     VGA_SYNC_N <= '1';
     VGA_BLANK_N <= '1';
     VGA_CLOCK_P <= clk_25MHz;
@@ -828,77 +831,69 @@ begin
     vga_blue <= glue_vga_blue;
     end generate;
 
-    vga_plasma: if C_vgadma generate
+    G_vga_plasma: if C_vgadma generate
     -- DMA controller
     dmacache: entity work.dmaCache32
       port map
       (
         clk               => clk, -- 100MHz system and mcb_cmd clk
         reset             => not calib_done,
-        tst_dbg(3)         => '0', -- gpio0_out(6),
-        tst_dbg(2)         => '0', -- gpio0_out(5),
-        tst_dbg(1)         => '0', -- gpio0_out(4),
-        tst_dbg(0)         => '0', -- key_s1_d,
+        tst_dbg(3)        => '0', -- gpio0_out(6),
+        tst_dbg(2)        => '0', -- gpio0_out(5),
+        tst_dbg(1)        => '0', -- gpio0_out(4),
+        tst_dbg(0)        => '0', -- key_s1_d,
 
-        m_axi_aresetn      => l01_axi_areset_n,
-        m_axi_aclk         => l01_axi_aclk,
-        m_axi_awid         => l01_axi_awid,
-        m_axi_awaddr       => l01_axi_awaddr,
-        m_axi_awlen        => l01_axi_awlen,
-        m_axi_awsize       => l01_axi_awsize,
-        m_axi_awburst      => l01_axi_awburst,
-        m_axi_awlock       => l01_axi_awlock,
-        m_axi_awcache      => l01_axi_awcache,
-        m_axi_awprot       => l01_axi_awprot,
-        m_axi_awqos        => l01_axi_awqos,
-        m_axi_awvalid      => l01_axi_awvalid,
-        m_axi_awready      => l01_axi_awready,
-        m_axi_wdata        => l01_axi_wdata,
-        m_axi_wstrb        => l01_axi_wstrb,
-        m_axi_wlast        => l01_axi_wlast,
-        m_axi_wvalid       => l01_axi_wvalid,
-        m_axi_wready       => l01_axi_wready,
-        m_axi_bid          => l01_axi_bid,
-        m_axi_bresp        => l01_axi_bresp,
-        m_axi_bvalid       => l01_axi_bvalid,
-        m_axi_bready       => l01_axi_bready,
-        m_axi_arid         => l01_axi_arid,
-        m_axi_araddr       => l01_axi_araddr,
-        m_axi_arlen        => l01_axi_arlen,
-        m_axi_arsize       => l01_axi_arsize,
-        m_axi_arburst      => l01_axi_arburst,
-        m_axi_arlock       => l01_axi_arlock,
-        m_axi_arcache      => l01_axi_arcache,
-        m_axi_arprot       => l01_axi_arprot,
-        m_axi_arqos        => l01_axi_arqos,
-        m_axi_arvalid      => l01_axi_arvalid,
-        m_axi_arready      => l01_axi_arready,
-        m_axi_rid          => l01_axi_rid,
-        m_axi_rdata        => l01_axi_rdata,
-        m_axi_rresp        => l01_axi_rresp,
-        m_axi_rlast        => l01_axi_rlast,
-        m_axi_rvalid       => l01_axi_rvalid,
-        m_axi_rready       => l01_axi_rready,
+        m_axi_aresetn     => l01_axi_areset_n,
+        m_axi_aclk        => l01_axi_aclk,
+        m_axi_awid        => l01_axi_awid,
+        m_axi_awaddr      => l01_axi_awaddr,
+        m_axi_awlen       => l01_axi_awlen,
+        m_axi_awsize      => l01_axi_awsize,
+        m_axi_awburst     => l01_axi_awburst,
+        m_axi_awlock      => l01_axi_awlock,
+        m_axi_awcache     => l01_axi_awcache,
+        m_axi_awprot      => l01_axi_awprot,
+        m_axi_awqos       => l01_axi_awqos,
+        m_axi_awvalid     => l01_axi_awvalid,
+        m_axi_awready     => l01_axi_awready,
+        m_axi_wdata       => l01_axi_wdata,
+        m_axi_wstrb       => l01_axi_wstrb,
+        m_axi_wlast       => l01_axi_wlast,
+        m_axi_wvalid      => l01_axi_wvalid,
+        m_axi_wready      => l01_axi_wready,
+        m_axi_bid         => l01_axi_bid,
+        m_axi_bresp       => l01_axi_bresp,
+        m_axi_bvalid      => l01_axi_bvalid,
+        m_axi_bready      => l01_axi_bready,
+        m_axi_arid        => l01_axi_arid,
+        m_axi_araddr      => l01_axi_araddr,
+        m_axi_arlen       => l01_axi_arlen,
+        m_axi_arsize      => l01_axi_arsize,
+        m_axi_arburst     => l01_axi_arburst,
+        m_axi_arlock      => l01_axi_arlock,
+        m_axi_arcache     => l01_axi_arcache,
+        m_axi_arprot      => l01_axi_arprot,
+        m_axi_arqos       => l01_axi_arqos,
+        m_axi_arvalid     => l01_axi_arvalid,
+        m_axi_arready     => l01_axi_arready,
+        m_axi_rid         => l01_axi_rid,
+        m_axi_rdata       => l01_axi_rdata,
+        m_axi_rresp       => l01_axi_rresp,
+        m_axi_rlast       => l01_axi_rlast,
+        m_axi_rvalid      => l01_axi_rvalid,
+        m_axi_rready      => l01_axi_rready,
 
         chns_from_host(0) => vgachannel_fromhost,
         chns_from_host(1) => spr0channel_fromhost,
---       channels_from_host(2) => aud0_fromhost,
---       channels_from_host(3) => aud1_fromhost,
---       channels_from_host(4) => aud2_fromhost,
---       channels_from_host(5) => aud3_fromhost,
 
         channels_to_host(0) => vgachannel_tohost,
         channels_to_host(1) => spr0channel_tohost,
---       channels_to_host(2) => aud0_tohost,
---       channels_to_host(3) => aud1_tohost,
---       channels_to_host(4) => aud2_tohost,
---       channels_to_host(5) => aud3_tohost,
+
         data_out => dma_data,
         readBusy => cche_busy,
         debug => cche_debug
     );
-    
-    G_vga_plasma_gen: if not C_vgadma_c2 generate
+
     --vreg_en  <= '1' when ram_address(31 downto 28) = B"1110" else '0';
     --vreg_uds <= '0' when vreg_we = '1' else
     --            '0' when ram_byte_we(0) = '1' or ram_byte_we(2) = '1' else '1';
@@ -949,15 +944,67 @@ begin
       i_in     => vga_clk,
       o_out    => VGA_CLOCK_P
     );
-    end generate; -- G_vga_plasma_gen not C_vgadma_c2
+    end generate; -- C_vgadma
 
-    G_vga_c2_gen: if C_vgadma_c2 generate
+    G_axidma_c2: if C_axidma_c2 generate
+    axidma: entity work.axidma
+      port map
+      (
+        clk               => clk, -- 100MHz system and mcb_cmd clk
+
+        m_axi_aresetn     => l01_axi_areset_n,
+        m_axi_aclk        => l01_axi_aclk,
+        m_axi_awid        => l01_axi_awid,
+        m_axi_awaddr      => l01_axi_awaddr,
+        m_axi_awlen       => l01_axi_awlen,
+        m_axi_awsize      => l01_axi_awsize,
+        m_axi_awburst     => l01_axi_awburst,
+        m_axi_awlock      => l01_axi_awlock,
+        m_axi_awcache     => l01_axi_awcache,
+        m_axi_awprot      => l01_axi_awprot,
+        m_axi_awqos       => l01_axi_awqos,
+        m_axi_awvalid     => l01_axi_awvalid,
+        m_axi_awready     => l01_axi_awready,
+        m_axi_wdata       => l01_axi_wdata,
+        m_axi_wstrb       => l01_axi_wstrb,
+        m_axi_wlast       => l01_axi_wlast,
+        m_axi_wvalid      => l01_axi_wvalid,
+        m_axi_wready      => l01_axi_wready,
+        m_axi_bid         => l01_axi_bid,
+        m_axi_bresp       => l01_axi_bresp,
+        m_axi_bvalid      => l01_axi_bvalid,
+        m_axi_bready      => l01_axi_bready,
+        m_axi_arid        => l01_axi_arid,
+        m_axi_araddr      => l01_axi_araddr,
+        m_axi_arlen       => l01_axi_arlen,
+        m_axi_arsize      => l01_axi_arsize,
+        m_axi_arburst     => l01_axi_arburst,
+        m_axi_arlock      => l01_axi_arlock,
+        m_axi_arcache     => l01_axi_arcache,
+        m_axi_arprot      => l01_axi_arprot,
+        m_axi_arqos       => l01_axi_arqos,
+        m_axi_arvalid     => l01_axi_arvalid,
+        m_axi_arready     => l01_axi_arready,
+        m_axi_rid         => l01_axi_rid,
+        m_axi_rdata       => l01_axi_rdata,
+        m_axi_rresp       => l01_axi_rresp,
+        m_axi_rlast       => l01_axi_rlast,
+        m_axi_rvalid      => l01_axi_rvalid,
+        m_axi_rready      => l01_axi_rready,
+
+        iaddr => S_vga_addr,
+        iaddr_strobe => S_vga_addr_strobe,
+        odata => S_vga_data,
+        oready => S_vga_data_ready
+    );
+
     -- data source: FIFO - cross clock domain cpu-pixel
-    G_vgabit_c2: if true generate
     -- compositing2 video accelerator, shows linked list of pixel data
     comp_fifo: entity work.compositing2_fifo
     generic map
     (
+      --C_timeout => 48,
+      --C_timeout_incomplete => true,
       C_width => 640,
       C_height => 480,
       C_data_width => 8,
@@ -965,29 +1012,23 @@ begin
     )
     port map
     (
-      clk => clk,
+      clk => clk, -- at axi speed
       clk_pixel => clk_25MHz,
       suggest_cache => S_vga_suggest_cache, -- video_fifo_suggest_cache,
-      addr_strobe => open, -- video_fifo_addr_strobe,
+      addr_strobe => S_vga_addr_strobe, -- video_fifo_addr_strobe,
       addr_out => S_vga_addr, -- video_fifo_addr,
-      data_ready => '1', -- video_fifo_data_ready, -- data valid for read acknowledge from RAM
+      data_ready => S_vga_data_ready, -- data valid, acknowledge from RAM
       --data_in => x"00AA00AA", -- video_fifo_data, -- from cache
       data_in => S_vga_data,
-      base_addr => x"0000000", -- R_fb_base_addr(29 downto 2),
+      base_addr => C_vga_base(29 downto 2), -- R_fb_base_addr(29 downto 2),
       active => S_vga_active_enabled,
       frame => open, -- vga_frame,
       data_out => vga_data_from_fifo(7 downto 0),
       fetch_next => S_vga_fetch_next
     );
-    end generate;
     S_vga_active_enabled <= not S_vga_vsync;
-    S_vga_data <= x"02800000" when S_vga_suggest_cache='0' else x"031CE000";
-
-    vgachannel_fromhost.addr <= x"10000000";
-    vgachannel_fromhost.setaddr <= '0';
-    vgachannel_fromhost.reqlen <= x"0000";
-    vgachannel_fromhost.setreqlen <= '0';
-    vgachannel_fromhost.req <= '0';
+    --S_vga_data_debug <= x"0280_0000" when S_vga_suggest_cache='0' else x"031CE000";
+    --S_vga_data_debug <= x"0280_0000" when S_vga_suggest_cache='0' else S_vga_data;
 
     -- VGA video generator - pixel clock synchronous
     vgabitmap: entity work.vga
@@ -1016,8 +1057,6 @@ begin
     vga_hsync <= not S_vga_hsync;
     vga_vsync <= not S_vga_vsync;
     vga_clock_p <= clk_25MHz;
-    end generate; -- G_vga_c2_gen C_vgadma_c2
-
-    end generate; -- C_vgadma
+    end generate; -- G_vga_c2_gen C_axidma_c2
 
 end Behavioral;
