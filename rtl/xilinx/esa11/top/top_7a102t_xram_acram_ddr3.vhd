@@ -69,15 +69,16 @@ entity esa11_xram_acram_ddr3 is
         C3_MEM_BANKADDR_WIDTH : integer := 3;
         
         C_vgadma: boolean := false; -- false: use glue's vgabit or vgatxt, true: use plasma's dma-axi bitmap
-        C_axidma_c2: boolean := false;
+        C_axidma_c2: boolean := true;
+        C_video_base_addr_out: boolean := true;
 
         C_dvid_ddr: boolean := false; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
 	C_vgahdmi: boolean := false;
         C_video_cache_size: integer := 8; -- KB video cache (vgahdmi) (0: disable, 2,4,8,16,32:enable)
 	C_vgahdmi_fifo_timeout: integer := 48;
 
-    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
-      C_vgatext_label: string := "f32c: ESA11-7a35i MIPS compatible soft-core 100MHz 32MB DDR3"; -- default banner in screen memory
+    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
+      C_vgatext_label: string := "f32c: ESA11-7a102t MIPS compatible soft-core 100MHz 256MB DDR3"; -- default banner as initial content of screen BRAM, NOP for RAM
       C_vgatext_mode: integer := 0;   -- 640x480
       C_vgatext_bits: integer := 4;   -- 64 possible colors
       C_vgatext_bram_mem: integer := 0;   -- KB (0: bram disabled -> use RAM)
@@ -349,15 +350,18 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     signal dummy_fromhost : DMAChannel_FromHost;
     signal spr0channel_tohost : DMAChannel_ToHost;
     signal vga_clk: std_logic;
+    signal S_vga_red, S_vga_green, S_vga_blue: std_logic_vector(7 downto 0);
     signal S_vga_blank: std_logic;
     signal S_vga_vsync, S_vga_hsync: std_logic;
     signal S_vga_fetch_next, S_vga_line_repeat: std_logic;
     signal S_vga_active_enabled: std_logic;
     signal S_vga_addr: std_logic_vector(29 downto 2);
-    constant C_vga_base: std_logic_vector(31 downto 0) := x"80010000"; -- byte address
+    signal S_vga_base_addr: std_logic_vector(31 downto 0) := x"80010000"; -- byte address
     signal S_vga_addr_strobe: std_logic;
     signal S_vga_suggest_cache: std_logic;
+    signal S_vga_suggest_burst: std_logic_vector(15 downto 0);
     signal S_vga_data, S_vga_data_debug: std_logic_vector(31 downto 0);
+    signal S_vga_read_done: std_logic;
     signal S_vga_data_ready: std_logic;
     signal vga_data_from_fifo: std_logic_vector(7 downto 0);
     signal vga_refresh: std_logic;
@@ -460,6 +464,7 @@ begin
       C_sio => C_sio,
       C_spi => C_spi,
       --C_ps2 => C_ps2,
+      C_video_base_addr_out => C_video_base_addr_out,
       C_dvid_ddr => C_dvid_ddr,
       C_vgahdmi => C_vgahdmi,
       C_video_cache_size => C_video_cache_size,
@@ -537,6 +542,7 @@ begin
         dvid_green => dvid_green,
         dvid_blue  => dvid_blue,
         dvid_clock => dvid_clock,
+        video_base_addr => S_vga_base_addr(31 downto 2),
 	-- simple I/O
 	simple_out(7 downto 0) => M_LED, simple_out(15 downto 8) => disp_7seg_segment,
 	simple_out(19 downto 16) => M_7SEG_DIGIT, simple_out(31 downto 20) => open,
@@ -950,8 +956,6 @@ begin
     axidma: entity work.axidma
       port map
       (
-        clk               => clk, -- 100MHz system and mcb_cmd clk
-
         m_axi_aresetn     => l01_axi_areset_n,
         m_axi_aclk        => l01_axi_aclk,
         m_axi_awid        => l01_axi_awid,
@@ -994,8 +998,10 @@ begin
 
         iaddr => S_vga_addr,
         iaddr_strobe => S_vga_addr_strobe,
+        iburst => S_vga_suggest_burst(7 downto 0),
         odata => S_vga_data,
-        oready => S_vga_data_ready
+        oready => S_vga_data_ready,
+        iread_done => S_vga_read_done
     );
 
     -- data source: FIFO - cross clock domain cpu-pixel
@@ -1012,15 +1018,17 @@ begin
     )
     port map
     (
-      clk => clk, -- at axi speed
+      clk => l01_axi_aclk, -- at axi speed
       clk_pixel => clk_25MHz,
       suggest_cache => S_vga_suggest_cache, -- video_fifo_suggest_cache,
+      suggest_burst => S_vga_suggest_burst,
       addr_strobe => S_vga_addr_strobe, -- video_fifo_addr_strobe,
       addr_out => S_vga_addr, -- video_fifo_addr,
       data_ready => S_vga_data_ready, -- data valid, acknowledge from RAM
       --data_in => x"00AA00AA", -- video_fifo_data, -- from cache
       data_in => S_vga_data,
-      base_addr => C_vga_base(29 downto 2), -- R_fb_base_addr(29 downto 2),
+      read_done => S_vga_read_done,
+      base_addr => S_vga_base_addr(29 downto 2),
       active => S_vga_active_enabled,
       frame => open, -- vga_frame,
       data_out => vga_data_from_fifo(7 downto 0),
@@ -1044,19 +1052,46 @@ begin
       red_byte    => vga_data_from_fifo(7 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5),
       green_byte  => vga_data_from_fifo(4 downto 2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2),
       blue_byte   => vga_data_from_fifo(1 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0),
-      vga_r => vga_red,
-      vga_g => vga_green,
-      vga_b => vga_blue,
+      vga_r => S_vga_red,
+      vga_g => S_vga_green,
+      vga_b => S_vga_blue,
       vga_hsync => S_vga_hsync,
       vga_vsync => S_vga_vsync,
       vga_blank => S_vga_blank, -- '1' when outside of horizontal or vertical graphics area
       vga_vblank => open -- '1' when outside of vertical graphics area (used for vblank interrupt)
     );
+    vga_red <= S_vga_red;
+    vga_green <= S_vga_green;
+    vga_blue <= S_vga_blue;
     vga_sync_n <= '1';
     vga_blank_n <= not S_vga_blank;
     vga_hsync <= not S_vga_hsync;
     vga_vsync <= not S_vga_vsync;
     vga_clock_p <= clk_25MHz;
+
+    I_vgahdmi_dvid: entity work.vga2dvid
+    generic map (
+      C_ddr     => C_dvid_ddr,
+      C_depth   => 8 -- 8bpp (8 bit per pixel)
+    )
+    port map (
+      clk_pixel => clk_25MHz, clk_shift => clk_pixel_shift,
+
+      in_red   => S_vga_red,
+      in_green => S_vga_green,
+      in_blue  => S_vga_blue,
+
+      in_blank => S_vga_blank,
+      in_hsync => S_vga_hsync,
+      in_vsync => S_vga_vsync,
+
+      -- single-ended output ready for differential buffers
+      out_red   => dvid_red,
+      out_green => dvid_green,
+      out_blue  => dvid_blue,
+      out_clock => dvid_clock
+    );
+
     end generate; -- G_vga_c2_gen C_axidma_c2
 
 end Behavioral;
