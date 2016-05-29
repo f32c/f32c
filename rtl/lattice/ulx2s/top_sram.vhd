@@ -74,6 +74,7 @@ entity glue is
 	C_i_rom_only: boolean := true;
 	C_icache_size: integer := 8;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
+	C_cached_addr_bits: integer := 20; -- 1 MBytes
 	C_sram: boolean := true;
 	C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
 	C_pipelined_read: boolean := true; -- works only at 81.25 MHz !!!
@@ -269,6 +270,7 @@ begin
 	C_cop0_config => C_cop0_config, C_exceptions => C_exceptions,
 	C_ll_sc => C_ll_sc,
 	C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
+	C_cached_addr_bits => C_cached_addr_bits,
 	-- debugging only
 	C_debug => C_debug
     )
