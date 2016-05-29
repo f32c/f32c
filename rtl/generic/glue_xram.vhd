@@ -113,7 +113,7 @@ generic (
   C_video_cache_size: integer := 0; -- KB
   --C_video_cache_all: std_logic := '0'; -- 0 cache pixel content only, 1 cache everything (all c2 pointers and content)
   C_video_cache_use_i: boolean := false; -- true: use instruction cache (faster, maybe buggy), false: use data cache (slower, works)
-  C_video_base_addr_out: boolean := true;
+  C_video_base_addr_out: boolean := false;
   -- TV simple 512x512 bitmap
   C_tv: boolean := false; -- enable TV output
   C_tv_fifo_width: integer := 512;
