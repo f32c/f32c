@@ -361,7 +361,7 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     signal S_vga_suggest_cache: std_logic;
     signal S_vga_suggest_burst: std_logic_vector(15 downto 0);
     signal S_vga_data, S_vga_data_debug: std_logic_vector(31 downto 0);
-    signal S_vga_read_done: std_logic;
+    signal S_vga_read_ready: std_logic;
     signal S_vga_data_ready: std_logic;
     signal vga_data_from_fifo: std_logic_vector(7 downto 0);
     signal vga_refresh: std_logic;
@@ -819,7 +819,7 @@ begin
         s02_axi_rready       => l02_axi_rready
     );
     l00_axi_aclk <= clk; -- 100 MHz
-    l01_axi_aclk <= clk; -- port l01 not used
+    l01_axi_aclk <= clk; -- port l01 used for video
     l02_axi_aclk <= '0'; -- port l02 not used
     end generate; -- G_acram_real
 
@@ -1001,7 +1001,7 @@ begin
         iburst => S_vga_suggest_burst(7 downto 0),
         odata => S_vga_data,
         oready => S_vga_data_ready,
-        iread_done => S_vga_read_done
+        iread_ready => S_vga_read_ready
     );
 
     -- data source: FIFO - cross clock domain cpu-pixel
@@ -1027,7 +1027,7 @@ begin
       data_ready => S_vga_data_ready, -- data valid, acknowledge from RAM
       --data_in => x"00AA00AA", -- video_fifo_data, -- from cache
       data_in => S_vga_data,
-      read_done => S_vga_read_done,
+      read_ready => S_vga_read_ready,
       base_addr => S_vga_base_addr(29 downto 2),
       active => S_vga_active_enabled,
       frame => open, -- vga_frame,

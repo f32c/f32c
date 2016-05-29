@@ -160,7 +160,7 @@ entity compositing2_fifo is
 	base_addr: in std_logic_vector(29 downto 2);
 	data_ready: in std_logic;
 	data_in: in std_logic_vector(31 downto 0);
-	read_done: out std_logic; -- acknowledge to RAM that data are consumed (and no more needed)
+	read_ready: out std_logic; -- acknowledge to RAM that data are consumed (and no more needed)
 	data_out: out std_logic_vector(C_data_width-1 downto 0);
 	active: in std_logic; -- rising edge sensitive will reset fifo RAM to base address, value 1 allows start of reading
 	frame: out std_logic; -- output CPU clock synchronous start edge detection (1 CPU-clock wide pulse for FB interrupt)
@@ -214,7 +214,6 @@ architecture behavioral of compositing2_fifo is
     signal S_pixels_remaining: std_logic_vector(15 downto 0);
     signal R_suggest_cache: std_logic := '0';
     signal R_timeout: std_logic := '0';
-    signal S_read_done_fsm, S_read_done_compositing: std_logic := '0'; -- acknowledge that data are consumed
     constant C_state_read_line_start: integer := 0;
     -- indicates which line in buffer (containing 2 lines) is written (compositing from RAM)
     -- and which line is read (by display output)
@@ -363,11 +362,10 @@ begin
         end if;
     end process;
 
-    S_read_done_fsm <= data_ready and S_need_refill;
-    -- read_done <= S_read_done_fsm or S_read_done_compositing;
-    read_done <= S_read_done_compositing when R_state = 4 else S_read_done_fsm;
+    --read_ready <= S_need_refill and R_shifting_counter(C_shift_addr_width); -- during shifting we are not ready to accept new data
+    read_ready <= R_shifting_counter(C_shift_addr_width); -- during shifting we are not ready to accept new data
     suggest_cache <= R_suggest_cache;
-    suggest_burst <= R_word_count when R_state = 4 and R_word_count /= 0 else x"0001"; -- at state 4 last read is 1-word
+    suggest_burst <= R_word_count when R_suggest_cache='1' else x"0001"; -- at state 4 last read is 1-word?
 
     -- need refill signal must be CPU synchronous
     process(clk) begin
@@ -481,10 +479,6 @@ begin
                         else '0';
     -- calculate the compositing address where pixel data go (byte address for 8bpp)
     S_pixbuf_in_mem_addr <= R_line_wr & R_position(C_addr_width-2 downto 0);
-
-    -- as soon as compositing write is activated
-    -- it can be assumed that data read from RAM is done
-    S_read_done_compositing <= S_data_write;
 
     -- data_in is always 32-bits
     -- buffer can have less than 32 bits
