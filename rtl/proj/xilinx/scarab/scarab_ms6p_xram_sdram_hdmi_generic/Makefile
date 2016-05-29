@@ -73,9 +73,12 @@ vhdfiles = \
 ../../../../soc/fm/lowpass.vhd \
 ../../../../soc/fm/bram_rds.vhd \
 ../../../../soc/fm/message.vhd \
-../../../../soc/vgahdmi/compositing_fifo.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
+../../../../soc/vgahdmi/video_cache_i.vhd \
+../../../../soc/vgahdmi/video_cache_d.vhd \
+../../../../soc/vgahdmi/tv.vhd \
+../../../../soc/cvbs.vhd \
 ../../../../soc/vgahdmi/vga.vhd \
 ../../../../soc/vgahdmi/VGA_textmode.vhd \
 ../../../../soc/vgahdmi/font_block_pack.vhd \
@@ -85,6 +88,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../../soc/vgahdmi/TMDS_encoder.vhd \
 ../../../../soc/vgahdmi/vga2dvid.vhd \
+../../../../soc/vgahdmi/vga2lcd.vhd \
 ../../../../soc/vgahdmi/ledstrip.vhd \
 ../../../../soc/vgahdmi/ws2812b.vhd \
 ../../../../soc/vgahdmi/pulse_counter.vhd \

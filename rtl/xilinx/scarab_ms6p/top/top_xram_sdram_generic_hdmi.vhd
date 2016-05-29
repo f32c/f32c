@@ -56,7 +56,7 @@ entity glue is
     C_sdram: boolean := true;
 
     C_vgahdmi: boolean := false;
-    C_vgahdmi_test_picture: integer := 0;
+    C_video_cache_size: integer := 32; -- KB
     -- number of pixels for line step 640
     C_vgahdmi_fifo_width: integer := 640;
     -- number of scan lines: 480
@@ -66,17 +66,6 @@ entity glue is
     -- width of FIFO address space -> size of fifo
     -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
     C_vgahdmi_fifo_addr_width: integer := 11;
-
-    C_ledstrip: boolean := false;
-    -- number of pixels for line step 144
-    C_ledstrip_fifo_width: integer := 144;
-    -- number of scan lines: 480
-    C_ledstrip_fifo_height: integer := 480;
-    -- normally this should be  actual bits per pixel
-    C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;
-    -- width of FIFO address space -> size of fifo
-    -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
-    C_ledstrip_fifo_addr_width: integer := 11;
 
     C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
@@ -116,6 +105,17 @@ entity glue is
           C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
           -- bitmap width of FIFO address space length = 2^width * 4 byte
           C_vgatext_bitmap_fifo_addr_width: integer := 11;
+
+    C_ledstrip: boolean := false;
+    -- number of pixels for line step 144
+    C_ledstrip_fifo_width: integer := 144;
+    -- number of scan lines: 480
+    C_ledstrip_fifo_height: integer := 480;
+    -- normally this should be  actual bits per pixel
+    C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;
+    -- width of FIFO address space -> size of fifo
+    -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
+    C_ledstrip_fifo_addr_width: integer := 11;
 
     C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable.
 
@@ -301,7 +301,7 @@ begin
       C_sdram_cycles_per_refresh => 1524,
       -- vga simple compositing bitmap only graphics
       C_vgahdmi => C_vgahdmi,
-      C_vgahdmi_test_picture => C_vgahdmi_test_picture,
+      C_video_cache_size => C_video_cache_size,
       C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
       C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
