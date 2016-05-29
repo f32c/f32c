@@ -67,6 +67,7 @@ entity cache is
 	C_icache_size: integer := 8;
 	C_dcache_size: integer := 2;
 	C_cached_addr_bits: integer := 25; -- 32 MB
+	C_xram_base: std_logic_vector(31 downto 28) := x"8";
 	C_cache_bursts: boolean := false;
 
 	-- debugging options
@@ -105,23 +106,6 @@ entity cache is
 end cache;
 
 architecture x of cache is
-    signal i_addr: std_logic_vector(31 downto 2);
-    signal i_data: std_logic_vector(31 downto 0);
-    signal icache_data_in, icache_data_out: std_logic_vector(31 downto 0);
-    signal icache_tag_in, icache_tag_out: std_logic_vector(12 downto 0);
-    signal iaddr_cacheable, icache_line_valid: boolean;
-    signal icache_write, instr_ready: std_logic;
-    signal flush_i_line, flush_d_line: std_logic;
-    signal to_i_bram, from_i_bram: std_logic_vector(44 downto 0);
-
-    signal R_i_strobe: std_logic;
-    signal R_i_addr: std_logic_vector(31 downto 2);
-    signal R_i_burst_len: std_logic_vector(2 downto 0);
-
-    --
-    -- Old I-cache declarations end here, new D-cache stuff below
-    --
-
     function F_kb_to_addrlen(k: integer) return integer is
 	variable bits, tmp: integer;
     begin
@@ -132,6 +116,33 @@ architecture x of cache is
 	return bits;
     end F_kb_to_addrlen;
 
+    constant C_i_addr_bits: integer := F_kb_to_addrlen(C_icache_size);
+    constant C_i_tag_bits: integer := C_cached_addr_bits - C_i_addr_bits + 2;
+    type T_icache_bram is array(0 to (C_icache_size * 256 - 1))
+      of std_logic_vector(C_i_tag_bits + 32 - 1 downto 0);
+
+    signal M_i_bram: T_icache_bram;
+
+    signal i_addr: std_logic_vector(31 downto 2);
+    signal i_data: std_logic_vector(31 downto 0);
+    signal icache_data_in, icache_data_out: std_logic_vector(31 downto 0);
+    signal icache_tag_in, icache_tag_out:
+      std_logic_vector(C_i_tag_bits - 1 downto 0);
+    signal to_i_bram, from_i_bram:
+      std_logic_vector(C_i_tag_bits + 32 - 1 downto 0);
+    signal iaddr_cacheable, icache_line_valid: boolean;
+    signal iaddr_in_xram: std_logic;
+    signal icache_write, instr_ready: std_logic;
+    signal flush_i_line, flush_d_line: std_logic;
+
+    signal R_i_strobe: std_logic;
+    signal R_i_addr: std_logic_vector(31 downto 2);
+    signal R_i_burst_len: std_logic_vector(2 downto 0);
+
+    --
+    -- Old I-cache declarations end here, new D-cache stuff below
+    --
+
     -- Data-side CPU interface
     signal cpu_d_addr: std_logic_vector(31 downto 2);
     signal cpu_d_data_in, cpu_d_data_out: std_logic_vector(31 downto 0);
@@ -141,7 +152,7 @@ architecture x of cache is
     -- Data cache
     constant C_d_addr_bits: integer := F_kb_to_addrlen(C_dcache_size);
     constant C_d_tag_bits: integer := C_cached_addr_bits - C_d_addr_bits + 1;
-    type T_dcache_bram is array(0 to (C_dcache_size * 512 - 1))
+    type T_dcache_bram is array(0 to (C_dcache_size * 256 - 1))
       of std_logic_vector(C_d_tag_bits + 32 - 1 downto 0);
 
     signal M_d_bram: T_dcache_bram;
@@ -160,6 +171,13 @@ architecture x of cache is
     signal clk_enable: std_logic;
 
 begin
+    assert (C_icache_size = 0 or C_icache_size * 1024 = 2 ** C_i_addr_bits)
+      report "C_icache_size must be a power of two" severity failure;
+    assert (C_icache_size <= 64)
+      report "C_icache_size bigger than 64 KB not supported" severity failure;
+    assert (C_i_addr_bits < C_cached_addr_bits)
+      report "C_icache_size must be smaller than memory size" severity failure;
+
     assert (C_dcache_size = 0 or C_dcache_size * 1024 = 2 ** C_d_addr_bits)
       report "C_dcache_size must be a power of two" severity failure;
     assert (C_dcache_size <= 64)
@@ -298,41 +316,43 @@ begin
     );
 
     icache_data_out <= from_i_bram(31 downto 0);
-    icache_tag_out <= from_i_bram(44 downto 32);
+    icache_tag_out <= from_i_bram(from_i_bram'high downto 32);
     to_i_bram(31 downto 0) <= imem_data_in;
-    to_i_bram(44 downto 32) <= icache_tag_in;
+    to_i_bram(to_i_bram'high downto 32) <= icache_tag_in;
 
     G_icache_2k:
     if C_icache_size = 2 generate
     tag_dp_bram: entity work.bram_true2p_1clk
     generic map (
-        dual_port => True,
-        data_width => 9,
-        addr_width => 9
+	dual_port => True,
+	data_width => C_i_tag_bits - 4,
+	addr_width => C_i_addr_bits - 2
     )
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => flush_i_line,
-	addr_a(8 downto 0) => i_addr(10 downto 2),
-	addr_b(8 downto 0) => cpu_d_addr(10 downto 2),
-	data_in_a => to_i_bram(44 downto 36),
+	addr_a => i_addr(C_i_addr_bits - 1 downto 2),
+	addr_b => cpu_d_addr(C_i_addr_bits - 1 downto 2),
+	data_in_a => to_i_bram(to_i_bram'high downto 36),
 	data_in_b => (others => '0'),
-	data_out_a => from_i_bram(44 downto 36),
+	data_out_a => from_i_bram(from_i_bram'high downto 36),
 	data_out_b => open
     );
     i_dp_bram: entity work.bram_true2p_1clk
     generic map (
-        dual_port => True,
-        data_width => 18,
-        addr_width => 10
+	dual_port => True,
+	data_width => 18,
+	addr_width => C_i_addr_bits - 1
     )
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => icache_write,
-	addr_a(9) => '0',
-	addr_a(8 downto 0) => i_addr(10 downto 2),
-	addr_b(9) => '1',
-	addr_b(8 downto 0) => i_addr(10 downto 2),
+	addr_a(C_i_addr_bits - 2) => '0',
+	addr_a(C_i_addr_bits - 3 downto 0) =>
+	  i_addr(C_i_addr_bits - 1 downto 2),
+	addr_b(C_i_addr_bits - 2) => '1',
+	addr_b(C_i_addr_bits - 3 downto 0) =>
+	  i_addr(C_i_addr_bits - 1 downto 2),
 	data_in_a => to_i_bram(0 * 18 + 17 downto 0 * 18),
 	data_in_b => to_i_bram(1 * 18 + 17 downto 1 * 18),
 	data_out_a => from_i_bram(0 * 18 + 17 downto 0 * 18),
@@ -344,32 +364,33 @@ begin
     if C_icache_size = 4 generate
     tag_dp_bram: entity work.bram_true2p_1clk
     generic map (
-        dual_port => True,
-        data_width => 9,
-        addr_width => 10
+	dual_port => True,
+	data_width => C_i_tag_bits - 4,
+	addr_width => C_i_addr_bits - 2
     )
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => flush_i_line,
-	addr_a => i_addr(11 downto 2),
-	addr_b => cpu_d_addr(11 downto 2),
-	data_in_a => to_i_bram(44 downto 36),
+	addr_a => i_addr(C_i_addr_bits - 1 downto 2),
+	addr_b => cpu_d_addr(C_i_addr_bits - 1 downto 2),
+	data_in_a => to_i_bram(to_i_bram'high downto 36),
 	data_in_b => (others => '0'),
-	data_out_a => from_i_bram(44 downto 36),
+	data_out_a => from_i_bram(from_i_bram'high downto 36),
 	data_out_b => open
     );
     i_block_iter: for b in 0 to 1 generate
     begin
     i_dp_bram: entity work.bram_true2p_1clk
     generic map (
-        dual_port => False,
-        data_width => 18,
-        addr_width => 10
+	dual_port => False,
+	data_width => 18,
+	addr_width => C_i_addr_bits - 2
     )
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => '0',
-	addr_a => i_addr(11 downto 2), addr_b => (others => '-'),
+	addr_a => i_addr(C_i_addr_bits - 1 downto 2),
+	addr_b => (others => '-'),
 	data_in_a => to_i_bram(b * 18 + 17 downto b * 18),
 	data_in_b => (others => '-'),
 	data_out_a => from_i_bram(b * 18 + 17 downto b * 18),
@@ -378,43 +399,44 @@ begin
     end generate i_block_iter;
     end generate; -- icache_4k
 
-    G_icache_8k:
-    if C_icache_size = 8 generate
+    G_icache_big:
+    if C_icache_size >= 8 generate
     tag_dp_bram: entity work.bram_true2p_1clk
     generic map (
-        dual_port => True,
-        data_width => 9,
-        addr_width => 11
+	dual_port => True,
+	data_width => C_i_tag_bits - 4,
+	addr_width => C_i_addr_bits - 2
     )
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => flush_i_line,
-	addr_a => i_addr(12 downto 2),
-	addr_b => cpu_d_addr(12 downto 2),
-	data_in_a => to_i_bram(44 downto 36),
+	addr_a => i_addr(C_i_addr_bits - 1 downto 2),
+	addr_b => cpu_d_addr(C_i_addr_bits - 1 downto 2),
+	data_in_a => to_i_bram(to_i_bram'high downto 36),
 	data_in_b => (others => '0'),
-	data_out_a => from_i_bram(44 downto 36),
+	data_out_a => from_i_bram(from_i_bram'high downto 36),
 	data_out_b => open
     );
     i_block_iter: for b in 0 to 3 generate
     begin
     i_dp_bram: entity work.bram_true2p_1clk
     generic map (
-        dual_port => False,
-        data_width => 9,
-        addr_width => 11
+	dual_port => False,
+	data_width => 9,
+	addr_width => C_i_addr_bits - 2
     )
     port map (
 	clk => clk,
 	we_a => icache_write, we_b => '0',
-	addr_a => i_addr(12 downto 2), addr_b => (others => '-'),
+	addr_a => i_addr(C_i_addr_bits - 1 downto 2),
+	addr_b => (others => '-'),
 	data_in_a => to_i_bram(b * 9 + 8 downto b * 9),
 	data_in_b => (others => '-'),
 	data_out_a => from_i_bram(b * 9 + 8 downto b * 9),
 	data_out_b => open
     );
     end generate i_block_iter;
-    end generate; -- icache_8k
+    end generate; -- icache_big
 
     imem_addr <= R_i_addr;
     imem_burst_len <= R_i_burst_len when iaddr_cacheable else (others => '0');
@@ -423,25 +445,13 @@ begin
     instr_ready <= imem_data_ready when not iaddr_cacheable else
       '1' when icache_line_valid else '0';
 
-    iaddr_cacheable <=
-      (C_icache_size = 2 or C_icache_size = 4 or C_icache_size = 8) and
-      true; -- XXX kseg0: R_i_addr(31 downto 29) = "100";
+    iaddr_cacheable <= C_icache_size /= 0;
     icache_write <= imem_data_ready when R_i_strobe = '1' else '0';
-    icache_tag_in <=
-      '1' & R_i_addr(31) & "00" & R_i_addr(19 downto 11)
-      when C_icache_size = 2 else
-      '1' & R_i_addr(31) & "000" & R_i_addr(19 downto 12)
-      when C_icache_size = 4 else
-      '1' & R_i_addr(31) & "0000" & R_i_addr(19 downto 13);
-    icache_line_valid <=
-      iaddr_cacheable and icache_tag_out(12) = '1' and
-      icache_tag_in(11) = icache_tag_out(11) and
-      ((C_icache_size = 2 and
-      icache_tag_in(8 downto 0) = icache_tag_out(8 downto 0)) or
-      (C_icache_size = 4 and
-      icache_tag_in(7 downto 0) = icache_tag_out(7 downto 0)) or
-      (C_icache_size = 8 and
-      icache_tag_in(6 downto 0) = icache_tag_out(6 downto 0)));
+    iaddr_in_xram <= '1' when R_i_addr(31 downto 28) = C_xram_base else '0';
+    icache_tag_in <= '1' & iaddr_in_xram
+      & R_i_addr(C_cached_addr_bits - 1 downto C_i_addr_bits)
+      when C_icache_size /= 0;
+    icache_line_valid <= iaddr_cacheable and icache_tag_in = icache_tag_out;
 
     --
     -- instruction cache FSM
