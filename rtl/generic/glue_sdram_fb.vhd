@@ -63,7 +63,7 @@ entity glue_sdram_fb is
 	C_movn_movz: boolean := false;
 
 	-- CPU's caches
-	C_icache_size: integer := 4;	-- 0, 2, 4 or 8 KBytes
+	C_icache_size: integer := 16;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 4;	-- 0, 2, 4 or 8 KBytes
 	C_cached_addr_bits: integer := 25; -- 32 MB
 	C_cache_bursts: boolean := true;
