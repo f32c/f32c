@@ -78,6 +78,7 @@ begin
         data_out_a => S_acram_d_rd(7+i*8 downto i*8)
     );
     bram_we(i) <= acram_en and acram_byte_we(i);
+    end generate;
     process(clk)
     begin
       if rising_edge(clk) then
@@ -94,5 +95,4 @@ begin
     -- at the same time when data sample is latched, output ready signal as delayed rising edge detection of acram_en
     --acram_ready <= '1' when R_ready_shift(0)='0' and R_ready_shift(1)='1' else '0'; -- transition 0->1
     acram_d_rd <= R_acram_d_rd;
-    end generate;
 end Structure;
