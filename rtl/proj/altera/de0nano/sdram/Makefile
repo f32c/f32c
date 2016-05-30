@@ -14,7 +14,7 @@ ASSIGNMENT_FILES = $(PROJECT).qpf $(PROJECT).qsf
 FAMILY = "Cyclone IV E"
 PART = EP4CE22F17C6
 BOARDFILE = de0.board
-CONFIG_DEVICE = EPCS4
+CONFIG_DEVICE = EPCS16
 SERIAL_FLASH_LOADER_DEVICE = EP4CE6
 # OPENOCD_INTERFACE=interface/altera-usb-blaster.cfg
 # OPENOCD_INTERFACE=ftdi-fpu1.ocd
@@ -53,7 +53,7 @@ SRCS = \
 ../../../../generic/bram_video.vhd \
 ../../../../cpu/idecode_rv32.vhd \
 ../../../../cpu/idecode_mi32.vhd \
-../../../../cpu/cache_generic_param.vhd \
+../../../../cpu/cache.vhd \
 ../../../../cpu/defs_rv32.vhd \
 ../../../../cpu/defs_mi32.vhd \
 ../../../../cpu/defs_f32c.vhd \
