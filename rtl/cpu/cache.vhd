@@ -193,7 +193,18 @@ begin
     G_dcache_logic:
     if C_dcache_size > 0 generate
 
-    d_cacheable <= cpu_d_addr(31 downto 28) = C_xram_base;
+    process(clk)
+    begin
+	if falling_edge(clk) and (not C_debug or clk_enable = '1') then
+	    d_from_bram <= M_d_bram(conv_integer(d_rd_addr));
+	end if;
+	if rising_edge(clk) and (not C_debug or clk_enable = '1') then
+	    if d_bram_wr_enable then
+		M_d_bram(conv_integer(d_wr_addr)) <= d_to_bram;
+	    end if;
+	end if;
+    end process;
+
     process(clk)
     begin
     if rising_edge(clk) and (not C_debug or clk_enable = '1') then
@@ -207,6 +218,7 @@ begin
     end if;
     end process;
 
+    d_cacheable <= cpu_d_addr(31 downto 28) = C_xram_base;
     d_rd_addr <= R_d_rd_addr(d_rd_addr'range) when d_miss_cycle
       else cpu_d_addr(d_rd_addr'range);
     d_wr_addr <= R_d_rd_addr(d_wr_addr'range) when d_miss_cycle
@@ -242,19 +254,6 @@ begin
     cpu_d_ready <= '1' when d_cacheable and cpu_d_write = '0'
       else dmem_data_ready;
     cpu_d_wait <= '1' when d_miss_cycle else '0';
-
-    -- infer data cache BRAMs
-    process(clk)
-    begin
-	if falling_edge(clk) and (not C_debug or clk_enable = '1') then
-	    d_from_bram <= M_d_bram(conv_integer(d_rd_addr));
-	end if;
-	if rising_edge(clk) and (not C_debug or clk_enable = '1') then
-	    if d_bram_wr_enable then
-		M_d_bram(conv_integer(d_wr_addr)) <= d_to_bram;
-	    end if;
-	end if;
-    end process;
 
     --
     -- Old I-cache stuff starts here
