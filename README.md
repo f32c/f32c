@@ -13,13 +13,20 @@ glue logic tailored for numerous popular FPGA development boards
 from various manufacturers.
 
 In synthetic integer benchmarks the core yields 3.06 CoreMark/MHz
-and 1.63 DMIPS/MHz (1.81 DMIPS/MHz with function inlining).
+and 1.63 DMIPS/MHz (1.81 DMIPS/MHz with function inlining) with
+code and data stored in on-chip block RAMs.  When configured with
+8 KB data and instruction caches, and with code and data stored in
+external SDRAM, the core yields 2.5 CoreMark/MHz and 1.24 DMIPS/MHz.
+
 A performance-tuned f32c SoC which includes a timer
 and a UART occupies only 1048 6-input LUTs, while still being able to
 execute gcc-generated code when synthesized in the most compact
 configuration which consumes just 697 (649 logic plus 48 memory) LUTs.
-From old to new FPGAs that we have tested, max stable clock ranges
-from 70 MHz (Spartan 3E-500) to 125 MHz (Zynq Z-7010).
+
+Fmax depends on core configuration and FPGA silicon, and tops at around
+115 MHz for 90 nm FPGAs (such as Xilinx S3E / S3A or Lattice XP2)
+up to 185 MHz for latest generations of 6-input LUT FPGAs such as
+Artix-7.
 
 Configurable options include:
 
