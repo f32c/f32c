@@ -64,8 +64,8 @@ entity cache is
 	C_regfile_synchronous_read: boolean := false;
 
 	-- cache options
-	C_icache_size: integer := 8;
-	C_dcache_size: integer := 2;
+	C_icache_size: integer := 4;
+	C_dcache_size: integer := 4;
 	C_cached_addr_bits: integer := 25; -- 32 MB
 	C_xram_base: std_logic_vector(31 downto 28) := x"8";
 	C_cache_bursts: boolean := false;
@@ -190,6 +190,10 @@ begin
     --
     -- data cache FSM
     --
+    G_dcache_logic:
+    if C_dcache_size > 0 generate
+
+    d_cacheable <= cpu_d_addr(31 downto 28) = C_xram_base;
     process(clk)
     begin
     if rising_edge(clk) and (not C_debug or clk_enable = '1') then
@@ -203,7 +207,6 @@ begin
     end if;
     end process;
 
-    d_cacheable <= cpu_d_addr(31 downto 28) = C_xram_base;
     d_rd_addr <= R_d_rd_addr(d_rd_addr'range) when d_miss_cycle
       else cpu_d_addr(d_rd_addr'range);
     d_wr_addr <= R_d_rd_addr(d_wr_addr'range) when d_miss_cycle
@@ -219,10 +222,11 @@ begin
       else '1' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
       when cpu_d_byte_sel = x"f"
       else '0' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
-
     d_miss_cycle <= R_d_cacheable_cycle and not R_d_fetch_done
       and R_d_tag_from_bram /=
       '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
+
+    end generate; -- G_dcache_logic
 
     dmem_addr <= R_d_rd_addr when d_miss_cycle else cpu_d_addr;
     dmem_addr_strobe <= '1' when d_miss_cycle
@@ -255,11 +259,6 @@ begin
     --
     -- Old I-cache stuff starts here
     --
-
-    assert (C_icache_size = 0 or C_icache_size = 2 or C_icache_size = 4
-      or C_icache_size = 8)
-      report "Invalid instruction cache size" severity failure;
-
     pipeline: entity work.pipeline
     generic map (
 	C_arch => C_arch, C_cache => true, C_reg_IF_PC => true,
