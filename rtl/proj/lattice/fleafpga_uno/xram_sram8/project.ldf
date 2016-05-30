@@ -69,7 +69,7 @@
         <Source name="../../../../cpu/loadalign.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../cpu/cache_generic_param.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../cpu/cache.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../cpu/pipeline.vhd" type="VHDL" type_short="VHDL">
