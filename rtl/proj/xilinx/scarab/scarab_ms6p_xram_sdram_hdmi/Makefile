@@ -22,6 +22,7 @@ vhdfiles = \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_112M5.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_100M.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_100M_25M_250M.vhd \
+../../../../xilinx/scarab_ms6p/clocks/clk_50M_100M_125Mp_125Mn_25M.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_81M25.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_25M_83M33_250M.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_250M_125M_25M.vhd \
@@ -29,7 +30,10 @@ vhdfiles = \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_96M43.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_96M43_433M9_289M3_28M93.vhd \
 ../../../../xilinx/chip/xc6/hdmi_out_xc6.vhd \
+../../../../xilinx/chip/xc6/ddr_out.vhd \
+../../../../generic/ddr_out.vhd \
 ../../../../generic/glue_xram.vhd \
+../../../../generic/ddr_out.vhd \
 ../../../../generic/bram.vhd \
 ../../../../generic/bootloader/defs_bootblock.vhd \
 ../../../../generic/bootloader/boot_sio_mi32el.vhd \
@@ -66,7 +70,6 @@ vhdfiles = \
 ../../../../soc/gpio.vhd \
 ../../../../soc/timer.vhd \
 ../../../../soc/pcm.vhd \
-../../../../soc/cvbs.vhd \
 ../../../../soc/pid/pid.vhd \
 ../../../../soc/pid/ctrlpid.vhd \
 ../../../../soc/pid/simotor.vhd \
@@ -83,6 +86,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/video_cache_d.vhd \
 ../../../../soc/vgahdmi/vga.vhd \
 ../../../../soc/vgahdmi/tv.vhd \
+../../../../soc/cvbs.vhd \
 ../../../../soc/vgahdmi/VGA_textmode.vhd \
 ../../../../soc/vgahdmi/font_block_pack.vhd \
 ../../../../soc/vgahdmi/font8x8_xark.vhd \
@@ -91,6 +95,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../../soc/vgahdmi/TMDS_encoder.vhd \
 ../../../../soc/vgahdmi/vga2dvid.vhd \
+../../../../soc/vgahdmi/ddr_dvid_out_se.vhd \
 ../../../../soc/vgahdmi/vga2lcd.vhd \
 ../../../../soc/vgahdmi/ledstrip.vhd \
 ../../../../soc/vgahdmi/ws2812b.vhd \
