@@ -203,7 +203,7 @@ begin
     end if;
     end process;
 
-    d_cacheable <= cpu_d_addr(31 downto 29) = "100";
+    d_cacheable <= cpu_d_addr(31 downto 28) = C_xram_base;
     d_rd_addr <= R_d_rd_addr(d_rd_addr'range) when d_miss_cycle
       else cpu_d_addr(d_rd_addr'range);
     d_wr_addr <= R_d_rd_addr(d_wr_addr'range) when d_miss_cycle
