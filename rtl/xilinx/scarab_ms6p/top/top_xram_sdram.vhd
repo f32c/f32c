@@ -50,13 +50,15 @@ entity glue is
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
     C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
-    C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
+    C_icache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
     C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
     C_cached_addr_bits: integer := 25; -- number of lower RAM address bits 2^25 -> 32MB to be cached
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
     C_sdram: boolean := true;
 
 
+    C_dvid_ddr: boolean := false; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver
+    
     C_vgahdmi: boolean := false;
     -- insert cache between RAM and compositing2 video fifo
     C_video_cache_size: integer := 32;  -- KB size 0:disable 2,4,8,16,32:enable
@@ -81,8 +83,8 @@ entity glue is
       C_vgatext_palette: boolean := true; -- no color palette
       C_vgatext_text: boolean := true; -- enable optional text generation
         C_vgatext_font_bram8: boolean := true; -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
-        C_vgatext_char_height: integer := 8; -- character cell height
-        C_vgatext_font_height: integer := 8; -- font height
+        C_vgatext_char_height: integer := 16; -- character cell height
+        C_vgatext_font_height: integer := 16; -- font height
         C_vgatext_font_depth: integer := 8; -- font char depth, 7=128 characters or 8=256 characters
         C_vgatext_font_linedouble: boolean := false;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)        
         C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)       
@@ -184,6 +186,8 @@ end glue;
 architecture Behavioral of glue is
   signal clk, sdram_clk_internal: std_logic;
   signal clk_25MHz, clk_250MHz, clk_433M92Hz: std_logic := '0';
+  signal clk_125MHz_p, clk_125MHz_n: std_logic := '0';
+  signal clk_pixel_shift: std_logic := '0';
   signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
   signal tmds_rgb: std_logic_vector(2 downto 0);
   signal tmds_clk: std_logic;
@@ -199,6 +203,7 @@ begin
       (
         clk_in1 => clk_50MHz, clk_out1 => clk_250MHz, clk_out2 => clk, clk_out3 => clk_25MHz
       );
+    clk_pixel_shift <= clk_250MHz;
     portd(0) <= fm_antenna;
     portd(1) <= cw_antenna;
   end generate;
@@ -219,16 +224,31 @@ begin
       (
         clk_in1 => clk_50MHz, clk_out1 => clk_250MHz, clk_out2 => clk, clk_out3 => clk_25MHz
       );
+    clk_pixel_shift <= clk_250MHz;
     portd(0) <= fm_antenna;
     portd(1) <= cw_antenna;
   end generate;
 
-  clk100: if C_clk_freq = 100 generate
-    clkgen100: entity work.pll_50M_100M_25M_250M
+  clk100_250: if C_clk_freq = 100 and not C_dvid_ddr generate
+    clkgen100_250: entity work.pll_50M_100M_25M_250M
       port map
       (
         clk_in1 => clk_50MHz, clk_out1 => clk, clk_out2 => clk_25MHz, clk_out3 => clk_250MHz
       );
+    clk_pixel_shift <= clk_250MHz;
+    portd(0) <= fm_antenna;
+    portd(1) <= cw_antenna;
+  end generate;
+
+  clk100_125: if C_clk_freq = 100 and C_dvid_ddr generate
+    clkgen100_125: entity work.clk_50M_100M_125Mp_125Mn_25M
+      port map
+      (
+        reset => '0', locked => open,
+        clk_50M_in => clk_50MHz, clk_100M => clk, clk_25M => clk_25MHz, 
+        clk_125Mp => clk_125MHz_p, clk_125Mn => clk_125MHz_n
+      );
+    clk_pixel_shift <= clk_125MHz_p;
     portd(0) <= fm_antenna;
     portd(1) <= cw_antenna;
   end generate;
@@ -244,6 +264,7 @@ begin
       (
         clk_in_96M43 => clk, clk_out_433M9 => clk_433M92Hz, clk_out_289M3 => clk_250MHz, clk_out_28M93 => clk_25MHz
       );
+    clk_pixel_shift <= clk_250MHz;
     portd(0) <= fm_antenna;
     portd(1) <= cw_antenna;
   end generate;
@@ -254,6 +275,7 @@ begin
       (
         clk_in1 => clk_50MHz, clk_out1 => clk_25MHz, clk_out2 => clk, clk_out3 => clk_250MHz
       );
+    clk_pixel_shift <= clk_250MHz;
     portd(0) <= fm_antenna;
     portd(1) <= cw_antenna;
   end generate;
@@ -304,9 +326,12 @@ begin
       C_sdram_column_bits => 9,
       C_sdram_startup_cycles => 10100,
       C_sdram_cycles_per_refresh => 1524,
-      C_video_cache_size => C_video_cache_size,
+
+      -- HDMI/DVI-D output SDR or DDR
+      C_dvid_ddr => C_dvid_ddr,
       -- vga simple compositing bitmap only graphics
       C_vgahdmi => C_vgahdmi,
+      C_video_cache_size => C_video_cache_size,
       C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
       C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
@@ -373,7 +398,7 @@ begin
     (
       clk => clk,
       clk_pixel => clk_25MHz, -- pixel clock
-      clk_pixel_shift => clk_250MHz, -- tmds clock 10x pixel clock
+      clk_pixel_shift => clk_pixel_shift, -- tmds clock 10x pixel clock for SDR or 5x for DDR
       clk_cw => clk_433M92Hz, -- CW clock for 433.92MHz transmitter
       clk_fmdds => clk_250MHz, -- FM/RDS clock
       -- external SDRAM interface
@@ -388,10 +413,10 @@ begin
       spi_ss(0)   => flash_cs,    spi_ss(1)   => sd_cd_dat3,
       spi_mosi(0) => flash_mosi,  spi_mosi(1) => sd_cmd,
       spi_miso(0) => flash_miso,  spi_miso(1) => sd_dat0,
-      dvid_red(0)   => tmds_rgb(2), dvid_red(1)   => open,
-      dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
-      dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
-      dvid_clock(0) => tmds_clk,    dvid_clock(1) => open,
+      dvid_red   => dvid_red,
+      dvid_green => dvid_green,
+      dvid_blue  => dvid_blue,
+      dvid_clock => dvid_clock,
       jack_ring(3) => audio1, jack_ring(2 downto 0) => open,
       jack_tip(3)  => audio2, jack_tip(2 downto 0)  => open,
       cw_antenna => cw_antenna,
@@ -437,6 +462,29 @@ begin
         Q => sdram_clk, C0 => clk, C1 => sdram_clk_internal, CE => '1',
         R => '0', S => '0', D0 => '0', D1 => '1'
       );
+
+    G_dvi_sdr: if not C_dvid_ddr generate
+      tmds_rgb <= dvid_red(0) & dvid_green(0) & dvid_blue(0);
+      tmds_clk <= dvid_clock(0);
+    end generate;
+
+    G_dvi_ddr: if C_dvid_ddr generate
+    -- vendor specific modules to
+    -- convert 2-bit pairs to DDR 1-bit
+    G_vga_ddrout: entity work.ddr_dvid_out_se
+    port map (
+      clk       => clk_125MHz_p,
+      clk_n     => clk_125MHz_n,
+      in_red    => dvid_red,
+      in_green  => dvid_green,
+      in_blue   => dvid_blue,
+      in_clock  => dvid_clock,
+      out_red   => tmds_rgb(2),
+      out_green => tmds_rgb(1),
+      out_blue  => tmds_rgb(0),
+      out_clock => tmds_clk
+    );
+    end generate;
 
     -- differential output buffering for HDMI clock and video
     hdmi_output1: entity work.hdmi_out
