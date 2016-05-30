@@ -1,6 +1,6 @@
 # f32c
 
-f32c is a retargetable 32-bit scalar pipelined processor core which
+f32c is a retargetable, scalar, pipelined, 32-bit processor core which
 can execute subsets of either RISC-V or MIPS instruction sets.
 It is implemented in parametrized VHDL which permits synthesis with
 different area / speed tradeoffs, and includes a branch predictor,
@@ -16,15 +16,15 @@ In synthetic integer benchmarks the core yields 3.06 CoreMark/MHz
 and 1.63 DMIPS/MHz (1.81 DMIPS/MHz with function inlining) with
 code and data stored in on-chip block RAMs.  When configured with
 8 KB data and instruction caches, and with code and data stored in
-external SDRAM, the core yields 2.5 CoreMark/MHz and 1.24 DMIPS/MHz.
+external SDRAM, the core yields 2.62 CoreMark/MHz and 1.24 DMIPS/MHz.
 
 A performance-tuned f32c SoC which includes a timer
-and a UART occupies only 1048 6-input LUTs, while still being able to
+and an UART occupies only 1048 6-input LUTs, while still being able to
 execute gcc-generated code when synthesized in the most compact
 configuration which consumes just 697 (649 logic plus 48 memory) LUTs.
 
-Fmax depends on core configuration and FPGA silicon, and tops at around
-115 MHz for 90 nm FPGAs (such as Xilinx S3E / S3A or Lattice XP2)
+The Fmax depends on core configuration and FPGA silicon, and tops at
+around 115 MHz for 90 nm FPGAs (such as Xilinx S3E / S3A or Lattice XP2)
 up to 185 MHz for latest generations of 6-input LUT FPGAs such as
 Artix-7.
 
