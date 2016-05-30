@@ -573,8 +573,7 @@ begin
 		   '0' when others;
     end generate;
 
-    simple_out(3 downto 0) <= R_simple_out(3 downto 0);
-    simple_out(7 downto 4) <= R_cpu_reset(3 downto 0);
+    simple_out <= R_simple_out;
 
     -- big address decoder when CPU reads IO
     process(io_addr, R_simple_in, R_simple_out, from_sio, from_gpio)
