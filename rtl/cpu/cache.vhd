@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2013 - 2014 Marko Zec, University of Zagreb
+-- Copyright (c) 2013 - 2016 Marko Zec, University of Zagreb
 -- All rights reserved.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -23,14 +23,15 @@
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
 --
+-- Modifications
+-- Davor Jadrijevic: instantiation of generic bram modules
+--
 -- $Id$
 --
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
-
-use work.f32c_pack.all;
 
 
 entity cache is
@@ -65,7 +66,9 @@ entity cache is
 	-- cache options
 	C_icache_size: integer := 8;
 	C_dcache_size: integer := 2;
-	C_cached_addr_bits: integer := 20; -- 1 MB
+	C_cached_addr_bits: integer := 25; -- 32 MB
+	C_xram_base: std_logic_vector(31 downto 28) := x"8";
+	C_cache_bursts: boolean := false;
 
 	-- debugging options
 	C_icache_expire: boolean := false; -- unused value
@@ -75,12 +78,14 @@ entity cache is
 	clk, reset: in std_logic;
 	imem_addr_strobe: out std_logic;
 	imem_addr: out std_logic_vector(31 downto 2);
+	imem_burst_len: out std_logic_vector(2 downto 0);
 	imem_data_in: in std_logic_vector(31 downto 0);
 	imem_data_ready: in std_logic;
 	dmem_addr_strobe: out std_logic;
 	dmem_write: out std_logic;
 	dmem_byte_sel: out std_logic_vector(3 downto 0);
 	dmem_addr: out std_logic_vector(31 downto 2);
+	dmem_burst_len: out std_logic_vector(2 downto 0);
 	dmem_data_in: in std_logic_vector(31 downto 0);
 	dmem_data_out: out std_logic_vector(31 downto 0);
 	dmem_data_ready: in std_logic;
@@ -94,43 +99,180 @@ entity cache is
 	debug_out_data: out std_logic_vector(7 downto 0);
 	debug_out_strobe: out std_logic;
 	debug_out_busy: in std_logic;
+	debug_clk_ena: out std_logic;
 	debug_debug: out std_logic_vector(7 downto 0);
 	debug_active: out std_logic
     );
 end cache;
 
 architecture x of cache is
-    constant C_D_IDLE: std_logic_vector := "00";
-    constant C_D_WRITE: std_logic_vector := "01";
-    constant C_D_READ: std_logic_vector := "10";
-    constant C_D_FETCH: std_logic_vector := "11";
+    function F_kb_to_addrlen(k: integer) return integer is
+	variable bits, tmp: integer;
+    begin
+	bits := 0;
+	while (2 ** bits < 1024 * k) loop
+	    bits := bits + 1;
+	end loop;
+	return bits;
+    end F_kb_to_addrlen;
 
-    signal i_addr, d_addr: std_logic_vector(31 downto 2);
+    constant C_i_addr_bits: integer := F_kb_to_addrlen(C_icache_size);
+    constant C_i_tag_bits: integer := C_cached_addr_bits - C_i_addr_bits + 2;
+    type T_icache_bram is array(0 to (C_icache_size * 256 - 1))
+      of std_logic_vector(C_i_tag_bits + 32 - 1 downto 0);
+
+    signal M_i_bram: T_icache_bram;
+
+    signal i_addr: std_logic_vector(31 downto 2);
     signal i_data: std_logic_vector(31 downto 0);
-    signal cpu_d_data_in, cpu_d_data_out: std_logic_vector(31 downto 0);
     signal icache_data_in, icache_data_out: std_logic_vector(31 downto 0);
-    signal dcache_data_in: std_logic_vector(31 downto 0);
-    signal icache_tag_in, icache_tag_out: std_logic_vector(12 downto 0);
-    signal dcache_tag_in, dcache_tag_out: std_logic_vector(12 downto 0);
+    signal icache_tag_in, icache_tag_out:
+      std_logic_vector(C_i_tag_bits - 1 downto 0);
+    signal to_i_bram, from_i_bram:
+      std_logic_vector(C_i_tag_bits + 32 - 1 downto 0);
     signal iaddr_cacheable, icache_line_valid: boolean;
-    signal daddr_cacheable, dcache_line_valid: boolean;
+    signal iaddr_in_xram: std_logic;
     signal icache_write, instr_ready: std_logic;
-    signal dcache_write, data_ready: std_logic;
     signal flush_i_line, flush_d_line: std_logic;
-    signal to_i_bram, from_i_bram: std_logic_vector(44 downto 0);
-    signal to_d_bram, from_d_bram: std_logic_vector(44 downto 0);
 
     signal R_i_strobe: std_logic;
     signal R_i_addr: std_logic_vector(31 downto 2);
-    signal R_dcache_wbuf: std_logic_vector(31 downto 0);
-    signal R_d_state: std_logic_vector(1 downto 0);
-    signal dcache_data_out: std_logic_vector(31 downto 0);
+    signal R_i_burst_len: std_logic_vector(2 downto 0);
 
+    --
+    -- Old I-cache declarations end here, new D-cache stuff below
+    --
+
+    -- Data-side CPU interface
+    signal cpu_d_addr: std_logic_vector(31 downto 2);
+    signal cpu_d_data_in, cpu_d_data_out: std_logic_vector(31 downto 0);
     signal cpu_d_strobe, cpu_d_write, cpu_d_ready: std_logic;
     signal cpu_d_byte_sel: std_logic_vector(3 downto 0);
-    signal d_tag_valid_bit: std_logic;
+
+    -- Data cache
+    constant C_d_addr_bits: integer := F_kb_to_addrlen(C_dcache_size);
+    constant C_d_tag_bits: integer := C_cached_addr_bits - C_d_addr_bits + 1;
+    type T_dcache_bram is array(0 to (C_dcache_size * 256 - 1))
+      of std_logic_vector(C_d_tag_bits + 32 - 1 downto 0);
+
+    signal M_d_bram: T_dcache_bram;
+    signal R_d_tag_from_bram: std_logic_vector(C_d_tag_bits - 1 downto 0);
+    signal R_d_cacheable_cycle, R_d_fetch_done: boolean;
+    signal R_d_rd_addr: std_logic_vector(31 downto 2);
+
+    signal d_rd_addr, d_wr_addr: std_logic_vector(C_d_addr_bits - 1 downto 2);
+    signal d_from_bram, d_to_bram:
+      std_logic_vector(C_d_tag_bits + 32 - 1 downto 0);
+    signal d_bram_wr_enable: boolean;
+    signal d_cacheable, d_miss_cycle: boolean;
+    signal cpu_d_wait: std_logic;
+
+    -- debugging
+    signal clk_enable: std_logic;
 
 begin
+    assert (C_icache_size = 0 or C_icache_size * 1024 = 2 ** C_i_addr_bits)
+      report "C_icache_size must be a power of two" severity failure;
+    assert (C_icache_size <= 64)
+      report "C_icache_size bigger than 64 KB not supported" severity failure;
+    assert (C_i_addr_bits < C_cached_addr_bits)
+      report "C_icache_size must be smaller than memory size" severity failure;
+
+    assert (C_dcache_size = 0 or C_dcache_size * 1024 = 2 ** C_d_addr_bits)
+      report "C_dcache_size must be a power of two" severity failure;
+    assert (C_dcache_size <= 64)
+      report "C_dcache_size bigger than 64 KB not supported" severity failure;
+    assert (C_d_addr_bits < C_cached_addr_bits)
+      report "C_dcache_size must be smaller than memory size" severity failure;
+
+    debug_clk_ena <= clk_enable when C_debug else '1';
+
+    --
+    -- data cache FSM
+    --
+    process(clk)
+    begin
+    if rising_edge(clk) and (not C_debug or clk_enable = '1') then
+	R_d_tag_from_bram <= d_from_bram(d_from_bram'high downto 32);
+	R_d_fetch_done <= d_miss_cycle and dmem_data_ready = '1';
+	if not d_miss_cycle then
+	    R_d_rd_addr <= cpu_d_addr;
+	    R_d_cacheable_cycle <= d_cacheable and cpu_d_strobe = '1'
+	      and cpu_d_write = '0';
+	end if;
+    end if;
+    end process;
+
+    d_cacheable <= cpu_d_addr(31 downto 28) = C_xram_base;
+    d_rd_addr <= R_d_rd_addr(d_rd_addr'range) when d_miss_cycle
+      else cpu_d_addr(d_rd_addr'range);
+    d_wr_addr <= R_d_rd_addr(d_wr_addr'range) when d_miss_cycle
+      else cpu_d_addr(d_rd_addr'range);
+    d_bram_wr_enable <= (d_miss_cycle and dmem_data_ready = '1')
+      or (not d_miss_cycle and d_cacheable and cpu_d_write = '1'
+      and cpu_d_strobe = '1');
+    d_to_bram(31 downto 0) <= dmem_data_in when d_miss_cycle
+      else cpu_d_data_out;
+    d_to_bram(d_to_bram'high downto 32) <=
+      '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
+      when d_miss_cycle
+      else '1' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
+      when cpu_d_byte_sel = x"f"
+      else '0' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
+
+    d_miss_cycle <= R_d_cacheable_cycle and not R_d_fetch_done
+      and R_d_tag_from_bram /=
+      '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
+
+    dmem_addr <= R_d_rd_addr when d_miss_cycle else cpu_d_addr;
+    dmem_addr_strobe <= '1' when d_miss_cycle
+      else '0' when d_cacheable and cpu_d_write = '0'
+      else cpu_d_strobe;
+    dmem_write <= '0' when d_miss_cycle else cpu_d_write;
+    dmem_burst_len <= (others => '0');
+    dmem_byte_sel <= cpu_d_byte_sel;
+    dmem_data_out <= cpu_d_data_out;
+
+    cpu_d_data_in <= dmem_data_in when d_miss_cycle
+      else d_from_bram(31 downto 0) when d_cacheable else dmem_data_in;
+    cpu_d_ready <= '1' when d_cacheable and cpu_d_write = '0'
+      else dmem_data_ready;
+    cpu_d_wait <= '1' when d_miss_cycle else '0';
+
+    debug_debug(7) <= '1' when R_d_fetch_done else '0';
+    debug_debug(6) <= '1' when R_d_cacheable_cycle else '0';
+    debug_debug(5) <= '1' when d_miss_cycle else '0'; -- cpu_d_wait
+    debug_debug(4) <= -- cpu_d_ready
+      '1' when d_cacheable and cpu_d_write = '0'
+      else '0' when d_miss_cycle else dmem_data_ready;
+    debug_debug(3) <= -- dmem_a_strobe
+      '1' when d_miss_cycle
+      else '0' when d_cacheable and cpu_d_write = '0'
+      else cpu_d_strobe;
+    debug_debug(2) <= dmem_data_ready;
+    debug_debug(1) <= cpu_d_write;
+    debug_debug(0) <= cpu_d_strobe;
+
+    -- infer data cache BRAMs
+    process(clk)
+    begin
+	if falling_edge(clk) and (not C_debug or clk_enable = '1') then
+	    d_from_bram <= M_d_bram(conv_integer(d_rd_addr));
+	end if;
+	if rising_edge(clk) and (not C_debug or clk_enable = '1') then
+	    if d_bram_wr_enable then
+		M_d_bram(conv_integer(d_wr_addr)) <= d_to_bram;
+	    end if;
+	end if;
+    end process;
+
+    --
+    -- Old I-cache stuff starts here
+    --
+
+    assert (C_icache_size = 0 or C_icache_size = 2 or C_icache_size = 4
+      or C_icache_size = 8)
+      report "Invalid instruction cache size" severity failure;
 
     pipeline: entity work.pipeline
     generic map (
@@ -155,10 +297,10 @@ begin
 	imem_addr_strobe => open,
 	imem_data_ready => instr_ready,
 	dmem_addr_strobe => cpu_d_strobe,
-	dmem_addr => d_addr,
+	dmem_addr => cpu_d_addr,
 	dmem_write => cpu_d_write, dmem_byte_sel => cpu_d_byte_sel,
 	dmem_data_in => cpu_d_data_in, dmem_data_out => cpu_d_data_out,
-	dmem_data_ready => cpu_d_ready,
+	dmem_data_ready => cpu_d_ready, dmem_cache_wait => cpu_d_wait,
 	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
 	flush_i_line => flush_i_line, flush_d_line => flush_d_line,
 	-- debugging
@@ -168,36 +310,49 @@ begin
 	debug_out_data => debug_out_data,
 	debug_out_strobe => debug_out_strobe,
 	debug_out_busy => debug_out_busy,
-	debug_debug => debug_debug,
+	debug_clk_ena => clk_enable,
+--	debug_debug => debug_debug,
 	debug_active => debug_active
     );
 
     icache_data_out <= from_i_bram(31 downto 0);
-    icache_tag_out <= from_i_bram(44 downto 32);
+    icache_tag_out <= from_i_bram(from_i_bram'high downto 32);
     to_i_bram(31 downto 0) <= imem_data_in;
-    to_i_bram(44 downto 32) <= icache_tag_in;
+    to_i_bram(to_i_bram'high downto 32) <= icache_tag_in;
 
     G_icache_2k:
     if C_icache_size = 2 generate
-    tag_dp_bram: entity work.bram_dp_x9
+    tag_dp_bram: entity work.bram_true2p_1clk
+    generic map (
+	dual_port => True,
+	data_width => C_i_tag_bits - 4,
+	addr_width => C_i_addr_bits - 2
+    )
     port map (
-	clk_a => clk, clk_b => clk,
-	ce_a => '1', ce_b => '1',
+	clk => clk,
 	we_a => icache_write, we_b => flush_i_line,
-	addr_a => "00" & i_addr(10 downto 2),
-	addr_b => "00" & d_addr(10 downto 2),
-	data_in_a => to_i_bram(44 downto 36),
+	addr_a => i_addr(C_i_addr_bits - 1 downto 2),
+	addr_b => cpu_d_addr(C_i_addr_bits - 1 downto 2),
+	data_in_a => to_i_bram(to_i_bram'high downto 36),
 	data_in_b => (others => '0'),
-	data_out_a => from_i_bram(44 downto 36),
+	data_out_a => from_i_bram(from_i_bram'high downto 36),
 	data_out_b => open
     );
-    i_dp_bram: entity work.bram_dp_x18
+    i_dp_bram: entity work.bram_true2p_1clk
+    generic map (
+	dual_port => True,
+	data_width => 18,
+	addr_width => C_i_addr_bits - 1
+    )
     port map (
-	clk_a => clk, clk_b => clk,
-	ce_a => '1', ce_b => '1',
+	clk => clk,
 	we_a => icache_write, we_b => icache_write,
-	addr_a => '0' & i_addr(10 downto 2),
-	addr_b => '1' & i_addr(10 downto 2),
+	addr_a(C_i_addr_bits - 2) => '0',
+	addr_a(C_i_addr_bits - 3 downto 0) =>
+	  i_addr(C_i_addr_bits - 1 downto 2),
+	addr_b(C_i_addr_bits - 2) => '1',
+	addr_b(C_i_addr_bits - 3 downto 0) =>
+	  i_addr(C_i_addr_bits - 1 downto 2),
 	data_in_a => to_i_bram(0 * 18 + 17 downto 0 * 18),
 	data_in_b => to_i_bram(1 * 18 + 17 downto 1 * 18),
 	data_out_a => from_i_bram(0 * 18 + 17 downto 0 * 18),
@@ -207,281 +362,111 @@ begin
 
     G_icache_4k:
     if C_icache_size = 4 generate
-    tag_dp_bram: entity work.bram_dp_x9
+    tag_dp_bram: entity work.bram_true2p_1clk
+    generic map (
+	dual_port => True,
+	data_width => C_i_tag_bits - 4,
+	addr_width => C_i_addr_bits - 2
+    )
     port map (
-	clk_a => clk, clk_b => clk,
-	ce_a => '1', ce_b => '1',
+	clk => clk,
 	we_a => icache_write, we_b => flush_i_line,
-	addr_a => '0' & i_addr(11 downto 2),
-	addr_b => '0' & d_addr(11 downto 2),
-	data_in_a => to_i_bram(44 downto 36),
+	addr_a => i_addr(C_i_addr_bits - 1 downto 2),
+	addr_b => cpu_d_addr(C_i_addr_bits - 1 downto 2),
+	data_in_a => to_i_bram(to_i_bram'high downto 36),
 	data_in_b => (others => '0'),
-	data_out_a => from_i_bram(44 downto 36),
+	data_out_a => from_i_bram(from_i_bram'high downto 36),
 	data_out_b => open
     );
     i_block_iter: for b in 0 to 1 generate
     begin
-    i_dp_bram: entity work.bram_dp_x18
+    i_dp_bram: entity work.bram_true2p_1clk
+    generic map (
+	dual_port => False,
+	data_width => 18,
+	addr_width => C_i_addr_bits - 2
+    )
     port map (
-	clk_a => clk, clk_b => clk,
-	ce_a => '1', ce_b => '0',
+	clk => clk,
 	we_a => icache_write, we_b => '0',
-	addr_a => i_addr(11 downto 2), addr_b => (others => '0'),
+	addr_a => i_addr(C_i_addr_bits - 1 downto 2),
+	addr_b => (others => '-'),
 	data_in_a => to_i_bram(b * 18 + 17 downto b * 18),
-	data_in_b => (others => '0'),
+	data_in_b => (others => '-'),
 	data_out_a => from_i_bram(b * 18 + 17 downto b * 18),
 	data_out_b => open
     );
     end generate i_block_iter;
     end generate; -- icache_4k
 
-    G_icache_8k:
-    if C_icache_size = 8 generate
-    tag_dp_bram: entity work.bram_dp_x9
+    G_icache_big:
+    if C_icache_size >= 8 generate
+    tag_dp_bram: entity work.bram_true2p_1clk
+    generic map (
+	dual_port => True,
+	data_width => C_i_tag_bits - 4,
+	addr_width => C_i_addr_bits - 2
+    )
     port map (
-	clk_a => clk, clk_b => clk,
-	ce_a => '1', ce_b => '1',
+	clk => clk,
 	we_a => icache_write, we_b => flush_i_line,
-	addr_a => i_addr(12 downto 2),
-	addr_b => d_addr(12 downto 2),
-	data_in_a => to_i_bram(44 downto 36),
+	addr_a => i_addr(C_i_addr_bits - 1 downto 2),
+	addr_b => cpu_d_addr(C_i_addr_bits - 1 downto 2),
+	data_in_a => to_i_bram(to_i_bram'high downto 36),
 	data_in_b => (others => '0'),
-	data_out_a => from_i_bram(44 downto 36),
+	data_out_a => from_i_bram(from_i_bram'high downto 36),
 	data_out_b => open
     );
     i_block_iter: for b in 0 to 3 generate
     begin
-    i_dp_bram: entity work.bram_dp_x9
+    i_dp_bram: entity work.bram_true2p_1clk
+    generic map (
+	dual_port => False,
+	data_width => 9,
+	addr_width => C_i_addr_bits - 2
+    )
     port map (
-	clk_a => clk, clk_b => clk,
-	ce_a => '1', ce_b => '0',
+	clk => clk,
 	we_a => icache_write, we_b => '0',
-	addr_a => i_addr(12 downto 2), addr_b => (others => '0'),
+	addr_a => i_addr(C_i_addr_bits - 1 downto 2),
+	addr_b => (others => '-'),
 	data_in_a => to_i_bram(b * 9 + 8 downto b * 9),
-	data_in_b => (others => '0'),
+	data_in_b => (others => '-'),
 	data_out_a => from_i_bram(b * 9 + 8 downto b * 9),
 	data_out_b => open
     );
     end generate i_block_iter;
-    end generate; -- icache_8k
+    end generate; -- icache_big
 
     imem_addr <= R_i_addr;
+    imem_burst_len <= R_i_burst_len when iaddr_cacheable else (others => '0');
     imem_addr_strobe <= '1' when not iaddr_cacheable else R_i_strobe;
     i_data <= icache_data_out when iaddr_cacheable else imem_data_in;
     instr_ready <= imem_data_ready when not iaddr_cacheable else
       '1' when icache_line_valid else '0';
 
-    iaddr_cacheable <=
-      (C_icache_size = 2 or C_icache_size = 4 or C_icache_size = 8) and
-      true; -- XXX kseg0: R_i_addr(31 downto 29) = "100";
+    iaddr_cacheable <= C_icache_size /= 0;
     icache_write <= imem_data_ready when R_i_strobe = '1' else '0';
-    icache_tag_in <=
-      '1' & R_i_addr(31) & "00" & R_i_addr(19 downto 11)
-      when C_icache_size = 2 else
-      '1' & R_i_addr(31) & "000" & R_i_addr(19 downto 12)
-      when C_icache_size = 4 else
-      '1' & R_i_addr(31) & "0000" & R_i_addr(19 downto 13);
-    icache_line_valid <=
-      iaddr_cacheable and icache_tag_out(12) = '1' and
-      icache_tag_in(11) = icache_tag_out(11) and
-      ((C_icache_size = 2 and
-      icache_tag_in(8 downto 0) = icache_tag_out(8 downto 0)) or
-      (C_icache_size = 4 and
-      icache_tag_in(7 downto 0) = icache_tag_out(7 downto 0)) or
-      (C_icache_size = 8 and
-      icache_tag_in(6 downto 0) = icache_tag_out(6 downto 0)));
+    iaddr_in_xram <= '1' when R_i_addr(31 downto 28) = C_xram_base else '0';
+    icache_tag_in <= '1' & iaddr_in_xram
+      & R_i_addr(C_cached_addr_bits - 1 downto C_i_addr_bits)
+      when C_icache_size /= 0;
+    icache_line_valid <= iaddr_cacheable and icache_tag_in = icache_tag_out;
 
+    --
+    -- instruction cache FSM
+    --
     process(clk)
     begin
     if rising_edge(clk) then
-	--
-	-- instruction cache FSM
-	--
 	R_i_addr <= i_addr;
+	R_i_burst_len <= (others => '0');
 	if iaddr_cacheable and (not icache_line_valid)
 	  and (imem_data_ready and R_i_strobe) = '0' then
 	    R_i_strobe <= '1';
 	else
 	    R_i_strobe <= '0';
 	end if;
-
-	--
-	-- data cache FSM
-	--
-	if (dmem_data_ready = '1' and R_d_state /= C_D_IDLE)
-	  or cpu_d_strobe = '0' then
-	    R_d_state <= C_D_IDLE;
-	elsif R_d_state = C_D_READ and dcache_line_valid then
-	    R_d_state <= C_D_IDLE;
-	elsif cpu_d_strobe = '1' and daddr_cacheable then
-	    if cpu_d_write = '1' then
-		R_d_state <= C_D_WRITE;
-	    elsif R_d_state = C_D_IDLE then
-		R_d_state <= C_D_READ;
-	    else
-		R_d_state <= C_D_FETCH;
-	    end if;
-	else
-	    R_d_state <= C_D_IDLE;
-	end if;
     end if;
     end process;
-
-    dmem_addr <= d_addr;
-    dmem_write <= cpu_d_write;
-    dmem_byte_sel <= cpu_d_byte_sel;
-    dmem_data_out <= cpu_d_data_out;
-
-    dmem_addr_strobe <=
-      cpu_d_strobe when not daddr_cacheable or cpu_d_write = '1'
-      else '0' when R_d_state = C_D_READ and dcache_line_valid
-      else '0' when R_d_state = C_D_IDLE else cpu_d_strobe;
-    cpu_d_data_in <= dcache_data_out when R_d_state = C_D_READ
-      else dmem_data_in;
-    cpu_d_ready <= '1' when R_d_state = C_D_READ and dcache_line_valid
-      else dmem_data_ready when not daddr_cacheable or R_d_state /= C_D_IDLE
-      else '0';
-
-    daddr_cacheable <=
-      (C_dcache_size = 2 or C_dcache_size = 4 or C_dcache_size = 8) and
-      d_addr(31 downto 29) = "100";
-    dcache_write <= dmem_data_ready when
-      (R_d_state = C_D_WRITE or R_d_state = C_D_FETCH) else '0';
-    d_tag_valid_bit <= '0' when cpu_d_write = '1' and cpu_d_byte_sel /= "1111"
-      and not dcache_line_valid else '1';
-    dcache_tag_in <=
-      d_tag_valid_bit & "000" & d_addr(19 downto 11)
-      when C_dcache_size = 2 else
-      d_tag_valid_bit & "0000" & d_addr(19 downto 12)
-      when C_dcache_size = 4 else
-      d_tag_valid_bit & "00000" & d_addr(19 downto 13);
-    dcache_line_valid <=
-      dcache_tag_out(12) = '1' and
-      ((C_dcache_size = 2 and
-      dcache_tag_in(8 downto 0) = dcache_tag_out(8 downto 0)) or
-      (C_dcache_size = 4 and
-      dcache_tag_in(7 downto 0) = dcache_tag_out(7 downto 0)) or
-      (C_dcache_size = 8 and
-      dcache_tag_in(6 downto 0) = dcache_tag_out(6 downto 0)));
-
-    dcache_tag_out <= from_d_bram(44 downto 32);
-    dcache_data_out <= from_d_bram(31 downto 0);
-    to_d_bram(44 downto 32) <= dcache_tag_in;
-    to_d_bram(31 downto 0) <= R_dcache_wbuf when R_d_state = C_D_WRITE
-      else dmem_data_in;
-
-    process(clk)
-    begin
-    if falling_edge(clk) then
-	if cpu_d_byte_sel(0) = '1' then
-	    R_dcache_wbuf(7 downto 0) <= cpu_d_data_out(7 downto 0);
-	else
-	    R_dcache_wbuf(7 downto 0) <= dcache_data_out(7 downto 0);
-	end if;
-	if cpu_d_byte_sel(1) = '1' then
-	    R_dcache_wbuf(15 downto 8) <= cpu_d_data_out(15 downto 8);
-	else
-	    R_dcache_wbuf(15 downto 8) <= dcache_data_out(15 downto 8);
-	end if;
-	if cpu_d_byte_sel(2) = '1' then
-	    R_dcache_wbuf(23 downto 16) <= cpu_d_data_out(23 downto 16);
-	else
-	    R_dcache_wbuf(23 downto 16) <= dcache_data_out(23 downto 16);
-	end if;
-	if cpu_d_byte_sel(3) = '1' then
-	    R_dcache_wbuf(31 downto 24) <= cpu_d_data_out(31 downto 24);
-	else
-	    R_dcache_wbuf(31 downto 24) <= dcache_data_out(31 downto 24);
-	end if;
-    end if;
-    end process;
-
-    G_dcache_2k:
-    if C_dcache_size = 2 generate
-    tag_dp_bram_d: entity work.bram_dp_x9
-    port map (
-	clk_a => '0', clk_b => clk,
-	ce_a => '0', ce_b => '1',
-	we_a => '0', we_b => dcache_write,
-	addr_a => (others => '0'),
-	addr_b => "00" & d_addr(10 downto 2),
-	data_in_a => (others => '0'),
-	data_in_b => to_d_bram(44 downto 36),
-	data_out_a => open,
-	data_out_b => from_d_bram(44 downto 36)
-    );
-    d_dp_bram: entity work.bram_dp_x18
-    port map (
-	clk_a => clk, clk_b => clk,
-	ce_a => '1', ce_b => '1',
-	we_a => dcache_write, we_b => dcache_write,
-	addr_a => '0' & d_addr(10 downto 2),
-	addr_b => '1' & d_addr(10 downto 2),
-	data_in_a => to_d_bram(0 * 18 + 17 downto 0 * 18),
-	data_in_b => to_d_bram(1 * 18 + 17 downto 1 * 18),
-	data_out_a => from_d_bram(0 * 18 + 17 downto 0 * 18),
-	data_out_b => from_d_bram(1 * 18 + 17 downto 1 * 18)
-    );
-    end generate; -- dcache_2k
-
-    G_dcache_4k:
-    if C_dcache_size = 4 generate
-    tag_dp_bram_d: entity work.bram_dp_x9
-    port map (
-	clk_a => '0', clk_b => clk,
-	ce_a => '0', ce_b => '1',
-	we_a => '0', we_b => dcache_write,
-	addr_a => (others => '0'),
-	addr_b => '0' & d_addr(11 downto 2),
-	data_in_a => (others => '0'),
-	data_in_b => to_d_bram(44 downto 36),
-	data_out_a => open,
-	data_out_b => from_d_bram(44 downto 36)
-    );
-    d_block_iter: for b in 0 to 1 generate
-    begin
-    d_dp_bram: entity work.bram_dp_x18
-    port map (
-	clk_a => clk, clk_b => '0',
-	ce_a => '1', ce_b => '0',
-	we_a => dcache_write, we_b => '0',
-	addr_a => d_addr(11 downto 2), addr_b => (others => '0'),
-	data_in_a => to_d_bram(b * 18 + 17 downto b * 18),
-	data_in_b => (others => '0'),
-	data_out_a => from_d_bram(b * 18 + 17 downto b * 18),
-	data_out_b => open
-    );
-    end generate d_block_iter;
-    end generate; -- dcache_4k
-
-    G_dcache_8k:
-    if C_dcache_size = 8 generate
-    tag_dp_bram_d: entity work.bram_dp_x9
-    port map (
-	clk_a => '0', clk_b => clk,
-	ce_a => '0', ce_b => '1',
-	we_a => '0', we_b => dcache_write,
-	addr_a => (others => '0'),
-	addr_b => d_addr(12 downto 2),
-	data_in_a => (others => '0'),
-	data_in_b => to_d_bram(44 downto 36),
-	data_out_a => open,
-	data_out_b => from_d_bram(44 downto 36)
-    );
-    d_block_iter: for b in 0 to 3 generate
-    begin
-    d_dp_bram: entity work.bram_dp_x9
-    port map (
-	clk_a => clk, clk_b => '0',
-	ce_a => '1', ce_b => '0',
-	we_a => dcache_write, we_b => '0',
-	addr_a => d_addr(12 downto 2), addr_b => (others => '0'),
-	data_in_a => to_d_bram(b * 9 + 8 downto b * 9),
-	data_in_b => (others => '0'),
-	data_out_a => from_d_bram(b * 9 + 8 downto b * 9),
-	data_out_b => open
-    );
-    end generate d_block_iter;
-    end generate; -- dcache_8k
-
 end x;
