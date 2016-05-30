@@ -182,10 +182,10 @@ set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE SPEED
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 
 
+set_global_assignment -name VHDL_FILE ../../../../cpu/cache.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/sdram_pack.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/sdram_mz.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bram_true2p_1clk.vhd
-set_global_assignment -name VHDL_FILE ../../../../cpu/cache_generic_param.vhd
 set_global_assignment -name VHDL_FILE ../../../../altera/de0nano/clocks/pll_50m.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bram.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/defs_bootblock.vhd
