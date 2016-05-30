@@ -140,7 +140,7 @@ entity compositing2_fifo is
         C_position_clipping: boolean := false; 
         -- graceful bandwidth control: at the N pixels before the end of horizontal line
         -- prevent further compositing (instead of starting new segment, skip to next line)
-        C_timeout: integer := 48; -- 0:disable, >=1 enable
+        C_timeout: integer := 0; -- 0:disable, >=1 enable
         C_timeout_incomplete: boolean := false; -- true: allow timeout to abort incomplete segment (check if burst allows that)
         -- number of pixels per horizontal line
         C_width: integer := 640; -- pixels per line
@@ -156,11 +156,11 @@ entity compositing2_fifo is
 	addr_strobe: out std_logic; -- if using cache discard this strobe, and give strobe='1' to cache
 	addr_out: out std_logic_vector(29 downto 2);
 	suggest_burst: out std_logic_vector(15 downto 0); -- number of 32-bit words requrested
-	suggest_cache: out std_logic;
+	suggest_cache: out std_logic; -- '1' during pulled content (state 4), most effective for cacheing
 	base_addr: in std_logic_vector(29 downto 2);
-	data_ready: in std_logic;
+	data_ready: in std_logic; -- RAM indicates data are ready for consuming
 	data_in: in std_logic_vector(31 downto 0);
-	read_ready: out std_logic; -- acknowledge to RAM that data are consumed (and no more needed)
+	read_ready: out std_logic; -- '1' when this module is ready to receive data from RAM
 	data_out: out std_logic_vector(C_data_width-1 downto 0);
 	active: in std_logic; -- rising edge sensitive will reset fifo RAM to base address, value 1 allows start of reading
 	frame: out std_logic; -- output CPU clock synchronous start edge detection (1 CPU-clock wide pulse for FB interrupt)
@@ -209,11 +209,12 @@ architecture behavioral of compositing2_fifo is
     signal R_vertical_scroll, S_vertical_scroll_next: integer range 0 to C_height-1; -- y-position scroll fix
     signal S_vertical_scrolled: std_logic_vector(29 downto 2);
     signal R_state: integer range 0 to 4;
-    signal R_position, R_word_count: std_logic_vector(15 downto 0);
+    signal R_position, R_word_count: std_logic_vector(15 downto 0) := x"0001";
     signal S_position, S_pixel_count: std_logic_vector(15 downto 0);
     signal S_pixels_remaining: std_logic_vector(15 downto 0);
     signal R_suggest_cache: std_logic := '0';
     signal R_timeout: std_logic := '0';
+    signal S_burst_limited: std_logic_vector(15 downto 0) := x"0001";
     constant C_state_read_line_start: integer := 0;
     -- indicates which line in buffer (containing 2 lines) is written (compositing from RAM)
     -- and which line is read (by display output)
@@ -362,10 +363,15 @@ begin
         end if;
     end process;
 
-    --read_ready <= S_need_refill and R_shifting_counter(C_shift_addr_width); -- during shifting we are not ready to accept new data
-    read_ready <= R_shifting_counter(C_shift_addr_width); -- during shifting we are not ready to accept new data
+    read_ready <= S_need_refill and R_shifting_counter(C_shift_addr_width); -- during shifting we are not ready to accept new data
+    --read_ready <= R_shifting_counter(C_shift_addr_width); -- during shifting we are not ready to accept new data
     suggest_cache <= R_suggest_cache;
-    suggest_burst <= R_word_count when R_suggest_cache='1' else x"0001"; -- at state 4 last read is 1-word?
+    --suggest_burst <= R_word_count when R_suggest_cache='1' else x"0001"; -- it should work but it doesn't
+    S_burst_limited <= R_word_count when R_word_count < 32 else x"0020"; -- limit burst to max 32
+    suggest_burst <= S_burst_limited when R_suggest_cache='1' else x"0001"; -- at state 4 last read is 1-word?
+    --suggest_burst <= R_word_count when R_state=4 else x"0001"; -- at state 4 last read is 1-word?
+    --suggest_burst <= R_word_count when R_suggest_cache='1' and R_word_count=2 else x"0001"; -- at state 4 last read is 1-word?
+    --suggest_burst <= x"0001"; -- at state 4 last read is 1-word?
 
     -- need refill signal must be CPU synchronous
     process(clk) begin
