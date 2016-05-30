@@ -239,20 +239,6 @@ begin
       else dmem_data_ready;
     cpu_d_wait <= '1' when d_miss_cycle else '0';
 
-    debug_debug(7) <= '1' when R_d_fetch_done else '0';
-    debug_debug(6) <= '1' when R_d_cacheable_cycle else '0';
-    debug_debug(5) <= '1' when d_miss_cycle else '0'; -- cpu_d_wait
-    debug_debug(4) <= -- cpu_d_ready
-      '1' when d_cacheable and cpu_d_write = '0'
-      else '0' when d_miss_cycle else dmem_data_ready;
-    debug_debug(3) <= -- dmem_a_strobe
-      '1' when d_miss_cycle
-      else '0' when d_cacheable and cpu_d_write = '0'
-      else cpu_d_strobe;
-    debug_debug(2) <= dmem_data_ready;
-    debug_debug(1) <= cpu_d_write;
-    debug_debug(0) <= cpu_d_strobe;
-
     -- infer data cache BRAMs
     process(clk)
     begin
@@ -311,7 +297,7 @@ begin
 	debug_out_strobe => debug_out_strobe,
 	debug_out_busy => debug_out_busy,
 	debug_clk_ena => clk_enable,
---	debug_debug => debug_debug,
+	debug_debug => debug_debug,
 	debug_active => debug_active
     );
 
