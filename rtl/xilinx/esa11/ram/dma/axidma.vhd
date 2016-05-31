@@ -67,7 +67,7 @@ entity axidma is
 end entity;
 
 architecture rtl of axidma is
-  signal mbi_read_busy     : std_logic;                                    -- ddr read cycle running
+  signal mbi_read_busy     : std_logic; -- internal lock allows one request to complete until next is accepted
 
   -- AXI4 temp signals
   signal axi_araddr       : std_logic_vector(31 downto 0);
@@ -111,14 +111,11 @@ begin
             mbi_read_busy <= '0';
             axi_araddr    <= (others => '0');
             axi_arvalid   <= '0';
-            axi_rready    <= '1'; -- accept all stale data
             axi_arlen     <= (others => '0');
       else
-        if iaddr_strobe = '1' and mbi_read_busy = '0' and axi_arvalid='0' then -- when previos request is finished, start new DDR read
-            --mbi_read_busy <= '1'; -- signal that read cycle is running
+        if iaddr_strobe = '1' and mbi_read_busy = '0' and axi_arvalid='0' and iburst /= 0 then -- when previos request is finished, start new DDR read
             axi_araddr    <= "00" & iaddr(29 downto 2) & "00";
             axi_arvalid   <= '1'; -- read request: address valid (similar to f32c strobe)
-            axi_rready    <= '1'; -- acknowledge all data as soon as they are received
             axi_arlen     <= iburst-1;
         else
           if axi_arvalid = '1' and m_axi_arready = '1' then
@@ -128,22 +125,16 @@ begin
         end if;
 
         -- read completed
-        -- m_axi_rlast indicates last packet in a burst
+        -- m_axi_rlast indicates last word in a burst
         if mbi_read_busy = '1' and m_axi_rvalid = '1' and m_axi_rlast = '1' then
           mbi_read_busy <= '0';
-        end if;
-
-        if axi_rready = '1' and m_axi_rvalid = '1'
-                            and m_axi_rlast = '1' then
-          axi_rready <= '0'; -- end of burst, remove the acknowledge
         end if;
 
       end if;
     end if; -- clk
   end process cache_mbi_read;
 
-  m_axi_rready <= iread_ready;
-  --m_axi_rready  <= axi_rready and iread_ready; -- acknowledge read, enabled when reaceiver is ready to read
+  m_axi_rready  <= iread_ready; -- consumer module (compositing2_fifo) asserts ready, just pass thru
   m_axi_arvalid <= axi_arvalid; -- read request. address to read from is valid
   m_axi_araddr  <= axi_araddr; -- address to read from
   m_axi_arlen   <= axi_arlen;  -- no burst, just read single 32bit word
