@@ -56,10 +56,6 @@ entity axidma is
       m_axi_rvalid         : in  std_logic;
       m_axi_rready         : out std_logic;
 
-      -- DMA channel address strobes
-      --chns_from_host       : in DMAChannels_FromHost := DMAChannels_FromHost_INIT;
-      --channels_to_host     : out DMAChannels_ToHost;
-      
       -- f32c bus
       iaddr: in std_logic_vector(29 downto 2);
       iaddr_strobe: in std_logic;
@@ -71,49 +67,14 @@ entity axidma is
 end entity;
 
 architecture rtl of axidma is
-
-  constant ddr_rd_len : integer := 32; -- number of 32 bit words to read per external ram access
-
-  type inputstate_t is (rd1,rcv1,rcv2,upd1);
-  signal inputstate : inputstate_t := rd1;
-
--- DMA channel state information
---  type DMAChannel_Internal is record
---     addr        : std_logic_vector(31 downto 0);       -- Current RAM address
---     count       : unsigned(16 downto 0);               -- Number of words to transfer.
---  end record;
-
---  type DMAChannels_Internal is array (integer range <>) of DMAChannel_Internal;
---  type arr_slv_15_0 is array (integer range <>) of std_logic_vector(15 downto 0);
---  type arr_slv_31_0 is array (integer range <>) of std_logic_vector(31 downto 0);
-
---  signal internals : DMAChannels_Internal(0 to DMACache_MaxChannel-1);
---  signal act_ch_wr: integer range 0 to DMACache_MaxChannel-1 := 0;
---  signal act_ch_rd: integer range 0 to DMACache_MaxChannel-1 := 0;
---  signal m_act_ch_wr: integer range 0 to DMACache_MaxChannel-1 := 0;
-
-  -- dma interface, sys_clk domain signals
-  signal ddr_re               : std_logic;                                -- same as insertAddr (ddr_re when not cacheHit)
-  signal ddr_hold             : std_logic_vector(2 downto 0);             -- shift reg delay from ddr_re
-  signal busy                 : std_logic;                                -- combinat. mix of signals
---  signal addr_reg             : std_logic_vector(31 downto 0);            -- addr, sys_clk-registered
-
-  -- mcb interface, mbi_rd_clk domain signals
---  signal mbi_re            : std_logic;                                    -- not mig_rd_empty
   signal mbi_read_busy     : std_logic;                                    -- ddr read cycle running
-  signal mbi_rd_count      : unsigned(7 downto 0);                         -- rd_clk counter
 
   -- AXI4 temp signals
   signal axi_araddr       : std_logic_vector(31 downto 0);
   signal axi_arvalid      : std_logic;
   signal axi_rready       : std_logic;
   signal axi_arlen        : std_logic_vector(7 downto 0) := x"00"; -- burst length, x"00":1x32bit, x"01":2x32bit etc..
-
-  --signal R_oready: std_logic := '0';
-  --signal R_odata: std_logic_vector(31 downto 0) := (others => '0');
-
 begin
-
   m_axi_arid     <= "0";    -- not used
   -- burst length, data beats-1 should match ddr_rd_len adjusted by arsize
   -- m_axi_arlen    <= std_logic_vector(to_unsigned(ddr_rd_len-1,8));  -- burst length, data beats-1 should match ddr_rd_len
@@ -126,7 +87,7 @@ begin
   m_axi_arqos    <= "0000"; -- QOS not supported
 
   m_axi_awid     <= "0";    -- not used
-  m_axi_awlen    <= X"00";  -- data beats-1 (single access)
+  m_axi_awlen    <= x"00";  -- data beats-1 (single access)
   m_axi_awsize   <= "010";  -- 32 bits, resp. 4 bytes
   m_axi_awburst  <= "01";   -- burst type INCR - Incrementing address
   m_axi_awlock   <= '0';    -- Exclusive access not supported
@@ -142,56 +103,47 @@ begin
 
   m_axi_bready  <= '0';
 
-  ddr_re <= iaddr_strobe;
-  busy <= ddr_re -- or (re_d and cache_offset_changed)
-          or mbi_read_busy;
-
   -- count read cycles, update busy flag
   cache_mbi_read : process(m_axi_aclk)
   begin
     if rising_edge(m_axi_aclk) then
-      if m_axi_aresetn = '0' then
+      if m_axi_aresetn = '0' and false then
             mbi_read_busy <= '0';
-            mbi_rd_count  <= (others => '0');
             axi_araddr    <= (others => '0');
             axi_arvalid   <= '0';
-            axi_rready    <= '0';
+            axi_rready    <= '1'; -- accept all stale data
             axi_arlen     <= (others => '0');
       else
-        if ddr_re = '1' and mbi_read_busy = '0' then -- when previos request is finished, start new DDR read
-            mbi_read_busy <= '1'; -- singal that read cycle is running
-            mbi_rd_count  <= (others => '0');
+        if iaddr_strobe = '1' and mbi_read_busy = '0' and axi_arvalid='0' then -- when previos request is finished, start new DDR read
+            --mbi_read_busy <= '1'; -- signal that read cycle is running
             axi_araddr    <= "00" & iaddr(29 downto 2) & "00";
             axi_arvalid   <= '1'; -- read request: address valid (similar to f32c strobe)
             axi_rready    <= '1'; -- acknowledge all data as soon as they are received
-            --axi_arlen     <= iburst-1;
-        end if;
-
-        if axi_arvalid = '1' and m_axi_arready = '1' then
-            axi_arvalid <= '0'; -- we got address accepted signal, remove read request
+            axi_arlen     <= iburst-1;
+        else
+          if axi_arvalid = '1' and m_axi_arready = '1' then
+              mbi_read_busy <= '1';
+              axi_arvalid <= '0'; -- we got address accepted signal, remove read request
+          end if;
         end if;
 
         -- read completed
         -- m_axi_rlast indicates last packet in a burst
         if mbi_read_busy = '1' and m_axi_rvalid = '1' and m_axi_rlast = '1' then
-           mbi_read_busy <= '0';
-        end if;
-
-        -- increment number of words transferred
-        if m_axi_rvalid = '1' then
-            mbi_rd_count <= unsigned(mbi_rd_count) + 1;
+          mbi_read_busy <= '0';
         end if;
 
         if axi_rready = '1' and m_axi_rvalid = '1'
                             and m_axi_rlast = '1' then
-            axi_rready <= '0'; -- end of burst, remove the acknowledge
+          axi_rready <= '0'; -- end of burst, remove the acknowledge
         end if;
 
       end if;
     end if; -- clk
   end process cache_mbi_read;
 
-  m_axi_rready  <= axi_rready and iread_ready; -- acknowledge read, enabled when reaceiver is ready to read
+  m_axi_rready <= iread_ready;
+  --m_axi_rready  <= axi_rready and iread_ready; -- acknowledge read, enabled when reaceiver is ready to read
   m_axi_arvalid <= axi_arvalid; -- read request. address to read from is valid
   m_axi_araddr  <= axi_araddr; -- address to read from
   m_axi_arlen   <= axi_arlen;  -- no burst, just read single 32bit word

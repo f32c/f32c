@@ -72,7 +72,8 @@ entity esa11_xram_acram_ddr3 is
         C_axidma_c2: boolean := true;
         C_video_base_addr_out: boolean := true;
 
-        C_dvid_ddr: boolean := false; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
+        C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
+
 	C_vgahdmi: boolean := false;
         C_video_cache_size: integer := 8; -- KB video cache (vgahdmi) (0: disable, 2,4,8,16,32:enable)
 	C_vgahdmi_fifo_timeout: integer := 48;
@@ -1013,7 +1014,7 @@ begin
       --C_timeout_incomplete => true,
       C_width => 640,
       C_height => 480,
-      C_data_width => 8,
+      C_data_width => 32,
       C_addr_width => 11
     )
     port map
@@ -1031,7 +1032,8 @@ begin
       base_addr => S_vga_base_addr(29 downto 2),
       active => S_vga_active_enabled,
       frame => open, -- vga_frame,
-      data_out => vga_data_from_fifo(7 downto 0),
+      data_out(7 downto 0) => vga_data_from_fifo(7 downto 0),
+      data_out(31 downto 8) => open,
       fetch_next => S_vga_fetch_next
     );
     S_vga_active_enabled <= not S_vga_vsync;
