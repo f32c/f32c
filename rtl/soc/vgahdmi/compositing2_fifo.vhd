@@ -142,6 +142,7 @@ entity compositing2_fifo is
         -- prevent further compositing (instead of starting new segment, skip to next line)
         C_timeout: integer := 0; -- 0:disable, >=1 enable
         C_timeout_incomplete: boolean := false; -- true: allow timeout to abort incomplete segment (check if burst allows that)
+        C_burst_max: integer := 1; -- limit burst suggestion to max number of 32-bit words
         -- number of pixels per horizontal line
         C_width: integer := 640; -- pixels per line
         C_height: integer := 480; -- number of vertical lines
@@ -155,7 +156,7 @@ entity compositing2_fifo is
 	clk, clk_pixel: in std_logic;
 	addr_strobe: out std_logic; -- if using cache discard this strobe, and give strobe='1' to cache
 	addr_out: out std_logic_vector(29 downto 2);
-	suggest_burst: out std_logic_vector(15 downto 0); -- number of 32-bit words requrested
+	suggest_burst: out std_logic_vector(15 downto 0) := x"0001"; -- number of 32-bit words requrested
 	suggest_cache: out std_logic; -- '1' during pulled content (state 4), most effective for cacheing
 	base_addr: in std_logic_vector(29 downto 2);
 	data_ready: in std_logic; -- RAM indicates data are ready for consuming
@@ -364,24 +365,28 @@ begin
         end if;
     end process;
 
-    -- delayed read ready??
+    -- experimental read ready signaling,
+    -- currently only used when connecting directly to axi
+    -- do and why do we need delayed read ready??
     process(clk) begin
       if rising_edge(clk) then
         R_read_ready <= R_shifting_counter(C_shift_addr_width);
       end if;
     end process;
-
     --read_ready <= R_shifting_counter(C_shift_addr_width); -- works for no burst
     read_ready <= R_read_ready and R_shifting_counter(C_shift_addr_width); -- during shifting we are not ready to accept new data
     --read_ready <= S_need_refill and R_read_ready and R_shifting_counter(C_shift_addr_width); -- during shifting we are not ready to accept new data
     --read_ready <= S_need_refill and R_shifting_counter(C_shift_addr_width); -- this works only for no burst but strange: works only long bitmap lines, short sprites dont' work
+
     suggest_cache <= R_suggest_cache;
-    --suggest_burst <= R_word_count when R_suggest_cache='1' else x"0001"; -- it should work but it doesn't
-    S_burst_limited <= R_word_count when R_word_count < 16 else x"0010"; -- limit burst to max 16 x 32-bit
-    suggest_burst <= S_burst_limited when R_suggest_cache='1' and R_word_count /= 0 else x"0001"; -- at state 4 last read is 1-word?
+    G_yes_burst: if C_burst_max > 1 generate
+      S_burst_limited <= R_word_count when R_word_count < C_burst_max else std_logic_vector(to_unsigned(C_burst_max,16)); -- limit burst to max 16 x 32-bit
+      suggest_burst <= S_burst_limited when R_suggest_cache='1' and R_word_count /= 0 else x"0001"; -- at state 4 last read is 1-word?
     --suggest_burst <= R_word_count when R_state=4 else x"0001"; -- at state 4 last read is 1-word?
     --suggest_burst <= R_word_count when R_suggest_cache='1' and R_word_count=2 else x"0001"; -- at state 4 last read is 1-word?
     --suggest_burst <= x"0001"; -- at state 4 last read is 1-word?
+    --suggest_burst <= R_word_count when R_suggest_cache='1' else x"0001"; -- it should work but it doesn't
+    end generate;
 
     -- need refill signal must be CPU synchronous
     process(clk) begin
@@ -417,8 +422,8 @@ begin
               -- XXX FIXME:
               -- ready signal can be missed and this will lead to deadlock
               -- and screen will freeze.
-              --conv_integer(not R_shifting_counter(C_shift_addr_width-1 downto 0)) = 0 -- during last shift cycle we can start new data
-              --or
+              conv_integer(not R_shifting_counter(C_shift_addr_width-1 downto 0)) = 0 -- during last shift cycle we can start new data
+              or
               R_shifting_counter(C_shift_addr_width) = '1' -- past last shift cycle, shift fully complete, start new data
             )
             else '0';
@@ -614,3 +619,16 @@ end;
 --     In 16bpp mode it looks like pixel step is still 8bpp
 
 -- [x] cache support (save bandwidth when displaying font using tiled sprites)
+
+-- [ ] axi burst: why do we need read_ready delay hack, is ready wrong timed
+
+-- [ ] axi burst: why ready and-masked with S_need_refill doesn't work, 
+--     is S_need_refill wrong timed
+--     are some un-needed data requested e.g., after the end of line/frame...?
+
+-- [ ] axi burst: can we get along without R_word_count /= 0
+       -- or when R_word_count = 0 prevent addr_strobe ?
+
+-- [ ] 24bpp: how can it be easily done (bandwidth saving instead of fetching 32bit
+
+-- [ ] FIFO for max burst length to avoid de-asserting read_ready and intermittent strobe
