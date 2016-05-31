@@ -364,7 +364,7 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     signal S_vga_data, S_vga_data_debug: std_logic_vector(31 downto 0);
     signal S_vga_read_ready: std_logic;
     signal S_vga_data_ready: std_logic;
-    signal vga_data_from_fifo: std_logic_vector(7 downto 0);
+    signal vga_data_from_fifo: std_logic_vector(31 downto 0);
     signal vga_refresh: std_logic;
     signal vga_reg_dtack: std_logic; -- low active, ack from VGA reg access
     signal vga_ackback: std_logic := '0'; -- clear for ack_d, sys_clk domai
@@ -1012,6 +1012,7 @@ begin
     (
       --C_timeout => 48,
       --C_timeout_incomplete => true,
+      C_burst_max => 64,
       C_width => 640,
       C_height => 480,
       C_data_width => 32,
@@ -1026,18 +1027,18 @@ begin
       addr_strobe => S_vga_addr_strobe, -- video_fifo_addr_strobe,
       addr_out => S_vga_addr, -- video_fifo_addr,
       data_ready => S_vga_data_ready, -- data valid, acknowledge from RAM
-      --data_in => x"00AA00AA", -- video_fifo_data, -- from cache
       data_in => S_vga_data,
       read_ready => S_vga_read_ready,
       base_addr => S_vga_base_addr(29 downto 2),
       active => S_vga_active_enabled,
-      frame => open, -- vga_frame,
+      frame => open, -- vga_frame, -- for f32c video interrupt
       data_out(7 downto 0) => vga_data_from_fifo(7 downto 0),
       data_out(31 downto 8) => open,
       fetch_next => S_vga_fetch_next
     );
     S_vga_active_enabled <= not S_vga_vsync;
-    --S_vga_data_debug <= x"0280_0000" when S_vga_suggest_cache='0' else x"031CE000";
+    --S_vga_data_debug <= x"00AA00AA"; -- stripe on the screen
+    --S_vga_data_debug <= x"0280_0000" when S_vga_suggest_cache='0' else x"031CE000"; -- full screen of RGB series
     --S_vga_data_debug <= x"0280_0000" when S_vga_suggest_cache='0' else S_vga_data;
 
     -- VGA video generator - pixel clock synchronous
