@@ -16,7 +16,7 @@ In synthetic integer benchmarks the core yields 3.06 CoreMark/MHz
 and 1.63 DMIPS/MHz (1.81 DMIPS/MHz with function inlining) with code
 and data stored in on-chip block RAMs.  When configured with 16 KB of
 instruction and 4 KB of data cache, and with code and data stored in
-external SDRAM, the core yields 2.72 CoreMark/MHz and 1.24 DMIPS/MHz.
+external SDRAM, the core yields 2.78 CoreMark/MHz and 1.31 DMIPS/MHz.
 
 A performance-tuned f32c SoC which includes a timer
 and an UART occupies only 1048 6-input LUTs, while still being able to
@@ -43,6 +43,8 @@ C_bp_global_depth    global branch history trace size
 C_result_forwarding  synthesize result bypasses
 C_load_aligner 	     synthesize load aligner
 C_full_shifter 	     pipelined instead of iterative shifer
+C_icache_size        instruction cache size (0 to 64 KB)
+C_dcache_size        data cache size (0 to 64 KB)
 C_debug              synthesize single-stepping debug module
 ```
 
