@@ -214,6 +214,7 @@ architecture behavioral of compositing2_fifo is
     signal S_pixels_remaining: std_logic_vector(15 downto 0);
     signal R_suggest_cache: std_logic := '0';
     signal R_timeout: std_logic := '0';
+    signal R_read_ready: std_logic := '0';
     signal S_burst_limited: std_logic_vector(15 downto 0) := x"0001";
     constant C_state_read_line_start: integer := 0;
     -- indicates which line in buffer (containing 2 lines) is written (compositing from RAM)
@@ -363,12 +364,21 @@ begin
         end if;
     end process;
 
-    read_ready <= S_need_refill and R_shifting_counter(C_shift_addr_width); -- during shifting we are not ready to accept new data
-    --read_ready <= R_shifting_counter(C_shift_addr_width); -- during shifting we are not ready to accept new data
+    -- delayed read ready??
+    process(clk) begin
+      if rising_edge(clk) then
+        R_read_ready <= R_shifting_counter(C_shift_addr_width);
+      end if;
+    end process;
+
+    --read_ready <= R_shifting_counter(C_shift_addr_width); -- works for no burst
+    read_ready <= R_read_ready and R_shifting_counter(C_shift_addr_width); -- during shifting we are not ready to accept new data
+    --read_ready <= S_need_refill and R_read_ready and R_shifting_counter(C_shift_addr_width); -- during shifting we are not ready to accept new data
+    --read_ready <= S_need_refill and R_shifting_counter(C_shift_addr_width); -- this works only for no burst but strange: works only long bitmap lines, short sprites dont' work
     suggest_cache <= R_suggest_cache;
     --suggest_burst <= R_word_count when R_suggest_cache='1' else x"0001"; -- it should work but it doesn't
-    S_burst_limited <= R_word_count when R_word_count < 32 else x"0020"; -- limit burst to max 32
-    suggest_burst <= S_burst_limited when R_suggest_cache='1' else x"0001"; -- at state 4 last read is 1-word?
+    S_burst_limited <= R_word_count when R_word_count < 16 else x"0010"; -- limit burst to max 16 x 32-bit
+    suggest_burst <= S_burst_limited when R_suggest_cache='1' and R_word_count /= 0 else x"0001"; -- at state 4 last read is 1-word?
     --suggest_burst <= R_word_count when R_state=4 else x"0001"; -- at state 4 last read is 1-word?
     --suggest_burst <= R_word_count when R_suggest_cache='1' and R_word_count=2 else x"0001"; -- at state 4 last read is 1-word?
     --suggest_burst <= x"0001"; -- at state 4 last read is 1-word?
@@ -395,7 +405,7 @@ begin
       end generate; -- no_fast_ram
       yes_fast_ram: if C_fast_ram = true generate
         -- warning this is workaround and can cause deadlock
-        S_need_refill <= '1' when R_need_refill_cpu='1' and
+        S_need_refill <= '1' when R_need_refill_cpu='1' and R_line_wr /= R_line_rd and 
             (
               -- conservative request delay:
               -- effectively this does
@@ -407,8 +417,8 @@ begin
               -- XXX FIXME:
               -- ready signal can be missed and this will lead to deadlock
               -- and screen will freeze.
-              conv_integer(not R_shifting_counter(C_shift_addr_width-1 downto 0)) = 0 -- during last shift cycle we can start new data
-              or
+              --conv_integer(not R_shifting_counter(C_shift_addr_width-1 downto 0)) = 0 -- during last shift cycle we can start new data
+              --or
               R_shifting_counter(C_shift_addr_width) = '1' -- past last shift cycle, shift fully complete, start new data
             )
             else '0';
