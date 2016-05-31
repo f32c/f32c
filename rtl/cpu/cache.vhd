@@ -157,6 +157,7 @@ architecture x of cache is
 
     signal M_d_bram: T_dcache_bram;
     signal R_d_tag_from_bram: std_logic_vector(C_d_tag_bits - 1 downto 0);
+    signal R_d_data_from_bram: std_logic_vector(31 downto 0);
     signal R_d_cacheable_cycle, R_d_fetch_done: boolean;
     signal R_d_rd_addr: std_logic_vector(31 downto 2);
 
@@ -209,6 +210,7 @@ begin
     begin
     if rising_edge(clk) and (not C_debug or clk_enable = '1') then
 	R_d_tag_from_bram <= d_from_bram(d_from_bram'high downto 32);
+	R_d_data_from_bram <= d_from_bram(31 downto 0);
 	R_d_fetch_done <= d_miss_cycle and dmem_data_ready = '1';
 	if not d_miss_cycle then
 	    R_d_rd_addr <= cpu_d_addr;
@@ -218,6 +220,23 @@ begin
     end if;
     end process;
 
+    d_wr_mux_iter: for b in 0 to 3 generate
+    begin
+    d_to_bram(b * 8 + 7 downto b * 8) <=
+      dmem_data_in(b * 8 + 7 downto b * 8) when d_miss_cycle
+      else cpu_d_data_out(b * 8 + 7 downto b * 8) when cpu_d_byte_sel(b) = '1'
+      else R_d_data_from_bram(b * 8 + 7 downto b * 8);
+    end generate;
+
+    d_to_bram(d_to_bram'high downto 32) <=
+      '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
+      when d_miss_cycle
+      else '1' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
+      when cpu_d_byte_sel = x"f" or (R_d_tag_from_bram =
+      '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
+      and cpu_d_addr = R_d_rd_addr)
+      else '0' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
+
     d_cacheable <= cpu_d_addr(31 downto 28) = C_xram_base;
     d_rd_addr <= R_d_rd_addr(d_rd_addr'range) when d_miss_cycle
       else cpu_d_addr(d_rd_addr'range);
@@ -226,14 +245,6 @@ begin
     d_bram_wr_enable <= (d_miss_cycle and dmem_data_ready = '1')
       or (not d_miss_cycle and d_cacheable and cpu_d_write = '1'
       and cpu_d_strobe = '1');
-    d_to_bram(31 downto 0) <= dmem_data_in when d_miss_cycle
-      else cpu_d_data_out;
-    d_to_bram(d_to_bram'high downto 32) <=
-      '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
-      when d_miss_cycle
-      else '1' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
-      when cpu_d_byte_sel = x"f"
-      else '0' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
     d_miss_cycle <= R_d_cacheable_cycle and not R_d_fetch_done
       and R_d_tag_from_bram /=
       '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
