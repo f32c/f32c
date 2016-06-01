@@ -75,7 +75,7 @@ begin
       ready_out(i) <= mpbus(i).data_ready;
       mpbus(i).addr_strobe <= bus_in(i).addr_strobe;
       mpbus(i).addr <= "10" & bus_in(i).addr;
-      mpbus(i).burst_len <= "001";
+      mpbus(i).burst_len <= "000";
       mpbus(i).write <= bus_in(i).write;
       mpbus(i).data_in <= bus_in(i).data_in;
       mpbus(i).byte_sel <= bus_in(i).byte_sel;
