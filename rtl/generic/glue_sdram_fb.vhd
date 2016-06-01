@@ -92,7 +92,7 @@ entity glue_sdram_fb is
 	C_spi_fixed_speed: std_logic_vector := "1111";
 	C_simple_in: integer range 0 to 128 := 32;
 	C_simple_out: integer range 0 to 128 := 32;
-	C_framebuffer: boolean := false;
+	C_framebuffer: boolean := true;
 	C_gpio: integer range 0 to 128 := 32
     );
     port (
@@ -458,11 +458,15 @@ begin
 		R_simple_in(C_simple_in - 1 downto 0) <=
 		  simple_in(C_simple_in - 1 downto 0);
 	    end if;
-            if C_framebuffer and fb_tick = '1' then
-                R_fb_intr <= '1';
-            end if;
+	    if C_framebuffer and io_addr_strobe(R_cur_io_port) = '1' and
+	      io_addr(11 downto 4) = x"38" then
+		R_fb_intr <= '0';
+	    end if;
+	    if C_framebuffer and fb_tick = '1' then
+		R_fb_intr <= '1';
+	    end if;
 	end if;
-        if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
+	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
 	  and io_write = '1' then
 	    -- simple out
 	    if C_simple_out > 0 and io_addr(11 downto 4) = x"71" then
@@ -481,13 +485,22 @@ begin
 	    end if;
 	    -- framebuffer
 	    if C_framebuffer and io_addr(11 downto 4) = x"38" then
-                R_fb_intr <= '0';
-            end if;
+		if C_big_endian then
+		    R_fb_mode <= cpu_to_io(25 downto 24);
+		    R_fb_base_addr <=
+		      cpu_to_io(11 downto 8) &
+		      cpu_to_io(23 downto 16) &
+		      cpu_to_io(31 downto 26);
+		else
+		    R_fb_mode <= cpu_to_io(1 downto 0);
+		    R_fb_base_addr <= cpu_to_io(31 downto 2);
+		end if;
+	    end if;
 	    -- CPU reset control
 	    if C_cpus /= 1 and io_addr(11 downto 4) = x"7F" then
 		R_cpu_reset <= cpu_to_io(15 downto 0);
 	    end if;
-        end if;
+	end if;
     end process;
 
 
@@ -503,11 +516,11 @@ begin
     port map (
 	clk => clk, clk_dac => clk_325m,
 	addr_strobe => sdram_bus(C_fb_port).addr_strobe,
-	addr_out => sdram_bus(C_fb_port).addr,
+	addr_out => sdram_bus(C_fb_port).addr(29 downto 2),
 	data_ready => sdram_bus(C_fb_port).data_ready,
 	data_in => sdram_bus(C_fb_port).data_out,
 	mode => R_fb_mode,
-	base_addr => R_fb_base_addr,
+	base_addr => R_fb_base_addr(29 downto 2),
 	dac_out => video_dac,
 	tick_out => fb_tick
     );
