@@ -71,12 +71,13 @@ entity esa11_xram_acram_ddr3 is
         C_vgadma: boolean := false; -- false: use glue's vgabit or vgatxt, true: use plasma's dma-axi bitmap
         C_axidma_c2: boolean := true;
         C_video_base_addr_out: boolean := true;
+        C_axidma_bpp: integer := 32; -- bpp 8/16/32
 
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
 
-	C_vgahdmi: boolean := false;
         C_video_cache_size: integer := 8; -- KB video cache (vgahdmi) (0: disable, 2,4,8,16,32:enable)
 	C_vgahdmi_fifo_timeout: integer := 48;
+	C_vgahdmi: boolean := false;
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: ESA11-7a102t MIPS compatible soft-core 100MHz 256MB DDR3"; -- default banner as initial content of screen BRAM, NOP for RAM
@@ -364,6 +365,7 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     signal S_vga_data, S_vga_data_debug: std_logic_vector(31 downto 0);
     signal S_vga_read_ready: std_logic;
     signal S_vga_data_ready: std_logic;
+    signal red_byte, green_byte, blue_byte: std_logic_vector(7 downto 0);
     signal vga_data_from_fifo: std_logic_vector(31 downto 0);
     signal vga_refresh: std_logic;
     signal vga_reg_dtack: std_logic; -- low active, ack from VGA reg access
@@ -1015,7 +1017,7 @@ begin
       C_burst_max => 64,
       C_width => 640,
       C_height => 480,
-      C_data_width => 32,
+      C_data_width => C_axidma_bpp,
       C_addr_width => 11
     )
     port map
@@ -1032,14 +1034,31 @@ begin
       base_addr => S_vga_base_addr(29 downto 2),
       active => S_vga_active_enabled,
       frame => open, -- vga_frame, -- for f32c video interrupt
-      data_out(7 downto 0) => vga_data_from_fifo(7 downto 0),
-      data_out(31 downto 8) => open,
+      data_out => vga_data_from_fifo,
       fetch_next => S_vga_fetch_next
     );
     S_vga_active_enabled <= not S_vga_vsync;
     --S_vga_data_debug <= x"00AA00AA"; -- stripe on the screen
     --S_vga_data_debug <= x"0280_0000" when S_vga_suggest_cache='0' else x"031CE000"; -- full screen of RGB series
     --S_vga_data_debug <= x"0280_0000" when S_vga_suggest_cache='0' else S_vga_data;
+
+    G_axidma_8bpp: if C_axidma_bpp = 8 generate
+      red_byte   <= vga_data_from_fifo(7 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5);
+      green_byte <= vga_data_from_fifo(4 downto 2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2);
+      blue_byte  <= vga_data_from_fifo(1 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0);
+    end generate;
+
+    G_axidma_16bpp: if C_axidma_bpp = 16 generate
+      red_byte   <= vga_data_from_fifo(15 downto 11) & vga_data_from_fifo(11) & vga_data_from_fifo(11) & vga_data_from_fifo(11);
+      green_byte <= vga_data_from_fifo(10 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5);
+      blue_byte  <= vga_data_from_fifo(4 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0);
+    end generate;
+
+    G_axidma_32bpp: if C_axidma_bpp = 32 generate
+      red_byte   <= vga_data_from_fifo(23 downto 16);
+      green_byte <= vga_data_from_fifo(15 downto 8);
+      blue_byte  <= vga_data_from_fifo(7 downto 0);
+    end generate;
 
     -- VGA video generator - pixel clock synchronous
     vgabitmap: entity work.vga
@@ -1052,9 +1071,9 @@ begin
       test_picture => '0', -- shows test picture when VGA is disabled (on startup)
       fetch_next  => S_vga_fetch_next,
       line_repeat => S_vga_line_repeat,
-      red_byte    => vga_data_from_fifo(7 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5),
-      green_byte  => vga_data_from_fifo(4 downto 2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2),
-      blue_byte   => vga_data_from_fifo(1 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0),
+      red_byte    => red_byte,
+      green_byte  => green_byte,
+      blue_byte   => blue_byte,
       vga_r => S_vga_red,
       vga_g => S_vga_green,
       vga_b => S_vga_blue,
