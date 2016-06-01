@@ -329,6 +329,7 @@ architecture Behavioral of glue_xram is
     signal vga_fetch_next, S_vga_fetch_enabled: std_logic; -- video module requests next data from fifo
     signal vga_line_repeat: std_logic;
     signal vga_data_from_fifo: std_logic_vector(31 downto 0);
+    signal vga_data_r, vga_data_g, vga_data_b: std_logic_vector(7 downto 0);
     -- VGA RAM port
     signal vga_addr: std_logic_vector(29 downto 2);
     signal vga_addr_strobe: std_logic; -- FIFO requests to read from RAM
@@ -1217,6 +1218,26 @@ begin
           );
     end generate;
 
+    -- 8/16/32 bpp conversion into RGB-888 for display.
+    -- unspported bpp values produce black screen
+    -- LSB bit extended as padding improving max dynamic range
+    G_vgabit_RGB_332_888: if C_vgahdmi_fifo_data_width = 8 generate
+      vga_data_r <= vga_data_from_fifo(7 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5); -- red
+      vga_data_g <= vga_data_from_fifo(4 downto 2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2); -- green
+      vga_data_b <= vga_data_from_fifo(1 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0); -- blue
+    end generate;
+    G_vgabit_RGB_565_888: if C_vgahdmi_fifo_data_width = 16 generate
+      vga_data_r <= vga_data_from_fifo(15 downto 11) & vga_data_from_fifo(11) & vga_data_from_fifo(11) & vga_data_from_fifo(11); -- red
+      vga_data_g <= vga_data_from_fifo(10 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5); -- green
+      vga_data_b <= vga_data_from_fifo(4 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0); -- blue
+    end generate;
+    G_vgabit_RGB_888_888: if C_vgahdmi_fifo_data_width = 32 generate
+      -- only 24 from 32 bits are used, 8 bits reserved for alpha channel
+      vga_data_r <= vga_data_from_fifo(23 downto 16); -- red
+      vga_data_g <= vga_data_from_fifo(15 downto 8); -- green
+      vga_data_b <= vga_data_from_fifo(7 downto 0); -- blue
+    end generate;
+
     -- VGA video generator - pixel clock synchronous
     vgabitmap: entity work.vga
     --generic map (
@@ -1227,9 +1248,9 @@ begin
       test_picture => not S_vga_enable, -- shows test picture when VGA is disabled (on startup)
       fetch_next => vga_fetch_next,
       line_repeat => vga_line_repeat,
-      red_byte    => vga_data_from_fifo(7 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5),
-      green_byte  => vga_data_from_fifo(4 downto 2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2),
-      blue_byte   => vga_data_from_fifo(1 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0),
+      red_byte    => vga_data_r,
+      green_byte  => vga_data_g,
+      blue_byte   => vga_data_b,
       vga_r => S_vga_r,
       vga_g => S_vga_g,
       vga_b => S_vga_b,
