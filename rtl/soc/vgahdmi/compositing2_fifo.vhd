@@ -367,25 +367,14 @@ begin
 
     -- experimental read ready signaling,
     -- currently only used when connecting directly to axi
-    -- do and why do we need delayed read ready??
-    process(clk) begin
-      if rising_edge(clk) then
-        R_read_ready <= R_shifting_counter(C_shift_addr_width);
-      end if;
-    end process;
-    --read_ready <= R_shifting_counter(C_shift_addr_width); -- works for no burst
-    read_ready <= R_read_ready and R_shifting_counter(C_shift_addr_width); -- during shifting we are not ready to accept new data
-    --read_ready <= S_need_refill and R_read_ready and R_shifting_counter(C_shift_addr_width); -- during shifting we are not ready to accept new data
+    read_ready <= R_shifting_counter(C_shift_addr_width); -- works for the burst
     --read_ready <= S_need_refill and R_shifting_counter(C_shift_addr_width); -- this works only for no burst but strange: works only long bitmap lines, short sprites dont' work
 
     suggest_cache <= R_suggest_cache;
     G_yes_burst: if C_burst_max > 1 generate
       S_burst_limited <= R_word_count when R_word_count < C_burst_max else std_logic_vector(to_unsigned(C_burst_max,16)); -- limit burst to max 16 x 32-bit
+      --suggest_burst <= S_burst_limited when R_suggest_cache='1' else x"0001"; -- at state 4 last read is 1-word?
       suggest_burst <= S_burst_limited when R_suggest_cache='1' and R_word_count /= 0 else x"0001"; -- at state 4 last read is 1-word?
-    --suggest_burst <= R_word_count when R_state=4 else x"0001"; -- at state 4 last read is 1-word?
-    --suggest_burst <= R_word_count when R_suggest_cache='1' and R_word_count=2 else x"0001"; -- at state 4 last read is 1-word?
-    --suggest_burst <= x"0001"; -- at state 4 last read is 1-word?
-    --suggest_burst <= R_word_count when R_suggest_cache='1' else x"0001"; -- it should work but it doesn't
     end generate;
 
     -- need refill signal must be CPU synchronous
@@ -620,7 +609,8 @@ end;
 
 -- [x] cache support (save bandwidth when displaying font using tiled sprites)
 
--- [ ] axi burst: why do we need read_ready delay hack, is ready wrong timed
+-- [x] axi burst: why do we need read_ready delay hack, is ready wrong timed
+--     no need for ready delay, ready seems correctly timed
 
 -- [ ] axi burst: why ready and-masked with S_need_refill doesn't work, 
 --     is S_need_refill wrong timed
@@ -628,7 +618,12 @@ end;
 
 -- [ ] axi burst: can we get along without R_word_count /= 0
        -- or when R_word_count = 0 prevent addr_strobe ?
+       -- mostly yes but when uploading c2_sprites and then c2_font
+       -- screen freezes without R_word_count /= 0
+       -- with R_word_count /= 0 works fine
 
 -- [ ] 24bpp: how can it be easily done (bandwidth saving instead of fetching 32bit
 
 -- [ ] FIFO for max burst length to avoid de-asserting read_ready and intermittent strobe
+
+-- [ ] burst: upload c2_sprites, c2_font and screen blanks, unrecoverable
