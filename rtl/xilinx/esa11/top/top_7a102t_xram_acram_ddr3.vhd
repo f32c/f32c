@@ -69,6 +69,7 @@ entity esa11_xram_acram_ddr3 is
         C3_MEM_BANKADDR_WIDTH : integer := 3;
         
         C_vgadma: boolean := false; -- false: use glue's vgabit or vgatxt, true: use plasma's dma-axi bitmap
+
         C_axidma_c2: boolean := true;
         C_video_base_addr_out: boolean := true;
         C_axidma_bpp: integer := 32; -- bpp 8/16/32
@@ -1034,7 +1035,7 @@ begin
       base_addr => S_vga_base_addr(29 downto 2),
       active => S_vga_active_enabled,
       frame => open, -- vga_frame, -- for f32c video interrupt
-      data_out => vga_data_from_fifo,
+      data_out => vga_data_from_fifo(C_axidma_bpp-1 downto 0),
       fetch_next => S_vga_fetch_next
     );
     S_vga_active_enabled <= not S_vga_vsync;
