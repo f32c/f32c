@@ -59,20 +59,21 @@ entity glue is
 
     C_dvid_ddr: boolean := false; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver
     
-    C_vgahdmi: boolean := false;
+    C_vgahdmi: boolean := true;
     -- insert cache between RAM and compositing2 video fifo
     C_video_cache_size: integer := 32;  -- KB size 0:disable 2,4,8,16,32:enable
+    C_video_cache_use_i: boolean := true; -- use I-data caching style, faster
     -- number of pixels for line step 640
     C_vgahdmi_fifo_width: integer := 640;
     -- number of scan lines: 480
     C_vgahdmi_fifo_height: integer := 480;
     -- normally this should be  actual bits per pixel
-    C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
+    C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8; -- bpp (currently 8/16/32 supported)
     -- width of FIFO address space -> size of fifo
     -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
     C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480                   
       C_vgatext_bits: integer := 4;   -- 64 possible colors
