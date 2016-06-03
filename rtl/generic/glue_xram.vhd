@@ -112,8 +112,6 @@ generic (
   C_lvds_display: boolean := false; -- false: normal DVI-D/HDMI, true: bare LCD panel
   C_video_cache_size: integer := 0; -- KB
   --C_video_cache_all: std_logic := '0'; -- 0 cache pixel content only, 1 cache everything (all c2 pointers and content)
-  C_video_cache_use_i: boolean := false; -- true: use instruction cache (faster, maybe buggy), false: use data cache (slower, works)
-  C_video_base_addr_out: boolean := false;
   -- TV simple 512x512 bitmap
   C_tv: boolean := false; -- enable TV output
   C_tv_fifo_width: integer := 512;
@@ -122,6 +120,9 @@ generic (
   C_tv_fifo_addr_width: integer := 11;
   -- VGA/HDMI simple 640x480 bitmap only
   C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
+  C_video_cache_use_i: boolean := false; -- true: use instruction cache (faster, maybe buggy), false: use data cache (slower, works)
+  C_video_base_addr_out: boolean := false;
+  C_vgahdmi_fifo_fast_ram: boolean := true;
   C_vgahdmi_fifo_timeout: integer := 0; -- abort compositing at N pixels before end of line (0 disabled)
   C_vgahdmi_burst_max: integer := 1; -- values >= 2 enable the burst
   C_vgahdmi_fifo_width: integer := 640;
@@ -1169,6 +1170,7 @@ begin
     -- compositing2 video accelerator, shows linked list of pixel data
     comp_fifo: entity work.compositing2_fifo
     generic map (
+      C_fast_ram => C_vgahdmi_fifo_fast_ram,
       C_timeout => C_vgahdmi_fifo_timeout,
       C_burst_max => C_vgahdmi_burst_max,
       C_width => C_vgahdmi_fifo_width,

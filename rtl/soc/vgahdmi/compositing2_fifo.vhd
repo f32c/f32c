@@ -210,14 +210,13 @@ architecture behavioral of compositing2_fifo is
     signal R_vertical_scroll, S_vertical_scroll_next: integer range 0 to C_height-1; -- y-position scroll fix
     signal S_vertical_scrolled: std_logic_vector(29 downto 2);
     signal R_state: integer range 0 to 4;
-    signal R_position, R_word_count: std_logic_vector(15 downto 0) := x"0001";
-    signal S_position, S_pixel_count: std_logic_vector(15 downto 0);
+    signal R_position: std_logic_vector(15 downto 0);
+    signal R_word_count: std_logic_vector(15 downto 0) := x"0001";
     signal S_pixels_remaining: std_logic_vector(15 downto 0);
     signal R_suggest_cache: std_logic := '0';
     signal R_timeout: std_logic := '0';
     signal R_read_ready: std_logic := '0';
     signal S_burst_limited: std_logic_vector(15 downto 0) := x"0001";
-    constant C_state_read_line_start: integer := 0;
     -- indicates which line in buffer (containing 2 lines) is written (compositing from RAM)
     -- and which line is read (by display output)
     signal R_line_rd, R_line_wr: std_logic := '0'; -- simple 1-bit index of line
@@ -378,6 +377,10 @@ begin
     end generate;
 
     -- need refill signal must be CPU synchronous
+    -- attention: R_need_refill_cpu is clk_pixel synchronos
+    -- R_need_refill_cpu will come with a delay,
+    -- a possible problem is that un-needed data may be requested
+    -- using address_strobe
     process(clk) begin
       if rising_edge(clk) then
         if R_line_wr = R_line_rd
@@ -399,7 +402,7 @@ begin
       end generate; -- no_fast_ram
       yes_fast_ram: if C_fast_ram = true generate
         -- warning this is workaround and can cause deadlock
-        S_need_refill <= '1' when R_need_refill_cpu='1' and R_line_wr /= R_line_rd and 
+        S_need_refill <= '1' when R_need_refill_cpu='1' and
             (
               -- conservative request delay:
               -- effectively this does
@@ -423,55 +426,6 @@ begin
     addr_strobe <= S_need_refill;
     addr_out <= R_sram_addr;
 
-    -- Dequeue pixel data from the circular buffer
-    -- by incrementing R_pixbuf_rd_addr on rising edge of clk
-    process(clk_pixel)
-      begin
-        if rising_edge(clk_pixel) then
-          if active = '0' then
-            R_pixbuf_rd_addr <= (others => '0');  -- this will read data from RAM
-            R_line_rd <= '0'; -- reset line to read from
-            R_vertical_scroll <= C_vscroll; -- vertical scroll to fix fifo delay
-          else
-            if fetch_next = '1' then
-              if R_pixbuf_rd_addr = C_width-1 then -- next line in buffer
-                -- this is executed once at the end of line (right of screen)
-                R_pixbuf_rd_addr <= (others => '0');
-                R_line_rd <= not R_line_rd; -- + 1;
-                R_vertical_scroll <= S_vertical_scroll_next;
-                R_line_start <= S_vertical_scrolled;
-              else
-                R_pixbuf_rd_addr <= R_pixbuf_rd_addr + 1;
-              end if;
-	    end if;
-          end if;
-        end if;
-      end process;
-
-    S_vertical_scrolled <= base_addr+R_vertical_scroll;
-    S_vertical_scroll_next <= 0 when R_vertical_scroll = C_height-1
-                                else R_vertical_scroll+1;
-
-    G_timeout: if C_timeout > 0 generate
-      process(clk_pixel)
-        begin
-          if rising_edge(clk_pixel) then
-            if R_pixbuf_rd_addr = 0 then
-              R_timeout <= '0';
-            end if;
-            if R_pixbuf_rd_addr = C_width-C_timeout then
-              R_timeout <= '1';
-            end if;
-          end if;
-        end process;
-    end generate;
-
-    -- compositing must erase stale data after use
-    -- needs clean memory for compositing fresh data
-    -- (erasing is done with fetch_next signal)
-    -- a registered, non-pass-through BRAM block
-    -- is required for this to work
-    S_compositing_erase <= fetch_next;
     -- sprite with large negative offset is invisble
     -- S_offset_visible <= '0' when R_compositing_active_offset(15 downto 14) = "10" else '1';
     -- write to buffer during state 4 (fetching of pixel data)
@@ -549,9 +503,6 @@ begin
       S_bram_data_in <= R_data_in_shift(C_data_width-1 downto 0);
     end generate;
 
-    -- calculate address for reading from line memory
-    S_pixbuf_out_mem_addr <= R_line_rd & R_pixbuf_rd_addr(C_addr_width-2 downto 0);
-
     linememory: entity work.bram_true2p_2clk
     generic map (
         dual_port => True, -- one port takes data from RAM, other port outputs to video
@@ -572,6 +523,72 @@ begin
         data_out_a => open,
         data_out_b => data_out
     );
+
+    ---------------------------------------------------------
+    -- clk_pixel synchronous readout of composited content --
+    ---------------------------------------------------------
+
+    -- calculate address for reading from line memory
+    S_pixbuf_out_mem_addr <= R_line_rd & R_pixbuf_rd_addr(C_addr_width-2 downto 0);
+
+    -- Dequeue pixel data from the circular buffer
+    -- by incrementing R_pixbuf_rd_addr on rising edge of clk
+    process(clk_pixel)
+      begin
+        if rising_edge(clk_pixel) then
+          if active = '0' then
+            R_pixbuf_rd_addr <= (others => '0');  -- this will read data from RAM
+            R_line_rd <= '0'; -- reset line to read from
+            R_vertical_scroll <= C_vscroll; -- vertical scroll to fix fifo delay
+          else
+            if fetch_next = '1' then
+              if R_pixbuf_rd_addr = C_width-1 then -- next line in buffer
+                -- this is executed once at the end of line (right of screen)
+                R_pixbuf_rd_addr <= (others => '0');
+                R_line_rd <= not R_line_rd; -- + 1;
+                R_vertical_scroll <= S_vertical_scroll_next;
+                R_line_start <= S_vertical_scrolled;
+              else
+                R_pixbuf_rd_addr <= R_pixbuf_rd_addr + 1;
+              end if;
+	    end if;
+          end if;
+        end if;
+      end process;
+
+    S_vertical_scrolled <= base_addr+R_vertical_scroll;
+    S_vertical_scroll_next <= 0 when R_vertical_scroll = C_height-1
+                                else R_vertical_scroll+1;
+
+    -- compositing must erase stale data after use.
+    -- immediately after data is read by "fetch_next" signal,
+    -- "linememory" BRAM must be erased to "color_background"
+    -- in order to be ready for
+    -- compositing new incoming data.
+    -- (erasing is done with the same "fetch_next" signal)
+    -- a registered, non-pass-through BRAM block
+    -- is required for this to work
+    S_compositing_erase <= fetch_next;
+
+    -- at a configurable amount of pixels end of line and
+    -- before "R_line_rd" changes this process will generate
+    -- timeout signal in order to cancel further compositing
+    -- This may reduce picture distortion in case of bandwidth
+    -- shortage
+    G_timeout: if C_timeout > 0 generate
+      process(clk_pixel)
+        begin
+          if rising_edge(clk_pixel) then
+            if R_pixbuf_rd_addr = 0 then
+              R_timeout <= '0';
+            end if;
+            if R_pixbuf_rd_addr = C_width-C_timeout then
+              R_timeout <= '1';
+            end if;
+          end if;
+        end process;
+    end generate;
+
 end;
 
 -- todo
