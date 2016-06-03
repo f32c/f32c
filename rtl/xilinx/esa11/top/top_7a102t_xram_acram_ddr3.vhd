@@ -1015,6 +1015,7 @@ begin
     (
       --C_timeout => 48,
       --C_timeout_incomplete => true,
+      C_fast_ram => false,
       C_burst_max => 64,
       C_width => 640,
       C_height => 480,

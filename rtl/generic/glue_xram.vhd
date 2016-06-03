@@ -123,6 +123,7 @@ generic (
   -- VGA/HDMI simple 640x480 bitmap only
   C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
   C_vgahdmi_fifo_timeout: integer := 0; -- abort compositing at N pixels before end of line (0 disabled)
+  C_vgahdmi_burst_max: integer := 1; -- values >= 2 enable the burst
   C_vgahdmi_fifo_width: integer := 640;
   C_vgahdmi_fifo_height: integer := 480;
   C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
@@ -664,7 +665,7 @@ begin
 
     G_sdram:
     if C_sdram generate
-    sdram: entity work.sdram
+    sdram: entity work.sdram_mz_wrap
     generic map (
       C_ports => C_xram_ports,
       --C_prio_port => 2, -- VGA priority port not yet implemented
@@ -1169,6 +1170,7 @@ begin
     comp_fifo: entity work.compositing2_fifo
     generic map (
       C_timeout => C_vgahdmi_fifo_timeout,
+      C_burst_max => C_vgahdmi_burst_max,
       C_width => C_vgahdmi_fifo_width,
       C_height => C_vgahdmi_fifo_height,
       C_data_width => C_vgahdmi_fifo_data_width,
