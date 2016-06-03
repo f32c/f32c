@@ -125,9 +125,12 @@ entity toplevel is
     C_gpio: integer := 32; -- number of GPIO pins
     C_spi: integer := 2; -- number of SPI interfaces
 
-    C_video_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
-
     C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
+      -- currently on ulx2s video cache doesn't work
+      -- some mixtures of bugs, might not directly be the fault in cache itself
+      C_video_cache_size: integer := 2; -- KB (0 to disable, 2,4,8,16,32 to enable)
+      C_video_cache_use_i: boolean := false; -- must be false, some data corruption with i-cache = true
+      C_vgahdmi_fifo_fast_ram: boolean := true; -- should be set true with cache, cache is faster than pixel shifter
       -- number of pixels for line; 640
       C_vgahdmi_fifo_width: integer := 640;
       -- number of scan lines: 480
@@ -135,7 +138,7 @@ entity toplevel is
       -- normally this should be  actual bits per pixel
       C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
       -- width of FIFO address space -> size of fifo
-      -- for 8bpp compositing use 11 -> 2048 bytes
+      -- for 640 pixel wide compositing use 11 -> 2048 bytes 8bpp
       C_vgahdmi_fifo_addr_width: integer := 11;
 
     C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
@@ -175,7 +178,8 @@ entity toplevel is
           C_vgatext_bitmap_fifo_height: integer := 480;
           -- output data width 8bpp
           C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
-          -- bitmap width of FIFO address space length = 2^width * 4 byte
+          -- width of FIFO address space -> size of fifo
+          -- for 640 pixel wide compositing use 11 -> 2048 bytes 8bpp
           C_vgatext_bitmap_fifo_addr_width: integer := 11;
 
     C_ledstrip: boolean := false;
@@ -188,9 +192,8 @@ entity toplevel is
     -- normally this should be  actual bits per pixel
     C_ledstrip_fifo_data_width: integer range 8 to 32 := 8;
     -- width of FIFO address space -> size of fifo
-    -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
+    -- for 640 pixel wide compositing use 11 -> 2048 bytes 8bpp
     C_ledstrip_fifo_addr_width: integer := 11;
-
 
     C_pcm: boolean := true;
     C_timer: boolean := true;
@@ -354,9 +357,11 @@ begin
       C_simple_in => C_simple_in,
       C_gpio => C_gpio,
 
-      C_video_cache_size => C_video_cache_size,
       -- vga simple bitmap
       C_vgahdmi => C_vgahdmi,
+      C_video_cache_size => C_video_cache_size,
+      C_video_cache_use_i => C_video_cache_use_i,
+      C_vgahdmi_fifo_fast_ram => C_vgahdmi_fifo_fast_ram,
       C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
       C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
