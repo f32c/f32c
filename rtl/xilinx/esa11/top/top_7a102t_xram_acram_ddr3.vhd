@@ -36,8 +36,6 @@ library unisim;
 use unisim.vcomponents.all;
 
 use work.f32c_pack.all;
-use work.dmacache_pkg.all;
-use work.techx_pkg.all;
 use work.axi_pack.all;
 
 entity esa11_xram_acram_ddr3 is
@@ -226,11 +224,6 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     signal dma_data : std_logic_vector(31 downto 0);
     signal cche_debug : std_logic_vector(7 downto 0) := (others => '0');
     signal cche_busy : std_logic := '0';
-    signal vgachannel_fromhost : DMAChannel_FromHost;
-    signal vgachannel_tohost : DMAChannel_ToHost;
-    signal spr0channel_fromhost : DMAChannel_FromHost;
-    signal dummy_fromhost : DMAChannel_FromHost;
-    signal spr0channel_tohost : DMAChannel_ToHost;
     signal vga_clk: std_logic;
     signal S_vga_red, S_vga_green, S_vga_blue: std_logic_vector(7 downto 0);
     signal S_vga_blank: std_logic;
