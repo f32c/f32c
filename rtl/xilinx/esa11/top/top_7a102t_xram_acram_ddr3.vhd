@@ -38,6 +38,7 @@ use unisim.vcomponents.all;
 use work.f32c_pack.all;
 use work.dmacache_pkg.all;
 use work.techx_pkg.all;
+use work.axi_pack.all;
 
 entity esa11_xram_acram_ddr3 is
     generic (
@@ -380,6 +381,9 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     signal vga_read : std_logic_vector(15 downto 0) := (others => '0');
     signal vga_window : std_logic;
     signal vblank_int : std_logic;
+    
+    signal from_reader_to_axi: T_axi_out;
+    signal from_axi_to_reader: T_axi_in;
 
     -- to switch glue/plasma vga
     signal glue_vga_vsync_n, glue_vga_hsync_n: std_logic;
@@ -957,48 +961,11 @@ begin
     end generate; -- C_vgadma
 
     G_axidma_c2: if C_axidma_c2 generate
-    axidma: entity work.axidma
+    axidma: entity work.axi_read
       port map
       (
-        m_axi_aresetn     => l01_axi_areset_n,
-        m_axi_aclk        => l01_axi_aclk,
-        m_axi_awid        => l01_axi_awid,
-        m_axi_awaddr      => l01_axi_awaddr,
-        m_axi_awlen       => l01_axi_awlen,
-        m_axi_awsize      => l01_axi_awsize,
-        m_axi_awburst     => l01_axi_awburst,
-        m_axi_awlock      => l01_axi_awlock,
-        m_axi_awcache     => l01_axi_awcache,
-        m_axi_awprot      => l01_axi_awprot,
-        m_axi_awqos       => l01_axi_awqos,
-        m_axi_awvalid     => l01_axi_awvalid,
-        m_axi_awready     => l01_axi_awready,
-        m_axi_wdata       => l01_axi_wdata,
-        m_axi_wstrb       => l01_axi_wstrb,
-        m_axi_wlast       => l01_axi_wlast,
-        m_axi_wvalid      => l01_axi_wvalid,
-        m_axi_wready      => l01_axi_wready,
-        m_axi_bid         => l01_axi_bid,
-        m_axi_bresp       => l01_axi_bresp,
-        m_axi_bvalid      => l01_axi_bvalid,
-        m_axi_bready      => l01_axi_bready,
-        m_axi_arid        => l01_axi_arid,
-        m_axi_araddr      => l01_axi_araddr,
-        m_axi_arlen       => l01_axi_arlen,
-        m_axi_arsize      => l01_axi_arsize,
-        m_axi_arburst     => l01_axi_arburst,
-        m_axi_arlock      => l01_axi_arlock,
-        m_axi_arcache     => l01_axi_arcache,
-        m_axi_arprot      => l01_axi_arprot,
-        m_axi_arqos       => l01_axi_arqos,
-        m_axi_arvalid     => l01_axi_arvalid,
-        m_axi_arready     => l01_axi_arready,
-        m_axi_rid         => l01_axi_rid,
-        m_axi_rdata       => l01_axi_rdata,
-        m_axi_rresp       => l01_axi_rresp,
-        m_axi_rlast       => l01_axi_rlast,
-        m_axi_rvalid      => l01_axi_rvalid,
-        m_axi_rready      => l01_axi_rready,
+        axi_in => from_axi_to_reader,
+        axi_out => from_reader_to_axi,
 
         iaddr => S_vga_addr,
         iaddr_strobe => S_vga_addr_strobe,
@@ -1007,6 +974,49 @@ begin
         oready => S_vga_data_ready,
         iread_ready => S_vga_read_ready
     );
+    
+    -- the junk can stand here for testing, but later
+    -- it will be removed
+    -- all modules instantiated from top should use axi_in/axi_out
+    from_axi_to_reader.aresetn <= l01_axi_areset_n;
+    from_axi_to_reader.aclk <= l01_axi_aclk;
+    l01_axi_awid <= from_reader_to_axi.awid;
+    l01_axi_awaddr <= from_reader_to_axi.awaddr;
+    l01_axi_awlen <= from_reader_to_axi.awlen;
+    l01_axi_awsize <= from_reader_to_axi.awsize;
+    l01_axi_awburst <= from_reader_to_axi.awburst;
+    l01_axi_awlock <= from_reader_to_axi.awlock;
+    l01_axi_awcache <= from_reader_to_axi.awcache;
+    l01_axi_awprot <= from_reader_to_axi.awprot;
+    l01_axi_awqos <= from_reader_to_axi.awqos;
+    l01_axi_awvalid <= from_reader_to_axi.awvalid;
+    from_axi_to_reader.awready <= l01_axi_awready;
+    l01_axi_wdata <= from_reader_to_axi.wdata;
+    l01_axi_wstrb <= from_reader_to_axi.wstrb;
+    l01_axi_wlast <= from_reader_to_axi.wlast;
+    l01_axi_wvalid <= from_reader_to_axi.wvalid;
+    from_axi_to_reader.wready <= l01_axi_wready;
+    from_axi_to_reader.bid <= l01_axi_bid;
+    from_axi_to_reader.bresp <= l01_axi_bresp;
+    from_axi_to_reader.bvalid <= l01_axi_bvalid;
+    l01_axi_bready <= from_reader_to_axi.bready;
+    l01_axi_arid <= from_reader_to_axi.arid;
+    l01_axi_araddr <= from_reader_to_axi.araddr;
+    l01_axi_arlen <= from_reader_to_axi.arlen;
+    l01_axi_arsize <= from_reader_to_axi.arsize;
+    l01_axi_arburst <= from_reader_to_axi.arburst;
+    l01_axi_arlock <= from_reader_to_axi.arlock;
+    l01_axi_arcache <= from_reader_to_axi.arcache;
+    l01_axi_arprot <= from_reader_to_axi.arprot;
+    l01_axi_arqos <= from_reader_to_axi.arqos;
+    l01_axi_arvalid <= from_reader_to_axi.arvalid;
+    from_axi_to_reader.arready <= l01_axi_arready;
+    from_axi_to_reader.rid <= l01_axi_rid;
+    from_axi_to_reader.rdata <= l01_axi_rdata;
+    from_axi_to_reader.rresp <= l01_axi_rresp;
+    from_axi_to_reader.rlast <= l01_axi_rlast;
+    from_axi_to_reader.rvalid <= l01_axi_rvalid;
+    l01_axi_rready <= from_reader_to_axi.rready;
 
     -- data source: FIFO - cross clock domain cpu-pixel
     -- compositing2 video accelerator, shows linked list of pixel data
