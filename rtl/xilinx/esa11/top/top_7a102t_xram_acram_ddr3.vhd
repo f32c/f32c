@@ -69,8 +69,6 @@ entity esa11_xram_acram_ddr3 is
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
         
-        C_vgadma: boolean := false; -- false: use glue's vgabit or vgatxt, true: use plasma's dma-axi bitmap
-
         C_axidma_c2: boolean := true;
         C_video_base_addr_out: boolean := true;
         C_axidma_bpp: integer := 32; -- bpp 8/16/32
@@ -214,126 +212,6 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
 
     signal calib_done           : std_logic := '0';
 
-    signal l00_axi_areset_n     :  std_logic := '1';
-    signal l00_axi_aclk         :  std_logic := '0';
-    signal l00_axi_awid         :  std_logic_vector(0 downto 0);
-    signal l00_axi_awaddr       :  std_logic_vector(31 downto 0);
-    signal l00_axi_awlen        :  std_logic_vector(7 downto 0);
-    signal l00_axi_awsize       :  std_logic_vector(2 downto 0);
-    signal l00_axi_awburst      :  std_logic_vector(1 downto 0);
-    signal l00_axi_awlock       :  std_logic;
-    signal l00_axi_awcache      :  std_logic_vector(3 downto 0);
-    signal l00_axi_awprot       :  std_logic_vector(2 downto 0);
-    signal l00_axi_awqos        :  std_logic_vector(3 downto 0);
-    signal l00_axi_awvalid      :  std_logic;
-    signal l00_axi_awready      :  std_logic;
-    signal l00_axi_wdata        :  std_logic_vector(31 downto 0);
-    signal l00_axi_wstrb        :  std_logic_vector(3 downto 0);
-    signal l00_axi_wlast        :  std_logic;
-    signal l00_axi_wvalid       :  std_logic;
-    signal l00_axi_wready       :  std_logic;
-    signal l00_axi_bid          :  std_logic_vector(0 downto 0);
-    signal l00_axi_bresp        :  std_logic_vector(1 downto 0);
-    signal l00_axi_bvalid       :  std_logic;
-    signal l00_axi_bready       :  std_logic;
-    signal l00_axi_arid         :  std_logic_vector(0 downto 0);
-    signal l00_axi_araddr       :  std_logic_vector(31 downto 0);
-    signal l00_axi_arlen        :  std_logic_vector(7 downto 0);
-    signal l00_axi_arsize       :  std_logic_vector(2 downto 0);
-    signal l00_axi_arburst      :  std_logic_vector(1 downto 0);
-    signal l00_axi_arlock       :  std_logic;
-    signal l00_axi_arcache      :  std_logic_vector(3 downto 0);
-    signal l00_axi_arprot       :  std_logic_vector(2 downto 0);
-    signal l00_axi_arqos        :  std_logic_vector(3 downto 0);
-    signal l00_axi_arvalid      :  std_logic;
-    signal l00_axi_arready      :  std_logic;
-    signal l00_axi_rid          :  std_logic_vector(0 downto 0);
-    signal l00_axi_rdata        :  std_logic_vector(31 downto 0);
-    signal l00_axi_rresp        :  std_logic_vector(1 downto 0);
-    signal l00_axi_rlast        :  std_logic;
-    signal l00_axi_rvalid       :  std_logic;
-    signal l00_axi_rready       :  std_logic;
-
-    signal l01_axi_areset_n     :  std_logic := '1';
-    signal l01_axi_aclk         :  std_logic := '0';
-    signal l01_axi_awid         :  std_logic_vector(0 downto 0);
-    signal l01_axi_awaddr       :  std_logic_vector(31 downto 0);
-    signal l01_axi_awlen        :  std_logic_vector(7 downto 0);
-    signal l01_axi_awsize       :  std_logic_vector(2 downto 0);
-    signal l01_axi_awburst      :  std_logic_vector(1 downto 0);
-    signal l01_axi_awlock       :  std_logic;
-    signal l01_axi_awcache      :  std_logic_vector(3 downto 0);
-    signal l01_axi_awprot       :  std_logic_vector(2 downto 0);
-    signal l01_axi_awqos        :  std_logic_vector(3 downto 0);
-    signal l01_axi_awvalid      :  std_logic;
-    signal l01_axi_awready      :  std_logic;
-    signal l01_axi_wdata        :  std_logic_vector(31 downto 0);
-    signal l01_axi_wstrb        :  std_logic_vector(3 downto 0);
-    signal l01_axi_wlast        :  std_logic;
-    signal l01_axi_wvalid       :  std_logic;
-    signal l01_axi_wready       :  std_logic;
-    signal l01_axi_bid          :  std_logic_vector(0 downto 0);
-    signal l01_axi_bresp        :  std_logic_vector(1 downto 0);
-    signal l01_axi_bvalid       :  std_logic;
-    signal l01_axi_bready       :  std_logic;
-    signal l01_axi_arid         :  std_logic_vector(0 downto 0);
-    signal l01_axi_araddr       :  std_logic_vector(31 downto 0);
-    signal l01_axi_arlen        :  std_logic_vector(7 downto 0);
-    signal l01_axi_arsize       :  std_logic_vector(2 downto 0);
-    signal l01_axi_arburst      :  std_logic_vector(1 downto 0);
-    signal l01_axi_arlock       :  std_logic;
-    signal l01_axi_arcache      :  std_logic_vector(3 downto 0);
-    signal l01_axi_arprot       :  std_logic_vector(2 downto 0);
-    signal l01_axi_arqos        :  std_logic_vector(3 downto 0);
-    signal l01_axi_arvalid      :  std_logic;
-    signal l01_axi_arready      :  std_logic;
-    signal l01_axi_rid          :  std_logic_vector(0 downto 0);
-    signal l01_axi_rdata        :  std_logic_vector(31 downto 0);
-    signal l01_axi_rresp        :  std_logic_vector(1 downto 0);
-    signal l01_axi_rlast        :  std_logic;
-    signal l01_axi_rvalid       :  std_logic;
-    signal l01_axi_rready       :  std_logic;
-
-    signal l02_axi_areset_n     :  std_logic := '1';
-    signal l02_axi_aclk         :  std_logic := '0';
-    signal l02_axi_awid         :  std_logic_vector(0 downto 0);
-    signal l02_axi_awaddr       :  std_logic_vector(31 downto 0);
-    signal l02_axi_awlen        :  std_logic_vector(7 downto 0);
-    signal l02_axi_awsize       :  std_logic_vector(2 downto 0);
-    signal l02_axi_awburst      :  std_logic_vector(1 downto 0);
-    signal l02_axi_awlock       :  std_logic;
-    signal l02_axi_awcache      :  std_logic_vector(3 downto 0);
-    signal l02_axi_awprot       :  std_logic_vector(2 downto 0);
-    signal l02_axi_awqos        :  std_logic_vector(3 downto 0);
-    signal l02_axi_awvalid      :  std_logic;
-    signal l02_axi_awready      :  std_logic;
-    signal l02_axi_wdata        :  std_logic_vector(31 downto 0);
-    signal l02_axi_wstrb        :  std_logic_vector(3 downto 0);
-    signal l02_axi_wlast        :  std_logic;
-    signal l02_axi_wvalid       :  std_logic;
-    signal l02_axi_wready       :  std_logic;
-    signal l02_axi_bid          :  std_logic_vector(0 downto 0);
-    signal l02_axi_bresp        :  std_logic_vector(1 downto 0);
-    signal l02_axi_bvalid       :  std_logic;
-    signal l02_axi_bready       :  std_logic;
-    signal l02_axi_arid         :  std_logic_vector(0 downto 0);
-    signal l02_axi_araddr       :  std_logic_vector(31 downto 0);
-    signal l02_axi_arlen        :  std_logic_vector(7 downto 0);
-    signal l02_axi_arsize       :  std_logic_vector(2 downto 0);
-    signal l02_axi_arburst      :  std_logic_vector(1 downto 0);
-    signal l02_axi_arlock       :  std_logic;
-    signal l02_axi_arcache      :  std_logic_vector(3 downto 0);
-    signal l02_axi_arprot       :  std_logic_vector(2 downto 0);
-    signal l02_axi_arqos        :  std_logic_vector(3 downto 0);
-    signal l02_axi_arvalid      :  std_logic;
-    signal l02_axi_arready      :  std_logic;
-    signal l02_axi_rid          :  std_logic_vector(0 downto 0);
-    signal l02_axi_rdata        :  std_logic_vector(31 downto 0);
-    signal l02_axi_rresp        :  std_logic_vector(1 downto 0);
-    signal l02_axi_rlast        :  std_logic;
-    signal l02_axi_rvalid       :  std_logic;
-    signal l02_axi_rready       :  std_logic;
-
     signal ram_en             : std_logic;
     signal ram_byte_we        : std_logic_vector(3 downto 0);
     signal ram_address        : std_logic_vector(29 downto 2);
@@ -382,13 +260,23 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     signal vga_window : std_logic;
     signal vblank_int : std_logic;
 
-    -- video axi
+    -- CPU memory axi port
+    signal l00_axi_areset_n: std_logic := '1';
+    signal l00_axi_aclk: std_logic := '0';
+    signal main_axi_miso: T_axi_miso;
+    signal main_axi_mosi: T_axi_mosi;
+
+    -- video axi port
+    signal l01_axi_areset_n: std_logic := '1';
+    signal l01_axi_aclk: std_logic := '0';
     signal from_reader_to_axi: T_axi_mosi;
     signal from_axi_to_reader: T_axi_miso;
-    
-    -- main memory axi multiport array
-    signal main_axi_miso, main_axi_miso2: T_axi_miso;
-    signal main_axi_mosi, main_axi_mosi2: T_axi_mosi;
+
+    -- unused axi port
+    signal l02_axi_areset_n: std_logic := '1';
+    signal l02_axi_aclk: std_logic := '0';
+    signal main_axi_miso2: T_axi_miso;
+    signal main_axi_mosi2: T_axi_mosi;
 
     -- to switch glue/plasma vga
     signal glue_vga_vsync_n, glue_vga_hsync_n: std_logic;
@@ -697,48 +585,6 @@ begin
     l00_axi_aclk <= clk; -- 100 MHz
     l01_axi_aclk <= clk; -- port l01 used for video
     l02_axi_aclk <= '0'; -- port l02 not used
-
-    G_l00_ajunk: if false generate
-    main_axi_mosi.awid <= l00_axi_awid;
-    main_axi_mosi.awaddr <= l00_axi_awaddr;
-    main_axi_mosi.awlen <= l00_axi_awlen;
-    main_axi_mosi.awsize <= l00_axi_awsize;
-    main_axi_mosi.awburst <= l00_axi_awburst;
-    main_axi_mosi.awlock <= l00_axi_awlock;
-    main_axi_mosi.awcache <= l00_axi_awcache;
-    main_axi_mosi.awprot <= l00_axi_awprot;
-    main_axi_mosi.awqos <= l00_axi_awqos;
-    main_axi_mosi.awvalid <= l00_axi_awvalid;
-    l00_axi_awready <= main_axi_miso.awready;
-    main_axi_mosi.wdata <= l00_axi_wdata;
-    main_axi_mosi.wstrb <= l00_axi_wstrb;
-    main_axi_mosi.wlast <= l00_axi_wlast;
-    main_axi_mosi.wvalid <= l00_axi_wvalid;
-    l00_axi_wready <= main_axi_miso.wready;
-    l00_axi_bid <= main_axi_miso.bid;
-    l00_axi_bresp <= main_axi_miso.bresp;
-    l00_axi_bvalid <= main_axi_miso.bvalid;
-    main_axi_mosi.bready <= l00_axi_bready;
-    main_axi_mosi.arid <= l00_axi_arid;
-    main_axi_mosi.araddr <= l00_axi_araddr;
-    main_axi_mosi.arlen <= l00_axi_arlen;
-    main_axi_mosi.arsize <= l00_axi_arsize;
-    main_axi_mosi.arburst <= l00_axi_arburst;
-    main_axi_mosi.arlock <= l00_axi_arlock;
-    main_axi_mosi.arcache <= l00_axi_arcache;
-    main_axi_mosi.arprot <= l00_axi_arprot;
-    main_axi_mosi.arqos <= l00_axi_arqos;
-    main_axi_mosi.arvalid <= l00_axi_arvalid;
-    l00_axi_arready <= main_axi_miso.arready;
-    l00_axi_rid <= main_axi_miso.rid;
-    l00_axi_rdata <= main_axi_miso.rdata;
-    l00_axi_rresp <= main_axi_miso.rresp;
-    l00_axi_rlast <= main_axi_miso.rlast;
-    l00_axi_rvalid <= main_axi_miso.rvalid;
-    main_axi_mosi.rready <= l00_axi_rready;
-    end generate;
-
-
     end generate; -- G_acram_real
 
     --FPGA_LED2 <= calib_done; -- should turn on 0.3 seconds after startup and remain on
@@ -754,121 +600,6 @@ begin
     vga_green <= glue_vga_green;
     vga_blue <= glue_vga_blue;
     end generate;
-
-    G_vga_plasma: if C_vgadma generate
-    -- DMA controller
-    dmacache: entity work.dmaCache32
-      port map
-      (
-        clk               => clk, -- 100MHz system and mcb_cmd clk
-        reset             => not calib_done,
-        tst_dbg(3)        => '0', -- gpio0_out(6),
-        tst_dbg(2)        => '0', -- gpio0_out(5),
-        tst_dbg(1)        => '0', -- gpio0_out(4),
-        tst_dbg(0)        => '0', -- key_s1_d,
-
-        m_axi_aresetn     => l01_axi_areset_n,
-        m_axi_aclk        => l01_axi_aclk,
-        m_axi_awid        => l01_axi_awid,
-        m_axi_awaddr      => l01_axi_awaddr,
-        m_axi_awlen       => l01_axi_awlen,
-        m_axi_awsize      => l01_axi_awsize,
-        m_axi_awburst     => l01_axi_awburst,
-        m_axi_awlock      => l01_axi_awlock,
-        m_axi_awcache     => l01_axi_awcache,
-        m_axi_awprot      => l01_axi_awprot,
-        m_axi_awqos       => l01_axi_awqos,
-        m_axi_awvalid     => l01_axi_awvalid,
-        m_axi_awready     => l01_axi_awready,
-        m_axi_wdata       => l01_axi_wdata,
-        m_axi_wstrb       => l01_axi_wstrb,
-        m_axi_wlast       => l01_axi_wlast,
-        m_axi_wvalid      => l01_axi_wvalid,
-        m_axi_wready      => l01_axi_wready,
-        m_axi_bid         => l01_axi_bid,
-        m_axi_bresp       => l01_axi_bresp,
-        m_axi_bvalid      => l01_axi_bvalid,
-        m_axi_bready      => l01_axi_bready,
-        m_axi_arid        => l01_axi_arid,
-        m_axi_araddr      => l01_axi_araddr,
-        m_axi_arlen       => l01_axi_arlen,
-        m_axi_arsize      => l01_axi_arsize,
-        m_axi_arburst     => l01_axi_arburst,
-        m_axi_arlock      => l01_axi_arlock,
-        m_axi_arcache     => l01_axi_arcache,
-        m_axi_arprot      => l01_axi_arprot,
-        m_axi_arqos       => l01_axi_arqos,
-        m_axi_arvalid     => l01_axi_arvalid,
-        m_axi_arready     => l01_axi_arready,
-        m_axi_rid         => l01_axi_rid,
-        m_axi_rdata       => l01_axi_rdata,
-        m_axi_rresp       => l01_axi_rresp,
-        m_axi_rlast       => l01_axi_rlast,
-        m_axi_rvalid      => l01_axi_rvalid,
-        m_axi_rready      => l01_axi_rready,
-
-        chns_from_host(0) => vgachannel_fromhost,
-        chns_from_host(1) => spr0channel_fromhost,
-
-        channels_to_host(0) => vgachannel_tohost,
-        channels_to_host(1) => spr0channel_tohost,
-
-        data_out => dma_data,
-        readBusy => cche_busy,
-        debug => cche_debug
-    );
-
-    --vreg_en  <= '1' when ram_address(31 downto 28) = B"1110" else '0';
-    --vreg_uds <= '0' when vreg_we = '1' else
-    --            '0' when ram_byte_we(0) = '1' or ram_byte_we(2) = '1' else '1';
-    --vreg_lds <= '0' when vreg_we = '1' else
-    --            '0' when ram_byte_we(1) = '1' or ram_byte_we(3) = '1' else '1';
-    --vreg_we  <= '0' when ram_byte_we(3 downto 0) /= "0000" else '1'; -- 0 means write
-
-    myvga : entity work.vga_controller
-    port map 
-    (
-      clk => clk, -- 100 MHz
-      reset => not calib_done,
-
-      reg_addr_in => (others => '0'), -- address(11 downto 0),
-      reg_data_in => (others => '0'), -- data_write(15 downto 0),
---      reg_data_in => data_write(31 downto 16),
-      reg_data_out => vga_read,
-      reg_rw => vreg_we,
-      reg_uds => vreg_uds,
-      reg_lds => vreg_lds,
-      reg_dtack => vga_reg_dtack,
-      reg_req => vreg_en,
-
-      sdr_refresh => vga_refresh,  -- end of line
-
-      dma_data => dma_data(15 downto 0),
-      vgachannel_fromhost => vgachannel_fromhost,
-      vgachannel_tohost => vgachannel_tohost,
-      spr0channel_fromhost => spr0channel_fromhost,
-      spr0channel_tohost => spr0channel_tohost,
-
-      hsync => VGA_HSYNC,
-      vsync => VGA_VSYNC,
-      vblank_int => vblank_int,
-      red => VGA_RED,
-      green => VGA_GREEN,
-      blue => VGA_BLUE,
-      vga_window => vga_window,
-      pixelclock => vga_clk
-    );
-
-    VGA_BLANK_N <= vga_window; -- when SW_S1 = '1' else not vga_window;
-    VGA_SYNC_N <= '0';
---   VGA_CLOCK_N <= '0';
-    vga_clockbuf: clk_port
-    port map
-    (
-      i_in     => vga_clk,
-      o_out    => VGA_CLOCK_P
-    );
-    end generate; -- C_vgadma
 
     G_axidma_c2: if C_axidma_c2 generate
     axidma: entity work.axi_read
@@ -886,52 +617,6 @@ begin
         oready => S_vga_data_ready,
         iread_ready => S_vga_read_ready
     );
-    
-    -- the junk can stand here for testing, but later
-    -- it will be removed
-    -- all modules instantiated from top should use axi_in/axi_out
-    --from_axi_to_reader.aresetn <= l01_axi_areset_n;
-    --from_axi_to_reader.aclk <= l01_axi_aclk;
-    G_l01_ajunk: if false generate
-    l01_axi_awid <= from_reader_to_axi.awid;
-    l01_axi_awaddr <= from_reader_to_axi.awaddr;
-    l01_axi_awlen <= from_reader_to_axi.awlen;
-    l01_axi_awsize <= from_reader_to_axi.awsize;
-    l01_axi_awburst <= from_reader_to_axi.awburst;
-    l01_axi_awlock <= from_reader_to_axi.awlock;
-    l01_axi_awcache <= from_reader_to_axi.awcache;
-    l01_axi_awprot <= from_reader_to_axi.awprot;
-    l01_axi_awqos <= from_reader_to_axi.awqos;
-    l01_axi_awvalid <= from_reader_to_axi.awvalid;
-    from_axi_to_reader.awready <= l01_axi_awready;
-    l01_axi_wdata <= from_reader_to_axi.wdata;
-    l01_axi_wstrb <= from_reader_to_axi.wstrb;
-    l01_axi_wlast <= from_reader_to_axi.wlast;
-    l01_axi_wvalid <= from_reader_to_axi.wvalid;
-    from_axi_to_reader.wready <= l01_axi_wready;
-    from_axi_to_reader.bid <= l01_axi_bid;
-    from_axi_to_reader.bresp <= l01_axi_bresp;
-    from_axi_to_reader.bvalid <= l01_axi_bvalid;
-    l01_axi_bready <= from_reader_to_axi.bready;
-    l01_axi_arid <= from_reader_to_axi.arid;
-    l01_axi_araddr <= from_reader_to_axi.araddr;
-    l01_axi_arlen <= from_reader_to_axi.arlen;
-    l01_axi_arsize <= from_reader_to_axi.arsize;
-    l01_axi_arburst <= from_reader_to_axi.arburst;
-    l01_axi_arlock <= from_reader_to_axi.arlock;
-    l01_axi_arcache <= from_reader_to_axi.arcache;
-    l01_axi_arprot <= from_reader_to_axi.arprot;
-    l01_axi_arqos <= from_reader_to_axi.arqos;
-    l01_axi_arvalid <= from_reader_to_axi.arvalid;
-    from_axi_to_reader.arready <= l01_axi_arready;
-    from_axi_to_reader.rid <= l01_axi_rid;
-    from_axi_to_reader.rdata <= l01_axi_rdata;
-    from_axi_to_reader.rresp <= l01_axi_rresp;
-    from_axi_to_reader.rlast <= l01_axi_rlast;
-    from_axi_to_reader.rvalid <= l01_axi_rvalid;
-    l01_axi_rready <= from_reader_to_axi.rready;
-    end generate;
-
     -- data source: FIFO - cross clock domain cpu-pixel
     -- compositing2 video accelerator, shows linked list of pixel data
     comp_fifo: entity work.compositing2_fifo
