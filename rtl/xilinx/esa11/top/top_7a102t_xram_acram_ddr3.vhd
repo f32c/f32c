@@ -381,9 +381,14 @@ architecture Behavioral of esa11_xram_acram_ddr3 is
     signal vga_read : std_logic_vector(15 downto 0) := (others => '0');
     signal vga_window : std_logic;
     signal vblank_int : std_logic;
+
+    -- video axi
+    signal from_reader_to_axi: T_axi_mosi;
+    signal from_axi_to_reader: T_axi_miso;
     
-    signal from_reader_to_axi: T_axi_out;
-    signal from_axi_to_reader: T_axi_in;
+    -- main memory axi multiport array
+    signal main_axi_miso, main_axi_miso2: T_axi_miso;
+    signal main_axi_mosi, main_axi_mosi2: T_axi_mosi;
 
     -- to switch glue/plasma vga
     signal glue_vga_vsync_n, glue_vga_hsync_n: std_logic;
@@ -688,7 +693,6 @@ begin
     port map(
         sys_rst              => not clk_locked, -- release reset when clock is stable
         sys_clk_i            => clk_200MHz, -- should be 200MHz
-        init_calib_complete  => calib_done, -- becomes high cca 0.3 seconds after startup
         -- physical signals to RAM chip
         ddr3_dq              => ddr_dq,
         ddr3_dqs_n           => ddr_dqs_n,
@@ -705,130 +709,70 @@ begin
         ddr3_dm(1)           => ddr_udm,
         ddr3_dm(0)           => ddr_ldm,
         ddr3_odt(0)          => ddr_odt,
-        -- port l00
+
+        -- multiport axi interface
         s00_axi_areset_out_n => l00_axi_areset_n,
         s00_axi_aclk         => l00_axi_aclk,
-        s00_axi_awid         => l00_axi_awid,
-        s00_axi_awaddr       => l00_axi_awaddr,
-        s00_axi_awlen        => l00_axi_awlen,
-        s00_axi_awsize       => l00_axi_awsize,
-        s00_axi_awburst      => l00_axi_awburst,
-        s00_axi_awlock       => l00_axi_awlock,
-        s00_axi_awcache      => l00_axi_awcache,
-        s00_axi_awprot       => l00_axi_awprot,
-        s00_axi_awqos        => l00_axi_awqos,
-        s00_axi_awvalid      => l00_axi_awvalid,
-        s00_axi_awready      => l00_axi_awready,
-        s00_axi_wdata        => l00_axi_wdata,
-        s00_axi_wstrb        => l00_axi_wstrb,
-        s00_axi_wlast        => l00_axi_wlast,
-        s00_axi_wvalid       => l00_axi_wvalid,
-        s00_axi_wready       => l00_axi_wready,
-        s00_axi_bid          => l00_axi_bid,
-        s00_axi_bresp        => l00_axi_bresp,
-        s00_axi_bvalid       => l00_axi_bvalid,
-        s00_axi_bready       => l00_axi_bready,
-        s00_axi_arid         => l00_axi_arid,
-        s00_axi_araddr       => l00_axi_araddr,
-        s00_axi_arlen        => l00_axi_arlen,
-        s00_axi_arsize       => l00_axi_arsize,
-        s00_axi_arburst      => l00_axi_arburst,
-        s00_axi_arlock       => l00_axi_arlock,
-        s00_axi_arcache      => l00_axi_arcache,
-        s00_axi_arprot       => l00_axi_arprot,
-        s00_axi_arqos        => l00_axi_arqos,
-        s00_axi_arvalid      => l00_axi_arvalid,
-        s00_axi_arready      => l00_axi_arready,
-        s00_axi_rid          => l00_axi_rid,
-        s00_axi_rdata        => l00_axi_rdata,
-        s00_axi_rresp        => l00_axi_rresp,
-        s00_axi_rlast        => l00_axi_rlast,
-        s00_axi_rvalid       => l00_axi_rvalid,
-        s00_axi_rready       => l00_axi_rready,
-        -- port l01
+        s00_axi_in           => main_axi_mosi,
+        s00_axi_out          => main_axi_miso,
+
         s01_axi_areset_out_n => l01_axi_areset_n,
         s01_axi_aclk         => l01_axi_aclk,
-        s01_axi_awid         => l01_axi_awid,
-        s01_axi_awaddr       => l01_axi_awaddr,
-        s01_axi_awlen        => l01_axi_awlen,
-        s01_axi_awsize       => l01_axi_awsize,
-        s01_axi_awburst      => l01_axi_awburst,
-        s01_axi_awlock       => l01_axi_awlock,
-        s01_axi_awcache      => l01_axi_awcache,
-        s01_axi_awprot       => l01_axi_awprot,
-        s01_axi_awqos        => l01_axi_awqos,
-        s01_axi_awvalid      => l01_axi_awvalid,
-        s01_axi_awready      => l01_axi_awready,
-        s01_axi_wdata        => l01_axi_wdata,
-        s01_axi_wstrb        => l01_axi_wstrb,
-        s01_axi_wlast        => l01_axi_wlast,
-        s01_axi_wvalid       => l01_axi_wvalid,
-        s01_axi_wready       => l01_axi_wready,
-        s01_axi_bid          => l01_axi_bid,
-        s01_axi_bresp        => l01_axi_bresp,
-        s01_axi_bvalid       => l01_axi_bvalid,
-        s01_axi_bready       => l01_axi_bready,
-        s01_axi_arid         => l01_axi_arid,
-        s01_axi_araddr       => l01_axi_araddr,
-        s01_axi_arlen        => l01_axi_arlen,
-        s01_axi_arsize       => l01_axi_arsize,
-        s01_axi_arburst      => l01_axi_arburst,
-        s01_axi_arlock       => l01_axi_arlock,
-        s01_axi_arcache      => l01_axi_arcache,
-        s01_axi_arprot       => l01_axi_arprot,
-        s01_axi_arqos        => l01_axi_arqos,
-        s01_axi_arvalid      => l01_axi_arvalid,
-        s01_axi_arready      => l01_axi_arready,
-        s01_axi_rid          => l01_axi_rid,
-        s01_axi_rdata        => l01_axi_rdata,
-        s01_axi_rresp        => l01_axi_rresp,
-        s01_axi_rlast        => l01_axi_rlast,
-        s01_axi_rvalid       => l01_axi_rvalid,
-        s01_axi_rready       => l01_axi_rready,
-        -- port l02
+        s01_axi_in           => from_reader_to_axi,
+        s01_axi_out          => from_axi_to_reader,
+
         s02_axi_areset_out_n => l02_axi_areset_n,
         s02_axi_aclk         => l02_axi_aclk,
-        s02_axi_awid         => l02_axi_awid,
-        s02_axi_awaddr       => l02_axi_awaddr,
-        s02_axi_awlen        => l02_axi_awlen,
-        s02_axi_awsize       => l02_axi_awsize,
-        s02_axi_awburst      => l02_axi_awburst,
-        s02_axi_awlock       => l02_axi_awlock,
-        s02_axi_awcache      => l02_axi_awcache,
-        s02_axi_awprot       => l02_axi_awprot,
-        s02_axi_awqos        => l02_axi_awqos,
-        s02_axi_awvalid      => l02_axi_awvalid,
-        s02_axi_awready      => l02_axi_awready,
-        s02_axi_wdata        => l02_axi_wdata,
-        s02_axi_wstrb        => l02_axi_wstrb,
-        s02_axi_wlast        => l02_axi_wlast,
-        s02_axi_wvalid       => l02_axi_wvalid,
-        s02_axi_wready       => l02_axi_wready,
-        s02_axi_bid          => l02_axi_bid,
-        s02_axi_bresp        => l02_axi_bresp,
-        s02_axi_bvalid       => l02_axi_bvalid,
-        s02_axi_bready       => l02_axi_bready,
-        s02_axi_arid         => l02_axi_arid,
-        s02_axi_araddr       => l02_axi_araddr,
-        s02_axi_arlen        => l02_axi_arlen,
-        s02_axi_arsize       => l02_axi_arsize,
-        s02_axi_arburst      => l02_axi_arburst,
-        s02_axi_arlock       => l02_axi_arlock,
-        s02_axi_arcache      => l02_axi_arcache,
-        s02_axi_arprot       => l02_axi_arprot,
-        s02_axi_arqos        => l02_axi_arqos,
-        s02_axi_arvalid      => l02_axi_arvalid,
-        s02_axi_arready      => l02_axi_arready,
-        s02_axi_rid          => l02_axi_rid,
-        s02_axi_rdata        => l02_axi_rdata,
-        s02_axi_rresp        => l02_axi_rresp,
-        s02_axi_rlast        => l02_axi_rlast,
-        s02_axi_rvalid       => l02_axi_rvalid,
-        s02_axi_rready       => l02_axi_rready
+        s02_axi_in           => main_axi_mosi2,
+        s02_axi_out          => main_axi_miso2,
+
+        init_calib_complete  => calib_done -- becomes high cca 0.3 seconds after startup
     );
     l00_axi_aclk <= clk; -- 100 MHz
     l01_axi_aclk <= clk; -- port l01 used for video
     l02_axi_aclk <= '0'; -- port l02 not used
+
+    G_l00_ajunk: if true generate
+    main_axi_mosi.awid <= l00_axi_awid;
+    main_axi_mosi.awaddr <= l00_axi_awaddr;
+    main_axi_mosi.awlen <= l00_axi_awlen;
+    main_axi_mosi.awsize <= l00_axi_awsize;
+    main_axi_mosi.awburst <= l00_axi_awburst;
+    main_axi_mosi.awlock <= l00_axi_awlock;
+    main_axi_mosi.awcache <= l00_axi_awcache;
+    main_axi_mosi.awprot <= l00_axi_awprot;
+    main_axi_mosi.awqos <= l00_axi_awqos;
+    main_axi_mosi.awvalid <= l00_axi_awvalid;
+    l00_axi_awready <= main_axi_miso.awready;
+    main_axi_mosi.wdata <= l00_axi_wdata;
+    main_axi_mosi.wstrb <= l00_axi_wstrb;
+    main_axi_mosi.wlast <= l00_axi_wlast;
+    main_axi_mosi.wvalid <= l00_axi_wvalid;
+    l00_axi_wready <= main_axi_miso.wready;
+    l00_axi_bid <= main_axi_miso.bid;
+    l00_axi_bresp <= main_axi_miso.bresp;
+    l00_axi_bvalid <= main_axi_miso.bvalid;
+    main_axi_mosi.bready <= l00_axi_bready;
+    main_axi_mosi.arid <= l00_axi_arid;
+    main_axi_mosi.araddr <= l00_axi_araddr;
+    main_axi_mosi.arlen <= l00_axi_arlen;
+    main_axi_mosi.arsize <= l00_axi_arsize;
+    main_axi_mosi.arburst <= l00_axi_arburst;
+    main_axi_mosi.arlock <= l00_axi_arlock;
+    main_axi_mosi.arcache <= l00_axi_arcache;
+    main_axi_mosi.arprot <= l00_axi_arprot;
+    main_axi_mosi.arqos <= l00_axi_arqos;
+    main_axi_mosi.arvalid <= l00_axi_arvalid;
+    l00_axi_arready <= main_axi_miso.arready;
+    l00_axi_rid <= main_axi_miso.rid;
+    l00_axi_rdata <= main_axi_miso.rdata;
+    l00_axi_rresp <= main_axi_miso.rresp;
+    l00_axi_rlast <= main_axi_miso.rlast;
+    l00_axi_rvalid <= main_axi_miso.rvalid;
+    main_axi_mosi.rready <= l00_axi_rready;
+    end generate;
+
+
     end generate; -- G_acram_real
 
     --FPGA_LED2 <= calib_done; -- should turn on 0.3 seconds after startup and remain on
@@ -962,8 +906,10 @@ begin
 
     G_axidma_c2: if C_axidma_c2 generate
     axidma: entity work.axi_read
-      port map
-      (
+    port map
+    (
+        axi_aresetn => l01_axi_areset_n,
+        axi_aclk => l01_axi_aclk,
         axi_in => from_axi_to_reader,
         axi_out => from_reader_to_axi,
 
@@ -978,8 +924,9 @@ begin
     -- the junk can stand here for testing, but later
     -- it will be removed
     -- all modules instantiated from top should use axi_in/axi_out
-    from_axi_to_reader.aresetn <= l01_axi_areset_n;
-    from_axi_to_reader.aclk <= l01_axi_aclk;
+    --from_axi_to_reader.aresetn <= l01_axi_areset_n;
+    --from_axi_to_reader.aclk <= l01_axi_aclk;
+    G_l01_ajunk: if false generate
     l01_axi_awid <= from_reader_to_axi.awid;
     l01_axi_awaddr <= from_reader_to_axi.awaddr;
     l01_axi_awlen <= from_reader_to_axi.awlen;
@@ -1017,6 +964,7 @@ begin
     from_axi_to_reader.rlast <= l01_axi_rlast;
     from_axi_to_reader.rvalid <= l01_axi_rvalid;
     l01_axi_rready <= from_reader_to_axi.rready;
+    end generate;
 
     -- data source: FIFO - cross clock domain cpu-pixel
     -- compositing2 video accelerator, shows linked list of pixel data
@@ -1104,11 +1052,13 @@ begin
     vga_clock_p <= clk_25MHz;
 
     I_vgahdmi_dvid: entity work.vga2dvid
-    generic map (
+    generic map 
+    (
       C_ddr     => C_dvid_ddr,
       C_depth   => 8 -- 8bpp (8 bit per pixel)
     )
-    port map (
+    port map
+    (
       clk_pixel => clk_25MHz, clk_shift => clk_pixel_shift,
 
       in_red   => S_vga_red,

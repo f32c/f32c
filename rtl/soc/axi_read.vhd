@@ -1,7 +1,7 @@
 -- (c) EMARD
 -- License=BSD
 
--- burst capable reader
+-- burst capable reader (AXI master)
 -- f32c compatible interface
 -- which can read-only from AXI bus
 
@@ -20,8 +20,9 @@ use work.sram_pack.all;
 entity axi_read is
 port
 (
-  axi_in: in T_axi_in;
-  axi_out: out T_axi_out;
+  axi_aresetn, axi_aclk: in std_logic;
+  axi_in: in T_axi_miso;
+  axi_out: out T_axi_mosi;
 
   -- f32c bus
   iaddr: in std_logic_vector(29 downto 2);
@@ -71,10 +72,10 @@ begin
   axi_out.bready  <= '0';
 
   -- count read cycles, update busy flag
-  cache_mbi_read : process(axi_in.aclk)
+  cache_mbi_read : process(axi_aclk)
   begin
-    if rising_edge(axi_in.aclk) then
-      if axi_in.aresetn = '0' and false then
+    if rising_edge(axi_aclk) then
+      if axi_aresetn = '0' and false then
             mbi_read_busy <= '0';
             axi_araddr    <= (others => '0');
             axi_arvalid   <= '0';
