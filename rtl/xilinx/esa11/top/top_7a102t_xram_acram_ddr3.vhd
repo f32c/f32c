@@ -644,48 +644,14 @@ begin
         readBusy           => ram_read_busy,
         hitcount           => ram_cache_hitcnt,
         readcount          => ram_cache_readcnt,
-        debug              => ram_cache_debug,
 
-        -- axi port l00
+        -- axi port l00 this module is AXI master
         m_axi_aresetn      => l00_axi_areset_n,
         m_axi_aclk         => l00_axi_aclk,
-        m_axi_awid         => l00_axi_awid,
-        m_axi_awaddr       => l00_axi_awaddr,
-        m_axi_awlen        => l00_axi_awlen,
-        m_axi_awsize       => l00_axi_awsize,
-        m_axi_awburst      => l00_axi_awburst,
-        m_axi_awlock       => l00_axi_awlock,
-        m_axi_awcache      => l00_axi_awcache,
-        m_axi_awprot       => l00_axi_awprot,
-        m_axi_awqos        => l00_axi_awqos,
-        m_axi_awvalid      => l00_axi_awvalid,
-        m_axi_awready      => l00_axi_awready,
-        m_axi_wdata        => l00_axi_wdata,
-        m_axi_wstrb        => l00_axi_wstrb,
-        m_axi_wlast        => l00_axi_wlast,
-        m_axi_wvalid       => l00_axi_wvalid,
-        m_axi_wready       => l00_axi_wready,
-        m_axi_bid          => l00_axi_bid,
-        m_axi_bresp        => l00_axi_bresp,
-        m_axi_bvalid       => l00_axi_bvalid,
-        m_axi_bready       => l00_axi_bready,
-        m_axi_arid         => l00_axi_arid,
-        m_axi_araddr       => l00_axi_araddr,
-        m_axi_arlen        => l00_axi_arlen,
-        m_axi_arsize       => l00_axi_arsize,
-        m_axi_arburst      => l00_axi_arburst,
-        m_axi_arlock       => l00_axi_arlock,
-        m_axi_arcache      => l00_axi_arcache,
-        m_axi_arprot       => l00_axi_arprot,
-        m_axi_arqos        => l00_axi_arqos,
-        m_axi_arvalid      => l00_axi_arvalid,
-        m_axi_arready      => l00_axi_arready,
-        m_axi_rid          => l00_axi_rid,
-        m_axi_rdata        => l00_axi_rdata,
-        m_axi_rresp        => l00_axi_rresp,
-        m_axi_rlast        => l00_axi_rlast,
-        m_axi_rvalid       => l00_axi_rvalid,
-        m_axi_rready       => l00_axi_rready
+        axi_in             => main_axi_miso,
+        axi_out            => main_axi_mosi,
+
+        debug              => ram_cache_debug
     );
     ram_ready <= not ram_read_busy;
 
@@ -710,7 +676,7 @@ begin
         ddr3_dm(0)           => ddr_ldm,
         ddr3_odt(0)          => ddr_odt,
 
-        -- multiport axi interface
+        -- multiport axi interface (AXI slaves)
         s00_axi_areset_out_n => l00_axi_areset_n,
         s00_axi_aclk         => l00_axi_aclk,
         s00_axi_in           => main_axi_mosi,
@@ -732,7 +698,7 @@ begin
     l01_axi_aclk <= clk; -- port l01 used for video
     l02_axi_aclk <= '0'; -- port l02 not used
 
-    G_l00_ajunk: if true generate
+    G_l00_ajunk: if false generate
     main_axi_mosi.awid <= l00_axi_awid;
     main_axi_mosi.awaddr <= l00_axi_awaddr;
     main_axi_mosi.awlen <= l00_axi_awlen;

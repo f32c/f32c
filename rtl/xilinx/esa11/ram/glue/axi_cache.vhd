@@ -20,6 +20,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.blk_ram_pkg.all;
+use work.axi_pack.all;
 
 entity axi_cache is
   
@@ -27,51 +28,11 @@ entity axi_cache is
     sys_clk            : in std_logic;                           -- system clock
     reset              : in std_logic;
 
-    -- AXI4 Master IF
     m_axi_aresetn      : in  std_logic;
     m_axi_aclk         : in  std_logic;
-    -- write addr
-    m_axi_awid         : out std_logic_vector(0 downto 0);
-    m_axi_awaddr       : out std_logic_vector(31 downto 0);
-    m_axi_awlen        : out std_logic_vector(7 downto 0);
-    m_axi_awsize       : out std_logic_vector(2 downto 0);
-    m_axi_awburst      : out std_logic_vector(1 downto 0);
-    m_axi_awlock       : out std_logic;
-    m_axi_awcache      : out std_logic_vector(3 downto 0);
-    m_axi_awprot       : out std_logic_vector(2 downto 0);
-    m_axi_awqos        : out std_logic_vector(3 downto 0);
-    m_axi_awvalid      : out std_logic;
-    m_axi_awready      : in  std_logic;
-    -- write data
-    m_axi_wdata        : out std_logic_vector(31 downto 0);
-    m_axi_wstrb        : out std_logic_vector(3 downto 0);
-    m_axi_wlast        : out std_logic;
-    m_axi_wvalid       : out std_logic;
-    m_axi_wready       : in  std_logic;
-    -- write response
-    m_axi_bid          : in  std_logic_vector(0 downto 0); -- not used
-    m_axi_bresp        : in  std_logic_vector(1 downto 0); -- not used (0: ok, 3: addr unknown)
-    m_axi_bvalid       : in  std_logic;
-    m_axi_bready       : out std_logic;
-    -- read addr
-    m_axi_arid         : out std_logic_vector(0 downto 0);
-    m_axi_araddr       : out std_logic_vector(31 downto 0);
-    m_axi_arlen        : out std_logic_vector(7 downto 0);
-    m_axi_arsize       : out std_logic_vector(2 downto 0);
-    m_axi_arburst      : out std_logic_vector(1 downto 0);
-    m_axi_arlock       : out std_logic;
-    m_axi_arcache      : out std_logic_vector(3 downto 0);
-    m_axi_arprot       : out std_logic_vector(2 downto 0);
-    m_axi_arqos        : out std_logic_vector(3 downto 0);
-    m_axi_arvalid      : out std_logic;
-    m_axi_arready      : in  std_logic;
-    -- read data
-    m_axi_rid          : in  std_logic_vector(0 downto 0); -- not used
-    m_axi_rdata        : in  std_logic_vector(31 downto 0);
-    m_axi_rresp        : in  std_logic_vector(1 downto 0); -- not used
-    m_axi_rlast        : in  std_logic;
-    m_axi_rvalid       : in  std_logic;
-    m_axi_rready       : out std_logic;
+    -- AXI4 Master IF
+    axi_in: in T_axi_miso;
+    axi_out: out T_axi_mosi;
 
     -- System Side
     addr_next    : in  std_logic_vector(31 downto 0);  -- system side byte address
@@ -166,23 +127,23 @@ architecture logic of axi_cache is
    signal new_wbe_d        : std_logic;
 
 begin  -- logic
-	m_axi_arid   <= "0";    -- not used
-	m_axi_arlen  <= X"0f";  -- burst length, data beats-1 (16 x 32 bit)
-	m_axi_arsize <= "010";  -- 32 bits, resp. 4 bytes
-	m_axi_arburst <= "01";  -- burst type INCR - Incrementing address
-	m_axi_arlock <= '0';    -- Exclusive access not supported
-	m_axi_arcache <= "0011"; -- Xilinx IP generally ignores, but 'modifiable'[1] bit required?
-	m_axi_arprot <= "000";  -- Xilinx IP generally ignores
-	m_axi_arqos  <= "0000"; -- QOS not supported
+	axi_out.arid   <= "0";    -- not used
+	axi_out.arlen  <= X"0f";  -- burst length, data beats-1 (16 x 32 bit)
+	axi_out.arsize <= "010";  -- 32 bits, resp. 4 bytes
+	axi_out.arburst <= "01";  -- burst type INCR - Incrementing address
+	axi_out.arlock <= '0';    -- Exclusive access not supported
+	axi_out.arcache <= "0011"; -- Xilinx IP generally ignores, but 'modifiable'[1] bit required?
+	axi_out.arprot <= "000";  -- Xilinx IP generally ignores
+	axi_out.arqos  <= "0000"; -- QOS not supported
 
-    m_axi_awid 	  <= "0";   -- not used
-    m_axi_awlen  <= X"00";  -- data beats-1 (single access)
-    m_axi_awsize <= "010";  -- 32 bits, resp. 4 bytes
-    m_axi_awburst <= "01";  -- burst type INCR - Incrementing address
-    m_axi_awlock <= '0';    -- Exclusive access not supported
-    m_axi_awcache <= "0011"; -- Xilinx IP generally ignores
-    m_axi_awprot <= "000";  -- Xilinx IP generally ignores
-    m_axi_awqos  <= "0000"; -- QOS not supported
+    axi_out.awid 	  <= "0";   -- not used
+    axi_out.awlen  <= X"00";  -- data beats-1 (single access)
+    axi_out.awsize <= "010";  -- 32 bits, resp. 4 bytes
+    axi_out.awburst <= "01";  -- burst type INCR - Incrementing address
+    axi_out.awlock <= '0';    -- Exclusive access not supported
+    axi_out.awcache <= "0011"; -- Xilinx IP generally ignores
+    axi_out.awprot <= "000";  -- Xilinx IP generally ignores
+    axi_out.awqos  <= "0000"; -- QOS not supported
 
 
    re   <= i_en when wbe = X"0" else '0'; -- read enable
@@ -201,11 +162,11 @@ begin  -- logic
           or (we and not we_d);-- and not wrsm_idle);
 
 
---   m_axi_wstrb <= axi_wstrb; -- controls which of the bytes in the data bus are valid
+--   axi_out.wstrb <= axi_wstrb; -- controls which of the bytes in the data bus are valid
 
 --   mcb_wr_en   <= i_en when wbe /= X"0" else '0';
 
-   cache_pb_we <= "1111" when m_axi_rvalid = '1' and axi_rready = '1' else "0000"; 
+   cache_pb_we <= "1111" when axi_in.rvalid = '1' and axi_rready = '1' else "0000"; 
 
 -- While a read is under way, the system side will be halted, so only one read at any time
   cache_mbi_read : process(m_axi_aclk)
@@ -227,18 +188,18 @@ begin  -- logic
   				mbi_rd_count  <= (others => '0');
       	        axi_araddr       <= "000" & addr(CACHE_WIDTH +LINE_SIZE-1 downto LINE_SIZE) & B"00_0000";
   				axi_arvalid <= '1';
-  			elsif m_axi_arready = '1' and axi_arvalid = '1' then
+  			elsif axi_in.arready = '1' and axi_arvalid = '1' then
   				axi_arvalid <= '0';
   			end if;
 
             -- read completed
 --  			if mbi_rd_count = std_logic_vector(to_unsigned(LINE_SIZE-1,8)) 
-  		   if  m_axi_rvalid = '1' and m_axi_rlast = '1' then
+  		   if  axi_in.rvalid = '1' and axi_in.rlast = '1' then
   			    mbi_read_busy <= '0';
   			end if;
 
             -- write to chache control
-  			if m_axi_rvalid = '1' and m_axi_rlast = '0' then
+  			if axi_in.rvalid = '1' and axi_in.rlast = '0' then
 --  				cache_pb_we  <= (others => '1');
   				mbi_rd_count <= unsigned(mbi_rd_count) + "1";
 --  			else
@@ -246,12 +207,12 @@ begin  -- logic
   			end if;
   			
             -- axi read handshake
---	        if m_axi_rvalid = '1' and axi_rready = '0' then
+--	        if axi_out.rvalid = '1' and axi_rready = '0' then
 --	      	   axi_rready <= '1';
---	        elsif axi_rready = '1' and m_axi_rlast = '1' then
+--	        elsif axi_rready = '1' and axi_in.rlast = '1' then
 	        if axi_rready = '1'
-	        	and m_axi_rvalid = '1' 
-	        	and m_axi_rlast = '1' then
+	        	and axi_in.rvalid = '1' 
+	        	and axi_in.rlast = '1' then
 	        	axi_rready <= '0';
 	        else
 	        	axi_rready <= '1';
@@ -265,9 +226,9 @@ begin  -- logic
 
   cache_pb_addr <= mbi_addr_offset & std_logic_vector(mbi_rd_count(3 downto 0)) & "00";
 
-  m_axi_rready  <= axi_rready; -- handshake (could also be activated before rvalid)
-  m_axi_arvalid <= axi_arvalid;
-  m_axi_araddr  <= axi_araddr;
+  axi_out.rready  <= axi_rready; -- handshake (could also be activated before rvalid)
+  axi_out.arvalid <= axi_arvalid;
+  axi_out.araddr  <= axi_araddr;
 
   new_addr <= '1' when "000" & addr(CACHE_WIDTH + LINE_SIZE - 1 downto 2) & "00" /= axi_awaddr
                  else '0';
@@ -292,7 +253,7 @@ begin  -- logic
   			axi_wvalid  <= '0';
   			axi_wvalid_d  <= '0';
   			axi_bready  <= '0';
-  			m_axi_wlast <= '0';
+  			axi_out.wlast <= '0';
   			axi_wready  <= '0';
   			wstate      <= wsidle;
   			wstate_d    <= wsidle;
@@ -302,7 +263,7 @@ begin  -- logic
          we_dac       <= '0';
   		else
   		   we_dac <= we;
-  			axi_wready  <= m_axi_wready;
+  			axi_wready  <= axi_in.wready;
   			mcb_wr_busy_d <= mcb_wr_busy;
   			axi_wvalid_d <= axi_wvalid;
   			wstate_d <= wstate;
@@ -316,17 +277,17 @@ begin  -- logic
 				                  or (we = '1' and new_wbe = '1') then
 									wstate <= wsaddr;
 								end if;
-				when wsaddr	=> if m_axi_awready = '1' then
+				when wsaddr	=> if axi_in.awready = '1' then
 								  wstate <= wsdata;
 								elsif wtimeout(5) =  '1' then
 					              wstate <= wsidle;
 								end if;
-				when wsdata => if m_axi_wready = '1' then
+				when wsdata => if axi_in.wready = '1' then
 									wstate <= wsresp;
 								elsif wtimeout(5) =  '1' then
 					              wstate <= wsidle;
 								end if;
-				when wsresp => if m_axi_bvalid = '1' then
+				when wsresp => if axi_in.bvalid = '1' then
 									wstate <= wsidle;
 								elsif wtimeout(5) =  '1' then
 					              wstate <= wsidle;
@@ -340,7 +301,7 @@ begin  -- logic
 		  			axi_awvalid <= '0';
 		  			axi_wvalid  <= '0';
 		  			axi_bready  <= '0';
-		  			m_axi_wlast <= '0';
+		  			axi_out.wlast <= '0';
 		  			axi_wready  <= '0';
 -- 				end if;
   			end if;
@@ -353,33 +314,33 @@ begin  -- logic
   				axi_wdata   <= din;
   				axi_wstrb   <= wbe;
 --  				axi_wvalid  <= '1';
---  				m_axi_wlast <= '1';
+--  				axi_out.wlast <= '1';
 --  				write_done  <= '1';
   			end if;
 
   			if wstate = wsdata and wstate_d /= wsdata then
---  			if m_axi_awready = '1' and axi_awvalid = '1' then
+--  			if axi_in.awready = '1' and axi_awvalid = '1' then
   				axi_awvalid <= '0';
-  				m_axi_wlast <= '1';
+  				axi_out.wlast <= '1';
   				axi_wvalid  <= '1';
-  			elsif wstate = wsdata and m_axi_wready = '1' then
+  			elsif wstate = wsdata and axi_in.wready = '1' then
   				axi_wvalid <= '0';
   			end if;
 
   			if wstate = wsresp and wstate_d /= wsresp then
 --				if axi_wready = '1' 
---			   and m_axi_wready = '0' 
+--			   and axi_in.wready = '0' 
 --			   and axi_wvalid_d = '1' then
 				axi_wvalid <= '0';
-				m_axi_wlast <= '0';
+				axi_out.wlast <= '0';
 --  				mcb_wr_busy <= '0'; -- release busy here, so cpu can continue
 			end if;
 
   			-- axi write response handshake
 --  			if wstate = wsidle and wstate_d = wsresp then
---  			if m_axi_bvalid = '1' and axi_bready = '1' then
+--  			if axi_in.bvalid = '1' and axi_bready = '1' then
 --  				axi_bready <= '0';
---				m_axi_wlast <= '0';
+--				axi_out.wlast <= '0';
 --  				mcb_wr_busy <= '0';
 --  			else --if axi_bready = '1' then
 --  				axi_bready <= '1';
@@ -405,12 +366,12 @@ begin  -- logic
   	end if;                           -- clk
   end process mbi_COMMANDS;
 
-  m_axi_awaddr  <= axi_awaddr;
-  m_axi_awvalid <= axi_awvalid;
-  m_axi_wvalid  <= axi_wvalid; --when write_done = '1' else '1'; -- and axi_wvalid_d;
-  m_axi_wdata   <= axi_wdata;
-  m_axi_wstrb   <= axi_wstrb;
-  m_axi_bready  <= axi_bready;
+  axi_out.awaddr  <= axi_awaddr;
+  axi_out.awvalid <= axi_awvalid;
+  axi_out.wvalid  <= axi_wvalid; --when write_done = '1' else '1'; -- and axi_wvalid_d;
+  axi_out.wdata   <= axi_wdata;
+  axi_out.wstrb   <= axi_wstrb;
+  axi_out.bready  <= axi_bready;
 
 
   CACHE_AND_mbi_WRITE : process (sys_clk, reset)
@@ -509,7 +470,7 @@ begin  -- logic
   hitCount  <= hitCounter;
   readCount <= readCounter;
 
-  debug <= m_axi_rdata(3 downto 0) & cache_pb_addr(3 downto 0);
+  debug <= axi_in.rdata(3 downto 0) & cache_pb_addr(3 downto 0);
 
   -- Cache DPRAM
   -- A-Port: read/write to sys, B-Port: write only, from MCB
@@ -524,7 +485,7 @@ begin  -- logic
       clkb   => m_axi_aclk,
       web    => cache_pb_we,
       addrb  => cache_pb_addr(cache_pb_addr'left downto 2),
-      dinb   => m_axi_rdata,
+      dinb   => axi_in.rdata,
       doutb  => open              -- read not used
       );
 
