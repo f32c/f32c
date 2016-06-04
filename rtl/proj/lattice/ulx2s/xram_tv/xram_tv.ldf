@@ -12,7 +12,7 @@
         <Source name="../../../../cpu/alu.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../cpu/cache_generic_param.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../cpu/cache.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../cpu/defs_f32c.vhd" type="VHDL" type_short="VHDL">
@@ -90,7 +90,10 @@
         <Source name="../../../../soc/cvbs.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../soc/vgahdmi/video_cache.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../soc/vgahdmi/video_cache_i.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vgahdmi/video_cache_d.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../soc/vgahdmi/tv.vhd" type="VHDL" type_short="VHDL">
