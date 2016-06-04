@@ -666,7 +666,7 @@ begin
 
     G_sdram:
     if C_sdram generate
-    sdram: entity work.sdram_mz_wrap
+    sdram: entity work.sdram -- _mz_wrap
     generic map (
       C_ports => C_xram_ports,
       --C_prio_port => 2, -- VGA priority port not yet implemented
