@@ -11,12 +11,10 @@ package axi_pack is
 --
 
 -- Inputs: Module <- AXI
--- (direction from AXI bus to module)
-type T_axi_in is
+-- direction from AXI bus to module, from bus master point of view.
+-- slave has i/o reversed.
+type T_axi_miso is
 record
-  -- AXI4 Master IF
-  aresetn        : std_logic;
-  aclk           : std_logic;
   -- write addr
   awready        : std_logic; -- not used
   wready         : std_logic; -- not used
@@ -34,8 +32,9 @@ record
 end record;
 
 -- Outputs: Module -> AXI
--- (direction from module to AXI bus)
-type T_axi_out is
+-- direction from module to AXI bus, from bus master point of view.
+-- slave has i/o reversed
+type T_axi_mosi is
 record
   -- write addr
   awid           : std_logic_vector(0 downto 0);
