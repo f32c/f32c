@@ -37,7 +37,7 @@ use unisim.vcomponents.all;
 
 use work.f32c_pack.all;
 
-entity glue is
+entity scarab_xram_sdram is
   generic
   (
     -- ISA: either ARCH_MI32 or ARCH_RV32
@@ -56,10 +56,12 @@ entity glue is
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
     C_sdram: boolean := true;
 
+    -- C_dvid_ddr = false: clk_pixel_shift = 250MHz
+    -- C_dvid_ddr = true: clk_pixel_shift = 125MHz
+    -- (fixme: DDR video output mode doesn't work on scarab)
+    C_dvid_ddr: boolean := false;
 
-    C_dvid_ddr: boolean := false; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver
-    
-    C_vgahdmi: boolean := true;
+    C_vgahdmi: boolean := false;
     -- insert cache between RAM and compositing2 video fifo
     C_video_cache_size: integer := 32;  -- KB size 0:disable 2,4,8,16,32:enable
     C_video_cache_use_i: boolean := true; -- use I-data caching style, faster
@@ -73,7 +75,7 @@ entity glue is
     -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
     C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480                   
       C_vgatext_bits: integer := 4;   -- 64 possible colors
@@ -182,9 +184,9 @@ entity glue is
     TMDS_out_CLK_P, TMDS_out_CLK_N: out std_logic;
     sw: in std_logic_vector(4 downto 1)
   );
-end glue;
+end scarab_xram_sdram;
 
-architecture Behavioral of glue is
+architecture Behavioral of scarab_xram_sdram is
   signal clk, sdram_clk_internal: std_logic;
   signal clk_25MHz, clk_250MHz, clk_433M92Hz: std_logic := '0';
   signal clk_125MHz_p, clk_125MHz_n: std_logic := '0';
