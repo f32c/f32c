@@ -140,7 +140,7 @@ begin
       simple_out(7 downto 0) => led, simple_out(31 downto 8) => open,
       simple_in(1 downto 0) => btns, simple_in(31 downto 2) => open
     );
-    btns <= btn_left & btn_right;
+    btns <= not btn_left & not btn_right;
 
     acram_emulation: entity work.acram_emu
     generic map

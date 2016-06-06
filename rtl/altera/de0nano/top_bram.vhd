@@ -86,5 +86,5 @@ begin
 	simple_in(19 downto 16) => sw, simple_in(31 downto 20) => open
     );
 
-    btns <= x"000" & "00" & btn_left & btn_right;
+    btns <= x"000" & "00" & not btn_left & not btn_right;
 end Behavioral;
