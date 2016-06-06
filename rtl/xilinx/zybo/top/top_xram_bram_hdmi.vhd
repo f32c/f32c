@@ -52,8 +52,7 @@ entity glue is
 	-- SoC configuration options
 	C_bram_size: integer := 128;
 	C_vgahdmi: boolean := false;
-	C_vgahdmi_mem_kb: integer := 38; -- KB 38K full mono 640x480
-	C_vgahdmi_test_picture: integer := 1; -- enable test picture
+	C_video_cache_size: integer := 8; -- enable test picture
 
         -- hard startup for xc7 series doesn't work on some boards
         -- reason unknown, disabled by default
@@ -172,7 +171,7 @@ begin
       C_clk_freq => C_clk_freq,
       C_bram_size => C_bram_size,
       C_vgahdmi => C_vgahdmi,
-      C_vgahdmi_test_picture => C_vgahdmi_test_picture,
+      C_video_cache_size => C_video_cache_size,
       C_vgatext => C_vgatext,
       C_vgatext_label => C_vgatext_label,
       C_vgatext_mode => C_vgatext_mode,
