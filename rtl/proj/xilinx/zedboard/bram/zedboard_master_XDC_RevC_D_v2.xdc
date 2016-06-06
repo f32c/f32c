@@ -75,7 +75,8 @@ set_property PACKAGE_PIN AB5 [get_ports {AC_SDA}];  # "AC-SDA"
 # ----------------------------------------------------------------------------
 # Clock Source - Bank 13
 # ---------------------------------------------------------------------------- 
-set_property PACKAGE_PIN Y9 [get_ports {GCLK}];  # "GCLK"
+set_property PACKAGE_PIN Y9 [get_ports {GCLK}];  # "GCLK", 100 MHz
+create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports gclk]
 
 # ----------------------------------------------------------------------------
 # JA Pmod - Bank 13
@@ -168,31 +169,31 @@ set_property PACKAGE_PIN W17  [get_ports {HD_VSYNC}];  # "HD-VSYNC"
 # ----------------------------------------------------------------------------
 # User LEDs - Bank 33
 # ---------------------------------------------------------------------------- 
-set_property PACKAGE_PIN T22 [get_ports {LD0}];  # "LD0"
-set_property PACKAGE_PIN T21 [get_ports {LD1}];  # "LD1"
-set_property PACKAGE_PIN U22 [get_ports {LD2}];  # "LD2"
-set_property PACKAGE_PIN U21 [get_ports {LD3}];  # "LD3"
-set_property PACKAGE_PIN V22 [get_ports {LD4}];  # "LD4"
-set_property PACKAGE_PIN W22 [get_ports {LD5}];  # "LD5"
-set_property PACKAGE_PIN U19 [get_ports {LD6}];  # "LD6"
-set_property PACKAGE_PIN U14 [get_ports {LD7}];  # "LD7"
+set_property PACKAGE_PIN T22 [get_ports {LD[0]}];  # "LD0"
+set_property PACKAGE_PIN T21 [get_ports {LD[1]}];  # "LD1"
+set_property PACKAGE_PIN U22 [get_ports {LD[2]}];  # "LD2"
+set_property PACKAGE_PIN U21 [get_ports {LD[3]}];  # "LD3"
+set_property PACKAGE_PIN V22 [get_ports {LD[4]}];  # "LD4"
+set_property PACKAGE_PIN W22 [get_ports {LD[5]}];  # "LD5"
+set_property PACKAGE_PIN U19 [get_ports {LD[6]}];  # "LD6"
+set_property PACKAGE_PIN U14 [get_ports {LD[7]}];  # "LD7"
 
 # ----------------------------------------------------------------------------
 # VGA Output - Bank 33
 # ---------------------------------------------------------------------------- 
-set_property PACKAGE_PIN Y21  [get_ports {VGA_B1}];  # "VGA-B1"
-set_property PACKAGE_PIN Y20  [get_ports {VGA_B2}];  # "VGA-B2"
-set_property PACKAGE_PIN AB20 [get_ports {VGA_B3}];  # "VGA-B3"
-set_property PACKAGE_PIN AB19 [get_ports {VGA_B4}];  # "VGA-B4"
-set_property PACKAGE_PIN AB22 [get_ports {VGA_G1}];  # "VGA-G1"
-set_property PACKAGE_PIN AA22 [get_ports {VGA_G2}];  # "VGA-G2"
-set_property PACKAGE_PIN AB21 [get_ports {VGA_G3}];  # "VGA-G3"
-set_property PACKAGE_PIN AA21 [get_ports {VGA_G4}];  # "VGA-G4"
+set_property PACKAGE_PIN Y21  [get_ports {VGA_B[1]}];  # "VGA-B1"
+set_property PACKAGE_PIN Y20  [get_ports {VGA_B[2]}];  # "VGA-B2"
+set_property PACKAGE_PIN AB20 [get_ports {VGA_B[3]}];  # "VGA-B3"
+set_property PACKAGE_PIN AB19 [get_ports {VGA_B[4]}];  # "VGA-B4"
+set_property PACKAGE_PIN AB22 [get_ports {VGA_G[1]}];  # "VGA-G1"
+set_property PACKAGE_PIN AA22 [get_ports {VGA_G[2]}];  # "VGA-G2"
+set_property PACKAGE_PIN AB21 [get_ports {VGA_G[3]}];  # "VGA-G3"
+set_property PACKAGE_PIN AA21 [get_ports {VGA_G[4]}];  # "VGA-G4"
 set_property PACKAGE_PIN AA19 [get_ports {VGA_HS}];  # "VGA-HS"
-set_property PACKAGE_PIN V20  [get_ports {VGA_R1}];  # "VGA-R1"
-set_property PACKAGE_PIN U20  [get_ports {VGA_R2}];  # "VGA-R2"
-set_property PACKAGE_PIN V19  [get_ports {VGA_R3}];  # "VGA-R3"
-set_property PACKAGE_PIN V18  [get_ports {VGA_R4}];  # "VGA-R4"
+set_property PACKAGE_PIN V20  [get_ports {VGA_R[1]}];  # "VGA-R1"
+set_property PACKAGE_PIN U20  [get_ports {VGA_R[2]}];  # "VGA-R2"
+set_property PACKAGE_PIN V19  [get_ports {VGA_R[3]}];  # "VGA-R3"
+set_property PACKAGE_PIN V18  [get_ports {VGA_R[4]}];  # "VGA-R4"
 set_property PACKAGE_PIN Y19  [get_ports {VGA_VS}];  # "VGA-VS"
 
 # ----------------------------------------------------------------------------
@@ -230,14 +231,14 @@ set_property PACKAGE_PIN G17 [get_ports {OTG_RESETN}];  # "OTG-RESETN"
 # ----------------------------------------------------------------------------
 # User DIP Switches - Bank 35
 # ---------------------------------------------------------------------------- 
-set_property PACKAGE_PIN F22 [get_ports {SW0}];  # "SW0"
-set_property PACKAGE_PIN G22 [get_ports {SW1}];  # "SW1"
-set_property PACKAGE_PIN H22 [get_ports {SW2}];  # "SW2"
-set_property PACKAGE_PIN F21 [get_ports {SW3}];  # "SW3"
-set_property PACKAGE_PIN H19 [get_ports {SW4}];  # "SW4"
-set_property PACKAGE_PIN H18 [get_ports {SW5}];  # "SW5"
-set_property PACKAGE_PIN H17 [get_ports {SW6}];  # "SW6"
-set_property PACKAGE_PIN M15 [get_ports {SW7}];  # "SW7"
+set_property PACKAGE_PIN F22 [get_ports {SW[0]}];  # "SW0"
+set_property PACKAGE_PIN G22 [get_ports {SW[1]}];  # "SW1"
+set_property PACKAGE_PIN H22 [get_ports {SW[2]}];  # "SW2"
+set_property PACKAGE_PIN F21 [get_ports {SW[3]}];  # "SW3"
+set_property PACKAGE_PIN H19 [get_ports {SW[4]}];  # "SW4"
+set_property PACKAGE_PIN H18 [get_ports {SW[5]}];  # "SW5"
+set_property PACKAGE_PIN H17 [get_ports {SW[6]}];  # "SW6"
+set_property PACKAGE_PIN M15 [get_ports {SW[7]}];  # "SW7"
 
 # ----------------------------------------------------------------------------
 # XADC AD Channels - Bank 35
