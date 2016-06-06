@@ -70,7 +70,7 @@ entity zybo_xram_acram_emu_hdmi is
 	C_video_cache_size: integer := 0; -- enable test picture
 
 
-    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string :=  "f32c: ZYBO xc7z010 MIPS compatible soft-core 100MHz 128KB BRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480
       C_vgatext_bits: integer := 4;   -- 64 possible colors
