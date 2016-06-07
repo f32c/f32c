@@ -44,6 +44,8 @@ entity glue is
     );
     port (
 	GCLK: in std_logic; -- 100 MHz
+	JA1: out std_logic; -- RS232 TXD
+	JA2: in std_logic; -- RS232 RXD
 	LD: out std_logic_vector(7 downto 0);
 	BTNC, BTND, BTNL, BTNR, BTNU: in std_logic;
 	SW: in std_logic_vector(7 downto 0)
@@ -63,7 +65,7 @@ begin
     )
     port map (
 	clk => gclk,
-	sio_txd(0) => open, sio_rxd(0) => '1',
+	sio_txd(0) => JA1, sio_rxd(0) => JA2,
 	sio_break(0) => open,
 	gpio => open,
 	spi_miso => "",
