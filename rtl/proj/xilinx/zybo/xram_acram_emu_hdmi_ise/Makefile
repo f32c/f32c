@@ -3,7 +3,7 @@ vendor = xilinx
 family = zinq
 part = xc7z010-clg400-1 # last number -1 is speed grade
 flashsize = 8192 # KB (kilobytes) - SPI flash device is M25P40
-top_module = glue
+top_module = zybo_xram_acram_emu_hdmi
 #isedir = /usr/local/xilinx/14.7/ISE_DS
 isedir = /opt/Xilinx/ISE/14.7/ISE_DS
 xil_env = . $(isedir)/settings64.sh
@@ -18,11 +18,12 @@ vfiles = \
 ../../../../soc/pid/rotary_decoder_v.v \
 
 vhdfiles = \
-../../../../xilinx/zybo/top/top_xram_acram_emu.vhd \
+../../../../xilinx/zybo/top/top_xram_acram_emu_hdmi.vhd \
 ../../../../xilinx/zybo/clocks/pll_125M_250M_100M_25M.vhd \
 ../../../../xilinx/zybo/clocks/mmcm_125M_81M25_250M521_25M052.vhd \
 ../../../../xilinx/zybo/clocks/clk_125M_100M_125M_25M.vhd \
 ../../../../xilinx/chip/xc7/hdmi_out_xc7.vhd \
+../../../../xilinx/chip/xc7/ddr_out.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \
 ../../../../generic/bootloader/defs_bootblock.vhd \
@@ -73,6 +74,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/vga.vhd \
 ../../../../soc/vgahdmi/vga2dvid.vhd \
 ../../../../soc/vgahdmi/vga2lcd.vhd \
+../../../../soc/vgahdmi/ddr_dvid_out_se.vhd \
 ../../../../soc/vgahdmi/video_cache_i.vhd \
 ../../../../soc/vgahdmi/video_cache_d.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \

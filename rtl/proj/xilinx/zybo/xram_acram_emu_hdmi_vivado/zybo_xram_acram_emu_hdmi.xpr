@@ -430,6 +430,12 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../../../xilinx/zybo/clocks/clk_125M_100M_125M_25M.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../../../xilinx/zybo/clocks/mmcm_125M_81M25_250M521_25M052.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
