@@ -140,7 +140,7 @@ entity zybo_xram_acram_emu_hdmi is
 end zybo_xram_acram_emu_hdmi;
 
 architecture Behavioral of zybo_xram_acram_emu_hdmi is
-    signal clk, clk_250MHz, clk_25MHz: std_logic;
+    signal clk, clk_250MHz, clk_125MHz, clk_25MHz: std_logic;
     signal clk_pixel_shift: std_logic;
     signal sio_break: std_logic;
     signal rs232_break: std_logic;
@@ -165,12 +165,21 @@ begin
     );
     end generate;
 
-    clk100: if C_clk_freq = 100 generate
-    clkgen100: entity work.pll_125M_250M_100M_25M
+    clk100_sdr: if C_clk_freq = 100 and not C_dvid_ddr generate
+    clkgen100_sdr: entity work.pll_125M_250M_100M_25M
     port map(
       clk_in1 => clk_125m, clk_out1 => clk_250MHz, clk_out2 => clk, clk_out3 => clk_25MHz
     );
     clk_pixel_shift <= clk_250MHz;
+    end generate;
+
+    clk100_ddr: if C_clk_freq = 100 and C_dvid_ddr generate
+    clkgen100_ddr: entity work.clk_125M_100M_125M_25M
+    port map(
+      reset => '0', locked => open,
+      clk_125M_in => clk_125m, clk_125M => clk_125MHz, clk_100M => clk, clk_25M => clk_25MHz
+    );
+    clk_pixel_shift <= clk_125MHz;
     end generate;
 
     clk125: if C_clk_freq = 125 generate
