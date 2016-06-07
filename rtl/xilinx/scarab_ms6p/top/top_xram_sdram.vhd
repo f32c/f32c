@@ -63,7 +63,7 @@ entity scarab_xram_sdram is
 
     C_vgahdmi: boolean := false;
     -- insert cache between RAM and compositing2 video fifo
-    C_video_cache_size: integer := 32;  -- KB size 0:disable 2,4,8,16,32:enable
+    C_video_cache_size: integer := 8; -- KB size 0:disable 2,4,8,16,32:enable
     C_video_cache_use_i: boolean := true; -- use I-data caching style, faster
     -- number of pixels for line step 640
     C_vgahdmi_fifo_width: integer := 640;
