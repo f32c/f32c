@@ -1,0 +1,43 @@
+Release 14.7 Drc P.20131013 (lin)
+Copyright (c) 1995-2013 Xilinx, Inc.  All rights reserved.
+
+Tue Jun  7 12:58:17 2016
+
+drc -z xc6slx9_par.ncd
+
+WARNING:PhysDesignRules:367 - The signal
+   <glue_xram/pipeline/pipeline/regfile/Mram_R11_RAMD_D1_O> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_xram/pipeline/pipeline/regfile/Mram_R21_RAMD_D1_O> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_xram/pipeline/pipeline/regfile/Mram_R15_RAMD_D1_O> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_xram/pipeline/pipeline/regfile/Mram_R25_RAMD_D1_O> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_xram/pipeline/pipeline/regfile/Mram_R24_RAMD_D1_O> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_xram/pipeline/pipeline/regfile/Mram_R14_RAMD_D1_O> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_xram/pipeline/pipeline/regfile/Mram_R12_RAMD_D1_O> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_xram/pipeline/pipeline/regfile/Mram_R22_RAMD_D1_O> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_xram/pipeline/pipeline/regfile/Mram_R23_RAMD_D1_O> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:367 - The signal
+   <glue_xram/pipeline/pipeline/regfile/Mram_R13_RAMD_D1_O> is incomplete. The
+   signal does not drive any load pins in the design.
+WARNING:PhysDesignRules:2410 - This design is using one or more 9K Block RAMs
+   (RAMB8BWER).  9K Block RAM initialization data, both user defined and
+   default, may be incorrect and should not be used.  For more information,
+   please reference Xilinx Answer Record 39999.
+DRC detected 0 errors and 11 warnings.  Please see the previously displayed
+individual error or warning messages for more details.

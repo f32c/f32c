@@ -1,0 +1,7 @@
+INFILE=/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/numato/mimas_v2_ddr2/xc6slx9_par.ncd
+OUTFILE=/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/numato/mimas_v2_ddr2/default.bit
+FAMILY=Spartan6
+PART=xc6slx9-2csg324
+WORKINGDIR=/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/numato/mimas_v2_ddr2
+LICENSE=WebPack
+USER_INFO=211079296_1777509582_210608792_746
