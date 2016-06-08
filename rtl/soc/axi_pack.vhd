@@ -22,13 +22,13 @@ record
   bid            : std_logic_vector(0 downto 0); -- not used
   bresp          : std_logic_vector(1 downto 0); -- not used (0: ok, 3: addr unknown)
   bvalid         : std_logic;                    -- not used
-  arready        : std_logic;
   -- read data
   rid            : std_logic_vector(0 downto 0); -- not used
   rdata          : std_logic_vector(31 downto 0);
   rresp          : std_logic_vector(1 downto 0); -- not used, (1): error?, (0): data transfer?
   rlast          : std_logic;
   rvalid         : std_logic;
+  arready        : std_logic;
 end record;
 
 -- Outputs: Module -> AXI
