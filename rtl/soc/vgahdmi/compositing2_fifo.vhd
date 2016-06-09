@@ -448,7 +448,7 @@ begin
     -- buffer can have less than 32 bits
     buffer_direct: if C_data_width = 32 generate
       S_bram_data_in <= data_in;
-      S_bram_write <= S_data_write;
+      S_bram_write <= S_data_write when data_in /= color_transparent else '0';
       R_bram_in_addr <= S_pixbuf_in_mem_addr; -- not a register but pass-thru signal
     end generate;
 
