@@ -61,6 +61,8 @@ vhdfiles = \
 ../../../../soc/sram_refresh.vhd \
 ../../../../soc/sram8.vhd \
 ../../../../soc/acram.vhd \
+../../../../soc/axiram.vhd \
+../../../../soc/axi_pack.vhd \
 ../../../../soc/sdram.vhd \
 ../../../../soc/sdram_mz.vhd \
 ../../../../soc/sdram_pack.vhd \
