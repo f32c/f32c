@@ -34,6 +34,7 @@ use ieee.numeric_std.all; -- we need signed type
 
 use work.f32c_pack.all;
 use work.sram_pack.all;
+use work.axi_pack.all;
 
 entity glue_xram is
 generic (
@@ -95,6 +96,7 @@ generic (
   C_sdram: boolean := false;
   C_acram: boolean := false; -- AXI CACHE RAM
   C_acram_wait_cycles: integer := 4; -- wait cycles for acram
+  C_axiram: boolean := false; -- AXI Master RAM (connects to AXI Slave)
   C_sio: integer := 1;
   C_sio_init_baudrate: integer := 115200;
   C_sio_fixed_baudrate: boolean := false;
@@ -220,6 +222,9 @@ port (
   acram_data_rd: in std_logic_vector(31 downto 0) := (others => '0');
   acram_data_wr: out std_logic_vector(31 downto 0);
   acram_byte_we: out std_logic_vector(3 downto 0);
+  -- AXI Master
+  axi_in: in T_axi_miso := C_axi_miso_0;
+  axi_out: out T_axi_mosi;
   --
   sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
   sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
@@ -558,7 +563,7 @@ begin
       else io_addr_strobe or video_bram_addr_strobe or bram_d_ready;
     
     G_xram:
-    if C_sdram or C_sram or C_sram8 or C_acram generate
+    if C_sdram or C_sram or C_sram8 or C_acram or C_axiram generate
     -- port 0: instruction bus
     to_xram(instr_port).addr_strobe <= imem_addr_strobe when
       S_imem_addr_in_xram = '1' else '0';
@@ -731,6 +736,24 @@ begin
 	bus_in => to_xram, ready_out => xram_ready
     );
     end generate; -- G_acram
+
+    G_axiram:
+    if C_axiram generate
+    --acram: entity work.axiram
+    --generic map (
+    --  C_ports => C_xram_ports, -- extra ports: framebuffer, textmode and PCM audio
+    --  C_prio_port => fb_port -- framebuffer
+    --)
+    --port map (
+    --  clk => clk,
+    --  axi_in => axi_in,
+    --  axi_out => axi_out,
+    --  data_out => from_xram,
+    --  snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
+    --  -- Multi-port connections:
+    --  bus_in => to_xram, ready_out => xram_ready
+    --);
+    end generate; -- G_axiram
 
     -- RS232 sio
     G_sio: for i in 0 to C_sio - 1 generate

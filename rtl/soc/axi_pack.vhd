@@ -31,6 +31,22 @@ record
   arready        : std_logic;
 end record;
 
+-- Zero-intializer for the inactive default
+constant C_axi_miso_0: T_axi_miso :=
+(
+  awready => '0',
+  wready => '0',
+  bid => (others => '0'),
+  bresp => (others => '0'),
+  bvalid => '0',
+  rid => (others => '0'),
+  rdata => (others => '0'),
+  rresp => (others => '0'),
+  rlast => '0',
+  rvalid => '0',
+  arready => '0'
+);
+
 -- Outputs: Module -> AXI
 -- direction from module to AXI bus, from bus master point of view.
 -- slave has i/o reversed
@@ -68,5 +84,40 @@ record
   -- read data
   rready         : std_logic;
 end record;
+
+-- Zero-intializer for the inactive default
+constant C_axi_mosi_0: T_axi_mosi :=
+(
+  awid => (others => '0'),
+  awaddr => (others => '0'),
+  awlen => (others => '0'),
+  awsize => (others => '0'),
+  awburst => (others => '0'),
+  awlock => '0',
+  awcache => (others => '0'),
+  awprot => (others => '0'),
+  awqos => (others => '0'),
+  awvalid => '0',
+  -- write data
+  wdata => (others => '0'),
+  wstrb => (others => '0'),
+  wlast => '0',
+  wvalid => '0',
+  -- write response
+  bready => '0',
+  -- read addr
+  arid => (others => '0'),
+  araddr => (others => '0'),
+  arlen => (others => '0'),
+  arsize => (others => '0'),
+  arburst => (others => '0'),
+  arlock => '0',
+  arcache => (others => '0'),
+  arprot => (others => '0'),
+  arqos => (others => '0'),
+  arvalid => '0',
+  -- read data
+  rready => '0'
+);
 
 end;
