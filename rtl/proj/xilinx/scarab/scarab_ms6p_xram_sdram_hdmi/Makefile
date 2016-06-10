@@ -63,6 +63,7 @@ vhdfiles = \
 ../../../../soc/acram.vhd \
 ../../../../soc/axiram.vhd \
 ../../../../soc/axi_pack.vhd \
+../../../../soc/axi_read.vhd \
 ../../../../soc/sdram.vhd \
 ../../../../soc/sdram_mz.vhd \
 ../../../../soc/sdram_pack.vhd \
