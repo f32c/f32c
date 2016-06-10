@@ -67,15 +67,24 @@ entity esa11_xram_acram_ddr3 is
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
         
-        C_axidma_c2: boolean := true;
-        C_video_base_addr_out: boolean := true;
+        C_axidma_c2: boolean := false;
+        C_video_base_addr_out: boolean := false;
         C_axidma_bpp: integer := 32; -- bpp 8/16/32
 
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
 
-        C_video_cache_size: integer := 8; -- KB video cache (vgahdmi) (0: disable, 2,4,8,16,32:enable)
-	C_vgahdmi_fifo_timeout: integer := 48;
-	C_vgahdmi: boolean := false;
+        C_vgahdmi: boolean := true;
+          C_vgahdmi_axi: boolean := true; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
+          C_vgahdmi_cache_size: integer := 8; -- KB video cache (only on f32c bus) (0: disable, 2,4,8,16,32:enable)
+          C_vgahdmi_fifo_timeout: integer := 0;
+          C_vgahdmi_fifo_burst_max: integer := 64;
+          C_vgahdmi_fifo_width: integer := 640;
+          -- height=vertical height in pixels
+          C_vgahdmi_fifo_height: integer := 480;
+          -- output data width 8bpp
+          C_vgahdmi_fifo_data_width: integer := 32; -- should be equal to bitmap depth
+          -- bitmap width of FIFO address space length = 2^width * 4 byte
+          C_vgahdmi_fifo_addr_width: integer := 11;
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: ESA11-7a102t MIPS compatible soft-core 100MHz 256MB DDR3"; -- default banner as initial content of screen BRAM, NOP for RAM
@@ -361,9 +370,14 @@ begin
       C_video_base_addr_out => C_video_base_addr_out,
       C_dvid_ddr => C_dvid_ddr,
       C_vgahdmi => C_vgahdmi,
-      C_video_cache_size => C_video_cache_size,
+      C_vgahdmi_axi => C_vgahdmi_axi,
+      C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_timeout => C_vgahdmi_fifo_timeout,
-
+      C_vgahdmi_fifo_burst_max => C_vgahdmi_fifo_burst_max,
+      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
+      C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
+      C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
+      C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
       C_vgatext_label => C_vgatext_label,
@@ -411,6 +425,10 @@ begin
 	acram_data_rd => ram_data_read,
 	acram_data_wr => ram_data_write,
 	acram_ready => ram_ready,
+        video_axi_aresetn => l01_axi_areset_n,
+        video_axi_aclk => l01_axi_aclk,
+        video_axi_in => from_axi_to_reader,
+        video_axi_out => from_reader_to_axi,
 	sio_txd(0) => UART1_TXD, 
 	sio_rxd(0) => UART1_RXD,
 	sio_break(0) => sio_break,

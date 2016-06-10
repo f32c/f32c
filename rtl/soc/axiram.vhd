@@ -120,17 +120,17 @@ begin
     process(clk)
     begin
       if rising_edge(clk) then
-        -- R_ack_bitmap <= (others => '0');
+        R_ack_bitmap <= (others => '0');
 	-- R_snoop_cycle <= '0';
-
 	R_prio_pending <= R_cur_port /= C_prio_port and C_prio_port >= 0 
 	              and bus_in(C_prio_port).addr_strobe = '1';
 
         if R_phase = C_phase_idle then
+          --R_ack_bitmap <= (others => '0'); -- clear all prev ack's, sequentially overrided if write cycle
           if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
             -- idle
-            R_ack_bitmap <= (others => '0');
             R_cur_port <= next_port;
+            --R_ack_bitmap <= (others => '0'); -- clear all prev ack's, sequentially overrided in write cycle
           else
             -- start a new transaction when slave ready
             if (axi_in.arready='1' and write='0') or (axi_in.awready='1' and write='1') then
@@ -145,6 +145,7 @@ begin
                 R_byte_sel <= byte_sel;
                 R_awvalid <= '1';
               else
+                --R_ack_bitmap <= (others => '0'); -- clear all prev ack's, sequentially overrided in write cycle
                 R_write_cycle <= false;
                 R_byte_sel <= x"0"; -- read cycle will read full 32 bits
                 R_arvalid <= '1';
@@ -155,6 +156,7 @@ begin
         end if;
 
         if R_phase = C_phase_wait_addr_ack then
+          --R_ack_bitmap <= (others => '0'); -- remove possible write ack
           if R_cur_port /= C_prio_port then
             R_last_port <= R_cur_port;
           end if;
@@ -179,15 +181,15 @@ begin
               --R_ack_bitmap(R_cur_port) <= '1'; -- already acknowledged at start of write cycle
               R_byte_sel <= x"0";
               R_wvalid <= '0'; -- de-assert data valid signal
-              --R_cur_port <= next_port;
-              --R_phase <= C_phase_idle;
-              R_phase <= C_phase_wait_write_ack;
+              R_cur_port <= next_port;
+              R_phase <= C_phase_idle;
+              --R_phase <= C_phase_wait_write_ack;
             end if;
           else -- read cycle = not write cycle
             if axi_in.rvalid = '1' and axi_in.rlast = '1' then
               -- end of read cycle
               R_bus_out <= axi_in.rdata; -- latch data and place on the f32c bus
-              R_ack_bitmap(R_cur_port) <= '1';
+              R_ack_bitmap(R_cur_port) <= '1'; -- read ack, must be removed in next cycle
               --R_byte_sel <= x"0"; -- should be already 0, read cycle has byte_sel=0
               --R_en <= '0';
               R_cur_port <= next_port;
@@ -206,11 +208,9 @@ begin
       end if; -- rising edge clk
     end process;
 
-
     -- read signaling
     axi_out.arid    <= "0";    -- not used
-    -- burst length, 00 means 1 word, 01 means 2 words, etc.
-    axi_out.arlen   <= x"00";  -- 1x 32-bit only (no burst)
+    axi_out.arlen   <= x"00";  -- 1x 32-bit only (no burst) burst length, 00 means 1 word, 01 means 2 words, etc.
     axi_out.arsize  <= "010";  -- 32 bits, resp. 4 bytes
     axi_out.arburst <= "01";   -- burst type INCR - Incrementing address
     axi_out.arlock  <= '0';    -- Exclusive access not supported

@@ -112,7 +112,6 @@ generic (
   -- false: normal monitors, DVI-D/HDMI 10-bit TMDS (25MHz pixel clock, 250MHz shift clock)
   -- true:  bare wired LCD panel, 7-bit LVDS (36MHz pixel clock, 252MHz shift clock and does only SDR, not DDR)
   C_lvds_display: boolean := false; -- false: normal DVI-D/HDMI, true: bare LCD panel
-  --C_video_cache_all: std_logic := '0'; -- 0 cache pixel content only, 1 cache everything (all c2 pointers and content)
   -- TV simple 512x512 bitmap
   C_tv: boolean := false; -- enable TV output
   C_tv_fifo_width: integer := 512;
@@ -122,16 +121,17 @@ generic (
   -- VGA/HDMI simple 640x480 bitmap only
   C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
   C_vgahdmi_axi: boolean := false; -- true: use AXI bus (video_axi_in/out) instead of f32c bus
-  C_video_cache_size: integer := 0; -- KB
-  C_video_cache_use_i: boolean := false; -- true: use instruction cache (faster, maybe buggy), false: use data cache (slower, works)
-  C_video_base_addr_out: boolean := false;
+  C_vgahdmi_cache_size: integer := 0; -- KB enable cache for f32c bus (C_vgahdmi_axi = false)
+  C_vgahdmi_cache_use_i: boolean := false; -- true: use instruction cache (faster, maybe buggy), false: use data cache (slower, works)
   C_vgahdmi_fifo_fast_ram: boolean := true;
   C_vgahdmi_fifo_timeout: integer := 0; -- abort compositing at N pixels before end of line (0 disabled)
-  C_vgahdmi_burst_max: integer := 1; -- values >= 2 enable the burst
+  C_vgahdmi_fifo_burst_max: integer := 1; -- values >= 2 enable the burst
   C_vgahdmi_fifo_width: integer := 640;
   C_vgahdmi_fifo_height: integer := 480;
   C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
   C_vgahdmi_fifo_addr_width: integer := 11;
+  --
+  C_video_base_addr_out: boolean := false; -- dummy video driver, just output base address to toplevel
   -- LED strip ws2812 POV simple 144x480 bitmap only
   C_ledstrip: boolean := false; -- enable dual channel ws2812b output
   C_ledstrip_full_circle: integer := 100; -- count of pulses per full circle of rotation
@@ -1084,6 +1084,8 @@ begin
     end generate; -- C_tv
 
     -- for external video driver, just obtain output address
+    -- this is dummy video driver
+    -- todo: frame interrupt not yet supported
     G_video_base_addr_out:
     if C_video_base_addr_out generate
     -- address decoder to set base address and clear interrupts
@@ -1115,7 +1117,7 @@ begin
         end if; -- end rising edge
     end process;
     video_base_addr <= R_fb_base_addr;
-    end generate;
+    end generate; -- end G_video_base_addr_out
 
     -- VGA/HDMI
     G_vgahdmi:
@@ -1130,7 +1132,7 @@ begin
     vga_data <= from_xram;
 
     -- data source: cache cpu clock synchronous
-    G_no_video_cache: if C_video_cache_size=0 generate
+    G_no_vgahdmi_cache: if C_vgahdmi_cache_size=0 generate
       -- bypass the cache
       vga_addr_strobe <= video_fifo_addr_strobe;
       vga_addr <= video_fifo_addr;
@@ -1138,13 +1140,13 @@ begin
       video_fifo_data <= vga_data; -- from XRAM
     end generate; -- end G_no_video_cache
 
-    G_yes_video_cache_i: if C_video_cache_use_i and C_video_cache_size > 0 generate
+    G_yes_vgahdmi_cache_i: if C_vgahdmi_cache_use_i and C_vgahdmi_cache_size > 0 generate
     -- currently i-cache can't do constant streaming for video
     -- until it is fixed, use d-cache
-    video_cache_i: entity work.video_cache_i
+    vgahdmi_cache_i: entity work.video_cache_i
     generic map
     (
-        C_icache_size => C_video_cache_size,
+        C_icache_size => C_vgahdmi_cache_size,
         C_cached_addr_bits => C_cached_addr_bits, -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
         C_icache_expire => false -- true: i-cache will immediately expire every cached data
     )
@@ -1165,13 +1167,13 @@ begin
       i_ready => video_fifo_data_ready, -- output to fifo
       i_data => video_fifo_data -- output from cache to fifo
     );
-    end generate; -- end G_yes_video_cache_i
+    end generate; -- end G_yes_vgahdmi_cache_i
 
-    G_yes_video_cache_d: if (not C_video_cache_use_i) and C_video_cache_size > 0 generate
-    video_cache_d: entity work.video_cache_d
+    G_yes_vgahdmi_cache_d: if (not C_vgahdmi_cache_use_i) and C_vgahdmi_cache_size > 0 generate
+    vgahdmi_cache_d: entity work.video_cache_d
     generic map
     (
-        C_dcache_size => C_video_cache_size,
+        C_dcache_size => C_vgahdmi_cache_size,
         C_cached_addr_bits => C_cached_addr_bits -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
     )
     port map
@@ -1195,7 +1197,7 @@ begin
       cpu_d_data_out => (others => '-'), -- input random data
       cpu_d_data_in => video_fifo_data -- output from cache to fifo
     );
-    end generate; -- end G_yes_video_cache_d
+    end generate; -- end G_yes_vgahdmi_cache_d
     end generate; -- end G_no_vgahdmi_axi
 
     G_yes_vgahdmi_axi: if C_vgahdmi_axi generate
@@ -1223,7 +1225,7 @@ begin
     generic map (
       C_fast_ram => C_vgahdmi_fifo_fast_ram,
       C_timeout => C_vgahdmi_fifo_timeout,
-      C_burst_max => C_vgahdmi_burst_max,
+      C_burst_max => C_vgahdmi_fifo_burst_max,
       C_width => C_vgahdmi_fifo_width,
       C_height => C_vgahdmi_fifo_height,
       C_data_width => C_vgahdmi_fifo_data_width,
