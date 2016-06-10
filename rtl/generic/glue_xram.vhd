@@ -112,7 +112,6 @@ generic (
   -- false: normal monitors, DVI-D/HDMI 10-bit TMDS (25MHz pixel clock, 250MHz shift clock)
   -- true:  bare wired LCD panel, 7-bit LVDS (36MHz pixel clock, 252MHz shift clock and does only SDR, not DDR)
   C_lvds_display: boolean := false; -- false: normal DVI-D/HDMI, true: bare LCD panel
-  C_video_cache_size: integer := 0; -- KB
   --C_video_cache_all: std_logic := '0'; -- 0 cache pixel content only, 1 cache everything (all c2 pointers and content)
   -- TV simple 512x512 bitmap
   C_tv: boolean := false; -- enable TV output
@@ -122,6 +121,8 @@ generic (
   C_tv_fifo_addr_width: integer := 11;
   -- VGA/HDMI simple 640x480 bitmap only
   C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
+  C_vgahdmi_axi: boolean := false; -- true: use AXI bus (video_axi_in/out) instead of f32c bus
+  C_video_cache_size: integer := 0; -- KB
   C_video_cache_use_i: boolean := false; -- true: use instruction cache (faster, maybe buggy), false: use data cache (slower, works)
   C_video_base_addr_out: boolean := false;
   C_vgahdmi_fifo_fast_ram: boolean := true;
@@ -222,9 +223,14 @@ port (
   acram_data_rd: in std_logic_vector(31 downto 0) := (others => '0');
   acram_data_wr: out std_logic_vector(31 downto 0);
   acram_byte_we: out std_logic_vector(3 downto 0);
-  -- AXI Master
-  axi_in: in T_axi_miso := C_axi_miso_0;
-  axi_out: out T_axi_mosi;
+  -- AXI Master for CPU and VIDEO
+  cpu_axi_in: in T_axi_miso := C_axi_miso_0;
+  cpu_axi_out: out T_axi_mosi;
+  -- video axi is currently used only when C_vgahdmi = true and C_vgahdmi_axi = true
+  video_axi_aresetn: in std_logic := '1';
+  video_axi_aclk: in std_logic := '0';
+  video_axi_in: in T_axi_miso := C_axi_miso_0;
+  video_axi_out: out T_axi_mosi;
   --
   sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
   sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
@@ -344,10 +350,12 @@ architecture Behavioral of glue_xram is
     signal vga_data: std_logic_vector(31 downto 0);
     -- Video FIFO data bus
     signal video_fifo_suggest_cache: std_logic := '0';
+    signal video_fifo_suggest_burst: std_logic_vector(15 downto 0);
     signal video_fifo_addr: std_logic_vector(29 downto 2);
     signal video_fifo_addr_strobe: std_logic; -- FIFO requests to read from RAM
     signal video_fifo_data_ready: std_logic; -- RAM responds to FIFO
     signal video_fifo_data: std_logic_vector(31 downto 0);
+    signal video_fifo_read_ready: std_logic := '1';
 
     signal video_bram_write: std_logic;
     signal video_bram_addr_strobe: std_logic;
@@ -579,7 +587,7 @@ begin
     to_xram(data_port).write <= dmem_write;
     to_xram(data_port).byte_sel <= dmem_byte_sel;
     -- port 2: VGA/HDMI video read
-    G_bitmap_sram: if C_tv OR C_vgahdmi OR C_ledstrip OR (C_vgatext AND C_vgatext_bitmap) generate
+    G_bitmap_sram: if C_tv OR (C_vgahdmi and not C_vgahdmi_axi) OR C_ledstrip OR (C_vgatext AND C_vgatext_bitmap) generate
     to_xram(fb_port).addr_strobe <= vga_addr_strobe;
     to_xram(fb_port).addr <= vga_addr(to_xram(fb_port).addr'high downto 2);
     to_xram(fb_port).data_in <= (others => '-');
@@ -739,20 +747,20 @@ begin
 
     G_axiram:
     if C_axiram generate
-    --acram: entity work.axiram
-    --generic map (
-    --  C_ports => C_xram_ports, -- extra ports: framebuffer, textmode and PCM audio
-    --  C_prio_port => fb_port -- framebuffer
-    --)
-    --port map (
-    --  clk => clk,
-    --  axi_in => axi_in,
-    --  axi_out => axi_out,
-    --  data_out => from_xram,
-    --  snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
-    --  -- Multi-port connections:
-    --  bus_in => to_xram, ready_out => xram_ready
-    --);
+    acram: entity work.axiram
+    generic map (
+      C_ports => C_xram_ports, -- extra ports: framebuffer, textmode and PCM audio
+      C_prio_port => fb_port -- framebuffer
+    )
+    port map (
+      clk => clk,
+      axi_in => cpu_axi_in,
+      axi_out => cpu_axi_out,
+      data_out => from_xram,
+      snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
+      -- Multi-port connections:
+      bus_in => to_xram, ready_out => xram_ready
+    );
     end generate; -- G_axiram
 
     -- RS232 sio
@@ -1116,6 +1124,7 @@ begin
     S_vga_fetch_enabled <= S_vga_enable and vga_fetch_next; -- drain fifo into display
     S_vga_active_enabled <= S_vga_enable and not S_vga_vsync; -- frame active, pre-fill fifo
 
+    G_no_vgahdmi_axi: if not C_vgahdmi_axi generate
     -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
     -- vga_data(7 downto 0) <= x"0F";
     vga_data <= from_xram;
@@ -1127,7 +1136,7 @@ begin
       vga_addr <= video_fifo_addr;
       video_fifo_data_ready <= vga_data_ready; -- data valid for read acknowledge from RAM
       video_fifo_data <= vga_data; -- from XRAM
-    end generate;
+    end generate; -- end G_no_video_cache
 
     G_yes_video_cache_i: if C_video_cache_use_i and C_video_cache_size > 0 generate
     -- currently i-cache can't do constant streaming for video
@@ -1156,7 +1165,7 @@ begin
       i_ready => video_fifo_data_ready, -- output to fifo
       i_data => video_fifo_data -- output from cache to fifo
     );
-    end generate;
+    end generate; -- end G_yes_video_cache_i
 
     G_yes_video_cache_d: if (not C_video_cache_use_i) and C_video_cache_size > 0 generate
     video_cache_d: entity work.video_cache_d
@@ -1186,7 +1195,26 @@ begin
       cpu_d_data_out => (others => '-'), -- input random data
       cpu_d_data_in => video_fifo_data -- output from cache to fifo
     );
-    end generate;
+    end generate; -- end G_yes_video_cache_d
+    end generate; -- end G_no_vgahdmi_axi
+
+    G_yes_vgahdmi_axi: if C_vgahdmi_axi generate
+    video_axi_read: entity work.axi_read
+    port map
+    (
+        axi_aresetn => video_axi_aresetn,
+        axi_aclk => video_axi_aclk,
+        axi_in => video_axi_in,
+        axi_out => video_axi_out,
+
+        iaddr => video_fifo_addr,
+        iaddr_strobe => video_fifo_addr_strobe,
+        iburst => video_fifo_suggest_burst(7 downto 0),
+        odata => video_fifo_data,
+        oready => video_fifo_data_ready,
+        iread_ready => video_fifo_read_ready
+    );
+    end generate; -- end G_yes_vgahdmi_axi
 
     -- data source: FIFO - cross clock domain cpu-pixel
     G_vgabit_c2: if true generate
@@ -1205,8 +1233,10 @@ begin
       clk => clk,
       clk_pixel => clk_pixel,
       suggest_cache => video_fifo_suggest_cache,
+      suggest_burst => video_fifo_suggest_burst,
       addr_strobe => video_fifo_addr_strobe,
       addr_out => video_fifo_addr,
+      read_ready => video_fifo_read_ready, -- fifo outputs '1' when ready to read data from RAM
       data_ready => video_fifo_data_ready, -- data valid for read acknowledge from RAM
       data_in => video_fifo_data, -- from cache
       -- data_in => x"00AA00AA", -- test pattern gray vertical line over whole screen
