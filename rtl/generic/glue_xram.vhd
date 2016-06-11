@@ -1281,14 +1281,14 @@ begin
     -- unspported bpp values produce black screen
     -- LSB bit extended as padding improving max dynamic range
     G_vgabit_RGB_332_888: if C_vgahdmi_fifo_data_width = 8 generate
-      vga_data_r <= vga_data_from_fifo(7 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5); -- red
-      vga_data_g <= vga_data_from_fifo(4 downto 2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2); -- green
-      vga_data_b <= vga_data_from_fifo(1 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0); -- blue
+      vga_data_r <= vga_data_from_fifo(7 downto 5) & vga_data_from_fifo(7 downto 5) & vga_data_from_fifo(7 downto 6); -- red
+      vga_data_g <= vga_data_from_fifo(4 downto 2) & vga_data_from_fifo(4 downto 2) & vga_data_from_fifo(4 downto 3); -- green
+      vga_data_b <= vga_data_from_fifo(1 downto 0) & vga_data_from_fifo(1 downto 0) & vga_data_from_fifo(1 downto 0) & vga_data_from_fifo(1 downto 0); -- blue
     end generate;
     G_vgabit_RGB_565_888: if C_vgahdmi_fifo_data_width = 16 generate
-      vga_data_r <= vga_data_from_fifo(15 downto 11) & vga_data_from_fifo(11) & vga_data_from_fifo(11) & vga_data_from_fifo(11); -- red
-      vga_data_g <= vga_data_from_fifo(10 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5); -- green
-      vga_data_b <= vga_data_from_fifo(4 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0); -- blue
+      vga_data_r <= vga_data_from_fifo(15 downto 11) & vga_data_from_fifo(15 downto 13); -- red
+      vga_data_g <= vga_data_from_fifo(10 downto 5) & vga_data_from_fifo(10 downto 9); -- green
+      vga_data_b <= vga_data_from_fifo(4 downto 0) & vga_data_from_fifo(4 downto 2); -- blue
     end generate;
     G_vgabit_RGB_888_888: if C_vgahdmi_fifo_data_width = 32 generate
       -- only 24 from 32 bits are used, 8 bits reserved for alpha channel
