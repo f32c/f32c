@@ -146,8 +146,9 @@ begin
         if write='0' and addr_strobe='1' and R_read_busy='0' and R_arvalid='0' then
           R_araddr <= "00" & addr & "00";
           R_arvalid <= '1';
+          R_read_busy <= '1';
         else
-          if R_arvalid='1' and axi_in.arready='1' then
+          if R_arvalid='1' and (false or axi_in.arready='1') then
             R_read_busy <= '1'; -- internal signal: read processing
             R_arvalid <= '0'; -- we got address accepted signal, remove read request
           end if;
@@ -155,10 +156,11 @@ begin
 
         -- read completed
         -- axi_in.rlast indicates last word in a burst
-        if R_read_busy = '1' and axi_in.rvalid = '1' then
+        if R_read_busy = '1' and (false or axi_in.rvalid = '1') then
           R_read_busy <= '0';
           R_bus_out <= axi_in.rdata;
           --R_bus_out <= x"C01DEBA6"; -- debugging constant must be seen on every read
+          --R_bus_out <= R_araddr;
           R_ack_bitmap(R_cur_port) <= '1'; -- read ack, must be removed in next cycle
           R_cur_port <= next_port;
         end if;
@@ -171,6 +173,7 @@ begin
           R_wvalid <= '1';
           -- we can safely acknowledge the write immediately
           R_ack_bitmap(R_cur_port) <= '1';
+          R_write_busy <= '1';
         else
           if R_awvalid='1' and axi_in.awready='1' then
             R_write_busy <= '1'; -- internal signal: read processing
@@ -198,7 +201,7 @@ begin
     axi_out.arcache <= "0011"; -- Xilinx IP generally ignores, but 'modifiable'[1] bit required?
     axi_out.arprot  <= "000";  -- Xilinx IP generally ignores
     axi_out.arqos   <= "0000"; -- QOS not supported
-
+    axi_out.rready  <= '1';    -- we are always ready to read data
     axi_out.arvalid <= R_arvalid;
     --axi_out.arvalid <= '0';
     axi_out.araddr  <= R_araddr;
