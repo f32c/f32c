@@ -80,6 +80,7 @@ architecture Structure of axiram is
     -- internal read lock
     signal R_read_busy, R_write_busy: std_logic := '0'; -- internal lock allows one request to complete until next is accepted
 
+    signal R_wait_bvalid: std_logic := '0';
     -- Arbiter internal signals
     signal next_port: integer;
 
@@ -158,8 +159,9 @@ begin
         -- axi_in.rlast indicates last word in a burst
         if R_read_busy = '1' and axi_in.rvalid = '1' and axi_in.rlast = '1'  then
           R_read_busy <= '0';
+          R_arvalid <= '0'; -- just to be sure, remove read request again
           R_bus_out <= axi_in.rdata;
-          --R_bus_out <= x"C01DEBA6"; -- debugging constant must be seen on every read
+          --R_bus_out <= x"DEBA66ED"; -- debugging constant must be seen on every read
           --R_bus_out <= R_araddr;
           R_ack_bitmap(R_cur_port) <= '1'; -- read ack, must be removed in next cycle
           R_cur_port <= next_port;
@@ -171,24 +173,35 @@ begin
           R_awvalid <= '1';
           R_out_word <= data_in;
           R_byte_sel <= byte_sel;
-          R_wvalid <= '1';
-          -- we can safely acknowledge the write immediately
-          R_ack_bitmap(R_cur_port) <= '1';
           --R_write_busy <= '1';
         else
           if R_awvalid='1' and axi_in.awready='1' then
             R_write_busy <= '1'; -- internal signal: read processing
             R_awvalid <= '0'; -- we got address accepted signal, remove read request
+            R_wvalid <= '1';
           end if;
         end if;
 
-        -- write completed
-        -- axi_in.rlast indicates last word in a burst
-        if R_write_busy = '1' and axi_in.wready = '1' then
-          R_write_busy <= '0';
+        -- write acknowledge
+        if R_wvalid='1' and axi_in.wready = '1' then
+          --R_write_busy <= '0';
+          R_awvalid <= '0'; -- just to be sure do it again
           R_wvalid <= '0'; -- de-assert data valid signal
+          --R_ack_bitmap(R_cur_port) <= '1';
+          --R_cur_port <= next_port;
+          R_wait_bvalid <= '1';
+        end if;
+
+        -- get write response
+        if R_wait_bvalid = '1' and axi_in.bvalid = '1' then
+          R_awvalid <= '0'; -- just to be sure do it again
+          R_wvalid <= '0'; -- just to be sure do it again
+          R_wait_bvalid <= '0';
+          R_write_busy <= '0';
+          R_ack_bitmap(R_cur_port) <= '1';
           R_cur_port <= next_port;
         end if;
+
       end if; -- not axi reset
       end if; -- rising edge clk
     end process;
