@@ -57,17 +57,15 @@ entity esa11_xram_axiram_ddr3 is
 
         C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         -- warning: 2K, 4K, 8K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
-        C_icache_size: integer := 0; -- 0, 2, 4, 8, 16, 32 KBytes
-        C_dcache_size: integer := 0; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_icache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 2^29 -> 512MB to be cached
 
         C3_NUM_DQ_PINS        : integer := 16;
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
         
-        C_axidma_c2: boolean := false;
         C_video_base_addr_out: boolean := false;
-        C_axidma_bpp: integer := 32; -- bpp 8/16/32
 
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
 
@@ -543,7 +541,7 @@ begin
     );
     l00_axi_aclk <= clk; -- 100 MHz
     l01_axi_aclk <= clk; -- port l01 used for video
-    l02_axi_aclk <= clk; -- port l02 not used
+    l02_axi_aclk <= '0'; -- port l02 not used
     end generate; -- G_acram_real
 
     --FPGA_LED2 <= calib_done; -- should turn on 0.3 seconds after startup and remain on
