@@ -123,6 +123,15 @@ begin
     process(clk)
     begin
       if rising_edge(clk) then
+      if axi_aresetn = '0' then
+        -- yes reset
+        R_read_busy <= '0';
+        R_araddr    <= (others => '0');
+        R_arvalid   <= '0';
+        R_write_busy <= '0';
+        R_awaddr    <= (others => '0');
+        R_awvalid   <= '0';
+      else -- not reset
         R_ack_bitmap <= (others => '0'); -- assure that f32c ack will last only 1 CPU cycle
         -- R_snoop_cycle <= '0';
         R_prio_pending <= R_cur_port /= C_prio_port and C_prio_port >= 0 
@@ -135,7 +144,7 @@ begin
 
         -- read cycle
         if write='0' and addr_strobe='1' and R_read_busy='0' and R_arvalid='0' then
-          R_araddr <= "00" & addr(29 downto 2) & "00";
+          R_araddr <= "00" & addr & "00";
           R_arvalid <= '1';
         else
           if R_arvalid='1' and axi_in.arready='1' then
@@ -146,7 +155,7 @@ begin
 
         -- read completed
         -- axi_in.rlast indicates last word in a burst
-        if R_read_busy = '1' and (axi_in.rvalid = '1' and axi_in.rlast = '1') then
+        if R_read_busy = '1' and axi_in.rvalid = '1' then
           R_read_busy <= '0';
           R_bus_out <= axi_in.rdata;
           --R_bus_out <= x"C01DEBA6"; -- debugging constant must be seen on every read
@@ -156,7 +165,7 @@ begin
 
         -- write cycle
         if write='1' and addr_strobe='1' and R_write_busy='0' and R_awvalid='0' then
-          R_awaddr <= "00" & addr(29 downto 2) & "00";
+          R_awaddr <= "00" & addr & "00";
           R_awvalid <= '1';
           R_out_word <= data_in;
           R_wvalid <= '1';
@@ -176,7 +185,7 @@ begin
           R_wvalid <= '0'; -- de-assert data valid signal
           R_cur_port <= next_port;
         end if;
-        
+      end if; -- not axi reset
       end if; -- rising edge clk
     end process;
 
