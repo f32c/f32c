@@ -71,9 +71,9 @@ entity esa11_xram_axiram_ddr3 is
 
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
 
-        C_video_cache_size: integer := 8; -- KB video cache (vgahdmi) (0: disable, 2,4,8,16,32:enable)
-	C_vgahdmi_fifo_timeout: integer := 48;
 	C_vgahdmi: boolean := false;
+        C_vgahdmi_cache_size: integer := 8; -- KB video cache (vgahdmi) (0: disable, 2,4,8,16,32:enable)
+        C_vgahdmi_fifo_timeout: integer := 48;
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: ESA11-7a102t MIPS compatible soft-core 100MHz 256MB DDR3"; -- default banner as initial content of screen BRAM, NOP for RAM
@@ -358,8 +358,8 @@ begin
       C_video_base_addr_out => C_video_base_addr_out,
       C_dvid_ddr => C_dvid_ddr,
       C_vgahdmi => C_vgahdmi,
-      C_video_cache_size => C_video_cache_size,
       C_vgahdmi_fifo_timeout => C_vgahdmi_fifo_timeout,
+      C_vgahdmi_cache_size => C_vgahdmi_cache_size,
 
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
@@ -402,8 +402,8 @@ begin
         clk => clk,
 	clk_pixel => clk_25MHz,
 	clk_pixel_shift => clk_pixel_shift,
-	axi_in => main_axi_miso,
-	axi_out => main_axi_mosi,
+	cpu_axi_in => main_axi_miso,
+	cpu_axi_out => main_axi_mosi,
 	sio_txd(0) => UART1_TXD, 
 	sio_rxd(0) => UART1_RXD,
 	sio_break(0) => sio_break,
