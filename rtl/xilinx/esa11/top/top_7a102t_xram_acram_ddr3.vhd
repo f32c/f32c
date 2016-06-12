@@ -67,9 +67,7 @@ entity esa11_xram_acram_ddr3 is
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
         
-        C_axidma_c2: boolean := false;
-        C_video_base_addr_out: boolean := false;
-        C_axidma_bpp: integer := 32; -- bpp 8/16/32
+        C_video_base_addr_out: boolean := false; -- enabling this creates dummy dirver, no use here
 
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
 
@@ -472,6 +470,17 @@ begin
     m_7seg_g  <= disp_7seg_segment(6);
     m_7seg_dp <= disp_7seg_segment(7);
 
+    vga_f32c: if C_vgahdmi or C_vgatext generate
+    VGA_SYNC_N <= '1';
+    VGA_BLANK_N <= '1';
+    VGA_CLOCK_P <= clk_25MHz;
+    VGA_VSYNC <= glue_vga_vsync_n;
+    VGA_HSYNC <= glue_vga_hsync_n;
+    vga_red <= glue_vga_red;
+    vga_green <= glue_vga_green;
+    vga_blue <= glue_vga_blue;
+    end generate;
+
     G_dvi_sdr: if not C_dvid_ddr generate
       tmds_rgb <= dvid_red(0) & dvid_green(0) & dvid_blue(0);
       tmds_clk <= dvid_clock(0);
@@ -600,144 +609,5 @@ begin
 
     --FPGA_LED2 <= calib_done; -- should turn on 0.3 seconds after startup and remain on
     --FPGA_LED3 <= ram_read_busy; -- more RAM traffic -> more LED brightness
-
-    vga_f32c: if C_vgahdmi or C_vgatext generate
-    VGA_SYNC_N <= '1';
-    VGA_BLANK_N <= '1';
-    VGA_CLOCK_P <= clk_25MHz;
-    VGA_VSYNC <= glue_vga_vsync_n;
-    VGA_HSYNC <= glue_vga_hsync_n;
-    vga_red <= glue_vga_red;
-    vga_green <= glue_vga_green;
-    vga_blue <= glue_vga_blue;
-    end generate;
-
-    G_axidma_c2: if C_axidma_c2 generate
-    axidma: entity work.axi_read
-    port map
-    (
-        axi_aresetn => l01_axi_areset_n,
-        axi_aclk => l01_axi_aclk,
-        axi_in => from_axi_to_reader,
-        axi_out => from_reader_to_axi,
-
-        iaddr => S_vga_addr,
-        iaddr_strobe => S_vga_addr_strobe,
-        iburst => S_vga_suggest_burst(7 downto 0),
-        odata => S_vga_data,
-        oready => S_vga_data_ready,
-        iread_ready => S_vga_read_ready
-    );
-    -- data source: FIFO - cross clock domain cpu-pixel
-    -- compositing2 video accelerator, shows linked list of pixel data
-    comp_fifo: entity work.compositing2_fifo
-    generic map
-    (
-      --C_timeout => 48,
-      --C_timeout_incomplete => true,
-      C_fast_ram => false,
-      C_burst_max => 64,
-      C_width => 640,
-      C_height => 480,
-      C_data_width => C_axidma_bpp,
-      C_addr_width => 11
-    )
-    port map
-    (
-      clk => l01_axi_aclk, -- at axi speed
-      clk_pixel => clk_25MHz,
-      suggest_cache => S_vga_suggest_cache, -- video_fifo_suggest_cache,
-      suggest_burst => S_vga_suggest_burst,
-      addr_strobe => S_vga_addr_strobe, -- video_fifo_addr_strobe,
-      addr_out => S_vga_addr, -- video_fifo_addr,
-      data_ready => S_vga_data_ready, -- data valid, acknowledge from RAM
-      data_in => S_vga_data,
-      read_ready => S_vga_read_ready,
-      base_addr => S_vga_base_addr(29 downto 2),
-      active => S_vga_active_enabled,
-      frame => open, -- vga_frame, -- for f32c video interrupt
-      data_out => vga_data_from_fifo(C_axidma_bpp-1 downto 0),
-      fetch_next => S_vga_fetch_next
-    );
-    S_vga_active_enabled <= not S_vga_vsync;
-    --S_vga_data_debug <= x"00AA00AA"; -- stripe on the screen
-    --S_vga_data_debug <= x"0280_0000" when S_vga_suggest_cache='0' else x"031CE000"; -- full screen of RGB series
-    --S_vga_data_debug <= x"0280_0000" when S_vga_suggest_cache='0' else S_vga_data;
-
-    G_axidma_8bpp: if C_axidma_bpp = 8 generate
-      red_byte   <= vga_data_from_fifo(7 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5) & vga_data_from_fifo(5);
-      green_byte <= vga_data_from_fifo(4 downto 2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2) & vga_data_from_fifo(2);
-      blue_byte  <= vga_data_from_fifo(1 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0);
-    end generate;
-
-    G_axidma_16bpp: if C_axidma_bpp = 16 generate
-      red_byte   <= vga_data_from_fifo(15 downto 11) & vga_data_from_fifo(11) & vga_data_from_fifo(11) & vga_data_from_fifo(11);
-      green_byte <= vga_data_from_fifo(10 downto 5) & vga_data_from_fifo(5) & vga_data_from_fifo(5);
-      blue_byte  <= vga_data_from_fifo(4 downto 0) & vga_data_from_fifo(0) & vga_data_from_fifo(0) & vga_data_from_fifo(0);
-    end generate;
-
-    G_axidma_32bpp: if C_axidma_bpp = 32 generate
-      red_byte   <= vga_data_from_fifo(23 downto 16);
-      green_byte <= vga_data_from_fifo(15 downto 8);
-      blue_byte  <= vga_data_from_fifo(7 downto 0);
-    end generate;
-
-    -- VGA video generator - pixel clock synchronous
-    vgabitmap: entity work.vga
-    --generic map (
-    --  C_dbl_y => 1
-    --)
-    port map
-    (
-      clk_pixel => clk_25MHz,
-      test_picture => '0', -- shows test picture when VGA is disabled (on startup)
-      fetch_next  => S_vga_fetch_next,
-      line_repeat => S_vga_line_repeat,
-      red_byte    => red_byte,
-      green_byte  => green_byte,
-      blue_byte   => blue_byte,
-      vga_r => S_vga_red,
-      vga_g => S_vga_green,
-      vga_b => S_vga_blue,
-      vga_hsync => S_vga_hsync,
-      vga_vsync => S_vga_vsync,
-      vga_blank => S_vga_blank, -- '1' when outside of horizontal or vertical graphics area
-      vga_vblank => open -- '1' when outside of vertical graphics area (used for vblank interrupt)
-    );
-    vga_red <= S_vga_red;
-    vga_green <= S_vga_green;
-    vga_blue <= S_vga_blue;
-    vga_sync_n <= '1';
-    vga_blank_n <= not S_vga_blank;
-    vga_hsync <= not S_vga_hsync;
-    vga_vsync <= not S_vga_vsync;
-    vga_clock_p <= clk_25MHz;
-
-    I_vgahdmi_dvid: entity work.vga2dvid
-    generic map 
-    (
-      C_ddr     => C_dvid_ddr,
-      C_depth   => 8 -- 8bpp (8 bit per pixel)
-    )
-    port map
-    (
-      clk_pixel => clk_25MHz, clk_shift => clk_pixel_shift,
-
-      in_red   => S_vga_red,
-      in_green => S_vga_green,
-      in_blue  => S_vga_blue,
-
-      in_blank => S_vga_blank,
-      in_hsync => S_vga_hsync,
-      in_vsync => S_vga_vsync,
-
-      -- single-ended output ready for differential buffers
-      out_red   => dvid_red,
-      out_green => dvid_green,
-      out_blue  => dvid_blue,
-      out_clock => dvid_clock
-    );
-
-    end generate; -- G_vga_c2_gen C_axidma_c2
 
 end Behavioral;
