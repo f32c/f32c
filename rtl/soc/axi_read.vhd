@@ -75,7 +75,7 @@ begin
   cache_mbi_read : process(axi_aclk)
   begin
     if rising_edge(axi_aclk) then
-      if axi_aresetn = '0' and false then
+      if axi_aresetn = '0' then
             mbi_read_busy <= '0';
             axi_araddr    <= (others => '0');
             axi_arvalid   <= '0';
