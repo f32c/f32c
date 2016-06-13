@@ -4,7 +4,15 @@
 -- AXI Master read/write 
 -- with integrated f32c compatible multiport arbiter
 
--- todo: byte_sel is currently ignored
+-- currently it doesn't support burst.
+-- AXI read and write can happen simultaneously
+-- but this module does either write or read at a time,
+-- to make sure that after new value is written, subsequent
+-- read will return new value, not the old.
+
+-- bus errors not handled
+-- timeouts not handled. if something gets stuck
+-- at AXI slave side, this module will get stuck too.
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -17,20 +25,20 @@ use work.axi_pack.all;
 entity axiram is
   generic
   (
-	C_ports: integer;
-	C_wait_cycles: integer range 2 to 65535 := 2; -- unused
-	C_prio_port: integer := -1
+    C_ports: integer;
+    C_wait_cycles: integer range 2 to 65535 := 2; -- unused
+    C_prio_port: integer := -1
   );
   port
   (
-	clk: in std_logic;
-	-- To internal bus / logic blocks
-	data_out: out std_logic_vector(31 downto 0); -- XXX rename to bus_out!
-	ready_out: out sram_ready_array; -- one bit per port
-	snoop_addr: out std_logic_vector(31 downto 2);
-	snoop_cycle: out std_logic := '0';
-	-- Inbound multi-port bus connections
-	bus_in: in sram_port_array;
+    clk: in std_logic;
+    -- To internal bus / logic blocks
+    data_out: out std_logic_vector(31 downto 0); -- XXX rename to bus_out!
+    ready_out: out sram_ready_array; -- one bit per port
+    snoop_addr: out std_logic_vector(31 downto 2);
+    snoop_cycle: out std_logic := '0';
+    -- Inbound multi-port bus connections
+    bus_in: in sram_port_array;
     -- AXI Master
     axi_aresetn: in std_logic := '1';
     axi_in: in T_axi_miso;
@@ -41,15 +49,15 @@ end axiram;
 architecture Structure of axiram is
     -- State machine constants
     constant C_phase_idle: integer := 0;
-    constant C_phase_wait_addr_ack: integer := 1;
-    constant C_phase_wait_data_ack: integer := 2;
-    --constant C_phase_wait_write_ack: integer := 3;
-    constant C_phase_last: integer := C_phase_wait_data_ack;
+    constant C_phase_wait_read_addr_ack: integer := 1;
+    constant C_phase_wait_read_data_ack: integer := 2;
+    constant C_phase_wait_write_addr_ack: integer := 3;
+    constant C_phase_wait_write_data_ack: integer := 4;
+    constant C_phase_max: integer := C_phase_wait_write_data_ack;
 
     -- Physical interface registers
     signal R_a: std_logic_vector(29 downto 2); -- to SRAM
     --signal R_en: std_logic := '0'; -- not used on axi?
-    signal R_write_cycle: boolean := false; -- internal
     signal R_byte_sel: std_logic_vector(3 downto 0) := x"0"; -- internal
     signal R_out_word: std_logic_vector(31 downto 0); -- internal
 
@@ -64,7 +72,7 @@ architecture Structure of axiram is
     signal data_in: std_logic_vector(31 downto 0);	-- from CPU bus
 
     -- Arbiter registers
-    signal R_phase: integer range 0 to C_phase_last;
+    signal R_phase: integer range 0 to C_phase_max;
     signal R_cur_port: integer range 0 to (C_ports - 1);
     signal R_last_port: integer range 0 to (C_ports - 1);
     signal R_prio_pending: boolean;
@@ -126,85 +134,74 @@ begin
 	              and bus_in(C_prio_port).addr_strobe = '1';
 
         if R_phase = C_phase_idle then
-          --R_ack_bitmap <= (others => '0'); -- clear all prev ack's, sequentially overrided if write cycle
           if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
             -- idle
             R_cur_port <= next_port;
-            --R_ack_bitmap <= (others => '0'); -- clear all prev ack's, sequentially overrided in write cycle
           else
             -- start a new transaction when slave ready
             if (axi_in.arready='1' and write='0') or (axi_in.awready='1' and write='1') then
               R_a <= addr;
               if write = '1' then
-                R_write_cycle <= true;
-                R_out_word <= data_in;
+                R_awvalid <= '1'; -- write request starts with address
+                R_out_word <= data_in; -- latch data to be written
+                R_byte_sel <= byte_sel; -- latch byte select to be written
                 -- we can safely acknowledge the write immediately
                 R_ack_bitmap(R_cur_port) <= '1';
                 --R_snoop_addr(29 downto 2) <= addr; -- XXX
                 --R_snoop_cycle <= '1';
-                R_byte_sel <= byte_sel;
-                R_awvalid <= '1';
+                R_arvalid <= '0'; -- extra safety no read request during write
+                R_phase <= C_phase_wait_write_addr_ack;
               else
-                --R_ack_bitmap <= (others => '0'); -- clear all prev ack's, sequentially overrided in write cycle
-                R_write_cycle <= false;
-                R_byte_sel <= x"0"; -- read cycle will read full 32 bits
-                R_arvalid <= '1';
+                R_arvalid <= '1'; -- read request starts with address
+                R_awvalid <= '0'; -- extra safety no write request during read
+                R_wvalid <= '0'; -- extra safety no write data during read
+                R_byte_sel <= x"0"; -- extra safety prevent unwanted write
+                R_phase <= C_phase_wait_read_addr_ack;
               end if;
-              R_phase <= C_phase_wait_addr_ack;
             end if;
           end if;
         end if;
 
-        if R_phase = C_phase_wait_addr_ack then
-          --R_ack_bitmap <= (others => '0'); -- remove possible write ack
+        if R_phase = C_phase_wait_read_addr_ack then
           if R_cur_port /= C_prio_port then
             R_last_port <= R_cur_port;
           end if;
-          if R_write_cycle then
-            if axi_in.awready = '1' then
-              R_awvalid <= '0'; -- de-assert address request
-              R_wvalid <= '1'; -- assert data valid, try if this could be asserted on earlier phase
-              R_phase <= C_phase_wait_data_ack;
-            end if;
-          else -- read cycle = not write cycle
-            if axi_in.arready = '1' then
-              R_arvalid <= '0'; -- de-assert address request
-              R_phase <= C_phase_wait_data_ack;
-            end if;
-          end if; -- end read/write cycle
-        end if; -- end phase wait data ack
+          if axi_in.arready = '1' then
+            R_arvalid <= '0'; -- de-activate address request
+            R_phase <= C_phase_wait_read_data_ack;
+          end if;
+        end if; -- end phase wait read addr ack
 
-        if R_phase = C_phase_wait_data_ack then
-          if R_write_cycle then
-            if axi_in.wready = '1' then
-              -- end of write cycle
-              --R_ack_bitmap(R_cur_port) <= '1'; -- already acknowledged at start of write cycle
-              R_byte_sel <= x"0";
-              R_wvalid <= '0'; -- de-assert data valid signal
-              R_cur_port <= next_port;
-              R_phase <= C_phase_idle;
-              --R_phase <= C_phase_wait_write_ack;
-            end if;
-          else -- read cycle = not write cycle
-            if axi_in.rvalid = '1' and axi_in.rlast = '1' then
-              -- end of read cycle
-              R_bus_out <= axi_in.rdata; -- latch data and place on the f32c bus
-              R_ack_bitmap(R_cur_port) <= '1'; -- read ack, must be removed in next cycle
-              --R_byte_sel <= x"0"; -- should be already 0, read cycle has byte_sel=0
-              --R_en <= '0';
-              R_cur_port <= next_port;
-              R_phase <= C_phase_idle;
-            end if;
-          end if; -- end read/write cycle
-	end if; -- end phase wait data ack
+        if R_phase = C_phase_wait_read_data_ack then
+          if axi_in.rvalid = '1' and axi_in.rlast = '1' then
+            -- end of read cycle
+            R_bus_out <= axi_in.rdata; -- latch data and place on the f32c bus
+            R_ack_bitmap(R_cur_port) <= '1'; -- read ack, must be removed in next cycle
+            R_cur_port <= next_port;
+            R_phase <= C_phase_idle;
+          end if;
+	end if; -- end phase wait read data ack
 
-        -- this phase maybe not needed
-        --if R_phase = C_phase_wait_write_ack then
-        --  if axi_in.bvalid = '1' then
-        --    R_cur_port <= next_port;
-        --    R_phase <= C_phase_idle;
-        --  end if;
-	--end if; -- end phase wait write ack
+        if R_phase = C_phase_wait_write_addr_ack then
+          if R_cur_port /= C_prio_port then
+            R_last_port <= R_cur_port;
+          end if;
+          if axi_in.awready = '1' then
+            R_awvalid <= '0'; -- de-activate address request
+            R_wvalid <= '1'; -- activate data valid, try if this could be activated on earlier phase
+            R_phase <= C_phase_wait_write_data_ack;
+          end if;
+        end if; -- end phase wait write addr ack
+
+        if R_phase = C_phase_wait_write_data_ack then
+          if axi_in.wready = '1' then
+            -- end of write cycle
+            R_byte_sel <= x"0"; -- de-active all byte selects to double-sure prevent of unwanted writes
+            R_wvalid <= '0'; -- de-activate data valid signal
+            R_cur_port <= next_port;
+            R_phase <= C_phase_idle;
+          end if;
+	end if; -- end phase wait write data ack
 
       end if; -- rising edge clk
     end process;
@@ -218,9 +215,9 @@ begin
     axi_out.arcache <= "0011"; -- Xilinx IP generally ignores, but 'modifiable'[1] bit required?
     axi_out.arprot  <= "000";  -- Xilinx IP generally ignores
     axi_out.arqos   <= "0000"; -- QOS not supported
-    axi_out.rready  <= '1';    -- we are always ready to read data
-    axi_out.arvalid <= R_arvalid;
-    axi_out.araddr  <= "00" & R_a & "00";
+    axi_out.rready  <= '1';    -- always ready to read data
+    axi_out.arvalid <= R_arvalid; -- read request start (address valid)
+    axi_out.araddr  <= "00" & R_a & "00"; -- address padded and 4-byte aligned
 
     -- write signaling
     axi_out.awid    <= "0";    -- not used
@@ -231,13 +228,13 @@ begin
     axi_out.awcache <= "0011"; -- Xilinx IP generally ignores
     axi_out.awprot  <= "000";  -- Xilinx IP generally ignores
     axi_out.awqos   <= "0000"; -- QOS not supported
-    axi_out.bready  <= '1';
-    axi_out.awvalid <= R_awvalid;
-    axi_out.awaddr  <= "00" & R_a & "00"; -- address currently padded and 4-byte aligned
-    axi_out.wvalid  <= R_wvalid;
+    axi_out.bready  <= '1';    -- always ready to read write response (response otherwise ignored)
+    axi_out.awvalid <= R_awvalid; -- write request start (address valid)
+    axi_out.awaddr  <= "00" & R_a & "00"; -- address padded and 4-byte aligned
+    axi_out.wvalid  <= R_wvalid; -- write data valid
     axi_out.wlast   <= R_wvalid; -- last is same as valid because we currently don't support burst
-    axi_out.wdata   <= R_out_word;
-    axi_out.wstrb   <= R_byte_sel;
+    axi_out.wdata   <= R_out_word; -- write data
+    axi_out.wstrb   <= R_byte_sel; -- byte select 4-bit vector
 
     -- f32c bus out
     data_out <= R_bus_out;
