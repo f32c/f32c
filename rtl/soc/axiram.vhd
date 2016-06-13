@@ -43,8 +43,8 @@ architecture Structure of axiram is
     constant C_phase_idle: integer := 0;
     constant C_phase_wait_addr_ack: integer := 1;
     constant C_phase_wait_data_ack: integer := 2;
-    constant C_phase_wait_write_ack: integer := 3;
-    constant C_phase_last: integer := C_phase_wait_write_ack;
+    --constant C_phase_wait_write_ack: integer := 3;
+    constant C_phase_last: integer := C_phase_wait_data_ack;
 
     -- Physical interface registers
     signal R_a: std_logic_vector(29 downto 2); -- to SRAM
@@ -198,12 +198,13 @@ begin
           end if; -- end read/write cycle
 	end if; -- end phase wait data ack
 
-        if R_phase = C_phase_wait_write_ack then
-          if axi_in.bvalid = '1' then
-            R_cur_port <= next_port;
-            R_phase <= C_phase_idle;
-          end if;
-	end if; -- end phase wait write ack
+        -- this phase maybe not needed
+        --if R_phase = C_phase_wait_write_ack then
+        --  if axi_in.bvalid = '1' then
+        --    R_cur_port <= next_port;
+        --    R_phase <= C_phase_idle;
+        --  end if;
+	--end if; -- end phase wait write ack
 
       end if; -- rising edge clk
     end process;

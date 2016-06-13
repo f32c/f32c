@@ -754,6 +754,7 @@ begin
     )
     port map (
       clk => clk,
+      -- axi_aresetn => not sio_break_internal(0),
       axi_in => cpu_axi_in,
       axi_out => cpu_axi_out,
       data_out => from_xram,
