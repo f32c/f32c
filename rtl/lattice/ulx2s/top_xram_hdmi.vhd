@@ -125,10 +125,9 @@ entity toplevel is
     C_gpio: integer := 32; -- number of GPIO pins
     C_spi: integer := 2; -- number of SPI interfaces
 
-    C_video_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
-
     C_hdmi_out: boolean := true;
     C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
+      C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
       -- number of pixels for line; 640
       C_vgahdmi_fifo_width: integer := 640;
       -- number of scan lines: 480
@@ -309,9 +308,9 @@ begin
       C_simple_in => C_simple_in,
       C_gpio => C_gpio,
 
-      C_video_cache_size => C_video_cache_size,
       -- vga simple bitmap
       C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
       C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
@@ -432,15 +431,15 @@ begin
       port map
       (
         tmds_in_rgb    => tmds_rgb,
-        tmds_out_rgb_p(2) => j2_2,  -- blue
-        tmds_out_rgb_n(2) => j2_3,
-        tmds_out_rgb_p(1) => j2_4,  -- green
-        tmds_out_rgb_n(1) => j2_5,
-        tmds_out_rgb_p(0) => j2_6,  -- red
-        tmds_out_rgb_n(0) => j2_7,
+        tmds_out_rgb_p(2) => j2_2,  -- D2+ red
+        tmds_out_rgb_n(2) => j2_3,  -- D2- red
+        tmds_out_rgb_p(1) => j2_4,  -- D1+ green
+        tmds_out_rgb_n(1) => j2_5,  -- D1- green
+        tmds_out_rgb_p(0) => j2_6,  -- D0+ blue
+        tmds_out_rgb_n(0) => j2_7,  -- D0- blue
         tmds_in_clk    => tmds_clk,
-        tmds_out_clk_p => j2_8, -- clock
-        tmds_out_clk_n => j2_9
+        tmds_out_clk_p => j2_8, -- CLK+ clock
+        tmds_out_clk_n => j2_9  -- CLK- clock
       );
 
     -- simulation for the ledstrip motor (forward-only motor)
