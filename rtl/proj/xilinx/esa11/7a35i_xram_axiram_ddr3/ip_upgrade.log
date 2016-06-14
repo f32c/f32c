@@ -1,0 +1,37 @@
+Copyright 1986-2016 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2016.1 (lin64) Build 1538259 Fri Apr  8 15:45:23 MDT 2016
+| Date         : Tue Jun 14 10:11:35 2016
+| Host         : ssd running 64-bit Debian GNU/Linux testing/unstable
+| Command      : upgrade_ip
+| Device       : xc7a35tfgg484-2
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'clk_d100_100_200_125_25MHz'
+
+1. Summary
+----------
+
+SUCCESS in the update of clk_d100_100_200_125_25MHz (xilinx.com:ip:clk_wiz:5.3) to current project options.
+
+
+
+
+
+
+Copyright 1986-2016 Xilinx, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2016.1 (lin64) Build 1538259 Fri Apr  8 15:45:23 MDT 2016
+| Date         : Tue Jun 14 10:11:24 2016
+| Host         : ssd running 64-bit Debian GNU/Linux testing/unstable
+| Command      : upgrade_ip
+| Device       : xc7a35tfgg484-2
+------------------------------------------------------------------------------------
+
+Upgrade Log for IP 'clk_d100_100_200_250_25MHz'
+
+1. Summary
+----------
+
+SUCCESS in the update of clk_d100_100_200_250_25MHz (xilinx.com:ip:clk_wiz:5.3) to current project options.
+
