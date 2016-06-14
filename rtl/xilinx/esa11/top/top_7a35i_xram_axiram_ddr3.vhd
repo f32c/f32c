@@ -84,7 +84,7 @@ entity esa11_7a35i_xram_axiram_ddr3 is
           C_vgahdmi_fifo_addr_width: integer := 11;
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
-      C_vgatext_label: string := "f32c: ESA11-7a102t MIPS compatible soft-core 100MHz 256MB DDR3"; -- default banner as initial content of screen BRAM, NOP for RAM
+      C_vgatext_label: string := "f32c: ESA11-7a35i MIPS compatible soft-core 100MHz 256MB DDR3"; -- default banner as initial content of screen BRAM, NOP for RAM
       C_vgatext_mode: integer := 0;   -- 640x480
       C_vgatext_bits: integer := 4;   -- 64 possible colors
       C_vgatext_bram_mem: integer := 0;   -- KB (0: bram disabled -> use RAM)
