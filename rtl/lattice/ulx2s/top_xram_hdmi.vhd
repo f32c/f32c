@@ -69,7 +69,7 @@ use xp2.components.all;
 entity toplevel is
   generic (
     -- Main clock: 25, 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-    C_clk_freq: integer := 81;
+    C_clk_freq: integer := 50;
 
     -- ISA options
     C_arch: integer := ARCH_MI32;
@@ -126,7 +126,8 @@ entity toplevel is
     C_spi: integer := 2; -- number of SPI interfaces
 
     C_hdmi_out: boolean := true;
-    C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
+
+    C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
       C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
       -- number of pixels for line; 640
       C_vgahdmi_fifo_width: integer := 640;
@@ -138,7 +139,7 @@ entity toplevel is
       -- for 8bpp compositing use 11 -> 2048 bytes
       C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 50MHz 1MB SRAM"; -- default banner in screen memory
       C_vgatext_mode: integer := 0; -- 640x480
       C_vgatext_bits: integer := 4; -- 16 possible colors
