@@ -161,6 +161,11 @@
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../../../soc/vector/vector.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../../../soc/vgahdmi/TMDS_encoder.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
