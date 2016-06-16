@@ -61,10 +61,10 @@ entity scarab_xram_sdram is
     -- (fixme: DDR video output mode doesn't work on scarab)
     C_dvid_ddr: boolean := false;
 
-    C_vgahdmi: boolean := false;
+    C_vgahdmi: boolean := true;
     -- insert cache between RAM and compositing2 video fifo
-    C_video_cache_size: integer := 8; -- KB size 0:disable 2,4,8,16,32:enable
-    C_video_cache_use_i: boolean := true; -- use I-data caching style, faster
+    C_vgahdmi_cache_size: integer := 8; -- KB size 0:disable 2,4,8,16,32:enable
+    C_vgahdmi_cache_use_i: boolean := true; -- use I-data caching style, faster
     -- number of pixels for line step 640
     C_vgahdmi_fifo_width: integer := 640;
     -- number of scan lines: 480
@@ -75,7 +75,7 @@ entity scarab_xram_sdram is
     -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
     C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480                   
       C_vgatext_bits: integer := 4;   -- 64 possible colors
@@ -149,6 +149,8 @@ entity scarab_xram_sdram is
         C_pid_prescaler: integer := 18;
         C_pid_precision: integer := 1;
         C_pid_pwm_bits: integer := 12;
+        
+      C_vector: boolean := false; -- vector processor unit (wip)
 
       C_gpio: integer := 64
   );
@@ -334,7 +336,7 @@ begin
       C_dvid_ddr => C_dvid_ddr,
       -- vga simple compositing bitmap only graphics
       C_vgahdmi => C_vgahdmi,
-      C_video_cache_size => C_video_cache_size,
+      C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
       C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
@@ -394,6 +396,7 @@ begin
       C_pid_fp => integer(floor((log2(real(C_clk_freq)*1.0E6))+0.5))-C_pid_prescaler, -- control loop approx freq in 2^n Hz for math, 26-C_pid_prescaler = 8
       C_pid_precision => C_pid_precision, -- fixed point PID precision
       C_pid_pwm_bits => C_pid_pwm_bits, -- clock divider bits define PWM output frequency
+      C_vector => C_vector,
       -- CPU debugging with serial port
       C_debug => C_debug
     )

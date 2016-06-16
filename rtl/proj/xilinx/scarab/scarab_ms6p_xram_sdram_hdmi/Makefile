@@ -83,6 +83,7 @@ vhdfiles = \
 ../../../../soc/fm/lowpass.vhd \
 ../../../../soc/fm/bram_rds.vhd \
 ../../../../soc/fm/message.vhd \
+../../../../soc/vector/vector.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
 ../../../../soc/vgahdmi/video_cache_i.vhd \

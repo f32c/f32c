@@ -197,6 +197,7 @@ generic (
       C_pid_precision: integer range 0 to 8 := 1; -- fixed point PID precision
       C_pid_pwm_bits: integer range 11 to 32 := 12; -- PWM output frequency f_clk/2^pwmbits (min 11 => 40kHz @ 81.25MHz)
       C_pid_fp: integer range 0 to 26 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
+    C_vector: boolean := false; -- vector processor
     C_timer: boolean := true
 );
 port (
@@ -326,6 +327,7 @@ architecture Behavioral of glue_xram is
     signal icp, icp_enable: std_logic_vector(1 downto 0);
     signal timer_intr: std_logic;
 
+
     -- TV video
     signal R_fb_base_addr: std_logic_vector(31 downto 2) := (others => '0');
     signal R_fb_intr: std_logic;
@@ -435,6 +437,12 @@ architecture Behavioral of glue_xram is
     constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
     signal from_fmrds: std_logic_vector(31 downto 0);
     signal fmrds_ce: std_logic;
+
+    -- Vector processor
+    constant iomap_vector: T_iomap_range := (x"FC20", x"FC3F");
+    signal from_vector: std_logic_vector(31 downto 0);
+    signal vector_ce: std_logic;
+    signal vector_intr: std_logic;
 
     -- GPIO
     constant iomap_gpio: T_iomap_range := (x"F800", x"F87F");
@@ -867,6 +875,10 @@ begin
 	    if C_timer then
                 io_to_cpu <= from_timer;
             end if;
+        when iomap_from(iomap_vector, iomap_range) to iomap_to(iomap_vector, iomap_range) =>
+	    if C_vector then
+                io_to_cpu <= from_vector;
+            end if;
         when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range) =>
             for i in 0 to C_sio - 1 loop
                 if conv_integer(io_addr(5 downto 4)) = i then
@@ -1005,6 +1017,25 @@ begin
     );
     with conv_integer(io_addr(11 downto 4)) select
       timer_ce <= io_addr_strobe when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range),
+                             '0' when others;
+    end generate;
+
+    -- Vector processor
+    G_vector:
+    if C_vector generate
+    vector: entity work.vector
+    --generic map (
+    --  C_pres => 10,
+    --  C_bits => 12
+    --)
+    port map (
+      clk => clk, ce => vector_ce, addr => dmem_addr(4 downto 2),
+      bus_write => dmem_write, byte_sel => dmem_byte_sel,
+      bus_in => cpu_to_dmem, bus_out => from_vector,
+      vector_irq => vector_intr
+    );
+    with conv_integer(io_addr(11 downto 4)) select
+      vector_ce <= io_addr_strobe when iomap_from(iomap_vector, iomap_range) to iomap_to(iomap_vector, iomap_range),
                              '0' when others;
     end generate;
 
