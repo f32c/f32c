@@ -1,8 +1,13 @@
 -- (c)EMARD
 -- License=BSD
 
--- I/O module for vector load and store
--- this module will request next data with
+-- this is glue module with mmio bus interface to f32c cpu
+-- only a few registers which provide
+
+-- * address for load/store to/from RAM
+-- * command to start vector functional units
+-- * monitoring vector function progress
+-- * interrupt flags
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -71,7 +76,7 @@ architecture arch of vector is
     signal R_start_io: std_logic; -- set to '1' during one clock cycle (not longer) to properly initiate RAM I/O
     -- command decoder should load
     -- R_store_mode, R_store_select, R_load_select
-    -- and 1-clock pulse S_start_io
+    -- and issue a 1-clock pulse on S_start_io
 
     -- vector done detection register (unused, just 0)
     signal R_rising_edge: std_logic_vector(C_bits-1 downto 0) := (others => '0');
@@ -126,8 +131,8 @@ begin
         if ce='1' and bus_write='1' and byte_sel="1111" then
           if conv_integer(addr) = C_vcommand then
             R_store_mode <= bus_in(23); -- RAM write cycle
-            R_store_select <= bus_in(C_vectors_bits-1+0 downto 0); -- vector to store
-            R_load_select <= bus_in(C_vectors-1+8 downto 8); -- vectors to load
+            R_store_select <= bus_in(C_vectors_bits-1+0 downto 0); -- byte 0, vector number to store
+            R_load_select <= bus_in(C_vectors-1+8 downto 8); -- byte 1 bitmask of vectors to load
             R_start_io <= '1';
           end if;
         else
@@ -212,6 +217,10 @@ begin
       port map
       (
         clk => clk,
+        addr => R(C_vaddress)(29 downto 2),
+        store_mode => R_store_mode,
+        store_data => S_ram_store_data,
+        load_data => S_ram_load_data,
         axi_in => axi_in, axi_out => axi_out
       );
     end generate;
