@@ -32,7 +32,7 @@ vhdfiles = \
 ../../../../xilinx/chip/xc6/hdmi_out_xc6.vhd \
 ../../../../xilinx/chip/xc6/ddr_out.vhd \
 ../../../../generic/ddr_out.vhd \
-../../../../generic/glue_xram.vhd \
+../../../../generic/glue_xram_vector.vhd \
 ../../../../generic/ddr_out.vhd \
 ../../../../generic/bram.vhd \
 ../../../../generic/bootloader/defs_bootblock.vhd \
@@ -83,6 +83,7 @@ vhdfiles = \
 ../../../../soc/fm/lowpass.vhd \
 ../../../../soc/fm/bram_rds.vhd \
 ../../../../soc/fm/message.vhd \
+../../../../soc/vector/vector.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
 ../../../../soc/vgahdmi/video_cache_i.vhd \
