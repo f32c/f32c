@@ -1,18 +1,21 @@
 -- (c)EMARD
 -- License=BSD
 
--- vector processor unit (dummy, future todo, work in progress)
--- this is glue module wich also does memory mapped I/O and interrupt handling
+-- I/O module for vector load and store
+-- this module will request next data with
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 
+use work.axi_pack.all;
+
 entity vector is
   generic
   (
     C_addr_bits: integer := 3; -- don't touch: number of address bits for the registers
+    C_axi: boolean := true; -- false: f32c bus for vector I/O, true: AXI bus for vector I/O
     C_bits: integer range 2 to 32 := 32  -- number of bits in each mmio register
   );
   port
@@ -23,17 +26,19 @@ entity vector is
     byte_sel: in std_logic_vector(3 downto 0);
     bus_in: in std_logic_vector(31 downto 0);
     bus_out: out std_logic_vector(31 downto 0);
+    axi_in: in T_axi_miso;
+    axi_out: out T_axi_mosi;
     vector_irq: out std_logic
   );
 end vector;
 
 architecture arch of vector is
-    constant C_mmio_registers: integer := 4; -- total number of mmio registers
+    constant C_mmio_registers: integer range 4 to 16 := 4; -- total number of memory backed mmio registers
 
-    constant C_vectors: integer := 4; -- total number of vector registers (BRAM blocks)
-    constant C_vectors_bits: integer := 2; -- number of bits to select the vector register 
-    constant C_vaddr_bits: integer := 11; -- number of address bits for BRAM vector
-    constant C_vdata_bits: integer := 32; -- number of data bits for each vector
+    constant C_vectors: integer range 2 to 16 := 2; -- total number of vector registers (BRAM blocks)
+    constant C_vectors_bits: integer range 1 to 4 := 1; -- number of bits to select the vector register 
+    constant C_vaddr_bits: integer range 2 to 16 := 11; -- number of address bits for BRAM vector
+    constant C_vdata_bits: integer range 32 to 64 := 32; -- number of data bits for each vector
 
     -- normal registers
     type T_mmio_regs is array (C_mmio_registers-1 downto 0) of std_logic_vector(C_bits-1 downto 0);
@@ -79,6 +84,7 @@ begin
         ext(VX, 32)
           when C_vcounter,
         ext(R(conv_integer(addr)),32)
+        --ext(R(0),32)
           when others;
 
     -- CPU core writes registers
@@ -96,7 +102,7 @@ begin
                 R(conv_integer(addr))(8*i+7 downto 8*i) <= -- only can clear intr. flag, never set
                 R(conv_integer(addr))(8*i+7 downto 8*i) and not bus_in(8*i+7 downto 8*i);
               else -- normal write for every other register
-                R(conv_integer(addr))(8*i+7 downto 8*i) <=  bus_in(8*i+7 downto 8*i);
+                R(conv_integer(addr))(8*i+7 downto 8*i) <= bus_in(8*i+7 downto 8*i);
               end if;
             else
               R(C_vdone_if)(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
@@ -194,5 +200,20 @@ begin
         VI(1) <= VI(1) - 1;
       end if;
     end process;
+
+    G_axi_dma:
+    if C_axi generate
+      I_axi_vector_dma:
+      entity work.axi_vector_dma
+      generic map
+      (
+        C_burst_max => 64
+      )
+      port map
+      (
+        clk => clk,
+        axi_in => axi_in, axi_out => axi_out
+      );
+    end generate;
 
 end;

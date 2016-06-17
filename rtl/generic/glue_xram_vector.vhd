@@ -232,6 +232,9 @@ port (
   video_axi_aclk: in std_logic := '0';
   video_axi_in: in T_axi_miso := C_axi_miso_0;
   video_axi_out: out T_axi_mosi;
+  -- vector processor AXI
+  vector_axi_in: in T_axi_miso := C_axi_miso_0;
+  vector_axi_out: out T_axi_mosi;
   --
   sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
   sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
@@ -1032,6 +1035,7 @@ begin
       clk => clk, ce => vector_ce, addr => dmem_addr(4 downto 2),
       bus_write => dmem_write, byte_sel => dmem_byte_sel,
       bus_in => cpu_to_dmem, bus_out => from_vector,
+      axi_in => vector_axi_in, axi_out => vector_axi_out,
       vector_irq => vector_intr
     );
     with conv_integer(io_addr(11 downto 4)) select

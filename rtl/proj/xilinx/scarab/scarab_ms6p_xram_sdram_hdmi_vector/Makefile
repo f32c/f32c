@@ -18,7 +18,7 @@ vfiles = \
 ../../../../soc/pid/rotary_decoder_v.v \
 
 vhdfiles = \
-../../../../xilinx/scarab_ms6p/top/top_xram_sdram.vhd \
+../../../../xilinx/scarab_ms6p/top/top_xram_sdram_vector.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_112M5.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_100M.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_100M_25M_250M.vhd \
@@ -84,6 +84,7 @@ vhdfiles = \
 ../../../../soc/fm/bram_rds.vhd \
 ../../../../soc/fm/message.vhd \
 ../../../../soc/vector/vector.vhd \
+../../../../soc/vector/axi_vector_dma.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
 ../../../../soc/vgahdmi/video_cache_i.vhd \
