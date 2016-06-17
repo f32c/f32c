@@ -875,10 +875,10 @@ begin
 	    if C_timer then
                 io_to_cpu <= from_timer;
             end if;
-        --when iomap_from(iomap_vector, iomap_range) to iomap_to(iomap_vector, iomap_range) =>
-	--    if C_vector then
-        --        io_to_cpu <= from_vector;
-        --    end if;
+        when iomap_from(iomap_vector, iomap_range) to iomap_to(iomap_vector, iomap_range) =>
+	    if C_vector then
+                io_to_cpu <= from_vector;
+            end if;
         when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range) =>
             for i in 0 to C_sio - 1 loop
                 if conv_integer(io_addr(5 downto 4)) = i then
@@ -1021,23 +1021,23 @@ begin
     end generate;
 
     -- Vector processor
-    --G_vector:
-    --if C_vector generate
-    --vector: entity work.vector
+    G_vector:
+    if C_vector generate
+    vector: entity work.vector
     --generic map (
     --  C_pres => 10,
     --  C_bits => 12
     --)
-    --port map (
-    --  clk => clk, ce => vector_ce, addr => dmem_addr(4 downto 2),
-    --  bus_write => dmem_write, byte_sel => dmem_byte_sel,
-    --  bus_in => cpu_to_dmem, bus_out => from_vector,
-    --  vector_irq => vector_intr
-    --);
-    --with conv_integer(io_addr(11 downto 4)) select
-    --  vector_ce <= io_addr_strobe when iomap_from(iomap_vector, iomap_range) to iomap_to(iomap_vector, iomap_range),
-    --                         '0' when others;
-    --end generate;
+    port map (
+      clk => clk, ce => vector_ce, addr => dmem_addr(4 downto 2),
+      bus_write => dmem_write, byte_sel => dmem_byte_sel,
+      bus_in => cpu_to_dmem, bus_out => from_vector,
+      vector_irq => vector_intr
+    );
+    with conv_integer(io_addr(11 downto 4)) select
+      vector_ce <= io_addr_strobe when iomap_from(iomap_vector, iomap_range) to iomap_to(iomap_vector, iomap_range),
+                             '0' when others;
+    end generate;
 
     -- TV PAL composite signal generation
     G_tv: if C_tv generate
