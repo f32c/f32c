@@ -73,7 +73,7 @@ architecture arch of vector is
     signal R_io_store_mode: std_logic; -- '0': load vectors from RAM, '1': store vector to RAM
     signal R_io_store_select: std_logic_vector(C_vectors_bits-1 downto 0); -- select one vector to store
     signal R_io_load_select, S_io_bram_we_select: std_logic_vector(C_vectors-1 downto 0); -- select multiple vectors load from the same RAM location
-    signal R_io_start: std_logic; -- set to '1' during one clock cycle (not longer) to properly initiate RAM I/O
+    signal R_io_request: std_logic; -- set to '1' during one clock cycle (not longer) to properly initiate RAM I/O
     signal S_io_done: std_logic;
 
     -- command decoder should load
@@ -88,10 +88,9 @@ begin
       bus_out <=
         ext(x"DEBA66AA", 32)
           when C_vcommand,
-        ext(S_io_done & S_io_bram_addr, 32)
+        ext(R_io_request & S_io_done & S_io_bram_addr, 32)
           when C_vcounter,
         ext(R(conv_integer(addr)),32)
-        --ext(R(0),32)
           when others;
 
     -- CPU core writes registers
@@ -135,10 +134,10 @@ begin
             R_io_store_mode <= bus_in(23); -- RAM write cycle
             R_io_store_select <= bus_in(C_vectors_bits-1+0 downto 0); -- byte 0, vector number to store
             R_io_load_select <= bus_in(C_vectors-1+8 downto 8); -- byte 1 bitmask of vectors to load
-            R_io_start <= '1';
+            R_io_request <= '1';
           end if;
         else
-          R_io_start <= '0';
+          R_io_request <= '0';
         end if;
       end if;
     end process;
@@ -189,10 +188,10 @@ begin
       (
         clk => clk,
 
-        -- vector processor control
+        -- vector processor control from mmio
         store_mode => R_io_store_mode, -- '0' load (read from RAM), '1' store (write to RAM)
         addr => R(C_vaddress)(29 downto 2), -- pointer to vector struct in RAM
-        request => R_io_start, -- 1-cycle pulse to start a I/O request
+        request => R_io_request, -- 1-cycle pulse to start a I/O request
         done => S_io_done, -- goes to 0 after accepting I/O request, returns to 1 when done
 
         -- bram interface
@@ -223,6 +222,5 @@ begin
         VI(1) <= VI(1) - 1;
       end if;
     end process;
-
 
 end;

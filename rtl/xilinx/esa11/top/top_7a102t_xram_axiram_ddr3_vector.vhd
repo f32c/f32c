@@ -261,14 +261,14 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
     signal vblank_int : std_logic;
 
     -- CPU memory axi port
-    signal l00_axi_areset_n: std_logic := '1';
-    signal l00_axi_aclk: std_logic := '0';
+    signal main_axi_areset_n: std_logic := '1';
+    signal main_axi_aclk: std_logic := '0';
     signal main_axi_miso: T_axi_miso;
     signal main_axi_mosi: T_axi_mosi;
 
     -- video axi port
-    signal l01_axi_areset_n: std_logic := '1';
-    signal l01_axi_aclk: std_logic := '0';
+    signal video_axi_areset_n: std_logic := '1';
+    signal video_axi_aclk: std_logic := '0';
     signal video_axi_miso: T_axi_miso;
     signal video_axi_mosi: T_axi_mosi;
 
@@ -421,8 +421,8 @@ begin
 	clk_pixel_shift => clk_pixel_shift,
 	cpu_axi_in => main_axi_miso,
 	cpu_axi_out => main_axi_mosi,
-        video_axi_aresetn => l01_axi_areset_n,
-        video_axi_aclk => l01_axi_aclk,
+        video_axi_aresetn => video_axi_areset_n,
+        video_axi_aclk => video_axi_aclk,
         video_axi_in => video_axi_miso,
         video_axi_out => video_axi_mosi,
         vector_axi_in => vector_axi_miso,
@@ -527,26 +527,26 @@ begin
         ddr3_odt(0)          => ddr_odt,
 
         -- multiport axi interface (AXI slaves)
-        s00_axi_areset_out_n => l00_axi_areset_n,
-        s00_axi_aclk         => l00_axi_aclk,
+        s00_axi_areset_out_n => main_axi_areset_n,
+        s00_axi_aclk         => main_axi_aclk,
         s00_axi_in           => main_axi_mosi,
         s00_axi_out          => main_axi_miso,
 
-        s01_axi_areset_out_n => l01_axi_areset_n,
-        s01_axi_aclk         => l01_axi_aclk,
-        s01_axi_in           => video_axi_mosi,
-        s01_axi_out          => video_axi_miso,
+        s01_axi_areset_out_n => vector_axi_areset_n,
+        s01_axi_aclk         => vector_axi_aclk,
+        s01_axi_in           => vector_axi_mosi,
+        s01_axi_out          => vector_axi_miso,
 
-        s02_axi_areset_out_n => vector_axi_areset_n,
-        s02_axi_aclk         => vector_axi_aclk,
-        s02_axi_in           => vector_axi_mosi,
-        s02_axi_out          => vector_axi_miso,
+        s02_axi_areset_out_n => video_axi_areset_n,
+        s02_axi_aclk         => video_axi_aclk,
+        s02_axi_in           => video_axi_mosi,
+        s02_axi_out          => video_axi_miso,
 
         init_calib_complete  => calib_done -- becomes high cca 0.3 seconds after startup
     );
-    l00_axi_aclk <= clk; -- 100 MHz
-    l01_axi_aclk <= clk; -- port l01 used for video
+    main_axi_aclk <= clk; -- 100 MHz
     vector_axi_aclk <= clk; -- vector processor port
+    video_axi_aclk <= clk; -- port l01 used for video
     end generate; -- G_acram_real
 
     --FPGA_LED2 <= calib_done; -- should turn on 0.3 seconds after startup and remain on
