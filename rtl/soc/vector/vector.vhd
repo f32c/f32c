@@ -62,18 +62,20 @@ architecture arch of vector is
     -- *** VECTORS ***
     -- progress counter register array for all vectors
     type T_vaddr is array (C_vectors-1 downto 0) of std_logic_vector(C_vaddr_bits downto 0);
-    signal VX: std_logic_vector(C_vaddr_bits downto 0) := (others => '1'); -- external counter for RAM load/store
     signal VI: T_vaddr; -- VI-internal counter for functional units
     type T_vdata is array (C_vectors-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
     signal S_vector_load, S_vector_store: T_vdata; -- vectors to RAM I/O lines
 
     -- *** RAM I/O ***
-    signal R_ram_load_addr, R_ram_store_addr: std_logic_vector(29 downto 2); -- RAM address to load/store
-    signal R_store_mode: std_logic; -- '0': load vectors from RAM, '1': store vector to RAM
-    signal R_store_select: std_logic_vector(C_vectors_bits-1 downto 0); -- select one vector to store
-    signal R_load_select, S_load_select: std_logic_vector(C_vectors-1 downto 0); -- select multiple vectors load from the same RAM location
-    signal S_ram_store_data, S_ram_load_data: std_logic_vector(C_vdata_bits-1 downto 0); -- channel to RAM
-    signal R_start_io: std_logic; -- set to '1' during one clock cycle (not longer) to properly initiate RAM I/O
+    signal S_io_bram_we: std_logic;
+    signal S_io_bram_addr: std_logic_vector(C_vaddr_bits-1 downto 0); -- RAM address to load/store
+    signal S_io_bram_rdata, S_io_bram_wdata: std_logic_vector(C_vdata_bits-1 downto 0); -- channel to RAM
+    signal R_io_store_mode: std_logic; -- '0': load vectors from RAM, '1': store vector to RAM
+    signal R_io_store_select: std_logic_vector(C_vectors_bits-1 downto 0); -- select one vector to store
+    signal R_io_load_select, S_io_bram_we_select: std_logic_vector(C_vectors-1 downto 0); -- select multiple vectors load from the same RAM location
+    signal R_io_start: std_logic; -- set to '1' during one clock cycle (not longer) to properly initiate RAM I/O
+    signal S_io_done: std_logic;
+
     -- command decoder should load
     -- R_store_mode, R_store_select, R_load_select
     -- and issue a 1-clock pulse on S_start_io
@@ -86,7 +88,7 @@ begin
       bus_out <=
         ext(x"DEBA66AA", 32)
           when C_vcommand,
-        ext(VX, 32)
+        ext(S_io_done & S_io_bram_addr, 32)
           when C_vcounter,
         ext(R(conv_integer(addr)),32)
         --ext(R(0),32)
@@ -130,13 +132,13 @@ begin
         -- command accepted only if written in 32-bit word
         if ce='1' and bus_write='1' and byte_sel="1111" then
           if conv_integer(addr) = C_vcommand then
-            R_store_mode <= bus_in(23); -- RAM write cycle
-            R_store_select <= bus_in(C_vectors_bits-1+0 downto 0); -- byte 0, vector number to store
-            R_load_select <= bus_in(C_vectors-1+8 downto 8); -- byte 1 bitmask of vectors to load
-            R_start_io <= '1';
+            R_io_store_mode <= bus_in(23); -- RAM write cycle
+            R_io_store_select <= bus_in(C_vectors_bits-1+0 downto 0); -- byte 0, vector number to store
+            R_io_load_select <= bus_in(C_vectors-1+8 downto 8); -- byte 1 bitmask of vectors to load
+            R_io_start <= '1';
           end if;
         else
-          R_start_io <= '0';
+          R_io_start <= '0';
         end if;
       end if;
     end process;
@@ -155,39 +157,55 @@ begin
       port map
       (
         clk => clk,
-        we_a => S_load_select(i), -- RAM write, otherwise read
+        we_a => S_io_bram_we_select(i),
         we_b => '0', -- VPU write
-        addr_a => VX(C_vaddr_bits-1 downto 0), -- external address (RAM I/O)
+        addr_a => S_io_bram_addr, -- external address (RAM I/O)
         addr_b => VI(i)(C_vaddr_bits-1 downto 0), -- internal address (VECTOR PROCESSOR)
-        data_in_a => S_ram_load_data,
+        data_in_a => S_io_bram_wdata,
         data_in_b => (others => '0'), -- to VPU
         data_out_a => S_vector_store(i),
         data_out_b => open -- to VPU
       );
-      S_load_select(i) <= R_load_select(i) and not VX(C_vaddr_bits); -- counter out, disable write
+      S_io_bram_we_select(i) <= R_io_load_select(i) and S_io_bram_we; -- counter out, disable write
+    end generate;
+    S_io_bram_rdata <= S_vector_store(conv_integer(R_io_store_select)); -- multiplexer
+
+    -- load/store asymmetry:
+    -- vector load: (1-to-many) all bus lines are connected to RAM data
+    --              all vector registers can be loaded with the same RAM data
+    -- vector store: (1-to-1) only one vector can be stored at a time
+
+    G_axi_dma:
+    if C_axi generate
+      I_axi_vector_dma:
+      entity work.axi_vector_dma
+      generic map
+      (
+        C_vaddr_bits => C_vaddr_bits, -- number of bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
+        C_vdata_bits => C_vdata_bits, -- number of data bits
+        C_burst_max => 64 -- max burst allowed by DMA longer transfers will be split in no.of bursts
+      )
+      port map
+      (
+        clk => clk,
+
+        -- vector processor control
+        store_mode => R_io_store_mode, -- '0' load (read from RAM), '1' store (write to RAM)
+        addr => R(C_vaddress)(29 downto 2), -- pointer to vector struct in RAM
+        request => R_io_start, -- 1-cycle pulse to start a I/O request
+        done => S_io_done, -- goes to 0 after accepting I/O request, returns to 1 when done
+
+        -- bram interface
+        bram_we => S_io_bram_we,
+        bram_addr => S_io_bram_addr,
+        bram_wdata => S_io_bram_wdata,
+        bram_rdata => S_io_bram_rdata,
+
+        -- axi interface
+        axi_in => axi_in, axi_out => axi_out
+      );
     end generate;
 
-    -- select from which vector data will be stored to RAM (1-of-many)
-    S_ram_store_data <= S_vector_store(conv_integer(R_store_select));
-    -- for vector load, all bus lines are connected to RAM data
-    -- all vector registers can be loaded with the same RAM data
-
-    -- write to RAM
-    -- work in progress, no RAM interface yet
-    -- currently this just rolls VX counter
-    process(clk)
-    begin
-        if rising_edge(clk) then
-          if R_start_io = '1' then
-            VX <= (others => '0');
-          else
-            if VX(C_vaddr_bits) = '0' then
-              -- I/O running
-              VX <= VX + 1;
-            end if;
-          end if;
-        end if;
-    end process;
 
     -- functional units
     -- no working functional units yet
@@ -206,23 +224,5 @@ begin
       end if;
     end process;
 
-    G_axi_dma:
-    if C_axi generate
-      I_axi_vector_dma:
-      entity work.axi_vector_dma
-      generic map
-      (
-        C_burst_max => 64
-      )
-      port map
-      (
-        clk => clk,
-        addr => R(C_vaddress)(29 downto 2),
-        store_mode => R_store_mode,
-        store_data => S_ram_store_data,
-        load_data => S_ram_load_data,
-        axi_in => axi_in, axi_out => axi_out
-      );
-    end generate;
 
 end;
