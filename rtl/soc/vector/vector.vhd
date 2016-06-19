@@ -182,7 +182,7 @@ begin
       (
         C_vaddr_bits => C_vaddr_bits, -- number of bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
         C_vdata_bits => C_vdata_bits, -- number of data bits
-        C_burst_max => 64 -- max burst allowed by DMA longer transfers will be split in no.of bursts
+        C_burst_max => 1 -- max burst allowed by DMA longer transfers will be split in no.of bursts
       )
       port map
       (

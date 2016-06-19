@@ -73,7 +73,8 @@ architecture arch of axi_vector_dma is
   signal R_arvalid: std_logic := '0'; -- read request, valid address
   signal R_awvalid: std_logic := '0'; -- write request, valid address
   signal R_wvalid: std_logic := '0'; -- write, valid data
-
+  signal R_wlast: std_logic := '0'; -- write, valid data
+  signal R_burst_remaining: std_logic_vector(4 downto 0) := (others => '0'); -- 1 less than actual value
 begin
   process(clk)
   begin
@@ -85,32 +86,41 @@ begin
           R_bram_addr <= (others => '0');
           R_state <= C_state_wait_write_addr_ack;
           R_awvalid <= '1'; -- write request starts with address
+          R_burst_remaining <= conv_std_logic_vector(C_burst_max-1, 5);
         end if;
       end if;
 
       if R_state = C_state_wait_write_addr_ack then
-        if true or axi_in.awready = '1' then
+        if axi_in.awready = '1' then
           R_awvalid <= '0'; -- de-activate address request
           R_wvalid <= '1'; -- activate data valid, try if this could be activated on earlier phase
+          --R_wlast <= '0';
           R_state <= C_state_wait_write_data_ack;
         end if;
       end if; -- end phase wait write addr ack
 
       if R_state = C_state_wait_write_data_ack then
-        if true or axi_in.wready = '1' then
+        if axi_in.wready = '1' then
           -- end of write cycle
-          R_wvalid <= '0'; -- de-activate data valid signal
           if R_bram_addr(C_vaddr_bits)='1' then
+            R_wvalid <= '0';
             R_state <= C_state_idle;
           else
+            --R_wvalid <= '0'; -- de-activate data valid signal
             R_ram_addr <= R_ram_addr + 1;
             R_bram_addr <= R_bram_addr + 1;
-            R_awvalid <= '1'; -- write request starts with address
-            R_state <= C_state_wait_write_addr_ack;
+            if R_burst_remaining = 0 then
+              R_wvalid <= '0';
+              R_awvalid <= '1'; -- write request starts with address
+              R_burst_remaining <= conv_std_logic_vector(C_burst_max-1, 5);
+              R_state <= C_state_wait_write_addr_ack;
+              --R_wlast <= '1'; -- too late to set last now
+            else
+              R_burst_remaining <= R_burst_remaining - 1;
+            end if;
           end if;
         end if;
       end if; -- end phase wait write data ack
-
     end if; -- rising edge
   end process;
 
@@ -131,7 +141,8 @@ begin
 
   -- write to RAM signaling
   axi_out.awid    <= "0";    -- not used
-  axi_out.awlen   <= x"00";  -- data beats-1 (single access) (no burst)
+  --axi_out.awlen   <= x"00";  -- data beats-1 (single access) (no burst)
+  axi_out.awlen   <= R_burst_remaining;
   axi_out.awsize  <= "010";  -- 32 bits, resp. 4 bytes
   axi_out.awburst <= "01";   -- burst type INCR - Incrementing address
   axi_out.awlock  <= '0';    -- Exclusive access not supported
@@ -143,7 +154,7 @@ begin
   axi_out.awvalid <= R_awvalid; -- write request start (address valid)
   axi_out.awaddr  <= "00" & R_ram_addr & "00"; -- address padded and 4-byte aligned
   axi_out.wvalid  <= R_wvalid; -- write data valid
-  axi_out.wlast   <= R_wvalid; -- last is same as valid because we currently don't support burst
+  axi_out.wlast   <= R_wvalid when R_burst_remaining = 0 else '0';
   axi_out.wdata   <= bram_rdata; -- write data
 
   bram_addr <= R_bram_addr(C_vaddr_bits-1 downto 0);
