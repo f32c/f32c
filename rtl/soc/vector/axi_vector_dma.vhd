@@ -106,15 +106,17 @@ begin
             R_wvalid <= '0';
             R_state <= C_state_idle;
           else
-            --R_wvalid <= '0'; -- de-activate data valid signal
-            R_ram_addr <= R_ram_addr + 1;
-            R_bram_addr <= R_bram_addr + 1;
+            R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue withing in the next bursts block
+            R_bram_addr <= R_bram_addr + 1; -- increment source address
             if R_burst_remaining = 0 then
               R_wvalid <= '0';
-              R_awvalid <= '1'; -- write request starts with address
-              R_burst_remaining <= conv_std_logic_vector(C_burst_max-1, 5);
-              R_state <= C_state_wait_write_addr_ack;
-              --R_wlast <= '1'; -- too late to set last now
+              if conv_integer(not R_bram_addr(C_vaddr_bits-1 downto 0)) = 0 then
+                R_state <= C_state_idle;
+              else
+                R_awvalid <= '1'; -- write request starts with address
+                R_burst_remaining <= conv_std_logic_vector(C_burst_max-1, 5);
+                R_state <= C_state_wait_write_addr_ack;
+              end if;
             else
               R_burst_remaining <= R_burst_remaining - 1;
             end if;
