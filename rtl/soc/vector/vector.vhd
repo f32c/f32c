@@ -62,9 +62,12 @@ architecture arch of vector is
     -- *** VECTORS ***
     -- progress counter register array for all vectors
     type T_vaddr is array (C_vectors-1 downto 0) of std_logic_vector(C_vaddr_bits downto 0);
-    signal VI: T_vaddr; -- VI-internal counter for functional units
+    signal R_VI: T_vaddr; -- VI-internal counter register for functional units
     type T_vdata is array (C_vectors-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
     signal S_vector_load, S_vector_store: T_vdata; -- vectors to RAM I/O lines
+    signal S_VARG, S_VRES: T_vdata; -- switchbar connection for arguments and results
+    -- each vector has its write enable signal
+    signal R_vector_we: std_logic_vector(C_vectors-1 downto 0);
 
     -- *** RAM I/O ***
     signal S_io_bram_we: std_logic;
@@ -75,6 +78,31 @@ architecture arch of vector is
     signal R_io_load_select, S_io_bram_we_select: std_logic_vector(C_vectors-1 downto 0); -- select multiple vectors load from the same RAM location
     signal R_io_request: std_logic; -- set to '1' during one clock cycle (not longer) to properly initiate RAM I/O
     signal S_io_done: std_logic;
+
+    -- *** Functional multiplexing ***
+
+    -- 4 main different functions
+    -- a function can have modifier that selects one from many of similar functions
+    constant C_functions: integer := 4; -- total number of functional units
+    constant C_functions_bits: integer := 2; -- total number bits to address one functional unit
+    constant C_function_sign: integer range 0 to C_functions-1 := 0; -- a=b, a=-b, a=abs(b)
+    constant C_function_inv: integer range 0 to C_functions-1 := 1; -- a=1/b
+    constant C_function_add: integer range 0 to C_functions-1 := 2; -- a=b+c, a=b-c
+    constant C_function_mul: integer range 0 to C_functions-1 := 3; -- a=b*c
+    -- all functions will broadcast results
+    type T_function_result is array (C_functions-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
+    signal S_function_result: T_function_result;
+    -- each vector can become a 'listener' to one of the selected results
+    type T_vector_listens_to is array (C_vectors-1 downto 0) of std_logic_vector(C_functions_bits-1 downto 0);
+    signal R_vector_listens_to: T_vector_listens_to;
+    -- the scheduler will drive write-enable signals for storing results into vectors
+   
+    -- *** ADD function ***
+    signal R_add_request: std_logic;
+    signal R_add_busy: std_logic;
+    signal R_add_mode: std_logic_vector(3 downto 0);
+    signal R_add_result_select, R_add_arg1_select, R_add_arg2_select: std_logic_vector(C_vaddr_bits-1 downto 0);
+    signal S_add_result: std_logic_vector(C_vdata_bits-1 downto 0);
 
     -- command decoder should load
     -- R_store_mode, R_store_select, R_load_select
@@ -131,10 +159,22 @@ begin
         -- command accepted only if written in 32-bit word
         if ce='1' and bus_write='1' and byte_sel="1111" then
           if conv_integer(addr) = C_vcommand then
-            R_io_store_mode <= bus_in(23); -- RAM write cycle
-            R_io_store_select <= bus_in(C_vectors_bits-1+0 downto 0); -- byte 0, vector number to store
-            R_io_load_select <= bus_in(C_vectors-1+8 downto 8); -- byte 1 bitmask of vectors to load
-            R_io_request <= '1';
+            if bus_in(31 downto 24) = x"01" then -- command 01 I/O
+              R_io_store_mode <= bus_in(23); -- RAM write cycle
+              R_io_store_select <= bus_in(C_vectors_bits-1+0 downto 0); -- byte 0, vector number to store
+              R_io_load_select <= bus_in(C_vectors-1+8 downto 8); -- byte 1 bitmask of vectors to load
+              R_io_request <= '1';
+            end if;
+            if bus_in(31 downto 24) = x"21" then -- command 21 integer add
+              R_add_mode <= bus_in(19 downto 16); -- Add mode
+              R_vector_listens_to(conv_integer(bus_in(C_vaddr_bits-1+8 downto 8))) <= 
+                conv_std_logic_vector(C_function_add, C_functions_bits);
+              R_add_result_select <= bus_in(C_vaddr_bits-1+8 downto 8);
+              R_add_arg1_select <= bus_in(C_vaddr_bits-1+4 downto 4);
+              R_add_arg2_select <= bus_in(C_vaddr_bits-1+0 downto 0);
+              -- set index bitmaps for incrementing indexes needed for this function
+              R_add_request <= '1';
+            end if;
           end if;
         else
           R_io_request <= '0';
@@ -157,13 +197,13 @@ begin
       (
         clk => clk,
         we_a => S_io_bram_we_select(i),
-        we_b => '0', -- VPU write
+        we_b => R_vector_we(i), -- VPU write, scheduler controls this signal
         addr_a => S_io_bram_addr, -- external address (RAM I/O)
-        addr_b => VI(i)(C_vaddr_bits-1 downto 0), -- internal address (VECTOR PROCESSOR)
+        addr_b => R_VI(i)(C_vaddr_bits-1 downto 0), -- internal address (VECTOR PROCESSOR)
         data_in_a => S_io_bram_wdata,
-        data_in_b => (others => '0'), -- to VPU
+        data_in_b => S_VRES(i), -- result from functional unit
         data_out_a => S_vector_store(i),
-        data_out_b => open -- to VPU
+        data_out_b => S_VARG(i) -- argument to functional unit
       );
       S_io_bram_we_select(i) <= R_io_load_select(i) and S_io_bram_we; -- counter out, disable write
     end generate;
@@ -205,22 +245,55 @@ begin
       );
     end generate;
 
-
+    -- this just rolls R_VI counters for integer add funciton
+    -- todo this must be replaced with proper scheduler
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        if R_add_request='1' then
+          R_VI(conv_integer(R_add_result_select)) <= (others => '0');
+          R_VI(conv_integer(R_add_arg1_select)) <= (others => '0');
+          R_VI(conv_integer(R_add_arg2_select)) <= (others => '0');
+          R_add_busy <= '1';
+          R_vector_we(conv_integer(R_add_result_select)) <= '1';
+        else
+          if R_add_busy='1' then
+            R_VI(conv_integer(R_add_result_select)) <= R_VI(conv_integer(R_add_result_select)) + 1;        
+            R_VI(conv_integer(R_add_arg1_select)) <= R_VI(conv_integer(R_add_arg1_select)) + 1;        
+            R_VI(conv_integer(R_add_arg2_select)) <= R_VI(conv_integer(R_add_arg2_select)) + 1;
+            if R_VI(conv_integer(R_add_result_select))(C_vaddr_bits) = '1' then
+              R_add_busy <= '0';
+              R_vector_we(conv_integer(R_add_result_select)) <= '0';
+            end if;
+          end if;
+        end if;
+      end if;
+    end process;
+    
     -- functional units
-    -- no working functional units yet
-    -- this just rolls some VI counters
-    process(clk)
-    begin
-      if rising_edge(clk) then
-        VI(0) <= VI(0) + 1;
-      end if;
-    end process;
+    S_function_result(C_function_sign) <= (others => '0');
+    S_function_result(C_function_add) <= S_VARG(conv_integer(R_add_arg1_select)) + S_VARG(conv_integer(R_add_arg2_select));
+    S_function_result(C_function_mul) <= (others => '0');
+    S_function_result(C_function_inv) <= (others => '0');
 
-    process(clk)
-    begin
-      if rising_edge(clk) then
-        VI(1) <= VI(1) - 1;
-      end if;
-    end process;
+    -- each vector can 'listen' to result of each functional unit
+    -- R_vector_listens_to instructs a vector to listen to result of a functional unit
+    G_listeners:
+    for i in 0 to C_vectors-1 generate
+      S_VRES(i) <= S_function_result(conv_integer(R_vector_listens_to(i)));
+    end generate; -- G_listeners
 
 end;
+
+-- command example
+-- 0x21000321  V(3) = V(2) + V(1)
+
+-- TODO:
+
+-- [ ] I/O handle the vector length (now unhandled, full vector load/stored)
+
+-- [ ] scheduler to control vector lengths and write signals
+--     it should count vector lengths
+--     it should count function pipeline delay cycles
+--     produce bitmap for which registers will be incremented
+--     produce bitmap for which vectors will store results
