@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# before every commit it will remove trailing spaces and CRs from end of lines
+
+# to activate:
+# cp pre-commit f32c/.git/hooks/pre-commit
+
+git diff --name-only --cached | while read file ; do
+egrep '[ ]+$' $file && cat $file | sed 's/[ \r]\+$//g' > $file.new && mv $file.new $file || exit 0
+done
