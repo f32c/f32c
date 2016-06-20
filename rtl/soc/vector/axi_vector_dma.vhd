@@ -73,7 +73,6 @@ architecture arch of axi_vector_dma is
   signal R_arvalid: std_logic := '0'; -- read request, valid address
   signal R_awvalid: std_logic := '0'; -- write request, valid address
   signal R_wvalid: std_logic := '0'; -- write, valid data
-  signal R_wlast: std_logic := '0'; -- write, valid data
   signal R_burst_remaining: std_logic_vector(4 downto 0) := (others => '0'); -- 1 less than actual value
 begin
   process(clk)
@@ -94,7 +93,6 @@ begin
         if axi_in.awready = '1' then
           R_awvalid <= '0'; -- de-activate address request
           R_wvalid <= '1'; -- activate data valid, try if this could be activated on earlier phase
-          --R_wlast <= '0';
           R_state <= C_state_wait_write_data_ack;
         end if;
       end if; -- end phase wait write addr ack
