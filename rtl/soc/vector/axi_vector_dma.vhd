@@ -212,3 +212,8 @@ end;
 
 -- [ ] todo: support boundary burst conditions:
 -- first burst (or the last) must be allowed to be shorter
+
+-- [ ] axi is probably not well initialized, (reset handling missing?)
+--     sometimes after first write burst vector axi port stops working
+--     other axi ports (cpu, video) keep working
+--     if this happens, reload the bitstream and try again
