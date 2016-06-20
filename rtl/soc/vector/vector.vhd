@@ -40,8 +40,8 @@ end vector;
 architecture arch of vector is
     constant C_mmio_registers: integer range 4 to 16 := 4; -- total number of memory backed mmio registers
 
-    constant C_vectors: integer range 2 to 16 := 2; -- total number of vector registers (BRAM blocks)
-    constant C_vectors_bits: integer range 1 to 4 := 1; -- number of bits to select the vector register 
+    constant C_vectors: integer range 2 to 16 := 4; -- total number of vector registers (BRAM blocks)
+    constant C_vectors_bits: integer range 1 to 4 := 2; -- number of bits to select the vector register 
     constant C_vaddr_bits: integer range 2 to 16 := 11; -- number of address bits for BRAM vector
     constant C_vdata_bits: integer range 32 to 64 := 32; -- number of data bits for each vector
 
@@ -167,17 +167,20 @@ begin
             end if;
             if bus_in(31 downto 24) = x"21" then -- command 21 integer add
               R_add_mode <= bus_in(19 downto 16); -- Add mode
+              -- select which vector will listen to results of 'add' functional unit
               R_vector_listens_to(conv_integer(bus_in(C_vaddr_bits-1+8 downto 8))) <= 
                 conv_std_logic_vector(C_function_add, C_functions_bits);
+              -- which vector indexes will increment
               R_add_result_select <= bus_in(C_vaddr_bits-1+8 downto 8);
               R_add_arg1_select <= bus_in(C_vaddr_bits-1+4 downto 4);
               R_add_arg2_select <= bus_in(C_vaddr_bits-1+0 downto 0);
-              -- set index bitmaps for incrementing indexes needed for this function
+              -- start functional unit
               R_add_request <= '1';
             end if;
           end if;
         else
           R_io_request <= '0';
+          R_add_request <= '0';
         end if;
       end if;
     end process;
@@ -188,8 +191,8 @@ begin
       generic map
       (
         dual_port => True, -- one port takes data from RAM, other port outputs to video
-        pass_thru_a => True, -- false allows simultaneous reading and erasing of old data
-        pass_thru_b => True, -- false allows simultaneous reading and erasing of old data
+        pass_thru_a => False, -- false allows simultaneous reading and erasing of old data
+        pass_thru_b => False, -- false allows simultaneous reading and erasing of old data
         data_width => C_vdata_bits,
         addr_width => C_vaddr_bits
       )
@@ -269,8 +272,8 @@ begin
         end if;
       end if;
     end process;
-    
-    -- functional units
+
+    -- functional units generate results
     S_function_result(C_function_sign) <= (others => '0');
     S_function_result(C_function_add) <= S_VARG(conv_integer(R_add_arg1_select)) + S_VARG(conv_integer(R_add_arg2_select));
     S_function_result(C_function_mul) <= (others => '0');
@@ -286,7 +289,16 @@ begin
 end;
 
 -- command example
+-- 0x01000100  load V(0) from RAM
+-- 0x01800000  store V(0) to RAM
+-- 0x01000200  load V(1) from RAM
+-- 0x01800001  store V(1) to RAM
+-- 0x01000400  load V(2) from RAM
+-- 0x01800002  store V(2) to RAM
+-- 0x01000800  load V(3) from RAM
+-- 0x01800003  store V(3) to RAM
 -- 0x21000321  V(3) = V(2) + V(1)
+-- 0x21000100  V(1) = V(0) + V(0)
 
 -- TODO:
 
