@@ -103,6 +103,8 @@ begin
         if axi_in.wready = '1' then
           -- end of write cycle
           if R_bram_addr(C_vaddr_bits)='1' then
+            -- we should normally never get here
+            -- but if we do, go to idle
             R_wvalid <= '0';
             R_state <= C_state_idle;
           else
@@ -111,6 +113,9 @@ begin
             if R_burst_remaining = 0 then
               R_wvalid <= '0';
               if conv_integer(not R_bram_addr(C_vaddr_bits-1 downto 0)) = 0 then
+                -- if all vaddr bits of R_bram_addr are '1'
+                -- so we are at last element and in next cycle vector will be
+                -- fully written, return to idle state
                 R_state <= C_state_idle;
               else
                 R_awvalid <= '1'; -- write request starts with address
@@ -119,6 +124,7 @@ begin
               end if;
             else
               R_burst_remaining <= R_burst_remaining - 1;
+              -- continue with bursting data in the same state
             end if;
           end if;
         end if;
