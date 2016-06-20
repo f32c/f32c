@@ -142,7 +142,7 @@ begin
   -- write to RAM signaling
   axi_out.awid    <= "0";    -- not used
   --axi_out.awlen   <= x"00";  -- data beats-1 (single access) (no burst)
-  axi_out.awlen   <= R_burst_remaining;
+  axi_out.awlen   <= "000" & R_burst_remaining;
   axi_out.awsize  <= "010";  -- 32 bits, resp. 4 bytes
   axi_out.awburst <= "01";   -- burst type INCR - Incrementing address
   axi_out.awlock  <= '0';    -- Exclusive access not supported
