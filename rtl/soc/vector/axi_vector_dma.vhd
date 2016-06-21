@@ -31,7 +31,8 @@ entity axi_vector_dma is
   (
     C_vaddr_bits: integer := 11; -- bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
     C_vdata_bits: integer := 32;
-    C_burst_max: integer := 64
+    C_burst_read_max: integer := 1;
+    C_burst_write_max: integer := 1
   );
   port
   (
@@ -84,13 +85,14 @@ begin
         if request='1' then
           R_ram_addr <= addr;
           R_bram_addr <= (others => '0');
-          R_burst_remaining <= conv_std_logic_vector(C_burst_max-1, C_burst_max_bits);
           R_store_mode <= store_mode;
           if store_mode='1' then
             R_awvalid <= '1'; -- write request starts with address
+            R_burst_remaining <= conv_std_logic_vector(C_burst_write_max-1, C_burst_max_bits);
             R_state <= C_state_wait_write_addr_ack;
           else
             R_arvalid <= '1'; -- read request starts with address
+            R_burst_remaining <= conv_std_logic_vector(C_burst_read_max-1, C_burst_max_bits);
             R_state <= C_state_wait_read_addr_ack;
           end if;
         end if;
@@ -99,7 +101,6 @@ begin
       if R_state = C_state_wait_read_addr_ack then
         if axi_in.arready='1' then
           R_arvalid <= '0'; -- de-activate address request
-          -- R_wvalid <= '1'; -- activate data valid, try if this could be activated on earlier phase
           R_state <= C_state_wait_read_data_ack;
         end if;
       end if; -- end phase wait read addr ack
@@ -114,7 +115,8 @@ begin
           else
             R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue reading in the next bursts block
             R_bram_addr <= R_bram_addr + 1; -- increment source address
-            if R_burst_remaining = 0 or axi_in.rlast='1' then
+            -- if R_burst_remaining = 0 or axi_in.rlast='1' then
+            if axi_in.rlast='1' then
               if conv_integer(not R_bram_addr(C_vaddr_bits-1 downto 0)) = 0 then
                 -- if all vaddr bits of R_bram_addr are '1'
                 -- so we are at last element and in next cycle vector will be
@@ -122,7 +124,7 @@ begin
                 R_state <= C_state_idle;
               else
                 R_arvalid <= '1'; -- write request starts with address
-                R_burst_remaining <= conv_std_logic_vector(C_burst_max-1, C_burst_max_bits);
+                R_burst_remaining <= conv_std_logic_vector(C_burst_read_max-1, C_burst_max_bits);
                 R_state <= C_state_wait_read_addr_ack;
               end if;
             else
@@ -161,7 +163,7 @@ begin
                 R_state <= C_state_idle;
               else
                 R_awvalid <= '1'; -- write request starts with address
-                R_burst_remaining <= conv_std_logic_vector(C_burst_max-1, C_burst_max_bits);
+                R_burst_remaining <= conv_std_logic_vector(C_burst_write_max-1, C_burst_max_bits);
                 R_state <= C_state_wait_write_addr_ack;
               end if;
             else
