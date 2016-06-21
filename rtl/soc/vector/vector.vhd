@@ -108,7 +108,7 @@ architecture arch of vector is
     -- indexes are x2, even are results, odd are arguments
     -- set all to 1 to initially avoid unwanted results to get written
     signal R_vector_indexed_by: T_vector_indexed_by := (others => (others => '1'));
-    
+
     signal S_add_arg_vi: integer range 0 to C_vaddr_bits-1;
     -- the scheduler will drive write-enable signals for storing results into vectors
 
@@ -186,11 +186,11 @@ begin
               R_vector_listens_to(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- result
                 conv_std_logic_vector(C_function_add, C_functions_bits);
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- result
-                conv_std_logic_vector(2*C_function_add, C_functions_bits+1); -- func result index
+                conv_std_logic_vector(C_function_add, C_functions_bits) & '0'; -- func result index
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+4 downto 4))) <= -- arg1
-                conv_std_logic_vector(2*C_function_add+1, C_functions_bits+1); -- func arg index
+                conv_std_logic_vector(C_function_add, C_functions_bits) & '1'; -- func arg index
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- arg2
-                conv_std_logic_vector(2*C_function_add+1, C_functions_bits+1); -- func arg index
+                conv_std_logic_vector(C_function_add, C_functions_bits) & '1'; -- func arg index
               -- which vector indexes values will be selected by core function
               R_add_result_select <= bus_in(C_vectors_bits-1+8 downto 8);
               R_add_arg1_select <= bus_in(C_vectors_bits-1+4 downto 4);
@@ -205,8 +205,11 @@ begin
               -- start functional unit
               R_add_request <= '1';
             end if;
-            --if bus_in(31 downto 24) = x"39" then -- command 39 un-listen all vectors
-            --end if;
+            if bus_in(31 downto 24) = x"99" then -- command 39 un-listen all vectors
+              -- set it as argument
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <=
+                conv_std_logic_vector(C_function_add, C_functions_bits) & '1'; -- func arg index
+            end if;
           end if;
         else
           R_io_request <= '0';
@@ -292,7 +295,8 @@ begin
           -- first result will be calculated wrong, maybe even stored at the end
           -- of vector and it will be overwritten later with correct result
           R_add_busy <= '1';
-          R_function_vi(2*C_function_add) <= conv_std_logic_vector(-1, C_vaddr_bits+1); -- result counter also enables we
+          --R_function_vi(2*C_function_add) <= conv_std_logic_vector(-1, C_vaddr_bits+1); -- result counter also enables we
+          R_function_vi(2*C_function_add) <= conv_std_logic_vector(-3, C_vaddr_bits+1); -- result counter starts with -3 propagation delay
           R_function_vi(2*C_function_add+1) <= (others => '0'); -- argument counter
         else
           if R_add_busy='1' then
@@ -308,14 +312,16 @@ begin
         end if;
       end if;
     end process;
-    
+
     -- core funtions here
     -- functional units generate results
     process(clk)
     begin
       if rising_edge(clk) then
+        -- R_function_resulut will be valid 1 cycle later
         R_function_result(C_function_sign) <= (others => '0');
-        R_function_result(C_function_add) <= S_VARG(conv_integer(R_add_arg1_select)) + S_VARG(conv_integer(R_add_arg2_select));
+        R_function_result(C_function_add) <= S_VARG(conv_integer(R_add_arg1_select))
+                                           + S_VARG(conv_integer(R_add_arg2_select));
         R_function_result(C_function_mul) <= (others => '0');
         R_function_result(C_function_inv) <= (others => '0');
       end if;
@@ -324,12 +330,7 @@ begin
     -- R_vector_listens_to(i)=fu sets a vector "i" to listen to result of a functional unit "fu"
     G_listeners:
     for i in 0 to C_vectors-1 generate
-      --process(clk)
-      --begin
-      --  if rising_edge(clk) then
       S_VRES(i) <= R_function_result(conv_integer(R_vector_listens_to(i)));
-      --  end if;
-      --end process;
       S_VI(i) <= R_function_vi(conv_integer(R_vector_indexed_by(i)))(C_vaddr_bits-1 downto 0);
       -- if functional counter is running (MSB=0)
       -- and if vector is indexed by result register (even number, LSB=0)
