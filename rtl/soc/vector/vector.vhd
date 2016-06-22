@@ -450,8 +450,15 @@ end;
 -- [ ] I/O should interpret linked list (now it does simple linear block)
 
 -- [*] scheduler to control vector lengths and write signals
+-- [ ] simplify scheduler with for loop and indexed registers
 -- [ ] scheduler should count vector lengths
 -- [ ] scheduler should count function pipeline delay cycles
 -- [ ] scheduler should handle pipeline delay
 
 -- [ ] at end of function, un-listen the result "indexed_by" setting LSB=1
+-- [ ] 64/32/16 bit mode: element size is 64-bit
+--     1 parallel 64-bit unit
+--     2 parallel 32-bit units
+--     4 parallel 16-bit units
+
+-- [ ] interrupt flag set on function done or I/O done

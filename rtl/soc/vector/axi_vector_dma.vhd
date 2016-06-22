@@ -214,8 +214,6 @@ begin
 end;
 
 -- [ ] todo: support boundary burst conditions:
--- first burst (or the last) must be allowed to be shorter
-
 -- [ ] axi is probably not well initialized, (reset handling missing?)
 --     sometimes after first write burst vector axi port stops working
 --     other axi ports (cpu, video) keep working
@@ -223,3 +221,5 @@ end;
 -- [ ] vector store may be signaled as done too early
 --     by bram_addr MSB bit while axi is still
 --     transferring last word.
+-- [ ] first burst (or the last) must be allowed to be shorter
+-- [ ] linked list support
