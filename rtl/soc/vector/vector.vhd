@@ -40,8 +40,8 @@ end vector;
 architecture arch of vector is
     constant C_mmio_registers: integer range 4 to 16 := 4; -- total number of memory backed mmio registers
 
-    constant C_vectors: integer range 2 to 16 := 4; -- total number of vector registers (BRAM blocks)
-    constant C_vectors_bits: integer range 1 to 4 := 2; -- number of bits to select the vector register
+    constant C_vectors: integer range 2 to 16 := 8; -- total number of vector registers (BRAM blocks)
+    constant C_vectors_bits: integer range 1 to 4 := 3; -- number of bits to select the vector register
     constant C_vaddr_bits: integer range 2 to 16 := 11; -- number of address bits for BRAM vector
     constant C_vdata_bits: integer range 32 to 64 := 32; -- number of data bits for each vector
 
@@ -238,14 +238,14 @@ begin
               R_mul_request <= '1';
             end if;
             if bus_in(31 downto 24) = x"99" then -- command 0x99 detach (workaround to un-listen a vector)
-              -- vectors keep being attached as listeners to 
+              -- vectors keep being attached as listeners to
               -- the functional unit and when this unit is used
               -- for other vectors, previous results are overwritten
               -- this is example of the situation
               -- V(3) = V(1) + V(2)
               -- V(0) = V(4) + V(5) -- V(3)=V(0)=V(4)+V(5), lost result V(3)=V(1)+V(2)
               -- this is workaround for this
-              -- V(3) = V(1) + V(2) -- result written to V(3) 
+              -- V(3) = V(1) + V(2) -- result written to V(3)
               -- detach V(3)        -- V(3) now detached from + function
               -- V(0) = V(4) + V(5) -- V(0)=V(4)+V(5), V(3)=V(1)+V(2)
               -- todo: detach V(3) should be done automatic after vector operation finishes
@@ -395,7 +395,7 @@ begin
         R_function_result(C_function_inv) <= (others => '0');
       end if;
     end process;
-    
+
     -- *** cross-switching from functional unit registers to vector registers ***
     -- concept of listeners
     -- each vector can 'listen' to result of any functional unit
