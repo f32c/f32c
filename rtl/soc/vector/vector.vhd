@@ -114,9 +114,15 @@ architecture arch of vector is
     signal S_add_arg_vi: integer range 0 to C_vaddr_bits-1;
     -- the scheduler will drive write-enable signals for storing results into vectors
     signal R_function_request, R_function_busy: std_logic_vector(C_functions-1 downto 0);
-    -- todo: make this an array for
-    -- each function to have different pipeline propagation delay
-    constant C_function_propagation_delay: integer := 1; -- 1 clock cycles between vector read and write
+    -- each function can have different pipeline propagation delay
+    type T_function_propagation_delay is array (0 to C_functions-1) of integer;
+    constant C_function_propagation_delay: T_function_propagation_delay :=
+    (
+      1, -- C_function_sign
+      1, -- C_function_inv
+      1, -- C_function_add
+      1  -- C_function_mul
+    );
 
     -- *** integer ADD function ***
     --signal R_add_request: std_logic;
@@ -336,10 +342,13 @@ begin
           if R_function_request(i)='1' and R_function_busy(i)='0' then
             R_function_busy(i) <= '1';
             -- result counter starts with negative propagation delay
-            R_function_vi(2*i) <= conv_std_logic_vector(-C_function_propagation_delay, C_vaddr_bits+1);
+            R_function_vi(2*i) <= conv_std_logic_vector(-C_function_propagation_delay(i), C_vaddr_bits+1);
             R_function_vi(2*i+1) <= (others => '0'); -- argument counter start from 0
           else
             if R_function_busy(i)='1' then
+              -- both limits are checked because result starts
+              -- negative and so we need to also check argument counter
+              -- to prevent immediately exiting
               if  R_function_vi(2*i)(C_vaddr_bits) = '1'
               and R_function_vi(2*i+1)(C_vaddr_bits) = '1'
               then
