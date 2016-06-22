@@ -68,8 +68,9 @@ architecture arch of vector is
     signal S_vector_load, S_vector_store: T_vdata; -- vectors to RAM I/O lines
     signal S_VARG, S_VRES: T_vdata; -- switchbar connection for arguments and results
     -- each vector has its write enable signal
-    --signal R_vector_we: std_logic_vector(C_vectors-1 downto 0);
     signal S_vector_we: std_logic_vector(C_vectors-1 downto 0);
+    signal R_vector_we: std_logic_vector(C_vectors-1 downto 0); -- rising edge tracking
+    signal S_vdone_interrupt: std_logic_vector(C_vectors-1 downto 0);
 
     -- *** RAM I/O ***
     signal S_io_bram_we: std_logic;
@@ -138,8 +139,8 @@ architecture arch of vector is
     signal S_mul_operator_result: std_logic_vector(2*C_vdata_bits-1 downto 0);
     --constant C_mul_propagation_delay: integer := 1; -- 1 clock cycles between vector read and write
 
-    -- vector done detection register (unused, just 0)
-    signal R_rising_edge: std_logic_vector(C_bits-1 downto 0) := (others => '0');
+    -- vector done detection register
+    signal S_interrupt_edge: std_logic_vector(C_bits-1 downto 0) := (others => '0');
 begin
     -- CPU core reads registers
     with conv_integer(addr) select
@@ -170,7 +171,7 @@ begin
               end if;
             else
               R(C_vdone_if)(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
-              R(C_vdone_if)(8*i+7 downto 8*i) or R_rising_edge(8*i+7 downto 8*i);
+              R(C_vdone_if)(8*i+7 downto 8*i) or S_interrupt_edge(8*i+7 downto 8*i);
             end if;
           end if;
         end if;
@@ -245,26 +246,18 @@ begin
               -- start functional unit
               R_function_request(C_function_mul) <= '1';
             end if;
-            if bus_in(31 downto 24) = x"99" then -- command 0x99 detach (workaround to un-listen a vector)
-              -- vectors keep being attached as listeners to
-              -- the functional unit and when this unit is used
-              -- for other vectors, previous results are overwritten
-              -- this is example of the situation
-              -- V(3) = V(1) + V(2)
-              -- V(0) = V(4) + V(5) -- V(3)=V(0)=V(4)+V(5), lost result V(3)=V(1)+V(2)
-              -- this is workaround for this
-              -- V(3) = V(1) + V(2) -- result written to V(3)
-              -- detach V(3)        -- V(3) now detached from + function
-              -- V(0) = V(4) + V(5) -- V(0)=V(4)+V(5), V(3)=V(1)+V(2)
-              -- todo: detach V(3) should be done automatic after vector operation finishes
-              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <=
-                conv_std_logic_vector(C_function_add, C_functions_bits) & '1'; -- func arg index
-            end if;
           end if;
         else
           R_io_request <= '0';
           R_function_request <= (others => '0');
         end if;
+        -- this is needed to keep vector from being unwantedly
+        -- overwritten by next run of the same functional unit
+        for i in 0 to C_vectors-1 loop
+          if S_vdone_interrupt(i)='1' then
+            R_vector_indexed_by(i)(0) <= '1'; -- detach this vector from functional unit write
+          end if;
+        end loop;
       end if;
     end process;
 
@@ -274,8 +267,8 @@ begin
       generic map
       (
         dual_port => True, -- one port takes data from RAM, other port outputs to video
-        pass_thru_a => True, -- false allows simultaneous reading and erasing of old data
-        pass_thru_b => True, -- false allows simultaneous reading and erasing of old data
+        pass_thru_a => False, -- false allows simultaneous reading and erasing of old data
+        pass_thru_b => False, -- false allows simultaneous reading and erasing of old data
         data_width => C_vdata_bits,
         addr_width => C_vaddr_bits
       )
@@ -408,6 +401,17 @@ begin
                         when R_vector_indexed_by(i)(0)='0' else '0'; -- indexed by LSB=0 means indexed by function result register
     end generate; -- G_listeners
 
+    -- falling edge of functional vector write enable signal "S_vector_we" indicates
+    -- the completion of vector operation (vdone interrupt)
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        R_vector_we <= S_vector_we;
+      end if;
+    end process;
+    S_vdone_interrupt <= R_vector_we and not S_vector_we;
+    S_interrupt_edge(C_vectors-1 downto 0) <= S_vdone_interrupt; -- S_interrupt_edge is larger (32-bit)
+
 end;
 
 -- command example
@@ -420,12 +424,22 @@ end;
 -- 0x01000800  load V(3) from RAM
 -- 0x01800003  store V(3) to RAM
 -- 0x21000321  V(3) = V(2) + V(1)
--- 0x99000003  V(3) detach workaround
 -- 0x21000102  V(1) = V(0) + V(2)
--- 0x99000001  V(1) detach workaround
 -- 0x21010102  V(1) = V(0) - V(2)
+-- 0x23000102  V(1) = V(0) * V(2)
 
 --  C usage
+
+-- volatile uint32_t *vector_ptr = (volatile uint32_t *)0xFFFFFC20;
+-- void wait_vector(void)
+-- {
+--   uint32_t a;
+--   do
+--   {
+--     a = vector_ptr[1];
+--   } while(a == 0);
+--   vector_ptr[1] = a; // clear interrupt flag(s)
+-- }
 
 --  vector_ptr[0] = red_green+200*256;
 --  vector_ptr[4] = 0x01000400; // load vector 1
@@ -450,10 +464,11 @@ end;
 -- [*] scheduler should handle pipeline delay
 -- [ ] scheduler should count vector lengths
 
--- [ ] at end of function, un-listen the result "indexed_by" setting LSB=1
 -- [ ] 64/32/16 bit mode: element size is 64-bit
 --     1 parallel 64-bit unit
 --     2 parallel 32-bit units
 --     4 parallel 16-bit units
 
--- [ ] interrupt flag set on function done or I/O done
+-- [*] interrupt flag set on function done
+-- [*] at end of function, un-listen the result "indexed_by" setting LSB=1
+-- [ ] interrupt flag set for I/O done
