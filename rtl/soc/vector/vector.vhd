@@ -115,9 +115,10 @@ architecture arch of vector is
     -- *** ADD function ***
     signal R_add_request: std_logic;
     signal R_add_busy: std_logic;
-    signal R_add_mode: std_logic_vector(3 downto 0);
+    signal R_add_mode: std_logic_vector(3 downto 0); -- bit0: 0:+  1:-
     signal R_add_result_select, R_add_arg1_select, R_add_arg2_select: std_logic_vector(C_vectors_bits-1 downto 0);
-    signal S_add_result: std_logic_vector(C_vdata_bits-1 downto 0);
+    signal S_add_operator_result, S_add_operator_plus, S_add_operator_minus: std_logic_vector(C_vdata_bits-1 downto 0);
+    constant C_add_propagation_delay: integer := 1; -- 1 clock cycles between vector read and write
 
     -- command decoder should load
     -- R_store_mode, R_store_select, R_load_select
@@ -174,13 +175,13 @@ begin
         -- command accepted only if written in 32-bit word
         if ce='1' and bus_write='1' and byte_sel="1111" then
           if conv_integer(addr) = C_vcommand then
-            if bus_in(31 downto 24) = x"01" then -- command 01 I/O
+            if bus_in(31 downto 24) = x"01" then -- command 0x01 I/O
               R_io_store_mode <= bus_in(23); -- RAM write cycle
               R_io_store_select <= bus_in(C_vectors_bits-1+0 downto 0); -- byte 0, vector number to store
               R_io_load_select <= bus_in(C_vectors-1+8 downto 8); -- byte 1 bitmask of vectors to load
               R_io_request <= '1';
             end if;
-            if bus_in(31 downto 24) = x"21" then -- command 21 integer add
+            if bus_in(31 downto 24) = x"21" then -- command 0x21 integer add
               R_add_mode <= bus_in(19 downto 16); -- Add mode
               -- select which vector will listen to results of 'add' functional unit
               R_vector_listens_to(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- result
@@ -205,8 +206,18 @@ begin
               -- start functional unit
               R_add_request <= '1';
             end if;
-            if bus_in(31 downto 24) = x"99" then -- command 39 un-listen all vectors
-              -- set it as argument
+            if bus_in(31 downto 24) = x"99" then -- command 0x99 detach (workaround to un-listen a vector)
+              -- vectors keep being attached as listeners to 
+              -- the functional unit and when this unit is used
+              -- for other vectors, previous results are overwritten
+              -- this is example of the situation
+              -- V(3) = V(1) + V(2)
+              -- V(0) = V(4) + V(5) -- V(3)=V(0)=V(4)+V(5), lost result V(3)=V(1)+V(2)
+              -- this is workaround for this
+              -- V(3) = V(1) + V(2) -- result written to V(3) 
+              -- detach V(3)        -- V(3) now detached from + function
+              -- V(0) = V(4) + V(5) -- V(0)=V(4)+V(5), V(3)=V(1)+V(2)
+              -- todo: detach V(3) should be done automatic after vector operation finishes
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <=
                 conv_std_logic_vector(C_function_add, C_functions_bits) & '1'; -- func arg index
             end if;
@@ -224,18 +235,20 @@ begin
       generic map
       (
         dual_port => True, -- one port takes data from RAM, other port outputs to video
-        pass_thru_a => False, -- false allows simultaneous reading and erasing of old data
-        pass_thru_b => False, -- false allows simultaneous reading and erasing of old data
+        pass_thru_a => True, -- false allows simultaneous reading and erasing of old data
+        pass_thru_b => True, -- false allows simultaneous reading and erasing of old data
         data_width => C_vdata_bits,
         addr_width => C_vaddr_bits
       )
       port map
       (
-        clk => clk,
+        clk => not clk, -- BRAM on falling clk edge is a must for AXI burst write to RAM
+        -- falling edge of the clock also reduced functional unit delay by 1 cycle
+        -- note: the f32c core also works with BRAM on falling edge
         we_a => S_io_bram_we_select(i),
         we_b => S_vector_we(i), -- VPU write, scheduler controls this signal
         addr_a => S_io_bram_addr, -- external address (RAM I/O)
-        addr_b => S_VI(i), -- internal address (VECTOR PROCESSOR)
+        addr_b => S_VI(i), -- internal address from functional unit
         data_in_a => S_io_bram_wdata,
         data_in_b => S_VRES(i), -- result from functional unit
         data_out_a => S_vector_store(i),
@@ -259,7 +272,7 @@ begin
         C_vaddr_bits => C_vaddr_bits, -- number of bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
         C_vdata_bits => C_vdata_bits, -- number of data bits
         C_burst_read_max => 64, -- max burst allowed by DMA. longer transfers will be split in many bursts
-        C_burst_write_max => 1
+        C_burst_write_max => 64
       )
       port map
       (
@@ -296,8 +309,7 @@ begin
           -- first result will be calculated wrong, maybe even stored at the end
           -- of vector and it will be overwritten later with correct result
           R_add_busy <= '1';
-          --R_function_vi(2*C_function_add) <= conv_std_logic_vector(-1, C_vaddr_bits+1); -- result counter also enables we
-          R_function_vi(2*C_function_add) <= conv_std_logic_vector(-2, C_vaddr_bits+1); -- result counter starts with -3 propagation delay
+          R_function_vi(2*C_function_add) <= conv_std_logic_vector(-C_add_propagation_delay, C_vaddr_bits+1); -- result counter starts with negative propagation delay
           R_function_vi(2*C_function_add+1) <= (others => '0'); -- argument counter
         else
           if R_add_busy='1' then
@@ -316,19 +328,33 @@ begin
       end if;
     end process;
 
-    -- core funtions here
-    -- functional units generate results
+    -- *** functional units ***
+    -- core funtions
+    -- operations with optional modifiers generate the results
+    S_add_operator_plus  <= S_VARG(conv_integer(R_add_arg1_select))
+                          + S_VARG(conv_integer(R_add_arg2_select));
+    S_add_operator_minus <= S_VARG(conv_integer(R_add_arg1_select))
+                          - S_VARG(conv_integer(R_add_arg2_select));
+    S_add_operator_result <= S_add_operator_plus when R_add_mode(0) = '0'
+                        else S_add_operator_minus;
+
+    -- registsering for fmax improvement
+    -- result for each core function is
+    -- moved to R_function_result to temporary register within 1 clock cycle delay
+    -- the outputs from temporary regisers are broadcast (collected later by listeners)
     process(clk)
     begin
       if rising_edge(clk) then
         -- R_function_resulut will be valid 1 cycle later
         R_function_result(C_function_sign) <= (others => '0');
-        R_function_result(C_function_add) <= S_VARG(conv_integer(R_add_arg1_select))
-                                           + S_VARG(conv_integer(R_add_arg2_select));
+        R_function_result(C_function_add) <= S_add_operator_result;
         R_function_result(C_function_mul) <= (others => '0');
         R_function_result(C_function_inv) <= (others => '0');
       end if;
     end process;
+    
+    -- *** cross-switching from functional unit registers to vector registers ***
+    -- concept of listeners
     -- each vector can 'listen' to result of each functional unit
     -- R_vector_listens_to(i)=fu sets a vector "i" to listen to result of a functional unit "fu"
     G_listeners:
@@ -338,8 +364,8 @@ begin
       -- if functional counter is running (MSB=0)
       -- and if vector is indexed by result register (even number, LSB=0)
       -- then set "write enable" to the vector register
-      -- problem: R_vector_indexed_by should be set all to '1' after the function
-      -- otherwise once written vector will be written again by arguments increment
+      -- problem: R_vector_indexed_by should be set LSB='1' after the function is done
+      -- otherwise written vector will be overwritten by next function
       S_vector_we(i) <= (not R_function_vi(conv_integer(R_vector_indexed_by(i)))(C_vaddr_bits) ) -- MSB bit 0 used as write enable
                         when R_vector_indexed_by(i)(0)='0' and R_add_busy='1' else '0'; -- indexed by LSB=0 means indexed by function result register
     end generate; -- G_listeners
@@ -356,7 +382,10 @@ end;
 -- 0x01000800  load V(3) from RAM
 -- 0x01800003  store V(3) to RAM
 -- 0x21000321  V(3) = V(2) + V(1)
--- 0x21000100  V(1) = V(0) + V(0)
+-- 0x99000003  V(3) detach workaround
+-- 0x21000102  V(1) = V(0) + V(2)
+-- 0x99000001  V(1) detach workaround
+-- 0x21010102  V(1) = V(0) - V(2)
 
 --  C usage
 
