@@ -81,6 +81,8 @@ architecture arch of vector is
     signal R_io_load_select, S_io_bram_we_select: std_logic_vector(C_vectors-1 downto 0); -- select multiple vectors load from the same RAM location
     signal R_io_request: std_logic; -- set to '1' during one clock cycle (not longer) to properly initiate RAM I/O
     signal S_io_done: std_logic;
+    signal R_io_done: std_logic_vector(1 downto 0) := (others => '1');
+    signal S_io_done_interrupt: std_logic;
     -- command decoder should load
     -- R_store_mode, R_store_select, R_load_select
     -- and issue a 1-clock pulse on R_io_request
@@ -164,10 +166,12 @@ begin
             if ce = '1' and bus_write = '1' then
               if conv_integer(addr) = C_vdone_if
               then -- logical and for interrupt flag registers
-                R(conv_integer(addr))(8*i+7 downto 8*i) <= -- only can clear intr. flag, never set
-                R(conv_integer(addr))(8*i+7 downto 8*i) and not bus_in(8*i+7 downto 8*i);
+                R(C_vdone_if)(8*i+7 downto 8*i) <= -- only can clear intr. flag, never set
+                R(C_vdone_if)(8*i+7 downto 8*i) and not bus_in(8*i+7 downto 8*i);
               else -- normal write for every other register
                 R(conv_integer(addr))(8*i+7 downto 8*i) <= bus_in(8*i+7 downto 8*i);
+                R(C_vdone_if)(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
+                R(C_vdone_if)(8*i+7 downto 8*i) or S_interrupt_edge(8*i+7 downto 8*i);
               end if;
             else
               R(C_vdone_if)(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
@@ -401,17 +405,25 @@ begin
                         when R_vector_indexed_by(i)(0)='0' else '0'; -- indexed by LSB=0 means indexed by function result register
     end generate; -- G_listeners
 
-    -- falling edge of functional vector write enable signal "S_vector_we" indicates
-    -- the completion of vector operation (vdone interrupt)
+    -- *** interrupts ***
+    -- storing old value to register has purpuse
+    -- to detect edge and generate single clock cycle pulse
+    -- which is used to raise interrupt flags
     process(clk)
     begin
       if rising_edge(clk) then
         R_vector_we <= S_vector_we;
+        R_io_done <= S_io_done & R_io_done(1);
       end if;
     end process;
-    S_vdone_interrupt <= R_vector_we and not S_vector_we;
+    -- falling edge of functional vector write enable signal "S_vector_we" indicates
+    -- the completion of vector operation (vdone interrupt)
+    S_vdone_interrupt <= R_vector_we and not S_vector_we; -- '1' on falling edge
     S_interrupt_edge(C_vectors-1 downto 0) <= S_vdone_interrupt; -- S_interrupt_edge is larger (32-bit)
-
+    -- rising edge of "S_io_done" indicates
+    -- the completion of vector I/O operation
+    S_io_done_interrupt <= R_io_done(1) and not R_io_done(0); -- '1' on rising edge
+    S_interrupt_edge(16) <= S_io_done_interrupt;
 end;
 
 -- command example
@@ -472,3 +484,5 @@ end;
 -- [*] interrupt flag set on function done
 -- [*] at end of function, un-listen the result "indexed_by" setting LSB=1
 -- [ ] interrupt flag set for I/O done
+
+-- [ ] rewrite command decoding to avoid sequential register writes
