@@ -297,12 +297,14 @@ begin
           -- of vector and it will be overwritten later with correct result
           R_add_busy <= '1';
           --R_function_vi(2*C_function_add) <= conv_std_logic_vector(-1, C_vaddr_bits+1); -- result counter also enables we
-          R_function_vi(2*C_function_add) <= conv_std_logic_vector(-3, C_vaddr_bits+1); -- result counter starts with -3 propagation delay
+          R_function_vi(2*C_function_add) <= conv_std_logic_vector(-2, C_vaddr_bits+1); -- result counter starts with -3 propagation delay
           R_function_vi(2*C_function_add+1) <= (others => '0'); -- argument counter
         else
           if R_add_busy='1' then
-            if R_function_vi(2*C_function_add+1)(C_vaddr_bits) = '1' then
-              R_function_vi(2*C_function_add  )(C_vaddr_bits) <= '1'; -- remove write enable
+            if  R_function_vi(2*C_function_add)(C_vaddr_bits) = '1'
+            and R_function_vi(2*C_function_add+1)(C_vaddr_bits) = '1'
+            then
+              --R_function_vi(2*C_function_add+1)(C_vaddr_bits) <= '1'; -- remove write enable
               --R_function_vi(2*C_function_add+1)(C_vaddr_bits) <= '1'; -- remove write enable
               R_add_busy <= '0';
             else
