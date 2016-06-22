@@ -27,7 +27,7 @@ entity vector is
   (
     ce, clk: in std_logic;
     bus_write: in std_logic;
-    addr: in std_logic_vector(C_addr_bits-1 downto 0); -- address max 8 registers of 32-bit
+    addr: in std_logic_vector(C_addr_bits-1 downto 0); -- address max 8 mmio registers of 32-bit
     byte_sel: in std_logic_vector(3 downto 0);
     bus_in: in std_logic_vector(31 downto 0);
     bus_out: out std_logic_vector(31 downto 0);
@@ -80,9 +80,11 @@ architecture arch of vector is
     signal R_io_load_select, S_io_bram_we_select: std_logic_vector(C_vectors-1 downto 0); -- select multiple vectors load from the same RAM location
     signal R_io_request: std_logic; -- set to '1' during one clock cycle (not longer) to properly initiate RAM I/O
     signal S_io_done: std_logic;
+    -- command decoder should load
+    -- R_store_mode, R_store_select, R_load_select
+    -- and issue a 1-clock pulse on R_io_request
 
     -- *** Functional multiplexing ***
-
     -- 4 main different functions
     -- a function can have modifier that selects one from many of similar functions
     constant C_functions: integer := 4; -- total number of functional units
@@ -111,24 +113,24 @@ architecture arch of vector is
 
     signal S_add_arg_vi: integer range 0 to C_vaddr_bits-1;
     -- the scheduler will drive write-enable signals for storing results into vectors
+    signal R_function_request, R_function_busy: std_logic_vector(C_functions-1 downto 0);
+    -- todo: make this an array for
+    -- each function to have different pipeline propagation delay
+    constant C_function_propagation_delay: integer := 1; -- 1 clock cycles between vector read and write
 
     -- *** integer ADD function ***
-    signal R_add_request: std_logic;
-    signal R_add_busy: std_logic;
+    --signal R_add_request: std_logic;
+    --signal R_add_busy: std_logic;
     signal R_add_mode: std_logic_vector(3 downto 0); -- bit0: 0:+  1:-
     signal R_add_result_select, R_add_arg1_select, R_add_arg2_select: std_logic_vector(C_vectors_bits-1 downto 0);
     signal S_add_operator_result, S_add_operator_plus, S_add_operator_minus: std_logic_vector(C_vdata_bits-1 downto 0);
-    constant C_add_propagation_delay: integer := 1; -- 1 clock cycles between vector read and write
+    --constant C_add_propagation_delay: integer := 1; -- 1 clock cycles between vector read and write
 
     -- *** integer MULTIPLY function ***
     signal R_mul_request, R_mul_busy: std_logic;
     signal R_mul_result_select, R_mul_arg1_select, R_mul_arg2_select: std_logic_vector(C_vectors_bits-1 downto 0);
     signal S_mul_operator_result: std_logic_vector(2*C_vdata_bits-1 downto 0);
-    constant C_mul_propagation_delay: integer := 1; -- 1 clock cycles between vector read and write
-
-    -- command decoder should load
-    -- R_store_mode, R_store_select, R_load_select
-    -- and issue a 1-clock pulse on S_start_io
+    --constant C_mul_propagation_delay: integer := 1; -- 1 clock cycles between vector read and write
 
     -- vector done detection register (unused, just 0)
     signal R_rising_edge: std_logic_vector(C_bits-1 downto 0) := (others => '0');
@@ -210,7 +212,7 @@ begin
               -- unwanted vectors which all have LSB=0 and are being used as argument index
 
               -- start functional unit
-              R_add_request <= '1';
+              R_function_request(C_function_add) <= '1';
             end if;
             if bus_in(31 downto 24) = x"23" then -- command 0x23 integer multiply
               --R_mul_mode <= bus_in(19 downto 16); -- Add mode
@@ -235,7 +237,7 @@ begin
               -- unwanted vectors which all have LSB=0 and are being used as argument index
 
               -- start functional unit
-              R_mul_request <= '1';
+              R_function_request(C_function_mul) <= '1';
             end if;
             if bus_in(31 downto 24) = x"99" then -- command 0x99 detach (workaround to un-listen a vector)
               -- vectors keep being attached as listeners to
@@ -255,8 +257,7 @@ begin
           end if;
         else
           R_io_request <= '0';
-          R_add_request <= '0';
-          R_mul_request <= '0';
+          R_function_request <= (others => '0');
         end if;
       end if;
     end process;
@@ -294,7 +295,6 @@ begin
     -- vector load: (1-to-many) all bus lines are connected to RAM data
     --              all vector registers can be loaded with the same RAM data
     -- vector store: (1-to-1) only one vector can be stored at a time
-
     G_axi_dma:
     if C_axi generate
       I_axi_vector_dma:
@@ -327,46 +327,32 @@ begin
       );
     end generate;
 
-    -- this acts as vector scheduler
-    process(clk)
-    begin
-      if rising_edge(clk) then
-        if R_add_request='1' and R_add_busy='0' then
-          R_add_busy <= '1';
-          -- result counter starts with negative propagation delay
-          R_function_vi(2*C_function_add) <= conv_std_logic_vector(-C_add_propagation_delay, C_vaddr_bits+1);
-          R_function_vi(2*C_function_add+1) <= (others => '0'); -- argument counter
-        else
-          if R_add_busy='1' then
-            if  R_function_vi(2*C_function_add)(C_vaddr_bits) = '1'
-            and R_function_vi(2*C_function_add+1)(C_vaddr_bits) = '1'
-            then
-              R_add_busy <= '0';
-            else
-              R_function_vi(2*C_function_add  ) <= R_function_vi(2*C_function_add  ) + 1; -- result counter
-              R_function_vi(2*C_function_add+1) <= R_function_vi(2*C_function_add+1) + 1; -- arg counter
+    -- *** functions scheduler ***
+    G_functions_scheduler:
+    for i in 0 to C_functions-1 generate
+      process(clk)
+      begin
+        if rising_edge(clk) then
+          if R_function_request(i)='1' and R_function_busy(i)='0' then
+            R_function_busy(i) <= '1';
+            -- result counter starts with negative propagation delay
+            R_function_vi(2*i) <= conv_std_logic_vector(-C_function_propagation_delay, C_vaddr_bits+1);
+            R_function_vi(2*i+1) <= (others => '0'); -- argument counter start from 0
+          else
+            if R_function_busy(i)='1' then
+              if  R_function_vi(2*i)(C_vaddr_bits) = '1'
+              and R_function_vi(2*i+1)(C_vaddr_bits) = '1'
+              then
+                R_function_busy(i) <= '0';
+              else
+                R_function_vi(2*i) <= R_function_vi(2*i) + 1; -- result counter
+                R_function_vi(2*i+1) <= R_function_vi(2*i+1) + 1; -- arg counter
+              end if;
             end if;
           end if;
         end if;
-        if R_mul_request='1' and R_mul_busy='0' then
-          R_mul_busy <= '1';
-          -- result counter starts with negative propagation delay
-          R_function_vi(2*C_function_mul) <= conv_std_logic_vector(-C_mul_propagation_delay, C_vaddr_bits+1); -- result counter starts with negative propagation delay
-          R_function_vi(2*C_function_mul+1) <= (others => '0'); -- argument counter
-        else
-          if R_mul_busy='1' then
-            if  R_function_vi(2*C_function_mul)(C_vaddr_bits) = '1'
-            and R_function_vi(2*C_function_mul+1)(C_vaddr_bits) = '1'
-            then
-              R_mul_busy <= '0';
-            else
-              R_function_vi(2*C_function_mul  ) <= R_function_vi(2*C_function_mul  ) + 1; -- result counter
-              R_function_vi(2*C_function_mul+1) <= R_function_vi(2*C_function_mul+1) + 1; -- arg counter
-            end if;
-          end if;
-        end if;
-      end if;
-    end process;
+      end process;
+    end generate; -- G_functions_scheduler
 
     -- *** functional units ***
     -- core funtions
@@ -447,13 +433,13 @@ end;
 -- TODO:
 
 -- [ ] I/O handle the vector length (now unhandled, full vector load/stored)
--- [ ] I/O should interpret linked list (now it does simple linear block)
+-- [ ] I/O should interprete linked list (now it does simple linear block)
 
 -- [*] scheduler to control vector lengths and write signals
--- [ ] simplify scheduler with for loop and indexed registers
+-- [*] simplify scheduler with for loop and indexed registers
+-- [*] scheduler should count function pipeline delay cycles
+-- [*] scheduler should handle pipeline delay
 -- [ ] scheduler should count vector lengths
--- [ ] scheduler should count function pipeline delay cycles
--- [ ] scheduler should handle pipeline delay
 
 -- [ ] at end of function, un-listen the result "indexed_by" setting LSB=1
 -- [ ] 64/32/16 bit mode: element size is 64-bit
