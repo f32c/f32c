@@ -121,7 +121,7 @@ begin
             R_bram_addr <= R_bram_addr + 1; -- increment source address
             -- if R_burst_remaining = 0 or axi_in.rlast='1' then
             if axi_in.rlast='1' then
-              if conv_integer(not R_bram_addr(C_vaddr_bits-1 downto 0)) = 0 
+              if conv_integer(not R_bram_addr(C_vaddr_bits-1 downto 0)) = 0
                 -- or conv_integer(not R_bram_addr(C_vaddr_bits-2 downto 1)) = 0 -- debug, early terminate
                 then
                 -- if all vaddr bits of R_bram_addr are '1'
