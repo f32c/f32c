@@ -115,7 +115,7 @@ architecture arch of vector is
     -- each function has its argument and result counter
     type T_vector_indexed_by is array (C_vectors-1 downto 0) of std_logic_vector(C_functions_bits downto 0);
     -- which function's index will run index for vector i
-    -- indexes are x2, even are results, odd are arguments
+    -- indexes are x2, even are arguments, odd are results
     -- set all to 1 to initially avoid unwanted results to get written
     signal R_vector_indexed_by: T_vector_indexed_by := (others => (others => '1'));
 
@@ -190,7 +190,7 @@ begin
       end process;
     end generate;
 
-    -- join all interrupt request bits into one bit
+    -- join all interrupt request bits into one bit (reduction-or)
     vector_irq <= '1' when
                     (  ( R(C_vdone_ie)  and R(C_vdone_if)  )
                     ) /= ext("0",C_bits) else '0';
@@ -212,22 +212,15 @@ begin
               R_add_mode <= bus_in(19 downto 16); -- Add mode
               -- select which vector will listen to results of 'add' functional unit
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- result
-                conv_std_logic_vector(C_function_add, C_functions_bits) & '0'; -- func result index
+                conv_std_logic_vector(C_function_add, C_functions_bits) & '1'; -- func result index
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+4 downto 4))) <= -- arg1
-                conv_std_logic_vector(C_function_add, C_functions_bits) & '1'; -- func arg index
+                conv_std_logic_vector(C_function_add, C_functions_bits) & '0'; -- func arg index
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- arg2
-                conv_std_logic_vector(C_function_add, C_functions_bits) & '1'; -- func arg index
+                conv_std_logic_vector(C_function_add, C_functions_bits) & '0'; -- func arg index
               -- which vector indexes values will be selected by core function
               R_add_result_select <= bus_in(C_vectors_bits-1+8 downto 8);
               R_add_arg1_select <= bus_in(C_vectors_bits-1+4 downto 4);
               R_add_arg2_select <= bus_in(C_vectors_bits-1+0 downto 0);
-
-              -- fixme problem: when function is done,
-              -- result index of R_vector_indexed_by (even value) should be changed
-              -- to argument by setting LSB=1
-              -- otherwise any new function's argument will also be written on other,
-              -- unwanted vectors which all have LSB=0 and are being used as argument index
-
               -- start functional unit
               R_function_request(C_function_add) <= '1';
             end if;
@@ -235,22 +228,15 @@ begin
               --R_mul_mode <= bus_in(19 downto 16); -- Add mode
               -- select which vector will listen to results of 'add' functional unit
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- result
-                conv_std_logic_vector(C_function_mul, C_functions_bits) & '0'; -- func result index
+                conv_std_logic_vector(C_function_mul, C_functions_bits) & '1'; -- func result index
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+4 downto 4))) <= -- arg1
-                conv_std_logic_vector(C_function_mul, C_functions_bits) & '1'; -- func arg index
+                conv_std_logic_vector(C_function_mul, C_functions_bits) & '0'; -- func arg index
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- arg2
-                conv_std_logic_vector(C_function_mul, C_functions_bits) & '1'; -- func arg index
+                conv_std_logic_vector(C_function_mul, C_functions_bits) & '0'; -- func arg index
               -- which vector indexes values will be selected by core function
               R_mul_result_select <= bus_in(C_vectors_bits-1+8 downto 8);
               R_mul_arg1_select <= bus_in(C_vectors_bits-1+4 downto 4);
               R_mul_arg2_select <= bus_in(C_vectors_bits-1+0 downto 0);
-
-              -- important: when function is done,
-              -- result index of R_vector_indexed_by (even value) should be changed
-              -- to argument by setting LSB=1
-              -- otherwise any new function's argument will also be written on other,
-              -- unwanted vectors which all have LSB=0 and are being used as argument index
-
               -- start functional unit
               R_function_request(C_function_mul) <= '1';
             end if;
@@ -263,7 +249,7 @@ begin
         -- overwritten by next run of the same functional unit
         for i in 0 to C_vectors-1 loop
           if S_vdone_interrupt(i)='1' then
-            R_vector_indexed_by(i)(0) <= '1'; -- detach this vector from functional unit write
+            R_vector_indexed_by(i)(0) <= '0'; -- detach this vector from functional unit write
           end if;
         end loop;
       end if;
@@ -287,7 +273,7 @@ begin
         -- falling edge of the clock also reduced functional unit delay by 1 cycle
         -- note: the f32c core also works with BRAM on falling edge
         we_a => S_io_bram_we_select(i),
-        we_b => S_vector_we(i), -- VPU write, scheduler controls this signal
+        we_b => S_vector_we(i), -- vector write enable from functional unit
         addr_a => S_io_bram_addr(C_vaddr_bits-1 downto 0), -- external address (RAM I/O)
         addr_b => S_VI(i), -- internal address from functional unit
         data_in_a => S_io_bram_wdata,
@@ -337,7 +323,7 @@ begin
     end generate;
 
     -- *** functions indexer ***
-    -- R_function_vi: 2*i for argument, 2*i+1 for result
+    -- R_function_vi: 2*i+1 for argument, 2*i for result
     G_functions_indexer:
     for i in 0 to C_functions-1 generate
       process(clk)
@@ -345,22 +331,21 @@ begin
         if rising_edge(clk) then
           if R_function_request(i)='1' and R_function_busy(i)='0' then
             R_function_busy(i) <= '1';
+            R_function_vi(2*i) <= (others => '0'); -- argument counter start from 0
             -- result counter starts with negative propagation delay
-            R_function_vi(2*i) <= conv_std_logic_vector(-C_function_propagation_delay(i), C_vaddr_bits+1);
-            R_function_vi(2*i+1) <= (others => '0'); -- argument counter start from 0
+            R_function_vi(2*i+1) <= conv_std_logic_vector(-C_function_propagation_delay(i), C_vaddr_bits+1);
           else
             if R_function_busy(i)='1' then
-              R_function_vi(2*i) <= R_function_vi(2*i) + 1; -- result counter
-              R_function_vi(2*i+1) <= R_function_vi(2*i+1) + 1; -- arg counter
-              if S_function_last_element(i)='1'
-              then
+              R_function_vi(2*i) <= R_function_vi(2*i) + 1; -- arg counter
+              R_function_vi(2*i+1) <= R_function_vi(2*i+1) + 1; -- result counter
+              if S_function_last_element(i)='1' then
                 R_function_busy(i) <= '0';
               end if;
             end if;
           end if;
         end if;
       end process;
-    end generate; -- G_functions_scheduler
+    end generate; -- G_functions_indexer
 
 
     -- *** functional units ***
@@ -375,13 +360,13 @@ begin
     -- is function result index equal the size of the 1st argument vector
     -- todo: 1 extra bit is needed to the vector length
     S_function_last_element(C_function_add) <= '1'
-      when R_function_vi(2*C_function_add) -- result index
+      when R_function_vi(2*C_function_add+1) -- result index
          = R_vector_length(conv_integer(R_add_arg1_select)) -- arg vector size
                                   else '0';
     S_mul_operator_result <= S_VARG(conv_integer(R_mul_arg1_select))
                            * S_VARG(conv_integer(R_mul_arg2_select));
     S_function_last_element(C_function_mul) <= '1'
-      when R_function_vi(2*C_function_mul)-- result index
+      when R_function_vi(2*C_function_mul+1)-- result index
          = R_vector_length(conv_integer(R_mul_arg1_select)) -- arg vector size
                                   else '0';
 
@@ -409,12 +394,12 @@ begin
       S_VRES(i) <= R_function_result(conv_integer(R_vector_indexed_by(i)(C_functions_bits downto 1)));
       S_VI(i) <= R_function_vi(conv_integer(R_vector_indexed_by(i)))(C_vaddr_bits-1 downto 0);
       -- if vector-indexing function is busy
-      -- and if vector is indexed by result register (even number, LSB=0)
+      -- and if vector is indexed by result register (odd number, LSB=1)
       -- then set "write enable" to the vector register
-      -- important: R_vector_indexed_by should be set LSB='1' after the function is done
+      -- important: R_vector_indexed_by should be set LSB='0' after the function is done
       -- otherwise previously written vector will be accidentaly overwritten by next function
       S_vector_we(i) <= R_function_busy(conv_integer(R_vector_indexed_by(i)(C_functions_bits downto 1)))
-                        when R_vector_indexed_by(i)(0)='0' else '0'; -- indexed by LSB=0 means indexed by function result register
+                        and R_vector_indexed_by(i)(0); -- indexed by LSB=1 means indexed by function result register
     end generate; -- G_listeners
 
 
@@ -504,11 +489,11 @@ end;
 -- [ ] I/O handle the vector length (now unhandled, full vector load/stored)
 -- [ ] I/O should interprete linked list (now it does simple linear block)
 
--- [*] scheduler to control vector lengths and write signals
--- [*] simplify scheduler with for loop and indexed registers
--- [*] scheduler should count function pipeline delay cycles
--- [*] scheduler should handle pipeline delay
--- [ ] scheduler should count vector lengths
+-- [*] indexer to control vector lengths and write signals
+-- [*] simplify indexer with for loop and indexed registers
+-- [*] indexer should count function pipeline delay cycles
+-- [*] indexer should handle pipeline delay
+-- [ ] indexer should count vector lengths
 
 -- [ ] 64/32/16 bit mode: element size is 64-bit
 --     1 parallel 64-bit unit
@@ -516,7 +501,6 @@ end;
 --     4 parallel 16-bit units
 
 -- [*] interrupt flag set on function done
--- [*] at end of function, un-listen the result "indexed_by" setting LSB=1
+-- [*] at end of function, un-listen the result "indexed_by" setting LSB=0
 -- [*] interrupt flag set for I/O done
 -- [ ] rewrite command decoding to avoid sequential register writes
--- [ ] vdone_interrupt, OR mask with corresponding vector from I/O done
