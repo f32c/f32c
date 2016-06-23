@@ -69,6 +69,7 @@ architecture arch of axi_vector_dma is
   signal R_ram_addr: std_logic_vector(29 downto 2);
   signal R_bram_addr: std_logic_vector(C_vaddr_bits downto 0) := (others => '1'); -- external counter for RAM load/store
   signal R_state: integer range 0 to C_state_max := C_state_idle;
+  signal R_done: std_logic := '1';
 
   -- axi registered signaling
   signal R_arvalid: std_logic := '0'; -- read request, valid address
@@ -87,6 +88,7 @@ begin
           R_ram_addr <= addr;
           R_bram_addr <= (others => '0');
           R_store_mode <= store_mode;
+          R_done <= '0';
           if store_mode='1' then
             R_awvalid <= '1'; -- write request starts with address
             R_burst_remaining <= conv_std_logic_vector(C_burst_write_max-1, C_burst_max_bits);
@@ -112,16 +114,20 @@ begin
           if R_bram_addr(C_vaddr_bits)='1' then
             -- we should normally never get here
             -- but if we do, go to idle
+            R_done <= '1';
             R_state <= C_state_idle;
           else
             R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue reading in the next bursts block
             R_bram_addr <= R_bram_addr + 1; -- increment source address
             -- if R_burst_remaining = 0 or axi_in.rlast='1' then
             if axi_in.rlast='1' then
-              if conv_integer(not R_bram_addr(C_vaddr_bits-1 downto 0)) = 0 then
+              if conv_integer(not R_bram_addr(C_vaddr_bits-1 downto 0)) = 0 
+                -- or conv_integer(not R_bram_addr(C_vaddr_bits-2 downto 1)) = 0 -- debug, early terminate
+                then
                 -- if all vaddr bits of R_bram_addr are '1'
                 -- so we are at last element and in next cycle vector will be
                 -- fully written, return to idle state
+                R_done <= '1';
                 R_state <= C_state_idle;
               else
                 R_arvalid <= '1'; -- write request starts with address
@@ -155,6 +161,7 @@ begin
               if R_bram_addr(C_vaddr_bits) = '1' then
                 -- we are at last element and in next cycle vector will be
                 -- fully written, return to idle state
+                R_done <= '1';
                 R_state <= C_state_idle;
               else
                 R_awvalid <= '1'; -- write request starts with address
@@ -200,7 +207,6 @@ begin
   axi_out.awprot  <= "000";  -- Xilinx IP generally ignores
   axi_out.awqos   <= "0000"; -- QOS not supported
   axi_out.bready  <= '1';    -- always ready to read write response (response otherwise ignored)
-  --axi_out.wstrb   <= "1111" when R_wvalid='1' else "0000"; -- byte select 4-bit vector
   axi_out.wstrb   <= "1111"; -- byte select 4-bit vector
   axi_out.awvalid <= R_awvalid; -- write request start (address valid)
   axi_out.awaddr  <= "00" & R_ram_addr & "00"; -- address padded and 4-byte aligned
@@ -209,11 +215,13 @@ begin
   axi_out.wdata   <= R_wdata; -- write data
   --axi_out.wdata   <= x"00000" & R_bram_addr; -- debug
   bram_addr <= R_bram_addr;
-  done <= R_bram_addr(C_vaddr_bits); -- MSB bit of bram addr counter means DONE
+  --done <= R_bram_addr(C_vaddr_bits); -- MSB bit of bram addr counter means DONE
+  done <= R_done;
 
 end;
 
--- [ ] todo: support boundary burst conditions:
+-- TODO
+-- [ ] support boundary burst conditions
 -- [ ] axi is probably not well initialized, (reset handling missing?)
 --     sometimes after first write burst vector axi port stops working
 --     other axi ports (cpu, video) keep working
@@ -223,3 +231,5 @@ end;
 --     transferring last word.
 -- [ ] first burst (or the last) must be allowed to be shorter
 -- [ ] linked list support
+-- [ ] R_done could be set 1 cycle earlier? as MSB in R_bram_addr(C_vaddr_bits)
+-- [ ] input value of vector length for store mode
