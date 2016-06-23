@@ -162,17 +162,18 @@ begin
       process(clk)
       begin
         if rising_edge(clk) then
-          if byte_sel(i) = '1' then
-            if ce = '1' and bus_write = '1' then
-              if conv_integer(addr) = C_vdone_if
-              then -- logical and for interrupt flag registers
-                R(C_vdone_if)(8*i+7 downto 8*i) <= -- only can clear intr. flag, never set
-                R(C_vdone_if)(8*i+7 downto 8*i) and not bus_in(8*i+7 downto 8*i);
-              else -- normal write for every other register
-                R(conv_integer(addr))(8*i+7 downto 8*i) <= bus_in(8*i+7 downto 8*i);
-                R(C_vdone_if)(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
-                R(C_vdone_if)(8*i+7 downto 8*i) or S_interrupt_edge(8*i+7 downto 8*i);
-              end if;
+          if byte_sel(i) = '1'
+          and ce = '1' and bus_write = '1'
+          and conv_integer(addr) = C_vdone_if
+          then
+            R(C_vdone_if)(8*i+7 downto 8*i) <= -- only can clear intr. flag, never set
+            R(C_vdone_if)(8*i+7 downto 8*i) and not bus_in(8*i+7 downto 8*i); -- write 1's to clear flags
+          else
+            if byte_sel(i) = '1'
+            and ce = '1' and bus_write = '1'
+            and conv_integer(addr) /= C_vdone_if
+            then
+              R(conv_integer(addr))(8*i+7 downto 8*i) <= bus_in(8*i+7 downto 8*i);
             else
               R(C_vdone_if)(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
               R(C_vdone_if)(8*i+7 downto 8*i) or S_interrupt_edge(8*i+7 downto 8*i);
@@ -375,7 +376,7 @@ begin
 
     -- registering for fmax improvement
     -- result for each core function is
-    -- moved to R_function_result to temporary register within 1 clock cycle delay
+    -- moved to temporary register array "R_function_result" in 1 clock cycle delay
     -- the outputs from temporary regisers are broadcast (collected later by listeners)
     process(clk)
     begin
