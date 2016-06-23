@@ -1,0 +1,26 @@
+# Vector processor
+
+Integer and floating point vector processor unit
+that runs parallel with f32c core, exchanging data over DMA.
+It can be also used as video blitter.
+
+Status of the vector processor:
+
+    * 4 x 32-bit MMIO control and interrupt registers
+    * 8 x uint32_t[2048] BRAM based vector registers
+    * I/O load and store using AXI RAM DMA burst
+    * multiple registers can load the same content at the same time
+    * integer functions +, -, * implemented
+    * every function after pipeline delay produces 1 operation per clock cycle
+    * any-to-any vector operation of type: a = b+c, a = b+b
+    * operation type not allowed: a = a+b
+    * + and * can run parallel on different sets of registers
+    * example: a = b+c, d = e*f can run parallel
+    * interrupt flag for each vector set when done
+    * works at 100MHz clock rate on artix-7
+    * theoretical maximum speed 200 MFLOP/s
+
+Todo:
+    * floating point arithmetic FPU core
+    * linked list I/O
+    * handling short vectors
