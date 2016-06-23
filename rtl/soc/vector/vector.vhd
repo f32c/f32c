@@ -190,12 +190,64 @@ begin
       end process;
     end generate;
 
-    -- join all interrupt request bits into one bit (reduction-or)
+    -- join all interrupt request bits into one output bit (reduction-or)
     vector_irq <= '1' when
                     (  ( R(C_vdone_ie)  and R(C_vdone_if)  )
                     ) /= ext("0",C_bits) else '0';
 
-    -- command decoder
+    -- *** interrupts ***
+    -- storing old value to register has purpuse
+    -- to detect edge and generate single clock cycle pulse
+    -- which is used to raise interrupt flags
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        R_vector_we <= S_vector_we;
+        R_io_done <= S_io_done & R_io_done(1);
+      end if;
+    end process;
+    -- falling edge of functional vector write enable signal "S_vector_we" indicates
+    -- the completion of vector operation (vdone interrupt)
+    S_vdone_interrupt <= R_vector_we and not S_vector_we; -- '1' on falling edge
+    S_interrupt_edge(C_vectors-1 downto 0) <= S_vdone_interrupt; -- S_interrupt_edge is larger (32-bit)
+    -- rising edge of "S_io_done" indicates
+    -- the completion of vector I/O operation
+    S_io_done_interrupt <= R_io_done(1) and not R_io_done(0); -- '1' on rising edge
+    S_interrupt_edge(16) <= S_io_done_interrupt;
+
+
+    -- *** VECTOR REGISTERS BRAM storage ***
+    G_vector_registers:
+    for i in 0 to C_vectors-1 generate
+      vector_bram: entity work.bram_true2p_1clk
+      generic map
+      (
+        dual_port => True, -- one port takes data from RAM, other port outputs to video
+        pass_thru_a => False, -- false allows simultaneous reading and erasing of old data
+        pass_thru_b => False, -- false allows simultaneous reading and erasing of old data
+        data_width => C_vdata_bits,
+        addr_width => C_vaddr_bits
+      )
+      port map
+      (
+        clk => not clk, -- BRAM on falling clk edge is a must for AXI burst write to RAM
+        -- falling edge of the clock also reduced functional unit delay by 1 cycle
+        -- note: the f32c core also works with BRAM on falling edge
+        we_a => S_io_bram_we_select(i),
+        we_b => S_vector_we(i), -- vector write enable from functional unit
+        addr_a => S_io_bram_addr(C_vaddr_bits-1 downto 0), -- external address (RAM I/O)
+        addr_b => S_VI(i), -- internal address from functional unit
+        data_in_a => S_io_bram_wdata,
+        data_in_b => S_VRES(i), -- result from functional unit
+        data_out_a => S_vector_store(i),
+        data_out_b => S_VARG(i) -- argument to functional unit
+      );
+      S_io_bram_we_select(i) <= R_io_load_select(i) and S_io_bram_we; -- counter out, disable write
+    end generate;
+    S_io_bram_rdata <= S_vector_store(conv_integer(R_io_store_select)); -- multiplexer
+
+
+    -- *** MMIO command decoder ***
     process(clk)
     begin
       if rising_edge(clk) then
@@ -255,35 +307,6 @@ begin
       end if;
     end process;
 
-    -- *** VECTOR REGISTERS BRAM storage ***
-    G_vector_registers:
-    for i in 0 to C_vectors-1 generate
-      vector_bram: entity work.bram_true2p_1clk
-      generic map
-      (
-        dual_port => True, -- one port takes data from RAM, other port outputs to video
-        pass_thru_a => False, -- false allows simultaneous reading and erasing of old data
-        pass_thru_b => False, -- false allows simultaneous reading and erasing of old data
-        data_width => C_vdata_bits,
-        addr_width => C_vaddr_bits
-      )
-      port map
-      (
-        clk => not clk, -- BRAM on falling clk edge is a must for AXI burst write to RAM
-        -- falling edge of the clock also reduced functional unit delay by 1 cycle
-        -- note: the f32c core also works with BRAM on falling edge
-        we_a => S_io_bram_we_select(i),
-        we_b => S_vector_we(i), -- vector write enable from functional unit
-        addr_a => S_io_bram_addr(C_vaddr_bits-1 downto 0), -- external address (RAM I/O)
-        addr_b => S_VI(i), -- internal address from functional unit
-        data_in_a => S_io_bram_wdata,
-        data_in_b => S_VRES(i), -- result from functional unit
-        data_out_a => S_vector_store(i),
-        data_out_b => S_VARG(i) -- argument to functional unit
-      );
-      S_io_bram_we_select(i) <= R_io_load_select(i) and S_io_bram_we; -- counter out, disable write
-    end generate;
-    S_io_bram_rdata <= S_vector_store(conv_integer(R_io_store_select)); -- multiplexer
 
     -- *** I/O DMA MODULE ***
     -- load/store asymmetry:
@@ -321,6 +344,27 @@ begin
         axi_in => axi_in, axi_out => axi_out
       );
     end generate;
+
+
+    -- *** VECTOR LENGTH ***
+    -- 1. set result length when function is done ("S_vdone_interrupt")
+    -- 2. set arg length when I/O vector load operation is done
+    G_vector_length:
+    for i in 0 to C_vectors-1 generate
+      process(clk)
+      begin
+        if rising_edge(clk) then
+          if S_vdone_interrupt(i)='1' then
+            R_vector_length(i) <= S_VI(i); -- after function done, store S_VI index of the vector into the register
+          else
+            if S_io_done_interrupt='1' and R_io_load_select(i)='1' and R_io_store_mode='0' then
+              R_vector_length(i) <= S_io_bram_addr;
+            end if;
+          end if;
+        end if;
+      end process;
+    end generate;
+
 
     -- *** functions indexer ***
     -- R_function_vi: 2*i+1 for argument, 2*i for result
@@ -401,47 +445,6 @@ begin
       S_vector_we(i) <= R_function_busy(conv_integer(R_vector_indexed_by(i)(C_functions_bits downto 1)))
                         and R_vector_indexed_by(i)(0); -- indexed by LSB=1 means indexed by function result register
     end generate; -- G_listeners
-
-
-    -- *** interrupts ***
-    -- storing old value to register has purpuse
-    -- to detect edge and generate single clock cycle pulse
-    -- which is used to raise interrupt flags
-    process(clk)
-    begin
-      if rising_edge(clk) then
-        R_vector_we <= S_vector_we;
-        R_io_done <= S_io_done & R_io_done(1);
-      end if;
-    end process;
-    -- falling edge of functional vector write enable signal "S_vector_we" indicates
-    -- the completion of vector operation (vdone interrupt)
-    S_vdone_interrupt <= R_vector_we and not S_vector_we; -- '1' on falling edge
-    S_interrupt_edge(C_vectors-1 downto 0) <= S_vdone_interrupt; -- S_interrupt_edge is larger (32-bit)
-    -- rising edge of "S_io_done" indicates
-    -- the completion of vector I/O operation
-    S_io_done_interrupt <= R_io_done(1) and not R_io_done(0); -- '1' on rising edge
-    S_interrupt_edge(16) <= S_io_done_interrupt;
-
-
-    -- *** VECTOR LENGTH ***
-    -- 1. set result length when function is done ("S_vdone_interrupt")
-    -- 2. set arg length when I/O vector load operation is done
-    G_vector_length:
-    for i in 0 to C_vectors-1 generate
-      process(clk)
-      begin
-        if rising_edge(clk) then
-          if S_vdone_interrupt(i)='1' then
-            R_vector_length(i) <= S_VI(i); -- after function done, store S_VI index of the vector into the register
-          else
-            if S_io_done_interrupt='1' and R_io_load_select(i)='1' and R_io_store_mode='0' then
-              R_vector_length(i) <= S_io_bram_addr;
-            end if;
-          end if;
-        end if;
-      end process;
-    end generate;
 
 end;
 
