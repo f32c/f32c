@@ -46,7 +46,7 @@ entity axi_vector_dma is
 
     -- bram interface
     bram_we: out std_logic := '0'; -- bram write enable
-    bram_addr: out std_logic_vector(C_vaddr_bits-1 downto 0);
+    bram_addr: out std_logic_vector(C_vaddr_bits downto 0);
     bram_wdata: out std_logic_vector(C_vdata_bits-1 downto 0);
     bram_rdata: in std_logic_vector(C_vdata_bits-1 downto 0);
 
@@ -208,7 +208,7 @@ begin
   axi_out.wlast   <= R_wvalid when R_burst_remaining = 0 else '0';
   axi_out.wdata   <= R_wdata; -- write data
   --axi_out.wdata   <= x"00000" & R_bram_addr; -- debug
-  bram_addr <= R_bram_addr(C_vaddr_bits-1 downto 0);
+  bram_addr <= R_bram_addr;
   done <= R_bram_addr(C_vaddr_bits); -- MSB bit of bram addr counter means DONE
 
 end;
