@@ -11,14 +11,14 @@ Status of the vector processor:
     * I/O load and store using AXI RAM DMA burst
     * multiple registers can load the same content at the same time
     * integer functions +, -, * implemented
-    * every function after pipeline delay produces 1 operation per clock cycle
     * any-to-any vector operation of type: a = b+c, a = b+b
     * operation type not allowed: a = a+b
     * + and * can run parallel on different sets of registers
     * example: a = b+c, d = e*f can run parallel
     * interrupt flag for each vector set when done
-    * works at 100MHz clock rate on artix-7
-    * theoretical maximum speed 200 MFLOP/s
+    * works at 100 MHz clock rate on artix-7
+    * after pipeline delay it can produce 1 result per 1 clock cycle
+    * theoretical maximum speed: 2 MFLOP/MHz
 
 Todo:
     * floating point arithmetic FPU core
