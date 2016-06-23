@@ -216,36 +216,6 @@ begin
     S_interrupt_edge(16) <= S_io_done_interrupt;
 
 
-    -- *** VECTOR REGISTERS BRAM storage ***
-    G_vector_registers:
-    for i in 0 to C_vectors-1 generate
-      vector_bram: entity work.bram_true2p_1clk
-      generic map
-      (
-        dual_port => True, -- one port takes data from RAM, other port outputs to video
-        pass_thru_a => False, -- false allows simultaneous reading and erasing of old data
-        pass_thru_b => False, -- false allows simultaneous reading and erasing of old data
-        data_width => C_vdata_bits,
-        addr_width => C_vaddr_bits
-      )
-      port map
-      (
-        clk => not clk, -- BRAM on falling clk edge is a must for AXI burst write to RAM
-        -- falling edge of the clock also reduced functional unit delay by 1 cycle
-        -- note: the f32c core also works with BRAM on falling edge
-        we_a => S_io_bram_we_select(i),
-        we_b => S_vector_we(i), -- vector write enable from functional unit
-        addr_a => S_io_bram_addr(C_vaddr_bits-1 downto 0), -- external address (RAM I/O)
-        addr_b => S_VI(i), -- internal address from functional unit
-        data_in_a => S_io_bram_wdata,
-        data_in_b => S_VRES(i), -- result from functional unit
-        data_out_a => S_vector_store(i),
-        data_out_b => S_VARG(i) -- argument to functional unit
-      );
-      S_io_bram_we_select(i) <= R_io_load_select(i) and S_io_bram_we; -- counter out, disable write
-    end generate;
-    S_io_bram_rdata <= S_vector_store(conv_integer(R_io_store_select)); -- multiplexer
-
 
     -- *** MMIO command decoder ***
     process(clk)
@@ -445,6 +415,37 @@ begin
       S_vector_we(i) <= R_function_busy(conv_integer(R_vector_indexed_by(i)(C_functions_bits downto 1)))
                         and R_vector_indexed_by(i)(0); -- indexed by LSB=1 means indexed by function result register
     end generate; -- G_listeners
+
+    -- *** VECTOR REGISTERS BRAM storage ***
+    G_vector_registers:
+    for i in 0 to C_vectors-1 generate
+      vector_bram: entity work.bram_true2p_1clk
+      generic map
+      (
+        dual_port => True, -- one port takes data from RAM, other port outputs to video
+        pass_thru_a => False, -- false allows simultaneous reading and erasing of old data
+        pass_thru_b => False, -- false allows simultaneous reading and erasing of old data
+        data_width => C_vdata_bits,
+        addr_width => C_vaddr_bits
+      )
+      port map
+      (
+        clk => not clk, -- BRAM on falling clk edge is a must for AXI burst write to RAM
+        -- falling edge of the clock also reduced functional unit delay by 1 cycle
+        -- note: the f32c core also works with BRAM on falling edge
+        we_a => S_io_bram_we_select(i),
+        we_b => S_vector_we(i), -- vector write enable from functional unit
+        addr_a => S_io_bram_addr(C_vaddr_bits-1 downto 0), -- external address (RAM I/O)
+        addr_b => S_VI(i), -- internal address from functional unit
+        data_in_a => S_io_bram_wdata,
+        data_in_b => S_VRES(i), -- result from functional unit
+        data_out_a => S_vector_store(i),
+        data_out_b => S_VARG(i) -- argument to functional unit
+      );
+      S_io_bram_we_select(i) <= R_io_load_select(i) and S_io_bram_we; -- counter out, disable write
+    end generate;
+    S_io_bram_rdata <= S_vector_store(conv_integer(R_io_store_select)); -- multiplexer
+
 
 end;
 
