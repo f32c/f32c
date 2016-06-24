@@ -30,20 +30,24 @@ Status of the vector processor:
     * 4 x 32-bit MMIO control and interrupt registers
     * 8 x uint32_t[2048] BRAM based vector registers
     * I/O load and store using AXI RAM DMA burst
-    * multiple registers can load the same content at the same time
-    * integer functions +, -, * implemented
+      can run parallel with arithmetic operations,
+      multiple registers load with the same content at the same time
+    * 32-bit integer arithmetic +, -, * 1 clock delay
+    * 32-bit floating point unit: 5 clocks delay (multiply)
     * any-to-any vector operation of type: a = b+c, a = b+b
-    * operation type not allowed: a = a+b
-    * + and * can run parallel on different sets of registers
-    * example: a = b+c, d = e*f can run parallel
+      except: a = a+b which will not work
+    * multiple operations can run parallel
+      provided they use different registers and different functional units
+    * multiple parallel functional untis can be instantiated
+      example: a = b+c, d = e*f can run parallel
     * interrupt flag for each vector set when done
     * works at 100 MHz clock rate on artix-7
-    * after pipeline delay it can produce 1 result per 1 clock cycle
-    * theoretical maximum speed: 2 MFLOP/MHz
+    * produces 1 result per 1 clock cycle
+      after initial 1-10 clocks delay, depending on function
+    * theoretical maximum speed approaches 2 MFLOP/MHz
 
 Todo:
 
-    * floating point arithmetic FPU core
     * linked list I/O
     * handling short vectors
     * chaining: explore possibility of parallel a = b+c, d = a*e
