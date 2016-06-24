@@ -128,7 +128,7 @@ architecture arch of vector is
       1, -- C_function_sign
       1, -- C_function_inv
       1, -- C_function_add
-      1  -- C_function_mul
+      5  -- C_function_mul
     );
     signal S_function_last_element: std_logic_vector(C_functions-1 downto 0); -- is function indexing the last element of result vector
 
@@ -144,6 +144,8 @@ architecture arch of vector is
     signal R_mul_request, R_mul_busy: std_logic;
     signal R_mul_result_select, R_mul_arg1_select, R_mul_arg2_select: std_logic_vector(C_vectors_bits-1 downto 0);
     signal S_mul_operator_result: std_logic_vector(2*C_vdata_bits-1 downto 0);
+    signal S_fpu_mul_operator_result: std_logic_vector(C_vdata_bits-1 downto 0);
+
     --constant C_mul_propagation_delay: integer := 1; -- 1 clock cycles between vector read and write
 
     -- vector done detection register
@@ -379,6 +381,19 @@ begin
                                   else '0';
     S_mul_operator_result <= S_VARG(conv_integer(R_mul_arg1_select))
                            * S_VARG(conv_integer(R_mul_arg2_select));
+
+    I_fpu_mul:
+    entity work.fpu_vhd
+    port map
+    (
+      clk => clk,
+      rmode => "00", -- round to nearest even
+      fpu_op => "010", -- float op 000 add, 010 multiply
+      opa => S_VARG(conv_integer(R_mul_arg1_select)),
+      opb => S_VARG(conv_integer(R_mul_arg2_select)),
+      result => S_fpu_mul_operator_result
+    );
+
     S_function_last_element(C_function_mul) <= '1'
       when R_function_vi(2*C_function_mul+1)-- result index
          = R_vector_length(conv_integer(R_mul_arg1_select)) -- arg vector size
@@ -394,7 +409,7 @@ begin
         -- R_function_resulut will be valid 1 cycle later
         R_function_result(C_function_sign) <= (others => '0');
         R_function_result(C_function_add) <= S_add_operator_result;
-        R_function_result(C_function_mul) <= S_mul_operator_result(C_vdata_bits-1 downto 0);
+        R_function_result(C_function_mul) <= S_fpu_mul_operator_result(C_vdata_bits-1 downto 0);
         R_function_result(C_function_inv) <= (others => '0');
       end if;
     end process;
