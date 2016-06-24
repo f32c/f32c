@@ -44,7 +44,8 @@ Status of the vector processor:
     * works at 100 MHz clock rate on artix-7
     * produces 1 result per 1 clock cycle
       after initial 1-10 clocks delay, depending on function
-    * theoretical maximum speed approaches 2 MFLOP/MHz
+    * theoretical maximum speed approaches 2 MFLOPs/MHz
+      when 1 I/O and 2 FPU operations are running parallel
 
 Todo:
 
