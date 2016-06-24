@@ -233,57 +233,57 @@ begin
             if bus_in(31 downto 24) = x"21" then -- command 0x21 integer add
               R_add_mode <= bus_in(19 downto 16); -- Add mode
               -- select which vector will listen to results of 'add' functional unit
-              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- result
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- result
                 conv_std_logic_vector(C_function_int_add, C_functions_bits) & '1'; -- func result index
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+4 downto 4))) <= -- arg1
                 conv_std_logic_vector(C_function_int_add, C_functions_bits) & '0'; -- func arg index
-              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- arg2
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- arg2
                 conv_std_logic_vector(C_function_int_add, C_functions_bits) & '0'; -- func arg index
               -- which vector indexes values will be selected by core function
               --R_add_result_select <= bus_in(C_vectors_bits-1+8 downto 8);
-              R_function_result_select(C_function_int_add) <= bus_in(C_vectors_bits-1+8 downto 8);
+              R_function_result_select(C_function_int_add) <= bus_in(C_vectors_bits-1+0 downto 0);
               --R_add_arg1_select <= bus_in(C_vectors_bits-1+4 downto 4);
               R_function_arg1_select(C_function_int_add) <= bus_in(C_vectors_bits-1+4 downto 4);
               --R_add_arg2_select <= bus_in(C_vectors_bits-1+0 downto 0);
-              R_function_arg2_select(C_function_int_add) <= bus_in(C_vectors_bits-1+0 downto 0);
+              R_function_arg2_select(C_function_int_add) <= bus_in(C_vectors_bits-1+8 downto 8);
               -- start functional unit
               R_function_request(C_function_int_add) <= '1';
             end if;
             if bus_in(31 downto 24) = x"23" then -- command 0x23 integer multiply
               --R_mul_mode <= bus_in(19 downto 16); -- Add mode
               -- select which vector will listen to results of 'add' functional unit
-              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- result
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- result
                 conv_std_logic_vector(C_function_int_mul, C_functions_bits) & '1'; -- func result index
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+4 downto 4))) <= -- arg1
                 conv_std_logic_vector(C_function_int_mul, C_functions_bits) & '0'; -- func arg index
-              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- arg2
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- arg2
                 conv_std_logic_vector(C_function_int_mul, C_functions_bits) & '0'; -- func arg index
               -- which vector indexes values will be selected by core function
               --R_mul_result_select <= bus_in(C_vectors_bits-1+8 downto 8);
-              R_function_result_select(C_function_int_mul) <= bus_in(C_vectors_bits-1+8 downto 8);
+              R_function_result_select(C_function_int_mul) <= bus_in(C_vectors_bits-1+0 downto 0);
               --R_mul_arg1_select <= bus_in(C_vectors_bits-1+4 downto 4);
               R_function_arg1_select(C_function_int_mul) <= bus_in(C_vectors_bits-1+4 downto 4);
               --R_mul_arg2_select <= bus_in(C_vectors_bits-1+0 downto 0);
-              R_function_arg2_select(C_function_int_mul) <= bus_in(C_vectors_bits-1+0 downto 0);
+              R_function_arg2_select(C_function_int_mul) <= bus_in(C_vectors_bits-1+8 downto 8);
               -- start functional unit
               R_function_request(C_function_int_mul) <= '1';
             end if;
             if bus_in(31 downto 24) = x"33" then -- command 0x33 fpu arithmetic
               R_fpu_arith_mode <= bus_in(19 downto 16); -- Add mode
               -- select which vector will listen to results of 'add' functional unit
-              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- result
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- result
                 conv_std_logic_vector(C_function_fpu_arith, C_functions_bits) & '1'; -- func result index
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+4 downto 4))) <= -- arg1
                 conv_std_logic_vector(C_function_fpu_arith, C_functions_bits) & '0'; -- func arg index
-              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- arg2
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- arg2
                 conv_std_logic_vector(C_function_fpu_arith, C_functions_bits) & '0'; -- func arg index
               -- which vector indexes values will be selected by core function
               --R_fpu_arith_result_select <= bus_in(C_vectors_bits-1+8 downto 8);
-              R_function_result_select(C_function_fpu_arith) <= bus_in(C_vectors_bits-1+8 downto 8);
+              R_function_result_select(C_function_fpu_arith) <= bus_in(C_vectors_bits-1+0 downto 0);
               --R_fpu_arith_arg1_select <= bus_in(C_vectors_bits-1+4 downto 4);
               R_function_arg1_select(C_function_fpu_arith) <= bus_in(C_vectors_bits-1+4 downto 4);
               --R_fpu_arith_arg2_select <= bus_in(C_vectors_bits-1+0 downto 0);
-              R_function_arg2_select(C_function_fpu_arith) <= bus_in(C_vectors_bits-1+0 downto 0);
+              R_function_arg2_select(C_function_fpu_arith) <= bus_in(C_vectors_bits-1+8 downto 8);
               -- start functional unit
               R_function_request(C_function_fpu_arith) <= '1';
             end if;
@@ -493,17 +493,17 @@ end;
 -- 0x01800002  store V(2) to RAM
 -- 0x01000800  load V(3) from RAM
 -- 0x01800003  store V(3) to RAM
--- 0x21000321  V(3) = V(2) + V(1)
--- 0x21000102  V(1) = V(0) + V(2)
--- 0x21010102  V(1) = V(0) - V(2)
--- 0x23000102  V(1) = V(0) * V(2)
--- 0x33000012  V(0) = V(1) + V(2) float
--- 0x33010012  V(0) = V(1) - V(2) float
--- 0x33020012  V(0) = V(1) * V(2) float
--- 0x33030012  V(0) = V(1) / V(2) float
--- 0x33040012  V(0) = i2f(V(1))   int->float
--- 0x33050012  V(0) = f2i(V(1))   float->int
--- 0x33060012  V(0) = V(1) % V(2) float
+-- 0x21000123  V(3) = V(2) + V(1)
+-- 0x21000201  V(1) = V(0) + V(2)
+-- 0x21010201  V(1) = V(0) - V(2)
+-- 0x23000201  V(1) = V(0) * V(2)
+-- 0x33000210  V(0) = V(1) + V(2) float
+-- 0x33010210  V(0) = V(1) - V(2) float
+-- 0x33020210  V(0) = V(1) * V(2) float
+-- 0x33030210  V(0) = V(1) / V(2) float
+-- 0x33040210  V(0) = i2f(V(1))   int->float
+-- 0x33050210  V(0) = f2i(V(1))   float->int
+-- 0x33060210  V(0) = V(1) % V(2) float
 
 --  C usage
 
@@ -524,7 +524,7 @@ end;
 --  vector_ptr[0] = green_blue;
 --  vector_ptr[4] = 0x01000200; // load vector 2
 --  delay(4);
---  vector_ptr[4] = 0x21000012; // v(0) = v(1) + v(2)
+--  vector_ptr[4] = 0x21000210; // v(0) = v(1) + v(2)
 --  delay(4);
 --  vector_ptr[0] = green_blue+128*256;
 --  vector_ptr[4] = 0x01800000; // store vector 0 (vector number)
@@ -552,3 +552,4 @@ end;
 -- [*] interrupt flag set for I/O done
 -- [ ] rewrite command decoding to avoid sequential register writes
 -- [ ] signed integer multiply
+-- [ ] fix FPU divide "/" (propagation delay problem)
