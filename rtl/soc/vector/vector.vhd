@@ -96,10 +96,10 @@ architecture arch of vector is
     -- a function can have modifier that selects one from many of similar functions
     constant C_functions: integer := 4; -- total number of functional units
     constant C_functions_bits: integer := 2; -- total number bits to address one functional unit
-    constant C_function_sign: integer range 0 to C_functions-1 := 0; -- a=b, a=-b, a=abs(b)
-    constant C_function_inv: integer range 0 to C_functions-1 := 1; -- a=1/b
-    constant C_function_add: integer range 0 to C_functions-1 := 2; -- a=b+c, a=b-c
-    constant C_function_mul: integer range 0 to C_functions-1 := 3; -- a=b*c
+    constant C_function_fpu_arith: integer range 0 to C_functions-1 := 0; -- +,-,*,/,i2f,f2i
+    constant C_function_fpu_cmp: integer range 0 to C_functions-1 := 1; -- <,>,...
+    constant C_function_int_add: integer range 0 to C_functions-1 := 2; -- a=b+c, a=b-c
+    constant C_function_int_mul: integer range 0 to C_functions-1 := 3; -- a=b*c
     -- all functions will broadcast results
     type T_function_result is array (C_functions-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
     signal R_function_result: T_function_result;
@@ -125,28 +125,27 @@ architecture arch of vector is
     type T_function_propagation_delay is array (0 to C_functions-1) of integer;
     constant C_function_propagation_delay: T_function_propagation_delay :=
     (
-      1, -- C_function_sign
-      1, -- C_function_inv
-      1, -- C_function_add
-      5  -- C_function_mul
+      5, -- C_function_fpu_arith
+      1, -- C_function_fpu_cmp
+      1, -- C_function_int_add
+      1  -- C_function_int_mul
     );
     signal S_function_last_element: std_logic_vector(C_functions-1 downto 0); -- is function indexing the last element of result vector
 
     -- *** integer ADD function ***
-    --signal R_add_request: std_logic;
-    --signal R_add_busy: std_logic;
     signal R_add_mode: std_logic_vector(3 downto 0); -- bit0: 0:+  1:-
     signal R_add_result_select, R_add_arg1_select, R_add_arg2_select: std_logic_vector(C_vectors_bits-1 downto 0);
     signal S_add_operator_result, S_add_operator_plus, S_add_operator_minus: std_logic_vector(C_vdata_bits-1 downto 0);
     --constant C_add_propagation_delay: integer := 1; -- 1 clock cycles between vector read and write
 
     -- *** integer MULTIPLY function ***
-    signal R_mul_request, R_mul_busy: std_logic;
     signal R_mul_result_select, R_mul_arg1_select, R_mul_arg2_select: std_logic_vector(C_vectors_bits-1 downto 0);
     signal S_mul_operator_result: std_logic_vector(2*C_vdata_bits-1 downto 0);
-    signal S_fpu_mul_operator_result: std_logic_vector(C_vdata_bits-1 downto 0);
 
-    --constant C_mul_propagation_delay: integer := 1; -- 1 clock cycles between vector read and write
+    -- *** floating point unit arithmetic functions ***
+    signal R_fpu_arith_mode: std_logic_vector(3 downto 0); -- select which float operation to execute
+    signal R_fpu_arith_result_select, R_fpu_arith_arg1_select, R_fpu_arith_arg2_select: std_logic_vector(C_vectors_bits-1 downto 0);
+    signal S_fpu_arith_operator_result: std_logic_vector(C_vdata_bits-1 downto 0);
 
     -- vector done detection register
     signal S_interrupt_edge: std_logic_vector(C_bits-1 downto 0) := (others => '0');
@@ -236,33 +235,49 @@ begin
               R_add_mode <= bus_in(19 downto 16); -- Add mode
               -- select which vector will listen to results of 'add' functional unit
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- result
-                conv_std_logic_vector(C_function_add, C_functions_bits) & '1'; -- func result index
+                conv_std_logic_vector(C_function_int_add, C_functions_bits) & '1'; -- func result index
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+4 downto 4))) <= -- arg1
-                conv_std_logic_vector(C_function_add, C_functions_bits) & '0'; -- func arg index
+                conv_std_logic_vector(C_function_int_add, C_functions_bits) & '0'; -- func arg index
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- arg2
-                conv_std_logic_vector(C_function_add, C_functions_bits) & '0'; -- func arg index
+                conv_std_logic_vector(C_function_int_add, C_functions_bits) & '0'; -- func arg index
               -- which vector indexes values will be selected by core function
               R_add_result_select <= bus_in(C_vectors_bits-1+8 downto 8);
               R_add_arg1_select <= bus_in(C_vectors_bits-1+4 downto 4);
               R_add_arg2_select <= bus_in(C_vectors_bits-1+0 downto 0);
               -- start functional unit
-              R_function_request(C_function_add) <= '1';
+              R_function_request(C_function_int_add) <= '1';
             end if;
             if bus_in(31 downto 24) = x"23" then -- command 0x23 integer multiply
               --R_mul_mode <= bus_in(19 downto 16); -- Add mode
               -- select which vector will listen to results of 'add' functional unit
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- result
-                conv_std_logic_vector(C_function_mul, C_functions_bits) & '1'; -- func result index
+                conv_std_logic_vector(C_function_int_mul, C_functions_bits) & '1'; -- func result index
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+4 downto 4))) <= -- arg1
-                conv_std_logic_vector(C_function_mul, C_functions_bits) & '0'; -- func arg index
+                conv_std_logic_vector(C_function_int_mul, C_functions_bits) & '0'; -- func arg index
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- arg2
-                conv_std_logic_vector(C_function_mul, C_functions_bits) & '0'; -- func arg index
+                conv_std_logic_vector(C_function_int_mul, C_functions_bits) & '0'; -- func arg index
               -- which vector indexes values will be selected by core function
               R_mul_result_select <= bus_in(C_vectors_bits-1+8 downto 8);
               R_mul_arg1_select <= bus_in(C_vectors_bits-1+4 downto 4);
               R_mul_arg2_select <= bus_in(C_vectors_bits-1+0 downto 0);
               -- start functional unit
-              R_function_request(C_function_mul) <= '1';
+              R_function_request(C_function_int_mul) <= '1';
+            end if;
+            if bus_in(31 downto 24) = x"33" then -- command 0x33 fpu arithmetic
+              R_fpu_arith_mode <= bus_in(19 downto 16); -- Add mode
+              -- select which vector will listen to results of 'add' functional unit
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- result
+                conv_std_logic_vector(C_function_fpu_arith, C_functions_bits) & '1'; -- func result index
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+4 downto 4))) <= -- arg1
+                conv_std_logic_vector(C_function_fpu_arith, C_functions_bits) & '0'; -- func arg index
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- arg2
+                conv_std_logic_vector(C_function_fpu_arith, C_functions_bits) & '0'; -- func arg index
+              -- which vector indexes values will be selected by core function
+              R_fpu_arith_result_select <= bus_in(C_vectors_bits-1+8 downto 8);
+              R_fpu_arith_arg1_select <= bus_in(C_vectors_bits-1+4 downto 4);
+              R_fpu_arith_arg2_select <= bus_in(C_vectors_bits-1+0 downto 0);
+              -- start functional unit
+              R_function_request(C_function_fpu_arith) <= '1';
             end if;
           end if;
         else
@@ -375,28 +390,32 @@ begin
                         else S_add_operator_minus;
     -- is function result index equal the size of the 1st argument vector
     -- todo: 1 extra bit is needed to the vector length
-    S_function_last_element(C_function_add) <= '1'
-      when R_function_vi(2*C_function_add+1) -- result index
+    S_function_last_element(C_function_int_add) <= '1'
+      when R_function_vi(2*C_function_int_add+1) -- result index
          = R_vector_length(conv_integer(R_add_arg1_select)) -- arg vector size
                                   else '0';
     S_mul_operator_result <= S_VARG(conv_integer(R_mul_arg1_select))
                            * S_VARG(conv_integer(R_mul_arg2_select));
 
-    I_fpu_mul:
+    S_function_last_element(C_function_int_mul) <= '1'
+      when R_function_vi(2*C_function_int_mul+1)-- result index
+         = R_vector_length(conv_integer(R_mul_arg1_select)) -- arg vector size
+                                  else '0';
+
+    I_fpu_arithmetic:
     entity work.fpu_vhd
     port map
     (
       clk => clk,
       rmode => "00", -- round to nearest even
-      fpu_op => "010", -- float op 000 add, 010 multiply
-      opa => S_VARG(conv_integer(R_mul_arg1_select)),
-      opb => S_VARG(conv_integer(R_mul_arg2_select)),
-      result => S_fpu_mul_operator_result
+      fpu_op => R_fpu_arith_mode(2 downto 0), -- float op 000 add, 010 multiply
+      opa => S_VARG(conv_integer(R_fpu_arith_arg1_select)),
+      opb => S_VARG(conv_integer(R_fpu_arith_arg2_select)),
+      result => S_fpu_arith_operator_result
     );
-
-    S_function_last_element(C_function_mul) <= '1'
-      when R_function_vi(2*C_function_mul+1)-- result index
-         = R_vector_length(conv_integer(R_mul_arg1_select)) -- arg vector size
+    S_function_last_element(C_function_fpu_arith) <= '1'
+      when R_function_vi(2*C_function_fpu_arith+1)-- result index
+         = R_vector_length(conv_integer(R_fpu_arith_arg1_select)) -- arg vector size
                                   else '0';
 
     -- registering for fmax improvement
@@ -407,10 +426,10 @@ begin
     begin
       if rising_edge(clk) then
         -- R_function_resulut will be valid 1 cycle later
-        R_function_result(C_function_sign) <= (others => '0');
-        R_function_result(C_function_add) <= S_add_operator_result;
-        R_function_result(C_function_mul) <= S_fpu_mul_operator_result(C_vdata_bits-1 downto 0);
-        R_function_result(C_function_inv) <= (others => '0');
+        R_function_result(C_function_fpu_arith) <= S_fpu_arith_operator_result;
+        R_function_result(C_function_fpu_cmp) <= (others => '0');
+        R_function_result(C_function_int_add) <= S_add_operator_result;
+        R_function_result(C_function_int_mul) <= S_mul_operator_result(C_vdata_bits-1 downto 0);
       end if;
     end process;
 
@@ -477,6 +496,13 @@ end;
 -- 0x21000102  V(1) = V(0) + V(2)
 -- 0x21010102  V(1) = V(0) - V(2)
 -- 0x23000102  V(1) = V(0) * V(2)
+-- 0x33000012  V(0) = V(1) + V(2) float
+-- 0x33010012  V(0) = V(1) - V(2) float
+-- 0x33020012  V(0) = V(1) * V(2) float
+-- 0x33030012  V(0) = V(1) / V(2) float
+-- 0x33040012  V(0) = i2f(V(1))   int->float
+-- 0x33050012  V(0) = f2i(V(1))   float->int
+-- 0x33060012  V(0) = V(1) % V(2) float
 
 --  C usage
 
