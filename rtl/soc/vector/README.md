@@ -25,3 +25,4 @@ Todo:
     * floating point arithmetic FPU core
     * linked list I/O
     * handling short vectors
+    * chaining: explore possibility of parallel a = b+c, d = a*e
