@@ -42,7 +42,7 @@ architecture arch of vector is
 
     constant C_vectors: integer range 2 to 16 := 8; -- total number of vector registers (BRAM blocks)
     constant C_vectors_bits: integer range 1 to 4 := 3; -- number of bits to select the vector register
-    constant C_vaddr_bits: integer range 2 to 16 := 11; -- number of address bits for BRAM vector
+    constant C_vaddr_bits: integer range 2 to 16 := 10; -- number of address bits for BRAM vector
     constant C_vdata_bits: integer range 32 to 64 := 32; -- number of data bits for each vector
 
     -- normal registers
