@@ -7,16 +7,16 @@ It can be also used as video blitter.
 Vector is 1-dimensional array of integers or floats.
 Vector operation applies same arithmetic function
 to elements of the arrays, each-to-each.
-For example 1024-element vector oparation
+For example 2048-element vector oparation
 
     a = b * c
 
 does
 
-    for(i = 0; i < 1024; i++)
+    for(i = 0; i < 2048; i++)
       a[i] = b[i] * c[i];
 
-In 1024 clock cycles. 
+In 2048 clock cycles.
 
 In real code run, there will be added latency 
 for RAM I/O, command and pipeline clock cycles 
@@ -28,7 +28,7 @@ more full length register vector operations with less I/O.
 Status of the vector processor:
 
     * 4 x 32-bit MMIO control and interrupt registers
-    * 8 x uint32_t[1024] BRAM based vector registers
+    * 8 x uint32_t[2048] BRAM based vector registers
     * I/O load and store using AXI RAM DMA burst
       can run parallel with arithmetic operations,
       multiple registers load with the same content at the same time
