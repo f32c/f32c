@@ -21,6 +21,7 @@ Status of the vector processor:
     * theoretical maximum speed: 2 MFLOP/MHz
 
 Todo:
+
     * floating point arithmetic FPU core
     * linked list I/O
     * handling short vectors
