@@ -228,9 +228,6 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
     signal ram_cache_hitcnt   : std_logic_vector(31 downto 0);
     signal ram_cache_readcnt  : std_logic_vector(31 downto 0);
 
-    signal dma_data : std_logic_vector(31 downto 0);
-    signal cche_debug : std_logic_vector(7 downto 0) := (others => '0');
-    signal cche_busy : std_logic := '0';
     signal vga_clk: std_logic;
     signal S_vga_red, S_vga_green, S_vga_blue: std_logic_vector(7 downto 0);
     signal S_vga_blank: std_logic;
