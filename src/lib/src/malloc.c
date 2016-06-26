@@ -32,10 +32,7 @@
 
 extern void *_end;
 
-static void *heapinit = &_end;
 static uint32_t *heap;
-
-#define	HEAP_TOP	0x800f8000
 
 #define	GET_LEN(len)	((len) & ~0x80000000)
 #define	IS_FREE(len)	((len) & 0x80000000)
@@ -55,6 +52,38 @@ static int used_cnt = 0;
  * to multiplies of 4) and the size of the descriptor.  The most significant
  * bit indicates chunk type, which can be either used (0) or free (1).
  */
+
+
+static void
+malloc_init()
+{
+	int i;
+	uint32_t off, ram_top;
+	volatile uint32_t *probe;
+
+	probe = heap = (void *) &_end;
+	off = 16;
+	for (i = -1; i < 2; i++) {
+		*probe = i;
+		if (probe[off] != i) {
+			off <<= 1;
+			i = -2;
+		}
+	}
+	ram_top = (uint32_t) &heap[off] - (((uint32_t) heap) & ~(1 <<31));
+
+	/* Reserve stack space depending on memory mapping */
+	if (ram_top & (1 << 31))
+		ram_top -= 0x8000; /* XRAM, 32 K */
+	else
+		ram_top -= 0x1000; /* BRAM, 4 K */
+
+	/* XXX: should panic if ram_top < heap */
+
+	i = (ram_top - ((uint32_t) heap)) / sizeof(*heap) - 1;
+	heap[0] = SET_FREE(i);
+	heap[i] = 0;
+}
 
 
 void
@@ -99,14 +128,8 @@ malloc(size_t size)
 
 	size = ((size + 3) >> 2) + 1;
 
-	if (heapinit != NULL) {
-		/* init */
-		heap = heapinit;
-		heapinit = NULL;
-		i = (HEAP_TOP - ((uint32_t) heap)) / sizeof(*heap) - 1;
-		heap[0] = SET_FREE(i);
-		heap[i] = 0;
-	}
+	if (heap == NULL)
+		malloc_init();
 
 	/* Find free block, linear search, slow. */
 	best_i = -1;
