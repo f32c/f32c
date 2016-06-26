@@ -13,6 +13,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
+--use ieee.numeric_std.all;
 
 use work.axi_pack.all;
 
@@ -97,7 +98,7 @@ architecture arch of vector is
     constant C_functions: integer := 4; -- total number of functional units
     constant C_functions_bits: integer := 2; -- total number bits to address one functional unit
     constant C_function_fpu_arith: integer range 0 to C_functions-1 := 0; -- +,-,*,/,i2f,f2i
-    constant C_function_fpu_cmp: integer range 0 to C_functions-1 := 1; -- <,>,...
+    constant C_function_fpu_divide: integer range 0 to C_functions-1 := 1; -- <,>,...
     constant C_function_int_add: integer range 0 to C_functions-1 := 2; -- a=b+c, a=b-c
     constant C_function_int_mul: integer range 0 to C_functions-1 := 3; -- a=b*c
     -- all functions will broadcast results
@@ -125,8 +126,8 @@ architecture arch of vector is
     type T_function_propagation_delay is array (0 to C_functions-1) of integer;
     constant C_function_propagation_delay: T_function_propagation_delay :=
     (
-      5, -- C_function_fpu_arith
-      1, -- C_function_fpu_cmp
+      5, -- C_function_fpu_arith +,-,*
+      7, -- C_function_fpu_divide /
       1, -- C_function_int_add
       1  -- C_function_int_mul
     );
@@ -141,6 +142,8 @@ architecture arch of vector is
     -- *** integer MULTIPLY function ***
     signal R_mul_mode: std_logic_vector(3 downto 0); -- bit0: 0:unsigned 1:signed
     signal S_mul_operator_result: std_logic_vector(2*C_vdata_bits-1 downto 0);
+    --signal S_muls_arg1, S_muls_arg2: signed(C_vdata_bits-1 downto 0);
+    --signal S_muls_result: signed(2*C_vdata_bits-1 downto 0);
 
     -- *** floating point unit arithmetic functions ***
     signal R_fpu_arith_mode: std_logic_vector(3 downto 0); -- select which float operation to execute
@@ -270,7 +273,7 @@ begin
             end if;
             if bus_in(31 downto 24) = x"33" then -- command 0x33 fpu arithmetic
               R_fpu_arith_mode <= bus_in(19 downto 16); -- Add mode
-              -- select which vector will listen to results of 'add' functional unit
+              -- select which vector will listen to results of 'fpu arith' functional unit
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- result
                 conv_std_logic_vector(C_function_fpu_arith, C_functions_bits) & '1'; -- func result index
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+4 downto 4))) <= -- arg1
@@ -286,6 +289,24 @@ begin
               R_function_arg2_select(C_function_fpu_arith) <= bus_in(C_vectors_bits-1+8 downto 8);
               -- start functional unit
               R_function_request(C_function_fpu_arith) <= '1';
+            end if;
+            if bus_in(31 downto 24) = x"34" then -- command 0x34 fpu divide
+              -- select which vector will listen to results of 'fpu divide' functional unit
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- result
+                conv_std_logic_vector(C_function_fpu_divide, C_functions_bits) & '1'; -- func result index
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+4 downto 4))) <= -- arg1
+                conv_std_logic_vector(C_function_fpu_divide, C_functions_bits) & '0'; -- func arg index
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- arg2
+                conv_std_logic_vector(C_function_fpu_divide, C_functions_bits) & '0'; -- func arg index
+              -- which vector indexes values will be selected by core function
+              --R_fpu_arith_result_select <= bus_in(C_vectors_bits-1+8 downto 8);
+              R_function_result_select(C_function_fpu_divide) <= bus_in(C_vectors_bits-1+0 downto 0);
+              --R_fpu_arith_arg1_select <= bus_in(C_vectors_bits-1+4 downto 4);
+              R_function_arg1_select(C_function_fpu_divide) <= bus_in(C_vectors_bits-1+4 downto 4);
+              --R_fpu_arith_arg2_select <= bus_in(C_vectors_bits-1+0 downto 0);
+              R_function_arg2_select(C_function_fpu_divide) <= bus_in(C_vectors_bits-1+8 downto 8);
+              -- start functional unit
+              R_function_request(C_function_fpu_divide) <= '1';
             end if;
           end if;
         else
@@ -362,6 +383,7 @@ begin
 
 
     -- *** functions indexer ***
+    -- accepts requests to start a functional unit
     -- R_function_vi: 2*i+1 for argument, 2*i for result
     G_functions_indexer:
     for i in 0 to C_functions-1 generate
@@ -401,6 +423,10 @@ begin
     S_function_result(C_function_int_add) <= S_add_operator_plus when R_add_mode(0) = '0'
                                         else S_add_operator_minus;
 
+    --S_muls_arg1 <= (S_VARG(conv_integer(R_function_arg1_select(C_function_int_mul))), C_vdata_bits);
+    --S_muls_arg2 <= (S_VARG(conv_integer(R_function_arg2_select(C_function_int_mul))), C_vdata_bits);
+    --S_muls_result <= S_muls_arg1 * S_muls_arg2;
+
     S_mul_operator_result <= S_VARG(conv_integer(R_function_arg1_select(C_function_int_mul)))
                            * S_VARG(conv_integer(R_function_arg2_select(C_function_int_mul)));
     S_function_result(C_function_int_mul) <= S_mul_operator_result(C_vdata_bits-1 downto 0);
@@ -415,6 +441,16 @@ begin
       opa => S_VARG(conv_integer(R_function_arg1_select(C_function_fpu_arith))),
       opb => S_VARG(conv_integer(R_function_arg2_select(C_function_fpu_arith))),
       result => S_function_result(C_function_fpu_arith)
+    );
+
+    I_fpu_divide:
+    entity work.float_divide_goldschmidt
+    port map
+    (
+      clk => clk,
+      X => S_VARG(conv_integer(R_function_arg1_select(C_function_fpu_divide))),
+      Y => S_VARG(conv_integer(R_function_arg2_select(C_function_fpu_divide))),
+      Q => S_function_result(C_function_fpu_divide)
     );
 
     -- registering for fmax improvement
