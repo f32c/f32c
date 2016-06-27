@@ -24,6 +24,10 @@ and an UART occupies only 1048 6-input LUTs, while still being able to
 execute gcc-generated code when synthesized in the most compact
 configuration which consumes just 697 (649 logic plus 48 memory) LUTs.
 
+Floating point vector processor is a work in progress and can be
+optinally sinthesized. On Artix-7 it uses 3562 LUTs, 64K BRAM,
+41 DSP multipliers and can provide up to 2 MFLOPs/MHz.
+
 The Fmax depends on core configuration and FPGA silicon, and tops at
 around 115 MHz for 90 nm FPGAs (such as Xilinx S3E / S3A or Lattice XP2)
 up to 185 MHz for latest generations of 6-input LUT FPGAs such as
