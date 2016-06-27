@@ -7,7 +7,8 @@ different area / speed tradeoffs, and includes a branch predictor,
 exception handling control block, and optional direct-mapped caches.
 The RTL code also includes modules such as a multi-port SDRAM and SRAM
 controllers, video framebuffers with composite (PAL), HDMI, DVI and VGA
-outputs with simple 2D acceleration for sprites and windows, 
+outputs with simple 2D acceleration for sprites and windows,
+floating point vector processor,
 SPI, UART, PCM audio, GPIO, PWM outputs and a timer, as well as 
 glue logic tailored for numerous popular FPGA development boards 
 from various manufacturers.
