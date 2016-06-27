@@ -25,8 +25,9 @@ execute gcc-generated code when synthesized in the most compact
 configuration which consumes just 697 (649 logic plus 48 memory) LUTs.
 
 Floating point vector processor is a work in progress and can be
-optinally sinthesized. On Artix-7 it uses 3562 LUTs, 64K BRAM,
-41 DSP multipliers and can provide up to 2 MFLOPs/MHz.
+optionally sinthesized. On Artix-7 it uses 3562 LUTs, 64K BRAM,
+41 DSP multipliers (36 for divider unit) and can provide up to 
+2 MFLOPs/MHz.
 
 The Fmax depends on core configuration and FPGA silicon, and tops at
 around 115 MHz for 90 nm FPGAs (such as Xilinx S3E / S3A or Lattice XP2)
