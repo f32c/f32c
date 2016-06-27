@@ -46,7 +46,7 @@ Status of the vector processor:
     * interrupt flag for each vector set when done
     * works at 100 MHz clock rate on artix-7
     * produces 1 result per 1 clock cycle
-      after initial 1-10 clocks delay, depending on function
+      after initial 1-7 clocks delay, depending on pipeline
     * theoretical maximum speed approaches 2 MFLOPs/MHz
       when 1 I/O and 2 FPU operations are running parallel
 
