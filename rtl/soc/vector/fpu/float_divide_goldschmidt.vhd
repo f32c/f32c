@@ -67,6 +67,7 @@ architecture rtl of float_divide_goldschmidt is
    -- intermedia results for goldschmidt's algorithm
    type T_a is array (0 to C_pipe_stages-1) of std_logic_vector(C_precision_bits-1 downto 0);
    signal a, not_a, next_a: T_a;
+   -- b is 1 bit larger for overflow detection and mantissa renormalization
    type T_b is array (0 to C_pipe_stages-1) of std_logic_vector(C_precision_bits downto 0);
    signal b, c, next_b: T_b;
    type T_ac is array (0 to C_pipe_stages-1) of std_logic_vector(2*C_precision_bits downto 0);
@@ -84,9 +85,10 @@ begin
      if i > 0 generate
        a(i) <= R_pipe_data(i-1).mantissa_a;
        b(i) <= R_pipe_data(i-1).mantissa_b;
-       -- originally it should be "'1' & ((not a(i))+1)",
-       -- here is ommitted +1 because 
-       -- "'1' & not a(i)" does approximately the same
+       -- c is guesstimated for "a" to approach towards "100...000" binary
+       -- originally it should be c = '1' & ((not a(i))+1), but
+       -- here is removed +1 to improve fmax. It is ok because
+       -- numerically it does approximately the same.
        c(i)(C_precision_bits downto 0) <= '1' & not a(i);
        ac(i) <= a(i)*c(i);
        bc(i) <= b(i)*c(i);
