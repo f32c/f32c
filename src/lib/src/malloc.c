@@ -61,8 +61,9 @@ malloc_init()
 	uint32_t off, ram_top;
 	volatile uint32_t *probe;
 
+	/* Attempt to guess the amount of available RAM */
 	probe = heap = (void *) &_end;
-	off = 16;
+	off = 1024;
 	for (i = -1; i < 2; i++) {
 		*probe = i;
 		if (probe[off] != i) {
@@ -78,10 +79,12 @@ malloc_init()
 	else
 		ram_top -= 0x1000; /* BRAM, 4 K */
 
-	/* XXX: should panic if ram_top < heap */
+	if (ram_top > (uint32_t) heap) {
+		i = (ram_top - ((uint32_t) heap)) / sizeof(*heap) - 1;
+		heap[0] = SET_FREE(i);
+	} else
+		i = 0;
 
-	i = (ram_top - ((uint32_t) heap)) / sizeof(*heap) - 1;
-	heap[0] = SET_FREE(i);
 	heap[i] = 0;
 }
 
