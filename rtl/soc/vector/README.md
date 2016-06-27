@@ -32,12 +32,15 @@ Status of the vector processor:
     * I/O load and store using AXI RAM DMA burst
       can run parallel with arithmetic operations,
       multiple registers load with the same content at the same time
-    * 32-bit integer arithmetic +, -, * 1 clock delay
-    * 32-bit floating point unit: 5 clocks delay (multiply)
+    * 4 parallel pipeline functional units
+    * 32-bit 2 integer arithmetic pielines: 1-stage (+,-) and 1-stage (*)
+    * 32-bit 2 floating point pipelines: 5-stage (+,-,*) and 7-stage (/)
+      (+,-,*) pipeline can optinallny convert integer to/from float
+      (/) division pipeline can optionally approximate 23-bit integers division
     * any-to-any vector operation of type: a = b+c, a = b+b
       except: a = a+b which will not work
     * multiple operations can run parallel
-      provided they use different registers and different functional units
+      provided they use different registers and different pipeline functional units
     * multiple parallel functional untis can be instantiated
       example: a = b+c, d = e*f can run parallel
     * interrupt flag for each vector set when done
@@ -52,3 +55,4 @@ Todo:
     * linked list I/O
     * handling short vectors
     * chaining: explore possibility of parallel a = b+c, d = a*e
+    * floating point comparation pipeline
