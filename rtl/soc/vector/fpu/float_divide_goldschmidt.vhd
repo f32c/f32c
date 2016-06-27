@@ -34,6 +34,7 @@ entity float_divide_goldschmidt is
   generic
   (
     C_pipe_stages: integer range 2 to 20 := 6; -- number of pipelined iteration steps
+    C_float_mode: boolean := true; -- true: default float mode, false: integer mode (no renormalization)
     -- 1+8+23 = IEEE 754 32-bit single precision float
     C_exponent_bits: integer := 8;
     C_mantissa_bits: integer := 23;
@@ -74,6 +75,8 @@ architecture rtl of float_divide_goldschmidt is
    signal ac: T_ac;
    type T_bc is array (0 to C_pipe_stages-1) of std_logic_vector(2*C_precision_bits+1 downto 0);
    signal bc: T_bc;
+   type T_exponent is array (0 to C_pipe_stages-1) of std_logic_vector(C_exponent_bits-1 downto 0);
+   signal exponent, next_exponent: T_exponent;
 begin
    -- the pipeline
    G_goldschmidt_pipeline:
@@ -85,6 +88,7 @@ begin
      if i > 0 generate
        a(i) <= R_pipe_data(i-1).mantissa_a;
        b(i) <= R_pipe_data(i-1).mantissa_b;
+       exponent(i) <= R_pipe_data(i-1).exponent;
        -- c is guesstimated for "a" to approach towards "100...000" binary
        -- originally it should be c = '1' & ((not a(i))+1), but
        -- here is removed +1 to improve fmax. It is ok because
@@ -93,7 +97,28 @@ begin
        ac(i) <= a(i)*c(i);
        bc(i) <= b(i)*c(i);
        next_a(i) <= ac(i)(2*C_precision_bits-1 downto C_precision_bits);
-       next_b(i) <= bc(i)(2*C_precision_bits   downto C_precision_bits);
+       G_float_mode:
+       if C_float_mode generate
+         -- float mode:
+         -- renormalize mantissa "b" if the bit in bc at position of
+         -- next_b(C_precision_bits) becomes 1
+         -- shifting it 1 bit more to the right in order not to loose MSB
+         next_b(i) <= bc(i)(2*C_precision_bits   downto C_precision_bits) 
+                 when bc(i)(2*C_precision_bits)='0' -- renormalization test
+                 else bc(i)(2*C_precision_bits+1 downto C_precision_bits+1);
+         -- renormalization divides mantissa by 2. To keep the
+         -- same floating point number we must add 1 to the exponent
+         -- in case of renormalization (exponent reporesents power of 2)
+         next_exponent(i) <= exponent(i)
+                        when bc(i)(2*C_precision_bits)='0' -- renormalization test
+                        else exponent(i) + 1;
+       end generate;
+       G_integer_mode:
+       if not C_float_mode generate
+         -- integer mode doesn't renormalize
+         next_b(i) <= bc(i)(2*C_precision_bits downto C_precision_bits);
+         next_exponent(i) <= exponent(i);
+       end generate;
      end generate;
      -- registers logic is moving data thru the pipeline
      process(clk)
@@ -111,8 +136,8 @@ begin
                                   <= '1' & y(C_mantissa_bits-1 downto 0);
            R_pipe_data(i).mantissa_a(C_precision_bits-C_mantissa_bits-2 downto 0) <= (others => '0');
            -- b is the same as a, but it has one bit more precision
-           -- loaded with '0' and then
-           -- unhidden MSB and the rest of mantissa
+           -- intially loaded with '0' (when it becomes 1 then renormalization should be done)
+           -- following bits are unhidden MSB and the rest of mantissa
            R_pipe_data(i).mantissa_b(C_precision_bits downto C_precision_bits-C_mantissa_bits-1)
                                   <= "01" & x(C_mantissa_bits-1 downto 0);
            R_pipe_data(i).mantissa_b(C_precision_bits-C_mantissa_bits-2 downto 0) <= (others => '0');
@@ -120,7 +145,7 @@ begin
          -- pipelined data processing
          if i > 0 then
            R_pipe_data(i).sign       <= R_pipe_data(i-1).sign;
-           R_pipe_data(i).exponent   <= R_pipe_data(i-1).exponent;
+           R_pipe_data(i).exponent   <= next_exponent(i);
            R_pipe_data(i).mantissa_a <= next_a(i);
            R_pipe_data(i).mantissa_b <= next_b(i);
          end if;
