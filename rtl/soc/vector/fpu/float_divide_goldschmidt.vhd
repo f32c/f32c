@@ -52,8 +52,10 @@ end float_divide_goldschmidt;
 
 architecture rtl of float_divide_goldschmidt is
    -- IEEE standard exponent offset
-   constant C_exponent_offset1: std_logic_vector(C_exponent_bits-2 downto 0) := (others => '1');
-   constant C_exponent_offset: std_logic_vector(C_exponent_bits-1 downto 0) := '0' & C_exponent_offset1;
+   -- here is a bitwise cocktail that
+   -- creates 2^(N-1)-2 integer for exponent offset:
+   constant C_exponent_offset1: std_logic_vector(C_exponent_bits-3 downto 0) := (others => '1');
+   constant C_exponent_offset: std_logic_vector(C_exponent_bits-1 downto 0) := '0' & C_exponent_offset1 & '0';
    -- elementary data which transit from one
    -- pipeline stage to another
    type T_pipe_element is
@@ -108,7 +110,7 @@ begin
                  else bc(i)(2*C_precision_bits+1 downto C_precision_bits+1);
          -- renormalization divides mantissa by 2. To keep the
          -- same floating point number we must add 1 to the exponent
-         -- in case of renormalization (exponent reporesents power of 2)
+         -- in case of renormalization. (exponent represents power of 2)
          next_exponent(i) <= exponent(i)
                         when bc(i)(2*C_precision_bits)='0' -- renormalization test
                         else exponent(i) + 1;
@@ -160,7 +162,7 @@ begin
    -- last stage of pipeline is the output
    q <= R_pipe_data(C_pipe_stages-1).sign
       & R_pipe_data(C_pipe_stages-1).exponent
-      & R_pipe_data(C_pipe_stages-1).mantissa_b(C_precision_bits-1 downto C_precision_bits-C_mantissa_bits); -- again hide MSB bit
+      & R_pipe_data(C_pipe_stages-1).mantissa_b(C_precision_bits-2 downto C_precision_bits-C_mantissa_bits-1); -- again hide MSB bit
 end;
 
 -- todo: normalization
