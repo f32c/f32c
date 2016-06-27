@@ -536,10 +536,9 @@ end;
 -- 0x33000210  V(0) = V(1) + V(2) float
 -- 0x33010210  V(0) = V(1) - V(2) float
 -- 0x33020210  V(0) = V(1) * V(2) float
--- 0x33030210  V(0) = V(1) / V(2) float
+-- 0x34000210  V(0) = V(1) / V(2) float
 -- 0x33040210  V(0) = i2f(V(1))   int->float
 -- 0x33050210  V(0) = f2i(V(1))   float->int
--- 0x33060210  V(0) = V(1) % V(2) float
 
 --  C usage
 
