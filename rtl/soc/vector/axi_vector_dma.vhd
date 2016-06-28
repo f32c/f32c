@@ -40,7 +40,7 @@ entity axi_vector_dma is
 
     -- vector processor control
     addr: in std_logic_vector(29 downto 2) := (others => '0'); -- vector struct address in RAM
-    request: in std_logic := '0'; -- hold request while data available, release to cancel I/O operation
+    request: in std_logic := '0'; -- pulse '1' during 1 clock cycle to start
     store_mode: in std_logic := '0'; -- '1' write to RAM (vector store mode), '0' read from RAM (vector load mode)
     done: out std_logic := '0';
 
