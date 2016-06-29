@@ -61,10 +61,10 @@ malloc_init()
 	uint32_t off, ram_top;
 	volatile uint32_t *probe;
 
-	/* Attempt to guess the amount of available RAM */
+	/* Attempt to guess the amount of available RAM, max 256 MB */
 	probe = heap = (void *) &_end;
 	off = 1024;
-	for (i = -1; i < 2; i++) {
+	for (i = -1; i < 2 && off < (1 << 28) / sizeof(*heap); i++) {
 		*probe = i;
 		if (probe[off] != i) {
 			off <<= 1;
