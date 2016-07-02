@@ -69,7 +69,7 @@ architecture Behavioral of glue is
   signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_data_write     : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_data_read      : std_logic_vector(31 downto 0) := (others => '0');
-  signal ram_read_busy      : std_logic := '0';
+  signal ram_ready          : std_logic := '1';
 begin
     -- clock synthesizer: Altera specific
     clk112: if C_clk_freq = 112 generate
@@ -107,7 +107,7 @@ begin
       acram_byte_we(3 downto 0) => ram_byte_we(3 downto 0),
       acram_data_rd(31 downto 0) => ram_data_read(31 downto 0),
       acram_data_wr(31 downto 0) => ram_data_write(31 downto 0),
-      acram_read_busy => ram_read_busy,
+      acram_ready => ram_ready,
       simple_out(7 downto 0) => led, simple_out(31 downto 8) => open,
       simple_in(1 downto 0) => btns, simple_in(31 downto 2) => open
     );
