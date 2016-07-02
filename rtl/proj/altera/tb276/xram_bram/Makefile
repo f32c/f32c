@@ -67,6 +67,9 @@ SRCS = \
 ../../../../soc/sram_refresh.vhd \
 ../../../../soc/sram8.vhd \
 ../../../../soc/acram.vhd \
+../../../../soc/axiram.vhd \
+../../../../soc/axi_read.vhd \
+../../../../soc/axi_pack.vhd \
 ../../../../soc/sdram.vhd \
 ../../../../soc/sio.vhd \
 ../../../../soc/spi.vhd \
@@ -90,7 +93,11 @@ SRCS = \
 ../../../../soc/vgahdmi/compositing_fifo.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
+../../../../soc/vgahdmi/video_cache_i.vhd \
+../../../../soc/vgahdmi/video_cache_d.vhd \
 ../../../../soc/vgahdmi/vga.vhd \
+../../../../soc/vgahdmi/tv.vhd \
+../../../../soc/cvbs.vhd \
 ../../../../soc/vgahdmi/VGA_textmode.vhd \
 ../../../../soc/vgahdmi/font_block_pack.vhd \
 ../../../../soc/vgahdmi/font8x8_xark.vhd \
@@ -99,6 +106,7 @@ SRCS = \
 ../../../../soc/vgahdmi/VGA_textmode_font_bram8.vhd \
 ../../../../soc/vgahdmi/TMDS_encoder.vhd \
 ../../../../soc/vgahdmi/vga2dvid.vhd \
+../../../../soc/vgahdmi/vga2lcd.vhd \
 ../../../../soc/vgahdmi/ledstrip.vhd \
 ../../../../soc/vgahdmi/ws2812b.vhd \
 ../../../../soc/vgahdmi/pulse_counter.vhd \
