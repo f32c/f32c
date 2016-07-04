@@ -84,10 +84,12 @@ end axi_vector_dma;
 architecture arch of axi_vector_dma is
   -- State machine constants
   constant C_state_idle: integer := 0;
-  constant C_state_wait_read_addr_ack: integer := 1;
-  constant C_state_wait_read_data_ack: integer := 2;
-  constant C_state_wait_write_addr_ack: integer := 3;
-  constant C_state_wait_write_data_ack: integer := 4;
+  constant C_state_wait_ready_to_read: integer := 1;
+  constant C_state_wait_read_addr_ack: integer := 2;
+  constant C_state_wait_read_data_ack: integer := 3;
+  constant C_state_wait_ready_to_write: integer := 4;
+  constant C_state_wait_write_addr_ack: integer := 5;
+  constant C_state_wait_write_data_ack: integer := 6;
   constant C_state_max: integer := C_state_wait_write_data_ack;
 
   signal R_store_mode: std_logic;
@@ -127,10 +129,18 @@ begin
           R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
           R_header_mode <= '1';
           R_done <= '0';
-          R_arvalid <= '1'; -- read request starts with address
-          R_state <= C_state_wait_read_addr_ack;
+          --R_arvalid <= '1'; -- read request starts with address
+          --R_state <= C_state_wait_read_addr_ack;
+          R_state <= C_state_wait_ready_to_read;
         end if;
       end if;
+
+      if R_state = C_state_wait_ready_to_read then
+        if axi_in.arready='1' then
+          R_arvalid <= '1'; -- activate address request
+          R_state <= C_state_wait_read_addr_ack;
+        end if;
+      end if; -- end phase wait read addr ack
 
       if R_state = C_state_wait_read_addr_ack then
         R_arvalid <= '0'; -- de-activate address request
@@ -167,11 +177,13 @@ begin
                   R_header_mode <= '0';
                   -- test load/store mode and jump to adequate next state read/write
                   if R_store_mode='1' then
-                      R_awvalid <= '1'; -- write request starts with address
-                      R_state <= C_state_wait_write_addr_ack;
+                      --R_awvalid <= '1'; -- write request starts with address
+                      --R_state <= C_state_wait_write_addr_ack;
+                      R_state <= C_state_wait_ready_to_write;
                   else
-                      R_arvalid <= '1'; -- read request starts with address
-                      R_state <= C_state_wait_read_addr_ack;
+                      --R_arvalid <= '1'; -- read request starts with address
+                      --R_state <= C_state_wait_read_addr_ack;
+                      R_state <= C_state_wait_ready_to_read;
                   end if;
                 else
                   -- length remaining = 0
@@ -190,8 +202,9 @@ begin
                     R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
                     R_header_mode <= '1';
                     R_ram_addr <= R_header(C_header_next)(29 downto 2);
-                    R_arvalid <= '1'; -- read request starts with address
-                    R_state <= C_state_wait_read_addr_ack;
+                    --R_arvalid <= '1'; -- read request starts with address
+                    --R_state <= C_state_wait_read_addr_ack;
+                    R_state <= C_state_wait_ready_to_read;
                   end if;
                 end if;
               else
@@ -199,8 +212,9 @@ begin
                 -- new read request for the new burst
                 R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue reading in the next bursts block
                 R_length_remaining <= R_length_remaining - 1;
-                R_arvalid <= '1'; -- read request starts with address
-                R_state <= C_state_wait_read_addr_ack;
+                --R_arvalid <= '1'; -- read request starts with address
+                --R_state <= C_state_wait_read_addr_ack;
+                R_state <= C_state_wait_ready_to_read;
               end if; -- if length remaining = 0
             else
               -- not the last in the burst, must continue
@@ -210,6 +224,13 @@ begin
             end if; -- end R_burst_remaining
         end if; -- end axi_in.rvalid='1'
       end if; -- end phase wait read data ack
+
+      if R_state = C_state_wait_ready_to_write then
+        if axi_in.awready = '1' then
+          R_awvalid <= '1'; -- activate address request
+          R_state <= C_state_wait_write_addr_ack;
+        end if;
+      end if; -- end phase wait write addr ack
 
       if R_state = C_state_wait_write_addr_ack then
         R_awvalid <= '0'; -- de-activate address request
@@ -242,16 +263,18 @@ begin
                     R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
                     R_header_mode <= '1';
                     R_ram_addr <= R_header(C_header_next)(29 downto 2);
-                    R_arvalid <= '1'; -- read request starts with address
                     -- jump to read state in header mode
-                    R_state <= C_state_wait_read_addr_ack;
+                    --R_arvalid <= '1'; -- read request starts with address
+                    --R_state <= C_state_wait_read_addr_ack;
+                    R_state <= C_state_wait_ready_to_read;
                   end if;
               else
                 R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next bursts block
                 R_length_remaining <= R_length_remaining - 1;
                 -- bram increment is not here, it is in next state (wait addr ack)
-                R_awvalid <= '1'; -- write request starts with address
-                R_state <= C_state_wait_write_addr_ack;
+                --R_awvalid <= '1'; -- write request starts with address
+                --R_state <= C_state_wait_write_addr_ack;
+                R_state <= C_state_wait_ready_to_write;
               end if;
             else
               R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next bursts block
