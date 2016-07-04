@@ -71,7 +71,6 @@ entity cache is
 	C_cache_bursts: boolean := false;
 
 	-- debugging options
-	C_icache_expire: boolean := false; -- unused value
 	C_debug: boolean
     );
     port (
@@ -229,7 +228,9 @@ begin
     end generate;
 
     d_to_bram(d_to_bram'high downto 32) <=
-      '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
+      '0' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
+      when flush_d_line = '1'
+      else '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
       when d_miss_cycle
       else '1' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
       when cpu_d_byte_sel = x"f" or (R_d_tag_from_bram =
@@ -244,7 +245,7 @@ begin
       else cpu_d_addr(d_rd_addr'range);
     d_bram_wr_enable <= (d_miss_cycle and dmem_data_ready = '1')
       or (not d_miss_cycle and d_cacheable and cpu_d_write = '1'
-      and cpu_d_strobe = '1');
+      and cpu_d_strobe = '1') or flush_d_line = '1';
     d_miss_cycle <= R_d_cacheable_cycle and not R_d_fetch_done
       and R_d_tag_from_bram /=
       '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
@@ -255,7 +256,7 @@ begin
     dmem_addr_strobe <= '1' when d_miss_cycle
       else '0' when d_cacheable and cpu_d_write = '0'
       else cpu_d_strobe;
-    dmem_write <= '0' when d_miss_cycle else cpu_d_write;
+    dmem_write <= '0' when d_miss_cycle else cpu_d_write or flush_d_line;
     dmem_burst_len <= (others => '0');
     dmem_byte_sel <= cpu_d_byte_sel;
     dmem_data_out <= cpu_d_data_out;
