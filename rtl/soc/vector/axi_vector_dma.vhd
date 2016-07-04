@@ -26,13 +26,37 @@ use work.axi_pack.all;
 -- at rising edge of the request
 -- following signals are latched: addr, store_mode
 
+-- multi-part vectors, consisting of segments
+-- I/O stops when number of elements exceed vaddr range
+-- which is usually 2048 elements
+
+-- struct vector_segment
+-- {
+--   uint16_t data_length; // length of the data segment (number of elements), maybe n-1 practical?
+--   uint16_t data_type; // data type, currently unused
+--   void *data_addr; // ptr to sequential vector's data, could be float or int32_t
+--   struct vector_segment *next;  // NULL if this is the last
+-- }
+
+-- linked list processing:
+-- 0. latch all needed input state in internal registers
+--    set header countdown to 2 and burst countdown to 2
+-- 1. read header (3x32-bit words in burst mode)
+--    store the header in register array (3 registers)
+--    until header counts 0, then decide if nonzero data pointer
+--    continue with the data
+-- 2. set ram addr with data pointer, set length, set initial burst
+--    and load/store bram to/from data pointer
+--
+
 entity axi_vector_dma is
   generic
   (
     C_vaddr_bits: integer := 11; -- bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
     C_vdata_bits: integer := 32;
-    C_burst_read_max: integer := 1;
-    C_burst_write_max: integer := 1
+    C_burst_max_bits: integer := 6; -- number of bits to describe burst max
+    C_burst_read_max: integer := 1; -- unused
+    C_burst_write_max: integer := 1 -- unused
   );
   port
   (
@@ -77,25 +101,21 @@ architecture arch of axi_vector_dma is
   signal R_awvalid: std_logic := '0'; -- write request, valid address
   signal R_wvalid: std_logic := '0'; -- write, valid data
   signal R_wdata: std_logic_vector(C_vdata_bits-1 downto 0);
-  constant C_burst_max_bits: integer := 6; -- number of bits to describe burst max
-  constant C_burst_bits_pad: std_logic_vector(7-C_burst_max_bits downto 0) := (others => '0');
-  signal S_burst_read_remaining_init, S_burst_write_remaining_init: std_logic_vector(C_burst_max_bits-1 downto 0); -- 1 less than actual value
-  signal S_burst_read_remaining, S_burst_write_remaining: std_logic_vector(C_burst_max_bits-1 downto 0); -- 1 less than actual value
-  signal R_burst_remaining: std_logic_vector(C_burst_max_bits-1 downto 0) := (others => '0'); -- 1 less than actual value
+  constant C_header_data_length: integer := 2; -- loaded first from ram+0 -- neeed early, can't be loaded last last
+  constant C_header_data_addr: integer := 1; -- loaded second from ram+1 -- needer early, can't be loaded last
+  constant C_header_next: integer := 0; -- loaded last from ram+2 - needed at end of data, can be loaded last
+  constant C_header_max: integer := 3; -- number of 32-bit words in the header
+  constant C_header_addr_bits: integer := 2; -- number of bits to describe the header must be C_header_addr_bits <= C_vaddr_bits
+  type T_header is array (0 to C_header_max-1) of std_logic_vector(31 downto 0);
+  signal R_header: T_header;
+  signal R_header_mode: std_logic; -- '1' when we read the header, otherwise the data
   signal R_length_remaining: std_logic_vector(C_vaddr_bits-1 downto 0) := (others => '0'); -- vector length 1 less then actual value (0 -> length 1)
+  constant C_burst_bits_pad: std_logic_vector(7-C_burst_max_bits downto 0) := (others => '0');
+  signal S_burst_remaining: std_logic_vector(C_burst_max_bits-1 downto 0) := (others => '0'); -- 1 less than actual value
 begin
-  S_burst_read_remaining_init <= conv_std_logic_vector(C_burst_read_max-1, C_burst_max_bits)
-                  when length >= C_burst_read_max-1
-                  else length(C_burst_max_bits-1 downto 0);
-  S_burst_write_remaining_init <= conv_std_logic_vector(C_burst_write_max-1, C_burst_max_bits)
-                  when length >= C_burst_write_max-1
-                  else length(C_burst_max_bits-1 downto 0);
-  S_burst_read_remaining <= conv_std_logic_vector(C_burst_read_max-1, C_burst_max_bits)
-                  when R_length_remaining >= C_burst_read_max-1
-                  else R_length_remaining(C_burst_max_bits-1 downto 0);
-  S_burst_write_remaining <= conv_std_logic_vector(C_burst_write_max-1, C_burst_max_bits)
-                  when R_length_remaining >= C_burst_write_max-1
-                  else R_length_remaining(C_burst_max_bits-1 downto 0);
+  -- from current length remaining, calculate the burst
+  S_burst_remaining <= R_length_remaining(C_burst_max_bits-1 downto 0);
+
   process(clk)
   begin
     if rising_edge(clk) then
@@ -104,65 +124,94 @@ begin
           R_ram_addr <= addr;
           R_bram_addr <= (others => '0');
           R_store_mode <= store_mode;
-          R_length_remaining <= length;
+          R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
+          R_header_mode <= '1';
           R_done <= '0';
-          if store_mode='1' then
-            R_awvalid <= '1'; -- write request starts with address
-            R_burst_remaining <= S_burst_write_remaining_init;
-            R_state <= C_state_wait_write_addr_ack;
-          else
-            R_arvalid <= '1'; -- read request starts with address
-            R_burst_remaining <= S_burst_read_remaining_init;
-            R_state <= C_state_wait_read_addr_ack;
-          end if;
+          R_arvalid <= '1'; -- read request starts with address
+          R_state <= C_state_wait_read_addr_ack;
         end if;
       end if;
 
       if R_state = C_state_wait_read_addr_ack then
+        R_arvalid <= '0'; -- de-activate address request
         if axi_in.arready='1' then
-          R_arvalid <= '0'; -- de-activate address request
           R_state <= C_state_wait_read_data_ack;
         end if;
       end if; -- end phase wait read addr ack
 
       if R_state = C_state_wait_read_data_ack then
         if axi_in.rvalid='1' then
-          -- end of write cycle
-          --if R_bram_addr(C_vaddr_bits)='1' then
-            -- we should normally never get here
-            -- but if we do, go to idle
-          --  R_done <= '1';
-          --  R_state <= C_state_idle;
-          --else
-            R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue reading in the next bursts block
-            R_bram_addr <= R_bram_addr + 1; -- increment source address
-            -- if R_burst_remaining = 0 or axi_in.rlast='1' then
-            if axi_in.rlast='1' then
+            if R_header_mode='1' then
+              -- header will be indexed downwards 2,1,0 using decrementing R_length_remaining
+              R_header(conv_integer(R_length_remaining(C_header_addr_bits-1 downto 0))) <= axi_in.rdata;
+            else
+              R_bram_addr <= R_bram_addr + 1; -- increment source address
+            end if;
+            if axi_in.rlast='1'
+            then
+              -- warning: when R_length_remaining=0 also axi_in.rlast='1' must appear.
+              -- nomally that should always be the case if both this module and AXI work correctly.
+              -- otherwise excessive RAM access may happen
               if conv_integer(not R_bram_addr(C_vaddr_bits-1 downto 0)) = 0
                 or R_length_remaining = 0
-                then
-                -- if all vaddr bits of R_bram_addr are '1'
-                -- so we are at last element and in next cycle vector will be
-                -- fully written, return to idle state
-                R_done <= '1';
-                R_state <= C_state_idle;
+              then
+                -- end of burst and end of length
+                if R_header_mode='1' then
+                  -- length remaining = 0
+                  -- if in header mode
+                  -- header will be complete in the next cycle
+                  -- (last header element is "next" pointer. it will be available in next cycle)
+                  -- from previous cycles, we have enough header info to prepare jump to the data
+                  R_ram_addr <= R_header(C_header_data_addr)(29 downto 2);
+                  R_length_remaining <= R_header(C_header_data_length)(C_vaddr_bits-1 downto 0);
+                  R_header_mode <= '0';
+                  -- test load/store mode and jump to adequate next state read/write
+                  if R_store_mode='1' then
+                      R_awvalid <= '1'; -- write request starts with address
+                      R_state <= C_state_wait_write_addr_ack;
+                  else
+                      R_arvalid <= '1'; -- read request starts with address
+                      R_state <= C_state_wait_read_addr_ack;
+                  end if;
+                else
+                  -- length remaining = 0
+                  -- not in header mode
+                  -- check if we have next header
+                  if R_header(C_header_next) = 0 then
+                    -- no next header (null pointer)
+                    -- return to idle state
+                    -- so we are at last element. in next cycle, vector will be
+                    -- fully written
+                    R_done <= '1';
+                    R_state <= C_state_idle;
+                  else
+                    -- non-zero pointer: we have next header to read
+                    -- this is vector multi-part continuation
+                    R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
+                    R_header_mode <= '1';
+                    R_ram_addr <= R_header(C_header_next)(29 downto 2);
+                    R_arvalid <= '1'; -- read request starts with address
+                    R_state <= C_state_wait_read_addr_ack;
+                  end if;
+                end if;
               else
-                R_arvalid <= '1'; -- write request starts with address
-                R_burst_remaining <= S_burst_read_remaining;
-                R_state <= C_state_wait_read_addr_ack;
-              end if;
+                -- last in the burst, length remaining > 0
+                R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue reading in the next bursts block
+                R_length_remaining <= R_length_remaining - 1;
+                R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue reading in the next bursts block
+              end if; -- if length remaining = 0
             else
-              R_burst_remaining <= R_burst_remaining - 1;
+              -- not the last in the burst, must continue
+              R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue reading in the next bursts block
               R_length_remaining <= R_length_remaining - 1;
               -- continue with bursting data in the same state
             end if; -- end R_burst_remaining
-          --end if; -- end else R_bram_addr(C_vaddr_bits)='1'
         end if; -- end axi_in.rvalid='1'
       end if; -- end phase wait read data ack
 
       if R_state = C_state_wait_write_addr_ack then
+        R_awvalid <= '0'; -- de-activate address request
         if axi_in.awready = '1' then
-          R_awvalid <= '0'; -- de-activate address request
           R_wvalid <= '1'; -- activate data valid, try if this could be activated on earlier phase
           R_state <= C_state_wait_write_data_ack;
           R_wdata <= bram_rdata;
@@ -174,25 +223,36 @@ begin
         if axi_in.wready='1' then
             -- end of write cycle
             R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next burst
-            if R_burst_remaining = 0 then
+            if S_burst_remaining = 0 then
               R_wvalid <= '0';
               if R_bram_addr(C_vaddr_bits) = '1'
               or R_length_remaining = 0
               then
-                -- we are at last element and in next cycle vector will be
-                -- fully written, return to idle state
-                R_done <= '1';
-                R_state <= C_state_idle;
+                  if R_header(C_header_next) = 0 then
+                    -- no next header (null pointer)
+                    -- so we are at last element. in next cycle, vector will be
+                    -- fully written
+                    R_done <= '1';
+                    -- return to idle state
+                    R_state <= C_state_idle;
+                  else
+                    -- non-zero pointer: we have next header to read
+                    -- this is vector multi-part continuation
+                    R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
+                    R_header_mode <= '1';
+                    R_ram_addr <= R_header(C_header_next)(29 downto 2);
+                    R_arvalid <= '1'; -- read request starts with address
+                    -- jump to read state in header mode
+                    R_state <= C_state_wait_read_addr_ack;
+                  end if;
               else
                 R_awvalid <= '1'; -- write request starts with address
-                R_burst_remaining <= S_burst_write_remaining;
                 R_state <= C_state_wait_write_addr_ack;
               end if;
             else
               R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next bursts block
               R_wdata <= bram_rdata;
               R_bram_addr <= R_bram_addr + 1; -- increment source address
-              R_burst_remaining <= R_burst_remaining - 1;
               R_length_remaining <= R_length_remaining - 1;
               -- continue with bursting data in the same state
             end if; -- end else R_burst_remaining = 0
@@ -203,7 +263,7 @@ begin
 
   -- read from RAM signaling
   axi_out.arid    <= "0";    -- not used
-  axi_out.arlen   <= C_burst_bits_pad & R_burst_remaining;  -- burst length, 0x00 means 1 word, 0x01 means 2 words, etc.
+  axi_out.arlen   <= C_burst_bits_pad & S_burst_remaining;  -- burst length, 0x00 means 1 word, 0x01 means 2 words, etc.
   axi_out.arsize  <= "010";  -- 32 bits, resp. 4 bytes
   axi_out.arburst <= "01";   -- burst type INCR - Incrementing address
   axi_out.arlock  <= '0';    -- Exclusive access not supported
@@ -215,11 +275,11 @@ begin
   axi_out.araddr  <= "00" & R_ram_addr & "00"; -- address padded and 4-byte aligned
   bram_wdata <= axi_in.rdata;
   --bram_we <= axi_in.rvalid;
-  bram_we <= axi_in.rvalid and not R_store_mode; -- prevent accidental write by rvalid in store mode
+  bram_we <= axi_in.rvalid and (not R_store_mode) and (not R_header_mode); -- prevent write during header read and stray rvalid in store mode
 
   -- write to RAM signaling
   axi_out.awid    <= "0";    -- not used
-  axi_out.awlen   <= C_burst_bits_pad & R_burst_remaining;
+  axi_out.awlen   <= C_burst_bits_pad & S_burst_remaining;
   axi_out.awsize  <= "010";  -- 32 bits, resp. 4 bytes
   axi_out.awburst <= "01";   -- burst type INCR - Incrementing address
   axi_out.awlock  <= '0';    -- Exclusive access not supported
@@ -231,7 +291,7 @@ begin
   axi_out.awvalid <= R_awvalid; -- write request start (address valid)
   axi_out.awaddr  <= "00" & R_ram_addr & "00"; -- address padded and 4-byte aligned
   axi_out.wvalid  <= R_wvalid; -- write data valid
-  axi_out.wlast   <= R_wvalid when R_burst_remaining = 0 else '0';
+  axi_out.wlast   <= R_wvalid when S_burst_remaining = 0 else '0';
   axi_out.wdata   <= R_wdata; -- write data
   --axi_out.wdata   <= x"00000" & R_bram_addr; -- debug
   bram_addr <= R_bram_addr;
@@ -241,7 +301,6 @@ begin
 end;
 
 -- TODO
--- [ ] support boundary burst conditions
 -- [ ] axi is probably not well initialized, (reset handling missing?)
 --     sometimes after first write burst vector axi port stops working
 --     other axi ports (cpu, video) keep working
@@ -249,7 +308,11 @@ end;
 -- [ ] vector store may be signaled as done too early
 --     by bram_addr MSB bit while axi is still
 --     transferring last word.
--- [ ] first burst (or the last) must be allowed to be shorter
--- [ ] linked list support
+-- [ ] first burst maybe shorter, use bit subset of the remaining
 -- [ ] R_done could be set 1 cycle earlier? as MSB in R_bram_addr(C_vaddr_bits)
--- [ ] input value of vector length for store mode
+-- [*] untested input value of vector length for store mode
+-- [*] untested linked list support
+-- [*] untested burst length power of 2, both read/write bursts equal
+-- [*] untested support boundary burst conditions
+-- [*] untested only R_length_remaining should be counted down, the burst length can be directly
+--     derived as bit subset of length
