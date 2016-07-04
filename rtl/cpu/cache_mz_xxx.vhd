@@ -64,14 +64,13 @@ entity cache is
 	C_regfile_synchronous_read: boolean := false;
 
 	-- cache options
-	C_icache_size: integer := 8;
-	C_dcache_size: integer := 2;
+	C_icache_size: integer := 4;
+	C_dcache_size: integer := 4;
 	C_cached_addr_bits: integer := 25; -- 32 MB
 	C_xram_base: std_logic_vector(31 downto 28) := x"8";
 	C_cache_bursts: boolean := false;
 
 	-- debugging options
-	C_icache_expire: boolean := false; -- unused value
 	C_debug: boolean
     );
     port (
@@ -157,6 +156,7 @@ architecture x of cache is
 
     signal M_d_bram: T_dcache_bram;
     signal R_d_tag_from_bram: std_logic_vector(C_d_tag_bits - 1 downto 0);
+    signal R_d_data_from_bram: std_logic_vector(31 downto 0);
     signal R_d_cacheable_cycle, R_d_fetch_done: boolean;
     signal R_d_rd_addr: std_logic_vector(31 downto 2);
 
@@ -190,70 +190,9 @@ begin
     --
     -- data cache FSM
     --
-    process(clk)
-    begin
-    if rising_edge(clk) and (not C_debug or clk_enable = '1') then
-	R_d_tag_from_bram <= d_from_bram(d_from_bram'high downto 32);
-	R_d_fetch_done <= d_miss_cycle and dmem_data_ready = '1';
-	if not d_miss_cycle then
-	    R_d_rd_addr <= cpu_d_addr;
-	    R_d_cacheable_cycle <= d_cacheable and cpu_d_strobe = '1'
-	      and cpu_d_write = '0';
-	end if;
-    end if;
-    end process;
+    G_dcache_logic:
+    if C_dcache_size > 0 generate
 
-    d_cacheable <= cpu_d_addr(31 downto 28) = C_xram_base;
-    d_rd_addr <= R_d_rd_addr(d_rd_addr'range) when d_miss_cycle
-      else cpu_d_addr(d_rd_addr'range);
-    d_wr_addr <= R_d_rd_addr(d_wr_addr'range) when d_miss_cycle
-      else cpu_d_addr(d_rd_addr'range);
-    d_bram_wr_enable <= (d_miss_cycle and dmem_data_ready = '1')
-      or (not d_miss_cycle and d_cacheable and cpu_d_write = '1'
-      and cpu_d_strobe = '1');
-    d_to_bram(31 downto 0) <= dmem_data_in when d_miss_cycle
-      else cpu_d_data_out;
-    d_to_bram(d_to_bram'high downto 32) <=
-      '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
-      when d_miss_cycle
-      else '1' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
-      when cpu_d_byte_sel = x"f"
-      else '0' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
-
-    d_miss_cycle <= R_d_cacheable_cycle and not R_d_fetch_done
-      and R_d_tag_from_bram /=
-      '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
-
-    dmem_addr <= R_d_rd_addr when d_miss_cycle else cpu_d_addr;
-    dmem_addr_strobe <= '1' when d_miss_cycle
-      else '0' when d_cacheable and cpu_d_write = '0'
-      else cpu_d_strobe;
-    dmem_write <= '0' when d_miss_cycle else cpu_d_write;
-    dmem_burst_len <= (others => '0');
-    dmem_byte_sel <= cpu_d_byte_sel;
-    dmem_data_out <= cpu_d_data_out;
-
-    cpu_d_data_in <= dmem_data_in when d_miss_cycle
-      else d_from_bram(31 downto 0) when d_cacheable else dmem_data_in;
-    cpu_d_ready <= '1' when d_cacheable and cpu_d_write = '0'
-      else dmem_data_ready;
-    cpu_d_wait <= '1' when d_miss_cycle else '0';
-
-    debug_debug(7) <= '1' when R_d_fetch_done else '0';
-    debug_debug(6) <= '1' when R_d_cacheable_cycle else '0';
-    debug_debug(5) <= '1' when d_miss_cycle else '0'; -- cpu_d_wait
-    debug_debug(4) <= -- cpu_d_ready
-      '1' when d_cacheable and cpu_d_write = '0'
-      else '0' when d_miss_cycle else dmem_data_ready;
-    debug_debug(3) <= -- dmem_a_strobe
-      '1' when d_miss_cycle
-      else '0' when d_cacheable and cpu_d_write = '0'
-      else cpu_d_strobe;
-    debug_debug(2) <= dmem_data_ready;
-    debug_debug(1) <= cpu_d_write;
-    debug_debug(0) <= cpu_d_strobe;
-
-    -- infer data cache BRAMs
     process(clk)
     begin
 	if falling_edge(clk) and (not C_debug or clk_enable = '1') then
@@ -266,14 +205,71 @@ begin
 	end if;
     end process;
 
+    process(clk)
+    begin
+    if rising_edge(clk) and (not C_debug or clk_enable = '1') then
+	R_d_tag_from_bram <= d_from_bram(d_from_bram'high downto 32);
+	R_d_data_from_bram <= d_from_bram(31 downto 0);
+	R_d_fetch_done <= d_miss_cycle and dmem_data_ready = '1';
+	if not d_miss_cycle then
+	    R_d_rd_addr <= cpu_d_addr;
+	    R_d_cacheable_cycle <= d_cacheable and cpu_d_strobe = '1'
+	      and cpu_d_write = '0';
+	end if;
+    end if;
+    end process;
+
+    d_wr_mux_iter: for b in 0 to 3 generate
+    begin
+    d_to_bram(b * 8 + 7 downto b * 8) <=
+      dmem_data_in(b * 8 + 7 downto b * 8) when d_miss_cycle
+      else cpu_d_data_out(b * 8 + 7 downto b * 8) when cpu_d_byte_sel(b) = '1'
+      else R_d_data_from_bram(b * 8 + 7 downto b * 8);
+    end generate;
+
+    d_to_bram(d_to_bram'high downto 32) <=
+      '0' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
+      when flush_d_line = '1'
+      else '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
+      when d_miss_cycle
+      else '1' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
+      when cpu_d_byte_sel = x"f" or (R_d_tag_from_bram =
+      '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
+      and cpu_d_addr = R_d_rd_addr)
+      else '0' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
+
+    d_cacheable <= cpu_d_addr(31 downto 28) = C_xram_base;
+    d_rd_addr <= R_d_rd_addr(d_rd_addr'range) when d_miss_cycle
+      else cpu_d_addr(d_rd_addr'range);
+    d_wr_addr <= R_d_rd_addr(d_wr_addr'range) when d_miss_cycle
+      else cpu_d_addr(d_rd_addr'range);
+    d_bram_wr_enable <= (d_miss_cycle and dmem_data_ready = '1')
+      or (not d_miss_cycle and d_cacheable and cpu_d_write = '1'
+      and cpu_d_strobe = '1') or flush_d_line = '1';
+    d_miss_cycle <= R_d_cacheable_cycle and not R_d_fetch_done
+      and R_d_tag_from_bram /=
+      '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
+
+    end generate; -- G_dcache_logic
+
+    dmem_addr <= R_d_rd_addr when d_miss_cycle else cpu_d_addr;
+    dmem_addr_strobe <= '1' when d_miss_cycle
+      else '0' when d_cacheable and cpu_d_write = '0'
+      else cpu_d_strobe;
+    dmem_write <= '0' when d_miss_cycle else cpu_d_write or flush_d_line;
+    dmem_burst_len <= (others => '0');
+    dmem_byte_sel <= cpu_d_byte_sel;
+    dmem_data_out <= cpu_d_data_out;
+
+    cpu_d_data_in <= dmem_data_in when d_miss_cycle
+      else d_from_bram(31 downto 0) when d_cacheable else dmem_data_in;
+    cpu_d_ready <= '1' when d_cacheable and cpu_d_write = '0'
+      else dmem_data_ready;
+    cpu_d_wait <= '1' when d_miss_cycle else '0';
+
     --
     -- Old I-cache stuff starts here
     --
-
-    assert (C_icache_size = 0 or C_icache_size = 2 or C_icache_size = 4
-      or C_icache_size = 8)
-      report "Invalid instruction cache size" severity failure;
-
     pipeline: entity work.pipeline
     generic map (
 	C_arch => C_arch, C_cache => true, C_reg_IF_PC => true,
@@ -311,7 +307,7 @@ begin
 	debug_out_strobe => debug_out_strobe,
 	debug_out_busy => debug_out_busy,
 	debug_clk_ena => clk_enable,
---	debug_debug => debug_debug,
+	debug_debug => debug_debug,
 	debug_active => debug_active
     );
 
