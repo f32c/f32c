@@ -76,7 +76,6 @@ entity cache is
 	C_xram_base: std_logic_vector(31 downto 28) := x"8";
 
 	-- debugging options
-	C_icache_expire: boolean := false; -- true: i-cache will immediately expire every cached data
 	C_debug: boolean
     );
     port (
@@ -97,9 +96,6 @@ entity cache is
 	snoop_cycle: in std_logic;
 	snoop_addr: in std_logic_vector(31 downto 2);
 	intr: in std_logic_vector(5 downto 0);
-	-- debugging only
-	icache_write_enable: in std_logic := '1'; -- icache write enable
-	icache_flush_enable: in std_logic := '1'; -- icache flush enable
 
 	debug_in_data: in std_logic_vector(7 downto 0);
 	debug_in_strobe: in std_logic;
@@ -142,7 +138,6 @@ architecture x of cache is
     signal daddr_cacheable, dcache_line_valid: boolean;
     signal icache_write, instr_ready: std_logic;
     signal dcache_write, data_ready: std_logic;
-    signal cpu_flush_i_line, cpu_flush_d_line: std_logic;
     signal flush_i_line, flush_d_line: std_logic;
     signal flush_i_addr: std_logic_vector(31 downto 2);
     signal to_i_bram, from_i_bram: std_logic_vector(C_itag_bits+31 downto 0);
@@ -198,7 +193,7 @@ begin
 	dmem_data_in => cpu_d_data_in, dmem_data_out => cpu_d_data_out,
 	dmem_data_ready => cpu_d_ready,
 	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
-	flush_i_line => cpu_flush_i_line, flush_d_line => cpu_flush_d_line,
+	flush_i_line => flush_i_line, flush_d_line => flush_d_line,
 	-- debugging
 	debug_in_data => debug_in_data,
 	debug_in_strobe => debug_in_strobe,
@@ -214,23 +209,6 @@ begin
     icache_tag_out <= from_i_bram(C_itag_bits+31 downto 32);
     to_i_bram(31 downto 0) <= imem_data_in;
     to_i_bram(C_itag_bits+31 downto 32) <= icache_tag_in;
-
-    normal_icache: if not C_icache_expire generate
-      flush_i_line <= cpu_flush_i_line and icache_flush_enable;
-      flush_i_addr <= cpu_d_addr;
-    end generate;
-
-    debug_icache: if C_icache_expire generate
-      process(clk)
-      begin
-        if rising_edge(clk) then
-          -- once used i_addr cache line immediately discarded on the next clock
-          -- pass i-data from SDRAM thru cache and expire
-          flush_i_line <= icache_write and icache_flush_enable;
-          flush_i_addr <= i_addr;
-        end if;
-      end process;
-    end generate;
 
     G_icache_2k:
     if C_icache_size = 2 generate
@@ -365,7 +343,7 @@ begin
       '1' when icache_line_valid else '0';
 
     iaddr_cacheable <= C_icache_size > 0; -- XXX kseg0: R_i_addr(31 downto 29) = "100";
-    icache_write <= imem_data_ready and R_i_strobe and icache_write_enable;
+    icache_write <= imem_data_ready and R_i_strobe;
     itag_valid: if C_icache_size > 0 generate
     R_i_addr_in_xram <= '1' when R_i_addr(31 downto 28) = C_xram_base else '0';
     icache_tag_in(1+C_cached_addr_bits-C_icache_addr_bits downto 0) 
@@ -462,9 +440,11 @@ begin
     dcache_addr <= cpu_d_addr when not C_cache_bursts or
       R_d_state(C_D_IDLE) = '1' else R_d_addr;
     dcache_write <= dmem_data_ready when (R_d_state(C_D_WRITE) = '1'
-      or R_d_state(C_D_FETCH) = '1' or R_d_state(C_D_BURST) = '1') else '0';
+      or R_d_state(C_D_FETCH) = '1' or R_d_state(C_D_BURST) = '1')
+      else flush_d_line;
     d_tag_valid_bit <= '0' when R_d_state(C_D_WRITE) = '1'
-      and cpu_d_byte_sel /= "1111" and not dcache_line_valid else '1';
+      and cpu_d_byte_sel /= "1111" and not dcache_line_valid
+      else not flush_d_line;
     dtag_valid: if C_dcache_size > 0 generate
     dcache_tag_in(C_dtag_bits-1) <= d_tag_valid_bit;
     dcache_tag_in(C_cached_addr_bits-C_dcache_addr_bits-1 downto 0) <= dcache_addr(C_cached_addr_bits-1 downto C_dcache_addr_bits);
