@@ -54,9 +54,7 @@ entity axi_vector_dma is
   (
     C_vaddr_bits: integer := 11; -- bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
     C_vdata_bits: integer := 32;
-    C_burst_max_bits: integer := 6; -- number of bits to describe burst max
-    C_burst_read_max: integer := 1; -- unused
-    C_burst_write_max: integer := 1 -- unused
+    C_burst_max_bits: integer := 6 -- number of bits to describe burst max
   );
   port
   (
@@ -251,6 +249,9 @@ begin
               or R_length_remaining = 0
               then
                   if R_header(C_header_next) = 0 then
+                    -- we must increment RAM address as the last element of the vector is
+                    -- in R_wdata and yet to be written (commited to bram on next axi_in.wready)
+                    R_ram_addr <= R_header(C_header_next)(29 downto 2);
                     -- no next header (null pointer)
                     -- so we are at last element. in next cycle, vector will be
                     -- fully written
