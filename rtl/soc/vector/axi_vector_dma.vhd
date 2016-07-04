@@ -196,9 +196,11 @@ begin
                 end if;
               else
                 -- last in the burst, length remaining > 0
+                -- new read request for the new burst
                 R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue reading in the next bursts block
                 R_length_remaining <= R_length_remaining - 1;
-                R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue reading in the next bursts block
+                R_arvalid <= '1'; -- read request starts with address
+                R_state <= C_state_wait_read_addr_ack;
               end if; -- if length remaining = 0
             else
               -- not the last in the burst, must continue
@@ -222,7 +224,6 @@ begin
       if R_state = C_state_wait_write_data_ack then
         if axi_in.wready='1' then
             -- end of write cycle
-            R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next burst
             if S_burst_remaining = 0 then
               R_wvalid <= '0';
               if R_bram_addr(C_vaddr_bits) = '1'
@@ -246,14 +247,17 @@ begin
                     R_state <= C_state_wait_read_addr_ack;
                   end if;
               else
+                R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next bursts block
+                R_length_remaining <= R_length_remaining - 1;
+                -- bram increment is not here, it is in next state (wait addr ack)
                 R_awvalid <= '1'; -- write request starts with address
                 R_state <= C_state_wait_write_addr_ack;
               end if;
             else
               R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next bursts block
+              R_length_remaining <= R_length_remaining - 1;
               R_wdata <= bram_rdata;
               R_bram_addr <= R_bram_addr + 1; -- increment source address
-              R_length_remaining <= R_length_remaining - 1;
               -- continue with bursting data in the same state
             end if; -- end else R_burst_remaining = 0
         end if; -- end axi_in.wready='1'
@@ -295,7 +299,6 @@ begin
   axi_out.wdata   <= R_wdata; -- write data
   --axi_out.wdata   <= x"00000" & R_bram_addr; -- debug
   bram_addr <= R_bram_addr;
-  --done <= R_bram_addr(C_vaddr_bits); -- MSB bit of bram addr counter means DONE
   done <= R_done;
 
 end;
