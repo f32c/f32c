@@ -163,11 +163,12 @@ begin
         end if;
 
         if R_phase = C_phase_wait_read_addr_ack then
+          R_arvalid <= '0'; -- de-activate address request
           if R_cur_port /= C_prio_port then
             R_last_port <= R_cur_port;
           end if;
           if axi_in.arready = '1' then
-            R_arvalid <= '0'; -- de-activate address request
+          --  R_arvalid <= '0'; -- de-activate address request
             R_phase <= C_phase_wait_read_data_ack;
           end if;
         end if; -- end phase wait read addr ack
@@ -183,11 +184,12 @@ begin
 	end if; -- end phase wait read data ack
 
         if R_phase = C_phase_wait_write_addr_ack then
+          R_awvalid <= '0'; -- de-activate address request
           if R_cur_port /= C_prio_port then
             R_last_port <= R_cur_port;
           end if;
           if axi_in.awready = '1' then
-            R_awvalid <= '0'; -- de-activate address request
+            --R_awvalid <= '0'; -- de-activate address request
             R_wvalid <= '1'; -- activate data valid, try if this could be activated on earlier phase
             R_phase <= C_phase_wait_write_data_ack;
           end if;
