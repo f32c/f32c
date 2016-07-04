@@ -336,9 +336,7 @@ begin
       generic map
       (
         C_vaddr_bits => C_vaddr_bits, -- number of bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
-        C_vdata_bits => C_vdata_bits, -- number of data bits
-        C_burst_read_max => 64, -- max burst allowed by DMA. longer transfers will be split in many bursts
-        C_burst_write_max => 64
+        C_vdata_bits => C_vdata_bits  -- number of data bits
       )
       port map
       (
@@ -374,7 +372,7 @@ begin
             R_vector_length(i) <= S_VI(i); -- after function done, store S_VI index of the vector into the register
           else
             if S_io_done_interrupt='1' and R_io_load_select(i)='1' and R_io_store_mode='0' then
-              R_vector_length(i) <= S_io_bram_addr;
+              R_vector_length(i) <= S_io_bram_addr; -- bram addr stops at true length (not length-1)
             end if;
           end if;
         end if;
