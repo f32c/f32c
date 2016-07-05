@@ -22,8 +22,16 @@ In real code run, there will be added latency
 for RAM I/O, command and pipeline clock cycles 
 before a vector operation starts.
 
-It is recommended to choose alghorithm that utilizes 
-more full length register vector operations with less I/O.
+Vector data doesn't have to be a contiguous array
+but can be given in a form of linked list with pointers
+to values scattered accross the whole RAM. 
+
+Speed recommendations:
+
+    * choose alghorithm that utilizes more full length register
+      vector operations with less I/O.
+    * I/O is faster for data in larger contiguous arrays
+      when the RAM burst can be used.
 
 Status of the vector processor:
 
@@ -41,7 +49,6 @@ Status of the vector processor:
       except: a = a+b which will not work
     * multiple operations can run parallel
       provided they use different registers and different pipeline functional units
-    * multiple parallel functional untis can be instantiated
       example: a = b+c, d = e*f can run parallel
     * interrupt flag for each vector set when done
     * works at 100 MHz clock rate on artix-7
@@ -49,10 +56,9 @@ Status of the vector processor:
       after initial 1-7 clocks delay, depending on pipeline
     * theoretical maximum speed approaches 2 MFLOPs/MHz
       when 1 I/O and 2 FPU operations are running parallel
+    * linked list support
 
 Todo:
 
-    * linked list I/O
-    * handling short vectors
     * chaining: explore possibility of parallel a = b+c, d = a*e
     * floating point comparation pipeline
