@@ -187,9 +187,9 @@ begin
                 else -- R_header(C_header_next) > 0
                   -- non-zero pointer: we have next header to read
                   -- this is vector multi-part continuation
+                  R_ram_addr <= R_header(C_header_next)(29 downto 2);
                   R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
                   R_header_mode <= '1';
-                  R_ram_addr <= R_header(C_header_next)(29 downto 2);
                   R_state <= C_state_wait_ready_to_read;
                 end if;
               end if;
@@ -244,6 +244,7 @@ begin
               else -- R_header(C_header_next) > 0
                 -- non-zero pointer: we have next header to read
                 -- this is vector multi-part continuation
+                R_ram_addr <= R_header(C_header_next)(29 downto 2);
                 R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
                 R_header_mode <= '1';
                 -- jump to read state in header mode
