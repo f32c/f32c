@@ -157,8 +157,8 @@ begin
             -- warning: when R_length_remaining=0 also axi_in.rlast='1' must appear.
             -- nomally that should always be the case if both this module and AXI work correctly.
             -- otherwise excessive RAM access may happen
-            if conv_integer(not R_bram_addr(C_vaddr_bits-1 downto 0)) = 0
-              or R_length_remaining = 0
+            if R_bram_addr(C_vaddr_bits) = '1' -- safety measure
+            or R_length_remaining = 0
             then
               -- end of burst and end of length
               if R_header_mode='1' then
@@ -234,7 +234,7 @@ begin
           -- end of write cycle
           if S_burst_remaining = 0 then
             R_wvalid <= '0';
-            if R_bram_addr(C_vaddr_bits) = '1'
+            if R_bram_addr(C_vaddr_bits) = '1' -- safety measure
             or R_length_remaining = 0
             then
               if R_header(C_header_next) = 0 then
@@ -273,7 +273,7 @@ begin
   -- read from RAM signaling
   axi_out.arid    <= "0";    -- not used
   axi_out.arlen   <= C_burst_bits_pad & S_burst_remaining;  -- burst length, 0x00 means 1 word, 0x01 means 2 words, etc.
-  axi_out.arsize  <= "010";  -- 32 bits, resp. 4 bytes
+  axi_out.arsize  <= "010";  -- 4 bytes = 32 bits
   axi_out.arburst <= "01";   -- burst type INCR - Incrementing address
   axi_out.arlock  <= '0';    -- Exclusive access not supported
   axi_out.arcache <= "0011"; -- Xilinx IP generally ignores, but 'modifiable'[1] bit required?
@@ -289,7 +289,7 @@ begin
   -- write to RAM signaling
   axi_out.awid    <= "0";    -- not used
   axi_out.awlen   <= C_burst_bits_pad & S_burst_remaining;
-  axi_out.awsize  <= "010";  -- 32 bits, resp. 4 bytes
+  axi_out.awsize  <= "010";  -- 4 bytes = 32 bits
   axi_out.awburst <= "01";   -- burst type INCR - Incrementing address
   axi_out.awlock  <= '0';    -- Exclusive access not supported
   axi_out.awcache <= "0011"; -- Xilinx IP generally ignores
