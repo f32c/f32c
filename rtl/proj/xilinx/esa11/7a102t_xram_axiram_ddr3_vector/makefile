@@ -6,7 +6,7 @@ xc3sprog_interface = ft4232h_fast
 bitfile=$(project).runs/impl_1/esa11_xram_axiram_ddr3.bit
 
 junk=*~
-junk+=.Xil vivado.log vivado.jou
+junk+=.Xil vivado.log vivado.jou ip_upgrade.log
 junk+=$(project).ip_user_files
 junk+=$(project).sim
 junk+=$(project).cache
