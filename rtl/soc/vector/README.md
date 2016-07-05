@@ -28,8 +28,8 @@ to values scattered accross the whole RAM.
 
 Speed recommendations:
 
-    * choose alghorithm that utilizes more full length register
-      vector operations with less I/O.
+    * choose alghorithm that utilizes more full length
+      vector register operations with less I/O.
     * I/O is faster for data in larger contiguous arrays
       when the RAM burst can be used.
 
@@ -63,3 +63,7 @@ Todo:
     * chaining: explore possibility of parallel a = b+c, d = a*e
     * floating point comparation pipeline
     * use both BRAM vector ports in crossbar multiplexer
+    * tighten up AXI states and reduce latency
+    * check internal vector lenghth, seems
+      1-2 elements are calculated more than neccessary
+    * f32c DMA support for non-AXI platforms
