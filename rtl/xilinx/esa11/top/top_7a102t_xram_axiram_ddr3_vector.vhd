@@ -44,7 +44,7 @@ entity esa11_xram_axiram_ddr3 is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: 81/100 MHz
+	-- Main clock: 25/100 MHz
 	C_clk_freq: integer := 100;
 
 	C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
@@ -55,7 +55,6 @@ entity esa11_xram_axiram_ddr3 is
         -- axi ram
 	C_axiram: boolean := true;
 
-        C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         -- warning: 2K, 4K, 8K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
         C_icache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
         C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
@@ -66,8 +65,6 @@ entity esa11_xram_axiram_ddr3 is
         C3_MEM_BANKADDR_WIDTH : integer := 3;
         
         C_vector: boolean := true; -- vector processor unit
-
-        C_video_base_addr_out: boolean := false;
 
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
 
@@ -235,7 +232,6 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
     signal S_vga_fetch_next, S_vga_line_repeat: std_logic;
     signal S_vga_active_enabled: std_logic;
     signal S_vga_addr: std_logic_vector(29 downto 2);
-    signal S_vga_base_addr: std_logic_vector(31 downto 0) := x"80010000"; -- byte address
     signal S_vga_addr_strobe: std_logic;
     signal S_vga_suggest_cache: std_logic;
     signal S_vga_suggest_burst: std_logic_vector(15 downto 0);
@@ -293,7 +289,7 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
     signal disp_7seg_segment: std_logic_vector(7 downto 0);
 begin
 
-    cpu100_200_250_25MHz: if C_clk_freq = 100 and not C_dvid_ddr generate
+    cpu100_hdmi_sdr: if C_clk_freq = 100 and not C_dvid_ddr generate
     clk100in_out100_200_250_25: clk_d100_100_200_250_25MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
@@ -307,7 +303,7 @@ begin
     clk_pixel_shift <= clk_250MHz;
     end generate;
 
-    cpu100_200_125_25MHz: if C_clk_freq = 100 and C_dvid_ddr generate
+    cpu100_hdmi_ddr: if C_clk_freq = 100 and C_dvid_ddr generate
     clk100in_out100_200_125_25: clk_d100_100_200_125_25MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
@@ -321,6 +317,21 @@ begin
     clk_pixel_shift <= clk_125MHz;
     end generate;
 
+    cpu25_hdmi_ddr: if C_clk_freq = 25 and C_dvid_ddr generate
+    clk100in_out25_200_125_25: clk_d100_100_200_125_25MHz
+    port map(clk_100mhz_in_p => i_100MHz_P,
+             clk_100mhz_in_n => i_100MHz_N,
+             reset => '0',
+             locked => clk_locked,
+             clk_100mhz => open,
+             clk_200mhz => clk_200MHz,
+             clk_125mhz => clk_125MHz,
+             clk_25mhz  => clk_25MHz
+    );
+    clk <= clk_25MHz;
+    clk_pixel_shift <= clk_125MHz;
+    end generate;
+
     G_vendor_specific_startup: if C_vendor_specific_startup generate
     -- reset hard-block: Xilinx Artix-7 specific
     reset: startupe2
@@ -330,7 +341,7 @@ begin
     port map (
       cfgmclk => cfgmclk,
       clk => cfgmclk,
-      gsr => sio_break,
+      gsr => '0',
       gts => '0',
       keyclearb => '0',
       pack => '1',
@@ -353,7 +364,6 @@ begin
       C_arch => C_arch,
       C_bram_size => C_bram_size,
       C_axiram => C_axiram,
-      C_icache_expire => C_icache_expire,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_cached_addr_bits,
@@ -362,7 +372,6 @@ begin
       C_spi => C_spi,
       C_vector => C_vector,
       --C_ps2 => C_ps2,
-      C_video_base_addr_out => C_video_base_addr_out,
       C_dvid_ddr => C_dvid_ddr,
       --
       C_vgahdmi => C_vgahdmi,
@@ -449,7 +458,6 @@ begin
         dvid_green => dvid_green,
         dvid_blue  => dvid_blue,
         dvid_clock => dvid_clock,
-        video_base_addr => S_vga_base_addr(31 downto 2),
 	-- simple I/O
 	simple_out(7 downto 0) => M_LED, simple_out(15 downto 8) => disp_7seg_segment,
 	simple_out(19 downto 16) => M_7SEG_DIGIT, simple_out(31 downto 20) => open,
