@@ -153,7 +153,9 @@ begin
             -- nomally that should always be the case if both this module and AXI work correctly.
             -- otherwise excessive RAM access may happen
             if R_bram_addr(C_vaddr_bits) = '1' -- safety measure
-            or R_length_remaining = 0
+            or R_length_remaining(C_vaddr_bits-1 downto C_burst_max_bits) = 0
+            -- axi_in.rlast='1' should coincide with S_burst_remaining=0 so this "or R_length_.."
+            -- should be the same as R_length_remaining = 0
             then
               -- end of burst and end of length
               if R_header_mode='1' then
@@ -215,19 +217,22 @@ begin
       when C_state_wait_write_addr_ack =>
         R_awvalid <= '0'; -- de-activate address request
         if axi_in.awready = '1' then
-          R_wvalid <= '1'; -- activate data valid, try if this could be activated on earlier phase
-          R_state <= C_state_wait_write_data_ack;
           R_wdata <= bram_rdata;
           R_bram_addr <= R_bram_addr+1; -- early prepare bram read address for next data
+          R_wvalid <= '1'; -- activate data valid, try if this could be activated on earlier phase
+          R_state <= C_state_wait_write_data_ack;
         end if;
 
       when C_state_wait_write_data_ack =>
         if axi_in.wready='1' then
           -- end of write cycle
-          if S_burst_remaining = 0 then
+          if S_burst_remaining = 0
+          then
             R_wvalid <= '0';
             if R_bram_addr(C_vaddr_bits) = '1' -- safety measure
-            or R_length_remaining(C_vaddr_bits-1 downto C_burst_max_bits) = 0 -- same as R_length_remaining = 0
+            or R_length_remaining(C_vaddr_bits-1 downto C_burst_max_bits) = 0
+            -- with S_burst_remaining = 0 this "or R_length_..."
+            -- should be the same as R_length_remaining = 0
             then
               if R_header(C_header_next) = 0 then
                 -- no next header (null pointer)
