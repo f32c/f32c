@@ -62,3 +62,4 @@ Todo:
 
     * chaining: explore possibility of parallel a = b+c, d = a*e
     * floating point comparation pipeline
+    * use both BRAM vector ports in crossbar multiplexer
