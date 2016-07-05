@@ -80,7 +80,6 @@ generic (
   -- SoC configuration options
   C_bram_size: integer := 2;	-- in KBytes
   C_boot_spi: boolean := true;
-  C_icache_expire: boolean := false; -- when true i-cache will just pass data, won't keep them
   C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
   C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
   C_sdram: boolean := true;
@@ -396,7 +395,6 @@ begin
       C_result_forwarding => C_result_forwarding,
       C_load_aligner => C_load_aligner, C_full_shifter => C_full_shifter,
       C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
-      C_icache_expire => C_icache_expire,
       C_xram_base => C_sdram_base, -- hacky part of address decoding in the cache
       C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_sdram_address_width, -- +1 ? e.g. 20 bits will cache 1MB

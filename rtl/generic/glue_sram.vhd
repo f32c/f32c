@@ -73,7 +73,6 @@ entity glue_sram is
 	C_cpus: integer := 1;
 	C_bram_size: integer := 2;	-- 2 or 16 KBytes
 	C_i_rom_only: boolean := true;
-	C_icache_expire: boolean := false; -- when true i-cache will just pass data, won't keep them
 	C_icache_size: integer := 8;	-- 0, 2, 4 or 8 KBytes
 	C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 	C_sram: boolean := true;
@@ -300,7 +299,6 @@ begin
 	C_cop0_count => C_cop0_count, C_cop0_compare => C_cop0_compare,
 	C_cop0_config => C_cop0_config, C_exceptions => C_exceptions,
 	C_ll_sc => C_ll_sc,
-	C_icache_expire => C_icache_expire,
 	C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
 	-- debugging only
 	C_debug => C_debug
