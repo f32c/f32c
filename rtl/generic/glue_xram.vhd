@@ -83,7 +83,6 @@ generic (
   C_bram_size: integer := 2;	-- in KBytes
   C_boot_rom: boolean := false;
   C_boot_spi: boolean := false;
-  C_icache_expire: boolean := false; -- when true i-cache will just pass data, won't keep them
   C_icache_size: integer := 0;	-- 0, 2, 4, 8, 16 or 32 KBytes
   C_dcache_size: integer := 0;	-- 0, 2, 4, 8, 16 or 32 KBytes
   C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- x"8" maps RAM to 0x80000000
@@ -524,7 +523,6 @@ begin
       C_result_forwarding => C_result_forwarding,
       C_load_aligner => C_load_aligner, C_full_shifter => C_full_shifter,
       C_ll_sc => C_ll_sc, C_exceptions => C_exceptions,
-      C_icache_expire => C_icache_expire,
       C_xram_base => C_xram_base, -- hacky part of address decoding in the cache
       C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_cached_addr_bits, -- +1 ? e.g. 20 bits will cache 1MB
@@ -1179,8 +1177,7 @@ begin
     generic map
     (
         C_icache_size => C_vgahdmi_cache_size,
-        C_cached_addr_bits => C_cached_addr_bits, -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
-        C_icache_expire => false -- true: i-cache will immediately expire every cached data
+        C_cached_addr_bits => C_cached_addr_bits -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
     )
     port map
     (
