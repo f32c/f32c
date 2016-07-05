@@ -1180,9 +1180,8 @@ begin
     vgahdmi_cache_i: entity work.video_cache_i
     generic map
     (
-        C_icache_size => C_vgahdmi_cache_size,
-        C_cached_addr_bits => C_cached_addr_bits, -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
-        C_icache_expire => false -- true: i-cache will immediately expire every cached data
+	C_icache_size => C_vgahdmi_cache_size,
+	C_cached_addr_bits => C_cached_addr_bits -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
     )
     port map
     (

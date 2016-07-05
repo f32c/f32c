@@ -48,7 +48,6 @@ entity basys3 is
         -- axi cache ram
 	C_acram: boolean := true;
 
-        C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         -- warning: 2K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
         -- no errors for 4K or 8K
         C_icache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
@@ -89,7 +88,6 @@ begin
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
         C_acram => C_acram,
-        C_icache_expire => C_icache_expire,
         C_icache_size => C_icache_size,
         C_dcache_size => C_dcache_size,
         C_cached_addr_bits => C_cached_addr_bits,
