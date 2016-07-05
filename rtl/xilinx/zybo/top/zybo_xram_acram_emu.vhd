@@ -57,7 +57,6 @@ generic
     C_acram_wait_cycles: integer := 3; -- for acram_emu min 3 is required to work
     C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (0 to disable, power of 2, MAX 128)
 
-    C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
     -- warning: 2K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
     -- no errors for 4K or 8K
     C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
@@ -257,7 +256,6 @@ begin
       C_bram_size => C_bram_size,
       C_acram => C_acram,
       C_acram_wait_cycles => C_acram_wait_cycles,
-      C_icache_expire => C_icache_expire,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_cached_addr_bits,
