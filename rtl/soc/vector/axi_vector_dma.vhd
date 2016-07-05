@@ -113,13 +113,11 @@ architecture arch of axi_vector_dma is
   constant C_burst_bits_pad: std_logic_vector(7-C_burst_max_bits downto 0) := (others => '0');
   signal S_burst_remaining: std_logic_vector(C_burst_max_bits-1 downto 0) := (others => '0'); -- 1 less than actual value
 begin
-  -- from current length remaining, calculate the burst
-  S_burst_remaining <= R_length_remaining(C_burst_max_bits-1 downto 0);
-
   process(clk)
   begin
     if rising_edge(clk) then
-      if R_state = C_state_idle then
+      case R_state is
+      when C_state_idle =>
         if request='1' then
           R_ram_addr <= addr;
           R_bram_addr <= (others => '0');
@@ -129,23 +127,20 @@ begin
           R_done <= '0';
           R_state <= C_state_wait_ready_to_read;
         end if;
-      end if;
 
-      if R_state = C_state_wait_ready_to_read then
+      when C_state_wait_ready_to_read =>
         if axi_in.arready='1' then
           R_arvalid <= '1'; -- activate address request
           R_state <= C_state_wait_read_addr_ack;
         end if;
-      end if; -- end phase wait read addr ack
 
-      if R_state = C_state_wait_read_addr_ack then
+      when C_state_wait_read_addr_ack =>
         R_arvalid <= '0'; -- de-activate address request
         if axi_in.arready='1' then
           R_state <= C_state_wait_read_data_ack;
         end if;
-      end if; -- end phase wait read addr ack
 
-      if R_state = C_state_wait_read_data_ack then
+      when C_state_wait_read_data_ack =>
         if axi_in.rvalid='1' then
           if R_header_mode='1' then
             -- header will be indexed downwards 2,1,0 using decrementing R_length_remaining
@@ -210,16 +205,14 @@ begin
             -- continue with bursting data in the same state
           end if; -- end R_burst_remaining
         end if; -- end axi_in.rvalid='1'
-      end if; -- end phase wait read data ack
 
-      if R_state = C_state_wait_ready_to_write then
+      when C_state_wait_ready_to_write =>
         if axi_in.awready = '1' then
           R_awvalid <= '1'; -- activate address request
           R_state <= C_state_wait_write_addr_ack;
         end if;
-      end if; -- end phase wait write addr ack
 
-      if R_state = C_state_wait_write_addr_ack then
+      when C_state_wait_write_addr_ack =>
         R_awvalid <= '0'; -- de-activate address request
         if axi_in.awready = '1' then
           R_wvalid <= '1'; -- activate data valid, try if this could be activated on earlier phase
@@ -227,15 +220,14 @@ begin
           R_wdata <= bram_rdata;
           R_bram_addr <= R_bram_addr+1; -- early prepare bram read address for next data
         end if;
-      end if; -- end phase wait write addr ack
 
-      if R_state = C_state_wait_write_data_ack then
+      when C_state_wait_write_data_ack =>
         if axi_in.wready='1' then
           -- end of write cycle
           if S_burst_remaining = 0 then
             R_wvalid <= '0';
             if R_bram_addr(C_vaddr_bits) = '1' -- safety measure
-            or R_length_remaining = 0
+            or R_length_remaining(C_vaddr_bits-1 downto C_burst_max_bits) = 0 -- same as R_length_remaining = 0
             then
               if R_header(C_header_next) = 0 then
                 -- no next header (null pointer)
@@ -266,9 +258,12 @@ begin
             -- continue with bursting data in the same state
           end if; -- end else R_burst_remaining = 0
         end if; -- end axi_in.wready='1'
-      end if; -- end phase wait write data ack
+      end case;
     end if; -- rising edge
   end process;
+
+  -- from current length remaining, calculate the burst
+  S_burst_remaining <= R_length_remaining(C_burst_max_bits-1 downto 0);
 
   -- read from RAM signaling
   axi_out.arid    <= "0";    -- not used
