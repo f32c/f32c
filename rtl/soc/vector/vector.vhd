@@ -372,7 +372,7 @@ begin
             R_vector_length(i) <= S_VI(i); -- after function done, store S_VI index of the vector into the register
           else
             if S_io_done_interrupt='1' and R_io_load_select(i)='1' and R_io_store_mode='0' then
-              R_vector_length(i) <= S_io_bram_addr; -- bram addr stops at true length (not length-1)
+              R_vector_length(i) <= S_io_bram_addr; -- bram addr should stop at true length (but it stops at length+1)
             end if;
           end if;
         end if;
