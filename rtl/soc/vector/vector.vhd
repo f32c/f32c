@@ -82,7 +82,7 @@ architecture arch of vector is
     -- Register to track length of vector. So shorter than max length vectors
     -- can be calculated faster
     type T_vector_length is array (C_vectors-1 downto 0) of std_logic_vector(C_vaddr_bits downto 0);
-    signal R_vector_length: T_vector_length;
+    signal R_vector_length: T_vector_length; -- true length-1, 0 -> 1 element, 1 -> 2 elements ...
 
     -- *** RAM I/O ***
     signal S_io_bram_we: std_logic;
@@ -343,7 +343,7 @@ begin
             R_vector_length(i) <= S_VI(i); -- after function done, store S_VI index of the vector into the register
           else
             if S_io_done_interrupt='1' and R_io_load_select(i)='1' and R_io_store_mode='0' then
-              R_vector_length(i) <= S_io_bram_addr; -- bram addr should stop at true length (but it stops at length+1)
+              R_vector_length(i) <= S_io_bram_addr - 1; -- bram addr stops at true length, vector works with length-1
             end if;
           end if;
         end if;
@@ -366,10 +366,11 @@ begin
             R_function_vi(2*i+1) <= conv_std_logic_vector(-C_function_propagation_delay(i), C_vaddr_bits+1);
           else
             if R_function_busy(i)='1' then
-              R_function_vi(2*i) <= R_function_vi(2*i) + 1; -- arg counter
-              R_function_vi(2*i+1) <= R_function_vi(2*i+1) + 1; -- result counter
               if S_function_last_element(i)='1' then
                 R_function_busy(i) <= '0';
+              else
+                R_function_vi(2*i) <= R_function_vi(2*i) + 1; -- arg counter
+                R_function_vi(2*i+1) <= R_function_vi(2*i+1) + 1; -- result counter
               end if;
             end if;
           end if;
