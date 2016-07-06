@@ -15,8 +15,6 @@ use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 --use ieee.numeric_std.all;
 
-use work.axi_pack.all;
-
 entity vector is
   generic
   (
@@ -71,7 +69,7 @@ architecture arch of vector is
 
     -- *** VECTORS ***
     -- progress counter register array for all vectors
-    type T_vaddr is array (C_vectors-1 downto 0) of std_logic_vector(C_vaddr_bits-1 downto 0);
+    type T_vaddr is array (C_vectors-1 downto 0) of std_logic_vector(C_vaddr_bits downto 0);
     signal S_VI: T_vaddr; -- VI-internal counter register for functional units
     --signal R_VI_increment, R_VI_reset: std_logic_vector(C_vectors-1 downto 0); -- bit mask which VI do increment
     type T_vdata is array (C_vectors-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
@@ -448,7 +446,7 @@ begin
     G_listeners:
     for i in 0 to C_vectors-1 generate
       S_VRES(i) <= R_function_result(conv_integer(R_vector_indexed_by(i)(C_functions_bits downto 1)));
-      S_VI(i) <= R_function_vi(conv_integer(R_vector_indexed_by(i)))(C_vaddr_bits-1 downto 0);
+      S_VI(i) <= R_function_vi(conv_integer(R_vector_indexed_by(i)));
       -- if vector-indexing function is busy
       -- and if vector is indexed by result register (odd number, LSB=1)
       -- then set "write enable" to the vector register
@@ -478,7 +476,7 @@ begin
         we_a => S_io_bram_we_select(i),
         we_b => S_vector_we(i), -- vector write enable from functional unit
         addr_a => S_io_bram_addr(C_vaddr_bits-1 downto 0), -- external address (RAM I/O)
-        addr_b => S_VI(i), -- internal address from functional unit
+        addr_b => S_VI(i)(C_vaddr_bits-1 downto 0), -- internal address from functional unit
         data_in_a => S_io_bram_wdata,
         data_in_b => S_VRES(i), -- result from functional unit
         data_out_a => S_vector_store(i),
