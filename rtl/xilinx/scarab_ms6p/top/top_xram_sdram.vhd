@@ -45,7 +45,7 @@ entity scarab_xram_sdram is
     C_debug: boolean := false;
 
     -- Main clock: 50/81/83/96/100/111/112/125
-    C_clk_freq: integer := 100;
+    C_clk_freq: integer := 83;
     C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
@@ -60,7 +60,7 @@ entity scarab_xram_sdram is
     -- (fixme: DDR video output mode doesn't work on scarab)
     C_dvid_ddr: boolean := false;
 
-    C_vgahdmi: boolean := true;
+    C_vgahdmi: boolean := false;
     -- insert cache between RAM and compositing2 video fifo
     C_vgahdmi_cache_size: integer := 8; -- KB size 0:disable 2,4,8,16,32:enable
     C_vgahdmi_cache_use_i: boolean := true; -- use I-data caching style, faster
@@ -74,7 +74,7 @@ entity scarab_xram_sdram is
     -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
     C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480                   
       C_vgatext_bits: integer := 4;   -- 64 possible colors

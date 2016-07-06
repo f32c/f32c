@@ -104,7 +104,7 @@ assign exp_tmp5 = op_div ? (exp_tmp4+1) : (exp_tmp4-1);
  
  
 always@(posedge clk)
-	exp_out <= #1 op_div ? exp_out_div : exp_out_mul;
+	exp_out <= op_div ? exp_out_div : exp_out_mul;
  
 assign exp_out_div = (expa_dn | expb_dn) ? (co2 ? exp_tmp5 : exp_tmp3 ) : co2 ? exp_tmp4 : exp_tmp2;
 assign exp_out_mul = exp_ovf_d[1] ? exp_out_a : (expa_dn | expb_dn) ? exp_tmp3 : exp_tmp2;
@@ -113,7 +113,7 @@ assign exp_ovf_d[0] = op_div ? (expa[7] & !expb[7]) : (co2 & expa[7] & expb[7]);
 assign exp_ovf_d[1] = op_div ? co2                  : ((!expa[7] & !expb[7] & exp_tmp2[7]) | co2);
  
 always @(posedge clk)
-	exp_ovf <= #1 exp_ovf_d;
+	exp_ovf <= exp_ovf_d;
  
 assign underflow_d[0] =	(exp_tmp1 < 8'h7f) & !co1 & !(opa_00 | opb_00 | expa_dn | expb_dn);
 assign underflow_d[1] =	((expa[7] | expb[7]) & !opa_00 & !opb_00) |
@@ -121,10 +121,10 @@ assign underflow_d[1] =	((expa[7] | expb[7]) & !opa_00 & !opb_00) |
 assign underflow_d[2] =	 !opa_00 & !opb_00 & (exp_tmp1 == 8'h7f);
  
 always @(posedge clk)
-	underflow <= #1 underflow_d;
+	underflow <= underflow_d;
  
 always @(posedge clk)
-	inf <= #1 op_div ? (expb_dn & !expa[7]) : ({co1,exp_tmp1} > 9'h17e) ;
+	inf <= op_div ? (expb_dn & !expa[7]) : ({co1,exp_tmp1} > 9'h17e) ;
  
  
 ////////////////////////////////////////////////////////////////////////
@@ -142,9 +142,9 @@ always @(signa or signb)
    endcase
  
 always @(posedge clk)
-	sign <= #1 sign_d;
+	sign <= sign_d;
  
 always @(posedge clk)
-	sign_exe <= #1 signa & signb;
+	sign_exe <= signa & signb;
  
 endmodule
