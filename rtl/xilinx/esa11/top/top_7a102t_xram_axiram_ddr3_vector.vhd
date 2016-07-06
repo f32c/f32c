@@ -65,6 +65,7 @@ entity esa11_xram_axiram_ddr3 is
         C3_MEM_BANKADDR_WIDTH : integer := 3;
         
         C_vector: boolean := true; -- vector processor unit
+        C_vector_axi: boolean := true; -- vector processor unit
 
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
 
@@ -371,6 +372,7 @@ begin
       C_sio => C_sio,
       C_spi => C_spi,
       C_vector => C_vector,
+      C_vector_axi => C_vector_axi,
       --C_ps2 => C_ps2,
       C_dvid_ddr => C_dvid_ddr,
       --

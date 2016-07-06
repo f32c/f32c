@@ -199,7 +199,7 @@ generic (
     C_vector: boolean := false; -- vector processor
     C_vector_vaddr_bits: integer := 11; -- vector size, should match FPGA internal BRAM block
     C_vector_vdata_bits: integer := 32; -- don't touch, vector data bus width
-    C_vector_axi: boolean := true; -- vector processor bus: true:AXI, false:f32c RAM
+    C_vector_axi: boolean := false; -- vector processor bus: true:AXI, false:f32c RAM
     C_timer: boolean := true
 );
 port (
@@ -301,7 +301,8 @@ architecture Behavioral of glue_xram is
     -- not yet working on ULX2S
     constant refresh_port: integer := 3;
     constant pcm_port: integer := 4;
-    constant C_xram_ports: integer := 5;
+    constant vector_port: integer := 5;
+    constant C_xram_ports: integer := 6;
 
     -- io base
     type T_iomap_range is array(0 to 1) of std_logic_vector(15 downto 0);
@@ -456,6 +457,13 @@ architecture Behavioral of glue_xram is
     signal S_vector_io_bram_addr: std_logic_vector(C_vector_vaddr_bits downto 0);
     signal S_vector_io_bram_wdata: std_logic_vector(C_vector_vdata_bits-1 downto 0);
     signal S_vector_io_bram_rdata: std_logic_vector(C_vector_vdata_bits-1 downto 0);
+    -- vector to f32c ram bus port interface
+    signal S_vector_ram_addr_strobe: std_logic;
+    signal S_vector_ram_addr: std_logic_vector(29 downto 2);
+    signal S_vector_ram_we: std_logic;
+    signal S_vector_ram_data_ready: std_logic;
+    signal S_vector_ram_wdata: std_logic_vector(31 downto 0);
+    signal S_vector_ram_rdata: std_logic_vector(31 downto 0);
 
     -- GPIO
     constant iomap_gpio: T_iomap_range := (x"F800", x"F87F");
@@ -633,13 +641,22 @@ begin
     refresh_data_ready <= xram_ready(refresh_port);
     end generate;
     -- port 4: PCM audio DMA
-    G_pcm_sdram: if C_pcm generate
+    G_pcm_xram: if C_pcm generate
         to_xram(pcm_port).addr_strobe <= pcm_addr_strobe;
         to_xram(pcm_port).write <= '0';
         to_xram(pcm_port).byte_sel <= "1111";
         to_xram(pcm_port).addr <= pcm_addr;
         to_xram(pcm_port).data_in <= (others => '-');
         pcm_data_ready <= xram_ready(pcm_port);
+    end generate;
+    -- port 5: Vector FPU DMA
+    G_vector_xram: if C_vector and (not C_vector_axi) generate
+        to_xram(vector_port).addr_strobe <= S_vector_ram_addr_strobe;
+        to_xram(vector_port).write <= S_vector_ram_we;
+        to_xram(vector_port).byte_sel <= "1111";
+        to_xram(vector_port).addr <= S_vector_ram_addr;
+        to_xram(vector_port).data_in <= S_vector_ram_wdata;
+        S_vector_ram_data_ready <= xram_ready(vector_port);
     end generate;
     end generate; -- G_xram
     
@@ -1085,6 +1102,42 @@ begin
           -- axi interface (external)
           axi_in => vector_axi_in, axi_out => vector_axi_out
         );
+      end generate;
+
+      G_vector_xram:
+      if not C_vector_axi generate
+        I_xram_vector_dma:
+        entity work.f32c_vector_dma
+        generic map
+        (
+          C_vaddr_bits => C_vector_vaddr_bits, -- number of bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
+          C_vdata_bits => C_vector_vdata_bits  -- number of data bits
+        )
+        port map
+        (
+          clk => clk,
+
+          -- vector processor control from mmio
+          store_mode => S_vector_io_store_mode, -- '0' load (read from RAM), '1' store (write to RAM)
+          addr => S_vector_io_addr, -- pointer to vector struct in RAM
+          request => S_vector_io_request, -- 1-cycle pulse to start a I/O request
+          done => S_vector_io_done, -- goes to 0 after accepting I/O request, returns to 1 when done
+
+          -- bram interface
+          bram_we => S_vector_io_bram_we, -- I/O module outputs we signal
+          bram_addr => S_vector_io_bram_addr, -- I/O module outputs addr
+          bram_wdata => S_vector_io_bram_wdata, -- I/O module outputs wdata
+          bram_rdata => S_vector_io_bram_rdata, -- I/O module inputs rdata
+
+          -- f32c interface (external)
+          addr_strobe => S_vector_ram_addr_strobe,
+          addr_out => S_vector_ram_addr,
+          data_ready => S_vector_ram_data_ready,
+          data_write => S_vector_ram_we,
+          data_in => S_vector_ram_rdata,
+          data_out => S_vector_ram_wdata
+        );
+        S_vector_ram_rdata <= from_xram;
       end generate;
 
       with conv_integer(io_addr(11 downto 4)) select
