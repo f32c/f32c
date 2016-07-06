@@ -28,7 +28,11 @@ MK_INCLUDES += -I${BASE_DIR}include
 MK_STDINC = -nostdinc -include sys/param.h
 
 # Libs
-LIBDIR = ${BASE_DIR}lib/${ARCH}el
+ifeq ($(ARCH),mips)
+ LIBDIR = ${BASE_DIR}lib/${ARCH}el
+else
+ LIBDIR = ${BASE_DIR}lib/${ARCH}
+endif
 
 ifndef WITHOUT_LIBS
  ifdef WITHOUT_FLOAT
