@@ -49,7 +49,7 @@ Status of the vector processor:
       except: a = a+b which will not work
     * multiple operations can run parallel
       provided they use different registers and different pipeline functional units
-      example: a = b+c, d = e*f can run parallel
+      example: a = b+c, d = e/f can run parallel
     * interrupt flag for each vector set when done
     * works at 100 MHz clock rate on artix-7
     * produces 1 result per 1 clock cycle
