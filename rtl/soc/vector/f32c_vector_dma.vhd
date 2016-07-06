@@ -242,6 +242,7 @@ begin
   addr_out <= R_ram_addr;
   addr_strobe <= R_addr_strobe;
   data_write <= '1' when R_state = C_state_wait_write_data_ack else '0';
+  data_out <= R_wdata;
   bram_wdata <= data_in;
   bram_we <= data_ready and (not R_store_mode) and (not R_header_mode); -- prevent write during header read and stray rvalid in store mode
   bram_addr <= R_bram_addr;
