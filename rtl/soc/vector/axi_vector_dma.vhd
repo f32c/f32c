@@ -61,11 +61,10 @@ entity axi_vector_dma is
     clk: in std_logic;
 
     -- vector processor control
-    addr: in std_logic_vector(29 downto 2) := (others => '0'); -- vector struct address in RAM
-    length: in std_logic_vector(C_vaddr_bits-1 downto 0) := (others => '1'); -- vector length 1 less then actual value (0 -> length 1)
-    request: in std_logic := '0'; -- pulse '1' during 1 clock cycle to start
-    store_mode: in std_logic := '0'; -- '1' write to RAM (vector store mode), '0' read from RAM (vector load mode)
-    done: out std_logic := '0';
+    addr: in std_logic_vector(29 downto 2); -- vector header struct address in RAM
+    request: in std_logic; -- pulse '1' during 1 clock cycle to start
+    store_mode: in std_logic; -- '1' write to RAM (vector store mode), '0' read from RAM (vector load mode)
+    done: out std_logic; -- '1' when done
 
     -- bram interface
     bram_we: out std_logic := '0'; -- bram write enable
