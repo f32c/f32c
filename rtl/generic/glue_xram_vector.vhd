@@ -197,6 +197,9 @@ generic (
       C_pid_pwm_bits: integer range 11 to 32 := 12; -- PWM output frequency f_clk/2^pwmbits (min 11 => 40kHz @ 81.25MHz)
       C_pid_fp: integer range 0 to 26 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
     C_vector: boolean := false; -- vector processor
+    C_vector_vaddr_bits: integer := 11; -- vector size, should match FPGA internal BRAM block
+    C_vector_vdata_bits: integer := 32; -- don't touch, vector data bus width
+    C_vector_axi: boolean := true; -- vector processor bus: true:AXI, false:f32c RAM
     C_timer: boolean := true
 );
 port (
@@ -445,6 +448,14 @@ architecture Behavioral of glue_xram is
     signal from_vector: std_logic_vector(31 downto 0);
     signal vector_ce: std_logic;
     signal vector_intr: std_logic;
+    signal S_vector_io_store_mode: std_logic;
+    signal S_vector_io_addr: std_logic_vector(29 downto 2);
+    signal S_vector_io_request: std_logic;
+    signal S_vector_io_done: std_logic;
+    signal S_vector_io_bram_we: std_logic;
+    signal S_vector_io_bram_addr: std_logic_vector(C_vector_vaddr_bits downto 0);
+    signal S_vector_io_bram_wdata: std_logic_vector(C_vector_vdata_bits-1 downto 0);
+    signal S_vector_io_bram_rdata: std_logic_vector(C_vector_vdata_bits-1 downto 0);
 
     -- GPIO
     constant iomap_gpio: T_iomap_range := (x"F800", x"F87F");
@@ -1024,21 +1035,61 @@ begin
     -- Vector processor
     G_vector:
     if C_vector generate
-    vector: entity work.vector
-    --generic map (
-    --  C_pres => 10,
-    --  C_bits => 12
-    --)
-    port map (
-      clk => clk, ce => vector_ce, addr => dmem_addr(4 downto 2),
-      bus_write => dmem_write, byte_sel => dmem_byte_sel,
-      bus_in => cpu_to_dmem, bus_out => from_vector,
-      axi_in => vector_axi_in, axi_out => vector_axi_out,
-      vector_irq => vector_intr
-    );
-    with conv_integer(io_addr(11 downto 4)) select
-      vector_ce <= io_addr_strobe when iomap_from(iomap_vector, iomap_range) to iomap_to(iomap_vector, iomap_range),
-                             '0' when others;
+      vector: entity work.vector
+      generic map (
+        C_vaddr_bits => C_vector_vaddr_bits, -- number of bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
+        C_vdata_bits => C_vector_vdata_bits  -- number of data bits
+      )
+      port map (
+        clk => clk, ce => vector_ce, addr => dmem_addr(4 downto 2),
+        -- f32c CPU interface
+        bus_write => dmem_write, byte_sel => dmem_byte_sel,
+        bus_in => cpu_to_dmem, bus_out => from_vector,
+        -- vector I/O module interface
+        io_store_mode => S_vector_io_store_mode,
+        io_addr => S_vector_io_addr,
+        io_request => S_vector_io_request,
+        io_done => S_vector_io_done,
+        io_bram_we => S_vector_io_bram_we,
+        io_bram_addr => S_vector_io_bram_addr,
+        io_bram_wdata => S_vector_io_bram_wdata,
+        io_bram_rdata => S_vector_io_bram_rdata,
+        vector_irq => vector_intr
+      );
+
+      G_vector_axi:
+      if C_vector_axi generate
+        I_axi_vector_dma:
+        entity work.axi_vector_dma
+        generic map
+        (
+          C_vaddr_bits => C_vector_vaddr_bits, -- number of bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
+          C_vdata_bits => C_vector_vdata_bits  -- number of data bits
+        )
+        port map
+        (
+          clk => clk,
+
+          -- vector processor control from mmio
+          store_mode => S_vector_io_store_mode, -- '0' load (read from RAM), '1' store (write to RAM)
+          addr => S_vector_io_addr, -- pointer to vector struct in RAM
+          request => S_vector_io_request, -- 1-cycle pulse to start a I/O request
+          done => S_vector_io_done, -- goes to 0 after accepting I/O request, returns to 1 when done
+
+          -- bram interface
+          bram_we => S_vector_io_bram_we, -- I/O module outputs we signal
+          bram_addr => S_vector_io_bram_addr, -- I/O module outputs addr
+          bram_wdata => S_vector_io_bram_wdata, -- I/O module outputs wdata
+          bram_rdata => S_vector_io_bram_rdata, -- I/O module inputs rdata
+
+          -- axi interface (external)
+          axi_in => vector_axi_in, axi_out => vector_axi_out
+        );
+      end generate;
+
+      with conv_integer(io_addr(11 downto 4)) select
+        vector_ce <= io_addr_strobe when iomap_from(iomap_vector, iomap_range) to iomap_to(iomap_vector, iomap_range),
+                               '0' when others;
     end generate;
 
     -- TV PAL composite signal generation

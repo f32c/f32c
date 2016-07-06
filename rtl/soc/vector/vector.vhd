@@ -21,8 +21,9 @@ entity vector is
   generic
   (
     C_addr_bits: integer := 3; -- don't touch: number of address bits for the registers
-    C_axi: boolean := true; -- false: f32c bus for vector I/O, true: AXI bus for vector I/O
-    C_bits: integer range 2 to 32 := 32  -- number of bits in each mmio register
+    C_vaddr_bits: integer range 2 to 16 := 11; -- number of address bits for BRAM vector
+    C_vdata_bits: integer range 32 to 64 := 32; -- number of data bits for each vector
+    C_bits: integer range 2 to 32 := 32  -- don't touch, number of bits in each mmio register
   );
   port
   (
@@ -32,8 +33,18 @@ entity vector is
     byte_sel: in std_logic_vector(3 downto 0);
     bus_in: in std_logic_vector(31 downto 0);
     bus_out: out std_logic_vector(31 downto 0);
-    axi_in: in T_axi_miso;
-    axi_out: out T_axi_mosi;
+
+    -- the vector I/O module interface
+    io_store_mode: out std_logic;
+    io_addr: out std_logic_vector(29 downto 2);
+    io_request: out std_logic;
+    io_done: in std_logic;
+    io_bram_we: in std_logic;
+    io_bram_addr: in std_logic_vector(C_vaddr_bits downto 0);
+    io_bram_wdata: in std_logic_vector(C_vdata_bits-1 downto 0);
+    io_bram_rdata: out std_logic_vector(C_vdata_bits-1 downto 0);
+
+    -- f32c interrupt
     vector_irq: out std_logic
   );
 end vector;
@@ -43,8 +54,6 @@ architecture arch of vector is
 
     constant C_vectors: integer range 2 to 16 := 8; -- total number of vector registers (BRAM blocks)
     constant C_vectors_bits: integer range 1 to 4 := 3; -- number of bits to select the vector register
-    constant C_vaddr_bits: integer range 2 to 16 := 11; -- number of address bits for BRAM vector
-    constant C_vdata_bits: integer range 32 to 64 := 32; -- number of data bits for each vector
 
     -- normal registers
     type T_mmio_regs is array (C_mmio_registers-1 downto 0) of std_logic_vector(C_bits-1 downto 0);
@@ -324,42 +333,6 @@ begin
     end process;
 
 
-    -- *** I/O DMA MODULE ***
-    -- load/store asymmetry:
-    -- vector load: (1-to-many) all bus lines are connected to RAM data
-    --              all vector registers can be loaded with the same RAM data
-    -- vector store: (1-to-1) only one vector can be stored at a time
-    G_axi_dma:
-    if C_axi generate
-      I_axi_vector_dma:
-      entity work.axi_vector_dma
-      generic map
-      (
-        C_vaddr_bits => C_vaddr_bits, -- number of bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
-        C_vdata_bits => C_vdata_bits  -- number of data bits
-      )
-      port map
-      (
-        clk => clk,
-
-        -- vector processor control from mmio
-        store_mode => R_io_store_mode, -- '0' load (read from RAM), '1' store (write to RAM)
-        addr => R(C_vaddress)(29 downto 2), -- pointer to vector struct in RAM
-        request => R_io_request, -- 1-cycle pulse to start a I/O request
-        done => S_io_done, -- goes to 0 after accepting I/O request, returns to 1 when done
-
-        -- bram interface
-        bram_we => S_io_bram_we,
-        bram_addr => S_io_bram_addr,
-        bram_wdata => S_io_bram_wdata,
-        bram_rdata => S_io_bram_rdata,
-
-        -- axi interface
-        axi_in => axi_in, axi_out => axi_out
-      );
-    end generate;
-
-
     -- *** VECTOR LENGTH ***
     -- 1. set result length when function is done ("S_vdone_interrupt")
     -- 2. set arg length when I/O vector load operation is done
@@ -515,6 +488,20 @@ begin
     end generate;
     S_io_bram_rdata <= S_vector_store(conv_integer(R_io_store_select)); -- multiplexer
 
+    -- *** I/O DMA MODULE ***
+    -- load/store asymmetry:
+    -- vector load: (1-to-many) all bus lines are connected to RAM data
+    --              all vector registers can be loaded with the same RAM data
+    -- vector store: (1-to-1) only one vector can be stored at a time
+    -- external connection to I/O module
+    io_store_mode <= R_io_store_mode; -- '0' load (read from RAM), '1' store (write to RAM)
+    io_addr <= R(C_vaddress)(29 downto 2); -- pointer to vector struct in RAM
+    io_request <= R_io_request; -- 1-cycle pulse to start a I/O request
+    S_io_done <= io_done; -- goes to 0 after accepting I/O request, returns to 1 when done
+    S_io_bram_we <= io_bram_we;
+    S_io_bram_addr <= io_bram_addr;
+    S_io_bram_wdata <= io_bram_wdata;
+    io_bram_rdata <= S_io_bram_rdata;
 
 end;
 
