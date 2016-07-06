@@ -45,11 +45,10 @@ entity scarab_xram_sdram is
     C_debug: boolean := false;
 
     -- Main clock: 50/81/83/96/100/111/112/125
-    C_clk_freq: integer := 100;
+    C_clk_freq: integer := 83;
     C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
-    C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
     C_icache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
     C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
     C_cached_addr_bits: integer := 25; -- number of lower RAM address bits 2^25 -> 32MB to be cached
@@ -57,6 +56,7 @@ entity scarab_xram_sdram is
     C_sdram: boolean := true;
 
     C_vector: boolean := true; -- vector processor unit (wip)
+    C_vector_axi: boolean := false; -- vector processor bus type (false: normal f32c)
 
     -- C_dvid_ddr = false: clk_pixel_shift = 250MHz
     -- C_dvid_ddr = true: clk_pixel_shift = 125MHz
@@ -318,7 +318,6 @@ begin
       C_arch => C_arch,
       C_clk_freq => C_clk_freq,
       C_bram_size => C_bram_size,
-      C_icache_expire => C_icache_expire,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_cached_addr_bits,
@@ -397,6 +396,7 @@ begin
       C_pid_precision => C_pid_precision, -- fixed point PID precision
       C_pid_pwm_bits => C_pid_pwm_bits, -- clock divider bits define PWM output frequency
       C_vector => C_vector,
+      C_vector_axi => C_vector_axi,
       -- CPU debugging with serial port
       C_debug => C_debug
     )

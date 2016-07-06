@@ -16,6 +16,12 @@ vfiles = \
 ../../../../soc/pid/ctrlpid_v.v \
 ../../../../soc/pid/simotor_v.v \
 ../../../../soc/pid/rotary_decoder_v.v \
+../../../../soc/vector/fpu/fpu.v \
+../../../../soc/vector/fpu/except.v \
+../../../../soc/vector/fpu/pre_norm.v \
+../../../../soc/vector/fpu/pre_norm_fmul.v \
+../../../../soc/vector/fpu/post_norm.v \
+../../../../soc/vector/fpu/primitives.v \
 
 vhdfiles = \
 ../../../../xilinx/scarab_ms6p/top/top_xram_sdram_vector.vhd \
@@ -85,6 +91,9 @@ vhdfiles = \
 ../../../../soc/fm/message.vhd \
 ../../../../soc/vector/vector.vhd \
 ../../../../soc/vector/axi_vector_dma.vhd \
+../../../../soc/vector/f32c_vector_dma.vhd \
+../../../../soc/vector/fpu/fpu_vhd.vhd \
+../../../../soc/vector/fpu/float_divide_goldschmidt.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
 ../../../../soc/vgahdmi/video_cache_i.vhd \
