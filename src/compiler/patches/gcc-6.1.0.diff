@@ -241,7 +241,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.h gcc/config/mips/mips.h
     ? TARGET_LLSC && !TARGET_MIPS16	\
 diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
 --- ../org/gcc-6.1.0/gcc/config/mips/mips.md	2016-01-04 15:30:50.000000000 +0100
-+++ gcc/config/mips/mips.md	2016-04-28 10:33:29.428426000 +0200
++++ gcc/config/mips/mips.md	2016-07-06 23:11:14.558038000 +0200
 @@ -35,6 +35,7 @@
    74kf2_1
    74kf1_1
@@ -520,6 +520,15 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    if (ISA_HAS_DSP_MULT)
      return "msub<u>\t%q0,%1,%2";
+@@ -2231,7 +2232,7 @@
+ 	  (mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+ 		   (any_extend:DI (match_operand:SI 2 "register_operand")))
+ 	  (const_int 32))))]
+-  ""
++  "!TARGET_SWMUL"
+ {
+   if (ISA_HAS_MULHI)
+     emit_insn (gen_<su>mulsi3_highpart_mulhi_internal (operands[0],
 @@ -2256,7 +2257,7 @@
  	  (mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
  		   (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
@@ -529,6 +538,24 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "muh<u>\t%0,%1,%2"
    [(set_attr "type" "imul3nc")
     (set_attr "mode" "SI")])
+@@ -2269,7 +2270,7 @@
+ 		   (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
+ 	  (const_int 32))))
+    (clobber (match_scratch:SI 3 "=l"))]
+-  "ISA_HAS_MULT && !ISA_HAS_MULHI && !TARGET_MIPS16"
++  "ISA_HAS_MULT && !ISA_HAS_MULHI && !TARGET_MIPS16 && !TARGET_SWMUL"
+   { return TARGET_FIX_R4000 ? "mult<u>\t%1,%2\n\tmfhi\t%0" : "#"; }
+   "&& reload_completed && !TARGET_FIX_R4000"
+   [(const_int 0)]
+@@ -2289,7 +2290,7 @@
+ 	  (mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+ 		   (any_extend:DI (match_operand:SI 2 "register_operand")))
+ 	  (const_int 32))))]
+-  ""
++  "!TARGET_SWMUL"
+ {
+   rtx hilo;
+ 
 @@ -2317,7 +2318,7 @@
  	   (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
  	  (const_int 32))))
@@ -798,7 +825,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
  mdsp
  Target Report Var(TARGET_DSP)
  Use MIPS-DSP instructions.
---- /dev/null	2016-04-28 10:55:00.000000000 +0200
+--- /dev/null	2016-07-06 23:33:00.000000000 +0200
 +++ gcc/config/mips/f32c.md	2016-04-28 10:33:29.430117000 +0200
 @@ -0,0 +1,96 @@
 +;;
