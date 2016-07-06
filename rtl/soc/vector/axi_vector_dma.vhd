@@ -310,18 +310,13 @@ begin
 end;
 
 -- TODO
--- [ ] axi is probably not well initialized, (reset handling missing?)
---     sometimes after first write burst vector axi port stops working
---     other axi ports (cpu, video) keep working
---     if this happens, reload the bitstream and try again
 -- [ ] vector store may be signaled as done too early
 --     by bram_addr MSB bit while axi is still
 --     transferring last word.
--- [ ] first burst maybe shorter, use bit subset of the remaining
--- [ ] R_done could be set 1 cycle earlier? as MSB in R_bram_addr(C_vaddr_bits)
--- [*] untested input value of vector length for store mode
--- [*] untested linked list support
--- [*] untested burst length power of 2, both read/write bursts equal
--- [*] untested support boundary burst conditions
--- [*] untested only R_length_remaining should be counted down, the burst length can be directly
+-- [ ] R_done could be set 1 cycle earlier?
+-- [x] first burst maybe shorter, use bit subset of the remaining
+-- [x] linked list support
+-- [x] burst length power of 2, both read/write bursts equal
+-- [x] supports boundary burst conditions
+-- [x] only R_length_remaining is counted down, the burst length can be directly
 --     derived as bit subset of length
