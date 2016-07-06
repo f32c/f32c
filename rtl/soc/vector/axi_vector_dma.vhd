@@ -216,8 +216,8 @@ begin
       when C_state_wait_write_addr_ack =>
         R_awvalid <= '0'; -- de-activate address request
         if axi_in.awready = '1' then
+          R_bram_addr <= R_bram_addr + 1; -- early prepare bram read address for next data
           R_wdata <= bram_rdata;
-          R_bram_addr <= R_bram_addr+1; -- early prepare bram read address for next data
           R_wvalid <= '1'; -- activate data valid, try if this could be activated on earlier phase
           R_state <= C_state_wait_write_data_ack;
         end if;
@@ -256,10 +256,10 @@ begin
               R_state <= C_state_wait_ready_to_write;
             end if;
           else -- S_burst_remaining > 0
+            R_bram_addr <= R_bram_addr + 1; -- increment source address
             R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next bursts block
             R_length_remaining <= R_length_remaining - 1;
             R_wdata <= bram_rdata;
-            R_bram_addr <= R_bram_addr + 1; -- increment source address
             -- continue with bursting data in the same state
           end if; -- end else R_burst_remaining = 0
         end if; -- end axi_in.wready='1'
