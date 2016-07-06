@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Product Version: Vivado v2016.1 (64-bit)              -->
+<!-- Product Version: Vivado v2016.2 (64-bit)              -->
 <!--                                                         -->
 <!-- Copyright 1986-2016 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="12" Path="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/esa11/7a35i_xram_axiram_ddr3_vector/esa11_7a35i_xram_axiram_ddr3.xpr">
+<Project Version="7" Minor="14" Path="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/esa11/7a35i_xram_axiram_ddr3_vector/esa11_7a35i_xram_axiram_ddr3.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="d9ae0350734544abb1e2d9bc160aee96"/>
@@ -33,13 +33,13 @@
     <Option Name="WTVcsLaunchSim" Val="0"/>
     <Option Name="WTRivieraLaunchSim" Val="0"/>
     <Option Name="WTActivehdlLaunchSim" Val="0"/>
-    <Option Name="WTXSimExportSim" Val="15"/>
-    <Option Name="WTModelSimExportSim" Val="15"/>
-    <Option Name="WTQuestaExportSim" Val="15"/>
-    <Option Name="WTIesExportSim" Val="15"/>
-    <Option Name="WTVcsExportSim" Val="15"/>
-    <Option Name="WTRivieraExportSim" Val="15"/>
-    <Option Name="WTActivehdlExportSim" Val="15"/>
+    <Option Name="WTXSimExportSim" Val="16"/>
+    <Option Name="WTModelSimExportSim" Val="16"/>
+    <Option Name="WTQuestaExportSim" Val="16"/>
+    <Option Name="WTIesExportSim" Val="16"/>
+    <Option Name="WTVcsExportSim" Val="16"/>
+    <Option Name="WTRivieraExportSim" Val="16"/>
+    <Option Name="WTActivehdlExportSim" Val="16"/>
     <Option Name="GenerateIPUpgradeLog" Val="TRUE"/>
   </Configuration>
   <FileSets Version="1" Minor="31">
@@ -60,6 +60,41 @@
       <File Path="$PPRDIR/../../../../cpu/defs_f32c.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/vector/fpu/primitives.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/vector/fpu/except.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/vector/fpu/post_norm.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/vector/fpu/pre_norm_fmul.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/vector/fpu/pre_norm.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
@@ -134,6 +169,13 @@
       <File Path="$PPRDIR/../../../../soc/axi_pack.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/vector/fpu/fpu.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../../../../soc/pid/simotor.vhd">
@@ -249,6 +291,18 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../../../soc/vector/fpu/fpu_vhd.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/vector/fpu/float_divide_goldschmidt.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../../../soc/vector/vector.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -305,11 +359,6 @@
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../../../../soc/gpio.vhd">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../cpu/cache_generic_param.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
@@ -392,6 +441,12 @@
       <File Path="$PPRDIR/../../../../soc/axi_read.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../cpu/cache.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../../../../soc/vgahdmi/ddr_dvid_out_se.vhd">
@@ -489,7 +544,7 @@
       <Filter Type="Srcs"/>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopModule" Val="axi_vector_dma"/>
+        <Option Name="TopModule" Val="cache"/>
         <Option Name="TopLib" Val="xil_defaultlib"/>
         <Option Name="TopAutoSet" Val="TRUE"/>
         <Option Name="TransportPathDelay" Val="0"/>
@@ -498,15 +553,27 @@
         <Option Name="SrcSet" Val="sources_1"/>
       </Config>
     </FileSet>
-    <FileSet Name="axi_interconnect_0" Type="BlockSrcs" RelSrcDir="$PSRCDIR/axi_interconnect_0">
-      <File Path="$PSRCDIR/sources_1/ip/axi_interconnect_0/axi_interconnect_0.xci">
+    <FileSet Name="mig_7series_1" Type="BlockSrcs" RelSrcDir="$PSRCDIR/mig_7series_1">
+      <File Path="$PSRCDIR/sources_1/ip/mig_7series_1/mig_7series_1.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
         </FileInfo>
       </File>
       <Config>
-        <Option Name="TopModule" Val="axi_interconnect_0"/>
+        <Option Name="TopModule" Val="mig_7series_1"/>
+        <Option Name="UseBlackboxStub" Val="1"/>
+      </Config>
+    </FileSet>
+    <FileSet Name="clk_d100_100_200_250_25MHz" Type="BlockSrcs" RelSrcDir="$PSRCDIR/clk_d100_100_200_250_25MHz">
+      <File Path="$PSRCDIR/sources_1/ip/clk_d100_100_200_250_25MHz/clk_d100_100_200_250_25MHz.xci">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+        </FileInfo>
+      </File>
+      <Config>
+        <Option Name="TopModule" Val="clk_d100_100_200_250_25MHz"/>
         <Option Name="UseBlackboxStub" Val="1"/>
       </Config>
     </FileSet>
@@ -523,27 +590,15 @@
         <Option Name="UseBlackboxStub" Val="1"/>
       </Config>
     </FileSet>
-    <FileSet Name="clk_d100_100_200_250_25MHz" Type="BlockSrcs" RelSrcDir="$PSRCDIR/clk_d100_100_200_250_25MHz">
-      <File Path="$PSRCDIR/sources_1/ip/clk_d100_100_200_250_25MHz/clk_d100_100_200_250_25MHz.xci">
+    <FileSet Name="axi_interconnect_0" Type="BlockSrcs" RelSrcDir="$PSRCDIR/axi_interconnect_0">
+      <File Path="$PSRCDIR/sources_1/ip/axi_interconnect_0/axi_interconnect_0.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
         </FileInfo>
       </File>
       <Config>
-        <Option Name="TopModule" Val="clk_d100_100_200_250_25MHz"/>
-        <Option Name="UseBlackboxStub" Val="1"/>
-      </Config>
-    </FileSet>
-    <FileSet Name="mig_7series_1" Type="BlockSrcs" RelSrcDir="$PSRCDIR/mig_7series_1">
-      <File Path="$PSRCDIR/sources_1/ip/mig_7series_1/mig_7series_1.xci">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-        </FileInfo>
-      </File>
-      <Config>
-        <Option Name="TopModule" Val="mig_7series_1"/>
+        <Option Name="TopModule" Val="axi_interconnect_0"/>
         <Option Name="UseBlackboxStub" Val="1"/>
       </Config>
     </FileSet>
@@ -577,14 +632,7 @@
       </Strategy>
       <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
     </Run>
-    <Run Id="axi_interconnect_0_synth_1" Type="Ft3:Synth" SrcSet="axi_interconnect_0" Part="xc7a100tfgg484-2" ConstrsSet="axi_interconnect_0" Description="Vivado Synthesis Defaults" Dir="$PRUNDIR/axi_interconnect_0_synth_1" IncludeInArchive="true">
-      <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2016"/>
-        <Step Id="synth_design"/>
-      </Strategy>
-      <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
-    </Run>
-    <Run Id="clk_d100_100_200_125_25MHz_synth_1" Type="Ft3:Synth" SrcSet="clk_d100_100_200_125_25MHz" Part="xc7a35tfgg484-2" ConstrsSet="clk_d100_100_200_125_25MHz" Description="Vivado Synthesis Defaults" Dir="$PRUNDIR/clk_d100_100_200_125_25MHz_synth_1" IncludeInArchive="true">
+    <Run Id="mig_7series_1_synth_1" Type="Ft3:Synth" SrcSet="mig_7series_1" Part="xc7a35tfgg484-2" ConstrsSet="mig_7series_1" Description="Vivado Synthesis Defaults" Dir="$PRUNDIR/mig_7series_1_synth_1" IncludeInArchive="true">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2016">
           <Desc>Vivado Synthesis Defaults</Desc>
@@ -602,7 +650,16 @@
       </Strategy>
       <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
     </Run>
-    <Run Id="mig_7series_1_synth_1" Type="Ft3:Synth" SrcSet="mig_7series_1" Part="xc7a35tfgg484-2" ConstrsSet="mig_7series_1" Description="Vivado Synthesis Defaults" Dir="$PRUNDIR/mig_7series_1_synth_1" IncludeInArchive="true">
+    <Run Id="clk_d100_100_200_125_25MHz_synth_1" Type="Ft3:Synth" SrcSet="clk_d100_100_200_125_25MHz" Part="xc7a35tfgg484-2" ConstrsSet="clk_d100_100_200_125_25MHz" Description="Vivado Synthesis Defaults" Dir="$PRUNDIR/clk_d100_100_200_125_25MHz_synth_1" IncludeInArchive="true">
+      <Strategy Version="1" Minor="2">
+        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2016">
+          <Desc>Vivado Synthesis Defaults</Desc>
+        </StratHandle>
+        <Step Id="synth_design"/>
+      </Strategy>
+      <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
+    </Run>
+    <Run Id="axi_interconnect_0_synth_1" Type="Ft3:Synth" SrcSet="axi_interconnect_0" Part="xc7a35tfgg484-2" ConstrsSet="axi_interconnect_0" Description="Vivado Synthesis Defaults" Dir="$PRUNDIR/axi_interconnect_0_synth_1" IncludeInArchive="true">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2016">
           <Desc>Vivado Synthesis Defaults</Desc>
@@ -626,21 +683,7 @@
       </Strategy>
       <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
     </Run>
-    <Run Id="axi_interconnect_0_impl_1" Type="Ft2:EntireDesign" Part="xc7a100tfgg484-2" ConstrsSet="axi_interconnect_0" Description="Default settings for Implementation." SynthRun="axi_interconnect_0_synth_1" IncludeInArchive="false">
-      <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2016"/>
-        <Step Id="init_design"/>
-        <Step Id="opt_design"/>
-        <Step Id="power_opt_design"/>
-        <Step Id="place_design"/>
-        <Step Id="post_place_power_opt_design"/>
-        <Step Id="phys_opt_design"/>
-        <Step Id="route_design"/>
-        <Step Id="post_route_phys_opt_design"/>
-        <Step Id="write_bitstream"/>
-      </Strategy>
-    </Run>
-    <Run Id="clk_d100_100_200_125_25MHz_impl_1" Type="Ft2:EntireDesign" Part="xc7a35tfgg484-2" ConstrsSet="clk_d100_100_200_125_25MHz" Description="Default settings for Implementation." SynthRun="clk_d100_100_200_125_25MHz_synth_1" IncludeInArchive="false">
+    <Run Id="mig_7series_1_impl_1" Type="Ft2:EntireDesign" Part="xc7a35tfgg484-2" ConstrsSet="mig_7series_1" Description="Default settings for Implementation." SynthRun="mig_7series_1_synth_1" IncludeInArchive="false">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2016">
           <Desc>Default settings for Implementation.</Desc>
@@ -672,7 +715,23 @@
         <Step Id="write_bitstream"/>
       </Strategy>
     </Run>
-    <Run Id="mig_7series_1_impl_1" Type="Ft2:EntireDesign" Part="xc7a35tfgg484-2" ConstrsSet="mig_7series_1" Description="Default settings for Implementation." SynthRun="mig_7series_1_synth_1" IncludeInArchive="false">
+    <Run Id="clk_d100_100_200_125_25MHz_impl_1" Type="Ft2:EntireDesign" Part="xc7a35tfgg484-2" ConstrsSet="clk_d100_100_200_125_25MHz" Description="Default settings for Implementation." SynthRun="clk_d100_100_200_125_25MHz_synth_1" IncludeInArchive="false">
+      <Strategy Version="1" Minor="2">
+        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2016">
+          <Desc>Default settings for Implementation.</Desc>
+        </StratHandle>
+        <Step Id="init_design"/>
+        <Step Id="opt_design"/>
+        <Step Id="power_opt_design"/>
+        <Step Id="place_design"/>
+        <Step Id="post_place_power_opt_design"/>
+        <Step Id="phys_opt_design"/>
+        <Step Id="route_design"/>
+        <Step Id="post_route_phys_opt_design"/>
+        <Step Id="write_bitstream"/>
+      </Strategy>
+    </Run>
+    <Run Id="axi_interconnect_0_impl_1" Type="Ft2:EntireDesign" Part="xc7a35tfgg484-2" ConstrsSet="axi_interconnect_0" Description="Default settings for Implementation." SynthRun="axi_interconnect_0_synth_1" IncludeInArchive="false">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2016">
           <Desc>Default settings for Implementation.</Desc>
