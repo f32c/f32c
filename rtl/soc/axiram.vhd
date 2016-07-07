@@ -148,13 +148,9 @@ begin
                 R_byte_sel <= byte_sel; -- latch byte select to be written
                 -- we can safely acknowledge the write immediately
                 R_ack_bitmap(R_cur_port) <= '1';
-                --R_arvalid <= '0'; -- extra safety no read request during write
                 R_phase <= C_phase_wait_write_addr_ack;
               else
                 R_arvalid <= '1'; -- read request starts with address
-                --R_awvalid <= '0'; -- extra safety no write request during read
-                --R_wvalid <= '0'; -- extra safety no write data during read
-                --R_byte_sel <= x"0"; -- extra safety prevent unwanted write
                 R_phase <= C_phase_wait_read_addr_ack;
               end if;
             end if;
