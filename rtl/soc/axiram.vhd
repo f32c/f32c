@@ -129,11 +129,12 @@ begin
     begin
       if rising_edge(clk) then
         R_ack_bitmap <= (others => '0');
-	-- R_snoop_cycle <= '0';
 	R_prio_pending <= R_cur_port /= C_prio_port and C_prio_port >= 0 
 	              and bus_in(C_prio_port).addr_strobe = '1';
 
-        if R_phase = C_phase_idle then
+        case R_phase is
+
+        when C_phase_idle =>
           if R_ack_bitmap(R_cur_port) = '1' or addr_strobe = '0' then
             -- idle
             R_cur_port <= next_port;
@@ -147,33 +148,31 @@ begin
                 R_byte_sel <= byte_sel; -- latch byte select to be written
                 -- we can safely acknowledge the write immediately
                 R_ack_bitmap(R_cur_port) <= '1';
-                --R_snoop_addr(29 downto 2) <= addr; -- XXX
-                --R_snoop_cycle <= '1';
-                R_arvalid <= '0'; -- extra safety no read request during write
+                --R_arvalid <= '0'; -- extra safety no read request during write
                 R_phase <= C_phase_wait_write_addr_ack;
               else
                 R_arvalid <= '1'; -- read request starts with address
-                R_awvalid <= '0'; -- extra safety no write request during read
-                R_wvalid <= '0'; -- extra safety no write data during read
-                R_byte_sel <= x"0"; -- extra safety prevent unwanted write
+                --R_awvalid <= '0'; -- extra safety no write request during read
+                --R_wvalid <= '0'; -- extra safety no write data during read
+                --R_byte_sel <= x"0"; -- extra safety prevent unwanted write
                 R_phase <= C_phase_wait_read_addr_ack;
               end if;
             end if;
           end if;
-        end if;
+        -- end phase idle
 
-        if R_phase = C_phase_wait_read_addr_ack then
+        when C_phase_wait_read_addr_ack =>
           R_arvalid <= '0'; -- de-activate address request
           if R_cur_port /= C_prio_port then
             R_last_port <= R_cur_port;
           end if;
           if axi_in.arready = '1' then
-          --  R_arvalid <= '0'; -- de-activate address request
+            --R_arvalid <= '0'; -- de-activate address request
             R_phase <= C_phase_wait_read_data_ack;
           end if;
-        end if; -- end phase wait read addr ack
+        -- end phase wait read addr ack
 
-        if R_phase = C_phase_wait_read_data_ack then
+        when C_phase_wait_read_data_ack =>
           if axi_in.rvalid = '1' and axi_in.rlast = '1' then
             -- end of read cycle
             R_bus_out <= axi_in.rdata; -- latch data and place on the f32c bus
@@ -181,29 +180,27 @@ begin
             R_cur_port <= next_port;
             R_phase <= C_phase_idle;
           end if;
-	end if; -- end phase wait read data ack
+	-- end phase wait read data ack
 
-        if R_phase = C_phase_wait_write_addr_ack then
+        when C_phase_wait_write_addr_ack =>
           R_awvalid <= '0'; -- de-activate address request
-          if R_cur_port /= C_prio_port then
-            R_last_port <= R_cur_port;
-          end if;
           if axi_in.awready = '1' then
             --R_awvalid <= '0'; -- de-activate address request
             R_wvalid <= '1'; -- activate data valid, try if this could be activated on earlier phase
             R_phase <= C_phase_wait_write_data_ack;
           end if;
-        end if; -- end phase wait write addr ack
+        -- end phase wait write addr ack
 
-        if R_phase = C_phase_wait_write_data_ack then
+        when C_phase_wait_write_data_ack =>
           if axi_in.wready = '1' then
             -- end of write cycle
-            R_byte_sel <= x"0"; -- de-active all byte selects to double-sure prevent of unwanted writes
+            --R_byte_sel <= x"0"; -- de-activate all byte selects to double-sure prevent of unwanted writes
             R_wvalid <= '0'; -- de-activate data valid signal
             R_cur_port <= next_port;
             R_phase <= C_phase_idle;
           end if;
-	end if; -- end phase wait write data ack
+	-- end phase wait write data ack
+        end case;
 
       end if; -- rising edge clk
     end process;
