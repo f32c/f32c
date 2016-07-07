@@ -66,6 +66,9 @@ entity esa11_xram_axiram_ddr3 is
         
         C_vector: boolean := true; -- vector processor unit
         C_vector_axi: boolean := true; -- vector processor unit
+        C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
+        C_vector_float_arithmetic: boolean := true; -- false will not have float arithmetic (+,-,*)
+        C_vector_float_divide: boolean := true; -- false will not have float divide (/) but will save LUTs and DSPs
 
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
 
@@ -373,6 +376,9 @@ begin
       C_spi => C_spi,
       C_vector => C_vector,
       C_vector_axi => C_vector_axi,
+      C_vector_registers => C_vector_registers,
+      C_vector_float_arithmetic => C_vector_float_arithmetic,
+      C_vector_float_divide => C_vector_float_divide,
       --C_ps2 => C_ps2,
       C_dvid_ddr => C_dvid_ddr,
       --
