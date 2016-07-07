@@ -198,12 +198,12 @@ begin
             if R_bram_addr(C_vaddr_bits) = '1' -- safety measure
             or R_length_remaining(C_vaddr_bits-1 downto C_burst_max_bits) = 0 -- same as R_length_remaining = 0
             then
+              R_data_write <= '0';
               if R_header(C_header_next) = 0 then
                 -- no next header (null pointer)
                 -- so we are at last element. in next cycle, vector will be
                 -- fully written
                 R_addr_strobe <= '0';
-                R_data_write <= '0';
                 R_done <= '1';
                 -- return to idle state
                 R_state <= C_state_idle;
@@ -213,7 +213,6 @@ begin
                 R_ram_addr <= R_header(C_header_next)(29 downto 2);
                 R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
                 R_header_mode <= '1';
-                R_data_write <= '0';
                 -- jump to read state in header mode
                 R_state <= C_state_wait_read_data_ack;
               end if;
