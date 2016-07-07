@@ -14,6 +14,7 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 --use ieee.numeric_std.all;
+use ieee.math_real.all; -- to calculate log2 bit size
 
 entity vector is
   generic
@@ -21,6 +22,9 @@ entity vector is
     C_addr_bits: integer := 3; -- don't touch: number of address bits for the registers
     C_vaddr_bits: integer range 2 to 16 := 11; -- number of address bits for BRAM vector
     C_vdata_bits: integer range 32 to 64 := 32; -- number of data bits for each vector
+    C_vectors: integer range 2 to 16 := 8; -- total number of vector registers (BRAM blocks)
+    C_float_arithmetic: boolean := true; -- instantiate floating point arithmetic (+,-,*)
+    C_float_divide: boolean := true; -- instantiate floating point divider (/) (LUT and DSP eater)
     C_bits: integer range 2 to 32 := 32  -- don't touch, number of bits in each mmio register
   );
   port
@@ -48,10 +52,16 @@ entity vector is
 end vector;
 
 architecture arch of vector is
+    -- useful for conversion from KB to number of address bits
+    function ceil_log2(x: integer)
+      return integer is
+    begin
+      return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
+    end ceil_log2;
+
     constant C_mmio_registers: integer range 4 to 16 := 4; -- total number of memory backed mmio registers
 
-    constant C_vectors: integer range 2 to 16 := 8; -- total number of vector registers (BRAM blocks)
-    constant C_vectors_bits: integer range 1 to 4 := 3; -- number of bits to select the vector register
+    constant C_vectors_bits: integer range 1 to 4 := ceil_log2(C_vectors); -- number of bits to select the vector register
 
     -- normal registers
     type T_mmio_regs is array (C_mmio_registers-1 downto 0) of std_logic_vector(C_bits-1 downto 0);
@@ -103,7 +113,7 @@ architecture arch of vector is
     -- 4 main different functions
     -- a function can have modifier that selects one from many of similar functions
     constant C_functions: integer := 4; -- total number of functional units
-    constant C_functions_bits: integer := 2; -- total number bits to address one functional unit
+    constant C_functions_bits: integer := ceil_log2(C_functions); -- total number bits to address one functional unit
     constant C_function_fpu_arith: integer range 0 to C_functions-1 := 0; -- +,-,*,/,i2f,f2i
     constant C_function_fpu_divide: integer range 0 to C_functions-1 := 1; -- <,>,...
     constant C_function_int_add: integer range 0 to C_functions-1 := 2; -- a=b+c, a=b-c
@@ -401,27 +411,33 @@ begin
                            * S_VARG(conv_integer(R_function_arg2_select(C_function_int_mul)));
     S_function_result(C_function_int_mul) <= S_mul_operator_result(C_vdata_bits-1 downto 0);
 
-    I_fpu_arithmetic:
-    entity work.fpu_vhd
-    port map
-    (
-      clk => clk,
-      rmode => "00", -- round to nearest even
-      fpu_op => R_fpu_arith_mode(2 downto 0), -- float op 000 add, 010 multiply
-      opa => S_VARG(conv_integer(R_function_arg1_select(C_function_fpu_arith))),
-      opb => S_VARG(conv_integer(R_function_arg2_select(C_function_fpu_arith))),
-      result => S_function_result(C_function_fpu_arith)
-    );
+    G_fpu_arith:
+    if C_float_arithmetic generate
+      I_fpu_arithmetic:
+      entity work.fpu_vhd
+      port map
+      (
+        clk => clk,
+        rmode => "00", -- round to nearest even
+        fpu_op => R_fpu_arith_mode(2 downto 0), -- float op 000 add, 010 multiply
+        opa => S_VARG(conv_integer(R_function_arg1_select(C_function_fpu_arith))),
+        opb => S_VARG(conv_integer(R_function_arg2_select(C_function_fpu_arith))),
+        result => S_function_result(C_function_fpu_arith)
+      );
+    end generate;
 
-    I_fpu_divide:
-    entity work.float_divide_goldschmidt
-    port map
-    (
-      clk => clk,
-      X => S_VARG(conv_integer(R_function_arg1_select(C_function_fpu_divide))),
-      Y => S_VARG(conv_integer(R_function_arg2_select(C_function_fpu_divide))),
-      Q => S_function_result(C_function_fpu_divide)
-    );
+    G_fpu_divide:
+    if C_float_divide generate
+      I_fpu_divide:
+      entity work.float_divide_goldschmidt
+      port map
+      (
+        clk => clk,
+        X => S_VARG(conv_integer(R_function_arg1_select(C_function_fpu_divide))),
+        Y => S_VARG(conv_integer(R_function_arg2_select(C_function_fpu_divide))),
+        Q => S_function_result(C_function_fpu_divide)
+      );
+    end generate;
 
     -- registering for fmax improvement
     -- result from each core function is

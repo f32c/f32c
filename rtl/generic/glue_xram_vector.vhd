@@ -200,6 +200,9 @@ generic (
     C_vector_vaddr_bits: integer := 11; -- vector size, should match FPGA internal BRAM block
     C_vector_vdata_bits: integer := 32; -- don't touch, vector data bus width
     C_vector_axi: boolean := false; -- vector processor bus: true:AXI, false:f32c RAM
+    C_vector_registers: integer := 8; -- Number of BRAM based vector registers. One register is 8K
+    C_vector_float_arithmetic: boolean := true; -- true: have float arithmetic (+,-,*), false: without this, LUT saving
+    C_vector_float_divide: boolean := true; -- true: have float divider (/), false: without divider, LUT and DSP saving
     C_timer: boolean := true
 );
 port (
@@ -300,9 +303,9 @@ architecture Behavioral of glue_xram is
     -- port number is the same as fb_text port because textmode is
     -- not yet working on ULX2S
     constant refresh_port: integer := 3;
+    constant vector_port: integer := 3;
     constant pcm_port: integer := 4;
-    constant vector_port: integer := 5;
-    constant C_xram_ports: integer := 6;
+    constant C_xram_ports: integer := 5;
 
     -- io base
     type T_iomap_range is array(0 to 1) of std_logic_vector(15 downto 0);
@@ -659,7 +662,7 @@ begin
         S_vector_ram_data_ready <= xram_ready(vector_port);
     end generate;
     end generate; -- G_xram
-    
+
     G_sram16bit:
     if C_sram generate
     sram: entity work.sram
@@ -1055,7 +1058,10 @@ begin
       vector: entity work.vector
       generic map (
         C_vaddr_bits => C_vector_vaddr_bits, -- number of bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
-        C_vdata_bits => C_vector_vdata_bits  -- number of data bits
+        C_vdata_bits => C_vector_vdata_bits, -- number of data bits
+        C_vectors => C_vector_registers,
+        C_float_arithmetic => C_vector_float_arithmetic,
+        C_float_divide => C_vector_float_divide
       )
       port map (
         clk => clk, ce => vector_ce, addr => dmem_addr(4 downto 2),
