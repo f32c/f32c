@@ -44,8 +44,8 @@ entity scarab_xram_sdram is
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
 
-    -- Main clock: 50/81/83/96/100/111/112/125
-    C_clk_freq: integer := 83;
+    -- Main clock: 25/50/81/83/96/100/111/112/125
+    C_clk_freq: integer := 100;
     C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
@@ -57,6 +57,9 @@ entity scarab_xram_sdram is
 
     C_vector: boolean := true; -- vector processor unit (wip)
     C_vector_axi: boolean := false; -- vector processor bus type (false: normal f32c)
+    C_vector_registers: integer := 2; -- number of internal vector registers min 2, each takes 8K
+    C_vector_float_arithmetic: boolean := false; -- false will not have float arithmetic (+,-,*)
+    C_vector_float_divide: boolean := false; -- false will not have float divide (/) but will save LUTs and DSPs
 
     -- C_dvid_ddr = false: clk_pixel_shift = 250MHz
     -- C_dvid_ddr = true: clk_pixel_shift = 125MHz
@@ -301,6 +304,18 @@ begin
     portd(1) <= cw_antenna;
   end generate;
 
+  clk25_250: if C_clk_freq = 25 and not C_dvid_ddr generate
+    clkgen25_250: entity work.pll_50M_100M_25M_250M
+      port map
+      (
+        clk_in1 => clk_50MHz, clk_out1 => open, clk_out2 => clk_25MHz, clk_out3 => clk_250MHz
+      );
+    clk_pixel_shift <= clk_250MHz;
+    clk <= clk_25MHz;
+    portd(0) <= fm_antenna;
+    portd(1) <= cw_antenna;
+  end generate;
+
   G_vendor_specific_startup: if C_vendor_specific_startup generate
   -- reset hard-block: Xilinx Spartan-6 specific
   reset: startup_spartan6
@@ -397,6 +412,9 @@ begin
       C_pid_pwm_bits => C_pid_pwm_bits, -- clock divider bits define PWM output frequency
       C_vector => C_vector,
       C_vector_axi => C_vector_axi,
+      C_vector_registers => C_vector_registers,
+      C_vector_float_arithmetic => C_vector_float_arithmetic,
+      C_vector_float_divide => C_vector_float_divide,
       -- CPU debugging with serial port
       C_debug => C_debug
     )
