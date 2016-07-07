@@ -94,6 +94,7 @@ architecture arch of f32c_vector_dma is
   
   -- f32c bus registers
   signal R_addr_strobe: std_logic := '0';
+  signal R_data_write: std_logic := '0';
   signal R_wdata: std_logic_vector(C_vdata_bits-1 downto 0);
 
   -- vector struct handling
@@ -151,6 +152,7 @@ begin
                 if R_store_mode='1' then
                   R_wdata <= bram_rdata;
                   R_bram_addr <= R_bram_addr+1; -- early prepare bram read address for next data
+                  R_data_write <= '1';
                   R_state <= C_state_wait_write_data_ack;
                 else -- R_store_mode='0'
                   R_state <= C_state_wait_read_data_ack;
@@ -173,7 +175,6 @@ begin
                   R_ram_addr <= R_header(C_header_next)(29 downto 2);
                   R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
                   R_header_mode <= '1';
-                  --R_state <= C_state_wait_read_data_ack;
                 end if;
               end if;
             else -- R_length_remaining > 0
@@ -181,7 +182,6 @@ begin
               -- new read request for the new burst
               R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue reading in the next bursts block
               R_length_remaining <= R_length_remaining - 1;
-              --R_state <= C_state_wait_read_data_ack;
             end if; -- if length remaining = 0
           else -- S_burst_remaining = 0
             -- not the last in the burst, must continue
@@ -203,6 +203,7 @@ begin
                 -- so we are at last element. in next cycle, vector will be
                 -- fully written
                 R_addr_strobe <= '0';
+                R_data_write <= '0';
                 R_done <= '1';
                 -- return to idle state
                 R_state <= C_state_idle;
@@ -212,6 +213,7 @@ begin
                 R_ram_addr <= R_header(C_header_next)(29 downto 2);
                 R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
                 R_header_mode <= '1';
+                R_data_write <= '0';
                 -- jump to read state in header mode
                 R_state <= C_state_wait_read_data_ack;
               end if;
@@ -220,7 +222,6 @@ begin
               R_length_remaining <= R_length_remaining - 1;
               R_wdata <= bram_rdata;
               R_bram_addr <= R_bram_addr + 1; -- increment source address
-              --R_state <= C_state_wait_write_data_ack;
             end if;
           else -- S_burst_remaining > 0
             R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next bursts block
@@ -241,7 +242,7 @@ begin
   suggest_burst <= S_burst_remaining;
   addr_out <= R_ram_addr;
   addr_strobe <= R_addr_strobe;
-  data_write <= '1' when R_state = C_state_wait_write_data_ack else '0';
+  data_write <= R_data_write;
   data_out <= R_wdata;
   bram_wdata <= data_in;
   bram_we <= data_ready and (not R_store_mode) and (not R_header_mode); -- prevent write during header read and stray rvalid in store mode
