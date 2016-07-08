@@ -128,84 +128,45 @@ begin
 
       when C_state_wait_read_data_ack =>
         if data_ready='1' then
-          if R_header_mode='1' then
-            -- header will be indexed downwards 2,1,0 using decrementing R_length_remaining
-            R_header(conv_integer(R_length_remaining(C_header_addr_bits-1 downto 0))) <= data_in;
-          else -- R_header_mode='0'
-            R_bram_addr <= R_bram_addr + 1; -- increment source address
-          end if;
-          if S_burst_remaining = 0 then
-            if R_bram_addr(C_vaddr_bits) = '1' -- safety measure
-            or R_length_remaining(C_vaddr_bits-1 downto C_burst_max_bits) = 0 -- same as R_length_remaining = 0
-            then
-              -- end of burst and end of length
-              if R_header_mode='1' then
-                -- length remaining = 0
-                -- if in header mode
-                -- header will be complete in the next cycle
-                -- (last header element is "next" pointer. it will be available in next cycle)
-                -- from previous cycles, we have enough header info to prepare jump to the data
-                R_ram_addr <= R_header(C_header_data_addr)(29 downto 2);
-                R_length_remaining <= R_header(C_header_data_length)(C_vaddr_bits-1 downto 0);
-                R_header_mode <= '0';
-                -- test load/store mode and jump to adequate next state read/write
-                if R_store_mode='1' then
-                  R_wdata <= bram_rdata;
-                  R_bram_addr <= R_bram_addr+1; -- early prepare bram read address for next data
-                  R_data_write <= '1';
-                  R_state <= C_state_wait_write_data_ack;
-                else -- R_store_mode='0'
-                  R_state <= C_state_wait_read_data_ack;
-                end if;
-              else -- R_header_mode='0'
-                -- length remaining = 0
-                -- not in header mode
-                -- check if we have next header
-                if R_header(C_header_next) = 0 then
-                  -- no next header (null pointer)
-                  -- return to idle state
-                  -- so we are at last element. in next cycle, vector will be
-                  -- fully written
-                  R_addr_strobe <= '0';
-                  R_done <= '1';
-                  R_state <= C_state_idle;
-                else -- R_header(C_header_next) > 0
-                  -- non-zero pointer: we have next header to read
-                  -- this is vector multi-part continuation
-                  R_ram_addr <= R_header(C_header_next)(29 downto 2);
-                  R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
-                  R_header_mode <= '1';
-                end if;
+          if R_bram_addr(C_vaddr_bits) = '1' -- safety measure
+          or R_length_remaining = 0
+          then
+            -- end of length
+            if R_header_mode='1' then
+              -- length remaining = 0
+              -- if in header mode
+              -- header will be complete in the next cycle
+              -- (last header element is "next" pointer. it will be available in next cycle)
+              -- from previous cycles, we have enough header info to prepare jump to the data
+              --R_header(conv_integer(R_length_remaining(C_header_addr_bits-1 downto 0))) <= data_in;
+              R_header(C_header_next) <= data_in; -- C_header_next = 0
+              R_ram_addr <= R_header(C_header_data_addr)(29 downto 2);
+              R_length_remaining <= R_header(C_header_data_length)(C_vaddr_bits-1 downto 0);
+              R_header_mode <= '0';
+              -- test load/store mode and jump to adequate next state read/write
+              if R_store_mode='1' then
+                R_wdata <= bram_rdata;
+                R_bram_addr <= R_bram_addr + 1; -- early prepare bram read address for next data
+                R_data_write <= '1';
+                R_state <= C_state_wait_write_data_ack;
+              else -- R_store_mode='0'
+                -- do not increment R_bram_addr, it must stay at 0
+                -- when we switch from header mode to
+                -- loading register with data read from RAM
+                R_state <= C_state_wait_read_data_ack;
               end if;
-            else -- R_length_remaining > 0
-              -- last in the burst, length remaining > 0
-              -- new read request for the new burst
-              R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue reading in the next bursts block
-              R_length_remaining <= R_length_remaining - 1;
-            end if; -- if length remaining = 0
-          else -- S_burst_remaining = 0
-            -- not the last in the burst, must continue
-            R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue reading in the next bursts block
-            R_length_remaining <= R_length_remaining - 1;
-            -- continue with bursting data in the same state
-          end if; -- end R_burst_remaining
-        end if; -- end data_ready='1'
-
-      when C_state_wait_write_data_ack =>
-        if data_ready='1' then
-          -- end of write cycle
-          if S_burst_remaining = 0 then
-            if R_bram_addr(C_vaddr_bits) = '1' -- safety measure
-            or R_length_remaining(C_vaddr_bits-1 downto C_burst_max_bits) = 0 -- same as R_length_remaining = 0
-            then
-              R_data_write <= '0';
+            else -- R_header_mode='0'
+              -- length remaining = 0
+              -- not in header mode
+              -- check if we have next header
+              R_bram_addr <= R_bram_addr + 1; -- increment source address
               if R_header(C_header_next) = 0 then
                 -- no next header (null pointer)
+                -- return to idle state
                 -- so we are at last element. in next cycle, vector will be
                 -- fully written
                 R_addr_strobe <= '0';
                 R_done <= '1';
-                -- return to idle state
                 R_state <= C_state_idle;
               else -- R_header(C_header_next) > 0
                 -- non-zero pointer: we have next header to read
@@ -213,22 +174,50 @@ begin
                 R_ram_addr <= R_header(C_header_next)(29 downto 2);
                 R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
                 R_header_mode <= '1';
-                -- jump to read state in header mode
-                R_state <= C_state_wait_read_data_ack;
               end if;
-            else -- S_burst_remaining = 0 and R_length_remaining > 0
-              R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next bursts block
-              R_length_remaining <= R_length_remaining - 1;
-              R_wdata <= bram_rdata;
+            end if; -- end R_header_mode
+          else -- R_length_remaining > 0
+            if R_header_mode='1' then
+              -- header will be indexed downwards 2,1,0 using decrementing R_length_remaining
+              R_header(conv_integer(R_length_remaining(C_header_addr_bits-1 downto 0))) <= data_in;
+            else -- R_header_mode='0'
               R_bram_addr <= R_bram_addr + 1; -- increment source address
             end if;
-          else -- S_burst_remaining > 0
+            R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue reading in the next bursts block
+            R_length_remaining <= R_length_remaining - 1;
+          end if; -- if length remaining = 0
+        end if; -- end data_ready='1'
+
+      when C_state_wait_write_data_ack =>
+        if data_ready='1' then
+          -- end of write cycle
+          if R_bram_addr(C_vaddr_bits) = '1' -- safety measure
+          or R_length_remaining = 0
+          then
+            R_data_write <= '0';
+            if R_header(C_header_next) = 0 then
+              -- no next header (null pointer)
+              -- so we are at last element. in next cycle, vector will be
+              -- fully written
+              R_addr_strobe <= '0';
+              R_done <= '1';
+              -- return to idle state
+              R_state <= C_state_idle;
+            else -- R_header(C_header_next) > 0
+              -- non-zero pointer: we have next header to read
+              -- this is vector multi-part continuation
+              R_ram_addr <= R_header(C_header_next)(29 downto 2);
+              R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
+              R_header_mode <= '1';
+              -- jump to read state in header mode
+              R_state <= C_state_wait_read_data_ack;
+            end if;
+          else -- R_length_remaining > 0
             R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next bursts block
             R_length_remaining <= R_length_remaining - 1;
             R_wdata <= bram_rdata;
             R_bram_addr <= R_bram_addr + 1; -- increment source address
-            -- continue with bursting data in the same state
-          end if; -- end else R_burst_remaining = 0
+          end if; -- end R_length_remaining
         end if; -- end data_ready='1'
       end case;
     end if; -- rising edge
