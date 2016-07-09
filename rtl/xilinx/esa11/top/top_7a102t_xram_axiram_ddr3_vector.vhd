@@ -129,9 +129,9 @@ entity esa11_xram_axiram_ddr3 is
 
     C_sio: integer := 1;   -- 1 UART channel
     C_spi: integer := 2;   -- 2 SPI channels (ch0 not connected, ch1 SD card)
-    C_timer: boolean := false; -- no timer
+    C_timer: boolean := true; -- false: no timer
     C_ps2: boolean := false; -- no PS/2 keyboard
-    C_gpio: integer := 0; -- 0: disabled, 32:32 GPIO bits
+    C_gpio: integer := 32; -- 0: disabled, 32:32 GPIO bits
     C_simple_io: boolean := true -- includes 31 simple inputs and 32 simple outputs
   );
   port (
