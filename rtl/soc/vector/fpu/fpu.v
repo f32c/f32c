@@ -316,7 +316,7 @@ always @(posedge clk)			// Exponent must be once cycle delayed
 	  5:	exp_r <= opa_r1[30:23];
 	endcase
  
-assign fract_div = (opb_dn ? quo[49:2] : {quo[26:0], 21'h0});
+//assign fract_div = (opb_dn ? quo[49:2] : {quo[26:0], 21'h0});
  
 always @(posedge clk)
 	opa_r1 <= opa_r[30:0];
@@ -357,7 +357,7 @@ post_norm u4(.clk(clk),			// System Clock
 	.opa_dn(opa_dn),		// Operand A Denormalized
 	.opb_dn(opb_dn),		// Operand A Denormalized
 	.rem_00(remainder_00),		// Diveide Remainder is zero
-	.div_opa_ldz(div_opa_ldz_r2),	// Divide opa leading zeros count
+//	.div_opa_ldz(div_opa_ldz_r2),	// Divide opa leading zeros count
 	.output_zero(mul_00 | div_00),	// Force output to Zero
 	.out(out_d),			// Normalized output (un-registered)
 	.ine(ine_d),			// Result Inexact output (un-registered)
