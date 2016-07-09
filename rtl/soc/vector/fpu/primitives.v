@@ -87,13 +87,13 @@ output	[49:0]	quo, rem;
 reg	[49:0]	quo, rem, quo1, remainder;
  
 always @(posedge clk)
-	quo1 <= opa; // opa / opb;
+	quo1 <= opa / opb;
  
 always @(posedge clk)
 	quo <= quo1;
  
 always @(posedge clk)
-	remainder <= opa; // opa % opb;
+	remainder <= opa % opb;
  
 always @(posedge clk)
 	rem <= remainder;
