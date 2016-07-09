@@ -311,7 +311,8 @@ wire		f2i_out_sign;
 always @(posedge clk)			// Exponent must be once cycle delayed
 	case(fpu_op_r2)
 	  0,1:	exp_r <= exp_fasu;
-	  2,3:	exp_r <= exp_mul;
+	  2:	exp_r <= exp_mul;
+//	  3:	exp_r <= exp_mul;
 	  4:	exp_r <= 0;
 	  5:	exp_r <= opa_r1[30:23];
 	endcase
@@ -356,7 +357,7 @@ post_norm u4(.clk(clk),			// System Clock
 	.exp_in(exp_r),			// Exponent Input
 	.opa_dn(opa_dn),		// Operand A Denormalized
 	.opb_dn(opb_dn),		// Operand A Denormalized
-	.rem_00(remainder_00),		// Diveide Remainder is zero
+//	.rem_00(remainder_00),		// Diveide Remainder is zero
 //	.div_opa_ldz(div_opa_ldz_r2),	// Divide opa leading zeros count
 	.output_zero(mul_00 | div_00),	// Force output to Zero
 	.out(out_d),			// Normalized output (un-registered)
