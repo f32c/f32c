@@ -253,45 +253,45 @@ wire	[49:0]	remainder;
 wire		remainder_00;
 reg	[4:0]	div_opa_ldz_d, div_opa_ldz_r1, div_opa_ldz_r2;
  
-always @(fracta_mul)
-	casex(fracta_mul[22:0])
-	   23'b1??????????????????????: div_opa_ldz_d = 1;
-	   23'b01?????????????????????: div_opa_ldz_d = 2;
-	   23'b001????????????????????: div_opa_ldz_d = 3;
-	   23'b0001???????????????????: div_opa_ldz_d = 4;
-	   23'b00001??????????????????: div_opa_ldz_d = 5;
-	   23'b000001?????????????????: div_opa_ldz_d = 6;
-	   23'b0000001????????????????: div_opa_ldz_d = 7;
-	   23'b00000001???????????????: div_opa_ldz_d = 8;
-	   23'b000000001??????????????: div_opa_ldz_d = 9;
-	   23'b0000000001?????????????: div_opa_ldz_d = 10;
-	   23'b00000000001????????????: div_opa_ldz_d = 11;
-	   23'b000000000001???????????: div_opa_ldz_d = 12;
-	   23'b0000000000001??????????: div_opa_ldz_d = 13;
-	   23'b00000000000001?????????: div_opa_ldz_d = 14;
-	   23'b000000000000001????????: div_opa_ldz_d = 15;
-	   23'b0000000000000001???????: div_opa_ldz_d = 16;
-	   23'b00000000000000001??????: div_opa_ldz_d = 17;
-	   23'b000000000000000001?????: div_opa_ldz_d = 18;
-	   23'b0000000000000000001????: div_opa_ldz_d = 19;
-	   23'b00000000000000000001???: div_opa_ldz_d = 20;
-	   23'b000000000000000000001??: div_opa_ldz_d = 21;
-	   23'b0000000000000000000001?: div_opa_ldz_d = 22;
-	   23'b0000000000000000000000?: div_opa_ldz_d = 23;
-	endcase
+//always @(fracta_mul)
+//	casex(fracta_mul[22:0])
+//	   23'b1??????????????????????: div_opa_ldz_d = 1;
+//	   23'b01?????????????????????: div_opa_ldz_d = 2;
+//	   23'b001????????????????????: div_opa_ldz_d = 3;
+//	   23'b0001???????????????????: div_opa_ldz_d = 4;
+//	   23'b00001??????????????????: div_opa_ldz_d = 5;
+//	   23'b000001?????????????????: div_opa_ldz_d = 6;
+//	   23'b0000001????????????????: div_opa_ldz_d = 7;
+//	   23'b00000001???????????????: div_opa_ldz_d = 8;
+//	   23'b000000001??????????????: div_opa_ldz_d = 9;
+//	   23'b0000000001?????????????: div_opa_ldz_d = 10;
+//	   23'b00000000001????????????: div_opa_ldz_d = 11;
+//	   23'b000000000001???????????: div_opa_ldz_d = 12;
+//	   23'b0000000000001??????????: div_opa_ldz_d = 13;
+//	   23'b00000000000001?????????: div_opa_ldz_d = 14;
+//	   23'b000000000000001????????: div_opa_ldz_d = 15;
+//	   23'b0000000000000001???????: div_opa_ldz_d = 16;
+//	   23'b00000000000000001??????: div_opa_ldz_d = 17;
+//	   23'b000000000000000001?????: div_opa_ldz_d = 18;
+//	   23'b0000000000000000001????: div_opa_ldz_d = 19;
+//	   23'b00000000000000000001???: div_opa_ldz_d = 20;
+//	   23'b000000000000000000001??: div_opa_ldz_d = 21;
+//	   23'b0000000000000000000001?: div_opa_ldz_d = 22;
+//	   23'b0000000000000000000000?: div_opa_ldz_d = 23;
+//	endcase
  
-assign fdiv_opa = !(|opa_r[30:23]) ? {(fracta_mul<<div_opa_ldz_d), 26'h0} : {fracta_mul, 26'h0};
+//assign fdiv_opa = !(|opa_r[30:23]) ? {(fracta_mul<<div_opa_ldz_d), 26'h0} : {fracta_mul, 26'h0};
  
  
-div_r2 u6(.clk(clk), .opa(fdiv_opa), .opb(fractb_mul), .quo(quo), .rem(remainder));
+//div_r2 u6(.clk(clk), .opa(fdiv_opa), .opb(fractb_mul), .quo(quo), .rem(remainder));
  
-assign remainder_00 = !(|remainder);
+//assign remainder_00 = !(|remainder);
  
-always @(posedge clk)
-	div_opa_ldz_r1 <= div_opa_ldz_d;
+//always @(posedge clk)
+//	div_opa_ldz_r1 <= div_opa_ldz_d;
  
-always @(posedge clk)
-	div_opa_ldz_r2 <= div_opa_ldz_r1;
+//always @(posedge clk)
+//	div_opa_ldz_r2 <= div_opa_ldz_r1;
  
  
 ////////////////////////////////////////////////////////////////////////
@@ -330,7 +330,7 @@ always @(fpu_op_r3 or fract_out_q or prod or fract_div or fract_i2f)
 	case(fpu_op_r3)
 	   0,1:	fract_denorm = {fract_out_q, 20'h0};
 	   2:	fract_denorm = prod;
-	   3:	fract_denorm = fract_div;
+//	   3:	fract_denorm = fract_div;
 	   4,5:	fract_denorm = fract_i2f;
 	endcase
  
@@ -402,10 +402,10 @@ always @(posedge clk)
  
 // Force pre-set values for non numerical output
 assign mul_inf = (fpu_op_r3==3'b010) & (inf_mul_r | inf_mul2) & (rmode_r3==2'h0);
-assign div_inf = (fpu_op_r3==3'b011) & (opb_00 | opa_inf);
+//assign div_inf = (fpu_op_r3==3'b011) & (opb_00 | opa_inf);
  
 assign mul_00 = (fpu_op_r3==3'b010) & (opa_00 | opb_00);
-assign div_00 = (fpu_op_r3==3'b011) & (opa_00 | opb_inf);
+//assign div_00 = (fpu_op_r3==3'b011) & (opa_00 | opb_inf);
  
 assign out_fixed = (	(qnan_d | snan_d) |
 			(ind_d & !fasu_op_r2) | 
@@ -420,12 +420,12 @@ always @(posedge clk)
 assign out_d_00 = !(|out_d);
  
 assign sign_mul_final = (sign_exe_r & ((opa_00 & opb_inf) | (opb_00 & opa_inf))) ? !sign_mul_r : sign_mul_r;
-assign sign_div_final = (sign_exe_r & (opa_inf & opb_inf)) ? !sign_mul_r : sign_mul_r | (opa_00 & opb_00);
+//assign sign_div_final = (sign_exe_r & (opa_inf & opb_inf)) ? !sign_mul_r : sign_mul_r | (opa_00 & opb_00);
  
 always @(posedge clk)
 	result[31] <=   ((fpu_op_r3==3'b101) & out_d_00) ? (f2i_out_sign & !(qnan_d | snan_d) ) :
 			((fpu_op_r3==3'b010) & !(snan_d | qnan_d)) ?	sign_mul_final :
-			((fpu_op_r3==3'b011) & !(snan_d | qnan_d)) ?	sign_div_final :
+//			((fpu_op_r3==3'b011) & !(snan_d | qnan_d)) ?	sign_div_final :
 			(snan_d | qnan_d | ind_d) ?			nan_sign_d :
 			output_zero_fasu ?				result_zero_sign_d :
 									sign_fasu_r;
@@ -436,23 +436,25 @@ assign ine_mula = ((inf_mul_r |  inf_mul2 | opa_inf | opb_inf) & (rmode_r3==2'h1
  
 assign ine_mul  = (ine_mula | ine_d | inf_fmul | out_d_00 | overflow_d | underflow_d) &
 		  !opa_00 & !opb_00 & !(snan_d | qnan_d | inf_d);
-assign ine_div  = (ine_d | overflow_d | underflow_d) & !(opb_00 | snan_d | qnan_d | inf_d);
+//assign ine_div  = (ine_d | overflow_d | underflow_d) & !(opb_00 | snan_d | qnan_d | inf_d);
 assign ine_fasu = (ine_d | overflow_d | underflow_d) & !(snan_d | qnan_d | inf_d);
  
 always @(posedge  clk)
 	ine <=   	 fpu_op_r3[2] ? ine_d :
 			!fpu_op_r3[1] ? ine_fasu :
-			 fpu_op_r3[0] ? ine_div  : ine_mul;
+//			 fpu_op_r3[0] ? ine_div  : 
+			 ine_mul;
  
  
 assign overflow_fasu = overflow_d & !(snan_d | qnan_d | inf_d);
 assign overflow_fmul = !inf_d & (inf_mul_r | inf_mul2 | overflow_d) & !(snan_d | qnan_d);
-assign overflow_fdiv = (overflow_d & !(opb_00 | inf_d | snan_d | qnan_d));
+//assign overflow_fdiv = (overflow_d & !(opb_00 | inf_d | snan_d | qnan_d));
  
 always @(posedge clk)
 	overflow <= 	 fpu_op_r3[2] ? 0 :
 			!fpu_op_r3[1] ? overflow_fasu :
-			 fpu_op_r3[0] ? overflow_fdiv : overflow_fmul;
+//			 fpu_op_r3[0] ? overflow_fdiv : 
+			 overflow_fmul;
  
 always @(posedge clk)
 	underflow_fmul_r <= underflow_fmul_d;
@@ -465,12 +467,13 @@ assign underflow_fmul1 = underflow_fmul_r[0] |
  
 assign underflow_fasu = underflow_d & !(inf_d | snan_d | qnan_d);
 assign underflow_fmul = underflow_fmul1 & !(snan_d | qnan_d | inf_mul_r);
-assign underflow_fdiv = underflow_fasu & !opb_00;
+//assign underflow_fdiv = underflow_fasu & !opb_00;
  
 always @(posedge clk)
 	underflow <=     fpu_op_r3[2] ? 0 :
 			!fpu_op_r3[1] ? underflow_fasu :
-			 fpu_op_r3[0] ? underflow_fdiv : underflow_fmul;
+//			 fpu_op_r3[0] ? underflow_fdiv : 
+			 underflow_fmul;
  
 always @(posedge clk)
 	snan <= snan_d;
@@ -541,22 +544,22 @@ always @(posedge clk)
 			);
  
 assign output_zero_fasu = out_d_00 & !(inf_d | snan_d | qnan_d);
-assign output_zero_fdiv = (div_00 | (out_d_00 & !opb_00)) & !(opa_inf & opb_inf) &
-			  !(opa_00 & opb_00) & !(qnan_d | snan_d);
+//assign output_zero_fdiv = (div_00 | (out_d_00 & !opb_00)) & !(opa_inf & opb_inf) &
+//			  !(opa_00 & opb_00) & !(qnan_d | snan_d);
 assign output_zero_fmul = (out_d_00 | opa_00 | opb_00) &
 			  !(inf_mul_r | inf_mul2 | opa_inf | opb_inf | snan_d | qnan_d) &
 			  !(opa_inf & opb_00) & !(opb_inf & opa_00);
  
 always @(posedge clk)
 	zero <= 	fpu_op_r3==3'b101 ?	out_d_00 & !(snan_d | qnan_d):
-			fpu_op_r3==3'b011 ?	output_zero_fdiv :
+//			fpu_op_r3==3'b011 ?	output_zero_fdiv :
 			fpu_op_r3==3'b010 ?	output_zero_fmul :
 						output_zero_fasu ;
  
 always @(posedge clk)
 	opa_nan_r <= !opa_nan & fpu_op_r2==3'b011;
  
-always @(posedge clk)
-	div_by_zero <= opa_nan_r & !opa_00 & !opa_inf & opb_00;
+//always @(posedge clk)
+//	div_by_zero <= opa_nan_r & !opa_00 & !opa_inf & opb_00;
  
 endmodule
