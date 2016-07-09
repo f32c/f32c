@@ -67,7 +67,8 @@ wire		opa_00, opb_00, fracta_00, fractb_00;
 wire	[7:0]	exp_tmp3, exp_tmp4, exp_tmp5;
 wire	[2:0]	underflow_d;
 reg	[2:0]	underflow;
-wire		op_div = (fpu_op == 3'b011);
+//wire		op_div = (fpu_op == 3'b011);
+wire		op_div = 0;
 wire	[7:0]	exp_out_mul, exp_out_div;
  
 ////////////////////////////////////////////////////////////////////////
