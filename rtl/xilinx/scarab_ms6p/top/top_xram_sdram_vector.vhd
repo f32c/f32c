@@ -57,8 +57,10 @@ entity scarab_xram_sdram is
 
     C_vector: boolean := true; -- vector processor unit (wip)
     C_vector_axi: boolean := false; -- vector processor bus type (false: normal f32c)
-    C_vector_registers: integer := 2; -- number of internal vector registers min 2, each takes 8K
-    C_vector_float_arithmetic: boolean := false; -- false will not have float arithmetic (+,-,*)
+    C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
+    C_vector_vaddr_bits: integer := 11;
+    C_vector_vdata_bits: integer := 32;
+    C_vector_float_arithmetic: boolean := true; -- false will not have float arithmetic (+,-,*)
     C_vector_float_divide: boolean := false; -- false will not have float divide (/) but will save LUTs and DSPs
 
     -- C_dvid_ddr = false: clk_pixel_shift = 250MHz
@@ -66,7 +68,7 @@ entity scarab_xram_sdram is
     -- (fixme: DDR video output mode doesn't work on scarab)
     C_dvid_ddr: boolean := false;
 
-    C_vgahdmi: boolean := true;
+    C_vgahdmi: boolean := false;
     -- insert cache between RAM and compositing2 video fifo
     C_vgahdmi_cache_size: integer := 8; -- KB size 0:disable 2,4,8,16,32:enable
     C_vgahdmi_cache_use_i: boolean := true; -- use I-data caching style, faster
@@ -132,8 +134,8 @@ entity scarab_xram_sdram is
 
     C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable.
 
-      C_pcm: boolean := true;
-      C_fmrds: boolean := true;
+      C_pcm: boolean := false;
+      C_fmrds: boolean := false;
         C_fm_stereo: boolean := true;
         C_fm_filter: boolean := true;
         C_fm_downsample: boolean := false;
@@ -155,7 +157,9 @@ entity scarab_xram_sdram is
         C_pid_precision: integer := 1;
         C_pid_pwm_bits: integer := 12;
         
-      C_gpio: integer := 64
+      C_timer: boolean := false; -- no timer
+
+      C_gpio: integer := 0
   );
   port
   (
@@ -310,7 +314,7 @@ begin
       (
         clk_in1 => clk_50MHz, clk_out1 => open, clk_out2 => clk_25MHz, clk_out3 => clk_250MHz
       );
-    clk_pixel_shift <= clk_250MHz;
+    --clk_pixel_shift <= clk_250MHz;
     clk <= clk_25MHz;
     portd(0) <= fm_antenna;
     portd(1) <= cw_antenna;
@@ -337,6 +341,7 @@ begin
       C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_cached_addr_bits,
       C_gpio => C_gpio,
+      C_timer => C_timer,
       C_sio => C_sio,
       C_spi => C_spi,
       C_xram_base => C_xram_base,
@@ -413,6 +418,8 @@ begin
       C_vector => C_vector,
       C_vector_axi => C_vector_axi,
       C_vector_registers => C_vector_registers,
+      C_vector_vaddr_bits => C_vector_vaddr_bits,
+      C_vector_vdata_bits => C_vector_vdata_bits,
       C_vector_float_arithmetic => C_vector_float_arithmetic,
       C_vector_float_divide => C_vector_float_divide,
       -- CPU debugging with serial port
