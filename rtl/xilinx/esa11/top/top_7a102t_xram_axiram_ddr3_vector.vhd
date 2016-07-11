@@ -72,6 +72,7 @@ entity esa11_xram_axiram_ddr3 is
         C_vector_float_arithmetic: boolean := true; -- false will not have float arithmetic (+,-,*)
         C_vector_float_divide: boolean := true; -- false will not have float divide (/) but will save LUTs and DSPs
 
+        C_video_mode: integer := 0; -- 0:640x480, 1:800x600, 2:1024x768
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
 
         C_vgahdmi: boolean := true;
@@ -188,8 +189,11 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
     end ceil_log2;
     signal clk, sio_break: std_logic;
     signal clk_25MHz, clk_100MHz, clk_200MHz, clk_250MHz: std_logic;
+    signal clk_40MHz: std_logic;
     signal clk_125MHz: std_logic := '0';
+    signal clk_pixel: std_logic;
     signal clk_pixel_shift: std_logic;
+    signal S_video_axi_aclk: std_logic;
     signal clk_locked: std_logic := '0';
     signal cfgmclk: std_logic;
 
@@ -218,6 +222,18 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
       locked : out STD_LOGIC
     );
     end component clk_d100_100_200_125_25MHz;
+
+    component clk_d100_100_200_40MHz is
+    Port (
+      clk_100mhz_in_p : in STD_LOGIC;
+      clk_100mhz_in_n : in STD_LOGIC;
+      clk_100mhz : out STD_LOGIC;
+      clk_200mhz : out STD_LOGIC;
+      clk_40mhz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
+    );
+    end component clk_d100_100_200_40MHz;
 
     signal calib_done           : std_logic := '0';
 
@@ -302,26 +318,48 @@ begin
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
              locked => clk_locked,
-             clk_100mhz => clk,
+             clk_100mhz => clk_100MHz,
              clk_200mhz => clk_200MHz,
              clk_250mhz => clk_250MHz,
              clk_25mhz  => clk_25MHz
     );
+    clk <= clk_100MHz;
+    clk_pixel <= clk_25MHz;
     clk_pixel_shift <= clk_250MHz;
+    S_video_axi_aclk <= clk_100MHz;
     end generate;
 
-    cpu100_hdmi_ddr: if C_clk_freq = 100 and C_dvid_ddr generate
+    cpu100_hdmi_ddr_640x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=0 generate
     clk100in_out100_200_125_25: clk_d100_100_200_125_25MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
              locked => clk_locked,
-             clk_100mhz => clk,
+             clk_100mhz => clk_100MHz,
              clk_200mhz => clk_200MHz,
              clk_125mhz => clk_125MHz,
              clk_25mhz  => clk_25MHz
     );
+    clk <= clk_100MHz;
+    clk_pixel <= clk_25MHz;
     clk_pixel_shift <= clk_125MHz;
+    S_video_axi_aclk <= clk_100MHz;
+    end generate;
+
+    cpu100_hdmi_ddr_800x600: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=1 generate
+    clk100in_out100_200_40: clk_d100_100_200_40MHz
+    port map(clk_100mhz_in_p => i_100MHz_P,
+             clk_100mhz_in_n => i_100MHz_N,
+             reset => '0',
+             locked => clk_locked,
+             clk_100mhz => clk_100MHz,
+             clk_200mhz => clk_200MHz,
+             clk_40mhz  => clk_40MHz
+    );
+    clk <= clk_100MHz;
+    clk_pixel <= clk_40MHz;
+    clk_pixel_shift <= clk_200MHz;
+    S_video_axi_aclk <= clk_100MHz;
     end generate;
 
     cpu25_hdmi_ddr: if C_clk_freq = 25 and C_dvid_ddr generate
@@ -330,13 +368,15 @@ begin
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
              locked => clk_locked,
-             clk_100mhz => open,
+             clk_100mhz => clk_100MHz,
              clk_200mhz => clk_200MHz,
              clk_125mhz => clk_125MHz,
              clk_25mhz  => clk_25MHz
     );
     clk <= clk_25MHz;
+    clk_pixel <= clk_25MHz;
     clk_pixel_shift <= clk_125MHz;
+    S_video_axi_aclk <= clk_100MHz;
     end generate;
 
     G_vendor_specific_startup: if C_vendor_specific_startup generate
@@ -437,7 +477,7 @@ begin
     )
     port map (
         clk => clk,
-	clk_pixel => clk_25MHz,
+	clk_pixel => clk_pixel,
 	clk_pixel_shift => clk_pixel_shift,
 	cpu_axi_in => main_axi_miso,
 	cpu_axi_out => main_axi_mosi,
@@ -563,9 +603,9 @@ begin
 
         init_calib_complete  => calib_done -- becomes high cca 0.3 seconds after startup
     );
-    main_axi_aclk <= clk; -- 100 MHz
-    vector_axi_aclk <= clk; -- vector processor port
-    video_axi_aclk <= clk; -- port l01 used for video
+    main_axi_aclk <= clk; -- port 0 CPU 100 MHz
+    vector_axi_aclk <= clk; -- port 1 vector processor port
+    video_axi_aclk <= S_video_axi_aclk; -- port 2 video data
     end generate; -- G_acram_real
 
     --FPGA_LED2 <= calib_done; -- should turn on 0.3 seconds after startup and remain on
