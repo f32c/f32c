@@ -58,7 +58,7 @@ entity scarab_xram_sdram is
     C_vector: boolean := true; -- vector processor unit (wip)
     C_vector_axi: boolean := false; -- vector processor bus type (false: normal f32c)
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
-    C_vector_vaddr_bits: integer := 11;
+    C_vector_vaddr_bits: integer := 10;
     C_vector_vdata_bits: integer := 32;
     C_vector_float_arithmetic: boolean := true; -- false will not have float arithmetic (+,-,*)
     C_vector_float_divide: boolean := false; -- false will not have float divide (/) but will save LUTs and DSPs
@@ -68,7 +68,7 @@ entity scarab_xram_sdram is
     -- (fixme: DDR video output mode doesn't work on scarab)
     C_dvid_ddr: boolean := false;
 
-    C_vgahdmi: boolean := false;
+    C_vgahdmi: boolean := true;
     -- insert cache between RAM and compositing2 video fifo
     C_vgahdmi_cache_size: integer := 8; -- KB size 0:disable 2,4,8,16,32:enable
     C_vgahdmi_cache_use_i: boolean := true; -- use I-data caching style, faster
