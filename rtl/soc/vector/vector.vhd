@@ -20,6 +20,8 @@ entity vector is
   generic
   (
     C_addr_bits: integer := 3; -- don't touch: number of address bits for the registers
+    C_invert_bram_clk_reg: boolean := true; -- esa11 artix7-axi needs true, spartan6-f32c needs false
+    C_invert_bram_clk_io: boolean := true; -- both artix7-axi and spartan6-f32c work with true
     C_vaddr_bits: integer range 2 to 16 := 11; -- number of address bits for BRAM vector
     C_vdata_bits: integer range 32 to 64 := 32; -- number of data bits for each vector
     C_vectors: integer range 2 to 16 := 8; -- total number of vector registers (BRAM blocks)
@@ -105,6 +107,7 @@ architecture arch of vector is
     signal S_io_done: std_logic;
     signal R_io_done: std_logic_vector(1 downto 0) := (others => '1');
     signal S_io_done_interrupt: std_logic;
+    signal S_bram_clk_reg, S_bram_clk_io: std_logic;
     -- command decoder should load
     -- R_store_mode, R_store_select, R_load_select
     -- and issue a 1-clock pulse on R_io_request
@@ -416,6 +419,22 @@ begin
 
 
     -- *** VECTOR REGISTERS BRAM storage ***
+    G_normal_clk_io:
+    if not C_invert_bram_clk_io generate
+      S_bram_clk_io <= clk;
+    end generate;
+    G_inverted_clk_io:
+    if C_invert_bram_clk_io generate
+      S_bram_clk_io <= not clk;
+    end generate;
+    G_normal_clk_reg:
+    if not C_invert_bram_clk_reg generate
+      S_bram_clk_reg <= clk;
+    end generate;
+    G_inverted_clk_reg:
+    if C_invert_bram_clk_reg generate
+      S_bram_clk_reg <= not clk;
+    end generate;
     G_vector_registers:
     for i in 0 to C_vectors-1 generate
       vector_bram: entity work.bram_true2p_2clk
@@ -429,8 +448,8 @@ begin
       )
       port map
       (
-        clk_a => clk, -- BRAM on falling clk edge is a must for AXI burst write to RAM
-        clk_b => not clk, -- BRAM on falling clk edge is a must for AXI burst write to RAM
+        clk_a => S_bram_clk_io, -- BRAM on falling clk edge is a must for AXI burst write to RAM
+        clk_b => S_bram_clk_reg, -- BRAM on falling clk edge works better for artix-7
         -- falling edge of the clock also reduced functional unit delay by 1 cycle
         -- note: the f32c core also works with BRAM on falling edge
         we_a => S_io_bram_we_select(i),
