@@ -356,7 +356,6 @@ begin
       C_arch => C_arch,
       C_bram_size => C_bram_size,
       C_axiram => C_axiram,
-      C_icache_expire => C_icache_expire,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_cached_addr_bits,
