@@ -195,6 +195,7 @@ begin
             if byte_sel(i) = '1'
             and ce = '1' and bus_write = '1'
             and conv_integer(addr) /= C_vdone_if
+            and conv_integer(addr) < C_mmio_registers
             then
               R(conv_integer(addr))(8*i+7 downto 8*i) <= bus_in(8*i+7 downto 8*i);
             else
@@ -444,7 +445,6 @@ begin
     end generate;
     S_io_bram_rdata <= S_vector_store(conv_integer(R_io_store_select)); -- multiplexer
 
-
     -- *** I/O DMA MODULE ***
     -- load/store asymmetry:
     -- vector load: (1-to-many) all bus lines are connected to RAM data
@@ -459,7 +459,6 @@ begin
     S_io_bram_addr <= io_bram_addr;
     S_io_bram_wdata <= io_bram_wdata;
     io_bram_rdata <= S_io_bram_rdata;
-
 end;
 
 -- command example
