@@ -418,7 +418,7 @@ begin
     -- *** VECTOR REGISTERS BRAM storage ***
     G_vector_registers:
     for i in 0 to C_vectors-1 generate
-      vector_bram: entity work.bram_true2p_1clk
+      vector_bram: entity work.bram_true2p_2clk
       generic map
       (
         dual_port => True, -- one port takes data from RAM, other port outputs to video
@@ -429,7 +429,8 @@ begin
       )
       port map
       (
-        clk => not clk, -- BRAM on falling clk edge is a must for AXI burst write to RAM
+        clk_a => clk, -- BRAM on falling clk edge is a must for AXI burst write to RAM
+        clk_b => not clk, -- BRAM on falling clk edge is a must for AXI burst write to RAM
         -- falling edge of the clock also reduced functional unit delay by 1 cycle
         -- note: the f32c core also works with BRAM on falling edge
         we_a => S_io_bram_we_select(i),
