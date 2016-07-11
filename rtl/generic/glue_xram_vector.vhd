@@ -35,6 +35,7 @@ use ieee.numeric_std.all; -- we need signed type
 use work.f32c_pack.all;
 use work.sram_pack.all;
 use work.axi_pack.all;
+use work.video_mode_pack.all;
 
 entity glue_xram is
 generic (
@@ -119,14 +120,15 @@ generic (
   C_tv_fifo_addr_width: integer := 11;
   -- VGA/HDMI simple 640x480 bitmap only
   C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
+  C_vgahdmi_mode: integer := 0; -- video mode selection: 0:640x480, 1:800x600, 2:1024x768
   C_vgahdmi_axi: boolean := false; -- true: use AXI bus (video_axi_in/out) instead of f32c bus
   C_vgahdmi_cache_size: integer := 0; -- KB enable cache for f32c bus (C_vgahdmi_axi = false)
   C_vgahdmi_cache_use_i: boolean := false; -- true: use instruction cache (faster, maybe buggy), false: use data cache (slower, works)
   C_vgahdmi_fifo_fast_ram: boolean := true;
   C_vgahdmi_fifo_timeout: integer := 0; -- abort compositing at N pixels before end of line (0 disabled)
   C_vgahdmi_fifo_burst_max: integer := 1; -- values >= 2 enable the burst
-  C_vgahdmi_fifo_width: integer := 640;
-  C_vgahdmi_fifo_height: integer := 480;
+  --C_vgahdmi_fifo_width: integer := C_video_modes(C_vgahdmi_mode).resolution_x;
+  --C_vgahdmi_fifo_height: integer := C_video_modes(C_vgahdmi_mode).resolution_y;
   C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
   C_vgahdmi_fifo_addr_width: integer := 11;
   --
@@ -461,6 +463,9 @@ architecture Behavioral of glue_xram is
     signal S_vector_io_bram_addr: std_logic_vector(C_vector_vaddr_bits downto 0);
     signal S_vector_io_bram_wdata: std_logic_vector(C_vector_vdata_bits-1 downto 0);
     signal S_vector_io_bram_rdata: std_logic_vector(C_vector_vdata_bits-1 downto 0);
+    constant C_vector_invert_bram_clk_io: boolean := true;
+    constant C_vector_invert_bram_clk_reg: boolean := C_vector_axi;
+
     -- vector to f32c ram bus port interface
     signal S_vector_ram_addr_strobe: std_logic;
     signal S_vector_ram_addr: std_logic_vector(29 downto 2);
@@ -644,6 +649,15 @@ begin
     to_xram(refresh_port).byte_sel <= "1111"; -- 32 bits read
     refresh_data_ready <= xram_ready(refresh_port);
     end generate;
+    -- port 3: Vector FPU DMA
+    G_vector_xram: if C_vector and (not C_vector_axi) generate
+        to_xram(vector_port).addr_strobe <= S_vector_ram_addr_strobe;
+        to_xram(vector_port).write <= S_vector_ram_we;
+        to_xram(vector_port).byte_sel <= "1111";
+        to_xram(vector_port).addr <= S_vector_ram_addr;
+        to_xram(vector_port).data_in <= S_vector_ram_wdata;
+        S_vector_ram_data_ready <= xram_ready(vector_port);
+    end generate;
     -- port 4: PCM audio DMA
     G_pcm_xram: if C_pcm generate
         to_xram(pcm_port).addr_strobe <= pcm_addr_strobe;
@@ -652,15 +666,6 @@ begin
         to_xram(pcm_port).addr <= pcm_addr;
         to_xram(pcm_port).data_in <= (others => '-');
         pcm_data_ready <= xram_ready(pcm_port);
-    end generate;
-    -- port 5: Vector FPU DMA
-    G_vector_xram: if C_vector and (not C_vector_axi) generate
-        to_xram(vector_port).addr_strobe <= S_vector_ram_addr_strobe;
-        to_xram(vector_port).write <= S_vector_ram_we;
-        to_xram(vector_port).byte_sel <= "1111";
-        to_xram(vector_port).addr <= S_vector_ram_addr;
-        to_xram(vector_port).data_in <= S_vector_ram_wdata;
-        S_vector_ram_data_ready <= xram_ready(vector_port);
     end generate;
     end generate; -- G_xram
 
@@ -1061,6 +1066,8 @@ begin
         C_vaddr_bits => C_vector_vaddr_bits, -- number of bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
         C_vdata_bits => C_vector_vdata_bits, -- number of data bits
         C_vectors => C_vector_registers,
+        C_invert_bram_clk_io => C_vector_invert_bram_clk_io,
+        C_invert_bram_clk_reg => C_vector_invert_bram_clk_reg,
         C_float_arithmetic => C_vector_float_arithmetic,
         C_float_divide => C_vector_float_divide
       )
@@ -1371,8 +1378,8 @@ begin
       C_fast_ram => C_vgahdmi_fifo_fast_ram,
       C_timeout => C_vgahdmi_fifo_timeout,
       C_burst_max => C_vgahdmi_fifo_burst_max,
-      C_width => C_vgahdmi_fifo_width,
-      C_height => C_vgahdmi_fifo_height,
+      C_width => C_video_modes(C_vgahdmi_mode).visible_width,
+      C_height => C_video_modes(C_vgahdmi_mode).visible_height,
       C_data_width => C_vgahdmi_fifo_data_width,
       C_addr_width => C_vgahdmi_fifo_addr_width
     )
@@ -1401,7 +1408,7 @@ begin
       linear_fifo: entity work.videofifo
           generic map (
             C_bram => true,
-            C_step => C_vgahdmi_fifo_width,
+            C_step => C_video_modes(C_vgahdmi_mode).visible_width,
             C_postpone_step => 0,
             C_width => C_vgahdmi_fifo_addr_width -- buffer size = 4 * 2^width bytes
           )
@@ -1444,9 +1451,16 @@ begin
 
     -- VGA video generator - pixel clock synchronous
     vgabitmap: entity work.vga
-    --generic map (
-    --  C_dbl_y => 1
-    --)
+    generic map (
+      C_resolution_x => C_video_modes(C_vgahdmi_mode).visible_width,
+      C_hsync_front_porch => C_video_modes(C_vgahdmi_mode).h_front_porch,
+      C_hsync_pulse => C_video_modes(C_vgahdmi_mode).h_sync_pulse,
+      C_hsync_back_porch => C_video_modes(C_vgahdmi_mode).h_back_porch,
+      C_resolution_y => C_video_modes(C_vgahdmi_mode).visible_height,
+      C_vsync_front_porch => C_video_modes(C_vgahdmi_mode).v_front_porch,
+      C_vsync_pulse => C_video_modes(C_vgahdmi_mode).v_sync_pulse,
+      C_vsync_back_porch => C_video_modes(C_vgahdmi_mode).v_back_porch
+    )
     port map (
       clk_pixel => clk_pixel,
       test_picture => not S_vga_enable, -- shows test picture when VGA is disabled (on startup)
@@ -1466,8 +1480,8 @@ begin
     vga_r <= S_vga_r;
     vga_g <= S_vga_g;
     vga_b <= S_vga_b;
-    vga_vsync <= not S_vga_vsync;
-    vga_hsync <= not S_vga_hsync;
+    vga_vsync <= S_vga_vsync xor not C_video_modes(C_vgahdmi_mode).v_sync_polarity;
+    vga_hsync <= S_vga_hsync xor not C_video_modes(C_vgahdmi_mode).h_sync_polarity;
 
     G_vgahdmi_tmds_display: if not C_lvds_display generate
     -- DVI-D TMDS Encoder Block
