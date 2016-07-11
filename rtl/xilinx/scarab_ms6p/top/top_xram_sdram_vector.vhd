@@ -45,7 +45,7 @@ entity scarab_xram_sdram is
     C_debug: boolean := false;
 
     -- Main clock: 25/50/81/83/96/100/111/112/125
-    C_clk_freq: integer := 100;
+    C_clk_freq: integer := 83;
     C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
@@ -70,7 +70,7 @@ entity scarab_xram_sdram is
 
     C_vgahdmi: boolean := true;
     -- insert cache between RAM and compositing2 video fifo
-    C_vgahdmi_cache_size: integer := 8; -- KB size 0:disable 2,4,8,16,32:enable
+    C_vgahdmi_cache_size: integer := 0; -- KB size 0:disable 2,4,8,16,32:enable
     C_vgahdmi_cache_use_i: boolean := true; -- use I-data caching style, faster
     -- number of pixels for line step 640
     C_vgahdmi_fifo_width: integer := 640;
