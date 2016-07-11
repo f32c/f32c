@@ -49,8 +49,8 @@ entity scarab_xram_sdram is
     C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
-    C_icache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
-    C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
+    C_icache_size: integer := 2; -- 0, 2, 4, 8, 16, 32 KBytes
+    C_dcache_size: integer := 2; -- 0, 2, 4, 8, 16, 32 KBytes
     C_cached_addr_bits: integer := 25; -- number of lower RAM address bits 2^25 -> 32MB to be cached
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
     C_sdram: boolean := true;
@@ -58,24 +58,27 @@ entity scarab_xram_sdram is
     C_vector: boolean := true; -- vector processor unit (wip)
     C_vector_axi: boolean := false; -- vector processor bus type (false: normal f32c)
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
-    C_vector_vaddr_bits: integer := 10;
+    C_vector_vaddr_bits: integer := 11;
     C_vector_vdata_bits: integer := 32;
     C_vector_float_arithmetic: boolean := true; -- false will not have float arithmetic (+,-,*)
     C_vector_float_divide: boolean := false; -- false will not have float divide (/) but will save LUTs and DSPs
+    C_vector_invert_bram_clk_io: boolean := false;
+    C_vector_invert_bram_clk_reg: boolean := true;
 
     -- C_dvid_ddr = false: clk_pixel_shift = 250MHz
     -- C_dvid_ddr = true: clk_pixel_shift = 125MHz
     -- (fixme: DDR video output mode doesn't work on scarab)
     C_dvid_ddr: boolean := false;
+    C_video_mode: integer := 0;
 
     C_vgahdmi: boolean := true;
     -- insert cache between RAM and compositing2 video fifo
     C_vgahdmi_cache_size: integer := 0; -- KB size 0:disable 2,4,8,16,32:enable
     C_vgahdmi_cache_use_i: boolean := true; -- use I-data caching style, faster
     -- number of pixels for line step 640
-    C_vgahdmi_fifo_width: integer := 640;
+    --C_vgahdmi_fifo_width: integer := 640;
     -- number of scan lines: 480
-    C_vgahdmi_fifo_height: integer := 480;
+    --C_vgahdmi_fifo_height: integer := 480;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8; -- bpp (currently 8/16/32 supported)
     -- width of FIFO address space -> size of fifo
@@ -314,7 +317,7 @@ begin
       (
         clk_in1 => clk_50MHz, clk_out1 => open, clk_out2 => clk_25MHz, clk_out3 => clk_250MHz
       );
-    --clk_pixel_shift <= clk_250MHz;
+    clk_pixel_shift <= clk_250MHz;
     clk <= clk_25MHz;
     portd(0) <= fm_antenna;
     portd(1) <= cw_antenna;
@@ -355,9 +358,8 @@ begin
       C_dvid_ddr => C_dvid_ddr,
       -- vga simple compositing bitmap only graphics
       C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
-      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
-      C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
       -- led strip simple compositing bitmap only graphics
@@ -422,6 +424,8 @@ begin
       C_vector_vdata_bits => C_vector_vdata_bits,
       C_vector_float_arithmetic => C_vector_float_arithmetic,
       C_vector_float_divide => C_vector_float_divide,
+      C_vector_invert_bram_clk_io => C_vector_invert_bram_clk_io,
+      C_vector_invert_bram_clk_reg => C_vector_invert_bram_clk_reg,
       -- CPU debugging with serial port
       C_debug => C_debug
     )

@@ -101,6 +101,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/vga.vhd \
 ../../../../soc/vgahdmi/tv.vhd \
 ../../../../soc/cvbs.vhd \
+../../../../soc/vgahdmi/video_mode_pack.vhd \
 ../../../../soc/vgahdmi/VGA_textmode.vhd \
 ../../../../soc/vgahdmi/font_block_pack.vhd \
 ../../../../soc/vgahdmi/font8x8_xark.vhd \

@@ -205,6 +205,8 @@ generic (
     C_vector_registers: integer := 8; -- Number of BRAM based vector registers. One register is 8K
     C_vector_float_arithmetic: boolean := true; -- true: have float arithmetic (+,-,*), false: without this, LUT saving
     C_vector_float_divide: boolean := true; -- true: have float divider (/), false: without divider, LUT and DSP saving
+    C_vector_invert_bram_clk_io: boolean := true; -- chip specific, experimentally determined
+    C_vector_invert_bram_clk_reg: boolean := true; -- chip specific, experimentally determined
     C_timer: boolean := true
 );
 port (
@@ -463,8 +465,6 @@ architecture Behavioral of glue_xram is
     signal S_vector_io_bram_addr: std_logic_vector(C_vector_vaddr_bits downto 0);
     signal S_vector_io_bram_wdata: std_logic_vector(C_vector_vdata_bits-1 downto 0);
     signal S_vector_io_bram_rdata: std_logic_vector(C_vector_vdata_bits-1 downto 0);
-    constant C_vector_invert_bram_clk_io: boolean := C_vector_axi; -- experimentally determined: f32c works with normal clock here, AXI works with inverted here
-    constant C_vector_invert_bram_clk_reg: boolean := true; -- need experimenting what works best
 
     -- vector to f32c ram bus port interface
     signal S_vector_ram_addr_strobe: std_logic;
