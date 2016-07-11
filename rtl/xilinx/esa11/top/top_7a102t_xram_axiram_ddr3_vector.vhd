@@ -45,7 +45,7 @@ entity esa11_xram_axiram_ddr3 is
 	C_debug: boolean := false;
 
 	-- Main clock: 25/100 MHz
-	C_clk_freq: integer := 100;
+	C_clk_freq: integer := 25;
 
 	C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
 
@@ -56,14 +56,14 @@ entity esa11_xram_axiram_ddr3 is
 	C_axiram: boolean := true;
 
         -- warning: 2K, 4K, 8K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
-        C_icache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
-        C_dcache_size: integer := 8; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 2^29 -> 512MB to be cached
 
         C3_NUM_DQ_PINS        : integer := 16;
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
-        
+
         C_vector: boolean := true; -- vector processor unit
         C_vector_axi: boolean := true; -- vector processor unit
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
@@ -80,9 +80,9 @@ entity esa11_xram_axiram_ddr3 is
           C_vgahdmi_cache_size: integer := 8; -- KB video cache (only on f32c bus) (0: disable, 2,4,8,16,32:enable)
           C_vgahdmi_fifo_timeout: integer := 0;
           C_vgahdmi_fifo_burst_max: integer := 64;
-          C_vgahdmi_fifo_width: integer := 640;
+          --C_vgahdmi_fifo_width: integer := 640;
           -- height=vertical height in pixels
-          C_vgahdmi_fifo_height: integer := 480;
+          --C_vgahdmi_fifo_height: integer := 480;
           -- output data width 8bpp
           C_vgahdmi_fifo_data_width: integer := 32; -- should be equal to bitmap depth
           -- bitmap width of FIFO address space length = 2^width * 4 byte
@@ -193,7 +193,6 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
     signal clk_125MHz: std_logic := '0';
     signal clk_pixel: std_logic;
     signal clk_pixel_shift: std_logic;
-    signal S_video_axi_aclk: std_logic;
     signal clk_locked: std_logic := '0';
     signal cfgmclk: std_logic;
 
@@ -278,24 +277,22 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
 
     -- CPU memory axi port
     signal main_axi_areset_n: std_logic := '1';
-    signal main_axi_aclk: std_logic := '0';
     signal main_axi_miso: T_axi_miso;
     signal main_axi_mosi: T_axi_mosi;
 
     -- video axi port
     signal video_axi_areset_n: std_logic := '1';
-    signal video_axi_aclk: std_logic := '0';
+    signal video_axi_aclk: std_logic;
     signal video_axi_miso: T_axi_miso;
     signal video_axi_mosi: T_axi_mosi;
 
     -- vector axi port
     signal vector_axi_areset_n: std_logic := '1';
-    signal vector_axi_aclk: std_logic := '0';
     signal vector_axi_miso: T_axi_miso;
     signal vector_axi_mosi: T_axi_mosi;
 
     -- to switch glue/plasma vga
-    signal glue_vga_vsync_n, glue_vga_hsync_n: std_logic;
+    signal glue_vga_vsync, glue_vga_hsync: std_logic;
     signal glue_vga_red, glue_vga_green, glue_vga_blue: std_logic_vector(7 downto 0);
 
     signal gpio: std_logic_vector(127 downto 0);
@@ -313,7 +310,7 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
 begin
 
     cpu100_hdmi_sdr: if C_clk_freq = 100 and not C_dvid_ddr generate
-    clk100in_out100_200_250_25: clk_d100_100_200_250_25MHz
+    clk100in_out100_200_250_25_sdr_640x480: clk_d100_100_200_250_25MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
@@ -326,11 +323,11 @@ begin
     clk <= clk_100MHz;
     clk_pixel <= clk_25MHz;
     clk_pixel_shift <= clk_250MHz;
-    S_video_axi_aclk <= clk_100MHz;
+    video_axi_aclk <= clk_200MHz;
     end generate;
 
     cpu100_hdmi_ddr_640x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=0 generate
-    clk100in_out100_200_125_25: clk_d100_100_200_125_25MHz
+    clk100in_out100_200_125_25_ddr_640x480: clk_d100_100_200_125_25MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
@@ -343,11 +340,11 @@ begin
     clk <= clk_100MHz;
     clk_pixel <= clk_25MHz;
     clk_pixel_shift <= clk_125MHz;
-    S_video_axi_aclk <= clk_100MHz;
+    video_axi_aclk <= clk_200MHz;
     end generate;
 
-    cpu100_hdmi_ddr_800x600: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=1 generate
-    clk100in_out100_200_40: clk_d100_100_200_40MHz
+    cpu100M_ddr_800x600: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=1 generate
+    clk_cpu100M_ddr_800x600: clk_d100_100_200_40MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
@@ -359,11 +356,11 @@ begin
     clk <= clk_100MHz;
     clk_pixel <= clk_40MHz;
     clk_pixel_shift <= clk_200MHz;
-    S_video_axi_aclk <= clk_100MHz;
+    video_axi_aclk <= clk_200MHz;
     end generate;
 
-    cpu25_hdmi_ddr: if C_clk_freq = 25 and C_dvid_ddr generate
-    clk100in_out25_200_125_25: clk_d100_100_200_125_25MHz
+    cpu25M_ddr_640x480: if C_clk_freq = 25 and C_dvid_ddr and C_video_mode=0 generate
+    clk_cpu25M_ddr_640x480: clk_d100_100_200_125_25MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
@@ -376,7 +373,23 @@ begin
     clk <= clk_25MHz;
     clk_pixel <= clk_25MHz;
     clk_pixel_shift <= clk_125MHz;
-    S_video_axi_aclk <= clk_100MHz;
+    video_axi_aclk <= clk_200MHz;
+    end generate;
+
+    cpu25M_ddr_800x600: if C_clk_freq = 25 and C_dvid_ddr and C_video_mode=1 generate
+    clk_cpu25M_ddr_800x600: clk_d100_100_200_40MHz
+    port map(clk_100mhz_in_p => i_100MHz_P,
+             clk_100mhz_in_n => i_100MHz_N,
+             reset => '0',
+             locked => clk_locked,
+             clk_100mhz => clk_100MHz,
+             clk_200mhz => clk_200MHz,
+             clk_40mhz  => clk_40MHz
+    );
+    clk <= clk_25MHz;
+    clk_pixel <= clk_40MHz;
+    clk_pixel_shift <= clk_200MHz;
+    video_axi_aclk <= clk_200MHz;
     end generate;
 
     G_vendor_specific_startup: if C_vendor_specific_startup generate
@@ -429,12 +442,13 @@ begin
       C_dvid_ddr => C_dvid_ddr,
       --
       C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_axi => C_vgahdmi_axi,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_timeout => C_vgahdmi_fifo_timeout,
       C_vgahdmi_fifo_burst_max => C_vgahdmi_fifo_burst_max,
-      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
-      C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
+      --C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
+      --C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
 
@@ -503,8 +517,8 @@ begin
         ps2_clk_out  => ps2_clk_out,
         ps2_dat_out  => ps2_dat_out,
         -- VGA/HDMI
-	vga_vsync => glue_vga_vsync_n,
-	vga_hsync => glue_vga_hsync_n,
+	vga_vsync => glue_vga_vsync,
+	vga_hsync => glue_vga_hsync,
 	vga_r => glue_vga_red,
 	vga_g => glue_vga_green,
 	vga_b => glue_vga_blue,
@@ -563,7 +577,7 @@ begin
         tmds_out_rgb_n => VID_D_N
     );
 
-    G_acram_real: if C_axiram generate
+    G_axiram_real: if C_axiram generate
     u_ddr_mem : entity work.axi_mpmc
     port map(
         sys_rst              => not clk_locked, -- release reset when clock is stable
@@ -587,12 +601,12 @@ begin
 
         -- multiport axi interface (AXI slaves)
         s00_axi_areset_out_n => main_axi_areset_n,
-        s00_axi_aclk         => main_axi_aclk,
+        s00_axi_aclk         => clk,
         s00_axi_in           => main_axi_mosi,
         s00_axi_out          => main_axi_miso,
 
         s01_axi_areset_out_n => vector_axi_areset_n,
-        s01_axi_aclk         => vector_axi_aclk,
+        s01_axi_aclk         => clk,
         s01_axi_in           => vector_axi_mosi,
         s01_axi_out          => vector_axi_miso,
 
@@ -603,9 +617,6 @@ begin
 
         init_calib_complete  => calib_done -- becomes high cca 0.3 seconds after startup
     );
-    main_axi_aclk <= clk; -- port 0 CPU 100 MHz
-    vector_axi_aclk <= clk; -- port 1 vector processor port
-    video_axi_aclk <= S_video_axi_aclk; -- port 2 video data
     end generate; -- G_acram_real
 
     --FPGA_LED2 <= calib_done; -- should turn on 0.3 seconds after startup and remain on
@@ -614,9 +625,9 @@ begin
     vga_f32c: if C_vgahdmi or C_vgatext generate
     VGA_SYNC_N <= '1';
     VGA_BLANK_N <= '1';
-    VGA_CLOCK_P <= clk_25MHz;
-    VGA_VSYNC <= glue_vga_vsync_n;
-    VGA_HSYNC <= glue_vga_hsync_n;
+    VGA_CLOCK_P <= clk_pixel;
+    VGA_VSYNC <= glue_vga_vsync;
+    VGA_HSYNC <= glue_vga_hsync;
     vga_red <= glue_vga_red;
     vga_green <= glue_vga_green;
     vga_blue <= glue_vga_blue;
