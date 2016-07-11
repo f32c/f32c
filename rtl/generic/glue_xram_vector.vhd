@@ -348,6 +348,7 @@ architecture Behavioral of glue_xram is
     -- VGA/HDMI video
     constant iomap_vga: T_iomap_range := (x"FB90", x"FB9F");
     signal vga_ce: std_logic; -- '1' when address is in iomap_vga range
+    signal S_video_data_clk: std_logic; -- switched cpu clk or axi clk
     signal S_vga_enable: std_logic;
     signal S_vga_active_enabled: std_logic;
     signal vga_fetch_next, S_vga_fetch_enabled: std_logic; -- video module requests next data from fifo
@@ -1274,7 +1275,7 @@ begin
     -- vga_data(7 downto 0) <= vga_addr(12 downto 5);
     -- vga_data(7 downto 0) <= x"0F";
     vga_data <= from_xram;
-
+    S_video_data_clk <= clk; -- compositing fifo must run CPU clock synchronous
     -- data source: cache cpu clock synchronous
     G_no_vgahdmi_cache: if C_vgahdmi_cache_size=0 generate
       -- bypass the cache
@@ -1344,6 +1345,7 @@ begin
     end generate; -- end G_no_vgahdmi_axi
 
     G_yes_vgahdmi_axi: if C_vgahdmi_axi generate
+    S_video_data_clk <= video_axi_aclk; -- compositing fifo will run axi clock synchronous
     video_axi_read: entity work.axi_read
     port map
     (
@@ -1375,7 +1377,7 @@ begin
       C_addr_width => C_vgahdmi_fifo_addr_width
     )
     port map (
-      clk => clk,
+      clk => S_video_data_clk, -- cpu or axi clock synchronous
       clk_pixel => clk_pixel,
       suggest_cache => video_fifo_suggest_cache,
       suggest_burst => video_fifo_suggest_burst,
