@@ -44,8 +44,8 @@ entity scarab_xram_sdram is
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
 
-    -- Main clock: 25/50/81/83/96/100/111/112/125
-    C_clk_freq: integer := 83;
+    -- Main clock: 25/50/75/81/83/96/100/111/112/125
+    C_clk_freq: integer := 75;
     C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
@@ -301,6 +301,18 @@ begin
       (
         clk_in1 => clk_50MHz, clk_out1 => clk
       );
+    portd(0) <= fm_antenna;
+    portd(1) <= cw_antenna;
+  end generate;
+
+  clk75_sdr_640x480: if C_clk_freq = 75 generate
+    clk75_sdr_640x480: entity work.clk_50_25_75_250
+      port map
+      (
+        reset => '0', locked => open,
+        clk_50M_in => clk_50MHz, clk_25M => clk_25MHz, clk_75M => clk, clk_250M => clk_250MHz
+      );
+    clk_pixel_shift <= clk_250MHz;
     portd(0) <= fm_antenna;
     portd(1) <= cw_antenna;
   end generate;

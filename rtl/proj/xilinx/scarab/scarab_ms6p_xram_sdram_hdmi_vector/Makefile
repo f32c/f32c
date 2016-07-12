@@ -30,6 +30,7 @@ vhdfiles = \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_100M_25M_250M.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/clk_50M_100M_125Mp_125Mn_25M.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_81M25.vhd \
+../../../../xilinx/scarab_ms6p/clocks/clk_50_25_75_250.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_25M_83M33_250M.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_250M_125M_25M.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_250M_111M11_25M.vhd \
