@@ -45,7 +45,7 @@ entity scarab_xram_sdram is
     C_debug: boolean := false;
 
     -- Main clock: 25/50/75/81/83/96/100/111/112/125
-    C_clk_freq: integer := 83;
+    C_clk_freq: integer := 100;
     C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
@@ -244,8 +244,8 @@ begin
     portd(1) <= cw_antenna;
   end generate;
 
-  clk100_250: if C_clk_freq = 100 and not C_dvid_ddr generate
-    clkgen100_250: entity work.pll_50M_100M_25M_250M
+  clk100_sdr_640x480: if C_clk_freq = 100 and not C_dvid_ddr generate
+    I_clk100_sdr_640x480: entity work.pll_50M_100M_25M_250M
       port map
       (
         clk_in1 => clk_50MHz, clk_out1 => clk, clk_out2 => clk_25MHz, clk_out3 => clk_250MHz
