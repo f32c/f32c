@@ -25,7 +25,8 @@ entity vector is
     C_vaddr_bits: integer range 2 to 16 := 11; -- number of address bits for BRAM vector
     C_vdata_bits: integer range 32 to 64 := 32; -- number of data bits for each vector
     C_vectors: integer range 2 to 16 := 8; -- total number of vector registers (BRAM blocks)
-    C_float_arithmetic: boolean := true; -- instantiate floating point arithmetic (+,-,*)
+    C_float_arithmetic: boolean := true; -- instantiate floating point arithmetic (+,-)
+    C_float_multiply: boolean := true; -- instantiate floating point divider (*)
     C_float_divide: boolean := true; -- instantiate floating point divider (/) (LUT and DSP eater)
     C_bits: integer range 2 to 32 := 32  -- don't touch, number of bits in each mmio register
   );
@@ -252,7 +253,7 @@ begin
               R_io_load_select <= bus_in(C_vectors-1+8 downto 8); -- byte 1 bitmask of vectors to load
               R_io_request <= '1';
             end if;
-            if bus_in(31 downto 24) = x"33" then -- command 0x33/0x34 fpu arithmetic
+            if C_float_arithmetic and bus_in(31 downto 24) = x"33" then -- command 0x33/0x34 fpu arithmetic
               R_fpu_arith_mode <= bus_in(19 downto 16); -- Arith mode +,-,*,/
               -- select which vector will listen to results of 'fpu arith' functional unit
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- result
@@ -271,7 +272,7 @@ begin
               -- start functional unit
               R_function_request(C_function_fpu_arith) <= '1';
             end if;
-            if bus_in(31 downto 24) = x"34" then -- command 0x34 fpu divide
+            if C_float_divide and bus_in(31 downto 24) = x"34" then -- command 0x34 fpu divide
               -- select which vector will listen to results of 'fpu arith' functional unit
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- result
                 conv_std_logic_vector(C_function_fpu_divide, C_functions_bits) & '1'; -- func result index
@@ -289,7 +290,7 @@ begin
               -- start functional unit
               R_function_request(C_function_fpu_divide) <= '1';
             end if;
-            if bus_in(31 downto 24) = x"35" then -- command 0x35 fpu multiply
+            if C_float_multiply and bus_in(31 downto 24) = x"35" then -- command 0x35 fpu multiply
               -- select which vector will listen to results of 'fpu arith' functional unit
               R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- result
                 conv_std_logic_vector(C_function_fpu_multiply, C_functions_bits) & '1'; -- func result index
@@ -392,7 +393,7 @@ begin
     end generate;
 
     G_fpu_multiply:
-    if true generate
+    if C_float_multiply generate
       I_fpu_multiply:
       entity work.fpmul
       port map

@@ -45,7 +45,7 @@ entity esa11_xram_axiram_ddr3 is
 	C_debug: boolean := false;
 
 	-- Main clock: 25/100 MHz
-	C_clk_freq: integer := 25;
+	C_clk_freq: integer := 100;
 
 	C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
 
@@ -70,6 +70,7 @@ entity esa11_xram_axiram_ddr3 is
         C_vector_vaddr_bits: integer := 11;
         C_vector_vdata_bits: integer := 32;
         C_vector_float_arithmetic: boolean := true; -- false will not have float arithmetic (+,-,*)
+        C_vector_float_multiply: boolean := true; -- false will not have float arithmetic (+,-,*)
         C_vector_float_divide: boolean := true; -- false will not have float divide (/) but will save LUTs and DSPs
         C_vector_invert_bram_clk_io: boolean := true; -- f32c:false, axi:true
         C_vector_invert_bram_clk_reg: boolean := true; -- f32c:true,  axi:true
@@ -436,6 +437,7 @@ begin
       C_vector_vaddr_bits => C_vector_vaddr_bits,
       C_vector_vdata_bits => C_vector_vdata_bits,
       C_vector_float_arithmetic => C_vector_float_arithmetic,
+      C_vector_float_multiply => C_vector_float_multiply,
       C_vector_float_divide => C_vector_float_divide,
       C_vector_invert_bram_clk_io => C_vector_invert_bram_clk_io,
       C_vector_invert_bram_clk_reg => C_vector_invert_bram_clk_reg,
