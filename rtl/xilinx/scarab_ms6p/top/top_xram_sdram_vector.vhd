@@ -45,7 +45,7 @@ entity scarab_xram_sdram is
     C_debug: boolean := false;
 
     -- Main clock: 25/50/75/81/83/96/100/111/112/125
-    C_clk_freq: integer := 75;
+    C_clk_freq: integer := 83;
     C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
@@ -58,7 +58,7 @@ entity scarab_xram_sdram is
     C_vector: boolean := true; -- vector processor unit (wip)
     C_vector_axi: boolean := false; -- vector processor bus type (false: normal f32c)
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
-    C_vector_vaddr_bits: integer := 10;
+    C_vector_vaddr_bits: integer := 11;
     C_vector_vdata_bits: integer := 32;
     C_vector_float_arithmetic: boolean := true; -- false will not have float arithmetic (+,-,*)
     C_vector_float_divide: boolean := false; -- false will not have float divide (/) but will save LUTs and DSPs
@@ -284,8 +284,8 @@ begin
     portd(1) <= cw_antenna;
   end generate;
 
-  clk83: if C_clk_freq = 83 generate
-    clkgen83: entity work.pll_50M_25M_83M33_250M
+  clk83_sdr_640x480: if C_clk_freq = 83 generate
+    I_clk83_sdr_640x480: entity work.pll_50M_25M_83M33_250M
       port map
       (
         clk_in1 => clk_50MHz, clk_out1 => clk_25MHz, clk_out2 => clk, clk_out3 => clk_250MHz
@@ -306,7 +306,7 @@ begin
   end generate;
 
   clk75_sdr_640x480: if C_clk_freq = 75 generate
-    clk75_sdr_640x480: entity work.clk_50_25_75_250
+    I_clk75_sdr_640x480: entity work.clk_50_25_75_250
       port map
       (
         reset => '0', locked => open,

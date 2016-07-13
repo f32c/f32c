@@ -115,10 +115,11 @@ architecture arch of vector is
     -- *** Functional multiplexing ***
     -- 4 main different functions
     -- a function can have modifier that selects one from many of similar functions
-    constant C_functions: integer := 2; -- total number of functional units
+    constant C_functions: integer := 4; -- total number of functional units
     constant C_functions_bits: integer := ceil_log2(C_functions); -- total number bits to address one functional unit
-    constant C_function_fpu_arith: integer range 0 to C_functions-1 := 0; -- +,-,*,i2f,f2i
+    constant C_function_fpu_arith: integer range 0 to C_functions-1 := 0; -- +,-
     constant C_function_fpu_divide: integer range 0 to C_functions-1 := 1; -- /
+    constant C_function_fpu_multiply: integer range 0 to C_functions-1 := 2; -- *
     -- all functions will broadcast results
     type T_function_result is array (C_functions-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
     signal R_function_result, S_function_result: T_function_result;
@@ -144,8 +145,10 @@ architecture arch of vector is
     type T_function_propagation_delay is array (0 to C_functions-1) of integer;
     constant C_function_propagation_delay: T_function_propagation_delay :=
     (
-      5, -- C_function_fpu_arith +,-,*
-      7  -- C_function_fpu_divide /
+      5, -- C_function_fpu_arith +,-
+      7, -- C_function_fpu_divide /
+      5, -- C_function_fpu_multiply *
+      1
     );
     signal S_function_last_element: std_logic_vector(C_functions-1 downto 0); -- is function indexing the last element of result vector
     type T_function_vector_select is array (0 to C_functions-1) of std_logic_vector(C_vectors_bits-1 downto 0);
@@ -286,6 +289,24 @@ begin
               -- start functional unit
               R_function_request(C_function_fpu_divide) <= '1';
             end if;
+            if bus_in(31 downto 24) = x"35" then -- command 0x35 fpu multiply
+              -- select which vector will listen to results of 'fpu arith' functional unit
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+0 downto 0))) <= -- result
+                conv_std_logic_vector(C_function_fpu_multiply, C_functions_bits) & '1'; -- func result index
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+4 downto 4))) <= -- arg1
+                conv_std_logic_vector(C_function_fpu_multiply, C_functions_bits) & '0'; -- func arg index
+              R_vector_indexed_by(conv_integer(bus_in(C_vectors_bits-1+8 downto 8))) <= -- arg2
+                conv_std_logic_vector(C_function_fpu_multiply, C_functions_bits) & '0'; -- func arg index
+              -- which vector indexes values will be selected by core function
+              --R_fpu_arith_result_select <= bus_in(C_vectors_bits-1+8 downto 8);
+              R_function_result_select(C_function_fpu_multiply) <= bus_in(C_vectors_bits-1+0 downto 0);
+              --R_fpu_arith_arg1_select <= bus_in(C_vectors_bits-1+4 downto 4);
+              R_function_arg1_select(C_function_fpu_multiply) <= bus_in(C_vectors_bits-1+4 downto 4);
+              --R_fpu_arith_arg2_select <= bus_in(C_vectors_bits-1+0 downto 0);
+              R_function_arg2_select(C_function_fpu_multiply) <= bus_in(C_vectors_bits-1+8 downto 8);
+              -- start functional unit
+              R_function_request(C_function_fpu_multiply) <= '1';
+            end if;
           end if;
         else
           R_io_request <= '0';
@@ -358,15 +379,28 @@ begin
     G_fpu_arith:
     if C_float_arithmetic generate
       I_fpu_arithmetic:
-      entity work.fpu_vhd
+      entity work.fpu
       port map
       (
         clk => clk,
         rmode => "00", -- round to nearest even
-        fpu_op => R_fpu_arith_mode(2 downto 0), -- float op 000 add, 010 multiply
+        fpu_op => "00" & R_fpu_arith_mode(0), -- float op 000 add, 001 sub
         opa => S_VARG(conv_integer(R_function_arg1_select(C_function_fpu_arith))),
         opb => S_VARG(conv_integer(R_function_arg2_select(C_function_fpu_arith))),
-        result => S_function_result(C_function_fpu_arith)
+        fpout => S_function_result(C_function_fpu_arith)
+      );
+    end generate;
+
+    G_fpu_multiply:
+    if true generate
+      I_fpu_multiply:
+      entity work.fpmul
+      port map
+      (
+        clk => clk,
+        FP_A => S_VARG(conv_integer(R_function_arg1_select(C_function_fpu_multiply))),
+        FP_B => S_VARG(conv_integer(R_function_arg2_select(C_function_fpu_multiply))),
+        FP_Z => S_function_result(C_function_fpu_multiply)
       );
     end generate;
 
