@@ -10,7 +10,7 @@ ENTITY post_norm IS
       div_opa_ldz  : IN     std_logic_vector (4 downto 0) ;
       exp_in       : IN     std_logic_vector (7 downto 0) ;
       exp_ovf      : IN     std_logic_vector (1 downto 0) ;
-      fpu_op       : IN     std_logic_vector (2 downto 0) ;
+      fpu_op       : IN     std_logic_vector (0 downto 0) ;
       fract_in     : IN     std_logic_vector (47 downto 0) ;
       opa_dn       : IN     std_logic  ;
       opas         : IN     std_logic  ;
@@ -148,10 +148,6 @@ ARCHITECTURE arch OF post_norm IS
 BEGIN
 
     op_dn <= opa_dn or opb_dn ;
-    op_mul <= '1'WHEN (fpu_op(2 DOWNTO 0)="010") ELSE '0';
-    op_div <= '1'WHEN (fpu_op(2 DOWNTO 0)="011") ELSE '0';
-    op_i2f <= '1'WHEN (fpu_op(2 DOWNTO 0)="100") ELSE '0';
-    op_f2i <= '1'WHEN (fpu_op(2 DOWNTO 0)="101") ELSE '0';
 
     ---------------------------------------------------------------------------
     -- Normalize and Round Logic
