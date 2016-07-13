@@ -204,6 +204,7 @@ generic (
     C_vector_axi: boolean := false; -- vector processor bus: true:AXI, false:f32c RAM
     C_vector_registers: integer := 8; -- Number of BRAM based vector registers. One register is 8K
     C_vector_float_arithmetic: boolean := true; -- true: have float arithmetic (+,-,*), false: without this, LUT saving
+    C_vector_float_multiply: boolean := true; -- true: have float divider (/), false: without divider, LUT and DSP saving
     C_vector_float_divide: boolean := true; -- true: have float divider (/), false: without divider, LUT and DSP saving
     C_vector_invert_bram_clk_io: boolean := true; -- chip specific, experimentally determined
     C_vector_invert_bram_clk_reg: boolean := true; -- chip specific, experimentally determined
@@ -1069,6 +1070,7 @@ begin
         C_invert_bram_clk_io => C_vector_invert_bram_clk_io,
         C_invert_bram_clk_reg => C_vector_invert_bram_clk_reg,
         C_float_arithmetic => C_vector_float_arithmetic,
+        C_float_multiply => C_vector_float_multiply,
         C_float_divide => C_vector_float_divide
       )
       port map (
