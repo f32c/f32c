@@ -16,12 +16,6 @@ vfiles = \
 ../../../../soc/pid/ctrlpid_v.v \
 ../../../../soc/pid/simotor_v.v \
 ../../../../soc/pid/rotary_decoder_v.v \
-../../../../soc/vector/fpu/fpu.v \
-../../../../soc/vector/fpu/except.v \
-../../../../soc/vector/fpu/pre_norm.v \
-../../../../soc/vector/fpu/pre_norm_fmul.v \
-../../../../soc/vector/fpu/post_norm.v \
-../../../../soc/vector/fpu/primitives.v \
 
 vhdfiles = \
 ../../../../xilinx/scarab_ms6p/top/top_xram_sdram_vector.vhd \
@@ -93,8 +87,24 @@ vhdfiles = \
 ../../../../soc/vector/vector.vhd \
 ../../../../soc/vector/axi_vector_dma.vhd \
 ../../../../soc/vector/f32c_vector_dma.vhd \
-../../../../soc/vector/fpu/fpu_vhd.vhd \
+../../../../soc/vector/fpu/add_sub/fpu_arch.vhd \
+../../../../soc/vector/fpu/add_sub/add_sub27_arch.vhd \
+../../../../soc/vector/fpu/add_sub/mul_r2_arch.vhd \
+../../../../soc/vector/fpu/add_sub/div_r2_arch.vhd \
+../../../../soc/vector/fpu/add_sub/except_arch.vhd \
+../../../../soc/vector/fpu/add_sub/pre_norm_arch.vhd \
+../../../../soc/vector/fpu/add_sub/pre_norm_fmul_arch.vhd \
+../../../../soc/vector/fpu/add_sub/post_norm_arch.vhd \
 ../../../../soc/vector/fpu/float_divide_goldschmidt.vhd \
+../../../../soc/vector/fpu/mul/multiplier/fpmul_pipeline.vhd \
+../../../../soc/vector/fpu/mul/multiplier/fpmul_stage1_struct.vhd \
+../../../../soc/vector/fpu/mul/multiplier/fpmul_stage2_struct.vhd \
+../../../../soc/vector/fpu/mul/multiplier/fpmul_stage3_struct.vhd \
+../../../../soc/vector/fpu/mul/multiplier/fpmul_stage4_struct.vhd \
+../../../../soc/vector/fpu/mul/common/fpnormalize_fpnormalize.vhd \
+../../../../soc/vector/fpu/mul/common/fpround_fpround.vhd \
+../../../../soc/vector/fpu/mul/common/packfp_packfp.vhd \
+../../../../soc/vector/fpu/mul/common/unpackfp_unpackfp.vhd \
 ../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/videofifo.vhd \
 ../../../../soc/vgahdmi/video_cache_i.vhd \
