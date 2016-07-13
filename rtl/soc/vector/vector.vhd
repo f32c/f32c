@@ -385,7 +385,7 @@ begin
       (
         clk => clk,
         rmode => "00", -- round to nearest even
-        fpu_op => "00" & R_fpu_arith_mode(0), -- float op 000 add, 001 sub
+        fpu_op => R_fpu_arith_mode(0 downto 0), -- float op 000 add, 001 sub
         opa => S_VARG(conv_integer(R_function_arg1_select(C_function_fpu_arith))),
         opb => S_VARG(conv_integer(R_function_arg2_select(C_function_fpu_arith))),
         fpout => S_function_result(C_function_fpu_arith)

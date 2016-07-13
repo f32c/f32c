@@ -89,11 +89,8 @@ vhdfiles = \
 ../../../../soc/vector/f32c_vector_dma.vhd \
 ../../../../soc/vector/fpu/add_sub/fpu_arch.vhd \
 ../../../../soc/vector/fpu/add_sub/add_sub27_arch.vhd \
-../../../../soc/vector/fpu/add_sub/mul_r2_arch.vhd \
-../../../../soc/vector/fpu/add_sub/div_r2_arch.vhd \
 ../../../../soc/vector/fpu/add_sub/except_arch.vhd \
 ../../../../soc/vector/fpu/add_sub/pre_norm_arch.vhd \
-../../../../soc/vector/fpu/add_sub/pre_norm_fmul_arch.vhd \
 ../../../../soc/vector/fpu/add_sub/post_norm_arch.vhd \
 ../../../../soc/vector/fpu/float_divide_goldschmidt.vhd \
 ../../../../soc/vector/fpu/mul/multiplier/fpmul_pipeline.vhd \
