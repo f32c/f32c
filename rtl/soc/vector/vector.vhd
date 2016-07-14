@@ -560,8 +560,8 @@ end;
 -- TODO:
 
 -- [*] I/O vector length for load
--- [ ] I/O vector length for store
--- [ ] I/O should interprete linked list (now it does simple linear block)
+-- [*] I/O vector length for store
+-- [*] I/O interpretes linked list
 
 -- [*] indexer to control vector lengths and write signals
 -- [*] simplify indexer with for loop and indexed registers
@@ -569,7 +569,7 @@ end;
 -- [*] indexer should handle pipeline delay
 -- [*] indexer should count vector lengths
 
--- [ ] 64/32/16 bit mode: element size is 64-bit
+-- [ ] mixed precision 64/32/16 mode
 --     1 parallel 64-bit unit
 --     2 parallel 32-bit units
 --     4 parallel 16-bit units
@@ -578,5 +578,21 @@ end;
 -- [*] at end of function, un-listen the result "indexed_by" setting LSB=0
 -- [*] interrupt flag set for I/O done
 -- [ ] rewrite command decoding to avoid sequential register writes
--- [ ] signed integer multiply
--- [ ] fix FPU divide "/" (propagation delay problem)
+-- [*] fix FPU divide "/" (propagation delay problem)
+-- [ ] find/make a suckless divide module FPU LUT/DSP usage friently
+
+-- [ ] both BRAM ports should be clocked CPU clock synchrnous,
+--     let AXI I/O and FPU handle the async and delays
+
+-- [ ] see if it is better to have each VI counter sitting of each
+--     BRAM address port insted of having multiplexer for functional
+--     unit indexers. Counter will be cotrolled by synchoronous "run" signal.
+--     when "run" is high, counter keeps incrementing.
+
+-- [ ] move I/O from using separate BRAM port into a member of functional
+--     units. I/O is slow and can be only 1 running at a time so it's a
+--     waste of BRAM ports to use them all just for 1 IO
+
+-- [ ] support A=A+B and A+=B compound expressions, but introducing a
+--     index to start of valid data in the vector, as such operation will
+--     shift elements in the vector due to pipeline delay
