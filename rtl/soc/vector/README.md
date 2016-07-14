@@ -1,7 +1,8 @@
 # Vector processor
 
-Integer and floating point vector processor unit
-that runs parallel with f32c core, exchanging data over DMA.
+Floating point vector processor unit
+that runs parallel with f32c core, 
+exchanging data over DMA.
 It can be also used as video blitter.
 
 Vector is 1-dimensional array of floats.
