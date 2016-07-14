@@ -62,7 +62,7 @@ entity scarab_xram_sdram is
     C_vector_vdata_bits: integer := 32;
     C_vector_float_arithmetic: boolean := true; -- false will not have float arithmetic (+,-,*)
     C_vector_float_multiply: boolean := true;
-    C_vector_float_divide: boolean := false; -- false will not have float divide (/) but will save LUTs and DSPs
+    C_vector_float_divide: boolean := true; -- false will not have float divide (/) but will save LUTs and DSPs
     C_vector_invert_bram_clk_io: boolean := false;
     C_vector_invert_bram_clk_reg: boolean := true;
 

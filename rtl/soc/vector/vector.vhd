@@ -147,7 +147,7 @@ architecture arch of vector is
     constant C_function_propagation_delay: T_function_propagation_delay :=
     (
       5, -- C_function_fpu_arith +,-
-      7, -- C_function_fpu_divide /
+     12, -- C_function_fpu_divide /
       5, -- C_function_fpu_multiply *
       1
     );
@@ -409,6 +409,10 @@ begin
     if C_float_divide generate
       I_fpu_divide:
       entity work.float_divide_goldschmidt
+      generic map
+      (
+        C_pipe_stages => 6
+      )
       port map
       (
         clk => clk,

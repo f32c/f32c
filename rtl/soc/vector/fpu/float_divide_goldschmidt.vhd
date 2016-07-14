@@ -74,11 +74,12 @@ architecture rtl of float_divide_goldschmidt is
    type T_b is array (0 to C_pipe_stages-1) of std_logic_vector(C_precision_bits downto 0);
    signal b, c, next_b: T_b;
    type T_ac is array (0 to C_pipe_stages-1) of std_logic_vector(2*C_precision_bits downto 0);
-   signal ac: T_ac;
+   signal ac, R_ac: T_ac;
    type T_bc is array (0 to C_pipe_stages-1) of std_logic_vector(2*C_precision_bits+1 downto 0);
-   signal bc: T_bc;
+   signal bc, R_bc: T_bc;
    type T_exponent is array (0 to C_pipe_stages-1) of std_logic_vector(C_exponent_bits-1 downto 0);
-   signal exponent, next_exponent: T_exponent;
+   signal exponent, R_exponent, next_exponent: T_exponent;
+   signal sign, R_sign, next_sign: std_logic_vector(C_pipe_stages-1 downto 0);
 begin
    -- the pipeline
    G_goldschmidt_pipeline:
@@ -88,9 +89,12 @@ begin
      -- using the goldschmidt algorithm
      G_goldschmidt_combinatorial:
      if i > 0 generate
-       a(i) <= R_pipe_data(i-1).mantissa_a;
-       b(i) <= R_pipe_data(i-1).mantissa_b;
+       sign(i) <= R_pipe_data(i-1).sign;
+       next_sign(i) <= R_sign(i);
        exponent(i) <= R_pipe_data(i-1).exponent;
+       a(i) <= R_pipe_data(i-1).mantissa_a;
+       next_a(i) <= R_ac(i)(2*C_precision_bits-1 downto C_precision_bits);
+       b(i) <= R_pipe_data(i-1).mantissa_b;
        -- c is guesstimated for "a" to approach towards "100...000" binary
        -- originally it should be c = '1' & ((not a(i))+1), but
        -- here is removed +1 to improve fmax. It is ok because
@@ -98,36 +102,35 @@ begin
        c(i)(C_precision_bits downto 0) <= '1' & not a(i);
        ac(i) <= a(i)*c(i);
        bc(i) <= b(i)*c(i);
-       next_a(i) <= ac(i)(2*C_precision_bits-1 downto C_precision_bits);
        G_float_mode:
        if C_float_mode generate
          -- float mode:
          -- renormalize mantissa "b" if the bit in bc at position of
          -- next_b(C_precision_bits) becomes 1
          -- shifting it 1 bit more to the right in order not to loose MSB
-         next_b(i) <= bc(i)(2*C_precision_bits   downto C_precision_bits) 
-                 when bc(i)(2*C_precision_bits)='0' -- renormalization test
-                 else bc(i)(2*C_precision_bits+1 downto C_precision_bits+1);
+         next_b(i) <= R_bc(i)(2*C_precision_bits   downto C_precision_bits)
+                 when R_bc(i)(2*C_precision_bits)='0' -- renormalization test
+                 else R_bc(i)(2*C_precision_bits+1 downto C_precision_bits+1);
          -- renormalization divides mantissa by 2. To keep the
          -- same floating point number we must add 1 to the exponent
          -- in case of renormalization. (exponent represents power of 2)
-         next_exponent(i) <= exponent(i)
-                        when bc(i)(2*C_precision_bits)='0' -- renormalization test
-                        else exponent(i) + 1;
+         next_exponent(i) <= R_exponent(i)
+                        when R_bc(i)(2*C_precision_bits)='0' -- renormalization test
+                        else R_exponent(i) + 1;
        end generate;
        G_integer_mode:
        if not C_float_mode generate
          -- integer mode doesn't renormalize
-         next_b(i) <= bc(i)(2*C_precision_bits downto C_precision_bits);
-         next_exponent(i) <= exponent(i);
+         next_b(i) <= R_bc(i)(2*C_precision_bits downto C_precision_bits);
+         next_exponent(i) <= R_exponent(i);
        end generate;
      end generate;
      -- registers logic is moving data thru the pipeline
      process(clk)
      begin
        if rising_edge(clk) then
-         -- data enter at pipe stage 0
          if i = 0 then
+           -- data enter at pipe stage 0
            R_pipe_data(i).sign     <= x(C_exponent_bits+C_mantissa_bits)
                                   xor y(C_exponent_bits+C_mantissa_bits);
            R_pipe_data(i).exponent <= x(C_exponent_bits+C_mantissa_bits-1 downto C_mantissa_bits)
@@ -143,10 +146,15 @@ begin
            R_pipe_data(i).mantissa_b(C_precision_bits downto C_precision_bits-C_mantissa_bits-1)
                                   <= "01" & x(C_mantissa_bits-1 downto 0);
            R_pipe_data(i).mantissa_b(C_precision_bits-C_mantissa_bits-2 downto 0) <= (others => '0');
-         end if;
-         -- pipelined data processing
-         if i > 0 then
-           R_pipe_data(i).sign       <= R_pipe_data(i-1).sign;
+         else
+           -- pipelined data processing
+           -- one extra register layer to infer pipelined multiplication
+           R_sign(i) <= sign(i);
+           R_exponent(i) <= exponent(i);
+           R_ac(i) <= ac(i);
+           R_bc(i) <= bc(i);
+           -- all below next_* signals are combinatorial based on above R_* registers
+           R_pipe_data(i).sign       <= next_sign(i);
            R_pipe_data(i).exponent   <= next_exponent(i);
            R_pipe_data(i).mantissa_a <= next_a(i);
            R_pipe_data(i).mantissa_b <= next_b(i);
