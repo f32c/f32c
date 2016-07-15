@@ -65,7 +65,7 @@ entity esa11_xram_axiram_ddr3 is
         C3_MEM_BANKADDR_WIDTH : integer := 3;
 
         C_vector: boolean := true; -- vector processor unit
-        C_vector_axi: boolean := true; -- vector processor unit
+        C_vector_axi: boolean := true; -- true: use AXI I/O, false use f32c RAM port I/O
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
         C_vector_vaddr_bits: integer := 11;
         C_vector_vdata_bits: integer := 32;
@@ -73,7 +73,7 @@ entity esa11_xram_axiram_ddr3 is
         C_vector_float_multiply: boolean := true; -- false will not have float arithmetic (+,-,*)
         C_vector_float_divide: boolean := true; -- false will not have float divide (/) but will save LUTs and DSPs
         C_vector_invert_bram_clk_io: boolean := true; -- f32c:false, axi:true
-        C_vector_invert_bram_clk_reg: boolean := true; -- f32c:true,  axi:true
+        C_vector_invert_bram_clk_reg: boolean := true; -- can stay always true
 
         C_video_mode: integer := 0; -- 0:640x480, 1:800x600, 2:1024x768
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
