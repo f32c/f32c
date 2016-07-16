@@ -69,11 +69,11 @@ entity esa11_xram_axiram_ddr3 is
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
         C_vector_vaddr_bits: integer := 11;
         C_vector_vdata_bits: integer := 32;
-        C_vector_float_arithmetic: boolean := true; -- false will not have float arithmetic (+,-,*)
-        C_vector_float_multiply: boolean := true; -- false will not have float arithmetic (+,-,*)
-        C_vector_float_divide: boolean := true; -- false will not have float divide (/) but will save LUTs and DSPs
+        C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
+        C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
+        C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
         C_vector_invert_bram_clk_io: boolean := true; -- f32c:false, axi:true
-        C_vector_invert_bram_clk_reg: boolean := true; -- can stay always true
+        C_vector_invert_bram_clk_reg: boolean := false; -- can stay always false
 
         C_video_mode: integer := 0; -- 0:640x480, 1:800x600, 2:1024x768
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
@@ -436,7 +436,7 @@ begin
       C_vector_registers => C_vector_registers,
       C_vector_vaddr_bits => C_vector_vaddr_bits,
       C_vector_vdata_bits => C_vector_vdata_bits,
-      C_vector_float_arithmetic => C_vector_float_arithmetic,
+      C_vector_float_addsub => C_vector_float_addsub,
       C_vector_float_multiply => C_vector_float_multiply,
       C_vector_float_divide => C_vector_float_divide,
       C_vector_invert_bram_clk_io => C_vector_invert_bram_clk_io,
