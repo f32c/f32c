@@ -60,11 +60,11 @@ entity scarab_xram_sdram is
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
     C_vector_vaddr_bits: integer := 11;
     C_vector_vdata_bits: integer := 32;
-    C_vector_float_arithmetic: boolean := true; -- false will not have float arithmetic (+,-,*)
-    C_vector_float_multiply: boolean := true;
-    C_vector_float_divide: boolean := true; -- false will not have float divide (/) but will save LUTs and DSPs
+    C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
+    C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
+    C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
     C_vector_invert_bram_clk_io: boolean := false;
-    C_vector_invert_bram_clk_reg: boolean := true;
+    C_vector_invert_bram_clk_reg: boolean := false;
 
     -- C_dvid_ddr = false: clk_pixel_shift = 250MHz
     -- C_dvid_ddr = true: clk_pixel_shift = 125MHz
@@ -435,7 +435,7 @@ begin
       C_vector_registers => C_vector_registers,
       C_vector_vaddr_bits => C_vector_vaddr_bits,
       C_vector_vdata_bits => C_vector_vdata_bits,
-      C_vector_float_arithmetic => C_vector_float_arithmetic,
+      C_vector_float_addsub => C_vector_float_addsub,
       C_vector_float_multiply => C_vector_float_multiply,
       C_vector_float_divide => C_vector_float_divide,
       C_vector_invert_bram_clk_io => C_vector_invert_bram_clk_io,
