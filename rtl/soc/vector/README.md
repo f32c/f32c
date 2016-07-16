@@ -42,25 +42,23 @@ Status of the vector processor:
       can run parallel with arithmetic operations,
       multiple registers load with the same content at the same time
     * 3 x 32-bit floating point functional units: 
-      5-stage (+,-)
-      7-stage (*)
-      7-stage (/)
-    * any-to-any vector operation of type: a = b+c, a = b+b
-      except: a = a+b which will not work
+      6-stage (+,-)
+      6-stage (*)
+      13-stage (/)
+    * any-to-any vector operations: a = b+c, a = b+b, a = a+b, a = a+a.
     * multiple operations can run parallel
       provided they use different registers and different functional units
       example: a = b+c, d = e/f can run parallel
     * interrupt flag for each vector set when done
     * works at 100 MHz clock rate on artix-7 and spartan-6
     * produces 1 result per 1 clock cycle
-      after initial 1-7 clocks delay, depending on functional unit
+      after initial 6-13 clocks delay, depending on functional unit
     * theoretical maximum speed approaches 3 MFLOPs/MHz
       when 1 I/O and 3 FPU operations are running parallel
     * linked list support
 
 Todo:
 
-    * compound operations: a += b
     * chaining: explore possibility of parallel a = b+c, d = a*e
     * use both BRAM vector ports in crossbar multiplexer
     * tighten up AXI states and reduce latency
