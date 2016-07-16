@@ -42,35 +42,51 @@ architecture rtl of bram_true2p_2clk is
 	shared variable ram: memory_t;
 begin
 	-- Port A
+	G_port_a_passthru: if pass_thru_a generate
 	process(clk_a)
 	begin
-	if(rising_edge(clk_a)) then
-            if not pass_thru_a then
-                data_out_a <= ram(conv_integer(addr_a));
-            end if;
-            if(we_a = '1') then
-                ram(conv_integer(addr_a)) := data_in_a;
-            end if;
-            if pass_thru_a then
-                data_out_a <= ram(conv_integer(addr_a));
-            end if;
+	if(rising_edge(clk_a)) then 
+	    if(we_a = '1') then
+		ram(conv_integer(addr_a)) := data_in_a;
+	    end if;
+	    data_out_a <= ram(conv_integer(addr_a));
 	end if;
 	end process;
+	end generate;
+
+	G_port_a_not_passthru: if not pass_thru_a generate
+	process(clk_a)
+	begin
+	if(rising_edge(clk_a)) then 
+	    data_out_a <= ram(conv_integer(addr_a));
+	    if(we_a = '1') then
+		ram(conv_integer(addr_a)) := data_in_a;
+	    end if;
+	end if;
+	end process;
+	end generate;
 
 	-- Port B 
-	G_dual_port: if dual_port generate
+	G_port_b_passthru: if dual_port and pass_thru_b generate
 	process(clk_b)
 	begin
-	if(rising_edge(clk_b)) then
-            if not pass_thru_b then
-                data_out_b <= ram(conv_integer(addr_b));
-            end if;
-            if(we_b = '1') then
-                ram(conv_integer(addr_b)) := data_in_b;
-            end if;
-            if pass_thru_b then
-                data_out_b <= ram(conv_integer(addr_b));
-            end if;
+	if(rising_edge(clk_b)) then 
+	    if(we_b = '1') then
+		ram(conv_integer(addr_b)) := data_in_b;
+	    end if;
+	    data_out_b <= ram(conv_integer(addr_b));
+	end if;
+	end process;
+	end generate;
+
+	G_port_b_not_passthru: if dual_port and not pass_thru_b generate
+	process(clk_b)
+	begin
+	if(rising_edge(clk_b)) then 
+	    data_out_b <= ram(conv_integer(addr_b));
+	    if(we_b = '1') then
+		ram(conv_integer(addr_b)) := data_in_b;
+	    end if;
 	end if;
 	end process;
 	end generate;
