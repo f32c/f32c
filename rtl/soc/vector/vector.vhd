@@ -95,7 +95,7 @@ architecture arch of vector is
     -- can be calculated faster
     type T_vector_length is array (C_vectors-1 downto 0) of std_logic_vector(C_vaddr_bits downto 0);
     signal R_vector_length, R_result_vector_length: T_vector_length; -- true length-1, 0 -> 1 element, 1 -> 2 elements ...
-    signal R_vector_shift, R_result_vector_shift, S_io_bram_addr_shift: T_vector_length; -- true length-1, 0 -> 1 element, 1 -> 2 elements ...
+    signal R_vector_shift, R_result_vector_shift, S_io_bram_addr_shift: T_vector_length; -- points to 1st element in vector
 
     -- *** RAM I/O ***
     signal S_io_bram_we: std_logic;
@@ -252,7 +252,13 @@ begin
               R_function_arg2_select(SI_cmd_function) <= S_cmd_arg2;
               R_function_arg1_select(SI_cmd_function) <= S_cmd_arg1;
               -- set result vector shift value (pipeline delay)
-              -- TODO: this one can be omitted and taken from cmd arguments (needs 11 bits)
+              -- vector shift is needed to handle compound operations like A=A+B
+              -- Pipeline has delay and there is only one address for R and W to the vector BRAM.
+              -- To read data, pass thru functional unit and write to the same register,
+              -- the only way is to write result "shifted" by N positions.
+              -- N is pipeline propagation delay. So result will appear N positions shifted
+              -- relative to original vector data position and we just set result pointer
+              -- to new start of the result data.
               R_result_vector_shift(SI_cmd_result) <= R_vector_shift(SI_cmd_result) +
                 conv_std_logic_vector(C_function_propagation_delay(SI_cmd_function), C_vaddr_bits+1);
               -- vector length: result = arg1
@@ -288,6 +294,11 @@ begin
             -- R_vector_shift contains current pointer to 1st element of a vector
             R_vector_index(i) <= R_vector_shift(i);
             if R_vector_write_request(i)='1' then
+              -- result data is being written to this vector
+              -- data will appear shifted to new position
+              -- because of pipeline propagation delay
+              -- and will have new length, same as argument length.
+              -- this sets new length and new shift position
               R_vector_length(i) <= R_result_vector_length(i);
               R_vector_shift(i) <= R_result_vector_shift(i);
               R_vector_write(i) <= '1';
@@ -431,18 +442,16 @@ begin
       vector_bram: entity work.bram_true2p_2clk
       generic map
       (
-        dual_port => True, -- one port takes data from RAM, other port outputs to video
-        pass_thru_a => False, -- false allows simultaneous reading and erasing of old data
-        pass_thru_b => False, -- false allows simultaneous reading and erasing of old data
+        dual_port => True, -- port A connected to DMA I/O, port B connected to Vector FPU
+        pass_thru_a => False, -- false allows simultaneous reading and writing
+        pass_thru_b => False, -- false allows simultaneous reading and writing
         data_width => C_vdata_bits,
         addr_width => C_vaddr_bits
       )
       port map
       (
-        clk_a => S_bram_clk_io, -- BRAM on falling clk edge is a must for AXI burst write to RAM
-        clk_b => S_bram_clk_reg, -- BRAM on falling clk edge works better for artix-7
-        -- falling edge of the clock also reduced functional unit delay by 1 cycle
-        -- note: the f32c core also works with BRAM on falling edge
+        clk_a => S_bram_clk_io, -- BRAM on falling clk edge (inverted clk) is a must for AXI burst write to RAM
+        clk_b => S_bram_clk_reg, -- BRAM on FPU side should normally be clocked on rising edge (normal clk)
         we_a => S_io_bram_we_select(i),
         we_b => R_vector_write(i), -- vector write enable from functional unit
         addr_a => S_io_bram_addr_shift(i)(C_vaddr_bits-1 downto 0), -- external address (RAM I/O)
@@ -474,6 +483,16 @@ begin
 end;
 
 -- command example
+---0x1234ABCD
+--   1 operation   0:I/O, 3:+-*/
+--    2 load/store 0:load 8:store
+--     3 not used
+--      4 add/sub select 0:+ 1:-
+--       A not used
+--        B arg 2
+--         C arg 1
+--          D result (D = C <oper> B)
+--
 -- 0x00000100  load V(0) from RAM
 -- 0x00800000  store V(0) to RAM
 -- 0x00000200  load V(1) from RAM
@@ -489,27 +508,49 @@ end;
 
 --  C usage
 
--- volatile uint32_t *vector_ptr = (volatile uint32_t *)0xFFFFFC20;
--- void wait_vector(void)
+-- RAM representation of a vector segment
+-- one vector can have any number of segments so
+-- the data can be scattered around the RAM
+-- but maximum of 2**C_vaddr_bits float elements
+-- can be loaded in one hardware vector (excess elements
+-- in RAM will not be read nor written by single vector I/O).
+-- If long vector has to be processed, application in C should
+-- loop over this, splitting it to multiple I/O and Vector operations.
+
+-- // MMIO hardware vector control interface to the CPU
+-- volatile uint32_t *vector_mmio = (volatile uint32_t *)0xFFFFFC20;
+
+-- struct vector_header_s
 -- {
---   uint32_t a;
+--   uint16_t length; // length=0 means 1 element, length=1 means 2 elements etc.
+--   uint16_t type; // not used
+--   float *data; // sequential datta
+--   volatile struct vector_header_s *next; // NULL if this is the last
+-- };
+
+-- // wait for vector operation to finish
+-- // busy waiting for interrupt flag
+-- void wait_vector_mask(uint32_t mask)
+-- {
+--   uint32_t i=0, a;
 --   do
 --   {
---     a = vector_ptr[1];
---   } while(a == 0);
---   vector_ptr[1] = a; // clear interrupt flag(s)
+--     a = vector_mmio[1];
+--   } while((a & mask) != mask && ++i < 200000); // some large timeout just in case...
+--   vector_mmio[1] = a; // clear interrupt flag(s)
 -- }
 
---  vector_ptr[0] = address_of_vector1;
---  vector_ptr[4] = 0x00000400; // load vector 1
---  delay(4);
---  vector_ptr[0] = address_of_vector2;
---  vector_ptr[4] = 0x00000200; // load vector 2
---  delay(4);
---  vector_ptr[4] = 0x30010210; // v(0) = v(1) - v(2)
---  delay(4);
---  vector_ptr[0] = address_of_vector0;
---  vector_ptr[4] = 0x00800000; // store vector 0 (vector number)
+--  vector_mmio[0] = address_of_vector1; // pointer to struct vector_header_s
+--  vector_mmio[4] = 0x00000200; // load vector 1 from RAM
+--  wait_vector_mask(1<<16); // bit 16 waits for I/O
+--  vector_mmio[0] = address_of_vector2; // pointer to struct vector_header_s
+--  vector_mmio[4] = 0x00000400; // load vector 2 from RAM
+--  wait_vector_mask(1<<16); // bit 16 waits for I/O
+--  vector_mmio[4] = 0x30010210; // v(0) = v(1) - v(2) // calculate
+--  wait_vector_mask(1<<0); // bit 0 waits for vector 0
+--  vector_mmio[0] = address_of_vector0;
+--  vector_mmio[4] = 0x00800000; // store vector 0 to RAM (vector number)
+--  wait_vector_mask(1<<16); // bit 16 waits for I/O
 
 
 -- TODO:
