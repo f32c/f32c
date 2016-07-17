@@ -588,3 +588,8 @@ end;
 -- [ ] move I/O from using separate BRAM port into a member of functional
 --     units. I/O is slow and can be only 1 running at a time so it's a
 --     waste of BRAM ports to use them all just for 1 IO
+
+-- [ ] flow control: introduce run/stop signal for vector indexer
+--     intended for I/O module to be used as a functional unit.
+--     slow functional unit can drop run this signal to 0,
+--     so index will not advance, waiting until data ready
