@@ -252,7 +252,9 @@ begin
             --if bus_in(31 downto 28) = x"3" then -- command 0x3...
               if S_cmd_function = C_function_io then
                 R_io_request <= '1'; -- trigger start of RAM I/O module
-                -- R_vector_load_request(SI_cmd_result) <= not S_cmd_store; -- I/O load when done must set new vector length
+                -- Normally arg1 and result should be set to the same value here.
+                -- A redundancy, but it allows to reuse
+                -- part of command decoding in arithmetic.
                 R_io_store_mode <= S_cmd_store; -- RAM write cycle
                 -- this will let I/O control increment of vector indexes
                 R_vector_io_flowcontrol(SI_cmd_arg1) <= '1';
@@ -278,8 +280,6 @@ begin
                 R_vector_length(SI_cmd_result) <= R_vector_length(SI_cmd_arg1);
               end if;
               R_fpu_addsub_mode(0) <= S_cmd_addsub_mode; -- ADD/SUB mode 0:+,1:-
-              -- set a vector to listen to results of the selected functional unit
-              R_vector_listen_to(SI_cmd_result) <= S_cmd_function;
               -- set functional unit's argmuents to be read from selected vectors
               R_function_arg2_select(SI_cmd_function) <= S_cmd_arg2;
               R_function_arg1_select(SI_cmd_function) <= S_cmd_arg1;
@@ -293,8 +293,10 @@ begin
               -- to new start of the result data.
               R_result_vector_shift(SI_cmd_result) <= R_vector_shift(SI_cmd_result) +
                 conv_std_logic_vector(C_function_propagation_delay(SI_cmd_function), C_vaddr_bits+1);
-              -- request write to result vector
-              -- except store mode which doesn't write to vector. It only reads vector and writes to RAM
+              -- set a vector to listen to results of the selected functional unit
+              R_vector_listen_to(SI_cmd_result) <= S_cmd_function;
+              -- request write to result vector (the data it listens to get written)
+              -- for the store mode write is disabled, a special case.
               R_vector_write_request(SI_cmd_result) <= not S_cmd_store;
             --end if;
           end if;
