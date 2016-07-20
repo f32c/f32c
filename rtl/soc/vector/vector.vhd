@@ -45,6 +45,7 @@ entity vector is
     io_request: out std_logic;
     io_done: in std_logic;
     io_bram_we: in std_logic;
+    io_bram_next: in std_logic; -- unused
     io_bram_addr: in std_logic_vector(C_vaddr_bits downto 0);
     io_bram_wdata: in std_logic_vector(C_vdata_bits-1 downto 0);
     io_bram_rdata: out std_logic_vector(C_vdata_bits-1 downto 0);

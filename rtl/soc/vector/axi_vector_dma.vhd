@@ -68,6 +68,7 @@ entity axi_vector_dma is
 
     -- bram interface
     bram_we: out std_logic := '0'; -- bram write enable
+    bram_next: out std_logic := '0'; -- unused
     bram_addr: out std_logic_vector(C_vaddr_bits downto 0);
     bram_wdata: out std_logic_vector(C_vdata_bits-1 downto 0);
     bram_rdata: in std_logic_vector(C_vdata_bits-1 downto 0);
