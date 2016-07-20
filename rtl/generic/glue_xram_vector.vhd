@@ -463,6 +463,7 @@ architecture Behavioral of glue_xram is
     signal S_vector_io_request: std_logic;
     signal S_vector_io_done: std_logic;
     signal S_vector_io_bram_we: std_logic;
+    signal S_vector_io_bram_next: std_logic;
     signal S_vector_io_bram_addr: std_logic_vector(C_vector_vaddr_bits downto 0);
     signal S_vector_io_bram_wdata: std_logic_vector(C_vector_vdata_bits-1 downto 0);
     signal S_vector_io_bram_rdata: std_logic_vector(C_vector_vdata_bits-1 downto 0);
@@ -1084,6 +1085,7 @@ begin
         io_request => S_vector_io_request,
         io_done => S_vector_io_done,
         io_bram_we => S_vector_io_bram_we,
+        io_bram_next => S_vector_io_bram_next,
         io_bram_addr => S_vector_io_bram_addr,
         io_bram_wdata => S_vector_io_bram_wdata,
         io_bram_rdata => S_vector_io_bram_rdata,
@@ -1141,6 +1143,7 @@ begin
 
           -- bram interface
           bram_we => S_vector_io_bram_we, -- I/O module outputs we signal
+          bram_next => S_vector_io_bram_next, -- I/O module outputs request to increment vector.vhd internal bram addr
           bram_addr => S_vector_io_bram_addr, -- I/O module outputs addr
           bram_wdata => S_vector_io_bram_wdata, -- I/O module outputs wdata
           bram_rdata => S_vector_io_bram_rdata, -- I/O module inputs rdata
