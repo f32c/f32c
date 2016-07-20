@@ -126,10 +126,10 @@ architecture arch of vector is
     -- a function can have modifier that selects one from many of similar functions
     constant C_functions: integer := 4; -- total number of functional units
     constant C_functions_bits: integer := ceil_log2(C_functions); -- total number bits to address one functional unit
-    constant C_function_fpu_addsub: integer range 0 to C_functions-1 := 0; -- +,-
-    constant C_function_fpu_multiply: integer range 0 to C_functions-1 := 1; -- *
-    constant C_function_fpu_divide: integer range 0 to C_functions-1 := 2; -- /
-    constant C_function_io: integer range 0 to C_functions-1 := 3; -- I/O
+    constant C_function_io: integer range 0 to C_functions-1 := 0; -- I/O
+    constant C_function_fpu_addsub: integer range 0 to C_functions-1 := 1; -- +,-
+    constant C_function_fpu_multiply: integer range 0 to C_functions-1 := 2; -- *
+    constant C_function_fpu_divide: integer range 0 to C_functions-1 := 3; -- /
     -- all functions will broadcast results
     type T_function_result is array (C_functions-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
     signal R_function_result, S_function_result: T_function_result;
@@ -141,10 +141,10 @@ architecture arch of vector is
     type T_function_propagation_delay is array (0 to C_functions-1) of integer;
     constant C_function_propagation_delay: T_function_propagation_delay :=
     (
+      1, -- C_function_io (RAM DMA) this affects load, not store
       5, -- C_function_fpu_addsub (+,-)
       5, -- C_function_fpu_multiply (*)
-     12, -- C_function_fpu_divide (/)
-      1  -- C_function_io (RAM DMA) this affects load, not store
+     12  -- C_function_fpu_divide (/)
     );
     type T_function_vector_select is array (0 to C_functions-1) of std_logic_vector(C_vectors_bits-1 downto 0);
     signal R_function_arg1_select, R_function_arg2_select: T_function_vector_select;
@@ -249,17 +249,17 @@ begin
         -- command accepted only if written in 32-bit word
         if ce='1' and bus_write='1' and byte_sel="1111" then
           if conv_integer(addr) = C_vcommand then
-            if bus_in(31 downto 28) = x"3" then -- command 0x3...
+            --if bus_in(31 downto 28) = x"3" then -- command 0x3...
               if S_cmd_function = C_function_io then
                 R_io_request <= '1'; -- trigger start of RAM I/O module
                 -- R_vector_load_request(SI_cmd_result) <= not S_cmd_store; -- I/O load when done must set new vector length
                 R_io_store_mode <= S_cmd_store; -- RAM write cycle
-                -- request Reset vector indexes (2 operands, only 1 used)
-                -- IO never uses arg2
-                R_vector_index_reset(SI_cmd_arg1) <= '1';
-                R_vector_index_reset(SI_cmd_result) <= '1';
+                -- this will let I/O control increment of vector indexes
                 R_vector_io_flowcontrol(SI_cmd_arg1) <= '1';
                 R_vector_io_flowcontrol(SI_cmd_result) <= '1';
+                -- request Reset vector indexes (2 operands, only 1 used), I/O never uses arg2
+                R_vector_index_reset(SI_cmd_arg1) <= '1';
+                R_vector_index_reset(SI_cmd_result) <= '1';
                 -- I/O module can know vector length only when it reads
                 -- last header (too late), we need here to know vector length
                 -- in advance. Here CPU must "help" by passing vector length in I/O command
@@ -270,8 +270,7 @@ begin
                 R_vector_io_flowcontrol(SI_cmd_arg2) <= '0';
                 R_vector_io_flowcontrol(SI_cmd_arg1) <= '0';
                 R_vector_io_flowcontrol(SI_cmd_result) <= '0';
-                -- request Reset vector for arithmetic operation (3 operands)
-                -- request Reset vector indexes
+                -- request Reset all used vector indexes
                 R_vector_index_reset(SI_cmd_arg2) <= '1';
                 R_vector_index_reset(SI_cmd_arg1) <= '1';
                 R_vector_index_reset(SI_cmd_result) <= '1';
@@ -297,7 +296,7 @@ begin
               -- request write to result vector
               -- except store mode which doesn't write to vector. It only reads vector and writes to RAM
               R_vector_write_request(SI_cmd_result) <= not S_cmd_store;
-            end if;
+            --end if;
           end if;
         else
           R_io_request <= '0';
@@ -534,20 +533,20 @@ end;
 --         C vector id arg 1
 --          D vector id result (D = C <oper> B)
 --
--- 0x33000000  load V(0) from RAM
--- 0x33800000  store V(0) to RAM
--- 0x33000111  load V(1) from RAM
--- 0x33800111  store V(1) to RAM
--- 0x33000222  load V(2) from RAM
--- 0x33800222  store V(2) to RAM
--- 0x33000333  load V(3) from RAM
--- 0x33800333  store V(3) to RAM
--- 0x30000210  V(0) = V(1) + V(2) float
--- 0x30010210  V(0) = V(1) - V(2) float
--- 0x31000210  V(0) = V(1) * V(2) float
--- 0x32000210  V(0) = V(1) / V(2) float
--- 0x33000222  load V(2) from RAM
--- 0x33800222  store V(2) to RAM
+-- 0x00009000  load V(0) from RAM length=10
+-- 0x00800000  store V(0) to RAM
+-- 0x0000A111  load V(1) from RAM length=11
+-- 0x00800111  store V(1) to RAM
+-- 0x00010222  load V(2) from RAM length=17
+-- 0x00800222  store V(2) to RAM
+-- 0x007FF333  load V(3) from RAM length=2048
+-- 0x00800333  store V(3) to RAM
+-- 0x01000210  V(0) = V(1) + V(2) float
+-- 0x01010210  V(0) = V(1) - V(2) float
+-- 0x02000210  V(0) = V(1) * V(2) float
+-- 0x03000210  V(0) = V(1) / V(2) float
+-- 0x00000222  load V(2) from RAM length=1
+-- 0x00800222  store V(2) to RAM
 
 --  C usage
 
@@ -625,14 +624,24 @@ end;
 
 -- [ ] find/make a suckless divide module FPU LUT/DSP usage friendly
 
--- [ ] both BRAM ports should be clocked CPU clock synchrnous,
+-- [*] both BRAM ports should be clocked CPU clock synchrnous,
 --     let AXI I/O and FPU handle the async and delays
 
--- [ ] move I/O from using separate BRAM port into a member of functional
+-- [*] move I/O from using separate BRAM port into a member of functional
 --     units. I/O is slow and can be only 1 running at a time so it's a
 --     waste of BRAM ports to use them all just for 1 IO
 
--- [ ] flow control: introduce run/stop signal for vector indexer
+-- [*] flow control: introduce run/stop signal for vector indexer
 --     intended for I/O module to be used as a functional unit.
 --     slow functional unit can drop run this signal to 0,
 --     so index will not advance, waiting until data ready
+
+-- [ ] renumber functional units: 0: I/O, 1:+/-, 2:*, 3:/
+
+-- [ ] clean up commands (I/O now needs 2 indentical arg1=result parameters
+--     to reuse code from arithmeitc. Maybe it can cleaner use 1 parameter.
+
+-- [ ] fine-grained commmands to manipulate shfit/length/increment
+-- [ ] half: (arguments from second half, result to first half)
+-- [ ] constant: (don't increment arguments.
+--     e.g. enabling I/O control flow without any I/O prevents increment
