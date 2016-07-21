@@ -126,10 +126,10 @@ architecture arch of vector is
     -- a function can have modifier that selects one from many of similar functions
     constant C_functions: integer := 4; -- total number of functional units
     constant C_functions_bits: integer := ceil_log2(C_functions); -- total number bits to address one functional unit
-    constant C_function_io: integer range 0 to C_functions-1 := 0; -- I/O
-    constant C_function_fpu_addsub: integer range 0 to C_functions-1 := 1; -- +,-
-    constant C_function_fpu_multiply: integer range 0 to C_functions-1 := 2; -- *
-    constant C_function_fpu_divide: integer range 0 to C_functions-1 := 3; -- /
+    constant C_function_io: integer range 0 to C_functions-1 := 3; -- I/O
+    constant C_function_fpu_addsub: integer range 0 to C_functions-1 := 0; -- +,-
+    constant C_function_fpu_multiply: integer range 0 to C_functions-1 := 1; -- *
+    constant C_function_fpu_divide: integer range 0 to C_functions-1 := 2; -- /
     -- all functions will broadcast results
     type T_function_result is array (C_functions-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
     signal R_function_result, S_function_result: T_function_result;
@@ -141,10 +141,10 @@ architecture arch of vector is
     type T_function_propagation_delay is array (0 to C_functions-1) of integer;
     constant C_function_propagation_delay: T_function_propagation_delay :=
     (
-      1, -- C_function_io (RAM DMA) this affects load, not store
       5, -- C_function_fpu_addsub (+,-)
       5, -- C_function_fpu_multiply (*)
-     12  -- C_function_fpu_divide (/)
+     12, -- C_function_fpu_divide (/)
+      1  -- C_function_io (RAM DMA) this affects load, not store
     );
     type T_function_vector_select is array (0 to C_functions-1) of std_logic_vector(C_vectors_bits-1 downto 0);
     signal R_function_arg1_select, R_function_arg2_select: T_function_vector_select;
@@ -535,20 +535,20 @@ end;
 --         C vector id arg 1
 --          D vector id result (D = C <oper> B)
 --
--- 0x00009000  load V(0) from RAM length=10
--- 0x00800000  store V(0) to RAM
--- 0x0000A111  load V(1) from RAM length=11
--- 0x00800111  store V(1) to RAM
--- 0x00010222  load V(2) from RAM length=17
--- 0x00800222  store V(2) to RAM
--- 0x007FF333  load V(3) from RAM length=2048
--- 0x00800333  store V(3) to RAM
--- 0x01000210  V(0) = V(1) + V(2) float
--- 0x01010210  V(0) = V(1) - V(2) float
--- 0x02000210  V(0) = V(1) * V(2) float
--- 0x03000210  V(0) = V(1) / V(2) float
--- 0x00000222  load V(2) from RAM length=1
--- 0x00800222  store V(2) to RAM
+-- 0x03009000  load V(0) from RAM length=10
+-- 0x03800000  store V(0) to RAM
+-- 0x0300A111  load V(1) from RAM length=11
+-- 0x03800111  store V(1) to RAM
+-- 0x03010222  load V(2) from RAM length=17
+-- 0x03800222  store V(2) to RAM
+-- 0x037FF333  load V(3) from RAM length=2048
+-- 0x03800333  store V(3) to RAM
+-- 0x00000210  V(0) = V(1) + V(2) float
+-- 0x00010210  V(0) = V(1) - V(2) float
+-- 0x01000210  V(0) = V(1) * V(2) float
+-- 0x02000210  V(0) = V(1) / V(2) float
+-- 0x03000222  load V(2) from RAM length=1
+-- 0x03800222  store V(2) to RAM
 
 --  C usage
 
