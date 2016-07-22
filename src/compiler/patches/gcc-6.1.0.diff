@@ -1,17 +1,6 @@
-diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips-cpus.def gcc/config/mips/mips-cpus.def
---- ../org/gcc-6.1.0/gcc/config/mips/mips-cpus.def	2016-01-04 15:30:50.000000000 +0100
-+++ gcc/config/mips/mips-cpus.def	2016-04-28 10:33:29.407604000 +0200
-@@ -102,6 +102,7 @@ MIPS_CPU ("4kp", PROCESSOR_4KP, 32, 0)
- MIPS_CPU ("4ksc", PROCESSOR_4KC, 32, 0)
- 
- /* MIPS32 Release 2 processors.  */
-+MIPS_CPU ("f32c", PROCESSOR_F32C, 33, 0)
- MIPS_CPU ("m4k", PROCESSOR_M4K, 33, 0)
- MIPS_CPU ("m14kc", PROCESSOR_M4K, 33, 0)
- MIPS_CPU ("m14k", PROCESSOR_M4K, 33, 0)
 diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.c gcc/config/mips/mips.c
 --- ../org/gcc-6.1.0/gcc/config/mips/mips.c	2016-02-12 00:53:54.000000000 +0100
-+++ gcc/config/mips/mips.c	2016-04-28 10:43:10.145286000 +0200
++++ gcc/config/mips/mips.c	2016-07-02 11:34:13.489238000 +0200
 @@ -811,6 +811,15 @@ static const struct mips_rtx_cost_data
  		     1,           /* branch_cost */
  		     4            /* memory_latency */
@@ -28,7 +17,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.c gcc/config/mips/mips.c
    { /* Loongson-2E */
      DEFAULT_COSTS
    },
-@@ -7521,7 +7530,7 @@ mips_block_move_straight (rtx dest, rtx 
+@@ -7521,7 +7530,7 @@ mips_block_move_straight (rtx dest, rtx
       picking the minimum of alignment or BITS_PER_WORD gets us the
       desired size for bits.  */
  
@@ -48,7 +37,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.c gcc/config/mips/mips.c
      return false;
 diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.h gcc/config/mips/mips.h
 --- ../org/gcc-6.1.0/gcc/config/mips/mips.h	2016-01-18 14:30:43.000000000 +0100
-+++ gcc/config/mips/mips.h	2016-04-28 10:37:03.427124000 +0200
++++ gcc/config/mips/mips.h	2016-07-02 11:34:13.504838000 +0200
 @@ -255,6 +255,7 @@ struct mips_cpu_info {
  #define TARGET_LOONGSON_2F          (mips_arch == PROCESSOR_LOONGSON_2F)
  #define TARGET_LOONGSON_2EF         (TARGET_LOONGSON_2E || TARGET_LOONGSON_2F)
@@ -241,7 +230,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.h gcc/config/mips/mips.h
     ? TARGET_LLSC && !TARGET_MIPS16	\
 diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
 --- ../org/gcc-6.1.0/gcc/config/mips/mips.md	2016-01-04 15:30:50.000000000 +0100
-+++ gcc/config/mips/mips.md	2016-07-06 23:11:14.558038000 +0200
++++ gcc/config/mips/mips.md	2016-07-22 09:56:07.210567800 +0200
 @@ -35,6 +35,7 @@
    74kf2_1
    74kf1_1
@@ -250,7 +239,15 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    loongson_2e
    loongson_2f
    loongson_3a
-@@ -1554,7 +1555,7 @@
+@@ -1131,6 +1132,7 @@
+ (include "7000.md")
+ (include "9000.md")
+ (include "10000.md")
++(include "f32c.md")
+ (include "loongson2ef.md")
+ (include "loongson3a.md")
+ (include "octeon.md")
+@@ -1554,7 +1556,7 @@
    [(set (match_operand:GPR 0 "register_operand")
  	(mult:GPR (match_operand:GPR 1 "register_operand")
  		  (match_operand:GPR 2 "register_operand")))]
@@ -259,7 +256,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    rtx lo;
  
-@@ -1581,7 +1582,7 @@
+@@ -1581,7 +1583,7 @@
    [(set (match_operand:GPR 0 "register_operand" "=d")
          (mult:GPR (match_operand:GPR 1 "register_operand" "d")
                    (match_operand:GPR 2 "register_operand" "d")))]
@@ -268,7 +265,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    if (TARGET_LOONGSON_2EF)
      return "<d>multu.g\t%0,%1,%2";
-@@ -1598,7 +1599,7 @@
+@@ -1598,7 +1600,7 @@
  	(mult:GPR (match_operand:GPR 1 "register_operand" "d,d")
  		  (match_operand:GPR 2 "register_operand" "d,d")))
     (clobber (match_scratch:GPR 3 "=l,X"))]
@@ -277,7 +274,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    if (which_alternative == 1)
      return "<d>mult\t%1,%2";
-@@ -1625,7 +1626,7 @@
+@@ -1625,7 +1627,7 @@
          (clobber (scratch:SI))])
     (set (match_operand:SI 3 "d_operand")
  	(match_dup 0))]
@@ -286,7 +283,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    [(parallel
         [(set (match_dup 3)
  	     (mult:SI (match_dup 1)
-@@ -1636,7 +1637,7 @@
+@@ -1636,7 +1638,7 @@
    [(set (match_operand:GPR 0 "muldiv_target_operand" "=l")
  	(mult:GPR (match_operand:GPR 1 "register_operand" "d")
  		  (match_operand:GPR 2 "register_operand" "d")))]
@@ -295,7 +292,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "<d>mult\t%1,%2"
    [(set_attr "type" "imul")
     (set_attr "mode" "<MODE>")])
-@@ -1646,7 +1647,7 @@
+@@ -1646,7 +1648,7 @@
  	(mult:GPR (match_operand:GPR 1 "register_operand" "d")
  		  (match_operand:GPR 2 "register_operand" "d")))
     (clobber (match_scratch:GPR 3 "=l"))]
@@ -304,7 +301,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "<d>mult\t%1,%2\;mflo\t%0"
    [(set_attr "type" "imul")
     (set_attr "mode" "<MODE>")
-@@ -1666,7 +1667,7 @@
+@@ -1666,7 +1668,7 @@
  		 (match_operand:SI 2 "d_operand")))
     (set (match_operand:SI 3 "d_operand")
  	(match_dup 0))]
@@ -313,7 +310,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    [(set (match_dup 0)
  	(const_int 0))
     (parallel
-@@ -1707,7 +1708,7 @@
+@@ -1707,7 +1709,7 @@
  		 (match_operand:SI 3 "register_operand" "0,0,d")))
     (clobber (match_scratch:SI 4 "=X,X,l"))
     (clobber (match_scratch:SI 5 "=X,X,&d"))]
@@ -322,7 +319,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "@
      madd\t%1,%2
      madd\t%1,%2
-@@ -1736,7 +1737,7 @@
+@@ -1736,7 +1738,7 @@
  		 (match_operand:SI 3 "register_operand" "0,0,l,d")))
     (clobber (match_scratch:SI 4 "=X,X,3,l"))
     (clobber (match_scratch:SI 5 "=X,X,X,&d"))]
@@ -331,7 +328,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "@
      madd\t%1,%2
      madd\t%1,%2
-@@ -1779,7 +1780,7 @@
+@@ -1779,7 +1781,7 @@
  			  (match_operand:SI 2 "register_operand" "d,d"))
  		 (match_operand:SI 3 "register_operand" "0,l")))
     (clobber (match_scratch:SI 4 "=X,3"))]
@@ -340,7 +337,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    if (which_alternative == 1)
      return "macc\t%0,%1,%2";
-@@ -1801,7 +1802,7 @@
+@@ -1801,7 +1803,7 @@
                    (mult:SI (match_operand:SI 2 "register_operand" "d,d")
                             (match_operand:SI 3 "register_operand" "d,d"))))
     (clobber (match_scratch:SI 4 "=X,1"))]
@@ -349,7 +346,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    if (which_alternative == 1)
      return "msac\t%0,%2,%3";
-@@ -1822,7 +1823,7 @@
+@@ -1822,7 +1824,7 @@
                             (match_operand:SI 3 "register_operand" "d,d"))))
     (clobber (match_scratch:SI 4 "=X,1"))
     (clobber (match_scratch:SI 5 "=d,d"))]
@@ -358,7 +355,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "#"
    "&& reload_completed"
    [(set (match_dup 5)
-@@ -1849,7 +1850,7 @@
+@@ -1849,7 +1851,7 @@
  	(plus:SI (mult:SI (match_dup 1)
  			  (match_dup 2))
  		 (match_dup 0)))]
@@ -367,7 +364,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "macc\t%3,%1,%2"
    [(set_attr "type"	"imadd")
     (set_attr "accum_in"	"0")
-@@ -1864,7 +1865,7 @@
+@@ -1864,7 +1866,7 @@
  	(minus:SI (match_dup 0)
  		  (mult:SI (match_dup 1)
  			   (match_dup 2))))]
@@ -376,7 +373,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "msac\t%3,%1,%2"
    [(set_attr "type"	"imadd")
     (set_attr "accum_in"	"0")
-@@ -1912,7 +1913,7 @@
+@@ -1912,7 +1914,7 @@
         [(set (match_operand:SI 3 "d_operand")
  	     (match_operand:SI 4 "macc_msac_operand"))
  	(clobber (match_dup 1))])]
@@ -385,7 +382,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    [(parallel [(set (match_dup 0)
  		   (match_dup 5))
  	      (clobber (match_dup 1))])
-@@ -1945,7 +1946,7 @@
+@@ -1945,7 +1947,7 @@
     (match_dup 0)
     (set (match_operand:SI 4 "d_operand")
  	(match_dup 1))]
@@ -394,7 +391,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    [(parallel [(set (match_dup 0)
  		   (match_dup 5))
  	      (clobber (match_dup 1))])
-@@ -1965,7 +1966,7 @@
+@@ -1965,7 +1967,7 @@
                             (match_operand:SI 3 "register_operand" "d,d,d"))))
     (clobber (match_scratch:SI 4 "=X,X,l"))
     (clobber (match_scratch:SI 5 "=X,X,&d"))]
@@ -403,7 +400,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "@
     msub\t%2,%3
     msub\t%2,%3
-@@ -2006,7 +2007,7 @@
+@@ -2006,7 +2008,7 @@
          (neg:SI (mult:SI (match_operand:SI 1 "register_operand" "d,d")
                           (match_operand:SI 2 "register_operand" "d,d"))))
     (clobber (match_scratch:SI 3 "=X,l"))]
@@ -412,7 +409,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "@
     muls\t$0,%1,%2
     muls\t%0,%1,%2"
-@@ -2017,7 +2018,7 @@
+@@ -2017,7 +2019,7 @@
    [(set (match_operand:DI 0 "register_operand")
  	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
  		 (any_extend:DI (match_operand:SI 2 "register_operand"))))]
@@ -421,7 +418,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    mulsidi3_gen_fn fn = mips_mulsidi3_gen_fn (<CODE>);
    emit_insn (fn (operands[0], operands[1], operands[2]));
-@@ -2028,7 +2029,7 @@
+@@ -2028,7 +2030,7 @@
    [(set (match_operand:DI 0 "register_operand")
  	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
  		 (any_extend:DI (match_operand:SI 2 "register_operand"))))]
@@ -430,7 +427,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    rtx dest = gen_reg_rtx (DImode);
    rtx low = mips_subword (dest, 0);
-@@ -2046,7 +2047,7 @@
+@@ -2046,7 +2048,7 @@
    [(set (match_operand:DI 0 "register_operand")
  	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
  		 (any_extend:DI (match_operand:SI 2 "register_operand"))))]
@@ -439,7 +436,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    rtx hilo;
  
-@@ -2063,7 +2064,7 @@
+@@ -2063,7 +2065,7 @@
    [(set (match_operand:DI 0 "muldiv_target_operand" "=ka")
  	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
  		 (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))]
@@ -448,7 +445,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    if (ISA_HAS_DSP_MULT)
      return "mult<u>\t%q0,%1,%2";
-@@ -2078,7 +2079,7 @@
+@@ -2078,7 +2080,7 @@
  	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
  		 (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))
     (clobber (match_scratch:DI 3 "=x"))]
@@ -457,7 +454,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "mult<u>\t%1,%2\;mflo\t%L0\;mfhi\t%M0"
    [(set_attr "type" "imul")
     (set_attr "mode" "SI")
-@@ -2091,7 +2092,7 @@
+@@ -2091,7 +2093,7 @@
     (clobber (match_scratch:TI 3 "=x"))
     (clobber (match_scratch:DI 4 "=d"))]
    "TARGET_64BIT && !TARGET_FIX_R4000 && !ISA_HAS_DMUL3
@@ -466,7 +463,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "#"
    "&& reload_completed"
    [(const_int 0)]
-@@ -2111,7 +2112,7 @@
+@@ -2111,7 +2113,7 @@
    [(set (match_operand:DI 0 "register_operand")
  	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
  		 (any_extend:DI (match_operand:SI 2 "register_operand"))))]
@@ -475,7 +472,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    emit_insn (gen_<u>mulsidi3_64bit_split (operands[0], operands[1],
  					  operands[2], gen_reg_rtx (DImode)));
-@@ -2158,7 +2159,7 @@
+@@ -2158,7 +2160,7 @@
  	     (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
  	     (any_extend:DI (match_operand:SI 2 "register_operand" "d")))]
  	  UNSPEC_SET_HILO))]
@@ -484,7 +481,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "mult<u>\t%1,%2"
    [(set_attr "type" "imul")
     (set_attr "mode" "SI")])
-@@ -2169,7 +2170,7 @@
+@@ -2169,7 +2171,7 @@
  	(mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "d"))
  		 (sign_extend:DI (match_operand:SI 2 "register_operand" "d"))))
     (clobber (match_scratch:DI 3 "=l"))]
@@ -493,7 +490,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "dmul\t%0,%1,%2"
    [(set_attr "type" "imul3")
     (set_attr "mode" "DI")])
-@@ -2178,7 +2179,7 @@
+@@ -2178,7 +2180,7 @@
    [(set (match_operand:DI 0 "register_operand" "=d")
  	(mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "d"))
  		 (sign_extend:DI (match_operand:SI 2 "register_operand" "d"))))]
@@ -502,7 +499,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "dmul\t%0,%1,%2"
    [(set_attr "type" "imul3nc")
     (set_attr "mode" "DI")])
-@@ -2190,7 +2191,7 @@
+@@ -2190,7 +2192,7 @@
  	 (mult:DI
  	  (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
  	  (any_extend:DI (match_operand:SI 2 "register_operand" "d")))))]
@@ -511,7 +508,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "muls<u>\t$0,%1,%2"
    [(set_attr "type" "imul")
     (set_attr "mode" "SI")])
-@@ -2209,7 +2210,7 @@
+@@ -2209,7 +2211,7 @@
  	   (mult:DI
  	      (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
  	      (any_extend:DI (match_operand:SI 2 "register_operand" "d")))))]
@@ -520,7 +517,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    if (ISA_HAS_DSP_MULT)
      return "msub<u>\t%q0,%1,%2";
-@@ -2231,7 +2232,7 @@
+@@ -2231,7 +2233,7 @@
  	  (mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
  		   (any_extend:DI (match_operand:SI 2 "register_operand")))
  	  (const_int 32))))]
@@ -529,7 +526,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    if (ISA_HAS_MULHI)
      emit_insn (gen_<su>mulsi3_highpart_mulhi_internal (operands[0],
-@@ -2256,7 +2257,7 @@
+@@ -2256,7 +2258,7 @@
  	  (mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
  		   (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
  	  (const_int 32))))]
@@ -538,7 +535,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "muh<u>\t%0,%1,%2"
    [(set_attr "type" "imul3nc")
     (set_attr "mode" "SI")])
-@@ -2269,7 +2270,7 @@
+@@ -2269,7 +2271,7 @@
  		   (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
  	  (const_int 32))))
     (clobber (match_scratch:SI 3 "=l"))]
@@ -547,7 +544,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    { return TARGET_FIX_R4000 ? "mult<u>\t%1,%2\n\tmfhi\t%0" : "#"; }
    "&& reload_completed && !TARGET_FIX_R4000"
    [(const_int 0)]
-@@ -2289,7 +2290,7 @@
+@@ -2289,7 +2291,7 @@
  	  (mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
  		   (any_extend:DI (match_operand:SI 2 "register_operand")))
  	  (const_int 32))))]
@@ -556,7 +553,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    rtx hilo;
  
-@@ -2317,7 +2318,7 @@
+@@ -2317,7 +2319,7 @@
  	   (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
  	  (const_int 32))))
     (clobber (match_scratch:SI 3 "=l"))]
@@ -565,7 +562,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "mulhi<u>\t%0,%1,%2"
    [(set_attr "type" "imul3")
     (set_attr "mode" "SI")])
-@@ -2332,7 +2333,7 @@
+@@ -2332,7 +2334,7 @@
  	    (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))
  	  (const_int 32))))
     (clobber (match_scratch:SI 3 "=l"))]
@@ -574,7 +571,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "mulshi<u>\t%0,%1,%2"
    [(set_attr "type" "imul3")
     (set_attr "mode" "SI")])
-@@ -2347,9 +2348,9 @@
+@@ -2347,9 +2349,9 @@
  	  (mult:TI (any_extend:TI (match_operand:DI 1 "register_operand"))
  		   (any_extend:TI (match_operand:DI 2 "register_operand")))
  	  (const_int 64))))]
@@ -586,7 +583,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    if (TARGET_MIPS16)
      emit_insn (gen_<su>muldi3_highpart_split (operands[0], operands[1],
-@@ -2370,7 +2371,7 @@
+@@ -2370,7 +2372,7 @@
  	  (mult:TI (any_extend:TI (match_operand:DI 1 "register_operand" "d"))
  		   (any_extend:TI (match_operand:DI 2 "register_operand" "d")))
  	  (const_int 64))))]
@@ -595,7 +592,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "dmuh<u>\t%0,%1,%2"
    [(set_attr "type" "imul3nc")
     (set_attr "mode" "DI")])
-@@ -2385,7 +2386,7 @@
+@@ -2385,7 +2387,7 @@
     (clobber (match_scratch:DI 3 "=l"))]
    "ISA_HAS_DMULT
     && !TARGET_MIPS16
@@ -604,7 +601,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    { return TARGET_FIX_R4000 ? "dmult<u>\t%1,%2\n\tmfhi\t%0" : "#"; }
    "&& reload_completed && !TARGET_FIX_R4000"
    [(const_int 0)]
-@@ -2419,7 +2420,7 @@
+@@ -2419,7 +2421,7 @@
    [(set (match_operand:TI 0 "register_operand")
  	(mult:TI (any_extend:TI (match_operand:DI 1 "register_operand"))
  		 (any_extend:TI (match_operand:DI 2 "register_operand"))))]
@@ -613,7 +610,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    rtx hilo;
  
-@@ -2443,7 +2444,7 @@
+@@ -2443,7 +2445,7 @@
  		 (any_extend:TI (match_operand:DI 2 "register_operand" "d"))))]
    "ISA_HAS_DMULT
     && !TARGET_FIX_R4000
@@ -622,7 +619,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "dmult<u>\t%1,%2"
    [(set_attr "type" "imul")
     (set_attr "mode" "DI")])
-@@ -2455,7 +2456,7 @@
+@@ -2455,7 +2457,7 @@
     (clobber (match_scratch:TI 3 "=x"))]
    "ISA_HAS_DMULT
     && TARGET_FIX_R4000
@@ -631,7 +628,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "dmult<u>\t%1,%2\;mflo\t%L0\;mfhi\t%M0"
    [(set_attr "type" "imul")
     (set_attr "mode" "DI")
-@@ -2469,7 +2470,7 @@
+@@ -2469,7 +2471,7 @@
  	(plus:SI (mult:SI (match_operand:SI 1 "register_operand" "d")
  			  (match_operand:SI 2 "register_operand" "d"))
  		 (match_dup 0)))]
@@ -640,7 +637,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "mad\t%1,%2"
    [(set_attr "type"	"imadd")
     (set_attr "accum_in"	"0")
-@@ -2484,7 +2485,7 @@
+@@ -2484,7 +2486,7 @@
  		  (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
  	 (match_operand:DI 3 "muldiv_target_operand" "0")))]
    "(TARGET_MAD || ISA_HAS_MACC || GENERATE_MADD_MSUB || ISA_HAS_DSP)
@@ -649,7 +646,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    if (TARGET_MAD)
      return "mad<u>\t%1,%2";
-@@ -2752,7 +2753,9 @@
+@@ -2752,7 +2754,9 @@
  		  (match_operand:ANYF 2 "register_operand")))]
    "<divide_condition>"
  {
@@ -660,7 +657,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
      if (!(ISA_HAS_FP_RECIP_RSQRT (<MODE>mode)
  	  && flag_unsafe_math_optimizations))
        operands[1] = force_reg (<MODE>mode, operands[1]);
-@@ -2816,7 +2819,7 @@
+@@ -2816,7 +2820,7 @@
        (set (match_operand:GPR 3 "register_operand")
  	   (mod:GPR (match_dup 1)
  		    (match_dup 2)))])]
@@ -669,7 +666,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    if (TARGET_MIPS16)
      {
-@@ -2834,7 +2837,7 @@
+@@ -2834,7 +2838,7 @@
     (set (match_operand:GPR 3 "register_operand" "=d")
  	(mod:GPR (match_dup 1)
  		 (match_dup 2)))]
@@ -678,7 +675,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "#"
    "&& reload_completed"
    [(const_int 0)]
-@@ -2860,7 +2863,7 @@
+@@ -2860,7 +2864,7 @@
  	(mod:GPR (match_dup 1)
  		 (match_dup 2)))
     (clobber (match_operand:GPR 4 "lo_operand" "=l"))]
@@ -687,7 +684,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "#"
    "&& cse_not_expected"
    [(const_int 0)]
-@@ -2881,7 +2884,7 @@
+@@ -2881,7 +2885,7 @@
        (set (match_operand:GPR 3 "register_operand")
  	   (umod:GPR (match_dup 1)
  		     (match_dup 2)))])]
@@ -696,7 +693,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    if (TARGET_MIPS16)
      {
-@@ -2899,7 +2902,7 @@
+@@ -2899,7 +2903,7 @@
     (set (match_operand:GPR 3 "register_operand" "=d")
  	(umod:GPR (match_dup 1)
  		  (match_dup 2)))]
@@ -705,7 +702,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "#"
    "reload_completed"
    [(const_int 0)]
-@@ -2920,7 +2923,7 @@
+@@ -2920,7 +2924,7 @@
  	(umod:GPR (match_dup 1)
  		  (match_dup 2)))
     (clobber (match_operand:GPR 4 "lo_operand" "=l"))]
@@ -714,7 +711,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "#"
    "cse_not_expected"
    [(const_int 0)]
-@@ -2937,7 +2940,7 @@
+@@ -2937,7 +2941,7 @@
    [(set (match_operand:GPR 0 "register_operand")
  	(any_mod:GPR (match_operand:GPR 1 "register_operand")
  		     (match_operand:GPR 2 "register_operand")))]
@@ -723,7 +720,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    rtx hilo;
  
-@@ -2964,7 +2967,7 @@
+@@ -2964,7 +2968,7 @@
  	  [(any_div:GPR (match_operand:GPR 1 "register_operand" "d")
  			(match_operand:GPR 2 "register_operand" "d"))]
  	  UNSPEC_SET_HILO))]
@@ -732,7 +729,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    { return mips_output_division ("<GPR:d>div<u>\t%.,%1,%2", operands); }
    [(set_attr "type" "idiv")
     (set_attr "mode" "<GPR:MODE>")])
-@@ -2975,7 +2978,7 @@
+@@ -2975,7 +2979,7 @@
    [(set (match_operand:GPR 0 "register_operand" "=&d")
  	(any_div:GPR (match_operand:GPR 1 "register_operand" "d")
  		     (match_operand:GPR 2 "register_operand" "d")))]
@@ -741,7 +738,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    {
      if (TARGET_LOONGSON_2EF)
        return mips_output_division ("<d>div<u>.g\t%0,%1,%2", operands);
-@@ -2991,7 +2994,7 @@
+@@ -2991,7 +2995,7 @@
    [(set (match_operand:GPR 0 "register_operand" "=&d")
  	(any_mod:GPR (match_operand:GPR 1 "register_operand" "d")
  		     (match_operand:GPR 2 "register_operand" "d")))]
@@ -750,7 +747,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    {
      if (TARGET_LOONGSON_2EF)
        return mips_output_division ("<d>mod<u>.g\t%0,%1,%2", operands);
-@@ -4232,7 +4235,7 @@
+@@ -4232,7 +4236,7 @@
  			  (match_operand 1 "const_int_operand")
  			  (match_operand 2 "const_int_operand"))
  	(match_operand:GPR 3 "reg_or_0_operand"))]
@@ -759,7 +756,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
  {
    if (mips_expand_ins_as_unaligned_store (operands[0], operands[3],
  					  INTVAL (operands[1]),
-@@ -4304,7 +4307,7 @@
+@@ -4304,7 +4308,7 @@
  	(unspec:GPR [(match_operand:BLK 1 "memory_operand" "m")
  		     (match_operand:QI 2 "memory_operand" "ZC")]
  		    UNSPEC_LOAD_LEFT))]
@@ -768,7 +765,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "<load>l\t%0,%2"
    [(set_attr "move_type" "load")
     (set_attr "mode" "<MODE>")])
-@@ -4315,7 +4318,7 @@
+@@ -4315,7 +4319,7 @@
  		     (match_operand:QI 2 "memory_operand" "ZC")
  		     (match_operand:GPR 3 "register_operand" "0")]
  		    UNSPEC_LOAD_RIGHT))]
@@ -777,7 +774,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "<load>r\t%0,%2"
    [(set_attr "move_type" "load")
     (set_attr "mode" "<MODE>")])
-@@ -4325,7 +4328,7 @@
+@@ -4325,7 +4329,7 @@
  	(unspec:BLK [(match_operand:GPR 1 "reg_or_0_operand" "dJ")
  		     (match_operand:QI 2 "memory_operand" "ZC")]
  		    UNSPEC_STORE_LEFT))]
@@ -786,7 +783,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
    "<store>l\t%z1,%2"
    [(set_attr "move_type" "store")
     (set_attr "mode" "<MODE>")])
-@@ -4336,7 +4339,7 @@
+@@ -4336,7 +4340,7 @@
  		     (match_operand:QI 2 "memory_operand" "ZC")
  		     (match_dup 0)]
  		    UNSPEC_STORE_RIGHT))]
@@ -797,7 +794,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.md gcc/config/mips/mips.md
     (set_attr "mode" "<MODE>")])
 diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
 --- ../org/gcc-6.1.0/gcc/config/mips/mips.opt	2016-01-04 15:30:50.000000000 +0100
-+++ gcc/config/mips/mips.opt	2016-04-28 10:33:29.429357000 +0200
++++ gcc/config/mips/mips.opt	2016-07-02 11:34:13.536038100 +0200
 @@ -115,6 +115,26 @@ mdouble-float
  Target Report RejectNegative InverseMask(SINGLE_FLOAT, DOUBLE_FLOAT)
  Allow hardware floating-point instructions to cover both 32-bit and 64-bit operations.
@@ -825,8 +822,19 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
  mdsp
  Target Report Var(TARGET_DSP)
  Use MIPS-DSP instructions.
---- /dev/null	2016-07-06 23:33:00.000000000 +0200
-+++ gcc/config/mips/f32c.md	2016-04-28 10:33:29.430117000 +0200
+diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips-cpus.def gcc/config/mips/mips-cpus.def
+--- ../org/gcc-6.1.0/gcc/config/mips/mips-cpus.def	2016-01-04 15:30:50.000000000 +0100
++++ gcc/config/mips/mips-cpus.def	2016-07-02 11:34:13.473637900 +0200
+@@ -102,6 +102,7 @@ MIPS_CPU ("4kp", PROCESSOR_4KP, 32, 0)
+ MIPS_CPU ("4ksc", PROCESSOR_4KC, 32, 0)
+ 
+ /* MIPS32 Release 2 processors.  */
++MIPS_CPU ("f32c", PROCESSOR_F32C, 33, 0)
+ MIPS_CPU ("m4k", PROCESSOR_M4K, 33, 0)
+ MIPS_CPU ("m14kc", PROCESSOR_M4K, 33, 0)
+ MIPS_CPU ("m14k", PROCESSOR_M4K, 33, 0)
+--- /dev/null	2016-07-22 10:47:49.000000000 +0200
++++ gcc/config/mips/f32c.md	2016-07-02 11:34:13.536038100 +0200
 @@ -0,0 +1,96 @@
 +;;
 +;; f32c pipeline description
@@ -925,7 +933,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
 +   (set_attr "mode" "<MODE>")])
 +
 --- ../org/gcc-6.1.0/configure	2016-03-17 23:54:19.000000000 +0100
-+++ configure	2016-04-28 10:33:29.436314000 +0200
++++ configure	2016-07-02 11:34:13.567238100 +0200
 @@ -2772,7 +2772,10 @@ target_libraries="target-libgcc \
  # note: any program that *uses* libraries that are in the "target_libraries"
  # list belongs in this list.
@@ -939,7 +947,7 @@ diff -drup ../org/gcc-6.1.0/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
  ################################################################################
  
 --- ../org/gcc-6.1.0/gcc/doc/invoke.texi	2016-04-22 15:17:26.000000000 +0200
-+++ gcc/doc/invoke.texi	2016-04-28 10:44:22.420195000 +0200
++++ gcc/doc/invoke.texi	2016-07-02 11:34:13.582838100 +0200
 @@ -17718,6 +17718,7 @@ The processor names are:
  @samp{i6400},
  @samp{interaptiv},
