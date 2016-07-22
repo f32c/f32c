@@ -5,6 +5,7 @@
 -- supports all types of expressions
 -- normal: A=B+C
 -- compound: A=A+B, A=A+A
+-- with full FPU and f32c I/O, uses 3148 LUTs on Artix-7
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -464,13 +465,13 @@ end;
 --         B vector id arg 1
 --          A vector id result (A = B <oper> C)
 --
--- 0xA00A0030  select vector 0 elements 3-10
+-- 0xA0090090  select vector 0 element 9 (constant)
 -- 0xE3009000  load V(0) from RAM
 -- 0xE381F000  store V(0) to RAM
--- 0xA1FF1001  select vector 1 elements 256-511
+-- 0xA1FF1001  select vector 1 elements 256-511 (inclusive)
 -- 0xE3000011  load V(1) from RAM
 -- 0xE381F011  store V(1) to RAM
--- 0xA7FF0002  select vector 2 elements 0-2047
+-- 0xA7FF0002  select vector 2 elements 0-2047 (inclusive)
 -- 0xE3000022  load V(2) from RAM
 -- 0xE381F022  store V(2) to RAM
 -- 0xA0037FD3  select vector 3 elements 2045-3 (2045,2046,2047,0,1,2,3)
@@ -516,16 +517,19 @@ end;
 -- }
 
 --  vector_mmio[0] = address_of_vector1; // pointer to struct vector_header_s
---  vector_mmio[4] = 0x00000200; // load vector 1 from RAM
---  wait_vector_mask(1<<16); // bit 16 waits for I/O
+--  vector_mmio[4] = 0xA7FF0001; // select vector 1 range 0-2047
+--  vector_mmio[4] = 0xE3000011; // load vector 1 from RAM
+--  wait_vector_mask(1<<1); // bit 16 waits for vector 1
 --  vector_mmio[0] = address_of_vector2; // pointer to struct vector_header_s
---  vector_mmio[4] = 0x00000400; // load vector 2 from RAM
---  wait_vector_mask(1<<16); // bit 16 waits for I/O
---  vector_mmio[4] = 0x30010210; // v(0) = v(1) - v(2) // calculate
+--  vector_mmio[4] = 0xA7FF0002; // select vector 2 range 0-2047
+--  vector_mmio[4] = 0xE3000022; // load vector 2 from RAM
+--  wait_vector_mask(1<<2); // bit 2 waits for vector 2
+--  vector_mmio[4] = 0xA7FF0000; // select vector 0 range 0-2047
+--  vector_mmio[4] = 0xE0404210; // v(0) = v(1) - v(2) // calculate in-place sub, alias v(0)=v(1)
 --  wait_vector_mask(1<<0); // bit 0 waits for vector 0
 --  vector_mmio[0] = address_of_vector0;
---  vector_mmio[4] = 0x00800000; // store vector 0 to RAM (vector number)
---  wait_vector_mask(1<<16); // bit 16 waits for I/O
+--  vector_mmio[4] = 0xE381F000; // store vector 0 to RAM
+--  wait_vector_mask(1<<16); // bit 16 waits for I/O store (store bit is special)
 
 
 -- TODO:
@@ -580,3 +584,7 @@ end;
 -- [*] half: (arguments from second half, result to first half)
 -- [*] constant: (don't increment arguments.
 --     e.g. enabling I/O control flow without any I/O prevents increment
+
+-- [ ] unifiy store interrupt. Other vector interrupts track write
+--     signal, while store has no write to vector so it's on a special flag
+
