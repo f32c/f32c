@@ -63,15 +63,12 @@ architecture arch of vector is
       return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
     end ceil_log2;
 
+
+    -- *** MMIO REGISTERS ***
     constant C_mmio_registers: integer range 4 to 16 := 4; -- total number of memory backed mmio registers
-
-    constant C_vectors_bits: integer range 1 to 4 := ceil_log2(C_vectors); -- number of bits to select the vector register
-
-    -- normal registers
+    -- CPU interface: memory-mapped registers
     type T_mmio_regs is array (C_mmio_registers-1 downto 0) of std_logic_vector(C_bits-1 downto 0);
     signal R: T_mmio_regs; -- register access from mmapped I/O  R: active register
-
-    -- *** REGISTERS ***
     -- named constants for vector DMA control registers
     -- this improves code readability
     -- and provides flexible register (re)numbering
@@ -81,26 +78,6 @@ architecture arch of vector is
     constant C_vcounter:   integer   := 3; -- vector progress counter (write to select which register to monitor)
     constant C_vcommand:   integer   := 4; -- vector processor command
 
-    -- *** VECTORS ***
-    -- progress counter register array for all vectors
-    type T_vaddr is array (C_vectors-1 downto 0) of std_logic_vector(C_vaddr_bits downto 0);
-    signal R_vector_index, S_vector_index_last: T_vaddr; -- VI-internal counter register for functional units
-    signal R_vector_index_reset, R_vector_write, R_vector_write_request: std_logic_vector(C_vectors-1 downto 0); -- signals to reset vector index
-    signal R_vector_write_prev_cycle: std_logic_vector(C_vectors-1 downto 0); -- rising edge tracking
-    signal S_vdone_interrupt: std_logic_vector(C_vectors-1 downto 0);
-    signal S_vector_index_run: std_logic_vector(C_vectors-1 downto 0);
-    type T_vdata is array (C_vectors-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
-    signal S_vector_load, S_vector_store: T_vdata; -- vectors to RAM I/O lines
-    signal S_VARG, R_VRES: T_vdata; -- switchbar connection for arguments and results
-    signal R_VARG: T_vdata; -- switchbar connection for arguments and results
-    -- Register to track length of vector. So shorter than max length vectors
-    -- can be calculated faster
-    type T_vector_length is array (C_vectors-1 downto 0) of std_logic_vector(C_vaddr_bits downto 0);
-    signal R_vector_length, R_result_vector_length: T_vector_length; -- true length-1, 0 -> 1 element, 1 -> 2 elements ...
-    signal R_vector_shift, R_result_vector_shift, S_io_bram_addr_shift: T_vector_length; -- points to 1st element in vector
-    signal R_delay_vector_length: std_logic_vector(C_vectors-1 downto 0) := (others => '0');
-    signal R_vector_load_request: std_logic_vector(C_vectors-1 downto 0) := (others => '0');
-    signal R_vector_io_flowcontrol: std_logic_vector(C_vectors-1 downto 0) := (others => '0');
 
     -- *** RAM I/O ***
     signal S_io_bram_we: std_logic;
@@ -110,54 +87,69 @@ architecture arch of vector is
     signal S_io_bram_rdata, R_io_bram_wdata: std_logic_vector(C_vdata_bits-1 downto 0); -- channel to RAM
     signal R_io_bram_rdata: std_logic_vector(C_vdata_bits-1 downto 0); -- channel to RAM
     signal R_io_store_mode: std_logic; -- '0': load vectors from RAM, '1': store vector to RAM
-    signal R_io_store_select: std_logic_vector(C_vectors_bits-1 downto 0); -- select one vector to store
-    signal R_io_load_select, S_io_bram_we_select: std_logic_vector(C_vectors-1 downto 0); -- select multiple vectors load from the same RAM location
     signal R_io_request: std_logic; -- set to '1' during one clock cycle (not longer) to properly initiate RAM I/O
     signal S_io_done: std_logic;
     signal R_io_done: std_logic_vector(1 downto 0) := (others => '1');
     signal S_io_done_interrupt: std_logic;
-    signal S_bram_clk_reg, S_bram_clk_io: std_logic;
-    -- command decoder should load
-    -- R_store_mode, R_store_select, R_load_select
-    -- and issue a 1-clock pulse on R_io_request
 
-    -- *** Functional multiplexing ***
+
+    -- *** VECTOR REGISTERS ***
+    -- We will act as we have 2x more vectors.
+    -- Each port is treated as separate vector, an alias of the same data
+    -- separately addressable for double parallel run
+    constant C_vectors_bits: integer range 1 to 4 := ceil_log2(C_vectors); -- number of bits to select the vector
+    constant C_increment_delay_bits: integer := 5; -- must fit 2* max propagation delay
+    type T_VR_addr_2port is array (2*C_vectors-1 downto 0) of std_logic_vector(C_vaddr_bits-1 downto 0);
+    signal R_VR_addr, R_VR_addr_start, R_VR_addr_stop: T_VR_addr_2port;
+    type T_VR_data_2port is array (2*C_vectors-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
+    signal S_VR_data_in, S_VR_data_out: T_VR_data_2port;
+    signal R_VR_index_reset, R_VR_busy: std_logic_vector(2*C_vectors-1 downto 0);
+    signal R_VR_write, R_VR_write_request: std_logic_vector(2*C_vectors-1 downto 0);
+    signal R_VR_write_prev_cycle: std_logic_vector(2*C_vectors-1 downto 0); -- rising edge tracking
+    type T_VR_increment_delay is array (2*C_vectors-1 downto 0) of std_logic_vector(C_increment_delay_bits-1 downto 0);
+    signal R_VR_increment_delay, R_VR_increment_delay_start: T_VR_increment_delay := (others => (others => '1')); -- starts negative and increments
+    signal R_VR_io_flowcontrol: std_logic_vector(2*C_vectors-1 downto 0) := (others => '0');
+    signal R_VR_load_request: std_logic_vector(2*C_vectors-1 downto 0) := (others => '0');
+    signal S_VR_done_interrupt: std_logic_vector(2*C_vectors-1 downto 0);
+
+
+    -- *** FUNCTIONAL UNITS ***
     -- 4 main different functions
-    -- a function can have modifier that selects one from many of similar functions
     constant C_functions: integer := 4; -- total number of functional units
     constant C_functions_bits: integer := ceil_log2(C_functions); -- total number bits to address one functional unit
     constant C_function_io: integer range 0 to C_functions-1 := 3; -- I/O
     constant C_function_fpu_addsub: integer range 0 to C_functions-1 := 0; -- +,-
     constant C_function_fpu_multiply: integer range 0 to C_functions-1 := 1; -- *
     constant C_function_fpu_divide: integer range 0 to C_functions-1 := 2; -- /
-    -- all functions will broadcast results
-    type T_function_result is array (C_functions-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
-    signal R_function_result, S_function_result: T_function_result;
-    type T_vector_listen_to is array (C_vectors-1 downto 0) of std_logic_vector(C_functions_bits-1 downto 0);
-    signal R_vector_listen_to: T_vector_listen_to := (others => (others => '1'));
-    --signal S_function_run: std_logic_vector(C_functions-1 downto 0) := (others => '1');
-
     -- each function can have different pipeline propagation delay
     type T_function_propagation_delay is array (0 to C_functions-1) of integer;
     constant C_function_propagation_delay: T_function_propagation_delay :=
     (
-      5, -- C_function_fpu_addsub (+,-)
-      5, -- C_function_fpu_multiply (*)
-     12, -- C_function_fpu_divide (/)
-      1  -- C_function_io (RAM DMA) this affects load, not store
+      6, -- C_function_fpu_addsub (+,-)
+      6, -- C_function_fpu_multiply (*)
+     13, -- C_function_fpu_divide (/)
+      0  -- C_function_io (RAM DMA) this affects load, not store
     );
-    type T_function_vector_select is array (0 to C_functions-1) of std_logic_vector(C_vectors_bits-1 downto 0);
-    signal R_function_arg1_select, R_function_arg2_select: T_function_vector_select;
+    -- a function can have modifier that selects one from many of similar functions
     signal R_fpu_addsub_mode: std_logic_vector(0 downto 0); -- select float A+B or A-B to execute
+    -- the data interface
+    type T_FU_data is array (C_functions-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
+    signal S_FU_result_data, S_FU_arg1_data, S_FU_arg2_data: T_FU_data;
+    -- the function-register data crossbar
+    type T_FU2VR is array (C_functions-1 downto 0) of integer range 0 to 2*C_vectors-1;
+    signal R_FU2VR_arg1, R_FU2VR_arg2: T_FU2VR;
+    type T_VR2FU is array (2*C_vectors-1 downto 0) of integer range 0 to C_functions-1;
+    signal R_VR2FU: T_VR2FU;
 
     -- simplify writing signals from command decoder
-    signal S_cmd_result, S_cmd_arg1, S_cmd_arg2: std_logic_vector(C_vectors_bits-1 downto 0); -- command decoder
-    signal SI_cmd_result, SI_cmd_arg1, SI_cmd_arg2: integer range 0 to C_vectors-1;
+    signal S_cmd_result, S_cmd_arg1, S_cmd_arg2: std_logic_vector(C_vectors_bits downto 0); -- command decoder, 2*vectors
+    signal SI_cmd_result, SI_cmd_arg1, SI_cmd_arg2: integer range 0 to 2*C_vectors-1;
     signal S_cmd_function: std_logic_vector(C_functions_bits-1 downto 0);
     signal SI_cmd_function: integer range 0 to C_functions-1;
     signal S_cmd_store: std_logic;
     signal S_cmd_addsub_mode: std_logic;
-    signal S_cmd_length: std_logic_vector(C_vaddr_bits-1 downto 0);
+    signal S_cmd_vector_start, S_cmd_vector_stop: std_logic_vector(C_vaddr_bits-1 downto 0);
+    signal S_cmd_pipe_delay: std_logic_vector(C_increment_delay_bits-1 downto 0);
 
     -- vector done detection register
     signal S_interrupt_edge: std_logic_vector(C_bits-1 downto 0) := (others => '0');
@@ -215,14 +207,14 @@ begin
     process(clk)
     begin
       if rising_edge(clk) then
-        R_vector_write_prev_cycle <= R_vector_write;
+        R_VR_write_prev_cycle <= R_VR_write;
         R_io_done <= S_io_done & R_io_done(1);
       end if;
     end process;
     -- falling edge of functional vector write enable signal "S_vector_we" indicates
     -- the completion of vector operation (vdone interrupt)
-    S_vdone_interrupt <= R_vector_write_prev_cycle and not R_vector_write; -- '1' on falling edge
-    S_interrupt_edge(C_vectors-1 downto 0) <= S_vdone_interrupt; -- S_interrupt_edge is larger (32-bit)
+    S_VR_done_interrupt <= R_VR_write_prev_cycle and not R_VR_write; -- '1' on falling edge
+    S_interrupt_edge(2*C_vectors-1 downto 0) <= S_VR_done_interrupt; -- S_interrupt_edge is larger (32-bit)
     -- rising edge of "S_io_done" indicates
     -- the completion of vector I/O operation
     S_io_done_interrupt <= R_io_done(1) and not R_io_done(0); -- '1' on rising edge
@@ -231,17 +223,19 @@ begin
 
     -- *** MMIO command decoder ***
     -- signals introduced only for readability
-    S_cmd_result <= bus_in(C_vectors_bits-1+0 downto 0);
+    S_cmd_result <= bus_in(C_vectors_bits+0 downto 0);
     SI_cmd_result <= conv_integer(S_cmd_result);
-    S_cmd_arg1 <= bus_in(C_vectors_bits-1+4 downto 4);
+    S_cmd_arg1 <= bus_in(C_vectors_bits+4 downto 4);
     SI_cmd_arg1 <= conv_integer(S_cmd_arg1);
-    S_cmd_arg2 <= bus_in(C_vectors_bits-1+8 downto 8);
+    S_cmd_arg2 <= bus_in(C_vectors_bits+8 downto 8);
     SI_cmd_arg2 <= conv_integer(S_cmd_arg2);
     S_cmd_function <= bus_in(C_functions_bits-1+24 downto 24);
     SI_cmd_function <= conv_integer(S_cmd_function);
     S_cmd_store <= bus_in(23);
-    S_cmd_addsub_mode <= bus_in(16);
-    S_cmd_length <= bus_in(C_vaddr_bits-1+8 downto 8);
+    S_cmd_addsub_mode <= bus_in(22);
+    S_cmd_vector_start <= bus_in(C_vaddr_bits-1+4 downto 4);
+    S_cmd_vector_stop <= bus_in(C_vaddr_bits-1+16 downto 16);
+    S_cmd_pipe_delay <= bus_in(C_increment_delay_bits-1+12 downto 12);
 
     process(clk)
     begin
@@ -249,62 +243,57 @@ begin
         -- command accepted only if written in 32-bit word
         if ce='1' and bus_write='1' and byte_sel="1111" then
           if conv_integer(addr) = C_vcommand then
-            --if bus_in(31 downto 28) = x"3" then -- command 0x3...
+            case bus_in(31 downto 28) is -- main command decode execute...
+            when x"A" => -- address range: set vector start and stop address
+              R_VR_addr_start(SI_cmd_result) <= S_cmd_vector_start;
+              R_VR_addr_stop(SI_cmd_result) <= S_cmd_vector_stop;
+            when x"E" => -- execute functional unit
               if S_cmd_function = C_function_io then
                 R_io_request <= '1'; -- trigger start of RAM I/O module
                 -- Normally arg1 and result should be set to the same value here.
-                -- A redundancy, but it allows to reuse
-                -- part of command decoding in arithmetic.
+                -- A redundancy, but it allows to reuse crossbar
+                -- and part of command decoding for arithmetic.
                 R_io_store_mode <= S_cmd_store; -- RAM write cycle
                 -- this will let I/O control increment of vector indexes
-                R_vector_io_flowcontrol(SI_cmd_arg1) <= '1';
-                R_vector_io_flowcontrol(SI_cmd_result) <= '1';
+                R_VR_io_flowcontrol(SI_cmd_result) <= '1';
                 -- request Reset vector indexes (2 operands, only 1 used), I/O never uses arg2
-                R_vector_index_reset(SI_cmd_arg1) <= '1';
-                R_vector_index_reset(SI_cmd_result) <= '1';
-                -- I/O module can know vector length only when it reads
-                -- last header (too late), we need here to know vector length
-                -- in advance. Here CPU must "help" by passing vector length in I/O command
-                -- this simplifies vector_indexer.
-                R_vector_length(SI_cmd_result) <= '0' & S_cmd_length;
+                R_VR_index_reset(SI_cmd_result) <= '1';
+                -- no increment delay to arguments (set msb)
+                R_VR_increment_delay_start(SI_cmd_result) <= S_cmd_pipe_delay;
               else
                 -- we need separate R_vector_flowcontrol
-                R_vector_io_flowcontrol(SI_cmd_arg2) <= '0';
-                R_vector_io_flowcontrol(SI_cmd_arg1) <= '0';
-                R_vector_io_flowcontrol(SI_cmd_result) <= '0';
+                R_VR_io_flowcontrol(SI_cmd_arg1) <= '0';
+                R_VR_io_flowcontrol(SI_cmd_arg2) <= '0';
+                R_VR_io_flowcontrol(SI_cmd_result) <= '0';
                 -- request Reset all used vector indexes
-                R_vector_index_reset(SI_cmd_arg2) <= '1';
-                R_vector_index_reset(SI_cmd_arg1) <= '1';
-                R_vector_index_reset(SI_cmd_result) <= '1';
-                -- vector length: result = arg1
-                R_vector_length(SI_cmd_result) <= R_vector_length(SI_cmd_arg1);
+                R_VR_index_reset(SI_cmd_arg1) <= '1';
+                R_VR_index_reset(SI_cmd_arg2) <= '1';
+                R_VR_index_reset(SI_cmd_result) <= '1';
+                -- no increment delay to arguments (set msb)
+                R_VR_increment_delay_start(SI_cmd_result) <= S_cmd_pipe_delay;
+                -- after result, if the arg1 = result, then following lines
+                -- will disable increment delay (A=A+B can't have inc. delay)
+                R_VR_increment_delay_start(SI_cmd_arg1)(C_increment_delay_bits-1) <= '1'; -- no delay
+                R_VR_increment_delay_start(SI_cmd_arg2)(C_increment_delay_bits-1) <= '1'; -- no delay
               end if;
+              -- choose add or sub (only affects to addsub function)
               R_fpu_addsub_mode(0) <= S_cmd_addsub_mode; -- ADD/SUB mode 0:+,1:-
               -- set functional unit's argmuents to be read from selected vectors
-              R_function_arg2_select(SI_cmd_function) <= S_cmd_arg2;
-              R_function_arg1_select(SI_cmd_function) <= S_cmd_arg1;
-              -- set result vector shift value (pipeline delay)
-              -- vector shift is needed to handle compound operations like A=A+B
-              -- Pipeline has delay and there is only one address for R and W to the vector BRAM.
-              -- To read data, pass thru functional unit and write to the same register,
-              -- the only way is to write result "shifted" by N positions.
-              -- N is pipeline propagation delay. So result will appear N positions shifted
-              -- relative to original vector data position and we just set result pointer
-              -- to new start of the result data.
-              R_result_vector_shift(SI_cmd_result) <= R_vector_shift(SI_cmd_result) +
-                conv_std_logic_vector(C_function_propagation_delay(SI_cmd_function), C_vaddr_bits+1);
+              R_FU2VR_arg1(SI_cmd_function) <= SI_cmd_arg1;
+              R_FU2VR_arg2(SI_cmd_function) <= SI_cmd_arg2;
               -- set a vector to listen to results of the selected functional unit
-              R_vector_listen_to(SI_cmd_result) <= S_cmd_function;
-              -- request write to result vector (the data it listens to get written)
+              R_VR2FU(SI_cmd_result) <= SI_cmd_function;
               -- for the store mode write is disabled, a special case.
-              R_vector_write_request(SI_cmd_result) <= not S_cmd_store;
-            --end if;
-          end if;
+              R_VR_write_request(SI_cmd_result) <= not S_cmd_store;
+            when others =>
+              -- nothing
+            end case;
+          end if; -- mmio command register decode
         else
           R_io_request <= '0';
-          R_vector_load_request <= (others => '0');
-          R_vector_index_reset <= (others => '0');
-          R_vector_write_request <= (others => '0');
+          R_VR_load_request <= (others => '0');
+          R_VR_index_reset <= (others => '0');
+          R_VR_write_request <= (others => '0');
         end if;
       end if;
     end process;
@@ -316,35 +305,31 @@ begin
     -- if not reset, keep index constantly incrementing
     -- update length when I/O vector load operation is done
     G_vector_indexer:
-    for i in 0 to C_vectors-1 generate
+    for i in 0 to 2*C_vectors-1 generate
       process(clk)
       begin
         if rising_edge(clk) then
-          if R_vector_index_reset(i)='1' then
-            -- R_vector_shift contains current pointer to 1st element of a vector
-            R_vector_index(i) <= R_vector_shift(i);
-            if R_vector_write_request(i)='1' then
-              -- Result data is being written to this vector.
-              -- Data will appear shifted to new position
-              -- because of pipeline propagation delay.
-              -- This sets new shift position
-              R_vector_shift(i) <= R_result_vector_shift(i);
-              R_vector_write(i) <= '1';
-            end if;
+          if R_VR_index_reset(i)='1' then
+            R_VR_addr(i) <= R_VR_addr_start(i);
+            R_VR_increment_delay(i) <= R_VR_increment_delay_start(i);
+            R_VR_write(i) <= R_VR_write_request(i);
           else -- not reset
-            -- end of write for func. unit
-            if R_vector_write(i) = '1' and R_vector_index(i) = S_vector_index_last(i) then
-              R_vector_write(i) <= '0';
-            end if;
-            -- Flow control can prevent vector index increment.
-            -- Used only for I/O, arithmetic function run index constantly
-            if R_vector_io_flowcontrol(i)='0' or S_io_bram_next='1' then
-              R_vector_index(i) <= R_vector_index(i)+1;
+            if R_VR_addr(i) = R_VR_addr_stop(i) then
+              -- end of run for this vector, disable write
+              R_VR_write(i) <= '0';
+            else
+              -- Flow control can also prevent vector index increment.
+              if R_VR_io_flowcontrol(i)='0' or S_io_bram_next='1' then
+                if R_VR_increment_delay(i)(C_increment_delay_bits-1)='0' then
+                  R_VR_increment_delay(i) <= R_VR_increment_delay(i)-1;
+                else
+                  R_VR_addr(i) <= R_VR_addr(i)+1;
+                end if;
+              end if;
             end if;
           end if; -- if reset
         end if; -- rising edge
       end process;
-      S_vector_index_last(i) <= R_vector_shift(i) + R_vector_length(i);
     end generate;
 
     -- *** FUNCTIONAL UNITS ***
@@ -357,9 +342,9 @@ begin
         clk => clk,
         rmode => "00", -- round to nearest even
         fpu_op => R_fpu_addsub_mode, -- float op 000 add, 001 sub
-        opa => R_VARG(conv_integer(R_function_arg1_select(C_function_fpu_addsub))),
-        opb => R_VARG(conv_integer(R_function_arg2_select(C_function_fpu_addsub))),
-        fpout => S_function_result(C_function_fpu_addsub)
+        opa => S_FU_arg1_data(C_function_fpu_addsub),
+        opb => S_FU_arg2_data(C_function_fpu_addsub),
+        fpout => S_FU_result_data(C_function_fpu_addsub)
       );
     end generate;
 
@@ -370,9 +355,9 @@ begin
       port map
       (
         clk => clk,
-        FP_A => R_VARG(conv_integer(R_function_arg1_select(C_function_fpu_multiply))),
-        FP_B => R_VARG(conv_integer(R_function_arg2_select(C_function_fpu_multiply))),
-        FP_Z => S_function_result(C_function_fpu_multiply)
+        FP_A => S_FU_arg1_data(C_function_fpu_multiply),
+        FP_B => S_FU_arg2_data(C_function_fpu_multiply),
+        FP_Z => S_FU_result_data(C_function_fpu_multiply)
       );
     end generate;
 
@@ -387,9 +372,9 @@ begin
       port map
       (
         clk => clk,
-        X => R_VARG(conv_integer(R_function_arg1_select(C_function_fpu_divide))),
-        Y => R_VARG(conv_integer(R_function_arg2_select(C_function_fpu_divide))),
-        Q => S_function_result(C_function_fpu_divide)
+        X => S_FU_arg1_data(C_function_fpu_divide),
+        Y => S_FU_arg2_data(C_function_fpu_divide),
+        Q => S_FU_result_data(C_function_fpu_divide)
       );
     end generate;
 
@@ -400,11 +385,11 @@ begin
     io_request <= R_io_request; -- 1-cycle pulse to start a I/O request
     S_io_done <= io_done; -- goes to 0 after accepting I/O request, returns to 1 when done
     S_io_bram_we <= io_bram_we;
-    io_bram_rdata <= R_VARG(conv_integer(R_function_arg1_select(C_function_io))); -- for vector store
+    io_bram_rdata <= S_FU_arg1_data(C_function_io); -- for vector store
     process(clk)
     begin
       if rising_edge(clk) then
-        -- as RAM will change 16-bit partial on falling edge,
+        -- as RAM may change 16-bit half on falling edge,
         -- we must capture valid data on rising edge.
         if io_bram_we='1' then
           R_io_bram_wdata <= io_bram_wdata; -- for vector load
@@ -414,7 +399,7 @@ begin
     -- load/store asymmetry
     -- store: vector should place data on the bram bus
     -- and wait for ready, immediately after ready arrives, new data
-    -- should be placed and 0-cycle delay signal index increment.
+    -- should be placed and do index increment.
     -- load: bram bus at the same cycle has valid data and bram_write_enable signal
     -- vector should sample data when write_enable=1 and load it to vector register
     -- io_bram_next must be correctly timed in I/O module
@@ -422,87 +407,28 @@ begin
     -- Corner cases like first and last element or jump to next struct
     -- can make it really difficult to debug.
     S_io_bram_next <= io_bram_next;
-    S_function_result(C_function_io) <= R_io_bram_wdata; -- for vector load
+    S_FU_result_data(C_function_io) <= R_io_bram_wdata; -- for vector load
 
-    -- registering for fmax improvement
-    G_registered_results:
-    for i in 0 to C_functions-1 generate
-      G_yes_function_result_reg:
-      if C_function_result_reg generate
-        process(clk)
-        begin
-          if rising_edge(clk) then
-            -- add 1 clock delay
-            R_function_result(i) <= S_function_result(i);
-          end if;
-        end process;
-      end generate;
-      G_no_function_result_reg:
-      if not C_function_result_reg generate
-        R_function_result(i) <= S_function_result(i);
-      end generate;
+
+    -- *** VECTOR CROSSBARS ***
+    G_function_out_to_vector_in_crossbar:
+    for i in 0 to 2*C_vectors-1 generate
+      S_VR_data_in(i) <= S_FU_result_data(R_VR2FU(i));
     end generate;
-
-
-    -- *** BRAM optional extra registers ***
-    G_listeners:
-    for i in 0 to C_vectors-1 generate
-      -- register on BRAM input
-      G_yes_bram_in_reg:
-      if C_bram_in_reg generate
-        process(clk)
-        begin
-          if rising_edge(clk) then
-            -- add 1 clock delay
-            R_VRES(i) <= R_function_result(conv_integer(R_vector_listen_to(i)(C_functions_bits-1 downto 0)));
-          end if;
-        end process;
-      end generate;
-      G_no_bram_in_reg:
-      if not C_bram_in_reg generate
-        R_VRES(i) <= R_function_result(conv_integer(R_vector_listen_to(i)(C_functions_bits-1 downto 0)));
-      end generate;
-      -- register on BRAM output
-      G_yes_bram_out_reg:
-      if C_bram_out_reg generate
-        process(clk)
-        begin
-          if rising_edge(clk) then
-            -- add 1 clock delay
-            R_VARG(i) <= S_VARG(i);
-          end if;
-        end process;
-      end generate;
-      G_no_bram_out_reg:
-      if not C_bram_out_reg generate
-        R_VARG(i) <= S_VARG(i);
-      end generate;
+    G_vector_out_to_function_in_crossbar:
+    for i in 0 to C_functions-1 generate
+      S_FU_arg1_data(i) <= S_VR_data_out(R_FU2VR_arg1(i));
+      S_FU_arg2_data(i) <= S_VR_data_out(R_FU2VR_arg2(i));
     end generate;
 
 
     -- *** VECTOR REGISTERS (BRAM) ***
-    G_normal_clk_io:
-    if not C_invert_bram_clk_io generate
-      S_bram_clk_io <= clk;
-    end generate;
-    G_inverted_clk_io:
-    if C_invert_bram_clk_io generate
-      S_bram_clk_io <= not clk;
-    end generate;
-    G_normal_clk_reg:
-    if not C_invert_bram_clk_reg generate
-      S_bram_clk_reg <= clk;
-    end generate;
-    G_inverted_clk_reg:
-    if C_invert_bram_clk_reg generate
-      S_bram_clk_reg <= not clk;
-    end generate;
     G_vector_registers:
     for i in 0 to C_vectors-1 generate
-      vector_bram: entity work.bram_true2p_2clk
+      vector_bram: entity work.bram_true2p_1clk
       generic map
       (
-        dual_port => False, -- port A connected to DMA I/O, port B connected to Vector FPU
+        dual_port => True, -- port A connected to DMA I/O, port B connected to Vector FPU
         pass_thru_a => False, -- false allows simultaneous reading and writing
         pass_thru_b => False, -- false allows simultaneous reading and writing
         data_width => C_vdata_bits,
@@ -510,45 +436,50 @@ begin
       )
       port map
       (
-        clk_a => S_bram_clk_reg, -- BRAM on FPU side should normally be clocked on rising edge (normal clk)
-        clk_b => '0',
-        we_a => R_vector_write(i), -- vector write enable from functional unit
-        we_b => '0',
-        addr_a => R_vector_index(i)(C_vaddr_bits-1 downto 0), -- internal address from vector indexer
-        addr_b => (others => '0'),
-        data_in_a => R_VRES(i), -- result from functional unit
-        data_in_b => (others => '0'),
-        data_out_a => S_VARG(i), -- argument to functional unit
-        data_out_b => open
+        clk => clk,
+        we_a => R_VR_write(2*i), -- vector write enable from functional unit
+        we_b => R_VR_write(2*i+1),
+        addr_a => R_VR_addr(2*i), -- internal address from vector indexer
+        addr_b => R_VR_addr(2*i+1),
+        data_in_a => S_VR_data_in(2*i), -- result from functional unit
+        data_in_b => S_VR_data_in(2*i+1),
+        data_out_a => S_VR_data_out(2*i), -- argument to functional unit
+        data_out_b => S_VR_data_out(2*i+1)
       );
     end generate;
 end;
 
+-- vector addr set
+-- 0xA7FF0002
+--   A - set vector address
+
 -- command example
----0x1234ABCD
---   1 operation always 3
---    2 choose functional unit: 0:+- 1:* 2:/ 3:I/O
---     3 for I/O, choose load/store 0:load 8:store
---      4 for add/sub choose +/- 0:+ 1:-
---       A not used
---        B vector id arg 2
---         C vector id arg 1
---          D vector id result (D = C <oper> B)
+---0xE1004CBA
+--   E execute always E
+--    1 choose functional unit: 0:+- 1:* 2:/ 3:I/O
+--     0 for I/O, load/store 0:load 8:store, for add/sub 0:+ 4:-
+--      0 disable pipeline delay: 0:have delay, 1: no delay
+--       4 pipeline delay: "4" for (+,-,*), "B" for (/)
+--        C vector id arg 2
+--         B vector id arg 1
+--          A vector id result (A = B <oper> C)
 --
--- 0x03009000  load V(0) from RAM length=10
--- 0x03800000  store V(0) to RAM
--- 0x0300A111  load V(1) from RAM length=11
--- 0x03800111  store V(1) to RAM
--- 0x03010222  load V(2) from RAM length=17
--- 0x03800222  store V(2) to RAM
--- 0x037FF333  load V(3) from RAM length=2048
--- 0x03800333  store V(3) to RAM
--- 0x00000210  V(0) = V(1) + V(2) float
--- 0x00010210  V(0) = V(1) - V(2) float
--- 0x01000210  V(0) = V(1) * V(2) float
--- 0x02000210  V(0) = V(1) / V(2) float
--- 0x03000222  load V(2) from RAM length=1
--- 0x03800222  store V(2) to RAM
+-- 0xA00A0030  select vector 0 elements 3-10
+-- 0xE3009000  load V(0) from RAM
+-- 0xE381F000  store V(0) to RAM
+-- 0xA1FF1001  select vector 1 elements 256-511
+-- 0xE3000011  load V(1) from RAM
+-- 0xE381F011  store V(1) to RAM
+-- 0xA7FF0002  select vector 2 elements 0-2047
+-- 0xE3000022  load V(2) from RAM
+-- 0xE381F022  store V(2) to RAM
+-- 0xA0037FD3  select vector 3 elements 2045-3 (2045,2046,2047,0,1,2,3)
+-- 0xE3000033  load V(3) from RAM
+-- 0xE381F033  store V(3) to RAM
+-- 0xE0004420  V(0) = V(2) + V(4) float (4: pipeline delay 5)
+-- 0xE0404420  V(0) = V(2) - V(4) float (4: pipeline delay 5)
+-- 0xE1004420  V(0) = V(2) * V(4) float (4: pipeline delay 5)
+-- 0xE200B420  V(0) = V(2) / V(4) float (B: pipeline delay 12)
 
 --  C usage
 
@@ -639,11 +570,13 @@ end;
 --     so index will not advance, waiting until data ready
 
 -- [ ] renumber functional units: 0: I/O, 1:+/-, 2:*, 3:/
+--     be careful reordering will affect fmax performance
 
 -- [ ] clean up commands (I/O now needs 2 indentical arg1=result parameters
 --     to reuse code from arithmeitc. Maybe it can cleaner use 1 parameter.
 
--- [ ] fine-grained commmands to manipulate shfit/length/increment
--- [ ] half: (arguments from second half, result to first half)
--- [ ] constant: (don't increment arguments.
+-- [*] fine-grained vector address control, one hardware vector
+--     can handle many short vectors
+-- [*] half: (arguments from second half, result to first half)
+-- [*] constant: (don't increment arguments.
 --     e.g. enabling I/O control flow without any I/O prevents increment

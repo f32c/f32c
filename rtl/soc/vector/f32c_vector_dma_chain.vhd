@@ -149,7 +149,9 @@ begin
               R_header_mode <= '0';
               -- test load/store mode and jump to adequate next state read/write
               if R_store_mode='1' then
-                --R_wdata <= bram_rdata;
+                if R_bram_addr = 0 then
+                  R_wdata <= bram_rdata; -- try to find right clock instance when first data are valid, very hackish
+                end if;
                 R_bram_addr <= R_bram_addr + 1; -- early prepare bram read address for next data
                 if R_bram_addr = 0 then
                   -- we can't do it at very start because indexer
@@ -191,9 +193,9 @@ begin
             if R_header_mode='1' then
               -- header will be indexed downwards 2,1,0 using decrementing R_length_remaining
               R_header(conv_integer(R_length_remaining(C_header_addr_bits-1 downto 0))) <= data_in;
-              if R_length_remaining = 2 and R_bram_addr = 0 then
-                R_wdata <= bram_rdata; -- try to find right clock instance when data are valid, very hackish
-              end if;
+              --if R_length_remaining = 1 and R_bram_addr = 0 then
+              --  R_wdata <= bram_rdata; -- try to find right clock instance when first data are valid, very hackish
+              --end if;
             else -- R_header_mode='0'
               R_bram_addr <= R_bram_addr + 1; -- increment source address
             end if;
