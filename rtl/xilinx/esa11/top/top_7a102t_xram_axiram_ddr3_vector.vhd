@@ -65,7 +65,7 @@ entity esa11_xram_axiram_ddr3 is
         C3_MEM_BANKADDR_WIDTH : integer := 3;
 
         C_vector: boolean := true; -- vector processor unit
-        C_vector_axi: boolean := true; -- true: use AXI I/O, false use f32c RAM port I/O
+        C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
         C_vector_vaddr_bits: integer := 11;
         C_vector_vdata_bits: integer := 32;
