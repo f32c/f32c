@@ -163,7 +163,7 @@ entity scarab_xram_sdram is
         
       C_timer: boolean := false; -- no timer
 
-      C_gpio: integer := 0
+      C_gpio: integer := 32
   );
   port
   (
