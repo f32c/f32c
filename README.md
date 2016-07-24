@@ -25,7 +25,7 @@ execute gcc-generated code when synthesized in the most compact
 configuration which consumes just 697 (649 logic plus 48 memory) LUTs.
 
 Floating point vector processor is a work in progress and can be
-optionally sinthesized. On Artix-7 it uses 2503 LUTs, 64K BRAM,
+optionally sinthesized. On Artix-7 it uses 3148 LUTs, 64K BRAM,
 38 DSP multipliers (36 for divider unit) and can provide up to 
 3 MFLOPs/MHz.
 
