@@ -20,14 +20,14 @@ entity vector is
     C_addr_bits: integer := 3; -- don't touch: number of address bits for the registers
     C_vaddr_bits: integer range 2 to 16 := 11; -- number of address bits for BRAM vector
     C_vdata_bits: integer range 32 to 64 := 32; -- number of data bits for each vector
-    C_vectors: integer range 2 to 16 := 8; -- total number of vector registers (BRAM blocks)
+    C_vectors: integer range 2 to 8 := 8; -- total number of vector registers (BRAM blocks)
     C_float_addsub: boolean := true; -- instantiate floating point addsub (+,-)
     C_float_multiply: boolean := true; -- instantiate floating point divider (*)
     C_float_divide: boolean := true; -- instantiate floating point divider (/) (LUT and DSP eater)
-    C_invert_bram_clk_reg: boolean := false; -- esa11 artix7-axi needs true, spartan6-f32c needs false
-    C_invert_bram_clk_io: boolean := false; -- both artix7-axi and spartan6-f32c work with false
-    C_bram_in_reg: boolean := false; -- extra register layer on vector bram in
-    C_bram_out_reg: boolean := false; -- extra register layer on vector bram out
+    C_invert_bram_clk_reg: boolean := false; -- not used, esa11 artix7-axi needs true, spartan6-f32c needs false
+    C_invert_bram_clk_io: boolean := false; -- not used
+    C_bram_in_reg: boolean := false; -- not used
+    C_bram_out_reg: boolean := false; -- not used
     C_function_result_reg: boolean := false; -- register layer on functional unit result
     C_bits: integer range 2 to 32 := 32  -- don't touch, number of bits in each mmio register
   );
@@ -83,10 +83,8 @@ architecture arch of vector is
     -- *** RAM I/O ***
     signal S_io_bram_we: std_logic;
     signal S_io_bram_next: std_logic;
-    signal R_io_bram_next: std_logic;
     signal S_io_bram_addr: std_logic_vector(C_vaddr_bits downto 0); -- RAM address to load/store
-    signal S_io_bram_rdata, R_io_bram_wdata: std_logic_vector(C_vdata_bits-1 downto 0); -- channel to RAM
-    signal R_io_bram_rdata: std_logic_vector(C_vdata_bits-1 downto 0); -- channel to RAM
+    signal R_io_bram_wdata: std_logic_vector(C_vdata_bits-1 downto 0); -- channel to RAM
     signal R_io_store_mode: std_logic; -- '0': load vectors from RAM, '1': store vector to RAM
     signal R_io_request: std_logic; -- set to '1' during one clock cycle (not longer) to properly initiate RAM I/O
     signal S_io_done: std_logic;
@@ -98,19 +96,18 @@ architecture arch of vector is
     -- We will act as we have 2x more vectors.
     -- Each port is treated as separate vector, an alias of the same data
     -- separately addressable for double parallel run
-    constant C_vectors_bits: integer range 1 to 4 := ceil_log2(C_vectors); -- number of bits to select the vector
+    constant C_vectors_bits: integer range 1 to 3 := ceil_log2(C_vectors); -- number of bits to select the vector
     constant C_increment_delay_bits: integer := 5; -- must fit 2* max propagation delay
     type T_VR_addr_2port is array (2*C_vectors-1 downto 0) of std_logic_vector(C_vaddr_bits-1 downto 0);
     signal R_VR_addr, R_VR_addr_start, R_VR_addr_stop: T_VR_addr_2port;
     type T_VR_data_2port is array (2*C_vectors-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
     signal S_VR_data_in, S_VR_data_out: T_VR_data_2port;
-    signal R_VR_index_reset, R_VR_busy: std_logic_vector(2*C_vectors-1 downto 0);
+    signal R_VR_index_reset: std_logic_vector(2*C_vectors-1 downto 0);
     signal R_VR_write, R_VR_write_request: std_logic_vector(2*C_vectors-1 downto 0);
     signal R_VR_write_prev_cycle: std_logic_vector(2*C_vectors-1 downto 0); -- rising edge tracking
     type T_VR_increment_delay is array (2*C_vectors-1 downto 0) of std_logic_vector(C_increment_delay_bits-1 downto 0);
     signal R_VR_increment_delay, R_VR_increment_delay_start: T_VR_increment_delay := (others => (others => '1')); -- starts negative and increments
     signal R_VR_io_flowcontrol: std_logic_vector(2*C_vectors-1 downto 0) := (others => '0');
-    signal R_VR_load_request: std_logic_vector(2*C_vectors-1 downto 0) := (others => '0');
     signal S_VR_done_interrupt: std_logic_vector(2*C_vectors-1 downto 0);
 
 
@@ -123,14 +120,14 @@ architecture arch of vector is
     constant C_function_fpu_multiply: integer range 0 to C_functions-1 := 1; -- *
     constant C_function_fpu_divide: integer range 0 to C_functions-1 := 2; -- /
     -- each function can have different pipeline propagation delay
-    type T_function_propagation_delay is array (0 to C_functions-1) of integer;
-    constant C_function_propagation_delay: T_function_propagation_delay :=
-    (
-      6, -- C_function_fpu_addsub (+,-)
-      6, -- C_function_fpu_multiply (*)
-     13, -- C_function_fpu_divide (/)
-      0  -- C_function_io (RAM DMA) this affects load, not store
-    );
+    --type T_function_propagation_delay is array (0 to C_functions-1) of integer;
+    --constant C_function_propagation_delay: T_function_propagation_delay :=
+    --(
+    --  6, -- C_function_fpu_addsub (+,-)
+    --  6, -- C_function_fpu_multiply (*)
+    -- 13, -- C_function_fpu_divide (/)
+    --  0  -- C_function_io (RAM DMA) this affects load, not store
+    --);
     -- a function can have modifier that selects one from many of similar functions
     signal R_fpu_addsub_mode: std_logic_vector(0 downto 0); -- select float A+B or A-B to execute
     -- the data interface
@@ -139,8 +136,8 @@ architecture arch of vector is
     -- the function-register data crossbar
     type T_FU2VR is array (C_functions-1 downto 0) of integer range 0 to 2*C_vectors-1;
     signal R_FU2VR_arg1, R_FU2VR_arg2: T_FU2VR;
-    type T_VR2FU is array (2*C_vectors-1 downto 0) of integer range 0 to C_functions-1;
-    signal R_VR2FU: T_VR2FU;
+    type T_VR2FU_result is array (2*C_vectors-1 downto 0) of integer range 0 to C_functions-1;
+    signal R_VR2FU_result: T_VR2FU_result;
 
     -- simplify writing signals from command decoder
     signal S_cmd_result, S_cmd_arg1, S_cmd_arg2: std_logic_vector(C_vectors_bits downto 0); -- command decoder, 2*vectors
@@ -224,19 +221,25 @@ begin
 
     -- *** MMIO command decoder ***
     -- signals introduced only for readability
-    S_cmd_result <= bus_in(C_vectors_bits+0 downto 0);
-    SI_cmd_result <= conv_integer(S_cmd_result);
-    S_cmd_arg1 <= bus_in(C_vectors_bits+4 downto 4);
-    SI_cmd_arg1 <= conv_integer(S_cmd_arg1);
-    S_cmd_arg2 <= bus_in(C_vectors_bits+8 downto 8);
-    SI_cmd_arg2 <= conv_integer(S_cmd_arg2);
+    -- common to all
     S_cmd_function <= bus_in(C_functions_bits-1+24 downto 24);
     SI_cmd_function <= conv_integer(S_cmd_function);
+    -- common, but used only for I/O
     S_cmd_store <= bus_in(23);
+    -- common, but used only for arithmetic add/sub
     S_cmd_addsub_mode <= bus_in(22);
+    -- specific to "E" command (execute)
+    S_cmd_pipe_delay <= bus_in(C_increment_delay_bits-1+12 downto 12);
+    S_cmd_arg2 <= bus_in(C_vectors_bits+8 downto 8);
+    SI_cmd_arg2 <= conv_integer(S_cmd_arg2);
+    S_cmd_arg1 <= bus_in(C_vectors_bits+4 downto 4);
+    SI_cmd_arg1 <= conv_integer(S_cmd_arg1);
+    -- specific to "A" command (address range)
     S_cmd_vector_start <= bus_in(C_vaddr_bits-1+4 downto 4);
     S_cmd_vector_stop <= bus_in(C_vaddr_bits-1+16 downto 16);
-    S_cmd_pipe_delay <= bus_in(C_increment_delay_bits-1+12 downto 12);
+    -- common to all
+    S_cmd_result <= bus_in(C_vectors_bits+0 downto 0);
+    SI_cmd_result <= conv_integer(S_cmd_result);
 
     process(clk)
     begin
@@ -262,7 +265,7 @@ begin
                 -- no increment delay to arguments (set msb)
                 R_VR_increment_delay_start(SI_cmd_result) <= S_cmd_pipe_delay;
               else
-                -- we need separate R_vector_flowcontrol
+                -- for arithmetic disable I/O_flowcontrol
                 R_VR_io_flowcontrol(SI_cmd_arg1) <= '0';
                 R_VR_io_flowcontrol(SI_cmd_arg2) <= '0';
                 R_VR_io_flowcontrol(SI_cmd_result) <= '0';
@@ -277,13 +280,13 @@ begin
                 R_VR_increment_delay_start(SI_cmd_arg1)(C_increment_delay_bits-1) <= '1'; -- no delay
                 R_VR_increment_delay_start(SI_cmd_arg2)(C_increment_delay_bits-1) <= '1'; -- no delay
               end if;
-              -- choose add or sub (only affects to addsub function)
+              -- choose add or sub (it is set always but only affects addsub function)
               R_fpu_addsub_mode(0) <= S_cmd_addsub_mode; -- ADD/SUB mode 0:+,1:-
               -- set functional unit's argmuents to be read from selected vectors
               R_FU2VR_arg1(SI_cmd_function) <= SI_cmd_arg1;
               R_FU2VR_arg2(SI_cmd_function) <= SI_cmd_arg2;
               -- set a vector to listen to results of the selected functional unit
-              R_VR2FU(SI_cmd_result) <= SI_cmd_function;
+              R_VR2FU_result(SI_cmd_result) <= SI_cmd_function;
               -- for the store mode write is disabled, a special case.
               R_VR_write_request(SI_cmd_result) <= not S_cmd_store;
             when others =>
@@ -292,7 +295,6 @@ begin
           end if; -- mmio command register decode
         else
           R_io_request <= '0';
-          R_VR_load_request <= (others => '0');
           R_VR_index_reset <= (others => '0');
           R_VR_write_request <= (others => '0');
         end if;
@@ -412,14 +414,14 @@ begin
 
 
     -- *** VECTOR CROSSBARS ***
-    G_function_out_to_vector_in_crossbar:
-    for i in 0 to 2*C_vectors-1 generate
-      S_VR_data_in(i) <= S_FU_result_data(R_VR2FU(i));
-    end generate;
     G_vector_out_to_function_in_crossbar:
     for i in 0 to C_functions-1 generate
       S_FU_arg1_data(i) <= S_VR_data_out(R_FU2VR_arg1(i));
       S_FU_arg2_data(i) <= S_VR_data_out(R_FU2VR_arg2(i));
+    end generate;
+    G_function_out_to_vector_in_crossbar:
+    for i in 0 to 2*C_vectors-1 generate
+      S_VR_data_in(i) <= S_FU_result_data(R_VR2FU_result(i));
     end generate;
 
 
