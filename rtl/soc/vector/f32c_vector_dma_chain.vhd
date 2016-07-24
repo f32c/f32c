@@ -149,12 +149,10 @@ begin
               R_header_mode <= '0';
               -- test load/store mode and jump to adequate next state read/write
               if R_store_mode='1' then
-                if R_bram_addr = 0 then
-                  R_wdata <= bram_rdata; -- try to find right clock instance when first data are valid, very hackish
-                end if;
                 R_bram_addr <= R_bram_addr + 1; -- early prepare bram read address for next data
                 if R_bram_addr = 0 then
-                  -- we can't do it at very start because indexer
+                  R_wdata <= bram_rdata; -- try to find right clock instance when first data are valid, very hackish
+                  -- we can't set R_next at very start because indexer
                   -- in vector.vhd must enter vector write state first
                   -- otherwise R_next will have no effect
                   R_next <= '1'; -- must request next data right now, fixes dobule-store of the same value at vector start
