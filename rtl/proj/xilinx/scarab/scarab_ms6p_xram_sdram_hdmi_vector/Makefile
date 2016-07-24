@@ -84,9 +84,9 @@ vhdfiles = \
 ../../../../soc/fm/lowpass.vhd \
 ../../../../soc/fm/bram_rds.vhd \
 ../../../../soc/fm/message.vhd \
-../../../../soc/vector/vector.vhd \
+../../../../soc/vector/vector_chain.vhd \
+../../../../soc/vector/f32c_vector_dma_chain.vhd \
 ../../../../soc/vector/axi_vector_dma.vhd \
-../../../../soc/vector/f32c_vector_dma.vhd \
 ../../../../soc/vector/fpu/add_sub/fpu_arch.vhd \
 ../../../../soc/vector/fpu/add_sub/add_sub27_arch.vhd \
 ../../../../soc/vector/fpu/add_sub/except_arch.vhd \
