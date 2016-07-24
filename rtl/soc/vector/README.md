@@ -37,18 +37,21 @@ Speed recommendations:
 Status of the vector processor:
 
     * 4 x 32-bit MMIO control and interrupt registers
-    * 8 x uint32_t[2048] BRAM based vector registers
+    * 8 x uint32_t[2048] dual-port BRAM vector registers
     * I/O load and store using AXI RAM DMA burst
-      can run parallel with arithmetic operations,
-      multiple registers load with the same content at the same time
-    * 3 x 32-bit floating point functional units: 
+      can run parallel with arithmetic operations
+    * 3 x 32-bit floating point functional units:
       6-stage (+,-)
       6-stage (*)
       13-stage (/)
-    * any-to-any vector operations: a = b+c, a = b+b, a = a+b, a = a+a.
-    * multiple operations can run parallel
-      provided they use different registers and different functional units
-      example: a = b+c, d = e/f can run parallel
+    * each vector is double-aliased and can be independently
+      used in 2 parallel or chained operations
+    * any-to-any vector operations: a = b+c, a = b+b, a = a+b, a = a+a
+      a=a+a is done in-place using double-alias
+    * parallel: a = a+b, c = d*e, f = g/h
+    * chaining: a = b+c, d = a*f, g = d/c
+    * sub-vectors: arguments and results can be limited to index range
+    * constants and halfs are special case of sub-vectors
     * interrupt flag for each vector set when done
     * works at 100 MHz clock rate on artix-7 and spartan-6
     * produces 1 result per 1 clock cycle
@@ -59,7 +62,5 @@ Status of the vector processor:
 
 Todo:
 
-    * chaining: explore possibility of parallel a = b+c, d = a*e
-    * use both BRAM vector ports in crossbar multiplexer
     * tighten up AXI states and reduce latency
     * connect interrupt reduction-or to MIPS CPU
