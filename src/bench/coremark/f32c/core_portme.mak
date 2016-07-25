@@ -64,7 +64,7 @@ MK_CFLAGS += -O2
 MK_CFLAGS += -finline-functions -finline-limit=32
 MK_CFLAGS += -fpeel-loops -funroll-all-loops
 MK_CFLAGS += -fipa-cp-clone -fipa-pta
-MK_CFLAGS += -fselective-scheduling -fselective-scheduling2
+MK_CFLAGS += -fselective-scheduling -fgcse-after-reload
 
 # Linker flags
 #MK_LDFLAHS += ${ENDIANFLAGS}
