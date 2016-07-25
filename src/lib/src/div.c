@@ -27,9 +27,9 @@
 
 
 /*
- * Using -Os optimization produces both the fastest and the most compact
- * division, so we override whatever optimization option was requested
- * at gcc invocation with __attribute__((optimize("-Os"))).
+ * Using -O2 optimization produces the fastest code with gcc-6.1.0, so we
+ * override whatever optimization option was requested at gcc invocation
+ * with __attribute__((optimize("-O2"))).
  */
 
 #define	OPTIMIZED_DIVSI3
@@ -40,7 +40,7 @@
 
 #define	UDIVMOD_BODY()							\
 	lo = 0;								\
-	uint32_t bit = (b > 0);						\
+	uint32_t bit = 1;						\
 									\
 	while (b < a && (int) b > 0) {					\
 		b <<= 1;						\
@@ -56,7 +56,7 @@
 	}
 
 
-static __attribute__((optimize("-Os"))) uint32_t
+static __attribute__((optimize("-O2"))) uint32_t
 __udivmodsi3(uint32_t a, uint32_t b, int flags)
 {
 #ifndef OPTIMIZED_DIVSI3
@@ -91,7 +91,7 @@ __udivmodsi3(uint32_t a, uint32_t b, int flags)
 }
 
 
-__attribute__((optimize("-Os"))) int32_t
+__attribute__((optimize("-O2"))) int32_t
 __divsi3(uint32_t a, uint32_t b)
 {
 #ifdef OPTIMIZED_DIVSI3
