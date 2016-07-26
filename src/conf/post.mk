@@ -177,8 +177,8 @@ MK_LDFLAGS += ${LDFLAGS}
 # Library construction flags
 MK_ARFLAGS = r
 
-# Discard .rel.dyn section which linker may emit in error with -gc-sections
-OBJFLAGS = -R .rel.dyn
+# Disregard metadata sections which objcopy may misinterpret
+OBJFLAGS = -R .rel.dyn -R .MIPS.abiflags
 
 CC = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
 CXX = ${ARCH}-elf-g++ ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES} -fno-rtti -fno-exceptions
