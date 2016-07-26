@@ -303,10 +303,9 @@ begin
 
 
     -- *** VECTOR INDEXER ***
-    -- if reset, set vector index to current vector shift position
-    -- if write request, update length and shift with result value
-    -- if not reset, keep index constantly incrementing
-    -- update length when I/O vector load operation is done
+    -- if reset, set vector index and delay to their start values
+    -- if not reset, coundown delay, start index incrementing,
+    -- for I/O do the flow control
     G_vector_indexer:
     for i in 0 to 2*C_vectors-1 generate
       process(clk)
