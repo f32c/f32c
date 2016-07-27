@@ -76,7 +76,7 @@ architecture arch of vector is
     constant C_vaddress:   integer   := 0; -- vector struct RAM address
     constant C_vdone_if:   integer   := 1; -- vector done interrupt flag
     constant C_vdone_ie:   integer   := 2; -- vector done interrupt enable
-    constant C_vcounter:   integer   := 3; -- vector progress counter (write to select which register to monitor)
+    constant C_vcounter:   integer   := 3; -- unused, placeholder for vector progress counter (write to select which register to monitor)
     constant C_vcommand:   integer   := 4; -- vector processor command
 
 
@@ -97,28 +97,31 @@ architecture arch of vector is
     -- Each port is treated as separate vector, an alias of the same data
     -- separately addressable for double parallel run
     constant C_vectors_bits: integer range 1 to 3 := ceil_log2(C_vectors); -- number of bits to select the vector
-    constant C_increment_delay_bits: integer := 5; -- must fit 2* max propagation delay
     type T_VR_addr_2port is array (2*C_vectors-1 downto 0) of std_logic_vector(C_vaddr_bits-1 downto 0);
     signal R_VR_addr, R_VR_addr_start, R_VR_addr_stop: T_VR_addr_2port;
     type T_VR_data_2port is array (2*C_vectors-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
     signal S_VR_data_in, S_VR_data_out: T_VR_data_2port;
     signal R_VR_index_reset: std_logic_vector(2*C_vectors-1 downto 0);
     signal R_VR_write, R_VR_write_request: std_logic_vector(2*C_vectors-1 downto 0);
-    signal R_VR_write_prev_cycle: std_logic_vector(2*C_vectors-1 downto 0); -- rising edge tracking
+    signal R_VR_write_prev_cycle: std_logic_vector(2*C_vectors-1 downto 0); -- falling edge tracking
+    constant C_increment_delay_bits: integer := 5; -- must fit 2* max propagation delay
     type T_VR_increment_delay is array (2*C_vectors-1 downto 0) of std_logic_vector(C_increment_delay_bits-1 downto 0);
     signal R_VR_increment_delay, R_VR_increment_delay_start: T_VR_increment_delay := (others => (others => '1')); -- starts negative and increments
     signal R_VR_io_flowcontrol: std_logic_vector(2*C_vectors-1 downto 0) := (others => '0');
     signal S_VR_done_interrupt: std_logic_vector(2*C_vectors-1 downto 0);
 
-
     -- *** FUNCTIONAL UNITS ***
     -- 4 main different functions
     constant C_functions: integer := 4; -- total number of functional units
     constant C_functions_bits: integer := ceil_log2(C_functions); -- total number bits to address one functional unit
-    constant C_function_io: integer range 0 to C_functions-1 := 3; -- I/O
+    -- IMPORTANT: reordering functional units will not only change ISA but will
+    -- also make signifcant change in FPGA placment and routing.
+    -- This can affect fmax performance.
+    -- Best order can be determined only from the experiment.
     constant C_function_fpu_addsub: integer range 0 to C_functions-1 := 0; -- +,-
     constant C_function_fpu_multiply: integer range 0 to C_functions-1 := 1; -- *
     constant C_function_fpu_divide: integer range 0 to C_functions-1 := 2; -- /
+    constant C_function_io: integer range 0 to C_functions-1 := 3; -- I/O
     -- each function can have different pipeline propagation delay
     --type T_function_propagation_delay is array (0 to C_functions-1) of integer;
     --constant C_function_propagation_delay: T_function_propagation_delay :=
@@ -158,8 +161,8 @@ begin
       bus_out <=
         ext(x"DEBA66AA", 32)
           when C_vcommand,
-        ext(R_io_request & S_io_done, 32)
-          when C_vcounter,
+        --ext(R_io_request & S_io_done, 32)
+        --  when C_vcounter,
         ext(R(conv_integer(addr)),32)
           when others;
 
@@ -258,11 +261,11 @@ begin
                 -- A redundancy, but it allows to reuse crossbar
                 -- and part of command decoding for arithmetic.
                 R_io_store_mode <= S_cmd_store; -- RAM write cycle
-                -- this will let I/O control increment of vector indexes
+                -- this will let I/O control increment of vector index
                 R_VR_io_flowcontrol(SI_cmd_result) <= '1';
-                -- request Reset vector indexes (2 operands, only 1 used), I/O never uses arg2
+                -- request Reset vector indexr
                 R_VR_index_reset(SI_cmd_result) <= '1';
-                -- no increment delay to arguments (set msb)
+                -- increment delay taken from command parameter
                 R_VR_increment_delay_start(SI_cmd_result) <= S_cmd_pipe_delay;
               else
                 -- for arithmetic disable I/O_flowcontrol
@@ -273,10 +276,11 @@ begin
                 R_VR_index_reset(SI_cmd_arg1) <= '1';
                 R_VR_index_reset(SI_cmd_arg2) <= '1';
                 R_VR_index_reset(SI_cmd_result) <= '1';
-                -- no increment delay to arguments (set msb)
+                -- increment delay taken from command parameter
                 R_VR_increment_delay_start(SI_cmd_result) <= S_cmd_pipe_delay;
                 -- after result, if the arg1 = result, then following lines
                 -- will disable increment delay (A=A+B can't have inc. delay)
+                -- no increment delay to arguments (set msb)
                 R_VR_increment_delay_start(SI_cmd_arg1)(C_increment_delay_bits-1) <= '1'; -- no delay
                 R_VR_increment_delay_start(SI_cmd_arg2)(C_increment_delay_bits-1) <= '1'; -- no delay
               end if;
@@ -320,7 +324,7 @@ begin
               -- end of run for this vector, disable write
               R_VR_write(i) <= '0';
             else
-              -- Flow control can also prevent vector index increment.
+              -- Flow control can enable/disable vector index increment.
               if R_VR_io_flowcontrol(i)='0' or S_io_bram_next='1' then
                 if R_VR_increment_delay(i)(C_increment_delay_bits-1)='0' then
                   R_VR_increment_delay(i) <= R_VR_increment_delay(i)-1;
@@ -451,9 +455,9 @@ begin
     end generate;
 end;
 
--- vector addr set
+-- vector range
 -- 0xA7FF0002
---   A - set vector address
+--   A - set vector 2 range 000:start 7FF:stop
 
 -- command example
 ---0xE1004CBA
@@ -462,8 +466,8 @@ end;
 --     0 for I/O, load/store 0:load 8:store, for add/sub 0:+ 4:-
 --      0 disable pipeline delay: 0:have delay, 1: no delay
 --       4 pipeline delay: "4" for (+,-,*), "B" for (/)
---        C vector id arg 2
---         B vector id arg 1
+--        C vector id arg2 - right hand side
+--         B vector id arg1 - left hand side
 --          A vector id result (A = B <oper> C)
 --
 -- 0xA0090090  select vector 0 element 9 (constant)
@@ -573,9 +577,6 @@ end;
 --     intended for I/O module to be used as a functional unit.
 --     slow functional unit can drop run this signal to 0,
 --     so index will not advance, waiting until data ready
-
--- [ ] renumber functional units: 0: I/O, 1:+/-, 2:*, 3:/
---     be careful reordering will affect fmax performance
 
 -- [ ] clean up commands (I/O now needs 2 indentical arg1=result parameters
 --     to reuse code from arithmeitc. Maybe it can cleaner use 1 parameter.
