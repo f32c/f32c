@@ -202,6 +202,7 @@ generic (
     C_vector_vaddr_bits: integer := 11; -- vector size, should match FPGA internal BRAM block
     C_vector_vdata_bits: integer := 32; -- don't touch, vector data bus width
     C_vector_axi: boolean := false; -- vector processor bus: true:AXI, false:f32c RAM
+    C_vector_interrupt: boolean := false; -- library can work without it. Enabling interrupt may produce routing and timing problems
     C_vector_registers: integer := 8; -- Number of BRAM based vector registers. One register is 8K
     C_vector_float_addsub: boolean := true; -- true: have float addsub (+,-), false: without this, LUT saving
     C_vector_float_multiply: boolean := true; -- true: have float multiply (*), false: without multiply, LUT and DSP saving
@@ -339,7 +340,7 @@ architecture Behavioral of glue_xram is
     signal timer_ce: std_logic;
     signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
     signal icp, icp_enable: std_logic_vector(1 downto 0);
-    signal timer_intr: std_logic;
+    signal timer_intr: std_logic := '0';
 
 
     -- TV video
@@ -457,7 +458,7 @@ architecture Behavioral of glue_xram is
     constant iomap_vector: T_iomap_range := (x"FC20", x"FC3F");
     signal from_vector: std_logic_vector(31 downto 0);
     signal vector_ce: std_logic;
-    signal vector_intr: std_logic;
+    signal vector_intr, S_vector_intr: std_logic := '0';
     signal S_vector_io_store_mode: std_logic;
     signal S_vector_io_addr: std_logic_vector(29 downto 2);
     signal S_vector_io_request: std_logic;
@@ -598,7 +599,7 @@ begin
       else vga_textmode_dmem_to_cpu when C_vgatext AND C_vgatext_bus_read AND dmem_addr(31 downto 28) = C_vgatext_bram_base -- address 0x40000000
       else from_xram when S_dmem_addr_in_xram = '1'
       else bram_d_to_cpu;
-    intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;
+    intr <= "00" & gpio_intr_joint & (timer_intr or S_vector_intr) & from_sio(0)(8) & R_fb_intr;
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"F" -- iomap at 0xFxxxxxxx
       else '0';
     video_bram_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 28) = C_vgatext_bram_base -- default at 0x4xxxxxxx
@@ -1091,6 +1092,14 @@ begin
         io_bram_rdata => S_vector_io_bram_rdata,
         vector_irq => vector_intr
       );
+
+      -- connecting interrupt will degrate signal routing and timing performance
+      -- on spartan-6 LX25. Vector Library currently doesn't need it.
+      -- It polls interrupt flag register
+      G_connect_vector_interrupt:
+      if C_vector_interrupt generate
+        S_vector_intr <= vector_intr;
+      end generate;
 
       G_vector_axi:
       if C_vector_axi generate
