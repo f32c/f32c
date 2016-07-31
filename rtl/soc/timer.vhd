@@ -397,11 +397,11 @@ begin
         if R_ocp_rising_edge(i) = '1' then
           Rintr(C_ocpn_intr(i)) <= '1';
         else
-          -- writing 0 to Rtmp(C_control)(C_ocpn_intr(i))
+          -- writing 1 to Rtmp(C_control)(C_ocpn_intr(i))
           -- will immediately reset interrupt flags
           -- (without need for writing to apply register)
           if ce = '1' and bus_write = '1' and addr = C_control 
-            and bus_in(C_ocpn_intr(i)) = '0' and byte_sel(C_ocpn_intr(i)/8) = '1' then
+            and bus_in(C_ocpn_intr(i)) = '1' and byte_sel(C_ocpn_intr(i)/8) = '1' then
             Rintr(C_ocpn_intr(i)) <= '0';
           end if;
         end if;
@@ -470,11 +470,11 @@ begin
         if R_icp_rising_edge(i) = '1' then
           Rintr(C_icpn_intr(i)) <= '1';
         else
-          -- writing 0 to Rtmp(C_control)(C_icpn_intr(i))
+          -- writing 1 to Rtmp(C_control)(C_icpn_intr(i))
           -- will immediately reset interrupt flags
           -- (without need for writing to apply register)
           if ce = '1' and bus_write = '1' and addr = C_control 
-           and bus_in(C_icpn_intr(i)) = '0' and byte_sel(C_icpn_intr(i)/8) = '1' then
+           and bus_in(C_icpn_intr(i)) = '1' and byte_sel(C_icpn_intr(i)/8) = '1' then
             Rintr(C_icpn_intr(i)) <= '0';
           end if;
         end if;
@@ -636,10 +636,10 @@ end;
 -- 1: R_timer_control
 
 -- *** byte 0 : interrupts flags, output mixing ***
--- bit 0: interrupt ocp0 flag 1=pending 0=resolved (write 0 to resolve)
--- bit 1: interrupt ocp1 flag 1=pending 0=resolved (write 0 to resolve)
--- bit 2: interrupt icp1 flag 1=pending 0=resolved (write 0 to resolve)
--- bit 3: interrupt icp0 flag 1=pending 0=resolved (write 0 to resolve)
+-- bit 0: interrupt ocp0 flag 1=pending 0=resolved (write 1 to resolve)
+-- bit 1: interrupt ocp1 flag 1=pending 0=resolved (write 1 to resolve)
+-- bit 2: interrupt icp1 flag 1=pending 0=resolved (write 1 to resolve)
+-- bit 3: interrupt icp0 flag 1=pending 0=resolved (write 1 to resolve)
 -- bit 4: output compare 0 filter select 1=and 0=or (ocpc1)
 --        0 (or):  ocpc1 = (R_counter >= R_ocp0_start or  R_counter < R_ocp1_start)
 --        1 (and): ocpc1 = (R_counter >= R_ocp1_start and R_counter < R_ocp1_start)
