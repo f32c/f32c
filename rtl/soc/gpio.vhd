@@ -73,11 +73,10 @@ architecture arch of gpio is
     constant C_input:      integer   := 6; -- input value
 
     -- edge detection related registers
-    constant C_edge_sync_depth: integer := 3; -- number of shift register stages (default 3) for icp clock synchronization
+    constant C_edge_sync_depth: integer := 2; -- number of shift register stages (default 3) for icp clock synchronization
     type T_edge_sync_shift is array (0 to C_bits-1) of std_logic_vector(C_edge_sync_depth-1 downto 0); -- edge detect synchronizer type
     signal R_edge_sync_shift: T_edge_sync_shift;
     signal R_rising_edge, R_falling_edge: std_logic_vector(C_bits-1 downto 0);
-
 begin
     -- CPU core reads registers
     with conv_integer(addr) select
@@ -94,24 +93,22 @@ begin
       process(clk)
       begin
         if rising_edge(clk) then
-          if byte_sel(i) = '1' then
-            if ce = '1' and bus_write = '1' then
-              if conv_integer(addr) = C_rising_if 
-              or conv_integer(addr) = C_falling_if
-              then -- logical and for interrupt flag registers
-                R(conv_integer(addr))(8*i+7 downto 8*i) <= -- only can clear intr. flag, never set
-                R(conv_integer(addr))(8*i+7 downto 8*i) and bus_in(8*i+7 downto 8*i);
-              elsif conv_integer(addr) = C_input then	-- toggle output bit when input set (like ATmega328)
-                R(C_output)(8*i+7 downto 8*i) <= R(C_output)(8*i+7 downto 8*i) XOR bus_in(8*i+7 downto 8*i);
-              else -- normal write for every other register
-                R(conv_integer(addr))(8*i+7 downto 8*i) <=  bus_in(8*i+7 downto 8*i);
-              end if;
-            else
-              R(C_rising_if)(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
-              R(C_rising_if)(8*i+7 downto 8*i) or R_rising_edge(8*i+7 downto 8*i);
-              R(C_falling_if)(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
-              R(C_falling_if)(8*i+7 downto 8*i) or R_falling_edge(8*i+7 downto 8*i);
-            end if;
+          if byte_sel(i) = '1' and ce = '1' and bus_write = '1'
+          then
+            case conv_integer(addr) is
+            when C_rising_if | C_falling_if => -- interrupt flag registers: logical "and"
+              R(conv_integer(addr))(8*i+7 downto 8*i) <= -- only can clear intr. flag, never set
+              R(conv_integer(addr))(8*i+7 downto 8*i) and not bus_in(8*i+7 downto 8*i); -- write 0's to clear flags
+            when C_input => -- write to input register toggles output bit when input bit is set (like on AVR)
+              R(C_output)(8*i+7 downto 8*i) <= R(C_output)(8*i+7 downto 8*i) XOR bus_in(8*i+7 downto 8*i);
+            when others => -- normal write for every other register
+              R(conv_integer(addr))(8*i+7 downto 8*i) <= bus_in(8*i+7 downto 8*i);
+            end case;
+          else
+            R(C_rising_if)(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
+            R(C_rising_if)(8*i+7 downto 8*i) or R_rising_edge(8*i+7 downto 8*i);
+            R(C_falling_if)(8*i+7 downto 8*i) <= -- only can set intr. flag, never clear
+            R(C_falling_if)(8*i+7 downto 8*i) or R_falling_edge(8*i+7 downto 8*i);
           end if;
         end if;
       end process;
@@ -124,7 +121,7 @@ begin
         gpio_pullup(i) <= '1' when R(C_output)(i) = '1' AND R(C_direction)(i) = '0' else 'Z';	-- set programmatic pull-up (like ATmega328)
       end generate;
 
-      -- *** edge detect synchronizer (3-stage shift register) ***
+      -- *** edge detect synchronizer (3 or more stage shift register) ***
       -- here is theory and schematics about 3-stage shift register
       -- https://www.doulos.com/knowhow/fpga/synchronisation/
       -- here is vhdl implementation of the 3-stage shift register
@@ -132,18 +129,18 @@ begin
       process(clk)
       begin
         if rising_edge(clk) then
-          R_edge_sync_shift(i) <= R_edge_sync_shift(i)(C_edge_sync_depth-2 downto 0) & gpio_phys(i);
+          R_edge_sync_shift(i) <= gpio_phys(i) & R_edge_sync_shift(i)(C_edge_sync_depth-1 downto 1);
         end if;
       end process;
       -- difference in 2 last bits of the shift register detect synchronous rising/falling edge
-      -- rising edge when at C_edge_sync_depth-1 is 0, and one clock earlier at C_edge_sync_depth-2 is 1
+      -- rising edge when at bit0 is 0, and one clock earlier at bit1 is 1
       R_rising_edge(i) <=
-           (not R_edge_sync_shift(i)(C_edge_sync_depth-1))  -- it was 0
-       and (    R_edge_sync_shift(i)(C_edge_sync_depth-2)); -- 1 is coming after 0
-      -- falling edge similar, but other reg is not'ed
+           (not R_edge_sync_shift(i)(0))  -- it was 0
+       and (    R_edge_sync_shift(i)(1)); -- 1 is coming after 0
+      -- falling edge similar, bit0 is 1 and bit1 is 0
       R_falling_edge(i) <=
-           (    R_edge_sync_shift(i)(C_edge_sync_depth-1))  -- it was 1
-       and (not R_edge_sync_shift(i)(C_edge_sync_depth-2)); -- 0 is coming after 1
+           (    R_edge_sync_shift(i)(0))  -- it was 1
+       and (not R_edge_sync_shift(i)(1)); -- 0 is coming after 1
     end generate;
 
     -- join all interrupt request bits into one bit
