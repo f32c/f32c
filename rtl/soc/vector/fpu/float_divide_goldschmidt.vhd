@@ -74,9 +74,13 @@ architecture rtl of float_divide_goldschmidt is
    type T_b is array (0 to C_pipe_stages-1) of std_logic_vector(C_precision_bits downto 0);
    signal b, c, next_b: T_b;
    type T_ac is array (0 to C_pipe_stages-1) of std_logic_vector(2*C_precision_bits downto 0);
-   signal ac, R_ac: T_ac;
+   signal ac: T_ac;
+   type T_R_ac is array (0 to C_pipe_stages-1) of std_logic_vector(2*C_precision_bits-1 downto C_precision_bits);
+   signal R_ac: T_R_ac;
    type T_bc is array (0 to C_pipe_stages-1) of std_logic_vector(2*C_precision_bits+1 downto 0);
-   signal bc, R_bc: T_bc;
+   signal bc: T_bc;
+   type T_R_bc is array (0 to C_pipe_stages-1) of std_logic_vector(2*C_precision_bits+1 downto C_precision_bits);
+   signal R_bc: T_R_bc;
    type T_exponent is array (0 to C_pipe_stages-1) of std_logic_vector(C_exponent_bits-1 downto 0);
    signal exponent, R_exponent, next_exponent: T_exponent;
    signal sign, R_sign, next_sign: std_logic_vector(C_pipe_stages-1 downto 0);
@@ -151,8 +155,8 @@ begin
            -- one extra register layer to infer pipelined multiplication
            R_sign(i) <= sign(i);
            R_exponent(i) <= exponent(i);
-           R_ac(i) <= ac(i);
-           R_bc(i) <= bc(i);
+           R_ac(i) <= ac(i)(2*C_precision_bits-1 downto C_precision_bits);
+           R_bc(i) <= bc(i)(2*C_precision_bits+1 downto C_precision_bits);
            -- all below next_* signals are combinatorial based on above R_* registers
            R_pipe_data(i).sign       <= next_sign(i);
            R_pipe_data(i).exponent   <= next_exponent(i);
