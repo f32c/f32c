@@ -35,7 +35,7 @@ use work.f32c_pack.all;
 
 entity glue is
     generic (
-	-- Main clock freq, 50 or 81 MHz
+	-- Main clock freq, in multiples of 10 MHz, or 81
 	C_clk_freq: integer := 81;
 
 	-- ISA

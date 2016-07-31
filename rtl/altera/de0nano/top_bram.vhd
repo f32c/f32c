@@ -38,7 +38,7 @@ entity glue is
 	-- ISA
 	C_arch: integer := ARCH_MI32;
 
-	-- Main clock freq, 100 MHz
+	-- Main clock freq, in multiples of 10 MHz
 	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
