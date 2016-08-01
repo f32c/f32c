@@ -178,6 +178,7 @@ begin
                 R_addr_strobe <= '0';
                 R_done <= '1';
                 R_header_mode <= '1';
+                R_next <= '1'; -- help vector to finish loading last element
                 R_state <= C_state_idle;
               else -- R_header(C_header_next) > 0
                 -- non-zero pointer: we have next header to read
