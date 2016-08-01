@@ -320,19 +320,19 @@ begin
             R_VR_increment_delay(i) <= R_VR_increment_delay_start(i);
             R_VR_write(i) <= R_VR_write_request(i);
           else -- not reset
-            if R_VR_addr(i) = R_VR_addr_stop(i) then
-              -- end of run for this vector, disable write
-              R_VR_write(i) <= '0';
-            else
-              -- Flow control can enable/disable vector index increment.
-              if R_VR_io_flowcontrol(i)='0' or S_io_bram_next='1' then
-                if R_VR_increment_delay(i)(C_increment_delay_bits-1)='0' then
-                  R_VR_increment_delay(i) <= R_VR_increment_delay(i)-1;
+            -- Flow control can enable/disable vector index increment.
+            if R_VR_io_flowcontrol(i)='0' or S_io_bram_next='1' then
+              if R_VR_increment_delay(i)(C_increment_delay_bits-1)='0' then
+                R_VR_increment_delay(i) <= R_VR_increment_delay(i)-1;
+              else
+                if R_VR_addr(i) = R_VR_addr_stop(i) then
+                  -- end of run for this vector, disable write
+                  R_VR_write(i) <= '0';
                 else
                   R_VR_addr(i) <= R_VR_addr(i)+1;
-                end if;
-              end if;
-            end if;
+                end if; -- end if stop reached
+              end if; -- end if increment delay
+            end if; -- end if flowcontrol
           end if; -- if reset
         end if; -- rising edge
       end process;
