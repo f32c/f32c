@@ -53,8 +53,8 @@ entity glue is
     C_gpio_adc: integer := 6; -- number of analog ports for ADC (on A0-A5 pins)
     C_ps2: boolean := false;
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
-    C_video_cache_size: integer := 8;
     C_vgahdmi: boolean := false;
+    C_vgahdmi_cache_size: integer := 8;
     -- number of pixels for line step 640
     C_vgahdmi_fifo_width: integer := 640;
     -- number of scan lines: 480
@@ -199,9 +199,9 @@ begin
     C_gpio_adc => C_gpio_adc,
     C_branch_prediction => C_branch_prediction,
     C_dvid_ddr => C_dvid_ddr,
-    C_video_cache_size => C_video_cache_size,
     -- vga simple compositing bitmap only graphics
     C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
       C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
