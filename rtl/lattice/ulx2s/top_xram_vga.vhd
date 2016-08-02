@@ -127,8 +127,8 @@ entity toplevel is
     C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
       -- currently on ulx2s video cache doesn't work
       -- some mixtures of bugs, might not directly be the fault in cache itself
-      C_video_cache_size: integer := 0; -- KB (0 to disable, also disable C_sram_refresh then fmax=81.25MHz, 2,4,8,16,32 to enable fmax=50MHz)
-      C_video_cache_use_i: boolean := false; -- must be false, some data corruption with i-cache = true
+      C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, also disable C_sram_refresh then fmax=81.25MHz, 2,4,8,16,32 to enable fmax=50MHz)
+      C_vgahdmi_cache_use_i: boolean := false; -- must be false, some data corruption with i-cache = true
       C_vgahdmi_fifo_fast_ram: boolean := true; -- should be set true with cache, cache is faster than pixel shifter
       -- number of pixels for line; 640
       C_vgahdmi_fifo_width: integer := 640;
@@ -357,8 +357,8 @@ begin
 
       -- vga simple bitmap
       C_vgahdmi => C_vgahdmi,
-      C_video_cache_size => C_video_cache_size,
-      C_video_cache_use_i => C_video_cache_use_i,
+      C_vgahdmi_cache_size => C_vgahdmi_cache_size,
+      C_vgahdmi_cache_use_i => C_vgahdmi_cache_use_i,
       C_vgahdmi_fifo_fast_ram => C_vgahdmi_fifo_fast_ram,
       C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
       C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,

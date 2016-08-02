@@ -6,3 +6,6 @@ and all features we were able to pack together.
 On ULX2S it is recommended to enable all medium size
 features like timer, gpio,  but only one big size
 feature like VGA or PID but not both at the same time.
+
+vgahdmi 8bpp 640x480 max clock 81 MHz
+vgatext 8bpp 640x480 max clock 50 MHz
