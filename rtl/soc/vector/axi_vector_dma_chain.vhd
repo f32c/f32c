@@ -97,6 +97,11 @@ architecture arch of axi_vector_dma is
   signal R_done: std_logic := '1';
   signal R_next: std_logic := '0'; -- request next data
 
+  -- output buffering to sync data coming from axi with clock rising edge
+  constant C_register_bram_output: boolean := true;
+  signal S_bram_wdata, R_bram_wdata: std_logic_vector(31 downto 0);
+  signal S_bram_we, R_bram_we, S_bram_next, R_bram_next: std_logic;
+
   -- axi registered signaling
   signal R_arvalid: std_logic := '0'; -- read request, valid address
   signal R_awvalid: std_logic := '0'; -- write request, valid address
@@ -185,6 +190,7 @@ begin
                   -- so we are at last element. in next cycle, vector will be
                   -- fully written
                   R_done <= '1';
+                  R_next <= '1'; -- this requests one more to help load last element
                   R_state <= C_state_idle;
                 else -- R_header(C_header_next) > 0
                   -- non-zero pointer: we have next header to read
@@ -293,9 +299,8 @@ begin
   axi_out.rready  <= '1';    -- always ready to read data
   axi_out.arvalid <= R_arvalid; -- read request start (address valid)
   axi_out.araddr  <= "00" & R_ram_addr & "00"; -- address padded and 4-byte aligned
-  bram_wdata <= axi_in.rdata;
-  --bram_we <= axi_in.rvalid;
-  bram_we <= axi_in.rvalid and (not R_store_mode) and (not R_header_mode); -- prevent write during header read and stray rvalid in store mode
+  S_bram_wdata <= axi_in.rdata;
+  S_bram_we <= axi_in.rvalid and (not R_store_mode) and (not R_header_mode); -- prevent write during header read and stray rvalid in store mode
 
   -- write to RAM signaling
   axi_out.awid    <= "0";    -- not used
@@ -314,9 +319,32 @@ begin
   axi_out.wlast   <= R_wvalid when S_burst_remaining = 0 else '0';
   axi_out.wdata   <= R_wdata; -- write data
   --axi_out.wdata   <= x"00000" & R_bram_addr; -- debug
-  bram_next <= ((axi_in.rvalid or axi_in.wready) and (not R_header_mode)) or R_next; -- R_next is fix, helps for 1st data and last data
+  S_bram_next <= ((axi_in.rvalid or axi_in.wready) and (not R_header_mode)) or R_next; -- R_next is fix, helps for 1st data and last data
   bram_addr <= R_bram_addr;
-  done <= R_done;
+  done <= R_done and not R_next;
+
+  G_delay_registered:
+  if C_register_bram_output generate
+  process(clk)
+  begin
+    if rising_edge(clk) then
+      R_bram_wdata <= S_bram_wdata;
+      R_bram_next <= S_bram_next;
+      R_bram_we <= S_bram_we;
+    end if;
+  end process;
+  end generate;
+
+  G_no_delay_registered:
+  if not C_register_bram_output generate
+      R_bram_wdata <= S_bram_wdata;
+      R_bram_next <= S_bram_next;
+      R_bram_we <= S_bram_we;
+  end generate;
+
+  bram_wdata <= R_bram_wdata;
+  bram_next <= R_bram_next;
+  bram_we <= R_bram_we;
 
 end;
 
