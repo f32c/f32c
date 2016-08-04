@@ -207,8 +207,6 @@ generic (
     C_vector_float_addsub: boolean := true; -- true: have float addsub (+,-), false: without this, LUT saving
     C_vector_float_multiply: boolean := true; -- true: have float multiply (*), false: without multiply, LUT and DSP saving
     C_vector_float_divide: boolean := true; -- true: have float divider (/), false: without divider, LUT and much DSP saving
-    C_vector_invert_bram_clk_io: boolean := true; -- chip specific, experimentally determined
-    C_vector_invert_bram_clk_reg: boolean := true; -- chip specific, experimentally determined
     C_timer: boolean := true
 );
 port (
@@ -1069,8 +1067,6 @@ begin
         C_vaddr_bits => C_vector_vaddr_bits, -- number of bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
         C_vdata_bits => C_vector_vdata_bits, -- number of data bits
         C_vectors => C_vector_registers,
-        C_invert_bram_clk_io => C_vector_invert_bram_clk_io,
-        C_invert_bram_clk_reg => C_vector_invert_bram_clk_reg,
         C_float_addsub => C_vector_float_addsub,
         C_float_multiply => C_vector_float_multiply,
         C_float_divide => C_vector_float_divide
@@ -1122,6 +1118,7 @@ begin
 
           -- bram interface
           bram_we => S_vector_io_bram_we, -- I/O module outputs we signal
+          bram_next => S_vector_io_bram_next, -- I/O module outputs request to increment vector.vhd internal bram addr
           bram_addr => S_vector_io_bram_addr, -- I/O module outputs addr
           bram_wdata => S_vector_io_bram_wdata, -- I/O module outputs wdata
           bram_rdata => S_vector_io_bram_rdata, -- I/O module inputs rdata

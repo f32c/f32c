@@ -45,7 +45,7 @@ entity scarab_xram_sdram is
     C_debug: boolean := false;
 
     -- Main clock: 25/50/75/81/83/96/100/111/112/125
-    C_clk_freq: integer := 100;
+    C_clk_freq: integer := 83;
     C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
@@ -63,8 +63,6 @@ entity scarab_xram_sdram is
     C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
     C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
     C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
-    C_vector_invert_bram_clk_io: boolean := false;
-    C_vector_invert_bram_clk_reg: boolean := false;
 
     -- C_dvid_ddr = false: clk_pixel_shift = 250MHz
     -- C_dvid_ddr = true: clk_pixel_shift = 125MHz
@@ -161,7 +159,7 @@ entity scarab_xram_sdram is
         C_pid_precision: integer := 1;
         C_pid_pwm_bits: integer := 12;
         
-      C_timer: boolean := false; -- no timer
+      C_timer: boolean := false; -- no timer, vector won't route on xc6slx25
 
       C_gpio: integer := 32
   );
@@ -438,8 +436,6 @@ begin
       C_vector_float_addsub => C_vector_float_addsub,
       C_vector_float_multiply => C_vector_float_multiply,
       C_vector_float_divide => C_vector_float_divide,
-      C_vector_invert_bram_clk_io => C_vector_invert_bram_clk_io,
-      C_vector_invert_bram_clk_reg => C_vector_invert_bram_clk_reg,
       -- CPU debugging with serial port
       C_debug => C_debug
     )

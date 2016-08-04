@@ -24,8 +24,6 @@ entity vector is
     C_float_addsub: boolean := true; -- instantiate floating point addsub (+,-)
     C_float_multiply: boolean := true; -- instantiate floating point divider (*)
     C_float_divide: boolean := true; -- instantiate floating point divider (/) (LUT and DSP eater)
-    C_invert_bram_clk_reg: boolean := false; -- not used, esa11 artix7-axi needs true, spartan6-f32c needs false
-    C_invert_bram_clk_io: boolean := false; -- not used
     C_bram_in_reg: boolean := false; -- not used
     C_bram_out_reg: boolean := false; -- not used
     C_function_result_reg: boolean := false; -- register layer on functional unit result
