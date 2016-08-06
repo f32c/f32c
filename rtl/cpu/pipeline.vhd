@@ -276,7 +276,7 @@ architecture Behavioral of pipeline is
     signal WB_clk: std_logic;
 
     -- multiplication unit
-    signal EX_mul_start: boolean;
+    signal EX_mul_start, EX_mul_done: boolean;
     signal R_hi_lo: std_logic_vector(63 downto 0);
 
     -- COP0 registers
@@ -841,7 +841,9 @@ begin
     -- =========================
     --
 
-    EX_running <= MEM_running and not (C_exceptions and ID_EX_wait);
+    EX_running <= MEM_running and not (C_exceptions and ID_EX_wait)
+      and (not C_mult_enable or EX_mul_done or
+      (ID_EX_alt_sel /= ALT_HI and ID_EX_alt_sel /= ALT_LO));
 
     -- forward the results from later stages
     EX_eff_reg1 <=
@@ -1370,7 +1372,7 @@ begin
 	clk => clk, clk_enable => clk_enable,
 	start => EX_mul_start, mult_signed => ID_EX_mult_signed,
 	x => EX_eff_reg1, y => EX_eff_reg2,
-	hi_lo => R_hi_lo, done => open
+	hi_lo => R_hi_lo, done => EX_mul_done
     );
     end generate;
 
