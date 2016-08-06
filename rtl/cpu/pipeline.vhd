@@ -276,8 +276,7 @@ architecture Behavioral of pipeline is
     signal WB_clk: std_logic;
 
     -- multiplication unit
-    signal mul_res: signed(65 downto 0);
-    signal R_mul_a, R_mul_b: signed(32 downto 0);
+    signal EX_mul_start: boolean;
     signal R_hi_lo: std_logic_vector(63 downto 0);
 
     -- COP0 registers
@@ -1361,36 +1360,19 @@ begin
     end generate;
 
 
-    --
     -- Multiplier unit, as a separate pipeline
-    --
     G_multiplier:
     if C_mult_enable and C_arch = ARCH_MI32 generate
-    mul_res <= R_mul_a * R_mul_b; -- infer asynchronous signed multiplier
-    process(clk, clk_enable)
-    begin
-	if falling_edge(clk) and clk_enable = '1'
-	  and (not C_cache or dmem_cache_wait = '0') then
-	    if not EX_MEM_EIP and ID_EX_mult then
-		R_mul_a(31 downto 0) <= CONV_SIGNED(UNSIGNED(EX_eff_reg1), 32);
-		R_mul_b(31 downto 0) <= CONV_SIGNED(UNSIGNED(EX_eff_reg2), 32);
-		if ID_EX_mult_signed then
-		    R_mul_a(32) <= EX_eff_reg1(31);
-		    R_mul_b(32) <= EX_eff_reg2(31);
-		else
-		    R_mul_a(32) <= '0';
-		    R_mul_b(32) <= '0';
-		end if;
-	    end if;
-	    -- XXX revisit R_hi_lo write enable
-	    -- XXX don't update R_hi_lo if exception pending?
-	    R_hi_lo(63 downto 32) <=
-	      conv_std_logic_vector(mul_res(63 downto 32), 32);
-	    R_hi_lo(31 downto 0) <=
-	      conv_std_logic_vector(mul_res(31 downto 0), 32);
-	end if;
-    end process;
-    end generate; -- multiplier
+    EX_mul_start <= (not C_cache or dmem_cache_wait = '0')
+      and ID_EX_mult and not EX_MEM_EIP;
+    multiplier: entity work.mul
+    port map (
+	clk => clk, clk_enable => clk_enable,
+	start => EX_mul_start, mult_signed => ID_EX_mult_signed,
+	x => EX_eff_reg1, y => EX_eff_reg2,
+	hi_lo => R_hi_lo, done => open
+    );
+    end generate;
 
     -- COP0
     G_cop0_count:
