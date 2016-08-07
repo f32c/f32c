@@ -177,6 +177,14 @@ begin
                 R_header_mode <= '0';
                 -- test load/store mode and jump to adequate next state read/write
                 if R_store_mode='1' then
+                  R_bram_addr <= R_bram_addr + 1; -- early prepare bram read address for next data
+                    R_wdata <= bram_rdata; -- try to find right clock instance when first data are valid, very hackish
+                    if R_bram_addr = 0 then
+                    -- we can't set R_next at very start because indexer
+                    -- in vector.vhd must enter vector write state first
+                    -- otherwise R_next will have no effect
+                      R_next <= '1'; -- must request next data right now, fixes dobule-store of the same value at vector start
+                    end if;
                   R_state <= C_state_wait_write_addr_ack;
                 else -- R_store_mode='0'
                   R_state <= C_state_wait_ready_to_read;
@@ -221,8 +229,13 @@ begin
       when C_state_wait_write_addr_ack =>
         --R_awvalid <= '0'; -- de-activate address request
         if axi_in.awready = '1' then
-          R_wdata <= bram_rdata;
-          --R_wdata <= x"BAADCAFE";
+          --if R_bram_addr = 0 then
+            -- dirty hack
+            -- first R_wdata should be loaded from header reading state
+            -- the rest load here
+            --R_wdata <= bram_rdata;
+            R_wdata <= x"BADCAFFE";
+          --end if;
           R_bram_addr <= R_bram_addr + 1; -- early prepare bram read address for next data
           --R_ram_addr <= R_ram_addr + 1;
           --R_next <= '1'; -- must request next data right now, fixes dobule-store of the same value at vector start
@@ -239,7 +252,7 @@ begin
 
       when C_state_wait_write_data_ack =>
         if axi_in.wready='1' then
-          R_wdata <= bram_rdata;
+          --R_wdata <= bram_rdata;
           -- end of write cycle
           if S_burst_remaining = 0
           then
@@ -260,7 +273,7 @@ begin
                 R_state <= C_state_idle;
               else -- R_header(C_header_next) > 0
                 -- non-zero pointer: we have next header to read
-                --R_wdata <= bram_rdata; -- at this point read data are valid, must take them now for next store cycle!
+                R_wdata <= bram_rdata; -- at this point read data are valid, must take them now for next store cycle!
                 -- this is vector multi-part continuation
                 R_ram_addr <= R_header(C_header_next)(29 downto 2);
                 R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
@@ -278,7 +291,7 @@ begin
             R_bram_addr <= R_bram_addr + 1; -- increment source address
             R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next bursts block
             R_length_remaining <= R_length_remaining - 1;
-            --R_wdata <= bram_rdata;
+            R_wdata <= bram_rdata;
             --R_next <= '1';
             -- continue with bursting data in the same state
           end if; -- end else R_burst_remaining = 0
@@ -331,7 +344,8 @@ begin
   --S_read_next  <= axi_in.rvalid;
   --S_write_next <= axi_in.wready;
   -- S_write_next <= '0';
-  S_write_next <= R_awvalid or (axi_in.wready and R_wvalid);
+  --S_write_next <= R_awvalid or (axi_in.wready and R_wvalid);
+  S_write_next <= axi_in.wready and R_wvalid;
   S_bram_next <= ((S_read_next or S_write_next) and (not R_header_mode)) or R_next; -- R_next is fix, helps for 1st data and last data
   bram_addr <= R_bram_addr;
   done <= R_done and not R_next;
