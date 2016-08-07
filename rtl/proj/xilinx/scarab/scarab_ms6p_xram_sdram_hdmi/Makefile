@@ -1,7 +1,10 @@
 project = miniSpartan6-plus
 vendor = xilinx
 family = spartan6
-part = xc6slx25-ftg256-3 # last number -3 is speed grade
+# for different FPGA chip, parameter override:
+# MODEL=xc6slx9 make
+MODEL ?= xc6slx25
+part = ${MODEL}-ftg256-3 # last number -3 is speed grade
 flashsize = 8192 # KB (kilobytes) - SPI flash device is M25P40
 top_module = scarab_xram_sdram
 isedir = /opt/Xilinx/ISE/14.7/ISE_DS
