@@ -41,7 +41,7 @@ entity scarab_xram_sdram is
   generic
   (
     -- ISA: either ARCH_MI32 or ARCH_RV32
-    C_arch: integer := ARCH_MI32;
+    C_arch: integer := ARCH_RV32;
     C_debug: boolean := false;
 
     -- Main clock: 50/81/83/96/100/111/112/125
@@ -74,8 +74,8 @@ entity scarab_xram_sdram is
     -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
     C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
-      C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
+    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
+      C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32KB BRAM";	-- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480
       C_vgatext_bits: integer := 4;   -- 64 possible colors
       C_vgatext_bram_mem: integer := 8;   -- 4KB text+font  memory
