@@ -71,6 +71,11 @@
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../../../cpu/mul.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../../../soc/pid/rotary_decoder_v.v">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>

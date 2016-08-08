@@ -40,6 +40,7 @@ vhdfiles = \
 ../../../../cpu/loadalign.vhd \
 ../../../../cpu/pipeline.vhd \
 ../../../../cpu/shift.vhd \
+../../../../cpu/mul.vhd \
 ../../../../cpu/defs_f32c.vhd \
 ../../../../cpu/defs_mi32.vhd \
 ../../../../cpu/defs_rv32.vhd \
