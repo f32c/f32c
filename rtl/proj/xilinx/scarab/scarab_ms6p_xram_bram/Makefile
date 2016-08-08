@@ -21,7 +21,7 @@ vfiles = \
 ../../../../soc/pid/rotary_decoder_v.v \
 
 vhdfiles = \
-../../../../xilinx/scarab_ms6p/top/top_xram_sdram.vhd \
+../../../../xilinx/scarab_ms6p/top/top_xram_bram.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_112M5.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_100M.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_100M_25M_250M.vhd \
@@ -52,7 +52,6 @@ vhdfiles = \
 ../../../../cpu/loadalign.vhd \
 ../../../../cpu/pipeline.vhd \
 ../../../../cpu/shift.vhd \
-../../../../cpu/mul.vhd \
 ../../../../cpu/defs_f32c.vhd \
 ../../../../cpu/defs_mi32.vhd \
 ../../../../cpu/defs_rv32.vhd \

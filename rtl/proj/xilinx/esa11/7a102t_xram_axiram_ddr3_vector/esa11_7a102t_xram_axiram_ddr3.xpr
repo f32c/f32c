@@ -491,7 +491,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../soc/vector/axi_vector_dma.vhd">
+      <File Path="$PPRDIR/../../../../soc/vector/axi_vector_dma_chain.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
