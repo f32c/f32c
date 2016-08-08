@@ -85,8 +85,7 @@ architecture arch of axi_vector_dma is
   constant C_state_wait_ready_to_read: integer := 1;
   constant C_state_wait_read_addr_ack: integer := 2;
   constant C_state_wait_read_data_ack: integer := 3;
-  constant C_state_wait_write_addr_ack: integer := 4;
-  constant C_state_wait_write_data_ack: integer := 5;
+  constant C_state_wait_write_data_ack: integer := 4;
   constant C_state_max: integer := C_state_wait_write_data_ack;
 
   signal R_store_mode: std_logic;
@@ -186,7 +185,7 @@ begin
                     -- otherwise R_next will have no effect
                   R_next <= '1'; -- must request next data right now, fixes dobule-store of the same value at vector start
                     --end if;
-                  R_state <= C_state_wait_write_addr_ack;
+                  R_state <= C_state_wait_write_data_ack;
                 else -- R_store_mode='0'
                   R_state <= C_state_wait_ready_to_read;
                 end if;
@@ -227,9 +226,8 @@ begin
           end if; -- end R_burst_remaining
         end if; -- end axi_in.rvalid='1'
 
-      when C_state_wait_write_addr_ack =>
-        --R_awvalid <= '0'; -- de-activate address request
-        if axi_in.awready='1' then
+      when C_state_wait_write_data_ack =>
+        if axi_in.awready='1' and R_wvalid='0' then
           R_next_awready <= '0';
           --if R_bram_addr = 0 then
             -- dirty hack
@@ -238,7 +236,7 @@ begin
             --R_wdata <= bram_rdata;
             --R_wdata <= x"BADCAFFE";
           --end if;
-          R_bram_addr <= R_bram_addr + 1; -- early prepare bram read address for next data
+          --R_bram_addr <= R_bram_addr + 1; -- early prepare bram read address for next data
           --R_ram_addr <= R_ram_addr + 1;
           --R_next <= '1'; -- must request next data right now, fixes dobule-store of the same value at vector start
           --if R_bram_addr = 0 then
@@ -249,11 +247,8 @@ begin
           --end if;
           R_awvalid <= '1'; -- address valid: single clock pulse (reset to '0' in next clock)
           R_wvalid <= '1'; -- data valid: activate data valid and keep holding it
-          R_state <= C_state_wait_write_data_ack;
         end if;
-
-      when C_state_wait_write_data_ack =>
-        if axi_in.wready='1' then
+        if axi_in.wready='1' and R_wvalid='1' then
           --R_wdata <= bram_rdata;
           -- end of write cycle
           if S_burst_remaining = 0
@@ -270,7 +265,7 @@ begin
                 -- fully written
                 R_header_mode <= '1';
                 R_done <= '1';
-                --R_next <= '1'; -- this requests one more to fix not written last element
+                R_next <= '1'; -- this requests one more to fix not written last element
                 -- return to idle state
                 R_state <= C_state_idle;
               else -- R_header(C_header_next) > 0
@@ -295,7 +290,7 @@ begin
                 R_wvalid <= '0';
                 R_next_awready <= '1';
                 -- bram increment is not here, it is in next state (wait addr ack)
-                R_state <= C_state_wait_write_addr_ack;
+                --R_state <= C_state_wait_write_addr_ack;
               end if;
             end if;
           else -- S_burst_remaining > 0
@@ -372,7 +367,7 @@ begin
   -- so if we have awready set, we know that burst will be continued and
   -- we do not deactive "bram_next"
   S_write_next <= '1' when
-     (axi_in.awready='1' and R_next_awready='1') or
+     (axi_in.awready='1' and R_wvalid='0' and R_next_awready='1') or
      (axi_in.wready='1' and R_wvalid='1' and (S_burst_remaining /= 0 or axi_in.awready='1')) else '0';
   S_bram_next <= ((S_read_next or S_write_next) and (not R_header_mode)) or R_next; -- R_next is fix, helps for 1st data and last data
   bram_addr <= R_bram_addr;
