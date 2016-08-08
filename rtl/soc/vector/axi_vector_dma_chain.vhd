@@ -118,6 +118,7 @@ architecture arch of axi_vector_dma is
   constant C_burst_bits_pad: std_logic_vector(7-C_burst_max_bits downto 0) := (others => '0');
   signal S_burst_remaining: std_logic_vector(C_burst_max_bits-1 downto 0) := (others => '0'); -- 1 less than actual value
   signal S_read_next, S_write_next: std_logic;
+  signal R_next_awready: std_logic := '0';
 begin
   process(clk)
   begin
@@ -228,7 +229,8 @@ begin
 
       when C_state_wait_write_addr_ack =>
         --R_awvalid <= '0'; -- de-activate address request
-        if axi_in.awready = '1' then
+        if axi_in.awready='1' then
+          R_next_awready <= '0';
           --if R_bram_addr = 0 then
             -- dirty hack
             -- first R_wdata should be loaded from header reading state
@@ -256,12 +258,12 @@ begin
           -- end of write cycle
           if S_burst_remaining = 0
           then
-            R_wvalid <= '0';
             if R_bram_addr(C_vaddr_bits) = '1' -- safety measure
             or R_length_remaining(C_vaddr_bits-1 downto C_burst_max_bits) = 0
             -- with S_burst_remaining = 0 this "or R_length_..."
             -- should be the same as R_length_remaining = 0
             then
+              R_wvalid <= '0';
               if R_header(C_header_next) = 0 then
                 -- no next header (null pointer)
                 -- so we are at last element. in next cycle, vector will be
@@ -284,8 +286,17 @@ begin
             else -- S_burst_remaining = 0 and R_length_remaining > 0
               R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next bursts block
               R_length_remaining <= R_length_remaining - 1;
-              -- bram increment is not here, it is in next state (wait addr ack)
-              R_state <= C_state_wait_write_addr_ack;
+              if axi_in.awready='1' then
+                -- handle immediately acknowledgeable awready (burst back-to-back)
+                -- by not leaving this state at all, just strobe the awvalid
+                R_awvalid <= '1';
+                R_bram_addr <= R_bram_addr+1;
+              else
+                R_wvalid <= '0';
+                R_next_awready <= '1';
+                -- bram increment is not here, it is in next state (wait addr ack)
+                R_state <= C_state_wait_write_addr_ack;
+              end if;
             end if;
           else -- S_burst_remaining > 0
             R_bram_addr <= R_bram_addr + 1; -- increment source address
@@ -345,7 +356,24 @@ begin
   --S_write_next <= axi_in.wready;
   -- S_write_next <= '0';
   --S_write_next <= R_awvalid or (axi_in.wready and R_wvalid);
-  S_write_next <= '1' when axi_in.wready='1' and R_wvalid='1' and S_burst_remaining /= 0 else '0';
+  --S_write_next <= '1' when axi_in.wready='1' and R_wvalid='1' and R_length_remaining /= 0 else '0';
+
+  -- when in state "C_state_wait_write_addr_ack" then
+  -- in time with axi_in.awready must be gated signal "bram_next" for
+  -- burst continuation
+  -- if burst is discontinued, then "bram_next" at the end of current burst will be
+  -- prevented.from combinatorial logic. state "C_state_wait_write_data_ack" will set
+  -- R_next_awready which will be used to produce "bram_next" in time with axi_in.awready
+  -- from state "C_state_wait_write_addr_ack"
+  
+  -- if burst is continued (back-to-back), then stay in state "C_state_wait_write_data_ack"
+  -- and allow "bram_next" to be set all the way, inclduing the end of the burst.
+  -- this is the condition covering it: (S_burst_remaining /= 0 or axi_in.awready='1')
+  -- so if we have awready set, we know that burst will be continued and
+  -- we do not deactive "bram_next"
+  S_write_next <= '1' when
+     (axi_in.awready='1' and R_next_awready='1') or
+     (axi_in.wready='1' and R_wvalid='1' and (S_burst_remaining /= 0 or axi_in.awready='1')) else '0';
   S_bram_next <= ((S_read_next or S_write_next) and (not R_header_mode)) or R_next; -- R_next is fix, helps for 1st data and last data
   bram_addr <= R_bram_addr;
   done <= R_done and not R_next;
