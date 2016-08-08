@@ -54,6 +54,7 @@ entity axi_vector_dma is
   (
     C_vaddr_bits: integer := 11; -- bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
     C_vdata_bits: integer := 32;
+    C_bram_rdata_latency: integer range 2 to 4 := 2; -- latency from bram_next to bram_rdata during store_mode
     C_burst_max_bits: integer := 6 -- number of bits to describe burst max
   );
   port
@@ -104,7 +105,16 @@ architecture arch of axi_vector_dma is
   signal R_arvalid: std_logic := '0'; -- read request, valid address
   signal R_awvalid: std_logic := '0'; -- write request, valid address
   signal R_wvalid: std_logic := '0'; -- write, valid data
-  --signal R_wdata: std_logic_vector(C_vdata_bits-1 downto 0);
+  constant C_wdata_fifo_bits: integer := 4; -- 3 bits fifo length 2**3 = 8, 4 bits = 16
+  type T_wdata_fifo is array ((2**C_wdata_fifo_bits)-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
+  signal R_wdata_fifo: T_wdata_fifo;
+  signal R_wdata_fifo_reset: std_logic := '0';
+  signal S_need_refill: std_logic;
+  -- fifo index counters
+  signal R_wdata_fifo_index_in: std_logic_vector(C_wdata_fifo_bits-1 downto 0) := (others => '1'); -- stopped
+  signal R_wdata_fifo_index_out: std_logic_vector(C_wdata_fifo_bits-1 downto 0) := (others => '0'); -- initial 0
+  signal S_wdata_fifo_index_diff: std_logic_vector(C_wdata_fifo_bits-1 downto 0);
+  signal R_bram_rdata_ready: std_logic_vector(C_bram_rdata_latency-1 downto 0);
   constant C_header_data_length: integer := 2; -- loaded first from ram+0 -- neeed early, can't be loaded last last
   constant C_header_data_addr: integer := 1; -- loaded second from ram+1 -- needer early, can't be loaded last
   constant C_header_next: integer := 0; -- loaded last from ram+2 - needed at end of data, can be loaded last
@@ -117,19 +127,20 @@ architecture arch of axi_vector_dma is
   constant C_burst_bits_pad: std_logic_vector(7-C_burst_max_bits downto 0) := (others => '0');
   signal S_burst_remaining: std_logic_vector(C_burst_max_bits-1 downto 0) := (others => '0'); -- 1 less than actual value
   signal S_read_next, S_write_next: std_logic;
-  signal R_next_awready: std_logic := '0';
 begin
   process(clk)
   begin
     if rising_edge(clk) then
       R_next <= '0'; -- default
       R_awvalid <= '0'; -- de-activate address request
+      R_wdata_fifo_reset <= '0';
       case R_state is
       when C_state_idle =>
         if request='1' then
           R_ram_addr <= addr;
           R_bram_addr <= (others => '0');
           R_store_mode <= store_mode;
+          R_wdata_fifo_reset <= store_mode; -- start fetching data from the fifo
           R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
           R_header_mode <= '1';
           R_done <= '0';
@@ -178,13 +189,6 @@ begin
                 -- test load/store mode and jump to adequate next state read/write
                 if R_store_mode='1' then
                   R_bram_addr <= R_bram_addr + 1; -- early prepare bram read address for next data
-                    --R_wdata <= bram_rdata; -- try to find right clock instance when first data are valid, very hackish
-                    --if R_bram_addr = 0 then
-                    -- we can't set R_next at very start because indexer
-                    -- in vector.vhd must enter vector write state first
-                    -- otherwise R_next will have no effect
-                  R_next <= '1'; -- must request next data right now, fixes dobule-store of the same value at vector start
-                    --end if;
                   R_state <= C_state_wait_write_data_ack;
                 else -- R_store_mode='0'
                   R_state <= C_state_wait_ready_to_read;
@@ -228,28 +232,11 @@ begin
 
       when C_state_wait_write_data_ack =>
         if axi_in.awready='1' and R_wvalid='0' then
-          R_next_awready <= '0';
-          --if R_bram_addr = 0 then
-            -- dirty hack
-            -- first R_wdata should be loaded from header reading state
-            -- the rest load here
-            --R_wdata <= bram_rdata;
-            --R_wdata <= x"BADCAFFE";
-          --end if;
-          --R_bram_addr <= R_bram_addr + 1; -- early prepare bram read address for next data
-          --R_ram_addr <= R_ram_addr + 1;
-          --R_next <= '1'; -- must request next data right now, fixes dobule-store of the same value at vector start
-          --if R_bram_addr = 0 then
-            --R_wdata <= bram_rdata;
-            -- we can't set R_next at very start because indexer
-            -- in vector.vhd must enter vector write state first
-            -- otherwise R_next will have no effect
-          --end if;
           R_awvalid <= '1'; -- address valid: single clock pulse (reset to '0' in next clock)
           R_wvalid <= '1'; -- data valid: activate data valid and keep holding it
         end if;
         if axi_in.wready='1' and R_wvalid='1' then
-          --R_wdata <= bram_rdata;
+          R_wdata_fifo_index_out <= R_wdata_fifo_index_out+1;
           -- end of write cycle
           if S_burst_remaining = 0
           then
@@ -263,14 +250,14 @@ begin
                 -- no next header (null pointer)
                 -- so we are at last element. in next cycle, vector will be
                 -- fully written
+                R_store_mode <= '0';
                 R_header_mode <= '1';
                 R_done <= '1';
-                R_next <= '1'; -- this requests one more to fix not written last element
+                --R_next <= '1'; -- this requests one more to fix not written last element
                 -- return to idle state
                 R_state <= C_state_idle;
               else -- R_header(C_header_next) > 0
                 -- non-zero pointer: we have next header to read
-                --R_wdata <= bram_rdata; -- at this point read data are valid, must take them now for next store cycle!
                 -- this is vector multi-part continuation
                 R_ram_addr <= R_header(C_header_next)(29 downto 2);
                 R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
@@ -280,30 +267,45 @@ begin
               end if;
             else -- S_burst_remaining = 0 and R_length_remaining > 0
               R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next bursts block
+              R_bram_addr <= R_bram_addr+1;
               R_length_remaining <= R_length_remaining - 1;
               if axi_in.awready='1' then
                 -- handle immediately acknowledgeable awready (burst back-to-back)
                 -- by not leaving this state at all, just strobe the awvalid
                 R_awvalid <= '1';
-                R_bram_addr <= R_bram_addr+1;
               else
                 R_wvalid <= '0';
-                R_next_awready <= '1';
-                -- bram increment is not here, it is in next state (wait addr ack)
-                --R_state <= C_state_wait_write_addr_ack;
               end if;
             end if;
           else -- S_burst_remaining > 0
             R_bram_addr <= R_bram_addr + 1; -- increment source address
             R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next bursts block
             R_length_remaining <= R_length_remaining - 1;
-            --R_wdata <= bram_rdata;
-            --R_next <= '1';
             -- continue with bursting data in the same state
           end if; -- end else R_burst_remaining = 0
         end if; -- end axi_in.wready='1'
       end case;
     end if; -- rising edge
+  end process;
+
+  -- the wdata fifo
+  S_wdata_fifo_index_diff <= R_wdata_fifo_index_in - R_wdata_fifo_index_out;
+  S_need_refill <= '1' when S_wdata_fifo_index_diff < ((2**C_wdata_fifo_bits)-2-C_bram_rdata_latency)  else '0';
+  process(clk)
+  begin
+    if rising_edge(clk) then
+      if R_wdata_fifo_reset='1' then
+        R_wdata_fifo_index_in <= R_wdata_fifo_index_out;
+        R_bram_rdata_ready <= (others => '0');
+      else
+        R_bram_rdata_ready <= S_need_refill & R_bram_rdata_ready(C_bram_rdata_latency-1 downto 1);
+        if R_bram_rdata_ready(1)='1' then
+          R_wdata_fifo(conv_integer(R_wdata_fifo_index_in)) <= bram_rdata;
+          --R_wdata_fifo(conv_integer(R_wdata_fifo_index_in)) <= R_wdata_fifo_index_in; -- debug
+          R_wdata_fifo_index_in <= R_wdata_fifo_index_in+1;
+        end if;
+      end if;
+    end if;
   end process;
 
   -- from current length remaining, calculate the burst
@@ -340,36 +342,10 @@ begin
   axi_out.awaddr  <= "00" & R_ram_addr & "00"; -- address padded and 4-byte aligned
   axi_out.wvalid  <= R_wvalid; -- write data valid
   axi_out.wlast   <= R_wvalid when S_burst_remaining = 0 else '0';
-  --axi_out.wdata   <= R_wdata; -- write data
-  axi_out.wdata   <= bram_rdata; -- write data
-  --axi_out.wdata   <= x"00000" & R_bram_addr; -- debug
+  axi_out.wdata   <= R_wdata_fifo(conv_integer(R_wdata_fifo_index_out)); -- write data
   S_read_next  <= '1' when axi_in.rvalid='1' and R_store_mode='0' and R_header_mode='0' and R_state=C_state_wait_read_data_ack  else '0';
-  --S_write_next <= '1' when axi_in.wready='1' and R_state = C_state_wait_write_data_ack else '0';
-  --S_read_next  <= '1' when axi_in.rvalid='1' and (R_state = C_state_wait_read_addr_ack  or R_state = C_state_wait_read_data_ack)  else '0';
-  --S_write_next <= '1' when axi_in.wready='1' and (R_state = C_state_wait_write_addr_ack or R_state = C_state_wait_write_data_ack) else '0';
-  --S_read_next  <= axi_in.rvalid;
-  --S_write_next <= axi_in.wready;
-  -- S_write_next <= '0';
-  --S_write_next <= R_awvalid or (axi_in.wready and R_wvalid);
-  --S_write_next <= '1' when axi_in.wready='1' and R_wvalid='1' and R_length_remaining /= 0 else '0';
-
-  -- when in state "C_state_wait_write_addr_ack" then
-  -- in time with axi_in.awready must be gated signal "bram_next" for
-  -- burst continuation
-  -- if burst is discontinued, then "bram_next" at the end of current burst will be
-  -- prevented.from combinatorial logic. state "C_state_wait_write_data_ack" will set
-  -- R_next_awready which will be used to produce "bram_next" in time with axi_in.awready
-  -- from state "C_state_wait_write_addr_ack"
-  
-  -- if burst is continued (back-to-back), then stay in state "C_state_wait_write_data_ack"
-  -- and allow "bram_next" to be set all the way, inclduing the end of the burst.
-  -- this is the condition covering it: (S_burst_remaining /= 0 or axi_in.awready='1')
-  -- so if we have awready set, we know that burst will be continued and
-  -- we do not deactive "bram_next"
-  S_write_next <= '1' when
-     (axi_in.awready='1' and R_wvalid='0' and R_next_awready='1') or
-     (axi_in.wready='1' and R_wvalid='1' and (S_burst_remaining /= 0 or axi_in.awready='1')) else '0';
-  S_bram_next <= ((S_read_next or S_write_next) and (not R_header_mode)) or R_next; -- R_next is fix, helps for 1st data and last data
+  S_write_next <= S_need_refill and R_store_mode;
+  S_bram_next <= ((S_read_next) and (not R_header_mode)) or (S_write_next or R_next); -- R_next is fix, helps for 1st data and last data
   bram_addr <= R_bram_addr;
   done <= R_done and not R_next;
 
