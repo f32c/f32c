@@ -10,12 +10,11 @@
 #define	JD_FMT_RGB16	1	/* RGB565, 2 bytes / pixel */
 #define	JD_FMT_RGB32	2	/* RGB888 word-aligned, 4 bytes / pixel */
 
-//#define JD_FORMAT	JD_FMT_RGB32
-#define JD_FORMAT	JD_FMT_RGB24
+#define JD_FORMAT	JD_FMT_RGB32
 
 #define	JD_SZBUF	4096	/* Size of stream input buffer */
 #define	JD_USE_SCALE	1	/* Use descaling feature for output */
-#define JD_TBLCLIP	1	/* Use table for saturation (might be a bit faster but increases 1K bytes of code size) */
+#define JD_TBLCLIP	0	/* Use table for saturation (might be a bit faster but increases 1K bytes of code size) */
 
 /*---------------------------------------------------------------------------*/
 
@@ -23,35 +22,7 @@
 extern "C" {
 #endif
 
-
-#ifdef _WIN32	/* FatFs development platform */
-
-#include <windows.h>
-#include <tchar.h>
-
-#else			/* Embedded platform */
-
-/* These types must be 16-bit, 32-bit or larger integer */
-typedef int32_t		INT;
-typedef uint32_t	UINT;
-
-/* These types must be 8-bit integer */
-//typedef char		CHAR;
-typedef unsigned char	UCHAR;
-typedef unsigned char	BYTE;
-
-/* These types must be 16-bit integer */
-typedef short		SHORT;
-typedef unsigned short	USHORT;
-typedef unsigned short	WORD;
-typedef unsigned short	WCHAR;
-
-/* These types must be 32-bit integer */
-typedef int32_t		LONG;
-typedef uint32_t	ULONG;
-typedef uint32_t	DWORD;
-
-#endif
+#include <fatfs/integer.h>
 
 
 /* Error code */

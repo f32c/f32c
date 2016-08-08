@@ -118,10 +118,11 @@ BYTE BYTECLIP (
 	INT val
 )
 {
-	if (val < 0) val = 0;
-	if (val > 255) val = 255;
-
-	return (BYTE)val;
+	if (__predict_true((val & 0x1f00) == 0))
+		return (BYTE)val;
+	if (val < 0)
+		return 0;
+	return 255;
 }
 
 #endif
@@ -367,6 +368,7 @@ INT huffext (			/* >=0: decoded data, <0: error code */
 /* Apply Inverse-DCT in Arai Algorithm (see also aa_idct.png)            */
 /*-----------------------------------------------------------------------*/
 
+__attribute__((optimize("-O3")))
 static
 void block_idct (
 	LONG* src,	/* Input block data (de-quantized and pre-scaled for Arai Algorithm) */
@@ -459,14 +461,15 @@ void block_idct (
 		v5 -= v6;
 		v4 -= v5;
 
-		dst[0] = BYTECLIP((v0 + v7) >> 8);	/* Descale the transformed values 8 bits and output */
-		dst[7] = BYTECLIP((v0 - v7) >> 8);
+		/* Descale the transformed values 8 bits and output */
+		dst[0] = BYTECLIP((v0 + v7) >> 8);
 		dst[1] = BYTECLIP((v1 + v6) >> 8);
-		dst[6] = BYTECLIP((v1 - v6) >> 8);
 		dst[2] = BYTECLIP((v2 + v5) >> 8);
-		dst[5] = BYTECLIP((v2 - v5) >> 8);
 		dst[3] = BYTECLIP((v3 + v4) >> 8);
 		dst[4] = BYTECLIP((v3 - v4) >> 8);
+		dst[5] = BYTECLIP((v2 - v5) >> 8);
+		dst[6] = BYTECLIP((v1 - v6) >> 8);
+		dst[7] = BYTECLIP((v0 - v7) >> 8);
 		dst += 8;
 
 		src += 8;	/* Next row */
@@ -480,6 +483,7 @@ void block_idct (
 /* Load all blocks in the MCU into working buffer                        */
 /*-----------------------------------------------------------------------*/
 
+__attribute__((optimize("-O3")))
 static
 JRESULT mcu_load (
 	JDEC* jd		/* Pointer to the decompressor object */
@@ -563,6 +567,7 @@ JRESULT mcu_load (
 /* Output an MCU: Convert YCrCb to RGB and output it in RGB form         */
 /*-----------------------------------------------------------------------*/
 
+__attribute__((optimize("-O3")))
 static
 JRESULT mcu_output (
 	JDEC* jd,	/* Pointer to the decompressor object */
@@ -1010,6 +1015,7 @@ JRESULT jd_prepare (
 /* Start to decompress the JPEG picture                                  */
 /*-----------------------------------------------------------------------*/
 
+__attribute__((optimize("-O3")))
 JRESULT jd_decomp (
 	JDEC* jd,								/* Initialized decompression object */
 	UINT (*outfunc)(JDEC*, void*, JRECT*),	/* RGB output function */

@@ -47,7 +47,7 @@
  * hexdump -v -e '1/1 "%u,\n"' ../../boot/fat/loader.bin > loader_bin.h
  * and set LOADER_LEN to the exact length of the loader.bin file.
  */
-#define EMBEDDED_LOADER
+//#define EMBEDDED_LOADER
 #ifdef EMBEDDED_LOADER
 #define LOADER_LEN 9716
 static char loader_bin[LOADER_LEN] = {
