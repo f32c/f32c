@@ -54,7 +54,6 @@ entity axi_vector_dma is
   (
     C_vaddr_bits: integer := 11; -- bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
     C_vdata_bits: integer := 32;
-    C_bram_rdata_latency: integer range 2 to 4 := 2; -- latency from bram_next to bram_rdata during store_mode
     C_burst_max_bits: integer := 6 -- number of bits to describe burst max
   );
   port
@@ -105,16 +104,7 @@ architecture arch of axi_vector_dma is
   signal R_arvalid: std_logic := '0'; -- read request, valid address
   signal R_awvalid: std_logic := '0'; -- write request, valid address
   signal R_wvalid: std_logic := '0'; -- write, valid data
-  constant C_wdata_fifo_bits: integer := 4; -- 3 bits fifo length 2**3 = 8, 4 bits = 16
-  type T_wdata_fifo is array ((2**C_wdata_fifo_bits)-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
-  signal R_wdata_fifo: T_wdata_fifo;
-  signal R_wdata_fifo_reset: std_logic := '0';
-  signal S_need_refill: std_logic;
-  -- fifo index counters
-  signal R_wdata_fifo_index_in: std_logic_vector(C_wdata_fifo_bits-1 downto 0) := (others => '1'); -- stopped
-  signal R_wdata_fifo_index_out: std_logic_vector(C_wdata_fifo_bits-1 downto 0) := (others => '0'); -- initial 0
-  signal S_wdata_fifo_index_diff: std_logic_vector(C_wdata_fifo_bits-1 downto 0);
-  signal R_bram_rdata_ready: std_logic_vector(C_bram_rdata_latency-1 downto 0);
+  -- linked list struct header fields
   constant C_header_data_length: integer := 2; -- loaded first from ram+0 -- neeed early, can't be loaded last last
   constant C_header_data_addr: integer := 1; -- loaded second from ram+1 -- needer early, can't be loaded last
   constant C_header_next: integer := 0; -- loaded last from ram+2 - needed at end of data, can be loaded last
@@ -126,6 +116,18 @@ architecture arch of axi_vector_dma is
   signal R_length_remaining: std_logic_vector(C_vaddr_bits-1 downto 0) := (others => '0'); -- vector length 1 less then actual value (0 -> length 1)
   constant C_burst_bits_pad: std_logic_vector(7-C_burst_max_bits downto 0) := (others => '0');
   signal S_burst_remaining: std_logic_vector(C_burst_max_bits-1 downto 0) := (others => '0'); -- 1 less than actual value
+  -- the bram_rdata fifo
+  constant C_wdata_fifo_bits: integer := 3; -- 3 bits fifo length 2**3 = 8 elements
+  type T_wdata_fifo is array (2**C_wdata_fifo_bits-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
+  signal R_wdata_fifo: T_wdata_fifo;
+  signal R_wdata_fifo_reset: std_logic := '0';
+  signal S_need_refill: std_logic;
+  -- fifo index counters
+  signal R_wdata_fifo_index_in: std_logic_vector(C_wdata_fifo_bits-1 downto 0) := (others => '1'); -- stopped
+  signal R_wdata_fifo_index_out: std_logic_vector(C_wdata_fifo_bits-1 downto 0) := (others => '0'); -- initial 0
+  signal S_wdata_fifo_index_diff: std_logic_vector(C_wdata_fifo_bits-1 downto 0);
+  signal R_bram_rdata_ready: std_logic;
+  -- bram_next component signals
   signal S_read_next, S_write_next: std_logic;
 begin
   process(clk)
@@ -133,7 +135,6 @@ begin
     if rising_edge(clk) then
       R_next <= '0'; -- default
       R_awvalid <= '0'; -- de-activate address request
-      R_wdata_fifo_reset <= '0';
       case R_state is
       when C_state_idle =>
         if request='1' then
@@ -148,6 +149,7 @@ begin
         end if;
 
       when C_state_wait_ready_to_read =>
+        R_wdata_fifo_reset <= '0';
         if axi_in.arready='1' then
           R_arvalid <= '1'; -- activate address request
           R_state <= C_state_wait_read_addr_ack;
@@ -253,7 +255,7 @@ begin
                 R_store_mode <= '0';
                 R_header_mode <= '1';
                 R_done <= '1';
-                --R_next <= '1'; -- this requests one more to fix not written last element
+                R_next <= '1'; -- this requests one more to fix not written last element
                 -- return to idle state
                 R_state <= C_state_idle;
               else -- R_header(C_header_next) > 0
@@ -290,18 +292,17 @@ begin
 
   -- the wdata fifo
   S_wdata_fifo_index_diff <= R_wdata_fifo_index_in - R_wdata_fifo_index_out;
-  S_need_refill <= '1' when S_wdata_fifo_index_diff < ((2**C_wdata_fifo_bits)-2-C_bram_rdata_latency)  else '0';
+  S_need_refill <= '1' when S_wdata_fifo_index_diff < 2**C_wdata_fifo_bits-2 else '0'; -- -2 as standoff to accept data remaining in bram_rdata pipeline
   process(clk)
   begin
     if rising_edge(clk) then
       if R_wdata_fifo_reset='1' then
         R_wdata_fifo_index_in <= R_wdata_fifo_index_out;
-        R_bram_rdata_ready <= (others => '0');
+        R_bram_rdata_ready <= '0';
       else
-        R_bram_rdata_ready <= S_need_refill & R_bram_rdata_ready(C_bram_rdata_latency-1 downto 1);
-        if R_bram_rdata_ready(1)='1' then
+        R_bram_rdata_ready <= S_need_refill; -- one clock delay matches bram_rdata latency
+        if R_bram_rdata_ready='1' then
           R_wdata_fifo(conv_integer(R_wdata_fifo_index_in)) <= bram_rdata;
-          --R_wdata_fifo(conv_integer(R_wdata_fifo_index_in)) <= R_wdata_fifo_index_in; -- debug
           R_wdata_fifo_index_in <= R_wdata_fifo_index_in+1;
         end if;
       end if;
@@ -324,7 +325,6 @@ begin
   axi_out.arvalid <= R_arvalid; -- read request start (address valid)
   axi_out.araddr  <= "00" & R_ram_addr & "00"; -- address padded and 4-byte aligned
   S_bram_wdata <= axi_in.rdata;
-  --S_bram_we <= S_read_next and (not R_store_mode) and (not R_header_mode); -- prevent write during header read and stray rvalid in store mode
   S_bram_we <= S_read_next;
 
   -- write to RAM signaling
@@ -343,9 +343,9 @@ begin
   axi_out.wvalid  <= R_wvalid; -- write data valid
   axi_out.wlast   <= R_wvalid when S_burst_remaining = 0 else '0';
   axi_out.wdata   <= R_wdata_fifo(conv_integer(R_wdata_fifo_index_out)); -- write data
-  S_read_next  <= '1' when axi_in.rvalid='1' and R_store_mode='0' and R_header_mode='0' and R_state=C_state_wait_read_data_ack  else '0';
+  S_read_next <= '1' when axi_in.rvalid='1' and R_store_mode='0' and R_header_mode='0' and R_state=C_state_wait_read_data_ack  else '0';
   S_write_next <= S_need_refill and R_store_mode;
-  S_bram_next <= ((S_read_next) and (not R_header_mode)) or (S_write_next or R_next); -- R_next is fix, helps for 1st data and last data
+  S_bram_next <= S_read_next or S_write_next or R_next; -- R_next is fix, helps for 1st data and last data
   bram_addr <= R_bram_addr;
   done <= R_done and not R_next;
 
