@@ -1366,7 +1366,7 @@ begin
     G_multiplier:
     if C_mult_enable and C_arch = ARCH_MI32 generate
     EX_mul_start <= (not C_cache or dmem_cache_wait = '0')
-      and ID_EX_mult and not EX_MEM_EIP;
+      and ID_EX_mult and not MEM_cancel_EX and not EX_MEM_EIP;
     multiplier: entity work.mul
     port map (
 	clk => clk, clk_enable => clk_enable,
