@@ -485,19 +485,19 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../soc/vector/vector_chain.vhd">
+      <File Path="$PPRDIR/../../../../soc/vector/vector.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../soc/vector/axi_vector_dma_chain.vhd">
+      <File Path="$PPRDIR/../../../../soc/vector/axi_vector_dma.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../soc/vector/f32c_vector_dma_chain.vhd">
+      <File Path="$PPRDIR/../../../../soc/vector/f32c_vector_dma.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
