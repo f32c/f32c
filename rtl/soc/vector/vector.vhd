@@ -2,6 +2,7 @@
 -- License=BSD
 
 -- f32c vector processor module
+-- supports chaining, aliases, ranges and constants
 -- supports all types of expressions
 -- normal: A=B+C
 -- compound: A=A+B, A=A+A
