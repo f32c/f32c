@@ -22,12 +22,9 @@
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
 --
--- $Id$
---
 
 library ieee;
 use ieee.std_logic_1164.all;
---use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
 entity alu is
@@ -66,21 +63,11 @@ begin
 
 	if C_sign_extend and seb_seh_cycle then
 	    if seb_seh_select = '1' then
-		logic <=
-		  x_logic(15) & x_logic(15) & x_logic(15) & x_logic(15) & 
-		  x_logic(15) & x_logic(15) & x_logic(15) & x_logic(15) & 
-		  x_logic(15) & x_logic(15) & x_logic(15) & x_logic(15) & 
-		  x_logic(15) & x_logic(15) & x_logic(15) & x_logic(15) &
-		  x_logic(15 downto 0);
+		logic(31 downto 16) <= (others => x_logic(15));
+		logic(15 downto 0) <= x_logic(15 downto 0);
 	    else
-		logic <=
-		  x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
-		  x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
-		  x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
-		  x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
-		  x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) & 
-		  x_logic(7) & x_logic(7) & x_logic(7) & x_logic(7) &
-		  x_logic(7 downto 0);
+		logic(31 downto 8) <= (others => x_logic(7));
+		logic(7 downto 0) <= x_logic(7 downto 0);
 	    end if;
 	else
 	    logic <= x_logic;
