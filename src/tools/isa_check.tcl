@@ -137,7 +137,7 @@ set unsupported 0
 if {$arch == "mips"} {
     set base_isa_set "sh lhu lh bgtz sllv srav beq sltu bgez srl srlv xor xori lui sw lbu and slt lw andi slti blez nop bne li sra addu nor negu subu bnez jalr or sltiu ori j beqz sll bltz jr sb lb move addiu jal b bal"
     set branch_likely_set "bnezl bltzl bnel beql beqzl bgezl bgtzl blezl"
-    set mul_set "mult multu mflo mfhi"
+    set mul_set "mult multu mflo mfhi mthi mtlo"
     set unaligned_store_set "swl swr"
     set unaligned_load_set "lwl lwr"
     set sign_extend_set "seb seh"
