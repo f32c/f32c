@@ -47,7 +47,7 @@ entity f32c_vector_dma is
   (
     C_vaddr_bits: integer := 11; -- bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
     C_vdata_bits: integer := 32;
-    C_burst_max_bits: integer := 3 -- number of bits to describe burst max
+    C_burst_max_bits: integer := 1 -- number of bits to describe burst max
   );
   port
   (
@@ -62,7 +62,7 @@ entity f32c_vector_dma is
 
     -- bram interface
     bram_we: out std_logic := '0'; -- bram write enable
-    bram_next: out std_logic := '0'; -- unused
+    bram_next: out std_logic := '0'; -- signal to increment vector index (instead of passing bram_addr)
     bram_addr: out std_logic_vector(C_vaddr_bits downto 0);
     bram_wdata: out std_logic_vector(C_vdata_bits-1 downto 0);
     bram_rdata: in std_logic_vector(C_vdata_bits-1 downto 0);
@@ -92,11 +92,12 @@ architecture arch of f32c_vector_dma is
   signal R_bram_addr: std_logic_vector(C_vaddr_bits downto 0) := (others => '1'); -- external counter for RAM load/store
   signal R_state: integer range 0 to C_state_max := C_state_idle;
   signal R_done: std_logic := '1';
-  
+  signal R_next: std_logic := '0'; -- request next data
+  signal S_remaining: std_logic;
+
   -- f32c bus registers
   signal R_addr_strobe: std_logic := '0';
   signal R_data_write: std_logic := '0';
-  signal R_wdata: std_logic_vector(C_vdata_bits-1 downto 0);
 
   -- vector struct handling
   constant C_header_data_length: integer := 2; -- loaded first from ram+0 -- neeed early, can't be loaded last last
@@ -109,10 +110,24 @@ architecture arch of f32c_vector_dma is
   signal R_header_mode: std_logic; -- '1' when we read the header, otherwise the data
   signal R_length_remaining: std_logic_vector(C_vaddr_bits-1 downto 0) := (others => '0'); -- vector length 1 less then actual value (0 -> length 1)
   signal S_burst_remaining: std_logic_vector(C_burst_max_bits-1 downto 0) := (others => '0'); -- 1 less than actual value
+  -- the bram_rdata fifo
+  constant C_wdata_fifo_bits: integer := 2; -- 2 bits fifo length 2**2 = 4 elements
+  type T_wdata_fifo is array (2**C_wdata_fifo_bits-1 downto 0) of std_logic_vector(C_vdata_bits-1 downto 0);
+  signal R_wdata_fifo: T_wdata_fifo;
+  signal R_wdata_fifo_reset: std_logic := '0';
+  signal S_need_refill: std_logic;
+  -- fifo index counters
+  signal R_wdata_fifo_index_in: std_logic_vector(C_wdata_fifo_bits-1 downto 0) := (others => '1'); -- stopped
+  signal R_wdata_fifo_index_out: std_logic_vector(C_wdata_fifo_bits-1 downto 0) := (others => '0'); -- initial 0
+  signal S_wdata_fifo_index_diff: std_logic_vector(C_wdata_fifo_bits-1 downto 0);
+  signal R_bram_rdata_ready: std_logic;
+  -- bram_next component signals
+  signal S_read_next, S_write_next: std_logic;
 begin
   process(clk)
   begin
     if rising_edge(clk) then
+      R_next <= '0'; -- default
       case R_state is
 
       when C_state_idle =>
@@ -120,6 +135,7 @@ begin
           R_ram_addr <= addr;
           R_bram_addr <= (others => '0');
           R_store_mode <= store_mode;
+          R_wdata_fifo_reset <= store_mode; -- start fetching data from the fifo
           R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
           R_header_mode <= '1';
           R_done <= '0';
@@ -128,6 +144,7 @@ begin
         end if;
 
       when C_state_wait_read_data_ack =>
+        R_wdata_fifo_reset <= '0';
         if data_ready='1' then
           if R_bram_addr(C_vaddr_bits) = '1' -- safety measure
           or R_length_remaining = 0
@@ -146,7 +163,6 @@ begin
               R_header_mode <= '0';
               -- test load/store mode and jump to adequate next state read/write
               if R_store_mode='1' then
-                R_wdata <= bram_rdata;
                 R_bram_addr <= R_bram_addr + 1; -- early prepare bram read address for next data
                 R_data_write <= '1';
                 R_state <= C_state_wait_write_data_ack;
@@ -168,6 +184,8 @@ begin
                 -- fully written
                 R_addr_strobe <= '0';
                 R_done <= '1';
+                R_header_mode <= '1';
+                R_next <= '1'; -- help vector to finish loading last element
                 R_state <= C_state_idle;
               else -- R_header(C_header_next) > 0
                 -- non-zero pointer: we have next header to read
@@ -191,17 +209,21 @@ begin
 
       when C_state_wait_write_data_ack =>
         if data_ready='1' then
+          R_wdata_fifo_index_out <= R_wdata_fifo_index_out+1; -- advance to next data in FIFO
           -- end of write cycle
           if R_bram_addr(C_vaddr_bits) = '1' -- safety measure
           or R_length_remaining = 0
           then
             R_data_write <= '0';
+            R_header_mode <= '1';
             if R_header(C_header_next) = 0 then
               -- no next header (null pointer)
               -- so we are at last element. in next cycle, vector will be
               -- fully written
               R_addr_strobe <= '0';
+              R_store_mode <= '0';
               R_done <= '1';
+              R_next <= '1'; -- this requests one more to fix not written last element
               -- return to idle state
               R_state <= C_state_idle;
             else -- R_header(C_header_next) > 0
@@ -209,19 +231,36 @@ begin
               -- this is vector multi-part continuation
               R_ram_addr <= R_header(C_header_next)(29 downto 2);
               R_length_remaining <= conv_std_logic_vector(C_header_max-1, C_vaddr_bits);
-              R_header_mode <= '1';
               -- jump to read state in header mode
               R_state <= C_state_wait_read_data_ack;
             end if;
           else -- R_length_remaining > 0
             R_ram_addr <= R_ram_addr + 1; -- destination address will be ready to continue writing in the next bursts block
             R_length_remaining <= R_length_remaining - 1;
-            R_wdata <= bram_rdata;
             R_bram_addr <= R_bram_addr + 1; -- increment source address
           end if; -- end R_length_remaining
         end if; -- end data_ready='1'
       end case;
     end if; -- rising edge
+  end process;
+
+  -- the wdata fifo
+  S_wdata_fifo_index_diff <= R_wdata_fifo_index_in - R_wdata_fifo_index_out;
+  S_need_refill <= '1' when S_wdata_fifo_index_diff < 2**C_wdata_fifo_bits-2 else '0'; -- -2 as standoff to accept data remaining in bram_rdata pipeline
+  process(clk)
+  begin
+    if rising_edge(clk) then
+      if R_wdata_fifo_reset='1' then
+        R_wdata_fifo_index_in <= R_wdata_fifo_index_out;
+        R_bram_rdata_ready <= '0';
+      else
+        R_bram_rdata_ready <= S_need_refill; -- one clock delay matches bram_rdata latency
+        if R_bram_rdata_ready='1' then
+          R_wdata_fifo(conv_integer(R_wdata_fifo_index_in)) <= bram_rdata;
+          R_wdata_fifo_index_in <= R_wdata_fifo_index_in+1;
+        end if;
+      end if;
+    end if;
   end process;
 
   -- from current length remaining, calculate the burst
@@ -232,12 +271,19 @@ begin
   addr_out <= R_ram_addr;
   addr_strobe <= R_addr_strobe;
   data_write <= R_data_write;
-  data_out <= R_wdata;
+  data_out <= R_wdata_fifo(conv_integer(R_wdata_fifo_index_out)); -- store mode, write data
   bram_wdata <= data_in;
   bram_we <= data_ready and (not R_store_mode) and (not R_header_mode); -- prevent write during header read and stray rvalid in store mode
+  -- bram_next is hacky and experimentally determined
+  -- combinatorial logic that makes vector index correctly
+  -- advance so vector store can work properly. Difficult
+  -- to debug, don't touch until you know what you are doing :)
+  S_read_next <= data_ready and (not R_store_mode) and (not R_header_mode);
+  S_write_next <= S_need_refill and R_store_mode; -- fifo must start fetching data during header mode
+  bram_next <= S_read_next or S_write_next or R_next; -- R_next is workaround for last element during vector load
   bram_addr <= R_bram_addr;
-  done <= R_done;
-
+  done <= R_done and not R_next;
+  S_remaining <= '0' when R_length_remaining = 0 else '1';
 end;
 
 -- TODO
