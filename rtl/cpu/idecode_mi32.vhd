@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2012 - 2014 Marko Zec, University of Zagreb
+-- Copyright (c) 2012 - 2016 Marko Zec, University of Zagreb
 -- All rights reserved.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -22,8 +22,6 @@
 -- LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
---
--- $Id$
 --
 
 library ieee;
@@ -66,7 +64,7 @@ entity idecode_mi32 is
 	mem_write: out std_logic;
 	mem_size: out std_logic_vector(1 downto 0);
 	mem_read_sign_extend: out std_logic; -- LB / LH
-	mult, mult_signed: out boolean;
+	mult, mult_signed, mthi, mtlo: out boolean;
 	ll, sc: out boolean;
 	flush_i_line, flush_d_line: out std_logic;
 	latency: out std_logic_vector(1 downto 0);
@@ -140,6 +138,8 @@ begin
 	flush_d_line <= '0';
 	mult <= false;
 	mult_signed <= false;
+	mthi <= false;
+	mtlo <= false;
 	ll <= false;
 	sc <= false;
 	exception <= false;
@@ -487,6 +487,16 @@ begin
 	    when MI32_SPEC_MFLO =>
 		read_alt <= true;
 		alt_sel <= ALT_LO;
+	    when MI32_SPEC_MTHI =>
+		if C_exceptions then
+		    mult <= true;
+		    mthi <= true;
+		end if;
+	    when MI32_SPEC_MTLO =>
+		if C_exceptions then
+		    mult <= true;
+		    mtlo <= true;
+		end if;
 	    when MI32_SPEC_MULT =>
 		op_major <= OP_MAJOR_ALT;
 		mult <= true;
