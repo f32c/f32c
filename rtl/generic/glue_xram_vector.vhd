@@ -470,6 +470,7 @@ architecture Behavioral of glue_xram is
     -- vector to f32c ram bus port interface
     signal S_vector_ram_addr_strobe: std_logic;
     signal S_vector_ram_addr: std_logic_vector(29 downto 2);
+    signal S_vector_ram_burst_len: std_logic_vector(2 downto 0) := (others => '0');
     signal S_vector_ram_we: std_logic;
     signal S_vector_ram_data_ready: std_logic;
     signal S_vector_ram_wdata: std_logic_vector(31 downto 0);
@@ -653,6 +654,7 @@ begin
     -- port 3: Vector FPU DMA
     G_vector_xram: if C_vector and (not C_vector_axi) generate
         to_xram(vector_port).addr_strobe <= S_vector_ram_addr_strobe;
+        to_xram(vector_port).burst_len <= S_vector_ram_burst_len;
         to_xram(vector_port).write <= S_vector_ram_we;
         to_xram(vector_port).byte_sel <= "1111";
         to_xram(vector_port).addr <= S_vector_ram_addr;
@@ -726,7 +728,8 @@ begin
 
     G_sdram:
     if C_sdram generate
-    sdram: entity work.sdram -- _mz_wrap
+    -- sdram: entity work.sdram_mz_wrap  -- burst capable sdram driver, but can't cross column boundary
+    sdram: entity work.sdram
     generic map (
       C_ports => C_xram_ports,
       --C_prio_port => 2, -- VGA priority port not yet implemented
@@ -1157,6 +1160,7 @@ begin
           -- f32c interface (external)
           addr_strobe => S_vector_ram_addr_strobe,
           addr_out => S_vector_ram_addr,
+          suggest_burst => S_vector_ram_burst_len,
           data_ready => S_vector_ram_data_ready,
           data_write => S_vector_ram_we,
           data_in => S_vector_ram_rdata,
