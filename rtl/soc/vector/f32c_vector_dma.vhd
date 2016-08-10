@@ -47,7 +47,7 @@ entity f32c_vector_dma is
   (
     C_vaddr_bits: integer := 11; -- bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
     C_vdata_bits: integer := 32;
-    C_burst_max_bits: integer := 1 -- number of bits to describe burst max
+    C_burst_max_bits: integer := 3 -- number of bits to describe burst max
   );
   port
   (
