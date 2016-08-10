@@ -62,5 +62,7 @@ Status of the vector processor:
 
 Todo:
 
-    * tighten up AXI states and reduce latency
-    * connect interrupt reduction-or to MIPS CPU
+    * MMIO constants to report hardware capabilities
+      number of vectors
+      maximum vector size
+      bitmap of functional units enabled
