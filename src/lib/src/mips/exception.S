@@ -41,7 +41,7 @@
  * _exception_regs MUST follow _exception_stack in memory!
  */
 _exception_stack:	.space ISR_STACK_SIZE
-_exception_regs:	.space REGSIZE * 20
+_exception_regs:	.space REGSIZE * 22
 
 
 	.text
@@ -74,11 +74,15 @@ LEAF(_exception_start)
 	sw	t5, (13 * REGSIZE)(k1)
 	sw	t6, (14 * REGSIZE)(k1)
 	sw	t7, (15 * REGSIZE)(k1)
+	mfhi	v0
+	mflo	v1
 	sw	t8, (16 * REGSIZE)(k1)
 	sw	t9, (17 * REGSIZE)(k1)
 	sw	fp, (18 * REGSIZE)(k1)
+	sw	v0, (19 * REGSIZE)(k1)	/* hi */
+	sw	v1, (20 * REGSIZE)(k1)	/* lo */
 #if 0
-	sw	gp, (20 * REGSIZE)(k1)
+	sw	gp, (22 * REGSIZE)(k1)
 #endif
 
 	/* Mask IRQs */
@@ -89,17 +93,22 @@ LEAF(_exception_start)
 	andi	a0, a0, 0xff
 
 	/* Set up the exception stack */
-	sw	sp, (19 * REGSIZE)(k1)
+	sw	sp, (21 * REGSIZE)(k1)
 	move	sp, k1
 
 	/* isr_dispatch() does the rest */
 	jal	isr_dispatch
 
 	/* Restore register context */
+	lw	t0, (19 * REGSIZE)(k1)	/* hi */
+	lw	t1, (20 * REGSIZE)(k1)	/* lo */
 	lw	ra, (0 * REGSIZE)(k1)
+	mthi	t0
 	lw	AT, (1 * REGSIZE)(k1)
 	lw	v0, (2 * REGSIZE)(k1)
 	lw	v1, (3 * REGSIZE)(k1)
+	mflo	zero			/* clear multiplier pipeline hazards */
+	mtlo	t1
 	lw	a0, (4 * REGSIZE)(k1)
 	lw	a1, (5 * REGSIZE)(k1)
 	lw	a2, (6 * REGSIZE)(k1)
@@ -115,9 +124,9 @@ LEAF(_exception_start)
 	lw	t8, (16 * REGSIZE)(k1)
 	lw	t9, (17 * REGSIZE)(k1)
 	lw	fp, (18 * REGSIZE)(k1)
-	lw	sp, (19 * REGSIZE)(k1)
+	lw	sp, (21 * REGSIZE)(k1)
 #if 0
-	lw	gp, (20 * REGSIZE)(k1)
+	lw	gp, (22 * REGSIZE)(k1)
 #endif
 
 	mfc0	k0, $MIPS_COP_0_EXC_PC
