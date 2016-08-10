@@ -23,8 +23,6 @@
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
 --
--- $Id$
---
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -62,7 +60,7 @@ entity idecode_rv32 is
 	mem_write: out std_logic;
 	mem_size: out std_logic_vector(1 downto 0);
 	mem_read_sign_extend: out std_logic; -- LB / LH
-	mult, mult_signed: out boolean;
+	mult, mult_signed, mthi, mtlo: out boolean;
 	ll, sc: out boolean;
 	flush_i_line, flush_d_line: out std_logic;
 	latency: out std_logic_vector(1 downto 0);
@@ -141,6 +139,8 @@ begin
 	flush_d_line <= '0';
 	mult <= false;
 	mult_signed <= false;
+	mthi <= false;
+	mtlo <= false;
 	ll <= false;
 	sc <= false;
 	exception <= false;
