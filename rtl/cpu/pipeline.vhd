@@ -276,8 +276,8 @@ architecture Behavioral of pipeline is
     signal WB_clk: std_logic;
 
     -- multiplication unit
-    signal EX_mul_start, EX_mul_done: boolean;
-    signal R_hi_lo: std_logic_vector(63 downto 0);
+    signal EX_mul_start, R_mul_commit, R_mul_done, mul_done: boolean;
+    signal R_hi_lo, hi_lo_from_mul: std_logic_vector(63 downto 0);
 
     -- COP0 registers
     signal R_reset: std_logic; -- registered reset input
@@ -842,7 +842,7 @@ begin
     --
 
     EX_running <= MEM_running and not (C_exceptions and ID_EX_wait)
-      and (not C_mult_enable or EX_mul_done or
+      and (not C_mult_enable or R_mul_done or
       (ID_EX_alt_sel /= ALT_HI and ID_EX_alt_sel /= ALT_LO));
 
     -- forward the results from later stages
@@ -1363,8 +1363,6 @@ begin
 
 
     -- Multiplier unit, as a separate pipeline
-    G_multiplier:
-    if C_mult_enable and C_arch = ARCH_MI32 generate
     EX_mul_start <= (not C_cache or dmem_cache_wait = '0')
       and ID_EX_mult and not MEM_cancel_EX and not EX_MEM_EIP;
     multiplier: entity work.mul
@@ -1372,9 +1370,38 @@ begin
 	clk => clk, clk_enable => clk_enable,
 	start => EX_mul_start, mult_signed => ID_EX_mult_signed,
 	x => EX_eff_reg1, y => EX_eff_reg2,
-	hi_lo => R_hi_lo, done => EX_mul_done
+	hi_lo => hi_lo_from_mul, done => mul_done
     );
-    end generate;
+
+    G_simple_mul:
+    if C_mult_enable and not C_exceptions generate
+    R_hi_lo <= hi_lo_from_mul;
+    R_mul_done <= mul_done;
+    end generate; -- G_simple_mul
+
+    G_staged_mul:
+    if C_mult_enable and C_exceptions generate
+    process(clk, clk_enable)
+    begin
+	if rising_edge(clk) and clk_enable = '1' then
+	    R_mul_commit <= false;
+	    if EX_mul_start then
+		R_mul_done <= false;
+	    elsif mul_done then
+		if not R_mul_done then
+		    R_mul_commit <= true;
+		end if;
+		R_mul_done <= true;
+	    end if;
+	end if;
+	if falling_edge(clk) and clk_enable = '1' then
+	    if R_mul_commit then
+		R_hi_lo <= hi_lo_from_mul;
+	    end if;
+	end if;
+    end process;
+    end generate; -- G_staged_mul
+
 
     -- COP0
     G_cop0_count:
