@@ -32,7 +32,7 @@ use ieee.std_logic_unsigned.all;
 entity mul is
     port(
 	clk, clk_enable: in std_logic;
-	start, mult_signed: in boolean;
+	start, mult_signed, mthi: in boolean;
 	x, y: in std_logic_vector(31 downto 0);
 	hi_lo: out std_logic_vector(63 downto 0);
 	done: out boolean
@@ -40,8 +40,9 @@ entity mul is
 end mul;
 
 architecture arch_x of mul is
-    signal mul_res: signed(65 downto 0);
-    signal R_mul_x, R_mul_y: signed(32 downto 0);
+    signal mul_res: signed(66 downto 0);
+    signal R_mul_x: signed(32 downto 0);
+    signal R_mul_y: signed(33 downto 0);
 begin
 
     done <= true; -- this is a single-cycle multiplier
@@ -55,10 +56,13 @@ begin
 	    R_mul_y(31 downto 0) <= CONV_SIGNED(UNSIGNED(y), 32);
 	    if mult_signed then
 		R_mul_x(32) <= x(31);
-		R_mul_y(32) <= y(31);
+		R_mul_y(33 downto 32) <= (others => y(31));
 	    else
 		R_mul_x(32) <= '0';
-		R_mul_y(32) <= '0';
+		R_mul_y(33 downto 32) <= (others => '0');
+	    end if;
+	    if mthi then
+		R_mul_y(32) <= '1';
 	    end if;
 	end if;
 	if falling_edge(clk) then
