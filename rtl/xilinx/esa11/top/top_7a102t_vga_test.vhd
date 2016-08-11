@@ -17,29 +17,9 @@ entity esa11_xram_axiram_ddr3 is
 
 	C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
 
-	-- SoC configuration options
-	C_bram_size: integer := 16;
-
-        -- axi ram
-	C_axiram: boolean := false;
-
-        -- warning: 2K, 4K, 8K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
-        C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
-        C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
-        C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 2^29 -> 512MB to be cached
-
         C3_NUM_DQ_PINS        : integer := 16;
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
-
-        C_vector: boolean := false; -- vector processor unit
-        C_vector_axi: boolean := true; -- true: use AXI I/O, false use f32c RAM port I/O
-        C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
-        C_vector_vaddr_bits: integer := 11;
-        C_vector_vdata_bits: integer := 32;
-        C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
-        C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
-        C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
         C_video_mode: integer := 0; -- 0:640x480, 1:800x600, 2:1024x768
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
@@ -92,14 +72,7 @@ entity esa11_xram_axiram_ddr3 is
           -- output data width 8bpp
           C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
           -- bitmap width of FIFO address space length = 2^width * 4 byte
-          C_vgatext_bitmap_fifo_addr_width: integer := 11;
-
-    C_sio: integer := 1;   -- 1 UART channel
-    C_spi: integer := 2;   -- 2 SPI channels (ch0 not connected, ch1 SD card)
-    C_timer: boolean := true; -- false: no timer
-    C_ps2: boolean := false; -- no PS/2 keyboard
-    C_gpio: integer := 32; -- 0: disabled, 32:32 GPIO bits
-    C_simple_io: boolean := true -- includes 31 simple inputs and 32 simple outputs
+          C_vgatext_bitmap_fifo_addr_width: integer := 11
   );
   port (
 	i_100MHz_P, i_100MHz_N: in std_logic;
@@ -156,7 +129,11 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
     signal clk, sio_break: std_logic;
     signal clk_25MHz, clk_100MHz, clk_200MHz, clk_250MHz: std_logic;
     signal clk_40MHz: std_logic;
+    signal clk_65MHz: std_logic := '0';
     signal clk_125MHz: std_logic := '0';
+    signal clk_325MHz: std_logic := '0';
+    signal clk_541MHz: std_logic := '0';
+    signal clk_108MHz: std_logic := '0';
     signal clk_pixel: std_logic;
     signal clk_pixel_shift: std_logic;
     signal clk_locked: std_logic := '0';
@@ -200,18 +177,30 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
     );
     end component clk_d100_100_200_40MHz;
 
-    signal calib_done           : std_logic := '0';
+    component clk_d100_108_216_325_65MHz is
+    Port (
+      clk_100mhz_in_p : in STD_LOGIC;
+      clk_100mhz_in_n : in STD_LOGIC;
+      clk_108m333hz : out STD_LOGIC;
+      clk_216m666hz : out STD_LOGIC;
+      clk_325mhz : out STD_LOGIC;
+      clk_65mhz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
+    );
+    end component clk_d100_108_216_325_65MHz;
 
-    signal ram_en             : std_logic;
-    signal ram_byte_we        : std_logic_vector(3 downto 0);
-    signal ram_address        : std_logic_vector(29 downto 2);
-    signal ram_data_write     : std_logic_vector(31 downto 0);
-    signal ram_data_read      : std_logic_vector(31 downto 0);
-    signal ram_read_busy      : std_logic := '0';
-    signal ram_ready          : std_logic := '1';
-    signal ram_cache_debug    : std_logic_vector(7 downto 0);
-    signal ram_cache_hitcnt   : std_logic_vector(31 downto 0);
-    signal ram_cache_readcnt  : std_logic_vector(31 downto 0);
+    component clk_d100_108_216_541MHz is
+    Port (
+      clk_100mhz_in_p : in STD_LOGIC;
+      clk_100mhz_in_n : in STD_LOGIC;
+      clk_108m333hz : out STD_LOGIC;
+      clk_216m666hz : out STD_LOGIC;
+      clk_541m666hz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
+    );
+    end component clk_d100_108_216_541MHz;
 
     signal vga_clk: std_logic;
     signal S_vga_red, S_vga_green, S_vga_blue: std_logic_vector(7 downto 0);
@@ -248,22 +237,14 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
     signal glue_vga_vsync, glue_vga_hsync: std_logic;
     signal glue_vga_red, glue_vga_green, glue_vga_blue: std_logic_vector(7 downto 0);
 
-    signal gpio: std_logic_vector(127 downto 0);
-    signal simple_in: std_logic_vector(31 downto 0);
-    signal simple_out: std_logic_vector(31 downto 0);
     signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
     signal tmds_rgb: std_logic_vector(2 downto 0);
     signal tmds_clk: std_logic;
-    --signal vga_vsync_n, vga_hsync_n: std_logic;
-    signal ps2_clk_in : std_logic;
-    signal ps2_clk_out : std_logic;
-    signal ps2_dat_in : std_logic;
-    signal ps2_dat_out : std_logic;
     signal disp_7seg_segment: std_logic_vector(7 downto 0);
+    signal R_blinky_pixel, R_blinky_pixel_shift: std_logic_vector(25 downto 0);
 begin
-
-    cpu100_hdmi_sdr: if C_clk_freq = 100 and not C_dvid_ddr generate
-    clk100in_out100_200_250_25_sdr_640x480: clk_d100_100_200_250_25MHz
+    cpu100M_sdr_640x480: if C_clk_freq = 100 and not C_dvid_ddr generate
+    clk_cpu100M_sdr_640x480: clk_d100_100_200_250_25MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
@@ -279,8 +260,8 @@ begin
     video_axi_aclk <= clk_200MHz;
     end generate;
 
-    cpu100_hdmi_ddr_640x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=0 generate
-    clk100in_out100_200_125_25_ddr_640x480: clk_d100_100_200_125_25MHz
+    cpu100M_ddr_640x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=0 generate
+    clk_cpu100M_ddr_640x480: clk_d100_100_200_125_25MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
@@ -312,36 +293,36 @@ begin
     video_axi_aclk <= clk_200MHz;
     end generate;
 
-    cpu25M_ddr_640x480: if C_clk_freq = 25 and C_dvid_ddr and C_video_mode=0 generate
-    clk_cpu25M_ddr_640x480: clk_d100_100_200_125_25MHz
+    cpu100M_ddr_1024x768: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=2 generate
+    clk_cpu100M_ddr_1024x768: clk_d100_108_216_325_65MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
              locked => clk_locked,
-             clk_100mhz => clk_100MHz,
-             clk_200mhz => clk_200MHz,
-             clk_125mhz => clk_125MHz,
-             clk_25mhz  => clk_25MHz
+             clk_108m333hz => clk_100MHz,
+             clk_216m666hz => clk_200MHz,
+             clk_325mhz => clk_325MHz,
+             clk_65mhz  => clk_65MHz
     );
-    clk <= clk_25MHz;
-    clk_pixel <= clk_25MHz;
-    clk_pixel_shift <= clk_125MHz;
+    clk <= clk_100MHz;
+    clk_pixel <= clk_65MHz;
+    clk_pixel_shift <= clk_325MHz;
     video_axi_aclk <= clk_200MHz;
     end generate;
 
-    cpu25M_ddr_800x600: if C_clk_freq = 25 and C_dvid_ddr and C_video_mode=1 generate
-    clk_cpu25M_ddr_800x600: clk_d100_100_200_40MHz
+    cpu100M_ddr_1280x1024: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=3 generate
+    clk_cpu100M_ddr_1280x1024: clk_d100_108_216_541MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
              locked => clk_locked,
-             clk_100mhz => clk_100MHz,
-             clk_200mhz => clk_200MHz,
-             clk_40mhz  => clk_40MHz
+             clk_108m333hz => clk_108MHz,
+             clk_216m666hz => clk_200MHz,
+             clk_541m666hz => clk_541MHz
     );
-    clk <= clk_25MHz;
-    clk_pixel <= clk_40MHz;
-    clk_pixel_shift <= clk_200MHz;
+    clk <= clk_108MHz;
+    clk_pixel <= clk_108MHz;
+    clk_pixel_shift <= clk_541MHz;
     video_axi_aclk <= clk_200MHz;
     end generate;
 
@@ -365,16 +346,9 @@ begin
     );
     end generate;
 
-    ps2_dat_in	<= PS2_A_DATA;
-    PS2_A_DATA	<= '0' when ps2_dat_out='0' else 'Z';
-    ps2_clk_in	<= PS2_A_CLK;
-    PS2_A_CLK	<= '0' when ps2_clk_out='0' else 'Z';
-
-    -- generic BRAM glue
     glue_vga_test: entity work.glue_vga_test
     generic map (
       C_clk_freq => C_clk_freq,
-      --C_ps2 => C_ps2,
       C_dvid_ddr => C_dvid_ddr,
       --
       C_vgahdmi => C_vgahdmi,
@@ -383,8 +357,6 @@ begin
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_timeout => C_vgahdmi_fifo_timeout,
       C_vgahdmi_fifo_burst_max => C_vgahdmi_fifo_burst_max,
-      --C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
-      --C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
 
@@ -492,5 +464,21 @@ begin
     vga_green <= glue_vga_green;
     vga_blue <= glue_vga_blue;
     end generate;
+
+  process(clk_pixel)
+  begin
+    if rising_edge(clk_pixel) then
+      R_blinky_pixel <= R_blinky_pixel+1;
+    end if;
+  end process;
+  M_LED(0) <= R_blinky_pixel(R_blinky_pixel'high);
+
+  process(clk_pixel_shift)
+  begin
+    if rising_edge(clk_pixel_shift) then
+      R_blinky_pixel_shift <= R_blinky_pixel_shift+1;
+    end if;
+  end process;
+  M_LED(1) <= R_blinky_pixel_shift(R_blinky_pixel_shift'high);
 
 end Behavioral;
