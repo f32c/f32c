@@ -127,8 +127,6 @@ generic (
   C_vgahdmi_fifo_fast_ram: boolean := true;
   C_vgahdmi_fifo_timeout: integer := 0; -- abort compositing at N pixels before end of line (0 disabled)
   C_vgahdmi_fifo_burst_max: integer := 1; -- values >= 2 enable the burst
-  --C_vgahdmi_fifo_width: integer := C_video_modes(C_vgahdmi_mode).resolution_x;
-  --C_vgahdmi_fifo_height: integer := C_video_modes(C_vgahdmi_mode).resolution_y;
   C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
   C_vgahdmi_fifo_addr_width: integer := 11;
   --
