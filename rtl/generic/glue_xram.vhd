@@ -1330,9 +1330,16 @@ begin
 
     -- VGA video generator - pixel clock synchronous
     vgabitmap: entity work.vga
-    --generic map (
-    --  C_dbl_y => 1
-    --)
+    generic map (
+      C_resolution_x => C_video_modes(C_vgahdmi_mode).visible_width,
+      C_hsync_front_porch => C_video_modes(C_vgahdmi_mode).h_front_porch,
+      C_hsync_pulse => C_video_modes(C_vgahdmi_mode).h_sync_pulse,
+      C_hsync_back_porch => C_video_modes(C_vgahdmi_mode).h_back_porch,
+      C_resolution_y => C_video_modes(C_vgahdmi_mode).visible_height,
+      C_vsync_front_porch => C_video_modes(C_vgahdmi_mode).v_front_porch,
+      C_vsync_pulse => C_video_modes(C_vgahdmi_mode).v_sync_pulse,
+      C_vsync_back_porch => C_video_modes(C_vgahdmi_mode).v_back_porch
+    )
     port map (
       clk_pixel => clk_pixel,
       test_picture => not S_vga_enable, -- shows test picture when VGA is disabled (on startup)
