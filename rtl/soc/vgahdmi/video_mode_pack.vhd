@@ -21,7 +21,7 @@ record
     h_sync_polarity, v_sync_polarity:           std_logic;
 end record;
 
-type T_video_modes is array (0 to 2) of T_video_mode;
+type T_video_modes is array (0 to 3) of T_video_mode;
 
 constant C_video_modes: T_video_modes :=
   (
@@ -51,7 +51,7 @@ constant C_video_modes: T_video_modes :=
       h_sync_polarity =>  '1',
       v_sync_polarity =>  '1'
     ),
-    (-- mode 2: 1024x768 @ 60Hz  (clk_pixel 65.00Mhz - good luck!)
+    (-- mode 2: 1024x768 @ 60Hz  (clk_pixel 65.00MHz - good luck!)
       pixel_clock_Hz  =>  65000000,
       visible_width   =>  1024,
       visible_height  =>  768,
@@ -61,6 +61,19 @@ constant C_video_modes: T_video_modes :=
       v_front_porch   =>  3,
       v_sync_pulse    =>  6,
       v_back_porch    =>  29,
+      h_sync_polarity =>  '0',
+      v_sync_polarity =>  '0'
+    ),
+    (-- mode 3: 1280x1024 @ 60Hz  (clk_pixel 108.00MHz - good luck xilinx 7-series)
+      pixel_clock_Hz  =>  108000000,
+      visible_width   =>  1280,
+      visible_height  =>  1024,
+      h_front_porch   =>  48,
+      h_sync_pulse    =>  112,
+      h_back_porch    =>  248,
+      v_front_porch   =>  1,
+      v_sync_pulse    =>  3,
+      v_back_porch    =>  38,
       h_sync_polarity =>  '0',
       v_sync_polarity =>  '0'
     )
