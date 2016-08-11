@@ -43,6 +43,7 @@ entity scarab_xram_sdram is
     -- ISA: either ARCH_MI32 or ARCH_RV32
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
+    C_exceptions: boolean := false; -- disable interrupts, Vector routes too long
 
     -- Main clock: 25/50/75/81/83/96/100/111/112/125
     C_clk_freq: integer := 83;
@@ -350,6 +351,7 @@ begin
     (
       C_arch => C_arch,
       C_clk_freq => C_clk_freq,
+      C_exceptions => C_exceptions,
       C_bram_size => C_bram_size,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
