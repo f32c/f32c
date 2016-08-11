@@ -52,7 +52,11 @@ entity glue is
     C_gpio_pullup: boolean := true;
     C_gpio_adc: integer := 6; -- number of analog ports for ADC (on A0-A5 pins)
     C_ps2: boolean := false;
+
+    -- video parameters common for vgahdmi and vgatext
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
+    C_video_mode: integer := 0; -- 0:640x480, 1:800x600, 2:1024x768
+
     C_vgahdmi: boolean := false;
     C_vgahdmi_cache_size: integer := 8;
     -- number of pixels for line step 640
@@ -67,7 +71,7 @@ entity glue is
     -- VGA textmode and graphics, full featured
     C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
     C_vgatext_label: string := "FleaFPGA-Uno f32c: 50MHz MIPS-compatible soft-core, 512KB SRAM";
-    C_vgatext_mode: integer := 0;   -- 640x480
+    -- C_vgatext_mode: integer := 0;   -- 640x480
     C_vgatext_bits: integer := 4;   -- 4096 possible colors
     C_vgatext_bram_mem: integer := 8;   -- 8KB text+font  memory
     C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
@@ -173,7 +177,8 @@ begin
   gpio_pullup(0) <= '1';  -- Wifi gpio
   User_LED2      <= '1';  -- Wifi reset
 
-  u0 : entity work.clkgen
+  video_mode_0_640x480: if C_video_mode = 0 generate
+  clk_640x480: entity work.clkgen640x480
   port map(
     CLKI        =>  sys_clock,
     CLKOP       =>  clk_dvi,
@@ -181,6 +186,29 @@ begin
     CLKOS2      =>  clk_pixel,
     CLKOS3      =>  clk
   );
+  end generate;
+
+  video_mode_1_800x600: if C_video_mode = 1 generate
+  clk_800x600: entity work.clkgen800x600
+  port map(
+    CLKI        =>  sys_clock,
+    CLKOP       =>  clk_dvi,
+    CLKOS       =>  clk_dvin,
+    CLKOS2      =>  clk_pixel,
+    CLKOS3      =>  clk
+  );
+  end generate;
+
+  video_mode_2_1024x768: if C_video_mode = 2 generate
+  clk_1024x768: entity work.clkgen1024x768
+  port map(
+    CLKI        =>  sys_clock,
+    CLKOP       =>  clk_dvi,
+    CLKOS       =>  clk_dvin,
+    CLKOS2      =>  clk_pixel,
+    CLKOS3      =>  clk
+  );
+  end generate;
 
     -- generic BRAM glue
   glue_xram: entity work.glue_xram
@@ -201,15 +229,16 @@ begin
     C_dvid_ddr => C_dvid_ddr,
     -- vga simple compositing bitmap only graphics
     C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
-      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
-      C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
+      --C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
+      --C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
     -- vga textmode + bitmap full feature graphics
     C_vgatext => C_vgatext,
         C_vgatext_label => C_vgatext_label,
-        C_vgatext_mode => C_vgatext_mode,
+        C_vgatext_mode => C_video_mode,
         C_vgatext_bits => C_vgatext_bits,
         C_vgatext_bram_mem => C_vgatext_bram_mem,
         C_vgatext_external_mem => C_vgatext_external_mem,
