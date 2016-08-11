@@ -27,6 +27,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 use ieee.math_real.all; -- to calculate log2 bit size
+use work.video_mode_pack.all;
 
 entity VGA_textmode is
   generic (
@@ -161,80 +162,13 @@ architecture Behavioral of VGA_textmode is
     return integer(ceil((log2(real(x)+1.0E-6))-1.0E-6));
   end ceil_log2;
 
-  type video_mode_t is
-  record
-    pixel_clock_Hz:                             integer;    -- currently informational (not used)
-    visible_width,  visible_height:             integer;
-    h_front_porch, h_sync_pulse, h_back_porch:  integer;
-    v_front_porch, v_sync_pulse, v_back_porch:  integer;
-    h_sync_polarity, v_sync_polarity:           std_logic;
-  end record;
-
-  -- video mode array
-  type video_mode_array_t is array (0 to 3) of video_mode_t;
-  constant vmode: video_mode_array_t :=
-  (
-    ( -- 640x480 @ ~60Hz
-      pixel_clock_Hz  =>  25000000, -- technically 25,175,000Hz, but 25Mhz is close enough
-      visible_width   =>  640,
-      visible_height  =>  480,
-      h_front_porch   =>  16,
-      h_sync_pulse    =>  96,
-      h_back_porch    =>  48,
-      v_front_porch   =>  10,
-      v_sync_pulse    =>  2,
-      v_back_porch    =>  33,
-      h_sync_polarity =>  '0',
-      v_sync_polarity =>  '0'
-    ),
-    ( -- 640x400 @ ~70Hz
-      pixel_clock_Hz  =>  25000000, -- technically 25,175,000Hz, but 25Mhz is close enough
-      visible_width   =>  640,
-      visible_height  =>  400,
-      h_front_porch   =>  16,
-      h_sync_pulse    =>  96,
-      h_back_porch    =>  48,
-      v_front_porch   =>  12,
-      v_sync_pulse    =>  2,
-      v_back_porch    =>  35,
-      h_sync_polarity =>  '0',
-      v_sync_polarity =>  '1'
-    ),
-    ( -- 800x600 @ ~60Hz
-      pixel_clock_Hz  =>  40000000,
-      visible_width   =>  800,
-      visible_height  =>  600,
-      h_front_porch   =>  40,
-      h_sync_pulse    =>  128,
-      h_back_porch    =>  88,
-      v_front_porch   =>  1,
-      v_sync_pulse    =>  4,
-      v_back_porch    =>  23,
-      h_sync_polarity =>  '1',
-      v_sync_polarity =>  '1'
-    ),
-    (-- 1024x768@60  (clk_pixel 65.00Mhz - good luck!)
-      pixel_clock_Hz  =>  65000000,
-      visible_width   =>  1024,
-      visible_height  =>  768,
-      h_front_porch   =>  24,
-      h_sync_pulse    =>  136,
-      h_back_porch    =>  160,
-      v_front_porch   =>  3,
-      v_sync_pulse    =>  6,
-      v_back_porch    =>  29,
-      h_sync_polarity =>  '0',
-      v_sync_polarity =>  '0'
-    )
-  );
-
   -- useful constants
-  constant total_width:       integer   := vmode(C_vgatext_mode).h_front_porch + vmode(C_vgatext_mode).h_sync_pulse +
-                                            vmode(C_vgatext_mode).h_back_porch + vmode(C_vgatext_mode).visible_width;
-  constant total_height:      integer   := vmode(C_vgatext_mode).v_front_porch + vmode(C_vgatext_mode).v_sync_pulse +
-                                            vmode(C_vgatext_mode).v_back_porch + vmode(C_vgatext_mode).visible_height;
-  constant visible_width:     integer   := vmode(C_vgatext_mode).visible_width;
-  constant visible_height:    integer   := vmode(C_vgatext_mode).visible_height;
+  constant total_width:       integer   := C_video_modes(C_vgatext_mode).h_front_porch + C_video_modes(C_vgatext_mode).h_sync_pulse +
+                                            C_video_modes(C_vgatext_mode).h_back_porch + C_video_modes(C_vgatext_mode).visible_width;
+  constant total_height:      integer   := C_video_modes(C_vgatext_mode).v_front_porch + C_video_modes(C_vgatext_mode).v_sync_pulse +
+                                            C_video_modes(C_vgatext_mode).v_back_porch + C_video_modes(C_vgatext_mode).visible_height;
+  constant visible_width:     integer   := C_video_modes(C_vgatext_mode).visible_width;
+  constant visible_height:    integer   := C_video_modes(C_vgatext_mode).visible_height;
 
   constant char_width:        integer   := 8;
   constant bytes_per_char:    integer   := select_t_f(C_vgatext_monochrome, 1, 2);
@@ -578,17 +512,17 @@ begin
         end if;
 
         -- if hcount is in the proper range, generate hsync output
-        if hcount >= -(vmode(C_vgatext_mode).h_back_porch+vmode(C_vgatext_mode).h_sync_pulse) and hcount < -vmode(C_vgatext_mode).h_back_porch then
-          hsync <= vmode(C_vgatext_mode).h_sync_polarity;
+        if hcount >= -(C_video_modes(C_vgatext_mode).h_back_porch+C_video_modes(C_vgatext_mode).h_sync_pulse) and hcount < -C_video_modes(C_vgatext_mode).h_back_porch then
+          hsync <= C_video_modes(C_vgatext_mode).h_sync_polarity;
         else
-          hsync <= NOT vmode(C_vgatext_mode).h_sync_polarity;
+          hsync <= NOT C_video_modes(C_vgatext_mode).h_sync_polarity;
         end if;
 
         -- if vcount is in the proper range, generate vsync output
-        if vcount >= -(vmode(C_vgatext_mode).v_back_porch+vmode(C_vgatext_mode).v_sync_pulse) and vcount < -vmode(C_vgatext_mode).v_back_porch then
-          vsync <= vmode(C_vgatext_mode).v_sync_polarity;
+        if vcount >= -(C_video_modes(C_vgatext_mode).v_back_porch+C_video_modes(C_vgatext_mode).v_sync_pulse) and vcount < -C_video_modes(C_vgatext_mode).v_back_porch then
+          vsync <= C_video_modes(C_vgatext_mode).v_sync_polarity;
         else
-          vsync <= NOT vmode(C_vgatext_mode).v_sync_polarity;
+          vsync <= NOT C_video_modes(C_vgatext_mode).v_sync_polarity;
         end if;
 
         -- set visible flag
