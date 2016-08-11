@@ -68,10 +68,10 @@ entity glue is
     -- width of FIFO address space -> size of fifo
     -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
     C_vgahdmi_fifo_addr_width: integer := 11;
+
     -- VGA textmode and graphics, full featured
     C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
     C_vgatext_label: string := "FleaFPGA-Uno f32c: 50MHz MIPS-compatible soft-core, 512KB SRAM";
-    -- C_vgatext_mode: integer := 0;   -- 640x480
     C_vgatext_bits: integer := 4;   -- 4096 possible colors
     C_vgatext_bram_mem: integer := 8;   -- 8KB text+font  memory
     C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
