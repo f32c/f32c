@@ -1,0 +1,56 @@
+[Device]
+Family=machxo2
+PartType=LCMXO2-7000HC
+PartName=LCMXO2-7000HC-4TG144C
+SpeedGrade=4
+Package=TQFP144
+OperatingCondition=COM
+Status=S
+
+[IP]
+VendorName=Lattice Semiconductor Corporation
+CoreType=LPM
+CoreStatus=Demo
+CoreName=DDR_GENERIC
+CoreRevision=6.0
+ModuleName=ddr_out
+SourceFormat=VHDL
+ParameterFileVersion=1.0
+Date=10/25/2015
+Time=04:37:27
+
+[Parameters]
+Verilog=0
+VHDL=1
+EDIF=1
+Destination=Synplicity
+Expression=BusA(0 to 7)
+Order=Big Endian [MSB:LSB]
+IO=0
+mode=Transmit
+trioddr=0
+highspeed=0
+io_type=LVDS25
+num_int=4
+width=1
+freq_in=150
+bandwidth=300
+aligned=Centered
+pre-configuration=ENABLED
+mode2=Transmit
+trioddr2=0
+highspeed2=0
+io_type2=LVDS25
+freq_in2=150
+gear=1x
+aligned2=Centered
+num_int2=4
+width2=1
+Interface=GDDRX1_TX.SCLK.Centered
+Delay=Bypass
+DelVal=
+UsePll=
+GenPll=0
+
+[Command]
+cmd_line= -w -n ddr_out -lang vhdl -synth synplify -bus_exp 7 -bb -arch xo2c00 -type iol -mode out -io_type LVDS25 -width 1 -freq_in 150 -gear 1 -clk sclk -del -1

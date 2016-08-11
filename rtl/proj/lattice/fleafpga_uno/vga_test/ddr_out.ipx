@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DiamondModule name="ddr_out" module="ddr_out" VendorName="Lattice Semiconductor Corporation" generator="IPexpress" date="2015 10 25 04:37:29.358" version="6.0" type="Module" synthesis="synplify" source_format="VHDL">
+  <Package>
+		<File name="ddr_out.lpc" type="lpc" modified="2015 10 25 04:37:27.085"/>
+		<File name="ddr_out.vhd" type="top_level_vhdl" modified="2015 10 25 04:37:27.147"/>
+		<File name="ddr_out_tmpl.vhd" type="template_vhdl" modified="2015 10 25 04:37:27.152"/>
+  </Package>
+</DiamondModule>

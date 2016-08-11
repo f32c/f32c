@@ -19,7 +19,8 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
-use work.f32c_pack.all;
+use ieee.math_real.all; -- to calculate log2 bit size
+--use work.f32c_pack.all;
 
 entity vga is
   generic(
@@ -48,13 +49,22 @@ entity vga is
 end vga;
 
 architecture syn of vga is
+    -- function integer ceiling log2
+    -- returns how many bits are needed to represent a number of states
+    -- example ceil_log2(255) = 8,  ceil_log2(256) = 8, ceil_log2(257) = 9
+    function ceil_log2(x: integer) return integer is
+    begin
+      return integer(ceil((log2(real(x)+1.0E-6))-1.0E-6));
+    end ceil_log2;
+
   constant C_frame_x: integer := C_resolution_x + C_hsync_front_porch + C_hsync_pulse + C_hsync_back_porch;
     -- frame_x = 640 + 16 + 96 + 48 = 800;
   constant C_frame_y: integer := C_resolution_y + C_vsync_front_porch + C_vsync_pulse + C_vsync_back_porch;
     -- frame_y = 480 + 10 + 2 + 33 = 525;
     -- refresh_rate = pixel_clock/(frame_x*frame_y) = 25MHz / (800*525) = 59.52Hz
   constant C_synclen: integer := 3; -- >=2, bit length of the clock synchronizer shift register
-  signal CounterX, CounterY: std_logic_vector(9 downto 0); -- 10 bits good for up to 1023 frame timing width (resolution 800x600)
+  signal CounterX: std_logic_vector(ceil_log2(C_frame_x-1)-1 downto 0); -- (9 downto 0) is good for up to 1023 frame timing width (resolution 640x480)
+  signal CounterY: std_logic_vector(ceil_log2(C_frame_y-1)-1 downto 0); -- (9 downto 0) is good for up to 1023 frame timing width (resolution 640x480)
   signal hSync, vSync, vBlank, DrawArea, fetcharea: std_logic;
   signal clksync: std_logic_vector(C_synclen-1 downto 0); -- fifo to clock synchronizer shift register
   signal shift_red, shift_green, shift_blue: std_logic_vector(7 downto 0); -- RENAME shift_ -> latch_
