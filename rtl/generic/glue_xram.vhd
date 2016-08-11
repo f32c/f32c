@@ -35,6 +35,7 @@ use ieee.numeric_std.all; -- we need signed type
 use work.f32c_pack.all;
 use work.sram_pack.all;
 use work.axi_pack.all;
+use work.video_mode_pack.all;
 
 entity glue_xram is
 generic (
@@ -119,14 +120,15 @@ generic (
   C_tv_fifo_addr_width: integer := 11;
   -- VGA/HDMI simple 640x480 bitmap only
   C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
+  C_vgahdmi_mode: integer := 0; -- video mode selection: 0:640x480, 1:800x600, 2:1024x768
   C_vgahdmi_axi: boolean := false; -- true: use AXI bus (video_axi_in/out) instead of f32c bus
   C_vgahdmi_cache_size: integer := 0; -- KB enable cache for f32c bus (C_vgahdmi_axi = false)
   C_vgahdmi_cache_use_i: boolean := false; -- true: use instruction cache (faster, maybe buggy), false: use data cache (slower, works)
   C_vgahdmi_fifo_fast_ram: boolean := true;
   C_vgahdmi_fifo_timeout: integer := 0; -- abort compositing at N pixels before end of line (0 disabled)
   C_vgahdmi_fifo_burst_max: integer := 1; -- values >= 2 enable the burst
-  C_vgahdmi_fifo_width: integer := 640;
-  C_vgahdmi_fifo_height: integer := 480;
+  --C_vgahdmi_fifo_width: integer := 640;
+  --C_vgahdmi_fifo_height: integer := 480;
   C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
   C_vgahdmi_fifo_addr_width: integer := 11;
   --
@@ -1255,8 +1257,8 @@ begin
       C_fast_ram => C_vgahdmi_fifo_fast_ram,
       C_timeout => C_vgahdmi_fifo_timeout,
       C_burst_max => C_vgahdmi_fifo_burst_max,
-      C_width => C_vgahdmi_fifo_width,
-      C_height => C_vgahdmi_fifo_height,
+      C_width => C_video_modes(C_vgahdmi_mode).visible_width,
+      C_height => C_video_modes(C_vgahdmi_mode).visible_height,
       C_data_width => C_vgahdmi_fifo_data_width,
       C_addr_width => C_vgahdmi_fifo_addr_width
     )
@@ -1285,7 +1287,7 @@ begin
       linear_fifo: entity work.videofifo
           generic map (
             C_bram => true,
-            C_step => C_vgahdmi_fifo_width,
+            C_step => C_video_modes(C_vgahdmi_mode).visible_width,
             C_postpone_step => 0,
             C_width => C_vgahdmi_fifo_addr_width -- buffer size = 4 * 2^width bytes
           )
