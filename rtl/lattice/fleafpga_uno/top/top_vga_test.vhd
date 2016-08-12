@@ -11,7 +11,7 @@ entity glue is
     C_clk_freq: integer := 50;
 
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
-    C_video_mode: integer := 1; -- 1:640x480, 3:800x600, 5:1024x768
+    C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x450, 3:800x600, 5:1024x768
 
     C_vgahdmi: boolean := true;
 
@@ -77,36 +77,69 @@ architecture Behavioral of glue is
   signal R_blinky_pixel, R_blinky_pixel_shift: std_logic_vector(25 downto 0);
 begin
 
-  video_mode_0_640x480: if C_video_mode = 1 generate
+  video_mode_1_640x360: if C_video_mode = 0 generate
   clk_640x480: entity work.clkgen640x480
   port map(
-    CLKI        =>  sys_clock,
-    CLKOP       =>  clk_dvi,
-    CLKOS       =>  clk_dvin,
-    CLKOS2      =>  clk_pixel,
-    CLKOS3      =>  clk
+    CLKI        =>  sys_clock, --  50 MHz
+    CLKOP       =>  clk_dvi,   -- 125 MHz
+    CLKOS       =>  clk_dvin,  -- 125 MHz inverted
+    CLKOS2      =>  clk_pixel, --  25 MHz
+    CLKOS3      =>  clk        --  50 MHz
   );
   end generate;
 
-  video_mode_1_800x600: if C_video_mode = 3 generate
+  video_mode_1_640x480: if C_video_mode = 1 generate
+  clk_640x480: entity work.clkgen640x480
+  port map(
+    CLKI        =>  sys_clock, --  50 MHz
+    CLKOP       =>  clk_dvi,   -- 125 MHz
+    CLKOS       =>  clk_dvin,  -- 125 MHz inverted
+    CLKOS2      =>  clk_pixel, --  25 MHz
+    CLKOS3      =>  clk        --  50 MHz
+  );
+  end generate;
+
+  video_mode_2_800x480: if C_video_mode = 2 generate
+  clk_800x480: entity work.clkgen800x480
+  port map(
+    CLKI        =>  sys_clock, --  50 MHz
+    CLKOP       =>  clk_dvi,   -- 150 MHz
+    CLKOS       =>  clk_dvin,  -- 150 MHz inverted
+    CLKOS2      =>  clk_pixel, --  30 MHz
+    CLKOS3      =>  clk        --  50 MHz
+  );
+  end generate;
+
+  video_mode_3_800x600: if C_video_mode = 3 generate
   clk_800x600: entity work.clkgen800x600
   port map(
-    CLKI        =>  sys_clock,
-    CLKOP       =>  clk_dvi,
-    CLKOS       =>  clk_dvin,
-    CLKOS2      =>  clk_pixel,
-    CLKOS3      =>  clk
+    CLKI        =>  sys_clock, --  50 MHz
+    CLKOP       =>  clk_dvi,   -- 200 MHz
+    CLKOS       =>  clk_dvin,  -- 200 MHz inverted
+    CLKOS2      =>  clk_pixel, --  40 MHz
+    CLKOS3      =>  clk        --  50 MHz
   );
   end generate;
 
-  video_mode_2_1024x768: if C_video_mode = 5 generate
+  video_mode_4_1024x576: if C_video_mode = 4 generate
+  clk_1024x576: entity work.clkgen800x480 -- not correct clock, this won't work
+  port map(
+    CLKI        =>  sys_clock, --  50 MHz
+    CLKOP       =>  clk_dvi,   -- 160 MHz requred, actual 150
+    CLKOS       =>  clk_dvin,  -- 160 MHz inverted required, actual 150
+    CLKOS2      =>  clk_pixel, --  32 MHz required, actual 30
+    CLKOS3      =>  clk        --  50 MHz
+  );
+  end generate;
+
+  video_mode_5_1024x768: if C_video_mode = 5 generate
   clk_1024x768: entity work.clkgen1024x768
   port map(
-    CLKI        =>  sys_clock,
-    CLKOP       =>  clk_dvi,
-    CLKOS       =>  clk_dvin,
-    CLKOS2      =>  clk_pixel,
-    CLKOS3      =>  clk
+    CLKI        =>  sys_clock, --  50 MHz
+    CLKOP       =>  clk_dvi,   -- 325 MHz
+    CLKOS       =>  clk_dvin,  -- 325 MHz inverted
+    CLKOS2      =>  clk_pixel, --  65 MHz
+    CLKOS3      =>  clk        --  50 MHz
   );
   end generate;
 
