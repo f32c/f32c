@@ -45,7 +45,7 @@ entity esa11_xram_axiram_ddr3 is
 	C_debug: boolean := false;
 
 	-- Main clock: 25/100/108 MHz (100 for 640x480 and 800x600, 108 for 1024x768 and 1280x1024)
-	C_clk_freq: integer := 100;
+	C_clk_freq: integer := 108;
 
 	C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
 
@@ -73,7 +73,7 @@ entity esa11_xram_axiram_ddr3 is
         C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
         C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
-        C_video_mode: integer := 1; -- 1:640x480, 3:800x600, 5:1024x768, 7:1280x1024
+        C_video_mode: integer := 5; -- 1:640x480, 3:800x600, 5:1024x768, 7:1280x1024
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
 
         C_vgahdmi: boolean := true;
@@ -188,6 +188,7 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
     signal clk, sio_break: std_logic;
     signal clk_100MHz, clk_200MHz: std_logic;
     signal clk_25MHz, clk_40MHz, clk_65MHz, clk_108MHz, clk_125MHz, clk_216MHz, clk_250MHz, clk_325MHz, clk_541MHz: std_logic := '0';
+    signal clk_axi: std_logic;
     signal clk_pixel: std_logic;
     signal clk_pixel_shift: std_logic;
     signal clk_locked: std_logic := '0';
@@ -362,6 +363,7 @@ begin
     clk_pixel <= clk_25MHz;
     clk_pixel_shift <= clk_125MHz;
     video_axi_aclk <= clk_200MHz;
+    clk_axi <= clk_200MHz;
     end generate;
 
     cpu100M_ddr_800x600: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=3 generate
@@ -378,6 +380,7 @@ begin
     clk_pixel <= clk_40MHz;
     clk_pixel_shift <= clk_200MHz;
     video_axi_aclk <= clk_200MHz;
+    clk_axi <= clk_200MHz;
     end generate;
 
     cpu108M_ddr_1024x768: if C_clk_freq = 108 and C_dvid_ddr and C_video_mode=5 generate
@@ -395,6 +398,7 @@ begin
     clk_pixel <= clk_65MHz;
     clk_pixel_shift <= clk_325MHz;
     video_axi_aclk <= clk_216MHz;
+    clk_axi <= clk_216MHz;
     end generate;
 
     cpu108M_ddr_1280x1024: if C_clk_freq = 108 and C_dvid_ddr and C_video_mode=7 generate
@@ -411,6 +415,7 @@ begin
     clk_pixel <= clk_108MHz;
     clk_pixel_shift <= clk_541MHz;
     video_axi_aclk <= clk_216MHz;
+    clk_axi <= clk_216MHz;
     end generate;
 
     G_vendor_specific_startup: if C_vendor_specific_startup generate
@@ -601,7 +606,7 @@ begin
     u_ddr_mem : entity work.axi_mpmc
     port map(
         sys_rst              => not clk_locked, -- release reset when clock is stable
-        sys_clk_i            => clk_200MHz, -- should be 200MHz
+        sys_clk_i            => clk_axi, -- not less than 200MHz, but not too much faster either
         -- physical signals to RAM chip
         ddr3_dq              => ddr_dq,
         ddr3_dqs_n           => ddr_dqs_n,
