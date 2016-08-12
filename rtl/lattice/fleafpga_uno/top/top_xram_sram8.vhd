@@ -55,7 +55,7 @@ entity glue is
 
     -- video parameters common for vgahdmi and vgatext
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
-    C_video_mode: integer := 0; -- 0:640x480, 1:800x600, 2:1024x768
+    C_video_mode: integer := 1; -- 1:640x480, 3:800x600, 5:1024x768
 
     C_vgahdmi: boolean := false;
     C_vgahdmi_cache_size: integer := 8;
@@ -177,7 +177,7 @@ begin
   gpio_pullup(0) <= '1';  -- Wifi gpio
   User_LED2      <= '1';  -- Wifi reset
 
-  video_mode_0_640x480: if C_video_mode = 0 generate
+  video_mode_0_640x480: if C_video_mode = 1 generate
   clk_640x480: entity work.clkgen640x480
   port map(
     CLKI        =>  sys_clock,
@@ -188,7 +188,7 @@ begin
   );
   end generate;
 
-  video_mode_1_800x600: if C_video_mode = 1 generate
+  video_mode_1_800x600: if C_video_mode = 3 generate
   clk_800x600: entity work.clkgen800x600
   port map(
     CLKI        =>  sys_clock,
@@ -199,7 +199,7 @@ begin
   );
   end generate;
 
-  video_mode_2_1024x768: if C_video_mode = 2 generate
+  video_mode_2_1024x768: if C_video_mode = 5 generate
   clk_1024x768: entity work.clkgen1024x768
   port map(
     CLKI        =>  sys_clock,

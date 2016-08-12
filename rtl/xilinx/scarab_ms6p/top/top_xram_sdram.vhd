@@ -55,11 +55,11 @@ entity scarab_xram_sdram is
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
     C_sdram: boolean := true;
 
-    C_video_mode: integer := 0; -- 0:640x480, 1:800x600, 2:1024x768
     -- C_dvid_ddr = false: clk_pixel_shift = 250MHz
     -- C_dvid_ddr = true: clk_pixel_shift = 125MHz
     -- (fixme: DDR video output mode doesn't work on scarab)
     C_dvid_ddr: boolean := false;
+    C_video_mode: integer := 1; -- 1:640x480 (todo: 3:800x600, 5:1024x768)
 
     C_vgahdmi: boolean := false;
     -- insert cache between RAM and compositing2 video fifo

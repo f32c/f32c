@@ -120,7 +120,7 @@ generic (
   C_tv_fifo_addr_width: integer := 11;
   -- VGA/HDMI simple 640x480 bitmap only
   C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
-  C_vgahdmi_mode: integer := 0; -- video mode selection: 0:640x480, 1:800x600, 2:1024x768
+  C_vgahdmi_mode: integer := 1; -- video mode selection: 0:640x360, 1:640x480, 2:800x450, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024
   C_vgahdmi_axi: boolean := false; -- true: use AXI bus (video_axi_in/out) instead of f32c bus
   C_vgahdmi_cache_size: integer := 0; -- KB enable cache for f32c bus (C_vgahdmi_axi = false)
   C_vgahdmi_cache_use_i: boolean := false; -- true: use instruction cache (faster, maybe buggy), false: use data cache (slower, works)
@@ -146,7 +146,7 @@ generic (
   -- minimal mode needs only 4K BRAM
   C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
     C_vgatext_label: string := "f32c";    -- default banner in screen memory
-    C_vgatext_mode: integer := 0; -- 640x480
+    C_vgatext_mode: integer := 1; -- video mode selection: 0:640x360, 1:640x480, 2:800x450, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024
     C_vgatext_bits: integer := 2; -- 4 possible colors
     C_vgatext_bram_mem: integer := 4; -- 4KB text+font  memory
     C_vgatext_bram_base: std_logic_vector(31 downto 28) := x"4"; -- start address of textmode bram x"4" -> 0x40000000

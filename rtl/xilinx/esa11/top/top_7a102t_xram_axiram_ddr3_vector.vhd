@@ -44,7 +44,7 @@ entity esa11_xram_axiram_ddr3 is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: 25/100/108 MHz (108 for 1024x768 and 1280x1024)
+	-- Main clock: 25/100/108 MHz (100 for 640x480 and 800x600, 108 for 1024x768 and 1280x1024)
 	C_clk_freq: integer := 100;
 
 	C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
@@ -73,7 +73,7 @@ entity esa11_xram_axiram_ddr3 is
         C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
         C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
-        C_video_mode: integer := 0; -- 0:640x480, 1:800x600, 2:1024x768
+        C_video_mode: integer := 1; -- 1:640x480, 3:800x600, 5:1024x768, 7:1280x1024
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
 
         C_vgahdmi: boolean := true;
@@ -187,7 +187,7 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
     end ceil_log2;
     signal clk, sio_break: std_logic;
     signal clk_100MHz, clk_200MHz: std_logic;
-    signal clk_25MHz, clk_40MHz, clk_65MHz, clk_108MHz, clk_125MHz, clk_250MHz, clk_325MHz, clk_541MHz: std_logic := '0';
+    signal clk_25MHz, clk_40MHz, clk_65MHz, clk_108MHz, clk_125MHz, clk_216MHz, clk_250MHz, clk_325MHz, clk_541MHz: std_logic := '0';
     signal clk_pixel: std_logic;
     signal clk_pixel_shift: std_logic;
     signal clk_locked: std_logic := '0';
@@ -330,7 +330,7 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
     signal ps2_dat_out : std_logic;
     signal disp_7seg_segment: std_logic_vector(7 downto 0);
 begin
-    cpu100M_sdr_640x480: if C_clk_freq = 100 and not C_dvid_ddr and C_video_mode=0 generate
+    cpu100M_sdr_640x480: if C_clk_freq = 100 and not C_dvid_ddr and C_video_mode=1 generate
     clk_cpu100M_sdr_640x480: clk_d100_100_200_250_25MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
@@ -347,7 +347,7 @@ begin
     video_axi_aclk <= clk_200MHz;
     end generate;
 
-    cpu100M_ddr_640x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=0 generate
+    cpu100M_ddr_640x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=1 generate
     clk_cpu100M_ddr_640x480: clk_d100_100_200_125_25MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
@@ -364,7 +364,7 @@ begin
     video_axi_aclk <= clk_200MHz;
     end generate;
 
-    cpu100M_ddr_800x600: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=1 generate
+    cpu100M_ddr_800x600: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=3 generate
     clk_cpu100M_ddr_800x600: clk_d100_100_200_40MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
@@ -380,37 +380,37 @@ begin
     video_axi_aclk <= clk_200MHz;
     end generate;
 
-    cpu100M_ddr_1024x768: if C_clk_freq = 108 and C_dvid_ddr and C_video_mode=2 generate
-    clk_cpu100M_ddr_1024x768: clk_d100_108_216_325_65MHz
-    port map(clk_100mhz_in_p => i_100MHz_P,
-             clk_100mhz_in_n => i_100MHz_N,
-             reset => '0',
-             locked => clk_locked,
-             clk_108m333hz => clk_100MHz,
-             clk_216m666hz => clk_200MHz,
-             clk_325mhz => clk_325MHz,
-             clk_65mhz  => clk_65MHz
-    );
-    clk <= clk_100MHz;
-    clk_pixel <= clk_65MHz;
-    clk_pixel_shift <= clk_325MHz;
-    video_axi_aclk <= clk_200MHz;
-    end generate;
-
-    cpu100M_ddr_1280x1024: if C_clk_freq = 108 and C_dvid_ddr and C_video_mode=3 generate
-    clk_cpu100M_ddr_1280x1024: clk_d100_108_216_541MHz
+    cpu108M_ddr_1024x768: if C_clk_freq = 108 and C_dvid_ddr and C_video_mode=5 generate
+    clk_cpu108M_ddr_1024x768: clk_d100_108_216_325_65MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
              locked => clk_locked,
              clk_108m333hz => clk_108MHz,
-             clk_216m666hz => clk_200MHz,
+             clk_216m666hz => clk_216MHz,
+             clk_325mhz => clk_325MHz,
+             clk_65mhz  => clk_65MHz
+    );
+    clk <= clk_108MHz;
+    clk_pixel <= clk_65MHz;
+    clk_pixel_shift <= clk_325MHz;
+    video_axi_aclk <= clk_216MHz;
+    end generate;
+
+    cpu108M_ddr_1280x1024: if C_clk_freq = 108 and C_dvid_ddr and C_video_mode=7 generate
+    clk_cpu108M_ddr_1280x1024: clk_d100_108_216_541MHz
+    port map(clk_100mhz_in_p => i_100MHz_P,
+             clk_100mhz_in_n => i_100MHz_N,
+             reset => '0',
+             locked => clk_locked,
+             clk_108m333hz => clk_108MHz,
+             clk_216m666hz => clk_216MHz,
              clk_541m666hz => clk_541MHz
     );
     clk <= clk_108MHz;
     clk_pixel <= clk_108MHz;
     clk_pixel_shift <= clk_541MHz;
-    video_axi_aclk <= clk_200MHz;
+    video_axi_aclk <= clk_216MHz;
     end generate;
 
     G_vendor_specific_startup: if C_vendor_specific_startup generate
@@ -469,8 +469,6 @@ begin
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_timeout => C_vgahdmi_fifo_timeout,
       C_vgahdmi_fifo_burst_max => C_vgahdmi_fifo_burst_max,
-      --C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
-      --C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
 
