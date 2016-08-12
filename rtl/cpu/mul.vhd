@@ -40,36 +40,38 @@ entity mul is
 end mul;
 
 architecture arch_x of mul is
-    signal mul_res: signed(66 downto 0);
+    signal R_mul_res: signed(66 downto 0);
     signal R_mul_x: signed(32 downto 0);
     signal R_mul_y: signed(33 downto 0);
+    signal R_mul_run: std_logic;
 begin
 
     done <= true; -- this is a single-cycle multiplier
 
-    mul_res <= R_mul_x * R_mul_y; -- infer asynchronous signed multiplier
-
-    process(clk, clk_enable)
+    process(clk)
     begin
-	if falling_edge(clk) and clk_enable = '1' and start then
-	    R_mul_x(31 downto 0) <= CONV_SIGNED(UNSIGNED(x), 32);
-	    R_mul_y(31 downto 0) <= CONV_SIGNED(UNSIGNED(y), 32);
-	    if mult_signed then
-		R_mul_x(32) <= x(31);
-		R_mul_y(33 downto 32) <= (others => y(31));
-	    else
-		R_mul_x(32) <= '0';
-		R_mul_y(33 downto 32) <= (others => '0');
-	    end if;
-	    if mthi then
-		R_mul_y(32) <= '1';
-	    end if;
+	if rising_edge(clk) then
+	    R_mul_run <= clk_enable;
 	end if;
 	if falling_edge(clk) then
-	    hi_lo(63 downto 32) <=
-	      conv_std_logic_vector(mul_res(63 downto 32), 32);
-	    hi_lo(31 downto 0) <=
-	      conv_std_logic_vector(mul_res(31 downto 0), 32);
+	    if clk_enable = '1' or R_mul_run = '1' then
+		R_mul_x(31 downto 0) <= CONV_SIGNED(UNSIGNED(x), 32);
+		R_mul_y(31 downto 0) <= CONV_SIGNED(UNSIGNED(y), 32);
+		if mult_signed then
+		    R_mul_x(32) <= x(31);
+		    R_mul_y(33 downto 32) <= (others => y(31));
+		else
+		    R_mul_x(32) <= '0';
+		    R_mul_y(33 downto 32) <= (others => '0');
+		end if;
+		if mthi then
+		    R_mul_y(32) <= '1';
+		end if;
+		R_mul_res <= R_mul_x * R_mul_y;
+	    end if;
 	end if;
     end process;
+
+    hi_lo(63 downto 32) <= conv_std_logic_vector(R_mul_res(63 downto 32), 32);
+    hi_lo(31 downto 0) <= conv_std_logic_vector(R_mul_res(31 downto 0), 32);
 end arch_x;
