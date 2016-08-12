@@ -21,8 +21,8 @@ entity esa11_xram_axiram_ddr3 is
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
 
-        C_video_mode: integer := 0; -- 0:640x480, 1:800x600, 2:1024x768
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
+        C_video_mode: integer := 1; -- 1:640x480, 3:800x600, 5:1024x768, 7:1280x1024
 
         C_vgahdmi: boolean := true;
           C_vgahdmi_axi: boolean := true; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
@@ -260,7 +260,7 @@ begin
     video_axi_aclk <= clk_200MHz;
     end generate;
 
-    cpu100M_ddr_640x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=0 generate
+    cpu100M_ddr_640x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=1 generate
     clk_cpu100M_ddr_640x480: clk_d100_100_200_125_25MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
@@ -277,7 +277,7 @@ begin
     video_axi_aclk <= clk_200MHz;
     end generate;
 
-    cpu100M_ddr_800x600: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=1 generate
+    cpu100M_ddr_800x600: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=3 generate
     clk_cpu100M_ddr_800x600: clk_d100_100_200_40MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
@@ -293,8 +293,8 @@ begin
     video_axi_aclk <= clk_200MHz;
     end generate;
 
-    cpu100M_ddr_1024x768: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=2 generate
-    clk_cpu100M_ddr_1024x768: clk_d100_108_216_325_65MHz
+    cpu108M_ddr_1024x768: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=5 generate
+    clk_cpu108M_ddr_1024x768: clk_d100_108_216_325_65MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
@@ -310,8 +310,8 @@ begin
     video_axi_aclk <= clk_200MHz;
     end generate;
 
-    cpu100M_ddr_1280x1024: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=3 generate
-    clk_cpu100M_ddr_1280x1024: clk_d100_108_216_541MHz
+    cpu108M_ddr_1280x1024: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=7 generate
+    clk_cpu108M_ddr_1280x1024: clk_d100_108_216_541MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',

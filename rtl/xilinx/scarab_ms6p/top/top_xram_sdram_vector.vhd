@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2015 Davor Jadrijevic
+-- Copyright (c) 2016 Davor Jadrijevic
 -- All rights reserved.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -69,7 +69,7 @@ entity scarab_xram_sdram is
     -- C_dvid_ddr = true: clk_pixel_shift = 125MHz
     -- (fixme: DDR video output mode doesn't work on scarab)
     C_dvid_ddr: boolean := false;
-    C_video_mode: integer := 0;
+    C_video_mode: integer := 1; -- 1:640x480 (todo: 3:800x600, 5:1024x768)
 
     C_vgahdmi: boolean := true;
     -- insert cache between RAM and compositing2 video fifo

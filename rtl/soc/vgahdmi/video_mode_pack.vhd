@@ -7,10 +7,21 @@ use ieee.std_logic_1164.all;
 package video_mode_pack is
 
 -- timings for popular video modes:
+-- even modes: 16:9
+-- odd modes:   4:3
 
--- 0: 640x480
--- 1: 800x600
--- 2: 1024x768
+-- 0: 640x360 16:9
+-- 1: 640x480 4:3
+-- 2: 800x450 16:9
+-- 3: 800x600 4:3
+-- 4: 1024x576 16:9
+-- 5: 1024x768 4:3
+-- 6: 1280x768 16:9
+-- 7: 1280x1024 4:3
+
+-- see also:
+-- http://tinyvga.com/vga-timing
+-- http://caxapa.ru/thumbs/361638/DMTv1r11.pdf
 
 type T_video_mode is
 record
@@ -18,15 +29,28 @@ record
     visible_width,  visible_height:             integer;
     h_front_porch, h_sync_pulse, h_back_porch:  integer;
     v_front_porch, v_sync_pulse, v_back_porch:  integer;
-    h_sync_polarity, v_sync_polarity:           std_logic;
+    h_sync_polarity, v_sync_polarity:           std_logic; -- '0':negative/falling-edge, '1':positive/rising-edge
 end record;
 
-type T_video_modes is array (0 to 3) of T_video_mode;
+type T_video_modes is array (0 to 7) of T_video_mode;
 
 constant C_video_modes: T_video_modes :=
   (
-    ( -- mode 0: 640x480 @ 60Hz
-      pixel_clock_Hz  =>  25000000, -- technically 25,175,000Hz, but 25Mhz is close enough
+    ( -- mode 0: 640x360 @ 70Hz
+      pixel_clock_Hz  =>  25175000,
+      visible_width   =>  640,
+      visible_height  =>  360,
+      h_front_porch   =>  16,
+      h_sync_pulse    =>  96,
+      h_back_porch    =>  48,
+      v_front_porch   =>  37,
+      v_sync_pulse    =>  2,
+      v_back_porch    =>  60,
+      h_sync_polarity =>  '1',
+      v_sync_polarity =>  '0'
+    ),
+    ( -- mode 1: 640x480 @ 60Hz
+      pixel_clock_Hz  =>  25175000,
       visible_width   =>  640,
       visible_height  =>  480,
       h_front_porch   =>  16,
@@ -38,7 +62,46 @@ constant C_video_modes: T_video_modes :=
       h_sync_polarity =>  '0',
       v_sync_polarity =>  '0'
     ),
-    ( -- mode 1: 800x600 @ 60Hz
+--    ( -- mode 2: 800x450 should be here but we have 720x400 @ 85 Hz for time being
+--      pixel_clock_Hz  =>  35500000,
+--      visible_width   =>  720,
+--      visible_height  =>  400,
+--      h_front_porch   =>  36,
+--      h_sync_pulse    =>  72,
+--      h_back_porch    =>  108,
+--      v_front_porch   =>  1,
+--      v_sync_pulse    =>  3,
+--      v_back_porch    =>  42,
+--      h_sync_polarity =>  '0',
+--      v_sync_polarity =>  '1'
+--    ),
+    ( -- mode 2: 800x450 @ 85 Hz https://forums.gentoo.org/viewtopic-t-765839-start-0.html
+      pixel_clock_Hz  =>  41810000,
+      visible_width   =>  800,
+      visible_height  =>  450,
+      h_front_porch   =>  40,
+      h_sync_pulse    =>  80,
+      h_back_porch    =>  120,
+      v_front_porch   =>  1,
+      v_sync_pulse    =>  3,
+      v_back_porch    =>  19,
+      h_sync_polarity =>  '0',
+      v_sync_polarity =>  '1'
+    ),
+--    ( -- mode 2: 800x480 @ 60 Hz
+--      pixel_clock_Hz  =>  29892000,
+--      visible_width   =>  800,
+--      visible_height  =>  480,
+--      h_front_porch   =>  16,
+--      h_sync_pulse    =>  80,
+--      h_back_porch    =>  96,
+--      v_front_porch   =>  1,
+--      v_sync_pulse    =>  3,
+--      v_back_porch    =>  13,
+--      h_sync_polarity =>  '1',
+--      v_sync_polarity =>  '1'
+--    ),
+    ( -- mode 3: 800x600 @ 60Hz
       pixel_clock_Hz  =>  40000000,
       visible_width   =>  800,
       visible_height  =>  600,
@@ -51,7 +114,20 @@ constant C_video_modes: T_video_modes :=
       h_sync_polarity =>  '1',
       v_sync_polarity =>  '1'
     ),
-    (-- mode 2: 1024x768 @ 60Hz  (clk_pixel 65.00MHz - good luck!)
+    ( -- mode 4: 1024x576 @ 50Hz
+      pixel_clock_Hz  =>  32000000,
+      visible_width   =>  1024,
+      visible_height  =>  576,
+      h_front_porch   =>  32,
+      h_sync_pulse    =>  93,
+      h_back_porch    =>  111,
+      v_front_porch   =>  5,
+      v_sync_pulse    =>  5,
+      v_back_porch    =>  39,
+      h_sync_polarity =>  '0',
+      v_sync_polarity =>  '0'
+    ),
+    ( -- mode 5: 1024x768 @ 60Hz  (clk_pixel 65.00MHz - good luck!)
       pixel_clock_Hz  =>  65000000,
       visible_width   =>  1024,
       visible_height  =>  768,
@@ -64,7 +140,20 @@ constant C_video_modes: T_video_modes :=
       h_sync_polarity =>  '0',
       v_sync_polarity =>  '0'
     ),
-    (-- mode 3: 1280x1024 @ 60Hz  (clk_pixel 108.00MHz - good luck xilinx 7-series)
+    ( -- mode 6: 1280x768 @ 60Hz
+      pixel_clock_Hz  =>  68250000,
+      visible_width   =>  1280,
+      visible_height  =>  768,
+      h_front_porch   =>  48,
+      h_sync_pulse    =>  32,
+      h_back_porch    =>  80,
+      v_front_porch   =>  3,
+      v_sync_pulse    =>  7,
+      v_back_porch    =>  12,
+      h_sync_polarity =>  '1',
+      v_sync_polarity =>  '0'
+    ),
+    ( -- mode 7: 1280x1024 @ 60Hz  (clk_pixel 108.00MHz - good luck xilinx 7-series)
       pixel_clock_Hz  =>  108000000,
       visible_width   =>  1280,
       visible_height  =>  1024,
@@ -74,8 +163,8 @@ constant C_video_modes: T_video_modes :=
       v_front_porch   =>  1,
       v_sync_pulse    =>  3,
       v_back_porch    =>  38,
-      h_sync_polarity =>  '0',
-      v_sync_polarity =>  '0'
+      h_sync_polarity =>  '1',
+      v_sync_polarity =>  '1'
     )
   );
 
