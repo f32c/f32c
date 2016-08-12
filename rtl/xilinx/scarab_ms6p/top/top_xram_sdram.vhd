@@ -55,6 +55,7 @@ entity scarab_xram_sdram is
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- RAM start address e.g. x"8" -> 0x80000000
     C_sdram: boolean := true;
 
+    C_video_mode: integer := 0; -- 0:640x480, 1:800x600, 2:1024x768
     -- C_dvid_ddr = false: clk_pixel_shift = 250MHz
     -- C_dvid_ddr = true: clk_pixel_shift = 125MHz
     -- (fixme: DDR video output mode doesn't work on scarab)
@@ -64,10 +65,6 @@ entity scarab_xram_sdram is
     -- insert cache between RAM and compositing2 video fifo
     C_vgahdmi_cache_size: integer := 8; -- KB size 0:disable 2,4,8,16,32:enable
     C_vgahdmi_cache_use_i: boolean := true; -- use I-data caching style, faster
-    -- number of pixels for line step 640
-    C_vgahdmi_fifo_width: integer := 640;
-    -- number of scan lines: 480
-    C_vgahdmi_fifo_height: integer := 480;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8; -- bpp (currently 8/16/32 supported)
     -- width of FIFO address space -> size of fifo
@@ -76,7 +73,7 @@ entity scarab_xram_sdram is
 
     C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
-      C_vgatext_mode: integer := 0;   -- 640x480                   
+      --C_vgatext_mode: integer := 0;   -- using common C_video_mode
       C_vgatext_bits: integer := 4;   -- 64 possible colors
       C_vgatext_bram_mem: integer := 0;   -- 4KB text+font  memory
       C_vgatext_bram_base: std_logic_vector(31 downto 28) := x"4"; -- textmode bram at 0x40000000
@@ -334,9 +331,8 @@ begin
       C_dvid_ddr => C_dvid_ddr,
       -- vga simple compositing bitmap only graphics
       C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
-      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
-      C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
       -- led strip simple compositing bitmap only graphics
@@ -348,7 +344,7 @@ begin
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
       C_vgatext_label => C_vgatext_label,
-      C_vgatext_mode => C_vgatext_mode,
+      C_vgatext_mode => C_video_mode,
       C_vgatext_bits => C_vgatext_bits,
       C_vgatext_bram_mem => C_vgatext_bram_mem,
       C_vgatext_bram_base => C_vgatext_bram_base,
