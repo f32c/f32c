@@ -11,7 +11,7 @@ entity glue is
     C_clk_freq: integer := 50;
 
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
-    C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x450, 3:800x600, 5:1024x768
+    C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
 
     C_vgahdmi: boolean := true;
 
@@ -77,8 +77,8 @@ architecture Behavioral of glue is
   signal R_blinky_pixel, R_blinky_pixel_shift: std_logic_vector(25 downto 0);
 begin
 
-  video_mode_1_640x360: if C_video_mode = 0 generate
-  clk_640x480: entity work.clkgen640x480
+  video_mode_0_640x360: if C_video_mode = 0 generate
+  clk_640x360: entity work.clkgen640x480
   port map(
     CLKI        =>  sys_clock, --  50 MHz
     CLKOP       =>  clk_dvi,   -- 125 MHz

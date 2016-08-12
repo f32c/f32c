@@ -55,14 +55,10 @@ entity glue is
 
     -- video parameters common for vgahdmi and vgatext
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
-    C_video_mode: integer := 1; -- 1:640x480, 3:800x600, 5:1024x768
+    C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
 
     C_vgahdmi: boolean := false;
     C_vgahdmi_cache_size: integer := 8;
-    -- number of pixels for line step 640
-    C_vgahdmi_fifo_width: integer := 640;
-    -- number of scan lines: 480
-    C_vgahdmi_fifo_height: integer := 480;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
     -- width of FIFO address space -> size of fifo
@@ -177,7 +173,18 @@ begin
   gpio_pullup(0) <= '1';  -- Wifi gpio
   User_LED2      <= '1';  -- Wifi reset
 
-  video_mode_0_640x480: if C_video_mode = 1 generate
+  video_mode_0_640x360: if C_video_mode = 0 generate
+  clk_640x360: entity work.clkgen640x480
+  port map(
+    CLKI        =>  sys_clock, --  50 MHz
+    CLKOP       =>  clk_dvi,   -- 125 MHz
+    CLKOS       =>  clk_dvin,  -- 125 MHz inverted
+    CLKOS2      =>  clk_pixel, --  25 MHz
+    CLKOS3      =>  clk        --  50 MHz
+  );
+  end generate;
+
+  video_mode_1_640x480: if C_video_mode = 1 generate
   clk_640x480: entity work.clkgen640x480
   port map(
     CLKI        =>  sys_clock,
@@ -188,7 +195,18 @@ begin
   );
   end generate;
 
-  video_mode_1_800x600: if C_video_mode = 3 generate
+  video_mode_2_800x480: if C_video_mode = 2 generate
+  clk_800x480: entity work.clkgen800x480
+  port map(
+    CLKI        =>  sys_clock, --  50 MHz
+    CLKOP       =>  clk_dvi,   -- 150 MHz
+    CLKOS       =>  clk_dvin,  -- 150 MHz inverted
+    CLKOS2      =>  clk_pixel, --  30 MHz
+    CLKOS3      =>  clk        --  50 MHz
+  );
+  end generate;
+
+  video_mode_3_800x600: if C_video_mode = 3 generate
   clk_800x600: entity work.clkgen800x600
   port map(
     CLKI        =>  sys_clock,
@@ -199,7 +217,18 @@ begin
   );
   end generate;
 
-  video_mode_2_1024x768: if C_video_mode = 5 generate
+  video_mode_4_1024x576: if C_video_mode = 4 generate
+  clk_1024x576: entity work.clkgen800x480 -- not correct clock, this won't work
+  port map(
+    CLKI        =>  sys_clock, --  50 MHz
+    CLKOP       =>  clk_dvi,   -- 160 MHz requred, actual 150
+    CLKOS       =>  clk_dvin,  -- 160 MHz inverted required, actual 150
+    CLKOS2      =>  clk_pixel, --  32 MHz required, actual 30
+    CLKOS3      =>  clk        --  50 MHz
+  );
+  end generate;
+
+  video_mode_5_1024x768: if C_video_mode = 5 generate
   clk_1024x768: entity work.clkgen1024x768
   port map(
     CLKI        =>  sys_clock,
@@ -231,8 +260,6 @@ begin
     C_vgahdmi => C_vgahdmi,
       C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
-      --C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
-      --C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
     -- vga textmode + bitmap full feature graphics
