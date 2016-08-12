@@ -12,6 +12,9 @@
         <Source name="../../../../lattice/fleafpga_uno/clocks/FleaFPGA_Uno_clkgen640x480.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../../lattice/fleafpga_uno/clocks/FleaFPGA_Uno_clkgen800x480.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../../lattice/fleafpga_uno/clocks/FleaFPGA_Uno_clkgen800x600.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
