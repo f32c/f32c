@@ -114,16 +114,16 @@ constant C_video_modes: T_video_modes :=
       h_sync_polarity =>  '1',
       v_sync_polarity =>  '1'
     ),
-    ( -- mode 4: 1024x576 @ 50Hz
-      pixel_clock_Hz  =>  32000000,
+    ( -- mode 4: 1024x576 @ 60Hz 44.67 1024 1056 1192 1224 576 587 593 605 -hsync -vsync.
+      pixel_clock_Hz  =>  44670000, -- 45 MHz should work
       visible_width   =>  1024,
       visible_height  =>  576,
       h_front_porch   =>  32,
-      h_sync_pulse    =>  93,
-      h_back_porch    =>  111,
-      v_front_porch   =>  5,
-      v_sync_pulse    =>  5,
-      v_back_porch    =>  39,
+      h_sync_pulse    =>  136,
+      h_back_porch    =>  32,
+      v_front_porch   =>  11,
+      v_sync_pulse    =>  6,
+      v_back_porch    =>  12,
       h_sync_polarity =>  '0',
       v_sync_polarity =>  '0'
     ),
