@@ -1434,7 +1434,7 @@ begin
             C_bram => true,
             C_step => C_video_modes(C_vgahdmi_mode).visible_width,
             C_postpone_step => 0,
-            C_width => C_vgahdmi_fifo_addr_width -- buffer size = 4 * 2^width bytes
+            C_width => compositing2_line_width(C_video_modes(C_vgahdmi_mode).visible_width) -- buffer size = 4 * 2^width bytes
           )
           port map (
             clk => clk,
