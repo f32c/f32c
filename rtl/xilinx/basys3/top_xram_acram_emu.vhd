@@ -55,7 +55,13 @@ entity basys3 is
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 2^29 -> 512MB to be cached
 
 	-- SoC configuration options
-	C_bram_size: integer := 128
+	C_bram_size: integer := 128;
+
+        C_sio: integer := 1;   -- 1 UART channel
+        C_spi: integer := 2;   -- 2 SPI channels (ch0 not connected, ch1 SD card)
+        C_timer: boolean := true; -- false: no timer
+        C_gpio: integer := 32; -- 0: disabled, 32:32 GPIO bits
+        C_simple_io: boolean := true -- includes 31 simple inputs and 32 simple outputs
     );
     port (
 	clk: in std_logic; -- 100 MHz
@@ -78,9 +84,27 @@ architecture Behavioral of basys3 is
     signal ram_address        : std_logic_vector(29 downto 2);
     signal ram_data_write     : std_logic_vector(31 downto 0);
     signal ram_data_read      : std_logic_vector(31 downto 0);
-    signal ram_read_busy      : std_logic := '0';
+    signal ram_ready          : std_logic := '0';
     signal btns: std_logic_vector(15 downto 0);
     signal lcd_7seg: std_logic_vector(15 downto 0);
+    signal clk_25MHz, clk_30MHz, clk_40MHz, clk_45MHz, clk_50MHz, clk_65MHz,
+           clk_100MHz, clk_108MHz, clk_112M5Hz, clk_125MHz, clk_150MHz,
+           clk_200MHz, clk_216MHz, clk_225MHz, clk_250MHz,
+           clk_325MHz, clk_541MHz: std_logic := '0';
+
+    component clk_d100_100_200_125_25MHz is
+    Port (
+      clk_100mhz_in_p : in STD_LOGIC;
+      clk_100mhz_in_n : in STD_LOGIC;
+      clk_100mhz : out STD_LOGIC;
+      clk_200mhz : out STD_LOGIC;
+      clk_125mhz : out STD_LOGIC;
+      clk_25mhz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
+    );
+    end component clk_d100_100_200_125_25MHz;
+
 begin
     -- generic BRAM glue[C
     glue_xram: entity work.glue_xram
@@ -91,7 +115,11 @@ begin
         C_icache_size => C_icache_size,
         C_dcache_size => C_dcache_size,
         C_cached_addr_bits => C_cached_addr_bits,
-	C_bram_size => C_bram_size
+	C_bram_size => C_bram_size,
+        C_gpio => C_gpio,
+        C_timer => C_timer,
+        C_sio => C_sio,
+        C_spi => C_spi
     )
     port map (
 	clk => clk,
@@ -100,7 +128,7 @@ begin
 	acram_byte_we => ram_byte_we,
 	acram_data_rd => ram_data_read,
 	acram_data_wr => ram_data_write,
-	acram_read_busy => ram_read_busy,
+	acram_ready => ram_ready,
 	sio_txd(0) => rstx, sio_rxd(0) => rsrx, sio_break(0) => rs232_break,
 	gpio(7 downto 0) => ja, gpio(15 downto 8) => jb,
 	gpio(23 downto 16) => jc, gpio(127 downto 24) => open,
@@ -140,6 +168,7 @@ begin
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
+      acram_ready => ram_ready,
       acram_en => ram_en
     );
 
