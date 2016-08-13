@@ -692,6 +692,32 @@
         <Option Name="UseBlackboxStub" Val="1"/>
       </Config>
     </FileSet>
+    <FileSet Name="clk_d100_100_200_150_30MHz" Type="BlockSrcs" RelSrcDir="$PSRCDIR/clk_d100_100_200_150_30MHz">
+      <File Path="$PSRCDIR/sources_1/ip/clk_d100_100_200_150_30MHz/clk_d100_100_200_150_30MHz.xci">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <Config>
+        <Option Name="TopModule" Val="clk_d100_100_200_150_30MHz"/>
+        <Option Name="UseBlackboxStub" Val="1"/>
+      </Config>
+    </FileSet>
+    <FileSet Name="clk_d100_100_112_225_45MHz" Type="BlockSrcs" RelSrcDir="$PSRCDIR/clk_d100_100_112_225_45MHz">
+      <File Path="$PSRCDIR/sources_1/ip/clk_d100_100_112_225_45MHz/clk_d100_100_112_225_45MHz.xci">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <Config>
+        <Option Name="TopModule" Val="clk_d100_100_112_225_45MHz"/>
+        <Option Name="UseBlackboxStub" Val="1"/>
+      </Config>
+    </FileSet>
   </FileSets>
   <Simulators>
     <Simulator Name="XSim">
@@ -767,6 +793,24 @@
     <Run Id="clk_d100_108_216_325_65MHz_synth_1" Type="Ft3:Synth" SrcSet="clk_d100_108_216_325_65MHz" Part="xc7a100tfgg484-2" ConstrsSet="clk_d100_108_216_325_65MHz" Description="Vivado Synthesis Defaults" Dir="$PRUNDIR/clk_d100_108_216_325_65MHz_synth_1" IncludeInArchive="true">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2016"/>
+        <Step Id="synth_design"/>
+      </Strategy>
+      <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
+    </Run>
+    <Run Id="clk_d100_100_200_150_30MHz_synth_1" Type="Ft3:Synth" SrcSet="clk_d100_100_200_150_30MHz" Part="xc7a100tfgg484-2" ConstrsSet="clk_d100_100_200_150_30MHz" Description="Vivado Synthesis Defaults" Dir="$PRUNDIR/clk_d100_100_200_150_30MHz_synth_1" IncludeInArchive="true">
+      <Strategy Version="1" Minor="2">
+        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2016">
+          <Desc>Vivado Synthesis Defaults</Desc>
+        </StratHandle>
+        <Step Id="synth_design"/>
+      </Strategy>
+      <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
+    </Run>
+    <Run Id="clk_d100_100_112_225_45MHz_synth_1" Type="Ft3:Synth" SrcSet="clk_d100_100_112_225_45MHz" Part="xc7a100tfgg484-2" ConstrsSet="clk_d100_100_112_225_45MHz" Description="Vivado Synthesis Defaults" Dir="$PRUNDIR/clk_d100_100_112_225_45MHz_synth_1" IncludeInArchive="true">
+      <Strategy Version="1" Minor="2">
+        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2016">
+          <Desc>Vivado Synthesis Defaults</Desc>
+        </StratHandle>
         <Step Id="synth_design"/>
       </Strategy>
       <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
@@ -873,6 +917,38 @@
     <Run Id="clk_d100_108_216_325_65MHz_impl_1" Type="Ft2:EntireDesign" Part="xc7a100tfgg484-2" ConstrsSet="clk_d100_108_216_325_65MHz" Description="Default settings for Implementation." SynthRun="clk_d100_108_216_325_65MHz_synth_1" IncludeInArchive="false">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2016"/>
+        <Step Id="init_design"/>
+        <Step Id="opt_design"/>
+        <Step Id="power_opt_design"/>
+        <Step Id="place_design"/>
+        <Step Id="post_place_power_opt_design"/>
+        <Step Id="phys_opt_design"/>
+        <Step Id="route_design"/>
+        <Step Id="post_route_phys_opt_design"/>
+        <Step Id="write_bitstream"/>
+      </Strategy>
+    </Run>
+    <Run Id="clk_d100_100_200_150_30MHz_impl_1" Type="Ft2:EntireDesign" Part="xc7a100tfgg484-2" ConstrsSet="clk_d100_100_200_150_30MHz" Description="Default settings for Implementation." SynthRun="clk_d100_100_200_150_30MHz_synth_1" IncludeInArchive="false">
+      <Strategy Version="1" Minor="2">
+        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2016">
+          <Desc>Default settings for Implementation.</Desc>
+        </StratHandle>
+        <Step Id="init_design"/>
+        <Step Id="opt_design"/>
+        <Step Id="power_opt_design"/>
+        <Step Id="place_design"/>
+        <Step Id="post_place_power_opt_design"/>
+        <Step Id="phys_opt_design"/>
+        <Step Id="route_design"/>
+        <Step Id="post_route_phys_opt_design"/>
+        <Step Id="write_bitstream"/>
+      </Strategy>
+    </Run>
+    <Run Id="clk_d100_100_112_225_45MHz_impl_1" Type="Ft2:EntireDesign" Part="xc7a100tfgg484-2" ConstrsSet="clk_d100_100_112_225_45MHz" Description="Default settings for Implementation." SynthRun="clk_d100_100_112_225_45MHz_synth_1" IncludeInArchive="false">
+      <Strategy Version="1" Minor="2">
+        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2016">
+          <Desc>Default settings for Implementation.</Desc>
+        </StratHandle>
         <Step Id="init_design"/>
         <Step Id="opt_design"/>
         <Step Id="power_opt_design"/>
