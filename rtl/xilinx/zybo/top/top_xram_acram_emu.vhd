@@ -83,7 +83,7 @@ entity glue is
 --	vga_g: out std_logic_vector(5 downto 0);
 --	vga_r, vga_b: out std_logic_vector(4 downto 0);
 --	vga_hs, vga_vs: out std_logic;
-	btn: in std_logic_vector(3 downto 0)
+        btn: in std_logic_vector(3 downto 0)
     );
 end glue;
 

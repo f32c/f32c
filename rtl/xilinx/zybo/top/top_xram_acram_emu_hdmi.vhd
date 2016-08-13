@@ -215,7 +215,7 @@ begin
       C_cached_addr_bits => C_cached_addr_bits,
       C_dvid_ddr => C_dvid_ddr,
       C_vgahdmi => C_vgahdmi,
-      C_video_cache_size => C_video_cache_size,
+      C_vgahdmi_cache_size => C_video_cache_size,
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
       C_vgatext_label => C_vgatext_label,
