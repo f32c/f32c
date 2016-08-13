@@ -69,7 +69,7 @@ use xp2.components.all;
 entity toplevel is
   generic (
     -- Main clock: 25, 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-    C_clk_freq: integer := 81;
+    C_clk_freq: integer := 50;
 
     -- ISA options
     C_arch: integer := ARCH_MI32;
@@ -124,25 +124,23 @@ entity toplevel is
     C_gpio: integer := 32; -- number of GPIO pins
     C_spi: integer := 2; -- number of SPI interfaces
 
+    C_video_mode: integer := 1;
+
     C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
       -- currently on ulx2s video cache doesn't work
       -- some mixtures of bugs, might not directly be the fault in cache itself
       C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, also disable C_sram_refresh then fmax=81.25MHz, 2,4,8,16,32 to enable fmax=50MHz)
       C_vgahdmi_cache_use_i: boolean := false; -- must be false, some data corruption with i-cache = true
       C_vgahdmi_fifo_fast_ram: boolean := true; -- should be set true with cache, cache is faster than pixel shifter
-      -- number of pixels for line; 640
-      C_vgahdmi_fifo_width: integer := 640;
-      -- number of scan lines: 480
-      C_vgahdmi_fifo_height: integer := 480;
       -- normally this should be  actual bits per pixel
       C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
       -- width of FIFO address space -> size of fifo
       -- for 640 pixel wide compositing use 11 -> 2048 bytes 8bpp
-      C_vgahdmi_fifo_addr_width: integer := 11;
+      --C_vgahdmi_fifo_addr_width: integer := 11;
 
     C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 50MHz 1MB SRAM"; -- default banner in screen memory
-      C_vgatext_mode: integer := 0; -- 640x480
+      -- C_vgatext_mode: integer := 0; -- 640x480
       C_vgatext_bits: integer := 4; -- 16 possible colors
       C_vgatext_bram_mem: integer := 0; -- 4KB text+font  memory
       C_vgatext_bram_base: std_logic_vector(31 downto 28) := x"4"; -- textmode bram at 0x40000000
@@ -357,13 +355,14 @@ begin
 
       -- vga simple bitmap
       C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_cache_use_i => C_vgahdmi_cache_use_i,
       C_vgahdmi_fifo_fast_ram => C_vgahdmi_fifo_fast_ram,
-      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
-      C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
+      --C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
+      --C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
-      C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
+      --C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
       -- led strip simple compositing bitmap only graphics
       C_ledstrip => C_ledstrip,
       C_ledstrip_full_circle => C_ledstrip_full_circle,
@@ -374,7 +373,7 @@ begin
       -- vga textmode
       C_vgatext => C_vgatext,
       C_vgatext_label => C_vgatext_label,
-      C_vgatext_mode => C_vgatext_mode,
+      C_vgatext_mode => C_video_mode,
       C_vgatext_bits => C_vgatext_bits,
       C_vgatext_bram_mem => C_vgatext_bram_mem,
       C_vgatext_bram_base => C_vgatext_bram_base,
