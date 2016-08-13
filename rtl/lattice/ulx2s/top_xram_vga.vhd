@@ -113,7 +113,7 @@ entity toplevel is
     C_cached_addr_bits: integer := 20; -- number of lower RAM address bits 2^20 -> 1MB to be cached
 
     C_sram: boolean := true;
-      C_sram_refresh: boolean := false; -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
+      C_sram_refresh: boolean := true; -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
       C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
       -- C_sram_pipelined_read: boolean := true; -- works only at 81.25 MHz !!! defined below as constant
 
@@ -138,6 +138,11 @@ entity toplevel is
       -- for 640 pixel wide compositing use 11 -> 2048 bytes 8bpp
       --C_vgahdmi_fifo_addr_width: integer := 11;
 
+    -- VGA textmode doesn't work on ulx2s any more
+    -- it used to work at 50MHz about january 2016,
+    -- at august 2016 it no longe works
+    -- arcagol shows screen corruption
+    -- other example may look like ok but it isn't
     C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 50MHz 1MB SRAM"; -- default banner in screen memory
       -- C_vgatext_mode: integer := 0; -- 640x480
