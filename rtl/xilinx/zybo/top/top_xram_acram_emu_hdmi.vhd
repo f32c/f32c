@@ -64,14 +64,15 @@ entity zybo_xram_acram_emu_hdmi is
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 25bits -> 2^25 -> 32MB to be cached
 
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
+        C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 7:1280x1024
 
 	C_vgahdmi: boolean := false;
-	C_video_cache_size: integer := 0; -- enable test picture
+	C_video_cache_size: integer := 0; -- KB 0:disabled
 
 
     C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string :=  "f32c: ZYBO xc7z010 MIPS compatible soft-core 100MHz 128KB BRAM";	-- default banner in screen memory
-      C_vgatext_mode: integer := 0;   -- 640x480
+      --C_vgatext_mode: integer := 1;   -- 640x480
       C_vgatext_bits: integer := 4;   -- 64 possible colors
       C_vgatext_bram_mem: integer := 0;   -- KB (0: bram disabled -> use RAM)
       C_vgatext_bram_base: std_logic_vector(31 downto 28) := x"4"; -- textmode bram at 0x40000000
@@ -219,7 +220,7 @@ begin
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
       C_vgatext_label => C_vgatext_label,
-      C_vgatext_mode => C_vgatext_mode,
+      C_vgatext_mode => C_video_mode,
       C_vgatext_bits => C_vgatext_bits,
       C_vgatext_bram_mem => C_vgatext_bram_mem,
       C_vgatext_bram_base => C_vgatext_bram_base,
