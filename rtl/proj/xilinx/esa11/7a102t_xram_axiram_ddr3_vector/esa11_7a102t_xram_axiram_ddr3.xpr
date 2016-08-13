@@ -33,13 +33,13 @@
     <Option Name="WTVcsLaunchSim" Val="0"/>
     <Option Name="WTRivieraLaunchSim" Val="0"/>
     <Option Name="WTActivehdlLaunchSim" Val="0"/>
-    <Option Name="WTXSimExportSim" Val="24"/>
-    <Option Name="WTModelSimExportSim" Val="24"/>
-    <Option Name="WTQuestaExportSim" Val="24"/>
-    <Option Name="WTIesExportSim" Val="24"/>
-    <Option Name="WTVcsExportSim" Val="24"/>
-    <Option Name="WTRivieraExportSim" Val="24"/>
-    <Option Name="WTActivehdlExportSim" Val="24"/>
+    <Option Name="WTXSimExportSim" Val="25"/>
+    <Option Name="WTModelSimExportSim" Val="25"/>
+    <Option Name="WTQuestaExportSim" Val="25"/>
+    <Option Name="WTIesExportSim" Val="25"/>
+    <Option Name="WTVcsExportSim" Val="25"/>
+    <Option Name="WTRivieraExportSim" Val="25"/>
+    <Option Name="WTActivehdlExportSim" Val="25"/>
     <Option Name="GenerateIPUpgradeLog" Val="TRUE"/>
   </Configuration>
   <FileSets Version="1" Minor="31">
@@ -705,8 +705,8 @@
         <Option Name="UseBlackboxStub" Val="1"/>
       </Config>
     </FileSet>
-    <FileSet Name="clk_d100_100_112_225_45MHz" Type="BlockSrcs" RelSrcDir="$PSRCDIR/clk_d100_100_112_225_45MHz">
-      <File Path="$PSRCDIR/sources_1/ip/clk_d100_100_112_225_45MHz/clk_d100_100_112_225_45MHz.xci">
+    <FileSet Name="clk_d100_100_200_250_50MHz" Type="BlockSrcs" RelSrcDir="$PSRCDIR/clk_d100_100_200_250_50MHz">
+      <File Path="$PSRCDIR/sources_1/ip/clk_d100_100_200_250_50MHz/clk_d100_100_200_250_50MHz.xci">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -714,7 +714,7 @@
         </FileInfo>
       </File>
       <Config>
-        <Option Name="TopModule" Val="clk_d100_100_112_225_45MHz"/>
+        <Option Name="TopModule" Val="clk_d100_100_200_250_50MHz"/>
         <Option Name="UseBlackboxStub" Val="1"/>
       </Config>
     </FileSet>
@@ -799,14 +799,12 @@
     </Run>
     <Run Id="clk_d100_100_200_150_30MHz_synth_1" Type="Ft3:Synth" SrcSet="clk_d100_100_200_150_30MHz" Part="xc7a100tfgg484-2" ConstrsSet="clk_d100_100_200_150_30MHz" Description="Vivado Synthesis Defaults" Dir="$PRUNDIR/clk_d100_100_200_150_30MHz_synth_1" IncludeInArchive="true">
       <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2016">
-          <Desc>Vivado Synthesis Defaults</Desc>
-        </StratHandle>
+        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2016"/>
         <Step Id="synth_design"/>
       </Strategy>
       <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
     </Run>
-    <Run Id="clk_d100_100_112_225_45MHz_synth_1" Type="Ft3:Synth" SrcSet="clk_d100_100_112_225_45MHz" Part="xc7a100tfgg484-2" ConstrsSet="clk_d100_100_112_225_45MHz" Description="Vivado Synthesis Defaults" Dir="$PRUNDIR/clk_d100_100_112_225_45MHz_synth_1" IncludeInArchive="true">
+    <Run Id="clk_d100_100_200_250_50MHz_synth_1" Type="Ft3:Synth" SrcSet="clk_d100_100_200_250_50MHz" Part="xc7a100tfgg484-2" ConstrsSet="clk_d100_100_200_250_50MHz" Description="Vivado Synthesis Defaults" Dir="$PRUNDIR/clk_d100_100_200_250_50MHz_synth_1" IncludeInArchive="true">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2016">
           <Desc>Vivado Synthesis Defaults</Desc>
@@ -930,9 +928,7 @@
     </Run>
     <Run Id="clk_d100_100_200_150_30MHz_impl_1" Type="Ft2:EntireDesign" Part="xc7a100tfgg484-2" ConstrsSet="clk_d100_100_200_150_30MHz" Description="Default settings for Implementation." SynthRun="clk_d100_100_200_150_30MHz_synth_1" IncludeInArchive="false">
       <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2016">
-          <Desc>Default settings for Implementation.</Desc>
-        </StratHandle>
+        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2016"/>
         <Step Id="init_design"/>
         <Step Id="opt_design"/>
         <Step Id="power_opt_design"/>
@@ -944,7 +940,7 @@
         <Step Id="write_bitstream"/>
       </Strategy>
     </Run>
-    <Run Id="clk_d100_100_112_225_45MHz_impl_1" Type="Ft2:EntireDesign" Part="xc7a100tfgg484-2" ConstrsSet="clk_d100_100_112_225_45MHz" Description="Default settings for Implementation." SynthRun="clk_d100_100_112_225_45MHz_synth_1" IncludeInArchive="false">
+    <Run Id="clk_d100_100_200_250_50MHz_impl_1" Type="Ft2:EntireDesign" Part="xc7a100tfgg484-2" ConstrsSet="clk_d100_100_200_250_50MHz" Description="Default settings for Implementation." SynthRun="clk_d100_100_200_250_50MHz_synth_1" IncludeInArchive="false">
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2016">
           <Desc>Default settings for Implementation.</Desc>
