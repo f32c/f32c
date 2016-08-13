@@ -130,8 +130,7 @@ generic (
   --C_vgahdmi_fifo_width: integer := 640;
   --C_vgahdmi_fifo_height: integer := 480;
   C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
-  C_vgahdmi_fifo_addr_width: integer := 11;
-  --
+  --C_vgahdmi_fifo_addr_width: integer := 11; -- calculated from video mode x-resolution
   C_video_base_addr_out: boolean := false; -- dummy video driver, just output base address to toplevel
   -- LED strip ws2812 POV simple 144x480 bitmap only
   C_ledstrip: boolean := false; -- enable dual channel ws2812b output
@@ -318,6 +317,17 @@ architecture Behavioral of glue_xram is
         b := base(0);
         return conv_integer(a(11 downto 4) - b(11 downto 4));
     end iomap_to;
+
+    -- calculates compositing2 fifo_addr_width (in bits) suitable
+    -- for given horizontal resolution
+    function compositing2_line_width(x_resolution: integer) return integer is
+    begin
+      if x_resolution < 1024 then
+        return 11;
+      else
+        return 12;
+      end if;
+    end;
 
     -- Timer
     constant iomap_timer: T_iomap_range := (x"F900", x"F93F");
@@ -1260,7 +1270,7 @@ begin
       C_width => C_video_modes(C_vgahdmi_mode).visible_width,
       C_height => C_video_modes(C_vgahdmi_mode).visible_height,
       C_data_width => C_vgahdmi_fifo_data_width,
-      C_addr_width => C_vgahdmi_fifo_addr_width
+      C_addr_width => compositing2_line_width(C_video_modes(C_vgahdmi_mode).visible_width)
     )
     port map (
       clk => clk,
@@ -1289,7 +1299,7 @@ begin
             C_bram => true,
             C_step => C_video_modes(C_vgahdmi_mode).visible_width,
             C_postpone_step => 0,
-            C_width => C_vgahdmi_fifo_addr_width -- buffer size = 4 * 2^width bytes
+            C_width => compositing2_line_width(C_video_modes(C_vgahdmi_mode).visible_width) -- buffer size = 4 * 2^width bytes
           )
           port map (
             clk => clk,
