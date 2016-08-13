@@ -1,30 +1,5 @@
---
--- Copyright (c) 2015 Marko Zec, University of Zagreb
--- All rights reserved.
---
--- Redistribution and use in source and binary forms, with or without
--- modification, are permitted provided that the following conditions
--- are met:
--- 1. Redistributions of source code must retain the above copyright
---    notice, this list of conditions and the following disclaimer.
--- 2. Redistributions in binary form must reproduce the above copyright
---    notice, this list of conditions and the following disclaimer in the
---    documentation and/or other materials provided with the distribution.
---
--- THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
--- ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
--- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
--- ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
--- FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
--- DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
--- OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
--- HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
--- LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
--- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
--- SUCH DAMAGE.
---
--- $Id$
---
+-- (c)EMARD
+-- LICENSE=BSD
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -42,7 +17,7 @@ entity basys3 is
 	-- ISA
 	C_arch: integer := ARCH_MI32;
 
-	-- Main clock: N
+	-- Main clock:
 	C_clk_freq: integer := 100; -- MHz
 
         -- axi cache ram
@@ -56,6 +31,15 @@ entity basys3 is
 
 	-- SoC configuration options
 	C_bram_size: integer := 16;
+
+        C_vector: boolean := true; -- vector processor unit
+        C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
+        C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
+        C_vector_vaddr_bits: integer := 11;
+        C_vector_vdata_bits: integer := 32;
+        C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
+        C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
+        C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
         C_sio: integer := 1;   -- 1 UART channel
         C_spi: integer := 2;   -- 2 SPI channels (ch0 not connected, ch1 SD card)
@@ -107,7 +91,7 @@ architecture Behavioral of basys3 is
 
 begin
     -- generic BRAM glue[C
-    glue_xram: entity work.glue_xram
+    glue_xram_vector: entity work.glue_xram
     generic map (
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
@@ -116,6 +100,14 @@ begin
         C_dcache_size => C_dcache_size,
         C_cached_addr_bits => C_cached_addr_bits,
 	C_bram_size => C_bram_size,
+        C_vector => C_vector,
+        C_vector_axi => C_vector_axi,
+        C_vector_registers => C_vector_registers,
+        C_vector_vaddr_bits => C_vector_vaddr_bits,
+        C_vector_vdata_bits => C_vector_vdata_bits,
+        C_vector_float_addsub => C_vector_float_addsub,
+        C_vector_float_multiply => C_vector_float_multiply,
+        C_vector_float_divide => C_vector_float_divide,
         C_gpio => C_gpio,
         C_timer => C_timer,
         C_sio => C_sio,
