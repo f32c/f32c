@@ -22,7 +22,7 @@ entity esa11_xram_axiram_ddr3 is
         C3_MEM_BANKADDR_WIDTH : integer := 3;
 
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
-        C_video_mode: integer := 1; -- 1:640x480, 3:800x600, 5:1024x768, 7:1280x1024
+        C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 7:1280x1024
 
         C_vgahdmi: boolean := true;
           C_vgahdmi_axi: boolean := true; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
@@ -127,13 +127,9 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
       return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
     end ceil_log2;
     signal clk, sio_break: std_logic;
-    signal clk_25MHz, clk_100MHz, clk_200MHz, clk_250MHz: std_logic;
-    signal clk_40MHz: std_logic;
-    signal clk_65MHz: std_logic := '0';
-    signal clk_125MHz: std_logic := '0';
-    signal clk_325MHz: std_logic := '0';
-    signal clk_541MHz: std_logic := '0';
-    signal clk_108MHz: std_logic := '0';
+    signal clk_100MHz, clk_200MHz: std_logic;
+    signal clk_25MHz, clk_30MHz, clk_40MHz, clk_45MHz, clk_50MHz, clk_65MHz, clk_108MHz, clk_112M5Hz, clk_125MHz, clk_150MHz, clk_216MHz, clk_225MHz, clk_250MHz, clk_325MHz, clk_541MHz: std_logic := '0';
+    signal clk_axi: std_logic;
     signal clk_pixel: std_logic;
     signal clk_pixel_shift: std_logic;
     signal clk_locked: std_logic := '0';
@@ -165,6 +161,19 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
     );
     end component clk_d100_100_200_125_25MHz;
 
+    component clk_d100_100_200_150_30MHz is
+    Port (
+      clk_100mhz_in_p : in STD_LOGIC;
+      clk_100mhz_in_n : in STD_LOGIC;
+      clk_100mhz : out STD_LOGIC;
+      clk_200mhz : out STD_LOGIC;
+      clk_150mhz : out STD_LOGIC;
+      clk_30mhz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
+    );
+    end component clk_d100_100_200_150_30MHz;
+
     component clk_d100_100_200_40MHz is
     Port (
       clk_100mhz_in_p : in STD_LOGIC;
@@ -176,6 +185,32 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
       locked : out STD_LOGIC
     );
     end component clk_d100_100_200_40MHz;
+
+    component clk_d100_100_112_225_45MHz is
+    Port (
+      clk_100mhz_in_p : in STD_LOGIC;
+      clk_100mhz_in_n : in STD_LOGIC;
+      clk_100mhz : out STD_LOGIC;
+      clk_225mhz : out STD_LOGIC;
+      clk_112m5hz : out STD_LOGIC;
+      clk_45mhz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
+    );
+    end component clk_d100_100_112_225_45MHz;
+
+    component clk_d100_100_200_250_50MHz is
+    Port (
+      clk_100mhz_in_p : in STD_LOGIC;
+      clk_100mhz_in_n : in STD_LOGIC;
+      clk_100mhz : out STD_LOGIC;
+      clk_200mhz : out STD_LOGIC;
+      clk_250mhz : out STD_LOGIC;
+      clk_50mhz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
+    );
+    end component clk_d100_100_200_250_50MHz;
 
     component clk_d100_108_216_325_65MHz is
     Port (
@@ -260,6 +295,24 @@ begin
     video_axi_aclk <= clk_200MHz;
     end generate;
 
+    cpu100M_ddr_640x360: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=0 generate
+    clk_cpu100M_ddr_640x360: clk_d100_100_200_125_25MHz
+    port map(clk_100mhz_in_p => i_100MHz_P,
+             clk_100mhz_in_n => i_100MHz_N,
+             reset => '0',
+             locked => clk_locked,
+             clk_100mhz => clk_100MHz,
+             clk_200mhz => clk_200MHz,
+             clk_125mhz => clk_125MHz,
+             clk_25mhz  => clk_25MHz
+    );
+    clk <= clk_100MHz;
+    clk_pixel <= clk_25MHz;
+    clk_pixel_shift <= clk_125MHz;
+    video_axi_aclk <= clk_200MHz;
+    clk_axi <= clk_200MHz;
+    end generate;
+
     cpu100M_ddr_640x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=1 generate
     clk_cpu100M_ddr_640x480: clk_d100_100_200_125_25MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
@@ -277,6 +330,24 @@ begin
     video_axi_aclk <= clk_200MHz;
     end generate;
 
+    cpu100M_ddr_800x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=2 generate
+    clk_cpu100M_ddr_800x480: clk_d100_100_200_150_30MHz
+    port map(clk_100mhz_in_p => i_100MHz_P,
+             clk_100mhz_in_n => i_100MHz_N,
+             reset => '0',
+             locked => clk_locked,
+             clk_100mhz => clk_100MHz,
+             clk_200mhz => clk_200MHz,
+             clk_150mhz => clk_150MHz,
+             clk_30mhz  => clk_30MHz
+    );
+    clk <= clk_100MHz;
+    clk_pixel <= clk_30MHz;
+    clk_pixel_shift <= clk_150MHz;
+    video_axi_aclk <= clk_200MHz;
+    clk_axi <= clk_200MHz;
+    end generate;
+
     cpu100M_ddr_800x600: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=3 generate
     clk_cpu100M_ddr_800x600: clk_d100_100_200_40MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
@@ -291,6 +362,42 @@ begin
     clk_pixel <= clk_40MHz;
     clk_pixel_shift <= clk_200MHz;
     video_axi_aclk <= clk_200MHz;
+    end generate;
+
+    cpu100M_ddr_1024x576_defunct: if FALSE and C_clk_freq = 100 and C_dvid_ddr and C_video_mode=4 generate
+    clk_cpu100M_ddr_1024x576_defunct: clk_d100_100_112_225_45MHz
+    port map(clk_100mhz_in_p => i_100MHz_P,
+             clk_100mhz_in_n => i_100MHz_N,
+             reset => '0',
+             locked => clk_locked,
+             clk_100mhz => clk_100MHz,
+             clk_112m5hz => clk_112M5Hz,
+             clk_225mhz => clk_225MHz,
+             clk_45mhz  => clk_45MHz
+    );
+    clk <= clk_100MHz;
+    clk_pixel <= clk_45MHz;
+    clk_pixel_shift <= clk_225MHz;
+    video_axi_aclk <= clk_225MHz;
+    clk_axi <= clk_225MHz;
+    end generate;
+
+    cpu100M_ddr_1024x576: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=4 generate
+    clk_cpu100M_ddr_1024x576: clk_d100_100_200_250_50MHz
+    port map(clk_100mhz_in_p => i_100MHz_P,
+             clk_100mhz_in_n => i_100MHz_N,
+             reset => '0',
+             locked => clk_locked,
+             clk_100mhz => clk_100MHz,
+             clk_200mhz => clk_200MHz,
+             clk_250mhz => clk_250MHz,
+             clk_50mhz  => clk_50MHz
+    );
+    clk <= clk_100MHz;
+    clk_pixel <= clk_50MHz;
+    clk_pixel_shift <= clk_250MHz;
+    video_axi_aclk <= clk_200MHz;
+    clk_axi <= clk_200MHz;
     end generate;
 
     cpu108M_ddr_1024x768: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=5 generate
