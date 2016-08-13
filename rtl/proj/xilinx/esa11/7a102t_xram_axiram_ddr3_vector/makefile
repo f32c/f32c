@@ -154,6 +154,23 @@ junk+=$(project).srcs/sources_1/ip/clk_d100_100_112_225_45MHz/doc
 junk+=$(project).srcs/sources_1/ip/clk_d100_100_112_225_45MHz/sim
 junk+=$(project).srcs/sources_1/ip/clk_d100_100_112_225_45MHz/synth
 junk+=$(project).srcs/sources_1/ip/clk_d100_100_112_225_45MHz/clk_wiz_v5_3_1
+# clk_d100_100_200_250_50MHz for 1024x576
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/*.upgrade_log
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/*.v
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/*.vhdl
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/*.dcp
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/*.xml
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/*.xdc
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/*.veo
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/*.vho
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/*.tcl
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/*.ncf
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/*.log
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/.Xil
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/doc
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/sim
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/synth
+junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_50MHz/clk_wiz_v5_3_1
 # clk_d100_108_216_541MHz for 1280x1024
 junk+=$(project).srcs/sources_1/ip/clk_d100_108_216_541MHz/*.upgrade_log
 junk+=$(project).srcs/sources_1/ip/clk_d100_108_216_541MHz/*.v
