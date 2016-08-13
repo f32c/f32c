@@ -83,8 +83,6 @@ entity esa11_xram_axiram_ddr3 is
           C_vgahdmi_fifo_burst_max: integer := 64;
           -- output data width 8bpp
           C_vgahdmi_fifo_data_width: integer := 32; -- should be equal to bitmap depth
-          -- bitmap width of FIFO address space length = 2^width * 4 byte
-          C_vgahdmi_fifo_addr_width: integer := 11; -- X-resolution buffer: 11:<1024 12:>1024
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: ESA11-7a102t MIPS compatible soft-core 100MHz 256MB DDR3"; -- default banner as initial content of screen BRAM, NOP for RAM
@@ -186,8 +184,10 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
       return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
     end ceil_log2;
     signal clk, sio_break: std_logic;
-    signal clk_100MHz, clk_200MHz: std_logic;
-    signal clk_25MHz, clk_30MHz, clk_40MHz, clk_45MHz, clk_65MHz, clk_108MHz, clk_112M5Hz, clk_125MHz, clk_150MHz, clk_216MHz, clk_225MHz, clk_250MHz, clk_325MHz, clk_541MHz: std_logic := '0';
+    signal clk_25MHz, clk_30MHz, clk_40MHz, clk_45MHz, clk_50MHz, clk_65MHz,
+           clk_100MHz, clk_108MHz, clk_112M5Hz, clk_125MHz, clk_150MHz,
+           clk_200MHz, clk_216MHz, clk_225MHz, clk_250MHz,
+           clk_325MHz, clk_541MHz: std_logic := '0';
     signal clk_axi: std_logic;
     signal clk_pixel: std_logic;
     signal clk_pixel_shift: std_logic;
@@ -257,6 +257,19 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
       locked : out STD_LOGIC
     );
     end component clk_d100_100_112_225_45MHz;
+
+    component clk_d100_100_200_250_50MHz is
+    Port (
+      clk_100mhz_in_p : in STD_LOGIC;
+      clk_100mhz_in_n : in STD_LOGIC;
+      clk_100mhz : out STD_LOGIC;
+      clk_200mhz : out STD_LOGIC;
+      clk_250mhz : out STD_LOGIC;
+      clk_50mhz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
+    );
+    end component clk_d100_100_200_250_50MHz;
 
     component clk_d100_108_216_325_65MHz is
     Port (
@@ -433,21 +446,21 @@ begin
     end generate;
 
     cpu100M_ddr_1024x576: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=4 generate
-    clk_cpu100M_ddr_1024x576: clk_d100_100_112_225_45MHz
+    clk_cpu100M_ddr_1024x576: clk_d100_100_200_250_50MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
              clk_100mhz_in_n => i_100MHz_N,
              reset => '0',
              locked => clk_locked,
              clk_100mhz => clk_100MHz,
-             clk_112m5hz => clk_112M5Hz,
-             clk_225mhz => clk_225MHz,
-             clk_45mhz  => clk_45MHz
+             clk_200mhz => clk_200MHz,
+             clk_250mhz => clk_250MHz,
+             clk_50mhz  => clk_50MHz
     );
     clk <= clk_100MHz;
-    clk_pixel <= clk_45MHz;
-    clk_pixel_shift <= clk_225MHz;
-    video_axi_aclk <= clk_225MHz;
-    clk_axi <= clk_225MHz;
+    clk_pixel <= clk_50MHz;
+    clk_pixel_shift <= clk_250MHz;
+    video_axi_aclk <= clk_200MHz;
+    clk_axi <= clk_200MHz;
     end generate;
 
     cpu108M_ddr_1024x768: if C_clk_freq = 108 and C_dvid_ddr and C_video_mode=5 generate
@@ -542,7 +555,6 @@ begin
       C_vgahdmi_fifo_timeout => C_vgahdmi_fifo_timeout,
       C_vgahdmi_fifo_burst_max => C_vgahdmi_fifo_burst_max,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
-      C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
 
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
