@@ -37,8 +37,7 @@ entity alu is
 	seb_seh_cycle: in boolean;
 	seb_seh_select: in std_logic;
 	addsubx: out std_logic_vector(32 downto 0);
-	logic: out std_logic_vector(31 downto 0);
-	equal: out boolean
+	logic: out std_logic_vector(31 downto 0)
     );
 end alu;
 
@@ -73,8 +72,6 @@ begin
 	    logic <= x_logic;
 	end if;
     end process;
-
-    equal <= x = y;
 
 end Behavioral;
 

@@ -212,7 +212,7 @@ architecture Behavioral of pipeline is
     signal EX_from_alu_addsubx: std_logic_vector(32 downto 0);
     signal EX_from_alu_logic, EX_from_alt: std_logic_vector(31 downto 0);
     signal EX_from_cop0: std_logic_vector(31 downto 0);
-    signal EX_from_alu_equal: boolean;
+    signal EX_equal: boolean;
     signal EX_2bit_add: std_logic_vector(1 downto 0);
     signal EX_mem_align_shamt: std_logic_vector(1 downto 0);
     signal EX_mem_byte_sel: std_logic_vector(3 downto 0);
@@ -882,7 +882,7 @@ begin
 	seb_seh_cycle => ID_EX_seb_seh_cycle,
 	seb_seh_select => ID_EX_seb_seh_select,
 	addsubx => EX_from_alu_addsubx, logic => EX_from_alu_logic,
-	funct => ID_EX_op_minor(1 downto 0), equal => EX_from_alu_equal
+	funct => ID_EX_op_minor(1 downto 0)
     );
 
     -- compute shift amount and function
@@ -958,28 +958,28 @@ begin
     end generate;
 
     -- branch or not?
-    process(ID_EX_branch_cycle, ID_EX_branch_condition, EX_from_alu_equal,
+    EX_equal <= EX_eff_reg1 = EX_eff_reg2;
+    process(ID_EX_branch_cycle, ID_EX_branch_condition, EX_equal,
       EX_eff_reg1)
     begin
 	if C_arch = ARCH_MI32 and ID_EX_branch_cycle then
 	    case ID_EX_branch_condition is
 	    when MI32_TEST_LTZ => EX_take_branch <= EX_eff_reg1(31) = '1';
 	    when MI32_TEST_GEZ => EX_take_branch <= EX_eff_reg1(31) = '0';
-	    when MI32_TEST_EQ  => EX_take_branch <= EX_from_alu_equal;
-	    when MI32_TEST_NE  => EX_take_branch <= not EX_from_alu_equal;
+	    when MI32_TEST_EQ  => EX_take_branch <= EX_equal;
+	    when MI32_TEST_NE  => EX_take_branch <= not EX_equal;
 	    when MI32_TEST_LEZ =>
-	      EX_take_branch <= EX_eff_reg1(31) = '1' or EX_from_alu_equal;
+	      EX_take_branch <= EX_eff_reg1(31) = '1' or EX_equal;
 	    when MI32_TEST_GTZ =>
-	      EX_take_branch <= EX_eff_reg1(31) = '0' and not EX_from_alu_equal;
+	      EX_take_branch <= EX_eff_reg1(31) = '0' and not EX_equal;
 	    when others =>
 	      EX_take_branch <= false;
 	    end case;
 	elsif C_arch = ARCH_RV32 and ID_EX_branch_cycle then
 	    case ID_EX_branch_condition is
-	    when RV32_TEST_ALWAYS =>
-	      EX_take_branch <= true;
-	    when RV32_TEST_EQ  => EX_take_branch <= EX_from_alu_equal;
-	    when RV32_TEST_NE  => EX_take_branch <= not EX_from_alu_equal;
+	    when RV32_TEST_ALWAYS => EX_take_branch <= true;
+	    when RV32_TEST_EQ  => EX_take_branch <= EX_equal;
+	    when RV32_TEST_NE  => EX_take_branch <= not EX_equal;
 	    when RV32_TEST_LT  =>
 	      EX_take_branch <= (EX_eff_reg1(31) xor EX_eff_alu_op2(31)
 	        xor EX_from_alu_addsubx(32)) = '1';
