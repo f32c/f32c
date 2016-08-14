@@ -137,9 +137,9 @@ entity toplevel is
 
     C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
       -- number of pixels for line; 640
-      C_vgahdmi_fifo_width: integer := 640;
+      --C_vgahdmi_fifo_width: integer := 640;
       -- number of scan lines: 480
-      C_vgahdmi_fifo_height: integer := 480;
+      --C_vgahdmi_fifo_height: integer := 480;
       -- normally this should be  actual bits per pixel
       C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
       -- width of FIFO address space -> size of fifo
@@ -367,10 +367,7 @@ begin
       C_tv_fifo_addr_width => C_tv_fifo_addr_width,
       -- VGA simple bitmap
       C_vgahdmi => C_vgahdmi,
-      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
-      C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
-      C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
       -- LED strip simple compositing bitmap only graphics
       C_ledstrip => C_ledstrip,
       C_ledstrip_full_circle => C_ledstrip_full_circle,
