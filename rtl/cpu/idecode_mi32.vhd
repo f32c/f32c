@@ -36,6 +36,7 @@ entity idecode_mi32 is
     generic(
 	C_branch_likely: boolean;
 	C_sign_extend: boolean;
+	C_mul_acc: boolean;
 	C_cache: boolean;
 	C_ll_sc: boolean;
 	C_movn_movz: boolean;
@@ -64,7 +65,7 @@ entity idecode_mi32 is
 	mem_write: out std_logic;
 	mem_size: out std_logic_vector(1 downto 0);
 	mem_read_sign_extend: out std_logic; -- LB / LH
-	mult, mult_signed, mthi, mtlo: out boolean;
+	mult, mult_signed, madd, mthi, mtlo: out boolean;
 	ll, sc: out boolean;
 	flush_i_line, flush_d_line: out std_logic;
 	latency: out std_logic_vector(1 downto 0);
@@ -138,6 +139,7 @@ begin
 	flush_d_line <= '0';
 	mult <= false;
 	mult_signed <= false;
+	madd <= false;
 	mthi <= false;
 	mtlo <= false;
 	ll <= false;
@@ -533,8 +535,33 @@ begin
 		unsupported_instr <= true;
 	    end case;
 	when MI32_OP_SPECIAL2 =>
-	    latency <= LATENCY_UNDEFINED;
-	    unsupported_instr <= true;
+	    target_addr <= instruction(15 downto 11);
+	    case instruction(5 downto 0) is
+	    when MI32_SPEC2_MADD =>
+		if C_mul_acc then
+		    op_major <= OP_MAJOR_ALT;
+		    mult <= true;
+		    madd <= true;
+		    mult_signed <= true;
+		    alt_sel <= ALT_LO;
+		else
+		    latency <= LATENCY_UNDEFINED;
+		    unsupported_instr <= true;
+		end if;
+	    when MI32_SPEC2_MADDU =>
+		if C_mul_acc then
+		    op_major <= OP_MAJOR_ALT;
+		    mult <= true;
+		    madd <= true;
+		    alt_sel <= ALT_LO;
+		else
+		    latency <= LATENCY_UNDEFINED;
+		    unsupported_instr <= true;
+		end if;
+	    when others =>
+		latency <= LATENCY_UNDEFINED;
+		unsupported_instr <= true;
+	    end case;
 	when MI32_OP_SPECIAL3 =>
 	    target_addr <= instruction(15 downto 11);
 	    op_minor <= OP_MINOR_XOR;

@@ -42,6 +42,7 @@ entity pipeline is
 	C_arch: integer;
 	C_big_endian: boolean;		-- MI32 only
 	C_mult_enable: boolean;		-- MI32 only
+	C_mul_acc: boolean := false;	-- MI32 only
 	C_branch_likely: boolean;	-- MI32 only
 	C_sign_extend: boolean;		-- MI32 only
 	C_movn_movz: boolean := false;	-- MI32 only
@@ -158,7 +159,7 @@ architecture Behavioral of pipeline is
     signal ID_jump_register_hazard: boolean;
     signal ID_seb_seh_cycle: boolean;
     signal ID_seb_seh_select: std_logic;
-    signal ID_mult, ID_mult_signed, ID_mthi, ID_mtlo: boolean;
+    signal ID_mult, ID_mult_signed, ID_madd, ID_mthi, ID_mtlo: boolean;
     signal ID_ll, ID_sc: boolean;
     signal ID_flush_i_line, ID_flush_d_line: std_logic;
     signal ID_wait, ID_cop0_write, ID_exception, ID_di, ID_ei: boolean;
@@ -191,7 +192,7 @@ architecture Behavioral of pipeline is
     signal ID_EX_latency: std_logic_vector(1 downto 0);
     signal ID_EX_seb_seh_cycle: boolean;
     signal ID_EX_seb_seh_select: std_logic;
-    signal ID_EX_mult, ID_EX_mult_signed: boolean;
+    signal ID_EX_mult, ID_EX_mult_signed, ID_EX_madd: boolean;
     signal ID_EX_mthi, ID_EX_mtlo: boolean;
     signal ID_EX_ll, ID_EX_sc: boolean;
     signal ID_EX_flush_i_line, ID_EX_flush_d_line: std_logic;
@@ -278,8 +279,9 @@ architecture Behavioral of pipeline is
 
     -- multiplication unit
     signal EX_mul_start, R_mul_commit, R_mul_done, mul_done: boolean;
-    signal R_we_hi, R_we_lo: boolean;
-    signal R_hi_lo, hi_lo_from_mul: std_logic_vector(63 downto 0);
+    signal R_we_hi, R_we_lo, R_clr_hi, R_clr_lo: boolean;
+    signal R_hi_lo, R_hi_lo_target: std_logic_vector(63 downto 0);
+    signal hi_lo_from_mul: std_logic_vector(63 downto 0);
 
     -- COP0 registers
     signal R_reset: std_logic; -- registered reset input
@@ -340,14 +342,15 @@ begin
     --	sort out the endianess story
     --	unaligned load / store instructions?
     --	revisit target_addr computation in idecode.vhd
-    --	MTHI/MTLO
-    --	division? - block on MFHI/MFLO if result not ready
+    --	division?
     --	result forwarding: muxes instead of priority encoders?
     --
     -- Believed to have been fixed already:
     --  cancel and restart an incomplete instruction fetch on branch!
     --	don't branch until branch delay slot fetched!!!
     --  MFC0/MTC0
+    --	MTHI/MTLO
+    --  block on MFHI/MFLO if result not ready
     --	revisit MULT / MFHI / MFLO decoding (now done in EX stage!!!)
     --  commit MULT result in MEM stage (branch likely must cancel commit)!
     --	exceptions/interrupts
@@ -475,11 +478,9 @@ begin
     if C_arch = ARCH_MI32 generate
     idecode: entity work.idecode_mi32
     generic map (
-	C_cache => C_cache,
-	C_ll_sc => C_ll_sc,
-	C_branch_likely => C_branch_likely,
-	C_sign_extend => C_sign_extend,
-	C_movn_movz => C_movn_movz,
+	C_cache => C_cache, C_ll_sc => C_ll_sc,
+	C_branch_likely => C_branch_likely, C_sign_extend => C_sign_extend,
+	C_mul_acc => C_mul_acc, C_movn_movz => C_movn_movz,
 	C_exceptions => C_exceptions
     )
     port map (
@@ -500,7 +501,7 @@ begin
 	mem_read_sign_extend => ID_mem_read_sign_extend,
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
 	seb_seh_cycle => ID_seb_seh_cycle, seb_seh_select => ID_seb_seh_select,
-	mult => ID_mult, mult_signed => ID_mult_signed,
+	mult => ID_mult, mult_signed => ID_mult_signed, madd => ID_madd,
 	mthi => ID_mthi, mtlo => ID_mtlo,
 	ll => ID_ll, sc => ID_sc,
 	cop0_wait => ID_wait, cop0_write => ID_cop0_write,
@@ -535,7 +536,7 @@ begin
 	mem_read_sign_extend => ID_mem_read_sign_extend,
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
 	mult => ID_mult, mult_signed => ID_mult_signed,
-	mthi => ID_mthi, mtlo => ID_mtlo,
+	mthi => ID_mthi, mtlo => ID_mtlo, madd => ID_madd,
 	ll => ID_ll, sc => ID_sc,
 	cop0_wait => ID_wait, cop0_write => ID_cop0_write,
 	exception => ID_exception, di => ID_di, ei => ID_ei,
@@ -704,6 +705,7 @@ begin
 		    if C_mult_enable then
 			ID_EX_mult <= false;
 			ID_EX_mult_signed <= false;
+			ID_EX_madd <= false;
 		    end if;
 		    if C_ll_sc then
 		        ID_EX_ll <= false;
@@ -785,6 +787,7 @@ begin
 		    if C_mult_enable then
 			ID_EX_mult <= ID_mult;
 			ID_EX_mult_signed <= ID_mult_signed;
+			ID_EX_madd <= C_mul_acc and ID_madd;
 			ID_EX_mthi <= ID_mthi;
 			ID_EX_mtlo <= ID_mtlo;
 			if ID_mtlo then
@@ -1373,7 +1376,8 @@ begin
 
     -- Multiplier unit, as a separate pipeline
     EX_mul_start <= (not C_cache or dmem_cache_wait = '0')
-      and ID_EX_mult and not MEM_cancel_EX and not EX_MEM_EIP;
+      and ID_EX_mult and not MEM_cancel_EX and not EX_MEM_EIP
+      and (not C_mul_acc or not ID_EX_madd or R_mul_done);
     multiplier: entity work.mul
     port map (
 	clk => clk, clk_enable => clk_enable, start => EX_mul_start,
@@ -1383,21 +1387,32 @@ begin
     );
 
     G_simple_mul:
-    if C_mult_enable and not C_exceptions generate
+    if C_mult_enable and not C_mul_acc and not C_exceptions generate
     R_hi_lo <= hi_lo_from_mul;
     R_mul_done <= mul_done;
     end generate; -- G_simple_mul
 
     G_staged_mul:
-    if C_mult_enable and C_exceptions generate
+    if C_mult_enable and (C_mul_acc or C_exceptions) generate
     process(clk, clk_enable)
     begin
 	if rising_edge(clk) and clk_enable = '1' then
 	    R_mul_commit <= false;
+	    R_clr_hi <= false;
+	    R_clr_lo <= false;
+	    if C_mul_acc then
+		R_hi_lo_target <= R_hi_lo + hi_lo_from_mul;
+	    else
+		R_hi_lo_target <= hi_lo_from_mul;
+	    end if;
 	    if EX_mul_start then
 		R_mul_done <= false;
 		R_we_hi <= not ID_EX_mtlo;
 		R_we_lo <= not ID_EX_mthi;
+		if C_mul_acc and not ID_EX_madd then
+		    R_clr_hi <= not ID_EX_mtlo;
+		    R_clr_lo <= not ID_EX_mthi;
+		end if;
 	    elsif mul_done then
 		if not R_mul_done then
 		    R_mul_commit <= true;
@@ -1408,11 +1423,17 @@ begin
 	if falling_edge(clk) and clk_enable = '1' then
 	    if R_mul_commit then
 		if R_we_hi then
-		    R_hi_lo(63 downto 32) <= hi_lo_from_mul(63 downto 32);
+		    R_hi_lo(63 downto 32) <= R_hi_lo_target(63 downto 32);
 		end if;
 		if R_we_lo then
-		    R_hi_lo(31 downto 0) <= hi_lo_from_mul(31 downto 0);
+		    R_hi_lo(31 downto 0) <= R_hi_lo_target(31 downto 0);
 		end if;
+	    end if;
+	    if C_mul_acc and R_clr_hi then
+		R_hi_lo(63 downto 32) <= (others => '0');
+	    end if;
+	    if C_mul_acc and R_clr_lo then
+		R_hi_lo(31 downto 0) <= (others => '0');
 	    end if;
 	end if;
     end process;
