@@ -8,6 +8,11 @@ use work.axi_pack.all;
 -- multiport interface to DDR3 RAM (AXI slave)
 
 entity axi_mpmc is
+   generic
+   (
+     C_mig_data_bits: integer := 128;
+     C_mig_wstrb_bits: integer := 16  -- byte select: data_bits/8
+   );
    Port
    (
       ddr3_dq              : inout std_logic_vector(15 downto 0);
@@ -185,8 +190,8 @@ architecture logic of axi_mpmc is
          M00_AXI_AWQOS        : out std_logic_vector(3 downto 0);
          M00_AXI_AWVALID      : out std_logic;
          M00_AXI_AWREADY      : in  std_logic;
-         M00_AXI_WDATA        : out std_logic_vector(127 downto 0);
-         M00_AXI_WSTRB        : out std_logic_vector(15 downto 0);
+         M00_AXI_WDATA        : out std_logic_vector(C_mig_data_bits-1 downto 0);
+         M00_AXI_WSTRB        : out std_logic_vector(C_mig_wstrb_bits-1 downto 0);
          M00_AXI_WLAST        : out std_logic;
          M00_AXI_WVALID       : out std_logic;
          M00_AXI_WREADY       : in  std_logic;
@@ -206,7 +211,7 @@ architecture logic of axi_mpmc is
          M00_AXI_ARVALID      : out std_logic;
          M00_AXI_ARREADY      : in  std_logic;
          M00_AXI_RID          : in  std_logic_vector(3 downto 0);
-         M00_AXI_RDATA        : in  std_logic_vector(127 downto 0);
+         M00_AXI_RDATA        : in  std_logic_vector(C_mig_data_bits-1 downto 0);
          M00_AXI_RRESP        : in  std_logic_vector(1 downto 0);
          M00_AXI_RLAST        : in  std_logic;
          M00_AXI_RVALID       : in  std_logic;
@@ -260,8 +265,8 @@ architecture logic of axi_mpmc is
          s_axi_awvalid        : in    std_logic;
          s_axi_awready        : out   std_logic;
 
-         s_axi_wdata          : in    std_logic_vector(127 downto 0);
-         s_axi_wstrb          : in    std_logic_vector(15 downto 0);
+         s_axi_wdata          : in    std_logic_vector(C_mig_data_bits-1 downto 0);
+         s_axi_wstrb          : in    std_logic_vector(C_mig_wstrb_bits-1 downto 0);
          s_axi_wlast          : in    std_logic;
          s_axi_wvalid         : in    std_logic;
          s_axi_wready         : out   std_logic;
@@ -285,7 +290,7 @@ architecture logic of axi_mpmc is
 
          s_axi_rready         : in    std_logic;
          s_axi_rid            : out   std_logic_vector(3 downto 0);
-         s_axi_rdata          : out   std_logic_vector(127 downto 0);
+         s_axi_rdata          : out   std_logic_vector(C_mig_data_bits-1 downto 0);
          s_axi_rresp          : out   std_logic_vector(1 downto 0);
          s_axi_rlast          : out   std_logic;
          s_axi_rvalid         : out   std_logic
@@ -305,8 +310,8 @@ architecture logic of axi_mpmc is
    signal l00_axi_awqos       : std_logic_vector(3 downto 0);
    signal l00_axi_awvalid     : std_logic;
    signal l00_axi_awready     : std_logic;
-   signal l00_axi_wdata       : std_logic_vector(127 downto 0);
-   signal l00_axi_wstrb       : std_logic_vector(15 downto 0);
+   signal l00_axi_wdata       : std_logic_vector(C_mig_data_bits-1 downto 0);
+   signal l00_axi_wstrb       : std_logic_vector(C_mig_wstrb_bits-1 downto 0);
    signal l00_axi_wlast       : std_logic;
    signal l00_axi_wvalid      : std_logic;
    signal l00_axi_wready      : std_logic;
@@ -327,7 +332,7 @@ architecture logic of axi_mpmc is
    signal l00_axi_arready     : std_logic;
    signal l00_axi_rready      : std_logic;
    signal l00_axi_rid         : std_logic_vector(3 downto 0);
-   signal l00_axi_rdata       : std_logic_vector(127 downto 0);
+   signal l00_axi_rdata       : std_logic_vector(C_mig_data_bits-1 downto 0);
    signal l00_axi_rresp       : std_logic_vector(1 downto 0);
    signal l00_axi_rlast       : std_logic;
    signal l00_axi_rvalid      : std_logic;
