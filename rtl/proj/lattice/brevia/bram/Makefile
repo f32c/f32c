@@ -11,7 +11,14 @@ DIAMONDC := $(shell find ${DIAMOND_BIN}/ -name diamondc)
 
 all:
 	@rm -rf ${IMPL_DIR}
-	@echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
+	@echo prj_project open ${PROJ_FILE} \; prj_run PAR -task PARTrace \; prj_run Export -task Bitgen | ${DIAMONDC}
+	@fgrep Warning: ${IMPL_DIR}/*.twr
 
 clean:
-	rm -rf ${IMPL_DIR}
+	rm -rf ${IMPL_DIR} *~
+
+program:
+	ujprog ${IMPL_DIR}/${PROJ_NAME}_${IMPL_NAME}.jed
+
+flash:
+	ujprog -j flash ${IMPL_DIR}/${PROJ_NAME}_${IMPL_NAME}.jed
