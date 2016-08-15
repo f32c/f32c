@@ -337,10 +337,10 @@ begin
       -- vga simple compositing bitmap only graphics
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
-      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
-      C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
+--      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
+--      C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
-      C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
+--      C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
       -- led strip simple compositing bitmap only graphics
       C_ledstrip => C_ledstrip,
       C_ledstrip_fifo_width => C_ledstrip_fifo_width,
