@@ -37,6 +37,7 @@ entity idecode_mi32 is
 	C_branch_likely: boolean;
 	C_sign_extend: boolean;
 	C_mul_acc: boolean;
+	C_mul_reg: boolean;
 	C_cache: boolean;
 	C_ll_sc: boolean;
 	C_movn_movz: boolean;
@@ -540,25 +541,33 @@ begin
 		unsupported_instr <= true;
 	    end case;
 	when MI32_OP_SPECIAL2 =>
-	    target_addr <= instruction(15 downto 11);
+	    if C_mul_acc or C_mul_reg then
+		target_addr <= instruction(15 downto 11);
+		op_major <= OP_MAJOR_ALT;
+		alt_sel <= ALT_LO;
+		read_alt <= C_mul_reg;
+		mult <= true;
+	    end if;
 	    case instruction(5 downto 0) is
 	    when MI32_SPEC2_MADD =>
 		if C_mul_acc then
-		    op_major <= OP_MAJOR_ALT;
-		    mult <= true;
 		    madd <= true;
 		    mult_signed <= true;
-		    alt_sel <= ALT_LO;
 		else
 		    latency <= LATENCY_UNDEFINED;
 		    unsupported_instr <= true;
 		end if;
 	    when MI32_SPEC2_MADDU =>
 		if C_mul_acc then
-		    op_major <= OP_MAJOR_ALT;
-		    mult <= true;
 		    madd <= true;
-		    alt_sel <= ALT_LO;
+		else
+		    latency <= LATENCY_UNDEFINED;
+		    unsupported_instr <= true;
+		end if;
+	    when MI32_SPEC2_MUL =>
+		if C_mul_reg then
+		    mult_signed <= true;
+		    mul_compound <= true;
 		else
 		    latency <= LATENCY_UNDEFINED;
 		    unsupported_instr <= true;
