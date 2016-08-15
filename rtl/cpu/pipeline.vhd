@@ -159,7 +159,8 @@ architecture Behavioral of pipeline is
     signal ID_jump_register_hazard: boolean;
     signal ID_seb_seh_cycle: boolean;
     signal ID_seb_seh_select: std_logic;
-    signal ID_mult, ID_mult_signed, ID_madd, ID_mthi, ID_mtlo: boolean;
+    signal ID_mult, ID_mult_signed, ID_madd, ID_mul_compound: boolean;
+    signal ID_mthi, ID_mtlo: boolean;
     signal ID_ll, ID_sc: boolean;
     signal ID_flush_i_line, ID_flush_d_line: std_logic;
     signal ID_wait, ID_cop0_write, ID_exception, ID_di, ID_ei: boolean;
@@ -192,7 +193,8 @@ architecture Behavioral of pipeline is
     signal ID_EX_latency: std_logic_vector(1 downto 0);
     signal ID_EX_seb_seh_cycle: boolean;
     signal ID_EX_seb_seh_select: std_logic;
-    signal ID_EX_mult, ID_EX_mult_signed, ID_EX_madd: boolean;
+    signal ID_EX_mult, ID_EX_mult_signed: boolean;
+    signal ID_EX_madd, ID_EX_mul_compound: boolean;
     signal ID_EX_mthi, ID_EX_mtlo: boolean;
     signal ID_EX_ll, ID_EX_sc: boolean;
     signal ID_EX_flush_i_line, ID_EX_flush_d_line: std_logic;
@@ -502,7 +504,7 @@ begin
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
 	seb_seh_cycle => ID_seb_seh_cycle, seb_seh_select => ID_seb_seh_select,
 	mult => ID_mult, mult_signed => ID_mult_signed, madd => ID_madd,
-	mthi => ID_mthi, mtlo => ID_mtlo,
+	mul_compound => ID_mul_compound, mthi => ID_mthi, mtlo => ID_mtlo,
 	ll => ID_ll, sc => ID_sc,
 	cop0_wait => ID_wait, cop0_write => ID_cop0_write,
 	exception => ID_exception, di => ID_di, ei => ID_ei,
@@ -535,8 +537,8 @@ begin
 	mem_write => ID_mem_write, mem_size => ID_mem_size,
 	mem_read_sign_extend => ID_mem_read_sign_extend,
 	latency => ID_latency, ignore_reg2 => ID_ignore_reg2,
-	mult => ID_mult, mult_signed => ID_mult_signed,
-	mthi => ID_mthi, mtlo => ID_mtlo, madd => ID_madd,
+	mult => ID_mult, mult_signed => ID_mult_signed, madd => ID_madd,
+	mul_compound => ID_mul_compound, mthi => ID_mthi, mtlo => ID_mtlo,
 	ll => ID_ll, sc => ID_sc,
 	cop0_wait => ID_wait, cop0_write => ID_cop0_write,
 	exception => ID_exception, di => ID_di, ei => ID_ei,
@@ -648,6 +650,9 @@ begin
     begin
 	if rising_edge(clk) and clk_enable = '1'
 	  and (not C_cache or dmem_cache_wait = '0') then
+	    if C_mult_enable then
+		ID_EX_mul_compound <= false;
+	    end if;
 	    if EX_running then
 		if not C_load_aligner and ID_EX_multicycle_lh_lb and
 		  not MEM_cancel_EX and not EX_MEM_EIP then
@@ -788,6 +793,7 @@ begin
 			ID_EX_mult <= ID_mult;
 			ID_EX_mult_signed <= ID_mult_signed;
 			ID_EX_madd <= C_mul_acc and ID_madd;
+			ID_EX_mul_compound <= ID_mul_compound;
 			ID_EX_mthi <= ID_mthi;
 			ID_EX_mtlo <= ID_mtlo;
 			if ID_mtlo then
@@ -854,7 +860,7 @@ begin
     --
 
     EX_running <= MEM_running and not (C_exceptions and ID_EX_wait)
-      and (not C_mult_enable or R_mul_done or
+      and (not C_mult_enable or (R_mul_done and not ID_EX_mul_compound) or
       (ID_EX_alt_sel /= ALT_HI and ID_EX_alt_sel /= ALT_LO));
 
     -- forward the results from later stages
@@ -1377,7 +1383,8 @@ begin
     -- Multiplier unit, as a separate pipeline
     EX_mul_start <= (not C_cache or dmem_cache_wait = '0')
       and ID_EX_mult and not MEM_cancel_EX and not EX_MEM_EIP
-      and (not C_mul_acc or not ID_EX_madd or R_mul_done);
+      and (not C_mul_acc or not ID_EX_madd or R_mul_done)
+      and (ID_EX_alt_sel /= ALT_LO or ID_EX_mul_compound);
     multiplier: entity work.mul
     port map (
 	clk => clk, clk_enable => clk_enable, start => EX_mul_start,
