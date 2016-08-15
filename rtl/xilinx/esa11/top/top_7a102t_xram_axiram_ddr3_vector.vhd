@@ -54,6 +54,7 @@ entity esa11_xram_axiram_ddr3 is
 
         -- axi ram
 	C_axiram: boolean := true;
+	C_axi_mig_data_bits: integer := 128; -- 32 or 128 (data bus width in link between MIG and AXI interconnect)
 
         -- warning: 2K, 4K, 8K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
         C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
@@ -685,8 +686,8 @@ begin
     u_ddr_mem : entity work.axi_mpmc
     generic map
     (
-      C_mig_data_bits => 128, -- 32 or 128
-      C_mig_wstrb_bits => 16  -- 4 or 16 (this is byte_select, must be C_mig_data_bits/8)
+      C_mig_data_bits => C_axi_mig_data_bits, -- 32 or 128
+      C_mig_wstrb_bits => C_axi_mig_data_bits/8  -- 4 or 16 (byte_select, normally C_mig_data_bits/8)
     )
     port map(
         sys_rst              => not clk_locked, -- release reset when clock is stable
