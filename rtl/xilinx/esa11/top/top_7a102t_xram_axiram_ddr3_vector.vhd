@@ -683,6 +683,11 @@ begin
 
     G_axiram_real: if C_axiram generate
     u_ddr_mem : entity work.axi_mpmc
+    generic map
+    (
+      C_mig_data_bits => 128, -- 32 or 128
+      C_mig_wstrb_bits => 16  -- 4 or 16 (this is byte_select, must be C_mig_data_bits/8)
+    )
     port map(
         sys_rst              => not clk_locked, -- release reset when clock is stable
         sys_clk_i            => clk_axi, -- not less than 200MHz, but not too much faster either
