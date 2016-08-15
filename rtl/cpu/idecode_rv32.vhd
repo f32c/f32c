@@ -35,6 +35,7 @@ use work.rv32_pack.all;
 entity idecode_rv32 is
     generic(
 	C_cache: boolean;
+	C_mul_reg: boolean;
 	C_ll_sc: boolean;
 	C_exceptions: boolean
     );

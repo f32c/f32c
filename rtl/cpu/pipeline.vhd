@@ -43,6 +43,7 @@ entity pipeline is
 	C_big_endian: boolean;		-- MI32 only
 	C_mult_enable: boolean;		-- MI32 only
 	C_mul_acc: boolean := false;	-- MI32 only
+	C_mul_reg: boolean := false;	-- MI32 only
 	C_branch_likely: boolean;	-- MI32 only
 	C_sign_extend: boolean;		-- MI32 only
 	C_movn_movz: boolean := false;	-- MI32 only
@@ -193,9 +194,8 @@ architecture Behavioral of pipeline is
     signal ID_EX_latency: std_logic_vector(1 downto 0);
     signal ID_EX_seb_seh_cycle: boolean;
     signal ID_EX_seb_seh_select: std_logic;
-    signal ID_EX_mult, ID_EX_mult_signed: boolean;
-    signal ID_EX_madd, ID_EX_mul_compound: boolean;
-    signal ID_EX_mthi, ID_EX_mtlo: boolean;
+    signal ID_EX_mult, ID_EX_mult_signed, ID_EX_madd: boolean;
+    signal ID_EX_mul_compound, ID_EX_mthi, ID_EX_mtlo: boolean;
     signal ID_EX_ll, ID_EX_sc: boolean;
     signal ID_EX_flush_i_line, ID_EX_flush_d_line: std_logic;
     signal ID_EX_branch_delay_follows, ID_EX_branch_delay_slot: boolean;
@@ -482,8 +482,8 @@ begin
     generic map (
 	C_cache => C_cache, C_ll_sc => C_ll_sc,
 	C_branch_likely => C_branch_likely, C_sign_extend => C_sign_extend,
-	C_mul_acc => C_mul_acc, C_movn_movz => C_movn_movz,
-	C_exceptions => C_exceptions
+	C_mul_acc => C_mul_acc, C_mul_reg => C_mul_reg,
+	C_movn_movz => C_movn_movz, C_exceptions => C_exceptions
     )
     port map (
 	instruction => IF_ID_instruction,
@@ -517,8 +517,7 @@ begin
     if C_arch = ARCH_RV32 generate
     idecode: entity work.idecode_rv32
     generic map (
-	C_cache => C_cache,
-	C_ll_sc => C_ll_sc,
+	C_cache => C_cache, C_ll_sc => C_ll_sc, C_mul_reg => C_mul_reg,
 	C_exceptions => C_exceptions
     )
     port map (
