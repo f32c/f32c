@@ -250,55 +250,56 @@ begin
 	    end case;
 	when RV32I_OP_REG_REG =>
 	    use_immediate <= false;
-	    case instruction(14 downto 12) is
-	    when RV32_FN3_ADD =>
-		if instruction(30) = '0' then
-		    op_minor <= OP_MINOR_ADD;
-		else
+	    if instruction(25) = '0' then
+		case instruction(14 downto 12) is
+		when RV32_FN3_ADD =>
+		    if instruction(30) = '0' then
+			op_minor <= OP_MINOR_ADD;
+		    else
+			op_minor <= OP_MINOR_SUB;
+		    end if;
+		when RV32_FN3_SLT =>
+		    op_major <= OP_MAJOR_SLT;
 		    op_minor <= OP_MINOR_SUB;
-		end if;
-	    when RV32_FN3_SLT =>
-		op_major <= OP_MAJOR_SLT;
-		op_minor <= OP_MINOR_SUB;
-		slt_signed <= true;
-	    when RV32_FN3_SLTU =>
-		op_major <= OP_MAJOR_SLT;
-		op_minor <= OP_MINOR_SUB;
-		slt_signed <= false;
-	    when RV32_FN3_XOR =>
-		op_minor <= OP_MINOR_XOR;
-	    when RV32_FN3_OR =>
-		op_minor <= OP_MINOR_OR;
-	    when RV32_FN3_AND =>
-		op_minor <= OP_MINOR_AND;
-	    when RV32_FN3_SL =>
-		reg1_addr <= instruction(24 downto 20);
-		reg2_addr <= instruction(19 downto 15);
-		reg1_zero <= instruction(24 downto 20) = RV32_REG_ZERO;
-		reg2_zero <= instruction(19 downto 15) = RV32_REG_ZERO;
-		ignore_reg2 <= instruction(19 downto 15) = RV32_REG_ZERO;
-		op_major <= OP_MAJOR_SHIFT;
-		latency <= LATENCY_MEM;
-		shift_fn <= OP_SHIFT_LL;
-		shift_variable <= true;
-	    when RV32_FN3_SR =>
-		reg1_addr <= instruction(24 downto 20);
-		reg2_addr <= instruction(19 downto 15);
-		reg1_zero <= instruction(24 downto 20) = RV32_REG_ZERO;
-		reg2_zero <= instruction(19 downto 15) = RV32_REG_ZERO;
-		ignore_reg2 <= instruction(19 downto 15) = RV32_REG_ZERO;
-		op_major <= OP_MAJOR_SHIFT;
-		latency <= LATENCY_MEM;
-		shift_variable <= true;
-		if instruction(30) = '1' then
-		    shift_fn <= OP_SHIFT_RA;
-		else
-		    shift_fn <= OP_SHIFT_RL;
-		end if;
-	    when others =>
-		-- nothing to do here, just appease ISE warnings
-	    end case;
-	    if C_mul_reg and instruction(25) = '1' then
+		    slt_signed <= true;
+		when RV32_FN3_SLTU =>
+		    op_major <= OP_MAJOR_SLT;
+		    op_minor <= OP_MINOR_SUB;
+		    slt_signed <= false;
+		when RV32_FN3_XOR =>
+		    op_minor <= OP_MINOR_XOR;
+		when RV32_FN3_OR =>
+		    op_minor <= OP_MINOR_OR;
+		when RV32_FN3_AND =>
+		    op_minor <= OP_MINOR_AND;
+		when RV32_FN3_SL =>
+		    reg1_addr <= instruction(24 downto 20);
+		    reg2_addr <= instruction(19 downto 15);
+		    reg1_zero <= instruction(24 downto 20) = RV32_REG_ZERO;
+		    reg2_zero <= instruction(19 downto 15) = RV32_REG_ZERO;
+		    ignore_reg2 <= instruction(19 downto 15) = RV32_REG_ZERO;
+		    op_major <= OP_MAJOR_SHIFT;
+		    latency <= LATENCY_MEM;
+		    shift_fn <= OP_SHIFT_LL;
+		    shift_variable <= true;
+		when RV32_FN3_SR =>
+		    reg1_addr <= instruction(24 downto 20);
+		    reg2_addr <= instruction(19 downto 15);
+		    reg1_zero <= instruction(24 downto 20) = RV32_REG_ZERO;
+		    reg2_zero <= instruction(19 downto 15) = RV32_REG_ZERO;
+		    ignore_reg2 <= instruction(19 downto 15) = RV32_REG_ZERO;
+		    op_major <= OP_MAJOR_SHIFT;
+		    latency <= LATENCY_MEM;
+		    shift_variable <= true;
+		    if instruction(30) = '1' then
+			shift_fn <= OP_SHIFT_RA;
+		    else
+			shift_fn <= OP_SHIFT_RL;
+		    end if;
+		when others =>
+		    -- nothing to do here, just appease ISE warnings
+		end case;
+	    elsif C_mul_reg then
 		mult <= true;
 		mul_compound <= true;
 		op_major <= OP_MAJOR_ALT;
