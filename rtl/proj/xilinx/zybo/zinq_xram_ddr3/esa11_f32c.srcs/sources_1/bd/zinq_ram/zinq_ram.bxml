@@ -2,9 +2,9 @@
 <Root MajorVersion="0" MinorVersion="33">
   <CompositeFile CompositeFileTopName="zinq_ram" CanBeSetAsTop="true" CanDisplayChildGraph="true">
     <Description>Composite Fileset</Description>
-    <Generation Name="SYNTHESIS" State="GENERATED" Timestamp="1462439389"/>
-    <Generation Name="IMPLEMENTATION" State="GENERATED" Timestamp="1462439389"/>
-    <Generation Name="SIMULATION" State="GENERATED" Timestamp="1462439389"/>
+    <Generation Name="SYNTHESIS" State="GENERATED" Timestamp="1471338430"/>
+    <Generation Name="IMPLEMENTATION" State="GENERATED" Timestamp="1471338430"/>
+    <Generation Name="SIMULATION" State="GENERATED" Timestamp="1471338430"/>
     <FileCollection Name="SOURCES" Type="SOURCES">
       <File Name="hdl/zinq_ram.vhd" Type="VHDL">
         <Properties IsEditable="false" IsVisible="true" Timestamp="0" IsTrackable="false" IsStatusTracked="false"/>
