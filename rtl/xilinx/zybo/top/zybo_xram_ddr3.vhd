@@ -36,6 +36,7 @@ library unisim;
 use unisim.vcomponents.all;
 
 use work.f32c_pack.all;
+use work.axi_pack.all;
 
 entity zybo_xram_ddr3 is
     generic (
@@ -51,15 +52,16 @@ entity zybo_xram_ddr3 is
 	-- SoC configuration options
 	C_bram_size: integer := 16;
 
+        C_axiram: boolean := true;
         -- axi cache ram
-	C_acram: boolean := true;
+	C_acram: boolean := false;
 	C_acram_wait_cycles: integer := 2;
 	C_acram_emu_kb: integer := 0; -- KB axi_cache emulation (0 to disable, power of 2, MAX 128)
 
         -- warning: 2K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
         -- no errors for 4K or 8K
-        C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
-        C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_icache_size: integer := 0; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_dcache_size: integer := 0; -- 0, 2, 4, 8, 16, 32 KBytes
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 2^29 -> 512MB to be cached
 
         C_DDR3_DQ_PINS        : integer := 32;
@@ -223,85 +225,8 @@ architecture Behavioral of zybo_xram_ddr3 is
     signal l00_axi_rvalid       :  std_logic;
     signal l00_axi_rready       :  std_logic;
 
-    signal l01_axi_areset_n     :  std_logic := '1';
-    signal l01_axi_aclk         :  std_logic := '0';
-    signal l01_axi_awid         :  std_logic_vector(0 downto 0);
-    signal l01_axi_awaddr       :  std_logic_vector(31 downto 0);
-    signal l01_axi_awlen        :  std_logic_vector(7 downto 0);
-    signal l01_axi_awsize       :  std_logic_vector(2 downto 0);
-    signal l01_axi_awburst      :  std_logic_vector(1 downto 0);
-    signal l01_axi_awlock       :  std_logic;
-    signal l01_axi_awcache      :  std_logic_vector(3 downto 0);
-    signal l01_axi_awprot       :  std_logic_vector(2 downto 0);
-    signal l01_axi_awqos        :  std_logic_vector(3 downto 0);
-    signal l01_axi_awvalid      :  std_logic;
-    signal l01_axi_awready      :  std_logic;
-    signal l01_axi_wdata        :  std_logic_vector(31 downto 0);
-    signal l01_axi_wstrb        :  std_logic_vector(3 downto 0);
-    signal l01_axi_wlast        :  std_logic;
-    signal l01_axi_wvalid       :  std_logic;
-    signal l01_axi_wready       :  std_logic;
-    signal l01_axi_bid          :  std_logic_vector(0 downto 0);
-    signal l01_axi_bresp        :  std_logic_vector(1 downto 0);
-    signal l01_axi_bvalid       :  std_logic;
-    signal l01_axi_bready       :  std_logic;
-    signal l01_axi_arid         :  std_logic_vector(0 downto 0);
-    signal l01_axi_araddr       :  std_logic_vector(31 downto 0);
-    signal l01_axi_arlen        :  std_logic_vector(7 downto 0);
-    signal l01_axi_arsize       :  std_logic_vector(2 downto 0);
-    signal l01_axi_arburst      :  std_logic_vector(1 downto 0);
-    signal l01_axi_arlock       :  std_logic;
-    signal l01_axi_arcache      :  std_logic_vector(3 downto 0);
-    signal l01_axi_arprot       :  std_logic_vector(2 downto 0);
-    signal l01_axi_arqos        :  std_logic_vector(3 downto 0);
-    signal l01_axi_arvalid      :  std_logic;
-    signal l01_axi_arready      :  std_logic;
-    signal l01_axi_rid          :  std_logic_vector(0 downto 0);
-    signal l01_axi_rdata        :  std_logic_vector(31 downto 0);
-    signal l01_axi_rresp        :  std_logic_vector(1 downto 0);
-    signal l01_axi_rlast        :  std_logic;
-    signal l01_axi_rvalid       :  std_logic;
-    signal l01_axi_rready       :  std_logic;
-
-    signal l02_axi_areset_n     :  std_logic := '1';
-    signal l02_axi_aclk         :  std_logic := '0';
-    signal l02_axi_awid         :  std_logic_vector(0 downto 0);
-    signal l02_axi_awaddr       :  std_logic_vector(31 downto 0);
-    signal l02_axi_awlen        :  std_logic_vector(7 downto 0);
-    signal l02_axi_awsize       :  std_logic_vector(2 downto 0);
-    signal l02_axi_awburst      :  std_logic_vector(1 downto 0);
-    signal l02_axi_awlock       :  std_logic;
-    signal l02_axi_awcache      :  std_logic_vector(3 downto 0);
-    signal l02_axi_awprot       :  std_logic_vector(2 downto 0);
-    signal l02_axi_awqos        :  std_logic_vector(3 downto 0);
-    signal l02_axi_awvalid      :  std_logic;
-    signal l02_axi_awready      :  std_logic;
-    signal l02_axi_wdata        :  std_logic_vector(31 downto 0);
-    signal l02_axi_wstrb        :  std_logic_vector(3 downto 0);
-    signal l02_axi_wlast        :  std_logic;
-    signal l02_axi_wvalid       :  std_logic;
-    signal l02_axi_wready       :  std_logic;
-    signal l02_axi_bid          :  std_logic_vector(0 downto 0);
-    signal l02_axi_bresp        :  std_logic_vector(1 downto 0);
-    signal l02_axi_bvalid       :  std_logic;
-    signal l02_axi_bready       :  std_logic;
-    signal l02_axi_arid         :  std_logic_vector(0 downto 0);
-    signal l02_axi_araddr       :  std_logic_vector(31 downto 0);
-    signal l02_axi_arlen        :  std_logic_vector(7 downto 0);
-    signal l02_axi_arsize       :  std_logic_vector(2 downto 0);
-    signal l02_axi_arburst      :  std_logic_vector(1 downto 0);
-    signal l02_axi_arlock       :  std_logic;
-    signal l02_axi_arcache      :  std_logic_vector(3 downto 0);
-    signal l02_axi_arprot       :  std_logic_vector(2 downto 0);
-    signal l02_axi_arqos        :  std_logic_vector(3 downto 0);
-    signal l02_axi_arvalid      :  std_logic;
-    signal l02_axi_arready      :  std_logic;
-    signal l02_axi_rid          :  std_logic_vector(0 downto 0);
-    signal l02_axi_rdata        :  std_logic_vector(31 downto 0);
-    signal l02_axi_rresp        :  std_logic_vector(1 downto 0);
-    signal l02_axi_rlast        :  std_logic;
-    signal l02_axi_rvalid       :  std_logic;
-    signal l02_axi_rready       :  std_logic;
+    signal main_axi_miso: T_axi_miso;
+    signal main_axi_mosi: T_axi_mosi;
 
     signal ram_en             : std_logic;
     signal ram_byte_we        : std_logic_vector(3 downto 0);
@@ -320,6 +245,10 @@ architecture Behavioral of zybo_xram_ddr3 is
     signal tmds_rgb: std_logic_vector(2 downto 0);
     signal tmds_clk: std_logic;
     signal vga_vsync_n, vga_hsync_n: std_logic;
+
+    signal R_blinky: std_logic_vector(26 downto 0);
+    signal FCLK_CLK0: std_logic; -- output from zynq
+
     signal ps2_clk_in : std_logic;
     signal ps2_clk_out : std_logic;
     signal ps2_dat_in : std_logic;
@@ -364,6 +293,7 @@ begin
       C_clk_freq => C_clk_freq,
       C_arch => C_arch,
       C_bram_size => C_bram_size,
+      C_axiram => C_axiram,
       C_acram => C_acram,
       C_acram_wait_cycles => C_acram_wait_cycles,
       C_icache_size => C_icache_size,
@@ -375,7 +305,6 @@ begin
       --C_ps2 => C_ps2,
 
       C_vgahdmi => C_vgahdmi,
-      C_vgahdmi_test_picture => C_vgahdmi_test_picture,
 
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
@@ -439,6 +368,9 @@ begin
         --ps2_clk_out  => ps2_clk_out,
         --ps2_dat_out  => ps2_dat_out,
 
+      cpu_axi_in => main_axi_miso,
+      cpu_axi_out => main_axi_mosi,
+
       acram_en => ram_en,
       acram_addr => ram_address,
       acram_byte_we => ram_byte_we,
@@ -460,8 +392,8 @@ begin
       dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
       dvid_clock(0) => tmds_clk,    dvid_clock(1) => open,
 	-- simple I/O
-      simple_out(3 downto 0) => led(3 downto 0),
-      simple_out(31 downto 4) => open,
+      simple_out(2 downto 0) => led(2 downto 0),
+      simple_out(31 downto 3) => open,
       simple_in(3 downto 0) => btn(3 downto 0),
       simple_in(15 downto 4) => open,
       simple_in(19 downto 16) => sw(3 downto 0),
@@ -480,7 +412,7 @@ begin
       tmds_out_rgb_n => hdmi_d_n
     );
 
-    acram_emu_gen: if C_acram_emu_kb > 0 generate
+    acram_emu_gen: if C_acram_emu_kb > 0 and C_acram generate
     axi_cache_emulation: entity work.acram_emu
     generic map
     (
@@ -499,7 +431,7 @@ begin
     --ram_data_read <= x"01234567"; -- debug purpose
     end generate;
 
-    G_acram_real: if C_acram_emu_kb = 0 generate
+    G_acram_real: if C_acram_emu_kb = 0 and C_acram generate
     axi_cache_ram: entity work.axi_cache
     port map (
         sys_clk            => clk,
@@ -590,54 +522,133 @@ begin
         FIXED_IO_ddr_vrp    => ddr_vrp,
         -- AXI
         -- port l00
-        S_AXI_GP0_aclk         => l00_axi_aclk,
-        S_AXI_GP0_awid         => "00000" & l00_axi_awid(0),
-        S_AXI_GP0_awaddr       => l00_axi_awaddr,
-        S_AXI_GP0_awlen        => l00_axi_awlen(3 downto 0),
-        S_AXI_GP0_awsize       => l00_axi_awsize,
-        S_AXI_GP0_awburst      => l00_axi_awburst,
-        S_AXI_GP0_awlock       => (others => l00_axi_awlock),
-        S_AXI_GP0_awcache      => l00_axi_awcache,
-        S_AXI_GP0_awprot       => l00_axi_awprot,
-        S_AXI_GP0_awqos        => l00_axi_awqos,
-        S_AXI_GP0_awvalid      => l00_axi_awvalid,
-        S_AXI_GP0_awready      => l00_axi_awready,
-        S_AXI_GP0_wdata        => l00_axi_wdata,
-        S_AXI_GP0_wstrb        => l00_axi_wstrb,
-        S_AXI_GP0_wlast        => l00_axi_wlast,
-        S_AXI_GP0_wvalid       => l00_axi_wvalid,
-        S_AXI_GP0_wready       => l00_axi_wready,
-        S_AXI_GP0_wid          => (others => '0'),
-        S_AXI_GP0_bid(0)       => l00_axi_bid(0),
-        S_AXI_GP0_bid(5 downto 1) => open,
-        S_AXI_GP0_bresp        => l00_axi_bresp,
-        S_AXI_GP0_bvalid       => l00_axi_bvalid,
-        S_AXI_GP0_bready       => l00_axi_bready,
-        S_AXI_GP0_arid         => "00000" & l00_axi_arid,
-        S_AXI_GP0_araddr       => l00_axi_araddr,
-        S_AXI_GP0_arlen        => l00_axi_arlen(3 downto 0),
-        S_AXI_GP0_arsize       => l00_axi_arsize,
-        S_AXI_GP0_arburst      => l00_axi_arburst,
-        S_AXI_GP0_arlock       => (others => l00_axi_arlock),
-        S_AXI_GP0_arcache      => l00_axi_arcache,
-        S_AXI_GP0_arprot       => l00_axi_arprot,
-        S_AXI_GP0_arqos        => l00_axi_arqos,
-        S_AXI_GP0_arvalid      => l00_axi_arvalid,
-        S_AXI_GP0_arready      => l00_axi_arready,
-        S_AXI_GP0_rid(0)       => l00_axi_rid(0),
-        S_AXI_GP0_rid(5 downto 1) => open,
-        S_AXI_GP0_rdata        => l00_axi_rdata,
-        S_AXI_GP0_rresp        => l00_axi_rresp,
-        S_AXI_GP0_rlast        => l00_axi_rlast,
-        S_AXI_GP0_rvalid       => l00_axi_rvalid,
-        S_AXI_GP0_rready       => l00_axi_rready
+        S_AXI_HP0_aclk         => l00_axi_aclk,
+        S_AXI_HP0_awid         => (others => '0'),
+        S_AXI_HP0_awaddr       => l00_axi_awaddr,
+        S_AXI_HP0_awlen        => l00_axi_awlen(3 downto 0),
+        S_AXI_HP0_awsize       => l00_axi_awsize,
+        S_AXI_HP0_awburst      => l00_axi_awburst,
+        S_AXI_HP0_awlock       => (others => '0'),
+        S_AXI_HP0_awcache      => l00_axi_awcache,
+        S_AXI_HP0_awprot       => l00_axi_awprot,
+        S_AXI_HP0_awqos        => l00_axi_awqos,
+        S_AXI_HP0_awvalid      => l00_axi_awvalid,
+        S_AXI_HP0_awready      => l00_axi_awready,
+        S_AXI_HP0_wdata        => l00_axi_wdata,
+        S_AXI_HP0_wstrb        => l00_axi_wstrb,
+        S_AXI_HP0_wlast        => l00_axi_wlast,
+        S_AXI_HP0_wvalid       => l00_axi_wvalid,
+        S_AXI_HP0_wready       => l00_axi_wready,
+        S_AXI_HP0_wid          => (others => '0'),
+        S_AXI_HP0_bid(5 downto 1) => open,
+        S_AXI_HP0_bid(0)       => l00_axi_bid(0),
+        S_AXI_HP0_bresp        => l00_axi_bresp,
+        S_AXI_HP0_bvalid       => l00_axi_bvalid,
+        S_AXI_HP0_bready       => l00_axi_bready,
+        S_AXI_HP0_arid         => (others => '0'),
+        S_AXI_HP0_araddr       => l00_axi_araddr,
+        S_AXI_HP0_arlen        => l00_axi_arlen(3 downto 0),
+        S_AXI_HP0_arsize       => l00_axi_arsize,
+        S_AXI_HP0_arburst      => l00_axi_arburst,
+        S_AXI_HP0_arlock       => (others => '0'),
+        S_AXI_HP0_arcache      => l00_axi_arcache,
+        S_AXI_HP0_arprot       => l00_axi_arprot,
+        S_AXI_HP0_arqos        => l00_axi_arqos,
+        S_AXI_HP0_arvalid      => l00_axi_arvalid,
+        S_AXI_HP0_arready      => l00_axi_arready,
+        S_AXI_HP0_rid(0)       => l00_axi_rid(0),
+        S_AXI_HP0_rid(5 downto 1) => open,
+        S_AXI_HP0_rdata        => l00_axi_rdata,
+        S_AXI_HP0_rresp        => l00_axi_rresp,
+        S_AXI_HP0_rlast        => l00_axi_rlast,
+        S_AXI_HP0_rvalid       => l00_axi_rvalid,
+        S_AXI_HP0_rready       => l00_axi_rready
     );
     l00_axi_aclk <= clk; -- 100 MHz
-    l01_axi_aclk <= '0'; -- port l01 not used
-    l02_axi_aclk <= '0'; -- port l02 not used
     end generate; -- G_acram_real
 
-    --FPGA_LED2 <= calib_done; -- should turn on 0.3 seconds after startup and remain on
-    --FPGA_LED3 <= ram_read_busy; -- more RAM traffic -> more LED brightness
+    G_axiram_real: if C_axiram generate
+    u_zinq_ram: entity work.zinq_ram_wrapper
+    port map(
+        -- ZINQ IO
+        FCLK_CLK0 => FCLK_CLK0,
+        FCLK_RESET0_N => open,
+        FIXED_IO_mio        => open,
+        --FIXED_IO_ps_clk     => clk, -- I don't know what's the purpose of this clock  ?
+        FIXED_IO_ps_porb    => open,
+        FIXED_IO_ps_srstb   => open,
+        -- physical signals to RAM chip
+        ddr_dq              => ddr_dq,
+        ddr_dqs_n           => ddr_dqs_n,
+        ddr_dqs_p           => ddr_dqs_p,
+        ddr_addr            => ddr_addr,
+        ddr_ba              => ddr_bankaddr,
+        ddr_ras_n           => ddr_ras_n,
+        ddr_cas_n           => ddr_cas_n,
+        ddr_we_n            => ddr_we_n,
+        ddr_ck_p            => ddr_clk,
+        ddr_ck_n            => ddr_clk_n,
+        ddr_cke             => ddr_cke,
+        ddr_dm              => ddr_dm,
+        ddr_odt             => ddr_odt,
+        ddr_reset_n         => open, -- ddr chip reset_n wired onbard to GND
+        FIXED_IO_ddr_vrn    => ddr_vrn,
+        FIXED_IO_ddr_vrp    => ddr_vrp,
+        -- AXI
+        -- port l00
+        S_AXI_HP0_aclk         => clk, -- f32c cpu clock to axi slave
+        S_AXI_HP0_awid         => (others => '0'),
+        S_AXI_HP0_awaddr       => main_axi_mosi.awaddr,
+        S_AXI_HP0_awlen        => main_axi_mosi.awlen(3 downto 0),
+        S_AXI_HP0_awsize       => main_axi_mosi.awsize,
+        S_AXI_HP0_awburst      => main_axi_mosi.awburst,
+        S_AXI_HP0_awlock       => (others => '0'),
+        S_AXI_HP0_awcache      => main_axi_mosi.awcache,
+        S_AXI_HP0_awprot       => main_axi_mosi.awprot,
+        S_AXI_HP0_awqos        => main_axi_mosi.awqos,
+        S_AXI_HP0_awvalid      => main_axi_mosi.awvalid,
+        S_AXI_HP0_awready      => main_axi_miso.awready,
+        S_AXI_HP0_wdata        => main_axi_mosi.wdata,
+        S_AXI_HP0_wstrb        => main_axi_mosi.wstrb,
+        S_AXI_HP0_wlast        => main_axi_mosi.wlast,
+        S_AXI_HP0_wvalid       => main_axi_mosi.wvalid,
+        S_AXI_HP0_wready       => main_axi_miso.wready,
+        S_AXI_HP0_wid          => (others => '0'),
+        S_AXI_HP0_bid(5 downto 1) => open,
+        S_AXI_HP0_bid(0)       => main_axi_miso.bid(0),
+        S_AXI_HP0_bresp        => main_axi_miso.bresp,
+        S_AXI_HP0_bvalid       => main_axi_miso.bvalid,
+        S_AXI_HP0_bready       => main_axi_mosi.bready,
+        S_AXI_HP0_arid         => (others => '0'),
+        S_AXI_HP0_araddr       => main_axi_mosi.araddr,
+        S_AXI_HP0_arlen        => main_axi_mosi.arlen(3 downto 0),
+        S_AXI_HP0_arsize       => main_axi_mosi.arsize,
+        S_AXI_HP0_arburst      => main_axi_mosi.arburst,
+        S_AXI_HP0_arlock       => (others => '0'),
+        S_AXI_HP0_arcache      => main_axi_mosi.arcache,
+        S_AXI_HP0_arprot       => main_axi_mosi.arprot,
+        S_AXI_HP0_arqos        => main_axi_mosi.arqos,
+        S_AXI_HP0_arvalid      => main_axi_mosi.arvalid,
+        S_AXI_HP0_arready      => main_axi_miso.arready,
+        S_AXI_HP0_rid(5 downto 1) => open,
+        S_AXI_HP0_rid(0)       => main_axi_miso.rid(0),
+        S_AXI_HP0_rdata        => main_axi_miso.rdata,
+        S_AXI_HP0_rresp        => main_axi_miso.rresp,
+        S_AXI_HP0_rlast        => main_axi_miso.rlast,
+        S_AXI_HP0_rvalid       => main_axi_miso.rvalid,
+        S_AXI_HP0_rready       => main_axi_mosi.rready
+    );
+    end generate;
+
+    -- ZYNQ should output some clock (100 MHz)
+    -- if this clock runs, led will blink
+    -- having no clock means non-functional zynq
+    process(FCLK_CLK0)
+    begin
+      if rising_edge(FCLK_CLK0) then
+        R_blinky <= R_blinky+1;
+      end if;
+    end process;
+    led(3) <= R_blinky(R_blinky'high);
 
 end Behavioral;

@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Product Version: Vivado v2016.1 (64-bit)              -->
+<!-- Product Version: Vivado v2016.2 (64-bit)              -->
 <!--                                                         -->
 <!-- Copyright 1986-2016 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="12" Path="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/zybo/zinq_xram_ddr3/esa11_f32c.xpr">
+<Project Version="7" Minor="14" Path="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/zybo/zinq_xram_ddr3/esa11_f32c.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="194bc42b8c8f49328288c86964539b6c"/>
     <Option Name="Part" Val="xc7z010clg400-1"/>
     <Option Name="CompiledLibDir" Val="$PCACHEDIR/compile_simlib"/>
     <Option Name="CompiledLibDirXSim" Val=""/>
-    <Option Name="CompiledLibDirModelSim" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/modelsim"/>
-    <Option Name="CompiledLibDirQuesta" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/questa"/>
-    <Option Name="CompiledLibDirIES" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/ies"/>
-    <Option Name="CompiledLibDirVCS" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/vcs"/>
-    <Option Name="CompiledLibDirRiviera" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/riviera"/>
-    <Option Name="CompiledLibDirActivehdl" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/activehdl"/>
+    <Option Name="CompiledLibDirModelSim" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/modelsim"/>
+    <Option Name="CompiledLibDirQuesta" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/questa"/>
+    <Option Name="CompiledLibDirIES" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/ies"/>
+    <Option Name="CompiledLibDirVCS" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/vcs"/>
+    <Option Name="CompiledLibDirRiviera" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/riviera"/>
+    <Option Name="CompiledLibDirActivehdl" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/activehdl"/>
     <Option Name="TargetLanguage" Val="VHDL"/>
     <Option Name="BoardPart" Val=""/>
     <Option Name="ActiveSimSet" Val="sim_fpga"/>
@@ -34,13 +34,13 @@
     <Option Name="WTVcsLaunchSim" Val="0"/>
     <Option Name="WTRivieraLaunchSim" Val="0"/>
     <Option Name="WTActivehdlLaunchSim" Val="0"/>
-    <Option Name="WTXSimExportSim" Val="17"/>
-    <Option Name="WTModelSimExportSim" Val="17"/>
-    <Option Name="WTQuestaExportSim" Val="17"/>
-    <Option Name="WTIesExportSim" Val="17"/>
-    <Option Name="WTVcsExportSim" Val="17"/>
-    <Option Name="WTRivieraExportSim" Val="17"/>
-    <Option Name="WTActivehdlExportSim" Val="17"/>
+    <Option Name="WTXSimExportSim" Val="20"/>
+    <Option Name="WTModelSimExportSim" Val="20"/>
+    <Option Name="WTQuestaExportSim" Val="20"/>
+    <Option Name="WTIesExportSim" Val="20"/>
+    <Option Name="WTVcsExportSim" Val="20"/>
+    <Option Name="WTRivieraExportSim" Val="20"/>
+    <Option Name="WTActivehdlExportSim" Val="20"/>
     <Option Name="GenerateIPUpgradeLog" Val="TRUE"/>
   </Configuration>
   <FileSets Version="1" Minor="31">
@@ -64,29 +64,9 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../soc/pid/simotor_v.v">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PPRDIR/../../../../cpu/shift.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../cpu/mul.vhd">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../soc/pid/rotary_decoder_v.v">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
@@ -96,13 +76,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../soc/fm/message.vhd">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../soc/fm/lowpass.vhd">
+      <File Path="$PPRDIR/../../../../cpu/mul.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -126,6 +100,44 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../../../generic/bptrace.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../cpu/alu.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/pid/simotor_v.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/pid/rotary_decoder_v.v">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/fm/message.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/fm/lowpass.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../../../soc/vgahdmi/font_block_pack.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -139,18 +151,6 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../generic/bptrace.vhd">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../cpu/alu.vhd">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PPRDIR/../../../../generic/bram_true2p_2clk.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -158,6 +158,12 @@
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../../../../generic/bootloader/defs_bootblock.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../cpu/pipeline.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -194,12 +200,6 @@
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../../../../soc/fm/rds.vhd">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PPRDIR/../../../../cpu/pipeline.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -271,17 +271,24 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../../../soc/axi_pack.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/vgahdmi/video_mode_pack.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PSRCDIR/sources_1/bd/zinq_ram/zinq_ram.bd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
-        <CompFileExtendedInfo CompFileName="zinq_ram.bd" FileRelPathName="ip/zinq_ram_processing_system7_0_0/zinq_ram_processing_system7_0_0.xci"/>
-        <CompFileExtendedInfo CompFileName="zinq_ram.bd" FileRelPathName="zinq_ram_ooc.xdc"/>
-        <CompFileExtendedInfo CompFileName="zinq_ram.bd" FileRelPathName="hdl/zinq_ram.hwdef"/>
-        <CompFileExtendedInfo CompFileName="zinq_ram.bd" FileRelPathName="hw_handoff/zinq_ram.hwh"/>
-        <CompFileExtendedInfo CompFileName="zinq_ram.bd" FileRelPathName="hw_handoff/zinq_ram_bd.tcl"/>
       </File>
       <File Path="$PPRDIR/../../../../xilinx/zybo/ram/glue/cache_table.vhd">
         <FileInfo>
@@ -410,12 +417,6 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../cpu/cache_generic_param.vhd">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PPRDIR/../../../../generic/bram.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -429,6 +430,42 @@
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../../../../soc/vgahdmi/vga2lcd.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/vgahdmi/tv.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/axi_read.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/vgahdmi/video_cache_d.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/vgahdmi/video_cache_i.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../soc/axiram.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../cpu/cache.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -544,9 +581,7 @@
     </Run>
     <Run Id="clk_d100_100_200_250_25MHz_synth_1" Type="Ft3:Synth" SrcSet="clk_d100_100_200_250_25MHz" Part="xc7z010clg400-1" ConstrsSet="clk_d100_100_200_250_25MHz" Description="Vivado Synthesis Defaults" Dir="$PRUNDIR/clk_d100_100_200_250_25MHz_synth_1" IncludeInArchive="true">
       <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2016">
-          <Desc>Vivado Synthesis Defaults</Desc>
-        </StratHandle>
+        <StratHandle Name="Vivado Synthesis Defaults" Flow="Vivado Synthesis 2016"/>
         <Step Id="synth_design"/>
       </Strategy>
       <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
@@ -568,9 +603,7 @@
     </Run>
     <Run Id="clk_d100_100_200_250_25MHz_impl_1" Type="Ft2:EntireDesign" Part="xc7z010clg400-1" ConstrsSet="clk_d100_100_200_250_25MHz" Description="Default settings for Implementation." SynthRun="clk_d100_100_200_250_25MHz_synth_1" IncludeInArchive="false">
       <Strategy Version="1" Minor="2">
-        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2016">
-          <Desc>Default settings for Implementation.</Desc>
-        </StratHandle>
+        <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2016"/>
         <Step Id="init_design"/>
         <Step Id="opt_design"/>
         <Step Id="power_opt_design"/>
