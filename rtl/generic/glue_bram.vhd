@@ -281,6 +281,7 @@ begin
     process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio)
 	variable i: integer;
     begin
+	io_to_cpu <= (others => '-');
 	case conv_integer(io_addr(11 downto 4)) is
 	when 16#00# to 16#07# =>
 	    for i in 0 to C_gpios - 1 loop

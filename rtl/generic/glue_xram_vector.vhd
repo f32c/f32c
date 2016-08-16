@@ -914,7 +914,7 @@ begin
     process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio, from_vga_textmode)
         variable i: integer;
     begin
-        -- io_to_cpu <= (others => '-');
+        io_to_cpu <= (others => '-');
         case conv_integer(io_addr(11 downto 4)) is
         when iomap_from(iomap_gpio, iomap_range) to iomap_to(iomap_gpio, iomap_range) =>
             for i in 0 to C_gpios - 1 loop

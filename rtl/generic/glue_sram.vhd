@@ -517,30 +517,23 @@ begin
     process(io_addr, R_simple_in, from_sio, from_spi,
       from_gpio, from_timer)
     begin
+	io_to_cpu <= (others => '-');
 	case conv_integer(io_addr(11 downto 4)) is
 	when iomap_from(iomap_gpio, iomap_range) to iomap_to(iomap_gpio, iomap_range) =>
 	    if C_gpio then
 		io_to_cpu <= from_gpio;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;	
 	when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range)  =>
 	    if C_timer then
 		io_to_cpu <= from_timer;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
 	when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range)  =>
 	    if C_sio then
 		io_to_cpu <= from_sio;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
 	when  iomap_from(iomap_pid, iomap_range) to iomap_to(iomap_pid, iomap_range) => -- address 0xFFFFFD80
 	    if C_pid then
 		io_to_cpu <= from_pid;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
 	when iomap_from(iomap_spi, iomap_range) to iomap_to(iomap_spi, iomap_range) =>
 	    for i in 0 to C_spi - 1 loop
@@ -565,14 +558,10 @@ begin
 	when iomap_from(iomap_pcm, iomap_range) to iomap_to(iomap_pcm, iomap_range) =>
 	    if C_pcm then
 		io_to_cpu <= from_pcm;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
 	when iomap_from(iomap_fmrds, iomap_range) to iomap_to(iomap_fmrds, iomap_range)  =>
 	    if C_fmrds then
 		io_to_cpu <= from_fmrds;
-	    else
-		io_to_cpu <= (others => '-');
 	    end if;
 	when others =>
 	    io_to_cpu <= (others => '-');
