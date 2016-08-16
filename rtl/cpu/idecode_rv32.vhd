@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2014 Marko Zec, University of Zagreb
+-- Copyright (c) 2014, 2016 Marko Zec, University of Zagreb
 -- All rights reserved.
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -139,7 +139,7 @@ begin
 	flush_i_line <= '0';
 	flush_d_line <= '0';
 	mult <= false;
-	mult_signed <= false;
+	mult_signed <= true;
 	madd <= false;
 	mul_compound <= false;
 	mthi <= false;
@@ -298,6 +298,13 @@ begin
 	    when others =>
 		-- nothing to do here, just appease ISE warnings
 	    end case;
+	    if C_mul_reg and instruction(25) = '1' then
+		mult <= true;
+		mul_compound <= true;
+		op_major <= OP_MAJOR_ALT;
+		alt_sel <= ALT_LO;
+		read_alt <= C_mul_reg;
+	    end if;
 	when RV32I_OP_SYS =>
 	    read_alt <= true;
 	    alt_sel <= ALT_COP0;
