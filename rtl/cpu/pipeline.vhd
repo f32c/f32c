@@ -1383,7 +1383,7 @@ begin
     EX_mul_start <= (not C_cache or dmem_cache_wait = '0')
       and ID_EX_mult and not MEM_cancel_EX and not EX_MEM_EIP
       and (not C_mul_acc or not ID_EX_madd or R_mul_done)
-      and (ID_EX_alt_sel /= ALT_LO or ID_EX_mul_compound);
+      and (ID_EX_alt_sel /= ALT_LO or ID_EX_mul_compound or ID_EX_madd);
     multiplier: entity work.mul
     port map (
 	clk => clk, clk_enable => clk_enable, start => EX_mul_start,
