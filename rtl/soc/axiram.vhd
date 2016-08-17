@@ -207,7 +207,7 @@ begin
     axi_out.arsize  <= "010";  -- 32 bits, resp. 4 bytes
     axi_out.arburst <= "01";   -- burst type INCR - Incrementing address
     axi_out.arlock  <= '0';    -- Exclusive access not supported
-    axi_out.arcache <= "0011"; -- Xilinx IP generally ignores, but 'modifiable'[1] bit required?
+    axi_out.arcache <= "1111"; -- Xilinx IP generally ignores, but 'modifiable'[1] bit required?
     axi_out.arprot  <= "000";  -- Xilinx IP generally ignores
     axi_out.arqos   <= "0000"; -- QOS not supported
     axi_out.rready  <= '1';    -- always ready to read data
@@ -220,7 +220,7 @@ begin
     axi_out.awsize  <= "010";  -- 32 bits, resp. 4 bytes
     axi_out.awburst <= "01";   -- burst type INCR - Incrementing address
     axi_out.awlock  <= '0';    -- Exclusive access not supported
-    axi_out.awcache <= "0011"; -- Xilinx IP generally ignores
+    axi_out.awcache <= "1111"; -- Xilinx IP generally ignores
     axi_out.awprot  <= "000";  -- Xilinx IP generally ignores
     axi_out.awqos   <= "0000"; -- QOS not supported
     axi_out.bready  <= '1';    -- always ready to read write response (response otherwise ignored)
