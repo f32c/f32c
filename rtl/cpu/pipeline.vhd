@@ -385,8 +385,7 @@ begin
 
     IF_PC_next <=
       EX_branch_target when
-	C_reg_IF_PC and (MEM_running and EX_running) and
-	(EX_take_branch xor ID_EX_predict_taken)
+	C_reg_IF_PC and EX_running and (EX_take_branch xor ID_EX_predict_taken)
       else IF_PC + 1 when
 	MEM_take_branch and not IF_need_refetch and ID_running
       else IF_PC when
