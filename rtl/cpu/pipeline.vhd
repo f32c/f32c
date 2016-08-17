@@ -859,7 +859,8 @@ begin
     --
 
     EX_running <= MEM_running and not (C_exceptions and ID_EX_wait)
-      and (not C_mult_enable or (R_mul_done and not ID_EX_mul_compound) or
+      and (not C_mult_enable or MEM_cancel_EX
+      or (R_mul_done and not ID_EX_mul_compound) or
       (ID_EX_alt_sel /= ALT_HI and ID_EX_alt_sel /= ALT_LO));
 
     -- forward the results from later stages
