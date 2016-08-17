@@ -569,8 +569,9 @@
           <spirit:configurableElementValue spirit:referenceId="PCW_USE_CORESIGHT">0</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="PCW_S_AXI_HP0_DATA_WIDTH">32</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="PCW_EN_CLK1_PORT">0</spirit:configurableElementValue>
-          <spirit:configurableElementValue spirit:referenceId="PCW_UIPARAM_DDR_BUS_WIDTH">32 Bit</spirit:configurableElementValue>
-          <spirit:configurableElementValue spirit:referenceId="PCW_UIPARAM_DDR_BL">4</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="PCW_UIPARAM_DDR_ADV_ENABLE">0</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="PCW_UIPARAM_DDR_BUS_WIDTH">16 Bit</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="PCW_UIPARAM_DDR_BL">8</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="PCW_UIPARAM_DDR_PARTNO">MT41K128M16 JT-125</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="PCW_UIPARAM_DDR_USE_INTERNAL_VREF">1</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="PCW_ENET0_PERIPHERAL_ENABLE">0</spirit:configurableElementValue>

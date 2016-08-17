@@ -10,12 +10,12 @@
     <Option Name="Part" Val="xc7z010clg400-1"/>
     <Option Name="CompiledLibDir" Val="$PCACHEDIR/compile_simlib"/>
     <Option Name="CompiledLibDirXSim" Val=""/>
-    <Option Name="CompiledLibDirModelSim" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/modelsim"/>
-    <Option Name="CompiledLibDirQuesta" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/questa"/>
-    <Option Name="CompiledLibDirIES" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/ies"/>
-    <Option Name="CompiledLibDirVCS" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/vcs"/>
-    <Option Name="CompiledLibDirRiviera" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/riviera"/>
-    <Option Name="CompiledLibDirActivehdl" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/activehdl"/>
+    <Option Name="CompiledLibDirModelSim" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/modelsim"/>
+    <Option Name="CompiledLibDirQuesta" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/questa"/>
+    <Option Name="CompiledLibDirIES" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/ies"/>
+    <Option Name="CompiledLibDirVCS" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/vcs"/>
+    <Option Name="CompiledLibDirRiviera" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/riviera"/>
+    <Option Name="CompiledLibDirActivehdl" Val="$PPRDIR/../../../../../../../../../../../../../../../../../../../../../../../../../../../../../../mt/xilinx/rootfs/opt/Xilinx/Vivado/2016.1/esa11/7a35i_xram_hdmi/esa11_f32c.cache/compile_simlib/activehdl"/>
     <Option Name="TargetLanguage" Val="VHDL"/>
     <Option Name="BoardPart" Val=""/>
     <Option Name="ActiveSimSet" Val="sim_fpga"/>
@@ -34,13 +34,13 @@
     <Option Name="WTVcsLaunchSim" Val="0"/>
     <Option Name="WTRivieraLaunchSim" Val="0"/>
     <Option Name="WTActivehdlLaunchSim" Val="0"/>
-    <Option Name="WTXSimExportSim" Val="22"/>
-    <Option Name="WTModelSimExportSim" Val="22"/>
-    <Option Name="WTQuestaExportSim" Val="22"/>
-    <Option Name="WTIesExportSim" Val="22"/>
-    <Option Name="WTVcsExportSim" Val="22"/>
-    <Option Name="WTRivieraExportSim" Val="22"/>
-    <Option Name="WTActivehdlExportSim" Val="22"/>
+    <Option Name="WTXSimExportSim" Val="27"/>
+    <Option Name="WTModelSimExportSim" Val="27"/>
+    <Option Name="WTQuestaExportSim" Val="27"/>
+    <Option Name="WTIesExportSim" Val="27"/>
+    <Option Name="WTVcsExportSim" Val="27"/>
+    <Option Name="WTRivieraExportSim" Val="27"/>
+    <Option Name="WTActivehdlExportSim" Val="27"/>
     <Option Name="GenerateIPUpgradeLog" Val="TRUE"/>
   </Configuration>
   <FileSets Version="1" Minor="31">
@@ -290,11 +290,11 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
         <CompFileExtendedInfo CompFileName="zinq_ram.bd" FileRelPathName="ip/zinq_ram_processing_system7_0_0/zinq_ram_processing_system7_0_0.xci"/>
-        <CompFileExtendedInfo CompFileName="zinq_ram.bd" FileRelPathName="hdl/zinq_ram.vhd"/>
         <CompFileExtendedInfo CompFileName="zinq_ram.bd" FileRelPathName="hw_handoff/zinq_ram.hwh"/>
-        <CompFileExtendedInfo CompFileName="zinq_ram.bd" FileRelPathName="hw_handoff/zinq_ram_bd.tcl"/>
         <CompFileExtendedInfo CompFileName="zinq_ram.bd" FileRelPathName="hdl/zinq_ram.hwdef"/>
+        <CompFileExtendedInfo CompFileName="zinq_ram.bd" FileRelPathName="hw_handoff/zinq_ram_bd.tcl"/>
         <CompFileExtendedInfo CompFileName="zinq_ram.bd" FileRelPathName="zinq_ram_ooc.xdc"/>
+        <CompFileExtendedInfo CompFileName="zinq_ram.bd" FileRelPathName="hdl/zinq_ram.vhd"/>
       </File>
       <File Path="$PPRDIR/../../../../xilinx/zybo/ram/glue/cache_table.vhd">
         <FileInfo>

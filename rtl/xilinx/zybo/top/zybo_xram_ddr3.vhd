@@ -60,8 +60,8 @@ entity zybo_xram_ddr3 is
 
         -- warning: 2K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
         -- no errors for 4K or 8K
-        C_icache_size: integer := 0; -- 0, 2, 4, 8, 16, 32 KBytes
-        C_dcache_size: integer := 0; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 2^29 -> 512MB to be cached
 
         C_DDR3_DQ_PINS        : integer := 32;
@@ -598,7 +598,7 @@ begin
         -- port l00
         S_AXI_HP0_aclk         => clk, -- f32c cpu clock to axi slave
         S_AXI_HP0_awid         => (others => '0'),
-        S_AXI_HP0_awaddr       => main_axi_mosi.awaddr,
+        S_AXI_HP0_awaddr       => x"0" & '1' & main_axi_mosi.awaddr(25 downto 0) & '0', -- drty fix
         S_AXI_HP0_awlen        => main_axi_mosi.awlen(3 downto 0),
         S_AXI_HP0_awsize       => main_axi_mosi.awsize,
         S_AXI_HP0_awburst      => main_axi_mosi.awburst,
@@ -620,7 +620,7 @@ begin
         S_AXI_HP0_bvalid       => main_axi_miso.bvalid,
         S_AXI_HP0_bready       => main_axi_mosi.bready,
         S_AXI_HP0_arid         => (others => '0'),
-        S_AXI_HP0_araddr       => main_axi_mosi.araddr,
+        S_AXI_HP0_araddr       => x"0" & '1' & main_axi_mosi.araddr(25 downto 0) & '0', -- drty fix
         S_AXI_HP0_arlen        => main_axi_mosi.arlen(3 downto 0),
         S_AXI_HP0_arsize       => main_axi_mosi.arsize,
         S_AXI_HP0_arburst      => main_axi_mosi.arburst,
