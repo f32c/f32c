@@ -7,9 +7,7 @@ Normally ZYBO RAM is used by PS .
     PL = f32c softcore in VHDL
     PS = ARM hardcore aka ZYNQ)
 
-This is an attempt, it compiles but does not work.
-
-A minimum ZINQ is instantiated with one general
+A minimum ZYNQ is instantiated with one general
 purpose slave AXI port. This port should be accessed
 by axi_cache.
 
@@ -25,18 +23,51 @@ then click generate bitstream on bottom of left window
 
 To reconfigure ZYNQ, click on left window Open Block Design
 
+
+Use zynq default DDR3 options (don't change anything
+except zynq core clock to 525 MHz (default is 533.333 MHz)
+
+Disable GP0 port.
+Double click to ZYNQ shematic box and enable HP0 port 
+(high performance port 0)
+
+Make all needed ports externally accessible.
+
+In address editor tab, select HP0 mapping range
+0x0000_0000 size 32MB to 0x03FF_FFFF
+Address editor tap *should* be on titlebar
+of the window in which ZYNQ schematic box is shown.
+
+Right click on zynq box and "Validate design".
+Should pass with no errors.
+
+On sources, navigate to zynq instance and 
+click "make HDL wrapper" and "generate output products"
+
+Recompile bitstream
+
 # Bitstream works
 
-It shows fading leds, it displays HDMI test picture,
-a blink led can be uploaded to BRAM and it works
+Board must first boot to linux. Select jumper
+SD/QSPI/JTAG to QSPI possition (jumper in the middle)
+
+Power the board, yellow TX/RX should blink as linux
+print boot messages and green MIO7 will light for several seconds 
+and when it turns off, linux has mostly booted.
+
+Then upload bitstream over JTAG.
+
+It shows fading leds, and LED3 has to blink, indicating
+that ZYNQ is clocked.
+
+Bitstream also displays HDMI test picture,
 
 # Problems
 
-No RAM ready signal, first write to ram will stop f32c CPU.
+Some dirtyness fixes in address.
+I have not exported hardware design to SDK and compiled
+my own FSBL or linux, but used stock installation from
+factory. 
 
-In toplevel module, some vector sizes between axi_cache and the ZINQ
-are different so ti is just crudely adapted just for compil to pass
-without much in-depth thinking of any meaning of them.
-
-I'm not sure is axi and zynq clocked correctly either.
-
+Those steps may be needed to reconfigure ZYNQ into 
+more suitable DDR3 behaviour and clocks
