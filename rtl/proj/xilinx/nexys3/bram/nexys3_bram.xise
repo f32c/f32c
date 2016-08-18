@@ -78,7 +78,7 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="34"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="26"/>
     </file>
-    <file xil_pn:name="../../../../xilinx/clkgen_nexys3.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="../../../../xilinx/nexys3/clkgen_nexys3.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="35"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="24"/>
     </file>
