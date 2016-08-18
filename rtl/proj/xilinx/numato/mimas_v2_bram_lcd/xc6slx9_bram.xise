@@ -19,7 +19,7 @@
     <file xil_pn:name="../../../cpu/loadalign.vhd" xil_pn:type="FILE_VHDL"/>
     <file xil_pn:name="../../../cpu/pipeline.txt" xil_pn:type="FILE_USERDOC"/>
     <file xil_pn:name="../../../cpu/shift.vhd" xil_pn:type="FILE_VHDL"/>
-    <file xil_pn:name="../../../cpu/mul.vhd" xil_pn:type="FILE_VHDL"/>
+    <file xil_pn:name="../../../cpu/mul_iter.vhd" xil_pn:type="FILE_VHDL"/>
     <file xil_pn:name="../../../generic/bptrace.vhd" xil_pn:type="FILE_VHDL"/>
     <file xil_pn:name="../../../generic/reg1w2r.vhd" xil_pn:type="FILE_VHDL"/>
     <file xil_pn:name="../../s6_numato_mimas_v2_toplevel_bram.vhd" xil_pn:type="FILE_VHDL"/>
