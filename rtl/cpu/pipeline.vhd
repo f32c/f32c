@@ -648,6 +648,9 @@ begin
     begin
 	if rising_edge(clk) and clk_enable = '1'
 	  and (not C_cache or dmem_cache_wait = '0') then
+	    if MEM_take_branch and not ID_running and IF_fetch_complete then
+		ID_EX_cancel_next <= true;
+	    end if;
 	    if C_mult_enable then
 		ID_EX_mul_compound <= false;
 	    end if;
@@ -664,10 +667,6 @@ begin
 		    ID_EX_shift_funct <= OP_SHIFT_RL;
 		    if not EX_MEM_multicycle_lh_lb then
 			ID_EX_shift_amount <=  EX_mem_align_shamt & "000";
-		    end if;
-		    if MEM_take_branch and not ID_running and
-		      IF_fetch_complete then
-			ID_EX_cancel_next <= true;
 		    end if;
 		    if ID_running or EX_MEM_EIP then
 			ID_EX_cancel_next <= false;
@@ -698,10 +697,6 @@ begin
 		    ID_EX_branch_cycle <= false;
 		    ID_EX_branch_likely <= false;
 		    ID_EX_predict_taken <= false;
-		    if MEM_take_branch and not ID_running and
-		      IF_fetch_complete then
-			ID_EX_cancel_next <= true;
-		    end if;
 		    if ID_running or EX_MEM_EIP then
 			ID_EX_cancel_next <= false;
 		    end if;
