@@ -43,10 +43,10 @@ entity scarab_xram_sdram is
     -- ISA: either ARCH_MI32 or ARCH_RV32
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
-    C_exceptions: boolean := false; -- false:disable interrupts, true:Vector spartan-6 routes too long
+    C_exceptions: boolean := true; -- false:disable interrupts, true:Vector spartan-6 routes too long
 
     -- Main clock: 25/50/75/81/83/96/100/111/112/125
-    C_clk_freq: integer := 83;
+    C_clk_freq: integer := 100;
     C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
@@ -159,7 +159,7 @@ entity scarab_xram_sdram is
         C_pid_precision: integer := 1;
         C_pid_pwm_bits: integer := 12;
         
-      C_timer: boolean := false; -- no timer, vector won't route on xc6slx25
+      C_timer: boolean := true; -- no timer, vector won't route on xc6slx25
 
       C_gpio: integer := 32
   );
