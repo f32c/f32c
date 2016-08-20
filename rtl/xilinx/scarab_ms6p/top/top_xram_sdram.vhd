@@ -334,7 +334,7 @@ begin
       C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
-      C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
+--      C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
       -- led strip simple compositing bitmap only graphics
       C_ledstrip => C_ledstrip,
       C_ledstrip_fifo_width => C_ledstrip_fifo_width,

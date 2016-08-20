@@ -20,6 +20,9 @@ vfiles = \
 ../../../../soc/pid/simotor_v.v \
 ../../../../soc/pid/rotary_decoder_v.v \
 
+txtfiles = \
+../../../../soc/vgahdmi/vga_textmode_regs.txt \
+
 vhdfiles = \
 ../../../../xilinx/scarab_ms6p/top/top_xram_bram.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_112M5.vhd \
@@ -36,7 +39,6 @@ vhdfiles = \
 ../../../../xilinx/chip/xc6/ddr_out.vhd \
 ../../../../generic/ddr_out.vhd \
 ../../../../generic/glue_xram.vhd \
-../../../../generic/ddr_out.vhd \
 ../../../../generic/bram.vhd \
 ../../../../generic/bootloader/defs_bootblock.vhd \
 ../../../../generic/bootloader/boot_sio_mi32el.vhd \
@@ -47,7 +49,6 @@ vhdfiles = \
 ../../../../generic/bram_true2p_2clk.vhd \
 ../../../../generic/bptrace.vhd \
 ../../../../generic/reg1w2r.vhd \
-../../../../generic/bram_video.vhd \
 ../../../../cpu/alu.vhd \
 ../../../../cpu/loadalign.vhd \
 ../../../../cpu/pipeline.vhd \
@@ -91,6 +92,7 @@ vhdfiles = \
 ../../../../soc/vgahdmi/videofifo.vhd \
 ../../../../soc/vgahdmi/video_cache_i.vhd \
 ../../../../soc/vgahdmi/video_cache_d.vhd \
+../../../../soc/vgahdmi/video_mode_pack.vhd \
 ../../../../soc/vgahdmi/vga.vhd \
 ../../../../soc/vgahdmi/tv.vhd \
 ../../../../soc/cvbs.vhd \
