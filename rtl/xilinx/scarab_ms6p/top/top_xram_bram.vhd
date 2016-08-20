@@ -41,7 +41,7 @@ entity scarab_xram_sdram is
   generic
   (
     -- ISA: either ARCH_MI32 or ARCH_RV32
-    C_arch: integer := ARCH_RV32;
+    C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
 
     -- Main clock: 50/81/83/96/100/111/112/125
