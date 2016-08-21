@@ -77,6 +77,7 @@ independenty and parallel from 2 different functional units.
 Functional unit does elementary arithmetic operation taking
 2 arguments as input and providing one result as output, or does
 I/O to RAM. There are 4 functional units:
+
     unit 0: A+B or A-B addition or subtraction
     unit 1: A*B multiplication
     unit 2: A/B division
