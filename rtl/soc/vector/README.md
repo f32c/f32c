@@ -37,7 +37,7 @@ Speed recommendations:
 Status of the vector processor:
 
     * 4 x 32-bit MMIO control and interrupt registers
-    * 8 x uint32_t[2048] dual-port BRAM vector registers
+    * 8 x float[2048] dual-port BRAM vector registers
     * I/O load and store using AXI RAM DMA burst
       can run parallel with arithmetic operations
     * 3 x 32-bit floating point functional units:
@@ -66,3 +66,50 @@ Todo:
       number of vectors
       maximum vector size
       bitmap of functional units enabled
+
+# Architecture
+
+
+Each vector register is made of one BRAM block
+Each BRAM block has two ports which can read or write content
+independenty and parallel from 2 different functional blocks.
+
+Functional block does elementary arithmetic operation taking
+2 arguments as input and providing one result as output, or does
+I/O to RAM.
+There are 4 functional units:
+    unit 0: A+B or A-B addition or subtraction
+    unit 1: A*B multiplication
+    unit 2: A/B division
+    unit 3: I/O move to RAM
+
+From MMIO command interface vector registers are accessed 
+by number of the vector register port, having 2 ports for the same
+register.
+
+Vector register ports are numbered from 0 to 2*number_of_registers-1
+Adjacent even and odd numbers represent 2 different ports, actually
+2 aliases of the same vector. For example both port 0 and port 1
+access the first vector, port 2 and port 3 the second etc.
+
+Each alias can independently address a "from-to" range of elements
+of the same vector. Ranges can be any: identical, disjunct, overlapping
+or single-element, when "from" = "to".
+
+This makes it possible to combine independed functional units
+for example: parallel run, chaining, or using 2 different ranges 
+of the same vector as arguments.
+
+Range is set to a vector port by MMIO command.
+Range is internal property of a vector port, once set, vector port 
+keeps "from-to" value in internal memory, until new value is set.
+Range can be only written (set) but can't be read.
+
+Each arithmetic vector operation is a form of binary operation on
+vector ports, processing each-to-each element in the range:
+V[0] = V[2] + V[4]
+
+If result vector has more elements (is longer) than one (or both) of the argument vectors,
+then the LAST ELEMENT in the range of the short argument will be REPEATED.
+Thus a constant-to-vector operation is possible by setting one of the
+vector range as single element: "from"="to"
