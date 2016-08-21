@@ -72,12 +72,11 @@ Todo:
 
 Each vector register is made of one BRAM block
 Each BRAM block has two ports which can read or write content
-independenty and parallel from 2 different functional blocks.
+independenty and parallel from 2 different functional units.
 
-Functional block does elementary arithmetic operation taking
+Functional unit does elementary arithmetic operation taking
 2 arguments as input and providing one result as output, or does
-I/O to RAM.
-There are 4 functional units:
+I/O to RAM. There are 4 functional units:
     unit 0: A+B or A-B addition or subtraction
     unit 1: A*B multiplication
     unit 2: A/B division
