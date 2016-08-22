@@ -55,12 +55,18 @@ entity zybo_xram_ddr3 is
         C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
     C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
-    C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 7:1280x1024
+    C_video_mode: integer := 3; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 7:1280x1024
 
     C_vgahdmi: boolean := true;
+      C_vgahdmi_axi: boolean := true; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
+      C_vgahdmi_cache_size: integer := 8; -- KB video cache (only on f32c bus) (0: disable, 2,4,8,16,32:enable)
+      C_vgahdmi_fifo_timeout: integer := 0;
+      C_vgahdmi_fifo_burst_max: integer := 2; -- 64 works for MIG
+      -- output data width 8bpp
+      C_vgahdmi_fifo_data_width: integer := 8; -- should be equal to bitmap depth
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
-      C_vgatext_label: string := "f32c: ESA11-7a35i MIPS compatible soft-core 100MHz 32MB DDR3"; -- default banner in screen memory
+      C_vgatext_label: string := "f32c: ZYBO-7z010 MIPS compatible soft-core 100MHz 32MB DDR3"; -- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480
       C_vgatext_bits: integer := 4;   -- 64 possible colors
       C_vgatext_bram_mem: integer := 0;   -- KB (0: bram disabled -> use RAM)
@@ -163,7 +169,7 @@ architecture Behavioral of zybo_xram_ddr3 is
     signal clk_locked: std_logic := '0';
     signal cfgmclk: std_logic;
 
-    component clk_d100_100_200_250_25MHz is
+    component clk_125_100_200_250_25MHz is
     Port (
       clk_125mhz_in : in STD_LOGIC;
       clk_100mhz : out STD_LOGIC;
@@ -173,9 +179,9 @@ architecture Behavioral of zybo_xram_ddr3 is
       reset : in STD_LOGIC;
       locked : out STD_LOGIC
     );
-    end component clk_d100_100_200_250_25MHz;
+    end component;
 
-    component clk_125_25_100_125_200MHz is
+    component clk_125_100_200_125_25MHz is
     Port (
       clk_125mhz_in: in STD_LOGIC;
       clk_25mhz: out STD_LOGIC;
@@ -187,7 +193,42 @@ architecture Behavioral of zybo_xram_ddr3 is
     );
     end component;
 
-    component clk_125_50_100_200_250MHz is
+    component clk_125_100_200_150_30MHz is
+    Port (
+      clk_125mhz_in : in STD_LOGIC;
+      clk_100mhz : out STD_LOGIC;
+      clk_200mhz : out STD_LOGIC;
+      clk_150mhz : out STD_LOGIC;
+      clk_30mhz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
+    );
+    end component;
+
+    component clk_125_100_200_40MHz is
+    Port (
+      clk_125mhz_in : in STD_LOGIC;
+      clk_100mhz : out STD_LOGIC;
+      clk_200mhz : out STD_LOGIC;
+      clk_40mhz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
+    );
+    end component;
+
+    component clk_125_100_112_225_45MHz is
+    Port (
+      clk_125mhz_in : in STD_LOGIC;
+      clk_100mhz : out STD_LOGIC;
+      clk_225mhz : out STD_LOGIC;
+      clk_112m5hz : out STD_LOGIC;
+      clk_45mhz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
+    );
+    end component;
+
+    component clk_125_100_200_250_50MHz is
     Port (
       clk_125mhz_in: in STD_LOGIC;
       clk_50mhz: out STD_LOGIC;
@@ -196,6 +237,29 @@ architecture Behavioral of zybo_xram_ddr3 is
       clk_200mhz: out STD_LOGIC;
       reset: in STD_LOGIC;
       locked: out STD_LOGIC
+    );
+    end component;
+
+    component clk_125_108_216_325_65MHz is
+    Port (
+      clk_125mhz_in : in STD_LOGIC;
+      clk_108m333hz : out STD_LOGIC;
+      clk_216m666hz : out STD_LOGIC;
+      clk_325mhz : out STD_LOGIC;
+      clk_65mhz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
+    );
+    end component;
+
+    component clk_125_108_216_541MHz is
+    Port (
+      clk_125mhz_in : in STD_LOGIC;
+      clk_108m333hz : out STD_LOGIC;
+      clk_216m666hz : out STD_LOGIC;
+      clk_541m666hz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
     );
     end component;
 
@@ -260,7 +324,7 @@ architecture Behavioral of zybo_xram_ddr3 is
     signal main_axi_mosi: T_axi_mosi;
     
     -- video axi port
-    signal video_axi_areset_n: std_logic := '1';
+    signal video_axi_aresetn: std_logic := '1';
     signal video_axi_aclk: std_logic;
     signal video_axi_miso: T_axi_miso;
     signal video_axi_mosi: T_axi_mosi;
@@ -288,7 +352,7 @@ architecture Behavioral of zybo_xram_ddr3 is
     signal disp_7seg_segment: std_logic_vector(7 downto 0);
 begin
     cpu100M_sdr_640x480: if C_clk_freq = 100 and not C_dvid_ddr and C_video_mode=1 generate
-    clk_cpu100M_sdr_640x480: clk_d100_100_200_250_25MHz
+    clk_cpu100M_sdr_640x480: clk_125_100_200_250_25MHz
     port map(clk_125mhz_in => clk_125m,
              reset => '0',
              locked => clk_locked,
@@ -301,10 +365,11 @@ begin
     clk_pixel <= clk_25MHz;
     clk_pixel_shift <= clk_250MHz;
     video_axi_aclk <= clk_200MHz;
+    clk_axi <= clk_200MHz;
     end generate;
 
-    cpu100M_ddr_640x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=1 generate
-    clk_cpu100M_ddr_640x480: clk_125_25_100_125_200MHz
+    cpu100M_ddr_640x360: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=0 generate
+    clk_cpu100M_ddr_640x360: clk_125_100_200_125_25MHz
     port map(clk_125mhz_in => clk_125m,
              reset => '0',
              locked => clk_locked,
@@ -320,8 +385,58 @@ begin
     clk_axi <= clk_200MHz;
     end generate;
 
+    cpu100M_ddr_640x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=1 generate
+    clk_cpu100M_ddr_640x480: clk_125_100_200_125_25MHz
+    port map(clk_125mhz_in => clk_125m,
+             reset => '0',
+             locked => clk_locked,
+             clk_100mhz => clk_100MHz,
+             clk_200mhz => clk_200MHz,
+             clk_125mhz => clk_125MHz,
+             clk_25mhz  => clk_25MHz
+    );
+    clk <= clk_100MHz;
+    clk_pixel <= clk_25MHz;
+    clk_pixel_shift <= clk_125MHz;
+    video_axi_aclk <= clk_200MHz;
+    clk_axi <= clk_200MHz;
+    end generate;
+
+    cpu100M_ddr_800x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=2 generate
+    clk_cpu100M_ddr_800x480: clk_125_100_200_150_30MHz
+    port map(clk_125mhz_in => clk_125m,
+             reset => '0',
+             locked => clk_locked,
+             clk_100mhz => clk_100MHz,
+             clk_200mhz => clk_200MHz,
+             clk_150mhz => clk_150MHz,
+             clk_30mhz  => clk_30MHz
+    );
+    clk <= clk_100MHz;
+    clk_pixel <= clk_30MHz;
+    clk_pixel_shift <= clk_150MHz;
+    video_axi_aclk <= clk_200MHz;
+    clk_axi <= clk_200MHz;
+    end generate;
+
+    cpu100M_ddr_800x600: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=3 generate
+    clk_cpu100M_ddr_800x600: clk_125_100_200_40MHz
+    port map(clk_125mhz_in => clk_125m,
+             reset => '0',
+             locked => clk_locked,
+             clk_100mhz => clk_100MHz,
+             clk_200mhz => clk_200MHz,
+             clk_40mhz  => clk_40MHz
+    );
+    clk <= clk_100MHz;
+    clk_pixel <= clk_40MHz;
+    clk_pixel_shift <= clk_200MHz;
+    video_axi_aclk <= clk_200MHz;
+    clk_axi <= clk_200MHz;
+    end generate;
+
     cpu100M_ddr_1024x576: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=4 generate
-    clk_cpu100M_ddr_1024x576: clk_125_50_100_200_250MHz
+    clk_cpu100M_ddr_1024x576: clk_125_100_200_250_50MHz
     port map(clk_125mhz_in => clk_125m,
              reset => '0',
              locked => clk_locked,
@@ -335,6 +450,39 @@ begin
     clk_pixel_shift <= clk_250MHz;
     video_axi_aclk <= clk_200MHz;
     clk_axi <= clk_200MHz;
+    end generate;
+
+    cpu108M_ddr_1024x768: if C_clk_freq = 108 and C_dvid_ddr and C_video_mode=5 generate
+    clk_cpu108M_ddr_1024x768: clk_125_108_216_325_65MHz
+    port map(clk_125mhz_in => clk_125m,
+             reset => '0',
+             locked => clk_locked,
+             clk_108m333hz => clk_108MHz,
+             clk_216m666hz => clk_216MHz,
+             clk_325mhz => clk_325MHz,
+             clk_65mhz  => clk_65MHz
+    );
+    clk <= clk_108MHz;
+    clk_pixel <= clk_65MHz;
+    clk_pixel_shift <= clk_325MHz;
+    video_axi_aclk <= clk_216MHz;
+    clk_axi <= clk_216MHz;
+    end generate;
+
+    cpu108M_ddr_1280x1024: if C_clk_freq = 108 and C_dvid_ddr and C_video_mode=7 generate
+    clk_cpu108M_ddr_1280x1024: clk_125_108_216_541MHz
+    port map(clk_125mhz_in => clk_125m,
+             reset => '0',
+             locked => clk_locked,
+             clk_108m333hz => clk_108MHz,
+             clk_216m666hz => clk_216MHz,
+             clk_541m666hz => clk_541MHz
+    );
+    clk <= clk_108MHz;
+    clk_pixel <= clk_108MHz;
+    clk_pixel_shift <= clk_541MHz;
+    video_axi_aclk <= clk_216MHz;
+    clk_axi <= clk_216MHz;
     end generate;
 
     G_vendor_specific_startup: if C_vendor_specific_startup generate
@@ -386,11 +534,11 @@ begin
 
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_mode => C_video_mode,
-      --C_vgahdmi_axi => C_vgahdmi_axi,
-      --C_vgahdmi_cache_size => C_vgahdmi_cache_size,
-      --C_vgahdmi_fifo_timeout => C_vgahdmi_fifo_timeout,
-      --C_vgahdmi_fifo_burst_max => C_vgahdmi_fifo_burst_max,
-      --C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
+      C_vgahdmi_axi => C_vgahdmi_axi,
+      C_vgahdmi_cache_size => C_vgahdmi_cache_size,
+      C_vgahdmi_fifo_timeout => C_vgahdmi_fifo_timeout,
+      C_vgahdmi_fifo_burst_max => C_vgahdmi_fifo_burst_max,
+      C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
 
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
@@ -460,7 +608,7 @@ begin
       gpio(127 downto 32) => open,
 
       -- VGA/HDMI
-      video_axi_aresetn => '1',
+      video_axi_aresetn => video_axi_aresetn,
       video_axi_aclk => video_axi_aclk,
       video_axi_in => video_axi_miso,
       video_axi_out => video_axi_mosi,
@@ -772,7 +920,7 @@ begin
       s01_axi_in => vector_axi_mosi,
       s01_axi_out => vector_axi_miso,
 
-      s02_axi_areset_out_n => open,
+      s02_axi_areset_out_n => video_axi_aresetn,
       s02_axi_aclk => video_axi_aclk,
       s02_axi_in => video_axi_mosi,
       s02_axi_out => video_axi_miso,
