@@ -126,19 +126,14 @@ entity toplevel is
 
     C_hdmi_out: boolean := true;
 
-    C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
+    C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
       C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
-      -- number of pixels for line; 640
-      C_vgahdmi_fifo_width: integer := 640;
-      -- number of scan lines: 480
-      C_vgahdmi_fifo_height: integer := 480;
       -- normally this should be  actual bits per pixel
       C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
       -- width of FIFO address space -> size of fifo
       -- for 8bpp compositing use 11 -> 2048 bytes
-      C_vgahdmi_fifo_addr_width: integer := 11;
 
-    C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 50MHz 1MB SRAM"; -- default banner in screen memory
       C_vgatext_mode: integer := 0; -- 640x480
       C_vgatext_bits: integer := 4; -- 16 possible colors
@@ -310,10 +305,7 @@ begin
       -- vga simple bitmap
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
-      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
-      C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
-      C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
       -- led strip simple compositing bitmap only graphics
       C_ledstrip => C_ledstrip,
       C_ledstrip_full_circle => C_ledstrip_full_circle,
@@ -388,8 +380,8 @@ begin
       simple_in(19 downto 16) => sw,
       gpio(0)  => j1_2,  gpio(1)  => j1_3,  gpio(2)  => j1_4,   gpio(3)  => j1_8,
       gpio(4)  => j1_9,  gpio(5)  => j1_4,  gpio(6)  => j1_14,  gpio(7)  => j1_15,
-      gpio(8)  => j1_16, gpio(9)  => j1_17, gpio(10) => j1_18,  gpio(11) => j1_19,
-      gpio(12) => j1_20, gpio(13) => j1_21, gpio(14) => j1_22,  gpio(15) => j1_23,
+      --gpio(8)  => j1_16, gpio(9)  => j1_17, gpio(10) => j1_18,  gpio(11) => j1_19,
+      --gpio(12) => j1_20, gpio(13) => j1_21, gpio(14) => j1_22,  gpio(15) => j1_23,
       -- gpio(27 downto 16) multifuncition GPIO/VGA/PID
       -- **** GPIO **** gpio(27 downto 16)
       --gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
@@ -430,15 +422,15 @@ begin
       port map
       (
         tmds_in_rgb    => tmds_rgb,
-        tmds_out_rgb_p(2) => j2_2,  -- D2+ red
-        tmds_out_rgb_n(2) => j2_3,  -- D2- red
-        tmds_out_rgb_p(1) => j2_4,  -- D1+ green
-        tmds_out_rgb_n(1) => j2_5,  -- D1- green
-        tmds_out_rgb_p(0) => j2_6,  -- D0+ blue
-        tmds_out_rgb_n(0) => j2_7,  -- D0- blue
+        tmds_out_rgb_p(2) => j1_22,  -- D2+ red    JB2
+        tmds_out_rgb_n(2) => j2_9,   -- D2- red    JB6
+        tmds_out_rgb_p(1) => j1_21,  -- D1+ green  JB3
+        tmds_out_rgb_n(1) => j2_8,   -- D1- green  JB7
+        tmds_out_rgb_p(0) => j1_20,  -- D0+ blue   JB4
+        tmds_out_rgb_n(0) => j2_7,   -- D0- blue   JB8
         tmds_in_clk    => tmds_clk,
-        tmds_out_clk_p => j2_8, -- CLK+ clock
-        tmds_out_clk_n => j2_9  -- CLK- clock
+        tmds_out_clk_p => j1_23, -- CLK+ clock     JB1
+        tmds_out_clk_n => j2_16  -- CLK- clock     JB5
       );
 
     -- simulation for the ledstrip motor (forward-only motor)
