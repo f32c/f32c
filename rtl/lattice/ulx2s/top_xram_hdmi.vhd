@@ -126,16 +126,16 @@ entity toplevel is
 
     C_hdmi_out: boolean := true;
 
-    C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
+    C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
       C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
       -- normally this should be  actual bits per pixel
       C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
       -- width of FIFO address space -> size of fifo
       -- for 8bpp compositing use 11 -> 2048 bytes
 
-    C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 50MHz 1MB SRAM"; -- default banner in screen memory
-      C_vgatext_mode: integer := 0; -- 640x480
+      C_vgatext_mode: integer := 1; -- 640x480
       C_vgatext_bits: integer := 4; -- 16 possible colors
       C_vgatext_bram_mem: integer := 0; -- 4KB text+font  memory
       C_vgatext_bram_base: std_logic_vector(31 downto 28) := x"4"; -- textmode bram at 0x40000000
