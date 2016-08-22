@@ -197,6 +197,7 @@ generic (
       C_pid_pwm_bits: integer range 11 to 32 := 12; -- PWM output frequency f_clk/2^pwmbits (min 11 => 40kHz @ 81.25MHz)
       C_pid_fp: integer range 0 to 26 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
     C_vector: boolean := false; -- vector processor
+    C_vector_burst_max_bits: integer := 6; -- AXI MIG can do 64x32-bit word burst
     C_vector_vaddr_bits: integer := 11; -- vector size, should match FPGA internal BRAM block
     C_vector_vdata_bits: integer := 32; -- don't touch, vector data bus width
     C_vector_axi: boolean := false; -- vector processor bus: true:AXI, false:f32c RAM
@@ -1115,6 +1116,7 @@ begin
         entity work.axi_vector_dma
         generic map
         (
+          C_burst_max_bits => C_vector_burst_max_bits, -- number of bits that describe max burst length
           C_vaddr_bits => C_vector_vaddr_bits, -- number of bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
           C_vdata_bits => C_vector_vdata_bits  -- number of data bits
         )
