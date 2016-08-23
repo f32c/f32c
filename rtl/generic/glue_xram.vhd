@@ -253,6 +253,9 @@ port (
   fm_antenna, cw_antenna: out std_logic;
   gpio: inout std_logic_vector(127 downto 0);
   gpio_pullup: inout std_logic_vector(127 downto 0);  -- XXX fixme not connected optional (set C_gpio_pullup false)
+  -- timer PWM input capture and output compare
+  ocp: out std_logic_vector(1 downto 0);
+  icp: in std_logic_vector(1 downto 0) := (others => '0');
   --ADC ports
   ADC_Error_out: inout std_logic_vector(5 downto 0); -- XXX fixme not connected
   -- PS/2 Keyboard
@@ -334,8 +337,8 @@ architecture Behavioral of glue_xram is
     signal timer_range: std_logic := '0';
     signal from_timer: std_logic_vector(31 downto 0);
     signal timer_ce: std_logic;
-    signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
-    signal icp, icp_enable: std_logic_vector(1 downto 0);
+    signal S_ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
+    signal icp_enable: std_logic_vector(1 downto 0);
     signal timer_intr: std_logic;
 
 
@@ -863,10 +866,11 @@ begin
     -- muxing simple_io to show PWM of timer on LEDs
     G_simple_out_timer:
     if C_timer = true generate
-      ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
-      ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
+      ocp_mux(0) <= S_ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
+      ocp_mux(1) <= S_ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
       simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
       else (others => '-');
+      ocp <= S_ocp;
     end generate;
 
     -- big address decoder when CPU reads IO
@@ -1009,7 +1013,7 @@ begin
     -- Timer
     G_timer:
     if C_timer generate
-    icp <= R_simple_out(3) & R_simple_out(0); -- during debug period, leds will serve as software-generated ICP
+    -- icp <= R_simple_out(3) & R_simple_out(0); -- during debug period, leds will serve as software-generated ICP
     timer: entity work.timer
     generic map (
       C_pres => 10,
@@ -1021,7 +1025,7 @@ begin
       bus_in => cpu_to_dmem, bus_out => from_timer,
       timer_irq => timer_intr,
       ocp_enable => ocp_enable, -- enable physical output
-      ocp => ocp, -- output compare signal
+      ocp => S_ocp, -- output compare signal
       icp_enable => icp_enable, -- enable physical input
       icp => icp -- input capture signal
     );
