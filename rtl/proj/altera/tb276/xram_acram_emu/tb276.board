@@ -60,12 +60,17 @@ set_location_assignment PIN_69 -to gpio[29]
 set_location_assignment PIN_72 -to gpio[30]
 set_location_assignment PIN_71 -to gpio[31]
 
-# sw are not on tb276 board
-# we define them on J4 connector
-set_location_assignment PIN_119 -to sw[3]
-set_location_assignment PIN_115 -to sw[2]
-set_location_assignment PIN_114 -to sw[1]
-set_location_assignment PIN_111 -to sw[0]
+# HDMI is not on tb276 board
+# we define in on J4 connector
+set_location_assignment PIN_119 -to hdmi_clkp
+set_location_assignment PIN_115 -to hdmi_clkn
+set_location_assignment PIN_114 -to hdmi_dp[0]
+set_location_assignment PIN_111 -to hdmi_dn[0]
+set_location_assignment PIN_110 -to hdmi_dp[1]
+set_location_assignment PIN_106 -to hdmi_dn[1]
+set_location_assignment PIN_105 -to hdmi_dp[2]
+set_location_assignment PIN_104 -to hdmi_dn[2]
+
 # rs232 is not on tb276 board
 # we define it on J3 connector
 # pinout for usbserial-TTL3V3 FTDI adapter
@@ -77,10 +82,6 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_25m
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_rxd
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_txd
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to ant_433M92
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[0]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[1]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[3]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[2]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[0]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[2]
@@ -123,4 +124,12 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[28]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[29]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[30]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[31]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_clkp
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_clkn
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_dp[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_dn[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_dp[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_dn[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_dp[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_dn[2]
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
