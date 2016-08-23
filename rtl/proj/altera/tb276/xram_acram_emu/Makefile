@@ -6,7 +6,7 @@
 ###################################################################
 
 PROJECT = project
-TOP_LEVEL_ENTITY = glue
+TOP_LEVEL_ENTITY = tb276_xram_acram_emu
 ASSIGNMENT_FILES = $(PROJECT).qpf $(PROJECT).qsf
 
 ###################################################################
@@ -35,6 +35,7 @@ include ../../include/altera.mk
 # Setup your sources here
 SRCS = \
 ../../../../altera/tb276/top/top_tb276_xram_acram_emu.vhd \
+../../../../altera/tb276/clocks/pll_25M_250M_25M_83M333.vhd \
 ../../../../altera/tb276/clocks/pll_25M_112M5.vhd \
 ../../../../altera/tb276/clocks/pll_25M_81M25.vhd \
 ../../../../altera/tb276/clocks/pll_112M5_433M92.vhd \
