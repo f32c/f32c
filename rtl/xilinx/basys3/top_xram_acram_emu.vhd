@@ -91,6 +91,7 @@ architecture Behavioral of basys3 is
            clk_100MHz, clk_108MHz, clk_112M5Hz, clk_125MHz, clk_150MHz,
            clk_200MHz, clk_216MHz, clk_225MHz, clk_250MHz,
            clk_325MHz, clk_541MHz: std_logic := '0';
+    signal icp, ocp: std_logic_vector(1 downto 0); -- timer PWM in/out
 
     component clk_d100_100_200_125_25MHz is
     Port (
@@ -131,14 +132,17 @@ begin
 	acram_ready => ram_ready,
 	sio_txd(0) => rstx, sio_rxd(0) => rsrx, sio_break(0) => rs232_break,
 	gpio(7 downto 0) => ja, gpio(15 downto 8) => jb,
-	gpio(23 downto 16) => jc, gpio(127 downto 24) => open,
+	gpio(19 downto 16) => jc(3 downto 0), gpio(127 downto 20) => open,
 	simple_out(15 downto 0) => led, simple_out(22 downto 16) => seg,
 	simple_out(23) => dp, simple_out(27 downto 24) => an,
 	simple_out(31 downto 28) => open,
 	simple_in(15 downto 0) => btns, simple_in(31 downto 16) => sw,
+	icp => icp, ocp => ocp,
 	spi_miso => (others => '0')
     );
     btns <= x"00" & "000" & btnc & btnu & btnd & btnl & btnr;
+    icp <= jc(5 downto 4);
+    jc(7 downto 6) <= ocp;
 
     res: startupe2
     generic map (
