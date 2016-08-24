@@ -57,12 +57,13 @@ entity zybo_xram_ddr3 is
 
     C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 7:1280x1024
+    -- fixme: non-working modes: 0, 4
 
     C_vgahdmi: boolean := true;
       C_vgahdmi_axi: boolean := true; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
       C_vgahdmi_cache_size: integer := 8; -- KB video cache (only on f32c bus) (0: disable, 2,4,8,16,32:enable)
       C_vgahdmi_fifo_timeout: integer := 0;
-      C_vgahdmi_fifo_burst_max: integer := 16; -- 64 works for MIG
+      C_vgahdmi_fifo_burst_max: integer := 8; -- 64 works for MIG
       -- output data width 8bpp
       C_vgahdmi_fifo_data_width: integer := 32; -- should be equal to bitmap depth
 
@@ -108,6 +109,7 @@ entity zybo_xram_ddr3 is
 	C_sio: integer := 1;   -- 1 UART channel
 	C_spi: integer := 2;   -- 2 SPI channels (ch0 not connected, ch1 SD card)
 	C_gpio: integer := 32; -- 32 GPIO bits
+	C_timer: boolean := true;
 	C_ps2: boolean := false; -- PS/2 keyboard
     C_simple_io: boolean := true -- includes 31 simple inputs and 32 simple outputs
     );
@@ -576,6 +578,7 @@ begin
       C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
       C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
 
+      C_timer => C_timer,
       C_debug => C_debug
     )
     port map (
@@ -966,7 +969,7 @@ begin
         -- port l00
         S_AXI_ACP_aclk         => clk_axi, -- f32c cpu clock to axi slave
         S_AXI_ACP_awid         => ram_axi_mosi.awid(2 downto 0),
-        S_AXI_ACP_awaddr       => ram_axi_mosi.awaddr(31 downto 28) & '1' & ram_axi_mosi.awaddr(26 downto 0), -- drty fix
+        S_AXI_ACP_awaddr       => x"1" & ram_axi_mosi.awaddr(27 downto 0), -- drty fix
         S_AXI_ACP_awlen        => ram_axi_mosi.awlen(3 downto 0),
         S_AXI_ACP_awsize       => ram_axi_mosi.awsize,
         S_AXI_ACP_awburst      => ram_axi_mosi.awburst,
@@ -988,7 +991,7 @@ begin
         S_AXI_ACP_bvalid       => ram_axi_miso.bvalid,
         S_AXI_ACP_bready       => ram_axi_mosi.bready,
         S_AXI_ACP_arid         => ram_axi_mosi.arid(2 downto 0),
-        S_AXI_ACP_araddr       => ram_axi_mosi.araddr(31 downto 28) & '1' & ram_axi_mosi.araddr(26 downto 0), -- drty fix
+        S_AXI_ACP_araddr       => x"1" & ram_axi_mosi.araddr(27 downto 0), -- drty fix
         S_AXI_ACP_arlen        => ram_axi_mosi.arlen(3 downto 0),
         S_AXI_ACP_arsize       => ram_axi_mosi.arsize,
         S_AXI_ACP_arburst      => ram_axi_mosi.arburst,
