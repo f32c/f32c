@@ -35,6 +35,14 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[6]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[7]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to btn_left
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to btn_right
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_clkp
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_clkn
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_dp[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_dn[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_dp[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_dn[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_dp[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_dn[2]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_addr[0]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_addr[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_addr[2]
@@ -123,6 +131,20 @@ set_location_assignment PIN_A13 -to led[1]
 set_location_assignment PIN_A15 -to led[0]
 set_location_assignment PIN_E1 -to btn_left
 set_location_assignment PIN_J15 -to btn_right
+# GPIO-1 (JP2)
+# hdmi   pin  hdmi
+# clkp  40 39 clkn  clock
+# dp[0] 38 37 dn[0] blue
+# dp[1] 36 35 dn[1] green
+# dp[2] 34 33 dn[2] red
+set_location_assignment PIN_J14 -to hdmi_clkp
+set_location_assignment PIN_J13 -to hdmi_clkn
+set_location_assignment PIN_K15 -to hdmi_dp[0]
+set_location_assignment PIN_J16 -to hdmi_dn[0]
+set_location_assignment PIN_L13 -to hdmi_dp[1]
+set_location_assignment PIN_M10 -to hdmi_dn[1]
+set_location_assignment PIN_N14 -to hdmi_dp[2]
+set_location_assignment PIN_L14 -to hdmi_dn[2]
 set_location_assignment PIN_M1 -to sw[0]
 set_location_assignment PIN_T8 -to sw[1]
 set_location_assignment PIN_B9 -to sw[2]
