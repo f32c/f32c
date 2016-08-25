@@ -62,32 +62,6 @@ constant C_video_modes: T_video_modes :=
       h_sync_polarity =>  '0',
       v_sync_polarity =>  '0'
     ),
---    ( -- mode 2: 720x400 @ 85 Hz
---      pixel_clock_Hz  =>  35500000, -- difficult to create
---      visible_width   =>  720,
---      visible_height  =>  400,
---      h_front_porch   =>  36,
---      h_sync_pulse    =>  72,
---      h_back_porch    =>  108,
---      v_front_porch   =>  1,
---      v_sync_pulse    =>  3,
---      v_back_porch    =>  42,
---      h_sync_polarity =>  '0',
---      v_sync_polarity =>  '1'
---    ),
---    ( -- mode 2: 800x450 @ 85 Hz https://forums.gentoo.org/viewtopic-t-765839-start-0.html
---      pixel_clock_Hz  =>  41810000, -- difficult to create
---      visible_width   =>  800,
---      visible_height  =>  450,
---      h_front_porch   =>  40,
---      h_sync_pulse    =>  80,
---      h_back_porch    =>  120,
---      v_front_porch   =>  1,
---      v_sync_pulse    =>  3,
---      v_back_porch    =>  19,
---      h_sync_polarity =>  '0',
---      v_sync_polarity =>  '1'
---    ),
     ( -- mode 2: 800x480 @ 60 Hz
       pixel_clock_Hz  =>  29892000, -- 30 MHz works
       visible_width   =>  800,
@@ -140,21 +114,8 @@ constant C_video_modes: T_video_modes :=
       h_sync_polarity =>  '0',
       v_sync_polarity =>  '0'
     ),
---    ( -- mode 6: 1280x768 @ 60Hz
---      pixel_clock_Hz  =>  68250000,
---      visible_width   =>  1280,
---      visible_height  =>  768,
---      h_front_porch   =>  48,
---      h_sync_pulse    =>  32,
---      h_back_porch    =>  80,
---      v_front_porch   =>  3,
---      v_sync_pulse    =>  7,
---      v_back_porch    =>  12,
---      h_sync_polarity =>  '1',
---      v_sync_polarity =>  '0'
---    ),
-    ( -- mode 6: 1280x768 @ 60Hz "1280x720"x59.9   74.50  1280 1344 1472 1664  720 723 728 748 -hsync +vsync (44.8 kHz)
-      pixel_clock_Hz  =>  74500000, -- 75 MHz should approx fit here
+    ( -- mode 6: 1280x768 @ 60Hz
+      pixel_clock_Hz  =>  74500000, -- 75 MHz works
       visible_width   =>  1280,
       visible_height  =>  768,
       h_front_porch   =>  64,
@@ -166,19 +127,6 @@ constant C_video_modes: T_video_modes :=
       h_sync_polarity =>  '0',
       v_sync_polarity =>  '1'
     ),
---    ( -- mode 6: 1280x768 @ 60Hz let's try "1280x768_59.90" 80.00 1280 1344 1480 1680 768 769 772 795 -HSync +Vsync
---      pixel_clock_Hz  =>  80000000,
---      visible_width   =>  1280,
---      visible_height  =>  768,
---      h_front_porch   =>  64,
---      h_sync_pulse    =>  136,
---      h_back_porch    =>  200,
---      v_front_porch   =>  1,
---      v_sync_pulse    =>  3,
---      v_back_porch    =>  23,
---      h_sync_polarity =>  '0',
---      v_sync_polarity =>  '1'
---    ),
     ( -- mode 7: 1280x1024 @ 60Hz  (clk_pixel 108.00MHz - good luck xilinx 7-series)
       pixel_clock_Hz  =>  108000000,
       visible_width   =>  1280,
