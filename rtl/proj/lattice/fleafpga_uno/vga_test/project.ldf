@@ -21,6 +21,9 @@
         <Source name="../../../../lattice/fleafpga_uno/clocks/FleaFPGA_Uno_clkgen1024x768.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../../lattice/fleafpga_uno/clocks/FleaFPGA_Uno_clkgen_375_75_50.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../../lattice/chip/xo2/ddr_out.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>

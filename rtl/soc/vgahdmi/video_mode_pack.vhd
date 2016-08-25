@@ -140,19 +140,45 @@ constant C_video_modes: T_video_modes :=
       h_sync_polarity =>  '0',
       v_sync_polarity =>  '0'
     ),
-    ( -- mode 6: 1280x768 @ 60Hz
-      pixel_clock_Hz  =>  68250000,
+--    ( -- mode 6: 1280x768 @ 60Hz
+--      pixel_clock_Hz  =>  68250000,
+--      visible_width   =>  1280,
+--      visible_height  =>  768,
+--      h_front_porch   =>  48,
+--      h_sync_pulse    =>  32,
+--      h_back_porch    =>  80,
+--      v_front_porch   =>  3,
+--      v_sync_pulse    =>  7,
+--      v_back_porch    =>  12,
+--      h_sync_polarity =>  '1',
+--      v_sync_polarity =>  '0'
+--    ),
+    ( -- mode 6: 1280x768 @ 60Hz "1280x720"x59.9   74.50  1280 1344 1472 1664  720 723 728 748 -hsync +vsync (44.8 kHz)
+      pixel_clock_Hz  =>  74500000, -- 75 MHz should approx fit here
       visible_width   =>  1280,
       visible_height  =>  768,
-      h_front_porch   =>  48,
-      h_sync_pulse    =>  32,
-      h_back_porch    =>  80,
+      h_front_porch   =>  64,
+      h_sync_pulse    =>  192,
+      h_back_porch    =>  192,
       v_front_porch   =>  3,
-      v_sync_pulse    =>  7,
-      v_back_porch    =>  12,
-      h_sync_polarity =>  '1',
-      v_sync_polarity =>  '0'
+      v_sync_pulse    =>  5,
+      v_back_porch    =>  20,
+      h_sync_polarity =>  '0',
+      v_sync_polarity =>  '1'
     ),
+--    ( -- mode 6: 1280x768 @ 60Hz let's try "1280x768_59.90" 80.00 1280 1344 1480 1680 768 769 772 795 -HSync +Vsync
+--      pixel_clock_Hz  =>  80000000,
+--      visible_width   =>  1280,
+--      visible_height  =>  768,
+--      h_front_porch   =>  64,
+--      h_sync_pulse    =>  136,
+--      h_back_porch    =>  200,
+--      v_front_porch   =>  1,
+--      v_sync_pulse    =>  3,
+--      v_back_porch    =>  23,
+--      h_sync_polarity =>  '0',
+--      v_sync_polarity =>  '1'
+--    ),
     ( -- mode 7: 1280x1024 @ 60Hz  (clk_pixel 108.00MHz - good luck xilinx 7-series)
       pixel_clock_Hz  =>  108000000,
       visible_width   =>  1280,

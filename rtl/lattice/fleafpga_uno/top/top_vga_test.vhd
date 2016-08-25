@@ -11,7 +11,7 @@ entity glue is
     C_clk_freq: integer := 50;
 
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
-    C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
+    C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768, 6:1280x768
 
     C_vgahdmi: boolean := true;
 
@@ -139,6 +139,17 @@ begin
     CLKOP       =>  clk_dvi,   -- 325 MHz
     CLKOS       =>  clk_dvin,  -- 325 MHz inverted
     CLKOS2      =>  clk_pixel, --  65 MHz
+    CLKOS3      =>  clk        --  50 MHz
+  );
+  end generate;
+
+  video_mode_6_1024x768: if C_video_mode = 6 generate
+  clk_1024x768: entity work.clkgen_375_75_50
+  port map(
+    CLKI        =>  sys_clock, --  50 MHz
+    CLKOP       =>  clk_dvi,   -- 375 MHz
+    CLKOS       =>  clk_dvin,  -- 375 MHz inverted
+    CLKOS2      =>  clk_pixel, --  75 MHz
     CLKOS3      =>  clk        --  50 MHz
   );
   end generate;
