@@ -39,45 +39,22 @@ use unisim.vcomponents.all;
 
 entity hdmi_out is
     port (
-	tmds_in_clk: in std_logic; -- 25 MHz pixel clock single ended
-	tmds_out_clk_p, tmds_out_clk_n: out std_logic; -- output 25 MHz differential
-	tmds_in_rgb: in std_logic_vector(2 downto 0); -- input (250 MHz single ended)
-	tmds_out_rgb_p, tmds_out_rgb_n: out std_logic_vector(2 downto 0) -- output 250 MHz differential
+	tmds_in_clk: in std_logic; -- input pixel clock single ended
+	tmds_out_clk_p, tmds_out_clk_n: out std_logic; -- output pixel clock differential
+	tmds_in_rgb: in std_logic_vector(2 downto 0); -- input rgb single ended
+	tmds_out_rgb_p, tmds_out_rgb_n: out std_logic_vector(2 downto 0) -- output rgb differential
     );
 end hdmi_out;
 
 architecture Behavioral of hdmi_out is
-    signal obuf_tmds_clock: std_logic;
 begin
     -- vendor-specific differential output buffering for HDMI clock and video
-    
-    -- 25MHz tmds clock must be passed through oddr2 buffer
-    -- before it can become input for differential output buffer obufds
-    clockbuf: oddr2
-      generic map(
-        DDR_ALIGNMENT => "NONE", -- Sets output alignment to "NONE", "C0" or "C1"
-        INIT => '1',    -- Sets initial state of the Q output to 1'b0 or 1'b1
-        SRTYPE => "SYNC" -- Specifies "SYNC" or "ASYNC"  set/reset
-      )
-      port map  (
-        C0 => tmds_in_clk, -- 1-bit clock input
-        C1 => not tmds_in_clk, -- 1-bit clock input inverted
-        CE => '1', -- 1-bit clock enable input
-        D0 => '1', -- 1-bit data input (associated with C0)
-        D1 => '0', -- 1-bit data input (associated with C1)
-        R  => '0', -- 1-bit reset input
-        S  => '0', -- 1-bit set input
-        Q  => obuf_tmds_clock -- 1-bit DDR output data
-      );
-
     hdmi_clock: obufds
       --generic map(IOSTANDARD => "DEFAULT")
-      port map(i => obuf_tmds_clock, o => tmds_out_clk_p, ob => tmds_out_clk_n);
-
+      port map(i => tmds_in_clk, o => tmds_out_clk_p, ob => tmds_out_clk_n);
     hdmi_video: for i in 0 to 2 generate
       tmds_video: obufds
         --generic map(IOSTANDARD => "DEFAULT")
         port map(i => tmds_in_rgb(i), o => tmds_out_rgb_p(i), ob => tmds_out_rgb_n(i));
     end generate;
-
 end Behavioral;
