@@ -43,6 +43,7 @@ entity scarab_xram_sdram is
     -- ISA: either ARCH_MI32 or ARCH_RV32
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
+    C_exceptions: boolean := true; -- false:disable interrupts allows vector to work
 
     -- Main clock: 50/81/83/96/100/111/112/125
     C_clk_freq: integer := 83;
@@ -147,6 +148,7 @@ entity scarab_xram_sdram is
         C_pid_pwm_bits: integer := 12;
         
       C_vector: boolean := false; -- vector processor unit (wip)
+      C_timer: boolean := true;
 
       C_gpio: integer := 64
   );
@@ -313,10 +315,12 @@ begin
     (
       C_arch => C_arch,
       C_clk_freq => C_clk_freq,
+      C_exceptions => C_exceptions,
       C_bram_size => C_bram_size,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_cached_addr_bits,
+      C_timer => C_timer,
       C_gpio => C_gpio,
       C_sio => C_sio,
       C_spi => C_spi,
