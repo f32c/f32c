@@ -25,7 +25,7 @@ begin
   ODDR_inst: ODDR2
   generic map
   (
-    DDR_ALIGNMENT => "C0", INIT => '0', SRTYPE => "SYNC"
+    DDR_ALIGNMENT => "C0", INIT => '0', SRTYPE => "ASYNC"
   )
   port map
   (
@@ -34,7 +34,7 @@ begin
     CE => '1', -- 1-bit clock enable input
     D0 => idata(0), -- 1-bit data input (output at positive edge)
     D1 => idata(1), -- 1-bit data input (output at negative edge)
-    R => ireset, -- 1-bit reset input
+    R => ireset,  -- 1-bit reset input
     S => '0',  -- 1-bit set input
     Q => odata -- 1-bit DDR output
   );
