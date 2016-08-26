@@ -19,6 +19,7 @@ vhdfiles = \
 ../../../../xilinx/scarab_ms6p/top/top_scarab_vga_test.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_100M_25M_250M.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/clk_50M_100M_125Mp_125Mn_25M.vhd \
+../../../../xilinx/scarab_ms6p/clocks/clk_50M_93M75_375Mp_375Mn_75M.vhd \
 ../../../../xilinx/chip/xc6/hdmi_out_xc6.vhd \
 ../../../../xilinx/chip/xc6/ddr_out.vhd \
 ../../../../soc/vgahdmi/glue_vga_test.vhd \

@@ -12,13 +12,13 @@ use unisim.vcomponents.all;
 
 entity scarab_vga_test is
   generic (
-	-- Main clock: 25/100/108/112 MHz
-	C_clk_freq: integer := 100;
+	-- Main clock: 25/93/100/108/112 MHz
+	C_clk_freq: integer := 93;
 
 	C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
 
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
-        C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1024x576, 7:1280x1024
+        C_video_mode: integer := 6; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1024x576, 7:1280x1024
 
         C_vgahdmi: boolean := true;
           C_vgahdmi_axi: boolean := true; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
@@ -115,7 +115,7 @@ architecture Behavioral of scarab_vga_test is
     signal clk_25MHz, clk_30MHz, clk_40MHz, clk_45MHz, clk_50MHz_out, clk_65MHz, clk_75MHz, clk_80MHz, 
            clk_100MHz, clk_108MHz, clk_112M5Hz, clk_125MHz, clk_125MHz_p, clk_125MHz_n, clk_150MHz, 
            clk_200MHz, clk_216MHz, clk_225MHz, clk_250MHz, 
-           clk_325MHz, clk_375MHz, 
+           clk_325MHz, clk_375MHz_p, clk_375MHz_n,
            clk_400MHz, clk_541MHz: std_logic := '0';
     signal clk_axi: std_logic;
     signal clk_pixel: std_logic;
@@ -150,7 +150,7 @@ architecture Behavioral of scarab_vga_test is
     signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
     signal tmds_in_rgb, tmds_out_rgb: std_logic_vector(2 downto 0);
     signal tmds_in_clk, tmds_out_clk: std_logic;
-    signal R_blinky_pixel, R_blinky_pixel_shift: std_logic_vector(25 downto 0);
+    signal R_blinky_pixel, R_blinky_pixel_shift_p, R_blinky_pixel_shift_n: std_logic_vector(25 downto 0);
 begin
   clk100M_sdr_640x480: if C_clk_freq = 100 and not C_dvid_ddr and C_video_mode=1 generate
     clkgen100_250: entity work.pll_50M_100M_25M_250M
@@ -173,6 +173,19 @@ begin
     clk_pixel <= clk_25MHz;
     clk_pixel_shift_p <= clk_125MHz_p;
     clk_pixel_shift_n <= clk_125MHz_n;
+  end generate;
+
+  clk93M75_ddr_1280x576: if C_clk_freq = 93 and C_dvid_ddr and C_video_mode=6 generate
+    clkgen93_375_75: entity work.clk_50M_93M75_375Mp_375Mn_75M
+      port map
+      (
+        reset => '0', locked => open,
+        clk_50M_in => clk_50MHz, clk_93M75 => clk, clk_75M => clk_75MHz, 
+        clk_375Mp => clk_375MHz_p, clk_375Mn => clk_375MHz_n
+      );
+    clk_pixel <= clk_75MHz;
+    clk_pixel_shift_p <= clk_375MHz_p;
+    clk_pixel_shift_n <= clk_375MHz_n;
   end generate;
 
   sdram_clk <= '0';
@@ -333,10 +346,19 @@ begin
   process(clk_pixel_shift_p)
   begin
     if rising_edge(clk_pixel_shift_p) then
-      R_blinky_pixel_shift <= R_blinky_pixel_shift+1;
+      R_blinky_pixel_shift_p <= R_blinky_pixel_shift_p+1;
     end if;
   end process;
-  leds(1) <= R_blinky_pixel_shift(R_blinky_pixel_shift'high);
-  leds(7 downto 2) <= (others => '0');
+  leds(1) <= R_blinky_pixel_shift_p(R_blinky_pixel_shift_p'high);
+
+  process(clk_pixel_shift_n)
+  begin
+    if rising_edge(clk_pixel_shift_n) then
+      R_blinky_pixel_shift_n <= R_blinky_pixel_shift_n+1;
+    end if;
+  end process;
+  leds(2) <= R_blinky_pixel_shift_n(R_blinky_pixel_shift_n'high);
+
+  leds(7 downto 3) <= (others => '0');
 
 end Behavioral;
