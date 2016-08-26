@@ -210,38 +210,6 @@ begin
     G_vgahdmi:
     if C_vgahdmi generate
 
-    -- data source: FIFO - cross clock domain cpu-pixel
-    G_vgabit_c2: if false generate
-    -- compositing2 video accelerator, shows linked list of pixel data
-    comp_fifo: entity work.compositing2_fifo
-    generic map (
-      C_fast_ram => C_vgahdmi_fifo_fast_ram,
-      C_timeout => C_vgahdmi_fifo_timeout,
-      C_burst_max => C_vgahdmi_fifo_burst_max,
-      C_width => C_video_modes(C_vgahdmi_mode).visible_width,
-      C_height => C_video_modes(C_vgahdmi_mode).visible_height,
-      C_data_width => C_vgahdmi_fifo_data_width,
-      C_addr_width => C_vgahdmi_fifo_addr_width
-    )
-    port map (
-      clk => S_video_data_clk, -- cpu or axi clock synchronous
-      clk_pixel => clk_pixel,
-      suggest_cache => video_fifo_suggest_cache,
-      suggest_burst => video_fifo_suggest_burst,
-      addr_strobe => video_fifo_addr_strobe,
-      addr_out => video_fifo_addr,
-      read_ready => video_fifo_read_ready, -- fifo outputs '1' when ready to read data from RAM
-      data_ready => video_fifo_data_ready, -- data valid for read acknowledge from RAM
-      data_in => video_fifo_data, -- from cache
-      -- data_in => x"00AA00AA", -- test pattern gray vertical line over whole screen
-      base_addr => R_fb_base_addr(29 downto 2),
-      active => S_vga_active_enabled,
-      frame => vga_frame,
-      data_out => vga_data_from_fifo(C_vgahdmi_fifo_data_width-1 downto 0),
-      fetch_next => S_vga_fetch_enabled
-    );
-    end generate;
-
     -- 8/16/32 bpp conversion into RGB-888 for display.
     -- unspported bpp values produce black screen
     -- LSB bit extended as padding improving max dynamic range
