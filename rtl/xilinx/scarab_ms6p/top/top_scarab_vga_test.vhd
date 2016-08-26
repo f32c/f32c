@@ -12,26 +12,23 @@ use unisim.vcomponents.all;
 
 entity scarab_vga_test is
   generic (
-	-- Main clock: 25/93/100/108/112 MHz
-	C_clk_freq: integer := 93;
+	-- Main clock: 94/98/100 MHz (1024x768:clk=98 1280x768:clk=94)
+	C_clk_freq: integer := 100;
 
 	C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
 
-        C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
-        C_video_mode: integer := 6; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1024x576, 7:1280x1024
+        C_dvid_ddr: boolean := true; -- false: SDR (clk_pixel_shift = 10x clk_pixel), true: DDR (clk_pixel_shift = 5x clk_pixel)
+        C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024
 
         C_vgahdmi: boolean := true;
           C_vgahdmi_axi: boolean := true; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
           C_vgahdmi_cache_size: integer := 8; -- KB video cache (only on f32c bus) (0: disable, 2,4,8,16,32:enable)
           C_vgahdmi_fifo_timeout: integer := 0;
-          C_vgahdmi_fifo_burst_max: integer := 64;
-          -- output data width 8bpp
-          C_vgahdmi_fifo_data_width: integer := 32; -- should be equal to bitmap depth
-          -- bitmap width of FIFO address space length = 2^width * 4 byte
-          C_vgahdmi_fifo_addr_width: integer := 11;
+          C_vgahdmi_fifo_burst_max: integer := 1;
+          C_vgahdmi_fifo_data_width: integer := 8; -- should be equal to bitmap depth
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
-      C_vgatext_label: string := "f32c: ESA11-7a102t MIPS compatible soft-core 100MHz 256MB DDR3"; -- default banner as initial content of screen BRAM, NOP for RAM
+      C_vgatext_label: string := "f32c: scarab MIPS compatible soft-core 100MHz 32MB SDRAM"; -- default banner as initial content of screen BRAM, NOP for RAM
       C_vgatext_mode: integer := 0;   -- 640x480
       C_vgatext_bits: integer := 4;   -- 64 possible colors
       C_vgatext_bram_mem: integer := 0;   -- KB (0: bram disabled -> use RAM)
@@ -112,11 +109,10 @@ architecture Behavioral of scarab_vga_test is
       return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
     end ceil_log2;
     signal clk, sio_break: std_logic;
-    signal clk_25MHz, clk_30MHz, clk_40MHz, clk_45MHz, clk_50MHz_out, clk_65MHz, clk_75MHz, clk_80MHz, 
-           clk_100MHz, clk_108MHz, clk_112M5Hz, clk_125MHz, clk_125MHz_p, clk_125MHz_n, clk_150MHz, 
-           clk_200MHz, clk_216MHz, clk_225MHz, clk_250MHz, 
-           clk_325MHz, clk_375MHz_p, clk_375MHz_n,
-           clk_400MHz, clk_541MHz: std_logic := '0';
+    signal clk_25MHz, clk_30MHz, clk_40MHz, clk_50MHz_p, clk_65MHz, clk_75MHz, clk_93M75, clk_97M5Hz,
+           clk_100MHz, clk_125MHz_p, clk_125MHz_n, clk_150MHz_p, clk_150MHz_n, 
+           clk_200MHz_p, clk_200MHz_n, clk_250MHz_p, clk_250MHz_n,
+           clk_325MHz_p, clk_325MHz_n, clk_375MHz_p, clk_375MHz_n: std_logic := '0';
     signal clk_axi: std_logic;
     signal clk_pixel: std_logic;
     signal clk_pixel_shift_p, clk_pixel_shift_n: std_logic;
@@ -153,17 +149,17 @@ architecture Behavioral of scarab_vga_test is
     signal R_blinky_pixel, R_blinky_pixel_shift_p, R_blinky_pixel_shift_n: std_logic_vector(25 downto 0);
 begin
   clk100M_sdr_640x480: if C_clk_freq = 100 and not C_dvid_ddr and C_video_mode=1 generate
-    clkgen100_250: entity work.pll_50M_100M_25M_250M
+    clkgen100_250_25: entity work.pll_50M_100M_25M_250M
       port map
       (
-        clk_in1 => clk_50MHz, clk_out1 => clk, clk_out2 => clk_25MHz, clk_out3 => clk_250MHz
+        clk_in1 => clk_50MHz, clk_out1 => clk, clk_out2 => clk_25MHz, clk_out3 => clk_250MHz_p
       );
     clk_pixel <= clk_25MHz;
-    clk_pixel_shift_p <= clk_250MHz;
+    clk_pixel_shift_p <= clk_250MHz_p;
   end generate;
 
-  clk100M_ddr_640x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=1 generate
-    clkgen100_125: entity work.clk_50M_100M_125Mp_125Mn_25M
+  clk100M_ddr_640x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode<=1 generate
+    clkgen100_125_25: entity work.clk_50M_100M_125Mp_125Mn_25M
       port map
       (
         reset => '0', locked => open,
@@ -175,7 +171,59 @@ begin
     clk_pixel_shift_n <= clk_125MHz_n;
   end generate;
 
-  clk93M75_ddr_1280x576: if C_clk_freq = 93 and C_dvid_ddr and C_video_mode=6 generate
+  clk100M_ddr_800x480: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=2 generate
+    clkgen100_150_30: entity work.clk_50M_100M_150Mp_150Mn_30M
+      port map
+      (
+        reset => '0', locked => open,
+        clk_50M_in => clk_50MHz, clk_100M => clk, clk_30M => clk_30MHz, 
+        clk_150Mp => clk_150MHz_p, clk_150Mn => clk_150MHz_n
+      );
+    clk_pixel <= clk_30MHz;
+    clk_pixel_shift_p <= clk_150MHz_p;
+    clk_pixel_shift_n <= clk_150MHz_n;
+  end generate;
+
+  clk100M_ddr_800x600: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=3 generate
+    clkgen100_200_40: entity work.clk_50M_100M_200Mp_200Mn_40M
+      port map
+      (
+        reset => '0', locked => open,
+        clk_50M_in => clk_50MHz, clk_100M => clk, clk_40M => clk_40MHz, 
+        clk_200Mp => clk_200MHz_p, clk_200Mn => clk_200MHz_n
+      );
+    clk_pixel <= clk_40MHz;
+    clk_pixel_shift_p <= clk_200MHz_p;
+    clk_pixel_shift_n <= clk_200MHz_n;
+  end generate;
+
+  clk100M_ddr_1024x576: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=4 generate
+    clkgen100_250_50: entity work.clk_50M_100M_250Mp_250Mn_50M
+      port map
+      (
+        reset => '0', locked => open,
+        clk_50M_in => clk_50MHz, clk_100M => clk, clk_50M => clk_50MHz_p,
+        clk_250Mp => clk_250MHz_p, clk_250Mn => clk_250MHz_n
+      );
+    clk_pixel <= clk_50MHz_p;
+    clk_pixel_shift_p <= clk_250MHz_p;
+    clk_pixel_shift_n <= clk_250MHz_n;
+  end generate;
+
+  clk97M5_ddr_1024x768: if C_clk_freq = 98 and C_dvid_ddr and C_video_mode=5 generate
+    clkgen98_325_65: entity work.clk_50M_97M5_325Mp_325Mn_65M
+      port map
+      (
+        reset => '0', locked => open,
+        clk_50M_in => clk_50MHz, clk_97M5 => clk, clk_65M => clk_65MHz, 
+        clk_325Mp => clk_325MHz_p, clk_325Mn => clk_325MHz_n
+      );
+    clk_pixel <= clk_65MHz;
+    clk_pixel_shift_p <= clk_325MHz_p;
+    clk_pixel_shift_n <= clk_325MHz_n;
+  end generate;
+
+  clk93M75_ddr_1280x768: if C_clk_freq = 94 and C_dvid_ddr and C_video_mode=6 generate
     clkgen93_375_75: entity work.clk_50M_93M75_375Mp_375Mn_75M
       port map
       (
@@ -221,7 +269,6 @@ begin
       C_vgahdmi_fifo_timeout => C_vgahdmi_fifo_timeout,
       C_vgahdmi_fifo_burst_max => C_vgahdmi_fifo_burst_max,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
-      C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
 
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
