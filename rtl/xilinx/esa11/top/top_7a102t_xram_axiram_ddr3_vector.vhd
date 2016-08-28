@@ -44,7 +44,7 @@ entity esa11_xram_axiram_ddr3 is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: 25/100/108 MHz (100 for 640x360..1024x576, 108 for 1024x768..1280x1024)
+	-- Main clock: 25/100/108 MHz (100 for 640x360..1024x576 and 1280x768, 108 for 1024x768 and 1280x1024)
 	C_clk_freq: integer := 100;
 
 	C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
@@ -75,13 +75,13 @@ entity esa11_xram_axiram_ddr3 is
         C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
-        C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 7:1280x1024
+        C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024
 
         C_vgahdmi: boolean := true;
           C_vgahdmi_axi: boolean := true; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
           C_vgahdmi_cache_size: integer := 8; -- KB video cache (only on f32c bus) (0: disable, 2,4,8,16,32:enable)
           C_vgahdmi_fifo_timeout: integer := 0;
-          C_vgahdmi_fifo_burst_max: integer := 64;
+          C_vgahdmi_fifo_burst_max_bits: integer := 6; -- 6 bits -> 64x32-bit words
           -- output data width 8bpp
           C_vgahdmi_fifo_data_width: integer := 32; -- should be equal to bitmap depth
 
@@ -185,10 +185,10 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
       return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
     end ceil_log2;
     signal clk, sio_break: std_logic;
-    signal clk_25MHz, clk_30MHz, clk_40MHz, clk_45MHz, clk_50MHz, clk_65MHz,
+    signal clk_25MHz, clk_30MHz, clk_40MHz, clk_45MHz, clk_50MHz, clk_65MHz, clk_75MHz,
            clk_100MHz, clk_108MHz, clk_112M5Hz, clk_125MHz, clk_150MHz,
            clk_200MHz, clk_216MHz, clk_225MHz, clk_250MHz,
-           clk_325MHz, clk_541MHz: std_logic := '0';
+           clk_325MHz, clk_375MHz, clk_541MHz: std_logic := '0';
     signal clk_axi: std_logic;
     signal clk_pixel: std_logic;
     signal clk_pixel_shift: std_logic;
@@ -284,6 +284,19 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
       locked : out STD_LOGIC
     );
     end component clk_d100_108_216_325_65MHz;
+
+    component clk_d100_100_225_375_75MHz is
+    Port (
+      clk_100mhz_in_p : in STD_LOGIC;
+      clk_100mhz_in_n : in STD_LOGIC;
+      clk_100mhz : out STD_LOGIC;
+      clk_225mhz : out STD_LOGIC;
+      clk_375mhz : out STD_LOGIC;
+      clk_75mhz : out STD_LOGIC;
+      reset : in STD_LOGIC;
+      locked : out STD_LOGIC
+    );
+    end component;
 
     component clk_d100_108_216_541MHz is
     Port (
@@ -482,6 +495,24 @@ begin
     clk_axi <= clk_216MHz;
     end generate;
 
+    cpu100M_ddr_1280x768: if C_clk_freq = 100 and C_dvid_ddr and C_video_mode=6 generate
+    clk_cpu100M_ddr_1280x768: clk_d100_100_225_375_75MHz
+    port map(clk_100mhz_in_p => i_100MHz_P,
+             clk_100mhz_in_n => i_100MHz_N,
+             reset => '0',
+             locked => clk_locked,
+             clk_100mhz => clk_100MHz,
+             clk_225mhz => clk_225MHz,
+             clk_375mhz => clk_375MHz,
+             clk_75mhz  => clk_75MHz
+    );
+    clk <= clk_100MHz;
+    clk_pixel <= clk_75MHz;
+    clk_pixel_shift <= clk_375MHz;
+    video_axi_aclk <= clk_225MHz;
+    clk_axi <= clk_225MHz;
+    end generate;
+
     cpu108M_ddr_1280x1024: if C_clk_freq = 108 and C_dvid_ddr and C_video_mode=7 generate
     clk_cpu108M_ddr_1280x1024: clk_d100_108_216_541MHz
     port map(clk_100mhz_in_p => i_100MHz_P,
@@ -554,7 +585,7 @@ begin
       C_vgahdmi_axi => C_vgahdmi_axi,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_timeout => C_vgahdmi_fifo_timeout,
-      C_vgahdmi_fifo_burst_max => C_vgahdmi_fifo_burst_max,
+      C_vgahdmi_fifo_burst_max_bits => C_vgahdmi_fifo_burst_max_bits,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
 
       -- vga advanced graphics text+compositing bitmap
