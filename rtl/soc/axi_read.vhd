@@ -77,10 +77,10 @@ begin
             R_arvalid   <= '0';
             R_arlen     <= (others => '0');
       else
-        if iaddr_strobe = '1' and R_read_busy = '0' and R_arvalid='0' and iburst /= 0 then -- when previos request is finished, start new DDR read
+        if iaddr_strobe = '1' and R_read_busy = '0' and R_arvalid='0' then -- when previos request is finished, start new DDR read
             R_araddr    <= "00" & iaddr(29 downto 2) & "00";
             R_arvalid   <= '1'; -- read request: address valid (similar to f32c strobe)
-            R_arlen     <= iburst-1;
+            R_arlen     <= iburst;
         else
           if R_arvalid = '1' and axi_in.arready = '1' then
               R_read_busy <= '1';

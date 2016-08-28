@@ -142,12 +142,13 @@ entity compositing2_fifo is
         -- prevent further compositing (instead of starting new segment, skip to next line)
         C_timeout: integer := 0; -- 0:disable, >=1 enable
         C_timeout_incomplete: boolean := false; -- true: allow timeout to abort incomplete segment (check if burst allows that)
-        C_burst_max: integer := 1; -- limit burst suggestion to max number of 32-bit words
+        C_burst_max_bits: integer := 0; -- number of bits to describe max burst requested
         -- number of pixels per horizontal line
         C_width: integer := 640; -- pixels per line
         C_height: integer := 480; -- number of vertical lines
         C_vscroll: integer := 3; -- vertical scroll that fixes fifo delay
         C_data_width: integer range 8 to 32 := 8; -- bits per pixel
+        C_length_subtract: integer := 1; -- todo: set to 0 to save LUTs but C library must change then
         -- fifo buffer size (number of address bits that refer to pixels)
         -- compositing: 11 (2^11 = 2048 bytes for 640x480 8bpp)
         C_addr_width: integer := 11 -- bits width of fifo address
@@ -156,7 +157,7 @@ entity compositing2_fifo is
 	clk, clk_pixel: in std_logic;
 	addr_strobe: out std_logic; -- if using cache discard this strobe, and give strobe='1' to cache
 	addr_out: out std_logic_vector(29 downto 2);
-	suggest_burst: out std_logic_vector(15 downto 0) := x"0001"; -- number of 32-bit words requrested
+	suggest_burst: out std_logic_vector(C_burst_max_bits-1 downto 0) := (others => '0'); -- number of 32-bit words requrested
 	suggest_cache: out std_logic; -- '1' during pulled content (state 4), most effective for cacheing
 	base_addr: in std_logic_vector(29 downto 2);
 	data_ready: in std_logic; -- RAM indicates data are ready for consuming
@@ -211,7 +212,7 @@ architecture behavioral of compositing2_fifo is
     signal S_vertical_scrolled: std_logic_vector(29 downto 2);
     signal R_state: integer range 0 to 4;
     signal R_position: std_logic_vector(15 downto 0);
-    signal R_word_count: std_logic_vector(15 downto 0) := x"0001";
+    signal R_word_count: std_logic_vector(15 downto 0) := (others => '0');
     signal S_pixels_remaining: std_logic_vector(15 downto 0);
     signal R_suggest_cache: std_logic := '0';
     signal R_timeout: std_logic := '0';
@@ -285,7 +286,7 @@ begin
                       -- area, thus make a short range clipping
                       R_position <= data_in(15 downto 0); -- compositing position (pixels)
                       -- addr pad for 8bpp is "00"
-                      R_word_count <= C_addr_pad & data_in(31 downto 16+C_shift_addr_width); -- number of 32-bit words (n*4 pixels)
+                      R_word_count <= (C_addr_pad & data_in(31 downto 16+C_shift_addr_width))-C_length_subtract; -- number of 32-bit words (n*4 pixels)
                       R_sram_addr <= R_sram_addr + 1;  -- next sequential read (data)
                     else
                       -- C_position_clipping = true
@@ -293,7 +294,7 @@ begin
                         -- data_in(15 downto 0) is positive
                         if data_in(15 downto 0) < C_width then
                           R_position <= data_in(15 downto 0); -- compositing position (pixels)
-                          R_word_count <= C_addr_pad & data_in(31 downto 16+C_shift_addr_width); -- number of 32-bit words (n*4 pixels)
+                          R_word_count <= (C_addr_pad & data_in(31 downto 16+C_shift_addr_width))-C_length_subtract; -- number of 32-bit words (n*4 pixels)
                           R_sram_addr <= R_sram_addr + 1;  -- next sequential read (data)
                         else
                           -- out of visible compositing range, skip to the next segment or line
@@ -311,7 +312,7 @@ begin
                         if S_pixels_remaining(15) = '0' then
                           -- few pixels still remaining from compositing line
                           R_position <= (others => '0');
-                          R_word_count <= C_addr_pad & S_pixels_remaining(15 downto C_shift_addr_width);
+                          R_word_count <= (C_addr_pad & S_pixels_remaining(15 downto C_shift_addr_width))-C_length_subtract;
                           -- skip forward (convert negative position into positive)
                           R_sram_addr <= R_sram_addr + (x"0001" - ("11" & data_in(15 downto 2)));
                         else
@@ -336,7 +337,7 @@ begin
                     -- data to compositing (written from another process)
                     -- pixeldata = data_in(31 downto 16);
                     -- check range if within the line
-                    if R_word_count = 1 or (R_timeout = '1' and C_timeout_incomplete) then
+                    if R_word_count = 0 or (R_timeout = '1' and C_timeout_incomplete) then
                       -- word count decrements
                       -- last element in segment is now being composited
                       -- from this state
@@ -370,10 +371,8 @@ begin
     --read_ready <= S_need_refill and R_shifting_counter(C_shift_addr_width); -- this works only for no burst but strange: works only long bitmap lines, short sprites dont' work
 
     suggest_cache <= R_suggest_cache;
-    G_yes_burst: if C_burst_max > 1 generate
-      S_burst_limited <= R_word_count when R_word_count < C_burst_max else std_logic_vector(to_unsigned(C_burst_max,16)); -- limit burst to max 16 x 32-bit
-      --suggest_burst <= S_burst_limited when R_suggest_cache='1' else x"0001"; -- at state 4 last read is 1-word?
-      suggest_burst <= S_burst_limited when R_suggest_cache='1' and R_word_count /= 0 else x"0001"; -- at state 4 last read is 1-word?
+    G_yes_burst: if C_burst_max_bits > 0 generate
+      suggest_burst <= R_word_count(C_burst_max_bits-1 downto 0) when R_suggest_cache='1' else (others => '0');
     end generate;
 
     -- need refill signal must be CPU synchronous
