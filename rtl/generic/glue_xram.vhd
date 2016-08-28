@@ -128,7 +128,7 @@ generic (
   C_vgahdmi_cache_use_i: boolean := false; -- true: use instruction cache (faster, maybe buggy), false: use data cache (slower, works)
   C_vgahdmi_fifo_fast_ram: boolean := true;
   C_vgahdmi_fifo_timeout: integer := 0; -- abort compositing at N pixels before end of line (0 disabled)
-  C_vgahdmi_fifo_burst_max: integer := 1; -- values >= 2 enable the burst
+  C_vgahdmi_fifo_burst_max_bits: integer := 0; -- values >= 1 enable the burst
   --C_vgahdmi_fifo_width: integer := 640;
   --C_vgahdmi_fifo_height: integer := 480;
   C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
@@ -368,7 +368,7 @@ architecture Behavioral of glue_xram is
     signal vga_data: std_logic_vector(31 downto 0);
     -- Video FIFO data bus
     signal video_fifo_suggest_cache: std_logic := '0';
-    signal video_fifo_suggest_burst: std_logic_vector(15 downto 0);
+    signal video_fifo_suggest_burst: std_logic_vector(7 downto 0) := (others => '0');
     signal video_fifo_addr: std_logic_vector(29 downto 2);
     signal video_fifo_addr_strobe: std_logic; -- FIFO requests to read from RAM
     signal video_fifo_data_ready: std_logic; -- RAM responds to FIFO
@@ -1273,7 +1273,7 @@ begin
     generic map (
       C_fast_ram => C_vgahdmi_fifo_fast_ram,
       C_timeout => C_vgahdmi_fifo_timeout,
-      C_burst_max => C_vgahdmi_fifo_burst_max,
+      C_burst_max_bits => C_vgahdmi_fifo_burst_max_bits,
       C_width => C_video_modes(C_vgahdmi_mode).visible_width,
       C_height => C_video_modes(C_vgahdmi_mode).visible_height,
       C_data_width => C_vgahdmi_fifo_data_width,
@@ -1283,7 +1283,7 @@ begin
       clk => clk,
       clk_pixel => clk_pixel,
       suggest_cache => video_fifo_suggest_cache,
-      suggest_burst => video_fifo_suggest_burst,
+      suggest_burst => video_fifo_suggest_burst(C_vgahdmi_fifo_burst_max_bits-1 downto 0),
       addr_strobe => video_fifo_addr_strobe,
       addr_out => video_fifo_addr,
       read_ready => video_fifo_read_ready, -- fifo outputs '1' when ready to read data from RAM
