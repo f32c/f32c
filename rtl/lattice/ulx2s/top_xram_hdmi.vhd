@@ -78,6 +78,8 @@ entity toplevel is
     -- C_boot_rom = false: -- serial bootloader only
     C_boot_rom: boolean := true;
     C_mult_enable: boolean := true;
+    C_mul_acc: boolean := true;    -- MI32 only
+    C_mul_reg: boolean := true;    -- MI32 only
     C_branch_likely: boolean := true;
     C_sign_extend: boolean := true;
     C_ll_sc: boolean := false;
@@ -133,7 +135,7 @@ entity toplevel is
       -- width of FIFO address space -> size of fifo
       -- for 8bpp compositing use 11 -> 2048 bytes
 
-    C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: Lattice FX2 MIPS compatible soft-core 50MHz 1MB SRAM"; -- default banner in screen memory
       C_vgatext_mode: integer := 1; -- 640x480
       C_vgatext_bits: integer := 4; -- 16 possible colors
@@ -241,7 +243,7 @@ architecture Behavioral of toplevel is
   signal btn: std_logic_vector(4 downto 0);
   signal tmds_rgb: std_logic_vector(2 downto 0);
   signal tmds_clk: std_logic;
-  signal blink1, blink2, blink3: std_logic_vector(25 downto 0);
+  signal icp, ocp: std_logic_vector(1 downto 0); -- timer PWM in/out
   signal gpio_28, fm_antenna, cw_antenna: std_logic;
   signal motor_bridge, motor_encoder: std_logic_vector(1 downto 0);
 begin
@@ -272,6 +274,8 @@ begin
       C_big_endian => C_big_endian,
       C_boot_rom => C_boot_rom,
       C_mult_enable => C_mult_enable,
+      C_mul_acc => C_mul_acc,
+      C_mul_reg => C_mul_reg,
       C_branch_likely => C_branch_likely,
       C_sign_extend => C_sign_extend,
       C_ll_sc => C_ll_sc,
@@ -378,10 +382,13 @@ begin
       simple_out(7 downto 0) => led(7 downto 0),
       simple_in(4 downto 0) => btn,
       simple_in(19 downto 16) => sw,
+      -- gpio
       gpio(0)  => j1_2,  gpio(1)  => j1_3,  gpio(2)  => j1_4,   gpio(3)  => j1_8,
       gpio(4)  => j1_9,  gpio(5)  => j1_4,  gpio(6)  => j1_14,  gpio(7)  => j1_15,
       --gpio(8)  => j1_16, gpio(9)  => j1_17, gpio(10) => j1_18,  gpio(11) => j1_19,
       --gpio(12) => j1_20, gpio(13) => j1_21, gpio(14) => j1_22,  gpio(15) => j1_23,
+      -- timer hardware pins
+      icp(0) => j2_4, icp(1) => j2_11, ocp(0) => j2_3, ocp(1) => j2_10,
       -- gpio(27 downto 16) multifuncition GPIO/VGA/PID
       -- **** GPIO **** gpio(27 downto 16)
       --gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
