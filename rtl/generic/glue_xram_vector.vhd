@@ -45,6 +45,8 @@ generic (
   C_arch: integer := ARCH_MI32;
   C_big_endian: boolean := false;
   C_mult_enable: boolean := true;
+  C_mul_acc: boolean := false;    -- MI32 only
+  C_mul_reg: boolean := false;    -- MI32 only
   C_branch_likely: boolean := true;
   C_sign_extend: boolean := true;
   C_ll_sc: boolean := false;
@@ -126,7 +128,6 @@ generic (
   C_vgahdmi_cache_use_i: boolean := false; -- true: use instruction cache (faster, maybe buggy), false: use data cache (slower, works)
   C_vgahdmi_fifo_fast_ram: boolean := true;
   C_vgahdmi_fifo_timeout: integer := 0; -- abort compositing at N pixels before end of line (0 disabled)
-  C_vgahdmi_fifo_burst_max: integer := 1; -- values >= 2 enable the burst
   C_vgahdmi_fifo_burst_max_bits: integer := 0; -- values >= 1 enable the burst
   C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
   --C_vgahdmi_fifo_addr_width: integer := 11; -- calculated internally
@@ -560,7 +561,8 @@ begin
       C_arch => C_arch, C_cpuid => 0, C_clk_freq => C_clk_freq,
       C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
       C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
-      C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
+      C_mult_enable => C_mult_enable, C_mul_acc => C_mul_acc, C_mul_reg => C_mul_reg,
+      C_PC_mask => C_PC_mask,
       C_cop0_count => C_cop0_count, C_cop0_config => C_cop0_config,
       C_cop0_compare => C_cop0_compare,
       C_branch_prediction => C_branch_prediction,
