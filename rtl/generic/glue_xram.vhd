@@ -129,8 +129,6 @@ generic (
   C_vgahdmi_fifo_fast_ram: boolean := true;
   C_vgahdmi_fifo_timeout: integer := 0; -- abort compositing at N pixels before end of line (0 disabled)
   C_vgahdmi_fifo_burst_max_bits: integer := 0; -- values >= 1 enable the burst
-  --C_vgahdmi_fifo_width: integer := 640;
-  --C_vgahdmi_fifo_height: integer := 480;
   C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
   --C_vgahdmi_fifo_addr_width: integer := 11; -- calculated from video mode x-resolution
   C_video_base_addr_out: boolean := false; -- dummy video driver, just output base address to toplevel
@@ -1376,8 +1374,8 @@ begin
     vga_r <= S_vga_r;
     vga_g <= S_vga_g;
     vga_b <= S_vga_b;
-    vga_vsync <= not S_vga_vsync;
-    vga_hsync <= not S_vga_hsync;
+    vga_vsync <= S_vga_vsync xor not C_video_modes(C_vgahdmi_mode).v_sync_polarity;
+    vga_hsync <= S_vga_hsync xor not C_video_modes(C_vgahdmi_mode).h_sync_polarity;
 
     G_vgahdmi_tmds_display: if not C_lvds_display generate
     -- DVI-D TMDS Encoder Block
