@@ -45,7 +45,7 @@ entity esa11_xram_axiram_ddr3 is
 	C_debug: boolean := false;
 
 	-- Main clock: 25/100/108 MHz (100 for 640x360..1024x576 and 1280x768, 108 for 1024x768 and 1280x1024)
-	C_clk_freq: integer := 100;
+	C_clk_freq: integer := 108;
 
 	C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
 
@@ -67,6 +67,7 @@ entity esa11_xram_axiram_ddr3 is
 
         C_vector: boolean := true; -- vector processor unit
         C_vector_axi: boolean := true; -- true: use AXI I/O, false use f32c RAM port I/O
+        C_vector_burst_max_bits: integer := 6; -- describe max burst
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
         C_vector_vaddr_bits: integer := 11;
         C_vector_vdata_bits: integer := 32;
@@ -75,7 +76,7 @@ entity esa11_xram_axiram_ddr3 is
         C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
-        C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024
+        C_video_mode: integer := 7; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024
 
         C_vgahdmi: boolean := true;
           C_vgahdmi_axi: boolean := true; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
@@ -571,6 +572,7 @@ begin
       C_spi => C_spi,
       C_vector => C_vector,
       C_vector_axi => C_vector_axi,
+      C_vector_burst_max_bits => C_vector_burst_max_bits,
       C_vector_registers => C_vector_registers,
       C_vector_vaddr_bits => C_vector_vaddr_bits,
       C_vector_vdata_bits => C_vector_vdata_bits,
