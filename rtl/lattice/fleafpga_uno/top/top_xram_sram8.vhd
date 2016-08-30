@@ -61,9 +61,6 @@ entity glue is
     C_vgahdmi_cache_size: integer := 8;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
-    -- width of FIFO address space -> size of fifo
-    -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
-    C_vgahdmi_fifo_addr_width: integer := 11;
 
     -- VGA textmode and graphics, full featured
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
