@@ -148,7 +148,7 @@ entity compositing2_fifo is
         C_height: integer := 480; -- number of vertical lines
         C_vscroll: integer := 3; -- vertical scroll that fixes fifo delay
         C_data_width: integer range 8 to 32 := 8; -- bits per pixel
-        C_length_subtract: integer := 1; -- todo: set to 0 to save LUTs but C library must change then
+        C_length_subtract: integer := 0; -- todo: set to 0 to save LUTs but C library must change then
         -- fifo buffer size (number of address bits that refer to pixels)
         -- compositing: 11 (2^11 = 2048 bytes for 640x480 8bpp)
         C_addr_width: integer := 11 -- bits width of fifo address
@@ -345,6 +345,7 @@ begin
                       -- if no more segments then complete the line
                       if R_seg_next = 0 or R_timeout = '1' then
                         -- no more segments, line completed
+                        R_word_count <= (others => '0');
                         R_state <= 0;
                         R_line_wr <= not R_line_wr; -- + 1;
                         R_sram_addr <= R_line_start; -- jump to start of the next line
@@ -372,7 +373,8 @@ begin
 
     suggest_cache <= R_suggest_cache;
     G_yes_burst: if C_burst_max_bits > 0 generate
-      suggest_burst <= R_word_count(C_burst_max_bits-1 downto 0) when R_suggest_cache='1' else (others => '0');
+      suggest_burst <= R_word_count(C_burst_max_bits-1 downto 0) when R_state=0 or R_state=4
+                  else std_logic_vector(to_unsigned(3-R_state, C_burst_max_bits)); -- value 2 means 3 words to burst
     end generate;
 
     -- need refill signal must be CPU synchronous
