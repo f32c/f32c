@@ -10,7 +10,7 @@ DIAMONDC := $(shell find ${DIAMOND_BIN}/ -name diamondc)
 
 PROGRAMMER_BASE := /usr/local/programmer
 PROGRAMMER_BIN :=  $(shell find ${PROGRAMMER_BASE}/ -maxdepth 2 -name bin | sort -rn | head -1)
-PROGRAMMERC := $(shell find ${PROGRAMMER_BIN}/ -name programmer)
+PROGRAMMERC := $(shell find ${PROGRAMMER_BIN}/ -name diamondc)
 
 # name of the project as defined in project file
 PROJECT = project
