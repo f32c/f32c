@@ -28,6 +28,8 @@ $(PROJECT)/$(PROJECT)_$(PROJECT).bit:
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	ddtcmd -oft -fullvme -if sparrowhawk_sram.xcf -nocompress -noheader -of $@
+	# ispvm -infile $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme -outfiletype -svf
+	# ispvm -infile sparrowhawk_sram.xcf -outfiletype -svf
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 	FleaFPGA-JTAG $<
