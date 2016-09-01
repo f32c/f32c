@@ -105,8 +105,13 @@ entity sparrowhawk is
 
   ADC_Comp_in   : inout std_logic_vector(5 downto 0);
   ADC_Error_out : inout std_logic_vector(5 downto 0);
+  
+  -- SD card
+  sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: inout std_logic;
+  sd_clk, sd_pwrn: out std_logic;
+  sd_cdn, sd_wp: in std_logic;
 
-    -- SPI1 to Flash ROM
+  -- SPI1 to Flash ROM
   spi1_miso   : in      std_logic;
   spi1_mosi   : out     std_logic;
   spi1_clk    : out     std_logic;
@@ -200,10 +205,11 @@ begin
     --sio_txd(1) => open,
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
-    spi_sck(0) => spi1_clk,
-    spi_ss(0) => spi1_cs,
-    spi_mosi(0) => spi1_mosi,
-    spi_miso(0) => spi1_miso,
+
+    spi_sck(0)  => open,  spi_sck(1)  => sd_clk,
+    spi_ss(0)   => open,  spi_ss(1)   => sd_dat3_csn,
+    spi_mosi(0) => open,  spi_mosi(1) => sd_cmd_di,
+    spi_miso(0) => open,  spi_miso(1) => sd_dat0_do,
 
     ADC_Error_out => ADC_Error_out,
 
