@@ -77,45 +77,31 @@ entity sparrowhawk is
   port (
   clk_100_p, clk_100_n: in std_logic;  -- main clock input from 100MHz clock source
   cy_clkout: in std_logic;  -- cypress CPU clock, firmware configurable 12/24/48MHz clock source
-  --sys_reset   : in    std_logic;  --
-
-  Shield_reset : inout    std_logic;  -- Buffered reset signal out to GPIO header
 
   -- UART0 (USB slave serial)
   tx: out   std_logic;
   rx: in    std_logic;
 
-  -- UART1 (Optional WiFi interface)
-  wifi_rx_i   : out   std_logic;
-  wifi_tx_o   : in    std_logic;
-
-  LVDS_Red    : out   std_logic;
-  LVDS_Green  : out   std_logic;
-  LVDS_Blue   : out   std_logic;
-  LVDS_ck     : out   std_logic;
+  --LVDS_Red    : out   std_logic;
+  --LVDS_Green  : out   std_logic;
+  --LVDS_Blue   : out   std_logic;
+  --LVDS_ck     : out   std_logic;
 
   led: out std_logic_vector(7 downto 0);
 
-  User_LED1   : inout std_logic;
-  User_LED2   : out   std_logic;
-  User_n_PB1  : in    std_logic;
+  --GPIO_wordport : inout std_logic_vector(15 downto 0);
+  --GPIO_pullup   : inout std_logic_vector(15 downto 0);
 
-  GPIO_wordport : inout std_logic_vector(15 downto 0);
-  GPIO_pullup   : inout std_logic_vector(15 downto 0);
-
-  ADC_Comp_in   : inout std_logic_vector(5 downto 0);
-  ADC_Error_out : inout std_logic_vector(5 downto 0);
-  
   -- SD card
   sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: inout std_logic;
   sd_clk, sd_pwrn: out std_logic;
   sd_cdn, sd_wp: in std_logic;
 
   -- SPI1 to Flash ROM
-  spi1_miso   : in      std_logic;
-  spi1_mosi   : out     std_logic;
-  spi1_clk    : out     std_logic;
-  spi1_cs     : out     std_logic
+  flash_miso   : in      std_logic;
+  flash_mosi   : out     std_logic;
+  flash_clk    : out     std_logic;
+  flash_csn    : out     std_logic
   );
 end;
 
@@ -124,11 +110,6 @@ architecture Behavioral of sparrowhawk is
   signal clk_dvi, clk_dvin, clk_pixel: std_logic;
   signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
 begin
-  shield_reset <= 'Z';  -- ignore for now
-
-  -- un-comment following two lines for WiFi option
-  -- gpio_pullup(0) <= '1';  -- Wifi gpio
-
   video_mode_1_640x480: if C_video_mode = 1 generate
   clk_640x480: entity work.clkgen_100_100
   port map(
@@ -206,48 +187,18 @@ begin
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
 
-    spi_sck(0)  => open,  spi_sck(1)  => sd_clk,
-    spi_ss(0)   => open,  spi_ss(1)   => sd_dat3_csn,
-    spi_mosi(0) => open,  spi_mosi(1) => sd_cmd_di,
-    spi_miso(0) => open,  spi_miso(1) => sd_dat0_do,
+    spi_sck(0)  => flash_clk,  spi_sck(1)  => sd_clk,
+    spi_ss(0)   => flash_csn,  spi_ss(1)   => sd_dat3_csn,
+    spi_mosi(0) => flash_mosi, spi_mosi(1) => sd_cmd_di,
+    spi_miso(0) => flash_miso, spi_miso(1) => sd_dat0_do,
 
-    ADC_Error_out => ADC_Error_out,
-
-    gpio(127 downto 32) => open,
-
-    gpio(24) => GPIO_wordport(0), -- PORTD0 pin D0
-    gpio(25) => GPIO_wordport(1), -- PORTD1 pin D1
-    gpio(26) => GPIO_wordport(2), -- PORTD2 pin D2
-    gpio(27) => GPIO_wordport(3), -- PORTD3 pin D3
-    gpio(28) => GPIO_wordport(4), -- PORTD4 pin D4
-    gpio(29) => GPIO_wordport(5), -- PORTD5 pin D5
-    gpio(30) => GPIO_wordport(6), -- PORTD6 pin D6
-    gpio(31) => GPIO_wordport(7), -- PORTD7 pin D7
-
-    gpio(21 downto 16) => ADC_Comp_In,
-
-    gpio(23 downto 22) => open,
-
-    gpio(8) => GPIO_wordport(8),  -- PORTB0 pin D8
-    gpio(9) => GPIO_wordport(9),  -- PORTB1 pin D9
-    gpio(10) => GPIO_wordport(10),  -- PORTB2 pin D10
-    gpio(11) => GPIO_wordport(11),  -- PORTB3 pin D11
-    gpio(12) => GPIO_wordport(12),  -- PORTB4 pin D12
-    gpio(13) => GPIO_wordport(13),  -- PORTB5 pin D13
-    gpio(14) => open,
-    gpio(15) => open,
-
-    gpio(7 downto 0) => open,
+    gpio(127 downto 0) => open,
 
     simple_out(7 downto 0) => led,
-    -- Wifi    simple_out(1) => User_LED2, -- Not available if WiFi option installed
     simple_out(31 downto 8) => open,
-    simple_in(0) => NOT User_n_PB1,
+    simple_in(0) => '0',
     simple_in(31 downto 1) => open,
---    sram_a(18 downto 0) => SRAM_Addr,
---    sram_d(7 downto 0) => SRAM_Data,
---    sram_wel => SRAM_n_we,
-    -- Digital Video out (singled ended DDR)
+
     dvid_red   => dvid_red,
     dvid_green => dvid_green,
     dvid_blue  => dvid_blue,
