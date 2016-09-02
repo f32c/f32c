@@ -5,6 +5,9 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+library LatticeECP3;
+use LatticeECP3.components.all;
+
 use work.f32c_pack.all;
 
 entity sparrowhawk is
@@ -106,16 +109,24 @@ entity sparrowhawk is
 end;
 
 architecture Behavioral of sparrowhawk is
+  component ILVDS
+    port (A, AN: in std_logic; Z: out  std_logic);
+  end component;
+
   signal clk, rs232_break, rs232_break2: std_logic;
+  signal clk_100: std_logic;
   signal clk_dvi, clk_dvin, clk_pixel: std_logic;
   signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
   signal R_blinky: std_logic_vector(26 downto 0);
 begin
+  -- convert external differential clock input to internal single ended clock
+  clock_diff2se:
+  ILVDS port map(A=>clk_100_p, AN=>clk_100_n, Z=>clk_100);
 
-video_mode_1_640x480: if false and C_video_mode = 1 generate
+  video_mode_1_640x480: if C_video_mode = 1 generate
   clk_640x480: entity work.clkgen_100_100
   port map(
-    CLK         => clk_100_p,
+    CLK         => clk_100,
     CLKOP       => clk
 --    CLKOP       =>  clk_dvi,
 --    CLKOS       =>  clk_dvin,
@@ -123,8 +134,6 @@ video_mode_1_640x480: if false and C_video_mode = 1 generate
 --    CLKOS3      =>  clk
    );
   end generate;
-  
-  clk <= clk_100_p;
   
     -- generic BRAM glue
   glue_xram: entity work.glue_xram
@@ -198,8 +207,8 @@ video_mode_1_640x480: if false and C_video_mode = 1 generate
 
     gpio(127 downto 0) => open,
 
-    simple_out(6 downto 0) => led(6 downto 0),
-    simple_out(31 downto 7) => open,
+    simple_out(7 downto 0) => led(7 downto 0),
+    simple_out(31 downto 8) => open,
     simple_in(0) => '0',
     simple_in(31 downto 1) => open,
 
@@ -232,6 +241,6 @@ video_mode_1_640x480: if false and C_video_mode = 1 generate
         R_blinky <= R_blinky+1;
       end if;
   end process;
-  led(7) <= R_blinky(R_blinky'high);
+  -- led(7) <= R_blinky(R_blinky'high);
   
 end Behavioral;

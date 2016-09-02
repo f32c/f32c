@@ -20,7 +20,7 @@
 				<BScanVal>0</BScanVal>
 			</Bypass>
 			<File>/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/lattice/sparrowhawk/xram_bram/project/project_project.bit</File>
-			<FileTime>09/02/16 21:38:15</FileTime>
+			<FileTime>09/03/16 00:57:47</FileTime>
 			<Operation>Fast Program</Operation>
 			<Option>
 				<SVFVendor>JTAG STANDARD</SVFVendor>
