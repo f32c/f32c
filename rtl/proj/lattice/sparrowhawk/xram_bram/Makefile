@@ -32,6 +32,9 @@ $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 program: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 	${PROGRAMMERC} $<
 
+program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
+	openocd --file=remote.ocd --file=ecp3.ocd
+
 #$(PROJECT)/$(PROJECT)_$(PROJECT).jed:
 #	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Jedecgen | ${DIAMONDC}
 
