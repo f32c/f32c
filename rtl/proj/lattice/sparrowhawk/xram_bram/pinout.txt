@@ -14,8 +14,12 @@ Pin 10 INITN
 
 WIFI_JTAG connector ESP12
 looking at wifi chip metal shield, antenna up
-(on RADIONA board, pin 1 is on opposite side from 6-pin programming female
-connector)
+(on RADIONA ESP8266 board: 
+pin 1 is on opposite side from 6-pin programming female connector)
+
+essid: jtag
+password: 12345678
+ip: 192.168.4.1 (jtag.lan)
 
  1 RST
  2 ADC
