@@ -31,7 +31,8 @@ $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	ddtcmd -oft -svfsingle -if sparrowhawk_sram.xcf -of $@
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
-	${PROGRAMMERC} $<
+	echo pgr_project open sparrowhawk_sram.xcf \; pgr_program run | ${DIAMONDC}
+	# ${PROGRAMMERC} $<
 
 program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 	openocd --file=ft2232-fpu1.ocd --file=ecp3.ocd
