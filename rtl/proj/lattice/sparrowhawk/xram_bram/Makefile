@@ -27,13 +27,17 @@ $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	ddtcmd -oft -fullvme -if sparrowhawk_sram.xcf -nocompress -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-	ddtcmd -oft -svfsingle -revd -op "SRAM Fast Program" -if sparrowhawk_sram.xcf -of $@
+	#ddtcmd -oft -svfsingle -revd -if sparrowhawk_sram.xcf -of $@
+	ddtcmd -oft -svfsingle -if sparrowhawk_sram.xcf -of $@
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 	${PROGRAMMERC} $<
 
 program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
-	openocd --file=remote.ocd --file=ecp3.ocd
+	openocd --file=ft2232-fpu1.ocd --file=ecp3.ocd
+
+program_ft2232: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
+	openocd --file=ft2232-fpu1.ocd --file=ecp3.ocd
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT).jed:
 #	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Jedecgen | ${DIAMONDC}
