@@ -18,41 +18,41 @@ PROJECT = project
 JUNK = ${IMPL_DIR} .recovery ._Real_._Math_.vhd *.sty reportview.xml
 JUNK += project_tcr.dir
 
-all: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
-	#@rm -rf ${IMPL_DIR}
-	#@echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
-	#ddtcmd -oft -fullvme -if project_sram.xcf -nocompress -noheader -of project/project_project_sram.vme
-	# flash vme file needs jedec *.jed file as input which is not automatically
-	# generated from commandline.
-	# GUI runs it with this
-	# bitgen -f "project_project.t2b" -w "project_project.ncd" -jedec "project_project.prf"
-	# after jedec file is generated, we can generate vme file for flash programming:
-	# ddtcmd -oft -fullvme -if project_flash.xcf -nocompress -noheader -of project/project_project_flash.vme
-
+all: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 
 $(PROJECT)/$(PROJECT)_$(PROJECT).bit:
 	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	ddtcmd -oft -fullvme -if sparrowhawk_sram.xcf -nocompress -noheader -of $@
-	# ispvm -infile $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme -outfiletype -svf
-	# ispvm -infile sparrowhawk_sram.xcf -outfiletype -svf
+
+$(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
+	ddtcmd -oft -svfsingle -revd -op "SRAM Fast Program" -if sparrowhawk_sram.xcf -of $@
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 	${PROGRAMMERC} $<
-	# after this, to gain access to serial port on linux
-	# rmmod ftdi_sio; modprobe ftdi_sio
 
-$(PROJECT)/$(PROJECT)_$(PROJECT).jed:
-	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Jedecgen | ${DIAMONDC}
+#$(PROJECT)/$(PROJECT)_$(PROJECT).jed:
+#	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Jedecgen | ${DIAMONDC}
 
-$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
-	ddtcmd -oft -fullvme -if sparrowhawk_flash.xcf -nocompress -noheader -of $@
+#$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
+#	ddtcmd -oft -fullvme -if sparrowhawk_flash.xcf -nocompress -noheader -of $@
+
+#$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
+#	ddtcmd -oft -svfsingle -op "FLASH Erase,Program,Verify" -if $< -of $@
 
 flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
 	${PROGRAMMERC} $<
 	# after this, to gain access to serial port on linux
 	# rmmod ftdi_sio; modprobe ftdi_sio
+
+# example another project
+#%.svf : %.jed
+#	ddtcmd -oft -svfsingle -op "FLASH Erase,Program,Verify" -if $< -of $@
+#	mv -f $@ $@.flash
+#	ddtcmd -oft -svfsingle -revd -op "SRAM Fast Program" -if $< -of $@
+#	mv -f $@ $@.sram
+#	./svf_to_urjtag.pl <$@.flash | sed 's/,/./g' > $@
 
 clean:
 	rm -rf $(JUNK) *~
