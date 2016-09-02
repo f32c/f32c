@@ -109,8 +109,10 @@ architecture Behavioral of sparrowhawk is
   signal clk, rs232_break, rs232_break2: std_logic;
   signal clk_dvi, clk_dvin, clk_pixel: std_logic;
   signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
+  signal R_blinky: std_logic_vector(26 downto 0);
 begin
-  video_mode_1_640x480: if C_video_mode = 1 generate
+
+video_mode_1_640x480: if false and C_video_mode = 1 generate
   clk_640x480: entity work.clkgen_100_100
   port map(
     CLK         => clk_100_p,
@@ -121,7 +123,9 @@ begin
 --    CLKOS3      =>  clk
    );
   end generate;
-
+  
+  clk <= clk_100_p;
+  
     -- generic BRAM glue
   glue_xram: entity work.glue_xram
   generic map (
@@ -194,8 +198,8 @@ begin
 
     gpio(127 downto 0) => open,
 
-    simple_out(7 downto 0) => led,
-    simple_out(31 downto 8) => open,
+    simple_out(6 downto 0) => led(6 downto 0),
+    simple_out(31 downto 7) => open,
     simple_in(0) => '0',
     simple_in(31 downto 1) => open,
 
@@ -220,4 +224,14 @@ begin
   --  out_blue  => LVDS_Blue,
   --  out_clock => LVDS_ck
   --);
+  
+  -- clock alive blinky
+  process(clk)
+  begin
+      if rising_edge(clk) then
+        R_blinky <= R_blinky+1;
+      end if;
+  end process;
+  led(7) <= R_blinky(R_blinky'high);
+  
 end Behavioral;
