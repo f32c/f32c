@@ -20,7 +20,7 @@ entity sparrowhawk is
     C_clk_freq: integer := 100;
 
     -- SoC configuration options
-    C_bram_size: integer := 2;
+    C_bram_size: integer := 32;
     C_icache_size: integer := 2;
     C_dcache_size: integer := 2;
     C_sram8: boolean := false;
