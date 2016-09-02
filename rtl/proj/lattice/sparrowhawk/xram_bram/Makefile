@@ -27,12 +27,10 @@ $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	ddtcmd -oft -fullvme -if sparrowhawk_sram.xcf -nocompress -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-	#ddtcmd -oft -svfsingle -revd -if sparrowhawk_sram.xcf -of $@
-	ddtcmd -oft -svfsingle -if sparrowhawk_sram.xcf -of $@
+	ddtcmd -oft -svfsingle -revd -if sparrowhawk_sram.xcf -of $@
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 	echo pgr_project open sparrowhawk_sram.xcf \; pgr_program run | ${DIAMONDC}
-	# ${PROGRAMMERC} $<
 
 program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 	openocd --file=ft2232-fpu1.ocd --file=ecp3.ocd
