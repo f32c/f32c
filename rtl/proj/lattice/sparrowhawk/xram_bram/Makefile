@@ -19,7 +19,7 @@ JUNK = ${IMPL_DIR} .recovery ._Real_._Math_.vhd *.sty reportview.xml
 JUNK += dummy_sym.sort project_tcl.html promote.xml
 JUNK += project_tcr.dir
 
-all: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
+all: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 
 $(PROJECT)/$(PROJECT)_$(PROJECT).bit:
 	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
