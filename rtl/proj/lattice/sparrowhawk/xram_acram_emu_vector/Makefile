@@ -19,7 +19,7 @@ JUNK = ${IMPL_DIR} .recovery ._Real_._Math_.vhd *.sty reportview.xml
 JUNK += dummy_sym.sort project_tcl.html promote.xml
 JUNK += project_tcr.dir
 
-all: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
+all: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 
 $(PROJECT)/$(PROJECT)_$(PROJECT).bit:
 	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
@@ -30,7 +30,7 @@ $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	ddtcmd -oft -svfsingle -revd -if sparrowhawk_sram.xcf -of $@
 
-program: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
+program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	echo pgr_project open sparrowhawk_sram.xcf \; pgr_program run | ${DIAMONDC}
 
 program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
