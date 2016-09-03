@@ -30,7 +30,7 @@ $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	ddtcmd -oft -svfsingle -revd -if sparrowhawk_sram.xcf -of $@
 	# patch it to work with openocd
-	patch -p0 < svf_patch.diff
+	patch < svf_patch.diff
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	echo pgr_project open sparrowhawk_sram.xcf \; pgr_program run | ${DIAMONDC}
