@@ -101,6 +101,7 @@ entity sparrowhawk is
   --LVDS_ck     : out   std_logic;
 
   led: out std_logic_vector(7 downto 0);
+  btn, dip: in std_logic_vector(3 downto 0);
 
   --GPIO_wordport : inout std_logic_vector(15 downto 0);
   --GPIO_pullup   : inout std_logic_vector(15 downto 0);
@@ -260,8 +261,8 @@ begin
 
     simple_out(7 downto 0) => led(7 downto 0),
     simple_out(31 downto 8) => open,
-    simple_in(0) => '0',
-    simple_in(31 downto 1) => open,
+    simple_in(3 downto 0) => btn,
+    simple_in(19 downto 16) => dip,
 
     acram_addr(16 downto 2) => ram_address(16 downto 2),
     acram_data_wr => ram_data_write,
