@@ -16,7 +16,7 @@ entity sparrowhawk is
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
 
-    -- Main clock: 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
+    -- Main clock: 41, 81, 100 MHz
     C_clk_freq: integer := 100;
 
     -- SoC configuration options
@@ -139,8 +139,8 @@ begin
   clock_diff2se:
   ILVDS port map(A=>clk_100_p, AN=>clk_100_n, Z=>clk_100);
 
-  video_mode_1_640x480: if C_video_mode = 1 generate
-  clk_640x480: entity work.clkgen_100_100
+  video_mode_1_640x480_100MHz: if C_clk_freq=100 and C_video_mode=1 generate
+  clk_640x480_100M: entity work.clkgen_100_100
   port map(
     CLK         => clk_100,
     CLKOP       => clk
@@ -150,7 +150,31 @@ begin
 --    CLKOS3      =>  clk
    );
   end generate;
-  
+
+  video_mode_1_640x480_81MHz: if C_clk_freq=81 and C_video_mode=1 generate
+  clk_640x480_81M25: entity work.clkgen_100_81M25_40M625_27M083
+  port map(
+    CLK         => clk_100,
+    CLKOP       => clk
+--    CLKOP       =>  clk_dvi,
+--    CLKOS       =>  clk_dvin,
+--    CLKOS2      =>  clk_pixel,
+--    CLKOS3      =>  clk
+   );
+  end generate;
+
+  video_mode_1_640x480_81MHz: if C_clk_freq=41 and C_video_mode=1 generate
+  clk_640x480_40M625: entity work.clkgen_100_81M25_40M625_27M083
+  port map(
+    CLK         => clk_100,
+    CLKOK       => clk
+--    CLKOP       =>  clk_dvi,
+--    CLKOS       =>  clk_dvin,
+--    CLKOS2      =>  clk_pixel,
+--    CLKOS3      =>  clk
+   );
+  end generate;
+
     -- generic BRAM glue
   glue_xram: entity work.glue_xram
   generic map (
