@@ -1,18 +1,21 @@
 # JTAG programming on linux
 
 Connect any ft2232 cable to JTAG
-run this once (will print errors, that's ok):
+run this (it may even work).
 
     make program_ft2232
 
-Every other time it is enough to run just this:
+Even if it doesn't work, it will alter some
+ft2232 status so from then on, this may work:
 
     make program
 
-To ptogram from diamond GUI:
+Or programming from diamond GUI may work:
 Tools->Programmer, detect cable, click on icon "program"...
 
 # JTAG pinout
+
+Connect JTAG programmer to 1x10-pin male header J15:
 
     J15: JTAG Header    wire    ESP-12 WIFI_JTAG
     ----------------    ----    ----------------
@@ -29,12 +32,13 @@ Tools->Programmer, detect cable, click on icon "program"...
 
 # ft2232 and openocd
 
-The make build process will generate *.svf bitstream file 
-for programming with external tools like openocd. 
-"make program_ft2232" will attempt to upload generated *.svf file 
-with openocd. This upload currently doesn't work (exits with error).
-A little help is needed here to get it working...
+The make command will generate and patch *.svf bitstream file 
+for programming with external tools like openocd.
+
+"make program_ft2232" will attempt to upload generated *.svf 
+file to FPGA with openocd. This upload is temporary (to SRAM of FPGA)
+and is active as long as FPGA board power is ON.
 
 However, openocd will change something to ft2232 cable and/or linux kernel 
-so from then on (while ft2232 usb cable is plugged), the cable will be 
+so from then on (while ft2232 USB cable is plugged in PC), the cable will be 
 recognized by diamond internal programmer.
