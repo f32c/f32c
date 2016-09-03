@@ -16,6 +16,7 @@ PROGRAMMERC := $(shell find ${PROGRAMMER_BIN}/ -name programmer)
 PROJECT = project
 
 JUNK = ${IMPL_DIR} .recovery ._Real_._Math_.vhd *.sty reportview.xml
+JUNK += dummy_sym.sort project_tcl.html promote.xml
 JUNK += project_tcr.dir
 
 all: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
