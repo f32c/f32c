@@ -1,0 +1,39 @@
+J15: JTAG Header pinout
+
+Pin  # Description  wire    ESP-12 WIFI_JTAG
+Pin  1 VCC 3.3V     red     VCC
+Pin  2 TDO          green   GPIO12
+Pin  3 TDI          blue    GPIO13
+Pin  4 PROGRAMN
+Pin  5 NC
+Pin  6 TMS          violet  GPIO16
+Pin  7 GND          black   GND
+Pin  8 TCK          yellow  GPIO14
+Pin  9 DONE
+Pin 10 INITN
+
+WIFI_JTAG connector ESP12
+looking at wifi chip metal shield, antenna up
+(on RADIONA ESP8266 board: 
+pin 1 is on opposite side from 6-pin programming female connector)
+
+essid: jtag
+password: 12345678
+ip: 192.168.4.1 (jtag.lan)
+
+ 1 RST
+ 2 ADC
+ 3 CH_PD
+ 4 GPIO16   violet   TMS
+ 5 GPIO14   yellow   TCK
+ 6 GPIO12   green    TDO
+ 7 GPIO13   blue     TDI
+ 8 VCC      red      VCC
+ 9 GND      black    GND
+10 GPIO15
+11 GPIO2
+12 GPIO0
+13 GPIO5
+14 GPIO4
+15 RXD
+16 TXD
