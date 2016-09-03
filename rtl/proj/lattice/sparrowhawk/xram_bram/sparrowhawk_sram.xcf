@@ -19,7 +19,7 @@
 				<BScanLen>1</BScanLen>
 				<BScanVal>0</BScanVal>
 			</Bypass>
-			<File>/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/lattice/sparrowhawk/xram_bram/project/project_project.bit</File>
+			<File>project/project_project.bit</File>
 			<FileTime>09/03/16 00:57:47</FileTime>
 			<Operation>Fast Program</Operation>
 			<Option>
