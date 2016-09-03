@@ -294,7 +294,7 @@
         <Source name="ddr_out.ipx" type="IPX_Module" type_short="IPX">
             <Options/>
         </Source>
-        <Source name="sparrowhawk.lpf" type="Logic Preference" type_short="LPF">
+        <Source name="../../../constraints/sparrowhawk.lpf" type="Logic Preference" type_short="LPF">
             <Options/>
         </Source>
         <Source name="sparrowhawk_flash.xcf" type="Programming Project File" type_short="Programming" excluded="TRUE">
