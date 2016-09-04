@@ -5,7 +5,7 @@ telnet_port 4444
 gdb_port 3333
 
 # JTAG TAPs
-jtag newtap ecp3 tap -expected-id 0x01015043 -irlen 8 -irmask 0xFF -ircapture 0b00011101
+jtag newtap ecp3 tap -expected-id 0x01015043 -irlen 8 -irmask 0xFF -ircapture 0x19
 
 init
 scan_chain

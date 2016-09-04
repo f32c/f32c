@@ -8,9 +8,7 @@ DIAMOND_BASE := /usr/local/diamond
 DIAMOND_BIN :=  $(shell find ${DIAMOND_BASE}/ -maxdepth 2 -name bin | sort -rn | head -1)
 DIAMONDC := $(shell find ${DIAMOND_BIN}/ -name diamondc)
 
-PROGRAMMER_BASE := /usr/local/programmer
-PROGRAMMER_BIN :=  $(shell find ${PROGRAMMER_BASE}/ -maxdepth 2 -name bin | sort -rn | head -1)
-PROGRAMMERC := $(shell find ${PROGRAMMER_BIN}/ -name programmer)
+OPENOCD_BASE := ../../../programmer/openocd/sparrowhawk/
 
 # name of the project as defined in project file
 PROJECT = project
@@ -31,16 +29,16 @@ $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	ddtcmd -oft -svfsingle -revd -if sparrowhawk_sram.xcf -of $@
 	# patch it to work with openocd
-	patch -p0 < svf_patch.diff
+	patch -p0 < $(OPENOCD_BASE)/svf_patch.diff
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	echo pgr_project open sparrowhawk_sram.xcf \; pgr_program run | ${DIAMONDC}
 
 program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
-	openocd --file=ft2232-fpu1.ocd --file=ecp3.ocd
+	openocd --file=$(OPENOCD_BASE)/remote.ocd --file=$(OPENOCD_BASE)/ecp3.ocd
 
 program_ft2232: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
-	openocd --file=ft2232-fpu1.ocd --file=ecp3.ocd
+	openocd --file=$(OPENOCD_BASE)/ft2232-fpu1.ocd --file=$(OPENOCD_BASE)/ecp3.ocd
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT).jed:
 #	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Jedecgen | ${DIAMONDC}
