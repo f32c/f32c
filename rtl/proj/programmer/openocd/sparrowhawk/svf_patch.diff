@@ -1,5 +1,5 @@
 --- project/project_project_sram.svf.orig	2016-09-04 08:55:35.795304467 +0200
-+++ project/project_project_sram.svf	2016-09-04 08:56:03.347510291 +0200
++++ project/project_project_sram.svf	2016-09-04 10:39:25.325841195 +0200
 @@ -46,7 +46,7 @@ STATE	IDLE;
  
  ! Shift in IDCODE(0x16) instruction
@@ -9,3 +9,14 @@
  		TDO  (01015043)
  		MASK (FFFFFFFF);
  
+@@ -95475,3 +95475,10 @@ SIR	8	TDI  (53);
+ SDR	32	TDI  (FFFFFFFF)
+ 		TDO  (00020000)
+ 		MASK (00060007);
++
++! Shift in ISC DISABLE(0x1E) instruction
++SIR	8	TDI  (1E);
++RUNTEST	IDLE	5 TCK	2,00E-01 SEC;
++! Shift in BYPASS(0xFF) instruction
++SIR	8	TDI  (FF);
++RUNTEST	IDLE	100 TCK	1,00E-03 SEC;
