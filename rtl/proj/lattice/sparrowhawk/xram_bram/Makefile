@@ -8,7 +8,7 @@ DIAMOND_BASE := /usr/local/diamond
 DIAMOND_BIN :=  $(shell find ${DIAMOND_BASE}/ -maxdepth 2 -name bin | sort -rn | head -1)
 DIAMONDC := $(shell find ${DIAMOND_BIN}/ -name diamondc)
 
-OPENOCD_BASE := ../../../programmer/openocd/sparrowhawk/
+OPENOCD_BASE := ../../programmer/openocd/sparrowhawk/
 
 # name of the project as defined in project file
 PROJECT = project
