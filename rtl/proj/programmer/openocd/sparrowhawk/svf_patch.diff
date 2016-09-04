@@ -1,0 +1,11 @@
+--- project/project_project_sram.svf.orig	2016-09-04 08:55:35.795304467 +0200
++++ project/project_project_sram.svf	2016-09-04 08:56:03.347510291 +0200
+@@ -46,7 +46,7 @@ STATE	IDLE;
+ 
+ ! Shift in IDCODE(0x16) instruction
+ SIR	8	TDI  (16);
+-SDR	32	TDI  (FFFFFFFF)
++SDR	32	TDI  (01015043)
+ 		TDO  (01015043)
+ 		MASK (FFFFFFFF);
+ 
