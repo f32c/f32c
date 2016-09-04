@@ -30,6 +30,10 @@ Connect JTAG programmer to 1x10-pin male header J15:
     Pin  9 DONE
     Pin 10 INITN
 
+Note: wifi_jtag doesn't work. It will display chip ID
+run upload, and report failure status and bitstream will not work.
+Probably it uploads too slow.
+
 # ft2232 and openocd
 
 The make command will generate and patch *.svf bitstream file 
