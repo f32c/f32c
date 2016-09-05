@@ -20,6 +20,7 @@ vfiles = \
 vhdfiles = \
 ../../../../xilinx/tb299/top/top_xc6slx9_xram_bram.vhd \
 ../../../../xilinx/tb299/clocks/pll_25M_112M5.vhd \
+../../../../xilinx/tb299/clocks/clk_25_100_125_25.vhd \
 ../../../../xilinx/tb299/clocks/pll_25M_81M25.vhd \
 ../../../../xilinx/chip/xc6/hdmi_out_xc6.vhd \
 ../../../../generic/glue_xram.vhd \
