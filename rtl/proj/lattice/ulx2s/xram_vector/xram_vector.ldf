@@ -237,10 +237,10 @@
         <Source name="../../../../soc/fm/message.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../soc/vector/vector_chain.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../soc/vector/vector.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../soc/vector/f32c_vector_dma_chain.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../soc/vector/f32c_vector_dma.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../soc/vector/axi_vector_dma.vhd" type="VHDL" type_short="VHDL">
