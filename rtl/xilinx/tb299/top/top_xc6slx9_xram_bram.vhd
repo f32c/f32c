@@ -43,7 +43,7 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: 81/112
+	-- Main clock: 81/100
 	C_clk_freq: integer := 81;
 
 	-- SoC configuration options
@@ -59,6 +59,8 @@ entity glue is
 	rs232_dce_rxd: in std_logic;
 	Led: out std_logic_vector(7 downto 0);
 	gpio: inout std_logic_vector(39 downto 0);
+	icp: in std_logic_vector(1 downto 0);
+	ocp: out std_logic_vector(1 downto 0);
 	btn_k2, btn_k3: in std_logic
     );
 end glue;
@@ -72,6 +74,15 @@ begin
     clkgen112: entity work.pll_25M_112M5
     port map(
       clk_in1 => clk_25m, clk_out1 => clk
+    );
+    end generate;
+
+    clk100: if C_clk_freq = 100 generate
+    clkgen100: entity work.clk_25_100_125_25
+    port map(
+      clk_25M_in => clk_25m, clk_100M => clk,
+      clk_125Mp => open, clk_125Mn => open, clk_25M => open,
+      reset => '0', locked => open
     );
     end generate;
 
@@ -110,6 +121,7 @@ begin
 	spi_miso(0) => '-',   spi_miso(1) => '-',
 	gpio(31 downto 0) => gpio(31 downto 0),
 	gpio(127 downto 32) => open,
+	icp => icp, ocp => ocp,
 	simple_out(7 downto 0) => Led(7 downto 0),
 	simple_out(31 downto 8) => open,
 	simple_in(0) => btn_k2,
