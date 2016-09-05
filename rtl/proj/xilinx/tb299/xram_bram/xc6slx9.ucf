@@ -85,3 +85,9 @@ Net "icp<0>" LOC = P143 | IOSTANDARD=LVCMOS33;
 Net "ocp<0>" LOC = P142 | IOSTANDARD=LVCMOS33;
 Net "icp<1>" LOC = P141 | IOSTANDARD=LVCMOS33;
 Net "ocp<1>" LOC = P140 | IOSTANDARD=LVCMOS33;
+
+## Onboard SPI Flash M25P40
+Net "flash_miso" LOC = P65 | IOSTANDARD = LVCMOS33 | PULLUP; # [N] DIN
+Net "flash_mosi" LOC = P64 | IOSTANDARD = LVCMOS33; # [B] CSI
+Net "flash_csn"  LOC = P38 | IOSTANDARD = LVCMOS33; # [b] CSO
+Net "flash_clk"  LOC = P70 | IOSTANDARD = LVCMOS33; # [C] CCLK

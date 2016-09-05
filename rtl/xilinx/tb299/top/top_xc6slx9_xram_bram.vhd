@@ -44,7 +44,7 @@ entity glue is
 	C_debug: boolean := false;
 
 	-- Main clock: 81/100
-	C_clk_freq: integer := 81;
+	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
 	C_bram_size: integer := 32;
@@ -61,6 +61,8 @@ entity glue is
 	gpio: inout std_logic_vector(39 downto 0);
 	icp: in std_logic_vector(1 downto 0);
 	ocp: out std_logic_vector(1 downto 0);
+        flash_csn, flash_clk, flash_mosi: out std_logic;
+        flash_miso: in std_logic;
 	btn_k2, btn_k3: in std_logic
     );
 end glue;
@@ -115,10 +117,10 @@ begin
 	clk => clk,
 	sio_txd(0) => rs232_dce_txd, sio_rxd(0) => rs232_dce_rxd,
 	sio_break(0) => rs232_break,
-	spi_sck(0)  => open,  spi_sck(1)  => open,
-	spi_ss(0)   => open,  spi_ss(1)   => open,
-	spi_mosi(0) => open,  spi_mosi(1) => open,
-	spi_miso(0) => '-',   spi_miso(1) => '-',
+	spi_sck(0)  => flash_clk,  spi_sck(1)  => open,
+	spi_ss(0)   => flash_csn,  spi_ss(1)   => open,
+	spi_mosi(0) => flash_mosi, spi_mosi(1) => open,
+	spi_miso(0) => flash_miso, spi_miso(1) => '-',
 	gpio(31 downto 0) => gpio(31 downto 0),
 	gpio(127 downto 32) => open,
 	icp => icp, ocp => ocp,
