@@ -146,7 +146,6 @@ ARCHITECTURE arch OF post_norm IS
     CONSTANT f2i_emax : std_logic_vector(7 DOWNTO 0) := X"9d";
     
 BEGIN
-
     op_dn <= opa_dn or opb_dn ;
 
     ---------------------------------------------------------------------------
@@ -227,8 +226,7 @@ BEGIN
     rmode_11 <= '1' WHEN (rmode = "11") ELSE '0';
 
     -- Fasu Output will be denormalized ...
-    dn <= NOT op_mul AND NOT op_div AND
-        (exp_in_00 OR (exp_next_mi(8) AND NOT fract_in(47)) );
+    dn <= (exp_in_00 OR (exp_next_mi(8) AND NOT fract_in(47)) );
 
     ---------------------------------------------------------------------------
     -- Fraction Normalization
@@ -237,104 +235,33 @@ BEGIN
     -- Incremented fraction for rounding
     fract_out_pl1 <= ('0' & fract_out) + '1';
 
-    -- Special Signals for f2i
-    f2i_emin <= X"7e" WHEN (rmode_00 = '1') ELSE X"7f";
-    f2i_zero <= '1' WHEN (((opas = '0') AND (exp_in < f2i_emin)) OR
-                          ((opas = '1') AND (exp_in > f2i_emax)) OR
-                          ((opas = '1') AND (exp_in < f2i_emin) AND
-                           ((fract_in_00 OR NOT rmode_11) = '1')))
-                ELSE '0';
-    f2i_max <= '1' WHEN (((opas = '0') AND (exp_in > f2i_emax)) OR
-                         ((opas = '1') AND (exp_in < f2i_emin) AND
-                          (fract_in_00 = '0') AND (rmode_11 = '1')))
-               ELSE '0';
     
-    -- Claculate various shifting options
-
-    shftr_mul <= exp_out WHEN ((NOT exp_ovf(1) AND exp_in_00) ='1')
-                 else exp_in_mi1(7 DOWNTO 0) ;
+    -- Calculate various shifting options
     shft_co <= '0' WHEN ((NOT exp_ovf(1) AND exp_in_00) ='1') else exp_in_mi1(8) ;
-    
-    div_shft1 <= ("000" & div_opa_ldz) WHEN (exp_in_00 = '1') ELSE
-                 div_scht1a(7 DOWNTO 0);
-    div_shft1_co <= '0' WHEN (exp_in_00 = '1') ELSE
-                    div_scht1a(8);
-    
-    div_scht1a <= ('0' & exp_in) - div_opa_ldz; -- 9 bits - includes carry out
-    div_shft2 <= exp_in + "10";
-    div_shft3 <= div_opa_ldz+exp_in;
-    div_shft4 <= div_opa_ldz-exp_in;
-
-    div_dn <= op_dn and div_shft1_co;
-    div_nr <= '1' WHEN ((op_dn = '1') and (exp_ovf(1) = '1') and
-                        (or_reduce(fract_in(46 DOWNTO 23)) = '0') AND
-                        (div_shft3 > X"16")) ELSE
-              '0';
-
-    f2i_shft <= exp_in - X"7d";
 
     -- Select shifting direction
-    left_right <= lr_div WHEN (op_div ='1') ELSE
-                  lr_mul WHEN (op_mul = '1') ELSE
-                  '1';
-
-                                                               
-    lr_div <= '1' WHEN ((op_dn AND NOT exp_ovf(1) AND  exp_ovf(0)) = '1') ELSE 
-              '0' WHEN ((op_dn AND exp_ovf(1)) = '1') ELSE 
-              '0' WHEN ((op_dn AND div_shft1_co) = '1') ELSE 
-              '1' WHEN ((op_dn AND exp_out_00) = '1') ELSE 
-              '1' WHEN ((NOT op_dn AND  exp_out_00 AND NOT exp_ovf(1)) = '1') ELSE 
-              '0' WHEN ((exp_ovf(1)) = '1') ELSE
-              '1';
-
-    lr_mul <= '1' WHEN ((shft_co OR (NOT exp_ovf(1) AND exp_in_00) OR 
-                         (NOT exp_ovf(1) AND NOT exp_in_00 AND
-                          (exp_out1_co OR exp_out_00) )) = '1') ELSE 
-              '0' WHEN (( exp_ovf(1) or exp_in_00 ) = '1') ELSE
-              '1';
+    left_right <= '1';
 
     -- Select Left and Right shift value
     fasu_shift_p1 <= X"02" WHEN (exp_in_00 = '1') ELSE exp_in_pl1(7 downto 0);
     fasu_shift <= fasu_shift_p1 WHEN ((dn OR exp_out_00) = '1') ELSE ("00" & fi_ldz);
 
-    shift_right <= shftr_div WHEN (op_div = '1') ELSE shftr_mul;
+    --shift_right <= shftr_div WHEN (op_div = '1') ELSE shftr_mul;
 
-    conv_shft <= f2i_shft WHEN (op_f2i = '1') ELSE ("00" & fi_ldz);
+    conv_shft <= "00" & fi_ldz;
 
-    shift_left <= shftl_div WHEN (op_div = '1') ELSE
-                  shftl_mul WHEN (op_mul = '1') ELSE
-                  conv_shft WHEN ((op_f2i or op_i2f) = '1') else
-                  fasu_shift;
-
-    shftl_mul <= exp_in_pl1(7 DOWNTO 0) WHEN
-                 ((shft_co OR (NOT exp_ovf(1) AND  exp_in_00) OR 
-                   (NOT exp_ovf(1) AND  NOT exp_in_00 AND 
-                    (exp_out1_co OR exp_out_00))) = '1') ELSE
-                 ("00" & fi_ldz);
-
-    shftl_div <= div_shft1(7 downto 0) WHEN
-                 ((op_dn and exp_out_00 and
-                   not (not exp_ovf(1) and exp_ovf(0))) ='1') else
-                 exp_in(7 downto 0) WHEN
-                 ((not op_dn and exp_out_00 and not exp_ovf(1))='1') else
-                 ("00" & fi_ldz);
-    
-    shftr_div <= div_shft3 WHEN ((op_dn AND exp_ovf(1)) = '1') else
-                 div_shft4 WHEN ((op_dn AND div_shft1_co) = '1') else
-                 div_shft2;
+    shift_left <= fasu_shift;
 
     -- Do the actual shifting
-    fract_in_shftr <= (OTHERS => '0') WHEN (or_reduce(shift_right(7 DOWNTO 6)) = '1') else
-                      shr(fract_in,shift_right(5 DOWNTO 0));
+    --fract_in_shftr <= (OTHERS => '0') WHEN (or_reduce(shift_right(7 DOWNTO 6)) = '1')
+    --             else shr(fract_in,shift_right(5 DOWNTO 0));
 
-    fract_in_shftl <= (OTHERS => '0') WHEN
-                      ((or_reduce(shift_left(7 DOWNTO 6))='1') OR
-                       ((f2i_zero AND op_f2i)='1')) else
-                      (SHL(fract_in,shift_left(5 DOWNTO 0)));
+    fract_in_shftl <= (OTHERS => '0') WHEN (or_reduce(shift_left(7 DOWNTO 6))='1')
+                 else (shl(fract_in,shift_left(5 DOWNTO 0)));
 
     -- Chose final fraction output
-    fract_trunc <= fract_in_shftl(24 DOWNTO 0) WHEN (left_right = '1') else
-                   fract_in_shftr(24 DOWNTO 0);
+    --fract_trunc <= fract_in_shftl(24 DOWNTO 0) WHEN (left_right = '1') else
+    --               fract_in_shftr(24 DOWNTO 0);
     fract_out <= fract_in_shftl(47 DOWNTO 25) WHEN (left_right = '1') else
                  fract_in_shftr(47 DOWNTO 25);
     ---------------------------------------------------------------------------
@@ -365,58 +292,11 @@ BEGIN
     exp_out1_co <= exp_in_pl1(8) WHEN (fract_in(47) = '1') else
                    exp_next_mi(8);
 
-    f2i_out_sign <=  f2i_out_sign_p1 WHEN (opas ='0') ELSE
-                     f2i_out_sign_p2;
-
-    f2i_out_sign_p1 <= '0' WHEN (exp_in<f2i_emin) ELSE
-                       '0' WHEN (exp_in>f2i_emax) ELSE
-                       opas;
-                               
-    f2i_out_sign_p2 <= '0' WHEN (exp_in<f2i_emin) ELSE
-                       '1'WHEN (exp_in>f2i_emax) ELSE
-                       opas;
-    
-    exp_i2f   <= X"9e" WHEN ((fract_in_00 AND opas)='1') else 
-                 X"00" WHEN ((fract_in_00 AND NOT opas)='1') else 
-                 (X"9e"-fi_ldz);
-
-    exp_f2i_1 <= shl((fract_in(47) & fract_in(47) & fract_in(47) & fract_in(47) &
-                      fract_in(47) & fract_in(47) & fract_in(47) & fract_in(47) &
-                      fract_in),f2i_shft);
-    
-    exp_f2i   <= (OTHERS => '0') WHEN (f2i_zero = '1') else
-                 X"ff" WHEN (f2i_max = '1') else
-                 exp_f2i_1(55 DOWNTO 48);
-    conv_exp  <= exp_f2i WHEN (op_f2i = '1') ELSE exp_i2f;
-
-    exp_out <= exp_div WHEN (op_div = '1') ELSE
-               conv_exp WHEN ((op_f2i OR op_i2f)='1') ELSE
-               X"00" WHEN (exp_zero = '1') ELSE
+    exp_out <= --exp_div WHEN (op_div = '1') ELSE
+               --conv_exp WHEN ((op_f2i OR op_i2f)='1') ELSE
+               --X"00" WHEN (exp_zero = '1') ELSE
                ("000000" & fract_in(47 downto 46)) WHEN (dn = '1') else
                exp_out1;
-
-    ldz_all <= ("00" & div_opa_ldz) + fi_ldz;
-    ldz_dif <= fi_ldz_2 - div_opa_ldz;
-    fi_ldz_2a <= "0010111" - fi_ldz;
-    fi_ldz_2 <= (fi_ldz_2a(6) & fi_ldz_2a(6 DOWNTO 0));
-
-    -- 9 bits - includes carry out
-    div_exp1 <= exp_in_mi1 + fi_ldz_2;       
-
-    div_exp2_temp <= exp_in_pl1 - ldz_all;
-    div_exp2 <= div_exp2_temp(7 DOWNTO 0);
-    div_exp3 <= exp_in + ldz_dif;
-    
-    exp_div <= div_exp3 when ((opa_dn AND opb_dn) = '1') ELSE 
-               div_exp1(7 DOWNTO 0) WHEN (opb_dn = '1') ELSE 
-               div_exp2 WHEN ((opa_dn = '1') AND
-                              NOT ( (exp_in<div_opa_ldz) OR (div_exp2>"011111110") )) ELSE 
-               (OTHERS => '0') WHEN ((opa_dn or (exp_in_00 and NOT exp_ovf(1)) ) = '1') ELSE 
-               exp_out1_mi1;
-
-    div_inf <= '1' WHEN ((opb_dn = '1') AND  (opa_dn = '0') and
-                         (div_exp1(7 DOWNTO 0) < X"7f"))
-               ELSE '0';
 
     ---------------------------------------------------------------------------
     -- ROUND
@@ -442,11 +322,11 @@ BEGIN
                       ((exp_out_ff and NOT op_div AND
                         NOT dn and NOT op_f2i) = '1')
                       ELSE fract_out;
-    exp_fix_div <= exp_fix_diva  WHEN (fi_ldz>"010110")
-                   else exp_fix_divb;
-    exp_out_rnd1 <= exp_fix_div WHEN ((g and r and s and exp_in_ff AND op_div)='1') else
-                    exp_next_mi(7 DOWNTO 0) WHEN ((g and r and s and exp_in_ff AND NOT op_div)='1') else
-                    exp_in when ((exp_out_ff and not op_f2i)='1') else
+    --exp_fix_div <= exp_fix_diva  WHEN (fi_ldz>"010110")
+    --               else exp_fix_divb;
+    exp_out_rnd1 <= --exp_fix_div WHEN ((g and r and s and exp_in_ff AND op_div)='1') else
+                    --exp_next_mi(7 DOWNTO 0) WHEN ((g and r and s and exp_in_ff AND NOT op_div)='1') else
+                    --exp_in when ((exp_out_ff and not op_f2i)='1') else
                     exp_out;        
     ovf1 <= exp_out_ff and NOT dn;
 
@@ -458,6 +338,7 @@ BEGIN
     round2_fasu <= ((r or s) and NOT r_sign) and
                    (NOT exp_out(7) OR (exp_out(7) AND  round2a));
 
+    noround2: if false generate
     round2_fmul <= NOT r_sign and 
                 (
                         (exp_ovf(1) and not fract_in_00 and
@@ -474,9 +355,10 @@ BEGIN
     round2_f2i_p1 <= '1' WHEN (exp_in<X"80" ) ELSE '0';
     round2_f2i <= rmode_10 and (( or_reduce(fract_in(23 DOWNTO 0)) AND
                                   NOT opas AND round2_f2i_p1) OR (or_reduce(fract_trunc)));
-   
-    round2 <= round2_fmul WHEN ((op_mul or op_div) = '1') ELSE
-              round2_f2i WHEN (op_f2i = '1') else
+    end generate;
+    
+    round2 <= --round2_fmul WHEN ((op_mul or op_div) = '1') ELSE
+              --round2_f2i WHEN (op_f2i = '1') else
               round2_fasu;
 
     fract_out_rnd2a <= fract_out_pl1(22 DOWNTO 0)  WHEN (round2 = '1') else fract_out;
@@ -521,151 +403,12 @@ BEGIN
     -- Final Output Mux
     ---------------------------------------------------------------------------
     -- Fix Output for denormalized and special numbers
-    max_num <=  ( not rmode_00 and (op_mul or op_div ) and (
-							  ( exp_ovf(1) and  exp_ovf(0)) or
-							  (not exp_ovf(1) and not exp_ovf(0) and exp_in_ff and (max_num_t2) and (max_num_t1) )
-							  )
-		   ) or
 
-		   ( op_div and (
-				   ( rmode_01 and ( div_inf or
-							 (exp_out_ff and not exp_ovf(1) ) or
-							 (exp_ovf(1) and  exp_ovf(0) )
-						)
-				   ) or
-		
-				   ( rmode(1) and not exp_ovf(1) and (
-								   ( exp_ovf(0) and exp_in_ff and r_sign and fract_in(47)
-								   ) or
-						
-								   (  r_sign and (
-										(fract_in(47) and div_inf) or
-										(exp_in(7) and not exp_out_rnd(7) and not exp_in_80 and max_num_t3 ) or
-										(exp_in(7) and  exp_out_rnd(7) and r_sign and exp_out_ff and op_dn and
-											 max_num_t4 )
-										)
-								   ) or
-
-								   ( exp_in_00 and r_sign and (
-												div_inf or
-												(r_sign and exp_out_ff and max_num_t2)
-											  )
-								   )
-							       )
-				  )
-			    )
-		   );
-
-    max_num_t2 <= '1' WHEN (fi_ldz_2<"0011000") ELSE '0';
-    max_num_t1 <= '1' WHEN (exp_out/=X"fe") ELSE '0';
-    max_num_t3 <= '1' WHEN (exp_out/=X"7f") ELSE '0';
-    max_num_t4 <= '1' WHEN (div_exp1>"011111110") ELSE '0';
-        
-    inf_out <= (rmode(1) and (op_mul or op_div) and not r_sign and (	(exp_in_ff and not op_div) or
-								(exp_ovf(1) and exp_ovf(0) and (exp_in_00 or exp_in(7)) ) 
-							   )
-		) or (div_inf and op_div and (
-				 rmode_00 or
-				(rmode(1) and not exp_in_ff and not exp_ovf(1) and not exp_ovf(0) and not r_sign ) or
-				(rmode(1) and not exp_ovf(1) and exp_ovf(0) and exp_in_00 and not r_sign)
-				)
-		) or (op_div and rmode(1) and exp_in_ff and op_dn and not r_sign and inf_out_t1 );
-
-    inf_out_t1 <= '1' WHEN ((fi_ldz_2 < 24) AND (exp_out_rnd/=X"fe")) ELSE
-                  '0';
-
-    fract_out_final <= (OTHERS => '0') when ((inf_out or ovf0 or output_zero ) = '1')ELSE
-                       ("111" & X"fffff") WHEN ((max_num or (f2i_max and op_f2i) )= '1') else
-                       fract_out_rnd;
-
-    exp_out_final <=  X"00" WHEN (((op_div and exp_ovf(1) and
-                                   not exp_ovf(0)) or output_zero )='1') else
-                      X"ff" WHEN (((op_div and exp_ovf(1) and
-                                   exp_ovf(0) and rmode_00) or inf_out or
-                                  (f2i_max and op_f2i) )='1') ELSE
-                      X"fe" WHEN (max_num = '1') else
-                      exp_out_rnd;
+    fract_out_final <= fract_out_rnd;
+    exp_out_final <= exp_out_rnd;
 
     ---------------------------------------------------------------------------
     -- Pack Result
     ---------------------------------------------------------------------------
     fpout <= exp_out_final & fract_out_final;
-
-    ---------------------------------------------------------------------------
-    -- Exceptions
-    ---------------------------------------------------------------------------
-    z <= shft_co or ( exp_ovf(1) or  exp_in_00) or
-         (not exp_ovf(1) and not exp_in_00 and (exp_out1_co or exp_out_00));
-
-    underflow_fmul <= ( (or_reduce(fract_trunc)) and z and not exp_in_ff ) or
-                      (fract_out_00 and not fract_in_00 and exp_ovf(1));
-
-    undeflow_div_p1 <= '1' WHEN (exp_out_final/=X"ff") ELSE '0';
-    undeflow_div_p2 <= '1' WHEN (exp_in>X"16") ELSE '0';
-    undeflow_div_p3 <= '1' WHEN (fi_ldz<"010111") ELSE '0';
-    undeflow_div_p4 <= '1' WHEN (exp_in<"00010111") ELSE '0';
-    undeflow_div_p5 <= '1' WHEN (exp_in(7)=exp_div(7)) ELSE '0';
-    undeflow_div_p6 <= '1' WHEN (exp_div(7 DOWNTO 1)="1111111") ELSE '0';
-    undeflow_div_p7 <= '1' WHEN (exp_in<X"7f") ELSE '0';
-    undeflow_div_p8 <= '1' WHEN (exp_in>X"20") ELSE '0';
-    undeflow_div_p9 <= '1' WHEN (ldz_all<"0010111") ELSE '0';
-    undeflow_div_p10 <= '1' WHEN (exp_in=X"01") ELSE '0';
-     
-    undeflow_div <=   not (exp_ovf(1) and  exp_ovf(0) and rmode_00) and not inf_out and not max_num and undeflow_div_p1 and (
-
-                        ((or_reduce(fract_trunc)) and not opb_dn and (
-                                                        ( op_dn and not exp_ovf(1) and exp_ovf(0))     or
-                                                        ( op_dn and  exp_ovf(1))                  or
-                                                        ( op_dn and  div_shft1_co)                or 
-                                                          exp_out_00                            or
-                                                          exp_ovf(1)
-                                                  )
-
-                        ) or
-
-                        ( exp_ovf(1) and not exp_ovf(0) and (
-                                                        (  op_dn and undeflow_div_p2 and undeflow_div_p3 ) or
-                                                        (  op_dn and undeflow_div_p4 and undeflow_div_p3 and not rem_00) or
-                                                        ( not op_dn and (undeflow_div_p5) and not rem_00) or
-                                                        ( not op_dn and exp_in_00 and (undeflow_div_p6) ) or
-                                                        ( not op_dn and undeflow_div_p7 and undeflow_div_p8 )
-                                                        )
-                        ) or
-
-                        (not exp_ovf(1) and not exp_ovf(0) and (
-                                                        ( op_dn and undeflow_div_p3 and exp_out_00) or
-                                                        ( exp_in_00 and not rem_00) or
-                                                        ( not op_dn and undeflow_div_p9 and undeflow_div_p10 and exp_out_00 and not rem_00)
-                                                        )
-                        )
-
-                        );
-
-    underflow <= (undeflow_div) WHEN (op_div = '1') ELSE
-                 (underflow_fmul) when(op_mul ='1') ELSE
-                 (NOT dn AND (NOT fract_in(47) AND exp_out1_co));
-
-    overflow_fdiv <=  inf_out or
-                      (NOT rmode_00 AND max_num) or
-                      (exp_in(7) and op_dn and exp_out_ff) or
-                      (exp_ovf(0) and (exp_ovf(1) or exp_out_ff) );
-
-    overflow <= overflow_fdiv WHEN (op_div ='1') else
-                (ovf0 or ovf1);
-
-    f2i_ine <= '1' WHEN (((f2i_zero AND NOT fract_in_00 AND NOT opas)='1') OR
-                         ((or_reduce(fract_trunc))='1') OR 
-                         ((f2i_zero='1') and (exp_in<X"80") and (opas='1') and (fract_in_00='0')) or
-                         ((f2i_max='1') and (rmode_11='1') and (exp_in<X"80"))) else '0';
-
-    ine <= f2i_ine WHEN (op_f2i='1') ELSE 
-           or_reduce(fract_trunc) WHEN (op_i2f='1') ELSE 
-           ((r and NOT dn) or (s and NOT dn) or max_num or (op_div and NOT rem_00));
-
-
-    ---------------------------------------------------------------------------
-    -- Debugging Stuff
-    ---------------------------------------------------------------------------
-    
-    
 END arch;
