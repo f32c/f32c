@@ -25,9 +25,9 @@ execute gcc-generated code when synthesized in the most compact
 configuration which consumes just 697 (649 logic plus 48 memory) LUTs.
 
 Floating point vector processor can be optionally sinthesized.
-Tested on spartan-6 xc6slx25 and artix-7 xc7a35i and xc7a102t. 
-On Artix-7 it uses 3148 LUTs, 64K BRAM, 38 DSP multipliers 
-(36 for divider unit) and can provide up to 3 MFLOPs/MHz.
+Tested on Xilinx spartan-6 (xc6slx25), 7-series (xc7a35i, xc7a102t, xc7z010),
+and Lattice ECP3 (LFE3-150EA). On Artix-7 it uses 3148 LUTs, 64K BRAM,
+38 DSP multipliers (36 for divider unit) and can provide up to 3 MFLOPs/MHz.
 
 The Fmax depends on core configuration and FPGA silicon, and tops at
 around 115 MHz for 90 nm FPGAs (such as Xilinx S3E / S3A or Lattice XP2)
