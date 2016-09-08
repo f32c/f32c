@@ -9,6 +9,9 @@ SHELL = /bin/bash
 # openocd_interface = interface/altera-usb-blaster.cfg
 # openocd_interface = ../../include/ft2232-fpu1.ocd
 openocd_interface = remote.ocd
+# xc3sprog ftdi won't work at full speed
+# it must be lowered below 100kHz for bitstream to
+# to start reliable
 xc3sprog_interface = ftdi
 
 vfiles = \
