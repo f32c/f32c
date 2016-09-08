@@ -368,6 +368,8 @@ begin
            and ( R_counter(C_bits+C_pres-1 downto C_pres) >= R(C_ocpn_start(i)) 
              and R_counter(C_bits+C_pres-1 downto C_pres) <  R(C_ocpn_stop(i)) ) )
       else '0';
+    glitchfree_ocp_if_not_have_interrupt:
+    if not C_have_intr generate
     process(clk)
     begin
       -- Store the OCP in output register to avoid possible nanosecond glitch
@@ -378,6 +380,14 @@ begin
       end if;
     end process;
     ocp(i) <= R_ocp(i);
+    end generate;
+    glitchfree_ocp_if_have_interrupt:
+    if C_have_intr generate
+      -- similar as above but with less LUTs
+      -- R_ocp_sync_shift(i)(0) is internal_ocp(i) stored in register
+      -- and it should be glitch-free
+      ocp(i) <= R_ocp_sync_shift(i)(0) xor R_control(C_ocpn_xor(i)); -- output optionally inverted
+    end generate;
     ocp_enable(i) <= R_control(C_ocpn_enable(i));
 
     ocp_interrupt: if C_have_intr generate
