@@ -58,8 +58,8 @@ entity timer is
 	sign: out std_logic; -- output MSB (sign) bit
 	icp_enable: out std_logic_vector(1 downto 0); -- input enable bits
 	ocp_enable: out std_logic_vector(1 downto 0); -- output enable bits
-	icp: in std_logic_vector(1 downto 0); -- input capture signals 0 and 1
-	ocp: out std_logic_vector(1 downto 0) -- output compare signals 0 and 1
+	icp: in std_logic_vector(C_icps-1 downto 0); -- input capture signals 0 and 1
+	ocp: out std_logic_vector(C_ocps-1 downto 0) -- output compare signals 0 and 1
     );
 end timer;
 
@@ -174,7 +174,8 @@ architecture arch of timer is
     type T_ocp_sync_shift is array (0 to C_ocps-1) of std_logic_vector(C_ocp_sync_depth-1 downto 0); -- ocp synchronizer type
     signal R_ocp_sync_shift: T_ocp_sync_shift;
     signal R_ocp_rising_edge: std_logic_vector(C_ocps-1 downto 0);
-    
+    signal R_ocp: std_logic_vector(C_ocps-1 downto 0);
+
     -- interrupt flag register (both icp and ocp)
     -- addressed by C_ocpn_intr and C_icpn_intr
     signal Rintr: std_logic_vector(C_iocps_max-1 downto 0);
@@ -367,7 +368,16 @@ begin
            and ( R_counter(C_bits+C_pres-1 downto C_pres) >= R(C_ocpn_start(i)) 
              and R_counter(C_bits+C_pres-1 downto C_pres) <  R(C_ocpn_stop(i)) ) )
       else '0';
-    ocp(i) <= internal_ocp(i) xor R_control(C_ocpn_xor(i)); -- output optionally inverted
+    process(clk)
+    begin
+      -- Store the OCP in output register to avoid possible nanosecond glitch
+      -- in "OR" mode at zero-crossing of the counter. Glitch is a side-effect of
+      -- propagation delay in the combinatorial logic of internal_ocp(i).
+      if rising_edge(clk) then
+        R_ocp(i) <= internal_ocp(i) xor R_control(C_ocpn_xor(i)); -- output optionally inverted
+      end if;
+    end process;
+    ocp(i) <= R_ocp(i);
     ocp_enable(i) <= R_control(C_ocpn_enable(i));
 
     ocp_interrupt: if C_have_intr generate
