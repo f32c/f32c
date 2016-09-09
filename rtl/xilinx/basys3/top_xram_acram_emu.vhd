@@ -55,7 +55,7 @@ entity basys3 is
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 2^29 -> 512MB to be cached
 
 	-- SoC configuration options
-	C_bram_size: integer := 16;
+	C_bram_size: integer := 32;
 
         C_sio: integer := 1;   -- 1 UART channel
         C_spi: integer := 2;   -- 2 SPI channels (ch0 not connected, ch1 SD card)
