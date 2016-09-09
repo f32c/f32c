@@ -1,16 +1,8 @@
 BLOCK RESETPATHS;
 BLOCK ASYNCPATHS;
-## Kondor-AX minimal constraints hand-made from user manual
-# clock is not exactly listed in manual just mentions it's on BANK 7
-# here are all BANK-7 clocks, hopfully one of them will work
-LOCATE COMP "clk_100_p" SITE "N3";
-LOCATE COMP "clk_100_n" SITE "N4";
-#LOCATE COMP "clk_100_p" SITE "L7";
-#LOCATE COMP "clk_100_n" SITE "L6";
-#LOCATE COMP "clk_100_p" SITE "N6";
-#LOCATE COMP "clk_100_n" SITE "N7";
-#LOCATE COMP "clk_100_p" SITE "P6";
-#LOCATE COMP "clk_100_n" SITE "P7";
+## Kondor-AX minimal constraints, hand-made
+LOCATE COMP "clk_100_p" SITE "C5";
+LOCATE COMP "clk_100_n" SITE "D5";
 FREQUENCY PORT "clk_100_p" 100 MHZ;
 FREQUENCY PORT "clk_100_n" 100 MHZ;
 ## LED indicators
@@ -30,11 +22,11 @@ IOBUF  PORT "led[4]" PULLMODE=NONE IO_TYPE=LVCMOS33;
 IOBUF  PORT "led[5]" PULLMODE=NONE IO_TYPE=LVCMOS33;
 IOBUF  PORT "led[6]" PULLMODE=NONE IO_TYPE=LVCMOS33;
 IOBUF  PORT "led[7]" PULLMODE=NONE IO_TYPE=LVCMOS33;
-## ARM-FPGA serial port
-LOCATE COMP "tx" SITE "AG28"; # OUT
-IOBUF  PORT "tx" PULLMODE=NONE IO_TYPE=LVCMOS33;
-LOCATE COMP "rx" SITE "AG29"; # IN
-IOBUF  PORT "rx" PULLMODE=UP IO_TYPE=LVCMOS33;
+## FT2232-FPGA serial port
+LOCATE COMP "tx" SITE "AJ1"; # OUT
+IOBUF  PORT "tx" PULLMODE=NONE IO_TYPE=LVCMOS25;
+LOCATE COMP "rx" SITE "AG1"; # IN
+IOBUF  PORT "rx" PULLMODE=UP IO_TYPE=LVCMOS25;
 ## SD card
 #LOCATE COMP "sd_dat3_csn" SITE "G13";
 #LOCATE COMP "sd_cmd_di" SITE "G12";
