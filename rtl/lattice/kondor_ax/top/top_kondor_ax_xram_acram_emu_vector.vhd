@@ -155,7 +155,7 @@ begin
     clk <= clk_100;
   end generate;
 
-  -- generic BRAM glue
+  -- full featured XRAM glue
   glue_xram: entity work.glue_xram
   generic map (
     C_arch => C_arch,
