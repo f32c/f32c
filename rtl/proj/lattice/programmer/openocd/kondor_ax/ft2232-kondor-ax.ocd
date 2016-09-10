@@ -1,5 +1,5 @@
 #
-# PLDkit FPU1 JTAG Programmer
+# Kondor-AX USB-JTAG Onboard Programmer
 #
 
 interface ftdi
