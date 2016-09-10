@@ -1,10 +1,16 @@
-BLOCK RESETPATHS ;
-BLOCK ASYNCPATHS ;
+BLOCK RESETPATHS;
+BLOCK ASYNCPATHS;
 ## Sparrowhawk minimal constraints hand-made from user manual
-LOCATE COMP "clk_100_p" SITE "U6" ;
-FREQUENCY PORT "clk_100_p" 100 MHZ ;
-LOCATE COMP "clk_100_n" SITE "U7" ;
-FREQUENCY PORT "clk_100_n" 100 MHZ ;
+LOCATE COMP "clk_100_p" SITE "U6";
+FREQUENCY PORT "clk_100_p" 100 MHZ;
+#IOBUF PORT "clk_100_p" IO_TYPE=SSTL15D PULLMODE=NONE DIFFRESISTOR=OFF;
+LOCATE COMP "clk_100_n" SITE "U7";
+FREQUENCY PORT "clk_100_n" 100 MHZ;
+#IOBUF PORT "clk_100_n" IO_TYPE=SSTL15D PULLMODE=NONE DIFFRESISTOR=OFF;
+#LOCATE COMP "osc_vid_clk_0" SITE "U28";
+#IOBUF PORT "osc_vid_clk_0" IO_TYPE=LVTTL33 PULLMODE=DOWN;
+#LOCATE COMP "osc_vid_clk_1" SITE "Y28";
+#IOBUF PORT "osc_vid_clk_1" IO_TYPE=LVTTL33 PULLMODE=DOWN;
 ## LED indicators
 LOCATE COMP "led[0]" SITE "G23"; # OUT (green)
 LOCATE COMP "led[1]" SITE "H23"; # OUT (yellow)
@@ -77,49 +83,566 @@ IOBUF  PORT "btn[0]" PULLMODE=NONE IO_TYPE=LVCMOS33;
 IOBUF  PORT "btn[1]" PULLMODE=NONE IO_TYPE=LVCMOS33;
 IOBUF  PORT "btn[2]" PULLMODE=NONE IO_TYPE=LVCMOS33;
 IOBUF  PORT "btn[3]" PULLMODE=NONE IO_TYPE=LVCMOS33;
-## DVI-D video connector
-## Following pins are wrong, copied from fleafpga:
-#LOCATE COMP "LVDS_Blue" SITE "128" ;
-#LOCATE COMP "LVDS_Green" SITE "133" ;
-#LOCATE COMP "LVDS_Red" SITE "139" ;
-#LOCATE COMP "LVDS_ck" SITE "122" ;
-#IOBUF PORT "LVDS_Blue" IO_TYPE=LVDS25 CLAMP=ON ;
-#IOBUF PORT "LVDS_Green" IO_TYPE=LVDS25 PULLMODE=NONE CLAMP=ON ;
-#IOBUF PORT "LVDS_Red" IO_TYPE=LVDS25 CLAMP=ON ;
-#IOBUF PORT "LVDS_ck" IO_TYPE=LVDS25 DIFFDRIVE="3.5" CLAMP=ON ;
-#LOCATE COMP "Audio_l" SITE "32" ;
-#LOCATE COMP "Audio_r" SITE "33" ;
-#IOBUF PORT "Audio_l" IO_TYPE=LVCMOS33 PULLMODE=NONE ;
-#IOBUF PORT "Audio_r" IO_TYPE=LVCMOS33 PULLMODE=NONE ;
-#IOBUF PORT "GPIO_wordport[0]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[1]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[2]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[3]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[4]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[5]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[6]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[7]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[8]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[9]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[10]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[11]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[12]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[13]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[14]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#IOBUF PORT "GPIO_wordport[15]" PULLMODE=NONE IO_TYPE=LVCMOS33 ;
-#LOCATE COMP "GPIO_wordport[0]" SITE "74" ;
-#LOCATE COMP "GPIO_wordport[1]" SITE "76" ;
-#LOCATE COMP "GPIO_wordport[2]" SITE "78" ;
-#LOCATE COMP "GPIO_wordport[3]" SITE "82" ;
-#LOCATE COMP "GPIO_wordport[4]" SITE "84" ;
-#LOCATE COMP "GPIO_wordport[5]" SITE "86" ;
-#LOCATE COMP "GPIO_wordport[6]" SITE "89" ;
-#LOCATE COMP "GPIO_wordport[7]" SITE "92" ;
-#LOCATE COMP "GPIO_wordport[8]" SITE "94" ;
-#LOCATE COMP "GPIO_wordport[9]" SITE "96" ;
-#LOCATE COMP "GPIO_wordport[10]" SITE "98" ;
-#LOCATE COMP "GPIO_wordport[11]" SITE "100" ;
-#LOCATE COMP "GPIO_wordport[12]" SITE "104" ;
-#LOCATE COMP "GPIO_wordport[13]" SITE "106" ;
-#LOCATE COMP "GPIO_wordport[14]" SITE "111" ;
-#LOCATE COMP "GPIO_wordport[15]" SITE "113" ;
+##########################################################################
+# PCS
+##########################################################################
+#LOCATE COMP "u_pcs_dvi_10b_a/PCSD_INST" SITE "PCSA";
+#LOCATE COMP "u_pcs_dvi_10b_b/PCSD_INST" SITE "PCSB";
+#LOCATE COMP "u_pcs_dvi_10b_c/PCSD_INST" SITE "PCSC";
+#LOCATE COMP "u_pcs_dvi_10b_d/PCSD_INST" SITE "PCSD";
+#
+##########################################################################
+# HDMI
+##########################################################################
+#LOCATE COMP "hdmi_in_scl_0" SITE "V27";
+#LOCATE COMP "hdmi_in_sda_0" SITE "V28";
+#LOCATE COMP "hdmi_in_hpd_0" SITE "W28";
+#LOCATE COMP "hdmi_in_scl_1" SITE "W26";
+#LOCATE COMP "hdmi_in_sda_1" SITE "W27";
+#LOCATE COMP "hdmi_in_hpd_1" SITE "V26";
+#LOCATE COMP "hdmi_in_scl_2" SITE "AD31";
+#LOCATE COMP "hdmi_in_sda_2" SITE "AE31";
+#LOCATE COMP "hdmi_in_hpd_2" SITE "AE32";
+#LOCATE COMP "hdmi_in_scl_3" SITE "AB30";
+#LOCATE COMP "hdmi_in_sda_3" SITE "AC30";
+#LOCATE COMP "hdmi_in_hpd_3" SITE "AD30";
+#LOCATE COMP "hdmi_out_scl_0" SITE "AB27";
+#LOCATE COMP "hdmi_out_sda_0" SITE "AA27";
+#LOCATE COMP "hdmi_out_hpd_0" SITE "AA28";
+#LOCATE COMP "hdmi_out_oe_n_0" SITE "Y25";
+#LOCATE COMP "hdmi_out_ddc_en_0" SITE "Y26";
+#LOCATE COMP "hdmi_out_scl_1" SITE "AA25";
+#LOCATE COMP "hdmi_out_sda_1" SITE "AC25";
+#LOCATE COMP "hdmi_out_hpd_1" SITE "AB25";
+#LOCATE COMP "hdmi_out_oe_n_1" SITE "AB26";
+#LOCATE COMP "hdmi_out_ddc_en_1" SITE "AA26";
+#LOCATE COMP "hdmi_out_oe_n_2" SITE "AB31";
+#LOCATE COMP "hdmi_out_ddc_en_2" SITE "AB32";
+#
+#DEFINE PORT GROUP "hdmi_in" "hdmi_in_scl_0" "hdmi_in_scl_1";
+#IOBUF GROUP "hdmi_in" IO_TYPE=LVTTL33 PULLMODE=UP;
+#DEFINE PORT GROUP "hdmi_in_v2" "hdmi_in_scl_2" "hdmi_in_scl_3";
+#IOBUF GROUP "hdmi_in_v2" IO_TYPE=LVTTL33 PULLMODE=UP;
+#DEFINE PORT GROUP "hdmi_out" "hdmi_out_oe_n_0" "hdmi_out_ddc_en_0" "hdmi_out_oe_n_1" "hdmi_out_ddc_en_1" "hdmi_out_oe_n_2" "hdmi_out_ddc_en_2";
+#IOBUF GROUP "hdmi_out" IO_TYPE=LVTTL33 PULLMODE=UP;
+[A#DEFINE PORT GROUP "hdmi_oc" "hdmi_in_hpd_0" "hdmi_in_hpd_1";
+#IOBUF GROUP "hdmi_oc" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
+#DEFINE PORT GROUP "hdmi_oc2" "hdmi_out_scl_0" "hdmi_out_sda_0" "hdmi_out_scl_1" "hdmi_out_sda_1";
+#IOBUF GROUP "hdmi_oc2" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
+#DEFINE PORT GROUP "hdmi_oc3" "hdmi_in_hpd_2" "hdmi_in_hpd_3" "hdmi_in_sda_2" "hdmi_in_sda_3";
+#DEFINE PORT GROUP "hdmi_oc4" "hdmi_in_sda_0" "hdmi_in_sda_1";
+#IOBUF GROUP "hdmi_oc4" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
+#DEFINE PORT GROUP "hdmi_in" "hdmi_in_scl_0" "hdmi_in_scl_1";
+#IOBUF GROUP "hdmi_in" IO_TYPE=LVTTL33 PULLMODE=UP;
+#DEFINE PORT GROUP "hdmi_out" "hdmi_out_oe_n_0" "hdmi_out_ddc_en_0" "hdmi_out_oe_n_1" "hdmi_out_ddc_en_1";
+#IOBUF GROUP "hdmi_out" IO_TYPE=LVTTL33 PULLMODE=UP;
+#DEFINE PORT GROUP "hdmi_oc" "hdmi_in_hpd_0" "hdmi_in_hpd_1" "hdmi_in_sda_0" "hdmi_in_sda_1";
+#IOBUF GROUP "hdmi_oc" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
+#DEFINE PORT GROUP "hdmi_oc2" "hdmi_out_scl_0" "hdmi_out_sda_0" "hdmi_out_scl_1" "hdmi_out_sda_1";
+#IOBUF GROUP "hdmi_oc2" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
+#DEFINE PORT GROUP "hdmi_oc3" "hdmi_out_hpd_0" "hdmi_out_hpd_1";
+#IOBUF GROUP "hdmi_oc3" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
+#
+##########################################################################
+# DDR3
+##########################################################################
+#LOCATE COMP "ddr3_rst_n_0" SITE "AD10";
+#LOCATE COMP "ddr3_clk_0" SITE "AE2";
+#LOCATE COMP "ddr3_cs_n_0" SITE "AN1";
+#LOCATE COMP "ddr3_cke_0" SITE "AE4";
+#LOCATE COMP "ddr3_addr_0_0" SITE "AN3";
+#LOCATE COMP "ddr3_addr_0_1" SITE "AC9";
+#LOCATE COMP "ddr3_addr_0_2" SITE "AM3";
+#LOCATE COMP "ddr3_addr_0_3" SITE "AP3";
+#LOCATE COMP "ddr3_addr_0_4" SITE "AD8";
+#LOCATE COMP "ddr3_addr_0_5" SITE "AM4";
+#LOCATE COMP "ddr3_addr_0_6" SITE "AD9";
+#LOCATE COMP "ddr3_addr_0_7" SITE "AM5";
+#LOCATE COMP "ddr3_addr_0_8" SITE "AC10";
+#LOCATE COMP "ddr3_addr_0_9" SITE "AL5";
+#LOCATE COMP "ddr3_addr_0_10" SITE "AJ4";
+#LOCATE COMP "ddr3_addr_0_11" SITE "AB10";
+#LOCATE COMP "ddr3_addr_0_12" SITE "AJ5";
+##LOCATE COMP "ddr3_addr_0_13" SITE "AP5";
+#LOCATE COMP "ddr3_ba_0_0" SITE "AP2";
+#LOCATE COMP "ddr3_ba_0_1" SITE "AC8";
+#LOCATE COMP "ddr3_ba_0_2" SITE "AN2";
+#LOCATE COMP "ddr3_ras_n_0" SITE "AL4";
+#LOCATE COMP "ddr3_cas_n_0" SITE "AK4";
+#LOCATE COMP "ddr3_we_n_0" SITE "AK3";
+#LOCATE COMP "ddr3_odt_0" SITE "AL3";
+#LOCATE COMP "ddr3_dqm_0_0" SITE "W7";
+#LOCATE COMP "ddr3_dqm_0_1" SITE "W1";
+#LOCATE COMP "ddr3_dqm_0_2" SITE "AB5";
+#LOCATE COMP "ddr3_dqm_0_3" SITE "AC4";
+#LOCATE COMP "ddr3_dq_0_0" SITE "V2";
+#LOCATE COMP "ddr3_dq_0_1" SITE "V4";
+#LOCATE COMP "ddr3_dq_0_2" SITE "U1";
+#LOCATE COMP "ddr3_dq_0_3" SITE "V8";
+#LOCATE COMP "ddr3_dq_0_4" SITE "V1";
+#LOCATE COMP "ddr3_dq_0_5" SITE "V9";
+#LOCATE COMP "ddr3_dq_0_6" SITE "U2";
+#LOCATE COMP "ddr3_dq_0_7" SITE "V3";
+#LOCATE COMP "ddr3_dq_0_8" SITE "Y2";
+#LOCATE COMP "ddr3_dq_0_9" SITE "W2";
+#LOCATE COMP "ddr3_dq_0_10" SITE "Y8";
+#LOCATE COMP "ddr3_dq_0_11" SITE "W8";
+#LOCATE COMP "ddr3_dq_0_12" SITE "Y1";
+#LOCATE COMP "ddr3_dq_0_13" SITE "W4";
+#LOCATE COMP "ddr3_dq_0_14" SITE "W9";
+#LOCATE COMP "ddr3_dq_0_15" SITE "W3";
+#LOCATE COMP "ddr3_dq_0_16" SITE "AB2";
+#LOCATE COMP "ddr3_dq_0_17" SITE "AA5";
+#LOCATE COMP "ddr3_dq_0_18" SITE "AB1";
+#LOCATE COMP "ddr3_dq_0_19" SITE "AA7";
+#LOCATE COMP "ddr3_dq_0_20" SITE "AA3";
+#LOCATE COMP "ddr3_dq_0_21" SITE "Y7";
+#LOCATE COMP "ddr3_dq_0_22" SITE "AA2";
+#LOCATE COMP "ddr3_dq_0_23" SITE "AA4";
+#LOCATE COMP "ddr3_dq_0_24" SITE "AB6";
+#LOCATE COMP "ddr3_dq_0_25" SITE "AB4";
+#LOCATE COMP "ddr3_dq_0_26" SITE "AB8";
+#LOCATE COMP "ddr3_dq_0_27" SITE "AC1";
+#LOCATE COMP "ddr3_dq_0_28" SITE "AC5";
+#LOCATE COMP "ddr3_dq_0_29" SITE "AC2";
+#LOCATE COMP "ddr3_dq_0_30" SITE "AB7";
+#LOCATE COMP "ddr3_dq_0_31" SITE "AB3";
+#LOCATE COMP "ddr3_dqs_0_0" SITE "V5";
+#LOCATE COMP "ddr3_dqs_0_1" SITE "W6";
+#LOCATE COMP "ddr3_dqs_0_2" SITE "AA10";
+#LOCATE COMP "ddr3_dqs_0_3" SITE "AD5";
+##
+#IOBUF PORT "ddr3_rst_n_0" IO_TYPE=LVCMOS15;
+#IOBUF PORT "ddr3_clk_0" IO_TYPE=SSTL15D;
+#DEFINE PORT GROUP "ddr3_dqs_0_grp" "ddr3_dqs_0_*";
+#IOBUF GROUP "ddr3_dqs_0_grp" IO_TYPE=SSTL15D EQ_CAL=0;
+#DEFINE PORT GROUP "ddr3_0_out" "ddr3_cs_n_0" "ddr3_cke_0" "ddr3_addr_0_{0:12}" 
+#"ddr3_ba_0_{0:2}" "ddr3_ras_n_0" "ddr3_cas_n_0" "ddr3_we_n_0" "ddr3_dqm_0_{0:3}" "ddr3_odt_0";
+#IOBUF GROUP "ddr3_0_out" IO_TYPE=SSTL15;
+#DEFINE PORT GROUP "ddr3_0_io_0" "ddr3_dq_0_{0:7}";
+#IOBUF GROUP "ddr3_0_io_0" IO_TYPE=SSTL15;
+#DEFINE PORT GROUP "ddr3_0_io_1" "ddr3_dq_0_{8:15}";
+#IOBUF GROUP "ddr3_0_io_1" IO_TYPE=SSTL15;
+#DEFINE PORT GROUP "ddr3_0_io_2" "ddr3_dq_0_{16:23}";
+#IOBUF GROUP "ddr3_0_io_2" IO_TYPE=SSTL15;
+#DEFINE PORT GROUP "ddr3_0_io_3" "ddr3_dq_0_{24:31}";
+#IOBUF GROUP "ddr3_0_io_3" IO_TYPE=SSTL15;
+##
+##
+#LOCATE COMP "ddr3_rst_n_1" SITE "T9";
+#LOCATE COMP "ddr3_clk_1" SITE "R2";
+#LOCATE COMP "ddr3_cs_n_1" SITE "R7";
+#LOCATE COMP "ddr3_cke_1" SITE "T1";
+#LOCATE COMP "ddr3_addr_1_0" SITE "R4";
+#LOCATE COMP "ddr3_addr_1_1" SITE "U8";
+#LOCATE COMP "ddr3_addr_1_2" SITE "R3";
+#LOCATE COMP "ddr3_addr_1_3" SITE "T3";
+#LOCATE COMP "ddr3_addr_1_4" SITE "T7";
+#LOCATE COMP "ddr3_addr_1_5" SITE "T2";
+#LOCATE COMP "ddr3_addr_1_6" SITE "U9";
+#LOCATE COMP "ddr3_addr_1_7" SITE "P10";
+#LOCATE COMP "ddr3_addr_1_8" SITE "AA9";
+#LOCATE COMP "ddr3_addr_1_9" SITE "R10";
+#LOCATE COMP "ddr3_addr_1_10" SITE "T4";
+#LOCATE COMP "ddr3_addr_1_11" SITE "AA8";
+#LOCATE COMP "ddr3_addr_1_12" SITE "T5";
+##LOCATE COMP "ddr3_addr_1_13" SITE "E3";
+#LOCATE COMP "ddr3_ba_1_0" SITE "R5";
+#LOCATE COMP "ddr3_ba_1_1" SITE "T6";
+#LOCATE COMP "ddr3_ba_1_2" SITE "L6";
+#LOCATE COMP "ddr3_ras_n_1" SITE "P9";
+#LOCATE COMP "ddr3_cas_n_1" SITE "P8";
+#LOCATE COMP "ddr3_we_n_1" SITE "R8";
+#LOCATE COMP "ddr3_odt_1" SITE "M8";
+#LOCATE COMP "ddr3_dqm_1_0" SITE "K2";
+#LOCATE COMP "ddr3_dqm_1_1" SITE "G1";
+#LOCATE COMP "ddr3_dqm_1_2" SITE "P4";
+#LOCATE COMP "ddr3_dqm_1_3" SITE "M1";
+#LOCATE COMP "ddr3_dq_1_0" SITE "K4";
+#LOCATE COMP "ddr3_dq_1_1" SITE "L1";
+#LOCATE COMP "ddr3_dq_1_2" SITE "J6";
+#LOCATE COMP "ddr3_dq_1_3" SITE "L7";
+#LOCATE COMP "ddr3_dq_1_4" SITE "K3";
+#LOCATE COMP "ddr3_dq_1_5" SITE "L2";
+#LOCATE COMP "ddr3_dq_1_6" SITE "K7";
+#LOCATE COMP "ddr3_dq_1_7" SITE "K1";
+#LOCATE COMP "ddr3_dq_1_8" SITE "H2";
+#LOCATE COMP "ddr3_dq_1_9" SITE "G2";
+#LOCATE COMP "ddr3_dq_1_10" SITE "J3";
+#LOCATE COMP "ddr3_dq_1_11" SITE "F3";
+#LOCATE COMP "ddr3_dq_1_12" SITE "H1";
+#LOCATE COMP "ddr3_dq_1_13" SITE "F2";
+#LOCATE COMP "ddr3_dq_1_14" SITE "J1";
+#LOCATE COMP "ddr3_dq_1_15" SITE "F1";
+#LOCATE COMP "ddr3_dq_1_16" SITE "N1";
+#LOCATE COMP "ddr3_dq_1_17" SITE "N4";
+#LOCATE COMP "ddr3_dq_1_18" SITE "N8";
+#LOCATE COMP "ddr3_dq_1_19" SITE "N5";
+#LOCATE COMP "ddr3_dq_1_20" SITE "N2";
+#LOCATE COMP "ddr3_dq_1_21" SITE "P5";
+#LOCATE COMP "ddr3_dq_1_22" SITE "M5";
+#LOCATE COMP "ddr3_dq_1_23" SITE "N3";
+#LOCATE COMP "ddr3_dq_1_24" SITE "M4";
+#LOCATE COMP "ddr3_dq_1_25" SITE "M3";
+#LOCATE COMP "ddr3_dq_1_26" SITE "M7";
+#LOCATE COMP "ddr3_dq_1_27" SITE "L4";
+#LOCATE COMP "ddr3_dq_1_28" SITE "L5";
+#LOCATE COMP "ddr3_dq_1_29" SITE "K5";
+#LOCATE COMP "ddr3_dq_1_30" SITE "K6";
+#LOCATE COMP "ddr3_dq_1_31" SITE "M2";
+#LOCATE COMP "ddr3_dqs_1_0" SITE "L10";
+#LOCATE COMP "ddr3_dqs_1_1" SITE "G3";
+#LOCATE COMP "ddr3_dqs_1_2" SITE "M10";
+#LOCATE COMP "ddr3_dqs_1_3" SITE "N9";
+#
+#IOBUF PORT "ddr3_rst_n_1" IO_TYPE=LVCMOS15;
+#IOBUF PORT "ddr3_clk_1" IO_TYPE=SSTL15D;
+#DEFINE PORT GROUP "ddr3_dqs_1_grp" "ddr3_dqs_1_*";
+#IOBUF GROUP "ddr3_dqs_1_grp" IO_TYPE=SSTL15D EQ_CAL=0;
+#DEFINE PORT GROUP "ddr3_1_out" "ddr3_cs_n_1" "ddr3_cke_1" "ddr3_addr_1_{0:12}";
+#"ddr3_ba_1_{0:2}" "ddr3_ras_n_1" "ddr3_cas_n_1" "ddr3_we_n_1" "ddr3_dqm_1_{0:3}" "ddr3_odt_1";
+#IOBUF GROUP "ddr3_1_out" IO_TYPE=SSTL15;
+#DEFINE PORT GROUP "ddr3_1_io_0" "ddr3_dq_1_{0:7}";
+#IOBUF GROUP "ddr3_1_io_0" IO_TYPE=SSTL15;
+#DEFINE PORT GROUP "ddr3_1_io_1" "ddr3_dq_1_{8:15}";
+#IOBUF GROUP "ddr3_1_io_1" IO_TYPE=SSTL15;
+#DEFINE PORT GROUP "ddr3_1_io_2" "ddr3_dq_1_{16:23}";
+#IOBUF GROUP "ddr3_1_io_2" IO_TYPE=SSTL15;
+#DEFINE PORT GROUP "ddr3_1_io_3" "ddr3_dq_1_{24:31}";
+#IOBUF GROUP "ddr3_1_io_3" IO_TYPE=SSTL15;
+##########################################################################
+# PARALLEL BUS
+##########################################################################
+#LOCATE COMP "prl_addr_0" SITE "C5";
+#LOCATE COMP "prl_addr_1" SITE "D15";
+#LOCATE COMP "prl_addr_2" SITE "D16";
+#LOCATE COMP "prl_addr_3" SITE "B15";
+#LOCATE COMP "prl_addr_4" SITE "A14";
+#LOCATE COMP "prl_addr_5" SITE "C14";
+#LOCATE COMP "prl_addr_6" SITE "E15";
+#LOCATE COMP "prl_addr_7" SITE "B14";
+#LOCATE COMP "prl_addr_8" SITE "B11";
+#LOCATE COMP "prl_addr_9" SITE "A11";
+#LOCATE COMP "prl_addr_10" SITE "D12";
+#LOCATE COMP "prl_addr_11" SITE "C11";
+#LOCATE COMP "prl_addr_12" SITE "B10";
+#LOCATE COMP "prl_addr_13" SITE "A10";
+#LOCATE COMP "prl_addr_14" SITE "A8";
+#LOCATE COMP "prl_addr_15" SITE "A7";
+#LOCATE COMP "prl_addr_16" SITE "B7";
+#LOCATE COMP "prl_addr_17" SITE "A13";
+#LOCATE COMP "prl_addr_18" SITE "D14";
+#LOCATE COMP "prl_addr_19" SITE "E12";
+#LOCATE COMP "prl_addr_20" SITE "C13";
+#LOCATE COMP "prl_addr_21" SITE "D13";
+#LOCATE COMP "prl_addr_22" SITE "A9";
+#LOCATE COMP "prl_addr_23" SITE "B8";
+#LOCATE COMP "prl_addr_24" SITE "A6";
+##LOCATE COMP "prl_addr_25" SITE "B6";
+##LOCATE COMP "prl_addr_26" SITE "A15";
+#LOCATE COMP "prl_data_0" SITE "C6";
+#LOCATE COMP "prl_data_1" SITE "B1";
+#LOCATE COMP "prl_data_2" SITE "D9";
+#LOCATE COMP "prl_data_3" SITE "A2";
+#LOCATE COMP "prl_data_4" SITE "A3";
+#LOCATE COMP "prl_data_5" SITE "C10";
+#LOCATE COMP "prl_data_6" SITE "B4";
+#LOCATE COMP "prl_data_7" SITE "D11";
+#LOCATE COMP "prl_data_8" SITE "D6";
+#LOCATE COMP "prl_data_9" SITE "B2";
+#LOCATE COMP "prl_data_10" SITE "C8";
+#LOCATE COMP "prl_data_11" SITE "B3";
+#LOCATE COMP "prl_data_12" SITE "C9";
+#LOCATE COMP "prl_data_13" SITE "A4";
+#LOCATE COMP "prl_data_14" SITE "D10";
+#LOCATE COMP "prl_data_15" SITE "A5";
+#LOCATE COMP "prl_rd_n" SITE "C4";
+#LOCATE COMP "prl_wr_n" SITE "A12";
+#LOCATE COMP "flash_rst_n" SITE "B12";
+#LOCATE COMP "flash_cs_n" SITE "D5";
+#LOCATE COMP "flash_busy_n" SITE "B13";
+#LOCATE COMP "isp_rst_n" SITE "A16";
+#LOCATE COMP "isp_cs_n" SITE "B16";
+#LOCATE COMP "isp_int" SITE "D17";
+#LOCATE COMP "isp_dreq" SITE "C16";
+#LOCATE COMP "isp_dack" SITE "C17";
+#
+#DEFINE PORT GROUP "prl_3v3_in" "flash_busy_n";
+#IOBUF GROUP "prl_3v3_in" IO_TYPE=LVTTL33 PULLMODE=UP;
+#DEFINE PORT GROUP "prl_3v3_out" "prl_addr_{0:24}" "prl_rd_n" "prl_wr_n" "flash_rst_n" "flash_cs_n" "isp_rst_n" "isp_cs_n" "isp_dreq";
+#DEFINE PORT GROUP "prl_3v3_out" "flash_rst_n" "flash_cs_n" "isp_rst_n" "isp_cs_n" "isp_dreq";
+#IOBUF GROUP "prl_3v3_out" IO_TYPE=LVTTL33 PULLMODE=UP;
+#DEFINE PORT GROUP "prl_3v3_io" "prl_data_{0:15}";
+#IOBUF GROUP "prl_3v3_io" IO_TYPE=LVTTL33 PULLMODE=UP;
+#
+##########################################################################
+# CY7C68013A
+##########################################################################
+#LOCATE COMP "cy_ifclk" SITE "E19";
+#LOCATE COMP "cy_slrd" SITE "A22";
+#LOCATE COMP "cy_slwr" SITE "B22";
+#LOCATE COMP "cy_sloe" SITE "D22";
+#LOCATE COMP "cy_adr_0" SITE "C22";
+#LOCATE COMP "cy_adr_1" SITE "B21";
+#LOCATE COMP "cy_pktend" SITE "A21";
+#LOCATE COMP "cy_flaga" SITE "C20";
+#LOCATE COMP "cy_flagb" SITE "B20";
+#LOCATE COMP "cy_flagc" SITE "A20";
+#LOCATE COMP "cy_pb_0" SITE "B17";
+#LOCATE COMP "cy_pb_1" SITE "A17";
+#LOCATE COMP "cy_pb_2" SITE "B18";
+#LOCATE COMP "cy_pb_3" SITE "A18";
+#LOCATE COMP "cy_pb_4" SITE "D19";
+#LOCATE COMP "cy_pb_5" SITE "C19";
+#LOCATE COMP "cy_pb_6" SITE "B19";
+#LOCATE COMP "cy_pb_7" SITE "A19";
+#LOCATE COMP "cy_int_0" SITE "E21";
+#LOCATE COMP "cy_itf_en" SITE "E21";
+#LOCATE COMP "cy_int_1" SITE "D21";
+#LOCATE COMP "cy_clkout" SITE "P30";
+##
+#IOBUF PORT "cy_ifclk" IO_TYPE=LVTTL33 PULLMODE=DOWN;
+#IOBUF PORT "cy_clkout" IO_TYPE=LVTTL33 PULLMODE=DOWN;
+#DEFINE PORT GROUP "cy_3v3_in" "cy_flaga" "cy_flagb" "cy_flagc" "cy_int_0" "cy_int_1";
+#DEFINE PORT GROUP "cy_3v3_in" "cy_flaga" "cy_flagb" "cy_flagc" "cy_itf_en";
+#IOBUF GROUP "cy_3v3_in" IO_TYPE=LVTTL33 PULLMODE=UP;
+#DEFINE PORT GROUP "cy_3v3_out" "cy_slrd" "cy_slwr" "cy_sloe" "cy_adr_{0:1}" "cy_pktend";
+#IOBUF GROUP "cy_3v3_out" IO_TYPE=LVTTL33 PULLMODE=UP;
+#DEFINE PORT GROUP "cy_3v3_io" "cy_pb_{0:7}";
+#IOBUF GROUP "cy_3v3_io" IO_TYPE=LVTTL33 PULLMODE=UP;
+#
+#INPUT_SETUP GROUP "cy_3v3_in" 10.000000 ns HOLD 5.000000 ns CLKPORT "cy_ifclk";
+#INPUT_SETUP GROUP "cy_3v3_io" 10.000000 ns HOLD 5.000000 ns CLKPORT "cy_ifclk";
+#CLOCK_TO_OUT GROUP "cy_3v3_out" MAX 10.000000 ns CLKPORT "cy_ifclk";
+#CLOCK_TO_OUT GROUP "cy_3v3_io" MAX 10.000000 ns CLKPORT "cy_ifclk";
+###########################################################################
+# SDC
+##########################################################################
+LOCATE COMP "sdc_clk" SITE "G11";
+#LOCATE COMP "sdc_cmd" SITE "G12";
+#LOCATE COMP "sdc_dat_0" SITE "H12";
+#LOCATE COMP "sdc_dat_1" SITE "H11";
+#LOCATE COMP "sdc_dat_2" SITE "F13";
+#LOCATE COMP "sdc_dat_3" SITE "G13";
+#LOCATE COMP "sdc_cd_n" SITE "E13";
+#LOCATE COMP "sdc_wp" SITE "J12";
+LOCATE COMP "sdc_pwr_n" SITE "H13";
+#
+#IOBUF PORT "sdc_clk" IO_TYPE=LVTTL33 PULLMODE=DOWN;
+#DEFINE PORT GROUP "sdc_3v3_in" "sdc_cd_n" "sdc_wp";
+#IOBUF GROUP "sdc_3v3_in" IO_TYPE=LVTTL33 PULLMODE=UP;
+#DEFINE PORT GROUP "sdc_3v3_out" "sdc_pwr_n";
+#IOBUF GROUP "sdc_3v3_out" IO_TYPE=LVTTL33 PULLMODE=UP;
+#DEFINE PORT GROUP "sdc_3v3_io" "sdc_cmd" "sdc_dat_{0:3}";
+#IOBUF GROUP "sdc_3v3_io" IO_TYPE=LVTTL33 PULLMODE=UP;
+#
+##########################################################################
+# UART
+##########################################################################
+#LOCATE COMP "uart_tx" SITE "D4";
+#LOCATE COMP "uart_rx" SITE "C2";
+#LOCATE COMP "uart_rts" SITE "C3";
+#LOCATE COMP "uart_cts" SITE "D3";
+#
+#IOBUF PORT "uart_tx" IO_TYPE=LVTTL33 PULLMODE=UP DRIVE=NA;
+#IOBUF PORT "uart_rx" IO_TYPE=LVTTL33 PULLMODE=UP DRIVE=8;
+#IOBUF PORT "uart_rts" IO_TYPE=LVTTL33 PULLMODE=UP DRIVE=NA;
+#IOBUF PORT "uart_cts" IO_TYPE=LVTTL33 PULLMODE=UP DRIVE=8;
+#
+##########################################################################
+# EXPANSION
+##########################################################################
+#LOCATE COMP "hdr_io_0" SITE "B28";
+#LOCATE COMP "hdr_io_1" SITE "A28";
+#LOCATE COMP "hdr_io_2" SITE "A27";
+#LOCATE COMP "hdr_io_3" SITE "C27";
+#LOCATE COMP "hdr_io_4" SITE "B27";
+#LOCATE COMP "hdr_io_5" SITE "D27";
+#LOCATE COMP "hdr_io_6" SITE "A26";
+#LOCATE COMP "hdr_io_7" SITE "D26";
+#LOCATE COMP "hdr_io_8" SITE "C26";
+#LOCATE COMP "hdr_io_9" SITE "E27";
+#LOCATE COMP "hdr_io_10" SITE "A25";
+#LOCATE COMP "hdr_io_11" SITE "C25";
+#LOCATE COMP "hdr_io_12" SITE "B25";
+#LOCATE COMP "hdr_io_13" SITE "D25";
+#LOCATE COMP "hdr_io_14" SITE "A24";
+#LOCATE COMP "hdr_io_15" SITE "D24";
+#LOCATE COMP "hdr_io_16" SITE "B24";
+#LOCATE COMP "hdr_io_17" SITE "E24";
+#LOCATE COMP "hdr_io_18" SITE "A23";
+#LOCATE COMP "hdr_io_19" SITE "C23";
+#LOCATE COMP "hdr_io_20" SITE "B23";
+#LOCATE COMP "hdr_io_21" SITE "D23";
+#LOCATE COMP "exp_io_0" SITE "W34";
+#LOCATE COMP "exp_io_1" SITE "AF32";
+#LOCATE COMP "exp_io_2" SITE "W33";
+#LOCATE COMP "exp_io_3" SITE "AF34";
+#LOCATE COMP "exp_io_4" SITE "Y34";
+#LOCATE COMP "exp_io_5" SITE "AG34";
+#LOCATE COMP "exp_io_6" SITE "Y33";
+#LOCATE COMP "exp_io_7" SITE "AH33";
+#LOCATE COMP "exp_io_8" SITE "AB34";
+#LOCATE COMP "exp_io_9" SITE "AJ31";
+#LOCATE COMP "exp_io_10" SITE "AB33";
+#LOCATE COMP "exp_io_11" SITE "AJ33";
+#LOCATE COMP "exp_io_12" SITE "AC34";
+#LOCATE COMP "exp_io_13" SITE "AL32";
+#LOCATE COMP "exp_io_14" SITE "AC33";
+#LOCATE COMP "exp_io_15" SITE "AL34";
+#LOCATE COMP "exp_io_16" SITE "AD34";
+#LOCATE COMP "exp_io_17" SITE "AL33";
+#LOCATE COMP "exp_io_18" SITE "AD33";
+#LOCATE COMP "exp_io_19" SITE "AF31";
+#LOCATE COMP "exp_io_20" SITE "AE34";
+#LOCATE COMP "exp_io_21" SITE "AK31";
+#LOCATE COMP "exp_io_22" SITE "AE33";
+#LOCATE COMP "exp_io_23" SITE "AK32";
+#LOCATE COMP "exp_io_24" SITE "W31";
+#LOCATE COMP "exp_io_25" SITE "AL31";
+#LOCATE COMP "exp_io_26" SITE "W32";
+#LOCATE COMP "exp_io_27" SITE "AM32";
+#LOCATE COMP "exp_io_28" SITE "Y31";
+#LOCATE COMP "exp_io_29" SITE "AM31";
+#LOCATE COMP "exp_io_30" SITE "Y32";
+#LOCATE COMP "exp_io_31" SITE "AM30";
+#LOCATE COMP "exp_io_32" SITE "AA30";
+#LOCATE COMP "exp_io_33" SITE "AA31";
+#LOCATE COMP "exp_io_34" SITE "AB31";
+#LOCATE COMP "exp_io_35" SITE "AB32";
+#LOCATE COMP "exp_io_36" SITE "AB30";
+#LOCATE COMP "exp_io_37" SITE "AN34";
+#LOCATE COMP "exp_io_38" SITE "AC30";
+#LOCATE COMP "exp_io_39" SITE "AN33";
+#LOCATE COMP "exp_io_40" SITE "AD30";
+#LOCATE COMP "exp_io_41" SITE "AP33";
+#LOCATE COMP "exp_io_42" SITE "AD31";
+#LOCATE COMP "exp_io_43" SITE "AP32";
+#LOCATE COMP "exp_io_44" SITE "AE31";
+#LOCATE COMP "exp_io_45" SITE "AP31";
+#LOCATE COMP "exp_io_46" SITE "AE32";
+#LOCATE COMP "exp_io_47" SITE "AP30";
+#LOCATE COMP "exp_io_48" SITE "K33";
+#LOCATE COMP "exp_io_49" SITE "K30";
+#LOCATE COMP "exp_io_50" SITE "K34";
+#LOCATE COMP "exp_io_51" SITE "K29";
+#LOCATE COMP "exp_io_52" SITE "K32";
+#LOCATE COMP "exp_io_53" SITE "L30";
+#LOCATE COMP "exp_io_54" SITE "K31";
+#LOCATE COMP "exp_io_55" SITE "L28";
+#LOCATE COMP "exp_io_56" SITE "L33";
+#LOCATE COMP "exp_io_57" SITE "L26";
+#LOCATE COMP "exp_io_58" SITE "L34";
+#LOCATE COMP "exp_io_59" SITE "M29";
+#LOCATE COMP "exp_io_60" SITE "L32";
+#LOCATE COMP "exp_io_61" SITE "M28";
+#LOCATE COMP "exp_io_62" SITE "L31";
+#LOCATE COMP "exp_io_63" SITE "M27";
+#LOCATE COMP "exp_io_64" SITE "M33";
+#LOCATE COMP "exp_io_65" SITE "M26";
+#LOCATE COMP "exp_io_66" SITE "M34";
+#LOCATE COMP "exp_io_67" SITE "N30";
+#LOCATE COMP "exp_io_68" SITE "M31";
+#LOCATE COMP "exp_io_69" SITE "N29";
+#LOCATE COMP "exp_io_70" SITE "M30";
+#LOCATE COMP "exp_io_71" SITE "N28";
+#LOCATE COMP "exp_io_72" SITE "N33";
+#LOCATE COMP "exp_io_73" SITE "N27";
+#LOCATE COMP "exp_io_74" SITE "N34";
+#LOCATE COMP "exp_io_75" SITE "R31";
+#LOCATE COMP "exp_io_76" SITE "N32";
+#LOCATE COMP "exp_io_77" SITE "R30";
+#LOCATE COMP "exp_io_78" SITE "N31";
+#LOCATE COMP "exp_io_79" SITE "R28";
+#LOCATE COMP "exp_io_80" SITE "P33";
+#LOCATE COMP "exp_io_81" SITE "R27";
+#LOCATE COMP "exp_io_82" SITE "P34";
+#LOCATE COMP "exp_io_83" SITE "T32";
+#LOCATE COMP "exp_io_84" SITE "R33";
+#LOCATE COMP "exp_io_85" SITE "T31";
+#LOCATE COMP "exp_io_86" SITE "R34";
+#LOCATE COMP "exp_io_87" SITE "T30";
+#LOCATE COMP "exp_io_88" SITE "T33";
+#LOCATE COMP "exp_io_89" SITE "T29";
+#LOCATE COMP "exp_io_90" SITE "T34";
+#LOCATE COMP "exp_io_91" SITE "U32";
+#LOCATE COMP "exp_pll" SITE "AJ34";
+#LOCATE COMP "exp2_pll" SITE "V34";
+#LOCATE COMP "exp2_pclk" SITE "U26";
+#
+#DEFINE PORT GROUP "exp_3v3_io" "hdr_io_{0:1}";
+#IOBUF GROUP "exp_3v3_io" IO_TYPE=LVTTL33 PULLMODE=UP;
+#IOBUF PORT "exp_pll" IO_TYPE=LVTTL33 PULLMODE=DOWN;
+#IOBUF PORT "exp2_pll" IO_TYPE=LVTTL33 PULLMODE=DOWN;
+#IOBUF PORT "exp2_pclk" IO_TYPE=LVTTL33 PULLMODE=DOWN;
+#
+##########################################################################
+# I2C
+##########################################################################
+#LOCATE COMP "cy_scl" SITE "D18";
+#LOCATE COMP "cy_sda" SITE "E18";
+#LOCATE COMP "sys_scl" SITE "AN31";
+#LOCATE COMP "sys_sda" SITE "AN32";
+#
+#DEFINE PORT GROUP "i2c_oc" "cy_scl" "cy_sda";
+#IOBUF GROUP "i2c_oc" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
+#DEFINE PORT GROUP "i2c_oc_v2" "sys_scl" "sys_sda";
+#IOBUF GROUP "i2c_oc_v2" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
+#
+##########################################################################
+# SWITCHES
+##########################################################################
+#LOCATE COMP "sw_dip_0" SITE "A33";
+#LOCATE COMP "sw_dip_1" SITE "A32";
+#LOCATE COMP "sw_dip_2" SITE "B32";
+#LOCATE COMP "sw_dip_3" SITE "C32";
+#LOCATE COMP "sw_push_0" SITE "E11";
+#LOCATE COMP "sw_push_1" SITE "E10";
+#LOCATE COMP "sw_push_2" SITE "F10";
+#LOCATE COMP "sw_push_3" SITE "F12";
+##
+#DEFINE PORT GROUP "switch_3v3" "sw_dip_{0:3}" "sw_push_{0:3}";
+#IOBUF GROUP "switch_3v3" IO_TYPE=LVTTL33 DRIVE=NA;
+#
+##########################################################################
+# LEDs
+##########################################################################
+#LOCATE COMP "led_0" SITE "G23";
+#LOCATE COMP "led_1" SITE "H23";
+#LOCATE COMP "led_2" SITE "H22";
+#LOCATE COMP "led_3" SITE "G21";
+#LOCATE COMP "led_4" SITE "G26";
+#LOCATE COMP "led_5" SITE "H26";
+#LOCATE COMP "led_6" SITE "G25";
+#LOCATE COMP "led_7" SITE "H25";
+##
+#DEFINE PORT GROUP "led_3v3" "led_{0:7}";
+#IOBUF GROUP "led_3v3" IO_TYPE=LVTTL33 PULLMODE=DOWN SLEWRATE=SLOW;
+#
+##########################################################################
+# SPI FLASH
+##########################################################################
+#LOCATE COMP "spi_cs_n" SITE "D34";
+#LOCATE COMP "spi_sck" SITE "F34";
+#LOCATE COMP "spi_mosi" SITE "F33";
+#LOCATE COMP "spi_miso" SITE "F32";
+#
+#DEFINE PORT GROUP "spi_3v3" "spi_cs_n" "spi_mosi" "spi_miso";
+#IOBUF GROUP "spi_3v3" IO_TYPE=LVTTL33 PULLMODE=UP;
+#IOBUF PORT "spi_sck" IO_TYPE=LVTTL33 PULLMODE=DOWN;
+#
+##########################################################################
+# AC97
+##########################################################################
+#LOCATE COMP "ac97_rst_n" SITE "W29";
+#LOCATE COMP "ac97_clk" SITE "V31";
+#LOCATE COMP "ac97_sdo" SITE "V29";
+#LOCATE COMP "ac97_sdi" SITE "V30";
+#LOCATE COMP "ac97_sync" SITE "W30";
+#
+#IOBUF PORT "ac97_clk" IO_TYPE=LVTTL33 PULLMODE=DOWN;
+#DEFINE PORT GROUP "ac97_3v3_in" "ac97_sdi";
+#IOBUF GROUP "ac97_3v3_in" IO_TYPE=LVTTL33 PULLMODE=UP;
+#DEFINE PORT GROUP "ac97_3v3_out" "ac97_rst_n" "ac97_sdo" "ac97_sync";
+#IOBUF GROUP "ac97_3v3_out" IO_TYPE=LVTTL33 PULLMODE=UP;
+#
