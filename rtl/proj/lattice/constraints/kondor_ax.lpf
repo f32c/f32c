@@ -3,17 +3,19 @@ BLOCK ASYNCPATHS;
 ## Kondor-AX minimal constraints, hand-made
 LOCATE COMP "clk_100_p" SITE "C5";
 LOCATE COMP "clk_100_n" SITE "D5";
+IOBUF PORT "clk_100_p" IO_TYPE=SLVS PULLMODE=NONE DIFFRESISTOR=100 BANK_VCCIO=1.2;
+IOBUF PORT "clk_100_n" IO_TYPE=SLVS PULLMODE=NONE DIFFRESISTOR=100 BANK_VCCIO=1.2;
 FREQUENCY PORT "clk_100_p" 100 MHZ;
 FREQUENCY PORT "clk_100_n" 100 MHZ;
 ## LED indicators
-LOCATE COMP "led[0]" SITE "J26"; # OUT (red dual)
-LOCATE COMP "led[1]" SITE "J27"; # OUT (green dual)
-LOCATE COMP "led[2]" SITE "K27"; # OUT (red dual)
-LOCATE COMP "led[3]" SITE "K26"; # OUT (green dual)
-LOCATE COMP "led[4]" SITE "A9";  # OUT (red dual)
-LOCATE COMP "led[5]" SITE "F10"; # OUT (green dual)
-LOCATE COMP "led[6]" SITE "D10"; # OUT (red dual)
-LOCATE COMP "led[7]" SITE "E10"; # OUT (green dual)
+LOCATE COMP "led[7]" SITE "K27"; # OUT (green dual)
+LOCATE COMP "led[6]" SITE "D10"; # OUT (green dual)
+LOCATE COMP "led[5]" SITE "J26"; # OUT (green dual)
+LOCATE COMP "led[4]" SITE "A9";  # OUT (green dual)
+LOCATE COMP "led[3]" SITE "K26"; # OUT (red dual)
+LOCATE COMP "led[2]" SITE "E10"; # OUT (red dual)
+LOCATE COMP "led[1]" SITE "J27"; # OUT (red dual)
+LOCATE COMP "led[0]" SITE "F10"; # OUT (red dual)
 IOBUF  PORT "led[0]" PULLMODE=NONE IO_TYPE=LVCMOS33;
 IOBUF  PORT "led[1]" PULLMODE=NONE IO_TYPE=LVCMOS33;
 IOBUF  PORT "led[2]" PULLMODE=NONE IO_TYPE=LVCMOS33;
