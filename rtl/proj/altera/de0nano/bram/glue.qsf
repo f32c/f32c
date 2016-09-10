@@ -56,14 +56,18 @@ set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
-set_location_assignment PIN_R8 -to clk_50m
-set_location_assignment PIN_M16 -to rs232_rxd
-set_location_assignment PIN_B16 -to rs232_txd
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_50m
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_rxd
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_txd
+
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+
+set_location_assignment PIN_R8 -to clk_50m
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_50m
+
+set_location_assignment PIN_A6 -to rs232_rxd
+set_location_assignment PIN_D5 -to rs232_txd
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_rxd
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_txd
+
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[0]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[3]
@@ -78,22 +82,24 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[6]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[7]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to btn_left
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to btn_right
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[0]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[1]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[2]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[3]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[4]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[5]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[6]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[7]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[8]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[9]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[10]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[11]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[12]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[13]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[14]
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[15]
+
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[0]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[1]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[2]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[3]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[4]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[5]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[6]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[7]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[8]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[9]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[10]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[11]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[12]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[13]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[14]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[15]
+
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[16]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[17]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[18]
@@ -112,22 +118,24 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[30]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[31]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[32]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[33]
-set_location_assignment PIN_D3 -to gpioa[0]
-set_location_assignment PIN_C3 -to gpioa[1]
-set_location_assignment PIN_A2 -to gpioa[2]
-set_location_assignment PIN_A3 -to gpioa[3]
-set_location_assignment PIN_B3 -to gpioa[4]
-set_location_assignment PIN_B4 -to gpioa[5]
-set_location_assignment PIN_A4 -to gpioa[6]
-set_location_assignment PIN_B5 -to gpioa[7]
-set_location_assignment PIN_A5 -to gpioa[8]
-set_location_assignment PIN_D5 -to gpioa[9]
-set_location_assignment PIN_B6 -to gpioa[10]
-set_location_assignment PIN_A6 -to gpioa[11]
-set_location_assignment PIN_B7 -to gpioa[12]
-set_location_assignment PIN_D6 -to gpioa[13]
-set_location_assignment PIN_A7 -to gpioa[14]
-set_location_assignment PIN_C6 -to gpioa[15]
+
+#set_location_assignment PIN_D3 -to gpioa[0]
+#set_location_assignment PIN_C3 -to gpioa[1]
+#set_location_assignment PIN_A2 -to gpioa[2]
+#set_location_assignment PIN_A3 -to gpioa[3]
+#set_location_assignment PIN_B3 -to gpioa[4]
+#set_location_assignment PIN_B4 -to gpioa[5]
+#set_location_assignment PIN_A4 -to gpioa[6]
+#set_location_assignment PIN_B5 -to gpioa[7]
+#set_location_assignment PIN_A5 -to gpioa[8]
+#set_location_assignment PIN_D5 -to gpioa[9]
+#set_location_assignment PIN_B6 -to gpioa[10]
+#set_location_assignment PIN_A6 -to gpioa[11]
+#set_location_assignment PIN_B7 -to gpioa[12]
+#set_location_assignment PIN_D6 -to gpioa[13]
+#set_location_assignment PIN_A7 -to gpioa[14]
+#set_location_assignment PIN_C6 -to gpioa[15]
+
 set_location_assignment PIN_C8 -to gpioa[16]
 set_location_assignment PIN_E6 -to gpioa[17]
 set_location_assignment PIN_E7 -to gpioa[18]
@@ -202,5 +210,6 @@ set_global_assignment -name VHDL_FILE ../../../../generic/bram.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/reg1w2r.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bptrace.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/gpio.vhd
-set_global_assignment -name CDF_FILE output_files/Chain1.cdf
+
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

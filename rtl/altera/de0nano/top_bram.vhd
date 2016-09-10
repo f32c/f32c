@@ -54,7 +54,7 @@ entity glue is
 	led: out std_logic_vector(7 downto 0);
 	btn_left, btn_right: in std_logic;
 	sw: in std_logic_vector(3 downto 0);
-	gpioa: inout std_logic_vector(33 downto 0)
+	gpioa: inout std_logic_vector(33 downto 16)
     );
 end glue;
 
@@ -84,7 +84,7 @@ begin
 	clk => clk,
 	sio_txd(0) => rs232_txd, sio_rxd(0) => rs232_rxd,
 	sio_break(0) => open,
-	gpio(31 downto 0) => gpioa(31 downto 0),
+	gpio(31 downto 16) => gpioa(31 downto 16), gpio(15 downto 0) => open,
 	spi_miso => "",
 	simple_out(7 downto 0) => led, simple_out(31 downto 8) => open,
 	simple_in(15 downto 0) => btns,
