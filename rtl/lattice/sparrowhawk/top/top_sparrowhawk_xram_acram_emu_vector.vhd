@@ -5,8 +5,8 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
---library LatticeECP3;
---use LatticeECP3.components.all;
+library lattice;
+use lattice.components.all;
 
 use work.f32c_pack.all;
 
@@ -99,6 +99,10 @@ entity sparrowhawk is
   --LVDS_Green  : out   std_logic;
   --LVDS_Blue   : out   std_logic;
   --LVDS_ck     : out   std_logic;
+  hdmi_pcs_hdoutp_ch0, hdmi_pcs_hdoutn_ch0: out std_logic;
+  hdmi_pcs_hdoutp_ch1, hdmi_pcs_hdoutn_ch1: out std_logic;
+  hdmi_pcs_hdoutp_ch2, hdmi_pcs_hdoutn_ch2: out std_logic;
+  hdmi_pcs_hdoutp_ch3, hdmi_pcs_hdoutn_ch3: out std_logic;
 
   led: out std_logic_vector(7 downto 0);
   btn, dip: in std_logic_vector(3 downto 0);
@@ -121,7 +125,20 @@ end;
 
 architecture Behavioral of sparrowhawk is
   component ILVDS
-    port (A, AN: in std_logic; Z: out  std_logic);
+    port (A, AN: in std_logic; Z: out std_logic);
+  end component;
+
+  component hdmi_transmitter
+  port
+  (
+    rstn, resync, txclk: in std_logic;
+    tx_video_ch0, tx_video_ch1, tx_video_ch2: in std_logic_vector(7 downto 0);
+    tx_audio_ch0, tx_audio_ch1, tx_audio_ch2: in std_logic_vector(3 downto 0);
+    tx_ctl: in std_logic_vector(3 downto 0);
+    tx_hsync, tx_vsync, tx_vde, tx_ade, tx_format: in std_logic;
+    red_fill, green_fill, blue_fill, audio_mute: in std_logic;
+    hdmi_txd_ch0, hdmi_txd_ch1, hdmi_txd_ch2: out std_logic_vector(9 downto 0)
+  );
   end component;
 
   signal clk, rs232_break, rs232_break2: std_logic;
@@ -134,6 +151,25 @@ architecture Behavioral of sparrowhawk is
   signal ram_data_read      : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_ready          : std_logic;
   signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
+  signal vga_r, vga_g, vga_b: std_logic_vector(7 downto 0);
+  signal vga_hsync, vga_vsync: std_logic;
+  signal hdmi_tx_clk: std_logic; -- full rate tx clock 165 MHz
+  signal hdmi_tx_rstn, hdmi_tx_resync: std_logic;
+  signal hdmi_tx_video_ch0, hdmi_tx_video_ch1, hdmi_tx_video_ch2: std_logic_vector(7 downto 0);
+  signal hdmi_tx_audio_ch0, hdmi_tx_audio_ch1, hdmi_tx_audio_ch2: std_logic_vector(3 downto 0);
+  signal hdmi_tx_hsync, hdmi_tx_vsync: std_logic;
+  signal hdmi_tx_ctl: std_logic_vector(3 downto 0);
+  signal hdmi_tx_vde, hdmi_tx_ade, hdmi_tx_format: std_logic;
+  signal hdmi_tx_red_fill, hdmi_tx_green_fill, hdmi_tx_blue_fill, hdmi_tx_audio_mute: std_logic := '0';
+  signal hdmi_pcs_fpga_txrefclk, hdmi_pcs_tx_serdes_rst_c, hdmi_pcs_tx_sync_qd_c, hdmi_pcs_rst_n, hdmi_pcs_serdes_rst_qd_c: std_logic;
+  signal hdmi_pcs_tx_full_clk_ch0, hdmi_pcs_tx_half_clk_ch0: std_logic;
+  signal hdmi_pcs_txdata_ch0: std_logic_vector(9 downto 0) := "1111100000";
+  signal hdmi_pcs_tx_full_clk_ch1, hdmi_pcs_tx_half_clk_ch1: std_logic;
+  signal hdmi_pcs_txdata_ch1: std_logic_vector(9 downto 0);
+  signal hdmi_pcs_tx_full_clk_ch2, hdmi_pcs_tx_half_clk_ch2: std_logic;
+  signal hdmi_pcs_txdata_ch2: std_logic_vector(9 downto 0);
+  signal hdmi_pcs_tx_full_clk_ch3, hdmi_pcs_tx_half_clk_ch3: std_logic;
+  signal hdmi_pcs_txdata_ch3: std_logic_vector(9 downto 0);
   signal R_blinky: std_logic_vector(26 downto 0);
 begin
   -- convert external differential clock input to internal single ended clock
@@ -141,15 +177,14 @@ begin
   ILVDS port map(A=>clk_100_p, AN=>clk_100_n, Z=>clk_100);
 
   video_mode_1_640x480_100MHz: if C_clk_freq=100 and C_video_mode=1 generate
-  clk_640x480_100M: entity work.clkgen_100_100
+  clk_640x480_100M: entity work.clk_100M_165M_27M5
   port map(
-    CLK         => clk_100,
-    CLKOP       => clk
---    CLKOP       =>  clk_dvi,
---    CLKOS       =>  clk_dvin,
---    CLKOS2      =>  clk_pixel,
---    CLKOS3      =>  clk
+    CLK    => clk_100,
+    CLKOP  => hdmi_tx_clk,
+    CLKOS  => clk_dvin,
+    CLKOK  => clk_pixel
    );
+   clk <= clk_100;
   end generate;
 
   video_mode_1_640x480_81MHz: if C_clk_freq=81 and C_video_mode=1 generate
@@ -271,6 +306,9 @@ begin
     acram_ready => ram_ready,
     acram_en => ram_en,
 
+    vga_hsync => vga_hsync, vga_vsync => vga_vsync,
+    vga_r => vga_r, vga_g => vga_g, vga_b => vga_b,
+
     dvid_red   => dvid_red,
     dvid_green => dvid_green,
     dvid_blue  => dvid_blue,
@@ -308,7 +346,91 @@ begin
   --  out_blue  => LVDS_Blue,
   --  out_clock => LVDS_ck
   --);
-  
+
+  no_transmitter: if false generate
+  -- currently this will not compile?
+  i_hdmi_transmitter: hdmi_transmitter
+  port map
+  (
+    rstn => hdmi_tx_rstn,
+    resync => hdmi_tx_resync,
+    txclk => hdmi_tx_clk,
+
+    -- input: VGA and audio data
+    tx_hsync => vga_hsync,
+    tx_vsync => vga_vsync,
+    tx_video_ch0 => vga_r,
+    tx_video_ch1 => vga_g,
+    tx_video_ch2 => vga_b,
+
+    tx_audio_ch0 => hdmi_tx_audio_ch0,
+    tx_audio_ch1 => hdmi_tx_audio_ch1,
+    tx_audio_ch2 => hdmi_tx_audio_ch2,
+
+    tx_ctl => hdmi_tx_ctl,
+    tx_vde => hdmi_tx_vde,
+    tx_ade => hdmi_tx_ade,
+    tx_format => hdmi_tx_format,
+
+    red_fill => hdmi_tx_red_fill,
+    green_fill => hdmi_tx_green_fill,
+    blue_fill => hdmi_tx_blue_fill,
+    audio_mute => hdmi_tx_audio_mute,
+
+    -- output to hdmi_pcs
+    hdmi_txd_ch0 => hdmi_pcs_txdata_ch3,
+    hdmi_txd_ch1 => hdmi_pcs_txdata_ch2,
+    hdmi_txd_ch2 => hdmi_pcs_txdata_ch1
+  );
+  end generate;
+
+  i_hdmi_pcs: entity hdmi_pcs
+  --generic map ( USER_CONFIG_FILE => "hdmi_pcs.txt" )
+  port map
+  (
+    txiclk_ch0 => hdmi_tx_clk,
+    txdata_ch0 => hdmi_pcs_txdata_ch0, -- HDMI clock
+    hdoutp_ch0 => hdmi_pcs_hdoutp_ch0,
+    hdoutn_ch0 => hdmi_pcs_hdoutn_ch0,
+    tx_full_clk_ch0 => hdmi_pcs_tx_full_clk_ch0,
+    tx_half_clk_ch0 => hdmi_pcs_tx_half_clk_ch0,
+    tx_pwrup_ch0_c => '1',
+    tx_div2_mode_ch0_c => '0',
+
+    txiclk_ch1 => hdmi_tx_clk,
+    txdata_ch1 => hdmi_pcs_txdata_ch1, -- HDMI red
+    hdoutp_ch1 => hdmi_pcs_hdoutp_ch1,
+    hdoutn_ch1 => hdmi_pcs_hdoutn_ch1,
+    tx_full_clk_ch1 => hdmi_pcs_tx_full_clk_ch1,
+    tx_half_clk_ch1 => hdmi_pcs_tx_half_clk_ch1,
+    tx_pwrup_ch1_c => '1',
+    tx_div2_mode_ch1_c => '0',
+
+    txiclk_ch2 => hdmi_tx_clk,
+    txdata_ch2 => hdmi_pcs_txdata_ch2, -- HDMI green
+    hdoutp_ch2 => hdmi_pcs_hdoutp_ch2,
+    hdoutn_ch2 => hdmi_pcs_hdoutn_ch2,
+    tx_full_clk_ch2 => hdmi_pcs_tx_full_clk_ch2,
+    tx_half_clk_ch2 => hdmi_pcs_tx_half_clk_ch2,
+    tx_pwrup_ch2_c => '1',
+    tx_div2_mode_ch2_c => '0',
+
+    txiclk_ch3 => hdmi_tx_clk,
+    txdata_ch3 => hdmi_pcs_txdata_ch3, -- HDMI blue
+    hdoutp_ch3 => hdmi_pcs_hdoutp_ch3,
+    hdoutn_ch3 => hdmi_pcs_hdoutn_ch3,
+    tx_full_clk_ch3 => hdmi_pcs_tx_full_clk_ch3,
+    tx_half_clk_ch3 => hdmi_pcs_tx_half_clk_ch3,
+    tx_pwrup_ch3_c => '1',
+    tx_div2_mode_ch3_c => '0',
+
+    fpga_txrefclk => hdmi_pcs_fpga_txrefclk,
+    tx_serdes_rst_c => hdmi_pcs_tx_serdes_rst_c,
+    tx_sync_qd_c => hdmi_pcs_tx_sync_qd_c,
+    rst_n => hdmi_pcs_rst_n,
+    serdes_rst_qd_c => hdmi_pcs_serdes_rst_qd_c
+  );
+
   -- clock alive blinky
   process(clk)
   begin
