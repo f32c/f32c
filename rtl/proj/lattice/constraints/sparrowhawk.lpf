@@ -7,10 +7,10 @@ FREQUENCY PORT "clk_100_p" 100 MHZ;
 LOCATE COMP "clk_100_n" SITE "U7";
 FREQUENCY PORT "clk_100_n" 100 MHZ;
 #IOBUF PORT "clk_100_n" IO_TYPE=SSTL15D PULLMODE=NONE DIFFRESISTOR=OFF;
-#LOCATE COMP "osc_vid_clk_0" SITE "U28";
-#IOBUF PORT "osc_vid_clk_0" IO_TYPE=LVTTL33 PULLMODE=DOWN;
-#LOCATE COMP "osc_vid_clk_1" SITE "Y28";
-#IOBUF PORT "osc_vid_clk_1" IO_TYPE=LVTTL33 PULLMODE=DOWN;
+LOCATE COMP "osc_vid_clk_0" SITE "U28";
+IOBUF PORT "osc_vid_clk_0" IO_TYPE=LVTTL33 PULLMODE=DOWN;
+LOCATE COMP "osc_vid_clk_1" SITE "Y28";
+IOBUF PORT "osc_vid_clk_1" IO_TYPE=LVTTL33 PULLMODE=DOWN;
 ## LED indicators
 LOCATE COMP "led[0]" SITE "G23"; # OUT (green)
 LOCATE COMP "led[1]" SITE "H23"; # OUT (yellow)
@@ -84,11 +84,20 @@ IOBUF  PORT "btn[1]" PULLMODE=NONE IO_TYPE=LVCMOS33;
 IOBUF  PORT "btn[2]" PULLMODE=NONE IO_TYPE=LVCMOS33;
 IOBUF  PORT "btn[3]" PULLMODE=NONE IO_TYPE=LVCMOS33;
 ##########################################################################
-# PCS
+# I2C (can configure onboard video clock generator)
+##########################################################################
+LOCATE COMP "sys_scl" SITE "AN31";
+LOCATE COMP "sys_sda" SITE "AN32";
+#
+DEFINE PORT GROUP "i2c_oc_v2" "sys_scl" "sys_sda";
+IOBUF GROUP "i2c_oc_v2" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
+#
+##########################################################################
+# PCS (on-chip VGA to HDMI converter)
 ##########################################################################
 #LOCATE COMP "u_pcs_dvi_10b_a/PCSD_INST" SITE "PCSA";
 #LOCATE COMP "u_pcs_dvi_10b_b/PCSD_INST" SITE "PCSB";
-#LOCATE COMP "u_pcs_dvi_10b_c/PCSD_INST" SITE "PCSC";
+LOCATE COMP "i_hdmi_pcs/hdmi_pcs" SITE "PCSC";
 #LOCATE COMP "u_pcs_dvi_10b_d/PCSD_INST" SITE "PCSD";
 #
 ##########################################################################
