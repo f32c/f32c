@@ -16,7 +16,7 @@ entity kondor_ax is
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
 
-    -- Main clock: 41, 81, 100 MHz
+    -- Main clock: 100,125,150 MHz (up to 125 MHz works)
     C_clk_freq: integer := 100;
 
     -- SoC configuration options
@@ -100,7 +100,7 @@ entity kondor_ax is
   --LVDS_Blue   : out   std_logic;
   --LVDS_ck     : out   std_logic;
 
-  led: out std_logic_vector(7 downto 0)
+  led: out std_logic_vector(7 downto 0);
   --btn, dip: in std_logic_vector(3 downto 0);
 
   -- SD card
@@ -109,10 +109,10 @@ entity kondor_ax is
   --sd_cdn, sd_wp: in std_logic;
 
   -- SPI1 to Flash ROM
-  --flash_miso   : in      std_logic;
-  --flash_mosi   : out     std_logic;
-  --flash_clk    : out     std_logic;
-  --flash_csn    : out     std_logic
+  flash_miso   : in      std_logic;
+  flash_mosi   : out     std_logic;
+  flash_clk    : out     std_logic;
+  flash_csn    : out     std_logic
   );
 end;
 
@@ -140,19 +140,33 @@ architecture Behavioral of kondor_ax is
   signal sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: std_logic;
   signal sd_clk, sd_pwrn: std_logic;
   signal sd_cdn, sd_wp: std_logic;
-
-  -- SPI1 to Flash ROM
-  signal flash_miso: std_logic;
-  signal flash_mosi: std_logic;
-  signal flash_clk: std_logic;
-  signal flash_csn: std_logic;
 begin
   -- convert external differential clock input to internal single ended clock
   clock_diff2se:
   ILVDS port map(A=>clk_100_p, AN=>clk_100_n, Z=>clk_100);
 
-  video_mode_none: if C_clk_freq=100 and C_video_mode=-1 generate
+  minimal_100MHz: if C_clk_freq=100 and C_video_mode=-1 generate
     clk <= clk_100;
+  end generate;
+
+  minimal_125MHz: if C_clk_freq=125 and C_video_mode=-1 generate
+  clk_125M: entity work.clk_100_125_25
+    port map(
+      CLKI        =>  clk_100,
+      CLKOP       =>  clk       -- 125 MHz
+--    CLKOS       =>  clk_dvin, -- 125 MHz inverted
+--    CLKOS2      =>  clk_pixel --  25 MHz
+     );
+  end generate;
+
+  minimal_150MHz: if C_clk_freq=150 and C_video_mode=-1 generate
+  clk_150M: entity work.clk_100_150_30
+    port map(
+      CLKI        =>  clk_100,
+      CLKOP       =>  clk       -- 150 MHz
+--    CLKOS       =>  clk_dvin, -- 150 MHz inverted
+--    CLKOS2      =>  clk_pixel --  30 MHz
+     );
   end generate;
 
   -- full featured XRAM glue
