@@ -107,8 +107,7 @@ entity sparrowhawk is
   led: out std_logic_vector(7 downto 0);
   btn, dip: in std_logic_vector(3 downto 0);
 
-  --GPIO_wordport : inout std_logic_vector(15 downto 0);
-  --GPIO_pullup   : inout std_logic_vector(15 downto 0);
+  hdr_io: inout std_logic_vector(21 downto 0);
 
   -- SD card
   sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: inout std_logic;
@@ -294,7 +293,8 @@ begin
     spi_mosi(0) => flash_mosi, spi_mosi(1) => sd_cmd_di,
     spi_miso(0) => flash_miso, spi_miso(1) => sd_dat0_do,
 
-    gpio(127 downto 0) => open,
+    gpio(127 downto 22) => open,
+    gpio(21 downto 0) => hdr_io,
 
     simple_out(7 downto 0) => led(7 downto 0),
     simple_out(31 downto 8) => open,
