@@ -256,6 +256,7 @@ port (
   pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
   vga_hsync, vga_vsync: out std_logic;
   vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0) := (others => '0');
+  dvi_r, dvi_g, dvi_b: out std_logic_vector(9 downto 0) := (others => '0'); -- dvi encoded
   tmds_out_rgb: out std_logic_vector(2 downto 0);
   tmds_out_clk: out std_logic := '0'; -- used for DDR output
   dvid_red, dvid_green, dvid_blue, dvid_clock: out std_logic_vector(1 downto 0);
@@ -1531,6 +1532,11 @@ begin
       in_hsync => S_vga_hsync,
       in_vsync => S_vga_vsync,
 
+      -- parallel output DVI encoded
+      outp_red   => dvi_r,
+      outp_green => dvi_g,
+      outp_blue  => dvi_b,
+
       -- single-ended output ready for differential buffers
       out_red   => dvid_red,
       out_green => dvid_green,
@@ -1816,6 +1822,11 @@ begin
           in_blank => vga_textmode_blank,
           in_hsync => vga_textmode_hsync,
           in_vsync => vga_textmode_vsync,
+
+          -- parallel output DVI encoded
+          outp_red   => dvi_r,
+          outp_green => dvi_g,
+          outp_blue  => dvi_b,
 
           -- single-ended output for differential buffers
           out_red   => dvid_red,
