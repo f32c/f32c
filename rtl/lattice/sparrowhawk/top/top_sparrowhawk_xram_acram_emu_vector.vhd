@@ -151,8 +151,10 @@ architecture Behavioral of sparrowhawk is
   signal ram_data_read      : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_ready          : std_logic;
   signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
-  signal vga_r, vga_g, vga_b: std_logic_vector(7 downto 0);
   signal vga_hsync, vga_vsync: std_logic;
+  signal vga_r, vga_g, vga_b: std_logic_vector(7 downto 0);
+  signal dvi_clk: std_logic_vector(9 downto 0) := "1111100000";
+  signal dvi_r, dvi_g, dvi_b: std_logic_vector(9 downto 0);
   signal hdmi_tx_clk: std_logic; -- full rate tx clock 165 MHz
   signal hdmi_tx_rstn, hdmi_tx_resync: std_logic;
   signal hdmi_tx_video_ch0, hdmi_tx_video_ch1, hdmi_tx_video_ch2: std_logic_vector(7 downto 0);
@@ -163,13 +165,13 @@ architecture Behavioral of sparrowhawk is
   signal hdmi_tx_red_fill, hdmi_tx_green_fill, hdmi_tx_blue_fill, hdmi_tx_audio_mute: std_logic := '0';
   signal hdmi_pcs_fpga_txrefclk, hdmi_pcs_tx_serdes_rst_c, hdmi_pcs_tx_sync_qd_c, hdmi_pcs_rst_n, hdmi_pcs_serdes_rst_qd_c: std_logic;
   signal hdmi_pcs_tx_full_clk_ch0, hdmi_pcs_tx_half_clk_ch0: std_logic;
-  signal hdmi_pcs_txdata_ch0: std_logic_vector(9 downto 0) := "1111100000";
+  --signal hdmi_pcs_txdata_ch0: std_logic_vector(9 downto 0) := "1111100000";
   signal hdmi_pcs_tx_full_clk_ch1, hdmi_pcs_tx_half_clk_ch1: std_logic;
-  signal hdmi_pcs_txdata_ch1: std_logic_vector(9 downto 0);
+  --signal hdmi_pcs_txdata_ch1: std_logic_vector(9 downto 0);
   signal hdmi_pcs_tx_full_clk_ch2, hdmi_pcs_tx_half_clk_ch2: std_logic;
-  signal hdmi_pcs_txdata_ch2: std_logic_vector(9 downto 0);
+  --signal hdmi_pcs_txdata_ch2: std_logic_vector(9 downto 0);
   signal hdmi_pcs_tx_full_clk_ch3, hdmi_pcs_tx_half_clk_ch3: std_logic;
-  signal hdmi_pcs_txdata_ch3: std_logic_vector(9 downto 0);
+  --signal hdmi_pcs_txdata_ch3: std_logic_vector(9 downto 0);
   signal R_blinky: std_logic_vector(26 downto 0);
 begin
   -- convert external differential clock input to internal single ended clock
@@ -279,7 +281,7 @@ begin
   port map (
     clk => clk,
     clk_pixel => clk_pixel,
-    clk_pixel_shift => clk_dvi,
+    clk_pixel_shift => '0',
     sio_rxd(0) => rx,
     --sio_rxd(1) => open,
     sio_txd(0) => tx,
@@ -308,7 +310,7 @@ begin
 
     vga_hsync => vga_hsync, vga_vsync => vga_vsync,
     vga_r => vga_r, vga_g => vga_g, vga_b => vga_b,
-
+    dvi_r => dvi_r, dvi_g => dvi_g, dvi_b => dvi_b,
     dvid_red   => dvid_red,
     dvid_green => dvid_green,
     dvid_blue  => dvid_blue,
@@ -354,7 +356,7 @@ begin
   (
     rstn => hdmi_tx_rstn,
     resync => hdmi_tx_resync,
-    txclk => hdmi_tx_clk,
+    txclk => clk_pixel,
 
     -- input: VGA and audio data
     tx_hsync => vga_hsync,
@@ -378,9 +380,9 @@ begin
     audio_mute => hdmi_tx_audio_mute,
 
     -- output to hdmi_pcs
-    hdmi_txd_ch0 => hdmi_pcs_txdata_ch3,
-    hdmi_txd_ch1 => hdmi_pcs_txdata_ch2,
-    hdmi_txd_ch2 => hdmi_pcs_txdata_ch1
+    hdmi_txd_ch0 => dvi_b,
+    hdmi_txd_ch1 => dvi_g,
+    hdmi_txd_ch2 => dvi_r
   );
   end generate;
 
@@ -388,8 +390,8 @@ begin
   --generic map ( USER_CONFIG_FILE => "hdmi_pcs.txt" )
   port map
   (
-    txiclk_ch0 => hdmi_tx_clk,
-    txdata_ch0 => hdmi_pcs_txdata_ch0, -- HDMI clock
+    txiclk_ch0 => clk_pixel,
+    txdata_ch0 => dvi_clk, -- HDMI clock
     hdoutp_ch0 => hdmi_pcs_hdoutp_ch0,
     hdoutn_ch0 => hdmi_pcs_hdoutn_ch0,
     tx_full_clk_ch0 => hdmi_pcs_tx_full_clk_ch0,
@@ -397,8 +399,8 @@ begin
     tx_pwrup_ch0_c => '1',
     tx_div2_mode_ch0_c => '0',
 
-    txiclk_ch1 => hdmi_tx_clk,
-    txdata_ch1 => hdmi_pcs_txdata_ch1, -- HDMI red
+    txiclk_ch1 => clk_pixel,
+    txdata_ch1 => dvi_r, -- HDMI red
     hdoutp_ch1 => hdmi_pcs_hdoutp_ch1,
     hdoutn_ch1 => hdmi_pcs_hdoutn_ch1,
     tx_full_clk_ch1 => hdmi_pcs_tx_full_clk_ch1,
@@ -406,8 +408,8 @@ begin
     tx_pwrup_ch1_c => '1',
     tx_div2_mode_ch1_c => '0',
 
-    txiclk_ch2 => hdmi_tx_clk,
-    txdata_ch2 => hdmi_pcs_txdata_ch2, -- HDMI green
+    txiclk_ch2 => clk_pixel,
+    txdata_ch2 => dvi_g, -- HDMI green
     hdoutp_ch2 => hdmi_pcs_hdoutp_ch2,
     hdoutn_ch2 => hdmi_pcs_hdoutn_ch2,
     tx_full_clk_ch2 => hdmi_pcs_tx_full_clk_ch2,
@@ -415,8 +417,8 @@ begin
     tx_pwrup_ch2_c => '1',
     tx_div2_mode_ch2_c => '0',
 
-    txiclk_ch3 => hdmi_tx_clk,
-    txdata_ch3 => hdmi_pcs_txdata_ch3, -- HDMI blue
+    txiclk_ch3 => clk_pixel,
+    txdata_ch3 => dvi_b, -- HDMI blue
     hdoutp_ch3 => hdmi_pcs_hdoutp_ch3,
     hdoutn_ch3 => hdmi_pcs_hdoutn_ch3,
     tx_full_clk_ch3 => hdmi_pcs_tx_full_clk_ch3,
@@ -424,7 +426,7 @@ begin
     tx_pwrup_ch3_c => '1',
     tx_div2_mode_ch3_c => '0',
 
-    fpga_txrefclk => hdmi_pcs_fpga_txrefclk,
+    fpga_txrefclk => hdmi_tx_clk,
     tx_serdes_rst_c => hdmi_pcs_tx_serdes_rst_c,
     tx_sync_qd_c => hdmi_pcs_tx_sync_qd_c,
     rst_n => hdmi_pcs_rst_n,

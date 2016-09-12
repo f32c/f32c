@@ -45,7 +45,9 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity vga2dvid is
 	Generic (
-		C_ddr: boolean := false; -- by default use SDR
+	        C_parallel: boolean := true; -- default output parallel data
+	        C_serial: boolean := true; -- default output serial data
+		C_ddr: boolean := false; -- default use SDR for serial data
 		C_depth	: integer := 8
 	);
 	Port (
@@ -57,6 +59,9 @@ entity vga2dvid is
 		in_blank     : in STD_LOGIC;
 		in_hsync     : in STD_LOGIC;
 		in_vsync     : in STD_LOGIC;
+		-- parallel outputs
+		outp_red, outp_green, outp_blue: out std_logic_vector(9 downto 0);
+		-- serial outputs
 		out_red      : out STD_LOGIC_VECTOR(1 downto 0);
 		out_green    : out STD_LOGIC_VECTOR(1 downto 0);
 		out_blue     : out STD_LOGIC_VECTOR(1 downto 0);
@@ -65,7 +70,6 @@ entity vga2dvid is
 end vga2dvid;
 
 architecture Behavioral of vga2dvid is
-
 	signal encoded_red, encoded_green, encoded_blue : std_logic_vector(9 downto 0);
 	signal latched_red, latched_green, latched_blue : std_logic_vector(9 downto 0) := (others => '0');
 	signal shift_red, shift_green, shift_blue	: std_logic_vector(9 downto 0) := (others => '0');
@@ -104,8 +108,14 @@ begin
 			latched_blue  <= encoded_blue;
 		end if;
 	end process;
+	
+	G_parallel: if C_parallel generate
+          outp_red   <= latched_red;
+          outp_green <= latched_green;
+          outp_blue  <= latched_blue;
+	end generate;
 
-	G_SDR: if not C_ddr generate
+	G_SDR: if C_serial and not C_ddr generate
 	process(clk_shift)
 	begin
 		if rising_edge(clk_shift) then
@@ -124,7 +134,7 @@ begin
 	end process;
 	end generate;
 
-	G_DDR: if C_ddr generate
+	G_DDR: if C_serial and C_ddr generate
 	process(clk_shift)
 	begin
 		if rising_edge(clk_shift) then 
@@ -146,9 +156,11 @@ begin
 	-- SDR: use only bit 0 from each out_* channel 
 	-- DDR: 2 bits per 1 clock period,
 	-- (one bit output on rising edge, other on falling edge of clk_shift)
-	out_red   <= shift_red(1 downto 0);
-	out_green <= shift_green(1 downto 0);
-	out_blue  <= shift_blue(1 downto 0);
-	out_clock <= shift_clock(1 downto 0);
+	G_serial: if C_serial generate
+          out_red   <= shift_red(1 downto 0);
+          out_green <= shift_green(1 downto 0);
+          out_blue  <= shift_blue(1 downto 0);
+          out_clock <= shift_clock(1 downto 0);
+        end generate;
 
 end Behavioral;
