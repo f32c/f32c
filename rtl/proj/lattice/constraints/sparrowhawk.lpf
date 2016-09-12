@@ -93,40 +93,43 @@ DEFINE PORT GROUP "i2c_oc_v2" "sys_scl" "sys_sda";
 IOBUF GROUP "i2c_oc_v2" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
 #
 ##########################################################################
-# PCS (on-chip VGA to HDMI converter)
+# PCS (on-chip DVI-D serial differential output)
+# COMP "magic_name" explained
+# magic_name = <label_of_pcs_module_in_vhdl_source>/PCSD_INST
+# see user's manual table 7
 ##########################################################################
-#LOCATE COMP "u_pcs_dvi_10b_a/PCSD_INST" SITE "PCSA";
-#LOCATE COMP "u_pcs_dvi_10b_b/PCSD_INST" SITE "PCSB";
-LOCATE COMP "i_hdmi_pcs/hdmi_pcs" SITE "PCSC";
-#LOCATE COMP "u_pcs_dvi_10b_d/PCSD_INST" SITE "PCSD";
+#LOCATE COMP "i_dvi_output0/PCSD_INST" SITE "PCSA"; # DVI input 0
+LOCATE COMP "i_hdmi_pcs/PCSD_INST" SITE "PCSB"; # DVI output 0
+#LOCATE COMP "i_dvi_output1/PCSD_INST" SITE "PCSC"; # DVI input 1
+LOCATE COMP "i_hdmi_pcs/PCSD_INST" SITE "PCSD";# DVI output 1
 #
 ##########################################################################
-# HDMI
+# HDMI auxilliary signals
 ##########################################################################
-#LOCATE COMP "hdmi_in_scl_0" SITE "V27";
-#LOCATE COMP "hdmi_in_sda_0" SITE "V28";
-#LOCATE COMP "hdmi_in_hpd_0" SITE "W28";
-#LOCATE COMP "hdmi_in_scl_1" SITE "W26";
-#LOCATE COMP "hdmi_in_sda_1" SITE "W27";
-#LOCATE COMP "hdmi_in_hpd_1" SITE "V26";
-#LOCATE COMP "hdmi_in_scl_2" SITE "AD31";
-#LOCATE COMP "hdmi_in_sda_2" SITE "AE31";
-#LOCATE COMP "hdmi_in_hpd_2" SITE "AE32";
-#LOCATE COMP "hdmi_in_scl_3" SITE "AB30";
-#LOCATE COMP "hdmi_in_sda_3" SITE "AC30";
-#LOCATE COMP "hdmi_in_hpd_3" SITE "AD30";
-#LOCATE COMP "hdmi_out_scl_0" SITE "AB27";
-#LOCATE COMP "hdmi_out_sda_0" SITE "AA27";
-#LOCATE COMP "hdmi_out_hpd_0" SITE "AA28";
-#LOCATE COMP "hdmi_out_oe_n_0" SITE "Y25";
-#LOCATE COMP "hdmi_out_ddc_en_0" SITE "Y26";
-#LOCATE COMP "hdmi_out_scl_1" SITE "AA25";
-#LOCATE COMP "hdmi_out_sda_1" SITE "AC25";
-#LOCATE COMP "hdmi_out_hpd_1" SITE "AB25";
-#LOCATE COMP "hdmi_out_oe_n_1" SITE "AB26";
-#LOCATE COMP "hdmi_out_ddc_en_1" SITE "AA26";
-#LOCATE COMP "hdmi_out_oe_n_2" SITE "AB31";
-#LOCATE COMP "hdmi_out_ddc_en_2" SITE "AB32";
+LOCATE COMP "hdmi_in_scl_0" SITE "V27";
+LOCATE COMP "hdmi_in_sda_0" SITE "V28";
+LOCATE COMP "hdmi_in_hpd_0" SITE "W28";
+LOCATE COMP "hdmi_in_scl_1" SITE "W26";
+LOCATE COMP "hdmi_in_sda_1" SITE "W27";
+LOCATE COMP "hdmi_in_hpd_1" SITE "V26";
+LOCATE COMP "hdmi_in_scl_2" SITE "AD31";
+LOCATE COMP "hdmi_in_sda_2" SITE "AE31";
+LOCATE COMP "hdmi_in_hpd_2" SITE "AE32";
+LOCATE COMP "hdmi_in_scl_3" SITE "AB30";
+LOCATE COMP "hdmi_in_sda_3" SITE "AC30";
+LOCATE COMP "hdmi_in_hpd_3" SITE "AD30";
+LOCATE COMP "hdmi_out_scl_0" SITE "AB27";
+LOCATE COMP "hdmi_out_sda_0" SITE "AA27";
+LOCATE COMP "hdmi_out_hpd_0" SITE "AA28";
+LOCATE COMP "hdmi_out_oe_n_0" SITE "Y25";
+LOCATE COMP "hdmi_out_ddc_en_0" SITE "Y26";
+LOCATE COMP "hdmi_out_scl_1" SITE "AA25";
+LOCATE COMP "hdmi_out_sda_1" SITE "AC25";
+LOCATE COMP "hdmi_out_hpd_1" SITE "AB25";
+LOCATE COMP "hdmi_out_oe_n_1" SITE "AB26";
+LOCATE COMP "hdmi_out_ddc_en_1" SITE "AA26";
+LOCATE COMP "hdmi_out_oe_n_2" SITE "AB31";
+LOCATE COMP "hdmi_out_ddc_en_2" SITE "AB32";
 #
 #DEFINE PORT GROUP "hdmi_in" "hdmi_in_scl_0" "hdmi_in_scl_1";
 #IOBUF GROUP "hdmi_in" IO_TYPE=LVTTL33 PULLMODE=UP;
@@ -143,14 +146,14 @@ LOCATE COMP "i_hdmi_pcs/hdmi_pcs" SITE "PCSC";
 #IOBUF GROUP "hdmi_oc4" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
 #DEFINE PORT GROUP "hdmi_in" "hdmi_in_scl_0" "hdmi_in_scl_1";
 #IOBUF GROUP "hdmi_in" IO_TYPE=LVTTL33 PULLMODE=UP;
-#DEFINE PORT GROUP "hdmi_out" "hdmi_out_oe_n_0" "hdmi_out_ddc_en_0" "hdmi_out_oe_n_1" "hdmi_out_ddc_en_1";
-#IOBUF GROUP "hdmi_out" IO_TYPE=LVTTL33 PULLMODE=UP;
+DEFINE PORT GROUP "hdmi_out" "hdmi_out_oe_n_0" "hdmi_out_ddc_en_0" "hdmi_out_oe_n_1" "hdmi_out_ddc_en_1";
+IOBUF GROUP "hdmi_out" IO_TYPE=LVTTL33 PULLMODE=UP;
 #DEFINE PORT GROUP "hdmi_oc" "hdmi_in_hpd_0" "hdmi_in_hpd_1" "hdmi_in_sda_0" "hdmi_in_sda_1";
 #IOBUF GROUP "hdmi_oc" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
-#DEFINE PORT GROUP "hdmi_oc2" "hdmi_out_scl_0" "hdmi_out_sda_0" "hdmi_out_scl_1" "hdmi_out_sda_1";
-#IOBUF GROUP "hdmi_oc2" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
-#DEFINE PORT GROUP "hdmi_oc3" "hdmi_out_hpd_0" "hdmi_out_hpd_1";
-#IOBUF GROUP "hdmi_oc3" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
+DEFINE PORT GROUP "hdmi_oc2" "hdmi_out_scl_0" "hdmi_out_sda_0" "hdmi_out_scl_1" "hdmi_out_sda_1";
+IOBUF GROUP "hdmi_oc2" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
+DEFINE PORT GROUP "hdmi_oc3" "hdmi_out_hpd_0" "hdmi_out_hpd_1";
+IOBUF GROUP "hdmi_oc3" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
 #
 ############################################
 ## 15x2 pin 2.54 mm GPIO expansion header

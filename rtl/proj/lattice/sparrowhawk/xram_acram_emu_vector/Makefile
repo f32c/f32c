@@ -17,6 +17,7 @@ JUNK = ${IMPL_DIR} .recovery ._Real_._Math_.vhd *.sty reportview.xml
 JUNK += dummy_sym.sort project_tcl.html promote.xml
 JUNK += generate_core.tcl generate_ngd.tcl msg_file.log
 JUNK += project_tcr.dir
+JUNK += hdmi_pcs.jhd hdmi_pcs.naf hdmi_pcs.pp hdmi_pcs.readme hdmi_pcs.sort hdmi_pcs.sym hdmi_pcs.tft hdmi_pcstx_reset_sm.naf hdmi_pcs_generate.log
 
 all: $(PROJECT)/$(PROJECT)_$(PROJECT).bit $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 
