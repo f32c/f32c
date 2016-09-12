@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<DiamondModule name="hdmi_pcs" module="PCS" VendorName="Lattice Semiconductor Corporation" generator="IPexpress" date="2016 09 11 21:00:40.942" version="8.2" type="Module" synthesis="synplify" source_format="VHDL">
+<DiamondModule name="hdmi_pcs" module="hdmi_pcs" VendorName="Lattice Semiconductor Corporation" generator="IPexpress" date="2016 09 13 00:35:39.464" version="8.2" type="Module" synthesis="synplify" source_format="VHDL">
   <Package>
-		<File name="hdmi_pcs.lpc" type="lpc" modified="2016 09 11 21:00:36.000"/>
-		<File name="hdmi_pcs.pp" type="pp" modified="2016 09 11 21:00:36.000"/>
-		<File name="hdmi_pcs.sym" type="sym" modified="2016 09 11 21:00:37.000"/>
-		<File name="hdmi_pcs.tft" type="tft" modified="2016 09 11 21:00:36.000"/>
-		<File name="hdmi_pcs.txt" type="pcs_module" modified="2016 09 11 21:00:36.000"/>
-		<File name="hdmi_pcs.vhd" type="top_level_vhdl" modified="2016 09 11 21:00:36.000"/>
+		<File name="hdmi_pcs.lpc" type="lpc" modified="2016 09 13 00:35:36.000"/>
+		<File name="hdmi_pcs.pp" type="pp" modified="2016 09 13 00:35:36.000"/>
+		<File name="hdmi_pcs.sym" type="sym" modified="2016 09 13 00:35:37.000"/>
+		<File name="hdmi_pcs.tft" type="tft" modified="2016 09 13 00:35:36.000"/>
+		<File name="hdmi_pcs.txt" type="pcs_module" modified="2016 09 13 00:35:36.000"/>
+		<File name="hdmi_pcs.vhd" type="top_level_vhdl" modified="2016 09 13 00:35:36.000"/>
   </Package>
 </DiamondModule>

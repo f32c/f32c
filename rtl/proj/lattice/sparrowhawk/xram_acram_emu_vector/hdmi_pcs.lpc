@@ -16,8 +16,8 @@ CoreRevision=8.2
 ModuleName=hdmi_pcs
 SourceFormat=VHDL
 ParameterFileVersion=1.0
-Date=09/11/2016
-Time=21:00:36
+Date=09/13/2016
+Time=00:35:36
 
 [Parameters]
 Verilog=0
@@ -242,8 +242,8 @@ _rx_los_port0=Internal
 _rx_los_port1=Internal
 _rx_los_port2=Internal
 _rx_los_port3=Internal
-_sci_ports=DISABLED
-_sci_int_port=DISABLED
+_sci_ports=ENABLED
+_sci_int_port=ENABLED
 _refck2core=ENABLED
 Regen=auto
 PAR1=0
