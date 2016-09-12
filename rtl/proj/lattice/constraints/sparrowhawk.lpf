@@ -152,6 +152,61 @@ LOCATE COMP "i_hdmi_pcs/hdmi_pcs" SITE "PCSC";
 #DEFINE PORT GROUP "hdmi_oc3" "hdmi_out_hpd_0" "hdmi_out_hpd_1";
 #IOBUF GROUP "hdmi_oc3" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
 #
+############################################
+## 15x2 pin 2.54 mm GPIO expansion header
+############################################
+#    GND   1 2   GND 
+#     5V   3 4   3V3
+#  GPIO0   5 6   GPIO1
+#  GPIO2   7 8   GPIO3
+# ......  .. ..  .....
+# GPIO20  25 26  GPIO21
+#    3V3  27 28  5V
+#    GND  29 30  GND
+LOCATE COMP "hdr_io[0]" SITE "B28";
+LOCATE COMP "hdr_io[1]" SITE "A28";
+LOCATE COMP "hdr_io[2]" SITE "A27";
+LOCATE COMP "hdr_io[3]" SITE "C27";
+LOCATE COMP "hdr_io[4]" SITE "B27";
+LOCATE COMP "hdr_io[5]" SITE "D27";
+LOCATE COMP "hdr_io[6]" SITE "A26";
+LOCATE COMP "hdr_io[7]" SITE "D26";
+LOCATE COMP "hdr_io[8]" SITE "C26";
+LOCATE COMP "hdr_io[9]" SITE "E27";
+LOCATE COMP "hdr_io[10]" SITE "A25";
+LOCATE COMP "hdr_io[11]" SITE "C25";
+LOCATE COMP "hdr_io[12]" SITE "B25";
+LOCATE COMP "hdr_io[13]" SITE "D25";
+LOCATE COMP "hdr_io[14]" SITE "A24";
+LOCATE COMP "hdr_io[15]" SITE "D24";
+LOCATE COMP "hdr_io[16]" SITE "B24";
+LOCATE COMP "hdr_io[17]" SITE "E24";
+LOCATE COMP "hdr_io[18]" SITE "A23";
+LOCATE COMP "hdr_io[19]" SITE "C23";
+LOCATE COMP "hdr_io[20]" SITE "B23";
+LOCATE COMP "hdr_io[21]" SITE "D23";
+IOBUF  PORT "hdr_io[0]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[1]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[2]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[3]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[4]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[5]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[6]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[7]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[8]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[9]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[10]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[11]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[12]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[13]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[14]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[15]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[16]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[17]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[18]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[19]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[20]" PULLMODE=UP IO_TYPE=LVCMOS33;
+IOBUF  PORT "hdr_io[21]" PULLMODE=UP IO_TYPE=LVCMOS33;
 ##########################################################################
 # DDR3
 ##########################################################################
