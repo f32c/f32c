@@ -128,7 +128,7 @@ entity toplevel is
 
     C_hdmi_out: boolean := true;
 
-    C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
+    C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
       C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
       -- normally this should be  actual bits per pixel
       C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
