@@ -3,9 +3,9 @@ BLOCK ASYNCPATHS;
 ## Sparrowhawk minimal constraints hand-made from user manual
 LOCATE COMP "clk_100_p" SITE "U6";
 FREQUENCY PORT "clk_100_p" 100 MHZ;
-#IOBUF PORT "clk_100_p" IO_TYPE=SSTL15D PULLMODE=NONE DIFFRESISTOR=OFF;
-LOCATE COMP "clk_100_n" SITE "U7";
-FREQUENCY PORT "clk_100_n" 100 MHZ;
+IOBUF PORT "clk_100_p" IO_TYPE=SSTL15D PULLMODE=NONE DIFFRESISTOR=OFF;
+#LOCATE COMP "clk_100_n" SITE "U7";
+#FREQUENCY PORT "clk_100_n" 100 MHZ;
 #IOBUF PORT "clk_100_n" IO_TYPE=SSTL15D PULLMODE=NONE DIFFRESISTOR=OFF;
 LOCATE COMP "osc_vid_clk_0" SITE "U28";
 IOBUF PORT "osc_vid_clk_0" IO_TYPE=LVTTL33 PULLMODE=DOWN;
@@ -93,7 +93,7 @@ DEFINE PORT GROUP "i2c_oc_v2" "sys_scl" "sys_sda";
 IOBUF GROUP "i2c_oc_v2" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
 #
 ##########################################################################
-# PCS (on-chip DVI-D serial differential output)
+# DVI-D PCS (lattice-specific on-chip DVI-D serial differential output)
 # COMP "magic_name" explained
 # magic_name = <label_of_pcs_module_in_vhdl_source>/PCSD_INST
 # see user's manual table 7
@@ -102,9 +102,45 @@ IOBUF GROUP "i2c_oc_v2" IO_TYPE=LVTTL33 PULLMODE=UP PCICLAMP=ON OPENDRAIN=ON;
 LOCATE COMP "i_hdmi_pcs/PCSD_INST" SITE "PCSB"; # DVI output 0
 #LOCATE COMP "i_dvi_output1/PCSD_INST" SITE "PCSC"; # DVI input 1
 LOCATE COMP "i_hdmi_pcs/PCSD_INST" SITE "PCSD";# DVI output 1
-#
 ##########################################################################
-# HDMI auxilliary signals
+# DVI-D output data pins for generic usage
+##########################################################################
+# DVI-D OUTPUT 0
+LOCATE COMP "dvi_out0_clk_p" SITE "AP14";
+IOBUF  PORT "dvi_out0_clk_p" PULLMODE=UP IO_TYPE=LVCMOS33;
+LOCATE COMP "dvi_out0_clk_n" SITE "AN14";
+IOBUF  PORT "dvi_out0_clk_n" PULLMODE=DOWN IO_TYPE=LVCMOS33;
+LOCATE COMP "dvi_out0_d_p[0]" SITE "AN15";
+IOBUF  PORT "dvi_out0_d_p[0]" PULLMODE=UP IO_TYPE=LVCMOS33;
+LOCATE COMP "dvi_out0_d_n[0]" SITE "AP15";
+IOBUF  PORT "dvi_out0_d_n[0]" PULLMODE=DOWN IO_TYPE=LVCMOS33;
+LOCATE COMP "dvi_out0_d_p[1]" SITE "AP16";
+IOBUF  PORT "dvi_out0_d_p[1]" PULLMODE=UP IO_TYPE=LVCMOS33;
+LOCATE COMP "dvi_out0_d_n[1]" SITE "AN16";
+IOBUF  PORT "dvi_out0_d_n[1]" PULLMODE=DOWN IO_TYPE=LVCMOS33;
+LOCATE COMP "dvi_out0_d_p[2]" SITE "AP17";
+IOBUF  PORT "dvi_out0_d_p[2]" PULLMODE=UP IO_TYPE=LVCMOS33;
+LOCATE COMP "dvi_out0_d_n[2]" SITE "AP17";
+IOBUF  PORT "dvi_out0_d_n[2]" PULLMODE=DOWN IO_TYPE=LVCMOS33;
+# DVI-D OUTPUT 1
+LOCATE COMP "dvi_out1_clk_p" SITE "AP10";
+IOBUF  PORT "dvi_out1_clk_p" PULLMODE=UP IO_TYPE=LVCMOS33;
+LOCATE COMP "dvi_out1_clk_n" SITE "AN10";
+IOBUF  PORT "dvi_out1_clk_n" PULLMODE=DOWN IO_TYPE=LVCMOS33;
+LOCATE COMP "dvi_out1_d_p[0]" SITE "AP11";
+IOBUF  PORT "dvi_out1_d_p[0]" PULLMODE=UP IO_TYPE=LVCMOS33;
+LOCATE COMP "dvi_out1_d_n[0]" SITE "AN11";
+IOBUF  PORT "dvi_out1_d_n[0]" PULLMODE=DOWN IO_TYPE=LVCMOS33;
+LOCATE COMP "dvi_out1_d_p[1]" SITE "AP12";
+IOBUF  PORT "dvi_out1_d_p[1]" PULLMODE=UP IO_TYPE=LVCMOS33;
+LOCATE COMP "dvi_out1_d_n[1]" SITE "AN12";
+IOBUF  PORT "dvi_out1_d_n[1]" PULLMODE=DOWN IO_TYPE=LVCMOS33;
+LOCATE COMP "dvi_out1_d_p[2]" SITE "AP13";
+IOBUF  PORT "dvi_out1_d_p[2]" PULLMODE=UP IO_TYPE=LVCMOS33;
+LOCATE COMP "dvi_out1_d_n[2]" SITE "AN13";
+IOBUF  PORT "dvi_out1_d_n[2]" PULLMODE=DOWN IO_TYPE=LVCMOS33;
+##########################################################################
+# DVI-D auxilliary signals
 ##########################################################################
 LOCATE COMP "hdmi_in_scl_0" SITE "V27";
 LOCATE COMP "hdmi_in_sda_0" SITE "V28";
