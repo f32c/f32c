@@ -3,13 +3,13 @@
     <Options/>
     <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Strategy1">
         <Options def_top="simple_ADC" top="sparrowhawk"/>
-        <Source name="../../../../lattice/sparrowhawk/top/top_sparrowhawk_xram_acram_emu_vector_genhdmi.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../lattice/sparrowhawk/top/top_sparrowhawk_xram_acram_emu_genhdmi.vhd" type="VHDL" type_short="VHDL">
             <Options top_module="sparrowhawk"/>
         </Source>
         <Source name="../../../../lattice/sparrowhawk/clocks/clk_100M_250M_25M_83M33.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../generic/glue_xram_vector.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../generic/glue_xram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../generic/bptrace.vhd" type="VHDL" type_short="VHDL">

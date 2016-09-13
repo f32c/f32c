@@ -29,28 +29,29 @@ entity sparrowhawk is
     C_gpio: integer := 32;
     C_gpio_pullup: boolean := false;
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
+    C_timer: boolean := true;
 
-    C_vector: boolean := true; -- vector processor unit
-    C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
-    C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
-    C_vector_vaddr_bits: integer := 11;
-    C_vector_vdata_bits: integer := 32;
-    C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
-    C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
-    C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
+--    C_vector: boolean := false; -- vector processor unit
+--    C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
+--    C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
+--    C_vector_vaddr_bits: integer := 11;
+--    C_vector_vdata_bits: integer := 32;
+--    C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
+--    C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
+--    C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
     -- video parameters common for vgahdmi and vgatext
     C_dvid_ddr: boolean := false; -- generate HDMI with DDR
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
 
     C_vgahdmi: boolean := true;
-    C_vgahdmi_cache_size: integer := 8;
+    C_vgahdmi_cache_size: integer := 0;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
 
     -- VGA textmode and graphics, full featured
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
-    C_vgatext_label: string := "FleaFPGA-Uno f32c: 50MHz MIPS-compatible soft-core, 512KB SRAM";
+    C_vgatext_label: string := "Sparrowhawk FX f32c: 83MHz MIPS-compatible soft-core, 128KB RAM emulated";
     C_vgatext_bits: integer := 4;   -- 4096 possible colors
     C_vgatext_bram_mem: integer := 8;   -- 8KB text+font  memory
     C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
@@ -58,10 +59,10 @@ entity sparrowhawk is
     C_vgatext_palette: boolean := true;  -- no color palette
     C_vgatext_text: boolean := true;    -- enable optional text generation
     C_vgatext_font_bram8: boolean := true;    -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
-    C_vgatext_char_height: integer := 16;   -- character cell height
-    C_vgatext_font_height: integer := 16;    -- font height
+    C_vgatext_char_height: integer := 8;   -- character cell height
+    C_vgatext_font_height: integer := 8;    -- font height
     C_vgatext_font_depth: integer := 8;     -- font char depth, 7=128 characters or 8=256 characters
-    C_vgatext_font_linedouble: boolean := true;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
+    C_vgatext_font_linedouble: boolean := false;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
     C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)
     C_vgatext_monochrome: boolean := false;    -- true for 2-color text for whole screen, else additional color attribute byte per character
     C_vgatext_finescroll: boolean := true;   -- true for pixel level character scrolling and line length modulo
@@ -85,47 +86,32 @@ entity sparrowhawk is
     C_vgatext_bitmap_fifo_addr_width: integer := 11
   );
   port (
-  clk_100_p, clk_100_n: in std_logic;  -- main clock input from 100MHz clock source
-  cy_clkout: in std_logic;  -- cypress CPU clock, firmware configurable 12/24/48MHz clock source
+  clk_100_p: in std_logic;  -- main clock input from 100MHz clock source
+  -- clk_100_n: in std_logic;  -- main clock input from 100MHz clock source
+  -- cy_clkout: in std_logic;  -- cypress CPU clock, firmware configurable 12/24/48MHz clock source
 
   -- UART0 (USB slave serial)
   tx: out   std_logic;
   rx: in    std_logic;
 
-  -- DVI-D GPIO signals
-  dvi_out0_clk_p, dvi_out0_clk_n: out std_logic;
-  dvi_out0_d_p, dvi_out0_d_n: out std_logic_vector(2 downto 0);
-  dvi_out1_clk_p, dvi_out1_clk_n: out std_logic;
-  dvi_out1_d_p, dvi_out1_d_n: out std_logic_vector(2 downto 0);
-
-  -- DVI-D auxiliary signals
-  hdmi_out_oe_n_0, hdmi_out_oe_n_1: out std_logic := '0';
-  hdmi_out_ddc_en_0, hdmi_out_ddc_en_1: out std_logic := '1';
-  hdmi_out_hpd_0, hdmi_out_hpd_1: out std_logic := '1';
-
   led: out std_logic_vector(7 downto 0);
   btn, dip: in std_logic_vector(3 downto 0);
 
+  -- 2x15-pin 2.54 mm GPIO header (connect HDMI here see label dvi_header_generic)
   hdr_io: inout std_logic_vector(21 downto 0);
 
-  -- SD card
+  -- SPI: SD card
   sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: inout std_logic;
   sd_clk, sd_pwrn: out std_logic;
   sd_cdn, sd_wp: in std_logic;
 
-  -- SPI1 to Flash ROM
-  flash_miso   : in      std_logic;
-  flash_mosi   : out     std_logic;
-  flash_clk    : out     std_logic;
-  flash_csn    : out     std_logic
+  -- SPI: Flash ROM
+  flash_mosi, flash_clk, flash_csn: out std_logic;
+  flash_miso: in std_logic
   );
 end;
 
 architecture Behavioral of sparrowhawk is
-  component ILVDS
-    port (A, AN: in std_logic; Z: out std_logic);
-  end component;
-
   signal clk, rs232_break, rs232_break2: std_logic;
   signal clk_100: std_logic;
   signal clk_dvi, clk_dvin, clk_pixel: std_logic;
@@ -139,16 +125,12 @@ architecture Behavioral of sparrowhawk is
   signal tmds_clk: std_logic;
   signal R_blinky: std_logic_vector(23 downto 0);
 begin
-  -- convert external differential clock input to internal single ended clock
-  --clock_diff2se:
-  --ILVDS port map(A=>clk_100_p, AN=>clk_100_n, Z=>clk_100);
-
   video_mode_1_640x480_100MHz: if C_clk_freq=100 and C_video_mode=1 generate
   clk_640x480_100M: entity work.clk_100M_250M_25M_83M33
   port map(
     CLK    => clk_100_p, -- 100 MHz input
     CLKOP  => clk_dvi,   -- 250 MHz
-    CLKOS  => clk_dvin,  -- 250 MHz inverted
+    CLKOS  => clk_dvin,  -- 250 MHz inverted (not used)
     CLKOK  => clk_pixel, --  25 MHz
     CLKOK2 => open       --  83.33 MHz
    );
@@ -160,7 +142,7 @@ begin
   port map(
     CLK    => clk_100_p, -- 100 MHz input
     CLKOP  => clk_dvi,   -- 250 MHz
-    CLKOS  => clk_dvin,  -- 250 MHz inverted
+    CLKOS  => clk_dvin,  -- 250 MHz inverted (not used)
     CLKOK  => clk_pixel, --  25 MHz
     CLKOK2 => clk        --  83.33 MHz
    );
@@ -171,7 +153,7 @@ begin
   port map(
     CLK    => clk_100_p, -- 100 MHz input
     CLKOP  => clk_dvi,   -- 250 MHz
-    CLKOS  => clk_dvin,  -- 250 MHz inverted
+    CLKOS  => clk_dvin,  -- 250 MHz inverted (not used)
     CLKOK  => clk_pixel, --  25 MHz
     CLKOK2 => open       --  83.33 MHz
    );
@@ -183,6 +165,7 @@ begin
   generic map (
     C_arch => C_arch,
     C_clk_freq => C_clk_freq,
+    C_branch_prediction => C_branch_prediction,
     C_bram_size => C_bram_size,
     C_acram => C_acram,
     C_icache_size => C_icache_size,
@@ -194,16 +177,16 @@ begin
     C_gpio => C_gpio,
     C_gpio_pullup => C_gpio_pullup,
     C_gpio_adc => C_gpio_adc,
-    C_branch_prediction => C_branch_prediction,
+    C_timer => C_timer,
 
-    C_vector => C_vector,
-    C_vector_axi => C_vector_axi,
-    C_vector_registers => C_vector_registers,
-    C_vector_vaddr_bits => C_vector_vaddr_bits,
-    C_vector_vdata_bits => C_vector_vdata_bits,
-    C_vector_float_addsub => C_vector_float_addsub,
-    C_vector_float_multiply => C_vector_float_multiply,
-    C_vector_float_divide => C_vector_float_divide,
+--    C_vector => C_vector,
+--    C_vector_axi => C_vector_axi,
+--    C_vector_registers => C_vector_registers,
+--    C_vector_vaddr_bits => C_vector_vaddr_bits,
+--    C_vector_vdata_bits => C_vector_vdata_bits,
+--    C_vector_float_addsub => C_vector_float_addsub,
+--    C_vector_float_multiply => C_vector_float_multiply,
+--    C_vector_float_divide => C_vector_float_divide,
 
     C_dvid_ddr => C_dvid_ddr,
     -- vga simple compositing bitmap only graphics
@@ -283,40 +266,6 @@ begin
     dvid_clock(0) => tmds_clk,    dvid_clock(1) => open
   );
 
-  -- differential output buffering for DVI-D clock and video
-  -- dvi_outX_d_p(2) -- D2+ red
-  -- dvi_outX_d_n(2) -- D2- red
-  -- dvi_outX_d_p(1) -- D1+ green
-  -- dvi_outX_d_n(1) -- D1- green
-  -- dvi_outX_d_p(0) -- D0+ blue
-  -- dvi_outX_d_n(0) -- D0- blue
-  -- PCS outputs disabled because they can't be used directly
-  G_enable_output0: if false generate
-  dvi_output0_generic: entity work.hdmi_out
-  port map
-  (
-    tmds_in_rgb    => tmds_rgb,
-    tmds_out_rgb_p => dvi_out0_d_p,
-    tmds_out_rgb_n => dvi_out0_d_n,
-    tmds_in_clk    => tmds_clk,
-    tmds_out_clk_p => dvi_out0_clk_p,
-    tmds_out_clk_n => dvi_out0_clk_n
-  );
-  end generate;
-
-  G_enable_output1: if false generate
-  dvi_output1_generic: entity work.hdmi_out
-  port map
-  (
-    tmds_in_rgb    => tmds_rgb,
-    tmds_out_rgb_p => dvi_out1_d_p,
-    tmds_out_rgb_n => dvi_out1_d_n,
-    tmds_in_clk    => tmds_clk,
-    tmds_out_clk_p => dvi_out1_clk_p,
-    tmds_out_clk_n => dvi_out1_clk_n
-  );
-  end generate;
-
   dvi_header_generic: entity work.hdmi_out
   -- D2- red    19  20   D2+ red
   -- D1- green  21  22   D1+ green
@@ -326,16 +275,16 @@ begin
   -- GND        29  30   GND
   port map
   (
-    tmds_in_rgb    => tmds_rgb,
+    tmds_in_rgb       => tmds_rgb,
     tmds_out_rgb_n(2) => hdr_io(14),
     tmds_out_rgb_p(2) => hdr_io(15),
     tmds_out_rgb_n(1) => hdr_io(16),
     tmds_out_rgb_p(1) => hdr_io(17),
     tmds_out_rgb_n(0) => hdr_io(18),
     tmds_out_rgb_p(0) => hdr_io(19),
-    tmds_in_clk    => tmds_clk,
-    tmds_out_clk_n => hdr_io(20),
-    tmds_out_clk_p => hdr_io(21)
+    tmds_in_clk       => tmds_clk,
+    tmds_out_clk_n    => hdr_io(20),
+    tmds_out_clk_p    => hdr_io(21)
   );
 
   acram_emulation: entity work.acram_emu
