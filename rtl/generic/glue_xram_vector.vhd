@@ -1242,7 +1242,9 @@ begin
     process(clk)
     begin
         if rising_edge(clk) then
-            if vga_ce = '1' and dmem_write = '1' then
+            if sio_break_internal(0) = '1' then
+              R_fb_base_addr <= (others => '0');
+            elsif vga_ce = '1' and dmem_write = '1' then
                 -- cpu write: writes Framebuffer base
                 if C_big_endian then
                    R_fb_base_addr <= -- XXX: revisit, probably wrong;
@@ -1277,7 +1279,9 @@ begin
     process(clk)
     begin
         if rising_edge(clk) then
-            if vga_ce = '1' and dmem_write = '1' then
+            if sio_break_internal(0) = '1' then
+              R_fb_base_addr <= (others => '0');
+            elsif vga_ce = '1' and dmem_write = '1' then
                 -- cpu write: writes Framebuffer base
                 if C_big_endian then
                    R_fb_base_addr <= -- XXX: revisit, probably wrong;
