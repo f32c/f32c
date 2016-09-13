@@ -14,7 +14,7 @@ entity sparrowhawk is
     C_debug: boolean := false;
 
     -- Main clock: 25, 83, 100 MHz
-    C_clk_freq: integer := 100;
+    C_clk_freq: integer := 83;
 
     -- SoC configuration options
     C_bram_size: integer := 2;
@@ -30,7 +30,7 @@ entity sparrowhawk is
     C_gpio_pullup: boolean := false;
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
 
-    C_vector: boolean := false; -- vector processor unit
+    C_vector: boolean := true; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
     C_vector_vaddr_bits: integer := 11;
@@ -260,7 +260,9 @@ begin
     spi_miso(0) => flash_miso, spi_miso(1) => sd_dat0_do,
 
     gpio(127 downto 22) => open,
-    gpio(21 downto 0) => hdr_io,
+    gpio(21 downto 14) => open, -- user's HDMI on the header for testing
+    gpio(13 downto 0) => hdr_io(13 downto 0), -- reduced for HDMI
+    --gpio(21 downto 0) => hdr_io,
 
     simple_out(7 downto 0) => led(7 downto 0),
     simple_out(31 downto 8) => open,
@@ -288,6 +290,7 @@ begin
   -- dvi_outX_d_n(1) -- D1- green
   -- dvi_outX_d_p(0) -- D0+ blue
   -- dvi_outX_d_n(0) -- D0- blue
+  G_enable_output0: if true generate
   dvi_output0_generic: entity work.hdmi_out
   port map
   (
@@ -298,7 +301,9 @@ begin
     tmds_out_clk_p => dvi_out0_clk_p,
     tmds_out_clk_n => dvi_out0_clk_n
   );
+  end generate;
 
+  G_enable_output1: if true generate
   dvi_output1_generic: entity work.hdmi_out
   port map
   (
@@ -308,6 +313,26 @@ begin
     tmds_in_clk    => tmds_clk,
     tmds_out_clk_p => dvi_out1_clk_p,
     tmds_out_clk_n => dvi_out1_clk_n
+  );
+  end generate;
+
+  dvi_header_generic: entity work.hdmi_out
+  -- D2- red    19  20   D2+ red
+  -- D1- green  21  22   D1+ green
+  -- D0- blue   23  24   D0+ blue
+  -- CLK-       25  26   CLK+
+  port map
+  (
+    tmds_in_rgb    => tmds_rgb,
+    tmds_out_rgb_n(2) => hdr_io(14),
+    tmds_out_rgb_p(2) => hdr_io(15),
+    tmds_out_rgb_n(1) => hdr_io(16),
+    tmds_out_rgb_p(1) => hdr_io(17),
+    tmds_out_rgb_n(0) => hdr_io(18),
+    tmds_out_rgb_p(0) => hdr_io(19),
+    tmds_in_clk    => tmds_clk,
+    tmds_out_clk_n => hdr_io(20),
+    tmds_out_clk_p => hdr_io(21)
   );
 
   acram_emulation: entity work.acram_emu
