@@ -51,7 +51,7 @@ entity sparrowhawk is
 
     -- VGA textmode and graphics, full featured
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
-    C_vgatext_label: string := "Sparrowhawk FX f32c: 83MHz MIPS-compatible soft-core, 128KB RAM emulated";
+    C_vgatext_label: string := "Sparrowhawk-FX f32c: 83MHz MIPS-compatible soft-core, 128KB RAM emulated";
     C_vgatext_bits: integer := 4;   -- 4096 possible colors
     C_vgatext_bram_mem: integer := 8;   -- 8KB text+font  memory
     C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
