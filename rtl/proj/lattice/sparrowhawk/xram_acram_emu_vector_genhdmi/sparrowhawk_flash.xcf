@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!DOCTYPE		ispXCF	SYSTEM	"IspXCF.dtd" >
+<ispXCF version="3.7.0">
+	<Comment></Comment>
+	<Chain>
+		<Comm>JTAG</Comm>
+		<Device>
+			<SelectedProg value="TRUE"/>
+			<Pos>1</Pos>
+			<Vendor>Lattice</Vendor>
+			<Family>LatticeECP3</Family>
+			<Name>LFE3-150EA</Name>
+			<IDCode>0x01015043</IDCode>
+			<Package>All</Package>
+			<PON>LFE3-150EA</PON>
+			<Bypass>
+				<InstrLen>8</InstrLen>
+				<InstrVal>11111111</InstrVal>
+				<BScanLen>1</BScanLen>
+				<BScanVal>0</BScanVal>
+			</Bypass>
+			<File>/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/lattice/sparrowhawk/xram_bram/project/project_project.bit</File>
+			<FileTime>09/01/16 12:03:16</FileTime>
+			<JedecChecksum>N/A</JedecChecksum>
+			<Operation>Fast Program</Operation>
+			<Option>
+				<SVFVendor>JTAG STANDARD</SVFVendor>
+				<IOState>HighZ</IOState>
+				<PreloadLength>1326</PreloadLength>
+				<IOVectorData>0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF</IOVectorData>
+				<Usercode>0x00000000</Usercode>
+				<AccessMode>JTAG</AccessMode>
+			</Option>
+		</Device>
+	</Chain>
+	<ProjectOptions>
+		<Program>SEQUENTIAL</Program>
+		<Process>ENTIRED CHAIN</Process>
+		<OperationOverride>No Override</OperationOverride>
+		<StartTAP>TLR</StartTAP>
+		<EndTAP>TLR</EndTAP>
+		<VerifyUsercode value="FALSE"/>
+		<TCKDelay>1</TCKDelay>
+	</ProjectOptions>
+	<CableOptions>
+		<CableName>USB</CableName>
+		<PortAdd>EzUSB-0</PortAdd>
+	</CableOptions>
+</ispXCF>
