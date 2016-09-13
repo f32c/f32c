@@ -290,7 +290,8 @@ begin
   -- dvi_outX_d_n(1) -- D1- green
   -- dvi_outX_d_p(0) -- D0+ blue
   -- dvi_outX_d_n(0) -- D0- blue
-  G_enable_output0: if true generate
+  -- PCS outputs disabled because they can't be used directly
+  G_enable_output0: if false generate
   dvi_output0_generic: entity work.hdmi_out
   port map
   (
@@ -303,7 +304,7 @@ begin
   );
   end generate;
 
-  G_enable_output1: if true generate
+  G_enable_output1: if false generate
   dvi_output1_generic: entity work.hdmi_out
   port map
   (
@@ -321,6 +322,8 @@ begin
   -- D1- green  21  22   D1+ green
   -- D0- blue   23  24   D0+ blue
   -- CLK-       25  26   CLK+
+  -- 3V3        27  28   5V
+  -- GND        29  30   GND
   port map
   (
     tmds_in_rgb    => tmds_rgb,
