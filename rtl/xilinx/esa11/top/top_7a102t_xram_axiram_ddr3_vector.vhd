@@ -139,6 +139,9 @@ entity esa11_xram_axiram_ddr3 is
 	UART1_RXD: in std_logic;
 	FPGA_SD_SCLK, FPGA_SD_CMD, FPGA_SD_D3: out std_logic;
 	FPGA_SD_D0: in std_logic;
+	FPGA_CCLK_CONF_DCLK: out std_logic;
+	FPGA_CSO, FPGA_MOSI: out std_logic;
+	FPGA_MISO_INTERNAL: in std_logic;
 	-- two onboard green LEDs next to yellow and red
         --FPGA_LED2, FPGA_LED3: out std_logic;
         -- DDR3 ------------------------------------------------------------------
@@ -642,10 +645,10 @@ begin
 	sio_txd(0) => UART1_TXD, 
 	sio_rxd(0) => UART1_RXD,
 	sio_break(0) => sio_break,
-        spi_sck(0)  => open,  spi_sck(1)  => FPGA_SD_SCLK,
-        spi_ss(0)   => open,  spi_ss(1)   => FPGA_SD_D3,
-        spi_mosi(0) => open,  spi_mosi(1) => FPGA_SD_CMD,
-        spi_miso(0) => '-',   spi_miso(1) => FPGA_SD_D0,
+        spi_sck(0)  => FPGA_CCLK_CONF_DCLK, spi_sck(1)  => FPGA_SD_SCLK,
+        spi_ss(0)   => FPGA_CSO,            spi_ss(1)   => FPGA_SD_D3,
+        spi_mosi(0) => FPGA_MOSI,           spi_mosi(1) => FPGA_SD_CMD,
+        spi_miso(0) => FPGA_MISO_INTERNAL,  spi_miso(1) => FPGA_SD_D0,
 	gpio(7 downto 0) => M_EXPMOD0, gpio(15 downto 8) => M_EXPMOD1,
 	gpio(23 downto 16) => M_EXPMOD2, gpio(31 downto 24) => M_EXPMOD3,
 	gpio(127 downto 32) => open,
