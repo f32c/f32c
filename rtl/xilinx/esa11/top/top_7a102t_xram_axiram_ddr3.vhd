@@ -73,14 +73,9 @@ entity esa11_xram_axiram_ddr3 is
           C_vgahdmi_axi: boolean := true; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
           C_vgahdmi_cache_size: integer := 8; -- KB video cache (only on f32c bus) (0: disable, 2,4,8,16,32:enable)
           C_vgahdmi_fifo_timeout: integer := 0;
-          C_vgahdmi_fifo_burst_max: integer := 64;
-          C_vgahdmi_fifo_width: integer := 640;
-          -- height=vertical height in pixels
-          C_vgahdmi_fifo_height: integer := 480;
+          C_vgahdmi_fifo_burst_max_bits: integer := 6; -- 6 bits is 64x32-bit burst
           -- output data width 8bpp
           C_vgahdmi_fifo_data_width: integer := 32; -- should be equal to bitmap depth
-          -- bitmap width of FIFO address space length = 2^width * 4 byte
-          C_vgahdmi_fifo_addr_width: integer := 11;
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: ESA11-7a102t MIPS compatible soft-core 100MHz 256MB DDR3"; -- default banner as initial content of screen BRAM, NOP for RAM
@@ -367,12 +362,9 @@ begin
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_axi => C_vgahdmi_axi,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
+      C_vgahdmi_fifo_burst_max_bits => C_vgahdmi_fifo_burst_max_bits,
       C_vgahdmi_fifo_timeout => C_vgahdmi_fifo_timeout,
-      C_vgahdmi_fifo_burst_max => C_vgahdmi_fifo_burst_max,
-      C_vgahdmi_fifo_width => C_vgahdmi_fifo_width,
-      C_vgahdmi_fifo_height => C_vgahdmi_fifo_height,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
-      C_vgahdmi_fifo_addr_width => C_vgahdmi_fifo_addr_width,
 
       -- vga advanced graphics text+compositing bitmap
       C_vgatext => C_vgatext,
