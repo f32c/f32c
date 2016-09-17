@@ -53,6 +53,9 @@ vhdfiles = \
 ../../../../soc/sram_refresh.vhd \
 ../../../../soc/sram8.vhd \
 ../../../../soc/acram.vhd \
+../../../../soc/axiram.vhd \
+../../../../soc/axi_read.vhd \
+../../../../soc/axi_pack.vhd \
 ../../../../soc/sdram.vhd \
 ../../../../soc/ps2.vhd \
 ../../../../soc/sio.vhd \
@@ -72,11 +75,12 @@ vhdfiles = \
 ../../../../soc/fm/lowpass.vhd \
 ../../../../soc/vgahdmi/vga.vhd \
 ../../../../soc/vgahdmi/tv.vhd \
+../../../../soc/vgahdmi/video_mode_pack.vhd \
 ../../../../soc/cvbs.vhd \
+../../../../soc/vgahdmi/compositing2_fifo.vhd \
+../../../../soc/vgahdmi/videofifo.vhd \
 ../../../../soc/vgahdmi/video_cache_i.vhd \
 ../../../../soc/vgahdmi/video_cache_d.vhd \
-../../../../soc/vgahdmi/videofifo.vhd \
-../../../../soc/vgahdmi/compositing2_fifo.vhd \
 ../../../../soc/vgahdmi/VGA_textmode.vhd \
 ../../../../soc/vgahdmi/font_block_pack.vhd \
 ../../../../soc/vgahdmi/font8x8_xark.vhd \
@@ -89,6 +93,5 @@ vhdfiles = \
 ../../../../soc/vgahdmi/ledstrip.vhd \
 ../../../../soc/vgahdmi/ws2812b.vhd \
 ../../../../soc/vgahdmi/pulse_counter.vhd \
-
 
 include ../../include/xilinx.mk
