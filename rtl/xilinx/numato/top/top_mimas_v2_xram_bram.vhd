@@ -128,7 +128,7 @@ end glue;
 architecture Behavioral of glue is
     signal clk, rs232_break: std_logic;
     signal clk_25MHz, clk_250MHz: std_logic := '0';
-    signal obuf_tmds_clock: std_logic;
+    signal tmds_clk: std_logic;
     signal tmds_rgb: std_logic_vector(2 downto 0);
 begin
     --  clock synthesizer: Xilinx Spartan-6 specific
@@ -227,14 +227,14 @@ begin
         dvid_red(0)   => tmds_rgb(2), dvid_red(1)   => open,
         dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
         dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
-        dvid_clock => open, -- clk_25MHz used directly
+        dvid_clock(0) => tmds_clk,    dvid_clock(1) => open,
 	fm_antenna => Audio1
     );
 
     -- differential output buffering for HDMI clock and video
     hdmi_output: entity work.hdmi_out
       port map (
-        tmds_in_clk => clk_25MHz,
+        tmds_in_clk => tmds_clk,
         tmds_out_clk_p => tmds_out_clk_p,
         tmds_out_clk_n => tmds_out_clk_n,
         tmds_in_rgb => tmds_rgb,
