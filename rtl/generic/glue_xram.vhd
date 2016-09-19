@@ -197,8 +197,11 @@ generic (
       C_pid_precision: integer range 0 to 8 := 1; -- fixed point PID precision
       C_pid_pwm_bits: integer range 11 to 32 := 12; -- PWM output frequency f_clk/2^pwmbits (min 11 => 40kHz @ 81.25MHz)
       C_pid_fp: integer range 0 to 26 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
-    C_vector: boolean := false; -- vector processor
-    C_timer: boolean := true
+    C_timer: boolean := true;
+      C_timer_ocp_mux: boolean := true; -- true: OCP to simple_out (LED) mux, fade example works, false: output to dedicated PWM ocp pins
+      C_timer_ocps: integer := 2;
+      C_timer_icps: integer := 2;
+    C_vector: boolean := false -- vector processor, this glue doesn't have it
 );
 port (
   clk: in std_logic;
@@ -255,8 +258,8 @@ port (
   gpio: inout std_logic_vector(127 downto 0);
   gpio_pullup: inout std_logic_vector(127 downto 0);  -- XXX fixme not connected optional (set C_gpio_pullup false)
   -- timer PWM input capture and output compare
-  ocp: out std_logic_vector(1 downto 0);
-  icp: in std_logic_vector(1 downto 0) := (others => '0');
+  ocp: out std_logic_vector(C_timer_ocps-1 downto 0);
+  icp: in std_logic_vector(C_timer_icps-1 downto 0) := (others => '0');
   --ADC ports
   ADC_Error_out: inout std_logic_vector(5 downto 0); -- XXX fixme not connected
   -- PS/2 Keyboard
@@ -338,8 +341,8 @@ architecture Behavioral of glue_xram is
     signal timer_range: std_logic := '0';
     signal from_timer: std_logic_vector(31 downto 0);
     signal timer_ce: std_logic;
-    signal S_ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
-    signal icp_enable: std_logic_vector(1 downto 0);
+    signal S_ocp, ocp_enable, ocp_mux: std_logic_vector(C_timer_ocps-1 downto 0);
+    signal icp_enable: std_logic_vector(C_timer_icps-1 downto 0);
     signal timer_intr: std_logic;
 
 
@@ -861,18 +864,18 @@ begin
     end process;
 
     G_simple_out_standard:
-    if C_timer = false generate
-        simple_out(C_simple_out - 1 downto 0) <=
-          R_simple_out(C_simple_out - 1 downto 0);
+    if not (C_timer=true and C_timer_ocp_mux=true) generate
+      simple_out(C_simple_out-1 downto 0) <= R_simple_out(C_simple_out-1 downto 0);
     end generate;
+
     -- muxing simple_io to show PWM of timer on LEDs
     G_simple_out_timer:
-    if C_timer = true generate
-      ocp_mux(0) <= S_ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
-      ocp_mux(1) <= S_ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
-      simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
-      else (others => '-');
-      ocp <= S_ocp;
+    if C_timer=true and C_timer_ocp_mux=true generate
+      G_ocp_mux:
+      for i in 0 to C_timer_ocps-1 generate
+        ocp_mux(i) <= S_ocp(i) when ocp_enable(i)='1' else R_simple_out(i);
+      end generate;
+      simple_out <= R_simple_out(C_simple_out-1 downto C_timer_ocps) & ocp_mux;
     end generate;
 
     -- big address decoder when CPU reads IO
@@ -1018,6 +1021,8 @@ begin
     -- icp <= R_simple_out(3) & R_simple_out(0); -- during debug period, leds will serve as software-generated ICP
     timer: entity work.timer
     generic map (
+      C_ocps => C_timer_ocps,
+      C_icps => C_timer_icps,
       C_pres => 10,
       C_bits => 12
     )
@@ -1031,6 +1036,7 @@ begin
       icp_enable => icp_enable, -- enable physical input
       icp => icp -- input capture signal
     );
+    ocp <= S_ocp;
     with conv_integer(io_addr(11 downto 4)) select
       timer_ce <= io_addr_strobe when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range),
                              '0' when others;
