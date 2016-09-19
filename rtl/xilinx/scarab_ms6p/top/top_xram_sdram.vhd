@@ -146,7 +146,11 @@ entity scarab_xram_sdram is
         C_pid_pwm_bits: integer := 12;
         
       C_vector: boolean := false; -- vector processor unit (wip)
+
       C_timer: boolean := true;
+        C_timer_ocp_mux: boolean := true; -- true: fade example will work, false: real use, no LED muxing, direct output
+        C_timer_ocps: integer := 2; -- # output compare units
+        C_timer_icps: integer := 2; -- # input capture units
 
       C_gpio: integer := 64
   );
@@ -192,6 +196,7 @@ architecture Behavioral of scarab_xram_sdram is
          clk_200MHz_p, clk_200MHz_n, clk_250MHz_p, clk_250MHz_n,
          clk_325MHz_p, clk_325MHz_n, clk_375MHz_p, clk_375MHz_n,
          clk_433M92Hz: std_logic := '0';
+  signal S_ocp: std_logic_vector(C_timer_ocps-1 downto 0);
   signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
   signal tmds_in_rgb, tmds_out_rgb: std_logic_vector(2 downto 0);
   signal tmds_in_clk, tmds_out_clk: std_logic;
@@ -387,6 +392,9 @@ begin
       C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_cached_addr_bits,
       C_timer => C_timer,
+        C_timer_ocp_mux => C_timer_ocp_mux,
+        C_timer_ocps => C_timer_ocps,
+        C_timer_icps => C_timer_icps,
       C_gpio => C_gpio,
       C_sio => C_sio,
       C_spi => C_spi,
@@ -508,10 +516,15 @@ begin
       --pid_bridge_r(0)  => portf(3),  pid_bridge_r(1)  => portf(7), -- pid_bridge_r(2)  => portf(11),
       --
       -- portf: LEDSTRIP and POV ball motor
-      ledstrip_out(1 downto 0) => portf(1 downto 0),
+      ledstrip_out(1 downto 0) => portf(11 downto 10),
 
-      simple_out(7 downto 0) => leds(7 downto 0),
+      -- portf: timer OCP/ICP
+      ocp(C_timer_ocps-1 downto 0) => S_ocp, -- portf(C_timer_ocps-1 downto 0),
+      icp(C_timer_icps-1 downto 0) => portf(3 downto 4-C_timer_icps),
+
       simple_out(31 downto 8) => open,
+      simple_out(7 downto 0) => leds(7 downto 0),
+      --simple_out(7 downto 4) => open, simple_out(3 downto 0) => leds(3 downto 0),
       simple_in(15 downto 0) => open,
       simple_in(19 downto 16) => sw(4 downto 1),
       simple_in(31 downto 20) => open
@@ -519,6 +532,9 @@ begin
     -- unused pins
     FPGA_SDA <= 'Z';
     FPGA_SCL <= 'Z';
+
+    portf(C_timer_ocps-1 downto 0) <= S_ocp;
+    --leds(C_timer_ocps+4-1 downto 4) <= S_ocp;
 
     -- SDRAM clock output needs special routing on Spartan-6
     sdram_clk_forward : ODDR2
