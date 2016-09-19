@@ -191,6 +191,9 @@ entity toplevel is
 
     C_pcm: boolean := true;
     C_timer: boolean := true;
+      C_timer_ocp_mux: boolean := true; -- true: fade example will work, false: real use, no LED muxing, direct output
+      C_timer_ocps: integer := 2; -- # output compare units
+      C_timer_icps: integer := 2; -- # input capture units
     C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
     C_fmrds: boolean := false; -- either FM or tx433
     C_fm_stereo: boolean := true;
@@ -243,7 +246,8 @@ architecture Behavioral of toplevel is
   signal btn: std_logic_vector(4 downto 0);
   signal tmds_rgb: std_logic_vector(2 downto 0);
   signal tmds_clk: std_logic;
-  signal icp, ocp: std_logic_vector(1 downto 0); -- timer PWM in/out
+  signal icp: std_logic_vector(C_timer_icps-1 downto 0); -- timer PWM in
+  signal ocp: std_logic_vector(C_timer_ocps-1 downto 0); -- timer PWM out
   signal gpio_28, fm_antenna, cw_antenna: std_logic;
   signal motor_bridge, motor_encoder: std_logic_vector(1 downto 0);
 begin
@@ -353,6 +357,9 @@ begin
       C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
       C_pcm => C_pcm,
       C_timer => C_timer,
+        C_timer_ocp_mux => C_timer_ocp_mux,
+        C_timer_ocps => C_timer_ocps,
+        C_timer_icps => C_timer_icps,
       C_pids => C_pids,
       C_pid_simulator => C_pid_simulator, -- for each pid choose simulator/real
       C_cw_simple_out => C_cw_simple_out, -- CW is for 433 MHz. -1 to disable. set (C_framebuffer => false, C_dds => false) for 433MHz transmitter
@@ -388,7 +395,8 @@ begin
       --gpio(8)  => j1_16, gpio(9)  => j1_17, gpio(10) => j1_18,  gpio(11) => j1_19,
       --gpio(12) => j1_20, gpio(13) => j1_21, gpio(14) => j1_22,  gpio(15) => j1_23,
       -- timer hardware pins
-      icp(0) => j2_4, icp(1) => j2_11, ocp(0) => j2_3, ocp(1) => j2_10,
+      icp(0) => j2_4, icp(1) => j2_11,
+      ocp(0) => j2_3, ocp(1) => j2_10,
       -- gpio(27 downto 16) multifuncition GPIO/VGA/PID
       -- **** GPIO **** gpio(27 downto 16)
       --gpio(16) => j2_2,  gpio(17) => j2_3,  gpio(18) => j2_4,   gpio(19) => j2_5,  -- PID0
