@@ -56,10 +56,10 @@ entity timer is
 	bus_out: out std_logic_vector(31 downto 0);
 	timer_irq: out std_logic; -- interrut requuest line (active level high)
 	sign: out std_logic; -- output MSB (sign) bit
-	icp_enable: out std_logic_vector(1 downto 0); -- input enable bits
-	ocp_enable: out std_logic_vector(1 downto 0); -- output enable bits
-	icp: in std_logic_vector(C_icps-1 downto 0); -- input capture signals 0 and 1
-	ocp: out std_logic_vector(C_ocps-1 downto 0) -- output compare signals 0 and 1
+	icp_enable: out std_logic_vector(C_icps-1 downto 0); -- input enable bits
+	ocp_enable: out std_logic_vector(C_ocps-1 downto 0); -- output enable bits
+	icp: in std_logic_vector(C_icps-1 downto 0); -- input capture signals
+	ocp: out std_logic_vector(C_ocps-1 downto 0) -- output compare signals
     );
 end timer;
 
@@ -370,16 +370,16 @@ begin
       else '0';
     glitchfree_ocp_if_not_have_interrupt:
     if not C_have_intr generate
-    process(clk)
-    begin
-      -- Store the OCP in output register to avoid possible nanosecond glitch
-      -- in "OR" mode at zero-crossing of the counter. Glitch is a side-effect of
-      -- propagation delay in the combinatorial logic of internal_ocp(i).
-      if rising_edge(clk) then
-        R_ocp(i) <= internal_ocp(i) xor R_control(C_ocpn_xor(i)); -- output optionally inverted
-      end if;
-    end process;
-    ocp(i) <= R_ocp(i);
+      process(clk)
+      begin
+        -- Store the OCP in output register to avoid possible nanosecond glitch
+        -- in "OR" mode at zero-crossing of the counter. Glitch is a side-effect of
+        -- propagation delay in the combinatorial logic of internal_ocp(i).
+        if rising_edge(clk) then
+          R_ocp(i) <= internal_ocp(i) xor R_control(C_ocpn_xor(i)); -- output optionally inverted
+        end if;
+      end process;
+      ocp(i) <= R_ocp(i);
     end generate;
     glitchfree_ocp_if_have_interrupt:
     if C_have_intr generate
@@ -428,7 +428,6 @@ begin
       end if;
     end process;
     end generate; -- end ocp_interrupt
-    
     end generate; -- end output_compare
 
     -- warning - asynchronous external icp rising edge
