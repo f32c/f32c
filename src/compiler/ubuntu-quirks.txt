@@ -1,4 +1,4 @@
-Lattice Diamond 3.7 and Ubuntu 16.04
+Lattice Diamond 3.8 and Ubuntu 16.04
 ====================================
 
 - First, get some dependencies: sudo apt-get install alien csh
@@ -7,14 +7,17 @@ Lattice Diamond 3.7 and Ubuntu 16.04
 
 - Install with sudo rpm -i diamond.rpm --nodeps
 
-- Synplify scripts have to be adjusted to use bash instead of dash and to allow Linux 4.x (in config/platform_check), to do this run ubuntu-synplify-fix.sh
+- Synplify scripts have to be adjusted to use bash instead of dash and to allow Linux 4.x (in config/platform_check), to do this run sudo ubuntu-synplify-fix.sh
 
-- Ubuntu 16.04: eth0 does not longer exist (interfaces are named e.g. enp0s25) which fails with Macrovision Licensing system, solution: create /etc/udev/rules.d/10-rename-network.rules with the following contents (replace xx with MAC, run ifconfig to get it):
+- Ubuntu 16.04: eth0 does not longer exist (interfaces are named e.g. enp0s25) which fails with the Macrovision Licensing system, solution: create /etc/udev/rules.d/10-rename-network.rules with the following contents (replace xx with MAC, run ifconfig to get it):
 
 SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="xx:xx:xx:xx:xx:xx", NAME="eth0"
 
-- Remove /usr/local/diamond/3.7_x64/bin/lin64/libusb*, else Diamond will hang when ULX2S is connected
+- Remove /usr/local/diamond/3.8_x64/bin/lin64/libusb*, else Diamond will hang when ULX2S is connected
 
 - Install eventual Lattice updates/service packs with sudo rpm -i update.rpm --nodeps
 
 - Call sudo dpkg-reconfigure dash, answer Yes (use dash)
+
+- Make a link so diamond can be executed from anywhere: sudo ln -s /usr/local/diamond/3.8_x64/bin/lin64/diamond /usr/bin/diamond
+
