@@ -45,12 +45,14 @@ use xp2.components.all;
 
 entity toplevel is
   generic (
-    C_clk_freq: integer := 25;
+    C_clk_freq: integer := 56; -- MHz (72.321429)
 
     -- ISA options
     C_arch: integer := ARCH_MI32;
     C_big_endian: boolean := false;
-
+    -- C_boot_rom = true: bootloader will try to chainboot SPI flash ROM, fallback to serial
+    -- C_boot_rom = false: -- serial bootloader only
+    C_boot_rom: boolean := true;
     C_mult_enable: boolean := true;
     C_branch_likely: boolean := true;
     C_sign_extend: boolean := true;
@@ -90,7 +92,7 @@ entity toplevel is
     C_simple_out: integer := 32; -- LEDs (only 8 used but quantized to 32)
     C_simple_in: integer := 32; -- buttons and switches (not all used)
     C_gpio: integer := 32; -- number of GPIO pins
-    C_spi: integer := 1; -- number of SPI interfaces (min 1, leave unconnected to disable)
+    C_spi: integer := 2; -- number of SPI interfaces (min 1, leave unconnected to disable)
 
     C_cw_simple_out: integer := 7; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
 
@@ -123,33 +125,36 @@ end toplevel;
 architecture Behavioral of toplevel is
   constant C_sram_pipelined_read: boolean := C_clk_freq = 81; -- works only at 81.25 MHz !!!
   signal clk: std_logic;
-  signal clk_112M5, clk_433M92: std_logic;
+  signal clk_56M25, clk_72M32, clk_112M5, clk_433M92: std_logic;
   signal pll_lock, reset_when_clock_stable: std_logic;
   signal cw_antenna: std_logic;
   signal rs232_break: std_logic;
   signal btn: std_logic_vector(4 downto 0);
 begin
-  clk <= clk_25m;
-  
-  inst_clk_25M_112M5: entity pll_25M_112M5
+  clk <= clk_56M25; -- CPU clock
+
+  inst_clk_25M_112M5: entity pll_25m_112m5_56m25
   port map
   (
     clk => clk_25M,
     clkop => clk_112M5,
+    clkok => clk_56M25,
     lock => pll_lock
   );
 
-  inst_clk_112M5_433M92: entity pll_112M5_433M92
+  inst_clk_112M5_433M92: entity pll_112m5_433m92_72m32
   port map
   (
     clk => clk_112M5,
-    clkop => clk_433M92
+    clkop => clk_433M92,
+    clkok => clk_72M32,
+    lock => open
   );
 
   reset_when_clock_stable <= pll_lock;
   -- reset assures clean start at power up
   -- not only after upload of bitstream
-  gsr_inst_25MHz: GSR
+  gsr_inst: GSR
   port map
   (
     gsr => reset_when_clock_stable
@@ -162,6 +167,7 @@ begin
       C_clk_freq => C_clk_freq,
       C_arch => C_arch,
       C_big_endian => C_big_endian,
+      C_boot_rom => C_boot_rom,
       C_mult_enable => C_mult_enable,
       C_branch_likely => C_branch_likely,
       C_sign_extend => C_sign_extend,
@@ -192,10 +198,15 @@ begin
       C_gpio => C_gpio,
       C_timer => C_timer
     )
-    port map (
+    port map
+    (
       clk => clk,
       clk_cw => clk_433M92,
       sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx, sio_break(0) => rs232_break,
+      spi_sck(0) => flash_sck, spi_ss(0) => flash_cen,
+      spi_mosi(0) => flash_si, spi_miso(0) => flash_so,
+      spi_sck(1) => sdcard_sck, spi_ss(1) => sdcard_cen,
+      spi_mosi(1) => sdcard_si, spi_miso(1) => sdcard_so,
       simple_out(7 downto 0) => led(7 downto 0),
       simple_in(4 downto 0) => btn,
       simple_in(19 downto 16) => sw,
