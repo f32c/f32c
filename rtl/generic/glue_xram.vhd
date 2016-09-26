@@ -84,7 +84,7 @@ generic (
 
   -- SoC configuration options
   C_bram_size: integer := 2;	-- in KBytes
-  C_boot_rom: boolean := false;
+  C_boot_rom: boolean := false; -- unused
   C_boot_spi: boolean := false;
   C_icache_size: integer := 0;	-- 0, 2, 4, 8, 16 or 32 KBytes
   C_dcache_size: integer := 0;	-- 0, 2, 4, 8, 16 or 32 KBytes
