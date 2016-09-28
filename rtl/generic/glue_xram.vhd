@@ -130,7 +130,6 @@ generic (
   C_vgahdmi_fifo_timeout: integer := 0; -- abort compositing at N pixels before end of line (0 disabled)
   C_vgahdmi_fifo_burst_max_bits: integer := 0; -- values >= 1 enable the burst
   C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
-  --C_vgahdmi_fifo_addr_width: integer := 11; -- calculated from video mode x-resolution
   C_video_base_addr_out: boolean := false; -- dummy video driver, just output base address to toplevel
   -- LED strip ws2812 POV simple 144x480 bitmap only
   C_ledstrip: boolean := false; -- enable dual channel ws2812b output

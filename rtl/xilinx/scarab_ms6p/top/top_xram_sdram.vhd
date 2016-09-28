@@ -66,9 +66,6 @@ entity scarab_xram_sdram is
     C_vgahdmi_cache_use_i: boolean := true; -- use I-data caching style, faster
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8; -- bpp (currently 8/16/32 supported)
-    -- width of FIFO address space -> size of fifo
-    -- for 8bpp compositing use 11 -> 2^11 = 2048 bytes
-    C_vgahdmi_fifo_addr_width: integer := 11;
 
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: miniSpartan6+ MIPS compatible soft-core 100MHz 32MB SDRAM";	-- default banner in screen memory
