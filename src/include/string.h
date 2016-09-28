@@ -28,6 +28,10 @@
 #ifndef	_STRING_H_
 #define	_STRING_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 char *strstr(const char *, const char *) __pure;
 
 void *memchr(const void *, int, size_t) __pure;
@@ -182,7 +186,7 @@ bzero(void *dst, int len)
 }
 
 
-static inline int
+static inline size_t
 strlen(const char *str)
 {
 	const char *cp;
@@ -229,5 +233,9 @@ strncmp(const char *s1, const char *s2, size_t n)
 	} while (--n != 0);
 	return (0);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !_STRING_H_ */

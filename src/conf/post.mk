@@ -159,6 +159,7 @@ endif
 
 # Pull in any module-specific compiler flags
 MK_CFLAGS += ${CFLAGS}
+MK_CXXFLAGS += ${CXXFLAGS}
 
 # Linker flags
 MK_LDFLAGS += -N ${ENDIANFLAGS}
@@ -181,7 +182,7 @@ MK_ARFLAGS = r
 OBJFLAGS = -R .rel.dyn -R .MIPS.abiflags
 
 CC = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
-CXX = ${ARCH}-elf-g++ ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES} -fno-rtti -fno-exceptions
+CXX = ${ARCH}-elf-g++ ${MK_CFLAGS} ${MK_CXXFLAGS} ${MK_STDINC} ${MK_INCLUDES} -fno-rtti -fno-exceptions
 AS = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_ASFLAGS} ${MK_INCLUDES}
 LD = ${ARCH}-elf-ld ${MK_LDFLAGS}
 AR = ${ARCH}-elf-ar ${MK_ARFLAGS}
@@ -212,8 +213,17 @@ ifeq ($(PROG),)
 	endif
 endif
 
+
 ASM_OBJS = $(addprefix ${OBJDIR}/,$(ASFILES:.S=.O))
-CXX_OBJS = $(addprefix ${OBJDIR}/,$(CXXFILES:.cpp=.o))
+
+CXX_OBJS = $(CXXFILES)
+CXX_OBJS := $(CXX_OBJS:.cc=.o)
+CXX_OBJS := $(CXX_OBJS:.cpp=.o)
+CXX_OBJS := $(CXX_OBJS:.c++=.o)
+CXX_OBJS := $(CXX_OBJS:.cxx=.o)
+
+CXX_OBJS := $(addprefix ${OBJDIR}/,$(CXX_OBJS))
+
 C_OBJS = $(addprefix ${OBJDIR}/,$(CFILES:.c=.o))
 OBJS = ${ASM_OBJS} ${C_OBJS} ${CXX_OBJS}
 
@@ -227,6 +237,8 @@ ${BIN}: ${PROG} Makefile
 	${ISA_CHECK} ${ARCH} ${PROG}
 	${OBJCOPY} ${OBJFLAGS} -O binary ${PROG} ${BIN}
 
+${OBJS}: ${HEADERS}
+
 ${PROG}: ${OBJS} Makefile
 	${LD} -o ${PROG} ${OBJS} ${MK_LIBS}
 
@@ -234,7 +246,7 @@ ${LIB}: ${OBJS} Makefile
 	${AR} ${LIBDIR}/lib${LIB}.a ${OBJS}
 
 depend:
-	${MKDEP} ${CFILES} > .depend
+	${MKDEP} ${CFILES} ${CXXFILES} > .depend
 
 clean:
 	rm -f ${OBJS} ${PROG} ${BIN} ${HEX}
@@ -259,6 +271,19 @@ $(addprefix ${OBJDIR}/,%.o) : %.c
 $(addprefix ${OBJDIR}/,%.o) : %.cpp
 	@mkdir -p $(dir $@)
 	${CXX} -o $@ $<
+
+$(addprefix ${OBJDIR}/,%.o) : %.cc
+	@mkdir -p $(dir $@)
+	${CXX} -o $@ $<
+
+$(addprefix ${OBJDIR}/,%.o) : %.cxx
+	@mkdir -p $(dir $@)
+	${CXX} -o $@ $<
+
+$(addprefix ${OBJDIR}/,%.o) : %.c++
+	@mkdir -p $(dir $@)
+	${CXX} -o $@ $<
+
 
 #
 # Rule for compiling ASM files

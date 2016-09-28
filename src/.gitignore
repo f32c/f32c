@@ -1,0 +1,7 @@
+*.o
+*.kdev4
+*~
+*.bin
+*.hex
+*.kate-swp
+.kdev_include_paths
