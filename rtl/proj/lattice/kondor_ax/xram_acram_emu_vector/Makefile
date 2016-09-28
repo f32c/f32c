@@ -7,6 +7,7 @@ IMPL_DIR := $(shell fgrep default_strategy ${PROJ_FILE} | cut -d'"' -f 4)
 DIAMOND_BASE := /usr/local/diamond
 DIAMOND_BIN :=  $(shell find ${DIAMOND_BASE}/ -maxdepth 2 -name bin | sort -rn | head -1)
 DIAMONDC := $(shell find ${DIAMOND_BIN}/ -name diamondc)
+DDTCMD := $(shell find ${DIAMOND_BIN}/ -name ddtcmd)
 
 OPENOCD_BASE := ../../programmer/openocd/kondor_ax/
 
@@ -24,10 +25,10 @@ $(PROJECT)/$(PROJECT)_$(PROJECT).bit:
 	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-	ddtcmd -oft -fullvme -if kondor_ax_sram.xcf -nocompress -noheader -of $@
+	${DDTCMD} -oft -fullvme -if kondor_ax_sram.xcf -nocompress -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-	ddtcmd -oft -svfsingle -revd -if kondor_ax_sram.xcf -of $@
+	${DDTCMD} -oft -svfsingle -revd -if kondor_ax_sram.xcf -of $@
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	echo pgr_project open kondor_ax_sram.xcf \; pgr_program run | ${DIAMONDC}
@@ -42,10 +43,10 @@ program_ft2232: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 #	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Jedecgen | ${DIAMONDC}
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
-#	ddtcmd -oft -fullvme -if sparrowhawk_flash.xcf -nocompress -noheader -of $@
+#	${DDTCMD} -oft -fullvme -if sparrowhawk_flash.xcf -nocompress -noheader -of $@
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
-#	ddtcmd -oft -svfsingle -op "FLASH Erase,Program,Verify" -if $< -of $@
+#	${DDTCMD} -oft -svfsingle -op "FLASH Erase,Program,Verify" -if $< -of $@
 
 flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
 	${PROGRAMMERC} $<
@@ -54,9 +55,9 @@ flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
 
 # example another project
 #%.svf : %.jed
-#	ddtcmd -oft -svfsingle -op "FLASH Erase,Program,Verify" -if $< -of $@
+#	${DDTCMD} -oft -svfsingle -op "FLASH Erase,Program,Verify" -if $< -of $@
 #	mv -f $@ $@.flash
-#	ddtcmd -oft -svfsingle -revd -op "SRAM Fast Program" -if $< -of $@
+#	${DDTCMD} -oft -svfsingle -revd -op "SRAM Fast Program" -if $< -of $@
 #	mv -f $@ $@.sram
 #	./svf_to_urjtag.pl <$@.flash | sed 's/,/./g' > $@
 
