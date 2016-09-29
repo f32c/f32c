@@ -78,13 +78,7 @@
         <Source name="../../../../lattice/kondor_ax/top/top_bram.vhd" type="VHDL" type_short="VHDL">
             <Options top_module="glue"/>
         </Source>
-        <Source name="elpida/elpida.sbx" type="sbx" type_short="SBX">
-            <Options/>
-        </Source>
         <Source name="clarity/clarity.sbx" type="sbx" type_short="SBX">
-            <Options/>
-        </Source>
-        <Source name="../../../../lattice/kondor_ax/clocks/clk_100_75.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../constraints/kondor_ax.lpf" type="Logic Preference" type_short="LPF">
