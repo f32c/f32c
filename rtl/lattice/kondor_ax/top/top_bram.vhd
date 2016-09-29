@@ -41,7 +41,7 @@ entity glue is
 	C_big_endian: boolean := false;
 	C_debug: boolean := false;
 
-	C_clk_freq: integer := 100;
+	C_clk_freq: integer := 75;
 
 	-- SoC configuration options
 	C_bram_size: integer := 64;
@@ -59,12 +59,21 @@ entity glue is
 end glue;
 
 architecture Behavioral of glue is
-    signal clk_100m: std_logic;
+    signal clk_100m, clk_75m: std_logic;
     signal rs232_break: std_logic;
 begin
 
-    clock_diff2se:
-    ILVDS port map(A => clk_100_p, AN => clk_100_n, Z => clk_100m);
+    clock_diff2se: ILVDS
+    port map(
+	A => clk_100_p, AN => clk_100_n,
+	Z => clk_100m
+    );
+
+    clkgen_75m: entity work.clk_100_75
+    port map(
+	CLKI => clk_100m,
+	CLKOP => clk_75m
+    );
 
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
@@ -79,7 +88,7 @@ begin
 	C_gpio => C_gpio
     )
     port map (
-	clk => clk_100m,
+	clk => clk_75m,
 	sio_txd(0) => tx,
 	sio_rxd(0) => rx,
 	sio_break(0) => rs232_break,
