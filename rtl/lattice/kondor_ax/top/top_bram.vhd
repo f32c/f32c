@@ -59,20 +59,52 @@ entity glue is
 end glue;
 
 architecture Behavioral of glue is
-    signal clk_100m, clk_75m: std_logic;
+    signal clk_100m, clk_75m, sysclk: std_logic;
     signal rs232_break: std_logic;
+    signal ddr_cmd: std_logic_vector(3 downto 0);
 begin
 
     clock_diff2se: ILVDS
-    port map(
+    port map (
 	A => clk_100_p, AN => clk_100_n,
 	Z => clk_100m
     );
 
-    clkgen_75m: entity work.clk_100_75
-    port map(
-	CLKI => clk_100m,
-	CLKOP => clk_75m
+--    clkgen_75m: entity work.clk_100_75
+--    port map ( CLKI => clk_100m, CLKOP => open);
+
+    lpddr3: entity work.lpddr3_sdram_mem_top_ddrx32
+    port map (
+	clk_in => clk_100m,
+	rst_n => '1',
+	init_start => '0',
+	cmd => ddr_cmd,
+	addr => (others => '0'),
+	cmd_burst_cnt => (others => '0'),
+	cmd_valid => '0',
+	write_data => (others => '0'),
+	datain_rdy => open,
+	data_mask => (others => '0'),
+	aref_brst_enb => '0',
+	clock_stop => '0',
+	rt_req => '0',
+	cmd_rdy => open,
+	init_done => open,
+	read_data => open,
+	read_data_valid => open,
+	rt_act => open,
+	rt_done => open,
+	rt_err => open,
+	sclk_out => sysclk,
+	clocking_good => open,
+	em_ddr_data => open,
+	em_ddr_dqs => open,
+	em_ddr_clk => open,
+	em_ddr_cke => open,
+	em_ddr_cs_n => open,
+	em_ddr_odt => open,
+	em_ddr_dm => open,
+	em_ddr_ca => open
     );
 
     -- generic BRAM glue
@@ -88,11 +120,13 @@ begin
 	C_gpio => C_gpio
     )
     port map (
-	clk => clk_75m,
+	clk => sysclk,
 	sio_txd(0) => tx,
 	sio_rxd(0) => rx,
 	sio_break(0) => rs232_break,
-	simple_out(7 downto 0) => led, simple_out(31 downto 8) => open,
+	simple_out(7 downto 0) => led,
+	simple_out(31 downto 28) => ddr_cmd,
+	simple_out(27 downto 8) => open,
 	simple_in => (others => '0'),
 	spi_miso => (others => '0')
     );
