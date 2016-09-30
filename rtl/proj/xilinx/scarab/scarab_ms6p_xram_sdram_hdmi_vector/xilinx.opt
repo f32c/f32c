@@ -4,7 +4,8 @@
 -opt_level 2
 -iuc NO
 -keep_hierarchy no
--netlist_hierarchy as_optimized
+#-netlist_hierarchy as_optimized
+-netlist_hierarchy rebuilt
 -rtlview no
 -glob_opt AllClockNets
 -read_cores yes

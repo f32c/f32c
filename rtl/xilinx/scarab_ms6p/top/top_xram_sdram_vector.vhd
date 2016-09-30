@@ -43,10 +43,10 @@ entity scarab_xram_sdram_vector is
     -- ISA: either ARCH_MI32 or ARCH_RV32
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
-    C_exceptions: boolean := false; -- false:disable interrupts allows vector to work
+    C_exceptions: boolean := true; -- false:disable interrupts allows vector to work
 
     -- Main clock: 25/50/75/81/83/96/100/111/112/125
-    C_clk_freq: integer := 98;
+    C_clk_freq: integer := 100;
     C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
     -- SoC configuration options
     C_bram_size: integer := 8; -- bootloader area
@@ -69,11 +69,11 @@ entity scarab_xram_sdram_vector is
     -- C_dvid_ddr = true: clk_pixel_shift = 125MHz
     -- (fixme: DDR video output mode doesn't work on scarab)
     C_dvid_ddr: boolean := true;
-    C_video_mode: integer := 5; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024
+    C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024
 
     C_vgahdmi: boolean := true;
     -- insert cache between RAM and compositing2 video fifo
-    C_vgahdmi_cache_size: integer := 0; -- KB size 0:disable 2,4,8,16,32:enable
+    C_vgahdmi_cache_size: integer := 8; -- KB size 0:disable 2,4,8,16,32:enable
     C_vgahdmi_cache_use_i: boolean := true; -- use I-data caching style, faster
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8; -- bpp (currently 8/16/32 supported)
