@@ -62,14 +62,14 @@ set_location_assignment PIN_71 -to gpio[31]
 
 # HDMI is not on tb276 board
 # we define in on J4 connector
-set_location_assignment PIN_119 -to hdmi_clkp
-set_location_assignment PIN_115 -to hdmi_clkn
-set_location_assignment PIN_114 -to hdmi_dp[0]
-set_location_assignment PIN_111 -to hdmi_dn[0]
-set_location_assignment PIN_110 -to hdmi_dp[1]
-set_location_assignment PIN_106 -to hdmi_dn[1]
-set_location_assignment PIN_105 -to hdmi_dp[2]
-set_location_assignment PIN_104 -to hdmi_dn[2]
+set_location_assignment PIN_119 -to hdmi_clkn
+set_location_assignment PIN_115 -to hdmi_clkp
+set_location_assignment PIN_114 -to hdmi_dn[0]
+set_location_assignment PIN_111 -to hdmi_dp[0]
+set_location_assignment PIN_110 -to hdmi_dn[1]
+set_location_assignment PIN_106 -to hdmi_dp[1]
+set_location_assignment PIN_105 -to hdmi_dn[2]
+set_location_assignment PIN_104 -to hdmi_dp[2]
 
 # rs232 is not on tb276 board
 # we define it on J3 connector
