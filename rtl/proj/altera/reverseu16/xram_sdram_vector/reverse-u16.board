@@ -1,0 +1,193 @@
+# -------------------------------------------------------------------------- #
+#set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+#set_global_assignment -name DEVICE_FILTER_PACKAGE TQFP
+#set_global_assignment -name DEVICE_FILTER_PIN_COUNT 144
+#set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 7
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 1.2V
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (VHDL)"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulation
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
+set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
+set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name RESERVE_DATA0_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name RESERVE_DATA1_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name RESERVE_FLASH_NCE_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name RESERVE_DCLK_AFTER_CONFIGURATION "USE AS REGULAR IO"
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+
+# -- main system clock
+set_location_assignment PIN_25 -to CLK_50MHz
+
+# -- uBUS 2.54mm universal header
+set_location_assignment PIN_72 -to AN
+set_location_assignment PIN_71 -to AP
+set_location_assignment PIN_88 -to BN
+set_location_assignment PIN_89 -to BP
+set_location_assignment PIN_90 -to CN
+set_location_assignment PIN_91 -to CP
+set_location_assignment PIN_68 -to DN # RX external RS232 TTL 3.3V
+set_location_assignment PIN_69 -to DP # TX external RS232 TTL 3.3V
+
+# -- ETHERNET
+set_location_assignment PIN_6  -to ASDO
+set_location_assignment PIN_8  -to NCSO
+set_location_assignment PIN_13 -to DATA0
+set_location_assignment PIN_12 -to DCLK
+set_location_assignment PIN_33 -to ETH_CS_N
+set_location_assignment PIN_23 -to ETH_INT_N
+set_location_assignment PIN_24 -to ETH_SO
+
+# -- SDRAM
+set_location_assignment PIN_65  -to DRAM_A[12]
+set_location_assignment PIN_66  -to DRAM_A[11]
+set_location_assignment PIN_99  -to DRAM_A[10]
+set_location_assignment PIN_67  -to DRAM_A[9]
+set_location_assignment PIN_85  -to DRAM_A[8]
+set_location_assignment PIN_83  -to DRAM_A[7]
+set_location_assignment PIN_80  -to DRAM_A[6]
+set_location_assignment PIN_77  -to DRAM_A[5]
+set_location_assignment PIN_76  -to DRAM_A[4]
+set_location_assignment PIN_105 -to DRAM_A[3]
+set_location_assignment PIN_87  -to DRAM_A[2]
+set_location_assignment PIN_86  -to DRAM_A[1]
+set_location_assignment PIN_98  -to DRAM_A[0]
+set_location_assignment PIN_100 -to DRAM_BA[1]
+set_location_assignment PIN_101 -to DRAM_BA[0]
+set_location_assignment PIN_30  -to DRAM_DQ[15]
+set_location_assignment PIN_42  -to DRAM_DQ[14]
+set_location_assignment PIN_31  -to DRAM_DQ[13]
+set_location_assignment PIN_44  -to DRAM_DQ[12]
+set_location_assignment PIN_46  -to DRAM_DQ[11]
+set_location_assignment PIN_58  -to DRAM_DQ[10]
+set_location_assignment PIN_59  -to DRAM_DQ[9]
+set_location_assignment PIN_60  -to DRAM_DQ[8]
+set_location_assignment PIN_120 -to DRAM_DQ[7]
+set_location_assignment PIN_121 -to DRAM_DQ[6]
+set_location_assignment PIN_125 -to DRAM_DQ[5]
+set_location_assignment PIN_135 -to DRAM_DQ[4]
+set_location_assignment PIN_136 -to DRAM_DQ[3]
+set_location_assignment PIN_137 -to DRAM_DQ[2]
+set_location_assignment PIN_141 -to DRAM_DQ[1]
+set_location_assignment PIN_142 -to DRAM_DQ[0]
+set_location_assignment PIN_64  -to DRAM_DQM[1]
+set_location_assignment PIN_119 -to DRAM_DQM[0]
+set_location_assignment PIN_106 -to DRAM_CAS_N
+set_location_assignment PIN_103 -to DRAM_RAS_N
+set_location_assignment PIN_104 -to DRAM_WE_N
+set_location_assignment PIN_43  -to DRAM_CLK
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_CLK
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_A[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_A[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_A[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_A[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_A[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_A[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_A[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_A[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_A[8]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_A[9]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_A[10]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_A[11]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_A[12]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[8]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[9]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[10]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[11]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[12]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[13]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[14]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQ[15]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_BA[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_BA[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQM[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_DQM[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_RAS_N
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_CAS_N
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SDRAM_WE_N
+
+# -- SD card
+set_location_assignment PIN_110 -to SD_CLK
+set_location_assignment PIN_114 -to SD_CS_N
+set_location_assignment PIN_127 -to SD_DET_N
+set_location_assignment PIN_111 -to SD_SI
+set_location_assignment PIN_126 -to SD_SO
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SD_CLK
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SD_CS_N
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SD_DET_N
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SD_SI
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SD_SO
+
+# -- USB
+set_location_assignment PIN_49 -to USB_CLK
+set_location_assignment PIN_51 -to USB_CS_N
+set_location_assignment PIN_31 -to USB_DBG
+set_location_assignment PIN_55 -to USB_IO1
+set_location_assignment PIN_54 -to USB_IO3
+set_location_assignment PIN_30 -to USB_PROG_N
+set_location_assignment PIN_32 -to USB_RESET_N
+set_location_assignment PIN_50 -to USB_SI
+set_location_assignment PIN_52 -to USB_SO
+set_location_assignment PIN_53 -to USB_TX
+set_location_assignment PIN_39 -to USB_RX
+
+# -- I2C (shared HDMI and RTC)
+set_location_assignment PIN_7   -to I2C_SDA
+set_location_assignment PIN_28  -to I2C_SCL
+set_location_assignment PIN_129 -to RTC_SQW
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to I2C_SDA
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to I2C_SCL
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to RTC_SQW
+
+# -- HDMI (vendor-specific differential)
+#set_location_assignment PIN_113 -to HDMI_CLK
+#set_location_assignment PIN_112 -to "HDMI_CLK(n)"
+#set_location_assignment PIN_133 -to HDMI_D0
+#set_location_assignment PIN_132 -to "HDMI_D0(n)"
+#set_location_assignment PIN_144 -to HDMI_D1
+#set_location_assignment PIN_143 -to "HDMI_D1N"
+#set_location_assignment PIN_10  -to HDMI_D2
+#set_location_assignment PIN_11  -to "HDMI_D2(n)"
+#set_location_assignment PIN_115 -to HDMI_CEC
+#set_instance_assignment -name IO_STANDARD LVDS_E_3R -to HDMI_CLK
+#set_instance_assignment -name IO_STANDARD LVDS_E_3R -to HDMI_D0
+##set_instance_assignment -name IO_STANDARD LVDS_E_3R -to HDMI_D1 # no support for LVDS_E_3R?
+#set_instance_assignment -name IO_STANDARD LVDS_E_3R -to HDMI_D2
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to HDMI_CEC
+
+# -- HDMI (GPIO, generic "differential")
+set_location_assignment PIN_113 -to "HDMI_CLKP"
+set_location_assignment PIN_112 -to "HDMI_CLKN"
+set_location_assignment PIN_133 -to "HDMI_DP[0]"
+set_location_assignment PIN_132 -to "HDMI_DN[0]"
+set_location_assignment PIN_144 -to "HDMI_DP[1]"
+set_location_assignment PIN_143 -to "HDMI_DN[1]"
+set_location_assignment PIN_10  -to "HDMI_DP[2]"
+set_location_assignment PIN_11  -to "HDMI_DN[2]"
+set_location_assignment PIN_115 -to "HDMI_CEC"
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to "HDMI_CLKP"
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to "HDMI_CLKN"
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to "HDMI_DP[0]"
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to "HDMI_DN[0]"
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to "HDMI_DP[1]"
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to "HDMI_DN[1]"
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to "HDMI_DP[2]"
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to "HDMI_DN[2]"
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to "HDMI_CEC"
+#
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
