@@ -1,0 +1,15 @@
+# tb276.cfg
+# OpenOCD commands
+
+telnet_port 4444
+gdb_port 3333
+
+adapter_khz 1000
+
+# JTAG TAPs
+jtag newtap reverseu16 tap -expected-id 0x020F30DD -irlen 10
+
+init
+scan_chain
+svf -tap reverseu16.tap project.svf
+shutdown
