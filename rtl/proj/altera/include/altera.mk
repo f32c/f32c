@@ -131,5 +131,8 @@ program_ocd: $(PROJECT).svf
 	openocd --file=$(OPENOCD_INTERFACE) --file=$(OPENOCD_BOARD)
 
 flash: $(PROJECT).jic
-	$(quartus_env); quartus_pgm --no_banner --mode=jtag -o "IPV;$(PROJECT).jic"
+	$(quartus_env); quartus_pgm --no_banner --mode=jtag -o "IP;$(PROJECT).jic"
 	echo "Power cycle or Reset device to run"
+
+# bitstream normally works but verify dumps some error (CRC)
+#	$(quartus_env); quartus_pgm --no_banner --mode=jtag -o "IPV;$(PROJECT).jic"
