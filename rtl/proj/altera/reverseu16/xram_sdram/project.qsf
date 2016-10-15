@@ -18,7 +18,7 @@
 #
 # Quartus II 32-bit
 # Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Web Edition
-# Date created = 15:42:44  October 11, 2016
+# Date created = 02:16:52  October 15, 2016
 #
 # -------------------------------------------------------------------------- #
 #
@@ -37,10 +37,10 @@
 
 
 set_global_assignment -name FAMILY "Cyclone IV E"
-set_global_assignment -name DEVICE EP4CE22E22C7
+set_global_assignment -name DEVICE EP4CE22E22C8
 set_global_assignment -name TOP_LEVEL_ENTITY reverseu16_xram_sdram
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "13.0 SP1"
-set_global_assignment -name PROJECT_CREATION_TIME_DATE "15:42:44  OCTOBER 11, 2016"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "02:16:52  OCTOBER 15, 2016"
 set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"# -------------------------------------------------------------------------- #
 #set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
