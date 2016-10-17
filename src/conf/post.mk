@@ -245,11 +245,9 @@ ${LIB}: ${OBJS} Makefile
 	${AR} ${LIBDIR}/lib${LIB}.a ${OBJS}
 
 depend:
-	mkdir -p ${OBJDIR}
-	${MKDEP} ${CFILES} ${CXXFILES} > ${OBJDIR}/.depend1
-	sed "s/\(^[^ ]*\):/${OBJDIR_ESC}\/\1:/" ${OBJDIR}/.depend1 \
-	    > ${OBJDIR}/.depend
-	rm ${OBJDIR}/.depend1
+	@mkdir -p ${OBJDIR}
+	${MKDEP} ${CFILES} ${CXXFILES} \
+	    | sed "s/\(^[^ ]*\):/${OBJDIR_ESC}\/\1:/" > ${OBJDIR}/.depend
 
 clean:
 	rm -f ${OBJS} ${PROG} ${BIN} ${HEX}
