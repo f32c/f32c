@@ -3,7 +3,7 @@
 set -e
 
 #MAKE=gmake -j4
-MAKE="make -j 8"
+MAKE="make -j 2"
 
 # prefix to install tools in /usr/local/gnu_mips_f32c
 PREFIX=/usr/local/gnu_mips_f32c
