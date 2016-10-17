@@ -32,6 +32,7 @@ entity reverseu16_xram_sdram is
         C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
 
 	C_sio: integer := 1;
+        C_spi: integer := 2;
 	C_gpio: integer := 32;
 	C_simple_io: boolean := true
     );
@@ -40,6 +41,9 @@ entity reverseu16_xram_sdram is
 	dp: out std_logic; -- rs232 txd
 	dn: in std_logic; -- rs232 rxd
 	--led: out std_logic_vector(7 downto 0);
+	-- SD card (SPI)
+        sd_clk, sd_cs_n, sd_si: out std_logic;
+        sd_so, sd_det_n: in std_logic;
 	--btn_left, btn_right: in std_logic;
 	--sw: in std_logic_vector(3 downto 0);
 	dram_a: out std_logic_vector(12 downto 0);
@@ -122,6 +126,7 @@ begin
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
+      C_spi => C_spi,
       C_debug => C_debug
     )
     port map (
@@ -129,7 +134,10 @@ begin
       clk_pixel => clk_pixel,
       clk_pixel_shift => clk_pixel_shift,
       sio_txd(0) => dp, sio_rxd(0) => dn,
-      spi_sck => open, spi_ss => open, spi_mosi => open, spi_miso => "",
+      spi_sck(0)  => open,  spi_sck(1)  => sd_clk,
+      spi_ss(0)   => open,  spi_ss(1)   => sd_cs_n,
+      spi_mosi(0) => open,  spi_mosi(1) => sd_si,
+      spi_miso(0) => open,  spi_miso(1) => sd_so,
       gpio => open,
       acram_en => ram_en,
       acram_addr(29 downto 2) => ram_address(29 downto 2),
