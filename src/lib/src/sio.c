@@ -44,6 +44,10 @@ static uint8_t sio_rxbuf_tail;	/* Managed by sio_getchar() */
 static uint8_t sio_tx_xoff;
 static uint8_t sio_isr_registered;
 
+int sio_rxempty() {
+    return sio_rxbuf_head == sio_rxbuf_tail;
+}
+
 
 static __attribute__((optimize("-Os"))) int
 sio_rx_isr(void)
@@ -55,16 +59,16 @@ sio_rx_isr(void)
 		return (0);
 
 	INB(c, IO_SIO_BYTE);
-	if (c == 0x13) {
-		/* XOFF */
-		sio_tx_xoff = 1;
-		return (1);
-	}
-	if (c == 0x11) {
-		/* XON */
-		sio_tx_xoff = 0;
-		return (1);
-	}
+// 	if (c == 0x13) {
+// 		/* XOFF */
+// 		sio_tx_xoff = 1;
+// 		return (1);
+// 	}
+// 	if (c == 0x11) {
+// 		/* XON */
+// 		sio_tx_xoff = 0;
+// 		return (1);
+// 	}
 	sio_rxbuf[sio_rxbuf_head++] = c;
 	sio_rxbuf_head &= SIO_RXBUFMASK;
 	return(1);
