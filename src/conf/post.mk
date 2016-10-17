@@ -202,6 +202,8 @@ MKDEP = ${CC} -MM
 ifndef OBJDIR
 	OBJDIR=./obj/${ARCH_DIR}
 endif
+# We need this crap for feeding sed when parsing .depend
+OBJDIR_ESC := $(shell echo ${OBJDIR} | sed -E "s%([\\./])%\\\\\1%g")
 
 #
 # Autogenerate targets
@@ -236,8 +238,6 @@ ${BIN}: ${PROG} Makefile
 	${ISA_CHECK} ${ARCH} ${PROG}
 	${OBJCOPY} ${OBJFLAGS} -O binary ${PROG} ${BIN}
 
-${OBJS}: ${HEADERS}
-
 ${PROG}: ${OBJS} Makefile
 	${LD} -o ${PROG} ${OBJS} ${MK_LIBS}
 
@@ -245,13 +245,17 @@ ${LIB}: ${OBJS} Makefile
 	${AR} ${LIBDIR}/lib${LIB}.a ${OBJS}
 
 depend:
-	${MKDEP} ${CFILES} ${CXXFILES} > .depend
+	mkdir -p ${OBJDIR}
+	${MKDEP} ${CFILES} ${CXXFILES} > ${OBJDIR}/.depend1
+	sed "s/\(^[^ ]*\):/${OBJDIR_ESC}\/\1:/" ${OBJDIR}/.depend1 \
+	    > ${OBJDIR}/.depend
+	rm ${OBJDIR}/.depend1
 
 clean:
 	rm -f ${OBJS} ${PROG} ${BIN} ${HEX}
 
 cleandepend:
-	rm -f .depend
+	rm -f ${OBJDIR}/.depend
 
 abort:
 	@ echo Error: unspecified target!
@@ -290,4 +294,4 @@ $(addprefix ${OBJDIR}/,%.O) : %.S
 	@mkdir -p $(dir $@)
 	${AS} -o $@ $<
 
--include .depend
+-include ${OBJDIR}/.depend
