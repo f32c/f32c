@@ -136,10 +136,8 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to SD_SO
 # -- USB
 set_location_assignment PIN_49 -to USB_CLK
 set_location_assignment PIN_51 -to USB_CS_N
-set_location_assignment PIN_31 -to USB_DBG
 set_location_assignment PIN_55 -to USB_IO1
 set_location_assignment PIN_54 -to USB_IO3
-set_location_assignment PIN_30 -to USB_PROG_N
 set_location_assignment PIN_32 -to USB_RESET_N
 set_location_assignment PIN_50 -to USB_SI
 set_location_assignment PIN_52 -to USB_SO
