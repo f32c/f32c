@@ -32,6 +32,7 @@ entity reverseu16_xram_sdram is
         C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
 
 	C_sio: integer := 1;
+	C_sio_init_baudrate: integer := 115200;
         C_spi: integer := 2;
 	C_gpio: integer := 32;
 	C_simple_io: boolean := true
@@ -40,7 +41,10 @@ entity reverseu16_xram_sdram is
 	clk_50MHz: in std_logic;
 	dp: out std_logic; -- rs232 txd
 	dn: in std_logic; -- rs232 rxd
-	--led: out std_logic_vector(7 downto 0);
+	-- vnc2 usb chip connection
+	usb_reset_n: inout std_logic;
+	usb_tx: in std_logic;
+	usb_rx: out std_logic;
 	-- SD card (SPI)
         sd_clk, sd_cs_n, sd_si: out std_logic;
         sd_so, sd_det_n: in std_logic;
@@ -108,6 +112,8 @@ begin
     );
     end generate;
 
+    usb_reset_n <= '1'; -- bring VNC2 usbserial chip out of reset
+
     -- generic XRAM glue
     glue_xram: entity work.glue_xram
     generic map (
@@ -126,6 +132,8 @@ begin
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
+      C_sio => C_sio,
+      C_sio_init_baudrate => C_sio_init_baudrate,
       C_spi => C_spi,
       C_debug => C_debug
     )
@@ -133,7 +141,8 @@ begin
       clk => clk,
       clk_pixel => clk_pixel,
       clk_pixel_shift => clk_pixel_shift,
-      sio_txd(0) => dp, sio_rxd(0) => dn,
+      -- sio_txd(0) => dp, sio_rxd(0) => dn, -- for external rs232 3.3V usbserial
+      sio_txd(0) => usb_rx, sio_rxd(0) => usb_tx, -- for internal VNC2 with firmware USBSlaveFT232Emu_build20161023.zip
       spi_sck(0)  => open,  spi_sck(1)  => sd_clk,
       spi_ss(0)   => open,  spi_ss(1)   => sd_cs_n,
       spi_mosi(0) => open,  spi_mosi(1) => sd_si,
