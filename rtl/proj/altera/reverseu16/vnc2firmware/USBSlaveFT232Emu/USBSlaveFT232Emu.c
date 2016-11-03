@@ -320,7 +320,7 @@ void uartTx()
 {
 	common_ioctl_cb_t iocb;
 	unsigned char b;
-	unsigned char led = 0xFF;
+	unsigned char led = LED_OFF;
 	unsigned short bytesTransferred;
 
 	// All VNC2 configuration is done in this uartTx thread
@@ -337,6 +337,8 @@ void uartTx()
 	// Port A, bit7 is the only one in use wiht this application.
 	// It is set as an output to drive an LED.
 	initialize_gpio(hGPIO_PORT_A);
+	led = LED_ON;
+	vos_dev_write(hGPIO_PORT_A, &led, 1, NULL);
 
 	// Unblock other threads now that everything is configured
 	vos_signal_semaphore(&semConfigured);
@@ -351,7 +353,7 @@ void uartTx()
 		iocb.get.queue_stat = 0;
 		vos_dev_ioctl(hUSBSLAVE_FT232, &iocb);
 
-		// If no bytes are available, wait a bit and return to teh top of the while() loop to try again
+		// If no bytes are available, wait a bit and return to the top of the while() loop to try again
 		if (iocb.get.queue_stat == 0)
 		{
 			vos_delay_msecs(5);	// delay timing can be varied to alter performance
@@ -365,15 +367,13 @@ void uartTx()
 		// read the available bytes from the USB port
 		vos_dev_read(hUSBSLAVE_FT232, &writebuf[0], iocb.get.queue_stat, &bytesTransferred);
 
-		// turn on the LED
-		led = 0x00;
+		led = LED_OFF;
 		vos_dev_write(hGPIO_PORT_A, &led, 1, NULL);
 
 		// send the bytes just read out the UART port
 		vos_dev_write(hUART, &writebuf[0], iocb.get.queue_stat, &bytesTransferred);
 
-		// turn off the LED
-		led = 0xFF;
+		led = LED_ON;
 		vos_dev_write(hGPIO_PORT_A, &led, 1, NULL);
 	}
 
@@ -384,7 +384,7 @@ void uartRx()
 	common_ioctl_cb_t iocb;
 	unsigned char b;
 	unsigned short bytesTransferred;
-	unsigned char led = 0xFF;
+	unsigned char led = LED_OFF;
 
 	// wait for other thread to initialize the hardware and drivers....
 	vos_wait_semaphore(&semConfigured);
@@ -411,15 +411,13 @@ void uartRx()
 		// read the data from the UART into the buffer
 		vos_dev_read(hUART, &readbuf[0], iocb.get.queue_stat, &bytesTransferred);
 
-		// turn on the LED
-		led = 0x00;
+		led = LED_OFF;
 		vos_dev_write(hGPIO_PORT_A, &led, 1, NULL);
 
 		// send the bytes just read to the USB port
 		vos_dev_write(hUSBSLAVE_FT232, &readbuf[0], iocb.get.queue_stat, &bytesTransferred);
 
-		// turn off the LED
-		led = 0xFF;
+		led = LED_ON;
 		vos_dev_write(hGPIO_PORT_A, &led, 1, NULL);
 	}
 

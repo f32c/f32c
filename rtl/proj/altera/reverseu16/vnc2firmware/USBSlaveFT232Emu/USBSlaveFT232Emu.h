@@ -39,3 +39,5 @@ VOS_HANDLE hUSBSLAVE_FT232; // Emulates an FT232 device using the USB Slave Inte
 
 #define BUFFER_SIZE 128
 
+#define LED_ON  0xFF
+#define LED_OFF 0x00

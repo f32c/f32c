@@ -20,8 +20,8 @@ void iomux_setup(void)
 		vos_iomux_define_bidi(11, IOMUX_IN_DEBUGGER, IOMUX_OUT_DEBUGGER);
 		// GPIO_Port_A_1 to pin 12 as Input.
 		vos_iomux_define_input(12, IOMUX_IN_GPIO_PORT_A_1);
-		// GPIO_Port_A_2 to pin 14 as Input.
-		vos_iomux_define_input(14, IOMUX_IN_GPIO_PORT_A_2);
+		// GPIO_Port_A_2 to pin 14 as Output.
+		vos_iomux_define_output(14, IOMUX_OUT_GPIO_PORT_A_2);
 		vos_iocell_set_config(14, 3, 0, 0, 0);
 		// GPIO_Port_A_3 to pin 15 as Input.
 		vos_iomux_define_input(15, IOMUX_IN_GPIO_PORT_A_3);
