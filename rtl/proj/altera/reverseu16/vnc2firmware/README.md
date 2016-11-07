@@ -27,10 +27,10 @@ with installed FT_PROG, V2PROG and FT900 programmer.
 
 # Issues
 
-Only upper USB port on reverse-u16 board works. Onboard
-USB LED will not light up when cable is plugged (USB male-to-male 
-A-A cable to the PC), but the serial port will appear on the
-PC.
+Only upper USB port on reverse-u16 board works.
+Use USB male-to-male A-A cable to the PC.
+Onboard RED LED near USB connector will blink during 
+serial traffic.
 
 To upload another arduino sketch, re-plug reverse-u16 or reload 
 the bitstream.

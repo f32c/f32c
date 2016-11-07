@@ -6,11 +6,10 @@ This project demonstrates configuring the VNC2 to function similar to a FT232 US
 The VNC2 is connected to the host (PC) via USB Port 1.
 
 Restrictions:
-- N/A
+Serial BREAK not supported
 
 Known bugs:
 - N/A
 
 Features requests:
-- N/A
-
+Asked FTDI if they can help with Serial BREAK
