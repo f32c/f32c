@@ -1,0 +1,223 @@
+# -------------------------------------------------------------------------- #
+#set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+#set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
+#set_global_assignment -name DEVICE_FILTER_PIN_COUNT 256
+#set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 6
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 1.2V
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (VHDL)"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulation
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+# clock 50 MHz
+set_location_assignment PIN_24 -to clk_50m
+# 2 BTNs
+set_location_assignment PIN_89 -to btn[1]
+set_location_assignment PIN_88 -to btn[2]
+# 8 LEDs
+set_location_assignment PIN_10 -to ld[1]
+set_location_assignment PIN_11 -to ld[2]
+set_location_assignment PIN_28 -to ld[3]
+set_location_assignment PIN_30 -to ld[4]
+set_location_assignment PIN_31 -to ld[5]
+set_location_assignment PIN_32 -to ld[6]
+set_location_assignment PIN_33 -to ld[7]
+set_location_assignment PIN_34 -to ld[8]
+# rs232 onboard
+set_location_assignment PIN_98 -to rs232_txd
+set_location_assignment PIN_91 -to rs232_rxd
+
+# J1 connector
+set_location_assignment PIN_87 -to gpio[0]
+set_location_assignment PIN_86 -to gpio[1]
+set_location_assignment PIN_85 -to gpio[2]
+set_location_assignment PIN_84 -to gpio[3]
+set_location_assignment PIN_83 -to gpio[4]
+set_location_assignment PIN_80 -to gpio[5]
+set_location_assignment PIN_77 -to gpio[6]
+set_location_assignment PIN_76 -to gpio[7]
+set_location_assignment PIN_75 -to gpio[8]
+set_location_assignment PIN_74 -to gpio[9]
+# VIN physical pin 11
+# GND physical pin 12
+set_location_assignment PIN_73 -to gpio[10]
+set_location_assignment PIN_72 -to gpio[11]
+set_location_assignment PIN_71 -to gpio[12]
+set_location_assignment PIN_70 -to gpio[13]
+set_location_assignment PIN_69 -to gpio[14]
+set_location_assignment PIN_68 -to gpio[15]
+set_location_assignment PIN_67 -to gpio[16]
+set_location_assignment PIN_66 -to gpio[17]
+set_location_assignment PIN_65 -to gpio[18]
+set_location_assignment PIN_64 -to gpio[19]
+set_location_assignment PIN_60 -to gpio[20]
+set_location_assignment PIN_59 -to gpio[21]
+set_location_assignment PIN_58 -to gpio[22]
+set_location_assignment PIN_55 -to gpio[23]
+set_location_assignment PIN_54 -to gpio[24]
+set_location_assignment PIN_53 -to gpio[25]
+# +3.3V physical pin 29
+#  GND  physical pin 30
+set_location_assignment PIN_52 -to gpio[26]
+set_location_assignment PIN_51 -to gpio[27]
+set_location_assignment PIN_50 -to gpio[28]
+set_location_assignment PIN_49 -to gpio[29]
+set_location_assignment PIN_46 -to gpio[30]
+set_location_assignment PIN_44 -to gpio[31]
+set_location_assignment PIN_43 -to gpio[32]
+set_location_assignment PIN_42 -to gpio[33]
+set_location_assignment PIN_39 -to gpio[34]
+set_location_assignment PIN_38 -to gpio[35]
+
+# J2 connector
+set_location_assignment PIN_3   -to gpio[36]
+set_location_assignment PIN_7   -to gpio[37]
+set_location_assignment PIN_1   -to gpio[38]
+set_location_assignment PIN_2   -to gpio[39]
+set_location_assignment PIN_143 -to gpio[40]
+set_location_assignment PIN_144 -to gpio[41]
+set_location_assignment PIN_141 -to gpio[42]
+set_location_assignment PIN_142 -to gpio[43]
+set_location_assignment PIN_137 -to gpio[44]
+set_location_assignment PIN_138 -to gpio[45]
+# VIN physical pin 11
+# GND physical pin 12
+# differential section for HDMI
+set_location_assignment PIN_135 -to "hdmi_hec(n)"
+set_location_assignment PIN_136 -to "hdmi_hec"
+set_location_assignment PIN_132 -to "hdmi_d(n)[2]"
+set_location_assignment PIN_133 -to "hdmi_d[2]"
+set_location_assignment PIN_128 -to "hdmi_d(n)[1]"
+set_location_assignment PIN_129 -to "hdmi_d[1]"
+set_location_assignment PIN_126 -to "hdmi_d(n)[0]"
+set_location_assignment PIN_127 -to "hdmi_d[0]"
+set_location_assignment PIN_124 -to "hdmi_scl"
+set_location_assignment PIN_125 -to "hdmi_sda"
+set_location_assignment PIN_120 -to "hdmi_clk(n)"
+set_location_assignment PIN_121 -to "hdmi_clk"
+set_location_assignment PIN_115 -to "hdmi_cec"
+set_location_assignment PIN_119 -to "hdmi_gpio[0]"
+set_location_assignment PIN_113 -to "hdmi_gpio[1]"
+set_location_assignment PIN_114 -to "hdmi_gpio[2]"
+# +3.3V physical pin 29
+#  GND  physical pin 30
+set_location_assignment PIN_111 -to gpio[46]
+set_location_assignment PIN_112 -to gpio[47]
+set_location_assignment PIN_106 -to gpio[48]
+set_location_assignment PIN_110 -to gpio[49]
+set_location_assignment PIN_104 -to gpio[50]
+set_location_assignment PIN_105 -to gpio[51]
+#set_location_assignment PIN_101 -to gpio[52]
+#set_location_assignment PIN_103 -to gpio[53]
+#set_location_assignment PIN_99  -to gpio[54]
+#set_location_assignment PIN_100 -to gpio[55]
+
+
+# the 433.92 MHz antenna pin
+# set_location_assignment PIN_75 -to ant_433M92
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_25m
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_rxd
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_txd
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to ant_433M92
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to ld[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to ld[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to ld[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to ld[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to ld[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to ld[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to ld[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to ld[8]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to btn[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to btn[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[8]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[9]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[10]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[11]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[12]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[13]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[14]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[15]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[16]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[17]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[18]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[19]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[20]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[21]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[22]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[23]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[24]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[25]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[26]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[27]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[28]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[29]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[30]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[31]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[32]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[33]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[34]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[35]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[36]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[37]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[38]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[39]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to gpio[40]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to gpio[41]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to gpio[42]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to gpio[43]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to gpio[44]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to gpio[45]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to gpio[46]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to gpio[47]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[48]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to gpio[49]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[50]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[51]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[52]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[53]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[54]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpio[55]
+
+# Differential HDMI
+set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_clk"
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_clk"
+set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_clk(n)"
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_clk(n)"
+set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_d[0]"
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_d[0]"
+set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_d(n)[0]"
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_d(n)[0]"
+set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_d[1]"
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_d[1]"
+set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_d(n)[1]"
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_d(n)[1]"
+set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_d[2]"
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_d[2]"
+set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_d(n)[2]"
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_d(n)[2]"
+set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_hec"
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_hec"
+set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_hec(n)"
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_hec(n)"
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_sda
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to hdmi_sda
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_scl
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to hdmi_scl
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_cec
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to hdmi_cec
+
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
