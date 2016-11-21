@@ -108,6 +108,7 @@ $(PROJECT).xsvf: $(PROJECT).svf
 
 $(ASSIGNMENT_FILES):
 	$(quartus_env); quartus_sh --prepare -f $(FAMILY) -t $(TOP_LEVEL_ENTITY) $(PROJECT)
+	echo >> $(PROJECT).qsf
 	cat $(BOARDFILE) >> $(PROJECT).qsf
 map.chg:
 	$(STAMP) map.chg
