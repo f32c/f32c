@@ -28,8 +28,9 @@ entity esa11_xram_sdram_vector is
 
         C_vector: boolean := true; -- vector processor unit (wip)
         C_vector_axi: boolean := false; -- vector processor bus type (false: normal f32c)
-        C_vector_registers: integer := 4; -- number of internal vector registers min 2, each takes 8K
-        C_vector_vaddr_bits: integer := 6;
+        C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
+        C_vector_bram_pass_thru: boolean := true; -- Cyclone-V won't compile with pass_thru=false
+        C_vector_vaddr_bits: integer := 10;
         C_vector_vdata_bits: integer := 32;
         C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
         C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
@@ -124,6 +125,7 @@ begin
       C_vector_registers => C_vector_registers,
       C_vector_vaddr_bits => C_vector_vaddr_bits,
       C_vector_vdata_bits => C_vector_vdata_bits,
+      C_vector_bram_pass_thru => C_vector_bram_pass_thru,
       C_vector_float_addsub => C_vector_float_addsub,
       C_vector_float_multiply => C_vector_float_multiply,
       C_vector_float_divide => C_vector_float_divide,

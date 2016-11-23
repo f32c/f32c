@@ -21,6 +21,7 @@ entity vector is
     C_addr_bits: integer := 3; -- don't touch: number of address bits for the registers
     C_vaddr_bits: integer range 2 to 16 := 11; -- number of address bits for BRAM vector
     C_vdata_bits: integer range 32 to 64 := 32; -- number of data bits for each vector
+    C_bram_pass_thru: boolean := false; -- altera Cyclone-V needs true
     C_vectors: integer range 2 to 8 := 8; -- total number of vector registers (BRAM blocks)
     C_float_addsub: boolean := true; -- instantiate floating point addsub (+,-)
     C_float_multiply: boolean := true; -- instantiate floating point divider (*)
@@ -434,8 +435,8 @@ begin
       generic map
       (
         dual_port => True, -- port A connected to DMA I/O, port B connected to Vector FPU
-        pass_thru_a => False, -- false allows simultaneous reading and writing
-        pass_thru_b => False, -- false allows simultaneous reading and writing
+        pass_thru_a => C_bram_pass_thru, -- false allows simultaneous reading and writing
+        pass_thru_b => C_bram_pass_thru, -- false allows simultaneous reading and writing
         data_width => C_vdata_bits,
         addr_width => C_vaddr_bits
       )

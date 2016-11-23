@@ -202,6 +202,7 @@ generic (
     C_vector_burst_max_bits: integer := 6; -- AXI MIG can do 64x32-bit word burst
     C_vector_vaddr_bits: integer := 11; -- vector size, should match FPGA internal BRAM block
     C_vector_vdata_bits: integer := 32; -- don't touch, vector data bus width
+    C_vector_bram_pass_thru: boolean := false; -- "false" is ok for all except altera Cyclone-V which needs "true"
     C_vector_axi: boolean := false; -- vector processor bus: true:AXI, false:f32c RAM
     C_vector_interrupt: boolean := false; -- library can work without it. Enabling interrupt may produce routing and timing problems
     C_vector_registers: integer := 8; -- Number of BRAM based vector registers. One register is 8K
@@ -1084,6 +1085,7 @@ begin
         C_vaddr_bits => C_vector_vaddr_bits, -- number of bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
         C_vdata_bits => C_vector_vdata_bits, -- number of data bits
         C_vectors => C_vector_registers,
+        C_bram_pass_thru => C_vector_bram_pass_thru,
         C_float_addsub => C_vector_float_addsub,
         C_float_multiply => C_vector_float_multiply,
         C_float_divide => C_vector_float_divide
