@@ -39,8 +39,11 @@ ifndef ENDIANFLAGS
 	ENDIANFLAGS = -EL
 endif
 
+TOOLPREFIX = ${ARCH}
+
 ifeq (${ARCH},riscv)
 	ARCH_DIR = ${ARCH}
+	TOOLPREFIX = ${ARCH}32
 else
 	ifeq ($(findstring -EB, ${ENDIANFLAGS}),)
 		_ARCH_BASE = ${ARCH}el
@@ -89,7 +92,7 @@ ifeq (${ARCH},riscv)
 	MK_LDFLAGS += -melf32lriscv
 
 	# f32c has no FP hardware
-	MK_CFLAGS += -msoft-float
+	MK_CFLAGS += -mno-float
 
 	# f32c/riscv has no mul / div hardware (default is muldiv)
 	MK_CFLAGS += -mno-muldiv
@@ -181,12 +184,12 @@ MK_ARFLAGS = r
 # Disregard metadata sections which objcopy may misinterpret
 OBJFLAGS = -R .rel.dyn -R .MIPS.abiflags
 
-CC = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
-CXX = ${ARCH}-elf-g++ ${MK_CFLAGS} ${MK_CXXFLAGS} ${MK_STDINC} ${MK_INCLUDES} -fno-rtti -fno-exceptions
-AS = ${ARCH}-elf-gcc ${MK_CFLAGS} ${MK_ASFLAGS} ${MK_INCLUDES}
-LD = ${ARCH}-elf-ld ${MK_LDFLAGS}
-AR = ${ARCH}-elf-ar ${MK_ARFLAGS}
-OBJCOPY = ${ARCH}-elf-objcopy
+CC = ${TOOLPREFIX}-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
+CXX = ${TOOLPREFIX}-elf-g++ ${MK_CFLAGS} ${MK_CXXFLAGS} ${MK_STDINC} ${MK_INCLUDES} -fno-rtti -fno-exceptions
+AS = ${TOOLPREFIX}-elf-gcc ${MK_CFLAGS} ${MK_ASFLAGS} ${MK_INCLUDES}
+LD = ${TOOLPREFIX}-elf-ld ${MK_LDFLAGS}
+AR = ${TOOLPREFIX}-elf-ar ${MK_ARFLAGS}
+OBJCOPY = ${TOOLPREFIX}-elf-objcopy
 ifeq ($(shell uname -s), FreeBSD)
 	ISA_CHECK = ${BASE_DIR}tools/isa_check.tcl
 else
