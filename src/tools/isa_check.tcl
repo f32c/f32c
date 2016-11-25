@@ -35,6 +35,9 @@ if {$argc != 2} {
 set arch [lindex $argv 0]
 set objfile [lindex $argv 1]
 set objdump "[set arch]-elf-objdump"
+if {$arch == "riscv"} {
+    set objdump "riscv32-elf-objdump"
+}
 
 set elffile [open "| $objdump -s $objfile"]
 set linenum 0
