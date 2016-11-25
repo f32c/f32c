@@ -1,89 +1,69 @@
-#!/bin/bash
+#!/bin/sh
 
-set -e
+# XXX check for wget, make, bison...
+# XXX Win32 -> use the MinGW-MSYS bundle
+# XXX sudo for install?
 
-#MAKE=gmake -j4
-MAKE="make -j 2"
+# XXX impossible to build statically linked binutils?
+# F32C_MAKEOPTIONS="LDFLAGS=-static"
 
-# prefix to install tools in /usr/local/gnu_mips_f32c
-PREFIX=/usr/local/gnu_mips_f32c
+SUDO=sudo
+MAKE=make
 
-MPC_ARCHIVE=$(ls mpc-*.tar.*)
-MPC_DIR=$(tar -tf $MPC_ARCHIVE | head -n 1)
-MPFR_ARCHIVE=$(ls mpfr-*.tar.*)
-MPFR_DIR=$(tar -tf $MPFR_ARCHIVE | head -n 1)
-GMP_ARCHIVE=$(ls gmp-*.tar.*)
-GMP_DIR=$(tar -tf $GMP_ARCHIVE | head -n 1)
-BINUTILS_ARCHIVE=$(ls binutils-*.tar.*)
-BINUTILS_DIR=$(tar -tf $BINUTILS_ARCHIVE | head -n 1 | cut -d/ -f 1)
-GCC_ARCHIVE=$(ls gcc-*.tar.*)
-GCC_DIR=$(tar -tf $GCC_ARCHIVE | head -n 1)
-echo "${MPC_ARCHIVE} -> ${MPC_DIR}"
-echo "${MPFR_ARCHIVE} -> ${MPFR_DIR}"
-echo "${GMP_ARCHIVE} -> ${GMP_DIR}"
-echo "${BINUTILS_ARCHIVE} -> ${BINUTILS_DIR}"
-echo "${GCC_ARCHIVE} -> ${GCC_DIR}"
+MAKE_JOBS=2
 
-if true
+BINUTILS_SRC_DIR=~/github/riscv-binutils-gdb
+GCC_SRC_DIR=~/github/riscv-gcc
+F32C_SRC_DIR=~/github/f32c
+F32C_TOOLCHAIN_DST_DIR=~/f32c_toolchain
+
+
+#
+# One-time job: fetch the sources, apply f32c patches
+#
+
+if [ ! -d ${BINUTILS_SRC_DIR} ]
 then
- rm -rf $MPC_DIR
- tar -xf $MPC_ARCHIVE
- rm -rf $MPFR_DIR
- tar -xf $MPFR_ARCHIVE
- rm -rf $GMP_DIR
- tar -xf $GMP_ARCHIVE
- rm -rf $BINUTILS_DIR
- tar -xf $BINUTILS_ARCHIVE
- rm -rf $GCC_DIR
- tar -xf $GCC_ARCHIVE
+    git clone https://github.com/riscv/riscv-binutils-gdb ${BINUTILS_SRC_DIR}
+    cd ${BINUTILS_SRC_DIR}
+    patch -p0 < ${F32C_SRC_DIR}/src/compiler/patches/binutils-2.26.diff
 fi
 
-if true
+if [ ! -d ${GCC_SRC_DIR} ]
 then
- cd $GCC_DIR
- ln -sf ../$MPC_DIR   mpc
- ln -sf ../$MPFR_DIR  mpfr
- ln -sf ../$GMP_DIR   gmp
- cd ..
+    git clone https://github.com/riscv/riscv-gcc ${GCC_SRC_DIR}
+    cd ${GCC_SRC_DIR}
+    ./contrib/download_prerequisites 
+    patch -p0 < ${F32C_SRC_DIR}/src/compiler/patches/gcc-6.1.0.diff
 fi
 
-if true
-then
- cd $BINUTILS_DIR
- patch -p0 < ../patches/binutils-2.26.diff
- cd ..
-fi
 
-if true
-then
- cd $GCC_DIR
- patch -p0 < ../patches/gcc-5.2.0.diff
- cd ..
-fi
+#
+# Build the toolchain(s)
+#
 
-if true
-then
- cd $BINUTILS_DIR
- ./configure --target=mips-elf --enable-languages=c,c++ \
-            --prefix=$PREFIX --mandir=$PREFIX/man \
-            --infodir=$PREFIX/info --disable-nls --disable-shared \
-            --disable-werror
- $MAKE
- # sudo $MAKE install
- $MAKE install
- cd ..
-fi
+${SUDO} mkdir -p ${F32C_TOOLCHAIN_DST_DIR}
 
-if true
-then
- cd $GCC_DIR
- ./configure --target=mips-elf --enable-languages=c,c++ \
-            --prefix=$PREFIX --mandir=$PREFIX/man \
-            --infodir=$PREFIX/info --disable-nls --disable-shared \
-	    --disable-werror
+for TARGET_ARCH in riscv32 mips
+do
+    for SRC_DIR in ${BINUTILS_SRC_DIR} ${GCC_SRC_DIR}
+    do
+	cd ${SRC_DIR}
+	${MAKE} distclean
+	find . -name config.cache -exec rm {} \;
+	./configure --target=${TARGET_ARCH}-elf --enable-languages=c,c++ \
+		--prefix=${F32C_TOOLCHAIN_DST_DIR} \
+		--mandir=${F32C_TOOLCHAIN_DST_DIR}/man \
+		--infodir=${F32C_TOOLCHAIN_DST_DIR}/info \
+		--disable-nls --disable-shared \
+		--disable-werror --with-gnu-as --with-gnu-ld
+	${MAKE} -j ${MAKE_JOBS} ${F32C_MAKEOPTIONS}
+	${SUDO} ${MAKE} ${F32C_MAKEOPTIONS} install
+    done
 
- $MAKE
- $MAKE install
- # sudo $MAKE install
- cd ..
-fi
+    ${SUDO} strip ${F32C_TOOLCHAIN_DST_DIR}/bin/${TARGET_ARCH}-elf-*
+    ${SUDO} find ${F32C_TOOLCHAIN_DST_DIR}/${TARGET_ARCH}-elf \
+	-type f -exec strip {} \;
+    ${SUDO} find ${F32C_TOOLCHAIN_DST_DIR}/libexec/gcc/${TARGET_ARCH}-elf \
+	-type f -exec strip {} \;
+done
