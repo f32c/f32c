@@ -30,6 +30,7 @@ entity reverseu16_xram_sdram is
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
         C_vector_vaddr_bits: integer := 10;
         C_vector_vdata_bits: integer := 32;
+        C_vector_bram_pass_thru: boolean := false; -- Cyclone-IV works with "true" and "false", Cyclone-V needs "true"
         C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
         C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
         C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
@@ -158,6 +159,7 @@ begin
       C_vector_registers => C_vector_registers,
       C_vector_vaddr_bits => C_vector_vaddr_bits,
       C_vector_vdata_bits => C_vector_vdata_bits,
+      C_vector_bram_pass_thru => C_vector_bram_pass_thru,
       C_vector_float_addsub => C_vector_float_addsub,
       C_vector_float_multiply => C_vector_float_multiply,
       C_vector_float_divide => C_vector_float_divide,
