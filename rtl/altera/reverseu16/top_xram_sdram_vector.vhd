@@ -15,8 +15,8 @@ entity reverseu16_xram_sdram is
 	C_debug: boolean := false;
 	C_branch_prediction: boolean := true;
 
-	-- Main clock: 81/83/112 (83 for hdmi video)
-	C_clk_freq: integer := 83;
+	-- Main clock: 81/83/100 (83,100 for hdmi video)
+	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
 	C_bram_size: integer := 2;
@@ -91,7 +91,7 @@ architecture Behavioral of reverseu16_xram_sdram is
 begin
     -- clock synthesizer: Altera specific
     G_generic_clk:
-    if C_clk_freq /= 81 and C_clk_freq /= 83 generate
+    if C_clk_freq /= 81 and C_clk_freq /= 83 and C_clk_freq /= 100 generate
     clock_generic: entity work.pll_50m
     generic map (
 	C_clk_freq => C_clk_freq
@@ -99,6 +99,18 @@ begin
     port map (
 	clk_50m => clk_50MHz,
 	clk => clk
+    );
+    end generate;
+
+    G_100m_clk: if C_clk_freq = 100 generate
+    clkgen: entity work.clk_50_250_25_100MHz
+    port map(
+      inclk0 => clk_50MHz,      --  50 MHz input from board
+      areset => '0',
+      locked => open,
+      c0 => clk_pixel_shift,  -- 250 MHz
+      c1 => clk_pixel,        --  25 MHz
+      c2 => clk               -- 100 MHz
     );
     end generate;
 

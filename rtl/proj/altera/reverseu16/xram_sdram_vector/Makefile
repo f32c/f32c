@@ -36,9 +36,10 @@ include ../../include/altera.mk
 # Setup your sources here
 SRCS = \
 ../../../../altera/reverseu16/top_xram_sdram_vector.vhd \
-../../../../altera/de0nano/clocks/pll_50M_250M_25M_83M333.vhd \
-../../../../altera/de0nano/clocks/pll_50m.vhd \
-../../../../altera/de0nano/clocks/pll_50m_81m25.vhd \
+../../../../altera/reverseu16/clocks/pll_50M_250M_25M_83M333.vhd \
+../../../../altera/reverseu16/clocks/pll_50m.vhd \
+../../../../altera/reverseu16/clocks/pll_50m_81m25.vhd \
+../../../../altera/reverseu16/clocks/clk_50_250_25_100MHz.vhd \
 ../../../../generic/hdmi_out.vhd \
 ../../../../generic/glue_xram_vector.vhd \
 ../../../../generic/bram.vhd \
