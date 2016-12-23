@@ -56,6 +56,10 @@ entity esa11_xram_axiram_ddr3 is
 	C_axiram: boolean := true;
 	C_axi_mig_data_bits: integer := 128; -- 32 or 128 (data bus width in link between MIG and AXI interconnect)
 
+        C_mult_enable: boolean := true;
+        C_mul_acc: boolean := false;    -- MI32 only
+        C_mul_reg: boolean := false;    -- MI32 only
+
         -- warning: 2K, 4K, 8K, 16K, 32K cache produces timing critical warnings at 100MHz cpu clock
         C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
         C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
@@ -69,6 +73,7 @@ entity esa11_xram_axiram_ddr3 is
         C_vector_axi: boolean := true; -- true: use AXI I/O, false use f32c RAM port I/O
         C_vector_burst_max_bits: integer := 6; -- describe max burst
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
+        C_vector_bram_pass_thru: boolean := true; -- number of internal vector registers min 2, each takes 8K
         C_vector_vaddr_bits: integer := 11;
         C_vector_vdata_bits: integer := 32;
         C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
@@ -569,6 +574,7 @@ begin
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_cached_addr_bits,
+      C_mult_enable => C_mult_enable, C_mul_acc => C_mul_acc, C_mul_reg => C_mul_reg,
       C_gpio => C_gpio,
       C_timer => C_timer,
       C_sio => C_sio,
@@ -577,6 +583,7 @@ begin
       C_vector_axi => C_vector_axi,
       C_vector_burst_max_bits => C_vector_burst_max_bits,
       C_vector_registers => C_vector_registers,
+      C_vector_bram_pass_thru => C_vector_bram_pass_thru,
       C_vector_vaddr_bits => C_vector_vaddr_bits,
       C_vector_vdata_bits => C_vector_vdata_bits,
       C_vector_float_addsub => C_vector_float_addsub,
