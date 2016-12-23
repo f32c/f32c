@@ -1,0 +1,212 @@
+# -------------------------------------------------------------------------- #
+#set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+#set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
+#set_global_assignment -name DEVICE_FILTER_PIN_COUNT 256
+#set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 6
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 1.2V
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (VHDL)"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulation
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+# clock 50 MHz
+set_location_assignment PIN_N5 -to ADC_CLK_10
+set_location_assignment PIN_P11 -to MAX10_CLK1_50
+set_location_assignment PIN_N14 -to MAX10_CLK2_50
+# 2 BTNs
+set_location_assignment PIN_B8 -to KEY[0]
+set_location_assignment PIN_A7 -to KEY[1]
+# 10 switches
+set_location_assignment PIN_C10 -to SW[0]
+set_location_assignment PIN_C11 -to SW[1]
+set_location_assignment PIN_D12 -to SW[2]
+set_location_assignment PIN_C12 -to SW[3]
+set_location_assignment PIN_A12 -to SW[4]
+set_location_assignment PIN_B12 -to SW[5]
+set_location_assignment PIN_A13 -to SW[6]
+set_location_assignment PIN_A14 -to SW[7]
+set_location_assignment PIN_B14 -to SW[8]
+set_location_assignment PIN_F15 -to SW[9]
+# 10 LEDs
+set_location_assignment PIN_A8 -to LEDR[0]
+set_location_assignment PIN_A9 -to LEDR[1]
+set_location_assignment PIN_A10 -to LEDR[2]
+set_location_assignment PIN_B10 -to LEDR[3]
+set_location_assignment PIN_D13 -to LEDR[4]
+set_location_assignment PIN_C13 -to LEDR[5]
+set_location_assignment PIN_E14 -to LEDR[6]
+set_location_assignment PIN_D14 -to LEDR[7]
+set_location_assignment PIN_A11 -to LEDR[8]
+set_location_assignment PIN_B11 -to LEDR[9]
+# rs232 onboard
+#set_location_assignment PIN_98 -to rs232_txd
+#set_location_assignment PIN_91 -to rs232_rxd
+# VGA output
+set_location_assignment PIN_P1 -to VGA_B[0]
+set_location_assignment PIN_T1 -to VGA_B[1]
+set_location_assignment PIN_P4 -to VGA_B[2]
+set_location_assignment PIN_N2 -to VGA_B[3]
+set_location_assignment PIN_W1 -to VGA_G[0]
+set_location_assignment PIN_T2 -to VGA_G[1]
+set_location_assignment PIN_R2 -to VGA_G[2]
+set_location_assignment PIN_R1 -to VGA_G[3]
+set_location_assignment PIN_N3 -to VGA_HS
+set_location_assignment PIN_AA1 -to VGA_R[0]
+set_location_assignment PIN_V1 -to VGA_R[1]
+set_location_assignment PIN_Y2 -to VGA_R[2]
+set_location_assignment PIN_Y1 -to VGA_R[3]
+set_location_assignment PIN_N1 -to VGA_VS
+# SDRAM
+set_location_assignment PIN_U17 -to DRAM_ADDR[0]
+set_location_assignment PIN_W19 -to DRAM_ADDR[1]
+set_location_assignment PIN_V18 -to DRAM_ADDR[2]
+set_location_assignment PIN_U18 -to DRAM_ADDR[3]
+set_location_assignment PIN_U19 -to DRAM_ADDR[4]
+set_location_assignment PIN_T18 -to DRAM_ADDR[5]
+set_location_assignment PIN_T19 -to DRAM_ADDR[6]
+set_location_assignment PIN_R18 -to DRAM_ADDR[7]
+set_location_assignment PIN_P18 -to DRAM_ADDR[8]
+set_location_assignment PIN_P19 -to DRAM_ADDR[9]
+set_location_assignment PIN_T20 -to DRAM_ADDR[10]
+set_location_assignment PIN_P20 -to DRAM_ADDR[11]
+set_location_assignment PIN_R20 -to DRAM_ADDR[12]
+set_location_assignment PIN_T21 -to DRAM_BA[0]
+set_location_assignment PIN_T22 -to DRAM_BA[1]
+set_location_assignment PIN_U22 -to DRAM_RAS_N
+set_location_assignment PIN_U21 -to DRAM_CAS_N
+set_location_assignment PIN_V22 -to DRAM_DQM[0]
+set_location_assignment PIN_J21 -to DRAM_DQM[1]
+set_location_assignment PIN_Y21 -to DRAM_DQ[0]
+set_location_assignment PIN_Y20 -to DRAM_DQ[1]
+set_location_assignment PIN_AA22 -to DRAM_DQ[2]
+set_location_assignment PIN_AA21 -to DRAM_DQ[3]
+set_location_assignment PIN_Y22 -to DRAM_DQ[4]
+set_location_assignment PIN_W22 -to DRAM_DQ[5]
+set_location_assignment PIN_W20 -to DRAM_DQ[6]
+set_location_assignment PIN_V21 -to DRAM_DQ[7]
+set_location_assignment PIN_P21 -to DRAM_DQ[8]
+set_location_assignment PIN_J22 -to DRAM_DQ[9]
+set_location_assignment PIN_H21 -to DRAM_DQ[10]
+set_location_assignment PIN_H22 -to DRAM_DQ[11]
+set_location_assignment PIN_G22 -to DRAM_DQ[12]
+set_location_assignment PIN_G20 -to DRAM_DQ[13]
+set_location_assignment PIN_G19 -to DRAM_DQ[14]
+set_location_assignment PIN_F22 -to DRAM_DQ[15]
+set_location_assignment PIN_V20 -to DRAM_WE_N
+set_location_assignment PIN_L14 -to DRAM_CLK
+set_location_assignment PIN_N22 -to DRAM_CKE
+set_location_assignment PIN_U20 -to DRAM_CS_N
+# differential section for HDMI
+#set_location_assignment PIN_135 -to "hdmi_hec(n)"
+#set_location_assignment PIN_136 -to "hdmi_hec"
+#set_location_assignment PIN_132 -to "hdmi_d(n)[2]"
+#set_location_assignment PIN_133 -to "hdmi_d[2]"
+#set_location_assignment PIN_128 -to "hdmi_d(n)[1]"
+#set_location_assignment PIN_129 -to "hdmi_d[1]"
+#set_location_assignment PIN_126 -to "hdmi_d(n)[0]"
+#set_location_assignment PIN_127 -to "hdmi_d[0]"
+#set_location_assignment PIN_124 -to "hdmi_scl"
+#set_location_assignment PIN_125 -to "hdmi_sda"
+#set_location_assignment PIN_120 -to "hdmi_clk(n)"
+#set_location_assignment PIN_121 -to "hdmi_clk"
+#set_location_assignment PIN_115 -to "hdmi_cec"
+#set_location_assignment PIN_119 -to "hdmi_gpio[0]"
+#set_location_assignment PIN_113 -to "hdmi_gpio[1]"
+#set_location_assignment PIN_114 -to "hdmi_gpio[2]"
+# accelerometer
+set_location_assignment PIN_AB16 -to GSENSOR_CS_N
+set_location_assignment PIN_Y14 -to GSENSOR_INT[1]
+set_location_assignment PIN_Y13 -to GSENSOR_INT[2]
+set_location_assignment PIN_AB15 -to GSENSOR_SCLK
+set_location_assignment PIN_V11 -to GSENSOR_SDI
+set_location_assignment PIN_V12 -to GSENSOR_SDO
+# Arduino connector
+set_location_assignment PIN_AB5 -to ARDUINO_IO[0]
+set_location_assignment PIN_AB6 -to ARDUINO_IO[1]
+set_location_assignment PIN_AB7 -to ARDUINO_IO[2]
+set_location_assignment PIN_AB8 -to ARDUINO_IO[3]
+set_location_assignment PIN_AB9 -to ARDUINO_IO[4]
+set_location_assignment PIN_Y10 -to ARDUINO_IO[5]
+set_location_assignment PIN_AA11 -to ARDUINO_IO[6]
+set_location_assignment PIN_AA12 -to ARDUINO_IO[7]
+set_location_assignment PIN_AB17 -to ARDUINO_IO[8]
+set_location_assignment PIN_AA17 -to ARDUINO_IO[9]
+set_location_assignment PIN_AB19 -to ARDUINO_IO[10]
+set_location_assignment PIN_AA19 -to ARDUINO_IO[11]
+set_location_assignment PIN_Y19 -to ARDUINO_IO[12]
+set_location_assignment PIN_AB20 -to ARDUINO_IO[13]
+set_location_assignment PIN_AB21 -to ARDUINO_IO[14]
+set_location_assignment PIN_AA20 -to ARDUINO_IO[15]
+set_location_assignment PIN_F16 -to ARDUINO_RESET_N
+# GPIO
+set_location_assignment PIN_V10 -to GPIO[0]
+set_location_assignment PIN_W10 -to GPIO[1]
+set_location_assignment PIN_V9 -to GPIO[2]
+set_location_assignment PIN_W9 -to GPIO[3]
+set_location_assignment PIN_V8 -to GPIO[4]
+set_location_assignment PIN_W8 -to GPIO[5]
+set_location_assignment PIN_V7 -to GPIO[6]
+set_location_assignment PIN_W7 -to GPIO[7]
+set_location_assignment PIN_W6 -to GPIO[8]
+set_location_assignment PIN_V5 -to GPIO[9]
+set_location_assignment PIN_W5 -to GPIO[10]
+set_location_assignment PIN_AA15 -to GPIO[11]
+set_location_assignment PIN_AA14 -to GPIO[12]
+set_location_assignment PIN_W13 -to GPIO[13]
+set_location_assignment PIN_W12 -to GPIO[14]
+set_location_assignment PIN_AB13 -to GPIO[15]
+set_location_assignment PIN_AB12 -to GPIO[16]
+set_location_assignment PIN_Y11 -to GPIO[17]
+set_location_assignment PIN_AB11 -to GPIO[18]
+set_location_assignment PIN_W11 -to GPIO[19]
+set_location_assignment PIN_AB10 -to GPIO[20]
+set_location_assignment PIN_AA10 -to GPIO[21]
+set_location_assignment PIN_AA9 -to GPIO[22]
+set_location_assignment PIN_Y8 -to GPIO[23]
+set_location_assignment PIN_AA8 -to GPIO[24]
+set_location_assignment PIN_Y7 -to GPIO[25]
+set_location_assignment PIN_AA7 -to GPIO[26]
+set_location_assignment PIN_Y6 -to GPIO[27]
+set_location_assignment PIN_AA6 -to GPIO[28]
+set_location_assignment PIN_Y5 -to GPIO[29]
+set_location_assignment PIN_AA5 -to GPIO[30]
+set_location_assignment PIN_Y4 -to GPIO[31]
+set_location_assignment PIN_AB3 -to GPIO[32]
+set_location_assignment PIN_Y3 -to GPIO[33]
+set_location_assignment PIN_AB2 -to GPIO[34]
+set_location_assignment PIN_AA2 -to GPIO[35]
+
+#set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_clk"
+#set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_clk"
+#set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_clk(n)"
+#set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_clk(n)"
+#set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_d[0]"
+#set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_d[0]"
+#set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_d(n)[0]"
+#set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_d(n)[0]"
+#set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_d[1]"
+#set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_d[1]"
+#set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_d(n)[1]"
+#set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_d(n)[1]"
+#set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_d[2]"
+#set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_d[2]"
+#set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_d(n)[2]"
+#set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_d(n)[2]"
+#set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_hec"
+#set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_hec"
+#set_instance_assignment -name IO_STANDARD "MINI-LVDS_E_3R" -to "hdmi_hec(n)"
+#set_instance_assignment -name CURRENT_STRENGTH_NEW "MINIMUM CURRENT" -to "hdmi_hec(n)"
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_sda
+#set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to hdmi_sda
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_scl
+#set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to hdmi_scl
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_cec
+#set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to hdmi_cec
+
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
