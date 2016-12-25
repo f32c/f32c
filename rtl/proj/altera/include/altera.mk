@@ -40,7 +40,7 @@ quartus_env ?= . ./quartus_env.sh
 # program: program your device with the compiled design
 ###################################################################
 
-all: $(PROJECT).sof $(PROJECT).svf $(PROJECT).jic
+all: $(PROJECT).sof $(PROJECT).svf
 
 clean:
 	rm -rf *~ $(PROJECT).jdi $(PROJECT).jic $(PROJECT).pin $(PROJECT).qws \
