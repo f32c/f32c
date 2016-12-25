@@ -39,19 +39,20 @@ entity de10lite_xram is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: 25/50/83/100 MHz (so far nothing works)
-	C_clk_freq: integer := 25;
+	-- Main clock: 25/50/75/83/100 MHz (works up to 75 MHz)
+	C_clk_freq: integer := 75;
 
 	-- SoC configuration options
 	C_bram_size: integer := 1;
+	C_boot_write_protect: boolean := false;
         C_icache_size: integer := 0;
         C_dcache_size: integer := 0;
         C_acram: boolean := true;
 
-        C_hdmi_out: boolean := true;
-        C_dvid_ddr: boolean := true;
+        C_hdmi_out: boolean := false;
+        C_dvid_ddr: boolean := false;
 
-        C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
+        C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
         C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
         -- normally this should be  actual bits per pixel
         C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
@@ -68,8 +69,11 @@ entity de10lite_xram is
 	--rs232_rxd: in std_logic;
 	sw: in std_logic_vector(9 downto 0);
 	ledr: out std_logic_vector(9 downto 0);
+	hex0, hex1, hex2, hex3, hex4, hex5: out std_logic_vector(7 downto 0);
 	arduino_io: inout std_logic_vector(15 downto 0);
 	gpio: inout std_logic_vector(35 downto 0);
+        vga_hs, vga_vs: out std_logic;
+        vga_r, vga_g, vga_b: out std_logic_vector(3 downto 0);
 	--hdmi_d: out std_logic_vector(2 downto 0);
 	--hdmi_clk: out std_logic;
 	key: in std_logic_vector(1 downto 0)
@@ -104,6 +108,27 @@ begin
 
     G_50m_clk: if C_clk_freq = 50 generate
     clk <= max10_clk1_50;
+    clkgen_50: entity work.clk_50M_25M_125MP_125MN_100M_83M33
+    port map(
+      inclk0 => max10_clk1_50, --  50 MHz input from board
+      inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
+      c0 => clk_pixel,         --  25 MHz
+      c1 => open,              -- 125 MHz positive
+      c2 => open,              -- 125 MHz negative
+      c3 => open,              -- 100 MHz
+      c4 => open               --  83.333 MHz
+    );
+    end generate;
+
+    G_75M_clk: if C_clk_freq = 75 generate
+    clkgen_75: entity work.clk_50M_25M_250M_75M
+    port map(
+      inclk0 => max10_clk1_50, --  50 MHz input from board
+      inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
+      c0 => clk_pixel,         --  25 MHz
+      c1 => open,              -- 250 MHz
+      c2 => clk                --  75 MHz
+    );
     end generate;
 
     G_83m_clk: if C_clk_freq = 83 generate
@@ -138,6 +163,7 @@ begin
       C_arch => C_arch,
       C_clk_freq => C_clk_freq,
       C_bram_size => C_bram_size,
+      C_boot_write_protect => C_boot_write_protect,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
       C_acram => C_acram,
@@ -160,22 +186,38 @@ begin
       acram_data_rd(31 downto 0) => ram_data_read(31 downto 0),
       acram_data_wr(31 downto 0) => ram_data_write(31 downto 0),
       acram_ready => ram_ready,
+      -- ***** VGA *****
+      vga_vsync => vga_vs,
+      vga_hsync => vga_hs,
+      vga_r(7 downto 4) => vga_r(3 downto 0),
+      vga_r(3 downto 0) => open,
+      vga_g(7 downto 4) => vga_g(3 downto 0),
+      vga_g(3 downto 0) => open,
+      vga_b(7 downto 4) => vga_b(3 downto 0),
+      vga_b(3 downto 0) => open,
       -- ***** HDMI *****
       --dvi_r => S_hdmi_pd2, dvi_g => S_hdmi_pd1, dvi_b => S_hdmi_pd0,
       --gpio(35 downto 0) => gpio(35 downto 0), gpio(127 downto 36) => open,
-      simple_out(9 downto 0) => ledr, simple_out(31 downto 10) => open,
+      simple_out(9 downto 0) => ledr(9 downto 0),
+      simple_out(10) => hex0(7),
+      simple_out(11) => hex1(7),
+      simple_out(12) => hex2(7),
+      simple_out(13) => hex3(7),
+      simple_out(14) => hex4(7),
+      simple_out(15) => hex5(7),
+      simple_out(31 downto 16) => open,
       simple_in(9 downto 0) => sw(9 downto 0), simple_in(31 downto 9) => open
     );
 
     acram_emulation: entity work.acram_emu
     generic map
     (
-      C_addr_width => 12
+      C_addr_width => 15
     )
     port map
     (
       clk => clk,
-      acram_a => ram_address(13 downto 2),
+      acram_a => ram_address(16 downto 2),
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,

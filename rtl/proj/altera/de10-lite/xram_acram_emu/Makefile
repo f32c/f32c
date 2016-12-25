@@ -38,6 +38,7 @@ include ../../include/altera.mk
 SRCS = \
 ../../../../altera/de10lite/top/top_de10lite_xram_acram_emu.vhd \
 ../../../../altera/de10lite/clocks/clk_50M_25M_125MP_125MN_100M_83M33.vhd \
+../../../../altera/de10lite/clocks/clk_50M_25M_250M_75M.vhd \
 ../../../../generic/hdmi_out.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \
