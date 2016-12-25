@@ -16,10 +16,10 @@ entity de10lite_xram_sdram is
 	C_branch_prediction: boolean := true;
 
 	-- Main clock: 81/83/100 (83,100 for hdmi video)
-	C_clk_freq: integer := 50;
+	C_clk_freq: integer := 83;
 
 	-- SoC configuration options
-	C_bram_size: integer := 2;
+	C_bram_size: integer := 1;
         C_icache_size: integer := 2;
         C_dcache_size: integer := 2;
         C_acram: boolean := false;
@@ -112,15 +112,18 @@ begin
     --);
     --end generate;
 
-    --G_83m333_clk: if C_clk_freq = 83 generate
-    --clkgen: entity work.pll_50M_250M_25M_83M333
-    --port map(
-    --  inclk0 => clk_50MHz,      --  50 MHz input from board
-    --  c0 => clk_pixel_shift,  -- 250 MHz
-    --  c1 => clk_pixel,        --  25 MHz
-    --  c2 => clk               --  83.333 MHz
-    --);
-    --end generate;
+    G_83m333_clk: if C_clk_freq = 83 generate
+    clkgen: entity work.clk_50M_25M_125MP_125MN_100M_83M33
+    port map(
+      inclk0 => max10_clk1_50, --  50 MHz input from board
+      inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
+      c0 => clk_pixel,         --  25 MHz
+      c1 => clk_pixel_shift,   -- 125 MHz positive
+      c2 => open,              -- 125 MHz negative
+      c3 => open,              -- 100 MHz
+      c4 => clk                --  83.333 MHz
+    );
+    end generate;
 
     --G_81m_clk:
     --if C_clk_freq = 81 generate
@@ -172,7 +175,7 @@ begin
       clk => clk,
       clk_pixel => clk_pixel,
       clk_pixel_shift => clk_pixel_shift,
-      sio_txd(0) => arduino_io(0), sio_rxd(0) => arduino_io(1),
+      sio_txd(0) => arduino_io(10), sio_rxd(0) => arduino_io(11),
       spi_sck(0)  => open,  spi_sck(1)  => open,
       spi_ss(0)   => open,  spi_ss(1)   => open,
       spi_mosi(0) => open,  spi_mosi(1) => open,

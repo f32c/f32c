@@ -39,11 +39,11 @@ entity de10lite_xram is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock:
-	C_clk_freq: integer := 50;
+	-- Main clock: 25/50/83/100 MHz (so far nothing works)
+	C_clk_freq: integer := 25;
 
 	-- SoC configuration options
-	C_bram_size: integer := 2;
+	C_bram_size: integer := 1;
         C_icache_size: integer := 0;
         C_dcache_size: integer := 0;
         C_acram: boolean := true;
@@ -51,7 +51,7 @@ entity de10lite_xram is
         C_hdmi_out: boolean := true;
         C_dvid_ddr: boolean := true;
 
-        C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
+        C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
         C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
         -- normally this should be  actual bits per pixel
         C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
@@ -72,14 +72,13 @@ entity de10lite_xram is
 	gpio: inout std_logic_vector(35 downto 0);
 	--hdmi_d: out std_logic_vector(2 downto 0);
 	--hdmi_clk: out std_logic;
-	key: in std_logic_vector(2 downto 1)
+	key: in std_logic_vector(1 downto 0)
     );
 end;
 
 architecture Behavioral of de10lite_xram is
   signal clk: std_logic;
   signal clk_pixel, clk_pixel_shift: std_logic;
-  signal btns: std_logic_vector(1 downto 0);
   signal ram_en             : std_logic;
   signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
   signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
@@ -90,6 +89,49 @@ architecture Behavioral of de10lite_xram is
   signal tx_in: std_logic_vector(29 downto 0);
   signal tmds_d: std_logic_vector(3 downto 0);
 begin
+    G_25m_clk: if C_clk_freq = 25 generate
+    clkgen_25: entity work.clk_50M_25M_125MP_125MN_100M_83M33
+    port map(
+      inclk0 => max10_clk1_50, --  50 MHz input from board
+      inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
+      c0 => clk,               --  25 MHz
+      c1 => open,              -- 125 MHz positive
+      c2 => open,              -- 125 MHz negative
+      c3 => open,              -- 100 MHz
+      c4 => open               --  83.333 MHz
+    );
+    end generate;
+
+    G_50m_clk: if C_clk_freq = 50 generate
+    clk <= max10_clk1_50;
+    end generate;
+
+    G_83m_clk: if C_clk_freq = 83 generate
+    clkgen_83: entity work.clk_50M_25M_125MP_125MN_100M_83M33
+    port map(
+      inclk0 => max10_clk1_50, --  50 MHz input from board
+      inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
+      c0 => open,              --  25 MHz
+      c1 => open,              -- 125 MHz positive
+      c2 => open,              -- 125 MHz negative
+      c3 => open,              -- 100 MHz
+      c4 => clk                --  83.333 MHz
+    );
+    end generate;
+
+    G_100m_clk: if C_clk_freq = 100 generate
+    clkgen_100: entity work.clk_50M_25M_125MP_125MN_100M_83M33
+    port map(
+      inclk0 => max10_clk1_50, --  50 MHz input from board
+      inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
+      c0 => open,              --  25 MHz
+      c1 => open,              -- 125 MHz positive
+      c2 => open,              -- 125 MHz negative
+      c3 => clk,               -- 100 MHz
+      c4 => open               --  83.333 MHz
+    );
+    end generate;
+
     -- generic XRAM glue
     glue_xram: entity work.glue_xram
     generic map (
@@ -110,7 +152,7 @@ begin
       clk => clk,
       clk_pixel => clk_pixel,
       clk_pixel_shift => clk_pixel_shift,
-      sio_txd(0) => arduino_io(0), sio_rxd(0) => arduino_io(1),
+      sio_txd(0) => arduino_io(10), sio_rxd(0) => arduino_io(11),
       spi_sck => open, spi_ss => open, spi_mosi => open, spi_miso => "",
       acram_en => ram_en,
       acram_addr(29 downto 2) => ram_address(29 downto 2),
@@ -119,10 +161,10 @@ begin
       acram_data_wr(31 downto 0) => ram_data_write(31 downto 0),
       acram_ready => ram_ready,
       -- ***** HDMI *****
-      dvi_r => S_hdmi_pd2, dvi_g => S_hdmi_pd1, dvi_b => S_hdmi_pd0,
-      gpio(35 downto 0) => gpio(35 downto 0), gpio(127 downto 36) => open,
+      --dvi_r => S_hdmi_pd2, dvi_g => S_hdmi_pd1, dvi_b => S_hdmi_pd0,
+      --gpio(35 downto 0) => gpio(35 downto 0), gpio(127 downto 36) => open,
       simple_out(9 downto 0) => ledr, simple_out(31 downto 10) => open,
-      simple_in(9 downto 0) => sw, simple_in(31 downto 10) => open
+      simple_in(9 downto 0) => sw(9 downto 0), simple_in(31 downto 9) => open
     );
 
     acram_emulation: entity work.acram_emu
@@ -155,9 +197,9 @@ begin
     -- true differential, vendor-specific
     -- tx_in <= S_HDMI_PD2 & S_HDMI_PD1 & S_HDMI_PD0; -- this would be normal bit order, but
     -- generic serializer follows vendor specific serializer style
-    tx_in <=  S_HDMI_PD2(0) & S_HDMI_PD2(1) & S_HDMI_PD2(2) & S_HDMI_PD2(3) & S_HDMI_PD2(4) & S_HDMI_PD2(5) & S_HDMI_PD2(6) & S_HDMI_PD2(7) & S_HDMI_PD2(8) & S_HDMI_PD2(9) &
-              S_HDMI_PD1(0) & S_HDMI_PD1(1) & S_HDMI_PD1(2) & S_HDMI_PD1(3) & S_HDMI_PD1(4) & S_HDMI_PD1(5) & S_HDMI_PD1(6) & S_HDMI_PD1(7) & S_HDMI_PD1(8) & S_HDMI_PD1(9) &
-              S_HDMI_PD0(0) & S_HDMI_PD0(1) & S_HDMI_PD0(2) & S_HDMI_PD0(3) & S_HDMI_PD0(4) & S_HDMI_PD0(5) & S_HDMI_PD0(6) & S_HDMI_PD0(7) & S_HDMI_PD0(8) & S_HDMI_PD0(9);
+    --tx_in <=  S_HDMI_PD2(0) & S_HDMI_PD2(1) & S_HDMI_PD2(2) & S_HDMI_PD2(3) & S_HDMI_PD2(4) & S_HDMI_PD2(5) & S_HDMI_PD2(6) & S_HDMI_PD2(7) & S_HDMI_PD2(8) & S_HDMI_PD2(9) &
+    --          S_HDMI_PD1(0) & S_HDMI_PD1(1) & S_HDMI_PD1(2) & S_HDMI_PD1(3) & S_HDMI_PD1(4) & S_HDMI_PD1(5) & S_HDMI_PD1(6) & S_HDMI_PD1(7) & S_HDMI_PD1(8) & S_HDMI_PD1(9) &
+    --          S_HDMI_PD0(0) & S_HDMI_PD0(1) & S_HDMI_PD0(2) & S_HDMI_PD0(3) & S_HDMI_PD0(4) & S_HDMI_PD0(5) & S_HDMI_PD0(6) & S_HDMI_PD0(7) & S_HDMI_PD0(8) & S_HDMI_PD0(9);
 
     --vendorspec_serializer_inst: entity work.serializer
     --PORT MAP

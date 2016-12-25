@@ -12,11 +12,11 @@ ASSIGNMENT_FILES = $(PROJECT).qpf $(PROJECT).qsf
 ###################################################################
 # Part, Family, Boardfile
 FAMILY = "MAX 10 FPGA"
-PART = 10M50DAF484C6GES
+PART = 10M50DAF484C7G
 BOARDFILE = de10-lite.board
 CONFIG_DEVICE = EPCS64
 SERIAL_FLASH_LOADER_DEVICE = EP4CE6
-OPENOCD_INTERFACE=interface/altera-usb-blaster.cfg
+OPENOCD_INTERFACE=altera-usb-blaster.ocd
 # OPENOCD_INTERFACE=ftdi-fpu1.ocd
 # OPENOCD_INTERFACE=remote.ocd
 OPENOCD_BOARD=de10-lite.ocd
@@ -36,14 +36,15 @@ include ../../include/altera.mk
 # Setup your sources here
 SRCS = \
 ../../../../altera/de10lite/top/top_de10lite_xram_sdram_vector.vhd \
+../../../../altera/de10lite/clocks/clk_50M_25M_125MP_125MN_100M_83M33.vhd \
 ../../../../generic/hdmi_out.vhd \
 ../../../../generic/glue_xram_vector.vhd \
 ../../../../generic/bram.vhd \
-../../../../generic/bootloader/defs_bootblock.vhd \
+../../../../generic/bootloader/defs_bootblock1k.vhd \
 ../../../../generic/bootloader/boot_sio_mi32el.vhd \
 ../../../../generic/bootloader/boot_sio_mi32eb.vhd \
 ../../../../generic/bootloader/boot_sio_rv32el.vhd \
-../../../../generic/bootloader/boot_rom_mi32el.vhd \
+../../../../generic/bootloader/boot_rom_mi32el_empty.vhd \
 ../../../../generic/bram_true2p_1clk.vhd \
 ../../../../generic/bram_true2p_2clk.vhd \
 ../../../../generic/bptrace.vhd \
