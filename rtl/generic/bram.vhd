@@ -110,7 +110,7 @@ architecture x of bram is
 	variable y: bram_type;
 	variable i,l: integer;
     begin
-	y := (others => x"00");
+	y := (others => (others => '0'));
 	i := n;
 	l := x'length;
 	while(i < l) loop
