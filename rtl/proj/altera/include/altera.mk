@@ -43,10 +43,10 @@ quartus_env ?= . ./quartus_env.sh
 all: $(PROJECT).sof $(PROJECT).svf
 
 clean:
-	rm -rf *~ $(PROJECT).jdi $(PROJECT).jic $(PROJECT).pin $(PROJECT).qws \
+	rm -rf *~ $(PROJECT).jdi $(PROJECT).jic $(PROJECT).pin $(PROJECT).qws $(PROJECT).sld \
 	       *.rpt *.chg smart.log *.htm *.eqn *.sof *.svf *.pof *.smsg *.summary \
 	       PLL*INFO.txt \
-	       db incremental_db output_files greybox_tmp \
+	       db incremental_db output_files greybox_tmp cr_ie_info.json \
 	       $(ASSIGNMENT_FILES)
 
 map: smart.log $(PROJECT).map.rpt
