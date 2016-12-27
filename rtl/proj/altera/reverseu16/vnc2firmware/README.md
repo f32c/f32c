@@ -29,6 +29,9 @@ with installed FT_PROG, V2PROG and FT900 programmer.
 
 Only upper USB port on reverse-u16 board works.
 Use USB male-to-male A-A cable to the PC.
+Unplug JTAG cable if USB port erratically appears and
+disappears. If PC USB port can't provide enough power,
+plug also external stable +5V/1A source.
 Onboard RED LED near USB connector will blink during 
 serial traffic.
 
