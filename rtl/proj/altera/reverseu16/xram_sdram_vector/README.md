@@ -6,10 +6,9 @@ with cables and programmers.
 # USB-serial VNC2 firmware and JTAG
 
 After uploading the bitstream, if usb-serial port will not
-enumerate or erratically attaches and detaches, unplug 10-pin
-JTAG cable. This is known issue with STM32 based USB Blaster clone.
-Cypress CYC68013A based USB Blaster clone is OK, it doesn't affect
-USB serial with JTAG cable.
+enumerate or erratically appear and disappear, unplug 10-pin
+JTAG cable. This is known issue with STM32 and Cypress based 
+USB Blaster clones.
 
 USB serial firmware doesn't support serial break,
 so to upload new arduino sketch, reverse-u16 needs to be
