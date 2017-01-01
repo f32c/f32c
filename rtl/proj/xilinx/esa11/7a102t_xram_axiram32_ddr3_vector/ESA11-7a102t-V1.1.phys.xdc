@@ -212,17 +212,17 @@ set_property -dict {PACKAGE_PIN U22 IOSTANDARD TMDS_33} [get_ports VID_D_P[2]]
 #
 #	Atmel MCU Communication
 #
-#set_property -dict {PACKAGE_PIN Y1 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_CCLK/CONF_DCLK]
-#set_property -dict {PACKAGE_PIN L12 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_CCLK_INTERNAL]
-#set_property -dict {PACKAGE_PIN T19 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_CSO]
+set_property -dict {PACKAGE_PIN Y1 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_CCLK_CONF_DCLK]
+#set_property -dict {PACKAGE_PIN L12 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_CCLK_INTERNAL] # won't compile?
+set_property -dict {PACKAGE_PIN T19 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_CSO]
 #set_property -dict {PACKAGE_PIN P21 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_D02]
 #set_property -dict {PACKAGE_PIN R21 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_D03]
 #set_property -dict {PACKAGE_PIN G11 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_DONE/CONF_DONE]
 #set_property -dict {PACKAGE_PIN U12 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_INIT/CONF_NCONFIG]
 
 #set_property -dict {PACKAGE_PIN AA1 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_MISO/CONF_DATA0]
-#set_property -dict {PACKAGE_PIN R22 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_MISO_INTERNAL]
-#set_property -dict {PACKAGE_PIN P22 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_MOSI]
+set_property -dict {PACKAGE_PIN R22 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_MISO_INTERNAL]
+set_property -dict {PACKAGE_PIN P22 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_MOSI]
 #set_property -dict {PACKAGE_PIN N12 IOSTANDARD LVTTL DRIVE 4} [get_ports FPGA_PROG/CONF_NSTATUS]
 
 #set_property -dict {PACKAGE_PIN U3 IOSTANDARD LVTTL DRIVE 4} [get_ports MCU_SD_CMD/MOSI]
