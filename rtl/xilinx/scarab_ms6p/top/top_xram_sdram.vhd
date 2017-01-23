@@ -61,6 +61,7 @@ entity scarab_xram_sdram is
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024
 
     C_vgahdmi: boolean := true;
+    C_vgahdmi_compositing: integer := 2; -- 2: compositing2, 0: linear framebuffer
     -- insert cache between RAM and compositing2 video fifo
     C_vgahdmi_cache_size: integer := 8; -- KB size 0:disable 2,4,8,16,32:enable
     C_vgahdmi_cache_use_i: boolean := true; -- use I-data caching style, faster
@@ -406,6 +407,7 @@ begin
       C_dvid_ddr => C_dvid_ddr,
       -- vga simple compositing bitmap only graphics
       C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_compositing => C_vgahdmi_compositing,
       C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
