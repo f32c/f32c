@@ -1308,14 +1308,16 @@ begin
     end generate;
 
     G_vgabit_linear: if C_vgahdmi_compositing < 2 generate
-    -- linear bitmap - shows linear memory block
-      video_fifo_suggest_cache <= '1';
+      -- linear bitmap - shows linear memory block
+      -- this FIFO always fetches 32-bit data
+      -- todo support 8bpp and 16bpp
+      video_fifo_suggest_cache <= '1'; -- always cache
       linear_fifo: entity work.videofifo
           generic map (
             C_bram => true,
-            C_step => C_video_modes(C_vgahdmi_mode).visible_width,
+            C_step => 0,
             C_postpone_step => 0,
-            C_width => compositing2_line_width(C_video_modes(C_vgahdmi_mode).visible_width) -- buffer size = 4 * 2^width bytes
+            C_width => 10 -- buffer address width, size = 2^C_width x 32-bit
           )
           port map (
             clk => clk,
@@ -1329,7 +1331,7 @@ begin
             start => S_vga_active_enabled,
             frame => vga_frame,
             data_out => vga_data_from_fifo(31 downto 0),
-            rewind => vga_line_repeat,
+            rewind => '0',
             fetch_next => S_vga_fetch_enabled
           );
     end generate;
