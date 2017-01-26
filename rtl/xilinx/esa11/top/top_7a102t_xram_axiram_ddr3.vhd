@@ -70,6 +70,7 @@ entity esa11_xram_axiram_ddr3 is
         C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
 
         C_vgahdmi: boolean := true;
+          C_vgahdmi_compositing: integer := 2; -- 2: compositing2 0:linear FB
           C_vgahdmi_axi: boolean := true; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
           C_vgahdmi_cache_size: integer := 8; -- KB video cache (only on f32c bus) (0: disable, 2,4,8,16,32:enable)
           C_vgahdmi_fifo_timeout: integer := 0;
@@ -360,6 +361,7 @@ begin
       C_dvid_ddr => C_dvid_ddr,
       --
       C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_compositing => C_vgahdmi_compositing,
       C_vgahdmi_axi => C_vgahdmi_axi,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_burst_max_bits => C_vgahdmi_fifo_burst_max_bits,
