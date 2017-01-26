@@ -69,26 +69,23 @@ entity bram is
 end bram;
 
 architecture x of bram is
-    type T_sel_endian is array(boolean) of integer;
-    constant sel_endian: T_sel_endian := (false => 0, true => 2);
-
-    type T_sel_spi is array(boolean) of integer;
-    constant sel_spi: T_sel_spi := (false => 0, true => 4);
-
-    type T_boot_block_select is array(0 to 7) of boot_block_type;
-    constant boot_block_select: T_boot_block_select := (
-	 --  (arch, big endian, spi)
-	(ARCH_MI32 + sel_endian(false)) + sel_spi(false) => boot_sio_mi32el,
-	(ARCH_MI32 + sel_endian(true)) + sel_spi(false) => boot_sio_mi32eb,
-	(ARCH_RV32 + sel_endian(false)) + sel_spi(false) => boot_sio_rv32el,
-	(ARCH_RV32 + sel_endian(true)) + sel_spi(false) => (others => (others => '0')), -- RISC-V currently has no big endian support
-	(ARCH_MI32 + sel_endian(false)) + sel_spi(true) => boot_rom_mi32el,
-	(ARCH_MI32 + sel_endian(true)) + sel_spi(true) => (others => (others => '0')),
-	(ARCH_RV32 + sel_endian(false)) + sel_spi(true) => (others => (others => '0')),
-	(ARCH_RV32 + sel_endian(true)) + sel_spi(true) => (others => (others => '0')) -- RISC-V currently has no big endian support
+    type T_boot_block_map is array(0 to 7) of boot_block_type;
+    constant boot_block_map: T_boot_block_map := (
+	boot_sio_mi32el,
+	boot_sio_mi32eb,
+	boot_rom_mi32el,
+	(others => (others => '0')),
+	boot_sio_rv32el,
+	(others => (others => '0')),
+	(others => (others => '0')),
+	(others => (others => '0'))
     );
 
-    constant boot_block: boot_block_type := boot_block_select(C_arch + sel_endian(C_big_endian) + sel_spi(C_boot_spi));
+    type T_sel is array(boolean) of integer;
+    constant sel: T_sel := (false => 0, true => 1);
+
+    constant boot_block: boot_block_type :=
+      boot_block_map(C_arch * 4 + sel(C_boot_spi) * 2 + sel(C_big_endian));
 
     type bram_type is array(0 to (C_bram_size * 256 - 1))
       of std_logic_vector(7 downto 0);
