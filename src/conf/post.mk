@@ -87,19 +87,10 @@ endif
 ifeq (${ARCH},riscv)
 	# RISCV-specific flags
 
-	# Generate rv32 code (default is rv64)
-	MK_CFLAGS += -m32
-	MK_LDFLAGS += -melf32lriscv
-
-	# f32c has no FP hardware
-	MK_CFLAGS += -mno-float
-
-	# f32c/riscv has no mul / div hardware (default is muldiv)
-	MK_CFLAGS += -mno-muldiv
-
+	MK_CFLAGS += -march=rv32i
+	MK_CFLAGS += -mabi=ilp32
 else
 	# MIPS-specific flags
-
 
 	ifeq ($(findstring -march=,$(MK_CFLAGS)),)
 		MK_CFLAGS += -march=f32c
@@ -110,6 +101,9 @@ else
 	ifeq ($(findstring -G,$(CFLAGS)),)
 		MK_CFLAGS += -G 32768
 	endif
+
+	# Disregard metadata sections which objcopy may misinterpret
+	OBJFLAGS = -R .rel.dyn -R .MIPS.abiflags
 
 	# f32c-specific flags
 	#MK_CFLAGS += -mno-div
@@ -180,9 +174,6 @@ MK_LDFLAGS += ${LDFLAGS}
 
 # Library construction flags
 MK_ARFLAGS = r
-
-# Disregard metadata sections which objcopy may misinterpret
-OBJFLAGS = -R .rel.dyn -R .MIPS.abiflags
 
 CC = ${TOOLPREFIX}-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
 CXX = ${TOOLPREFIX}-elf-g++ ${MK_CFLAGS} ${MK_CXXFLAGS} ${MK_STDINC} ${MK_INCLUDES} -fno-rtti -fno-exceptions
