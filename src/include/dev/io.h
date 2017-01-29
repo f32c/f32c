@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2015 Marko Zec, University of Zagreb
+ * Copyright (c) 2013-2017 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,18 +21,19 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #ifndef _IO_H_
 #define	_IO_H_
 
-#ifdef __mips__
+#ifdef __mips
 #include <mips/io.h>
-#endif
-#ifdef __riscv__
+#else
+#ifdef __riscv
 #include <riscv/io.h>
+#else
+#error "Unsupported architecture"
+#endif
 #endif
 
 
