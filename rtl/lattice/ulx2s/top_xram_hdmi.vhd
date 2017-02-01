@@ -74,9 +74,9 @@ entity toplevel is
     -- ISA options
     C_arch: integer := ARCH_MI32;
     C_big_endian: boolean := false;
-    -- C_boot_rom = true: bootloader will try to chainboot SPI flash ROM, fallback to serial
-    -- C_boot_rom = false: -- serial bootloader only
-    C_boot_rom: boolean := true;
+    -- C_boot_spi = true: bootloader will try to chainboot SPI flash ROM, fallback to serial
+    -- C_boot_spi = false: -- serial bootloader only
+    C_boot_spi: boolean := true;
     C_mult_enable: boolean := true;
     C_mul_acc: boolean := true;    -- MI32 only
     C_mul_reg: boolean := true;    -- MI32 only
@@ -276,7 +276,7 @@ begin
       C_clk_freq => C_clk_freq,
       C_arch => C_arch,
       C_big_endian => C_big_endian,
-      C_boot_rom => C_boot_rom,
+      C_boot_spi => C_boot_spi,
       C_mult_enable => C_mult_enable,
       C_mul_acc => C_mul_acc,
       C_mul_reg => C_mul_reg,
