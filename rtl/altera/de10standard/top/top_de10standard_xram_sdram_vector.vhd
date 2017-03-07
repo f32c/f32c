@@ -15,8 +15,8 @@ entity de10standard_xram_sdram is
 	C_debug: boolean := false;
 	C_branch_prediction: boolean := true;
 
-	-- Main clock: 50/75/83/100
-	C_clk_freq: integer := 50;
+	-- Main clock: 50/83
+	C_clk_freq: integer := 83;
 
 	-- SoC configuration options
 	C_bram_size: integer := 1;
@@ -95,42 +95,15 @@ begin
       clk <= CLOCK_50;
     end generate;
 
---    G_75M_clk: if C_clk_freq = 75 generate
---    clkgen_75: entity work.clk_50M_25M_250M_75M
---    port map(
---      inclk0 => max10_clk1_50, --  50 MHz input from board
---      inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
---      c0 => clk_pixel,         --  25 MHz
---      c1 => open,              -- 250 MHz
---      c2 => clk                --  75 MHz
---    );
---    end generate;
-
---    G_83M33_clk: if C_clk_freq = 83 generate
---    clkgen_83: entity work.clk_50M_25M_125MP_125MN_100M_83M33
---    port map(
---      inclk0 => max10_clk1_50, --  50 MHz input from board
---      inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
---      c0 => open,              --  25 MHz
---      c1 => open,              -- 125 MHz positive
---      c2 => open,              -- 125 MHz negative
---      c3 => open,              -- 100 MHz
---      c4 => clk                --  83.333 MHz
---    );
---    end generate;
-
---    G_100M_clk: if C_clk_freq = 100 generate
---    clkgen_100: entity work.clk_50M_25M_125MP_125MN_100M_83M33
---    port map(
---      inclk0 => max10_clk1_50, --  50 MHz input from board
---      inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
---      c0 => open,              --  25 MHz
---      c1 => open,              -- 125 MHz positive
---      c2 => open,              -- 125 MHz negative
---      c3 => clk,               -- 100 MHz
---      c4 => open               --  83.333 MHz
---    );
---    end generate;
+    G_83M33_clk: if C_clk_freq = 83 generate
+    clkgen_83: entity work.clk_50M_250M_25M_83M33
+    port map(
+      refclk => CLOCK_50,      --  50 MHz input from board
+      outclk_0 => open,        -- 250 MHz
+      outclk_1 => clk_pixel,   --  25 MHz
+      outclk_2 => clk          --  83.333 MHz
+    );
+    end generate;
 
     -- generic XRAM glue
     glue_xram: entity work.glue_xram

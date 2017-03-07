@@ -36,6 +36,8 @@ include ../../include/altera.mk
 # Setup your sources here
 SRCS = \
 ../../../../altera/de10standard/top/top_de10standard_xram_sdram_vector.vhd \
+../../../../altera/de10standard/clocks/clk_50M_250M_25M_83M33.vhd \
+../../../../altera/de10standard/clocks/clk_50M_250M_25M_83M33_0002.v \
 ../../../../generic/hdmi_out.vhd \
 ../../../../generic/glue_xram_vector.vhd \
 ../../../../generic/bram.vhd \
@@ -131,5 +133,4 @@ SRCS = \
 ../../../../soc/vector/fpu/mul/common/packfp_packfp.vhd \
 ../../../../soc/vector/fpu/mul/common/unpackfp_unpackfp.vhd \
 
-#../../../../altera/de10lite/clocks/clk_50M_25M_125MP_125MN_100M_83M33.vhd \
-#../../../../altera/de10lite/clocks/clk_50M_25M_250M_75M.vhd \
+#../../../../altera/de10lite/clocks/clk_50M_250M_25M_83M33.vhd \
