@@ -38,6 +38,8 @@ SRCS = \
 ../../../../altera/de10standard/top/top_de10standard_xram_sdram_vector.vhd \
 ../../../../altera/de10standard/clocks/clk_50M_250M_25M_83M33.vhd \
 ../../../../altera/de10standard/clocks/clk_50M_250M_25M_83M33_0002.v \
+../../../../altera/de10standard/clocks/clk_50M_250M_25M_100M.vhd \
+../../../../altera/de10standard/clocks/clk_50M_250M_25M_100M_0002.v \
 ../../../../generic/hdmi_out.vhd \
 ../../../../generic/glue_xram_vector.vhd \
 ../../../../generic/bram.vhd \

@@ -15,7 +15,7 @@ entity de10standard_xram_sdram is
 	C_debug: boolean := false;
 	C_branch_prediction: boolean := true;
 
-	-- Main clock: 50/83
+	-- Main clock: 50/83/100
 	C_clk_freq: integer := 83;
 
 	-- SoC configuration options
@@ -102,6 +102,16 @@ begin
       outclk_0 => open,        -- 250 MHz
       outclk_1 => clk_pixel,   --  25 MHz
       outclk_2 => clk          --  83.333 MHz
+    );
+    end generate;
+
+    G_100M_clk: if C_clk_freq = 100 generate
+    clkgen_100: entity work.clk_50M_250M_25M_100M
+    port map(
+      refclk => CLOCK_50,      --  50 MHz input from board
+      outclk_0 => open,        -- 250 MHz
+      outclk_1 => clk_pixel,   --  25 MHz
+      outclk_2 => clk          -- 100 MHz
     );
     end generate;
 
