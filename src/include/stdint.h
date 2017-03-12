@@ -178,6 +178,15 @@
 #define	SIG_ATOMIC_MIN	INT32_MIN
 #define	SIG_ATOMIC_MAX	INT32_MAX
 
+#ifndef	_INTMAX_T_DECLARED
+typedef	__intmax_t		intmax_t;
+#define	_INTMAX_T_DECLARED
+#endif
+#ifndef	_UINTMAX_T_DECLARED
+typedef	__uintmax_t		uintmax_t;
+#define	_UINTMAX_T_DECLARED
+#endif
+
 #ifndef WCHAR_MIN /* Also possibly defined in <wchar.h> */
 /* Limits of wchar_t. */
 #define	WCHAR_MIN	INT32_MIN
