@@ -1,6 +1,6 @@
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
- *      The Regents of the University of California.  All rights reserved.
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  *
  * All or some portions of this file are derived from material licensed
@@ -19,7 +19,7 @@
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- *                      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -38,12 +38,44 @@
 
 #include <dev/sio.h>
 #include <stdarg.h>
+#include <stdint.h>
+#include <string.h>
 
 
 #define	MAXNBUF	32
 
 #define	PCHAR(c) {(*func)(c, arg); retval++;}
 
+static __inline int imax(int a, int b) { return (a > b ? a : b); }
+
+/*
+ * Put a NUL-terminated ASCII number (base <= 36) in a buffer in reverse
+ * order; return an optional length and a pointer to the last character
+ * written in the buffer (i.e., the first character of the string).
+ * The buffer pointed to by `nbuf' must have length >= MAXNBUF.
+ */
+static char *
+pn(char *nbuf, uintmax_t num, int base, int *lenp, int upper)
+{
+	char *p, c;
+
+	p = nbuf;
+	*p = '\0';
+	do {
+		c = num % base;
+		num /= base;
+		if (c < 10)
+                	c += '0';
+		else if (upper)
+                	c += 'A' - 10;
+		else
+                	c += 'a' - 10;
+		*++p = c;
+	} while (num != 0);
+	if (lenp)
+		*lenp = p - nbuf;
+	return (p);
+}
 
 #ifndef NO_PRINTF_FLOAT
 __attribute__((optimize("-Os"))) static int
@@ -108,120 +140,241 @@ __attribute__((optimize("-Os"))) int
 _xvprintf(char const *fmt, void(*func)(int, void *), void *arg, va_list ap)
 {
 	char nbuf[MAXNBUF];
-	char *cp;
-	u_int num;
-	int ch;
-	int base, sign, neg, n, width;
+	const char *p, *percent;
+	int ch, n;
+	uintmax_t num;
+	int base, lflag, qflag, tmp, width, ladjust, sharpflag, neg, sign, dot;
+	int cflag, hflag, jflag, zflag;
+	int dwidth, upper;
 	char padc;
-	int retval = 0;
+	int stop = 0, retval = 0;
+
+	num = 0;
+
+	if (fmt == NULL)
+		fmt = "(fmt null)\n";
 
 	for (;;) {
-		while ((ch = (u_char)*fmt++) != '%') {
-			if (ch == 0)
+		padc = ' ';
+		width = 0;
+		while ((ch = (u_char)*fmt++) != '%' || stop) {
+			if (ch == '\0')
 				return (retval);
 			PCHAR(ch);
 		}
-
-		sign = 0;
-		neg = 0;
-		base = 10;
-		padc = ' ';
-		width = 0;
-		
-reswitch:
-		switch (ch = (u_char)*fmt++) {
-		case 0:
-			return (-1);	/* XXX use proper errno */
+		percent = fmt - 1;
+		qflag = 0; lflag = 0; ladjust = 0; sharpflag = 0; neg = 0;
+		sign = 0; dot = 0; dwidth = 0; upper = 0;
+		cflag = 0; hflag = 0; jflag = 0; zflag = 0;
+reswitch:	switch (ch = (u_char)*fmt++) {
+		case '.':
+			dot = 1;
+			goto reswitch;
+		case '#':
+			sharpflag = 1;
+			goto reswitch;
+		case '+':
+			sign = 1;
+			goto reswitch;
+		case '-':
+			ladjust = 1;
+			goto reswitch;
 		case '%':
 			PCHAR(ch);
 			break;
-		case '0':
-			padc = '0';
-			goto reswitch;
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-			for (n = 0;; ++fmt) {
-				n = n * 10 + ch - '0';
-				ch = *fmt;
-				if (ch < '0' || ch > '9')
-					break;
-			}
-			width = n;
-			goto reswitch;
 		case '*':
-			width = va_arg(ap, int);
-			/* fallthrough */
-		case '.':
+			if (!dot) {
+				width = va_arg(ap, int);
+				if (width < 0) {
+					ladjust = !ladjust;
+					width = -width;
+				}
+			} else {
+				dwidth = va_arg(ap, int);
+			}
 			goto reswitch;
-		case 's':
-			cp = va_arg(ap, char *);
-			if (cp == NULL)
-				cp = "(null)";
-			while((ch = *cp++))
-				PCHAR(ch);
-			break;
+		case '0':
+			if (!dot) {
+				padc = '0';
+				goto reswitch;
+			}
+		case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
+				for (n = 0;; ++fmt) {
+					n = n * 10 + ch - '0';
+					ch = *fmt;
+					if (ch < '0' || ch > '9')
+						break;
+				}
+			if (dot)
+				dwidth = n;
+			else
+				width = n;
+			goto reswitch;
 		case 'c':
 			PCHAR(va_arg(ap, int));
 			break;
 		case 'd':
 		case 'i':
+			base = 10;
+			sign = 1;
 			goto handle_sign;
-		case 'l':
-			/* XXX quad modifier - fixme! */
+		case 'h':
+			if (hflag) {
+				hflag = 0;
+				cflag = 1;
+			} else
+				hflag = 1;
 			goto reswitch;
+		case 'j':
+			jflag = 1;
+			goto reswitch;
+		case 'l':
+			if (lflag) {
+				lflag = 0;
+				qflag = 1;
+			} else
+				lflag = 1;
+			goto reswitch;
+		case 'n':
+			if (jflag)
+				*(va_arg(ap, intmax_t *)) = retval;
+			else if (qflag)
+				*(va_arg(ap, quad_t *)) = retval;
+			else if (lflag)
+				*(va_arg(ap, long *)) = retval;
+			else if (zflag)
+				*(va_arg(ap, size_t *)) = retval;
+			else if (hflag)
+				*(va_arg(ap, short *)) = retval;
+			else if (cflag)
+				*(va_arg(ap, char *)) = retval;
+			else
+				*(va_arg(ap, int *)) = retval;
+			break;
 		case 'o':
 			base = 8;
 			goto handle_nosign;
-		case 'u':
-			goto handle_nosign;
 		case 'p':
-			width = 8;
-			padc = '0';
-			PCHAR(padc);
-			PCHAR('x');
+			base = 16;
+			sharpflag = (width == 0);
+			sign = 0;
+			num = (uintptr_t)va_arg(ap, void *);
+			goto number;
+		case 'q':
+			qflag = 1;
+			goto reswitch;
+		case 's':
+			p = va_arg(ap, char *);
+			if (p == NULL)
+				p = "(null)";
+			if (!dot)
+				n = strlen (p);
+			else
+				for (n = 0; n < dwidth && p[n]; n++)
+					continue;
+
+			width -= n;
+
+			if (!ladjust && width > 0)
+				while (width--)
+					PCHAR(padc);
+			while (n--)
+				PCHAR(*p++);
+			if (ladjust && width > 0)
+				while (width--)
+					PCHAR(padc);
+			break;
+		case 'u':
+			base = 10;
+			goto handle_nosign;
+		case 'X':
+			upper = 1;
 		case 'x':
 			base = 16;
+			goto handle_nosign;
+		case 'y':
+			base = 16;
+			sign = 1;
+			goto handle_sign;
+		case 'z':
+			zflag = 1;
+			goto reswitch;
 handle_nosign:
-			num = va_arg(ap, u_int);
+			sign = 0;
+			if (jflag)
+				num = va_arg(ap, uintmax_t);
+			else if (qflag)
+				num = va_arg(ap, u_quad_t);
+			else if (lflag)
+				num = va_arg(ap, u_long);
+			else if (zflag)
+				num = va_arg(ap, size_t);
+			else if (hflag)
+				num = (u_short)va_arg(ap, int);
+			else if (cflag)
+				num = (u_char)va_arg(ap, int);
+			else
+				num = va_arg(ap, u_int);
 			goto number;
 handle_sign:
-			sign = 1;
-			num = va_arg(ap, int);
+			if (jflag)
+				num = va_arg(ap, intmax_t);
+			else if (qflag)
+				num = va_arg(ap, quad_t);
+			else if (lflag)
+				num = va_arg(ap, long);
+			else if (zflag)
+				num = va_arg(ap, ssize_t);
+			else if (hflag)
+				num = (short)va_arg(ap, int);
+			else if (cflag)
+				num = (char)va_arg(ap, int);
+			else
+				num = va_arg(ap, int);
 number:
-			if (sign && (int) num < 0) {
+			if (sign && (intmax_t)num < 0) {
 				neg = 1;
-				num = - (int) num;
+				num = -(intmax_t)num;
 			}
-			n = 0;
-			do {
-				ch = num % base;
-				if (ch < 10)
-					nbuf[n] = ch + '0';
-				else
-					nbuf[n] = ch + 'a' - 10;
-				num /= base;
-				n++;
-			} while (num != 0);
-
-			if (neg && padc == '0')
-				PCHAR('-');
-
-			for (;width > n + neg; width--)
-				PCHAR(padc);
-
-			if (neg && padc != '0')
-				PCHAR('-');
-
-			for (; n > 0;) {
-				PCHAR(nbuf[--n]);
+			p = pn(nbuf, num, base, &n, upper);
+			tmp = 0;
+			if (sharpflag && num != 0) {
+				if (base == 8)
+					tmp++;
+				else if (base == 16)
+					tmp += 2;
 			}
+			if (neg)
+				tmp++;
+
+			if (!ladjust && padc == '0')
+				dwidth = width - tmp;
+			width -= tmp + imax(dwidth, n);
+			dwidth -= n;
+			if (!ladjust)
+				while (width-- > 0)
+					PCHAR(' ');
+			if (neg)
+				PCHAR('-');
+			if (sharpflag && num != 0) {
+				if (base == 8) {
+					PCHAR('0');
+				} else if (base == 16) {
+					PCHAR('0');
+					PCHAR('x');
+				}
+			}
+			while (dwidth-- > 0)
+				PCHAR('0');
+
+			while (*p)
+				PCHAR(*p--);
+
+			if (ladjust)
+				while (width-- > 0)
+					PCHAR(' ');
+
 			break;
 #ifndef NO_PRINTF_FLOAT
 		case 'f':
@@ -229,11 +382,18 @@ number:
 			break;
 #endif /* NO_PRINTF_FLOAT */
 		default:
+			while (percent < fmt)
+				PCHAR(*percent++);
+			/*
+			 * Since we ignore a formatting argument it is no 
+			 * longer safe to obey the remaining formatting
+			 * arguments as the arguments will no longer match
+			 * the format specs.
+			 */
+			stop = 1;
 			break;
 		}
 	}
-
-	return (retval);
 }
 
 
