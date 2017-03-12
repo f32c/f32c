@@ -17,7 +17,7 @@
 
 #define	MAX_FNAMES	256
 
-char fnames[MAX_FNAMES][256];
+char **fnames;
 int fcnt;
 
 
@@ -66,6 +66,8 @@ main(void)
 	char tmpbuf[256];
 	int i, f, fpos = 0, block, cur, got, vol = 0xfff;
 	char *buf = (void *) 0x80080000;
+
+	fnames = malloc(MAX_FNAMES * 256);
 
 	tmpbuf[0] = 'd';
 	tmpbuf[1] = ':';
