@@ -390,6 +390,8 @@ begin
     -- Debugging SIO instance
     G_debug_sio:
     if C_debug generate
+      signal bus_out : std_logic_vector(31 downto 0);
+    begin
     debug_sio: entity work.sio
     generic map (
 	C_clk_freq => C_clk_freq,
@@ -400,11 +402,12 @@ begin
 	bus_write => deb_sio_tx_strobe, byte_sel => "0001",
 	bus_in(7 downto 0) => debug_to_sio_data,
 	bus_in(31 downto 8) => x"000000",
-	bus_out(7 downto 0) => sio_to_debug_data,
-	bus_out(8) => deb_sio_rx_done, bus_out(9) => open,
-	bus_out(10) => deb_sio_tx_busy, bus_out(31 downto 11) => open,
-	break => open
+        bus_out => bus_out, break => open
     );
+
+    sio_to_debug_data <= bus_out(7 downto 0);
+    deb_sio_rx_done <= bus_out(8);
+    deb_sio_tx_busy <= bus_out(10);
     end generate;
 
     sio_txd(0) <= sio_tx(0) when not C_debug or debug_active = '0' else deb_tx;
