@@ -1,0 +1,7 @@
+setMode -bs
+setCable -port svf -file "default.svf"
+addDevice -p 1 -file "/usr/local/xilinx/14.7/ISE_DS/ISE/spartan6/data/xc6slx45.bsd"
+attachflash -position 1 -spi "N25Q128"
+assignfiletoattachedflash -position 1 -file "default.mcs"
+Program -p 1 -dataWidth 1 -spionly -e -loadfpga
+exit
