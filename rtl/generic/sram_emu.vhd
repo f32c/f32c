@@ -54,8 +54,11 @@ architecture Structure of sram_emu is
     -- SRAM emulation signals for internal BRAM
     signal sram_we_lower, sram_we_upper: std_logic;
     signal from_sram_lower, from_sram_upper: std_logic_vector(7 downto 0);
+    signal clk_n : std_logic;
 begin
 
+    clk_n <= not clk;
+  
     sram_emul_lower: entity work.bram_true2p_1clk
     generic map (
         dual_port => false,
@@ -63,7 +66,7 @@ begin
         addr_width => C_addr_width
     )
     port map (
-        clk => not clk,
+        clk => clk_n,
         we_a => sram_we_lower,
         addr_a => sram_a(C_addr_width-1 downto 0),
         data_in_a => sram_d(7 downto 0), data_out_a => from_sram_lower,
@@ -78,7 +81,7 @@ begin
         addr_width => C_addr_width
     )
     port map (
-        clk => not clk,
+        clk => clk_n,
         we_a => sram_we_upper,
         addr_a => sram_a(C_addr_width-1 downto 0),
         data_in_a => sram_d(15 downto 8), data_out_a => from_sram_upper,
