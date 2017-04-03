@@ -45,6 +45,10 @@ LDFLAGS += -gc-sections
 LDFLAGS += --section-start=.init=0x80000000
 LDFLAGS += --library-path=../../../lib/${ARCH}el
 
+ifeq (${ARCH},mips)
+        OBJFLAGS = -R .rel.dyn -R .MIPS.abiflags
+endif
+
 LIBS = -lcrt0 -lc -lm
 
 SRC_C = main.c file.c edit.c
@@ -55,8 +59,8 @@ all: $(PROG).bin
 
 $(PROG).bin: $(PROG).elf
 	$(ISA_CHECK) $(ARCH) $(PROG).elf
-	$(ARCH)-elf-objcopy -O binary $(PROG).elf $(PROG).bin
-	$(ARCH)-elf-objcopy -O srec $(PROG).elf $(PROG).hex
+	$(ARCH)-elf-objcopy ${OBJFLAGS} -O binary $(PROG).elf $(PROG).bin
+	$(ARCH)-elf-objcopy ${OBJFLAGS} -O srec $(PROG).elf $(PROG).hex
 
 $(PROG).elf: $(OBJ)
 	$(ECHO) "LINK $@"
