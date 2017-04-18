@@ -15,7 +15,7 @@ MAKE_JOBS=2
 BINUTILS_SRC_DIR=~/github/riscv-binutils-gdb
 GCC_SRC_DIR=~/github/riscv-gcc
 F32C_SRC_DIR=~/github/f32c
-F32C_TOOLCHAIN_DST_DIR=~/f32c_toolchain
+F32C_TOOLCHAIN_DST_DIR=/usr/local
 
 
 #
