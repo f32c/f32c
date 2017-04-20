@@ -15,6 +15,11 @@ if [ "$OSTYPE" == "cygwin" ]; then
 	SUDO=
 fi
 
+if [ "$OSTYPE" == "msys" ]; then
+	F32C_MAKEOPTIONS="LDFLAGS=-all-static"
+	SUDO=
+fi
+
 if [ "$OSTYPE" == "FreeBSD" ]; then
 	MAKE=gmake
 fi
@@ -28,7 +33,7 @@ F32C_TOOLCHAIN_DST_DIR=/usr/local
 #
 # Check for prerequisites
 #
-for PROG in git wget tar patch $MAKE bison makeinfo gcc install
+for PROG in git wget tar patch $MAKE bison diff cmp makeinfo gcc install
 do
     if [ "`command -v $PROG`" == "" ]; then
 	echo $PROG required but not installed, aborting!
