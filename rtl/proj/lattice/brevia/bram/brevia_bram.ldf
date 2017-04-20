@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<BaliProject version="3.2" title="brevia_bram" device="LFXP2-5E-6TN144C" default_implementation="impl1">
+<BaliProject version="3.2" title="brevia_bram" device="LFXP2-5E-7TN144C" default_implementation="impl1">
     <Options/>
     <Implementation title="impl1" dir="impl1" description="impl1" synthesis="synplify" default_strategy="Strategy1">
         <Options def_top="glue"/>
+        <Source name="../../../../lattice/brevia/top_bram.vhd" type="VHDL" type_short="VHDL">
+            <Options top_module="glue"/>
+        </Source>
         <Source name="../../../../cpu/alu.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -69,13 +72,19 @@
         <Source name="../../../../generic/bptrace.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../lattice/brevia/top_bram.vhd" type="VHDL" type_short="VHDL">
-            <Options top_module="glue"/>
-        </Source>
         <Source name="../../../../soc/gpio.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../generic/bram.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../lattice/brevia/clocks/clkgen.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../lattice/brevia/clocks/pll_xp2_25m.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="impl1/impl1.xcf" type="Programming Project File" type_short="Programming">
             <Options/>
         </Source>
         <Source name="../../constraints/brevia.lpf" type="Logic Preference" type_short="LPF">
