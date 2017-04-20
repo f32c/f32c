@@ -26,6 +26,18 @@ F32C_TOOLCHAIN_DST_DIR=/usr/local
 
 
 #
+# Check for prerequisites
+#
+for PROG in git wget tar patch $MAKE bison makeinfo gcc install
+do
+    if [ "`command -v $PROG`" == "" ]; then
+	echo $PROG required but not installed, aborting!
+	exit 1
+    fi
+done
+
+
+#
 # One-time job: fetch the sources, apply f32c patches
 #
 
