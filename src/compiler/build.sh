@@ -16,7 +16,7 @@ if [ "$OSTYPE" == "cygwin" ]; then
 fi
 
 if [ "$OSTYPE" == "msys" ]; then
-	F32C_MAKEOPTIONS="LDFLAGS=-all-static"
+	F32C_MAKEOPTIONS="LDFLAGS=-static"
 	SUDO=
 fi
 
