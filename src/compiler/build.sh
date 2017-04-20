@@ -9,8 +9,15 @@
 
 SUDO=sudo
 MAKE=make
-
 MAKE_JOBS=2
+
+if [ "$OSTYPE" == "cygwin" ]; then
+	SUDO=
+fi
+
+if [ "$OSTYPE" == "FreeBSD" ]; then
+	MAKE=gmake
+fi
 
 BINUTILS_SRC_DIR=~/github/riscv-binutils-gdb
 GCC_SRC_DIR=~/github/riscv-gcc
