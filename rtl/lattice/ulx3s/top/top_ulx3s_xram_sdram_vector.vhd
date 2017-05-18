@@ -10,7 +10,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 use work.f32c_pack.all;
 
-entity kondor_ax is
+entity ulx3s_xram_sdram_vector is
   generic (
     -- ISA: either ARCH_MI32 or ARCH_RV32
     C_arch: integer := ARCH_MI32;
@@ -21,7 +21,8 @@ entity kondor_ax is
 
     -- SoC configuration options
     C_bram_size: integer := 2;
-    C_acram: boolean := true;
+    C_acram: boolean := false;
+    C_sdram: boolean := true;
     C_icache_size: integer := 2;
     C_dcache_size: integer := 2;
     C_sram8: boolean := false;
@@ -33,7 +34,7 @@ entity kondor_ax is
     C_gpio_pullup: boolean := false;
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
 
-    C_vector: boolean := true; -- vector processor unit
+    C_vector: boolean := false; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
     C_vector_vaddr_bits: integer := 11;
@@ -53,7 +54,7 @@ entity kondor_ax is
 
     -- VGA textmode and graphics, full featured
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
-    C_vgatext_label: string := "Kondor-AX f32c: 50MHz MIPS-compatible soft-core, 128KB ACRAM Emulation";
+    C_vgatext_label: string := "ULX3S f32c: 100MHz MIPS-compatible soft-core, 32MB SDRAM";
     C_vgatext_bits: integer := 4;   -- 4096 possible colors
     C_vgatext_bram_mem: integer := 8;   -- 8KB text+font  memory
     C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
@@ -89,11 +90,21 @@ entity kondor_ax is
   );
   port (
   clk_100_p, clk_100_n: in std_logic;  -- main clock input from 100MHz clock source
-  cy_clkout: in std_logic;  -- cypress CPU clock, firmware configurable 12/24/48MHz clock source
 
   -- UART0 (USB slave serial)
   tx: out   std_logic;
   rx: in    std_logic;
+
+  sdram_clk: out std_logic;
+  sdram_cke: out std_logic;
+  sdram_csn: out std_logic;
+  sdram_rasn: out std_logic;
+  sdram_casn: out std_logic;
+  sdram_wen: out std_logic;
+  sdram_a: out std_logic_vector (12 downto 0);
+  sdram_ba: out std_logic_vector(1 downto 0);
+  sdram_dqm: out std_logic_vector(1 downto 0);
+  sdram_d: inout std_logic_vector (15 downto 0);
 
   --LVDS_Red    : out   std_logic;
   --LVDS_Green  : out   std_logic;
@@ -116,10 +127,10 @@ entity kondor_ax is
   );
 end;
 
-architecture Behavioral of kondor_ax is
-  component ILVDS
-    port (A, AN: in std_logic; Z: out  std_logic);
-  end component;
+architecture Behavioral of ulx3s_xram_sdram_vector is
+  --component ILVDS
+  --  port (A, AN: in std_logic; Z: out  std_logic);
+  --end component;
 
   signal clk, rs232_break, rs232_break2: std_logic;
   signal clk_100: std_logic;
@@ -142,8 +153,9 @@ architecture Behavioral of kondor_ax is
   signal sd_cdn, sd_wp: std_logic;
 begin
   -- convert external differential clock input to internal single ended clock
-  clock_diff2se:
-  ILVDS port map(A=>clk_100_p, AN=>clk_100_n, Z=>clk_100);
+  --clock_diff2se:
+  --ILVDS port map(A=>clk_100_p, AN=>clk_100_n, Z=>clk_100);
+  clk_100 <= clk_100_p;
 
   minimal_100MHz: if C_clk_freq=100 and C_video_mode=-1 generate
     clk <= clk_100;
@@ -176,6 +188,11 @@ begin
     C_clk_freq => C_clk_freq,
     C_bram_size => C_bram_size,
     C_acram => C_acram,
+    C_sdram => C_sdram,
+    C_sdram_address_width => 24,
+    C_sdram_column_bits => 9,
+    C_sdram_startup_cycles => 10100,
+    C_sdram_cycles_per_refresh => 1524,
     C_icache_size => C_icache_size,
     C_dcache_size => C_dcache_size,
     C_sram8 => C_sram8,
@@ -257,12 +274,12 @@ begin
     simple_in(3 downto 0) => btn,
     simple_in(19 downto 16) => dip,
 
-    acram_addr(16 downto 2) => ram_address(16 downto 2),
-    acram_data_wr => ram_data_write,
-    acram_data_rd => ram_data_read,
-    acram_byte_we => ram_byte_we,
-    acram_ready => ram_ready,
-    acram_en => ram_en,
+    -- external SDRAM interface
+    sdram_addr => sdram_a, sdram_data => sdram_d,
+    sdram_ba => sdram_ba, sdram_dqm => sdram_dqm,
+    sdram_ras => sdram_rasn, sdram_cas => sdram_casn,
+    sdram_cke => sdram_cke, sdram_clk => sdram_clk,
+    sdram_we => sdram_wen, sdram_cs => sdram_csn,
 
     dvid_red   => dvid_red,
     dvid_green => dvid_green,
