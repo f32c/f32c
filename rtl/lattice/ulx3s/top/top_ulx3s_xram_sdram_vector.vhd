@@ -34,14 +34,14 @@ entity ulx3s_xram_sdram_vector is
     C_gpio_pullup: boolean := false;
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
 
-    C_vector: boolean := false; -- vector processor unit
+    C_vector: boolean := true; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
     C_vector_vaddr_bits: integer := 11;
     C_vector_vdata_bits: integer := 32;
     C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
     C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
-    C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
+    C_vector_float_divide: boolean := false; -- false will not have float divide (/) will save much LUTs and DSPs
 
     -- video parameters common for vgahdmi and vgatext
     C_dvid_ddr: boolean := false; -- generate HDMI with DDR
@@ -89,7 +89,7 @@ entity ulx3s_xram_sdram_vector is
     C_vgatext_bitmap_fifo_addr_width: integer := 11
   );
   port (
-  clk_100_p, clk_100_n: in std_logic;  -- main clock input from 100MHz clock source
+  clk_25MHz: in std_logic;  -- main clock input from 25MHz clock source
 
   -- UART0 (USB slave serial)
   tx: out   std_logic;
@@ -128,10 +128,6 @@ entity ulx3s_xram_sdram_vector is
 end;
 
 architecture Behavioral of ulx3s_xram_sdram_vector is
-  --component ILVDS
-  --  port (A, AN: in std_logic; Z: out  std_logic);
-  --end component;
-
   signal clk, rs232_break, rs232_break2: std_logic;
   signal clk_100: std_logic;
   signal clk_dvi, clk_dvin, clk_pixel: std_logic;
@@ -152,10 +148,7 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal sd_clk, sd_pwrn: std_logic;
   signal sd_cdn, sd_wp: std_logic;
 begin
-  -- convert external differential clock input to internal single ended clock
-  --clock_diff2se:
-  --ILVDS port map(A=>clk_100_p, AN=>clk_100_n, Z=>clk_100);
-  clk_100 <= clk_100_p;
+  clk_100 <= clk_25MHz;
 
   minimal_100MHz: if C_clk_freq=100 and C_video_mode=-1 generate
     clk <= clk_100;
