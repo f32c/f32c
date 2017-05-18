@@ -17,7 +17,7 @@ entity ulx3s_xram_sdram_vector is
     C_debug: boolean := false;
 
     -- Main clock: 100,125,150 MHz (up to 125 MHz works)
-    C_clk_freq: integer := 100;
+    C_clk_freq: integer := 25;
 
     -- SoC configuration options
     C_bram_size: integer := 2;
@@ -148,16 +148,14 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal sd_clk, sd_pwrn: std_logic;
   signal sd_cdn, sd_wp: std_logic;
 begin
-  clk_100 <= clk_25MHz;
-
-  minimal_100MHz: if C_clk_freq=100 and C_video_mode=-1 generate
-    clk <= clk_100;
+  minimal_25MHz: if C_clk_freq=25 and C_video_mode=-1 generate
+    clk <= clk_25MHz;
   end generate;
 
   minimal_125MHz: if C_clk_freq=125 and C_video_mode=-1 generate
   clk_125M: entity work.clk_100_125_25
     port map(
-      CLKI        =>  clk_100,
+      CLKI        =>  clk_25MHz,
       CLKOP       =>  clk       -- 125 MHz
 --    CLKOS       =>  clk_dvin, -- 125 MHz inverted
 --    CLKOS2      =>  clk_pixel --  25 MHz
@@ -167,7 +165,7 @@ begin
   minimal_150MHz: if C_clk_freq=150 and C_video_mode=-1 generate
   clk_150M: entity work.clk_100_150_30
     port map(
-      CLKI        =>  clk_100,
+      CLKI        =>  clk_25MHz,
       CLKOP       =>  clk       -- 150 MHz
 --    CLKOS       =>  clk_dvin, -- 150 MHz inverted
 --    CLKOS2      =>  clk_pixel --  30 MHz
