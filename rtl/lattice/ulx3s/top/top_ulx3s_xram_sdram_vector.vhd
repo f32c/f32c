@@ -16,8 +16,8 @@ entity ulx3s_xram_sdram_vector is
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
 
-    -- Main clock: 100,125,150 MHz (up to 125 MHz works)
-    C_clk_freq: integer := 25;
+    -- Main clock: 25,100 MHz
+    C_clk_freq: integer := 100;
 
     -- SoC configuration options
     C_bram_size: integer := 2;
@@ -44,10 +44,10 @@ entity ulx3s_xram_sdram_vector is
     C_vector_float_divide: boolean := false; -- false will not have float divide (/) will save much LUTs and DSPs
 
     -- video parameters common for vgahdmi and vgatext
-    C_dvid_ddr: boolean := false; -- generate HDMI with DDR
-    C_video_mode: integer := -1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
+    C_dvid_ddr: boolean := true; -- generate HDMI with DDR
+    C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
 
-    C_vgahdmi: boolean := false;
+    C_vgahdmi: boolean := true;
     C_vgahdmi_cache_size: integer := 8;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
@@ -106,10 +106,8 @@ entity ulx3s_xram_sdram_vector is
   sdram_dqm: out std_logic_vector(1 downto 0);
   sdram_d: inout std_logic_vector (15 downto 0);
 
-  --LVDS_Red    : out   std_logic;
-  --LVDS_Green  : out   std_logic;
-  --LVDS_Blue   : out   std_logic;
-  --LVDS_ck     : out   std_logic;
+  gpdi_dp: out std_logic_vector(2 downto 0);
+  gpdi_clkp: out std_logic;
 
   led: out std_logic_vector(7 downto 0);
   --btn, dip: in std_logic_vector(3 downto 0);
@@ -152,23 +150,14 @@ begin
     clk <= clk_25MHz;
   end generate;
 
-  minimal_125MHz: if C_clk_freq=125 and C_video_mode=-1 generate
-  clk_125M: entity work.clk_100_125_25
+  ddr_640x480_100MHz: if C_clk_freq=100 and C_video_mode=1 generate
+  clk_100M: entity work.clk_25_100_125_25
     port map(
       CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk       -- 125 MHz
---    CLKOS       =>  clk_dvin, -- 125 MHz inverted
---    CLKOS2      =>  clk_pixel --  25 MHz
-     );
-  end generate;
-
-  minimal_150MHz: if C_clk_freq=150 and C_video_mode=-1 generate
-  clk_150M: entity work.clk_100_150_30
-    port map(
-      CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk       -- 150 MHz
---    CLKOS       =>  clk_dvin, -- 150 MHz inverted
---    CLKOS2      =>  clk_pixel --  30 MHz
+      CLKOP       =>  clk_dvi,   -- 125 MHz
+      CLKOS       =>  clk_dvin,  -- 125 MHz inverted
+      CLKOS2      =>  clk_pixel, --  25 MHz
+      CLKOS3      =>  clk        -- 100 MHz CPU
      );
   end generate;
 
@@ -296,20 +285,20 @@ begin
 
   -- vendor specific modules to
   -- convert single ended DDR to phyisical output signals
-  --G_vgatext_ddrout: entity work.ddr_dvid_out_se
-  --port map (
-  --  clk       => clk_dvi,
-  --  clk_n     => clk_dvin,
-  --  in_red    => dvid_red,
-  --  in_green  => dvid_green,
-  --  in_blue   => dvid_blue,
-  --  in_clock  => dvid_clock,
-  --  out_red   => LVDS_Red,
-  --  out_green => LVDS_Green,
-  --  out_blue  => LVDS_Blue,
-  --  out_clock => LVDS_ck
-  --);
-  
+  G_vgatext_ddrout: entity work.ddr_dvid_out_se
+  port map (
+    clk       => clk_dvi,
+    clk_n     => clk_dvin,
+    in_red    => dvid_red,
+    in_green  => dvid_green,
+    in_blue   => dvid_blue,
+    in_clock  => dvid_clock,
+    out_red   => gpdi_dp(2),
+    out_green => gpdi_dp(1),
+    out_blue  => gpdi_dp(0),
+    out_clock => gpdi_clkp
+  );
+
   -- clock alive blinky
   process(clk)
   begin

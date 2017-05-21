@@ -6,10 +6,7 @@
         <Source name="../../../../lattice/ulx3s/top/top_ulx3s_xram_sdram_vector.vhd" type="VHDL" type_short="VHDL">
             <Options top_module="ulx3s_xram_sdram_vector"/>
         </Source>
-        <Source name="../../../../lattice/ulx3s/clocks/clk_100_125_25.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../lattice/ulx3s/clocks/clk_100_150_30.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../lattice/ulx3s/clocks/clk_25_100_125_25.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../generic/glue_xram_vector.vhd" type="VHDL" type_short="VHDL">
@@ -148,6 +145,12 @@
             <Options/>
         </Source>
         <Source name="../../../../soc/vgahdmi/vga.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../lattice/chip/ecp5u/ddr_out.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vgahdmi/ddr_dvid_out_se.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../soc/vgahdmi/tv.vhd" type="VHDL" type_short="VHDL">
