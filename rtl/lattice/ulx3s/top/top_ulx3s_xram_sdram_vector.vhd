@@ -30,7 +30,7 @@ entity ulx3s_xram_sdram_vector is
     C_sio: integer := 2;
     C_spi: integer := 2;
     C_simple_io: boolean := true;
-    C_gpio: integer := 32;
+    C_gpio: integer := 56;
     C_gpio_pullup: boolean := false;
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
 
@@ -95,6 +95,7 @@ entity ulx3s_xram_sdram_vector is
   tx: out   std_logic;
   rx: in    std_logic;
 
+
   sdram_clk: out std_logic;
   sdram_cke: out std_logic;
   sdram_csn: out std_logic;
@@ -106,18 +107,25 @@ entity ulx3s_xram_sdram_vector is
   sdram_dqm: out std_logic_vector(1 downto 0);
   sdram_d: inout std_logic_vector (15 downto 0);
 
+  -- Onboard blinky
+  led: out std_logic_vector(7 downto 0);
+  btn: in std_logic_vector(5 downto 0);
+  oled_csn, oled_clk, oled_mosi, oled_dc, oled_resn: out std_logic;
+
+  -- GPIO
+  j1a,j2a: inout std_logic_vector(18 downto 5);
+  j1b,j2b: inout std_logic_vector(36 downto 23);
+
+  -- Digital Video (differential outputs)
   gpdi_dp, gpdi_dn: out std_logic_vector(2 downto 0);
   gpdi_clkp, gpdi_clkn: out std_logic;
 
-  led: out std_logic_vector(7 downto 0);
-  --btn, dip: in std_logic_vector(3 downto 0);
+  -- SD card (SPI1)
+  sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: inout std_logic;
+  sd_clk: out std_logic;
+  sd_cdn, sd_wp: in std_logic;
 
-  -- SD card
-  --sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: inout std_logic;
-  --sd_clk, sd_pwrn: out std_logic;
-  --sd_cdn, sd_wp: in std_logic;
-
-  -- SPI1 to Flash ROM
+  -- Flash ROM (SPI0)
   flash_miso   : in      std_logic;
   flash_mosi   : out     std_logic;
   flash_clk    : out     std_logic;
@@ -140,14 +148,6 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal ddr_clk: std_logic;
   signal R_blinky: std_logic_vector(26 downto 0);
   
-  -- dummy signals for spi and buttons
-  signal btn, dip: std_logic_vector(3 downto 0);
-
-  -- SD card
-  signal sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: std_logic;
-  signal sd_clk, sd_pwrn: std_logic;
-  signal sd_cdn, sd_wp: std_logic;
-
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
   end component;
@@ -253,13 +253,22 @@ begin
     spi_ss(0)   => flash_csn,  spi_ss(1)   => sd_dat3_csn,
     spi_mosi(0) => flash_mosi, spi_mosi(1) => sd_cmd_di,
     spi_miso(0) => flash_miso, spi_miso(1) => sd_dat0_do,
+    
+    gpio(127 downto 56) => open,
+    gpio(55 downto 42) => j2b(36 downto 23),
+    gpio(41 downto 28) => j2a(18 downto 5),
+    gpio(27 downto 14) => j1b(36 downto 23),
+    gpio(13 downto 0) => j1a(18 downto 5),
 
-    gpio(127 downto 0) => open,
-
+    simple_out(31 downto 13) => open,
+    simple_out(12) => oled_csn,
+    simple_out(11) => oled_dc,
+    simple_out(10) => oled_resn,
+    simple_out(9) => oled_mosi,
+    simple_out(8) => oled_clk,
     simple_out(7 downto 0) => led(7 downto 0),
-    simple_out(31 downto 8) => open,
-    simple_in(3 downto 0) => btn,
-    simple_in(19 downto 16) => dip,
+    simple_in(31 downto 6) => (others => '0'),
+    simple_in(5 downto 0) => btn,
 
     -- external SDRAM interface
     sdram_addr => sdram_a, sdram_data => sdram_d,
@@ -274,6 +283,7 @@ begin
     dvid_clock => dvid_clock
   );
 
+  no_acram: if C_acram generate
   acram_emulation: entity work.acram_emu
   generic map
   (
@@ -289,11 +299,13 @@ begin
       acram_ready => ram_ready,
       acram_en => ram_en
   );
+  end generate;
 
-  -- vendor specific modules to
-  -- convert single ended DDR to phyisical output signals
+  -- this module instantiates vendor specific modules ddr_out to
+  -- convert SDR 2-bit input to DDR clocked 1-bit output (single-ended)
   G_vgatext_ddrout: entity work.ddr_dvid_out_se
-  port map (
+  port map
+  (
     clk       => clk_dvi,
     clk_n     => clk_dvin,
     in_red    => dvid_red,
@@ -308,20 +320,10 @@ begin
   
   gpdi_data_channels: for i in 0 to 2 generate
     gpdi_diff_data: OLVDS
-    port map (
-      A => ddr_d(i), Z => gpdi_dp(i), ZN => gpdi_dn(i)
-    );
+    port map(A => ddr_d(i), Z => gpdi_dp(i), ZN => gpdi_dn(i));
   end generate;
   gpdi_diff_clock: OLVDS
-  port map (
-    A => ddr_clk, Z => gpdi_clkp, ZN => gpdi_clkn
-  );
-
-  -- fake differential output  
-  --gpdi_dp <= ddr_d;
-  --gpdi_dn <= not ddr_d;
-  --gpdi_clkp <= ddr_clk;
-  --gpdi_clkn <= not ddr_clk;
+  port map(A => ddr_clk, Z => gpdi_clkp, ZN => gpdi_clkn);
 
   -- clock alive blinky
   process(clk)
