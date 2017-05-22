@@ -5,9 +5,6 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
---library LatticeECP3;
---use LatticeECP3.components.all;
-
 use work.f32c_pack.all;
 
 entity ulx3s_xram_sdram_vector is
@@ -106,8 +103,8 @@ entity ulx3s_xram_sdram_vector is
   sdram_dqm: out std_logic_vector(1 downto 0);
   sdram_d: inout std_logic_vector (15 downto 0);
 
-  gpdi_dp: out std_logic_vector(2 downto 0);
-  gpdi_clkp: out std_logic;
+  gpdi_dp, gpdi_dn: out std_logic_vector(2 downto 0);
+  gpdi_clkp, gpdi_clkn: out std_logic;
 
   led: out std_logic_vector(7 downto 0);
   --btn, dip: in std_logic_vector(3 downto 0);
@@ -136,6 +133,8 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal ram_data_read      : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_ready          : std_logic;
   signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
+  signal ddr_d: std_logic_vector(2 downto 0);
+  signal ddr_clk: std_logic;
   signal R_blinky: std_logic_vector(26 downto 0);
   
   -- dummy signals for spi and buttons
@@ -298,6 +297,12 @@ begin
     out_blue  => gpdi_dp(0),
     out_clock => gpdi_clkp
   );
+
+  -- fake differential output  
+  --gpdi_dp <= ddr_d;
+  --gpdi_dn <= not ddr_d;
+  --gpdi_clkp <= ddr_clk;
+  --gpdi_clkn <= not ddr_clk;
 
   -- clock alive blinky
   process(clk)
