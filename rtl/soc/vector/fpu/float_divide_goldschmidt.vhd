@@ -176,10 +176,3 @@ begin
       & R_pipe_data(C_pipe_stages-1).exponent
       & R_pipe_data(C_pipe_stages-1).mantissa_b(C_precision_bits-2 downto C_precision_bits-C_mantissa_bits-1); -- again hide MSB bit
 end;
-
--- todo: normalization
-
--- in course of the pipeline stages,
--- result may loose significant bits
--- if MSB=0, subtract exponent and left shift b
--- until we have again MSB=1
