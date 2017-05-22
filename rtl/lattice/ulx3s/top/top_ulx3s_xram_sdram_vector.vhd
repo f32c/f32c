@@ -7,6 +7,9 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 use work.f32c_pack.all;
 
+library ecp5u;
+use ecp5u.components.all;
+
 entity ulx3s_xram_sdram_vector is
   generic (
     -- ISA: either ARCH_MI32 or ARCH_RV32
@@ -144,6 +147,11 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: std_logic;
   signal sd_clk, sd_pwrn: std_logic;
   signal sd_cdn, sd_wp: std_logic;
+
+  component OLVDS
+    port(A: in std_logic; Z, ZN: out std_logic);
+  end component;
+
 begin
   minimal_25MHz: if C_clk_freq=25 and C_video_mode=-1 generate
     clk <= clk_25MHz;
@@ -292,10 +300,21 @@ begin
     in_green  => dvid_green,
     in_blue   => dvid_blue,
     in_clock  => dvid_clock,
-    out_red   => gpdi_dp(2),
-    out_green => gpdi_dp(1),
-    out_blue  => gpdi_dp(0),
-    out_clock => gpdi_clkp
+    out_red   => ddr_d(2),
+    out_green => ddr_d(1),
+    out_blue  => ddr_d(0),
+    out_clock => ddr_clk
+  );
+  
+  gpdi_data_channels: for i in 0 to 2 generate
+    gpdi_diff_data: OLVDS
+    port map (
+      A => ddr_d(i), Z => gpdi_dp(i), ZN => gpdi_dn(i)
+    );
+  end generate;
+  gpdi_diff_clock: OLVDS
+  port map (
+    A => ddr_clk, Z => gpdi_clkp, ZN => gpdi_clkn
   );
 
   -- fake differential output  
