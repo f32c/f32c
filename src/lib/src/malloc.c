@@ -81,7 +81,12 @@ malloc_init()
 
 	if (ram_top > (uint32_t) heap) {
 		i = (ram_top - ((uint32_t) heap)) / sizeof(*heap) - 1;
+#if 0
 		heap[0] = SET_FREE(i);
+#else
+		// XXX workaround for the buggy gcc-7.0.1 optimizer !?!
+		((volatile uint32_t *) heap)[0] = SET_FREE(i);
+#endif
 	} else
 		i = 0;
 
