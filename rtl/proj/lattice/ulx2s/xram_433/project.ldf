@@ -231,6 +231,9 @@
         <Source name="../../constraints/ulx2s.lpf" type="Logic Preference" type_short="LPF">
             <Options/>
         </Source>
+        <Source name="ulx2s_sram.xcf" type="Programming Project File" type_short="Programming" excluded="TRUE">
+            <Options/>
+        </Source>
     </Implementation>
     <Strategy name="Strategy1" file="ulx2s_sram1.sty"/>
 </BaliProject>
