@@ -25,10 +25,10 @@ $(PROJECT)/$(PROJECT)_$(PROJECT).bit:
 	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-	${DDTCMD} -oft -fullvme -if ulx3s_sram.xcf -nocompress -noheader -of $@
+	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_sram.xcf -nocompress -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-	${DDTCMD} -oft -svfsingle -revd -if ulx3s_sram.xcf -of $@
+	LANG=C ${DDTCMD} -oft -svfsingle -revd -if ulx3s_sram.xcf -of $@
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	echo pgr_project open ulx3s_sram.xcf \; pgr_program run | ${DIAMONDC}

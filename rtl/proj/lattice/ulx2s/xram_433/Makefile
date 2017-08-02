@@ -35,13 +35,13 @@ $(PROJECT)/$(PROJECT)_$(PROJECT).jed:
 #	@fgrep Warning: ${IMPL_DIR}/*.twr
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
-	ddtcmd -oft -svfsingle -revd -if ulx2s_sram.xcf -of $@
+	LANG=C ddtcmd -oft -svfsingle -revd -if ulx2s_sram.xcf -of $@
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
-#	ddtcmd -oft -fullvme -if ulx2s_flash.xcf -nocompress -noheader -of $@
+#	LANG=C ddtcmd -oft -fullvme -if ulx2s_flash.xcf -nocompress -noheader -of $@
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
-#	ddtcmd -oft -svfsingle -op "FLASH Erase,Program,Verify" -if $< -of $@
+#	LANG=C ddtcmd -oft -svfsingle -op "FLASH Erase,Program,Verify" -if $< -of $@
 
 #flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
 #	${PROGRAMMERC} $<
@@ -50,9 +50,9 @@ $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
 
 # example another project
 #%.svf : %.jed
-#	ddtcmd -oft -svfsingle -op "FLASH Erase,Program,Verify" -if $< -of $@
+#	LANG=C ddtcmd -oft -svfsingle -op "FLASH Erase,Program,Verify" -if $< -of $@
 #	mv -f $@ $@.flash
-#	ddtcmd -oft -svfsingle -revd -op "SRAM Fast Program" -if $< -of $@
+#	LANG=C ddtcmd -oft -svfsingle -revd -op "SRAM Fast Program" -if $< -of $@
 #	mv -f $@ $@.sram
 #	./svf_to_urjtag.pl <$@.flash | sed 's/,/./g' > $@
 
