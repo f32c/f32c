@@ -239,8 +239,8 @@ architecture Behavioral of esa11_xram_axiram_ddr3 is
 
     component clk_d100_83_100_200_125_25MHz is
     Port (
-      clk_100M_in_p : in STD_LOGIC;
-      clk_100M_in_n : in STD_LOGIC;
+      clk_in1_p : in STD_LOGIC;
+      clk_in1_n : in STD_LOGIC;
       clk_83M333 : out STD_LOGIC;
       clk_100M : out STD_LOGIC;
       clk_200M : out STD_LOGIC;
@@ -426,8 +426,8 @@ begin
 
     cpu83_100M_ddr_640x480: if (C_clk_freq = 83 or C_clk_freq = 100) and C_dvid_ddr and C_video_mode<=1 generate
     clk_cpu83_100M_ddr_640x480: clk_d100_83_100_200_125_25MHz
-    port map(clk_100M_in_p => i_100MHz_P,
-             clk_100M_in_n => i_100MHz_N,
+    port map(clk_in1_p => i_100MHz_P,
+             clk_in1_n => i_100MHz_N,
              clk_83M333 => clk_83MHz,
              clk_100M => clk_100MHz,
              clk_200M => clk_200MHz,

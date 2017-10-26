@@ -1,5 +1,5 @@
 # linux version
-vivado ?= /opt/Xilinx/Vivado/2016.2/bin/vivado
+vivado ?= /opt/Xilinx/Vivado/2017.3/bin/vivado
 # windows version
 # vivado ?= /cygdrive/c/Xilinx/Vivado/2015.4/bin/vivado
 # basename of the file some_project.xpr
