@@ -56,6 +56,23 @@ junk+=$(project).srcs/sources_1/ip/axi_bram_ctrl_0/axi_bram_ctrl_v4_0
 junk+=$(project).srcs/sources_1/ip/axi_bram_ctrl_0/blk_mem_gen_v8_2
 junk+=$(project).srcs/sources_1/ip/axi_bram_ctrl_0/sim
 junk+=$(project).srcs/sources_1/ip/axi_bram_ctrl_0/synth
+# 100_83_200_250_25MHz for SDR 640x480
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/*.upgrade_log
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/*.v
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/*.vh
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/*.vhdl
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/*.dcp
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/*.xml
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/*.xdc
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/*.veo
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/*.vho
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/*.tcl
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/*.ncf
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/*.log
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/doc
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/sim
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/synth
+junk+=$(project).srcs/sources_1/ip/clk_d100_83_100_200_125_25MHz/clk_wiz_v5_3_1
 # 100_100_200_250_25MHz for SDR 640x480
 junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_25MHz/*.upgrade_log
 junk+=$(project).srcs/sources_1/ip/clk_d100_100_200_250_25MHz/*.v
