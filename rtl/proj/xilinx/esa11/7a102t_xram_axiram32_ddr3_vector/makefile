@@ -24,6 +24,7 @@ junk+=$(project).srcs/sources_1/ip/axi_interconnect_0/blk_mem_gen_v8_3_3
 junk+=$(project).srcs/sources_1/ip/axi_interconnect_0/fifo_generator_v13_1_1
 junk+=$(project).srcs/sources_1/ip/axi_interconnect_0/synth
 junk+=$(project).srcs/sources_1/ip/axi_interconnect_0/sim
+junk+=$(project).srcs/sources_1/ip/axi_interconnect_0/hdl
 
 junk+=$(project).srcs/sources_1/ip/mig_7series_1/example_design/
 junk+=$(project).srcs/sources_1/ip/mig_7series_1/*.upgrade_log
