@@ -179,6 +179,7 @@ generic (
         C_vgatext_bitmap_fifo_data_width: integer := 8; -- data width from the fifo
 
     C_pcm: boolean := false;
+    C_synth: boolean := false;
     C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
     C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
       C_fm_stereo: boolean := false;
@@ -450,6 +451,13 @@ architecture Behavioral of glue_xram is
     signal pcm_l, pcm_r: std_logic;
     signal pcm_bus_l, pcm_bus_r: ieee.numeric_std.signed(15 downto 0);
     signal pwm_filt_l, pwm_filt_r: std_logic;
+
+    -- Polyphonic synth (128 tonewheel voices)
+    constant iomap_synth: T_iomap_range := (x"FBB0", x"FBBF");
+    signal synth_ce: std_logic;
+    signal pcm_synth: ieee.numeric_std.signed(15 downto 0);
+    signal pwm_synth: std_logic;
+    -- signal from_synth: std_logic_vector(31 downto 0); -- write only
 
     -- FM/RDS RADIO
     constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
@@ -1803,6 +1811,37 @@ begin
     
     G_tvout_no_pcm: if C_tv and not C_pcm generate
     jack_tip <= S_tv_dac;
+    end generate;
+
+    --
+    -- Polyphonic Synth
+    --
+    G_synth:
+    if C_synth generate
+    synth: entity work.synth
+    generic map
+    (
+      C_clk_freq => 81250000 -- Hz fixme, this shouldn't be hardcoded
+    )
+    port map
+    (
+      clk => clk, io_ce => synth_ce, io_addr => io_addr(2 downto 2),
+      io_bus_write => dmem_write, io_byte_sel => dmem_byte_sel,
+      io_bus_in => cpu_to_dmem, -- io_bus_out => from_synth,
+      pcm_out => pcm_synth
+    );
+    with conv_integer(io_addr(11 downto 4)) select
+      synth_ce <= io_addr_strobe when iomap_from(iomap_synth, iomap_range) to iomap_to(iomap_synth, iomap_range),
+                           '0' when others;
+    synth_sigmadelta: entity work.sigmadelta
+    port map
+    (
+      clk => clk,
+      in_pcm_l => pcm_synth, in_pcm_r => open,
+      out_l => pwm_synth
+    );
+    jack_tip  <= (others => pwm_synth);
+    jack_ring <= (others => pwm_synth);
     end generate;
 
     -- CW transmitter
