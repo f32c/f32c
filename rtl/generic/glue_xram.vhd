@@ -1821,7 +1821,7 @@ begin
     synth: entity work.synth
     generic map
     (
-      C_clk_freq => 81250000 -- Hz fixme, this shouldn't be hardcoded
+      C_clk_freq => 50000000 -- Hz fixme, this shouldn't be hardcoded
     )
     port map
     (

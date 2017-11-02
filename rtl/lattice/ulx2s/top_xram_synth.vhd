@@ -69,7 +69,7 @@ use xp2.components.all;
 entity toplevel is
   generic (
     -- Main clock: 25, 50, 62, 75, 81, 87, 100, 112, 125, 137, 150 MHz
-    C_clk_freq: integer := 81;
+    C_clk_freq: integer := 50;
 
     -- ISA options
     C_arch: integer := ARCH_MI32;
