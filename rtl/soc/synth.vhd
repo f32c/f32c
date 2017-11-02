@@ -26,6 +26,7 @@ generic
   C_wav_data_bits: integer := 12; -- bits signed wave amplitude resolution
   C_pa_data_bits: integer := 32; -- bits of data in phase accumulator BRAM
   C_amplify: integer := 0; -- bits louder output but reduces max number of voices by 2^n (clipping)
+  C_test_tone: boolean := false; -- Generate tone A4 (440 Hz)
   C_out_bits: integer := 16 -- bits of signed accumulator data (PCM)
 );
 port
@@ -133,7 +134,7 @@ architecture RTL of synth is
         for j in 0 to drawbar_registration'length-1 loop
           sum := sum + drawbar_registration(j) * sin(drawbar_harmonic(j)*w);
         end loop;
-        y(i) := to_signed(integer( sum/normalize * (2.0**real(bits-1)-1.0)), C_wav_data_bits);
+        y(i) := to_signed(integer( sum/normalize * (2.0**real(bits-1)-1.0)), bits);
       end loop;
       return y;
     end F_wav_table;
@@ -158,13 +159,15 @@ architecture RTL of synth is
     end F_freq_table;
     constant C_freq_table: T_freq_table := F_freq_table(C_voice_table_len, C_temperament, C_tuning_cents, C_tones_per_octave, C_cents_per_octave, C_phase_const_bits); -- wave table initializer len, freq
     
+    constant C_voice_max_volume: integer := 2**(C_voice_vol_bits-1)-1;
+
     signal R_voice, S_pa_write_addr: std_logic_vector(C_voice_addr_bits-1 downto 0); -- currently processed voice, destination of increment
     signal S_pa_read_data, S_pa_write_data: std_logic_vector(C_pa_data_bits-1 downto 0); -- current and next phase
     signal S_voice_vol, R_voice_vol: signed(C_voice_vol_bits-1 downto 0);
     signal S_vv_read_data, S_vv_write_data: std_logic_vector(C_voice_vol_bits-1 downto 0); -- voice volume data
     signal S_vv_read_addr, S_vv_write_addr: std_logic_vector(C_voice_addr_bits-1 downto 0); -- voice volume addr
     signal S_vv_write: std_logic;
-    signal S_wav_data: signed(C_wav_data_bits-1 downto 0);
+    signal S_wav_data, R_wav_data: signed(C_wav_data_bits-1 downto 0);
     signal R_multiplied: signed(C_voice_vol_bits+C_wav_data_bits-1 downto 0);
     signal R_accu: signed(C_accu_bits-1 downto 0);
     signal R_output: signed(C_out_bits-1 downto 0); 
@@ -194,16 +197,8 @@ begin
     begin
       if rising_edge(clk) then
         R_voice <= R_voice + 1;
-        -- if conv_integer(R_voice) = 0 then
-          -- R_led <= S_pa_read_data(S_pa_read_data'length-1 downto S_pa_read_data'length-R_led'length);
-          -- R_led <= std_logic_vector(S_wav_data(S_wav_data'length-1 downto S_wav_data'length-R_led'length));
-          -- R_led <= std_logic_vector(R_multiplied(R_multiplied'length-1 downto R_multiplied'length-R_led'length));
-          -- R_led <= std_logic_vector(R_accu(R_accu'length-1 downto R_accu'length-R_led'length));
-        -- end if; 
-        R_voice_vol <= S_voice_vol; -- simulate 1-clock delay to match BRAM delay
       end if;
     end process;
-    -- R_voice contains current address of the voice amplitude and frequency table
 
     -- increment the array of phase accumulators in the BRAM
     S_pa_write_data <= S_pa_read_data + to_integer(C_freq_table(conv_integer(R_voice))); -- next time base incremented with frequency
@@ -229,12 +224,18 @@ begin
 
     -- Voice Volume BRAM
     -- bus write, synth read from addressed BRAM the volume of current voice
-    --S_vv_write <= '1';
-    --S_vv_write_addr <= R_voice;
-    --S_vv_write_data <= 1000 when R_voice = 69 or R_voice = 72 else 0; -- 69: tone A4, 1000: almost full volume
-    S_vv_write <= '1' when io_bus_write = '1' and io_ce = '1' and io_byte_sel = "1111" else '0';
-    S_vv_write_addr <= io_bus_in(C_voice_addr_bits-1 downto 0);
-    S_vv_write_data <= io_bus_in(C_voice_vol_bits+7 downto 8);
+    yes_test_tone: if C_test_tone generate
+      S_vv_write <= '1'; -- debug testing to generate some tone
+      S_vv_write_addr <= R_voice;
+      S_vv_write_data <= std_logic_vector(to_unsigned(C_voice_max_volume, C_voice_vol_bits)) -- max volume
+        when conv_integer(R_voice) = 69 -- 69: tone A4 (440 Hz)
+        else (others => '0');
+    end generate;
+    no_test_tone: if not C_test_tone generate
+      S_vv_write <= '1' when io_bus_write = '1' and io_ce = '1' and io_byte_sel = "1111" else '0';
+      S_vv_write_addr <= io_bus_in(C_voice_addr_bits-1 downto 0);
+      S_vv_write_data <= io_bus_in(C_voice_vol_bits+7 downto 8);
+    end generate;
     S_vv_read_addr <= R_voice;
     S_voice_vol <= to_signed(conv_integer(S_vv_read_data), C_voice_vol_bits);
     voice_volume: entity work.bram_true2p_1clk
@@ -263,10 +264,12 @@ begin
     begin
       if rising_edge(clk) then
         -- S_voice_vol must be signed, then max amplitude is 2x smaller
-        -- count this into designing R_accu large enough to avoid clipping
-        -- R_voice_vol used for delay-match with BRAM
-        R_multiplied <= S_voice_vol * S_wav_data;
-        if conv_integer(R_voice) = 2 then -- output-ready R_accu appears with 2 clocks delay
+        -- consider this when designing R_accu large enough to avoid clipping
+        -- registering inputs to the multiplier reduces noise at low volumes
+        R_voice_vol <= S_voice_vol;
+        R_wav_data <= S_wav_data;
+        R_multiplied <= R_voice_vol * R_wav_data;
+        if conv_integer(R_voice) = 3 then -- output-ready R_accu appears with 3 clocks delay
           R_output <= R_accu(C_accu_bits-1 downto C_accu_bits-C_out_bits);
           R_accu <= (others => '0'); -- reset accumulator
         else

@@ -1821,7 +1821,11 @@ begin
     synth: entity work.synth
     generic map
     (
-      C_clk_freq => 50000000 -- Hz fixme, this shouldn't be hardcoded
+      C_clk_freq => C_clk_freq * 1000000, -- Hz fixme with HZ-precise clock
+      C_voice_vol_bits => 11,
+      C_wav_data_bits => 12,
+      -- C_test_tone => true,
+      C_amplify => 2
     )
     port map
     (
@@ -1834,11 +1838,15 @@ begin
       synth_ce <= io_addr_strobe when iomap_from(iomap_synth, iomap_range) to iomap_to(iomap_synth, iomap_range),
                            '0' when others;
     synth_sigmadelta: entity work.sigmadelta
+    generic map
+    (
+      C_bits => 12
+    )
     port map
     (
       clk => clk,
-      in_pcm_l => pcm_synth, in_pcm_r => (others => '0'),
-      out_l => pwm_synth
+      in_pcm => pcm_synth,
+      out_pwm => pwm_synth
     );
     jack_tip  <= (others => pwm_synth);
     jack_ring <= (others => pwm_synth);
