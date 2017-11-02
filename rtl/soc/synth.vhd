@@ -236,7 +236,7 @@ begin
     S_vv_write_addr <= io_bus_in(C_voice_addr_bits-1 downto 0);
     S_vv_write_data <= io_bus_in(C_voice_vol_bits+7 downto 8);
     S_vv_read_addr <= R_voice;
-    S_voice_vol <= S_vv_read_data;
+    S_voice_vol <= to_signed(conv_integer(S_vv_read_data), C_voice_vol_bits);
     voice_volume: entity work.bram_true2p_1clk
     generic map
     (
