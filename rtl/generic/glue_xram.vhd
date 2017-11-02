@@ -1837,7 +1837,7 @@ begin
     port map
     (
       clk => clk,
-      in_pcm_l => pcm_synth, in_pcm_r => open,
+      in_pcm_l => pcm_synth, in_pcm_r => (others => '0'),
       out_l => pwm_synth
     );
     jack_tip  <= (others => pwm_synth);
