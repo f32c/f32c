@@ -26,7 +26,7 @@ generic
   C_wav_data_bits: integer := 12; -- bits signed wave amplitude resolution
   C_pa_data_bits: integer := 32; -- bits of data in phase accumulator BRAM
   C_amplify: integer := 0; -- bits louder output but reduces max number of voices by 2^n (clipping)
-  C_keyboard: boolean := false; -- false: CPU bus input, true: keyboard input (generates tone A4 (440 Hz) and few others) 
+  C_keyboard: boolean := false; -- false: CPU bus input, true: keyboard input (generates tone A4 (440 Hz) and few others)
   C_out_bits: integer := 24 -- bits of signed PCM output data
 );
 port
@@ -106,14 +106,22 @@ architecture RTL of synth is
     constant C_drawbar_harmonic:   T_drawbar_table := (1,3, 2,4,6,8, 10,12,16);
     -- Hammond common registrations see http://www.keyboardservice.com/Drawbars.asp
     constant C_drawbar_sinewave:   T_drawbar_table := (8,0, 0,0,0,0, 0,0,0);
-    constant C_drawbar_rockorgan:  T_drawbar_table := (8,8, 8,0,0,0, 0,0,0);
-    constant C_drawbar_metalorgan: T_drawbar_table := (8,3, 1,0,1,0, 0,0,0);
+    constant C_drawbar_rockorgan:  T_drawbar_table := (8,8, 8,2,0,0, 0,0,0);
+    constant C_drawbar_metalorgan: T_drawbar_table := (8,7, 5,0,5,0, 0,0,0);
     constant C_drawbar_sawtooth:   T_drawbar_table := (8,3, 4,2,1,1, 1,0,0);
     constant C_drawbar_squarewave: T_drawbar_table := (0,0, 8,0,3,0, 2,0,0);
     constant C_drawbar_fullbright: T_drawbar_table := (8,8, 8,8,8,8, 8,8,8);
+    constant C_drawbar_englishorn: T_drawbar_table := (0,0, 3,5,7,7, 5,4,0);
     constant C_drawbar_brojack:    T_drawbar_table := (8,0, 0,0,0,0, 8,8,8);
+    constant C_drawbar_vocalist:   T_drawbar_table := (7,8, 4,3,0,0, 0,0,0);
+    constant C_drawbar_stringensamble: T_drawbar_table := (4,0, 5,5,4,5, 3,3,6);
+    constant C_drawbar_silky:      T_drawbar_table := (8,0, 8,0,0,0, 0,0,8);
+    constant C_drawbar_fatt:       T_drawbar_table := (8,8, 8,0,0,0, 8,8,8);
+    constant C_drawbar_evilways:   T_drawbar_table := (8,8, 6,4,0,0, 0,0,0);
+    constant C_drawbar_itsonlylove:T_drawbar_table := (6,4, 8,8,4,8, 4,4,8);
+    constant C_drawbar_whitershadeofpale: T_drawbar_table := (6,8, 8,6,0,0, 0,0,0);
     -- choose registration
-    constant C_drawbar_registration: T_drawbar_table := C_drawbar_brojack; -- choose registration
+    constant C_drawbar_registration: T_drawbar_table := C_drawbar_metalorgan; -- choose registration
 
     constant C_wav_table_len: integer := 2**C_wav_addr_bits;
     type T_wav_table is array (0 to C_wav_table_len-1) of signed(C_wav_data_bits-1 downto 0);
