@@ -457,12 +457,12 @@ architecture Behavioral of glue_xram is
     -- Polyphonic synth (128 tonewheel voices)
     constant iomap_synth: T_iomap_range := (x"FBB0", x"FBBF");
     signal synth_ce: std_logic;
-    signal pcm_synth: ieee.numeric_std.signed(15 downto 0);
+    signal pcm_synth: ieee.numeric_std.signed(23 downto 0);
     signal pwm_synth: std_logic;
     -- signal from_synth: std_logic_vector(31 downto 0); -- write only
     
-    -- Global PCM 16-bit signed mono for digital output (currently only SPDIF)
-    signal S_pcm_mono: ieee.numeric_std.signed(15 downto 0);
+    -- Global PCM 24-bit signed mono for digital output (currently only SPDIF)
+    signal S_pcm_mono: ieee.numeric_std.signed(23 downto 0);
 
     -- SPDIF
     signal S_spdif_sample: std_logic_vector(23 downto 0);
@@ -1855,20 +1855,17 @@ begin
     port map
     (
       clk => clk,
-      in_pcm => pcm_synth,
+      in_pcm => pcm_synth(pcm_synth'length-1 downto pcm_synth'length-12),
       out_pwm => pwm_synth
     );
-    S_pcm_mono <= pcm_synth; -- todo make better mixing
     jack_ring <= (others => pwm_synth);
     end generate;
+    
+    S_pcm_mono <= pcm_synth + pcm_bus_l + pcm_bus_r; -- global PCM mixer, warning synth is 24-bit others are 16-bit
 
     -- SPDIF digital audio output (1-channel)
     G_spdif:
     if C_spdif generate
-    -- 16-bit signed PCM is padded to 24-bit signed PCM for SPDIF
-    S_spdif_sample_pad <= (others => S_pcm_mono(0));
-    -- sending signed 24-bit PCM data (padded)
-    S_spdif_sample <= std_logic_vector( S_pcm_mono & S_spdif_sample_pad );
     inst_spdif_tx: entity work.spdif_tx
     generic map
     (
@@ -1877,7 +1874,7 @@ begin
     port map
     (
       clk => clk,
-      data_in => S_spdif_sample,
+      data_in => std_logic_vector(S_pcm_mono),
       spdif_out => S_spdif_out
     );
     jack_tip <= "00" & S_spdif_out & S_spdif_out; -- proper voltage swing for SPDIF

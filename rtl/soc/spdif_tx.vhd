@@ -12,7 +12,7 @@ entity spdif_tx is
  );
  port(
   clk : in std_logic; -- system clock
-  data_in : in std_logic_vector(23 downto 0); -- signed 24-bit PCM input
+  data_in : in std_logic_vector(23 downto 0); -- 24-bit signed value
   address_out : out std_logic := '0'; -- 1 address bit means stereo only
   spdif_out : out std_logic
  );

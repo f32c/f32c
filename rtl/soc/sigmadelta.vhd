@@ -9,12 +9,12 @@ use ieee.numeric_std.all;
 entity sigmadelta is
 generic
 (
-  C_bits: integer range 2 to 16 := 12 -- sigma-delta DAC resolution
+  C_bits: integer range 2 to 16 := 12 -- sigma-delta DAC input resolution
 );
 port
 (
   clk: in std_logic;
-  in_pcm: in signed(15 downto 0); -- 16-bit PCM in
+  in_pcm: in signed(C_bits-1 downto 0); -- 16-bit PCM in
   out_pwm: out std_logic
 );
 end;
@@ -30,7 +30,7 @@ begin
       -- for purpose of PCM generation here is
       -- conversion to unsigned std_logic_vector
       -- by inverting MSB bit (effectively adding 0x8000)
-      R_pcm_unsigned_data <= std_logic_vector( (not in_pcm(15)) & in_pcm(14 downto 16-C_bits) );
+      R_pcm_unsigned_data <= std_logic_vector( (not in_pcm(C_bits-1)) & in_pcm(C_bits-2 downto 0));
       -- Output 1-bit DAC
       R_dac_acc <= R_dac_acc + (R_dac_acc(C_bits) & R_pcm_unsigned_data);
     end if;
