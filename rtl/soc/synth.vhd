@@ -51,7 +51,9 @@ architecture RTL of synth is
     -- key numbering (key 0 is C-1, key 69 is A4 (440 Hz), key 127 is G9)
 
     -- see https://en.wikipedia.org/wiki/Semitone
-    -- classical music quarter-comma meantone temperament, chromatic scale
+    -- http://www.kylegann.com/tuning.html
+
+    -- classical 16-century music quarter-comma meantone temperament, chromatic scale
     constant C_quarter_comma_temperament: T_meantone_temperament :=
     (
          0.0, --  0 C
@@ -67,7 +69,43 @@ architecture RTL of synth is
       1006.8, -- 10 Bb
       1082.9  -- 11 B
     );
+    
+    -- Ben Johnston's Suite for Microtonal Piano (1977)
+    constant C_microtonal_piano_temperament: T_meantone_temperament :=
+    (
+         0.0, --  0 C
+       105.0, --  1 C#
+       203.9, --  2 D
+       297.5, --  3 Eb
+       386.3, --  4 E
+       470.8, --  5 F
+       551.3, --  6 F#
+       702.0, --  7 G
+       840.5, --  8 G#
+       905.9, --  9 A
+       968.8, -- 10 Bb
+      1088.3  -- 11 B
+    );
 
+    -- Hammond temperament targets equal-temperament, but 
+    -- due to constructional reasons, some tones are slightly off-tune
+    constant C_hammond_temperament: T_meantone_temperament :=
+    (
+         0.0,        --  0 C
+        99.89267627, --  1 C#
+       200.7760963,  --  2 D
+       300.488157,   --  3 Eb
+       400.180858,   --  4 E
+       499.8955969,  --  5 F
+       600.6025772,  --  6 F#
+       700.5966375,  --  7 G
+       799.8695005,  --  8 G#
+       900.5764808,  --  9 A
+      1000.29122,    -- 10 Bb
+      1099.983921    -- 11 B
+    );
+
+    -- equal temperament aka EDO-12 is default for MIDI instruments
     constant C_equal_temperament: T_meantone_temperament :=
     (
          0.0, --  0 C
@@ -85,7 +123,7 @@ architecture RTL of synth is
     );
 
     -- Select which temperament to use 
-    constant C_temperament: T_meantone_temperament := C_quarter_comma_temperament;
+    constant C_temperament: T_meantone_temperament := C_hammond_temperament;
 
     -- tuning math:
     -- input: C_clk_freq, C_ref_freq, C_ref_octave, C_ref_note, C_pa_data_bits, C_voice_addr_bits
