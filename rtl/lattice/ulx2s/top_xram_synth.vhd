@@ -202,6 +202,7 @@ entity toplevel is
 
     C_pcm: boolean := false;
     C_synth: boolean := true; -- Polyphonic synth
+    C_spdif: boolean := true; -- SPDIF output (to audio jack tip)
     C_timer: boolean := true;
     C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
     C_fmrds: boolean := false; -- either FM or tx433
@@ -379,6 +380,8 @@ begin
       C_ledstrip_fifo_addr_width => C_ledstrip_fifo_addr_width,
       -- Polyphonic sound synthesizer
       C_synth => C_synth,
+      -- SPDIF output
+      C_spdif => C_spdif,
       -- VGA textmode and bitmap
       C_vgatext => C_vgatext,
       C_vgatext_label => C_vgatext_label,

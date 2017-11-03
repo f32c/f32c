@@ -180,6 +180,7 @@ generic (
 
     C_pcm: boolean := false;
     C_synth: boolean := false;
+    C_spdif: boolean := false; -- generate SPDIF output
     C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
     C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
       C_fm_stereo: boolean := false;
@@ -255,6 +256,7 @@ port (
   ledstrip_rotation: in std_logic := '0'; -- input from motor rotation encoder
   ledstrip_out: out std_logic_vector(1 downto 0); -- 2 channels out
   jack_tip, jack_ring: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, 4-bit simple DAC
+  spdif_out: out std_logic; -- spdif output digital audio
   fm_antenna, cw_antenna: out std_logic;
   gpio: inout std_logic_vector(127 downto 0);
   gpio_pullup: inout std_logic_vector(127 downto 0);  -- XXX fixme not connected optional (set C_gpio_pullup false)
@@ -448,7 +450,7 @@ architecture Behavioral of glue_xram is
     signal pcm_addr_strobe, pcm_data_ready: std_logic;
     signal pcm_addr: std_logic_vector(29 downto 2);
     signal from_pcm: std_logic_vector(31 downto 0);
-    signal pcm_l, pcm_r: std_logic;
+    signal pwm_l, pwm_r: std_logic;
     signal pcm_bus_l, pcm_bus_r: ieee.numeric_std.signed(15 downto 0);
     signal pwm_filt_l, pwm_filt_r: std_logic;
 
@@ -458,6 +460,14 @@ architecture Behavioral of glue_xram is
     signal pcm_synth: ieee.numeric_std.signed(15 downto 0);
     signal pwm_synth: std_logic;
     -- signal from_synth: std_logic_vector(31 downto 0); -- write only
+    
+    -- Global PCM 16-bit signed mono for digital output (currently only SPDIF)
+    signal S_pcm_mono: ieee.numeric_std.signed(15 downto 0);
+
+    -- SPDIF
+    signal S_spdif_sample: std_logic_vector(23 downto 0);
+    signal S_spdif_sample_pad: signed(7 downto 0);
+    signal S_spdif_out: std_logic;
 
     -- FM/RDS RADIO
     constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
@@ -1797,7 +1807,7 @@ begin
       addr_strobe => pcm_addr_strobe, data_ready => pcm_data_ready,
       addr_out => pcm_addr, data_in => from_xram,
       out_pcm_l => pcm_bus_l, out_pcm_r => pcm_bus_r,
-      out_r => pcm_r, out_l => pcm_l
+      out_r => pwm_r, out_l => pwm_l
     );
     with conv_integer(io_addr(11 downto 4)) select
       pcm_ce <= io_addr_strobe when iomap_from(iomap_pcm, iomap_range) to iomap_to(iomap_pcm, iomap_range),
@@ -1805,8 +1815,8 @@ begin
     -- audible debugging of RDS internal filters
     --jack_tip  <= (others => pwm_filt_l);
     --jack_ring <= (others => pwm_filt_r);
-    jack_tip  <= S_tv_dac when C_tv else (others => pcm_l);
-    jack_ring <= (others => pcm_r);
+    jack_tip  <= S_tv_dac when C_tv else (others => pwm_l);
+    jack_ring <= (others => pwm_r);
     end generate;
     
     G_tvout_no_pcm: if C_tv and not C_pcm generate
@@ -1821,11 +1831,11 @@ begin
     synth: entity work.synth
     generic map
     (
-      C_clk_freq => C_clk_freq * 1000000, -- Hz fixme with HZ-precise clock
+      C_clk_freq => C_clk_freq * 1000000, -- Hz fixme with Hz-precise clock
       C_voice_vol_bits => 11,
       C_wav_data_bits => 12,
       -- C_test_tone => true,
-      C_amplify => 2
+      C_amplify => 0
     )
     port map
     (
@@ -1848,8 +1858,30 @@ begin
       in_pcm => pcm_synth,
       out_pwm => pwm_synth
     );
-    jack_tip  <= (others => pwm_synth);
+    S_pcm_mono <= pcm_synth; -- todo make better mixing
     jack_ring <= (others => pwm_synth);
+    end generate;
+
+    -- SPDIF digital audio output (1-channel)
+    G_spdif:
+    if C_spdif generate
+    -- 16-bit signed PCM is padded to 24-bit signed PCM for SPDIF
+    S_spdif_sample_pad <= (others => S_pcm_mono(0));
+    -- sending signed 24-bit PCM data (padded)
+    S_spdif_sample <= std_logic_vector( S_pcm_mono & S_spdif_sample_pad );
+    inst_spdif_tx: entity work.spdif_tx
+    generic map
+    (
+      C_clk_freq => C_clk_freq * 1000000 -- Hz fixme with Hz-precise clock
+    )
+    port map
+    (
+      clk => clk,
+      data_in => S_spdif_sample,
+      spdif_out => S_spdif_out
+    );
+    jack_tip <= "00" & S_spdif_out & S_spdif_out; -- proper voltage swing for SPDIF
+    spdif_out <= S_spdif_out;
     end generate;
 
     -- CW transmitter
