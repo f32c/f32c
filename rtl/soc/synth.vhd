@@ -102,17 +102,18 @@ architecture RTL of synth is
     constant C_accu_bits: integer := C_voice_vol_bits+C_wav_data_bits+C_voice_addr_bits-C_amplify-1; -- accumulator register width
 
     constant C_drawbar_len: integer := 9; -- number of Hammond style drawbars
-    type T_drawbar_table is array (0 to C_drawbar_len-1) of real;
-    constant C_drawbar_harmonic:   T_drawbar_table := (1.0,3.0, 2.0,4.0,6.0,8.0, 10.0,12.0,16.0);
-    -- Hammond common registrations
-    constant C_drawbar_sinewave:   T_drawbar_table := (8.0,0.0, 0.0,0.0,0.0,0.0, 0.0,0.0,0.0);
-    constant C_drawbar_rockorgan:  T_drawbar_table := (8.0,8.0, 8.0,0.0,0.0,0.0, 0.0,0.0,0.0);
-    constant C_drawbar_metalorgan: T_drawbar_table := (8.0,3.0, 1.0,0.0,1.0,0.0, 0.3,0.0,0.0);
-    constant C_drawbar_sawtooth:   T_drawbar_table := (8.0,3.0, 4.0,2.0,1.0,1.0, 1.0,0.0,0.0);
-    constant C_drawbar_squarewave: T_drawbar_table := (0.0,0.0, 8.0,0.0,3.0,0.0, 2.0,0.0,0.0);
-    constant C_drawbar_fullbright: T_drawbar_table := (8.0,8.0, 8.0,8.0,8.0,8.0, 8.0,8.0,8.0);
+    type T_drawbar_table is array (0 to C_drawbar_len-1) of integer;
+    constant C_drawbar_harmonic:   T_drawbar_table := (1,3, 2,4,6,8, 10,12,16);
+    -- Hammond common registrations see http://www.keyboardservice.com/Drawbars.asp
+    constant C_drawbar_sinewave:   T_drawbar_table := (8,0, 0,0,0,0, 0,0,0);
+    constant C_drawbar_rockorgan:  T_drawbar_table := (8,8, 8,0,0,0, 0,0,0);
+    constant C_drawbar_metalorgan: T_drawbar_table := (8,3, 1,0,1,0, 0,0,0);
+    constant C_drawbar_sawtooth:   T_drawbar_table := (8,3, 4,2,1,1, 1,0,0);
+    constant C_drawbar_squarewave: T_drawbar_table := (0,0, 8,0,3,0, 2,0,0);
+    constant C_drawbar_fullbright: T_drawbar_table := (8,8, 8,8,8,8, 8,8,8);
+    constant C_drawbar_brojack:    T_drawbar_table := (8,0, 0,0,0,0, 8,8,8);
     -- choose registration
-    constant C_drawbar_registration: T_drawbar_table := C_drawbar_metalorgan; -- choose registration
+    constant C_drawbar_registration: T_drawbar_table := C_drawbar_brojack; -- choose registration
 
     constant C_wav_table_len: integer := 2**C_wav_addr_bits;
     type T_wav_table is array (0 to C_wav_table_len-1) of signed(C_wav_data_bits-1 downto 0);
@@ -126,13 +127,13 @@ architecture RTL of synth is
     begin
       normalize := 0.0;
       for j in 0 to drawbar_registration'length-1 loop
-        normalize := normalize + drawbar_registration(j);
+        normalize := normalize + real(2**drawbar_registration(j)/2);
       end loop;
       for i in 0 to len - 1 loop
         w := 2.0*3.141592653589793*real(i)/real(len); -- w = 2*pi*f
         sum := 0.0;
         for j in 0 to drawbar_registration'length-1 loop
-          sum := sum + drawbar_registration(j) * sin(drawbar_harmonic(j)*w);
+          sum := sum + real(2**drawbar_registration(j)/2) * sin(real(drawbar_harmonic(j))*w);
         end loop;
         y(i) := to_signed(integer( sum/normalize * (2.0**real(bits-1)-1.0)), bits);
       end loop;
