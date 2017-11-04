@@ -130,15 +130,27 @@ architecture RTL of synth is
     -- output: C_shift_octave, C_tuning_cents
 
     -- calculate base frequency, this is lowest possible A, meantone_temperament #9
-    constant C_base_freq: real := real(C_clk_freq)*2.0**(C_temperament(C_ref_tone)/C_cents_per_octave-real(C_voice_addr_bits+C_pa_data_bits));
+    -- downshifting by (C_voice_addr_bits+C_pa_data_bits) is moved to C_shift_octave to avoid floating underflow here
+    constant C_base_freq: real := real(C_clk_freq)*2.0**(C_temperament(C_ref_tone)/C_cents_per_octave);
     -- calculate how many octaves (floating point) we need to go up to reach C_ref_freq
     constant C_octave_to_ref: real := log(C_ref_freq/C_base_freq)/log(2.0);
     -- convert real C_octave_to_ref into octave integer and cents tuning
-    constant C_shift_octave: integer := integer(C_octave_to_ref)-C_ref_octave;
+    -- now shift by (C_voice_addr_bits+C_pa_data_bits)
+    constant C_shift_octave: integer := integer(C_octave_to_ref)+C_voice_addr_bits+C_pa_data_bits-C_ref_octave;
     constant C_tuning_cents: real := C_cents_per_octave*(C_octave_to_ref-floor(C_octave_to_ref));
 
     constant C_accu_bits: integer := C_voice_vol_bits+C_wav_data_bits+C_voice_addr_bits-C_amplify-1; -- accumulator register width
 
+    -- Hardware Registration:
+    -- Can be changed only at compile time.
+    -- Allows independent and consistent tuning of each key for
+    -- non-equal temperaments, odd harmonics 5,7,9,... and user-defined waveforms.
+    -- For software (CPU-controlled) registration like in original hammond,
+    -- 9 sinewave voices are mixed with drawbar 2^n volume coefficients,
+    -- see http://www.jessedeanefreeman.com/hammondstuff.html
+    -- hardware registration should be set to:
+    -- C_temperament = C_hammond_temperament (or C_equal_temperament)
+    -- C_drawbar_registration = C_drawbar_sinewave
     constant C_drawbar_len: integer := 9; -- number of Hammond style drawbars
     type T_drawbar_table is array (0 to C_drawbar_len-1) of integer;
     constant C_drawbar_harmonic:   T_drawbar_table := (1,3, 2,4,6,8, 10,12,16);
@@ -158,8 +170,8 @@ architecture RTL of synth is
     constant C_drawbar_evilways:   T_drawbar_table := (8,8, 6,4,0,0, 0,0,0);
     constant C_drawbar_itsonlylove:T_drawbar_table := (6,4, 8,8,4,8, 4,4,8);
     constant C_drawbar_whitershadeofpale: T_drawbar_table := (6,8, 8,6,0,0, 0,0,0);
-    -- choose registration
-    constant C_drawbar_registration: T_drawbar_table := C_drawbar_metalorgan; -- choose registration
+    -- choose hardware registration
+    constant C_drawbar_registration: T_drawbar_table := C_drawbar_sinewave;
 
     constant C_wav_table_len: integer := 2**C_wav_addr_bits;
     type T_wav_table is array (0 to C_wav_table_len-1) of signed(C_wav_data_bits-1 downto 0);
@@ -191,24 +203,26 @@ architecture RTL of synth is
     constant C_voice_table_len: integer := 2**C_voice_addr_bits;
     constant C_phase_const_bits: integer := C_shift_octave+C_voice_table_len/C_tones_per_octave+2; -- bits for phase accumulator addition constants
     type T_freq_table is array (0 to C_voice_table_len-1) of unsigned(C_phase_const_bits-1 downto 0);
-    function F_freq_table(len: integer; temperament: T_meantone_temperament; tuning: real; tones_per_octave: integer; cents_per_octave: real;  bits: integer)
+    function F_freq_table(len: integer; temperament: T_meantone_temperament; tuning: real; tones_per_octave: integer; cents_per_octave: real; transpose:integer;  bits: integer)
       return T_freq_table is
-        variable i: integer;
+        variable i, j: integer;
         variable octave, tone: integer;
         variable y: T_freq_table;
     begin
       for i in 0 to len - 1 loop
+        j := (i + transpose) mod len;
         octave := i / tones_per_octave; -- octave number
         tone := i mod tones_per_octave; -- meantone number
-        y(i) := to_unsigned(integer(2.0**(real(C_shift_octave+octave)+(temperament(tone)+tuning)/cents_per_octave)+0.5), bits);
+        y(j) := to_unsigned(integer(2.0**(real(C_shift_octave+octave)+(temperament(tone)+tuning)/cents_per_octave)+0.5), bits);
       end loop;
       return y;
     end F_freq_table;
-    constant C_freq_table: T_freq_table := F_freq_table(C_voice_table_len, C_temperament, C_tuning_cents, C_tones_per_octave, C_cents_per_octave, C_phase_const_bits); -- wave table initializer len, freq
+    -- wave table initializer len, freq, transposed by 1 to match hardware pipeline delay
+    constant C_freq_table: T_freq_table := F_freq_table(C_voice_table_len, C_temperament, C_tuning_cents, C_tones_per_octave, C_cents_per_octave, 1, C_phase_const_bits);
     
     constant C_voice_max_volume: integer := 2**(C_voice_vol_bits-1)-1;
 
-    signal R_voice, S_pa_write_addr: std_logic_vector(C_voice_addr_bits-1 downto 0); -- currently processed voice, destination of increment
+    signal R_voice, R_voice_prev, S_pa_write_addr: std_logic_vector(C_voice_addr_bits-1 downto 0); -- currently processed voice, destination of increment
     signal S_pa_read_data, S_pa_write_data: std_logic_vector(C_pa_data_bits-1 downto 0); -- current and next phase
     signal S_voice_vol, R_voice_vol: signed(C_voice_vol_bits-1 downto 0);
     signal S_vv_read_data, S_vv_write_data: std_logic_vector(C_voice_vol_bits-1 downto 0); -- voice volume data
@@ -224,13 +238,14 @@ begin
     begin
       if rising_edge(clk) then
         R_voice <= R_voice + 1;
+        R_voice_prev <= R_voice;
       end if;
     end process;
 
     -- increment the array of phase accumulators in the BRAM
     S_pa_write_data <= S_pa_read_data + to_integer(C_freq_table(conv_integer(R_voice))); -- next time base incremented with frequency
     -- next value is written on previous address to match register pipeline latency
-    S_pa_write_addr <= R_voice - 1;
+    S_pa_write_addr <= R_voice_prev;
     phase_accumulator: entity work.bram_true2p_1clk
     generic map
     (
@@ -253,7 +268,7 @@ begin
     -- bus write, synth read from addressed BRAM the volume of current voice
     yes_test_keyboard: if C_keyboard generate
       S_vv_write <= '1'; -- debug testing to generate some tone
-      S_vv_write_addr <= S_pa_write_addr;
+      S_vv_write_addr <= R_voice;
       S_vv_write_data <= std_logic_vector(to_unsigned(C_voice_max_volume, C_voice_vol_bits)) -- max volume
         when (conv_integer(R_voice) = 5*12+9  and keyboard(0) = '1') -- A4 (440 Hz)
         or   (conv_integer(R_voice) = 3*12+11 and keyboard(1) = '1') -- B2
@@ -266,7 +281,7 @@ begin
     end generate;
     no_test_keyboard: if not C_keyboard generate
       S_vv_write <= '1' when io_bus_write = '1' and io_ce = '1' and io_byte_sel = "1111" else '0';
-      S_vv_write_addr <= io_bus_in(C_voice_addr_bits-1 downto 0);
+      S_vv_write_addr <= io_bus_in(C_voice_addr_bits-1 downto 0); -- warning: tone 68 (not 69) is A4
       S_vv_write_data <= io_bus_in(C_voice_vol_bits+7 downto 8);
     end generate;
     S_vv_read_addr <= R_voice;
