@@ -281,7 +281,7 @@ begin
     end generate;
     no_test_keyboard: if not C_keyboard generate
       S_vv_write <= '1' when io_bus_write = '1' and io_ce = '1' and io_byte_sel = "1111" else '0';
-      S_vv_write_addr <= io_bus_in(C_voice_addr_bits-1 downto 0); -- warning: tone 68 (not 69) is A4
+      S_vv_write_addr <= io_bus_in(C_voice_addr_bits-1 downto 0);
       S_vv_write_data <= io_bus_in(C_voice_vol_bits+7 downto 8);
     end generate;
     S_vv_read_addr <= R_voice;
