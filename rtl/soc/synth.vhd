@@ -3,6 +3,10 @@
 -- LICENSE=BSD
 
 -- this module generates multiple-voice polyphonic sound
+-- bus interface updates a set of 128 volumes by writing a
+-- 32-bit data for to any address
+-- 0xVVVTT    VVVV-volume signed 11-bit, TT-MIDI tone number 7-bit
+-- 0x20045    Plays MIDI tone 69, note A4 (440 Hz) at volume 256 (half max)
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -27,6 +31,7 @@ generic
   C_pa_data_bits: integer := 32; -- bits of data in phase accumulator BRAM
   C_amplify: integer := 0; -- bits louder output but reduces max number of voices by 2^n (clipping)
   C_keyboard: boolean := false; -- false: CPU bus input, true: keyboard input (generates tone A4 (440 Hz) and few others)
+  C_zero_cross: boolean := false; -- updates at zero cross (remove clicks) expense 1 extra BRAM
   C_out_bits: integer := 24 -- bits of signed PCM output data
 );
 port
@@ -225,10 +230,12 @@ architecture RTL of synth is
     signal R_voice, R_voice_prev, S_pa_write_addr: std_logic_vector(C_voice_addr_bits-1 downto 0); -- currently processed voice, destination of increment
     signal S_pa_read_data, S_pa_write_data: std_logic_vector(C_pa_data_bits-1 downto 0); -- current and next phase
     signal S_voice_vol, R_voice_vol: signed(C_voice_vol_bits-1 downto 0);
-    signal S_vv_read_data, S_vv_write_data: std_logic_vector(C_voice_vol_bits-1 downto 0); -- voice volume data
-    signal S_vv_read_addr, S_vv_write_addr: std_logic_vector(C_voice_addr_bits-1 downto 0); -- voice volume addr
-    signal S_vv_write: std_logic;
+    signal S_avv_read_data, R_avv_write_data: std_logic_vector(C_voice_vol_bits+1 downto 0); -- voice volume + 2 bits zero-cross tracking
+    signal S_pvv_read_data, S_pvv_write_data: std_logic_vector(C_voice_vol_bits-1 downto 0); -- voice volume data written by the bus
+    signal S_vv_read_addr, S_pvv_write_addr, R_avv_write_addr: std_logic_vector(C_voice_addr_bits-1 downto 0); -- voice volume addr
+    signal S_bus_vol_write, S_avv_write, S_pvv_write: std_logic;
     signal S_wav_data, R_wav_data: signed(C_wav_data_bits-1 downto 0);
+    signal S_wav_zero_cross: std_logic;
     signal R_multiplied: signed(C_voice_vol_bits+C_wav_data_bits-1 downto 0);
     signal R_accu: signed(C_accu_bits-1 downto 0);
     signal R_output: signed(C_out_bits-1 downto 0); 
@@ -267,9 +274,9 @@ begin
     -- Voice Volume BRAM
     -- bus write, synth read from addressed BRAM the volume of current voice
     yes_test_keyboard: if C_keyboard generate
-      S_vv_write <= '1'; -- debug testing to generate some tone
-      S_vv_write_addr <= R_voice;
-      S_vv_write_data <= std_logic_vector(to_unsigned(C_voice_max_volume, C_voice_vol_bits)) -- max volume
+      S_pvv_write <= '1'; -- debug testing to generate some tone
+      S_pvv_write_addr <= R_voice;
+      S_pvv_write_data(C_voice_vol_bits-1 downto 0) <= std_logic_vector(to_unsigned(C_voice_max_volume, C_voice_vol_bits)) -- max volume
         when (conv_integer(R_voice) = 5*12+9  and keyboard(0) = '1') -- A4 (440 Hz)
         or   (conv_integer(R_voice) = 3*12+11 and keyboard(1) = '1') -- B2
         or   (conv_integer(R_voice) = 4*12+0  and keyboard(2) = '1') -- C3
@@ -280,13 +287,35 @@ begin
         else (others => '0');
     end generate;
     no_test_keyboard: if not C_keyboard generate
-      S_vv_write <= '1' when io_bus_write = '1' and io_ce = '1' and io_byte_sel = "1111" else '0';
-      S_vv_write_addr <= io_bus_in(C_voice_addr_bits-1 downto 0);
-      S_vv_write_data <= io_bus_in(C_voice_vol_bits+7 downto 8);
+      -- if CPU is not writing to the bus:
+      -- detect volume zero-cross by tracking sign bit
+      -- and update new volume value during the zero cross.
+      -- for zer-cross update, we need to provide voice address
+      -- previous than current voice address in order that the read data
+      -- can be compared (fresh written volume = current volume) and
+      -- written to the same address
+      S_bus_vol_write <= '1' when io_bus_write = '1' and io_ce = '1' and io_byte_sel = "1111" else '0';
+      S_pvv_write <= S_bus_vol_write;
+      S_pvv_write_addr <= io_bus_in(C_voice_addr_bits-1 downto 0);
+      S_pvv_write_data <= io_bus_in(C_voice_vol_bits+7 downto 8);
     end generate;
-    S_vv_read_addr <= R_voice;
-    S_voice_vol <= to_signed(conv_integer(S_vv_read_data), C_voice_vol_bits);
-    voice_volume: entity work.bram_true2p_1clk
+
+    yes_zero_cross_detection: if C_zero_cross generate
+    S_wav_zero_cross <= S_avv_read_data(C_voice_vol_bits+1) xor S_avv_read_data(C_voice_vol_bits);
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        R_avv_write_addr <= R_voice_prev;
+        if S_wav_zero_cross = '1' then
+          R_avv_write_data(C_voice_vol_bits-1 downto 0) <= S_pvv_read_data(C_voice_vol_bits-1 downto 0); -- take bus written value
+        else
+          R_avv_write_data(C_voice_vol_bits-1 downto 0) <= S_avv_read_data(C_voice_vol_bits-1 downto 0); -- write same as read
+        end if;
+        R_avv_write_data(C_voice_vol_bits+1) <= S_avv_read_data(C_voice_vol_bits); -- shift sign bit up
+        R_avv_write_data(C_voice_vol_bits) <= S_wav_data(C_wav_data_bits-1); -- sign bit of the wave
+      end if;
+    end process;
+    bus_written_voice_volume: entity work.bram_true2p_1clk
     generic map
     (
         dual_port => true,
@@ -296,12 +325,41 @@ begin
     port map
     (
         clk => clk,
-        we_a => S_vv_write,
-        addr_a => S_vv_write_addr,
-        data_in_a => S_vv_write_data,
+        we_a => S_pvv_write,
+        addr_a => S_pvv_write_addr,
+        data_in_a => S_pvv_write_data,
         we_b => '0', -- always read 
         addr_b => S_vv_read_addr,
-        data_out_b => S_vv_read_data
+        data_out_b => S_pvv_read_data
+    );
+    S_avv_write <= '1';
+    end generate;
+
+    no_zero_cross_detection: if not C_zero_cross generate
+      S_avv_write <= S_pvv_write;
+      -- misnomer warning: in this case, R_* are signals, not registers
+      R_avv_write_addr <= S_pvv_write_addr;
+      R_avv_write_data(C_voice_vol_bits-1 downto 0) <= S_pvv_write_data;
+    end generate;
+
+    S_vv_read_addr <= R_voice;
+    S_voice_vol <= to_signed(conv_integer(S_avv_read_data), C_voice_vol_bits);
+    active_voice_volume: entity work.bram_true2p_1clk
+    generic map
+    (
+        dual_port => true,
+        addr_width => C_voice_addr_bits,
+        data_width => C_voice_vol_bits+2 -- 2 extra bits for vol sign bit tracking
+    )
+    port map
+    (
+        clk => clk,
+        we_a => S_avv_write,
+        addr_a => R_avv_write_addr,
+        data_in_a => R_avv_write_data,
+        we_b => '0', -- always read 
+        addr_b => S_vv_read_addr,
+        data_out_b => S_avv_read_data
     );
 
     -- waveform data reading (delayed 1 clock, address R_voice-1)
@@ -335,4 +393,5 @@ end;
 -- [x] fix tuning math to work for other than 128 voices
 -- [ ] given the max cents error calculate number of phase accumulator bits
 -- [x] f32c CPU bus interface to alter voice amplitudes
--- [ ] bus interface to upload waveforms (or a way of changing drawbar registrations)
+-- [x] bus interface to upload waveforms (or a way of changing drawbar registrations)
+-- [x] zero cross volume updates

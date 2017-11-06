@@ -180,6 +180,7 @@ generic (
 
     C_pcm: boolean := false;
     C_synth: boolean := false;
+      C_synth_zero_cross: boolean := false; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
     C_spdif: boolean := false; -- generate SPDIF output
     C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
     C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
@@ -1835,6 +1836,7 @@ begin
       C_voice_vol_bits => 11,
       C_wav_data_bits => 12,
       -- C_keyboard => true, -- constant test tone
+      C_zero_cross => C_synth_zero_cross,
       C_amplify => 0
     )
     port map

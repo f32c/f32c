@@ -202,6 +202,7 @@ entity toplevel is
 
     C_pcm: boolean := false;
     C_synth: boolean := true; -- Polyphonic synth
+      C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
     C_spdif: boolean := true; -- SPDIF output (to audio jack tip)
     C_timer: boolean := true;
     C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
@@ -380,6 +381,7 @@ begin
       C_ledstrip_fifo_addr_width => C_ledstrip_fifo_addr_width,
       -- Polyphonic sound synthesizer
       C_synth => C_synth,
+      C_synth_zero_cross => C_synth_zero_cross,
       -- SPDIF output
       C_spdif => C_spdif,
       -- VGA textmode and bitmap
