@@ -31,6 +31,7 @@ generic
   C_pa_data_bits: integer := 32; -- bits of data in phase accumulator BRAM
   C_amplify: integer := 0; -- bits louder output but reduces max number of voices by 2^n (clipping)
   C_keyboard: boolean := false; -- false: CPU bus input, true: keyboard input (generates tone A4 (440 Hz) and few others)
+  C_bus_freq_write: boolean := true; -- true: CPU bus writes frequency
   C_zero_cross: boolean := false; -- updates at zero cross (remove clicks) expense 1 extra BRAM
   C_out_bits: integer := 24 -- bits of signed PCM output data
 );
@@ -227,8 +228,10 @@ architecture RTL of synth is
     
     constant C_voice_max_volume: integer := 2**(C_voice_vol_bits-1)-1;
 
-    signal R_voice, R_voice_prev, S_pa_write_addr: std_logic_vector(C_voice_addr_bits-1 downto 0); -- currently processed voice, destination of increment
+    signal R_voice, R_voice_next, R_voice_prev, R_voice_written, S_pa_write_addr, S_freq_write_addr: std_logic_vector(C_voice_addr_bits-1 downto 0); -- currently processed voice, destination of increment
+    signal S_freq_read_data, S_freq_write_data: std_logic_vector(C_phase_const_bits-1 downto 0);
     signal S_pa_read_data, S_pa_write_data: std_logic_vector(C_pa_data_bits-1 downto 0); -- current and next phase
+    signal S_bus_freq_write: std_logic;
     signal S_voice_vol, R_voice_vol: signed(C_voice_vol_bits-1 downto 0);
     signal S_avv_read_data, R_avv_write_data: std_logic_vector(C_voice_vol_bits+1 downto 0); -- voice volume + 2 bits zero-cross tracking
     signal S_pvv_read_data, S_pvv_write_data: std_logic_vector(C_voice_vol_bits-1 downto 0); -- voice volume data written by the bus
@@ -245,12 +248,40 @@ begin
     begin
       if rising_edge(clk) then
         R_voice <= R_voice + 1;
-        R_voice_prev <= R_voice;
+        R_voice_prev <= R_voice; -- 1 clock delay
       end if;
     end process;
 
+    yes_bus_freq_write: if C_bus_freq_write generate
+    S_bus_freq_write <= '1' when io_bus_write = '1' and io_ce = '1' and io_addr(0) = '1' and io_byte_sel = "1111" else '0';
+    S_freq_write_addr <= R_voice_written; -- from updating voice volume
+    S_freq_write_data <= io_bus_in(C_phase_const_bits-1 downto 0);
+    bus_written_frequency: entity work.bram_true2p_1clk
+    generic map
+    (
+        dual_port => true,
+        addr_width => C_voice_addr_bits,
+        data_width => C_phase_const_bits
+    )
+    port map
+    (
+        clk => clk,
+        we_a => S_bus_freq_write,
+        addr_a => S_freq_write_addr,
+        data_in_a => S_freq_write_data,
+        we_b => '0', -- always read
+        addr_b => R_voice, -- valid data will appear 1 cycle after R_voice
+        data_out_b => S_freq_read_data
+    );
+    -- increment the array of phase accumulators in the BRAM
+    S_pa_write_data <= S_pa_read_data + S_freq_read_data;
+    end generate;
+
+    no_bus_freq_write: if not C_bus_freq_write generate
     -- increment the array of phase accumulators in the BRAM
     S_pa_write_data <= S_pa_read_data + to_integer(C_freq_table(conv_integer(R_voice))); -- next time base incremented with frequency
+    end generate;
+
     -- next value is written on previous address to match register pipeline latency
     S_pa_write_addr <= R_voice_prev;
     phase_accumulator: entity work.bram_true2p_1clk
@@ -266,7 +297,7 @@ begin
         we_a => '1', -- always write increments
         addr_a => S_pa_write_addr,
         data_in_a => S_pa_write_data,
-        we_b => '0', -- always read 
+        we_b => '0', -- always read
         addr_b => R_voice,
         data_out_b => S_pa_read_data
     );
@@ -294,10 +325,18 @@ begin
       -- previous than current voice address in order that the read data
       -- can be compared (fresh written volume = current volume) and
       -- written to the same address
-      S_bus_vol_write <= '1' when io_bus_write = '1' and io_ce = '1' and io_byte_sel = "1111" else '0';
+      S_bus_vol_write <= '1' when io_bus_write = '1' and io_ce = '1' and io_addr(0) = '0' and io_byte_sel = "1111" else '0';
       S_pvv_write <= S_bus_vol_write;
       S_pvv_write_addr <= io_bus_in(C_voice_addr_bits-1 downto 0);
       S_pvv_write_data <= io_bus_in(C_voice_vol_bits+7 downto 8);
+      process(clk)
+      begin
+        if rising_edge(clk) then
+          if S_bus_vol_write = '1' then
+            R_voice_written <= S_pvv_write_addr; -- remember last voice written for optional pitch bend
+          end if;
+        end if;
+      end process;
     end generate;
 
     yes_zero_cross_detection: if C_zero_cross generate
@@ -395,3 +434,4 @@ end;
 -- [x] f32c CPU bus interface to alter voice amplitudes
 -- [x] bus interface to upload waveforms (or a way of changing drawbar registrations)
 -- [x] zero cross volume updates
+-- [ ] preload BRAM with some sane data (keyboard won't work with bus freq update enabled)
