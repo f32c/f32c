@@ -5,7 +5,7 @@ main feature include:
 
     Memory multiport controllers: SRAM, SDRAM, AXI master, DDR3 for Xilinx
     Floating point vector processor: 3 FLOPs/clock, A=B+-*/C, 8 vectors, 2048 length, DMA, 32-bit 
-    Video 2D acceleration: windows, sprites, textmode, scroll, blitter, DMA, output HDMI/VGA/Composite
+    Video 2D acceleration: windows, sprites, textmode, scroll, blitter, DMA, output HDMI/VGA/Composite/LEDstrip
     Sound: 16-bit stereo DMA PCM (WAV)
     Polyphonic synthesizer 128-voice, 24-bit (tonewheel organ emulation)
     Audio output to digital (SPDIF 48kHz/24-bit) and analog (stereo jack PWM)
@@ -14,7 +14,7 @@ main feature include:
     PID controller: 4 DC motors with encoders
     Timer: phase accumulator, input trigger and capture, PWM output, interrupts
     GPIO with interrupts
-    SPI multi-channel for Flash, SD card etc
+    SPI multi-channel: Flash, SD card, OLED display
     RS232 Serial
 
 All SoC components are optional, each is carefully optimized
