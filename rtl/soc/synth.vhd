@@ -32,7 +32,8 @@ generic
   C_amplify: integer := 0; -- bits louder output but reduces max number of voices by 2^n (clipping)
   C_keyboard: boolean := false; -- false: CPU bus input, true: keyboard input (generates tone A4 (440 Hz) and few others)
   C_bus_freq_write: boolean := true; -- true: CPU bus writes frequency
-  C_zero_cross: boolean := false; -- updates at zero cross (remove clicks) expense 1 extra BRAM
+  C_zero_cross: boolean := false; -- updates volume at zero cross (remove clicks) expense 1 extra BRAM
+  C_vol_approach_speed_bits: integer := 4; -- 2^n speed of smooth volume approach after each zero cross 0:slowest, 4:normal
   C_out_bits: integer := 24 -- bits of signed PCM output data
 );
 port
@@ -235,6 +236,7 @@ architecture RTL of synth is
     signal S_voice_vol, R_voice_vol: signed(C_voice_vol_bits-1 downto 0);
     signal S_avv_read_data, R_avv_write_data: std_logic_vector(C_voice_vol_bits+1 downto 0); -- voice volume + 2 bits zero-cross tracking
     signal S_pvv_read_data, S_pvv_write_data: std_logic_vector(C_voice_vol_bits-1 downto 0); -- voice volume data written by the bus
+    signal S_avv_read_signed_data, S_pvv_read_signed_data: signed(C_voice_vol_bits-1 downto 0);
     signal S_vv_read_addr, S_pvv_write_addr, R_avv_write_addr: std_logic_vector(C_voice_addr_bits-1 downto 0); -- voice volume addr
     signal S_bus_vol_write, S_avv_write, S_pvv_write: std_logic;
     signal S_wav_data, R_wav_data: signed(C_wav_data_bits-1 downto 0);
@@ -341,14 +343,20 @@ begin
 
     yes_zero_cross_detection: if C_zero_cross generate
     S_wav_zero_cross <= S_avv_read_data(C_voice_vol_bits+1) xor S_avv_read_data(C_voice_vol_bits);
+    S_avv_read_signed_data <= to_signed(conv_integer(S_avv_read_data(C_voice_vol_bits-1 downto 0)), C_voice_vol_bits);
+    S_pvv_read_signed_data <= to_signed(conv_integer(S_pvv_read_data), C_voice_vol_bits);
     process(clk)
     begin
       if rising_edge(clk) then
         R_avv_write_addr <= R_voice_prev;
-        if S_wav_zero_cross = '1' then
-          R_avv_write_data(C_voice_vol_bits-1 downto 0) <= S_pvv_read_data(C_voice_vol_bits-1 downto 0); -- take bus written value
+        if (S_avv_read_signed_data(C_voice_vol_bits-1 downto C_vol_approach_speed_bits) = S_pvv_read_signed_data(C_voice_vol_bits-1 downto C_vol_approach_speed_bits)) or S_wav_zero_cross = '0' then
+          R_avv_write_data(C_voice_vol_bits-1 downto 0) <= S_avv_read_data(C_voice_vol_bits-1 downto 0); -- no change, write same as read
+        elsif S_avv_read_signed_data(S_avv_read_signed_data'length-1) = '1' then -- negative volume will change abruptly on zero cross
+          R_avv_write_data(C_voice_vol_bits-1 downto 0) <= S_pvv_read_data(C_voice_vol_bits-1 downto 0); -- positive volumes change slowly
+        elsif S_avv_read_signed_data < S_pvv_read_signed_data then -- fixme transition from negative to positive volime
+          R_avv_write_data(C_voice_vol_bits-1 downto C_vol_approach_speed_bits) <= S_avv_read_data(C_voice_vol_bits-1 downto C_vol_approach_speed_bits)+1; -- increment avv towardes pvv
         else
-          R_avv_write_data(C_voice_vol_bits-1 downto 0) <= S_avv_read_data(C_voice_vol_bits-1 downto 0); -- write same as read
+          R_avv_write_data(C_voice_vol_bits-1 downto C_vol_approach_speed_bits) <= S_avv_read_data(C_voice_vol_bits-1 downto C_vol_approach_speed_bits)-1; -- decrement avv towards pvv
         end if;
         R_avv_write_data(C_voice_vol_bits+1) <= S_avv_read_data(C_voice_vol_bits); -- shift sign bit up
         R_avv_write_data(C_voice_vol_bits) <= S_wav_data(C_wav_data_bits-1); -- sign bit of the wave
@@ -435,3 +443,4 @@ end;
 -- [x] bus interface to upload waveforms (or a way of changing drawbar registrations)
 -- [x] zero cross volume updates
 -- [ ] preload BRAM with some sane data (keyboard won't work with bus freq update enabled)
+-- [ ] additional bit in the volume for abrupt change instead of slow transition, currently sign bit is used
