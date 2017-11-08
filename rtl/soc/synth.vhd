@@ -33,7 +33,7 @@ generic
   C_keyboard: boolean := false; -- false: CPU bus input, true: keyboard input (generates tone A4 (440 Hz) and few others)
   C_bus_freq_write: boolean := true; -- true: CPU bus writes frequency
   C_zero_cross: boolean := false; -- updates volume at zero cross (remove clicks) expense 1 extra BRAM
-  C_vol_approach_speed_bits: integer := 4; -- 2^n speed of smooth volume approach after each zero cross 0:slowest, 4:normal
+  C_vol_velocity_bits: integer := 4; -- 2^n voice volume velocity (step at zero cross) 0-3:slow no click, 4:normal small click, 5:normal mild click, >=6: fast strong click
   C_out_bits: integer := 24 -- bits of signed PCM output data
 );
 port
@@ -349,14 +349,14 @@ begin
     begin
       if rising_edge(clk) then
         R_avv_write_addr <= R_voice_prev;
-        if (S_avv_read_signed_data(C_voice_vol_bits-1 downto C_vol_approach_speed_bits) = S_pvv_read_signed_data(C_voice_vol_bits-1 downto C_vol_approach_speed_bits)) or S_wav_zero_cross = '0' then
-          R_avv_write_data(C_voice_vol_bits-1 downto 0) <= S_avv_read_data(C_voice_vol_bits-1 downto 0); -- no change, write same as read
-        elsif S_avv_read_signed_data(S_avv_read_signed_data'length-1) = '1' then -- negative volume will change abruptly on zero cross
-          R_avv_write_data(C_voice_vol_bits-1 downto 0) <= S_pvv_read_data(C_voice_vol_bits-1 downto 0); -- positive volumes change slowly
-        elsif S_avv_read_signed_data < S_pvv_read_signed_data then -- fixme transition from negative to positive volime
-          R_avv_write_data(C_voice_vol_bits-1 downto C_vol_approach_speed_bits) <= S_avv_read_data(C_voice_vol_bits-1 downto C_vol_approach_speed_bits)+1; -- increment avv towardes pvv
+        if S_wav_zero_cross = '0' then
+          R_avv_write_data(C_voice_vol_bits-1 downto 0) <= S_avv_read_data(C_voice_vol_bits-1 downto 0); -- not zero cross: no change, write same as read
+        elsif S_avv_read_signed_data(C_voice_vol_bits-1 downto C_vol_velocity_bits) = S_pvv_read_signed_data(C_voice_vol_bits-1 downto C_vol_velocity_bits) then -- difference is small
+          R_avv_write_data(C_voice_vol_bits-1 downto 0) <= S_pvv_read_data(C_voice_vol_bits-1 downto 0); -- abrupt change
+        elsif S_avv_read_signed_data < S_pvv_read_signed_data then
+          R_avv_write_data(C_voice_vol_bits-1 downto C_vol_velocity_bits) <= S_avv_read_data(C_voice_vol_bits-1 downto C_vol_velocity_bits)+1; -- increment avv towardes pvv
         else
-          R_avv_write_data(C_voice_vol_bits-1 downto C_vol_approach_speed_bits) <= S_avv_read_data(C_voice_vol_bits-1 downto C_vol_approach_speed_bits)-1; -- decrement avv towards pvv
+          R_avv_write_data(C_voice_vol_bits-1 downto C_vol_velocity_bits) <= S_avv_read_data(C_voice_vol_bits-1 downto C_vol_velocity_bits)-1; -- decrement avv towards pvv
         end if;
         R_avv_write_data(C_voice_vol_bits+1) <= S_avv_read_data(C_voice_vol_bits); -- shift sign bit up
         R_avv_write_data(C_voice_vol_bits) <= S_wav_data(C_wav_data_bits-1); -- sign bit of the wave
