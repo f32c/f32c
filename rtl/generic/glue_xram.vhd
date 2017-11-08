@@ -1863,6 +1863,9 @@ begin
       out_pwm => pwm_synth
     );
     jack_ring <= (others => pwm_synth);
+    G_left_analog: if not C_spdif generate
+      jack_tip <= (others => pwm_synth);
+    end generate;
     end generate;
     
     S_pcm_mono <= pcm_synth + pcm_bus_l + pcm_bus_r; -- global PCM mixer, warning synth is 24-bit others are 16-bit
