@@ -41,7 +41,7 @@ entity ulx3s_xram_sdram_vector is
     C_vector_vdata_bits: integer := 32;
     C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
     C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
-    C_vector_float_divide: boolean := false; -- false will not have float divide (/) will save much LUTs and DSPs
+    C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
     -- video parameters common for vgahdmi and vgatext
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR

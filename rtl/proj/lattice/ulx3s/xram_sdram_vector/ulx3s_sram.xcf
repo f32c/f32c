@@ -9,10 +9,10 @@
 			<Pos>1</Pos>
 			<Vendor>Lattice</Vendor>
 			<Family>ECP5UM</Family>
-			<Name>LFE5U-25F</Name>
-			<IDCode>0x01113043</IDCode>
+			<Name>LFE5U-45F</Name>
+			<IDCode>0x01112043</IDCode>
 			<Package>All</Package>
-			<PON>LFE5U-25F</PON>
+			<PON>LFE5U-45F</PON>
 			<Bypass>
 				<InstrLen>8</InstrLen>
 				<InstrVal>11111111</InstrVal>
