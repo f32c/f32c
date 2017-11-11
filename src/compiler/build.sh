@@ -1,8 +1,19 @@
 #!/bin/sh
 
-# XXX check for wget, make, bison...
 # XXX Win32 -> use the MinGW-MSYS bundle
-# XXX sudo for install?
+
+
+GNU_MIRROR=ftp://ftp.gnu.org/gnu
+
+BINUTILS_URL=${GNU_MIRROR}/binutils/binutils-2.29.tar.xz
+GCC_URL=${GNU_MIRROR}/gcc/gcc-7.2.0/gcc-7.2.0.tar.xz
+
+BINUTILS_SRC_DIR=~/github/gnu/binutils
+GCC_SRC_DIR=~/github/gnu/gcc
+
+F32C_SRC_DIR=~/github/f32c
+F32C_TOOLCHAIN_DST_DIR=/usr/local
+
 
 # XXX impossible to build statically linked binutils?
 # F32C_MAKEOPTIONS="LDFLAGS=-static"
@@ -24,11 +35,6 @@ if [ "$OSTYPE" == "FreeBSD" ]; then
 	MAKE=gmake
 fi
 
-BINUTILS_SRC_DIR=~/github/riscv-binutils-gdb
-GCC_SRC_DIR=~/github/riscv-gcc
-F32C_SRC_DIR=~/github/f32c
-F32C_TOOLCHAIN_DST_DIR=/usr/local
-
 
 #
 # Check for prerequisites
@@ -48,15 +54,26 @@ done
 
 if [ ! -d ${BINUTILS_SRC_DIR} ]
 then
-    git clone https://github.com/riscv/riscv-binutils-gdb ${BINUTILS_SRC_DIR}
+#    git clone https://github.com/riscv/riscv-binutils-gdb ${BINUTILS_SRC_DIR}
+    mkdir -p ${BINUTILS_SRC_DIR}
     cd ${BINUTILS_SRC_DIR}
+    wget ${BINUTILS_URL}
+    tar -xf *
+    rm *.tar*
+    mv */* .
     patch -p0 < ${F32C_SRC_DIR}/src/compiler/patches/binutils-2.26.diff
 fi
 
 if [ ! -d ${GCC_SRC_DIR} ]
 then
-    git clone https://github.com/riscv/riscv-gcc ${GCC_SRC_DIR}
+#    git clone https://github.com/riscv/riscv-gcc ${GCC_SRC_DIR}
+    mkdir -p ${GCC_SRC_DIR}
     cd ${GCC_SRC_DIR}
+    cd ${GCC_SRC_DIR}
+    wget ${GCC_URL}
+    tar -xf *
+    rm *.tar*
+    mv */* .
     ./contrib/download_prerequisites 
     patch -p0 < ${F32C_SRC_DIR}/src/compiler/patches/gcc-6.1.0.diff
 fi
