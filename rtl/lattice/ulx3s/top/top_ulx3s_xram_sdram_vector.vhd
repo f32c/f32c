@@ -33,6 +33,15 @@ entity ulx3s_xram_sdram_vector is
     C_gpio: integer := 56;
     C_gpio_pullup: boolean := false;
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
+    C_timer: boolean := true;
+
+    C_pcm: boolean := false; -- PCM audio (wav playing)
+    C_synth: boolean := true; -- Polyphonic synth
+      C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
+      C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
+    C_spdif: boolean := true; -- SPDIF output (to audio jack tip)
+
+    C_cw_simple_out: integer := 7; -- simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
     C_vector: boolean := true; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
@@ -91,11 +100,24 @@ entity ulx3s_xram_sdram_vector is
   port (
   clk_25MHz: in std_logic;  -- main clock input from 25MHz clock source
 
-  -- UART0 (USB slave serial)
-  tx: out   std_logic;
-  rx: in    std_logic;
+  -- UART0 (FTDI USB slave serial)
+  ftdi_rxd: out   std_logic;
+  ftdi_txd: in    std_logic;
+  -- FTDI additional signaling
+  ftdi_ndsr: inout  std_logic;
+  ftdi_nrts: inout  std_logic;
+  ftdi_txden: inout std_logic;
+  
+  -- UART1 (WiFi serial)
+  wifi_rxd: out   std_logic;
+  wifi_txd: in    std_logic;
+  -- WiFi additional signaling
+  wifi_en: inout  std_logic := 'Z'; -- '0' will disable wifi by default
+  wifi_gpio0: inout std_logic;
+  wifi_gpio15: inout std_logic;
+  wifi_gpio16: inout std_logic;
 
-
+  -- SDRAM
   sdram_clk: out std_logic;
   sdram_cke: out std_logic;
   sdram_csn: out std_logic;
@@ -113,8 +135,13 @@ entity ulx3s_xram_sdram_vector is
   oled_csn, oled_clk, oled_mosi, oled_dc, oled_resn: out std_logic;
 
   -- GPIO
-  j1a,j2a: inout std_logic_vector(18 downto 5);
-  j1b,j2b: inout std_logic_vector(36 downto 23);
+  gp, gn: inout std_logic_vector(27 downto 0);
+  
+  -- Audio jack 3.5mm
+  audio_l, audio_r, audio_v: out std_logic_vector(3 downto 0);
+  
+  -- Onboard antenna 433 MHz
+  ant_433mhz: out std_logic;
 
   -- Digital Video (differential outputs)
   gpdi_dp, gpdi_dn: out std_logic_vector(2 downto 0);
@@ -174,6 +201,7 @@ begin
     C_arch => C_arch,
     C_clk_freq => C_clk_freq,
     C_bram_size => C_bram_size,
+    C_branch_prediction => C_branch_prediction,
     C_acram => C_acram,
     C_sdram => C_sdram,
     C_sdram_address_width => 24,
@@ -189,7 +217,18 @@ begin
     C_gpio => C_gpio,
     C_gpio_pullup => C_gpio_pullup,
     C_gpio_adc => C_gpio_adc,
-    C_branch_prediction => C_branch_prediction,
+    C_timer => C_timer,
+
+    -- DMA wav playing
+    C_pcm => C_pcm,
+    -- Polyphonic sound synthesizer (todo: support synth in vector glue)
+    --C_synth => C_synth,
+    --C_synth_zero_cross => C_synth_zero_cross,
+    --C_synth_amplify => C_synth_amplify,
+    -- SPDIF output
+    --C_spdif => C_spdif,
+
+    C_cw_simple_out => C_cw_simple_out,
 
     C_vector => C_vector,
     C_vector_axi => C_vector_axi,
@@ -242,10 +281,10 @@ begin
     clk => clk,
     clk_pixel => clk_pixel,
     clk_pixel_shift => clk_dvi,
-    sio_rxd(0) => rx,
-    --sio_rxd(1) => open,
-    sio_txd(0) => tx,
-    --sio_txd(1) => open,
+    sio_rxd(0) => ftdi_txd,
+    sio_rxd(1) => wifi_txd,
+    sio_txd(0) => ftdi_rxd,
+    sio_txd(1) => wifi_rxd,
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
 
@@ -253,12 +292,10 @@ begin
     spi_ss(0)   => flash_csn,  spi_ss(1)   => sd_dat3_csn,
     spi_mosi(0) => flash_mosi, spi_mosi(1) => sd_cmd_di,
     spi_miso(0) => flash_miso, spi_miso(1) => sd_dat0_do,
-    
+
     gpio(127 downto 56) => open,
-    gpio(55 downto 42) => j2b(36 downto 23),
-    gpio(41 downto 28) => j2a(18 downto 5),
-    gpio(27 downto 14) => j1b(36 downto 23),
-    gpio(13 downto 0) => j1a(18 downto 5),
+    gpio(55 downto 28) => gn(27 downto 0),
+    gpio(27 downto 0) => gp(27 downto 0),
 
     simple_out(31 downto 13) => open,
     simple_out(12) => oled_csn,
@@ -269,6 +306,11 @@ begin
     simple_out(7 downto 0) => led(7 downto 0),
     simple_in(31 downto 6) => (others => '0'),
     simple_in(5 downto 0) => btn,
+    
+    jack_tip => audio_l,
+    jack_ring => audio_r,
+    
+    cw_antenna => ant_433mhz,
 
     -- external SDRAM interface
     sdram_addr => sdram_a, sdram_data => sdram_d,
