@@ -39,7 +39,7 @@
 	.type _start,@function
 
 _start:
-	la	gp, _gp	
+	la	gp, __global_pointer$
 	la	s1, _end	/* End of BSS section, word aligned */
 	la	s0, __bss_start	/* Start of BSS section, NOT word aligned */
 	j	bss_bzero_enter
