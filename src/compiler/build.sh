@@ -12,7 +12,8 @@ BINUTILS_SRC_DIR=~/github/gnu/binutils
 GCC_SRC_DIR=~/github/gnu/gcc
 
 F32C_SRC_DIR=~/github/f32c
-F32C_TOOLCHAIN_DST_DIR=/usr/local
+#F32C_TOOLCHAIN_DST_DIR=/usr/local
+F32C_TOOLCHAIN_DST_DIR=/tmp/f32c
 
 
 # XXX impossible to build statically linked binutils?
@@ -21,6 +22,13 @@ F32C_TOOLCHAIN_DST_DIR=/usr/local
 SUDO=sudo
 MAKE=make
 MAKE_JOBS=2
+
+CC=gcc
+CXX=g++
+
+if [ "$OSTYPE" == "" ]; then
+	OSTYPE=`uname`
+fi
 
 if [ "$OSTYPE" == "cygwin" ]; then
 	SUDO=
@@ -39,7 +47,7 @@ fi
 #
 # Check for prerequisites
 #
-for PROG in git wget tar patch $MAKE bison diff cmp makeinfo gcc install
+for PROG in git wget tar patch $MAKE bison diff cmp makeinfo gcc g++ install
 do
     if [ "`command -v $PROG`" == "" ]; then
 	echo $PROG required but not installed, aborting!
