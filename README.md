@@ -23,7 +23,7 @@ and an UART occupies only 1048 6-input LUTs, while still being able to
 execute gcc-generated code when synthesized in the most compact
 configuration which consumes just 697 (649 logic plus 48 memory) LUTs.
 
-Floating point vector processor can be optionally sinthesized.
+Floating point vector processor can be optionally synthesized.
 Tested on Xilinx Spartan-6 (xc6slx25) and 7-series (xc7a35i, xc7a102t, xc7z010),
 Altera Cyclone-4 (EP4CE22) and MAX-10 (10M50DAF), Lattice ECP3 (LFE3-150EA) 
 and ECP5 (LFE5UM-85F). On Artix-7 it uses 3148 LUTs, 64K BRAM,
