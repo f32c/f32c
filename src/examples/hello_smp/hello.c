@@ -16,7 +16,7 @@
 
 #ifdef __mips__
 static const char *arch = "mips";
-#elif defined(__riscv__)
+#elif defined(__riscv)
 static const char *arch = "riscv";
 #else
 static const char *arch = "unknown";
