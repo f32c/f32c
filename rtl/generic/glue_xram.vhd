@@ -258,6 +258,7 @@ port (
   ledstrip_rotation: in std_logic := '0'; -- input from motor rotation encoder
   ledstrip_out: out std_logic_vector(1 downto 0); -- 2 channels out
   jack_tip, jack_ring: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, 4-bit simple DAC
+  audio_l, audio_r, video_composite: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, new naming of 4-bit simple DAC
   spdif_out: out std_logic; -- spdif output digital audio
   fm_antenna, cw_antenna: out std_logic;
   gpio: inout std_logic_vector(127 downto 0);
@@ -468,7 +469,7 @@ architecture Behavioral of glue_xram is
 
     -- SPDIF
     signal S_spdif_sample: std_logic_vector(23 downto 0);
-    signal S_spdif_sample_pad: signed(7 downto 0);
+    signal S_spdif_sample_pad: ieee.numeric_std.signed(7 downto 0);
     signal S_spdif_out: std_logic;
 
     -- FM/RDS RADIO
@@ -1819,10 +1820,16 @@ begin
     --jack_ring <= (others => pwm_filt_r);
     jack_tip  <= S_tv_dac when C_tv else (others => pwm_l);
     jack_ring <= (others => pwm_r);
+    audio_l <= (others => pwm_l);
+    audio_r <= (others => pwm_r);
     end generate;
-    
+
     G_tvout_no_pcm: if C_tv and not C_pcm generate
     jack_tip <= S_tv_dac;
+    end generate;
+
+    G_tvout: if C_tv generate
+    video_composite <= S_tv_dac;
     end generate;
 
     --
