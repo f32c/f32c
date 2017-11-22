@@ -47,9 +47,10 @@ use work.boot_rom_mi32el.all;
 entity bram is
     generic(
 	C_bram_size: integer; -- in KBytes
-	C_arch: integer; -- ARCH_MI32 or ARCH_RV32
-	C_big_endian: boolean;
-	C_boot_spi: boolean;
+	C_bram_const_init: boolean := true; -- preload BRAM with bootloader content
+	C_arch: integer; -- ARCH_MI32 or ARCH_RV32 selects image to preload
+	C_big_endian: boolean; -- selects image to preload
+	C_boot_spi: boolean; -- selects image to preload
 	C_write_protect_bootloader: boolean := true
     );
     port(
@@ -69,23 +70,33 @@ entity bram is
 end bram;
 
 architecture x of bram is
-    type T_boot_block_map is array(0 to 7) of boot_block_type;
+    type T_boot_block_map is array(0 to 15) of boot_block_type;
     constant boot_block_map: T_boot_block_map := (
+-- all BRAMs unititialized if C_bram_const_init is false
+	(others => (others => '-')),
+	(others => (others => '-')),
+	(others => (others => '-')),
+	(others => (others => '-')),
+	(others => (others => '-')),
+	(others => (others => '-')),
+	(others => (others => '-')),
+	(others => (others => '-')),
+-- preload options for bootloaders
 	boot_sio_mi32el,
 	boot_sio_mi32eb,
 	boot_rom_mi32el,
-	(others => (others => '0')),
+	(others => (others => '-')),
 	boot_sio_rv32el,
-	(others => (others => '0')),
-	(others => (others => '0')),
-	(others => (others => '0'))
+	(others => (others => '-')),
+	(others => (others => '-')),
+	(others => (others => '-'))
     );
 
     type T_sel is array(boolean) of integer;
     constant sel: T_sel := (false => 0, true => 1);
 
     constant boot_block: boot_block_type :=
-      boot_block_map(C_arch * 4 + sel(C_boot_spi) * 2 + sel(C_big_endian));
+      boot_block_map(sel(C_bram_const_init) * 8 + C_arch * 4 + sel(C_boot_spi) * 2 + sel(C_big_endian));
 
     type bram_type is array(0 to (C_bram_size * 256 - 1))
       of std_logic_vector(7 downto 0);
@@ -107,7 +118,7 @@ architecture x of bram is
 	variable y: bram_type;
 	variable i,l: integer;
     begin
-	y := (others => (others => '0'));
+	y := (others => (others => '-'));
 	i := n;
 	l := x'length;
 	while(i < l) loop

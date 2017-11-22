@@ -84,6 +84,7 @@ generic (
 
   -- SoC configuration options
   C_bram_size: integer := 2;	-- in KBytes
+  C_bram_const_init: boolean := true; -- preload BRAM with the bootloader content (MAX10 can't, it is different)
   C_boot_write_protect: boolean := true; -- true: write protect bootloader, false: CPU can modify its bootloader
   C_boot_spi: boolean := false;
   C_icache_size: integer := 0;	-- 0, 2, 4, 8, 16 or 32 KBytes
@@ -1942,6 +1943,7 @@ begin
     bram: entity work.bram
     generic map (
 	C_bram_size => C_bram_size,
+	C_bram_const_init => C_bram_const_init,
 	C_arch => C_arch,
 	C_big_endian => C_big_endian,
 	C_write_protect_bootloader => C_boot_write_protect,
