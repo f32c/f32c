@@ -1,0 +1,6 @@
+#
+# Altera USB-Blaster II
+#
+
+interface usb_blaster
+usb_blaster_lowlevel_driver ftdi
