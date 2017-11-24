@@ -1844,7 +1844,7 @@ begin
       C_clk_freq => C_clk_freq * 1000000, -- Hz fixme with Hz-precise clock
       C_voice_vol_bits => 11,
       C_wav_data_bits => 12,
-      -- C_keyboard => true, -- constant test tone
+      -- C_keyboard => true, -- constant test tone (fixme: it doesn't work)
       C_zero_cross => C_synth_zero_cross,
       C_amplify => C_synth_amplify
     )
@@ -1853,7 +1853,6 @@ begin
       clk => clk, io_ce => synth_ce, io_addr => io_addr(2 downto 2),
       io_bus_write => dmem_write, io_byte_sel => dmem_byte_sel,
       io_bus_in => cpu_to_dmem, -- io_bus_out => from_synth,
-      keyboard => "0000001", -- if keyboard is enabled, constantly play A4 (440 Hz)
       pcm_out => pcm_synth
     );
     with conv_integer(io_addr(11 downto 4)) select
