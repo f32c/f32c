@@ -203,8 +203,8 @@ entity toplevel is
     C_pcm: boolean := false;
     C_synth: boolean := true; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
-      C_synth_amplify: integer := 4; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
-    C_spdif: boolean := false; -- SPDIF output (to audio jack tip)
+      C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
+    C_spdif: boolean := true; -- SPDIF output (to audio jack tip)
     C_timer: boolean := true;
     C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
     C_fmrds: boolean := false; -- either FM or tx433

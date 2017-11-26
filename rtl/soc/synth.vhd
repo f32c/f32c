@@ -24,6 +24,7 @@ generic
   C_ref_freq: real := 440.0; -- Hz reference tone frequency (usually 440Hz for tone A4)
   C_ref_octave: integer := 5; -- reference octave (default 5)
   C_ref_tone: integer := 9; -- reference tone (default 9, tone A)
+  C_slow_octave: integer := 7; -- octaves above this need to slow rise of the volume to avoid clicks
   C_voice_addr_bits: integer := 7; -- bits voices (2^n voices, phase accumulators, volume multipliers)
   C_voice_vol_bits: integer := 11; -- bits signed data for volume of each voice
   C_wav_addr_bits: integer := 10;  -- bits unsigned address for wave time base (time resolution)
@@ -33,7 +34,7 @@ generic
   C_keyboard: boolean := false; -- false: CPU bus input, true: keyboard input (generates tone A4 (440 Hz) and few others)
   C_bus_freq_write: boolean := true; -- true: CPU bus writes frequency
   C_zero_cross: boolean := false; -- updates volume at zero cross (remove clicks) expense 1 extra BRAM
-  C_vol_velocity_bits: integer := 4; -- 2^n voice volume velocity (step at zero cross) 0-3:slow no click, 4:normal small click, 5:normal mild click, >=6: fast strong click
+  C_vol_velocity_bits: integer := 3; -- 2^n voice volume velocity above slow octave (step at zero cross) 0-3:slow no click, 4:normal small click, 5:normal mild click, >=6: fast strong click
   C_out_bits: integer := 24 -- bits of signed PCM output data
 );
 port
@@ -145,7 +146,6 @@ architecture RTL of synth is
     -- now shift by (C_voice_addr_bits+C_pa_data_bits)
     constant C_shift_octave: integer := integer(C_octave_to_ref)+C_voice_addr_bits+C_pa_data_bits-C_ref_octave;
     constant C_tuning_cents: real := C_cents_per_octave*(C_octave_to_ref-floor(C_octave_to_ref));
-
     constant C_accu_bits: integer := C_voice_vol_bits+C_wav_data_bits+C_voice_addr_bits-C_amplify-1; -- accumulator register width
 
     -- Hardware Registration:
@@ -226,7 +226,8 @@ architecture RTL of synth is
     end F_freq_table;
     -- wave table initializer len, freq, transposed by 1 to match hardware pipeline delay
     constant C_freq_table: T_freq_table := F_freq_table(C_voice_table_len, C_temperament, C_tuning_cents, C_tones_per_octave, C_cents_per_octave, 1, C_phase_const_bits);
-    
+    constant C_zc_low_freq_bits: integer := C_shift_octave + C_slow_octave;
+
     constant C_voice_max_volume: integer := 2**(C_voice_vol_bits-1)-1;
 
     signal R_voice, R_voice_next, R_voice_prev, R_voice_written, S_pa_write_addr, S_freq_write_addr: std_logic_vector(C_voice_addr_bits-1 downto 0); -- currently processed voice, destination of increment
@@ -351,7 +352,8 @@ begin
         R_avv_write_addr <= R_voice_prev;
         if S_wav_zero_cross = '0' then
           R_avv_write_data(C_voice_vol_bits-1 downto 0) <= S_avv_read_data(C_voice_vol_bits-1 downto 0); -- not zero cross: no change, write same as read
-        elsif S_avv_read_signed_data(C_voice_vol_bits-1 downto C_vol_velocity_bits) = S_pvv_read_signed_data(C_voice_vol_bits-1 downto C_vol_velocity_bits) then -- difference is small
+        elsif S_avv_read_signed_data(C_voice_vol_bits-1 downto C_vol_velocity_bits) = S_pvv_read_signed_data(C_voice_vol_bits-1 downto C_vol_velocity_bits) -- difference is small
+        or conv_integer(S_freq_read_data(C_phase_const_bits-1 downto C_zc_low_freq_bits)) = 0 then  -- if high freq bits are 0, this is low freq and can change abruptly without click
           R_avv_write_data(C_voice_vol_bits-1 downto 0) <= S_pvv_read_data(C_voice_vol_bits-1 downto 0); -- abrupt change
         elsif S_avv_read_signed_data < S_pvv_read_signed_data then
           R_avv_write_data(C_voice_vol_bits-1 downto C_vol_velocity_bits) <= S_avv_read_data(C_voice_vol_bits-1 downto C_vol_velocity_bits)+1; -- increment avv towardes pvv
