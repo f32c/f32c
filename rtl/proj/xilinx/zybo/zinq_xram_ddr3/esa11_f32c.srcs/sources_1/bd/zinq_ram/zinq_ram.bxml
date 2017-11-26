@@ -2,9 +2,10 @@
 <Root MajorVersion="0" MinorVersion="33">
   <CompositeFile CompositeFileTopName="zinq_ram" CanBeSetAsTop="true" CanDisplayChildGraph="true">
     <Description>Composite Fileset</Description>
-    <Generation Name="SYNTHESIS" State="GENERATED" Timestamp="1471393492"/>
-    <Generation Name="IMPLEMENTATION" State="GENERATED" Timestamp="1471393492"/>
-    <Generation Name="SIMULATION" State="GENERATED" Timestamp="1471393492"/>
+    <Generation Name="SYNTHESIS" State="GENERATED" Timestamp="1511724690"/>
+    <Generation Name="IMPLEMENTATION" State="GENERATED" Timestamp="1511724690"/>
+    <Generation Name="SIMULATION" State="GENERATED" Timestamp="1511724690"/>
+    <Generation Name="HW_HANDOFF" State="GENERATED" Timestamp="1511724690"/>
     <FileCollection Name="SOURCES" Type="SOURCES">
       <File Name="ip/zinq_ram_processing_system7_0_0/zinq_ram_processing_system7_0_0.xci" Type="IP">
         <Instance HierarchyPath="processing_system7_0"/>
@@ -14,10 +15,14 @@
         <UsedIn Val="IMPLEMENTATION"/>
         <UsedIn Val="SIMULATION"/>
       </File>
-      <File Name="hdl/zinq_ram.vhd" Type="VHDL">
+      <File Name="synth/zinq_ram.vhd" Type="VHDL">
         <Properties IsEditable="false" IsVisible="true" Timestamp="0" IsTrackable="false" IsStatusTracked="false"/>
         <Library Name="xil_defaultlib"/>
         <UsedIn Val="SYNTHESIS"/>
+      </File>
+      <File Name="sim/zinq_ram.vhd" Type="VHDL">
+        <Properties IsEditable="false" IsVisible="true" Timestamp="0" IsTrackable="false" IsStatusTracked="false"/>
+        <Library Name="xil_defaultlib"/>
         <UsedIn Val="SIMULATION"/>
       </File>
       <File Name="zinq_ram_ooc.xdc" Type="XDC">
@@ -37,7 +42,7 @@
         <Library Name="xil_defaultlib"/>
         <UsedIn Val="HW_HANDOFF"/>
       </File>
-      <File Name="hdl/zinq_ram.hwdef">
+      <File Name="synth/zinq_ram.hwdef">
         <Properties IsEditable="false" IsVisible="true" Timestamp="0" IsTrackable="false" IsStatusTracked="false"/>
         <Library Name="xil_defaultlib"/>
         <UsedIn Val="HW_HANDOFF"/>
