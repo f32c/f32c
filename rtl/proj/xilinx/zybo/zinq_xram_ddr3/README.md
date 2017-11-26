@@ -89,6 +89,18 @@ indication that DDR3 works. Try to upload blink to SDRAM, note that
 LED0-2 correspond to arduino pins 8-10, while examples use pin 13 for
 LED so edit it first to 8 and if that blinks, DDR3 is working
 
+# After Vivado Upgrade
+
+Module "zinq_ram" will have yellow triangle.
+Right-click on "zinq_ram" module -> Reset output products.
+Right-click on "zinq_ram" module -> Generate output products.
+Right-click on "zinq_ram" module -> Generate HDL wrapper.
+Yelow triangle will still be there.
+
+Clock will have some red markings,
+Right-click on clock module -> Ugrade IP -> continue with IP container
+disabled -> OK
+
 # Problems
 
 Some dirty fixes in address relocation and handling
