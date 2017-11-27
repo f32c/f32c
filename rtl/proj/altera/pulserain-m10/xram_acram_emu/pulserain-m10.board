@@ -132,26 +132,26 @@ set_global_assignment -name ISP_CLAMP_STATE_DEFAULT "TRI-STATE"
 set_location_assignment PIN_88 -to osc_in
 set_location_assignment PIN_75 -to UART_RXD
 set_location_assignment PIN_79 -to UART_TXD
-set_location_assignment PIN_132 -to debug_led
-set_location_assignment PIN_130 -to P1[5]
 set_location_assignment PIN_21 -to P0[0]
 set_location_assignment PIN_22 -to P0[1]
 set_location_assignment PIN_54 -to P0[2]
 set_location_assignment PIN_24 -to P0[3]
 set_location_assignment PIN_56 -to P0[4]
-set_location_assignment PIN_100 -to P1[6]
-set_location_assignment PIN_131 -to P1[7]
+set_location_assignment PIN_25 -to P0[5]
+set_location_assignment PIN_135 -to P0[6]
+set_location_assignment PIN_59 -to P0[7]
 set_location_assignment PIN_92 -to P1[0]
 set_location_assignment PIN_105 -to P1[1]
 set_location_assignment PIN_106 -to P1[2]
 set_location_assignment PIN_85 -to P1[3]
 set_location_assignment PIN_99 -to P1[4]
+set_location_assignment PIN_130 -to P1[5] # LED1 GREEN
+set_location_assignment PIN_100 -to P1[6]
+set_location_assignment PIN_131 -to P1[7] # LED2 RED
+set_location_assignment PIN_132 -to debug_led # LED3 BLUE
 set_location_assignment PIN_74 -to push_button
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to push_button
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to push_button
-set_location_assignment PIN_25 -to P0[5]
-set_location_assignment PIN_135 -to P0[6]
-set_location_assignment PIN_59 -to P0[7]
 set_location_assignment PIN_29 -to mem_cs_n
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to mem_cs_n
 set_location_assignment PIN_32 -to mem_so
