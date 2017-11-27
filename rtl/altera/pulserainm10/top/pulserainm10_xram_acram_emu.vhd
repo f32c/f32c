@@ -37,8 +37,8 @@ entity pulserainm10_xram is
         -- Negatively influences timing closure, hence disabled
         --C_movn_movz: boolean := false;
 
-	-- Main clock: 25/50/75/83/100 MHz (works up to 75 MHz)
-	C_clk_freq: integer := 75;
+	-- Main clock: 25/83/100 MHz
+	C_clk_freq: integer := 83;
 
 	-- SoC configuration options
 	C_bram_size: integer := 1;
@@ -77,6 +77,7 @@ end;
 architecture Behavioral of pulserainm10_xram is
   signal clk: std_logic;
   signal clk_pixel, clk_pixel_shift: std_logic;
+  signal clk_25M02: std_logic;
   signal ram_en             : std_logic;
   signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
   signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
@@ -88,66 +89,39 @@ architecture Behavioral of pulserainm10_xram is
   signal tmds_d: std_logic_vector(3 downto 0);
 begin
     G_25m_clk: if C_clk_freq = 25 generate
-    clkgen_25: entity work.clk_50M_25M_125MP_125MN_100M_83M33
+    clkgen_25: entity work.clk_12M_25M05_125M25P_125M25N_100M2_83M5
     port map(
-      inclk0 => osc_in,        --  50 MHz input from board
-      inclk1 => osc_in,        --  50 MHz input from board (backup clock)
-      c0 => clk,               --  25 MHz
-      c1 => open,              -- 125 MHz positive
-      c2 => open,              -- 125 MHz negative
-      c3 => open,              -- 100 MHz
-      c4 => open               --  83.333 MHz
+      inclk0 => osc_in,        --  12 MHz input from board
+      c0 => clk_25M02,         --  25.05 MHz
+      c1 => open,              -- 125.25 MHz positive
+      c2 => open,              -- 125.25 MHz negative
+      c3 => open,              -- 100.20 MHz
+      c4 => open               --  83.50 MHz
     );
-    end generate;
-
-    G_50m_clk: if C_clk_freq = 50 generate
-    clk <= osc_in;
-    clkgen_50: entity work.clk_50M_25M_125MP_125MN_100M_83M33
-    port map(
-      inclk0 => osc_in,        --  50 MHz input from board
-      inclk1 => osc_in,        --  50 MHz input from board (backup clock)
-      c0 => clk_pixel,         --  25 MHz
-      c1 => open,              -- 125 MHz positive
-      c2 => open,              -- 125 MHz negative
-      c3 => open,              -- 100 MHz
-      c4 => open               --  83.333 MHz
-    );
-    end generate;
-
-    G_75M_clk: if C_clk_freq = 75 generate
-    clkgen_75: entity work.clk_50M_25M_250M_75M
-    port map(
-      inclk0 => osc_in,        --  50 MHz input from board
-      inclk1 => osc_in,        --  50 MHz input from board (backup clock)
-      c0 => clk_pixel,         --  25 MHz
-      c1 => open,              -- 250 MHz
-      c2 => clk                --  75 MHz
-    );
+    clk <= clk_25M02;
     end generate;
 
     G_83m_clk: if C_clk_freq = 83 generate
-    clkgen_83: entity work.clk_50M_25M_125MP_125MN_100M_83M33
+    clkgen_83: entity work.clk_12M_25M05_125M25P_125M25N_100M2_83M5
     port map(
-      inclk0 => osc_in,        --  50 MHz input from board
-      inclk1 => osc_in,        --  50 MHz input from board (backup clock)
-      c0 => open,              --  25 MHz
-      c1 => open,              -- 125 MHz positive
-      c2 => open,              -- 125 MHz negative
-      c3 => open,              -- 100 MHz
-      c4 => clk                --  83.333 MHz
+      inclk0 => osc_in,        --  12 MHz input from board
+      c0 => clk_25M02,         --  25.05 MHz
+      c1 => open,              -- 125.25 MHz positive
+      c2 => open,              -- 125.25 MHz negative
+      c3 => open,              -- 100.20 MHz
+      c4 => clk                --  83.50 MHz
     );
     end generate;
 
     G_100m_clk: if C_clk_freq = 100 generate
-    clkgen_100: entity work.clk_50M_25M_125MP_125MN_100M_83M33
+    clkgen_100: entity work.clk_12M_25M05_125M25P_125M25N_100M2_83M5
     port map(
-      inclk0 => osc_in,        --  50 MHz input from board
-      inclk1 => osc_in,        --  50 MHz input from board (backup clock)
-      c0 => open,              --  25 MHz
-      c1 => open,              -- 125 MHz positive
-      c2 => open,              -- 125 MHz negative
-      c3 => clk,               -- 100 MHz
-      c4 => open               --  83.333 MHz
+      inclk0 => osc_in,        --  12 MHz input from board
+      c0 => clk_25M02,         --  25.05 MHz
+      c1 => open,              -- 125.25 MHz positive
+      c2 => open,              -- 125.25 MHz negative
+      c3 => clk,               -- 100.20 MHz
+      c4 => open               --  83.50 MHz
     );
     end generate;
 
@@ -250,5 +224,18 @@ begin
     --);
     --hdmi_clk <= CLK_PIXEL;
     --hdmi_d   <= tmds_d(2 downto 0);
+
+    vendorspec_dual_config: entity work.dual_config
+    port map
+    (
+      avmm_rcv_address => "000",         -- avalon.address
+      avmm_rcv_read => '0',              --       .read
+      avmm_rcv_writedata => x"00000000", --       .writedata
+      avmm_rcv_write => '0',             --       .write
+      avmm_rcv_readdata => open,         --       .readdata
+      clk => clk_25M02,                  --    clk.clk 25.02MHz
+      nreset => '1'                      -- nreset.reset_n
+    );
+
 
 end Behavioral;

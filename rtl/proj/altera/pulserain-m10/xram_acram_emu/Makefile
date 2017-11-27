@@ -37,8 +37,11 @@ include ../../include/altera.mk
 # Setup your sources here
 SRCS = \
 ../../../../altera/pulserainm10/top/pulserainm10_xram_acram_emu.vhd \
-../../../../altera/de10lite/clocks/clk_50M_25M_125MP_125MN_100M_83M33.vhd \
-../../../../altera/de10lite/clocks/clk_50M_25M_250M_75M.vhd \
+../../../../altera/pulserainm10/dual_config/dual_config.vhd \
+../../../../altera/pulserainm10/dual_config/submodules/altera_dual_boot.v \
+../../../../altera/pulserainm10/dual_config/submodules/rtl/alt_dual_boot.v \
+../../../../altera/pulserainm10/dual_config/submodules/rtl/alt_dual_boot_avmm.v \
+../../../../altera/pulserainm10/clocks/clk_12M_25M05_125M25P_125M25N_100M2_83M5.vhd \
 ../../../../generic/hdmi_out.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \

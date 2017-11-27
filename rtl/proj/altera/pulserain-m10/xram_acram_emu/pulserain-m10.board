@@ -115,11 +115,11 @@ set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to P0
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to P1
 set_global_assignment -name FINAL_PLACEMENT_OPTIMIZATION ALWAYS
 set_global_assignment -name ENABLE_OCT_DONE OFF
-#set_global_assignment -name EXTERNAL_FLASH_FALLBACK_ADDRESS 00000000
-#set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "PASSIVE SERIAL"
-#set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
-#set_global_assignment -name INTERNAL_FLASH_UPDATE_MODE "DUAL IMAGES"
-#set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
+set_global_assignment -name EXTERNAL_FLASH_FALLBACK_ADDRESS 00000000
+set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "PASSIVE SERIAL"
+set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
+set_global_assignment -name INTERNAL_FLASH_UPDATE_MODE "DUAL IMAGES"
+set_global_assignment -name CRC_ERROR_OPEN_DRAIN OFF
 set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
 set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
