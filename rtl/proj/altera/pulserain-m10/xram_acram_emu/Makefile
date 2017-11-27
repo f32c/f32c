@@ -37,11 +37,17 @@ include ../../include/altera.mk
 # Setup your sources here
 SRCS = \
 ../../../../altera/pulserainm10/top/pulserainm10_xram_acram_emu.vhd \
+../../../../altera/pulserainm10/clocks/clk_12M_25M05_125M25P_125M25N_100M2_83M5.vhd \
 ../../../../altera/pulserainm10/dual_config/dual_config.vhd \
 ../../../../altera/pulserainm10/dual_config/submodules/altera_dual_boot.v \
 ../../../../altera/pulserainm10/dual_config/submodules/rtl/alt_dual_boot.v \
 ../../../../altera/pulserainm10/dual_config/submodules/rtl/alt_dual_boot_avmm.v \
-../../../../altera/pulserainm10/clocks/clk_12M_25M05_125M25P_125M25N_100M2_83M5.vhd \
+../../../../altera/pulserainm10/onchip_flash/onchip_flash.vhd \
+../../../../altera/pulserainm10/onchip_flash/submodules/altera_onchip_flash_util.v \
+../../../../altera/pulserainm10/onchip_flash/submodules/altera_onchip_flash_avmm_data_controller.v \
+../../../../altera/pulserainm10/onchip_flash/submodules/altera_onchip_flash.v \
+../../../../altera/pulserainm10/onchip_flash/submodules/altera_onchip_flash_avmm_csr_controller.v \
+../../../../altera/pulserainm10/onchip_flash/submodules/rtl/altera_onchip_flash_block.v \
 ../../../../generic/hdmi_out.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \
