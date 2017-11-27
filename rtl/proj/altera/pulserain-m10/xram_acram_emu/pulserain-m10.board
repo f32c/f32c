@@ -39,9 +39,7 @@
 
 set_global_assignment -name FAMILY "MAX 10"
 set_global_assignment -name DEVICE 10M08SAE144C8G
-#set_global_assignment -name TOP_LEVEL_ENTITY Mustang_fast
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 16.1.0
-#set_global_assignment -name PROJECT_CREATION_TIME_DATE "17:22:39  MARCH 19, 2017"
 set_global_assignment -name LAST_QUARTUS_VERSION "16.1.0 Lite Edition"
 #set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
@@ -57,11 +55,8 @@ set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
-set_global_assignment -name NUM_PARALLEL_PROCESSORS 4
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 2
 
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to osc_in
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to UART_TXD
-set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to UART_RXD
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
 set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
 set_global_assignment -name VERILOG_INPUT_VERSION SYSTEMVERILOG_2005
@@ -128,10 +123,14 @@ set_global_assignment -name OPTIMIZE_POWER_DURING_FITTING "NORMAL COMPILATION"
 set_global_assignment -name AUTO_RAM_TO_LCELL_CONVERSION ON
 set_global_assignment -name AUTO_RAM_RECOGNITION ON
 set_global_assignment -name ISP_CLAMP_STATE_DEFAULT "TRI-STATE"
+set_global_assignment -name POST_FLOW_SCRIPT_FILE "quartus_sh:post_flow.tcl"
 
 set_location_assignment PIN_88 -to osc_in
 set_location_assignment PIN_75 -to UART_RXD
 set_location_assignment PIN_79 -to UART_TXD
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to osc_in
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to UART_TXD
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to UART_RXD
 set_location_assignment PIN_21 -to P0[0]
 set_location_assignment PIN_22 -to P0[1]
 set_location_assignment PIN_54 -to P0[2]

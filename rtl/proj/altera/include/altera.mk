@@ -45,6 +45,7 @@ all: $(PROJECT).sof $(PROJECT).svf
 clean:
 	rm -rf *~ $(PROJECT).jdi $(PROJECT).jic $(PROJECT).pin $(PROJECT).qws $(PROJECT).sld \
 	       *.rpt *.chg smart.log *.htm *.eqn *.sof *.svf *.pof *.smsg *.summary \
+	       f32c_dual_boot.map f32c_dual_boot*.rpd cfm.bin  \
 	       PLL*INFO.txt \
 	       db incremental_db output_files greybox_tmp cr_ie_info.json \
 	       $(ASSIGNMENT_FILES)
@@ -101,6 +102,9 @@ $(PROJECT).svf: $(PROJECT).sof
 # http://www.xilinx.com/support/documentation/application_notes/xapp058.zip
 $(PROJECT).xsvf: $(PROJECT).svf
 	svf2xsvf502 -i $(PROJECT).svf -o $(PROJECT).xsvf
+
+cfm.bin: post_flow.tcl dual_image.cof project.sof
+	$(quartus_env); quartus_sh -t post_flow.tcl
 
 ###################################################################
 # Project initialization
