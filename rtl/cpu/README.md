@@ -14,7 +14,7 @@ The memory access is done using 32-bit synchronous
 bus with simple signaling and tight timing.
 
 Usually f32c uses multiport RAM arbiter which
-has signal bus towards phyisical RAM and multiple
+has signal bus towards physical RAM and multiple
 ports for CPU and SOC like video or DMA.
 
 Valid data "live" on the wire during a single data
@@ -59,6 +59,21 @@ bus because f32c does 32-bit aligned memory transfers only.
     dmem_data_out: std_logic_vector(31 downto 0);
 Input and output of 32-bit data are routed separately,
 f32c never does 3-state bus transfers.
+
+# non-deterministic cases
+
+The only supported behaviour of bus master is that from
+the moment it sets "adddress_strobe" to 1, it is no longer
+allowed to change anything on the bus neither to give up
+from the transfer before "data_ready" becomes 1.
+
+If bus state is changed during read cycle (before "data_ready"
+becomes 1), the bus content will be sampled after random number
+of clocks, depending on activity on other ports.
+
+If bus state is changed during write cycle (before "data_ready"
+becomes 1), the bus content will be sampled in the clock
+cycle previuos to the cycle when "data_ready" becomes 1.
 
 # cache
 
