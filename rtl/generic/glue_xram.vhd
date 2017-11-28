@@ -93,6 +93,7 @@ generic (
   C_cached_addr_bits: integer := 20; -- number of lower RAM address bits to be cached
   C_sram: boolean := false; -- 16-bit SRAM
   C_sram_refresh: boolean := false; -- sram refresh workaround (RED ULX2S boards need this)
+  C_xdma: boolean := false; -- used to write bootloader on MAX10 (shared with refresh/textmode port)
   C_sram8: boolean := false; -- 8-bit SRAM
   C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
   C_sram_pipelined_read: boolean := false; -- works only at 81.25 MHz !!!
@@ -214,10 +215,20 @@ port (
   clk_pixel_shift: in std_logic := '0'; -- digital video (DVID/HDMI) bit shift clock, for SDR 10x clk_pixel, for DDR 5x clk_pixel, default 0 if no digital video
   clk_fmdds: in std_logic := '0'; -- FM DDS clock (>216 MHz)
   clk_cw: in std_logic := '0'; -- CW transmitter 433.92 MHz
+  reset: in std_logic := '0'; -- external RESET (or'd with RS232 BREAK)
+  -- xdma: external DMA
+  xdma_addr: in std_logic_vector(29 downto 2) := (others => '-');
+  xdma_strobe: in std_logic := '0';
+  xdma_write: in std_logic := '0';
+  xdma_byte_sel: in std_logic_vector(3 downto 0) := (others => '1');
+  xdma_data_in: in std_logic_vector(31 downto 0) := (others => '-');
+  xdma_data_ready: out std_logic;
+  -- sram
   sram_a: out std_logic_vector(19 downto 0);
   sram_d: inout std_logic_vector(15 downto 0);
   sram_wel, sram_lbl, sram_ubl: out std_logic;
   -- sram_oel: out std_logic; -- XXX the old ULXP2 board needs this!
+  -- sdram
   sdram_addr: out std_logic_vector(12 downto 0);
   sdram_data: inout std_logic_vector(15 downto 0);
   sdram_ba: out std_logic_vector(1 downto 0);
@@ -294,6 +305,7 @@ architecture Behavioral of glue_xram is
     signal io_addr_strobe: std_logic;
     signal io_addr: std_logic_vector(11 downto 2);
     signal intr: std_logic_vector(5 downto 0); -- interrupt
+    signal S_reset: std_logic;
 
     -- SDRAM
     signal to_xram: sram_port_array;
@@ -539,6 +551,9 @@ architecture Behavioral of glue_xram is
     signal refresh_addr: std_logic_vector(29 downto 2) := (others => '0');
     signal refresh_strobe: std_logic := '0';
     signal refresh_data_ready: std_logic;
+    signal refresh_write: std_logic;
+    signal refresh_byte_sel: std_logic_vector(3 downto 0) := (others => '1');
+    signal refresh_data_in: std_logic_vector(31 downto 0) := (others => '-');
 
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
@@ -550,7 +565,7 @@ architecture Behavioral of glue_xram is
     signal debug_active: std_logic;
 
 begin
-
+    S_reset <= reset or sio_break_internal(0);
     -- f32c core
     pipeline: entity work.cache
     generic map (
@@ -572,7 +587,7 @@ begin
       C_debug => C_debug
     )
     port map (
-      clk => clk, reset => sio_break_internal(0), intr => intr,
+      clk => clk, reset => S_reset, intr => intr,
       imem_addr => imem_addr,
       imem_data_in => final_to_cpu_i,
       imem_addr_strobe => imem_addr_strobe,
@@ -652,12 +667,12 @@ begin
     to_xram(fb_text_port).byte_sel <= "1111"; -- 32 bits read for RGB
     vga_textmode_text_sdram_ready <= xram_ready(fb_text_port);
     end generate;
-    G_refresh_port: if C_sram_refresh generate
+    G_refresh_port: if C_sram_refresh or C_xdma generate
     to_xram(refresh_port).addr_strobe <= refresh_strobe;
     to_xram(refresh_port).addr <= refresh_addr;
-    to_xram(refresh_port).data_in <= (others => '-');
-    to_xram(refresh_port).write <= '0';
-    to_xram(refresh_port).byte_sel <= "1111"; -- 32 bits read
+    to_xram(refresh_port).data_in <= refresh_data_in;
+    to_xram(refresh_port).write <= refresh_write;
+    to_xram(refresh_port).byte_sel <= refresh_byte_sel; -- refresh should set all to 32 bits read
     refresh_data_ready <= xram_ready(refresh_port);
     end generate;
     -- port 4: PCM audio DMA
@@ -706,6 +721,15 @@ begin
       refresh_data_ready => refresh_data_ready
     );
     end generate; -- G_sram_refresh
+
+    G_xdma: if C_xdma generate
+    refresh_addr <= xdma_addr;
+    refresh_strobe <= xdma_strobe;
+    refresh_byte_sel <= xdma_byte_sel;
+    refresh_write <= xdma_write;
+    refresh_data_in <= xdma_data_in;
+    xdma_data_ready <= refresh_data_ready;
+    end generate; -- G_xdma
 
     G_sram8bit:
     if C_sram8 generate

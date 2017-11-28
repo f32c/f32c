@@ -48,6 +48,7 @@ SRCS = \
 ../../../../altera/pulserainm10/onchip_flash/submodules/altera_onchip_flash.v \
 ../../../../altera/pulserainm10/onchip_flash/submodules/altera_onchip_flash_avmm_csr_controller.v \
 ../../../../altera/pulserainm10/onchip_flash/submodules/rtl/altera_onchip_flash_block.v \
+../../../../altera/pulserainm10/max10_boot_preloader/max10_boot_preloader.vhd \
 ../../../../generic/hdmi_out.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \

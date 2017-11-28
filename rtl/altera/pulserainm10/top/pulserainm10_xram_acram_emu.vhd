@@ -44,6 +44,7 @@ entity pulserainm10_xram is
 	C_bram_size: integer := 1;
 	C_bram_const_init: boolean := false; -- MAX10 cannot preload bootloader using VHDL constant intializer
 	C_boot_write_protect: boolean := false;
+	C_xdma: boolean := true;
         C_icache_size: integer := 0;
         C_dcache_size: integer := 0;
         C_acram: boolean := true;
@@ -78,6 +79,13 @@ architecture Behavioral of pulserainm10_xram is
   signal clk: std_logic;
   signal clk_pixel, clk_pixel_shift: std_logic;
   signal clk_25M02: std_logic;
+  signal S_reset: std_logic := '0';
+  signal xdma_addr: std_logic_vector(29 downto 2) := (others => '0');
+  signal xdma_strobe: std_logic := '0';
+  signal xdma_data_ready: std_logic;
+  signal xdma_write: std_logic := '0';
+  signal xdma_byte_sel: std_logic_vector(3 downto 0) := (others => '1');
+  signal xdma_data_in: std_logic_vector(31 downto 0) := (others => '-');
   signal ram_en             : std_logic;
   signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
   signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
@@ -87,6 +95,7 @@ architecture Behavioral of pulserainm10_xram is
   signal S_hdmi_pd0, S_hdmi_pd1, S_hdmi_pd2: std_logic_vector(9 downto 0);
   signal tx_in: std_logic_vector(29 downto 0);
   signal tmds_d: std_logic_vector(3 downto 0);
+  signal R_blinky: std_logic_vector(23 downto 0);
 begin
     G_25m_clk: if C_clk_freq = 25 generate
     clkgen_25: entity work.clk_12M_25M05_125M25P_125M25N_100M2_83M5
@@ -130,6 +139,7 @@ begin
     generic map (
       C_arch => C_arch,
       C_clk_freq => C_clk_freq,
+      C_xdma => C_xdma,
       C_bram_size => C_bram_size,
       C_bram_const_init => C_bram_const_init,
       C_boot_write_protect => C_boot_write_protect,
@@ -152,6 +162,10 @@ begin
       clk => clk,
       --clk_pixel => clk_pixel,
       --clk_pixel_shift => clk_pixel_shift,
+      reset => S_reset,
+      xdma_addr => xdma_addr, xdma_strobe => xdma_strobe,
+      xdma_write => xdma_write, xdma_byte_sel => xdma_byte_sel,
+      xdma_data_in => xdma_data_in, xdma_data_ready => xdma_data_ready,
       sio_txd(0) => uart_txd, sio_rxd(0) => uart_rxd,
       spi_sck => open, spi_ss => open, spi_mosi => open, spi_miso => "",
       acram_en => ram_en,
@@ -171,7 +185,7 @@ begin
       --vga_b(3 downto 0) => open,
       -- ***** HDMI *****
       --dvi_r => S_hdmi_pd2, dvi_g => S_hdmi_pd1, dvi_b => S_hdmi_pd0,
-      gpio(7 downto 0) => p0, gpio(15 downto 8) => p1, gpio(127 downto 16) => open,
+      gpio(7 downto 0) => p0, gpio(14 downto 8) => p1(6 downto 0), gpio(127 downto 15) => open,
       simple_out(0) => debug_led,
       simple_out(31 downto 1) => open,
       simple_in(0) => push_button,
@@ -193,6 +207,16 @@ begin
       acram_byte_we => ram_byte_we,
       acram_en => ram_en
     );
+    end generate;
+
+    G_blinky: if true generate
+      process(clk)
+      begin
+        if rising_edge(clk) then
+          R_blinky <= R_blinky+1;
+        end if;
+      end process;
+      p1(7) <= R_blinky(R_blinky'high);
     end generate;
 
     -- generic "differential" output buffering for HDMI clock and video
@@ -225,6 +249,8 @@ begin
     --hdmi_clk <= CLK_PIXEL;
     --hdmi_d   <= tmds_d(2 downto 0);
 
+    -- this module must be present in order for bitstream to load
+    -- from onchip flash
     vendorspec_dual_config: entity work.dual_config
     port map
     (
@@ -237,5 +263,18 @@ begin
       nreset => '1'                      -- nreset.reset_n
     );
 
+    -- preload the f32c bootloader and reset CPU
+    boot_preload: entity work.max10_boot_preloader
+    port map
+    (
+      clk => clk,
+      reset_in => R_blinky(R_blinky'high), -- debug: constantly resetting
+      reset_out => S_reset,
+      addr => xdma_addr(9 downto 2),
+      strobe => xdma_strobe,
+      data => xdma_data_in,
+      write => xdma_write,
+      ready => xdma_data_ready
+    );
 
 end Behavioral;
