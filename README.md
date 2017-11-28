@@ -1,6 +1,6 @@
 # f32c
 
-f32c is a retargetable, scalar, pipelined, 32-bit processor core which
+[f32c](/rtl/cpu/README.md) is a retargetable, scalar, pipelined, 32-bit processor core which
 can execute subsets of either RISC-V or MIPS instruction sets.
 It is implemented in parametrized VHDL which permits synthesis with
 different area / speed tradeoffs, and includes a branch predictor,
