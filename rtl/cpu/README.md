@@ -73,7 +73,7 @@ of clocks, depending on activity on other ports.
 
 If bus state is changed during write cycle (before "data_ready"
 becomes 1), the bus content will be sampled in the clock
-cycle previuos to the cycle when "data_ready" becomes 1.
+cycle previous to the cycle when "data_ready" becomes 1.
 
 # cache
 
