@@ -103,8 +103,17 @@ $(PROJECT).svf: $(PROJECT).sof
 $(PROJECT).xsvf: $(PROJECT).svf
 	svf2xsvf502 -i $(PROJECT).svf -o $(PROJECT).xsvf
 
+# suitable for python script flasher on pulserain M10
 cfm.bin: post_flow.tcl dual_image.cof project.sof
 	$(quartus_env); quartus_sh -t post_flow.tcl
+
+# MAX10 full image
+full_image.pof: post_flow.tcl dual_image.cof project.sof
+	$(quartus_env); quartus_sh -t post_flow.tcl
+
+# MAX10 full image converted to SVF
+full_image.svf: full_image.pof
+	$(quartus_env); quartus_cpf -c -q 8MHz -g 3.3 -n p $< $@
 
 ###################################################################
 # Project initialization
