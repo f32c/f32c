@@ -617,21 +617,33 @@ begin
     -- using most significant address bit (bit 32), which is
     --S_imem_addr_in_xram <= imem_addr(31);
     --S_dmem_addr_in_xram <= dmem_addr(31);
+    G_yes_mux_bram: if C_bram_size > 0 generate
     final_to_cpu_i <= from_xram when S_imem_addr_in_xram = '1' else bram_i_to_cpu;
     final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
       else vga_textmode_dmem_to_cpu when C_vgatext AND C_vgatext_bus_read AND dmem_addr(31 downto 28) = C_vgatext_bram_base -- address 0x40000000
       else from_xram when S_dmem_addr_in_xram = '1'
       else bram_d_to_cpu;
+    imem_data_ready <= xram_ready(instr_port) when S_imem_addr_in_xram = '1'
+      else bram_i_ready;
+    dmem_data_ready <= xram_ready(data_port) when S_dmem_addr_in_xram = '1'
+      else io_addr_strobe or video_bram_addr_strobe or bram_d_ready;
+    end generate;
+    G_no_mux_bram: if C_bram_size <= 0 generate
+    final_to_cpu_i <= from_xram;
+    final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
+      else vga_textmode_dmem_to_cpu when C_vgatext AND C_vgatext_bus_read AND dmem_addr(31 downto 28) = C_vgatext_bram_base -- address 0x40000000
+      else from_xram;
+    imem_data_ready <= xram_ready(instr_port);
+    dmem_data_ready <= xram_ready(data_port) when S_dmem_addr_in_xram = '1'
+      else io_addr_strobe or video_bram_addr_strobe;
+    end generate;
+
     intr <= "00" & gpio_intr_joint & timer_intr & from_sio(0)(8) & R_fb_intr;
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"F" -- iomap at 0xFxxxxxxx
       else '0';
     video_bram_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 28) = C_vgatext_bram_base -- default at 0x4xxxxxxx
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
-    imem_data_ready <= xram_ready(instr_port) when S_imem_addr_in_xram = '1'
-      else bram_i_ready;
-    dmem_data_ready <= xram_ready(data_port) when S_dmem_addr_in_xram = '1'
-      else io_addr_strobe or video_bram_addr_strobe or bram_d_ready;
     
     G_xram:
     if C_sdram or C_sram or C_sram8 or C_acram or C_axiram generate
@@ -1961,6 +1973,7 @@ begin
 
 
     -- Block RAM
+    G_bram: if C_bram_size > 0 generate
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"0"
       else '0';
     bram: entity work.bram
@@ -1980,6 +1993,7 @@ begin
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
 	dmem_data_out => bram_d_to_cpu, dmem_data_in => cpu_to_dmem
     );
+    end generate;
 
     -- Debugging SIO instance
     G_debug_sio:
