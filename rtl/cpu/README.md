@@ -41,6 +41,10 @@ After data_ready becomes logic 1, in the next CPU clock cycle
 address_strobe must be set to logic 0 otherwise a
 new write cycle will be started.
 
+If strobe is constantly held at 1, the strobe will be
+ignored during the cycle when ready is 1. In the following
+cycle ready will become 0 and the new write cycle will start.
+
     dmem_write: std_logic;
 Write signal logic 1 defines that it will be a write cycle.
 Write signal logic 0 is read cycle.
