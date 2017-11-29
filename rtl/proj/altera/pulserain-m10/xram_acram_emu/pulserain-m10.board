@@ -124,6 +124,7 @@ set_global_assignment -name AUTO_RAM_TO_LCELL_CONVERSION ON
 set_global_assignment -name AUTO_RAM_RECOGNITION ON
 set_global_assignment -name ISP_CLAMP_STATE_DEFAULT "TRI-STATE"
 set_global_assignment -name POST_FLOW_SCRIPT_FILE "quartus_sh:post_flow.tcl"
+# set_global_assignment -name GENERATE_SVF_FILE ON
 
 set_location_assignment PIN_88 -to osc_in
 set_location_assignment PIN_75 -to UART_RXD
