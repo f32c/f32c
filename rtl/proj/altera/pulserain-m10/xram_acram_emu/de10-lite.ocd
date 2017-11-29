@@ -4,7 +4,7 @@
 telnet_port 4444
 gdb_port 3333
 
-adapter_khz 1000
+adapter_khz 8000
 
 # JTAG TAPs
 jtag newtap de10lite tap -expected-id 0x031050dd -irlen 10
