@@ -13,7 +13,7 @@ entity pulserainm10_xram is
 	-- ISA: either ARCH_MI32 or ARCH_RV32
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
-        C_mult_enable: boolean := false;
+        C_mult_enable: boolean := true;
 
         --C_mul_acc: boolean := false;    -- MI32 only
         --C_mul_reg: boolean := false;    -- MI32 only
@@ -41,10 +41,10 @@ entity pulserainm10_xram is
 	C_clk_freq: integer := 83;
 
 	-- SoC configuration options
-	C_bram_size: integer := 1;
+	C_bram_size: integer := 8;
 	C_bram_const_init: boolean := false; -- MAX10 cannot preload bootloader using VHDL constant intializer
-	C_boot_write_protect: boolean := false;
-	C_xdma: boolean := true;
+	C_boot_write_protect: boolean := false; -- leave boot block writeable
+	C_xdma: boolean := true; -- bootloader initializes with external DMA
         C_icache_size: integer := 0;
         C_dcache_size: integer := 0;
         C_acram: boolean := true;
@@ -69,6 +69,8 @@ entity pulserainm10_xram is
 	osc_in: in std_logic;
 	uart_txd: out std_logic;
 	uart_rxd: in std_logic;
+	uart_aux_txd: out std_logic;
+	uart_aux_rxd: in std_logic;
 	debug_led: out std_logic;
 	push_button: in std_logic;
 	p0, p1: inout std_logic_vector(7 downto 0)
@@ -80,7 +82,7 @@ architecture Behavioral of pulserainm10_xram is
   signal clk_pixel, clk_pixel_shift: std_logic;
   signal clk_25M02: std_logic;
   signal S_reset: std_logic := '0';
-  signal xdma_addr: std_logic_vector(29 downto 2) := ('0', others => '0');
+  signal xdma_addr: std_logic_vector(29 downto 2) := ('1', others => '0'); -- preload address 0x80000000 XRAM
   signal xdma_strobe: std_logic := '0';
   signal xdma_data_ready: std_logic;
   signal xdma_write: std_logic := '0';
@@ -185,7 +187,7 @@ begin
       --vga_b(3 downto 0) => open,
       -- ***** HDMI *****
       --dvi_r => S_hdmi_pd2, dvi_g => S_hdmi_pd1, dvi_b => S_hdmi_pd0,
-      gpio(7 downto 0) => p0, gpio(12 downto 8) => p1(4 downto 0), gpio(127 downto 13) => open,
+      gpio(7 downto 0) => p0, gpio(15 downto 8) => p1(7 downto 0), gpio(127 downto 16) => open,
       simple_out(0) => debug_led,
       simple_out(31 downto 1) => open,
       simple_in(0) => push_button,
@@ -196,12 +198,12 @@ begin
     acram_emulation: entity work.acram_emu
     generic map
     (
-      C_addr_width => 13
+      C_addr_width => 12
     )
     port map
     (
       clk => clk,
-      acram_a => ram_address(14 downto 2),
+      acram_a => ram_address(13 downto 2),
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
@@ -216,7 +218,7 @@ begin
           R_blinky <= R_blinky+1;
         end if;
       end process;
-      p1(7) <= not R_blinky(R_blinky'high); -- LED connected to VCC therefore NOT
+      -- p1(7) <= not R_blinky(R_blinky'high); -- RED LED connected to VCC
     end generate;
 
     -- generic "differential" output buffering for HDMI clock and video
@@ -268,16 +270,19 @@ begin
     port map
     (
       clk => clk,
-      reset_in => R_blinky(R_blinky'high), -- debug: constantly resetting
-      reset_out => S_reset,
-      addr => xdma_addr(10 downto 2),
+      reset_in => R_blinky(R_blinky'high), -- debug: constantly resetting and writing bootloader
+      reset_out => open, -- initially 1, appears as delayed reset_in
+      addr => xdma_addr(9 downto 2), -- must fit bootloader size 1K
+      data => xdma_data_in, -- comes from register - last read data will stay on the bus
       strobe => xdma_strobe,
-      data => xdma_data_in,
-      write => xdma_write,
-      ready => xdma_data_ready
+      write => xdma_write, -- write is the same as strobe
+      byte_sel => xdma_byte_sel, -- all 1
+      ready => xdma_data_ready -- response from RAM arbiter
     );
-    p1(5) <= not S_reset; -- LED connected to VCC therefore NOT
+    -- p1(5) <= not S_reset; -- GREEN LED (connected to VCC)
     -- p1(5) <= not xdma_strobe;
     -- p1(5) <= not '1';
+
+   --  uart_txd <= uart_rxd; -- loopback test for RS232
 
 end Behavioral;

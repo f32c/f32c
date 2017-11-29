@@ -15,16 +15,17 @@ entity max10_boot_preloader is
 	-- Main clock: 25/83/100 MHz
 	C_clk_freq: integer := 83; -- MHz
 	-- SoC configuration options
-	C_boot_addr_bits: integer := 9 -- 8: 256x4-byte = 1K
+	C_boot_addr_bits: integer := 8 -- 8: 256x4-byte = 1K bootloader size
     );
     port (
 	clk: in std_logic;
-	reset_in: in std_logic;
-	reset_out: out std_logic := '0';
+	reset_in: in std_logic := '0';
+	reset_out: out std_logic; -- initially 1
 	addr: out std_logic_vector(C_boot_addr_bits-1 downto 0);
 	strobe: out std_logic;
 	data: out std_logic_vector(31 downto 0);
 	write: out std_logic;
+	byte_sel: out std_logic_vector(3 downto 0) := "1111"; -- always 32-bit mode
 	ready: in std_logic
     );
 end;
@@ -32,12 +33,6 @@ end;
 architecture Behavioral of max10_boot_preloader is
   constant C_slowdown: integer := 1;
   constant C_onchip_addr_bits: integer := 17;
-  signal ram_en             : std_logic;
-  signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
-  signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
-  signal ram_data_write     : std_logic_vector(31 downto 0) := (others => '0');
-  signal ram_data_read      : std_logic_vector(31 downto 0) := (others => '0');
-  signal ram_ready          : std_logic := '1';
   signal S_onchip_reset_n   : std_logic := '0';
   signal R_onchip_addr      : std_logic_vector(C_onchip_addr_bits-1+C_slowdown downto 0) := (others => '0');
   signal S_onchip_read      : std_logic := '1';
@@ -71,48 +66,41 @@ begin
     S_onchip_done <= R_onchip_addr(C_boot_addr_bits+C_slowdown);
     addr <= R_onchip_addr(C_boot_addr_bits-1+C_slowdown downto C_slowdown);
     S_onchip_read <= (R_onchip_addr(C_slowdown-1)) and (not S_onchip_done); -- and (not S_onchip_waitrequest);
-    -- data <= S_onchip_rd_data
-    --data <= S_onchip_rd_data( 7 downto 0) 
-    --      & S_onchip_rd_data(15 downto 8)
-    --      & S_onchip_rd_data(23 downto 16)
-    --      & S_onchip_rd_data(31 downto 24);
-    data <= R_data;
-    -- strobe <= S_onchip_rd_valid and (not S_onchip_done);
-    -- write <= S_onchip_rd_valid and (not S_onchip_done);
-    strobe <= R_strobe;
-    write <= R_strobe;
-    -- write <= '1';
-    reset_out <= not S_onchip_done;
+    data <= R_data; -- output data from latch register
+    strobe <= R_strobe; -- request DMA transaction
+    write <= R_strobe; -- request write to DMA
+    reset_out <= not S_onchip_done; -- hold reset until done
     process(clk)
     begin
       if rising_edge(clk) then
         if reset_in = '1' then
           R_onchip_addr <= (others => '0');
         else
-          if (S_onchip_done = '0' and ready = '1' and R_strobe = '1')
-          or (S_onchip_done = '0' and R_onchip_addr(C_slowdown-1) = '0' and S_onchip_waitrequest = '0')
-          then
-            R_onchip_addr <= R_onchip_addr + 1;
+          if S_onchip_done = '0' then
+            if (ready = '1' and R_strobe = '1') -- data arrived after being requested
+            or (R_strobe = '0' and R_onchip_addr(C_slowdown-1) = '0' and S_onchip_waitrequest = '0') -- when nothing is requested, everything is ready for new transaction
+            then
+              R_onchip_addr <= R_onchip_addr + 1;
+            end if;
           end if;
         end if;
       end if;
     end process;
-    
+
+    -- sample flash data exactily on clock instance when
+    -- valid=1 and don't change anything on DMA bus until
+    -- DMA transaction is signaled as complete with ready=1    
     process(clk)
     begin
       if rising_edge(clk) then
         if R_strobe = '0' then
-          if S_onchip_rd_valid = '1' then
-            -- R_data <= S_onchip_rd_data
-            R_data <= S_onchip_rd_data( 7 downto 0) 
-                    & S_onchip_rd_data(15 downto 8)
-                    & S_onchip_rd_data(23 downto 16)
-                    & S_onchip_rd_data(31 downto 24);
-            R_strobe <= '1';
+          if S_onchip_rd_valid = '1' and S_onchip_read = '1' then
+            R_data <= S_onchip_rd_data;
+            R_strobe <= '1'; -- issue DMA request
           end if;
         else
           if ready = '1' then
-            R_strobe <= '0';
+            R_strobe <= '0'; -- release DMA request
           end if;
         end if;
       end if;
