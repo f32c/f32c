@@ -41,13 +41,14 @@ entity pulserainm10_xram is
 	C_clk_freq: integer := 83;
 
 	-- SoC configuration options
-	C_bram_size: integer := 8;
+	C_bram_size: integer := 0; -- BRAM disabled
 	C_bram_const_init: boolean := false; -- MAX10 cannot preload bootloader using VHDL constant intializer
 	C_boot_write_protect: boolean := false; -- leave boot block writeable
-	C_xdma: boolean := true; -- bootloader initializes with external DMA
+	C_xdma: boolean := true; -- bootloader initializes XRAM with external DMA
         C_icache_size: integer := 0;
         C_dcache_size: integer := 0;
         C_acram: boolean := true;
+        C_xram_base: std_logic_vector(31 downto 28) := x"0"; -- XRAM (acram emu) at address 0 instead of BRAM
 
         C_hdmi_out: boolean := false;
         C_dvid_ddr: boolean := false;
@@ -82,7 +83,7 @@ architecture Behavioral of pulserainm10_xram is
   signal clk_pixel, clk_pixel_shift: std_logic;
   signal clk_25M02: std_logic;
   signal S_reset: std_logic := '0';
-  signal xdma_addr: std_logic_vector(29 downto 2) := ('1', others => '0'); -- preload address 0x80000000 XRAM
+  signal xdma_addr: std_logic_vector(29 downto 2) := ('0', others => '0'); -- preload address 0x00000000 XRAM
   signal xdma_strobe: std_logic := '0';
   signal xdma_data_ready: std_logic;
   signal xdma_write: std_logic := '0';
@@ -148,6 +149,7 @@ begin
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
       C_acram => C_acram,
+      C_xram_base => C_xram_base,
       C_sio => C_sio,
       C_timer => C_timer,
       C_gpio => C_gpio,
