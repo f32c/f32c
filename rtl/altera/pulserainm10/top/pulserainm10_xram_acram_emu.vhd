@@ -80,7 +80,7 @@ architecture Behavioral of pulserainm10_xram is
   signal clk_pixel, clk_pixel_shift: std_logic;
   signal clk_25M02: std_logic;
   signal S_reset: std_logic := '0';
-  signal xdma_addr: std_logic_vector(29 downto 2) := (others => '0');
+  signal xdma_addr: std_logic_vector(29 downto 2) := ('0', others => '0');
   signal xdma_strobe: std_logic := '0';
   signal xdma_data_ready: std_logic;
   signal xdma_write: std_logic := '0';
@@ -95,7 +95,7 @@ architecture Behavioral of pulserainm10_xram is
   signal S_hdmi_pd0, S_hdmi_pd1, S_hdmi_pd2: std_logic_vector(9 downto 0);
   signal tx_in: std_logic_vector(29 downto 0);
   signal tmds_d: std_logic_vector(3 downto 0);
-  signal R_blinky: std_logic_vector(23 downto 0);
+  signal R_blinky: std_logic_vector(25 downto 0);
 begin
     G_25m_clk: if C_clk_freq = 25 generate
     clkgen_25: entity work.clk_12M_25M05_125M25P_125M25N_100M2_83M5
@@ -185,7 +185,7 @@ begin
       --vga_b(3 downto 0) => open,
       -- ***** HDMI *****
       --dvi_r => S_hdmi_pd2, dvi_g => S_hdmi_pd1, dvi_b => S_hdmi_pd0,
-      gpio(7 downto 0) => p0, gpio(14 downto 8) => p1(6 downto 0), gpio(127 downto 15) => open,
+      gpio(7 downto 0) => p0, gpio(12 downto 8) => p1(4 downto 0), gpio(127 downto 13) => open,
       simple_out(0) => debug_led,
       simple_out(31 downto 1) => open,
       simple_in(0) => push_button,
@@ -216,7 +216,7 @@ begin
           R_blinky <= R_blinky+1;
         end if;
       end process;
-      p1(7) <= R_blinky(R_blinky'high);
+      p1(7) <= not R_blinky(R_blinky'high); -- LED connected to VCC therefore NOT
     end generate;
 
     -- generic "differential" output buffering for HDMI clock and video
@@ -270,11 +270,14 @@ begin
       clk => clk,
       reset_in => R_blinky(R_blinky'high), -- debug: constantly resetting
       reset_out => S_reset,
-      addr => xdma_addr(9 downto 2),
+      addr => xdma_addr(10 downto 2),
       strobe => xdma_strobe,
       data => xdma_data_in,
       write => xdma_write,
       ready => xdma_data_ready
     );
+    p1(5) <= not S_reset; -- LED connected to VCC therefore NOT
+    -- p1(5) <= not xdma_strobe;
+    -- p1(5) <= not '1';
 
 end Behavioral;
