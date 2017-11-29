@@ -223,10 +223,14 @@ C_OBJS = $(addprefix ${OBJDIR}/,$(CFILES:.c=.o))
 OBJS = ${ASM_OBJS} ${C_OBJS} ${CXX_OBJS}
 
 BIN = ${PROG}.bin
+SREC = ${PROG}.srec
 HEX = ${PROG}.hex
 
+${SREC}: ${BIN} Makefile
+	${OBJCOPY} ${OBJFLAGS} -O srec ${PROG} ${SREC}
+
 ${HEX}: ${BIN} Makefile
-	${OBJCOPY} ${OBJFLAGS} -O srec ${PROG} ${HEX}
+	${OBJCOPY} ${OBJFLAGS} -O ihex ${PROG} ${HEX}
 
 ${BIN}: ${PROG} Makefile
 	${ISA_CHECK} ${ARCH} ${PROG}
@@ -244,7 +248,7 @@ depend:
 	    | sed "s/\(^[^ ]*\):/${OBJDIR_ESC}\/\1:/" > ${OBJDIR}/.depend
 
 clean:
-	rm -f ${OBJS} ${PROG} ${BIN} ${HEX}
+	rm -f ${OBJS} ${PROG} ${BIN} ${HEX} ${SREC}
 
 cleandepend:
 	rm -f ${OBJDIR}/.depend
