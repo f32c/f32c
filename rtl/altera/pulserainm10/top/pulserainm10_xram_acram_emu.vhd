@@ -38,7 +38,7 @@ entity pulserainm10_xram is
         --C_movn_movz: boolean := false;
 
 	-- Main clock: 25/83/100 MHz
-	C_clk_freq: integer := 83;
+	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
 	C_bram_size: integer := 0; -- BRAM disabled
@@ -62,9 +62,9 @@ entity pulserainm10_xram is
 
 	C_sio: integer := 1;
 	C_gpio: integer := 16;
-	C_timer: boolean := false;
+	C_timer: boolean := true; -- needs simple out of 32 elements ?
 	C_simple_in: integer := 1;
-	C_simple_out: integer := 1
+	C_simple_out: integer := 32
     );
     port (
 	osc_in: in std_logic;
@@ -99,6 +99,7 @@ architecture Behavioral of pulserainm10_xram is
   signal tx_in: std_logic_vector(29 downto 0);
   signal tmds_d: std_logic_vector(3 downto 0);
   signal R_blinky: std_logic_vector(25 downto 0);
+  signal S_uart_break: std_logic;
 begin
     G_25m_clk: if C_clk_freq = 25 generate
     clkgen_25: entity work.clk_12M_25M05_125M25P_125M25N_100M2_83M5
@@ -168,9 +169,9 @@ begin
       --clk_pixel_shift => clk_pixel_shift,
       reset => S_reset,
       xdma_addr => xdma_addr, xdma_strobe => xdma_strobe,
-      xdma_write => xdma_write, xdma_byte_sel => xdma_byte_sel,
+      xdma_write => '1', xdma_byte_sel => "1111",
       xdma_data_in => xdma_data_in, xdma_data_ready => xdma_data_ready,
-      sio_txd(0) => uart_txd, sio_rxd(0) => uart_rxd,
+      sio_txd(0) => uart_txd, sio_rxd(0) => uart_rxd, sio_break(0) => S_uart_break,
       spi_sck => open, spi_ss => open, spi_mosi => open, spi_miso => "",
       acram_en => ram_en,
       acram_addr(29 downto 2) => ram_address(29 downto 2),
@@ -200,12 +201,12 @@ begin
     acram_emulation: entity work.acram_emu
     generic map
     (
-      C_addr_width => 12
+      C_addr_width => 13
     )
     port map
     (
       clk => clk,
-      acram_a => ram_address(13 downto 2),
+      acram_a => ram_address(14 downto 2),
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
@@ -268,18 +269,17 @@ begin
     );
 
     -- preload the f32c bootloader and reset CPU
+    -- preloads initially at startup and during each reset of the CPU
     boot_preload: entity work.max10_boot_preloader
     port map
     (
       clk => clk,
-      reset_in => R_blinky(R_blinky'high), -- debug: constantly resetting and writing bootloader
-      reset_out => open, -- initially 1, appears as delayed reset_in
-      addr => xdma_addr(9 downto 2), -- must fit bootloader size 1K
+      reset_in => S_uart_break, -- input reset rising edge (from serial break) starts DMA preload
+      reset_out => S_reset, -- 1 during DMA preload (holds CPU in reset state)
+      addr => xdma_addr(9 downto 2), -- must fit bootloader size 1K 10-bit byte address
       data => xdma_data_in, -- comes from register - last read data will stay on the bus
-      strobe => xdma_strobe,
-      write => xdma_write, -- write is the same as strobe
-      byte_sel => xdma_byte_sel, -- all 1
-      ready => xdma_data_ready -- response from RAM arbiter
+      strobe => xdma_strobe, -- use strobe as strobe and as write signal
+      ready => xdma_data_ready -- response from RAM arbiter (write completed)
     );
     -- p1(5) <= not S_reset; -- GREEN LED (connected to VCC)
     -- p1(5) <= not xdma_strobe;
