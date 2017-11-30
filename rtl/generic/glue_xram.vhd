@@ -777,7 +777,7 @@ begin
       cycles_per_refresh => C_sdram_cycles_per_refresh
     )
     port map (
-      clk => clk, reset => sio_break_internal(0),
+      clk => clk, reset => S_reset,
       -- internal connections
       data_out => from_xram, bus_in => to_xram, ready_out => xram_ready,
       snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
@@ -1172,7 +1172,7 @@ begin
     process(clk)
     begin
         if rising_edge(clk) then
-            if sio_break_internal(0) = '1' then
+            if S_reset = '1' then
               R_fb_base_addr <= (others => '0');
             elsif vga_ce = '1' and dmem_write = '1' then
                 -- cpu write: writes Framebuffer base
@@ -1209,7 +1209,7 @@ begin
     process(clk)
     begin
         if rising_edge(clk) then
-            if sio_break_internal(0) = '1' then
+            if S_reset = '1' then
               R_fb_base_addr <= (others => '0');
             elsif vga_ce = '1' and dmem_write = '1' then
                 -- cpu write: writes Framebuffer base
@@ -1513,7 +1513,7 @@ begin
     process(clk)
     begin
         if rising_edge(clk) then
-            if sio_break_internal(0) = '1' then
+            if S_reset = '1' then
               R_fb_base_addr <= (others => '0');
             elsif vga_ce = '1' and dmem_write = '1' then
                 -- cpu write: writes Framebuffer base
@@ -1615,7 +1615,7 @@ begin
         C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo
       )
       port map (
-        reset_i => sio_break_internal(0),
+        reset_i => S_reset,
         clk_i => clk, ce_i => vga_textmode_ce, bus_addr_i => dmem_addr(4 downto 2),
         bus_write_i => dmem_write, byte_sel_i => dmem_byte_sel,
         bus_data_i => cpu_to_dmem, bus_data_o => from_vga_textmode,
