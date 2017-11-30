@@ -55,6 +55,8 @@ entity scarab_xram_acram_emu is
 
 	-- SoC configuration options
 	C_bram_size: integer := 8; -- KB
+	C_bram_const_init: boolean := true; -- true: preload BRAM with bootloader
+	C_boot_write_protect: boolean := true; -- leave boot block in BRAM writeable
 
         -- axi cache ram
         C_acram: boolean := true;
@@ -108,8 +110,7 @@ entity scarab_xram_acram_emu is
 
 	C_sio: integer := 1;
 	C_spi: integer := 2;
-	C_gpio: integer := 32;
-	C_simple_io: boolean := true
+	C_gpio: integer := 32
     );
     port (
 	clk_50MHz: in std_logic;
@@ -208,6 +209,8 @@ begin
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
 	C_bram_size => C_bram_size,
+        C_bram_const_init => C_bram_const_init,
+        C_boot_write_protect => C_boot_write_protect,
         C_acram => C_acram,
         C_acram_wait_cycles => C_acram_wait_cycles,
         C_icache_size => C_icache_size,
