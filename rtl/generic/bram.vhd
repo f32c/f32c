@@ -118,7 +118,7 @@ architecture x of bram is
 	variable y: bram_type;
 	variable i,l: integer;
     begin
-	y := (others => (others => '-'));
+	y := (others => (others => '0')); -- if '0' is '-' then Xilinx ISE error
 	i := n;
 	l := x'length;
 	while(i < l) loop
