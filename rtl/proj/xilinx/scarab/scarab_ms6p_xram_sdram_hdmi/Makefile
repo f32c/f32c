@@ -80,6 +80,9 @@ vhdfiles = \
 ../../../../soc/gpio.vhd \
 ../../../../soc/timer.vhd \
 ../../../../soc/pcm.vhd \
+../../../../soc/synth.vhd \
+../../../../soc/spdif_tx.vhd \
+../../../../soc/sigmadelta.vhd \
 ../../../../soc/pid/pid.vhd \
 ../../../../soc/pid/ctrlpid.vhd \
 ../../../../soc/pid/simotor.vhd \

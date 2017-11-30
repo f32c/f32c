@@ -61,7 +61,6 @@ entity scarab_xram_acram_emu is
         C_acram_wait_cycles: integer := 3; -- real axi_cache works with 2, acram_emu needs 3 (should be fixed)
 	C_acram_emu_kb: integer := 64; -- KB axi_cache emulation (power of 2, MAX 64)
 
-        C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
         C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
         C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 25bits -> 2^25 -> 32MB to be cached
@@ -211,7 +210,6 @@ begin
 	C_bram_size => C_bram_size,
         C_acram => C_acram,
         C_acram_wait_cycles => C_acram_wait_cycles,
-        C_icache_expire => C_icache_expire,
         C_icache_size => C_icache_size,
         C_dcache_size => C_dcache_size,
         C_cached_addr_bits => C_cached_addr_bits,
@@ -296,7 +294,7 @@ begin
     hdmi_output1: entity work.hdmi_out
       port map
       (
-        tmds_in_clk    => clk_25MHz, -- some monitors prefer this clock
+        tmds_in_clk    => tmds_clk,
         tmds_out_clk_p => tmds_out_clk_p,
         tmds_out_clk_n => tmds_out_clk_n,
         tmds_in_rgb    => tmds_rgb,
