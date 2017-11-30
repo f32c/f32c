@@ -5,6 +5,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use ieee.math_real.all; -- to calculate log2 bit size
 
 use work.f32c_pack.all;
 
@@ -47,8 +48,11 @@ entity pulserainm10_xram is
 	C_xdma: boolean := true; -- bootloader initializes XRAM with external DMA
         C_icache_size: integer := 0;
         C_dcache_size: integer := 0;
+        C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached
         C_acram: boolean := true;
-        C_xram_base: std_logic_vector(31 downto 28) := x"0"; -- XRAM (acram emu) at address 0 instead of BRAM
+        C_acram_wait_cycles: integer := 6; -- only 6 works (other boards work with 3 or more)
+        C_acram_emu_kb: integer := 32; -- KB axi_cache emulation (power of 2, MAX 32)
+        C_xram_base: std_logic_vector(31 downto 28) := x"0"; -- XRAM (acram emu) at address 0 (instead of disabled BRAM)
 
         C_hdmi_out: boolean := false;
         C_dvid_ddr: boolean := false;
@@ -79,6 +83,13 @@ entity pulserainm10_xram is
 end;
 
 architecture Behavioral of pulserainm10_xram is
+  -- useful for conversion from KB to number of address bits
+  function ceil_log2(x: integer)
+      return integer is
+  begin
+      return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
+  end ceil_log2;
+
   signal clk: std_logic;
   signal clk_pixel, clk_pixel_shift: std_logic;
   signal clk_25M02: std_logic;
@@ -149,7 +160,9 @@ begin
       C_boot_write_protect => C_boot_write_protect,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
+      C_cached_addr_bits => C_cached_addr_bits,
       C_acram => C_acram,
+      C_acram_wait_cycles => C_acram_wait_cycles,
       C_xram_base => C_xram_base,
       C_sio => C_sio,
       C_timer => C_timer,
@@ -201,12 +214,12 @@ begin
     acram_emulation: entity work.acram_emu
     generic map
     (
-      C_addr_width => 13
+      C_addr_width => 8 + ceil_log2(C_acram_emu_kb)
     )
     port map
     (
       clk => clk,
-      acram_a => ram_address(14 downto 2),
+      acram_a => ram_address(9 + ceil_log2(C_acram_emu_kb) downto 2),
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
