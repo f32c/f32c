@@ -45,11 +45,8 @@ entity scarab_xram_acram_emu is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: 81/100/125 MHz
-	-- vivado at 81MHz: screen flickers, fetch 1 byte late?
-	-- ise at 81MHz: no flicker
-	-- at 100MHz both ISE and Vivado don't flicker 
-	C_clk_freq: integer := 100;
+	-- Main clock: 50/81/100/112 MHz
+	C_clk_freq: integer := 50;
 
 	C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
 
@@ -61,15 +58,15 @@ entity scarab_xram_acram_emu is
         -- axi cache ram
         C_acram: boolean := true;
         C_acram_wait_cycles: integer := 3; -- real axi_cache works with 2, acram_emu needs 3 (should be fixed)
-	C_acram_emu_kb: integer := 64; -- KB axi_cache emulation (power of 2, MAX 64)
+	C_acram_emu_kb: integer := 32; -- KB axi_cache emulation (power of 2, MAX 64)
 
-        C_icache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
-        C_dcache_size: integer := 4; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_icache_size: integer := 0; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_dcache_size: integer := 0; -- 0, 2, 4, 8, 16, 32 KBytes
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 25bits -> 2^25 -> 32MB to be cached
 
-	C_vgahdmi: boolean := false;
+	C_vgahdmi: boolean := true;
 
-    C_vgatext: boolean := true; -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "f32c: ESA11-7a35i MIPS compatible soft-core 100MHz 32MB DDR3"; -- default banner in screen memory
       C_vgatext_mode: integer := 0;   -- 640x480
       C_vgatext_bits: integer := 4;   -- 64 possible colors
