@@ -44,27 +44,25 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	-- Main clock: 81/100/125 MHz
-	-- vivado at 81MHz: screen flickers, fetch 1 byte late?
-	-- ise at 81MHz: no flicker
-	-- at 100MHz both ISE and Vivado don't flicker 
-	C_clk_freq: integer := 100;
+	-- Main clock: 50/81/100/112 MHz
+	C_clk_freq: integer := 50;
 
 	-- SoC configuration options
 	C_bram_size: integer := 16;
 
         C_sram: boolean := true;
         C_sram_refresh: boolean := false; -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
-        C_sram_wait_cycles: integer := 3; -- is there any number of cycles which works ?
+        C_sram_wait_cycles: integer := 3; -- 2,3,4,5,6 don't work. (simple blink works but floating point not)
         C_sram_pipelined_read: boolean := false;
 
         C_icache_size: integer := 0; -- 0, 2, 4, 8, 16, 32 KBytes
         C_dcache_size: integer := 0; -- 0, 2, 4, 8, 16, 32 KBytes
-        C_cached_addr_bits: integer := 20; -- number of lower RAM address bits 2^25 -> 32MB to be cached
+        C_cached_addr_bits: integer := 20; -- number of lower RAM address bits 2^20 -> 1MB to be cached
 
 	C_sio: integer := 1;
 	C_spi: integer := 2;
-	C_gpio: integer := 32
+	C_gpio: integer := 32;
+	C_timer: boolean := true
     );
     port (
 	clk_50MHz: in std_logic;
@@ -156,8 +154,10 @@ begin
         C_sram_pipelined_read => C_sram_pipelined_read, -- works only at 81.25 MHz !!!
         C_icache_size => C_icache_size,
         C_dcache_size => C_dcache_size,
-        C_cached_addr_bits => C_cached_addr_bits
-	--C_spi => C_spi,
+        C_cached_addr_bits => C_cached_addr_bits,
+        C_timer => C_timer,
+        C_gpio => C_gpio,
+	C_spi => C_spi
 	--C_pid => false,
     )
     port map (
