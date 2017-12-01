@@ -29,7 +29,7 @@
 -- emulation of the 16-bit SRAM chip using BRAM
 -- it is useful for d/i cache coherence test.
 -- it is not timing exact as real chip:
--- it uses system clock (sampled on falling edge)
+-- it uses system clock (sampled by default on falling edge)
 -- real chip doesn't use system clock but has timing on its own.
 
 library ieee;
@@ -39,6 +39,7 @@ use ieee.numeric_std.all;
 
 entity sram_emu is
     generic (
+        C_rising_edge: boolean := false; -- true: rising, false: falling edge of the clock
 	C_addr_width: integer := 11 -- address width defines RAM size 11 bits -> 2^11 * 2 byte = 2048*2 = 4K
     );
     port (
@@ -54,10 +55,14 @@ architecture Structure of sram_emu is
     -- SRAM emulation signals for internal BRAM
     signal sram_we_lower, sram_we_upper: std_logic;
     signal from_sram_lower, from_sram_upper: std_logic_vector(7 downto 0);
-    signal clk_n : std_logic;
+    signal S_clk: std_logic;
 begin
-
-    clk_n <= not clk;
+    G_rising_edge: if C_rising_edge generate
+      S_clk <= clk;
+    end generate;
+    G_falling_edge: if not C_rising_edge generate
+      S_clk <= not clk;
+    end generate;
   
     sram_emul_lower: entity work.bram_true2p_1clk
     generic map (
@@ -66,7 +71,7 @@ begin
         addr_width => C_addr_width
     )
     port map (
-        clk => clk_n,
+        clk => S_clk,
         we_a => sram_we_lower,
         addr_a => sram_a(C_addr_width-1 downto 0),
         data_in_a => sram_d(7 downto 0), data_out_a => from_sram_lower,
@@ -81,7 +86,7 @@ begin
         addr_width => C_addr_width
     )
     port map (
-        clk => clk_n,
+        clk => S_clk,
         we_a => sram_we_upper,
         addr_a => sram_a(C_addr_width-1 downto 0),
         data_in_a => sram_d(15 downto 8), data_out_a => from_sram_upper,
