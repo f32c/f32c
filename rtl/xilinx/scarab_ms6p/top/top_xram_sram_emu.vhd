@@ -55,18 +55,16 @@ entity glue is
 
         C_sram: boolean := true;
         C_sram_refresh: boolean := false; -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
-        C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
+        C_sram_wait_cycles: integer := 3; -- is there any number of cycles which works ?
         C_sram_pipelined_read: boolean := false;
 
-        C_icache_expire: boolean := false; -- false: normal i-cache, true: passthru buggy i-cache
-        C_icache_size: integer := 2; -- 0, 2, 4, 8, 16, 32 KBytes
-        C_dcache_size: integer := 2; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_icache_size: integer := 0; -- 0, 2, 4, 8, 16, 32 KBytes
+        C_dcache_size: integer := 0; -- 0, 2, 4, 8, 16, 32 KBytes
         C_cached_addr_bits: integer := 20; -- number of lower RAM address bits 2^25 -> 32MB to be cached
 
 	C_sio: integer := 1;
 	C_spi: integer := 2;
-	C_gpio: integer := 32;
-	C_simple_io: boolean := true
+	C_gpio: integer := 32
     );
     port (
 	clk_50MHz: in std_logic;
@@ -105,6 +103,8 @@ architecture Behavioral of glue is
     signal clk, clk_250MHz, clk_25MHz: std_logic;
     signal rs232_break: std_logic;
     signal tmds_out_rgb: std_logic_vector(2 downto 0);
+    signal tmds_rgb: std_logic_vector(2 downto 0);
+    signal tmds_clk: std_logic;
     signal sram_a: std_logic_vector(11 downto 0);
     signal sram_d: std_logic_vector(15 downto 0);
     signal sram_wel, sram_lbl, sram_ubl: std_logic;
@@ -154,7 +154,6 @@ begin
         C_sram_refresh => C_sram_refresh, -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
         C_sram_wait_cycles => C_sram_wait_cycles, -- ISSI, OK do 87.5 MHz
         C_sram_pipelined_read => C_sram_pipelined_read, -- works only at 81.25 MHz !!!
-        C_icache_expire => C_icache_expire,
         C_icache_size => C_icache_size,
         C_dcache_size => C_dcache_size,
         C_cached_addr_bits => C_cached_addr_bits
@@ -165,6 +164,12 @@ begin
 	clk => clk,
 	sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
 	sio_break(0) => rs232_break,
+
+        dvid_red(0)   => tmds_rgb(2), dvid_red(1)   => open,
+        dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
+        dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
+        dvid_clock(0) => tmds_clk,    dvid_clock(1) => open,
+
 --	spi_sck(0)  => open,  spi_sck(1)  => open,
 --	spi_ss(0)   => open,  spi_ss(1)   => open
 --	spi_mosi(0) => open,  spi_mosi(1) => open,
@@ -178,6 +183,7 @@ begin
 --	gpio(27 downto 24) => jd_u(3 downto 0),
 --	gpio(31 downto 28) => jd_d(3 downto 0),
 --	gpio(127 downto 32) => open,
+
 	simple_out(7 downto 0) => leds(7 downto 0),
 	simple_out(31 downto 8) => open,
 	simple_in(15 downto 0) => open,
@@ -193,10 +199,10 @@ begin
     hdmi_output1: entity work.hdmi_out
       port map
       (
-        tmds_in_clk    => clk_25MHz,
+        tmds_in_clk    => tmds_clk,
         tmds_out_clk_p => tmds_out_clk_p,
         tmds_out_clk_n => tmds_out_clk_n,
-        tmds_in_rgb    => tmds_out_rgb,
+        tmds_in_rgb    => tmds_rgb,
         tmds_out_rgb_p => tmds_out_p,
         tmds_out_rgb_n => tmds_out_n
       );
@@ -204,10 +210,10 @@ begin
     hdmi_output2: entity work.hdmi_out
       port map
       (
-        tmds_in_clk    => clk_25MHz,
+        tmds_in_clk    => tmds_clk,
         tmds_out_clk_p => tmds_in_clk_p,
         tmds_out_clk_n => tmds_in_clk_n,
-        tmds_in_rgb    => tmds_out_rgb,
+        tmds_in_rgb    => tmds_rgb,
         tmds_out_rgb_p => tmds_in_p,
         tmds_out_rgb_n => tmds_in_n
       );
