@@ -50,7 +50,7 @@ entity pulserainm10_xram is
         C_dcache_size: integer := 0;
         C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached
         C_acram: boolean := true;
-        C_acram_wait_cycles: integer := 6; -- only 6 works (other boards work with 3 or more)
+        C_acram_wait_cycles: integer := 4; -- only 6 completey works, 4 partially (other boards work with 3 or more)
         C_acram_emu_kb: integer := 32; -- KB axi_cache emulation (power of 2, MAX 32)
         C_xram_base: std_logic_vector(31 downto 28) := x"0"; -- XRAM (acram emu) at address 0 (instead of disabled BRAM)
 
@@ -203,6 +203,7 @@ begin
       --vga_b(3 downto 0) => open,
       -- ***** HDMI *****
       --dvi_r => S_hdmi_pd2, dvi_g => S_hdmi_pd1, dvi_b => S_hdmi_pd0,
+      -- gpio(7 downto 0) => p0, gpio(12 downto 8) => p1(4 downto 0), gpio(127 downto 13) => open,
       gpio(7 downto 0) => p0, gpio(15 downto 8) => p1(7 downto 0), gpio(127 downto 16) => open,
       simple_out(0) => debug_led,
       simple_out(31 downto 1) => open,
@@ -295,9 +296,8 @@ begin
       ready => xdma_data_ready -- response from RAM arbiter (write completed)
     );
     -- p1(5) <= not S_reset; -- GREEN LED (connected to VCC)
-    -- p1(5) <= not xdma_strobe;
+    -- p1(7) <= not xdma_strobe; -- RED LED
     -- p1(5) <= not '1';
-
-   --  uart_txd <= uart_rxd; -- loopback test for RS232
+    -- uart_txd <= uart_rxd; -- loopback test for RS232
 
 end Behavioral;

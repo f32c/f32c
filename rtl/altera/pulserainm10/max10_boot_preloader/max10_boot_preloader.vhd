@@ -16,8 +16,6 @@ entity max10_boot_preloader is
     generic (
 	-- ISA: either ARCH_MI32 or ARCH_RV32
 	C_arch: integer := ARCH_MI32;
-	-- Main clock: 25/83/100 MHz
-	C_clk_freq: integer := 83; -- MHz
 	-- SoC configuration options
 	C_boot_addr_bits: integer := 8 -- 8: 256x4-byte = 1K bootloader size
     );
@@ -48,30 +46,32 @@ architecture Behavioral of max10_boot_preloader is
   signal R_strobe: std_logic := '0';
   signal R_data: std_logic_vector(31 downto 0);
   signal R_addr: std_logic_vector(C_boot_addr_bits-1 downto 0);
+  signal R_initial_read: std_logic := '1';
 begin
-    S_onchip_reset_n <= not reset_in;
+    -- S_onchip_reset_n <= reset_out;
+    S_onchip_reset_n <= '1';
     -- vendor specific onchip flash interface module
     onchip_flash_interface: entity work.onchip_flash
     port map (
       clock => clk,
+      reset_n => S_onchip_reset_n,
       avmm_csr_addr => '0', -- always 0
       avmm_csr_read => '0', -- always 0
-      avmm_csr_writedata => x"00000000", -- not used
+      avmm_csr_writedata => (others => '0'), -- not used
       avmm_csr_write => '0', -- always 0
       avmm_csr_readdata => open, -- not used
-      avmm_data_addr => R_onchip_addr(C_onchip_addr_bits-1+C_slowdown downto C_slowdown), -- addr_counter goes here
+      avmm_data_addr => R_onchip_addr(C_onchip_addr_bits+C_slowdown-1 downto C_slowdown), -- addr_counter goes here
       avmm_data_read => S_onchip_read, -- read request signal
-      avmm_data_writedata => x"00000000", -- not used, we only read
+      avmm_data_writedata => (others => '0'), -- not used, we only read
       avmm_data_write => '0', -- always 0
       avmm_data_readdata => S_onchip_rd_data, -- data going out here
       avmm_data_waitrequest => S_onchip_waitrequest,
       avmm_data_readdatavalid => S_onchip_rd_valid,
-      avmm_data_burstcount => "01",
-      reset_n => S_onchip_reset_n
+      avmm_data_burstcount => "01" -- 01 for single read (no burst)
     );
     S_onchip_done <= R_onchip_addr(C_boot_addr_bits+C_slowdown);
-    S_onchip_read <= (R_onchip_addr(C_slowdown-1)) and (not S_onchip_done);
-    addr <= R_onchip_addr(C_boot_addr_bits-1+C_slowdown downto C_slowdown);
+    S_onchip_read <= (not R_onchip_addr(C_slowdown-1)) and (not S_onchip_done);
+    addr <= R_onchip_addr(C_boot_addr_bits+C_slowdown-1 downto C_slowdown);
     data <= R_data; -- output data from latch register
     strobe <= R_strobe; -- request DMA transaction
     reset_out <= not S_onchip_done; -- hold reset until done
@@ -81,12 +81,14 @@ begin
         R_prev_reset_in <= reset_in;
         if reset_in = '1' and R_prev_reset_in = '0' then -- reset rising edge
           R_onchip_addr <= (others => '0');
+          R_initial_read <= '1';
         else
+          R_initial_read <= '0';
           if S_onchip_done = '0' then
-            if (R_strobe = '0' and R_onchip_addr(C_slowdown-1) = '0' and S_onchip_waitrequest = '0') -- when nothing is requested, everything is ready for new transaction
-            or (R_strobe = '1' and ready = '1') -- or data arrived after being requested
+            if (R_onchip_addr(C_slowdown-1) = '0' and S_onchip_done = '0' and S_onchip_waitrequest = '0') -- data arrived after being requested
+            or (R_strobe = '1' and ready = '1') -- have been written
             then
-              R_onchip_addr <= R_onchip_addr + 1; -- LSB bit 0 is not part of address, it's connected to flash read line
+              R_onchip_addr <= R_onchip_addr + 1; -- LSB bit 0 is not part of address
             end if;
           end if;
         end if;
@@ -100,7 +102,7 @@ begin
     begin
       if rising_edge(clk) then
         if R_strobe = '0' then
-          if S_onchip_rd_valid = '1' and S_onchip_read = '1' then
+          if S_onchip_rd_valid = '1' and S_onchip_done = '0' then
             -- we have valid data after requesting them
             R_data <= S_onchip_rd_data;
             R_strobe <= '1'; -- issue DMA request
