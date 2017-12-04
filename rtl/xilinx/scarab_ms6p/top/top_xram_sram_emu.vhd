@@ -33,12 +33,13 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use ieee.math_real.all; -- to calculate log2 bit size
 
 library unisim;
 use unisim.vcomponents.all;
 use work.f32c_pack.all;
 
-entity glue is
+entity scarab_xram_sram_emu is
     generic (
 	-- ISA: either ARCH_MI32 or ARCH_RV32
 	C_arch: integer := ARCH_MI32;
@@ -50,6 +51,9 @@ entity glue is
 	-- SoC configuration options
 	C_bram_size: integer := 16;
 
+        -- External RAM emulated with BRAM
+        C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- XRAM (acram emu) at address 0 (takes place of disabled BRAM)
+        C_xram_emu_kb: integer := 32; -- KB XRAM emulation (power of 2, MAX 64)
         C_sram: boolean := true;
         C_sram_refresh: boolean := false; -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
         C_sram_wait_cycles: integer := 3; -- 2,3,4,5,6 don't work. (simple blink works but floating point not)
@@ -95,15 +99,21 @@ entity glue is
 	TMDS_out_CLK_P, TMDS_out_CLK_N: out std_logic;
 	sw: in std_logic_vector(4 downto 1)
     );
-end glue;
+end;
 
-architecture Behavioral of glue is
+architecture Behavioral of scarab_xram_sram_emu is
+    -- useful for conversion from KB to number of address bits
+    function ceil_log2(x: integer)
+      return integer is
+    begin
+      return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
+    end ceil_log2;
     signal clk, clk_250MHz, clk_25MHz: std_logic;
     signal rs232_break: std_logic;
     signal tmds_out_rgb: std_logic_vector(2 downto 0);
     signal tmds_rgb: std_logic_vector(2 downto 0);
     signal tmds_clk: std_logic;
-    signal sram_a: std_logic_vector(11 downto 0);
+    signal sram_a: std_logic_vector(19 downto 0);
     signal sram_d: std_logic_vector(15 downto 0);
     signal sram_wel, sram_lbl, sram_ubl: std_logic;
 begin
@@ -147,7 +157,7 @@ begin
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
 	C_bram_size => C_bram_size,
-
+        C_xram_base => C_xram_base,
         C_sram => C_sram,
         C_sram_refresh => C_sram_refresh, -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
         C_sram_wait_cycles => C_sram_wait_cycles, -- ISSI, OK do 87.5 MHz
@@ -158,7 +168,6 @@ begin
         C_timer => C_timer,
         C_gpio => C_gpio,
 	C_spi => C_spi
-	--C_pid => false,
     )
     port map (
 	clk => clk,
@@ -189,8 +198,7 @@ begin
 	simple_in(15 downto 0) => open,
 	simple_in(19 downto 16) => sw(4 downto 1),
 	simple_in(31 downto 20) => open,
-	sram_a(19 downto 12) => open,
-	sram_a(11 downto 0) => sram_a(11 downto 0), sram_d => sram_d, 
+	sram_a => sram_a, sram_d => sram_d, 
 	sram_wel => sram_wel,
 	sram_lbl => sram_lbl, sram_ubl => sram_ubl
     );
@@ -221,12 +229,12 @@ begin
     sram_chip_emulation: entity work.sram_emu
     generic map
     (
-      C_addr_width => 12
+      C_addr_width => 9 + ceil_log2(C_xram_emu_kb)
     )
     port map
     (
       clk => clk,
-      sram_a => sram_a(11 downto 0), sram_d => sram_d,
+      sram_a => sram_a(8 + ceil_log2(C_xram_emu_kb) downto 0), sram_d => sram_d,
       sram_wel => sram_wel,
       sram_lbl => sram_lbl, sram_ubl => sram_ubl
     );
