@@ -56,7 +56,7 @@ generic
   C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
 
   -- SoC configuration options
-  C_bram_size: integer := 0; -- KB or 0 to disable
+  C_bram_size: integer := 0; -- KB 8 to enable or 0 to disable
   C_bram_const_init: boolean := true; -- true: preload BRAM with bootloader
   C_boot_write_protect: boolean := true; -- leave boot block in BRAM writeable
 
@@ -64,16 +64,29 @@ generic
   C_xboot_rom: boolean := true;
   C_boot_rom_data_bits: integer := 32; -- number of bits in output from bootrom_emu
 
-  -- axi cache ram
-  C_xram_base: std_logic_vector(31 downto 28) := x"0"; -- XRAM (acram emu) at address 0 (instead of disabled BRAM)
-  C_acram: boolean := true;
-  C_acram_wait_cycles: integer := 3; -- real axi_cache works with 2, acram_emu needs 3 (should be fixed)
-  C_acram_emu_kb: integer := 32; -- KB axi_cache emulation (power of 2, MAX 64)
+  -- External RAM emulated with BRAM
+  C_xram_base: std_logic_vector(31 downto 28) := x"0"; -- XRAM (acram emu) at address 0 (takes place of disabled BRAM)
+  C_xram_emu_kb: integer := 32; -- KB XRAM emulation (power of 2, MAX 64)
 
+  C_sram: boolean := false; -- either acram or sram, not both
+  C_sram_refresh: boolean := false; -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
+  C_sram_wait_cycles: integer := 3; -- 3,4 works, other values untested
+  C_sram_pipelined_read: boolean := false;
+
+  C_acram: boolean := true; -- either acram or sram, not both
+  C_acram_wait_cycles: integer := 3; -- real axi_cache works with 2, acram_emu needs 3 (should be fixed)
+
+  -- CPU cache
   C_icache_size: integer := 0; -- 0, 2, 4, 8, 16, 32 KBytes
   C_dcache_size: integer := 0; -- 0, 2, 4, 8, 16, 32 KBytes
   C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 25bits -> 2^25 -> 32MB to be cached
 
+  -- standard IO hardware
+  C_sio: integer := 1;
+  C_spi: integer := 2;
+  C_gpio: integer := 32;
+
+  -- Video
   C_vgahdmi: boolean := true;
 
     C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
@@ -113,11 +126,8 @@ generic
           -- output data width 8bpp
           C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
           -- bitmap width of FIFO address space length = 2^width * 4 byte
-          C_vgatext_bitmap_fifo_addr_width: integer := 11;
+          C_vgatext_bitmap_fifo_addr_width: integer := 11
 
-	C_sio: integer := 1;
-	C_spi: integer := 2;
-	C_gpio: integer := 32
 );
 port
 (
@@ -185,6 +195,10 @@ architecture Behavioral of scarab_xram_acram_emu_xboot is
     signal ram_cache_hitcnt   : std_logic_vector(31 downto 0);
     signal ram_cache_readcnt  : std_logic_vector(31 downto 0);
 
+    signal sram_a: std_logic_vector(19 downto 0) := (others => '0');
+    signal sram_d: std_logic_vector(15 downto 0);
+    signal sram_wel, sram_lbl, sram_ubl: std_logic;
+
     signal tmds_rgb: std_logic_vector(2 downto 0);
     signal tmds_clk: std_logic;
 begin
@@ -236,9 +250,17 @@ begin
       C_xram_base => C_xram_base,
       C_acram => C_acram,
       C_acram_wait_cycles => C_acram_wait_cycles,
+      C_sram => C_sram,
+      C_sram_refresh => C_sram_refresh, -- RED ULX2S need it, others don't (exclusive: textmode or refresh)
+      C_sram_wait_cycles => C_sram_wait_cycles, -- ISSI, OK do 87.5 MHz
+      C_sram_pipelined_read => C_sram_pipelined_read, -- works only at 81.25 MHz !!!
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_cached_addr_bits,
+
+      C_spi => C_spi,
+      C_sio => C_sio,
+      C_gpio => C_gpio,
 
       C_vgahdmi => C_vgahdmi,
 
@@ -275,15 +297,12 @@ begin
       C_vgatext_bitmap_fifo_height => C_vgatext_bitmap_fifo_height,
       C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
       C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width
-	--C_spi => C_spi,
-	--C_pid => false,
     )
     port map (
       clk => clk,
       clk_pixel => clk_25MHz,
       clk_pixel_shift => clk_250MHz,
-      sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
-      sio_break(0) => rs232_break,
+      sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx, sio_break(0) => rs232_break,
       reset => S_reset,
       xdma_addr => xdma_addr, xdma_strobe => xdma_strobe,
       xdma_write => '1', xdma_byte_sel => "1111",
@@ -311,6 +330,10 @@ begin
       dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
       dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
       dvid_clock(0) => tmds_clk,    dvid_clock(1) => open,
+
+      sram_a => sram_a, sram_d => sram_d, 
+      sram_wel => sram_wel,
+      sram_lbl => sram_lbl, sram_ubl => sram_ubl,
 
       acram_en => ram_en,
       acram_addr(29 downto 2) => ram_address(29 downto 2),
@@ -343,21 +366,38 @@ begin
         tmds_out_rgb_n => tmds_in_n
       );
     
+    G_acram: if C_acram generate
     acram_emulation: entity work.acram_emu
     generic map
     (
-      C_addr_width => 8 + ceil_log2(C_acram_emu_kb)
+      C_addr_width => 8 + ceil_log2(C_xram_emu_kb)
     )
     port map
     (
       clk => clk,
-      acram_a => ram_address(9 + ceil_log2(C_acram_emu_kb) downto 2),
+      acram_a => ram_address(9 + ceil_log2(C_xram_emu_kb) downto 2),
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
       acram_ready => ram_ready,
       acram_en => ram_en
     );
+    end generate;
+
+    G_sram: if C_sram generate
+    sram_chip_emulation: entity work.sram_emu
+    generic map
+    (
+      C_addr_width => 9 + ceil_log2(C_xram_emu_kb)
+    )
+    port map
+    (
+      clk => clk,
+      sram_a => sram_a(8 + ceil_log2(C_xram_emu_kb) downto 0), sram_d => sram_d,
+      sram_wel => sram_wel,
+      sram_lbl => sram_lbl, sram_ubl => sram_ubl
+    );
+    end generate;
 
     -- disable onboard sdram chip
     sdram_clk <= '0';

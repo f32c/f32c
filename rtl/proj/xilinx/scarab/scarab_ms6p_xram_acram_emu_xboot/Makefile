@@ -44,6 +44,7 @@ vhdfiles = \
 ../../../../generic/reg1w2r.vhd \
 ../../../../generic/bram_video.vhd \
 ../../../../generic/acram_emu.vhd \
+../../../../generic/sram_emu.vhd \
 ../../../../generic/ddr_out.vhd \
 ../../../../cpu/alu.vhd \
 ../../../../cpu/loadalign.vhd \
