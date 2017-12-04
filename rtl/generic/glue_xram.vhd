@@ -52,6 +52,7 @@ generic (
   C_ll_sc: boolean := false;
   C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff"; -- full 4GB
   C_exceptions: boolean := true;
+  C_regfile_synchronous_read: boolean := false;
 
   -- COP0 options
   C_cop0_count: boolean := true;
@@ -570,6 +571,7 @@ begin
     pipeline: entity work.cache
     generic map (
       C_arch => C_arch, C_cpuid => 0, C_clk_freq => C_clk_freq,
+      C_regfile_synchronous_read => C_regfile_synchronous_read,
       C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
       C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
       C_mult_enable => C_mult_enable, C_mul_acc => C_mul_acc, C_mul_reg => C_mul_reg,
