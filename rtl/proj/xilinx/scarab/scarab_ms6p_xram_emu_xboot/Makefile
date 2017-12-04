@@ -18,7 +18,7 @@ vfiles = \
 ../../../../soc/pid/rotary_decoder_v.v \
 
 vhdfiles = \
-../../../../xilinx/scarab_ms6p/top/top_xram_acram_emu_xboot.vhd \
+../../../../xilinx/scarab_ms6p/top/top_xram_emu_xboot.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_112M5.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_100M.vhd \
 ../../../../xilinx/scarab_ms6p/clocks/pll_50M_100M_25M_250M.vhd \
