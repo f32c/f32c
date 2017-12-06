@@ -16,11 +16,13 @@ PART = 10M08SAE144C8G
 BOARDFILE = pulserain-m10.board
 CONFIG_DEVICE = EPCS64
 SERIAL_FLASH_LOADER_DEVICE = EP4CE6
+# STM32 and 8051 based blaster clones work
 OPENOCD_INTERFACE=altera-usb-blaster.ocd
 # OPENOCD_INTERFACE=altera-usb-blaster2.cfg
+# ftdi-fup1.ocd interface didn't work
 # OPENOCD_INTERFACE=ftdi-fpu1.ocd
 # OPENOCD_INTERFACE=remote.ocd
-OPENOCD_BOARD=de10-lite.ocd
+OPENOCD_BOARD=max10-08.ocd
 
 ###################################################################
 #

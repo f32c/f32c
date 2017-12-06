@@ -7,9 +7,9 @@ gdb_port 3333
 adapter_khz 8000
 
 # JTAG TAPs
-jtag newtap de10lite tap -expected-id 0x031050dd -irlen 10
+jtag newtap max10_08 tap -expected-id 0x031820dd -irlen 10
 
 init
 scan_chain
-svf -tap de10lite.tap project.svf
+svf -tap max10_08.tap project.svf
 shutdown
