@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!DOCTYPE		ispXCF	SYSTEM	"IspXCF.dtd" >
+<ispXCF version="3.7.0">
+	<Comment></Comment>
+	<Chain>
+		<Comm>JTAG</Comm>
+		<Device>
+			<SelectedProg value="TRUE"/>
+			<Pos>1</Pos>
+			<Vendor>Lattice</Vendor>
+			<Family>LatticeXP2</Family>
+			<Name>LFXP2-8E</Name>
+			<IDCode>0x0129a043</IDCode>
+			<Package>All</Package>
+			<PON>LFXP2-8E</PON>
+			<Bypass>
+				<InstrLen>8</InstrLen>
+				<InstrVal>11111111</InstrVal>
+				<BScanLen>1</BScanLen>
+				<BScanVal>0</BScanVal>
+			</Bypass>
+			<File>./project/project_project.jed</File>
+			<FileTime>08/02/17 00:46:44</FileTime>
+			<JedecChecksum>0x4206</JedecChecksum>
+			<Operation>SRAM Program,Verify</Operation>
+			<Option>
+				<SVFVendor>JTAG STANDARD</SVFVendor>
+				<IOState>Leave Alone</IOState>
+				<PreloadLength>522</PreloadLength>
+				<IOVectorData>0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF</IOVectorData>
+				<Reinitialize value="TRUE"/>
+				<SVFProcessor>SVF Processor</SVFProcessor>
+				<Usercode>0xFFFFFFFF</Usercode>
+				<AccessMode>SRAM</AccessMode>
+			</Option>
+		</Device>
+	</Chain>
+	<ProjectOptions>
+		<Program>SEQUENTIAL</Program>
+		<Process>ENTIRED CHAIN</Process>
+		<OperationOverride>No Override</OperationOverride>
+		<StartTAP>TLR</StartTAP>
+		<EndTAP>TLR</EndTAP>
+		<VerifyUsercode value="FALSE"/>
+		<TCKDelay>1</TCKDelay>
+	</ProjectOptions>
+	<CableOptions>
+		<CableName>USB2</CableName>
+		<PortAdd>FTUSB-0</PortAdd>
+		<USBID>FER ULX2S BOARD JTAG / UART Location 0000 Serial FER ULX2S board JTAG / UART</USBID>
+	</CableOptions>
+</ispXCF>

@@ -8,17 +8,56 @@ DIAMOND_BASE := /usr/local/diamond
 DIAMOND_BIN :=  $(shell find ${DIAMOND_BASE}/ -maxdepth 2 -name bin | sort -rn | head -1)
 DIAMONDC := $(shell find ${DIAMOND_BIN}/ -name diamondc)
 
+OPENOCD_BASE := ../../programmer/openocd/ulx2s/
 
-all:
-	@rm -rf ${IMPL_DIR}
-	@echo prj_project open ${PROJ_FILE} \; prj_run PAR -task PARTrace \; prj_run Export -task Bitgen | ${DIAMONDC}
-	#@fgrep Warning: ${IMPL_DIR}/*.twr
+# name of the project as defined in project file
+PROJECT = project
 
-clean:
-	rm -rf ${IMPL_DIR} *~
+JUNK = ${IMPL_DIR} .recovery ._Real_._Math_.vhd *.sty reportview.xml
+JUNK += dummy_sym.sort project_tcl.html promote.xml
+JUNK += generate_core.tcl generate_ngd.tcl msg_file.log
+JUNK += project_tcr.dir .run_manager.ini
+JUNK += hdmi_pcs.jhd hdmi_pcs.naf hdmi_pcs.pp hdmi_pcs.readme hdmi_pcs.sort hdmi_pcs.sym hdmi_pcs.tft hdmi_pcstx_reset_sm.naf hdmi_pcs_generate.log
 
-program:
+all: $(PROJECT)/$(PROJECT)_$(PROJECT).jed $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
+
+program: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
 	ujprog ${IMPL_DIR}/${PROJ_NAME}_${IMPL_NAME}.jed
 
-flash:
+flash: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
 	ujprog -j flash ${IMPL_DIR}/${PROJ_NAME}_${IMPL_NAME}.jed
+
+#program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
+#	openocd --file=$(OPENOCD_BASE)/remote.ocd --file=$(OPENOCD_BASE)/ecp3.ocd
+
+#program_ft2232: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
+#	openocd --file=$(OPENOCD_BASE)/ft2232-fpu1.ocd --file=$(OPENOCD_BASE)/ecp3.ocd
+
+$(PROJECT)/$(PROJECT)_$(PROJECT).jed:
+	@echo prj_project open ${PROJ_FILE} \; prj_run PAR -task PARTrace \; prj_run Export -task Bitgen | ${DIAMONDC}
+#	@fgrep Warning: ${IMPL_DIR}/*.twr
+
+$(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
+	LANG=C ddtcmd -oft -svfsingle -revd -if ulx2s_sram.xcf -of $@
+
+#$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
+#	LANG=C ddtcmd -oft -fullvme -if ulx2s_flash.xcf -nocompress -noheader -of $@
+
+#$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
+#	LANG=C ddtcmd -oft -svfsingle -op "FLASH Erase,Program,Verify" -if $< -of $@
+
+#flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
+#	${PROGRAMMERC} $<
+	# after this, to gain access to serial port on linux
+	# rmmod ftdi_sio; modprobe ftdi_sio
+
+# example another project
+#%.svf : %.jed
+#	LANG=C ddtcmd -oft -svfsingle -op "FLASH Erase,Program,Verify" -if $< -of $@
+#	mv -f $@ $@.flash
+#	LANG=C ddtcmd -oft -svfsingle -revd -op "SRAM Fast Program" -if $< -of $@
+#	mv -f $@ $@.sram
+#	./svf_to_urjtag.pl <$@.flash | sed 's/,/./g' > $@
+
+clean:
+	rm -rf $(JUNK) *~
