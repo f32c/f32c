@@ -1,0 +1,15 @@
+# ecp3.cfg
+# OpenOCD commands
+
+telnet_port 4444
+gdb_port 3333
+
+# JTAG TAPs
+#jtag newtap lfe5u25 tap -expected-id 0x41111043 -irlen 8 -irmask 0xFF -ircapture 0x5
+jtag newtap lfe5u45 tap -expected-id 0x41112043 -irlen 8 -irmask 0xFF -ircapture 0x5
+#jtag newtap lfe5u85 tap -expected-id 0x41113043 -irlen 8 -irmask 0xFF -ircapture 0x5
+
+init
+scan_chain
+svf -tap lfe5u45.tap project/project_project_sram.svf
+shutdown
