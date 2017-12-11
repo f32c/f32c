@@ -9,7 +9,7 @@ DIAMOND_BIN :=  $(shell find ${DIAMOND_BASE}/ -maxdepth 2 -name bin | sort -rn |
 DIAMONDC := $(shell find ${DIAMOND_BIN}/ -name diamondc)
 DDTCMD := $(shell find ${DIAMOND_BIN}/ -name ddtcmd)
 
-OPENOCD_BASE := ../../programmer/openocd/kondor_ax/
+OPENOCD_BASE := ../../programmer/openocd/ulx3s/
 
 # name of the project as defined in project file
 PROJECT = project
@@ -37,7 +37,7 @@ program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 	openocd --file=$(OPENOCD_BASE)/remote.ocd --file=$(OPENOCD_BASE)/ecp5.ocd
 
 program_ft2232: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
-	openocd --file=$(OPENOCD_BASE)/ft2232-kondor-ax.ocd --file=$(OPENOCD_BASE)/ecp5.ocd
+	openocd --file=$(OPENOCD_BASE)/ft2232-fpu1.ocd --file=$(OPENOCD_BASE)/ecp5.ocd
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT).jed:
 #	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Jedecgen | ${DIAMONDC}
