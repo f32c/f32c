@@ -1,0 +1,15 @@
+# ac8v4.ocd
+# OpenOCD commands
+
+telnet_port 4444
+gdb_port 3333
+
+# adapter_khz 8000
+
+# JTAG TAPs
+jtag newtap cyclone2 tap -expected-id 0x020b20dd -irlen 10
+
+init
+scan_chain
+svf -tap cyclone2.tap project.svf
+shutdown
