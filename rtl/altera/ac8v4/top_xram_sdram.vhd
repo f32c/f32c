@@ -32,6 +32,7 @@ entity top_ac8v4_xram_sdram is
         C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
 
 	C_sio: integer := 1;
+	C_spi: integer := 2;
 	C_gpio: integer := 32
     );
     port (
@@ -40,8 +41,10 @@ entity top_ac8v4_xram_sdram is
 	rs232_rx: in std_logic;
 	bit: out std_logic_vector(7 downto 0);
 	seg: out std_logic_vector(7 downto 0);
-	-- btn_left, btn_right: in std_logic;
+	btn: in std_logic_vector(1 to 4);
 	-- sw: in std_logic_vector(3 downto 0);
+	sd_mmc_clk, sd_mmc_cs, sd_mmc_di: out std_logic;
+	sd_mmc_do: in std_logic;
 	sdr_ad: out std_logic_vector(12 downto 0);
 	sdr_da: inout std_logic_vector(15 downto 0);
 	sdr_ba: out std_logic_vector(1 downto 0);
@@ -59,7 +62,7 @@ architecture Behavioral of top_ac8v4_xram_sdram is
   signal clk: std_logic;
   signal clk_325m: std_logic;
   signal clk_pixel, clk_pixel_shift: std_logic;
-  signal btns: std_logic_vector(1 downto 0);
+  signal btns: std_logic_vector(3 downto 0);
   signal tmds_rgb: std_logic_vector(2 downto 0);
   signal tmds_clk: std_logic;
   signal ram_en             : std_logic;
@@ -89,6 +92,7 @@ begin
       C_sdram_column_bits => 9,
       C_sdram_startup_cycles => 10100,
       C_sdram_cycles_per_refresh => 1524,
+      C_spi => C_spi,
       -- vga simple bitmap
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
@@ -100,7 +104,8 @@ begin
       clk_pixel => clk_pixel,
       clk_pixel_shift => clk_pixel_shift,
       sio_txd(0) => rs232_tx, sio_rxd(0) => rs232_rx,
-      spi_sck => open, spi_ss => open, spi_mosi => open, spi_miso => "",
+      spi_sck(0) => open, spi_ss(0) => open, spi_mosi(0) => open, spi_miso(0) => '0',
+      spi_sck(1) => sd_mmc_clk, spi_ss(1) => sd_mmc_cs, spi_mosi(1) => sd_mmc_di, spi_miso(1) => sd_mmc_do,
       gpio => open,
       acram_en => ram_en,
       acram_addr(29 downto 2) => ram_address(29 downto 2),
@@ -119,9 +124,9 @@ begin
       dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
       dvid_clock(0) => tmds_clk,    dvid_clock(1) => open,
       simple_out(7 downto 0) => seg, simple_out(31 downto 8) => open,
-      simple_in(1 downto 0) => btns, simple_in(31 downto 2) => open
+      simple_in(3 downto 0) => btns, simple_in(31 downto 4) => open
     );
-    -- btns <= not btn_left & not btn_right;
+    btns <= btn(4) & btn(3) & btn(2) & btn(1);
     bit <= (others => '1');
 
     G_acram: if C_acram generate

@@ -155,3 +155,7 @@ set_location_assignment PIN_97 -to SD_MMC_DO
 set_location_assignment PIN_160 -to RS232_RX
 set_location_assignment PIN_163 -to RS232_TX
 
+set_location_assignment PIN_144 -to BTN[1]
+set_location_assignment PIN_145 -to BTN[2]
+set_location_assignment PIN_146 -to BTN[3]
+set_location_assignment PIN_147 -to BTN[4]
