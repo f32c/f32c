@@ -107,7 +107,7 @@ entity ulx3s_xram_sdram_vector is
   ftdi_ndsr: inout  std_logic;
   ftdi_nrts: inout  std_logic;
   ftdi_txden: inout std_logic;
-  
+
   -- UART1 (WiFi serial)
   wifi_rxd: out   std_logic;
   wifi_txd: in    std_logic;
@@ -136,10 +136,13 @@ entity ulx3s_xram_sdram_vector is
 
   -- GPIO
   gp, gn: inout std_logic_vector(27 downto 0);
-  
+
+  -- SHUTDOWN: logic '1' here will shutdown power on PCB >= v1.7.5
+  shutdown: out std_logic := '0';
+
   -- Audio jack 3.5mm
   audio_l, audio_r, audio_v: out std_logic_vector(3 downto 0);
-  
+
   -- Onboard antenna 433 MHz
   ant_433mhz: out std_logic;
 
@@ -174,7 +177,7 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal ddr_d: std_logic_vector(2 downto 0);
   signal ddr_clk: std_logic;
   signal R_blinky: std_logic_vector(26 downto 0);
-  
+
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
   end component;
@@ -297,7 +300,8 @@ begin
     gpio(55 downto 28) => gn(27 downto 0),
     gpio(27 downto 0) => gp(27 downto 0),
 
-    simple_out(31 downto 13) => open,
+    simple_out(31 downto 14) => open,
+    simple_out(13)=> shutdown,
     simple_out(12) => oled_csn,
     simple_out(11) => oled_dc,
     simple_out(10) => oled_resn,
@@ -306,10 +310,10 @@ begin
     simple_out(7 downto 0) => led(7 downto 0),
     simple_in(31 downto 6) => (others => '0'),
     simple_in(5 downto 0) => btn,
-    
+
     jack_tip => audio_l,
     jack_ring => audio_r,
-    
+
     cw_antenna => ant_433mhz,
 
     -- external SDRAM interface
@@ -359,7 +363,7 @@ begin
     out_blue  => ddr_d(0),
     out_clock => ddr_clk
   );
-  
+
   gpdi_data_channels: for i in 0 to 2 generate
     gpdi_diff_data: OLVDS
     port map(A => ddr_d(i), Z => gpdi_dp(i), ZN => gpdi_dn(i));
@@ -375,5 +379,5 @@ begin
       end if;
   end process;
   -- led(7) <= R_blinky(R_blinky'high);
-  
+
 end Behavioral;
