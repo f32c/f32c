@@ -109,7 +109,7 @@ begin
   oled_dc <= S_hspi_dc;
   oled_resn <= S_hspi_resn;
 
-  -- show OLED singal status on the LEDs
+  -- show OLED signals on the LEDs
   led(4 downto 0) <= S_hspi_csn & S_hspi_dc & S_hspi_resn & S_hspi_mosi & S_hspi_sck;
   
   -- Pushbuttons passthru (using pins on J1 shared with wifi)
