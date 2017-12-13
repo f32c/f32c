@@ -159,3 +159,10 @@ set_location_assignment PIN_144 -to BTN[1]
 set_location_assignment PIN_145 -to BTN[2]
 set_location_assignment PIN_146 -to BTN[3]
 set_location_assignment PIN_147 -to BTN[4]
+
+set_location_assignment PIN_149 -to VGA_B
+set_location_assignment PIN_150 -to VGA_G
+set_location_assignment PIN_151 -to VGA_R
+set_location_assignment PIN_152 -to VGA_HS
+set_location_assignment PIN_161 -to VGA_VS
+

@@ -24,12 +24,52 @@ entity top_ac8v4_xram_sdram is
         C_acram: boolean := false;
         C_sdram: boolean := true;
 
-        C_hdmi_out: boolean := false;
+        C_video_mode: integer := 4; -- 50 MHz clock
 
         C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
         C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
         -- normally this should be  actual bits per pixel
-        C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
+        -- C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
+
+    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
+      C_vgatext_label: string :=  "f32c: ac8v4 MIPS compatible soft-core 50MHz SDRAM";	-- default banner in screen memory
+      --C_vgatext_mode: integer := 1;   -- 640x480
+      C_vgatext_bits: integer := 4;   -- 64 possible colors
+      C_vgatext_bram_mem: integer := 0;   -- KB (0: bram disabled -> use RAM)
+      C_vgatext_bram_base: std_logic_vector(31 downto 28) := x"4"; -- textmode bram at 0x40000000
+      C_vgatext_external_mem: integer := 32768; -- 32MB external SRAM/SDRAM
+      C_vgatext_reset: boolean := true; -- reset registers to default with async reset
+      C_vgatext_palette: boolean := true; -- no color palette
+      C_vgatext_text: boolean := true; -- enable optional text generation
+        C_vgatext_font_bram8: boolean := true; -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
+        C_vgatext_char_height: integer := 16; -- character cell height
+        C_vgatext_font_height: integer := 16; -- font height
+        C_vgatext_font_depth: integer := 8; -- font char depth, 7=128 characters or 8=256 characters
+        C_vgatext_font_linedouble: boolean := false;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
+        C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)
+        C_vgatext_monochrome: boolean := false;    -- true for 2-color text for whole screen, else additional color attribute byte per character
+        C_vgatext_finescroll: boolean := true;   -- true for pixel level character scrolling and line length modulo
+        C_vgatext_cursor: boolean := true;    -- true for optional text cursor
+        C_vgatext_cursor_blink: boolean := true;    -- true for optional blinking text cursor
+        C_vgatext_bus_read: boolean := false; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
+        C_vgatext_reg_read: boolean := true; -- true to allow reading vgatext BRAM from CPU bus (may affect fmax). false is write only
+        C_vgatext_text_fifo: boolean := true;  -- enable text memory FIFO
+          C_vgatext_text_fifo_postpone_step: integer := 0;
+          C_vgatext_text_fifo_step: integer := (82*2)/4; -- step for the FIFO refill and rewind
+          C_vgatext_text_fifo_width: integer := 6; -- width of FIFO address space (default=4) length = 2^width * 4 bytes
+      C_vgatext_bitmap: boolean := false; -- true for optional bitmap generation
+        C_vgatext_bitmap_depth: integer := 8; -- 8-bpp 256-color bitmap
+        C_vgatext_bitmap_fifo: boolean := true; -- enable bitmap FIFO
+          C_vgatext_bitmap_fifo_timeout: integer := 48; -- abort compositing 48 pixels before end of line
+          -- 8 bpp compositing
+          -- step=horizontal width in pixels
+          C_vgatext_bitmap_fifo_step: integer := 640;
+          -- height=vertical height in pixels
+          C_vgatext_bitmap_fifo_height: integer := 480;
+          -- output data width 8bpp
+          C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
+          -- bitmap width of FIFO address space length = 2^width * 4 byte
+          C_vgatext_bitmap_fifo_addr_width: integer := 11;
 
 	C_sio: integer := 1;
 	C_spi: integer := 2;
@@ -42,6 +82,7 @@ entity top_ac8v4_xram_sdram is
 	bit: out std_logic_vector(7 downto 0);
 	seg: out std_logic_vector(7 downto 0);
 	btn: in std_logic_vector(1 to 4);
+	vga_vs, vga_hs, vga_r, vga_g, vga_b: out std_logic;
 	-- sw: in std_logic_vector(3 downto 0);
 	sd_mmc_clk, sd_mmc_cs, sd_mmc_di: out std_logic;
 	sd_mmc_do: in std_logic;
@@ -75,7 +116,8 @@ begin
     -- clock synthesizer: Altera specific
     G_generic_clk:
     if C_clk_freq = 50 generate
-    clk <= clk_50m;    
+    clk <= clk_50m;
+    clk_pixel <= clk_50m;
     end generate;
 
     -- generic XRAM glue
@@ -95,8 +137,43 @@ begin
       C_spi => C_spi,
       -- vga simple bitmap
       C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
-      C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
+      --C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
+      -- vga advanced graphics text+compositing bitmap
+      C_vgatext => C_vgatext,
+      C_vgatext_label => C_vgatext_label,
+      C_vgatext_mode => C_video_mode,
+      C_vgatext_bits => C_vgatext_bits,
+      C_vgatext_bram_mem => C_vgatext_bram_mem,
+      C_vgatext_bram_base => C_vgatext_bram_base,
+      C_vgatext_external_mem => C_vgatext_external_mem,
+      C_vgatext_reset => C_vgatext_reset,
+      C_vgatext_palette => C_vgatext_palette,
+      C_vgatext_text => C_vgatext_text,
+      C_vgatext_font_bram8 => C_vgatext_font_bram8,
+      C_vgatext_bus_read => C_vgatext_bus_read,
+      C_vgatext_reg_read => C_vgatext_reg_read,
+      C_vgatext_text_fifo => C_vgatext_text_fifo,
+      C_vgatext_text_fifo_step => C_vgatext_text_fifo_step,
+      C_vgatext_text_fifo_width => C_vgatext_text_fifo_width,
+      C_vgatext_char_height => C_vgatext_char_height,
+      C_vgatext_font_height => C_vgatext_font_height,
+      C_vgatext_font_depth => C_vgatext_font_depth,
+      C_vgatext_font_linedouble => C_vgatext_font_linedouble,
+      C_vgatext_font_widthdouble => C_vgatext_font_widthdouble,
+      C_vgatext_monochrome => C_vgatext_monochrome,
+      C_vgatext_finescroll => C_vgatext_finescroll,
+      C_vgatext_cursor => C_vgatext_cursor,
+      C_vgatext_cursor_blink => C_vgatext_cursor_blink,
+      C_vgatext_bitmap => C_vgatext_bitmap,
+      C_vgatext_bitmap_depth => C_vgatext_bitmap_depth,
+      C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo,
+      C_vgatext_bitmap_fifo_timeout => C_vgatext_bitmap_fifo_timeout,
+      C_vgatext_bitmap_fifo_step => C_vgatext_bitmap_fifo_step,
+      C_vgatext_bitmap_fifo_height => C_vgatext_bitmap_fifo_height,
+      C_vgatext_bitmap_fifo_data_width => C_vgatext_bitmap_fifo_data_width,
+      C_vgatext_bitmap_fifo_addr_width => C_vgatext_bitmap_fifo_addr_width,
       C_debug => C_debug
     )
     port map (
@@ -118,6 +195,12 @@ begin
       sdram_ras => sdr_ras, sdram_cas => sdr_cas,
       sdram_cke => sdr_cke, sdram_clk => sdr_clk,
       sdram_we => sdr_we, sdram_cs => sdr_cs,
+      -- ***** VGA *****
+      vga_vsync => vga_vs,
+      vga_hsync => vga_hs,
+      vga_r(7) => vga_r,
+      vga_g(7) => vga_g,
+      vga_b(7) => vga_b,
       -- ***** HDMI *****
       dvid_red(0)   => tmds_rgb(2), dvid_red(1)   => open,
       dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
@@ -146,19 +229,5 @@ begin
       acram_en => ram_en
     );
     end generate;
-
-    -- differential output buffering for HDMI clock and video
-    --G_hdmi: if C_hdmi_out generate
-    --hdmi_output: entity work.hdmi_out
-    --  port map
-    --  (
-    --    tmds_in_rgb    => tmds_rgb,
-    --    tmds_out_rgb_p => hdmi_dp,   -- D2+ red  D1+ green  D0+ blue
-    --    tmds_out_rgb_n => hdmi_dn,   -- D2- red  D1- green  D0- blue
-    --    tmds_in_clk    => tmds_clk,
-    --    tmds_out_clk_p => hdmi_clkp, -- CLK+ clock
-    --    tmds_out_clk_n => hdmi_clkn  -- CLK- clock
-    --  );
-    --end generate;
 
 end Behavioral;
