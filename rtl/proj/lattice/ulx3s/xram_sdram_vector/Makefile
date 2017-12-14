@@ -28,7 +28,7 @@ $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_sram.xcf -nocompress -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 1 -if ulx3s_sram.xcf -of $@
+	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_sram.xcf -of $@
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	echo pgr_project open ulx3s_sram.xcf \; pgr_program run | ${DIAMONDC}
