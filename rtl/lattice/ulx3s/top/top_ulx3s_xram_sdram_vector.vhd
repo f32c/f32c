@@ -134,6 +134,7 @@ entity ulx3s_xram_sdram_vector is
   -- Onboard blinky
   led: out std_logic_vector(7 downto 0);
   btn: in std_logic_vector(6 downto 0);
+  sw: in std_logic_vector(3 downto 0);
   oled_csn, oled_clk, oled_mosi, oled_dc, oled_resn: out std_logic;
 
   -- GPIO
@@ -339,7 +340,9 @@ begin
     simple_out(9) => oled_mosi,
     simple_out(8) => oled_clk,
     simple_out(7 downto 0) => led(7 downto 0),
-    simple_in(31 downto 7) => (others => '0'),
+    simple_in(31 downto 20) => (others => '0'),
+    simple_in(19 downto 16) => sw,
+    simple_in(15 downto 7) => (others => '0'),
     simple_in(6 downto 0) => btn,
 
     jack_tip => audio_l,
