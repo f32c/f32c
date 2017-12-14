@@ -4,6 +4,7 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use ieee.math_real.all; -- to calculate log2 bit size
 
 use work.f32c_pack.all;
 
@@ -16,12 +17,13 @@ entity ulx3s_xram_sdram_vector is
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
 
-    -- Main clock: 25,100 MHz
+    -- Main clock: 25/78/100 MHz
     C_clk_freq: integer := 100;
 
     -- SoC configuration options
     C_bram_size: integer := 2;
     C_acram: boolean := false;
+    C_acram_emu_kb: integer := 32; -- KB axi_cache emulation (power of 2)
     C_sdram: boolean := true;
     C_icache_size: integer := 2;
     C_dcache_size: integer := 2;
@@ -35,11 +37,11 @@ entity ulx3s_xram_sdram_vector is
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
     C_timer: boolean := true;
 
-    C_pcm: boolean := false; -- PCM audio (wav playing)
-    C_synth: boolean := true; -- Polyphonic synth
+    C_pcm: boolean := true; -- PCM audio (wav playing)
+    C_synth: boolean := false; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
-    C_spdif: boolean := true; -- SPDIF output (to audio jack tip)
+    C_spdif: boolean := false; -- SPDIF output (to audio jack tip)
 
     C_cw_simple_out: integer := 7; -- simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
@@ -131,7 +133,7 @@ entity ulx3s_xram_sdram_vector is
 
   -- Onboard blinky
   led: out std_logic_vector(7 downto 0);
-  btn: in std_logic_vector(5 downto 0);
+  btn: in std_logic_vector(6 downto 0);
   oled_csn, oled_clk, oled_mosi, oled_dc, oled_resn: out std_logic;
 
   -- GPIO
@@ -164,6 +166,12 @@ entity ulx3s_xram_sdram_vector is
 end;
 
 architecture Behavioral of ulx3s_xram_sdram_vector is
+  -- useful for conversion from KB to number of address bits
+  function ceil_log2(x: integer)
+      return integer is
+  begin
+      return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
+  end ceil_log2;
   signal clk, rs232_break, rs232_break2: std_logic;
   signal clk_100: std_logic;
   signal clk_dvi, clk_dvin, clk_pixel: std_logic;
@@ -185,6 +193,29 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
 begin
   minimal_25MHz: if C_clk_freq=25 and C_video_mode=-1 generate
     clk <= clk_25MHz;
+  end generate;
+
+  ddr_640x480_25MHz: if C_clk_freq=25 and C_video_mode=1 generate
+  clk_25M: entity work.clk_25_100_125_25
+    port map(
+      CLKI        =>  clk_25MHz,
+      CLKOP       =>  clk_dvi,   -- 125 MHz
+      CLKOS       =>  clk_dvin,  -- 125 MHz inverted
+      CLKOS2      =>  clk_pixel, --  25 MHz
+      CLKOS3      =>  open       -- 100 MHz
+     );
+    clk <= clk_pixel; 
+  end generate;
+
+  ddr_640x480_78MHz: if C_clk_freq=78 and C_video_mode=1 generate
+  clk_78M: entity work.clk_25_78_125_25
+    port map(
+      CLKI        =>  clk_25MHz,
+      CLKOP       =>  clk_dvi,   -- 125 MHz
+      CLKOS       =>  clk_dvin,  -- 125 MHz inverted
+      CLKOS2      =>  clk_pixel, --  25 MHz
+      CLKOS3      =>  clk        --  78.125 MHz CPU
+     );
   end generate;
 
   ddr_640x480_100MHz: if C_clk_freq=100 and C_video_mode=1 generate
@@ -308,8 +339,8 @@ begin
     simple_out(9) => oled_mosi,
     simple_out(8) => oled_clk,
     simple_out(7 downto 0) => led(7 downto 0),
-    simple_in(31 downto 6) => (others => '0'),
-    simple_in(5 downto 0) => btn,
+    simple_in(31 downto 7) => (others => '0'),
+    simple_in(6 downto 0) => btn,
 
     jack_tip => audio_l,
     jack_ring => audio_r,
@@ -329,16 +360,16 @@ begin
     dvid_clock => dvid_clock
   );
 
-  no_acram: if C_acram generate
+  G_acram: if C_acram generate
   acram_emulation: entity work.acram_emu
   generic map
   (
-      C_addr_width => 15
+      C_addr_width => 8 + ceil_log2(C_acram_emu_kb)
   )
   port map
   (
       clk => clk,
-      acram_a => ram_address(16 downto 2),
+      acram_a => ram_address(9 + ceil_log2(C_acram_emu_kb) downto 2),
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
