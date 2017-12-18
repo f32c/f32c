@@ -46,7 +46,7 @@ entity ulx3s_passthru_wifi is
   oled_csn, oled_clk, oled_mosi, oled_dc, oled_resn: out std_logic;
 
   -- GPIO (some are shared with wifi and adc)
-  gp, gn: inout std_logic_vector(27 downto 0);
+  gp, gn: inout std_logic_vector(27 downto 0) := (others => 'Z');
 
   -- SHUTDOWN: logic '1' here will shutdown power on PCB >= v1.7.5
   shutdown: out std_logic := '0';
@@ -62,9 +62,9 @@ entity ulx3s_passthru_wifi is
   flash_csn    : out     std_logic;
 
   -- SD card (SPI1)
-  sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: inout std_logic;
-  sd_clk: out std_logic;
-  sd_cdn, sd_wp: in std_logic
+  sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: inout std_logic := 'Z';
+  sd_clk: inout std_logic := 'Z';
+  sd_cdn, sd_wp: inout std_logic := 'Z'
   );
 end;
 
@@ -88,13 +88,24 @@ begin
   --  0   0     1   1
   --  1   0     0   1
   --  0   1     1   0
-  S_prog_in <= ftdi_ndtr & ftdi_nrts;
+  S_prog_in(1) <= ftdi_ndtr;
+  S_prog_in(0) <= ftdi_nrts;
   S_prog_out <= "01" when S_prog_in = "10" else
                 "10" when S_prog_in = "01" else
                 "11";
   wifi_en <= S_prog_out(1);
   wifi_gpio0 <= S_prog_out(0);
-  
+
+  -- permanent flashing mode
+  -- wifi_en <= ftdi_nrts;
+  -- wifi_gpio0 <= ftdi_ndtr;
+
+  gp(9) <= '0'; -- WiFi GPIO12 selects flash voltage 3.3V
+  gn(9) <= 'Z';
+  wifi_gpio15 <= 'Z';
+  wifi_gpio16 <= 'Z';
+
+  g_x: if true generate
   -- OLED display passthru (using pins on J1 shared with wifi)
   S_hspi_miso <= gp(9); -- wifi gpio12
   S_hspi_mosi <= gn(9); -- wifi gpio13
@@ -117,6 +128,7 @@ begin
   gn(12) <= btn(4); -- down
   gp(13) <= btn(5); -- left
   gn(13) <= btn(6); -- right
+  end generate;
 
   -- clock alive blinky
   process(clk)
