@@ -62,6 +62,8 @@ entity ulx3s_xram_sdram_vector is
     C_vgahdmi_cache_size: integer := 8;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
+    C_vgahdmi_cache_size: integer := 0;
+    C_vgahdmi_cache_use_i: boolean := false;
 
     -- VGA textmode and graphics, full featured
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
