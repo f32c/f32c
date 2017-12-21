@@ -19,7 +19,7 @@ JUNK += dummy_sym.sort project_tcl.html promote.xml
 JUNK += generate_core.tcl generate_ngd.tcl msg_file.log
 JUNK += project_tcr.dir
 
-all: $(PROJECT)/$(PROJECT)_$(PROJECT).bit $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
+all: $(PROJECT)/$(PROJECT)_$(PROJECT).bit $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 
 $(PROJECT)/$(PROJECT)_$(PROJECT).bit:
 	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
@@ -38,6 +38,9 @@ program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 
 program_ft2232: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 	openocd --file=$(OPENOCD_BASE)/ft2232-fpu1.ocd --file=$(OPENOCD_BASE)/ecp5.ocd
+
+program_flea: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
+	FleaFPGA-JTAG $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT).jed:
 #	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Jedecgen | ${DIAMONDC}
