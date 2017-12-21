@@ -57,6 +57,8 @@ again:
 		*mem_base = 0;
 	} while (*mem_end != 0 && mem_end < (int *) 0xb0000000);
 	mem_end = (int *) (((int) mem_end) & 0xfff80000);
+	/* Don't touch the top 4 KB, the stack lives there */
+	mem_end -= 0x1000;
 	size = (int) mem_end - (int) mem_base;
 	
 	printf("base %p end %p (size %d.%03d MB)\n", mem_base, mem_end,
@@ -82,12 +84,12 @@ again:
 	size = (int) mem_end - (int) mem_base;
 
 	int csum = 0;
-	for (i = 0; i < 32 * 1024 * 1024 / 4; i++) {
+	for (i = 0; i < size / 4; i++) {
 		mem_base[i] = i;
 		csum += i;
 	}
 	tmp = 0;
-	for (i = 0; i < 32 * 1024 * 1024 / 4; i++) {
+	for (i = 0; i < size / 4; i++) {
 		tmp += mem_base[i];
 	}
 	if (csum == tmp)
@@ -96,14 +98,15 @@ again:
 		printf("CSUM mismatch: %08x %08x\n", csum, tmp);
 
 	tmp = 0;
-	for (i = 0; i < size / 4; i++) {
+	for (i = 0; i < size / 4 - 1; i++) {
 		a = mem_base[i];
 		b = mem_base[i + 1];
-		if (b != a + 1)
+		if (b != a + 1) {
+			printf("%08x:%08x %08x:%08x\n", i, a, i + 1, b);
 			tmp++;
+		}
 	}
-	printf("%08x %08x\n", a, b);
-	printf("read errors (should be exactly 1): %d\n", tmp);
+	printf("read errors: %d\n", tmp);
 
 	RDTSC(seed);
 	val = seed;
