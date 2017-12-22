@@ -3,7 +3,7 @@
     <Options/>
     <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Strategy1">
         <Options def_top="ulx3s_passthru_wifi" top="ulx3s_passthru_wifi"/>
-        <Source name="../../../../lattice/ulx3s/passthru/ulx3s_passthru_wifi.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../lattice/ulx3s/passthru/ulx3s_45f_passthru_wifi.vhd" type="VHDL" type_short="VHDL">
             <Options top_module="ulx3s_passthru_wifi"/>
         </Source>
         <Source name="../../constraints/ulx3s.lpf" type="Logic Preference" type_short="LPF">
