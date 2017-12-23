@@ -56,10 +56,10 @@ entity ulx3s_passthru_wifi is
   --gpdi_clkp, gpdi_clkn: out std_logic;
 
   -- Flash ROM (SPI0)
-  flash_miso   : in      std_logic;
-  flash_mosi   : out     std_logic;
-  flash_clk    : out     std_logic;
-  flash_csn    : out     std_logic;
+  --flash_miso   : in      std_logic;
+  --flash_mosi   : out     std_logic;
+  --flash_clk    : out     std_logic;
+  --flash_csn    : out     std_logic;
 
   -- SD card (SPI1)
   sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: inout std_logic := 'Z';

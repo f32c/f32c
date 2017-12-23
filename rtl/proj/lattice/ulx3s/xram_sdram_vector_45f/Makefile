@@ -24,8 +24,14 @@ all: $(PROJECT)/$(PROJECT)_$(PROJECT).bit $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.
 $(PROJECT)/$(PROJECT)_$(PROJECT).bit:
 	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
 
+$(PROJECT)/$(PROJECT)_$(PROJECT).mcs:
+	LANG=C ${DDTCMD} -dev LFE5U-45F -if $(PROJECT)/$(PROJECT)_$(PROJECT).bit -oft -int -of $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
+
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_sram.xcf -nocompress -noheader -of $@
+
+$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
+	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_flash.xcf -nocompress -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_sram.xcf -of $@
@@ -41,6 +47,9 @@ program_ft2232: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 
 program_flea: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 	FleaFPGA-JTAG $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
+
+program_flea_flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
+	FleaFPGA-JTAG $<
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT).jed:
 #	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Jedecgen | ${DIAMONDC}

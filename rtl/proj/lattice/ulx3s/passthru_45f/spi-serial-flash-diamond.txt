@@ -1,0 +1,41 @@
+Programming Flash from Diamond GUI
+using ft2232 cable connected to JTAG header
+
+flash can also slowly programmed from commandline with
+ft231x usbserial using make program_flea_flash
+
+Onboard flash chip is: IS25LP032D-JNLE-TR SOIC-8 150mil
+
+Connect FT2232 cable to JTAG header, make first upload of any SVF using
+openocd to prime the cable for diamond use
+
+follow TN02050 to generate PROM file and go to section
+6. Programming the SPI Flash with bitstream file using Diamond Programmer
+
+Open diamond, select tools->Spreadsheet view, enable master SPI port and
+MCCLK 62 MHz, double click xcf file
+
+SYSCONFIG CONFIG_IOVOLTAGE=3.3 COMPRESS_CONFIG=ON SLAVE_SPI_PORT=DISABLE MASTER_SPI_PORT=ENABLE SLAVE_PARALLEL_PORT=DISABLE ;
+
+Diamond settings for a flash compatible compatible with onboard flash:
+
+Access mode: SPI Flash Background Programming
+Operation: SPI Flash Erase, Program, Verify
+
+Programming file: project_project.mcs
+
+[ ] Reinitialize part on program error
+
+SPI FLASH Options:
+
+Family: SPI Serial Flash
+Vendor: Micron
+Device: SPI-M25F32
+Package. 8-pin VDFPN8
+
+Data size (Bytes): [] click [Load From File]
+Start address (HEX): 0x00000000
+End address (HEX):   0x00020000
+
+[ ] Erase SPI part on programming error
+[ ] Secure SPI flash golden pattern sectors

@@ -155,16 +155,18 @@ entity ulx3s_xram_sdram_vector is
   gpdi_dp, gpdi_dn: out std_logic_vector(2 downto 0);
   gpdi_clkp, gpdi_clkn: out std_logic;
 
+  -- Flash ROM (SPI0)
+  -- commented out because it can't be used as GPIO
+  -- when bitstream is loaded from config flash
+  --flash_miso   : in      std_logic;
+  --flash_mosi   : out     std_logic;
+  --flash_clk    : out     std_logic;
+  --flash_csn    : out     std_logic;
+
   -- SD card (SPI1)
   sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: inout std_logic;
   sd_clk: out std_logic;
-  sd_cdn, sd_wp: in std_logic;
-
-  -- Flash ROM (SPI0)
-  flash_miso   : in      std_logic;
-  flash_mosi   : out     std_logic;
-  flash_clk    : out     std_logic;
-  flash_csn    : out     std_logic
+  sd_cdn, sd_wp: in std_logic
   );
 end;
 
@@ -325,10 +327,10 @@ begin
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
 
-    spi_sck(0)  => flash_clk,  spi_sck(1)  => sd_clk,
-    spi_ss(0)   => flash_csn,  spi_ss(1)   => sd_dat3_csn,
-    spi_mosi(0) => flash_mosi, spi_mosi(1) => sd_cmd_di,
-    spi_miso(0) => flash_miso, spi_miso(1) => sd_dat0_do,
+    spi_sck(0)  => open,  spi_sck(1)  => sd_clk,
+    spi_ss(0)   => open,  spi_ss(1)   => sd_dat3_csn,
+    spi_mosi(0) => open,  spi_mosi(1) => sd_cmd_di,
+    spi_miso(0) => '0',   spi_miso(1) => sd_dat0_do,
 
     gpio(127 downto 56) => open,
     gpio(55 downto 28) => gn(27 downto 0),
