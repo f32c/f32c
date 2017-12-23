@@ -24,8 +24,14 @@ all: $(PROJECT)/$(PROJECT)_$(PROJECT).bit $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.
 $(PROJECT)/$(PROJECT)_$(PROJECT).bit:
 	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
 
+$(PROJECT)/$(PROJECT)_$(PROJECT).mcs:
+	LANG=C ${DDTCMD} -dev LFE5U-12F -if $(PROJECT)/$(PROJECT)_$(PROJECT).bit -oft -int -of $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
+
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_sram.xcf -nocompress -noheader -of $@
+
+$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
+	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_flash.xcf -nocompress -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_sram.xcf -of $@
@@ -34,13 +40,16 @@ program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	echo pgr_project open ulx3s_sram.xcf \; pgr_program run | ${DIAMONDC}
 
 program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
-	openocd --file=$(OPENOCD_BASE)/remote.ocd --file=$(OPENOCD_BASE)/ecp5-25f.ocd
+	openocd --file=$(OPENOCD_BASE)/remote.ocd --file=$(OPENOCD_BASE)/ecp5-12f.ocd
 
 program_ft2232: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
-	openocd --file=$(OPENOCD_BASE)/ft2232-fpu1.ocd --file=$(OPENOCD_BASE)/ecp5-25f.ocd
+	openocd --file=$(OPENOCD_BASE)/ft2232-fpu1.ocd --file=$(OPENOCD_BASE)/ecp5-12f.ocd
 
 program_flea: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 	FleaFPGA-JTAG $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
+
+program_flea_flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
+	FleaFPGA-JTAG $<
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT).jed:
 #	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Jedecgen | ${DIAMONDC}
