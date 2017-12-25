@@ -36,6 +36,7 @@ entity ulx3s_passthru_wifi is
   -- WiFi additional signaling
   wifi_en: inout  std_logic := 'Z'; -- '0' will disable wifi by default
   wifi_gpio0: inout std_logic;
+  wifi_gpio2: inout std_logic;
   wifi_gpio15: inout std_logic;
   wifi_gpio16: inout std_logic;
 
@@ -111,7 +112,7 @@ begin
   S_hspi_mosi <= gn(9); -- wifi gpio13
   S_hspi_sck <= gn(10); -- wifi gpio14
   S_hspi_csn <= wifi_gpio15; -- wifi gpio15
-  S_hspi_dc <= gp(11); -- wifi gpio25
+  S_hspi_dc <= wifi_gpio2; -- wifi gpio25
   S_hspi_resn <= gn(11); -- wifi gpio26
 
   oled_csn <= S_hspi_csn;
