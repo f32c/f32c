@@ -343,17 +343,18 @@ begin
     gpio(29) => gpdi_sda,
     gpio(28) => gpdi_scl,
     gpio(27 downto 0) => gp(27 downto 0),
-    simple_out(31 downto 18) => open,
-    simple_out(17) => oled_mosi, -- adc_mosi,
-    simple_out(16) => oled_clk, -- adc_sclk,
-    simple_out(15) => oled_csn, -- adc_csn,
+    simple_out(31 downto 19) => open,
+    simple_out(18) => adc_mosi,
+    simple_out(17) => adc_sclk,
+    simple_out(16) => adc_csn,
+    simple_out(15) => open,
     simple_out(14) => wifi_en,
     simple_out(13) => shutdown,
-    simple_out(12) => adc_csn, -- oled_csn,
+    simple_out(12) => oled_csn,
     simple_out(11) => oled_dc,
     simple_out(10) => oled_resn,
-    simple_out(9) => adc_mosi, -- oled_mosi,
-    simple_out(8) => adc_sclk, -- oled_clk,
+    simple_out(9) => oled_mosi,
+    simple_out(8) => oled_clk,
     simple_out(7 downto 0) => led(7 downto 0),
     simple_in(31 downto 21) => (others => '0'),
     simple_in(20) => adc_miso,
@@ -361,14 +362,14 @@ begin
     simple_in(15 downto 7) => (others => '0'),
     simple_in(6 downto 0) => btn,
 
-    -- 2 MSB audio channel bits are not used in common setup.
-    --jack_tip(3 downto 2) => audio_l(1 downto 0),
-    --jack_ring(3 downto 2) => audio_r(1 downto 0),
-    -- They could be used down to 75 ohm load
+    -- 2 MSB audio channel bits are not used in "default" setup.
+    jack_tip(3 downto 2) => audio_l(1 downto 0),
+    jack_ring(3 downto 2) => audio_r(1 downto 0),
+    -- 4-bit could be used down to 75 ohm load
     -- but FPGA will stop working (IO overload)
     -- if standard 17 ohm earphones are plugged.
-    jack_tip => audio_l,
-    jack_ring => audio_r,
+    --jack_tip => audio_l,
+    --jack_ring => audio_r,
 
     cw_antenna => ant_433mhz,
 
@@ -434,6 +435,11 @@ begin
         R_blinky <= R_blinky+1;
       end if;
   end process;
+
   -- led(7) <= R_blinky(R_blinky'high);
+  -- test staircase ramp voltage on AUDIO:
+  --audio_l <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
+  --audio_r <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
+  --audio_v <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
 
 end Behavioral;
