@@ -348,7 +348,7 @@ begin
     simple_out(17) => adc_sclk,
     simple_out(16) => adc_csn,
     simple_out(15) => open,
-    simple_out(14) => wifi_en,
+    simple_out(14) => open, -- wifi_en,
     simple_out(13) => shutdown,
     simple_out(12) => oled_csn,
     simple_out(11) => oled_dc,

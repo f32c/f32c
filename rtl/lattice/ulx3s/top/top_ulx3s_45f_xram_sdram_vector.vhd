@@ -195,6 +195,7 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal ddr_d: std_logic_vector(2 downto 0);
   signal ddr_clk: std_logic;
   signal R_blinky: std_logic_vector(26 downto 0);
+  signal S_spdif_out: std_logic;
 
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
@@ -348,7 +349,7 @@ begin
     simple_out(17) => adc_sclk,
     simple_out(16) => adc_csn,
     simple_out(15) => open,
-    simple_out(14) => wifi_en,
+    simple_out(14) => open, -- wifi_en
     simple_out(13) => shutdown,
     simple_out(12) => oled_csn,
     simple_out(11) => oled_dc,

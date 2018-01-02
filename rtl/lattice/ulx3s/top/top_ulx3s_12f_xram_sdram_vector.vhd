@@ -32,7 +32,7 @@ entity ulx3s_xram_sdram_vector is
     C_sio: integer := 2;
     C_spi: integer := 2;
     C_simple_io: boolean := true;
-    C_gpio: integer := 56;
+    C_gpio: integer := 64;
     C_gpio_pullup: boolean := false;
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
     C_timer: boolean := true;
@@ -117,9 +117,11 @@ entity ulx3s_xram_sdram_vector is
   wifi_txd: in    std_logic;
   -- WiFi additional signaling
   wifi_en: inout  std_logic := 'Z'; -- '0' will disable wifi by default
-  wifi_gpio0: inout std_logic;
-  wifi_gpio15: inout std_logic;
-  wifi_gpio16: inout std_logic;
+  wifi_gpio0, wifi_gpio2, wifi_gpio15, wifi_gpio16: inout std_logic := 'Z';
+
+  -- ADC MAX11123
+  adc_csn, adc_sclk, adc_mosi: out std_logic;
+  adc_miso: in std_logic;
 
   -- SDRAM
   sdram_clk: out std_logic;
@@ -146,7 +148,7 @@ entity ulx3s_xram_sdram_vector is
   shutdown: out std_logic := '0';
 
   -- Audio jack 3.5mm
-  audio_l, audio_r, audio_v: out std_logic_vector(3 downto 0);
+  audio_l, audio_r, audio_v: inout std_logic_vector(3 downto 0) := (others => 'Z');
 
   -- Onboard antenna 433 MHz
   ant_433mhz: out std_logic;
@@ -154,6 +156,9 @@ entity ulx3s_xram_sdram_vector is
   -- Digital Video (differential outputs)
   gpdi_dp, gpdi_dn: out std_logic_vector(2 downto 0);
   gpdi_clkp, gpdi_clkn: out std_logic;
+
+  -- i2c shared for digital video and RTC
+  gpdi_scl, gpdi_sda: inout std_logic;
 
   -- Flash ROM (SPI0)
   -- commented out because it can't be used as GPIO
@@ -200,7 +205,7 @@ begin
     clk <= clk_25MHz;
   end generate;
 
-  ddr_640x480_25MHz: if C_clk_freq=25 and C_video_mode=1 generate
+  ddr_640x480_25MHz: if C_clk_freq=25 and (C_video_mode=0 or C_video_mode=1) generate
   clk_25M: entity work.clk_25_100_125_25
     port map(
       CLKI        =>  clk_25MHz,
@@ -212,7 +217,7 @@ begin
     clk <= clk_pixel; 
   end generate;
 
-  ddr_640x480_78MHz: if C_clk_freq=78 and C_video_mode=1 generate
+  ddr_640x480_78MHz: if C_clk_freq=78 and (C_video_mode=0 or C_video_mode=1) generate
   clk_78M: entity work.clk_25_78_125_25
     port map(
       CLKI        =>  clk_25MHz,
@@ -223,7 +228,7 @@ begin
      );
   end generate;
 
-  ddr_640x480_100MHz: if C_clk_freq=100 and C_video_mode=1 generate
+  ddr_640x480_100MHz: if C_clk_freq=100 and (C_video_mode=0 or C_video_mode=1) generate
   clk_100M: entity work.clk_25_100_125_25
     port map(
       CLKI        =>  clk_25MHz,
@@ -332,15 +337,18 @@ begin
     spi_mosi(0) => open,  spi_mosi(1) => sd_cmd_di,
     spi_miso(0) => '0',   spi_miso(1) => sd_dat0_do,
 
-    gpio(127 downto 56) => open,
-    gpio(55 downto 28) => gn(27 downto 0),
+    gpio(127 downto 28+32) => open,
+    gpio(27+32 downto 32) => gn(27 downto 0),
+    gpio(31 downto 30) => open,
+    gpio(29) => gpdi_sda,
+    gpio(28) => gpdi_scl,
     gpio(27 downto 0) => gp(27 downto 0),
-
-    simple_out(31 downto 15) => open,
-    --simple_out(17) => wifi_gpio16,
-    --simple_out(16) => wifi_gpio15,
-    --simple_out(15) => wifi_gpio0,
-    simple_out(14) => wifi_en,
+    simple_out(31 downto 19) => open,
+    simple_out(18) => adc_mosi,
+    simple_out(17) => adc_sclk,
+    simple_out(16) => adc_csn,
+    simple_out(15) => open,
+    simple_out(14) => open, -- wifi_en,
     simple_out(13) => shutdown,
     simple_out(12) => oled_csn,
     simple_out(11) => oled_dc,
@@ -348,13 +356,20 @@ begin
     simple_out(9) => oled_mosi,
     simple_out(8) => oled_clk,
     simple_out(7 downto 0) => led(7 downto 0),
-    simple_in(31 downto 20) => (others => '0'),
+    simple_in(31 downto 21) => (others => '0'),
+    simple_in(20) => adc_miso,
     simple_in(19 downto 16) => sw,
     simple_in(15 downto 7) => (others => '0'),
     simple_in(6 downto 0) => btn,
 
-    jack_tip => audio_l,
-    jack_ring => audio_r,
+    -- 2 MSB audio channel bits are not used in "default" setup.
+    jack_tip(3 downto 2) => audio_l(1 downto 0),
+    jack_ring(3 downto 2) => audio_r(1 downto 0),
+    -- 4-bit could be used down to 75 ohm load
+    -- but FPGA will stop working (IO overload)
+    -- if standard 17 ohm earphones are plugged.
+    --jack_tip => audio_l,
+    --jack_ring => audio_r,
 
     cw_antenna => ant_433mhz,
 
@@ -420,6 +435,11 @@ begin
         R_blinky <= R_blinky+1;
       end if;
   end process;
+
   -- led(7) <= R_blinky(R_blinky'high);
+  -- test staircase ramp voltage on AUDIO:
+  --audio_l <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
+  --audio_r <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
+  --audio_v <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
 
 end Behavioral;
