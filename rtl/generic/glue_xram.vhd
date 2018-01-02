@@ -484,7 +484,7 @@ architecture Behavioral of glue_xram is
     -- SPDIF
     signal S_spdif_sample: std_logic_vector(23 downto 0);
     signal S_spdif_sample_pad: ieee.numeric_std.signed(7 downto 0);
-    signal S_spdif_out: std_logic;
+    --signal S_spdif_out: std_logic;
 
     -- FM/RDS RADIO
     constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
@@ -1910,6 +1910,8 @@ begin
     jack_ring <= (others => pwm_synth);
     G_left_analog: if not C_spdif generate
       jack_tip <= (others => pwm_synth);
+    audio_l <= (others => pwm_synth);
+    audio_r <= (others => pwm_synth);
     end generate;
     end generate;
     
@@ -1927,10 +1929,9 @@ begin
     (
       clk => clk,
       data_in => std_logic_vector(S_pcm_mono),
-      spdif_out => S_spdif_out
+      spdif_out => spdif_out
     );
-    jack_tip <= "00" & S_spdif_out & S_spdif_out; -- proper voltage swing for SPDIF
-    spdif_out <= S_spdif_out;
+    -- jack_tip <= "00" & S_spdif_out & S_spdif_out; -- proper voltage swing for SPDIF
     end generate;
 
     -- CW transmitter
