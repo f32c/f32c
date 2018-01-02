@@ -203,8 +203,8 @@ entity toplevel is
     C_pcm: boolean := false;
     C_synth: boolean := true; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
-      C_synth_amplify: integer := 4; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
-    C_spdif: boolean := false; -- SPDIF output (to audio jack tip)
+      C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
+    C_spdif: boolean := true; -- SPDIF output (to audio jack tip)
     C_timer: boolean := true;
     C_cw_simple_out: integer := -1; -- simple_out (default 7) bit for 433MHz modulator. -1 to disable. set (C_framebuffer := false, C_dds := false) for 433MHz transmitter
     C_fmrds: boolean := false; -- either FM or tx433
@@ -258,6 +258,8 @@ architecture Behavioral of toplevel is
   signal btn: std_logic_vector(4 downto 0);
   signal gpio_28, fm_antenna, cw_antenna: std_logic;
   signal motor_bridge, motor_encoder: std_logic_vector(1 downto 0);
+  signal S_audio_l, S_audio_r: std_logic_vector(3 downto 0);
+  signal S_spdif_out: std_logic;
 begin
   --
   -- Clock synthesizer
@@ -446,8 +448,9 @@ begin
       spi_mosi(0) => flash_si, spi_miso(0) => flash_so,
       spi_sck(1) => sdcard_sck, spi_ss(1) => sdcard_cen,
       spi_mosi(1) => sdcard_si, spi_miso(1) => sdcard_so,
-      jack_ring(3) => p_ring,
-      jack_tip => p_tip,
+      audio_l => S_audio_l,
+      audio_r => S_audio_r,
+      spdif_out => S_spdif_out,
       simple_out(7 downto 0) => led(7 downto 0),
       simple_in(4 downto 0) => btn,
       simple_in(19 downto 16) => sw,
@@ -484,6 +487,14 @@ begin
       sram_lbl => sram_lbl, sram_ubl => sram_ubl,
       sram_wel => sram_wel
     );
+
+    G_yes_spdif: if C_spdif generate
+      p_tip <= "00" & S_spdif_out & S_spdif_out;
+    end generate;
+    G_no_spdif: if not C_spdif generate
+      p_tip <= S_audio_l;
+    end generate;
+    p_ring <= S_audio_r(3);
 
     -- simulation for the ledstrip motor (forward-only motor)
     ledstrip_motor_simulation: if false generate

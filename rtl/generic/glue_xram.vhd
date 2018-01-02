@@ -270,7 +270,6 @@ port (
   video_base_addr: out std_logic_vector(31 downto 2) := (others => '0'); -- video base address
   ledstrip_rotation: in std_logic := '0'; -- input from motor rotation encoder
   ledstrip_out: out std_logic_vector(1 downto 0); -- 2 channels out
-  jack_tip, jack_ring: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, 4-bit simple DAC
   audio_l, audio_r, video_composite: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, new naming of 4-bit simple DAC
   spdif_out: out std_logic; -- spdif output digital audio
   fm_antenna, cw_antenna: out std_logic;
@@ -1854,17 +1853,8 @@ begin
     with conv_integer(io_addr(11 downto 4)) select
       pcm_ce <= io_addr_strobe when iomap_from(iomap_pcm, iomap_range) to iomap_to(iomap_pcm, iomap_range),
                            '0' when others;
-    -- audible debugging of RDS internal filters
-    --jack_tip  <= (others => pwm_filt_l);
-    --jack_ring <= (others => pwm_filt_r);
-    jack_tip  <= S_tv_dac when C_tv else (others => pwm_l);
-    jack_ring <= (others => pwm_r);
     audio_l <= (others => pwm_l);
     audio_r <= (others => pwm_r);
-    end generate;
-
-    G_tvout_no_pcm: if C_tv and not C_pcm generate
-    jack_tip <= S_tv_dac;
     end generate;
 
     G_tvout: if C_tv generate
@@ -1907,12 +1897,8 @@ begin
       in_pcm => pcm_synth(pcm_synth'length-1 downto pcm_synth'length-12),
       out_pwm => pwm_synth
     );
-    jack_ring <= (others => pwm_synth);
-    G_left_analog: if not C_spdif generate
-      jack_tip <= (others => pwm_synth);
     audio_l <= (others => pwm_synth);
     audio_r <= (others => pwm_synth);
-    end generate;
     end generate;
     
     S_pcm_mono <= pcm_synth + pcm_bus_l + pcm_bus_r; -- global PCM mixer, warning synth is 24-bit others are 16-bit
@@ -1931,7 +1917,6 @@ begin
       data_in => std_logic_vector(S_pcm_mono),
       spdif_out => spdif_out
     );
-    -- jack_tip <= "00" & S_spdif_out & S_spdif_out; -- proper voltage swing for SPDIF
     end generate;
 
     -- CW transmitter
