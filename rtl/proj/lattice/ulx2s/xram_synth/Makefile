@@ -7,6 +7,7 @@ IMPL_DIR := $(shell fgrep default_strategy ${PROJ_FILE} | cut -d'"' -f 4)
 DIAMOND_BASE := /usr/local/diamond
 DIAMOND_BIN :=  $(shell find ${DIAMOND_BASE}/ -maxdepth 2 -name bin | sort -rn | head -1)
 DIAMONDC := $(shell find ${DIAMOND_BIN}/ -name diamondc)
+DDTCMD := $(shell find ${DIAMOND_BIN}/ -name ddtcmd)
 
 OPENOCD_BASE := ../../programmer/openocd/ulx2s/
 
@@ -33,12 +34,19 @@ flash: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
 #program_ft2232: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 #	openocd --file=$(OPENOCD_BASE)/ft2232-fpu1.ocd --file=$(OPENOCD_BASE)/ecp3.ocd
 
+$(PROJECT)/$(PROJECT)_$(PROJECT).bit:
+	@echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
+
 $(PROJECT)/$(PROJECT)_$(PROJECT).jed:
 	@echo prj_project open ${PROJ_FILE} \; prj_run PAR -task PARTrace \; prj_run Export -task Bitgen | ${DIAMONDC}
 #	@fgrep Warning: ${IMPL_DIR}/*.twr
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
 	LANG=C ddtcmd -oft -svfsingle -revd -if ulx2s_sram.xcf -of $@
+
+
+$(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
+	LANG=C ${DDTCMD} -oft -fullvme -if ulx2s_sram.xcf -noheader -of $@
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
 #	LANG=C ddtcmd -oft -fullvme -if ulx2s_flash.xcf -nocompress -noheader -of $@
