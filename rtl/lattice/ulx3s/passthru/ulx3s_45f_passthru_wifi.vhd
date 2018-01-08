@@ -34,11 +34,7 @@ entity ulx3s_passthru_wifi is
   wifi_rxd: out   std_logic;
   wifi_txd: in    std_logic;
   -- WiFi additional signaling
-  wifi_en: inout  std_logic := 'Z'; -- '0' will disable wifi by default
-  wifi_gpio0: inout std_logic;
-  wifi_gpio2: inout std_logic;
-  wifi_gpio15: inout std_logic;
-  wifi_gpio16: inout std_logic;
+  wifi_en, wifi_gpio0, wifi_gpio2, wifi_gpio15, wifi_gpio16: inout  std_logic := 'Z'; -- '0' will disable wifi by default
 
   -- Onboard blinky
   led: out std_logic_vector(7 downto 0);
@@ -105,8 +101,6 @@ begin
 
   gp(9) <= '0' when S_hspi_sd_csn = '1' else S_hspi_miso; -- WiFi GPIO12 selects flash voltage 3.3V
   gn(9) <= 'Z';
-  wifi_gpio15 <= 'Z';
-  wifi_gpio16 <= 'Z';
 
   g_x: if true generate
   -- OLED display passthru (using pins on J1 shared with wifi)
@@ -115,7 +109,7 @@ begin
   S_hspi_sck <= gn(10); -- wifi gpio14
   S_hspi_sd_csn <= gn(11); -- wifi gpio26
   S_hspi_oled_csn <= wifi_gpio15;
-  S_hspi_oled_dc <= wifi_gpio2;
+  S_hspi_oled_dc <= wifi_gpio16;
   S_hspi_oled_resn <= gp(11); -- wifi gpio25
 
   oled_csn <= S_hspi_oled_csn;
@@ -133,7 +127,7 @@ begin
   S_hspi_miso <= sd_dat0_do;
   -- show OLED signals on the LEDs
   led(6 downto 0) <= S_hspi_sd_csn & S_hspi_oled_csn & S_hspi_oled_resn & S_hspi_oled_dc & S_hspi_miso & S_hspi_mosi & S_hspi_sck;
-  
+
   -- Pushbuttons passthru (using pins on J1 shared with wifi)
   gp(12) <= btn(3); -- up 
   gn(12) <= btn(4); -- down

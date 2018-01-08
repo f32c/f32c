@@ -168,7 +168,7 @@ LOCATE COMP "wifi_rxd" SITE "K3"; # FPGA transmits to WiFi
 LOCATE COMP "wifi_txd" SITE "K4"; # FPGA receives from WiFi
 LOCATE COMP "wifi_gpio0" SITE "L2";
 LOCATE COMP "wifi_gpio15" SITE "N3"; # HSPI SS
-LOCATE COMP "wifi_gpio16" SITE "P5";
+LOCATE COMP "wifi_gpio16" SITE "L1";
 # LOCATE COMP "prog_done" SITE "Y3"; # not GPIO, always active
 IOBUF  PORT "wifi_en" PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;
 IOBUF  PORT "wifi_rxd" PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;
