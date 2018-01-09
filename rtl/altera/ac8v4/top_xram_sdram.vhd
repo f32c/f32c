@@ -24,7 +24,7 @@ entity top_ac8v4_xram_sdram is
         C_acram: boolean := false;
         C_sdram: boolean := true;
 
-        C_video_mode: integer := 4; -- 50 MHz clock
+        C_video_mode: integer := 1; -- 25 MHz clock
 
         C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
         C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
@@ -114,10 +114,17 @@ architecture Behavioral of top_ac8v4_xram_sdram is
   signal ram_ready          : std_logic;
 begin
     -- clock synthesizer: Altera specific
-    G_generic_clk:
-    if C_clk_freq = 50 generate
-    clk <= clk_50m;
-    clk_pixel <= clk_50m;
+    --G_generic_clk:
+    --if C_clk_freq = 50 generate
+    --clk <= clk_50m;
+    --clk_pixel <= clk_50m;
+    --end generate;
+
+    clk50: if C_clk_freq = 50 generate
+    clkgen: entity work.clk_50_50_25
+    port map(
+      inclk0 => clk_50m, c0 => clk, c1 => clk_pixel
+    );
     end generate;
 
     -- generic XRAM glue

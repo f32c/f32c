@@ -36,6 +36,7 @@ include ../../include/altera.mk
 # Setup your sources here
 SRCS = \
 ../../../../altera/ac8v4/top_xram_sdram.vhd \
+../../../../altera/ac8v4/clocks/clk_50_50_25.vhd \
 ../../../../generic/hdmi_out.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \
