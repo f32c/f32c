@@ -34,7 +34,7 @@ entity ulx3s_passthru_wifi is
   wifi_rxd: out   std_logic;
   wifi_txd: in    std_logic;
   -- WiFi additional signaling
-  wifi_en, wifi_gpio0, wifi_gpio2, wifi_gpio5, wifi_gpio16: inout  std_logic := 'Z'; -- '0' will disable wifi by default
+  wifi_en, wifi_gpio0, wifi_gpio2, wifi_gpio16, wifi_gpio17: inout  std_logic := 'Z'; -- '0' will disable wifi by default
 
   -- Onboard blinky
   led: out std_logic_vector(7 downto 0);
@@ -116,11 +116,11 @@ begin
   --S_hspi_oled_dc <= wifi_gpio16;
   --S_hspi_oled_resn <= gp(11); -- wifi gpio25
 
-  --oled_csn <= S_hspi_oled_csn;
-  --oled_clk <= S_hspi_sck;
-  --oled_mosi <= S_hspi_mosi;
-  --oled_dc <= S_hspi_oled_dc;
-  --oled_resn <= S_hspi_oled_resn;
+  oled_csn <= gn(11); -- wifi_gpio26
+  oled_clk <= sd_clk; -- wifi_gpio14
+  oled_mosi <= sd_cmd_di; -- wifi_gpio15
+  oled_dc <= wifi_gpio16;
+  oled_resn <= gp(11); -- wifi_gpio25
 
   -- show OLED signals on the LEDs
   -- led(4 downto 0) <= S_hspi_csn & S_hspi_dc & S_hspi_resn & S_hspi_mosi & S_hspi_sck;
@@ -133,7 +133,7 @@ begin
   -- led(6 downto 0) <= S_hspi_sd_csn & S_hspi_oled_csn & S_hspi_oled_resn & S_hspi_oled_dc & S_hspi_miso & S_hspi_mosi & S_hspi_sck;
   -- show SD signals on the LEDs
   -- led(5 downto 0) <= sd_clk & sd_dat2 & sd_dat3_csn & sd_cmd_di & sd_dat0_do & sd_dat1_irq;
-  led(5 downto 0) <= sd_clk & sd_dat2 & sd_dat3_csn & sd_cmd_di & sd_dat0_do & sd_dat1_irq;
+  led(7 downto 0) <= oled_csn & oled_resn & sd_clk & sd_dat2 & sd_dat3_csn & sd_cmd_di & sd_dat0_do & sd_dat1_irq;
 
   -- Pushbuttons passthru (using pins on J1 shared with wifi)
   gp(12) <= btn(3); -- up 
@@ -149,6 +149,6 @@ begin
         R_blinky <= R_blinky+1;
       end if;
   end process;
-  led(7) <= R_blinky(R_blinky'high);
+  -- led(7) <= R_blinky(R_blinky'high);
 
 end Behavioral;
