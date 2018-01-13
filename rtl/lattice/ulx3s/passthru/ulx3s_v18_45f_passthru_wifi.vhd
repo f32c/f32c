@@ -116,7 +116,7 @@ begin
   --S_hspi_oled_dc <= wifi_gpio16;
   --S_hspi_oled_resn <= gp(11); -- wifi gpio25
 
-  oled_csn <= gn(11); -- wifi_gpio26
+  oled_csn <= wifi_gpio17;
   oled_clk <= sd_clk; -- wifi_gpio14
   oled_mosi <= sd_cmd_di; -- wifi_gpio15
   oled_dc <= wifi_gpio16;
