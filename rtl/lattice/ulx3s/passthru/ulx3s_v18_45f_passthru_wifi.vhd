@@ -60,22 +60,19 @@ entity ulx3s_passthru_wifi is
 
   -- SD card (SPI1)
   sd_dat0_do: inout std_logic := 'Z'; -- wifi_gpio2
-  sd_dat3_csn, sd_cmd_di: inout std_logic := 'Z'; -- wifi_gpio13, wifi_gpio15
-  sd_clk: inout std_logic := 'Z'; -- wifi_gpio14
-  sd_dat1_irq, sd_dat2: inout std_logic := 'Z'; -- wifi_gpio4, wifi_gpio12
-  sd_cdn, sd_wp: inout std_logic := 'Z' 
+  sd_dat3_csn, sd_cmd_di: in std_logic; -- wifi_gpio13, wifi_gpio15
+  sd_clk: in std_logic; -- wifi_gpio14
+  sd_dat1_irq, sd_dat2: in std_logic; -- wifi_gpio4, wifi_gpio12
+  sd_cdn, sd_wp: in std_logic 
   );
 end;
 
 architecture Behavioral of ulx3s_passthru_wifi is
-  signal clk: std_logic;
   signal R_blinky: std_logic_vector(26 downto 0);
-  signal S_hspi_miso, S_hspi_mosi, S_hspi_sck: std_logic;
-  signal S_hspi_sd_csn, S_hspi_oled_csn, S_hspi_oled_dc, S_hspi_oled_resn: std_logic;
   signal S_prog_in, S_prog_out: std_logic_vector(1 downto 0);
+  signal R_spi_miso: std_logic_vector(7 downto 0);
 begin
-  clk <= clk_25MHz;
-  
+
   -- TX/RX passthru
   ftdi_rxd <= wifi_txd;
   wifi_rxd <= ftdi_txd;
@@ -96,25 +93,13 @@ begin
   wifi_gpio0 <= S_prog_out(0);
   --sd_dat0_do <= '0' when wifi_gpio0 = '0' else 'Z'; -- gpio2 together with gpio2 to 0  
   --sd_dat2 <= '0' when wifi_gpio0 = '0' else 'Z'; -- wifi gpio12
-  sd_dat0_do <= '0' when (S_prog_in(0) xor S_prog_in(1)) = '1' else 'Z'; -- gpio2 together with gpio2 to 0  
+  sd_dat0_do <= '0' when (S_prog_in(0) xor S_prog_in(1)) = '1' else
+                R_spi_miso(0) when oled_csn = '0' else -- SPI reading buttons with OLED CSn
+                'Z'; -- gpio2 to 0 during programming init
   -- sd_dat2 <= '0' when (S_prog_in(0) xor S_prog_in(1)) = '1' else 'Z'; -- wifi gpio12
-
   -- permanent flashing mode
   -- wifi_en <= ftdi_nrts;
   -- wifi_gpio0 <= ftdi_ndtr;
-
-  -- gp(9) <= '0' when S_hspi_sd_csn = '1' else S_hspi_miso; -- WiFi GPIO12 selects flash voltage 3.3V
-  -- gn(9) <= 'Z';
-
-  g_x: if true generate
-  -- OLED display passthru (using pins on J1 shared with wifi)
-  --gp(9) <= S_hspi_miso; -- wifi gpio12
-  --S_hspi_mosi <= gn(9); -- wifi gpio13
-  --S_hspi_sck <= gn(10); -- wifi gpio14
-  --S_hspi_sd_csn <= gn(11); -- wifi gpio26
-  --S_hspi_oled_csn <= wifi_gpio15;
-  --S_hspi_oled_dc <= wifi_gpio16;
-  --S_hspi_oled_resn <= gp(11); -- wifi gpio25
 
   oled_csn <= wifi_gpio17;
   oled_clk <= sd_clk; -- wifi_gpio14
@@ -123,32 +108,30 @@ begin
   oled_resn <= gp(11); -- wifi_gpio25
 
   -- show OLED signals on the LEDs
-  -- led(4 downto 0) <= S_hspi_csn & S_hspi_dc & S_hspi_resn & S_hspi_mosi & S_hspi_sck;
-
-  --sd_dat3_csn <= S_hspi_sd_csn;
-  --sd_clk <= S_hspi_sck;
-  --sd_cmd_di <= S_hspi_mosi;
-  --S_hspi_miso <= sd_dat0_do;
-  -- show OLED signals on the LEDs
-  -- led(6 downto 0) <= S_hspi_sd_csn & S_hspi_oled_csn & S_hspi_oled_resn & S_hspi_oled_dc & S_hspi_miso & S_hspi_mosi & S_hspi_sck;
   -- show SD signals on the LEDs
   -- led(5 downto 0) <= sd_clk & sd_dat2 & sd_dat3_csn & sd_cmd_di & sd_dat0_do & sd_dat1_irq;
-  led(7 downto 0) <= oled_csn & oled_resn & sd_clk & sd_dat2 & sd_dat3_csn & sd_cmd_di & sd_dat0_do & sd_dat1_irq;
-
-  -- Pushbuttons passthru (using pins on J1 shared with wifi)
-  gp(12) <= btn(3); -- up 
-  gn(12) <= btn(4); -- down
-  gp(13) <= btn(5); -- left
-  gn(13) <= btn(6); -- right
-  end generate;
+  led(7 downto 0) <= oled_csn & R_spi_miso(0) & sd_clk & sd_dat2 & sd_dat3_csn & sd_cmd_di & sd_dat0_do & sd_dat1_irq;
 
   -- clock alive blinky
-  process(clk)
+  process(clk_25MHz)
   begin
-      if rising_edge(clk) then
+      if rising_edge(clk_25MHz) then
         R_blinky <= R_blinky+1;
       end if;
   end process;
   -- led(7) <= R_blinky(R_blinky'high);
+
+  y_btn: if true generate
+  process(sd_clk, wifi_gpio17) -- gpio17 is OLED CSn
+  begin
+    if wifi_gpio17 = '1' then
+      R_spi_miso <= '0' & btn; -- sample button state during csn=1
+    else
+      if rising_edge(sd_clk) then
+        R_spi_miso <= R_spi_miso(R_spi_miso'high-1 downto 0) & R_spi_miso(R_spi_miso'high) ; -- shift to the left
+      end if;
+    end if;
+  end process;
+  end generate;
 
 end Behavioral;
