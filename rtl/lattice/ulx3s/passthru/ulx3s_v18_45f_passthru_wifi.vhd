@@ -90,7 +90,7 @@ begin
                 "10" when S_prog_in = "01" else
                 "11";
   wifi_en <= S_prog_out(1);
-  wifi_gpio0 <= S_prog_out(0);
+  wifi_gpio0 <= S_prog_out(0) and btn(0); -- holding BTN0 will hold gpio0 LOW, signal for ESP32 to take control
   --sd_dat0_do <= '0' when wifi_gpio0 = '0' else 'Z'; -- gpio2 together with gpio2 to 0  
   --sd_dat2 <= '0' when wifi_gpio0 = '0' else 'Z'; -- wifi gpio12
   sd_dat0_do <= '0' when (S_prog_in(0) xor S_prog_in(1)) = '1' else
