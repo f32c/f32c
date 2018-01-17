@@ -18,7 +18,7 @@ entity ulx3s_xram_sdram_vector is
     C_debug: boolean := false;
 
     -- Main clock: 25/50/78/100 MHz (SDRAM doesn't work below 78 MHz)
-    C_clk_freq: integer := 78;
+    C_clk_freq: integer := 50;
 
     -- SoC configuration options
     C_bram_size: integer := 2;
@@ -117,7 +117,7 @@ entity ulx3s_xram_sdram_vector is
   wifi_txd: in    std_logic;
   -- WiFi additional signaling
   wifi_en: inout  std_logic := 'Z'; -- '0' will disable wifi by default
-  wifi_gpio0, wifi_gpio2, wifi_gpio15, wifi_gpio16: inout std_logic := 'Z';
+  wifi_gpio0, wifi_gpio2, wifi_gpio16, wifi_gpio17: inout std_logic := 'Z';
 
   -- ADC MAX11123
   adc_csn, adc_sclk, adc_mosi: out std_logic;
@@ -219,7 +219,7 @@ begin
   end generate;
 
   ddr_640x480_50MHz: if C_clk_freq=50 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_78M: entity work.clk_25_78_125_25
+  clk_50M: entity work.clk_25_50_125_25
     port map(
       CLKI        =>  clk_25MHz,
       CLKOP       =>  clk_dvi,   -- 125 MHz
@@ -457,5 +457,7 @@ begin
   --audio_l <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
   --audio_r <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
   --audio_v <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
+  
+  wifi_gpio0 <= btn(0);
 
 end Behavioral;

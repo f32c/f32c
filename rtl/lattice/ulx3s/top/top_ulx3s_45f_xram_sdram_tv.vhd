@@ -128,7 +128,7 @@ entity ulx3s_xram_sdram_tv is
   wifi_txd: in    std_logic;
   -- WiFi additional signaling
   wifi_en: inout  std_logic := 'Z'; -- '0' will disable wifi by default
-  wifi_gpio0, wifi_gpio2, wifi_gpio15, wifi_gpio16: inout std_logic := 'Z';
+  wifi_gpio0, wifi_gpio2, wifi_gpio16, wifi_gpio17: inout std_logic := 'Z';
 
   -- ADC MAX11123
   adc_csn, adc_sclk, adc_mosi: out std_logic;
@@ -447,5 +447,7 @@ begin
   --audio_l <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
   --audio_r <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
   --audio_v <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
+  
+  wifi_gpio0 <= btn(0); -- ESP32 loader
 
 end Behavioral;
