@@ -18,7 +18,7 @@ entity ulx3s_xram_sdram_vector is
     C_debug: boolean := false;
 
     -- Main clock: 25/50/78/100 MHz (SDRAM doesn't work below 78 MHz)
-    C_clk_freq: integer := 50;
+    C_clk_freq: integer := 100;
 
     -- SoC configuration options
     C_bram_size: integer := 2;
@@ -40,8 +40,9 @@ entity ulx3s_xram_sdram_vector is
     C_pcm: boolean := false; -- PCM audio (wav playing)
     C_synth: boolean := true; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
-      C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
-    C_spdif: boolean := true; -- SPDIF output (to audio jack tip)
+      C_synth_amplify: integer := 3; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
+      C_synth_multiplier_sign_fix: boolean := true; -- ECP5 FPGA needs this
+    C_spdif: boolean := true; -- SPDIF output
 
     C_cw_simple_out: integer := -1; -- simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
@@ -281,6 +282,7 @@ begin
     C_synth => C_synth,
     C_synth_zero_cross => C_synth_zero_cross,
     C_synth_amplify => C_synth_amplify,
+    C_synth_multiplier_sign_fix => C_synth_multiplier_sign_fix,
     -- SPDIF output
     C_spdif => C_spdif,
 
