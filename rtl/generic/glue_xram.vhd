@@ -185,6 +185,7 @@ generic (
     C_synth: boolean := false;
       C_synth_zero_cross: boolean := false; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 is default for digital output. higher values may clip
+      C_synth_multiplier_sign_fix: boolean := false; -- some FPGA like ECP5 need such fix
     C_spdif: boolean := false; -- generate SPDIF output
     C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
     C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
@@ -1873,6 +1874,7 @@ begin
       C_voice_vol_bits => 11,
       C_wav_data_bits => 12,
       -- C_keyboard => true, -- constant test tone (fixme: it doesn't work)
+      C_multiplier_sign_fix => C_synth_multiplier_sign_fix,
       C_zero_cross => C_synth_zero_cross,
       C_amplify => C_synth_amplify
     )
