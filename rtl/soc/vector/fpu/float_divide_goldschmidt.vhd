@@ -1,9 +1,7 @@
 -- (c)EMARD
 -- license = BSD
 
--- Goldschmit approximate integer division, pipelined
--- work in progress, exponent normalization is not yet done
--- so currently only integer division is done on the mantissa
+-- Goldschmit approximate integer division, pipelined.
 
 -- to calculate q = x/y,
 -- in each iteration it multiplies both x and y with
