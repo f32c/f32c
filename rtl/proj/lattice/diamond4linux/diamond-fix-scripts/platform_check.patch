@@ -1,0 +1,11 @@
+--- platform_check~	2016-05-15 15:31:27.000000000 +0200
++++ platform_check	2016-05-15 16:01:39.054163557 +0200
+@@ -12,7 +12,7 @@ export SHELL
+ case $PLATFORM in
+     linux | linux_a_64 )
+         case $VERSION in
+-            3.* | 2.4.* | 2.6.*  )
++            4.* | 3.* | 2.4.* | 2.6.*  )
+                 PLATFORM_STATUS="ok";;
+             *)
+                 PLATFORM_STATUS=`echo $PLATFORM $VERSION`;;
