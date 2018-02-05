@@ -41,7 +41,7 @@ Status of the vector processor:
     * I/O load and store using AXI RAM DMA burst
       can run parallel with arithmetic operations
     * 3 x 32-bit floating point functional units:
-      6-stage (+,-)
+      5-stage (+,-)
       6-stage (*)
       13-stage (/)
     * each vector is double-aliased and can be independently
@@ -68,7 +68,6 @@ Todo:
       bitmap of functional units enabled
 
 # Architecture
-
 
 Each vector register is made of one BRAM block
 Each BRAM block has two ports which can read or write content
