@@ -9,7 +9,7 @@ inputs = [
 	('bit', clock_name)
 ]
 outputs = [('number','outputC')]
-v_includes = '`include "src/defines.v"\n'
+v_includes = '`include "defines.v"\n'
 
 widths = {
 	'bit' : '',
