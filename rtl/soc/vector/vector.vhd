@@ -339,18 +339,35 @@ begin
     end generate;
 
     -- *** FUNCTIONAL UNITS ***
-    G_fpu_addsub:
+
+-- this adder has signal latency problems
+
+--    G_fpu_addsub:
+--    if C_float_addsub generate
+--      I_fpu_addsub:
+--      entity work.fpu
+--      port map
+--      (
+--        clk => clk,
+--        rmode => "00", -- round to nearest even
+--        fpu_op => R_fpu_addsub_mode, -- float op 000 add, 001 sub
+--        opa => S_FU_arg1_data(C_function_fpu_addsub),
+--        opb => S_FU_arg2_data(C_function_fpu_addsub),
+--        fpout => S_FU_result_data(C_function_fpu_addsub)
+--      );
+--    end generate;
+
+    G_fpu_addsub_emiraga:
     if C_float_addsub generate
-      I_fpu_addsub:
-      entity work.fpu
+      I_fpu_addsub_emiraga:
+      entity work.add_sub_emiraga
       port map
       (
-        clk => clk,
-        rmode => "00", -- round to nearest even
-        fpu_op => R_fpu_addsub_mode, -- float op 000 add, 001 sub
-        opa => S_FU_arg1_data(C_function_fpu_addsub),
-        opb => S_FU_arg2_data(C_function_fpu_addsub),
-        fpout => S_FU_result_data(C_function_fpu_addsub)
+        clock_in => clk,
+        add_sub_bit => R_fpu_addsub_mode(0), -- 0 add, 1 sub
+        inputA => S_FU_arg1_data(C_function_fpu_addsub),
+        inputB => S_FU_arg2_data(C_function_fpu_addsub),
+        outputC => S_FU_result_data(C_function_fpu_addsub)
       );
     end generate;
 
