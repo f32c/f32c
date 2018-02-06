@@ -17,6 +17,8 @@ vfiles = \
 ../../../../soc/pid/ctrlpid_v.v \
 ../../../../soc/pid/simotor_v.v \
 ../../../../soc/pid/rotary_decoder_v.v \
+../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee_adder.v \
+../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee.v \
 
 vhdfiles = \
 ../../../../xilinx/scarab_ms6p/top/top_xram_sdram_vector.vhd \
@@ -90,11 +92,7 @@ vhdfiles = \
 ../../../../soc/vector/vector.vhd \
 ../../../../soc/vector/f32c_vector_dma.vhd \
 ../../../../soc/vector/axi_vector_dma.vhd \
-../../../../soc/vector/fpu/add_sub/fpu_arch.vhd \
-../../../../soc/vector/fpu/add_sub/add_sub27_arch.vhd \
-../../../../soc/vector/fpu/add_sub/except_arch.vhd \
-../../../../soc/vector/fpu/add_sub/pre_norm_arch.vhd \
-../../../../soc/vector/fpu/add_sub/post_norm_arch.vhd \
+../../../../soc/vector/fpu/add_sub_emiraga/add_sub_emiraga.vhd \
 ../../../../soc/vector/fpu/float_divide_goldschmidt.vhd \
 ../../../../soc/vector/fpu/mul/multiplier/fpmul_pipeline.vhd \
 ../../../../soc/vector/fpu/mul/multiplier/fpmul_stage1_struct.vhd \
