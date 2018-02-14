@@ -48,6 +48,9 @@ entity ulx3s_passthru_wifi is
   -- SHUTDOWN: logic '1' here will shutdown power on PCB >= v1.7.5
   shutdown: out std_logic := '0';
 
+  -- Audio jack 3.5mm
+  audio_l, audio_r, audio_v: inout std_logic_vector(3 downto 0) := (others => 'Z');
+
   -- Digital Video (differential outputs)
   --gpdi_dp, gpdi_dn: out std_logic_vector(2 downto 0);
   --gpdi_clkp, gpdi_clkn: out std_logic;
