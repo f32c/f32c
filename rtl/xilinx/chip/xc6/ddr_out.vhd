@@ -18,8 +18,6 @@ entity ddr_out is
   );
 end ddr_out;
 
--- seems to not work?
--- should OSERDES2 be used insted?
 architecture Structure of ddr_out is
 begin
   ODDR_inst: ODDR2
