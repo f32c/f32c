@@ -23,7 +23,8 @@ entity fleafpga_ohm_xram_sdram_vector is
     -- SoC configuration options
     C_bram_size: integer := 2;
     C_acram: boolean := true;
-    C_acram_emu_kb: integer := 32; -- KB axi_cache emulation (power of 2)
+    C_acram_wait_cycles: integer := 3; -- 3 or more
+    C_acram_emu_kb: integer := 16; -- KB axi_cache emulation (power of 2)
     C_sdram: boolean := false;
     C_icache_size: integer := 2;
     C_dcache_size: integer := 2;
@@ -238,6 +239,7 @@ begin
     C_bram_size => C_bram_size,
     C_branch_prediction => C_branch_prediction,
     C_acram => C_acram,
+    C_acram_wait_cycles => C_acram_wait_cycles,
     C_sdram => C_sdram,
     C_sdram_address_width => 24,
     C_sdram_column_bits => 9,
@@ -350,6 +352,14 @@ begin
     sdram_ras => dram_n_ras, sdram_cas => dram_n_cas,
     sdram_cke => dram_cke, -- sdram_clk => dram_clk, -- this is 180 deg clock
     sdram_we => dram_n_we, sdram_cs => dram_n_cs,
+
+    -- acram_emu (AXI cache emulation using BRAM)
+    acram_en => ram_en,
+    acram_addr(29 downto 2) => ram_address(29 downto 2),
+    acram_byte_we(3 downto 0) => ram_byte_we(3 downto 0),
+    acram_data_rd(31 downto 0) => ram_data_read(31 downto 0),
+    acram_data_wr(31 downto 0) => ram_data_write(31 downto 0),
+    acram_ready => ram_ready,
 
     dvid_red   => dvid_red,
     dvid_green => dvid_green,
