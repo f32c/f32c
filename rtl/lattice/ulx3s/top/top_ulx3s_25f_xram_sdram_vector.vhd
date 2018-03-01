@@ -26,6 +26,7 @@ entity ulx3s_xram_sdram_vector is
     C_acram_wait_cycles: integer := 3; -- 3 or more
     C_acram_emu_kb: integer := 32; -- KB axi_cache emulation (power of 2)
     C_sdram: boolean := true;
+    C_sdram_clock_range: integer := 2;
     C_icache_size: integer := 2;
     C_dcache_size: integer := 2;
     C_sram8: boolean := false;
@@ -250,6 +251,7 @@ begin
     C_acram => C_acram,
     C_acram_wait_cycles => C_acram_wait_cycles,
     C_sdram => C_sdram,
+    C_sdram_clock_range => C_sdram_clock_range,
     C_sdram_address_width => 24,
     C_sdram_column_bits => 9,
     C_sdram_startup_cycles => 10100,

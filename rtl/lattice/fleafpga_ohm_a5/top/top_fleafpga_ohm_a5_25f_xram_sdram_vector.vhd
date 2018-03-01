@@ -17,15 +17,15 @@ entity fleafpga_ohm_xram_sdram_vector is
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
 
-    -- Main clock: 25/78/100 MHz
+    -- Main clock: 25/78/100/125 MHz
     C_clk_freq: integer := 100;
 
     -- SoC configuration options
     C_bram_size: integer := 2;
-    C_acram: boolean := true;
+    C_acram: boolean := false;
     C_acram_wait_cycles: integer := 3; -- 3 or more
     C_acram_emu_kb: integer := 16; -- KB axi_cache emulation (power of 2)
-    C_sdram: boolean := false;
+    C_sdram: boolean := true;
     C_icache_size: integer := 2;
     C_dcache_size: integer := 2;
     C_sram8: boolean := false;
@@ -59,7 +59,7 @@ entity fleafpga_ohm_xram_sdram_vector is
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
 
-    C_vgahdmi: boolean := true;
+    C_vgahdmi: boolean := false;
     C_vgahdmi_cache_size: integer := 8;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
@@ -175,7 +175,7 @@ architecture Behavioral of fleafpga_ohm_xram_sdram_vector is
       return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
   end ceil_log2;
   signal clk, rs232_break, rs232_break2: std_logic;
-  signal clk_100: std_logic;
+  signal clk_sdram: std_logic;
   signal clk_dvi, clk_dvin, clk_pixel: std_logic;
   signal ram_en             : std_logic;
   signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
@@ -209,8 +209,8 @@ begin
     clk <= clk_pixel; 
   end generate;
 
-  ddr_640x480_78MHz: if C_clk_freq=78 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_78M: entity work.clk_25_78_125_25
+  old_ddr_640x480_78MHz: if false and C_clk_freq=78 and (C_video_mode=0 or C_video_mode=1) generate
+  old_clk_78M: entity work.clk_25_78_125_25
     port map(
       CLKI        =>  sys_clock,
       CLKOP       =>  clk_dvi,   -- 125 MHz
@@ -218,6 +218,18 @@ begin
       CLKOS2      =>  clk_pixel, --  25 MHz
       CLKOS3      =>  clk        --  78.125 MHz CPU
      );
+  end generate;
+
+  ddr_640x480_78MHz: if C_clk_freq=78 and (C_video_mode=0 or C_video_mode=1) generate
+  clk_78M: entity work.clk_25_125p_125n_78_78s
+    port map(
+      CLKI        =>  sys_clock,
+      CLKOP       =>  clk_dvi,   -- 125 MHz
+      CLKOS       =>  clk_dvin,  -- 125 MHz inverted
+      CLKOS2      =>  clk,       --  78.125 MHz CPU
+      CLKOS3      =>  clk_sdram  --  78.125 MHz phase 146' SDRAM
+     );
+  clk_pixel <= sys_clock;
   end generate;
 
   ddr_640x480_100MHz: if C_clk_freq=100 and (C_video_mode=0 or C_video_mode=1) generate
@@ -229,6 +241,18 @@ begin
       CLKOS2      =>  clk_pixel, --  25 MHz
       CLKOS3      =>  clk        -- 100 MHz CPU
      );
+  end generate;
+
+  ddr_640x480_125MHz: if C_clk_freq=125 and (C_video_mode=0 or C_video_mode=1) generate
+  clk_125M: entity work.clk_25_100_125_25
+    port map(
+      CLKI        =>  sys_clock,
+      CLKOP       =>  clk_dvi,   -- 125 MHz
+      CLKOS       =>  clk_dvin,  -- 125 MHz inverted
+      CLKOS2      =>  clk_pixel, --  25 MHz
+      CLKOS3      =>  open        -- 100 MHz CPU
+     );
+     clk <= clk_dvi; -- 125 MHz
   end generate;
 
   -- full featured XRAM glue
@@ -350,7 +374,7 @@ begin
     sdram_addr => dram_addr, sdram_data => dram_data,
     sdram_ba => dram_ba, sdram_dqm => dram_dqm,
     sdram_ras => dram_n_ras, sdram_cas => dram_n_cas,
-    sdram_cke => dram_cke, -- sdram_clk => dram_clk, -- this is 180 deg clock
+    sdram_cke => dram_cke, sdram_clk => dram_clk,
     sdram_we => dram_n_we, sdram_cs => dram_n_cs,
 
     -- acram_emu (AXI cache emulation using BRAM)
@@ -366,9 +390,8 @@ begin
     dvid_blue  => dvid_blue,
     dvid_clock => dvid_clock
   );
+  -- dram_clk <= not clk_sdram;
   
-  dram_clk <= clk; -- This SDRAM works with direct clock
-
   G_acram: if C_acram generate
   acram_emulation: entity work.acram_emu
   generic map

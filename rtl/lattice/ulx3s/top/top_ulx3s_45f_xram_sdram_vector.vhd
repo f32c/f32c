@@ -26,6 +26,7 @@ entity ulx3s_xram_sdram_vector is
     C_acram_wait_cycles: integer := 3; -- 3 or more
     C_acram_emu_kb: integer := 16; -- KB axi_cache emulation (power of 2)
     C_sdram: boolean := true;
+    C_sdram_clock_range: integer := 1; -- standard value good for all
     C_icache_size: integer := 2;
     C_dcache_size: integer := 2;
     C_sram8: boolean := false;
@@ -241,6 +242,18 @@ begin
      );
   end generate;
 
+  ddr_640x480_100MHz: if C_clk_freq=125 and (C_video_mode=0 or C_video_mode=1) generate
+  clk_100M: entity work.clk_25_100_125_25
+    port map(
+      CLKI        =>  clk_25MHz,
+      CLKOP       =>  clk_dvi,   -- 125 MHz
+      CLKOS       =>  clk_dvin,  -- 125 MHz inverted
+      CLKOS2      =>  clk_pixel, --  25 MHz
+      CLKOS3      =>  open       -- 100 MHz
+     );
+  clk <= clk_dvi;
+  end generate;
+
   -- full featured XRAM glue
   glue_xram: entity work.glue_xram
   generic map (
@@ -251,6 +264,7 @@ begin
     C_acram => C_acram,
     C_acram_wait_cycles => C_acram_wait_cycles,
     C_sdram => C_sdram,
+    C_sdram_clock_range => 2,
     C_sdram_address_width => 24,
     C_sdram_column_bits => 9,
     C_sdram_startup_cycles => 10100,
