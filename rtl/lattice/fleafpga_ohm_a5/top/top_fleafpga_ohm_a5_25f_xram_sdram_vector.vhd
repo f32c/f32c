@@ -18,7 +18,7 @@ entity fleafpga_ohm_xram_sdram_vector is
     C_debug: boolean := false;
 
     -- Main clock: 25/78/100 MHz
-    C_clk_freq: integer := 78;
+    C_clk_freq: integer := 100;
 
     -- SoC configuration options
     C_bram_size: integer := 2;
@@ -37,7 +37,7 @@ entity fleafpga_ohm_xram_sdram_vector is
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
     C_timer: boolean := true;
 
-    C_pcm: boolean := false; -- PCM audio (wav playing)
+    C_pcm: boolean := true; -- PCM audio (wav playing)
     C_synth: boolean := false; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
@@ -45,7 +45,7 @@ entity fleafpga_ohm_xram_sdram_vector is
 
     C_cw_simple_out: integer := 7; -- simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
-    C_vector: boolean := false; -- vector processor unit
+    C_vector: boolean := true; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
     C_vector_vaddr_bits: integer := 11;
@@ -58,7 +58,7 @@ entity fleafpga_ohm_xram_sdram_vector is
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
 
-    C_vgahdmi: boolean := false;
+    C_vgahdmi: boolean := true;
     C_vgahdmi_cache_size: integer := 8;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
@@ -67,7 +67,7 @@ entity fleafpga_ohm_xram_sdram_vector is
 
     -- VGA textmode and graphics, full featured
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
-    C_vgatext_label: string := "ULX3S f32c: 100MHz MIPS-compatible soft-core, 32MB SDRAM";
+    C_vgatext_label: string := "FleaFPGA Ohm f32c: 100MHz MIPS-compatible soft-core, 32MB SDRAM";
     C_vgatext_bits: integer := 4;   -- 4096 possible colors
     C_vgatext_bram_mem: integer := 8;   -- 8KB text+font  memory
     C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
@@ -348,7 +348,7 @@ begin
     sdram_addr => dram_addr, sdram_data => dram_data,
     sdram_ba => dram_ba, sdram_dqm => dram_dqm,
     sdram_ras => dram_n_ras, sdram_cas => dram_n_cas,
-    sdram_cke => dram_cke, sdram_clk => dram_clk,
+    sdram_cke => dram_cke, -- sdram_clk => dram_clk, -- this is 180 deg clock
     sdram_we => dram_n_we, sdram_cs => dram_n_cs,
 
     dvid_red   => dvid_red,
@@ -356,6 +356,8 @@ begin
     dvid_blue  => dvid_blue,
     dvid_clock => dvid_clock
   );
+  
+  dram_clk <= clk; -- This SDRAM works with direct clock
 
   G_acram: if C_acram generate
   acram_emulation: entity work.acram_emu

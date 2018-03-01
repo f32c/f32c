@@ -249,22 +249,13 @@
         <Source name="../../../../soc/vector/axi_vector_dma.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../soc/vector/fpu/add_sub/fpu_arch.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../soc/vector/fpu/add_sub_emiraga/add_sub_emiraga.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../soc/vector/fpu/add_sub/add_sub27_arch.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee_adder.v" type="Verilog" type_short="Verilog">
             <Options/>
         </Source>
-        <Source name="../../../../soc/vector/fpu/add_sub/except_arch.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/vector/fpu/add_sub/pre_norm_arch.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/vector/fpu/add_sub/post_norm_arch.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/vector/fpu/float_divide_goldschmidt.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee.v" type="Verilog" type_short="Verilog">
             <Options/>
         </Source>
         <Source name="../../../../soc/vector/fpu/mul/multiplier/fpmul_pipeline.vhd" type="VHDL" type_short="VHDL">
@@ -292,6 +283,9 @@
             <Options/>
         </Source>
         <Source name="../../../../soc/vector/fpu/mul/common/unpackfp_unpackfp.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/fpu/float_divide_goldschmidt.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../constraints/ulx3s.lpf" type="Logic Preference" type_short="LPF">
