@@ -17,15 +17,16 @@ entity fleafpga_ohm_xram_sdram_vector is
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
 
-    -- Main clock: 25/78/100/125 MHz
+    -- Main clock: 25/78/93/100/112 MHz
     C_clk_freq: integer := 100;
 
     -- SoC configuration options
     C_bram_size: integer := 2;
-    C_acram: boolean := false;
+    C_acram: boolean := true;
     C_acram_wait_cycles: integer := 3; -- 3 or more
     C_acram_emu_kb: integer := 16; -- KB axi_cache emulation (power of 2)
-    C_sdram: boolean := true;
+    C_sdram: boolean := false; -- onboard chip is 4XG12 D9NND (MT48LC16M16A2F4-6A:G)
+    C_sdram_clock_range: integer := 1;
     C_icache_size: integer := 2;
     C_dcache_size: integer := 2;
     C_sram8: boolean := false;
@@ -36,9 +37,9 @@ entity fleafpga_ohm_xram_sdram_vector is
     C_gpio: integer := 64;
     C_gpio_pullup: boolean := false;
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
-    C_timer: boolean := true;
+    C_timer: boolean := false;
 
-    C_pcm: boolean := true; -- PCM audio (wav playing)
+    C_pcm: boolean := false; -- PCM audio (wav playing)
     C_synth: boolean := false; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
@@ -46,7 +47,7 @@ entity fleafpga_ohm_xram_sdram_vector is
 
     C_cw_simple_out: integer := 7; -- simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
-    C_vector: boolean := true; -- vector processor unit
+    C_vector: boolean := false; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
     C_vector_vaddr_bits: integer := 11;
@@ -124,14 +125,14 @@ entity fleafpga_ohm_xram_sdram_vector is
 	-- SDRAM interface (For use with 16Mx16bit or 32Mx16bit SDR DRAM, depending on version)
 	Dram_Clk		: out		std_logic;	-- clock to SDRAM
 	Dram_CKE		: out		std_logic;	-- clock to SDRAM
+	Dram_n_cs		: out		std_logic;
 	Dram_n_Ras		: out		std_logic;	-- SDRAM RAS
 	Dram_n_Cas		: out		std_logic;	-- SDRAM CAS
 	Dram_n_We		: out		std_logic;	-- SDRAM write-enable
 	Dram_BA			: out		std_logic_vector(1 downto 0);	-- SDRAM bank-address
 	Dram_Addr		: out		std_logic_vector(12 downto 0);	-- SDRAM address bus
-	Dram_Data		: inout		std_logic_vector(15 downto 0);	-- data bus to/from SDRAM
-	Dram_n_cs		: out		std_logic;
 	Dram_dqm		: out		std_logic_vector(1 downto 0);
+	Dram_Data		: inout		std_logic_vector(15 downto 0);	-- data bus to/from SDRAM
 
 	-- GPIO Header pins declaration (RasPi compatible GPIO format)
 	-- gpio0 = GPIO_IDSD
@@ -243,16 +244,22 @@ begin
      );
   end generate;
 
-  ddr_640x480_125MHz: if C_clk_freq=125 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_125M: entity work.clk_25_100_125_25
+  ddr_640x480_93M57Hz: if C_clk_freq=93 and (C_video_mode=0 or C_video_mode=1) generate
+  clk_93M75: entity work.clk_25M_112M5_93M75
     port map(
       CLKI        =>  sys_clock,
-      CLKOP       =>  clk_dvi,   -- 125 MHz
-      CLKOS       =>  clk_dvin,  -- 125 MHz inverted
-      CLKOS2      =>  clk_pixel, --  25 MHz
-      CLKOS3      =>  open        -- 100 MHz CPU
+      CLKOP       =>  open,      -- 112.5  MHz
+      CLKOS       =>  clk        --  93.75 MHz
      );
-     clk <= clk_dvi; -- 125 MHz
+  end generate;
+
+  ddr_640x480_112M5Hz: if C_clk_freq=112 and (C_video_mode=0 or C_video_mode=1) generate
+  clk_112M5: entity work.clk_25M_112M5_112M5s_28M125_7M03
+    port map(
+      CLKI        =>  sys_clock,
+      CLKOP       =>  clk,          -- 112.5 MHz
+      CLKOS       =>  clk_sdram     -- 112.5 MHz phase 144'
+     );
   end generate;
 
   -- full featured XRAM glue
@@ -265,6 +272,7 @@ begin
     C_acram => C_acram,
     C_acram_wait_cycles => C_acram_wait_cycles,
     C_sdram => C_sdram,
+    C_sdram_clock_range => C_sdram_clock_range,
     C_sdram_address_width => 24,
     C_sdram_column_bits => 9,
     C_sdram_startup_cycles => 10100,
@@ -374,8 +382,8 @@ begin
     sdram_addr => dram_addr, sdram_data => dram_data,
     sdram_ba => dram_ba, sdram_dqm => dram_dqm,
     sdram_ras => dram_n_ras, sdram_cas => dram_n_cas,
-    sdram_cke => dram_cke, sdram_clk => dram_clk,
     sdram_we => dram_n_we, sdram_cs => dram_n_cs,
+    sdram_cke => dram_cke, -- sdram_clk => dram_clk,
 
     -- acram_emu (AXI cache emulation using BRAM)
     acram_en => ram_en,
@@ -390,7 +398,7 @@ begin
     dvid_blue  => dvid_blue,
     dvid_clock => dvid_clock
   );
-  -- dram_clk <= not clk_sdram;
+  dram_clk <= clk_sdram;
   
   G_acram: if C_acram generate
   acram_emulation: entity work.acram_emu
