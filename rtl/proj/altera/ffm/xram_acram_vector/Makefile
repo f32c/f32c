@@ -13,7 +13,7 @@ ASSIGNMENT_FILES = $(PROJECT).qpf $(PROJECT).qsf
 # Part, Family, Boardfile
 FAMILY = "Cyclone V"
 PART = 5CEBA4F23C7
-BOARDFILE = ffm-c5a4-sd-v0.0.board
+BOARDFILE = ffm-c5a4-sd-v2r0-0.board
 CONFIG_DEVICE = EPCS64 # fixme
 SERIAL_FLASH_LOADER_DEVICE = EP4CE22 # fixme
 OPENOCD_BOARD=esa11-fpga-c5a4.ocd
@@ -115,12 +115,9 @@ SRCS = \
 ../../../../soc/vector/vector.vhd \
 ../../../../soc/vector/f32c_vector_dma.vhd \
 ../../../../soc/vector/axi_vector_dma.vhd \
-../../../../soc/vector/fpu/add_sub/fpu_arch.vhd \
-../../../../soc/vector/fpu/add_sub/add_sub27_arch.vhd \
-../../../../soc/vector/fpu/add_sub/except_arch.vhd \
-../../../../soc/vector/fpu/add_sub/pre_norm_arch.vhd \
-../../../../soc/vector/fpu/add_sub/post_norm_arch.vhd \
-../../../../soc/vector/fpu/float_divide_goldschmidt.vhd \
+../../../../soc/vector/fpu/add_sub_emiraga/add_sub_emiraga.vhd \
+../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee_adder.v \
+../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee.v \
 ../../../../soc/vector/fpu/mul/multiplier/fpmul_pipeline.vhd \
 ../../../../soc/vector/fpu/mul/multiplier/fpmul_stage1_struct.vhd \
 ../../../../soc/vector/fpu/mul/multiplier/fpmul_stage2_struct.vhd \
@@ -130,3 +127,4 @@ SRCS = \
 ../../../../soc/vector/fpu/mul/common/fpround_fpround.vhd \
 ../../../../soc/vector/fpu/mul/common/packfp_packfp.vhd \
 ../../../../soc/vector/fpu/mul/common/unpackfp_unpackfp.vhd \
+../../../../soc/vector/fpu/float_divide_goldschmidt.vhd \
