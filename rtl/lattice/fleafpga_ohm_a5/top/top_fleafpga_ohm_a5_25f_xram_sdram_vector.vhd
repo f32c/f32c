@@ -22,11 +22,11 @@ entity fleafpga_ohm_xram_sdram_vector is
 
     -- SoC configuration options
     C_bram_size: integer := 2;
-    C_acram: boolean := true;
+    C_acram: boolean := false;
     C_acram_wait_cycles: integer := 3; -- 3 or more
     C_acram_emu_kb: integer := 16; -- KB axi_cache emulation (power of 2)
-    C_sdram: boolean := false; -- onboard chip is 4XG12 D9NND (MT48LC16M16A2F4-6A:G)
-    C_sdram_clock_range: integer := 1;
+    C_sdram: boolean := true; -- onboard chip is 4XG12 D9NND (MT48LC16M16A2F4-6A:G)
+    C_sdram_clock_range: integer := 2;
     C_icache_size: integer := 2;
     C_dcache_size: integer := 2;
     C_sram8: boolean := false;
@@ -34,20 +34,20 @@ entity fleafpga_ohm_xram_sdram_vector is
     C_sio: integer := 2;
     C_spi: integer := 2;
     C_simple_io: boolean := true;
-    C_gpio: integer := 64;
+    C_gpio: integer := 32;
     C_gpio_pullup: boolean := false;
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
-    C_timer: boolean := false;
+    C_timer: boolean := true;
 
-    C_pcm: boolean := false; -- PCM audio (wav playing)
+    C_pcm: boolean := true; -- PCM audio (wav playing)
     C_synth: boolean := false; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
     C_spdif: boolean := false; -- SPDIF output (to audio jack tip)
 
-    C_cw_simple_out: integer := 7; -- simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
+    C_cw_simple_out: integer := -1; -- simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
-    C_vector: boolean := false; -- vector processor unit
+    C_vector: boolean := true; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
     C_vector_vaddr_bits: integer := 11;
@@ -60,7 +60,7 @@ entity fleafpga_ohm_xram_sdram_vector is
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
 
-    C_vgahdmi: boolean := false;
+    C_vgahdmi: boolean := true;
     C_vgahdmi_cache_size: integer := 8;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
@@ -112,10 +112,10 @@ entity fleafpga_ohm_xram_sdram_vector is
 	n_led1			: buffer	std_logic;
  
 	-- Digital video out
-	LVDS_Red		: out		std_logic_vector(1 downto 0);
-	LVDS_Green		: out		std_logic_vector(1 downto 0);
-	LVDS_Blue		: out		std_logic_vector(1 downto 0);
-	LVDS_ck			: out		std_logic_vector(1 downto 0);
+	lvds_red		: out		std_logic_vector(1 downto 0);
+	lvds_green		: out		std_logic_vector(1 downto 0);
+	lvds_blue		: out		std_logic_vector(1 downto 0);
+	lvds_ck			: out		std_logic_vector(1 downto 0);
 	
 	-- USB Slave (FT230x) debug interface 
 	slave_tx_o 		: out		std_logic;
@@ -123,21 +123,21 @@ entity fleafpga_ohm_xram_sdram_vector is
 	slave_cts_i		: in		std_logic;	-- Receives signal from #RTS pin on FT230x, where applicable.
 
 	-- SDRAM interface (For use with 16Mx16bit or 32Mx16bit SDR DRAM, depending on version)
-	Dram_Clk		: out		std_logic;	-- clock to SDRAM
-	Dram_CKE		: out		std_logic;	-- clock to SDRAM
-	Dram_n_cs		: out		std_logic;
-	Dram_n_Ras		: out		std_logic;	-- SDRAM RAS
-	Dram_n_Cas		: out		std_logic;	-- SDRAM CAS
-	Dram_n_We		: out		std_logic;	-- SDRAM write-enable
-	Dram_BA			: out		std_logic_vector(1 downto 0);	-- SDRAM bank-address
-	Dram_Addr		: out		std_logic_vector(12 downto 0);	-- SDRAM address bus
-	Dram_dqm		: out		std_logic_vector(1 downto 0);
-	Dram_Data		: inout		std_logic_vector(15 downto 0);	-- data bus to/from SDRAM
+	dram_clk		: out		std_logic;	-- clock to SDRAM
+	dram_cke		: out		std_logic;	-- clock to SDRAM
+	dram_n_cs		: out		std_logic;
+	dram_n_ras		: out		std_logic;	-- SDRAM RAS
+	dram_n_cas		: out		std_logic;	-- SDRAM CAS
+	dram_n_we		: out		std_logic;	-- SDRAM write-enable
+	dram_ba			: out		std_logic_vector(1 downto 0);	-- SDRAM bank-address
+	dram_addr		: out		std_logic_vector(12 downto 0);	-- SDRAM address bus
+	dram_dqm		: out		std_logic_vector(1 downto 0);
+	dram_data		: inout		std_logic_vector(15 downto 0);	-- data bus to/from SDRAM
 
 	-- GPIO Header pins declaration (RasPi compatible GPIO format)
 	-- gpio0 = GPIO_IDSD
 	-- gpio1 = GPIO_IDSC
-	GPIO			: inout		std_logic_vector(27 downto 0);
+	gpio			: inout		std_logic_vector(27 downto 0);
 
 	-- Sigma Delta ADC ('Enhanced' Ohm-specific GPIO functionality)
 	-- NOTE: Must comment out GPIO_5, GPIO_7, GPIO_10 AND GPIO_24 as instructed in the pin constraints file (.LPF) in order to use
@@ -159,12 +159,12 @@ entity fleafpga_ohm_xram_sdram_vector is
 	mmc_miso		: in		std_logic;
 
 	-- PS/2 Mode enable, keyboard and Mouse interfaces
-	PS2_enable		: out		std_logic;
-	PS2_clk1		: inout		std_logic;
-	PS2_data1		: inout		std_logic;
+	usb1_ps2_enable		: out		std_logic;
+	usb1_dp			: inout		std_logic;
+	usb1_dn			: inout		std_logic;
 
-	PS2_clk2		: inout		std_logic;
-	PS2_data2		: inout		std_logic
+	usb2_dp			: inout		std_logic;
+	usb2_dn			: inout		std_logic
   );
 end;
 
@@ -188,6 +188,11 @@ architecture Behavioral of fleafpga_ohm_xram_sdram_vector is
   signal ddr_d: std_logic_vector(2 downto 0);
   signal ddr_clk: std_logic;
   signal R_blinky: std_logic_vector(26 downto 0);
+
+  alias ps2_clk1 : std_logic is usb1_dp;
+  alias ps2_data1 : std_logic is usb1_dn;
+  alias ps2_clk2 : std_logic is usb2_dp;
+  alias ps2_data2 : std_logic is usb2_dn;
 
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
@@ -383,7 +388,8 @@ begin
     sdram_ba => dram_ba, sdram_dqm => dram_dqm,
     sdram_ras => dram_n_ras, sdram_cas => dram_n_cas,
     sdram_we => dram_n_we, sdram_cs => dram_n_cs,
-    sdram_cke => dram_cke, -- sdram_clk => dram_clk,
+    sdram_cke => dram_cke,
+    sdram_clk => dram_clk,
 
     -- acram_emu (AXI cache emulation using BRAM)
     acram_en => ram_en,
@@ -398,8 +404,9 @@ begin
     dvid_blue  => dvid_blue,
     dvid_clock => dvid_clock
   );
-  dram_clk <= clk_sdram;
-  
+  -- dram_clk <= clk_sdram;
+  -- dram_cke <= '1';
+
   G_acram: if C_acram generate
   acram_emulation: entity work.acram_emu
   generic map
