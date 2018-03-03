@@ -109,7 +109,7 @@ entity fleafpga_ohm_xram_sdram_vector is
 	sys_reset		: in		std_logic;	-- master reset input from reset header.
 
 	-- On-board status LED
-	n_led1			: buffer	std_logic;
+	led			: buffer	std_logic;
  
 	-- Digital video out
 	lvds_red		: out		std_logic_vector(1 downto 0);
@@ -369,7 +369,7 @@ begin
 
     gpio(27 downto 0) => gpio(27 downto 0),
     simple_out(31 downto 1) => open,
-    simple_out(0) => n_led1,
+    simple_out(0) => led,
     simple_in(31 downto 0) => open,
 
     -- 2 MSB audio channel bits are not used in "default" setup.
