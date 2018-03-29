@@ -16,10 +16,11 @@ PART = 5CEBA4F23C7
 BOARDFILE = ffm-c5a4-sd-v2r0-0.board
 CONFIG_DEVICE = EPCS64 # fixme
 SERIAL_FLASH_LOADER_DEVICE = EP4CE22 # fixme
-OPENOCD_BOARD=esa11-fpga-c5a4.ocd
-# OPENOCD_INTERFACE=interface/altera-usb-blaster.cfg
-# OPENOCD_INTERFACE=ftdi-fpu1.ocd
-OPENOCD_INTERFACE=remote.ocd
+OPENOCD_BOARD=ffm-fpga-c5a4.ocd
+# OPENOCD_INTERFACE=altera-usb-blaster.ocd
+OPENOCD_INTERFACE=ft4232.ocd
+# OPENOCD_INTERFACE=remote.ocd
+OPENOCD_SVF_CLOCK=33MHz
 
 ###################################################################
 #

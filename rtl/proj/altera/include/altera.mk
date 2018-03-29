@@ -18,6 +18,7 @@ CONFIG_DEVICE ?= EPCS4
 SERIAL_FLASH_LOADER_DEVICE ?= EP4CE6
 OPENOCD_INTERFACE ?= =interface/altera-usb-blaster.cfg
 OPENOCD_BOARD ?= tb276.ocd
+OPENOCD_SVF_CLOCK ?= 1MHz
 ###################################################################
 
 ###################################################################
@@ -46,7 +47,7 @@ clean:
 	rm -rf *~ $(PROJECT).jdi $(PROJECT).jic $(PROJECT).pin $(PROJECT).qws $(PROJECT).sld \
 	       *.rpt *.chg smart.log *.htm *.eqn *.sof *.svf *.pof *.smsg *.summary \
 	       f32c_dual_boot.map f32c_dual_boot*.rpd cfm.bin  \
-	       PLL*INFO.txt \
+	       PLL*INFO.txt c5_pin_model_dump.txt \
 	       db incremental_db output_files greybox_tmp cr_ie_info.json \
 	       $(ASSIGNMENT_FILES)
 
@@ -95,7 +96,7 @@ $(PROJECT).jic: $(PROJECT).sof
 	$(quartus_env); quartus_cpf -c -d $(CONFIG_DEVICE) -s $(SERIAL_FLASH_LOADER_DEVICE) $(PROJECT).sof $(PROJECT).jic
 
 $(PROJECT).svf: $(PROJECT).sof
-	$(quartus_env); quartus_cpf -c -q 1MHz -g 3.3 -n p $(PROJECT).sof $(PROJECT).svf
+	$(quartus_env); quartus_cpf -c -q $(OPENOCD_SVF_CLOCK) -g 3.3 -n p $(PROJECT).sof $(PROJECT).svf
 
 # http://dangerousprototypes.com/docs/JTAG_SVF_to_XSVF_file_converter
 # executable svf2xsvf502 is in zip file under old subdirectory:
