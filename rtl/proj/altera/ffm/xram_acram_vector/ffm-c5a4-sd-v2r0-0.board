@@ -180,7 +180,7 @@ set_location_assignment PIN_G16 -to FIO[66] # (B7A_4N)
 set_location_assignment PIN_G15 -to FIO[67] # (B7A_12P)
 set_location_assignment PIN_F14 -to FIO[68] # (B7A_12N)
 set_location_assignment PIN_E15 -to FIO[69] # (B7A_7P)
-set_location_assignment PIN_F15 -to FIO[70] # (B7A_7N)
+set_location_assignment PIN_F15 -to FIO[70] # (B7A_7N) DV_D[23]
 set_location_assignment PIN_D12 -to FIO[71] # (B7A_23P)
 set_location_assignment PIN_E12 -to FIO[72] # (B7A_23N)
 set_location_assignment PIN_G11 -to FIO[73] # (B7A_18P)
@@ -203,7 +203,8 @@ set_location_assignment PIN_B10 -to FIO[89]
 set_location_assignment PIN_A9 -to FIO[90]
 set_location_assignment PIN_A8 -to FIO[91]
 set_location_assignment PIN_B7 -to FIO[92]
-set_location_assignment PIN_A7 -to FIO[93]
+set_location_assignment PIN_A7 -to FIO[93] # DV_D[0]
+
 #
 #	SD-Card
 #
