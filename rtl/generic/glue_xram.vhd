@@ -52,7 +52,6 @@ generic (
   C_ll_sc: boolean := false;
   C_PC_mask: std_logic_vector(31 downto 0) := x"ffffffff"; -- full 4GB
   C_exceptions: boolean := true;
-  C_regfile_synchronous_read: boolean := false;
 
   -- COP0 options
   C_cop0_count: boolean := true;
@@ -64,7 +63,7 @@ generic (
   C_full_shifter: boolean := true;
   C_result_forwarding: boolean := true;
   C_load_aligner: boolean := true;
-
+  C_regfile_synchronous_read: boolean := false;
   -- Negatively influences timing closure, hence disabled
   C_movn_movz: boolean := false;
 
