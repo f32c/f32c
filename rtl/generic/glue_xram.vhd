@@ -261,7 +261,7 @@ port (
   simple_out: out std_logic_vector(31 downto 0);
   pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
   pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
-  vga_hsync, vga_vsync: out std_logic;
+  vga_hsync, vga_vsync, vga_blank: out std_logic;
   vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0) := (others => '0'); -- parallel VGA
   dvi_r, dvi_g, dvi_b: out std_logic_vector(9 downto 0) := (others => '0'); -- parallel DVI
   tmds_out_rgb: out std_logic_vector(2 downto 0);
@@ -1448,6 +1448,7 @@ begin
     vga_b <= S_vga_b;
     vga_vsync <= S_vga_vsync xor not C_video_modes(C_vgahdmi_mode).v_sync_polarity;
     vga_hsync <= S_vga_hsync xor not C_video_modes(C_vgahdmi_mode).h_sync_polarity;
+    vga_blank <= S_vga_blank;
 
     G_vgahdmi_tmds_display: if not C_lvds_display generate
     -- DVI-D TMDS Encoder Block
