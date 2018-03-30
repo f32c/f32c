@@ -20,7 +20,8 @@ entity ffm_xram_sdram_vector is
 	C_clk_freq: integer := 75;
 
 	-- SoC configuration options
-	C_bram_size: integer := 2;
+	C_bram_size: integer := 16;
+	C_bram_const_init: boolean := true;
         C_icache_size: integer := 2;
         C_dcache_size: integer := 2;
         C_acram: boolean := false;
@@ -134,6 +135,7 @@ begin
       C_clk_freq => C_clk_freq,
       C_branch_prediction => C_branch_prediction,
       C_bram_size => C_bram_size,
+      C_bram_const_init => C_bram_const_init,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
       C_acram => C_acram,
@@ -143,15 +145,15 @@ begin
       C_sdram_startup_cycles => 10100,
       C_sdram_cycles_per_refresh => 1524,
       -- vector processor
-      C_vector => C_vector,
-      C_vector_axi => C_vector_axi,
-      C_vector_registers => C_vector_registers,
-      C_vector_vaddr_bits => C_vector_vaddr_bits,
-      C_vector_vdata_bits => C_vector_vdata_bits,
-      C_vector_bram_pass_thru => C_vector_bram_pass_thru,
-      C_vector_float_addsub => C_vector_float_addsub,
-      C_vector_float_multiply => C_vector_float_multiply,
-      C_vector_float_divide => C_vector_float_divide,
+      --C_vector => C_vector,
+      --C_vector_axi => C_vector_axi,
+      --C_vector_registers => C_vector_registers,
+      --C_vector_vaddr_bits => C_vector_vaddr_bits,
+      --C_vector_vdata_bits => C_vector_vdata_bits,
+      --C_vector_bram_pass_thru => C_vector_bram_pass_thru,
+      --C_vector_float_addsub => C_vector_float_addsub,
+      --C_vector_float_multiply => C_vector_float_multiply,
+      --C_vector_float_divide => C_vector_float_divide,
       -- vga simple bitmap
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_mode => C_video_mode,

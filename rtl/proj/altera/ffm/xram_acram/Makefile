@@ -40,7 +40,7 @@ SRCS = \
 ../../../../altera/ffm/clocks/clk_125p_125n_25_75_100.vhd \
 ../../../../altera/ffm/clocks/clk_125p_125n_25_75_100_0002.v \
 ../../../../generic/hdmi_out.vhd \
-../../../../generic/glue_xram_vector.vhd \
+../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \
 ../../../../generic/bootloader/defs_bootblock.vhd \
 ../../../../generic/bootloader/boot_sio_mi32el.vhd \
@@ -81,6 +81,9 @@ SRCS = \
 ../../../../soc/gpio.vhd \
 ../../../../soc/timer.vhd \
 ../../../../soc/pcm.vhd \
+../../../../soc/synth.vhd \
+../../../../soc/sigmadelta.vhd \
+../../../../soc/spdif_tx.vhd \
 ../../../../soc/pid/pid.vhd \
 ../../../../soc/pid/ctrlpid.vhd \
 ../../../../soc/pid/simotor.vhd \
