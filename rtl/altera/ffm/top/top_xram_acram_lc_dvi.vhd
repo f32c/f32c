@@ -47,12 +47,13 @@ entity ffm_xram_sdram is
         C_dvid_ddr: boolean := false; -- generate HDMI with DDR
         C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
         C_hdmi_out: boolean := true;
+        C_compositing2_write_while_reading: boolean := false; -- nonfunctional, can't be enabled for Cyclone-V
 
         C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
         C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
         -- normally this should be actual bits per pixel
         C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
-        C_vgahdmi_compositing: integer := 0; -- because C5 doesn't have write-while-read BRAM
+        C_vgahdmi_compositing: integer := 2; -- because C5 doesn't have write-while-read BRAM
 
         -- VGA textmode and graphics, full featured
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
@@ -249,6 +250,7 @@ begin
       --C_vector_float_divide => C_vector_float_divide,
       -- vga simple bitmap
       C_dvid_ddr => C_dvid_ddr,
+      C_compositing2_write_while_reading => C_compositing2_write_while_reading,
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
