@@ -125,6 +125,7 @@ generic (
   -- VGA/HDMI simple 640x480 bitmap only
   C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
   C_vgahdmi_compositing: integer := 2; -- 2: Compositing2 2D acceleration, 0: linear bitmap
+  C_compositing2_write_while_reading: boolean := true; -- true for normal function
   C_vgahdmi_mode: integer := 1; -- video mode selection: 0:640x360, 1:640x480, 2:800x450, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024
   C_vgahdmi_axi: boolean := false; -- true: use AXI bus (video_axi_in/out) instead of f32c bus
   C_vgahdmi_cache_size: integer := 0; -- KB enable cache for f32c bus (C_vgahdmi_axi = false)
@@ -1129,6 +1130,7 @@ begin
     S_vga_active_enabled <= S_vga_enable and not S_tv_vsync; -- frame active, pre-fill fifo
     comp_fifo: entity work.compositing2_fifo
     generic map (
+      C_write_while_reading => C_compositing2_write_while_reading,
       C_width => C_tv_fifo_width,
       C_height => C_tv_fifo_height,
       C_data_width => C_tv_fifo_data_width,
@@ -1339,6 +1341,7 @@ begin
     -- compositing2 video accelerator, shows linked list of pixel data
     comp_fifo: entity work.compositing2_fifo
     generic map (
+      C_write_while_reading => C_compositing2_write_while_reading,
       C_fast_ram => C_vgahdmi_fifo_fast_ram,
       C_timeout => C_vgahdmi_fifo_timeout,
       C_burst_max_bits => C_vgahdmi_fifo_burst_max_bits,
@@ -1689,6 +1692,7 @@ begin
       if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
         bitmap_videofifo: entity work.compositing2_fifo
           generic map (
+            C_write_while_reading => C_compositing2_write_while_reading,
             C_timeout => C_vgatext_bitmap_fifo_timeout,
             C_width => C_vgatext_bitmap_fifo_step,
             C_height => C_vgatext_bitmap_fifo_height,

@@ -134,6 +134,7 @@ entity compositing2_fifo is
     generic (
         C_synclen: integer := 2; -- bits in cpu-to-pixel clock synchronizer
         C_fast_ram: boolean := true; -- set to true if RAM can be faster then shifting period (4 cycles for 8bpp) but beware of deadlock bug
+        C_write_while_reading: boolean := true; -- true: normal, false: non-functiona, picture won't look correct without it :)
         -- C_position_clipping = false -- (default) handles only small out of screen positions
         -- C_position_clipping = true -- handles large out of screen gracefully (LUT eater)
         -- for average use it can be left disabled (false)
@@ -569,7 +570,7 @@ begin
     -- (erasing is done with the same "fetch_next" signal)
     -- a registered, non-pass-through BRAM block
     -- is required for this to work
-    S_compositing_erase <= fetch_next;
+    S_compositing_erase <= fetch_next when C_write_while_reading else '0';
 
     -- at a configurable amount of pixels end of line and
     -- before "R_line_rd" changes this process will generate
