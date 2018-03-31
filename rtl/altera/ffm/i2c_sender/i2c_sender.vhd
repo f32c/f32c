@@ -85,7 +85,8 @@ i2c_tristate: process(data_sr, tristate_sr)
 i2c_send:   process(clk)
    begin
       if rising_edge(clk) then
-         if resend = '1' and finished = '1' then 
+         -- if resend = '1' and finished = '1' then 
+         if resend = '1' then 
             address           <= (others => '0');
             clk_first_quarter <= (others => '1');
             clk_last_quarter  <= (others => '1');
