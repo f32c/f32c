@@ -141,6 +141,7 @@ architecture Behavioral of ffm_xram_sdram is
   signal tmds_clk: std_logic;
   signal S_vga_blank: std_logic;
   signal S_vga_hsync, S_vga_vsync: std_logic;
+  signal S_i2c_resend: std_logic;
 --  alias dv_clk: std_logic is fio(32);
 --  alias dv_sda: std_logic is fio(33);
 --  alias dv_scl: std_logic is fio(34);
@@ -268,7 +269,8 @@ begin
       spi_ss(0)   => open,  spi_ss(1)   => sd_m_d(3),
       spi_mosi(0) => open,  spi_mosi(1) => sd_m_cmd,
       spi_miso(0) => open,  spi_miso(1) => sd_m_d(0),
-      gpio => open,
+      gpio(27 downto 0) => open,
+      gpio(31 downto 30) => open,
       acram_en => ram_en,
       acram_addr(29 downto 2) => ram_address(29 downto 2),
       acram_byte_we(3 downto 0) => ram_byte_we(3 downto 0),
@@ -281,8 +283,8 @@ begin
       sdram_cke => dr_cke, sdram_clk => dr_clk,
       sdram_we => dr_we_n, sdram_cs => dr_cs_n,
       -- ***** VGA *****
-      gpio(29) => dv_sda,
-      gpio(28) => dv_scl,
+      --gpio(29) => dv_sda,
+      --gpio(28) => dv_scl,
       vga_hsync => S_vga_hsync,
       vga_vsync => S_vga_vsync,
       vga_blank => S_vga_blank,
@@ -294,12 +296,14 @@ begin
       dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
       dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
       dvid_clock(0) => tmds_clk,    dvid_clock(1) => open,
-      simple_out(0) => led, simple_out(31 downto 1) => open,
+      simple_out(0) => led,
+      simple_out(1) => S_i2c_resend,
+      simple_out(31 downto 2) => open,
       simple_in(1 downto 0) => (others => '0'), simple_in(31 downto 2) => open
     );
-    dv_clk <= clk_pixel;
-    dv_hsync <= not S_vga_hsync;
-    dv_vsync <= not S_vga_vsync;
+    dv_clk <= not clk_pixel;
+    dv_hsync <= S_vga_hsync;
+    dv_vsync <= S_vga_vsync;
     dv_de <= not S_vga_blank;
 
     -- unused RAM upper 16 bits
@@ -337,5 +341,14 @@ begin
         tmds_out_clk_n => vid_clk_n  -- CLK- clock
       );
     end generate;
+
+    i2c_send: entity work.i2c_sender
+      port map
+      (
+        clk => clk_pixel,
+        resend => S_i2c_resend,
+        sioc => dv_scl,
+        siod => dv_sda
+      );
 
 end Behavioral;
