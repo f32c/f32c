@@ -254,6 +254,7 @@ begin
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_vgahdmi_compositing => C_vgahdmi_compositing,
+      C_gpio => C_gpio,
       C_timer => C_timer,
       C_sio => C_sio,
       C_sio_init_baudrate => C_sio_init_baudrate,
@@ -269,8 +270,10 @@ begin
       spi_ss(0)   => open,  spi_ss(1)   => sd_m_d(3),
       spi_mosi(0) => open,  spi_mosi(1) => sd_m_cmd,
       spi_miso(0) => open,  spi_miso(1) => sd_m_d(0),
-      gpio(27 downto 0) => open,
       gpio(31 downto 30) => open,
+      gpio(29) => open, -- dv_sda,
+      gpio(28) => open, -- dv_scl,
+      gpio(27 downto 0) => open,
       acram_en => ram_en,
       acram_addr(29 downto 2) => ram_address(29 downto 2),
       acram_byte_we(3 downto 0) => ram_byte_we(3 downto 0),
@@ -283,8 +286,6 @@ begin
       sdram_cke => dr_cke, sdram_clk => dr_clk,
       sdram_we => dr_we_n, sdram_cs => dr_cs_n,
       -- ***** VGA *****
-      --gpio(29) => dv_sda,
-      --gpio(28) => dv_scl,
       vga_hsync => S_vga_hsync,
       vga_vsync => S_vga_vsync,
       vga_blank => S_vga_blank,
@@ -342,6 +343,7 @@ begin
       );
     end generate;
 
+    G_i2c_sender: if true generate
     i2c_send: entity work.i2c_sender
       port map
       (
@@ -350,5 +352,6 @@ begin
         sioc => dv_scl,
         siod => dv_sda
       );
+    end generate;
 
 end Behavioral;
