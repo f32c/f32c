@@ -17,17 +17,17 @@ entity ffm_xram_sdram_vector is
 	C_branch_prediction: boolean := true;
 
 	-- Main clock: 50/75/100
-	C_clk_freq: integer := 75;
+	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
 	C_bram_size: integer := 16;
 	C_bram_const_init: boolean := true;
         C_icache_size: integer := 2;
         C_dcache_size: integer := 2;
-        C_acram: boolean := false;
-        C_sdram: boolean := true;
+        C_acram: boolean := true;
+        C_sdram: boolean := false;
 
-        C_vector: boolean := false; -- vector processor unit (wip)
+        C_vector: boolean := true; -- vector processor unit
         C_vector_axi: boolean := false; -- vector processor bus type (false: normal f32c)
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
         C_vector_bram_pass_thru: boolean := true; -- Cyclone-V won't compile with pass_thru=false
@@ -37,6 +37,13 @@ entity ffm_xram_sdram_vector is
         C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
         C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
+	C_sio: integer := 1;
+	C_sio_init_baudrate: integer := 115200;
+        C_spi: integer := 2;
+	C_gpio: integer := 32;
+	C_timer: boolean := true;
+	C_simple_io: boolean := true;
+
         C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
         C_hdmi_out: boolean := false;
 
@@ -44,13 +51,43 @@ entity ffm_xram_sdram_vector is
         C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
         -- normally this should be actual bits per pixel
         C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
+        C_vgahdmi_compositing: integer := 0; -- disabled as C5 doesn't have non-pass-thru write-while-read BRAM
 
-	C_sio: integer := 1;
-	C_sio_init_baudrate: integer := 115200;
-        C_spi: integer := 2;
-	C_gpio: integer := 32;
-	C_timer: boolean := true;
-	C_simple_io: boolean := true
+        -- VGA textmode and graphics, full featured
+    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext_label: string := "FFM f32c: 100MHz MIPS-compatible soft-core, 32MB SDRAM";
+    C_vgatext_bits: integer := 4;   -- 4096 possible colors
+    C_vgatext_bram_mem: integer := 8;   -- 8KB text+font  memory
+    C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
+    C_vgatext_reset: boolean := true;   -- reset registers to default with async reset
+    C_vgatext_palette: boolean := true;  -- no color palette
+    C_vgatext_text: boolean := true;    -- enable optional text generation
+    C_vgatext_font_bram8: boolean := true;    -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
+    C_vgatext_char_height: integer := 8;   -- character cell height
+    C_vgatext_font_height: integer := 8;    -- font height
+    C_vgatext_font_depth: integer := 8;     -- font char depth, 7=128 characters or 8=256 characters
+    C_vgatext_font_linedouble: boolean := false;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
+    C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)
+    C_vgatext_monochrome: boolean := false;    -- true for 2-color text for whole screen, else additional color attribute byte per character
+    C_vgatext_finescroll: boolean := true;   -- true for pixel level character scrolling and line length modulo
+    C_vgatext_cursor: boolean := true;    -- true for optional text cursor
+    C_vgatext_cursor_blink: boolean := true;    -- true for optional blinking text cursor
+    C_vgatext_bus_read: boolean := true; -- true: allow reading vgatext BRAM from CPU bus (may affect fmax). false: write only
+    C_vgatext_reg_read: boolean := false; -- true: allow reading vgatext BRAM from CPU bus (may affect fmax). false: write only
+    C_vgatext_text_fifo: boolean := true;  -- disable text memory FIFO
+      C_vgatext_text_fifo_step: integer := (82*2)/4; -- step for the FIFO refill and rewind
+      C_vgatext_text_fifo_width: integer := 6;  -- width of FIFO address space (default=4) length = 2^width * 4 bytes
+    C_vgatext_bitmap: boolean := false;     -- true for optional bitmap generation
+    C_vgatext_bitmap_depth: integer := 8;   -- 8-bpp 16-color bitmap
+    C_vgatext_bitmap_fifo: boolean := true;  -- disable bitmap FIFO
+    -- step=horizontal width in pixels
+    C_vgatext_bitmap_fifo_step: integer := 640;
+    -- height=vertical height in pixels
+    C_vgatext_bitmap_fifo_height: integer := 480;
+    -- output data width 8bpp
+    C_vgatext_bitmap_fifo_data_width: integer := 8; -- should be equal to bitmap depth
+    -- bitmap width of FIFO address space length = 2^width * 4 byte
+    C_vgatext_bitmap_fifo_addr_width: integer := 11
     );
     port
     (
@@ -87,6 +124,7 @@ architecture Behavioral of ffm_xram_sdram_vector is
   signal clk_pixel, clk_pixel_shift, clk_pixel_shift_n: std_logic;
   signal tmds_rgb: std_logic_vector(2 downto 0);
   signal tmds_clk: std_logic;
+  signal S_vga_blank: std_logic;
   alias dv_clk: std_logic is fio(32);
   alias dv_sda: std_logic is fio(33);
   alias dv_scl: std_logic is fio(34);
@@ -115,7 +153,7 @@ begin
       clk_pixel_shift <= clock_50a; -- wrong, should be 250 MHz
     end generate;
 
-    G_75MHz_clk: if C_clk_freq = 75 generate
+    G_75MHz_clk: if C_clk_freq = 75 and C_video_mode = 1 generate
     clkgen_75: entity work.clk_125p_125n_25_75_100
     port map(
       refclk   => clock_50a,         --   50 MHz input from board
@@ -128,6 +166,32 @@ begin
     );
     end generate;
 
+    G_100MHz_vidmod1_clk: if C_clk_freq = 100 and C_video_mode = 1 generate
+    clkgen_100_vidmod1: entity work.clk_125p_125n_25_75_100
+    port map(
+      refclk   => clock_50a,         --   50 MHz input from board
+      rst      => '0',               --    0:don't reset
+      outclk_0 => clk_pixel_shift,   --  125 MHz phase 0
+      outclk_1 => clk_pixel_shift_n, --  125 MHz phase 180
+      outclk_2 => clk_pixel,         --   25 MHz pixel clock
+      outclk_3 => open,              --   75 MHz unused
+      outclk_4 => clk                --  100 MHz CPU clock
+    );
+    end generate;
+
+    G_100MHz_vidmod6_clk: if C_clk_freq = 100 and C_video_mode = 6 generate
+    clkgen_100_vidmod6: entity work.clk_125p_125n_25_75_100
+    port map(
+      refclk   => clock_50a,         --   50 MHz input from board
+      rst      => '0',               --    0:don't reset
+      outclk_0 => open,              --  125 MHz phase 0
+      outclk_1 => open,              --  125 MHz phase 180
+      outclk_2 => open,              --   25 MHz unused
+      outclk_3 => clk_pixel,         --   75 MHz pixel clock
+      outclk_4 => clk                --  100 MHz CPU clock
+    );
+    end generate;
+
     -- generic XRAM glue
     glue_xram: entity work.glue_xram
     generic map (
@@ -135,7 +199,7 @@ begin
       C_clk_freq => C_clk_freq,
       C_branch_prediction => C_branch_prediction,
       C_bram_size => C_bram_size,
-      C_bram_const_init => C_bram_const_init,
+      --C_bram_const_init => C_bram_const_init,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
       C_acram => C_acram,
@@ -145,20 +209,21 @@ begin
       C_sdram_startup_cycles => 10100,
       C_sdram_cycles_per_refresh => 1524,
       -- vector processor
-      --C_vector => C_vector,
-      --C_vector_axi => C_vector_axi,
-      --C_vector_registers => C_vector_registers,
-      --C_vector_vaddr_bits => C_vector_vaddr_bits,
-      --C_vector_vdata_bits => C_vector_vdata_bits,
-      --C_vector_bram_pass_thru => C_vector_bram_pass_thru,
-      --C_vector_float_addsub => C_vector_float_addsub,
-      --C_vector_float_multiply => C_vector_float_multiply,
-      --C_vector_float_divide => C_vector_float_divide,
+      C_vector => C_vector,
+      C_vector_axi => C_vector_axi,
+      C_vector_registers => C_vector_registers,
+      C_vector_vaddr_bits => C_vector_vaddr_bits,
+      C_vector_vdata_bits => C_vector_vdata_bits,
+      C_vector_bram_pass_thru => C_vector_bram_pass_thru,
+      C_vector_float_addsub => C_vector_float_addsub,
+      C_vector_float_multiply => C_vector_float_multiply,
+      C_vector_float_divide => C_vector_float_divide,
       -- vga simple bitmap
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
+      C_vgahdmi_compositing => C_vgahdmi_compositing,
       C_timer => C_timer,
       C_sio => C_sio,
       C_sio_init_baudrate => C_sio_init_baudrate,
@@ -187,8 +252,9 @@ begin
       sdram_cke => dr_cke, sdram_clk => dr_clk,
       sdram_we => dr_we_n, sdram_cs => dr_cs_n,
       -- ***** VGA *****
-      vga_vsync => dv_vsync,
       vga_hsync => dv_hsync,
+      vga_vsync => dv_vsync,
+      --vga_blank => S_vga_blank,
       vga_r => dv_d(23 downto 16),
       vga_g => dv_d(15 downto 8),
       vga_b => dv_d(7 downto 0),
@@ -201,6 +267,7 @@ begin
       simple_in(1 downto 0) => (others => '0'), simple_in(31 downto 2) => open
     );
     dv_clk <= clk_pixel;
+    dv_de <= not S_vga_blank;
 
     -- unused RAM upper 16 bits
     dr_dqm(3 downto 2) <= (others => '0');
@@ -210,12 +277,12 @@ begin
     acram_emulation: entity work.acram_emu
     generic map
     (
-      C_addr_width => 12
+      C_addr_width => 15
     )
     port map
     (
       clk => clk,
-      acram_a => ram_address(13 downto 2),
+      acram_a => ram_address(16 downto 2),
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
