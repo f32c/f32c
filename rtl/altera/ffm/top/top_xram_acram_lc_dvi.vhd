@@ -304,7 +304,7 @@ begin
       simple_out(31 downto 2) => open,
       simple_in(1 downto 0) => (others => '0'), simple_in(31 downto 2) => open
     );
-    dv_clk <= not clk_pixel;
+    dv_clk <= clk_pixel;
     dv_hsync <= S_vga_hsync;
     dv_vsync <= S_vga_vsync;
     dv_de <= not S_vga_blank;
