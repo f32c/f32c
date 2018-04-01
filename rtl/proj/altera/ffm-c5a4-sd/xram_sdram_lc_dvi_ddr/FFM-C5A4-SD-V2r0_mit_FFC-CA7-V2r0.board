@@ -137,6 +137,7 @@ set_location_assignment PIN_L2  -to vid_clk
 set_location_assignment PIN_L1  -to vid_clk(n)
 set_location_assignment PIN_AA2 -to vid_d0 # blue+
 set_location_assignment PIN_AA1 -to vid_d0(n) # blue-
+# disabled because green channel pin pair U1/U2 is differential RX capable, not TX.
 #set_location_assignment PIN_U2  -to vid_d1 # green+
 #set_location_assignment PIN_U1  -to vid_d1(n) # green-
 set_location_assignment PIN_N2  -to vid_d2 # red+
