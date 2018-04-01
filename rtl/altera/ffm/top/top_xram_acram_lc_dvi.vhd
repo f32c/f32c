@@ -138,8 +138,7 @@ end;
 architecture Behavioral of ffm_xram_sdram is
   signal clk: std_logic;
   signal clk_pixel, clk_pixel_shift, clk_pixel_shift_n: std_logic;
-  signal tmds_rgb: std_logic_vector(2 downto 0);
-  signal tmds_clk: std_logic;
+  signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
   signal S_vga_blank: std_logic;
   signal S_vga_hsync, S_vga_vsync: std_logic;
   signal S_i2c_resend: std_logic := '0';
@@ -294,11 +293,12 @@ begin
       vga_r => dv_d(23 downto 16),
       vga_g => dv_d(15 downto 8),
       vga_b => dv_d(7 downto 0),
-      -- ***** HDMI *****
-      dvid_red(0)   => tmds_rgb(2), dvid_red(1)   => open,
-      dvid_green(0) => tmds_rgb(1), dvid_green(1) => open,
-      dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
-      dvid_clock(0) => tmds_clk,    dvid_clock(1) => open,
+      -- ***** DVI *****
+      dvid_red   => dvid_red,
+      dvid_green => dvid_green,
+      dvid_blue  => dvid_blue,
+      dvid_clock => dvid_clock,
+      -- ***** Simple IO ******
       simple_out(0) => led,
       simple_out(1) => open, -- S_i2c_resend,
       simple_out(31 downto 2) => open,
@@ -332,14 +332,14 @@ begin
     end generate;
 
     -- differential output buffering for HDMI clock and video
-    G_hdmi_out: if C_hdmi_out and not C_dvid_ddr generate
-    hdmi_output: entity work.hdmi_out
+    G_dvi_out: if C_hdmi_out and not C_dvid_ddr generate
+    dvi_output: entity work.hdmi_out
       port map
       (
-        tmds_in_rgb    => tmds_rgb,
+        tmds_in_rgb    => dvid_red(0) & dvid_green(0) & dvid_blue(0),
         tmds_out_rgb_p => vid_d_p,   -- D2+ red  D1+ green  D0+ blue
         tmds_out_rgb_n => vid_d_n,   -- D2- red  D1- green  D0- blue
-        tmds_in_clk    => tmds_clk,
+        tmds_in_clk    => dvid_clock(0),
         tmds_out_clk_p => vid_clk_p, -- CLK+ clock
         tmds_out_clk_n => vid_clk_n  -- CLK- clock
       );
