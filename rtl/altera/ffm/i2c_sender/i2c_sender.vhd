@@ -31,42 +31,49 @@ architecture Behavioral of i2c_sender is
    signal   tristate_sr       : std_logic_vector(28 downto 0) := (others => '0');
    signal   reg_value         : std_logic_vector(15 downto 0)  := (others => '0');
    constant i2c_wr_addr       : std_logic_vector(7 downto 0)  := x"72";
+   type T_writereg is
+   record
+     reg, val: std_logic_vector(7 downto 0);
+   end record;
+   type T_init_sequence is array(0 to 25) of T_writereg;
+   constant C_init_sequence: T_init_sequence :=
+   (
+     (reg => x"01", val => x"00"), --  0 Set N Value(6144)
+     (reg => x"02", val => x"18"), --  1 Set N Value(6144)
+     (reg => x"03", val => x"00"), --  2 Set N Value(6144)
+     (reg => x"15", val => x"00"), --  3 Input 444 (RGB or YCrCb) with Separate Syncs
+     (reg => x"16", val => x"61"), --  4 44.1kHz fs, YPrPb 444
+     (reg => x"18", val => x"46"), --  5 CSC disabled
+     (reg => x"40", val => x"80"), --  6 General Control Packet Enable
+     (reg => x"41", val => x"10"), --  7 Power Down control
+     (reg => x"48", val => x"48"), --  8 Reverse bus, Data right justified
+     (reg => x"48", val => x"a8"), --  9 Set Dither Mode 12 to 10 bit
+     (reg => x"4c", val => x"06"), -- 10 12-bit Output
+     (reg => x"55", val => x"00"), -- 11 Set RGB444 in AVinfo Frame
+     (reg => x"55", val => x"08"), -- 12 Set active format Aspect
+     (reg => x"96", val => x"20"), -- 13 HPD Interrupt clear
+     (reg => x"98", val => x"03"), -- 14 ADI required Write
+     (reg => x"98", val => x"02"), -- 15 ADI required Write
+     (reg => x"9c", val => x"30"), -- 16 ADI required Write
+     (reg => x"9d", val => x"61"), -- 17 Set clock divide
+     (reg => x"a2", val => x"a4"), -- 18 ADI required Write
+     (reg => x"43", val => x"a4"), -- 19 ADI required Write
+     (reg => x"af", val => x"16"), -- 20 Set HDMI Mode
+     (reg => x"ba", val => x"60"), -- 21 No clock delay
+     (reg => x"de", val => x"9c"), -- 22 ADI required write
+     (reg => x"e4", val => x"60"), -- 23 ADI required Write
+     (reg => x"fa", val => x"7d"), -- 24 Nbr of times to search for good phase
+     others => (reg => x"ff", val => x"ff")  -- 25 FFFF end of sequence
+   );
 begin
 
 registers: process(clk)
    begin
       if rising_edge(clk) then
-         case address is
-            when x"00" => reg_value  <= x"0100"; -- Set N Value(6144)
-            when x"01" => reg_value  <= x"0218"; -- Set N Value(6144)
-            when x"02" => reg_value  <= x"0300"; -- Set N Value(6144)
-            when x"03" => reg_value  <= x"1500"; -- Input 444 (RGB or YCrCb) with Separate Syncs
-            when x"04" => reg_value  <= x"1661"; -- 44.1kHz fs, YPrPb 444
-            when x"05" => reg_value  <= x"1846"; -- CSC disabled
-            when x"06" => reg_value  <= x"4080"; -- General Control Packet Enable
-            when x"07" => reg_value  <= x"4110"; -- Power Down control
-            when x"08" => reg_value  <= x"4848"; -- Reverse bus, Data right justified
-            when x"09" => reg_value  <= x"48a8"; -- Set Dither Mode 12 to 10 bit
-            when x"0a" => reg_value  <= x"4c06"; -- 12 bit Output
-            when x"0b" => reg_value  <= x"5500"; -- Set RGB444 in AVinfo Frame
-            when x"0c" => reg_value  <= x"5508"; -- Set active format Aspect
-            when x"0d" => reg_value  <= x"9620"; -- HPD Interrupt clear
-            when x"0e" => reg_value  <= x"9803"; -- ADI required Write
-            when x"0f" => reg_value  <= x"9802"; -- ADI required Write
-            when x"10" => reg_value  <= x"9c30"; -- ADI required Write
-            when x"11" => reg_value  <= x"9d61"; -- Set clock divide
-            when x"12" => reg_value  <= x"a2a4"; -- ADI required Write
-            when x"13" => reg_value  <= x"43a4"; -- ADI required Write
-            when x"14" => reg_value  <= x"af16"; -- Set HDMI Mode
-            when x"15" => reg_value  <= x"ba60"; -- No clock delay
-            when x"16" => reg_value  <= x"de9c"; -- ADI required write
-            when x"17" => reg_value  <= x"e460"; -- ADI required Write
-            when x"18" => reg_value  <= x"fa7d"; -- Nbr of times to search for good phase
-            when others => reg_value <= x"ffff";
-         end case;
+        reg_value <= C_init_sequence(to_integer(unsigned(address))).reg
+                   & C_init_sequence(to_integer(unsigned(address))).val;
       end if;
    end process;
-  
    
 i2c_tristate: process(data_sr, tristate_sr)
    begin
