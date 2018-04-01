@@ -43,6 +43,7 @@ SRCS = \
 ../../../../altera/ffm/clocks/clk_125p_125n_25_75_100_0002.v \
 ../../../../altera/ffm/clocks/clk_250_25_75_100.vhd \
 ../../../../altera/ffm/clocks/clk_250_25_75_100_0002.v \
+../../../../altera/chip/cyclone5/dvi_lvds.vhd \
 ../../../../generic/hdmi_out.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \

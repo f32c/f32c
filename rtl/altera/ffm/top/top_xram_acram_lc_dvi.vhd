@@ -139,6 +139,8 @@ architecture Behavioral of ffm_xram_sdram is
   signal clk: std_logic;
   signal clk_pixel, clk_pixel_shift, clk_pixel_shift_n: std_logic;
   signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
+  signal ddr_dvid: std_logic_vector(3 downto 0);
+  signal vid_lvds_p: std_logic_vector(3 downto 0);
   signal S_vga_blank: std_logic;
   signal S_vga_hsync, S_vga_vsync: std_logic;
   signal S_i2c_resend: std_logic := '0';
@@ -331,8 +333,8 @@ begin
     );
     end generate;
 
-    -- differential output buffering for HDMI clock and video
-    G_dvi_out: if C_hdmi_out and not C_dvid_ddr generate
+    -- single eneded outputs simulating differential buffering for DVI clock and video
+    G_sdr_dvi_out: if C_hdmi_out and not C_dvid_ddr generate
     dvi_output: entity work.hdmi_out
       port map
       (
@@ -343,6 +345,29 @@ begin
         tmds_out_clk_p => vid_clk_p, -- CLK+ clock
         tmds_out_clk_n => vid_clk_n  -- CLK- clock
       );
+    end generate;
+
+    -- DDR output buffering for DVI clock and video
+    G_ddr_dvi_out: if C_hdmi_out and C_dvid_ddr generate
+    ddr_dvi_output: entity work.dvi_lvds
+      port map
+      (
+        tx_in       => dvid_red & dvid_green & dvid_blue & dvid_clock,
+        tx_inclock  => clk_pixel_shift,
+        tx_out      => vid_lvds_p
+      );
+      vid_d_p <= vid_lvds_p(3 downto 1);
+      vid_clk_p <= vid_lvds_p(0);
+--    dvi_out_buf: entity work.hdmi_out
+--      port map
+--      (
+--        tmds_in_rgb    => ddr_dvid(3 downto 1),
+--        tmds_out_rgb_p => vid_d_p,   -- D2+ red  D1+ green  D0+ blue
+--        tmds_out_rgb_n => vid_d_n,   -- D2- red  D1- green  D0- blue
+--        tmds_in_clk    => ddr_dvid(0),
+--        tmds_out_clk_p => vid_clk_p, -- CLK+ clock
+--        tmds_out_clk_n => vid_clk_n  -- CLK- clock
+--      );
     end generate;
 
     G_i2c_sender: if true generate
