@@ -41,24 +41,34 @@ architecture Behavioral of i2c_sender is
      --(reg => x"01", val => x"00"), --  0 Set N Value(6144)
      --(reg => x"02", val => x"18"), --  1 Set N Value(6144)
      --(reg => x"03", val => x"00"), --  2 Set N Value(6144)
+     (reg => x"01", val => x"00"), --  0 Set N Value(0) default
+     (reg => x"02", val => x"00"), --  1 Set N Value(0) default
+     (reg => x"03", val => x"00"), --  2 Set N Value(0) default
      (reg => x"15", val => x"00"), --  3 Input 444 (RGB or YCrCb) with Separate Syncs
      --(reg => x"16", val => x"61"), --  4 44.1kHz fs, YPrPb 444
+     (reg => x"16", val => x"00"), --  4 0 default
      (reg => x"18", val => x"46"), --  5 CSC disabled
      --(reg => x"40", val => x"80"), --  6 General Control Packet Enable
+     (reg => x"40", val => x"00"), --  6 0 default
      (reg => x"41", val => x"10"), --  7 Power Down control
      --(reg => x"48", val => x"48"), --  8 Reverse bus, Data right justified
      --(reg => x"48", val => x"a8"), --  9 Set Dither Mode 12 to 10 bit
+     (reg => x"48", val => x"00"), --  9 0 default
      --(reg => x"4c", val => x"06"), -- 10 12-bit Output
-     --(reg => x"55", val => x"00"), -- 11 Set RGB444 in AVinfo Frame
+     (reg => x"4c", val => x"00"), -- 10 0 default
+     (reg => x"55", val => x"00"), -- 11 0 default
      --(reg => x"55", val => x"08"), -- 12 Set active format Aspect
      --(reg => x"96", val => x"20"), -- 13 HPD Interrupt clear
+     (reg => x"96", val => x"00"), -- 13 0 default
      (reg => x"98", val => x"03"), -- 14 ADI required Write
      (reg => x"98", val => x"02"), -- 15 ADI required Write
      (reg => x"9c", val => x"30"), -- 16 ADI required Write
      --(reg => x"9d", val => x"61"), -- 17 Set clock divide
+     (reg => x"9d", val => x"00"), -- 17 0 default
      (reg => x"a2", val => x"a4"), -- 18 ADI required Write
      (reg => x"43", val => x"a4"), -- 19 ADI required Write
      --(reg => x"af", val => x"16"), -- 20 Set HDMI Mode
+     (reg => x"af", val => x"00"), -- 20 0 default
      (reg => x"ba", val => x"60"), -- 21 No clock delay
      (reg => x"de", val => x"9c"), -- 22 ADI required write
      (reg => x"e4", val => x"60"), -- 23 ADI required Write
