@@ -135,7 +135,7 @@ BEGIN
 		pll_compensation_mode => "AUTO",
 		pll_self_reset_on_loss_lock => "OFF",
 		preemphasis_setting => 0,
-		refclk_frequency => "20.000000 MHz",
+		refclk_frequency => "25.000000 MHz",
 		registered_input => "TX_CORECLK",
 		use_external_pll => "OFF",
 		use_no_phase_shift => "ON",
