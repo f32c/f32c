@@ -142,7 +142,7 @@ architecture Behavioral of ffm_xram_sdram is
   signal tmds_clk: std_logic;
   signal S_vga_blank: std_logic;
   signal S_vga_hsync, S_vga_vsync: std_logic;
-  signal S_i2c_resend: std_logic;
+  signal S_i2c_resend: std_logic := '0';
 --  alias dv_clk: std_logic is fio(32);
 --  alias dv_sda: std_logic is fio(33);
 --  alias dv_scl: std_logic is fio(34);
@@ -300,7 +300,7 @@ begin
       dvid_blue(0)  => tmds_rgb(0), dvid_blue(1)  => open,
       dvid_clock(0) => tmds_clk,    dvid_clock(1) => open,
       simple_out(0) => led,
-      simple_out(1) => S_i2c_resend,
+      simple_out(1) => open, -- S_i2c_resend,
       simple_out(31 downto 2) => open,
       simple_in(1 downto 0) => (others => '0'), simple_in(31 downto 2) => open
     );
