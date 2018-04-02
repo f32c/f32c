@@ -1,6 +1,6 @@
 BLOCK RESETPATHS;
 BLOCK ASYNCPATHS;
-## ULX3S v1.7 minimal constraints, hand-made
+## ULX3S v1.7 patched minimal constraints, hand-made
 
 # The clock "usb" and "gpdi" sheet
 LOCATE COMP "clk_25MHz" SITE "G2";

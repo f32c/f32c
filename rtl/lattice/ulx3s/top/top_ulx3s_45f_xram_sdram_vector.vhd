@@ -119,7 +119,12 @@ entity ulx3s_xram_sdram_vector is
   wifi_txd: in    std_logic;
   -- WiFi additional signaling
   wifi_en: inout  std_logic := 'Z'; -- '0' will disable wifi by default
-  wifi_gpio0, wifi_gpio2, wifi_gpio16, wifi_gpio17: inout std_logic := 'Z';
+  wifi_gpio0, wifi_gpio5, wifi_gpio16, wifi_gpio17: inout std_logic := 'Z';
+
+  -- USB
+  usb_fpga_dp, usb_fpga_dn: inout std_logic; -- single ended
+  --usb_fpga_pu_dp, usb_fpga_pu_dn: out std_logic; -- pull up/down control
+  --usb_fpga_bd_dp, usb_fpga_bd_dn: inout std_logic; -- differential bidirectional
 
   -- ADC MAX11123
   adc_csn, adc_sclk, adc_mosi: out std_logic;
