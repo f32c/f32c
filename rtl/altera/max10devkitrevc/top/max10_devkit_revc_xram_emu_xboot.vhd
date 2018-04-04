@@ -72,6 +72,8 @@ entity max10_devkit_revc_xram is
         C_hdmi_out: boolean := false;
         C_dvid_ddr: boolean := false;
 
+        C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
+
         C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
         C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
         -- normally this should be  actual bits per pixel
@@ -214,6 +216,7 @@ begin
       -- vga simple bitmap
       C_dvid_ddr => C_dvid_ddr,
       C_vgahdmi => C_vgahdmi,
+      C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
       C_debug => C_debug
