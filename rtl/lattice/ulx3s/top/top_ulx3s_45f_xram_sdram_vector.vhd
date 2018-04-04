@@ -66,6 +66,7 @@ entity ulx3s_xram_sdram_vector is
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
     C_vgahdmi_cache_size: integer := 0;
     C_vgahdmi_cache_use_i: boolean := false;
+    C_compositing2_write_while_reading: boolean := true;
 
     -- VGA textmode and graphics, full featured
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
@@ -307,6 +308,7 @@ begin
 
     C_dvid_ddr => C_dvid_ddr,
     -- vga simple compositing bitmap only graphics
+    C_compositing2_write_while_reading => C_compositing2_write_while_reading,
     C_vgahdmi => C_vgahdmi,
       C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
