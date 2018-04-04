@@ -50,7 +50,7 @@ entity ffm_xram_sdram is
 	C_boot_write_protect: boolean := true; -- set to 'false' for 1K bram size
 	
 	-- SDRAM
-	C_sdram: boolean := true;
+	C_sdram: boolean := false;
 
         -- axi ram
 	C_axiram: boolean := false; -- default true
@@ -83,10 +83,10 @@ entity ffm_xram_sdram is
         C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
         C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
-        C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
+        C_dvid_ddr: boolean := false; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
         C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024, default 1
 
-        C_vgahdmi: boolean := true;
+        C_vgahdmi: boolean := false;
           C_vgahdmi_axi: boolean := false; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
           C_vgahdmi_cache_size: integer := 8; -- KB video cache (only on f32c bus) (0: disable, 2,4,8,16,32:enable, default 8)
           C_vgahdmi_fifo_timeout: integer := 0; -- default 0
@@ -145,7 +145,7 @@ entity ffm_xram_sdram is
 	UART3_RXD: in std_logic;
 	-- LED: out std_logic;
 	SD_M_CLK, SD_M_CMD: out std_logic;
-	SD_M_D: inout std_logic_vector(3 downto 0);
+	SD_M_D: inout std_logic_vector(3 downto 0)
 	--FPGA_CCLK_CONF_DCLK: out std_logic;
 	--FPGA_CSO, FPGA_MOSI: out std_logic;
 	--FPGA_MISO_INTERNAL: in std_logic;
@@ -168,34 +168,33 @@ entity ffm_xram_sdram is
 
 	--FIO: inout std_logic_vector(97 downto 0); -- GPIOs
         -- SDRAM
-	dr_clk: out std_logic;
-	dr_cke: out std_logic;
-	dr_cs_n: out std_logic;
-	dr_a: out std_logic_vector(12 downto 0);
-	dr_ba: out std_logic_vector(1 downto 0);
-	dr_ras_n, dr_cas_n: out std_logic;
-	dr_dqm: out std_logic_vector(3 downto 0);
-	dr_d: inout std_logic_vector(31 downto 0);
-	dr_we_n: out std_logic;
-	-- FFM Module IO
+	--dr_clk: out std_logic;
+	--dr_cke: out std_logic;
+	--dr_cs_n: out std_logic;
+	--dr_a: out std_logic_vector(12 downto 0);
+	--dr_ba: out std_logic_vector(1 downto 0);
+	--dr_ras_n, dr_cas_n: out std_logic;
+	--dr_dqm: out std_logic_vector(3 downto 0);
+	--dr_d: inout std_logic_vector(31 downto 0);
+	--dr_we_n: out std_logic;
 	-- ADV7513 video chip
-        dv_clk: out std_logic;
-        dv_sda: inout std_logic;
-        dv_scl: out std_logic;
-        dv_int: out std_logic;
-        dv_de: out std_logic;
-        dv_hsync: out std_logic;
-        dv_vsync: out std_logic;
-        dv_spdif: out std_logic;
-        dv_mclk: out std_logic;
-        dv_i2s: out std_logic_vector(3 downto 0);
-        dv_sclk: out std_logic;
-        dv_lrclk: out std_logic;
-        dv_d: out std_logic_vector(23 downto 0);
+        --dv_clk: out std_logic;
+        --dv_sda: inout std_logic;
+        --dv_scl: out std_logic;
+        --dv_int: out std_logic;
+        --dv_de: out std_logic;
+        --dv_hsync: out std_logic;
+        --dv_vsync: out std_logic;
+        --dv_spdif: out std_logic;
+        --dv_mclk: out std_logic;
+        --dv_i2s: out std_logic_vector(3 downto 0);
+        --dv_sclk: out std_logic;
+        --dv_lrclk: out std_logic;
+        --dv_d: out std_logic_vector(23 downto 0);
 	-- Low-Cost HDMI video out
         -- HDMI
-	VID_D_P, VID_D_N: out std_logic_vector(2 downto 0);
-	VID_CLK_P, VID_CLK_N: out std_logic
+	--VID_D_P, VID_D_N: out std_logic_vector(2 downto 0);
+	--VID_CLK_P, VID_CLK_N: out std_logic
   );
 end;
 
@@ -707,11 +706,11 @@ begin
         video_axi_out => video_axi_mosi,
         vector_axi_in => vector_axi_miso,
         vector_axi_out => vector_axi_mosi,
-        sdram_addr => dr_a, sdram_data => dr_d(15 downto 0),
-        sdram_ba => dr_ba, sdram_dqm => dr_dqm(1 downto 0),
-        sdram_ras => dr_ras_n, sdram_cas => dr_cas_n,
-        sdram_cke => dr_cke, sdram_clk => dr_clk,
-        sdram_we => dr_we_n, sdram_cs => dr_cs_n,
+        --sdram_addr => dr_a, sdram_data => dr_d(15 downto 0),
+        --sdram_ba => dr_ba, sdram_dqm => dr_dqm(1 downto 0),
+        --sdram_ras => dr_ras_n, sdram_cas => dr_cas_n,
+        --sdram_cke => dr_cke, sdram_clk => dr_clk,
+        --sdram_we => dr_we_n, sdram_cs => dr_cs_n,
 	sio_txd(0) => UART3_TXD, 
 	sio_rxd(0) => UART3_RXD,
 	sio_break(0) => sio_break,
@@ -725,9 +724,9 @@ begin
         vga_hsync => S_vga_hsync,
         vga_vsync => S_vga_vsync,
         vga_blank => S_vga_blank,
-        vga_r => dv_d(23 downto 16),
-        vga_g => dv_d(15 downto 8),
-        vga_b => dv_d(7 downto 0),
+        --vga_r => dv_d(23 downto 16),
+        --vga_g => dv_d(15 downto 8),
+        --vga_b => dv_d(7 downto 0),
 	-- DVI
         dvid_red   => dvid_red,
         dvid_green => dvid_green,
@@ -739,13 +738,13 @@ begin
         simple_in(31 downto 0) => (others => '-')
     );
     -- unused RAM upper 16 bits
-    dr_dqm(3 downto 2) <= (others => '0');
-    dr_d(31 downto 16) <= (others => 'Z');
+    --dr_dqm(3 downto 2) <= (others => '0');
+    --dr_d(31 downto 16) <= (others => 'Z');
 
-    dv_clk <= clk_pixel;
-    dv_hsync <= S_vga_hsync;
-    dv_vsync <= S_vga_vsync;
-    dv_de <= not S_vga_blank;
+    --dv_clk <= clk_pixel;
+    --dv_hsync <= S_vga_hsync;
+    --dv_vsync <= S_vga_vsync;
+    --dv_de <= not S_vga_blank;
 
     G_dvi_sdr: if not C_dvid_ddr generate
       tmds_rgb <= dvid_red(0) & dvid_green(0) & dvid_blue(0);
@@ -772,16 +771,18 @@ begin
     end generate;
 
     -- differential output buffering for HDMI clock and video
-    hdmi_output: entity work.hdmi_out
-    port map
-    (
-        tmds_in_clk => tmds_clk, -- clk_25MHz or tmds_clk
-        tmds_out_clk_p => VID_CLK_P,
-        tmds_out_clk_n => VID_CLK_N,
-        tmds_in_rgb => tmds_rgb,
-        tmds_out_rgb_p => VID_D_P,
-        tmds_out_rgb_n => VID_D_N
-    );
+    G_lc_dvi: if false generate
+    --hdmi_output: entity work.hdmi_out
+    --port map
+    --(
+    --    tmds_in_clk => tmds_clk, -- clk_25MHz or tmds_clk
+    --    tmds_out_clk_p => VID_CLK_P,
+    --    tmds_out_clk_n => VID_CLK_N,
+    --    tmds_in_rgb => tmds_rgb,
+    --    tmds_out_rgb_p => VID_D_P,
+    --    tmds_out_rgb_n => VID_D_N
+    --);
+    end generate;
 
     G_axiram_real: if C_axiram generate
     --u_ddr_mem : entity work.axi_mpmc
