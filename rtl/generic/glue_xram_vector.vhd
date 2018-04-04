@@ -275,7 +275,6 @@ port (
   ledstrip_out: out std_logic_vector(1 downto 0); -- 2 channels out
   audio_l, audio_r, video_composite: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, new naming of 4-bit simple DAC
   spdif_out: out std_logic; -- spdif output digital audio
-  jack_tip, jack_ring: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, 4-bit simple DAC
   fm_antenna, cw_antenna: out std_logic;
   gpio: inout std_logic_vector(127 downto 0);
   gpio_pullup: inout std_logic_vector(127 downto 0);  -- XXX fixme not connected optional (set C_gpio_pullup false)
@@ -469,7 +468,6 @@ architecture Behavioral of glue_xram is
     signal pcm_addr: std_logic_vector(29 downto 2);
     signal from_pcm: std_logic_vector(31 downto 0);
     signal pwm_l, pwm_r: std_logic;
-    signal pcm_l, pcm_r: std_logic;
     signal pcm_bus_l, pcm_bus_r: ieee.numeric_std.signed(15 downto 0);
     signal pwm_filt_l, pwm_filt_r: std_logic;
 
@@ -1952,24 +1950,15 @@ begin
       addr_strobe => pcm_addr_strobe, data_ready => pcm_data_ready,
       addr_out => pcm_addr, data_in => from_xram,
       out_pcm_l => pcm_bus_l, out_pcm_r => pcm_bus_r,
-      out_r => pcm_r, out_l => pcm_l
+      out_r => pwm_r, out_l => pwm_l
     );
     with conv_integer(io_addr(11 downto 4)) select
       pcm_ce <= io_addr_strobe when iomap_from(iomap_pcm, iomap_range) to iomap_to(iomap_pcm, iomap_range),
                            '0' when others;
     audio_l <= (others => pwm_l);
     audio_r <= (others => pwm_r);
-    -- audible debugging of RDS internal filters
-    --jack_tip  <= (others => pwm_filt_l);
-    --jack_ring <= (others => pwm_filt_r);
-    jack_tip  <= S_tv_dac when C_tv else (others => pcm_l);
-    jack_ring <= (others => pcm_r);
     end generate;
     
-    G_tvout_no_pcm: if C_tv and not C_pcm generate
-    jack_tip <= S_tv_dac;
-    end generate;
-
     G_tvout: if C_tv generate
     video_composite <= S_tv_dac;
     end generate;
