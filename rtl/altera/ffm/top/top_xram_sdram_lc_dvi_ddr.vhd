@@ -130,7 +130,7 @@ entity ffm_xram_sdram is
         dv_lrclk: inout std_logic;
         dv_d: inout std_logic_vector(23 downto 0);
 	-- Low-Cost HDMI video out
-	vid_d0, vid_d2: out std_logic;
+	vid_d: out std_logic_vector(2 downto 0);
 	vid_clk: out std_logic
     );
 end;
@@ -357,9 +357,7 @@ begin
                & dvid_blue(0)  & dvid_blue(1)
                & dvid_clock(0) & dvid_clock(1),
         tx_inclock => clk_pixel_shift,
-        tx_out(3) => vid_d2,
-     -- tx_out(2) => vid_d1,
-        tx_out(1) => vid_d0,
+        tx_out(3 downto 1) => vid_d(2 downto 0),
         tx_out(0) => vid_clk
       );
     end generate;
