@@ -85,6 +85,7 @@ generic (
 
   -- SoC configuration options
   C_bram_size: integer := 2;	-- in KBytes
+  C_bram_const_init: boolean := true; -- preload BRAM with the bootloader content (MAX10 can't, it is different)
   C_boot_write_protect: boolean := true; -- true: write protect bootloader, false: CPU can modify its bootloader
   C_boot_spi: boolean := false;
   C_icache_size: integer := 0;	-- 0, 2, 4, 8, 16 or 32 KBytes
@@ -124,6 +125,7 @@ generic (
   -- VGA/HDMI simple 640x480 bitmap only
   C_vgahdmi: boolean := false; -- enable VGA/HDMI output to vga_ and tmds_
   C_vgahdmi_compositing: integer := 2; -- 2: Compositing2 2D acceleration, 0: linear bitmap
+  C_compositing2_write_while_reading: boolean := true; -- true for normal function
   C_vgahdmi_mode: integer := 1; -- video mode selection: 0:640x360, 1:640x480, 2:800x450, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024
   C_vgahdmi_axi: boolean := false; -- true: use AXI bus (video_axi_in/out) instead of f32c bus
   C_vgahdmi_cache_size: integer := 0; -- KB enable cache for f32c bus (C_vgahdmi_axi = false)
@@ -182,6 +184,11 @@ generic (
         C_vgatext_bitmap_fifo_data_width: integer := 8; -- data width from the fifo
 
     C_pcm: boolean := false;
+    C_synth: boolean := false;
+      C_synth_zero_cross: boolean := false; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
+      C_synth_amplify: integer := 0; -- 0 is default for digital output. higher values may clip
+      C_synth_multiplier_sign_fix: boolean := false; -- some FPGA like ECP5 need such fix
+    C_spdif: boolean := false; -- generate SPDIF output
     C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
     C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
       C_fm_stereo: boolean := false;
@@ -257,7 +264,7 @@ port (
   simple_out: out std_logic_vector(31 downto 0);
   pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
   pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
-  vga_hsync, vga_vsync: out std_logic;
+  vga_hsync, vga_vsync, vga_blank: out std_logic;
   vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0) := (others => '0');
   dvi_r, dvi_g, dvi_b: out std_logic_vector(9 downto 0) := (others => '0'); -- dvi encoded
   tmds_out_rgb: out std_logic_vector(2 downto 0);
@@ -266,6 +273,8 @@ port (
   video_base_addr: out std_logic_vector(31 downto 2) := (others => '0'); -- video base address
   ledstrip_rotation: in std_logic := '0'; -- input from motor rotation encoder
   ledstrip_out: out std_logic_vector(1 downto 0); -- 2 channels out
+  audio_l, audio_r, video_composite: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, new naming of 4-bit simple DAC
+  spdif_out: out std_logic; -- spdif output digital audio
   jack_tip, jack_ring: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, 4-bit simple DAC
   fm_antenna, cw_antenna: out std_logic;
   gpio: inout std_logic_vector(127 downto 0);
@@ -459,9 +468,25 @@ architecture Behavioral of glue_xram is
     signal pcm_addr_strobe, pcm_data_ready: std_logic;
     signal pcm_addr: std_logic_vector(29 downto 2);
     signal from_pcm: std_logic_vector(31 downto 0);
+    signal pwm_l, pwm_r: std_logic;
     signal pcm_l, pcm_r: std_logic;
     signal pcm_bus_l, pcm_bus_r: ieee.numeric_std.signed(15 downto 0);
     signal pwm_filt_l, pwm_filt_r: std_logic;
+
+    -- Polyphonic synth (128 tonewheel voices)
+    constant iomap_synth: T_iomap_range := (x"FBB0", x"FBBF");
+    signal synth_ce: std_logic;
+    signal pcm_synth: ieee.numeric_std.signed(23 downto 0);
+    signal pwm_synth: std_logic;
+    -- signal from_synth: std_logic_vector(31 downto 0); -- write only
+    
+    -- Global PCM 24-bit signed mono for digital output (currently only SPDIF)
+    signal S_pcm_mono: ieee.numeric_std.signed(23 downto 0);
+
+    -- SPDIF
+    signal S_spdif_sample: std_logic_vector(23 downto 0);
+    signal S_spdif_sample_pad: ieee.numeric_std.signed(7 downto 0);
+    --signal S_spdif_out: std_logic;
 
     -- FM/RDS RADIO
     constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
@@ -1203,6 +1228,7 @@ begin
     S_vga_active_enabled <= S_vga_enable and not S_tv_vsync; -- frame active, pre-fill fifo
     comp_fifo: entity work.compositing2_fifo
     generic map (
+      C_write_while_reading => C_compositing2_write_while_reading,
       C_width => C_tv_fifo_width,
       C_height => C_tv_fifo_height,
       C_data_width => C_tv_fifo_data_width,
@@ -1414,6 +1440,7 @@ begin
     -- compositing2 video accelerator, shows linked list of pixel data
     comp_fifo: entity work.compositing2_fifo
     generic map (
+      C_write_while_reading => C_compositing2_write_while_reading,
       C_fast_ram => C_vgahdmi_fifo_fast_ram,
       C_timeout => C_vgahdmi_fifo_timeout,
       C_burst_max_bits => C_vgahdmi_fifo_burst_max_bits,
@@ -1523,6 +1550,7 @@ begin
     vga_b <= S_vga_b;
     vga_vsync <= S_vga_vsync xor not C_video_modes(C_vgahdmi_mode).v_sync_polarity;
     vga_hsync <= S_vga_hsync xor not C_video_modes(C_vgahdmi_mode).h_sync_polarity;
+    vga_blank <= S_vga_blank;
 
     G_vgahdmi_tmds_display: if not C_lvds_display generate
     -- DVI-D TMDS Encoder Block
@@ -1763,6 +1791,7 @@ begin
       if C_vgatext_bitmap AND C_vgatext_bitmap_fifo generate
         bitmap_videofifo: entity work.compositing2_fifo
           generic map (
+            C_write_while_reading => C_compositing2_write_while_reading,
             C_timeout => C_vgatext_bitmap_fifo_timeout,
             C_width => C_vgatext_bitmap_fifo_step,
             C_height => C_vgatext_bitmap_fifo_height,
@@ -1928,6 +1957,8 @@ begin
     with conv_integer(io_addr(11 downto 4)) select
       pcm_ce <= io_addr_strobe when iomap_from(iomap_pcm, iomap_range) to iomap_to(iomap_pcm, iomap_range),
                            '0' when others;
+    audio_l <= (others => pwm_l);
+    audio_r <= (others => pwm_r);
     -- audible debugging of RDS internal filters
     --jack_tip  <= (others => pwm_filt_l);
     --jack_ring <= (others => pwm_filt_r);
@@ -1938,6 +1969,70 @@ begin
     G_tvout_no_pcm: if C_tv and not C_pcm generate
     jack_tip <= S_tv_dac;
     end generate;
+
+    G_tvout: if C_tv generate
+    video_composite <= S_tv_dac;
+    end generate;
+
+    --
+    -- Polyphonic Synth
+    --
+    G_synth:
+    if C_synth generate
+    synth: entity work.synth
+    generic map
+    (
+      C_clk_freq => C_clk_freq * 1000000, -- Hz fixme with Hz-precise clock
+      C_voice_vol_bits => 11,
+      C_wav_data_bits => 12,
+      -- C_keyboard => true, -- constant test tone (fixme: it doesn't work)
+      C_multiplier_sign_fix => C_synth_multiplier_sign_fix,
+      C_zero_cross => C_synth_zero_cross,
+      C_amplify => C_synth_amplify
+    )
+    port map
+    (
+      clk => clk, io_ce => synth_ce, io_addr => io_addr(2 downto 2),
+      io_bus_write => dmem_write, io_byte_sel => dmem_byte_sel,
+      io_bus_in => cpu_to_dmem, -- io_bus_out => from_synth,
+      pcm_out => pcm_synth
+    );
+    with conv_integer(io_addr(11 downto 4)) select
+      synth_ce <= io_addr_strobe when iomap_from(iomap_synth, iomap_range) to iomap_to(iomap_synth, iomap_range),
+                           '0' when others;
+    synth_sigmadelta: entity work.sigmadelta
+    generic map
+    (
+      C_bits => 12
+    )
+    port map
+    (
+      clk => clk,
+      in_pcm => pcm_synth(pcm_synth'length-1 downto pcm_synth'length-12),
+      out_pwm => pwm_synth
+    );
+    audio_l <= (others => pwm_synth);
+    audio_r <= (others => pwm_synth);
+    end generate;
+    
+    S_pcm_mono <= pcm_synth + pcm_bus_l + pcm_bus_r; -- global PCM mixer, warning synth is 24-bit others are 16-bit
+
+    -- SPDIF digital audio output (1-channel)
+    G_spdif:
+    if C_spdif generate
+    inst_spdif_tx: entity work.spdif_tx
+    generic map
+    (
+      C_clk_freq => C_clk_freq * 1000000 -- Hz fixme with Hz-precise clock
+    )
+    port map
+    (
+      clk => clk,
+      data_in => std_logic_vector(S_pcm_mono),
+      spdif_out => spdif_out
+    );
+    end generate;
+
 
     -- CW transmitter
     -- one selected simple_out enables carrier wave (CW) modulation
@@ -1986,6 +2081,7 @@ begin
     bram: entity work.bram
     generic map (
 	C_bram_size => C_bram_size,
+	C_bram_const_init => C_bram_const_init,
 	C_arch => C_arch,
 	C_big_endian => C_big_endian,
 	C_write_protect_bootloader => C_boot_write_protect,
