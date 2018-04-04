@@ -179,19 +179,19 @@ entity ffm_xram_sdram is
 	dr_we_n: out std_logic;
 	-- FFM Module IO
 	-- ADV7513 video chip
-        dv_clk: inout std_logic;
+        dv_clk: out std_logic;
         dv_sda: inout std_logic;
-        dv_scl: inout std_logic;
-        dv_int: inout std_logic;
-        dv_de: inout std_logic;
-        dv_hsync: inout std_logic;
-        dv_vsync: inout std_logic;
-        dv_spdif: inout std_logic;
-        dv_mclk: inout std_logic;
-        dv_i2s: inout std_logic_vector(3 downto 0);
-        dv_sclk: inout std_logic;
-        dv_lrclk: inout std_logic;
-        dv_d: inout std_logic_vector(23 downto 0);
+        dv_scl: out std_logic;
+        dv_int: out std_logic;
+        dv_de: out std_logic;
+        dv_hsync: out std_logic;
+        dv_vsync: out std_logic;
+        dv_spdif: out std_logic;
+        dv_mclk: out std_logic;
+        dv_i2s: out std_logic_vector(3 downto 0);
+        dv_sclk: out std_logic;
+        dv_lrclk: out std_logic;
+        dv_d: out std_logic_vector(23 downto 0);
 	-- Low-Cost HDMI video out
         -- HDMI
 	VID_D_P, VID_D_N: out std_logic_vector(2 downto 0);
