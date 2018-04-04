@@ -385,13 +385,11 @@ begin
     simple_in(6 downto 0) => btn,
 
     -- 2 MSB audio channel bits are not used in "default" setup.
-    jack_tip(3 downto 2) => audio_l(1 downto 0),
-    jack_ring(3 downto 2) => audio_r(1 downto 0),
+    audio_l(3 downto 2) => audio_l(1 downto 0),
+    audio_r(3 downto 2) => audio_r(1 downto 0),
     -- 4-bit could be used down to 75 ohm load
     -- but FPGA will stop working (IO overload)
     -- if standard 17 ohm earphones are plugged.
-    --jack_tip => audio_l,
-    --jack_ring => audio_r,
 
     cw_antenna => ant_433mhz,
 
