@@ -50,11 +50,11 @@ entity ffm_xram_sdram is
 	C_boot_write_protect: boolean := true; -- set to 'false' for 1K bram size
 	
 	-- SDRAM
-	C_sdram: boolean := false;
+	C_sdram: boolean := true;
 
         -- axi ram
 	C_axiram: boolean := false; -- default true
-	C_axi_mig_data_bits: integer := 32; -- bits 32 or 128 (data bus width in link between MIG and AXI interconnect), default 32
+	C_axi_mig_data_bits: integer := 128; -- bits 32 or 128 (data bus width in link between MIG and AXI interconnect), default 32
 
         C_mult_enable: boolean := true;
         C_mul_acc: boolean := false;    -- MI32 only, default false
@@ -83,10 +83,10 @@ entity ffm_xram_sdram is
         C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
         C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
-        C_dvid_ddr: boolean := false; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
+        C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
         C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024, default 1
 
-        C_vgahdmi: boolean := false;
+        C_vgahdmi: boolean := true;
           C_vgahdmi_axi: boolean := false; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
           C_vgahdmi_cache_size: integer := 8; -- KB video cache (only on f32c bus) (0: disable, 2,4,8,16,32:enable, default 8)
           C_vgahdmi_fifo_timeout: integer := 0; -- default 0
@@ -140,61 +140,58 @@ entity ffm_xram_sdram is
     C_simple_io: boolean := true -- includes 31 simple inputs and 32 simple outputs
   );
   port (
-	clk_100MHz_P, clk_100MHz_N: in std_logic;
-	UART3_TXD: out std_logic;
-	UART3_RXD: in std_logic;
-	-- LED: out std_logic;
-	SD_M_CLK, SD_M_CMD: out std_logic;
-	SD_M_D: inout std_logic_vector(3 downto 0)
+	clk_100mhz_p, clk_100mhz_n: in std_logic;
+	uart3_txd: out std_logic;
+	uart3_rxd: in std_logic;
+	sd_m_clk, sd_m_cmd: out std_logic;
+	sd_m_d: inout std_logic_vector(3 downto 0);
 	--FPGA_CCLK_CONF_DCLK: out std_logic;
 	--FPGA_CSO, FPGA_MOSI: out std_logic;
 	--FPGA_MISO_INTERNAL: in std_logic;
-        -- DDR3 ------------------------------------------------------------------
-        --DDR_DQ                  : inout  std_logic_vector(C3_NUM_DQ_PINS-1 downto 0);       -- mcb3_dram_dq
-        --DDR_A                   : out    std_logic_vector(C3_MEM_ADDR_WIDTH-1 downto 0);    -- mcb3_dram_a
-        --DDR_BA                  : out    std_logic_vector(C3_MEM_BANKADDR_WIDTH-1 downto 0);-- mcb3_dram_ba
-        --DDR_RAS_N               : out    std_logic;                                         -- mcb3_dram_ras_n
-        --DDR_CAS_N               : out    std_logic;                                         -- mcb3_dram_cas_n
-        --DDR_WE_N                : out    std_logic;                                         -- mcb3_dram_we_n
-        --DDR_ODT                 : out    std_logic;                                         -- mcb3_dram_odt
-        --DDR_CKE                 : out    std_logic;                                         -- mcb3_dram_cke
-        --DDR_LDM                 : out    std_logic;                                         -- mcb3_dram_dm
-        --DDR_UDM                 : out    std_logic;                                         -- mcb3_dram_udm
-        --DDR_DQS_P               : inout  std_logic_vector(1 downto 0);                      -- mcb3_dram_udqs
-        --DDR_DQS_N               : inout  std_logic_vector(1 downto 0);                      -- mcb3_dram_udqs_n
-        --DDR_CK_P                : out    std_logic;                                         -- mcb3_dram_ck
-        --DDR_CK_N                : out    std_logic;                                         -- mcb3_dram_ck_n
-        --DDR_RESET_N             : out    std_logic;
+        --ddr3 ------------------------------------------------------------------
+        --ddr3_dq                  : inout  std_logic_vector(C3_NUM_dq_PINS-1 downto 0);       -- mcb3_dram_dq
+        --ddr3_a                   : out    std_logic_vector(C3_MEM_ADDR_WIDTH-1 downto 0);    -- mcb3_dram_a
+        --ddr3_ba                  : out    std_logic_vector(C3_MEM_BANKADDR_WIDTH-1 downto 0);-- mcb3_dram_ba
+        --ddr3_ras_n               : out    std_logic;                                         -- mcb3_dram_ras_n
+        --ddr3_cas_n               : out    std_logic;                                         -- mcb3_dram_cas_n
+        --ddr3_we_n                : out    std_logic;                                         -- mcb3_dram_we_n
+        --ddr3_odt                 : out    std_logic;                                         -- mcb3_dram_odt
+        --ddr3_cke                 : out    std_logic;                                         -- mcb3_dram_cke
+        --ddr3_ldm                 : out    std_logic;                                         -- mcb3_dram_dm
+        --ddr3_udm                 : out    std_logic;                                         -- mcb3_dram_udm
+        --ddr3_dqs_p               : inout  std_logic_vector(1 downto 0);                      -- mcb3_dram_udqs
+        --ddr3_dqs_n               : inout  std_logic_vector(1 downto 0);                      -- mcb3_dram_udqs_n
+        --ddr3_ck_p                : out    std_logic;                                         -- mcb3_dram_ck
+        --ddr3_ck_n                : out    std_logic;                                         -- mcb3_dram_ck_n
+        --ddr3_reset_n             : out    std_logic;
 
-	--FIO: inout std_logic_vector(97 downto 0); -- GPIOs
         -- SDRAM
-	--dr_clk: out std_logic;
-	--dr_cke: out std_logic;
-	--dr_cs_n: out std_logic;
-	--dr_a: out std_logic_vector(12 downto 0);
-	--dr_ba: out std_logic_vector(1 downto 0);
-	--dr_ras_n, dr_cas_n: out std_logic;
-	--dr_dqm: out std_logic_vector(3 downto 0);
-	--dr_d: inout std_logic_vector(31 downto 0);
-	--dr_we_n: out std_logic;
+	dr_clk: out std_logic;
+	dr_cke: out std_logic;
+	dr_cs_n: out std_logic;
+	dr_a: out std_logic_vector(12 downto 0);
+	dr_ba: out std_logic_vector(1 downto 0);
+	dr_ras_n, dr_cas_n: out std_logic;
+	dr_dqm: out std_logic_vector(3 downto 0);
+	dr_d: inout std_logic_vector(31 downto 0);
+	dr_we_n: out std_logic;
 	-- ADV7513 video chip
-        --dv_clk: out std_logic;
-        --dv_sda: inout std_logic;
-        --dv_scl: out std_logic;
+        dv_clk: out std_logic;
+        dv_sda: inout std_logic;
+        dv_scl: inout std_logic;
         --dv_int: out std_logic;
-        --dv_de: out std_logic;
-        --dv_hsync: out std_logic;
-        --dv_vsync: out std_logic;
+        dv_de: out std_logic;
+        dv_hsync: out std_logic;
+        dv_vsync: out std_logic;
         --dv_spdif: out std_logic;
         --dv_mclk: out std_logic;
         --dv_i2s: out std_logic_vector(3 downto 0);
         --dv_sclk: out std_logic;
         --dv_lrclk: out std_logic;
-        --dv_d: out std_logic_vector(23 downto 0);
-	-- Low-Cost HDMI video out
-        -- HDMI
-	--VID_D_P, VID_D_N: out std_logic_vector(2 downto 0);
-	--VID_CLK_P, VID_CLK_N: out std_logic
+        dv_d: out std_logic_vector(23 downto 0);
+	-- Low-Cost DVI video out
+	vid_d_p, vid_d_n: out std_logic_vector(2 downto 0);
+	vid_clk_p, vid_clk_n: out std_logic
   );
 end;
 
@@ -419,8 +416,8 @@ architecture Behavioral of ffm_xram_sdram is
 begin
     cpu100M_sdr_640x480: if C_clk_freq = 100 and not C_dvid_ddr and C_video_mode=1 generate
     clk_cpu100M_sdr_640x480: clk_d100_100_200_250_25MHz
-    port map(clk_100mhz_in_p => clk_100MHz_P,
-             clk_100mhz_in_n => clk_100MHz_N,
+    port map(clk_100mhz_in_p => clk_100mhz_p,
+             clk_100mhz_in_n => clk_100mhz_n,
              reset => '0',
              locked => clk_locked,
              clk_100mhz => clk_100MHz,
@@ -436,7 +433,7 @@ begin
 
     cpu83_100M_ddr_640x480: if (C_clk_freq = 83 or C_clk_freq = 100) and C_dvid_ddr and C_video_mode<=1 generate
     clk_cpu83_100M_ddr_640x480: clk_d100_83_100_200_125_25MHz
-    port map(clk_in1_p => clk_100MHz_P,
+    port map(clk_in1_p => clk_100mhz_p,
              clk_in1_n => clk_100MHz_N,
              clk_83M333 => clk_83MHz,
              clk_100M => clk_100MHz,
@@ -460,8 +457,8 @@ begin
 
     cpu80_100M_ddr_800x480: if (C_clk_freq = 80 or C_clk_freq = 100) and C_dvid_ddr and C_video_mode=2 generate
     clk_cpu80_100M_ddr_800x480: clk_d100_100_200_150_30MHz
-    port map(clk_100M_in_p => clk_100MHz_P,
-             clk_100M_in_n => clk_100MHz_N,
+    port map(clk_100M_in_p => clk_100mhz_p,
+             clk_100M_in_n => clk_100mhz_n,
              clk_80M => clk_80MHz,
              clk_100M => clk_100MHz,
              clk_200M => clk_200MHz,
@@ -484,8 +481,8 @@ begin
 
     cpu83_100M_ddr_800x600: if (C_clk_freq = 83 or C_clk_freq = 100) and C_dvid_ddr and C_video_mode=3 generate
     clk_cpu83_100M_ddr_800x600: clk_d100_100_200_40MHz
-    port map(clk_100M_in_p => clk_100MHz_P,
-             clk_100M_in_n => clk_100MHz_N,
+    port map(clk_100M_in_p => clk_100mhz_p,
+             clk_100M_in_n => clk_100mhz_n,
              clk_83M333 => clk_83MHz,
              clk_100M => clk_100MHz,
              clk_200M => clk_200MHz,
@@ -507,8 +504,8 @@ begin
 
     cpu83_100M_ddr_1024x576: if (C_clk_freq = 83 or C_clk_freq = 100) and C_dvid_ddr and C_video_mode=4 generate
     clk_cpu83_100M_ddr_1024x576: clk_d100_100_200_250_50MHz
-    port map(clk_100M_in_p => clk_100MHz_P,
-             clk_100M_in_n => clk_100MHz_N,
+    port map(clk_100M_in_p => clk_100mhz_p,
+             clk_100M_in_n => clk_100mhz_n,
              clk_83M333 => clk_83MHz,
              clk_100M => clk_100MHz,
              clk_200M => clk_200MHz,
@@ -531,8 +528,8 @@ begin
 
     cpu81_108M_ddr_1024x768: if (C_clk_freq = 81 or C_clk_freq = 108) and C_dvid_ddr and C_video_mode=5 generate
     clk_cpu81_108M_ddr_1024x768: clk_d100_108_216_325_65MHz
-    port map(clk_100M_in_p => clk_100MHz_P,
-             clk_100M_in_n => clk_100MHz_N,
+    port map(clk_100M_in_p => clk_100mhz_p,
+             clk_100M_in_n => clk_100mhz_n,
              clk_81M25 => clk_81MHz,
              clk_108M333 => clk_108MHz,
              clk_216M666 => clk_216MHz,
@@ -555,8 +552,8 @@ begin
 
     cpu80_100M_ddr_1280x768: if (C_clk_freq = 80 or C_clk_freq = 100) and C_dvid_ddr and C_video_mode=6 generate
     clk_cpu80_100M_ddr_1280x768: clk_d100_100_225_375_75MHz
-    port map(clk_100M_in_p => clk_100MHz_P,
-             clk_100M_in_n => clk_100MHz_N,
+    port map(clk_100M_in_p => clk_100mhz_p,
+             clk_100M_in_n => clk_100mhz_n,
              clk_80M357 => clk_80MHz,
              clk_100M => clk_100MHz,
              clk_225M => clk_225MHz,
@@ -579,8 +576,8 @@ begin
 
     cpu83_108M_ddr_1280x1024: if (C_clk_freq = 83 or C_clk_freq = 108) and C_dvid_ddr and C_video_mode=7 generate
     clk_cpu83_108M_ddr_1280x1024: clk_d100_108_216_541MHz
-    port map(clk_100M_in_p => clk_100MHz_P,
-             clk_100M_in_n => clk_100MHz_N,
+    port map(clk_100M_in_p => clk_100mhz_p,
+             clk_100M_in_n => clk_100mhz_n,
              clk_83M333 => clk_83MHz,
              clk_108M333 => clk_108MHz,
              clk_216M666 => clk_216MHz,
@@ -706,13 +703,13 @@ begin
         video_axi_out => video_axi_mosi,
         vector_axi_in => vector_axi_miso,
         vector_axi_out => vector_axi_mosi,
-        --sdram_addr => dr_a, sdram_data => dr_d(15 downto 0),
-        --sdram_ba => dr_ba, sdram_dqm => dr_dqm(1 downto 0),
-        --sdram_ras => dr_ras_n, sdram_cas => dr_cas_n,
-        --sdram_cke => dr_cke, sdram_clk => dr_clk,
-        --sdram_we => dr_we_n, sdram_cs => dr_cs_n,
-	sio_txd(0) => UART3_TXD, 
-	sio_rxd(0) => UART3_RXD,
+        sdram_addr => dr_a, sdram_data => dr_d(15 downto 0),
+        sdram_ba => dr_ba, sdram_dqm => dr_dqm(1 downto 0),
+        sdram_ras => dr_ras_n, sdram_cas => dr_cas_n,
+        sdram_cke => dr_cke, sdram_clk => dr_clk,
+        sdram_we => dr_we_n, sdram_cs => dr_cs_n,
+	sio_txd(0) => uart3_txd,
+	sio_rxd(0) => uart3_rxd,
 	sio_break(0) => sio_break,
         spi_sck(0)  => open,                spi_sck(1)  => SD_M_CLK,
         spi_ss(0)   => open,                spi_ss(1)   => SD_M_D(3),
@@ -724,9 +721,9 @@ begin
         vga_hsync => S_vga_hsync,
         vga_vsync => S_vga_vsync,
         vga_blank => S_vga_blank,
-        --vga_r => dv_d(23 downto 16),
-        --vga_g => dv_d(15 downto 8),
-        --vga_b => dv_d(7 downto 0),
+        vga_r => dv_d(23 downto 16),
+        vga_g => dv_d(15 downto 8),
+        vga_b => dv_d(7 downto 0),
 	-- DVI
         dvid_red   => dvid_red,
         dvid_green => dvid_green,
@@ -738,13 +735,25 @@ begin
         simple_in(31 downto 0) => (others => '-')
     );
     -- unused RAM upper 16 bits
-    --dr_dqm(3 downto 2) <= (others => '0');
-    --dr_d(31 downto 16) <= (others => 'Z');
+    dr_dqm(3 downto 2) <= (others => '0');
+    dr_d(31 downto 16) <= (others => 'Z');
 
-    --dv_clk <= clk_pixel;
-    --dv_hsync <= S_vga_hsync;
-    --dv_vsync <= S_vga_vsync;
-    --dv_de <= not S_vga_blank;
+    dv_clk <= clk_pixel;
+    dv_hsync <= S_vga_hsync;
+    dv_vsync <= S_vga_vsync;
+    dv_de <= not S_vga_blank;
+
+    G_i2c_sender: if true generate
+    i2c_send: entity work.i2c_sender
+      port map
+      (
+        clk => clk_pixel,
+        resend => '0',
+        sioc => dv_scl,
+        siod => dv_sda
+      );
+    end generate;
+
 
     G_dvi_sdr: if not C_dvid_ddr generate
       tmds_rgb <= dvid_red(0) & dvid_green(0) & dvid_blue(0);
@@ -770,18 +779,18 @@ begin
     );
     end generate;
 
-    -- differential output buffering for HDMI clock and video
-    G_lc_dvi: if false generate
-    --hdmi_output: entity work.hdmi_out
-    --port map
-    --(
-    --    tmds_in_clk => tmds_clk, -- clk_25MHz or tmds_clk
-    --    tmds_out_clk_p => VID_CLK_P,
-    --    tmds_out_clk_n => VID_CLK_N,
-    --    tmds_in_rgb => tmds_rgb,
-    --    tmds_out_rgb_p => VID_D_P,
-    --    tmds_out_rgb_n => VID_D_N
-    --);
+    -- differential output buffering for DVI clock and video
+    G_lc_dvi: if true generate
+    dvi_output: entity work.hdmi_out
+    port map
+    (
+        tmds_in_clk => tmds_clk, -- clk_25MHz or tmds_clk
+        tmds_out_clk_p => vid_clk_p,
+        tmds_out_clk_n => vid_clk_n,
+        tmds_in_rgb => tmds_rgb,
+        tmds_out_rgb_p => vid_d_p,
+        tmds_out_rgb_n => vid_d_n
+    );
     end generate;
 
     G_axiram_real: if C_axiram generate
@@ -795,21 +804,21 @@ begin
     --    sys_rst              => not clk_locked, -- release reset when clock is stable
     --    sys_clk_i            => clk_axi, -- not less than 200MHz, but not too much faster either
         -- physical signals to RAM chip
-    --    ddr3_dq              => ddr_dq,
-    --    ddr3_dqs_n           => ddr_dqs_n,
-    --    ddr3_dqs_p           => ddr_dqs_p,
-    --    ddr3_addr            => ddr_a,
-    --    ddr3_ba              => ddr_ba,
-    --    ddr3_ras_n           => ddr_ras_n,
-    --    ddr3_cas_n           => ddr_cas_n,
-    --    ddr3_we_n            => ddr_we_n,
-    --    ddr3_reset_n         => ddr_reset_n,
-    --    ddr3_ck_p(0)         => ddr_ck_p,
-    --    ddr3_ck_n(0)         => ddr_ck_n,
-    --    ddr3_cke(0)          => ddr_cke,
-    --    ddr3_dm(1)           => ddr_udm,
-    --    ddr3_dm(0)           => ddr_ldm,
-    --    ddr3_odt(0)          => ddr_odt,
+    --    ddr3_dq              => ddr3_dq,
+    --    ddr3_dqs_n           => ddr3_dqs_n,
+    --    ddr3_dqs_p           => ddr3_dqs_p,
+    --    ddr3_addr            => ddr3_a,
+    --    ddr3_ba              => ddr3_ba,
+    --    ddr3_ras_n           => ddr3_ras_n,
+    --    ddr3_cas_n           => ddr3_cas_n,
+    --    ddr3_we_n            => ddr3_we_n,
+    --    ddr3_reset_n         => ddr3_reset_n,
+    --    ddr3_ck_p(0)         => ddr3_ck_p,
+    --    ddr3_ck_n(0)         => ddr3_ck_n,
+    --    ddr3_cke(0)          => ddr3_cke,
+    --    ddr3_dm(1)           => ddr3_udm,
+    --    ddr3_dm(0)           => ddr3_ldm,
+    --    ddr3_odt(0)          => ddr3_odt,
 
         -- multiport axi interface (AXI slaves)
     --    s00_axi_areset_out_n => main_axi_areset_n,
