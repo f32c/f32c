@@ -61,7 +61,7 @@ entity max10_devkit_revc_xram is
         C_dcache_size: integer := 0;
         C_cached_addr_bits: integer := 20; -- lower address bits than C_cached_addr_bits are cached
         C_xram_base: std_logic_vector(31 downto 28) := x"0"; -- XRAM (acram/sram emu) at address 0 (instead of disabled BRAM)
-        C_xram_emu_kb: integer := 32; -- KB XRAM emu size (power of 2, MAX 32 here)
+        C_xram_emu_kb: integer := 128; -- KB XRAM emu size (power of 2, MAX 32 here)
         C_sram: boolean := false; -- enable either C_acram or C_sram, not both
         C_sram_refresh: boolean := false; -- sram_emu doesn't need that
         C_sram_wait_cycles: integer := 3; -- >= 3 works
