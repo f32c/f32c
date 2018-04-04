@@ -72,7 +72,7 @@ entity max10_devkit_revc_xram is
         C_hdmi_out: boolean := false;
         C_dvid_ddr: boolean := false;
 
-        C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
+        C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
         C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
         -- normally this should be  actual bits per pixel
         C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
@@ -90,10 +90,23 @@ entity max10_devkit_revc_xram is
 	clk_25_max10: in std_logic;
 	uart_tx: out std_logic;
 	uart_rx: in std_logic;
-	led: out std_logic_vector(4 downto 0);
+	user_led: out std_logic_vector(4 downto 0);
 	user_pb: in std_logic_vector(3 downto 0); -- pushbuttons
 	user_dipsw: in std_logic_vector(4 downto 0);
-	p0, p1: inout std_logic_vector(7 downto 0)
+	-- ADV7513 video chip
+        hdmi_sda: inout std_logic;
+        hdmi_scl: inout std_logic;
+        hdmi_tx_clk: out std_logic;
+        hdmi_tx_int: inout std_logic;
+        hdmi_tx_de: out std_logic;
+        hdmi_tx_hs: out std_logic;
+        hdmi_tx_vs: out std_logic;
+        --hdmi_tx_spdif: out std_logic;
+        --hdmi_tx_mclk: out std_logic;
+        --hdmi_tx_i2s: out std_logic_vector(3 downto 0);
+        --hdmi_tx_sclk: out std_logic;
+        --hdmi_tx_lrclk: out std_logic;
+        hdmi_tx_d: out std_logic_vector(23 downto 0)
     );
 end;
 
@@ -107,7 +120,6 @@ architecture Behavioral of max10_devkit_revc_xram is
 
   signal clk: std_logic;
   signal clk_pixel, clk_pixel_shift: std_logic;
-  signal clk_25M02: std_logic;
   signal S_reset: std_logic := '0';
   signal xdma_addr: std_logic_vector(29 downto 2) := ('0', others => '0'); -- preload address 0x00000000 XRAM
   signal xdma_strobe: std_logic := '0';
@@ -133,25 +145,27 @@ architecture Behavioral of max10_devkit_revc_xram is
   signal tmds_d: std_logic_vector(3 downto 0);
   signal R_blinky: std_logic_vector(25 downto 0);
   signal S_uart_break: std_logic;
+  signal S_vga_blank: std_logic;
+  signal S_vga_hsync, S_vga_vsync: std_logic;
+  signal S_i2c_resend: std_logic := '0';
 begin
     G_25m_clk: if C_clk_freq = 25 generate
     clkgen_25: entity work.clk_25_25_125p_125n_75_100
     port map(
       inclk0 => clk_25_max10,  --  25 MHz input from board
-      c0 => clk_25M02,         --  25.00 MHz
+      c0 => clk_pixel,         --  25.00 MHz
       c1 => open,              -- 125.00 MHz positive
       c2 => open,              -- 125.00 MHz negative
       c3 => open,              --  76.96 MHz
       c4 => open               -- 100.00 MHz
     );
-    clk <= clk_25M02;
     end generate;
 
     G_83m_clk: if C_clk_freq = 77 generate
     clkgen_83: entity work.clk_25_25_125p_125n_75_100
     port map(
       inclk0 => clk_25_max10,  --  25 MHz input from board
-      c0 => clk_25M02,         --  25.00 MHz
+      c0 => clk_pixel,         --  25.00 MHz
       c1 => open,              -- 125.00 MHz positive
       c2 => open,              -- 125.00 MHz negative
       c3 => clk,               --  76.96 MHz
@@ -162,8 +176,8 @@ begin
     G_100m_clk: if C_clk_freq = 100 generate
     clkgen_100: entity work.clk_25_25_125p_125n_75_100
     port map(
-      inclk0 => clk_25_max10,  --  12 MHz input from board
-      c0 => clk_25M02,         --  25.00 MHz
+      inclk0 => clk_25_max10,  --  25 MHz input from board
+      c0 => clk_pixel,         --  25.00 MHz
       c1 => open,              -- 125.00 MHz positive
       c2 => open,              -- 125.00 MHz negative
       c3 => open,              --  76.96 MHz
@@ -206,7 +220,7 @@ begin
     )
     port map (
       clk => clk,
-      --clk_pixel => clk_pixel,
+      clk_pixel => clk_pixel,
       --clk_pixel_shift => clk_pixel_shift,
       reset => S_reset,
       xdma_addr => xdma_addr, xdma_strobe => xdma_strobe,
@@ -223,23 +237,26 @@ begin
       sram_a => sram_a, sram_d => sram_d, sram_wel => sram_wel,
       sram_lbl => sram_lbl, sram_ubl => sram_ubl,
       -- ***** VGA *****
-      --vga_vsync => vga_vs,
-      --vga_hsync => vga_hs,
-      --vga_r(7 downto 4) => vga_r(3 downto 0),
-      --vga_r(3 downto 0) => open,
-      --vga_g(7 downto 4) => vga_g(3 downto 0),
-      --vga_g(3 downto 0) => open,
-      --vga_b(7 downto 4) => vga_b(3 downto 0),
-      --vga_b(3 downto 0) => open,
-      -- ***** HDMI *****
+      vga_hsync => S_vga_hsync,
+      vga_vsync => S_vga_vsync,
+      vga_blank => S_vga_blank,
+      vga_r => hdmi_tx_d(23 downto 16),
+      vga_g => hdmi_tx_d(15 downto 8),
+      vga_b => hdmi_tx_d(7 downto 0),
+      -- ***** DVI *****
       --dvi_r => S_hdmi_pd2, dvi_g => S_hdmi_pd1, dvi_b => S_hdmi_pd0,
       gpio => open,
-      simple_out(4 downto 0) => led,
+      simple_out(4 downto 0) => user_led,
+      -- simple_out(5) => S_i2c_resend,
       simple_out(31 downto 5) => open,
       simple_in(3 downto 0) => user_pb,
       simple_in(8 downto 4) => user_dipsw,
       simple_in(31 downto 9) => (others => '0')
     );
+    hdmi_tx_clk <= clk_pixel;
+    hdmi_tx_hs <= S_vga_hsync;
+    hdmi_tx_vs <= S_vga_vsync;
+    hdmi_tx_de <= not S_vga_blank;
 
     G_acram: if C_acram generate
     acram_emulation: entity work.acram_emu
@@ -324,7 +341,7 @@ begin
       avmm_rcv_writedata => x"00000000", --       .writedata
       avmm_rcv_write => '0',             --       .write
       avmm_rcv_readdata => open,         --       .readdata
-      clk => clk_25M02,                  --    clk.clk 25.02MHz
+      clk => clk_pixel,                  --    clk.clk 25.02MHz
       nreset => '1'                      -- nreset.reset_n
     );
     end generate;
@@ -368,6 +385,17 @@ begin
         next_data => S_rom_next_data,
         data => S_rom_data,
         valid => S_rom_valid
+      );
+    end generate;
+
+    G_i2c_sender: if true generate
+    i2c_send: entity work.i2c_sender
+      port map
+      (
+        clk => clk_pixel,
+        resend => S_i2c_resend,
+        sioc => hdmi_scl,
+        siod => hdmi_sda
       );
     end generate;
 

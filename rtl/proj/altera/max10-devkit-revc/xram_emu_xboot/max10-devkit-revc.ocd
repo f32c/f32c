@@ -7,7 +7,7 @@ gdb_port 3333
 adapter_khz 8000
 
 # JTAG TAPs
-jtag newtap max10devkitrevc tap -expected-id 0x031050dd -irlen 10
+jtag newtap max10devkitrevc tap -expected-id 0x031050DD -irlen 10
 
 init
 scan_chain

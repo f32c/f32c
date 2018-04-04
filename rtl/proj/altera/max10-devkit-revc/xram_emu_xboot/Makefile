@@ -16,11 +16,12 @@ PART = 10M50DAF484C6GES
 BOARDFILE = max10-devkit-revc.board
 CONFIG_DEVICE = EPCS64
 SERIAL_FLASH_LOADER_DEVICE = EP4CE6
-OPENOCD_INTERFACE=altera-usb-blaster.ocd
+OPENOCD_INTERFACE=altera-usb-blaster2.ocd
 # OPENOCD_INTERFACE=altera-usb-blaster2.cfg
 # OPENOCD_INTERFACE=ftdi-fpu1.ocd
 # OPENOCD_INTERFACE=remote.ocd
 OPENOCD_BOARD=max10-devkit-revc.ocd
+OPENOCD_SVF_CLOCK=8MHz
 
 ###################################################################
 #
@@ -49,6 +50,7 @@ SRCS = \
 ../../../../altera/max10devkitrevc/onchip_flash/submodules/altera_onchip_flash_avmm_csr_controller.v \
 ../../../../altera/max10devkitrevc/onchip_flash/submodules/rtl/altera_onchip_flash_block.v \
 ../../../../altera/max10devkitrevc/max10_boot_preloader/max10_boot_preloader.vhd \
+../../../../altera/ffm/i2c_sender/i2c_sender.vhd \
 ../../../../generic/hdmi_out.vhd \
 ../../../../generic/glue_xram.vhd \
 ../../../../generic/bram.vhd \
