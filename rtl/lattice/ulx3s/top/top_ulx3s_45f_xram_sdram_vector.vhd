@@ -8,11 +8,18 @@ use ieee.math_real.all; -- to calculate log2 bit size
 
 use work.f32c_pack.all;
 
+use work.boot_block_pack.all;
+use work.boot_sio_mi32el.all;
+use work.boot_sio_mi32eb.all;
+use work.boot_sio_rv32el.all;
+use work.boot_rom_mi32el.all;
+
 library ecp5u;
 use ecp5u.components.all;
 
 entity ulx3s_xram_sdram_vector is
-  generic (
+  generic
+  (
     -- ISA: either ARCH_MI32 or ARCH_RV32
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
@@ -21,31 +28,36 @@ entity ulx3s_xram_sdram_vector is
     C_clk_freq: integer := 100;
 
     -- SoC configuration options
-    C_bram_size: integer := 2;
-    C_acram: boolean := false;
+    C_xboot_rom: boolean := false; -- false default, bootloader initializes XRAM with external DMA
+    C_bram_size: integer := 2; -- 2 default, must be disabled with 0 when C_xboot_emu = true
+    C_bram_const_init: boolean := true; -- true default, MAX10 cannot preload bootloader using VHDL constant intializer
+    C_boot_write_protect: boolean := true; -- true default, may leave boot block writeable to save some LUTs
+    C_boot_rom_data_bits: integer := 32; -- number of bits in output from bootrom_emu
+    C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- 8 default for C_xboot_rom=false, 0 for C_xboot_rom=true, sets XRAM base address
+    C_acram: boolean := false; -- false default (ulx3s has sdram chip)
     C_acram_wait_cycles: integer := 3; -- 3 or more
-    C_acram_emu_kb: integer := 16; -- KB axi_cache emulation (power of 2)
-    C_sdram: boolean := true;
+    C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2)
+    C_sdram: boolean := true; -- true default
     C_sdram_clock_range: integer := 1; -- standard value good for all
-    C_icache_size: integer := 2;
-    C_dcache_size: integer := 2;
-    C_sram8: boolean := false;
-    C_branch_prediction: boolean := false;
-    C_sio: integer := 2;
-    C_spi: integer := 2;
-    C_simple_io: boolean := true;
-    C_gpio: integer := 64;
-    C_gpio_pullup: boolean := false;
+    C_icache_size: integer := 2; -- 2 default
+    C_dcache_size: integer := 2; -- 2 default
+    C_cached_addr_bits: integer := 25; -- lower address bits than C_cached_addr_bits are cached
+    C_branch_prediction: boolean := false; -- false default
+    C_sio: integer := 2; -- 2 default
+    C_spi: integer := 2; -- 2 default
+    C_simple_io: boolean := true; -- true default
+    C_gpio: integer := 64; -- 64 default for ulx3s
+    C_gpio_pullup: boolean := false; -- false default
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
-    C_timer: boolean := true;
+    C_timer: boolean := true; -- true default
 
     C_pcm: boolean := true; -- PCM audio (wav playing)
     C_synth: boolean := false; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
-    C_spdif: boolean := false; -- SPDIF output (to audio jack tip)
+    C_spdif: boolean := false; -- SPDIF output
 
-    C_cw_simple_out: integer := 7; -- simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
+    C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
     C_vector: boolean := true; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
@@ -61,12 +73,11 @@ entity ulx3s_xram_sdram_vector is
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
 
     C_vgahdmi: boolean := true;
-    C_vgahdmi_cache_size: integer := 8;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
-    C_vgahdmi_cache_size: integer := 0;
+    C_vgahdmi_cache_size: integer := 0; -- 0 default (disabled, cache flush not yet implemented)
     C_vgahdmi_cache_use_i: boolean := false;
-    C_compositing2_write_while_reading: boolean := true;
+    C_compositing2_write_while_reading: boolean := true; -- default true
 
     -- VGA textmode and graphics, full featured
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
@@ -104,7 +115,8 @@ entity ulx3s_xram_sdram_vector is
     -- bitmap width of FIFO address space length = 2^width * 4 byte
     C_vgatext_bitmap_fifo_addr_width: integer := 11
   );
-  port (
+  port
+  (
   clk_25MHz: in std_logic;  -- main clock input from 25MHz clock source
 
   -- UART0 (FTDI USB slave serial)
@@ -205,6 +217,19 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal R_blinky: std_logic_vector(26 downto 0);
   signal S_spdif_out: std_logic;
 
+  signal S_reset: std_logic := '0'; -- reset to hold during DMA preload
+  -- exposed DMA signals for boot preloader
+  signal xdma_addr: std_logic_vector(29 downto 2) := ('0', others => '0'); -- preload address 0x00000000 XRAM
+  signal xdma_strobe: std_logic := '0';
+  signal xdma_data_ready: std_logic := '0';
+  signal xdma_write: std_logic := '0';
+  signal xdma_byte_sel: std_logic_vector(3 downto 0) := (others => '1');
+  signal xdma_data_in: std_logic_vector(31 downto 0) := (others => '-');
+  -- signals for ROM emulation
+  signal S_rom_reset, S_rom_next_data: std_logic;
+  signal S_rom_data: std_logic_vector(C_boot_rom_data_bits-1 downto 0);
+  signal S_rom_valid: std_logic;
+
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
   end component;
@@ -266,18 +291,22 @@ begin
     C_arch => C_arch,
     C_clk_freq => C_clk_freq,
     C_bram_size => C_bram_size,
+    C_bram_const_init => C_bram_const_init,
+    C_boot_write_protect => C_boot_write_protect,
     C_branch_prediction => C_branch_prediction,
     C_acram => C_acram,
     C_acram_wait_cycles => C_acram_wait_cycles,
     C_sdram => C_sdram,
-    C_sdram_clock_range => 2,
+    -- C_sdram_clock_range => 2,
     C_sdram_address_width => 24,
     C_sdram_column_bits => 9,
     C_sdram_startup_cycles => 10100,
     C_sdram_cycles_per_refresh => 1524,
     C_icache_size => C_icache_size,
     C_dcache_size => C_dcache_size,
-    C_sram8 => C_sram8,
+    C_cached_addr_bits => C_cached_addr_bits,
+    C_xdma => C_xboot_rom,
+    C_xram_base => C_xram_base,
     C_debug => C_debug,
     C_sio => C_sio,
     C_spi => C_spi,
@@ -289,11 +318,11 @@ begin
     -- DMA wav playing
     C_pcm => C_pcm,
     -- Polyphonic sound synthesizer (todo: support synth in vector glue)
-    --C_synth => C_synth,
-    --C_synth_zero_cross => C_synth_zero_cross,
-    --C_synth_amplify => C_synth_amplify,
+    C_synth => C_synth,
+    C_synth_zero_cross => C_synth_zero_cross,
+    C_synth_amplify => C_synth_amplify,
     -- SPDIF output
-    --C_spdif => C_spdif,
+    C_spdif => C_spdif,
 
     C_cw_simple_out => C_cw_simple_out,
 
@@ -349,6 +378,7 @@ begin
     clk => clk,
     clk_pixel => clk_pixel,
     clk_pixel_shift => clk_dvi,
+    reset => S_reset,
     sio_rxd(0) => ftdi_txd,
     sio_rxd(1) => wifi_txd,
     sio_txd(0) => ftdi_rxd,
@@ -392,8 +422,15 @@ begin
     -- 4-bit could be used down to 75 ohm load
     -- but FPGA will stop working (IO overload)
     -- if standard 17 ohm earphones are plugged.
+    spdif_out => audio_v(0),
 
     cw_antenna => ant_433mhz,
+
+    -- exposed DMA for boot preloader
+    xdma_addr => xdma_addr, xdma_strobe => xdma_strobe,
+    xdma_write => '1', xdma_byte_sel => "1111",
+    xdma_data_in => xdma_data_in,
+    xdma_data_ready => xdma_data_ready,
 
     -- external SDRAM interface
     sdram_addr => sdram_a, sdram_data => sdram_d,
@@ -415,6 +452,48 @@ begin
     dvid_blue  => dvid_blue,
     dvid_clock => dvid_clock
   );
+
+  -- preload the f32c bootloader and reset CPU
+  -- preloads initially at startup and during each reset of the CPU
+  G_xboot_rom: if C_xboot_rom generate
+      boot_preload: entity work.boot_preloader
+      generic map
+      (
+	-- ROM data bits
+	C_rom_data_bits => C_boot_rom_data_bits, -- bits in the ROM
+	-- ROM size in addr bits
+	-- SoC configuration options
+	C_boot_addr_bits => 8 -- 8: 256x4-byte = 1K bootloader size
+      )
+      port map
+      (
+        clk => clk,
+        reset_in => rs232_break, -- input reset rising edge (from serial break) starts DMA preload
+        reset_out => S_reset, -- S_reset, 1 during DMA preload (holds CPU in reset state)
+        rom_reset => S_rom_reset,
+        rom_next_data => S_rom_next_data,
+        rom_data => S_rom_data,
+        rom_valid => S_rom_valid,
+        addr => xdma_addr(9 downto 2), -- must fit bootloader size 1K 10-bit byte address
+        data => xdma_data_in, -- comes from register - last read data will stay on the bus
+        strobe => xdma_strobe, -- use strobe as strobe and as write signal
+        ready => xdma_data_ready -- response from RAM arbiter (write completed)
+      );
+      bootrom_emu: entity work.bootrom_emu
+      generic map
+      (
+        C_content => boot_sio_mi32el,
+        C_data_bits => C_boot_rom_data_bits
+      )
+      port map
+      (
+        clk => clk,
+        reset => S_rom_reset,
+        next_data => S_rom_next_data,
+        data => S_rom_data,
+        valid => S_rom_valid
+      );
+  end generate;
 
   G_acram: if C_acram generate
   acram_emulation: entity work.acram_emu
