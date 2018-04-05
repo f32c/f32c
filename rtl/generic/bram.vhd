@@ -112,7 +112,6 @@ architecture x of bram is
     -- scroll down to the "Other XST Command Line Options" field and
     -- enter: -loop_iteration_limit 2048
     --
-
     function boot_block_to_bram(x: boot_block_type; n: integer)
       return bram_type is
 	variable y: bram_type;
@@ -121,7 +120,7 @@ architecture x of bram is
 	y := (others => (others => '0')); -- if '0' is '-' then Xilinx ISE error
 	i := n;
 	l := x'length;
-	while i < l and y'lengtn > 0 loop
+	while i < l loop
 	    y(i/4) := x(i);
 	    i := i + 4;
 	end loop;
