@@ -121,7 +121,7 @@ architecture x of bram is
 	y := (others => (others => '0')); -- if '0' is '-' then Xilinx ISE error
 	i := n;
 	l := x'length;
-	while(i < l) loop
+	while i < l and y'lengtn > 0 loop
 	    y(i/4) := x(i);
 	    i := i + 4;
 	end loop;
