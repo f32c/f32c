@@ -63,6 +63,7 @@ generic (
   C_full_shifter: boolean := true;
   C_result_forwarding: boolean := true;
   C_load_aligner: boolean := true;
+  C_regfile_synchronous_read: boolean := false;
 
   -- Negatively influences timing closure, hence disabled
   C_movn_movz: boolean := false;
@@ -92,6 +93,7 @@ generic (
   C_dcache_size: integer := 0;	-- 0, 2, 4, 8, 16 or 32 KBytes
   C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- x"8" maps RAM to 0x80000000
   C_cached_addr_bits: integer := 20; -- number of lower RAM address bits to be cached
+  C_xdma: boolean := false; -- used to write bootloader on MAX10 (shared with refresh/textmode port)
   C_sram: boolean := false; -- 16-bit SRAM
   C_sram_refresh: boolean := false; -- sram refresh workaround (RED ULX2S boards need this)
   C_sram8: boolean := false; -- 8-bit SRAM
@@ -207,6 +209,10 @@ generic (
       C_pid_precision: integer range 0 to 8 := 1; -- fixed point PID precision
       C_pid_pwm_bits: integer range 11 to 32 := 12; -- PWM output frequency f_clk/2^pwmbits (min 11 => 40kHz @ 81.25MHz)
       C_pid_fp: integer range 0 to 26 := 8; -- loop frequency value for pid calculation, use 26-C_pid_prescaler
+    C_timer: boolean := true;
+      C_timer_ocp_mux: boolean := true; -- true: OCP to simple_out (LED) mux, fade example works, false: output to dedicated PWM ocp pins
+      C_timer_ocps: integer := 2;
+      C_timer_icps: integer := 2;
     C_vector: boolean := false; -- vector processor
     C_vector_burst_max_bits: integer := 6; -- AXI MIG can do 64x32-bit word burst
     C_vector_vaddr_bits: integer := 11; -- vector size, should match FPGA internal BRAM block
@@ -217,8 +223,7 @@ generic (
     C_vector_registers: integer := 8; -- Number of BRAM based vector registers. One register is 8K
     C_vector_float_addsub: boolean := true; -- true: have float addsub (+,-), false: without this, LUT saving
     C_vector_float_multiply: boolean := true; -- true: have float multiply (*), false: without multiply, LUT and DSP saving
-    C_vector_float_divide: boolean := true; -- true: have float divider (/), false: without divider, LUT and much DSP saving
-    C_timer: boolean := true
+    C_vector_float_divide: boolean := true -- true: have float divider (/), false: without divider, LUT and much DSP saving
 );
 port (
   clk: in std_logic;
@@ -226,6 +231,14 @@ port (
   clk_pixel_shift: in std_logic := '0'; -- digital video (DVID/HDMI) bit shift clock, for SDR 10x clk_pixel, for DDR 5x clk_pixel, default 0 if no digital video
   clk_fmdds: in std_logic := '0'; -- FM DDS clock (>216 MHz)
   clk_cw: in std_logic := '0'; -- CW transmitter 433.92 MHz
+  reset: in std_logic := '0'; -- external RESET (or'd with RS232 BREAK)
+  -- xdma: external DMA
+  xdma_addr: in std_logic_vector(29 downto 2) := (others => '-');
+  xdma_strobe: in std_logic := '0';
+  xdma_write: in std_logic := '0';
+  xdma_byte_sel: in std_logic_vector(3 downto 0) := (others => '1');
+  xdma_data_in: in std_logic_vector(31 downto 0) := (others => '-');
+  xdma_data_ready: out std_logic := '0';
   sram_a: out std_logic_vector(19 downto 0);
   sram_d: inout std_logic_vector(15 downto 0);
   sram_wel, sram_lbl, sram_ubl: out std_logic;
@@ -265,8 +278,8 @@ port (
   pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
   pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
   vga_hsync, vga_vsync, vga_blank: out std_logic;
-  vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0) := (others => '0');
-  dvi_r, dvi_g, dvi_b: out std_logic_vector(9 downto 0) := (others => '0'); -- dvi encoded
+  vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0) := (others => '0'); -- parallel VGA
+  dvi_r, dvi_g, dvi_b: out std_logic_vector(9 downto 0) := (others => '0'); -- parallel DVI
   tmds_out_rgb: out std_logic_vector(2 downto 0);
   tmds_out_clk: out std_logic := '0'; -- used for DDR output
   dvid_red, dvid_green, dvid_blue, dvid_clock: out std_logic_vector(1 downto 0);
@@ -278,6 +291,9 @@ port (
   fm_antenna, cw_antenna: out std_logic;
   gpio: inout std_logic_vector(127 downto 0);
   gpio_pullup: inout std_logic_vector(127 downto 0);  -- XXX fixme not connected optional (set C_gpio_pullup false)
+  -- timer PWM input capture and output compare
+  ocp: out std_logic_vector(C_timer_ocps-1 downto 0);
+  icp: in std_logic_vector(C_timer_icps-1 downto 0) := (others => '0');
   --ADC ports
   ADC_Error_out: inout std_logic_vector(5 downto 0); -- XXX fixme not connected
   -- PS/2 Keyboard
@@ -305,6 +321,7 @@ architecture Behavioral of glue_xram is
     signal io_addr_strobe: std_logic;
     signal io_addr: std_logic_vector(11 downto 2);
     signal intr: std_logic_vector(5 downto 0); -- interrupt
+    signal S_reset: std_logic;
 
     -- SDRAM
     signal to_xram: sram_port_array;
@@ -360,13 +377,16 @@ architecture Behavioral of glue_xram is
     signal timer_range: std_logic := '0';
     signal from_timer: std_logic_vector(31 downto 0);
     signal timer_ce: std_logic;
-    signal ocp, ocp_enable, ocp_mux: std_logic_vector(1 downto 0);
-    signal icp, icp_enable: std_logic_vector(1 downto 0);
+    signal S_ocp, ocp_enable, ocp_mux: std_logic_vector(C_timer_ocps-1 downto 0);
+    signal icp_enable: std_logic_vector(C_timer_icps-1 downto 0);
     signal timer_intr: std_logic := '0';
 
-
     -- TV video
-    signal R_fb_base_addr: std_logic_vector(31 downto 2) := (others => '0');
+    -- C_fb_base_addr_disabled intializer having
+    -- MSB bit different than C_xram_base  because we
+    -- want to start with test screen by default for any C_xram_base
+    signal R_fb_base_addr: std_logic_vector(31 downto 2) := not C_xram_base(31) &
+      "-----------------------------"; -- rest of 29 bits can have any value
     signal R_fb_intr: std_logic;
     signal S_tv_dac: std_logic_vector(3 downto 0);
     signal S_tv_fetch_next: std_logic;
@@ -477,14 +497,9 @@ architecture Behavioral of glue_xram is
     signal pcm_synth: ieee.numeric_std.signed(23 downto 0);
     signal pwm_synth: std_logic;
     -- signal from_synth: std_logic_vector(31 downto 0); -- write only
-    
+
     -- Global PCM 24-bit signed mono for digital output (currently only SPDIF)
     signal S_pcm_mono: ieee.numeric_std.signed(23 downto 0);
-
-    -- SPDIF
-    signal S_spdif_sample: std_logic_vector(23 downto 0);
-    signal S_spdif_sample_pad: ieee.numeric_std.signed(7 downto 0);
-    --signal S_spdif_out: std_logic;
 
     -- FM/RDS RADIO
     constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
@@ -570,6 +585,9 @@ architecture Behavioral of glue_xram is
     signal refresh_addr: std_logic_vector(29 downto 2) := (others => '0');
     signal refresh_strobe: std_logic := '0';
     signal refresh_data_ready: std_logic;
+    signal refresh_write: std_logic;
+    signal refresh_byte_sel: std_logic_vector(3 downto 0) := (others => '1');
+    signal refresh_data_in: std_logic_vector(31 downto 0) := (others => '-');
 
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
@@ -581,11 +599,13 @@ architecture Behavioral of glue_xram is
     signal debug_active: std_logic;
 
 begin
+    S_reset <= reset or sio_break_internal(0);
 
     -- f32c core
     pipeline: entity work.cache
     generic map (
       C_arch => C_arch, C_cpuid => 0, C_clk_freq => C_clk_freq,
+      C_regfile_synchronous_read => C_regfile_synchronous_read,
       C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
       C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
       C_mult_enable => C_mult_enable, C_mul_acc => C_mul_acc, C_mul_reg => C_mul_reg,
@@ -603,7 +623,7 @@ begin
       C_debug => C_debug
     )
     port map (
-      clk => clk, reset => sio_break_internal(0), intr => intr,
+      clk => clk, reset => S_reset, intr => intr,
       imem_addr => imem_addr,
       imem_data_in => final_to_cpu_i,
       imem_addr_strobe => imem_addr_strobe,
@@ -633,21 +653,34 @@ begin
     -- using most significant address bit (bit 32), which is
     --S_imem_addr_in_xram <= imem_addr(31);
     --S_dmem_addr_in_xram <= dmem_addr(31);
+
+    G_yes_mux_bram: if C_bram_size > 0 generate
     final_to_cpu_i <= from_xram when S_imem_addr_in_xram = '1' else bram_i_to_cpu;
     final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
       else vga_textmode_dmem_to_cpu when C_vgatext AND C_vgatext_bus_read AND dmem_addr(31 downto 28) = C_vgatext_bram_base -- address 0x40000000
       else from_xram when S_dmem_addr_in_xram = '1'
       else bram_d_to_cpu;
+    imem_data_ready <= xram_ready(instr_port) when S_imem_addr_in_xram = '1'
+      else bram_i_ready;
+    dmem_data_ready <= xram_ready(data_port) when S_dmem_addr_in_xram = '1'
+      else io_addr_strobe or video_bram_addr_strobe or bram_d_ready;
+    end generate;
+    G_no_mux_bram: if C_bram_size <= 0 generate
+    final_to_cpu_i <= from_xram;
+    final_to_cpu_d <= io_to_cpu when io_addr_strobe = '1'
+      else vga_textmode_dmem_to_cpu when C_vgatext AND C_vgatext_bus_read AND dmem_addr(31 downto 28) = C_vgatext_bram_base -- address 0x40000000
+      else from_xram;
+    imem_data_ready <= xram_ready(instr_port);
+    dmem_data_ready <= xram_ready(data_port) when S_dmem_addr_in_xram = '1'
+      else io_addr_strobe or video_bram_addr_strobe;
+    end generate;
+
     intr <= "00" & gpio_intr_joint & (timer_intr or S_vector_intr) & from_sio(0)(8) & R_fb_intr;
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"F" -- iomap at 0xFxxxxxxx
       else '0';
     video_bram_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 28) = C_vgatext_bram_base -- default at 0x4xxxxxxx
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
-    imem_data_ready <= xram_ready(instr_port) when S_imem_addr_in_xram = '1'
-      else bram_i_ready;
-    dmem_data_ready <= xram_ready(data_port) when S_dmem_addr_in_xram = '1'
-      else io_addr_strobe or video_bram_addr_strobe or bram_d_ready;
     
     G_xram:
     if C_sdram or C_sram or C_sram8 or C_acram or C_axiram generate
@@ -683,14 +716,15 @@ begin
     to_xram(fb_text_port).byte_sel <= "1111"; -- 32 bits read for RGB
     vga_textmode_text_sdram_ready <= xram_ready(fb_text_port);
     end generate;
-    G_refresh_port: if C_sram_refresh generate
+    G_refresh_port: if C_sram_refresh or C_xdma generate
     to_xram(refresh_port).addr_strobe <= refresh_strobe;
     to_xram(refresh_port).addr <= refresh_addr;
-    to_xram(refresh_port).data_in <= (others => '-');
-    to_xram(refresh_port).write <= '0';
-    to_xram(refresh_port).byte_sel <= "1111"; -- 32 bits read
+    to_xram(refresh_port).data_in <= refresh_data_in;
+    to_xram(refresh_port).write <= refresh_write;
+    to_xram(refresh_port).byte_sel <= refresh_byte_sel; -- refresh should set all to 32 bits read
     refresh_data_ready <= xram_ready(refresh_port);
     end generate;
+    
     -- port 3: Vector FPU DMA
     G_vector_xram: if C_vector and (not C_vector_axi) generate
         to_xram(vector_port).addr_strobe <= S_vector_ram_addr_strobe;
@@ -748,6 +782,15 @@ begin
     );
     end generate; -- G_sram_refresh
 
+    G_xdma: if C_xdma generate
+    refresh_addr <= xdma_addr;
+    refresh_strobe <= xdma_strobe;
+    refresh_byte_sel <= xdma_byte_sel;
+    refresh_write <= xdma_write;
+    refresh_data_in <= xdma_data_in;
+    xdma_data_ready <= refresh_data_ready;
+    end generate; -- G_xdma
+
     G_sram8bit:
     if C_sram8 generate
     sram8: entity work.sram8_controller
@@ -784,7 +827,7 @@ begin
       cycles_per_refresh => C_sdram_cycles_per_refresh
     )
     port map (
-      clk => clk, reset => sio_break_internal(0),
+      clk => clk, reset => sio_break_internal(0), -- SDRAM when preloaded must not be held at reset
       -- internal connections
       data_out => from_xram, bus_in => to_xram, ready_out => xram_ready,
       snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
@@ -929,17 +972,18 @@ begin
     end process;
 
     G_simple_out_standard:
-    if C_timer = false generate
-        simple_out(C_simple_out - 1 downto 0) <=
-          R_simple_out(C_simple_out - 1 downto 0);
+    if not (C_timer=true and C_timer_ocp_mux=true) generate
+      simple_out(C_simple_out-1 downto 0) <= R_simple_out(C_simple_out-1 downto 0);
     end generate;
+
     -- muxing simple_io to show PWM of timer on LEDs
     G_simple_out_timer:
-    if C_timer = true generate
-      ocp_mux(0) <= ocp(0) when ocp_enable(0)='1' else R_simple_out(1);
-      ocp_mux(1) <= ocp(1) when ocp_enable(1)='1' else R_simple_out(2);
-      simple_out <= R_simple_out(31 downto 3) & ocp_mux & R_simple_out(0) when C_simple_out > 0
-      else (others => '-');
+    if C_timer=true and C_timer_ocp_mux=true generate
+      G_ocp_mux:
+      for i in 0 to C_timer_ocps-1 generate
+        ocp_mux(i) <= S_ocp(i) when ocp_enable(i)='1' else R_simple_out(i);
+      end generate;
+      simple_out <= R_simple_out(C_simple_out-1 downto C_timer_ocps) & ocp_mux;
     end generate;
 
     -- big address decoder when CPU reads IO
@@ -1082,9 +1126,11 @@ begin
     -- Timer
     G_timer:
     if C_timer generate
-    icp <= R_simple_out(3) & R_simple_out(0); -- during debug period, leds will serve as software-generated ICP
+    -- icp <= R_simple_out(3) & R_simple_out(0); -- during debug period, leds will serve as software-generated ICP
     timer: entity work.timer
     generic map (
+      C_ocps => C_timer_ocps,
+      C_icps => C_timer_icps,
       C_pres => 10,
       C_bits => 12
     )
@@ -1094,10 +1140,11 @@ begin
       bus_in => cpu_to_dmem, bus_out => from_timer,
       timer_irq => timer_intr,
       ocp_enable => ocp_enable, -- enable physical output
-      ocp => ocp, -- output compare signal
+      ocp => S_ocp, -- output compare signal
       icp_enable => icp_enable, -- enable physical input
       icp => icp -- input capture signal
     );
+    ocp <= S_ocp;
     with conv_integer(io_addr(11 downto 4)) select
       timer_ce <= io_addr_strobe when iomap_from(iomap_timer, iomap_range) to iomap_to(iomap_timer, iomap_range),
                              '0' when others;
@@ -1271,8 +1318,8 @@ begin
     process(clk)
     begin
         if rising_edge(clk) then
-            if sio_break_internal(0) = '1' then
-              R_fb_base_addr <= (others => '0');
+            if S_reset = '1' then
+              R_fb_base_addr(31) <= not C_xram_base(31);
             elsif vga_ce = '1' and dmem_write = '1' then
                 -- cpu write: writes Framebuffer base
                 if C_big_endian then
@@ -1308,8 +1355,8 @@ begin
     process(clk)
     begin
         if rising_edge(clk) then
-            if sio_break_internal(0) = '1' then
-              R_fb_base_addr <= (others => '0');
+            if S_reset = '1' then
+              R_fb_base_addr(31) <= not C_xram_base(31);
             elsif vga_ce = '1' and dmem_write = '1' then
                 -- cpu write: writes Framebuffer base
                 if C_big_endian then
@@ -1361,8 +1408,8 @@ begin
     vgahdmi_cache_i: entity work.video_cache_i
     generic map
     (
-	C_icache_size => C_vgahdmi_cache_size,
-	C_cached_addr_bits => C_cached_addr_bits -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
+        C_icache_size => C_vgahdmi_cache_size,
+        C_cached_addr_bits => C_cached_addr_bits -- address bits of cached RAM (size=2^n) 20=1MB 25=32MB
     )
     port map
     (
@@ -1615,8 +1662,8 @@ begin
     process(clk)
     begin
         if rising_edge(clk) then
-            if sio_break_internal(0) = '1' then
-              R_fb_base_addr <= (others => '0');
+            if S_reset = '1' then
+              R_fb_base_addr(31) <= not C_xram_base(31);
             elsif vga_ce = '1' and dmem_write = '1' then
                 -- cpu write: writes Framebuffer base
                 if C_big_endian then
@@ -1717,7 +1764,7 @@ begin
         C_vgatext_bitmap_fifo => C_vgatext_bitmap_fifo
       )
       port map (
-        reset_i => sio_break_internal(0),
+        reset_i => S_reset,
         clk_i => clk, ce_i => vga_textmode_ce, bus_addr_i => dmem_addr(4 downto 2),
         bus_write_i => dmem_write, byte_sel_i => dmem_byte_sel,
         bus_data_i => cpu_to_dmem, bus_data_o => from_vga_textmode,
@@ -2022,7 +2069,6 @@ begin
     );
     end generate;
 
-
     -- CW transmitter
     -- one selected simple_out enables carrier wave (CW) modulation
     -- used for carriers of higher frequency than FM DDS
@@ -2065,6 +2111,7 @@ begin
 
 
     -- Block RAM
+    G_bram: if C_bram_size > 0 generate
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"0"
       else '0';
     bram: entity work.bram
@@ -2084,6 +2131,7 @@ begin
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
 	dmem_data_out => bram_d_to_cpu, dmem_data_in => cpu_to_dmem
     );
+    end generate;
 
     -- Debugging SIO instance
     G_debug_sio:

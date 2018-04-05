@@ -71,6 +71,7 @@ generic (
   C_debug: boolean := false;
 
   -- SDRAM parameters
+  C_sdram_clock_range : integer := 2;
   C_sdram_address_width : integer := 24;
   C_sdram_column_bits : integer := 9;
   C_sdram_startup_cycles : integer := 10100;
@@ -91,9 +92,9 @@ generic (
   C_dcache_size: integer := 0;	-- 0, 2, 4, 8, 16 or 32 KBytes
   C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- x"8" maps RAM to 0x80000000
   C_cached_addr_bits: integer := 20; -- number of lower RAM address bits to be cached
+  C_xdma: boolean := false; -- used to write bootloader on MAX10 (shared with refresh/textmode port)
   C_sram: boolean := false; -- 16-bit SRAM
   C_sram_refresh: boolean := false; -- sram refresh workaround (RED ULX2S boards need this)
-  C_xdma: boolean := false; -- used to write bootloader on MAX10 (shared with refresh/textmode port)
   C_sram8: boolean := false; -- 8-bit SRAM
   C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
   C_sram_pipelined_read: boolean := false; -- works only at 81.25 MHz !!!
@@ -224,7 +225,7 @@ port (
   xdma_write: in std_logic := '0';
   xdma_byte_sel: in std_logic_vector(3 downto 0) := (others => '1');
   xdma_data_in: in std_logic_vector(31 downto 0) := (others => '-');
-  xdma_data_ready: out std_logic;
+  xdma_data_ready: out std_logic := '0';
   -- sram
   sram_a: out std_logic_vector(19 downto 0);
   sram_d: inout std_logic_vector(15 downto 0);
@@ -363,11 +364,12 @@ architecture Behavioral of glue_xram is
     signal timer_ce: std_logic;
     signal S_ocp, ocp_enable, ocp_mux: std_logic_vector(C_timer_ocps-1 downto 0);
     signal icp_enable: std_logic_vector(C_timer_icps-1 downto 0);
-    signal timer_intr: std_logic;
+    signal timer_intr: std_logic := '0';
 
 
     -- TV video
-    signal R_fb_base_addr: std_logic_vector(31 downto 2) := (others => '0');
+    signal R_fb_base_addr: std_logic_vector(31 downto 2) := not C_xram_base(31) &
+      "-----------------------------"; -- rest of 29 bits can have any value
     signal R_fb_intr: std_logic;
     signal S_tv_dac: std_logic_vector(3 downto 0);
     signal S_tv_fetch_next: std_logic;
@@ -480,11 +482,6 @@ architecture Behavioral of glue_xram is
     
     -- Global PCM 24-bit signed mono for digital output (currently only SPDIF)
     signal S_pcm_mono: ieee.numeric_std.signed(23 downto 0);
-
-    -- SPDIF
-    signal S_spdif_sample: std_logic_vector(23 downto 0);
-    signal S_spdif_sample_pad: ieee.numeric_std.signed(7 downto 0);
-    --signal S_spdif_out: std_logic;
 
     -- FM/RDS RADIO
     constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
@@ -646,7 +643,7 @@ begin
     video_bram_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 28) = C_vgatext_bram_base -- default at 0x4xxxxxxx
       else '0';
     io_addr <= '0' & dmem_addr(10 downto 2);
-    
+
     G_xram:
     if C_sdram or C_sram or C_sram8 or C_acram or C_axiram generate
     -- port 0: instruction bus
@@ -690,7 +687,7 @@ begin
     refresh_data_ready <= xram_ready(refresh_port);
     end generate;
     -- port 4: PCM audio DMA
-    G_pcm_sdram: if C_pcm generate
+    G_pcm_xram: if C_pcm generate
         to_xram(pcm_port).addr_strobe <= pcm_addr_strobe;
         to_xram(pcm_port).write <= '0';
         to_xram(pcm_port).byte_sel <= "1111";
@@ -772,14 +769,15 @@ begin
       --C_ras => 3,
       --C_cas => 3,
       --C_pre => 3,
-      --C_clock_range => 2,
+      --C_shift_read => true, -- 16->32 bit collection: true: shifter, false: multiplexer
+      C_clock_range => C_sdram_clock_range, -- 1 or 2 works at 100 MHz
       sdram_address_width => C_sdram_address_width,
       sdram_column_bits => C_sdram_column_bits,
       sdram_startup_cycles => C_sdram_startup_cycles,
       cycles_per_refresh => C_sdram_cycles_per_refresh
     )
     port map (
-      clk => clk, reset => S_reset,
+      clk => clk, reset => sio_break_internal(0), -- SDRAM when preloaded must not be held at reset
       -- internal connections
       data_out => from_xram, bus_in => to_xram, ready_out => xram_ready,
       snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
@@ -1176,7 +1174,7 @@ begin
     begin
         if rising_edge(clk) then
             if S_reset = '1' then
-              R_fb_base_addr <= (others => '0');
+              R_fb_base_addr(31) <= not C_xram_base(31);
             elsif vga_ce = '1' and dmem_write = '1' then
                 -- cpu write: writes Framebuffer base
                 if C_big_endian then
@@ -1213,7 +1211,7 @@ begin
     begin
         if rising_edge(clk) then
             if S_reset = '1' then
-              R_fb_base_addr <= (others => '0');
+              R_fb_base_addr(31) <= not C_xram_base(31);
             elsif vga_ce = '1' and dmem_write = '1' then
                 -- cpu write: writes Framebuffer base
                 if C_big_endian then
@@ -1519,7 +1517,7 @@ begin
     begin
         if rising_edge(clk) then
             if S_reset = '1' then
-              R_fb_base_addr <= (others => '0');
+              R_fb_base_addr(31) <= not C_xram_base(31);
             elsif vga_ce = '1' and dmem_write = '1' then
                 -- cpu write: writes Framebuffer base
                 if C_big_endian then
