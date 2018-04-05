@@ -5,6 +5,16 @@
 # Part pkg:  BGA484
 # Created:   02.04.2018 15:56:17
 
+# **** WARNING **** CASE SENSITIVITY BUGS ****
+# * use lowercase names for all signal names here in constraints
+# and in the VHDL.
+# Don't believe if they told us VHDL is case Insensitive,
+# because it is not.
+# * a MiXeD_caSE_Signal_Names will choose most undesireable
+# moment to start producing incomprehensible compile
+# errors, let days and nights of development pass just to find
+# how compiler wants you to lower_case_everything....
+
 set_property CFGBVS VCCO [current_design]
 #where value1 is either VCCO or GND
 
@@ -16,7 +26,7 @@ set_property CONFIG_VOLTAGE 3.3 [current_design]
 #
 set_property -dict {PACKAGE_PIN T4 IOSTANDARD LVDS_25} [get_ports clk_100mhz_n]
 set_property -dict {PACKAGE_PIN R4 IOSTANDARD LVDS_25} [get_ports clk_100mhz_p]
-create_clock -name {clk100}  [get_ports {clk_100MHz_P}] -period {10.000}  -add 
+create_clock -name {clk100}  [get_ports {clk_100MHz_p}] -period {10.000}  -add 
 
 #set_property -dict {PACKAGE_PIN V13 IOSTANDARD LVTTL} [get_ports PON_RESET_N]
 #set_property -dict {PACKAGE_PIN Y8 IOSTANDARD LVTTL} [get_ports PS_SRST_N]
