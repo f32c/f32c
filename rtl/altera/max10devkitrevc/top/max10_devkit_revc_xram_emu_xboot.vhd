@@ -149,7 +149,6 @@ architecture Behavioral of max10_devkit_revc_xram is
   signal S_uart_break: std_logic;
   signal S_vga_blank: std_logic;
   signal S_vga_hsync, S_vga_vsync: std_logic;
-  signal S_i2c_resend: std_logic := '0';
 begin
     G_25m_clk: if C_clk_freq = 25 generate
     clkgen_25: entity work.clk_25_25_125p_125n_75_100
@@ -250,7 +249,6 @@ begin
       --dvi_r => S_hdmi_pd2, dvi_g => S_hdmi_pd1, dvi_b => S_hdmi_pd0,
       gpio => open,
       simple_out(4 downto 0) => user_led,
-      -- simple_out(5) => S_i2c_resend,
       simple_out(31 downto 5) => open,
       simple_in(3 downto 0) => user_pb,
       simple_in(8 downto 4) => user_dipsw,
@@ -396,7 +394,7 @@ begin
       port map
       (
         clk => clk_pixel,
-        resend => S_i2c_resend,
+        resend => S_reset,
         sioc => hdmi_scl,
         siod => hdmi_sda
       );

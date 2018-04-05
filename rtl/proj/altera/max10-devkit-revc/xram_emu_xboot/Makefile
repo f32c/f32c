@@ -52,7 +52,7 @@ SRCS = \
 ../../../../altera/max10devkitrevc/max10_boot_preloader/max10_boot_preloader.vhd \
 ../../../../altera/ffm/i2c_sender/i2c_sender.vhd \
 ../../../../generic/hdmi_out.vhd \
-../../../../generic/glue_xram.vhd \
+../../../../generic/glue_xram_vector.vhd \
 ../../../../generic/bram.vhd \
 ../../../../generic/bootloader/defs_bootblock1k.vhd \
 ../../../../generic/bootloader/boot_sio_mi32el.vhd \
@@ -131,4 +131,20 @@ SRCS = \
 ../../../../soc/vgahdmi/ledstrip.vhd \
 ../../../../soc/vgahdmi/ws2812b.vhd \
 ../../../../soc/vgahdmi/pulse_counter.vhd \
+../../../../soc/vector/vector.vhd \
+../../../../soc/vector/f32c_vector_dma.vhd \
+../../../../soc/vector/axi_vector_dma.vhd \
+../../../../soc/vector/fpu/add_sub_emiraga/add_sub_emiraga.vhd \
+../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee_adder.v \
+../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee.v \
+../../../../soc/vector/fpu/mul/multiplier/fpmul_pipeline.vhd \
+../../../../soc/vector/fpu/mul/multiplier/fpmul_stage1_struct.vhd \
+../../../../soc/vector/fpu/mul/multiplier/fpmul_stage2_struct.vhd \
+../../../../soc/vector/fpu/mul/multiplier/fpmul_stage3_struct.vhd \
+../../../../soc/vector/fpu/mul/multiplier/fpmul_stage4_struct.vhd \
+../../../../soc/vector/fpu/mul/common/fpnormalize_fpnormalize.vhd \
+../../../../soc/vector/fpu/mul/common/fpround_fpround.vhd \
+../../../../soc/vector/fpu/mul/common/packfp_packfp.vhd \
+../../../../soc/vector/fpu/mul/common/unpackfp_unpackfp.vhd \
+../../../../soc/vector/fpu/float_divide_goldschmidt.vhd \
 
