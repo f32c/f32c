@@ -18,6 +18,9 @@ package video_mode_pack is
 -- 5: 1024x768 4:3
 -- 6: 1280x768 16:9
 -- 7: 1280x1024 4:3
+-- 8: 1680x1050 16:9
+-- 9: 1600x1200 4:3
+-- 10: 1920x1080 16:9
 
 -- see also:
 -- http://tinyvga.com/vga-timing
@@ -32,7 +35,7 @@ record
     h_sync_polarity, v_sync_polarity:           std_logic; -- '0':negative/falling-edge, '1':positive/rising-edge
 end record;
 
-type T_video_modes is array (0 to 7) of T_video_mode;
+type T_video_modes is array (0 to 10) of T_video_mode;
 
 constant C_video_modes: T_video_modes :=
   (
@@ -127,7 +130,7 @@ constant C_video_modes: T_video_modes :=
       h_sync_polarity =>  '0',
       v_sync_polarity =>  '1'
     ),
-    ( -- mode 7: 1280x1024 @ 60Hz  (clk_pixel 108.00MHz - good luck xilinx 7-series)
+    ( -- mode 7: 1280x1024 @ 60Hz  (clk_pixel 108.00MHz)
       pixel_clock_Hz  =>  108000000,
       visible_width   =>  1280,
       visible_height  =>  1024,
@@ -137,6 +140,46 @@ constant C_video_modes: T_video_modes :=
       v_front_porch   =>  1,
       v_sync_pulse    =>  3,
       v_back_porch    =>  38,
+      h_sync_polarity =>  '1',
+      v_sync_polarity =>  '1'
+    ),
+    ( -- mode 8: 1680x1050 @ 60Hz  (clk_pixel 147.14MHz)
+      pixel_clock_Hz  =>  147140000,
+      visible_width   =>  1680,
+      visible_height  =>  1050,
+      h_front_porch   =>  104,
+      h_sync_pulse    =>  184,
+      h_back_porch    =>  288,
+      v_front_porch   =>  1,
+      v_sync_pulse    =>  3,
+      v_back_porch    =>  33,
+      h_sync_polarity =>  '1',
+      v_sync_polarity =>  '1'
+    ),
+    ( -- mode 9: 1600x1200 @ 60Hz  (clk_pixel 162.00MHz)
+      pixel_clock_Hz  =>  162000000,
+      visible_width   =>  1680,
+      visible_height  =>  1200,
+      h_front_porch   =>  64,
+      h_sync_pulse    =>  192,
+      h_back_porch    =>  304,
+      v_front_porch   =>  1,
+      v_sync_pulse    =>  3,
+      v_back_porch    =>  46,
+      h_sync_polarity =>  '1',
+      v_sync_polarity =>  '1'
+    ),
+    ( -- mode 10: 1920x1080 @ 60Hz  (clk_pixel 148.50MHz)
+      -- http://www.avsforum.com/forum/37-video-processors/790477-help-needed-1080p-custom-timings-can-t-get-resolution-small-enough.html
+      pixel_clock_Hz  =>  148500000,
+      visible_width   =>  1920,
+      visible_height  =>  1080,
+      h_front_porch   =>  88,
+      h_sync_pulse    =>  44,
+      h_back_porch    =>  148,
+      v_front_porch   =>  4,
+      v_sync_pulse    =>  5,
+      v_back_porch    =>  36,
       h_sync_polarity =>  '1',
       v_sync_polarity =>  '1'
     )
