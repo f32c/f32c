@@ -5,6 +5,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use ieee.math_real.all; -- to calculate log2 bit size
 
 use work.f32c_pack.all;
 
@@ -24,6 +25,7 @@ entity ffm_xram_sdram is
 	C_bram_const_init: boolean := true;
         C_icache_size: integer := 2;
         C_dcache_size: integer := 2;
+        C_xram_emu_kb: integer := 128; -- KB XRAM emu size (power of 2, MAX 32 here)
         C_acram: boolean := false;
         C_sdram: boolean := true;
 
@@ -45,7 +47,7 @@ entity ffm_xram_sdram is
 	C_simple_io: boolean := true;
 
         C_dvid_ddr: boolean := false; -- generate HDMI with DDR
-        C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
+        C_video_mode: integer := 10; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768, 10:1920x1080
         C_hdmi_out: boolean := true;
         C_compositing2_write_while_reading: boolean := false; -- nonfunctional, can't be enabled for Cyclone-V
 
@@ -136,6 +138,12 @@ entity ffm_xram_sdram is
 end;
 
 architecture Behavioral of ffm_xram_sdram is
+  -- useful for conversion from KB to number of address bits
+  function ceil_log2(x: integer)
+      return integer is
+  begin
+      return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
+  end ceil_log2;
   signal clk: std_logic;
   signal clk_pixel, clk_pixel_shift, clk_pixel_shift_n: std_logic;
   signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
@@ -143,7 +151,7 @@ architecture Behavioral of ffm_xram_sdram is
   signal vid_lvds_p: std_logic_vector(3 downto 0);
   signal S_vga_blank: std_logic;
   signal S_vga_hsync, S_vga_vsync: std_logic;
-  signal S_i2c_resend: std_logic := '0';
+  signal S_uart_break: std_logic := '0';
 --  alias dv_clk: std_logic is fio(32);
 --  alias dv_sda: std_logic is fio(33);
 --  alias dv_scl: std_logic is fio(34);
@@ -223,6 +231,19 @@ begin
     );
     end generate;
 
+    G_100MHz_vidmod10_clk: if C_clk_freq = 100 and C_video_mode = 10 generate
+    clkgen_100_vidmod10: entity work.clk_148M44p_148M44n_29M69_79M16_98M96
+    port map(
+      refclk   => clock_50a,         --   50 MHz input from board
+      rst      => '0',               --    0:don't reset
+      outclk_0 => clk_pixel,         --  148.44 MHz pixel clock
+      outclk_1 => open,              --  148.44 MHz phase 180 unused
+      outclk_2 => open,              --   29.69 MHz unused
+      outclk_3 => open,              --   79.16 MHz unused
+      outclk_4 => clk                --   98.96 MHz CPU clock
+    );
+    end generate;
+
     -- generic XRAM glue
     glue_xram: entity work.glue_xram
     generic map (
@@ -269,6 +290,7 @@ begin
       clk_pixel => clk_pixel,
       clk_pixel_shift => clk_pixel_shift,
       sio_txd(0) => uart3_txd, sio_rxd(0) => uart3_rxd,
+      sio_break(0) => S_uart_break, -- at UART break, also resend i2c to ADV7513
       spi_sck(0)  => open,  spi_sck(1)  => sd_m_clk,
       spi_ss(0)   => open,  spi_ss(1)   => sd_m_d(3),
       spi_mosi(0) => open,  spi_mosi(1) => sd_m_cmd,
@@ -302,8 +324,7 @@ begin
       dvid_clock => dvid_clock,
       -- ***** Simple IO ******
       simple_out(0) => led,
-      simple_out(1) => open, -- S_i2c_resend,
-      simple_out(31 downto 2) => open,
+      simple_out(31 downto 1) => open,
       simple_in(1 downto 0) => (others => '0'), simple_in(31 downto 2) => open
     );
     dv_clk <= clk_pixel;
@@ -319,12 +340,12 @@ begin
     acram_emulation: entity work.acram_emu
     generic map
     (
-      C_addr_width => 15
+      C_addr_width => 8 + ceil_log2(C_xram_emu_kb)
     )
     port map
     (
       clk => clk,
-      acram_a => ram_address(16 downto 2),
+      acram_a => ram_address(9 + ceil_log2(C_xram_emu_kb) downto 2),
       acram_d_wr => ram_data_write,
       acram_d_rd => ram_data_read,
       acram_byte_we => ram_byte_we,
@@ -370,15 +391,13 @@ begin
 --      );
     end generate;
 
-    G_i2c_sender: if true generate
     i2c_send: entity work.i2c_sender
       port map
       (
         clk => clk_pixel,
-        resend => S_i2c_resend,
+        resend => S_uart_break,
         sioc => dv_scl,
         siod => dv_sda
       );
-    end generate;
 
 end Behavioral;
