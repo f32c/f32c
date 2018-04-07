@@ -25,15 +25,15 @@ entity ffm_xram_sdram is
 	C_bram_const_init: boolean := true;
         C_icache_size: integer := 2;
         C_dcache_size: integer := 2;
-        C_xram_emu_kb: integer := 128; -- KB XRAM emu size (power of 2, MAX 32 here)
+        C_xram_emu_kb: integer := 128; -- KB XRAM emu size (power of 2, MAX 128 here)
         C_acram: boolean := false;
         C_sdram: boolean := true;
 
-        C_vector: boolean := false; -- vector processor unit (wip)
+        C_vector: boolean := true; -- vector processor unit (wip)
         C_vector_axi: boolean := false; -- vector processor bus type (false: normal f32c)
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
         C_vector_bram_pass_thru: boolean := true; -- Cyclone-V won't compile with pass_thru=false
-        C_vector_vaddr_bits: integer := 10;
+        C_vector_vaddr_bits: integer := 11;
         C_vector_vdata_bits: integer := 32;
         C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
         C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
@@ -47,7 +47,7 @@ entity ffm_xram_sdram is
 	C_simple_io: boolean := true;
 
         C_dvid_ddr: boolean := false; -- generate HDMI with DDR
-        C_video_mode: integer := 10; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768, 10:1920x1080
+        C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768, 10:1920x1080
         C_hdmi_out: boolean := true;
         C_compositing2_write_while_reading: boolean := false; -- nonfunctional, can't be enabled for Cyclone-V
 
@@ -55,7 +55,7 @@ entity ffm_xram_sdram is
         C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
         -- normally this should be actual bits per pixel
         C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
-        C_vgahdmi_compositing: integer := 2; -- because C5 doesn't have write-while-read BRAM
+        C_vgahdmi_compositing: integer := 2; -- 2: default compositing2
 
         -- VGA textmode and graphics, full featured
     C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
@@ -261,15 +261,15 @@ begin
       C_sdram_startup_cycles => 10100,
       C_sdram_cycles_per_refresh => 1524,
       -- vector processor
-      --C_vector => C_vector,
-      --C_vector_axi => C_vector_axi,
-      --C_vector_registers => C_vector_registers,
-      --C_vector_vaddr_bits => C_vector_vaddr_bits,
-      --C_vector_vdata_bits => C_vector_vdata_bits,
-      --C_vector_bram_pass_thru => C_vector_bram_pass_thru,
-      --C_vector_float_addsub => C_vector_float_addsub,
-      --C_vector_float_multiply => C_vector_float_multiply,
-      --C_vector_float_divide => C_vector_float_divide,
+      C_vector => C_vector,
+      C_vector_axi => C_vector_axi,
+      C_vector_registers => C_vector_registers,
+      C_vector_vaddr_bits => C_vector_vaddr_bits,
+      C_vector_vdata_bits => C_vector_vdata_bits,
+      C_vector_bram_pass_thru => C_vector_bram_pass_thru,
+      C_vector_float_addsub => C_vector_float_addsub,
+      C_vector_float_multiply => C_vector_float_multiply,
+      C_vector_float_divide => C_vector_float_divide,
       -- vga simple bitmap
       C_dvid_ddr => C_dvid_ddr,
       C_compositing2_write_while_reading => C_compositing2_write_while_reading,

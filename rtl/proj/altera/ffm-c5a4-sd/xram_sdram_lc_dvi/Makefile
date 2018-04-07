@@ -47,7 +47,7 @@ SRCS = \
 ../../../../altera/ffm/clocks/clk_148M44p_148M44n_29M69_79M16_98M96_0002.v \
 ../../../../altera/chip/cyclone5/dvi_lvds.vhd \
 ../../../../generic/hdmi_out.vhd \
-../../../../generic/glue_xram.vhd \
+../../../../generic/glue_xram_vector.vhd \
 ../../../../generic/bram.vhd \
 ../../../../generic/bootloader/defs_bootblock.vhd \
 ../../../../generic/bootloader/boot_sio_mi32el.vhd \
