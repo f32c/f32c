@@ -475,6 +475,9 @@ begin
 
 		-- Set the data masks to read all bytes
 		iob_dqm <= (others => '0');
+		-- we will be ready for a new transaction next cycle!
+		-- It works but I'm not 100% sure is it correct to enable it here
+		-- ready_for_new <= '1';
 
 	    when s_read_2 =>
 		state <= s_read_3;
