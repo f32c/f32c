@@ -31,7 +31,7 @@ entity ffm_xram_sdram is
         C_sdram: boolean := false;
         C_sdram32: boolean := true;
 
-        C_vector: boolean := false; -- vector processor unit (wip)
+        C_vector: boolean := true; -- vector processor unit (works up to 100 MHz)
         C_vector_axi: boolean := false; -- vector processor bus type (false: normal f32c)
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
         C_vector_bram_pass_thru: boolean := true; -- Cyclone-V won't compile with pass_thru=false
@@ -48,13 +48,13 @@ entity ffm_xram_sdram is
 	C_timer: boolean := true;
 	C_simple_io: boolean := true;
 
-        C_dvid_ddr: boolean := false; -- generate HDMI with DDR
+        C_dvid_ddr: boolean := false; -- generate HDMI with DDR, currently FFM v2r0 differential green wired wrong.
         C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768, 10:1920x1080
         C_hdmi_out: boolean := true;
         C_compositing2_write_while_reading: boolean := false; -- nonfunctional, can't be enabled for Cyclone-V
 
         C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
-        C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
+        C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable, leave disabled, cache flush not implemented)
         -- normally this should be actual bits per pixel
         C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
         C_vgahdmi_compositing: integer := 2; -- 2: default compositing2
@@ -220,6 +220,19 @@ begin
     );
     end generate;
 
+    G_100MHz_vidmod2_clk: if C_clk_freq = 100 and C_video_mode = 2 generate
+    clkgen_100_vidmod2: entity work.clk_148M44p_148M44n_29M69_79M16_98M96
+    port map(
+      refclk   => clock_50a,         --   50 MHz input from board
+      rst      => '0',               --    0:don't reset
+      outclk_0 => clk_pixel_shift,   --  148.44 MHz unused
+      outclk_1 => clk_pixel_shift_n, --  148.44 MHz phase 180 unused
+      outclk_2 => clk_pixel,         --   29.69 MHz pixel clock
+      outclk_3 => open,              --   79.16 MHz unused
+      outclk_4 => clk                --   98.96 MHz CPU clock
+    );
+    end generate;
+
     G_100MHz_vidmod6_clk: if C_clk_freq = 100 and C_video_mode = 6 generate
     clkgen_100_vidmod6: entity work.clk_125p_125n_25_75_100
     port map(
@@ -244,6 +257,33 @@ begin
       outclk_3 => open,              --   79.16 MHz unused
       outclk_4 => clk                --   98.96 MHz CPU clock
     );
+    end generate;
+
+    G_148MHz_vidmod2_clk: if C_clk_freq = 148 and C_video_mode = 2 generate
+    clkgen_148_vidmod2: entity work.clk_148M44p_148M44n_29M69_79M16_98M96
+    port map(
+      refclk   => clock_50a,         --   50 MHz input from board
+      rst      => '0',               --    0:don't reset
+      outclk_0 => clk,               --  148.44 MHz CPU clock
+      outclk_1 => open,              --  148.44 MHz phase 180 unused
+      outclk_2 => clk_pixel,         --   29.69 MHz pixel clock
+      outclk_3 => open,              --   79.16 MHz unused
+      outclk_4 => open               --   98.96 MHz unused
+    );
+    end generate;
+
+    G_148MHz_vidmod10_clk: if C_clk_freq = 148 and C_video_mode = 10 generate
+    clkgen_148_vidmod10: entity work.clk_148M44p_148M44n_29M69_79M16_98M96
+    port map(
+      refclk   => clock_50a,         --   50 MHz input from board
+      rst      => '0',               --    0:don't reset
+      outclk_0 => clk_pixel,         --  148.44 MHz CPU and pixel clock
+      outclk_1 => open,              --  148.44 MHz phase 180 unused
+      outclk_2 => open,              --   29.69 MHz unused
+      outclk_3 => open,              --   79.16 MHz unused
+      outclk_4 => open               --   98.96 MHz unused
+    );
+    clk <= clk_pixel; -- 148 MHz!
     end generate;
 
     -- generic XRAM glue
