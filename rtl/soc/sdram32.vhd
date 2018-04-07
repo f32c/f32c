@@ -151,7 +151,7 @@ architecture Behavioral of sdram32 is
 	s_idle_in_3, s_idle_in_2, s_idle_in_1,
 	s_idle,
 	s_open_in_2, s_open_in_1,
-	s_write_1, s_write_2, s_write_3,
+	s_write_1, s_write_2,
 	s_read_1,  s_read_2,  s_read_3,  s_read_4,  
 	s_precharge
     );
@@ -326,8 +326,6 @@ begin
 		request_done <= true;
 	    end if;
 	    data_ready_delay <= '0' & data_ready_delay(data_ready_delay'high downto 1);
-	    -- iob_dqm <= dqm_sr(3 downto 0);
-	    -- dqm_sr <= "1111" & dqm_sr(dqm_sr'high downto 4); -- shift down
 
 	    -------------------------------------------------------------------
 	    -- It we are ready for a new tranasction and one is being presented
@@ -529,20 +527,7 @@ begin
                 --data_ready_delay(1) <= '1';
 
 	    when s_write_2 =>
-		state <= s_write_3;
 		-- can we do a back-to-back write?
-		if S_let_back2back then
-		    if save_wr = '1' then
-			-- back-to-back write?
-			state           <= s_write_1;
-			ready_for_new   <= '1';
-		    end if;
-		    -- Although it looks right in simulation you can't go write-to-read 
-		    -- here due to bus contention, as iob_dq_hiz takes a few ns.
-		end if;
-
-	    when s_write_3 =>  -- must wait tRDL, hence the extra idle state
-		-- back to back transaction?
 		if S_let_back2back then
 		    if save_wr = '1' then
 			-- back-to-back write?
