@@ -95,11 +95,12 @@ generic (
   C_cached_addr_bits: integer := 20; -- number of lower RAM address bits to be cached
   C_xdma: boolean := false; -- used to write bootloader on MAX10 (shared with refresh/textmode port)
   C_sram: boolean := false; -- 16-bit SRAM
+  C_sram8: boolean := false; -- 8-bit SRAM (or 16-bit chip connected with 8 lines)
   C_sram_refresh: boolean := false; -- sram refresh workaround (RED ULX2S boards need this)
-  C_sram8: boolean := false; -- 8-bit SRAM
   C_sram_wait_cycles: integer := 4; -- ISSI, OK do 87.5 MHz
   C_sram_pipelined_read: boolean := false; -- works only at 81.25 MHz !!!
-  C_sdram: boolean := false;
+  C_sdram: boolean := false; -- 16-bit SDRAM (or 32-bit chip connected with 16 lines)
+  C_sdram32: boolean := false; -- 32-bit SDRAM
   C_acram: boolean := false; -- AXI CACHE RAM
   C_acram_wait_cycles: integer := 4; -- wait cycles for acram
   C_axiram: boolean := false; -- AXI Master RAM (connects to AXI Slave)
@@ -244,9 +245,9 @@ port (
   sram_wel, sram_lbl, sram_ubl: out std_logic;
   -- sram_oel: out std_logic; -- XXX the old ULXP2 board needs this!
   sdram_addr: out std_logic_vector(12 downto 0);
-  sdram_data: inout std_logic_vector(15 downto 0);
+  sdram_data: inout std_logic_vector(31 downto 0) := (others => 'Z');
   sdram_ba: out std_logic_vector(1 downto 0);
-  sdram_dqm: out std_logic_vector(1 downto 0);
+  sdram_dqm: out std_logic_vector(3 downto 0) := (others => '1');
   sdram_ras, sdram_cas: out std_logic;
   sdram_cke, sdram_clk: out std_logic;
   sdram_we, sdram_cs: out std_logic;
@@ -683,7 +684,7 @@ begin
     io_addr <= '0' & dmem_addr(10 downto 2);
     
     G_xram:
-    if C_sdram or C_sram or C_sram8 or C_acram or C_axiram generate
+    if C_sdram or C_sdram32 or C_sram or C_sram8 or C_acram or C_axiram generate
     -- port 0: instruction bus
     to_xram(instr_port).addr_strobe <= imem_addr_strobe when
       S_imem_addr_in_xram = '1' else '0';
@@ -809,10 +810,40 @@ begin
     );
     end generate; -- G_sram8bit
 
-    G_sdram:
+    G_sdram16:
     if C_sdram generate
     -- sdram: entity work.sdram_mz_wrap  -- burst capable sdram driver, but can't cross column boundary
-    sdram: entity work.sdram
+    sdram16: entity work.sdram
+    generic map (
+      C_ports => C_xram_ports,
+      --C_prio_port => 2, -- VGA priority port not yet implemented
+      --C_ras => 3, -- 3 default
+      --C_cas => 3, -- 3 default
+      --C_pre => 3, -- 3 default
+      --C_shift_read => true, -- 16->32 bit collection: true: shifter, false: multiplexer
+      C_clock_range => C_sdram_clock_range, -- 1 or 2 works at 100 MHz
+      sdram_address_width => C_sdram_address_width,
+      sdram_column_bits => C_sdram_column_bits,
+      sdram_startup_cycles => C_sdram_startup_cycles,
+      cycles_per_refresh => C_sdram_cycles_per_refresh
+    )
+    port map (
+      clk => clk, reset => sio_break_internal(0), -- SDRAM when preloaded must not be held at reset
+      -- internal connections
+      data_out => from_xram, bus_in => to_xram, ready_out => xram_ready,
+      snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
+      -- external SDRAM interface
+      sdram_addr => sdram_addr, sdram_data => sdram_data(15 downto 0),
+      sdram_ba => sdram_ba, sdram_dqm => sdram_dqm(1 downto 0),
+      sdram_ras => sdram_ras, sdram_cas => sdram_cas,
+      sdram_cke => sdram_cke, sdram_clk => sdram_clk,
+      sdram_we => sdram_we, sdram_cs => sdram_cs
+    );
+    end generate; -- end final G_sdram16
+
+    G_sdram32:
+    if C_sdram32 generate
+    sdram32: entity work.sdram32
     generic map (
       C_ports => C_xram_ports,
       --C_prio_port => 2, -- VGA priority port not yet implemented
@@ -838,9 +869,9 @@ begin
       sdram_cke => sdram_cke, sdram_clk => sdram_clk,
       sdram_we => sdram_we, sdram_cs => sdram_cs
     );
-    end generate; -- end final G_sdram
+    end generate; -- end final G_sdram32
 
-    G_no_sdram: if not C_sdram generate
+    G_no_sdram: if not C_sdram and not C_sdram32 generate
     -- disable SDRAM, but we need to
     -- use external signals here so
     -- xilinx compiler will be happy
