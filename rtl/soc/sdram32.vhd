@@ -194,7 +194,7 @@ architecture Behavioral of sdram32 is
 
     -- signals for when to read the data off of the bus
     signal data_ready_delay:
-      std_logic_vector(C_clock_range / 2 + C_cas + 1 downto 0);
+      std_logic_vector(C_clock_range / 2 + C_cas downto 0);
     signal request_done: boolean;
 
     -- bit indexes used when splitting the address into row/colum/bank.
