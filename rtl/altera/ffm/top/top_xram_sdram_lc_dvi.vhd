@@ -27,9 +27,10 @@ entity ffm_xram_sdram is
         C_dcache_size: integer := 2;
         C_xram_emu_kb: integer := 128; -- KB XRAM emu size (power of 2, MAX 128 here)
         C_acram: boolean := false;
-        C_sdram: boolean := true;
+        C_sdram: boolean := false;
+        C_sdram32: boolean := true;
 
-        C_vector: boolean := true; -- vector processor unit (wip)
+        C_vector: boolean := false; -- vector processor unit (wip)
         C_vector_axi: boolean := false; -- vector processor bus type (false: normal f32c)
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
         C_vector_bram_pass_thru: boolean := true; -- Cyclone-V won't compile with pass_thru=false
@@ -256,6 +257,7 @@ begin
       C_dcache_size => C_dcache_size,
       C_acram => C_acram,
       C_sdram => C_sdram,
+      C_sdram32 => C_sdram32,
       C_sdram_address_width => 24,
       C_sdram_column_bits => 9,
       C_sdram_startup_cycles => 10100,
@@ -305,8 +307,8 @@ begin
       acram_data_rd(31 downto 0) => ram_data_read(31 downto 0),
       acram_data_wr(31 downto 0) => ram_data_write(31 downto 0),
       acram_ready => ram_ready,
-      sdram_addr => dr_a, sdram_data => dr_d(15 downto 0),
-      sdram_ba => dr_ba, sdram_dqm => dr_dqm(1 downto 0),
+      sdram_addr => dr_a, sdram_data => dr_d,
+      sdram_ba => dr_ba, sdram_dqm => dr_dqm,
       sdram_ras => dr_ras_n, sdram_cas => dr_cas_n,
       sdram_cke => dr_cke, sdram_clk => dr_clk,
       sdram_we => dr_we_n, sdram_cs => dr_cs_n,
@@ -331,10 +333,6 @@ begin
     dv_hsync <= S_vga_hsync;
     dv_vsync <= S_vga_vsync;
     dv_de <= not S_vga_blank;
-
-    -- unused RAM upper 16 bits
-    dr_dqm(3 downto 2) <= (others => '0');
-    dr_d(31 downto 16) <= (others => 'Z');
 
     G_yes_acram: if C_acram generate
     acram_emulation: entity work.acram_emu

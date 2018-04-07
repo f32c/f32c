@@ -81,6 +81,7 @@ SRCS = \
 ../../../../soc/axi_pack.vhd \
 ../../../../soc/axi_read.vhd \
 ../../../../soc/sdram.vhd \
+../../../../soc/sdram32.vhd \
 ../../../../soc/sdram_mz.vhd \
 ../../../../soc/sdram_pack.vhd \
 ../../../../soc/sio.vhd \
