@@ -25,6 +25,7 @@ entity ffm_xram_sdram is
 	C_bram_const_init: boolean := true;
         C_icache_size: integer := 2;
         C_dcache_size: integer := 2;
+        C_cached_addr_bits: integer := 26; -- for 64 MB SDRAM
         C_xram_emu_kb: integer := 128; -- KB XRAM emu size (power of 2, MAX 128 here)
         C_acram: boolean := false;
         C_sdram: boolean := false;
@@ -255,6 +256,7 @@ begin
       C_bram_const_init => C_bram_const_init,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
+      C_cached_addr_bits => C_cached_addr_bits,
       C_acram => C_acram,
       C_sdram => C_sdram,
       C_sdram32 => C_sdram32,
