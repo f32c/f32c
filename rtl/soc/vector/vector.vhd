@@ -21,7 +21,7 @@ entity vector is
     C_addr_bits: integer := 3; -- don't touch: number of address bits for the registers
     C_vaddr_bits: integer range 2 to 16 := 11; -- number of address bits for BRAM vector
     C_vdata_bits: integer range 32 to 64 := 32; -- number of data bits for each vector
-    C_bram_pass_thru: boolean := false; -- altera Cyclone-V needs true
+    C_bram_pass_thru: boolean := false; -- false: default, altera Cyclone-V needs true but c2_vector_fast won't work
     C_vectors: integer range 2 to 8 := 8; -- total number of vector registers (BRAM blocks)
     C_float_addsub: boolean := true; -- instantiate floating point addsub (+,-)
     C_float_multiply: boolean := true; -- instantiate floating point divider (*)
