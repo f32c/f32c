@@ -118,11 +118,11 @@ architecture Behavioral of sdram32 is
     constant CMD_LOAD_MODE_REG : std_logic_vector(3 downto 0) := "0000";
 
     constant MODE_REG_CAS_2: std_logic_vector(12 downto 0) :=
-    -- Reserved, wr bust, OpMode, CAS Latency (2), Burst Type, Burst Length (2)
-      "000" &   "0"  &  "00"  &    "010"      &     "0"    &   "001";
+    -- Reserved, wr burst, OpMode, CAS Latency (2), Burst Type, Burst Length (1)
+      "000" &   "0"  &  "00"  &    "010"      &     "0"    &   "000";
     constant MODE_REG_CAS_3: std_logic_vector(12 downto 0) :=
-    -- Reserved, wr bust, OpMode, CAS Latency (3), Burst Type, Burst Length (2)
-      "000" &   "0"  &  "00"  &    "011"      &     "0"    &   "001";
+    -- Reserved, wr burst, OpMode, CAS Latency (3), Burst Type, Burst Length (1)
+      "000" &   "0"  &  "00"  &    "011"      &     "0"    &   "000";
 
     signal iob_command: std_logic_vector(3 downto 0) := CMD_NOP;
     signal iob_address: std_logic_vector(12 downto 0) := (others => '0');
@@ -198,11 +198,11 @@ architecture Behavioral of sdram32 is
 
     -- bit indexes used when splitting the address into row/colum/bank.
     constant start_of_col: natural := 0;
-    constant end_of_col: natural := sdram_column_bits-2;
-    constant start_of_bank: natural := sdram_column_bits-1;
-    constant end_of_bank: natural := sdram_column_bits;
-    constant start_of_row: natural := sdram_column_bits+1;
-    constant end_of_row: natural := sdram_address_width-2;
+    constant end_of_col: natural := sdram_column_bits-1;
+    constant start_of_bank: natural := sdram_column_bits;
+    constant end_of_bank: natural := sdram_column_bits+1;
+    constant start_of_row: natural := sdram_column_bits+2;
+    constant end_of_row: natural := sdram_address_width-1;
     constant prefresh_cmd: natural := 10;
 
     -- Bus interface signals (resolved from bus_in record via R_cur_port)
@@ -236,9 +236,9 @@ begin
     ----------------------------------------------------------------------------
     -- Seperate the address into row / bank / address
     ----------------------------------------------------------------------------
-    addr_row(end_of_row-start_of_row downto 0) <= addr(end_of_row  downto start_of_row);  -- 12:0 <=  22:10
-    addr_bank                                  <= addr(end_of_bank downto start_of_bank); -- 1:0  <=  9:8
-    addr_col(sdram_column_bits-1 downto 0)     <= addr(end_of_col  downto start_of_col) & '0';  -- 8:0  <=  7:0 & '0'
+    addr_row(end_of_row-start_of_row downto 0) <= addr(end_of_row  downto start_of_row);  -- 12:0 <=  23:11
+    addr_bank                                  <= addr(end_of_bank downto start_of_bank); --  1:0 <= 10:9
+    addr_col(sdram_column_bits-1 downto 0)     <= addr(end_of_col  downto start_of_col);  --  8:0 <=  8:0
 
     -----------------------------------------------------------
     -- Forward the SDRAM clock to the SDRAM chip - 180 degress 
