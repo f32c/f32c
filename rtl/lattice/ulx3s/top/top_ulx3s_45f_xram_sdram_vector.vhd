@@ -61,6 +61,7 @@ entity ulx3s_xram_sdram_vector is
 
     C_vector: boolean := true; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
+    C_vector_bram_pass_thru: boolean := false; -- false: default, true: c2_vector_fast won't work
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
     C_vector_vaddr_bits: integer := 11;
     C_vector_vdata_bits: integer := 32;
@@ -328,6 +329,7 @@ begin
 
     C_vector => C_vector,
     C_vector_axi => C_vector_axi,
+    C_vector_bram_pass_thru => C_vector_bram_pass_thru,
     C_vector_registers => C_vector_registers,
     C_vector_vaddr_bits => C_vector_vaddr_bits,
     C_vector_vdata_bits => C_vector_vdata_bits,
@@ -433,8 +435,8 @@ begin
     xdma_data_ready => xdma_data_ready,
 
     -- external SDRAM interface
-    sdram_addr => sdram_a, sdram_data => sdram_d,
-    sdram_ba => sdram_ba, sdram_dqm => sdram_dqm,
+    sdram_addr => sdram_a, sdram_data(15 downto 0) => sdram_d,
+    sdram_ba => sdram_ba, sdram_dqm(1 downto 0) => sdram_dqm,
     sdram_ras => sdram_rasn, sdram_cas => sdram_casn,
     sdram_cke => sdram_cke, sdram_clk => sdram_clk,
     sdram_we => sdram_wen, sdram_cs => sdram_csn,
