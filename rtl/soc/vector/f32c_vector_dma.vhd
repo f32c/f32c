@@ -287,12 +287,8 @@ begin
 end;
 
 -- TODO
--- [x] axi is probably not well initialized, (reset handling missing?)
---     sometimes after first write burst vector axi port stops working
---     other axi ports (cpu, video) keep working
---     if this happens, reload the bitstream and try again
 -- [ ] vector store may be signaled as done too early
---     by bram_addr MSB bit while axi is still
+--     by bram_addr MSB bit while bus is still
 --     transferring last word.
 -- [ ] R_done could be set 1 cycle earlier? as MSB in R_bram_addr(C_vaddr_bits)
 -- [x] first burst maybe shorter, use bit subset of the remaining
