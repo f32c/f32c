@@ -107,11 +107,11 @@ IOBUF  PORT "flash_wpn" PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;
 #IOBUF  PORT "flash_cfg_select[2]" PULLMODE=DOWN IO_TYPE=LVCMOS33 DRIVE=4;
 
 ## SD card "sdcard", "usb" sheet
-LOCATE COMP "sd_clk" SITE "J1"; # sd_clk WiFi_GPIO14
+LOCATE COMP "sd_clk" SITE "H2"; # sd_clk WiFi_GPIO14
 LOCATE COMP "sd_cmd_di" SITE "J3"; # sd_cmd_di WiFi GPIO15
 LOCATE COMP "sd_dat0_do" SITE "K2"; # sd_dat0_do WiFi GPIO2
 LOCATE COMP "sd_dat1_irq" SITE "K1"; # sd_dat1_irq WiFi GPIO4
-LOCATE COMP "sd_dat2" SITE "H2"; # sd_dat2 WiFi_GPIO12
+LOCATE COMP "sd_dat2" SITE "J1"; # sd_dat2 WiFi_GPIO12
 LOCATE COMP "sd_dat3_csn" SITE "H1"; # sd_dat3_csn WiFi_GPIO13
 LOCATE COMP "sd_wp" SITE "P5"; # not connected
 LOCATE COMP "sd_cdn" SITE "N5"; # not connected
