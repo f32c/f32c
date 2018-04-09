@@ -36,6 +36,12 @@
         <Source name="../../../../generic/bootloader/boot_rom_mi32el.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../../generic/bootloader/boot_preloader.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../generic/bootloader/bootrom_emu.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../../generic/reg1w2r.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -139,6 +145,9 @@
             <Options/>
         </Source>
         <Source name="../../../../soc/sdram.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/sdram32.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../soc/acram.vhd" type="VHDL" type_short="VHDL">
