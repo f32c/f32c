@@ -118,7 +118,7 @@ entity ulx3s_xram_sdram_vector is
   );
   port
   (
-  clk_25MHz: in std_logic;  -- main clock input from 25MHz clock source
+  clk_25mhz: in std_logic;  -- main clock input from 25MHz clock source
 
   -- UART0 (FTDI USB slave serial)
   ftdi_rxd: out   std_logic;
@@ -190,7 +190,8 @@ entity ulx3s_xram_sdram_vector is
   --flash_csn    : out     std_logic;
 
   -- SD card (SPI1)
-  sd_dat3_csn, sd_cmd_di, sd_dat0_do, sd_dat1_irq, sd_dat2: inout std_logic;
+  sd_cmd: inout std_logic;
+  sd_d: inout std_logic_vector(3 downto 0);
   sd_clk: out std_logic;
   sd_cdn, sd_wp: in std_logic
   );
@@ -389,9 +390,9 @@ begin
     sio_break(1) => rs232_break2,
 
     spi_sck(0)  => open,  spi_sck(1)  => sd_clk,
-    spi_ss(0)   => open,  spi_ss(1)   => sd_dat3_csn,
-    spi_mosi(0) => open,  spi_mosi(1) => sd_cmd_di,
-    spi_miso(0) => '0',   spi_miso(1) => sd_dat0_do,
+    spi_ss(0)   => open,  spi_ss(1)   => sd_d(3),
+    spi_mosi(0) => open,  spi_mosi(1) => sd_cmd,
+    spi_miso(0) => '0',   spi_miso(1) => sd_d(0),
 
     gpio(127 downto 28+32) => open,
     gpio(27+32 downto 32) => gn(27 downto 0),
