@@ -50,7 +50,8 @@ entity ffm_xram_sdram is
 	C_boot_write_protect: boolean := true; -- set to 'false' for 1K bram size
 	
 	-- SDRAM
-	C_sdram: boolean := true;
+	C_sdram: boolean := false; -- 16-bit sdram
+	C_sdram32: boolean := true; -- 32-bit sdram
 
         -- axi ram
 	C_axiram: boolean := false; -- default true
@@ -625,6 +626,7 @@ begin
       C_bram_size => C_bram_size,
       C_boot_write_protect => C_boot_write_protect,
       C_sdram => C_sdram,
+      C_sdram32 => C_sdram32,
       C_axiram => C_axiram,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
@@ -703,8 +705,8 @@ begin
         video_axi_out => video_axi_mosi,
         vector_axi_in => vector_axi_miso,
         vector_axi_out => vector_axi_mosi,
-        sdram_addr => dr_a, sdram_data => dr_d(15 downto 0),
-        sdram_ba => dr_ba, sdram_dqm => dr_dqm(1 downto 0),
+        sdram_addr => dr_a, sdram_data => dr_d,
+        sdram_ba => dr_ba, sdram_dqm => dr_dqm,
         sdram_ras => dr_ras_n, sdram_cas => dr_cas_n,
         sdram_cke => dr_cke, sdram_clk => dr_clk,
         sdram_we => dr_we_n, sdram_cs => dr_cs_n,
@@ -734,9 +736,6 @@ begin
 	-- simple_out(0) => led,
         simple_in(31 downto 0) => (others => '-')
     );
-    -- unused RAM upper 16 bits
-    dr_dqm(3 downto 2) <= (others => '0');
-    dr_d(31 downto 16) <= (others => 'Z');
 
     dv_clk <= clk_pixel;
     dv_hsync <= S_vga_hsync;
