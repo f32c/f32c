@@ -62,10 +62,9 @@ entity ulx3s_passthru_wifi is
   --flash_csn    : out     std_logic;
 
   -- SD card (SPI1)
-  sd_dat0_do: inout std_logic := 'Z'; -- wifi_gpio2
-  sd_dat3_csn, sd_cmd_di: in std_logic; -- wifi_gpio13, wifi_gpio15
+  sd_d: inout std_logic_vector(3 downto 0); -- wifi_gpio 13,12,4,2
+  sd_cmd: in std_logic; -- wifi_gpio15
   sd_clk: in std_logic; -- wifi_gpio14
-  sd_dat1_irq, sd_dat2: in std_logic; -- wifi_gpio4, wifi_gpio12
   sd_cdn, sd_wp: in std_logic 
   );
 end;
@@ -94,26 +93,28 @@ begin
                 "11";
   wifi_en <= S_prog_out(1);
   wifi_gpio0 <= S_prog_out(0) and btn(0); -- holding BTN0 will hold gpio0 LOW, signal for ESP32 to take control
-  --sd_dat0_do <= '0' when wifi_gpio0 = '0' else 'Z'; -- gpio2 together with gpio2 to 0  
-  --sd_dat2 <= '0' when wifi_gpio0 = '0' else 'Z'; -- wifi gpio12
-  sd_dat0_do <= '0' when (S_prog_in(0) xor S_prog_in(1)) = '1' else
+  --sd_d(0) <= '0' when wifi_gpio0 = '0' else 'Z'; -- gpio2 together with gpio0 to 0
+  --sd_d(2) <= '0' when wifi_gpio0 = '0' else 'Z'; -- wifi gpio12
+  sd_d(0) <= '0' when (S_prog_in(0) xor S_prog_in(1)) = '1' else
                 R_spi_miso(0) when oled_csn = '0' else -- SPI reading buttons with OLED CSn
                 'Z'; -- gpio2 to 0 during programming init
-  -- sd_dat2 <= '0' when (S_prog_in(0) xor S_prog_in(1)) = '1' else 'Z'; -- wifi gpio12
+  -- sd_d(2) <= '0' when (S_prog_in(0) xor S_prog_in(1)) = '1' else 'Z'; -- wifi gpio12
   -- permanent flashing mode
   -- wifi_en <= ftdi_nrts;
   -- wifi_gpio0 <= ftdi_ndtr;
 
+  sd_d(3 downto 1) <= (others => 'Z');
+
   oled_csn <= wifi_gpio17;
   oled_clk <= sd_clk; -- wifi_gpio14
-  oled_mosi <= sd_cmd_di; -- wifi_gpio15
+  oled_mosi <= sd_cmd; -- wifi_gpio15
   oled_dc <= wifi_gpio16;
   oled_resn <= gp(11); -- wifi_gpio25
 
   -- show OLED signals on the LEDs
   -- show SD signals on the LEDs
-  -- led(5 downto 0) <= sd_clk & sd_dat2 & sd_dat3_csn & sd_cmd_di & sd_dat0_do & sd_dat1_irq;
-  led(7 downto 0) <= oled_csn & R_spi_miso(0) & sd_clk & sd_dat2 & sd_dat3_csn & sd_cmd_di & sd_dat0_do & sd_dat1_irq;
+  -- led(5 downto 0) <= sd_clk & sd_d(2) & sd_d(3) & sd_cmd & sd_d(0) & sd_d(1);
+  led(7 downto 0) <= oled_csn & R_spi_miso(0) & sd_clk & sd_d(2) & sd_d(3) & sd_cmd & sd_d(0) & sd_d(1);
 
   -- clock alive blinky
   process(clk_25MHz)
