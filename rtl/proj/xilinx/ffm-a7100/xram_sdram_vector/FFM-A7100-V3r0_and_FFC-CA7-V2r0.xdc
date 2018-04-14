@@ -26,7 +26,7 @@ set_property CONFIG_VOLTAGE 3.3 [current_design]
 #
 set_property -dict {PACKAGE_PIN T4 IOSTANDARD LVDS_25} [get_ports clk_100mhz_n]
 set_property -dict {PACKAGE_PIN R4 IOSTANDARD LVDS_25} [get_ports clk_100mhz_p]
-create_clock -name {clk100}  [get_ports {clk_100MHz_p}] -period {10.000}  -add 
+create_clock -name {clk100}  [get_ports {clk_100mhz_p}] -period {10.000}  -add 
 
 #set_property -dict {PACKAGE_PIN V13 IOSTANDARD LVTTL} [get_ports PON_RESET_N]
 #set_property -dict {PACKAGE_PIN Y8 IOSTANDARD LVTTL} [get_ports PS_SRST_N]
