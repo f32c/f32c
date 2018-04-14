@@ -205,6 +205,7 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
       return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
   end ceil_log2;
   signal clk, rs232_break, rs232_break2: std_logic;
+  signal S_rxd, S_txd: std_logic; -- mix USB and WiFi
   signal clk_100: std_logic;
   signal clk_dvi, clk_dvin, clk_pixel: std_logic;
   signal ram_en             : std_logic;
@@ -286,6 +287,12 @@ begin
      );
   clk <= clk_dvi;
   end generate;
+
+  -- both USB and WiFi can upload binary executable to f32c
+  -- (not both on the same time)
+  S_rxd <= ftdi_txd and wifi_txd;
+  ftdi_rxd <= S_txd;
+  wifi_rxd <= S_txd;
 
   -- full featured XRAM glue
   glue_xram: entity work.glue_xram
@@ -382,10 +389,10 @@ begin
     clk_pixel => clk_pixel,
     clk_pixel_shift => clk_dvi,
     reset => S_reset,
-    sio_rxd(0) => ftdi_txd,
-    sio_rxd(1) => wifi_txd,
-    sio_txd(0) => ftdi_rxd,
-    sio_txd(1) => wifi_rxd,
+    sio_rxd(0) => S_rxd,
+    sio_rxd(1) => open,
+    sio_txd(0) => S_txd,
+    sio_txd(1) => open,
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
 
