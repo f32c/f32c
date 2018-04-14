@@ -50,14 +50,15 @@ entity ulx3s_xram_sdram_vector is
     C_gpio_pullup: boolean := false; -- false default
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
     C_timer: boolean := true; -- true default
-
     C_pcm: boolean := true; -- PCM audio (wav playing)
     C_synth: boolean := false; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
     C_spdif: boolean := false; -- SPDIF output
-
     C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
+
+    C_passthru_autodetect: boolean := true; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
+    C_passthru_timeout: real := 0.5; -- seconds (approximately) to return to f32c after ESP32 programming
 
     C_vector: boolean := true; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
@@ -124,6 +125,7 @@ entity ulx3s_xram_sdram_vector is
   ftdi_rxd: out   std_logic;
   ftdi_txd: in    std_logic;
   -- FTDI additional signaling
+  ftdi_ndtr: inout  std_logic;
   ftdi_ndsr: inout  std_logic;
   ftdi_nrts: inout  std_logic;
   ftdi_txden: inout std_logic;
@@ -205,7 +207,6 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
       return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
   end ceil_log2;
   signal clk, rs232_break, rs232_break2: std_logic;
-  signal S_rxd, S_txd: std_logic; -- mix USB and WiFi
   signal clk_100: std_logic;
   signal clk_dvi, clk_dvin, clk_pixel: std_logic;
   signal ram_en             : std_logic;
@@ -232,6 +233,14 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal S_rom_reset, S_rom_next_data: std_logic;
   signal S_rom_data: std_logic_vector(C_boot_rom_data_bits-1 downto 0);
   signal S_rom_valid: std_logic;
+
+  -- dual ESP32/f32c programming mode
+  signal S_rxd, S_txd: std_logic; -- mix USB and WiFi
+  signal S_prog_in, S_prog_out: std_logic_vector(1 downto 0);
+  signal S_esp32_prog_init: std_logic;
+  signal R_esp32_mode: std_logic := '0';
+  constant C_esp32_counter_bits: integer := ceil_log2(integer(C_clk_freq*1.0E6*C_passthru_timeout))+1;
+  signal R_esp32_counter: std_logic_vector(C_esp32_counter_bits-1 downto 0) := (others => '0'); -- 28 bits for 0.75s at 100 MHz
 
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
@@ -288,11 +297,67 @@ begin
   clk <= clk_dvi;
   end generate;
 
-  -- both USB and WiFi can upload binary executable to f32c
-  -- (not both on the same time)
-  S_rxd <= ftdi_txd and wifi_txd;
-  ftdi_rxd <= S_txd;
-  wifi_rxd <= S_txd;
+  G_yes_passthru_autodetect: if C_passthru_autodetect generate
+    -- Autodetect programming of ESP32 and f32c
+
+    -- Programming logic
+    -- SERIAL  ->  ESP32
+    -- DTR RTS -> EN IO0
+    --  1   1     1   1
+    --  0   0     1   1
+    --  1   0     0   1
+    --  0   1     1   0
+    S_prog_in(1) <= ftdi_ndtr;
+    S_prog_in(0) <= ftdi_nrts;
+    S_prog_out <= "01" when S_prog_in = "10" else
+                  "10" when S_prog_in = "01" else
+                  "11";
+    wifi_en <= S_prog_out(1);
+    wifi_gpio0 <= S_prog_out(0) and btn(0); -- holding BTN0 will hold gpio0 LOW, signal for ESP32 to take control
+    S_esp32_prog_init <= S_prog_in(0) xor S_prog_in(1);
+    sd_d(0) <= '0' when S_esp32_prog_init = '1' else
+               -- R_spi_miso(0) when oled_csn = '0' else -- SPI reading buttons with OLED CSn
+               'Z'; -- gpio2 to 0 during programming init
+    -- autodetect ESP32 programming mode
+    -- when S_esp32_prog_init = '1' enter ESP32 mode ahd hold it
+    -- until ftdi_txd = '1' is stable for approx 0.5s
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        if S_prog_out = "10" then -- ESP32 prog init detected -> enter ESP32 mode
+          R_esp32_mode <= '1';
+          R_esp32_counter <= (others => '0'); -- reset counter
+        else
+          if R_esp32_counter(R_esp32_counter'high) = '1' then -- counter expired
+            R_esp32_mode <= '0'; -- disable esp32 mode
+          else
+            if ftdi_txd = '0' then -- low level means activity of FTDI TX
+              R_esp32_counter <= (others => '0'); -- activity: reset counter
+            else
+              R_esp32_counter <= R_esp32_counter + 1; -- inactivity: counter increment
+            end if;
+          end if;
+        end if;        
+      end if;
+    end process;
+    -- both USB and WiFi can upload binary executable to f32c
+    -- (not both on the same time)
+    -- S_rxd <= '1' when R_esp32_mode='1' else (ftdi_txd and wifi_txd);
+    S_rxd <= R_esp32_mode or (ftdi_txd and wifi_txd); -- same logic function as above line
+    ftdi_rxd <= wifi_txd when R_esp32_mode='1' else S_txd;
+    wifi_rxd <= ftdi_txd when R_esp32_mode='1' else S_txd;
+  end generate;
+  G_no_passthru_autodetect: if not C_passthru_autodetect generate
+    -- both USB and WiFi can upload binary executable to f32c
+    -- (not both on the same time)
+    S_rxd <= ftdi_txd and wifi_txd;
+    ftdi_rxd <= S_txd;
+    wifi_rxd <= S_txd;
+    wifi_gpio0 <= btn(0); -- pressing BTN0 will escape to ESP32 file select menu
+  end generate;
+  
+  -- hold pushbutton BTN1 to upload to f32c over USB
+  -- released BTN1 will pass-thru serial to ESP32
 
   -- full featured XRAM glue
   glue_xram: entity work.glue_xram
@@ -561,6 +626,5 @@ begin
   --audio_r <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
   --audio_v <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
   
-  wifi_gpio0 <= btn(0); -- pressing BTN0 will escape to ESP32 file select menu
 
 end Behavioral;
