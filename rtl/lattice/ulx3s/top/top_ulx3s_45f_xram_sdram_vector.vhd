@@ -58,7 +58,7 @@ entity ulx3s_xram_sdram_vector is
     C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
     C_passthru_autodetect: boolean := true; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
-    C_passthru_timeout: real := 0.5; -- seconds (approximately) to return to f32c after ESP32 programming
+    C_passthru_timeout: real := 5.0; -- seconds (approximately) to return to f32c after ESP32 programming
 
     C_vector: boolean := true; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
@@ -320,7 +320,7 @@ begin
                'Z'; -- gpio2 to 0 during programming init
     -- autodetect ESP32 programming mode
     -- when S_esp32_prog_init = '1' enter ESP32 mode ahd hold it
-    -- until ftdi_txd = '1' is stable for approx 0.5s
+    -- until ftdi_txd = '1' is stable for approx 5s
     process(clk)
     begin
       if rising_edge(clk) then
