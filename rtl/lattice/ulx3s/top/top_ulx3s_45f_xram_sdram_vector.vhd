@@ -58,9 +58,11 @@ entity ulx3s_xram_sdram_vector is
     C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
     C_passthru_autodetect: boolean := true; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
-    C_passthru_timeout: real := 5.0; -- seconds (approximately) to return to f32c after ESP32 programming
+    C_passthru_timeout: real := 4.0; -- seconds (approximately) to return to f32c after ESP32 programming
+    C_passthru_break: real := 200.0E-3; -- seconds (approximately) to detect serial break and enter f32c mode
+    C_passthru_init_prolong: real := 1.0E-3; -- seconds approx to prolong ESP32 init signal
 
-    C_vector: boolean := true; -- vector processor unit
+    C_vector: boolean := false; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
     C_vector_bram_pass_thru: boolean := false; -- false: default, true: c2_vector_fast won't work
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
@@ -192,10 +194,12 @@ entity ulx3s_xram_sdram_vector is
   --flash_csn    : out     std_logic;
 
   -- SD card (SPI1)
-  sd_cmd: inout std_logic;
+  sd_cmd: inout std_logic := 'Z';
   sd_d: inout std_logic_vector(3 downto 0);
-  sd_clk: out std_logic;
-  sd_cdn, sd_wp: in std_logic
+  sd_clk: inout std_logic := 'Z';
+  sd_cdn, sd_wp: in std_logic;
+
+  nc: inout std_logic_vector(8 downto 0) -- not connected pins to force compiler to use some logic
   );
 end;
 
@@ -237,10 +241,15 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   -- dual ESP32/f32c programming mode
   signal S_rxd, S_txd: std_logic; -- mix USB and WiFi
   signal S_prog_in, S_prog_out: std_logic_vector(1 downto 0);
-  signal S_esp32_prog_init: std_logic;
-  signal R_esp32_mode: std_logic := '0';
-  constant C_esp32_counter_bits: integer := ceil_log2(integer(C_clk_freq*1.0E6*C_passthru_timeout))+1;
+  signal S_esp32_prog_init, S_esp32_prog_init_prolong: std_logic;
+  signal R_esp32_mode: std_logic := '1';
+  constant C_esp32_counter_bits: integer := 1+ceil_log2(integer(C_clk_freq*1.0E6*C_passthru_timeout));
   signal R_esp32_counter: std_logic_vector(C_esp32_counter_bits-1 downto 0) := (others => '0'); -- 28 bits for 0.75s at 100 MHz
+  constant C_break_counter_bits: integer := 1+ceil_log2(integer(C_clk_freq*1.0E6*C_passthru_break));
+  signal R_break_counter: std_logic_vector(C_break_counter_bits-1 downto 0) := (others => '0');
+  constant C_esp32_init_counter_bits: integer := 1+ceil_log2(integer(C_clk_freq*1.0E6*C_passthru_init_prolong));
+  signal R_esp32_init_counter: std_logic_vector(C_esp32_init_counter_bits-1 downto 0) := (others => '0');
+  signal S_f32c_sd_csn, S_f32c_sd_clk, S_f32c_sd_miso, S_f32c_sd_mosi: std_logic;
 
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
@@ -315,16 +324,66 @@ begin
     wifi_en <= S_prog_out(1);
     wifi_gpio0 <= S_prog_out(0) and btn(0); -- holding BTN0 will hold gpio0 LOW, signal for ESP32 to take control
     S_esp32_prog_init <= S_prog_in(0) xor S_prog_in(1);
-    sd_d(0) <= '0' when S_esp32_prog_init = '1' else
-               -- R_spi_miso(0) when oled_csn = '0' else -- SPI reading buttons with OLED CSn
-               'Z'; -- gpio2 to 0 during programming init
-    -- autodetect ESP32 programming mode
-    -- when S_esp32_prog_init = '1' enter ESP32 mode ahd hold it
-    -- until ftdi_txd = '1' is stable for approx 5s
+    -- prolong esp32 prog_init signal
+    G_prolong_esp32_prog_init: if false generate
     process(clk)
     begin
       if rising_edge(clk) then
-        if S_prog_out = "10" then -- ESP32 prog init detected -> enter ESP32 mode
+        if S_esp32_prog_init = '1' then
+          R_esp32_init_counter <= (others => '0');
+        else
+          if R_esp32_init_counter(R_esp32_init_counter'high) = '0' then
+            R_esp32_init_counter <= R_esp32_init_counter + 1;
+          end if;
+        end if;
+      end if;
+    end process;
+    S_esp32_prog_init_prolong <= not R_esp32_init_counter(R_esp32_init_counter'high);
+    end generate;
+    sd_d(0) <= '0' when S_esp32_prog_init = '1' else
+               -- R_spi_miso(0) when oled_csn = '0' else -- SPI reading buttons with OLED CSn
+               'Z'; -- wifi_gpio2 to 0 during programming init
+    sd_d(3) <= 'Z' when R_esp32_mode = '1' else S_f32c_sd_csn;
+    sd_clk <= 'Z' when R_esp32_mode = '1' else S_f32c_sd_clk;
+    S_f32c_sd_miso <= sd_d(0);
+    sd_cmd <= 'Z' when R_esp32_mode = '1' else S_f32c_sd_mosi;
+    sd_d(2 downto 1) <= (others => 'Z');
+
+    -- nc pins are used to force sd as bidirectional
+    nc(0) <= sd_d(1) and sd_d(0);
+    nc(1) <= sd_d(3) and sd_d(2);
+    nc(2) <= sd_clk and sd_cmd;
+
+    -- detect serial break
+    G_detect_serial_break: if true generate
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        -- f32c serial break detection
+        if ftdi_txd = '1' then
+          R_break_counter <= (others => '0');
+        else
+          if R_break_counter(R_break_counter'high) = '0' then
+            R_break_counter <= R_break_counter + 1;
+          end if;
+        end if;
+      end if;
+    end process;
+    end generate;
+
+    -- autodetect ESP32 programming mode
+    G_autodetect_esp32_prog: if true generate
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        -- esp32 detection
+        -- if R_break_counter(R_break_counter'high) = '1' and R_esp32_counter(R_esp32_counter'high) = '1' then -- serial break detected during esp32 mode
+          -- R_esp32_mode <= '0'; -- serial break -> esp32 mode off
+        -- else
+        -- when S_esp32_prog_init = '1' enter ESP32 mode ahd hold it
+        -- until ftdi_txd = '1' is stable for approx 4s
+        if S_prog_in = "01" then -- esp32 prog init detected -> enter esp32 mode
+        -- if S_esp32_prog_init = '1' then
           R_esp32_mode <= '1';
           R_esp32_counter <= (others => '0'); -- reset counter
         else
@@ -337,10 +396,14 @@ begin
               R_esp32_counter <= R_esp32_counter + 1; -- inactivity: counter increment
             end if;
           end if;
-        end if;        
+        end if; -- esp32 prog detect
+        -- end if; -- f32c serial break detect
       end if;
     end process;
+    end generate;
     -- both USB and WiFi can upload binary executable to f32c
+    -- because AND mixture of ftdi and wifi TXD is connected to f32c RXD
+    -- and f32c TXD is connected to both ftdi and wifi RXD
     -- (not both on the same time)
     -- S_rxd <= '1' when R_esp32_mode='1' else (ftdi_txd and wifi_txd);
     S_rxd <= R_esp32_mode or (ftdi_txd and wifi_txd); -- same logic function as above line
@@ -461,10 +524,10 @@ begin
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
 
-    spi_sck(0)  => open,  spi_sck(1)  => sd_clk,
-    spi_ss(0)   => open,  spi_ss(1)   => sd_d(3),
-    spi_mosi(0) => open,  spi_mosi(1) => sd_cmd,
-    spi_miso(0) => '0',   spi_miso(1) => sd_d(0),
+    spi_sck(0)  => open,  spi_sck(1)  => S_f32c_sd_clk,   -- sd_clk,
+    spi_ss(0)   => open,  spi_ss(1)   => S_f32c_sd_csn,   -- sd_d(3),
+    spi_mosi(0) => open,  spi_mosi(1) => S_f32c_sd_mosi,  -- sd_cmd,
+    spi_miso(0) => '0',   spi_miso(1) => S_f32c_sd_miso,  -- sd_d(0),
 
     gpio(127 downto 28+32) => open,
     gpio(27+32 downto 32) => gn(27 downto 0),
