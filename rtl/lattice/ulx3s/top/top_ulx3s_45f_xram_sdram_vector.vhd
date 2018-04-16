@@ -319,15 +319,10 @@ begin
     wifi_gpio0 <= S_prog_out(0) and btn(0); -- holding BTN0 will hold gpio0 LOW, signal for ESP32 to take control
     sd_d(0) <= '0' when S_prog_in = "01" else 'Z'; -- wifi_gpio2 to 0 during programming init
     sd_d(3) <= '1' when R_esp32_mode = '1' else S_f32c_sd_csn;
-    sd_clk <= '1' when R_esp32_mode = '1' else S_f32c_sd_clk;
+    sd_clk <= '1' when R_esp32_mode = '1' else (S_f32c_sd_clk when S_f32c_sd_csn = '0' else 'Z');
     S_f32c_sd_miso <= sd_d(0);
-    sd_cmd <= '1' when R_esp32_mode = '1' else S_f32c_sd_mosi;
+    sd_cmd <= '1' when R_esp32_mode = '1' else (S_f32c_sd_mosi when S_f32c_sd_csn = '0' else 'Z');
     sd_d(2 downto 1) <= (others => '1') when R_esp32_mode = '1' else (others => 'Z');
-
-    --sd_d(3) <= '1';
-    --sd_clk <= '1';
-    --sd_cmd <= '1';
-    --sd_d(2 downto 1) <= (others => '1');
 
     G_nc_out: if false generate
     -- nc pins are used to force sd as bidirectional
