@@ -324,13 +324,6 @@ begin
     sd_cmd <= '1' when R_esp32_mode = '1' else (S_f32c_sd_mosi when S_f32c_sd_csn = '0' else 'Z');
     sd_d(2 downto 1) <= (others => '1') when R_esp32_mode = '1' else (others => 'Z');
 
-    G_nc_out: if false generate
-    -- nc pins are used to force sd as bidirectional
-    nc(0) <= sd_d(1) and sd_d(0);
-    nc(1) <= sd_d(3) and sd_d(2);
-    nc(2) <= sd_clk and sd_cmd;
-    end generate;
-
     -- detect serial break
     G_detect_serial_break: if true generate
     process(clk_25MHz)
