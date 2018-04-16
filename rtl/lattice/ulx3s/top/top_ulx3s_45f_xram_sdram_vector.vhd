@@ -318,20 +318,27 @@ begin
     wifi_en <= S_prog_out(1);
     wifi_gpio0 <= S_prog_out(0) and btn(0); -- holding BTN0 will hold gpio0 LOW, signal for ESP32 to take control
     sd_d(0) <= '0' when S_prog_in = "01" else 'Z'; -- wifi_gpio2 to 0 during programming init
-    sd_d(3) <= 'Z' when R_esp32_mode = '1' else S_f32c_sd_csn;
-    sd_clk <= 'Z' when R_esp32_mode = '1' else S_f32c_sd_clk;
+    sd_d(3) <= '1' when R_esp32_mode = '1' else S_f32c_sd_csn;
+    sd_clk <= '1' when R_esp32_mode = '1' else S_f32c_sd_clk;
     S_f32c_sd_miso <= sd_d(0);
-    sd_cmd <= 'Z' when R_esp32_mode = '1' else S_f32c_sd_mosi;
-    sd_d(2 downto 1) <= (others => 'Z');
+    sd_cmd <= '1' when R_esp32_mode = '1' else S_f32c_sd_mosi;
+    sd_d(2 downto 1) <= (others => '1') when R_esp32_mode = '1' else (others => 'Z');
 
+    --sd_d(3) <= '1';
+    --sd_clk <= '1';
+    --sd_cmd <= '1';
+    --sd_d(2 downto 1) <= (others => '1');
+
+    G_nc_out: if false generate
     -- nc pins are used to force sd as bidirectional
     nc(0) <= sd_d(1) and sd_d(0);
     nc(1) <= sd_d(3) and sd_d(2);
     nc(2) <= sd_clk and sd_cmd;
+    end generate;
 
     -- detect serial break
     G_detect_serial_break: if true generate
-    process(clk)
+    process(clk_25MHz)
     begin
       if rising_edge(clk_25MHz) then
         -- f32c serial break detection
@@ -348,7 +355,7 @@ begin
 
     -- autodetect ESP32 programming mode
     G_autodetect_esp32_prog: if true generate
-    process(clk)
+    process(clk_25MHz)
     begin
       if rising_edge(clk_25MHz) then
         -- esp32 detection
