@@ -144,6 +144,7 @@ entity ffm_xram_sdram is
 	clk_100mhz_p, clk_100mhz_n: in std_logic;
 	uart3_txd: out std_logic;
 	uart3_rxd: in std_logic;
+	sd_m_cdet: in std_logic;
 	sd_m_clk, sd_m_cmd: out std_logic;
 	sd_m_d: inout std_logic_vector(3 downto 0);
 	--FPGA_CCLK_CONF_DCLK: out std_logic;
@@ -734,7 +735,8 @@ begin
 	-- simple I/O
 	simple_out(31 downto 0) => open,
 	-- simple_out(0) => led,
-        simple_in(31 downto 0) => (others => '-')
+        simple_in(31 downto 1) => (others => '-'),
+	simple_in(0) => sd_m_cdet
     );
 
     dv_clk <= clk_pixel;
