@@ -384,8 +384,8 @@ begin
     -- cw_antenna => ant_433mhz,
 
     -- external SDRAM interface
-    sdram_addr => dram_addr, sdram_data => dram_data,
-    sdram_ba => dram_ba, sdram_dqm => dram_dqm,
+    sdram_addr => dram_addr, sdram_data(15 downto 0) => dram_data,
+    sdram_ba => dram_ba, sdram_dqm(1 downto 0) => dram_dqm,
     sdram_ras => dram_n_ras, sdram_cas => dram_n_cas,
     sdram_we => dram_n_we, sdram_cs => dram_n_cs,
     sdram_cke => dram_cke,
