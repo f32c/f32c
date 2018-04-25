@@ -28,19 +28,19 @@ $(PROJECT)/$(PROJECT)_$(PROJECT).mcs:
 	LANG=C ${DDTCMD} -dev LFE5U-25F -if $(PROJECT)/$(PROJECT)_$(PROJECT).bit -oft -int -of $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_sram.xcf -nocompress -noheader -of $@
+	LANG=C ${DDTCMD} -oft -fullvme -if fleafpga_ohm_sram.xcf -nocompress -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
-	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_flash.xcf -nocompress -noheader -of $@
+	LANG=C ${DDTCMD} -oft -fullvme -if fleafpga_ohm_flash.xcf -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_sram.xcf -of $@
+	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if fleafpga_ohm_sram.xcf -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
-	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_flash.xcf -of $@
+	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if fleafpga_ohm_flash.xcf -of $@
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-	echo pgr_project open ulx3s_sram.xcf \; pgr_program run | ${DIAMONDC}
+	echo pgr_project open fleafpga_ohm_sram.xcf \; pgr_program run | ${DIAMONDC}
 
 program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 	openocd --file=$(OPENOCD_BASE)/remote.ocd --file=$(OPENOCD_BASE)/ecp5-25f.ocd
@@ -70,7 +70,7 @@ program_flea_flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
 #	${DDTCMD} -oft -svfsingle -op "FLASH Erase,Program,Verify" -if $< -of $@
 
 flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
-	${PROGRAMMERC} $<
+	FleaFPGA-JTAG $<
 	# after this, to gain access to serial port on linux
 	# rmmod ftdi_sio; modprobe ftdi_sio
 
