@@ -48,10 +48,11 @@ entity ffm_xram_sdram is
 	-- SoC configuration options
 	C_bram_size: integer := 16; -- K default 16
 	C_boot_write_protect: boolean := true; -- set to 'false' for 1K bram size
-	
+
 	-- SDRAM
 	C_sdram: boolean := false; -- 16-bit sdram
 	C_sdram32: boolean := true; -- 32-bit sdram
+	C_sdram_clock_range: integer := 3; -- 3: must be for FFM board, 2: default for other boards
 
         -- axi ram
 	C_axiram: boolean := false; -- default true
@@ -84,15 +85,15 @@ entity ffm_xram_sdram is
         C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
         C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
-        C_dvid_ddr: boolean := true; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
+        C_dvid_ddr: boolean := false; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
         C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024, default 1
 
         C_vgahdmi: boolean := true;
           C_vgahdmi_axi: boolean := false; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
-          C_vgahdmi_cache_size: integer := 8; -- KB video cache (only on f32c bus) (0: disable, 2,4,8,16,32:enable, default 8)
+          C_vgahdmi_cache_size: integer := 0; -- KB video cache (only on f32c bus) (0: disable, 2,4,8,16,32:enable, default 8)
           C_vgahdmi_fifo_timeout: integer := 0; -- default 0
-          C_vgahdmi_fifo_burst_max_bits: integer := 6; -- 6 bits -> 64x32-bit words
-          C_vgahdmi_fifo_data_width: integer := 32; -- bits per pixel (default 32)
+          C_vgahdmi_fifo_burst_max_bits: integer := 0; -- 6 bits -> 64x32-bit words
+          C_vgahdmi_fifo_data_width: integer := 8; -- bits per pixel (default 32)
 
     C_vgatext: boolean := false; -- Xark's feature-rich bitmap+textmode VGA
       C_vgatext_label: string := "FFM-A7100: MIPS compatible soft-core 100MHz SDRAM"; -- default banner as initial content of screen BRAM, NOP for RAM
@@ -226,45 +227,20 @@ architecture Behavioral of ffm_xram_sdram is
     );
     constant C_clk_freq: integer := C_mode_clk_freq(C_video_mode);
 
-    component clk_d100_100_200_250_25MHz is
-    Port (
-      clk_100mhz_in_p : in STD_LOGIC;
-      clk_100mhz_in_n : in STD_LOGIC;
-      clk_100mhz : out STD_LOGIC;
-      clk_200mhz : out STD_LOGIC;
-      clk_250mhz : out STD_LOGIC;
-      clk_25mhz : out STD_LOGIC;
-      reset : in STD_LOGIC;
-      locked : out STD_LOGIC
-    );
-    end component clk_d100_100_200_250_25MHz;
-
-    component clk_d100_100_200_125_25MHz is
-    Port (
-      clk_100M_in_p : in STD_LOGIC;
-      clk_100M_in_n : in STD_LOGIC;
-      clk_100M : out STD_LOGIC;
-      clk_200M : out STD_LOGIC;
-      clk_125M : out STD_LOGIC;
-      clk_25M : out STD_LOGIC;
-      reset : in STD_LOGIC;
-      locked : out STD_LOGIC
-    );
-    end component clk_d100_100_200_125_25MHz;
-
-    component clk_d100_83_100_200_125_25MHz is
+    component clk_d100_83_100_200_250_125_25MHz is
     Port (
       clk_in1_p : in STD_LOGIC;
       clk_in1_n : in STD_LOGIC;
       clk_83M333 : out STD_LOGIC;
       clk_100M : out STD_LOGIC;
       clk_200M : out STD_LOGIC;
+      clk_250M : out STD_LOGIC;
       clk_125M : out STD_LOGIC;
       clk_25M : out STD_LOGIC;
       reset : in STD_LOGIC;
       locked : out STD_LOGIC
     );
-    end component clk_d100_83_100_200_125_25MHz;
+    end component clk_d100_83_100_200_250_125_25MHz;
 
     component clk_d100_100_200_150_30MHz is
     Port (
@@ -416,43 +392,32 @@ architecture Behavioral of ffm_xram_sdram is
     signal tmds_rgb: std_logic_vector(2 downto 0);
     signal tmds_clk: std_logic;
 begin
-    cpu100M_sdr_640x480: if C_clk_freq = 100 and not C_dvid_ddr and C_video_mode=1 generate
-    clk_cpu100M_sdr_640x480: clk_d100_100_200_250_25MHz
-    port map(clk_100mhz_in_p => clk_100mhz_p,
-             clk_100mhz_in_n => clk_100mhz_n,
-             reset => '0',
-             locked => clk_locked,
-             clk_100mhz => clk_100MHz,
-             clk_200mhz => clk_200MHz,
-             clk_250mhz => clk_250MHz,
-             clk_25mhz  => clk_25MHz
-    );
-    clk <= clk_100MHz;
-    clk_pixel <= clk_25MHz;
-    clk_pixel_shift <= clk_250MHz;
-    video_axi_aclk <= clk_200MHz;
-    end generate;
-
-    cpu83_100M_ddr_640x480: if (C_clk_freq = 83 or C_clk_freq = 100) and C_dvid_ddr and C_video_mode<=1 generate
-    clk_cpu83_100M_ddr_640x480: clk_d100_83_100_200_125_25MHz
+    cpu83_100M_sdr_ddr_640x480: if (C_clk_freq = 83 or C_clk_freq = 100) and C_video_mode<=1 generate
+    clk_cpu83_100M_sdr_ddr_640x480: clk_d100_83_100_200_250_125_25MHz
     port map(clk_in1_p => clk_100mhz_p,
              clk_in1_n => clk_100MHz_N,
              clk_83M333 => clk_83MHz,
              clk_100M => clk_100MHz,
              clk_200M => clk_200MHz,
+             clk_250M => clk_250MHz,
              clk_125M => clk_125MHz,
              clk_25M  => clk_25MHz,
              locked => clk_locked,
              reset => '0'
     );
-    cpu83M_ddr_640x480: if C_clk_freq = 83 generate
+    cpu83M_sdr_640x480: if C_clk_freq = 83 generate
       clk <= clk_83MHz;
     end generate;
-    cpu100M_ddr_640x480: if C_clk_freq = 100 generate
+    cpu100M_sdr_640x480: if C_clk_freq = 100 generate
       clk <= clk_100MHz;
     end generate;
     clk_pixel <= clk_25MHz;
-    clk_pixel_shift <= clk_125MHz;
+    shift_sdr_640x480: if not C_dvid_ddr generate
+      clk_pixel_shift <= clk_250MHz;
+    end generate;
+    shift_ddr_640x480: if C_dvid_ddr generate
+      clk_pixel_shift <= clk_125MHz;
+    end generate;
     video_axi_aclk <= clk_200MHz;
     clk_axi <= clk_200MHz;
     end generate;
@@ -628,6 +593,7 @@ begin
       C_boot_write_protect => C_boot_write_protect,
       C_sdram => C_sdram,
       C_sdram32 => C_sdram32,
+      C_sdram_clock_range => C_sdram_clock_range,
       C_axiram => C_axiram,
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
@@ -714,10 +680,10 @@ begin
 	sio_txd(0) => uart3_txd,
 	sio_rxd(0) => uart3_rxd,
 	sio_break(0) => sio_break,
-        spi_sck(0)  => open,                spi_sck(1)  => SD_M_CLK,
-        spi_ss(0)   => open,                spi_ss(1)   => SD_M_D(3),
-        spi_mosi(0) => open,                spi_mosi(1) => SD_M_CMD,
-        spi_miso(0) => '-',                 spi_miso(1) => SD_M_D(0),
+        spi_sck(0)  => open,  spi_sck(1)  => SD_M_CLK,
+        spi_ss(0)   => open,  spi_ss(1)   => SD_M_D(3),
+        spi_mosi(0) => open,  spi_mosi(1) => SD_M_CMD,
+        spi_miso(0) => '-',   spi_miso(1) => SD_M_D(0),
 	gpio(89 downto 0) => open,
 	gpio(127 downto 90) => open,
 	-- VGA
@@ -744,7 +710,6 @@ begin
     dv_vsync <= S_vga_vsync;
     dv_de <= not S_vga_blank;
 
-    G_i2c_sender: if true generate
     i2c_send: entity work.i2c_sender
       port map
       (
@@ -753,8 +718,6 @@ begin
         sioc => dv_scl,
         siod => dv_sda
       );
-    end generate;
-
 
     G_dvi_sdr: if not C_dvid_ddr generate
       tmds_rgb <= dvid_red(0) & dvid_green(0) & dvid_blue(0);
@@ -781,18 +744,16 @@ begin
     end generate;
 
     -- differential output buffering for DVI clock and video
-    G_lc_dvi: if true generate
     dvi_output: entity work.hdmi_out
     port map
     (
-        tmds_in_clk => tmds_clk, -- clk_25MHz or tmds_clk
+        tmds_in_clk => tmds_clk, -- clk_250MHz or tmds_clk
         tmds_out_clk_p => vid_clk_p,
         tmds_out_clk_n => vid_clk_n,
         tmds_in_rgb => tmds_rgb,
         tmds_out_rgb_p => vid_d_p,
         tmds_out_rgb_n => vid_d_n
     );
-    end generate;
 
     G_axiram_real: if C_axiram generate
     --u_ddr_mem : entity work.axi_mpmc
