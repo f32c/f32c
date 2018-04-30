@@ -41,6 +41,8 @@ entity vga is
     test_picture: in std_logic := '0'; -- show test picture
     fetch_next: out std_logic; -- request FIFO to fetch next pixel data
     line_repeat: out std_logic; -- request FIFO to repeat previous scan line content (used in y-doublescan)
+    beam_x: out std_logic_vector(9 downto 0);
+    beam_y: out std_logic_vector(9 downto 0);
     red_byte, green_byte, blue_byte: in std_logic_vector(7 downto 0); -- pixel data from FIFO
     vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0); -- 8-bit VGA video signal out
     vga_hsync, vga_vsync: out std_logic; -- VGA sync
@@ -97,6 +99,9 @@ begin
     end if;
   end process;
   
+  beam_x <= CounterX;
+  beam_y <= CounterY;
+
   vga_blank <= not DrawArea;
   -- Sync and VBlank generation
   process(clk_pixel)
