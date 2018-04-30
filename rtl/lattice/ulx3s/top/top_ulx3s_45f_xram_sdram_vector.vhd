@@ -61,7 +61,7 @@ entity ulx3s_xram_sdram_vector is
     C_passthru_clk_Hz: real := 25.0E6; -- passthru state machine uses 25 MHz clock
     C_passthru_break: real := 10.0E-3; -- seconds (approximately) to detect serial break and enter f32c mode
 
-    C_vector: boolean := false; -- vector processor unit
+    C_vector: boolean := true; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
     C_vector_bram_pass_thru: boolean := false; -- false: default, true: c2_vector_fast won't work
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
@@ -319,9 +319,9 @@ begin
     wifi_gpio0 <= S_prog_out(0) and btn(0); -- holding BTN0 will hold gpio0 LOW, signal for ESP32 to take control
     sd_d(0) <= '0' when S_prog_in = "01" else 'Z'; -- wifi_gpio2 to 0 during programming init
     sd_d(3) <= '1' when R_esp32_mode = '1' else S_f32c_sd_csn;
-    sd_clk <= '1' when R_esp32_mode = '1' else (S_f32c_sd_clk when S_f32c_sd_csn = '0' else 'Z');
+    sd_clk <= '1' when R_esp32_mode = '1' else S_f32c_sd_clk when S_f32c_sd_csn = '0' else 'Z';
     S_f32c_sd_miso <= sd_d(0);
-    sd_cmd <= '1' when R_esp32_mode = '1' else (S_f32c_sd_mosi when S_f32c_sd_csn = '0' else 'Z');
+    sd_cmd <= '1' when R_esp32_mode = '1' else S_f32c_sd_mosi when S_f32c_sd_csn = '0' else 'Z';
     sd_d(2 downto 1) <= (others => '1') when R_esp32_mode = '1' else (others => 'Z');
 
     -- detect serial break
