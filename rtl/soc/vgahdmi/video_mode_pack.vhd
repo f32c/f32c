@@ -65,7 +65,7 @@ constant C_video_modes: T_video_modes :=
       h_sync_polarity =>  '0',
       v_sync_polarity =>  '0'
     ),
-    ( -- mode 2: 800x480 @ 60 Hz
+    ( -- mode 2: 800x480 @ 60Hz
       pixel_clock_Hz  =>  29892000, -- 30 MHz works
       visible_width   =>  800,
       visible_height  =>  480,
