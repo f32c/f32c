@@ -76,7 +76,7 @@ entity ffm_xram_sdram is
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
 
-        C_vector: boolean := false; -- vector processor unit
+        C_vector: boolean := true; -- vector processor unit
         C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
         C_vector_burst_max_bits: integer := 6; -- bits describe max burst, default 6: burst length 2^6=64
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
@@ -301,6 +301,7 @@ begin
       clkout2_divide   => 4,      --   250 MHz /4 divide
       clkout3_divide   => 8,      --   125 MHz /8 divide
       clkout4_divide   => 40,     --    25 MHz /40 divide
+      clkout5_divide   => 12,     --    83.333 MHz /12 divide
       bandwidth        => "OPTIMIZED"
     )
     port map
@@ -315,6 +316,7 @@ begin
       clkout2  => clk_250MHz,
       clkout3  => clk_125MHz,
       clkout4  => clk_25MHz,
+      clkout5  => clk_83MHz,
       locked   => clk_locked
     );
     cpu83M_sdr_640x480: if C_clk_freq = 83 generate

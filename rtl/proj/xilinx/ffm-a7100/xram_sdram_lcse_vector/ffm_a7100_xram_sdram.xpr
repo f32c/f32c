@@ -3,7 +3,7 @@
 <!--                                                         -->
 <!-- Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.   -->
 
-<Project Version="7" Minor="36" Path="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/ffm-a7100/xram_sdram_vector/ffm_a7100_xram_sdram.xpr">
+<Project Version="7" Minor="36" Path="/home/guest/src/fpga/fpgarduino/f32c/rtl/proj/xilinx/ffm-a7100/xram_sdram_lcse_vector/ffm_a7100_xram_sdram.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="d9ae0350734544abb1e2d9bc160aee96"/>

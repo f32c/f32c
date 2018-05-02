@@ -76,7 +76,7 @@ entity ffm_xram_sdram is
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
 
-        C_vector: boolean := false; -- vector processor unit
+        C_vector: boolean := true; -- vector processor unit
         C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
         C_vector_burst_max_bits: integer := 6; -- bits describe max burst, default 6: burst length 2^6=64
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
@@ -301,6 +301,7 @@ begin
       clkout2_divide   => 4,      --   250 MHz /4 divide
       clkout3_divide   => 8,      --   125 MHz /8 divide
       clkout4_divide   => 40,     --    25 MHz /40 divide
+      clkout5_divide   => 12,     --    83.333 MHz /12 divide
       bandwidth        => "OPTIMIZED"
     )
     port map
@@ -315,6 +316,7 @@ begin
       clkout2  => clk_250MHz,
       clkout3  => clk_125MHz,
       clkout4  => clk_25MHz,
+      clkout5  => clk_83MHz,
       locked   => clk_locked
     );
     cpu83M_sdr_640x480: if C_clk_freq = 83 generate
@@ -727,15 +729,15 @@ begin
 
     G_dvi_sdr: if not C_dvid_ddr generate
     gpdi_sdr_se: for i in 0 to 3 generate
-      vid_d_p(i) <= S_dvid_crgb(2*i+0);
-      vid_d_n(i) <= not S_dvid_crgb(2*i+0);
+      vid_d_p(i) <= S_dvid_crgb(2*i);
+      vid_d_n(i) <= not S_dvid_crgb(2*i);
     end generate;
     end generate;
 
     G_dvi_ddr: if C_dvid_ddr generate
     -- vendor specific DDR and differential modules
     gpdi_ddr_diff: for i in 0 to 3 generate
-      gpdi_ddr:   oddr generic map (DDR_CLK_EDGE => "SAME_EDGE", INIT => '0', SRTYPE => "SYNC") port map (D1=>S_dvid_crgb(2*i+0), D2=>S_dvid_crgb(2*i+1), Q=>S_ddr_d(i), C=>clk_pixel_shift, CE=>'1', R=>'0', S=>'0');
+      gpdi_ddr:   oddr generic map (DDR_CLK_EDGE => "SAME_EDGE", INIT => '0', SRTYPE => "SYNC") port map (D1=>S_dvid_crgb(2*i), D2=>S_dvid_crgb(2*i+1), Q=>S_ddr_d(i), C=>clk_pixel_shift, CE=>'1', R=>'0', S=>'0');
       gpdi_diff:  obufds port map(i => S_ddr_d(i), o => vid_d_p(i), ob => vid_d_n(i));
     end generate;
     end generate;
