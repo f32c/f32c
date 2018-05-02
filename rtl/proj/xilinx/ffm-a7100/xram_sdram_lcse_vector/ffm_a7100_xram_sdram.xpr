@@ -526,7 +526,7 @@
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../xilinx/ffm-a7100/top/top_ffm_a7100_xram_sdram_vector.vhd">
+      <File Path="$PPRDIR/../../../../xilinx/ffm-a7100/top/top_ffm_a7100_xram_sdram_lcse_vector.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
