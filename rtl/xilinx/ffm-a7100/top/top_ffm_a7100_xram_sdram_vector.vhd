@@ -31,6 +31,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
+-- vendor-specific for xilinx
 library unisim;
 use unisim.vcomponents.all;
 
@@ -38,7 +39,8 @@ use work.f32c_pack.all;
 use work.axi_pack.all;
 
 entity ffm_xram_sdram is
-  generic (
+  generic
+  (
 	-- ISA
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
@@ -74,7 +76,7 @@ entity ffm_xram_sdram is
         C3_MEM_ADDR_WIDTH     : integer := 14;
         C3_MEM_BANKADDR_WIDTH : integer := 3;
 
-        C_vector: boolean := true; -- vector processor unit
+        C_vector: boolean := false; -- vector processor unit
         C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
         C_vector_burst_max_bits: integer := 6; -- bits describe max burst, default 6: burst length 2^6=64
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
@@ -86,7 +88,7 @@ entity ffm_xram_sdram is
         C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
         C_dvid_ddr: boolean := false; -- false: clk_pixel_shift = 250MHz, true: clk_pixel_shift = 125MHz (DDR output driver)
-        C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024, default 1
+        C_video_mode: integer := 7; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024, default 1
 
         C_vgahdmi: boolean := true;
           C_vgahdmi_axi: boolean := false; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
@@ -193,12 +195,14 @@ entity ffm_xram_sdram is
         --dv_lrclk: out std_logic;
         dv_d: out std_logic_vector(23 downto 0);
 	-- Low-Cost DVI video out
-	vid_d_p, vid_d_n: out std_logic_vector(2 downto 0);
-	vid_clk_p, vid_clk_n: out std_logic
+	vid_d_p, vid_d_n: out std_logic_vector(3 downto 0)
   );
 end;
 
 architecture Behavioral of ffm_xram_sdram is
+    signal clk_100MHz_in: std_logic; -- converted from differential to single ended
+    signal clk_fb: std_logic; -- feedback internally used in clock generator
+
     signal clk, sio_break: std_logic;
     signal clk_25MHz, clk_30MHz, clk_40MHz, clk_45MHz, clk_50MHz, clk_65MHz, clk_75MHz, clk_80MHz, clk_81MHz, clk_83MHz,
            clk_100MHz, clk_108MHz, clk_112M5Hz, clk_125MHz, clk_150MHz,
@@ -227,117 +231,7 @@ architecture Behavioral of ffm_xram_sdram is
     );
     constant C_clk_freq: integer := C_mode_clk_freq(C_video_mode);
 
-    component clk_d100_83_100_200_250_125_25MHz is
-    Port (
-      clk_in1_p : in STD_LOGIC;
-      clk_in1_n : in STD_LOGIC;
-      clk_83M333 : out STD_LOGIC;
-      clk_100M : out STD_LOGIC;
-      clk_200M : out STD_LOGIC;
-      clk_250M : out STD_LOGIC;
-      clk_125M : out STD_LOGIC;
-      clk_25M : out STD_LOGIC;
-      reset : in STD_LOGIC;
-      locked : out STD_LOGIC
-    );
-    end component clk_d100_83_100_200_250_125_25MHz;
-
-    component clk_d100_100_200_150_30MHz is
-    Port (
-      clk_100M_in_p : in STD_LOGIC;
-      clk_100M_in_n : in STD_LOGIC;
-      clk_80M : out STD_LOGIC;
-      clk_100M : out STD_LOGIC;
-      clk_200M : out STD_LOGIC;
-      clk_150M : out STD_LOGIC;
-      clk_30M : out STD_LOGIC;
-      reset : in STD_LOGIC;
-      locked : out STD_LOGIC
-    );
-    end component clk_d100_100_200_150_30MHz;
-
-    component clk_d100_100_200_40MHz is
-    Port (
-      clk_100M_in_p : in STD_LOGIC;
-      clk_100M_in_n : in STD_LOGIC;
-      clk_83M333 : out STD_LOGIC;
-      clk_100M : out STD_LOGIC;
-      clk_200M : out STD_LOGIC;
-      clk_40M : out STD_LOGIC;
-      reset : in STD_LOGIC;
-      locked : out STD_LOGIC
-    );
-    end component clk_d100_100_200_40MHz;
-
-    component clk_d100_100_112_225_45MHz is
-    Port (
-      clk_100M_in_p : in STD_LOGIC;
-      clk_100M_in_n : in STD_LOGIC;
-      clk_100M : out STD_LOGIC;
-      clk_225M : out STD_LOGIC;
-      clk_112M5 : out STD_LOGIC;
-      clk_45M : out STD_LOGIC;
-      reset : in STD_LOGIC;
-      locked : out STD_LOGIC
-    );
-    end component clk_d100_100_112_225_45MHz;
-
-    component clk_d100_100_200_250_50MHz is
-    Port (
-      clk_100M_in_p : in STD_LOGIC;
-      clk_100M_in_n : in STD_LOGIC;
-      clk_83M333 : out STD_LOGIC;
-      clk_100M : out STD_LOGIC;
-      clk_200M : out STD_LOGIC;
-      clk_250M : out STD_LOGIC;
-      clk_50M : out STD_LOGIC;
-      reset : in STD_LOGIC;
-      locked : out STD_LOGIC
-    );
-    end component clk_d100_100_200_250_50MHz;
-
-    component clk_d100_108_216_325_65MHz is
-    Port (
-      clk_100M_in_p : in STD_LOGIC;
-      clk_100M_in_n : in STD_LOGIC;
-      clk_81M25 : out STD_LOGIC;
-      clk_108M333 : out STD_LOGIC;
-      clk_216M666 : out STD_LOGIC;
-      clk_325M : out STD_LOGIC;
-      clk_65M : out STD_LOGIC;
-      reset : in STD_LOGIC;
-      locked : out STD_LOGIC
-    );
-    end component clk_d100_108_216_325_65MHz;
-
-    component clk_d100_100_225_375_75MHz is
-    Port (
-      clk_100M_in_p : in STD_LOGIC;
-      clk_100M_in_n : in STD_LOGIC;
-      clk_80M357 : out STD_LOGIC;
-      clk_100M : out STD_LOGIC;
-      clk_225M : out STD_LOGIC;
-      clk_375M : out STD_LOGIC;
-      clk_75M : out STD_LOGIC;
-      reset : in STD_LOGIC;
-      locked : out STD_LOGIC
-    );
-    end component;
-
-    component clk_d100_108_216_541MHz is
-    Port (
-      clk_100M_in_p : in STD_LOGIC;
-      clk_100M_in_n : in STD_LOGIC;
-      clk_83M333 : out STD_LOGIC;
-      clk_108M333 : out STD_LOGIC;
-      clk_216M666 : out STD_LOGIC;
-      clk_541M666 : out STD_LOGIC;
-      reset : in STD_LOGIC;
-      locked : out STD_LOGIC
-    );
-    end component clk_d100_108_216_541MHz;
-
-    signal calib_done           : std_logic := '0';
+    signal calib_done: std_logic := '0';
 
     signal ram_en             : std_logic;
     signal ram_byte_we        : std_logic_vector(3 downto 0);
@@ -388,22 +282,40 @@ architecture Behavioral of ffm_xram_sdram is
     signal gpio: std_logic_vector(127 downto 0);
     signal simple_in: std_logic_vector(31 downto 0);
     signal simple_out: std_logic_vector(31 downto 0);
-    signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
-    signal tmds_rgb: std_logic_vector(2 downto 0);
-    signal tmds_clk: std_logic;
+    signal S_ddr_d: std_logic_vector(3 downto 0);
+    signal S_dvid_crgb: std_logic_vector(7 downto 0); -- clock, red, green, blue
 begin
+    -- convert differential input clock to single-ended
+    clkin_ibufgds: ibufgds
+    port map (I => clk_100MHz_P, IB => clk_100MHz_N, O => clk_100MHz_in);
+
     cpu83_100M_sdr_ddr_640x480: if (C_clk_freq = 83 or C_clk_freq = 100) and C_video_mode<=1 generate
-    clk_cpu83_100M_sdr_ddr_640x480: clk_d100_83_100_200_250_125_25MHz
-    port map(clk_in1_p => clk_100mhz_p,
-             clk_in1_n => clk_100MHz_N,
-             clk_83M333 => clk_83MHz,
-             clk_100M => clk_100MHz,
-             clk_200M => clk_200MHz,
-             clk_250M => clk_250MHz,
-             clk_125M => clk_125MHz,
-             clk_25M  => clk_25MHz,
-             locked => clk_locked,
-             reset => '0'
+    clk_cpu83_100M_sdr_ddr_640x480: mmcme2_base
+    generic map
+    (
+      clkin1_period    => 10.0,   --   100 MHz (10 ns)
+      clkfbout_mult_f  => 10.0,   --  1000 MHz *10 common multiply
+      divclk_divide    => 1,      --  1000 MHz /1 common divide
+      clkout0_divide_f => 10.0,   --   100 MHz /10 divide
+      clkout1_divide   => 5,      --   200 MHz /5 divide
+      clkout2_divide   => 4,      --   250 MHz /4 divide
+      clkout3_divide   => 8,      --   125 MHz /8 divide
+      clkout4_divide   => 40,     --    25 MHz /40 divide
+      bandwidth        => "OPTIMIZED"
+    )
+    port map
+    (
+      pwrdwn   => '0',
+      rst      => '0',
+      clkin1   => clk_100MHz_in,
+      clkfbin  => clk_fb,
+      clkfbout => clk_fb,
+      clkout0  => clk_100MHz,
+      clkout1  => clk_200MHz,
+      clkout2  => clk_250MHz,
+      clkout3  => clk_125MHz,
+      clkout4  => clk_25MHz,
+      locked   => clk_locked
     );
     cpu83M_sdr_640x480: if C_clk_freq = 83 generate
       clk <= clk_83MHz;
@@ -423,16 +335,32 @@ begin
     end generate;
 
     cpu80_100M_ddr_800x480: if (C_clk_freq = 80 or C_clk_freq = 100) and C_dvid_ddr and C_video_mode=2 generate
-    clk_cpu80_100M_ddr_800x480: clk_d100_100_200_150_30MHz
-    port map(clk_100M_in_p => clk_100mhz_p,
-             clk_100M_in_n => clk_100mhz_n,
-             clk_80M => clk_80MHz,
-             clk_100M => clk_100MHz,
-             clk_200M => clk_200MHz,
-             clk_150M => clk_150MHz,
-             clk_30M  => clk_30MHz,
-             locked => clk_locked,
-             reset => '0'
+    clk_cpu80_100M_ddr_800x480: mmcme2_base
+    generic map
+    (
+      clkin1_period    => 10.0,   --   100 MHz (10 ns)
+      clkfbout_mult_f  => 12.0,   --  1200 MHz *12 common multiply
+      divclk_divide    => 1,      --  1200 MHz /1 common divide
+      clkout0_divide_f => 8.0,    --   150 MHz /8 divide
+      clkout1_divide   => 40,     --    30 MHz /40 divide
+      clkout2_divide   => 12,     --   100 MHz /12 divide
+      clkout3_divide   => 6,      --   200 MHz /6 divide
+      clkout4_divide   => 15,     --    80 MHz /15 divide
+      bandwidth        => "OPTIMIZED"
+    )
+    port map
+    (
+      pwrdwn   => '0',
+      rst      => '0',
+      clkin1   => clk_100MHz_in,
+      clkfbin  => clk_fb,
+      clkfbout => clk_fb,
+      clkout0  => clk_150MHz,
+      clkout1  => clk_30MHz,
+      clkout2  => clk_100MHz,
+      clkout3  => clk_200MHz,
+      clkout4  => clk_80MHz,
+      locked   => clk_locked
     );
     cpu80M_ddr_800x480: if C_clk_freq = 80 generate
       clk <= clk_80MHz;
@@ -447,15 +375,30 @@ begin
     end generate;
 
     cpu83_100M_ddr_800x600: if (C_clk_freq = 83 or C_clk_freq = 100) and C_dvid_ddr and C_video_mode=3 generate
-    clk_cpu83_100M_ddr_800x600: clk_d100_100_200_40MHz
-    port map(clk_100M_in_p => clk_100mhz_p,
-             clk_100M_in_n => clk_100mhz_n,
-             clk_83M333 => clk_83MHz,
-             clk_100M => clk_100MHz,
-             clk_200M => clk_200MHz,
-             clk_40M  => clk_40MHz,
-             locked => clk_locked,
-             reset => '0'
+    clk_cpu83_100M_ddr_800x600: mmcme2_base
+    generic map
+    (
+      clkin1_period    => 10.0,   --   100 MHz (10 ns)
+      clkfbout_mult_f  => 10.0,   --  1000 MHz *10 common multiply
+      divclk_divide    => 1,      --  1000 MHz /1 common divide
+      clkout0_divide_f => 5.0,    --   200 MHz /5 divide
+      clkout1_divide   => 25,     --    40 MHz /25 divide
+      clkout2_divide   => 10,     --   100 MHz /10 divide
+      clkout3_divide   => 12,     --    83.333 MHz /12 divide
+      bandwidth        => "OPTIMIZED"
+    )
+    port map
+    (
+      pwrdwn   => '0',
+      rst      => '0',
+      clkin1   => clk_100MHz_in,
+      clkfbin  => clk_fb,
+      clkfbout => clk_fb,
+      clkout0  => clk_200MHz,
+      clkout1  => clk_40MHz,
+      clkout2  => clk_100MHz,
+      clkout3  => clk_83MHz,
+      locked   => clk_locked
     );
     cpu83M_ddr_800x600: if C_clk_freq = 83 generate
       clk <= clk_83MHz;
@@ -470,16 +413,32 @@ begin
     end generate;
 
     cpu83_100M_ddr_1024x576: if (C_clk_freq = 83 or C_clk_freq = 100) and C_dvid_ddr and C_video_mode=4 generate
-    clk_cpu83_100M_ddr_1024x576: clk_d100_100_200_250_50MHz
-    port map(clk_100M_in_p => clk_100mhz_p,
-             clk_100M_in_n => clk_100mhz_n,
-             clk_83M333 => clk_83MHz,
-             clk_100M => clk_100MHz,
-             clk_200M => clk_200MHz,
-             clk_250M => clk_250MHz,
-             clk_50M  => clk_50MHz,
-             locked => clk_locked,
-             reset => '0'
+    clk_cpu83_100M_ddr_1024x576: mmcme2_base
+    generic map
+    (
+      clkin1_period    => 10.0,   --   100 MHz (10 ns)
+      clkfbout_mult_f  => 10.0,   --  1000 MHz *10 common multiply
+      divclk_divide    => 1,      --  1000 MHz /1 common divide
+      clkout0_divide_f => 4.0,    --   250 MHz /4 divide
+      clkout1_divide   => 20,     --    50 MHz /20 divide
+      clkout2_divide   => 10,     --   100 MHz /10 divide
+      clkout3_divide   => 5,      --   200 MHz /5 divide
+      clkout4_divide   => 12,     --    83.333 MHz /12 divide
+      bandwidth        => "OPTIMIZED"
+    )
+    port map
+    (
+      pwrdwn   => '0',
+      rst      => '0',
+      clkin1   => clk_100MHz_in,
+      clkfbin  => clk_fb,
+      clkfbout => clk_fb,
+      clkout0  => clk_250MHz,
+      clkout1  => clk_50MHz,
+      clkout2  => clk_100MHz,
+      clkout3  => clk_200MHz,
+      clkout4  => clk_83MHz,
+      locked   => clk_locked
     );
     cpu83M_ddr_1024x576: if C_clk_freq = 83 generate
       clk <= clk_83MHz;
@@ -494,16 +453,32 @@ begin
     end generate;
 
     cpu81_108M_ddr_1024x768: if (C_clk_freq = 81 or C_clk_freq = 108) and C_dvid_ddr and C_video_mode=5 generate
-    clk_cpu81_108M_ddr_1024x768: clk_d100_108_216_325_65MHz
-    port map(clk_100M_in_p => clk_100mhz_p,
-             clk_100M_in_n => clk_100mhz_n,
-             clk_81M25 => clk_81MHz,
-             clk_108M333 => clk_108MHz,
-             clk_216M666 => clk_216MHz,
-             clk_325M => clk_325MHz,
-             clk_65M  => clk_65MHz,
-             locked => clk_locked,
-             reset => '0'
+    clk_cpu81_108M_ddr_1024x768: mmcme2_base
+    generic map
+    (
+      clkin1_period    => 10.0,   --   100 MHz (10 ns)
+      clkfbout_mult_f  => 13.0,   --  1300 MHz *13 common multiply
+      divclk_divide    => 1,      --  1300 MHz /1 common divide
+      clkout0_divide_f => 4.0,    --   325 MHz /4 divide
+      clkout1_divide   => 20,     --    65 MHz /20 divide
+      clkout2_divide   => 6,      --   216 MHz /6 divide
+      clkout3_divide   => 12,     --   108 MHz /12 divide
+      clkout4_divide   => 16,     --    81.250 MHz /16 divide
+      bandwidth        => "OPTIMIZED"
+    )
+    port map
+    (
+      pwrdwn   => '0',
+      rst      => '0',
+      clkin1   => clk_100MHz_in,
+      clkfbin  => clk_fb,
+      clkfbout => clk_fb,
+      clkout0  => clk_325MHz,
+      clkout1  => clk_65MHz,
+      clkout2  => clk_216MHz,
+      clkout3  => clk_108MHz,
+      clkout4  => clk_81MHz,
+      locked   => clk_locked
     );
     cpu81M_ddr_1024x768: if C_clk_freq = 81 generate
       clk <= clk_81MHz;
@@ -518,16 +493,32 @@ begin
     end generate;
 
     cpu80_100M_ddr_1280x768: if (C_clk_freq = 80 or C_clk_freq = 100) and C_dvid_ddr and C_video_mode=6 generate
-    clk_cpu80_100M_ddr_1280x768: clk_d100_100_225_375_75MHz
-    port map(clk_100M_in_p => clk_100mhz_p,
-             clk_100M_in_n => clk_100mhz_n,
-             clk_80M357 => clk_80MHz,
-             clk_100M => clk_100MHz,
-             clk_225M => clk_225MHz,
-             clk_375M => clk_375MHz,
-             clk_75M  => clk_75MHz,
-             locked => clk_locked,
-             reset => '0'
+    clk_cpu80_100M_ddr_1280x768: mmcme2_base
+    generic map
+    (
+      clkin1_period    => 10.0,   --   100 MHz (10 ns)
+      clkfbout_mult_f  => 11.25,  --  1125 MHz *11.25 common multiply
+      divclk_divide    => 1,      --  1300 MHz /1 common divide
+      clkout0_divide_f => 11.25,  --   100 MHz /11.25 divide
+      clkout1_divide   => 5,      --   225 MHz /5 divide
+      clkout2_divide   => 3,      --   375 MHz /3 divide
+      clkout3_divide   => 15,     --    75 MHz /15 divide
+      clkout4_divide   => 14,     --    80.357 MHz /14 divide
+      bandwidth        => "OPTIMIZED"
+    )
+    port map
+    (
+      pwrdwn   => '0',
+      rst      => '0',
+      clkin1   => clk_100MHz_in,
+      clkfbin  => clk_fb,
+      clkfbout => clk_fb,
+      clkout0  => clk_100MHz,
+      clkout1  => clk_225MHz,
+      clkout2  => clk_375MHz,
+      clkout3  => clk_75MHz,
+      clkout4  => clk_80MHz,
+      locked   => clk_locked
     );
     cpu80M_ddr_1280x768: if C_clk_freq = 80 generate
       clk <= clk_80MHz;
@@ -542,15 +533,30 @@ begin
     end generate;
 
     cpu83_108M_ddr_1280x1024: if (C_clk_freq = 83 or C_clk_freq = 108) and C_dvid_ddr and C_video_mode=7 generate
-    clk_cpu83_108M_ddr_1280x1024: clk_d100_108_216_541MHz
-    port map(clk_100M_in_p => clk_100mhz_p,
-             clk_100M_in_n => clk_100mhz_n,
-             clk_83M333 => clk_83MHz,
-             clk_108M333 => clk_108MHz,
-             clk_216M666 => clk_216MHz,
-             clk_541M666 => clk_541MHz,
-             locked => clk_locked,
-             reset => '0'
+    clk_cpu83_108M_ddr_1280x1024: mmcme2_base
+    generic map
+    (
+      clkin1_period    => 10.0,   --   100 MHz (10 ns)
+      clkfbout_mult_f  => 32.5,   --  3250 MHz *32.5 common multiply
+      divclk_divide    => 3,      --  1083.333 MHz /3 common divide
+      clkout0_divide_f => 2.0,    --   541.666 MHz /2 divide
+      clkout1_divide   => 5,      --   216.666 MHz /5 divide
+      clkout2_divide   => 10,     --   108.333 MHz /10 divide
+      clkout3_divide   => 13,     --    83.333 MHz /13 divide
+      bandwidth        => "OPTIMIZED"
+    )
+    port map
+    (
+      pwrdwn   => '0',
+      rst      => '0',
+      clkin1   => clk_100MHz_in,
+      clkfbin  => clk_fb,
+      clkfbout => clk_fb,
+      clkout0  => clk_541MHz,
+      clkout1  => clk_216MHz,
+      clkout2  => clk_108MHz,
+      clkout3  => clk_83MHz,
+      locked   => clk_locked
     );
     cpu83M_ddr_1280x1024: if C_clk_freq = 83 generate
       clk <= clk_83MHz;
@@ -694,10 +700,10 @@ begin
         vga_g => dv_d(15 downto 8),
         vga_b => dv_d(7 downto 0),
 	-- DVI
-        dvid_red   => dvid_red,
-        dvid_green => dvid_green,
-        dvid_blue  => dvid_blue,
-        dvid_clock => dvid_clock,
+        dvid_clock => S_dvid_crgb(7 downto 6),
+        dvid_red   => S_dvid_crgb(5 downto 4),
+        dvid_green => S_dvid_crgb(3 downto 2),
+        dvid_blue  => S_dvid_crgb(1 downto 0),
 	-- simple I/O
 	simple_out(31 downto 0) => open,
 	-- simple_out(0) => led,
@@ -720,40 +726,19 @@ begin
       );
 
     G_dvi_sdr: if not C_dvid_ddr generate
-      tmds_rgb <= dvid_red(0) & dvid_green(0) & dvid_blue(0);
-      tmds_clk <= dvid_clock(0);
+    gpdi_sdr_se: for i in 0 to 3 generate
+      vid_d_p(i) <= S_dvid_crgb(2*i);
+      vid_d_n(i) <= not S_dvid_crgb(2*i);
+    end generate;
     end generate;
 
     G_dvi_ddr: if C_dvid_ddr generate
-    -- vendor specific modules to
-    -- convert 2-bit pairs to DDR 1-bit
-    G_vga_ddrout: entity work.ddr_dvid_out_se
-    port map
-    (
-      clk       => clk_pixel_shift,
-      clk_n     => '0', -- inverted shift clock not needed on xilinx
-      in_red    => dvid_red,
-      in_green  => dvid_green,
-      in_blue   => dvid_blue,
-      in_clock  => dvid_clock,
-      out_red   => tmds_rgb(2),
-      out_green => tmds_rgb(1),
-      out_blue  => tmds_rgb(0),
-      out_clock => tmds_clk
-    );
+    -- vendor specific DDR and differential modules
+    gpdi_ddr_diff: for i in 0 to 3 generate
+      gpdi_ddr:   oddr generic map (DDR_CLK_EDGE => "SAME_EDGE", INIT => '0', SRTYPE => "SYNC") port map (D1=>S_dvid_crgb(2*i), D2=>S_dvid_crgb(2*i+1), Q=>S_ddr_d(i), C=>clk_pixel_shift, CE=>'1', R=>'0', S=>'0');
+      gpdi_diff:  obufds port map(i => S_ddr_d(i), o => vid_d_p(i), ob => vid_d_n(i));
     end generate;
-
-    -- differential output buffering for DVI clock and video
-    dvi_output: entity work.hdmi_out
-    port map
-    (
-        tmds_in_clk => tmds_clk, -- clk_250MHz or tmds_clk
-        tmds_out_clk_p => vid_clk_p,
-        tmds_out_clk_n => vid_clk_n,
-        tmds_in_rgb => tmds_rgb,
-        tmds_out_rgb_p => vid_d_p,
-        tmds_out_rgb_n => vid_d_n
-    );
+    end generate;
 
     G_axiram_real: if C_axiram generate
     --u_ddr_mem : entity work.axi_mpmc
@@ -803,3 +788,4 @@ begin
     end generate; -- G_acram_real
 
 end Behavioral;
+
