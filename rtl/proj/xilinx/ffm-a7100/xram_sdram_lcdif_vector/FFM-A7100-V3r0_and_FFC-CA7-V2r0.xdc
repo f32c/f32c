@@ -124,13 +124,13 @@ set_property -dict {PACKAGE_PIN C13 IOSTANDARD LVTTL} [get_ports dv_vsync]
 #
 #	SD-Card
 #
-set_property -dict {PACKAGE_PIN W12 IOSTANDARD LVTTL} [get_ports sd_m_cdet]
-set_property -dict {PACKAGE_PIN W11 IOSTANDARD LVTTL} [get_ports sd_m_clk]
-set_property -dict {PACKAGE_PIN AA10 IOSTANDARD LVTTL} [get_ports sd_m_cmd]
-set_property -dict {PACKAGE_PIN AA9 IOSTANDARD LVTTL} [get_ports {sd_m_d[0]}]
-set_property -dict {PACKAGE_PIN AB10 IOSTANDARD LVTTL} [get_ports {sd_m_d[1]}]
-set_property -dict {PACKAGE_PIN W10 IOSTANDARD LVTTL} [get_ports {sd_m_d[2]}]
-set_property -dict {PACKAGE_PIN V10 IOSTANDARD LVTTL} [get_ports {sd_m_d[3]}]
+set_property -dict {PACKAGE_PIN W12 IOSTANDARD LVTTL DRIVE 8 PULLUP TRUE} [get_ports sd_m_cdet]
+set_property -dict {PACKAGE_PIN W11 IOSTANDARD LVTTL DRIVE 8 PULLUP TRUE} [get_ports sd_m_clk]
+set_property -dict {PACKAGE_PIN AA10 IOSTANDARD LVTTL DRIVE 8 PULLUP TRUE} [get_ports sd_m_cmd]
+set_property -dict {PACKAGE_PIN AA9 IOSTANDARD LVTTL DRIVE 8 PULLUP TRUE} [get_ports {sd_m_d[0]}]
+set_property -dict {PACKAGE_PIN AB10 IOSTANDARD LVTTL DRIVE 8 PULLUP TRUE} [get_ports {sd_m_d[1]}]
+set_property -dict {PACKAGE_PIN W10 IOSTANDARD LVTTL DRIVE 8 PULLUP TRUE} [get_ports {sd_m_d[2]}]
+set_property -dict {PACKAGE_PIN V10 IOSTANDARD LVTTL DRIVE 8 PULLUP TRUE} [get_ports {sd_m_d[3]}]
 
 #
 #	USB (USB3340)
