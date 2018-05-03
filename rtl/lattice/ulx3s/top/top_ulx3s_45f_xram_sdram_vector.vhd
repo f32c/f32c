@@ -178,8 +178,7 @@ entity ulx3s_xram_sdram_vector is
   ant_433mhz: out std_logic;
 
   -- Digital Video (differential outputs)
-  gpdi_dp, gpdi_dn: out std_logic_vector(2 downto 0);
-  gpdi_clkp, gpdi_clkn: out std_logic;
+  gpdi_dp, gpdi_dn: out std_logic_vector(3 downto 0);
 
   -- i2c shared for digital video and RTC
   gpdi_scl, gpdi_sda: inout std_logic;
@@ -211,16 +210,15 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   end ceil_log2;
   signal clk, rs232_break, rs232_break2: std_logic;
   signal clk_100: std_logic;
-  signal clk_dvi, clk_dvin, clk_pixel: std_logic;
+  signal clk_pixel_shift, clk_pixel: std_logic;
   signal ram_en             : std_logic;
   signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
   signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_data_write     : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_data_read      : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_ready          : std_logic;
-  signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
-  signal ddr_d: std_logic_vector(2 downto 0);
-  signal ddr_clk: std_logic;
+  signal dvid_crgb: std_logic_vector(7 downto 0);
+  signal ddr_d: std_logic_vector(3 downto 0);
   signal R_blinky: std_logic_vector(26 downto 0);
   signal S_spdif_out: std_logic;
 
@@ -258,8 +256,8 @@ begin
   clk_25M: entity work.clk_25_100_125_25
     port map(
       CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_dvi,   -- 125 MHz
-      CLKOS       =>  clk_dvin,  -- 125 MHz inverted
+      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
+      CLKOS       =>  open,      -- 125 MHz inverted
       CLKOS2      =>  clk_pixel, --  25 MHz
       CLKOS3      =>  open       -- 100 MHz
      );
@@ -270,8 +268,8 @@ begin
   clk_78M: entity work.clk_25_78_125_25
     port map(
       CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_dvi,   -- 125 MHz
-      CLKOS       =>  clk_dvin,  -- 125 MHz inverted
+      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
+      CLKOS       =>  open,  -- 125 MHz inverted
       CLKOS2      =>  clk_pixel, --  25 MHz
       CLKOS3      =>  clk        --  78.125 MHz CPU
      );
@@ -281,8 +279,8 @@ begin
   clk_100M: entity work.clk_25_100_125_25
     port map(
       CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_dvi,   -- 125 MHz
-      CLKOS       =>  clk_dvin,  -- 125 MHz inverted
+      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
+      CLKOS       =>  open,  -- 125 MHz inverted
       CLKOS2      =>  clk_pixel, --  25 MHz
       CLKOS3      =>  clk        -- 100 MHz CPU
      );
@@ -292,12 +290,12 @@ begin
   clk_100M: entity work.clk_25_100_125_25
     port map(
       CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_dvi,   -- 125 MHz
-      CLKOS       =>  clk_dvin,  -- 125 MHz inverted
+      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
+      CLKOS       =>  open,  -- 125 MHz inverted
       CLKOS2      =>  clk_pixel, --  25 MHz
       CLKOS3      =>  open       -- 100 MHz
      );
-  clk <= clk_dvi;
+  clk <= clk_pixel_shift;
   end generate;
 
   G_yes_passthru_autodetect: if C_passthru_autodetect generate
@@ -471,7 +469,7 @@ begin
   port map (
     clk => clk,
     clk_pixel => clk_pixel,
-    clk_pixel_shift => clk_dvi,
+    clk_pixel_shift => clk_pixel_shift,
     reset => S_reset,
     sio_rxd(0) => S_rxd,
     sio_rxd(1) => open,
@@ -541,10 +539,10 @@ begin
     acram_data_wr(31 downto 0) => ram_data_write(31 downto 0),
     acram_ready => ram_ready,
 
-    dvid_red   => dvid_red,
-    dvid_green => dvid_green,
-    dvid_blue  => dvid_blue,
-    dvid_clock => dvid_clock
+    dvid_clock => dvid_crgb(7 downto 6),
+    dvid_red   => dvid_crgb(5 downto 4),
+    dvid_green => dvid_crgb(3 downto 2),
+    dvid_blue  => dvid_crgb(1 downto 0)
   );
 
   -- preload the f32c bootloader and reset CPU
@@ -607,43 +605,20 @@ begin
   );
   end generate;
 
-  -- this module instantiates vendor specific modules ddr_out to
-  -- convert SDR 2-bit input to DDR clocked 1-bit output (single-ended)
-  G_vgatext_ddrout: entity work.ddr_dvid_out_se
-  port map
-  (
-    clk       => clk_dvi,
-    clk_n     => clk_dvin,
-    in_red    => dvid_red,
-    in_green  => dvid_green,
-    in_blue   => dvid_blue,
-    in_clock  => dvid_clock,
-    out_red   => ddr_d(2),
-    out_green => ddr_d(1),
-    out_blue  => ddr_d(0),
-    out_clock => ddr_clk
-  );
-
-  gpdi_data_channels: for i in 0 to 2 generate
-    gpdi_diff_data: OLVDS
-    port map(A => ddr_d(i), Z => gpdi_dp(i), ZN => gpdi_dn(i));
+  G_dvid_sdr: if not C_dvid_ddr generate
+    -- this module instantiates single ended inverters to simulate differential
+    G_sdr_se: for i in 0 to 3 generate
+      gpdi_dp(i) <= dvid_crgb(2*i);
+      gpdi_dn(i) <= not dvid_crgb(2*i);
+    end generate;
   end generate;
-  gpdi_diff_clock: OLVDS
-  port map(A => ddr_clk, Z => gpdi_clkp, ZN => gpdi_clkn);
 
-  -- clock alive blinky
-  process(clk)
-  begin
-      if rising_edge(clk) then
-        R_blinky <= R_blinky+1;
-      end if;
-  end process;
-
-  -- led(7) <= R_blinky(R_blinky'high);
-  -- test staircase ramp voltage on AUDIO:
-  --audio_l <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
-  --audio_r <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
-  --audio_v <= R_blinky(R_blinky'high-4 downto R_blinky'high-7);
-  
+  G_dvid_ddr: if C_dvid_ddr generate
+    -- this module instantiates vendor specific buffers for ddr-differential
+    G_ddr_diff: for i in 0 to 3 generate
+      gpdi_ddr: ODDRX1F port map(D0=>dvid_crgb(2*i), D1=>dvid_crgb(2*i+1), Q=>ddr_d(i), SCLK=>clk_pixel_shift, RST=>'0');
+      gpdi_diff: OLVDS port map(A => ddr_d(i), Z => gpdi_dp(i), ZN => gpdi_dn(i));
+    end generate;
+  end generate;
 
 end Behavioral;
