@@ -168,12 +168,6 @@
         <Source name="../../../../soc/vgahdmi/vga.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../lattice/chip/ecp5u/ddr_out.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/vgahdmi/ddr_dvid_out_se.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../soc/vgahdmi/tv.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -232,9 +226,6 @@
             <Options/>
         </Source>
         <Source name="../../../../soc/vgahdmi/vga2lcd.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../generic/hdmi_out.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../soc/simple_ADC.vhd" type="VHDL" type_short="VHDL">
