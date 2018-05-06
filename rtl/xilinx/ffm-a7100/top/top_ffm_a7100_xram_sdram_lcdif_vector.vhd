@@ -164,21 +164,21 @@ entity ffm_xram_sdram is
 	--FPGA_CSO, FPGA_MOSI: out std_logic;
 	--FPGA_MISO_INTERNAL: in std_logic;
         --ddr3 ------------------------------------------------------------------
-        --ddr3_dq                  : inout  std_logic_vector(C3_NUM_dq_PINS-1 downto 0);       -- mcb3_dram_dq
-        --ddr3_a                   : out    std_logic_vector(C3_MEM_ADDR_WIDTH-1 downto 0);    -- mcb3_dram_a
-        --ddr3_ba                  : out    std_logic_vector(C3_MEM_BANKADDR_WIDTH-1 downto 0);-- mcb3_dram_ba
-        --ddr3_ras_n               : out    std_logic;                                         -- mcb3_dram_ras_n
-        --ddr3_cas_n               : out    std_logic;                                         -- mcb3_dram_cas_n
-        --ddr3_we_n                : out    std_logic;                                         -- mcb3_dram_we_n
-        --ddr3_odt                 : out    std_logic;                                         -- mcb3_dram_odt
-        --ddr3_cke                 : out    std_logic;                                         -- mcb3_dram_cke
-        --ddr3_ldm                 : out    std_logic;                                         -- mcb3_dram_dm
-        --ddr3_udm                 : out    std_logic;                                         -- mcb3_dram_udm
-        --ddr3_dqs_p               : inout  std_logic_vector(1 downto 0);                      -- mcb3_dram_udqs
-        --ddr3_dqs_n               : inout  std_logic_vector(1 downto 0);                      -- mcb3_dram_udqs_n
-        --ddr3_ck_p                : out    std_logic;                                         -- mcb3_dram_ck
-        --ddr3_ck_n                : out    std_logic;                                         -- mcb3_dram_ck_n
-        --ddr3_reset_n             : out    std_logic;
+        --ddr_dq                  : inout  std_logic_vector(C3_NUM_dq_PINS-1 downto 0);       -- mcb3_dram_dq
+        --ddr_a                   : out    std_logic_vector(C3_MEM_ADDR_WIDTH-1 downto 0);    -- mcb3_dram_a
+        --ddr_ba                  : out    std_logic_vector(C3_MEM_BANKADDR_WIDTH-1 downto 0);-- mcb3_dram_ba
+        --ddr_ras_n               : out    std_logic;                                         -- mcb3_dram_ras_n
+        --ddr_cas_n               : out    std_logic;                                         -- mcb3_dram_cas_n
+        --ddr_we_n                : out    std_logic;                                         -- mcb3_dram_we_n
+        --ddr_odt                 : out    std_logic;                                         -- mcb3_dram_odt
+        --ddr_cke                 : out    std_logic;                                         -- mcb3_dram_cke
+        --ddr_ldm                 : out    std_logic;                                         -- mcb3_dram_dm
+        --ddr_udm                 : out    std_logic;                                         -- mcb3_dram_udm
+        --ddr_dqs_p               : inout  std_logic_vector(1 downto 0);                      -- mcb3_dram_udqs
+        --ddr_dqs_n               : inout  std_logic_vector(1 downto 0);                      -- mcb3_dram_udqs_n
+        --ddr_ck_p                : out    std_logic;                                         -- mcb3_dram_ck
+        --ddr_ck_n                : out    std_logic;                                         -- mcb3_dram_ck_n
+        --ddr_reset_n             : out    std_logic;
 
         -- SDRAM
 	dr_clk: out std_logic;
