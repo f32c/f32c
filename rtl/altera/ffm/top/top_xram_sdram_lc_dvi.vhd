@@ -419,17 +419,6 @@ begin
       );
       vid_d_p <= vid_lvds_p(3 downto 1);
       vid_clk_p <= vid_lvds_p(0);
---    dvi_out_buf: entity work.hdmi_out
---      port map
---      (
---        tmds_in_rgb    => ddr_dvid(3 downto 1),
---        tmds_out_rgb_p => vid_d_p,   -- D2+ red  D1+ green  D0+ blue
---        tmds_out_rgb_n => vid_d_n,   -- D2- red  D1- green  D0- blue
---        tmds_in_clk    => ddr_dvid(0),
---        tmds_out_clk_p => vid_clk_p, -- CLK+ clock
---        tmds_out_clk_n => vid_clk_n  -- CLK- clock
---      );
-    end generate;
 
     i2c_send: entity work.i2c_sender
       port map
