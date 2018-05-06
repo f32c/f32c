@@ -172,6 +172,12 @@
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../../../generic/bootloader/boot_preloader.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../../../generic/bootloader/defs_bootblock.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -197,6 +203,12 @@
         </FileInfo>
       </File>
       <File Path="$PPRDIR/../../../../generic/bootloader/boot_sio_rv32el.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PPRDIR/../../../../generic/bootloader/bootrom_emu.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>
@@ -619,13 +631,23 @@
       <Strategy Version="1" Minor="2">
         <StratHandle Name="Vivado Implementation Defaults" Flow="Vivado Implementation 2015"/>
         <Step Id="init_design"/>
-        <Step Id="opt_design"/>
-        <Step Id="power_opt_design"/>
-        <Step Id="place_design"/>
-        <Step Id="post_place_power_opt_design"/>
-        <Step Id="phys_opt_design"/>
-        <Step Id="route_design"/>
-        <Step Id="post_route_phys_opt_design"/>
+        <Step Id="opt_design">
+          <Option Id="Directive">4</Option>
+        </Step>
+        <Step Id="power_opt_design" EnableStepBool="1"/>
+        <Step Id="place_design">
+          <Option Id="Directive">14</Option>
+        </Step>
+        <Step Id="post_place_power_opt_design" EnableStepBool="1"/>
+        <Step Id="phys_opt_design" EnableStepBool="1">
+          <Option Id="Directive">7</Option>
+        </Step>
+        <Step Id="route_design">
+          <Option Id="Directive">5</Option>
+        </Step>
+        <Step Id="post_route_phys_opt_design" EnableStepBool="1">
+          <Option Id="Directive">1</Option>
+        </Step>
         <Step Id="write_bitstream"/>
       </Strategy>
       <GeneratedRun Dir="$PRUNDIR" File="gen_run.xml"/>
