@@ -213,6 +213,8 @@ begin
     to_i_bram(31 downto 0) <= imem_data_in;
     to_i_bram(C_itag_bits+31 downto 32) <= icache_tag_in;
 
+    flush_i_addr(C_icache_addr_bits-1 downto 2) <= cpu_d_addr(C_icache_addr_bits-1 downto 2);
+
     G_icache_2k:
     if C_icache_size = 2 generate
     tag_dp_bram: entity work.bram_true2p_1clk
