@@ -63,7 +63,7 @@ architecture Behavioral of spi is
     signal R_spi_byte: std_logic_vector(7 downto 0);
     signal R_clk_div: std_logic_vector(7 downto 0) := x"80";
     signal R_clk_acc: std_logic_vector(7 downto 0);
-    signal R_cen: std_logic;
+    signal R_cen: std_logic := '1'; -- SPI disabled by default
 
 begin
     bus_out(31 downto 9) <= (others => '-');
