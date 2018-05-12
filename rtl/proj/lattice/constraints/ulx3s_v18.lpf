@@ -172,8 +172,8 @@ LOCATE COMP "wifi_rxd" SITE "K3"; # FPGA transmits to WiFi
 LOCATE COMP "wifi_txd" SITE "K4"; # FPGA receives from WiFi
 LOCATE COMP "wifi_gpio0" SITE "L2";
 LOCATE COMP "wifi_gpio5" SITE "N4"; # WIFI LED
-LOCATE COMP "wifi_gpio16" SITE "L1";
-LOCATE COMP "wifi_gpio17" SITE "N3";
+LOCATE COMP "wifi_gpio16" SITE "L1"; # Serial1 RX
+LOCATE COMP "wifi_gpio17" SITE "N3"; # Serial1 TX
 # LOCATE COMP "prog_done" SITE "Y3"; # not GPIO, always active
 IOBUF  PORT "wifi_en" PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;
 IOBUF  PORT "wifi_rxd" PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;
