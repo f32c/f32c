@@ -33,6 +33,7 @@ entity ulx3s_xram_sdram_vector is
     C_bram_const_init: boolean := true; -- true default, MAX10 cannot preload bootloader using VHDL constant intializer
     C_boot_write_protect: boolean := true; -- true default, may leave boot block writeable to save some LUTs
     C_boot_rom_data_bits: integer := 32; -- number of bits in output from bootrom_emu
+    C_boot_spi: boolean := true; -- SPI bootloader is larger and allows setting of baudrate
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- 8 default for C_xboot_rom=false, 0 for C_xboot_rom=true, sets XRAM base address
     C_acram: boolean := false; -- false default (ulx3s has sdram chip)
     C_acram_wait_cycles: integer := 3; -- 3 or more
@@ -386,6 +387,7 @@ begin
     C_bram_size => C_bram_size,
     C_bram_const_init => C_bram_const_init,
     C_boot_write_protect => C_boot_write_protect,
+    C_boot_spi => C_boot_spi,
     C_branch_prediction => C_branch_prediction,
     C_acram => C_acram,
     C_acram_wait_cycles => C_acram_wait_cycles,
@@ -576,7 +578,7 @@ begin
       bootrom_emu: entity work.bootrom_emu
       generic map
       (
-        C_content => boot_sio_mi32el,
+        C_content => boot_rom_mi32el,
         C_data_bits => C_boot_rom_data_bits
       )
       port map
