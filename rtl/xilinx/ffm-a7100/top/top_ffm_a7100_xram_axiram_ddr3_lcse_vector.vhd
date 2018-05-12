@@ -38,6 +38,12 @@ use unisim.vcomponents.all;
 use work.f32c_pack.all;
 use work.axi_pack.all;
 
+use work.boot_block_pack.all;
+use work.boot_sio_mi32el.all;
+use work.boot_sio_mi32eb.all;
+use work.boot_sio_rv32el.all;
+use work.boot_rom_mi32el.all;
+
 entity ffm_xram_sdram is
   generic
   (
@@ -45,11 +51,13 @@ entity ffm_xram_sdram is
 	C_arch: integer := ARCH_MI32;
 	C_debug: boolean := false;
 
-	C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
-
 	-- SoC configuration options
+	C_xboot_rom: boolean := false; -- false default, bootloader initializes XRAM with external DMA
 	C_bram_size: integer := 16; -- K default 16
+	C_bram_const_init: boolean := true; -- true default, MAX10 cannot preload bootloader using VHDL constant intializer
 	C_boot_write_protect: boolean := true; -- set to 'false' for 1K bram size
+        C_boot_rom_data_bits: integer := 32; -- number of bits in output from bootrom_emu
+	C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- 8 default for C_xboot_rom=false, 0 for C_xboot_rom=true, sets XRAM base address
 
 	-- SDRAM
 	C_sdram: boolean := false; -- 16-bit sdram
@@ -63,6 +71,8 @@ entity ffm_xram_sdram is
         C_mult_enable: boolean := true;
         C_mul_acc: boolean := false;    -- MI32 only, default false
         C_mul_reg: boolean := false;    -- MI32 only, default false
+        C_branch_prediction: boolean := true; -- default: true
+        C_regfile_synchronous_read: boolean := false; -- default: false, artix-7 works both true or false
 
         -- integer multiplication doesn't work for CPU clock 100MHz, works at 83MHz
         -- cache 4K doesn't work vectors at 100MHz CPU clock
@@ -92,7 +102,7 @@ entity ffm_xram_sdram is
 
         C_vgahdmi: boolean := true;
           C_vgahdmi_axi: boolean := true; -- connect vgahdmi to video_axi_in/out instead to f32c bus arbiter
-          C_vgahdmi_cache_size: integer := 0; -- KB video cache (only on f32c bus) (0: disable, 2,4,8,16,32:enable, default 8)
+          C_vgahdmi_cache_size: integer := 32; -- KB video cache (only on f32c bus) (0: disable, 2,4,8,16,32:enable, default 8)
           C_vgahdmi_fifo_timeout: integer := 0; -- default 0
           C_vgahdmi_fifo_burst_max_bits: integer := 6; -- 6 bits -> 64x32-bit words
           C_vgahdmi_fifo_data_width: integer := 32; -- bits per pixel (default 32)
@@ -150,10 +160,7 @@ entity ffm_xram_sdram is
 	sd_m_cdet: in std_logic;
 	sd_m_clk, sd_m_cmd: out std_logic;
 	sd_m_d: inout std_logic_vector(3 downto 0);
-	--FPGA_CCLK_CONF_DCLK: out std_logic;
-	--FPGA_CSO, FPGA_MOSI: out std_logic;
-	--FPGA_MISO_INTERNAL: in std_logic;
-        -- ddr3 ------------------------------------------------------------------
+        --ddr3 ------------------------------------------------------------------
         ddr_dq                  : inout  std_logic_vector(C3_NUM_dq_PINS-1 downto 0);       -- mcb3_dram_dq
         ddr_a                   : out    std_logic_vector(C3_MEM_ADDR_WIDTH-1 downto 0);    -- mcb3_dram_a
         ddr_ba                  : out    std_logic_vector(C3_MEM_BANKADDR_WIDTH-1 downto 0);-- mcb3_dram_ba
@@ -274,6 +281,20 @@ architecture Behavioral of ffm_xram_sdram is
     signal vector_axi_areset_n: std_logic := '1';
     signal vector_axi_miso: T_axi_miso;
     signal vector_axi_mosi: T_axi_mosi;
+
+    -- xboot DMA preloader
+  signal S_reset: std_logic := '0'; -- reset to hold during DMA preload
+  -- exposed DMA signals for boot preloader
+  signal xdma_addr: std_logic_vector(29 downto 2) := ('0', others => '0'); -- preload address 0x00000000 XRAM
+  signal xdma_strobe: std_logic := '0';
+  signal xdma_data_ready: std_logic := '0';
+  signal xdma_write: std_logic := '0';
+  signal xdma_byte_sel: std_logic_vector(3 downto 0) := (others => '1');
+  signal xdma_data_in: std_logic_vector(31 downto 0) := (others => '-');
+  -- signals for ROM emulation
+  signal S_rom_reset, S_rom_next_data: std_logic;
+  signal S_rom_data: std_logic_vector(C_boot_rom_data_bits-1 downto 0);
+  signal S_rom_valid: std_logic;
 
     -- to switch glue/plasma vga
     signal glue_vga_vsync, glue_vga_hsync: std_logic;
@@ -572,32 +593,13 @@ begin
     clk_axi <= clk_216MHz;
     end generate;
 
-    G_vendor_specific_startup: if C_vendor_specific_startup generate
-    -- reset hard-block: Xilinx Artix-7 specific
-    reset: startupe2
-    generic map (
-      prog_usr => "FALSE"
-    )
-    port map (
-      cfgmclk => cfgmclk,
-      clk => cfgmclk,
-      gsr => sio_break,
-      gts => '0',
-      keyclearb => '0',
-      pack => '1',
-      usrcclko => clk,
-      usrcclkts => '0',
-      usrdoneo => '1',
-      usrdonets => '0'
-    );
-    end generate;
-
     -- generic XRAM glue
     glue_xram: entity work.glue_xram
     generic map (
       C_clk_freq => C_clk_freq,
       C_arch => C_arch,
       C_bram_size => C_bram_size,
+      C_bram_const_init => C_bram_const_init,
       C_boot_write_protect => C_boot_write_protect,
       C_sdram => C_sdram,
       C_sdram32 => C_sdram32,
@@ -606,7 +608,11 @@ begin
       C_icache_size => C_icache_size,
       C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_cached_addr_bits,
+      C_xdma => C_xboot_rom,
+      C_xram_base => C_xram_base,
       C_mult_enable => C_mult_enable, C_mul_acc => C_mul_acc, C_mul_reg => C_mul_reg,
+      C_branch_prediction => C_branch_prediction,
+      C_regfile_synchronous_read => C_regfile_synchronous_read,
       C_gpio => C_gpio,
       C_timer => C_timer,
       C_sio => C_sio,
@@ -672,6 +678,7 @@ begin
         clk => clk,
 	clk_pixel => clk_pixel,
 	clk_pixel_shift => clk_pixel_shift,
+        reset => S_reset,
 	cpu_axi_in => main_axi_miso,
 	cpu_axi_out => main_axi_mosi,
         video_axi_aresetn => video_axi_areset_n,
@@ -680,6 +687,11 @@ begin
         video_axi_out => video_axi_mosi,
         vector_axi_in => vector_axi_miso,
         vector_axi_out => vector_axi_mosi,
+    -- exposed DMA for boot preloader
+    xdma_addr => xdma_addr, xdma_strobe => xdma_strobe,
+    xdma_write => '1', xdma_byte_sel => "1111",
+    xdma_data_in => xdma_data_in,
+    xdma_data_ready => xdma_data_ready,
         sdram_addr => dr_a, sdram_data => dr_d,
         sdram_ba => dr_ba, sdram_dqm => dr_dqm,
         sdram_ras => dr_ras_n, sdram_cas => dr_cas_n,
@@ -742,7 +754,49 @@ begin
     end generate;
     end generate;
 
-    G_axiram_real: if C_axiram generate
+  -- preload the f32c bootloader and reset CPU
+  -- preloads initially at startup and during each reset of the CPU
+  G_xboot_rom: if C_xboot_rom generate
+      boot_preload: entity work.boot_preloader
+      generic map
+      (
+	-- ROM data bits
+	C_rom_data_bits => C_boot_rom_data_bits, -- bits in the ROM
+	-- ROM size in addr bits
+	-- SoC configuration options
+	C_boot_addr_bits => 8 -- 8: 256x4-byte = 1K bootloader size
+      )
+      port map
+      (
+        clk => clk,
+        reset_in => sio_break, -- input reset rising edge (from serial break) starts DMA preload
+        reset_out => S_reset, -- S_reset, 1 during DMA preload (holds CPU in reset state)
+        rom_reset => S_rom_reset,
+        rom_next_data => S_rom_next_data,
+        rom_data => S_rom_data,
+        rom_valid => S_rom_valid,
+        addr => xdma_addr(9 downto 2), -- must fit bootloader size 1K 10-bit byte address
+        data => xdma_data_in, -- comes from register - last read data will stay on the bus
+        strobe => xdma_strobe, -- use strobe as strobe and as write signal
+        ready => xdma_data_ready -- response from RAM arbiter (write completed)
+      );
+      bootrom_emu: entity work.bootrom_emu
+      generic map
+      (
+        C_content => boot_sio_mi32el,
+        C_data_bits => C_boot_rom_data_bits
+      )
+      port map
+      (
+        clk => clk,
+        reset => S_rom_reset,
+        next_data => S_rom_next_data,
+        data => S_rom_data,
+        valid => S_rom_valid
+      );
+  end generate;
+
+  G_axiram_real: if C_axiram generate
     u_ddr_mem : entity work.axi_mpmc
     generic map
     (
@@ -750,44 +804,44 @@ begin
       C_mig_wstrb_bits => C_axi_mig_data_bits/8  -- 4 or 16 (byte_select, normally C_mig_data_bits/8)
     )
     port map(
-        sys_rst              => not clk_locked, -- release reset when clock is stable
-        sys_clk_i            => clk_axi, -- not less than 200MHz, but not too much faster either
-        -- physical signals to RAM chip
-        ddr3_dq              => ddr_dq,
-        ddr3_dqs_n           => ddr_dqs_n,
-        ddr3_dqs_p           => ddr_dqs_p,
-        ddr3_addr            => ddr_a,
-        ddr3_ba              => ddr_ba,
-        ddr3_ras_n           => ddr_ras_n,
-        ddr3_cas_n           => ddr_cas_n,
-        ddr3_we_n            => ddr_we_n,
-        ddr3_reset_n         => ddr_reset_n,
-        ddr3_ck_p(0)         => ddr_ck_p,
-        ddr3_ck_n(0)         => ddr_ck_n,
-        ddr3_cke(0)          => ddr_cke,
-        ddr3_dm(1)           => ddr_udm,
-        ddr3_dm(0)           => ddr_ldm,
-        ddr3_odt(0)          => ddr_odt,
+      sys_rst              => not clk_locked, -- release reset when clock is stable
+      sys_clk_i            => clk_axi, -- not less than 200MHz, but not too much faster either
 
-        -- multiport axi interface (AXI slaves)
-        s00_axi_areset_out_n => main_axi_areset_n,
-        s00_axi_aclk         => clk,
-        s00_axi_in           => main_axi_mosi,
-        s00_axi_out          => main_axi_miso,
+      -- physical signals to RAM chip
+      ddr3_dq              => ddr_dq,
+      ddr3_dqs_n           => ddr_dqs_n,
+      ddr3_dqs_p           => ddr_dqs_p,
+      ddr3_addr            => ddr_a,
+      ddr3_ba              => ddr_ba,
+      ddr3_ras_n           => ddr_ras_n,
+      ddr3_cas_n           => ddr_cas_n,
+      ddr3_we_n            => ddr_we_n,
+      ddr3_reset_n         => ddr_reset_n,
+      ddr3_ck_p(0)         => ddr_ck_p,
+      ddr3_ck_n(0)         => ddr_ck_n,
+      ddr3_cke(0)          => ddr_cke,
+      ddr3_dm(1)           => ddr_udm,
+      ddr3_dm(0)           => ddr_ldm,
+      ddr3_odt(0)          => ddr_odt,
 
-        s01_axi_areset_out_n => vector_axi_areset_n,
-        s01_axi_aclk         => clk,
-        s01_axi_in           => vector_axi_mosi,
-        s01_axi_out          => vector_axi_miso,
+      -- multiport axi interface (AXI slaves)
+      s00_axi_areset_out_n => main_axi_areset_n,
+      s00_axi_aclk         => clk,
+      s00_axi_in           => main_axi_mosi,
+      s00_axi_out          => main_axi_miso,
 
-        s02_axi_areset_out_n => video_axi_areset_n,
-        s02_axi_aclk         => video_axi_aclk,
-        s02_axi_in           => video_axi_mosi,
-        s02_axi_out          => video_axi_miso,
+      s01_axi_areset_out_n => vector_axi_areset_n,
+      s01_axi_aclk         => clk,
+      s01_axi_in           => vector_axi_mosi,
+      s01_axi_out          => vector_axi_miso,
 
-        init_calib_complete  => calib_done -- becomes high cca 0.3 seconds after startup
+      s02_axi_areset_out_n => video_axi_areset_n,
+      s02_axi_aclk         => video_axi_aclk,
+      s02_axi_in           => video_axi_mosi,
+      s02_axi_out          => video_axi_miso,
+
+      init_calib_complete  => calib_done -- becomes high cca 0.3 seconds after startup
     );
-    end generate; -- G_acram_real
+  end generate; -- G_acram_real
 
 end Behavioral;
-
