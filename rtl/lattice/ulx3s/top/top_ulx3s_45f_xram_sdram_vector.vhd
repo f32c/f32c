@@ -238,7 +238,7 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   -- dual ESP32/f32c programming mode
   signal S_rxd, S_txd: std_logic; -- mix USB and WiFi
   signal S_prog_in, S_prog_out: std_logic_vector(1 downto 0);
-  signal R_esp32_mode: std_logic := '1';
+  signal R_esp32_mode: std_logic := '0';
   constant C_break_counter_bits: integer := 1+ceil_log2(integer(C_passthru_clk_Hz*C_passthru_break));
   signal R_break_counter: std_logic_vector(C_break_counter_bits-1 downto 0) := (others => '0');
   signal S_f32c_sd_csn, S_f32c_sd_clk, S_f32c_sd_miso, S_f32c_sd_mosi: std_logic;
@@ -321,6 +321,8 @@ begin
     S_f32c_sd_miso <= sd_d(0);
     sd_cmd <= '1' when R_esp32_mode = '1' else S_f32c_sd_mosi when S_f32c_sd_csn = '0' else 'Z';
     sd_d(2 downto 1) <= (others => '1') when R_esp32_mode = '1' else (others => 'Z');
+    
+    S_f32c_sd_csn <= '1'; -- force disabled for debugging
 
     -- detect serial break
     G_detect_serial_break: if true generate
@@ -479,7 +481,7 @@ begin
     sio_break(1) => rs232_break2,
 
     spi_sck(0)  => open,  spi_sck(1)  => S_f32c_sd_clk,   -- sd_clk,
-    spi_ss(0)   => open,  spi_ss(1)   => S_f32c_sd_csn,   -- sd_d(3),
+    spi_ss(0)   => open,  spi_ss(1)   => open, -- S_f32c_sd_csn,   -- sd_d(3),
     spi_mosi(0) => open,  spi_mosi(1) => S_f32c_sd_mosi,  -- sd_cmd,
     spi_miso(0) => '0',   spi_miso(1) => S_f32c_sd_miso,  -- sd_d(0),
 
