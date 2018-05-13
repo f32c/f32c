@@ -317,7 +317,7 @@ begin
     wifi_en <= S_prog_out(1);
     wifi_gpio0 <= S_prog_out(0) and btn(0); -- holding BTN0 will hold gpio0 LOW, signal for ESP32 to take control
     sd_d(0) <= '0' when S_prog_in = "01" else 'Z'; -- wifi_gpio2 to 0 during programming init
-    sd_d(3) <= '1' when R_esp32_mode = '1' else S_f32c_sd_csn;
+    sd_d(3) <= '1' when R_esp32_mode = '1' else '0' when S_f32c_sd_csn = '0' else 'Z';
     sd_clk <= '1' when R_esp32_mode = '1' else S_f32c_sd_clk when S_f32c_sd_csn = '0' else 'Z';
     S_f32c_sd_miso <= sd_d(0);
     sd_cmd <= '1' when R_esp32_mode = '1' else S_f32c_sd_mosi when S_f32c_sd_csn = '0' else 'Z';
