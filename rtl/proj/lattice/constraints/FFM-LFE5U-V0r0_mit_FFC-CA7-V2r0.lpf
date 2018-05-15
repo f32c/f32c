@@ -9,13 +9,13 @@
 #LOCATE COMP "clk_100mhz_p" SITE "P4";
 #LOCATE COMP "clk_100mhz_n" SITE "P5";
 
-# this is how it probably could be routed:
+# this clock routing is ok:
 LOCATE COMP "clk_100mhz_p" SITE "H3";
 LOCATE COMP "clk_100mhz_n" SITE "J3";
 
-IOBUF PORT "clk_100mhz_n" IO_TYPE=LVDS DRIVE=4;
-IOBUF PORT "clk_100mhz_p" IO_TYPE=LVDS DRIVE=4;
 FREQUENCY PORT "clk_100mhz_p" 100 MHZ;
+IOBUF PORT "clk_100mhz_p" IO_TYPE=LVDS DRIVE=4;
+IOBUF PORT "clk_100mhz_n" IO_TYPE=LVDS DRIVE=4;
 
 # JTAG and SPI FLASH voltage 3.3V and options to boot from SPI flash
 SYSCONFIG CONFIG_IOVOLTAGE=3.3 COMPRESS_CONFIG=ON SLAVE_SPI_PORT=DISABLE MASTER_SPI_PORT=ENABLE SLAVE_PARALLEL_PORT=DISABLE;
@@ -702,3 +702,8 @@ IOBUF PORT "fioc[69]" PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;
 #LOCATE COMP "PON_RESET_N" SITE "V6";
 #IOBUF PORT "PON_RESET_N" PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;
 
+# TODO
+
+# [ ] fix schematics for clk_100mhz_p/n P4/P5 -> H3/J3
+# [ ] fix schematics for usb_clk <-> uart3_rxd  B26 <-> N21
+# [ ] fix schematics for eth_clk <-> eth_txd[1] D24 <-> K23
