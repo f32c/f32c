@@ -119,6 +119,7 @@ entity ffm_lfe5u_xram_sdram_vector is
   port
   (
   clk_100mhz_p: in std_logic;  -- main clock input from 100MHz differential clock source
+  usb_clk, eth_clk: in std_logic; -- USB 60 MHz and ETH 50 MHz single ended clocks
 
   -- UART3 (FT4232 port 3) direction named from FPGA standpoint
   uart3_txd: out   std_logic;
@@ -220,6 +221,12 @@ architecture Behavioral of ffm_lfe5u_xram_sdram_vector is
   signal S_prog_in, S_prog_out: std_logic_vector(1 downto 0);
   signal R_esp32_mode: std_logic := '0';
   signal S_f32c_sd_csn, S_f32c_sd_clk, S_f32c_sd_miso, S_f32c_sd_mosi: std_logic;
+  
+  -- clock testing
+  signal clk_test_usb, clk_test_eth: std_logic;
+  signal R_cnt_usb, R_cnt_eth: std_logic_vector(23 downto 0);
+  alias ps2_led_green: std_logic is fioa(5);
+  alias ps2_led_red: std_logic is fioa(7);
 
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
@@ -282,6 +289,7 @@ begin
 
   -- hold pushbutton BTN1 to upload to f32c over USB
   -- released BTN1 will pass-thru serial to ESP32
+  
 
   -- full featured XRAM glue
   glue_xram: entity work.glue_xram
@@ -544,5 +552,38 @@ begin
     sioc => dv_scl,
     siod => dv_sda
   );
+
+  -- testing additional clocks
+  I_clk_usb: entity work.clk_60_30_150_100_85MHz
+    port map(
+      CLKI        =>  usb_clk,          --  50 MHz input
+      CLKOP       =>  clk_test_usb,     --  25 MHz
+      CLKOS       =>  open,             -- 125 MHz
+      CLKOS2      =>  open,              -- 100 MHz CPU
+      CLKOS3      =>  open              --  83 MHz CPU
+    );
+  process(clk_test_usb)
+  begin
+    if rising_edge(clk_test_usb) then
+      R_cnt_usb <= R_cnt_usb+1;
+    end if;
+  end process;
+  ps2_led_red <= R_cnt_usb(R_cnt_usb'high);
+
+  I_clk_eth: entity work.clk_50_25_125_100_83MHz
+    port map(
+      CLKI        =>  eth_clk,          --  50 MHz input
+      CLKOP       =>  clk_test_eth,     --  25 MHz
+      CLKOS       =>  open,             -- 125 MHz
+      CLKOS2      =>  open,              -- 100 MHz CPU
+      CLKOS3      =>  open              --  83 MHz CPU
+    );
+  process(clk_test_eth)
+  begin
+    if rising_edge(clk_test_eth) then
+      R_cnt_eth <= R_cnt_eth+1;
+    end if;
+  end process;
+  ps2_led_green <= R_cnt_eth(R_cnt_eth'high);
 
 end Behavioral;
