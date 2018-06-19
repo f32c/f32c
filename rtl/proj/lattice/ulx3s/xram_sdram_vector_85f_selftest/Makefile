@@ -36,25 +36,25 @@ $(PROJECT)/$(PROJECT)_$(PROJECT).mcs: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_quad.mcs: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	LANG=C ${DDTCMD} -dev LFE5U-85F -if $< \
-	-oft -advanced -format int -flashsize 32 -quad 1 -of $@
+	-oft -advanced -format int -flashsize 128 -quad 1 -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_sram.xcf -nocompress -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
-	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_flash.xcf -nocompress -noheader -of $@
+	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_flash_micron_32m.xcf -nocompress -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_quad_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT)_quad.mcs
-	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_quad_flash.xcf -nocompress -noheader -of $@
+	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_quad_flash_micron_32m.xcf -nocompress -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_sram.xcf -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
-	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_flash.xcf -of $@
+	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_flash_micron_32m.xcf -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_quad_flash.svf: $(PROJECT)/$(PROJECT)_$(PROJECT)_quad.mcs
-	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_quad_flash.xcf -of $@
+	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_quad_flash_micron_32m.xcf -of $@
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	echo pgr_project open ulx3s_sram.xcf \; pgr_program run | ${DIAMONDC}

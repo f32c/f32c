@@ -297,10 +297,10 @@
         <Source name="../../../../soc/vector/fpu/float_divide_goldschmidt.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../constraints/ulx3s_v18_selftest.lpf" type="Logic Preference" type_short="LPF">
+        <Source name="../../constraints/ulx3s_v188_selftest.lpf" type="Logic Preference" type_short="LPF">
             <Options/>
         </Source>
-        <Source name="ulx3s_flash.xcf" type="Programming Project File" type_short="Programming" excluded="TRUE">
+        <Source name="ulx3s_quad_flash_micron_32m.xcf" type="Programming Project File" type_short="Programming" excluded="TRUE">
             <Options/>
         </Source>
         <Source name="ulx3s_sram.xcf" type="Programming Project File" type_short="Programming">
