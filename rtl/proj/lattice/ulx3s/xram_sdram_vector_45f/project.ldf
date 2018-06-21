@@ -300,10 +300,10 @@
         <Source name="../../constraints/ulx3s_v17patch.lpf" type="Logic Preference" type_short="LPF">
             <Options/>
         </Source>
-        <Source name="ulx3s_flash.xcf" type="Programming Project File" type_short="Programming" excluded="TRUE">
+        <Source name="ulx3s_45f_flash_micron_32mbit.xcf" type="Programming Project File" type_short="Programming" excluded="TRUE">
             <Options/>
         </Source>
-        <Source name="ulx3s_sram.xcf" type="Programming Project File" type_short="Programming">
+        <Source name="ulx3s_45f_sram.xcf" type="Programming Project File" type_short="Programming">
             <Options/>
         </Source>
     </Implementation>

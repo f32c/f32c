@@ -19,7 +19,7 @@
 			</Bypass>
 			<File>project/project_project.mcs</File>
 			<FileTime>12/23/17 00:34:50</FileTime>
-			<Operation>SPI Flash Erase,Program,Verify</Operation>
+			<Operation>SPI Flash Erase,Program</Operation>
 			<Option>
 				<SVFVendor>JTAG STANDARD</SVFVendor>
 				<AccessMode>SPI Flash Background Programming</AccessMode>
@@ -59,7 +59,7 @@
 					<Name>SPI-M25P32</Name>
 					<IDCode>0x15</IDCode>
 					<Package>8-pin VDFPN8</Package>
-					<Operation>SPI Flash Erase,Program,Verify</Operation>
+					<Operation>SPI Flash Erase,Program</Operation>
 					<File>project/project_project.mcs</File>
 					<AddressBase>0x00000000</AddressBase>
 					<EndAddress>0x00080000</EndAddress>
