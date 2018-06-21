@@ -59,7 +59,7 @@
 					<Name>SPI-S25FL164K</Name>
 					<IDCode>0x16</IDCode>
 					<Package>8-lead SOIC</Package>
-					<Operation>SPI Flash Erase,Program,Verify</Operation>
+					<Operation>SPI Flash Erase,Program</Operation>
 					<File>project/project_project.mcs</File>
 					<AddressBase>0x00000000</AddressBase>
 					<EndAddress>0x00100000</EndAddress>
