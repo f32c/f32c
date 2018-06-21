@@ -33,11 +33,17 @@ $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
 	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_flash.xcf -nocompress -noheader -of $@
 
+$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_spansion_64mbit.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
+	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_flash_spansion_64mbit.xcf -nocompress -noheader -of $@
+
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_sram.xcf -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
 	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_flash.xcf -of $@
+
+$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_spansion_64mbit.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
+	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_flash_spansion_64mbit.xcf -of $@
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	echo pgr_project open ulx3s_sram.xcf \; pgr_program run | ${DIAMONDC}
@@ -58,6 +64,9 @@ program_flea: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 	FleaFPGA-JTAG $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 
 program_flea_flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
+	FleaFPGA-JTAG $<
+
+program_flea_flash_spansion: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash_spansion_64mbit.vme
 	FleaFPGA-JTAG $<
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT).jed:
