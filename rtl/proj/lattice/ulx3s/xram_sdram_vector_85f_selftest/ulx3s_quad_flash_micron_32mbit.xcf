@@ -62,7 +62,7 @@
 					<Operation>SPI Flash Erase,Program,Verify</Operation>
 					<File>project/project_project_quad.mcs</File>
 					<AddressBase>0x00000000</AddressBase>
-					<EndAddress>0x00020000</EndAddress>
+					<EndAddress>0x00080000</EndAddress>
 					<DeviceSize>32</DeviceSize>
 					<DataSize>4194304</DataSize>
 					<NumberOfDevices>1</NumberOfDevices>
