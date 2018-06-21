@@ -428,5 +428,6 @@ begin
         sioc => dv_scl,
         siod => dv_sda
       );
+    end generate;
 
 end Behavioral;
