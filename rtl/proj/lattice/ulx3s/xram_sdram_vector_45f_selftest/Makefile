@@ -19,7 +19,13 @@ JUNK += dummy_sym.sort project_tcl.html promote.xml
 JUNK += generate_core.tcl generate_ngd.tcl msg_file.log
 JUNK += project_tcr.dir
 
-all: $(PROJECT)/$(PROJECT)_$(PROJECT).bit $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
+all: $(PROJECT)/$(PROJECT)_$(PROJECT).bit \
+	$(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf \
+	$(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme \
+	$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_micron_32mbit.svf \
+	$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_micron_32mbit.vme \
+	$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_spansion_64mbit.svf \
+	$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_spansion_64mbit.vme
 
 $(PROJECT)/$(PROJECT)_$(PROJECT).bit:
 	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
@@ -28,19 +34,25 @@ $(PROJECT)/$(PROJECT)_$(PROJECT).mcs:
 	LANG=C ${DDTCMD} -dev LFE5U-45F -if $(PROJECT)/$(PROJECT)_$(PROJECT).bit -oft -int -of $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_sram.xcf -nocompress -noheader -of $@
+	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_45f_sram.xcf -nocompress -noheader -of $@
 
-$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
-	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_flash.xcf -nocompress -noheader -of $@
+$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_micron_32mbit.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
+	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_45f_flash_micron_32mbit.xcf -nocompress -noheader -of $@
+
+$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_spansion_64mbit.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
+	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_45f_flash_spansion_64mbit.xcf -nocompress -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_sram.xcf -of $@
+	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_45f_sram.xcf -of $@
 
-$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
-	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_flash.xcf -of $@
+$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_micron_32mbit.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
+	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_45f_flash_micron_32mbit.xcf -of $@
+
+$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_spansion_64mbit.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
+	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_45f_flash_spansion_64mbit.xcf -of $@
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-	echo pgr_project open ulx3s_sram.xcf \; pgr_program run | ${DIAMONDC}
+	echo pgr_project open ulx3s_45f_sram.xcf \; pgr_program run | ${DIAMONDC}
 
 program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 	openocd --file=$(OPENOCD_BASE)/remote.ocd --file=$(OPENOCD_BASE)/ecp5-45f.ocd
@@ -48,7 +60,7 @@ program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 program_web: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 	svfupload.py ulx3s.lan $<
 
-program_web_flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf
+program_web_flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash_micron_32mbit.svf
 	svfupload.py ulx3s.lan $<
 
 program_ft2232: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
@@ -57,14 +69,17 @@ program_ft2232: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 program_flea: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 	FleaFPGA-JTAG $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 
-program_flea_flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
+program_flea_flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash_micron_32mbit.vme
+	FleaFPGA-JTAG $<
+
+program_flea_flash_spansion: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash_spansion_64mbit.vme
 	FleaFPGA-JTAG $<
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT).jed:
 #	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Jedecgen | ${DIAMONDC}
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
-#	${DDTCMD} -oft -fullvme -if sparrowhawk_flash.xcf -nocompress -noheader -of $@
+#	${DDTCMD} -oft -fullvme -if sparrowhawk_flash_micron_32mbit.xcf -nocompress -noheader -of $@
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
 #	${DDTCMD} -oft -svfsingle -op "FLASH Erase,Program,Verify" -if $< -of $@
