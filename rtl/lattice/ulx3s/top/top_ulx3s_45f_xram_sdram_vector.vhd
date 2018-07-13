@@ -323,8 +323,6 @@ begin
     sd_cmd <= '1' when R_esp32_mode = '1' else S_f32c_sd_mosi when S_f32c_sd_csn = '0' else 'Z';
     sd_d(2 downto 1) <= (others => '1') when R_esp32_mode = '1' else (others => 'Z');
     
-    S_f32c_sd_csn <= '1'; -- force disabled for debugging
-
     -- detect serial break
     G_detect_serial_break: if true generate
     process(clk_25MHz)
@@ -483,7 +481,7 @@ begin
     sio_break(1) => rs232_break2,
 
     spi_sck(0)  => open,  spi_sck(1)  => S_f32c_sd_clk,   -- sd_clk,
-    spi_ss(0)   => open,  spi_ss(1)   => open, -- S_f32c_sd_csn,   -- sd_d(3),
+    spi_ss(0)   => open,  spi_ss(1)   => S_f32c_sd_csn,   -- sd_d(3),
     spi_mosi(0) => open,  spi_mosi(1) => S_f32c_sd_mosi,  -- sd_cmd,
     spi_miso(0) => '0',   spi_miso(1) => S_f32c_sd_miso,  -- sd_d(0),
 
