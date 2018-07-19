@@ -409,6 +409,7 @@ architecture Behavioral of glue_xram is
     signal vga_addr_strobe: std_logic; -- FIFO requests to read from RAM
     signal vga_data_ready: std_logic; -- RAM responds to FIFO
     signal vga_data: std_logic_vector(31 downto 0);
+    signal vga_suggest_burst: std_logic_vector(7 downto 0) := (others => '0');
     -- Video FIFO data bus
     signal video_fifo_suggest_cache: std_logic := '0';
     signal video_fifo_suggest_burst: std_logic_vector(7 downto 0) := (others => '0');
@@ -525,7 +526,7 @@ architecture Behavioral of glue_xram is
     -- vector to f32c ram bus port interface
     signal S_vector_ram_addr_strobe: std_logic;
     signal S_vector_ram_addr: std_logic_vector(29 downto 2);
-    signal S_vector_ram_burst_len: std_logic_vector(2 downto 0) := (others => '0');
+    signal S_vector_ram_burst_len: std_logic_vector(7 downto 0) := (others => '0');
     signal S_vector_ram_we: std_logic;
     signal S_vector_ram_data_ready: std_logic;
     signal S_vector_ram_wdata: std_logic_vector(31 downto 0);
@@ -704,6 +705,7 @@ begin
     to_xram(fb_port).addr_strobe <= vga_addr_strobe;
     to_xram(fb_port).addr <= vga_addr(to_xram(fb_port).addr'high downto 2);
     to_xram(fb_port).data_in <= (others => '-');
+    to_xram(fb_port).burst_len <= vga_suggest_burst;
     to_xram(fb_port).write <= '0';
     to_xram(fb_port).byte_sel <= "1111"; -- 32 bits read for RGB
     vga_data_ready <= xram_ready(fb_port);
@@ -1281,7 +1283,7 @@ begin
           -- f32c interface (external)
           addr_strobe => S_vector_ram_addr_strobe,
           addr_out => S_vector_ram_addr,
-          suggest_burst => S_vector_ram_burst_len,
+          suggest_burst => S_vector_ram_burst_len(2 downto 0),
           data_ready => S_vector_ram_data_ready,
           data_write => S_vector_ram_we,
           data_in => S_vector_ram_rdata,
@@ -1429,6 +1431,7 @@ begin
       -- bypass the cache
       vga_addr_strobe <= video_fifo_addr_strobe;
       vga_addr <= video_fifo_addr;
+      vga_suggest_burst <= video_fifo_suggest_burst;
       video_fifo_data_ready <= vga_data_ready; -- data valid for read acknowledge from RAM
       video_fifo_data <= vga_data; -- from XRAM
     end generate; -- end G_no_video_cache

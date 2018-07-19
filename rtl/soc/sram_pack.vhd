@@ -38,7 +38,7 @@ type sram_port_type is
     record
 	-- addr: std_logic_vector(19 downto 2);
 	addr: std_logic_vector(29 downto 2);
-	burst_len: std_logic_vector(2 downto 0); -- request burst up to 8 32-bit words
+	burst_len: std_logic_vector(7 downto 0); -- request burst up to 256 32-bit words
 	data_in: std_logic_vector(31 downto 0);
 	byte_sel: std_logic_vector(3 downto 0);
 	addr_strobe: std_logic;
