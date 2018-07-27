@@ -132,7 +132,7 @@ IOBUF  PORT "adc_sclk" PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;
 
 ## Audio 4-bit DAC "analog", "gpio" sheet
 # 4-bit mode can drive down to 75 ohm load impedance.
-# Lower impedance leads to IO overload, 
+# Lower impedance leads to IO overload,
 # FPGA will stop working and need reboot.
 # For standard 17 ohm earphones:
 # use bits 2,3 as input (High-Z) and drive only bits 0,1.
