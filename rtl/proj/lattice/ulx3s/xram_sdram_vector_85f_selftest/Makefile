@@ -22,10 +22,10 @@ JUNK += project_tcr.dir
 all: $(PROJECT)/$(PROJECT)_$(PROJECT).bit \
 	$(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf \
 	$(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme \
-	$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf \
-	$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme \
-	$(PROJECT)/$(PROJECT)_$(PROJECT)_quad_flash.svf \
-	$(PROJECT)/$(PROJECT)_$(PROJECT)_quad_flash.vme
+	$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_micron_128mbit.svf \
+	$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_micron_128mbit.vme \
+	$(PROJECT)/$(PROJECT)_$(PROJECT)_quad_flash_micron_128mbit.svf \
+	$(PROJECT)/$(PROJECT)_$(PROJECT)_quad_flash_micron_128mbit.vme
 
 $(PROJECT)/$(PROJECT)_$(PROJECT).bit:
 	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
@@ -41,19 +41,19 @@ $(PROJECT)/$(PROJECT)_$(PROJECT)_quad.mcs: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_85f_sram.xcf -nocompress -noheader -of $@
 
-$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
+$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_micron_128mbit.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
 	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_85f_flash_micron_128mbit.xcf -nocompress -noheader -of $@
 
-$(PROJECT)/$(PROJECT)_$(PROJECT)_quad_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT)_quad.mcs
+$(PROJECT)/$(PROJECT)_$(PROJECT)_quad_flash_micron_128mbit.vme: $(PROJECT)/$(PROJECT)_$(PROJECT)_quad.mcs
 	LANG=C ${DDTCMD} -oft -fullvme -if ulx3s_85f_quad_flash_micron_128mbit.xcf -nocompress -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_85f_sram.xcf -of $@
 
-$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
+$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_micron_128mbit.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
 	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_85f_flash_micron_128mbit.xcf -of $@
 
-$(PROJECT)/$(PROJECT)_$(PROJECT)_quad_flash.svf: $(PROJECT)/$(PROJECT)_$(PROJECT)_quad.mcs
+$(PROJECT)/$(PROJECT)_$(PROJECT)_quad_flash_micron_128mbit.svf: $(PROJECT)/$(PROJECT)_$(PROJECT)_quad.mcs
 	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx3s_85f_quad_flash_micron_128mbit.xcf -of $@
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
