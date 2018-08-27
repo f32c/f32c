@@ -9,7 +9,7 @@
 			<Pos>1</Pos>
 			<Vendor>Lattice</Vendor>
 			<Family>ECP5U</Family>
-			<Name>LFE5U-85F</Name>
+			<Name>LFE5U-45F</Name>
 			<Package>All</Package>
 			<Bypass>
 				<InstrLen>8</InstrLen>
@@ -17,7 +17,7 @@
 				<BScanLen>1</BScanLen>
 				<BScanVal>0</BScanVal>
 			</Bypass>
-			<File>project/project_project.mcs</File>
+			<File>project/project_project_quad.mcs</File>
 			<FileTime>12/23/17 00:34:50</FileTime>
 			<Operation>SPI Flash Erase,Program</Operation>
 			<Option>
@@ -30,17 +30,17 @@
 					<Pos>1</Pos>
 					<Vendor>Lattice</Vendor>
 					<Family>ECP5U</Family>
-					<Name>LFE5U-85F</Name>
-					<IDCode>0x41113043</IDCode>
+					<Name>LFE5U-45F</Name>
+					<IDCode>0x41112043</IDCode>
 					<Package>All</Package>
-					<PON>LFE5U-85F</PON>
+					<PON>LFE5U-45F</PON>
 					<Bypass>
 						<InstrLen>8</InstrLen>
 						<InstrVal>11111111</InstrVal>
 						<BScanLen>1</BScanLen>
 						<BScanVal>0</BScanVal>
 					</Bypass>
-					<MaskFile>/mt/lattice/diamond/3.7_x64/data/vmdata/database/xpga/ecp5/LFE5U-85F.msk</MaskFile>
+					<MaskFile>/mt/lattice/diamond/3.7_x64/data/vmdata/database/xpga/ecp5/LFE5U-45F.msk</MaskFile>
 					<Operation>Bypass</Operation>
 					<Option>
 						<SVFVendor>JTAG STANDARD</SVFVendor>
@@ -56,15 +56,15 @@
 					<Pos>1</Pos>
 					<Vendor>Micron</Vendor>
 					<Family>SPI Serial Flash</Family>
-					<Name>SPI-M25P32</Name>
+					<Name>SPI-M25P128</Name>
 					<IDCode>0x15</IDCode>
 					<Package>8-pin VDFPN8</Package>
 					<Operation>SPI Flash Erase,Program</Operation>
-					<File>project/project_project.mcs</File>
+					<File>project/project_project_quad.mcs</File>
 					<AddressBase>0x00000000</AddressBase>
-					<EndAddress>0x00400000</EndAddress>
-					<DeviceSize>32</DeviceSize>
-					<DataSize>4194304</DataSize>
+					<EndAddress>0x01000000</EndAddress>
+					<DeviceSize>128</DeviceSize>
+					<DataSize>16777216</DataSize>
 					<NumberOfDevices>1</NumberOfDevices>
 					<ReInitialize value="FALSE"/>
 				</Device>
@@ -73,11 +73,11 @@
 				<Device>
 					<Pos>1</Pos>
 					<Name></Name>
-					<File>project/project_project.mcs</File>
+					<File>project/project_project_quad.mcs</File>
 					<LocalChainList>
 						<LocalDevice index="-99"
 							name="Unknown"
-							file="project/project_project.mcs"/>
+							file="project/project_project_quad.mcs"/>
 					</LocalChainList>
 					<Option>
 						<SVFVendor>JTAG STANDARD</SVFVendor>

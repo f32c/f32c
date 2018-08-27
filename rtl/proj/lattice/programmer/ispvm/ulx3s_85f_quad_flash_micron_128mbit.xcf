@@ -7,7 +7,7 @@
 		<Device>
 			<SelectedProg value="TRUE"/>
 			<Pos>1</Pos>
-			<Vendor>Micron</Vendor>
+			<Vendor>Lattice</Vendor>
 			<Family>ECP5U</Family>
 			<Name>LFE5U-85F</Name>
 			<Package>All</Package>

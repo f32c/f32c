@@ -7,7 +7,7 @@
 		<Device>
 			<SelectedProg value="TRUE"/>
 			<Pos>1</Pos>
-			<Vendor>Micron</Vendor>
+			<Vendor>Lattice</Vendor>
 			<Family>ECP5U</Family>
 			<Name>LFE5U-85F</Name>
 			<Package>All</Package>
@@ -62,7 +62,7 @@
 					<Operation>SPI Flash Erase,Program</Operation>
 					<File>project/project_project_quad.mcs</File>
 					<AddressBase>0x00000000</AddressBase>
-					<EndAddress>0x00080000</EndAddress>
+					<EndAddress>0x00400000</EndAddress>
 					<DeviceSize>32</DeviceSize>
 					<DataSize>4194304</DataSize>
 					<NumberOfDevices>1</NumberOfDevices>

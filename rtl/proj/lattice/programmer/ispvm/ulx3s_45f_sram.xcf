@@ -8,7 +8,7 @@
 			<SelectedProg value="TRUE"/>
 			<Pos>1</Pos>
 			<Vendor>Lattice</Vendor>
-			<Family>ECP5UM</Family>
+			<Family>ECP5U</Family>
 			<Name>LFE5U-45F</Name>
 			<IDCode>0x41112043</IDCode>
 			<Package>All</Package>
