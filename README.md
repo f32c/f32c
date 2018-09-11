@@ -60,6 +60,6 @@ together with pre-built demo bitstreams for various Xilinx, Altera
 and Lattice FPGAs, and with further instructions on how to compile
 RISC-V / MIPS executables using the Arduino IDE.
 
-All VHDL modules are BSD licensed.  The majority of software libraries
-are borrowed from FreeBSD, while some originate from other projects and
-may bear an MIT-style license.
+All VHDL modules are [BSD licensed](LICENSE).  The majority of software
+libraries are borrowed from FreeBSD, while some originate from other
+projects and may be subject to an MIT-style license.
