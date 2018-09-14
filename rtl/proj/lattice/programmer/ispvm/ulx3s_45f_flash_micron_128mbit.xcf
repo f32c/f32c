@@ -54,11 +54,11 @@
 			<FlashDevice>
 				<Device>
 					<Pos>1</Pos>
-					<Vendor>Micron</Vendor>
+					<Vendor>SPANSION</Vendor>
 					<Family>SPI Serial Flash</Family>
-					<Name>SPI-M25P32</Name>
-					<IDCode>0x15</IDCode>
-					<Package>8-pin VDFPN8</Package>
+					<Name>SPI-S25FL128S</Name>
+					<Package>8-lead WSON</Package>
+					<IDCode>0x17</IDCode>
 					<Operation>SPI Flash Erase,Program</Operation>
 					<File>project/project_project.mcs</File>
 					<AddressBase>0x00000000</AddressBase>
