@@ -9,7 +9,7 @@
 			<Pos>1</Pos>
 			<Vendor>Lattice</Vendor>
 			<Family>ECP5U</Family>
-			<Name>LFE5U-45F</Name>
+			<Name>LFE5U-25F</Name>
 			<Package>All</Package>
 			<Bypass>
 				<InstrLen>8</InstrLen>
@@ -17,7 +17,7 @@
 				<BScanLen>1</BScanLen>
 				<BScanVal>0</BScanVal>
 			</Bypass>
-			<File>project/project_project_quad.mcs</File>
+			<File>project/project_project.mcs</File>
 			<FileTime>12/23/17 00:34:50</FileTime>
 			<Operation>SPI Flash Erase,Program</Operation>
 			<Option>
@@ -30,10 +30,10 @@
 					<Pos>1</Pos>
 					<Vendor>Lattice</Vendor>
 					<Family>ECP5U</Family>
-					<Name>LFE5U-45F</Name>
-					<IDCode>0x41112043</IDCode>
+					<Name>LFE5U-25F</Name>
+					<IDCode>0x41111043</IDCode>
 					<Package>All</Package>
-					<PON>LFE5U-45F</PON>
+					<PON>LFE5U-25F</PON>
 					<Bypass>
 						<InstrLen>8</InstrLen>
 						<InstrVal>11111111</InstrVal>
@@ -54,17 +54,17 @@
 			<FlashDevice>
 				<Device>
 					<Pos>1</Pos>
-					<Vendor>Micron</Vendor>
+					<Vendor>SPANSION</Vendor>
 					<Family>SPI Serial Flash</Family>
-					<Name>SPI-M25P32</Name>
-					<IDCode>0x15</IDCode>
-					<Package>8-pin VDFPN8</Package>
+					<Name>SPI-S25FL164K</Name>
+					<IDCode>0x16</IDCode>
+					<Package>8-lead SOIC</Package>
 					<Operation>SPI Flash Erase,Program</Operation>
-					<File>project/project_project_quad.mcs</File>
+					<File>project/project_project.mcs</File>
 					<AddressBase>0x00000000</AddressBase>
-					<EndAddress>0x00400000</EndAddress>
-					<DeviceSize>32</DeviceSize>
-					<DataSize>4194304</DataSize>
+					<EndAddress>0x01000000</EndAddress>
+					<DeviceSize>128</DeviceSize>
+					<DataSize>16777216</DataSize>
 					<NumberOfDevices>1</NumberOfDevices>
 					<ReInitialize value="FALSE"/>
 				</Device>
@@ -73,11 +73,11 @@
 				<Device>
 					<Pos>1</Pos>
 					<Name></Name>
-					<File>project/project_project_quad.mcs</File>
+					<File>project/project_project.mcs</File>
 					<LocalChainList>
 						<LocalDevice index="-99"
 							name="Unknown"
-							file="project/project_project_quad.mcs"/>
+							file="project/project_project.mcs"/>
 					</LocalChainList>
 					<Option>
 						<SVFVendor>JTAG STANDARD</SVFVendor>
