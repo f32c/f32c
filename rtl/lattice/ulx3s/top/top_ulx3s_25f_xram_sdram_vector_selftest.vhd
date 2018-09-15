@@ -197,6 +197,8 @@ entity ulx3s_xram_sdram_vector is
   sd_d: inout std_logic_vector(3 downto 0);
   sd_clk: inout std_logic := 'Z';
   sd_cdn, sd_wp: in std_logic;
+  
+  flash_wpn, flash_holdn: out std_logic := '1';
 
   nc: inout std_logic_vector(8 downto 0) -- not connected pins to force compiler to use some logic
   );

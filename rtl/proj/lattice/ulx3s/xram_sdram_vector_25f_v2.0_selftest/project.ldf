@@ -300,9 +300,6 @@
         <Source name="../../constraints/ulx3s_v20_selftest.lpf" type="Logic Preference" type_short="LPF">
             <Options/>
         </Source>
-        <Source name="ulx3s_25f_quad_flash_micron_128mbit.xcf" type="Programming Project File" type_short="Programming" excluded="TRUE">
-            <Options/>
-        </Source>
         <Source name="ulx3s_25f_sram.xcf" type="Programming Project File" type_short="Programming">
             <Options/>
         </Source>
