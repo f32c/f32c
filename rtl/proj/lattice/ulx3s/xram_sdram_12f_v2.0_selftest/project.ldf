@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<BaliProject version="3.2" title="project" device="LFE5U-12F-6BG381C" default_implementation="project">
+<BaliProject version="3.2" title="project" device="LFE5U-12F-6BG381I" default_implementation="project">
     <Options/>
     <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Strategy1">
         <Options def_top="ulx3s_xram_sdram_vector" top="ulx3s_xram_sdram_vector"/>
@@ -298,9 +298,6 @@
             <Options/>
         </Source>
         <Source name="../../constraints/ulx3s_v20_selftest.lpf" type="Logic Preference" type_short="LPF">
-            <Options/>
-        </Source>
-        <Source name="ulx3s_12f_quad_flash_micron_128mbit.xcf" type="Programming Project File" type_short="Programming" excluded="TRUE">
             <Options/>
         </Source>
         <Source name="ulx3s_12f_sram.xcf" type="Programming Project File" type_short="Programming">
