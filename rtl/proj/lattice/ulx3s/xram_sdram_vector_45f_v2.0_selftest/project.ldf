@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<BaliProject version="3.2" title="project" device="LFE5U-45F-6BG381C" default_implementation="project">
+<BaliProject version="3.2" title="project" device="LFE5U-45F-6BG381I" default_implementation="project">
     <Options/>
     <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Strategy1">
         <Options def_top="ulx3s_xram_sdram_vector" top="ulx3s_xram_sdram_vector"/>

@@ -191,6 +191,7 @@ entity ulx3s_xram_sdram_vector is
   --flash_mosi   : out     std_logic;
   --flash_clk    : out     std_logic;
   --flash_csn    : out     std_logic;
+  flash_holdn, flash_wpn: out std_logic := '1';
 
   -- SD card (SPI1)
   sd_cmd: inout std_logic := 'Z';
