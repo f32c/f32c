@@ -21,7 +21,7 @@ BOARD_VERSION=v20
 FPGA_SIZE = 25
 
 # bitstream file prefix
-BITSTREAM_PREFIX = f32c_selftest_$(BOARD)_$(BOARD_VERSION)_$(FPGA_SIZE)k
+BITSTREAM_PREFIX = f32c_$(BOARD)_$(BOARD_VERSION)_$(FPGA_SIZE)k_selftest_100mhz
 
 XCF_PREFIX = $(BOARD)_$(FPGA_SIZE)
 
@@ -59,8 +59,8 @@ $(PROJECT)/$(BITSTREAM_PREFIX).bit: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	cd $(PROJECT); ln -s $(PROJECT)_$(PROJECT).bit $(BITSTREAM_PREFIX).bit
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_is25lp032d.mcs: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-#	LANG=C ${DDTCMD} -dev LFE5U-$(FPGA_SIZE)F -if $< \
-#	-oft -advanced -format int -flashsize 32 -quad 1 -of $@
+#	LANG=C ${DDTCMD} -dev LFE5U-$(FPGA_SIZE)F -oft -advanced -format int -flashsize 32 -quad 1 -header \
+#	-if $< -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_flash_is25lp032d.mcs: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
 	cd $(PROJECT); ln -sf $(PROJECT)_$(PROJECT).mcs $(PROJECT)_$(PROJECT)_flash_is25lp032d.mcs
@@ -72,8 +72,8 @@ $(PROJECT)/$(BITSTREAM_PREFIX)_flash_is25lp032d.svf: $(PROJECT)/$(PROJECT)_$(PRO
 	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if $(XCF_PREFIX)f_flash_is25lp032d.xcf -of $@
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_s25fl164k.mcs: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-#	LANG=C ${DDTCMD} -dev LFE5U-$(FPGA_SIZE)F -if $< \
-#	-oft -advanced -format int -flashsize 64 -quad 1 -of $@
+#	LANG=C ${DDTCMD} -dev LFE5U-$(FPGA_SIZE)F -oft -advanced -format int -flashsize 64 -quad 1 -header \
+#	-if $< -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_flash_s25fl164k.mcs: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
 	cd $(PROJECT); ln -sf $(PROJECT)_$(PROJECT).mcs $(PROJECT)_$(PROJECT)_flash_s25fl164k.mcs
@@ -112,13 +112,11 @@ program_web_flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf
 program_ft2232: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 	openocd --file=$(OPENOCD_BASE)/ft2232-fpu1.ocd --file=$(OPENOCD_BASE)/ecp5-$(FPGA_SIZE)f.ocd
 
-program_flea: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
-	FleaFPGA-JTAG $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
+program_flea: $(PROJECT)/$(BITSTREAM_PREFIX)_sram.vme
+	FleaFPGA-JTAG $<
 
-flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
-	${PROGRAMMERC} $<
-	# after this, to gain access to serial port on linux
-	# rmmod ftdi_sio; modprobe ftdi_sio
+program_flea_flash: $(PROJECT)/$(BITSTREAM_PREFIX)_flash_is25lp128f.vme
+	FleaFPGA-JTAG $<
 
 clean:
 	rm -rf $(JUNK) *~
