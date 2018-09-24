@@ -1,0 +1,13 @@
+# ecp3.cfg
+# OpenOCD commands
+
+telnet_port 4444
+gdb_port 3333
+
+# JTAG TAPs
+jtag newtap machxo2 tap -expected-id 0x012bd043 -irlen 8 -irmask 0xFF -ircapture 0x5
+
+init
+scan_chain
+svf -tap machxo2.tap project/project_project_sram.svf
+shutdown

@@ -7,6 +7,10 @@ IMPL_DIR := $(shell fgrep default_strategy ${PROJ_FILE} | cut -d'"' -f 4)
 DIAMOND_BASE := /usr/local/diamond
 DIAMOND_BIN :=  $(shell find ${DIAMOND_BASE}/ -maxdepth 2 -name bin | sort -rn | head -1)
 DIAMONDC := $(shell find ${DIAMOND_BIN}/ -name diamondc)
+DDTCMD := $(shell find ${DIAMOND_BIN}/ -name ddtcmd)
+
+OPENOCD = openocd_ft232r
+OPENOCD_BASE := ../../programmer/openocd/fleafpga_uno
 
 # name of the project as defined in project file
 PROJECT = project
@@ -27,23 +31,25 @@ $(PROJECT)/$(PROJECT)_$(PROJECT).bit:
 	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-	ddtcmd -oft -fullvme -if project_sram.xcf -nocompress -noheader -of $@
+	LANG=C $(DDTCMD) -oft -fullvme -if project_sram.xcf -nocompress -noheader -of $@
+
+$(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
+	LANG=C $(DDTCMD) -oft -svfsingle -revd -maxdata 8 -if project_sram.xcf -noheader -of $@
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme
 	FleaFPGA-JTAG $<
-	# after this, to gain access to serial port on linux
-	# rmmod ftdi_sio; modprobe ftdi_sio
 
 $(PROJECT)/$(PROJECT)_$(PROJECT).jed:
 	echo prj_project open ${PROJ_FILE} \; prj_run Export -task Jedecgen | ${DIAMONDC}
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
-	ddtcmd -oft -fullvme -if project_flash.xcf -nocompress -noheader -of $@
+	LANG=C $(DDTCMD) -oft -fullvme -if project_flash.xcf -nocompress -noheader -of $@
 
 flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
 	FleaFPGA-JTAG $<
-	# after this, to gain access to serial port on linux
-	# rmmod ftdi_sio; modprobe ftdi_sio
+
+program_ft230x: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
+	$(OPENOCD) --file=$(OPENOCD_BASE)/ft230x.ocd --file=$(OPENOCD_BASE)/machxo2.ocd
 
 clean:
 	rm -rf ${IMPL_DIR} .recovery *.sty *~
