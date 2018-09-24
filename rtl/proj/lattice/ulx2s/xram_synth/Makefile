@@ -9,6 +9,7 @@ DIAMOND_BIN :=  $(shell find ${DIAMOND_BASE}/ -maxdepth 2 -name bin | sort -rn |
 DIAMONDC := $(shell find ${DIAMOND_BIN}/ -name diamondc)
 DDTCMD := $(shell find ${DIAMOND_BIN}/ -name ddtcmd)
 
+OPENOCD = openocd_ft232r
 OPENOCD_BASE := ../../programmer/openocd/ulx2s/
 
 # name of the project as defined in project file
@@ -34,6 +35,9 @@ flash: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
 #program_ft2232: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 #	openocd --file=$(OPENOCD_BASE)/ft2232-fpu1.ocd --file=$(OPENOCD_BASE)/ecp3.ocd
 
+program_ft232r: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
+	$(OPENOCD) --file=$(OPENOCD_BASE)/ft232r.ocd --file=$(OPENOCD_BASE)/fx2.ocd
+
 $(PROJECT)/$(PROJECT)_$(PROJECT).bit:
 	@echo prj_project open ${PROJ_FILE} \; prj_run Export -task Bitgen | ${DIAMONDC}
 
@@ -42,10 +46,9 @@ $(PROJECT)/$(PROJECT)_$(PROJECT).jed:
 #	@fgrep Warning: ${IMPL_DIR}/*.twr
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
-	LANG=C ddtcmd -oft -svfsingle -revd -if ulx2s_sram.xcf -of $@
+	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx2s_sram.xcf -noheader -of $@
 
-
-$(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
+$(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
 	LANG=C ${DDTCMD} -oft -fullvme -if ulx2s_sram.xcf -noheader -of $@
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
@@ -56,8 +59,6 @@ $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 
 #flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.vme
 #	${PROGRAMMERC} $<
-	# after this, to gain access to serial port on linux
-	# rmmod ftdi_sio; modprobe ftdi_sio
 
 # example another project
 #%.svf : %.jed
