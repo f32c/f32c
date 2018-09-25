@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<BaliProject version="3.2" title="project" device="LFE5U-45F-6BG381C" default_implementation="project">
+<BaliProject version="3.2" title="project" device="LFE5U-45F-6BG381I" default_implementation="project">
     <Options/>
     <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Strategy1">
-        <Options def_top="ulx3s_xram_sdram_tv" top="ulx3s_xram_sdram_tv"/>
+        <Options def_top="ulx3s_xram_sdram_vector" top="ulx3s_xram_sdram_vector"/>
         <Source name="../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_tv.vhd" type="VHDL" type_short="VHDL">
-            <Options top_module="ulx3s_xram_sdram_tv"/>
+            <Options top_module="ulx3s_xram_sdram_vector"/>
         </Source>
         <Source name="../../../../lattice/ulx3s/clocks/clk_25_325_25_81.vhd" type="VHDL" type_short="VHDL">
             <Options/>
@@ -12,7 +12,7 @@
         <Source name="../../../../lattice/ulx3s/clocks/clk_25_325_25_92.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../generic/glue_xram.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../generic/glue_xram_vector.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../generic/bptrace.vhd" type="VHDL" type_short="VHDL">
@@ -34,6 +34,12 @@
             <Options/>
         </Source>
         <Source name="../../../../generic/bootloader/boot_rom_mi32el.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../generic/bootloader/boot_preloader.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../generic/bootloader/bootrom_emu.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../generic/reg1w2r.vhd" type="VHDL" type_short="VHDL">
@@ -76,6 +82,18 @@
             <Options/>
         </Source>
         <Source name="../../../../cpu/mul_iter.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/synth.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/sigmadelta.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/spdif_tx.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/pcm.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../soc/sio.vhd" type="VHDL" type_short="VHDL">
@@ -129,6 +147,9 @@
         <Source name="../../../../soc/sdram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../../soc/sdram32.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../../soc/acram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -145,12 +166,6 @@
             <Options/>
         </Source>
         <Source name="../../../../soc/vgahdmi/vga.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../lattice/chip/ecp5u/ddr_out.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/vgahdmi/ddr_dvid_out_se.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../soc/vgahdmi/tv.vhd" type="VHDL" type_short="VHDL">
@@ -186,18 +201,6 @@
         <Source name="../../../../soc/vgahdmi/ledstrip.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../soc/synth.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/sigmadelta.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/spdif_tx.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/pcm.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../generic/bram_true2p_2clk.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -223,9 +226,6 @@
             <Options/>
         </Source>
         <Source name="../../../../soc/vgahdmi/vga2lcd.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../generic/hdmi_out.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../soc/simple_ADC.vhd" type="VHDL" type_short="VHDL">
@@ -297,13 +297,10 @@
         <Source name="../../../../soc/vector/fpu/float_divide_goldschmidt.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../constraints/ulx3s.lpf" type="Logic Preference" type_short="LPF">
+        <Source name="../../constraints/ulx3s_v17patch.lpf" type="Logic Preference" type_short="LPF">
             <Options/>
         </Source>
-        <Source name="ulx3s_flash.xcf" type="Programming Project File" type_short="Programming" excluded="TRUE">
-            <Options/>
-        </Source>
-        <Source name="ulx3s_sram.xcf" type="Programming Project File" type_short="Programming">
+        <Source name="ulx3s_12f_sram.xcf" type="Programming Project File" type_short="Programming">
             <Options/>
         </Source>
     </Implementation>

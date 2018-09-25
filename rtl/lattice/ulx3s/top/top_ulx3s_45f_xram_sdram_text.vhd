@@ -17,7 +17,7 @@ use work.boot_rom_mi32el.all;
 library ecp5u;
 use ecp5u.components.all;
 
-entity ulx3s_xram_sdram_vector is
+entity ulx3s_xram_sdram_text is
   generic
   (
     -- ISA: either ARCH_MI32 or ARCH_RV32
@@ -202,7 +202,7 @@ entity ulx3s_xram_sdram_vector is
   );
 end;
 
-architecture Behavioral of ulx3s_xram_sdram_vector is
+architecture Behavioral of ulx3s_xram_sdram_text is
   -- useful for conversion from KB to number of address bits
   function ceil_log2(x: integer)
       return integer is

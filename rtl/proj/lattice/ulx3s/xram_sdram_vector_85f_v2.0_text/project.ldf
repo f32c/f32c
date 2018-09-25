@@ -2,9 +2,9 @@
 <BaliProject version="3.2" title="project" device="LFE5U-85F-6BG381C" default_implementation="project">
     <Options/>
     <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Strategy1">
-        <Options def_top="ulx3s_xram_sdram_vector" top="ulx3s_xram_sdram_vector"/>
+        <Options def_top="ulx3s_xram_sdram_text" top="ulx3s_xram_sdram_text"/>
         <Source name="../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_text.vhd" type="VHDL" type_short="VHDL">
-            <Options top_module="ulx3s_xram_sdram_vector"/>
+            <Options top_module="ulx3s_xram_sdram_text"/>
         </Source>
         <Source name="../../../../lattice/ulx3s/clocks/clk_25_78_125_25.vhd" type="VHDL" type_short="VHDL">
             <Options/>

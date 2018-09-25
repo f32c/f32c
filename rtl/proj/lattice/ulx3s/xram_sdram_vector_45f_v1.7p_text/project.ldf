@@ -3,7 +3,7 @@
     <Options/>
     <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Strategy1">
         <Options def_top="ulx3s_xram_sdram_text" top="ulx3s_xram_sdram_text"/>
-        <Source name="../../../../lattice/ulx3s/top/top_ulx3s_25f_xram_sdram_text.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_text.vhd" type="VHDL" type_short="VHDL">
             <Options top_module="ulx3s_xram_sdram_text"/>
         </Source>
         <Source name="../../../../lattice/ulx3s/clocks/clk_25_78_125_25.vhd" type="VHDL" type_short="VHDL">
@@ -34,6 +34,12 @@
             <Options/>
         </Source>
         <Source name="../../../../generic/bootloader/boot_rom_mi32el.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../generic/bootloader/boot_preloader.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../generic/bootloader/bootrom_emu.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../generic/reg1w2r.vhd" type="VHDL" type_short="VHDL">
@@ -76,6 +82,15 @@
             <Options/>
         </Source>
         <Source name="../../../../cpu/mul_iter.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/synth.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/sigmadelta.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/spdif_tx.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../soc/pcm.vhd" type="VHDL" type_short="VHDL">
@@ -132,6 +147,9 @@
         <Source name="../../../../soc/sdram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../../soc/sdram32.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../../soc/acram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -148,12 +166,6 @@
             <Options/>
         </Source>
         <Source name="../../../../soc/vgahdmi/vga.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../lattice/chip/ecp5u/ddr_out.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/vgahdmi/ddr_dvid_out_se.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../soc/vgahdmi/tv.vhd" type="VHDL" type_short="VHDL">
@@ -216,9 +228,6 @@
         <Source name="../../../../soc/vgahdmi/vga2lcd.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../generic/hdmi_out.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../soc/simple_ADC.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -249,22 +258,13 @@
         <Source name="../../../../soc/vector/axi_vector_dma.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../soc/vector/fpu/add_sub/fpu_arch.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../soc/vector/fpu/add_sub_emiraga/add_sub_emiraga.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../soc/vector/fpu/add_sub/add_sub27_arch.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee_adder.v" type="Verilog" type_short="Verilog">
             <Options/>
         </Source>
-        <Source name="../../../../soc/vector/fpu/add_sub/except_arch.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/vector/fpu/add_sub/pre_norm_arch.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/vector/fpu/add_sub/post_norm_arch.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../soc/vector/fpu/float_divide_goldschmidt.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee.v" type="Verilog" type_short="Verilog">
             <Options/>
         </Source>
         <Source name="../../../../soc/vector/fpu/mul/multiplier/fpmul_pipeline.vhd" type="VHDL" type_short="VHDL">
@@ -294,7 +294,10 @@
         <Source name="../../../../soc/vector/fpu/mul/common/unpackfp_unpackfp.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../constraints/ulx3s.lpf" type="Logic Preference" type_short="LPF">
+        <Source name="../../../../soc/vector/fpu/float_divide_goldschmidt.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../constraints/ulx3s_v17patch.lpf" type="Logic Preference" type_short="LPF">
             <Options/>
         </Source>
         <Source name="ulx3s_flash.xcf" type="Programming Project File" type_short="Programming" excluded="TRUE">
