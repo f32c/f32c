@@ -1,11 +1,15 @@
 #
-# openocd_ft232r patched for custom jtag_gpio and buffer_size
+# openocd_ft232r patched for custom jtag nums and buffer_size
 #
 
 interface ft232r
 ft232r_vid_pid 0x0403 0x6015
-ft232r_jtag_nums 5 6 7 3
+# ft232r_serial_desc 123456
+ft232r_tck_num 5
+ft232r_tms_num 6
+ft232r_tdi_num 7
+ft232r_tdo_num 3
 ft232r_trst_num 2
 ft232r_srst_num 4
 ft232r_buffer_size 16384
-adapter_khz 1000
+adapter_khz 300

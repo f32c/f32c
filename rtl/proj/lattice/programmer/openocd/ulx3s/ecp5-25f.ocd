@@ -11,5 +11,5 @@ jtag newtap lfe5u25 tap -expected-id 0x41111043 -irlen 8 -irmask 0xFF -ircapture
 
 init
 scan_chain
-svf -tap lfe5u25.tap project/project_project_sram.svf
+svf -tap lfe5u25.tap -quiet -progress project/project_project_sram.svf
 shutdown
