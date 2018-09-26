@@ -510,9 +510,12 @@ begin
     simple_in(15 downto 7) => (others => '0'),
     simple_in(6 downto 0) => btn,
 
-    -- 2 MSB audio channel bits are not used in "default" setup.
-    audio_l(3 downto 2) => audio_l(1 downto 0),
-    audio_r(3 downto 2) => audio_r(1 downto 0),
+    -- v1.7 2 MSB audio channel bits should not be used or board resets.
+    --audio_l(3 downto 2) => audio_l(1 downto 0),
+    --audio_r(3 downto 2) => audio_r(1 downto 0),
+    -- v2.1.2 can use all 4 bits, better supply and filtering
+    audio_l(3 downto 0) => audio_l(3 downto 0),
+    audio_r(3 downto 0) => audio_r(3 downto 0),
     -- 4-bit could be used down to 75 ohm load
     -- but FPGA will stop working (IO overload)
     -- if standard 17 ohm earphones are plugged.
