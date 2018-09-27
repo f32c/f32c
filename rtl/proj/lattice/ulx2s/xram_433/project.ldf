@@ -147,6 +147,15 @@
         <Source name="../../../../soc/vgahdmi/ledstrip.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../../soc/synth.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/sigmadelta.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/spdif_tx.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../../soc/pcm.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>

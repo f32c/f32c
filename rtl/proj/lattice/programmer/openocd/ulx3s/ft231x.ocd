@@ -5,11 +5,13 @@
 interface ft232r
 ft232r_vid_pid 0x0403 0x6015
 # ft232r_serial_desc 123456
-ft232r_tck_num 5
-ft232r_tms_num 6
-ft232r_tdi_num 7
-ft232r_tdo_num 3
-ft232r_trst_num 2
-ft232r_srst_num 4
+# ft232r_jtag_nums DSR DCD RI CTS
+ft232r_tck_num DSR
+ft232r_tms_num DCD
+ft232r_tdi_num RI
+ft232r_tdo_num CTS
+ft232r_trst_num RTS
+ft232r_srst_num DTR
 ft232r_buffer_size 16384
-adapter_khz 300
+ft232r_restore_serial 0x0015
+adapter_khz 1000

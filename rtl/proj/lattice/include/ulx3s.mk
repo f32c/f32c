@@ -9,7 +9,7 @@ DIAMOND_BIN :=  $(shell find ${DIAMOND_BASE}/ -maxdepth 2 -name bin | sort -rn |
 DIAMONDC := $(shell find ${DIAMOND_BIN}/ -name diamondc)
 DDTCMD := $(shell find ${DIAMOND_BIN}/ -name ddtcmd)
 
-OPENOCD := openocd_ft232r
+OPENOCD ?= openocd_ft232r
 OPENOCD_BASE := ../../programmer/openocd/ulx3s/
 
 # name of the project as defined in project file
@@ -102,7 +102,7 @@ program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	echo pgr_project open $(XCF_PREFIX)f_sram.xcf \; pgr_program run | ${DIAMONDC}
 
 program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
-	openocd --file=$(OPENOCD_BASE)/remote.ocd --file=$(OPENOCD_BASE)/ecp5-$(FPGA_SIZE)f.ocd
+	$(OPENOCD) --file=$(OPENOCD_BASE)/remote.ocd --file=$(OPENOCD_BASE)/ecp5-$(FPGA_SIZE)f.ocd
 
 program_web: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 	svfupload.py ulx3s.lan $<
@@ -112,7 +112,7 @@ program_web_flash: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash.svf
 
 program_ft2232: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 	ln -sf $(BITSTREAM_PREFIX)_sram.svf $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
-	openocd --file=$(OPENOCD_BASE)/ft2232-fpu1.ocd --file=$(OPENOCD_BASE)/ecp5-$(FPGA_SIZE)f.ocd
+	$(OPENOCD) --file=$(OPENOCD_BASE)/ft2232-fpu1.ocd --file=$(OPENOCD_BASE)/ecp5-$(FPGA_SIZE)f.ocd
 	rm -f $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 
 program_ft231x: $(PROJECT)/$(BITSTREAM_PREFIX)_sram.svf

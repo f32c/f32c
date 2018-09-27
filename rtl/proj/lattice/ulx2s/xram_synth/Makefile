@@ -46,7 +46,9 @@ $(PROJECT)/$(PROJECT)_$(PROJECT).jed:
 #	@fgrep Warning: ${IMPL_DIR}/*.twr
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
-	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx2s_sram.xcf -noheader -of $@
+	ujprog $< -s $@
+
+#	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if ulx2s_sram.xcf -noheader -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.vme: $(PROJECT)/$(PROJECT)_$(PROJECT).jed
 	LANG=C ${DDTCMD} -oft -fullvme -if ulx2s_sram.xcf -noheader -of $@

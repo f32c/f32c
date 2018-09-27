@@ -5,9 +5,9 @@ telnet_port 4444
 gdb_port 3333
 
 # JTAG TAPs
-jtag newtap fx2 tap -expected-id 0x0129a043 -irlen 8 -irmask 0xFF -ircapture 0x5
+jtag newtap fx2 tap -expected-id 0x0129a043 -irlen 8 -irmask 0xFF -ircapture 0x1d
 
 init
 scan_chain
-svf -tap fx2.tap project/project_project_sram.svf
+svf -tap fx2.tap -quiet -progress project/project_project_sram.svf
 shutdown
