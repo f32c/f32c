@@ -68,7 +68,8 @@ entity ulx3s_xram_sdram_vector is
       -- C_rds_clock_multiply: integer := 57; -- multiply 57 and divide 3125 from cpu clk 100 MHz
       -- C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
 
-    C_passthru_autodetect: boolean := true; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
+    -- enabling passthru autodetect reduces fmax or vector divide must be disabled on 45f
+    C_passthru_autodetect: boolean := false; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
     C_passthru_clk_Hz: real := 25.0E6; -- passthru state machine uses 25 MHz clock
     C_passthru_break: real := 10.0E-3; -- seconds (approximately) to detect serial break and enter f32c mode
 

@@ -47,7 +47,7 @@ entity ulx3s_xram_sdram_vector is
     C_sio: integer := 2; -- 2 default
     C_spi: integer := 2; -- 2 default
     C_simple_io: boolean := true; -- true default
-    C_gpio: integer := 96; -- 64 default for ulx3s, additional gpio for audio DAC testing
+    C_gpio: integer := 64; -- 64 default for ulx3s
     C_gpio_pullup: boolean := false; -- false default
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
     C_timer: boolean := true; -- true default
@@ -55,11 +55,10 @@ entity ulx3s_xram_sdram_vector is
     C_synth: boolean := false; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
-    C_spdif: boolean := false; -- SPDIF output
+    C_spdif: boolean := true; -- SPDIF output
     C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
-    -- enabling passthru autodetect reduces fmax or vector divide must be disabled on 45f
-    C_passthru_autodetect: boolean := false; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
+    C_passthru_autodetect: boolean := true; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
     C_passthru_clk_Hz: real := 25.0E6; -- passthru state machine uses 25 MHz clock
     C_passthru_break: real := 10.0E-3; -- seconds (approximately) to detect serial break and enter f32c mode
 
@@ -192,7 +191,6 @@ entity ulx3s_xram_sdram_vector is
   --flash_mosi   : out     std_logic;
   --flash_clk    : out     std_logic;
   --flash_csn    : out     std_logic;
-  flash_holdn, flash_wpn: out std_logic := '1';
 
   -- SD card (SPI1)
   sd_cmd: inout std_logic := 'Z';
@@ -325,8 +323,6 @@ begin
     sd_cmd <= '1' when R_esp32_mode = '1' else S_f32c_sd_mosi when S_f32c_sd_csn = '0' else 'Z';
     sd_d(2 downto 1) <= (others => '1') when R_esp32_mode = '1' else (others => 'Z');
     
-    -- S_f32c_sd_csn <= '1'; -- force disabled for debugging
-
     -- detect serial break
     G_detect_serial_break: if true generate
     process(clk_25MHz)
@@ -489,14 +485,9 @@ begin
     spi_mosi(0) => open,  spi_mosi(1) => S_f32c_sd_mosi,  -- sd_cmd,
     spi_miso(0) => '0',   spi_miso(1) => S_f32c_sd_miso,  -- sd_d(0),
 
-    gpio(127 downto 96) => open, -- not allocated
-    gpio(95 downto 76) => open, -- 12 pins free
-    gpio(75 downto 72) => audio_v,
-    gpio(71 downto 68) => audio_r,
-    gpio(67 downto 64) => audio_l,
-    gpio(63 downto 28+32) => open, -- 4 pins free
+    gpio(127 downto 28+32) => open,
     gpio(27+32 downto 32) => gn(27 downto 0),
-    gpio(31 downto 30) => open, -- 2 pins free
+    gpio(31 downto 30) => open,
     gpio(29) => gpdi_sda,
     gpio(28) => gpdi_scl,
     gpio(27 downto 0) => gp(27 downto 0),
@@ -519,13 +510,16 @@ begin
     simple_in(15 downto 7) => (others => '0'),
     simple_in(6 downto 0) => btn,
 
-    -- 2 MSB audio channel bits are not used in "default" setup.
-    audio_l(3 downto 2) => open, -- audio_l(1 downto 0),
-    audio_r(3 downto 2) => open, -- audio_r(1 downto 0),
+    -- v1.7: 2 MSB audio channel bits are not used in "default" setup.
+    --audio_l(3 downto 2) => audio_l(1 downto 0),
+    --audio_r(3 downto 2) => audio_r(1 downto 0),
     -- 4-bit could be used down to 75 ohm load
     -- but FPGA will stop working (IO overload)
     -- if standard 17 ohm earphones are plugged.
-    spdif_out => open, -- audio_v(0),
+    -- v2.1.2: can use all 4 bits, better power supply
+    audio_l(3 downto 0) => audio_l(3 downto 0),
+    audio_r(3 downto 0) => audio_r(3 downto 0),
+    spdif_out => audio_v(0),
 
     cw_antenna => ant_433mhz,
 
