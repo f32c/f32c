@@ -10,7 +10,7 @@ DIAMONDC := $(shell find ${DIAMOND_BIN}/ -name diamondc)
 DDTCMD := $(shell find ${DIAMOND_BIN}/ -name ddtcmd)
 
 OPENOCD ?= openocd_ft232r
-OPENOCD_BASE := ../../programmer/openocd/ulx3s/
+OPENOCD_BASE := ../../programmer/openocd/ulx3s
 
 # name of the project as defined in project file
 PROJECT = project
@@ -97,6 +97,7 @@ $(PROJECT)/$(BITSTREAM_PREFIX)_flash_is25lp128f.vme: $(PROJECT)/$(PROJECT)_$(PRO
 
 $(PROJECT)/$(BITSTREAM_PREFIX)_flash_is25lp128f.svf: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash_is25lp128f.mcs
 	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if $(XCF_PREFIX)f_flash_is25lp128f.xcf -of $@
+	sed --in-place -f $(OPENOCD_BASE)/fix_flash_is25lp128f.sed $@
 
 program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	echo pgr_project open $(XCF_PREFIX)f_sram.xcf \; pgr_program run | ${DIAMONDC}
