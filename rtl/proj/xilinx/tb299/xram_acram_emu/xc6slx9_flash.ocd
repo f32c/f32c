@@ -1,0 +1,21 @@
+# xc6slx9_flash.ocd
+# OpenOCD commands
+
+# create xc6slx9.mcs file flash M25P40 -> xc6slx9, configuration file = xc6slx9.bit
+# impact->new project->output to svf file
+# browse ..ISE/spartan6/data/xc6slx9.bsd as config file for xc6slx9 device,
+# add flash SPI M25P40, its config file is xc6slx9.mcs
+# program -> creates svf file for indirect flashing
+
+#telnet_port 4444
+#gdb_port 3333
+
+adapter_khz 1000
+
+# JTAG TAPs
+jtag newtap xc6slx9 tap -expected-id 0x24001093 -irlen 6
+
+init
+scan_chain
+svf -tap xc6slx9.tap xc6slx9_flash.svf
+shutdown

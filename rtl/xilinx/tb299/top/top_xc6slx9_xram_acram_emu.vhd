@@ -49,12 +49,12 @@ entity glue is
 	C_clk_freq: integer := 100;
 
 	-- SoC configuration options
-	C_bram_size: integer := 32;
-	C_acram: boolean := false;
+	C_bram_size: integer := 2;
+	C_acram: boolean := true;
 	C_acram_wait_cycles: integer := 3; -- 3 or more
         C_acram_emu_kb: integer := 32; -- KB axi_cache emulation (power of 2, MAX 32)
-        C_icache_size: integer := 0;	-- 0, 2, 4, 8, 16 or 32 KBytes
-        C_dcache_size: integer := 0;	-- 0, 2, 4, 8, 16 or 32 KBytes
+        C_icache_size: integer := 2;	-- 0, 2, 4, 8, 16 or 32 KBytes
+        C_dcache_size: integer := 2;	-- 0, 2, 4, 8, 16 or 32 KBytes
 	C_sio: integer := 1;
 	C_spi: integer := 2;
 	C_gpio: integer := 32;

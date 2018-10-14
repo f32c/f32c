@@ -7,8 +7,8 @@ interface ft232r
 # ft232r_serial_desc 250001
 ft232r_tck_num DTR
 ft232r_tms_num CTS
-ft232r_tdi_num TXD
-ft232r_tdo_num RXD
-ft232r_trst_num DCD
-ft232r_srst_num RI
+ft232r_tdo_num DCD
+ft232r_tdi_num RI
+ft232r_trst_num TXD
+ft232r_srst_num RXD
 adapter_khz 1000

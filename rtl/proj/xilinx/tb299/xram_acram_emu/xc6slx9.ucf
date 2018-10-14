@@ -1,0 +1,93 @@
+## This file is a general .ucf for xc6slx9 board. See
+## page 274 of http://www.xilinx.com/support/documentation/user_guides/ug385.pdf
+## To use it in a project:
+## - remove or comment the lines corresponding to unused pins
+## - rename the used signals according to the project
+
+##Clock signal 25 MHz
+Net "clk_25m" LOC = P85 | IOSTANDARD=LVCMOS33;
+Net "clk_25m" TNM_NET = sys_clk_pin;
+TIMESPEC TS_sys_clk_pin = PERIOD sys_clk_pin 25 MHz high 50%;
+
+## Usb-RS232 interface
+Net "rs232_dce_rxd" LOC = P94 | IOSTANDARD=LVCMOS33; #Bank = 1, pin name = IO_L48P_HDC_M1DQ8, Sch name = MCU-RX
+Net "rs232_dce_txd" LOC = P97 | IOSTANDARD=LVCMOS33; #Bank = 1, pin name = IO_L48N_M1DQ9, Sch name = MCU-TX
+
+## Leds
+Net "Led<0>" LOC =  P1 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L2P_CMPCLK, Sch name = LD0
+Net "Led<1>" LOC =  P2 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L2N_CMPMOSI, Sch name = LD1
+Net "Led<2>" LOC =  P5 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L5P, Sch name = LD2
+Net "Led<3>" LOC =  P6 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L5N, Sch name = LD3
+Net "Led<4>" LOC =  P7 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L15P, Sch name = LD4
+Net "Led<5>" LOC =  P8 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L15N, Sch name = LD5
+Net "Led<6>" LOC =  P9 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16P, Sch name = LD6
+Net "Led<7>" LOC = P10 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16N_VREF, Sch name = LD7
+
+## Switches
+#Net "sw<0>" LOC =  P11 | IOSTANDARD = LVCMOS33;
+#Net "sw<1>" LOC =  P12 | IOSTANDARD = LVCMOS33;
+#Net "sw<2>" LOC =  P14 | IOSTANDARD = LVCMOS33;
+#Net "sw<3>" LOC =  P15 | IOSTANDARD = LVCMOS33;
+#Net "sw<4>" LOC =  P16 | IOSTANDARD = LVCMOS33;
+#Net "sw<5>" LOC =  P17 | IOSTANDARD = LVCMOS33;
+#Net "sw<6>" LOC =  P21 | IOSTANDARD = LVCMOS33;
+#Net "sw<7>" LOC =  P22 | IOSTANDARD = LVCMOS33;
+
+## Buttons
+#Net "btn_k1" LOC = P84 | IOSTANDARD = LVCMOS33; # this is clock pin, marked N_GCLK
+Net "btn_k2" LOC = P79 | IOSTANDARD = LVCMOS33;
+Net "btn_k3" LOC = P78 | IOSTANDARD = LVCMOS33;
+
+## GPIO
+Net "gpio<0>" LOC =  P12 | IOSTANDARD = LVCMOS33;
+Net "gpio<1>" LOC =  P11 | IOSTANDARD = LVCMOS33;
+Net "gpio<2>" LOC =  P15 | IOSTANDARD = LVCMOS33;
+Net "gpio<3>" LOC =  P14 | IOSTANDARD = LVCMOS33;
+Net "gpio<4>" LOC =  P17 | IOSTANDARD = LVCMOS33;
+Net "gpio<5>" LOC =  P16 | IOSTANDARD = LVCMOS33;
+Net "gpio<6>" LOC =  P22 | IOSTANDARD = LVCMOS33;
+Net "gpio<7>" LOC =  P21 | IOSTANDARD = LVCMOS33;
+Net "gpio<8>" LOC =  P24 | IOSTANDARD = LVCMOS33;
+Net "gpio<9>" LOC =  P23 | IOSTANDARD = LVCMOS33;
+Net "gpio<10>" LOC =  P27 | IOSTANDARD = LVCMOS33;
+Net "gpio<11>" LOC =  P26 | IOSTANDARD = LVCMOS33;
+Net "gpio<12>" LOC =  P30 | IOSTANDARD = LVCMOS33;
+Net "gpio<13>" LOC =  P29 | IOSTANDARD = LVCMOS33;
+Net "gpio<14>" LOC =  P33 | IOSTANDARD = LVCMOS33;
+Net "gpio<15>" LOC =  P32 | IOSTANDARD = LVCMOS33;
+Net "gpio<16>" LOC =  P35 | IOSTANDARD = LVCMOS33;
+Net "gpio<17>" LOC =  P34 | IOSTANDARD = LVCMOS33;
+Net "gpio<18>" LOC =  P41 | IOSTANDARD = LVCMOS33;
+Net "gpio<19>" LOC =  P40 | IOSTANDARD = LVCMOS33;
+Net "gpio<20>" LOC =  P44 | IOSTANDARD = LVCMOS33;
+Net "gpio<21>" LOC =  P43 | IOSTANDARD = LVCMOS33;
+Net "gpio<22>" LOC =  P46 | IOSTANDARD = LVCMOS33;
+Net "gpio<23>" LOC =  P45 | IOSTANDARD = LVCMOS33;
+Net "gpio<24>" LOC =  P48 | IOSTANDARD = LVCMOS33;
+Net "gpio<25>" LOC =  P47 | IOSTANDARD = LVCMOS33;
+Net "gpio<26>" LOC =  P51 | IOSTANDARD = LVCMOS33;
+Net "gpio<27>" LOC =  P50 | IOSTANDARD = LVCMOS33;
+Net "gpio<28>" LOC =  P56 | IOSTANDARD = LVCMOS33;
+Net "gpio<29>" LOC =  P55 | IOSTANDARD = LVCMOS33;
+Net "gpio<30>" LOC =  P58 | IOSTANDARD = LVCMOS33;
+Net "gpio<31>" LOC =  P57 | IOSTANDARD = LVCMOS33;
+Net "gpio<32>" LOC =  P61 | IOSTANDARD = LVCMOS33;
+Net "gpio<33>" LOC =  P59 | IOSTANDARD = LVCMOS33;
+Net "gpio<34>" LOC =  P66 | IOSTANDARD = LVCMOS33;
+Net "gpio<35>" LOC =  P62 | IOSTANDARD = LVCMOS33;
+Net "gpio<36>" LOC =  P80 | IOSTANDARD = LVCMOS33;
+Net "gpio<37>" LOC =  P67 | IOSTANDARD = LVCMOS33;
+Net "gpio<38>" LOC =  P82 | IOSTANDARD = LVCMOS33;
+Net "gpio<39>" LOC =  P81 | IOSTANDARD = LVCMOS33;
+
+## Timer ICP/OCP
+Net "icp<0>" LOC = P143 | IOSTANDARD=LVCMOS33;
+Net "ocp<0>" LOC = P142 | IOSTANDARD=LVCMOS33;
+Net "icp<1>" LOC = P141 | IOSTANDARD=LVCMOS33;
+Net "ocp<1>" LOC = P140 | IOSTANDARD=LVCMOS33;
+
+## Onboard SPI Flash M25P40
+Net "flash_miso" LOC = P65 | IOSTANDARD = LVCMOS33 | PULLUP; # [N] DIN
+Net "flash_mosi" LOC = P64 | IOSTANDARD = LVCMOS33; # [B] CSI
+Net "flash_csn"  LOC = P38 | IOSTANDARD = LVCMOS33; # [b] CSO
+Net "flash_clk"  LOC = P70 | IOSTANDARD = LVCMOS33; # [C] CCLK
