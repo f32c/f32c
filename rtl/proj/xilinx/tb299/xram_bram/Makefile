@@ -6,9 +6,11 @@ flashsize = 512 # KB (kilobytes) - SPI flash device is M25P40
 top_module = glue
 isedir = /usr/local/xilinx/14.7/ISE_DS
 SHELL = /bin/bash
+openocd_exe = openocd_ft232r
 # openocd_interface = interface/altera-usb-blaster.cfg
 # openocd_interface = ../../include/ft2232-fpu1.ocd
-openocd_interface = remote.ocd
+openocd_interface = ../../include/ft232r.ocd
+# openocd_interface = remote.ocd
 # xc3sprog ftdi won't work at full speed
 # it must be lowered below 100kHz for bitstream to
 # to start reliable

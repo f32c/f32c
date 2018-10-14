@@ -40,6 +40,7 @@ isedir ?= /opt/Xilinx/ISE/14.7/ISE_DS
 xil_env ?= . $(isedir)/settings32.sh
 #xil_env ?= . $(isedir)/settings64.sh
 openocd_interface ?= interface/altera-usb-blaster.cfg
+openocd_exe ?= openocd
 xc3sprog_interface ?= xpc
 xc3sprog_device ?= 0
 jtag_spi_bridge ?= ../../include/bscan_xc6s_ftg256_blink.bit.xz
@@ -142,10 +143,10 @@ mimasv2_flash: $(project).bin
 	MimasV2Config.py $(mimasv2_device) $(project).bin
 
 program: $(project).svf
-	openocd --file=$(openocd_interface) --file=$(project).ocd
+	$(openocd_exe) --file=$(openocd_interface) --file=$(project).ocd
 
 flash: $(project)_flash.svf
-	openocd --file=$(openocd_interface) --file=$(project)_flash.ocd
+	$(openocd_exe) --file=$(openocd_interface) --file=$(project)_flash.ocd
 
 $(project).mcs: $(project).bit
 	$(xil_env); \
