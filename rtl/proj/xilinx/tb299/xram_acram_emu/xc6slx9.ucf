@@ -13,15 +13,15 @@ TIMESPEC TS_sys_clk_pin = PERIOD sys_clk_pin 25 MHz high 50%;
 Net "rs232_dce_rxd" LOC = P94 | IOSTANDARD=LVCMOS33; #Bank = 1, pin name = IO_L48P_HDC_M1DQ8, Sch name = MCU-RX
 Net "rs232_dce_txd" LOC = P97 | IOSTANDARD=LVCMOS33; #Bank = 1, pin name = IO_L48N_M1DQ9, Sch name = MCU-TX
 
-## Leds
-Net "Led<0>" LOC =  P1 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L2P_CMPCLK, Sch name = LD0
-Net "Led<1>" LOC =  P2 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L2N_CMPMOSI, Sch name = LD1
-Net "Led<2>" LOC =  P5 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L5P, Sch name = LD2
-Net "Led<3>" LOC =  P6 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L5N, Sch name = LD3
-Net "Led<4>" LOC =  P7 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L15P, Sch name = LD4
-Net "Led<5>" LOC =  P8 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L15N, Sch name = LD5
-Net "Led<6>" LOC =  P9 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16P, Sch name = LD6
-Net "Led<7>" LOC = P10 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16N_VREF, Sch name = LD7
+## LEDs
+Net "led<0>" LOC =  P1 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L2P_CMPCLK, Sch name = LD0
+Net "led<1>" LOC =  P2 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L2N_CMPMOSI, Sch name = LD1
+Net "led<2>" LOC =  P5 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L5P, Sch name = LD2
+Net "led<3>" LOC =  P6 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L5N, Sch name = LD3
+Net "led<4>" LOC =  P7 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L15P, Sch name = LD4
+Net "led<5>" LOC =  P8 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L15N, Sch name = LD5
+Net "led<6>" LOC =  P9 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16P, Sch name = LD6
+Net "led<7>" LOC = P10 | IOSTANDARD = LVCMOS33; #Bank = 2, pin name = IO_L16N_VREF, Sch name = LD7
 
 ## Switches
 #Net "sw<0>" LOC =  P11 | IOSTANDARD = LVCMOS33;
@@ -62,16 +62,16 @@ Net "gpio<19>" LOC =  P40 | IOSTANDARD = LVCMOS33;
 Net "gpio<20>" LOC =  P44 | IOSTANDARD = LVCMOS33;
 Net "gpio<21>" LOC =  P43 | IOSTANDARD = LVCMOS33;
 Net "gpio<22>" LOC =  P46 | IOSTANDARD = LVCMOS33;
-Net "gpio<23>" LOC =  P45 | IOSTANDARD = LVCMOS33;
-Net "gpio<24>" LOC =  P48 | IOSTANDARD = LVCMOS33;
-Net "gpio<25>" LOC =  P47 | IOSTANDARD = LVCMOS33;
-Net "gpio<26>" LOC =  P51 | IOSTANDARD = LVCMOS33;
-Net "gpio<27>" LOC =  P50 | IOSTANDARD = LVCMOS33;
-Net "gpio<28>" LOC =  P56 | IOSTANDARD = LVCMOS33;
-Net "gpio<29>" LOC =  P55 | IOSTANDARD = LVCMOS33;
-Net "gpio<30>" LOC =  P58 | IOSTANDARD = LVCMOS33;
-Net "gpio<31>" LOC =  P57 | IOSTANDARD = LVCMOS33;
-Net "gpio<32>" LOC =  P61 | IOSTANDARD = LVCMOS33;
+Net "gpio<23>" LOC =  P138 | IOSTANDARD = LVCMOS33;
+Net "gpio<24>" LOC =  P139 | IOSTANDARD = LVCMOS33;
+Net "gpio<25>" LOC =  P134 | IOSTANDARD = LVCMOS33;
+Net "gpio<26>" LOC =  P137 | IOSTANDARD = LVCMOS33;
+Net "gpio<27>" LOC =  P132 | IOSTANDARD = LVCMOS33;
+Net "gpio<28>" LOC =  P133 | IOSTANDARD = LVCMOS33;
+Net "gpio<29>" LOC =  P127 | IOSTANDARD = LVCMOS33;
+Net "gpio<30>" LOC =  P131 | IOSTANDARD = LVCMOS33;
+Net "gpio<31>" LOC =  P124 | IOSTANDARD = LVCMOS33;
+Net "gpio<32>" LOC =  P126 | IOSTANDARD = LVCMOS33;
 Net "gpio<33>" LOC =  P59 | IOSTANDARD = LVCMOS33;
 Net "gpio<34>" LOC =  P66 | IOSTANDARD = LVCMOS33;
 Net "gpio<35>" LOC =  P62 | IOSTANDARD = LVCMOS33;
@@ -85,6 +85,16 @@ Net "icp<0>" LOC = P143 | IOSTANDARD=LVCMOS33;
 Net "ocp<0>" LOC = P142 | IOSTANDARD=LVCMOS33;
 Net "icp<1>" LOC = P141 | IOSTANDARD=LVCMOS33;
 Net "ocp<1>" LOC = P140 | IOSTANDARD=LVCMOS33;
+
+## HDMI (bank 0 or 2 only)
+Net "tmds_n(0)" LOC="P47" | IOSTANDARD=TMDS_33; # blue -
+Net "tmds_p(0)" LOC="P48" | IOSTANDARD=TMDS_33; # blue +
+Net "tmds_n(1)" LOC="P50" | IOSTANDARD=TMDS_33; # green -
+Net "tmds_p(1)" LOC="P51" | IOSTANDARD=TMDS_33; # green +
+Net "tmds_n(2)" LOC="P55" | IOSTANDARD=TMDS_33; # red -
+Net "tmds_p(2)" LOC="P56" | IOSTANDARD=TMDS_33; # red +
+Net "tmds_n(3)" LOC="P57" | IOSTANDARD=TMDS_33; # clock -
+Net "tmds_p(3)" LOC="P58" | IOSTANDARD=TMDS_33; # clock +
 
 ## Onboard SPI Flash M25P40
 Net "flash_miso" LOC = P65 | IOSTANDARD = LVCMOS33 | PULLUP; # [N] DIN

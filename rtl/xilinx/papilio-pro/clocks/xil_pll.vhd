@@ -37,29 +37,29 @@ entity xil_pll is
   generic(
     clk_in_period_ns  : real    := 10.0;    -- default input 100 MHz
     clk_mult          : integer := 10;      -- default fVCO = 1000 MHz
-    clk_diva          : integer := 10;      -- 100 MHz
-    clk_phasea        : real    := 0.0;
-    clk_divb          : integer := 8;       -- 125 MHz
-    clk_phaseb        : real    := 0.0;
-    clk_divc          : integer := 40;      -- 25 MHz
-    clk_phasec        : real    := 0.0;
-    clk_divd          : integer := 10;      -- 100 MHz
-    clk_phased        : real    := 0.0;
-    clk_dive          : integer := 10;      -- 100 MHz
-    clk_phasee        : real    := 0.0;
-    clk_divf          : integer := 10;      -- 100 MHz
-    clk_phasef        : real    := 0.0
+    clk_div0          : integer := 10;      -- 100 MHz
+    clk_phase0        : real    := 0.0;
+    clk_div1          : integer := 10;      -- 100 MHz
+    clk_phase1        : real    := 0.0;
+    clk_div2          : integer := 10;      -- 100 MHz
+    clk_phase2        : real    := 0.0;
+    clk_div3          : integer := 10;      -- 100 MHz
+    clk_phase3        : real    := 0.0;
+    clk_div4          : integer := 10;      -- 100 MHz
+    clk_phase4        : real    := 0.0;
+    clk_div5          : integer := 10;      -- 100 MHz
+    clk_phase5        : real    := 0.0
   );
   port(
     -- Clock in ports
     clk_in            : in     std_logic;   -- 100 MHz
     -- Clock out ports
-    clk_outa          : out    std_logic;   -- 100 MHz
-    clk_outb          : out    std_logic;   -- 125 MHz
-    clk_outc          : out    std_logic;   --  25 MHz
-    clk_outd          : out    std_logic;   -- 100 MHz
-    clk_oute          : out    std_logic;   -- 100 MHz
-    clk_outf          : out    std_logic    -- 100 MHz
+    clk_out0          : out    std_logic;   -- 100 MHz
+    clk_out1          : out    std_logic;   -- 100 MHz
+    clk_out2          : out    std_logic;   -- 100 MHz
+    clk_out3          : out    std_logic;   -- 100 MHz
+    clk_out4          : out    std_logic;   -- 100 MHz
+    clk_out5          : out    std_logic    -- 100 MHz
   );
 end xil_pll;
 
@@ -70,12 +70,12 @@ architecture RTL of xil_pll is
   signal clkfb      : std_logic;
   signal clkfb_buf  : std_logic;
 
-  signal clk_a      : std_logic;
-  signal clk_b      : std_logic;
-  signal clk_c      : std_logic;
-  signal clk_d      : std_logic;
-  signal clk_e      : std_logic;
-  signal clk_f      : std_logic;
+  signal clk_0      : std_logic;
+  signal clk_1      : std_logic;
+  signal clk_2      : std_logic;
+  signal clk_3      : std_logic;
+  signal clk_4      : std_logic;
+  signal clk_5      : std_logic;
 
 begin
 
@@ -93,35 +93,35 @@ begin
     DIVCLK_DIVIDE        => 1,
     CLKFBOUT_MULT        => clk_mult,
     CLKFBOUT_PHASE       => 0.000,
-    CLKOUT0_DIVIDE       => clk_diva,
-    CLKOUT0_PHASE        => clk_phasea,
+    CLKOUT0_DIVIDE       => clk_div0,
+    CLKOUT0_PHASE        => clk_phase0,
     CLKOUT0_DUTY_CYCLE   => 0.500,
-    CLKOUT1_DIVIDE       => clk_diva,
-    CLKOUT1_PHASE        => clk_phasea,
+    CLKOUT1_DIVIDE       => clk_div1,
+    CLKOUT1_PHASE        => clk_phase1,
     CLKOUT1_DUTY_CYCLE   => 0.500,
-    CLKOUT2_DIVIDE       => clk_diva,
-    CLKOUT2_PHASE        => clk_phasea,
+    CLKOUT2_DIVIDE       => clk_div2,
+    CLKOUT2_PHASE        => clk_phase2,
     CLKOUT2_DUTY_CYCLE   => 0.500,
-    CLKOUT3_DIVIDE       => clk_diva,
-    CLKOUT3_PHASE        => clk_phasea,
+    CLKOUT3_DIVIDE       => clk_div3,
+    CLKOUT3_PHASE        => clk_phase3,
     CLKOUT3_DUTY_CYCLE   => 0.500,
-    CLKOUT4_DIVIDE       => clk_diva,
-    CLKOUT4_PHASE        => clk_phasea,
+    CLKOUT4_DIVIDE       => clk_div4,
+    CLKOUT4_PHASE        => clk_phase4,
     CLKOUT4_DUTY_CYCLE   => 0.500,
-    CLKOUT5_DIVIDE       => clk_diva,
-    CLKOUT5_PHASE        => clk_phasea,
+    CLKOUT5_DIVIDE       => clk_div5,
+    CLKOUT5_PHASE        => clk_phase5,
     CLKOUT5_DUTY_CYCLE   => 0.500,
     CLKIN_PERIOD         => clk_in_period_ns,
     REF_JITTER           => 0.010
   )
   port map(
     CLKFBOUT            => clkfb,
-    CLKOUT0             => clk_a,
-    CLKOUT1             => clk_b,
-    CLKOUT2             => clk_c,
-    CLKOUT3             => clk_d,
-    CLKOUT4             => clk_e,
-    CLKOUT5             => clk_f,
+    CLKOUT0             => clk_0,
+    CLKOUT1             => clk_1,
+    CLKOUT2             => clk_2,
+    CLKOUT3             => clk_3,
+    CLKOUT4             => clk_4,
+    CLKOUT5             => clk_5,
     LOCKED              => open,
     RST                 => '0',
     -- Input clock control
@@ -134,40 +134,40 @@ begin
     I => clkfb
   );
 
-  clka_bufg : BUFG
+  clk0_bufg : BUFG
   port map(
-    O   => clk_outa,
-    I   => clk_a
+    O   => clk_out0,
+    I   => clk_0
   );
 
-  clkb_bufg : BUFG
+  clk1_bufg : BUFG
   port map(
-    O   => clk_outb,
-    I   => clk_b
+    O   => clk_out1,
+    I   => clk_1
   );
 
-  clkc_bufg : BUFG
+  clk2_bufg : BUFG
   port map(
-    O   => clk_outc,
-    I   => clk_c
+    O   => clk_out2,
+    I   => clk_2
   );
 
-  clkd_bufg : BUFG
+  clk3_bufg : BUFG
   port map(
-    O   => clk_outd,
-    I   => clk_d
+    O   => clk_out3,
+    I   => clk_3
   );
 
-  clke_bufg : BUFG
+  clk4_bufg : BUFG
   port map(
-    O   => clk_oute,
-    I   => clk_e
+    O   => clk_out4,
+    I   => clk_4
   );
 
-  clkf_bufg : BUFG
+  clk5_bufg : BUFG
   port map(
-    O   => clk_outf,
-    I   => clk_f
+    O   => clk_out5,
+    I   => clk_5
   );
 
 end RTL;
