@@ -7,8 +7,10 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity ddr_dvid_out_se is
 	Port (
-		clk	  : in	STD_LOGIC; -- positive clock 125MHz (phase 0)
-		clk_n	  : in	STD_LOGIC; -- negative clock 125MHz (phase 180)
+		clk	  : in STD_LOGIC; -- positive clock 125MHz (phase 0)
+		clk_n	  : in STD_LOGIC; -- negative clock 125MHz (phase 180)
+		-- input reset
+		reset     : in STD_LOGIC := '0';
 		-- input hdmi data for DDR out, 2 bits per clock period
 		in_red	  : in STD_LOGIC_VECTOR(1 downto 0);
 		in_green  : in STD_LOGIC_VECTOR(1 downto 0);
@@ -29,28 +31,28 @@ begin
   ddr_out_red: entity work.ddr_out
   port map
   (
-    iclkp=>clk, iclkn=>clk_n, ireset=>'0',
+    iclkp=>clk, iclkn=>clk_n, ireset=>reset,
     idata(1 downto 0)=>in_red(1 downto 0), odata=>out_red
   );
 
   ddr_out_green: entity work.ddr_out
   port map
   (
-    iclkp=>clk, iclkn=>clk_n, ireset=>'0',
+    iclkp=>clk, iclkn=>clk_n, ireset=>reset,
     idata(1 downto 0)=>in_green(1 downto 0), odata=>out_green
   );
 
   ddr_out_blue: entity work.ddr_out
   port map
   (
-    iclkp=>clk, iclkn=>clk_n, ireset=>'0',
+    iclkp=>clk, iclkn=>clk_n, ireset=>reset,
     idata(1 downto 0)=>in_blue(1 downto 0), odata=>out_blue
   );
 
   ddr_out_clock: entity work.ddr_out
   port map
   (
-    iclkp=>clk, iclkn=>clk_n, ireset=>'0',
+    iclkp=>clk, iclkn=>clk_n, ireset=>reset,
     idata(1 downto 0)=>in_clock(1 downto 0), odata=>out_clock
   );
 
