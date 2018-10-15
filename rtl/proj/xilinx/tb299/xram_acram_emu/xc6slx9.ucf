@@ -71,14 +71,14 @@ Net "gpio<28>" LOC =  P133 | IOSTANDARD = LVCMOS33;
 Net "gpio<29>" LOC =  P127 | IOSTANDARD = LVCMOS33;
 Net "gpio<30>" LOC =  P131 | IOSTANDARD = LVCMOS33;
 Net "gpio<31>" LOC =  P124 | IOSTANDARD = LVCMOS33;
-Net "gpio<32>" LOC =  P126 | IOSTANDARD = LVCMOS33;
-Net "gpio<33>" LOC =  P59 | IOSTANDARD = LVCMOS33;
-Net "gpio<34>" LOC =  P66 | IOSTANDARD = LVCMOS33;
-Net "gpio<35>" LOC =  P62 | IOSTANDARD = LVCMOS33;
-Net "gpio<36>" LOC =  P80 | IOSTANDARD = LVCMOS33;
-Net "gpio<37>" LOC =  P67 | IOSTANDARD = LVCMOS33;
-Net "gpio<38>" LOC =  P82 | IOSTANDARD = LVCMOS33;
-Net "gpio<39>" LOC =  P81 | IOSTANDARD = LVCMOS33;
+#Net "gpio<32>" LOC =  P126 | IOSTANDARD = LVCMOS33;
+#Net "gpio<33>" LOC =  P59 | IOSTANDARD = LVCMOS33;
+#Net "gpio<34>" LOC =  P66 | IOSTANDARD = LVCMOS33;
+#Net "gpio<35>" LOC =  P62 | IOSTANDARD = LVCMOS33;
+#Net "gpio<36>" LOC =  P80 | IOSTANDARD = LVCMOS33;
+#Net "gpio<37>" LOC =  P67 | IOSTANDARD = LVCMOS33;
+#Net "gpio<38>" LOC =  P82 | IOSTANDARD = LVCMOS33;
+#Net "gpio<39>" LOC =  P81 | IOSTANDARD = LVCMOS33;
 
 ## Timer ICP/OCP
 Net "icp<0>" LOC = P143 | IOSTANDARD=LVCMOS33;
@@ -97,7 +97,7 @@ Net "tmds_n(3)" LOC="P57" | IOSTANDARD=TMDS_33; # clock -
 Net "tmds_p(3)" LOC="P58" | IOSTANDARD=TMDS_33; # clock +
 
 ## Onboard SPI Flash M25P40
-Net "flash_miso" LOC = P65 | IOSTANDARD = LVCMOS33 | PULLUP; # [N] DIN
-Net "flash_mosi" LOC = P64 | IOSTANDARD = LVCMOS33; # [B] CSI
-Net "flash_csn"  LOC = P38 | IOSTANDARD = LVCMOS33; # [b] CSO
-Net "flash_clk"  LOC = P70 | IOSTANDARD = LVCMOS33; # [C] CCLK
+#Net "flash_miso" LOC = P65 | IOSTANDARD = LVCMOS33 | PULLUP; # [N] DIN
+#Net "flash_mosi" LOC = P64 | IOSTANDARD = LVCMOS33; # [B] CSI
+#Net "flash_csn"  LOC = P38 | IOSTANDARD = LVCMOS33; # [b] CSO
+#Net "flash_clk"  LOC = P70 | IOSTANDARD = LVCMOS33; # [C] CCLK

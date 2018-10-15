@@ -37,29 +37,38 @@ use unisim.vcomponents.all;
 
 use work.f32c_pack.all;
 
-
 entity glue is
     generic (
 	-- ISA: either ARCH_MI32 or ARCH_RV32
 	C_arch: integer := ARCH_MI32;
-        C_regfile_synchronous_read: boolean := true;
+	C_mult_enable: boolean := false;
+	C_mul_acc: boolean := false;
         C_exceptions: boolean := false;
 	C_debug: boolean := false;
 
+        -- CPU core configuration options
+        C_branch_likely: boolean := true;
+        C_branch_prediction: boolean := false;
+        C_full_shifter: boolean := true;
+        C_result_forwarding: boolean := true;
+        C_load_aligner: boolean := true;
+        C_regfile_synchronous_read: boolean := true;
+
 	-- Main clock: 25/50/67/71/77/83/100
 	C_clk_freq: integer := 25;
+	C_vendor_specific_startup: boolean := false; -- true: this board won't start without it
 
 	-- SoC configuration options
 	C_bram_size: integer := 2;
 	C_acram: boolean := true;
-	C_acram_wait_cycles: integer := 4; -- 3 or more
+	C_acram_wait_cycles: integer := 3; -- 3 or more
         C_acram_emu_kb: integer := 32; -- KB axi_cache emulation (power of 2, MAX 32)
         C_icache_size: integer := 0;	-- 0, 2, 4, 8, 16 or 32 KBytes
         C_dcache_size: integer := 0;	-- 0, 2, 4, 8, 16 or 32 KBytes
-        C_cached_addr_bits: integer := 29; -- lower address bits than C_cached_addr_bits are cached: 25bits -> 2^25 -> 32MB to be cached
+        C_cached_addr_bits: integer := 15; -- lower address bits that are cached: 15bits -> 2^15 -> 32KB to be cached
 	C_sio: integer := 1;
-	C_spi: integer := 1;
-	C_gpio: integer := 32;
+	C_spi: integer := 0;
+	C_gpio: integer := 0;
 	C_simple_io: boolean := true;
 	C_timer: boolean := false;
 
@@ -68,8 +77,11 @@ entity glue is
         -- (fixme: DDR video output mode doesn't work on scarab)
         C_dvid_ddr: boolean := true;
         C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024
+        C_shift_clock_synchronizer: boolean := false; -- some hardware may need this enabled
+        C_compositing2_write_while_reading: boolean := true; -- true for normal operation
 
         C_vgahdmi: boolean := true;
+        C_vgahdmi_compositing: integer := 2;
         -- insert cache between RAM and compositing2 video fifo
         C_vgahdmi_cache_size: integer := 0; -- KB size 0:disable 2,4,8,16,32:enable
         C_vgahdmi_cache_use_i: boolean := true; -- use I-data caching style, faster
@@ -100,8 +112,11 @@ architecture Behavioral of glue is
   end ceil_log2;
   signal clk, rs232_break: std_logic;
   signal clk_pixel: std_logic; -- 25 MHz
+  -- signal clk_pixel_shift: std_logic; -- 125 MHz
   signal clk_pixel_shift_p: std_logic; -- 125 MHz
   signal clk_pixel_shift_n: std_logic; -- 125 MHz inverted (180 deg phase)
+  signal clk_locked: std_logic;
+  signal S_reset: std_logic;
   signal ram_en             : std_logic;
   signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
   signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
@@ -117,16 +132,20 @@ begin
     generic map(
       clk_in_period_ns => 40.0, -- input 25 MHz
       clk_mult => 40, -- default fVCO = 1000 MHz
-      clk_div0 => 40, -- 25 MHz
-      clk_div1 => 8, -- 125 MHz
-      clk_div2 => 8, clk_phase2 => 180.0, -- 125 MHz phase inverted
-      clk_div3 => 10  -- 100 MHz
+      clk_div0 => 10, -- 100 MHz
+      clk_div1 => 40, --  25 MHz
+      clk_div2 => 8,  -- 125 MHz
+      clk_div3 => 8, clk_phase3 => 180.0 -- 125 MHz phase inverted
     )
     port map(
       clk_in => clk_25m,
-      clk_out0 => clk_pixel, clk_out1 => clk_pixel_shift_p, clk_out2 => clk_pixel_shift_n,
-      clk_out3 => clk
+      clk_out0 => clk,
+      clk_out1 => clk_pixel,
+      clk_out2 => clk_pixel_shift_p,
+      clk_out3 => open,
+      locked => clk_locked
     );
+    clk_pixel_shift_n <= not clk_pixel_shift_p;
     end generate;
 
     clk83: if C_clk_freq = 83 generate
@@ -134,16 +153,20 @@ begin
     generic map(
       clk_in_period_ns => 40.0, -- input 25 MHz
       clk_mult => 40, -- default fVCO = 1000 MHz
-      clk_div0 => 40, -- 25 MHz
-      clk_div1 => 8, -- 125 MHz
-      clk_div2 => 8, clk_phase2 => 180.0, -- 125 MHz phase inverted
-      clk_div3 => 12  -- 83.333 MHz
+      clk_div0 => 12, --  83.333 MHz
+      clk_div1 => 40, --  25 MHz
+      clk_div2 => 8,  -- 125 MHz
+      clk_div3 => 8, clk_phase3 => 180.0 -- 125 MHz phase inverted
     )
     port map(
       clk_in => clk_25m,
-      clk_out0 => clk_pixel, clk_out1 => clk_pixel_shift_p, clk_out2 => clk_pixel_shift_n,
-      clk_out3 => clk
+      clk_out0 => clk,
+      clk_out1 => clk_pixel,
+      clk_out2 => clk_pixel_shift_p,
+      clk_out3 => open,
+      locked => clk_locked
     );
+    clk_pixel_shift_n <= not clk_pixel_shift_p;
     end generate;
 
     clk77: if C_clk_freq = 77 generate
@@ -151,16 +174,20 @@ begin
     generic map(
       clk_in_period_ns => 40.0, -- input 25 MHz
       clk_mult => 40, -- default fVCO = 1000 MHz
-      clk_div0 => 40, -- 25 MHz
-      clk_div1 => 8, -- 125 MHz
-      clk_div2 => 8, clk_phase2 => 180.0, -- 125 MHz phase inverted
-      clk_div3 => 13  -- 76.923 MHz
+      clk_div0 => 13, --  76.923 MHz
+      clk_div1 => 40, --  25 MHz
+      clk_div2 => 8,  -- 125 MHz
+      clk_div3 => 8, clk_phase3 => 180.0 -- 125 MHz phase inverted
     )
     port map(
       clk_in => clk_25m,
-      clk_out0 => clk_pixel, clk_out1 => clk_pixel_shift_p, clk_out2 => clk_pixel_shift_n,
-      clk_out3 => clk
+      clk_out0 => clk,
+      clk_out1 => clk_pixel,
+      clk_out2 => clk_pixel_shift_p,
+      clk_out3 => open,
+      locked => clk_locked
     );
+    clk_pixel_shift_n <= not clk_pixel_shift_p;
     end generate;
 
     clk71: if C_clk_freq = 71 generate
@@ -168,16 +195,20 @@ begin
     generic map(
       clk_in_period_ns => 40.0, -- input 25 MHz
       clk_mult => 40, -- default fVCO = 1000 MHz
-      clk_div0 => 40, -- 25 MHz
-      clk_div1 => 8, -- 125 MHz
-      clk_div2 => 8, clk_phase2 => 180.0, -- 125 MHz phase inverted
-      clk_div3 => 14  -- 71.429 MHz
+      clk_div0 => 14, --  71.429 MHz
+      clk_div1 => 40, --  25 MHz
+      clk_div2 => 8,  -- 125 MHz
+      clk_div3 => 8, clk_phase3 => 180.0 -- 125 MHz phase inverted
     )
     port map(
       clk_in => clk_25m,
-      clk_out0 => clk_pixel, clk_out1 => clk_pixel_shift_p, clk_out2 => clk_pixel_shift_n,
-      clk_out3 => clk
+      clk_out0 => clk,
+      clk_out1 => clk_pixel,
+      clk_out2 => clk_pixel_shift_p,
+      clk_out3 => open,
+      locked => clk_locked
     );
+    clk_pixel_shift_n <= not clk_pixel_shift_p;
     end generate;
 
     clk67: if C_clk_freq = 67 generate
@@ -185,16 +216,20 @@ begin
     generic map(
       clk_in_period_ns => 40.0, -- input 25 MHz
       clk_mult => 40, -- default fVCO = 1000 MHz
-      clk_div0 => 40, -- 25 MHz
-      clk_div1 => 8, -- 125 MHz
-      clk_div2 => 8, clk_phase2 => 180.0, -- 125 MHz phase inverted
-      clk_div3 => 15  -- 66.667 MHz
+      clk_div0 => 15, --  66.667 MHz
+      clk_div1 => 40, --  25 MHz
+      clk_div2 => 8,  -- 125 MHz
+      clk_div3 => 8, clk_phase3 => 180.0 -- 125 MHz phase inverted
     )
     port map(
       clk_in => clk_25m,
-      clk_out0 => clk_pixel, clk_out1 => clk_pixel_shift_p, clk_out2 => clk_pixel_shift_n,
-      clk_out3 => clk
+      clk_out0 => clk,
+      clk_out1 => clk_pixel,
+      clk_out2 => clk_pixel_shift_p,
+      clk_out3 => open,
+      locked => clk_locked
     );
+    clk_pixel_shift_n <= not clk_pixel_shift_p;
     end generate;
 
     clk50: if C_clk_freq = 50 generate
@@ -202,16 +237,20 @@ begin
     generic map(
       clk_in_period_ns => 40.0, -- input 25 MHz
       clk_mult => 40, -- default fVCO = 1000 MHz
-      clk_div0 => 40, -- 25 MHz
-      clk_div1 => 8, -- 125 MHz
-      clk_div2 => 8, clk_phase2 => 180.0, -- 125 MHz phase inverted
-      clk_div3 => 20  -- 50 MHz
+      clk_div0 => 20, --  50 MHz
+      clk_div1 => 40, --  25 MHz
+      clk_div2 => 8,  -- 125 MHz
+      clk_div3 => 8, clk_phase3 => 180.0 -- 125 MHz phase inverted
     )
     port map(
       clk_in => clk_25m,
-      clk_out0 => clk_pixel, clk_out1 => clk_pixel_shift_p, clk_out2 => clk_pixel_shift_n,
-      clk_out3 => clk
+      clk_out0 => clk,
+      clk_out1 => clk_pixel,
+      clk_out2 => clk_pixel_shift_p,
+      clk_out3 => open,
+      locked => clk_locked
     );
+    clk_pixel_shift_n <= not clk_pixel_shift_p;
     end generate;
 
     clk25: if C_clk_freq = 25 generate
@@ -219,31 +258,47 @@ begin
     generic map(
       clk_in_period_ns => 40.0, -- input 25 MHz
       clk_mult => 40, -- default fVCO = 1000 MHz
-      clk_div0 => 40, -- 25 MHz
-      clk_div1 => 8, -- 125 MHz
-      clk_div2 => 8, clk_phase2 => 180.0, -- 125 MHz phase inverted
-      clk_div3 => 40  -- 25 MHz
+      clk_div0 => 40, --  25 MHz
+      clk_div1 => 40, --  25 MHz
+      clk_div2 => 8,  -- 125 MHz
+      clk_div3 => 8, clk_phase3 => 180.0 -- 125 MHz phase inverted
     )
     port map(
       clk_in => clk_25m,
-      clk_out0 => clk_pixel, clk_out1 => clk_pixel_shift_p, clk_out2 => clk_pixel_shift_n,
-      clk_out3 => clk
+      clk_out0 => clk,
+      clk_out1 => open,
+      clk_out2 => clk_pixel_shift_p,
+      clk_out3 => open,
+      locked => clk_locked
     );
+    clk_pixel <= clk;
+    clk_pixel_shift_n <= not clk_pixel_shift_p;
     end generate;
 
+    G_vendor_specific_startup: if C_vendor_specific_startup generate
     -- reset hard-block: Xilinx Spartan-6 specific
     reset: startup_spartan6
     port map (
-	clk => clk, gsr => rs232_break, gts => rs232_break,
-	keyclearb => '0'
+      clk => clk, gsr => rs232_break, gts => rs232_break,
+      keyclearb => '0'
     );
+    end generate; -- G_vendor_specific_startup
+
+    S_reset <= not clk_locked;
 
     -- generic BRAM glue
     glue_xram: entity work.glue_xram
     generic map (
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
+	C_mult_enable => C_mult_enable,
+	C_mul_acc => C_mul_acc,
         C_regfile_synchronous_read => C_regfile_synchronous_read,
+        C_branch_likely => C_branch_likely,
+        C_branch_prediction => C_branch_prediction,
+        C_result_forwarding => C_result_forwarding,
+        C_load_aligner => C_load_aligner,
+        C_full_shifter => C_full_shifter,
         C_exceptions => C_exceptions,
 	C_bram_size => C_bram_size,
 	C_acram => C_acram,
@@ -251,8 +306,11 @@ begin
         C_cached_addr_bits => C_cached_addr_bits,
         -- HDMI/DVI-D output SDR or DDR
         C_dvid_ddr => C_dvid_ddr,
+        C_shift_clock_synchronizer => C_shift_clock_synchronizer,
+        C_compositing2_write_while_reading => C_compositing2_write_while_reading,
         -- vga simple compositing bitmap only graphics
         C_vgahdmi => C_vgahdmi,
+        C_vgahdmi_compositing => C_vgahdmi_compositing,
         C_vgahdmi_mode => C_video_mode,
         C_vgahdmi_cache_size => C_vgahdmi_cache_size,
         C_vgahdmi_cache_use_i => C_vgahdmi_cache_use_i,
@@ -269,29 +327,29 @@ begin
         clk_pixel_shift => clk_pixel_shift_p, -- tmds clock 10x pixel clock for SDR or 5x for DDR
 	sio_txd(0) => rs232_dce_txd, sio_rxd(0) => rs232_dce_rxd,
 	sio_break(0) => rs232_break,
-	reset => rs232_break,
+	reset => S_reset,
         acram_en => ram_en,
         acram_addr(29 downto 2) => ram_address(29 downto 2),
         acram_byte_we(3 downto 0) => ram_byte_we(3 downto 0),
         acram_data_rd(31 downto 0) => ram_data_read(31 downto 0),
         acram_data_wr(31 downto 0) => ram_data_write(31 downto 0),
         acram_ready => ram_ready,
-	spi_sck(0)  => flash_clk,  -- spi_sck(1)  => open,
-	spi_ss(0)   => flash_csn,  -- spi_ss(1)   => open,
-	spi_mosi(0) => flash_mosi, -- spi_mosi(1) => open,
-	spi_miso(0) => flash_miso, -- spi_miso(1) => '-',
-	gpio(31 downto 0) => gpio(31 downto 0),
+	--spi_sck(0)  => flash_clk,  -- spi_sck(1)  => open,
+	--spi_ss(0)   => flash_csn,  -- spi_ss(1)   => open,
+	--spi_mosi(0) => flash_mosi, -- spi_mosi(1) => open,
+	--spi_miso(0) => flash_miso, -- spi_miso(1) => '-',
 	gpio(127 downto 32) => open,
+	gpio(31 downto 0) => gpio(31 downto 0),
 	-- icp => icp, ocp => ocp,
         dvid_clock => dvid_clock,
         dvid_red   => dvid_red,
         dvid_green => dvid_green,
         dvid_blue  => dvid_blue,
-	simple_out(7 downto 0) => led(7 downto 0),
 	simple_out(31 downto 8) => open,
-	simple_in(0) => btn_k2,
+	simple_out(7 downto 0) => led(7 downto 0),
+	simple_in(31 downto 2) => open,
 	simple_in(1) => btn_k3,
-	simple_in(31 downto 2) => open
+	simple_in(0) => btn_k2
     );
 
     G_acram: if C_acram generate
@@ -317,7 +375,7 @@ begin
     port map (
       clk       => clk_pixel_shift_p,
       clk_n     => clk_pixel_shift_n,
-      reset     => rs232_break,
+      reset     => '0',
       in_clock  => dvid_clock,
       in_red    => dvid_red,
       in_green  => dvid_green,
