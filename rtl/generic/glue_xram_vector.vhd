@@ -119,6 +119,7 @@ generic (
   -- false: normal monitors, DVI-D/HDMI 10-bit TMDS (25MHz pixel clock, 250MHz shift clock)
   -- true:  bare wired LCD panel, 7-bit LVDS (36MHz pixel clock, 252MHz shift clock and does only SDR, not DDR)
   C_lvds_display: boolean := false; -- false: normal DVI-D/HDMI, true: bare LCD panel
+  C_shift_clock_synchronizer: boolean := false; -- some hardware may need this enabled
   -- TV simple 512x512 bitmap
   C_tv: boolean := false; -- enable TV output
   C_tv_fifo_width: integer := 512;
@@ -1636,6 +1637,7 @@ begin
     -- XXX Fixme: unify this block with vgatextmode (use same signal names)
     G_vgahdmi_dvid: entity work.vga2dvid
     generic map (
+      C_shift_clock_synchronizer => C_shift_clock_synchronizer,
       C_ddr     => C_dvid_ddr,
       C_depth   => 8 -- 8bpp (8 bit per pixel)
     )
@@ -1668,6 +1670,7 @@ begin
     -- XXX Fixme: unify this block with vgatextmode (use same signal names)
     G_vgahdmi_lcd: entity work.vga2lcd
     generic map (
+      C_shift_clock_synchronizer => C_shift_clock_synchronizer,
       C_depth => 8 -- 8bpp (8 bit per pixel)
     )
     port map (
