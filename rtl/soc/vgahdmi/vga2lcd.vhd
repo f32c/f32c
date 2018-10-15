@@ -12,6 +12,7 @@ use IEEE.std_logic_1164.ALL;
 entity vga2lcd is
 	generic
 	(
+		C_shift_clock_synchronizer: boolean := false; -- try to get out_clock in sync with clk_pixel
 		C_depth: integer := 8
 	);
 	port
@@ -34,7 +35,10 @@ end vga2lcd;
 architecture Behavioral of vga2lcd is
 	signal latched_red_green, latched_green_blue, latched_blue_sync: std_logic_vector(6 downto 0) := (others => '0');
 	signal shift_red_green, shift_green_blue, shift_blue_sync: std_logic_vector(6 downto 0) := (others => '0');
-	signal shift_clock: std_logic_vector(6 downto 0) := "1100011"; -- this is per spec, the clock
+	constant C_shift_clock_initial: std_logic_vector(9 downto 0) := "1100011"; -- this is per spec, the clock
+	signal shift_clock: std_logic_vector(6 downto 0) := C_shift_clock_initial;
+	signal R_shift_clock_off_sync: std_logic := '0';
+	signal R_shift_clock_synchronizer: std_logic_vector(7 downto 0) := (others => '0');
 
 	signal red_d  : std_logic_vector(7 downto 0);
 	signal green_d: std_logic_vector(7 downto 0);
@@ -50,6 +54,37 @@ begin
 		green_d(i) <= in_green((C_depth-1-i) MOD C_depth);
 		blue_d (i) <= in_blue ((C_depth-1-i) MOD C_depth);
 	end generate;
+
+	G_shift_clock_synchronizer: if C_shift_clock_synchronizer generate
+	-- sampler verifies is shift_clock state synchronous with pixel_clock
+	process(clk_pixel)
+	begin
+		if rising_edge(clk_pixel) then
+			-- does 0 to 1 transition at bits 2 downto 1 happen at rising_edge of clk_pixel?
+			-- if shift_clock = C_shift_clock_initial then
+			if shift_clock(2 downto 1) = C_shift_clock_initial(2 downto 1) then -- same as above line but simplified
+				R_shift_clock_off_sync <= '0';
+			else
+				R_shift_clock_off_sync <= '1';
+			end if;
+		end if;
+	end process;
+	-- every N cycles of clk_shift: signal to skip 1 cycle in order to get in sync
+	process(clk_shift)
+	begin
+		if rising_edge(clk_shift) then
+			if R_shift_clock_off_sync = '1' then
+				if R_shift_clock_synchronizer(R_shift_clock_synchronizer'high) = '1' then
+					R_shift_clock_synchronizer <= (others => '0');
+				else
+					R_shift_clock_synchronizer <= R_shift_clock_synchronizer + 1;
+				end if;
+			else
+				R_shift_clock_synchronizer <= (others => '0');
+			end if;
+		end if;
+	end process;
+	end generate; -- shift_clock_synchronizer
 	
 	process(clk_pixel)
 	begin
@@ -72,7 +107,9 @@ begin
 			shift_green_blue <= "0" & shift_green_blue(6 downto 1);
 			shift_blue_sync  <= "0" & shift_blue_sync (6 downto 1);
 		end if;
-		shift_clock <= shift_clock(0) & shift_clock(6 downto 1);
+		if R_shift_clock_synchronizer(R_shift_clock_synchronizer'high) = '0' then
+			shift_clock <= shift_clock(0) & shift_clock(6 downto 1);
+		end if;
 	  end if;
 	end process;
 

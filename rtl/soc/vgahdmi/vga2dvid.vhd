@@ -42,9 +42,12 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity vga2dvid is
 	Generic (
+		C_shift_clock_synchronizer: boolean := false; -- try to get out_clock in sync with clk_pixel
 	        C_parallel: boolean := true; -- default output parallel data
 	        C_serial: boolean := true; -- default output serial data
 		C_ddr: boolean := false; -- default use SDR for serial data
@@ -73,7 +76,10 @@ architecture Behavioral of vga2dvid is
 	signal encoded_red, encoded_green, encoded_blue : std_logic_vector(9 downto 0);
 	signal latched_red, latched_green, latched_blue : std_logic_vector(9 downto 0) := (others => '0');
 	signal shift_red, shift_green, shift_blue	: std_logic_vector(9 downto 0) := (others => '0');
-	signal shift_clock: std_logic_vector(9 downto 0) := "0000011111";
+	constant C_shift_clock_initial: std_logic_vector(9 downto 0) := "0000011111";
+	signal shift_clock: std_logic_vector(9 downto 0) := C_shift_clock_initial;
+	signal R_shift_clock_off_sync: std_logic := '0';
+	signal R_shift_clock_synchronizer: std_logic_vector(7 downto 0) := (others => '0');
 
 	constant c_red	 : std_logic_vector(1 downto 0) := (others => '0');
 	constant c_green : std_logic_vector(1 downto 0) := (others => '0');
@@ -96,6 +102,37 @@ begin
 		blue_d(i)  <= in_blue((C_depth-1-i) MOD C_depth);
 	end generate;
 	
+	G_shift_clock_synchronizer: if C_shift_clock_synchronizer generate
+	-- sampler verifies is shift_clock state synchronous with pixel_clock
+	process(clk_pixel)
+	begin
+		if rising_edge(clk_pixel) then
+			-- does 0 to 1 transition at bits 5 downto 4 happen at rising_edge of clk_pixel?
+			-- if shift_clock = C_shift_clock_initial then
+			if shift_clock(5 downto 4) = C_shift_clock_initial(5 downto 4) then -- same as above line but simplified 
+				R_shift_clock_off_sync <= '0';
+			else
+				R_shift_clock_off_sync <= '1';
+			end if;
+		end if;
+	end process;
+	-- every N cycles of clk_shift: signal to skip 1 cycle in order to get in sync
+	process(clk_shift)
+	begin
+		if rising_edge(clk_shift) then
+			if R_shift_clock_off_sync = '1' then
+				if R_shift_clock_synchronizer(R_shift_clock_synchronizer'high) = '1' then
+					R_shift_clock_synchronizer <= (others => '0');
+				else
+					R_shift_clock_synchronizer <= R_shift_clock_synchronizer + 1;
+				end if;
+			else
+				R_shift_clock_synchronizer <= (others => '0');
+			end if;
+		end if;
+	end process;
+	end generate; -- shift_clock_synchronizer
+
 	u21: entity work.tmds_encoder PORT MAP(clk => clk_pixel, data => red_d,   c => c_red,   blank => in_blank, encoded => encoded_red);
 	u22: entity work.tmds_encoder PORT MAP(clk => clk_pixel, data => green_d, c => c_green, blank => in_blank, encoded => encoded_green);
 	u23: entity work.tmds_encoder PORT MAP(clk => clk_pixel, data => blue_d,  c => c_blue,  blank => in_blank, encoded => encoded_blue);
@@ -120,7 +157,7 @@ begin
 	begin
 		if rising_edge(clk_shift) then
 		--if shift_clock = "0000011111" then
-		if shift_clock(5 downto 4) = "01" then -- simplified above
+		if shift_clock(5 downto 4) = C_shift_clock_initial(5 downto 4) then -- same as above line but simplified
 			shift_red <= latched_red;
 			shift_green <= latched_green;
 			shift_blue <= latched_blue;
@@ -129,7 +166,9 @@ begin
 			shift_green <= "0" & shift_green(9 downto 1);
 			shift_blue <= "0" & shift_blue (9 downto 1);
 		end if;
-		shift_clock <= shift_clock(0) & shift_clock(9 downto 1);
+		if R_shift_clock_synchronizer(R_shift_clock_synchronizer'high) = '0' then
+			shift_clock <= shift_clock(0) & shift_clock(9 downto 1);
+		end if;
 		end if;
 	end process;
 	end generate;
@@ -139,7 +178,7 @@ begin
 	begin
 		if rising_edge(clk_shift) then 
 		--if shift_clock = "0000011111" then
-		if shift_clock(5 downto 4) = "01" then -- simplified above
+		if shift_clock(5 downto 4) = C_shift_clock_initial(5 downto 4) then -- same as above line but simplified
 			shift_red   <= latched_red;
 			shift_green <= latched_green;
 			shift_blue  <= latched_blue;
@@ -148,7 +187,9 @@ begin
 			shift_green <= "00" & shift_green(9 downto 2);
 			shift_blue  <= "00" & shift_blue (9 downto 2);
 		end if;
-		shift_clock <= shift_clock(1 downto 0) & shift_clock(9 downto 2);
+		if R_shift_clock_synchronizer(R_shift_clock_synchronizer'high) = '0' then
+			shift_clock <= shift_clock(1 downto 0) & shift_clock(9 downto 2);
+		end if;
 		end if;
 	end process;
 	end generate;
