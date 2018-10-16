@@ -105,7 +105,7 @@ junk += $(project).svf _impactbatch.log
 $(project)_flash.svf: $(project).mcs
 	cp $< default.mcs
 	cp $(project).cfi default.cfi
-	$(xil_env); impact -batch mcs2svf.ut
+	$(xil_env); XIL_IMPACT_SKIPIDCODECHECK=1 impact -batch mcs2svf.ut
 	mv default.svf $@
 	rm default.mcs default.cfi
 junk += $(project)_flash.svf
