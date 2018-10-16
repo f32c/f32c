@@ -43,13 +43,13 @@ entity scarab_xram_sdram_vector is
     -- ISA: either ARCH_MI32 or ARCH_RV32
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
-    C_exceptions: boolean := true; -- false:disable interrupts allows vector to work
+    C_exceptions: boolean := false; -- false:disable interrupts allows vector to work
 
     -- Main clock: 25/50/75/81/83/96/100/111/112/125
     C_clk_freq: integer := 100;
     C_vendor_specific_startup: boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board)
     -- SoC configuration options
-    C_bram_size: integer := 8; -- bootloader area
+    C_bram_size: integer := 4; -- bootloader area
     C_icache_size: integer := 2; -- 0, 2, 4, 8, 16, 32 KBytes
     C_dcache_size: integer := 2; -- 0, 2, 4, 8, 16, 32 KBytes
     C_cached_addr_bits: integer := 25; -- number of lower RAM address bits 2^25 -> 32MB to be cached
@@ -154,7 +154,7 @@ entity scarab_xram_sdram_vector is
         C_pid_precision: integer := 1;
         C_pid_pwm_bits: integer := 12;
         
-      C_timer: boolean := true; -- false: disable timer allows vector to work
+      C_timer: boolean := false; -- false: disable timer allows vector to work
 
       C_gpio: integer := 32
   );
