@@ -1,3 +1,4 @@
+
 --
 -- Copyright (c) 2018 Felix Vietmeyer
 -- All rights reserved.
@@ -59,7 +60,8 @@ entity xil_pll is
     clk_out2          : out    std_logic;   -- 100 MHz
     clk_out3          : out    std_logic;   -- 100 MHz
     clk_out4          : out    std_logic;   -- 100 MHz
-    clk_out5          : out    std_logic    -- 100 MHz
+    clk_out5          : out    std_logic;   -- 100 MHz
+    locked            : out    std_logic
   );
 end xil_pll;
 
@@ -122,7 +124,7 @@ begin
     CLKOUT3             => clk_3,
     CLKOUT4             => clk_4,
     CLKOUT5             => clk_5,
-    LOCKED              => open,
+    LOCKED              => locked,
     RST                 => '0',
     -- Input clock control
     CLKFBIN             => clkfb_buf,
