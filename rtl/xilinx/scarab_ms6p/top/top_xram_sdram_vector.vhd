@@ -70,6 +70,7 @@ entity scarab_xram_sdram_vector is
     -- (fixme: DDR video output mode doesn't work on scarab)
     C_dvid_ddr: boolean := true;
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 4:1024x576, 5:1024x768, 6:1280x768, 7:1280x1024
+    C_shift_clock_synchronizer: boolean := false; -- some hardware may need this enabled
 
     C_vgahdmi: boolean := true;
     -- insert cache between RAM and compositing2 video fifo
@@ -153,7 +154,7 @@ entity scarab_xram_sdram_vector is
         C_pid_precision: integer := 1;
         C_pid_pwm_bits: integer := 12;
         
-      C_timer: boolean := false; -- false: disable timer allows vector to work
+      C_timer: boolean := true; -- false: disable timer allows vector to work
 
       C_gpio: integer := 32
   );
@@ -406,6 +407,7 @@ begin
 
       -- HDMI/DVI-D output SDR or DDR
       C_dvid_ddr => C_dvid_ddr,
+      C_shift_clock_synchronizer => C_shift_clock_synchronizer,
       -- vga simple compositing bitmap only graphics
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_mode => C_video_mode,
@@ -485,8 +487,8 @@ begin
       clk_cw => clk_433M92Hz, -- CW clock for 433.92MHz transmitter
       clk_fmdds => clk_250MHz_p, -- FM/RDS clock
       -- external SDRAM interface
-      sdram_addr => sdram_a, sdram_data => sdram_d,
-      sdram_ba => sdram_ba, sdram_dqm => sdram_dqm,
+      sdram_addr => sdram_a, sdram_data(31 downto 16) => open, sdram_data(15 downto 0) => sdram_d,
+      sdram_ba => sdram_ba, sdram_dqm(3 downto 2) => open, sdram_dqm(1 downto 0) => sdram_dqm,
       sdram_ras => sdram_rasn, sdram_cas => sdram_casn,
       sdram_cke => sdram_cke, sdram_clk => sdram_clk_internal,
       sdram_we => sdram_wen, sdram_cs => sdram_csn,
@@ -500,8 +502,8 @@ begin
       dvid_green => dvid_green,
       dvid_blue  => dvid_blue,
       dvid_clock => dvid_clock,
-      jack_ring(3) => audio1, jack_ring(2 downto 0) => open,
-      jack_tip(3)  => audio2, jack_tip(2 downto 0)  => open,
+      audio_r(3)  => audio1, audio_r(2 downto 0) => open,
+      audio_l(3)  => audio2, audio_l(2 downto 0)  => open,
       cw_antenna => cw_antenna,
       fm_antenna => fm_antenna,
       gpio(11 downto  0) => porta(11 downto 0),
