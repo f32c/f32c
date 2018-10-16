@@ -54,7 +54,7 @@ $(PROJECT)/$(BITSTREAM_PREFIX)_sram.svf: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 
 $(PROJECT)/$(PROJECT)_$(PROJECT).mcs: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	LANG=C ${DDTCMD} -dev LFE5U-$(FPGA_SIZE)F \
-	-if $< -oft -int -quad 1 -of $@
+	-if $< -oft -int -quad 4 -of $@
 
 $(PROJECT)/$(BITSTREAM_PREFIX).bit: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	cd $(PROJECT); ln -s $(PROJECT)_$(PROJECT).bit $(BITSTREAM_PREFIX).bit
