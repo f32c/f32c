@@ -60,7 +60,7 @@ $(PROJECT)/$(BITSTREAM_PREFIX).bit: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	cd $(PROJECT); ln -s $(PROJECT)_$(PROJECT).bit $(BITSTREAM_PREFIX).bit
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_is25lp032d.mcs: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
-#	LANG=C ${DDTCMD} -dev LFE5U-$(FPGA_SIZE)F -oft -advanced -format int -flashsize 32 -quad 1 -header \
+#	LANG=C ${DDTCMD} -dev LFE5U-$(FPGA_SIZE)F -oft -advanced -format int -flashsize 32 -quad 4 -header \
 #	-if $< -of $@
 
 $(PROJECT)/$(PROJECT)_$(PROJECT)_flash_is25lp032d.mcs: $(PROJECT)/$(PROJECT)_$(PROJECT).mcs
@@ -71,6 +71,7 @@ $(PROJECT)/$(BITSTREAM_PREFIX)_flash_is25lp032d.vme: $(PROJECT)/$(PROJECT)_$(PRO
 
 $(PROJECT)/$(BITSTREAM_PREFIX)_flash_is25lp032d.svf: $(PROJECT)/$(PROJECT)_$(PROJECT)_flash_is25lp032d.mcs
 	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if $(XCF_PREFIX)f_flash_is25lp032d.xcf -of $@
+	sed --in-place -f $(OPENOCD_BASE)/fix_flash_is25lp128f.sed $@
 
 #$(PROJECT)/$(PROJECT)_$(PROJECT)_flash_s25fl164k.mcs: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 #	LANG=C ${DDTCMD} -dev LFE5U-$(FPGA_SIZE)F -oft -advanced -format int -flashsize 64 -quad 1 -header \
