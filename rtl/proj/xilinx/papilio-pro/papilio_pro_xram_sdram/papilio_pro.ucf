@@ -27,10 +27,10 @@ CONFIG PROHIBIT=P60;
 NET CLK_CRYSTAL    LOC="P94"  |IOSTANDARD=LVTTL;                                # CLK
 NET RX             LOC="P101" |IOSTANDARD=LVTTL |DRIVE=8 |SLEW=FAST;            # RX
 NET TX             LOC="P105" |IOSTANDARD=LVTTL |DRIVE=8 |SLEW=FAST;            # TX
-NET PORT_A(0)      LOC="P48"  |IOSTANDARD=LVTTL;                                # A0
-NET PORT_A(1)      LOC="P51"  |IOSTANDARD=LVTTL;                                # A1
-NET PORT_A(2)      LOC="P56"  |IOSTANDARD=LVTTL;                                # A2
-NET PORT_A(3)      LOC="P58"  |IOSTANDARD=LVTTL;                                # A3
+NET PORT_A(0)      LOC="P48"  |IOSTANDARD=TMDS_33;                              # A0 TMDSP(2) red+
+NET PORT_A(1)      LOC="P51"  |IOSTANDARD=TMDS_33;                              # A1 TMDSP(1) green+
+NET PORT_A(2)      LOC="P56"  |IOSTANDARD=TMDS_33;                              # A2 TMDSP(0) blue+
+NET PORT_A(3)      LOC="P58"  |IOSTANDARD=TMDS_33;                              # A3 TMDSP(3) clock+
 NET PORT_A(4)      LOC="P61"  |IOSTANDARD=LVTTL;                                # A4
 NET PORT_A(5)      LOC="P66"  |IOSTANDARD=LVTTL;                                # A5
 NET PORT_A(6)      LOC="P67"  |IOSTANDARD=LVTTL;                                # A6
@@ -55,10 +55,10 @@ NET PORT_B(8)      LOC="P74"  |IOSTANDARD=LVTTL;                                
 NET PORT_B(9)      LOC="P95"  |IOSTANDARD=LVTTL;                                # B9
 NET PORT_B(10)     LOC="P62"  |IOSTANDARD=LVTTL;                                # B10
 NET PORT_B(11)     LOC="P59"  |IOSTANDARD=LVTTL;                                # B11
-NET PORT_B(12)     LOC="P57"  |IOSTANDARD=LVTTL;                                # B12
-NET PORT_B(13)     LOC="P55"  |IOSTANDARD=LVTTL;                                # B13
-NET PORT_B(14)     LOC="P50"  |IOSTANDARD=LVTTL;                                # B14
-NET PORT_B(15)     LOC="P47"  |IOSTANDARD=LVTTL;                                # B15
+NET PORT_B(12)     LOC="P57"  |IOSTANDARD=TMDS_33;                              # B12 TMDSN(3) clock-
+NET PORT_B(13)     LOC="P55"  |IOSTANDARD=TMDS_33;                              # B13 TMDSN(0) blue-
+NET PORT_B(14)     LOC="P50"  |IOSTANDARD=TMDS_33;                              # B14 TMDSN(1) green-
+NET PORT_B(15)     LOC="P47"  |IOSTANDARD=TMDS_33;                              # B15 TMDSN(2) red-
 NET PORT_C(0)      LOC="P114" |IOSTANDARD=LVTTL;                                # C0
 NET PORT_C(1)      LOC="P115" |IOSTANDARD=LVTTL;                                # C1
 NET PORT_C(2)      LOC="P116" |IOSTANDARD=LVTTL;                                # C2

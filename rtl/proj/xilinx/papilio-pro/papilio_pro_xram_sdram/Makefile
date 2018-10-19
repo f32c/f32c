@@ -11,7 +11,7 @@ xil_env = . $(isedir)/settings64.sh
 SHELL = /bin/bash
 # openocd_interface = interface/altera-usb-blaster.cfg
 # openocd_interface = ../include/ft2232-fpu1.ocd
-openocd_interface = ../../include/ft2232-generic.ocd
+openocd_interface = ../../include/ft2232-papiilio-pro.ocd
 xc3sprog_interface = ftdi
 
 vfiles = \

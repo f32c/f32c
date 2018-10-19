@@ -42,8 +42,8 @@ entity papilio_xram_sdram is
     C_arch                      : integer := ARCH_MI32;
     C_debug                     : boolean := false;
 
-    -- Main clock: 100
-    C_clk_freq                  : integer := 100;
+    -- Main clock: 99.2 MHz
+    C_clk_freq                  : integer := 99;
     C_vendor_specific_startup   : boolean := false -- false: disabled (xilinx startup doesn't work reliable on this board - check this)
   );
   port
@@ -86,29 +86,36 @@ entity papilio_xram_sdram is
 end;
 
 architecture Behavioral of papilio_xram_sdram is
-  signal cpu_clk     : std_logic;
+  signal clk_cpu     : std_logic;
+  signal clk_pixel: std_logic; -- 25 MHz
+  signal clk_pixel_shift_p: std_logic; -- 125 MHz
+  signal clk_pixel_shift_n: std_logic; -- 125 MHz inverted (180 deg phase)
+  signal clk_locked: std_logic;
   signal sdram_clk_internal: std_logic;
   signal rs232_break : std_logic;
+  signal dvid_red, dvid_green, dvid_blue, dvid_clock: std_logic_vector(1 downto 0);
+  signal tmds_out_crgb: std_logic_vector(3 downto 0);
 begin
   -- clock synthesizer: Xilinx Spartan-6 specific
-  clk100: if C_clk_freq = 100 generate
+  clk100: if C_clk_freq = 99 generate
     clkgen: entity work.xil_pll
       generic map(
         clk_in_period_ns    => 31.250,  --32 MHz
-        clk_mult            => 25,      --fVCO = 800 MHz
-        clk_div0            => 8,       -- 100 Mhz
+        clk_mult            => 31,      --fVCO = 992 MHz
+        clk_div0            => 10,      --  99.2 Mhz
         clk_phase0          => 0.0,
-        clk_div1            => 8,       -- 100 MHz
-        clk_phase1          => 180.0,
-        clk_div2            => 8,       -- 100 MHz
+        clk_div1            => 40,      --  24.8 MHz
+        clk_phase1          => 0.0,
+        clk_div2            => 8,       -- 124.0 MHz
         clk_phase2          => 0.0
       )
       port map(
         clk_in              => clk_crystal,
-        clk_out0            => open,
-        clk_out1            => open,
-        clk_out2            => cpu_clk
+        clk_out0            => clk_cpu,
+        clk_out1            => clk_pixel,
+        clk_out2            => clk_pixel_shift_p
       );
+    clk_pixel_shift_n <= not clk_pixel_shift_p;
   end generate;
 
   G_vendor_specific_startup: if C_vendor_specific_startup generate
@@ -116,7 +123,7 @@ begin
   reset: startup_spartan6
     port map
     (
-      clk       => cpu_clk,
+      clk       => clk_cpu,
       gsr       => rs232_break,
       gts       => rs232_break,
       keyclearb => '0'
@@ -130,7 +137,7 @@ begin
     C_arch                      => C_arch,
     C_debug                     => C_debug,
     C_clk_freq                  => C_clk_freq,
-    C_bram_size                 => 4, -- KB, choose 2/4/8K which synthesizes best
+    C_bram_size                 => 4, -- KB, from 2/4/8K choose which one synthesizes best
     --parameters we fix for this example
     C_sio                       => 1,
     C_spi                       => 2,
@@ -174,7 +181,7 @@ begin
     C_boot_spi                  => false,
     C_icache_size               => 2,
     C_dcache_size               => 2,
-    C_xram_base                 => X"8",
+    C_xram_base                 => X"8", -- SDRAM mapping at 0x80000000
     C_cached_addr_bits          => 23, -- 2^23 bytes = 8 MB onboard SDRAM
 
     C_sio_init_baudrate         => 115200,
@@ -197,7 +204,8 @@ begin
     C_acram                     => false,
     C_axiram                    => false,
     C_tv                        => false,
-    C_vgahdmi                   => false,
+    C_vgahdmi                   => true,
+    C_dvid_ddr                  => true,
     C_ledstrip                  => false,
     C_vgatext                   => false,
     C_pcm                       => false,
@@ -210,7 +218,9 @@ begin
     C_vector                    => false
   )
   port map(
-    clk                         => cpu_clk,
+    clk                         => clk_cpu,
+    clk_pixel                   => clk_pixel, -- pixel clock
+    clk_pixel_shift             => clk_pixel_shift_p, -- tmds clock 10x pixel clock for SDR or 5x for DDR
     sio_txd(0)                  => tx,
     sio_rxd(0)                  => rx,
     sio_break(0)                => rs232_break,
@@ -220,13 +230,15 @@ begin
     spi_mosi(0) => flash_si,  spi_mosi(1) => spi_mosi,
     spi_miso(0) => flash_so,  spi_miso(1) => spi_miso,
     simple_in(31 downto 8)      => (others => '0'),
-    simple_in(7 downto 0)       => port_a(7 downto 0),
+    simple_in(7 downto 4)       => port_a(7 downto 4),
+    simple_in(3 downto 0)       => (others => '0'),
     simple_out(31 downto 9)     => open,
     simple_out(8 downto 1)      => port_a(15 downto 8),
     simple_out(0)               => led1,
     gpio(127 downto 28)         => open,
     gpio(27 downto 16)          => port_c,
-    gpio(15 downto 0)           => port_b,
+    gpio(15 downto 12)          => open,
+    gpio(11 downto 0)           => port_b(11 downto 0),
     -- sdram
     sdram_addr                  => sdram_addr,
     sdram_data(31 downto 16)    => open,
@@ -250,8 +262,42 @@ begin
       )
       port map
       (
-        Q => sdram_clk, C0 => cpu_clk, C1 => sdram_clk_internal, CE => '1',
+        Q => sdram_clk, C0 => clk_cpu, C1 => sdram_clk_internal, CE => '1',
         R => '0', S => '0', D0 => '0', D1 => '1'
       );
+
+  -- vendor specific modules to
+  -- convert 2-bit pairs to DDR 1-bit
+  G_vga_ddrout0: entity work.ddr_dvid_out_se
+  port map
+  (
+    clk       => clk_pixel_shift_p,
+    clk_n     => clk_pixel_shift_n,
+    reset     => '0',
+    in_clock  => dvid_clock,
+    in_red    => dvid_red,
+    in_green  => dvid_green,
+    in_blue   => dvid_blue,
+    out_clock => tmds_out_crgb(3),
+    out_red   => tmds_out_crgb(2),
+    out_green => tmds_out_crgb(1),
+    out_blue  => tmds_out_crgb(0)
+  );
+
+  -- differential output buffering for HDMI clock and video
+  hdmi_output0: entity work.hdmi_out
+  port map
+  (
+    tmds_in_clk    => tmds_out_crgb(3),
+    tmds_out_clk_p => port_a(3),
+    tmds_out_clk_n => port_b(12),
+    tmds_in_rgb    => tmds_out_crgb(2 downto 0),
+    tmds_out_rgb_p(2) => port_a(0),
+    tmds_out_rgb_p(1) => port_a(1),
+    tmds_out_rgb_p(0) => port_a(2),
+    tmds_out_rgb_n(2) => port_b(15),
+    tmds_out_rgb_n(1) => port_b(14),
+    tmds_out_rgb_n(0) => port_b(13)
+  );
 
 end Behavioral;
