@@ -44,9 +44,7 @@ entity papilio_xram_sdram is
 
     -- Main clock: 100
     C_clk_freq                  : integer := 100;
-    C_vendor_specific_startup   : boolean := false; -- false: disabled (xilinx startup doesn't work reliable on this board - check this)
-    -- SoC configuration options
-    C_bram_size                 : integer := 4 -- bootloader area
+    C_vendor_specific_startup   : boolean := false -- false: disabled (xilinx startup doesn't work reliable on this board - check this)
   );
   port
   (
@@ -98,18 +96,18 @@ begin
       generic map(
         clk_in_period_ns    => 31.250,  --32 MHz
         clk_mult            => 25,      --fVCO = 800 MHz
-        clk_diva            => 8,
-        clk_phasea          => 0.0,
-        clk_divb            => 8,
-        clk_phaseb          => 180.0,
-        clk_divc            => 8,
-        clk_phasec          => 0.0
+        clk_div0            => 8,       -- 100 Mhz
+        clk_phase0          => 0.0,
+        clk_div1            => 8,       -- 100 MHz
+        clk_phase1          => 180.0,
+        clk_div2            => 8,       -- 100 MHz
+        clk_phase2          => 0.0
       )
       port map(
         clk_in              => clk_crystal,
-        clk_outa            => open,
-        clk_outb            => open,
-        clk_outc            => cpu_clk
+        clk_out0            => open,
+        clk_out1            => open,
+        clk_out2            => cpu_clk
       );
   end generate;
 
@@ -132,7 +130,7 @@ begin
     C_arch                      => C_arch,
     C_debug                     => C_debug,
     C_clk_freq                  => C_clk_freq,
-    C_bram_size                 => C_bram_size,
+    C_bram_size                 => 4, -- KB, choose 2/4/8K which synthesizes best
     --parameters we fix for this example
     C_sio                       => 1,
     C_spi                       => 2,
@@ -172,12 +170,12 @@ begin
 
     -- SoC configuration options
     C_bram_const_init           => true,
-    C_boot_write_protect        => true,
+    C_boot_write_protect        => false,
     C_boot_spi                  => false,
-    C_icache_size               => 0,
-    C_dcache_size               => 0,
+    C_icache_size               => 2,
+    C_dcache_size               => 2,
     C_xram_base                 => X"8",
-    C_cached_addr_bits          => 20,
+    C_cached_addr_bits          => 23, -- 2^23 bytes = 8 MB onboard SDRAM
 
     C_sio_init_baudrate         => 115200,
     C_sio_fixed_baudrate        => false,
@@ -189,8 +187,8 @@ begin
     C_simple_in                 => 32,
     C_simple_out                => 32,
 
-    C_timer                     => true,
-    C_timer_ocp_mux             => true,
+    C_timer                     => false,
+    C_timer_ocp_mux             => false,
     C_timer_ocps                => 2,
     C_timer_icps                => 2,
     --these settings turn off unused features in glue_xram
