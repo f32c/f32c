@@ -239,6 +239,11 @@ begin
     gpio(27 downto 16)          => port_c,
     gpio(15 downto 12)          => open,
     gpio(11 downto 0)           => port_b(11 downto 0),
+    -- digital video
+    dvid_clock => dvid_clock,
+    dvid_red   => dvid_red,
+    dvid_green => dvid_green,
+    dvid_blue  => dvid_blue,
     -- sdram
     sdram_addr                  => sdram_addr,
     sdram_data(31 downto 16)    => open,
