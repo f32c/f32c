@@ -137,11 +137,23 @@ begin
     C_arch                      => C_arch,
     C_debug                     => C_debug,
     C_clk_freq                  => C_clk_freq,
-    C_bram_size                 => 4, -- KB, from 2/4/8K choose which one synthesizes best
+
     --parameters we fix for this example
+    C_bram_size                 => 4, -- KB, from 2/4/8K choose which one synthesizes best
+
     C_sio                       => 1,
     C_spi                       => 2,
     C_gpio                      => 32,
+
+    C_boot_write_protect        => false,
+    C_icache_size               => 2,
+    C_dcache_size               => 2,
+    C_cached_addr_bits          => 23, -- 2^23 bytes = 8 MB onboard SDRAM
+
+    C_timer                     => true,
+    C_timer_ocp_mux             => false,
+    C_timer_ocps                => 2,
+    C_timer_icps                => 2,
 
     C_sdram                     => true,
     C_sdram_clock_range         => 2,
@@ -149,6 +161,10 @@ begin
     C_sdram_column_bits         => 8,
     C_sdram_startup_cycles      => 10100,
     C_sdram_cycles_per_refresh  => 1524,
+
+    C_vgahdmi                   => true,
+    C_dvid_ddr                  => true,
+
     --these settings reflext default settings in glue_xram
     -- ISA options
     C_big_endian                => false,
@@ -177,12 +193,8 @@ begin
 
     -- SoC configuration options
     C_bram_const_init           => true,
-    C_boot_write_protect        => false,
     C_boot_spi                  => false,
-    C_icache_size               => 2,
-    C_dcache_size               => 2,
     C_xram_base                 => X"8", -- SDRAM mapping at 0x80000000
-    C_cached_addr_bits          => 23, -- 2^23 bytes = 8 MB onboard SDRAM
 
     C_sio_init_baudrate         => 115200,
     C_sio_fixed_baudrate        => false,
@@ -194,18 +206,12 @@ begin
     C_simple_in                 => 32,
     C_simple_out                => 32,
 
-    C_timer                     => false,
-    C_timer_ocp_mux             => false,
-    C_timer_ocps                => 2,
-    C_timer_icps                => 2,
     --these settings turn off unused features in glue_xram
     C_xdma                      => false,
     C_sram                      => false,
     C_acram                     => false,
     C_axiram                    => false,
     C_tv                        => false,
-    C_vgahdmi                   => true,
-    C_dvid_ddr                  => true,
     C_ledstrip                  => false,
     C_vgatext                   => false,
     C_pcm                       => false,
