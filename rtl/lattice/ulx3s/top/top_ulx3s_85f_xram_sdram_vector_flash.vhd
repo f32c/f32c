@@ -33,7 +33,7 @@ entity ulx3s_xram_sdram_vector is
     C_bram_const_init: boolean := true; -- true default, MAX10 cannot preload bootloader using VHDL constant intializer
     C_boot_write_protect: boolean := true; -- true default, may leave boot block writeable to save some LUTs
     C_boot_rom_data_bits: integer := 32; -- number of bits in output from bootrom_emu
-    C_boot_spi: boolean := false; -- SPI bootloader is larger and allows setting of baudrate
+    C_boot_spi: boolean := true; -- SPI bootloader is larger and allows setting of baudrate
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- 8 default for C_xboot_rom=false, 0 for C_xboot_rom=true, sets XRAM base address
     C_acram: boolean := false; -- false default (ulx3s has sdram chip)
     C_acram_wait_cycles: integer := 3; -- 3 or more
@@ -55,14 +55,14 @@ entity ulx3s_xram_sdram_vector is
     C_synth: boolean := false; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
-    C_spdif: boolean := false; -- SPDIF output
+    C_spdif: boolean := true; -- SPDIF output
     C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
-    C_passthru_autodetect: boolean := true; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
+    C_passthru_autodetect: boolean := false; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
     C_passthru_clk_Hz: real := 25.0E6; -- passthru state machine uses 25 MHz clock
     C_passthru_break: real := 10.0E-3; -- seconds (approximately) to detect serial break and enter f32c mode
 
-    C_vector: boolean := false; -- vector processor unit
+    C_vector: boolean := true; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
     C_vector_bram_pass_thru: boolean := false; -- false: default, true: c2_vector_fast won't work
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
@@ -70,7 +70,7 @@ entity ulx3s_xram_sdram_vector is
     C_vector_vdata_bits: integer := 32;
     C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
     C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
-    C_vector_float_divide: boolean := false; -- false will not have float divide (/) will save much LUTs and DSPs
+    C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
     -- video parameters common for vgahdmi and vgatext
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
@@ -185,12 +185,10 @@ entity ulx3s_xram_sdram_vector is
   gpdi_scl, gpdi_sda: inout std_logic;
 
   -- Flash ROM (SPI0)
-  -- commented out because it can't be used as GPIO
-  -- when bitstream is loaded from config flash
-  --flash_miso   : in      std_logic;
-  --flash_mosi   : out     std_logic;
-  --flash_clk    : out     std_logic;
-  --flash_csn    : out     std_logic;
+  flash_miso   : in      std_logic;
+  flash_mosi   : out     std_logic;
+  --flash_clk    : out     std_logic; -- not GPIO, needs vendor-specific module
+  flash_csn    : out     std_logic;
 
   -- SD card (SPI1)
   sd_cmd: inout std_logic := 'Z';
@@ -243,6 +241,7 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   constant C_break_counter_bits: integer := 1+ceil_log2(integer(C_passthru_clk_Hz*C_passthru_break));
   signal R_break_counter: std_logic_vector(C_break_counter_bits-1 downto 0) := (others => '0');
   signal S_f32c_sd_csn, S_f32c_sd_clk, S_f32c_sd_miso, S_f32c_sd_mosi: std_logic;
+  signal S_flash_csn, S_flash_clk: std_logic;
 
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
@@ -480,10 +479,10 @@ begin
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
 
-    spi_sck(0)  => open,  spi_sck(1)  => S_f32c_sd_clk,   -- sd_clk,
-    spi_ss(0)   => open,  spi_ss(1)   => S_f32c_sd_csn,   -- sd_d(3),
-    spi_mosi(0) => open,  spi_mosi(1) => S_f32c_sd_mosi,  -- sd_cmd,
-    spi_miso(0) => '0',   spi_miso(1) => S_f32c_sd_miso,  -- sd_d(0),
+    spi_sck(0)  => S_flash_clk,  spi_sck(1)  => S_f32c_sd_clk,   -- sd_clk,
+    spi_ss(0)   => S_flash_csn,  spi_ss(1)   => S_f32c_sd_csn,   -- sd_d(3),
+    spi_mosi(0) => flash_mosi,   spi_mosi(1) => S_f32c_sd_mosi,  -- sd_cmd,
+    spi_miso(0) => flash_miso,   spi_miso(1) => S_f32c_sd_miso,  -- sd_d(0),
 
     gpio(127 downto 28+32) => open,
     gpio(27+32 downto 32) => gn(27 downto 0),
@@ -510,7 +509,7 @@ begin
     simple_in(15 downto 7) => (others => '0'),
     simple_in(6 downto 0) => btn,
 
-    -- v1.7: 2 MSB audio channel bits should not be used or board resets.
+    -- v1.7: 2 MSB audio channel bits are not used in "default" setup.
     --audio_l(3 downto 2) => audio_l(1 downto 0),
     --audio_r(3 downto 2) => audio_r(1 downto 0),
     -- 4-bit could be used down to 75 ohm load
@@ -625,5 +624,13 @@ begin
       gpdi_diff: OLVDS port map(A => ddr_d(i), Z => gpdi_dp(i), ZN => gpdi_dn(i));
     end generate;
   end generate;
+
+  flash_clock: entity work.ecp5_flash_clk
+  port map
+  (
+    flash_csn => S_flash_csn,
+    flash_clk => S_flash_clk
+  );
+  flash_csn <= S_flash_csn;
 
 end Behavioral;
