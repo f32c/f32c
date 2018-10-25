@@ -12,6 +12,10 @@ DDTCMD := $(shell find ${DIAMOND_BIN}/ -name ddtcmd)
 OPENOCD ?= openocd_ft232r
 OPENOCD_BASE := ../../programmer/openocd/ulx3s
 
+FLEAFPGA_JTAG ?= FleaFPGA-JTAG
+
+UJPROG ?= ujprog
+
 # name of the project as defined in project file
 PROJECT = project
 
@@ -100,8 +104,16 @@ $(PROJECT)/$(BITSTREAM_PREFIX)_flash_is25lp128f.svf: $(PROJECT)/$(PROJECT)_$(PRO
 	LANG=C ${DDTCMD} -oft -svfsingle -revd -maxdata 8 -if $(XCF_PREFIX)f_flash_is25lp128f.xcf -of $@
 	sed --in-place -f $(OPENOCD_BASE)/fix_flash_is25lp128f.sed $@
 
+# default programmer is "ujprog"
 program: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
+	$(UJPROG) $<
+
+# needs ft2232 cable
+program_diamond: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 	echo pgr_project open $(XCF_PREFIX)f_sram.xcf \; pgr_program run | ${DIAMONDC}
+
+program_ujprog: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
+	$(UJPROG) $<
 
 program_wifi: $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 	$(OPENOCD) --file=$(OPENOCD_BASE)/remote.ocd --file=$(OPENOCD_BASE)/ecp5-$(FPGA_SIZE)f.ocd
@@ -123,10 +135,10 @@ program_ft231x: $(PROJECT)/$(BITSTREAM_PREFIX)_sram.svf
 	rm -f $(PROJECT)/$(PROJECT)_$(PROJECT)_sram.svf
 
 program_flea: $(PROJECT)/$(BITSTREAM_PREFIX)_sram.vme
-	FleaFPGA-JTAG $<
+	$(FLEAFPGA_JTAG) $<
 
 program_flea_flash: $(PROJECT)/$(BITSTREAM_PREFIX)_flash_is25lp128f.vme
-	FleaFPGA-JTAG $<
+	$(FLEAFPGA_JTAG) $<
 
 clean:
 	rm -rf $(JUNK) *~
