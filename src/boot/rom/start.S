@@ -39,6 +39,6 @@
 	.type _start,@function
 
 _start:
-	li	sp, 0x80100000
 	move	ra, zero
+	li	sp, 0x80100000
 	j	main
