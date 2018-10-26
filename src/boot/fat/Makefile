@@ -25,7 +25,7 @@ LIBSRC = ../../lib/src
 CFILES = loader.c ${LIBSRC}/sio_poll.c \
 	${LIBSRC}/printf.c ${LIBSRC}/fatfs.c ${LIBSRC}/file.c \
 	${LIBSRC}/malloc.c ${LIBSRC}/spi.c ${LIBSRC}/sdcard.c \
-	${LIBSRC}/diskio.c ${LIBSRC}/mul.c ${LIBSRC}/div.c
+	${LIBSRC}/diskio.c ${LIBSRC}/mul.c ${LIBSRC}/div.c ${LIBSRC}/div64.c
 
 ASFILES = ${LIBSRC}/${ARCH}/start.S
 
