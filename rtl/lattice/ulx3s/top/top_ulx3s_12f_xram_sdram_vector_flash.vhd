@@ -31,7 +31,7 @@ entity ulx3s_xram_sdram_vector is
     C_xboot_rom: boolean := false; -- false default, bootloader initializes XRAM with external DMA
     C_bram_size: integer := 16; -- 2 default, must be disabled with 0 when C_xboot_emu = true
     C_bram_const_init: boolean := true; -- true default, MAX10 cannot preload bootloader using VHDL constant intializer
-    C_boot_write_protect: boolean := false; -- true default, may leave boot block writeable to save some LUTs
+    C_boot_write_protect: boolean := true; -- true default, may leave boot block writeable to save some LUTs
     C_boot_rom_data_bits: integer := 32; -- number of bits in output from bootrom_emu
     C_boot_spi: boolean := true; -- SPI bootloader is larger and allows setting of baudrate
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- 8 default for C_xboot_rom=false, 0 for C_xboot_rom=true, sets XRAM base address
@@ -189,10 +189,12 @@ entity ulx3s_xram_sdram_vector is
   flash_mosi   : out     std_logic;
   --flash_clk    : out     std_logic; -- not GPIO, needs vendor-specific module
   flash_csn    : out     std_logic;
+  flash_holdn  : out     std_logic := '1';
+  flash_wpn    : out     std_logic := '1';
 
   -- SD card (SPI1)
   sd_cmd: inout std_logic := 'Z';
-  sd_d: inout std_logic_vector(3 downto 0);
+  sd_d: inout std_logic_vector(3 downto 0) := (others => 'Z');
   sd_clk: inout std_logic := 'Z';
   sd_cdn, sd_wp: in std_logic;
 
@@ -241,7 +243,7 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   constant C_break_counter_bits: integer := 1+ceil_log2(integer(C_passthru_clk_Hz*C_passthru_break));
   signal R_break_counter: std_logic_vector(C_break_counter_bits-1 downto 0) := (others => '0');
   signal S_f32c_sd_csn, S_f32c_sd_clk, S_f32c_sd_miso, S_f32c_sd_mosi: std_logic;
-  signal S_flash_csn, S_flash_clk, S_flash_clk_filtered: std_logic;
+  signal S_flash_csn, S_flash_clk, S_flash_clk_filtered, S_flash_csn_filtered: std_logic;
 
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
@@ -371,6 +373,11 @@ begin
     ftdi_rxd <= S_txd;
     wifi_rxd <= S_txd;
     wifi_gpio0 <= btn(0); -- pressing BTN0 will escape to ESP32 file select menu
+    sd_d(3) <= S_f32c_sd_csn;
+    sd_clk <= S_f32c_sd_clk;
+    S_f32c_sd_miso <= sd_d(0);
+    sd_cmd <= S_f32c_sd_mosi;
+    sd_d(2 downto 1) <= (others => '1');
   end generate;
   
   -- hold pushbutton BTN1 to upload to f32c over USB
@@ -625,14 +632,14 @@ begin
     end generate;
   end generate;
   
-  S_flash_clk_filtered <= S_flash_clk and not S_flash_csn;
+  S_flash_csn_filtered <= S_flash_csn;
+  S_flash_clk_filtered <= S_flash_csn_filtered or S_flash_clk;
   flash_clock: entity work.ecp5_flash_clk
   port map
   (
-    flash_csn => S_flash_csn,
+    flash_csn => rs232_break,
     flash_clk => S_flash_clk_filtered
   );
-  flash_csn <= S_flash_csn;
-  
+  flash_csn <= S_flash_csn_filtered;
 
 end Behavioral;
