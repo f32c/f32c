@@ -31,7 +31,7 @@ entity ulx3s_xram_sdram_vector is
     C_xboot_rom: boolean := false; -- false default, bootloader initializes XRAM with external DMA
     C_bram_size: integer := 16; -- 2 default, must be disabled with 0 when C_xboot_emu = true
     C_bram_const_init: boolean := true; -- true default, MAX10 cannot preload bootloader using VHDL constant intializer
-    C_boot_write_protect: boolean := true; -- true default, may leave boot block writeable to save some LUTs
+    C_boot_write_protect: boolean := false; -- true default, may leave boot block writeable to save some LUTs
     C_boot_rom_data_bits: integer := 32; -- number of bits in output from bootrom_emu
     C_boot_spi: boolean := true; -- SPI bootloader is larger and allows setting of baudrate
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- 8 default for C_xboot_rom=false, 0 for C_xboot_rom=true, sets XRAM base address
@@ -241,7 +241,7 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   constant C_break_counter_bits: integer := 1+ceil_log2(integer(C_passthru_clk_Hz*C_passthru_break));
   signal R_break_counter: std_logic_vector(C_break_counter_bits-1 downto 0) := (others => '0');
   signal S_f32c_sd_csn, S_f32c_sd_clk, S_f32c_sd_miso, S_f32c_sd_mosi: std_logic;
-  signal S_flash_csn, S_flash_clk: std_logic;
+  signal S_flash_csn, S_flash_clk, S_flash_clk_filtered: std_logic;
 
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
@@ -624,13 +624,15 @@ begin
       gpdi_diff: OLVDS port map(A => ddr_d(i), Z => gpdi_dp(i), ZN => gpdi_dn(i));
     end generate;
   end generate;
-
+  
+  S_flash_clk_filtered <= S_flash_clk and not S_flash_csn;
   flash_clock: entity work.ecp5_flash_clk
   port map
   (
     flash_csn => S_flash_csn,
-    flash_clk => S_flash_clk
+    flash_clk => S_flash_clk_filtered
   );
   flash_csn <= S_flash_csn;
+  
 
 end Behavioral;
