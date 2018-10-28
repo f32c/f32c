@@ -33,6 +33,9 @@
 
 #define	SRAM_BASE	0x80000000
 #define	SRAM_TOP	0x80100000
+/* FAT loader start address in the flash image */
+#define LOADER_START    0x100000
+/* address in RAM where the FAT loader is copied from flash */
 #define	LOADER_BASE	0x800f8000
 
 #ifndef ONLY_I_ROM
@@ -213,8 +216,8 @@ main(void)
 		goto boot;
 	}
 
-	len = sec_size * res_sec - 512;
-	flash_read_block((void *) cp, 512, len);
+	len = sec_size * res_sec - LOADER_START;
+	flash_read_block((void *) cp, LOADER_START, len);
 	puts("Boot block loaded from SPI flash at 0x");
 	phex32((uint32_t) cp);
 	puts(" len 0x");

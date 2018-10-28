@@ -17,15 +17,19 @@ CFLAGS += -D_FS_TINY=1 -D_FS_RPATH=0 -D_USE_LFN=0 -D_CODE_PAGE=1
 
 PROG = loader
 
-# loader start address in the image
-LOADER_START = 512
+# loader start address in the flash image
+# should be equal to rom/loader.c
+# #define LOADER_START 0x100000
+LOADER_START = 1048576
+# bitstream should be written from flash address 512
+# and should not overwrite LOADER_START
 
 # SPI flash image name
 SPI_IMG_NAME = ulx2s_4m.img
 
 # FAT filesystem parameters
 VOLUME_NAME=ULX3S
-IMAGE_KB = 640
+IMAGE_KB = 4096
 LOGICAL_SECTOR_SIZE = 4096
 SECTORS = $(shell echo $(IMAGE_KB) \* 1024 / $(LOGICAL_SECTOR_SIZE) | bc)
 RESERVED_SECTORS = $(shell echo '(' $$(wc -c loader.bin | xargs echo | cut -d " " -f 1) + $(LOADER_START) + $(LOGICAL_SECTOR_SIZE) - 1 ')' / $(LOGICAL_SECTOR_SIZE) | bc)
@@ -45,8 +49,7 @@ ASFILES = ${LIBSRC}/${ARCH}/start.S
 include ${POST_MK}
 
 image_linux: loader.bin
-	@echo "sectors:" $(SECTORS)
-	cat /dev/zero | tr "\000" "\377" | dd ibs=$(LOGICAL_SECTOR_SIZE) count=$(SECTORS) of=${SPI_IMG_NAME}
+	dd if=/dev/zero ibs=$(LOGICAL_SECTOR_SIZE) count=$(SECTORS) | tr "\0" "\377" > ${SPI_IMG_NAME}
 	@echo "Reserved sectors:" $(RESERVED_SECTORS)
 	mkfs.msdos \
 	  -n $(VOLUME_NAME) \
@@ -55,7 +58,8 @@ image_linux: loader.bin
 	  -R $(RESERVED_SECTORS) \
 	  -r $(ROOT_DIR_ENTRIES) \
 	  -f $(NUMBER_OF_FATS) \
-	  ./${SPI_IMG_NAME}
+	  ./${SPI_IMG_NAME} $(IMAGE_KB)
+	cat /dev/zero | tr "\0" "\377" | dd of=${SPI_IMG_NAME} bs=1 seek=512 count=$(LOADER_START) conv=notrunc
 	dd if=loader.bin of=${SPI_IMG_NAME} bs=1 seek=$(LOADER_START) conv=notrunc
 	# loader.bin from old image (for debugging)
 	# dd bs=1 if=/tmp/ulx3s_4m.img of=${SPI_IMG_NAME} skip=$(LOADER_START) seek=$(LOADER_START) count=10440 conv=notrunc
