@@ -15,10 +15,23 @@ CFLAGS += -DNO_PRINTF_FLOAT
 CFLAGS += -D_FS_MINIMIZE=1 -D_FS_READONLY=1 -D_USE_ERASE=0
 CFLAGS += -D_FS_TINY=1 -D_FS_RPATH=0 -D_USE_LFN=0 -D_CODE_PAGE=1
 
+PROG = loader
+
+# loader start address in the image
+LOADER_START = 512
+
 # SPI flash image name
 SPI_IMG_NAME = ulx2s_4m.img
 
-PROG = loader
+# FAT filesystem parameters
+VOLUME_NAME=ULX3S
+#SECTORS = 304 # for 0-12FFFFF
+SECTORS = 1024
+LOGICAL_SECTOR_SIZE = 4096
+ROOT_DIR_ENTRIES = 128
+RESERVED_SECTORS = $(shell echo '(' $$(wc -c loader.bin | cut -d " " -f 1) + $(LOADER_START) + $(LOGICAL_SECTOR_SIZE) - 1 ')' / $(LOGICAL_SECTOR_SIZE) | bc)
+FAT_SIZE = 12
+NUMBER_OF_FATS = 1
 
 LIBSRC = ../../lib/src
 
@@ -31,11 +44,34 @@ ASFILES = ${LIBSRC}/${ARCH}/start.S
 
 include ${POST_MK}
 
+image_linux: loader.bin
+	cat /dev/zero | tr "\000" "\377" | dd ibs=$(LOGICAL_SECTOR_SIZE) count=$(SECTORS) of=${SPI_IMG_NAME}
+	@echo "Reserved sectors:" $(RESERVED_SECTORS)
+	mkfs.msdos \
+	  -n $(VOLUME_NAME) \
+	  -F $(FAT_SIZE) \
+	  -S $(LOGICAL_SECTOR_SIZE) \
+	  -R $(RESERVED_SECTORS) \
+	  -r $(ROOT_DIR_ENTRIES) \
+	  -f $(NUMBER_OF_FATS) \
+	  ./${SPI_IMG_NAME} $(SECTORS)
+	# dd bs=1 if=loader.bin of=${SPI_IMG_NAME} seek=$(LOADER_START) conv=notrunc
+	dd bs=1 if=/tmp/ulx3s_4m.img of=${SPI_IMG_NAME} skip=$(LOADER_START) seek=$(LOADER_START) count=10440 conv=notrunc
+	mmd -i ${SPI_IMG_NAME} ::boot
+	mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/basic.bin ::boot
+	mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/autoexec.bas ::
+	mdir -i ${SPI_IMG_NAME} -/ ::
+
 image:	loader.bin
 	cat /dev/zero | tr "\000" "\377" | dd ibs=4k count=1k of=${SPI_IMG_NAME}
-	echo "(`wc -c loader.bin | cut -c1-9` + 512 + 4095) / 4096" | bc > .rs
-	echo "Reserved sectors:" `cat .rs`
-	newfs_msdos -F 12 -S 4096 -s 1024 -r `cat .rs` -e 128 -n 1 \
+	@echo "Reserved sectors:" $(RESERVED_SECTORS)
+	newfs_msdos \
+	  -F $(FAT_SIZE) \
+	  -S $(SECTORS) \
+	  -s $(LOGICAL_SECTOR_SIZE) \
+	  -r $(RESERVED_SECTORS) \
+	  -e $(ROOT_DIR_ENTRIES) \
+	  -n $(NUMBER_OF_FATS) \
 	    ./${SPI_IMG_NAME}
 	rm .rs
 	dd bs=1 if=loader.bin of=${SPI_IMG_NAME} oseek=512 conv=notrunc
