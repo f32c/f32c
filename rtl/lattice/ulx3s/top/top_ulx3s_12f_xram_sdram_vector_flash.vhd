@@ -29,7 +29,7 @@ entity ulx3s_xram_sdram_vector is
 
     -- SoC configuration options
     C_xboot_rom: boolean := false; -- false default, bootloader initializes XRAM with external DMA
-    C_bram_size: integer := 16; -- 2 default, must be disabled with 0 when C_xboot_emu = true
+    C_bram_size: integer := 2; -- 2 default, must be disabled with 0 when C_xboot_emu = true
     C_bram_const_init: boolean := true; -- true default, MAX10 cannot preload bootloader using VHDL constant intializer
     C_boot_write_protect: boolean := true; -- true default, may leave boot block writeable to save some LUTs
     C_boot_rom_data_bits: integer := 32; -- number of bits in output from bootrom_emu
