@@ -55,7 +55,7 @@ image_linux: loader.bin
 	  -R $(RESERVED_SECTORS) \
 	  -r $(ROOT_DIR_ENTRIES) \
 	  -f $(NUMBER_OF_FATS) \
-	  ./${SPI_IMG_NAME} $(IMAGE_KB)
+	  ./${SPI_IMG_NAME}
 	# freshly compiled loader.bin doesn't work
 	# dd bs=1 if=loader.bin of=${SPI_IMG_NAME} seek=$(LOADER_START) conv=notrunc
 	# loader.bin from old image works
@@ -71,8 +71,7 @@ image:	loader.bin
 	newfs_msdos \
 	  -L $(VOLUME_NAME) \
 	  -F $(FAT_TYPE) \
-	  -S $(SECTORS) \
-	  -s $(LOGICAL_SECTOR_SIZE) \
+	  -S $(LOGICAL_SECTOR_SIZE) \
 	  -r $(RESERVED_SECTORS) \
 	  -e $(ROOT_DIR_ENTRIES) \
 	  -n $(NUMBER_OF_FATS) \
