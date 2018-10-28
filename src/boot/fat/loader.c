@@ -37,6 +37,7 @@ static const char *bootfiles[] = {
 	"D:/frisc_ld.bin",
 #endif
 	"D:/bootme.bin",
+	"/autoexec.bin",
 	"/boot/kernel",
 	"/boot/basic.bin",
 	NULL
