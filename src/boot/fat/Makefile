@@ -1,6 +1,6 @@
 
 # Bootloader uses a non-default loadaddr
-LOADADDR = 0x8fff8000
+LOADADDR = 0x800f8000
 
 # Do not link standard libs
 WITHOUT_LIBS = true
@@ -56,10 +56,9 @@ image_linux: loader.bin
 	  -r $(ROOT_DIR_ENTRIES) \
 	  -f $(NUMBER_OF_FATS) \
 	  ./${SPI_IMG_NAME}
-	# freshly compiled loader.bin doesn't work
-	# dd bs=1 if=loader.bin of=${SPI_IMG_NAME} seek=$(LOADER_START) conv=notrunc
-	# loader.bin from old image works
-	dd bs=1 if=/tmp/ulx3s_4m.img of=${SPI_IMG_NAME} skip=$(LOADER_START) seek=$(LOADER_START) count=10440 conv=notrunc
+	dd if=loader.bin of=${SPI_IMG_NAME} bs=1 seek=$(LOADER_START) conv=notrunc
+	# loader.bin from old image (for debugging)
+	# dd bs=1 if=/tmp/ulx3s_4m.img of=${SPI_IMG_NAME} skip=$(LOADER_START) seek=$(LOADER_START) count=10440 conv=notrunc
 	mmd -i ${SPI_IMG_NAME} ::boot
 	mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/basic.bin ::boot
 	mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/autoexec.bas ::
