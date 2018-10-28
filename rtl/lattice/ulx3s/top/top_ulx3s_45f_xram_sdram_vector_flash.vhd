@@ -55,7 +55,7 @@ entity ulx3s_xram_sdram_vector is
     C_synth: boolean := false; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
-    C_spdif: boolean := false; -- SPDIF output
+    C_spdif: boolean := true; -- SPDIF output
     C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
     -- enabling passthru autodetect reduces fmax or vector divide must be disabled on 45f
@@ -186,14 +186,16 @@ entity ulx3s_xram_sdram_vector is
   gpdi_scl, gpdi_sda: inout std_logic;
 
   -- Flash ROM (SPI0)
-  -- commented out because it can't be used as GPIO
-  -- when bitstream is loaded from config flash
-  flash_miso: in std_logic;
-  flash_mosi, flash_clk, flash_csn: out std_logic;
+  flash_miso   : in      std_logic;
+  flash_mosi   : out     std_logic;
+  --flash_clk    : out     std_logic; -- not GPIO, needs vendor-specific module
+  flash_csn    : out     std_logic;
+  flash_holdn  : out     std_logic := '1';
+  flash_wpn    : out     std_logic := '1';
 
   -- SD card (SPI1)
   sd_cmd: inout std_logic := 'Z';
-  sd_d: inout std_logic_vector(3 downto 0);
+  sd_d: inout std_logic_vector(3 downto 0) := (others => 'Z');
   sd_clk: inout std_logic := 'Z';
   sd_cdn, sd_wp: in std_logic;
 
@@ -242,9 +244,7 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   constant C_break_counter_bits: integer := 1+ceil_log2(integer(C_passthru_clk_Hz*C_passthru_break));
   signal R_break_counter: std_logic_vector(C_break_counter_bits-1 downto 0) := (others => '0');
   signal S_f32c_sd_csn, S_f32c_sd_clk, S_f32c_sd_miso, S_f32c_sd_mosi: std_logic;
-  
-  -- signals for vendor-specific SPI flash clock output
-  signal S_flash_clk, S_flash_csn: std_logic;
+  signal S_flash_csn, S_flash_clk, S_flash_clk_filtered, S_flash_csn_filtered: std_logic;
 
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
@@ -325,8 +325,6 @@ begin
     sd_cmd <= '1' when R_esp32_mode = '1' else S_f32c_sd_mosi when S_f32c_sd_csn = '0' else 'Z';
     sd_d(2 downto 1) <= (others => '1') when R_esp32_mode = '1' else (others => 'Z');
     
-    -- S_f32c_sd_csn <= '1'; -- force disabled for debugging
-
     -- detect serial break
     G_detect_serial_break: if true generate
     process(clk_25MHz)
@@ -376,6 +374,11 @@ begin
     ftdi_rxd <= S_txd;
     wifi_rxd <= S_txd;
     wifi_gpio0 <= btn(0); -- pressing BTN0 will escape to ESP32 file select menu
+    sd_d(3) <= S_f32c_sd_csn;
+    sd_clk <= S_f32c_sd_clk;
+    S_f32c_sd_miso <= sd_d(0);
+    sd_cmd <= S_f32c_sd_mosi;
+    sd_d(2 downto 1) <= (others => '1');
   end generate;
   
   -- hold pushbutton BTN1 to upload to f32c over USB
@@ -484,10 +487,10 @@ begin
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
 
-    spi_sck(0)  => S_flash_clk, spi_sck(1)  => S_f32c_sd_clk,   -- sd_clk,
-    spi_ss(0)   => S_flash_csn, spi_ss(1)   => S_f32c_sd_csn,   -- sd_d(3),
-    spi_mosi(0) => flash_mosi,  spi_mosi(1) => S_f32c_sd_mosi,  -- sd_cmd,
-    spi_miso(0) => flash_miso,  spi_miso(1) => S_f32c_sd_miso,  -- sd_d(0),
+    spi_sck(0)  => S_flash_clk,  spi_sck(1)  => S_f32c_sd_clk,   -- sd_clk,
+    spi_ss(0)   => S_flash_csn,  spi_ss(1)   => S_f32c_sd_csn,   -- sd_d(3),
+    spi_mosi(0) => flash_mosi,   spi_mosi(1) => S_f32c_sd_mosi,  -- sd_cmd,
+    spi_miso(0) => flash_miso,   spi_miso(1) => S_f32c_sd_miso,  -- sd_d(0),
 
     gpio(127 downto 28+32) => open,
     gpio(27+32 downto 32) => gn(27 downto 0),
@@ -514,7 +517,7 @@ begin
     simple_in(15 downto 7) => (others => '0'),
     simple_in(6 downto 0) => btn,
 
-    -- v1.7: 2 MSB audio channel bits should not be used or board resets.
+    -- v1.7: 2 MSB audio channel bits are not used in "default" setup.
     --audio_l(3 downto 2) => audio_l(1 downto 0),
     --audio_r(3 downto 2) => audio_r(1 downto 0),
     -- 4-bit could be used down to 75 ohm load
@@ -613,15 +616,6 @@ begin
       acram_en => ram_en
   );
   end generate;
-  
-  flash_clock_output: entity work.ecp5_flash_clk
-  port map
-  (
-    flash_clk => S_flash_clk,
-    flash_csn => S_flash_csn
-  );
-  flash_clk <= S_flash_clk;
-  flash_csn <= S_flash_csn;
 
   G_dvid_sdr: if not C_dvid_ddr generate
     -- this module instantiates single ended inverters to simulate differential
@@ -638,5 +632,15 @@ begin
       gpdi_diff: OLVDS port map(A => ddr_d(i), Z => gpdi_dp(i), ZN => gpdi_dn(i));
     end generate;
   end generate;
+
+  S_flash_csn_filtered <= S_flash_csn;
+  S_flash_clk_filtered <= S_flash_csn_filtered or S_flash_clk;
+  flash_clock: entity work.ecp5_flash_clk
+  port map
+  (
+    flash_csn => rs232_break,
+    flash_clk => S_flash_clk_filtered
+  );
+  flash_csn <= S_flash_csn_filtered;
 
 end Behavioral;
