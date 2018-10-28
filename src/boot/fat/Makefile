@@ -25,13 +25,15 @@ SPI_IMG_NAME = ulx2s_4m.img
 
 # FAT filesystem parameters
 VOLUME_NAME=ULX3S
-#SECTORS = 304 # for 0-12FFFFF
-SECTORS = 1024
+# SECTORS = 288 # for 0-12FFFFF
+SECTORS = 288
+# SECTORS = 1024
 LOGICAL_SECTOR_SIZE = 4096
 ROOT_DIR_ENTRIES = 128
 RESERVED_SECTORS = $(shell echo '(' $$(wc -c loader.bin | cut -d " " -f 1) + $(LOADER_START) + $(LOGICAL_SECTOR_SIZE) - 1 ')' / $(LOGICAL_SECTOR_SIZE) | bc)
 FAT_SIZE = 12
 NUMBER_OF_FATS = 1
+LINUX_BLOCKS = $(shell echo $(SECTORS) * $(LOGICAL_SECTOR_SIZE) / 1024 | bc)
 
 LIBSRC = ../../lib/src
 
@@ -54,8 +56,10 @@ image_linux: loader.bin
 	  -R $(RESERVED_SECTORS) \
 	  -r $(ROOT_DIR_ENTRIES) \
 	  -f $(NUMBER_OF_FATS) \
-	  ./${SPI_IMG_NAME} $(SECTORS)
+	  ./${SPI_IMG_NAME} $(LINUX_BLOCKS)
+	# freshly compiled loader.bin doesn't work
 	# dd bs=1 if=loader.bin of=${SPI_IMG_NAME} seek=$(LOADER_START) conv=notrunc
+	# loader.bin from old image works
 	dd bs=1 if=/tmp/ulx3s_4m.img of=${SPI_IMG_NAME} skip=$(LOADER_START) seek=$(LOADER_START) count=10440 conv=notrunc
 	mmd -i ${SPI_IMG_NAME} ::boot
 	mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/basic.bin ::boot
