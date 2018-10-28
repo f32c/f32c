@@ -64,8 +64,16 @@ image_linux: loader.bin
 	# loader.bin from old image (for debugging)
 	# dd bs=1 if=/tmp/ulx3s_4m.img of=${SPI_IMG_NAME} skip=$(LOADER_START) seek=$(LOADER_START) count=10440 conv=notrunc
 	mmd -i ${SPI_IMG_NAME} ::boot
+	mmd -i ${SPI_IMG_NAME} ::demo
 	mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/basic.bin ::boot
 	mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/autoexec.bas ::
+	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/arcagol.bin ::demo
+	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/galaga.bin ::demo
+	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/blink.bin ::demo
+	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/pong.bin ::demo
+	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/sprites.bin ::demo
+	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/vector_fractal_fast.bin ::demo/vector.bin
+	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/galaga.bin ::autoexec.bin
 	mdir -i ${SPI_IMG_NAME} -/ ::
 
 image:	loader.bin
