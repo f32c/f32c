@@ -28,8 +28,8 @@ VOLUME_NAME=ULX3S
 IMAGE_KB = 640
 LOGICAL_SECTOR_SIZE = 4096
 SECTORS = $(shell echo $(IMAGE_KB) \* 1024 / $(LOGICAL_SECTOR_SIZE) | bc)
-RESERVED_SECTORS = $(shell echo '(' $$(wc -c loader.bin | cut -d " " -f 1) + $(LOADER_START) + $(LOGICAL_SECTOR_SIZE) - 1 ')' / $(LOGICAL_SECTOR_SIZE) | bc)
-FAT_SIZE = 12
+RESERVED_SECTORS = $(shell echo '(' $$(wc -c loader.bin | xargs echo | cut -d " " -f 1) + $(LOADER_START) + $(LOGICAL_SECTOR_SIZE) - 1 ')' / $(LOGICAL_SECTOR_SIZE) | bc)
+FAT_TYPE = 12
 NUMBER_OF_FATS = 1
 ROOT_DIR_ENTRIES = 128
 
@@ -50,7 +50,7 @@ image_linux: loader.bin
 	@echo "Reserved sectors:" $(RESERVED_SECTORS)
 	mkfs.msdos \
 	  -n $(VOLUME_NAME) \
-	  -F $(FAT_SIZE) \
+	  -F $(FAT_TYPE) \
 	  -S $(LOGICAL_SECTOR_SIZE) \
 	  -R $(RESERVED_SECTORS) \
 	  -r $(ROOT_DIR_ENTRIES) \
@@ -70,7 +70,7 @@ image:	loader.bin
 	@echo "Reserved sectors:" $(RESERVED_SECTORS)
 	newfs_msdos \
 	  -L $(VOLUME_NAME) \
-	  -F $(FAT_SIZE) \
+	  -F $(FAT_TYPE) \
 	  -S $(SECTORS) \
 	  -s $(LOGICAL_SECTOR_SIZE) \
 	  -r $(RESERVED_SECTORS) \
