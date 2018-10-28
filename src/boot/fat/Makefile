@@ -67,7 +67,7 @@ image_linux: loader.bin
 	mdir -i ${SPI_IMG_NAME} -/ ::
 
 image:	loader.bin
-	cat /dev/zero | tr "\000" "\377" | dd ibs=4k count=1k of=${SPI_IMG_NAME}
+	cat /dev/zero | tr "\000" "\377" | dd ibs=$(LOGICAL_SECTOR_SIZE) count=$(SECTORS) of=${SPI_IMG_NAME}
 	@echo "Reserved sectors:" $(RESERVED_SECTORS)
 	newfs_msdos \
 	  -F $(FAT_SIZE) \
@@ -77,8 +77,7 @@ image:	loader.bin
 	  -e $(ROOT_DIR_ENTRIES) \
 	  -n $(NUMBER_OF_FATS) \
 	    ./${SPI_IMG_NAME}
-	rm .rs
-	dd bs=1 if=loader.bin of=${SPI_IMG_NAME} oseek=512 conv=notrunc
+	dd bs=1 if=loader.bin of=${SPI_IMG_NAME} oseek=$(LOADER_START) conv=notrunc
 	mmd -i ${SPI_IMG_NAME} ::boot
 	mmd -i ${SPI_IMG_NAME} ::demo
 	mmd -i ${SPI_IMG_NAME} ::demo/pics
