@@ -25,15 +25,13 @@ SPI_IMG_NAME = ulx2s_4m.img
 
 # FAT filesystem parameters
 VOLUME_NAME=ULX3S
-# SECTORS = 288 # for 0-12FFFFF
-SECTORS = 288
-# SECTORS = 1024
+IMAGE_KB = 640
 LOGICAL_SECTOR_SIZE = 4096
-ROOT_DIR_ENTRIES = 128
+SECTORS = $(shell echo $(IMAGE_KB) \* 1024 / $(LOGICAL_SECTOR_SIZE) | bc)
 RESERVED_SECTORS = $(shell echo '(' $$(wc -c loader.bin | cut -d " " -f 1) + $(LOADER_START) + $(LOGICAL_SECTOR_SIZE) - 1 ')' / $(LOGICAL_SECTOR_SIZE) | bc)
 FAT_SIZE = 12
 NUMBER_OF_FATS = 1
-LINUX_BLOCKS = $(shell echo $(SECTORS) * $(LOGICAL_SECTOR_SIZE) / 1024 | bc)
+ROOT_DIR_ENTRIES = 128
 
 LIBSRC = ../../lib/src
 
@@ -47,6 +45,7 @@ ASFILES = ${LIBSRC}/${ARCH}/start.S
 include ${POST_MK}
 
 image_linux: loader.bin
+	@echo "sectors:" $(SECTORS)
 	cat /dev/zero | tr "\000" "\377" | dd ibs=$(LOGICAL_SECTOR_SIZE) count=$(SECTORS) of=${SPI_IMG_NAME}
 	@echo "Reserved sectors:" $(RESERVED_SECTORS)
 	mkfs.msdos \
@@ -56,7 +55,7 @@ image_linux: loader.bin
 	  -R $(RESERVED_SECTORS) \
 	  -r $(ROOT_DIR_ENTRIES) \
 	  -f $(NUMBER_OF_FATS) \
-	  ./${SPI_IMG_NAME} $(LINUX_BLOCKS)
+	  ./${SPI_IMG_NAME} $(IMAGE_KB)
 	# freshly compiled loader.bin doesn't work
 	# dd bs=1 if=loader.bin of=${SPI_IMG_NAME} seek=$(LOADER_START) conv=notrunc
 	# loader.bin from old image works
@@ -70,6 +69,7 @@ image:	loader.bin
 	cat /dev/zero | tr "\000" "\377" | dd ibs=$(LOGICAL_SECTOR_SIZE) count=$(SECTORS) of=${SPI_IMG_NAME}
 	@echo "Reserved sectors:" $(RESERVED_SECTORS)
 	newfs_msdos \
+	  -L $(VOLUME_NAME) \
 	  -F $(FAT_SIZE) \
 	  -S $(SECTORS) \
 	  -s $(LOGICAL_SECTOR_SIZE) \
