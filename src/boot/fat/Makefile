@@ -33,6 +33,8 @@ IMAGE_KB = 4096
 LOGICAL_SECTOR_SIZE = 4096
 SECTORS = $(shell echo $(IMAGE_KB) \* 1024 / $(LOGICAL_SECTOR_SIZE) | bc)
 RESERVED_SECTORS = $(shell echo '(' $$(wc -c loader.bin | xargs echo | cut -d " " -f 1) + $(LOADER_START) + $(LOGICAL_SECTOR_SIZE) - 1 ')' / $(LOGICAL_SECTOR_SIZE) | bc)
+BOOTSECTOR_SIZE = 512
+ERASE_TO_LOADER = $(shell echo $(LOADER_START) - $(BOOTSECTOR_SIZE) | bc)
 FAT_TYPE = 12
 NUMBER_OF_FATS = 1
 ROOT_DIR_ENTRIES = 128
@@ -59,20 +61,18 @@ image_linux: loader.bin
 	  -r $(ROOT_DIR_ENTRIES) \
 	  -f $(NUMBER_OF_FATS) \
 	  ./${SPI_IMG_NAME} $(IMAGE_KB)
-	# erase to 0xFF bitstream space
-	# FIXME erasing is 512 byte too long, overlaps with
-	# start of loader.bin which will be writen there 3 commands later
-	cat /dev/zero | tr "\0" "\377" | dd of=${SPI_IMG_NAME} bs=1 seek=512 count=$(LOADER_START) conv=notrunc
+	# erase (write 0xFF) after bootsector up to start of loader.bin (space for bitstream)
+	dd if=/dev/zero bs=$(ERASE_TO_LOADER) count=1 | tr "\0" "\377" | dd of=${SPI_IMG_NAME} bs=$(BOOTSECTOR_SIZE) seek=1 conv=notrunc
 	# write the bitstream
 	dd if=/mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480flash/f32c_ulx3s_v20_12k_pix8bpp640x480flash_100mhz.bit \
-	  of=${SPI_IMG_NAME} bs=512 seek=1 conv=notrunc
+	  of=${SPI_IMG_NAME} bs=$(BOOTSECTOR_SIZE) seek=1 conv=notrunc
 	# write the FAT bootloader
 	dd if=loader.bin of=${SPI_IMG_NAME} bs=1 seek=$(LOADER_START) conv=notrunc
-	# loader.bin from old image (for debugging)
-	# dd bs=1 if=/tmp/ulx3s_4m.img of=${SPI_IMG_NAME} skip=$(LOADER_START) seek=$(LOADER_START) count=10440 conv=notrunc
+	# copy files to FAT filesystem
 	mmd -i ${SPI_IMG_NAME} ::boot
 	mmd -i ${SPI_IMG_NAME} ::demo
-	mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/basic.bin ::boot
+	# mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/basic.bin ::boot
+	mcopy -i ${SPI_IMG_NAME} ../../lang/basic/basic.bin ::boot
 	mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/autoexec.bas ::
 	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/arcagol.bin ::demo
 	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/galaga.bin ::demo
