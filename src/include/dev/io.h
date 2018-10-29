@@ -58,6 +58,8 @@
 #define	IO_SPI_SDCARD	IO_ADDR(0x350)	/* half, RW */
 
 #define	IO_FB		IO_ADDR(0x380)	/* word, WR */
+#define	IO_TXTMODE_CTRL	IO_ADDR(0x381)	/* byte, WR */
+#define	IO_C2VIDEO_BASE	IO_ADDR(0x390)	/* word, WR */
 
 #define	IO_PCM_CUR	IO_ADDR(0x3A0)	/* word, RD */
 #define	IO_PCM_FIRST	IO_ADDR(0x3A0)	/* word, WR */

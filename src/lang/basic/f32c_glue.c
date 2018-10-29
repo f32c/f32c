@@ -53,8 +53,9 @@ tsc_update(void)
 {
 	uint32_t tsc;
 
-	 /* Clear the 50 Hz framebuffer interrupt */
-	INB(tsc, IO_FB);
+	/* Clear the vertical video blank interrupt (50-60 Hz) */
+	INW(tsc, IO_FB);
+	INW(tsc, IO_C2VIDEO_BASE);
 
 	RDTSC(tsc);
 	if (tsc < tsc_lo)

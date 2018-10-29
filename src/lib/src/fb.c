@@ -242,10 +242,27 @@ uint8_t fb_mode = 3;
 
 #define	ABS(a) (((a) < 0) ? -(a) : (a))
 
+#define COMPOSITING2
+
+#ifdef COMPOSITING2
+/* NOTE from compositing_line.h START */
+struct compositing_line {
+	struct compositing_line *next;
+	int16_t x;
+	uint16_t n;
+	uint8_t *bmp;
+};
+/* NOTE from compositing_line.h END */
+
+static struct compositing_line scanlines[288];
+static struct compositing_line blank_line = { NULL, 640, 0, NULL };
+static struct compositing_line *sp[480];
+#endif
 
 void
 fb_set_mode(int mode)
 {
+	int i;
 
 	free(fb[1]);
 	fb[1] = NULL;
@@ -266,11 +283,36 @@ fb_set_mode(int mode)
 	}
 	fb_mode = mode;
 	fb_active = fb[0];
-	if (fb_mode <= 1)
+	if (fb_mode <= 1) {
 		fb_rectangle(0, 0, 511, 287, 0);
+#ifdef COMPOSITING2
+		/* compisiting2 will be initialized as simple framebuffer */
+		/* Initialize compositing line descriptors */
+		for (i = 0; i < 96; i++) {
+			sp[i] = &blank_line;
+			sp[i + 288 + 96] = &blank_line;
+		}
+		for (i = 0; i < 288; i++) {
+			scanlines[i].x = 64;
+			scanlines[i].n = 511;
+			scanlines[i].bmp = &fb_active[512 * i];
+			sp[i + 96] = &scanlines[i];
+		}
+#endif
+	}
 
 #ifdef __mips__
+#ifdef COMPOSITING2
+	if (fb_mode <= 1)
+	{
+		OUTW(IO_C2VIDEO_BASE, sp);
+		OUTB(IO_TXTMODE_CTRL, 0b11000000); // enable video, yes bitmap, no text mode, no cursor
+	}
+	else
+		OUTW(IO_C2VIDEO_BASE, NULL);
+#else
 	OUTW(IO_FB, ((uint32_t) fb_active) | fb_mode);
+#endif
 #endif
 }
 
