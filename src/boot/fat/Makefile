@@ -59,7 +59,14 @@ image_linux: loader.bin
 	  -r $(ROOT_DIR_ENTRIES) \
 	  -f $(NUMBER_OF_FATS) \
 	  ./${SPI_IMG_NAME} $(IMAGE_KB)
+	# erase to 0xFF bitstream space
+	# FIXME erasing is 512 byte too long, overlaps with
+	# start of loader.bin which will be writen there 3 commands later
 	cat /dev/zero | tr "\0" "\377" | dd of=${SPI_IMG_NAME} bs=1 seek=512 count=$(LOADER_START) conv=notrunc
+	# write the bitstream
+	dd if=/mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480flash/f32c_ulx3s_v20_12k_pix8bpp640x480flash_100mhz.bit \
+	  of=${SPI_IMG_NAME} bs=512 seek=1 conv=notrunc
+	# write the FAT bootloader
 	dd if=loader.bin of=${SPI_IMG_NAME} bs=1 seek=$(LOADER_START) conv=notrunc
 	# loader.bin from old image (for debugging)
 	# dd bs=1 if=/tmp/ulx3s_4m.img of=${SPI_IMG_NAME} skip=$(LOADER_START) seek=$(LOADER_START) count=10440 conv=notrunc
