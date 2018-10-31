@@ -435,3 +435,6 @@ IOBUF PORT  "gn[27]" PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;
 # on PCB v1.7 shutdown is not connected to FPGA
 LOCATE COMP "shutdown" SITE "G16"; # FPGA receives
 IOBUF  PORT "shutdown" PULLMODE=DOWN IO_TYPE=LVCMOS33 DRIVE=4;
+# on PCB v1.7 wifi_gpio5 is not connected to FPGA
+LOCATE COMP "wifi_gpio5" SITE "N4"; # FPGA receives
+IOBUF  PORT "wifi_gpio5" PULLMODE=DOWN IO_TYPE=LVCMOS33 DRIVE=4;
