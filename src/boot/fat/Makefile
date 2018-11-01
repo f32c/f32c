@@ -64,23 +64,26 @@ image_linux: loader.bin
 	# erase (write 0xFF) after bootsector up to start of loader.bin (space for bitstream)
 	dd if=/dev/zero bs=$(ERASE_TO_LOADER) count=1 | tr "\0" "\377" | dd of=${SPI_IMG_NAME} bs=$(BOOTSECTOR_SIZE) seek=1 conv=notrunc
 	# write the bitstream
-	dd if=/mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480flash/f32c_ulx3s_v20_12k_pix8bpp640x480flash_100mhz.bit \
+	#dd if=/mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480flash/f32c_ulx3s_v20_12k_pix8bpp640x480flash_100mhz.bit \
+	#  of=${SPI_IMG_NAME} bs=$(BOOTSECTOR_SIZE) seek=1 conv=notrunc
+	dd if=/mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-45k/pix8bpp640x480oledspi/f32c_ulx3s_v20_45k_pix8bpp640x480oledspi_100mhz.bit \
 	  of=${SPI_IMG_NAME} bs=$(BOOTSECTOR_SIZE) seek=1 conv=notrunc
 	# write the FAT bootloader
 	dd if=loader.bin of=${SPI_IMG_NAME} bs=1 seek=$(LOADER_START) conv=notrunc
 	# copy files to FAT filesystem
 	mmd -i ${SPI_IMG_NAME} ::boot
 	mmd -i ${SPI_IMG_NAME} ::demo
-	# mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/basic.bin ::boot
-	mcopy -i ${SPI_IMG_NAME} ../../lang/basic/basic.bin ::boot
+	mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/basic.bin ::boot
+	# mcopy -i ${SPI_IMG_NAME} ../../lang/basic/basic.bin ::boot
 	mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/autoexec.bas ::
 	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/arcagol.bin ::demo
 	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/galaga.bin ::demo
 	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/blink.bin ::demo
 	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/pong.bin ::demo
+	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/oled.bin ::demo
 	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/sprites.bin ::demo
 	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/vector_fractal_fast.bin ::demo/vector.bin
-	#mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/galaga.bin ::autoexec.bin
+	# mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/oled.bin ::autoexec.bin
 	mdir -i ${SPI_IMG_NAME} -/ ::
 
 image:	loader.bin
