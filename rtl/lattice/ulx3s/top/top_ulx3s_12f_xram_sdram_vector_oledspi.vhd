@@ -46,6 +46,8 @@ entity ulx3s_xram_sdram_vector is
     C_branch_prediction: boolean := false; -- false default
     C_sio: integer := 2; -- 2 default
     C_spi: integer := 4; -- 2 default
+    C_spi_turbo_mode: std_logic_vector := "0000";
+    C_spi_fixed_speed: std_logic_vector := "1110";
     C_simple_io: boolean := true; -- true default
     C_gpio: integer := 64; -- 64 default for ulx3s
     C_gpio_pullup: boolean := false; -- false default
@@ -410,6 +412,8 @@ begin
     C_debug => C_debug,
     C_sio => C_sio,
     C_spi => C_spi,
+    C_spi_turbo_mode => C_spi_turbo_mode,
+    C_spi_fixed_speed => C_spi_fixed_speed,
     C_gpio => C_gpio,
     C_gpio_pullup => C_gpio_pullup,
     C_gpio_adc => C_gpio_adc,
