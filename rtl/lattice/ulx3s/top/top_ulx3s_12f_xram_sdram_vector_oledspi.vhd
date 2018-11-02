@@ -47,7 +47,7 @@ entity ulx3s_xram_sdram_vector is
     C_sio: integer := 2; -- 2 default
     C_spi: integer := 4; -- 2 default
     C_spi_turbo_mode: std_logic_vector := "0000";
-    C_spi_fixed_speed: std_logic_vector := "1110";
+    C_spi_fixed_speed: std_logic_vector := "1100";
     C_simple_io: boolean := true; -- true default
     C_gpio: integer := 64; -- 64 default for ulx3s
     C_gpio_pullup: boolean := false; -- false default
