@@ -300,7 +300,7 @@
         <Source name="../../../../soc/vector/fpu/float_divide_goldschmidt.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../constraints/ulx3s_v17_flash.lpf" type="Logic Preference" type_short="LPF">
+        <Source name="../../constraints/ulx3s_v17patch_flash.lpf" type="Logic Preference" type_short="LPF">
             <Options/>
         </Source>
         <Source name="ulx3s_45f_flash_micron_32mbit.xcf" type="Programming Project File" type_short="Programming" excluded="TRUE">
