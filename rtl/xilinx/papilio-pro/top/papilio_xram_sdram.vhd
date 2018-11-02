@@ -143,6 +143,7 @@ begin
 
     C_sio                       => 1,
     C_spi                       => 2,
+    C_boot_spi                  => true,
     C_gpio                      => 32,
 
     C_boot_write_protect        => false,
@@ -193,7 +194,6 @@ begin
 
     -- SoC configuration options
     C_bram_const_init           => true,
-    C_boot_spi                  => false,
     C_xram_base                 => X"8", -- SDRAM mapping at 0x80000000
 
     C_sio_init_baudrate         => 115200,
