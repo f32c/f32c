@@ -1,0 +1,13 @@
+Index: xc3sprog.cpp
+===================================================================
+--- xc3sprog.cpp	(revision 795)
++++ xc3sprog.cpp	(working copy)
+@@ -1299,7 +1299,7 @@
+         int ret = 0;
+         char action = 'w';
+         BitFile spifile;
+-        FILE_STYLE  spifile_style = STYLE_BIT;
++        FILE_STYLE  spifile_style = STYLE_BIN;
+ 
+         FILE *spifile_fp =
+             getFile_and_Attribute_from_name

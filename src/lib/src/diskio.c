@@ -37,6 +37,7 @@
 #endif
 
 #define	FLASH_BLOCKLEN	4096
+#define FLASH_FAT_OFFSET 0x100000
 
 #define	SPI_CMD_WRSR	0x01
 #define	SPI_CMD_PAGEWR	0x02
@@ -69,7 +70,7 @@ flash_erase_sectors(int start, int cnt)
 {
 	int addr, sum, i;
 
-	addr = start * (FLASH_BLOCKLEN / 256);
+	addr = FLASH_FAT_OFFSET / 256 + start * (FLASH_BLOCKLEN / 256);
 	for (; cnt > 0; cnt--, addr += (FLASH_BLOCKLEN / 256)) {
 		/* Skip already blank sectors */
 		spi_start_transaction(IO_SPI_FLASH);
@@ -123,7 +124,7 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 	/* Erase sectors */
 	flash_erase_sectors(SectorNumber, SectorCount);
 
-	addr = SectorNumber * (FLASH_BLOCKLEN / 256);
+	addr = FLASH_FAT_OFFSET / 256 + SectorNumber * (FLASH_BLOCKLEN / 256);
 	for (; SectorCount > 0; SectorCount--)
 		switch (mfg_id) {
 		case SPI_MFG_SST:
@@ -187,7 +188,7 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 static int
 flash_disk_read(uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount)
 {
-	int addr = SectorNumber * (FLASH_BLOCKLEN / 256);
+	int addr = FLASH_FAT_OFFSET / 256 + SectorNumber * (FLASH_BLOCKLEN / 256);
 
 	for (; SectorCount > 0; SectorCount--) {
 		spi_start_transaction(IO_SPI_FLASH);

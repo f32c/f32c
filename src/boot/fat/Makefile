@@ -17,19 +17,29 @@ CFLAGS += -D_FS_TINY=1 -D_FS_RPATH=0 -D_USE_LFN=0 -D_CODE_PAGE=1
 
 PROG = loader
 
-# loader start address in the flash image
-# should be equal to rom/loader.c
-# #define LOADER_START 0x100000
-LOADER_START = 1048576
-# bitstream should be written from flash address 512
-# and should not overwrite LOADER_START
+# Leaves free space for bitstream
+# FAT will starts at 1MB (offset mount).
+FLASH_FAT_OFFSET = 1048576
+# bitstream should be written from flash address 0
+# and should not be longer than FLASH_FAT_OFFSET bytes
+# BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480oledspi/f32c_ulx3s_v20_12k_pix8bpp640x480oledspi_100mhz.bit
+# BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-45k/pix8bpp640x480oledspi/f32c_ulx3s_v20_45k_pix8bpp640x480oledspi_100mhz.bit
+BITSTREAM_IMG_NAME = ../../../rtl/proj/xilinx/papilio-pro/papilio_pro_xram_sdram/papilio_pro.bin
+# loader start address relative to start of the FAT image
+LOADER_START = 512
+# it should match the address relative to flash start in rom/loader.c
+# #define LOADER_START 0x100200
 
-# SPI flash image name
-SPI_IMG_NAME = ulx2s_4m.img
+# SPI flash complete image name
+SPI_IMG_NAME = /tmp/flash.img
+
+# temporary files
+TMP_BITSTREAM_IMG_NAME = /tmp/bitstream.img
+TMP_FAT_IMG_NAME = /tmp/fat.img
 
 # FAT filesystem parameters
 VOLUME_NAME=ULX3S
-IMAGE_KB = 4096
+IMAGE_KB = 3072
 LOGICAL_SECTOR_SIZE = 4096
 SECTORS = $(shell echo $(IMAGE_KB) \* 1024 / $(LOGICAL_SECTOR_SIZE) | bc)
 RESERVED_SECTORS = $(shell echo '(' $$(wc -c loader.bin | xargs echo | cut -d " " -f 1) + $(LOADER_START) + $(LOGICAL_SECTOR_SIZE) - 1 ')' / $(LOGICAL_SECTOR_SIZE) | bc)
@@ -51,7 +61,12 @@ ASFILES = ${LIBSRC}/${ARCH}/start.S
 include ${POST_MK}
 
 image_linux: loader.bin
-	dd if=/dev/zero ibs=$(LOGICAL_SECTOR_SIZE) count=$(SECTORS) | tr "\0" "\377" > ${SPI_IMG_NAME}
+	# erase (write 0xFF) as the space for bitstream
+	dd if=/dev/zero bs=$(FLASH_FAT_OFFSET) count=1 | tr "\0" "\377" > ${TMP_BITSTREAM_IMG_NAME}
+	# write the bitstream
+	dd if=${BITSTREAM_IMG_NAME} of=${TMP_BITSTREAM_IMG_NAME} conv=notrunc
+	# FAT filesystem
+	dd if=/dev/zero ibs=$(LOGICAL_SECTOR_SIZE) count=$(SECTORS) | tr "\0" "\377" > ${TMP_FAT_IMG_NAME}
 	@echo "Reserved sectors:" $(RESERVED_SECTORS)
 	mkfs.msdos \
 	  -n $(VOLUME_NAME) \
@@ -60,31 +75,29 @@ image_linux: loader.bin
 	  -R $(RESERVED_SECTORS) \
 	  -r $(ROOT_DIR_ENTRIES) \
 	  -f $(NUMBER_OF_FATS) \
-	  ./${SPI_IMG_NAME} $(IMAGE_KB)
+	  ${TMP_FAT_IMG_NAME} $(IMAGE_KB)
 	# erase (write 0xFF) after bootsector up to start of loader.bin (space for bitstream)
-	dd if=/dev/zero bs=$(ERASE_TO_LOADER) count=1 | tr "\0" "\377" | dd of=${SPI_IMG_NAME} bs=$(BOOTSECTOR_SIZE) seek=1 conv=notrunc
-	# write the bitstream
-	#dd if=/mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480flash/f32c_ulx3s_v20_12k_pix8bpp640x480flash_100mhz.bit \
-	#  of=${SPI_IMG_NAME} bs=$(BOOTSECTOR_SIZE) seek=1 conv=notrunc
-	dd if=/mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-45k/pix8bpp640x480oledspi/f32c_ulx3s_v20_45k_pix8bpp640x480oledspi_100mhz.bit \
-	  of=${SPI_IMG_NAME} bs=$(BOOTSECTOR_SIZE) seek=1 conv=notrunc
+        # dd if=/dev/zero bs=$(ERASE_TO_LOADER) count=1 | tr "\0" "\377" | dd of=${TMP_FAT_IMG_NAME} bs=$(BOOTSECTOR_SIZE) seek=
 	# write the FAT bootloader
-	dd if=loader.bin of=${SPI_IMG_NAME} bs=1 seek=$(LOADER_START) conv=notrunc
+	dd if=loader.bin of=${TMP_FAT_IMG_NAME} bs=1 seek=$(LOADER_START) conv=notrunc
 	# copy files to FAT filesystem
-	mmd -i ${SPI_IMG_NAME} ::boot
-	mmd -i ${SPI_IMG_NAME} ::demo
-	mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/basic.bin ::boot
-	# mcopy -i ${SPI_IMG_NAME} ../../lang/basic/basic.bin ::boot
-	mcopy -i ${SPI_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/autoexec.bas ::
-	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/arcagol.bin ::demo
-	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/galaga.bin ::demo
-	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/blink.bin ::demo
-	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/pong.bin ::demo
-	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/oled.bin ::demo
-	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/sprites.bin ::demo
-	mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/vector_fractal_fast.bin ::demo/vector.bin
-	# mcopy -i ${SPI_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/oled.bin ::autoexec.bin
-	mdir -i ${SPI_IMG_NAME} -/ ::
+	mmd -i ${TMP_FAT_IMG_NAME} ::boot
+	mmd -i ${TMP_FAT_IMG_NAME} ::demo
+	# mcopy -i ${TMP_FAT_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/basic.bin ::boot
+	mcopy -i ${TMP_FAT_IMG_NAME} ../../lang/basic/basic.bin ::boot
+	mcopy -i ${TMP_FAT_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/autoexec.bas ::
+	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/arcagol.bin ::demo
+	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/galaga.bin ::demo
+	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/blink.bin ::demo
+	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/pong.bin ::demo
+	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/oled.bin ::demo
+	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/sprites.bin ::demo
+	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/vector_fractal_fast.bin ::demo/vector.bin
+	# mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/galaga.bin ::autoexec.bin
+	mdir -i ${TMP_FAT_IMG_NAME} -/ ::
+	# complete FLASH image
+	cat ${TMP_BITSTREAM_IMG_NAME} ${TMP_FAT_IMG_NAME} > ${SPI_IMG_NAME}
+	@rm ${TMP_BITSTREAM_IMG_NAME} ${TMP_FAT_IMG_NAME}
 
 image:	loader.bin
 	cat /dev/zero | tr "\000" "\377" | dd ibs=$(LOGICAL_SECTOR_SIZE) count=$(SECTORS) of=${SPI_IMG_NAME}
@@ -132,3 +145,16 @@ image:	loader.bin
 	mcopy -i ${SPI_IMG_NAME} ../../../../demo/basic/autoexec.bas ::
 	mcopy -i ${SPI_IMG_NAME} ../../bench/coremark/coremark.bin ::bench
 	mcopy -i ${SPI_IMG_NAME} ../../bench/dhry/dhry.bin ::bench
+
+flash_ulx3s:
+	ujprog /mt/scratch/tmp/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-45k-v2.0/tinyfpga_45k.bit
+	#ujprog /mt/scratch/tmp/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-85k-v2.0/tinyfpga_85k.bit
+	sleep 2
+	# write whole image
+	tinyfpgasp -a 0 -w /tmp/flash.img
+
+flash_papilio:
+	xz -cd ../../../rtl/proj/xilinx/include/bscan_xc6s_tqg144_papilio_pro.bit.xz > /tmp/jtag_spi_bridge.bit
+	/mt/scratch/tmp/xc3sprog/xc3sprog_anybin -c ftdi -I/tmp/jtag_spi_bridge.bit /tmp/flash.img
+	rm /tmp/jtag_spi_bridge.bit
+	/mt/scratch/tmp/xc3sprog/xc3sprog_anybin -c ftdi -R

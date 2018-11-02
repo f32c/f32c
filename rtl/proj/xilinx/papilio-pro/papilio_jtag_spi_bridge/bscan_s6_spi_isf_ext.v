@@ -28,7 +28,7 @@ module top
    wire        RAM_DO;
    wire        RAM_DI;
    reg 	       RAM_WE = 0;
-   reg [7:0]   counter = 0;
+   reg [15:0]   counter = 0;
    
    RAMB16_S1_S1 RAMB16_S1_S1_inst
      (
@@ -70,7 +70,7 @@ module top
 
    wire        rst = CAPTURE || RESET || UPDATE || !SEL1;
    
-   assign LED1=counter[7];
+   assign LED1=counter[15];
    always @(posedge DRCK1)
      if(!CSB)
        counter <= counter + 1;

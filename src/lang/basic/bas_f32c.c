@@ -37,10 +37,13 @@
 
 
 #define	RAM_BASE	0x80000000
-#define	LOADER_BASE	0x8fff8000
+#define	LOADER_BASE	0x800f8000
 
 #define	LOAD_COOKIE	0x10adc0de
 #define	LOADADDR	RAM_BASE
+
+#define FLASH_FAT_OFFSET 0x100000
+#define LOADER_START     0x100200
 
 /*
  * If compiling with EMBEDDED_LOADER first prepare loader_bin.h using:
@@ -168,7 +171,7 @@ bas_exec(void)
 #ifdef EMBEDDED_LOADER
 	memcpy(cp, loader_bin, LOADER_LEN);
 #else /* !EMBEDDED_LOADER */
-	flash_read_block((void *) cp, 0, 512);
+	flash_read_block((void *) cp, FLASH_FAT_OFFSET, 512);
 	sec_size = (cp[0xc] << 8) + cp[0xb];
 	res_sec = (cp[0xf] << 8) + cp[0xe];
 	if (cp[0x1fe] != 0x55 || cp[0x1ff] != 0xaa || sec_size != 4096
@@ -177,8 +180,8 @@ bas_exec(void)
 		error(15);
 	}
 
-	len = sec_size * res_sec - 512;
-	flash_read_block((void *) cp, 512, len);
+	len = sec_size * res_sec - (LOADER_START - FLASH_FAT_OFFSET);
+	flash_read_block((void *) cp, FLASH_FAT_OFFSET, len);
 #endif
 
 #ifdef __mips__

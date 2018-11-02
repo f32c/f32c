@@ -33,8 +33,10 @@
 
 #define	SRAM_BASE	0x80000000
 #define	SRAM_TOP	0x80100000
+/* FAT start (bootsector) address in the flash image */
+#define FLASH_FAT_OFFSET 0x100000
 /* FAT loader start address in the flash image */
-#define LOADER_START    0x100000
+#define LOADER_START    0x100200
 /* address in RAM where the FAT loader is copied from flash */
 #define	LOADER_BASE	0x800f8000
 
@@ -205,18 +207,18 @@ main(void)
 	/* Reset all CPU cores except CPU #0 */
 	OUTW(IO_CPU_RESET, ~1);
 
-	flash_read_block((void *) cp, 0, 512);
+	flash_read_block((void *) cp, FLASH_FAT_OFFSET, 512);
 	sec_size = (cp[0xc] << 8) + cp[0xb];
 	res_sec = (cp[0xf] << 8) + cp[0xe];
 	if (cp[0x1fe] != 0x55 || cp[0x1ff] != 0xaa || sec_size != 4096
-	    || res_sec < 2) {
+	    /* || res_sec < 2 */ ) {
 		puts("Invalid boot sector\n");
 		sio_boot();
 		cp = sio_load_binary();
 		goto boot;
 	}
 
-	len = sec_size * res_sec - LOADER_START;
+	len = sec_size * res_sec - (LOADER_START - FLASH_FAT_OFFSET);
 	flash_read_block((void *) cp, LOADER_START, len);
 	puts("Boot block loaded from SPI flash at 0x");
 	phex32((uint32_t) cp);

@@ -71,7 +71,7 @@ NET PORT_C(8)      LOC="P123" |IOSTANDARD=LVTTL;                                
 NET PORT_C(9)      LOC="P124" |IOSTANDARD=LVTTL;                                # C9
 NET PORT_C(10)     LOC="P126" |IOSTANDARD=LVTTL;                                # C10
 NET PORT_C(11)     LOC="P127" |IOSTANDARD=LVTTL;                                # C11
-NET SPI_MISO       LOC="P131" |IOSTANDARD=LVTTL;                                # C12
+NET SPI_MISO       LOC="P131" |IOSTANDARD=LVTTL |PULLUP;                        # C12
 NET SPI_MOSI       LOC="P132" |IOSTANDARD=LVTTL;                                # C13
 NET SPI_SS         LOC="P133" |IOSTANDARD=LVTTL;                                # C14
 NET SPI_SCK        LOC="P134" |IOSTANDARD=LVTTL;                                # C15
