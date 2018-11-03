@@ -135,7 +135,7 @@ bas_exec(void)
 	uint32_t *up = (void *) RAM_BASE;
 	uint8_t *cp = (void *) LOADER_BASE;
 	int len;
-	int i;
+	uint32_t i;
 #ifndef EMBEDDED_LOADER
 	int res_sec, sec_size;
 #endif
@@ -191,7 +191,7 @@ bas_exec(void)
 		__asm __volatile__(
 			"cache	0, 0(%0)"
 			: 
-			: "r" (i)
+			: "r" (cp+i)
 		);
 	}
 
