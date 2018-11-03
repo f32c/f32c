@@ -135,6 +135,7 @@ bas_exec(void)
 	uint32_t *up = (void *) RAM_BASE;
 	uint8_t *cp = (void *) LOADER_BASE;
 	int len;
+	int i;
 #ifndef EMBEDDED_LOADER
 	int res_sec, sec_size;
 #endif
@@ -185,6 +186,15 @@ bas_exec(void)
 #endif
 
 #ifdef __mips__
+	/* Invalidate I-cache */
+	for (i = 0; i < 32768; i += 4) {
+		__asm __volatile__(
+			"cache	0, 0(%0)"
+			: 
+			: "r" (i)
+		);
+	}
+
 	__asm __volatile__(
 		".set noreorder;"
 		"di;"			/* Disable all interrupts */
