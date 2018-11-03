@@ -47,11 +47,13 @@
 #define	SPI_CMD_FASTRD	0x0b
 #define	SPI_CMD_ERSEC	0x20
 #define	SPI_CMD_EWSR	0x50
-#define	SPI_CMD_RDID	0x90
-#define	SPI_CMD_AAIWR	0xad
+#define	SPI_CMD_RDID	0xAB
+#define	SPI_CMD_AAIWR	0xAD
 
-#define	SPI_MFG_SPANS	0x01
-#define	SPI_MFG_SST	0xbf
+#define	SPI_MFG_ISSI1	0x15
+#define	SPI_MFG_SPANS	0x16
+#define	SPI_MFG_ISSI2	0x17
+#define	SPI_MFG_SST	0xBF
 
 
 #ifndef DISKIO_RO
@@ -146,6 +148,8 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 				busy_wait();
 			}
 			break;
+		case SPI_MFG_ISSI1:
+		case SPI_MFG_ISSI2:
 		case SPI_MFG_SPANS:
 			for (i = 0; i < FLASH_BLOCKLEN; i += 256, addr++) {
 				/* Write enable */
