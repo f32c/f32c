@@ -22,9 +22,12 @@ PROG = loader
 FLASH_FAT_OFFSET = 1048576
 # bitstream should be written from flash address 0
 # and should not be longer than FLASH_FAT_OFFSET bytes
-# BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480oledspi/f32c_ulx3s_v20_12k_pix8bpp640x480oledspi_100mhz.bit
-BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_12f_v2.0_c2_oledspi/project/f32c_ulx3s_v20_12k_pix8bpp640x480oledspi_100mhz.bit
+BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480oledspi/f32c_ulx3s_v20_12k_pix8bpp640x480oledspi_100mhz.bit
+# BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_12f_v2.0_c2_oledspi/project/f32c_ulx3s_v20_12k_pix8bpp640x480oledspi_100mhz.bit
 # BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-45k/pix8bpp640x480oledspi/f32c_ulx3s_v20_45k_pix8bpp640x480oledspi_100mhz.bit
+# BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_vector_45f_v1.7p_c2_oledspi/project/f32c_ulx3s_v17_45k_pix8bpp640x480oledspi_100mhz.bit
+# BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v17-45k/pix8bpp640x480oledspi/f32c_ulx3s_v17_45k_pix8bpp640x480oledspi_100mhz.bit
+# BITSTREAM_IMG_NAME = /mt/scratch/tmp/xilinx/papilio-pro/f32c/papilio_pro.bin
 # BITSTREAM_IMG_NAME = ../../../rtl/proj/xilinx/papilio-pro/papilio_pro_xram_sdram/papilio_pro.bin
 # loader start address relative to start of the FAT image
 LOADER_START = 512
@@ -147,9 +150,14 @@ image:	loader.bin
 	mcopy -i ${SPI_IMG_NAME} ../../bench/coremark/coremark.bin ::bench
 	mcopy -i ${SPI_IMG_NAME} ../../bench/dhry/dhry.bin ::bench
 
+flash_ulx2s:
+	ujprog -j flash /mt/scratch/tmp/lattice/ulx2s/8e/xram_synth/ulx2s_8e_xram_synth.jed
+	# ujprog -j flash ../../../rtl/proj/lattice/ulx2s/xram_synth/project/project_project.jed
+
 flash_ulx3s:
 	ujprog /mt/scratch/tmp/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-12k-v2.0/tinyfpga_12k.bit
 	#ujprog /mt/scratch/tmp/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-45k-v2.0/tinyfpga_45k.bit
+	#ujprog /mt/scratch/tmp/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-45k-v1.7patch/tinyfpga_45k.bit
 	#ujprog /mt/scratch/tmp/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-85k-v2.0/tinyfpga_85k.bit
 	sleep 2
 	# write whole image
