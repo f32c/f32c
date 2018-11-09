@@ -246,7 +246,7 @@ port (
   sram_wel, sram_lbl, sram_ubl: out std_logic;
   -- sram_oel: out std_logic; -- XXX the old ULXP2 board needs this!
   sdram_addr: out std_logic_vector(12 downto 0);
-  sdram_data: inout std_logic_vector(31 downto 0) := (others => 'Z');
+  sdram_data: inout std_logic_vector(31 downto 0);
   sdram_ba: out std_logic_vector(1 downto 0);
   sdram_dqm: out std_logic_vector(3 downto 0) := (others => '1');
   sdram_ras, sdram_cas: out std_logic;
