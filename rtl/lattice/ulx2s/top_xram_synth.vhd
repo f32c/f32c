@@ -74,8 +74,8 @@ entity toplevel is
     -- ISA options
     C_arch: integer := ARCH_MI32;
     C_big_endian: boolean := false;
-    -- C_boot_spi = true: bootloader will try to chainboot SPI flash ROM, fallback to serial
-    -- C_boot_spi = false: -- serial bootloader only
+    -- C_boot_spi := true; -- bootloader will try to chainboot SPI flash ROM, fallback to serial
+    -- C_boot_spi := false;-- serial bootloader only
     C_boot_spi: boolean := true;
     C_mult_enable: boolean := true;
     C_branch_likely: boolean := true;
@@ -104,7 +104,6 @@ entity toplevel is
 
     -- SoC configuration options
     C_bram_size: integer := 8;	-- 8 or 16 KBytes
-      C_i_rom_only: boolean := true;
       C_icache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
       C_dcache_size: integer := 2;	-- 0, 2, 4 or 8 KBytes
 
@@ -123,6 +122,8 @@ entity toplevel is
     C_simple_in: integer := 32; -- buttons and switches (not all used)
     C_gpio: integer := 32; -- number of GPIO pins
     C_spi: integer := 2; -- number of SPI interfaces
+    C_spi_turbo_mode: std_logic_vector := "0000";
+    C_spi_fixed_speed: std_logic_vector := "1100";
 
     C_tv: boolean := false; -- TV out
       -- number of pixels for line; 512
@@ -352,7 +353,6 @@ begin
       C_movn_movz => C_movn_movz,
       C_debug => C_debug,
       C_bram_size => C_bram_size,
-      -- C_i_rom_only => C_i_rom_only,
       C_icache_size => C_icache_size,	-- 0, 2, 4 or 8 KBytes
       C_dcache_size => C_dcache_size,	-- 0, 2, 4 or 8 KBytes
       C_xram_base => C_xram_base,
@@ -363,6 +363,8 @@ begin
       C_sram_pipelined_read => C_sram_pipelined_read, -- works only at 81.25 MHz !!!
       C_sio => C_sio,
       C_spi => C_spi,
+      C_spi_turbo_mode => C_spi_turbo_mode,
+      C_spi_fixed_speed => C_spi_fixed_speed,
       C_simple_out => C_simple_out,
       C_simple_in => C_simple_in,
       C_gpio => C_gpio,

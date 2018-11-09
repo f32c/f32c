@@ -6,7 +6,7 @@
         <Source name="../../../../lattice/ulx2s/top_xram_synth.vhd" type="VHDL" type_short="VHDL">
             <Options top_module="toplevel"/>
         </Source>
-        <Source name="../../../../generic/glue_xram.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../generic/glue_xram_vector.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../cpu/alu.vhd" type="VHDL" type_short="VHDL">
@@ -183,6 +183,9 @@
         <Source name="../../../../soc/sdram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../../soc/sdram32.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../../soc/acram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -238,6 +241,54 @@
             <Options/>
         </Source>
         <Source name="../../../../soc/pid/rotary_decoder.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/vector.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/f32c_vector_dma.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/axi_vector_dma.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/fpu/add_sub_emiraga/add_sub_emiraga.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee_adder.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee.v" type="Verilog" type_short="Verilog">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/fpu/mul/multiplier/fpmul_pipeline.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/fpu/mul/multiplier/fpmul_stage1_struct.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/fpu/mul/multiplier/fpmul_stage2_struct.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/fpu/mul/multiplier/fpmul_stage3_struct.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/fpu/mul/multiplier/fpmul_stage4_struct.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/fpu/mul/common/fpnormalize_fpnormalize.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/fpu/mul/common/fpround_fpround.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/fpu/mul/common/packfp_packfp.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/fpu/mul/common/unpackfp_unpackfp.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../soc/vector/fpu/float_divide_goldschmidt.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../constraints/ulx2s.lpf" type="Logic Preference" type_short="LPF">
