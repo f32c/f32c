@@ -41,10 +41,10 @@ entity ulx3s_xram_sdram_vector is
     --   1 MB  "1"          x"100fffff"  20                  2            false        custom
     -- RAM start address x"8" -> 0x80000000 (needs C_PC_mask x"800fffff" for 1MB or x"81ffffff" for 32MB)
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- 8 default for C_xboot_rom=false, 0 for C_xboot_rom=true, sets XRAM base address
-    -- C_PC_mask: std_logic_vector(31 downto 0) := x"81ffffff"; -- ULX3S default 32MB
-    C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff"; -- ULX2S simulation 1MB
-    -- C_cached_addr_bits: integer := 25; -- ULX3S default 32MB
-    C_cached_addr_bits: integer := 20; -- ULX2S simulation 1MB
+    C_PC_mask: std_logic_vector(31 downto 0) := x"81ffffff"; -- ULX3S default 32MB
+    -- C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff"; -- ULX2S simulation 1MB
+    C_cached_addr_bits: integer := 25; -- ULX3S default 32MB
+    -- C_cached_addr_bits: integer := 20; -- ULX2S simulation 1MB
     C_acram: boolean := false; -- false default (ulx3s has sdram chip)
     C_acram_wait_cycles: integer := 3; -- 3 or more
     C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2)
