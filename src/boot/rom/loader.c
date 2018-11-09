@@ -38,7 +38,7 @@
 /* FAT loader start address in the flash image */
 #define LOADER_START    0x100200
 /* address in RAM where the FAT loader is copied from flash */
-#define	LOADER_BASE	0x800f8000
+#define	LOADER_BASE	0x800F0000
 
 #ifndef ONLY_I_ROM
 #if _BYTE_ORDER == _BIG_ENDIAN
@@ -251,7 +251,7 @@ boot:
 		".set noat;"
 		"move $1, %0;"
 		"lui $4, 0x8000;"	/* stack mask */
-		"lui $5, 0x0010;"	/* top of the initial stack */
+		"lui $5, 0x1000;"	/* top of the initial stack */
 		"and $29, %0, $4;"	/* clear low bits of the stack */
 
 		"beqz $29, cache_skip;"	/* skip cache invalidate for BRAM */
