@@ -34,7 +34,17 @@ entity ulx3s_xram_sdram_vector is
     C_boot_write_protect: boolean := true; -- true default, may leave boot block writeable to save some LUTs
     C_boot_rom_data_bits: integer := 32; -- number of bits in output from bootrom_emu
     C_boot_spi: boolean := true; -- SPI bootloader is larger and allows setting of baudrate
+    --  RAM    C_xram_base  C_PC_mask    C_cached_addr_bits  C_bram_size  C_xboot_rom  Comment
+    --  32 MB  "8"          x"81ffffff"  25                  2            false        ULX3S default
+    --  32 MB  "0"          x"01ffffff"  25                  0            true         XRAM only, no BRAM
+    --   1 MB  "8"          x"800fffff"  20                  2            false        ULX2S simulaton
+    --   1 MB  "1"          x"100fffff"  20                  2            false        custom
+    -- RAM start address x"8" -> 0x80000000 (needs C_PC_mask x"800fffff" for 1MB or x"81ffffff" for 32MB)
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- 8 default for C_xboot_rom=false, 0 for C_xboot_rom=true, sets XRAM base address
+    -- C_PC_mask: std_logic_vector(31 downto 0) := x"81ffffff"; -- ULX3S default 32MB
+    C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff"; -- ULX2S simulation 1MB
+    -- C_cached_addr_bits: integer := 25; -- ULX3S default 32MB
+    C_cached_addr_bits: integer := 20; -- ULX2S simulation 1MB
     C_acram: boolean := false; -- false default (ulx3s has sdram chip)
     C_acram_wait_cycles: integer := 3; -- 3 or more
     C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2)
@@ -396,6 +406,7 @@ begin
     C_boot_write_protect => C_boot_write_protect,
     C_boot_spi => C_boot_spi,
     C_branch_prediction => C_branch_prediction,
+    C_PC_mask => C_PC_mask,
     C_acram => C_acram,
     C_acram_wait_cycles => C_acram_wait_cycles,
     C_sdram => C_sdram,
