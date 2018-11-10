@@ -55,6 +55,8 @@
 #define	SPI_MFG_ISSI2	0x17
 #define	SPI_MFG_SST	0xBF
 
+#define USE_EWSR 1
+#define USE_WRSR 1
 
 #ifndef DISKIO_RO
 static void
@@ -114,14 +116,18 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 	mfg_id = spi_byte(IO_SPI_FLASH, 0);
 	spi_byte(IO_SPI_FLASH, 0);
 
+	#if USE_EWSR
 	/* Enable Write Status Register */
 	spi_start_transaction(IO_SPI_FLASH);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
+	#endif
 
+	#if USE_WRSR
 	/* Clear write-protect bits */
 	spi_start_transaction(IO_SPI_FLASH);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
 	spi_byte(IO_SPI_FLASH, 0);
+	#endif
 
 	/* Erase sectors */
 	flash_erase_sectors(SectorNumber, SectorCount);
@@ -175,14 +181,18 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 	spi_byte(IO_SPI_FLASH, SPI_CMD_WRDI);
 	busy_wait();
 
+	#if USE_EWSR
 	/* Enable Write Status Register */
 	spi_start_transaction(IO_SPI_FLASH);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
+	#endif
 
+	#if USE_WRSR
 	/* Set write-protect bits */
 	spi_start_transaction(IO_SPI_FLASH);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
 	spi_byte(IO_SPI_FLASH, 0x1c);
+	#endif
 
 	return (RES_OK);
 }
@@ -285,25 +295,33 @@ disk_ioctl(BYTE drive, BYTE cmd, void* buf)
 #ifndef DISKIO_RO
 	case CTRL_ERASE_SECTOR:
 		if (drive == 0) {
+			#if USE_EWSR
 			/* Enable Write Status Register */
 			spi_start_transaction(IO_SPI_FLASH);
 			spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
+			#endif
 
+			#if USE_WRSR
 			/* Clear write-protect bits */
 			spi_start_transaction(IO_SPI_FLASH);
 			spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
 			spi_byte(IO_SPI_FLASH, 0);
+			#endif
 
 			flash_erase_sectors(up[0], up[1] - up[0] + 1);
 
+			#if USE_EWSR
 			/* Enable Write Status Register */
 			spi_start_transaction(IO_SPI_FLASH);
 			spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
+			#endif
 
+			#if USE_WRSR
 			/* Set write-protect bits */
 			spi_start_transaction(IO_SPI_FLASH);
 			spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
 			spi_byte(IO_SPI_FLASH, 0x1c);
+			#endif
 		}
 		return (RES_OK);
 #endif /* !DISKIO_RO */
