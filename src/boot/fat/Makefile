@@ -96,6 +96,8 @@ image_linux: loader.bin
 	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/pong.bin ::demo
 	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/oled.bin ::demo
 	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/sprites.bin ::demo
+	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/synth50.bin ::demo
+	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/synth100.bin ::demo
 	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/vector_fractal_fast.bin ::demo/vector.bin
 	# mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/galaga.bin ::autoexec.bin
 	mdir -i ${TMP_FAT_IMG_NAME} -/ ::
