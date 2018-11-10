@@ -3,7 +3,7 @@
     <Options/>
     <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Strategy1">
         <Options def_top="ulx3s_xram_sdram_vector" top="ulx3s_xram_sdram_vector"/>
-        <Source name="../../../../lattice/ulx3s/top/top_ulx3s_v17_45f_xram_sdram_vector_oledspi.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_vector_flash.vhd" type="VHDL" type_short="VHDL">
             <Options top_module="ulx3s_xram_sdram_vector"/>
         </Source>
         <Source name="../../../../lattice/ulx3s/clocks/clk_25_78_125_25.vhd" type="VHDL" type_short="VHDL">
@@ -301,9 +301,6 @@
             <Options/>
         </Source>
         <Source name="../../constraints/ulx3s_v17patch_flash.lpf" type="Logic Preference" type_short="LPF">
-            <Options/>
-        </Source>
-        <Source name="ulx3s_45f_flash_micron_32mbit.xcf" type="Programming Project File" type_short="Programming" excluded="TRUE">
             <Options/>
         </Source>
         <Source name="ulx3s_45f_sram.xcf" type="Programming Project File" type_short="Programming">

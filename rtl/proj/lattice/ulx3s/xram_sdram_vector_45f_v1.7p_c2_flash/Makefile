@@ -5,6 +5,6 @@ BOARD_VERSION = v17p
 FPGA_SIZE = 45
 
 # bitstream file prefix
-BITSTREAM_PREFIX = f32c_$(BOARD)_$(BOARD_VERSION)_$(FPGA_SIZE)k_flash_100mhz
+BITSTREAM_PREFIX = f32c_$(BOARD)_$(BOARD_VERSION)_$(FPGA_SIZE)k_pix8bpp640x480flash_100mhz
 
 include ../../include/ulx3s.mk
