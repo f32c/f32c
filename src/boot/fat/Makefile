@@ -22,8 +22,9 @@ PROG = loader
 FLASH_FAT_OFFSET = 1048576
 # bitstream should be written from flash address 0
 # and should not be longer than FLASH_FAT_OFFSET bytes
-BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480oledspi/f32c_ulx3s_v20_12k_pix8bpp640x480oledspi_100mhz.bit
-# BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_12f_v2.0_c2_oledspi/project/f32c_ulx3s_v20_12k_pix8bpp640x480oledspi_100mhz.bit
+# BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480oledspi/f32c_ulx3s_v20_12k_pix8bpp640x480oledspi_100mhz.bit
+BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_12f_v2.0_c2_oledspi/project/f32c_ulx3s_v20_12k_pix8bpp640x480oledspi_100mhz.bit
+# BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_12f_v2.0_synth/project/f32c_ulx3s_v20_12k_synth_100mhz.bit
 # BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-45k/pix8bpp640x480oledspi/f32c_ulx3s_v20_45k_pix8bpp640x480oledspi_100mhz.bit
 # BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_vector_45f_v1.7p_c2_oledspi/project/f32c_ulx3s_v17_45k_pix8bpp640x480oledspi_100mhz.bit
 # BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v17-45k/pix8bpp640x480oledspi/f32c_ulx3s_v17_45k_pix8bpp640x480oledspi_100mhz.bit
