@@ -62,10 +62,10 @@
 static void
 busy_wait()
 {
-
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_RDSR);
-	do {} while (spi_byte(IO_SPI_FLASH, SPI_CMD_RDSR) & 1);
+	do {
+		spi_start_transaction(IO_SPI_FLASH);
+		spi_byte(IO_SPI_FLASH, SPI_CMD_RDSR);
+	} while (spi_byte(IO_SPI_FLASH, SPI_CMD_RDSR) & 1);
 }
 
 
