@@ -12,6 +12,9 @@
         <Source name="../../../../lattice/ulx3s/clocks/clk_25_100_125_25.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../../lattice/chip/ecp5u/ecp5_flash_clk.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../../generic/glue_xram_vector.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -297,7 +300,7 @@
         <Source name="../../../../soc/vector/fpu/float_divide_goldschmidt.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../constraints/ulx3s_v20_selftest.lpf" type="Logic Preference" type_short="LPF">
+        <Source name="../../constraints/ulx3s_v20_flash.lpf" type="Logic Preference" type_short="LPF">
             <Options/>
         </Source>
         <Source name="ulx3s_12f_sram.xcf" type="Programming Project File" type_short="Programming">
