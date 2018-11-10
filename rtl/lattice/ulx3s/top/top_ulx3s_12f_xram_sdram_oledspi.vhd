@@ -256,7 +256,7 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   constant C_break_counter_bits: integer := 1+ceil_log2(integer(C_passthru_clk_Hz*C_passthru_break));
   signal R_break_counter: std_logic_vector(C_break_counter_bits-1 downto 0) := (others => '0');
   signal S_f32c_sd_csn, S_f32c_sd_clk, S_f32c_sd_miso, S_f32c_sd_mosi: std_logic;
-  signal S_flash_csn, S_flash_clk, S_flash_clk_filtered, S_flash_csn_filtered: std_logic;
+  signal S_flash_csn, S_flash_clk: std_logic;
 
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
@@ -650,14 +650,12 @@ begin
     end generate;
   end generate;
 
-  S_flash_csn_filtered <= S_flash_csn;
-  S_flash_clk_filtered <= S_flash_csn_filtered or S_flash_clk;
   flash_clock: entity work.ecp5_flash_clk
   port map
   (
     flash_csn => rs232_break,
-    flash_clk => S_flash_clk_filtered
+    flash_clk => S_flash_clk
   );
-  flash_csn <= S_flash_csn_filtered;
+  flash_csn <= S_flash_csn;
 
 end Behavioral;
