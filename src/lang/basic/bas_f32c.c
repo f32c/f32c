@@ -37,7 +37,7 @@
 
 
 #define	RAM_BASE	0x80000000
-#define	LOADER_BASE	0x800f8000
+#define	LOADER_BASE	0x800F0000
 
 #define	LOAD_COOKIE	0x10adc0de
 #define	LOADADDR	RAM_BASE
@@ -189,9 +189,9 @@ bas_exec(void)
 	/* Invalidate I-cache */
 	for (i = 0; i < 32768; i += 4) {
 		__asm __volatile__(
-			"cache	0, 0(%0)"
+			"cache 0, 0(%0)"
 			: 
-			: "r" (cp+i)
+			: "r" (i + (uint32_t)cp)
 		);
 	}
 
@@ -207,7 +207,7 @@ bas_exec(void)
 		"or $29, $29, $5;"      /* set the stack pointer */
 		".set reorder;"
 		:
-		: "r" (cp)
+		: "r" (LOADER_BASE)
 	);
 #else /* riscv */
 	/* XXX fixme! */
