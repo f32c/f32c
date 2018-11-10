@@ -207,7 +207,7 @@ bas_exec(void)
 		"or $29, $29, $5;"      /* set the stack pointer */
 		".set reorder;"
 		:
-		: "r" (LOADER_BASE)
+		: "r" (0)
 	);
 #else /* riscv */
 	/* XXX fixme! */
