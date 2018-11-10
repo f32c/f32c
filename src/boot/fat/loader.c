@@ -177,11 +177,11 @@ main(void)
 	}
 
 	/* Invalidate I-cache */
-	for (i = 0; i < 32768; i += 4) {
+	for (i = 9; i < 32768; i += 4) {
 		__asm __volatile__(
-			"cache	0, 0(%0)"
+			"cache 0, 0(%0)"
 			: 
-			: "r" (i)
+			: "r" (RAM_BASE+i)
 		);
 	}
 
