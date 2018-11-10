@@ -56,7 +56,9 @@
 #define	SPI_MFG_SST	0xBF
 
 #define USE_EWSR 1
+#define USE_WREN_BEFORE_WRSR 0
 #define USE_WRSR 1
+
 
 #ifndef DISKIO_RO
 static void
@@ -122,6 +124,12 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 	spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
 	#endif
 
+	#if USE_WREN_BEFORE_WRSR
+	/* Write enable */
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
+	#endif
+
 	#if USE_WRSR
 	/* Clear write-protect bits */
 	spi_start_transaction(IO_SPI_FLASH);
@@ -185,6 +193,12 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 	/* Enable Write Status Register */
 	spi_start_transaction(IO_SPI_FLASH);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
+	#endif
+
+	#if USE_WREN_BEFORE_WRSR
+	/* Write enable */
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
 	#endif
 
 	#if USE_WRSR
@@ -301,6 +315,12 @@ disk_ioctl(BYTE drive, BYTE cmd, void* buf)
 			spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
 			#endif
 
+			#if USE_WREN_BEFORE_WRSR
+			/* Write enable */
+			spi_start_transaction(IO_SPI_FLASH);
+			spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
+			#endif
+
 			#if USE_WRSR
 			/* Clear write-protect bits */
 			spi_start_transaction(IO_SPI_FLASH);
@@ -314,6 +334,12 @@ disk_ioctl(BYTE drive, BYTE cmd, void* buf)
 			/* Enable Write Status Register */
 			spi_start_transaction(IO_SPI_FLASH);
 			spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
+			#endif
+
+			#if USE_WREN_BEFORE_WRSR
+			/* Write enable */
+			spi_start_transaction(IO_SPI_FLASH);
+			spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
 			#endif
 
 			#if USE_WRSR
