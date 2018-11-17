@@ -52,7 +52,6 @@ entity ulx3s_xram_sdram_vector is
     C_sdram_clock_range: integer := 1; -- standard value good for all
     C_icache_size: integer := 2; -- 2 default
     C_dcache_size: integer := 2; -- 2 default
-    C_cached_addr_bits: integer := 25; -- lower address bits than C_cached_addr_bits are cached
     C_branch_prediction: boolean := false; -- false default
     C_sio: integer := 2; -- 2 default
     C_spi: integer := 4; -- 2 default

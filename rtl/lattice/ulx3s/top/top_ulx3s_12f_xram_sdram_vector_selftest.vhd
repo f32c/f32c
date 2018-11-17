@@ -34,7 +34,17 @@ entity ulx3s_xram_sdram_vector is
     C_boot_write_protect: boolean := true; -- true default, may leave boot block writeable to save some LUTs
     C_boot_rom_data_bits: integer := 32; -- number of bits in output from bootrom_emu
     C_boot_spi: boolean := true; -- SPI bootloader is larger and allows setting of baudrate
+    --  RAM    C_xram_base  C_PC_mask    C_cached_addr_bits  C_bram_size  C_xboot_rom  Comment
+    --  32 MB  "8"          x"81ffffff"  25                  2            false        ULX3S default
+    --  32 MB  "0"          x"01ffffff"  25                  0            true         XRAM only, no BRAM
+    --   1 MB  "8"          x"800fffff"  20                  2            false        ULX2S simulaton
+    --   1 MB  "1"          x"100fffff"  20                  2            false        custom
+    -- RAM start address x"8" -> 0x80000000 (needs C_PC_mask x"800fffff" for 1MB or x"81ffffff" for 32MB)
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- 8 default for C_xboot_rom=false, 0 for C_xboot_rom=true, sets XRAM base address
+    C_PC_mask: std_logic_vector(31 downto 0) := x"81ffffff"; -- ULX3S default 32MB
+    -- C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff"; -- ULX2S simulation 1MB
+    C_cached_addr_bits: integer := 25; -- ULX3S default 32MB
+    -- C_cached_addr_bits: integer := 20; -- ULX2S simulation 1MB
     C_acram: boolean := false; -- false default (ulx3s has sdram chip)
     C_acram_wait_cycles: integer := 3; -- 3 or more
     C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2)
@@ -42,10 +52,9 @@ entity ulx3s_xram_sdram_vector is
     C_sdram_clock_range: integer := 1; -- standard value good for all
     C_icache_size: integer := 2; -- 2 default
     C_dcache_size: integer := 2; -- 2 default
-    C_cached_addr_bits: integer := 25; -- lower address bits than C_cached_addr_bits are cached
     C_branch_prediction: boolean := false; -- false default
     C_sio: integer := 2; -- 2 default
-    C_spi: integer := 2; -- 2 default
+    C_spi: integer := 3; -- 2 default
     C_simple_io: boolean := true; -- true default
     C_gpio: integer := 96; -- 64 default for ulx3s, additional gpio for audio DAC testing
     C_gpio_pullup: boolean := false; -- false default
@@ -58,7 +67,8 @@ entity ulx3s_xram_sdram_vector is
     C_spdif: boolean := false; -- SPDIF output
     C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
-    C_passthru_autodetect: boolean := true; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
+    -- enabling passthru autodetect reduces fmax or vector divide must be disabled on 45f
+    C_passthru_autodetect: boolean := false; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
     C_passthru_clk_Hz: real := 25.0E6; -- passthru state machine uses 25 MHz clock
     C_passthru_break: real := 10.0E-3; -- seconds (approximately) to detect serial break and enter f32c mode
 
@@ -136,7 +146,7 @@ entity ulx3s_xram_sdram_vector is
   wifi_rxd: out   std_logic;
   wifi_txd: in    std_logic;
   -- WiFi additional signaling
-  wifi_en: inout  std_logic := 'Z'; -- '0' will disable wifi by default
+  wifi_en: inout  std_logic; -- '0' will disable wifi by default
   wifi_gpio0, wifi_gpio5, wifi_gpio16, wifi_gpio17: inout std_logic := 'Z';
 
   -- USB
@@ -187,10 +197,10 @@ entity ulx3s_xram_sdram_vector is
   -- Flash ROM (SPI0)
   -- commented out because it can't be used as GPIO
   -- when bitstream is loaded from config flash
-  --flash_miso   : in      std_logic;
-  --flash_mosi   : out     std_logic;
+  flash_miso   : in      std_logic;
+  flash_mosi   : out     std_logic;
   --flash_clk    : out     std_logic;
-  --flash_csn    : out     std_logic;
+  flash_csn    : out     std_logic;
   flash_holdn, flash_wpn: out std_logic := '1';
 
   -- SD card (SPI1)
@@ -244,6 +254,7 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   constant C_break_counter_bits: integer := 1+ceil_log2(integer(C_passthru_clk_Hz*C_passthru_break));
   signal R_break_counter: std_logic_vector(C_break_counter_bits-1 downto 0) := (others => '0');
   signal S_f32c_sd_csn, S_f32c_sd_clk, S_f32c_sd_miso, S_f32c_sd_mosi: std_logic;
+  signal S_flash_csn, S_flash_clk: std_logic;
 
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
@@ -375,6 +386,12 @@ begin
     ftdi_rxd <= S_txd;
     wifi_rxd <= S_txd;
     wifi_gpio0 <= btn(0); -- pressing BTN0 will escape to ESP32 file select menu
+    wifi_en <= '0';
+    sd_d(3) <= S_f32c_sd_csn;
+    sd_clk <= S_f32c_sd_clk;
+    S_f32c_sd_miso <= sd_d(0);
+    sd_cmd <= S_f32c_sd_mosi;
+    sd_d(2 downto 1) <= (others => '1');
   end generate;
   
   -- hold pushbutton BTN1 to upload to f32c over USB
@@ -390,6 +407,10 @@ begin
     C_boot_write_protect => C_boot_write_protect,
     C_boot_spi => C_boot_spi,
     C_branch_prediction => C_branch_prediction,
+    C_PC_mask => C_PC_mask,
+    C_icache_size => C_icache_size,
+    C_dcache_size => C_dcache_size,
+    C_cached_addr_bits => C_cached_addr_bits,
     C_acram => C_acram,
     C_acram_wait_cycles => C_acram_wait_cycles,
     C_sdram => C_sdram,
@@ -398,9 +419,6 @@ begin
     C_sdram_column_bits => 9,
     C_sdram_startup_cycles => 10100,
     C_sdram_cycles_per_refresh => 1524,
-    C_icache_size => C_icache_size,
-    C_dcache_size => C_dcache_size,
-    C_cached_addr_bits => C_cached_addr_bits,
     C_xdma => C_xboot_rom,
     C_xram_base => C_xram_base,
     C_debug => C_debug,
@@ -483,10 +501,10 @@ begin
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
 
-    spi_sck(0)  => open,  spi_sck(1)  => S_f32c_sd_clk,   -- sd_clk,
-    spi_ss(0)   => open,  spi_ss(1)   => S_f32c_sd_csn,   -- sd_d(3),
-    spi_mosi(0) => open,  spi_mosi(1) => S_f32c_sd_mosi,  -- sd_cmd,
-    spi_miso(0) => '0',   spi_miso(1) => S_f32c_sd_miso,  -- sd_d(0),
+    spi_ss(0)   => S_flash_csn,  spi_ss(1)   => S_f32c_sd_csn,   spi_ss(2)   => oled_csn,
+    spi_sck(0)  => S_flash_clk,  spi_sck(1)  => S_f32c_sd_clk,   spi_sck(2)  => oled_clk,
+    spi_mosi(0) => flash_mosi,   spi_mosi(1) => S_f32c_sd_mosi,  spi_mosi(2) => oled_mosi,
+    spi_miso(0) => flash_miso,   spi_miso(1) => S_f32c_sd_miso,  spi_miso(2) => open,
 
     gpio(127 downto 96) => open, -- not allocated
     gpio(95 downto 76) => open, -- 12 pins free
@@ -506,11 +524,11 @@ begin
     simple_out(15) => open,
     simple_out(14) => open, -- wifi_en
     simple_out(13) => shutdown,
-    simple_out(12) => oled_csn,
+    simple_out(12) => open,
     simple_out(11) => oled_dc,
     simple_out(10) => oled_resn,
-    simple_out(9) => oled_mosi,
-    simple_out(8) => oled_clk,
+    simple_out(9) => open,
+    simple_out(8) => open,
     simple_out(7 downto 0) => led(7 downto 0),
     simple_in(31 downto 21) => (others => '0'),
     simple_in(20) => adc_miso,
@@ -630,5 +648,13 @@ begin
       gpdi_diff: OLVDS port map(A => ddr_d(i), Z => gpdi_dp(i), ZN => gpdi_dn(i));
     end generate;
   end generate;
+
+  flash_clock: entity work.ecp5_flash_clk
+  port map
+  (
+    flash_csn => rs232_break,
+    flash_clk => S_flash_clk
+  );
+  flash_csn <= S_flash_csn;
 
 end Behavioral;
