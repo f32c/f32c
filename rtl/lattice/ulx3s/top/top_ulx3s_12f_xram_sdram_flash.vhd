@@ -502,10 +502,10 @@ begin
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
 
-    spi_ss(0)   => S_flash_csn,  spi_ss(1)   => S_f32c_sd_csn,   spi_ss(2)   => oled_csn,   spi_ss(3)   => gn(21),
-    spi_sck(0)  => S_flash_clk,  spi_sck(1)  => S_f32c_sd_clk,   spi_sck(2)  => oled_clk,   spi_sck(3)  => gn(22),
+    spi_ss(0)   => S_flash_csn,  spi_ss(1)   => S_f32c_sd_csn,   spi_ss(2)   => oled_csn,   spi_ss(3)   => gn(24),
+    spi_sck(0)  => S_flash_clk,  spi_sck(1)  => S_f32c_sd_clk,   spi_sck(2)  => oled_clk,   spi_sck(3)  => gn(21),
     spi_mosi(0) => flash_mosi,   spi_mosi(1) => S_f32c_sd_mosi,  spi_mosi(2) => oled_mosi,  spi_mosi(3) => gn(23),
-    spi_miso(0) => flash_miso,   spi_miso(1) => S_f32c_sd_miso,  spi_miso(2) => open,       spi_miso(3) => gn(24),
+    spi_miso(0) => flash_miso,   spi_miso(1) => S_f32c_sd_miso,  spi_miso(2) => open,       spi_miso(3) => gn(22),
 
     gpio(127 downto 28+32) => open,
     gpio(27+32 downto 25+32) => gn(27 downto 25),
