@@ -22,16 +22,21 @@ PROG = loader
 FLASH_FAT_OFFSET = 1048576
 # bitstream should be written from flash address 0
 # and should not be longer than FLASH_FAT_OFFSET bytes
-BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480flash/f32c_ulx3s_v20_12k_pix8bpp640x480flash_100mhz.bit
-# BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_12f_v2.0_c2_flash/project/f32c_ulx3s_v20_12k_pix8bpp640x480flash_100mhz.bit
-# BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-25k/pix8bpp640x480flash/f32c_ulx3s_v20_25k_pix8bpp640x480flash_100mhz.bit
-# BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_12f_v2.0_synth/project/f32c_ulx3s_v20_12k_synth_100mhz.bit
-# BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-45k/pix8bpp640x480flash/f32c_ulx3s_v20_45k_pix8bpp640x480flash_100mhz.bit
-# BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_vector_45f_v1.7p_c2_flash/project/f32c_ulx3s_v17p_45k_pix8bpp640x480flash_100mhz.bit
-# BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v17-45k/pix8bpp640x480flash/f32c_ulx3s_v17p_45k_pix8bpp640x480flash_100mhz.bit
-# BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-85k/pix8bpp640x480flash/f32c_ulx3s_v20_85k_pix8bpp640x480flash_100mhz.bit
-# BITSTREAM_IMG_NAME = /mt/scratch/tmp/xilinx/papilio-pro/f32c/papilio_pro.bin
-# BITSTREAM_IMG_NAME = ../../../rtl/proj/xilinx/papilio-pro/papilio_pro_xram_sdram/papilio_pro.bin
+#BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480flash/f32c_ulx3s_v20_12k_pix8bpp640x480flash_100mhz.bit
+#BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_12f_v2.0_c2_flash/project/f32c_ulx3s_v20_12k_pix8bpp640x480flash_100mhz.bit
+#BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/f32c/f32c-12k-v20/f32c_ulx3s_v20_12k_selftest_100mhz.bit
+#BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_12f_v2.0_synth/project/f32c_ulx3s_v20_12k_synth_100mhz.bit
+#BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-25k/pix8bpp640x480flash/f32c_ulx3s_v20_25k_pix8bpp640x480flash_100mhz.bit
+#BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/f32c/f32c-25k-vector-v20/f32c_ulx3s_v20_25k_selftest_100mhz.bit
+#BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-45k/pix8bpp640x480flash/f32c_ulx3s_v20_45k_pix8bpp640x480flash_100mhz.bit
+#BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/f32c/f32c-45k-vector-v20/f32c_ulx3s_v20_45k_selftest_100mhz.bit
+#BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_vector_45f_v1.7p_c2_flash/project/f32c_ulx3s_v17p_45k_pix8bpp640x480flash_100mhz.bit
+#BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v17-45k/pix8bpp640x480flash/f32c_ulx3s_v17p_45k_pix8bpp640x480flash_100mhz.bit
+#BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/f32c/f32c-45k-vector-v17patch/f32c_ulx3s_v17p_45k_selftest_100mhz.bit
+#BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-85k/pix8bpp640x480flash/f32c_ulx3s_v20_85k_pix8bpp640x480flash_100mhz.bit
+BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/f32c/f32c-85k-vector-v20/f32c_ulx3s_v20_85k_selftest_100mhz.bit
+#BITSTREAM_IMG_NAME = /mt/scratch/tmp/xilinx/papilio-pro/f32c/papilio_pro.bin
+#BITSTREAM_IMG_NAME = ../../../rtl/proj/xilinx/papilio-pro/papilio_pro_xram_sdram/papilio_pro.bin
 # loader start address relative to start of the FAT image
 LOADER_START = 512
 # it should match the address relative to flash start in rom/loader.c
@@ -55,6 +60,8 @@ ERASE_TO_LOADER = $(shell echo $(LOADER_START) - $(BOOTSECTOR_SIZE) | bc)
 FAT_TYPE = 12
 NUMBER_OF_FATS = 1
 ROOT_DIR_ENTRIES = 128
+
+F32C_BIN_DIR=/mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/f32c/f32c-bin
 
 LIBSRC = ../../lib/src
 
@@ -90,19 +97,21 @@ image_linux: loader.bin
 	# copy files to FAT filesystem
 	mmd -i ${TMP_FAT_IMG_NAME} ::boot
 	mmd -i ${TMP_FAT_IMG_NAME} ::demo
-	mcopy -i ${TMP_FAT_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/basic.bin ::boot
 	#mcopy -i ${TMP_FAT_IMG_NAME} ../../lang/basic/basic.bin ::boot
-	mcopy -i ${TMP_FAT_IMG_NAME} ~/src/fpga/fpgarduino/basic-c2/autoexec.bas ::
-	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/arcagol.bin ::demo
-	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/galaga.bin ::demo
-	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/blink.bin ::demo
-	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/pong.bin ::demo
-	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/oled.bin ::demo
-	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/sprites.bin ::demo
-	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/synth50.bin ::demo
-	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/synth100.bin ::demo
-	mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/vector_fractal_fast.bin ::demo/vector.bin
-	# mcopy -i ${TMP_FAT_IMG_NAME} /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-bin/galaga.bin ::autoexec.bin
+	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/basic.bin ::boot
+	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/autoexec.bas ::
+	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/arcagol.bin ::demo
+	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/galaga.bin ::demo
+	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/blink.bin ::demo
+	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/pong.bin ::demo
+	#mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/oled.bin ::demo
+	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/sprites.bin ::demo
+	#mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/synth50.bin ::demo
+	#mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/synth100.bin ::demo
+	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/vector_fractal_fast.bin ::demo/vector.bin
+	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/selftest-mcp7940n.bin ::demo/test_mcp.bin
+	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/selftest-pcf8523t.bin ::demo/test_pcf.bin
+	# mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/galaga.bin ::autoexec.bin
 	mdir -i ${TMP_FAT_IMG_NAME} -/ ::
 	# complete FLASH image
 	cat ${TMP_BITSTREAM_IMG_NAME} ${TMP_FAT_IMG_NAME} > ${SPI_IMG_NAME}
@@ -160,11 +169,11 @@ flash_ulx2s:
 	# ujprog -j flash ../../../rtl/proj/lattice/ulx2s/xram_synth/project/project_project.jed
 
 flash_ulx3s:
-	#ujprog /mt/scratch/tmp/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-45k-v1.7patch/tinyfpga_45k.bit
-	ujprog /mt/scratch/tmp/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-12k-v2.0/tinyfpga_12k.bit
-	#ujprog /mt/scratch/tmp/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-25k-v2.0/tinyfpga_25k.bit
-	#ujprog /mt/scratch/tmp/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-45k-v2.0/tinyfpga_45k.bit
-	#ujprog /mt/scratch/tmp/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-85k-v2.0/tinyfpga_85k.bit
+	#ujprog /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-45k-v1.7patch/tinyfpga_45k.bit
+	#ujprog /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-12k-v2.0/tinyfpga_12k.bit
+	#ujprog /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-25k-v2.0/tinyfpga_25k.bit
+	#ujprog /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-45k-v2.0/tinyfpga_45k.bit
+	ujprog /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/tinyfpgasp/tinyfpgasp-85k-v2.0/tinyfpga_85k.bit
 	sleep 2
 	# write whole image
 	tinyfpgasp -a 0 -w /tmp/flash.img
