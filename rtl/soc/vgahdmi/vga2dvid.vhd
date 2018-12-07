@@ -80,6 +80,7 @@ architecture Behavioral of vga2dvid is
 	signal shift_clock: std_logic_vector(9 downto 0) := C_shift_clock_initial;
 	signal R_shift_clock_off_sync: std_logic := '0';
 	signal R_shift_clock_synchronizer: std_logic_vector(7 downto 0) := (others => '0');
+	signal R_sync_fail: std_logic_vector(6 downto 0); -- counts sync fails, after too many, reinitialize shift_clock
 
 	constant c_red	 : std_logic_vector(1 downto 0) := (others => '0');
 	constant c_green : std_logic_vector(1 downto 0) := (others => '0');
@@ -168,6 +169,15 @@ begin
 		end if;
 		if R_shift_clock_synchronizer(R_shift_clock_synchronizer'high) = '0' then
 			shift_clock <= shift_clock(0) & shift_clock(9 downto 1);
+		else
+			-- synchronization failed.
+			-- after too many fails, reinitialize shift_clock
+			if R_sync_fail(R_sync_fail'high) = '1' then
+				shift_clock <= C_shift_clock_initial;
+				R_sync_fail <= (others => '0');
+			else
+				R_sync_fail <= R_sync_fail + 1;
+			end if;
 		end if;
 		end if;
 	end process;
@@ -189,6 +199,15 @@ begin
 		end if;
 		if R_shift_clock_synchronizer(R_shift_clock_synchronizer'high) = '0' then
 			shift_clock <= shift_clock(1 downto 0) & shift_clock(9 downto 2);
+		else
+			-- synchronization failed.
+			-- after too many fails, reinitialize shift_clock
+			if R_sync_fail(R_sync_fail'high) = '1' then
+				shift_clock <= C_shift_clock_initial;
+				R_sync_fail <= (others => '0');
+			else
+				R_sync_fail <= R_sync_fail + 1;
+			end if;
 		end if;
 		end if;
 	end process;
