@@ -87,6 +87,7 @@ entity ulx3s_xram_sdram_vector is
     -- video parameters common for vgahdmi and vgatext
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
+    C_shift_clock_synchronizer: boolean := true; -- logic that synchronizes DVI clock with pixel clock.
 
     C_vgahdmi: boolean := true;
     -- normally this should be  actual bits per pixel
@@ -249,6 +250,8 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal S_rom_valid: std_logic;
 
   -- dual ESP32/f32c programming mode
+  alias wifi_rxd2: std_logic is wifi_gpio16;
+  alias wifi_txd2: std_logic is wifi_gpio17;
   signal S_rxd, S_txd: std_logic; -- mix USB and WiFi
   signal S_prog_in, S_prog_out: std_logic_vector(1 downto 0);
   signal R_esp32_mode: std_logic := '0';
@@ -451,6 +454,7 @@ begin
     C_vector_float_divide => C_vector_float_divide,
 
     C_dvid_ddr => C_dvid_ddr,
+    C_shift_clock_synchronizer => C_shift_clock_synchronizer,
     -- vga simple compositing bitmap only graphics
     C_compositing2_write_while_reading => C_compositing2_write_while_reading,
     C_vgahdmi => C_vgahdmi,
