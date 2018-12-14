@@ -75,6 +75,7 @@ entity ulx3s_xram_sdram_vector is
     -- video parameters common for vgahdmi and vgatext
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
+    C_shift_clock_synchronizer: boolean := true; -- logic that synchronizes DVI clock with pixel clock.
 
     C_vgahdmi: boolean := true;
     -- normally this should be  actual bits per pixel
@@ -430,6 +431,7 @@ begin
     C_vector_float_divide => C_vector_float_divide,
 
     C_dvid_ddr => C_dvid_ddr,
+    C_shift_clock_synchronizer => C_shift_clock_synchronizer,
     -- vga simple compositing bitmap only graphics
     C_compositing2_write_while_reading => C_compositing2_write_while_reading,
     C_vgahdmi => C_vgahdmi,
