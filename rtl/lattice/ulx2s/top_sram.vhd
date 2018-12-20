@@ -305,7 +305,8 @@ begin
     sio: entity work.sio
     generic map (
 	C_big_endian => C_big_endian,
-	C_clk_freq => C_clk_freq
+	C_clk_freq => C_clk_freq,
+	C_break_detect => true
     )
     port map (
 	clk => clk, ce => sio_ce, txd => sio_txd, rxd => rs232_rx,
@@ -411,6 +412,7 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) then
+	    R_cpu_reset(0) <= sio_break;
 	    R_cur_io_port <= next_io_port;
 	end if;
 	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
