@@ -394,7 +394,7 @@ begin
     -- C_sdram_clock_range => 2,
     C_sdram_address_width => 24,
     C_sdram_column_bits => 9,
-    C_sdram_startup_cycles => 10100,
+    C_sdram_startup_cycles => 12000,
     C_sdram_cycles_per_refresh => 1524,
     C_icache_size => C_icache_size,
     C_dcache_size => C_dcache_size,
