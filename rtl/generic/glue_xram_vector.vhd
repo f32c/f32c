@@ -73,6 +73,9 @@ generic (
 
   -- SDRAM parameters
   C_sdram_clock_range : integer := 2;
+  C_sdram_ras : integer := 3;
+  C_sdram_cas : integer := 3;
+  C_sdram_pre : integer := 3;
   C_sdram_address_width : integer := 24;
   C_sdram_column_bits : integer := 9;
   C_sdram_startup_cycles : integer := 10100;
@@ -820,9 +823,9 @@ begin
     generic map (
       C_ports => C_xram_ports,
       --C_prio_port => 2, -- VGA priority port not yet implemented
-      --C_ras => 3, -- 3 default
-      --C_cas => 3, -- 3 default
-      --C_pre => 3, -- 3 default
+      C_ras => C_sdram_ras,
+      C_cas => C_sdram_cas,
+      C_pre => C_sdram_pre,
       --C_shift_read => true, -- 16->32 bit collection: true: shifter, false: multiplexer
       C_clock_range => C_sdram_clock_range, -- 1 or 2 works at 100 MHz
       sdram_address_width => C_sdram_address_width,

@@ -53,9 +53,9 @@ entity sdram is
     generic (
 	C_ports: integer;
 	C_prio_port: integer := -1;
-	C_ras: integer range 2 to 3 := 2;
-	C_cas: integer range 2 to 3 := 2;
-	C_pre: integer range 2 to 3 := 2;
+	C_ras: integer range 2 to 3 := 3;
+	C_cas: integer range 2 to 3 := 3;
+	C_pre: integer range 2 to 3 := 3;
 	C_clock_range: integer range 0 to 5 := 2; -- default:2, (read delay, for every 2 shift delay line increases by 1)
 	C_ready_point: integer range 0 to 1 := 1; -- shift delay reg bit index when data ready is sent, default:1
 	C_done_point: integer range 0 to 1 := 1; -- shift delay reg bit index when new transaction is accepted, default:1
