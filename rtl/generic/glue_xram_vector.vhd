@@ -107,10 +107,11 @@ generic (
   C_acram: boolean := false; -- AXI CACHE RAM
   C_acram_wait_cycles: integer := 4; -- wait cycles for acram
   C_axiram: boolean := false; -- AXI Master RAM (connects to AXI Slave)
-  C_sio: integer := 1;
+  C_sio: integer := 1; -- number of serial port interfaces 0-4
   C_sio_init_baudrate: integer := 115200;
   C_sio_fixed_baudrate: boolean := false;
   C_sio_break_detect: boolean := true;
+  C_usbsio: std_logic_vector := "0000"; -- 0-standard serial port, 1-usbserial port
   C_spi: integer := 0;
   C_spi_turbo_mode: std_logic_vector := "0000";
   C_spi_fixed_speed: std_logic_vector := "1111";
@@ -236,6 +237,7 @@ port (
   clk_pixel_shift: in std_logic := '0'; -- digital video (DVID/HDMI) bit shift clock, for SDR 10x clk_pixel, for DDR 5x clk_pixel, default 0 if no digital video
   clk_fmdds: in std_logic := '0'; -- FM DDS clock (>216 MHz)
   clk_cw: in std_logic := '0'; -- CW transmitter 433.92 MHz
+  clk_usbsio: in std_logic := '0'; -- usb-serial port 48 or 60 MHz
   reset: in std_logic := '0'; -- external RESET (or'd with RS232 BREAK)
   -- xdma: external DMA
   xdma_addr: in std_logic_vector(29 downto 2) := (others => '-');
@@ -276,6 +278,7 @@ port (
   --
   sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
   sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
+  usbsio_dp, usbsio_dn: inout std_logic_vector(C_sio - 1 downto 0);
   spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
   spi_miso: in std_logic_vector(C_spi - 1 downto 0) := (others => '-');
   simple_in: in std_logic_vector(31 downto 0);
@@ -935,9 +938,10 @@ begin
     );
     end generate; -- G_axiram
 
-    -- RS232 sio
+    -- RS232 or USB sio
     G_sio: for i in 0 to C_sio - 1 generate
-        sio_instance: entity work.sio
+        G_rs232_sio: if C_usbsio(i) = '0' generate
+        rs232_sio_instance: entity work.sio
         generic map (
           C_clk_freq => C_clk_freq,
           C_init_baudrate => C_sio_init_baudrate,
@@ -952,6 +956,21 @@ begin
           bus_in => cpu_to_dmem, bus_out => from_sio(i),
           break => sio_break_internal(i)
         );
+        end generate G_rs232_sio;
+        G_usb_sio: if C_usbsio(i) = '1' generate
+        usb_sio_instance: entity work.usbsio
+        generic map (
+          C_bypass => false, -- false: normal, true: serial loopback for debug
+          C_big_endian => C_big_endian
+	)
+        port map (
+          clk => clk, ce => sio_ce(i),
+          usb_clk => clk_usbsio, usb_dp => usbsio_dp(i), usb_dn => usbsio_dn(i),
+          bus_write => dmem_write, byte_sel => dmem_byte_sel,
+          bus_in => cpu_to_dmem, bus_out => from_sio(i),
+          break => sio_break_internal(i)
+        );
+        end generate G_usb_sio;
         sio_ce(i) <= io_addr_strobe when io_addr(11 downto 6) = x"3" & "00" and
           conv_integer(io_addr(5 downto 4)) = i else '0';
 	sio_break(i) <= sio_break_internal(i);
