@@ -15,6 +15,7 @@ entity usbsio is
     );
     port (
 	ce, clk: in std_logic;
+	reset: in std_logic; -- warning reset going to mixed clock domains
 	bus_write: in std_logic;
 	byte_sel: in std_logic_vector(3 downto 0);
 	bus_in: in std_logic_vector(31 downto 0);
@@ -91,7 +92,10 @@ architecture Behavioral of usbsio is
     -- registers for receive logic
     signal R_rx_byte: std_logic_vector(7 downto 0);
     signal R_rx_full: std_logic;
-    signal R_break: std_logic := '0';
+    signal R_rxrdy_tick: std_logic_vector(2 downto 0); -- every 4th clock assert rx ready
+    signal R_rx_read_cycle: std_logic;
+    signal S_rx_available, R_rx_available: std_logic;
+    signal R_break, S_break: std_logic := '0';
 begin
     bus_out(31 downto 11) <= "---------------------";
     bus_out(9 downto 8) <= '-' & R_rx_full;
@@ -108,7 +112,7 @@ begin
       usb_txval <= usb_rxval;
       usb_txdat <= usb_rxdat;
     end generate G_yes_bypass;
-    usb_devreset <= '0';
+    usb_devreset <= reset;
 
     process(clk)
     begin
@@ -120,18 +124,43 @@ begin
             else
               R_usb_txval <= '0';
 	    end if;
-	    if ce = '1' and bus_write = '0' and byte_sel(0) = '1' and R_rx_full = '1' then
-	      -- byte has been read, reset R_rx_full
+
+            if ce = '1' and bus_write = '0' and byte_sel(0) = '1' and R_rx_full = '1' then
               R_rx_full <= '0';
             else
               if usb_rxval = '1' and R_rx_full = '0' then
-	        R_rx_byte <= usb_rxdat;
-	        R_rx_full <= '1';
-	      end if;
-	    end if;
-	    
-	    -- TODO break detect logic
-	    -- R_break <= not usb_online;
+                R_rx_byte <= usb_rxdat;
+                R_rx_full <= '1';
+              end if;
+            end if;
+
+--            if R_rx_full = '1' then
+--              if usb_rxval = '1' then
+--                R_rx_byte <= usb_rxdat;
+--              else -- not valid byte, read cycle should disable rx_full
+--                if ce = '1' and bus_write = '0' and byte_sel(0) = '1' then
+--                  R_rx_full <= '0';
+--                end if;
+--              end if;
+--            else -- R_rx_full = '0'
+--              if usb_rxval = '1' then
+--                R_rx_byte <= usb_rxdat;
+--                R_rx_full <= '1';
+--              end if;
+--            end if;
+
+	    -- produces rx valid every 5th clock
+	    -- to allow one cycle for R_rxfull to go high and
+	    -- prevent furher fetch that will overrun the 1 byte storage
+	    if R_rxrdy_tick(R_rxrdy_tick'high) = '0' then
+	      R_rxrdy_tick <= R_rxrdy_tick + 1;
+            else
+              R_rxrdy_tick <= (others => '0');
+            end if;
+
+	    -- serial break register to offload signal timing
+	    R_break <= S_break;
+
 
 	end if;
     end process;
@@ -159,6 +188,7 @@ begin
             HIGHSPEED       => usb_highspeed,
             SUSPEND         => usb_suspend,
             ONLINE          => usb_online,
+            BREAK           => S_break,
             RXVAL           => usb_rxval,
             RXDAT           => usb_rxdat,
             RXRDY           => usb_rxrdy,
