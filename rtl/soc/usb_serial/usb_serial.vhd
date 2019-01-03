@@ -747,8 +747,8 @@ begin
                    txbuf_rdat;
 
     -- Buffer logic.
-    q_rxbuf_read <= (RXRDY or (not q_rxval)) when (q_rxbuf_tail /= q_rxbuf_head) else '0';
-    -- q_rxbuf_read <= RXRDY when (q_rxbuf_tail /= q_rxbuf_head) else '0';
+    -- q_rxbuf_read <= (RXRDY or (not q_rxval)) when (q_rxbuf_tail /= q_rxbuf_head) else '0';
+    q_rxbuf_read <= RXRDY when (q_rxbuf_tail /= q_rxbuf_head) else '0';
     q_txbuf_rdy <= '1' when (q_txbuf_head + 1 /= q_txbuf_tail) else '0';
 
     -- Connection between PHY-side and application-side signals.
@@ -857,7 +857,8 @@ begin
                 -- The RAM buffer reads a byte in this cycle.
                 q_rxbuf_tail    <= q_rxbuf_tail + 1;
                 q_rxval         <= '1';
-            elsif RXRDY = '1' then
+            -- elsif RXRDY = '1' then
+            else
                 -- Byte consumed by application; no new data yet.
                 q_rxval         <= '0';
             end if;
