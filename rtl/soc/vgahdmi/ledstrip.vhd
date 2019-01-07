@@ -195,7 +195,6 @@ begin
     )
     port map
     (
-      -- clk => clk_25MHz,
       clk => clk,
       fetch_next => vga_fetch_next,
       external_trigger => rotation_sensor,
@@ -220,7 +219,6 @@ begin
     )
     port map (
       clk => clk,
-      -- clk_pixel => clk_25MHz,
       clk_pixel => clk,
       addr_strobe => video_addr_strobe,
       addr_out => video_addr,
