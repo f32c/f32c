@@ -123,6 +123,9 @@ entity usb_serial is
         -- High when the device is in the Configured state.
         ONLINE :        out std_logic;
 
+        -- High when the device asserts SERIAL BREAK signal.
+        BREAK :         out std_logic;
+
         -- High if a received byte is available on RXDAT.
         RXVAL :         out std_logic;
 
@@ -564,6 +567,11 @@ architecture usb_serial_arch of usb_serial is
     signal s_halt_out :     std_logic_vector(1 to 2) := "00";
     signal s_nyet :         std_logic := '0';
 
+    -- serial break (PHY side)
+    signal s_break :        std_logic;
+    -- serial break (application side)
+    signal q_break :        std_logic;
+
     -- Buffer state (application side).
     signal q_rxbuf_head :   unsigned(RXBUFSIZE_BITS-1 downto 0);
     signal q_rxbuf_tail :   unsigned(RXBUFSIZE_BITS-1 downto 0) := to_unsigned(0, RXBUFSIZE_BITS);
@@ -684,6 +692,7 @@ begin
             C_DSCOFF        => usbc_dscoff,
             C_DSCLEN        => usbc_dsclen,
             C_SELFPOWERED   => usbc_selfpowered,
+            C_BREAK         => s_break,
             T_IN            => usbc_in,
             T_OUT           => usbc_out,
             T_SETUP         => usbc_setup,
@@ -705,6 +714,7 @@ begin
     HIGHSPEED   <= q_highspeed;
     SUSPEND     <= q_suspend;
     ONLINE      <= q_online;
+    BREAK       <= q_break;
     RXVAL       <= q_rxval;
     RXDAT       <= rxbuf_rdat;
     RXLEN       <= std_logic_vector(q_rxbuf_head - q_rxbuf_tail);
@@ -737,7 +747,8 @@ begin
                    txbuf_rdat;
 
     -- Buffer logic.
-    q_rxbuf_read <= (RXRDY or (not q_rxval)) when (q_rxbuf_tail /= q_rxbuf_head) else '0';
+    -- q_rxbuf_read <= (RXRDY or (not q_rxval)) when (q_rxbuf_tail /= q_rxbuf_head) else '0';
+    q_rxbuf_read <= RXRDY when (q_rxbuf_tail /= q_rxbuf_head) else '0';
     q_txbuf_rdy <= '1' when (q_txbuf_head + 1 /= q_txbuf_tail) else '0';
 
     -- Connection between PHY-side and application-side signals.
@@ -751,6 +762,7 @@ begin
         q_usbrst     <= usbi_usbrst;
         q_highspeed  <= usbi_highspeed;
         q_suspend    <= usbi_suspend;
+        q_break      <= s_break;
       end if;
     end process;
 
@@ -763,16 +775,6 @@ begin
         s_reset      <= RESET;
       end if;
     end process;
-
---    q_rxbuf_head <= s_rxbuf_head;
---    s_rxbuf_tail <= q_rxbuf_tail;
---    s_txbuf_head <= q_txbuf_head;
---    q_txbuf_tail <= s_txbuf_tail;
---    s_txcork    <= TXCORK;
---    s_reset     <= RESET;
---    q_online    <= usbc_confd;
---    q_usbrst    <= usbi_usbrst;
---    q_highspeed <= usbi_highspeed;
 
     -- Lookup address/length of the selected descriptor (combinatorial).
     process (usbc_dsctyp, usbc_dscinx, usbi_highspeed)
@@ -855,7 +857,8 @@ begin
                 -- The RAM buffer reads a byte in this cycle.
                 q_rxbuf_tail    <= q_rxbuf_tail + 1;
                 q_rxval         <= '1';
-            elsif RXRDY = '1' then
+            -- elsif RXRDY = '1' then
+            else
                 -- Byte consumed by application; no new data yet.
                 q_rxval         <= '0';
             end if;

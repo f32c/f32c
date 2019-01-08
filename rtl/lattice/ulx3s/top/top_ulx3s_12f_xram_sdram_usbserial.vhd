@@ -25,7 +25,7 @@ entity ulx3s_xram_sdram_vector is
     C_debug: boolean := false;
 
     -- Main clock: 48/89/104 MHz
-    C_clk_freq: integer := 104;
+    C_clk_freq: integer := 89;
 
     -- SoC configuration options
     C_xboot_rom: boolean := false; -- false default, bootloader initializes XRAM with external DMA

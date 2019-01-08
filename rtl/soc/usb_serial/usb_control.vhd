@@ -158,6 +158,9 @@ entity usb_control is
         -- High if the device is not drawing bus power.
         C_SELFPOWERED : in  std_logic;
 
+        -- High when serial break is being requested by the host (PC)
+        C_BREAK :       out std_logic;
+
         -- Connect to T_IN from usb_transact when T_ENDPT = 0, otherwise pull to 0.
         T_IN :          in  std_logic;
 
@@ -170,7 +173,7 @@ entity usb_control is
         -- Connect to T_PING from usb_transact when T_ENDPT = 0, otherwise pull to 0.
         T_PING :        in  std_logic;
 
-        -- Connect to T_FIN from ubs_transact.
+        -- Connect to T_FIN from usb_transact.
         T_FIN :         in  std_logic;
 
         -- Connect to T_NAK towards usb_transact when T_ENDPT = 0.
@@ -208,14 +211,16 @@ end entity usb_control;
 architecture usb_control_arch of usb_control is
 
     -- Constants for control request
-    constant req_getstatus :    std_logic_vector(3 downto 0) := "0000";
-    constant req_clearfeature : std_logic_vector(3 downto 0) := "0001";
-    constant req_setfeature :   std_logic_vector(3 downto 0) := "0011";
-    constant req_setaddress :   std_logic_vector(3 downto 0) := "0101";
-    constant req_getdesc :      std_logic_vector(3 downto 0) := "0110";
-    constant req_getconf :      std_logic_vector(3 downto 0) := "1000";
-    constant req_setconf :      std_logic_vector(3 downto 0) := "1001";
-    constant req_getiface :     std_logic_vector(3 downto 0) := "1010";
+    constant req_getstatus :    std_logic_vector(7 downto 0) := x"00";
+    constant req_clearfeature : std_logic_vector(7 downto 0) := x"01";
+    constant req_setfeature :   std_logic_vector(7 downto 0) := x"03";
+    constant req_setaddress :   std_logic_vector(7 downto 0) := x"05";
+    constant req_getdesc :      std_logic_vector(7 downto 0) := x"06";
+    constant req_getconf :      std_logic_vector(7 downto 0) := x"08";
+    constant req_setconf :      std_logic_vector(7 downto 0) := x"09";
+    constant req_getiface :     std_logic_vector(7 downto 0) := x"0A";
+    -- class request serial break
+    constant req_break :        std_logic_vector(7 downto 0) := x"23";
 
     -- State machine
     type t_state is (
@@ -225,7 +230,7 @@ architecture usb_control_arch of usb_control is
     signal s_state : t_state := ST_IDLE;
 
     -- Current control request
-    signal s_ctlrequest :   std_logic_vector(3 downto 0);
+    signal s_ctlrequest :   std_logic_vector(7 downto 0);
     signal s_ctlparam :     std_logic_vector(7 downto 0);
     signal s_desctyp :      std_logic_vector(2 downto 0);
     signal s_answerlen :    unsigned(7 downto 0);
@@ -239,11 +244,16 @@ architecture usb_control_arch of usb_control is
     signal s_setupptr :     unsigned(2 downto 0);
     signal s_answerptr :    unsigned(7 downto 0);
 
+    signal s_break :        std_logic := '0';
+
 begin
 
     -- Status signals
     C_ADDR <= s_addr;
     C_CONFD <= s_confd;
+
+    -- Serial break
+    C_BREAK <= s_break;
 
     -- Memory interface
     C_DSCBUSY   <= T_IN when (s_state = ST_WAITIN) else
@@ -319,17 +329,19 @@ begin
                             when "000" =>
                                 -- bmRequestType
                                 s_ctlparam <= T_RXDAT;
-                                if T_RXDAT(6 downto 5) /= "00" then
-                                    -- non-standard device request
+                                if T_RXDAT(6) = '1' then
+                                    -- non-standard or non-class device request
                                     s_state <= ST_NONSTANDARD;
                                 end if;
                             when "001" =>
                                 -- bRequest
-                                s_ctlrequest <= T_RXDAT(3 downto 0);
-                                if T_RXDAT(7 downto 4) /= "0000" then
-                                    -- Unknown request
-                                    s_state <= ST_SETUPERR;
-                                end if;
+                                s_ctlrequest <= T_RXDAT(7 downto 0);
+                                -- standard request has upper nibble 0
+                                -- non-standard (class) request for serial break is 0x23
+                                --if T_RXDAT(7 downto 4) /= x"0" and T_RXDAT(7 downto 4) /= class_req_break(7 downto 4) then
+                                --    -- Unknown request
+                                --    s_state <= ST_SETUPERR;
+                                --end if;
                             when "010" =>
                                 -- wValue lsb
                                 if s_ctlrequest /= req_getstatus then
@@ -379,6 +391,12 @@ begin
                                             -- Probably get interface status
                                             s_sendbyte <= "00000000";
                                             s_ctlparam <= "00000000";
+                                        end if;
+                                    when req_break =>
+                                        if s_ctlparam = x"00" then
+                                            s_break <= '0';
+                                        else
+                                            s_break <= '1';
                                         end if;
                                     when others =>
                                         -- Don't care about index.
@@ -489,6 +507,8 @@ begin
                             when req_getiface =>
                                 -- Move to data stage
                                 s_state <= ST_WAITIN;
+                            when req_break =>
+                                s_state <= ST_IDLE;
                             when others =>
                                 -- Unsupported request
                                 s_state <= ST_STALL;

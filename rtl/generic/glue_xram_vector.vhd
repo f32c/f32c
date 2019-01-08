@@ -965,6 +965,7 @@ begin
 	)
         port map (
           clk => clk, ce => sio_ce(i),
+          reset => '0',
           usb_clk => clk_usbsio, usb_dp => usbsio_dp(i), usb_dn => usbsio_dn(i),
           bus_write => dmem_write, byte_sel => dmem_byte_sel,
           bus_in => cpu_to_dmem, bus_out => from_sio(i),
