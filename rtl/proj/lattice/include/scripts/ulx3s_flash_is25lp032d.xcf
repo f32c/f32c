@@ -1,0 +1,104 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!DOCTYPE		ispXCF	SYSTEM	"IspXCF.dtd" >
+<ispXCF version="3.7.0">
+	<Comment></Comment>
+	<Chain>
+		<Comm>JTAG</Comm>
+		<Device>
+			<SelectedProg value="TRUE"/>
+			<Pos>1</Pos>
+			<Vendor>Lattice</Vendor>
+			<Family>ECP5U</Family>
+			<Name>LFE5U-12F</Name>
+			<Package>All</Package>
+			<Bypass>
+				<InstrLen>8</InstrLen>
+				<InstrVal>11111111</InstrVal>
+				<BScanLen>1</BScanLen>
+				<BScanVal>0</BScanVal>
+			</Bypass>
+			<File>project/project_project_flash_is25lp032d.mcs</File>
+			<FileTime>12/23/17 00:34:50</FileTime>
+			<Operation>SPI Flash Erase,Program</Operation>
+			<Option>
+				<SVFVendor>JTAG STANDARD</SVFVendor>
+				<AccessMode>SPI Flash Background Programming</AccessMode>
+			</Option>
+			<FPGALoader>
+			<CPLDDevice>
+				<Device>
+					<Pos>1</Pos>
+					<Vendor>Lattice</Vendor>
+					<Family>ECP5U</Family>
+					<Name>LFE5U-12F</Name>
+					<IDCode>0x21111043</IDCode>
+					<Package>All</Package>
+					<PON>LFE5U-12F</PON>
+					<Bypass>
+						<InstrLen>8</InstrLen>
+						<InstrVal>11111111</InstrVal>
+						<BScanLen>1</BScanLen>
+						<BScanVal>0</BScanVal>
+					</Bypass>
+					<MaskFile>/mt/lattice/diamond/3.7_x64/data/vmdata/database/xpga/ecp5/LFE5U-45F.msk</MaskFile>
+					<Operation>Bypass</Operation>
+					<Option>
+						<SVFVendor>JTAG STANDARD</SVFVendor>
+						<IOState>HighZ</IOState>
+						<PreloadLength>510</PreloadLength>
+						<IOVectorData>0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF</IOVectorData>
+						<AccessMode>JTAG</AccessMode>
+					</Option>
+				</Device>
+			</CPLDDevice>
+			<FlashDevice>
+				<Device>
+					<Pos>1</Pos>
+					<Vendor>Micron</Vendor>
+					<Family>SPI Serial Flash</Family>
+					<Name>SPI-M25P32</Name>
+					<IDCode>0x15</IDCode>
+					<Package>8-pin VDFPN8</Package>
+					<Operation>SPI Flash Erase,Program</Operation>
+					<File>project/project_project_flash_is25lp032d.mcs</File>
+					<AddressBase>0x00000000</AddressBase>
+					<EndAddress>0x00400000</EndAddress>
+					<DeviceSize>32</DeviceSize>
+					<DataSize>4194304</DataSize>
+					<NumberOfDevices>1</NumberOfDevices>
+					<ReInitialize value="FALSE"/>
+				</Device>
+			</FlashDevice>
+			<FPGADevice>
+				<Device>
+					<Pos>1</Pos>
+					<Name></Name>
+					<File>project/project_project_flash_is25lp032d.mcs</File>
+					<LocalChainList>
+						<LocalDevice index="-99"
+							name="Unknown"
+							file="project/project_project_flash_is25lp032d.mcs"/>
+					</LocalChainList>
+					<Option>
+						<SVFVendor>JTAG STANDARD</SVFVendor>
+					</Option>
+				</Device>
+			</FPGADevice>
+			</FPGALoader>
+		</Device>
+	</Chain>
+	<ProjectOptions>
+		<Program>SEQUENTIAL</Program>
+		<Process>ENTIRED CHAIN</Process>
+		<OperationOverride>No Override</OperationOverride>
+		<StartTAP>TLR</StartTAP>
+		<EndTAP>TLR</EndTAP>
+		<VerifyUsercode value="FALSE"/>
+		<TCKDelay>1</TCKDelay>
+	</ProjectOptions>
+	<CableOptions>
+		<CableName>USB2</CableName>
+		<PortAdd>FTUSB-0</PortAdd>
+		<USBID>FPU1 JTAG PROGRAMMER A Location 0000 Serial FPU1 JTAG Programmer A</USBID>
+	</CableOptions>
+</ispXCF>
