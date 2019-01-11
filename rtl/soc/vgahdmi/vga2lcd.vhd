@@ -37,7 +37,7 @@ end vga2lcd;
 architecture Behavioral of vga2lcd is
 	signal latched_red_green, latched_green_blue, latched_blue_sync: std_logic_vector(6 downto 0) := (others => '0');
 	signal shift_red_green, shift_green_blue, shift_blue_sync: std_logic_vector(6 downto 0) := (others => '0');
-	constant C_shift_clock_initial: std_logic_vector(9 downto 0) := "1100011"; -- this is per spec, the clock
+	constant C_shift_clock_initial: std_logic_vector(6 downto 0) := "1100011"; -- this is per spec, the clock
 	signal shift_clock: std_logic_vector(6 downto 0) := C_shift_clock_initial;
 	signal R_shift_clock_off_sync: std_logic := '0';
 	signal R_shift_clock_synchronizer: std_logic_vector(7 downto 0) := (others => '0');

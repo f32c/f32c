@@ -26,6 +26,7 @@ TOP_MODULE = ulx3s_xram_sdram_vector
 
 # various toplevels for building different f32c soc's
 TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_flash.vhd
+#TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_lcd35.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_noflash.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_433.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_synth.vhd
@@ -53,6 +54,7 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../lattice/ulx3s/clocks/clk_25_125_250_25_83.vhd \
   ../../../../lattice/ulx3s/clocks/clk_25_125_25_48_89.vhd \
   ../../../../lattice/ulx3s/clocks/clk_25_125_25_48_104.vhd \
+  ../../../../lattice/ulx3s/clocks/clk_25_287M5_19M16_6M38_95M83.vhd \
   ../../../../lattice/chip/ecp5u/ecp5_flash_clk.vhd \
   ../../../../generic/glue_xram_vector.vhd \
   ../../../../generic/bootloader/defs_bootblock.vhd \
@@ -96,7 +98,6 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../soc/gpio.vhd \
   ../../../../soc/timer.vhd \
   ../../../../soc/spi.vhd \
-  ../../../../soc/ps2.vhd \
   ../../../../soc/pid/ctrlpid.vhd \
   ../../../../soc/pid/pid.vhd  \
   ../../../../soc/pid/rotary_decoder.vhd \
@@ -132,6 +133,7 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../soc/vgahdmi/TMDS_encoder.vhd \
   ../../../../soc/vgahdmi/vga2dvid.vhd \
   ../../../../soc/vgahdmi/vga2lcd.vhd \
+  ../../../../soc/vgahdmi/vga2lcd35.vhd \
   ../../../../soc/simple_ADC.vhd \
   ../../../../soc/fm/fm.vhd \
   ../../../../soc/fm/rds.vhd \
@@ -153,6 +155,8 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../soc/vector/fpu/mul/common/packfp_packfp.vhd \
   ../../../../soc/vector/fpu/mul/common/unpackfp_unpackfp.vhd \
   ../../../../soc/vector/fpu/float_divide_goldschmidt.vhd
+
+#  ../../../../soc/ps2.vhd \
     
 VERILOG_FILES = \
   ../../../../soc/pid/ctrlpid_v.v \

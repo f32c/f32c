@@ -21,6 +21,7 @@ package video_mode_pack is
 -- 8: 1680x1050 16:9
 -- 9: 1600x1200 4:3
 -- 10: 1920x1080 16:9
+-- 11: 320x200 4:3
 
 -- see also:
 -- http://tinyvga.com/vga-timing
@@ -35,7 +36,7 @@ record
     h_sync_polarity, v_sync_polarity:           std_logic; -- '0':negative/falling-edge, '1':positive/rising-edge
 end record;
 
-type T_video_modes is array (0 to 10) of T_video_mode;
+type T_video_modes is array (0 to 11) of T_video_mode;
 
 constant C_video_modes: T_video_modes :=
   (
@@ -180,6 +181,19 @@ constant C_video_modes: T_video_modes :=
       v_front_porch   =>  4,
       v_sync_pulse    =>  5,
       v_back_porch    =>  36,
+      h_sync_polarity =>  '1',
+      v_sync_polarity =>  '1'
+    ),
+    ( -- mode 11: 320x240 @ 60Hz  (clk_pixel 6.4 MHz)
+      pixel_clock_Hz  =>  6400000,
+      visible_width   =>  320,
+      visible_height  =>  240,
+      h_front_porch   =>  20,
+      h_sync_pulse    =>  30,
+      h_back_porch    =>  38,
+      v_front_porch   =>  4,
+      v_sync_pulse    =>  3,
+      v_back_porch    =>  15,
       h_sync_polarity =>  '1',
       v_sync_polarity =>  '1'
     )

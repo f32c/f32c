@@ -123,6 +123,7 @@ generic (
   -- false: normal monitors, DVI-D/HDMI 10-bit TMDS (25MHz pixel clock, 250MHz shift clock)
   -- true:  bare wired LCD panel, 7-bit LVDS (36MHz pixel clock, 252MHz shift clock and does only SDR, not DDR)
   C_lvds_display: boolean := false; -- false: normal DVI-D/HDMI, true: bare LCD panel
+  C_lcd35_display: boolean := false; -- small 3.5" 320x240 LCD takes 8-bit R,G,B each clock cycle
   C_shift_clock_synchronizer: boolean := false; -- some hardware may need this enabled
   -- TV simple 512x512 bitmap
   C_tv: boolean := false; -- enable TV output
@@ -287,6 +288,7 @@ port (
   pid_bridge_f,  pid_bridge_r:  out std_logic_vector(C_pids-1 downto 0);
   vga_hsync, vga_vsync, vga_blank: out std_logic;
   vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0) := (others => '0'); -- parallel VGA
+  vga_serial_rgb: out std_logic_vector(7 downto 0) := (others => '0'); -- each 8-bit R,G,B is sent durinig one of 3 clock cycles
   dvi_r, dvi_g, dvi_b: out std_logic_vector(9 downto 0) := (others => '0'); -- parallel DVI
   tmds_out_rgb: out std_logic_vector(2 downto 0);
   tmds_out_clk: out std_logic := '0'; -- used for DDR output
@@ -1691,7 +1693,7 @@ begin
     G_vgahdmi_lvds_display: if C_lvds_display generate
     -- LCD LVDS Encoder Block
     -- XXX Fixme: unify this block with vgatextmode (use same signal names)
-    G_vgahdmi_lcd: entity work.vga2lcd
+    G_vgahdmi_lvds: entity work.vga2lcd
     generic map (
       C_shift_clock_synchronizer => C_shift_clock_synchronizer,
       C_depth => 8 -- 8bpp (8 bit per pixel)
@@ -1712,6 +1714,23 @@ begin
       out_green_blue => dvid_green,
       out_blue_sync  => dvid_blue,
       out_clock      => dvid_clock
+    );
+    end generate;
+
+    G_vgahdmi_lcd35_display: if C_lcd35_display generate
+    -- TODO: unify this block with vgatextmode (use same signal names)
+    G_vgahdmi_lcd35: entity work.vga2lcd35
+    generic map (
+      C_depth => 8 -- 8bpp (8 bit per pixel)
+    )
+    port map (
+      clk_pixel => clk_pixel,
+      clk_shift => clk_pixel_shift,
+      in_red   => S_vga_r,
+      in_green => S_vga_g,
+      in_blue  => S_vga_b,
+      in_hsync => S_vga_hsync,
+      out_rgb  => vga_serial_rgb -- 8-bit output serial R,G,B
     );
     end generate;
 
