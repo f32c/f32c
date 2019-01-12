@@ -669,7 +669,7 @@ begin
   flash_csn <= S_flash_csn;
   
   -- USB 1.1
-  G_yes_usbserial: if C_usbsio(0) = '1' generate
+  G_yes_usbserial: if C_usbsio /= "0000" generate
     usb_fpga_pu_dp <= '1'; -- D+ pullup enabled to activate USB 1.1 enumeration
     usb_fpga_pu_dn <= 'Z'; -- D- pullup/down disabled to activate USB 1.1 enumeration
     -- manual reset as USB-serial currently doesn't support break
