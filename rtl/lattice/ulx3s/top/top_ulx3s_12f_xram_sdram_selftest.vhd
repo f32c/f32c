@@ -25,7 +25,7 @@ entity ulx3s_xram_sdram_vector is
     C_debug: boolean := false;
 
     -- Main clock: 25/78/89/100/104 MHz
-    C_clk_freq: integer := 89;
+    C_clk_freq: integer := 100;
 
     -- SoC configuration options
     C_xboot_rom: boolean := false; -- false default, bootloader initializes XRAM with external DMA
@@ -65,7 +65,19 @@ entity ulx3s_xram_sdram_vector is
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
     C_spdif: boolean := false; -- SPDIF output
-    C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
+    C_cw_simple_out: integer := -1; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
+    C_fmrds: boolean := true; -- enable FM/RDS output to fm_antenna
+      C_fm_stereo: boolean := false;
+      C_fm_filter: boolean := false;
+      C_fm_downsample: boolean := false;
+      C_rds_msg_len: integer := 260; -- bytes of circular sent message, typical 52 for PS or 260 PS+RT
+      C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz)
+      --C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
+      --C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
+      --C_rds_clock_multiply: integer := 63; -- multiply and divide from cpu clk 89.285714 MHz
+      --C_rds_clock_divide: integer := 3084; -- to get 1.824 MHz for RDS logic
+      C_rds_clock_multiply: integer := 57; -- multiply 57 and divide 3125 from cpu clk 100 MHz
+      C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
 
     -- enabling passthru autodetect reduces fmax or vector divide must be disabled on 45f
     C_passthru_autodetect: boolean := false; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
@@ -85,6 +97,7 @@ entity ulx3s_xram_sdram_vector is
     -- video parameters common for vgahdmi and vgatext
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
+    C_shift_clock_synchronizer: boolean := true; -- logic that synchronizes DVI clock with pixel clock.
 
     C_vgahdmi: boolean := true;
     -- normally this should be  actual bits per pixel
@@ -223,6 +236,7 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal clk, rs232_break, rs232_break2: std_logic;
   signal clk_pixel_shift, clk_pixel: std_logic;
   signal clk_usbsio: std_logic;
+  signal clk_fm: std_logic;
   signal ram_en             : std_logic;
   signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
   signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
@@ -312,14 +326,22 @@ begin
   end generate;
 
   ddr_640x480_100MHz: if C_clk_freq=100 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_100M: entity work.clk_25_100_125_25
+  clk_89M_2: entity work.clk_25_125_25_48_89
     port map(
       CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
-      CLKOS       =>  open,  -- 125 MHz inverted
-      CLKOS2      =>  clk_pixel, --  25 MHz
-      CLKOS3      =>  clk        -- 100 MHz CPU
-     );
+      CLKOP       =>  open,            -- 125    MHz DVI
+      CLKOS       =>  open,            --  25    MHz DVI
+      CLKOS2      =>  clk_usbsio,      --  48.07 MHz USB
+      CLKOS3      =>  open             --  89.25 MHz CPU
+    );
+  clk_100M: entity work.clk_25_250_125_25_100
+    port map(
+      CLKI        =>  clk_25MHz,
+      CLKOP       =>  clk_fm,          -- 250 MHz
+      CLKOS       =>  clk_pixel_shift, -- 125 MHz
+      CLKOS2      =>  clk_pixel,       --  25 MHz
+      CLKOS3      =>  clk              -- 100 MHz CPU
+    );
   end generate;
 
   ddr_640x480_125MHz: if C_clk_freq=125 and (C_video_mode=0 or C_video_mode=1) generate
@@ -333,6 +355,16 @@ begin
      );
   clk <= clk_pixel_shift;
   end generate;
+
+--  tv_512x288_81MHz: if C_fmrds generate
+--  clk_81M25: entity work.clk_25_325_25_81
+--    port map(
+--      CLKI        =>  clk_25MHz,
+--      CLKOP       =>  clk_pal,          -- 325 MHz for PAL
+--      CLKOS       =>  open,             --  25 MHz
+--      CLKOS2      =>  open              --  81.25 MHz CPU
+--     );
+--  end generate;
 
   G_yes_passthru_autodetect: if C_passthru_autodetect generate
     -- Autodetect programming of ESP32 and f32c
@@ -467,6 +499,15 @@ begin
 
     C_cw_simple_out => C_cw_simple_out,
 
+    C_fmrds => C_fmrds, -- either FM or tx433
+      C_fm_stereo => C_fm_stereo,
+      C_fm_filter => C_fm_filter,
+      C_fm_downsample => C_fm_downsample,
+      C_rds_msg_len => C_rds_msg_len, -- bytes of RDS binary message, usually 52 (8-char PS) or 260 (8 PS + 64 RT)
+      C_fmdds_hz => C_fmdds_hz, -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
+      C_rds_clock_multiply => C_rds_clock_multiply, -- multiply and divide from cpu clk 81.25 MHz
+      C_rds_clock_divide => C_rds_clock_divide,  -- to get 1.824 MHz for RDS logic
+
     C_vector => C_vector,
     C_vector_axi => C_vector_axi,
     C_vector_bram_pass_thru => C_vector_bram_pass_thru,
@@ -478,6 +519,7 @@ begin
     C_vector_float_divide => C_vector_float_divide,
 
     C_dvid_ddr => C_dvid_ddr,
+    C_shift_clock_synchronizer => C_shift_clock_synchronizer,
     -- vga simple compositing bitmap only graphics
     C_compositing2_write_while_reading => C_compositing2_write_while_reading,
     C_vgahdmi => C_vgahdmi,
@@ -521,13 +563,14 @@ begin
     clk_pixel => clk_pixel,
     clk_pixel_shift => clk_pixel_shift,
     clk_usbsio => clk_usbsio,
+    clk_fmdds => clk_fm,
     reset => S_reset,
     sio_rxd(0) => S_rxd,
+    --sio_rxd(1) => open,
     usbsio_dp(1) => usb_fpga_bd_dp,
-    sio_rxd(1) => open,
     sio_txd(0) => S_txd,
+    --sio_txd(1) => open,
     usbsio_dn(1) => usb_fpga_bd_dn,
-    sio_txd(1) => open,
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
 
@@ -574,7 +617,8 @@ begin
     -- if standard 17 ohm earphones are plugged.
     spdif_out => open, -- audio_v(0),
 
-    cw_antenna => ant_433mhz,
+    --cw_antenna => ant_433mhz,
+    fm_antenna => ant_433mhz,
 
     -- exposed DMA for boot preloader
     xdma_addr => xdma_addr, xdma_strobe => xdma_strobe,
