@@ -185,16 +185,16 @@ entity ulx3s_xram_sdram_text is
   gpdi_scl, gpdi_sda: inout std_logic;
 
   -- Flash ROM (SPI0)
-  flash_miso   : in      std_logic;
-  flash_mosi   : out     std_logic;
-  --flash_clk    : out     std_logic; -- not GPIO, needs vendor-specific module
-  flash_csn    : out     std_logic;
-  flash_holdn  : out     std_logic := '1';
-  flash_wpn    : out     std_logic := '1';
+  -- commented out because it can't be used as GPIO
+  -- when bitstream is loaded from config flash
+  --flash_miso   : in      std_logic;
+  --flash_mosi   : out     std_logic;
+  --flash_clk    : out     std_logic;
+  --flash_csn    : out     std_logic;
 
   -- SD card (SPI1)
   sd_cmd: inout std_logic := 'Z';
-  sd_d: inout std_logic_vector(3 downto 0) := (others => 'Z');
+  sd_d: inout std_logic_vector(3 downto 0);
   sd_clk: inout std_logic := 'Z';
   sd_cdn, sd_wp: in std_logic;
 
@@ -243,7 +243,6 @@ architecture Behavioral of ulx3s_xram_sdram_text is
   constant C_break_counter_bits: integer := 1+ceil_log2(integer(C_passthru_clk_Hz*C_passthru_break));
   signal R_break_counter: std_logic_vector(C_break_counter_bits-1 downto 0) := (others => '0');
   signal S_f32c_sd_csn, S_f32c_sd_clk, S_f32c_sd_miso, S_f32c_sd_mosi: std_logic;
-  signal S_flash_csn, S_flash_clk, S_flash_clk_filtered, S_flash_csn_filtered: std_logic;
 
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
@@ -373,11 +372,6 @@ begin
     ftdi_rxd <= S_txd;
     wifi_rxd <= S_txd;
     wifi_gpio0 <= btn(0); -- pressing BTN0 will escape to ESP32 file select menu
-    sd_d(3) <= S_f32c_sd_csn;
-    sd_clk <= S_f32c_sd_clk;
-    S_f32c_sd_miso <= sd_d(0);
-    sd_cmd <= S_f32c_sd_mosi;
-    sd_d(2 downto 1) <= (others => '1');
   end generate;
   
   -- hold pushbutton BTN1 to upload to f32c over USB
@@ -396,10 +390,10 @@ begin
     C_acram => C_acram,
     C_acram_wait_cycles => C_acram_wait_cycles,
     C_sdram => C_sdram,
-    C_sdram_clock_range => 2,
     C_sdram_ras => 3,
     C_sdram_cas => 3,
     C_sdram_pre => 3,
+    C_sdram_clock_range => 2,
     C_sdram_address_width => 24,
     C_sdram_column_bits => 9,
     C_sdram_startup_cycles => 12000,
@@ -489,10 +483,10 @@ begin
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
 
-    spi_sck(0)  => S_flash_clk,  spi_sck(1)  => S_f32c_sd_clk,   -- sd_clk,
-    spi_ss(0)   => S_flash_csn,  spi_ss(1)   => S_f32c_sd_csn,   -- sd_d(3),
-    spi_mosi(0) => flash_mosi,   spi_mosi(1) => S_f32c_sd_mosi,  -- sd_cmd,
-    spi_miso(0) => flash_miso,   spi_miso(1) => S_f32c_sd_miso,  -- sd_d(0),
+    spi_sck(0)  => open,  spi_sck(1)  => S_f32c_sd_clk,   -- sd_clk,
+    spi_ss(0)   => open,  spi_ss(1)   => S_f32c_sd_csn,   -- sd_d(3),
+    spi_mosi(0) => open,  spi_mosi(1) => S_f32c_sd_mosi,  -- sd_cmd,
+    spi_miso(0) => '0',   spi_miso(1) => S_f32c_sd_miso,  -- sd_d(0),
 
     gpio(127 downto 28+32) => open,
     gpio(27+32 downto 32) => gn(27 downto 0),
@@ -634,15 +628,5 @@ begin
       gpdi_diff: OLVDS port map(A => ddr_d(i), Z => gpdi_dp(i), ZN => gpdi_dn(i));
     end generate;
   end generate;
-
-  S_flash_csn_filtered <= S_flash_csn;
-  S_flash_clk_filtered <= S_flash_csn_filtered or S_flash_clk;
-  flash_clock: entity work.ecp5_flash_clk
-  port map
-  (
-    flash_csn => rs232_break,
-    flash_clk => S_flash_clk_filtered
-  );
-  flash_csn <= S_flash_csn_filtered;
 
 end Behavioral;
