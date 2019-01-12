@@ -267,10 +267,6 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   end component;
 
 begin
-  minimal_25MHz: if C_clk_freq=25 and C_video_mode=-1 generate
-    clk <= clk_25MHz;
-  end generate;
-
   ddr_320x240_96MHz: if C_clk_freq=96 and C_video_mode=11 generate
   clk_96M_320_240: entity work.clk_25_287M5_19M16_6M38_95M83
     port map(
@@ -280,52 +276,6 @@ begin
       CLKOS2      =>  clk_pixel, --  6.3888 MHz
       CLKOS3      =>  clk        -- 95.8333 MHz CPU
     );
-  end generate;
-
-  ddr_640x480_25MHz: if C_clk_freq=25 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_25M: entity work.clk_25_100_125_25
-    port map(
-      CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
-      CLKOS       =>  open,      -- 125 MHz inverted
-      CLKOS2      =>  clk_pixel, --  25 MHz
-      CLKOS3      =>  open       -- 100 MHz
-    );
-    clk <= clk_pixel; 
-  end generate;
-
-  ddr_640x480_78MHz: if C_clk_freq=78 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_78M: entity work.clk_25_78_125_25
-    port map(
-      CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
-      CLKOS       =>  open,  -- 125 MHz inverted
-      CLKOS2      =>  clk_pixel, --  25 MHz
-      CLKOS3      =>  clk        --  78.125 MHz CPU
-    );
-  end generate;
-
-  ddr_640x480_100MHz: if C_clk_freq=100 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_100M: entity work.clk_25_100_125_25
-    port map(
-      CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
-      CLKOS       =>  open,  -- 125 MHz inverted
-      CLKOS2      =>  clk_pixel, --  25 MHz
-      CLKOS3      =>  clk        -- 100 MHz CPU
-    );
-  end generate;
-
-  ddr_640x480_125MHz: if C_clk_freq=125 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_125M: entity work.clk_25_100_125_25
-    port map(
-      CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
-      CLKOS       =>  open,  -- 125 MHz inverted
-      CLKOS2      =>  clk_pixel, --  25 MHz
-      CLKOS3      =>  open       -- 100 MHz
-    );
-  clk <= clk_pixel_shift;
   end generate;
 
   G_yes_passthru_autodetect: if C_passthru_autodetect generate

@@ -35,6 +35,7 @@ entity ulx3s_xram_sdram_vector is
     C_boot_rom_data_bits: integer := 32; -- number of bits in output from bootrom_emu
     C_boot_spi: boolean := true; -- SPI bootloader is larger and allows setting of baudrate
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- 8 default for C_xboot_rom=false, 0 for C_xboot_rom=true, sets XRAM base address
+    C_cached_addr_bits: integer := 25; -- lower address bits than C_cached_addr_bits are cached
     C_acram: boolean := true; -- false default (ulx3s has sdram chip)
     C_acram_wait_cycles: integer := 3; -- 3 or more
     C_acram_emu_kb: integer := 32; -- KB axi_cache emulation (power of 2)
@@ -42,7 +43,6 @@ entity ulx3s_xram_sdram_vector is
     C_sdram_clock_range: integer := 1; -- standard value good for all
     C_icache_size: integer := 0; -- 2 default
     C_dcache_size: integer := 0; -- 2 default
-    C_cached_addr_bits: integer := 25; -- lower address bits than C_cached_addr_bits are cached
     C_branch_prediction: boolean := false; -- false default
     C_sio: integer := 2; -- 2 default
     C_spi: integer := 2; -- 2 default

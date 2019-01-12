@@ -25,10 +25,10 @@ CONSTRAINTS = ../../constraints/ulx3s_v20.lpf
 TOP_MODULE = ulx3s_xram_sdram_vector
 
 # various toplevels for building different f32c soc's
-TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_flash.vhd
+#TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_flash.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_lcd35.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_noflash.vhd
-#TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_433.vhd
+TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_433.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_synth.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_tv.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_usbserial.vhd
@@ -54,6 +54,8 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../lattice/ulx3s/clocks/clk_25_125_250_25_83.vhd \
   ../../../../lattice/ulx3s/clocks/clk_25_125_25_48_89.vhd \
   ../../../../lattice/ulx3s/clocks/clk_25_125_25_48_104.vhd \
+  ../../../../lattice/ulx3s/clocks/clk_25M_112M5_93M75.vhd \
+  ../../../../lattice/ulx3s/clocks/clk_112M5_433M92.vhd \
   ../../../../lattice/ulx3s/clocks/clk_25_287M5_19M16_6M38_95M83.vhd \
   ../../../../lattice/chip/ecp5u/ecp5_flash_clk.vhd \
   ../../../../generic/glue_xram_vector.vhd \

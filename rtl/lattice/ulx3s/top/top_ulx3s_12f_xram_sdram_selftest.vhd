@@ -298,8 +298,8 @@ begin
      );
   end generate;
 
-  ddr_640x480_100MHz: if C_clk_freq=125 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_100M: entity work.clk_25_100_125_25
+  ddr_640x480_125MHz: if C_clk_freq=125 and (C_video_mode=0 or C_video_mode=1) generate
+  clk_125M: entity work.clk_25_100_125_25
     port map(
       CLKI        =>  clk_25MHz,
       CLKOP       =>  clk_pixel_shift,   -- 125 MHz

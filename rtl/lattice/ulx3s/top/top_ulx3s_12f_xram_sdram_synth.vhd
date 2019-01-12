@@ -52,7 +52,6 @@ entity ulx3s_xram_sdram_vector is
     C_sdram_clock_range: integer := 1; -- standard value good for all
     C_icache_size: integer := 2; -- 2 default
     C_dcache_size: integer := 2; -- 2 default
-    C_cached_addr_bits: integer := 25; -- lower address bits than C_cached_addr_bits are cached
     C_branch_prediction: boolean := false; -- false default
     C_sio: integer := 2; -- 2 default
     C_spi: integer := 4; -- 2 default
@@ -301,8 +300,8 @@ begin
      );
   end generate;
 
-  ddr_640x480_100MHz: if C_clk_freq=125 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_100M: entity work.clk_25_100_125_25
+  ddr_640x480_125MHz: if C_clk_freq=125 and (C_video_mode=0 or C_video_mode=1) generate
+  clk_125M: entity work.clk_25_100_125_25
     port map(
       CLKI        =>  clk_25MHz,
       CLKOP       =>  clk_pixel_shift,   -- 125 MHz

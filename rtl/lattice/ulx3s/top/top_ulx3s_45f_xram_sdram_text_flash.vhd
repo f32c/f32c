@@ -35,13 +35,13 @@ entity ulx3s_xram_sdram_text is
     C_boot_rom_data_bits: integer := 32; -- number of bits in output from bootrom_emu
     C_boot_spi: boolean := true; -- SPI bootloader is larger and allows setting of baudrate
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- 8 default for C_xboot_rom=false, 0 for C_xboot_rom=true, sets XRAM base address
+    C_cached_addr_bits: integer := 25; -- lower address bits than C_cached_addr_bits are cached
     C_acram: boolean := false; -- false default (ulx3s has sdram chip)
     C_acram_wait_cycles: integer := 3; -- 3 or more
     C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2)
     C_sdram: boolean := true; -- true default
     C_icache_size: integer := 2; -- 2 default
     C_dcache_size: integer := 2; -- 2 default
-    C_cached_addr_bits: integer := 25; -- lower address bits than C_cached_addr_bits are cached
     C_branch_prediction: boolean := false; -- false default
     C_sio: integer := 2; -- 2 default
     C_spi: integer := 2; -- 2 default
@@ -288,8 +288,8 @@ begin
      );
   end generate;
 
-  ddr_640x480_100MHz: if C_clk_freq=125 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_100M: entity work.clk_25_100_125_25
+  ddr_640x480_125MHz: if C_clk_freq=125 and (C_video_mode=0 or C_video_mode=1) generate
+  clk_125M: entity work.clk_25_100_125_25
     port map(
       CLKI        =>  clk_25MHz,
       CLKOP       =>  clk_pixel_shift,   -- 125 MHz
