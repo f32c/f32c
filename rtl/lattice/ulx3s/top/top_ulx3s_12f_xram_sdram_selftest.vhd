@@ -24,8 +24,8 @@ entity ulx3s_xram_sdram_vector is
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
 
-    -- Main clock: 25/78/100 MHz
-    C_clk_freq: integer := 100;
+    -- Main clock: 25/78/89/100/104 MHz
+    C_clk_freq: integer := 89;
 
     -- SoC configuration options
     C_xboot_rom: boolean := false; -- false default, bootloader initializes XRAM with external DMA
@@ -53,6 +53,7 @@ entity ulx3s_xram_sdram_vector is
     C_dcache_size: integer := 2; -- 2 default
     C_branch_prediction: boolean := false; -- false default
     C_sio: integer := 2; -- 2 default
+    C_usbsio: std_logic_vector := "0100"; -- f32c bootloader over USB-serial
     C_spi: integer := 3; -- 2 default
     C_simple_io: boolean := true; -- true default
     C_gpio: integer := 96; -- 64 default for ulx3s, additional gpio for audio DAC testing
@@ -149,9 +150,9 @@ entity ulx3s_xram_sdram_vector is
   wifi_gpio0, wifi_gpio5, wifi_gpio16, wifi_gpio17: inout std_logic := 'Z';
 
   -- USB
-  usb_fpga_dp, usb_fpga_dn: inout std_logic; -- single ended
-  --usb_fpga_pu_dp, usb_fpga_pu_dn: out std_logic; -- pull up/down control
-  --usb_fpga_bd_dp, usb_fpga_bd_dn: inout std_logic; -- differential bidirectional
+  --usb_fpga_dp, usb_fpga_dn: in std_logic; -- differential input (currently not used)
+  usb_fpga_pu_dp, usb_fpga_pu_dn: inout std_logic; -- pull up/down control
+  usb_fpga_bd_dp, usb_fpga_bd_dn: inout std_logic; -- single-ended bidirectional
 
   -- ADC MAX11123
   adc_csn, adc_sclk, adc_mosi: out std_logic;
@@ -220,8 +221,8 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
       return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
   end ceil_log2;
   signal clk, rs232_break, rs232_break2: std_logic;
-  signal clk_100: std_logic;
   signal clk_pixel_shift, clk_pixel: std_logic;
+  signal clk_usbsio: std_logic;
   signal ram_en             : std_logic;
   signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
   signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
@@ -233,7 +234,8 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal R_blinky: std_logic_vector(26 downto 0);
   signal S_spdif_out: std_logic;
 
-  signal S_reset: std_logic := '0'; -- reset to hold during DMA preload
+  signal S_reset, S_reset_during_dma, R_reset: std_logic := '0'; -- reset to hold during DMA preload
+  signal R_reset_counter: std_logic_vector(20 downto 0); -- btn0 debouncer
   -- exposed DMA signals for boot preloader
   signal xdma_addr: std_logic_vector(29 downto 2) := ('0', others => '0'); -- preload address 0x00000000 XRAM
   signal xdma_strobe: std_logic := '0';
@@ -284,6 +286,28 @@ begin
       CLKOS       =>  open,  -- 125 MHz inverted
       CLKOS2      =>  clk_pixel, --  25 MHz
       CLKOS3      =>  clk        --  78.125 MHz CPU
+     );
+  end generate;
+
+  ddr_640x480_89MHz: if C_clk_freq=89 and (C_video_mode=0 or C_video_mode=1) generate
+  clk_89M: entity work.clk_25_125_25_48_89
+    port map(
+      CLKI        =>  clk_25MHz,
+      CLKOP       =>  clk_pixel_shift, -- 125    MHz DVI
+      CLKOS       =>  clk_pixel,       --  25    MHz DVI
+      CLKOS2      =>  clk_usbsio,      --  48.07 MHz USB
+      CLKOS3      =>  clk              --  89.25 MHz CPU
+     );
+  end generate;
+
+  ddr_640x480_104MHz: if C_clk_freq=104 and (C_video_mode=0 or C_video_mode=1) generate
+  clk_104M: entity work.clk_25_125_25_48_104
+    port map(
+      CLKI        =>  clk_25MHz,
+      CLKOP       =>  clk_pixel_shift, -- 125    MHz DVI
+      CLKOS       =>  clk_pixel,       --  25    MHz DVI
+      CLKOS2      =>  clk_usbsio,      --  48.07 MHz USB
+      CLKOS3      =>  clk              -- 104.17 MHz CPU
      );
   end generate;
 
@@ -425,6 +449,7 @@ begin
     C_xram_base => C_xram_base,
     C_debug => C_debug,
     C_sio => C_sio,
+    C_usbsio => C_usbsio,
     C_spi => C_spi,
     C_gpio => C_gpio,
     C_gpio_pullup => C_gpio_pullup,
@@ -495,10 +520,13 @@ begin
     clk => clk,
     clk_pixel => clk_pixel,
     clk_pixel_shift => clk_pixel_shift,
+    clk_usbsio => clk_usbsio,
     reset => S_reset,
     sio_rxd(0) => S_rxd,
+    usbsio_dp(1) => usb_fpga_bd_dp,
     sio_rxd(1) => open,
     sio_txd(0) => S_txd,
+    usbsio_dn(1) => usb_fpga_bd_dn,
     sio_txd(1) => open,
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
@@ -591,7 +619,7 @@ begin
       (
         clk => clk,
         reset_in => rs232_break, -- input reset rising edge (from serial break) starts DMA preload
-        reset_out => S_reset, -- S_reset, 1 during DMA preload (holds CPU in reset state)
+        reset_out => S_reset_during_dma, -- 1 during DMA preload (holds CPU in reset state) FIXME on glue_xram module use this instead of R_reset
         rom_reset => S_rom_reset,
         rom_next_data => S_rom_next_data,
         rom_data => S_rom_data,
@@ -658,5 +686,29 @@ begin
     flash_clk => S_flash_clk
   );
   flash_csn <= S_flash_csn;
+
+  -- USB 1.1
+  G_yes_usbserial: if C_usbsio /= "0000" generate
+    usb_fpga_pu_dp <= '1'; -- D+ pullup enabled to activate USB 1.1 enumeration
+    usb_fpga_pu_dn <= 'Z'; -- D- pullup/down disabled to activate USB 1.1 enumeration
+    -- manual reset as USB-serial currently doesn't support break
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        if btn(0) = '0' then
+          R_reset_counter <= (others => '0');
+        else
+          if R_reset_counter(R_reset_counter'high) = '0' then
+            R_reset_counter <= R_reset_counter + 1;
+          end if;
+        end if;
+      R_reset <= not R_reset_counter(R_reset_counter'high);
+      end if;
+    end process;
+  end generate;
+
+  G_not_usbserial: if C_usbsio(0) = '0' generate
+    R_reset <= rs232_break;
+  end generate;
 
 end Behavioral;
