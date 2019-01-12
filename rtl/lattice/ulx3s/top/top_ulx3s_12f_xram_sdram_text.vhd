@@ -24,8 +24,8 @@ entity ulx3s_xram_sdram_vector is
     C_arch: integer := ARCH_MI32;
     C_debug: boolean := false;
 
-    -- Main clock: 96 MHz
-    C_clk_freq: integer := 96;
+    -- Main clock: 25/78/100 MHz
+    C_clk_freq: integer := 100;
 
     -- SoC configuration options
     C_xboot_rom: boolean := false; -- false default, bootloader initializes XRAM with external DMA
@@ -34,22 +34,12 @@ entity ulx3s_xram_sdram_vector is
     C_boot_write_protect: boolean := true; -- true default, may leave boot block writeable to save some LUTs
     C_boot_rom_data_bits: integer := 32; -- number of bits in output from bootrom_emu
     C_boot_spi: boolean := true; -- SPI bootloader is larger and allows setting of baudrate
-    --  RAM    C_xram_base  C_PC_mask    C_cached_addr_bits  C_bram_size  C_xboot_rom  Comment
-    --  32 MB  "8"          x"81ffffff"  25                  2            false        ULX3S default
-    --  32 MB  "0"          x"01ffffff"  25                  0            true         XRAM only, no BRAM
-    --   1 MB  "8"          x"800fffff"  20                  2            false        ULX2S simulaton
-    --   1 MB  "1"          x"100fffff"  20                  2            false        custom
-    -- RAM start address x"8" -> 0x80000000 (needs C_PC_mask x"800fffff" for 1MB or x"81ffffff" for 32MB)
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- 8 default for C_xboot_rom=false, 0 for C_xboot_rom=true, sets XRAM base address
-    C_PC_mask: std_logic_vector(31 downto 0) := x"81ffffff"; -- ULX3S default 32MB
-    -- C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff"; -- ULX2S simulation 1MB
-    C_cached_addr_bits: integer := 25; -- ULX3S default 32MB
-    -- C_cached_addr_bits: integer := 20; -- ULX2S simulation 1MB
+    C_cached_addr_bits: integer := 25; -- lower address bits than C_cached_addr_bits are cached
     C_acram: boolean := false; -- false default (ulx3s has sdram chip)
     C_acram_wait_cycles: integer := 3; -- 3 or more
     C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2)
     C_sdram: boolean := true; -- true default
-    C_sdram_clock_range: integer := 1; -- standard value good for all
     C_icache_size: integer := 2; -- 2 default
     C_dcache_size: integer := 2; -- 2 default
     C_branch_prediction: boolean := false; -- false default
@@ -66,7 +56,7 @@ entity ulx3s_xram_sdram_vector is
     C_synth: boolean := false; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
-    C_spdif: boolean := true; -- SPDIF output
+    C_spdif: boolean := false; -- SPDIF output
     C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
     -- enabling passthru autodetect reduces fmax or vector divide must be disabled on 45f
@@ -86,11 +76,9 @@ entity ulx3s_xram_sdram_vector is
 
     -- video parameters common for vgahdmi and vgatext
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
-    C_video_mode: integer := 11; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768, 11:320x200
-    C_lcd35_display: boolean := true; -- for small 3.5" 320x240 LCD display
-    C_shift_clock_synchronizer: boolean := false; -- logic that synchronizes DVI clock with pixel clock, not used for 3.5" display
+    C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
 
-    C_vgahdmi: boolean := true;
+    C_vgahdmi: boolean := false;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
     C_vgahdmi_cache_size: integer := 0; -- 0 default (disabled, cache flush not yet implemented)
@@ -98,19 +86,19 @@ entity ulx3s_xram_sdram_vector is
     C_compositing2_write_while_reading: boolean := true; -- default true
 
     -- VGA textmode and graphics, full featured
-    C_vgatext: boolean := false;    -- Xark's feature-rich bitmap+textmode VGA
+    C_vgatext: boolean := true;    -- Xark's feature-rich bitmap+textmode VGA
     C_vgatext_label: string := "ULX3S f32c: 100MHz MIPS-compatible soft-core, 32MB SDRAM";
     C_vgatext_bits: integer := 4;   -- 4096 possible colors
-    C_vgatext_bram_mem: integer := 8;   -- 8KB text+font  memory
-    C_vgatext_external_mem: integer := 0; -- 0KB external SRAM/SDRAM
+    C_vgatext_bram_mem: integer := 0;   -- 8KB text+font  memory
+    C_vgatext_external_mem: integer := 32768; -- 0KB external SRAM/SDRAM
     C_vgatext_reset: boolean := true;   -- reset registers to default with async reset
     C_vgatext_palette: boolean := true;  -- no color palette
     C_vgatext_text: boolean := true;    -- enable optional text generation
     C_vgatext_font_bram8: boolean := true;    -- font in separate bram8 file (for Lattice XP2 BRAM or non power-of-two BRAM sizes)
-    C_vgatext_char_height: integer := 16;   -- character cell height
-    C_vgatext_font_height: integer := 16;    -- font height
+    C_vgatext_char_height: integer := 8;   -- character cell height
+    C_vgatext_font_height: integer := 8;    -- font height
     C_vgatext_font_depth: integer := 8;     -- font char depth, 7=128 characters or 8=256 characters
-    C_vgatext_font_linedouble: boolean := true;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
+    C_vgatext_font_linedouble: boolean := false;   -- double font height by doubling each line (e.g., so 8x8 font fills 8x16 cell)
     C_vgatext_font_widthdouble: boolean := false;   -- double font width by doubling each pixel (e.g., so 8 wide font is 16 wide cell)
     C_vgatext_monochrome: boolean := false;    -- true for 2-color text for whole screen, else additional color attribute byte per character
     C_vgatext_finescroll: boolean := true;   -- true for pixel level character scrolling and line length modulo
@@ -123,7 +111,7 @@ entity ulx3s_xram_sdram_vector is
       C_vgatext_text_fifo_width: integer := 6;  -- width of FIFO address space (default=4) length = 2^width * 4 bytes
     C_vgatext_bitmap: boolean := true;     -- true for optional bitmap generation
     C_vgatext_bitmap_depth: integer := 8;   -- 8-bpp 16-color bitmap
-    C_vgatext_bitmap_fifo: boolean := true;  -- disable bitmap FIFO
+    C_vgatext_bitmap_fifo: boolean := true;  -- enable bitmap FIFO
     -- step=horizontal width in pixels
     C_vgatext_bitmap_fifo_step: integer := 640;
     -- height=vertical height in pixels
@@ -232,9 +220,6 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal ram_data_write     : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_data_read      : std_logic_vector(31 downto 0) := (others => '0');
   signal ram_ready          : std_logic;
-  signal lcd_hsync, lcd_vsync, lcd_blank: std_logic;
-  signal lcd_spclk, lcd_spdat, lcd_spena, lcd_resetn: std_logic := '1';
-  signal lcd_dat: std_logic_vector(7 downto 0); -- each 8-bit R,G,B is sent durinig one of 3 clock cycles
   signal dvid_crgb: std_logic_vector(7 downto 0);
   signal ddr_d: std_logic_vector(3 downto 0);
   signal R_blinky: std_logic_vector(26 downto 0);
@@ -260,22 +245,61 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   constant C_break_counter_bits: integer := 1+ceil_log2(integer(C_passthru_clk_Hz*C_passthru_break));
   signal R_break_counter: std_logic_vector(C_break_counter_bits-1 downto 0) := (others => '0');
   signal S_f32c_sd_csn, S_f32c_sd_clk, S_f32c_sd_miso, S_f32c_sd_mosi: std_logic;
-  signal S_flash_csn, S_flash_clk: std_logic;
+  signal S_flash_csn, S_flash_clk, S_flash_clk_filtered, S_flash_csn_filtered: std_logic;
 
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
   end component;
 
 begin
-  ddr_320x240_96MHz: if C_clk_freq=96 and C_video_mode=11 generate
-  clk_96M_320_240: entity work.clk_25_287M5_19M16_6M38_95M83
+  minimal_25MHz: if C_clk_freq=25 and C_video_mode=-1 generate
+    clk <= clk_25MHz;
+  end generate;
+
+  ddr_640x480_25MHz: if C_clk_freq=25 and (C_video_mode=0 or C_video_mode=1) generate
+  clk_25M: entity work.clk_25_100_125_25
     port map(
       CLKI        =>  clk_25MHz,
-      CLKOP       =>  open, -- 287.5 MHz unused
-      CLKOS       =>  clk_pixel_shift, -- 19.1666 MHz,
-      CLKOS2      =>  clk_pixel, --  6.3888 MHz
-      CLKOS3      =>  clk        -- 95.8333 MHz CPU
-    );
+      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
+      CLKOS       =>  open,      -- 125 MHz inverted
+      CLKOS2      =>  clk_pixel, --  25 MHz
+      CLKOS3      =>  open       -- 100 MHz
+     );
+    clk <= clk_pixel; 
+  end generate;
+
+  ddr_640x480_78MHz: if C_clk_freq=78 and (C_video_mode=0 or C_video_mode=1) generate
+  clk_78M: entity work.clk_25_78_125_25
+    port map(
+      CLKI        =>  clk_25MHz,
+      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
+      CLKOS       =>  open,  -- 125 MHz inverted
+      CLKOS2      =>  clk_pixel, --  25 MHz
+      CLKOS3      =>  clk        --  78.125 MHz CPU
+     );
+  end generate;
+
+  ddr_640x480_100MHz: if C_clk_freq=100 and (C_video_mode=0 or C_video_mode=1) generate
+  clk_100M: entity work.clk_25_100_125_25
+    port map(
+      CLKI        =>  clk_25MHz,
+      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
+      CLKOS       =>  open,  -- 125 MHz inverted
+      CLKOS2      =>  clk_pixel, --  25 MHz
+      CLKOS3      =>  clk        -- 100 MHz CPU
+     );
+  end generate;
+
+  ddr_640x480_125MHz: if C_clk_freq=125 and (C_video_mode=0 or C_video_mode=1) generate
+  clk_125M: entity work.clk_25_100_125_25
+    port map(
+      CLKI        =>  clk_25MHz,
+      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
+      CLKOS       =>  open,  -- 125 MHz inverted
+      CLKOS2      =>  clk_pixel, --  25 MHz
+      CLKOS3      =>  open       -- 100 MHz
+     );
+  clk <= clk_pixel_shift;
   end generate;
 
   G_yes_passthru_autodetect: if C_passthru_autodetect generate
@@ -371,7 +395,6 @@ begin
     C_boot_write_protect => C_boot_write_protect,
     C_boot_spi => C_boot_spi,
     C_branch_prediction => C_branch_prediction,
-    C_PC_mask => C_PC_mask,
     C_acram => C_acram,
     C_acram_wait_cycles => C_acram_wait_cycles,
     C_sdram => C_sdram,
@@ -420,8 +443,6 @@ begin
     C_vector_float_divide => C_vector_float_divide,
 
     C_dvid_ddr => C_dvid_ddr,
-    C_lcd35_display => C_lcd35_display,
-    C_shift_clock_synchronizer => C_shift_clock_synchronizer,
     -- vga simple compositing bitmap only graphics
     C_compositing2_write_while_reading => C_compositing2_write_while_reading,
     C_vgahdmi => C_vgahdmi,
@@ -472,27 +493,19 @@ begin
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
 
-    spi_ss(0)   => S_flash_csn,  spi_ss(1)   => S_f32c_sd_csn,   spi_ss(2)   => oled_csn,   spi_ss(3)   => gp(27),
-    spi_sck(0)  => S_flash_clk,  spi_sck(1)  => S_f32c_sd_clk,   spi_sck(2)  => oled_clk,   spi_sck(3)  => gn(27),
-    spi_mosi(0) => flash_mosi,   spi_mosi(1) => S_f32c_sd_mosi,  spi_mosi(2) => oled_mosi,  spi_mosi(3) => gp(26),
-    spi_miso(0) => flash_miso,   spi_miso(1) => S_f32c_sd_miso,  spi_miso(2) => open,       spi_miso(3) => gn(26),
+    spi_ss(0)   => S_flash_csn,  spi_ss(1)   => S_f32c_sd_csn,   spi_ss(2)   => oled_csn,   spi_ss(3)   => gn(24),
+    spi_sck(0)  => S_flash_clk,  spi_sck(1)  => S_f32c_sd_clk,   spi_sck(2)  => oled_clk,   spi_sck(3)  => gn(21),
+    spi_mosi(0) => flash_mosi,   spi_mosi(1) => S_f32c_sd_mosi,  spi_mosi(2) => oled_mosi,  spi_mosi(3) => gn(23),
+    spi_miso(0) => flash_miso,   spi_miso(1) => S_f32c_sd_miso,  spi_miso(2) => open,       spi_miso(3) => gn(22),
 
     gpio(127 downto 28+32) => open,
-    gpio(27+32 downto 26+32) => open, -- EXT SPI
-    -- gpio(25+32) => open,
-    gpio(24+32 downto 21+32) => open, -- LCD PMOD
-    gpio(20+32 downto 18+32) => gn(20 downto 18),
-    gpio(17+32 downto 14+32) => open, -- LCD PMOD
-    gpio(13+32 downto 32) => gn(13 downto 0),
+    gpio(27+32 downto 25+32) => gn(27 downto 25),
+    gpio(24+32 downto 21+32) => open,
+    gpio(20+32 downto 32) => gn(20 downto 0),
     gpio(31 downto 30) => open,
     gpio(29) => gpdi_sda,
     gpio(28) => gpdi_scl,
-    gpio(27 downto 26) => open, -- EXT SPI
-    gpio(25) => open,
-    gpio(24 downto 21) => open, -- LCD PMOD
-    gpio(20 downto 18) => gp(20 downto 18),
-    gpio(17 downto 14) => open, -- LCD PMOD
-    gpio(13 downto 0) => gp(13 downto 0),
+    gpio(27 downto 0) => gp(27 downto 0),
     simple_out(31 downto 19) => open,
     simple_out(18) => adc_mosi,
     simple_out(17) => adc_sclk,
@@ -500,11 +513,11 @@ begin
     simple_out(15) => open,
     simple_out(14) => open, -- wifi_en
     simple_out(13) => shutdown,
-    simple_out(12) => open,
+    simple_out(12) => oled_csn,
     simple_out(11) => oled_dc,
     simple_out(10) => oled_resn,
-    simple_out(9) => open,
-    simple_out(8) => open,
+    simple_out(9) => oled_mosi,
+    simple_out(8) => oled_clk,
     simple_out(7 downto 0) => led(7 downto 0),
     simple_in(31 downto 21) => (others => '0'),
     simple_in(20) => adc_miso,
@@ -512,7 +525,7 @@ begin
     simple_in(15 downto 7) => (others => '0'),
     simple_in(6 downto 0) => btn,
 
-    -- v1.7: 2 MSB audio channel bits are not used in "default" setup.
+    -- v1.7: 2 MSB audio channel bits should not be used or board resets.
     --audio_l(3 downto 2) => audio_l(1 downto 0),
     --audio_r(3 downto 2) => audio_r(1 downto 0),
     -- 4-bit could be used down to 75 ohm load
@@ -545,9 +558,6 @@ begin
     acram_data_rd(31 downto 0) => ram_data_read(31 downto 0),
     acram_data_wr(31 downto 0) => ram_data_write(31 downto 0),
     acram_ready => ram_ready,
-    
-    vga_hsync => lcd_hsync, vga_vsync => lcd_vsync, vga_blank => lcd_blank,
-    vga_serial_rgb => lcd_dat,
 
     dvid_clock => dvid_crgb(7 downto 6),
     dvid_red   => dvid_crgb(5 downto 4),
@@ -630,32 +640,15 @@ begin
       gpdi_diff: OLVDS port map(A => ddr_d(i), Z => gpdi_dp(i), ZN => gpdi_dn(i));
     end generate;
   end generate;
-  
-  -- board pins -> flat cable -> display pins
-  gn(24) <= lcd_blank;
-  gp(24) <= not clk_pixel_shift;
-  gn(23) <= not lcd_hsync;
-  gp(23) <= not lcd_vsync;
-  gp(22) <= lcd_spclk;
-  gn(22) <= lcd_spdat;
-  gn(21) <= lcd_resetn;
-  gn(21) <= lcd_spena;
 
-  gn(17) <= lcd_dat(7);
-  gp(17) <= lcd_dat(6);
-  gn(16) <= lcd_dat(5);
-  gp(16) <= lcd_dat(4);
-  gn(15) <= lcd_dat(3);
-  gp(15) <= lcd_dat(2);
-  gn(14) <= lcd_dat(1);
-  gp(14) <= lcd_dat(0);
-
+  S_flash_csn_filtered <= S_flash_csn;
+  S_flash_clk_filtered <= S_flash_csn_filtered or S_flash_clk;
   flash_clock: entity work.ecp5_flash_clk
   port map
   (
     flash_csn => rs232_break,
-    flash_clk => S_flash_clk
+    flash_clk => S_flash_clk_filtered
   );
-  flash_csn <= S_flash_csn;
+  flash_csn <= S_flash_csn_filtered;
 
 end Behavioral;
