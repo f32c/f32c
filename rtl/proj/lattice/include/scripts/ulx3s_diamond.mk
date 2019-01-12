@@ -231,11 +231,11 @@ JUNK += $(BOARD)_$(FPGA_SIZE)f_$(PROJECT)_flash_$(FLASH_CHIP).vme
 JUNK += $(BOARD)_$(FPGA_SIZE)f.ocd
 # diamond junk
 JUNK += ${IMPL_DIR} .recovery ._Real_._Math_.vhd *.sty reportview.xml
-JUNK += dummy_sym.sort project_tcl.html promote.xml
+JUNK += dummy_sym.sort project_tcl.html promote.xml .run_manager.ini
 JUNK += generate_core.tcl generate_ngd.tcl msg_file.log
-JUNK += project_tcr.dir
 
 JUNK_DIR = project
+JUNK_DIR += project_tcr.dir
 
 clean:
 	rm -rf $(JUNK_DIR)
