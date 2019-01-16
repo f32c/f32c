@@ -22,7 +22,7 @@ PROG = loader
 FLASH_FAT_OFFSET = 1048576
 # bitstream should be written from flash address 0
 # and should not be longer than FLASH_FAT_OFFSET bytes
-BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480flash/f32c_ulx3s_v20_12k_pix8bpp640x480flash_100mhz.bit
+#BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480flash/f32c_ulx3s_v20_12k_pix8bpp640x480flash_100mhz.bit
 #BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-25k/pix8bpp320x240/ulx3s_12f_f32c.bit
 #BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_12f_v2.0_c2_flash/project/f32c_ulx3s_v20_12k_pix8bpp640x480flash_100mhz.bit
 #BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/f32c/f32c-12k-v20/f32c_ulx3s_v20_12k_selftest_100mhz.bit
@@ -36,7 +36,7 @@ BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/
 #BITSTREAM_IMG_NAME = /mt/scratch/tmp/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v17-45k/pix8bpp640x480flash/f32c_ulx3s_v17p_45k_pix8bpp640x480flash_100mhz.bit
 #BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/f32c/f32c-45k-vector-v17patch/f32c_ulx3s_v17p_45k_selftest_100mhz.bit
 #BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-85k/pix8bpp640x480flash/f32c_ulx3s_v20_85k_pix8bpp640x480flash_100mhz.bit
-#BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/f32c/f32c-85k-vector-v20/f32c_ulx3s_v20_85k_selftest_100mhz.bit
+BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/f32c/f32c-85k-vector-v20/ulx3s_v20_85f_f32c_selftest_100mhz.bit
 #BITSTREAM_IMG_NAME = /mt/scratch/tmp/xilinx/papilio-pro/f32c/papilio_pro.bin
 #BITSTREAM_IMG_NAME = ../../../rtl/proj/xilinx/papilio-pro/papilio_pro_xram_sdram/papilio_pro.bin
 # loader start address relative to start of the FAT image

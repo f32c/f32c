@@ -1,6 +1,8 @@
 # ******* project, board and chip name *******
-PROJECT = f32c_normal_100mhz
-BOARD = ulx3s
+PROJECT = f32c_pix8bpp640x480_100mhz
+# ulx3s_v20/ulx3s_v17p
+BOARD = ulx3s_v20
+# 12/25/45/85
 FPGA_SIZE = 12
 FPGA_PACKAGE = 6bg381c
 # config flash: 1:SPI (standard), 4:QSPI (quad)
@@ -25,7 +27,7 @@ CONSTRAINTS = ../../constraints/ulx3s_v20.lpf
 TOP_MODULE = ulx3s_xram_sdram_vector
 
 # various toplevels for building different f32c soc's
-TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram.vhd
+#TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_lcd35.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_noflash.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_433.vhd
@@ -42,7 +44,7 @@ TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_text.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_text_noflash.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_tv.vhd
-#TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_vector.vhd
+TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_vector.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_vector_noflash.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_vector_selftest.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_85f_xram_acram_emu_vector_segpdi.vhd

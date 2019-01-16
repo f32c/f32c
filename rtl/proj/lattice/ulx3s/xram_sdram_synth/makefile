@@ -1,6 +1,8 @@
 # ******* project, board and chip name *******
 PROJECT = f32c_synth_100mhz
-BOARD = ulx3s
+# ulx3s_v20/ulx3s_v17p
+BOARD = ulx3s_v20
+# 12/25/45/85
 FPGA_SIZE = 12
 FPGA_PACKAGE = 6bg381c
 # config flash: 1:SPI (standard), 4:QSPI (quad)
