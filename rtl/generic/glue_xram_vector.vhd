@@ -290,8 +290,6 @@ port (
   vga_r, vga_g, vga_b: out std_logic_vector(7 downto 0) := (others => '0'); -- parallel VGA
   vga_serial_rgb: out std_logic_vector(7 downto 0) := (others => '0'); -- each 8-bit R,G,B is sent durinig one of 3 clock cycles
   dvi_r, dvi_g, dvi_b: out std_logic_vector(9 downto 0) := (others => '0'); -- parallel DVI
-  tmds_out_rgb: out std_logic_vector(2 downto 0);
-  tmds_out_clk: out std_logic := '0'; -- used for DDR output
   dvid_red, dvid_green, dvid_blue, dvid_clock: out std_logic_vector(1 downto 0);
   video_base_addr: out std_logic_vector(31 downto 2) := (others => '0'); -- video base address
   ledstrip_rotation: in std_logic := '0'; -- input from motor rotation encoder
