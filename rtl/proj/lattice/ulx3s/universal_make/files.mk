@@ -7,6 +7,7 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../lattice/ulx3s/clocks/clk_25_125_25_48_104.vhd \
   ../../../../lattice/ulx3s/clocks/clk_25_325_25_81.vhd \
   ../../../../lattice/ulx3s/clocks/clk_25_325_25_92.vhd \
+  ../../../../lattice/ulx3s/clocks/clk_25_300_150_30_100.vhd \
   ../../../../lattice/ulx3s/clocks/clk_25M_112M5_93M75.vhd \
   ../../../../lattice/ulx3s/clocks/clk_112M5_433M92.vhd \
   ../../../../lattice/ulx3s/clocks/clk_25_287M5_19M16_6M38_95M83.vhd \
@@ -112,6 +113,7 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../soc/vector/fpu/float_divide_goldschmidt.vhd
 
 VERILOG_FILES = \
+  ../../../../lattice/ulx3s/clocks/clk_25_300_150_30_100_v.v \
   ../../../../soc/pid/ctrlpid_v.v \
   ../../../../soc/pid/simotor_v.v \
   ../../../../soc/pid/rotary_decoder_v.v \
