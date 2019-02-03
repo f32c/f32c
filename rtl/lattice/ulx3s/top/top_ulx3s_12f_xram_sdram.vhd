@@ -301,6 +301,17 @@ begin
      );
   end generate;
 
+  ddr_800x480_100MHz: if C_clk_freq=100 and C_video_mode=2 generate
+  clk_800x480_100M: entity work.clk_25_300_150_30_100
+    port map(
+      clkin       =>  clk_25MHz,
+      clkout(0)   =>  open,            -- 300 MHz
+      clkout(1)   =>  clk_pixel_shift, -- 150 MHz
+      clkout(2)   =>  clk_pixel,       --  30 MHz
+      clkout(3)   =>  clk              -- 100 MHz CPU
+     );
+  end generate;
+
   ddr_640x480_125MHz: if C_clk_freq=125 and (C_video_mode=0 or C_video_mode=1) generate
   clk_125M: entity work.clk_25_100_125_25
     port map(
