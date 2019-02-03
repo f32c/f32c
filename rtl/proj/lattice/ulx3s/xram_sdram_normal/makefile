@@ -1,5 +1,6 @@
 # ******* project, board and chip name *******
-PROJECT = f32c_pix8bpp640x480_100mhz
+#PROJECT = f32c_pix8bpp640x480_100mhz
+PROJECT = f32c_pix8bpp800x480_100mhz
 # ulx3s_v20/ulx3s_v17p
 BOARD = ulx3s_v20
 # 12/25/45/85
@@ -30,6 +31,8 @@ TOP_MODULE = ulx3s_xram_sdram_vector
 TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_lcd35.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_noflash.vhd
+#TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_text.vhd
+#TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_text100x60.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_433.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_synth.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_tv.vhd

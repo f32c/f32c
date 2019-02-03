@@ -3,7 +3,7 @@ PROJECT = f32c_selftest_100mhz
 # board: ulx3s_v20 ulx3s_v17p
 BOARD = ulx3s_v20
 # fpga size: 12 25 45 85
-FPGA_SIZE = 12
+FPGA_SIZE = 25
 FPGA_PACKAGE = 6bg381c
 # config flash: 1:SPI (standard), 4:QSPI (quad)
 FLASH_SPI = 4
