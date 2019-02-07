@@ -420,7 +420,7 @@ begin
       vid_d_p <= vid_lvds_p(3 downto 1);
       vid_clk_p <= vid_lvds_p(0);
 
-    i2c_send: entity work.i2c_sender
+    i2c_send: entity work.i2c_sender_adv7513
       port map
       (
         clk => clk_pixel,
