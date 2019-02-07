@@ -51,5 +51,11 @@ TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_noflash
 
 include ../universal_make/files.mk
 
+BITSTREAM = \
+$(BOARD)_$(FPGA_SIZE)f_$(PROJECT).bit \
+$(BOARD)_$(FPGA_SIZE)f_$(PROJECT).vme \
+$(BOARD)_$(FPGA_SIZE)f_$(PROJECT).svf \
+$(BOARD)_$(FPGA_SIZE)f_$(PROJECT)_flash_$(FLASH_CHIP).vme
+
 SCRIPTS = ../../include/scripts
 include $(SCRIPTS)/ulx3s_diamond.mk
