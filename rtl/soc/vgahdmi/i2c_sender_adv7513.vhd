@@ -4,21 +4,22 @@
 -- Description: Send register writes over an I2C-like interface
 --
 -- Changed to adv7513 init by emu.(AN-1720)
+-- Changed for RGB passthru by emard
 -- 
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
-entity i2c_sender is
-    Port ( clk    : in    STD_LOGIC;    
+entity i2c_sender_adv7513 is
+    Port ( clk    : in    STD_LOGIC; -- around pixel clock 25-165 MHz, not critical
            resend : in    STD_LOGIC;
            sioc   : out   STD_LOGIC;
            siod   : inout STD_LOGIC
     );
-end i2c_sender;
+end;
 
-architecture Behavioral of i2c_sender is
+architecture Behavioral of i2c_sender_adv7513 is
    signal   divider           : unsigned(7 downto 0)  := (others => '0'); 
     -- this value gives nearly 200ms cycles before the first register is written
    signal   initial_pause     : unsigned(22 downto 0) := (others => '0');
