@@ -544,7 +544,7 @@ begin
   end generate;
 
   -- ADV7513 i2c initializer
-  i2c_send: entity work.i2c_sender
+  i2c_send: entity work.i2c_sender_adv7513
   port map
   (
     clk => clk_pixel,
