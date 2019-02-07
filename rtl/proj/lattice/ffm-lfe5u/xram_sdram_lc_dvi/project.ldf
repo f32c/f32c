@@ -204,7 +204,7 @@
         <Source name="../../../../soc/vgahdmi/ledstrip.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../altera/ffm/i2c_sender/i2c_sender.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../soc/vgahdmi/i2c_sender_adv7513.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../generic/bram_true2p_2clk.vhd" type="VHDL" type_short="VHDL">
