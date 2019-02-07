@@ -89,7 +89,10 @@ SCRIPTS ?= scripts
 FPGA_CHIP_UPPERCASE := $(shell echo $(FPGA_CHIP) | tr '[:lower:]' '[:upper:]')
 FPGA_PACKAGE_UPPERCASE := $(shell echo $(FPGA_PACKAGE) | tr '[:lower:]' '[:upper:]')
 
-all: $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).bit $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).vme $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).svf $(BOARD)_$(FPGA_SIZE)f_$(PROJECT)_flash_$(FLASH_CHIP).vme
+BITSTREAM ?= $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).bit
+
+all: $(BITSTREAM)
+#all: $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).bit $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).vme $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).svf $(BOARD)_$(FPGA_SIZE)f_$(PROJECT)_flash_$(FLASH_CHIP).vme
 #all: $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).bit $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).svf
 #all: $(PROJECT)/$(PROJECT)_$(PROJECT).bit
 #all: $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).bit
@@ -221,14 +224,15 @@ JUNK += $(PROJECT).json
 JUNK += $(VHDL_TO_VERILOG_FILES)
 JUNK += $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).config
 JUNK += $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).ldf
-JUNK += $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).bit
-JUNK += $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).vme
-JUNK += $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).svf
 JUNK += $(BOARD)_$(FPGA_SIZE)f.xcf
 JUNK += $(BOARD)_$(FPGA_SIZE)f_$(PROJECT)_flash.mcs
 JUNK += $(BOARD)_$(FPGA_SIZE)f_flash_$(FLASH_CHIP).xcf
-JUNK += $(BOARD)_$(FPGA_SIZE)f_$(PROJECT)_flash_$(FLASH_CHIP).vme
-JUNK += $(BOARD)_$(FPGA_SIZE)f.ocd
+JUNK += $(BITSTREAM)
+#JUNK += $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).bit
+#JUNK += $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).vme
+#JUNK += $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).svf
+#JUNK += $(BOARD)_$(FPGA_SIZE)f.ocd
+#JUNK += $(BOARD)_$(FPGA_SIZE)f_$(PROJECT)_flash_$(FLASH_CHIP).vme
 # diamond junk
 JUNK += ${IMPL_DIR} .recovery ._Real_._Math_.vhd *.sty reportview.xml
 JUNK += dummy_sym.sort project_tcl.html promote.xml .run_manager.ini
