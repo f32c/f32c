@@ -63,8 +63,19 @@ set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_location_assignment PIN_R8 -to clk_50m
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_50m
 
-set_location_assignment PIN_A6 -to rs232_rxd
-set_location_assignment PIN_D5 -to rs232_txd
+# MenloParkInnovation: Set this to original de0.board assignments
+# See de0.board for commented out lines.
+#
+# PIN_M16 is GPIO_2_IN[2]
+set_location_assignment PIN_M16 -to rs232_rxd
+# PIN_B16 is GPIO_2[1]
+set_location_assignment PIN_B16 -to rs232_txd
+
+# PIN_A6 is GPIO_0[11]
+#set_location_assignment PIN_A6 -to rs232_rxd
+# PIN D5 is GPIO_0[9]
+#set_location_assignment PIN_D5 -to rs232_txd
+
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_rxd
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_txd
 
