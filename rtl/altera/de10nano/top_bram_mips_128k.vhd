@@ -41,8 +41,8 @@ entity glue is
 	-- Main clock freq, in multiples of 10 MHz
 	C_clk_freq: integer := 100;
 
-	-- SoC configuration options (64K in this configuration)
-	C_bram_size: integer := 64;
+	-- SoC configuration options (128K in this configuration)
+	C_bram_size: integer := 128;
 
 	-- Debugging
 	C_debug: boolean := false

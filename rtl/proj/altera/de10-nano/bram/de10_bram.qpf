@@ -18,16 +18,18 @@
 #
 # Quartus Prime
 # Version 17.1.0 Build 590 10/25/2017 SJ Lite Edition
-# Date created = 08:21:36  February 13, 2019
+# Date created = 09:29:47  February 13, 2019
 #
 # -------------------------------------------------------------------------- #
 
 QUARTUS_VERSION = "17.1"
-DATE = "08:21:36  February 13, 2019"
+DATE = "09:29:47  February 13, 2019"
 
 # Revisions
 
-PROJECT_REVISION = "glue_riscv_64k"
+PROJECT_REVISION = "glue_mips_128k"
+PROJECT_REVISION = "glue_riscv_128k"
 PROJECT_REVISION = "glue_mips_64k"
-PROJECT_REVISION = "glue64k"
-PROJECT_REVISION = "glue"
+PROJECT_REVISION = "glue_riscv_64k"
+PROJECT_REVISION = "glue_mips_32k"
+PROJECT_REVISION = "glue_riscv_32k"
