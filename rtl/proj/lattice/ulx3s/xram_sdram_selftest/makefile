@@ -13,9 +13,9 @@ FLASH_CHIP = is25lp128f
 # ******* design files *******
 # current boards like v2.1.2 and v3.0.3
 # default constraints, should be good for all
-CONSTRAINTS = ../../constraints/ulx3s_v20.lpf
+#CONSTRAINTS = ../../constraints/ulx3s_v20.lpf
 # special for self-test
-#CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_selftest.lpf
+CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_selftest.lpf
 # special for single-ended single-data-rate digital video
 #CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_segpdi.lpf
 # first ULX3S prototypes v1.7 boards with patched ESP32 connection

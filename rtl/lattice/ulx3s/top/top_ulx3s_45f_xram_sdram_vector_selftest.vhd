@@ -60,7 +60,7 @@ entity ulx3s_xram_sdram_vector is
     C_gpio_pullup: boolean := false; -- false default
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
     C_timer: boolean := true; -- true default
-    C_pcm: boolean := true; -- PCM audio (wav playing)
+    C_pcm: boolean := false; -- PCM audio (wav playing)
     C_synth: boolean := false; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
