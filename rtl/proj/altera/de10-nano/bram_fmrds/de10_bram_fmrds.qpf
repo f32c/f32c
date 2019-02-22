@@ -27,11 +27,4 @@ DATE = "06:46:17  February 15, 2019"
 
 # Revisions
 
-PROJECT_REVISION = "glue_mips_64k"
-PROJECT_REVISION = "glue_riscv_512k"
-PROJECT_REVISION = "glue_mips_512k"
-PROJECT_REVISION = "glue_mips_128k"
-PROJECT_REVISION = "glue_mips_32k"
-PROJECT_REVISION = "glue_riscv_128k"
-PROJECT_REVISION = "glue_riscv_64k"
-PROJECT_REVISION = "glue_riscv_32k"
+PROJECT_REVISION = "fmrds_mips_64k"

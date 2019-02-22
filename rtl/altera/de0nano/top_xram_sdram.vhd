@@ -49,9 +49,13 @@ entity glue is
         C_acram: boolean := false;
         C_sdram: boolean := true;
 
-        C_hdmi_out: boolean := true;
+        -- menlo disable hdmi, there is no video on this board.
+        -- C_hdmi_out: boolean := true;
+        -- C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
 
-        C_vgahdmi: boolean := true; -- simple VGA bitmap with compositing
+        C_hdmi_out: boolean := false;
+        C_vgahdmi: boolean := false; -- simple VGA bitmap with compositing
+
         C_vgahdmi_cache_size: integer := 0; -- KB (0 to disable, 2,4,8,16,32 to enable)
         -- normally this should be  actual bits per pixel
         C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
@@ -142,6 +146,10 @@ begin
       C_sdram_column_bits => 9,
       C_sdram_startup_cycles => 10100,
       C_sdram_cycles_per_refresh => 1524,
+
+      -- Menlo: Enable FM RDS
+      C_fmrds => true,
+
       -- vga simple bitmap
       C_vgahdmi => C_vgahdmi,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
