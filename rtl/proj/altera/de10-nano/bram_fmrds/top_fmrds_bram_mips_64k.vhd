@@ -2,17 +2,52 @@
 --
 -- TODO:
 --
--- 02/21/2019
--- Hook up fm_antenna to I/O port
--- Resolve clocks issues
--- Implement Arduino add-in for DE10-Nano, modified clocks, memory sizes.
+-- 02/22/2019
 --
+-- Enable FM RDS IP block
+-- #Resolve clocks issues
+--  #- extra clocks
+--  #- 81 on CPU vs. 81.25 Mhz required.
+--    #- CPU takes integer Mhz option
+--    #- what are the other projects doing?
+--    #- fpga_ulx2s_sram has FM option
+-- #fpga_ulx2s_sram.menu.soc.fm.socopt=_fm_
+-- #fpga_ulx2s_sram.menu.soc.fm.build.f_cpu=81250000
+-- #fpga_ulx2s_sram.menu.soc.fm.f_cpu_MHz=81
+--
+-- debug SoC options selection with Arduino
+--
+-- #Validate clock frequency configuration change with Arduino add-in updates.
+--
+-- #Hook up fm_antenna to I/O port
+--   #- FPGA port GPIO_0 PIN_V12 on DE10-Nano
+--   #- top header, lower left corner.
 
 --
 -- Menlopark Innovation LLC
 -- 02/17/2019
 --
 -- Top module for DE10-Nano BRAM based FM RDS project.
+--
+--   - GPIO's are mapped to Arduino header pins on the DE10-Nano.
+--
+--   - FM Antenna is hooked up to GPIO_0[0] which is PIN_V12 on the FPGA.
+--
+--     - It is the top header on the DE10-Nano, lower left corner pin and
+--       not one of the Arduino header pins.
+--
+--     - This leaves all the Arduino I/O pins free for Arduino projects and use.
+--
+--   - Frequency has been set to 81Mhz for FM RDS
+--     - Similar to fpga_ulx2s_sram project.
+--
+--   - BRAM memory set to 64K default
+--     - Leave plenty of space for experimentation.
+--     - Can increase to 512K with block RAMS on the DE10-Nano FPGA.
+--
+--   - FM RDS SoC module is mapped to IO_BASE + 0x400
+--     - This decodes the range 0xFFFF_FC00 - 0xFFFF_FCFF.
+--     - see fmrds_glue_bram.vhd I/O decoder and mux.
 --
 
 --
@@ -57,8 +92,6 @@ entity glue is
 
 	-- Main clock freq, in multiples of 10 MHz
 	C_clk_freq: integer := 100;
-        -- Menlo: from top_xram_sdram.vhd, need 81.25Mhz for FM RDS
-	-- C_clk_freq: integer := 83;
 
         -- Menlo:
 	-- SoC configuration options (64K in this configuration)
@@ -68,6 +101,12 @@ entity glue is
 	C_debug: boolean := false
     );
     port (
+
+        --
+        -- Ports are specified in glue_de10_nano.qsf and Quartus II
+        -- provides them to the top level entity.
+        --
+
 	clk_50m: in std_logic;
 	rs232_txd: out std_logic;
 	rs232_rxd: in std_logic;
@@ -88,17 +127,41 @@ end glue;
 
 architecture Behavioral of glue is
     signal clk: std_logic;
+    signal clk_fmdds: std_logic;
+    signal clk_25: std_logic;
     signal btns: std_logic_vector(15 downto 0);
 begin
 
-    clock: entity work.pll_50m
-    generic map (
-	C_clk_freq => C_clk_freq
-    )
-    port map (
-	clk_50m => clk_50m,
-	clk => clk
+--    clock: entity work.pll_50m
+--    generic map (
+--	C_clk_freq => C_clk_freq
+--    )
+--    port map (
+--	clk_50m => clk_50m,
+--	clk => clk
+--    );
+
+    clkgen_100: entity work.clk_50M_250M_25M_100M
+    port map(
+      refclk => clk_50m,       --  50 MHz input from board
+      outclk_0 => clk_fmdds,  -- 250 MHz FM DDS frequency synthesizer
+      outclk_1 => clk_25,      --  25 MHz used for VGA when enabled.
+      outclk_2 => clk          -- 100 MHz main CPU core clock
     );
+
+    --
+    -- This PLL is from top_de10standard_xram_sdram_vector.vhd
+    -- which has a Cyclone V at 50Mhz base clock similar to the
+    -- DE10-Nano.
+    --
+    -- PLL's are originally configured using an Altera IP block,
+    -- but the project does not have the settings, just the generated
+    -- template code that activates the PLL with the state configuration.
+    --
+    -- This PLL generates 25, 100, and 250Mhz which is used for the
+    -- main clock (100Mhz) and FM RDS frequency synthesizer (250Mhz).
+    --
+
 
     -- Menlo fmrds BRAM glue module.
     glue_bram: entity work.fmrds_glue_bram
@@ -108,7 +171,14 @@ begin
 	C_bram_size => C_bram_size,
 
         -- Menlo: Add support for C_fmrds
-        -- C_fmrds => false,
+        C_fmrds => true,
+        C_fmdds_hz => 250000000,        -- 250Mhz direct digital synthesis clock
+        C_rds_clock_multiply => 57,     -- multiply 57 and divide 3125 from cpu clk 100Mhz
+        C_rds_clock_divide => 3125,     -- to get 1.824 Mhz for RDS logic
+        C_fm_stereo => false,
+        C_fm_filter => false,
+        C_fm_downsample => false,
+        C_rds_msg_len => 260,
 
 	C_debug => C_debug
     )
@@ -120,10 +190,11 @@ begin
 	spi_miso => "",
 	simple_out(7 downto 0) => led, simple_out(31 downto 8) => open,
 	simple_in(15 downto 0) => btns,
-	simple_in(19 downto 16) => sw, simple_in(31 downto 20) => open
+	simple_in(19 downto 16) => sw, simple_in(31 downto 20) => open,
 
         -- FM RDS support
-        -- fm_antenna => GPIO_0(0)
+        clk_fmdds => clk_fmdds,
+        fm_antenna => fm_antenna
     );
 
     btns <= x"000" & "00" & not btn_left & not btn_right;

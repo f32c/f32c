@@ -122,7 +122,6 @@ entity fmrds_glue_bram is
 
         -- Menlo:
         -- FM RDS ports from top level module
-	clk_fmrds_81mhz: in std_logic := '0'; -- RDS and PCM processing clock 81.25Mhz
 	clk_fmdds: in std_logic := '0'; -- FM DDS clock (>216 MHz)
 	fm_antenna: out std_logic
     );
@@ -875,8 +874,8 @@ begin
       -- c_rds_clock_divide => 812500
     )
     port map (
-      clk => clk_fmrds_81mhz, -- RDS and PCM processing clock 81.25 MHz
-      clk_fmdds => clk_fmdds,
+      clk => clk, -- RDS and PCM processing clock is CPU clock at 100Mhz
+      clk_fmdds => clk_fmdds,           -- Direct Digital Synthesis
       ce => fmrds_ce, addr => dmem_addr(3 downto 2),
       bus_write => dmem_write, byte_sel => dmem_byte_sel,
       bus_in => cpu_to_dmem, bus_out => from_fmrds,

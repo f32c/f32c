@@ -17,6 +17,10 @@ set_global_assignment -name VHDL_FILE top_fmrds_bram_mips_64k.vhd
 # Common project file started from f32c\rtl\generic\glue_bram.vhd
 set_global_assignment -name VHDL_FILE fmrds_glue_bram.vhd
 
+# multiple frequency clock PLL
+set_global_assignment -name VHDL_FILE ../../../../altera/de10nano/clocks/clk_50M_250M_25M_100M.vhd
+set_global_assignment -name VERILOG_FILE ../../../../altera/de10nano/clocks/clk_50M_250M_25M_100M_0002.v
+
 #
 # These are project files that are specific to the SoC top level
 # being used and not in the general basic glue_de10_nano.qsf

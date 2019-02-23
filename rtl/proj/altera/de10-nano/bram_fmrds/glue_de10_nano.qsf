@@ -289,6 +289,7 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to FPGA_CLK3_50
 # GPIO
 #============================================================
 
+# FM RDS support fmrds
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to fm_antenna
 set_location_assignment PIN_V12 -to fm_antenna
 
@@ -669,6 +670,8 @@ set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 # VHDL source files for F32C project
 
 set_global_assignment -name VHDL_FILE ../../../../altera/de10nano/clocks/pll_50m.vhd
+#set_global_assignment -name VHDL_FILE ../../../../altera/pll_50m.vhd
+
 set_global_assignment -name VHDL_FILE ../../../../soc/spi.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/defs_bootblock.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/boot_sio_rv32el.vhd
@@ -683,7 +686,6 @@ set_global_assignment -name VHDL_FILE ../../../../soc/pid/pid.vhd
 set_global_assignment -name VERILOG_FILE ../../../../soc/pid/ctrlpid_v.v
 set_global_assignment -name VHDL_FILE ../../../../soc/pid/ctrlpid.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bram_rv32.vhd
-set_global_assignment -name VHDL_FILE ../../../../altera/pll_50m.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/timer.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/idecode_rv32.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/idecode_mi32.vhd
