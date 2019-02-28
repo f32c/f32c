@@ -1,6 +1,6 @@
 # ******* project, board and chip name *******
-PROJECT = f32c_pix8bpp640x480_100mhz
-#PROJECT = f32c_pix8bpp800x480_100mhz
+PROJECT = f32c_pix8bpp640x480ws3_100mhz
+#PROJECT = f32c_pix16bpp640x480ws2_100mhz
 # ulx3s_v20/ulx3s_v17p
 BOARD = ulx3s_v20
 # 12/25/45/85
