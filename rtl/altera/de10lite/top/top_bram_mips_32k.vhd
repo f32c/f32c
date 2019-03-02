@@ -64,11 +64,11 @@ entity glue is
 	C_arch: integer := ARCH_MI32;
 
 	-- Main clock freq
-	C_clk_freq: integer := 75;
 
-	-- C_clk_freq: integer := 100;
-	-- C_clk_freq: integer := 50;
-	-- C_clk_freq: integer := 25;
+	-- C_clk_freq: integer := 100; -- This does not work
+	--C_clk_freq: integer := 75;   -- This does not work
+	C_clk_freq: integer := 50;     -- works.
+	-- C_clk_freq: integer := 25;  -- works.
 
 	-- SoC configuration options (32K in this configuration)
 	C_bram_size: integer := 32;
