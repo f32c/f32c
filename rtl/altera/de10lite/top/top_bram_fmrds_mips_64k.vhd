@@ -66,8 +66,7 @@ entity glue is
 
 	-- Main clock freq
 
-        --
-	-- C_clk_freq: integer := 50;  -- works with native FPGA clock. FMAX 76.x Mhz.
+	C_clk_freq: integer := 50;  -- works with native FPGA clock. FMAX 76.x Mhz.
         --
         -- It appears 50Mhz from the native 50Mhz FPGA clock on the DE10-Lite
         -- is the most reliable for this configuration and should be used for
@@ -85,7 +84,7 @@ entity glue is
         -- clock, even though its FPGA clock is also 50Mhz.
         --
 
-	C_clk_freq: integer := 75;
+	-- C_clk_freq: integer := 75;
         -- *** Experimental ***
         -- This works with basic blink and serial I/O, but violates timing.
         -- Working on timing analysis.
@@ -108,15 +107,8 @@ entity glue is
 -- PLL Compensation		1	-8.573	0	-8.573	-8.573
 --
 
-	-- C_clk_freq: integer := 25;  -- works with PLL clock. FMAX 33.93 Mhz.
-        -- This is here for experiments and validating PLL based clock generation.
-        -- No need to use for deployed projects since the MAX10 prefers to operate
-        -- at its native FPGA input clock of 50Mhz.
-        -- Gives warning about timing requirements not met. ?.SDC file Settings?
-
-	-- SoC configuration options (128K in this configuration)
-	-- C_bram_size: integer := 32;
-	C_bram_size: integer := 128;    -- 128K (64% of on chip memory)
+	-- SoC configuration options
+	C_bram_size: integer := 64;    -- 64K
 
         -- SPI instances
 	C_spi: integer := 0;
@@ -181,9 +173,6 @@ entity glue is
 
         -- GPIO
 	gpio: inout std_logic_vector(35 downto 0)
-
-        -- TODO: Ensure all these are mapped.
-	--gpioa: inout std_logic_vector(33 downto 16)
     );
 end glue;
 
@@ -195,6 +184,10 @@ architecture Behavioral of glue is
     signal btn_left: std_logic;
     signal btn_right: std_logic;
     signal simple_out_bit_9: std_logic;
+
+    -- FM DDS support
+    signal clk_fmdds: std_logic;
+    signal fm_antenna: std_logic;
 begin
 
     --
@@ -205,7 +198,10 @@ begin
     rs232_rxd <= arduino_io(0);
     arduino_io(1) <= rs232_txd;
     
-    -- gpio mapped to Arduino pins
+    -- Board Arduino headers mapped to CPU gpio
+
+    -- Board GPIO connector 0 mapped to FM RDS antenna
+    gpio(0) <= fm_antenna;
 
     -- ledr(9) mapped to arduino_io(13) in addition to simple_out(9)
     -- This allows Arduino programs to flash LED on D13 as with Arduino UNO.
@@ -225,36 +221,16 @@ begin
     -- VGA
     -- Feature for another module.
 
-    --
-    -- The following allows selection of multiple standard clock
-    -- frequencies.
-    --
-
-    G_25m_clk: if C_clk_freq = 25 generate
-    clkgen_25: entity work.clk_50M_25M_125MP_125MN_100M_83M33
-    port map(
-      inclk0 => max10_clk1_50, --  50 MHz input from board
-      inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
-      c0 => f32c_clk,          --  25 MHz
-      c1 => open,              -- 125 MHz positive
-      c2 => open,              -- 125 MHz negative
-      c3 => open,              -- 100 MHz
-      c4 => open               --  83.333 MHz
-    );
-    end generate;
-
     G_50m_clk: if C_clk_freq = 50 generate
     -- Menlo: 50Mhz clock is driven directly from MAX10 clock
     f32c_clk <= max10_clk1_50;
-    clkgen_50: entity work.clk_50M_25M_125MP_125MN_100M_83M33
+    clkgen_50: entity work.clk_50M_25M_250M_75M
     port map(
       inclk0 => max10_clk1_50, --  50 MHz input from board
       inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
       c0 => open,              --  25 MHz clk_pixel
-      c1 => open,              -- 125 MHz positive
-      c2 => open,              -- 125 MHz negative
-      c3 => open,              -- 100 MHz
-      c4 => open               --  83.333 MHz
+      c1 => clk_fmdds,         -- 250 MHz FM DDS clock
+      c2 => open               --  75 MHz
     );
     end generate;
 
@@ -264,45 +240,30 @@ begin
       inclk0 => max10_clk1_50, --  50 MHz input from board
       inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
       c0 => open,              --  25 MHz clk_pixel
-      c1 => open,              -- 250 MHz
+      c1 => clk_fmdds,         -- 250 MHz FM DDS clock
       c2 => f32c_clk           --  75 MHz
     );
     end generate;
 
-    G_83m_clk: if C_clk_freq = 83 generate
-    clkgen_83: entity work.clk_50M_25M_125MP_125MN_100M_83M33
-    port map(
-      inclk0 => max10_clk1_50, --  50 MHz input from board
-      inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
-      c0 => open,              --  25 MHz
-      c1 => open,              -- 125 MHz positive
-      c2 => open,              -- 125 MHz negative
-      c3 => open,              -- 100 MHz
-      c4 => f32c_clk           --  83.333 MHz
-    );
-    end generate;
-
-    G_100m_clk: if C_clk_freq = 100 generate
-    clkgen_100: entity work.clk_50M_25M_125MP_125MN_100M_83M33
-    port map(
-      inclk0 => max10_clk1_50, --  50 MHz input from board
-      inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
-      c0 => open,              --  25 MHz
-      c1 => open,              -- 125 MHz positive
-      c2 => open,              -- 125 MHz negative
-      c3 => f32c_clk,          -- 100 MHz
-      c4 => open               --  83.333 MHz
-    );
-    end generate;
-
     --
-    -- generic BRAM glue
+    -- FM RDS generic BRAM glue
     --
-    glue_bram: entity work.glue_bram
+    glue_bram: entity work.fmrds_glue_bram
     generic map (
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
 	C_bram_size => C_bram_size,
+
+        -- Menlo: Add support for C_fmrds
+        C_fmrds => true,
+        C_fmdds_hz => 250000000,        -- 250Mhz direct digital synthesis clock
+        -- C_rds_clock_multiply => 57,  -- multiply 57 and divide 3125 from cpu clk 100Mhz
+        C_rds_clock_multiply => 114,    -- multiply 114 and divide 3125 from cpu clk 50Mhz
+        C_rds_clock_divide => 3125,     -- to get 1.824 Mhz for RDS logic
+        C_fm_stereo => false,
+        C_fm_filter => false,
+        C_fm_downsample => false,
+        C_rds_msg_len => 260,
 
         -- SPI instances
 	C_spi => C_spi,
@@ -340,7 +301,8 @@ begin
         gpio(15 downto 2) => arduino_io(15 downto 2),
 
         -- GPIO mapped to gpio 47 - 16
-	gpio(47 downto 16) => gpio(31 downto 0),
+        -- GPIO 0 is fm_antenna for FM RDS
+	gpio(47 downto 17) => gpio(31 downto 1),
 
 	gpio(127 downto 48) => open,
 
@@ -355,7 +317,11 @@ begin
         -- simple_in 32 bits
 	simple_in(15 downto 0) => btns,
 	simple_in(25 downto 16) => sw,
-        simple_in(31 downto 26) => open
+        simple_in(31 downto 26) => open,
+
+        -- FM RDS support
+        clk_fmdds => clk_fmdds,
+        fm_antenna => fm_antenna
     );
 
 end Behavioral;

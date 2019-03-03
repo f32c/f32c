@@ -1,0 +1,37 @@
+
+#
+# VHDL source files for F32C project
+#
+set_global_assignment -name VHDL_FILE ../../../../soc/spi.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/defs_bootblock.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/boot_sio_rv32el.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/boot_sio_mi32el.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/boot_sio_mi32eb.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/boot_rom_mi32el.vhd
+set_global_assignment -name VERILOG_FILE ../../../../soc/pid/simotor_v.v
+set_global_assignment -name VHDL_FILE ../../../../soc/pid/simotor.vhd
+set_global_assignment -name VERILOG_FILE ../../../../soc/pid/rotary_decoder_v.v
+set_global_assignment -name VHDL_FILE ../../../../soc/pid/rotary_decoder.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/pid/pid.vhd
+set_global_assignment -name VERILOG_FILE ../../../../soc/pid/ctrlpid_v.v
+set_global_assignment -name VHDL_FILE ../../../../soc/pid/ctrlpid.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bram_rv32.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/glue_bram.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/timer.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/idecode_rv32.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/idecode_mi32.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/defs_rv32.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/defs_mi32.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/defs_f32c.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/alu.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/shift.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/mul_iter.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/pipeline.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/loadalign.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/debug.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sio.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bram.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/reg1w2r.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bptrace.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/gpio.vhd
+
