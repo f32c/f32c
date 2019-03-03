@@ -1,0 +1,18 @@
+
+#
+# MenloPark Innovation
+#
+# 03/03/2019
+#
+# These are files required to build various SoC options.
+#
+
+# Menlopark Innovation: Enable SDR
+set_global_assignment -name VHDL_FILE ../../../../soc/sdr/sdr.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sdr/rds.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sdr/message.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sdr/lowpass.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sdr/fmgen.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sdr/fir.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sdr/bram_rds.vhd
+
