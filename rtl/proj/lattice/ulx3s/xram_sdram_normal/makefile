@@ -1,5 +1,5 @@
 # ******* project, board and chip name *******
-PROJECT = f32c_pix8bpp640x480ws3_100mhz
+PROJECT = f32c_pix16bpp640x480ws2_100mhz
 #PROJECT = f32c_pix16bpp640x480ws2_100mhz
 # ulx3s_v20/ulx3s_v17p
 BOARD = ulx3s_v20
@@ -15,6 +15,8 @@ FLASH_CHIP = is25lp128f
 # current boards like v2.1.2 and v3.0.3
 # default constraints, should be good for all
 CONSTRAINTS = ../../constraints/ulx3s_v20.lpf
+# special for uncompressed image (ecpmulti)
+#CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_uncompressed.lpf
 # special for self-test
 #CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_selftest.lpf
 # special for single-ended single-data-rate digital video
@@ -42,12 +44,12 @@ TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_25f_xram_sdram_vector.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_25f_xram_sdram_vector_noflash.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_25f_xram_sdram_vector_selftest.vhd
+#TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_vector.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_433.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_synth.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_text.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_text_noflash.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_tv.vhd
-#TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_vector.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_vector_noflash.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_vector_selftest.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_85f_xram_acram_emu_vector_segpdi.vhd

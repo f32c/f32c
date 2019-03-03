@@ -250,6 +250,7 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal S_rom_valid: std_logic;
 
   -- dual ESP32/f32c programming mode
+  signal S_wifi_en: std_logic;
   signal S_rxd, S_txd: std_logic; -- mix USB and WiFi
   signal S_prog_in, S_prog_out: std_logic_vector(1 downto 0);
   signal R_esp32_mode: std_logic := '0';
@@ -396,6 +397,7 @@ begin
     S_rxd <= ftdi_txd and wifi_txd;
     ftdi_rxd <= S_txd;
     wifi_rxd <= S_txd;
+    wifi_en <= S_wifi_en;
     wifi_gpio0 <= btn(0); -- pressing BTN0 will escape to ESP32 file select menu
     sd_d(3) <= S_f32c_sd_csn;
     sd_clk <= S_f32c_sd_clk;
@@ -535,7 +537,7 @@ begin
     simple_out(17) => adc_sclk,
     simple_out(16) => adc_csn,
     simple_out(15) => open,
-    simple_out(14) => open, -- wifi_en
+    simple_out(14) => S_wifi_en,
     simple_out(13) => shutdown,
     simple_out(12) => open,
     simple_out(11) => oled_dc,

@@ -46,10 +46,10 @@ entity ulx3s_xram_sdram_vector is
     C_cached_addr_bits: integer := 25; -- ULX3S default 32MB
     -- C_cached_addr_bits: integer := 20; -- ULX2S simulation 1MB
     C_acram: boolean := false; -- false default (ulx3s has sdram chip)
-    C_acram_wait_cycles: integer := 3; -- 3 or more
+    C_acram_wait_cycles: integer := 2; -- 3 or more
     C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2)
     C_sdram: boolean := true; -- true default
-    C_sdram_wait_cycles: integer := 3; -- RAS/CAS/PRE wait cycles (2 or 3)
+    C_sdram_wait_cycles: integer := 2; -- RAS/CAS/PRE wait cycles (2 or 3)
     C_icache_size: integer := 2; -- 2 default
     C_dcache_size: integer := 2; -- 2 default
     C_branch_prediction: boolean := false; -- false default
@@ -252,6 +252,7 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   -- dual ESP32/f32c programming mode
   alias wifi_rxd2: std_logic is wifi_gpio16;
   alias wifi_txd2: std_logic is wifi_gpio17;
+  signal S_wifi_en: std_logic;
   signal S_rxd, S_txd: std_logic; -- mix USB and WiFi
   signal S_prog_in, S_prog_out: std_logic_vector(1 downto 0);
   signal R_esp32_mode: std_logic := '0';
@@ -387,6 +388,7 @@ begin
     S_rxd <= ftdi_txd and wifi_txd;
     ftdi_rxd <= S_txd;
     wifi_rxd <= S_txd;
+    wifi_en <= S_wifi_en;
     wifi_gpio0 <= btn(0); -- pressing BTN0 will escape to ESP32 file select menu
     sd_d(3) <= S_f32c_sd_csn;
     sd_clk <= S_f32c_sd_clk;
@@ -526,7 +528,7 @@ begin
     simple_out(17) => adc_sclk,
     simple_out(16) => adc_csn,
     simple_out(15) => open,
-    simple_out(14) => open, -- wifi_en
+    simple_out(14) => S_wifi_en,
     simple_out(13) => shutdown,
     simple_out(12) => open,
     simple_out(11) => oled_dc,
