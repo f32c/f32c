@@ -92,6 +92,9 @@ architecture arch of sdr is
     -- bits for RDS message buffer
     constant C_addr_bits: integer := integer(ceil((log2(real(C_rds_msg_len)+1.0E-6))-1.0E-6));
 
+    -- message len -1 disables RDS
+    constant C_rds_msg_disable: std_logic_vector(c_addr_bits-1 downto 0) := (others => '1');
+    
     -- normal registers
     -- type fm_reg_type  is std_logic_vector(C_bits-1 downto 0);
     type fm_regs_type is array (C_registers-1 downto 0) of std_logic_vector(C_bits-1 downto 0);
@@ -123,12 +126,16 @@ architecture arch of sdr is
     constant C_sdr_control3: integer := 7;
 
     -- FM/RDS RADIO
-    signal rds_pcm: ieee.numeric_std.signed(15 downto 0); -- modulated PCM with audio and RDS
+    signal rds_pcm_out: ieee.numeric_std.signed(15 downto 0); -- modulated PCM with audio and RDS
+    signal rds_pcm_in: ieee.numeric_std.signed(15 downto 0);  -- modulated PCM with audio and RDS
+
     signal rds_addr: std_logic_vector(C_addr_bits-1 downto 0); -- RDS modulator reads BRAM from this addr during transmission
     signal rds_data: std_logic_vector(7 downto 0); -- BRAM returns value to RDS for transmission
     signal rds_bram_write: std_logic; -- decoded address -> write signal for BRAM
     signal R_rds_bram_write: std_logic := '0'; -- 1 clock delayed write signal to offload timing constraints
     signal from_fmrds: std_logic_vector(31 downto 0); -- debugging for subcarrier phase, not used
+    signal rds_msg_len_in: std_logic_vector(c_addr_bits-1 downto 0);
+    signal fm_antenna_out: std_logic;
 
     -- Menlo: Control signals
     signal rds_cw_en: std_logic;    -- carrier wave control
@@ -179,6 +186,21 @@ begin
     rds_mod_en <= R(C_rds_control)(1);
     rds_rds_data_en <= R(C_rds_control)(2);
 
+    -- Enable/Disable CW carrier
+    fm_antenna <= fm_antenna_out
+                 when rds_cw_en = '1'
+                 else '0';
+
+    -- Enable/Disable modulation
+    rds_pcm_in <= rds_pcm_out
+                   when rds_mod_en = '1'
+                   else to_signed(0, 16);
+
+    -- Enable/Disable RDS modulation
+    rds_msg_len_in <= R(C_rds_addr)(C_addr_bits-1 downto 0)
+                      when rds_rds_data_en = '1'
+                      else C_rds_msg_disable;
+
     --
     -- SDR control register signals
     --
@@ -202,6 +224,10 @@ begin
       end if;
     end process;
 
+    --
+    -- RDS takes PCM L + R audio in and a buffers with RDS messages
+    -- and modulates them on pcm_out.
+    --
     rds_modulator: entity work.rds
     generic map (
       c_addr_bits => C_addr_bits, -- number of address bits for RDS message RAM
@@ -220,15 +246,17 @@ begin
     )
     port map (
       clk => clk, -- RDS and PCM processing clock, same as CPU clock
-      rds_msg_len => R(C_rds_addr)(C_addr_bits-1 downto 0),
+
+      rds_msg_len => rds_msg_len_in,
+
       addr => rds_addr, -- out, address driven by rds module
       data => rds_data,
-      pcm_in_left => pcm_in_left,
-      pcm_in_right => pcm_in_right,
+      pcm_in_left => pcm_in_left,       -- PCM audio input
+      pcm_in_right => pcm_in_right,     -- ""
       debug => from_fmrds,
-      out_l => pwm_out_left,
-      out_r => pwm_out_right,
-      pcm_out => rds_pcm
+      out_l => pwm_out_left,            -- Debug signals
+      out_r => pwm_out_right,           -- ""
+      pcm_out => rds_pcm_out            -- 16 bit PCM to FM transmitter
     );
 
     fm_modulator: entity work.fmgen
@@ -239,8 +267,8 @@ begin
       clk_pcm => clk, -- PCM processing clock, same as CPU clock
       clk_dds => clk_fmdds, -- DDS clock must be > 2x cw_freq 
       cw_freq => R(C_cw_freq), -- Hz FM carrier wave frequency, e.g. 107900000
-      pcm_in => rds_pcm,
-      fm_out => fm_antenna
+      pcm_in => rds_pcm_in,    -- 16 bit PCM modulation input
+      fm_out => fm_antenna_out
     );
 
     rdsbram: entity work.bram_rds
