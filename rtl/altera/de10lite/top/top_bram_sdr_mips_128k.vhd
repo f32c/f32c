@@ -17,7 +17,9 @@
 --   to  
 -- "Single Uncompressed Image with memory initialization (512 Kbits UFM)" 
 --
--- Note: It appears FM frequency generation is off by 0.5Mhz low.
+-- Note: It appears FM frequency generation is off by 0.5Mhz
+-- on the DE10-Lite. It also appears to switch back and forth
+-- between the set frequency 107.9Mhz and -0.5Mhz.
 --
 -- Example: Setting 107.9Mhz => 107.2Mhz on dial.
 --
@@ -248,13 +250,16 @@ begin
     --
     -- SDR generic BRAM glue
     --
+    -- SDR is Software Defined Radio and implements
+    -- Direct Digital Synthesis of radio signals.
+    --
     glue_bram: entity work.sdr_glue_bram
     generic map (
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
 	C_bram_size => C_bram_size,
 
-        -- Menlo: Add support for C_fmrds
+        -- FM RDS settings
         C_fmrds => true,
         C_fmdds_hz => 250000000,        -- 250Mhz direct digital synthesis clock
         -- C_rds_clock_multiply => 57,  -- multiply 57 and divide 3125 from cpu clk 100Mhz

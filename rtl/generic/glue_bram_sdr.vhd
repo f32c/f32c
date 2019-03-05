@@ -97,18 +97,14 @@ entity sdr_glue_bram is
         -- Optional SoC modules
       
         --
-        -- Menlo:
+        -- FM RDS options for SoC SDR
         --
-        -- FM RDS module
-        --
-        -- Example from glue_xram.vhd
-        --
-	C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
+	C_fmrds: boolean := false; -- Enables compilation of SoC SDR module.
 	C_fm_stereo: boolean := false;
         C_fm_filter: boolean := false;
         C_fm_downsample: boolean := false;
 	C_rds_msg_len: integer := 260; -- bytes of circular sent message, typical 52 for PS or 260 PS+RT
-        C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, e.g. 250000000, 325000000)
+        C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, 250Mhz default)
         C_rds_clock_multiply: integer := 57; -- multiply 57 and divide 3125 from cpu clk 100 MHz
         C_rds_clock_divide: integer := 3125 -- to get 1.824 MHz for RDS logic
     );
@@ -122,9 +118,8 @@ entity sdr_glue_bram is
 	simple_out: out std_logic_vector(31 downto 0);
 	gpio: inout std_logic_vector(127 downto 0);
 
-        -- Menlo:
-        -- FM RDS ports from top level module
-	clk_fmdds: in std_logic := '0'; -- FM DDS clock (>216 MHz)
+        -- FM RDS for SoC SDR
+	clk_fmdds: in std_logic := '0'; -- DDS clock (250Mhz typical)
 	fm_antenna: out std_logic
     );
 end sdr_glue_bram;
@@ -226,32 +221,20 @@ architecture Behavioral of sdr_glue_bram is
        return conv_integer(a(11 downto 4) - b(11 downto 4));
     end iomap_to;
 
+    --
     -- Menlo:
     --
-    -- FM/RDS RADIO
+    -- SoC SDR, Software Defined Radio.
     --
-    -- FPGAArduino\arduino\libraries\RDS\RDS.h documents its
-    -- registers in the following way:
+    -- Built from, and incorporates the functionsn of FM RDS
+    -- but adds shortwave frequency coverage in addition
+    -- to other modulation modes.
     --
-    -- // hardware address of 260-byte RDS buffer
-    -- // 260 32-bit words contain each a 8-bit byte (LSB)
-    -- #define RDS_ADDRESS 0xFFFFF000
+    -- The FM RDS registers are documented in SDR.h:
     --
-    -- This does not match this definition.
-    -- TODO: Resolve, change the software source code.
-    --
-    -- In addition the software header documents a 260 byte RDS
-    -- buffer on 32 bit word boundaries, but a decode space of
-    -- only 16K. Look to see if these are higher addresses.
-    --
-    -- 0xFFFF_F000  -- in the software
-    -- 0xFFFF_FC00  -- actual decode with base at 0x400 + IO_BASE
-    --
-
-    -- FM/RDS RADIO
-    -- constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
-    signal from_fmrds: std_logic_vector(31 downto 0);
-    signal fmrds_ce: std_logic;
+    -- SoC SDR
+    signal from_sdr: std_logic_vector(31 downto 0);
+    signal sdr_ce: std_logic;
 
 begin
 
@@ -601,7 +584,7 @@ begin
     --
     -- address decoder and input mux when CPU reads IO
     --
-    process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio, from_fmrds)
+    process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio, from_sdr)
 	variable i: integer;
     begin
 	io_to_cpu <= (others => '-');
@@ -646,12 +629,12 @@ begin
         --
         -- Menlo:
         --
-        -- FMRDS IO_BASE + 0x400 => IO_BASE + 0x4FF
+        -- SDR IO_BASE + 0x400 => IO_BASE + 0x4FF
         -- 0xFFFF_FC00 => 0xFFF_FCFF
         --
 	when 16#40# =>
 	    if C_fmrds then
-		io_to_cpu <= from_fmrds;
+		io_to_cpu <= from_sdr;
 	    end if;
 
         -- IO_PUSHBTN
@@ -878,19 +861,27 @@ begin
       -- c_rds_clock_divide => 812500
     )
     port map (
-      clk => clk, -- RDS and PCM processing clock is CPU clock at 100Mhz
-      clk_fmdds => clk_fmdds,           -- Direct Digital Synthesis
-      ce => fmrds_ce, addr => dmem_addr(3 downto 2),
-      bus_write => dmem_write, byte_sel => dmem_byte_sel,
-      bus_in => cpu_to_dmem, bus_out => from_fmrds,
+      clk => clk,              -- RDS and PCM processing clock is CPU clock at 100Mhz
+      clk_fmdds => clk_fmdds,  -- Direct Digital Synthesis
+      ce => sdr_ce,
+      addr => dmem_addr(7 downto 2), -- 256 byte block, A0, A1 decoded into byte_sel by CPU
+      bus_write => dmem_write,
+      byte_sel => dmem_byte_sel,
+      bus_in => cpu_to_dmem,
+      bus_out => from_sdr,
       pcm_in_left => (others => '0'),
       pcm_in_right => (others => '0'),
---      debug => from_fmrds,
+      -- debug => from_sdr,
       fm_antenna => fm_antenna
     );
 
-    -- This decodes 64K of space from 0x400 - 0x4FF
-    fmrds_ce <= io_addr_strobe when io_addr(11 downto 8) = x"4" else '0';
+    --
+    -- This decodes 64K of space from IO_BASE + 0x400 => IO_BASE + 0x4FF
+    -- Actual: 0xFFFFFC00 - 0xFFFFFCFF
+    --
+    -- See SDR.h
+    --
+    sdr_ce <= io_addr_strobe when io_addr(11 downto 8) = x"4" else '0';
     end generate;
 
 end Behavioral;
