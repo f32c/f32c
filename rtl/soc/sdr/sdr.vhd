@@ -152,12 +152,12 @@ begin
     -- N.B. select signal ce is not used in the decode since its expected
     -- the external caller has multiplexed the bus_out from this SoC entity.
     --
-    readable_registers: if C_readable_reg generate -- LUT saving
+    readable_registers: if C_readable_reg generate -- LUT saving if not set.
     with conv_integer(addr) select
       bus_out <= 
-        ext(rds_addr, 32)
+        ext(rds_addr, 32) -- rds_addr is RDS message BRAM address
           when C_rds_addr,
-        ext(R(conv_integer(addr)), 32)
+        ext(R(conv_integer(addr)), 32)  -- Access general register value
           when others;
     end generate;
 
@@ -168,7 +168,7 @@ begin
     -- for each register allowing individual register byte
     -- writes as the CPU core decodes A0 and A1 into byte_sel(3 - 0).
     --
-    writereg_intrflags: for i in 0 to C_bits/8-1 generate
+    writereg_control: for i in 0 to C_bits/8-1 generate
       process(clk)
       begin
         if rising_edge(clk) then

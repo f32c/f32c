@@ -632,7 +632,7 @@ begin
         -- SDR IO_BASE + 0x400 => IO_BASE + 0x4FF
         -- 0xFFFF_FC00 => 0xFFF_FCFF
         --
-	when 16#40# =>
+	when 16#40# to 16#4F# =>
 	    if C_fmrds then
 		io_to_cpu <= from_sdr;
 	    end if;
@@ -847,6 +847,7 @@ begin
     if C_fmrds generate
     fm_tx: entity work.sdr
     generic map (
+      C_readable_reg => true,   -- Allow registers to be read
       c_fmdds_hz => C_fmdds_hz, -- Hz FMDDS clock frequency
       C_rds_msg_len => C_rds_msg_len, -- allocate RAM for RDS message
       C_stereo => C_fm_stereo,
