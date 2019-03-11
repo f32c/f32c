@@ -41,11 +41,15 @@ entity ulx3s_xram_sdram_vector is
     --   1 MB  "1"          x"100fffff"  20                  2            false        custom
     -- RAM start address x"8" -> 0x80000000 (needs C_PC_mask x"800fffff" for 1MB or x"81ffffff" for 32MB)
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- 8 default for C_xboot_rom=false, 0 for C_xboot_rom=true, sets XRAM base address
-    C_cached_addr_bits: integer := 25; -- lower address bits than C_cached_addr_bits are cached
+    C_PC_mask: std_logic_vector(31 downto 0) := x"81ffffff"; -- ULX3S default 32MB
+    -- C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff"; -- ULX2S simulation 1MB
+    C_cached_addr_bits: integer := 25; -- ULX3S default 32MB
+    -- C_cached_addr_bits: integer := 20; -- ULX2S simulation 1MB
     C_acram: boolean := false; -- false default (ulx3s has sdram chip)
-    C_acram_wait_cycles: integer := 3; -- 3 or more
+    C_acram_wait_cycles: integer := 2; -- 3 or more
     C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2)
     C_sdram: boolean := true; -- true default
+    C_sdram_wait_cycles: integer := 2; -- RAS/CAS/PRE wait cycles (2 or 3)
     C_icache_size: integer := 2; -- 2 default
     C_dcache_size: integer := 2; -- 2 default
     C_branch_prediction: boolean := false; -- false default
@@ -63,7 +67,7 @@ entity ulx3s_xram_sdram_vector is
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
       C_synth_multiplier_sign_fix: boolean := true; -- ECP5 FPGA needs this
-    C_spdif: boolean := true; -- SPDIF output
+    C_spdif: boolean := true; -- SPDIF output (for 85F disable vhgahdmi DDR)
     C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
     -- enabling passthru autodetect reduces fmax or vector divide must be disabled on 45f
@@ -82,8 +86,9 @@ entity ulx3s_xram_sdram_vector is
     C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
     -- video parameters common for vgahdmi and vgatext
-    C_dvid_ddr: boolean := true; -- generate HDMI with DDR
+    C_dvid_ddr: boolean := false; -- generate HDMI with DDR (disabled for OLED to work at 85F)
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
+    C_shift_clock_synchronizer: boolean := true; -- logic that synchronizes DVI clock with pixel clock.
 
     C_vgahdmi: boolean := true;
     -- normally this should be  actual bits per pixel
@@ -203,7 +208,7 @@ entity ulx3s_xram_sdram_vector is
 
   -- SD card (SPI1)
   sd_cmd: inout std_logic := 'Z';
-  sd_d: inout std_logic_vector(3 downto 0);
+  sd_d: inout std_logic_vector(3 downto 0) := (others => 'Z');
   sd_clk: inout std_logic := 'Z';
   sd_cdn, sd_wp: in std_logic;
 
@@ -246,6 +251,9 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal S_rom_valid: std_logic;
 
   -- dual ESP32/f32c programming mode
+  alias wifi_rxd2: std_logic is wifi_gpio16;
+  alias wifi_txd2: std_logic is wifi_gpio17;
+  signal S_wifi_en: std_logic;
   signal S_rxd, S_txd: std_logic; -- mix USB and WiFi
   signal S_prog_in, S_prog_out: std_logic_vector(1 downto 0);
   signal R_esp32_mode: std_logic := '0';
@@ -381,7 +389,13 @@ begin
     S_rxd <= ftdi_txd and wifi_txd;
     ftdi_rxd <= S_txd;
     wifi_rxd <= S_txd;
+    wifi_en <= S_wifi_en;
     wifi_gpio0 <= btn(0); -- pressing BTN0 will escape to ESP32 file select menu
+    sd_d(3) <= S_f32c_sd_csn;
+    sd_clk <= S_f32c_sd_clk;
+    S_f32c_sd_miso <= sd_d(0);
+    sd_cmd <= S_f32c_sd_mosi;
+    sd_d(2 downto 1) <= (others => '1');
   end generate;
   
   -- hold pushbutton BTN1 to upload to f32c over USB
@@ -397,13 +411,14 @@ begin
     C_boot_write_protect => C_boot_write_protect,
     C_boot_spi => C_boot_spi,
     C_branch_prediction => C_branch_prediction,
+    C_PC_mask => C_PC_mask,
     C_acram => C_acram,
     C_acram_wait_cycles => C_acram_wait_cycles,
     C_sdram => C_sdram,
     C_sdram_clock_range => 2,
-    C_sdram_ras => 3,
-    C_sdram_cas => 3,
-    C_sdram_pre => 3,
+    C_sdram_ras => C_sdram_wait_cycles,
+    C_sdram_cas => C_sdram_wait_cycles,
+    C_sdram_pre => C_sdram_wait_cycles,
     C_sdram_address_width => 24,
     C_sdram_column_bits => 9,
     C_sdram_startup_cycles => 12000,
@@ -446,6 +461,7 @@ begin
     C_vector_float_divide => C_vector_float_divide,
 
     C_dvid_ddr => C_dvid_ddr,
+    C_shift_clock_synchronizer => C_shift_clock_synchronizer,
     -- vga simple compositing bitmap only graphics
     C_compositing2_write_while_reading => C_compositing2_write_while_reading,
     C_vgahdmi => C_vgahdmi,
@@ -504,6 +520,7 @@ begin
     gpio(127 downto 28+32) => open,
     gpio(27+32 downto 25+32) => gn(27 downto 25),
     gpio(24+32 downto 21+32) => open,
+    gpio(20+32 downto 32) => gn(20 downto 0),
     gpio(31 downto 30) => open,
     gpio(29) => gpdi_sda,
     gpio(28) => gpdi_scl,
@@ -513,7 +530,7 @@ begin
     simple_out(17) => adc_sclk,
     simple_out(16) => adc_csn,
     simple_out(15) => open,
-    simple_out(14) => open, -- wifi_en
+    simple_out(14) => S_wifi_en,
     simple_out(13) => shutdown,
     simple_out(12) => open,
     simple_out(11) => oled_dc,
@@ -527,7 +544,7 @@ begin
     simple_in(15 downto 7) => (others => '0'),
     simple_in(6 downto 0) => btn,
 
-    -- v1.7: 2 MSB audio channel bits should not be used or board resets.
+    -- v1.7: 2 MSB audio channel bits are not used in "default" setup.
     --audio_l(3 downto 2) => audio_l(1 downto 0),
     --audio_r(3 downto 2) => audio_r(1 downto 0),
     -- 4-bit could be used down to 75 ohm load
