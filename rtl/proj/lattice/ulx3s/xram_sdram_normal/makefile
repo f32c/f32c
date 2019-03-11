@@ -1,6 +1,6 @@
 # ******* project, board and chip name *******
-PROJECT = f32c_pix16bpp640x480ws2_100mhz
-#PROJECT = f32c_pix16bpp640x480ws2_100mhz
+PROJECT = f32c_pix8bpp640x480ws2_100mhz
+#PROJECT = f32c_pix16bpp640x480ws2uc_100mhz
 # ulx3s_v20/ulx3s_v17p
 BOARD = ulx3s_v20
 # 12/25/45/85
@@ -21,6 +21,8 @@ CONSTRAINTS = ../../constraints/ulx3s_v20.lpf
 #CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_selftest.lpf
 # special for single-ended single-data-rate digital video
 #CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_segpdi.lpf
+# special user has no flash access
+#CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_jtagflash.lpf
 # first ULX3S prototypes v1.7 boards with patched ESP32 connection
 #CONSTRAINTS = ../../constraints/ulx3s_v17patch.lpf
 # special for self-test

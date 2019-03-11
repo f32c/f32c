@@ -46,10 +46,10 @@ entity ulx3s_xram_sdram_vector is
     C_cached_addr_bits: integer := 25; -- ULX3S default 32MB
     -- C_cached_addr_bits: integer := 20; -- ULX2S simulation 1MB
     C_acram: boolean := false; -- false default (ulx3s has sdram chip)
-    C_acram_wait_cycles: integer := 3; -- 3 or more
+    C_acram_wait_cycles: integer := 2; -- 3 or more
     C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2)
     C_sdram: boolean := true; -- true default
-    C_sdram_clock_range: integer := 1; -- standard value good for all
+    C_sdram_wait_cycles: integer := 2; -- RAS/CAS/PRE wait cycles (2 or 3)
     C_icache_size: integer := 2; -- 2 default
     C_dcache_size: integer := 2; -- 2 default
     C_branch_prediction: boolean := false; -- false default
@@ -70,7 +70,7 @@ entity ulx3s_xram_sdram_vector is
     C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
     -- enabling passthru autodetect reduces fmax or vector divide must be disabled on 45f
-    C_passthru_autodetect: boolean := false; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
+    C_passthru_autodetect: boolean := true; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
     C_passthru_clk_Hz: real := 25.0E6; -- passthru state machine uses 25 MHz clock
     C_passthru_break: real := 10.0E-3; -- seconds (approximately) to detect serial break and enter f32c mode
 
@@ -184,6 +184,9 @@ entity ulx3s_xram_sdram_vector is
 
   -- SHUTDOWN: logic '1' here will shutdown power on PCB >= v1.7.5
   shutdown: out std_logic := '0';
+  
+  -- PROGRAMN: logic '0' to next multiboot image
+  user_programn: out std_logic := '1';
 
   -- Audio jack 3.5mm
   audio_l, audio_r, audio_v: inout std_logic_vector(3 downto 0) := (others => 'Z');
@@ -198,12 +201,12 @@ entity ulx3s_xram_sdram_vector is
   gpdi_scl, gpdi_sda: inout std_logic;
 
   -- Flash ROM (SPI0)
-  flash_miso   : in      std_logic;
-  flash_mosi   : out     std_logic;
+  --flash_miso   : in      std_logic;
+  --flash_mosi   : out     std_logic;
   --flash_clk    : out     std_logic; -- not GPIO, needs vendor-specific module
-  flash_csn    : out     std_logic;
-  flash_holdn  : out     std_logic := '1';
-  flash_wpn    : out     std_logic := '1';
+  --flash_csn    : out     std_logic;
+  --flash_holdn  : out     std_logic := '1';
+  --flash_wpn    : out     std_logic := '1';
 
   -- SD card (SPI1)
   sd_cmd: inout std_logic := 'Z';
@@ -250,6 +253,8 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal S_rom_valid: std_logic;
 
   -- dual ESP32/f32c programming mode
+  alias wifi_rxd2: std_logic is wifi_gpio16;
+  alias wifi_txd2: std_logic is wifi_gpio17;
   signal S_rxd, S_txd: std_logic; -- mix USB and WiFi
   signal S_prog_in, S_prog_out: std_logic_vector(1 downto 0);
   signal R_esp32_mode: std_logic := '0';
@@ -257,6 +262,8 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal R_break_counter: std_logic_vector(C_break_counter_bits-1 downto 0) := (others => '0');
   signal S_f32c_sd_csn, S_f32c_sd_clk, S_f32c_sd_miso, S_f32c_sd_mosi: std_logic;
   signal S_flash_csn, S_flash_clk: std_logic;
+  signal S_wifi_en: std_logic;
+  signal S_program: std_logic;
 
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
@@ -386,6 +393,7 @@ begin
     ftdi_rxd <= S_txd;
     wifi_rxd <= S_txd;
     wifi_gpio0 <= btn(0); -- pressing BTN0 will escape to ESP32 file select menu
+    wifi_en <= S_wifi_en; -- wifi enable controlled from f32c
     sd_d(3) <= S_f32c_sd_csn;
     sd_clk <= S_f32c_sd_clk;
     S_f32c_sd_miso <= sd_d(0);
@@ -410,7 +418,10 @@ begin
     C_acram => C_acram,
     C_acram_wait_cycles => C_acram_wait_cycles,
     C_sdram => C_sdram,
-    -- C_sdram_clock_range => 2,
+    C_sdram_clock_range => 2,
+    C_sdram_ras => C_sdram_wait_cycles,
+    C_sdram_cas => C_sdram_wait_cycles,
+    C_sdram_pre => C_sdram_wait_cycles,
     C_sdram_address_width => 24,
     C_sdram_column_bits => 9,
     C_sdram_startup_cycles => 12000,
@@ -503,10 +514,10 @@ begin
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
 
-    spi_ss(0)   => S_flash_csn,  spi_ss(1)   => S_f32c_sd_csn,   spi_ss(2)   => oled_csn,   spi_ss(3)   => gn(24),
-    spi_sck(0)  => S_flash_clk,  spi_sck(1)  => S_f32c_sd_clk,   spi_sck(2)  => oled_clk,   spi_sck(3)  => gn(21),
-    spi_mosi(0) => flash_mosi,   spi_mosi(1) => S_f32c_sd_mosi,  spi_mosi(2) => oled_mosi,  spi_mosi(3) => gn(23),
-    spi_miso(0) => flash_miso,   spi_miso(1) => S_f32c_sd_miso,  spi_miso(2) => open,       spi_miso(3) => gn(22),
+    spi_ss(0)   => open,   spi_ss(1)   => S_f32c_sd_csn,   spi_ss(2)   => oled_csn,   spi_ss(3)   => gn(24),
+    spi_sck(0)  => open,   spi_sck(1)  => S_f32c_sd_clk,   spi_sck(2)  => oled_clk,   spi_sck(3)  => gn(21),
+    spi_mosi(0) => open,   spi_mosi(1) => S_f32c_sd_mosi,  spi_mosi(2) => oled_mosi,  spi_mosi(3) => gn(23),
+    spi_miso(0) => open,   spi_miso(1) => S_f32c_sd_miso,  spi_miso(2) => open,       spi_miso(3) => gn(22),
 
     gpio(127 downto 28+32) => open,
     gpio(27+32 downto 25+32) => gn(27 downto 25),
@@ -520,8 +531,8 @@ begin
     simple_out(18) => adc_mosi,
     simple_out(17) => adc_sclk,
     simple_out(16) => adc_csn,
-    simple_out(15) => open,
-    simple_out(14) => open, -- wifi_en
+    simple_out(15) => S_program,
+    simple_out(14) => open, -- S_wifi_en,
     simple_out(13) => shutdown,
     simple_out(12) => open,
     simple_out(11) => oled_dc,
@@ -574,6 +585,8 @@ begin
     dvid_green => dvid_crgb(3 downto 2),
     dvid_blue  => dvid_crgb(1 downto 0)
   );
+  
+  user_programn <= not S_program;
 
   -- preload the f32c bootloader and reset CPU
   -- preloads initially at startup and during each reset of the CPU
@@ -651,12 +664,12 @@ begin
     end generate;
   end generate;
 
-  flash_clock: entity work.ecp5_flash_clk
-  port map
-  (
-    flash_csn => rs232_break,
-    flash_clk => S_flash_clk
-  );
-  flash_csn <= S_flash_csn;
+  --flash_clock: entity work.ecp5_flash_clk
+  --port map
+  --(
+  --  flash_csn => rs232_break,
+  --  flash_clk => S_flash_clk
+  --);
+  --flash_csn <= S_flash_csn;
 
 end Behavioral;
