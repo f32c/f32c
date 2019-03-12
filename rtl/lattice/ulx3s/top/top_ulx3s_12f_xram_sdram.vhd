@@ -560,7 +560,7 @@ begin
     -- v2.1.2: can use all 4 bits, better power supply
     audio_l(3 downto 0) => audio_l(3 downto 0),
     audio_r(3 downto 0) => audio_r(3 downto 0),
-    spdif_out => audio_v(0),
+    spdif_out => audio_v(1),
 
     cw_antenna => ant_433mhz,
 
