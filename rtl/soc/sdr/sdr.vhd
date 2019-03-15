@@ -123,6 +123,12 @@ architecture arch of sdr is
 
     constant C_rds_control: integer  := 3;  -- Menlo: Added control register.
 
+    -- Bit definitions
+    constant C_rds_control_cw_enable:        integer := 0;  -- Bit numbers
+    constant C_rds_control_modulator_enable: integer := 1;
+    constant C_rds_control_rds_data_enable:  integer := 2;
+    constant C_rds_control_fm_pcm_enable:    integer := 3;
+
     -- SDR control registers
     constant C_sdr_control0: integer := 4;
     constant C_sdr_control1: integer := 5;
@@ -173,7 +179,8 @@ architecture arch of sdr is
     -- Menlo: Control signals
     signal rds_cw_en: std_logic;    -- carrier wave control
     signal rds_mod_en: std_logic;   -- modulator control
-    signal rds_rds_data_en: std_logic;   -- RDS data control
+    signal rds_rds_data_en: std_logic; -- RDS data control
+    signal rds_fm_pcm_en: std_logic;   -- FM PCM audio modulation enable
 
     signal pcm_clk: std_logic;          -- PCM clock
     signal pcm_clk_last_tick: std_logic;
@@ -232,9 +239,10 @@ begin
     --
     -- These are supplied by the CPU R/W banked registers.
     --
-    rds_cw_en <= R(C_rds_control)(0);
-    rds_mod_en <= R(C_rds_control)(1);
-    rds_rds_data_en <= R(C_rds_control)(2);
+    rds_cw_en <= R(C_rds_control)(C_rds_control_cw_enable);
+    rds_mod_en <= R(C_rds_control)(C_rds_control_modulator_enable);
+    rds_rds_data_en <= R(C_rds_control)(C_rds_control_rds_data_enable);
+    rds_fm_pcm_en <= R(C_rds_control)(C_rds_control_fm_pcm_enable);
 
     -- Enable/Disable CW carrier
     fm_antenna <= fm_antenna_out
