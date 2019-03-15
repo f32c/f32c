@@ -1,15 +1,16 @@
 
+--
+-- AM transmitter.
+--
+--
+-- MenloParkInnovation LLC
+-- 03/07/2019
+--
+-- Started from:
+
 -- FM transmitter
 -- (c) Marko Zec
 -- LICENSE=BSD
-
--- This module can be used for any FM range
-
--- when used with FM RADIO 87-108 kHz
--- maximum frequency deviation is 75 kHz
--- input pcm value has range -32767..+32767
--- and corresponds to frequency deviation
--- of 2x pcm value -65536 .. +65536 Hz
 
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -17,18 +18,10 @@ use IEEE.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.all;
 
-entity fmgen is
+entity amgen is
 generic (
 	c_use_pcm_in: boolean := true;
 	c_fm_acclen: integer := 28;
-	-- modulation: how many Hz CW will swing when input changes by 1:
-	-- by FM standard, max CW swing is 75 kHz. Channels are 100 kHz apart.
-	-- 16-bit signed input values have full range in -32767..+32767, for
-	-- 1Hz/bit it makes 65 kHz swing and assures no overmodulation.
-	-- 2Hz/bit allows full use of 75 kHz band swing but input value must
-	-- stay in range -18750..+18750 to prevent overmodulation. 
-	-- When changing c_hz_per_bit,
-	-- other RDS and pilot tone values must be scaled in rds.vhd
 	c_hz_per_bit: integer := 2; -- Hz FM modulation strength (1, 2 or 4)
 	c_remove_dc: boolean := true; -- remove DC offset
 	c_fdds: real -- Hz input clock frequency e.g. 250000000.0
@@ -37,12 +30,12 @@ port (
         clk_pcm: in std_logic; -- PCM processing clock, any (e.g. 25 MHz)
 	clk_dds: in std_logic; -- DDS clock must be >2*cw_freq (e.g. 250 MHz)
 	cw_freq: in std_logic_vector(31 downto 0);
-	pcm_in: in signed(15 downto 0); -- FM swing: pcm_in * hz_per_bit
-	fm_out: out std_logic
+	pcm_in: in signed(15 downto 0);
+	am_out: out std_logic
 );
-end fmgen;
+end amgen;
 
-architecture x of fmgen is
+architecture x of amgen is
 	signal fm_acc, fm_inc: signed((C_fm_acclen - 1) downto 0);
 	signal R_pcm_avg, R_pcm_ac: signed(15 downto 0);
 	signal R_cnt: integer;
@@ -98,5 +91,5 @@ begin
 	end if;
     end process;
 
-    fm_out <= fm_acc((C_fm_acclen - 1));
+    am_out <= fm_acc((C_fm_acclen - 1));
 end;

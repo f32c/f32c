@@ -96,6 +96,9 @@ entity sdr_glue_bram is
 
         -- Optional SoC modules
       
+        -- SoC SDR options
+        C_pcm_hz: integer := 48000; -- 48Khz PCM audio standard
+
         --
         -- FM RDS options for SoC SDR
         --
@@ -841,14 +844,15 @@ begin
     -- IO_BASE + 0x400 => IO_BASE + 0x4FF
     -- Actual use is (4) 32 bit registers decoded from dmem_addr(3 downto 2)
     --
-    -- TODO: Rename fmrds -> sdr for the SoC, but keep fmrds options.
-    --
     G_fmrds:
     if C_fmrds generate
     fm_tx: entity work.sdr
     generic map (
-      C_readable_reg => true,   -- Allow registers to be read
-      c_fmdds_hz => C_fmdds_hz, -- Hz FMDDS clock frequency
+      C_sdr_hz => (C_clk_freq * 1000000), -- Hz SDR clk frequency
+      C_pcm_hz => C_pcm_hz,  -- Hz PCM clock frequency
+
+      C_fmdds_hz => C_fmdds_hz, -- Hz FMDDS clock frequency
+
       C_rds_msg_len => C_rds_msg_len, -- allocate RAM for RDS message
       C_stereo => C_fm_stereo,
       -- multiply/divide to produce 1.824 MHz clock
