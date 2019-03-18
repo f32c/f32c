@@ -39,6 +39,7 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../cpu/mul_iter.vhd \
   ../../../../soc/synth.vhd \
   ../../../../soc/sigmadelta.vhd \
+  ../../../../soc/dacpwm.vhd \
   ../../../../soc/spdif_tx.vhd \
   ../../../../soc/pcm.vhd \
   ../../../../soc/sio.vhd \

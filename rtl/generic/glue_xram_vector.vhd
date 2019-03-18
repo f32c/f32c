@@ -197,6 +197,7 @@ generic (
       C_synth_zero_cross: boolean := false; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 is default for digital output. higher values may clip
       C_synth_multiplier_sign_fix: boolean := false; -- some FPGA like ECP5 need such fix
+    C_dacpwm: boolean := false; -- combine 4-bit DAC with PWM to enhance resolution
     C_spdif: boolean := false; -- generate SPDIF output
     C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
     C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
@@ -504,6 +505,7 @@ architecture Behavioral of glue_xram is
     constant iomap_synth: T_iomap_range := (x"FBB0", x"FBBF");
     signal synth_ce: std_logic;
     signal pcm_synth: ieee.numeric_std.signed(23 downto 0);
+    signal dacpwm_synth: std_logic_vector(3 downto 0); -- same size as audio_l audio_r
     signal pwm_synth: std_logic;
     -- signal from_synth: std_logic_vector(31 downto 0); -- write only
 
@@ -2079,8 +2081,36 @@ begin
     with conv_integer(io_addr(11 downto 4)) select
       pcm_ce <= io_addr_strobe when iomap_from(iomap_pcm, iomap_range) to iomap_to(iomap_pcm, iomap_range),
                            '0' when others;
-    audio_l <= (others => pwm_l);
-    audio_r <= (others => pwm_r);
+    G_yes_pcm_dacpwm: if C_dacpwm generate
+      pcm_l_dacpwm: entity work.dacpwm
+      generic map
+      (
+        C_pcm_bits => 12,
+        C_dac_bits => audio_l'length
+      )
+      port map
+      (
+        clk => clk,
+        pcm => std_logic_vector(pcm_bus_l(pcm_bus_l'length-1 downto pcm_bus_l'length-12)),
+        dac => audio_l
+      );
+      pcm_r_dacpwm: entity work.dacpwm
+      generic map
+      (
+        C_pcm_bits => 12,
+        C_dac_bits => audio_r'length
+      )
+      port map
+      (
+        clk => clk,
+        pcm => std_logic_vector(pcm_bus_r(pcm_bus_r'length-1 downto pcm_bus_r'length-12)),
+        dac => audio_r
+      );
+    end generate;
+    G_not_pcm_dacpwm: if not C_dacpwm generate
+      audio_l <= (others => pwm_l);
+      audio_r <= (others => pwm_r);
+    end generate;
     end generate;
     
     G_tvout: if C_tv generate
@@ -2113,19 +2143,37 @@ begin
     with conv_integer(io_addr(11 downto 4)) select
       synth_ce <= io_addr_strobe when iomap_from(iomap_synth, iomap_range) to iomap_to(iomap_synth, iomap_range),
                            '0' when others;
-    synth_sigmadelta: entity work.sigmadelta
-    generic map
-    (
-      C_bits => 12
-    )
-    port map
-    (
-      clk => clk,
-      in_pcm => pcm_synth(pcm_synth'length-1 downto pcm_synth'length-12),
-      out_pwm => pwm_synth
-    );
-    audio_l <= (others => pwm_synth);
-    audio_r <= (others => pwm_synth);
+    G_yes_synth_dacpwm: if C_dacpwm generate
+      synth_dacpwm: entity work.dacpwm
+      generic map
+      (
+        C_pcm_bits => 12,
+        C_dac_bits => dacpwm_synth'length
+      )
+      port map
+      (
+        clk => clk,
+        pcm => std_logic_vector(pcm_synth(pcm_synth'length-1 downto pcm_synth'length-12)),
+        dac => dacpwm_synth
+      );
+      audio_l <= dacpwm_synth;
+      audio_r <= dacpwm_synth;
+    end generate;
+    G_not_synth_dacpwm: if not C_dacpwm generate
+      synth_sigmadelta: entity work.sigmadelta
+      generic map
+      (
+        C_bits => 12
+      )
+      port map
+      (
+        clk => clk,
+        in_pcm => pcm_synth(pcm_synth'length-1 downto pcm_synth'length-12),
+        out_pwm => pwm_synth
+      );
+      audio_l <= (others => pwm_synth);
+      audio_r <= (others => pwm_synth);
+    end generate;
     end generate;
     
     S_pcm_mono <= pcm_synth + pcm_bus_l + pcm_bus_r; -- global PCM mixer, warning synth is 24-bit others are 16-bit
