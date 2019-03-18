@@ -66,6 +66,8 @@ entity ulx3s_xram_sdram_vector is
     C_synth: boolean := true; -- Polyphonic synth
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
+      C_synth_multiplier_sign_fix: boolean := true;
+    C_dacpwm: boolean := true; -- DACPWM output
     C_spdif: boolean := true; -- SPDIF output
     C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
@@ -438,6 +440,9 @@ begin
     C_synth => C_synth,
     C_synth_zero_cross => C_synth_zero_cross,
     C_synth_amplify => C_synth_amplify,
+    C_synth_multiplier_sign_fix => C_synth_multiplier_sign_fix,
+    -- DACPWM output 4-bit DAC with PWM resolution enhancement
+    C_dacpwm => C_dacpwm,
     -- SPDIF output
     C_spdif => C_spdif,
 
