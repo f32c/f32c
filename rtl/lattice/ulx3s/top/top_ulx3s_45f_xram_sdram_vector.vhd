@@ -67,7 +67,7 @@ entity ulx3s_xram_sdram_vector is
       C_synth_zero_cross: boolean := true; -- volume changes at zero-cross, spend 1 BRAM to remove clicks
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
       C_synth_multiplier_sign_fix: boolean := true; -- ECP5 FPGA needs this
-    C_spdif: boolean := false; -- SPDIF output (for 85F disable, false)
+    C_spdif: boolean := true; -- SPDIF output (for 85F disable, false)
     C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
     -- enabling passthru autodetect reduces fmax or vector divide must be disabled on 45f
@@ -86,7 +86,7 @@ entity ulx3s_xram_sdram_vector is
     C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
 
     -- video parameters common for vgahdmi and vgatext
-    C_dvid_ddr: boolean := true; -- generate HDMI with DDR
+    C_dvid_ddr: boolean := false; -- generate HDMI with DDR
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
     C_shift_clock_synchronizer: boolean := true; -- logic that synchronizes DVI clock with pixel clock.
 
