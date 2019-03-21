@@ -187,9 +187,14 @@ architecture Behavioral of glue is
     signal btn_right: std_logic;
     signal simple_out_bit_9: std_logic;
 
+    signal clk_dds: std_logic;
+
     -- FM DDS support
-    signal clk_fmdds: std_logic;
     signal fm_antenna: std_logic;
+
+    -- AM DDS support
+    signal am_antenna: std_logic;
+
 begin
 
     --
@@ -204,6 +209,9 @@ begin
 
     -- Board GPIO connector 0 mapped to FM RDS antenna
     gpio(0) <= fm_antenna;
+
+    -- Board GPIO connector 1 mapped to AM RDS antenna
+    gpio(1) <= am_antenna;
 
     -- ledr(9) mapped to arduino_io(13) in addition to simple_out(9)
     -- This allows Arduino programs to flash LED on D13 as with Arduino UNO.
@@ -231,7 +239,7 @@ begin
       inclk0 => max10_clk1_50, --  50 MHz input from board
       inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
       c0 => open,              --  25 MHz clk_pixel
-      c1 => clk_fmdds,         -- 250 MHz FM DDS clock
+      c1 => clk_dds,           -- 250 MHz DDS clock
       c2 => open               --  75 MHz
     );
     end generate;
@@ -242,7 +250,7 @@ begin
       inclk0 => max10_clk1_50, --  50 MHz input from board
       inclk1 => max10_clk2_50, --  50 MHz input from board (backup clock)
       c0 => open,              --  25 MHz clk_pixel
-      c1 => clk_fmdds,         -- 250 MHz FM DDS clock
+      c1 => clk_dds,           -- 250 MHz DDS clock
       c2 => f32c_clk           --  75 MHz
     );
     end generate;
@@ -261,7 +269,10 @@ begin
 
         -- FM RDS settings
         C_fmrds => true,
-        C_fmdds_hz => 250000000,        -- 250Mhz direct digital synthesis clock
+
+        -- SDR synthesis clock
+        C_dds_hz => 250000000,          -- 250Mhz direct digital synthesis clock
+
         -- C_rds_clock_multiply => 57,  -- multiply 57 and divide 3125 from cpu clk 100Mhz
         C_rds_clock_multiply => 114,    -- multiply 114 and divide 3125 from cpu clk 50Mhz
         C_rds_clock_divide => 3125,     -- to get 1.824 Mhz for RDS logic
@@ -296,18 +307,23 @@ begin
         spi_miso => "", -- arduino_io(12)
 
         --
-        -- gpio 128 bits availble.
+        -- CPU gpio 128 bits availble.
+        --
+        -- Baseline physical GPIO 32 bits available.
         --
 
-        -- Arduino D0 and D1 is mapped to rs232 RXD and rs232_TXD.
+        -- CPU Arduino D0 and D1 is mapped to rs232 RXD and rs232 TXD.
         gpio(1 downto 0) => open,
 
-        -- Arduino I/O mapped to gpio 15-2
+        -- Arduino I/O mapped to CPU gpio 15-2
         gpio(15 downto 2) => arduino_io(15 downto 2),
 
-        -- GPIO mapped to gpio 47 - 16
-        -- GPIO 0 is fm_antenna for FM RDS
-	gpio(47 downto 17) => gpio(31 downto 1),
+	gpio(17 downto 16) => open,
+
+        -- Physical GPIO_0 mapped to CPU gpio 47 - 18
+        -- physical GPIO_0_0 is fm_antenna for FM SDR
+        -- physical GPIO_0_1 is am_antenna for AM SDR
+	gpio(47 downto 18) => gpio(31 downto 2),
 
 	gpio(127 downto 48) => open,
 
@@ -325,8 +341,10 @@ begin
         simple_in(31 downto 26) => open,
 
         -- FM RDS support
-        clk_fmdds => clk_fmdds,
-        fm_antenna => fm_antenna
+        clk_dds => clk_dds,
+        fm_antenna => fm_antenna,
+
+        am_antenna => am_antenna
     );
 
 end Behavioral;

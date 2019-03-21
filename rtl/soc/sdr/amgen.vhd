@@ -2,9 +2,22 @@
 --
 -- AM transmitter.
 --
+-- Menlo:
+--
+-- This generates the carrier wave from a 256Mhz clock and applies a
+-- processed 16 bit PCM modulation to the signal.
+--
+-- It has a filter for the PCM input to perform DC bias removal.
+--
+-- It operates across two clock domains. The main CPU clock
+-- of 50 - 100Mhz (typical), and the radio frequency synthesis
+-- clock of 250Mhz.
+--
+-- Logic in the 250Mhz clock domain is kept as simple as possible
+-- to ensure timing closure.
 --
 -- MenloParkInnovation LLC
--- 03/07/2019
+-- 03/20/2019
 --
 -- Started from:
 
@@ -24,14 +37,15 @@ generic (
 	c_fm_acclen: integer := 28;
 	c_hz_per_bit: integer := 2; -- Hz FM modulation strength (1, 2 or 4)
 	c_remove_dc: boolean := true; -- remove DC offset
-	c_fdds: real -- Hz input clock frequency e.g. 250000000.0
+	c_fdds: real -- Direct Digitial Synthesis clock frequency.
 );
 port (
-        clk_pcm: in std_logic; -- PCM processing clock, any (e.g. 25 MHz)
+        clk_pcm: in std_logic; -- PCM processing clock from CPU (e.g. 50/100 MHz)
 	clk_dds: in std_logic; -- DDS clock must be >2*cw_freq (e.g. 250 MHz)
-	cw_freq: in std_logic_vector(31 downto 0);
-	pcm_in: in signed(15 downto 0);
-	am_out: out std_logic
+	cw_freq: in std_logic_vector(31 downto 0);  -- Carrier Wave frequecy
+	pcm_in_i: in signed(15 downto 0);  -- Instantaneous signed PCM modulation value I
+	pcm_in_q: in signed(15 downto 0);  -- Instantaneous signed PCM modulation value Q
+	am_out: out std_logic           -- Pulsed signal to antenna, external filters, FM amplifiers.
 );
 end amgen;
 
@@ -45,7 +59,7 @@ architecture x of amgen is
 	signal R_dds_mul_res: signed(63 downto 0);
 
 begin
-    R_pcm_ac <= pcm_in - R_pcm_avg; -- subtract average to remove DC offset
+    R_pcm_ac <= pcm_in_i - R_pcm_avg; -- subtract average to remove DC offset
 
     -- Calculate signal average to remove DC offset
     remove_dc_offset: if C_remove_dc generate

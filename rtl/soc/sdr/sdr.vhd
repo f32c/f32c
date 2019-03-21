@@ -1,8 +1,21 @@
 
 --
+-- TODO:
 --
+-- 03/20/2019
 --
-
+-- Integrate AMGEN so that AM and FM modulators are separate.
+--  - Don't want to have extra logic in the critical 256Mhz timing path.
+--  - Add separate enable for AM modulation section.
+--
+-- Sine wave synthesizer block RAM's and register interfaces.
+--   - tables for the I + Q sine/cosine based on samples per cycle.
+--   - table for FM modulation of sine frequency.
+--
+-- Allow loading of synthesizer tables.
+--   - sub-decoding of this blocks 256 byte address space.
+--
+-- AM modulation modes, delta sigma, etc.
 --
 -- 03/03/2019
 --
@@ -55,8 +68,9 @@ entity sdr is
         C_sdr_hz: integer;            -- Hz main clk.
         C_pcm_hz: integer;            -- PCM modulation rate in Hz
 
+        C_dds_hz: integer;           -- Hz clk_dds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
+
         -- FM RDS/DDS support
-        C_fmdds_hz: integer;           -- Hz clk_fmdds (>2*108 MHz, e.g. 250 MHz, 325 MHz)
         C_rds_clock_multiply: integer; -- multiply and divide from cpu clk 81.25 MHz
         C_rds_clock_divide: integer;    -- to get 1.824 MHz for RDS logic
         C_stereo: boolean := false;
@@ -81,10 +95,11 @@ entity sdr is
 	bus_in: in std_logic_vector(31 downto 0);
 	bus_out: out std_logic_vector(31 downto 0);
 	fm_irq: out std_logic; -- interrupt request line (active level high)
-	clk_fmdds: in std_logic; -- DDS clock, must be > 2x max cw_freq, normally > 216 MHz
+	clk_dds: in std_logic; -- DDS clock, must be > 2x max cw_freq, normally > 216 MHz
 	pcm_in_left, pcm_in_right: in ieee.numeric_std.signed(15 downto 0) := (others => '0'); -- PCM audio input
 	pwm_out_left, pwm_out_right: out std_logic;
-	fm_antenna: out std_logic -- pyhsical output
+	fm_antenna: out std_logic; -- pyhsical output
+	am_antenna: out std_logic -- pyhsical output
     );
 end sdr;
 
@@ -132,6 +147,7 @@ architecture arch of sdr is
     constant C_rds_control_modulator_enable: integer := 1;
     constant C_rds_control_rds_data_enable:  integer := 2;
     constant C_rds_control_fm_pcm_enable:    integer := 3;
+    constant C_rds_control_am_enable:        integer := 4;  -- Bit numbers
 
     -- SDR control registers
     constant C_sdr_control0: integer := 4;
@@ -168,10 +184,10 @@ architecture arch of sdr is
 
     signal R: fm_regs_type; -- CPU -> RTL R/W registers.
 
-    -- FM/RDS RADIO
     signal rds_pcm_out: ieee.numeric_std.signed(15 downto 0); -- modulated PCM with audio and RDS
     signal rds_pcm_in: ieee.numeric_std.signed(15 downto 0);  -- modulated PCM with audio and RDS
 
+    -- FM/RDS RADIO
     signal rds_addr: std_logic_vector(C_addr_bits-1 downto 0); -- RDS modulator reads BRAM from this addr during transmission
     signal rds_data: std_logic_vector(7 downto 0); -- BRAM returns value to RDS for transmission
     signal rds_bram_write: std_logic; -- decoded address -> write signal for BRAM
@@ -180,8 +196,12 @@ architecture arch of sdr is
     signal rds_msg_len_in: std_logic_vector(c_addr_bits-1 downto 0);
     signal fm_antenna_out: std_logic;
 
+    -- AM RADIO
+    signal am_antenna_out: std_logic;
+
     -- Menlo: Control signals
-    signal rds_cw_en: std_logic;    -- carrier wave control
+    signal rds_cw_en: std_logic;    -- FM carrier wave control
+    signal sdr_am_en: std_logic;    -- AM carrier wave control
     signal rds_mod_en: std_logic;   -- modulator control
     signal rds_rds_data_en: std_logic; -- RDS data control
     signal rds_fm_pcm_en: std_logic;   -- FM PCM audio modulation enable
@@ -247,10 +267,16 @@ begin
     rds_mod_en <= R(C_rds_control)(C_rds_control_modulator_enable);
     rds_rds_data_en <= R(C_rds_control)(C_rds_control_rds_data_enable);
     rds_fm_pcm_en <= R(C_rds_control)(C_rds_control_fm_pcm_enable);
+    sdr_am_en <= R(C_rds_control)(C_rds_control_am_enable);
 
-    -- Enable/Disable CW carrier
+    -- Enable/Disable FM CW carrier
     fm_antenna <= fm_antenna_out
                  when rds_cw_en = '1'
+                 else '0';
+
+    -- Enable/Disable AM CW carrier
+    am_antenna <= am_antenna_out
+                 when sdr_am_en = '1'
                  else '0';
 
     -- Enable/Disable modulation
@@ -422,13 +448,37 @@ begin
       pcm_out => rds_pcm_out            -- 16 bit PCM to FM transmitter
     );
 
-    fm_modulator: entity work.fmgen
+    --
+    -- AM modulation and carrier generator
+    --
+    -- TODO: Decide whether to use common register as configured
+    -- right now for I + Q vs. Left + Right PCM data.
+    --
+
+    am_modulator: entity work.amgen
     generic map (
-      c_fdds => real(C_fmdds_hz)
+      c_fdds => real(C_dds_hz)
     )
     port map (
       clk_pcm => clk,          -- PCM processing clock, same as CPU clock
-      clk_dds => clk_fmdds,    -- DDS clock must be > 2x cw_freq 
+      clk_dds => clk_dds,      -- DDS clock must be > 2x cw_freq 
+      cw_freq => R(C_cw_freq), -- Hz AM carrier wave frequency, e.g. 107900000
+      pcm_in_i => R_pcm_left,  -- 16 bit PCM modulation input I
+      pcm_in_q => R_pcm_right, -- 16 bit PCM modulation input Q
+      am_out => am_antenna_out
+    );
+
+    --
+    -- FM modulation and carrier generator
+    --
+
+    fm_modulator: entity work.fmgen
+    generic map (
+      c_fdds => real(C_dds_hz)
+    )
+    port map (
+      clk_pcm => clk,          -- PCM processing clock, same as CPU clock
+      clk_dds => clk_dds,      -- DDS clock must be > 2x cw_freq 
       cw_freq => R(C_cw_freq), -- Hz FM carrier wave frequency, e.g. 107900000
       pcm_in => rds_pcm_in,    -- 16 bit PCM modulation input
       fm_out => fm_antenna_out

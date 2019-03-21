@@ -1,4 +1,20 @@
 
+--
+-- Menlo:
+--
+-- This generates the carrier wave from a 256Mhz clock and applies a
+-- 16 bit PCM shift value to modulate an FM carrier.
+--
+-- It has a filter for the PCM input to perform DC bias removal.
+--
+-- It operates across two clock domains. The main CPU clock
+-- of 50 - 100Mhz (typical), and the radio frequency synthesis
+-- clock of 250Mhz.
+--
+-- Logic in the 250Mhz clock domain is kept as simple as possible
+-- to ensure timing closure.
+--
+
 -- FM transmitter
 -- (c) Marko Zec
 -- LICENSE=BSD
@@ -36,9 +52,9 @@ generic (
 port (
         clk_pcm: in std_logic; -- PCM processing clock, any (e.g. 25 MHz)
 	clk_dds: in std_logic; -- DDS clock must be >2*cw_freq (e.g. 250 MHz)
-	cw_freq: in std_logic_vector(31 downto 0);
+	cw_freq: in std_logic_vector(31 downto 0);  -- Carrier wave center frequency
 	pcm_in: in signed(15 downto 0); -- FM swing: pcm_in * hz_per_bit
-	fm_out: out std_logic
+	fm_out: out std_logic           -- Pulsed signal to antenna output.
 );
 end fmgen;
 

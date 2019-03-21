@@ -98,6 +98,7 @@ entity sdr_glue_bram is
       
         -- SoC SDR options
         C_pcm_hz: integer := 48000; -- 48Khz PCM audio standard
+        C_dds_hz: integer := 250000000; -- Hz clk_dds (>2*108 MHz, 250Mhz default)
 
         --
         -- FM RDS options for SoC SDR
@@ -107,7 +108,6 @@ entity sdr_glue_bram is
         C_fm_filter: boolean := false;
         C_fm_downsample: boolean := false;
 	C_rds_msg_len: integer := 260; -- bytes of circular sent message, typical 52 for PS or 260 PS+RT
-        C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz, 250Mhz default)
         C_rds_clock_multiply: integer := 57; -- multiply 57 and divide 3125 from cpu clk 100 MHz
         C_rds_clock_divide: integer := 3125 -- to get 1.824 MHz for RDS logic
     );
@@ -121,9 +121,10 @@ entity sdr_glue_bram is
 	simple_out: out std_logic_vector(31 downto 0);
 	gpio: inout std_logic_vector(127 downto 0);
 
-        -- FM RDS for SoC SDR
-	clk_fmdds: in std_logic := '0'; -- DDS clock (250Mhz typical)
-	fm_antenna: out std_logic
+        -- Synthesis clock SoC SDR
+	clk_dds: in std_logic := '0'; -- DDS clock (250Mhz typical)
+	fm_antenna: out std_logic;
+	am_antenna: out std_logic
     );
 end sdr_glue_bram;
 
@@ -851,7 +852,7 @@ begin
       C_sdr_hz => (C_clk_freq * 1000000), -- Hz SDR clk frequency
       C_pcm_hz => C_pcm_hz,  -- Hz PCM clock frequency
 
-      C_fmdds_hz => C_fmdds_hz, -- Hz FMDDS clock frequency
+      C_dds_hz => C_dds_hz, -- Hz DDS clock frequency
 
       C_rds_msg_len => C_rds_msg_len, -- allocate RAM for RDS message
       C_stereo => C_fm_stereo,
@@ -867,7 +868,7 @@ begin
     )
     port map (
       clk => clk,              -- RDS and PCM processing clock is CPU clock at 100Mhz
-      clk_fmdds => clk_fmdds,  -- Direct Digital Synthesis
+      clk_dds => clk_dds,      -- Direct Digital Synthesis
       ce => sdr_ce,
       addr => dmem_addr(7 downto 2), -- 256 byte block, A0, A1 decoded into byte_sel by CPU
       bus_write => dmem_write,
@@ -877,7 +878,8 @@ begin
       pcm_in_left => (others => '0'),
       pcm_in_right => (others => '0'),
       -- debug => from_sdr,
-      fm_antenna => fm_antenna
+      fm_antenna => fm_antenna,
+      am_antenna => am_antenna
     );
 
     --
