@@ -17,3 +17,6 @@ set_global_assignment -name VHDL_FILE ../../../../soc/sdr/amgen.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/sdr/fir.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/sdr/bram_rds.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/sdr/param_clk_gen.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sdr/bram_synth.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sdr/bram_synth_data.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sdr/sine_synth.vhd

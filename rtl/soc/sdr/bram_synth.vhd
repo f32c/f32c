@@ -1,5 +1,10 @@
 
--- Menlo:
+--
+-- MenloPark Innovation LLC:
+--
+-- Created from bram_rds.vhd as a 16 bit PCM/SDR synthesizer table ram.
+--
+-- 03/23/2019
     --
     -- This is a dual port RAM that supports two reads, or a write
     -- and a read with separate addresses at the same time to the RAM.
@@ -7,7 +12,7 @@
     -- the dmem are both available during the same clock cycle based
     -- on the dmem address.
     --
-
+--
 --
 -- Copyright (c) 2013 - 2015 Marko Zec, University of Zagreb
 -- Copyright (c) 2015 Davor Jadrijevic
@@ -42,30 +47,31 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
-use work.message.all; -- RDS message in file message.vhd
+use work.bram_synth_data.all; -- Initial data constants file
 
-entity bram_rds is
+entity bram_synth is
     generic(
-        c_mem_bytes: integer range 2 to 2048 := 260; -- bytes
-        c_addr_bits: integer range 1 to 11 := 9 -- address bits of BRAM
+        c_mem_bytes: integer range 2 to 2048 := 64; -- 16 bit words
+        c_addr_bits: integer range 1 to 16    := 6  -- address bits of BRAM
     );
     port(
 	clk: in std_logic;
 	imem_addr: in std_logic_vector(c_addr_bits-1 downto 0);
-	imem_data_out: out std_logic_vector(7 downto 0);
+	imem_data_out: out std_logic_vector(15 downto 0);
 	dmem_write: in std_logic;
 	dmem_addr: in std_logic_vector(c_addr_bits-1 downto 0);
-	dmem_data_in: in std_logic_vector(7 downto 0);
-	dmem_data_out: out std_logic_vector(7 downto 0)
+	dmem_data_in: in std_logic_vector(15 downto 0);
+	dmem_data_out: out std_logic_vector(15 downto 0)
     );
-end bram_rds;
+end bram_synth;
 
-architecture x of bram_rds is
+architecture x of bram_synth is
+
     type bram_type is array(0 to (c_mem_bytes - 1))
-      of std_logic_vector(7 downto 0);
+      of std_logic_vector(15 downto 0);
 
-    -- function to convert initial RDS message type to bram_type
-    function init_bram(x: rds_msg_type; lmax: integer)
+    -- function to convert initial table values to bram_type
+    function init_bram(x: bram_synth_init_data_type; lmax: integer)
       return bram_type is
         variable i, n: integer;
         variable y: bram_type;
@@ -80,7 +86,8 @@ architecture x of bram_rds is
       return y;
     end init_bram;
 
-    signal bram_0: bram_type := init_bram(rds_msg_map, c_mem_bytes);
+    -- Initialize BRAM from its separate constants file.
+    signal bram_0: bram_type := init_bram(bram_synth_init_data, c_mem_bytes);
 
     -- Lattice Diamond attributes
     attribute syn_ramstyle: string;
@@ -94,8 +101,8 @@ architecture x of bram_rds is
     attribute ramstyle: string;
     attribute ramstyle of bram_0: signal is "no_rw_check";
 
-    signal ibram_0: std_logic_vector(7 downto 0);
-    signal dbram_0: std_logic_vector(7 downto 0);
+    signal ibram_0: std_logic_vector(15 downto 0);
+    signal dbram_0: std_logic_vector(15 downto 0);
 
 begin
 
@@ -106,7 +113,7 @@ begin
     begin
 	if rising_edge(clk) then
 	    if dmem_write = '1' then
-		bram_0(conv_integer(dmem_addr)) <= dmem_data_in(7 downto 0);
+		bram_0(conv_integer(dmem_addr)) <= dmem_data_in(15 downto 0);
 	    end if;
 	    dbram_0 <= bram_0(conv_integer(dmem_addr));
 	    ibram_0 <= bram_0(conv_integer(imem_addr));

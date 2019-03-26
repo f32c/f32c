@@ -1,5 +1,10 @@
 
 --
+-- Note: Lots of comments as this module is intended for quick
+--       project based configuration add/remove of submodules.
+--
+
+--
 -- TODO:
 --
 -- 03/20/2019
@@ -105,23 +110,25 @@ end sdr;
 
 architecture arch of sdr is
     
-    -- Menlo: Registers always readable.
+    -- Registers always readable.
     constant C_readable_reg: boolean := true;
 
+    --
+    -- C_banked_registers is the number of registers in the general
+    -- register bank for SoC SDR internal control signals.
+    --
+    -- It does not represent the registers decode by sub-modules.
+    --
     -- # of registers with memory <= (less or equal of) # of all registers
-    -- First 16 registers, address 0x???? ??00 - 0x???? ??3C
+    --
+    -- First 16 registers, or 64 bytes.
+    --
     constant C_banked_registers: integer := 16;
 
-    constant C_bits: integer := 32;     -- don't touch, default bit size of memory registers
+    constant C_bits: integer := 32;  -- registers are always 32 bit.
 
-    -- bits for RDS message buffer
-    constant C_addr_bits: integer := integer(ceil((log2(real(C_rds_msg_len)+1.0E-6))-1.0E-6));
-
-    -- message len -1 disables RDS
-    constant C_rds_msg_disable: std_logic_vector(c_addr_bits-1 downto 0) := (others => '1');
-    
     --
-    -- *** REGISTERS DEFINITIONS ***
+    -- *** Banked Registers Definitions ***
     --
 
     --
@@ -136,18 +143,17 @@ architecture arch of sdr is
     --                  (31 downto 16) 16-bit RDS buffer addr to write data to
     constant C_rds_data:   integer   := 1;
 
-    -- output to cpu: address currently being sent by RDS
-    -- input from cpu: message length in (C_addr_bits-1 downto 0)
-    constant C_rds_addr:   integer   := 2;
+    -- input from cpu: message length in (C_rds_bram_addr_bits-1 downto 0)
+    constant C_rds_reg_msg_len:  integer   := 2;
 
     constant C_rds_control: integer  := 3;  -- Menlo: Added control register.
 
-    -- Bit definitions
+    -- Bit definitions for control/status register
     constant C_rds_control_cw_enable:        integer := 0;  -- Bit numbers
     constant C_rds_control_modulator_enable: integer := 1;
     constant C_rds_control_rds_data_enable:  integer := 2;
-    constant C_rds_control_fm_pcm_enable:    integer := 3;
-    constant C_rds_control_am_enable:        integer := 4;  -- Bit numbers
+    constant C_rds_control_am_enable:        integer := 3;
+    constant C_rds_control_am_pcm_enable:    integer := 4;
 
     -- SDR control registers
     constant C_sdr_control0: integer := 4;
@@ -156,21 +162,38 @@ architecture arch of sdr is
     constant C_sdr_control3: integer := 7;
 
     --
-    -- SDR PCM Audio Registers
+    -- CPU -> RTL PCM Audio Registers
     --
-    -- PCM audio is 16 bit with a range from -32767 to +32767
+    -- These registers allow the CPU to provide a real time
+    -- PCM audio stream.
     --
-    constant C_sdr_pcm_cs: integer   := 8;
-    constant C_sdr_pcm_data: integer := 9;  -- L (15 downto 0) R (31 downto 16)
-    constant C_sdr_pcm_IQ: integer   := 10; -- L (15 downto 0) R (31 downto 16)
-    constant C_sdr_pcm_IQ_R: integer := 11; -- L (15 downto 0) R (31 downto 16)
+    -- PCM audio samples are 16 bit with a range from -32767 to +32767
+    --
+    constant C_sdr_pcm_data: integer := 8;  -- L (15 downto 0) R (31 downto 16)
+    constant C_sdr_pcm_IQ: integer   := 9; -- L (15 downto 0) R (31 downto 16)
+    constant C_sdr_pcm_IQ_R: integer := 10; -- L (15 downto 0) R (31 downto 16)
+    constant C_sdr_pcm_cs: integer   := 11;
 
     constant C_sdr_pcm_cs_data_full      : integer := 0;  -- Bit numbers
     constant C_sdr_pcm_cs_iq_data_full   : integer := 1;
     constant C_sdr_pcm_cs_iq_r_data_full : integer := 2;
 
     --
-    -- CPU -> RTL registers.
+    -- Synthesizer registers
+    --
+
+    constant C_sdr_pcm_synth_cs: integer   := 12;
+
+    constant C_sdr_pcm_synth_enable        : integer := 0;  -- Bit numbers
+    constant C_sdr_pcm_sine_enable         : integer := 1;
+
+    constant C_sdr_pcm_synth_ram: integer  := 13;  -- Address (31 downto 16) Data (16 downto 0)
+
+    constant C_sdr_pcm_synth_freq: integer := 14;
+    constant C_sdr_pcm_synth_amplitude: integer := 15;
+
+    --
+    -- CPU -> RTL register bank.
     --
     -- This is a bank of CPU R/W registers with byte, 16 bit, and 32 bit word addressing.
     --
@@ -180,65 +203,166 @@ architecture arch of sdr is
     -- does not allow update without causing multiple drivers.
     --
 
-    type fm_regs_type is array (C_banked_registers-1 downto 0) of std_logic_vector(C_bits-1 downto 0);
+    type banked_regs_type is array (C_banked_registers-1 downto 0) of std_logic_vector(C_bits-1 downto 0);
 
-    signal R: fm_regs_type; -- CPU -> RTL R/W registers.
+    signal R: banked_regs_type; -- Banked CPU -> RTL R/W registers.
+
+    signal banked_regs_sel: std_logic;
+
+    --
+    -- FM Carrier generator and Radio Data System
+    --
+
+    -- bits for RDS message buffer
+    constant C_rds_bram_addr_bits: integer := integer(ceil((log2(real(C_rds_msg_len)+1.0E-6))-1.0E-6));
+
+    -- message len -1 disables RDS
+    constant C_rds_msg_disable: std_logic_vector(c_rds_bram_addr_bits-1 downto 0) := (others => '1');
 
     signal rds_pcm_out: ieee.numeric_std.signed(15 downto 0); -- modulated PCM with audio and RDS
-    signal rds_pcm_in: ieee.numeric_std.signed(15 downto 0);  -- modulated PCM with audio and RDS
+    signal rds_pcm_in: ieee.numeric_std.signed(15 downto 0);  -- ""
 
-    -- FM/RDS RADIO
-    signal rds_addr: std_logic_vector(C_addr_bits-1 downto 0); -- RDS modulator reads BRAM from this addr during transmission
-    signal rds_data: std_logic_vector(7 downto 0); -- BRAM returns value to RDS for transmission
+    -- RDS modulator reads BRAM from this addr during transmission
+    signal rds_bram_addr: std_logic_vector(C_rds_bram_addr_bits-1 downto 0);
+
+    signal rds_bram_data: std_logic_vector(7 downto 0); -- BRAM returns value to RDS for transmission
     signal rds_bram_write: std_logic; -- decoded address -> write signal for BRAM
-    signal R_rds_bram_write: std_logic := '0'; -- 1 clock delayed write signal to offload timing constraints
+
+    -- 1 clock delayed write signal to offload timing constraints
+    signal R_rds_bram_write: std_logic := '0';
+
     signal from_fmrds: std_logic_vector(31 downto 0); -- debugging for subcarrier phase, not used
-    signal rds_msg_len_in: std_logic_vector(c_addr_bits-1 downto 0);
+    signal rds_msg_len_in: std_logic_vector(c_rds_bram_addr_bits-1 downto 0);
     signal fm_antenna_out: std_logic;
 
-    -- AM RADIO
+    --
+    -- AM Carrier generator
+    --
+
     signal am_antenna_out: std_logic;
 
-    -- Menlo: Control signals
-    signal rds_cw_en: std_logic;    -- FM carrier wave control
+    -- SDR control signals
+    signal rds_fm_en: std_logic;    -- FM carrier wave control
     signal sdr_am_en: std_logic;    -- AM carrier wave control
     signal rds_mod_en: std_logic;   -- modulator control
     signal rds_rds_data_en: std_logic; -- RDS data control
-    signal rds_fm_pcm_en: std_logic;   -- FM PCM audio modulation enable
+    signal sdr_am_pcm_en: std_logic;   -- AM PCM audio modulation enable
 
+    -- CPU -> RTL PCM CS registers and control signals
     signal pcm_clk: std_logic;          -- PCM clock
     signal pcm_clk_last_tick: std_logic;
     signal pcm_clk_armed: std_logic;
 
-    -- PCM CS register and control signals
     signal R_pcm_cs: std_logic_vector(C_bits-1 downto 0);
     signal R_pcm_left: ieee.numeric_std.signed(15 downto 0) := (others => '0');
     signal R_pcm_right: ieee.numeric_std.signed(15 downto 0) := (others => '0');
 
+    -- PCM Sine Synthesizer module
+    constant C_sine_synth_reg_count: integer := 4;
+    constant C_sine_synth_reg_addr_bits: integer := 2;
+
+    signal sine_synth_reg_addr: std_logic_vector(C_sine_synth_reg_addr_bits-1 downto 0);
+    signal sine_synth_reg_write: std_logic;
+    signal sine_synth_bus_in: std_logic_vector(31 downto 0);
+    signal sine_synth_bus_out: std_logic_vector(31 downto 0);
+    signal sine_synth_pcm_out: std_logic_vector(15 downto 0);
+
+    -- Synth RAM module
+    constant C_synth_ram_len: integer       := 64;  -- 64 words of synth BRAM
+    constant C_synth_ram_addr_bits: integer := 6;
+
+    signal synth_bram_addr: std_logic_vector(C_synth_ram_addr_bits-1 downto 0);
+    signal synth_bram_data: std_logic_vector(15 downto 0);
+    signal synth_bram_write: std_logic;
+
+    -- 1 clock delayed write signal to offload timing constraints
+    signal R_synth_bram_write: std_logic := '0';
+
 begin
+
+    --
+    -- CPU => SoC Register Decodes
+    --
+    -- There are (2) register models implemented within the 256 byte
+    -- or 64 32 bit register address range.
+    --
+    -- 1) General Register Bank Model
+    --
+    -- The general register model is mapped into the first part of the 256 byte
+    -- address space and implements a register bank as an array
+    -- which provides a default read/write implementation from the CPU
+    -- and supports 32 bit reads and byte, 16 bit word, and 32 bit
+    -- word writes.
+    --
+    -- Signals generated from individual registers in the bank control
+    -- parts of the circuit and provide a generic "read back" mechanism.
+    --
+    -- For real time signals that are returned to the CPU the data must
+    -- be sourced from a register outside the register bank.
+    --
+    -- 2) SoC sub-module model
+    --
+    -- The second register model decodes register ranges into sub-module
+    -- specific select lines and passes the address, byte select, and data
+    -- buses to the module. The decode selects which range of the 256
+    -- byte address space activates the module, and its up to the module
+    -- to implement its registers as it sees fit. The interface for model
+    -- #2 is exactly the same for each sub-module except for the register
+    -- count generic parameter and its register address width.
+    --
+    -- The data paths are 32 bits in and out, and the module decides
+    -- if it decodes 32 bits, 16 bit words, bytes, or a combination.
+    --
+    -- This model is intended for the most flexiblity in systems integration
+    -- of the SoC SDR subsystems that implement signal generations, filtering,
+    -- decoding, and synthesis uses DSP blocks.
+    --
 
     --
     -- CPU core reads registers.
     --
+    -- This is the main CPU read bus multiplixer.
+    --
+    -- Each sub-component that supplies read data to the CPU
+    -- must be in the case statement.
+    --
     -- Register reads are always 32 bit.
     --
-    -- Notes: select signal ce is not used in the decode since its expected
+    -- Notes: The select signal ce is not used in the decode since its expected
     -- the external caller has multiplexed the bus_out from this SoC entity.
     --
     -- Control registers that provide real time signals from RTL -> CPU
-    -- "read around" the register bank. This is because the status signals are
-    -- updated in separate processes and have their own status state registers.
+    -- are in separate registers and not in the general register bank.
     --
-    readable_registers: if C_readable_reg generate -- LUT saving if not set.
-    with conv_integer(addr) select
-      bus_out <= 
-        ext(rds_addr, 32) -- rds_addr is RDS message BRAM address
-          when C_rds_addr,
-        ext(R_pcm_cs, 32) -- sdr_pcm_cs is the PCM control register
-          when C_sdr_pcm_cs,
-        ext(R(conv_integer(addr)), 32)  -- Access banked register value
-          when others;
-    end generate;
+    -- The logic here promotes the 5 bits of addr to 32 and does
+    -- the compare against the register number. The synthesizers logic
+    -- reduction will remote the excess bits beyond the number defined
+    -- for addr.
+    --
+    -- This fully decodes the address space presented to this SoC.
+    -- avoiding aliasing.
+    --
+    process(addr)
+    begin
+        case conv_integer(addr) is
+
+        -- Banked registers
+        when C_cw_freq to C_sdr_pcm_IQ_R  =>
+            bus_out <= ext(R(conv_integer(addr)), 32);
+
+        -- Independent registers
+        when C_sdr_pcm_cs =>
+            bus_out <= ext(R_pcm_cs, 32);
+
+        -- Sub-module registers
+        when C_sdr_pcm_synth_cs to C_sdr_pcm_synth_amplitude  =>
+            bus_out <= ext(R(conv_integer(addr)), 32);
+
+        when others  =>
+            -- Undefined registers read as 0
+            bus_out <= (others => '0');
+        end case;
+    end process;
 
     --
     -- CPU core writes banked registers.
@@ -247,73 +371,34 @@ begin
     -- for each register allowing individual register byte
     -- writes as the CPU core decodes A0 and A1 into byte_sel(3 - 0).
     --
+    -- Control signals are generated from the banked registers.
+    --
+
+    --
+    -- This is the select signal for banked registers write.
+    --
+    process(addr)
+    begin
+        banked_regs_sel <= '0';
+        case conv_integer(addr) is
+        when 10#00# to C_banked_registers-1 =>
+            banked_regs_sel <= '1';
+        when others  =>
+            banked_regs_sel <= '0';
+        end case;
+    end process;
+
     writereg_control: for i in 0 to C_bits/8-1 generate
       process(clk)
       begin
         if rising_edge(clk) then
-          if byte_sel(i) = '1' and ce = '1' and bus_write = '1' then
+          if byte_sel(i) = '1' and ce = '1' and bus_write = '1' and banked_regs_sel = '1' then
             R(conv_integer(addr))(8*i+7 downto 8*i) <=  bus_in(8*i+7 downto 8*i);
           end if;
         end if;
       end process;
     end generate;
 
-    --
-    -- FM RDS control register signals.
-    --
-    -- These are supplied by the CPU R/W banked registers.
-    --
-    rds_cw_en <= R(C_rds_control)(C_rds_control_cw_enable);
-    rds_mod_en <= R(C_rds_control)(C_rds_control_modulator_enable);
-    rds_rds_data_en <= R(C_rds_control)(C_rds_control_rds_data_enable);
-    rds_fm_pcm_en <= R(C_rds_control)(C_rds_control_fm_pcm_enable);
-    sdr_am_en <= R(C_rds_control)(C_rds_control_am_enable);
-
-    -- Enable/Disable FM CW carrier
-    fm_antenna <= fm_antenna_out
-                 when rds_cw_en = '1'
-                 else '0';
-
-    -- Enable/Disable AM CW carrier
-    am_antenna <= am_antenna_out
-                 when sdr_am_en = '1'
-                 else '0';
-
-    -- Enable/Disable modulation
-    rds_pcm_in <= rds_pcm_out
-                   when rds_mod_en = '1'
-                   else to_signed(0, 16);
-
-    -- Enable/Disable RDS modulation
-    rds_msg_len_in <= R(C_rds_addr)(C_addr_bits-1 downto 0)
-                      when rds_rds_data_en = '1'
-                      else C_rds_msg_disable;
-
-    --
-    -- write to circular RDS memory when the low byte of
-    -- register 1 is written.
-    --
-    -- This "shadows" the banked registers.
-    --
-    rds_bram_write <= '1'
-                 when byte_sel(0) = '1'
-                  and ce = '1'
-                  and bus_write = '1'
-                  and conv_integer(addr) = C_rds_data
-                 else '0';
-
-    -- RDS message RAM write delay 1 clock cycle
-    process(clk)
-    begin
-      if rising_edge(clk) then
-        R_rds_bram_write <= rds_bram_write;
-      end if;
-    end process;
-
-    --
-    -- TODO: Make a separate module pcm_cpu that can be test benched and
-    -- make the code here cleaner. Would need to sub-decode FM RDS and
-    -- PCM.
     --
     -- PCM modulator for FM:
     --
@@ -417,7 +502,7 @@ begin
     --
     rds_modulator: entity work.rds
     generic map (
-      c_addr_bits => C_addr_bits, -- number of address bits for RDS message RAM
+      c_addr_bits => C_rds_bram_addr_bits, -- number of address bits for RDS message RAM
       -- multiply/divide to produce 1.824 MHz clock
       c_rds_clock_multiply => C_rds_clock_multiply,
       c_rds_clock_divide => C_rds_clock_divide,
@@ -436,8 +521,8 @@ begin
 
       rds_msg_len => rds_msg_len_in,
 
-      addr => rds_addr, -- out, address driven by rds module
-      data => rds_data,
+      addr => rds_bram_addr, -- out, BRAM address driven by rds module
+      data => rds_bram_data, -- in data from RDS message BRAM
 
       pcm_in_left  => R_pcm_left,      -- PCM audio input
       pcm_in_right => R_pcm_right,     -- ""
@@ -448,13 +533,16 @@ begin
       pcm_out => rds_pcm_out            -- 16 bit PCM to FM transmitter
     );
 
+    -- Enable/Disable RDS modulation
+    rds_rds_data_en <= R(C_rds_control)(C_rds_control_rds_data_enable);
+
+    rds_msg_len_in <= R(C_rds_reg_msg_len)(C_rds_bram_addr_bits-1 downto 0)
+                      when rds_rds_data_en = '1'
+                      else C_rds_msg_disable;
+
     --
     -- AM modulation and carrier generator
     --
-    -- TODO: Decide whether to use common register as configured
-    -- right now for I + Q vs. Left + Right PCM data.
-    --
-
     am_modulator: entity work.amgen
     generic map (
       c_fdds => real(C_dds_hz)
@@ -467,6 +555,15 @@ begin
       pcm_in_q => R_pcm_right, -- 16 bit PCM modulation input Q
       am_out => am_antenna_out
     );
+
+    sdr_am_pcm_en <= R(C_rds_control)(C_rds_control_am_pcm_enable);
+
+    -- Enable/Disable AM CW carrier
+    sdr_am_en <= R(C_rds_control)(C_rds_control_am_enable);
+
+    am_antenna <= am_antenna_out
+                 when sdr_am_en = '1'
+                 else '0';
 
     --
     -- FM modulation and carrier generator
@@ -484,19 +581,124 @@ begin
       fm_out => fm_antenna_out
     );
 
+    -- Enable/Disable modulation
+    rds_mod_en <= R(C_rds_control)(C_rds_control_modulator_enable);
+
+    rds_pcm_in <= rds_pcm_out
+                   when rds_mod_en = '1'
+                   else to_signed(0, 16);
+
+    -- Enable/Disable FM CW carrier
+    rds_fm_en <= R(C_rds_control)(C_rds_control_cw_enable);
+
+    fm_antenna <= fm_antenna_out
+                 when rds_fm_en = '1'
+                 else '0';
+
+    --
+    -- This is a dual port RAM that supports two reads, or a write
+    -- and a read with separate addresses at the same time to the RAM.
+    -- It actually has 3 data ports as the read and write paths on
+    -- the dmem are both available during the same clock cycle based
+    -- on the dmem address.
+    --
+    -- imem and dmem must be left over names for instruction memory
+    -- and data memory ports for the general pattern for the F32C CPU
+    -- core.
+    --
+
     rdsbram: entity work.bram_rds
     generic map (
 	c_mem_bytes => C_rds_msg_len, -- allocate RAM for max message size
-        c_addr_bits => C_addr_bits    -- number of address bits for RDS message RAM
+        c_addr_bits => C_rds_bram_addr_bits    -- number of address bits for RDS message RAM
     )
     port map (
 	clk => clk,
-	imem_addr => rds_addr,     -- in, address input to bram_rds module
-	imem_data_out => rds_data,
+	imem_addr => rds_bram_addr,     -- driven by rds module
+	imem_data_out => rds_bram_data, -- read data to rds module
 	dmem_write => R_rds_bram_write,
-	dmem_addr => R(C_rds_data)(16+C_addr_bits-1 downto 16),
-	dmem_data_out => open, dmem_data_in => R(C_rds_data)(7 downto 0)
+	dmem_addr => R(C_rds_data)(16+C_rds_bram_addr_bits-1 downto 16),  -- bram write addr
+	dmem_data_out => open, dmem_data_in => R(C_rds_data)(7 downto 0) -- bram write data
     );
+
+    --
+    -- write to circular RDS memory when the low byte of
+    -- register 1 is written.
+    --
+    -- This "shadows" the banked register.
+    --
+    rds_bram_write <= '1'
+                 when byte_sel(0) = '1'
+                  and ce = '1'
+                  and bus_write = '1'
+                  and conv_integer(addr) = C_rds_data
+                 else '0';
+
+    -- RDS message RAM write delay 1 clock cycle
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        R_rds_bram_write <= rds_bram_write;
+      end if;
+    end process;
+
+    --
+    -- Sine Synthesizer
+    --
+    sinesynth: entity work.sine_synth
+    generic map (
+	c_reg_count     => C_sine_synth_reg_count, -- 4 registers
+        c_reg_addr_bits => C_sine_synth_reg_addr_bits
+    )
+    port map (
+        -- SoC CPU Register interface
+	clk       => clk,
+	reg_addr  => sine_synth_reg_addr,
+	reg_byte_sel => byte_sel,
+	reg_write => sine_synth_reg_write,
+	bus_in    => sine_synth_bus_in,
+	bus_out   => sine_synth_bus_out,
+
+        -- Module specific I/O ports
+        pcm_out   => sine_synth_pcm_out
+    );
+
+    --
+    -- TODO: It's better to hide this behind the synth module when created.
+    --
+    synthbram: entity work.bram_synth
+    generic map (
+	c_mem_bytes => C_synth_ram_len,
+        c_addr_bits => C_synth_ram_addr_bits
+    )
+    port map (
+	clk => clk,
+	imem_addr => synth_bram_addr,
+	imem_data_out => synth_bram_data,
+	dmem_write => R_synth_bram_write,
+	dmem_addr => R(C_sdr_pcm_synth_ram)(16+C_synth_ram_addr_bits-1 downto 16),
+	dmem_data_out => open, dmem_data_in => R(C_sdr_pcm_synth_ram)(15 downto 0)
+    );
+
+    --
+    -- Writes to the Synth BRAM.
+    --
+    -- This "shadows" the banked registers.
+    --
+    synth_bram_write <= '1'
+                 when byte_sel(0) = '1'
+                  and ce = '1'
+                  and bus_write = '1'
+                  and conv_integer(addr) = C_sdr_pcm_synth_ram
+                 else '0';
+
+    -- Synth BRAM write delay 1 clock cycle
+    process(clk)
+    begin
+      if rising_edge(clk) then
+        R_synth_bram_write <= synth_bram_write;
+      end if;
+    end process;
 
 end;
 
