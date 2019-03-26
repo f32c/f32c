@@ -261,22 +261,10 @@ architecture arch of sdr is
     constant C_sine_synth_reg_count: integer := 4;
     constant C_sine_synth_reg_addr_bits: integer := 2;
 
+    signal sine_synth_ce: std_logic;
     signal sine_synth_reg_addr: std_logic_vector(C_sine_synth_reg_addr_bits-1 downto 0);
-    signal sine_synth_reg_write: std_logic;
-    signal sine_synth_bus_in: std_logic_vector(31 downto 0);
     signal sine_synth_bus_out: std_logic_vector(31 downto 0);
     signal sine_synth_pcm_out: std_logic_vector(15 downto 0);
-
-    -- Synth RAM module
-    constant C_synth_ram_len: integer       := 64;  -- 64 words of synth BRAM
-    constant C_synth_ram_addr_bits: integer := 6;
-
-    signal synth_bram_addr: std_logic_vector(C_synth_ram_addr_bits-1 downto 0);
-    signal synth_bram_data: std_logic_vector(15 downto 0);
-    signal synth_bram_write: std_logic;
-
-    -- 1 clock delayed write signal to offload timing constraints
-    signal R_synth_bram_write: std_logic := '0';
 
 begin
 
@@ -344,19 +332,27 @@ begin
     --
     process(addr)
     begin
+
+        banked_regs_sel <= '0';
+        sine_synth_ce <= '0';
+
         case conv_integer(addr) is
 
         -- Banked registers
         when C_cw_freq to C_sdr_pcm_IQ_R  =>
             bus_out <= ext(R(conv_integer(addr)), 32);
+            banked_regs_sel <= '1';
 
         -- Independent registers
         when C_sdr_pcm_cs =>
             bus_out <= ext(R_pcm_cs, 32);
 
         -- Sub-module registers
+
+        -- PCM synthesizer
         when C_sdr_pcm_synth_cs to C_sdr_pcm_synth_amplitude  =>
-            bus_out <= ext(R(conv_integer(addr)), 32);
+            bus_out <= sine_synth_bus_out;
+            sine_synth_ce <= '1';
 
         when others  =>
             -- Undefined registers read as 0
@@ -373,20 +369,6 @@ begin
     --
     -- Control signals are generated from the banked registers.
     --
-
-    --
-    -- This is the select signal for banked registers write.
-    --
-    process(addr)
-    begin
-        banked_regs_sel <= '0';
-        case conv_integer(addr) is
-        when 10#00# to C_banked_registers-1 =>
-            banked_regs_sel <= '1';
-        when others  =>
-            banked_regs_sel <= '0';
-        end case;
-    end process;
 
     writereg_control: for i in 0 to C_bits/8-1 generate
       process(clk)
@@ -643,7 +625,7 @@ begin
     end process;
 
     --
-    -- Sine Synthesizer
+    -- Sine wave Synthesizer
     --
     sinesynth: entity work.sine_synth
     generic map (
@@ -653,52 +635,16 @@ begin
     port map (
         -- SoC CPU Register interface
 	clk       => clk,
-	reg_addr  => sine_synth_reg_addr,
-	reg_byte_sel => byte_sel,
-	reg_write => sine_synth_reg_write,
-	bus_in    => sine_synth_bus_in,
+	addr  => addr(C_sine_synth_reg_addr_bits-1 downto 0),
+	byte_sel => byte_sel,
+	bus_write => bus_write,
+        reg_ce    => sine_synth_ce,
+	bus_in    => bus_in,
 	bus_out   => sine_synth_bus_out,
 
         -- Module specific I/O ports
         pcm_out   => sine_synth_pcm_out
     );
-
-    --
-    -- TODO: It's better to hide this behind the synth module when created.
-    --
-    synthbram: entity work.bram_synth
-    generic map (
-	c_mem_bytes => C_synth_ram_len,
-        c_addr_bits => C_synth_ram_addr_bits
-    )
-    port map (
-	clk => clk,
-	imem_addr => synth_bram_addr,
-	imem_data_out => synth_bram_data,
-	dmem_write => R_synth_bram_write,
-	dmem_addr => R(C_sdr_pcm_synth_ram)(16+C_synth_ram_addr_bits-1 downto 16),
-	dmem_data_out => open, dmem_data_in => R(C_sdr_pcm_synth_ram)(15 downto 0)
-    );
-
-    --
-    -- Writes to the Synth BRAM.
-    --
-    -- This "shadows" the banked registers.
-    --
-    synth_bram_write <= '1'
-                 when byte_sel(0) = '1'
-                  and ce = '1'
-                  and bus_write = '1'
-                  and conv_integer(addr) = C_sdr_pcm_synth_ram
-                 else '0';
-
-    -- Synth BRAM write delay 1 clock cycle
-    process(clk)
-    begin
-      if rising_edge(clk) then
-        R_synth_bram_write <= synth_bram_write;
-      end if;
-    end process;
 
 end;
 
