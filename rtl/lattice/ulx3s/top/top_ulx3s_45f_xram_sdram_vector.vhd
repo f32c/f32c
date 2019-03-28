@@ -420,8 +420,8 @@ begin
     C_sdram_ras => C_sdram_wait_cycles,
     C_sdram_cas => C_sdram_wait_cycles,
     C_sdram_pre => C_sdram_wait_cycles,
-    C_sdram_address_width => 24,
-    C_sdram_column_bits => 9,
+    C_sdram_address_width => C_cached_addr_bits-1, -- RAM addr is 16-bit based (24 for 32MB), cached addr is 8-bit based (25 for 32MB)
+    C_sdram_column_bits => C_cached_addr_bits-16, -- 9 for 32MB, 10 for 64MB
     C_sdram_startup_cycles => 12000,
     C_sdram_cycles_per_refresh => 1524,
     C_icache_size => C_icache_size,

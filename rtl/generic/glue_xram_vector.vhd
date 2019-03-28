@@ -76,8 +76,8 @@ generic (
   C_sdram_ras : integer := 3;
   C_sdram_cas : integer := 3;
   C_sdram_pre : integer := 3;
-  C_sdram_address_width : integer := 24;
-  C_sdram_column_bits : integer := 9;
+  C_sdram_address_width : integer := 24; -- recommended C_cached_addr_bits-1, -- RAM addr is 16-bit based (24 for 32MB), cached addr is 8-bit based (25 for 32MB)
+  C_sdram_column_bits : integer := 9; -- recommended C_cached_addr_bits-16, -- 9 for 32MB, 10 for 64MB
   C_sdram_startup_cycles : integer := 10100;
   C_sdram_cycles_per_refresh : integer := 1524;
 
