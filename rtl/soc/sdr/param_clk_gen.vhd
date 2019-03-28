@@ -20,6 +20,10 @@
 -- is eliminated. This is useful for critical timing paths where a single
 -- fixed frequency is required.
 --
+-- When rollover occurs, the output clk_out is valid for (1) master
+-- clock period. This simplifies use by callers that are operating from
+-- the higher frequency main clock.
+--
 
 library ieee; 
 use ieee.std_logic_1164.all;
@@ -43,7 +47,7 @@ end param_clk_gen;
 architecture arch of param_clk_gen is
 
     constant MaxCount : integer :=
-      integer( (real(InputClockRate) / real(OutputFrequency)) / real(2));
+      integer( (real(InputClockRate) / real(OutputFrequency)));
 
     -- Calculate number of bits required to hold the max count value
     constant N : integer := integer(ceil(log2(real(MaxCount))));
@@ -67,12 +71,13 @@ begin
         elsif   rising_edge(clk) then
             count_reg <= count_next;
 
+            -- Resets previous value of clk_reg.
+            clk_reg <= '0';
+
             if (count_reg = MaxCount) then
-                if (clk_reg = '0') then
-                    clk_reg <= '1';
-                else
-                    clk_reg <= '0';
-                end if;
+                -- Set clk_reg to '1' for (1) master clk tick.
+                -- This relies on the last assignment rule for process/always_ff.
+                clk_reg <= '1';
             end if;
         end if;
     end process;

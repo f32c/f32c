@@ -250,8 +250,6 @@ architecture arch of sdr is
 
     -- CPU -> RTL PCM CS registers and control signals
     signal pcm_clk: std_logic;          -- PCM clock
-    signal pcm_clk_last_tick: std_logic;
-    signal pcm_clk_armed: std_logic;
 
     signal R_pcm_cs: std_logic_vector(C_bits-1 downto 0);
     signal R_pcm_left: ieee.numeric_std.signed(15 downto 0) := (others => '0');
@@ -409,7 +407,7 @@ begin
         port map (
           clk => clk,
           reset => '0',
-          clk_out => pcm_clk
+          clk_out => pcm_clk -- One pulse per rollover
           );
 
     --
@@ -455,16 +453,7 @@ begin
             -- current PCM levels to the modulator.
             --
 
-            -- ARM pcm_clk on rising edge.
-            if pcm_clk = '1' and pcm_clk_last_tick = '0' then
-                pcm_clk_armed <= '1';
-            end if;
-
-            pcm_clk_last_tick <= pcm_clk;
-
-            if pcm_clk_armed = '1' and R_pcm_cs(C_sdr_pcm_cs_data_full) = '1' then
-
-                pcm_clk_armed <= '0';
+            if pcm_clk = '1' and R_pcm_cs(C_sdr_pcm_cs_data_full) = '1' then
 
                 -- Transfer PCM register data to modulator register
                 R_pcm_left  <= to_signed(conv_integer(R(C_sdr_pcm_data)(15 downto 0)), 16);
@@ -600,7 +589,8 @@ begin
 	imem_data_out => rds_bram_data, -- read data to rds module
 	dmem_write => R_rds_bram_write,
 	dmem_addr => R(C_rds_data)(16+C_rds_bram_addr_bits-1 downto 16),  -- bram write addr
-	dmem_data_out => open, dmem_data_in => R(C_rds_data)(7 downto 0) -- bram write data
+	dmem_data_out => open,
+        dmem_data_in => R(C_rds_data)(7 downto 0) -- bram write data
     );
 
     --
@@ -629,8 +619,7 @@ begin
     --
     sinesynth: entity work.sine_synth
     generic map (
-	c_reg_count     => C_sine_synth_reg_count, -- 4 registers
-        c_reg_addr_bits => C_sine_synth_reg_addr_bits
+        C_reg_addr_bits => C_sine_synth_reg_addr_bits
     )
     port map (
         -- SoC CPU Register interface
