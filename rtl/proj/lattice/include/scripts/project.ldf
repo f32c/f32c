@@ -10,5 +10,5 @@
             <Options/>
         </Source>
     </Implementation>
-    <Strategy name="Strategy1" file="ulx3s_sram1.sty"/>
+    <Strategy name="Strategy1" file="ulx3s.sty"/>
 </BaliProject>
