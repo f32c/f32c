@@ -68,9 +68,9 @@ architecture arch of sine_synth is
     constant C_clk_gen_width: integer := 16;
 
     constant C_sdr_pcm_synth_cs: integer     := 0; -- Register 0
-      constant C_sdr_pcm_synth_enable:  integer := 0; -- Bit numbers
-      constant C_sdr_pcm_sine_enable:   integer := 1;
-      constant C_sdr_pcm_write_protect: integer := 2;
+      constant C_sdr_pcm_synth_enable:  integer := 0; -- Bit numbers (0x01)
+      constant C_sdr_pcm_sine_enable:   integer := 1; -- (0x02)
+      constant C_sdr_pcm_write_protect: integer := 2; -- (0x04)
 
     constant C_sdr_pcm_synth_ram: integer       := 1;  -- Address (31 downto 16) Data (16 downto 0)
     constant C_sdr_pcm_synth_freq: integer      := 2;
