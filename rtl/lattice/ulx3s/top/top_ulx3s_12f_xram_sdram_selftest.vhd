@@ -50,12 +50,12 @@ entity ulx3s_xram_sdram_vector is
     C_acram_wait_cycles: integer := 3; -- 3 or more
     C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2)
     C_sdram: boolean := true; -- true default
-    C_sdram_wait_cycles: integer := 3; -- RAS/CAS/PRE wait cycles (2 or 3)
+    C_sdram_wait_cycles: integer := 2; -- RAS/CAS/PRE wait cycles (2 or 3)
     C_icache_size: integer := 2; -- 2 default
     C_dcache_size: integer := 2; -- 2 default
     C_branch_prediction: boolean := false; -- false default
     C_sio: integer := 2; -- 2 default
-    C_usbsio: std_logic_vector := "0100"; -- f32c bootloader over USB-serial
+    C_usbsio: std_logic_vector := "0000"; -- "0000"-disable, "0100" enumerate over US2 
     C_spi: integer := 3; -- 2 default
     C_simple_io: boolean := true; -- true default
     C_gpio: integer := 96; -- 64 default for ulx3s, additional gpio for audio DAC testing
@@ -328,7 +328,8 @@ begin
   end generate;
 
   ddr_640x480_100MHz: if C_clk_freq=100 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_89M_2: entity work.clk_25_125_25_48_89
+   ddr_640x480_100MHz_usb: if C_usbsio /= "0000" generate
+    clk_89M_2: entity work.clk_25_125_25_48_89
     port map(
       CLKI        =>  clk_25MHz,
       CLKOP       =>  open,            -- 125    MHz DVI
@@ -336,6 +337,7 @@ begin
       CLKOS2      =>  clk_usbsio,      --  48.07 MHz USB
       CLKOS3      =>  open             --  89.25 MHz CPU
     );
+   end generate;
   clk_100M: entity work.clk_25_250_125_25_100
     port map(
       CLKI        =>  clk_25MHz,
@@ -343,6 +345,12 @@ begin
       CLKOS       =>  clk_pixel_shift, -- 125 MHz
       CLKOS2      =>  clk_pixel,       --  25 MHz
       CLKOS3      =>  clk              -- 100 MHz CPU
+    );
+  clk_100M_sdram: entity work.clk_25_100_100s
+    port map(
+      clkin       =>  clk_25MHz,
+      clkout(0)   =>  open,            -- 100 MHz CPU
+      clkout(1)   =>  sdram_clk        -- 100 MHz phase shift 144 deg
     );
   end generate;
 
@@ -632,7 +640,7 @@ begin
     sdram_addr => sdram_a, sdram_data(15 downto 0) => sdram_d,
     sdram_ba => sdram_ba, sdram_dqm(1 downto 0) => sdram_dqm,
     sdram_ras => sdram_rasn, sdram_cas => sdram_casn,
-    sdram_cke => sdram_cke, sdram_clk => sdram_clk,
+    sdram_cke => sdram_cke, sdram_clk => open,
     sdram_we => sdram_wen, sdram_cs => sdram_csn,
 
     -- acram_emu (AXI cache emulation using BRAM)

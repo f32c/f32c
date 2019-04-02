@@ -11,6 +11,7 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../lattice/ulx3s/clocks/clk_25M_112M5_93M75.vhd \
   ../../../../lattice/ulx3s/clocks/clk_112M5_433M92.vhd \
   ../../../../lattice/ulx3s/clocks/clk_25_287M5_19M16_6M38_95M83.vhd \
+  ../../../../lattice/ulx3s/clocks/clk_25_100_100s.vhd \
   ../../../../lattice/chip/ecp5u/ecp5_flash_clk.vhd \
   ../../../../generic/glue_xram_vector.vhd \
   ../../../../generic/bootloader/defs_bootblock.vhd \
@@ -115,6 +116,7 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
 
 VERILOG_FILES = \
   ../../../../lattice/ulx3s/clocks/clk_25_300_150_30_100_v.v \
+  ../../../../lattice/ulx3s/clocks/clk_25_100_100s_v.v \
   ../../../../soc/pid/ctrlpid_v.v \
   ../../../../soc/pid/simotor_v.v \
   ../../../../soc/pid/rotary_decoder_v.v \

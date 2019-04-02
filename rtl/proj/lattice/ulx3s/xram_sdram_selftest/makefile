@@ -50,6 +50,21 @@ TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_selftes
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_85f_xram_acram_emu_vector_segpdi.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_85f_xram_acram_emu_vector.vhd
 
+CLK0_NAME = clk_25_100_100s_v
+CLK0_FILE_NAME = ../../../../lattice/ulx3s/clocks/$(CLK0_NAME).v
+CLK0_OPTIONS_OLD = \
+  --input=25 \
+  --output=100 \
+  --s1=100 \
+  --p1=144 \
+# for new ecppll: to override above, rename CLK0_OPTIONS_NEW -> CLK0_OPTIONS
+CLK0_OPTIONS = \
+  --module=$(CLK0_NAME) \
+  --clkin=25 \
+  --clkout0=100 \
+  --clkout1=100 \
+  --phase1=180
+
 include ../universal_make/files.mk
 
 BITSTREAM_ = \
@@ -62,5 +77,7 @@ $(BOARD)_$(FPGA_SIZE)f_$(PROJECT)_flash_$(FLASH_CHIP).vme
 
 SCRIPTS = ../../include/scripts
 #include $(SCRIPTS)/ulx3s_diamond.mk
+include $(SCRIPTS)/trellis_path.mk
+# include $(SCRIPTS)/trellis_main.mk
 include $(SCRIPTS)/diamond_path.mk
 include $(SCRIPTS)/diamond_main.mk
