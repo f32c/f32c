@@ -1,5 +1,5 @@
 # ******* project, board and chip name *******
-PROJECT = f32c_selftest_100mhz
+PROJECT = f32c_selftest_2ws_89mhz
 # board: ulx3s_v20 ulx3s_v17p
 BOARD = ulx3s_v20
 # fpga size: 12 25 45 85
@@ -50,7 +50,8 @@ TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_45f_xram_sdram_vector_
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_85f_xram_acram_emu_vector_segpdi.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_85f_xram_acram_emu_vector.vhd
 
-CLK0_NAME = clk_25_100_100s_v
+#CLK0_NAME = clk_25_100_100s_v
+CLK0_NAME = clk_25_125_89_89s_48_v
 CLK0_FILE_NAME = ../../../../lattice/ulx3s/clocks/$(CLK0_NAME).v
 CLK0_OPTIONS_OLD = \
   --input=25 \
@@ -61,9 +62,34 @@ CLK0_OPTIONS_OLD = \
 CLK0_OPTIONS = \
   --module=$(CLK0_NAME) \
   --clkin=25 \
-  --clkout0=100 \
+  --clkout0=125 \
+  --clkout1=89 \
+  --clkout2=89 \
+  --phase2=120 \
+  --clkout3=48
+
+CLK1_NAME = clk_25_125_104_104s_48_v
+CLK1_FILE_NAME = ../../../../lattice/ulx3s/clocks/$(CLK1_NAME).v
+# for new ecppll: to override above, rename CLK0_OPTIONS_NEW -> CLK0_OPTIONS
+CLK1_OPTIONS = \
+  --module=$(CLK1_NAME) \
+  --clkin=25 \
+  --clkout0=125 \
+  --clkout1=104 \
+  --clkout2=104 \
+  --phase2=120 \
+  --clkout3=48
+
+CLK2_NAME = clk_25_250_100_100s_v
+CLK2_FILE_NAME = ../../../../lattice/ulx3s/clocks/$(CLK2_NAME).v
+# for new ecppll: to override above, rename CLK0_OPTIONS_NEW -> CLK0_OPTIONS
+CLK2_OPTIONS = \
+  --module=$(CLK2_NAME) \
+  --clkin=25 \
+  --clkout0=250 \
   --clkout1=100 \
-  --phase1=120
+  --clkout2=100 \
+  --phase2=150 \
 
 include ../universal_make/files.mk
 

@@ -10,27 +10,27 @@ USE ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 
-entity clk_25_100_100s is
+entity clk_25_125_104_104s_48 is
   port
   (
     clkin: in std_logic;
-    clkout: out std_logic_vector(1 downto 0);
+    clkout: out std_logic_vector(3 downto 0);
     locked: out std_logic
   );
 end;
 
-architecture syn of clk_25_100_100s is
-  component clk_25_100_100s_v -- verilog name and its parameters
+architecture syn of clk_25_125_104_104s_48 is
+  component clk_25_125_104_104s_48_v -- verilog name and its parameters
   port
   (
     clkin: in std_logic;
-    clkout: out std_logic_vector(1 downto 0);
+    clkout: out std_logic_vector(3 downto 0);
     locked: out std_logic
   );
   end component;
 
 begin
-  clk_video_cpu_v_inst: clk_25_100_100s_v
+  clk_video_cpu_sdram_usb_v_inst: clk_25_125_104_104s_48_v
   port map
   (
     clkin => clkin,
