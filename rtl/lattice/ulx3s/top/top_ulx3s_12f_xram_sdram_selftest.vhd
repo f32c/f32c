@@ -25,7 +25,7 @@ entity ulx3s_xram_sdram_vector is
     C_debug: boolean := false;
 
     -- Main clock: 25/78/89/100/104 MHz
-    C_clk_freq: integer := 100;
+    C_clk_freq: integer := 89;
 
     -- SoC configuration options
     C_xboot_rom: boolean := false; -- false default, bootloader initializes XRAM with external DMA
@@ -55,7 +55,7 @@ entity ulx3s_xram_sdram_vector is
     C_dcache_size: integer := 2; -- 2 default
     C_branch_prediction: boolean := false; -- false default
     C_sio: integer := 2; -- 2 default
-    C_usbsio: std_logic_vector := "0000"; -- "0000"-disable, "0100" enumerate over US2 
+    C_usbsio: std_logic_vector := "0100"; -- "0000"-disable, "0100" enumerate over US2
     C_spi: integer := 3; -- 2 default
     C_simple_io: boolean := true; -- true default
     C_gpio: integer := 96; -- 64 default for ulx3s, additional gpio for audio DAC testing
@@ -68,7 +68,7 @@ entity ulx3s_xram_sdram_vector is
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
     C_spdif: boolean := false; -- SPDIF output
     C_cw_simple_out: integer := -1; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
-    C_fmrds: boolean := true; -- enable FM/RDS output to fm_antenna
+    C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna (problems in selftest)
       C_fm_stereo: boolean := false;
       C_fm_filter: boolean := false;
       C_fm_downsample: boolean := false;
@@ -295,7 +295,7 @@ begin
   end generate;
 
   ddr_640x480_78MHz: if C_clk_freq=78 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_78M: entity work.clk_25_78_125_25
+    clk_78M: entity work.clk_25_78_125_25
     port map(
       CLKI        =>  clk_25MHz,
       CLKOP       =>  clk_pixel_shift,   -- 125 MHz
@@ -306,64 +306,60 @@ begin
   end generate;
 
   ddr_640x480_89MHz: if C_clk_freq=89 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_89M: entity work.clk_25_125_25_48_89
+    clk_89M: entity work.clk_25_125_89_89s_48
     port map(
-      CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_pixel_shift, -- 125    MHz DVI
-      CLKOS       =>  clk_pixel,       --  25    MHz DVI
-      CLKOS2      =>  clk_usbsio,      --  48.07 MHz USB
-      CLKOS3      =>  clk              --  89.25 MHz CPU
+      clkin       =>  clk_25MHz,
+      clkout(0)   =>  clk_pixel_shift, -- 125    MHz DVI
+      clkout(1)   =>  clk,             --  89.25 MHz CPU
+      clkout(2)   =>  sdram_clk,       --  89.25 MHz SDRAM phase shift 115 deg
+      clkout(3)   =>  clk_usbsio       --  48.07 MHz USB
      );
+    clk_pixel <= clk_25MHz;
+    clk_250M_100M_100Ms_89: entity work.clk_25_250_100_100s
+    port map(
+      clkin       =>  clk_25MHz,
+      clkout(0)   =>  clk_fm,          -- 250 MHz FM
+      clkout(1)   =>  open,            -- 100 MHz CPU
+      clkout(2)   =>  open             -- 100 MHz SDRAM phase shift 117 deg
+    );
   end generate;
 
   ddr_640x480_104MHz: if C_clk_freq=104 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_104M: entity work.clk_25_125_25_48_104
+    clk_104M: entity work.clk_25_125_104_104s_48
     port map(
-      CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_pixel_shift, -- 125    MHz DVI
-      CLKOS       =>  clk_pixel,       --  25    MHz DVI
-      CLKOS2      =>  clk_usbsio,      --  48.07 MHz USB
-      CLKOS3      =>  clk              -- 104.17 MHz CPU
+      clkin       =>  clk_25MHz,
+      clkout(0)   =>  clk_pixel_shift, -- 125    MHz DVI
+      clkout(1)   =>  clk,             -- 104.17 MHz CPU
+      clkout(2)   =>  sdram_clk,       -- 104.17 MHz SDRAM phase shift 120 deg
+      clkout(3)   =>  clk_usbsio       --  48.07 MHz USB
      );
+    clk_pixel <= clk_25MHz;
+    clk_250M_100M_100Ms_104: entity work.clk_25_250_100_100s
+    port map(
+      clkin       =>  clk_25MHz,
+      clkout(0)   =>  clk_fm,          -- 250 MHz FM
+      clkout(1)   =>  open,            -- 100 MHz CPU
+      clkout(2)   =>  open             -- 100 MHz SDRAM phase shift 117 deg
+    );
   end generate;
 
   ddr_640x480_100MHz: if C_clk_freq=100 and (C_video_mode=0 or C_video_mode=1) generate
-   ddr_640x480_100MHz_usb: if C_usbsio /= "0000" generate
-    clk_89M_2: entity work.clk_25_125_25_48_89
-    port map(
-      CLKI        =>  clk_25MHz,
-      CLKOP       =>  open,            -- 125    MHz DVI
-      CLKOS       =>  open,            --  25    MHz DVI
-      CLKOS2      =>  clk_usbsio,      --  48.07 MHz USB
-      CLKOS3      =>  open             --  89.25 MHz CPU
-    );
-   end generate;
-  clk_100M: entity work.clk_25_250_125_25_100
-    port map(
-      CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_fm,          -- 250 MHz
-      CLKOS       =>  clk_pixel_shift, -- 125 MHz
-      CLKOS2      =>  clk_pixel,       --  25 MHz
-      CLKOS3      =>  clk              -- 100 MHz CPU
-    );
-  clk_100M_sdram: entity work.clk_25_100_100s
+    clk_125M_48M: entity work.clk_25_125_89_89s_48
     port map(
       clkin       =>  clk_25MHz,
-      clkout(0)   =>  open,            -- 100 MHz CPU
-      clkout(1)   =>  sdram_clk        -- 100 MHz phase shift 144 deg
-    );
-  end generate;
-
-  ddr_640x480_125MHz: if C_clk_freq=125 and (C_video_mode=0 or C_video_mode=1) generate
-  clk_125M: entity work.clk_25_100_125_25
-    port map(
-      CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
-      CLKOS       =>  open,  -- 125 MHz inverted
-      CLKOS2      =>  clk_pixel, --  25 MHz
-      CLKOS3      =>  open       -- 100 MHz
+      clkout(0)   =>  clk_pixel_shift, -- 125    MHz DVI
+      clkout(1)   =>  open,            --  89.25 MHz CPU
+      clkout(2)   =>  open,            --  89.25 MHz SDRAM phase shift 115 deg
+      clkout(3)   =>  clk_usbsio       --  48.07 MHz USB
      );
-  clk <= clk_pixel_shift;
+    clk_pixel <= clk_25MHz;
+    clk_250M_100M_100Ms_100: entity work.clk_25_250_100_100s
+    port map(
+      clkin       =>  clk_25MHz,
+      clkout(0)   =>  clk_fm,          -- 250 MHz FM
+      clkout(1)   =>  clk,             -- 100 MHz CPU
+      clkout(2)   =>  sdram_clk        -- 100 MHz SDRAM phase shift 117 deg
+    );
   end generate;
 
 --  tv_512x288_81MHz: if C_fmrds generate
@@ -485,7 +481,7 @@ begin
     C_sdram_pre => C_sdram_wait_cycles,
     C_sdram_address_width => C_cached_addr_bits-1, -- RAM addr is 16-bit based (24 for 32MB), cached addr is 8-bit based (25 for 32MB)
     C_sdram_column_bits => C_cached_addr_bits-16, -- 9 for 32MB, 10 for 64MB
-    C_sdram_startup_cycles => 12000,
+    C_sdram_startup_cycles => 14000,
     C_sdram_cycles_per_refresh => 1524,
     C_xdma => C_xboot_rom,
     C_xram_base => C_xram_base,
