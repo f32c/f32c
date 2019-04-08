@@ -1,7 +1,7 @@
 module clk_25_125_104_104s_48_v
 (
     input clkin, // 25 MHz, 0 deg
-    output [3:0] clkout, // 0: 125 MHz, 0 deg; 1: 104.167 MHz, 0 deg; 2: 104.167 MHz, 120 deg; 3: 48.0769 MHz, 0 deg
+    output [3:0] clkout, // 0: 125 MHz, 0 deg; 1: 104.167 MHz, 0 deg; 2: 104.167 MHz, 180 deg; 3: 48.0769 MHz, 0 deg
     output locked
 );
 wire clkfb;
@@ -24,7 +24,7 @@ EHXPLLL #(
         .CLKOS_FPHASE(0),
         .CLKOS2_ENABLE("ENABLED"),
         .CLKOS2_DIV(6),
-        .CLKOS2_CPHASE(4),
+        .CLKOS2_CPHASE(5),
         .CLKOS2_FPHASE(0),
         .CLKOS3_ENABLE("ENABLED"),
         .CLKOS3_DIV(13),

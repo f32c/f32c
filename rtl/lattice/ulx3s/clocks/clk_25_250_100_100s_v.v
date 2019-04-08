@@ -1,7 +1,7 @@
 module clk_25_250_100_100s_v
 (
     input clkin, // 25 MHz, 0 deg
-    output [2:0] clkout, // 0: 250 MHz, 0 deg; 1: 100 MHz, 0 deg; 2: 100 MHz, 144 deg
+    output [2:0] clkout, // 0: 250 MHz, 0 deg; 1: 100 MHz, 0 deg; 2: 100 MHz, 180 deg
     output locked
 );
 wire clkfb;
@@ -25,7 +25,7 @@ EHXPLLL #(
         .CLKOS2_ENABLE("ENABLED"),
         .CLKOS2_DIV(5),
         .CLKOS2_CPHASE(2),
-        .CLKOS2_FPHASE(0),
+        .CLKOS2_FPHASE(4),
         .CLKFB_DIV(10),
         .CLKI_DIV(1),
         .FEEDBK_PATH("INT_OP")

@@ -57,7 +57,7 @@ CLK0_OPTIONS_OLD = \
   --input=25 \
   --output=100 \
   --s1=100 \
-  --p1=144 \
+  --p1=180 \
 # for new ecppll: to override above, rename CLK0_OPTIONS_NEW -> CLK0_OPTIONS
 CLK0_OPTIONS = \
   --module=$(CLK0_NAME) \
@@ -65,7 +65,7 @@ CLK0_OPTIONS = \
   --clkout0=125 \
   --clkout1=89 \
   --clkout2=89 \
-  --phase2=120 \
+  --phase2=180 \
   --clkout3=48
 
 CLK1_NAME = clk_25_125_104_104s_48_v
@@ -77,7 +77,7 @@ CLK1_OPTIONS = \
   --clkout0=125 \
   --clkout1=104 \
   --clkout2=104 \
-  --phase2=120 \
+  --phase2=180 \
   --clkout3=48
 
 CLK2_NAME = clk_25_250_100_100s_v
@@ -89,7 +89,7 @@ CLK2_OPTIONS = \
   --clkout0=250 \
   --clkout1=100 \
   --clkout2=100 \
-  --phase2=150 \
+  --phase2=180 \
 
 include ../universal_make/files.mk
 

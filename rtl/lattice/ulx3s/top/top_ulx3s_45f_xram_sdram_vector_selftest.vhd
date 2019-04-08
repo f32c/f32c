@@ -43,8 +43,8 @@ entity ulx3s_xram_sdram_vector is
     C_xram_base: std_logic_vector(31 downto 28) := x"8"; -- 8 default for C_xboot_rom=false, 0 for C_xboot_rom=true, sets XRAM base address
     C_PC_mask: std_logic_vector(31 downto 0) := x"81ffffff"; -- ULX3S default 32MB
     -- C_PC_mask: std_logic_vector(31 downto 0) := x"800fffff"; -- ULX2S simulation 1MB
-    -- C_cached_addr_bits: integer := 25; -- ULX3S default 25->32MB
-    C_cached_addr_bits: integer := 26; -- ULX3S 26->64MB
+    C_cached_addr_bits: integer := 25; -- ULX3S default 25->32MB
+    -- C_cached_addr_bits: integer := 26; -- ULX3S 26->64MB
     -- C_cached_addr_bits: integer := 20; -- ULX2S simulation 1MB
     C_acram: boolean := false; -- false default (ulx3s has sdram chip)
     C_acram_wait_cycles: integer := 3; -- 3 or more
@@ -68,7 +68,7 @@ entity ulx3s_xram_sdram_vector is
       C_synth_amplify: integer := 0; -- 0 for 24-bit digital reproduction, 5 for PWM (clipping possible)
     C_spdif: boolean := false; -- SPDIF output
     C_cw_simple_out: integer := -1; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
-    C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna (problems in selftest)
+    C_fmrds: boolean := true; -- enable FM/RDS output to fm_antenna
       C_fm_stereo: boolean := false;
       C_fm_filter: boolean := false;
       C_fm_downsample: boolean := false;
@@ -76,10 +76,10 @@ entity ulx3s_xram_sdram_vector is
       C_fmdds_hz: integer := 250000000; -- Hz clk_fmdds (>2*108 MHz)
       --C_rds_clock_multiply: integer := 912; -- multiply and divide from cpu clk 81.25 MHz
       --C_rds_clock_divide: integer := 40625; -- to get 1.824 MHz for RDS logic
-      --C_rds_clock_multiply: integer := 63; -- multiply and divide from cpu clk 89.285714 MHz
-      --C_rds_clock_divide: integer := 3084; -- to get 1.824 MHz for RDS logic
-      C_rds_clock_multiply: integer := 57; -- multiply 57 and divide 3125 from cpu clk 100 MHz
-      C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
+      C_rds_clock_multiply: integer := 63; -- multiply and divide from cpu clk 89.285714 MHz
+      C_rds_clock_divide: integer := 3084; -- to get 1.824 MHz for RDS logic
+      --C_rds_clock_multiply: integer := 57; -- multiply 57 and divide 3125 from cpu clk 100 MHz
+      --C_rds_clock_divide: integer := 3125; -- to get 1.824 MHz for RDS logic
 
     -- enabling passthru autodetect reduces fmax or vector divide must be disabled on 45f
     C_passthru_autodetect: boolean := false; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
@@ -286,10 +286,10 @@ begin
   clk_25M: entity work.clk_25_100_125_25
     port map(
       CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
-      CLKOS       =>  open,      -- 125 MHz inverted
-      CLKOS2      =>  clk_pixel, --  25 MHz
-      CLKOS3      =>  open       -- 100 MHz
+      CLKOP       =>  clk_pixel_shift, -- 125 MHz
+      CLKOS       =>  open,            -- 125 MHz inverted
+      CLKOS2      =>  clk_pixel,       --  25 MHz
+      CLKOS3      =>  open             -- 100 MHz
      );
     clk <= clk_pixel; 
   end generate;
@@ -298,10 +298,10 @@ begin
     clk_78M: entity work.clk_25_78_125_25
     port map(
       CLKI        =>  clk_25MHz,
-      CLKOP       =>  clk_pixel_shift,   -- 125 MHz
-      CLKOS       =>  open,  -- 125 MHz inverted
-      CLKOS2      =>  clk_pixel, --  25 MHz
-      CLKOS3      =>  clk        --  78.125 MHz CPU
+      CLKOP       =>  clk_pixel_shift, -- 125 MHz
+      CLKOS       =>  open,            -- 125 MHz inverted
+      CLKOS2      =>  clk_pixel,       --  25 MHz
+      CLKOS3      =>  clk              --  78.125 MHz CPU
      );
   end generate;
 
@@ -310,17 +310,17 @@ begin
     port map(
       clkin       =>  clk_25MHz,
       clkout(0)   =>  clk_pixel_shift, -- 125    MHz DVI
-      clkout(1)   =>  clk,             --  89.25 MHz CPU
-      clkout(2)   =>  sdram_clk,       --  89.25 MHz SDRAM phase shift 115 deg
+      clkout(1)   =>  clk,             --  89.28 MHz CPU
+      clkout(2)   =>  sdram_clk,       --  89.28 MHz SDRAM phase shift 180 deg
       clkout(3)   =>  clk_usbsio       --  48.07 MHz USB
      );
-    clk_pixel <= clk_25MHz;
+    clk_pixel <= not clk_25MHz;
     clk_250M_100M_100Ms_89: entity work.clk_25_250_100_100s
     port map(
       clkin       =>  clk_25MHz,
       clkout(0)   =>  clk_fm,          -- 250 MHz FM
       clkout(1)   =>  open,            -- 100 MHz CPU
-      clkout(2)   =>  open             -- 100 MHz SDRAM phase shift 117 deg
+      clkout(2)   =>  open             -- 100 MHz SDRAM phase shift 180 deg
     );
   end generate;
 
@@ -330,16 +330,16 @@ begin
       clkin       =>  clk_25MHz,
       clkout(0)   =>  clk_pixel_shift, -- 125    MHz DVI
       clkout(1)   =>  clk,             -- 104.17 MHz CPU
-      clkout(2)   =>  sdram_clk,       -- 104.17 MHz SDRAM phase shift 120 deg
+      clkout(2)   =>  sdram_clk,       -- 104.17 MHz SDRAM phase shift 180 deg
       clkout(3)   =>  clk_usbsio       --  48.07 MHz USB
      );
-    clk_pixel <= clk_25MHz;
+    clk_pixel <= not clk_25MHz;
     clk_250M_100M_100Ms_104: entity work.clk_25_250_100_100s
     port map(
       clkin       =>  clk_25MHz,
       clkout(0)   =>  clk_fm,          -- 250 MHz FM
       clkout(1)   =>  open,            -- 100 MHz CPU
-      clkout(2)   =>  open             -- 100 MHz SDRAM phase shift 117 deg
+      clkout(2)   =>  open             -- 100 MHz SDRAM phase shift 180 deg
     );
   end generate;
 
@@ -348,17 +348,17 @@ begin
     port map(
       clkin       =>  clk_25MHz,
       clkout(0)   =>  clk_pixel_shift, -- 125    MHz DVI
-      clkout(1)   =>  open,            --  89.25 MHz CPU
-      clkout(2)   =>  open,            --  89.25 MHz SDRAM phase shift 115 deg
+      clkout(1)   =>  open,            --  89.28 MHz CPU
+      clkout(2)   =>  open,            --  89.28 MHz SDRAM phase shift 180 deg
       clkout(3)   =>  clk_usbsio       --  48.07 MHz USB
      );
-    clk_pixel <= clk_25MHz;
+    clk_pixel <= not clk_25MHz;
     clk_250M_100M_100Ms_100: entity work.clk_25_250_100_100s
     port map(
       clkin       =>  clk_25MHz,
       clkout(0)   =>  clk_fm,          -- 250 MHz FM
       clkout(1)   =>  clk,             -- 100 MHz CPU
-      clkout(2)   =>  sdram_clk        -- 100 MHz SDRAM phase shift 117 deg
+      clkout(2)   =>  sdram_clk        -- 100 MHz SDRAM phase shift 180 deg
     );
   end generate;
 
