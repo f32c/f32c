@@ -842,6 +842,7 @@ begin
 	    end if;
 	    if R_reset = '1' then
 		ID_EX_exception <= true;
+		ID_EX_bubble <= false;
 	    end if;
 	end if;
     end process;
