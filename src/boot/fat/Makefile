@@ -22,12 +22,14 @@ PROG = loader
 FLASH_FAT_OFFSET = 1048576
 # bitstream should be written from flash address 0
 # and should not be longer than FLASH_FAT_OFFSET bytes
-#BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480/ulx3s_v20_12f_f32c_pix8bpp640x480_100mhz.bit
-BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix16bpp640x480ws2uc/ulx3s_v20_12f_f32c_pix16bpp640x480ws2uc_100mhz.bit
+BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix8bpp640x480/ulx3s_v20_12f_f32c_pix8bpp640x480_100mhz.bit
+#BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-12k/pix16bpp640x480ws2uc/ulx3s_v20_12f_f32c_pix16bpp640x480ws2uc_100mhz.bit
 #BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-25k/pix8bpp320x240/ulx3s_12f_f32c.bit
 #BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_12f_v2.0_c2_flash/project/f32c_ulx3s_v20_12k_pix8bpp640x480flash_100mhz.bit
 #BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-bin/fpga/f32c/f32c-12k-v20/f32c_ulx3s_v20_12k_selftest_100mhz.bit
 #BITSTREAM_IMG_NAME = ../../../rtl/proj/lattice/ulx3s/xram_sdram_12f_v2.0_synth/project/f32c_ulx3s_v20_12k_synth_100mhz.bit
+#BITSTREAM_IMG_NAME = /home/davor/.arduino15/packages/FPGArduino/tools/bootloaders/1.0.0/ulx3s/ulx3s_v20_12f_f32c_synth_100mhz.bit
+#BITSTREAM_IMG_NAME = /home/guest/src/fpga/fpgarduino/f32c/rtl/proj/lattice/ulx3s/xram_sdram_synth/ulx3s_v20_12f_f32c_synth_100mhz.bit
 #BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-25k/pix8bpp640x480ws2/ulx3s_v20_25f_f32c_pix8bpp640x480ws2_100mhz.bit
 #BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-25k/pix8bpp640x480ws2uc/ulx3s_v20_25f_f32c_pix8bpp640x480ws2uc_100mhz.bit
 #BITSTREAM_IMG_NAME = /mt/scratch/tmp/fpga/lattice/ulx3s/ulx3s-sdcard/ULX3S/f32c/f32c-v20-25k/pix16bpp640x480ws2uc/ulx3s_v20_25f_f32c_pix16bpp640x480ws2uc_100mhz.bit
@@ -117,6 +119,7 @@ image_linux: loader.bin
 	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/slides16.bin ::demo
 	#mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/synth50.bin ::demo
 	#mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/synth100.bin ::demo
+	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/dsynth.bin ::demo
 	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/vector_fractal_fast.bin ::demo/vector.bin
 	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/selftest-mcp7940n.bin ::demo/test_mcp.bin
 	mcopy -i ${TMP_FAT_IMG_NAME} ${F32C_BIN_DIR}/selftest-pcf8523t.bin ::demo/test_pcf.bin
