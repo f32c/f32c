@@ -218,6 +218,14 @@ program_ocd_thru: $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).svf $(BOARD)_$(FPGA_SIZE)f.o
 program_ft232r: $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).svf $(BOARD)_$(FPGA_SIZE)f.ocd
 	$(OPENOCD) --file=$(SCRIPTS)/ft232r.ocd --file=$(BOARD)_$(FPGA_SIZE)f.ocd
 
+# program SRAM with OPENOCD with ft2232
+program_ft2232: $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).svf $(BOARD)_$(FPGA_SIZE)f.ocd
+	$(OPENOCD) --file=$(SCRIPTS)/ft2232.ocd --file=$(BOARD)_$(FPGA_SIZE)f.ocd
+
+# program SRAM with OPENOCD with ft2232
+program_ft4232: $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).svf $(BOARD)_$(FPGA_SIZE)f.ocd
+	$(OPENOCD) --file=$(SCRIPTS)/ft4232.ocd --file=$(BOARD)_$(FPGA_SIZE)f.ocd
+
 JUNK = *~
 #JUNK += $(PROJECT).ys
 JUNK += $(PROJECT).json

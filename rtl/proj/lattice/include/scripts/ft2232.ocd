@@ -1,0 +1,19 @@
+#
+# Generic FT2232H JTAG Programmer
+#
+
+
+interface ftdi
+# ftdi_device_desc "Dual RS232-HS"
+ftdi_vid_pid 0x0403 0x6010
+ftdi_layout_init 0x3088 0x1f8b
+
+# default is port A if unspecified
+# pinout ADBUS 0-TCK 1-TDI 2-TDO 3-TMS 
+#ftdi_channel 0
+
+# uncomment this to use port B
+# pinout BDBUS 0-TCK 1-TDI 2-TDO 3-TMS 
+#ftdi_channel 1
+
+adapter_khz 25000
