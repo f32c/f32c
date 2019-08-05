@@ -90,7 +90,7 @@ entity ulx3s_xram_sdram_vector is
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
 
-    C_vgahdmi: boolean := true;
+    C_vgahdmi: boolean := false;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
     C_vgahdmi_cache_size: integer := 0; -- 0 default (disabled, cache flush not yet implemented)
