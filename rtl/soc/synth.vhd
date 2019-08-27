@@ -36,7 +36,7 @@ generic
   C_keyboard: boolean := false; -- false: CPU bus input, true: keyboard input (generates tone A4 (440 Hz) and few others)
   C_bus_freq_write: boolean := true; -- true: CPU bus writes frequency
   C_zero_cross: boolean := false; -- updates volume at zero cross (remove clicks) expense 1 extra BRAM
-  C_vol_velocity_bits: integer := 3; -- 2^n voice volume velocity above slow octave (step at zero cross) 0-3:slow no click, 4:normal small click, 5:normal mild click, >=6: fast strong click
+  C_vol_velocity_bits: integer := 6; -- 2^n voice volume velocity above slow octave (step at zero cross) 0-3:slow no click, 4:normal small click, 5:normal mild click, >=6: fast strong click
   C_out_bits: integer := 24 -- bits of signed PCM output data
 );
 port
