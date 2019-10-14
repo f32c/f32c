@@ -53,11 +53,6 @@ TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_selftes
 #CLK0_NAME = clk_25_100_100s_v
 CLK0_NAME = clk_25_125_89_89s_48_v
 CLK0_FILE_NAME = ../../../../lattice/ulx3s/clocks/$(CLK0_NAME).v
-CLK0_OPTIONS_OLD = \
-  --input=25 \
-  --output=100 \
-  --s1=100 \
-  --p1=180 \
 # for new ecppll: to override above, rename CLK0_OPTIONS_NEW -> CLK0_OPTIONS
 CLK0_OPTIONS = \
   --module=$(CLK0_NAME) \
