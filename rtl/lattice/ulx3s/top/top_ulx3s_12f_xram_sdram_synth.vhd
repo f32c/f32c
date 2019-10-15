@@ -58,7 +58,7 @@ entity ulx3s_xram_sdram_vector is
     C_spi_turbo_mode: std_logic_vector := "0000";
     C_spi_fixed_speed: std_logic_vector := "1100";
     C_simple_io: boolean := true; -- true default
-    C_gpio: integer := 64; -- 64 default for ulx3s
+    C_gpio: integer := 32; -- 64 default for ulx3s
     C_gpio_pullup: boolean := false; -- false default
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
     C_timer: boolean := true; -- true default
@@ -69,7 +69,7 @@ entity ulx3s_xram_sdram_vector is
       C_synth_multiplier_sign_fix: boolean := true;
     C_dacpwm: boolean := true; -- DACPWM output
     C_spdif: boolean := true; -- SPDIF output
-    C_cw_simple_out: integer := 7; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
+    C_cw_simple_out: integer := -1; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
     -- enabling passthru autodetect reduces fmax or vector divide must be disabled on 45f
     C_passthru_autodetect: boolean := false; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
