@@ -18,9 +18,9 @@ use ieee.numeric_std.all;
 entity usb_rx_phy_emard is
 generic
 (
-  C_clk_input_hz: natural := 6000000; -- Hz input to this module (6 or 48 MHz)
-  C_clk_bit_hz: natural   := 1500000; -- Hz bit clock (1.5 Mbps or 12 Mbps)
-  C_PA_bits: natural      := 8        -- phase accumulator bits, 8 is ok
+  C_clk_input_hz: natural := 48000000; -- Hz input to this module (6 or 48 MHz)
+  C_clk_bit_hz: natural   := 12000000; -- Hz bit clock (1.5 Mbps or 12 Mbps)
+  C_PA_bits: natural      := 8         -- phase accumulator bits, 8 is ok
 );
 port
 (
