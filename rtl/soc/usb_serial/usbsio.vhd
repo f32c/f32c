@@ -23,6 +23,7 @@ entity usbsio is
 	break: out std_logic; -- TODO: missing support in usb_serial
 	-- USB interface
 	usb_clk: in std_logic; -- 48 MHz or 60 MHz for USB PHY
+	usb_diff_dp: in std_logic; -- differential input D+,D-
 	usb_dp: inout std_logic; -- single-ended D+
 	usb_dn: inout std_logic  -- single-ended D-
     );
@@ -250,8 +251,8 @@ begin
     -- transciever soft-core
     --usb_fpga_pu_dp <= '1'; -- D+ pullup for USB1.1 device mode
     --usb_fpga_pu_dn <= 'Z'; -- D- no pullup for USB1.1 device mode
-    -- S_rxd <= usb_diff_dp; -- differential input reads D+
-    S_rxd <= usb_dp; -- single-ended input reads D+ may work as well
+    S_rxd <= usb_diff_dp; -- differential input reads D+
+    --S_rxd <= usb_dp; -- single-ended input reads D+ may work as well
     S_rxdp <= usb_dp; -- single-ended input reads D+
     S_rxdn <= usb_dn; -- single-ended input reads D-
     usb_dp <= S_txdp when S_txoe = '0' else 'Z';

@@ -1,3 +1,4 @@
+
 --
 -- Copyright (c) 2015 Marko Zec, University of Zagreb
 -- Copyright (c) 2016 Emard
@@ -280,6 +281,7 @@ port (
   --
   sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
   sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
+  usbsio_diff_dp: in std_logic_vector(C_sio - 1 downto 0);
   usbsio_dp, usbsio_dn: inout std_logic_vector(C_sio - 1 downto 0);
   spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
   spi_miso: in std_logic_vector(C_spi - 1 downto 0) := (others => '-');
@@ -968,7 +970,8 @@ begin
         port map (
           clk => clk, ce => sio_ce(i),
           reset => '0',
-          usb_clk => clk_usbsio, usb_dp => usbsio_dp(i), usb_dn => usbsio_dn(i),
+          usb_clk => clk_usbsio,
+          usb_diff_dp => usbsio_diff_dp(i), usb_dp => usbsio_dp(i), usb_dn => usbsio_dn(i),
           bus_write => dmem_write, byte_sel => dmem_byte_sel,
           bus_in => cpu_to_dmem, bus_out => from_sio(i),
           break => sio_break_internal(i)

@@ -46,19 +46,25 @@ use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
  
 entity usb_phy is
-  generic (usb_rst_det : boolean := TRUE);
+  generic (
+    C_emard_rx  : boolean := true;
+    usb_rst_det : boolean := true
+  );
   port (
-    clk              : in  std_logic;  -- 60 MHz
+    clk              : in  std_logic;  -- 48 MHz
     rst              : in  std_logic;
     phy_tx_mode      : in  std_logic;  -- HIGH level for differential io mode (else single-ended)
     usb_rst          : out std_logic;
     -- Transciever Interface
     rxd, rxdp, rxdn  : in  std_logic;
     txdp, txdn, txoe : out std_logic;
+    -- clk recovery debug
+    ce_o             : out std_logic;
     -- RX debug interface
     sync_err_o, bit_stuff_err_o, byte_err_o: out std_logic;
     -- UTMI Interface
-    DataOut_i        : in  std_logic_vector(7 downto 0);
+    LineCtrl_i       : IN  STD_LOGIC := '0'; -- 0: normal data TX, 1: line control (for low speed usb)
+    DataOut_i        : in  std_logic_vector(7 downto 0); -- byte_to_send or LineCtrl mode (see usb_tx_phy)
     TxValid_i        : in  std_logic;
     TxReady_o        : out std_logic;
     DataIn_o         : out std_logic_vector(7 downto 0);
@@ -134,6 +140,7 @@ begin
     txdn       => txdn,
     txoe       => txoe_out,
     -- UTMI Interface
+    LineCtrl_i => LineCtrl_i,
     DataOut_i  => DataOut_i,
     TxValid_i  => TxValid_i,
     TxReady_o  => TxReady_o
@@ -143,6 +150,7 @@ begin
   -- RX Phy and DPLL                                                                    --
 --======================================================================================--
  
+  G_rx_phy: if not C_emard_rx generate
   i_rx_phy: entity work.usb_rx_phy
   port map (
     clk        => clk,
@@ -164,6 +172,34 @@ begin
     RxEn_i     => txoe_out,
     LineState  => LineState
   );
+  end generate;
+
+  G_rx_phy_emard: if C_emard_rx generate
+  E_rx_phy_emard: entity work.usb_rx_phy_emard
+  port map (
+    clk        => clk,
+    reset      => not rst,
+    clk_recovered_edge => fs_ce,
+    -- Transciever Interface
+    usb_dif    => rxd,
+    usb_dp     => rxdp,
+    usb_dn     => rxdn,
+    -- RX debug interface
+--    sync_err_o => sync_err_o,
+--    bit_stuff_err_o => bit_stuff_err_o,
+--    byte_err_o => byte_err_o,
+    -- UTMI Interface
+    data       => DataIn_o,
+    valid      => RxValid_o,
+    rx_active  => RxActive_o,
+--    RxError_o  => RxError_o,
+    rx_en      => txoe_out,
+    linestate  => LineState
+  );
+  RxError_o <= '0';
+  end generate;
+
+  ce_o <= fs_ce;
  
 --======================================================================================--
   -- Generate an USB Reset if we see SE0 for at least 2.5uS                             --

@@ -154,7 +154,7 @@ entity ulx3s_xram_sdram_vector is
   wifi_gpio0, wifi_gpio5, wifi_gpio16, wifi_gpio17: inout std_logic := 'Z';
 
   -- USB
-  --usb_fpga_dp, usb_fpga_dn: in std_logic; -- differential input (currently not used)
+  usb_fpga_dp: in std_logic; -- differential input (currently not used)
   usb_fpga_pu_dp, usb_fpga_pu_dn: inout std_logic; -- pull up/down control
   usb_fpga_bd_dp, usb_fpga_bd_dn: inout std_logic; -- single-ended bidirectional
 
@@ -503,6 +503,7 @@ begin
     clk_pixel_shift => clk_pixel_shift,
     clk_usbsio => clk_usbsio,
     reset => R_reset,
+    usbsio_diff_dp(0) => usb_fpga_dp,
     usbsio_dp(0) => usb_fpga_bd_dp,
     sio_rxd(0) => S_rxd,
     -- sio_rxd(1) => S_rxd,

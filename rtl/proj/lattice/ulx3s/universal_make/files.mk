@@ -53,6 +53,7 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../soc/usb11_phy/usb_phy.vhd \
   ../../../../soc/usb11_phy/usb_tx_phy.vhd \
   ../../../../soc/usb11_phy/usb_rx_phy_48MHz.vhd \
+  ../../../../soc/usb11_phy/usb_rx_phy_emard.vhd \
   ../../../../soc/gpio.vhd \
   ../../../../soc/timer.vhd \
   ../../../../soc/spi.vhd \
