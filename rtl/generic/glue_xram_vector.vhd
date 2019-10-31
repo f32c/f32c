@@ -281,7 +281,7 @@ port (
   --
   sio_rxd: in std_logic_vector(C_sio - 1 downto 0);
   sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
-  usbsio_diff_dp: in std_logic_vector(C_sio - 1 downto 0);
+  usbsio_diff_dp: inout std_logic_vector(C_sio - 1 downto 0); -- used as IN only, INOUT avoids error when unused
   usbsio_dp, usbsio_dn: inout std_logic_vector(C_sio - 1 downto 0);
   spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
   spi_miso: in std_logic_vector(C_spi - 1 downto 0) := (others => '-');
