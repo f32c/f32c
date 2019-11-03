@@ -18,9 +18,9 @@ use ieee.numeric_std.all;
 entity usb_rx_phy_emard is
 generic
 (
-  C_clk_input_hz: natural := 48000000; -- Hz input to this module (6 or 48 MHz)
-  C_clk_bit_hz: natural   := 12000000; -- Hz bit clock (1.5 Mbps or 12 Mbps)
-  C_PA_bits: natural      := 8         -- phase accumulator bits, 8 is ok
+  C_clk_input_hz: natural := 6000000; -- Hz input to this module (6 or 48 MHz)
+  C_clk_bit_hz: natural   := 1500000; -- Hz bit clock (1.5 Mbps or 12 Mbps)
+  C_PA_bits: natural      := 8        -- phase accumulator bits, 8 is ok
 );
 port
 (
@@ -111,7 +111,7 @@ begin
           R_linebit_prev <= S_linebit;
           if (R_idlecnt(0) = '0' and R_frame = '1') or R_frame = '0' then -- skips stuffed bit if in the frame
             if R_linestate_sync = "00" then
-              R_data <= (others => '1'); -- SE0 resets data to prevent restarting the frame from old shifted data
+              R_data <= (others => '0'); -- SE0 resets data to prevent restarting the frame from old shifted data
             else
               R_data <= S_bit & R_data(R_data'high downto 1); -- only payload bits, skips stuffed bit
             end if;
@@ -157,7 +157,7 @@ begin
                 end if;
             else -- R_frame = '0'
 --              if S_bit = '0' and R_data(R_data'high downto R_data'high-1) = "11" then -- exact timing differential detection of the start of frame
-              if R_data(R_data'high downto R_data'high-3) = "0111" then -- later timing differential detection of the start of frame
+              if R_data(R_data'high downto R_data'high-5) = "000111" then -- later timing differential detection of the start of frame
                 R_frame <= '1';
                 R_preamble <= '1';
                 R_valid <= (others => '0');
