@@ -1,9 +1,10 @@
 # f32c C sources - how to compile:
 
-MIPS compiler it should be patched (patches are here).
-RISC-V probably any (even the latest) will do but you need
-to know latest set of required compiler and linker options
-and this is often subject of change during development :)
+MIPS compiler should be patched becuse f32c uses subset of
+MIPS ISA (patches are here).
+RISC-V compiler probably any (even the latest) will do but
+you need to know latest set of required compiler and linker
+options and this is often subject of change during development :)
 
 Although you can download compilers, patch and compile from source,
 fastest way is to tnstall arduino and from board manager
