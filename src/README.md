@@ -22,7 +22,7 @@ Then get back here and (replace "username.." with your login name)
     directory where it is with dot before script name:
     . ./makefiles.sh
     This is what it does:
-    export MAKEFILES=/home/guest/src/fpga/fpgarduino/f32c/src/tools/../conf/f32c.mk
+    export MAKEFILES=/home/username/src/fpga/fpgarduino/f32c/src/tools/../conf/f32c.mk
 
     $ PATH=$PATH:~username/.arduino15/packages/FPGArduino/tools/f32c-compiler/1.0.0/bin/
 
