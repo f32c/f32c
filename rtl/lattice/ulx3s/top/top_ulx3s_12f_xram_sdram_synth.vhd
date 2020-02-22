@@ -49,7 +49,7 @@ entity ulx3s_xram_sdram_vector is
     C_acram_wait_cycles: integer := 3; -- 3 or more
     C_acram_emu_kb: integer := 128; -- KB axi_cache emulation (power of 2)
     C_sdram: boolean := true; -- true default
-    C_sdram_clock_range: integer := 1; -- standard value good for all
+    C_sdram_wait_cycles: integer := 3; -- RAS/CAS/PRE wait cycles (2 or 3)
     C_icache_size: integer := 2; -- 2 default
     C_dcache_size: integer := 2; -- 2 default
     C_branch_prediction: boolean := false; -- false default
@@ -58,7 +58,7 @@ entity ulx3s_xram_sdram_vector is
     C_spi_turbo_mode: std_logic_vector := "0000";
     C_spi_fixed_speed: std_logic_vector := "1100";
     C_simple_io: boolean := true; -- true default
-    C_gpio: integer := 32; -- 64 default for ulx3s
+    C_gpio: integer := 0; -- 64 default for ulx3s
     C_gpio_pullup: boolean := false; -- false default
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
     C_timer: boolean := true; -- true default
@@ -69,12 +69,15 @@ entity ulx3s_xram_sdram_vector is
       C_synth_multiplier_sign_fix: boolean := true;
     C_dacpwm: boolean := true; -- DACPWM output
     C_spdif: boolean := true; -- SPDIF output
+    C_i2s: boolean := true; -- I2S output to gn(6 downto 0)
+    C_i2s_Hz: integer := 44100;
     C_cw_simple_out: integer := -1; -- 7 default, simple_out bit for 433MHz modulator. -1 to disable. for 433MHz transmitter set (C_framebuffer => false, C_dds => false)
 
     -- enabling passthru autodetect reduces fmax or vector divide must be disabled on 45f
     C_passthru_autodetect: boolean := false; -- false: normal, true: autodetect programming of ESP32 and passthru serial port
     C_passthru_clk_Hz: real := 25.0E6; -- passthru state machine uses 25 MHz clock
     C_passthru_break: real := 10.0E-3; -- seconds (approximately) to detect serial break and enter f32c mode
+    C_wifi_serial: boolean := false; -- connect wifi serial to f32c
 
     C_vector: boolean := false; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
@@ -89,6 +92,7 @@ entity ulx3s_xram_sdram_vector is
     -- video parameters common for vgahdmi and vgatext
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
     C_video_mode: integer := 1; -- 0:640x360, 1:640x480, 2:800x480, 3:800x600, 5:1024x768
+    C_shift_clock_synchronizer: boolean := false; -- logic that synchronizes DVI clock with pixel clock.
 
     C_vgahdmi: boolean := false;
     -- normally this should be  actual bits per pixel
@@ -381,11 +385,17 @@ begin
     wifi_rxd <= ftdi_txd when R_esp32_mode='1' else S_txd;
   end generate;
   G_no_passthru_autodetect: if not C_passthru_autodetect generate
+    G_yes_wifi_serial: if C_wifi_serial generate
     -- both USB and WiFi can upload binary executable to f32c
     -- (not both on the same time)
     S_rxd <= ftdi_txd and wifi_txd;
     ftdi_rxd <= S_txd;
     wifi_rxd <= S_txd;
+    end generate;
+    G_not_wifi_serial: if not C_wifi_serial generate
+    S_rxd <= ftdi_txd;
+    ftdi_rxd <= S_txd;
+    end generate;
     wifi_gpio0 <= btn(0); -- pressing BTN0 will escape to ESP32 file select menu
     sd_d(3) <= S_f32c_sd_csn;
     sd_clk <= S_f32c_sd_clk;
@@ -412,9 +422,9 @@ begin
     C_acram_wait_cycles => C_acram_wait_cycles,
     C_sdram => C_sdram,
     C_sdram_clock_range => 2,
-    C_sdram_ras => 3,
-    C_sdram_cas => 3,
-    C_sdram_pre => 3,
+    C_sdram_ras => C_sdram_wait_cycles,
+    C_sdram_cas => C_sdram_wait_cycles,
+    C_sdram_pre => C_sdram_wait_cycles,
     C_sdram_address_width => 24,
     C_sdram_column_bits => 9,
     C_sdram_startup_cycles => 12000,
@@ -445,6 +455,9 @@ begin
     C_dacpwm => C_dacpwm,
     -- SPDIF output
     C_spdif => C_spdif,
+    -- I2S output
+    C_i2s => C_i2s,
+    C_i2s_Hz => C_i2s_Hz,
 
     C_cw_simple_out => C_cw_simple_out,
 
@@ -459,6 +472,7 @@ begin
     C_vector_float_divide => C_vector_float_divide,
 
     C_dvid_ddr => C_dvid_ddr,
+    C_shift_clock_synchronizer => C_shift_clock_synchronizer,
     -- vga simple compositing bitmap only graphics
     C_compositing2_write_while_reading => C_compositing2_write_while_reading,
     C_vgahdmi => C_vgahdmi,
@@ -514,13 +528,7 @@ begin
     spi_mosi(0) => flash_mosi,   spi_mosi(1) => S_f32c_sd_mosi,  spi_mosi(2) => oled_mosi,  spi_mosi(3) => gn(23),
     spi_miso(0) => flash_miso,   spi_miso(1) => S_f32c_sd_miso,  spi_miso(2) => open,       spi_miso(3) => gn(22),
 
-    gpio(127 downto 28+32) => open,
-    gpio(27+32 downto 25+32) => gn(27 downto 25),
-    gpio(24+32 downto 21+32) => open,
-    gpio(20+32 downto 32) => gn(20 downto 0),
-    gpio(31 downto 30) => open,
-    gpio(29) => gpdi_sda,
-    gpio(28) => gpdi_scl,
+    gpio(127 downto 28) => open,
     gpio(27 downto 0) => gp(27 downto 0),
     simple_out(31 downto 19) => open,
     simple_out(18) => adc_mosi,
@@ -551,6 +559,7 @@ begin
     audio_l(3 downto 0) => audio_l(3 downto 0),
     audio_r(3 downto 0) => audio_r(3 downto 0),
     spdif_out => audio_v(1),
+    i2s_bck => gn(3), i2s_din => gn(4), i2s_lrck => gn(5),
 
     cw_antenna => ant_433mhz,
 
@@ -580,6 +589,10 @@ begin
     dvid_green => dvid_crgb(3 downto 2),
     dvid_blue  => dvid_crgb(1 downto 0)
   );
+  gn(6) <= '0'; -- i2s FMT 0:i2s
+  gn(2) <= '0'; -- i2s SCL system clock
+  gn(1) <= '1'; -- i2s DMP deemphasis
+  gn(0) <= '1'; -- i2s FLT filter
 
   -- preload the f32c bootloader and reset CPU
   -- preloads initially at startup and during each reset of the CPU

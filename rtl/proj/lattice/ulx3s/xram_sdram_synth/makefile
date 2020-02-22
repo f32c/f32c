@@ -60,4 +60,6 @@ $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).svf \
 $(BOARD)_$(FPGA_SIZE)f_$(PROJECT)_flash_$(FLASH_CHIP).vme
 
 SCRIPTS = ../../include/scripts
-include $(SCRIPTS)/ulx3s_diamond.mk
+include $(SCRIPTS)/diamond_path.mk
+include $(SCRIPTS)/diamond_main.mk
+#include $(SCRIPTS)/ulx3s_diamond.mk
