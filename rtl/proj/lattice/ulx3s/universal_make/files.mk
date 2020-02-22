@@ -42,6 +42,7 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../soc/sigmadelta.vhd \
   ../../../../soc/dacpwm.vhd \
   ../../../../soc/spdif_tx.vhd \
+  ../../../../soc/i2s.vhd \
   ../../../../soc/pcm.vhd \
   ../../../../soc/sio.vhd \
   ../../../../soc/usb_serial/usbsio.vhd \
@@ -120,5 +121,6 @@ VERILOG_FILES = \
   ../../../../soc/pid/ctrlpid_v.v \
   ../../../../soc/pid/simotor_v.v \
   ../../../../soc/pid/rotary_decoder_v.v \
+  ../../../../soc/i2s_v.v \
   ../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee_adder.v \
   ../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee.v \
