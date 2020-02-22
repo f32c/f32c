@@ -200,6 +200,8 @@ generic (
       C_synth_multiplier_sign_fix: boolean := false; -- some FPGA like ECP5 need such fix
     C_dacpwm: boolean := false; -- combine 4-bit DAC with PWM to enhance resolution
     C_spdif: boolean := false; -- generate SPDIF output
+    C_i2s: boolean := false; -- generate I2S output
+      C_i2s_Hz: integer := 44100; -- I2S sample rate
     C_cw_simple_out: integer := -1; -- simple out bit used for CW modulation. -1 to disable
     C_fmrds: boolean := false; -- enable FM/RDS output to fm_antenna
       C_fm_stereo: boolean := false;
@@ -299,6 +301,7 @@ port (
   ledstrip_out: out std_logic_vector(1 downto 0); -- 2 channels out
   audio_l, audio_r, video_composite: out std_logic_vector(3 downto 0); -- 3.5mm phone jack, new naming of 4-bit simple DAC
   spdif_out: out std_logic; -- spdif output digital audio
+  i2s_din, i2s_bck, i2s_lrck: out std_logic; -- i2s output digital audio
   fm_antenna, cw_antenna: out std_logic;
   gpio: inout std_logic_vector(127 downto 0);
   gpio_pullup: inout std_logic_vector(127 downto 0);  -- XXX fixme not connected optional (set C_gpio_pullup false)
@@ -513,6 +516,8 @@ architecture Behavioral of glue_xram is
 
     -- Global PCM 24-bit signed mono for digital output (currently only SPDIF)
     signal S_pcm_mono: ieee.numeric_std.signed(23 downto 0);
+    -- Global PCM 24-bit signed stereo for digital output (currently only I2S)
+    signal S_pcm_l, S_pcm_r: ieee.numeric_std.signed(23 downto 0);
 
     -- FM/RDS RADIO
     constant iomap_fmrds: T_iomap_range := (x"FC00", x"FC0F");
@@ -2179,11 +2184,11 @@ begin
     end generate;
     end generate;
     
-    S_pcm_mono <= pcm_synth + pcm_bus_l + pcm_bus_r; -- global PCM mixer, warning synth is 24-bit others are 16-bit
 
     -- SPDIF digital audio output (1-channel)
     G_spdif:
     if C_spdif generate
+    S_pcm_mono <= pcm_synth + pcm_bus_l + pcm_bus_r; -- global PCM mixer, warning synth is 24-bit others are 16-bit
     inst_spdif_tx: entity work.spdif_tx
     generic map
     (
@@ -2194,6 +2199,26 @@ begin
       clk => clk,
       data_in => std_logic_vector(S_pcm_mono),
       spdif_out => spdif_out
+    );
+    end generate;
+
+    -- I2S digital audio output (2-channel)
+    G_i2s:
+    if C_i2s generate
+    S_pcm_l <= pcm_synth + pcm_bus_l; -- global PCM mixer, warning synth is 24-bit PCM is 16-bit
+    S_pcm_r <= pcm_synth + pcm_bus_r; -- global PCM mixer, warning synth is 24-bit PCM is 16-bit
+    inst_i2s: entity work.i2s
+    generic map
+    (
+      clk_hz => C_clk_freq * 1000000, -- Hz fixme with Hz-precise clock
+      lrck_hz => C_i2s_Hz -- Hz i2s PCM sample rate
+    )
+    port map
+    (
+      clk => clk,
+      l => std_logic_vector(S_pcm_l(23 downto 8)),
+      r => std_logic_vector(S_pcm_r(23 downto 8)),
+      din => i2s_din, bck => i2s_bck, lrck => i2s_lrck
     );
     end generate;
 
