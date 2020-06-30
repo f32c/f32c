@@ -9,8 +9,9 @@
 
 library IEEE;
 use IEEE.std_logic_1164.all;
-library ecp5u;
-use ecp5u.components.all;
+
+--library ecp5u;
+--use ecp5u.components.all;
 
 entity ecp5_flash_clk is
   port

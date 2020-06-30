@@ -14,8 +14,8 @@ use work.boot_sio_mi32eb.all;
 use work.boot_sio_rv32el.all;
 use work.boot_rom_mi32el.all;
 
-library ecp5u;
-use ecp5u.components.all;
+--library ecp5u;
+--use ecp5u.components.all;
 
 entity ulx3s_xram_sdram_vector is
   generic
@@ -58,7 +58,7 @@ entity ulx3s_xram_sdram_vector is
     C_spi_turbo_mode: std_logic_vector := "0000";
     C_spi_fixed_speed: std_logic_vector := "1100";
     C_simple_io: boolean := true; -- true default
-    C_gpio: integer := 64; -- 64 default for ulx3s
+    C_gpio: integer := 32; -- 64 default for ulx3s
     C_gpio_pullup: boolean := false; -- false default
     C_gpio_adc: integer := 0; -- number of analog ports for ADC (on A0-A5 pins)
     C_timer: boolean := true; -- true default
@@ -224,9 +224,9 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   begin
       return integer(ceil((log2(real(x)-1.0E-6))-1.0E-6)); -- 256 -> 8, 257 -> 9
   end ceil_log2;
-  signal clk, rs232_break, rs232_break2: std_logic;
-  signal clk_100: std_logic;
-  signal clk_pixel_shift, clk_pixel: std_logic;
+  signal S_clocks: std_logic_vector(3 downto 0);
+  signal clk, clk_pixel_shift, clk_pixel: std_logic;
+  signal rs232_break, rs232_break2: std_logic;
   signal ram_en             : std_logic;
   signal ram_byte_we        : std_logic_vector(3 downto 0) := (others => '0');
   signal ram_address        : std_logic_vector(31 downto 0) := (others => '0');
@@ -260,12 +260,18 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal R_break_counter: std_logic_vector(C_break_counter_bits-1 downto 0) := (others => '0');
   signal S_f32c_sd_csn, S_f32c_sd_clk, S_f32c_sd_miso, S_f32c_sd_mosi: std_logic;
   signal S_flash_csn, S_flash_clk: std_logic;
+  signal S_dummy_gpio: std_logic_vector(127 downto 0);
+  signal S_dummy_simple_in, S_dummy_simple_out: std_logic_vector(31 downto 0);
+  signal S_dummy_sdram_d: std_logic_vector(31 downto 16);
+  signal S_dummy_sdram_dqm: std_logic_vector(3 downto 2);
 
+  component ODDRX1F
+    port (D0, D1, SCLK, RST: in std_logic; Q: out std_logic);
+  end component;
   component OLVDS
     port(A: in std_logic; Z, ZN: out std_logic);
   end component;
   
-  signal S_clocks: std_logic_vector(3 downto 0);
 
 begin
   minimal_25MHz: if C_clk_freq=25 and C_video_mode=-1 generate
@@ -538,37 +544,37 @@ begin
     clk_pixel_shift => clk_pixel_shift,
     reset => S_reset,
     sio_rxd(0) => S_rxd,
-    sio_rxd(1) => open,
+    --sio_rxd(1) => open,
     sio_txd(0) => S_txd,
-    sio_txd(1) => open,
+    --sio_txd(1) => open,
     sio_break(0) => rs232_break,
     sio_break(1) => rs232_break2,
 
     spi_ss(0)   => S_flash_csn,  spi_ss(1)   => S_f32c_sd_csn,   spi_ss(2)   => oled_csn,   spi_ss(3)   => gn(24),
     spi_sck(0)  => S_flash_clk,  spi_sck(1)  => S_f32c_sd_clk,   spi_sck(2)  => oled_clk,   spi_sck(3)  => gn(21),
     spi_mosi(0) => flash_mosi,   spi_mosi(1) => S_f32c_sd_mosi,  spi_mosi(2) => oled_mosi,  spi_mosi(3) => gn(23),
-    spi_miso(0) => flash_miso,   spi_miso(1) => S_f32c_sd_miso,  spi_miso(2) => open,       spi_miso(3) => gn(22),
+    spi_miso(0) => flash_miso,   spi_miso(1) => S_f32c_sd_miso,  spi_miso(2) => '0',        spi_miso(3) => gn(22),
 
-    gpio(127 downto 28+32) => open,
+    gpio(127 downto 28+32) => S_dummy_gpio(127 downto 28+32),
     gpio(27+32 downto 25+32) => gn(27 downto 25),
-    gpio(24+32 downto 21+32) => open,
+    gpio(24+32 downto 21+32) => S_dummy_gpio(24+32 downto 21+32),
     gpio(20+32 downto 32) => gn(20 downto 0),
-    gpio(31 downto 30) => open,
+    gpio(31 downto 30) => S_dummy_gpio(31 downto 30),
     gpio(29) => gpdi_sda,
     gpio(28) => gpdi_scl,
     gpio(27 downto 0) => gp(27 downto 0),
-    simple_out(31 downto 19) => open,
+    simple_out(31 downto 19) => S_dummy_simple_out(31 downto 19),
     simple_out(18) => adc_mosi,
     simple_out(17) => adc_sclk,
     simple_out(16) => adc_csn,
-    simple_out(15) => open,
+    simple_out(15) => S_dummy_simple_out(15),
     simple_out(14) => S_wifi_en,
     simple_out(13) => shutdown,
-    simple_out(12) => open,
+    simple_out(12) => S_dummy_simple_out(12),
     simple_out(11) => oled_dc,
     simple_out(10) => oled_resn,
-    simple_out(9) => open,
-    simple_out(8) => open,
+    simple_out(9) => S_dummy_simple_out(9),
+    simple_out(8) => S_dummy_simple_out(8),
     simple_out(7 downto 0) => led(7 downto 0),
     simple_in(31 downto 21) => (others => '0'),
     simple_in(20) => adc_miso,
@@ -597,7 +603,9 @@ begin
 
     -- external SDRAM interface
     sdram_addr => sdram_a, sdram_data(15 downto 0) => sdram_d,
+    sdram_data(31 downto 16) => S_dummy_sdram_d,
     sdram_ba => sdram_ba, sdram_dqm(1 downto 0) => sdram_dqm,
+    sdram_dqm(3 downto 2) => S_dummy_sdram_dqm,
     sdram_ras => sdram_rasn, sdram_cas => sdram_casn,
     sdram_cke => sdram_cke, sdram_clk => sdram_clk,
     sdram_we => sdram_wen, sdram_cs => sdram_csn,
