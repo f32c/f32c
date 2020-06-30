@@ -12,6 +12,7 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../lattice/ulx3s/clocks/clk_112M5_433M92.vhd \
   ../../../../lattice/ulx3s/clocks/clk_25_287M5_19M16_6M38_95M83.vhd \
   ../../../../lattice/ulx3s/clocks/clk_25_125_89_89s_48.vhd \
+  ../../../../lattice/chip/ecp5u/ecp5pll.vhd \
   ../../../../lattice/chip/ecp5u/ecp5_flash_clk.vhd \
   ../../../../generic/glue_xram_vector.vhd \
   ../../../../generic/bootloader/defs_bootblock.vhd \
