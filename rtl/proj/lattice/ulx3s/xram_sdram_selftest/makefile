@@ -16,6 +16,7 @@ FLASH_CHIP = is25lp128f
 #CONSTRAINTS = ../../constraints/ulx3s_v20.lpf
 # special for self-test
 CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_selftest.lpf
+#CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_selftest_extgpdi.lpf
 # special for single-ended single-data-rate digital video
 #CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_segpdi.lpf
 # first ULX3S prototypes v1.7 boards with patched ESP32 connection
@@ -36,6 +37,7 @@ TOP_MODULE = ulx3s_xram_sdram_vector
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_usbserial.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_axi.vhd
 TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_selftest.vhd
+#TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram_selftest_extgpdi.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_25f_xram_sdram_vector.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_25f_xram_sdram_vector_noflash.vhd
 #TOP_MODULE_FILE = ../../../../lattice/ulx3s/top/top_ulx3s_25f_xram_sdram_vector_selftest.vhd
