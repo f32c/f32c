@@ -1,0 +1,556 @@
+ -- Copyright (C) 2020  Intel Corporation. All rights reserved.
+ -- Your use of Intel Corporation's design tools, logic functions 
+ -- and other software and tools, and any partner logic 
+ -- functions, and any output files from any of the foregoing 
+ -- (including device programming or simulation files), and any 
+ -- associated documentation or information are expressly subject 
+ -- to the terms and conditions of the Intel Program License 
+ -- Subscription Agreement, the Intel Quartus Prime License Agreement,
+ -- the Intel FPGA IP License Agreement, or other applicable license
+ -- agreement, including, without limitation, that your use is for
+ -- the sole purpose of programming logic devices manufactured by
+ -- Intel and sold by Intel or its authorized distributors.  Please
+ -- refer to the applicable agreement for further details, at
+ -- https://fpgasoftware.intel.com/eula.
+ -- 
+ -- This is a Quartus Prime output file. It is for reporting purposes only, and is
+ -- not intended for use as a Quartus Prime input file. This file cannot be used
+ -- to make Quartus Prime pin assignments - for instructions on how to make pin
+ -- assignments, please see Quartus Prime help.
+ ---------------------------------------------------------------------------------
+
+
+
+ ---------------------------------------------------------------------------------
+ -- NC            : No Connect. This pin has no internal connection to the device.
+ -- DNU           : Do Not Use. This pin MUST NOT be connected.
+ -- VCCINT        : Dedicated power pin, which MUST be connected to VCC  (1.2V).
+ -- VCCIO         : Dedicated power pin, which MUST be connected to VCC
+ --                 of its bank.
+ --                  Bank 1A:       3.3V
+ --                  Bank 1B:       3.3V
+ --                  Bank 2:       3.3V
+ --                  Bank 3:       3.3V
+ --                  Bank 4:       3.3V
+ --                  Bank 5:       3.3V
+ --                  Bank 6:       3.3V
+ --                  Bank 7:       3.3V
+ --                  Bank 8:       3.3V
+ -- GND           : Dedicated ground pin. Dedicated GND pins MUST be connected to GND.
+ --                  It can also be used to report unused dedicated pins. The connection
+ --                  on the board for unused dedicated pins depends on whether this will
+ --                  be used in a future design. One example is device migration. When
+ --                  using device migration, refer to the device pin-tables. If it is a
+ --                  GND pin in the pin table or if it will not be used in a future design
+ --                  for another purpose the it MUST be connected to GND. If it is an unused
+ --                  dedicated pin, then it can be connected to a valid signal on the board
+ --                  (low, high, or toggling) if that signal is required for a different
+ --                  revision of the design.
+ -- GND+          : Unused input pin. It can also be used to report unused dual-purpose pins.
+ --                  This pin should be connected to GND. It may also be connected  to a
+ --                  valid signal  on the board  (low, high, or toggling)  if that signal
+ --                  is required for a different revision of the design.
+ -- GND*          : Unused  I/O  pin. Connect each pin marked GND* directly to GND
+ --                  or leave it unconnected.
+ -- RESERVED      : Unused I/O pin, which MUST be left unconnected.
+ -- RESERVED_INPUT    : Pin is tri-stated and should be connected to the board.
+ -- RESERVED_INPUT_WITH_WEAK_PULLUP    : Pin is tri-stated with internal weak pull-up resistor.
+ -- RESERVED_INPUT_WITH_BUS_HOLD       : Pin is tri-stated with bus-hold circuitry.
+ -- RESERVED_OUTPUT_DRIVEN_HIGH        : Pin is output driven high.
+ ---------------------------------------------------------------------------------
+
+
+
+ ---------------------------------------------------------------------------------
+ -- Pin directions (input, output or bidir) are based on device operating in user mode.
+ ---------------------------------------------------------------------------------
+
+Quartus Prime Version 20.1.1 Build 720 11/11/2020 SJ Lite Edition
+CHIP  "xram_sdram_vector"  ASSIGNED TO AN: 10M50DAF484C7G
+
+Pin Name/Usage               : Location  : Dir.   : I/O Standard      : Voltage : I/O Bank  : User Assignment
+-------------------------------------------------------------------------------------------------------------
+GND                          : A1        : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : A2        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : A3        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : A4        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : A5        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : A6        :        :                   :         : 8         :                
+key[1]                       : A7        : input  : 3.3-V LVTTL       :         : 7         : Y              
+ledr[0]                      : A8        : output : 3.3-V LVTTL       :         : 7         : Y              
+ledr[1]                      : A9        : output : 3.3-V LVTTL       :         : 7         : Y              
+ledr[2]                      : A10       : output : 3.3-V LVTTL       :         : 7         : Y              
+ledr[8]                      : A11       : output : 3.3-V LVTTL       :         : 7         : Y              
+sw[4]                        : A12       : input  : 3.3-V LVTTL       :         : 7         : Y              
+sw[6]                        : A13       : input  : 3.3-V LVTTL       :         : 7         : Y              
+sw[7]                        : A14       : input  : 3.3-V LVTTL       :         : 7         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : A15       :        :                   :         : 7         :                
+hex1[7]                      : A16       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex1[4]                      : A17       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex1[5]                      : A18       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex2[7]                      : A19       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex2[1]                      : A20       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex2[3]                      : A21       : output : 3.3-V LVTTL       :         : 6         : Y              
+GND                          : A22       : gnd    :                   :         :           :                
+vga_r[0]                     : AA1       : output : 3.3-V LVTTL       :         : 3         : Y              
+gpio[35]                     : AA2       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : AA3       :        :                   :         : 3         :                
+GND                          : AA4       : gnd    :                   :         :           :                
+gpio[30]                     : AA5       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[28]                     : AA6       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[26]                     : AA7       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[24]                     : AA8       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[22]                     : AA9       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[21]                     : AA10      : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+arduino_io[6]                : AA11      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+arduino_io[7]                : AA12      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : AA13      :        :                   :         : 4         :                
+gpio[12]                     : AA14      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+gpio[11]                     : AA15      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : AA16      :        :                   :         : 4         :                
+arduino_io[9]                : AA17      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+GND                          : AA18      : gnd    :                   :         :           :                
+arduino_io[11]               : AA19      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+arduino_io[15]               : AA20      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+dram_dq[3]                   : AA21      : bidir  : 3.3-V LVTTL       :         : 5         : Y              
+dram_dq[2]                   : AA22      : bidir  : 3.3-V LVTTL       :         : 5         : Y              
+GND                          : AB1       : gnd    :                   :         :           :                
+gpio[34]                     : AB2       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[32]                     : AB3       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : AB4       :        :                   :         : 3         :                
+arduino_io[0]                : AB5       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+arduino_io[1]                : AB6       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+arduino_io[2]                : AB7       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+arduino_io[3]                : AB8       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+arduino_io[4]                : AB9       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[20]                     : AB10      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+gpio[18]                     : AB11      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+gpio[16]                     : AB12      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+gpio[15]                     : AB13      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : AB14      :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : AB15      :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : AB16      :        :                   :         : 4         :                
+arduino_io[8]                : AB17      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : AB18      :        :                   :         : 4         :                
+arduino_io[10]               : AB19      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+arduino_io[13]               : AB20      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+arduino_io[14]               : AB21      : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+GND                          : AB22      : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : B1        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : B2        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : B3        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : B4        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : B5        :        :                   :         : 8         :                
+GND                          : B6        : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : B7        :        :                   :         : 8         :                
+key[2]                       : B8        : input  : 3.3-V LVTTL       :         : 7         : N              
+GND                          : B9        : gnd    :                   :         :           :                
+ledr[3]                      : B10       : output : 3.3-V LVTTL       :         : 7         : Y              
+ledr[9]                      : B11       : output : 3.3-V LVTTL       :         : 7         : Y              
+sw[5]                        : B12       : input  : 3.3-V LVTTL       :         : 7         : Y              
+GND                          : B13       : gnd    :                   :         :           :                
+sw[8]                        : B14       : input  : 3.3-V LVTTL       :         : 7         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : B15       :        :                   :         : 7         :                
+hex1[3]                      : B16       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex1[6]                      : B17       : output : 3.3-V LVTTL       :         : 7         : Y              
+GND                          : B18       : gnd    :                   :         :           :                
+hex2[2]                      : B19       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex2[0]                      : B20       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex2[4]                      : B21       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex2[6]                      : B22       : output : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : C1        :        :                   :         : 1B        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : C2        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : C3        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : C4        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : C5        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : C6        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : C7        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : C8        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : C9        :        :                   :         : 7         :                
+sw[0]                        : C10       : input  : 3.3-V LVTTL       :         : 7         : Y              
+sw[1]                        : C11       : input  : 3.3-V LVTTL       :         : 7         : Y              
+sw[3]                        : C12       : input  : 3.3-V LVTTL       :         : 7         : Y              
+ledr[5]                      : C13       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex0[0]                      : C14       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex0[2]                      : C15       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex0[3]                      : C16       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex0[6]                      : C17       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex1[0]                      : C18       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex3[3]                      : C19       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex3[4]                      : C20       : output : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : C21       :        :                   :         : 6         :                
+hex2[5]                      : C22       : output : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : D1        :        :                   :         : 1B        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : D2        :        :                   :         : 1B        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : D3        :        :                   :         : 1B        :                
+GND                          : D4        : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : D5        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : D6        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : D7        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : D8        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : D9        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : D10       :        :                   :         : 8         :                
+GND                          : D11       : gnd    :                   :         :           :                
+sw[2]                        : D12       : input  : 3.3-V LVTTL       :         : 7         : Y              
+ledr[4]                      : D13       : output : 3.3-V LVTTL       :         : 7         : Y              
+ledr[7]                      : D14       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex0[7]                      : D15       : output : 3.3-V LVTTL       :         : 7         : Y              
+GND                          : D16       : gnd    :                   :         :           :                
+hex0[5]                      : D17       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex1[1]                      : D18       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex3[5]                      : D19       : output : 3.3-V LVTTL       :         : 6         : Y              
+GND                          : D20       : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : D21       :        :                   :         : 6         :                
+hex3[7]                      : D22       : output : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : E1        :        :                   :         : 1B        :                
+GND                          : E2        : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : E3        :        :                   :         : 1A        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : E4        :        :                   :         : 1A        :                
+NC                           : E5        :        :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : E6        :        :                   :         : 8         :                
+GND                          : E7        : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : E8        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : E9        :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : E10       :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : E11       :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : E12       :        :                   :         : 7         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : E13       :        :                   :         : 7         :                
+ledr[6]                      : E14       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex0[1]                      : E15       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex0[4]                      : E16       : output : 3.3-V LVTTL       :         : 7         : Y              
+hex3[6]                      : E17       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex1[2]                      : E18       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex4[2]                      : E19       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex4[1]                      : E20       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex3[2]                      : E21       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex3[1]                      : E22       : output : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : F1        :        :                   :         : 1B        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : F2        :        :                   :         : 1B        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : F3        :        :                   :         : 1A        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : F4        :        :                   :         : 1A        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : F5        :        :                   :         : 1A        :                
+NC                           : F6        :        :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : F7        :        :                   :         : 8         :                
+~ALTERA_CONF_DONE~ / RESERVED_INPUT : F8        : input  : 3.3 V Schmitt Trigger :         : 8         : N              
+VCCIO8                       : F9        : power  :                   : 3.3V    : 8         :                
+GND                          : F10       : gnd    :                   :         :           :                
+VCCIO8                       : F11       : power  :                   : 3.3V    : 8         :                
+VCCIO7                       : F12       : power  :                   : 3.3V    : 7         :                
+GND                          : F13       : gnd    :                   :         :           :                
+VCCIO7                       : F14       : power  :                   : 3.3V    : 7         :                
+sw[9]                        : F15       : input  : 3.3-V LVTTL       :         : 7         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : F16       :        :                   :         : 7         :                
+hex4[7]                      : F17       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex4[0]                      : F18       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex4[5]                      : F19       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex4[6]                      : F20       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex3[0]                      : F21       : output : 3.3-V LVTTL       :         : 6         : Y              
+dram_dq[15]                  : F22       : bidir  : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : G1        :        :                   :         : 1B        :                
+~ALTERA_TCK~ / RESERVED_INPUT : G2        : input  : 3.3 V Schmitt Trigger :         : 1B        : N              
+RESERVED_INPUT_WITH_WEAK_PULLUP : G3        :        :                   :         : 1A        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : G4        :        :                   :         : 1A        :                
+ANAIN1                       : G5        :        :                   :         :           :                
+GND                          : G6        : gnd    :                   :         :           :                
+VCCD_PLL3                    : G7        : power  :                   : 1.2V    :           :                
+GND                          : G8        : gnd    :                   :         :           :                
+~ALTERA_nSTATUS~ / RESERVED_INPUT : G9        : input  : 3.3 V Schmitt Trigger :         : 8         : N              
+VCCIO8                       : G10       : power  :                   : 3.3V    : 8         :                
+VCCIO8                       : G11       : power  :                   : 3.3V    : 8         :                
+VCCIO7                       : G12       : power  :                   : 3.3V    : 7         :                
+VCCIO7                       : G13       : power  :                   : 3.3V    : 7         :                
+VCCIO7                       : G14       : power  :                   : 3.3V    : 7         :                
+GND                          : G15       : gnd    :                   :         :           :                
+VCCD_PLL2                    : G16       : power  :                   : 1.2V    :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : G17       :        :                   :         : 6         :                
+GND                          : G18       : gnd    :                   :         :           :                
+dram_dq[14]                  : G19       : bidir  : 3.3-V LVTTL       :         : 6         : Y              
+dram_dq[13]                  : G20       : bidir  : 3.3-V LVTTL       :         : 6         : Y              
+GND                          : G21       : gnd    :                   :         :           :                
+dram_dq[12]                  : G22       : bidir  : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : H1        :        :                   :         : 1B        :                
+~ALTERA_TMS~ / RESERVED_INPUT_WITH_WEAK_PULLUP : H2        : input  : 3.3 V Schmitt Trigger :         : 1B        : N              
+RESERVED_INPUT_WITH_WEAK_PULLUP : H3        :        :                   :         : 1A        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : H4        :        :                   :         : 1A        :                
+REFGND                       : H5        :        :                   :         :           :                
+ADC_VREF                     : H6        :        :                   :         :           :                
+VCCA_ADC                     : H7        : power  :                   : 2.5V    :           :                
+VCCA3                        : H8        : power  :                   : 2.5V    :           :                
+~ALTERA_nCONFIG~ / RESERVED_INPUT : H9        : input  : 3.3 V Schmitt Trigger :         : 8         : N              
+~ALTERA_CONFIG_SEL~ / RESERVED_INPUT : H10       : input  : 3.3-V LVTTL       :         : 8         : N              
+RESERVED_INPUT_WITH_WEAK_PULLUP : H11       :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : H12       :        :                   :         : 7         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : H13       :        :                   :         : 7         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : H14       :        :                   :         : 7         :                
+VCCA2                        : H15       : power  :                   : 2.5V    :           :                
+VCCIO6                       : H16       : power  :                   : 3.3V    : 6         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : H17       :        :                   :         : 6         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : H18       :        :                   :         : 6         :                
+hex4[4]                      : H19       : output : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : H20       :        :                   :         : 6         :                
+dram_dq[10]                  : H21       : bidir  : 3.3-V LVTTL       :         : 6         : Y              
+dram_dq[11]                  : H22       : bidir  : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : J1        :        :                   :         : 1B        :                
+GND                          : J2        : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : J3        :        :                   :         : 1A        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : J4        :        :                   :         : 1A        :                
+ANAIN2                       : J5        :        :                   :         :           :                
+GND                          : J6        : gnd    :                   :         :           :                
+VCCINT                       : J7        : power  :                   : 1.2V    :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : J8        :        :                   :         : 1A        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : J9        :        :                   :         : 1A        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : J10       :        :                   :         : 8         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : J11       :        :                   :         : 7         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : J12       :        :                   :         : 7         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : J13       :        :                   :         : 7         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : J14       :        :                   :         : 6         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : J15       :        :                   :         : 6         :                
+GND                          : J16       : gnd    :                   :         :           :                
+VCCIO6                       : J17       : power  :                   : 3.3V    : 6         :                
+hex4[3]                      : J18       : output : 3.3-V LVTTL       :         : 6         : Y              
+GND                          : J19       : gnd    :                   :         :           :                
+hex5[0]                      : J20       : output : 3.3-V LVTTL       :         : 6         : Y              
+dram_dqm[1]                  : J21       : output : 3.3-V LVTTL       :         : 6         : Y              
+dram_dq[9]                   : J22       : bidir  : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : K1        :        :                   :         : 1B        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : K2        :        :                   :         : 1B        :                
+GND                          : K3        : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : K4        :        :                   :         : 1A        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : K5        :        :                   :         : 1A        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : K6        :        :                   :         : 1A        :                
+VCCIO1A                      : K7        : power  :                   : 3.3V    : 1A        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : K8        :        :                   :         : 1B        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : K9        :        :                   :         : 1B        :                
+GND                          : K10       : gnd    :                   :         :           :                
+VCC                          : K11       : power  :                   : 1.2V    :           :                
+GND                          : K12       : gnd    :                   :         :           :                
+VCC                          : K13       : power  :                   : 1.2V    :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : K14       :        :                   :         : 6         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : K15       :        :                   :         : 6         :                
+VCCIO6                       : K16       : power  :                   : 3.3V    : 6         :                
+VCCIO6                       : K17       : power  :                   : 3.3V    : 6         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : K18       :        :                   :         : 6         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : K19       :        :                   :         : 6         :                
+hex5[1]                      : K20       : output : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : K21       :        :                   :         : 6         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : K22       :        :                   :         : 6         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : L1        :        :                   :         : 1B        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : L2        :        :                   :         : 1B        :                
+DNU                          : L3        :        :                   :         :           :                
+~ALTERA_TDI~ / RESERVED_INPUT_WITH_WEAK_PULLUP : L4        : input  : 3.3 V Schmitt Trigger :         : 1B        : N              
+GND                          : L5        : gnd    :                   :         :           :                
+VCCIO1A                      : L6        : power  :                   : 3.3V    : 1A        :                
+VCCIO1B                      : L7        : power  :                   : 3.3V    : 1B        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : L8        :        :                   :         : 1B        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : L9        :        :                   :         : 1B        :                
+VCC                          : L10       : power  :                   : 1.2V    :           :                
+VCC                          : L11       : power  :                   : 1.2V    :           :                
+VCC                          : L12       : power  :                   : 1.2V    :           :                
+GND                          : L13       : gnd    :                   :         :           :                
+dram_clk                     : L14       : output : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : L15       :        :                   :         : 6         :                
+VCCIO6                       : L16       : power  :                   : 3.3V    : 6         :                
+GND                          : L17       : gnd    :                   :         :           :                
+hex5[2]                      : L18       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex5[7]                      : L19       : output : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : L20       :        :                   :         : 6         :                
+GND                          : L21       : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : L22       :        :                   :         : 5         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : M1        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : M2        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : M3        :        :                   :         : 1B        :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : M4        :        :                   :         : 1B        :                
+~ALTERA_TDO~                 : M5        : output : 3.3-V LVTTL       :         : 1B        : N              
+VCCIO1B                      : M6        : power  :                   : 3.3V    : 1B        :                
+GND                          : M7        : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : M8        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : M9        :        :                   :         : 2         :                
+GND                          : M10       : gnd    :                   :         :           :                
+VCC                          : M11       : power  :                   : 1.2V    :           :                
+VCC                          : M12       : power  :                   : 1.2V    :           :                
+VCC                          : M13       : power  :                   : 1.2V    :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : M14       :        :                   :         : 6         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : M15       :        :                   :         : 6         :                
+GND                          : M16       : gnd    :                   :         :           :                
+VCCIO6                       : M17       : power  :                   : 3.3V    : 6         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : M18       :        :                   :         : 6         :                
+GND                          : M19       : gnd    :                   :         :           :                
+hex5[4]                      : M20       : output : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : M21       :        :                   :         : 5         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : M22       :        :                   :         : 5         :                
+vga_vs                       : N1        : output : 3.3-V LVTTL       :         : 2         : Y              
+vga_b[3]                     : N2        : output : 3.3-V LVTTL       :         : 2         : Y              
+vga_hs                       : N3        : output : 3.3-V LVTTL       :         : 2         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : N4        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : N5        :        :                   :         : 2         :                
+VCCIO2                       : N6        : power  :                   : 3.3V    : 2         :                
+VCCIO2                       : N7        : power  :                   : 3.3V    : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : N8        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : N9        :        :                   :         : 2         :                
+VCC                          : N10       : power  :                   : 1.2V    :           :                
+GND                          : N11       : gnd    :                   :         :           :                
+VCC                          : N12       : power  :                   : 1.2V    :           :                
+GND                          : N13       : gnd    :                   :         :           :                
+max10_clk2_50                : N14       : input  : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : N15       :        :                   :         : 6         :                
+VCCIO5                       : N16       : power  :                   : 3.3V    : 5         :                
+VCCIO6                       : N17       : power  :                   : 3.3V    : 6         :                
+hex5[3]                      : N18       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex5[5]                      : N19       : output : 3.3-V LVTTL       :         : 6         : Y              
+hex5[6]                      : N20       : output : 3.3-V LVTTL       :         : 6         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : N21       :        :                   :         : 5         :                
+dram_cke                     : N22       : output : 3.3-V LVTTL       :         : 5         : Y              
+vga_b[0]                     : P1        : output : 3.3-V LVTTL       :         : 2         : Y              
+GND                          : P2        : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : P3        :        :                   :         : 2         :                
+vga_b[2]                     : P4        : output : 3.3-V LVTTL       :         : 2         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : P5        :        :                   :         : 2         :                
+GND                          : P6        : gnd    :                   :         :           :                
+VCCIO2                       : P7        : power  :                   : 3.3V    : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : P8        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : P9        :        :                   :         : 3         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : P10       :        :                   :         : 3         :                
+max10_clk1_50                : P11       : input  : 3.3-V LVTTL       :         : 3         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : P12       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : P13       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : P14       :        :                   :         : 5         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : P15       :        :                   :         : 5         :                
+VCCIO5                       : P16       : power  :                   : 3.3V    : 5         :                
+GND                          : P17       : gnd    :                   :         :           :                
+dram_addr[8]                 : P18       : output : 3.3-V LVTTL       :         : 5         : Y              
+dram_addr[9]                 : P19       : output : 3.3-V LVTTL       :         : 5         : Y              
+dram_addr[11]                : P20       : output : 3.3-V LVTTL       :         : 5         : Y              
+dram_dq[8]                   : P21       : bidir  : 3.3-V LVTTL       :         : 5         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : P22       :        :                   :         : 5         :                
+vga_g[3]                     : R1        : output : 3.3-V LVTTL       :         : 2         : Y              
+vga_g[2]                     : R2        : output : 3.3-V LVTTL       :         : 2         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : R3        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : R4        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : R5        :        :                   :         : 2         :                
+VCCIO2                       : R6        : power  :                   : 3.3V    : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : R7        :        :                   :         : 2         :                
+VCCA1                        : R8        : power  :                   : 2.5V    :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : R9        :        :                   :         : 3         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : R10       :        :                   :         : 3         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : R11       :        :                   :         : 3         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : R12       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : R13       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : R14       :        :                   :         : 5         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : R15       :        :                   :         : 5         :                
+VCCIO5                       : R16       : power  :                   : 3.3V    : 5         :                
+VCCIO5                       : R17       : power  :                   : 3.3V    : 5         :                
+dram_addr[7]                 : R18       : output : 3.3-V LVTTL       :         : 5         : Y              
+GND                          : R19       : gnd    :                   :         :           :                
+dram_addr[12]                : R20       : output : 3.3-V LVTTL       :         : 5         : Y              
+GND                          : R21       : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : R22       :        :                   :         : 5         :                
+vga_b[1]                     : T1        : output : 3.3-V LVTTL       :         : 2         : Y              
+vga_g[1]                     : T2        : output : 3.3-V LVTTL       :         : 2         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : T3        :        :                   :         : 2         :                
+GND                          : T4        : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : T5        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : T6        :        :                   :         : 2         :                
+VCCD_PLL1                    : T7        : power  :                   : 1.2V    :           :                
+GND                          : T8        : gnd    :                   :         :           :                
+VCCIO3                       : T9        : power  :                   : 3.3V    : 3         :                
+VCCIO3                       : T10       : power  :                   : 3.3V    : 3         :                
+VCCIO3                       : T11       : power  :                   : 3.3V    : 3         :                
+VCCIO4                       : T12       : power  :                   : 3.3V    : 4         :                
+VCCIO4                       : T13       : power  :                   : 3.3V    : 4         :                
+GND                          : T14       : gnd    :                   :         :           :                
+VCCA4                        : T15       : power  :                   : 2.5V    :           :                
+GND                          : T16       : gnd    :                   :         :           :                
+VCCIO5                       : T17       : power  :                   : 3.3V    : 5         :                
+dram_addr[5]                 : T18       : output : 3.3-V LVTTL       :         : 5         : Y              
+dram_addr[6]                 : T19       : output : 3.3-V LVTTL       :         : 5         : Y              
+dram_addr[10]                : T20       : output : 3.3-V LVTTL       :         : 5         : Y              
+dram_ba[0]                   : T21       : output : 3.3-V LVTTL       :         : 5         : Y              
+dram_ba[1]                   : T22       : output : 3.3-V LVTTL       :         : 5         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : U1        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : U2        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : U3        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : U4        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : U5        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : U6        :        :                   :         : 3         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : U7        :        :                   :         : 3         :                
+VCCIO3                       : U8        : power  :                   : 3.3V    : 3         :                
+VCCIO3                       : U9        : power  :                   : 3.3V    : 3         :                
+GND                          : U10       : gnd    :                   :         :           :                
+VCCIO4                       : U11       : power  :                   : 3.3V    : 4         :                
+VCCIO4                       : U12       : power  :                   : 3.3V    : 4         :                
+GND                          : U13       : gnd    :                   :         :           :                
+VCCIO4                       : U14       : power  :                   : 3.3V    : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : U15       :        :                   :         : 4         :                
+VCCD_PLL4                    : U16       : power  :                   : 1.2V    :           :                
+dram_addr[0]                 : U17       : output : 3.3-V LVTTL       :         : 5         : Y              
+dram_addr[3]                 : U18       : output : 3.3-V LVTTL       :         : 5         : Y              
+dram_addr[4]                 : U19       : output : 3.3-V LVTTL       :         : 5         : Y              
+dram_cs_n                    : U20       : output : 3.3-V LVTTL       :         : 5         : Y              
+dram_cas_n                   : U21       : output : 3.3-V LVTTL       :         : 5         : Y              
+dram_ras_n                   : U22       : output : 3.3-V LVTTL       :         : 5         : Y              
+vga_r[1]                     : V1        : output : 3.3-V LVTTL       :         : 2         : Y              
+GND                          : V2        : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : V3        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : V4        :        :                   :         : 3         :                
+gpio[9]                      : V5        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+GND                          : V6        : gnd    :                   :         :           :                
+gpio[6]                      : V7        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[4]                      : V8        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[2]                      : V9        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[0]                      : V10       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : V11       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : V12       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : V13       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : V14       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : V15       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : V16       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : V17       :        :                   :         : 4         :                
+dram_addr[2]                 : V18       : output : 3.3-V LVTTL       :         : 5         : Y              
+GND                          : V19       : gnd    :                   :         :           :                
+dram_we_n                    : V20       : output : 3.3-V LVTTL       :         : 5         : Y              
+dram_dq[7]                   : V21       : bidir  : 3.3-V LVTTL       :         : 5         : Y              
+dram_dqm[0]                  : V22       : output : 3.3-V LVTTL       :         : 5         : Y              
+vga_g[0]                     : W1        : output : 3.3-V LVTTL       :         : 2         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : W2        :        :                   :         : 2         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : W3        :        :                   :         : 3         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : W4        :        :                   :         : 3         :                
+gpio[10]                     : W5        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[8]                      : W6        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[7]                      : W7        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[5]                      : W8        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[3]                      : W9        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[1]                      : W10       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[19]                     : W11       : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+gpio[14]                     : W12       : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+gpio[13]                     : W13       : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+RESERVED_INPUT_WITH_WEAK_PULLUP : W14       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : W15       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : W16       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : W17       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : W18       :        :                   :         : 4         :                
+dram_addr[1]                 : W19       : output : 3.3-V LVTTL       :         : 5         : Y              
+dram_dq[6]                   : W20       : bidir  : 3.3-V LVTTL       :         : 5         : Y              
+GND                          : W21       : gnd    :                   :         :           :                
+dram_dq[5]                   : W22       : bidir  : 3.3-V LVTTL       :         : 5         : Y              
+vga_r[3]                     : Y1        : output : 3.3-V LVTTL       :         : 3         : Y              
+vga_r[2]                     : Y2        : output : 3.3-V LVTTL       :         : 3         : Y              
+gpio[33]                     : Y3        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[31]                     : Y4        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[29]                     : Y5        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[27]                     : Y6        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[25]                     : Y7        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[23]                     : Y8        : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+GND                          : Y9        : gnd    :                   :         :           :                
+arduino_io[5]                : Y10       : bidir  : 3.3-V LVTTL       :         : 3         : Y              
+gpio[17]                     : Y11       : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+GND                          : Y12       : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : Y13       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : Y14       :        :                   :         : 4         :                
+GND                          : Y15       : gnd    :                   :         :           :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : Y16       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : Y17       :        :                   :         : 4         :                
+RESERVED_INPUT_WITH_WEAK_PULLUP : Y18       :        :                   :         : 4         :                
+arduino_io[12]               : Y19       : bidir  : 3.3-V LVTTL       :         : 4         : Y              
+dram_dq[1]                   : Y20       : bidir  : 3.3-V LVTTL       :         : 5         : Y              
+dram_dq[0]                   : Y21       : bidir  : 3.3-V LVTTL       :         : 5         : Y              
+dram_dq[4]                   : Y22       : bidir  : 3.3-V LVTTL       :         : 5         : Y              

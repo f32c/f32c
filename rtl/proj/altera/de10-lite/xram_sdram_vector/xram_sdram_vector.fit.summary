@@ -1,0 +1,18 @@
+Fitter Status : Successful - Wed Dec 15 22:46:00 2021
+Quartus Prime Version : 20.1.1 Build 720 11/11/2020 SJ Lite Edition
+Revision Name : xram_sdram_vector
+Top-level Entity Name : de10lite_xram_sdram
+Family : MAX 10
+Device : 10M50DAF484C7G
+Timing Models : Final
+Total logic elements : 29,034 / 49,760 ( 58 % )
+    Total combinational functions : 25,512 / 49,760 ( 51 % )
+    Dedicated logic registers : 14,337 / 49,760 ( 29 % )
+Total registers : 14337
+Total pins : 177 / 360 ( 49 % )
+Total virtual pins : 0
+Total memory bits : 643,072 / 1,677,312 ( 38 % )
+Embedded Multiplier 9-bit elements : 79 / 288 ( 27 % )
+Total PLLs : 1 / 4 ( 25 % )
+UFM blocks : 0 / 1 ( 0 % )
+ADC blocks : 0 / 2 ( 0 % )

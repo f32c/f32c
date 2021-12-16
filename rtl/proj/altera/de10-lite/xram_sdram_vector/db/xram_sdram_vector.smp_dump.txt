@@ -1,0 +1,21 @@
+
+State Machine - |de10lite_xram_sdram|glue_xram:glue_xram|sdram:\G_sdram16:sdram16|state
+Name state.s_precharge state.s_read_4 state.s_read_3 state.s_read_2 state.s_read_1 state.s_write_3 state.s_write_2 state.s_write_1 state.s_open_in_1 state.s_open_in_2 state.s_idle state.s_idle_in_1 state.s_idle_in_2 state.s_idle_in_3 state.s_idle_in_4 state.s_idle_in_5 state.s_idle_in_6 state.s_startup 
+state.s_startup 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+state.s_idle_in_6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 
+state.s_idle_in_5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 
+state.s_idle_in_4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 
+state.s_idle_in_3 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 
+state.s_idle_in_2 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 
+state.s_idle_in_1 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 
+state.s_idle 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 
+state.s_open_in_2 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 
+state.s_open_in_1 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 
+state.s_write_1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 
+state.s_write_2 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 
+state.s_write_3 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 
+state.s_read_1 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.s_read_2 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.s_read_3 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.s_read_4 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.s_precharge 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
