@@ -51,11 +51,23 @@ architecture Behavioral of reg1w2r is
     type reg_type is array(0 to 31) of std_logic_vector(31 downto 0);
     signal R1, R2, RD: reg_type;
 
-    -- Prevent XST from inferring block RAMs
+    -- XST attributes
     attribute ram_style: string;
     attribute ram_style of R1: signal is "distributed";
     attribute ram_style of R2: signal is "distributed";
     attribute ram_style of RD: signal is "distributed";
+
+    -- Lattice Diamond attributes
+    attribute syn_ramstyle: string;
+    attribute syn_ramstyle of R1: signal is "distributed";
+    attribute syn_ramstyle of R2: signal is "distributed";
+    attribute syn_ramstyle of RD: signal is "distributed";
+
+    -- Altera Quartus attributes
+    attribute ramstyle: string;
+    attribute ramstyle of R1: signal is "distributed";
+    attribute ramstyle of R2: signal is "distributed";
+    attribute ramstyle of RD: signal is "distributed";
 
 begin
     process(wr_clk)
@@ -73,7 +85,7 @@ begin
 
     process(rd_clk, rd1_addr, rd2_addr, rdd_addr)
     begin
-	if falling_edge(rd_clk) or not C_synchronous_read then
+	if not C_synchronous_read or falling_edge(rd_clk) then
 	    rd1_data <= R1(conv_integer(rd1_addr));
 	    rd2_data <= R2(conv_integer(rd2_addr));
 	    rdd_data <= RD(conv_integer(rdd_addr));
