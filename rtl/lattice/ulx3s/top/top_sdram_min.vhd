@@ -73,9 +73,12 @@ begin
 	sio_rxd(0) => ftdi_txd,
 	sio_txd(0) => ftdi_rxd,
 	sio_break(0) => sio_break,
+	simple_in(31 downto 20) => (others => '0'),
 	simple_in(19 downto 16) => sw,
+	simple_in(15 downto 7) => (others => '0'),
 	simple_in(6 downto 1) => btn(6 downto 1), -- r l d up f2 f1
 	simple_in(0) => not btn(0), -- pwr
+	simple_out(31 downto 8) => open,
 	simple_out(7 downto 0) => led
     );
 
