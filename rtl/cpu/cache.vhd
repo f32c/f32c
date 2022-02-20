@@ -40,8 +40,8 @@ entity cache is
 	C_arch: integer;
 	C_big_endian: boolean;		-- MI32 only
 	C_mult_enable: boolean;		-- MI32 only
-        C_mul_acc: boolean := false;    -- MI32 only
-        C_mul_reg: boolean := false;    -- MI32 only
+	C_mul_acc: boolean := false;	-- MI32 only
+	C_mul_reg: boolean := false;	-- MI32 only
 	C_branch_likely: boolean;	-- MI32 only
 	C_sign_extend: boolean;		-- MI32 only
 	C_movn_movz: boolean := false;	-- MI32 only
@@ -278,9 +278,10 @@ begin
 	C_cpuid => C_cpuid, C_clk_freq => C_clk_freq, C_ll_sc => C_ll_sc,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
-	C_mult_enable => C_mult_enable, C_mul_acc => C_mul_acc, C_mul_reg => C_mul_reg,
-	C_PC_mask => C_PC_mask,
-	C_init_PC => C_init_PC, C_branch_prediction => C_branch_prediction,
+	C_PC_mask => C_PC_mask, C_init_PC => C_init_PC,
+	C_mult_enable => C_mult_enable,
+	C_mul_acc => C_mul_acc, C_mul_reg => C_mul_reg,
+	C_branch_prediction => C_branch_prediction,
 	C_bp_global_depth => C_bp_global_depth,
 	C_result_forwarding => C_result_forwarding,
 	C_load_aligner => C_load_aligner, C_full_shifter => C_full_shifter,
