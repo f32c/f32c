@@ -153,7 +153,7 @@ architecture Behavioral of glue_sdram_min is
     signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
 
     -- CPU reset control
-    signal R_cpu_reset: std_logic_vector(15 downto 0) := x"fffe";
+    signal R_cpu_reset: std_logic_vector(15 downto 0) := (others => '1');
 
     function F_init_PC(cpuid: integer) return std_logic_vector is
     begin
@@ -367,7 +367,7 @@ begin
 	cycles_per_refresh => C_sdram_cycles_per_refresh
     )
     port map (
-	clk => clk, reset => R_cpu_reset(0),
+	clk => clk, reset => res(0),
 	-- internal connections
 	mpbus => sdram_bus,
 	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
@@ -422,6 +422,13 @@ begin
 		R_simple_in(C_simple_in - 1 downto 0) <=
 		  simple_in(C_simple_in - 1 downto 0);
 	    end if;
+	    -- CPU reset control
+	    if reset = '1' then
+		R_cpu_reset <= (others => '1');
+	    elsif R_cpu_reset(0) = '1' then
+		R_cpu_reset(15 downto 8) <= R_cpu_reset(14 downto 8) & '0';
+		R_cpu_reset(0) <= R_cpu_reset(15);
+	    end if;
 	end if;
 	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
 	  and io_write = '1' then
@@ -442,7 +449,7 @@ begin
 	    end if;
 	    -- CPU reset control
 	    if C_cpus /= 1 and io_addr(11 downto 4) = x"7F" then
-		R_cpu_reset <= cpu_to_io(15 downto 0);
+		R_cpu_reset <= x"ff" & cpu_to_io(7 downto 0);
 	    end if;
 	end if;
     end process;
