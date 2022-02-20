@@ -3,6 +3,9 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
 entity top_sdram is
+    generic (
+	C_clk_freq: natural := 66
+    );
     port (
 	clk_25mhz: in std_logic;
 
@@ -48,13 +51,14 @@ end top_sdram;
 
 architecture x of top_sdram is
     signal clk, pll_lock: std_logic;
+    signal clk_133m, clk_66m, clk_160m, clk_80m: std_logic;
     signal reset: std_logic;
     signal sio_break: std_logic;
 
 begin
     I_top: entity work.glue_sdram_min
     generic map (
-	C_clk_freq => 66,
+	C_clk_freq => C_clk_freq,
 	C_debug => true
     )
     port map (
@@ -90,12 +94,16 @@ begin
 	enclk_66m => '1',
 	enclk_160m => '1',
 	enclk_80m => '1',
-	clk_133m => open,
-	clk_66m => clk,
-	clk_160m => open,
-	clk_80m => open,
+	clk_133m => clk_133m,
+	clk_66m => clk_66m,
+	clk_160m => clk_160m,
+	clk_80m => clk_80m,
 	lock => pll_lock 
     );
 
+    clk <= clk_160m when C_clk_freq = 160
+      else clk_133m when C_clk_freq = 133
+      else clk_80m when C_clk_freq = 80
+      else clk_66m;
     reset <= not pll_lock or sio_break;
 end x;
