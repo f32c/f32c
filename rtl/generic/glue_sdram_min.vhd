@@ -70,6 +70,10 @@ entity glue_sdram_min is
 	C_debug: boolean := false;
 
 	-- SDRAM parameters
+	C_ras: natural := 2;
+	C_cas: natural := 2;
+	C_pre: natural := 2;
+	C_clock_range: integer range 0 to 2 := 1;
 	C_sdram_address_width : integer := 24;
 	C_sdram_column_bits : integer := 9;
 	C_sdram_startup_cycles : integer := 10100;
@@ -361,6 +365,8 @@ begin
     sdram: entity work.sdram_controller
     generic map (
 	C_ports => 2 * C_cpus,
+	C_ras => C_ras, C_cas => C_cas, C_pre => C_pre,
+	C_clock_range => C_clock_range,
 	sdram_address_width => C_sdram_address_width,
 	sdram_column_bits => C_sdram_column_bits,
 	sdram_startup_cycles => C_sdram_startup_cycles,
