@@ -4,7 +4,7 @@ use ieee.std_logic_unsigned.all;
 
 entity top_sdram is
     generic (
-	C_clk_freq: natural := 66
+	C_clk_freq: natural := 80
     );
     port (
 	clk_25mhz: in std_logic;
@@ -59,7 +59,7 @@ begin
     I_top: entity work.glue_sdram_min
     generic map (
 	C_clk_freq => C_clk_freq,
-	C_debug => true
+	C_debug => false
     )
     port map (
 	clk => clk,
