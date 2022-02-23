@@ -139,8 +139,8 @@ architecture Behavioral of glue_sdram_min is
     signal dmem_byte_sel: f32c_byte_sel;
 
     -- Boot ROM
-    signal bram_i_to_cpu: std_logic_vector(31 downto 0);
-    signal bram_i_ready: std_logic;
+    signal rom_i_to_cpu: std_logic_vector(31 downto 0);
+    signal rom_i_ready: std_logic;
 
     -- SDRAM
     signal sdram_bus: sdram_port_array;
@@ -315,8 +315,8 @@ begin
 		imem_data_ready(cpu) <= sdram_bus(instr_port).data_ready;
 		final_to_cpu_i(cpu) <= sdram_bus(instr_port).data_out;
 	    else
-		imem_data_ready(cpu) <= bram_i_ready;
-		final_to_cpu_i(cpu) <= bram_i_to_cpu;
+		imem_data_ready(cpu) <= rom_i_ready;
+		final_to_cpu_i(cpu) <= rom_i_to_cpu;
 	    end if;
 	else -- CPU #1, CPU #2...
 	    -- CPU, data bus
@@ -557,20 +557,15 @@ begin
     --
     -- Boot ROM (only CPU #0, only instruction bus)
     --
-    rom: entity work.bram
+    rom: entity work.rom
     generic map (
-	C_bram_size => 2,
 	C_arch => C_arch,
 	C_big_endian => C_big_endian,
 	C_boot_spi => false
     )
     port map (
-	clk => clk, imem_addr_strobe => imem_addr_strobe(0),
-	imem_addr => imem_addr(0), imem_data_out => bram_i_to_cpu,
-	imem_data_ready => bram_i_ready, dmem_data_ready => open,
-	dmem_addr_strobe => '0', dmem_write => '0',
-	dmem_byte_sel => x"0", dmem_addr => (others => '0'),
-	dmem_data_out => open, dmem_data_in => (others => '0')
+	clk => clk, strobe => imem_addr_strobe(0), addr => imem_addr(0),
+	data_out => rom_i_to_cpu, data_ready => rom_i_ready
     );
 
     --
