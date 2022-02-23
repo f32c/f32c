@@ -66,9 +66,6 @@
         <Source name="../../../../generic/bram_true2p_1clk.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../generic/bram.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../generic/bootloader/defs_bootblock.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -82,6 +79,9 @@
             <Options/>
         </Source>
         <Source name="../../../../generic/bootloader/boot_rom_mi32el.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../generic/rom.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../lattice/ulx3s/clocks/pll_25_133_66_160_80.vhd" type="VHDL" type_short="VHDL">
