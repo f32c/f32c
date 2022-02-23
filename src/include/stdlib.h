@@ -64,7 +64,8 @@ exit(int x __unused)
 #ifdef __mips__
 			".set noreorder\n"
 			"jr $0\n"
-			"mtc0 $0, $12"	/* Mask and disable all interrupts */
+			"mtc0 $0, $12\n" /* Mask and disable all interrupts */
+			".set reorder"
 #else /* riscv */
 			"jr zero\n"
 #endif
