@@ -106,8 +106,9 @@ entity glue_sdram_min is
 	sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
 	spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
 	spi_miso: in std_logic_vector(C_spi - 1 downto 0) := (others => '0');
-	simple_in: in std_logic_vector(31 downto 0) := (others => '0');
-	simple_out: out std_logic_vector(31 downto 0)
+	simple_in: in std_logic_vector(C_simple_in - 1 downto 0) :=
+	  (others => '0');
+	simple_out: out std_logic_vector(C_simple_out - 1 downto 0)
     );
 end glue_sdram_min;
 
@@ -459,7 +460,7 @@ begin
 	    end if;
 	end if;
     end process;
-    simple_out <= R_simple_out;
+    simple_out <= R_simple_out(C_simple_out - 1 downto 0);
 
 
     --

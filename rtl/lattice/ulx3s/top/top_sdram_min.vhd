@@ -7,10 +7,7 @@ entity top_sdram is
 	C_clk_freq: natural := 80
     );
     port (
-	clk_25mhz: in std_logic;
-
-	-- '1' = power off
-	shutdown: out std_logic := '0';
+	clk_25m: in std_logic;
 
 	-- SDRAM
 	sdram_clk: out std_logic;
@@ -26,26 +23,47 @@ entity top_sdram is
 
 	-- On-board simple IO
 	led: out std_logic_vector(7 downto 0);
-	btn: in std_logic_vector(6 downto 0);
+	btn_pwr, btn_f1, btn_f2: in std_logic;
+	btn_up, btn_down, btn_left, btn_right: in std_logic;
 	sw: in std_logic_vector(3 downto 0);
 
 	-- GPIO
-	gp: inout std_logic_vector(27 downto 0) := (others => 'Z');
-	gn: inout std_logic_vector(27 downto 0) := (others => 'Z');
+	gp: inout std_logic_vector(27 downto 0);
+	gn: inout std_logic_vector(27 downto 0);
 
 	-- Audio jack 3.5mm
-	audio_l: inout std_logic_vector(3 downto 0) := (others => 'Z');
-	audio_r: inout std_logic_vector(3 downto 0) := (others => 'Z');
-	audio_v: inout std_logic_vector(3 downto 0) := (others => 'Z');
+	p_tip: inout std_logic_vector(3 downto 0);
+	p_ring: inout std_logic_vector(3 downto 0);
+	p_ring2: inout std_logic_vector(3 downto 0);
 
 	-- SIO0 (FTDI)
-	ftdi_rxd: out std_logic;
-	ftdi_txd: in std_logic;
+	rs232_tx: out std_logic;
+	rs232_rx: in std_logic;
 
-	-- SIO1 (ESP32)
-	wifi_rxd: out std_logic;
-	wifi_txd: in std_logic;
-	wifi_en: out std_logic := '0'
+	-- Digital Video (differential outputs)
+	gpdi_dp, gpdi_dn: out std_logic_vector(3 downto 0);
+  
+	-- i2c shared for digital video and RTC
+	gpdi_scl, gpdi_sda: inout std_logic;
+
+	-- SPI flash
+	flash_so: in std_logic;
+	flash_si: out std_logic;
+	flash_cen: out std_logic;
+	--flash_sck: out std_logic; -- accessed via special ECP5 primitive
+	flash_holdn, flash_wpn: out std_logic := '1';
+
+	-- ADC MAX11123
+	adc_csn: out std_logic;
+	adc_sclk: out std_logic;
+	adc_mosi: out std_logic;
+	adc_miso: in std_logic;
+
+	-- PCB antenna
+	ant: out std_logic;
+
+	-- '1' = power off
+	shutdown: out std_logic := '0'
     );
 end top_sdram;
 
@@ -55,10 +73,15 @@ architecture x of top_sdram is
     signal reset: std_logic;
     signal sio_break: std_logic;
 
+    signal R_simple_in: std_logic_vector(19 downto 0);
+
 begin
     I_top: entity work.glue_sdram_min
     generic map (
 	C_clk_freq => C_clk_freq,
+	C_spi => 2,
+	C_simple_out => 8,
+	C_simple_in => 20,
 	C_debug => false
     )
     port map (
@@ -74,21 +97,18 @@ begin
 	sdram_cas => sdram_casn,
 	sdram_addr => sdram_a,
 	sdram_data => sdram_d,
-	sio_rxd(0) => ftdi_txd,
-	sio_txd(0) => ftdi_rxd,
+	sio_rxd(0) => rs232_rx,
+	sio_txd(0) => rs232_tx,
 	sio_break(0) => sio_break,
-	simple_in(31 downto 20) => (others => '0'),
-	simple_in(19 downto 16) => sw,
-	simple_in(15 downto 7) => (others => '0'),
-	simple_in(6 downto 1) => btn(6 downto 1), -- r l d up f2 f1
-	simple_in(0) => not btn(0), -- pwr
-	simple_out(31 downto 8) => open,
-	simple_out(7 downto 0) => led
+	simple_in => R_simple_in,
+	simple_out => led
     );
+    R_simple_in <= sw & x"00" & '0' & not btn_pwr & btn_f2 & btn_f1
+      & btn_up & btn_down & btn_left & btn_right when rising_edge(clk);
 
     I_pll: entity work.pll
     port map (
-	clki => clk_25mhz,
+	clki => clk_25m,
 	stdby => '0',
 	enclk_133m => '1',
 	enclk_66m => '1',
