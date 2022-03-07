@@ -8,7 +8,7 @@ CONSTRAINTS=../../constraints/ulx3s_v20.lpf
 FILES=
 
 $(PROJ).json: $(FILES) synth.ys Makefile
-	yosys -q synth.ys
+	yosys -m ghdl -q synth.ys
 
 $(PROJ).config: $(PROJ).json
 	nextpnr-ecp5 --router router2 --json $(PROJ).json \
