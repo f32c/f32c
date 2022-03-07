@@ -99,7 +99,7 @@ TINYFPGASP ?= tinyfpgasp
 FLEAFPGA_JTAG ?= FleaFPGA-JTAG 
 OPENOCD ?= openocd
 OPENOCD_INTERFACE ?= $(SCRIPTS)/ft231x.ocd
-UJPROG ?= ujprog
+UJPROG ?= fujprog
 
 # helper scripts directory
 SCRIPTS ?= scripts
@@ -108,8 +108,8 @@ SCRIPTS ?= scripts
 FPGA_CHIP_UPPERCASE := $(shell echo $(FPGA_CHIP) | tr '[:lower:]' '[:upper:]')
 FPGA_PACKAGE_UPPERCASE := $(shell echo $(FPGA_PACKAGE) | tr '[:lower:]' '[:upper:]')
 
-#BITSTREAM ?= $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).bit
-BITSTREAM ?= $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).bit $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).vme $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).svf $(BOARD)_$(FPGA_SIZE)f_$(PROJECT)_flash_$(FLASH_CHIP).vme
+BITSTREAM ?= $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).bit
+#BITSTREAM ?= $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).bit $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).vme $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).svf $(BOARD)_$(FPGA_SIZE)f_$(PROJECT)_flash_$(FLASH_CHIP).vme
 
 all: $(BITSTREAM)
 
@@ -217,6 +217,7 @@ $(BOARD)_$(FPGA_SIZE)f_$(PROJECT)_flash_$(FLASH_CHIP).vme: $(BOARD)_$(FPGA_SIZE)
 #	LD_LIBRARY_PATH=$(LIBTRELLIS) $(ECPPACK) $(IDCODE_CHIPID) --db $(TRELLISDB) $< --freq 62.0 --svf-rowsize 8000 --svf $@
 
 # program SRAM  with ujrprog (temporary)
+prog: program
 program: $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).bit
 	$(UJPROG) $<
 
