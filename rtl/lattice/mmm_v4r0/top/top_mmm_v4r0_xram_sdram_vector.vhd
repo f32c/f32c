@@ -135,6 +135,10 @@ entity mmm_v4r0_xram_sdram_vector is
 
   -- Onboard blinky
   led: out std_logic_vector(2 downto 1);
+  
+  -- RS232
+  txd1, txd2: out std_logic;
+  rxd1, rxd2: in  std_logic;
 
   -- GPIO
   io_0,  io_1,  io_2,  io_3,  io_4,  io_5,  io_6,  io_7,
@@ -371,10 +375,10 @@ begin
     clk_pixel => clk_pixel,
     clk_pixel_shift => clk_pixel_shift,
     reset => S_reset,
-    sio_rxd(0) => io_10,
-    sio_rxd(1) => open,
-    sio_txd(0) => io_11,
-    sio_txd(1) => open,
+    sio_rxd(0) => rxd1,
+    sio_rxd(1) => rxd2,
+    sio_txd(0) => txd1,
+    sio_txd(1) => txd2,
     sio_break(0) => S_sio_break,
     sio_break(1) => S_sio_break2,
 
