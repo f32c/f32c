@@ -13,7 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -40,8 +40,8 @@
  * Ignores `locale' stuff.  Assumes that the upper and lower case
  * alphabets and digits are each contiguous.
  */
-__attribute__((optimize("-Os"))) long
-strtol(const char *nptr, char **endptr, int base)
+static __attribute__((optimize("-Os"))) long
+_strtolx(const char *nptr, char **endptr, int base, int sig)
 {
 	const char *s = nptr;
 	unsigned long acc;
@@ -88,9 +88,14 @@ strtol(const char *nptr, char **endptr, int base)
 	 * Set any if any `digits' consumed; make it negative to indicate
 	 * overflow.
 	 */
-	cutoff = neg ? -(unsigned long)LONG_MIN : LONG_MAX;
-	cutlim = cutoff % (unsigned long)base;
-	cutoff /= (unsigned long)base;
+	if (sig) {
+		cutoff = neg ? -(unsigned long)LONG_MIN : LONG_MAX;
+		cutlim = cutoff % (unsigned long)base;
+		cutoff /= (unsigned long)base;
+	} else {
+		cutoff = (unsigned long)ULONG_MAX / (unsigned long)base;
+		cutlim = (unsigned long)ULONG_MAX % (unsigned long)base;
+	}
 	for (acc = 0, any = 0;; c = *s++) {
 		if (!isascii(c))
 			break;
@@ -111,10 +116,27 @@ strtol(const char *nptr, char **endptr, int base)
 		}
 	}
 	if (any < 0) {
-		acc = neg ? LONG_MIN : LONG_MAX;
+		if (sig)
+			acc = neg ? LONG_MIN : LONG_MAX;
+		else
+			acc = ULONG_MAX;
 	} else if (neg)
 		acc = -acc;
 	if (endptr != 0)
 		*((const char **)endptr) = any ? s - 1 : nptr;
 	return (acc);
+}
+
+__attribute__((optimize("-Os"))) long
+strtoul(const char *nptr, char **endptr, int base)
+{
+
+	return _strtolx(nptr, endptr, base, 0);
+}
+
+__attribute__((optimize("-Os"))) long
+strtol(const char *nptr, char **endptr, int base)
+{
+
+	return _strtolx(nptr, endptr, base, 1);
 }
