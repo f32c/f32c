@@ -62,7 +62,7 @@ sio_probe_rx(void)
 }
 
 
-__attribute__((optimize("-Os"))) int
+__attribute__((weak, optimize("-Os"))) int
 sio_getchar(int blocking)
 {
 	int c, busy;
@@ -81,7 +81,7 @@ sio_getchar(int blocking)
 }
 
 
-__attribute__((optimize("-Os"))) int
+__attribute__((weak, optimize("-Os"))) int
 sio_putchar(int c, int blocking)
 {
 	int in, busy;
