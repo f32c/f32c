@@ -117,11 +117,11 @@ begin
 		if R_bit_cnt(3) = '0' then -- spi active
 		    -- one CPU clock cycle before the CPU cycle when SPI clock makes falling edge
 		    if clk_acc_next(7) = '0' and R_clk_acc(7) = '1' then
-		    	-- sample input and shift input reg
-		    	R_spi_byte_in <= R_spi_byte_in(6 downto 0) & spi_miso;
-		    	-- shift output reg (must be separate from input to avoid CPU bus mux)
-		    	R_spi_byte_out <= R_spi_byte_out(6 downto 0) & '0';
-		    	R_bit_cnt <= R_bit_cnt + 1;
+			-- sample input and shift input reg
+			R_spi_byte_in <= R_spi_byte_in(6 downto 0) & spi_miso;
+			-- shift output reg (must be separate from input to avoid CPU bus mux)
+			R_spi_byte_out <= R_spi_byte_out(6 downto 0) & '0';
+			R_bit_cnt <= R_bit_cnt + 1;
 		    end if;
 		    R_clk_acc <= clk_acc_next;
 		end if;
@@ -149,8 +149,8 @@ begin
 		    R_spi_cen <= '0';
 		end if;
 	    else -- not write, rising cpu edge (but falling spi edge)
-	    	-- tx / rx logic
-	    	if R_bit_cnt(3) = '0' then -- spi active
+		-- tx / rx logic
+		if R_bit_cnt(3) = '0' then -- spi active
 		    R_spi_byte_in <= R_spi_byte_in(6 downto 0) & spi_miso;
 		    R_spi_byte_out <= R_spi_byte_out(6 downto 0) & '0';
 		    R_bit_cnt <= R_bit_cnt + 1;
@@ -161,4 +161,3 @@ begin
     end process;
     end generate G_yes_turbo_mode;
 end Behavioral;
-
