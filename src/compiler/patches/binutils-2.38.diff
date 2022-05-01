@@ -1,6 +1,6 @@
 diff -drup org/binutils/gas/config/tc-mips.c binutils/gas/config/tc-mips.c
 --- org/binutils/gas/config/tc-mips.c	2022-01-22 13:14:08.000000000 +0100
-+++ binutils/gas/config/tc-mips.c	2022-04-29 11:31:28.131407000 +0200
++++ gas/config/tc-mips.c	2022-04-29 11:31:28.131407000 +0200
 @@ -20077,6 +20077,8 @@ static const struct mips_cpu_info mips_cpu_info_table[
    { "24kef2_1",       0, ASE_DSP,		ISA_MIPS32R2, CPU_MIPS32R2 },
    { "24kef",          0, ASE_DSP,		ISA_MIPS32R2, CPU_MIPS32R2 },
@@ -12,7 +12,7 @@ diff -drup org/binutils/gas/config/tc-mips.c binutils/gas/config/tc-mips.c
    { "24kex",          0, ASE_DSP,		ISA_MIPS32R2, CPU_MIPS32R2 },
 diff -drup org/binutils/opcodes/mips-dis.c binutils/opcodes/mips-dis.c
 --- org/binutils/opcodes/mips-dis.c	2022-01-22 13:14:09.000000000 +0100
-+++ binutils/opcodes/mips-dis.c	2022-04-29 11:43:21.709197000 +0200
++++ opcodes/mips-dis.c	2022-04-29 11:43:21.709197000 +0200
 @@ -568,6 +568,11 @@ const struct mips_arch_choice mips_arch_choices[] =
      mips_cp0_names_mips3264r2,
      mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
