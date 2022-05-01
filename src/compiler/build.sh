@@ -5,8 +5,8 @@
 
 GNU_MIRROR=ftp://ftp.gnu.org/gnu
 
-BINUTILS_URL=${GNU_MIRROR}/binutils/binutils-2.29.tar.xz
-GCC_URL=${GNU_MIRROR}/gcc/gcc-7.2.0/gcc-7.2.0.tar.xz
+BINUTILS_URL=${GNU_MIRROR}/binutils/binutils-2.38.tar.xz
+GCC_URL=${GNU_MIRROR}/gcc/gcc-11.3.0/gcc-11.3.0.tar.xz
 
 BINUTILS_SRC_DIR=~/github/gnu/binutils
 GCC_SRC_DIR=~/github/gnu/gcc
@@ -69,7 +69,7 @@ then
     tar -xf *
     rm *.tar*
     mv */* .
-    patch -p0 < ${F32C_SRC_DIR}/src/compiler/patches/binutils-2.26.diff
+    patch -p0 < ${F32C_SRC_DIR}/src/compiler/patches/binutils-2.38.diff
 fi
 
 if [ ! -d ${GCC_SRC_DIR} ]
@@ -83,7 +83,7 @@ then
     rm *.tar*
     mv */* .
     ./contrib/download_prerequisites 
-    patch -p0 < ${F32C_SRC_DIR}/src/compiler/patches/gcc-6.1.0.diff
+    patch -p0 < ${F32C_SRC_DIR}/src/compiler/patches/gcc-11.3.0.diff
 fi
 
 
