@@ -1,12 +1,22 @@
 #File : core_portme.mak
 
+BASE_DIR = $(subst conf/f32c.mk,,${MAKEFILES})
+ISA_CHECK = tclsh ${BASE_DIR}tools/isa_check.tcl
+
+ifeq ($(findstring riscv, ${ARCH}),)
+ TOOLPREFIX = mips
+else
+ TOOLPREFIX = riscv32
+endif
+
 # Flag : OUTFLAG
 #	Use this flag to define how to to get an executable (e.g -o)
 OUTFLAG= -o
 
-# Flag : CC
-#	Use this flag to define compiler to use
-CC = $(ARCH)-elf-gcc
+CC = $(TOOLPREFIX)-elf-gcc
+LD = $(TOOLPREFIX)-elf-ld
+AS = $(TOOLPREFIX)-elf-as
+OBJCOPY = ${TOOLPREFIX}-elf-objcopy
 
 # Flag : CFLAGS
 #	Use this flag to define compiler options. Note, you can add compiler options from the command line using XCFLAGS="other flags"
@@ -16,7 +26,7 @@ ENDIANFLAGS = -EL
 
 # Default load offset - bootloader is at 0x00000000
 ifndef LOADADDR
-  LOADADDR = 0x400
+ LOADADDR = 0x400
 endif
 
 ifeq ($(findstring 0x8, ${LOADADDR}),)
@@ -51,7 +61,7 @@ endif
 
 # MIPS-specific flags
 ifeq ($(ARCH),riscv)
- MK_CFLAGS += -m32 -mno-muldiv
+ MK_CFLAGS += -march=rv32i -mabi=ilp32
 endif
 
 MK_CFLAGS += ${MK_STDINC} ${MK_INCLUDES}
@@ -106,11 +116,17 @@ RUN =
 OEXT = .o
 EXE = .$(ARCH)
 
-# Target : port_pre% and port_post%
-# For the purpose of this simple port, no pre or post steps needed.
+.PHONY: port_prebuild
+port_prebuild:
 
-.PHONY : port_prebuild port_postbuild port_prerun port_postrun port_preload port_postload
-port_pre% port_post% : 
+# Target: port_postbuild
+# Generate any files that are needed after actual build end.
+# E.g. change format to srec, bin, zip in order to be able to load into flash
+.PHONY: port_postbuild
+port_postbuild:
+	${ISA_CHECK} ${ARCH} ${OUTFILE}
+	${OBJCOPY} ${OBJFLAGS} -O binary ${OUTFILE} ${OUTFILE}.bin
+	${OBJCOPY} ${OBJFLAGS} -O srec ${OUTFILE} ${OUTFILE}.srec
 
 # FLAG : OPATH
 # Path to the output folder. Default - current folder.

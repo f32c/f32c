@@ -1,15 +1,14 @@
-The EEMBC license only permits downloads of CoreMark software sources
-directly from their web site on individual basis, hence you should
-register at www.eembc.org and download CoreMark tarball from there.
+The EEMBC license for coremark is vague and above all is not irrevocable,
+hence the coremark sources are not included here, but have to be
+downloaded separately.  The "build.sh" script provided here should do the
+job: fetch the appropriate sources from github, and build both mips and
+riscv versions of the benchmark.
 
-Unpack the tarball so that all sources are moved in this directory:
+Note that by default the binaries are linked at 0x00000400.  To build
+coremark for execution at some other address, add LOADADDR=0x80000000
+to "make" arguments.
 
-tar xf coremark_v1.0.tgz
-mv coremark_v1.0/* .
+Use "ujprog -ta coremark.riscv.srec" / "ujprog -ta coremark.mips.srec"
+or some other ASCII terminal emulation program to send the .srec encoded
+binaries from the cm_src directory to the FPGA.
 
-Then, patch the original Makefile:
-
-patch -p 0 < Makefile.diff
-
-The "make" command can then be used to build the benchmark.  Note
-that the default load address is 0x400.

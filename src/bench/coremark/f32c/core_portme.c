@@ -126,7 +126,7 @@ void portable_init(core_portable *p, int *argc, char *argv[])
 	CLOCKS_PER_SEC =
 	    ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1) * 1000;
 #else
-	CLOCKS_PER_SEC = 100 * 1000 * 1000;
+	CLOCKS_PER_SEC = 50 * 1000 * 1000;
 #endif
 
 	printf("\nDetected %d.%03d MHz CPU.\n\n", CLOCKS_PER_SEC / 1000000,
