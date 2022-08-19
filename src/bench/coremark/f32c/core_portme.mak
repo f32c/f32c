@@ -23,6 +23,7 @@ OBJCOPY = ${TOOLPREFIX}-elf-objcopy
 
 WITHOUT_FLOAT = true
 ENDIANFLAGS = -EL
+MK_CFLAGS = -ffunction-sections -fdata-sections
 
 # Default load offset - bootloader is at 0x00000000
 ifndef LOADADDR
@@ -30,7 +31,7 @@ ifndef LOADADDR
 endif
 
 ifeq ($(findstring 0x8, ${LOADADDR}),)
-MK_CFLAGS += -DBRAM
+ MK_CFLAGS += -DBRAM
 endif
 
 # Includes
@@ -57,11 +58,13 @@ ifeq ($(ARCH),mips)
  MK_CFLAGS += -march=f32c
  MK_CFLAGS += ${ENDIANFLAGS}
  MK_CFLAGS += -G 32768
+ OBJFLAGS += -R .MIPS.abiflags -R .reginfo
 endif
 
 # MIPS-specific flags
 ifeq ($(ARCH),riscv)
  MK_CFLAGS += -march=rv32i -mabi=ilp32
+ OBJFLAGS += -R .riscv.attributes
 endif
 
 MK_CFLAGS += ${MK_STDINC} ${MK_INCLUDES}
@@ -81,6 +84,7 @@ MK_CFLAGS += -fselective-scheduling -fgcse-after-reload
 #MK_LDFLAGS += -N
 MK_LDFLAGS += -Wl,--section-start=.init=${LOADADDR}
 MK_LDFLAGS += -Wl,--library-path=${LIBDIR}
+MK_LDFLAGS += -Wl,-gc-sections
 MK_LDFLAGS += -nostartfiles -nostdlib
 ifndef WITHOUT_LIBS
  MK_LDFLAGS += -lcrt0
