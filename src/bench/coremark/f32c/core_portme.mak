@@ -132,6 +132,8 @@ port_postbuild:
 	${OBJCOPY} ${OBJFLAGS} -O binary ${OUTFILE} ${OUTFILE}.bin
 	${OBJCOPY} ${OBJFLAGS} -O srec ${OUTFILE} ${OUTFILE}.srec
 
+PORT_CLEAN = ${OUTFILE}.bin ${OUTFILE}.srec
+
 # FLAG : OPATH
 # Path to the output folder. Default - current folder.
 OPATH = ./
