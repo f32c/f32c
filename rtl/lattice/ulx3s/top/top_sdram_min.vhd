@@ -2,8 +2,11 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
+use work.f32c_pack.all;
+
 entity top_sdram is
     generic (
+	C_arch: natural := ARCH_MI32;
 	C_clk_freq: natural := 80
     );
     port (
@@ -78,6 +81,7 @@ architecture x of top_sdram is
 begin
     I_top: entity work.glue_sdram_min
     generic map (
+	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
 	C_spi => 2,
 	C_simple_out => 8,
