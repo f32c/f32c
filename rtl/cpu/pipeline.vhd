@@ -843,6 +843,7 @@ begin
 	    if R_reset = '1' then
 		ID_EX_exception <= true;
 		ID_EX_bubble <= false;
+		ID_EX_wait <= false;
 	    end if;
 	end if;
     end process;
