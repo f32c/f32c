@@ -35,6 +35,8 @@ entity glue is
     generic (
 	C_arch: integer := ARCH_MI32; -- either ARCH_MI32 or ARCH_RV32
 	C_big_endian: boolean := false;
+	C_mult_enable: boolean := true;
+	C_mul_reg: boolean := true;
 	C_debug: boolean := false;
 
 	C_clk_freq: integer := 80;
@@ -71,6 +73,8 @@ begin
     generic map (
 	C_arch => C_arch,
 	C_big_endian => C_big_endian,
+	C_mult_enable => C_mult_enable,
+	C_mul_reg => C_mul_reg,
 	C_clk_freq => C_clk_freq,
 	C_bram_size => C_bram_size,
 	C_debug => C_debug,
