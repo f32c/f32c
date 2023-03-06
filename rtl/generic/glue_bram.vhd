@@ -41,6 +41,7 @@ entity glue_bram is
 	C_arch: integer := ARCH_MI32;
 	C_big_endian: boolean := false;
 	C_mult_enable: boolean := true;
+	C_mul_reg: boolean := false;
 	C_branch_likely: boolean := true;
 	C_sign_extend: boolean := true;
 	C_ll_sc: boolean := false;
@@ -156,7 +157,8 @@ begin
 	C_arch => C_arch, C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
-	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
+	C_mult_enable => C_mult_enable, C_mul_reg => C_mul_reg,
+	C_PC_mask => C_PC_mask,
 	C_cop0_count => C_cop0_count, C_cop0_config => C_cop0_config,
 	C_cop0_compare => C_cop0_compare,
 	C_branch_prediction => C_branch_prediction,
