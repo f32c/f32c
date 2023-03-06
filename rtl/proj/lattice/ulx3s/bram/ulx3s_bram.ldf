@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<BaliProject version="3.2" title="ulx3s_sdram_min" device="LFE5U-12F-8BG381C" default_implementation="impl1">
+<BaliProject version="3.2" title="ulx3s_bram" device="LFE5U-12F-8BG381C" default_implementation="impl1">
     <Options/>
     <Implementation title="impl1" dir="impl1" description="impl1" synthesis="synplify" default_strategy="Timing">
         <Options def_top="glue"/>
@@ -85,5 +85,4 @@
             <Options/>
         </Source>
     </Implementation>
-    <Strategy name="Strategy1" file="ulx3s_sdram_min1.sty"/>
 </BaliProject>
