@@ -1,0 +1,517 @@
+{
+	"partitions" : [
+		{
+			"name" : "Top",
+			"pins" : [
+				{
+					"name" : "ledr[0]",
+					"strict" : false
+				},
+				{
+					"name" : "ledr[1]",
+					"strict" : false
+				},
+				{
+					"name" : "ledr[2]",
+					"strict" : false
+				},
+				{
+					"name" : "ledr[3]",
+					"strict" : false
+				},
+				{
+					"name" : "ledr[4]",
+					"strict" : false
+				},
+				{
+					"name" : "ledr[5]",
+					"strict" : false
+				},
+				{
+					"name" : "ledr[6]",
+					"strict" : false
+				},
+				{
+					"name" : "ledr[7]",
+					"strict" : false
+				},
+				{
+					"name" : "ledr[8]",
+					"strict" : false
+				},
+				{
+					"name" : "ledr[9]",
+					"strict" : false
+				},
+				{
+					"name" : "hex0[0]",
+					"strict" : false
+				},
+				{
+					"name" : "hex0[1]",
+					"strict" : false
+				},
+				{
+					"name" : "hex0[2]",
+					"strict" : false
+				},
+				{
+					"name" : "hex0[3]",
+					"strict" : false
+				},
+				{
+					"name" : "hex0[4]",
+					"strict" : false
+				},
+				{
+					"name" : "hex0[5]",
+					"strict" : false
+				},
+				{
+					"name" : "hex0[6]",
+					"strict" : false
+				},
+				{
+					"name" : "hex0[7]",
+					"strict" : false
+				},
+				{
+					"name" : "hex1[0]",
+					"strict" : false
+				},
+				{
+					"name" : "hex1[1]",
+					"strict" : false
+				},
+				{
+					"name" : "hex1[2]",
+					"strict" : false
+				},
+				{
+					"name" : "hex1[3]",
+					"strict" : false
+				},
+				{
+					"name" : "hex1[4]",
+					"strict" : false
+				},
+				{
+					"name" : "hex1[5]",
+					"strict" : false
+				},
+				{
+					"name" : "hex1[6]",
+					"strict" : false
+				},
+				{
+					"name" : "hex1[7]",
+					"strict" : false
+				},
+				{
+					"name" : "hex2[0]",
+					"strict" : false
+				},
+				{
+					"name" : "hex2[1]",
+					"strict" : false
+				},
+				{
+					"name" : "hex2[2]",
+					"strict" : false
+				},
+				{
+					"name" : "hex2[3]",
+					"strict" : false
+				},
+				{
+					"name" : "hex2[4]",
+					"strict" : false
+				},
+				{
+					"name" : "hex2[5]",
+					"strict" : false
+				},
+				{
+					"name" : "vga_hs",
+					"strict" : false
+				},
+				{
+					"name" : "vga_vs",
+					"strict" : false
+				},
+				{
+					"name" : "vga_r[0]",
+					"strict" : false
+				},
+				{
+					"name" : "vga_r[1]",
+					"strict" : false
+				},
+				{
+					"name" : "vga_r[2]",
+					"strict" : false
+				},
+				{
+					"name" : "vga_r[3]",
+					"strict" : false
+				},
+				{
+					"name" : "vga_g[0]",
+					"strict" : false
+				},
+				{
+					"name" : "vga_g[1]",
+					"strict" : false
+				},
+				{
+					"name" : "vga_g[2]",
+					"strict" : false
+				},
+				{
+					"name" : "vga_g[3]",
+					"strict" : false
+				},
+				{
+					"name" : "vga_b[0]",
+					"strict" : false
+				},
+				{
+					"name" : "vga_b[1]",
+					"strict" : false
+				},
+				{
+					"name" : "vga_b[2]",
+					"strict" : false
+				},
+				{
+					"name" : "vga_b[3]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_addr[0]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_addr[1]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_addr[2]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_addr[3]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_addr[4]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_addr[5]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_addr[6]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_addr[7]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_addr[8]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_addr[9]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_addr[10]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_addr[11]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_addr[12]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_ba[0]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_ba[1]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dqm[0]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dqm[1]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_ras_n",
+					"strict" : false
+				},
+				{
+					"name" : "dram_cas_n",
+					"strict" : false
+				},
+				{
+					"name" : "dram_cke",
+					"strict" : false
+				},
+				{
+					"name" : "dram_we_n",
+					"strict" : false
+				},
+				{
+					"name" : "arduino_io[10]",
+					"strict" : false
+				},
+				{
+					"name" : "arduino_io[11]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[0]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[1]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[2]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[3]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[4]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[5]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[6]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[7]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[8]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[9]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[10]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[11]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[12]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[13]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[14]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[15]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[16]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[17]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[18]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[19]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[20]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[21]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[22]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[23]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[24]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[25]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[26]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[27]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[28]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[29]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[30]",
+					"strict" : false
+				},
+				{
+					"name" : "gpio[31]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[0]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[1]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[2]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[3]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[4]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[5]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[6]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[7]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[8]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[9]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[10]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[11]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[12]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[13]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[14]",
+					"strict" : false
+				},
+				{
+					"name" : "dram_dq[15]",
+					"strict" : false
+				},
+				{
+					"name" : "sw[8]",
+					"strict" : false
+				},
+				{
+					"name" : "sw[3]",
+					"strict" : false
+				},
+				{
+					"name" : "sw[0]",
+					"strict" : false
+				},
+				{
+					"name" : "sw[4]",
+					"strict" : false
+				},
+				{
+					"name" : "sw[1]",
+					"strict" : false
+				},
+				{
+					"name" : "sw[9]",
+					"strict" : false
+				},
+				{
+					"name" : "sw[7]",
+					"strict" : false
+				},
+				{
+					"name" : "sw[6]",
+					"strict" : false
+				},
+				{
+					"name" : "sw[5]",
+					"strict" : false
+				},
+				{
+					"name" : "sw[2]",
+					"strict" : false
+				}
+			]
+		}
+	]
+}

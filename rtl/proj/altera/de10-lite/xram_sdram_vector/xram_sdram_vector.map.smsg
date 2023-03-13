@@ -1,0 +1,3 @@
+Info (10281): Verilog HDL Declaration information at ctrlpid_v.v(54): object "KP" differs only in case from object "Kp" in the same scope File: /home/leo/github_contrs/f32c/rtl/soc/pid/ctrlpid_v.v Line: 54
+Info (10281): Verilog HDL Declaration information at ctrlpid_v.v(54): object "KI" differs only in case from object "Ki" in the same scope File: /home/leo/github_contrs/f32c/rtl/soc/pid/ctrlpid_v.v Line: 54
+Info (10281): Verilog HDL Declaration information at ctrlpid_v.v(54): object "KD" differs only in case from object "Kd" in the same scope File: /home/leo/github_contrs/f32c/rtl/soc/pid/ctrlpid_v.v Line: 54
