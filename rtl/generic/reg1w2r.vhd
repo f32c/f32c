@@ -35,20 +35,25 @@ use ieee.numeric_std.all;
 
 entity reg1w2r is
     generic(
+	C_addr_width: natural := 5;
+	C_data_width: natural := 32;
 	C_synchronous_read: boolean := false;
 	C_debug: boolean := false
     );
     port(
-	rd1_addr, rd2_addr, rdd_addr, wr_addr: in std_logic_vector(4 downto 0);
-	rd1_data, rd2_data, rdd_data: out std_logic_vector(31 downto 0);
-	wr_data: in std_logic_vector(31 downto 0);
+	rd1_addr, rd2_addr, rdd_addr, wr_addr: in
+	  std_logic_vector(C_addr_width - 1 downto 0);
+	rd1_data, rd2_data, rdd_data: out
+	  std_logic_vector(C_data_width - 1 downto 0);
+	wr_data: in std_logic_vector(C_data_width - 1 downto 0);
 	wr_enable: in std_logic;
 	rd_clk, wr_clk: in std_logic
     );
 end reg1w2r;
 
 architecture Behavioral of reg1w2r is
-    type reg_type is array(0 to 31) of std_logic_vector(31 downto 0);
+    type reg_type is array(0 to (2 ** C_addr_width) - 1)
+      of std_logic_vector(C_data_width - 1 downto 0);
     signal R1, R2, RD: reg_type;
 
     -- XST attributes
