@@ -193,34 +193,19 @@ begin
 	    end if;
 	    dbram_0 <= bram_0(conv_integer(dmem_addr));
 	    ibram_0 <= bram_0(conv_integer(imem_addr));
-	end if;
-    end process;
 
-    process(clk)
-    begin
-	if falling_edge(clk) then
 	    if dmem_byte_sel(1) = '1' and write_enable then
 		bram_1(conv_integer(dmem_addr)) <= dmem_data_in(15 downto 8);
 	    end if;
 	    dbram_1 <= bram_1(conv_integer(dmem_addr));
 	    ibram_1 <= bram_1(conv_integer(imem_addr));
-	end if;
-    end process;
 
-    process(clk)
-    begin
-	if falling_edge(clk) then
 	    if dmem_byte_sel(2) = '1' and write_enable then
 		bram_2(conv_integer(dmem_addr)) <= dmem_data_in(23 downto 16);
 	    end if;
 	    dbram_2 <= bram_2(conv_integer(dmem_addr));
 	    ibram_2 <= bram_2(conv_integer(imem_addr));
-	end if;
-    end process;
 
-    process(clk)
-    begin
-	if falling_edge(clk) then
 	    if dmem_byte_sel(3) = '1' and write_enable then
 		bram_3(conv_integer(dmem_addr)) <= dmem_data_in(31 downto 24);
 	    end if;
