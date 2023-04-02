@@ -21,14 +21,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #ifndef	_STRING_H_
 #define	_STRING_H_
 
 char *strstr(const char *, const char *) __pure;
+char *strtok(char * __restrict, const char * __restrict);
+char *strtok_r(char *, const char *, char **);
 
 void *memchr(const void *, int, size_t) __pure;
 void *memmove(void *, const void *, size_t);
@@ -42,15 +42,7 @@ int memcmp(const void *, const void *, size_t) __pure;
 #ifdef USE_BUILTIN_STRCPY
 #define	strcpy(dst, src) __builtin_strcpy((dst), (src))
 #else
-#if 0
-#define	strcpy(dst, src)					\
-	if (sizeof(src) != sizeof(void *))			\
-		_memcpy((dst), (src), sizeof(src));		\
-	else							\
-		_strcpy(dst, src);
-#else
-#define	strcpy(dst, src)	 _strcpy(dst, src);
-#endif
+#define	strcpy(dst, src) _strcpy(dst, src);
 #endif
 
 

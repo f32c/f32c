@@ -71,7 +71,7 @@ ifeq ($(LIB),c)
 	file.c gets.c malloc.c memcmp.c memcpy.c memmove.c \
 	memset.c mul.c printf.c qsort.c random.c sdcard.c sio_poll.c \
 	spi.c sprintf.c strcasecmp.c strcpy.c strncpy.c \
-	strstr.c strtol.c
+	strstr.c strtok.c strtol.c
 
  ifneq ($(ARCH),riscv)
   CFILES += sio.c sio_baud.c setjmperr.c isr.c
