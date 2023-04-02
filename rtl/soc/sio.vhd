@@ -70,9 +70,19 @@ end sio;
 --   7..0  tx_byte
 --
 architecture Behavioral of sio is
-    constant C_baud_init: std_logic_vector(15 downto 0) :=
-      std_logic_vector(to_unsigned(
-	C_init_baudrate * 2**10 / 1000 * 2**10 / C_clk_freq / 1000, 16));
+    function F_baud_init(f: natural; b: natural) return std_logic_vector is
+	variable val: natural;
+    begin
+    if b <= 200000 then
+	val := b * 2**10 / 1000 * 2**10 / f / 1000;
+    elsif b <= 2000000 then
+	val := b / 10 * 2**10 / 100 * 2**10 / f / 1000;
+    else -- OK up to 3000000 bauds at min. 50 MHz clock frequency
+	val := b / 100 * 2**10 / 100 * 2**10 / f / 100;
+    end if;
+    return std_logic_vector(to_unsigned(val, 16));
+    end function F_baud_init;
+
     -- break detection math
     constant C_break_detect_bits: integer := integer(ceil((log2(real(C_break_detect_delay_ms * C_clk_freq * 1000 * 8/7)))+1.0E-16));
     constant C_break_detect_count: integer := 7 * 2**(C_break_detect_bits-3); -- number of clock ticks for break detection
@@ -83,7 +93,7 @@ architecture Behavioral of sio is
       -- counter resets to this value (fine tuning parameter for break detect delay) 
 
     -- baud * 16 impulse generator
-    signal R_baudrate: std_logic_vector(15 downto 0) := C_baud_init;
+    signal R_baudrate: std_logic_vector(15 downto 0) := F_baud_init(C_clk_freq, C_init_baudrate);
     signal R_baudgen: std_logic_vector(16 downto 0);
 
     -- transmit logic
@@ -213,7 +223,7 @@ begin
 		    R_break <= '1';
 		    rx_break_tickcnt <= rx_break_tickcnt - C_break_detect_incr;
 		    if C_break_resets_baudrate then
-			R_baudrate <= C_baud_init;
+			R_baudrate <= F_baud_init(C_clk_freq, C_init_baudrate);
 		    end if;
 		else
 		    R_break <= '0';
