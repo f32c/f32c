@@ -55,7 +55,7 @@ main(void)
 	char tmpbuf[128];
 	int f;
 
-	tmpbuf[0] = '1';
+	tmpbuf[0] = 'd';
 	tmpbuf[1] = ':';
 	tmpbuf[2] = 0;
 	f = open(tmpbuf, O_RDONLY);
