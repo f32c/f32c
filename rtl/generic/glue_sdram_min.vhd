@@ -90,7 +90,8 @@ entity glue_sdram_min is
 	C_spi_turbo_mode: std_logic_vector := "0000";
 	C_spi_fixed_speed: std_logic_vector := "1111";
 	C_simple_in: natural := 32;
-	C_simple_out: natural := 32
+	C_simple_out: natural := 32;
+	C_uptime: boolean := true
     );
     port (
 	clk: in std_logic;
@@ -157,8 +158,6 @@ architecture Behavioral of glue_sdram_min is
     signal next_io_port: integer range 0 to (C_io_ports - 1);
     signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
 
-    -- CPU reset control
-    signal R_cpu_reset: std_logic_vector(15 downto 0) := (others => '1');
 
     function F_init_PC(cpuid: integer) return std_logic_vector is
     begin
@@ -169,28 +168,43 @@ architecture Behavioral of glue_sdram_min is
 	end if;
     end F_init_PC;
 
-    -- io base
-    type T_iomap_range is array(0 to 1) of std_logic_vector(15 downto 0);
-    constant iomap_range: T_iomap_range := (x"F800", x"FFFF");
+    -- IO base
+    type T_io_range is array(0 to 1) of std_logic_vector(15 downto 0);
+    constant C_io_range: T_io_range := (x"F800", x"FFFF");
 
-    function iomap_from(r: T_iomap_range; base: T_iomap_range) return integer is
+    function F_io_from(r: T_io_range) return integer is
 	variable a, b: std_logic_vector(15 downto 0);
     begin
 	a := r(0);
-	b := base(0);
+	b := C_io_range(0);
 	return conv_integer(a(11 downto 4) - b(11 downto 4));
-    end iomap_from;
+    end F_io_from;
 
-    function iomap_to(r: T_iomap_range; base: T_iomap_range) return integer is
+    function F_io_to(r: T_io_range) return integer is
 	variable a, b: std_logic_vector(15 downto 0);
     begin
 	a := r(1);
-	b := base(0);
+	b := C_io_range(0);
 	return conv_integer(a(11 downto 4) - b(11 downto 4));
-    end iomap_to;
+    end F_io_to;
+
+    -- CPU reset control
+    constant C_io_cpu_reset: T_io_range := (x"FFC0", x"FFC0");
+    signal R_cpu_reset: std_logic_vector(15 downto 0) := (others => '1');
+
+    -- Uptime
+    constant C_io_uptime: T_io_range := (x"FFD0", x"FFDF");
+    signal R_uptime_s: std_logic_vector(31 downto 0);
+    signal R_uptime_frac: std_logic_vector(31 downto 0);
+    signal R_boottime_s: std_logic_vector(31 downto 0);
+
+    -- Simple I/O: onboard LEDs, buttons and switches
+    constant C_io_simple_in: T_io_range := (x"FF00", x"FF0F");
+    constant C_io_simple_out: T_io_range := (x"FF10", x"FF1F");
+    signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
 
     -- Serial I/O (RS232)
-    constant iomap_sio: T_iomap_range := (x"FB00", x"FB3F");
+    constant C_io_sio: T_io_range := (x"FB00", x"FB3F");
     signal sio_range: std_logic := '0';
     type from_sio_type is array (0 to C_sio - 1) of
       std_logic_vector(31 downto 0);
@@ -198,18 +212,13 @@ architecture Behavioral of glue_sdram_min is
     signal sio_ce, sio_tx, sio_rx: std_logic_vector(C_sio - 1 downto 0);
 
     -- SPI (on-board Flash, SD card, others...)
-    constant iomap_spi: T_iomap_range := (x"FB40", x"FB7F");
+    constant C_io_spi: T_io_range := (x"FB40", x"FB7F");
     signal spi_range: std_logic := '0';
     type from_spi_type is array (0 to C_spi - 1) of
       std_logic_vector(31 downto 0);
     signal from_spi: from_spi_type;
     signal spi_ce: std_logic_vector(C_spi - 1 downto 0);
 
-    -- Simple I/O: onboard LEDs, buttons and switches
-    constant iomap_simple_in: T_iomap_range := (x"FF00", x"FF0F");
-    constant iomap_simple_out: T_iomap_range := (x"FF10", x"FF1F");
-    signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
-   
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
     signal debug_to_sio_data: std_logic_vector(7 downto 0);
@@ -272,6 +281,19 @@ begin
     );
     end generate;
 
+    --
+    -- Boot ROM (only CPU #0, only instruction bus)
+    --
+    rom: entity work.rom
+    generic map (
+	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_boot_spi => false
+    )
+    port map (
+	clk => clk, strobe => imem_addr_strobe(0), addr => imem_addr(0),
+	data_out => rom_i_to_cpu, data_ready => rom_i_ready
+    );
 
     --
     -- SDRAM
@@ -413,7 +435,6 @@ begin
     next_io_port <= t;
     end process;
 
-
     --
     -- I/O access
     --
@@ -424,12 +445,43 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) then
+	    -- IO arbiter
 	    R_cur_io_port <= next_io_port;
+
+	    -- Simple input synchronizer
 	    if C_simple_in > 0 then
 		R_simple_in(C_simple_in - 1 downto 0) <=
 		  simple_in(C_simple_in - 1 downto 0);
 	    end if;
+
+	    -- Uptime counter
+	    if C_uptime then
+		R_uptime_frac <= R_uptime_frac + 1;
+		case C_clk_freq is
+		when 66 to 67 =>
+		    if R_uptime_frac = 66666666 then
+			R_uptime_s <= R_uptime_s + 1;
+			R_uptime_frac <= (others => '0');
+		    end if;
+		when 133 =>
+		    if R_uptime_frac = 133333332 then
+			R_uptime_s <= R_uptime_s + 1;
+			R_uptime_frac <= (others => '0');
+		    end if;
+		when others =>
+		    if R_uptime_frac = C_clk_freq * 1000000 - 1 then
+			R_uptime_s <= R_uptime_s + 1;
+			R_uptime_frac <= (others => '0');
+		    end if;
+		end case;
+	    end if;
+
 	    -- CPU reset control
+	    if C_cpus /= 1 and io_addr_strobe(R_cur_io_port) = '1'
+	      and io_write = '1' and
+	      io_addr(11 downto 4) = F_io_from(C_io_cpu_reset) then
+		R_cpu_reset <= x"ff" & cpu_to_io(7 downto 0);
+	    end if;
 	    if reset = '1' then
 		R_cpu_reset <= (others => '1');
 	    elsif R_cpu_reset(0) = '1' then
@@ -440,7 +492,8 @@ begin
 	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
 	  and io_write = '1' then
 	    -- simple out
-	    if C_simple_out > 0 and io_addr(11 downto 4) = x"71" then
+	    if C_simple_out > 0 and
+	      io_addr(11 downto 4) = F_io_from(C_io_simple_out) then
 		if io_byte_sel(0) = '1' then
 		    R_simple_out(7 downto 0) <= cpu_to_io(7 downto 0);
 		end if;
@@ -454,17 +507,16 @@ begin
 		    R_simple_out(31 downto 24) <= cpu_to_io(31 downto 24);
 		end if;
 	    end if;
-	    -- CPU reset control
-	    if C_cpus /= 1 and io_addr(11 downto 4) = x"7F" then
-		R_cpu_reset <= x"ff" & cpu_to_io(7 downto 0);
+	    if C_uptime and io_addr(11 downto 4) = F_io_from(C_io_uptime)
+	      and io_addr(3 downto 2) = "10" then
+		R_boottime_s <= cpu_to_io;
 	    end if;
 	end if;
     end process;
     simple_out <= R_simple_out(C_simple_out - 1 downto 0);
 
-
     --
-    -- RS232 sio
+    -- RS232 SIO
     --
     G_sio: for i in 0 to C_sio - 1 generate
 	sio_instance: entity work.sio
@@ -482,13 +534,12 @@ begin
 	    bus_in => cpu_to_io, bus_out => from_sio(i),
 	    break => sio_break(i)
 	);
-	sio_ce(i) <= io_addr_strobe(R_cur_io_port)
-	  when io_addr(11 downto 6) = x"3" & "00" and
+	sio_ce(i) <= io_addr_strobe(R_cur_io_port) when sio_range = '1' and
 	  conv_integer(io_addr(5 downto 4)) = i else '0';
     end generate;
     G_sio_decoder: if C_sio > 0 generate
-    with conv_integer(io_addr(11 downto 4)) select
-      sio_range <= '1' when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range), '0' when others;
+    with conv_integer(io_addr(11 downto 4)) select sio_range <=
+      '1' when F_io_from(C_io_sio) to F_io_to(C_io_sio), '0' when others;
     end generate;
     sio_rx(0) <= sio_rxd(0);
 
@@ -508,66 +559,64 @@ begin
 	    spi_sck => spi_sck(i), spi_cen => spi_ss(i),
 	    spi_miso => spi_miso(i), spi_mosi => spi_mosi(i)
 	);
-	spi_ce(i) <= io_addr_strobe(R_cur_io_port)
-	  when io_addr(11 downto 6) = x"3" & "01" and
+	spi_ce(i) <= io_addr_strobe(R_cur_io_port) when spi_range = '1' and
 	  conv_integer(io_addr(5 downto 4)) = i else '0';
     end generate;
     G_spi_decoder: if C_spi > 0 generate
-    with conv_integer(io_addr(11 downto 4)) select
-      spi_range <= '1' when iomap_from(iomap_spi, iomap_range) to iomap_to(iomap_spi, iomap_range),
-		   '0' when others;
+    with conv_integer(io_addr(11 downto 4)) select spi_range <=
+      '1' when F_io_from(C_io_spi) to F_io_to(C_io_spi), '0' when others;
     end generate;
 
-    -- big address decoder when CPU reads IO
-    process(io_addr, R_simple_in, R_simple_out, from_sio)
+    -- Address decoder when CPU reads IO
+    process(io_addr, from_sio, from_spi, R_simple_in, R_simple_out,
+      R_uptime_s, R_uptime_frac, R_boottime_s)
 	variable i: integer;
     begin
 	io_to_cpu <= (others => '-');
 	case conv_integer(io_addr(11 downto 4)) is
-	when iomap_from(iomap_sio, iomap_range) to iomap_to(iomap_sio, iomap_range) =>
+	when F_io_from(C_io_sio) to F_io_to(C_io_sio) =>
 	    for i in 0 to C_sio - 1 loop
 		if conv_integer(io_addr(5 downto 4)) = i then
 		    io_to_cpu <= from_sio(i);
 		end if;
 	    end loop;
-	when iomap_from(iomap_spi, iomap_range) to iomap_to(iomap_spi, iomap_range) =>
+	when F_io_from(C_io_spi) to F_io_to(C_io_spi) =>
 	    for i in 0 to C_spi - 1 loop
 		if conv_integer(io_addr(5 downto 4)) = i then
 		    io_to_cpu <= from_spi(i);
 		end if;
 	    end loop;
-	when iomap_from(iomap_simple_in, iomap_range) to iomap_to(iomap_simple_in, iomap_range) =>
+	when F_io_from(C_io_simple_in) to F_io_to(C_io_simple_in) =>
 	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
 		    io_to_cpu(C_simple_in - i * 32 - 1 downto i * 32) <=
 		      R_simple_in(C_simple_in - i * 32 - 1 downto i * 32);
 		end if;
 	    end loop;
-	when iomap_from(iomap_simple_out, iomap_range) to iomap_to(iomap_simple_out, iomap_range) =>
+	when F_io_from(C_io_simple_out) to F_io_to(C_io_simple_out) =>
 	    for i in 0 to (C_simple_out + 31) / 4 - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
 		    io_to_cpu(C_simple_out - i * 32 - 1 downto i * 32) <=
 		      R_simple_out(C_simple_out - i * 32 - 1 downto i * 32);
 		end if;
 	    end loop;
+	when F_io_from(C_io_uptime) =>
+	    if C_uptime then
+		case io_addr(3 downto 2) is
+		when "00" =>
+		    io_to_cpu <= R_uptime_s;
+		when "01" =>
+		    io_to_cpu <= R_uptime_frac;
+		when "10" =>
+		    io_to_cpu <= R_boottime_s;
+		when others  =>
+		    io_to_cpu <= (others => '-');
+		end case;
+	    end if;
 	when others  =>
 	    io_to_cpu <= (others => '-');
 	end case;
     end process;
-
-    --
-    -- Boot ROM (only CPU #0, only instruction bus)
-    --
-    rom: entity work.rom
-    generic map (
-	C_arch => C_arch,
-	C_big_endian => C_big_endian,
-	C_boot_spi => false
-    )
-    port map (
-	clk => clk, strobe => imem_addr_strobe(0), addr => imem_addr(0),
-	data_out => rom_i_to_cpu, data_ready => rom_i_ready
-    );
 
     --
     -- Debugging SIO instance
