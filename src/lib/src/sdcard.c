@@ -29,6 +29,7 @@
 #include <dev/sdcard.h>
 #include <dev/spi.h>
 
+#include <fatfs/ff.h>
 #include <fatfs/diskio.h>
 
 

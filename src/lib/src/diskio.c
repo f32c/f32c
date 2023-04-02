@@ -21,14 +21,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #include <dev/io.h>
 #include <dev/sdcard.h>
 #include <dev/spi.h>
 
+#include <fatfs/ff.h>
 #include <fatfs/diskio.h>
 
 
@@ -47,9 +46,11 @@
 #define	SPI_CMD_FASTRD	0x0b
 #define	SPI_CMD_ERSEC	0x20
 #define	SPI_CMD_EWSR	0x50
-#define	SPI_CMD_RDID	0xAB
+#define	SPI_CMD_RDID	0x9F
+#define	SPI_CMD_RDID2	0xAB
 #define	SPI_CMD_AAIWR	0xAD
 
+#define	SPI_MFG_CYPRESS	0x01
 #define	SPI_MFG_ISSI1	0x15
 #define	SPI_MFG_SPANS	0x16
 #define	SPI_MFG_ISSI2	0x17
@@ -111,12 +112,16 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 
 	/* Get SPI chip ID */
 	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_RDID);
+	spi_byte(IO_SPI_FLASH, SPI_CMD_RDID2);
 	spi_byte(IO_SPI_FLASH, 0);
 	spi_byte(IO_SPI_FLASH, 0);
 	spi_byte(IO_SPI_FLASH, 0);
 	mfg_id = spi_byte(IO_SPI_FLASH, 0);
-	spi_byte(IO_SPI_FLASH, 0);
+	if (mfg_id == 0xff) {
+		spi_start_transaction(IO_SPI_FLASH);
+		spi_byte(IO_SPI_FLASH, SPI_CMD_RDID);
+		mfg_id = spi_byte(IO_SPI_FLASH, 0);
+	}
 
 	#if USE_EWSR
 	/* Enable Write Status Register */
@@ -162,6 +167,7 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 				busy_wait();
 			}
 			break;
+		case SPI_MFG_CYPRESS:
 		case SPI_MFG_ISSI1:
 		case SPI_MFG_ISSI2:
 		case SPI_MFG_SPANS:
@@ -262,14 +268,14 @@ disk_status(BYTE drive)
 
 
 DRESULT
-disk_read(BYTE drive, BYTE* Buffer, DWORD SectorNumber, BYTE SectorCount)
+disk_read(BYTE pdrv, BYTE* buff, LBA_t sector, UINT count)
 {
 
-	switch (drive) {
+	switch (pdrv) {
 	case 0:
-		return (flash_disk_read(Buffer, SectorNumber, SectorCount));
+		return (flash_disk_read(buff, sector, count));
 	case 1:
-		return (sdcard_disk_read(Buffer, SectorNumber, SectorCount));
+		return (sdcard_disk_read(buff, sector, count));
 	default:
 		return (RES_ERROR);
 	}
@@ -278,15 +284,15 @@ disk_read(BYTE drive, BYTE* Buffer, DWORD SectorNumber, BYTE SectorCount)
 
 #ifndef DISKIO_RO
 DRESULT
-disk_write(BYTE drive, const BYTE* Buffer, DWORD SectorNumber, BYTE SectorCount)
+disk_write(BYTE pdrv, const BYTE* buff, LBA_t sector, UINT count)
 {
-	uint8_t *buf = (void *) Buffer;
+	uint8_t *buf = (void *) buff;
 
-	switch (drive) {
+	switch (pdrv) {
 	case 0:
-		return (flash_disk_write(buf, SectorNumber, SectorCount));
+		return (flash_disk_write(buf, sector, count));
 	case 1:
-		return (sdcard_disk_write(buf, SectorNumber, SectorCount));
+		return (sdcard_disk_write(buf, sector, count));
 	default:
 		return (RES_ERROR);
 	}
@@ -307,7 +313,13 @@ disk_ioctl(BYTE drive, BYTE cmd, void* buf)
 			*up = 512;
 		return (RES_OK);
 #ifndef DISKIO_RO
-	case CTRL_ERASE_SECTOR:
+	case GET_SECTOR_COUNT:
+		if (drive == 0) {
+			*up = ((1 << 22) - FLASH_FAT_OFFSET) / FLASH_BLOCKLEN;
+			return (RES_OK);
+		}
+		return (RES_ERROR);
+	case CTRL_TRIM:
 		if (drive == 0) {
 			#if USE_EWSR
 			/* Enable Write Status Register */

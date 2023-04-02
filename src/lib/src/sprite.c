@@ -34,17 +34,10 @@
 #include <unistd.h>
 #include <sys/queue.h>
 
-#ifdef __mips__
 #include <dev/io.h>
 #include <dev/fb.h>
 #include <tjpgd.h>
 #include <upng.h>
-#else
-#include <stdint.h>
-#include "../../include/dev/fb.h"
-#include "../../include/upng.h"
-#include "../../lang/basic/tjpgd.h"	/* XXX BASIC HACK, REVISIT! */
-#endif
 
 
 struct sprite {

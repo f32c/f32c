@@ -67,7 +67,7 @@ ifeq ($(LIB),c)
   ASFILES = ${ARCH}/setjmp.S ${ARCH}/exception.S
  endif
 
- CFILES = assert.c atoi.c diskio.c div.c div64.c fatfs.c \
+ CFILES = assert.c atoi.c diskio.c div.c div64.c fatfs.c ffunicode.c \
 	file.c gets.c malloc.c memcmp.c memcpy.c memmove.c \
 	memset.c mul.c printf.c qsort.c random.c sdcard.c sio_poll.c \
 	spi.c sprintf.c strcasecmp.c strcpy.c strncpy.c \
