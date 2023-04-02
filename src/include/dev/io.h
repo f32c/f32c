@@ -23,8 +23,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _IO_H_
-#define	_IO_H_
+#ifndef _DEV_IO_H_
+#define	_DEV_IO_H_
 
 #ifdef __mips
 #include <mips/io.h>
@@ -56,6 +56,8 @@
 
 #define	IO_SPI_FLASH	IO_ADDR(0x340)	/* half, RW */
 #define	IO_SPI_SDCARD	IO_ADDR(0x350)	/* half, RW */
+#define	IO_SPI_ADC	IO_ADDR(0x360)	/* half, RW */
+#define	IO_SPI_EXT	IO_ADDR(0x370)	/* half, RW */
 
 #define	IO_FB		IO_ADDR(0x380)	/* word, WR */
 #define	IO_TXTMODE_CTRL	IO_ADDR(0x381)	/* byte, WR */
@@ -75,7 +77,11 @@
 #define	IO_LED		IO_ADDR(0x710)	/* word, WR */
 #define	IO_LCD		IO_ADDR(0x712)	/* word, WR */
 
-#define	IO_CPU_RESET	IO_ADDR(0x7F0)	/* byte, WR */
+#define	IO_CPU_RESET	IO_ADDR(0x7C0)	/* byte, WR */
+
+#define	IO_UPTIME_S	IO_ADDR(0x7D0)	/* word, RD */
+#define	IO_UPTIME_FRAC	IO_ADDR(0x7D4)	/* word, RD */
+#define	IO_BOOTTIME_S	IO_ADDR(0x7D8)	/* word, RW */
 
 
 /* SIO status bitmask */
@@ -159,4 +165,4 @@
 0xF1C-0xF1F LED3
 */
 
-#endif /* !_IO_H_ */
+#endif /* !_DEV_IO_H_ */
