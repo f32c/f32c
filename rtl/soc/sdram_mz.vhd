@@ -39,7 +39,7 @@
 -- Reads  17 cycles = 5,882,352 reads/sec  = 23.5MB/s (excl. refresh overhead)
 --
 -- For 1:1 mixed reads and writes into the same row it is around 88MB/s 
--- For reads or wries to the same it is can be as high as 184MB/s 
+-- For reads or writes to the same it can be as high as 184MB/s 
 ----------------------------------------------------------------------------------
 
 library IEEE;
@@ -111,10 +111,10 @@ architecture Behavioral of SDRAM_Controller is
     constant CMD_LOAD_MODE_REG : std_logic_vector(3 downto 0) := "0000";
 
     constant MODE_REG_CAS_2    : std_logic_vector(12 downto 0) := 
-    -- Reserved, wr bust, OpMode, CAS Latency (2), Burst Type, Burst Length (2)
+    -- Reserved, wr burst, OpMode, CAS Latency (2), Burst Type, Burst Length (2)
       "000" &   "0"  &  "00"  &    "010"      &     "0"    &   "001";
     constant MODE_REG_CAS_3    : std_logic_vector(12 downto 0) := 
-    -- Reserved, wr bust, OpMode, CAS Latency (3), Burst Type, Burst Length (2)
+    -- Reserved, wr burst, OpMode, CAS Latency (3), Burst Type, Burst Length (2)
       "000" &   "0"  &  "00"  &    "011"      &     "0"    &   "001";
 
     signal iob_command     : std_logic_vector( 3 downto 0) := CMD_NOP;
