@@ -21,6 +21,9 @@
         <Source name="../../../../soc/sio.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
+        <Source name="../../../../soc/rtc.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
         <Source name="../../../../cpu/defs_f32c.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
