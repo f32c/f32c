@@ -58,6 +58,10 @@ architecture x of rtc is
 		eff_hz := 33333333;
 	    elsif mhz = 66 or mhz = 67 then
 		eff_hz := 66666667;
+	    elsif mhz = 93 or mhz = 94 then
+		eff_hz := 93750000;
+	    elsif mhz = 112 or mhz = 113 then
+		eff_hz := 112500000;
 	    elsif mhz = 133 then
 		eff_hz := 133333333;
 	    elsif mhz = 166 or mhz = 167 then
