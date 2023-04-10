@@ -30,6 +30,12 @@ ifeq ($(MAKECMDGOALS),crt0)
  .DEFAULT_GOAL = lib
 endif
 
+ifeq ($(MAKECMDGOALS),crt0rom)
+ LIB = crt0rom
+ CFLAGS += -DCRT0ROM
+ .DEFAULT_GOAL = lib
+endif
+
 ifeq ($(MAKECMDGOALS),c)
  LIB = c
  .DEFAULT_GOAL = lib
@@ -62,13 +68,17 @@ ifeq ($(LIB),crt0)
  ASFILES = ${ARCH}/start.S
 endif
 
+ifeq ($(LIB),crt0rom)
+ ASFILES = ${ARCH}/start.S
+endif
+
 ifeq ($(LIB),c)
  ifneq ($(ARCH),riscv)
   ASFILES = ${ARCH}/setjmp.S ${ARCH}/exception.S
  endif
 
- CFILES = assert.c atoi.c diskio.c div.c div64.c fatfs.c ffunicode.c \
-	file.c gets.c malloc.c memcmp.c memcpy.c memmove.c \
+ CFILES = asctime.c assert.c atoi.c diskio.c div.c div64.c fatfs.c \
+	ffunicode.c file.c gets.c malloc.c memcmp.c memcpy.c memmove.c \
 	memset.c mul.c printf.c qsort.c random.c sdcard.c sio_poll.c \
 	spi.c sprintf.c strcasecmp.c strcpy.c strncpy.c \
 	strstr.c strtok.c strtol.c
@@ -127,6 +137,7 @@ libs:
 	${MAKE} m
 	rm -fr ${OBJDIR}
 	${MAKE} ulx2s
+	rm -fr ${OBJDIR}
 
 clean: clean_lib_objs
 
