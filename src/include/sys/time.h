@@ -254,18 +254,7 @@ struct clockinfo {
 /* These macros are also in time.h. */
 #ifndef CLOCK_REALTIME
 #define CLOCK_REALTIME	0
-#define CLOCK_VIRTUAL	1
-#define CLOCK_PROF	2
-#define CLOCK_MONOTONIC	4
-#define CLOCK_UPTIME	5		/* FreeBSD-specific. */
-#define CLOCK_UPTIME_PRECISE	7	/* FreeBSD-specific. */
-#define CLOCK_UPTIME_FAST	8	/* FreeBSD-specific. */
-#define CLOCK_REALTIME_PRECISE	9	/* FreeBSD-specific. */
-#define CLOCK_REALTIME_FAST	10	/* FreeBSD-specific. */
-#define CLOCK_MONOTONIC_PRECISE	11	/* FreeBSD-specific. */
-#define CLOCK_MONOTONIC_FAST	12	/* FreeBSD-specific. */
-#define CLOCK_SECOND	13		/* FreeBSD-specific. */
-#define CLOCK_THREAD_CPUTIME_ID	14
+#define CLOCK_MONOTONIC	1
 #endif
 
 #ifndef TIMER_ABSTIME
@@ -274,17 +263,6 @@ struct clockinfo {
 #endif
 
 #ifdef _KERNEL
-
-/*
- * Kernel to clock driver interface.
- */
-void	inittodr(time_t base);
-void	resettodr(void);
-
-extern volatile time_t	time_second;
-extern volatile time_t	time_uptime;
-extern struct bintime boottimebin;
-extern struct timeval boottime;
 
 /*
  * Functions for looking at our clock: [get]{bin,nano,micro}[up]time()
@@ -332,7 +310,9 @@ int	ratecheck(struct timeval *, const struct timeval *);
 void	timevaladd(struct timeval *t1, const struct timeval *t2);
 void	timevalsub(struct timeval *t1, const struct timeval *t2);
 int	tvtohz(struct timeval *tv);
+
 #else /* !_KERNEL */
+
 #include <time.h>
 
 #include <sys/cdefs.h>

@@ -91,20 +91,7 @@ typedef	__timer_t	timer_t;
 /* These macros are also in sys/time.h. */
 #if !defined(CLOCK_REALTIME) && __POSIX_VISIBLE >= 200112
 #define CLOCK_REALTIME	0
-#ifdef __BSD_VISIBLE
-#define CLOCK_VIRTUAL	1
-#define CLOCK_PROF	2
-#endif
-#define CLOCK_MONOTONIC	4
-#define CLOCK_UPTIME	5		/* FreeBSD-specific. */
-#define CLOCK_UPTIME_PRECISE	7	/* FreeBSD-specific. */
-#define CLOCK_UPTIME_FAST	8	/* FreeBSD-specific. */
-#define CLOCK_REALTIME_PRECISE	9	/* FreeBSD-specific. */
-#define CLOCK_REALTIME_FAST	10	/* FreeBSD-specific. */
-#define CLOCK_MONOTONIC_PRECISE	11	/* FreeBSD-specific. */
-#define CLOCK_MONOTONIC_FAST	12	/* FreeBSD-specific. */
-#define CLOCK_SECOND	13		/* FreeBSD-specific. */
-#define CLOCK_THREAD_CPUTIME_ID	14
+#define CLOCK_MONOTONIC	1
 #endif /* !defined(CLOCK_REALTIME) && __POSIX_VISIBLE >= 200112 */
 
 #if !defined(TIMER_ABSTIME) && __POSIX_VISIBLE >= 200112
@@ -120,7 +107,7 @@ struct tm {
 	int	tm_hour;	/* hours since midnight [0-23] */
 	int	tm_mday;	/* day of the month [1-31] */
 	int	tm_mon;		/* months since January [0-11] */
-	int	tm_year;	/* years since 1900 */
+	int	tm_year;	/* years since 1 BC */
 	int	tm_wday;	/* days since Sunday [0-6] */
 	int	tm_yday;	/* days since January 1 [0-365] */
 	int	tm_isdst;	/* Daylight Savings Time flag */
