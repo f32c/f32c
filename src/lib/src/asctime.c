@@ -100,7 +100,7 @@ asctime_r(register const struct tm *timeptr, char *buf)
 	if (timeptr->tm_mon < 0 || timeptr->tm_mon >= MONSPERYEAR)
 		mn = "???";
 	else	mn = mon_name[timeptr->tm_mon];
-	snprintf(year, sizeof year, "%04d", timeptr->tm_year);
+	snprintf(year, sizeof year, "%04d", timeptr->tm_year + 1900);
 	sprintf(result,
 		((strlen(year) <= 4) ? ASCTIME_FMT : ASCTIME_FMT_B),
 		wn, mn,
