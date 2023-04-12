@@ -23,6 +23,8 @@
  * SUCH DAMAGE.
  */
 
+#include <time.h>
+
 #include <dev/io.h>
 #include <dev/sdcard.h>
 #include <dev/spi.h>
@@ -374,6 +376,16 @@ disk_ioctl(BYTE drive, BYTE cmd, void* buf)
 DWORD
 get_fattime(void)
 {
+	time_t t;
+	struct tm tm;
+	DWORD res;
 
-	return (0);
+	t = time(NULL);
+	gmtime_r(&t, &tm);
+
+	res = (tm.tm_year - 80) << 25 | (tm.tm_mon + 1) << 21
+	    | tm.tm_mday << 16 | tm.tm_hour << 11
+	    | tm.tm_min << 5 | tm.tm_sec >> 1;
+
+	return (res);
 }
