@@ -1,6 +1,5 @@
 --
--- Copyright (c) 2013 - 2015 Marko Zec, University of Zagreb
--- All rights reserved.
+-- Copyright (c) 2013 - 2023 Marko Zec
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -39,6 +38,7 @@ entity sio is
 	C_break_detect: boolean := false;
 	C_break_detect_delay_ms: integer := 200;
 	C_break_resets_baudrate: boolean := false;
+	C_rx_fifo_bits: natural := 5;
 	C_tx_only: boolean := false
     );
     port (
@@ -107,9 +107,10 @@ architecture Behavioral of sio is
     signal R_rx_full: std_logic;
     signal R_rx_byte: std_logic_vector(7 downto 0);
 
-    type rx_fifo_type is array(0 to 15) of std_logic_vector(7 downto 0);
+    type rx_fifo_type is array(0 to 2 ** C_rx_fifo_bits - 1) of
+      std_logic_vector(7 downto 0);
     signal M_rx_fifo: rx_fifo_type;
-    signal R_rx_inpos, R_rx_outpos: std_logic_vector(3 downto 0);
+    signal R_rx_rd_i, R_rx_wr_i: std_logic_vector(C_rx_fifo_bits - 1 downto 0);
 
 begin
 
@@ -148,9 +149,16 @@ begin
 			R_tx_phase <= x"1";
 			R_tx_ser <= bus_in(7 downto 0) & '0';
 		    end if;
-		elsif bus_write = '0' and byte_sel(0) = '1' then
-		    R_rx_full <= '0';
+		elsif bus_write = '0' and byte_sel(0) = '1'
+		  and R_rx_full = '1' then
+		    R_rx_rd_i <= R_rx_rd_i + 1;
 		end if;
+	    end if;
+	    if R_rx_rd_i = R_rx_wr_i then
+		R_rx_full <= '0';
+	    else
+		R_rx_full <= '1';
+		R_rx_byte <= M_rx_fifo(conv_integer(R_rx_rd_i));
 	    end if;
 
 	    -- baud generator
@@ -190,8 +198,10 @@ begin
 			R_rx_phase <= R_rx_phase + 1;
 			if R_rx_phase = x"9" then
 			    R_rx_phase <= x"0";
-			    R_rx_full <= '1';
-			    R_rx_byte <= R_rx_des;
+			    M_rx_fifo(conv_integer(R_rx_wr_i)) <= R_rx_des;
+			    if R_rx_wr_i + 1 /= R_rx_rd_i then
+				R_rx_wr_i <= R_rx_wr_i + 1;
+			    end if;
 			end if;
 		    end if;
 		end if;
