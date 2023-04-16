@@ -5,6 +5,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_ARITH.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use ieee.numeric_std.all; -- we need signed type
 
 use work.f32c_pack.all;
 
@@ -26,6 +27,7 @@ entity de10lite_xram_sdram is
         C_acram: boolean := false;
         C_sdram: boolean := true;
 
+		  
         C_vector: boolean := true; -- vector processor unit (wip)
         C_vector_axi: boolean := false; -- vector processor bus type (false: normal f32c)
         C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
@@ -66,9 +68,9 @@ entity de10lite_xram_sdram is
         --hdmi_clk: out std_logic;
         -- SDRAM
         dram_addr: out std_logic_vector(12 downto 0);
-        dram_dq: inout std_logic_vector(15 downto 0);
+        dram_dq: inout std_logic_vector(31 downto 0);
         dram_ba: out std_logic_vector(1 downto 0);
-        dram_dqm: out std_logic_vector(1 downto 0);
+        dram_dqm: out std_logic_vector(3 downto 0);
         dram_ras_n, dram_cas_n: out std_logic;
         dram_cke: out std_logic;
         dram_clk: out std_logic;
@@ -185,8 +187,10 @@ begin
       acram_data_rd(31 downto 0) => ram_data_read(31 downto 0),
       acram_data_wr(31 downto 0) => ram_data_write(31 downto 0),
       acram_ready => ram_ready,
-      sdram_addr => dram_addr, sdram_data => dram_dq,
-      sdram_ba => dram_ba, sdram_dqm => dram_dqm,
+      sdram_addr => dram_addr, 
+		sdram_data => dram_dq,
+      sdram_ba => dram_ba, 
+		sdram_dqm => dram_dqm,
       sdram_ras => dram_ras_n, sdram_cas => dram_cas_n,
       sdram_cke => dram_cke, sdram_clk => dram_clk,
       sdram_we => dram_we_n, sdram_cs => dram_cs_n,
@@ -244,3 +248,4 @@ begin
     --  );
 
 end Behavioral;
+	    
