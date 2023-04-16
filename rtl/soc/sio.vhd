@@ -23,8 +23,6 @@
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
 --
--- $Id$
---
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -39,10 +37,9 @@ entity sio is
 	C_init_baudrate: integer := 115200;
 	C_fixed_baudrate: boolean := false;
 	C_break_detect: boolean := false;
-        C_break_detect_delay_ms: integer := 200; -- ms (milliseconds) serial break
+	C_break_detect_delay_ms: integer := 200;
 	C_break_resets_baudrate: boolean := false;
-	C_tx_only: boolean := false;
-	C_bypass: boolean := false
+	C_tx_only: boolean := false
     );
     port (
 	ce, clk: in std_logic;
@@ -87,7 +84,6 @@ architecture Behavioral of sio is
     constant C_break_detect_bits: integer := integer(ceil((log2(real(C_break_detect_delay_ms * C_clk_freq * 1000 * 8/7)))+1.0E-16));
     constant C_break_detect_count: integer := 7 * 2**(C_break_detect_bits-3); -- number of clock ticks for break detection
     constant C_break_detect_delay_ticks: integer := C_break_detect_delay_ms * C_clk_freq * 1000;
-    constant C_break_detect_incr: integer := 1;
     constant C_break_detect_start: std_logic_vector(C_break_detect_bits-1 downto 0) :=
       std_logic_vector(to_unsigned(C_break_detect_count-C_break_detect_delay_ticks, C_break_detect_bits)); 
       -- counter resets to this value (fine tuning parameter for break detect delay) 
@@ -112,23 +108,6 @@ architecture Behavioral of sio is
     signal rx_break_tickcnt: std_logic_vector(C_break_detect_bits-1 downto 0) := C_break_detect_start;
 begin
 
-    G_bypass:
-    if C_bypass generate
-    process(clk)
-    begin
-	if rising_edge(clk) then
-	    R_rxd <= rxd;
-	    if ce = '1' and bus_write = '1' and byte_sel(0) = '1' then
-		tx_running <= bus_in(0);
-	    end if;
-	end if;
-    end process;
-    bus_out <= "-------------------------------" & R_rxd;
-    txd <= tx_running;
-    end generate;
-
-    G_sio:
-    if not C_bypass generate
     --
     -- rx / tx phases:
     --	"0000" idle
@@ -216,12 +195,12 @@ begin
 	    -- break detect logic
 	    if C_break_detect and R_rxd = '0' then
 		if rx_break_tickcnt(C_break_detect_bits-1 downto C_break_detect_bits-4) /= x"f" then
-		    rx_break_tickcnt <= rx_break_tickcnt + C_break_detect_incr;
+		    rx_break_tickcnt <= rx_break_tickcnt + 1;
 		end if;
 	    elsif C_break_detect then
 		if rx_break_tickcnt(C_break_detect_bits-1 downto C_break_detect_bits-3) = "111" then
 		    R_break <= '1';
-		    rx_break_tickcnt <= rx_break_tickcnt - C_break_detect_incr;
+		    rx_break_tickcnt <= rx_break_tickcnt - 1;
 		    if C_break_resets_baudrate then
 			R_baudrate <= F_baud_init(C_clk_freq, C_init_baudrate);
 		    end if;
@@ -232,5 +211,4 @@ begin
 	    end if;
 	end if;
     end process;
-    end generate;
 end Behavioral;
