@@ -68,7 +68,11 @@ clock_gettime(clockid_t clk_id, struct timespec *tp) {
 
 	INW(sec, IO_RTC_BOOTTIME_S);
 	tp->tv_sec += sec;
-	return (0);
+	if (sec)
+		return (0);
+	tp->tv_sec = 0;
+	tp->tv_nsec = 0;
+	return (-1);
 }
 
 

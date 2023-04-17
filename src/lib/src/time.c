@@ -38,10 +38,12 @@ time(time_t *res)
 	time_t t;
 	uint32_t sec;
 
-	INW(sec, IO_RTC_UPTIME_S);
-	t = sec;
 	INW(sec, IO_RTC_BOOTTIME_S);
-	t += sec;
+	t = sec;
+	if (t != 0) {
+		INW(sec, IO_RTC_UPTIME_S);
+		t += sec;
+	}
 	if (res != NULL)
 		*res = t;
 	return (t);
