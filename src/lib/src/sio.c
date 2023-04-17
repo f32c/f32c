@@ -21,15 +21,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #include <dev/io.h>
 #include <dev/sio.h>
 #include <sys/isr.h>
 
-#define	SIO_RXBUFSIZE	(1 << 4)
+#define	SIO_RXBUFSIZE	(1 << 5)
 #define	SIO_RXBUFMASK	(SIO_RXBUFSIZE - 1)
 
 static int sio_rx_isr(void);
@@ -39,35 +37,51 @@ struct isr_link sio_isr_link = {
 };
 
 static char sio_rxbuf[SIO_RXBUFSIZE];
-static uint8_t sio_rxbuf_head;	/* Managed by sio_rx_isr() */
-static uint8_t sio_rxbuf_tail;	/* Managed by sio_getchar() */
+static uint32_t sio_rxbuf_head;	/* Managed by sio_rx_isr() */
+static uint32_t sio_rxbuf_tail;	/* Managed by sio_getchar() */
 static uint8_t sio_tx_xoff;
 static uint8_t sio_isr_registered;
+
+uint32_t sio_hw_rx_overruns;
+uint32_t sio_sw_rx_overruns;
 
 
 static __attribute__((optimize("-Os"))) int
 sio_rx_isr(void)
 {
-	int c, s;
+	uint32_t c, s, sio_rxbuf_head_next;
 
-	INB(s, IO_SIO_STATUS);
-	if ((s & SIO_RX_FULL) == 0)
-		return (0);
+	do {
+		INB(s, IO_SIO_STATUS);
+		if (s >> 4 != 0) {
+			sio_hw_rx_overruns += (s >> 4) & 0xf;
+			OUTB(IO_SIO_STATUS, 0);
+		}
 
-	INB(c, IO_SIO_BYTE);
-	if (c == 0x13) {
-		/* XOFF */
-		sio_tx_xoff = 1;
-		return (1);
-	}
-	if (c == 0x11) {
-		/* XON */
-		sio_tx_xoff = 0;
-		return (1);
-	}
-	sio_rxbuf[sio_rxbuf_head++] = c;
-	sio_rxbuf_head &= SIO_RXBUFMASK;
-	return(1);
+		if ((s & SIO_RX_FULL) == 0)
+			return (1);
+
+		INB(c, IO_SIO_BYTE);
+		if (c == 0x13) {
+			/* XOFF */
+			sio_tx_xoff = 1;
+			continue;
+		}
+		if (c == 0x11) {
+			/* XON */
+			sio_tx_xoff = 0;
+			continue;
+		}
+
+		sio_rxbuf_head_next = (sio_rxbuf_head + 1) & SIO_RXBUFMASK;
+		if (sio_rxbuf_head_next == sio_rxbuf_tail) {
+			sio_sw_rx_overruns++;
+			continue;
+		}
+
+		sio_rxbuf[sio_rxbuf_head] = c;
+		sio_rxbuf_head = sio_rxbuf_head_next;
+	} while (1);
 }
 
 
@@ -86,7 +100,7 @@ __attribute__((weak, optimize("-Os"))) int
 sio_getchar(int blocking)
 {
 	int c, busy;
-	volatile uint8_t *head_ptr = &sio_rxbuf_head;
+	volatile uint32_t *head_ptr = &sio_rxbuf_head;
 
 	if (!sio_isr_registered)
 		sio_register_isr();
