@@ -21,29 +21,39 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #include <dev/io.h>
 #include <dev/sio.h>
 
-#define	SIO_RXBUFSIZE	(1 << 3)
+#define	SIO_RXBUFSIZE	(1 << 5)
 #define	SIO_RXBUFMASK	(SIO_RXBUFSIZE - 1)
 
 static char sio_rxbuf[SIO_RXBUFSIZE];
-static uint8_t sio_rxbuf_head;
-static uint8_t sio_rxbuf_tail;
+static uint32_t sio_rxbuf_head; /* Managed by sio_probe_rx() */
+static uint32_t sio_rxbuf_tail; /* Managed by sio_getchar() */
 static uint8_t sio_tx_xoff;
+
+uint32_t sio_hw_rx_overruns;
+uint32_t sio_sw_rx_overruns;
 
 
 __attribute__((optimize("-Os"))) int
 sio_probe_rx(void)
 {
-	int c, s;
+	uint32_t c, s, sio_rxbuf_head_next;
 
-	INB(s, IO_SIO_STATUS);
-	if (s & SIO_RX_FULL) {
+	do {
+		INB(s, IO_SIO_STATUS);
+		if (s >> 4 != 0) {
+			sio_hw_rx_overruns += (s >> 4) & 0xf;
+			OUTB(IO_SIO_STATUS, 0);
+		}
+
+		s &= (SIO_TX_BUSY | SIO_RX_FULL);
+		if ((s & SIO_RX_FULL) == 0)
+			return (s);
+
 		INB(c, IO_SIO_BYTE);
 		if (c == 0x13) {
 			/* XOFF */
@@ -55,10 +65,16 @@ sio_probe_rx(void)
 			sio_tx_xoff = 0;
 			return(s);
 		}
-		sio_rxbuf[sio_rxbuf_head++] = c;
-		sio_rxbuf_head &= SIO_RXBUFMASK;
-	}
-	return(s);
+
+		sio_rxbuf_head_next = (sio_rxbuf_head + 1) & SIO_RXBUFMASK;
+		if (sio_rxbuf_head_next == sio_rxbuf_tail) {
+			sio_sw_rx_overruns++;
+			continue;
+		}
+
+		sio_rxbuf[sio_rxbuf_head] = c;
+		sio_rxbuf_head = sio_rxbuf_head_next;
+	} while (1);
 }
 
 
