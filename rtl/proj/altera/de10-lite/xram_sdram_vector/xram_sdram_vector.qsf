@@ -42,7 +42,7 @@ set_global_assignment -name DEVICE 10M50DAF484C7G
 set_global_assignment -name TOP_LEVEL_ENTITY de10lite_xram_sdram
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 16.1.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "13:54:38  DECEMBER 26, 2016"
-set_global_assignment -name LAST_QUARTUS_VERSION "16.1.0 Lite Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "20.1.1 Lite Edition"
 # -------------------------------------------------------------------------- #
 #set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
@@ -305,11 +305,46 @@ set_location_assignment PIN_AA2 -to GPIO[35]
 
 
 set_global_assignment -name ADV_NETLIST_OPT_SYNTH_GATE_RETIME ON
+set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
+set_global_assignment -name VHDL_FILE ../../../../soc/sdram32.vhd
+set_global_assignment -name SOURCE_FILE "../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/parselib.py"
+set_global_assignment -name VERILOG_FILE "../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee_adder.v"
+set_global_assignment -name VERILOG_FILE "../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/ieee.v"
+set_global_assignment -name SOURCE_FILE "../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/generate.py"
+set_global_assignment -name VERILOG_FILE "../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/defines.v"
+set_global_assignment -name SOURCE_FILE "../../../../soc/vector/fpu/add_sub_emiraga/ieee754-verilog/src/config.py"
+set_global_assignment -name VHDL_FILE ../../../../generic/glue_xram_vector.vhd
+set_global_assignment -name VHDL_FILE ../../../../altera/ffm/top/top_xram_sdram_lc_dvi.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/ram_emu.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/fm/fir.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/fb.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sdram_mz_wrap.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/vgahdmi/i2c_sender_adv7513.vhd
+set_global_assignment -name VHDL_FILE ../../../../altera/chip/cyclone5/dvi_lvds.vhd
+set_global_assignment -name VHDL_FILE ../../../../altera/ffm/clocks/clk_148M44p_148M44n_29M69_79M16_98M96.vhd
+set_global_assignment -name VHDL_FILE ../../../../altera/ffm/clocks/clk_250_25_75_100.vhd
+set_global_assignment -name VHDL_FILE ../../../../altera/ffm/clocks/clk_125p_125n_25_75_100.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/vector/fpu/add_sub_emiraga/add_sub_emiraga.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/i2s.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/spdif_tx.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sigmadelta.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/synth.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/dacpwm.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/vgahdmi/vga2lcd35.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/usb11_phy/usb_rx_phy_emard.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/usb11_phy/usb_rx_phy_48MHz.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/usb11_phy/usb_tx_phy.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/usb11_phy/usb_phy.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/usb_serial/usb_serial.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/usb_serial/usb_packet.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/usb_serial/usb_init.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/usb_serial/usb_control.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/usb_serial/usb_transact.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/usb_serial/usbsio.vhd
 set_global_assignment -name SOURCE_FILE ../../../../altera/de10lite/top/top_de10lite_xram_sdram_vector.vhd
 set_global_assignment -name SOURCE_FILE ../../../../altera/de10lite/clocks/clk_50M_25M_125MP_125MN_100M_83M33.vhd
 set_global_assignment -name SOURCE_FILE ../../../../altera/de10lite/clocks/clk_50M_25M_250M_75M.vhd
 set_global_assignment -name SOURCE_FILE ../../../../generic/hdmi_out.vhd
-set_global_assignment -name SOURCE_FILE ../../../../generic/glue_xram_vector.vhd
 set_global_assignment -name SOURCE_FILE ../../../../generic/bram.vhd
 set_global_assignment -name SOURCE_FILE ../../../../generic/bootloader/defs_bootblock1k.vhd
 set_global_assignment -name SOURCE_FILE ../../../../generic/bootloader/boot_sio_mi32el.vhd
@@ -402,5 +437,5 @@ set_global_assignment -name SOURCE_FILE ../../../../soc/vector/fpu/mul/common/fp
 set_global_assignment -name SOURCE_FILE ../../../../soc/vector/fpu/mul/common/fpround_fpround.vhd
 set_global_assignment -name SOURCE_FILE ../../../../soc/vector/fpu/mul/common/packfp_packfp.vhd
 set_global_assignment -name SOURCE_FILE ../../../../soc/vector/fpu/mul/common/unpackfp_unpackfp.vhd
-set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
+set_global_assignment -name SOURCE_FILE db/xram_sdram_vector.cmp.rdb
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
