@@ -39,7 +39,10 @@ void qsort(void *, size_t, size_t, int (*)(const void *, const void *));
 uint32_t random(void);
 void srand(unsigned);
 
+int abs(int) __pure2;
 int atoi(const char *);
+
+long labs(long) __pure2;
 
 void *malloc(size_t size);
 void *realloc(void *ptr, size_t size);

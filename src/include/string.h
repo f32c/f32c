@@ -26,6 +26,7 @@
 #ifndef	_STRING_H_
 #define	_STRING_H_
 
+char *strcat(char * __restrict, const char * __restrict);
 char *strstr(const char *, const char *) __pure;
 char *strtok(char * __restrict, const char * __restrict);
 char *strtok_r(char *, const char *, char **);
