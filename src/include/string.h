@@ -139,7 +139,7 @@ strcmp(const char *s1, const char *s2)
 }
 
 
-static inline void
+static inline void *
 _memcpy(void *dst, const void *src, int len)
 {
 	char *dst1 = (char *) dst;
@@ -147,6 +147,8 @@ _memcpy(void *dst, const void *src, int len)
 
 	while (len--)
 		*dst1++ = *src1++;
+
+	return (dst);
 }
 
 
