@@ -2,6 +2,7 @@
 <BaliProject version="3.2" title="project" device="LFE5U-12F-7BG381C" default_implementation="project">
     <Options/>
     <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Strategy1">
+        <Options def_top="simple_ADC" top="ulx3s_xram_sdram_vector"/>
         <Source name="../../../../lattice/ulx3s/top/top_ulx3s_12f_xram_sdram.vhd" type="VHDL" type_short="VHDL">
             <Options top_module="ulx3s_xram_sdram_vector"/>
         </Source>
