@@ -415,6 +415,11 @@
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../../../soc/rtc.vhd">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../../../soc/gpio.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>

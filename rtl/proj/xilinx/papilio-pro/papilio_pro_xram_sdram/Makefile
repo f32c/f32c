@@ -65,6 +65,7 @@ vhdfiles = \
 ../../../../soc/sdram_mz_wrap.vhd \
 ../../../../soc/sio.vhd \
 ../../../../soc/spi.vhd \
+../../../../soc/rtc.vhd \
 ../../../../soc/gpio.vhd \
 ../../../../soc/timer.vhd \
 ../../../../soc/pcm.vhd \

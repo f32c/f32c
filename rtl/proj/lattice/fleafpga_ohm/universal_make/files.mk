@@ -56,6 +56,7 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../soc/gpio.vhd \
   ../../../../soc/timer.vhd \
   ../../../../soc/spi.vhd \
+  ../../../../soc/rtc.vhd \
   ../../../../soc/pid/ctrlpid.vhd \
   ../../../../soc/pid/pid.vhd  \
   ../../../../soc/pid/rotary_decoder.vhd \

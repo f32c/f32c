@@ -68,6 +68,7 @@ vhdfiles = \
 ../../../../soc/ps2.vhd \
 ../../../../soc/sio.vhd \
 ../../../../soc/spi.vhd \
+../../../../soc/rtc.vhd \
 ../../../../soc/gpio.vhd \
 ../../../../soc/timer.vhd \
 ../../../../soc/pcm.vhd \

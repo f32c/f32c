@@ -73,6 +73,7 @@ SRCS = \
 ../../../../soc/sdram.vhd \
 ../../../../soc/sdram_mz.vhd \
 ../../../../soc/sdram_pack.vhd \
+../../../../soc/rtc.vhd \
 ../../../../soc/sio.vhd \
 ../../../../soc/spi.vhd \
 ../../../../soc/gpio.vhd \

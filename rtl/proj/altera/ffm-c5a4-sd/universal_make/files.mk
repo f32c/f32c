@@ -48,6 +48,7 @@ $(TOPLEVEL_FILE) \
 ../../../../soc/sdram_pack.vhd \
 ../../../../soc/sio.vhd \
 ../../../../soc/spi.vhd \
+../../../../soc/rtc.vhd \
 ../../../../soc/usb_serial/usbsio.vhd \
 ../../../../soc/usb_serial/usb_serial.vhd \
 ../../../../soc/usb_serial/usb_init.vhd \

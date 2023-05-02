@@ -75,6 +75,7 @@ SRCS = \
 ../../../../soc/axi_read.vhd \
 ../../../../soc/dacpwm.vhd \
 ../../../../soc/i2s.vhd \
+../../../../soc/rtc.vhd \
 ../../../../soc/spdif_tx.vhd \
 ../../../../soc/sigmadelta.vhd \
 ../../../../soc/synth.vhd \
