@@ -118,6 +118,7 @@ generic (
   C_spi_fixed_speed: std_logic_vector := "1111";
   C_simple_in: integer range 0 to 128 := 32;
   C_simple_out: integer range 0 to 128 := 32;
+  C_rtc: boolean := true;
   -- video hardware output settings
   C_dvid_ddr: boolean := false; -- false: generate digital video from 250MHz SDR single edge, true: digital video from 125MHz DDR double edge
   -- C_lvds_display:
@@ -570,6 +571,12 @@ architecture Behavioral of glue_xram is
     signal pid_encoder_b_out: std_logic_vector(C_pids-1 downto 0);
     constant C_pids_bits: integer := integer(floor((log2(real(C_pids)+0.001))+0.5));
 
+    -- RTC
+    constant C_io_rtc: T_iomap_range := (x"FF80", x"FF8F");
+    signal rtc_io_range: boolean;
+    signal rtc_ce: std_logic;
+    signal from_rtc: std_logic_vector(31 downto 0);
+
     -- Serial I/O (RS232)
     constant iomap_sio: T_iomap_range := (x"FB00", x"FB3F");
     signal sio_range: std_logic := '0';
@@ -1017,6 +1024,26 @@ begin
     end generate;
 
     --
+    -- RTC
+    --
+    G_rtc: if C_rtc generate
+    I_rtc: entity work.rtc
+    generic map (
+	C_clk_freq_mhz => C_clk_freq
+    )
+    port map (
+	clk => clk, ce => rtc_ce,
+	bus_addr => io_addr(3 downto 2),
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_rtc
+    );
+    rtc_ce <= io_addr_strobe when rtc_io_range else '0';
+    with conv_integer(io_addr(11 downto 4)) select rtc_io_range <= true
+      when iomap_from(C_io_rtc, iomap_range) to iomap_to(C_io_rtc, iomap_range),
+      false when others;
+    end generate;
+
+    --
     -- Simple I/O
     --
     process(clk)
@@ -1054,7 +1081,8 @@ begin
     end generate;
 
     -- big address decoder when CPU reads IO
-    process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio, from_vga_textmode)
+    process(io_addr, R_simple_in, R_simple_out, from_sio, from_rtc, from_spi,
+      from_timer, from_gpio, from_vga_textmode)
         variable i: integer;
     begin
         io_to_cpu <= (others => '-');
@@ -1128,6 +1156,8 @@ begin
             else
                 io_to_cpu <= (others => '-');
             end if;
+	when iomap_from(C_io_rtc, iomap_range) to iomap_to(C_io_rtc, iomap_range) =>
+	    io_to_cpu <= from_rtc;
         when others  =>
             io_to_cpu <= (others => '-');
         end case;
