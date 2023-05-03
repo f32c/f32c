@@ -33,13 +33,10 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- *
- *	from: src/sys/i386/include/_stdint.h,v 1.2 2004/05/18 16:04:57 stefanf
- * $FreeBSD: stable/9/sys/mips/include/_stdint.h 218266 2011-02-04 13:09:46Z tijl $
  */
 
-#ifndef _SYS_STDINT_H_
-#define	_SYS_STDINT_H_
+#ifndef _STDINT_H_
+#define	_STDINT_H_
 
 #if !defined(__cplusplus) || defined(__STDC_CONSTANT_MACROS)
 
@@ -199,4 +196,4 @@ typedef	__uintmax_t		uintmax_t;
 
 #endif /* !defined(__cplusplus) || defined(__STDC_LIMIT_MACROS) */
 
-#endif /* !_SYS_STDINT_H_ */
+#endif /* !_STDINT_H_ */
