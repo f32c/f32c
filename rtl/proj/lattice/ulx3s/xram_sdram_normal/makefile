@@ -20,8 +20,10 @@ FLASH_CHIP = is25lp128f
 #CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_uncompressed.lpf
 # special for self-test
 #CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_selftest.lpf
-# special for single-ended single-data-rate digital video
+# special for single-ended single-data-rate digital video, older boards v2.0.x ... v3.0.8
 CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_segpdi.lpf
+# newer boards >= v3.1.6
+#CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v316.lpf
 # special user has no flash access
 #CONSTRAINTS = ../../constraints/ulx3s_options/ulx3s_v20_jtagflash.lpf
 # first ULX3S prototypes v1.7 boards with patched ESP32 connection
@@ -63,9 +65,10 @@ include ../universal_make/files.mk
 
 BITSTREAM = \
 $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).bit \
-$(BOARD)_$(FPGA_SIZE)f_$(PROJECT).vme \
 $(BOARD)_$(FPGA_SIZE)f_$(PROJECT).svf \
-$(BOARD)_$(FPGA_SIZE)f_$(PROJECT)_flash_$(FLASH_CHIP).vme
+
+#$(BOARD)_$(FPGA_SIZE)f_$(PROJECT).vme \
+#$(BOARD)_$(FPGA_SIZE)f_$(PROJECT)_flash_$(FLASH_CHIP).vme
 
 SCRIPTS = ../../include/scripts
 include $(SCRIPTS)/diamond_path.mk
