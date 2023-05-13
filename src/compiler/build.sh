@@ -19,7 +19,9 @@ F32C_TOOLCHAIN_DST_DIR=/tmp/f32c
 # XXX impossible to build statically linked binutils?
 # F32C_MAKEOPTIONS="LDFLAGS=-static"
 
-SUDO=sudo
+# Uncomment SUDO if you want the binaries directly installed into /usr/...
+#SUDO=su
+
 MAKE=make
 MAKE_JOBS=2
 
