@@ -33,7 +33,7 @@
         <Source name="../../../../cpu/shift.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../cpu/mul_iter.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../cpu/mul_dsp.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../cpu/loadalign.vhd" type="VHDL" type_short="VHDL">
