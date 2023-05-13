@@ -5,7 +5,7 @@ WARNS = 1
 
 # Override -Os, and turn on extra optimization efforts
 # 1.603 DMIPS/MHz with gcc-13.1
-DHRY_CFLAGS += -Ofast -fselective-scheduling
+DHRY_CFLAGS += -Ofast -fselective-scheduling -funroll-all-loops
 
 # Inlining functions is not permitted per Dhrystone rules!
 DHRY_CFLAGS += -fno-inline-functions -fno-inline-small-functions
