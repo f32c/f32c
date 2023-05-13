@@ -12,11 +12,11 @@ floating point vector processor, SPI, UART, PCM audio, GPIO, PWM outputs and a
 timer, as well as glue logic tailored for numerous popular FPGA development boards 
 from various manufacturers.
 
-In synthetic integer benchmarks the core yields 3.06 CoreMark/MHz
-and 1.63 DMIPS/MHz (1.81 DMIPS/MHz with function inlining) with code
-and data stored in on-chip block RAMs.  When configured with 16 KB of
-instruction and 4 KB of data cache, and with code and data stored in
-external SDRAM, the core yields 2.78 CoreMark/MHz and 1.31 DMIPS/MHz.
+In synthetic integer benchmarks the core yields 2.98 CoreMark/MHz
+and 1.62 DMIPS/MHz with code and data stored in on-chip block RAMs.
+When configured with 16 KB of instruction and 4 KB of data cache,
+and with code and data stored in external SDRAM, the core yields
+2.67 CoreMark/MHz and 1.34 DMIPS/MHz.
 
 A performance-tuned f32c SoC which includes a timer
 and an UART occupies only 1048 6-input LUTs, while still being able to
