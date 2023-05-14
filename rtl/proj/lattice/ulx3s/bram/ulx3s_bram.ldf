@@ -63,9 +63,6 @@
         <Source name="../../../../generic/bootloader/boot_rom_mi32el.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../lattice/ulx3s/clocks/pll_25_133_66_160_80.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../generic/bram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -79,6 +76,9 @@
             <Options/>
         </Source>
         <Source name="../../../../soc/spi.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../lattice/ulx3s/clocks/pll_25_169_112_96_84.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../constraints/ulx3s_fer.lpf" type="Logic Preference" type_short="LPF">
