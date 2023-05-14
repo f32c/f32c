@@ -93,9 +93,6 @@ bdirs()
 	DIR dir;
 	FILINFO finfo;
 	int fres;
-	static char lfn[_MAX_LFN + 1];
-	finfo.lfname = lfn;
-	finfo.lfsize = sizeof(lfn);
 #else
 	DIR *dir;
 	struct dirent *dp;
@@ -105,6 +102,8 @@ bdirs()
 	NULL_TERMINATE(st);
 
 #ifdef f32c
+	bzero(&dir, sizeof(dir));
+	bzero(&finfo, sizeof(finfo));
 	fres = f_opendir(&dir, st->strval);
 	if (fres != FR_OK) {
 		FREE_STR(st);
@@ -121,10 +120,7 @@ bdirs()
 	st->strlen = 0;
 #ifdef f32c
 	while (f_readdir(&dir, &finfo) == FR_OK && finfo.fname[0] != 0) {
-		if (lfn[0] == 0)
-			name = finfo.fname;
-		else
-			name = lfn;
+		name = finfo.fname;
 #else
 	while ((dp = readdir(dir)) != NULL) {
 		name = dp->d_name;

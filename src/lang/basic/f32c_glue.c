@@ -44,7 +44,7 @@
 #include "bas.h"
 
 
-int errno;
+int _errno;
 uint32_t freq_khz, tsc_hi, tsc_lo;
 
 
@@ -102,7 +102,7 @@ memcpy(void *dst, const void *src, size_t len)
 int *__error(void)
 {
 
-	return (&errno);
+	return (&_errno);
 }
 
 
@@ -157,23 +157,13 @@ syscall(int number __unused, ...)
 }
 
 
-time_t
-time(time_t *tloc)
-{
-	time_t t = 0;
-
-	if (tloc != NULL)
-		*tloc = t;
-	return (t);
-}
-
-
 static struct tm t;
 
 struct tm *
 localtime(const time_t *clock __unused)
 {
 
+printf("XXXX %s()\n", __FUNCTION__);
 	return (&t);
 }
 
@@ -182,6 +172,7 @@ char *
 ctime(const time_t *clock __unused)
 {
 
+printf("XXXX %s()\n", __FUNCTION__);
 	return ("");
 }
 
@@ -189,6 +180,8 @@ ctime(const time_t *clock __unused)
 void
 srand(unsigned seed __unused)
 {
+
+printf("XXXX %s()\n", __FUNCTION__);
 }
 
 
@@ -201,29 +194,6 @@ __assert(const char *func, const char *file, int lno, const char *expr)
 	while (1) {
 		exit(1);
 	}
-}
-
-
-/* XXX gcc -O3 yields an infinite loop (recursive jal memset): compiler bug? */
-__attribute__((optimize("-O2")))
-void *
-memset(void *b, int c, size_t len)
-{
-	char *cp = b;
-	int *ip = b;
-
-	c &= 0xff;
-	c |= (c << 8);
-	c |= (c << 16);
-
-	while (((int) cp & 3) && len-- > 0)
-		*cp++ = c;
-	for (;len >= 4; len -= 4)
-		*ip++ = c;
-	while (len-- > 0)
-		*cp++ = c;
-
-	return (b);
 }
 
 
@@ -242,32 +212,21 @@ do_ls(const char *path)
 	int c, filecnt = 0;
 	uint64_t totsize = 0;
 	char *fname;
-	static char lfn[_MAX_LFN + 1];
-	fno.lfname = lfn;
-	fno.lfsize = sizeof(lfn);
 
 	/* Open the directory */
+	bzero(&dir, sizeof(dir));
+	bzero(&fno, sizeof(fno));
 	fres = f_opendir(&dir, path);
 	if (fres != FR_OK)
 		return (fres);
-
-	printf("Directory for ");
-	if (*path == 0) {
-		f_getcwd(lfn, _MAX_LFN);
-		printf("%s\n", lfn);
-	} else
-		printf("%s\n", path);
+	printf("Directory for %s\n", path);
 
 	do {
 		/* Read a directory item */
 		fres = f_readdir(&dir, &fno);
 		if (fres != FR_OK || fno.fname[0] == 0)
 			break;
-
-		if (lfn[0] == 0)
-			fname = fno.fname;
-		else
-			fname = lfn;
+		fname = fno.fname;
 		if (fno.fattrib & AM_DIR)
 			printf("<DIR>       %s\n", fname);
 		else {
@@ -293,7 +252,7 @@ do_ls(const char *path)
 		return (-1);
 	printf("%u Kbytes in %d files, ",
 	    (uint32_t) (totsize / 1024), filecnt);
-	printf("%lu Kbytes free.\n",
+	printf("%u Kbytes free.\n",
 	    free_clust * fs->csize * (fs->ssize / 512) / 2);
 
 	return (fres);
