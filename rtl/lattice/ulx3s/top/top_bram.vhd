@@ -36,17 +36,18 @@ entity glue is
 	C_arch: integer := ARCH_MI32; -- either ARCH_MI32 or ARCH_RV32
 	C_big_endian: boolean := false;
 	C_mult_enable: boolean := true;
-	C_mul_reg: boolean := true;
+	C_mul_reg: boolean := false;
 	C_debug: boolean := false;
 
-	C_clk_freq: integer := 80;
+	C_clk_freq: integer := 84;
 
 	-- SoC configuration options
 	C_bram_size: integer := 32;
 	C_sio: integer := 1;
 	C_spi: integer := 0;
 	C_gpio: integer := 0;
-	C_simple_io: boolean := true
+	C_simple_io: boolean := true;
+	C_timer: boolean := false
     );
     port (
 	clk_25m: in std_logic;
@@ -61,7 +62,7 @@ end glue;
 
 architecture x of glue is
     signal clk, pll_lock: std_logic;
-    signal clk_133m, clk_66m, clk_160m, clk_80m: std_logic;
+    signal clk_112m5, clk_96m43, clk_84m34: std_logic;
     signal reset: std_logic;
     signal sio_break: std_logic;
 
@@ -80,7 +81,8 @@ begin
 	C_debug => C_debug,
 	C_sio => C_sio,
 	C_spi => C_spi,
-	C_gpio => C_gpio
+	C_gpio => C_gpio,
+	C_timer => C_timer
     )
     port map (
 	clk => clk,
@@ -94,25 +96,20 @@ begin
     R_simple_in <= sw & x"00" & '0' & not btn_pwr & btn_f2 & btn_f1
       & btn_up & btn_down & btn_left & btn_right when rising_edge(clk);
 
-    I_pll: entity work.pll
+    I_pll: entity work.pll_25m
     port map (
-	clki => clk_25m,
-	stdby => '0',
-	enclk_133m => '1',
-	enclk_66m => '1',
-	enclk_160m => '1',
-	enclk_80m => '1',
-	clk_133m => clk_133m,
-	clk_66m => clk_66m,
-	clk_160m => clk_160m,
-	clk_80m => clk_80m,
+	clk_25m => clk_25m,
+	clk_168m75 => open,
+	clk_112m5 => clk_112m5,
+	clk_96m43 => clk_96m43,
+	clk_84m34 => clk_84m34,
 	lock => pll_lock
     );
 
-    clk <= clk_160m when C_clk_freq = 160
-      else clk_133m when C_clk_freq = 133
-      else clk_80m when C_clk_freq = 80
-      else clk_66m;
+    clk <= clk_112m5 when C_clk_freq = 112
+      else clk_96m43 when C_clk_freq = 96
+      else clk_84m34 when C_clk_freq = 84
+      else '0';
     reset <= not pll_lock or sio_break;
 
 end x;

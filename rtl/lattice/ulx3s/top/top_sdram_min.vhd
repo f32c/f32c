@@ -10,7 +10,9 @@ use ecp5u.components.all;
 entity top_sdram is
     generic (
 	C_arch: natural := ARCH_MI32;
-	C_clk_freq: natural := 80
+	C_clk_freq: natural := 84;
+	C_icache_size: natural := 16;
+	C_dcache_size: natural := 16
     );
     port (
 	clk_25m: in std_logic;
@@ -82,7 +84,7 @@ end top_sdram;
 
 architecture x of top_sdram is
     signal clk, pll_lock: std_logic;
-    signal clk_133m, clk_66m, clk_160m, clk_80m: std_logic;
+    signal clk_112m5, clk_96m43, clk_84m34: std_logic;
     signal reset: std_logic;
     signal sio_break: std_logic;
     signal flash_sck: std_logic;
@@ -96,6 +98,8 @@ begin
     generic map (
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
+	C_icache_size => C_icache_size,
+	C_dcache_size => C_dcache_size,
 	C_spi => 3,
 	C_simple_out => 8,
 	C_simple_in => 20,
@@ -143,24 +147,19 @@ begin
     );
     flash_cen <= flash_csn;
 
-    I_pll: entity work.pll
+    I_pll: entity work.pll_25m
     port map (
-	clki => clk_25m,
-	stdby => '0',
-	enclk_133m => '1',
-	enclk_66m => '1',
-	enclk_160m => '1',
-	enclk_80m => '1',
-	clk_133m => clk_133m,
-	clk_66m => clk_66m,
-	clk_160m => clk_160m,
-	clk_80m => clk_80m,
-	lock => pll_lock 
+	clk_25m => clk_25m,
+	clk_168m75 => open,
+	clk_112m5 => clk_112m5,
+	clk_96m43 => clk_96m43,
+	clk_84m34 => clk_84m34,
+	lock => pll_lock
     );
 
-    clk <= clk_160m when C_clk_freq = 160
-      else clk_133m when C_clk_freq = 133
-      else clk_80m when C_clk_freq = 80
-      else clk_66m;
+    clk <= clk_112m5 when C_clk_freq = 112
+      else clk_96m43 when C_clk_freq = 96
+      else clk_84m34 when C_clk_freq = 84
+      else '0';
     reset <= not pll_lock or sio_break;
 end x;
