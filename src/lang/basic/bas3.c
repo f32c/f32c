@@ -334,23 +334,13 @@ ame:    if(j->mvalue < i){         /* current operator has higher */
 void
 tim()
 {
-#ifdef f32c
-	uint64_t tmp;
-#else
-	struct timeval tv;
+	struct timespec ts;
 	static uint64_t t0;
-#endif
 
-#ifdef f32c
-	tmp = tsc_hi;
-	tmp = (tmp << 32) + tsc_lo;
-	res.f = tmp / 1000.0 / freq_khz;
-#else
-	gettimeofday(&tv, NULL);
+	clock_gettime(CLOCK_MONOTONIC, &ts);
 	if (t0 == 0)
-		t0 = tv.tv_sec;
-	res.f = 1.0 * (tv.tv_sec - t0) + tv.tv_usec / 1000000.0;
-#endif
+		t0 = ts.tv_sec;
+	res.f = 1.0 * (ts.tv_sec - t0) + ts.tv_nsec / 1000000000.0;
 	vartype = RVAL;
 }
 
