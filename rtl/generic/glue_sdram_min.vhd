@@ -96,6 +96,13 @@ entity glue_sdram_min is
     port (
 	clk: in std_logic;
 	reset: in std_logic := '0';
+	xbus_addr: out std_logic_vector(31 downto 2);
+	xbus_strobe: out std_logic;
+	xbus_write: out std_logic;
+	xbus_byte_sel: out std_logic_vector(3 downto 0);
+	xbus_data_out: out std_logic_vector(31 downto 0);
+	xbus_data_in: in std_logic_vector(31 downto 0) := (others => '-');
+	xbus_ack: in std_logic := '1';
 	sdram_addr: out std_logic_vector(12 downto 0);
 	sdram_data: inout std_logic_vector(15 downto 0);
 	sdram_ba: out std_logic_vector(1 downto 0);
@@ -149,6 +156,9 @@ architecture Behavioral of glue_sdram_min is
     signal snoop_cycle: std_logic;
     signal snoop_addr: std_logic_vector(31 downto 2);
 
+    -- eXternal BUS (XBUS)
+    signal xbus_addr_range: boolean;
+
     -- I/O
     signal io_write: std_logic;
     signal io_byte_sel: std_logic_vector(3 downto 0);
@@ -157,7 +167,6 @@ architecture Behavioral of glue_sdram_min is
     signal io_addr_strobe: std_logic_vector((C_io_ports - 1) downto 0);
     signal next_io_port: integer range 0 to (C_io_ports - 1);
     signal R_cur_io_port: integer range 0 to (C_io_ports - 1);
-
 
     function F_init_PC(cpuid: integer) return std_logic_vector is
     begin
@@ -304,16 +313,14 @@ begin
     for cpu in 0 to (C_cpus - 1) loop
 	data_port := cpu;
 	instr_port := C_cpus + cpu;
+	sdram_data_strobe := '0';
+	sdram_instr_strobe := '0';
 
 	if dmem_addr(cpu)(31 downto 28) = x"8" then
 	    sdram_data_strobe := dmem_addr_strobe(cpu);
-	else
-	    sdram_data_strobe := '0';
 	end if;
 	if imem_addr(cpu)(31 downto 28) = x"8" then
 	    sdram_instr_strobe := imem_addr_strobe(cpu);
-	else
-	    sdram_instr_strobe := '0';
 	end if;
 	if cpu = 0 then
 	    -- CPU, data bus
@@ -327,6 +334,9 @@ begin
 	    elsif sdram_data_strobe = '1' then
 		dmem_data_ready(cpu) <= sdram_bus(data_port).data_ready;
 		final_to_cpu_d(cpu) <= sdram_bus(data_port).data_out;
+	    elsif xbus_addr_range then
+		dmem_data_ready(cpu) <= xbus_ack;
+		final_to_cpu_d(cpu) <= xbus_data_in;
 	    else -- ROM, instruction bus only
 		dmem_data_ready(cpu) <= '1';
 		final_to_cpu_d(cpu) <= (others => '-');
@@ -405,6 +415,16 @@ begin
 	sdram_cke => sdram_cke, sdram_clk => sdram_clk,
 	sdram_we => sdram_we, sdram_cs => sdram_cs
     );
+
+    --
+    -- External data bus (only CPU #0)
+    --
+    xbus_addr_range <= dmem_addr(0)(31 downto 30) = "01";
+    xbus_addr <= dmem_addr(0);
+    xbus_data_out <= cpu_to_dmem(0);
+    xbus_strobe <= dmem_addr_strobe(0) when xbus_addr_range else '0';
+    xbus_write <= dmem_write(0) when xbus_addr_range else '0';
+    xbus_byte_sel <= dmem_byte_sel(0) when xbus_addr_range else x"0";
 
     --
     -- I/O arbiter
