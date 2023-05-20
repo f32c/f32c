@@ -67,6 +67,8 @@ architecture x of glue is
     signal sio_break: std_logic;
 
     signal R_simple_in: std_logic_vector(19 downto 0);
+    signal open_out: std_logic_vector(31 downto 8);
+    signal S_spi_miso: std_logic_vector(C_spi-1 downto 0);
 
 begin
     -- generic BRAM glue
@@ -89,9 +91,11 @@ begin
 	sio_txd(0) => rs232_tx,
 	sio_rxd(0) => rs232_rx,
 	sio_break(0) => sio_break,
+	simple_out(31 downto 8) => open_out,
 	simple_out(7 downto 0) => led,
+	simple_in(31 downto 20) => (others => '-'),
 	simple_in(19 downto 0) => R_simple_in,
-	spi_miso => open
+	spi_miso => S_spi_miso
     );
     R_simple_in <= sw & x"00" & '0' & not btn_pwr & btn_f2 & btn_f1
       & btn_up & btn_down & btn_left & btn_right when rising_edge(clk);
