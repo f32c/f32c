@@ -1,6 +1,5 @@
 --
--- Copyright (c) 2013 Marko Zec, University of Zagreb 
--- All rights reserved.
+-- Copyright (c) 2013 Marko Zec
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -23,8 +22,6 @@
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
 --
--- $Id$
---
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -44,20 +41,20 @@ end bptrace;
 
 architecture Structure of bptrace is
     type bptrace_type is array(0 to 8191) of std_logic_vector(1 downto 0);
-    signal bptrace: bptrace_type;
+    signal M_bptrace: bptrace_type;
 
     attribute syn_ramstyle: string;
-    attribute syn_ramstyle of bptrace: signal is "no_rw_check";
+    attribute syn_ramstyle of M_bptrace: signal is "no_rw_check";
 
 begin
     process(clk)
     begin
 	if rising_edge(clk) then
 	    if we = '1' then
-		bptrace(conv_integer(wraddr)) <= din;
+		M_bptrace(conv_integer(wraddr)) <= din;
 	    end if;
 	    if re = '1' then
-		dout <= bptrace(conv_integer(rdaddr));
+		dout <= M_bptrace(conv_integer(rdaddr));
 	    end if;
 	end if;
     end process;

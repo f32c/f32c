@@ -102,15 +102,15 @@ architecture x of debug is
     constant DEB_REQ_EXEC: integer := 3;
 
     -- Commands
-    constant DEB_CMD_ACTIVE: std_logic_vector := x"9d";
-    constant DEB_CMD_REG_RD: std_logic_vector := x"a0";
-    constant DEB_CMD_BREAKPOINT_RD: std_logic_vector := x"a1";
-    constant DEB_CMD_REG_WR: std_logic_vector := x"e0";
-    constant DEB_CMD_BREAKPOINT_WR: std_logic_vector := x"e1";
+    constant DEB_CMD_ACTIVE: std_logic_vector(7 downto 0) := x"9d";
+    constant DEB_CMD_REG_RD: std_logic_vector(7 downto 0) := x"a0";
+    constant DEB_CMD_BREAKPOINT_RD: std_logic_vector(7 downto 0) := x"a1";
+    constant DEB_CMD_REG_WR: std_logic_vector(7 downto 0) := x"e0";
+    constant DEB_CMD_BREAKPOINT_WR: std_logic_vector(7 downto 0) := x"e1";
 
-    constant DEB_CMD_MEM_RD: std_logic_vector := x"e2";
-    constant DEB_CMD_MEM_WR: std_logic_vector := x"e3";
-    constant DEB_CMD_CLK_STEP: std_logic_vector := x"ef";
+    constant DEB_CMD_MEM_RD: std_logic_vector(7 downto 0) := x"e2";
+    constant DEB_CMD_MEM_WR: std_logic_vector(7 downto 0) := x"e3";
+    constant DEB_CMD_CLK_STEP: std_logic_vector(7 downto 0) := x"ef";
 
     -- Debugger enabled flag
     signal R_debug_active: std_logic := '0';
@@ -293,8 +293,8 @@ begin
 		    else
 			R_clk_enable <= '1';
 			R_breakpoint <= '0';
-			for break_iter in 0 to C_breakpoints - 1 loop
-			    R_break_addrs(break_iter)(1) <= '0';
+			for bp_iter in 0 to C_breakpoints - 1 loop
+			    R_break_addrs(bp_iter)(1) <= '0';
 			end loop;
 			R_arg2 <= R_arg2 - 1;
 		    end if;
@@ -313,13 +313,13 @@ begin
 	    --
 	    -- Breakpoint detection
 	    --
-	    for break_iter in 0 to C_breakpoints - 1 loop
-		if R_break_addrs(break_iter)(0) = '1' and
+	    for bp_iter in 0 to C_breakpoints - 1 loop
+		if R_break_addrs(bp_iter)(0) = '1' and
 		  (trace_break_pc and C_PC_mask(31 downto 2)) =
-		  (R_break_addrs(break_iter)(31 downto 2) and
+		  (R_break_addrs(bp_iter)(31 downto 2) and
 		  C_PC_mask(31 downto 2)) then
 		    R_breakpoint <= '1';
-		    R_break_addrs(break_iter)(1) <= '1';
+		    R_break_addrs(bp_iter)(1) <= '1';
 		    R_clk_enable <= '0';
 		end if;
 	    end loop;

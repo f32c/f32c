@@ -1,6 +1,5 @@
 --
--- Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
--- All rights reserved.
+-- Copyright (c) 2013 - 2023 Marko Zec
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -23,8 +22,6 @@
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
 --
--- $Id$
---
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -44,49 +41,49 @@ constant ARCH_RV32:		integer := 1;
 --
 
 -- Memory access width
-constant MEM_SIZE_UNDEFINED:	std_logic_vector := "--";
-constant MEM_SIZE_8:		std_logic_vector := "00";
-constant MEM_SIZE_16:		std_logic_vector := "01";
-constant MEM_SIZE_32:		std_logic_vector := "10";
-constant MEM_SIZE_64:		std_logic_vector := "11";
+constant MEM_SIZE_UNDEFINED:	std_logic_vector(1 downto 0) := "--";
+constant MEM_SIZE_8:		std_logic_vector(1 downto 0) := "00";
+constant MEM_SIZE_16:		std_logic_vector(1 downto 0) := "01";
+constant MEM_SIZE_32:		std_logic_vector(1 downto 0) := "10";
+constant MEM_SIZE_64:		std_logic_vector(1 downto 0) := "11";
 
 -- Result availability latency
-constant LATENCY_UNDEFINED:	std_logic_vector := "--";
-constant LATENCY_EX:		std_logic_vector := "00";
-constant LATENCY_MEM:		std_logic_vector := "01";
-constant LATENCY_WB:		std_logic_vector := "11";
+constant LATENCY_UNDEFINED:	std_logic_vector(1 downto 0) := "--";
+constant LATENCY_EX:		std_logic_vector(1 downto 0) := "00";
+constant LATENCY_MEM:		std_logic_vector(1 downto 0) := "01";
+constant LATENCY_WB:		std_logic_vector(1 downto 0) := "11";
 
 -- Branch predictor saturation counter values
-constant BP_STRONG_TAKEN:	std_logic_vector := "11";
-constant BP_WEAK_TAKEN:		std_logic_vector := "10";
-constant BP_WEAK_NOT_TAKEN:	std_logic_vector := "01";
-constant BP_STRONG_NOT_TAKEN:	std_logic_vector := "00";
+constant BP_STRONG_TAKEN:	std_logic_vector(1 downto 0) := "11";
+constant BP_WEAK_TAKEN:		std_logic_vector(1 downto 0) := "10";
+constant BP_WEAK_NOT_TAKEN:	std_logic_vector(1 downto 0) := "01";
+constant BP_STRONG_NOT_TAKEN:	std_logic_vector(1 downto 0) := "00";
 
 -- EX stage result select
-constant OP_MAJOR_ALU:		std_logic_vector := "00";
-constant OP_MAJOR_SLT:		std_logic_vector := "01";
-constant OP_MAJOR_SHIFT:	std_logic_vector := "10";
-constant OP_MAJOR_ALT:		std_logic_vector := "11";
+constant OP_MAJOR_ALU:		std_logic_vector(1 downto 0) := "00";
+constant OP_MAJOR_SLT:		std_logic_vector(1 downto 0) := "01";
+constant OP_MAJOR_SHIFT:	std_logic_vector(1 downto 0) := "10";
+constant OP_MAJOR_ALT:		std_logic_vector(1 downto 0) := "11";
 
 -- ALU operation select
-constant OP_MINOR_ADD:		std_logic_vector := "00-";
-constant OP_MINOR_SUB:		std_logic_vector := "01-";
-constant OP_MINOR_AND:		std_logic_vector := "100";
-constant OP_MINOR_OR:		std_logic_vector := "101";
-constant OP_MINOR_XOR:		std_logic_vector := "110";
-constant OP_MINOR_NOR:		std_logic_vector := "111";
+constant OP_MINOR_ADD:		std_logic_vector(2 downto 0) := "00-";
+constant OP_MINOR_SUB:		std_logic_vector(2 downto 0) := "01-";
+constant OP_MINOR_AND:		std_logic_vector(2 downto 0) := "100";
+constant OP_MINOR_OR:		std_logic_vector(2 downto 0) := "101";
+constant OP_MINOR_XOR:		std_logic_vector(2 downto 0) := "110";
+constant OP_MINOR_NOR:		std_logic_vector(2 downto 0) := "111";
 
 -- Shift operation select
-constant OP_SHIFT_LL:		std_logic_vector := "00";
-constant OP_SHIFT_BYPASS:	std_logic_vector := "01";
-constant OP_SHIFT_RL:		std_logic_vector := "10";
-constant OP_SHIFT_RA:		std_logic_vector := "11";
+constant OP_SHIFT_LL:		std_logic_vector(1 downto 0) := "00";
+constant OP_SHIFT_BYPASS:	std_logic_vector(1 downto 0) := "01";
+constant OP_SHIFT_RL:		std_logic_vector(1 downto 0) := "10";
+constant OP_SHIFT_RA:		std_logic_vector(1 downto 0) := "11";
 
 -- ALT mux select
-constant ALT_HI:		std_logic_vector := "000";
-constant ALT_LO:		std_logic_vector := "001";
-constant ALT_PC_RET:		std_logic_vector := "010";
-constant ALT_COP0:		std_logic_vector := "011";
+constant ALT_HI:		std_logic_vector(2 downto 0) := "000";
+constant ALT_LO:		std_logic_vector(2 downto 0) := "001";
+constant ALT_PC_RET:		std_logic_vector(2 downto 0) := "010";
+constant ALT_COP0:		std_logic_vector(2 downto 0) := "011";
 
 function ARCH_REG_ZERO(arch : integer) return std_logic_vector;
 
