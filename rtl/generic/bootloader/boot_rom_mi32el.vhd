@@ -6,7 +6,7 @@ use work.boot_block_pack.all;
 
 package boot_rom_mi32el is
 
-constant boot_rom_mi32el : boot_block_type := (
+constant M_boot_rom_mi32el : boot_block_type := (
 x"25", x"F8", x"00", x"00", x"03", x"00", x"00", x"08",
 x"10", x"80", x"1D", x"3C", x"E8", x"FF", x"BD", x"27",
 x"03", x"00", x"02", x"24", x"14", x"00", x"BF", x"AF",

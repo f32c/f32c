@@ -82,11 +82,11 @@ architecture x of bram is
 	(others => (others => '-')),
 	(others => (others => '-')),
 -- preload options for bootloaders
-	boot_sio_mi32el,
-	boot_sio_mi32eb,
-	boot_rom_mi32el,
+	M_boot_sio_mi32el,
+	M_boot_sio_mi32eb,
+	M_boot_rom_mi32el,
 	(others => (others => '-')),
-	boot_sio_rv32el,
+	M_boot_sio_rv32el,
 	(others => (others => '-')),
 	(others => (others => '-')),
 	(others => (others => '-'))
