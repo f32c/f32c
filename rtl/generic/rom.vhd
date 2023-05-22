@@ -60,11 +60,11 @@ end rom;
 architecture x of rom is
     type T_boot_block_map is array(0 to 7) of boot_block_type;
     constant boot_block_map: T_boot_block_map := (
-	boot_sio_mi32el,
-	boot_sio_mi32eb,
-	boot_rom_mi32el,
+	M_boot_sio_mi32el,
+	M_boot_sio_mi32eb,
+	M_boot_rom_mi32el,
 	(others => (others => '-')),
-	boot_sio_rv32el,
+	M_boot_sio_rv32el,
 	(others => (others => '-')),
 	(others => (others => '-')),
 	(others => (others => '-'))
