@@ -190,7 +190,6 @@ architecture arch of timer is
     
     -- function to join all interrupt bits into one
     impure function interrupt(n_ocps, n_icps: integer) return std_logic is
-      variable i: integer;
       variable intr: std_logic;
     begin
       intr := '0';
@@ -208,7 +207,7 @@ architecture arch of timer is
     -- function to return value to the bus when reading registers
     -- flexible for variable number of icps
     impure function busoutput(a: std_logic_vector(C_addr_bits-1 downto 0)) return std_logic_vector is
-      variable i, adr: integer;
+      variable adr: integer;
       variable retval: std_logic_vector(31 downto 0);
     begin
       adr := conv_integer(a);
@@ -595,7 +594,6 @@ begin
 
     -- writing from bus to temporary registers
     process(clk)
-    variable i: integer := 0;
     begin
     if rising_edge(clk) then
         if ce = '1' and bus_write = '1' then
