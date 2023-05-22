@@ -216,7 +216,7 @@ architecture Behavioral of pipeline is
     signal EX_from_cop0: std_logic_vector(31 downto 0);
     signal EX_equal: boolean;
     signal EX_2bit_add: std_logic_vector(1 downto 0);
-    signal EX_mem_align_shamt: std_logic_vector(1 downto 0);
+    signal EX_memalign_shamt: std_logic_vector(1 downto 0);
     signal EX_mem_byte_sel: std_logic_vector(3 downto 0);
     signal EX_take_branch: boolean;
     signal EX_branch_target: std_logic_vector(31 downto 2);
@@ -666,7 +666,7 @@ begin
 		    ID_EX_shift_variable <= false;
 		    ID_EX_shift_funct <= OP_SHIFT_RL;
 		    if not EX_MEM_multicycle_lh_lb then
-			ID_EX_shift_amount <=  EX_mem_align_shamt & "000";
+			ID_EX_shift_amount <=  EX_memalign_shamt & "000";
 		    end if;
 		    if ID_running or EX_MEM_EIP then
 			ID_EX_cancel_next <= false;
@@ -889,14 +889,14 @@ begin
 
     -- compute shift amount and function
     EX_2bit_add <= EX_eff_reg1(1 downto 0) + ID_EX_alu_op2(1 downto 0);
-    EX_mem_align_shamt <= "00" when ID_EX_mem_size(1) = '1' else
+    EX_memalign_shamt <= "00" when ID_EX_mem_size(1) = '1' else
       EX_2bit_add when not C_big_endian else
       not(EX_2bit_add(1)) & '0' when ID_EX_mem_size = "01" else
       "00" when EX_2bit_add = "11" else
       "01" when EX_2bit_add = "10" else
       "10" when EX_2bit_add = "01" else
-      "11" when EX_2bit_add = "00";
-    EX_shamt <= EX_mem_align_shamt & "---" when ID_EX_mem_cycle = '1'
+      "11";
+    EX_shamt <= EX_memalign_shamt & "---" when ID_EX_mem_cycle = '1'
       else EX_eff_reg1(4 downto 0) when ID_EX_shift_variable
       else ID_EX_shift_amount;
 
