@@ -580,7 +580,6 @@ begin
 
     -- Address decoder when CPU reads IO
     process(io_addr, from_sio, from_spi, from_rtc, R_simple_in, R_simple_out)
-	variable i: integer;
     begin
 	io_to_cpu <= (others => '-');
 	case conv_integer(io_addr(11 downto 4)) is
