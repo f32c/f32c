@@ -225,6 +225,7 @@ architecture Behavioral of glue_sdram_min is
     signal debug_debug: std_logic_vector(7 downto 0);
     signal debug_out_strobe: std_logic;
     signal debug_active: std_logic;
+    signal debug_bus_out: std_logic_vector(31 downto 0);
 
 begin
 
@@ -620,10 +621,12 @@ begin
 	bus_write => deb_sio_tx_strobe, byte_sel => "0001",
 	bus_in(31 downto 8) => x"000000",
 	bus_in(7 downto 0) => debug_to_sio_data,
-	bus_out(10) => deb_sio_tx_busy, bus_out(8) => deb_sio_rx_done,
-	bus_out(7 downto 0) => sio_to_debug_data,
+	bus_out => debug_bus_out,
 	break => open
     );
+    deb_sio_tx_busy <= debug_bus_out(10);
+    deb_sio_rx_done <= debug_bus_out(8);
+    sio_to_debug_data <= debug_bus_out(7 downto 0);
     end generate;
 
     sio_txd(0) <= sio_tx(0) when not C_debug or debug_active = '0' else deb_tx;
