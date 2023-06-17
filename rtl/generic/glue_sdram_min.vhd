@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2015-2022 Marko Zec
+-- Copyright (c) 2015-2023 Marko Zec
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -177,51 +177,42 @@ architecture Behavioral of glue_sdram_min is
 	end if;
     end F_init_PC;
 
-    -- IO base
-    type T_io_range is array(0 to 1) of std_logic_vector(15 downto 0);
-    constant C_io_base: std_logic_vector(15 downto 0) := x"F800";
-
-    function F_io_from(r: T_io_range) return integer is
-	variable a: std_logic_vector(15 downto 0);
-    begin
-	a := r(0);
-	return conv_integer(a(11 downto 4) - C_io_base(11 downto 4));
-    end F_io_from;
-
-    function F_io_to(r: T_io_range) return integer is
-	variable a: std_logic_vector(15 downto 0);
-    begin
-	a := r(1);
-	return conv_integer(a(11 downto 4) - C_io_base(11 downto 4));
-    end F_io_to;
-
-    -- CPU reset control
-    constant C_io_cpu_reset: T_io_range := (x"FFC0", x"FFC0");
+    -- CPU reset control: 0x7C0
+    constant C_io_cpu_reset: std_logic_vector(7 downto 0) := x"7C";
     signal R_cpu_reset: std_logic_vector(15 downto 0) := (others => '1');
 
-    -- Simple I/O: onboard LEDs, buttons and switches
-    constant C_io_simple_in: T_io_range := (x"FF00", x"FF0F");
-    constant C_io_simple_out: T_io_range := (x"FF10", x"FF1F");
-    signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
+    -- Simple input (buttons and switches): 0x700 .. 070F
+    constant C_io_simple_in: std_logic_vector(7 downto 0) := x"70";
+    signal R_simple_in: std_logic_vector(31 downto 0);
 
-    -- Serial I/O (RS232)
-    constant C_io_sio: T_io_range := (x"FB00", x"FB3F");
+    -- Simple output (onboard LEDs): 0x710 .. 0x71F
+    constant C_io_simple_out: std_logic_vector(7 downto 0) := x"71";
+    signal R_simple_out: std_logic_vector(31 downto 0);
+
+    -- Serial I/O (RS232): 0x300 .. 0x33F
+    constant C_io_sio0: std_logic_vector(7 downto 0) := x"30";
+    constant C_io_sio1: std_logic_vector(7 downto 0) := x"31";
+    constant C_io_sio2: std_logic_vector(7 downto 0) := x"32";
+    constant C_io_sio3: std_logic_vector(7 downto 0) := x"33";
     signal sio_io_range: boolean;
     type from_sio_type is array (0 to C_sio - 1) of
       std_logic_vector(31 downto 0);
     signal from_sio: from_sio_type;
     signal sio_ce, sio_tx, sio_rx: std_logic_vector(C_sio - 1 downto 0);
 
-    -- SPI (on-board Flash, SD card, others...)
-    constant C_io_spi: T_io_range := (x"FB40", x"FB7F");
+    -- SPI (on-board Flash, SD card, others...): 0x340 .. 0x37F
+    constant C_io_spi0: std_logic_vector(7 downto 0) := x"34";
+    constant C_io_spi1: std_logic_vector(7 downto 0) := x"35";
+    constant C_io_spi2: std_logic_vector(7 downto 0) := x"36";
+    constant C_io_spi3: std_logic_vector(7 downto 0) := x"37";
     signal spi_io_range: boolean;
     type from_spi_type is array (0 to C_spi - 1) of
       std_logic_vector(31 downto 0);
     signal from_spi: from_spi_type;
     signal spi_ce: std_logic_vector(C_spi - 1 downto 0);
 
-    -- RTC
-    constant C_io_rtc: T_io_range := (x"FF80", x"FF8F");
+    -- RTC: 0x780 .. 0x78F
+    constant C_io_rtc: std_logic_vector(7 downto 0) := x"78";
     signal rtc_io_range: boolean;
     signal rtc_ce: std_logic;
     signal from_rtc: std_logic_vector(31 downto 0);
@@ -430,7 +421,7 @@ begin
     -- I/O arbiter
     --
     process(R_cur_io_port, dmem_addr, dmem_addr_strobe)
-	variable i, j, t, cpu: integer;
+	variable t: integer;
     begin
     for cpu in 0 to (C_cpus - 1) loop
 	if dmem_addr(cpu)(31 downto 28) = x"f" then
@@ -457,7 +448,7 @@ begin
     -- I/O access
     --
     io_write <= dmem_write(R_cur_io_port);
-    io_addr <=  '0' & dmem_addr(R_cur_io_port)(10 downto 2);
+    io_addr <= '0' & dmem_addr(R_cur_io_port)(10 downto 2);
     io_byte_sel <= dmem_byte_sel(R_cur_io_port);
     cpu_to_io <= cpu_to_dmem(R_cur_io_port);
     process(clk)
@@ -474,8 +465,7 @@ begin
 
 	    -- CPU reset control
 	    if C_cpus /= 1 and io_addr_strobe(R_cur_io_port) = '1'
-	      and io_write = '1' and
-	      io_addr(11 downto 4) = F_io_from(C_io_cpu_reset) then
+	      and io_write = '1' and io_addr(11 downto 4) = C_io_cpu_reset then
 		R_cpu_reset <= x"ff" & cpu_to_io(7 downto 0);
 	    end if;
 	    if reset = '1' then
@@ -489,7 +479,7 @@ begin
 	  and io_write = '1' then
 	    -- simple out
 	    if C_simple_out > 0 and
-	      io_addr(11 downto 4) = F_io_from(C_io_simple_out) then
+	      io_addr(11 downto 4) = C_io_simple_out then
 		if io_byte_sel(0) = '1' then
 		    R_simple_out(7 downto 0) <= cpu_to_io(7 downto 0);
 		end if;
@@ -529,10 +519,10 @@ begin
 	sio_ce(i) <= io_addr_strobe(R_cur_io_port) when sio_io_range and
 	  conv_integer(io_addr(5 downto 4)) = i else '0';
     end generate;
-    G_sio_decoder: if C_sio > 0 generate
-    with conv_integer(io_addr(11 downto 4)) select sio_io_range <= true
-      when F_io_from(C_io_sio) to F_io_to(C_io_sio), false when others;
-    end generate;
+    sio_io_range <= io_addr(11 downto 4) = C_io_sio0
+      or io_addr(11 downto 4) = C_io_sio1
+      or io_addr(11 downto 4) = C_io_sio2
+      or io_addr(11 downto 4) = C_io_sio3;
     sio_rx(0) <= sio_rxd(0);
 
     --
@@ -554,10 +544,10 @@ begin
 	spi_ce(i) <= io_addr_strobe(R_cur_io_port) when spi_io_range and
 	  conv_integer(io_addr(5 downto 4)) = i else '0';
     end generate;
-    G_spi_decoder: if C_spi > 0 generate
-    with conv_integer(io_addr(11 downto 4)) select spi_io_range <= true
-      when F_io_from(C_io_spi) to F_io_to(C_io_spi), false when others;
-    end generate;
+    spi_io_range <= io_addr(11 downto 4) = C_io_spi0
+      or io_addr(11 downto 4) = C_io_spi1
+      or io_addr(11 downto 4) = C_io_spi2
+      or io_addr(11 downto 4) = C_io_spi3;
 
     --
     -- RTC
@@ -574,42 +564,41 @@ begin
 	bus_in => cpu_to_io, bus_out => from_rtc
     );
     rtc_ce <= io_addr_strobe(R_cur_io_port) when rtc_io_range else '0';
-    with conv_integer(io_addr(11 downto 4)) select rtc_io_range <= true
-      when F_io_from(C_io_rtc) to F_io_to(C_io_rtc), false when others;
+    rtc_io_range <= io_addr(11 downto 4) = C_io_rtc;
     end generate;
 
     -- Address decoder when CPU reads IO
     process(io_addr, from_sio, from_spi, from_rtc, R_simple_in, R_simple_out)
     begin
 	io_to_cpu <= (others => '-');
-	case conv_integer(io_addr(11 downto 4)) is
-	when F_io_from(C_io_sio) to F_io_to(C_io_sio) =>
+	case io_addr(11 downto 4) is
+	when C_io_sio0 | C_io_sio1 | C_io_sio2 | C_io_sio3 =>
 	    for i in 0 to C_sio - 1 loop
 		if conv_integer(io_addr(5 downto 4)) = i then
 		    io_to_cpu <= from_sio(i);
 		end if;
 	    end loop;
-	when F_io_from(C_io_spi) to F_io_to(C_io_spi) =>
+	when C_io_spi0 | C_io_spi1 | C_io_spi2 | C_io_spi3 =>
 	    for i in 0 to C_spi - 1 loop
 		if conv_integer(io_addr(5 downto 4)) = i then
 		    io_to_cpu <= from_spi(i);
 		end if;
 	    end loop;
-	when F_io_from(C_io_simple_in) to F_io_to(C_io_simple_in) =>
+	when C_io_simple_in =>
 	    for i in 0 to (C_simple_in + 31) / 4 - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
 		    io_to_cpu(C_simple_in - i * 32 - 1 downto i * 32) <=
 		      R_simple_in(C_simple_in - i * 32 - 1 downto i * 32);
 		end if;
 	    end loop;
-	when F_io_from(C_io_simple_out) to F_io_to(C_io_simple_out) =>
+	when C_io_simple_out =>
 	    for i in 0 to (C_simple_out + 31) / 4 - 1 loop
 		if conv_integer(io_addr(3 downto 2)) = i then
 		    io_to_cpu(C_simple_out - i * 32 - 1 downto i * 32) <=
 		      R_simple_out(C_simple_out - i * 32 - 1 downto i * 32);
 		end if;
 	    end loop;
-	when F_io_from(C_io_rtc) to F_io_to(C_io_rtc) =>
+	when C_io_rtc =>
 	    io_to_cpu <= from_rtc;
 	when others  =>
 	    io_to_cpu <= (others => '-');
@@ -629,11 +618,10 @@ begin
     port map (
 	clk => clk, ce => '1', txd => deb_tx, rxd => sio_rxd(0),
 	bus_write => deb_sio_tx_strobe, byte_sel => "0001",
-	bus_in(7 downto 0) => debug_to_sio_data,
 	bus_in(31 downto 8) => x"000000",
+	bus_in(7 downto 0) => debug_to_sio_data,
+	bus_out(10) => deb_sio_tx_busy, bus_out(8) => deb_sio_rx_done,
 	bus_out(7 downto 0) => sio_to_debug_data,
-	bus_out(8) => deb_sio_rx_done, bus_out(9) => open,
-	bus_out(10) => deb_sio_tx_busy, bus_out(31 downto 11) => open,
 	break => open
     );
     end generate;
