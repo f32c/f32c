@@ -222,7 +222,6 @@ begin
 
     -- Outbound multiport demux
     process(R_ready_out, R_from_sdram)
-	variable i: integer;
     begin
 	for i in 0 to (C_ports - 1) loop
 	    mpbus(i).data_ready <= R_ready_out(i);
@@ -271,7 +270,7 @@ begin
 
     -- Arbiter: round-robin port selection combinatorial logic
     process(mpbus, R_cur_port)
-	variable i, j, t, n: integer;
+	variable t, n: integer;
     begin
 	t := R_cur_port;
 	for i in 0 to (C_ports - 1) loop
