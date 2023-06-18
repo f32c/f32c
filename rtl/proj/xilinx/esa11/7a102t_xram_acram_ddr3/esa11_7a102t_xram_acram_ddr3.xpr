@@ -75,11 +75,6 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../generic/reg1w2r.vhd">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-        </FileInfo>
-      </File>
       <File Path="$PPRDIR/../../../../cpu/loadalign.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>

@@ -15,7 +15,6 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../generic/bram_true2p_1clk.vhd \
   ../../../../generic/bram_true2p_2clk.vhd \
   ../../../../generic/bptrace.vhd \
-  ../../../../generic/reg1w2r.vhd \
   ../../../../cpu/alu.vhd \
   ../../../../cpu/debug.vhd \
   ../../../../cpu/defs_f32c.vhd \

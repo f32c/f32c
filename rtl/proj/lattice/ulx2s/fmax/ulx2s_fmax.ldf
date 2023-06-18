@@ -66,9 +66,6 @@
         <Source name="../../../../lattice/ulx2s/clocks/pll_xp2_25m.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../lattice/chip/xp2/reg1w2r_xp2.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../lattice/chip/xp2/bptrace_xp2.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>

@@ -354,7 +354,6 @@ set_global_assignment -name SOURCE_FILE ../../../../generic/bootloader/boot_rom_
 set_global_assignment -name SOURCE_FILE ../../../../generic/bram_true2p_1clk.vhd
 set_global_assignment -name SOURCE_FILE ../../../../generic/bram_true2p_2clk.vhd
 set_global_assignment -name SOURCE_FILE ../../../../generic/bptrace.vhd
-set_global_assignment -name SOURCE_FILE ../../../../generic/reg1w2r.vhd
 set_global_assignment -name SOURCE_FILE ../../../../generic/acram_emu.vhd
 set_global_assignment -name SOURCE_FILE ../../../../generic/bram_video.vhd
 set_global_assignment -name SOURCE_FILE ../../../../cpu/idecode_rv32.vhd

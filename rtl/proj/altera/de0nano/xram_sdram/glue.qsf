@@ -276,7 +276,6 @@ set_global_assignment -name VHDL_FILE ../../../../altera/de0nano/clocks/pll_50m_
 set_global_assignment -name VHDL_FILE ../../../../soc/spi.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/sio.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/gpio.vhd
-set_global_assignment -name VHDL_FILE ../../../../generic/reg1w2r.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bptrace.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/idecode_rv32.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/idecode_mi32.vhd

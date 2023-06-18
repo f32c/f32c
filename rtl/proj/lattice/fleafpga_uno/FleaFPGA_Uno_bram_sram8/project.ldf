@@ -27,9 +27,6 @@
         <Source name="../../../generic/bootloader/boot_sio_mi32eb.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../lattice/reg1w2r_xo2.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../lattice/FleaFPGA_Uno_clkgen.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>

@@ -207,7 +207,6 @@ set_global_assignment -name VHDL_FILE ../../../../cpu/loadalign.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/debug.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/sio.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bram.vhd
-set_global_assignment -name VHDL_FILE ../../../../generic/reg1w2r.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bptrace.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/gpio.vhd
 

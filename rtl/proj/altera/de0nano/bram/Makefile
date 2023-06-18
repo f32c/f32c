@@ -37,7 +37,6 @@ SRCS = \
 ../../../generic/bram_mi32.vhd \
 ../../../generic/bram_rv32.vhd \
 ../../../generic/bptrace.vhd \
-../../../generic/reg1w2r.vhd \
 ../../../cpu/idecode_rv32.vhd \
 ../../../cpu/idecode_mi32.vhd \
 ../../../cpu/defs_rv32.vhd \

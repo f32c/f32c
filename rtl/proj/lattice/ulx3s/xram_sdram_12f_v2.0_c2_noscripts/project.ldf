@@ -51,9 +51,6 @@
         <Source name="../../../../generic/bootloader/bootrom_emu.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../generic/reg1w2r.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../generic/bram_true2p_1clk.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>

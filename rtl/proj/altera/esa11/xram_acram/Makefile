@@ -47,7 +47,6 @@ SRCS = \
 ../../../../generic/bram_true2p_1clk.vhd \
 ../../../../generic/bram_true2p_2clk.vhd \
 ../../../../generic/bptrace.vhd \
-../../../../generic/reg1w2r.vhd \
 ../../../../generic/acram_emu.vhd \
 ../../../../generic/bram_video.vhd \
 ../../../../cpu/idecode_rv32.vhd \
