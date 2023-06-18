@@ -1,6 +1,5 @@
 --
--- Copyright (c) 2008 - 2016 Marko Zec, University of Zagreb
--- All rights reserved.
+-- Copyright (c) 2008 - 2023 Marko Zec
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -22,8 +21,6 @@
 -- LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
---
--- $Id$
 --
 
 library ieee;
@@ -278,6 +275,22 @@ architecture Behavioral of pipeline is
     signal WB_writeback_data: std_logic_vector(31 downto 0);
     signal WB_mem_data_aligned: std_logic_vector(31 downto 0);
     signal WB_clk: std_logic;
+
+    -- three (four) port register file
+    type reg_type is array(0 to 31) of std_logic_vector(31 downto 0);
+    signal M_R1, M_R2, M_RD: reg_type;
+    attribute ram_style: string; -- XST / Vivado
+    attribute ram_style of M_R1: signal is "distributed";
+    attribute ram_style of M_R2: signal is "distributed";
+    attribute ram_style of M_RD: signal is "distributed";
+    attribute syn_ramstyle: string; -- Lattice Diamond
+    attribute syn_ramstyle of M_R1: signal is "distributed";
+    attribute syn_ramstyle of M_R2: signal is "distributed";
+    attribute syn_ramstyle of M_RD: signal is "distributed";
+    attribute ramstyle: string; -- Altera Quartus
+    attribute ramstyle of M_R1: signal is "distributed";
+    attribute ramstyle of M_R2: signal is "distributed";
+    attribute ramstyle of M_RD: signal is "distributed";
 
     -- multiplication unit
     signal EX_mul_start, R_mul_commit, R_mul_done, mul_done: boolean;
@@ -544,19 +557,17 @@ begin
     );
     end generate;
 
+    --
     -- three- or four-ported register file: 2(3) async reads, 1 sync write
-    regfile: entity work.reg1w2r
-    generic map (
-	C_synchronous_read => C_regfile_synchronous_read,
-	C_debug => C_debug
-    )
-    port map (
-	rd1_addr => ID_reg1_addr, rd2_addr => ID_reg2_addr,
-	rdd_addr => trace_addr(4 downto 0), wr_addr => MEM_WB_writeback_addr,
-	rd1_data => ID_reg1_data, rd2_data => ID_reg2_data,
-	rdd_data => reg_trace_data, wr_data => WB_writeback_data,
-	wr_enable => MEM_WB_write_enable, rd_clk => clk, wr_clk => WB_clk
-    );
+    --
+    process(clk, ID_reg1_addr, ID_reg2_addr, trace_addr, M_R1, M_R2, M_RD)
+    begin
+	if not C_regfile_synchronous_read or falling_edge(clk) then
+	    ID_reg1_data <= M_R1(conv_integer(ID_reg1_addr));
+	    ID_reg2_data <= M_R2(conv_integer(ID_reg2_addr));
+	    reg_trace_data <= M_RD(conv_integer(trace_addr(4 downto 0)));
+        end if;
+    end process;
 
     --
     -- WB_writeback_data overrides register reads with pipelined load aligner.
@@ -564,6 +575,19 @@ begin
     -- at the half of the clk cycle, in which case no bypass logic is required.
     --
     WB_clk <= clk when C_load_aligner else not clk;
+    process(WB_clk)
+    begin
+	if rising_edge(WB_clk) then
+	    if MEM_WB_write_enable = '1' then
+		M_R1(conv_integer(MEM_WB_writeback_addr)) <= WB_writeback_data;
+		M_R2(conv_integer(MEM_WB_writeback_addr)) <= WB_writeback_data;
+	    end if;
+	    if C_debug and MEM_WB_write_enable = '1' then
+		M_RD(conv_integer(MEM_WB_writeback_addr)) <= WB_writeback_data;
+	    end if;
+	end if;
+    end process;
+
     ID_reg1_eff_data <= IF_ID_EPC & "00" when C_arch = ARCH_RV32 and ID_reg1_pc
       else ID_reg1_data when (not C_load_aligner and
       (not C_regfile_synchronous_read or
