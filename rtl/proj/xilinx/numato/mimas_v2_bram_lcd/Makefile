@@ -33,7 +33,6 @@ vhdfiles = \
 ../../../../generic/bootloader/boot_sio_rv32el.vhd \
 ../../../../generic/bootloader/boot_rom_mi32el.vhd \
 ../../../../generic/bptrace.vhd \
-../../../../generic/reg1w2r.vhd \
 ../../../../generic/bram_video.vhd \
 ../../../../cpu/alu.vhd \
 ../../../../cpu/loadalign.vhd \

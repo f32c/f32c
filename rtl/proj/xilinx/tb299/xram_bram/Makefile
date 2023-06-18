@@ -39,7 +39,6 @@ vhdfiles = \
 ../../../../generic/bram_true2p_1clk.vhd \
 ../../../../generic/bram_true2p_2clk.vhd \
 ../../../../generic/bptrace.vhd \
-../../../../generic/reg1w2r.vhd \
 ../../../../generic/acram_emu.vhd \
 ../../../../cpu/alu.vhd \
 ../../../../cpu/loadalign.vhd \
@@ -136,7 +135,6 @@ vhdfiles = \
 ../../../../generic/bram_true2p_1clk.vhd \
 ../../../../generic/bram_true2p_2clk.vhd \
 ../../../../generic/bptrace.vhd \
-../../../../generic/reg1w2r.vhd \
 ../../../../generic/acram_emu.vhd \
 ../../../../cpu/alu.vhd \
 ../../../../cpu/loadalign.vhd \

@@ -21,7 +21,6 @@ vhdfiles = \
 ../../../generic/bram_mi32_eb.vhd \
 ../../../generic/bram_mi32_el.vhd \
 ../../../generic/bptrace.vhd \
-../../../generic/reg1w2r.vhd \
 ../../../cpu/alu.vhd \
 ../../../cpu/loadalign.vhd \
 ../../../cpu/pipeline.vhd \

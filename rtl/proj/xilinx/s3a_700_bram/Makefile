@@ -20,7 +20,6 @@ vhdfiles = \
 ../../../generic/bootloader/boot_sio_mi32eb.vhd \
 ../../../generic/bootloader/boot_sio_rv32el.vhd \
 ../../../generic/bptrace.vhd \
-../../../generic/reg1w2r.vhd \
 ../../../cpu/alu.vhd \
 ../../../cpu/loadalign.vhd \
 ../../../cpu/pipeline.vhd \
