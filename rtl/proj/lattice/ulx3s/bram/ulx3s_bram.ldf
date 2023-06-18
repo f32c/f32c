@@ -42,9 +42,6 @@
         <Source name="../../../../cpu/debug.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../generic/bptrace.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../generic/bootloader/defs_bootblock.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>

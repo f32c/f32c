@@ -110,7 +110,6 @@ architecture Behavioral of pipeline is
     -- pipeline stage 1: instruction fetch
     signal IF_PC, IF_PC_next, IF_PC_ext_next: std_logic_vector(31 downto 2);
     signal IF_bpredict_index: std_logic_vector(12 downto 0);
-    signal IF_bpredict_re: std_logic;
     signal IF_instruction: std_logic_vector(31 downto 0);
     signal IF_data_ready, IF_fetch_complete, IF_need_refetch: boolean;
     -- boundary to stage 2
@@ -254,7 +253,6 @@ architecture Behavioral of pipeline is
     signal MEM_running, MEM_take_branch: boolean;
     signal MEM_cancel_EX: boolean;
     signal MEM_bpredict_score: std_logic_vector(1 downto 0);
-    signal MEM_bpredict_we: std_logic;
     signal MEM_eff_data: std_logic_vector(31 downto 0);
     signal MEM_shamt_1_2_4: std_logic_vector(2 downto 0);
     signal MEM_data_in, MEM_from_shift: std_logic_vector(31 downto 0);
@@ -291,6 +289,11 @@ architecture Behavioral of pipeline is
     attribute ramstyle of M_R1: signal is "distributed";
     attribute ramstyle of M_R2: signal is "distributed";
     attribute ramstyle of M_RD: signal is "distributed";
+
+    -- branch predictor's block RAM
+    type bptrace_type is array(0 to 8191) of std_logic_vector(1 downto 0);
+    signal M_bptrace: bptrace_type;
+    attribute syn_ramstyle of M_bptrace: signal is "no_rw_check";
 
     -- multiplication unit
     signal EX_mul_start, R_mul_commit, R_mul_done, mul_done: boolean;
@@ -472,14 +475,20 @@ begin
       EX_MEM_branch_hist xor IF_PC(14 downto (15 - C_bp_global_depth));
     IF_bpredict_index((12 - C_bp_global_depth) downto 0) <=
       IF_PC((14 - C_bp_global_depth) downto 2);
-    IF_bpredict_re <= '1' when ID_running else '0';
 
-    bptrace: entity work.bptrace
-    port map (
-	din => MEM_bpredict_score, dout => IF_ID_bpredict_score,
-	rdaddr => IF_bpredict_index, wraddr => EX_MEM_bpredict_index,
-	re => IF_bpredict_re, we => MEM_bpredict_we, clk => clk
-    );
+    process(clk)
+    begin
+	if rising_edge(clk) then
+	    if EX_MEM_branch_cycle then
+		M_bptrace(conv_integer(EX_MEM_bpredict_index)) <=
+		  MEM_bpredict_score;
+	    end if;
+	    if ID_running then
+		IF_ID_bpredict_score <=
+		  M_bptrace(conv_integer(IF_bpredict_index));
+	    end if;
+	end if;
+    end process;
     end generate;
 
     --
@@ -1262,7 +1271,6 @@ begin
     -- branch prediction
     G_bp_update_score:
     if C_branch_prediction and C_arch /= ARCH_RV32 generate
-    MEM_bpredict_we <= '1' when EX_MEM_branch_cycle else '0';
     process(clk, clk_enable)
     begin
 	if falling_edge(clk) and clk_enable = '1'
