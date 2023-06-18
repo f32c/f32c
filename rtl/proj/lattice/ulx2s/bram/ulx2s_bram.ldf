@@ -3,9 +3,6 @@
     <Options/>
     <Implementation title="impl1" dir="impl1" description="ulx2s_bram" synthesis="synplify" default_strategy="Timing">
         <Options def_top="glue"/>
-        <Source name="../../../../cpu/alu.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../cpu/debug.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -76,9 +73,6 @@
             <Options/>
         </Source>
         <Source name="../../../../lattice/ulx2s/clocks/pll_xp2_25m.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../lattice/chip/xp2/bptrace_xp2.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../constraints/ulx2s.lpf" type="Logic Preference" type_short="LPF">

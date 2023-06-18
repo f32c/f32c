@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<BaliProject version="3.2" title="ulx2s_sram" device="LFXP2-5E-6TN144C" default_implementation="impl1">
+<BaliProject version="3.2" title="ulx2s_sram" device="LFXP2-5E-7TN144C" default_implementation="impl1">
     <Options/>
     <Implementation title="impl1" dir="impl1" description="ulx2s_sram" synthesis="synplify" default_strategy="Timing">
         <Options def_top="glue"/>
-        <Source name="../../../../cpu/cache.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../lattice/ulx2s/top_sram.vhd" type="VHDL" type_short="VHDL">
+            <Options top_module="glue"/>
+        </Source>
+        <Source name="../../../../lattice/ulx2s/clocks/clkgen.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../cpu/alu.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../lattice/ulx2s/clocks/pll_xp2_25m.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../lattice/ulx2s/clocks/pll_xp2_81m25_433m33.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../cpu/cache.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../cpu/debug.vhd" type="VHDL" type_short="VHDL">
@@ -39,12 +48,6 @@
         <Source name="../../../../cpu/mul_dsp.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../lattice/ulx2s/top_sram.vhd" type="VHDL" type_short="VHDL">
-            <Options top_module="glue"/>
-        </Source>
-        <Source name="../../../../lattice/ulx2s/clocks/clkgen.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../soc/cvbs.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -72,37 +75,25 @@
         <Source name="../../../../soc/spi.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../lattice/ulx2s/clocks/pll_xp2_81m25_433m33.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../lattice/ulx2s/clocks/pll_xp2_25m.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../lattice/chip/xp2/bptrace_xp2.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../lattice/chip/xp2/bram_xp2.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../generic/bram_true2p_1clk.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../generic/bram.vhd" type="VHDL" type_short="VHDL" excluded="TRUE">
+        <Source name="../../../../generic/bootloader/boot_rom_mi32el.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../generic/bootloader/boot_rom_mi32el.vhd" type="VHDL" type_short="VHDL" excluded="TRUE">
+        <Source name="../../../../generic/bootloader/boot_sio_mi32eb.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../generic/bootloader/boot_sio_mi32eb.vhd" type="VHDL" type_short="VHDL" excluded="TRUE">
+        <Source name="../../../../generic/bootloader/boot_sio_mi32el.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../generic/bootloader/boot_sio_mi32el.vhd" type="VHDL" type_short="VHDL" excluded="TRUE">
+        <Source name="../../../../generic/bootloader/boot_sio_rv32el.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../generic/bootloader/boot_sio_rv32el.vhd" type="VHDL" type_short="VHDL" excluded="TRUE">
+        <Source name="../../../../generic/bootloader/defs_bootblock.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../generic/bootloader/defs_bootblock.vhd" type="VHDL" type_short="VHDL" excluded="TRUE">
+        <Source name="../../../../generic/rom.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../constraints/ulx2s.lpf" type="Logic Preference" type_short="LPF">

@@ -2,14 +2,11 @@
 <BaliProject version="3.2" title="project" device="LFXP2-8E-6TN144C" default_implementation="project">
     <Options/>
     <Implementation title="project" dir="project" description="project" synthesis="synplify" default_strategy="Strategy1">
-        <Options def_top="compositing_fifo" top="toplevel"/>
+        <Options def_top="glue_xram" top="toplevel"/>
         <Source name="../../../../lattice/ulx2s/top_xram_tv.vhd" type="VHDL" type_short="VHDL">
             <Options top_module="toplevel"/>
         </Source>
         <Source name="../../../../generic/glue_xram.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../cpu/alu.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../cpu/cache_generic_param.vhd" type="VHDL" type_short="VHDL">
@@ -43,9 +40,6 @@
             <Options/>
         </Source>
         <Source name="../../../../cpu/debug.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../lattice/chip/xp2/bptrace_xp2.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../generic/bram.vhd" type="VHDL" type_short="VHDL">

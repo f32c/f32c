@@ -207,6 +207,7 @@ architecture Behavioral of pipeline is
     signal EX_eff_alu_op2: std_logic_vector(31 downto 0);
     signal EX_shamt: std_logic_vector(4 downto 0);
     signal EX_from_shift: std_logic_vector(31 downto 0);
+    signal EX_alu_ex, EX_alu_ey: std_logic_vector(32 downto 0);
     signal EX_from_alu_addsubx: std_logic_vector(32 downto 0);
     signal EX_from_alu_logic, EX_from_alt: std_logic_vector(31 downto 0);
     signal EX_from_cop0: std_logic_vector(31 downto 0);
@@ -907,18 +908,35 @@ begin
       WB_eff_data when ID_EX_fwd_mem_alu_op2 and C_result_forwarding else
       ID_EX_alu_op2;
 
-    -- instantiate the ALU
-    alu: entity work.alu
-    generic map (
-	C_sign_extend => C_sign_extend
-    )
-    port map (
-	x => EX_eff_reg1, y => EX_eff_alu_op2,
-	seb_seh_cycle => ID_EX_seb_seh_cycle,
-	seb_seh_select => ID_EX_seb_seh_select,
-	addsubx => EX_from_alu_addsubx, logic => EX_from_alu_logic,
-	funct => ID_EX_op_minor(1 downto 0)
-    );
+    -- ALU
+    EX_alu_ex <= '0' & EX_eff_reg1;
+    EX_alu_ey <= '0' & EX_eff_alu_op2;
+    EX_from_alu_addsubx <= EX_alu_ex + EX_alu_ey when ID_EX_op_minor(1) = '0'
+      else EX_alu_ex - EX_alu_ey;
+
+    process(EX_eff_reg1, EX_eff_alu_op2, ID_EX_op_minor, ID_EX_seb_seh_cycle,
+      ID_EX_seb_seh_select)
+	variable logic: std_logic_vector(31 downto 0);
+    begin
+	case ID_EX_op_minor(1 downto 0) is
+	when "00" =>	logic := EX_eff_reg1 and EX_eff_alu_op2;
+	when "01" =>	logic := EX_eff_reg1 or EX_eff_alu_op2;
+	when "10" =>	logic := EX_eff_reg1 xor EX_eff_alu_op2;
+	when others =>	logic := not(EX_eff_reg1 or EX_eff_alu_op2);
+	end case;
+
+	if C_sign_extend and ID_EX_seb_seh_cycle then
+	    if ID_EX_seb_seh_select = '1' then
+		EX_from_alu_logic(31 downto 16) <= (others => logic(15));
+		EX_from_alu_logic(15 downto 0) <= logic(15 downto 0);
+	    else
+		EX_from_alu_logic(31 downto 8) <= (others => logic(7));
+		EX_from_alu_logic(7 downto 0) <= logic(7 downto 0);
+	    end if;
+	else
+	    EX_from_alu_logic <= logic;
+	end if;
+    end process;
 
     -- compute shift amount and function
     EX_2bit_add <= EX_eff_reg1(1 downto 0) + ID_EX_alu_op2(1 downto 0);
