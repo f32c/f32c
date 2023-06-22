@@ -27,13 +27,7 @@
         <Source name="../../../../cpu/idecode_mi32.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../cpu/shift.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../cpu/mul_dsp.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../cpu/loadalign.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../cpu/debug.vhd" type="VHDL" type_short="VHDL">

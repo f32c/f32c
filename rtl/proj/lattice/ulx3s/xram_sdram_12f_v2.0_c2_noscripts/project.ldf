@@ -24,9 +24,6 @@
         <Source name="../../../../generic/glue_xram_vector.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../generic/bptrace.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../generic/bram.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -54,9 +51,6 @@
         <Source name="../../../../generic/bram_true2p_1clk.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../cpu/alu.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../cpu/debug.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
@@ -75,16 +69,10 @@
         <Source name="../../../../cpu/idecode_rv32.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../cpu/loadalign.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
         <Source name="../../../../cpu/cache.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../cpu/pipeline.vhd" type="VHDL" type_short="VHDL">
-            <Options/>
-        </Source>
-        <Source name="../../../../cpu/shift.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../cpu/mul_iter.vhd" type="VHDL" type_short="VHDL">
