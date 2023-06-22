@@ -105,7 +105,6 @@ entity cache is
 	debug_out_data: out std_logic_vector(7 downto 0);
 	debug_out_strobe: out std_logic;
 	debug_out_busy: in std_logic;
-	debug_debug: out std_logic_vector(7 downto 0);
 	debug_active: out std_logic
     );
 end cache;
@@ -204,7 +203,6 @@ begin
 	debug_out_data => debug_out_data,
 	debug_out_strobe => debug_out_strobe,
 	debug_out_busy => debug_out_busy,
-	debug_debug => debug_debug,
 	debug_active => debug_active
     );
 

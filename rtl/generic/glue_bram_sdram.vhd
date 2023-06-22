@@ -227,7 +227,6 @@ architecture Behavioral of glue_bram is
     signal debug_to_sio_data: std_logic_vector(7 downto 0);
     signal deb_sio_rx_done, deb_sio_tx_busy, deb_sio_tx_strobe: std_logic;
     signal deb_tx: std_logic;
-    signal debug_debug: std_logic_vector(7 downto 0);
     signal debug_out_strobe: std_logic;
     signal debug_active: std_logic;
 
@@ -267,7 +266,6 @@ begin
 	debug_out_data => debug_to_sio_data,
 	debug_out_strobe => deb_sio_tx_strobe,
 	debug_out_busy => deb_sio_tx_busy,
-	debug_debug => debug_debug,
 	debug_active => debug_active
     );
     final_to_cpu_i <= from_sdram when imem_addr(31 downto 30) = "10"
