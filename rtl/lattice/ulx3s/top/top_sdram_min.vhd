@@ -11,8 +11,9 @@ entity top_sdram is
     generic (
 	C_arch: natural := ARCH_MI32;
 	C_clk_freq: natural := 84;
-	C_icache_size: natural := 16;
-	C_dcache_size: natural := 16
+	C_icache_size: natural := 8;
+	C_dcache_size: natural := 8;
+	C_cpus: natural := 1
     );
     port (
 	clk_25m: in std_logic;
@@ -100,6 +101,7 @@ begin
 	C_clk_freq => C_clk_freq,
 	C_icache_size => C_icache_size,
 	C_dcache_size => C_dcache_size,
+	C_cpus => C_cpus,
 	C_spi => 3,
 	C_simple_out => 8,
 	C_simple_in => 20,
