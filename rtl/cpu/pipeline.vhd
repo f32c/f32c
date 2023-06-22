@@ -576,7 +576,7 @@ begin
 	    ID_reg1_data <= M_R1(conv_integer(ID_reg1_addr));
 	    ID_reg2_data <= M_R2(conv_integer(ID_reg2_addr));
 	    reg_trace_data <= M_RD(conv_integer(trace_addr(4 downto 0)));
-        end if;
+	end if;
     end process;
 
     --
@@ -740,8 +740,8 @@ begin
 			ID_EX_madd <= false;
 		    end if;
 		    if C_ll_sc then
-		        ID_EX_ll <= false;
-		        ID_EX_sc <= false;
+			ID_EX_ll <= false;
+			ID_EX_sc <= false;
 		    end if;
 		    if C_cache then
 			ID_EX_flush_i_line <= '0';
@@ -828,8 +828,8 @@ begin
 			end if;
 		    end if;
 		    if C_ll_sc then
-		        ID_EX_ll <= ID_ll;
-		        ID_EX_sc <= ID_sc;
+			ID_EX_ll <= ID_ll;
+			ID_EX_sc <= ID_sc;
 		    end if;
 		    if C_cache then
 			ID_EX_flush_i_line <= ID_flush_i_line;
@@ -1012,8 +1012,7 @@ begin
 
     -- branch or not?
     EX_equal <= EX_eff_reg1 = EX_eff_reg2;
-    process(ID_EX_branch_cycle, ID_EX_branch_condition, EX_equal,
-      EX_eff_reg1)
+    process(ID_EX_branch_cycle, ID_EX_branch_condition, EX_equal, EX_eff_reg1)
     begin
 	if C_arch = ARCH_MI32 and ID_EX_branch_cycle then
 	    case ID_EX_branch_condition is
@@ -1022,11 +1021,11 @@ begin
 	    when MI32_TEST_EQ  => EX_take_branch <= EX_equal;
 	    when MI32_TEST_NE  => EX_take_branch <= not EX_equal;
 	    when MI32_TEST_LEZ =>
-	      EX_take_branch <= EX_eff_reg1(31) = '1' or EX_equal;
+		EX_take_branch <= EX_eff_reg1(31) = '1' or EX_equal;
 	    when MI32_TEST_GTZ =>
-	      EX_take_branch <= EX_eff_reg1(31) = '0' and not EX_equal;
+		EX_take_branch <= EX_eff_reg1(31) = '0' and not EX_equal;
 	    when others =>
-	      EX_take_branch <= false;
+		EX_take_branch <= false;
 	    end case;
 	elsif C_arch = ARCH_RV32 and ID_EX_branch_cycle then
 	    case ID_EX_branch_condition is
@@ -1034,17 +1033,17 @@ begin
 	    when RV32_TEST_EQ  => EX_take_branch <= EX_equal;
 	    when RV32_TEST_NE  => EX_take_branch <= not EX_equal;
 	    when RV32_TEST_LT  =>
-	      EX_take_branch <= (EX_eff_reg1(31) xor EX_eff_alu_op2(31)
-	        xor EX_from_alu_addsubx(32)) = '1';
+		EX_take_branch <= (EX_eff_reg1(31) xor EX_eff_alu_op2(31)
+		  xor EX_from_alu_addsubx(32)) = '1';
 	    when RV32_TEST_GE  =>
-	      EX_take_branch <= (EX_eff_reg1(31) xor EX_eff_alu_op2(31)
-	        xor EX_from_alu_addsubx(32)) = '0';
+		EX_take_branch <= (EX_eff_reg1(31) xor EX_eff_alu_op2(31)
+		  xor EX_from_alu_addsubx(32)) = '0';
 	    when RV32_TEST_LTU =>
-	      EX_take_branch <= EX_from_alu_addsubx(32) = '1';
+		EX_take_branch <= EX_from_alu_addsubx(32) = '1';
 	    when RV32_TEST_GEU =>
-	      EX_take_branch <= EX_from_alu_addsubx(32) = '0';
+		EX_take_branch <= EX_from_alu_addsubx(32) = '0';
 	    when others =>
-	      EX_take_branch <= false;
+		EX_take_branch <= false;
 	    end case;
 	else
 	    EX_take_branch <= false;
@@ -1146,7 +1145,7 @@ begin
 		else
 		    EX_MEM_writeback_addr <= ID_EX_writeback_addr;
 		end if;
-	        if C_exceptions and not EX_MEM_EIP then
+		if C_exceptions and not EX_MEM_EIP then
 		    if ID_EX_ei then
 			R_cop0_EI <= '1';
 		    end if;
@@ -1397,9 +1396,95 @@ begin
     end process;
 
     --
-    -- Pipeline stage 5: register writeback
-    -- ====================================
+    -- Pipeline stage 5: load aligner & register writeback
+    -- ===================================================
     --
+
+    -- Load aligner
+    process(MEM_WB_mem_data, MEM_WB_mem_read_sign_extend, MEM_WB_mem_size,
+      MEM_WB_mem_addr_offset)
+	variable mem_align_tmp_h: std_logic_vector(15 downto 0);
+	variable mem_align_tmp_b: std_logic_vector(7 downto 0);
+    begin
+
+	-- byte
+	if C_big_endian then
+	    case MEM_WB_mem_addr_offset is
+		when "11" => mem_align_tmp_b := MEM_WB_mem_data(7 downto 0);
+		when "10" => mem_align_tmp_b := MEM_WB_mem_data(15 downto 8);
+		when "01" => mem_align_tmp_b := MEM_WB_mem_data(23 downto 16);
+		when others => mem_align_tmp_b := MEM_WB_mem_data(31 downto 24);
+	    end case;
+	else
+	    case MEM_WB_mem_addr_offset is
+		when "00" => mem_align_tmp_b := MEM_WB_mem_data(7 downto 0);
+		when "01" => mem_align_tmp_b := MEM_WB_mem_data(15 downto 8);
+		when "10" => mem_align_tmp_b := MEM_WB_mem_data(23 downto 16);
+		when others => mem_align_tmp_b := MEM_WB_mem_data(31 downto 24);
+	    end case;
+	end if;
+
+	-- half-word
+	if C_big_endian then
+	    case MEM_WB_mem_addr_offset is
+		when "10" => mem_align_tmp_h := MEM_WB_mem_data(15 downto 0);
+		when "00" => mem_align_tmp_h := MEM_WB_mem_data(31 downto 16);
+		when others => mem_align_tmp_h := (others => '-');
+	    end case;
+	else
+	    case MEM_WB_mem_addr_offset is
+		when "00" => mem_align_tmp_h := MEM_WB_mem_data(15 downto 0);
+		when "10" => mem_align_tmp_h := MEM_WB_mem_data(31 downto 16);
+		when others => mem_align_tmp_h := (others => '-');
+	    end case;
+	end if;
+
+	if MEM_WB_mem_size(1) = '1' then
+	    -- word load
+	    if MEM_WB_mem_addr_offset = "00" then
+		if C_big_endian then
+		    WB_mem_data_aligned <= MEM_WB_mem_data;
+		else
+		    WB_mem_data_aligned <=
+		      MEM_WB_mem_data(31 downto 8) & mem_align_tmp_b;
+		end if;
+	    else
+		WB_mem_data_aligned <= (others => '-');
+	    end if;
+	else
+	    if MEM_WB_mem_size(0) = '0' then
+		-- byte load
+		if MEM_WB_mem_read_sign_extend = '1' then
+		    if mem_align_tmp_b(7) = '1' then
+			WB_mem_data_aligned <=
+			  x"ffffff" & mem_align_tmp_b(7 downto 0);
+		    else
+			WB_mem_data_aligned <=
+			  x"000000" & mem_align_tmp_b(7 downto 0);
+		    end if;
+		else
+		    WB_mem_data_aligned <=
+		      x"000000" & mem_align_tmp_b(7 downto 0);
+		end if;
+	    else
+		-- half word load
+		if MEM_WB_mem_addr_offset(0) = '1' then
+		    WB_mem_data_aligned <= (others => '-');
+		elsif MEM_WB_mem_read_sign_extend = '1' then
+		    if mem_align_tmp_h(15) = '1' then
+			WB_mem_data_aligned <=
+			  x"ffff" & mem_align_tmp_h(15 downto 0);
+		    else
+			WB_mem_data_aligned <=
+			  x"0000" & mem_align_tmp_h(15 downto 0);
+		    end if;
+		else
+		    WB_mem_data_aligned <=
+		      x"0000" & mem_align_tmp_h(15 downto 0);
+		end if;
+	    end if;
+	end if;
+    end process;
 
     -- WB_eff_data goes into bypass / forwarding muxes back to the EX stage
     WB_eff_data <= MEM_WB_mem_data when MEM_WB_mem_cycle = '1'
@@ -1410,23 +1495,10 @@ begin
       else WB_mem_data_aligned when MEM_WB_mem_cycle = '1'
       else MEM_WB_ex_data;
 
-    -- instantiate memory load aligner
-    G_pipelined_load_aligner:
-    if C_load_aligner generate
-    loadalign: entity work.loadalign
-    generic map (
-	C_big_endian => C_big_endian
-    )
-    port map (
-	mem_read_sign_extend_pipelined => MEM_WB_mem_read_sign_extend,
-	mem_size_pipelined => MEM_WB_mem_size,
-	mem_addr_offset => MEM_WB_mem_addr_offset,
-	mem_align_in => MEM_WB_mem_data, mem_align_out => WB_mem_data_aligned
-    );
-    end generate;
 
-
+    --
     -- Multiplier unit, as a separate pipeline
+    --
     EX_mul_start <= (not C_cache or dmem_cache_wait = '0')
       and ID_EX_mult and not MEM_cancel_EX and not EX_MEM_EIP
       and (not C_mul_acc or not ID_EX_madd or R_mul_done)
