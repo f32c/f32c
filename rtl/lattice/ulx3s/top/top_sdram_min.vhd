@@ -13,6 +13,10 @@ entity top_sdram is
 	C_clk_freq: natural := 84;
 	C_icache_size: natural := 8;
 	C_dcache_size: natural := 8;
+	C_branch_prediction: boolean true;
+	C_full_shifter: boolean := true;
+	C_result_forwarding: boolean := true;
+	C_load_aligner: boolean := true;
 	C_cpus: natural := 1
     );
     port (
@@ -99,9 +103,13 @@ begin
     generic map (
 	C_arch => C_arch,
 	C_clk_freq => C_clk_freq,
+	C_cpus => C_cpus,
 	C_icache_size => C_icache_size,
 	C_dcache_size => C_dcache_size,
-	C_cpus => C_cpus,
+	C_branch_prediction => C_branch_prediction,
+	C_full_shifter => C_full_shifter,
+	C_result_forwarding => C_result_forwarding,
+	C_load_aligner => C_load_aligner,
 	C_spi => 3,
 	C_simple_out => 8,
 	C_simple_in => 20,
