@@ -131,7 +131,7 @@ begin
 	debug_in_data => x"00", debug_in_strobe => '0',
 	debug_in_busy => open, debug_out_data => open,
 	debug_out_strobe => open, debug_out_busy => '0',
-	debug_debug => open, debug_active => open
+	debug_active => open
     );
     final_to_cpu <= io_to_cpu when io_addr_strobe = '1' else dmem_to_cpu;
     io_addr_strobe <= dmem_addr_strobe when dmem_addr(31 downto 30) = "11"
