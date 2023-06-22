@@ -13,7 +13,7 @@ entity top_sdram is
 	C_clk_freq: natural := 84;
 	C_icache_size: natural := 8;
 	C_dcache_size: natural := 8;
-	C_branch_prediction: boolean true;
+	C_branch_prediction: boolean := true;
 	C_full_shifter: boolean := true;
 	C_result_forwarding: boolean := true;
 	C_load_aligner: boolean := true;
