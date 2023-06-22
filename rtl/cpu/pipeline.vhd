@@ -206,6 +206,8 @@ architecture Behavioral of pipeline is
     signal EX_eff_reg1, EX_eff_reg2: std_logic_vector(31 downto 0);
     signal EX_eff_alu_op2: std_logic_vector(31 downto 0);
     signal EX_shamt: std_logic_vector(4 downto 0);
+    signal EX_shift_stage8: std_logic_vector(31 downto 0);
+    signal EX_shift_sel16, EX_shift_sel8: std_logic_vector(1 downto 0);
     signal EX_from_shift: std_logic_vector(31 downto 0);
     signal EX_alu_ex, EX_alu_ey: std_logic_vector(32 downto 0);
     signal EX_from_alu_addsubx: std_logic_vector(32 downto 0);
@@ -234,7 +236,7 @@ architecture Behavioral of pipeline is
     signal EX_MEM_latency: std_logic;
     signal EX_MEM_mem_cycle, EX_MEM_logic_cycle: std_logic;
     signal EX_MEM_mem_read_sign_extend: std_logic;
-    signal EX_MEM_shamt_1_2_4: std_logic_vector(2 downto 0);
+    signal EX_MEM_shamt: std_logic_vector(2 downto 0);
     signal EX_MEM_shift_funct: std_logic_vector(1 downto 0);
     signal EX_MEM_shift_blocked: boolean;
     signal EX_MEM_mem_size: std_logic_vector(1 downto 0);
@@ -255,7 +257,11 @@ architecture Behavioral of pipeline is
     signal MEM_cancel_EX: boolean;
     signal MEM_bpredict_score: std_logic_vector(1 downto 0);
     signal MEM_eff_data: std_logic_vector(31 downto 0);
-    signal MEM_shamt_1_2_4: std_logic_vector(2 downto 0);
+    signal MEM_shamt: std_logic_vector(2 downto 0);
+    signal MEM_shift_stage1, MEM_shift_stage2, MEM_shift_stage4:
+      std_logic_vector(31 downto 0);
+    signal MEM_shift_sel4, MEM_shift_sel2, MEM_shift_sel1:
+      std_logic_vector(1 downto 0);
     signal MEM_data_in, MEM_from_shift: std_logic_vector(31 downto 0);
     -- boundary to stage 5
     signal MEM_WB_mem_cycle: std_logic;
@@ -951,20 +957,34 @@ begin
       else EX_eff_reg1(4 downto 0) when ID_EX_shift_variable
       else ID_EX_shift_amount;
 
-    -- instantiate the barrel shifter
-    shift: entity work.shift
-    generic map (
-	C_load_aligner => C_load_aligner
-    )
-    port map (
-	shamt_8_16 => EX_shamt(4 downto 3), funct_8_16 => ID_EX_shift_funct,
-	shamt_1_2_4 => MEM_shamt_1_2_4, funct_1_2_4 => EX_MEM_shift_funct,
-	stage1_in => EX_MEM_mem_data_out, stage4_out => MEM_from_shift,
-	stage8_in => EX_eff_reg2, stage16_out => EX_from_shift,
-	mem_multicycle_lh_lb => MEM_WB_multicycle_lh_lb,
-	mem_read_sign_extend_multicycle => EX_MEM_mem_read_sign_extend,
-	mem_size_multicycle => EX_MEM_mem_size(0)
-    );
+    -- barrel shifter, 16- and 8-bit stage (shift by 1, 2 and 4 in MEM stage)
+    EX_shift_sel8 <= ID_EX_shift_funct when EX_shamt(3) = '1'
+      else OP_SHIFT_BYPASS;
+    EX_shift_sel16 <= ID_EX_shift_funct when EX_shamt(4) = '1'
+      else OP_SHIFT_BYPASS;
+
+    with EX_shift_sel8 select EX_shift_stage8 <=
+	EX_eff_reg2(23 downto 0) & x"00" when OP_SHIFT_LL,
+	x"00" & EX_eff_reg2(31 downto 8) when OP_SHIFT_RL,
+	EX_eff_reg2(31) & EX_eff_reg2(31) & EX_eff_reg2(31)
+	  & EX_eff_reg2(31) & EX_eff_reg2(31) & EX_eff_reg2(31)
+	  & EX_eff_reg2(31) & EX_eff_reg2(31) & EX_eff_reg2(31 downto 8)
+	  when OP_SHIFT_RA,
+	EX_eff_reg2 when others;
+
+    with EX_shift_sel16 select EX_from_shift <=
+	EX_shift_stage8(15 downto 0) & x"0000" when OP_SHIFT_LL,
+	x"0000" & EX_shift_stage8(31 downto 16) when OP_SHIFT_RL,
+	EX_shift_stage8(31) & EX_shift_stage8(31)
+	  & EX_shift_stage8(31) & EX_shift_stage8(31)
+	  & EX_shift_stage8(31) & EX_shift_stage8(31)
+	  & EX_shift_stage8(31) & EX_shift_stage8(31)
+	  & EX_shift_stage8(31) & EX_shift_stage8(31)
+	  & EX_shift_stage8(31) & EX_shift_stage8(31)
+	  & EX_shift_stage8(31) & EX_shift_stage8(31)
+	  & EX_shift_stage8(31) & EX_shift_stage8(31)
+	  & EX_shift_stage8(31 downto 16) when OP_SHIFT_RA,
+	EX_shift_stage8 when others;
 
     -- compute byte select lines
     EX_mem_byte_sel(0) <= '1' when
@@ -1079,11 +1099,11 @@ begin
 	    end if;
 
 	    if not C_full_shifter and EX_MEM_shift_blocked then
-		if EX_MEM_shamt_1_2_4 = "010" then
+		if EX_MEM_shamt = "010" then
 		    EX_MEM_shift_blocked <= false;
 		end if;
 		EX_MEM_mem_data_out <= MEM_from_shift;
-		EX_MEM_shamt_1_2_4 <= EX_MEM_shamt_1_2_4 - 1;
+		EX_MEM_shamt <= EX_MEM_shamt - 1;
 	    end if;
 
 	    if MEM_running and (MEM_cancel_EX or not EX_running or
@@ -1116,7 +1136,7 @@ begin
 		EX_MEM_mem_cycle <= ID_EX_mem_cycle;
 		EX_MEM_mem_write <= ID_EX_mem_write;
 		EX_MEM_mem_byte_sel <= EX_mem_byte_sel;
-		EX_MEM_shamt_1_2_4 <= EX_shamt(2 downto 0);
+		EX_MEM_shamt <= EX_shamt(2 downto 0);
 		EX_MEM_shift_funct <= ID_EX_shift_funct;
 		EX_MEM_shift_blocked <= not C_full_shifter
 		  and ID_EX_op_major = OP_MAJOR_SHIFT
@@ -1281,9 +1301,61 @@ begin
       and EX_MEM_branch_likely and not EX_MEM_take_branch) or
       (C_arch = ARCH_RV32 and EX_MEM_take_branch);
 
-    MEM_shamt_1_2_4 <= "001" when not C_full_shifter and EX_MEM_shift_blocked
-      else "00" & EX_MEM_shamt_1_2_4(0) when not C_full_shifter
-      else EX_MEM_shamt_1_2_4;
+    MEM_shamt <= "001" when not C_full_shifter and EX_MEM_shift_blocked
+      else "00" & EX_MEM_shamt(0) when not C_full_shifter
+      else EX_MEM_shamt;
+
+    -- barrel shifter, 1-, 2- and 4-bit stage (shift by 16 and 8 in EX stage)
+    MEM_shift_sel1 <= EX_MEM_shift_funct when MEM_shamt(0) = '1'
+      else OP_SHIFT_BYPASS;
+    MEM_shift_sel2 <= EX_MEM_shift_funct when MEM_shamt(1) = '1'
+      else OP_SHIFT_BYPASS;
+    MEM_shift_sel4 <= EX_MEM_shift_funct when MEM_shamt(2) = '1'
+      else OP_SHIFT_BYPASS;
+
+    with MEM_shift_sel1 select MEM_shift_stage1 <=
+	EX_MEM_mem_data_out(30 downto 0) & "0" when OP_SHIFT_LL,
+	"0" & EX_MEM_mem_data_out(31 downto 1) when OP_SHIFT_RL,
+	EX_MEM_mem_data_out(31) & EX_MEM_mem_data_out(31 downto 1)
+	  when OP_SHIFT_RA,
+	EX_MEM_mem_data_out when others;
+
+    with MEM_shift_sel2 select MEM_shift_stage2 <=
+	MEM_shift_stage1(29 downto 0) & "00" when OP_SHIFT_LL,
+	"00" & MEM_shift_stage1(31 downto 2) when OP_SHIFT_RL,
+	MEM_shift_stage1(31) & MEM_shift_stage1(31)
+	  & MEM_shift_stage1(31 downto 2) when OP_SHIFT_RA,
+	MEM_shift_stage1 when others;
+
+    with MEM_shift_sel4 select MEM_shift_stage4 <=
+	MEM_shift_stage2(27 downto 0) & x"0" when OP_SHIFT_LL,
+	x"0" & MEM_shift_stage2(31 downto 4) when OP_SHIFT_RL,
+	MEM_shift_stage2(31) & MEM_shift_stage2(31)
+	  & MEM_shift_stage2(31) & MEM_shift_stage2(31)
+	  & MEM_shift_stage2(31 downto 4) when OP_SHIFT_RA,
+	MEM_shift_stage2 when others;
+
+    -- sign-extend byte and half loads when load aligner is omited
+    process(MEM_shift_stage4, MEM_WB_multicycle_lh_lb,
+      EX_MEM_mem_read_sign_extend, EX_MEM_mem_size)
+    begin
+	MEM_from_shift <= MEM_shift_stage4;
+	if not C_load_aligner and MEM_WB_multicycle_lh_lb then
+	    if EX_MEM_mem_size(0) = '0' then -- byte load
+		MEM_from_shift(31 downto 8) <= x"000000";
+		if EX_MEM_mem_read_sign_extend = '1'
+		  and MEM_shift_stage4(7) = '1' then
+		    MEM_from_shift(31 downto 8) <= x"ffffff";
+		end if;
+	    else -- half word load
+		MEM_from_shift(31 downto 16) <= x"0000";
+		if EX_MEM_mem_read_sign_extend = '1'
+		  and MEM_shift_stage4(15) = '1' then
+		    MEM_from_shift(31 downto 16) <= x"ffff";
+		end if;
+	    end if;
+	end if;
+    end process;
 
     -- branch prediction
     G_bp_update_score:
