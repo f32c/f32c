@@ -89,7 +89,7 @@ end top_sdram;
 
 architecture x of top_sdram is
     signal clk, pll_lock: std_logic;
-    signal clk_112m5, clk_96m43, clk_84m34: std_logic;
+    signal clk_123m75, clk_112m5, clk_92m8125, clk_84m375, clk_74m25: std_logic;
     signal reset: std_logic;
     signal sio_break: std_logic;
     signal flash_sck: std_logic;
@@ -160,16 +160,17 @@ begin
     I_pll: entity work.pll_25m
     port map (
 	clk_25m => clk_25m,
-	clk_168m75 => open,
-	clk_112m5 => clk_112m5,
-	clk_96m43 => clk_96m43,
-	clk_84m34 => clk_84m34,
-	lock => pll_lock
+	clk_371m25 => open, clk_337m5 => open, clk_168m75 => open,
+	clk_123m75 => clk_123m75, clk_112m5 => clk_112m5,
+	clk_92m8125 => clk_92m8125, clk_84m375 => clk_84m375,
+	clk_74m25 => clk_74m25, lock => pll_lock
     );
 
-    clk <= clk_112m5 when C_clk_freq = 112
-      else clk_96m43 when C_clk_freq = 96
-      else clk_84m34 when C_clk_freq = 84
+    clk <= clk_123m75 when C_clk_freq = 124
+      else clk_112m5 when C_clk_freq = 112
+      else clk_92m8125 when C_clk_freq = 93
+      else clk_84m375 when C_clk_freq = 84
+      else clk_74m25 when C_clk_freq = 74
       else '0';
     reset <= not pll_lock or sio_break;
 end x;

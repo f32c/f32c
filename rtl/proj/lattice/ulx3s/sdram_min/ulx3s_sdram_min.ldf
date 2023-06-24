@@ -6,7 +6,7 @@
         <Source name="../../../../lattice/ulx3s/top/top_sdram_min.vhd" type="VHDL" type_short="VHDL">
             <Options top_module="top_sdram"/>
         </Source>
-        <Source name="../../../../lattice/ulx3s/clocks/pll_25_169_112_96_84.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../lattice/ulx3s/clocks/pll_25_675_742.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../generic/glue_sdram_min.vhd" type="VHDL" type_short="VHDL">
@@ -49,6 +49,9 @@
             <Options/>
         </Source>
         <Source name="../../../../cpu/mul_dsp.vhd" type="VHDL" type_short="VHDL">
+            <Options/>
+        </Source>
+        <Source name="../../../../cpu/mul_iter.vhd" type="VHDL" type_short="VHDL" excluded="TRUE">
             <Options/>
         </Source>
         <Source name="../../../../cpu/debug.vhd" type="VHDL" type_short="VHDL">
