@@ -70,10 +70,6 @@ entity glue_sdram_min is
 	C_debug: boolean := false;
 
 	-- SDRAM parameters
-	C_ras: natural := 2;
-	C_cas: natural := 2;
-	C_pre: natural := 2;
-	C_clock_range: integer range 0 to 2 := 1;
 	C_sdram_address_width : integer := 24;
 	C_sdram_column_bits : integer := 9;
 	C_sdram_startup_cycles : integer := 10100;
@@ -152,6 +148,10 @@ architecture Behavioral of glue_sdram_min is
     signal rom_i_ready: std_logic;
 
     -- SDRAM
+    constant C_ras: natural range 2 to 3 := 2 + C_clk_freq / 135;
+    constant C_cas: natural range 2 to 3 := 2 + C_clk_freq / 135;
+    constant C_pre: natural range 2 to 3 := 2 + C_clk_freq / 135;
+    constant C_clock_range: natural range 0 to 2 := 1 + C_clk_freq / 101;
     signal sdram_bus: sdram_port_array;
     signal snoop_cycle: std_logic;
     signal snoop_addr: std_logic_vector(31 downto 2);
