@@ -148,9 +148,9 @@ architecture Behavioral of glue_sdram_min is
     signal rom_i_ready: std_logic;
 
     -- SDRAM
-    constant C_ras: natural range 2 to 3 := 2 + C_clk_freq / 135;
-    constant C_cas: natural range 2 to 3 := 2 + C_clk_freq / 135;
-    constant C_pre: natural range 2 to 3 := 2 + C_clk_freq / 135;
+    constant C_ras: natural range 2 to 3 := 2 + C_clk_freq / 137;
+    constant C_cas: natural range 2 to 3 := 2 + C_clk_freq / 137;
+    constant C_pre: natural range 2 to 3 := 2 + C_clk_freq / 137;
     constant C_clock_range: natural range 0 to 2 := 1 + C_clk_freq / 101;
     signal sdram_bus: sdram_port_array;
     signal snoop_cycle: std_logic;
