@@ -165,7 +165,7 @@ architecture x of cache is
     signal d_from_bram, d_to_bram:
       std_logic_vector(C_d_tag_bits + 32 - 1 downto 0);
     signal d_bram_wr_enable: boolean;
-    signal d_cacheable, d_miss_cycle: boolean;
+    signal d_cacheable, d_miss_cycle: boolean := false;
     signal cpu_d_wait: std_logic;
 
     -- debugging
