@@ -446,7 +446,7 @@ begin
     iaddr_in_xram <= '1' when R_i_addr(31 downto 28) = C_xram_base else '0';
     icache_tag_in <= '1' & iaddr_in_xram
       & R_i_addr(C_cached_addr_bits - 1 downto C_i_addr_bits)
-      when C_icache_size /= 0;
+      when C_icache_size /= 0 else (others => '0');
     icache_line_valid <= iaddr_cacheable and icache_tag_in = icache_tag_out;
 
     --
