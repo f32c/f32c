@@ -109,7 +109,7 @@ architecture x of cache is
     function F_kb_to_addrlen(k: integer) return integer is
 	variable bits, tmp: integer;
     begin
-	bits := 0;
+	bits := 8;
 	while (2 ** bits < 1024 * k) loop
 	    bits := bits + 1;
 	end loop;
