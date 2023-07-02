@@ -1,6 +1,5 @@
 --
--- Copyright (c) 2013 - 2016 Marko Zec, University of Zagreb
--- All rights reserved.
+-- Copyright (c) 2013 - 2023 Marko Zec
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -23,8 +22,6 @@
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
 --
--- $Id$
---
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -32,22 +29,28 @@ use ieee.std_logic_1164.all;
 package sdram_pack is
 
 --
--- SDRAM port type
+-- SDRAM port types
 --
-type sdram_port_type is
+
+-- consumer -> SDRAM
+type sdram_req_type is
     record
-	-- consumer -> DRAM
 	addr: std_logic_vector(31 downto 2);
 	data_in: std_logic_vector(31 downto 0);
 	byte_sel: std_logic_vector(3 downto 0);
-	addr_strobe: std_logic;
 	burst_len: std_logic_vector(2 downto 0);
 	write: std_logic;
-	-- DRAM -> consumer
+	strobe: std_logic;
+    end record;
+
+-- SDRAM -> consumer
+type sdram_resp_type is
+    record
 	data_out: std_logic_vector(31 downto 0);
 	data_ready: std_logic;
     end record;
 
-type sdram_port_array is array(0 to 15) of sdram_port_type;
+type sdram_req_array is array(0 to 15) of sdram_req_type;
+type sdram_resp_array is array(0 to 15) of sdram_resp_type;
 
 end;

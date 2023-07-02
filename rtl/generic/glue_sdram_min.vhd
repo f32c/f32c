@@ -152,7 +152,8 @@ architecture Behavioral of glue_sdram_min is
     constant C_cas: natural range 2 to 3 := 2 + C_clk_freq / 137;
     constant C_pre: natural range 2 to 3 := 2 + C_clk_freq / 137;
     constant C_clock_range: natural range 0 to 2 := 1 + C_clk_freq / 101;
-    signal sdram_bus: sdram_port_array;
+    signal sdram_req: sdram_req_array;
+    signal sdram_resp: sdram_resp_array;
     signal snoop_cycle: std_logic;
     signal snoop_addr: std_logic_vector(31 downto 2);
 
@@ -296,7 +297,7 @@ begin
     -- SDRAM
     --
     process(imem_addr, dmem_addr, dmem_byte_sel, cpu_to_dmem, dmem_write,
-      dmem_addr_strobe, imem_addr_strobe, sdram_bus, io_to_cpu)
+      dmem_addr_strobe, imem_addr_strobe, sdram_req, sdram_resp, io_to_cpu)
 	variable data_port, instr_port: integer;
 	variable sdram_data_strobe, sdram_instr_strobe: std_logic;
     begin
@@ -322,8 +323,8 @@ begin
 		end if;
 		final_to_cpu_d(cpu) <= io_to_cpu;
 	    elsif sdram_data_strobe = '1' then
-		dmem_data_ready(cpu) <= sdram_bus(data_port).data_ready;
-		final_to_cpu_d(cpu) <= sdram_bus(data_port).data_out;
+		dmem_data_ready(cpu) <= sdram_resp(data_port).data_ready;
+		final_to_cpu_d(cpu) <= sdram_resp(data_port).data_out;
 	    elsif xbus_addr_range then
 		dmem_data_ready(cpu) <= xbus_ack;
 		final_to_cpu_d(cpu) <= xbus_data_in;
@@ -333,8 +334,8 @@ begin
 	    end if;
 	    -- CPU, instruction bus
 	    if sdram_instr_strobe = '1' then
-		imem_data_ready(cpu) <= sdram_bus(instr_port).data_ready;
-		final_to_cpu_i(cpu) <= sdram_bus(instr_port).data_out;
+		imem_data_ready(cpu) <= sdram_resp(instr_port).data_ready;
+		final_to_cpu_i(cpu) <= sdram_resp(instr_port).data_out;
 	    else
 		imem_data_ready(cpu) <= rom_i_ready;
 		final_to_cpu_i(cpu) <= rom_i_to_cpu;
@@ -349,8 +350,8 @@ begin
 		end if;
 		final_to_cpu_d(cpu) <= io_to_cpu;
 	    elsif sdram_data_strobe = '1' then
-		dmem_data_ready(cpu) <= sdram_bus(data_port).data_ready;
-		final_to_cpu_d(cpu) <= sdram_bus(data_port).data_out;
+		dmem_data_ready(cpu) <= sdram_resp(data_port).data_ready;
+		final_to_cpu_d(cpu) <= sdram_resp(data_port).data_out;
 	    else
 		-- XXX assert address eror signal?
 		dmem_data_ready(cpu) <= '1';
@@ -358,8 +359,8 @@ begin
 	    end if;
 	    -- CPU, instruction bus
 	    if sdram_instr_strobe = '1' then
-		imem_data_ready(cpu) <= sdram_bus(instr_port).data_ready;
-		final_to_cpu_i(cpu) <= sdram_bus(instr_port).data_out;
+		imem_data_ready(cpu) <= sdram_resp(instr_port).data_ready;
+		final_to_cpu_i(cpu) <= sdram_resp(instr_port).data_out;
 	    else
 		-- XXX assert address eror signal?
 		imem_data_ready(cpu) <= '1';
@@ -367,19 +368,19 @@ begin
 	    end if;
 	end if;
 	-- CPU, data bus
-	sdram_bus(data_port).addr_strobe <= sdram_data_strobe;
-	sdram_bus(data_port).burst_len <= dmem_burst_len(cpu);
-	sdram_bus(data_port).write <= dmem_write(cpu);
-	sdram_bus(data_port).byte_sel <= dmem_byte_sel(cpu);
-	sdram_bus(data_port).addr <= dmem_addr(cpu);
-	sdram_bus(data_port).data_in <= cpu_to_dmem(cpu);
+	sdram_req(data_port).strobe <= sdram_data_strobe;
+	sdram_req(data_port).burst_len <= dmem_burst_len(cpu);
+	sdram_req(data_port).write <= dmem_write(cpu);
+	sdram_req(data_port).byte_sel <= dmem_byte_sel(cpu);
+	sdram_req(data_port).addr <= dmem_addr(cpu);
+	sdram_req(data_port).data_in <= cpu_to_dmem(cpu);
 	-- CPU, instruction bus
-	sdram_bus(instr_port).addr_strobe <= sdram_instr_strobe;
-	sdram_bus(instr_port).burst_len <= imem_burst_len(cpu);
-	sdram_bus(instr_port).addr <= imem_addr(cpu);
-	sdram_bus(instr_port).data_in <= (others => '-');
-	sdram_bus(instr_port).write <= '0';
-	sdram_bus(instr_port).byte_sel <= x"f";
+	sdram_req(instr_port).strobe <= sdram_instr_strobe;
+	sdram_req(instr_port).burst_len <= imem_burst_len(cpu);
+	sdram_req(instr_port).addr <= imem_addr(cpu);
+	sdram_req(instr_port).data_in <= (others => '-');
+	sdram_req(instr_port).write <= '0';
+	sdram_req(instr_port).byte_sel <= x"f";
     end loop;
     end process;
 
@@ -396,7 +397,7 @@ begin
     port map (
 	clk => clk, reset => res(0),
 	-- internal connections
-	mpbus => sdram_bus,
+	req => sdram_req, resp => sdram_resp,
 	snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
 	-- external SDRAM interface
 	sdram_addr => sdram_addr, sdram_data => sdram_data,

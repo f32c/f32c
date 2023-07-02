@@ -67,7 +67,8 @@ entity SDRAM_Controller is
 	reset: in  STD_LOGIC;
 
 	-- To internal bus / logic blocks
-	mpbus: inout sdram_port_array;
+	req: in sdram_req_array;
+	resp: out sdram_resp_array;
 	snoop_addr: out std_logic_vector(31 downto 2);
 	snoop_cycle: out std_logic;
 
@@ -117,12 +118,12 @@ architecture Behavioral of SDRAM_Controller is
     -- Reserved, wr burst, OpMode, CAS Latency (3), Burst Type, Burst Length (2)
       "000" &   "0"  &  "00"  &    "011"      &     "0"    &   "001";
 
-    signal iob_command     : std_logic_vector( 3 downto 0) := CMD_NOP;
-    signal iob_address     : std_logic_vector(12 downto 0) := (others => '0');
-    signal iob_data        : std_logic_vector(15 downto 0) := (others => '0');
-    signal iob_dqm         : std_logic_vector( 1 downto 0) := (others => '0');
-    signal iob_cke         : std_logic := '0';
-    signal iob_bank        : std_logic_vector( 1 downto 0) := (others => '0');
+    signal iob_command: std_logic_vector( 3 downto 0) := CMD_NOP;
+    signal iob_address: std_logic_vector(12 downto 0) := (others => '0');
+    signal iob_data: std_logic_vector(15 downto 0) := (others => '0');
+    signal iob_dqm: std_logic_vector( 1 downto 0) := (others => '0');
+    signal iob_cke: std_logic := '0';
+    signal iob_bank: std_logic_vector( 1 downto 0) := (others => '0');
    
     attribute IOB: string;
     attribute IOB of iob_command: signal is "true";
@@ -197,8 +198,8 @@ architecture Behavioral of SDRAM_Controller is
     constant end_of_row: natural := sdram_address_width-2;
     constant prefresh_cmd: natural := 10;
 
-    -- Bus interface signals (resolved from mpbus record via R_cur_port)
-    signal addr_strobe: std_logic;			-- from CPU bus
+    -- Bus interface signals (resolved from req record via R_cur_port)
+    signal strobe: std_logic;				-- from CPU bus
     signal write: std_logic;				-- from CPU bus
     signal byte_sel: std_logic_vector(3 downto 0);	-- from CPU bus
     signal addr: std_logic_vector(31 downto 0);		-- from CPU bus
@@ -213,19 +214,19 @@ architecture Behavioral of SDRAM_Controller is
 
 begin
     -- Inbound multiport mux
-    addr_strobe <= mpbus(R_next_port).addr_strobe;
-    write <= mpbus(R_next_port).write;
-    byte_sel <= mpbus(R_next_port).byte_sel;
-    addr(mpbus(0).addr'high - 2 downto 0) <= mpbus(R_next_port).addr;
-    data_in <= mpbus(R_next_port).data_in;
-    burst_len <= mpbus(R_next_port).burst_len;
+    strobe <= req(R_next_port).strobe;
+    write <= req(R_next_port).write;
+    byte_sel <= req(R_next_port).byte_sel;
+    addr(req(0).addr'high - 2 downto 0) <= req(R_next_port).addr;
+    data_in <= req(R_next_port).data_in;
+    burst_len <= req(R_next_port).burst_len;
 
     -- Outbound multiport demux
     process(R_ready_out, R_from_sdram)
     begin
 	for i in 0 to (C_ports - 1) loop
-	    mpbus(i).data_ready <= R_ready_out(i);
-	    mpbus(i).data_out <= R_from_sdram & R_from_sdram_prev;
+	    resp(i).data_ready <= R_ready_out(i);
+	    resp(i).data_out <= R_from_sdram & R_from_sdram_prev;
 	end loop;
     end process;
 
@@ -269,7 +270,7 @@ begin
     sdram_data <= iob_data when iob_dq_hiz = '0' else (others => 'Z');
 
     -- Arbiter: round-robin port selection combinatorial logic
-    process(mpbus, R_cur_port)
+    process(req, R_cur_port)
 	variable t, n: integer;
     begin
 	t := R_cur_port;
@@ -277,7 +278,7 @@ begin
 	    for j in 1 to C_ports loop
 		if R_cur_port = i then
 		    n := (i + j) mod C_ports;
-		    if mpbus(n).addr_strobe = '1' and n /= C_prio_port then
+		    if req(n).strobe = '1' and n /= C_prio_port then
 			t := n;
 			exit;
 		    end if;
@@ -333,7 +334,7 @@ begin
 	    -------------------------------------------------------------------
 	    R_ready_out <= (others => '0');
 	    R_ready_out(R_cur_port) <= data_ready_delay(1);
-	    if ready_for_new = '1' and addr_strobe = '1'
+	    if ready_for_new = '1' and strobe = '1'
 	      and read_done and R_ready_out(R_next_port) = '0' then
 		R_cur_port <= R_next_port;
 		if save_bank = addr_bank and save_row = addr_row then
@@ -341,11 +342,11 @@ begin
 		else
 		    can_back_to_back <= '0';
 		end if;
-		save_row         <= addr_row;
-		save_bank        <= addr_bank;
-		save_col         <= addr_col;
-		save_wr          <= write;
-		save_data_in     <= data_in;
+		save_row	 <= addr_row;
+		save_bank	 <= addr_bank;
+		save_col	 <= addr_col;
+		save_wr		 <= write;
+		save_data_in	 <= data_in;
 		save_byte_enable <= byte_sel;
 		save_burst_len	 <= burst_len;
 		ready_for_new    <= '0';
@@ -381,17 +382,17 @@ begin
 		-- All the commands during the startup are NOPS, except these
 		if startup_refresh_count = startup_refresh_max-31 then
 		    -- ensure all rows are closed
-		    iob_command     <= CMD_PRECHARGE;
+		    iob_command <= CMD_PRECHARGE;
 		    iob_address(prefresh_cmd) <= '1';  -- all banks
-		    iob_bank        <= (others => '0');
+		    iob_bank <= (others => '0');
 		elsif startup_refresh_count = startup_refresh_max-23 then   
 		    -- these refreshes need to be at least tREF (66ns) apart
-		    iob_command     <= CMD_REFRESH;
+		    iob_command <= CMD_REFRESH;
 		elsif startup_refresh_count = startup_refresh_max-15 then
-		    iob_command     <= CMD_REFRESH;
+		    iob_command <= CMD_REFRESH;
 		elsif startup_refresh_count = startup_refresh_max-7 then    
 		    -- Now load the mode register
-		    iob_command     <= CMD_LOAD_MODE_REG;
+		    iob_command <= CMD_LOAD_MODE_REG;
 		    if C_cas = 2 then
 			iob_address <= MODE_REG_CAS_2;
 		    else
@@ -405,9 +406,9 @@ begin
 		-- the first refresh cycle
 		------------------------------------------------------
 		if startup_refresh_count = 0 then
-		    state           <= s_idle;
-		    ready_for_new   <= '1';
-		    read_done	    <= true;
+		    state <= s_idle;
+		    ready_for_new <= '1';
+		    read_done <= true;
 		    startup_refresh_count <= to_unsigned(2048 - cycles_per_refresh+1,14);
 		end if;
 
@@ -425,7 +426,7 @@ begin
 		    -- Start the refresh cycle. 
 		    -- This tasks tRFC (66ns), so 6 idle cycles are needed @ 100MHz
 		    ------------------------------------------------------------------------
-		    state       <= s_idle_in_6;
+		    state	<= s_idle_in_6;
 		    iob_command <= CMD_REFRESH;
 		    startup_refresh_count <= startup_refresh_count - cycles_per_refresh+1;
 		elsif ready_for_new = '0' then
@@ -451,12 +452,12 @@ begin
 	    when s_open_in_1 =>
 		-- still waiting for row to open
 		if save_wr = '1' then
-		    state       <= s_write_1;
+		    state	<= s_write_1;
 		    iob_dq_hiz  <= '0';
 		    iob_data    <= save_data_in(15 downto 0); -- get the DQ bus out of HiZ early
 		else
 		    iob_dq_hiz  <= '1';
-		    state       <= s_read_1;
+		    state	<= s_read_1;
 		end if;
 		-- we will be ready for a new transaction next cycle!
 		ready_for_new   <= '1';
@@ -465,17 +466,17 @@ begin
 	    -- Processing the read transaction
 	    ----------------------------------
 	    when s_read_1 =>
-		state           <= s_read_2;
-		iob_command     <= CMD_READ;
-		iob_address     <= save_col;
-		iob_bank        <= save_bank;
+		state		<= s_read_2;
+		iob_command	<= CMD_READ;
+		iob_address	<= save_col;
+		iob_bank	<= save_bank;
 		iob_address(prefresh_cmd) <= '0'; -- A10 actually matters - it selects auto precharge
 
 		-- Schedule reading the data values off the bus
 		data_ready_delay(data_ready_delay'high)   <= '1';
 
 		-- Set the data masks to read all bytes
-		iob_dqm            <= (others => '0');
+		iob_dqm		   <= (others => '0');
 		dqm_sr(1 downto 0) <= (others => '0');
 
 	    when s_read_2 =>
@@ -505,24 +506,24 @@ begin
 	    -- Processing the write transaction
 	    -------------------------------------------------------------------
 	    when s_write_1 =>
-		state              <= s_write_2;
-		iob_command        <= CMD_WRITE;
-		iob_address        <= save_col;
-		iob_address(prefresh_cmd)    <= '0'; -- A10 actually matters - it selects auto precharge
-		iob_bank           <= save_bank;
-		iob_dqm            <= NOT save_byte_enable(1 downto 0);
+		state		<= s_write_2;
+		iob_command	<= CMD_WRITE;
+		iob_address	<= save_col;
+		iob_address(prefresh_cmd) <= '0'; -- A10 actually matters - it selects auto precharge
+		iob_bank	<= save_bank;
+		iob_dqm		<= NOT save_byte_enable(1 downto 0);
 		dqm_sr(1 downto 0) <= NOT save_byte_enable(3 downto 2);
-		iob_data           <= save_data_in(15 downto 0);
-		iob_data_next      <= save_data_in(31 downto 16);
+		iob_data	<= save_data_in(15 downto 0);
+		iob_data_next	<= save_data_in(31 downto 16);
 
 	    when s_write_2 =>
-		state           <= s_write_3;
-		iob_data        <= iob_data_next;
+		state		<= s_write_3;
+		iob_data	<= iob_data_next;
 		-- can we do a back-to-back write?
 		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
 		    if save_wr = '1' then
 			-- back-to-back write?
-			state           <= s_write_1;
+			state		<= s_write_1;
 			ready_for_new   <= '1';
 		    end if;
 		    -- Although it looks right in simulation you can't go write-to-read 
@@ -534,17 +535,17 @@ begin
 		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
 		    if save_wr = '1' then
 			-- back-to-back write?
-			state           <= s_write_1;
+			state		<= s_write_1;
 			ready_for_new   <= '1';
 		    else
 			-- write-to-read switch?
-			state           <= s_read_1;
-			iob_dq_hiz      <= '1';
+			state		<= s_read_1;
+			iob_dq_hiz	<= '1';
 			ready_for_new   <= '1'; -- we will be ready for a new transaction next cycle!
 		    end if;
 		else
-		    iob_dq_hiz         <= '1';
-		    state              <= s_precharge;
+		    iob_dq_hiz <= '1';
+		    state <= s_precharge;
 		end if;
 
 	    -------------------------------------------------------------------
@@ -556,21 +557,21 @@ begin
 		else
 		    state <= s_idle_in_3;
 		end if;
-		iob_command     <= CMD_PRECHARGE;
+		iob_command <= CMD_PRECHARGE;
 		iob_address(prefresh_cmd) <= '1'; -- A10 actually matters - it selects all banks or just one
 
 	    -------------------------------------------------------------------
 	    -- We should never get here, but if we do then reset the memory
 	    -------------------------------------------------------------------
 	    when others => 
-		state                 <= s_startup;
-		ready_for_new         <= '0';
+		state <= s_startup;
+		ready_for_new <= '0';
 		startup_refresh_count <= startup_refresh_max-to_unsigned(sdram_startup_cycles,14);
 	    end case;
 
 	    if reset = '1' then  -- Sync reset
-		state                 <= s_startup;
-		ready_for_new         <= '0';
+		state <= s_startup;
+		ready_for_new <= '0';
 		startup_refresh_count <= startup_refresh_max-to_unsigned(sdram_startup_cycles,14);
 	    end if;
 	end if;
