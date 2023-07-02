@@ -685,8 +685,8 @@ begin
 
     process(clk, clk_enable)
     begin
-	if rising_edge(clk) and clk_enable = '1'
-	  and (not C_cache or dmem_cache_wait = '0') then
+    if rising_edge(clk) then
+	if clk_enable = '1' and (not C_cache or dmem_cache_wait = '0') then
 	    if MEM_take_branch and not ID_running and IF_fetch_complete then
 		ID_EX_cancel_next <= true;
 	    end if;
@@ -885,6 +885,7 @@ begin
 		ID_EX_wait <= false;
 	    end if;
 	end if;
+    end if;
     end process;
 
 
