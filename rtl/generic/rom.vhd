@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2013 - 2022 Marko Zec
+-- Copyright (c) 2013 - 2023 Marko Zec
 -- Copyright (c) 2015 Davor Jadrijevic
 --
 -- Redistribution and use in source and binary forms, with or without
@@ -77,11 +77,12 @@ architecture x of rom is
       boot_block_map(C_arch * 4 + sel(C_boot_spi) * 2 + sel(C_big_endian));
 
     type rom_type is array(0 to (C_rom_size * 256 - 1))
-      of std_logic_vector(7 downto 0);
+      of std_logic_vector(31 downto 0);
 
     --
     -- Xilinx ISE 14.7 for Spartan-3 will abort with error about loop 
-    -- iteration limit >64 exceeded.  We need 128 iterations here.
+    -- iteration limit >64 exceeded.  We need at least 128 iterations
+    -- here, depending on the actual boot block size.
     -- If buiding with makefile, edit file xilinx.opt file and
     -- append this line (give sufficiently large limit):
     -- -loop_iteration_limit 2048
@@ -90,25 +91,21 @@ architecture x of rom is
     -- scroll down to the "Other XST Command Line Options" field and
     -- enter: -loop_iteration_limit 2048
     --
-    function boot_block_to_rom(x: boot_block_type; n: natural)
+    function boot_block_to_rom(x: boot_block_type)
       return rom_type is
 	variable y: rom_type;
-	variable i,l: natural;
+	variable i: natural;
     begin
-	y := (others => (others => '0')); -- if '0' is '-' then Xilinx ISE error
-	i := n;
-	l := x'length;
-	while i < l loop
-	    y(i / 4) := x(i);
+	y := (others => (others => '0')); -- appease Xilinx ISE
+	i := 0;
+	while i < x'length loop
+	    y(i / 4) := x(i + 3) & x(i + 2) & x(i + 1) & x(i);
 	    i := i + 4;
 	end loop;
 	return y;
     end boot_block_to_rom;
 
-    signal rom_0: rom_type := boot_block_to_rom(boot_block, 0);
-    signal rom_1: rom_type := boot_block_to_rom(boot_block, 1);
-    signal rom_2: rom_type := boot_block_to_rom(boot_block, 2);
-    signal rom_3: rom_type := boot_block_to_rom(boot_block, 3);
+    signal rom: rom_type := boot_block_to_rom(boot_block);
 
     signal R_ack: std_logic;
 
@@ -117,8 +114,7 @@ begin
     process(clk)
     begin
 	if rising_edge(clk) then
-	    data_out <= rom_3(conv_integer(addr)) & rom_2(conv_integer(addr))
-	      & rom_1(conv_integer(addr)) & rom_0(conv_integer(addr));
+	    data_out <= rom(conv_integer(addr));
 
 	    if strobe = '1' and R_ack = '0' then
 		R_ack <= '1';
