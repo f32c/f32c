@@ -1,6 +1,5 @@
 --
--- Copyright (c) 2013 - 2016 Marko Zec, University of Zagreb
--- All rights reserved.
+-- Copyright (c) 2013 - 2023 Marko Zec
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -26,15 +25,13 @@
 -- Modifications
 -- Davor Jadrijevic: instantiation of generic bram modules
 --
--- $Id$
---
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
 
-entity f32_cache is
+entity f32c_cache is
     generic (
 	-- ISA options
 	C_arch: integer;
