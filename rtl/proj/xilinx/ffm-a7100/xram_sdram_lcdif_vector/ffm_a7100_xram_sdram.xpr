@@ -275,7 +275,7 @@
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../cpu/pipeline.vhd">
+      <File Path="$PPRDIR/../../../../cpu/f32c_core.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>

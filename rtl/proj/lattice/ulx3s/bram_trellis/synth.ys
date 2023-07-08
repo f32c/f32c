@@ -9,7 +9,7 @@ ghdl --ieee=synopsys -fexplicit -frelaxed-rules --work=work \
   ../../../../cpu/loadalign.vhd \
   ../../../../cpu/shift.vhd \
   ../../../../cpu/mul_iter.vhd \
-  ../../../../cpu/pipeline.vhd \
+  ../../../../cpu/f32c_core.vhd \
   ../../../../generic/bootloader/defs_bootblock.vhd \
   ../../../../generic/bootloader/boot_sio_rv32el.vhd \
   ../../../../generic/bootloader/boot_sio_mi32el.vhd \

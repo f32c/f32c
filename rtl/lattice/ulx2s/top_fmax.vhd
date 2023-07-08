@@ -110,7 +110,7 @@ begin
     );
 
     -- f32c core
-    pipeline: entity work.pipeline
+    cpu: entity work.f32c_core
     generic map (
 	C_arch => C_arch, C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,

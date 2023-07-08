@@ -34,7 +34,7 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
 
-entity cache is
+entity f32_cache is
     generic (
 	-- ISA options
 	C_arch: integer;
@@ -103,9 +103,9 @@ entity cache is
 	debug_clk_ena: out std_logic;
 	debug_active: out std_logic
     );
-end cache;
+end f32c_cache;
 
-architecture x of cache is
+architecture x of f32c_cache is
     function F_kb_to_addrlen(k: integer) return integer is
 	variable bits, tmp: integer;
     begin
@@ -271,7 +271,7 @@ begin
     --
     -- Old I-cache stuff starts here
     --
-    pipeline: entity work.pipeline
+    core: entity work.f32c_core
     generic map (
 	C_arch => C_arch, C_cache => true, C_reg_IF_PC => true,
 	C_cpuid => C_cpuid, C_clk_freq => C_clk_freq, C_ll_sc => C_ll_sc,

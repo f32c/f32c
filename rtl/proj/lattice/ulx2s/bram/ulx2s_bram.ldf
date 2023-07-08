@@ -24,7 +24,7 @@
         <Source name="../../../../cpu/loadalign.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../cpu/pipeline.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../cpu/f32c_core.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../../../cpu/shift.vhd" type="VHDL" type_short="VHDL">

@@ -378,7 +378,7 @@ architecture Behavioral of glue_bram_sram8 is
 begin
 
   -- f32c core
-  pipeline: entity work.cache
+  cpu: entity work.f32c_cache
   generic map (
   C_arch => C_arch, C_cpuid => 0, C_clk_freq => C_clk_freq,
   C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,

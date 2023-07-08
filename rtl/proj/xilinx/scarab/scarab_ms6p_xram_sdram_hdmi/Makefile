@@ -52,7 +52,7 @@ vhdfiles = \
 ../../../../generic/bram_video.vhd \
 ../../../../cpu/alu.vhd \
 ../../../../cpu/loadalign.vhd \
-../../../../cpu/pipeline.vhd \
+../../../../cpu/f32c_core.vhd \
 ../../../../cpu/shift.vhd \
 ../../../../cpu/mul_iter.vhd \
 ../../../../cpu/defs_f32c.vhd \
@@ -60,7 +60,7 @@ vhdfiles = \
 ../../../../cpu/defs_rv32.vhd \
 ../../../../cpu/idecode_mi32.vhd \
 ../../../../cpu/idecode_rv32.vhd \
-../../../../cpu/cache.vhd \
+../../../../cpu/f32c_cache.vhd \
 ../../../../cpu/debug.vhd \
 ../../../../soc/sram_pack.vhd \
 ../../../../soc/sram.vhd \

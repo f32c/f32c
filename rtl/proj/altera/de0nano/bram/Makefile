@@ -44,7 +44,7 @@ SRCS = \
 ../../../cpu/defs_f32c.vhd \
 ../../../cpu/shift.vhd \
 ../../../cpu/mul_iter.vhd \
-../../../cpu/pipeline.vhd \
+../../../cpu/f32c_core.vhd \
 ../../../cpu/loadalign.vhd \
 ../../../cpu/idecode.vhd \
 ../../../cpu/alu.vhd \

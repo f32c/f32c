@@ -52,7 +52,7 @@
     <file xil_pn:name="../../clocks/mimas_v2/clk_100MHz_25MHz_250MHz.vhd" xil_pn:type="FILE_VHDL"/>
     <file xil_pn:name="../../../soc/fm/fm.vhd" xil_pn:type="FILE_VHDL"/>
     <file xil_pn:name="../../hdmi_out.vhd" xil_pn:type="FILE_VHDL"/>
-    <file xil_pn:name="../../../cpu/pipeline.vhd" xil_pn:type="FILE_VHDL"/>
+    <file xil_pn:name="../../../cpu/f32c_core.vhd" xil_pn:type="FILE_VHDL"/>
     <file xil_pn:name="../../../generic/bram.vhd" xil_pn:type="FILE_VHDL"/>
     <file xil_pn:name="../../../soc/vgahdmi/videofifo.vhd" xil_pn:type="FILE_VHDL"/>
     <file xil_pn:name="../../../generic/glue_bram_vgaf.vhd" xil_pn:type="FILE_VHDL"/>

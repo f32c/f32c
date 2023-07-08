@@ -236,7 +236,7 @@ begin
     begin
     intr(i) <= "000" & '0' & from_sio(0)(8) & '0' when i = 0 else "000000";
     res(i) <= R_cpu_reset(i);
-    cpu: entity work.cache
+    cpu: entity work.f32c_cache
     generic map (
 	C_arch => C_arch, C_cpuid => i, C_clk_freq => C_clk_freq,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,

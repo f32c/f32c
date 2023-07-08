@@ -41,7 +41,7 @@ vhdfiles = \
 ../../../../generic/acram_emu.vhd \
 ../../../../cpu/alu.vhd \
 ../../../../cpu/loadalign.vhd \
-../../../../cpu/pipeline.vhd \
+../../../../cpu/f32c_core.vhd \
 ../../../../cpu/shift.vhd \
 ../../../../cpu/mul_iter.vhd \
 ../../../../cpu/defs_f32c.vhd \

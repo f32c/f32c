@@ -626,7 +626,7 @@ begin
     S_reset <= reset or sio_break_internal(0);
 
     -- f32c core
-    pipeline: entity work.cache
+    cpu: entity work.f32c_cache
     generic map (
       C_arch => C_arch, C_cpuid => 0, C_clk_freq => C_clk_freq,
       C_regfile_synchronous_read => C_regfile_synchronous_read,

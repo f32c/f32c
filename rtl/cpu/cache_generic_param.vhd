@@ -166,7 +166,7 @@ begin
       or C_dcache_size = 8 or C_dcache_size = 16 or C_dcache_size = 32)
       report "Invalid data cache size" severity failure;
 
-    pipeline: entity work.pipeline
+    cpu: entity work.f32c_core
     generic map (
 	C_arch => C_arch, C_cache => true, C_reg_IF_PC => true,
 	C_cpuid => C_cpuid, C_clk_freq => C_clk_freq, C_ll_sc => C_ll_sc,

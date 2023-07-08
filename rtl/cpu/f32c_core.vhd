@@ -33,7 +33,7 @@ use work.mi32_pack.all;
 use work.rv32_pack.all;
 
 
-entity pipeline is
+entity f32c_core is
     generic (
 	-- ISA options
 	C_arch: integer;
@@ -97,9 +97,9 @@ entity pipeline is
 	debug_clk_ena: out std_logic;
 	debug_active: out std_logic
     );
-end pipeline;
+end f32c_core;
 
-architecture Behavioral of pipeline is
+architecture Behavioral of f32c_core is
 
     constant C_eff_init_PC: std_logic_vector(31 downto 0)
       := C_init_PC and C_PC_mask;

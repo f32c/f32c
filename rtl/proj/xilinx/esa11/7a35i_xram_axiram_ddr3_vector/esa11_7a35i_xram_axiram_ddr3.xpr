@@ -218,7 +218,7 @@
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../cpu/pipeline.vhd">
+      <File Path="$PPRDIR/../../../../cpu/f32c_core.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
@@ -496,7 +496,7 @@
           <Attr Name="UsedIn" Val="synthesis"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../../../../cpu/cache.vhd">
+      <File Path="$PPRDIR/../../../../cpu/f32c_cache.vhd">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="simulation"/>

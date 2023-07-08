@@ -186,7 +186,7 @@ set_global_assignment -name OPTIMIZATION_MODE "HIGH PERFORMANCE EFFORT"
 set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE SPEED
 set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
 
-set_global_assignment -name VHDL_FILE ../../../../cpu/cache.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/f32c_cache.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/sdram_pack.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/sdram_mz.vhd
 set_global_assignment -name VHDL_FILE ../../../../generic/bram_true2p_1clk.vhd
@@ -213,7 +213,7 @@ set_global_assignment -name VHDL_FILE ../../../../cpu/defs_f32c.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/alu.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/shift.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/mul_iter.vhd
-set_global_assignment -name VHDL_FILE ../../../../cpu/pipeline.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/f32c_core.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/loadalign.vhd
 set_global_assignment -name VHDL_FILE ../../../../cpu/debug.vhd
 set_global_assignment -name VHDL_FILE ../../../../altera/de0nano/top_sdram.vhd

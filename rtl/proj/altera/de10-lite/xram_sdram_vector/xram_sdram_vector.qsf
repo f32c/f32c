@@ -358,13 +358,13 @@ set_global_assignment -name SOURCE_FILE ../../../../generic/acram_emu.vhd
 set_global_assignment -name SOURCE_FILE ../../../../generic/bram_video.vhd
 set_global_assignment -name SOURCE_FILE ../../../../cpu/idecode_rv32.vhd
 set_global_assignment -name SOURCE_FILE ../../../../cpu/idecode_mi32.vhd
-set_global_assignment -name SOURCE_FILE ../../../../cpu/cache.vhd
+set_global_assignment -name SOURCE_FILE ../../../../cpu/f32c_cache.vhd
 set_global_assignment -name SOURCE_FILE ../../../../cpu/defs_rv32.vhd
 set_global_assignment -name SOURCE_FILE ../../../../cpu/defs_mi32.vhd
 set_global_assignment -name SOURCE_FILE ../../../../cpu/defs_f32c.vhd
 set_global_assignment -name SOURCE_FILE ../../../../cpu/shift.vhd
 set_global_assignment -name SOURCE_FILE ../../../../cpu/mul_iter.vhd
-set_global_assignment -name SOURCE_FILE ../../../../cpu/pipeline.vhd
+set_global_assignment -name SOURCE_FILE ../../../../cpu/f32c_core.vhd
 set_global_assignment -name SOURCE_FILE ../../../../cpu/loadalign.vhd
 set_global_assignment -name SOURCE_FILE ../../../../cpu/alu.vhd
 set_global_assignment -name SOURCE_FILE ../../../../cpu/debug.vhd
