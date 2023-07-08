@@ -1,7 +1,7 @@
 # f32c core
 
 Here's the core of f32c CPU. 
-pipeline.vhd is the most complex part which
+f32c_core.vhd is the most complex part which
 gives true speed to the the processor. 
 
 The bus behaviour is coming from the pipeline
