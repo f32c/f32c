@@ -33,6 +33,22 @@
 static const char rtc_res_tbl[8] = {1, 2, 5, 10, 20, 50, 100, 200};
 
 
+uint32_t
+get_cpu_freq() {
+	uint32_t rtc_cfg;
+	uint32_t incr_ns;
+	uint64_t clk_freq = 1000000000;
+
+	INW(rtc_cfg, IO_RTC_CFG);
+	incr_ns = rtc_res_tbl[(rtc_cfg >> 24) & 0xf];
+	clk_freq += incr_ns / 2;
+	clk_freq <<= 24;
+	clk_freq /= (rtc_cfg & 0xffffff) * incr_ns;
+
+	return (clk_freq);
+}
+
+
 int
 clock_getres(clockid_t clk_id, struct timespec *res) {
 	uint32_t rtc_cfg;

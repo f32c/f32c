@@ -176,4 +176,7 @@ time_t timegm(struct tm * const);
 #endif
 __END_DECLS
 
+/* f32c-specific */
+uint32_t get_cpu_freq(void);
+
 #endif /* !_TIME_H_ */
