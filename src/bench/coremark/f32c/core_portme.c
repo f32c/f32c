@@ -121,13 +121,7 @@ void portable_init(core_portable *p, int *argc, char *argv[])
 	}
 	p->portable_id=1;
 
-#ifdef __mips__
-	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
-	CLOCKS_PER_SEC =
-	    ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1) * 1000;
-#else
-	CLOCKS_PER_SEC = 50 * 1000 * 1000;
-#endif
+	CLOCKS_PER_SEC = get_cpu_freq();
 
 	printf("\nDetected %d.%03d MHz CPU.\n\n", CLOCKS_PER_SEC / 1000000,
 	    (CLOCKS_PER_SEC / 1000) % 1000);

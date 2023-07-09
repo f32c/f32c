@@ -282,13 +282,7 @@ main ()
 	User_Time = -User_Time;
 
     uint32_t tmp, freq_khz;
-#ifdef __mips__
-    mfc0_macro(tmp, MIPS_COP_0_CONFIG);
-    freq_khz = ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1);
-#else
-    tmp = 0;
-    freq_khz = 100000;
-#endif
+    freq_khz = (get_cpu_freq() + 499) / 1000;
 
     printf ("\nticks:\t\t%d @ %d.%03d MHz\nms:\t\t%d\n", User_Time,
 	freq_khz / 1000, freq_khz % 1000, User_Time / freq_khz);

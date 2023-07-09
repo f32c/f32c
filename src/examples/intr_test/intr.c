@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <dev/io.h>
 #include <sys/isr.h>
 #include <mips/asm.h>
@@ -45,8 +46,7 @@ main(void)
 {
 	int tmp, in, out = 0;
 
-	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
-	freq_khz = ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1);
+	freq_khz = (get_cpu_freq() + 499) / 1000;
 	printf("Clock ticks at %f MHz.\n", freq_khz / 1000.0);
 
 	mfc0_macro(tmp, MIPS_COP_0_COUNT);

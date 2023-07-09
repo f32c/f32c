@@ -1,12 +1,11 @@
 /*
  * Exercise various graphics manipulation functions.  Apparently also
- * a good test for SRAM consistency / reliability.
- *
- * $Id$
+ * a good test for S(D)RAM consistency / reliability.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <dev/io.h>
 #include <dev/fb.h>
 #include <sys/isr.h>
@@ -73,8 +72,7 @@ main(void)
 	isr_register_handler(2, &fb_isr);
 	asm("ei");
 
-	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
-	freq_khz = ((tmp >> 16) & 0xfff) * 1000 / ((tmp >> 29) + 1);
+	freq_khz = (get_cpu_freq() + 499) / 1000;
 
 again:
 	fb_set_mode(mode);
