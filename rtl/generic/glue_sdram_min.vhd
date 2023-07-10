@@ -286,7 +286,7 @@ begin
     generic map (
 	C_arch => C_arch,
 	C_big_endian => C_big_endian,
-	C_boot_spi => false
+	C_boot_spi => true
     )
     port map (
 	clk => clk, strobe => imem_addr_strobe(0), addr => imem_addr(0),
