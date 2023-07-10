@@ -596,48 +596,6 @@ begin
     dvid_blue  => dvid_crgb(1 downto 0)
   );
 
-  -- preload the f32c bootloader and reset CPU
-  -- preloads initially at startup and during each reset of the CPU
-  G_xboot_rom: if C_xboot_rom generate
-      boot_preload: entity work.boot_preloader
-      generic map
-      (
-	-- ROM data bits
-	C_rom_data_bits => C_boot_rom_data_bits, -- bits in the ROM
-	-- ROM size in addr bits
-	-- SoC configuration options
-	C_boot_addr_bits => 8 -- 8: 256x4-byte = 1K bootloader size
-      )
-      port map
-      (
-        clk => clk,
-        reset_in => rs232_break, -- input reset rising edge (from serial break) starts DMA preload
-        reset_out => S_reset, -- S_reset, 1 during DMA preload (holds CPU in reset state)
-        rom_reset => S_rom_reset,
-        rom_next_data => S_rom_next_data,
-        rom_data => S_rom_data,
-        rom_valid => S_rom_valid,
-        addr => xdma_addr(9 downto 2), -- must fit bootloader size 1K 10-bit byte address
-        data => xdma_data_in, -- comes from register - last read data will stay on the bus
-        strobe => xdma_strobe, -- use strobe as strobe and as write signal
-        ready => xdma_data_ready -- response from RAM arbiter (write completed)
-      );
-      bootrom_emu: entity work.bootrom_emu
-      generic map
-      (
-        C_content => boot_rom_mi32el,
-        C_data_bits => C_boot_rom_data_bits
-      )
-      port map
-      (
-        clk => clk,
-        reset => S_rom_reset,
-        next_data => S_rom_next_data,
-        data => S_rom_data,
-        valid => S_rom_valid
-      );
-  end generate;
-
   G_acram: if C_acram generate
   acram_emulation: entity work.acram_emu
   generic map
