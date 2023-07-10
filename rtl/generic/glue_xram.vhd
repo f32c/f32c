@@ -84,6 +84,7 @@ generic (
   --C_ram_emu_wait_states: integer := 0;
 
   -- SoC configuration options
+  C_boot_rom: boolean := false;
   C_bram_size: integer := 2;	-- in KBytes
   C_bram_const_init: boolean := true; -- preload BRAM with the bootloader content (MAX10 can't, it is different)
   C_boot_write_protect: boolean := true; -- true: write protect bootloader, false: CPU can modify its bootloader
@@ -1963,7 +1964,7 @@ begin
 
 
     -- Block RAM
-    G_bram: if C_bram_size > 0 generate
+    G_bram: if C_bram_size > 0 and not C_boot_rom generate
     dmem_bram_enable <= dmem_addr_strobe when dmem_addr(31 downto 28) = x"0"
       else '0';
     bram: entity work.bram
@@ -1983,6 +1984,21 @@ begin
 	dmem_byte_sel => dmem_byte_sel, dmem_addr => dmem_addr,
 	dmem_data_out => bram_d_to_cpu, dmem_data_in => cpu_to_dmem
     );
+    end generate;
+
+    -- Boot ROM
+    if C_boot_rom generate
+    rom: entity work.rom
+    generic map (
+	C_arch => C_arch,
+	C_big_endian => C_big_endian,
+	C_boot_spi => C_boot_spi
+    )
+    port map (
+	clk => clk, strobe => imem_addr_strobe, addr => imem_addr,
+	data_out => bram_i_to_cpu, data_ready => bram_i_ready
+    );
+    bram_d_ready <= '1'; -- fake, no data can be read from ROM yet
     end generate;
 
     -- Debugging SIO instance
