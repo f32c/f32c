@@ -28,6 +28,7 @@ entity ulx3s_xram_sdram_vector is
     C_clk_freq: integer := 100;
 
     -- SoC configuration options
+    C_boot_rom: boolean := true; -- synthesize boot ROM instead of BRAM
     C_xboot_rom: boolean := false; -- false default, bootloader initializes XRAM with external DMA
     C_bram_size: integer := 2; -- 2 default, must be disabled with 0 when C_xboot_emu = true
     C_bram_const_init: boolean := true; -- true default, MAX10 cannot preload bootloader using VHDL constant intializer
@@ -416,6 +417,7 @@ begin
   generic map (
     C_arch => C_arch,
     C_clk_freq => C_clk_freq,
+    C_boot_rom => C_boot_rom,
     C_bram_size => C_bram_size,
     C_bram_const_init => C_bram_const_init,
     C_boot_write_protect => C_boot_write_protect,
