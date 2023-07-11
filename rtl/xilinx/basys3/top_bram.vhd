@@ -1,6 +1,5 @@
 --
--- Copyright (c) 2015 Marko Zec, University of Zagreb
--- All rights reserved.
+-- Copyright (c) 2015, 2023 Marko Zec
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -22,8 +21,6 @@
 -- LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 -- OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 -- SUCH DAMAGE.
---
--- $Id$
 --
 
 library IEEE;
@@ -58,7 +55,9 @@ entity glue is
 	an: out std_logic_vector(3 downto 0); -- 7-segment display
 	led: out std_logic_vector(15 downto 0);
 	sw: in std_logic_vector(15 downto 0);
-	btnC, btnU, btnD, btnL, btnR: in std_logic
+	btnC, btnU, btnD, btnL, btnR: in std_logic;
+	QspiDB: inout std_logic_vector(3 downto 0);
+	QspiCSn: out std_logic
     );
 end glue;
 
@@ -66,13 +65,15 @@ architecture Behavioral of glue is
     signal rs232_break: std_logic;
     signal btns: std_logic_vector(15 downto 0);
     signal lcd_7seg: std_logic_vector(15 downto 0);
+    signal flash_clk: std_logic;
 begin
     -- generic BRAM glue
     glue_bram: entity work.glue_bram
     generic map (
 	C_clk_freq => C_clk_freq,
 	C_arch => C_arch,
-	C_bram_size => C_bram_size
+	C_bram_size => C_bram_size,
+	C_spi => 1
     )
     port map (
 	clk => clk,
@@ -83,9 +84,14 @@ begin
 	simple_out(23) => dp, simple_out(27 downto 24) => an,
 	simple_out(31 downto 28) => open,
 	simple_in(15 downto 0) => btns, simple_in(31 downto 16) => sw,
-	spi_miso => (others => '0')
+	spi_ss(0) => QspiCSn,
+	spi_sck(0) => flash_clk,
+	spi_mosi(0) => QspiDB(0),
+	spi_miso(0) => QspiDB(1)
     );
     btns <= x"00" & "000" & btnc & btnu & btnd & btnl & btnr;
+    QspiDB(2) <= '1'; -- wp_n
+    QspiDB(3) <= '1'; -- hold_n
 
     res: startupe2
     generic map (
@@ -97,7 +103,7 @@ begin
 	gts => '0',
 	keyclearb => '0',
 	pack => '1',
-	usrcclko => clk,
+	usrcclko => flash_clk,
 	usrcclkts => '0',
 	usrdoneo => '1',
 	usrdonets => '0'
