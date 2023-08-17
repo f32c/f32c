@@ -37,7 +37,14 @@ char *stack_top;
 
 void mp_stack_ctrl_init() {
     volatile int stack_dummy;
+    #if __GNUC__ >= 13
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdangling-pointer"
+    #endif
     stack_top = (char*)&stack_dummy;
+    #if __GNUC__ >= 13
+    #pragma GCC diagnostic pop
+    #endif
 }
 
 mp_uint_t mp_stack_usage() {
