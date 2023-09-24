@@ -77,7 +77,7 @@ ifeq ($(LIB),c)
   ASFILES = ${ARCH}/setjmp.S ${ARCH}/exception.S
  endif
 
- CFILES += assert.c div.c div64.c mul.c
+ CFILES += gen/assert.c gen/div.c gen/div64.c gen/mul.c
 
  CFILES += dev/diskio.c dev/sdcard.c dev/sio_baud.c dev/sio_poll.c dev/spi.c
 
@@ -95,7 +95,7 @@ ifeq ($(LIB),c)
  CFILES += stdtime/asctime.c stdtime/clock.c stdtime/time.c
 
  ifneq ($(ARCH),riscv)
-  CFILES += dev/sio.c setjmperr.c isr.c
+  CFILES += dev/sio.c gen/setjmperr.c gen/isr.c
  endif
 
  ifeq ($(INT_LIBC),true)
