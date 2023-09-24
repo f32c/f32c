@@ -30,11 +30,7 @@ freely, subject to the following restrictions:
 #include <unistd.h>
 #include <limits.h>
 
-#ifdef __mips__
 #include <upng.h>
-#else
-#include "../../include/upng.h"
-#endif
 
 
 #define MAKE_BYTE(b) ((b) & 0xFF)

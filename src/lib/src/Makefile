@@ -77,14 +77,16 @@ ifeq ($(LIB),c)
   ASFILES = ${ARCH}/setjmp.S ${ARCH}/exception.S
  endif
 
- CFILES += assert.c diskio.c div.c div64.c
- CFILES += fatfs.c ffunicode.c file.c malloc.c
- CFILES += mul.c sdcard.c sio_poll.c spi.c
+ CFILES += assert.c div.c div64.c mul.c
+
+ CFILES += dev/diskio.c dev/sdcard.c dev/sio_baud.c dev/sio_poll.c dev/spi.c
+
+ CFILES += fs/fatfs.c fs/ffunicode.c fs/file.c
 
  CFILES += stdio/gets.c stdio/printf.c stdio/sprintf.c
 
- CFILES += stdlib/abs.c stdlib/atoi.c stdlib/labs.c stdlib/qsort.c \
-	stdlib/random.c stdlib/strtol.c
+ CFILES += stdlib/abs.c stdlib/atoi.c stdlib/labs.c stdlib/malloc.c \
+	stdlib/qsort.c stdlib/random.c stdlib/strtol.c
 
  CFILES += string/memcmp.c string/memcpy.c string/memmove.c string/memset.c \
 	string/strcasecmp.c string/strcat.c string/strcpy.c string/strncpy.c \
@@ -93,7 +95,7 @@ ifeq ($(LIB),c)
  CFILES += stdtime/asctime.c stdtime/clock.c stdtime/time.c
 
  ifneq ($(ARCH),riscv)
-  CFILES += sio.c sio_baud.c setjmperr.c isr.c
+  CFILES += dev/sio.c setjmperr.c isr.c
  endif
 
  ifeq ($(INT_LIBC),true)
@@ -128,7 +130,7 @@ ifeq ($(LIB),m)
 endif
 
 ifeq ($(LIB),ulx2s)
- CFILES = fb.c tjpgd.c upng.c sprite.c lcd.c
+ CFILES = dev/fb.c dev/tjpgd.c dev/upng.c dev/sprite.c dev/lcd.c
 endif
 
 include ${POST_MK}
