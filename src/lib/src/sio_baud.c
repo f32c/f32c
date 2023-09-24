@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec, University of Zagreb
+ * Copyright (c) 2013, 2023 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,9 +21,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
+
+#include <time.h>
 
 #include <dev/io.h>
 #include <dev/sio.h>
@@ -40,8 +40,7 @@ sio_setbaud(int bauds)
 {
 	uint32_t val, freq_khz;
 
-	mfc0_macro(val, MIPS_COP_0_CONFIG);
-	freq_khz = ((val >> 16) & 0xfff) * 1000 / ((val >> 29) + 1);
+	freq_khz = (get_cpu_freq() + 499) / 1000;
 
 	val = bauds;
 	if (bauds > 1000000)
