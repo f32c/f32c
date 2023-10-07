@@ -86,7 +86,8 @@ ifeq ($(LIB),c)
  CFILES += stdio/gets.c stdio/printf.c stdio/sprintf.c
 
  CFILES += stdlib/abs.c stdlib/atoi.c stdlib/labs.c stdlib/malloc.c \
-	stdlib/qsort.c stdlib/random.c stdlib/strtol.c
+	stdlib/qsort.c stdlib/random.c stdlib/strtol.c stdlib/strtoll.c \
+	stdlib/strtoull.c
 
  CFILES += string/memcmp.c string/memcpy.c string/memmove.c string/memset.c \
 	string/strcasecmp.c string/strcat.c string/strcpy.c string/strncpy.c \
