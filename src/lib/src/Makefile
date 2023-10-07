@@ -126,7 +126,8 @@ ifeq ($(LIB),m)
 	math/isfinite.c math/scalbnf.c math/log2.c math/log10.c math/cosh.c \
 	math/sinh.c math/modf.c math/ceil.c math/erf.c math/frexp.c \
 	math/atan2.c math/acosh.c math/log1p.c math/atanh.c math/asinh.c \
-	math/tanh.c math/tan.c
+	math/tanh.c math/tan.c math/signbit.c math/nearbyint.c math/rintf.c \
+	math/fenv.c
 endif
 
 ifeq ($(LIB),ulx2s)
