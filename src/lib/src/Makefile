@@ -110,7 +110,8 @@ ifeq ($(LIB),c)
 	float/floatsisf.c float/floatundidf.c float/floatundisf.c \
 	float/floatunsidf.c float/floatunsisf.c float/lshrdi3.c \
 	float/muldf3.c float/mulsf3.c float/negdf2.c float/negsf2.c \
-	float/subdf3.c float/subsf3.c float/truncdfsf2.c
+	float/subdf3.c float/subsf3.c float/truncdfsf2.c float/fixdfdi.c \
+	float/ashrdi3.c float/floatdidf.c
  endif
 endif
 
