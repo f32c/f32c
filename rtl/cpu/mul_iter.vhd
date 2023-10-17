@@ -48,7 +48,7 @@ architecture arch_x of mul is
     signal R_done: boolean;
 begin
 
-    process(clk)
+    process(clk, clk_enable)
     begin
 	if rising_edge(clk) and clk_enable = '1' then
 	    if start then

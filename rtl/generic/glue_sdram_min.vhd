@@ -297,7 +297,10 @@ begin
     -- SDRAM
     --
     process(imem_addr, dmem_addr, dmem_byte_sel, cpu_to_dmem, dmem_write,
-      dmem_addr_strobe, imem_addr_strobe, sdram_req, sdram_resp, io_to_cpu)
+      dmem_addr_strobe, imem_addr_strobe, rom_i_ready,rom_i_to_cpu,
+      sdram_req, sdram_resp, io_to_cpu, io_addr_strobe, io_write,
+      R_cur_io_port, xbus_addr_range, xbus_data_in, xbus_ack,
+      dmem_burst_len, imem_burst_len)
 	variable data_port, instr_port: integer;
 	variable sdram_data_strobe, sdram_instr_strobe: std_logic;
     begin
@@ -420,7 +423,7 @@ begin
     --
     -- I/O arbiter
     --
-    process(R_cur_io_port, dmem_addr, dmem_addr_strobe)
+    process(R_cur_io_port, dmem_addr, dmem_addr_strobe, io_addr_strobe)
 	variable t: integer;
     begin
     for cpu in 0 to (C_cpus - 1) loop
@@ -451,7 +454,7 @@ begin
     io_addr <= '0' & dmem_addr(R_cur_io_port)(10 downto 2);
     io_byte_sel <= dmem_byte_sel(R_cur_io_port);
     cpu_to_io <= cpu_to_dmem(R_cur_io_port);
-    process(clk)
+    process(clk, io_addr_strobe, io_write, R_cur_io_port)
     begin
 	if rising_edge(clk) then
 	    -- IO arbiter

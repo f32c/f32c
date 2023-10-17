@@ -222,7 +222,7 @@ begin
     burst_len <= req(R_next_port).burst_len;
 
     -- Outbound multiport demux
-    process(R_ready_out, R_from_sdram)
+    process(R_ready_out, R_from_sdram, R_from_sdram_prev)
     begin
 	for i in 0 to (C_ports - 1) loop
 	    resp(i).data_ready <= R_ready_out(i);

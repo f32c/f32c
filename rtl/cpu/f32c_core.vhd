@@ -424,7 +424,7 @@ begin
       IF_PC_next and C_PC_mask(31 downto 2) when IF_data_ready
       else IF_ID_PC; -- i.e. do not change
 
-    process(clk, clk_enable)
+    process(clk, clk_enable, dmem_cache_wait)
     begin
 	if rising_edge(clk) and clk_enable = '1'
 	  and (not C_cache or dmem_cache_wait = '0') then
@@ -1073,7 +1073,7 @@ begin
     EX_branch_target <= IF_ID_PC_4 when ID_EX_predict_taken
       else ID_EX_branch_target;
 
-    process(clk, clk_enable)
+    process(clk, clk_enable, dmem_cache_wait)
     begin
 	if rising_edge(clk) and clk_enable = '1'
 	  and (not C_cache or dmem_cache_wait = '0') then
@@ -1360,7 +1360,7 @@ begin
     -- branch prediction
     G_bp_update_score:
     if C_branch_prediction and C_arch /= ARCH_RV32 generate
-    process(clk, clk_enable)
+    process(clk, clk_enable, dmem_cache_wait)
     begin
 	if falling_edge(clk) and clk_enable = '1'
 	  and (not C_cache or dmem_cache_wait = '0') then
@@ -1425,7 +1425,7 @@ begin
       dmem_data_in(23 downto 16) & dmem_data_in(31 downto 24) when C_big_endian
       else dmem_data_in;
 
-    process(clk, clk_enable)
+    process(clk, clk_enable, MEM_running, dmem_cache_wait)
     begin
 	if rising_edge(clk) and clk_enable = '1'
 	  and (MEM_running or (C_cache and dmem_cache_wait = '1')) then
