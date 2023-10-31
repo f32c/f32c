@@ -11,6 +11,7 @@ entity top_sdram is
     generic (
 	C_arch: natural := ARCH_MI32;
 	C_clk_freq: natural := 84; -- 74, 84, 93, 112, 124, 135
+	C_sio_init_baudrate: integer := 115200;
 	C_icache_size: natural := 8;
 	C_dcache_size: natural := 8;
 	C_branch_prediction: boolean := true;
@@ -114,12 +115,13 @@ begin
 	C_spi => 3,
 	C_simple_out => 8,
 	C_simple_in => 20,
+	C_sio_init_baudrate => C_sio_init_baudrate,
 	C_debug => false
     )
     port map (
 	clk => clk,
 	reset => reset,
-	sdram_clk => sdram_clk,
+	sdram_clk => open,
 	sdram_cke => sdram_cke,
 	sdram_cs => sdram_csn,
 	sdram_we => sdram_wen,
@@ -149,6 +151,10 @@ begin
     );
     R_simple_in <= sw & x"00" & '0' & not btn_pwr & btn_f2 & btn_f1
       & btn_up & btn_down & btn_left & btn_right when rising_edge(clk);
+
+    -- Route SDRAM clock through a DDR register for precise signal timings
+    I_sdram_clk: ODDRX1F
+    port map (sclk => clk, rst => '0', d0 => '0', d1 => '1', Q => sdram_clk);
 
     -- SPI flash clock has to be routed through a ECP5-specific primitive
     I_flash_mux: USRMCLK
