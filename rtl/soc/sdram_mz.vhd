@@ -459,8 +459,10 @@ begin
 		    iob_dq_hiz  <= '1';
 		    state	<= s_read_1;
 		end if;
-		-- we will be ready for a new transaction next cycle!
-		ready_for_new   <= '1';
+		-- will be ready for a new transaction next cycle!
+		if save_wr = '1' or unsigned(save_burst_len) = 0 then
+		    ready_for_new <= '1';
+		end if;
 
 	    ----------------------------------
 	    -- Processing the read transaction
@@ -473,7 +475,7 @@ begin
 		iob_address(prefresh_cmd) <= '0'; -- A10 actually matters - it selects auto precharge
 
 		-- Schedule reading the data values off the bus
-		data_ready_delay(data_ready_delay'high)   <= '1';
+		data_ready_delay(data_ready_delay'high) <= '1';
 
 		-- Set the data masks to read all bytes
 		iob_dqm		   <= (others => '0');
@@ -485,6 +487,10 @@ begin
 		    save_burst_len <=
 		      std_logic_vector(unsigned(save_burst_len) - 1);
 		    save_col <= std_logic_vector(unsigned(save_col) + 2);
+		    if unsigned(save_burst_len) = 1 then
+			-- will be ready for a new transaction next cycle!
+			ready_for_new <= '1';
+		    end if;
 		else
 		    state <= s_read_3;
 		end if;
