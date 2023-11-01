@@ -499,10 +499,26 @@ begin
 		end if;
 
 	    when s_read_3 => 
-		if C_cas = 2 then
-		    state <= s_precharge;
-		else
-		    state <= s_read_4;
+		if forcing_refresh = '1' or
+		  (ready_for_new = '0' and can_back_to_back = '0') then
+		    if C_cas = 2 then
+			state <= s_precharge;
+		    else
+			state <= s_read_4;
+		    end if;
+		elsif ready_for_new = '0' then
+		    if save_wr = '1' then
+			state <= s_write_1;
+			iob_dq_hiz <= '0';
+			iob_data <= save_data_in(15 downto 0);
+			ready_for_new <= '1';
+		    else
+			state <= s_read_1;
+			-- will be ready for a new transaction next cycle!
+			if unsigned(save_burst_len) = 0 then
+			    ready_for_new <= '1';
+			end if;
+		    end if;
 		end if;
 
 	    when s_read_4 => 
@@ -547,7 +563,10 @@ begin
 			-- write-to-read switch?
 			state		<= s_read_1;
 			iob_dq_hiz	<= '1';
-			ready_for_new   <= '1'; -- we will be ready for a new transaction next cycle!
+			-- will be ready for a new transaction next cycle!
+			if unsigned(save_burst_len) = 0 then
+			    ready_for_new <= '1';
+			end if;
 		    end if;
 		else
 		    iob_dq_hiz <= '1';
