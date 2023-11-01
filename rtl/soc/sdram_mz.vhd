@@ -186,7 +186,7 @@ architecture Behavioral of SDRAM_Controller is
 
     -- signals for when to read the data off of the bus
     signal data_ready_delay:
-      std_logic_vector(C_clock_range / 2 + C_cas + 1 downto 0);
+      std_logic_vector(C_clock_range / 2 + C_cas downto 0);
     signal read_done: boolean;
 
     -- bit indexes used when splitting the address into row/colum/bank.
@@ -320,7 +320,7 @@ begin
 	    ----------------------------------------------------------------------------
 	    -- update shift registers used to choose when to present data to/from memory
 	    ----------------------------------------------------------------------------
-	    if data_ready_delay(3 downto 1) = "001" then
+	    if data_ready_delay(2 downto 0) = "001" then
 		read_done <= true;
 	    end if;
 	    data_ready_delay <= '0' & data_ready_delay(data_ready_delay'high downto 1);
@@ -333,7 +333,7 @@ begin
 	    -- and if it can be back-to-backed with the last transaction
 	    -------------------------------------------------------------------
 	    R_ready_out <= (others => '0');
-	    R_ready_out(R_cur_port) <= data_ready_delay(1);
+	    R_ready_out(R_cur_port) <= data_ready_delay(0);
 	    if ready_for_new = '1' and strobe = '1'
 	      and read_done and R_ready_out(R_next_port) = '0' then
 		R_cur_port <= R_next_port;
