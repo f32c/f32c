@@ -432,7 +432,7 @@ begin
 		    state	<= s_idle_in_6;
 		    iob_command <= CMD_REFRESH;
 		    startup_refresh_count <= startup_refresh_count - cycles_per_refresh+1;
-		elsif ready_for_new = '0' then
+		elsif accepting_new or ready_for_new = '0' then
 		    --------------------------------
 		    -- Start the read or write cycle. 
 		    -- First task is to open the row
@@ -443,8 +443,13 @@ begin
 			state <= s_open_in_2;
 		    end if;
 		    iob_command <= CMD_ACTIVE;
-		    iob_address <= save_row;
-		    iob_bank    <= save_bank;
+		    if accepting_new then
+			iob_address <= addr_row;
+			iob_bank    <= addr_bank;
+		    else
+			iob_address <= save_row;
+			iob_bank    <= save_bank;
+		    end if;
 		end if;
 
 	    --------------------------------------------
