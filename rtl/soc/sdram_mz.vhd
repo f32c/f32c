@@ -178,6 +178,7 @@ architecture Behavioral of SDRAM_Controller is
     signal save_burst_len: std_logic_vector(2 downto 0);
 
     -- control when new transactions are accepted
+    signal accepting_new: boolean; -- combinatorial
     signal ready_for_new: std_logic := '0';
     signal can_back_to_back: std_logic := '0';
 
@@ -300,6 +301,9 @@ begin
 	end if;
     end process;
 
+    accepting_new <= ready_for_new = '1' and strobe = '1' and read_done
+      and R_ready_out(R_next_port) = '0';
+
     main_proc: process(clk) 
     begin
 	if rising_edge(clk) then
@@ -334,8 +338,7 @@ begin
 	    -------------------------------------------------------------------
 	    R_ready_out <= (others => '0');
 	    R_ready_out(R_cur_port) <= data_ready_delay(0);
-	    if ready_for_new = '1' and strobe = '1'
-	      and read_done and R_ready_out(R_next_port) = '0' then
+	    if accepting_new then
 		R_cur_port <= R_next_port;
 		if save_bank = addr_bank and save_row = addr_row then
 		    can_back_to_back <= '1';
@@ -499,12 +502,18 @@ begin
 		end if;
 
 	    when s_read_3 => 
-		if forcing_refresh = '1' or
-		  (ready_for_new = '0' and can_back_to_back = '0') then
+		if forcing_refresh = '1' or (accepting_new and
+		  (save_bank /= addr_bank or save_row /= addr_row)) then
 		    if C_cas = 2 then
 			state <= s_precharge;
 		    else
 			state <= s_read_4;
+		    end if;
+		elsif accepting_new and write = '0' then
+		    state <= s_read_1;
+		    -- will be ready for a new transaction next cycle!
+		    if unsigned(burst_len) = 0 then
+			ready_for_new <= '1';
 		    end if;
 		elsif ready_for_new = '0' then
 		    if save_wr = '1' then
