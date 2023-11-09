@@ -1264,13 +1264,6 @@ begin
 	    elsif C_ll_sc and EX_MEM_sc and EX_MEM_ll_bit = '0' then
 		EX_MEM_mem_cycle <= '0';
 	    end if;
-	    if C_exceptions and C_cop0_count and C_cop0_compare then
-		if R_cop0_count = R_cop0_compare then
-		    R_cop0_timer_intr <= '1';
-		end if;
-	    else
-		R_cop0_timer_intr <= '0';
-	    end if;
 	    if R_reset = '1' then
 		EX_MEM_mem_cycle <= '0';
 		EX_MEM_mem_write <= '0';
@@ -1279,6 +1272,12 @@ begin
 		    R_cop0_EI <= '1';
 		    R_cop0_intr_mask <= (others => '0');
 		end if;
+	    end if;
+	end if;
+	if rising_edge(clk) and clk_enable = '1' then
+	    if C_exceptions and C_cop0_count and C_cop0_compare
+	      and R_cop0_count = R_cop0_compare then
+		R_cop0_timer_intr <= '1';
 	    end if;
 	end if;
     end process;
