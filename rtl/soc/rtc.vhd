@@ -55,35 +55,41 @@ architecture x of rtc is
 
 	if mhz /= 0 then
 	    if mhz = 33 then
-		eff_hz := 33333333;
+		eff_hz := 33333333; -- 100 / 3
 	    elsif mhz = 66 or mhz = 67 then
-		eff_hz := 66666667;
+		eff_hz := 66666667; -- 200 / 3
 	    elsif mhz = 74 then
-		eff_hz := 74250000;
+		eff_hz := 74250000; -- 742.5 / 10
+	    elsif mhz = 82 then
+		eff_hz := 82500000; -- 650 / 8; 742.5 / 9
 	    elsif mhz = 84 then
-		eff_hz := 84375000;
+		eff_hz := 84375000; -- 675 / 8
 	    elsif mhz = 93 then
-		eff_hz := 92812500;
+		eff_hz := 92812500; -- 650 / 7; 742.5 / 8
 	    elsif mhz = 94 then
-		eff_hz := 93750000;
+		eff_hz := 93750000; -- 375 / 4
 	    elsif mhz = 96 then
-		eff_hz := 96428571;
+		eff_hz := 96428571; -- 675 / 7 
+	    elsif mhz = 106 then
+		eff_hz := 106071429; -- 742.5 / 7
 	    elsif mhz = 109 then
-		eff_hz := 109090909;
+		eff_hz := 109090909; -- 1200 / 11
 	    elsif mhz = 112 or mhz = 113 then
-		eff_hz := 112500000;
+		eff_hz := 112500000; -- 675 / 6
 	    elsif mhz = 116 then
-		eff_hz := 116666666;
+		eff_hz := 116666666; -- 1050 / 9
 	    elsif mhz = 124 then
-		eff_hz := 123750000;
+		eff_hz := 123750000; -- 742.5 / 6
 	    elsif mhz = 133 then
-		eff_hz := 133333333;
+		eff_hz := 133333333; -- 400 / 3
 	    elsif mhz = 166 or mhz = 167 then
-		eff_hz := 166666667;
+		eff_hz := 166666667; -- 500 / 3
+	    elsif mhz = 171 then
+		eff_hz := 171428571; -- 1200 / 7
 	    elsif mhz = 233 then
-		eff_hz := 233333333;
+		eff_hz := 233333333; -- 700 / 3
 	    elsif mhz = 266 or mhz = 267 then
-		eff_hz := 266666667;
+		eff_hz := 266666667; -- 800 / 3
 	    else
 		eff_hz := mhz * 1000000;
 	    end if;
