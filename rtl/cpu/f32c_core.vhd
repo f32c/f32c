@@ -1279,6 +1279,9 @@ begin
 	      and R_cop0_count = R_cop0_compare then
 		R_cop0_timer_intr <= '1';
 	    end if;
+	    if C_cop0_count then
+		R_cop0_count <= R_cop0_count + 1;
+	    end if;
 	end if;
     end process;
 
@@ -1635,21 +1638,6 @@ begin
     end process;
     end generate; -- G_staged_mul
 
-
-    -- COP0
-    G_cop0_count:
-    if C_cop0_count generate
-    process(clk, clk_enable)
-    begin
-	if rising_edge(clk) and clk_enable = '1' then
-	    R_cop0_count <= R_cop0_count + 1;
-	end if;
-    end process;
-    end generate;
-    G_not_cop0_count:
-    if not C_cop0_count generate
-    R_cop0_count <= (others => '-'); 
-    end generate;
 
     -- R_cop0_config
     G_cop0_config:
