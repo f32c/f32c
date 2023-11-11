@@ -44,7 +44,7 @@ end mul;
 
 architecture arch_x of mul is
     signal R_x, R_hi_lo: std_logic_vector(63 downto 0);
-    signal R_y, R_cmp: std_logic_vector(31 downto 0);
+    signal R_y, R_cmp: std_logic_vector(32 downto 0);
     signal R_done: boolean;
 begin
 
@@ -61,14 +61,20 @@ begin
 		    R_x(63 downto 32) <= (others => '0');
 		end if;
 		if mult_signed and y(31) = '1' then
-		    R_y <= y - 1;
+		    R_y(31 downto 0) <= y - 1;
+		    R_y(32) <= '1';
 		    R_cmp <= (others => '1');
 		else
-		    R_y <= y;
+		    R_y(31 downto 0) <= y;
+		    if mthi then
+			R_y(32) <= '1';
+		    else
+			R_y(32) <= '0';
+		    end if;
 		    R_cmp <= (others => '0');
 		end if;
 	    elsif R_y /= R_cmp then
-		R_done <= R_y(31 downto 1) = R_cmp(31 downto 1);
+		R_done <= R_y(32 downto 1) = R_cmp(32 downto 1);
 		if R_y(0) /= R_cmp(0) then
 		    if R_cmp(0) = '0' then
 			R_hi_lo <= R_hi_lo + R_x;
@@ -78,10 +84,10 @@ begin
 		end if;
 		if C_skip_mux and R_y(1) = R_cmp(1) then
 		    R_x <= R_x(61 downto 0) & "00";
-		    R_y <= R_cmp(1 downto 0) & R_y(31 downto 2);
+		    R_y <= R_cmp(1 downto 0) & R_y(32 downto 2);
 		else
 		    R_x <= R_x(62 downto 0) & '0';
-		    R_y <= R_cmp(0) & R_y(31 downto 1);
+		    R_y <= R_cmp(0) & R_y(32 downto 1);
 		end if;
 	    else
 		R_done <= true;
