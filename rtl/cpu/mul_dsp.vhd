@@ -43,11 +43,12 @@ architecture arch_x of mul is
     signal R_mul_res: signed(66 downto 0);
     signal R_mul_x: signed(32 downto 0);
     signal R_mul_y: signed(33 downto 0);
+    signal R_done: boolean;
 begin
 
     process(clk)
     begin
-	if falling_edge(clk) and clk_enable = '1' then
+	if rising_edge(clk) and clk_enable = '1' then
 	    if start then
 		R_mul_x(31 downto 0) <= CONV_SIGNED(UNSIGNED(x), 32);
 		R_mul_y(31 downto 0) <= CONV_SIGNED(UNSIGNED(y), 32);
@@ -62,13 +63,12 @@ begin
 		    R_mul_y(32) <= '1';
 		end if;
 	    end if;
-	end if;
-	if rising_edge(clk) and clk_enable = '1' then
 	    R_mul_res <= R_mul_x * R_mul_y;
+	    R_done <= not start;
 	end if;
     end process;
 
     hi_lo(63 downto 32) <= conv_std_logic_vector(R_mul_res(63 downto 32), 32);
     hi_lo(31 downto 0) <= conv_std_logic_vector(R_mul_res(31 downto 0), 32);
-    done <= true; -- single cycle operation
+    done <= R_done;
 end arch_x;
