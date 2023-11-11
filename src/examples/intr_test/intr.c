@@ -1,11 +1,11 @@
 /*
- * Print out something each 1/2 second from interrupt context.  Even after
- * the program terminates once a button gets pressed, interrupts remain
- * enabled so messages will continue to be displayed while the bootloader
- * processes serial input.
+ * Enable timer interrupts at INTR_FREQ, and report status each second.
+ * Toggle every 4 seconds between waiting for interrupts using a dedicated
+ * CPU instruction or simply looping until a full second expires.
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <dev/io.h>
@@ -13,24 +13,22 @@
 #include <mips/asm.h>
 
 
+#define	INTR_FREQ 100000
+
 #define BTN_ANY (BTN_CENTER | BTN_UP | BTN_DOWN | BTN_LEFT | BTN_RIGHT)
 
-static uint32_t next_t, freq_khz, tsc_lo;
-
+static uint32_t tick_incr;
+static uint32_t cnt0, cnt1;
 
 static int
 tsc_update(void)
 {
-	int32_t tsc;
+	uint32_t next_t;
 
-	mfc0_macro(tsc, MIPS_COP_0_COUNT);
-
-	printf("%d ticks passed since the last interrupt.\n", tsc - tsc_lo);
-
-	tsc_lo = tsc;
-
-	next_t = next_t + freq_khz * 500;
+	mfc0_macro(next_t, MIPS_COP_0_COMPARE);
+	next_t += tick_incr;
 	mtc0_macro(next_t, MIPS_COP_0_COMPARE);
+	cnt0++;
 
 	return (1);
 }
@@ -44,21 +42,38 @@ static struct isr_link tick_isr = {
 void
 main(void)
 {
-	int tmp, in, out = 0;
+	int tmp, in;
+	int sec = 0, prev_sec = 0;
+	int loopc = 0;
 
-	freq_khz = (get_cpu_freq() + 499) / 1000;
-	printf("Clock ticks at %f MHz.\n", freq_khz / 1000.0);
-
-	mfc0_macro(tmp, MIPS_COP_0_COUNT);
-	next_t = tmp + freq_khz * 500;
-	mtc0_macro(next_t, MIPS_COP_0_COMPARE);
+	tick_incr = get_cpu_freq() / INTR_FREQ;
 
 	isr_register_handler(7, &tick_isr);
 	asm("ei");
 
 	do {
-		OUTB(IO_LED, out++);
-		asm("wait");
+		INW(sec, IO_RTC_UPTIME_S);
+		if (sec != prev_sec) {
+			OUTB(IO_LED, sec);
+			printf("CPU freq %f MHz ",
+			    get_cpu_freq() / 1000000.0);
+			printf("uptime %d intr / s %d loops / s %d\n", sec,
+			    cnt0 - cnt1, loopc);
+			if (cnt0 == cnt1) {
+				mfc0_macro(tmp, MIPS_COP_0_COUNT);
+				tmp += tick_incr;
+				mtc0_macro(tmp, MIPS_COP_0_COMPARE);
+			}
+			prev_sec = sec;
+			cnt1 = cnt0;
+			loopc = 0;
+		}
+		if (sec & 4 && cnt0 != cnt1)
+			asm("wait");
+		loopc++;
 		INB(in, IO_PUSHBTN);
 	} while ((in & BTN_ANY) == 0);
+
+	asm("di");
+	isr_remove_handler(7, &tick_isr);
 }
