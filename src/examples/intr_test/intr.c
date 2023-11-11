@@ -18,7 +18,7 @@
 #define BTN_ANY (BTN_CENTER | BTN_UP | BTN_DOWN | BTN_LEFT | BTN_RIGHT)
 
 static uint32_t tick_incr;
-static uint32_t cnt0, cnt1;
+static uint32_t cnt0;
 
 static int
 tsc_update(void)
@@ -44,7 +44,9 @@ main(void)
 {
 	int tmp, in;
 	int sec = 0, prev_sec = 0;
+	int cnt1 = 0;
 	int loopc = 0;
+	int waitc = 0;
 
 	tick_incr = get_cpu_freq() / INTR_FREQ;
 
@@ -55,10 +57,10 @@ main(void)
 		INW(sec, IO_RTC_UPTIME_S);
 		if (sec != prev_sec) {
 			OUTB(IO_LED, sec);
-			printf("CPU freq %f MHz ",
-			    get_cpu_freq() / 1000000.0);
-			printf("uptime %d intr / s %d loops / s %d\n", sec,
-			    cnt0 - cnt1, loopc);
+			printf("Freq %f MHz, ", get_cpu_freq() / 1000000.0);
+			printf("up %d s, intr / s %d, loops / s %d, "
+			    "waits / s %d\n", sec, cnt0 - cnt1,
+			    loopc, waitc);
 			if (cnt0 == cnt1) {
 				mfc0_macro(tmp, MIPS_COP_0_COUNT);
 				tmp += tick_incr;
@@ -67,9 +69,12 @@ main(void)
 			prev_sec = sec;
 			cnt1 = cnt0;
 			loopc = 0;
+			waitc = 0;
 		}
-		if (sec & 4 && cnt0 != cnt1)
+		if (sec & 4 && cnt0 != cnt1) {
 			asm("wait");
+			waitc++;
+		}
 		loopc++;
 		INB(in, IO_PUSHBTN);
 	} while ((in & BTN_ANY) == 0);
