@@ -50,7 +50,7 @@ entity f32c_core is
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
 
 	-- COP0 options
-	C_clk_freq: integer;
+	C_clk_freq: integer;		-- XXX unused, to be removed
 	C_cache: boolean := false;
 	C_cpuid: integer := 0;
 	C_cop0_count: boolean := false;
@@ -1638,36 +1638,13 @@ begin
     end process;
     end generate; -- G_staged_mul
 
-
-    -- R_cop0_config
-    G_cop0_config:
-    if C_cop0_config or C_debug generate
+    -- R_cop0_config, read-only
     R_cop0_config(31) <= '0'; -- no config1 register
-    with C_clk_freq select R_cop0_config(30 downto 16) <=
-	"10" & conv_std_logic_vector(100, 13) when 33,
-	"01" & conv_std_logic_vector(125, 13) when 62,
-	"10" & conv_std_logic_vector(200, 13) when 66,
-	"10" & conv_std_logic_vector(200, 13) when 67,
-	"11" & conv_std_logic_vector(325, 13) when 81,
-	"01" & conv_std_logic_vector(175, 13) when 87,
-	"01" & conv_std_logic_vector(225, 13) when 112,
-	"10" & conv_std_logic_vector(400, 13) when 133,
-	"01" & conv_std_logic_vector(275, 13) when 137,
-	"10" & conv_std_logic_vector(500, 13) when 166,
-	"10" & conv_std_logic_vector(500, 13) when 167,
-	"10" & conv_std_logic_vector(700, 13) when 233,
-	"10" & conv_std_logic_vector(800, 13) when 266,
-	"10" & conv_std_logic_vector(800, 13) when 267,
-	"00" & conv_std_logic_vector(C_clk_freq, 13) when others;
+    R_cop0_config(30 downto 16) <= (others => '-');
     R_cop0_config(15) <= '1' when C_big_endian else '0';
     R_cop0_config(14) <= '1' when C_arch = ARCH_RV32 else '0';
-    R_cop0_config(13 downto 4) <= (others => '-');
-    R_cop0_config(3 downto 0) <= conv_std_logic_vector(C_cpuid, 4);
-    end generate;
-    G_not_cop0_config:
-    if not C_cop0_config and not C_debug generate
-    R_cop0_config <= (others => '-');
-    end generate;
+    R_cop0_config(13 downto 12) <= (others => '-');
+    R_cop0_config(11 downto 0) <= conv_std_logic_vector(C_cpuid, 12);
 
     --
     -- Debug module
