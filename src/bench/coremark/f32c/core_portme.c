@@ -47,16 +47,11 @@
 	If there are issues with the return value overflowing, increase this value.
 	*/
 
-#undef	CLOCKS_PER_SEC
-
-int CLOCKS_PER_SEC;
-
-#define NSECS_PER_SEC CLOCKS_PER_SEC
 #define CORETIMETYPE clock_t 
-#define GETMYTIME(_t) do {int t; RDTSC(t); *_t = t;} while (0);
+#define GETMYTIME(_t) do {*_t = clock();} while (0);
 #define MYTIMEDIFF(fin,ini) ((fin)-(ini))
 #define TIMER_RES_DIVIDER 1
-#define EE_TICKS_PER_SEC (NSECS_PER_SEC / TIMER_RES_DIVIDER)
+#define EE_TICKS_PER_SEC CLOCKS_PER_SEC;
 
 /** Define Host specific (POSIX), or target specific global time variables. */
 static CORETIMETYPE start_time_val, stop_time_val;
@@ -111,7 +106,6 @@ ee_u32 default_num_contexts=1;
 */
 void portable_init(core_portable *p, int *argc, char *argv[])
 {
-	uint32_t tmp;
 
 	if (sizeof(ee_ptr_int) != sizeof(ee_u8 *)) {
 		ee_printf("ERROR! Please define ee_ptr_int to a type that holds a pointer!\n");
@@ -121,10 +115,8 @@ void portable_init(core_portable *p, int *argc, char *argv[])
 	}
 	p->portable_id=1;
 
-	CLOCKS_PER_SEC = get_cpu_freq();
-
-	printf("\nDetected %d.%03d MHz CPU.\n\n", CLOCKS_PER_SEC / 1000000,
-	    (CLOCKS_PER_SEC / 1000) % 1000);
+	printf("\nDetected %d.%03d MHz CPU.\n\n", get_cpu_freq() / 1000000,
+	    (get_cpu_freq() / 1000) % 1000);
 	printf("CoreMark starting, please wait for around 15 secs...\n\n");
 }
 /* Function : portable_fini
@@ -133,20 +125,20 @@ void portable_init(core_portable *p, int *argc, char *argv[])
 void portable_fini(core_portable *p)
 {
 	core_results *cr;
-	uint32_t cm;
+	uint32_t tms, cm, cmpmhz;
 
 	cr = (void *)(((char *) p) - offsetof(core_results, port));
 
-	uint32_t tms =
-	    (stop_time_val - start_time_val) / (CLOCKS_PER_SEC / 1000);
-	cm = cr->iterations * 100000 /
-	  ((stop_time_val - start_time_val) / 10000);
+	tms = (stop_time_val - start_time_val) / (CLOCKS_PER_SEC / 1000);
+	cm = cr->iterations * 1000000ULL / tms;
+	cmpmhz = cm * 1000000ULL / get_cpu_freq();
 
-	printf("\nTiming loop completed in %d.%03d seconds.\n\n"
-	    "CoreMark/MHz: %d.%03d\n", tms / 1000, tms % 1000,
-	    cm / 1000, cm % 1000);
+	printf("\nTiming loop completed in %d.%03d seconds.\n\n",
+	    tms / 1000, tms % 1000);
+	printf("CoreMark: %7d.%03d\n", cm / 1000, cm % 1000);
+	printf("CoreMark/MHz: %3d.%03d\n", cmpmhz / 1000, cmpmhz % 1000);
 
-	p->portable_id=0;
+	p->portable_id = 0;
 }
 
 
