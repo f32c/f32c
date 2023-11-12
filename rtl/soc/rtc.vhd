@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2023. Marko Zec
+-- Copyright (c) 2023 Marko Zec
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -32,7 +32,6 @@ entity rtc is
     generic (
 	C_clk_freq_hz: natural := 0;
 	C_clk_freq_mhz: natural := 0;
-	C_adjustable: boolean := false;
 	C_boottime: boolean := true
     );
     port (
@@ -130,22 +129,22 @@ architecture x of rtc is
     constant C_ns_incr_index_vec: std_logic_vector(3 downto 0) :=
       conv_std_logic_vector(C_ns_incr_index, 4);
     constant C_ns_incr: natural := C_ns_incr_list(C_ns_incr_index);
+    constant C_prescaler_incr: std_logic_vector(27 downto 0) :=
+      conv_std_logic_vector(integer(1000000000.0 / real(C_ns_incr) /
+      real(C_eff_freq_hz) * real(2 ** 28)), 28);
 
     signal R_uptime_s: std_logic_vector(31 downto 0);
     signal R_uptime_ns: std_logic_vector(29 downto 0);
     signal R_boottime_s: std_logic_vector(31 downto 0);
-    signal R_prescaler_cnt: std_logic_vector(24 downto 0);
-    signal R_prescaler_incr: std_logic_vector(23 downto 0) :=
-      conv_std_logic_vector(integer(1000000000.0 / real(C_ns_incr) /
-      real(C_eff_freq_hz) * real(2 ** 24)), 24);
+    signal R_prescaler_cnt: std_logic_vector(28 downto 0);
 
 begin
     process(clk)
     begin
 	if rising_edge(clk) then
-	    R_prescaler_cnt <= ('0' & R_prescaler_cnt(23 downto 0))
-	      + ('0' & R_prescaler_incr);
-	    if R_prescaler_cnt(24) = '1' then
+	    R_prescaler_cnt <= ('0' & R_prescaler_cnt(27 downto 0))
+	      + ('0' & C_prescaler_incr);
+	    if R_prescaler_cnt(28) = '1' then
 		R_uptime_ns <= R_uptime_ns + C_ns_incr;
 		if R_uptime_ns = 1000000000 - C_ns_incr then
 		    R_uptime_ns <= (others => '0');
@@ -153,10 +152,6 @@ begin
 		end if;
 	    end if;
 	    if ce = '1' and bus_write = '1' then
-		if C_adjustable and bus_addr = "10" and
-		  bus_in(27 downto 24) = C_ns_incr_index_vec then
-		    R_prescaler_incr <= bus_in(23 downto 0);
-		end if;
 		if C_boottime and bus_addr = "11" then
 		    R_boottime_s <= bus_in;
 		end if;
@@ -167,6 +162,6 @@ begin
     with bus_addr select bus_out <=
       R_uptime_s when "00",
       "00" & R_uptime_ns when "01",
-      x"0" & C_ns_incr_index_vec & R_prescaler_incr when "10",
+      C_prescaler_incr & C_ns_incr_index_vec when "10",
       R_boottime_s when others;
 end x;
