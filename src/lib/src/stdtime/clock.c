@@ -44,7 +44,6 @@ get_cpu_freq() {
 	clk_freq += incr_ns / 2;
 	clk_freq <<= 28;
 	clk_freq /= (rtc_cfg >> 4) * incr_ns;
-
 	return (clk_freq);
 }
 
@@ -63,6 +62,23 @@ clock_getres(clockid_t clk_id, struct timespec *res) {
 }
 
 
+clock_t
+clock() {
+	uint32_t sec, sec2, nsec;
+	uint64_t frac;
+
+	do {
+		INW(sec, IO_RTC_UPTIME_S);
+		INW(nsec, IO_RTC_UPTIME_NS);
+		INW(sec2, IO_RTC_UPTIME_S);
+	} while (__predict_false(sec != sec2));
+
+	/* ns to frac: divide via multiplying by inverse */
+	frac = nsec * ((1ULL << 32) * CLOCKS_PER_SEC / 1000000000);
+	return (sec * CLOCKS_PER_SEC + (frac >> 32));
+}
+
+
 int
 clock_gettime(clockid_t clk_id, struct timespec *tp) {
 	uint32_t sec, sec2, nsec;
@@ -75,7 +91,7 @@ clock_gettime(clockid_t clk_id, struct timespec *tp) {
 		INW(sec, IO_RTC_UPTIME_S);
 		INW(nsec, IO_RTC_UPTIME_NS);
 		INW(sec2, IO_RTC_UPTIME_S);
-	} while (sec != sec2);
+	} while (__predict_false(sec != sec2));
 	tp->tv_sec = sec;
 	tp->tv_nsec = nsec;
 
