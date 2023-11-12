@@ -45,16 +45,8 @@
 #include <sys/_null.h>
 #include <sys/_types.h>
 
-#if __POSIX_VISIBLE > 0 && __POSIX_VISIBLE < 200112 || __BSD_VISIBLE
-/*
- * Frequency of the clock ticks reported by times().  Deprecated - use
- * sysconf(_SC_CLK_TCK) instead.  (Removed in 1003.1-2001.)
- */
-#define	CLK_TCK		128
-#endif
-
-/* Frequency of the clock ticks reported by clock().  */
-#define	CLOCKS_PER_SEC	128
+/* Frequency of clock ticks reported by clock().  */
+#define	CLOCKS_PER_SEC	1000000
 
 #ifndef _CLOCK_T_DECLARED
 typedef	__clock_t	clock_t;
