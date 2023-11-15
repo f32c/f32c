@@ -21,16 +21,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
-
-/*
- * Using -O2 optimization produces the fastest code with gcc-6.1.0, so we
- * override whatever optimization option was requested at gcc invocation
- * with __attribute__((optimize("-O2"))).
- */
 
 #define	OPTIMIZED_DIVSI3
 
@@ -56,7 +48,7 @@
 	}
 
 
-static __attribute__((optimize("-O2"))) uint32_t
+static uint32_t
 __udivmodsi3(uint32_t a, uint32_t b, int flags)
 {
 #ifndef OPTIMIZED_DIVSI3
@@ -81,7 +73,7 @@ __udivmodsi3(uint32_t a, uint32_t b, int flags)
 
 	UDIVMOD_BODY();
 
-	if (__predict_false(flags & UDIVMOD_DO_MOD))
+	if (flags & UDIVMOD_DO_MOD)
 		return (a);
 #ifndef OPTIMIZED_DIVSI3
 	if (neg)
@@ -91,7 +83,7 @@ __udivmodsi3(uint32_t a, uint32_t b, int flags)
 }
 
 
-__attribute__((optimize("-O2"))) int32_t
+int32_t
 __divsi3(uint32_t a, uint32_t b)
 {
 #ifdef OPTIMIZED_DIVSI3
