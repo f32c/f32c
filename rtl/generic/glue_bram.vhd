@@ -1,6 +1,5 @@
 --
--- Copyright (c) 2015 Marko Zec, University of Zagreb
--- All rights reserved.
+-- Copyright (c) 2015-2023 Marko Zec
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -77,6 +76,7 @@ entity glue_bram is
 	C_spi_fixed_speed: std_logic_vector := "1111";
 	C_simple_in: integer range 0 to 128 := 32;
 	C_simple_out: integer range 0 to 128 := 32;
+	C_rtc: boolean := true;
 	C_gpio: integer range 0 to 128 := 32;
 	C_timer: boolean := true
     );
@@ -139,7 +139,13 @@ architecture Behavioral of glue_bram is
 
     -- Simple I/O: onboard LEDs, buttons and switches
     signal R_simple_in, R_simple_out: std_logic_vector(31 downto 0);
-   
+
+    -- RTC: 0x780 .. 0x78F
+    constant C_io_rtc: std_logic_vector(7 downto 0) := x"78";
+    signal rtc_io_range: boolean;
+    signal rtc_ce: std_logic;
+    signal from_rtc: std_logic_vector(31 downto 0);
+
     -- Debug
     signal sio_to_debug_data: std_logic_vector(7 downto 0);
     signal debug_to_sio_data: std_logic_vector(7 downto 0);
@@ -237,6 +243,24 @@ begin
     end generate;
 
     --
+    -- RTC
+    --
+    G_rtc: if C_rtc generate
+    I_rtc: entity work.rtc
+    generic map (
+	C_clk_freq_mhz => C_clk_freq
+    )
+    port map (
+	clk => clk, ce => rtc_ce,
+	bus_addr => dmem_addr(3 downto 2),
+	bus_write => dmem_write, byte_sel => dmem_byte_sel,
+	bus_in => cpu_to_dmem, bus_out => from_rtc
+    );
+    rtc_ce <= dmem_addr_strobe when rtc_io_range else '0';
+    rtc_io_range <= dmem_addr(11 downto 4) = C_io_rtc;
+    end generate;
+
+    --
     -- I/O
     --
     process(clk)
@@ -278,7 +302,8 @@ begin
         else (others => '-');
     end generate;
 
-    process(io_addr, R_simple_in, R_simple_out, from_sio, from_timer, from_gpio)
+    process(io_addr, R_simple_in, R_simple_out, from_sio, from_rtc, from_timer,
+      from_gpio)
     begin
 	io_to_cpu <= (others => '-');
 	case conv_integer(io_addr(11 downto 4)) is
@@ -318,6 +343,8 @@ begin
 		      R_simple_out(i * 32 + 31 downto i * 32);
 		end if;
 	    end loop;
+	when 16#78#  =>
+	    io_to_cpu <= from_rtc;
 	when others  =>
 	    io_to_cpu <= (others => '-');
 	end case;
