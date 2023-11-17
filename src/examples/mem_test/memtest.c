@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <dev/io.h>
 
@@ -11,6 +12,7 @@
 #include <mips/cpuregs.h>
 
 extern int _end;
+char *buf;
 
 
 int
@@ -24,6 +26,8 @@ main(void)
 	volatile uint8_t *p8;
 	volatile uint16_t *p16;
 	volatile uint32_t *p32;
+
+	buf = (void *) mem_base;
 
 	tot_err = 0;
 	iter = 1;
@@ -240,6 +244,17 @@ again:
 	printf("%d errors\n", tmp);
 	tot_err += tmp;
 	
+	size = 256 * 1024;
+	RDTSC(start);
+	for (i = 0; i < 100; i++)
+		memcpy(buf, buf + size, size);
+	RDTSC(end);
+	len = (end - start) / freq_khz;
+	speed = i * size / len;
+	printf("%d * memcpy(%d KB) done in %d.%03d s (%d.%03d MB/s)\n", i,
+	    size / 1024, len / 1000, len % 1000, speed / 1000,
+	    speed % 1000);
+
 	printf("Accumulated %d errors after %d iterations\n\n",
 	    tot_err, iter);
 
