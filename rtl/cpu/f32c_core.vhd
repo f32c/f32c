@@ -60,7 +60,7 @@ entity f32c_core is
 	-- optimization options
 	C_result_forwarding: boolean := true;
 	C_branch_prediction: boolean := true;
-	C_bp_global_depth: integer := 6; -- range 2 to 12
+	C_bp_global_depth: integer := 9; -- range 2 to 12
 	C_load_aligner: boolean := true;
 	C_full_shifter: boolean := true;
 	C_reg_IF_PC: boolean := false;
