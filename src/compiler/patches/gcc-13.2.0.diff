@@ -1,0 +1,960 @@
+diff -drup ../org/gcc/gcc/config/mips/mips-cpus.def gcc/config/mips/mips-cpus.def
+--- ../org/gcc/gcc/config/mips/mips-cpus.def	2023-07-27 10:13:04.000000000 +0200
++++ gcc/config/mips/mips-cpus.def	2023-11-17 12:56:06.263332000 +0100
+@@ -152,6 +152,8 @@ MIPS_CPU ("p5600", PROCESSOR_P5600, MIPS_ISA_MIPS32R5,
+ MIPS_CPU ("m5100", PROCESSOR_M5100, MIPS_ISA_MIPS32R5, PTF_AVOID_BRANCHLIKELY_SPEED)
+ MIPS_CPU ("m5101", PROCESSOR_M5100, MIPS_ISA_MIPS32R5, PTF_AVOID_BRANCHLIKELY_SPEED)
+ 
++MIPS_CPU ("f32c", PROCESSOR_F32C, MIPS_ISA_MIPS32R2, 0)
++
+ /* MIPS64 processors.  */
+ MIPS_CPU ("5kc", PROCESSOR_5KC, MIPS_ISA_MIPS64, 0)
+ MIPS_CPU ("5kf", PROCESSOR_5KF, MIPS_ISA_MIPS64, 0)
+diff -drup ../org/gcc/gcc/config/mips/mips.cc gcc/config/mips/mips.cc
+--- ../org/gcc/gcc/config/mips/mips.cc	2023-07-27 10:13:04.000000000 +0200
++++ gcc/config/mips/mips.cc	2023-11-17 12:56:06.269080000 +0100
+@@ -832,6 +832,15 @@ static const struct mips_rtx_cost_data
+ 		     1,           /* branch_cost */
+ 		     4            /* memory_latency */
+   },
++  { /* F32C */
++    SOFT_FP_COSTS,
++    COSTS_N_INSNS (3),            /* int_mult_si */
++    COSTS_N_INSNS (3),            /* int_mult_di */
++    COSTS_N_INSNS (36),           /* int_div_si */
++    COSTS_N_INSNS (68),           /* int_div_di */
++		     1,           /* branch_cost */
++		     4            /* memory_latency */
++  },
+   { /* Loongson-2E */
+     DEFAULT_COSTS
+   },
+@@ -8168,7 +8177,7 @@ mips_block_move_straight (rtx dest, rtx src, HOST_WIDE
+      picking the minimum of alignment or BITS_PER_WORD gets us the
+      desired size for bits.  */
+ 
+-  if (!ISA_HAS_LWL_LWR)
++  if (!ISA_HAS_LWL_LWR || NO_UNALIGNED_LOAD || NO_UNALIGNED_STORE)
+     bits = MIN (BITS_PER_WORD, MIN (MEM_ALIGN (src), MEM_ALIGN (dest)));
+   else
+     {
+@@ -8299,7 +8308,7 @@ mips_block_move_loop (rtx dest, rtx src, HOST_WIDE_INT
+ bool
+ mips_expand_block_move (rtx dest, rtx src, rtx length)
+ {
+-  if (!ISA_HAS_LWL_LWR
++  if ((!ISA_HAS_LWL_LWR || NO_UNALIGNED_LOAD || NO_UNALIGNED_STORE)
+       && (MEM_ALIGN (src) < MIPS_MIN_MOVE_MEM_ALIGN
+ 	  || MEM_ALIGN (dest) < MIPS_MIN_MOVE_MEM_ALIGN))
+     return false;
+diff -drup ../org/gcc/gcc/config/mips/mips.h gcc/config/mips/mips.h
+--- ../org/gcc/gcc/config/mips/mips.h	2023-07-27 10:13:04.000000000 +0200
++++ gcc/config/mips/mips.h	2023-11-17 12:56:06.270900000 +0100
+@@ -283,6 +283,7 @@ struct mips_cpu_info {
+ #define ISA_MIPS64R6		    (mips_isa == MIPS_ISA_MIPS64R6)
+ 
+ /* Architecture target defines.  */
++#define TARGET_F32C                 (mips_arch == PROCESSOR_F32C)
+ #define TARGET_LOONGSON_2E          (mips_arch == PROCESSOR_LOONGSON_2E)
+ #define TARGET_LOONGSON_2F          (mips_arch == PROCESSOR_LOONGSON_2F)
+ #define TARGET_LOONGSON_2EF         (TARGET_LOONGSON_2E || TARGET_LOONGSON_2F)
+@@ -318,6 +319,7 @@ struct mips_cpu_info {
+ 				     || mips_tune == PROCESSOR_74KF2_1	\
+ 				     || mips_tune == PROCESSOR_74KF1_1  \
+ 				     || mips_tune == PROCESSOR_74KF3_2)
++#define TUNE_F32C                   (mips_tune == PROCESSOR_F32C)
+ #define TUNE_LOONGSON_2EF           (mips_tune == PROCESSOR_LOONGSON_2E	\
+ 				     || mips_tune == PROCESSOR_LOONGSON_2F)
+ #define TUNE_GS464		    (mips_tune == PROCESSOR_GS464)
+@@ -387,8 +389,10 @@ struct mips_cpu_info {
+    directly accessible, while the command-line options select
+    TARGET_HARD_FLOAT_ABI and TARGET_SOFT_FLOAT_ABI to reflect the ABI
+    in use.  */
+-#define TARGET_HARD_FLOAT (TARGET_HARD_FLOAT_ABI && !TARGET_MIPS16)
+-#define TARGET_SOFT_FLOAT (TARGET_SOFT_FLOAT_ABI || TARGET_MIPS16)
++#define TARGET_HARD_FLOAT \
++    (TARGET_HARD_FLOAT_ABI && !TARGET_MIPS16 && !TARGET_F32C)
++#define TARGET_SOFT_FLOAT \
++    (TARGET_SOFT_FLOAT_ABI || TARGET_MIPS16 || TARGET_F32C)
+ 
+ /* TARGET_FLOAT64 represents -mfp64 and TARGET_FLOATXX represents
+    -mfpxx, derive TARGET_FLOAT32 to represent -mfp32.  */
+@@ -814,7 +818,7 @@ struct mips_cpu_info {
+        |march=r10000|march=r12000|march=r14000|march=r16000:-mips4} \
+      %{march=mips32|march=4kc|march=4km|march=4kp|march=4ksc:-mips32} \
+      %{march=mips32r2|march=m4k|march=4ke*|march=4ksd|march=24k* \
+-       |march=34k*|march=74k*|march=m14k*|march=1004k* \
++       |march=34k*|march=74k*|march=m14k*|march=1004k*|march=f32c \
+        |march=interaptiv: -mips32r2} \
+      %{march=mips32r3: -mips32r3} \
+      %{march=mips32r5|march=p5600|march=m5100|march=m5101: -mips32r5} \
+@@ -840,7 +844,7 @@ struct mips_cpu_info {
+ 
+ #define MIPS_ARCH_FLOAT_SPEC \
+   "%{mhard-float|msoft-float|mno-float|march=mips*:; \
+-     march=vr41*|march=m4k|march=4k*|march=24kc|march=24kec \
++     march=f32c|march=vr41*|march=m4k|march=4k*|march=24kc|march=24kec \
+      |march=34kc|march=34kn|march=74kc|march=1004kc|march=5kc \
+      |march=m14k*|march=m5101|march=octeon|march=xlr: -msoft-float; \
+      march=*: -mhard-float}"
+@@ -1000,6 +1004,11 @@ struct mips_cpu_info {
+    been generated up to this point.  */
+ #define ISA_HAS_BRANCHLIKELY	(!ISA_MIPS1 && mips_isa_rev <= 5)
+ 
++/* F32C hacks */
++#define NO_DIV (TARGET_SWDIV || TARGET_F32C)
++#define NO_UNALIGNED_LOAD (TARGET_NO_UNALIGNED_LOAD || TARGET_F32C)
++#define NO_UNALIGNED_STORE (TARGET_NO_UNALIGNED_STORE || TARGET_F32C)
++
+ /* ISA has 32 single-precision registers.  */
+ #define ISA_HAS_ODD_SPREG	((mips_isa_rev >= 1			\
+ 				  && !TARGET_GS464)			\
+@@ -1016,7 +1025,7 @@ struct mips_cpu_info {
+ 				  || TARGET_MAD				\
+ 				  || (mips_isa_rev >= 1			\
+ 				      && mips_isa_rev <= 5))		\
+-				 && !TARGET_MIPS16)
++				 && !TARGET_MIPS16 && !TARGET_F32C)
+ 
+ /* ISA has a three-operand multiplication instruction.  */
+ #define ISA_HAS_DMUL3		(TARGET_64BIT				\
+@@ -1076,9 +1085,10 @@ struct mips_cpu_info {
+ 
+ /* ISA has the integer conditional move instructions introduced in mips4 and
+    ST Loongson 2E/2F.  */
+-#define ISA_HAS_CONDMOVE        (ISA_HAS_FP_CONDMOVE			\
++#define ISA_HAS_CONDMOVE        ((ISA_HAS_FP_CONDMOVE			\
+ 				 || TARGET_MIPS5900			\
+-				 || TARGET_LOONGSON_2EF)
++				 || TARGET_LOONGSON_2EF)		\
++				 && !TARGET_F32C)
+ 
+ /* ISA has LDC1 and SDC1.  */
+ #define ISA_HAS_LDC1_SDC1	(!ISA_MIPS1				\
+@@ -1120,16 +1130,16 @@ struct mips_cpu_info {
+ 
+ /* ISA has conditional trap instructions.  */
+ #define ISA_HAS_COND_TRAP	(!ISA_MIPS1				\
+-				 && !TARGET_MIPS16)
++				 && !TARGET_MIPS16 && !TARGET_F32C)
+ 
+ /* ISA has conditional trap with immediate instructions.  */
+ #define ISA_HAS_COND_TRAPI	(!ISA_MIPS1				\
+ 				 && mips_isa_rev <= 5			\
+-				 && !TARGET_MIPS16)
++				 && !TARGET_MIPS16 && !TARGET_F32C)
+ 
+ /* ISA has integer multiply-accumulate instructions, madd and msub.  */
+ #define ISA_HAS_MADD_MSUB	(mips_isa_rev >= 1			\
+-				 && mips_isa_rev <= 5)
++				 && mips_isa_rev <= 5 && !TARGET_F32C)
+ 
+ /* Integer multiply-accumulate instructions should be generated.  */
+ #define GENERATE_MADD_MSUB	(TARGET_IMADD && !TARGET_MIPS16)
+@@ -1176,14 +1186,18 @@ struct mips_cpu_info {
+ 				      && (MODE) == V2SFmode))		\
+ 				 && !TARGET_MIPS16)
+ 
+-#define ISA_HAS_LWL_LWR		(mips_isa_rev <= 5 && !TARGET_MIPS16)
++#define ISA_HAS_LWL_LWR		(mips_isa_rev <= 5 && !TARGET_MIPS16 && \
++				 !NO_UNALIGNED_LOAD)
++#define ISA_HAS_SWL_SWR		(mips_isa_rev <= 5 && !TARGET_MIPS16 && \
++				 !NO_UNALIGNED_STORE)
+ 
+ #define ISA_HAS_IEEE_754_LEGACY	(mips_isa_rev <= 5)
+ 
+ #define ISA_HAS_IEEE_754_2008	(mips_isa_rev >= 2)
+ 
+-/* ISA has count leading zeroes/ones instruction (not implemented).  */
+-#define ISA_HAS_CLZ_CLO		(mips_isa_rev >= 1 && !TARGET_MIPS16)
++/* ISA has count leading zeroes/ones instruction (not implemented). */
++#define ISA_HAS_CLZ_CLO		(mips_isa_rev >= 1 && !TARGET_MIPS16 && \
++				 !TARGET_F32C)
+ 
+ /* ISA has count trailing zeroes/ones instruction.  */
+ #define ISA_HAS_CTZ_CTO		(TARGET_LOONGSON_EXT2)
+@@ -1229,18 +1243,19 @@ struct mips_cpu_info {
+ 				  || TARGET_MIPS5500			\
+ 				  || TARGET_SR71K			\
+ 				  || TARGET_SMARTMIPS)			\
+-				 && !TARGET_MIPS16)
++				 && !TARGET_MIPS16 && !TARGET_F32C)
+ 
+ /* ISA has the WSBH (word swap bytes within halfwords) instruction.
+    64-bit targets also provide DSBH and DSHD.  */
+-#define ISA_HAS_WSBH		(mips_isa_rev >= 2 && !TARGET_MIPS16)
++#define ISA_HAS_WSBH		(mips_isa_rev >= 2 && !TARGET_MIPS16 && \
++				 !TARGET_F32C)
+ 
+ /* ISA has data prefetch instructions.  This controls use of 'pref'.  */
+ #define ISA_HAS_PREFETCH	((ISA_MIPS4				\
+ 				  || TARGET_LOONGSON_2EF		\
+ 				  || TARGET_MIPS5900			\
+ 				  || mips_isa_rev >= 1)			\
+-				 && !TARGET_MIPS16)
++				 && !TARGET_MIPS16 && !TARGET_F32C)
+ 
+ /* ISA has data prefetch, LL and SC with limited 9-bit displacement.  */
+ #define ISA_HAS_9BIT_DISPLACEMENT	(mips_isa_rev >= 6)
+@@ -1259,10 +1274,12 @@ struct mips_cpu_info {
+ #define ISA_HAS_TRUNC_W		(!ISA_MIPS1)
+ 
+ /* ISA includes the MIPS32r2 seb and seh instructions.  */
+-#define ISA_HAS_SEB_SEH		(mips_isa_rev >= 2 && !TARGET_MIPS16)
++#define ISA_HAS_SEB_SEH		(mips_isa_rev >= 2 && !TARGET_MIPS16 && \
++				 !TARGET_NO_SEB_SEH)
+ 
+ /* ISA includes the MIPS32/64 rev 2 ext and ins instructions.  */
+-#define ISA_HAS_EXT_INS		(mips_isa_rev >= 2 && !TARGET_MIPS16)
++#define ISA_HAS_EXT_INS		(mips_isa_rev >= 2 && !TARGET_MIPS16 && \
++				 !TARGET_F32C)
+ 
+ /* ISA has instructions for accessing top part of 64-bit fp regs.  */
+ #define ISA_HAS_MXHC1		(!TARGET_FLOAT32	\
+@@ -1283,10 +1300,12 @@ struct mips_cpu_info {
+ 				 && TARGET_64BIT)
+ 
+ /* The DSP ASE is available.  */
+-#define ISA_HAS_DSP		(TARGET_DSP && !TARGET_MIPS16)
++#define ISA_HAS_DSP		(TARGET_DSP && !TARGET_MIPS16 && \
++				 !TARGET_F32C)
+ 
+ /* Revision 2 of the DSP ASE is available.  */
+-#define ISA_HAS_DSPR2		(TARGET_DSPR2 && !TARGET_MIPS16)
++#define ISA_HAS_DSPR2		(TARGET_DSPR2 && !TARGET_MIPS16 && \
++				 !TARGET_F32C)
+ 
+ /* The MSA ASE is available.  */
+ #define ISA_HAS_MSA		(TARGET_MSA && !TARGET_MIPS16)
+@@ -1328,10 +1347,10 @@ struct mips_cpu_info {
+ 				 || TARGET_LOONGSON_2EF)
+ 
+ /* ISA includes synci, jr.hb and jalr.hb.  */
+-#define ISA_HAS_SYNCI (mips_isa_rev >= 2 && !TARGET_MIPS16)
++#define ISA_HAS_SYNCI (mips_isa_rev >= 2 && !TARGET_MIPS16 && !TARGET_F32C)
+ 
+ /* ISA includes sync.  */
+-#define ISA_HAS_SYNC ((mips_isa >= MIPS_ISA_MIPS2 || TARGET_MIPS3900) && !TARGET_MIPS16)
++#define ISA_HAS_SYNC ((mips_isa >= MIPS_ISA_MIPS2 || TARGET_MIPS3900) && !TARGET_MIPS16 && !TARGET_F32C)
+ #define GENERATE_SYNC			\
+   (target_flags_explicit & MASK_LLSC	\
+    ? TARGET_LLSC && !TARGET_MIPS16	\
+diff -drup ../org/gcc/gcc/config/mips/mips.md gcc/config/mips/mips.md
+--- ../org/gcc/gcc/config/mips/mips.md	2023-07-27 10:13:04.000000000 +0200
++++ gcc/config/mips/mips.md	2023-11-17 12:56:06.273718000 +0100
+@@ -35,6 +35,7 @@
+   74kf2_1
+   74kf1_1
+   74kf3_2
++  f32c
+   loongson_2e
+   loongson_2f
+   gs464
+@@ -1181,6 +1182,7 @@
+ (include "7000.md")
+ (include "9000.md")
+ (include "10000.md")
++(include "f32c.md")
+ (include "loongson2ef.md")
+ (include "gs464.md")
+ (include "gs464e.md")
+@@ -1606,7 +1608,7 @@
+   [(set (match_operand:GPR 0 "register_operand")
+ 	(mult:GPR (match_operand:GPR 1 "register_operand")
+ 		  (match_operand:GPR 2 "register_operand")))]
+-  "ISA_HAS_<D>MULT || ISA_HAS_R6<D>MUL"
++  "(ISA_HAS_<D>MULT || ISA_HAS_R6<D>MUL) && !TARGET_SWMUL"
+ {
+   rtx lo;
+ 
+@@ -1633,7 +1635,7 @@
+   [(set (match_operand:GPR 0 "register_operand" "=d")
+         (mult:GPR (match_operand:GPR 1 "register_operand" "d")
+                   (match_operand:GPR 2 "register_operand" "d")))]
+-  "TARGET_LOONGSON_2EF || TARGET_LOONGSON_EXT || ISA_HAS_R6<D>MUL"
++  "(TARGET_LOONGSON_2EF || TARGET_LOONGSON_EXT || ISA_HAS_R6<D>MUL) && !TARGET_SWMUL"
+ {
+   if (TARGET_LOONGSON_2EF)
+     return "<d>multu.g\t%0,%1,%2";
+@@ -1650,7 +1652,7 @@
+ 	(mult:GPR (match_operand:GPR 1 "register_operand" "d,d")
+ 		  (match_operand:GPR 2 "register_operand" "d,d")))
+    (clobber (match_scratch:GPR 3 "=l,X"))]
+-  "ISA_HAS_<D>MUL3"
++  "ISA_HAS_<D>MUL3 && !TARGET_SWMUL"
+ {
+   if (which_alternative == 1)
+     return "<d>mult\t%1,%2";
+@@ -1677,7 +1679,7 @@
+         (clobber (scratch:SI))])
+    (set (match_operand:SI 3 "d_operand")
+ 	(match_dup 0))]
+-  "ISA_HAS_MUL3 && peep2_reg_dead_p (2, operands[0])"
++  "(ISA_HAS_MUL3 && peep2_reg_dead_p (2, operands[0])) && !TARGET_SWMUL"
+   [(parallel
+        [(set (match_dup 3)
+ 	     (mult:SI (match_dup 1)
+@@ -1688,7 +1690,7 @@
+   [(set (match_operand:GPR 0 "muldiv_target_operand" "=l")
+ 	(mult:GPR (match_operand:GPR 1 "register_operand" "d")
+ 		  (match_operand:GPR 2 "register_operand" "d")))]
+-  "ISA_HAS_<D>MULT && !TARGET_FIX_R4000"
++  "ISA_HAS_<D>MULT && !TARGET_FIX_R4000 && !TARGET_SWMUL"
+   "<d>mult\t%1,%2"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "<MODE>")])
+@@ -1698,7 +1700,7 @@
+ 	(mult:GPR (match_operand:GPR 1 "register_operand" "d")
+ 		  (match_operand:GPR 2 "register_operand" "d")))
+    (clobber (match_scratch:GPR 3 "=l"))]
+-  "ISA_HAS_<D>MULT && TARGET_FIX_R4000"
++  "(ISA_HAS_<D>MULT && TARGET_FIX_R4000) && !TARGET_SWMUL"
+   "<d>mult\t%1,%2\;mflo\t%0"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "<MODE>")
+@@ -1718,7 +1720,7 @@
+ 		 (match_operand:SI 2 "d_operand")))
+    (set (match_operand:SI 3 "d_operand")
+ 	(match_dup 0))]
+-  "ISA_HAS_MACC && !ISA_HAS_MUL3"
++  "ISA_HAS_MACC && !ISA_HAS_MUL3 && !TARGET_SWMUL"
+   [(set (match_dup 0)
+ 	(const_int 0))
+    (parallel
+@@ -1759,7 +1761,7 @@
+ 		 (match_operand:SI 3 "register_operand" "l,l,d")))
+    (clobber (match_scratch:SI 4 "=X,X,l"))
+    (clobber (match_scratch:SI 5 "=X,X,&d"))]
+-  "GENERATE_MADD_MSUB && !TARGET_MIPS16"
++  "GENERATE_MADD_MSUB && !TARGET_MIPS16 && !TARGET_SWMUL"
+   "@
+     madd\t%1,%2
+     madd\t%1,%2
+@@ -1788,7 +1790,7 @@
+ 		 (match_operand:SI 3 "register_operand" "l,l,l,d")))
+    (clobber (match_scratch:SI 4 "=X,X,3,l"))
+    (clobber (match_scratch:SI 5 "=X,X,X,&d"))]
+-  "TARGET_MIPS3900 && !TARGET_MIPS16"
++  "TARGET_MIPS3900 && !TARGET_MIPS16 && !TARGET_SWMUL"
+   "@
+     madd\t%1,%2
+     madd\t%1,%2
+@@ -1831,7 +1833,7 @@
+ 			  (match_operand:SI 2 "register_operand" "d,d"))
+ 		 (match_operand:SI 3 "register_operand" "l,l")))
+    (clobber (match_scratch:SI 4 "=X,3"))]
+-  "ISA_HAS_MACC"
++  "ISA_HAS_MACC && !TARGET_SWMUL"
+ {
+   if (which_alternative == 1)
+     return "macc\t%0,%1,%2";
+@@ -1853,7 +1855,7 @@
+                   (mult:SI (match_operand:SI 2 "register_operand" "d,d")
+                            (match_operand:SI 3 "register_operand" "d,d"))))
+    (clobber (match_scratch:SI 4 "=X,1"))]
+-  "ISA_HAS_MSAC"
++  "ISA_HAS_MSAC && !TARGET_SWMUL"
+ {
+   if (which_alternative == 1)
+     return "msac\t%0,%2,%3";
+@@ -1874,7 +1876,7 @@
+                            (match_operand:SI 3 "register_operand" "d,d"))))
+    (clobber (match_scratch:SI 4 "=X,1"))
+    (clobber (match_scratch:SI 5 "=d,d"))]
+-  "ISA_HAS_MACC && !ISA_HAS_MSAC"
++  "ISA_HAS_MACC && !ISA_HAS_MSAC && !TARGET_SWMUL"
+   "#"
+   "&& reload_completed"
+   [(set (match_dup 5)
+@@ -1901,7 +1903,7 @@
+ 	(plus:SI (mult:SI (match_dup 1)
+ 			  (match_dup 2))
+ 		 (match_dup 0)))]
+-  "ISA_HAS_MACC && reload_completed"
++  "ISA_HAS_MACC && reload_completed && !TARGET_SWMUL"
+   "macc\t%3,%1,%2"
+   [(set_attr "type"	"imadd")
+    (set_attr "accum_in"	"0")
+@@ -1916,7 +1918,7 @@
+ 	(minus:SI (match_dup 0)
+ 		  (mult:SI (match_dup 1)
+ 			   (match_dup 2))))]
+-  "ISA_HAS_MSAC && reload_completed"
++  "ISA_HAS_MSAC && reload_completed && !TARGET_SWMUL"
+   "msac\t%3,%1,%2"
+   [(set_attr "type"	"imadd")
+    (set_attr "accum_in"	"0")
+@@ -1964,7 +1966,7 @@
+        [(set (match_operand:SI 3 "d_operand")
+ 	     (match_operand:SI 4 "macc_msac_operand"))
+ 	(clobber (match_dup 1))])]
+-  "ISA_HAS_MUL3 && peep2_reg_dead_p (2, operands[1])"
++  "ISA_HAS_MUL3 && peep2_reg_dead_p (2, operands[1]) && !TARGET_SWMUL"
+   [(parallel [(set (match_dup 0)
+ 		   (match_dup 5))
+ 	      (clobber (match_dup 1))])
+@@ -1997,7 +1999,7 @@
+    (match_dup 0)
+    (set (match_operand:SI 4 "d_operand")
+ 	(match_dup 1))]
+-  "ISA_HAS_MUL3 && peep2_reg_dead_p (3, operands[1])"
++  "ISA_HAS_MUL3 && peep2_reg_dead_p (3, operands[1]) && !TARGET_SWMUL"
+   [(parallel [(set (match_dup 0)
+ 		   (match_dup 5))
+ 	      (clobber (match_dup 1))])
+@@ -2017,7 +2019,7 @@
+                            (match_operand:SI 3 "register_operand" "d,d,d"))))
+    (clobber (match_scratch:SI 4 "=X,X,l"))
+    (clobber (match_scratch:SI 5 "=X,X,&d"))]
+-  "GENERATE_MADD_MSUB"
++  "GENERATE_MADD_MSUB && !TARGET_SWMUL"
+   "@
+    msub\t%2,%3
+    msub\t%2,%3
+@@ -2058,7 +2060,7 @@
+         (neg:SI (mult:SI (match_operand:SI 1 "register_operand" "d,d")
+                          (match_operand:SI 2 "register_operand" "d,d"))))
+    (clobber (match_scratch:SI 3 "=X,l"))]
+-  "ISA_HAS_MULS"
++  "ISA_HAS_MULS && !TARGET_SWMUL"
+   "@
+    muls\t$0,%1,%2
+    muls\t%0,%1,%2"
+@@ -2069,7 +2071,7 @@
+   [(set (match_operand:DI 0 "register_operand")
+ 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+ 		 (any_extend:DI (match_operand:SI 2 "register_operand"))))]
+-  "mips_mulsidi3_gen_fn (<CODE>) != NULL"
++  "mips_mulsidi3_gen_fn (<CODE>) != NULL && !TARGET_SWMUL"
+ {
+   mulsidi3_gen_fn fn = mips_mulsidi3_gen_fn (<CODE>);
+   emit_insn (fn (operands[0], operands[1], operands[2]));
+@@ -2080,7 +2082,7 @@
+   [(set (match_operand:DI 0 "register_operand")
+ 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+ 		 (any_extend:DI (match_operand:SI 2 "register_operand"))))]
+-  "!TARGET_64BIT && ISA_HAS_R6MUL"
++  "!TARGET_64BIT && ISA_HAS_R6MUL && !TARGET_SWMUL"
+ {
+   rtx dest = gen_reg_rtx (DImode);
+   rtx low = mips_subword (dest, 0);
+@@ -2098,7 +2100,7 @@
+   [(set (match_operand:DI 0 "register_operand")
+ 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+ 		 (any_extend:DI (match_operand:SI 2 "register_operand"))))]
+-  "!TARGET_64BIT && TARGET_MIPS16"
++  "!TARGET_64BIT && TARGET_MIPS16 && !TARGET_SWMUL"
+ {
+   rtx hilo;
+ 
+@@ -2115,7 +2117,7 @@
+   [(set (match_operand:DI 0 "muldiv_target_operand" "=ka")
+ 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 		 (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))]
+-  "!TARGET_64BIT && (!TARGET_FIX_R4000 || ISA_HAS_DSP) && ISA_HAS_MULT"
++  "!TARGET_64BIT && (!TARGET_FIX_R4000 || ISA_HAS_DSP) && ISA_HAS_MULT && !TARGET_SWMUL"
+ {
+   if (ISA_HAS_DSP_MULT)
+     return "mult<u>\t%q0,%1,%2";
+@@ -2130,7 +2132,7 @@
+ 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 		 (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))
+    (clobber (match_scratch:DI 3 "=x"))]
+-  "!TARGET_64BIT && TARGET_FIX_R4000 && !ISA_HAS_DSP && ISA_HAS_MULT"
++  "!TARGET_64BIT && TARGET_FIX_R4000 && !ISA_HAS_DSP && ISA_HAS_MULT && !TARGET_SWMUL"
+   "mult<u>\t%1,%2\;mflo\t%L0\;mfhi\t%M0"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "SI")
+@@ -2143,7 +2145,7 @@
+    (clobber (match_scratch:TI 3 "=x"))
+    (clobber (match_scratch:DI 4 "=d"))]
+   "TARGET_64BIT && !TARGET_FIX_R4000 && !ISA_HAS_DMUL3
+-   && !TARGET_MIPS16 && ISA_HAS_MULT"
++   && !TARGET_MIPS16 && ISA_HAS_MULT && !TARGET_SWMUL"
+   "#"
+   "&& reload_completed"
+   [(const_int 0)]
+@@ -2163,7 +2165,7 @@
+   [(set (match_operand:DI 0 "register_operand")
+ 	(mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+ 		 (any_extend:DI (match_operand:SI 2 "register_operand"))))]
+-  "TARGET_64BIT && TARGET_MIPS16"
++  "TARGET_64BIT && TARGET_MIPS16 && !TARGET_SWMUL"
+ {
+   emit_insn (gen_<u>mulsidi3_64bit_split (operands[0], operands[1],
+ 					  operands[2], gen_reg_rtx (DImode)));
+@@ -2210,7 +2212,7 @@
+ 	     (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 	     (any_extend:DI (match_operand:SI 2 "register_operand" "d")))]
+ 	  UNSPEC_SET_HILO))]
+-  "TARGET_64BIT && !TARGET_FIX_R4000"
++  "TARGET_64BIT && !TARGET_FIX_R4000 && !TARGET_SWMUL"
+   "mult<u>\t%1,%2"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "SI")])
+@@ -2221,7 +2223,7 @@
+ 	(mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 		 (sign_extend:DI (match_operand:SI 2 "register_operand" "d"))))
+    (clobber (match_scratch:DI 3 "=l"))]
+-  "ISA_HAS_DMUL3"
++  "ISA_HAS_DMUL3 && !TARGET_SWMUL"
+   "dmul\t%0,%1,%2"
+   [(set_attr "type" "imul3")
+    (set_attr "mode" "DI")])
+@@ -2230,7 +2232,7 @@
+   [(set (match_operand:DI 0 "register_operand" "=d")
+ 	(mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 		 (sign_extend:DI (match_operand:SI 2 "register_operand" "d"))))]
+-  "ISA_HAS_R6DMUL"
++  "ISA_HAS_R6DMUL && !TARGET_SWMUL"
+   "dmul\t%0,%1,%2"
+   [(set_attr "type" "imul3nc")
+    (set_attr "mode" "DI")])
+@@ -2242,7 +2244,7 @@
+ 	 (mult:DI
+ 	  (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 	  (any_extend:DI (match_operand:SI 2 "register_operand" "d")))))]
+-  "!TARGET_64BIT && ISA_HAS_MULS"
++  "!TARGET_64BIT && ISA_HAS_MULS && !TARGET_SWMUL"
+   "muls<u>\t$0,%1,%2"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "SI")])
+@@ -2261,7 +2263,7 @@
+ 	   (mult:DI
+ 	      (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 	      (any_extend:DI (match_operand:SI 2 "register_operand" "d")))))]
+-  "!TARGET_64BIT && (ISA_HAS_MSAC || GENERATE_MADD_MSUB || ISA_HAS_DSP)"
++  "!TARGET_64BIT && (ISA_HAS_MSAC || GENERATE_MADD_MSUB || ISA_HAS_DSP) && !TARGET_SWMUL"
+ {
+   if (ISA_HAS_DSP_MULT)
+     return "msub<u>\t%q0,%1,%2";
+@@ -2283,7 +2285,7 @@
+ 	  (mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+ 		   (any_extend:DI (match_operand:SI 2 "register_operand")))
+ 	  (const_int 32))))]
+-  ""
++  "!TARGET_SWMUL"
+ {
+   if (ISA_HAS_MULHI)
+     emit_insn (gen_<su>mulsi3_highpart_mulhi_internal (operands[0],
+@@ -2308,7 +2310,7 @@
+ 	  (mult:DI (any_extend:DI (match_operand:SI 1 "register_operand" "d"))
+ 		   (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
+ 	  (const_int 32))))]
+-  "ISA_HAS_R6MUL"
++  "ISA_HAS_R6MUL && !TARGET_SWMUL"
+   "muh<u>\t%0,%1,%2"
+   [(set_attr "type" "imul3nc")
+    (set_attr "mode" "SI")])
+@@ -2321,7 +2323,7 @@
+ 		   (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
+ 	  (const_int 32))))
+    (clobber (match_scratch:SI 3 "=l"))]
+-  "ISA_HAS_MULT && !ISA_HAS_MULHI && !TARGET_MIPS16"
++  "ISA_HAS_MULT && !ISA_HAS_MULHI && !TARGET_MIPS16 && !TARGET_SWMUL"
+   { return TARGET_FIX_R4000 ? "mult<u>\t%1,%2\n\tmfhi\t%0" : "#"; }
+   "&& reload_completed && !TARGET_FIX_R4000"
+   [(const_int 0)]
+@@ -2341,7 +2343,7 @@
+ 	  (mult:DI (any_extend:DI (match_operand:SI 1 "register_operand"))
+ 		   (any_extend:DI (match_operand:SI 2 "register_operand")))
+ 	  (const_int 32))))]
+-  ""
++  "!TARGET_SWMUL"
+ {
+   rtx hilo;
+ 
+@@ -2369,7 +2371,7 @@
+ 	   (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
+ 	  (const_int 32))))
+    (clobber (match_scratch:SI 3 "=l"))]
+-  "ISA_HAS_MULHI"
++  "ISA_HAS_MULHI && !TARGET_SWMUL"
+   "mulhi<u>\t%0,%1,%2"
+   [(set_attr "type" "imul3")
+    (set_attr "mode" "SI")])
+@@ -2384,7 +2386,7 @@
+ 	    (any_extend:DI (match_operand:SI 2 "register_operand" "d"))))
+ 	  (const_int 32))))
+    (clobber (match_scratch:SI 3 "=l"))]
+-  "ISA_HAS_MULHI"
++  "ISA_HAS_MULHI && !TARGET_SWMUL"
+   "mulshi<u>\t%0,%1,%2"
+   [(set_attr "type" "imul3")
+    (set_attr "mode" "SI")])
+@@ -2399,9 +2401,9 @@
+ 	  (mult:TI (any_extend:TI (match_operand:DI 1 "register_operand"))
+ 		   (any_extend:TI (match_operand:DI 2 "register_operand")))
+ 	  (const_int 64))))]
+-  "ISA_HAS_R6DMUL
++  "(ISA_HAS_R6DMUL
+    || (ISA_HAS_DMULT
+-       && !(<CODE> == ZERO_EXTEND && TARGET_FIX_VR4120))"
++       && !(<CODE> == ZERO_EXTEND && TARGET_FIX_VR4120))) && !TARGET_SWMUL"
+ {
+   if (TARGET_MIPS16)
+     emit_insn (gen_<su>muldi3_highpart_split (operands[0], operands[1],
+@@ -2422,7 +2424,7 @@
+ 	  (mult:TI (any_extend:TI (match_operand:DI 1 "register_operand" "d"))
+ 		   (any_extend:TI (match_operand:DI 2 "register_operand" "d")))
+ 	  (const_int 64))))]
+-  "ISA_HAS_R6DMUL"
++  "ISA_HAS_R6DMUL && !TARGET_SWMUL"
+   "dmuh<u>\t%0,%1,%2"
+   [(set_attr "type" "imul3nc")
+    (set_attr "mode" "DI")])
+@@ -2437,7 +2439,7 @@
+    (clobber (match_scratch:DI 3 "=l"))]
+   "ISA_HAS_DMULT
+    && !TARGET_MIPS16
+-   && !(<CODE> == ZERO_EXTEND && TARGET_FIX_VR4120)"
++   && !(<CODE> == ZERO_EXTEND && TARGET_FIX_VR4120) && !TARGET_SWMUL"
+   { return TARGET_FIX_R4000 ? "dmult<u>\t%1,%2\n\tmfhi\t%0" : "#"; }
+   "&& reload_completed && !TARGET_FIX_R4000"
+   [(const_int 0)]
+@@ -2472,7 +2474,7 @@
+ 	(mult:TI (any_extend:TI (match_operand:DI 1 "register_operand"))
+ 		 (any_extend:TI (match_operand:DI 2 "register_operand"))))]
+   "ISA_HAS_R6DMUL
+-   || (ISA_HAS_DMULT
++   || (ISA_HAS_DMULT && !TARGET_SWMUL
+        && !(<CODE> == ZERO_EXTEND && TARGET_FIX_VR4120))"
+ {
+   rtx hilo, hi, lo;
+@@ -2504,7 +2506,7 @@
+ 		 (any_extend:TI (match_operand:DI 2 "register_operand" "d"))))]
+   "ISA_HAS_DMULT
+    && !TARGET_FIX_R4000
+-   && !(<CODE> == ZERO_EXTEND && TARGET_FIX_VR4120)"
++   && !(<CODE> == ZERO_EXTEND && TARGET_FIX_VR4120) && !TARGET_SWMUL"
+   "dmult<u>\t%1,%2"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "DI")])
+@@ -2516,7 +2518,7 @@
+    (clobber (match_scratch:TI 3 "=x"))]
+   "ISA_HAS_DMULT
+    && TARGET_FIX_R4000
+-   && !(<CODE> == ZERO_EXTEND && TARGET_FIX_VR4120)"
++   && !(<CODE> == ZERO_EXTEND && TARGET_FIX_VR4120) && !TARGET_SWMUL"
+   "dmult<u>\t%1,%2\;mflo\t%L0\;mfhi\t%M0"
+   [(set_attr "type" "imul")
+    (set_attr "mode" "DI")
+@@ -2530,7 +2532,7 @@
+ 	(plus:SI (mult:SI (match_operand:SI 1 "register_operand" "d")
+ 			  (match_operand:SI 2 "register_operand" "d"))
+ 		 (match_dup 0)))]
+-  "TARGET_MAD"
++  "TARGET_MAD && !TARGET_SWMUL"
+   "mad\t%1,%2"
+   [(set_attr "type"	"imadd")
+    (set_attr "accum_in"	"0")
+@@ -2545,7 +2547,7 @@
+ 		  (any_extend:DI (match_operand:SI 2 "register_operand" "d")))
+ 	 (match_operand:DI 3 "muldiv_target_operand" "0")))]
+   "(TARGET_MAD || ISA_HAS_MACC || GENERATE_MADD_MSUB || ISA_HAS_DSP)
+-   && !TARGET_64BIT"
++   && !TARGET_64BIT && !TARGET_SWMUL"
+ {
+   if (TARGET_MAD)
+     return "mad<u>\t%1,%2";
+@@ -2813,7 +2815,9 @@
+ 		  (match_operand:ANYF 2 "register_operand")))]
+   "<divide_condition>"
+ {
+-  if (const_1_operand (operands[1], <MODE>mode))
++  if (NO_DIV)
++    FAIL;
++  else if (const_1_operand (operands[1], <MODE>mode))
+     if (!(ISA_HAS_FP_RECIP_RSQRT (<MODE>mode)
+ 	  && flag_unsafe_math_optimizations))
+       operands[1] = force_reg (<MODE>mode, operands[1]);
+@@ -2877,7 +2881,7 @@
+       (set (match_operand:GPR 3 "register_operand")
+ 	   (mod:GPR (match_dup 1)
+ 		    (match_dup 2)))])]
+-  "ISA_HAS_<D>DIV && !TARGET_FIX_VR4120"
++  "ISA_HAS_<D>DIV && !TARGET_FIX_VR4120 && !NO_DIV"
+ {
+   if (TARGET_MIPS16)
+     {
+@@ -2895,7 +2899,7 @@
+    (set (match_operand:GPR 3 "register_operand" "=d")
+ 	(mod:GPR (match_dup 1)
+ 		 (match_dup 2)))]
+-  "ISA_HAS_<D>DIV && !TARGET_FIX_VR4120 && !TARGET_MIPS16"
++  "ISA_HAS_<D>DIV && !TARGET_FIX_VR4120 && !TARGET_MIPS16 && !NO_DIV"
+   "#"
+   "&& reload_completed"
+   [(const_int 0)]
+@@ -2921,7 +2925,7 @@
+ 	(mod:GPR (match_dup 1)
+ 		 (match_dup 2)))
+    (clobber (match_operand:GPR 4 "lo_operand" "=l"))]
+-  "ISA_HAS_<D>DIV && !TARGET_FIX_VR4120 && TARGET_MIPS16"
++  "ISA_HAS_<D>DIV && !TARGET_FIX_VR4120 && TARGET_MIPS16 && !NO_DIV"
+   "#"
+   "&& cse_not_expected"
+   [(const_int 0)]
+@@ -2942,7 +2946,7 @@
+       (set (match_operand:GPR 3 "register_operand")
+ 	   (umod:GPR (match_dup 1)
+ 		     (match_dup 2)))])]
+-  "ISA_HAS_<D>DIV && !TARGET_FIX_VR4120"
++  "ISA_HAS_<D>DIV && !TARGET_FIX_VR4120 && !NO_DIV"
+ {
+   if (TARGET_MIPS16)
+     {
+@@ -2960,7 +2964,7 @@
+    (set (match_operand:GPR 3 "register_operand" "=d")
+ 	(umod:GPR (match_dup 1)
+ 		  (match_dup 2)))]
+-  "ISA_HAS_<D>DIV && !TARGET_MIPS16"
++  "ISA_HAS_<D>DIV && !TARGET_MIPS16 && !NO_DIV"
+   "#"
+   "reload_completed"
+   [(const_int 0)]
+@@ -2981,7 +2985,7 @@
+ 	(umod:GPR (match_dup 1)
+ 		  (match_dup 2)))
+    (clobber (match_operand:GPR 4 "lo_operand" "=l"))]
+-  "ISA_HAS_<D>DIV && TARGET_MIPS16"
++  "ISA_HAS_<D>DIV && TARGET_MIPS16 && !NO_DIV"
+   "#"
+   "cse_not_expected"
+   [(const_int 0)]
+@@ -2998,7 +3002,7 @@
+   [(set (match_operand:GPR 0 "register_operand")
+ 	(any_mod:GPR (match_operand:GPR 1 "register_operand")
+ 		     (match_operand:GPR 2 "register_operand")))]
+-  ""
++  "!NO_DIV"
+ {
+   rtx hilo;
+ 
+@@ -3025,7 +3029,7 @@
+ 	  [(any_div:GPR (match_operand:GPR 1 "register_operand" "d")
+ 			(match_operand:GPR 2 "register_operand" "d"))]
+ 	  UNSPEC_SET_HILO))]
+-  "ISA_HAS_<GPR:D>DIV"
++  "ISA_HAS_<GPR:D>DIV && !NO_DIV"
+   { return mips_output_division ("<GPR:d>div<u>\t%.,%1,%2", operands); }
+   [(set_attr "type" "idiv")
+    (set_attr "mode" "<GPR:MODE>")])
+@@ -3036,7 +3040,7 @@
+   [(set (match_operand:GPR 0 "register_operand" "=&d")
+ 	(any_div:GPR (match_operand:GPR 1 "register_operand" "d")
+ 		     (match_operand:GPR 2 "register_operand" "d")))]
+-  "TARGET_LOONGSON_2EF || TARGET_LOONGSON_EXT || ISA_HAS_R6<D>DIV"
++  "(TARGET_LOONGSON_2EF || TARGET_LOONGSON_EXT || ISA_HAS_R6<D>DIV) && !NO_DIV"
+   {
+     if (TARGET_LOONGSON_2EF)
+       return mips_output_division ("<d>div<u>.g\t%0,%1,%2", operands);
+@@ -3052,7 +3056,7 @@
+   [(set (match_operand:GPR 0 "register_operand" "=&d")
+ 	(any_mod:GPR (match_operand:GPR 1 "register_operand" "d")
+ 		     (match_operand:GPR 2 "register_operand" "d")))]
+-  "TARGET_LOONGSON_2EF || TARGET_LOONGSON_EXT || ISA_HAS_R6<D>DIV"
++  "(TARGET_LOONGSON_2EF || TARGET_LOONGSON_EXT || ISA_HAS_R6<D>DIV) && !NO_DIV"
+   {
+     if (TARGET_LOONGSON_2EF)
+       return mips_output_division ("<d>mod<u>.g\t%0,%1,%2", operands);
+@@ -4360,7 +4364,7 @@
+ 			  (match_operand 1 "const_int_operand")
+ 			  (match_operand 2 "const_int_operand"))
+ 	(match_operand:GPR 3 "reg_or_0_operand"))]
+-  "ISA_HAS_LWL_LWR"
++  "ISA_HAS_SWL_SWR"
+ {
+   if (mips_expand_ins_as_unaligned_store (operands[0], operands[3],
+ 					  INTVAL (operands[1]),
+@@ -4432,7 +4436,7 @@
+ 	(unspec:GPR [(match_operand:BLK 1 "memory_operand" "m")
+ 		     (match_operand:QI 2 "memory_operand" "ZC")]
+ 		    UNSPEC_LOAD_LEFT))]
+-  "!TARGET_MIPS16 && mips_mem_fits_mode_p (<MODE>mode, operands[1])"
++  "!TARGET_MIPS16 && mips_mem_fits_mode_p (<MODE>mode, operands[1]) && !NO_UNALIGNED_LOAD"
+   "<load>l\t%0,%2"
+   [(set_attr "move_type" "load")
+    (set_attr "mode" "<MODE>")])
+@@ -4443,7 +4447,7 @@
+ 		     (match_operand:QI 2 "memory_operand" "ZC")
+ 		     (match_operand:GPR 3 "register_operand" "0")]
+ 		    UNSPEC_LOAD_RIGHT))]
+-  "!TARGET_MIPS16 && mips_mem_fits_mode_p (<MODE>mode, operands[1])"
++  "!TARGET_MIPS16 && mips_mem_fits_mode_p (<MODE>mode, operands[1]) && !NO_UNALIGNED_LOAD"
+   "<load>r\t%0,%2"
+   [(set_attr "move_type" "load")
+    (set_attr "mode" "<MODE>")])
+@@ -4453,7 +4457,7 @@
+ 	(unspec:BLK [(match_operand:GPR 1 "reg_or_0_operand" "dJ")
+ 		     (match_operand:QI 2 "memory_operand" "ZC")]
+ 		    UNSPEC_STORE_LEFT))]
+-  "!TARGET_MIPS16 && mips_mem_fits_mode_p (<MODE>mode, operands[0])"
++  "!TARGET_MIPS16 && mips_mem_fits_mode_p (<MODE>mode, operands[0]) && !NO_UNALIGNED_STORE"
+   "<store>l\t%z1,%2"
+   [(set_attr "move_type" "store")
+    (set_attr "mode" "<MODE>")])
+@@ -4464,7 +4468,7 @@
+ 		     (match_operand:QI 2 "memory_operand" "ZC")
+ 		     (match_dup 0)]
+ 		    UNSPEC_STORE_RIGHT))]
+-  "!TARGET_MIPS16 && mips_mem_fits_mode_p (<MODE>mode, operands[0])"
++  "!TARGET_MIPS16 && mips_mem_fits_mode_p (<MODE>mode, operands[0]) && !NO_UNALIGNED_STORE"
+   "<store>r\t%z1,%2"
+   [(set_attr "move_type" "store")
+    (set_attr "mode" "<MODE>")])
+diff -drup ../org/gcc/gcc/config/mips/mips.opt gcc/config/mips/mips.opt
+--- ../org/gcc/gcc/config/mips/mips.opt	2023-07-27 10:13:04.000000000 +0200
++++ gcc/config/mips/mips.opt	2023-11-17 12:56:06.274241000 +0100
+@@ -115,6 +115,26 @@ mdouble-float
+ Target RejectNegative InverseMask(SINGLE_FLOAT, DOUBLE_FLOAT)
+ Allow hardware floating-point instructions to cover both 32-bit and 64-bit operations.
+ 
++mno-mul
++Target RejectNegative Var(TARGET_SWMUL)
++Do not use integer mul instructions
++
++mno-div
++Target RejectNegative Var(TARGET_SWDIV)
++Do not use integer div instructions
++
++mno-sign-extend
++Target RejectNegative Var(TARGET_NO_SEB_SEH)
++Do not use sign extend instructions
++
++mno-unaligned-load
++Target RejectNegative Var(TARGET_NO_UNALIGNED_LOAD)
++Do not emit unaligned load instructions
++
++mno-unaligned-store
++Target RejectNegative Var(TARGET_NO_UNALIGNED_STORE)
++Do not emit unaligned store instructions
++
+ mdsp
+ Target Var(TARGET_DSP)
+ Use MIPS-DSP instructions.
+--- /dev/null	2023-11-17 14:23:41.798304000 +0100
++++ gcc/config/mips/f32c.md	2023-11-17 13:01:08.704662000 +0100
+@@ -0,0 +1,98 @@
++;;
++;; f32c pipeline description
++;;
++
++
++(define_automaton "f32c_cpu, f32c_mdu")
++
++;; Integer execution unit.
++(define_cpu_unit "f32c_ixu_arith"       "f32c_cpu")
++(define_cpu_unit "f32c_ixu_mpydiv"      "f32c_mdu")
++
++(define_insn_reservation "f32c_int_load" 3
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "load"))
++  "f32c_ixu_arith")
++
++(define_insn_reservation "f32c_int_store" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "store"))
++  "f32c_ixu_arith")
++
++(define_bypass 3 "f32c_int_load" "f32c_int_store")
++
++(define_insn_reservation "f32c_int_mult" 5
++  (and (eq_attr "cpu" "f32c")
++       (and (eq_attr "type" "imul,imadd")
++	    (eq_attr "mode" "SI")))
++  "f32c_ixu_arith+(f32c_ixu_mpydiv*2)")
++
++(define_insn_reservation "f32c_int_mfhilo" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "mfhi,mflo"))
++  "f32c_ixu_arith+f32c_ixu_mpydiv")
++
++(define_bypass 5 "f32c_int_mult" "f32c_int_mfhilo")
++
++(define_insn_reservation "f32c_int_shift" 2
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "shift"))
++  "f32c_ixu_arith")
++
++(define_insn_reservation "f32c_condmove" 2
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "condmove"))
++  "f32c_ixu_arith")
++
++;; All other integer insns.
++(define_insn_reservation "f32c_int_alu" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "arith,const,logical,move,nop,signext,slt"))
++  "f32c_ixu_arith")
++
++(define_insn_reservation "f32c_int_branch" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "branch"))
++  "f32c_ixu_arith")
++
++;; JR/JALR.
++(define_insn_reservation "f32c_int_jump" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "jump,call"))
++  "f32c_ixu_arith")
++
++;; Any    -> JR/JALR (without dependency) : 1 clock issue delay
++;; Load   -> JR/JALR (with dependency)    : 3 clock issue delay
++;; Shift  -> JR/JALR (with dependency)    : 3 clock issue delay
++;; Any    -> JR/JALR (with dependency)    : 2 clock issue delay
++(define_bypass 3 "f32c_int_load"   "f32c_int_jump")
++(define_bypass 3 "f32c_int_shift"  "f32c_int_jump")
++(define_bypass 2 "f32c_int_alu"    "f32c_int_jump")
++(define_bypass 2 "f32c_int_mfhilo" "f32c_int_jump")
++
++;; Unknown 
++(define_insn_reservation "f32c_int_unknown" 1
++  (and (eq_attr "cpu" "f32c")
++       (eq_attr "type" "unknown,multi"))
++  "f32c_ixu_arith+f32c_ixu_mpydiv")
++
++
++;; Substitute sll %0,%1,1 with addu %0,%1,%1
++(define_insn "*ashl<mode>3"
++  [(set (match_operand:GPR 0 "register_operand" "=d")
++        (ashift:GPR (match_operand:GPR 1 "register_operand" "d")
++                       (match_operand:SI 2 "arith_operand" "dI")))]
++  "TARGET_F32C"
++{
++  if (CONST_INT_P (operands[2]))
++    operands[2] = GEN_INT (INTVAL (operands[2])
++                           & (GET_MODE_BITSIZE (<MODE>mode) - 1));
++                               
++  if (CONST_INT_P (operands[2]) && INTVAL (operands[2]) == 1)
++    return "addu\t%0,%1,%1";
++  else
++    return "sll\t%0,%1,%2";
++}
++  [(set_attr "type" "shift")
++   (set_attr "mode" "<MODE>")])
++
+--- ../org/gcc/configure	2023-07-27 10:13:03.000000000 +0200
++++ configure	2023-11-17 12:56:06.279013000 +0100
+@@ -2850,7 +2850,10 @@ target_libraries="target-libgcc \
+ # note: any program that *uses* libraries that are in the "target_libraries"
+ # list belongs in this list.
+ #
+-target_tools="target-rda"
++
++# Don't build target tools and libraries for f32c
++target_tools=""
++target_libraries=""
+ 
+ ################################################################################
+ 
+--- ../org/gcc/gcc/doc/invoke.texi	2023-07-27 10:13:04.000000000 +0200
++++ gcc/doc/invoke.texi	2023-11-17 12:56:06.288601000 +0100
+@@ -26590,6 +26590,7 @@ The processor names are:
+ @samp{1004kc}, @samp{1004kf2_1}, @samp{1004kf1_1},
+ @samp{i6400}, @samp{i6500},
+ @samp{interaptiv},
++@samp{f32c},
+ @samp{loongson2e}, @samp{loongson2f}, @samp{loongson3a}, @samp{gs464},
+ @samp{gs464e}, @samp{gs264e},
+ @samp{m4k},
