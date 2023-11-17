@@ -21,7 +21,7 @@ WITHOUT_FLOAT = yes
 CFILES = dhry_1.c dhry_2.c miscfn.c
 
 # Override default interrupt-driven sio routines
-CFILES += ../../lib/src/sio_poll.c
+CFILES += ../../lib/src/dev/sio_poll.c
 
 include ${POST_MK}
 
