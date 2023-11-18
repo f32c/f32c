@@ -247,12 +247,24 @@ again:
 	size = 256 * 1024;
 	RDTSC(start);
 	for (i = 0; i < 100; i++)
-		memcpy(buf, buf + size, size);
+		memcpy(buf + i * 4, buf + size - i * 16, size);
 	RDTSC(end);
 	len = (end - start) / freq_khz;
 	speed = i * size / len;
-	printf("%d * memcpy(%d KB) done in %d.%03d s (%d.%03d MB/s)\n", i,
-	    size / 1024, len / 1000, len % 1000, speed / 1000,
+	printf("%d * memcpy(aligned %d KB) done in %d.%03d s (%d.%03d MB/s)\n",
+	    i, size / 1024, len / 1000, len % 1000, speed / 1000,
+	    speed % 1000);
+
+	size = 256 * 1024;
+	RDTSC(start);
+	for (i = 0; i < 100; i++)
+		memcpy(buf + i * 4 + 1 + (i & 2), buf + size - i * 16 - 1,
+		    size);
+	RDTSC(end);
+	len = (end - start) / freq_khz;
+	speed = i * size / len;
+	printf("%d * memcpy(unaligned %d KB) done in %d.%03d s (%d.%03d MB/s)"
+	    "\n", i, size / 1024, len / 1000, len % 1000, speed / 1000,
 	    speed % 1000);
 
 	printf("Accumulated %d errors after %d iterations\n\n",
