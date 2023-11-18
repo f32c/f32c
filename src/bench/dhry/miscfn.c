@@ -20,7 +20,7 @@ malloc(int size)
 }
 
 
-/* memcpy() and strcpy() are required for -Os builds */
+/* a proper memcpy() function apparently is faster then inlined version */
 #ifdef memcpy
 #undef memcpy
 #endif
@@ -29,15 +29,4 @@ memcpy(char *dst, const char *src, int len)
 {
 
 	_memcpy(dst, src, len);
-}
-
-void
-#ifdef strcpy
-#undef strcpy
-#endif
-strcpy(char *dst, const char *src)
-{
-
-	for (; *src != 0;)
-		*dst++ = *src++;
 }
