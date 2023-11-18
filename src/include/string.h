@@ -145,6 +145,15 @@ _memcpy(void *dst, const void *src, int len)
 	char *dst1 = (char *) dst;
 	const char *src1 = (const char *) src;
 
+	if ((((int)dst | (int)src) & 3) == 0) {
+		while (len >= 4) {
+			*((uint32_t *) dst1) = *((uint32_t *) src1);
+			dst1 += 4;
+			src1 += 4;
+			len -= 4;
+		}
+	}
+
 	while (len--)
 		*dst1++ = *src1++;
 
@@ -198,12 +207,11 @@ strchr(const char *p, int ch)
 		char *p;
 	} u;
 
-	u.cp = p;
-	for (;; ++u.p) {
+	for (u.cp = p;; ++u.p) {
 		if (*u.p == ch)
 			return(u.p);
 		if (*u.p == '\0')
-		return(NULL);
+			return(NULL);
 	}
 	/* NOTREACHED */
 }
