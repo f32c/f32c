@@ -165,6 +165,16 @@ architecture x of f32c_cache is
     signal d_cacheable, d_miss_cycle: boolean := false;
     signal cpu_d_wait: std_logic;
 
+    -- store buffer
+    type T_sb_mem is array(0 to 15)
+      of std_logic_vector(32 - 2 + 4 + 32 - 1 downto 0);
+    signal M_sb: T_sb_mem;
+    signal R_sb_head: std_logic_vector(3 downto 0) := (others => '0');
+    signal R_sb_tail: std_logic_vector(3 downto 0) := (others => '0');
+    signal R_sb_queued: std_logic_vector(3 downto 0) := (others => '0');
+    signal R_sb_empty: boolean := true;
+    signal R_sb_full: boolean := false;
+
     -- debugging
     signal clk_enable: std_logic;
 
@@ -208,7 +218,7 @@ begin
     if rising_edge(clk) and (not C_debug or clk_enable = '1') then
 	R_d_tag_from_bram <= d_from_bram(d_from_bram'high downto 32);
 	R_d_data_from_bram <= d_from_bram(31 downto 0);
-	R_d_fetch_done <= d_miss_cycle and dmem_data_ready = '1';
+	R_d_fetch_done <= R_sb_empty and d_miss_cycle and dmem_data_ready = '1';
 	if not d_miss_cycle then
 	    R_d_rd_addr <= cpu_d_addr;
 	    R_d_cacheable_cycle <= d_cacheable and cpu_d_strobe = '1'
@@ -241,7 +251,7 @@ begin
       else cpu_d_addr(d_rd_addr'range);
     d_wr_addr <= R_d_rd_addr(d_wr_addr'range) when d_miss_cycle
       else cpu_d_addr(d_rd_addr'range);
-    d_bram_wr_enable <= (d_miss_cycle and dmem_data_ready = '1')
+    d_bram_wr_enable <= (d_miss_cycle and dmem_data_ready = '1' and R_sb_empty)
       or (not d_miss_cycle and d_cacheable and cpu_d_write = '1'
       and cpu_d_strobe = '1') or flush_d_line = '1';
     d_miss_cycle <= R_d_cacheable_cycle and not R_d_fetch_done
@@ -250,18 +260,63 @@ begin
 
     end generate; -- G_dcache_logic
 
-    dmem_addr <= R_d_rd_addr when d_miss_cycle else cpu_d_addr;
-    dmem_addr_strobe <= '1' when d_miss_cycle
+    --
+    -- store buffer
+    --
+    process(clk)
+	variable sb_queued_new: std_logic_vector(3 downto 0);
+    begin
+    if rising_edge(clk) and (not C_debug or clk_enable = '1') then
+	sb_queued_new := R_sb_queued;
+	if not R_sb_full and cpu_d_strobe = '1' and cpu_d_write = '1' and
+	  not d_miss_cycle and (not R_sb_empty or dmem_data_ready = '0') then
+	    M_sb(conv_integer(R_sb_head))(65 downto 36) <= cpu_d_addr;
+	    M_sb(conv_integer(R_sb_head))(35 downto 32) <= cpu_d_byte_sel;
+	    M_sb(conv_integer(R_sb_head))(31 downto 0) <= cpu_d_data_out;
+	    R_sb_empty <= false;
+	    -- XXX fixme: R_sb_head <= R_sb_head + 1;
+	    sb_queued_new := sb_queued_new + 1;
+	    if sb_queued_new = 1 then
+		R_sb_full <= true;
+	    end if;
+	end if;
+	if not R_sb_empty and dmem_data_ready = '1' then
+	    R_sb_full <= false;
+	    -- XXX fixme: R_sb_tail <= R_sb_tail + 1;
+	    sb_queued_new := sb_queued_new - 1;
+	    if sb_queued_new = 0 then
+		R_sb_empty <= true;
+	    end if;
+	end if;
+	R_sb_queued <= sb_queued_new;
+	if reset = '1' then
+	    R_sb_empty <= true;
+	    R_sb_full <= false;
+	    R_sb_tail <= R_sb_head;
+	    R_sb_queued <= (others => '0');
+	end if;
+    end if;
+    end process;
+
+    dmem_addr <= M_sb(conv_integer(R_sb_tail))(65 downto 36) when not R_sb_empty
+      else R_d_rd_addr when d_miss_cycle else cpu_d_addr;
+    dmem_addr_strobe <= '1' when not R_sb_empty or d_miss_cycle
       else '0' when d_cacheable and cpu_d_write = '0'
       else cpu_d_strobe;
-    dmem_write <= '0' when d_miss_cycle else cpu_d_write or flush_d_line;
+    dmem_write <= '1' when not R_sb_empty
+      else '0' when d_miss_cycle
+      else cpu_d_write or flush_d_line; -- XXX revist flush_d_line here!
     dmem_burst_len <= (others => '0');
-    dmem_byte_sel <= cpu_d_byte_sel;
-    dmem_data_out <= cpu_d_data_out;
+    dmem_byte_sel <= cpu_d_byte_sel when R_sb_empty
+      else M_sb(conv_integer(R_sb_tail))(35 downto 32);
+    dmem_data_out <= cpu_d_data_out when R_sb_empty
+      else M_sb(conv_integer(R_sb_tail))(31 downto 0);
 
     cpu_d_data_in <= dmem_data_in when d_miss_cycle
       else d_from_bram(31 downto 0) when d_cacheable else dmem_data_in;
     cpu_d_ready <= '1' when d_cacheable and cpu_d_write = '0'
+      else '1' when not R_sb_full and cpu_d_write = '1'
+      else '0' when not R_sb_empty
       else dmem_data_ready;
     cpu_d_wait <= '1' when d_miss_cycle else '0';
 
