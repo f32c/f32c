@@ -163,7 +163,6 @@ main ()
 #ifdef MSC_CLOCK
   Begin_Time = clock();
 #endif
-  RDTSC(Begin_Time);
 
   for (Run_Index = 1; Run_Index <= Number_Of_Runs; ++Run_Index)
   {
@@ -225,7 +224,6 @@ main ()
 #ifdef MSC_CLOCK
   End_Time = clock();
 #endif
-  RDTSC(End_Time);
 
 #ifdef NOTYET
   printf ("Execution ends\n");
@@ -287,20 +285,17 @@ main ()
   }
   
 #endif /* NOTYET */
-    if (User_Time < 0)
-	User_Time = -User_Time;
-
     uint32_t tmp, freq_khz;
     freq_khz = (get_cpu_freq() + 499) / 1000;
-    
-    printf ("\nticks:\t\t%d @ %d.%03d MHz\nms:\t\t%d\n", User_Time,
-	freq_khz / 1000, freq_khz % 1000, User_Time / freq_khz);
-    tmp =  Number_Of_Runs * 1000 / (User_Time / freq_khz);
-    printf ("Dhry/s:\t\t%d\n", tmp);
-    printf ("VAX DMIPS:\t%d.%03d\n", tmp / 1757,
-	(tmp * 1000 / 1757) % 1000);
-    tmp = Number_Of_Runs * 1000 / 1757 * 1000 / (User_Time / 1000);
-    printf ("VAX DMIPS/MHz:\t%d.%03d\n", tmp / 1000, tmp % 1000);
+
+    printf("\nCPU freq:\t%d.%03d MHz\n", freq_khz / 1000, freq_khz % 1000);
+    printf("Duration:\t%d.%03d ms\n", User_Time / 1000, User_Time % 1000);
+    tmp = Number_Of_Runs * 1000 / (User_Time / 1000);
+    printf("Dhry/s:\t\t%d\n", tmp);
+    tmp = tmp * 1000 / 1757;
+    printf("DMIPS:\t\t%d.%03d\n", tmp / 1000, tmp % 1000);
+    tmp = tmp * 1000 / freq_khz;
+    printf("DMIPS/MHz:\t%d.%03d\n", tmp / 1000, tmp % 1000);
 }
 
 
