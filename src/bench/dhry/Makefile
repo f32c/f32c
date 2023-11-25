@@ -18,9 +18,6 @@ DHRY_CFLAGS += -DFAST_STRCMP -DUNROLLED_STRCMP
 # use clock(3) for time measurement
 DHRY_CFLAGS += -DMSC_CLOCK
 
-# We don't need floating point support here
-WITHOUT_FLOAT = yes
-
 CFILES = dhry_1.c dhry_2.c
 
 # Override default interrupt-driven sio routines
