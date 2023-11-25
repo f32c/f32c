@@ -392,11 +392,9 @@
 /* General definitions: */
 
 /* f32c */
-#include <dev/io.h>		/* for RDTSC() */
 #include <stdio.h>
-#include <string.h>		/* for strcpy, strcmp */
-#include <mips/asm.h>		
-#include <mips/cpuregs.h>	/* for mfc0 rxx, cp0_config */
+#include <string.h>		/* for strcpy(), strcmp() */
+#include <time.h>		/* for get_cpu_freq(), clock() */
 
 #define Null 0 
                 /* Value of a Null pointer */

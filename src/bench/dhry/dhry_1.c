@@ -58,7 +58,7 @@ extern long     time();
 #endif
 #ifdef MSC_CLOCK
 extern clock_t	clock();
-#define Too_Small_Time (2*HZ)
+#define Too_Small_Time (2 * CLOCKS_PER_SEC)
 #endif
 
 long            Begin_Time,
@@ -86,6 +86,12 @@ main ()
   REG   int             Run_Index;
   REG   int             Number_Of_Runs;
 
+  /* Flush any stale characters from SIO RX buffer */
+  for (int n = 100000; n > 0; n--) {
+    if (sio_getchar(0) != -1)
+      n = 100000;
+  }
+
   /* Initializations */
 
   Next_Ptr_Glob = (Rec_Pointer) malloc (sizeof (Rec_Type));
@@ -105,44 +111,33 @@ main ()
         /* Warning: With 16-Bit processors and Number_Of_Runs > 32000,  */
         /* overflow may occur for this array element.                   */
 
-#if 0
-  printf ("\nDhrystone Benchmark, Version 2.1 (Language: C)\n\n");
+  printf ("\n");
+  printf ("Dhrystone Benchmark, Version 2.1 (Language: C)\n");
+  printf ("\n");
   if (Reg)
   {
     printf ("Program compiled with 'register' attribute\n");
+    printf ("\n");
   }
   else
   {
     printf ("Program compiled without 'register' attribute\n");
+    printf ("\n");
   }
-#endif
-
-#if 1
+  printf ("Please give the number of runs through the benchmark: ");
   {
     int n;
-
-    /* Flush any stale characters from SIO RX buffer */
-    for (n = 100000; n > 0; n --) {
-	if (sio_getchar(0) != -1)
-	    n = 100000;
-    }
-
 #if 0
-    printf ("\nPlease give the number of runs through the benchmark: ");
+    scanf ("%d", &n);
 #else
-    printf ("\nNumber of runs: ");
-#endif
     gets((char *) Arr_1_Glob, 50);
-    Number_Of_Runs = atoi((char *) Arr_1_Glob);
+    n = atoi((char *) Arr_1_Glob);
+#endif
+    Number_Of_Runs = n;
   }
-#else
-#ifdef BRAM
-  Number_Of_Runs = 1000000; /* code in (fast) block RAM */
-#else
-  Number_Of_Runs = 200000; /* code in (slow) external SRAM */
-#endif
-  printf ("\n%d runs...\n", Number_Of_Runs);
-#endif
+  printf ("\n");
+
+  printf ("Execution starts, %d runs through Dhrystone\n", Number_Of_Runs);
 
   /***************/
   /* Start timer */
@@ -220,12 +215,10 @@ main ()
   End_Time = clock();
 #endif
 
-#ifdef NOTYET
   printf ("Execution ends\n");
   printf ("\n");
   printf ("Final values of the variables used in the benchmark:\n");
   printf ("\n");
-#endif /* NOTYET */
   printf ("1	%d (5)\n2	%d (1)\n", Int_Glob, Bool_Glob);
   printf ("3	%c (A)\n4	%c (B)\n", Ch_1_Glob, Ch_2_Glob);
   printf ("5	%d (7)\n6	%d (Number_Of_Runs + 10)\n",
@@ -249,13 +242,13 @@ main ()
 
   User_Time = End_Time - Begin_Time;
 
-#ifdef NOTYET
   if (User_Time < Too_Small_Time)
   {
     printf ("Measured time too small to obtain meaningful results\n");
     printf ("Please increase number of runs\n");
     printf ("\n");
   }
+#ifdef NOTYET
   else
   {
 #ifdef TIME
