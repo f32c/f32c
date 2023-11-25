@@ -21,7 +21,7 @@ DHRY_CFLAGS += -DMSC_CLOCK
 # We don't need floating point support here
 WITHOUT_FLOAT = yes
 
-CFILES = dhry_1.c dhry_2.c miscfn.c
+CFILES = dhry_1.c dhry_2.c
 
 # Override default interrupt-driven sio routines
 CFILES += ../../lib/src/dev/sio_poll.c
