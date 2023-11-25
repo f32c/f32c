@@ -1,5 +1,6 @@
 /*
- * Write and read back random patterns to / from memory.
+ * Write and read back various random patterns to / from memory, while
+ * performing a bit of correctness checking and throughput measurements.
  */
 
 #include <stdio.h>
@@ -10,6 +11,10 @@
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
+
+#if CLOCKS_PER_SEC != 1000000
+#error "CLOCKS_PER_SEC is not 1000000, aborting build"
+#endif
 
 extern int _end;
 char *buf;
@@ -32,19 +37,6 @@ main(void)
 	tot_err = 0;
 	iter = 1;
 again:
-
-#if 0
-#define N 4
-#define K 16385
-	p32 = (void *) 0x80000000;
-	for (i = 0; i < N * K; i += K) {
-		p32[i] = i + (i << 24);
-	}
-	for (i = 0; i < N * K; i += K) {
-		printf("%08x\n", p32[i]);
-	}
-	printf("\n");
-#endif
 
 	freq_khz = (get_cpu_freq() + 499) / 1000;
 	printf("Detected %d.%03d MHz CPU\n\n",
@@ -69,7 +61,7 @@ again:
 	    size >> 20, ((size & 0xfffff) * 1000) >> 20);
 
 	size = 128 * 1024 * 1024;
-	RDTSC(start);
+	start = clock();
 	for (i = 0; i < size / (512 * 4); i++)
 		for (p32 = (uint32_t *) mem_base;
 		    p32 < (uint32_t *) &mem_base[512];) {
@@ -78,8 +70,8 @@ again:
 			val = *p32++; val = *p32++; val = *p32++; val = *p32++;
 			val = *p32++; val = *p32++; val = *p32++; val = *p32++;
 		}
-	RDTSC(end);
-	len = (end - start) / freq_khz;
+	end = clock();
+	len = (end - start) / 1000;
 	speed = size / len;
 	printf("Cache speed: %d MB 32-bit read done in"
 	    " %d.%03d s (%d.%03d MB/s)\n", size / 1024 / 1024,
@@ -112,10 +104,10 @@ again:
 	}
 	printf("read errors: %d\n", tmp);
 
-	RDTSC(seed);
+	seed = clock();
 	val = seed;
 
-	RDTSC(start);
+	start = clock();
 	for (p32 = (uint32_t *) mem_base; p32 < (uint32_t *) mem_end;
 	    val += 0x137b5d51) {
 		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
@@ -123,21 +115,21 @@ again:
 		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
 		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
 	}
-	RDTSC(end);
-	len = (end - start) / freq_khz;
+	end = clock();
+	len = (end - start) / 1000;
 	speed = size / len;
 	printf("32-bit write done in %d.%03d s (%d.%03d MB/s)\n",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	
-	RDTSC(start);
+	start = clock();
 	for (p32 = (uint32_t *) mem_base; p32 < (uint32_t *) mem_end;) {
 		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
 		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
 		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
 		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
 	}
-	RDTSC(end);
-	len = (end - start) / freq_khz;
+	end = clock();
+	len = (end - start) / 1000;
 	speed = size / len;
 	printf("32-bit read done in %d.%03d s (%d.%03d MB/s), ",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
@@ -157,7 +149,7 @@ again:
 	tot_err += tmp;
 
 	val = seed;
-	RDTSC(start);
+	start = clock();
 	for (p16 = (uint16_t *) mem_base; p16 < (uint16_t *) mem_end;
 	    val += 0x137b5d51) {
 		*p16++ = val; *p16++ = ~val; *p16++ = val; *p16++ = ~val;
@@ -165,21 +157,21 @@ again:
 		*p16++ = val; *p16++ = ~val; *p16++ = val; *p16++ = ~val;
 		*p16++ = val; *p16++ = ~val; *p16++ = val; *p16++ = ~val;
 	}
-	RDTSC(end);
-	len = (end - start) / freq_khz;
+	end = clock();
+	len = (end - start) / 1000;
 	speed = size / len;
 	printf("16-bit write done in %d.%03d s (%d.%03d MB/s)\n",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	
-	RDTSC(start);
+	start = clock();
 	for (p16 = (uint16_t *) mem_base; p16 < (uint16_t *) mem_end;) {
 		val = *p16++; val = *p16++; val = *p16++; val = *p16++;
 		val = *p16++; val = *p16++; val = *p16++; val = *p16++;
 		val = *p16++; val = *p16++; val = *p16++; val = *p16++;
 		val = *p16++; val = *p16++; val = *p16++; val = *p16++;
 	}
-	RDTSC(end);
-	len = (end - start) / freq_khz;
+	end = clock();
+	len = (end - start) / 1000;
 	speed = size / len;
 	printf("16-bit read done in %d.%03d s (%d.%03d MB/s), ",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
@@ -203,7 +195,7 @@ again:
 	tot_err += tmp;
 	
 	val = seed;
-	RDTSC(start);
+	start = clock();
 	for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end;
 	    val += 0x137b5d51) {
 		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
@@ -211,21 +203,21 @@ again:
 		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
 		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
 	}
-	RDTSC(end);
-	len = (end - start) / freq_khz;
+	end = clock();
+	len = (end - start) / 1000;
 	speed = size / len;
 	printf("8-bit write done in %d.%03d s (%d.%03d MB/s)\n",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	
-	RDTSC(start);
+	start = clock();
 	for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end;) {
 		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
 		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
 		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
 		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
 	}
-	RDTSC(end);
-	len = (end - start) / freq_khz;
+	end = clock();
+	len = (end - start) / 1000;
 	speed = size / len;
 	printf("8-bit read done in %d.%03d s (%d.%03d MB/s), ",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
@@ -245,23 +237,23 @@ again:
 	tot_err += tmp;
 	
 	size = 256 * 1024;
-	RDTSC(start);
+	start = clock();
 	for (i = 0; i < 100; i++)
 		memcpy(buf + i * 4, buf + size - i * 16, size);
-	RDTSC(end);
-	len = (end - start) / freq_khz;
+	end = clock();
+	len = (end - start) / 1000;
 	speed = i * size / len;
 	printf("%d * memcpy(aligned %d KB) done in %d.%03d s (%d.%03d MB/s)\n",
 	    i, size / 1024, len / 1000, len % 1000, speed / 1000,
 	    speed % 1000);
 
 	size = 256 * 1024;
-	RDTSC(start);
+	start = clock();
 	for (i = 0; i < 100; i++)
 		memcpy(buf + i * 4 + 1 + (i & 2), buf + size - i * 16 - 1,
 		    size);
-	RDTSC(end);
-	len = (end - start) / freq_khz;
+	end = clock();
+	len = (end - start) / 1000;
 	speed = i * size / len;
 	printf("%d * memcpy(unaligned %d KB) done in %d.%03d s (%d.%03d MB/s)"
 	    "\n", i, size / 1024, len / 1000, len % 1000, speed / 1000,
