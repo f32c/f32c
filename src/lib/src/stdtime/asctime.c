@@ -108,7 +108,7 @@ asctime_r(register const struct tm *timeptr, char *buf)
 		timeptr->tm_min, timeptr->tm_sec,
 		year);
 	if (strlen(result) < STD_ASCTIME_BUF_SIZE || buf == buf_asctime)
-		return strcpy(buf, result)
+		return strcpy(buf, result);
 	else {
 		errno = EOVERFLOW;
 		return NULL;
