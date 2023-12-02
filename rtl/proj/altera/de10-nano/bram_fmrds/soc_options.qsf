@@ -1,0 +1,18 @@
+
+#
+# MenloPark Innovation
+#
+# 02/17/2019
+#
+# These are files required to build various SoC options.
+#
+
+# Menlopark Innovation: Enable FM RDS SoC
+set_global_assignment -name VHDL_FILE ../../../../soc/fm/rds.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/fm/message.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/fm/lowpass.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/fm/fmgen.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/fm/fm.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/fm/fir.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/fm/bram_rds.vhd
+

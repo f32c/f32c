@@ -1,3 +1,41 @@
+# Menlo fork of f32c
+
+Most work centers around adding support for the Terasic DE10-Nano
+board, though some minor fixes to others such as DE0-Nano have been done.
+
+The DE10-Nano supports Arduino UNO compatible headers so that Arduino UNO shields
+may be used. The GPIO pins have been assigned to these header pins for use with
+Arduino projects.
+
+F32C uses non-standard port numbering, and this will be fixed in a later check
+in for the DE10-Nano builds as part of the Menlo fork of FPGAArduino.
+
+The Menlo fork of FPGAArduino includes the Arduino IDE support for the DE10-Nano,
+and includes block RAM configurations from 32K - 512K for larger projects to
+operate out of the high speed FPGA block rams. Both MIPS and RISC-V have
+been validated as working for basic Arduino sketches.
+
+One project build option is the FM RDS core and has been tested with
+the FPGAArduino RDS sketch as a MIPS 64K core build. It operates with
+a Grundig/Eton Executive Satellit for RDS data.
+
+# Future work
+
+Future work planned for F32C:
+
+Full Arduino compatible pins, definitions, SoC's to port GRBL machine controller.
+
+DE10-Lite support for a low cost MAX10 FPGA solution with Arduino headers.
+
+Linux SoC support on the DE10-Nano to allow the Arduino IDE running on the
+ARM SoC's to program the FPGAArduino on the FPGA. Register and virtual serial
+port interfaces will be created. (May involve mixed Verilog from my existing shell
+projects).
+
+High Frequency/Shortwave version of the RDS core for ham radio digital modes. This
+would require external filters and amplifier to conform to specification, as well
+as a amateur radio (HAM) license to use.
+
 # f32c
 
 [f32c](/rtl/cpu/README.md) is a retargetable, scalar, pipelined, 32-bit processor core which

@@ -16,8 +16,11 @@ set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_location_assignment PIN_R8 -to clk_50m
-set_location_assignment PIN_M16 -to rs232_rxd
-set_location_assignment PIN_B16 -to rs232_txd
+
+# MenloParkInnovation: This is in conflict with glue.qsf
+#set_location_assignment PIN_M16 -to rs232_rxd
+#set_location_assignment PIN_B16 -to rs232_txd
+
 set_location_assignment PIN_L3 -to led[7]
 set_location_assignment PIN_B1 -to led[6]
 set_location_assignment PIN_F3 -to led[5]

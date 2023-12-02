@@ -41,7 +41,7 @@ set_global_assignment -name DEVICE EP4CE22F17C6
 set_global_assignment -name TOP_LEVEL_ENTITY glue
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 13.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "12:35:30  MAY 15, 2014"
-set_global_assignment -name LAST_QUARTUS_VERSION 14.1.0
+set_global_assignment -name LAST_QUARTUS_VERSION "17.1.0 Lite Edition"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
@@ -59,9 +59,17 @@ set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 
 set_location_assignment PIN_R8 -to clk_50m
 
-set_location_assignment PIN_A6 -to rs232_rxd
-set_location_assignment PIN_D5 -to rs232_txd
-
+#
+# MenloParkInnovation: Set this to original de0.board assignments
+# See de0.board for commented out lines.
+#
+#set_location_assignment PIN_A6 -to rs232_rxd
+#set_location_assignment PIN_D5 -to rs232_txd
+#
+# PIN_M16 is GPIO_2_IN[2]
+set_location_assignment PIN_M16 -to rs232_rxd
+# PIN_B16 is GPIO_2[1]
+set_location_assignment PIN_B16 -to rs232_txd
 
 set_location_assignment PIN_P2 -to dram_addr[0]
 set_location_assignment PIN_N5 -to dram_addr[1]
@@ -149,6 +157,7 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hdmi_clkn
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_50m
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_rxd
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_txd
+
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[0]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[3]
@@ -202,6 +211,11 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_cke
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_clk
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_we_n
 set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to dram_cs_n
+
+# MenloParkInnovation: This was missing from the file and causes build errors.
+set_global_assignment -name VHDL_FILE ../../../../soc/synth.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sigmadelta.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/spdif_tx.vhd
 
 set_global_assignment -name VHDL_FILE ../../../../generic/acram_emu.vhd
 set_global_assignment -name VHDL_FILE ../../../../soc/fb.vhd
@@ -291,4 +305,5 @@ set_global_assignment -name VHDL_FILE ../../../../cpu/debug.vhd
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
