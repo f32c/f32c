@@ -316,6 +316,7 @@ architecture Behavioral of f32c_core is
     signal R_cop0_EI, R_cop0_BD: std_logic;
     signal R_cop0_intr, R_cop0_intr_mask: std_logic_vector(7 downto 0);
     signal R_cop0_EX_code: std_logic_vector(4 downto 0);
+    signal R_cop0_timer_frit, R_cop0_timer_frut: boolean;
     signal R_cop0_timer_intr: std_logic;
     signal sr, cause: std_logic_vector(31 downto 0);
 
@@ -1096,6 +1097,11 @@ begin
 	    if C_exceptions then
 		R_cop0_intr(6 downto 2) <= intr(4 downto 0);
 		R_cop0_intr(7) <= intr(5) or R_cop0_timer_intr;
+		if C_cop0_count and C_cop0_compare
+		  and R_cop0_timer_frit /= R_cop0_timer_frut then
+		    R_cop0_timer_intr <= '1';
+		    R_cop0_timer_frut <= R_cop0_timer_frit;
+		end if;
 	    end if;
 
 	    if not C_full_shifter and EX_MEM_shift_blocked then
@@ -1277,7 +1283,7 @@ begin
 	if rising_edge(clk) and clk_enable = '1' then
 	    if C_exceptions and C_cop0_count and C_cop0_compare
 	      and R_cop0_count = R_cop0_compare then
-		R_cop0_timer_intr <= '1';
+		R_cop0_timer_frit <= not R_cop0_timer_frit;
 	    end if;
 	    if C_cop0_count then
 		R_cop0_count <= R_cop0_count + 1;
