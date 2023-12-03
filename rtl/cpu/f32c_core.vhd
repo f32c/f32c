@@ -39,8 +39,8 @@ entity f32c_core is
 	C_arch: integer;
 	C_big_endian: boolean;		-- MI32 only
 	C_mult_enable: boolean;		-- MI32 only
-	C_mult_iter: boolean := true;	-- MI32 only
-	C_mult_iter_skip_mux: boolean := true; -- MI32 only
+	C_mult_iter: boolean := false;	-- MI32 only
+	C_mult_iter_skip_mux: boolean := true; -- 1 cycle faster mult_iter
 	C_mul_acc: boolean := false;	-- MI32 only
 	C_mul_reg: boolean := false;	-- MI32 only
 	C_branch_likely: boolean;	-- MI32 only
