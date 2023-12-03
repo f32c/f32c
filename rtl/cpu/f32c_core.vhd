@@ -39,6 +39,8 @@ entity f32c_core is
 	C_arch: integer;
 	C_big_endian: boolean;		-- MI32 only
 	C_mult_enable: boolean;		-- MI32 only
+	C_mult_iter: boolean := true;	-- MI32 only
+	C_mult_iter_skip_mux: boolean := true; -- MI32 only
 	C_mul_acc: boolean := false;	-- MI32 only
 	C_mul_reg: boolean := false;	-- MI32 only
 	C_branch_likely: boolean;	-- MI32 only
@@ -305,6 +307,12 @@ architecture Behavioral of f32c_core is
     signal EX_mul_start, R_mul_commit, R_mul_done, mul_done: boolean;
     signal R_we_hi, R_we_lo, R_clr_hi, R_clr_lo: boolean;
     signal R_hi_lo, R_hi_lo_target: std_logic_vector(63 downto 0);
+    signal R_x: std_logic_vector(63 downto 0);
+    signal R_y, R_cmp: std_logic_vector(32 downto 0);
+    signal R_mul_res_s: signed(66 downto 0);
+    signal R_mul_hi_lo: std_logic_vector(63 downto 0);
+    signal R_mul_x: signed(32 downto 0);
+    signal R_mul_y: signed(33 downto 0);
     signal hi_lo_from_mul: std_logic_vector(63 downto 0);
 
     -- COP0 registers
@@ -344,21 +352,6 @@ begin
     -- IF_ID_, ID_EX_, EX_MEM_ or MEM_WB_ may be affected by the clk.
     -- Combinatiorial signals used locally in each stage must be prefixed by
     -- IF_, ID_, EX_, MEM_ or WB_.  XXX update / fix this convention!!!
-    --
-    -- Memory organization, regardless of endianess config:
-    -- imem_data_in / dmem_data_in / dmem_data_out (31 downto 0):
-    --             10987654321098765432109876543210
-    -- 0x00000000: |byte 3||byte 2||byte 1||byte 0|
-    -- 0x00000004: |byte 7||byte 6||byte 5||byte 4|
-    -- 0x00000008: |byte b||byte a||byte 9||byte 8|
-    -- ...
-    --
-    -- Little endian (C_big_endian = false; gcc -EL):
-    --   register: |byte A||byte B||byte C||byte D|
-    --   memory:   |byte A||byte B||byte C||byte D|
-    -- Big endian (C_big_endian = true; gcc -EB):
-    --   register: |byte A||byte B||byte C||byte D|
-    --   memory:   |byte D||byte C||byte B||byte A|
     --
 
     -- XXX TODO:
@@ -1583,21 +1576,96 @@ begin
       and ID_EX_mult and not MEM_cancel_EX and not EX_MEM_EIP
       and (not C_mul_acc or not ID_EX_madd or R_mul_done)
       and (ID_EX_alt_sel /= ALT_LO or ID_EX_mul_compound or ID_EX_madd);
-    multiplier: entity work.mul
-    port map (
-	clk => clk, clk_enable => clk_enable, start => EX_mul_start,
-	mult_signed => ID_EX_mult_signed, mthi => ID_EX_mthi,
-	x => EX_eff_reg1, y => EX_eff_reg2,
-	hi_lo => hi_lo_from_mul, done => mul_done
-    );
 
-    G_simple_mul:
+    -- Iterative multiplier
+    G_mul_iter:
+    if C_mult_enable and C_mult_iter generate
+    process(clk, clk_enable)
+    begin
+	if rising_edge(clk) and clk_enable = '1' then
+	    if EX_mul_start then
+		mul_done <= false;
+		R_mul_hi_lo <= (others => '0');
+		R_x(31 downto 0) <= EX_eff_reg1;
+		if ID_EX_mult_signed and EX_eff_reg1(31) = '1' then
+		    R_x(63 downto 32) <= (others => '1');
+		else
+		    R_x(63 downto 32) <= (others => '0');
+		end if;
+		if ID_EX_mult_signed and EX_eff_reg2(31) = '1' then
+		    R_y(31 downto 0) <= EX_eff_reg2 - 1;
+		    R_y(32) <= '1';
+		    R_cmp <= (others => '1');
+		else
+		    R_y(31 downto 0) <= EX_eff_reg2;
+		    if ID_EX_mthi then
+			R_y(32) <= '1';
+		    else
+			R_y(32) <= '0';
+		    end if;
+		    R_cmp <= (others => '0');
+		end if;
+	    elsif R_y /= R_cmp then
+		mul_done <= R_y(32 downto 1) = R_cmp(32 downto 1);
+		if R_y(0) /= R_cmp(0) then
+		    if R_cmp(0) = '0' then
+			R_mul_hi_lo <= R_mul_hi_lo + R_x;
+		    else
+			R_mul_hi_lo <= R_mul_hi_lo - R_x;
+		    end if;
+		end if;
+		if C_mult_iter_skip_mux and R_y(1) = R_cmp(1) then
+		    R_x <= R_x(61 downto 0) & "00";
+		    R_y <= R_cmp(1 downto 0) & R_y(32 downto 2);
+		else
+		    R_x <= R_x(62 downto 0) & '0';
+		    R_y <= R_cmp(0) & R_y(32 downto 1);
+		end if;
+	    else
+		mul_done <= true;
+	    end if;
+	end if;
+    end process;
+    hi_lo_from_mul <= R_mul_hi_lo;
+    end generate; -- G_mul_iter
+
+    -- DSP multiplier
+    G_mul_dsp:
+    if C_mult_enable and not C_mult_iter generate
+    process(clk, clk_enable)
+    begin
+	if rising_edge(clk) and clk_enable = '1' then
+	    if EX_mul_start then
+		R_mul_x(31 downto 0) <= CONV_SIGNED(UNSIGNED(EX_eff_reg1), 32);
+		R_mul_y(31 downto 0) <= CONV_SIGNED(UNSIGNED(EX_eff_reg2), 32);
+		if ID_EX_mult_signed then
+		    R_mul_x(32) <= EX_eff_reg1(31);
+		    R_mul_y(33 downto 32) <= (others => EX_eff_reg1(31));
+		else
+		    R_mul_x(32) <= '0';
+		    R_mul_y(33 downto 32) <= (others => '0');
+		end if;
+		if ID_EX_mthi then
+		    R_mul_y(32) <= '1';
+		end if;
+	    end if;
+	    R_mul_res_s <= R_mul_x * R_mul_y;
+	    mul_done <= not EX_mul_start;
+	end if;
+    end process;
+    hi_lo_from_mul(63 downto 32) <=
+      conv_std_logic_vector(R_mul_res_s(63 downto 32), 32);
+    hi_lo_from_mul(31 downto 0) <=
+      conv_std_logic_vector(R_mul_res_s(31 downto 0), 32);
+    end generate; -- G_mul_dsp
+
+    G_mul_simple:
     if C_mult_enable and not C_mul_acc and not C_exceptions generate
     R_hi_lo <= hi_lo_from_mul;
     R_mul_done <= mul_done;
-    end generate; -- G_simple_mul
+    end generate; -- G_mul_simple
 
-    G_staged_mul:
+    G_mul_staged:
     if C_mult_enable and (C_mul_acc or C_exceptions) generate
     process(clk, clk_enable)
     begin
@@ -1642,7 +1710,7 @@ begin
 	    end if;
 	end if;
     end process;
-    end generate; -- G_staged_mul
+    end generate; -- G_mul_staged
 
     -- R_cop0_config, read-only
     R_cop0_config(31) <= '0'; -- no config1 register
