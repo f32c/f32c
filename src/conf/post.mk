@@ -39,12 +39,12 @@ ifndef ENDIANFLAGS
 	ENDIANFLAGS = -EL
 endif
 
-TOOLPREFIX = ${ARCH}
+ARCH_DIR = ${ARCH}
+TOOLPREFIX = ${ARCH}-elf
 
 ifeq (${ARCH},riscv)
-	ARCH_DIR = ${ARCH}
-	TOOLPREFIX = ${ARCH}32
-else
+	TOOLPREFIX = ${ARCH}32-elf
+else ifeq (${ARCH},mips)
 	ifeq ($(findstring -EB, ${ENDIANFLAGS}),)
 		_ARCH_BASE = ${ARCH}el
 	else
@@ -63,6 +63,8 @@ else
 			ARCH_DIR = ${_ARCH_BASE}
 		endif
 	endif
+else
+  $(error Unsupported architecture ${ARCH})
 endif
 
 ifeq ($(findstring 0x8, ${LOADADDR}),)
@@ -89,7 +91,7 @@ ifeq (${ARCH},riscv)
 
 	MK_CFLAGS += -march=rv32i
 	MK_CFLAGS += -mabi=ilp32
-else
+else ifeq (${ARCH},mips)
 	# MIPS-specific flags
 
 	ifeq ($(findstring -march=,$(MK_CFLAGS)),)
@@ -110,6 +112,8 @@ else
 	#MK_CFLAGS += -mno-unaligned-load
 	#MK_CFLAGS += -mno-unaligned-store
 	#MK_CFLAGS += -mcondmove
+else
+  $(error Unsupported architecture ${ARCH})
 endif
 
 # Optimization options
@@ -133,7 +137,7 @@ endif
 
 # Warning flags
 ifeq ($(findstring ${WARNS}, "01234"),)
-	$(error Unsupportde WARNS level ${WARNS})
+  $(error Unsupported WARNS level ${WARNS})
 endif
 ifneq ($(findstring ${WARNS}, "1234"),)
 	MK_CFLAGS += -Wall
@@ -175,12 +179,12 @@ MK_LDFLAGS += ${LDFLAGS}
 # Library construction flags
 MK_ARFLAGS = r
 
-CC = ${TOOLPREFIX}-elf-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
-CXX = ${TOOLPREFIX}-elf-g++ ${MK_CFLAGS} ${MK_CXXFLAGS} ${MK_STDINC} ${MK_INCLUDES} -fno-rtti -fno-exceptions
-AS = ${TOOLPREFIX}-elf-gcc ${MK_CFLAGS} ${MK_ASFLAGS} ${MK_INCLUDES}
-LD = ${TOOLPREFIX}-elf-ld ${MK_LDFLAGS}
-AR = ${TOOLPREFIX}-elf-ar ${MK_ARFLAGS}
-OBJCOPY = ${TOOLPREFIX}-elf-objcopy
+CC = ${TOOLPREFIX}-gcc ${MK_CFLAGS} ${MK_STDINC} ${MK_INCLUDES}
+CXX = ${TOOLPREFIX}-g++ ${MK_CFLAGS} ${MK_CXXFLAGS} ${MK_STDINC} ${MK_INCLUDES} -fno-rtti -fno-exceptions
+AS = ${TOOLPREFIX}-gcc ${MK_CFLAGS} ${MK_ASFLAGS} ${MK_INCLUDES}
+LD = ${TOOLPREFIX}-ld ${MK_LDFLAGS}
+AR = ${TOOLPREFIX}-ar ${MK_ARFLAGS}
+OBJCOPY = ${TOOLPREFIX}-objcopy
 ifeq ($(shell uname -s), FreeBSD)
 	ISA_CHECK = ${BASE_DIR}tools/isa_check.tcl
 else
