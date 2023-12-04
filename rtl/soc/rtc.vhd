@@ -131,7 +131,7 @@ architecture x of rtc is
     constant C_ns_incr: natural := C_ns_incr_list(C_ns_incr_index);
     constant C_prescaler_incr: std_logic_vector(27 downto 0) :=
       conv_std_logic_vector(integer(1000000000.0 / real(C_ns_incr) /
-      real(C_eff_freq_hz) * real(2 ** 28)), 28);
+      real(C_eff_freq_hz) * 268435456.0), 28);
 
     signal R_uptime_s: std_logic_vector(31 downto 0);
     signal R_uptime_ns: std_logic_vector(29 downto 0);
