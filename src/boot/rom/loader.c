@@ -138,7 +138,7 @@ static void *
 sio_load_binary(void)
 {
 	uint32_t i, t;
-	uint32_t crc, base, len;
+	uint32_t crc = 0, base = 0, len = 0;
 	char *cp;
 
 	do {
@@ -183,7 +183,10 @@ sio_load_binary(void)
 			}
 			break;
 		case 0xb0:	/* Set baudrate, abuse base as speed */
+#if 0
+			// XXX breaks 2 KB footprint constraint
 			sio_setbaud(base);
+#endif
 			break;
 		case 0xb1:	/* Done, jump to base */
 			return ((void *) base);
