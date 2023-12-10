@@ -51,8 +51,8 @@
 #define	IO_TIMER		IO_ADDR(0x100)	/* 16-byte, WR */
 
 #define	IO_SIO_BYTE		IO_ADDR(0x300)	/* byte, RW */
-#define	IO_SIO_STATUS		IO_ADDR(0x301)	/* byte, RD */
-#define	IO_SIO_BAUD		IO_ADDR(0x302)	/* half, WR */
+#define	IO_SIO_STATUS		IO_ADDR(0x304)	/* byte, RW */
+#define	IO_SIO_BAUD		IO_ADDR(0x308)	/* half, RW */
 
 #define	IO_SPI_FLASH		IO_ADDR(0x340)	/* half, RW */
 #define	IO_SPI_SDCARD		IO_ADDR(0x350)	/* half, RW */
@@ -86,8 +86,8 @@
 
 
 /* SIO status bitmask */
-#define	SIO_TX_BUSY	0x4
-#define	SIO_RX_OVERRUN	0x2
+#define	SIO_RX_OVERRUN	0xf0
+#define	SIO_TX_BUSY	0x2
 #define	SIO_RX_FULL	0x1
 
 /* Pushbutton input bitmask */
