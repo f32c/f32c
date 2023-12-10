@@ -1,7 +1,10 @@
 #!/bin/sh
 
-# XXX Win32 -> use the MinGW-MSYS bundle
+# main targets
+TARGET_ARCH="mips riscv32"
 
+# optional extras
+#TARGET_ARCH=${TARGET_ARCH}" microblaze nios2 arm"
 
 GNU_MIRROR=ftp://ftp.gnu.org/gnu
 
@@ -15,9 +18,10 @@ F32C_SRC_DIR=~/github/f32c
 #F32C_TOOLCHAIN_DST_DIR=/usr/local
 F32C_TOOLCHAIN_DST_DIR=/tmp/f32c
 
-
 # XXX impossible to build statically linked binutils?
 # F32C_MAKEOPTIONS="LDFLAGS=-static"
+
+# XXX Win32 -> use the MinGW-MSYS bundle
 
 # Uncomment SUDO if you want the binaries directly installed into /usr/...
 #SUDO=su
@@ -93,14 +97,18 @@ fi
 
 ${SUDO} mkdir -p ${F32C_TOOLCHAIN_DST_DIR}
 
-for TARGET_ARCH in riscv32 mips
+for TARGET in $TARGET_ARCH
 do
+    TARGET_PREF=${TARGET}-elf
+    if [ "$TARGET" == "arm" ]; then
+	TARGET_PREF=${TARGET_PREF}-eabi
+    fi
     for SRC_DIR in ${BINUTILS_SRC_DIR} ${GCC_SRC_DIR}
     do
 	cd ${SRC_DIR}
 	${MAKE} distclean
 	find . -name config.cache -exec rm {} \;
-	./configure --target=${TARGET_ARCH}-elf --enable-languages=c,c++ \
+	./configure --target=${TARGET_PREF} --enable-languages=c,c++ \
 		--prefix=${F32C_TOOLCHAIN_DST_DIR} \
 		--mandir=${F32C_TOOLCHAIN_DST_DIR}/man \
 		--infodir=${F32C_TOOLCHAIN_DST_DIR}/info \
@@ -110,9 +118,9 @@ do
 	${SUDO} ${MAKE} ${F32C_MAKEOPTIONS} install
     done
 
-    ${SUDO} strip ${F32C_TOOLCHAIN_DST_DIR}/bin/${TARGET_ARCH}-elf-*
-    ${SUDO} find ${F32C_TOOLCHAIN_DST_DIR}/${TARGET_ARCH}-elf \
+    ${SUDO} strip ${F32C_TOOLCHAIN_DST_DIR}/bin/${TARGET_PREF}-*
+    ${SUDO} find ${F32C_TOOLCHAIN_DST_DIR}/${TARGET_PREF} \
 	-type f -exec strip {} \;
-    ${SUDO} find ${F32C_TOOLCHAIN_DST_DIR}/libexec/gcc/${TARGET_ARCH}-elf \
+    ${SUDO} find ${F32C_TOOLCHAIN_DST_DIR}/libexec/gcc/${TARGET_PREF} \
 	-type f -exec strip {} \;
 done
