@@ -199,7 +199,8 @@ architecture Behavioral of glue_sdram_min is
     type from_sio_type is array (0 to C_sio - 1) of
       std_logic_vector(31 downto 0);
     signal from_sio: from_sio_type;
-    signal sio_ce, sio_tx, sio_rx: std_logic_vector(C_sio - 1 downto 0);
+    signal sio_ce, sio_intr: std_logic_vector(C_sio - 1 downto 0);
+    signal sio_tx, sio_rx: std_logic_vector(C_sio - 1 downto 0);
 
     -- SPI (on-board Flash, SD card, others...): 0x340 .. 0x37F
     constant C_io_spi0: std_logic_vector(7 downto 0) := x"34";
@@ -234,11 +235,11 @@ begin
     --
     G_CPU: for i in 0 to (C_cpus - 1) generate
     begin
-    intr(i) <= "000" & '0' & from_sio(0)(8) & '0' when i = 0 else "000000";
+    intr(i) <= "000" & '0' & sio_intr(0) & '0' when i = 0 else "000000";
     res(i) <= R_cpu_reset(i);
     cpu: entity work.f32c_cache
     generic map (
-	C_arch => C_arch, C_cpuid => i, C_clk_freq => C_clk_freq,
+	C_arch => C_arch, C_cpuid => i,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
 	C_mult_enable => C_mult_enable, C_PC_mask => C_PC_mask,
@@ -510,14 +511,13 @@ begin
 	    C_init_baudrate => C_sio_init_baudrate,
 	    C_fixed_baudrate => C_sio_fixed_baudrate,
 	    C_break_detect => C_sio_break_detect,
-	    C_break_resets_baudrate => C_sio_break_detect,
-	    C_big_endian => C_big_endian
+	    C_break_resets_baudrate => C_sio_break_detect
 	)
 	port map (
-	    clk => clk, ce => sio_ce(i), txd => sio_tx(i), rxd => sio_rx(i),
-	    bus_write => io_write, byte_sel => io_byte_sel,
+	    clk => clk, txd => sio_tx(i), rxd => sio_rx(i), ce => sio_ce(i),
+	    bus_write => io_write, bus_addr => io_addr(3 downto 2),
 	    bus_in => cpu_to_io, bus_out => from_sio(i),
-	    break => sio_break(i)
+	    rx_ready => sio_intr(i), break => sio_break(i)
 	);
 	sio_ce(i) <= io_addr_strobe(R_cur_io_port) when sio_io_range and
 	  conv_integer(io_addr(5 downto 4)) = i else '0';
@@ -615,20 +615,18 @@ begin
     if C_debug generate
     debug_sio: entity work.sio
     generic map (
-	C_clk_freq => C_clk_freq,
-	C_big_endian => false
+	C_clk_freq => C_clk_freq
     )
     port map (
 	clk => clk, ce => '1', txd => deb_tx, rxd => sio_rxd(0),
-	bus_write => deb_sio_tx_strobe, byte_sel => "0001",
+	bus_write => deb_sio_tx_strobe, bus_addr => "00", -- XXX fixme!
 	bus_in(31 downto 8) => x"000000",
 	bus_in(7 downto 0) => debug_to_sio_data,
-	bus_out => debug_bus_out,
-	break => open
+	bus_out => debug_bus_out, break => open, rx_ready => open
     );
     deb_sio_tx_busy <= debug_bus_out(10);
-    deb_sio_rx_done <= debug_bus_out(8);
-    sio_to_debug_data <= debug_bus_out(7 downto 0);
+    deb_sio_rx_done <= debug_bus_out(8); -- XXX fixme!
+    sio_to_debug_data <= debug_bus_out(7 downto 0); -- XXX fixme!
     end generate;
 
     sio_txd(0) <= sio_tx(0) when not C_debug or debug_active = '0' else deb_tx;
