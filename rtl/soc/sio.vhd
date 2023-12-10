@@ -32,7 +32,6 @@ use ieee.math_real.all; -- to calculate log2 bit size
 entity sio is
     generic (
 	C_clk_freq: integer; -- MHz clock frequency
-	C_big_endian: boolean := false;
 	C_init_baudrate: integer := 115200;
 	C_fixed_baudrate: boolean := false;
 	C_break_detect: boolean := false;
@@ -45,30 +44,33 @@ entity sio is
     port (
 	ce, clk: in std_logic;
 	bus_write: in std_logic;
-	byte_sel: in std_logic_vector(3 downto 0);
+	bus_addr: in std_logic_vector(3 downto 2);
 	bus_in: in std_logic_vector(31 downto 0);
 	bus_out: out std_logic_vector(31 downto 0);
 	break: out std_logic;
+	rx_ready: out std_logic;
 	rxd: in std_logic;
 	txd: out std_logic
     );
 end sio;
 
 --
--- SIO -> CPU data word:
--- 31..11  unused
--- 15..12  RX overruns saturating counter
---     11  reserved
---     10  set if tx busy
---      9  reserved
---      8  set if rx_byte is unread, reset on read
---   7..0  rx_byte
+-- SIO register map:
 --
--- CPU -> SIO data word:
--- 31..16  clock divisor (or unused)
---  15..8  RX overruns reset (any value written clears RX overruns counter)
---   7..0  tx_byte
+-- 0x0:	RX/TX data
+--	7..0	RD: rx byte, reading clears status bit #0 when RX queue empty
+--	7..0	WR: tx byte, writing sets status bit #1
 --
+-- 0x4: status:
+--	7..4	RX overruns saturating counter (clears by writing any value)
+--	3..2	reserved
+--	1	TX busy, clears automatically when TX completes
+--      0	RX data available, clears automatically when RX queue empty
+--
+-- 0x8: baud:
+--	15..0	clock divisor for 1:16 baud generator
+--
+
 architecture Behavioral of sio is
     function F_baud_init(f: natural; b: natural) return std_logic_vector is
 	variable val: natural;
@@ -107,7 +109,7 @@ architecture Behavioral of sio is
     signal R_rx_des: std_logic_vector(7 downto 0);
     signal R_rx_phase: std_logic_vector(3 downto 0);
     signal R_rx_break_tickcnt: std_logic_vector(C_break_detect_bits-1 downto 0) := C_break_detect_start;
-    signal R_rx_full: std_logic;
+    signal R_rx_available: std_logic;
     signal R_rx_byte: std_logic_vector(7 downto 0);
     signal R_rx_overruns: std_logic_vector(3 downto 0);
 
@@ -126,12 +128,15 @@ begin
     --	"1010" stop bit
     --
 
-    tx_running <= '1' when R_tx_phase /= x"0" else '0';
-    bus_out(31 downto 16) <= (others => '-');
-    bus_out(15 downto 9) <= R_rx_overruns & '-' & tx_running & '-';
-    bus_out(8) <= R_rx_full when not C_tx_only else '0';
-    bus_out(7 downto 0) <= R_rx_byte when not C_tx_only else (others => '-');
     txd <= R_tx_ser(0);
+
+    tx_running <= '1' when R_tx_phase /= x"0" else '0';
+    bus_out(31 downto 0) <= (others => '-');
+    with bus_addr select bus_out(15 downto 0) <=
+      x"00" & R_rx_byte when "00",
+      x"00" & R_rx_overruns & "00" & tx_running & R_rx_available when "01",
+      R_baudrate when others;
+    rx_ready <= R_rx_available;
     break <= R_break;
 
     process(clk)
@@ -139,27 +144,21 @@ begin
 	if rising_edge(clk) then
 	    -- bus interface logic
 	    if ce = '1' then
-		if not C_fixed_baudrate and bus_write = '1' and
-		  byte_sel(2) = '1' then
-		    if C_big_endian then
-			R_baudrate <=
-			  bus_in(23 downto 16) & bus_in(31 downto 24);
-		    else
-			R_baudrate <= bus_in(31 downto 16);
-		    end if;
-		end if;
 		if bus_write = '1' then
-		    if byte_sel(0) = '1' then
+		    if bus_addr = "00" then
 			if R_tx_phase = x"0" then
 			    R_tx_phase <= x"1";
 			    R_tx_ser <= bus_in(7 downto 0) & '0';
 			end if;
 		    end if;
-		    if C_rx_overruns and byte_sel(1) = '1' then
+		    if C_rx_overruns and bus_addr = "01" then
 			R_rx_overruns <= (others => '0');
 		    end if;
+		    if not C_fixed_baudrate and bus_addr = "10" then
+			R_baudrate <= bus_in(15 downto 0);
+		    end if;
 		else -- bus_write = '0'
-		    if byte_sel(0) = '1' and R_rx_full = '1' then
+		    if bus_addr = "00" and R_rx_available = '1' then
 			R_rx_rd_i <= R_rx_rd_i + 1;
 		    end if;
 		end if;
@@ -214,9 +213,9 @@ begin
 	    end if;
 	    if not C_tx_only then
 		if R_rx_rd_i = R_rx_wr_i then
-		    R_rx_full <= '0';
+		    R_rx_available <= '0';
 		else
-		    R_rx_full <= '1';
+		    R_rx_available <= '1';
 		    R_rx_byte <= M_rx_fifo(conv_integer(R_rx_rd_i));
 		end if;
 	    end if;
