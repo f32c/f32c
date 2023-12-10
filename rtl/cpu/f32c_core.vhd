@@ -52,7 +52,6 @@ entity f32c_core is
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
 
 	-- COP0 options
-	C_clk_freq: integer;		-- XXX unused, to be removed
 	C_cache: boolean := false;
 	C_cpuid: integer := 0;
 	C_cop0_count: boolean := false;

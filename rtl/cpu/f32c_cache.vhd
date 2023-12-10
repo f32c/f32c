@@ -48,7 +48,6 @@ entity f32c_cache is
 	C_init_PC: std_logic_vector(31 downto 0) := x"00000000";
 
 	-- COP0 options
-	C_clk_freq: integer;
 	C_cpuid: integer := 0;
 	C_cop0_count: boolean := false;
 	C_cop0_compare: boolean := false;
@@ -326,7 +325,7 @@ begin
     core: entity work.f32c_core
     generic map (
 	C_arch => C_arch, C_cache => true, C_reg_IF_PC => true,
-	C_cpuid => C_cpuid, C_clk_freq => C_clk_freq, C_ll_sc => C_ll_sc,
+	C_cpuid => C_cpuid, C_ll_sc => C_ll_sc,
 	C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
 	C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
 	C_PC_mask => C_PC_mask, C_init_PC => C_init_PC,
