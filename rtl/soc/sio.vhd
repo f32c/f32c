@@ -71,25 +71,51 @@ end sio;
 --
 
 architecture Behavioral of sio is
-    function F_baud_init(f: natural; b: natural) return std_logic_vector is
-	variable val: natural;
+    type T_baud_list is array(0 to 16) of natural;
+    constant C_baud_list: T_baud_list := (
+	300,	600,	1200,	2400,	4800,	9600,	19200,	38400,
+	57600,	115200,	230400,	460800,	921600,	1000000, 1500000, 3000000,
+	0
+    );
+
+    function F_baud_index(constant b: natural) return natural is
+	variable idx: natural;
     begin
-    if b <= 200000 then
-	val := b * 2**10 / 1000 * 2**10 / f / 1000;
-    elsif b <= 2000000 then
-	val := b / 10 * 2**10 / 100 * 2**10 / f / 1000;
-    else -- OK up to 3000000 bauds at min. 50 MHz clock frequency
-	val := b / 100 * 2**10 / 100 * 2**10 / f / 100;
-    end if;
-    return conv_std_logic_vector(val, 16);
-    end function F_baud_init;
+    for i in 0 to 16 loop
+	idx := i;
+	exit when C_baud_list(i) = b;
+    end loop;
+    assert idx /= 16 report "unsupported baudrate: " & integer'image(b)
+      severity failure;
+    return idx;
+    end F_baud_index;
+
+    type T_baud_rom is array(0 to 15) of std_logic_vector(15 downto 0);
+    function F_baud_calc(constant f: natural) return T_baud_rom is
+	variable M_b_r: T_baud_rom;
+	variable b, val: natural;
+    begin
+    for i in 0 to 15 loop
+	b := C_baud_list(i);
+	if b <= 200000 then
+	    val := b * 2**10 / 1000 * 2**10 / f / 1000;
+	elsif b <= 2000000 then
+	    val := b / 10 * 2**10 / 100 * 2**10 / f / 1000;
+	else -- OK up to 3000000 bauds at min. 50 MHz clock frequency
+	    val := b / 100 * 2**10 / 100 * 2**10 / f / 100;
+	end if;
+	M_b_r(i) := conv_std_logic_vector(val, 16);
+    end loop;
+    return M_b_r;
+    end F_baud_calc;
+    signal M_baud_rom: T_baud_rom := F_baud_calc(C_clk_freq);
 
     constant C_break_tickcnt_max: natural :=
       1000000 / C_break_detect_delay_ms * C_clk_freq;
 
     -- baud * 16 impulse generator
-    signal R_baudrate: std_logic_vector(15 downto 0) :=
-      F_baud_init(C_clk_freq, C_init_baudrate);
+    signal R_baud_index: std_logic_vector(3 downto 0) :=
+      conv_std_logic_vector(F_baud_index(C_init_baudrate), 4);
     signal R_baudgen: std_logic_vector(16 downto 0);
 
     -- transmit logic
@@ -127,10 +153,10 @@ begin
 
     tx_running <= '1' when R_tx_phase /= x"0" else '0';
     bus_out(31 downto 0) <= (others => '-');
-    with bus_addr select bus_out(15 downto 0) <=
-      x"00" & R_rx_byte when "00",
-      x"00" & R_rx_overruns & "00" & tx_running & R_rx_available when "01",
-      R_baudrate when others;
+    with bus_addr select bus_out(7 downto 0) <=
+      R_rx_byte when "00",
+      R_rx_overruns & "00" & tx_running & R_rx_available when "01",
+      x"0" & R_baud_index when others;
     rx_ready <= R_rx_available;
     break <= R_break;
 
@@ -150,7 +176,7 @@ begin
 			R_rx_overruns <= (others => '0');
 		    end if;
 		    if not C_fixed_baudrate and bus_addr = "10" then
-			R_baudrate <= bus_in(15 downto 0);
+			R_baud_index <= bus_in(3 downto 0);
 		    end if;
 		else -- bus_write = '0'
 		    if bus_addr = "00" and R_rx_available = '1' then
@@ -160,7 +186,8 @@ begin
 	    end if;
 
 	    -- baud generator
-	    R_baudgen <= ('0' & R_baudgen(15 downto 0)) + ('0' & R_baudrate);
+	    R_baudgen <= ('0' & R_baudgen(15 downto 0))
+	      + ('0' & M_baud_rom(conv_integer(R_baud_index)));
 
 	    -- tx logic
 	    if R_tx_phase /= x"0" and R_baudgen(16) = '1' then
@@ -220,7 +247,8 @@ begin
 		if R_rx_break_tickcnt = 0 then
 		    R_break <= '1';
 		    if C_break_resets_baudrate then
-			R_baudrate <= F_baud_init(C_clk_freq, C_init_baudrate);
+			R_baud_index <= conv_std_logic_vector(
+			  F_baud_index(C_init_baudrate), 4);
 		    end if;
 		else
 		    R_rx_break_tickcnt <= R_rx_break_tickcnt - 1;
