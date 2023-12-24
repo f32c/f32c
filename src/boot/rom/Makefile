@@ -25,10 +25,7 @@ PROG = loader
 
 LIBSRC = ../../lib/src
 
-CFILES = loader.c ../sio/loader.c \
-	${LIBSRC}/stdtime/clock.c ${LIBSRC}/dev/spi.c \
-	${LIBSRC}/dev/sio_baud.c ${LIBSRC}/gen/mul.c \
-	${LIBSRC}/gen/div.c ${LIBSRC}/gen/div64.c
+CFILES = loader.c ../sio/loader.c ${LIBSRC}/dev/spi.c ${LIBSRC}/gen/mul.c
 
 ASFILES = start.S
 

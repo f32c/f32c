@@ -183,10 +183,12 @@ sio_load_binary(void)
 			}
 			break;
 		case 0xb0:	/* Set baudrate, abuse base as speed */
-#if 0
-			// XXX breaks 2 KB footprint constraint
-			sio_setbaud(base);
-#endif
+			if (base == 3000000)
+				OUTB(IO_SIO_BAUD, 15);
+			else if (base == 1000000)
+				OUTB(IO_SIO_BAUD, 13);
+			else
+				OUTB(IO_SIO_BAUD, 9); // 115200
 			break;
 		case 0xb1:	/* Done, jump to base */
 			return ((void *) base);
