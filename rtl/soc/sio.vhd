@@ -90,21 +90,13 @@ architecture Behavioral of sio is
     return idx;
     end F_baud_index;
 
-    type T_baud_rom is array(0 to 15) of std_logic_vector(15 downto 0);
+    type T_baud_rom is array(0 to 15) of std_logic_vector(19 downto 0);
     function F_baud_calc(constant f: natural) return T_baud_rom is
 	variable M_b_r: T_baud_rom;
-	variable b, val: natural;
     begin
     for i in 0 to 15 loop
-	b := C_baud_list(i);
-	if b <= 200000 then
-	    val := b * 2**10 / 1000 * 2**10 / f / 1000;
-	elsif b <= 2000000 then
-	    val := b / 10 * 2**10 / 100 * 2**10 / f / 1000;
-	else -- OK up to 3000000 bauds at min. 50 MHz clock frequency
-	    val := b / 100 * 2**10 / 100 * 2**10 / f / 100;
-	end if;
-	M_b_r(i) := conv_std_logic_vector(val, 16);
+	M_b_r(i) := conv_std_logic_vector(integer(16777216.0
+	  * real(C_baud_list(i)) / 1000000.0 / real(C_clk_freq)), 20);
     end loop;
     return M_b_r;
     end F_baud_calc;
@@ -116,7 +108,7 @@ architecture Behavioral of sio is
     -- baud * 16 impulse generator
     signal R_baud_index: std_logic_vector(3 downto 0) :=
       conv_std_logic_vector(F_baud_index(C_init_baudrate), 4);
-    signal R_baudgen: std_logic_vector(16 downto 0);
+    signal R_baudgen: std_logic_vector(20 downto 0);
 
     -- transmit logic
     signal R_tx_tickcnt: std_logic_vector(3 downto 0);
@@ -186,11 +178,11 @@ begin
 	    end if;
 
 	    -- baud generator
-	    R_baudgen <= ('0' & R_baudgen(15 downto 0))
+	    R_baudgen <= ('0' & R_baudgen(19 downto 0))
 	      + ('0' & M_baud_rom(conv_integer(R_baud_index)));
 
 	    -- tx logic
-	    if R_tx_phase /= x"0" and R_baudgen(16) = '1' then
+	    if R_tx_phase /= x"0" and R_baudgen(20) = '1' then
 		R_tx_tickcnt <= R_tx_tickcnt + 1;
 		if R_tx_tickcnt = x"f" then
 		    R_tx_ser <= '1' & R_tx_ser(8 downto 1);
@@ -203,7 +195,7 @@ begin
 
 	    -- rx logic
 	    R_rxd <= rxd;
-	    if R_baudgen(16) = '1' and not C_tx_only then
+	    if not C_tx_only and R_baudgen(20) = '1' then
 		if R_rx_phase = x"0" then
 		    if R_rxd = '0' then
 			-- start bit, delay further sampling for ~0.5 T
