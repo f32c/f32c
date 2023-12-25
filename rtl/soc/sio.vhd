@@ -144,7 +144,7 @@ begin
     txd <= R_tx_ser(0);
 
     tx_running <= '1' when R_tx_phase /= x"0" else '0';
-    bus_out(31 downto 0) <= (others => '-');
+    bus_out(31 downto 8) <= (others => '-');
     with bus_addr select bus_out(7 downto 0) <=
       R_rx_byte when "00",
       R_rx_overruns & "00" & tx_running & R_rx_available when "01",
