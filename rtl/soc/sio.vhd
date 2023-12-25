@@ -111,7 +111,7 @@ architecture Behavioral of sio is
     signal M_baud_rom: T_baud_rom := F_baud_calc(C_clk_freq);
 
     constant C_break_tickcnt_max: natural :=
-      1000000 / C_break_detect_delay_ms * C_clk_freq;
+      C_clk_freq * 1000 * C_break_detect_delay_ms;
 
     -- baud * 16 impulse generator
     signal R_baud_index: std_logic_vector(3 downto 0) :=
