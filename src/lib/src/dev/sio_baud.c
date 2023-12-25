@@ -23,30 +23,39 @@
  * SUCH DAMAGE.
  */
 
-#include <time.h>
-
 #include <dev/io.h>
 #include <dev/sio.h>
 
-#include <mips/asm.h>
-#include <mips/cpuregs.h>
 
+static uint16_t sio_bauds[16] = {
+	3,	6,	12,	24,	48,	96,	192,	384,
+	576,	1152,	2304,	4608,	9216,	10000,	15000,	30000
+};
 
 /*
- * Set RS-232 baudrate.  Works well with FT-232R from 300 to 3000000 bauds.
+ * Set RS-232 baudrate.
  */
-__attribute__((optimize("-Os"))) void
+int
 sio_setbaud(int bauds)
 {
-	uint32_t val, freq_khz;
+	int i;
 
-	freq_khz = (get_cpu_freq() + 499) / 1000;
+	for (i = 0, bauds /= 100; i < 16; i++)
+		if (sio_bauds[i] == bauds) {
+			OUTB(IO_SIO_BAUD, i);
+			return (0);
+		}
+	return (-1);
+}
 
-	val = bauds;
-	if (bauds > 1000000)
-		val /= 10;
-	val = val * 1024 / 1000 * 1024 / freq_khz + 1;
-	if (bauds > 1000000)
-		val *= 10;
-	OUTH(IO_SIO_BAUD, val);
+/*
+ * Get RS-232 baudrate.
+ */
+int
+sio_getbaud(void)
+{
+	int i;
+
+	INB(i, IO_SIO_BAUD);
+	return (sio_bauds[i] * 100);
 }
