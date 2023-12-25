@@ -82,9 +82,8 @@ bauds(void)
 
 	bauds = evalint();
 	check();
-	if (bauds < 300 || bauds > 3000000)
+	if (sio_setbaud(bauds))
 		error(33);	/* argument error */
-	sio_setbaud(bauds);
 	normret;
 }
 
