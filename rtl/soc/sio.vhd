@@ -238,7 +238,7 @@ begin
 	    if C_break_detect then
 		if R_rx_break_tickcnt = 0 then
 		    R_break <= '1';
-		    if C_break_resets_baudrate then
+		    if C_break_resets_baudrate and not C_fixed_baudrate then
 			R_baud_index <= conv_std_logic_vector(
 			  F_baud_index(C_init_baudrate), 4);
 		    end if;
