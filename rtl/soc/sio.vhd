@@ -67,7 +67,7 @@ end sio;
 --      0	RX data available, clears automatically when RX queue empty
 --
 -- 0x8: baud:
---	15..0	clock divisor for 1:16 baud generator
+--	3..0	index in baudrate table
 --
 
 architecture Behavioral of sio is
