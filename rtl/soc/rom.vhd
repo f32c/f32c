@@ -51,30 +51,29 @@ architecture x of rom is
     type T_rom is array(0 to (C_rom_size * 256 - 1))
       of std_logic_vector(31 downto 0);
 
-    function F_srec_file(constant fname: string; arch: natural;
-      big_endian: boolean; boot_spi: boolean) return string is
+    function F_srec_file return string is
     begin
-	if fname /= "" then
-	    return fname;
-	elsif arch = 0 then -- MIPS
-	    if big_endian then
-		if boot_spi then
+	if C_srec_file /= "" then
+	    return C_srec_file;
+	elsif C_arch = 0 then -- MIPS
+	    if C_big_endian then
+		if C_boot_spi then
 		    return "boot/mipseb_spi.srec";
 		else
 		    return "boot/mipseb_sio.srec";
 		end if;
 	    else
-		if boot_spi then
+		if C_boot_spi then
 		    return "boot/mipsel_spi.srec";
 		else
 		    return "boot/mipsel_sio.srec";
 		end if;
 	    end if;
-	elsif arch = 1 then -- RISCV
+	elsif C_arch = 1 then -- RISCV
 	    return "boot/riscv_sio.srec";
 	else
 	    assert FALSE report "Unsuported architecture #"
-	      & integer'image(arch) severity failure;
+	      & integer'image(C_arch) severity failure;
 	end if;
     end F_srec_file;
 
@@ -143,8 +142,7 @@ architecture x of rom is
 	return M_r;
     end F_rom_from_srec;
 
-    signal M_rom: T_rom := F_rom_from_srec(F_srec_file(C_srec_file, C_arch,
-      C_big_endian, C_boot_spi));
+    signal M_rom: T_rom := F_rom_from_srec(F_srec_file);
     signal R_ack: std_logic;
 
 begin
