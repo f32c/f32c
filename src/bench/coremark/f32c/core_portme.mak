@@ -73,8 +73,7 @@ MK_CFLAGS += ${MK_STDINC} ${MK_INCLUDES}
 MK_CFLAGS += -ffreestanding
 
 # Optimization options
-MK_CFLAGS += -Ofast -fselective-scheduling -funroll-all-loops
-MK_CFLAGS += -finline-functions -finline-limit=32
+MK_CFLAGS += -Ofast -funroll-all-loops
 
 # Linker flags
 #MK_LDFLAHS += ${ENDIANFLAGS}
