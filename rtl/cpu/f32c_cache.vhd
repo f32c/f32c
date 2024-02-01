@@ -260,15 +260,15 @@ begin
 	    M_sb(conv_integer(R_sb_head))(35 downto 32) <= cpu_d_byte_sel;
 	    M_sb(conv_integer(R_sb_head))(31 downto 0) <= cpu_d_data_out;
 	    R_sb_empty <= false;
-	    -- XXX fixme: R_sb_head <= R_sb_head + 1;
+	    R_sb_head <= R_sb_head + 1;
 	    sb_queued_new := sb_queued_new + 1;
-	    if sb_queued_new = 1 then
+	    if sb_queued_new = 15 then
 		R_sb_full <= true;
 	    end if;
 	end if;
 	if not R_sb_empty and dmem_data_ready = '1' then
 	    R_sb_full <= false;
-	    -- XXX fixme: R_sb_tail <= R_sb_tail + 1;
+	    R_sb_tail <= R_sb_tail + 1;
 	    sb_queued_new := sb_queued_new - 1;
 	    if sb_queued_new = 0 then
 		R_sb_empty <= true;
