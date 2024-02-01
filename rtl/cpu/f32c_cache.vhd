@@ -1,5 +1,5 @@
 --
--- Copyright (c) 2013 - 2023 Marko Zec
+-- Copyright (c) 2013 - 2024 Marko Zec
 --
 -- Redistribution and use in source and binary forms, with or without
 -- modification, are permitted provided that the following conditions
@@ -226,25 +226,12 @@ begin
     end if;
     end process;
 
-    d_wr_mux_iter: for b in 0 to 3 generate
-    begin
-    d_to_bram(b * 8 + 7 downto b * 8) <=
-      dmem_data_in(b * 8 + 7 downto b * 8) when d_miss_cycle
-      else cpu_d_data_out(b * 8 + 7 downto b * 8) when cpu_d_byte_sel(b) = '1'
-      else R_d_data_from_bram(b * 8 + 7 downto b * 8);
-    end generate;
-
-    d_to_bram(d_to_bram'high downto 32) <=
-      '0' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
-      when flush_d_line = '1'
-      else '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
-      when d_miss_cycle
-      else '1' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
-      when cpu_d_byte_sel = x"f" or (R_d_tag_from_bram =
-      '1' & R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits)
-      and cpu_d_addr = R_d_rd_addr)
-      else '0' & cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits);
-
+    d_to_bram(d_to_bram'high - 1 downto 0) <=
+      R_d_rd_addr(C_cached_addr_bits - 1 downto C_d_addr_bits) & dmem_data_in
+      when d_miss_cycle else
+      cpu_d_addr(C_cached_addr_bits - 1 downto C_d_addr_bits) & cpu_d_data_out;
+    d_to_bram(d_to_bram'high) <= '0' when flush_d_line = '1'
+      else '1' when d_miss_cycle or cpu_d_byte_sel = x"f" else '0';
     d_cacheable <= cpu_d_addr(31 downto 28) = C_xram_base;
     d_rd_addr <= R_d_rd_addr(d_rd_addr'range) when d_miss_cycle
       else cpu_d_addr(d_rd_addr'range);
