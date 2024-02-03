@@ -67,6 +67,7 @@ entity f32c_cache is
 	C_cached_addr_bits: integer := 25; -- 32 MB
 	C_xram_base: std_logic_vector(31 downto 28) := x"8";
 	C_cache_bursts: boolean := false;
+	C_store_buffer_slots: natural := 15;
 
 	-- debugging options
 	C_debug: boolean
@@ -260,15 +261,19 @@ begin
 	    M_sb(conv_integer(R_sb_head))(35 downto 32) <= cpu_d_byte_sel;
 	    M_sb(conv_integer(R_sb_head))(31 downto 0) <= cpu_d_data_out;
 	    R_sb_empty <= false;
-	    R_sb_head <= R_sb_head + 1;
+	    if C_store_buffer_slots > 1 then
+		R_sb_head <= R_sb_head + 1;
+	    end if;
 	    sb_queued_new := sb_queued_new + 1;
-	    if sb_queued_new = 15 then
+	    if sb_queued_new = C_store_buffer_slots then
 		R_sb_full <= true;
 	    end if;
 	end if;
 	if not R_sb_empty and dmem_data_ready = '1' then
 	    R_sb_full <= false;
-	    R_sb_tail <= R_sb_tail + 1;
+	    if C_store_buffer_slots > 1 then
+		R_sb_tail <= R_sb_tail + 1;
+	    end if;
 	    sb_queued_new := sb_queued_new - 1;
 	    if sb_queued_new = 0 then
 		R_sb_empty <= true;
