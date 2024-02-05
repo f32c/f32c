@@ -253,7 +253,8 @@ begin
     process(clk)
 	variable sb_queued_new: std_logic_vector(3 downto 0);
     begin
-    if rising_edge(clk) and (not C_debug or clk_enable = '1') then
+    if rising_edge(clk) and C_store_buffer_slots > 0
+      and (not C_debug or clk_enable = '1') then
 	sb_queued_new := R_sb_queued;
 	if not R_sb_full and cpu_d_strobe = '1' and cpu_d_write = '1' and
 	  not d_miss_cycle and (not R_sb_empty or dmem_data_ready = '0') then
@@ -306,8 +307,9 @@ begin
     cpu_d_data_in <= dmem_data_in when d_miss_cycle
       else d_from_bram(31 downto 0) when d_cacheable else dmem_data_in;
     cpu_d_ready <= '1' when d_cacheable and cpu_d_write = '0'
-      else '1' when not R_sb_full and cpu_d_write = '1'
-      else '0' when not R_sb_empty
+      else '1' when C_store_buffer_slots > 0
+        and not R_sb_full and cpu_d_write = '1'
+      else '0' when C_store_buffer_slots > 0 and not R_sb_empty
       else dmem_data_ready;
     cpu_d_wait <= '1' when d_miss_cycle else '0';
 
