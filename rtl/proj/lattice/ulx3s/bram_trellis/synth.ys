@@ -4,11 +4,7 @@ ghdl --ieee=synopsys -fexplicit -frelaxed-rules --work=work \
   ../../../../cpu/defs_f32c.vhd \
   ../../../../cpu/idecode_mi32.vhd \
   ../../../../cpu/idecode_rv32.vhd \
-  ../../../../cpu/alu.vhd \
   ../../../../cpu/debug.vhd \
-  ../../../../cpu/loadalign.vhd \
-  ../../../../cpu/shift.vhd \
-  ../../../../cpu/mul_iter.vhd \
   ../../../../cpu/f32c_core.vhd \
   ../../../../generic/bootloader/defs_bootblock.vhd \
   ../../../../generic/bootloader/boot_sio_rv32el.vhd \
@@ -23,6 +19,7 @@ ghdl --ieee=synopsys -fexplicit -frelaxed-rules --work=work \
   ../../../../soc/sio.vhd \
   ../../../../soc/gpio.vhd \
   ../../../../soc/spi.vhd \
+  ../../../../soc/rtc.vhd \
   ../../../../soc/timer.vhd \
   ../../../../generic/glue_bram.vhd \
   ../../../../lattice/ulx3s/clocks/ecp5pll_25_169_112_96_84.vhd \
