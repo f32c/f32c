@@ -629,7 +629,7 @@ begin
     -- f32c core
     cpu: entity work.f32c_cache
     generic map (
-      C_arch => C_arch, C_cpuid => 0, C_clk_freq => C_clk_freq,
+      C_arch => C_arch, C_cpuid => 0, -- C_clk_freq => C_clk_freq,
       C_regfile_synchronous_read => C_regfile_synchronous_read,
       C_big_endian => C_big_endian, C_branch_likely => C_branch_likely,
       C_sign_extend => C_sign_extend, C_movn_movz => C_movn_movz,
@@ -962,12 +962,13 @@ begin
           C_init_baudrate => C_sio_init_baudrate,
           C_fixed_baudrate => C_sio_fixed_baudrate,
           C_break_detect => C_sio_break_detect,
-          C_break_resets_baudrate => C_sio_break_detect,
-          C_big_endian => C_big_endian
+          C_break_resets_baudrate => C_sio_break_detect
+          -- C_big_endian => C_big_endian
 	)
         port map (
           clk => clk, ce => sio_ce(i), txd => sio_tx(i), rxd => sio_rx(i),
-          bus_write => dmem_write, byte_sel => dmem_byte_sel,
+          bus_write => dmem_write, -- byte_sel => dmem_byte_sel,
+          bus_addr => io_addr(3 downto 2),
           bus_in => cpu_to_dmem, bus_out => from_sio(i),
           break => sio_break_internal(i)
         );
@@ -2335,12 +2336,12 @@ begin
     if C_debug generate
     debug_sio: entity work.sio
     generic map (
-      C_clk_freq => C_clk_freq,
-      C_big_endian => false
+      C_clk_freq => C_clk_freq
+      -- C_big_endian => false
     )
     port map (
       clk => clk, ce => '1', txd => deb_tx, rxd => sio_rxd(0),
-      bus_write => deb_sio_tx_strobe, byte_sel => "0001",
+      bus_write => deb_sio_tx_strobe, -- byte_sel => "0001",
       bus_in(7 downto 0) => debug_to_sio_data,
       bus_in(31 downto 8) => x"000000",
       bus_out(7 downto 0) => sio_to_debug_data,

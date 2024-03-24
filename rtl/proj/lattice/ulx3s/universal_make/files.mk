@@ -25,19 +25,14 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../generic/bram.vhd \
   ../../../../generic/bram_true2p_1clk.vhd \
   ../../../../generic/bram_true2p_2clk.vhd \
-  ../../../../generic/bptrace.vhd \
-  ../../../../cpu/alu.vhd \
-  ../../../../cpu/debug.vhd \
+  ../../../../cpu/idecode_mi32.vhd \
+  ../../../../cpu/idecode_rv32.vhd \
   ../../../../cpu/defs_f32c.vhd \
   ../../../../cpu/defs_mi32.vhd \
   ../../../../cpu/defs_rv32.vhd \
-  ../../../../cpu/idecode_mi32.vhd \
-  ../../../../cpu/idecode_rv32.vhd \
-  ../../../../cpu/loadalign.vhd \
+  ../../../../cpu/debug.vhd \
   ../../../../cpu/f32c_cache.vhd \
   ../../../../cpu/f32c_core.vhd \
-  ../../../../cpu/shift.vhd \
-  ../../../../cpu/mul_iter.vhd \
   ../../../../soc/synth.vhd \
   ../../../../soc/sigmadelta.vhd \
   ../../../../soc/dacpwm.vhd \
@@ -45,6 +40,7 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../soc/i2s.vhd \
   ../../../../soc/pcm.vhd \
   ../../../../soc/sio.vhd \
+  ../../../../soc/rom.vhd \
   ../../../../soc/usb_serial/usbsio.vhd \
   ../../../../soc/usb_serial/usb_serial.vhd \
   ../../../../soc/usb_serial/usb_init.vhd \
