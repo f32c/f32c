@@ -95,6 +95,7 @@ entity ulx3s_xram_sdram_vector is
     C_vgahdmi: boolean := true;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
+    C_vgahdmi_fifo_burst_max_bits: integer := 0; -- values >= 1 enable the burst
     C_vgahdmi_cache_size: integer := 0; -- 0 default (disabled, cache flush not yet implemented)
     C_vgahdmi_cache_use_i: boolean := false;
     C_compositing2_write_while_reading: boolean := true; -- default true
@@ -482,6 +483,7 @@ begin
       C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
+      C_vgahdmi_fifo_burst_max_bits => C_vgahdmi_fifo_burst_max_bits,
     -- vga textmode + bitmap full feature graphics
     C_vgatext => C_vgatext,
         C_vgatext_label => C_vgatext_label,

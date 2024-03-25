@@ -63,6 +63,9 @@ VHDL_FILES = $(TOP_MODULE_FILE) \
   ../../../../soc/sram.vhd \
   ../../../../soc/sram_refresh.vhd \
   ../../../../soc/sram8.vhd \
+  ../../../../soc/sdram_mz.vhd \
+  ../../../../soc/sdram_pack.vhd \
+  ../../../../soc/sdram_mz_wrap.vhd \
   ../../../../soc/sdram.vhd \
   ../../../../soc/sdram32.vhd \
   ../../../../soc/acram.vhd \
