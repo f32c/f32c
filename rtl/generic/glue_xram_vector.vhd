@@ -388,15 +388,6 @@ architecture Behavioral of glue_xram is
       end if;
     end;
 
-    function cache_bursts(x_burst: integer) return boolean is
-    begin
-      if x_burst >= 1 then
-        return true;
-      else
-        return false;
-      end if;
-    end;
-
     -- Timer
     constant iomap_timer: T_iomap_range := (x"F900", x"F93F");
     signal timer_range: std_logic := '0';
@@ -653,7 +644,6 @@ begin
       C_xram_base => C_xram_base, -- hacky part of address decoding in the cache
       C_icache_size => C_icache_size, C_dcache_size => C_dcache_size,
       C_cached_addr_bits => C_cached_addr_bits, -- +1 ? e.g. 20 bits will cache 1MB
-      C_cache_bursts => cache_bursts(C_vgahdmi_fifo_burst_max_bits),
       -- debugging only
       C_debug => C_debug
     )
