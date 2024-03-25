@@ -59,26 +59,20 @@ entity sdram_mz_wrap is
 end sdram_mz_wrap;
 
 architecture Behavioral of sdram_mz_wrap is
-    -- Bus interface signals (resolved from bus_in record via R_cur_port)
-    signal addr_strobe: std_logic;		    -- from CPU bus
-    signal write: std_logic;			    -- from CPU bus
-    signal byte_sel: std_logic_vector(3 downto 0);  -- from CPU bus
-    signal addr: std_logic_vector(31 downto 0);     -- from CPU bus
-    signal data_in: std_logic_vector(31 downto 0);  -- from CPU bus
-    -- new bus standard
-    signal mpbus: sdram_port_array;
+    signal req: sdram_req_array;
+    signal resp: sdram_resp_array;
 begin
     -- for data output signals all ports are the same
     -- port 0 is used but any should work
-    data_out <= mpbus(0).data_out;
+    data_out <= resp(0).data_out;
     all_ports: for i in 0 to C_ports-1 generate
-      ready_out(i) <= mpbus(i).data_ready;
-      mpbus(i).addr_strobe <= bus_in(i).addr_strobe;
-      mpbus(i).addr <= "10" & bus_in(i).addr;
-      mpbus(i).burst_len <= bus_in(i).burst_len;
-      mpbus(i).write <= bus_in(i).write;
-      mpbus(i).data_in <= bus_in(i).data_in;
-      mpbus(i).byte_sel <= bus_in(i).byte_sel;
+      req(i).strobe <= bus_in(i).addr_strobe;
+      req(i).addr <= "10" & bus_in(i).addr;
+      req(i).burst_len <= bus_in(i).burst_len(2 downto 0);
+      req(i).write <= bus_in(i).write;
+      req(i).data_in <= bus_in(i).data_in;
+      req(i).byte_sel <= bus_in(i).byte_sel;
+      ready_out(i) <= resp(i).data_ready;
     end generate;
     
     sdram: entity work.sdram_controller -- sdram_mz.vhd
@@ -99,7 +93,7 @@ begin
     (
       clk => clk, reset => reset,
       -- internal connections
-      mpbus => mpbus,
+      req => req, resp => resp,
       snoop_cycle => snoop_cycle, snoop_addr => snoop_addr,
       -- external SDRAM interface
       sdram_addr => sdram_addr, sdram_data => sdram_data,
