@@ -836,8 +836,8 @@ begin
 
     G_sdram16:
     if C_sdram generate
-    sdram16: entity work.sdram_mz_wrap  -- burst capable sdram driver, but can't cross column boundary
-    -- sdram16: entity work.sdram
+    -- sdram16: entity work.sdram_mz_wrap  -- burst capable sdram driver, but can't cross column boundary
+    sdram16: entity work.sdram
     generic map (
       C_ports => C_xram_ports,
       --C_prio_port => 2, -- VGA priority port not yet implemented
