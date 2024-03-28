@@ -454,3 +454,8 @@ IOBUF  PORT "user_programn" PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;
 # on PCB v1.7 shutdown is not connected to FPGA
 LOCATE COMP "shutdown" SITE "G16"; # FPGA receives
 IOBUF  PORT "shutdown" PULLMODE=DOWN IO_TYPE=LVCMOS33 DRIVE=4;
+
+## Skip clock-domain crossing paths from futile PnR timing closure attempts
+# relevant to glue_xram projects with video output
+BLOCK PATH FROM CLKNET "clk" TO CLKNET "clk_pixel";
+BLOCK PATH FROM CLKNET "clk_pixel" TO CLKNET "clk";
