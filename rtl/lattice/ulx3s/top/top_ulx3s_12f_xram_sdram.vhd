@@ -79,13 +79,14 @@ entity ulx3s_xram_sdram_vector is
 
     C_vector: boolean := false; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
+    C_vector_burst_max_bits: integer := 0; -- 0 bits means burst disabled
     C_vector_bram_pass_thru: boolean := false; -- false: default, true: c2_vector_fast won't work
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
     C_vector_vaddr_bits: integer := 11;
     C_vector_vdata_bits: integer := 32;
     C_vector_float_addsub: boolean := true; -- false will not have float addsub (+,-)
     C_vector_float_multiply: boolean := true; -- false will not have float multiply (*)
-    C_vector_float_divide: boolean := true; -- false will not have float divide (/) will save much LUTs and DSPs
+    C_vector_float_divide: boolean := false; -- false will not have float divide (/) will save much LUTs and DSPs
 
     -- video parameters common for vgahdmi and vgatext
     C_dvid_ddr: boolean := true; -- generate HDMI with DDR
@@ -467,6 +468,7 @@ begin
 
     C_vector => C_vector,
     C_vector_axi => C_vector_axi,
+    C_vector_burst_max_bits => C_vector_burst_max_bits,
     C_vector_bram_pass_thru => C_vector_bram_pass_thru,
     C_vector_registers => C_vector_registers,
     C_vector_vaddr_bits => C_vector_vaddr_bits,
