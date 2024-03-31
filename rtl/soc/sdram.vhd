@@ -507,9 +507,8 @@ begin
 	    when s_read_1 =>
 		state           <= s_read_2;
 		iob_command     <= CMD_READ;
-		iob_address     <= save_col;
+		iob_address     <= save_col(12 downto prefresh_cmd+1) & '0' & save_col(prefresh_cmd-1 downto 0); -- A10=0 selects auto precharge
 		iob_bank        <= save_bank;
-		iob_address(prefresh_cmd) <= '0'; -- A10 actually matters - it selects auto precharge
 
 		-- Schedule reading the data values off the bus
 		data_ready_delay(data_ready_delay'high)   <= '1';
@@ -562,8 +561,7 @@ begin
 	    when s_write_1 =>
 		state              <= s_write_2;
 		iob_command        <= CMD_WRITE;
-		iob_address        <= save_col;
-		iob_address(prefresh_cmd)    <= '0'; -- A10 actually matters - it selects auto precharge
+		iob_address        <= save_col(12 downto prefresh_cmd+1) & '0' & save_col(prefresh_cmd-1 downto 0); -- A10=0 selects auto precharge
 		iob_bank           <= save_bank;
 		iob_dqm            <= NOT save_byte_enable(1 downto 0);
 		dqm_sr(1 downto 0) <= NOT save_byte_enable(3 downto 2);
@@ -615,7 +613,7 @@ begin
 		    state <= s_idle_in_3;
 		end if;
 		iob_command     <= CMD_PRECHARGE;
-		iob_address(prefresh_cmd) <= '1'; -- A10 actually matters - it selects all banks or just one
+		iob_address(prefresh_cmd) <= '1'; -- A10 selects all banks or just one
 
 	    -------------------------------------------------------------------
 	    -- We should never get here, but if we do then reset the memory
