@@ -541,7 +541,7 @@ end;
 --  vector_mmio[0] = address_of_vector1; // pointer to struct vector_header_s
 --  vector_mmio[4] = 0xA7FF0001; // select vector 1 range 0-2047
 --  vector_mmio[4] = 0xE3000011; // load vector 1 from RAM
---  wait_vector_mask(1<<1); // bit 16 waits for vector 1
+--  wait_vector_mask(1<<1); // bit 1 waits for vector 1
 --  vector_mmio[0] = address_of_vector2; // pointer to struct vector_header_s
 --  vector_mmio[4] = 0xA7FF0002; // select vector 2 range 0-2047
 --  vector_mmio[4] = 0xE3000022; // load vector 2 from RAM
