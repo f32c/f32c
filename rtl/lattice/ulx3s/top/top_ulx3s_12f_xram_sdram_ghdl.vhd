@@ -653,7 +653,7 @@ begin
       bootrom_emu: entity work.bootrom_emu
       generic map
       (
-        C_content => boot_rom_mi32el,
+        -- C_content => boot_rom_mi32el, -- FIXME
         C_data_bits => C_boot_rom_data_bits
       )
       port map
