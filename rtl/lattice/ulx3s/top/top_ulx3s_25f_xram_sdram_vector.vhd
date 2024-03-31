@@ -28,6 +28,7 @@ entity ulx3s_xram_sdram_vector is
     C_clk_freq: integer := 100;
 
     -- SoC configuration options
+    C_boot_rom: boolean := true; -- synthesize boot ROM instead of BRAM
     C_xboot_rom: boolean := false; -- false default, bootloader initializes XRAM with external DMA
     C_bram_size: integer := 2; -- 2 default, must be disabled with 0 when C_xboot_emu = true
     C_bram_const_init: boolean := true; -- true default, MAX10 cannot preload bootloader using VHDL constant intializer
@@ -78,6 +79,7 @@ entity ulx3s_xram_sdram_vector is
 
     C_vector: boolean := true; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
+    C_vector_burst_max_bits: integer := 0; -- 0 bits means burst disabled
     C_vector_bram_pass_thru: boolean := false; -- false: default, true: c2_vector_fast won't work
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
     C_vector_vaddr_bits: integer := 11;
@@ -94,6 +96,7 @@ entity ulx3s_xram_sdram_vector is
     C_vgahdmi: boolean := true;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8;
+    C_vgahdmi_fifo_burst_max_bits: integer := 0; -- values >= 1 enable the burst, use 0..3 until sdram_mz is fixed to allow more
     C_vgahdmi_cache_size: integer := 0; -- 0 default (disabled, cache flush not yet implemented)
     C_vgahdmi_cache_use_i: boolean := false;
     C_compositing2_write_while_reading: boolean := true; -- default true
@@ -252,8 +255,8 @@ architecture Behavioral of ulx3s_xram_sdram_vector is
   signal S_rom_valid: std_logic;
 
   -- dual ESP32/f32c programming mode
-  alias wifi_rxd2: std_logic is wifi_gpio16;
-  alias wifi_txd2: std_logic is wifi_gpio17;
+  -- alias wifi_rxd2: std_logic is wifi_gpio16;
+  -- alias wifi_txd2: std_logic is wifi_gpio17;
   signal S_rxd, S_txd: std_logic; -- mix USB and WiFi
   signal S_prog_in, S_prog_out: std_logic_vector(1 downto 0);
   signal R_esp32_mode: std_logic := '0';
@@ -390,8 +393,8 @@ begin
     S_rxd <= ftdi_txd and wifi_txd;
     ftdi_rxd <= S_txd;
     wifi_rxd <= S_txd;
-    wifi_gpio0 <= btn(0); -- pressing BTN0 will escape to ESP32 file select menu
     wifi_en <= S_wifi_en; -- wifi enable controlled from f32c
+    wifi_gpio0 <= btn(0); -- pressing BTN0 will escape to ESP32 file select menu
     sd_d(3) <= S_f32c_sd_csn;
     sd_clk <= S_f32c_sd_clk;
     S_f32c_sd_miso <= sd_d(0);
@@ -407,6 +410,7 @@ begin
   generic map (
     C_arch => C_arch,
     C_clk_freq => C_clk_freq,
+    C_boot_rom => C_boot_rom,
     C_bram_size => C_bram_size,
     C_bram_const_init => C_bram_const_init,
     C_boot_write_protect => C_boot_write_protect,
@@ -455,6 +459,7 @@ begin
 
     C_vector => C_vector,
     C_vector_axi => C_vector_axi,
+    C_vector_burst_max_bits => C_vector_burst_max_bits,
     C_vector_bram_pass_thru => C_vector_bram_pass_thru,
     C_vector_registers => C_vector_registers,
     C_vector_vaddr_bits => C_vector_vaddr_bits,
@@ -471,6 +476,7 @@ begin
       C_vgahdmi_mode => C_video_mode,
       C_vgahdmi_cache_size => C_vgahdmi_cache_size,
       C_vgahdmi_fifo_data_width => C_vgahdmi_fifo_data_width,
+      C_vgahdmi_fifo_burst_max_bits => C_vgahdmi_fifo_burst_max_bits,
     -- vga textmode + bitmap full feature graphics
     C_vgatext => C_vgatext,
         C_vgatext_label => C_vgatext_label,
@@ -616,7 +622,7 @@ begin
       bootrom_emu: entity work.bootrom_emu
       generic map
       (
-        C_content => boot_rom_mi32el,
+        -- C_content => boot_rom_mi32el, -- FIXME
         C_data_bits => C_boot_rom_data_bits
       )
       port map
