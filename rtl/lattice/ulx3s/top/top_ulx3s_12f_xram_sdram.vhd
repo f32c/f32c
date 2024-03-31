@@ -77,7 +77,7 @@ entity ulx3s_xram_sdram_vector is
     C_passthru_clk_Hz: real := 25.0E6; -- passthru state machine uses 25 MHz clock
     C_passthru_break: real := 10.0E-3; -- seconds (approximately) to detect serial break and enter f32c mode
 
-    C_vector: boolean := false; -- vector processor unit
+    C_vector: boolean := true; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
     C_vector_burst_max_bits: integer := 0; -- 0 bits means burst disabled
     C_vector_bram_pass_thru: boolean := false; -- false: default, true: c2_vector_fast won't work

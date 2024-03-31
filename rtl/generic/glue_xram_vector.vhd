@@ -836,8 +836,8 @@ begin
 
     G_sdram16:
     if C_sdram generate
-    -- sdram16: entity work.sdram_mz_wrap  -- burst capable sdram driver, but can't cross column boundary
-    sdram16: entity work.sdram
+    sdram16: entity work.sdram_mz_wrap  -- burst capable sdram driver, but can't cross column boundary
+    -- sdram16: entity work.sdram
     generic map (
       C_ports => C_xram_ports,
       --C_prio_port => 2, -- VGA priority port not yet implemented
@@ -1324,6 +1324,7 @@ begin
         entity work.f32c_vector_dma
         generic map
         (
+          C_burst_max_bits => C_vector_burst_max_bits, -- number of bits that describe max burst length
           C_vaddr_bits => C_vector_vaddr_bits, -- number of bits that represent max vector length e.g. 11 -> 2^11 -> 2048 elements
           C_vdata_bits => C_vector_vdata_bits  -- number of data bits
         )
@@ -1347,7 +1348,7 @@ begin
           -- f32c interface (external)
           addr_strobe => S_vector_ram_addr_strobe,
           addr_out => S_vector_ram_addr,
-          suggest_burst => S_vector_ram_burst_len(2 downto 0),
+          -- suggest_burst => S_vector_ram_burst_len(2 downto 0), -- FIXME
           data_ready => S_vector_ram_data_ready,
           data_write => S_vector_ram_we,
           data_in => S_vector_ram_rdata,
