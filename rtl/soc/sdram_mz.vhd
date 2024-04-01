@@ -275,16 +275,12 @@ begin
 	variable t, n: integer;
     begin
 	t := R_cur_port;
-	for i in 0 to (C_ports - 1) loop
-	    for j in 1 to C_ports loop
-		if R_cur_port = i then
-		    n := (i + j) mod C_ports;
-		    if req(n).strobe = '1' and n /= C_prio_port then
-			t := n;
-			exit;
-		    end if;
-		end if;
-	    end loop;
+	for i in 1 to C_ports loop
+	    n := (R_cur_port + i) mod C_ports;
+	    if req(n).strobe = '1' then
+		t := n;
+		exit;
+	    end if;
 	end loop;
 	next_port <= t;
     end process;
