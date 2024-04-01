@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 - 2015 Marko Zec, University of Zagreb
+ * Copyright (c) 2013 - 2024 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -238,6 +238,9 @@ uint8_t fb_mode = 3;
 #define COMPOSITING2
 
 #ifdef COMPOSITING2
+#define	_FB_WIDTH	640
+#define	_FB_HEIGHT	480
+
 /* NOTE from compositing_line.h START */
 struct compositing_line {
 	struct compositing_line *next;
@@ -247,10 +250,12 @@ struct compositing_line {
 };
 /* NOTE from compositing_line.h END */
 
-static struct compositing_line scanlines[288];
-static struct compositing_line blank_line = { NULL, 640, 0, NULL };
-static struct compositing_line *sp[480];
-#endif
+static struct compositing_line scanlines[_FB_HEIGHT];
+static struct compositing_line *sp[_FB_HEIGHT];
+#else /* !COMPOSITING2 */
+#define	_FB_WIDTH	512
+#define	_FB_HEIGHT	288
+#endif /* !COMPOSITING2 */
 
 void
 fb_set_mode(int mode)
@@ -269,7 +274,7 @@ fb_set_mode(int mode)
 	} else {
 		if (fb_mode != mode) {
 			free(fb[0]);
-			fb[0] = malloc((mode + 1) * 512 * 288);
+			fb[0] = malloc((mode + 1) * _FB_WIDTH * _FB_HEIGHT);
 		}
 		if (fb[0] == NULL)
 			mode = 3;
@@ -277,19 +282,15 @@ fb_set_mode(int mode)
 	fb_mode = mode;
 	fb_active = fb[0];
 	if (fb_mode <= 1) {
-		fb_rectangle(0, 0, 511, 287, 0);
+		fb_rectangle(0, 0, _FB_WIDTH - 1, _FB_HEIGHT - 1, 0);
 #ifdef COMPOSITING2
 		/* compisiting2 will be initialized as simple framebuffer */
 		/* Initialize compositing line descriptors */
-		for (i = 0; i < 96; i++) {
-			sp[i] = &blank_line;
-			sp[i + 288 + 96] = &blank_line;
-		}
-		for (i = 0; i < 288; i++) {
-			scanlines[i].x = 64;
-			scanlines[i].n = 511;
-			scanlines[i].bmp = &fb_active[512 * i];
-			sp[i + 96] = &scanlines[i];
+		for (i = 0; i < _FB_HEIGHT; i++) {
+			scanlines[i].x = 0;
+			scanlines[i].n = _FB_WIDTH - 1;
+			scanlines[i].bmp = &fb_active[_FB_WIDTH * i];
+			sp[i] = &scanlines[i];
 		}
 #endif
 	}
@@ -317,7 +318,7 @@ fb_set_drawable(int visual)
 	if (visual < 0 || visual > 1)
 		return;
 	if (fb[visual] == NULL)
-		fb[visual] = malloc((fb_mode + 1) * 512 * 288);
+		fb[visual] = malloc((fb_mode + 1) * _FB_WIDTH * _FB_HEIGHT);
 	if (fb[visual] == NULL)
 		return;
 	fb_drawable = visual;
@@ -464,16 +465,17 @@ __attribute__((optimize("-O3")))
 void
 fb_plot(int x, int y, int color)
 {
-	int off = (y << 9) + x;
+	int off = y * _FB_WIDTH + x;
 	uint8_t *dp = fb_active;
 
-	if (__predict_false(y < 0 || y > 287 || fb_mode > 1 || (x >> 9)))
+	if (__predict_false(y < 0 || y >= _FB_HEIGHT || fb_mode > 1 ||
+	    x < 0 || x >= _FB_WIDTH))
 		return;
 
-	if (__predict_true(fb_mode != 0))
-		*((uint16_t *) &dp[off << 1]) = color;
-	else
+	if (__predict_true(fb_mode = 0))
 		dp[off] = color;
+	else
+		*((uint16_t *) &dp[off << 1]) = color;
 }
 
 
@@ -481,8 +483,8 @@ static void
 plot_internal_8(int x, int y, int color, uint8_t *dp)
 {
 
-	if (!(y < 0 || y > 287 || (x >> 9)))
-		dp[(y << 9) + x] = color;
+	if (!(y < 0 || y >= _FB_HEIGHT|| x < 0 || x >= _FB_WIDTH))
+		dp[y * _FB_WIDTH + x] = color;
 }
 
 
@@ -490,7 +492,7 @@ static void
 plot_internal_16(int x, int y, int color, uint8_t *dp)
 {
 
-	if (!(y < 0 || y > 287 || (x >> 9)))
+	if (!(y < 0 || y >= _FB_HEIGHT || x < 0 || x >= _FB_WIDTH))
 		*((uint16_t *) &dp[(y << 10) + 2 * x]) = color;
 }
 
@@ -499,7 +501,7 @@ static void
 plot_internal_unbounded_8(int x, int y, int color, uint8_t *dp)
 {
 
-	dp[(y << 9) + x] = color;
+	dp[y * _FB_WIDTH + x] = color;
 }
 
 
@@ -533,21 +535,21 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 		x0 = 0;
 	if (__predict_false(y0 < 0))
 		y0 = 0;
-	if (__predict_false(x1 > 511))
-		x1 = 511;
-	if (__predict_false(y1 > 287))
-		y1 = 287;
+	if (__predict_false(x1 >= _FB_WIDTH))
+		x1 = _FB_WIDTH - 1;
+	if (__predict_false(y1 >= _FB_HEIGHT))
+		y1 = _FB_HEIGHT - 1;
 
-	if (__predict_true(fb_mode)) {
+	if (__predict_false(fb_mode)) {
 		uint16_t *fb16 = (void *) fb_active;
 		color = (color << 16) | (color & 0xffff);
 		for (; y0 <= y1; y0++) {
 			for (x = x0; x <= x1 && (x & 1); x++)
-				fb16[(y0 << 9) + x] = color;
+				fb16[y0 * _FB_WIDTH + x] = color;
 			for (; x < x1; x += 2)
-				*((int *) &fb16[(y0 << 9) + x]) = color;
+				*((int *) &fb16[y0 * _FB_WIDTH + x]) = color;
 			for (; x <= x1; x++)
-				fb16[(y0 << 9) + x] = color;
+				fb16[y0 * _FB_WIDTH + x] = color;
 		}
 	} else {
 		uint8_t *fb8 = (void *) fb_active;
@@ -555,11 +557,11 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 		color = (color << 16) | (color & 0xffff);
 		for (; y0 <= y1; y0++) {
 			for (x = x0; x <= x1 && (x & 3); x++)
-				fb8[(y0 << 9) + x] = color;
+				fb8[y0 * _FB_WIDTH + x] = color;
 			for (; x <= (x1 - 3); x += 4)
-				*((int *) &fb8[(y0 << 9) + x]) = color;
+				*((int *) &fb8[y0 * _FB_WIDTH + x]) = color;
 			for (; x <= x1; x++)
-				fb8[(y0 << 9) + x] = color;
+				fb8[y0 * _FB_WIDTH + x] = color;
 		}
 	}
 }
@@ -579,8 +581,8 @@ fb_line(int x0, int y0, int x1, int y1, int color)
 	int err = dx + dy;
 	int e2;
  
-	if ((x0 >> 9) || y0 < 0 || y0 > 287 ||
-	    (x1 >> 9) || y1 < 0 || y1 > 287) {
+	if (x0 < 0 || x0 >= _FB_WIDTH || y0 < 0 || y0 >= _FB_HEIGHT ||
+	    x1 < 0 || x1 >= _FB_WIDTH || y1 < 0 || y1 >= _FB_HEIGHT) {
 		if (fb_mode)
 			plotfn = plot_internal_16;
 		else
@@ -621,7 +623,8 @@ fb_circle(int x0, int y0, int r, int color)
 	int y = r;
 	plotfn_t *plotfn;
  
-	if (x0 - r < 0 || x0 + r > 511 || y0 - r < 0 || y0 + r > 287) {
+	if (x0 - r < 0 || x0 + r >= _FB_WIDTH
+	    || y0 - r < 0 || y0 + r >= _FB_HEIGHT) {
 		if (fb_mode)
 			plotfn = plot_internal_16;
 		else
@@ -699,7 +702,7 @@ fb_fill_8(int x, int y, int color)
 		int16_t x, y;
 	} *sb, *sp;
 
-	curcolor = fb8[(y << 9) + x];
+	curcolor = fb8[y * _FB_WIDTH + x];
 	if (curcolor == color)
 		return;
     
@@ -714,11 +717,12 @@ fb_fill_8(int x, int y, int color)
 		x = sp->x;
 		y = sp->y;
 		l = r = 0;
-		for (; y >= 0 && fb8[(y << 9) + x] == curcolor; y--) {}
-		for (y++; y < 288 && fb8[(y << 9) + x] == curcolor; y++) {
-			fb8[(y << 9) + x] = color;
+		for (; y >= 0 && fb8[y * _FB_WIDTH + x] == curcolor; y--) {}
+		for (y++; y < _FB_HEIGHT && fb8[y * _FB_WIDTH + x]
+		    == curcolor; y++) {
+			fb8[y * _FB_WIDTH + x] = color;
 			if (!l && x > 0 &&
-			    fb8[(y << 9) + x - 1] == curcolor) {
+			    fb8[y * _FB_WIDTH + x - 1] == curcolor) {
 				sp->x = x - 1;
 				sp->y = y;
 				sp++;
@@ -726,18 +730,18 @@ fb_fill_8(int x, int y, int color)
 					goto abort;
 				l = 1;
 			} else if (l && x > 0 &&
-			    fb8[(y << 9) + x - 1] != curcolor)
+			    fb8[y * _FB_WIDTH + x - 1] != curcolor)
 				l = 0;
-			if (!r && x < 511 &&
-			    fb8[(y << 9) + x + 1] == curcolor) {
+			if (!r && x < _FB_WIDTH - 1 &&
+			    fb8[y * _FB_WIDTH + x + 1] == curcolor) {
 				sp->x = x + 1;
 				sp->y = y;
 				sp++;
 				if (sp - sb == ssiz)
 					goto abort;
 				r = 1;
-			} else if (r && x < 511 &&
-			    fb8[(y << 9) + x + 1] != curcolor)
+			} else if (r && x < _FB_WIDTH - 1 &&
+			    fb8[y * _FB_WIDTH + x + 1] != curcolor)
 				r = 0;
 		}
 	}
@@ -755,7 +759,7 @@ fb_fill_16(int x, int y, int color)
 		int16_t x, y;
 	} *sb, *sp;
 
-	curcolor = fb16[(y << 9) + x];
+	curcolor = fb16[y * _FB_WIDTH + x];
 	if (curcolor == color)
 		return;
     
@@ -770,11 +774,12 @@ fb_fill_16(int x, int y, int color)
 		x = sp->x;
 		y = sp->y;
 		l = r = 0;
-		for (; y >= 0 && fb16[(y << 9) + x] == curcolor; y--) {}
-		for (y++; y < 288 && fb16[(y << 9) + x] == curcolor; y++) {
-			fb16[(y << 9) + x] = color;
+		for (; y >= 0 && fb16[y * _FB_WIDTH + x] == curcolor; y--) {}
+		for (y++; y < _FB_HEIGHT && fb16[y * _FB_WIDTH + x]
+		    == curcolor; y++) {
+			fb16[y * _FB_WIDTH + x] = color;
 			if (!l && x > 0 &&
-			    fb16[(y << 9) + x - 1] == curcolor) {
+			    fb16[y * _FB_WIDTH + x - 1] == curcolor) {
 				l = 1;
 				sp->x = x - 1;
 				sp->y = y;
@@ -782,18 +787,18 @@ fb_fill_16(int x, int y, int color)
 				if (sp - sb == ssiz)
 					goto abort;
 			} else if (l && x > 0 &&
-			    fb16[(y << 9) + x - 1] != curcolor)
+			    fb16[y * _FB_WIDTH + x - 1] != curcolor)
 				l = 0;
-			if (!r && x < 511 &&
-			    fb16[(y << 9) + x + 1] == curcolor) {
+			if (!r && x < _FB_WIDTH - 1 &&
+			    fb16[y * _FB_WIDTH + x + 1] == curcolor) {
 				r = 1;
 				sp->x = x + 1;
 				sp->y = y;
 				sp++;
 				if (sp - sb == ssiz)
 					goto abort;
-			} else if (r && x < 511 &&
-			    fb16[(y << 9) + x + 1] != curcolor)
+			} else if (r && x < _FB_WIDTH - 1 &&
+			    fb16[y * _FB_WIDTH + x + 1] != curcolor)
 				r = 0;
 		}
 	}
@@ -809,7 +814,8 @@ fb_fill(int x, int y, int color)
 	if (__predict_false(fb_mode > 1))
 		return;
 
-	if (__predict_false(x < 0 || y < 0 || x > 511 || y > 287))
+	if (__predict_false(x < 0 || y < 0 || x >= _FB_WIDTH
+	    || y >= _FB_HEIGHT))
 		return;
 
 	if (fb_mode)
@@ -850,7 +856,7 @@ next_char:
 			bp++;
 			ys = 0;
 		}
-		if (__predict_false(y < 0 || y > 287))
+		if (__predict_false(y < 0 || y >= _FB_HEIGHT))
 			continue;
 		c = *bp;
 		for (x = x0, xs = 0; x < x0 + 6 * scale_x; x++, xs++) {
@@ -858,16 +864,16 @@ next_char:
 				c = c << 1;
 				xs = 0;
 			}
-			if (__predict_false(x < 0 || x > 511))
+			if (__predict_false(x < 0 || x >= _FB_WIDTH))
 				continue;
-			off = (y << 9) + x;
+			off = y * _FB_WIDTH + x;
 			if (__predict_false(c & 0x80))
 				dot = fgcolor;
 			else if (bgcolor < 0)
 				continue;
 			else
 				dot = bgcolor;
-			if (__predict_true(fb_mode != 0))
+			if (__predict_false(fb_mode != 0))
 				*((uint16_t *) &fb_active[off << 1]) = dot;
 			else
 				fb_active[off] = dot;
