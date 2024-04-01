@@ -1,9 +1,4 @@
-/*
- * Print a message on serial console, and blink LEDs until a button
- * is pressed on the ULX2S FPGA board.
- *
- * $Id$
- */
+// many sprites moving accross the screen
 
 extern "C" {
 #include <stdio.h>
@@ -34,27 +29,22 @@ void setup()
   c2.alloc_sprites(SPRITE_MAX);
   Sprite_speed = (struct sprite_speed *) malloc(SPRITE_MAX * sizeof(struct sprite_speed));
 
-  #if 1
-    for(i = 0; i < c2.sprite_max && i < N_SHAPES; i++)
-      c2.shape_to_sprite(&Shape[i]);
-    for(i = c2.n_sprites; i < c2.sprite_max; i++)
-      c2.sprite_clone(i%N_SHAPES);
-    for(i = 0; i < c2.n_sprites; i++)
-    {
-      //shape_to_sprite(1 + (i % 3),i);
-      c2.Sprite[i]->x = 20 + (rand() % 600);
-      c2.Sprite[i]->y = 20 + (rand() % 400);
-      Sprite_speed[i].x = (rand() % 3)-1;
-      Sprite_speed[i].y = (rand() % 3)-1;
-    }
-  #endif
-
-  if(1)
+  for(i = 0; i < c2.sprite_max && i < N_SHAPES; i++)
+    c2.shape_to_sprite(&Shape[i]);
+  for(i = c2.n_sprites; i < c2.sprite_max; i++)
+    c2.sprite_clone(i%N_SHAPES);
+  for(i = 0; i < c2.n_sprites; i++)
   {
+    c2.Sprite[i]->x = 20 + (rand() % 600);
+    c2.Sprite[i]->y = 20 + (rand() % 400);
+    Sprite_speed[i].x = (rand() % 3)-1;
+    Sprite_speed[i].y = (rand() % 3)-1;
+  }
+
   // enable video fetching after all the
   // pointers have been correctly sat.
-    c2.sprite_refresh();
-  }
+  c2.sprite_refresh();
+
   // prevents random RAM content from
   // causing extensive fetching, and slowing
   // down CPU
@@ -98,14 +88,12 @@ void loop()
   while((*c2.vblank_reg & 0x80) == 0);
   c2.sprite_refresh();
   while((*c2.vblank_reg & 0x80) != 0);
-  //delay(15);
 }
 
 void
 main(void)
 {
-        setup();
-again:;
-	loop();
-	goto again;
+  setup();
+  while(1)
+    loop();
 }
