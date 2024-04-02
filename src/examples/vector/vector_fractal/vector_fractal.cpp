@@ -126,8 +126,6 @@ void fractal()
   Vtmp.range(0, SCREEN_WIDTH-1);
   Vtmp1.range(0, SCREEN_WIDTH-1);
 
-  // run time
-  //int tstart = millis();
   // now real application initialization
   Vac = Mac;
   Vbc = Mbc; // use Vtmp to temporary hold Mbc
@@ -176,12 +174,6 @@ void fractal()
     Vaz = Mbc_inc;
     Vbc = Vbc1 + Vaz; // in-place compound expression must use different alias on left and right hand side
   } // for y
-  #if 0
-  int tstop = millis();
-  Serial.print("time: ");
-  Serial.print(tstop-tstart);
-  Serial.println(" ms");
-  #endif
 }
 
 void main(void)
