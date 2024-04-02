@@ -184,14 +184,8 @@ void fractal()
   #endif
 }
 
-void setup(void)
+void main(void)
 {
   alloc_bitmap();
   fractal();
-}
-
-void main(void)
-{
-  setup();
-  while(1);
 }
