@@ -11,7 +11,7 @@ extern "C" {
 #include "Compositing/shape.h"
 #include "shapes.h"
 
-#define SPRITE_MAX 160
+#define SPRITE_MAX 128
 #define N_SHAPES ((int)(sizeof(Shape)/sizeof(Shape[0])))
 
 Compositing c2;
