@@ -17,25 +17,14 @@ extern "C"
 #include <stdlib.h>
 }
 
-#define ADAFRUIT_GFX 0
-#define COMPOSITING2 1
-
-#if ADAFRUIT_GFX
-#include <Adafruit_GFX.h>
-#include <Adafruit_F32C_VGA.h>
-Adafruit_F32C_VGA display(1);
-#endif
-
-#if COMPOSITING2
-  #include "Compositing/Compositing.h"
-  #define SPRITE_MAX 10
-  Compositing c2;
-  //                            RRGGBB
-  #define C2_WHITE  RGB2PIXEL(0xFFFFFF)
-  #define C2_GREEN  RGB2PIXEL(0x00FF00)
-  #define C2_ORANGE RGB2PIXEL(0xFF7F00)
-  #define C2_BLUE   RGB2PIXEL(0x4080FF)
-#endif
+#include "Compositing/Compositing.h"
+#define SPRITE_MAX 10
+Compositing c2;
+//                            RRGGBB
+#define C2_WHITE  RGB2PIXEL(0xFFFFFF)
+#define C2_GREEN  RGB2PIXEL(0x00FF00)
+#define C2_ORANGE RGB2PIXEL(0xFF7F00)
+#define C2_BLUE   RGB2PIXEL(0x4080FF)
 
 //Define Pins
 #define BEEPER     33
@@ -64,10 +53,6 @@ Adafruit_F32C_VGA display(1);
 
 #define X_BOUNCE_DISTANCE (SCREEN_WIDTH-2*PADDLE_PADDING-2*PADDLE_WIDTH-1*BALL_SIZE)
 #define Y_BOUNCE_DISTANCE (SCREEN_HEIGHT-1*BALL_SIZE)
-
-#if 0
-#define abs(x) (x >= 0 ? x : -x)
-#endif
 
 //Define Variables
 
@@ -181,19 +166,6 @@ int expectB()
 //Setup 
 void setup() 
 {
-  #if ADAFRUIT_GFX
-  display.begin(); // inicijalizacija za SPI
-  display.clearDisplay();   // clears the screen and buffer
-  display.display();   
-  display.setTextWrap(false);
-  splash();
-  delay(2000);
-  display.setTextColor(WHITE);
-  display.setTextSize(FONT_SIZE);
-  display.clearDisplay(); 
-  #endif
-
-  #if COMPOSITING2
   c2.init();
   c2.alloc_sprites(SPRITE_MAX);
   
@@ -225,7 +197,6 @@ void setup()
   *c2.cntrl_reg = 0b11000000; // enable video, yes bitmap, no text mode, no cursor
   
   expectBY = expectB();
-  #endif
 }
 
 #if 1
@@ -238,32 +209,6 @@ long map(long x, long in_min, long in_max, long out_min, long out_max)
 //Splash Screen
 void splash()
 {
-  #if ADAFRUIT_GFX
-  display.clearDisplay(); 
-
-  display.setTextColor(WHITE);
-  centerPrint("PONG",0,10);
-  centerPrint("By Allan Alcorn",24*5,4);
-  centerPrint("Ported by",33*5,4);
-  centerPrint("MichaelTeeuw.nl",42*5,4);
-
-  display.fillRect(0,SCREEN_HEIGHT-20,SCREEN_WIDTH,20,WHITE);
-  display.setTextColor(BLACK);
-  centerPrint("Move paddle to start!",SCREEN_HEIGHT-18,2);
-
-  display.display();
-
-#if HAVE_ANALOG
-  int controlA = analogRead(CONTROL_A);
-  int controlB = analogRead(CONTROL_B);
-  while (abs(controlA - analogRead(CONTROL_A) + controlB - analogRead(CONTROL_B)) < 10) {
-    // show as long as the total absolute change of 
-    // both potmeters is smaler than 5
-  }
-#endif
-
-  soundStart();
-  #endif
 }
 
 
@@ -342,48 +287,6 @@ void calculateMovement()
 
 void draw()
 {
-  #if ADAFRUIT_GFX
-  display.clearDisplay(); 
-
-  //draw paddle A
-  display.fillRect(PADDLE_PADDING,paddleLocationA,PADDLE_WIDTH,PADDLE_HEIGHT,WHITE);
-
-  //draw paddle B
-  display.fillRect(SCREEN_WIDTH-PADDLE_WIDTH-PADDLE_PADDING,paddleLocationB,PADDLE_WIDTH,PADDLE_HEIGHT,WHITE);
-
-  //draw center line
-  for (int i=0; i<SCREEN_HEIGHT; i+=26) {
-    display.drawFastVLine(SCREEN_WIDTH/2, i, 10, WHITE);
-  }
-  
-  // draw horizontal top line
-  display.drawFastHLine(0, 0, SCREEN_WIDTH-1, WHITE);
-
-  // draw horizontal bottom line
-  display.drawFastHLine(0, SCREEN_HEIGHT-1, SCREEN_WIDTH-1, WHITE);
-
-  //draw ball
-  display.fillRect(ballX,ballY,BALL_SIZE,BALL_SIZE,WHITE);
-
-  //print scores
-
-  //backwards indent score A. This is dirty, but it works ... ;)
-  int scoreAWidth = 5 * FONT_SIZE;
-  if (scoreA > 9) scoreAWidth += 6 * FONT_SIZE;
-  if (scoreA > 99) scoreAWidth += 6 * FONT_SIZE;
-  if (scoreA > 999) scoreAWidth += 6 * FONT_SIZE;
-  if (scoreA > 9999) scoreAWidth += 6 * FONT_SIZE;
-
-  display.setCursor(SCREEN_WIDTH/2 - SCORE_PADDING - scoreAWidth,8);
-  display.print(scoreA);
-
-  display.setCursor(SCREEN_WIDTH/2 + SCORE_PADDING+1,8); //+1 because of dotted line.
-  display.print(scoreB);
-  
-  display.display();
-  #endif
-
-  #if COMPOSITING2
   c2.Sprite[0]->x = ballX;
   c2.Sprite[0]->y = ballY;
   c2.Sprite[1]->x = PADDLE_PADDING;
@@ -394,29 +297,13 @@ void draw()
   while((*c2.vblank_reg & 0x80) == 0);
   c2.sprite_refresh();
   while((*c2.vblank_reg & 0x80) != 0);
-  #endif
 } 
-
-
-
-
-void centerPrint(char *text, int y, int size)
-{
-  #if ADAFRUIT_GFX
-  display.setTextSize(size);
-  display.setCursor(SCREEN_WIDTH/2 - ((strlen(text))*6*size)/2,y);
-  display.print(text);
-  #endif
-}
 
 //Loop
 void loop()
 {
   calculateMovement();
   draw();
-  #if ADAFRUIT_GFX
-  delay(5);
-  #endif
 }
 
 void main(void)
