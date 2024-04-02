@@ -1,9 +1,3 @@
-extern "C" {
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <dev/io.h>
-}
 #include "Compositing/Compositing.h"
 #include "font.h"
 

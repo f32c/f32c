@@ -1,10 +1,7 @@
 // many sprites moving accross the screen
 
 extern "C" {
-#include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include <dev/io.h>
 }
 
 #include "Compositing/Compositing.h"
