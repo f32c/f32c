@@ -1,61 +1,97 @@
 /*
  * Exercise various graphics manipulation functions.  Apparently also
- * a good test for S(D)RAM consistency / reliability.
+ * a good speed test for combined read / write SDRAM throughput.
+ *
+ * Scores reported on the serial console are relative to the ULX3S board
+ * with xram design @ 100 MHz, * using the standard sdram controller, with
+ * the vidtest binary built using gcc-13.2.
+ *
+ * Allow circa 15 iterations (circa 1 minute) for the scores to start
+ * converging.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+#include <dev/io.h>
 #include <dev/fb.h>
 
+typedef void test_fn_t(int, int, int, int, int);
+
+static void
+circle_test(int x0, int y0, int x1, int y1, int ink)
+{
+
+	fb_filledcircle(x0, y0, x1 & 0x7f, ink);
+}
+
+static void
+text_test(int x0, int y0, int x1, int y1, int ink)
+{
+
+	fb_text(x0, y0, "Hello, f32c world!", ink, ink >> 16,
+	    ((x0 & 3) << 16) + (y0 & 3));
+}
+
+struct fb_test {
+	test_fn_t *fn;
+	char *desc;
+	uint32_t weight;
+	uint64_t time;
+} fb_test[] = {
+	{ .fn = fb_line, .desc = "lines", .weight = 12180 },
+	{ .fn = fb_rectangle, .desc = "rects", .weight = 1303 },
+	{ .fn = circle_test, .desc = "circles", .weight = 2188 },
+	{ .fn = text_test, .desc = "text", .weight = 1633 },
+	{ /* terminate list */ }
+};
 
 void
 main(void)
 {
-	int i, rep, tmp, lim, mode = 0;
+	int ti = 0, iter = 1;
+	int i, rnd;
 	struct timespec start, end;
 	uint32_t x0, y0, x1, y1;
-	uint64_t tdelta;
+	uint64_t ips, score, overall = 0;
 
-again:
-	fb_set_mode(mode);
+	fb_set_mode(0);
 
-	/* Lines */
-	for (rep = 0; rep < 15; rep++) {
+	do {
+		OUTB(IO_LED, (iter << 2) + ti);
+		if (ti == 0)
+			printf("iter #%d: ", iter);
 		clock_gettime(CLOCK_MONOTONIC, &start);
-		if (rep < 5)
-			lim = 10000;
-		else
-			lim = 1000;
-		for (i = 0; i < lim; i++) {
-			tmp = random();
-			x0 = tmp & 0x1ff;
-			y0 = (tmp >> 8) & 0xff;
-			x1 = (tmp >> 16) & 0x1ff;
-			y1= (tmp >> 24) & 0xff;
-			if (rep < 5)
-				fb_line(x0, y0, x1, y1, i ^ tmp);
-			else if (rep < 10)
-				fb_rectangle(x0, y0, x1, y1, i ^ tmp);
-			else
-				fb_filledcircle(x0, y0, x1 & 0x7f, i ^ tmp);
+		for (i = 0; i < fb_test[ti].weight; i++) {
+			RDTSC(rnd);
+			rnd += random();
+			x0 = rnd % 640;
+			y0 = (rnd >> 10) % 480;
+			rnd += start.tv_nsec;
+			x1 = (rnd >> 8) % 640;
+			y1 = (rnd >> 18) % 480;
+			fb_test[ti].fn(x0, y0, x1, y1, rnd);
 		}
 		clock_gettime(CLOCK_MONOTONIC, &end);
-		tdelta = end.tv_nsec - start.tv_nsec
-		    + (end.tv_sec - start.tv_sec) * 1000000000;
-		tmp = i * 1000 / (tdelta / 1000000);
-		printf(" mode %d: %u ", mode, tmp);
-		if (rep < 5)
-			printf("lines / s\n");
-		else if (rep < 10)
-			printf("rectangles / s\n");
-		else
-			printf("circles / s\n");
+		fb_test[ti].time += end.tv_nsec - start.tv_nsec
+		    + (end.tv_sec - start.tv_sec) * 1000000000ULL;
+		ips = i * 1000000000ULL * iter / fb_test[ti].time;
+		score = ips * 1000 / fb_test[ti].weight;
+		overall += score;
+		score += 5;
+		printf("%s: %llu.%02llu ", fb_test[ti].desc, score / 1000,
+		    (score / 10) % 100);
 
-		if (sio_getchar(0) == 3)
-			exit(0); /* CTRL+C */
-	}
-
-	mode ^= 1;
-	goto again;
+		ti++;
+		if (fb_test[ti].fn == NULL) {
+			overall /= ti;
+			overall += 5;
+			printf("overall: %llu.%02llu\n", overall / 1000,
+			    (overall / 10) % 100);
+			ti = 0;
+			overall = 0;
+			iter++;
+		}
+	} while (sio_getchar(0) != 3); /* CTRL+C */
 }
