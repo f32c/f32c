@@ -8,7 +8,6 @@ extern "C" {
 }
 
 #include "Compositing/Compositing.h"
-#include "Compositing/shape.h"
 #include "shapes.h"
 
 #define SPRITE_MAX 128
