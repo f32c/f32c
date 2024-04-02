@@ -5,11 +5,7 @@
  */
 extern "C"
 {
-//#include <stdio.h>
-//#include <unistd.h>
 #include <stdlib.h>
-//#include <dev/io.h>
-//#include <stdint.h>
 #include <string.h>
 #include <math.h>
 }
