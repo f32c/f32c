@@ -19,7 +19,7 @@ extern "C"
 #define ANZCOL 256
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
-#define SPRITE_MAX 10
+#define SPRITE_MAX 1
 
 Compositing c2;
 Vector V;
