@@ -504,17 +504,25 @@ begin
 
 	    when s_read_3 => 
 		if forcing_refresh = '1' or (accepting_new and
-		  (save_bank /= addr_bank or save_row /= addr_row)) then
+		  (save_bank /= addr_bank or save_row /= addr_row)) or
+		  can_back_to_back = '0' then
 		    if C_cas = 2 then
 			state <= s_precharge;
 		    else
 			state <= s_read_4;
 		    end if;
-		elsif accepting_new and write = '0' then
-		    state <= s_read_1;
-		    -- will be ready for a new transaction next cycle!
-		    if unsigned(burst_len) = 0 then
+		elsif accepting_new then
+		    if write = '1' then
+			state <= s_write_1;
+			iob_dq_hiz <= '0';
+			iob_data <= data_in(15 downto 0);
 			ready_for_new <= '1';
+		    else
+			state <= s_read_1;
+			-- will be ready for a new transaction next cycle!
+			if unsigned(burst_len) = 0 then
+			    ready_for_new <= '1';
+			end if;
 		    end if;
 		elsif ready_for_new = '0' then
 		    if save_wr = '1' then
