@@ -9,7 +9,6 @@ extern "C" {
 }
 
 #include "Compositing/Compositing.h"
-#define SPRITE_MAX 4
 
 Compositing c2;
 
@@ -22,8 +21,12 @@ Compositing c2;
 #define RESOLUTION_X VGA_X_MAX
 #define RESOLUTION_Y VGA_Y_MAX
 
-#define BLOCK_X 256
-#define BLOCK_Y 256
+// number of sprites
+#define SPRITE_MAX 4 // >= 2
+
+// sprite size
+#define BLOCK_X 256 // divisible by 4
+#define BLOCK_Y 256 // divisible by 4
 
 // xy rotation center and radius
 #define CX ((RESOLUTION_X-BLOCK_X)/2)
@@ -42,8 +45,8 @@ void setup()
   // sprite 0
   pixel_t *green_blue = (pixel_t *)malloc(BLOCK_X*BLOCK_Y*sizeof(pixel_t));
   i = 0;
-  for(int x = 0; x < BLOCK_X; x++)
-    for(int y = 0; y < BLOCK_Y; y++)
+  for(int y = 0; y < BLOCK_Y; y++)
+    for(int x = 0; x < BLOCK_X; x++)
     {
       g = x*256/BLOCK_X;
       b = y*512/BLOCK_Y;
@@ -54,11 +57,11 @@ void setup()
   // sprite 1
   pixel_t *red_green = (pixel_t *)malloc(BLOCK_X*BLOCK_Y*sizeof(pixel_t));
   i = 0;
-  for(int x = 0; x < BLOCK_X; x++)
-    for(int y = 0; y < BLOCK_Y; y++)
+  for(int y = 0; y < BLOCK_Y; y++)
+    for(int x = 0; x < BLOCK_X; x++)
     {
-      r = x*256/BLOCK_X;
-      g = y*256/BLOCK_Y;
+      g = x*256/BLOCK_X;
+      r = y*256/BLOCK_Y;
       red_green[i++] = RGB2PIXEL((r<<16)|(g<<8));
     }
   c2.sprite_from_bitmap(BLOCK_X, BLOCK_Y, red_green);
