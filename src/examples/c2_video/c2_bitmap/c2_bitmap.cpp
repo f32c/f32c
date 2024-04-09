@@ -34,8 +34,6 @@ Compositing c2;
 
 void setup() 
 {
-  int i;
-
   c2.init();
   c2.alloc_sprites(SPRITE_MAX);
 
@@ -43,32 +41,20 @@ void setup()
   pixel_t *green_blue = (pixel_t *)malloc(BLOCK_X*BLOCK_Y*sizeof(pixel_t));
   for(int i = BLOCK_X*BLOCK_Y; --i >= 0; )
     green_blue[i] = RGB2PIXEL(i);
-  i = c2.sprite_from_bitmap(BLOCK_X, BLOCK_Y, green_blue);
-  c2.Sprite[i]->x = 0;
-  c2.Sprite[i]->y = 0;
+  c2.sprite_from_bitmap(BLOCK_X, BLOCK_Y, green_blue);
 
   // sprite 1
   pixel_t *red_green = (pixel_t *)malloc(BLOCK_X*BLOCK_Y*sizeof(pixel_t));
   for(int i = BLOCK_X*BLOCK_Y; --i >= 0; )
     red_green[i] = RGB2PIXEL(i<<8);
-  i = c2.sprite_from_bitmap(BLOCK_X, BLOCK_Y, red_green);
-  c2.Sprite[i]->x = RESOLUTION_X-BLOCK_X;
-  c2.Sprite[i]->y = 0;
+  c2.sprite_from_bitmap(BLOCK_X, BLOCK_Y, red_green);
 
-  // sprite 2
-  i = c2.sprite_clone(0);
-  c2.Sprite[i]->x = RESOLUTION_X-BLOCK_X;
-  c2.Sprite[i]->y = RESOLUTION_Y-BLOCK_Y;
-
-  // sprite 3
-  i = c2.sprite_clone(1); 
-  c2.Sprite[i]->x = 0;
-  c2.Sprite[i]->y = RESOLUTION_Y-BLOCK_Y;
+  for(int j = 2; j < SPRITE_MAX; j++)
+    c2.sprite_clone(j & 1);
 
   // draw them all
   c2.sprite_refresh();
   *c2.cntrl_reg = 0b11000000; // enable video, yes bitmap, no text mode, no cursor
-  
 }
 
 void loop()
@@ -76,10 +62,10 @@ void loop()
   int i;
   static uint8_t a; // rotation angle
 
-  for(i = 0; i < 4; i++)
+  for(i = 0; i < SPRITE_MAX; i++)
   {
-    c2.Sprite[i]->x = CX + RX * cos(2*M_PI/256*(a+64*i));
-    c2.Sprite[i]->y = CY + RY * sin(2*M_PI/256*(a+64*i));
+    c2.Sprite[i]->x = CX + RX * cos(2*M_PI/256*(a+256/SPRITE_MAX*i));
+    c2.Sprite[i]->y = CY + RY * sin(2*M_PI/256*(a+256/SPRITE_MAX*i));
   }
   a++; // rotate one step by incrementing the angle
 
