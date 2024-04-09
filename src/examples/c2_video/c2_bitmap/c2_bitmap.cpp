@@ -12,12 +12,6 @@ extern "C" {
 
 Compositing c2;
 
-//                            RRGGBB
-#define C2_WHITE  RGB2PIXEL(0xFFFFFF)
-#define C2_GREEN  RGB2PIXEL(0x002200)
-#define C2_ORANGE RGB2PIXEL(0xFF7F00)
-#define C2_BLUE   RGB2PIXEL(0x4080FF)
-
 #define RESOLUTION_X VGA_X_MAX
 #define RESOLUTION_Y VGA_Y_MAX
 
