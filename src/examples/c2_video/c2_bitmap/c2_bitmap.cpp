@@ -34,19 +34,33 @@ Compositing c2;
 
 void setup() 
 {
+  int i;
+  uint8_t r,g,b;
   c2.init();
   c2.alloc_sprites(SPRITE_MAX);
 
   // sprite 0
   pixel_t *green_blue = (pixel_t *)malloc(BLOCK_X*BLOCK_Y*sizeof(pixel_t));
-  for(int i = BLOCK_X*BLOCK_Y; --i >= 0; )
-    green_blue[i] = RGB2PIXEL(i);
+  i = 0;
+  for(int x = 0; x < BLOCK_X; x++)
+    for(int y = 0; y < BLOCK_Y; y++)
+    {
+      g = x*256/BLOCK_X;
+      b = y*512/BLOCK_Y;
+      green_blue[i++] = RGB2PIXEL((g<<8)|b);
+    }
   c2.sprite_from_bitmap(BLOCK_X, BLOCK_Y, green_blue);
 
   // sprite 1
   pixel_t *red_green = (pixel_t *)malloc(BLOCK_X*BLOCK_Y*sizeof(pixel_t));
-  for(int i = BLOCK_X*BLOCK_Y; --i >= 0; )
-    red_green[i] = RGB2PIXEL(i<<8);
+  i = 0;
+  for(int x = 0; x < BLOCK_X; x++)
+    for(int y = 0; y < BLOCK_Y; y++)
+    {
+      r = x*256/BLOCK_X;
+      g = y*256/BLOCK_Y;
+      red_green[i++] = RGB2PIXEL((r<<16)|(g<<8));
+    }
   c2.sprite_from_bitmap(BLOCK_X, BLOCK_Y, red_green);
 
   for(int j = 2; j < SPRITE_MAX; j++)
