@@ -321,7 +321,7 @@ begin
 	    -- update shift registers used to choose when to present data to/from memory
 	    ----------------------------------------------------------------------------
 	    if data_ready_delay(2 downto 0) = "001" then
-		read_done <= true;
+		read_done <= unsigned(save_burst_len) = 0;
 	    end if;
 	    data_ready_delay <= '0' & data_ready_delay(data_ready_delay'high downto 1);
 	    iob_dqm <= dqm_sr(1 downto 0);
@@ -407,7 +407,7 @@ begin
 		if startup_refresh_count = 0 then
 		    state <= s_idle;
 		    ready_for_new <= '1';
-		    read_done <= true;
+		    read_done <= unsigned(save_burst_len) = 0;
 		    startup_refresh_count <= to_unsigned(2048 - cycles_per_refresh+1,14);
 		end if;
 
