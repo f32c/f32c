@@ -373,14 +373,14 @@ begin
 	end if;
 	-- CPU, data bus
 	sdram_req(data_port).strobe <= sdram_data_strobe;
-	sdram_req(data_port).burst_len <= dmem_burst_len(cpu);
+	sdram_req(data_port).burst_len(2 downto 0) <= dmem_burst_len(cpu);
 	sdram_req(data_port).write <= dmem_write(cpu);
 	sdram_req(data_port).byte_sel <= dmem_byte_sel(cpu);
 	sdram_req(data_port).addr <= dmem_addr(cpu);
 	sdram_req(data_port).data_in <= cpu_to_dmem(cpu);
 	-- CPU, instruction bus
 	sdram_req(instr_port).strobe <= sdram_instr_strobe;
-	sdram_req(instr_port).burst_len <= imem_burst_len(cpu);
+	sdram_req(instr_port).burst_len(2 downto 0) <= imem_burst_len(cpu);
 	sdram_req(instr_port).addr <= imem_addr(cpu);
 	sdram_req(instr_port).data_in <= (others => '-');
 	sdram_req(instr_port).write <= '0';
