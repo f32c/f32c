@@ -175,7 +175,7 @@ architecture Behavioral of SDRAM_Controller is
     signal save_col: std_logic_vector(12 downto 0);
     signal save_data_in: std_logic_vector(31 downto 0);
     signal save_byte_enable: std_logic_vector( 3 downto 0);
-    signal save_burst_len: std_logic_vector(2 downto 0);
+    signal save_burst_len: std_logic_vector(7 downto 0);
 
     -- control when new transactions are accepted
     signal accepting_new: boolean; -- combinatorial
@@ -205,7 +205,7 @@ architecture Behavioral of SDRAM_Controller is
     signal byte_sel: std_logic_vector(3 downto 0);	-- from CPU bus
     signal addr: std_logic_vector(31 downto 0);		-- from CPU bus
     signal data_in: std_logic_vector(31 downto 0);	-- from CPU bus
-    signal burst_len: std_logic_vector(2 downto 0);	-- from CPU bus
+    signal burst_len: std_logic_vector(7 downto 0);	-- from CPU bus
 
     -- Arbiter registers
     signal R_cur_port, R_next_port: integer range 0 to (C_ports - 1);

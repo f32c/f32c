@@ -68,7 +68,7 @@ begin
     all_ports: for i in 0 to C_ports-1 generate
       req(i).strobe <= bus_in(i).addr_strobe;
       req(i).addr <= "10" & bus_in(i).addr;
-      req(i).burst_len <= bus_in(i).burst_len(2 downto 0);
+      req(i).burst_len <= bus_in(i).burst_len;
       req(i).write <= bus_in(i).write;
       req(i).data_in <= bus_in(i).data_in;
       req(i).byte_sel <= bus_in(i).byte_sel;

@@ -38,7 +38,7 @@ type sdram_req_type is
 	addr: std_logic_vector(31 downto 2);
 	data_in: std_logic_vector(31 downto 0);
 	byte_sel: std_logic_vector(3 downto 0);
-	burst_len: std_logic_vector(2 downto 0);
+	burst_len: std_logic_vector(7 downto 0);
 	write: std_logic;
 	strobe: std_logic;
     end record;
