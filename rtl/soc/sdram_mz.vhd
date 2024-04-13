@@ -407,7 +407,8 @@ begin
 		if startup_refresh_count = 0 then
 		    state <= s_idle;
 		    ready_for_new <= '1';
-		    read_done <= unsigned(save_burst_len) = 0;
+		    save_burst_len <= 0;
+		    read_done <= true;
 		    startup_refresh_count <= to_unsigned(2048 - cycles_per_refresh+1,14);
 		end if;
 
