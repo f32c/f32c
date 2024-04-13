@@ -96,7 +96,7 @@ entity ulx3s_xram_sdram_vector is
     C_vgahdmi: boolean := true;
     -- normally this should be  actual bits per pixel
     C_vgahdmi_fifo_data_width: integer range 8 to 32 := 8; -- 16 for burst
-    C_vgahdmi_fifo_burst_max_bits: integer range 0 to 8 := 8; -- values >= 1 enable the burst
+    C_vgahdmi_fifo_burst_max_bits: integer range 0 to 8 := 0; -- values >= 1 enable the burst
     C_vgahdmi_fifo_fast_ram: boolean := true;
     C_vgahdmi_cache_size: integer := 0; -- 0 default (disabled, cache flush not yet implemented)
     C_vgahdmi_cache_use_i: boolean := false;
