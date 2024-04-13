@@ -13,6 +13,6 @@ CXXFILES += vector_fractal.cpp
 #CFLAGS += -DSOC_VIDEO_BPP=8
 
 # for 16bpp color video bitstream use this
-CFLAGS += -DSOC_VIDEO_BPP=16
+#CFLAGS += -DSOC_VIDEO_BPP=16
 
 include ${POST_MK}
