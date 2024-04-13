@@ -9,14 +9,13 @@ extern "C" {
 }
 
 #include "Compositing/Compositing.h"
-
 Compositing c2;
 
 #define RESOLUTION_X VGA_X_MAX
 #define RESOLUTION_Y VGA_Y_MAX
 
 // number of sprites
-#define SPRITE_MAX 4 // >= 2
+#define SPRITE_MAX 6 // >= 2
 
 // sprite size
 #define BLOCK_X 256 // divisible by 4
