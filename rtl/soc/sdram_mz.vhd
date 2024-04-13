@@ -42,14 +42,14 @@
 -- For reads or writes to the same it can be as high as 184MB/s 
 ----------------------------------------------------------------------------------
 
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
-use IEEE.NUMERIC_STD.ALL;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 use work.sdram_pack.all;
 
 
-entity SDRAM_Controller is
+entity sdram_controller is
     generic (
 	C_ports: integer;
 	C_prio_port: integer := -1;
@@ -63,8 +63,8 @@ entity SDRAM_Controller is
 	cycles_per_refresh: natural
     );
     port (
-	clk: in  STD_LOGIC;
-	reset: in  STD_LOGIC;
+	clk: in std_logic;
+	reset: in std_logic;
 
 	-- To internal bus / logic blocks
 	req: in sdram_req_array;
@@ -73,19 +73,19 @@ entity SDRAM_Controller is
 	snoop_cycle: out std_logic;
 
 	-- SDRAM signals
-	sdram_clk: out STD_LOGIC;
-	sdram_cke: out STD_LOGIC;
-	sdram_cs: out STD_LOGIC;
-	sdram_ras: out STD_LOGIC;
-	sdram_cas: out STD_LOGIC;
-	sdram_we: out STD_LOGIC;
-	sdram_dqm: out STD_LOGIC_VECTOR( 1 downto 0);
-	sdram_addr: out STD_LOGIC_VECTOR(12 downto 0);
-	sdram_ba: out STD_LOGIC_VECTOR( 1 downto 0);
-	sdram_data: inout STD_LOGIC_VECTOR(15 downto 0));
-end SDRAM_Controller;
+	sdram_clk: out std_logic;
+	sdram_cke: out std_logic;
+	sdram_cs: out std_logic;
+	sdram_ras: out std_logic;
+	sdram_cas: out std_logic;
+	sdram_we: out std_logic;
+	sdram_dqm: out std_logic_vector(1 downto 0);
+	sdram_addr: out std_logic_vector(12 downto 0);
+	sdram_ba: out std_logic_vector(1 downto 0);
+	sdram_data: inout std_logic_vector(15 downto 0));
+end sdram_controller;
 
-architecture Behavioral of SDRAM_Controller is
+architecture behavioral of sdram_controller is
     -- From page 37 of MT48LC16M16A2 datasheet
     -- Name (Function)       CS# RAS# CAS# WE# DQM  Addr    Data
     -- COMMAND INHIBIT (NOP)  H   X    X    X   X     X       X
@@ -118,86 +118,87 @@ architecture Behavioral of SDRAM_Controller is
     -- Reserved, wr burst, OpMode, CAS Latency (3), Burst Type, Burst Length (2)
       "000" &   "0"  &  "00"  &    "011"      &     "0"    &   "001";
 
-    signal iob_command: std_logic_vector( 3 downto 0) := CMD_NOP;
-    signal iob_address: std_logic_vector(12 downto 0) := (others => '0');
-    signal iob_data: std_logic_vector(15 downto 0) := (others => '0');
-    signal iob_dqm: std_logic_vector( 1 downto 0) := (others => '0');
-    signal iob_cke: std_logic := '0';
-    signal iob_bank: std_logic_vector( 1 downto 0) := (others => '0');
+    signal R_iob_command: std_logic_vector(3 downto 0) := CMD_NOP;
+    signal R_iob_address: std_logic_vector(12 downto 0) := (others => '0');
+    signal R_iob_data: std_logic_vector(15 downto 0) := (others => '0');
+    signal R_iob_dqm: std_logic_vector(1 downto 0) := (others => '0');
+    signal R_iob_cke: std_logic := '0';
+    signal R_iob_bank: std_logic_vector(1 downto 0) := (others => '0');
    
     attribute IOB: string;
-    attribute IOB of iob_command: signal is "true";
-    attribute IOB of iob_address: signal is "true";
-    attribute IOB of iob_dqm    : signal is "true";
-    attribute IOB of iob_cke    : signal is "true";
-    attribute IOB of iob_bank   : signal is "true";
-    attribute IOB of iob_data   : signal is "true";
-   
-    signal iob_data_next: std_logic_vector(15 downto 0) := (others => '0');
+    attribute IOB of R_iob_command: signal is "true";
+    attribute IOB of R_iob_address: signal is "true";
+    attribute IOB of R_iob_dqm: signal is "true";
+    attribute IOB of R_iob_cke: signal is "true";
+    attribute IOB of R_iob_bank: signal is "true";
+    attribute IOB of R_iob_data: signal is "true";
+
+    signal R_iob_data_next: std_logic_vector(15 downto 0) := (others => '0');
     signal R_from_sdram_prev, R_from_sdram: std_logic_vector(15 downto 0);
     signal R_ready_out: std_logic_vector(C_ports - 1 downto 0); -- one-hot
     attribute IOB of R_from_sdram: signal is "true";
-   
+
     type fsm_state is (
-	s_startup,
-	s_idle_in_6, s_idle_in_5, s_idle_in_4,
-	s_idle_in_3, s_idle_in_2, s_idle_in_1,
-	s_idle,
-	s_open_in_2, s_open_in_1,
-	s_write_1, s_write_2, s_write_3,
-	s_read_1,  s_read_2,  s_read_3,  s_read_4,  
-	s_precharge
+	S_startup,
+	S_idle_in_6, S_idle_in_5, S_idle_in_4,
+	S_idle_in_3, S_idle_in_2, S_idle_in_1,
+	S_idle,
+	S_open_in_2, S_open_in_1,
+	S_write_1, S_write_2, S_write_3,
+	S_read_1, S_read_2, S_read_3, S_read_4,
+	S_precharge
     );
 
-    signal state: fsm_state := s_startup;
+    signal R_state: fsm_state := S_startup;
     attribute FSM_ENCODING: string;
-    attribute FSM_ENCODING of state: signal is "ONE-HOT";
+    attribute FSM_ENCODING of R_state: signal is "ONE-HOT";
 
     -- dual purpose counter, it counts up during the startup phase, then is used to trigger refreshes.
-    constant startup_refresh_max   : unsigned(13 downto 0) := (others => '1');
-    signal   startup_refresh_count : unsigned(13 downto 0) := startup_refresh_max - to_unsigned(sdram_startup_cycles,14);
+    constant C_startup_refresh_max: unsigned(13 downto 0) := (others => '1');
+    signal R_startup_refresh_count: unsigned(13 downto 0) :=
+      C_startup_refresh_max - to_unsigned(sdram_startup_cycles,14);
 
     -- logic to decide when to refresh
-    signal pending_refresh: std_logic := '0';
-    signal forcing_refresh: std_logic := '0';
+    signal pending_refresh: boolean;
+    signal forcing_refresh: boolean;
 
     -- The incoming address is split into these three values
     signal addr_row: std_logic_vector(12 downto 0) := (others => '0');
     signal addr_col: std_logic_vector(12 downto 0) := (others => '0');
-    signal addr_bank: std_logic_vector( 1 downto 0) := (others => '0');
+    signal addr_bank: std_logic_vector(1 downto 0) := (others => '0');
 
-    signal dqm_sr: std_logic_vector( 3 downto 0) := (others => '1'); -- an extra two bits in case CAS=3
+    signal R_dqm_sr: std_logic_vector(3 downto 0) := (others => '1'); -- an extra two bits in case CAS=3
 
     -- signals to hold the requested transaction before it is completed
-    signal save_wr: std_logic := '0';
-    signal save_row: std_logic_vector(12 downto 0);
-    signal save_bank: std_logic_vector( 1 downto 0);
-    signal save_col: std_logic_vector(12 downto 0);
-    signal save_data_in: std_logic_vector(31 downto 0);
-    signal save_byte_enable: std_logic_vector( 3 downto 0);
-    signal save_burst_len: std_logic_vector(7 downto 0);
+    signal R_save_wr: std_logic := '0';
+    signal R_save_row: std_logic_vector(12 downto 0);
+    signal R_save_bank: std_logic_vector(1 downto 0);
+    signal R_save_col: std_logic_vector(12 downto 0);
+    signal R_save_data_in: std_logic_vector(31 downto 0);
+    signal R_save_byte_enable: std_logic_vector(3 downto 0);
+    signal R_save_burst_len: std_logic_vector(7 downto 0);
 
     -- control when new transactions are accepted
     signal accepting_new: boolean; -- combinatorial
-    signal ready_for_new: std_logic := '0';
-    signal can_back_to_back: std_logic := '0';
+    signal R_ready_for_new: boolean;
+    signal R_can_back_to_back: boolean;
 
     -- signal to control the Hi-Z state of the DQ bus
-    signal iob_dq_hiz: std_logic := '1';
+    signal R_iob_dq_hiz: boolean := true;
 
     -- signals for when to read the data off of the bus
-    signal data_ready_delay:
+    signal R_data_ready_delay:
       std_logic_vector(C_clock_range / 2 + C_cas downto 0);
-    signal read_done: boolean;
+    signal R_read_done: boolean;
 
     -- bit indexes used when splitting the address into row/colum/bank.
-    constant start_of_col: natural := 0;
-    constant end_of_col: natural := sdram_column_bits-2;
-    constant start_of_bank: natural := sdram_column_bits-1;
-    constant end_of_bank: natural := sdram_column_bits;
-    constant start_of_row: natural := sdram_column_bits+1;
-    constant end_of_row: natural := sdram_address_width-2;
-    constant prefresh_cmd: natural := 10;
+    constant C_start_of_col: natural := 0;
+    constant C_end_of_col: natural := sdram_column_bits - 2;
+    constant C_start_of_bank: natural := sdram_column_bits - 1;
+    constant C_end_of_bank: natural := sdram_column_bits;
+    constant C_start_of_row: natural := sdram_column_bits + 1;
+    constant C_end_of_row: natural := sdram_address_width - 2;
+    constant C_prefresh_cmd: natural := 10;
 
     -- Bus interface signals (resolved from req record via R_cur_port)
     signal strobe: std_logic;				-- from CPU bus
@@ -210,7 +211,7 @@ architecture Behavioral of SDRAM_Controller is
     -- Arbiter registers
     signal R_cur_port, R_next_port: integer range 0 to (C_ports - 1);
 
-    -- Arbiter internal signals
+    -- Arbiter internal signals, combinatorial
     signal next_port: integer;
 
 begin
@@ -234,15 +235,18 @@ begin
     -- Indicate the need to refresh when the counter is 2048,
     -- Force a refresh when the counter is 4096 - (if a refresh is forced, 
     -- multiple refresshes will be forced until the counter is below 2048
-    pending_refresh <= startup_refresh_count(11);
-    forcing_refresh <= startup_refresh_count(12);
+    pending_refresh <= R_startup_refresh_count(11) = '1';
+    forcing_refresh <= R_startup_refresh_count(12) = '1';
 
     ----------------------------------------------------------------------------
     -- Seperate the address into row / bank / address
     ----------------------------------------------------------------------------
-    addr_row(end_of_row-start_of_row downto 0) <= addr(end_of_row  downto start_of_row); -- 12:0 <=  22:10
-    addr_bank                                  <= addr(end_of_bank downto start_of_bank);      -- 1:0  <=  9:8
-    addr_col(sdram_column_bits-1 downto 0)     <= addr(end_of_col  downto start_of_col) & '0'; -- 8:0  <=  7:0 & '0'
+    addr_row(C_end_of_row - C_start_of_row downto 0) <=
+      addr(C_end_of_row downto C_start_of_row); -- 12:0 <=  22:10
+    addr_bank
+      <= addr(C_end_of_bank downto C_start_of_bank);      -- 1:0  <=  9:8
+    addr_col(sdram_column_bits-1 downto 0)
+      <= addr(C_end_of_col downto C_start_of_col) & '0'; -- 8:0  <=  7:0 & '0'
 
     -----------------------------------------------------------
     -- Forward the SDRAM clock to the SDRAM chip - 180 degress 
@@ -256,19 +260,19 @@ begin
     --!! Check the pinout report to be sure      !!
     --!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     -----------------------------------------------
-    sdram_cke  <= iob_cke;
-    sdram_CS   <= iob_command(3);
-    sdram_RAS  <= iob_command(2);
-    sdram_CAS  <= iob_command(1);
-    sdram_WE   <= iob_command(0);
-    sdram_dqm  <= iob_dqm;
-    sdram_ba   <= iob_bank;
-    sdram_addr <= iob_address;
+    sdram_cke  <= R_iob_cke;
+    sdram_CS   <= R_iob_command(3);
+    sdram_RAS  <= R_iob_command(2);
+    sdram_CAS  <= R_iob_command(1);
+    sdram_WE   <= R_iob_command(0);
+    sdram_dqm  <= R_iob_dqm;
+    sdram_ba   <= R_iob_bank;
+    sdram_addr <= R_iob_address;
 
     ---------------------------------------------------------------
     -- Explicitly set up the tristate I/O buffers on the DQ signals
     ---------------------------------------------------------------
-    sdram_data <= iob_data when iob_dq_hiz = '0' else (others => 'Z');
+    sdram_data <= (others => 'Z') when R_iob_dq_hiz else R_iob_data;
 
     -- Arbiter: round-robin port selection combinatorial logic
     process(req, R_cur_port)
@@ -297,7 +301,7 @@ begin
 	end if;
     end process;
 
-    accepting_new <= ready_for_new = '1' and strobe = '1' and read_done
+    accepting_new <= R_ready_for_new and strobe = '1' and R_read_done
       and R_ready_out(R_next_port) = '0';
 
     main_proc: process(clk) 
@@ -308,24 +312,25 @@ begin
 	    ------------------------------------------------
 	    -- Default state is to do nothing
 	    ------------------------------------------------
-	    iob_command     <= CMD_NOP;
-	    iob_address     <= (others => '0');
-	    iob_bank        <= (others => '0');
+	    R_iob_command <= CMD_NOP;
+	    R_iob_address <= (others => '0');
+	    R_iob_bank <= (others => '0');
 
 	    ------------------------------------------------
 	    -- countdown for initialisation & refresh
 	    ------------------------------------------------
-	    startup_refresh_count <= startup_refresh_count+1;
+	    R_startup_refresh_count <= R_startup_refresh_count + 1;
 
 	    ----------------------------------------------------------------------------
 	    -- update shift registers used to choose when to present data to/from memory
 	    ----------------------------------------------------------------------------
-	    if data_ready_delay(2 downto 0) = "001" then
-		read_done <= unsigned(save_burst_len) = 0;
+	    if R_data_ready_delay(2 downto 0) = "001" then
+		R_read_done <= unsigned(R_save_burst_len) = 0;
 	    end if;
-	    data_ready_delay <= '0' & data_ready_delay(data_ready_delay'high downto 1);
-	    iob_dqm <= dqm_sr(1 downto 0);
-	    dqm_sr <= "11" & dqm_sr(dqm_sr'high downto 2);
+	    R_data_ready_delay <=
+	      '0' & R_data_ready_delay(R_data_ready_delay'high downto 1);
+	    R_iob_dqm <= R_dqm_sr(1 downto 0);
+	    R_dqm_sr <= "11" & R_dqm_sr(R_dqm_sr'high downto 2);
 
 	    -------------------------------------------------------------------
 	    -- It we are ready for a new tranasction and one is being presented
@@ -333,31 +338,28 @@ begin
 	    -- and if it can be back-to-backed with the last transaction
 	    -------------------------------------------------------------------
 	    R_ready_out <= (others => '0');
-	    R_ready_out(R_cur_port) <= data_ready_delay(0);
+	    R_ready_out(R_cur_port) <= R_data_ready_delay(0);
 	    if accepting_new then
 		R_cur_port <= R_next_port;
-		if save_bank = addr_bank and save_row = addr_row then
-		    can_back_to_back <= '1';
-		else
-		    can_back_to_back <= '0';
-		end if;
-		save_row	 <= addr_row;
-		save_bank	 <= addr_bank;
-		save_col	 <= addr_col;
-		save_wr		 <= write;
-		save_data_in	 <= data_in;
-		save_byte_enable <= byte_sel;
-		save_burst_len	 <= burst_len;
-		ready_for_new    <= '0';
+		R_can_back_to_back <=
+		  R_save_bank = addr_bank and R_save_row = addr_row;
+		R_save_row <= addr_row;
+		R_save_bank <= addr_bank;
+		R_save_col <= addr_col;
+		R_save_wr <= write;
+		R_save_data_in <= data_in;
+		R_save_byte_enable <= byte_sel;
+		R_save_burst_len <= burst_len;
+		R_ready_for_new <= false;
 		if write = '1' then
 		    R_ready_out(R_next_port) <= '1';
 		else
-		    read_done <= false;
+		    R_read_done <= false;
 		end if;
 	    end if;
 
-	    case state is 
-	    when s_startup =>
+	    case R_state is 
+	    when S_startup =>
 		------------------------------------------------------------------------
 		-- This is the initial startup state, where we wait for at least 100us
 		-- before starting the start sequence
@@ -376,26 +378,26 @@ begin
 		--  * LOAD_MODE_REG 
 		--  * 2 cycles wait
 		------------------------------------------------------------------------
-		iob_CKE <= '1';
+		R_iob_CKE <= '1';
 
 		-- All the commands during the startup are NOPS, except these
-		if startup_refresh_count = startup_refresh_max-31 then
+		if R_startup_refresh_count = C_startup_refresh_max - 31 then
 		    -- ensure all rows are closed
-		    iob_command <= CMD_PRECHARGE;
-		    iob_address(prefresh_cmd) <= '1';  -- all banks
-		    iob_bank <= (others => '0');
-		elsif startup_refresh_count = startup_refresh_max-23 then   
+		    R_iob_command <= CMD_PRECHARGE;
+		    R_iob_address(C_prefresh_cmd) <= '1'; -- all banks
+		    R_iob_bank <= (others => '0');
+		elsif R_startup_refresh_count = C_startup_refresh_max - 23 then
 		    -- these refreshes need to be at least tREF (66ns) apart
-		    iob_command <= CMD_REFRESH;
-		elsif startup_refresh_count = startup_refresh_max-15 then
-		    iob_command <= CMD_REFRESH;
-		elsif startup_refresh_count = startup_refresh_max-7 then    
+		    R_iob_command <= CMD_REFRESH;
+		elsif R_startup_refresh_count = C_startup_refresh_max - 15 then
+		    R_iob_command <= CMD_REFRESH;
+		elsif R_startup_refresh_count = C_startup_refresh_max - 7 then
 		    -- Now load the mode register
-		    iob_command <= CMD_LOAD_MODE_REG;
+		    R_iob_command <= CMD_LOAD_MODE_REG;
 		    if C_cas = 2 then
-			iob_address <= MODE_REG_CAS_2;
+			R_iob_address <= MODE_REG_CAS_2;
 		    else
-			iob_address <= MODE_REG_CAS_3;
+			R_iob_address <= MODE_REG_CAS_3;
 		    end if;
 		end if;
 
@@ -404,229 +406,237 @@ begin
 		-- get prepared to accept a new command, and schedule
 		-- the first refresh cycle
 		------------------------------------------------------
-		if startup_refresh_count = 0 then
-		    state <= s_idle;
-		    ready_for_new <= '1';
-		    save_burst_len <= 0;
-		    read_done <= true;
-		    startup_refresh_count <= to_unsigned(2048 - cycles_per_refresh+1,14);
+		if R_startup_refresh_count = 0 then
+		    R_state <= S_idle;
+		    R_ready_for_new <= true;
+		    R_save_burst_len <= 0;
+		    R_read_done <= true;
+		    R_startup_refresh_count <=
+		      to_unsigned(2048 - cycles_per_refresh + 1, 14);
 		end if;
 
-	    when s_idle_in_6 => state <= s_idle_in_5;
-	    when s_idle_in_5 => state <= s_idle_in_4;
-	    when s_idle_in_4 => state <= s_idle_in_3;
-	    when s_idle_in_3 => state <= s_idle_in_2;
-	    when s_idle_in_2 => state <= s_idle_in_1;
-	    when s_idle_in_1 => state <= s_idle;
+	    when S_idle_in_6 => R_state <= S_idle_in_5;
+	    when S_idle_in_5 => R_state <= S_idle_in_4;
+	    when S_idle_in_4 => R_state <= S_idle_in_3;
+	    when S_idle_in_3 => R_state <= S_idle_in_2;
+	    when S_idle_in_2 => R_state <= S_idle_in_1;
+	    when S_idle_in_1 => R_state <= S_idle;
 
-	    when s_idle =>
+	    when S_idle =>
 		-- Priority is to issue a refresh if one is outstanding
-		if pending_refresh = '1' or forcing_refresh = '1' then
-		    ------------------------------------------------------------------------
-		    -- Start the refresh cycle. 
-		    -- This tasks tRFC (66ns), so 6 idle cycles are needed @ 100MHz
-		    ------------------------------------------------------------------------
-		    state	<= s_idle_in_6;
-		    iob_command <= CMD_REFRESH;
-		    startup_refresh_count <= startup_refresh_count - cycles_per_refresh+1;
-		elsif accepting_new or ready_for_new = '0' then
+		if pending_refresh or forcing_refresh then
+		    ----------------------------------------------------
+		    -- Start the refresh cycle. This tasks tRFC (66ns),
+		    -- so 6 idle cycles are needed @ 100MHz
+		    ----------------------------------------------------
+		    R_state <= S_idle_in_6;
+		    R_iob_command <= CMD_REFRESH;
+		    R_startup_refresh_count <=
+		      R_startup_refresh_count - cycles_per_refresh+1;
+		elsif accepting_new or not R_ready_for_new then
 		    --------------------------------
 		    -- Start the read or write cycle. 
 		    -- First task is to open the row
 		    --------------------------------
 		    if C_ras = 2 then
-			state <= s_open_in_1;
+			R_state <= S_open_in_1;
 		    else
-			state <= s_open_in_2;
+			R_state <= S_open_in_2;
 		    end if;
-		    iob_command <= CMD_ACTIVE;
+		    R_iob_command <= CMD_ACTIVE;
 		    if accepting_new then
-			iob_address <= addr_row;
-			iob_bank    <= addr_bank;
+			R_iob_address <= addr_row;
+			R_iob_bank <= addr_bank;
 		    else
-			iob_address <= save_row;
-			iob_bank    <= save_bank;
+			R_iob_address <= R_save_row;
+			R_iob_bank <= R_save_bank;
 		    end if;
 		end if;
 
 	    --------------------------------------------
 	    -- Opening the row ready for reads or writes
 	    --------------------------------------------
-	    when s_open_in_2 => state <= s_open_in_1;
+	    when S_open_in_2 =>
+		R_state <= S_open_in_1;
 
-	    when s_open_in_1 =>
+	    when S_open_in_1 =>
 		-- still waiting for row to open
-		if save_wr = '1' then
-		    state	<= s_write_1;
-		    iob_dq_hiz  <= '0';
-		    iob_data    <= save_data_in(15 downto 0); -- get the DQ bus out of HiZ early
+		if R_save_wr = '1' then
+		    R_state <= S_write_1;
+		    R_iob_dq_hiz <= false;
+		    R_iob_data <= R_save_data_in(15 downto 0); -- get the DQ bus out of HiZ early
 		else
-		    iob_dq_hiz  <= '1';
-		    state	<= s_read_1;
+		    R_iob_dq_hiz <= true;
+		    R_state <= S_read_1;
 		end if;
 		-- will be ready for a new transaction next cycle!
-		if save_wr = '1' or unsigned(save_burst_len) = 0 then
-		    ready_for_new <= '1';
+		if R_save_wr = '1' or unsigned(R_save_burst_len) = 0 then
+		    R_ready_for_new <= true;
 		end if;
 
 	    ----------------------------------
 	    -- Processing the read transaction
 	    ----------------------------------
-	    when s_read_1 =>
-		state		<= s_read_2;
-		iob_command	<= CMD_READ;
-		iob_address	<= save_col;
-		iob_bank	<= save_bank;
-		iob_address(prefresh_cmd) <= '0'; -- A10 actually matters - it selects auto precharge
+	    when S_read_1 =>
+		R_state	<= S_read_2;
+		R_iob_command <= CMD_READ;
+		R_iob_address <= R_save_col;
+		R_iob_bank <= R_save_bank;
+		R_iob_address(C_prefresh_cmd) <= '0'; -- A10 actually matters - it selects auto precharge
 
 		-- Schedule reading the data values off the bus
-		data_ready_delay(data_ready_delay'high) <= '1';
+		R_data_ready_delay(R_data_ready_delay'high) <= '1';
 
 		-- Set the data masks to read all bytes
-		iob_dqm		   <= (others => '0');
-		dqm_sr(1 downto 0) <= (others => '0');
+		R_iob_dqm <= (others => '0');
+		R_dqm_sr(1 downto 0) <= (others => '0');
 
-	    when s_read_2 =>
-		if unsigned(save_burst_len) /= 0 then
-		    state <= s_read_1;
-		    save_burst_len <=
-		      std_logic_vector(unsigned(save_burst_len) - 1);
-		    save_col <= std_logic_vector(unsigned(save_col) + 2);
-		    save_col(10) <= '0';
-		    if save_col(9 downto 1) = '1' & x"ff" then
-			state <= s_read_3;
-			can_back_to_back <= '0';
-			save_bank <= std_logic_vector(unsigned(save_bank) + 1);
-			if save_bank = "11" then
-			    save_row <=
-			      std_logic_vector(unsigned(save_row) + 1);
+	    when S_read_2 =>
+		if unsigned(R_save_burst_len) /= 0 then
+		    R_state <= S_read_1;
+		    R_save_burst_len <=
+		      std_logic_vector(unsigned(R_save_burst_len) - 1);
+		    R_save_col <= std_logic_vector(unsigned(R_save_col) + 2);
+		    R_save_col(10) <= '0';
+		    if R_save_col(9 downto 1) = '1' & x"ff" then
+			R_state <= S_read_3;
+			R_can_back_to_back <= false;
+			R_save_bank <=
+			  std_logic_vector(unsigned(R_save_bank) + 1);
+			if R_save_bank = "11" then
+			    R_save_row <=
+			      std_logic_vector(unsigned(R_save_row) + 1);
 			end if;
-		    elsif unsigned(save_burst_len) = 1 then
+		    elsif unsigned(R_save_burst_len) = 1 then
 			-- will be ready for a new transaction next cycle!
-			ready_for_new <= '1';
+			R_ready_for_new <= true;
 		    end if;
 		else
-		    state <= s_read_3;
+		    R_state <= S_read_3;
 		end if;
 		if C_cas = 3 then
-		    dqm_sr(1 downto 0) <= (others => '0');
+		    R_dqm_sr(1 downto 0) <= (others => '0');
 		end if;
 
-	    when s_read_3 => 
-		if forcing_refresh = '1' or (accepting_new and
-		  (save_bank /= addr_bank or save_row /= addr_row)) or
-		  can_back_to_back = '0' then
+	    when S_read_3 => 
+		if forcing_refresh or (accepting_new and
+		  (R_save_bank /= addr_bank or R_save_row /= addr_row)) or
+		  not R_can_back_to_back then
 		    if C_cas = 2 then
-			state <= s_precharge;
+			R_state <= S_precharge;
 		    else
-			state <= s_read_4;
+			R_state <= S_read_4;
 		    end if;
 		elsif accepting_new then
 		    if write = '1' then
-			state <= s_write_1;
-			iob_dq_hiz <= '0';
-			iob_data <= data_in(15 downto 0);
-			ready_for_new <= '1';
+			R_state <= S_write_1;
+			R_iob_dq_hiz <= false;
+			R_iob_data <= data_in(15 downto 0);
+			R_ready_for_new <= true;
 		    else
-			state <= s_read_1;
+			R_state <= S_read_1;
 			-- will be ready for a new transaction next cycle!
 			if unsigned(burst_len) = 0 then
-			    ready_for_new <= '1';
+			    R_ready_for_new <= true;
 			end if;
 		    end if;
-		elsif ready_for_new = '0' then
-		    if save_wr = '1' then
-			state <= s_write_1;
-			iob_dq_hiz <= '0';
-			iob_data <= save_data_in(15 downto 0);
-			ready_for_new <= '1';
+		elsif not R_ready_for_new then
+		    if R_save_wr = '1' then
+			R_state <= S_write_1;
+			R_iob_dq_hiz <= false;
+			R_iob_data <= R_save_data_in(15 downto 0);
+			R_ready_for_new <= true;
 		    else
-			state <= s_read_1;
+			R_state <= S_read_1;
 			-- will be ready for a new transaction next cycle!
-			if unsigned(save_burst_len) = 0 then
-			    ready_for_new <= '1';
+			if unsigned(R_save_burst_len) = 0 then
+			    R_ready_for_new <= true;
 			end if;
 		    end if;
 		end if;
 
-	    when s_read_4 => 
-		state <= s_precharge;
+	    when S_read_4 => 
+		R_state <= S_precharge;
 
 	    ------------------------------------------------------------------
 	    -- Processing the write transaction
 	    -------------------------------------------------------------------
-	    when s_write_1 =>
-		state		<= s_write_2;
-		iob_command	<= CMD_WRITE;
-		iob_address	<= save_col;
-		iob_address(prefresh_cmd) <= '0'; -- A10 actually matters - it selects auto precharge
-		iob_bank	<= save_bank;
-		iob_dqm		<= NOT save_byte_enable(1 downto 0);
-		dqm_sr(1 downto 0) <= NOT save_byte_enable(3 downto 2);
-		iob_data	<= save_data_in(15 downto 0);
-		iob_data_next	<= save_data_in(31 downto 16);
+	    when S_write_1 =>
+		R_state	 <= S_write_2;
+		R_iob_command <= CMD_WRITE;
+		R_iob_address <= R_save_col;
+		R_iob_address(C_prefresh_cmd) <= '0'; -- A10 actually matters - it selects auto precharge
+		R_iob_bank <= R_save_bank;
+		R_iob_dqm <= NOT R_save_byte_enable(1 downto 0);
+		R_dqm_sr(1 downto 0) <= NOT R_save_byte_enable(3 downto 2);
+		R_iob_data <= R_save_data_in(15 downto 0);
+		R_iob_data_next	<= R_save_data_in(31 downto 16);
 
-	    when s_write_2 =>
-		state		<= s_write_3;
-		iob_data	<= iob_data_next;
+	    when S_write_2 =>
+		R_state	<= S_write_3;
+		R_iob_data <= R_iob_data_next;
 		-- can we do a back-to-back write?
-		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
-		    if save_wr = '1' then
+		if not forcing_refresh and not R_ready_for_new
+		  and R_can_back_to_back then
+		    if R_save_wr = '1' then
 			-- back-to-back write?
-			state		<= s_write_1;
-			ready_for_new   <= '1';
+			R_state	<= S_write_1;
+			R_ready_for_new <= true;
 		    end if;
 		    -- Although it looks right in simulation you can't go write-to-read 
 		    -- here due to bus contention, as iob_dq_hiz takes a few ns.
 		end if;
 
-	    when s_write_3 =>  -- must wait tRDL, hence the extra idle state
+	    when S_write_3 =>  -- must wait tRDL, hence the extra idle state
 		-- back to back transaction?
-		if forcing_refresh = '0' and ready_for_new = '0' and can_back_to_back = '1' then
-		    if save_wr = '1' then
+		if not forcing_refresh and not R_ready_for_new and
+		  R_can_back_to_back then
+		    if R_save_wr = '1' then
 			-- back-to-back write?
-			state		<= s_write_1;
-			ready_for_new   <= '1';
+			R_state	<= S_write_1;
+			R_ready_for_new <= true;
 		    else
 			-- write-to-read switch?
-			state		<= s_read_1;
-			iob_dq_hiz	<= '1';
+			R_state	<= S_read_1;
+			R_iob_dq_hiz <= true;
 			-- will be ready for a new transaction next cycle!
-			if unsigned(save_burst_len) = 0 then
-			    ready_for_new <= '1';
+			if unsigned(R_save_burst_len) = 0 then
+			    R_ready_for_new <= true;
 			end if;
 		    end if;
 		else
-		    iob_dq_hiz <= '1';
-		    state <= s_precharge;
+		    R_iob_dq_hiz <= true;
+		    R_state <= S_precharge;
 		end if;
 
 	    -------------------------------------------------------------------
 	    -- Closing the row off (this closes all banks)
 	    -------------------------------------------------------------------
-	    when s_precharge =>
+	    when S_precharge =>
 		if C_pre = 2 then
-		    state <= s_idle_in_2;
+		    R_state <= S_idle_in_2;
 		else
-		    state <= s_idle_in_3;
+		    R_state <= S_idle_in_3;
 		end if;
-		iob_command <= CMD_PRECHARGE;
-		iob_address(prefresh_cmd) <= '1'; -- A10 actually matters - it selects all banks or just one
+		R_iob_command <= CMD_PRECHARGE;
+		R_iob_address(C_prefresh_cmd) <= '1'; -- A10 actually matters - it selects all banks or just one
 
 	    -------------------------------------------------------------------
 	    -- We should never get here, but if we do then reset the memory
 	    -------------------------------------------------------------------
 	    when others => 
-		state <= s_startup;
-		ready_for_new <= '0';
-		startup_refresh_count <= startup_refresh_max-to_unsigned(sdram_startup_cycles,14);
+		R_state <= S_startup;
+		R_ready_for_new <= false;
+		R_startup_refresh_count <=
+		  C_startup_refresh_max - to_unsigned(sdram_startup_cycles, 14);
 	    end case;
 
 	    if reset = '1' then  -- Sync reset
-		state <= s_startup;
-		ready_for_new <= '0';
-		startup_refresh_count <= startup_refresh_max-to_unsigned(sdram_startup_cycles,14);
+		R_state <= S_startup;
+		R_ready_for_new <= false;
+		R_startup_refresh_count <=
+		  C_startup_refresh_max - to_unsigned(sdram_startup_cycles, 14);
 	    end if;
 	end if;
     end process;
-end Behavioral;
+end behavioral;
