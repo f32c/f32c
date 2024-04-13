@@ -491,7 +491,16 @@ begin
 		    save_burst_len <=
 		      std_logic_vector(unsigned(save_burst_len) - 1);
 		    save_col <= std_logic_vector(unsigned(save_col) + 2);
-		    if unsigned(save_burst_len) = 1 then
+		    save_col(10) <= '0';
+		    if save_col(9 downto 1) = '1' & x"ff" then
+			state <= s_read_3;
+			can_back_to_back <= '0';
+			save_bank <= std_logic_vector(unsigned(save_bank) + 1);
+			if save_bank = "11" then
+			    save_row <=
+			      std_logic_vector(unsigned(save_row) + 1);
+			end if;
+		    elsif unsigned(save_burst_len) = 1 then
 			-- will be ready for a new transaction next cycle!
 			ready_for_new <= '1';
 		    end if;
