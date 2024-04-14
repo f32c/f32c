@@ -15,11 +15,11 @@ Compositing c2;
 #define RESOLUTION_Y VGA_Y_MAX
 
 // number of sprites
-#define SPRITE_MAX 6 // >= 2
+#define SPRITE_MAX 4 // >= 2
 
 // sprite size
-#define BLOCK_X 256 // divisible by 4
-#define BLOCK_Y 256 // divisible by 4
+#define BLOCK_X (256/4*4) // divisible by 4
+#define BLOCK_Y (256/4*4) // divisible by 4
 
 // xy rotation center and radius
 #define CX ((RESOLUTION_X-BLOCK_X)/2)
@@ -27,6 +27,14 @@ Compositing c2;
 
 #define RX CX
 #define RY CY
+
+#define ALIGNED_MALLOC 1
+#define ALIGNED_MALLOC_QUANT 0x1000
+#define ALIGNED_MALLOC_NEXT(x) ((x/ALIGNED_MALLOC_QUANT+1)*ALIGNED_MALLOC_QUANT)
+
+#if ALIGNED_MALLOC
+pixel_t *aligned_malloc = (pixel_t *)0x80080000;
+#endif
 
 void setup() 
 {
@@ -36,7 +44,12 @@ void setup()
   c2.alloc_sprites(SPRITE_MAX);
 
   // sprite 0
+  #if ALIGNED_MALLOC
+  pixel_t *green_blue = aligned_malloc;
+  aligned_malloc += ALIGNED_MALLOC_NEXT(BLOCK_X*BLOCK_Y*sizeof(pixel_t));
+  #else
   pixel_t *green_blue = (pixel_t *)malloc(BLOCK_X*BLOCK_Y*sizeof(pixel_t));
+  #endif
   i = 0;
   for(int y = 0; y < BLOCK_Y; y++)
     for(int x = 0; x < BLOCK_X; x++)
@@ -48,7 +61,12 @@ void setup()
   c2.sprite_from_bitmap(BLOCK_X, BLOCK_Y, green_blue);
 
   // sprite 1
+  #if ALIGNED_MALLOC
+  pixel_t *red_green = aligned_malloc;
+  aligned_malloc += ALIGNED_MALLOC_NEXT(BLOCK_X*BLOCK_Y*sizeof(pixel_t));
+  #else
   pixel_t *red_green = (pixel_t *)malloc(BLOCK_X*BLOCK_Y*sizeof(pixel_t));
+  #endif
   i = 0;
   for(int y = 0; y < BLOCK_Y; y++)
     for(int x = 0; x < BLOCK_X; x++)
