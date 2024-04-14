@@ -374,8 +374,8 @@ begin
 
     suggest_cache <= R_suggest_cache;
     G_yes_burst: if C_burst_max_bits > 0 generate
-      suggest_burst <= R_word_count(C_burst_max_bits-1 downto 0) when R_state=0 or R_state=4
-                  else std_logic_vector(to_unsigned(3-R_state, C_burst_max_bits)); -- value 2 means 3 words to burst
+      suggest_burst <= R_word_count(C_burst_max_bits-1 downto 0) when R_state=4 -- value 2 means 3 words to burst
+                  else std_logic_vector(to_unsigned(0, C_burst_max_bits)); -- value 0 means 1 word, no burst
     end generate;
 
     -- need refill signal must be CPU synchronous
