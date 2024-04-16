@@ -505,11 +505,10 @@ begin
     if rising_edge(clk) then
 	R_i_addr <= i_addr;
 	R_i_burst_len <= (others => '0');
-	if iaddr_cacheable and (not icache_line_valid)
+	R_i_strobe <= '0';
+	if iaddr_cacheable and reset = '0' and not icache_line_valid
 	  and (imem_data_ready and R_i_strobe) = '0' then
 	    R_i_strobe <= '1';
-	else
-	    R_i_strobe <= '0';
 	end if;
     end if;
     end process;
