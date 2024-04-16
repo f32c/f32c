@@ -468,15 +468,13 @@ begin
 	    end if;
 
 	    -- CPU reset control
-	    if C_cpus /= 1 and io_addr_strobe(R_cur_io_port) = '1'
+	    R_cpu_reset(0) <= '0';
+	    if C_cpus > 1 and io_addr_strobe(R_cur_io_port) = '1'
 	      and io_write = '1' and io_addr(11 downto 4) = C_io_cpu_reset then
-		R_cpu_reset <= x"ff" & cpu_to_io(7 downto 0);
+		R_cpu_reset <= cpu_to_io(15 downto 0);
 	    end if;
 	    if reset = '1' then
 		R_cpu_reset <= (others => '1');
-	    elsif R_cpu_reset(0) = '1' then
-		R_cpu_reset(15 downto 8) <= R_cpu_reset(14 downto 8) & '0';
-		R_cpu_reset(0) <= R_cpu_reset(15);
 	    end if;
 	end if;
 	if rising_edge(clk) and io_addr_strobe(R_cur_io_port) = '1'
