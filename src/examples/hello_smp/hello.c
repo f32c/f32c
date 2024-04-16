@@ -1,18 +1,11 @@
 /*
- * Print a message on serial console and blink LEDs until a button is pressed.
- *
- * $Id$
+ * Print messages from all CPU cores on serial console and blink LEDs.
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <dev/io.h>
-#include <dev/sio.h>
 
 #include <mips/asm.h>
-#include <mips/cpuregs.h>
 
 #ifdef __mips__
 static const char *arch = "mips";
@@ -26,51 +19,46 @@ static const char *arch = "unknown";
 
 
 void
-main(void)
+hello_cpu(int cpuid)
 {
-	int in, out = 0;
-	uint32_t tmp, cpuid;
+	int cnt = 0;
 	char c;
 
-	mfc0_macro(tmp, MIPS_COP_0_CONFIG);
-	cpuid = tmp & 0xf;
+	printf("Hello f32c/%s world from CPU #%d!\n", arch, cpuid);
 
-	if (cpuid == 0) {
-		/* Wake up all CPUs */
-		printf("Hello, f32c/%s world!\n", arch);
-		OUTB(IO_CPU_RESET, 0);
-	}
+	/* Wake up the next CPU */
+	OUTW(IO_CPU_RESET, -1 << (cpuid + 2));
 
-	if (cpuid == 4) {
-		OUTB(IO_CPU_RESET, 1);
-	}
+	do {
+		cnt += cpuid + 13;
+		if (cnt < 0x10000000)
+			continue;
+		cnt = 0;
+		INB(c, IO_PUSHBTN);
+		if ((c & BTN_ANY) == 0) {
+			INB(c, IO_LED);
+			c ^= 1 << cpuid;
+			OUTB(IO_LED, c);
+		}
+		printf(" %d", cpuid);
+	} while (1);
+}
 
-#if 1
+
+void
+main(void)
+{
+	uint32_t tmp, cpuid;
+
+	mfc0_macro(cpuid, MIPS_COP_0_CONFIG);
+	cpuid &= 0xfff;
+
 	tmp = 0x80180000 + 0x1000 * cpuid;
 	__asm __volatile__(
-		"move $29, %0;"	/* set SP */
+		"move $29, %0;"	/* set per-thread SP */
 		:
 		: "r" (tmp)
 	);
-#endif
 
-	/* It's a mystery why we need this to fire up CPU #3 */
-	OUTB(IO_CPU_RESET, 0);
-
-	tmp = 1 << cpuid;
-	do {
-		INB(in, IO_PUSHBTN);
-		if ((in & BTN_ANY) == 0)
-			OUTB(IO_LED, tmp);
-		out += (cpuid + 13);
-		if (out > 0x1000000) {
-			OUTB(IO_SIO_BYTE, ' ');
-			do {
-				INB(c, IO_SIO_STATUS);
-			} while (c & SIO_TX_BUSY);
-			c = '0' + cpuid;
-			out = 0;
-			OUTB(IO_SIO_BYTE, c);
-		}
-	} while (1);
+	hello_cpu(cpuid);
 }
