@@ -14,6 +14,7 @@ entity top_sdram is
 	C_sio_init_baudrate: integer := 115200;
 	C_icache_size: natural := 8;
 	C_dcache_size: natural := 8;
+	C_mult_enable: boolean := true;
 	C_branch_prediction: boolean := true;
 	C_full_shifter: boolean := true;
 	C_result_forwarding: boolean := true;
@@ -108,6 +109,7 @@ begin
 	C_cpus => C_cpus,
 	C_icache_size => C_icache_size,
 	C_dcache_size => C_dcache_size,
+	C_mult_enable => C_mult_enable,
 	C_branch_prediction => C_branch_prediction,
 	C_full_shifter => C_full_shifter,
 	C_result_forwarding => C_result_forwarding,
