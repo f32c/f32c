@@ -497,8 +497,8 @@ begin
 		    R_save_burst_len <=
 		      std_logic_vector(unsigned(R_save_burst_len) - 1);
 		    R_save_col <= std_logic_vector(unsigned(R_save_col) + 2);
-		    R_save_col(10) <= '0';
-		    if R_save_col(9 downto 1) = '1' & x"ff" then
+		    R_save_col(9) <= '0';
+		    if R_save_col(8 downto 1) = x"ff" then
 			R_state <= S_read_3;
 			R_can_back_to_back <= false;
 			R_save_bank <=
