@@ -192,7 +192,6 @@ architecture behavioral of sdram_controller is
     signal R_read_done: boolean;
 
     -- bit indexes used when splitting the address into row/colum/bank.
-    constant C_start_of_col: natural := 0;
     constant C_end_of_col: natural := sdram_column_bits - 2;
     constant C_start_of_bank: natural := sdram_column_bits - 1;
     constant C_end_of_bank: natural := sdram_column_bits;
@@ -242,11 +241,11 @@ begin
     -- Seperate the address into row / bank / address
     ----------------------------------------------------------------------------
     addr_row(C_end_of_row - C_start_of_row downto 0) <=
-      addr(C_end_of_row downto C_start_of_row); -- 12:0 <=  22:10
+      addr(C_end_of_row downto C_start_of_row);       -- 12:0 <=  22:10
     addr_bank
-      <= addr(C_end_of_bank downto C_start_of_bank);      -- 1:0  <=  9:8
-    addr_col(sdram_column_bits-1 downto 0)
-      <= addr(C_end_of_col downto C_start_of_col) & '0'; -- 8:0  <=  7:0 & '0'
+      <= addr(C_end_of_bank downto C_start_of_bank);  -- 1:0  <=  9:8
+    addr_col(sdram_column_bits - 1 downto 0)
+      <= addr(C_end_of_col downto 0) & '0';           -- 8:0  <=  7:0 & '0'
 
     -----------------------------------------------------------
     -- Forward the SDRAM clock to the SDRAM chip - 180 degress 
@@ -409,7 +408,7 @@ begin
 		if R_startup_refresh_count = 0 then
 		    R_state <= S_idle;
 		    R_ready_for_new <= true;
-		    R_save_burst_len <= 0;
+		    R_save_burst_len <= (others => '0');
 		    R_read_done <= true;
 		    R_startup_refresh_count <=
 		      to_unsigned(2048 - cycles_per_refresh + 1, 14);
@@ -497,8 +496,10 @@ begin
 		    R_save_burst_len <=
 		      std_logic_vector(unsigned(R_save_burst_len) - 1);
 		    R_save_col <= std_logic_vector(unsigned(R_save_col) + 2);
-		    R_save_col(9) <= '0';
-		    if R_save_col(8 downto 1) = x"ff" then
+		    R_save_col(sdram_column_bits) <= '0';
+		    -- Check if we are crossing row / bank boundary?
+		    if std_logic_vector(to_signed(-1, sdram_column_bits - 1))
+		      = R_save_col(sdram_column_bits - 1 downto 1) then
 			R_state <= S_read_3;
 			R_can_back_to_back <= false;
 			R_save_bank <=
