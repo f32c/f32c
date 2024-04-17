@@ -299,8 +299,7 @@ begin
       else '0' when d_cacheable and cpu_d_write = '0'
       else cpu_d_strobe;
     dmem_write <= '1' when not R_sb_empty
-      else '0' when d_miss_cycle
-      else cpu_d_write or flush_d_line; -- XXX revist flush_d_line here!
+      else '0' when d_miss_cycle else cpu_d_write;
     dmem_burst_len <= (others => '0');
     dmem_byte_sel <= cpu_d_byte_sel when R_sb_empty
       else M_sb(conv_integer(R_sb_tail))(35 downto 32);
