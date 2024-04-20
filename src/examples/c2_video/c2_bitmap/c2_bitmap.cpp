@@ -28,12 +28,20 @@ Compositing c2;
 #define RX CX
 #define RY CY
 
-#define ALIGNED_MALLOC 1
-#define ALIGNED_MALLOC_QUANT 0x1000
-#define ALIGNED_MALLOC_NEXT(x) ((x/ALIGNED_MALLOC_QUANT+1)*ALIGNED_MALLOC_QUANT)
+#define ALIGNED_MALLOC 0
+#define ALIGNED_MALLOC_QUANT 16
+#define ALIGNED_MALLOC_MASK (~(ALIGNED_MALLOC_QUANT-1))
+#define ALIGNED_MALLOC_NEXT(x) ((x+ALIGNED_MALLOC_QUANT) & ALIGNED_MALLOC_MASK)
 
 #if ALIGNED_MALLOC
-pixel_t *aligned_malloc = (pixel_t *)0x80080000;
+size_t aligned_malloc = 0x80080000;
+void *alimalloc(size_t len)
+{
+  void *retval = (void *)(aligned_malloc);
+  aligned_malloc += ALIGNED_MALLOC_NEXT(len);
+  return retval;
+}
+#define malloc alimalloc
 #endif
 
 void setup() 
@@ -44,12 +52,7 @@ void setup()
   c2.alloc_sprites(SPRITE_MAX);
 
   // sprite 0
-  #if ALIGNED_MALLOC
-  pixel_t *green_blue = aligned_malloc;
-  aligned_malloc += ALIGNED_MALLOC_NEXT(BLOCK_X*BLOCK_Y*sizeof(pixel_t));
-  #else
   pixel_t *green_blue = (pixel_t *)malloc(BLOCK_X*BLOCK_Y*sizeof(pixel_t));
-  #endif
   i = 0;
   for(int y = 0; y < BLOCK_Y; y++)
     for(int x = 0; x < BLOCK_X; x++)
@@ -61,12 +64,7 @@ void setup()
   c2.sprite_from_bitmap(BLOCK_X, BLOCK_Y, green_blue);
 
   // sprite 1
-  #if ALIGNED_MALLOC
-  pixel_t *red_green = aligned_malloc;
-  aligned_malloc += ALIGNED_MALLOC_NEXT(BLOCK_X*BLOCK_Y*sizeof(pixel_t));
-  #else
   pixel_t *red_green = (pixel_t *)malloc(BLOCK_X*BLOCK_Y*sizeof(pixel_t));
-  #endif
   i = 0;
   for(int y = 0; y < BLOCK_Y; y++)
     for(int x = 0; x < BLOCK_X; x++)
