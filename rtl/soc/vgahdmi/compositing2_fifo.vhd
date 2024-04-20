@@ -218,7 +218,6 @@ architecture behavioral of compositing2_fifo is
     signal R_suggest_cache: std_logic := '0';
     signal R_timeout: std_logic := '0';
     signal R_read_ready: std_logic := '0';
-    signal S_burst_limited: std_logic_vector(15 downto 0) := x"0001";
     -- indicates which line in buffer (containing 2 lines) is written (compositing from RAM)
     -- and which line is read (by display output)
     signal R_line_rd, R_line_wr: std_logic := '0'; -- simple 1-bit index of line
@@ -283,7 +282,7 @@ begin
                   when 2 => -- read position and pixel count
                     if C_position_clipping = false then
                       -- simple variant: no arithmetic clipping
-                      -- use a bigger bram and wirite to unused
+                      -- use a bigger bram and write to unused
                       -- area, thus make a short range clipping
                       R_position <= data_in(15 downto 0); -- compositing position (pixels)
                       -- addr pad for 8bpp is "00"
