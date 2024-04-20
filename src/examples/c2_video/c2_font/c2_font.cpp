@@ -1,5 +1,6 @@
 #include "Compositing/Compositing.h"
 #include "font.h"
+#define USE_FONT 1 // 0:color tiles, 1:font.h
 
 #define N_LETTERS ((int)(sizeof(Font)/sizeof(Font[0])))
 
@@ -15,7 +16,11 @@ void main(void)
   *c2.cntrl_reg = 0;
   #if 1
     for(i = 0; i < c2.sprite_max && i < N_LETTERS; i++)
+      #if USE_FONT
       c2.shape_to_sprite(&(Font[i]));
+      #else
+      c2.sprite_fill_rect(16, 16, std_colors[i&7].color); // 16x16 color tiles instead of font
+      #endif
     unique_sprites = c2.n_sprites;
     for(i = unique_sprites; i < c2.sprite_max; i++)
       c2.sprite_clone(i%unique_sprites);
