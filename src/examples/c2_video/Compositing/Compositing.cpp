@@ -35,7 +35,7 @@ void Compositing::alloc_sprites(int n)
 // sprite: sprite to create
 int Compositing::shape_to_sprite(const struct shape *sh)
 {
-  int i,j;
+  int i;
   int ix=VGA_X_MAX/2,iy=VGA_Y_MAX/2; // initial sprite position on screen
   int h; // width and height of the sprite
   int sprite_size, line_size; // how much to malloc
@@ -97,7 +97,7 @@ int Compositing::shape_to_sprite(const struct shape *sh)
   {
       // uint8_t *line_content = &(new_content[y[0]*w]); // pointer to current line in content
       // enforce 32-bit even line content start address
-      int16_t lxo = 0; // line x-offset fo skipping transparent pixels
+      int16_t lxo = 0; // line x-offset for skipping transparent pixels
       clr = *bmp;
       #if REMOVE_LEADING_TRANSPARENT
       for(clr = *bmp; *clr != 0 && color_list[(int)*clr] == 0; clr++, lxo++); // skip leading transparent pixels (color 0)
@@ -137,6 +137,7 @@ int Compositing::shape_to_sprite(const struct shape *sh)
           if( 0 == memcmp(new_sprite->line[l].bmp, new_sprite->line[y].bmp, x*sizeof(pixel_t)) ) // exact match
             existing_content = new_sprite->line[l].bmp;
       // then search for the same in all previous sprites
+      int j; // loops over sprites
       for(j = 0; j < n_sprites && existing_content == NULL; j++)
       {
         for(l = 0; l < Sprite[j]->h && existing_content == NULL; l++) // loop over existing sprite lines
