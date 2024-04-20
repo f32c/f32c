@@ -270,11 +270,14 @@ fb_set_mode(int mode)
 	mode &= 3;
 	if (mode > 1) {
 		free(fb[0]);
+		free(fb[1]);
 		fb[0] = NULL;
+		fb[1] = NULL;
 	} else {
 		if (fb_mode != mode) {
 			free(fb[0]);
-			fb[0] = malloc((mode + 1) * _FB_WIDTH * _FB_HEIGHT);
+			free(fb[1]);
+			fb[0] = malloc(_FB_WIDTH * _FB_HEIGHT << mode);
 		}
 		if (fb[0] == NULL)
 			mode = 3;
@@ -287,9 +290,10 @@ fb_set_mode(int mode)
 		/* compisiting2 will be initialized as simple framebuffer */
 		/* Initialize compositing line descriptors */
 		for (i = 0; i < _FB_HEIGHT; i++) {
+			scanlines[i].next = NULL;
 			scanlines[i].x = 0;
 			scanlines[i].n = _FB_WIDTH - 1;
-			scanlines[i].bmp = &fb_active[_FB_WIDTH * i];
+			scanlines[i].bmp = &fb_active[_FB_WIDTH * i << mode];
 			sp[i] = &scanlines[i];
 		}
 #endif
@@ -318,7 +322,7 @@ fb_set_drawable(int visual)
 	if (visual < 0 || visual > 1)
 		return;
 	if (fb[visual] == NULL)
-		fb[visual] = malloc((fb_mode + 1) * _FB_WIDTH * _FB_HEIGHT);
+		fb[visual] = malloc(_FB_WIDTH * _FB_HEIGHT << fb_mode);
 	if (fb[visual] == NULL)
 		return;
 	fb_drawable = visual;
@@ -472,7 +476,7 @@ fb_plot(int x, int y, int color)
 	    x < 0 || x >= _FB_WIDTH))
 		return;
 
-	if (__predict_true(fb_mode = 0))
+	if (fb_mode == 0)
 		dp[off] = color;
 	else
 		*((uint16_t *) &dp[off << 1]) = color;
@@ -491,9 +495,10 @@ plot_internal_8(int x, int y, int color, uint8_t *dp)
 static void
 plot_internal_16(int x, int y, int color, uint8_t *dp)
 {
+	uint16_t *dp16 = (void *)dp;
 
 	if (!(y < 0 || y >= _FB_HEIGHT || x < 0 || x >= _FB_WIDTH))
-		*((uint16_t *) &dp[(y << 10) + 2 * x]) = color;
+		dp16[y * _FB_WIDTH + x] = color;
 }
 
 
@@ -508,8 +513,9 @@ plot_internal_unbounded_8(int x, int y, int color, uint8_t *dp)
 static void
 plot_internal_unbounded_16(int x, int y, int color, uint8_t *dp)
 {
+	uint16_t *dp16 = (void *)dp;
 
-	*((uint16_t *) &dp[(y << 10) + 2 * x]) = color;
+	dp16[y * _FB_WIDTH + x] = color;
 }
 
 
@@ -540,7 +546,7 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 	if (__predict_false(y1 >= _FB_HEIGHT))
 		y1 = _FB_HEIGHT - 1;
 
-	if (__predict_false(fb_mode)) {
+	if (fb_mode) {
 		uint16_t *fb16 = (void *) fb_active;
 		color = (color << 16) | (color & 0xffff);
 		for (; y0 <= y1; y0++) {
@@ -674,7 +680,7 @@ fb_filledcircle(int x0, int y0, int r, int color)
  
 	fb_plot(x0, y0 + r, color);
 	fb_plot(x0, y0 - r, color);
-	fb_rectangle(x0 + r, y0, x0 - r, y0, color);
+	fb_rectangle(x0 - r, y0, x0 + r, y0, color);
  
 	while(x < y) {
 		if (f >= 0) {
@@ -873,7 +879,7 @@ next_char:
 				continue;
 			else
 				dot = bgcolor;
-			if (__predict_false(fb_mode != 0))
+			if (fb_mode)
 				*((uint16_t *) &fb_active[off << 1]) = dot;
 			else
 				fb_active[off] = dot;
