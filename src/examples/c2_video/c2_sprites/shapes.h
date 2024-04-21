@@ -304,6 +304,25 @@ const char *shape_snacker_down_2[] =
 NULL
 };
 
+const char *shape_dessert[] =
+{/*
+ 0123456789012345678901 */
+"                      ",
+"             BB       ",
+"           BB         ",
+"         BB OOO       ",
+"   OOOOO  OOOOOOO     ",
+" OOOOOOOOOOOOOOOOO    ",
+"OOOO  OOOOOO  OOOO    ",
+"OOOOOOOOOOOOOOOOOO    ",
+"OOOOOOOO  OOOOOOOO    ",
+"OOO OOOOOOOOOO OOO    ",
+"OOOO          OOO     ",
+" OOOOOOOOOOOOOOO      ",
+"    OOOOOOOOO         ",
+NULL
+};
+
 const struct shape Shape[] =
 {
   [0] = { std_colors, shape_invader1 },
@@ -317,6 +336,7 @@ const struct shape Shape[] =
   [8] = { snack_colors, shape_snacker_right_2  },
   [9] = { snack_colors, shape_snacker_down_1   },
  [10] = { snack_colors, shape_snacker_down_2   },
+ [11] = { snack_colors, shape_dessert          },
 //  [5] = { NULL, NULL }
 };
 
