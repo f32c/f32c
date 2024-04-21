@@ -4,7 +4,7 @@
 // ascii-art of the shapes
 const struct charcolors std_colors[] =
 { //      RRGGBB
-  {'O', RGB2PIXEL(0xFF7F00)}, // orange
+  {'O', RGB2PIXEL(0xF25E00)}, // orange
   {'R', RGB2PIXEL(0xFF0000)}, // red
   {'Y', RGB2PIXEL(0xFFFF00)}, // yellow
   {'C', RGB2PIXEL(0x00FFFF)}, // cyan
@@ -15,6 +15,18 @@ const struct charcolors std_colors[] =
   {0, 0}
 };
 
+const struct charcolors snack_colors[] =
+{ //      RRGGBB
+  {'O', RGB2PIXEL(0xFF7F00)}, // orange
+  {'R', RGB2PIXEL(0xFF0000)}, // red
+  {'Y', RGB2PIXEL(0xFFFF00)}, // yellow
+  {'V', RGB2PIXEL(0xC734FF)}, // violet
+  {'G', RGB2PIXEL(0x38CB00)}, // green
+  {'B', RGB2PIXEL(0x0DA1FF)}, // blue
+  {'W', RGB2PIXEL(0xFFFFFF)}, // white
+  {' ', RGB2PIXEL(0)}, // transparent
+  {0, 0}
+};
 
 const char *shape_ship1[] =
 {
@@ -140,13 +152,91 @@ const char *shape_invader2[] =
 NULL
 };
 
+const char *shape_guard_blue[] =
+{/*
+ 0123456789012345678901 */
+"   BBBBBBBBBBBBBBB    ",
+"  B  WWWWBBBWWWW  B   ",
+"  BBWW  WWOWW  WWBB   ",
+"  BBWW  WWOWW  WWBB   ",
+"  BBWWWWWWOWWWWWWBB   ",
+"  BBWWWWWWOWWWWWWBB   ",
+"  BBWWWWWWOWWWWWWBB   ",
+"  BBWWWWWWOWWWWWWBB   ",
+"  B  WWWWBBBWWWW  B   ",
+"  BBBBBBBBBBBBBBBBB   ",
+" WWWWWGWWWWWGWWWWG    ",
+"  VWW   VWW   VWW     ",
+"   G     G     G      ",
+NULL
+};
+
+const char *shape_guard_orange[] =
+{/*
+ 0123456789012345678901 */
+"   OOOOOOOOOOOOOOO    ",
+"  O  WWWWOOOWWWW  O   ",
+"  OOWWWWWWBWWWWWWOO   ",
+"  OOWWW  BBWWW  OOO   ",
+"  OOWWW  BBWWW  OOO   ",
+"  OOWWWWWWBWWWWWWOO   ",
+"  OOWWWWWWBWWWWWWOO   ",
+"  OOWWWWWWBWWWWWWOO   ",
+"  O  WWWWOOOWWWW  O   ",
+"  OOOOOOOOOOOOOOOOO   ",
+"  WWWWWGWWWWWGWWWWG   ",
+"   VWW   VWW   VWW    ",
+"    G     G     G     ",
+NULL
+};
+
+const char *shape_guard_violet[] =
+{/*
+ 0123456789012345678901 */
+"   VVVVVVVVVVVVVVV    ",
+"  V  WWWWVVVWWWW  V   ",
+"  VVWWWWWWGWWWWWWVV   ",
+"  VVV  WWWGG  WWWVV   ",
+"  VVV  WWWGG  WWWVV   ",
+"  VVWWWWWWGWWWWWWVV   ",
+"  VVWWWWWWGWWWWWWVV   ",
+"  VVWWWWWWGWWWWWWVV   ",
+"  V  WWWWVVVWWWW  V   ",
+"  VVVVVVVVVVVVVVVVV   ",
+"   WWWWWGWWWWWGWWWWG  ",
+"    VWW   VWW   VWW   ",
+"     G     G     G    ",
+NULL
+};
+
+const char *shape_guard_green[] =
+{/*
+ 0123456789012345678901 */
+"   GGGGGGGGGGGGGGG    ",
+"  G  WWWWGGGWWWW  G   ",
+"  GGWWWWWWVWWWWWWGG   ",
+"  GGWWWWWWVWWWWWWGG   ",
+"  GGWWWWWWVWWWWWWGG   ",
+"  GGWWWWWWVWWWWWWGG   ",
+"  GGWW  WWVWW  WWGG   ",
+"  GGWW  WWVWW  WWGG   ",
+"  G  WWWWGGGWWWW  G   ",
+"  GGGGGGGGGGGGGGGGG   ",
+"  WWWWWGWWWWWGWWWWG   ",
+"   VWW   VWW   VWW    ",
+"    G     G     G     ",
+NULL
+};
+
 const struct shape Shape[] =
 {
   [0] = { std_colors, shape_invader1 },
   [1] = { std_colors, shape_invader2 },
   [2] = { std_colors, shape_ship1},
-//  [3] = { std_colors, shape_ship2},
-//  [4] = { std_colors, shape_ship3},
+  [3] = { snack_colors, shape_guard_blue },
+  [4] = { snack_colors, shape_guard_orange },
+  [5] = { snack_colors, shape_guard_violet },
+  [6] = { snack_colors, shape_guard_green },
 //  [5] = { NULL, NULL }
 };
 
