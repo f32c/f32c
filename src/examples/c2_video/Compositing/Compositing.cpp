@@ -147,6 +147,9 @@ int Compositing::shape_to_sprite(const struct shape *sh)
               existing_content = Sprite[j]->line[l].bmp;
         }
       }
+      #if BURST_WORKAROUND
+      new_sprite->line[y].bmp = new_sprite->line[y].bmp; // WTF? adding this line makes c2_font working with RAM burst enabled
+      #endif
       // if found, relink new sprite content to existing content
       if(existing_content)
         new_sprite->line[y].bmp = existing_content; // Sprite[0]->line[0].bmp; // existing_content;

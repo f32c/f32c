@@ -9,6 +9,8 @@
 
 #define REMOVE_LEADING_TRANSPARENT 1
 
+#define BURST_WORKAROUND 1
+
 // struct used to draw sprite in C
 struct sprite
 {
