@@ -152,45 +152,7 @@ const char *shape_invader2[] =
 NULL
 };
 
-const char *shape_guard_blue[] =
-{/*
- 0123456789012345678901 */
-"   BBBBBBBBBBBBBBB    ",
-"  B  WWWWBBBWWWW  B   ",
-"  BBWW  WWOWW  WWBB   ",
-"  BBWW  WWOWW  WWBB   ",
-"  BBWWWWWWOWWWWWWBB   ",
-"  BBWWWWWWOWWWWWWBB   ",
-"  BBWWWWWWOWWWWWWBB   ",
-"  BBWWWWWWOWWWWWWBB   ",
-"  B  WWWWBBBWWWW  B   ",
-"  BBBBBBBBBBBBBBBBB   ",
-" WWWWWGWWWWWGWWWWG    ",
-"  VWW   VWW   VWW     ",
-"   G     G     G      ",
-NULL
-};
-
-const char *shape_guard_orange[] =
-{/*
- 0123456789012345678901 */
-"   OOOOOOOOOOOOOOO    ",
-"  O  WWWWOOOWWWW  O   ",
-"  OOWWWWWWBWWWWWWOO   ",
-"  OOWWW  BBWWW  OOO   ",
-"  OOWWW  BBWWW  OOO   ",
-"  OOWWWWWWBWWWWWWOO   ",
-"  OOWWWWWWBWWWWWWOO   ",
-"  OOWWWWWWBWWWWWWOO   ",
-"  O  WWWWOOOWWWW  O   ",
-"  OOOOOOOOOOOOOOOOO   ",
-"  WWWWWGWWWWWGWWWWG   ",
-"   VWW   VWW   VWW    ",
-"    G     G     G     ",
-NULL
-};
-
-const char *shape_guard_violet[] =
+const char *shape_guard_violet_left[] =
 {/*
  0123456789012345678901 */
 "   VVVVVVVVVVVVVVV    ",
@@ -209,7 +171,7 @@ const char *shape_guard_violet[] =
 NULL
 };
 
-const char *shape_guard_green[] =
+const char *shape_guard_green_down[] =
 {/*
  0123456789012345678901 */
 "   GGGGGGGGGGGGGGG    ",
@@ -228,15 +190,133 @@ const char *shape_guard_green[] =
 NULL
 };
 
+const char *shape_guard_blue_up[] =
+{/*
+ 0123456789012345678901 */
+"   BBBBBBBBBBBBBBB    ",
+"  B  WWWWBBBWWWW  B   ",
+"  BBWW  WWOWW  WWBB   ",
+"  BBWW  WWOWW  WWBB   ",
+"  BBWWWWWWOWWWWWWBB   ",
+"  BBWWWWWWOWWWWWWBB   ",
+"  BBWWWWWWOWWWWWWBB   ",
+"  BBWWWWWWOWWWWWWBB   ",
+"  B  WWWWBBBWWWW  B   ",
+"  BBBBBBBBBBBBBBBBB   ",
+" WWWWWGWWWWWGWWWWG    ",
+"  VWW   VWW   VWW     ",
+"   G     G     G      ",
+NULL
+};
+
+const char *shape_guard_orange_right[] =
+{/*
+ 0123456789012345678901 */
+"   OOOOOOOOOOOOOOO    ",
+"  O  WWWWOOOWWWW  O   ",
+"  OOWWWWWWBWWWWWWOO   ",
+"  OOWWW  BBWWW  OOO   ",
+"  OOWWW  BBWWW  OOO   ",
+"  OOWWWWWWBWWWWWWOO   ",
+"  OOWWWWWWBWWWWWWOO   ",
+"  OOWWWWWWBWWWWWWOO   ",
+"  O  WWWWOOOWWWW  O   ",
+"  OOOOOOOOOOOOOOOOO   ",
+"  WWWWWGWWWWWGWWWWG   ",
+"   VWW   VWW   VWW    ",
+"    G     G     G     ",
+NULL
+};
+
+const char *shape_snacker_right_1[] =
+{/*
+ 0123456789012345678901 */
+"                      ",
+"                      ",
+"      GWWWWWWW        ",
+"     VWW  WWWWW       ",
+"    GWWW  WWWWWW      ",
+"  WWWWWWWW            ",
+"  WWWWWWWW            ",
+"  WWWWWWWWW           ",
+"    GWWWWWWWW         ",
+"     VWWWWWWWWWW      ",
+"      GWWWWWWWW       ",
+"                      ",
+"                      ",
+NULL
+};
+
+const char *shape_snacker_right_2[] =
+{/*
+ 0123456789012345678901 */
+"                      ",
+"                      ",
+"                      ",
+"  WW                  ",
+"  WW  GWWWWWWW        ",
+"  WW VWW  WWWWW       ",
+"  WWGWWW  WWWWWW      ",
+"  WWWWWWWW            ",
+"  WWWWWWWWWWWWWW      ",
+"  WWWWWWWWWWWWWW      ",
+"   GWWWWWWWWWWW       ",
+"    VWWWWWWWW         ",
+"                      ",
+"                      ",
+"                      ",
+NULL
+};
+
+const char *shape_snacker_down_1[] =
+{/*
+ 0123456789012345678901 */
+"        GWWWWWWV      ",
+"        GWWWWWWV      ",
+"       VWWWV          ",
+"      GWWWWWG         ",
+"      GWWWWWWV        ",
+"      GWWWWV  B       ",
+"      GWWWWV  B       ",
+"      GWWWG WWG       ",
+"      GWWV  WWG       ",
+"      GWWV  WWG       ",
+"      GWWV  WV        ",
+"       VWV  G         ",
+NULL
+};
+
+const char *shape_snacker_down_2[] =
+{/*
+ 0123456789012345678901 */
+"    WWWWWWV           ",
+"    WWWWWWV           ",
+"       GWWWG          ",
+"     GWWWWWWWWG       ",
+"    VWWWWW  WWG       ",
+"   VWWWWWW  WWWV      ",
+"  VWWWWW  WWWWWV      ",
+"  VWWWW    WWWWV      ",
+"  VWWW      WWWV      ",
+"  VWW        WWV      ",
+"   GG        GG       ",
+"                      ",
+NULL
+};
+
 const struct shape Shape[] =
 {
   [0] = { std_colors, shape_invader1 },
   [1] = { std_colors, shape_invader2 },
   [2] = { std_colors, shape_ship1},
-  [3] = { snack_colors, shape_guard_blue },
-  [4] = { snack_colors, shape_guard_orange },
-  [5] = { snack_colors, shape_guard_violet },
-  [6] = { snack_colors, shape_guard_green },
+  [3] = { snack_colors, shape_guard_violet_left },
+  [4] = { snack_colors, shape_guard_green_down },
+  [5] = { snack_colors, shape_guard_blue_up },
+  [6] = { snack_colors, shape_guard_orange_right },
+  [7] = { snack_colors, shape_snacker_right_1  },
+  [8] = { snack_colors, shape_snacker_right_2  },
+  [9] = { snack_colors, shape_snacker_down_1   },
+ [10] = { snack_colors, shape_snacker_down_2   },
 //  [5] = { NULL, NULL }
 };
 
