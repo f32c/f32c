@@ -41,6 +41,11 @@ int game_demo = 1; // 0-play 1-demo
 #define SPRITE_MAX 512
 #define N_SHAPES (sizeof(Shape)/sizeof(Shape[0]))
 
+// demo mode ship slow shooting freq (friendly mode)
+#define SHIP_SHOOTING_FREQ_SLOW 5000000
+// demo mode ship fast shooting freq (alien_mode)
+#define SHIP_SHOOTING_FREQ_FAST 500000000
+
 // max number of objects on the screen
 #define SHIPS_MAX (SPRITE_MAX-N_SHAPES)
 
@@ -71,7 +76,7 @@ int game_demo = 1; // 0-play 1-demo
 // time to reload next ship missile
 #define SHIP_MISSILE_RELOAD 8
 
-// time to reload next ship missile
+// time to reload next alien bomb
 #define ALIEN_BOMB_RELOAD 8
 
 // alien suction bars distance
@@ -1265,7 +1270,7 @@ int ship_aim_hit(struct starship *s, struct starship **alien)
 void ship_move(struct starship *s)
 {
   uint32_t rng = rand();
-  uint32_t shooting_freq = 5000000;
+  uint32_t shooting_freq = SHIP_SHOOTING_FREQ_SLOW;
   static int xdir = SPEED*FPSCALE/2; // x-direction that ship moves
   struct starship *object_collided;
   static int immunity = 0; // can't be destroyed
@@ -1365,7 +1370,7 @@ void ship_move(struct starship *s)
     return;
   }
   if(Alien_friendly == 0)
-    shooting_freq = 600000000;
+    shooting_freq = SHIP_SHOOTING_FREQ_FAST;
   if(s->prepare > 0)
     s->prepare--;
   else
