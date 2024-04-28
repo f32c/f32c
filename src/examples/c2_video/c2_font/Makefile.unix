@@ -1,0 +1,11 @@
+all:
+	g++ -DSOC_VIDEO_BPP=16 c2_font.cpp Compositing/Compositing.cpp
+
+run:	all
+	./a.out
+
+valgrind:	all
+	valgrind --leak-check=yes ./a.out
+
+clean:
+	rm -f a.out
