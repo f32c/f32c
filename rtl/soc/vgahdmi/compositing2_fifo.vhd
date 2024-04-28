@@ -150,6 +150,9 @@ entity compositing2_fifo is
         C_vscroll: integer := 3; -- vertical scroll that fixes fifo delay
         C_data_width: integer range 8 to 32 := 8; -- bits per pixel
         C_length_subtract: integer := 0; -- todo: set to 0 to save LUTs but C library must change then
+        C_length_width: integer range 4 to 16 := 11; -- bits width is 2^n limit of sprite x-size
+        -- C_length_width = 11 allows up to 2048 pixel horizontal width
+        -- C_length_width = 16 allows too much video badwidth to test CPU stability
         -- fifo buffer size (number of address bits that refer to pixels)
         -- compositing: 11 (2^11 = 2048 bytes for 640x480 8bpp)
         C_addr_width: integer := 11 -- bits width of fifo address
@@ -190,6 +193,7 @@ architecture behavioral of compositing2_fifo is
     constant C_length: integer := 2**C_addr_width; -- 1 sll C_addr_width - shift logical left
     constant C_addr_pad: std_logic_vector(C_shift_addr_width-1 downto 0) := (others => '0'); -- warning fixme degenerate range (-1 downto 0) for 32bit
     constant C_data_pad: std_logic_vector(C_data_width-1 downto 0) := (others => '-'); -- when shifting
+    constant C_length_pad: std_logic_vector(16-1 downto C_length_width) := (others => '0');
 
     -- Internal state
     signal R_sram_addr: std_logic_vector(29 downto 2);
@@ -286,7 +290,7 @@ begin
                       -- area, thus make a short range clipping
                       R_position <= data_in(15 downto 0); -- compositing position (pixels)
                       -- addr pad for 8bpp is "00"
-                      R_word_count <= (C_addr_pad & data_in(31 downto 16+C_shift_addr_width))-C_length_subtract; -- number of 32-bit words (n*4 pixels)
+                      R_word_count <= (C_addr_pad & C_length_pad & data_in(31-(16-C_length_width) downto 16+C_shift_addr_width))-C_length_subtract; -- number of 32-bit words (n*4 pixels)
                       R_sram_addr <= R_sram_addr + 1;  -- next sequential read (data)
                     else
                       -- C_position_clipping = true
@@ -294,7 +298,7 @@ begin
                         -- data_in(15 downto 0) is positive
                         if data_in(15 downto 0) < C_width then
                           R_position <= data_in(15 downto 0); -- compositing position (pixels)
-                          R_word_count <= (C_addr_pad & data_in(31 downto 16+C_shift_addr_width))-C_length_subtract; -- number of 32-bit words (n*4 pixels)
+                          R_word_count <= (C_addr_pad & C_length_pad & data_in(31-(16-C_length_width) downto 16+C_shift_addr_width))-C_length_subtract; -- number of 32-bit words (n*4 pixels)
                           R_sram_addr <= R_sram_addr + 1;  -- next sequential read (data)
                         else
                           -- out of visible compositing range, skip to the next segment or line
@@ -377,8 +381,8 @@ begin
                   else std_logic_vector(to_unsigned(0, C_burst_max_bits)); -- value 0 means 1 word, no burst
     end generate;
 
-    -- need refill signal must be CPU synchronous
-    -- attention: R_need_refill_cpu is clk_pixel synchronos
+    -- R_need_refill_cpu signal must be CPU synchronous
+    -- attention: R_line_wr and R_line_rd are clk_pixel synchronos
     -- R_need_refill_cpu will come with a delay,
     -- a possible problem is that un-needed data may be requested
     -- using address_strobe
