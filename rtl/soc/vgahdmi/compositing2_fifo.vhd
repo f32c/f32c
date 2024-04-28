@@ -646,6 +646,13 @@ end;
 
 -- [ ] 24bpp: how can it be easily done (bandwidth saving instead of fetching 32bit
 
+-- [ ] mixed bpp 1,2,4,8,16,32 on the same screen:
+--     to encode bpp we have 16 bits for position and pixel count while
+--     for up to full HD 11 bits are usually enough, 3 bits can encode bpp
+
+-- [ ] palette c2 option bit that load new palette instead of sprite or to
+--     load a 32-bpp sprite line as new palette
+
 -- [ ] FIFO for max burst length to avoid de-asserting read_ready and intermittent strobe
 
 -- [ ] burst: upload c2_sprites, c2_font and screen blanks, unrecoverable
