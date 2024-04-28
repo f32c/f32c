@@ -851,6 +851,27 @@ const char *shape_9[] =
 NULL
 };
 
+const char *shape_checkers[] =
+{/*
+ 01234567890123456789012345678901 */
+" W W W W W W W W",
+"W W W W W W W W ",
+" W W W W W W W W",
+"W W W W W W W W ",
+" W W W W W W W W",
+"W W W W W W W W ",
+" W W W W W W W W",
+"W W W W W W W W ",
+" W W W W W W W W",
+"W W W W W W W W ",
+" W W W W W W W W",
+"W W W W W W W W ",
+" W W W W W W W W",
+"W W W W W W W W ",
+" W W W W W W W W",
+"W W W W W W W W ",
+NULL
+};
 const struct shape Font[] =
 {
    [0] = { std_colors, shape_space },
@@ -891,5 +912,5 @@ const struct shape Font[] =
   [35] = { std_colors, shape_7 },
   [36] = { std_colors, shape_8 },
   [37] = { std_colors, shape_9 },
+  // [38] = { std_colors, shape_checkers },
 };
-
