@@ -5,7 +5,7 @@ extern "C" {
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#if __F32C__
+#ifdef __F32C__
 #include <dev/io.h>
 #endif
 }
@@ -14,13 +14,13 @@ void Compositing::init()
 {
   int i;
 
-#if __F32C__
+#ifdef __F32C__
   *videobase_reg = (uint32_t) NULL; // NULL pointer
 #endif
   scanlines = (struct compositing_line **)malloc(VGA_Y_MAX * sizeof(struct compositing_line *));
   for(i = 0; i < VGA_Y_MAX; i++)
     scanlines[i] = NULL;
-#if __F32C__
+#ifdef __F32C__
   *videobase_reg = (uint32_t)&(scanlines[0]);
 #endif
   n_sprites = 0;
@@ -361,7 +361,7 @@ void Compositing::sprite_refresh(int m, int n)
       }
     }
   }
-#if __F32C__
+#ifdef __F32C__
   *videobase_reg = (uint32_t) &(scanlines[0]);
 #endif
 }

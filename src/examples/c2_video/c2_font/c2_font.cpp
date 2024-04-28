@@ -18,7 +18,7 @@ int main(void)
   int unique_sprites;
   c2.init();
   c2.alloc_sprites(765); // 1200 full screen, 765 triangle, it sets c2.sprite_max
-  #if __F32c__
+  #ifdef __F32C__
   *c2.videobase_reg = 0; // disable video during update
   *c2.cntrl_reg = 0;
   #endif
@@ -63,7 +63,7 @@ int main(void)
 
   // this is needed for vgatext
   // to disable textmode and enable bitmap
-  #if __F32c__
+  #ifdef __F32C__
   *c2.cntrl_reg = 0b11000000; // enable video, yes bitmap, no text mode, no cursor
   #endif
   return 0;
