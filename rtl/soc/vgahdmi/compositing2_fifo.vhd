@@ -138,7 +138,7 @@ entity compositing2_fifo is
         -- C_position_clipping = false -- (default) handles only small out of screen positions
         -- C_position_clipping = true -- handles large out of screen gracefully (LUT eater)
         -- for average use it can be left disabled (false)
-        C_position_clipping: boolean := false; 
+        C_position_clipping: boolean := false;
         -- graceful bandwidth control: at the N pixels before the end of horizontal line
         -- prevent further compositing (instead of starting new segment, skip to next line)
         C_timeout: integer := 0; -- 0:disable, >=1 enable
@@ -271,7 +271,7 @@ begin
                 case R_state is
                   when 0 => -- read pointer to line start
                     -- R_sram_addr points to one of array of start addresses
-                    if conv_integer(data_in) = 0 then
+                    if conv_integer(data_in(29 downto 2)) = 0 then
                       -- NULL pointer: this line is empty, jump to next line
                       R_line_wr <= not R_line_wr; -- + 1;
                       R_sram_addr <= R_line_start; -- jump to start of the next line
@@ -382,7 +382,8 @@ begin
     end generate;
 
     -- R_need_refill_cpu signal must be CPU synchronous
-    -- attention: R_line_wr and R_line_rd are clk_pixel synchronos
+    -- R_line_wr is clk (CPU) synchronous
+    -- R_line_rd is clk_pixel synchronos
     -- R_need_refill_cpu will come with a delay,
     -- a possible problem is that un-needed data may be requested
     -- using address_strobe
