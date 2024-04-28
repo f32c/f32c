@@ -5,18 +5,24 @@ extern "C" {
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#if __F32C__
 #include <dev/io.h>
+#endif
 }
 
 void Compositing::init()
 {
   int i;
 
+#if __F32C__
   *videobase_reg = (uint32_t) NULL; // NULL pointer
+#endif
   scanlines = (struct compositing_line **)malloc(VGA_Y_MAX * sizeof(struct compositing_line *));
   for(i = 0; i < VGA_Y_MAX; i++)
     scanlines[i] = NULL;
+#if __F32C__
   *videobase_reg = (uint32_t)&(scanlines[0]);
+#endif
   n_sprites = 0;
   return;
 }
@@ -114,7 +120,7 @@ int Compositing::shape_to_sprite(const struct shape *sh)
       }
       else
       {
-        line_content = (pixel_t *) ( (3 + (uint32_t)line_content) & ~3 );
+        line_content = (pixel_t *) ( (3 + (size_t)line_content) & ~3 );
         new_sprite->line[y].bmp = line_content;
         for(x = 0; x < rl; x++, clr++) // copy content
           *(line_content++) = color_list[(int)*clr];
@@ -355,7 +361,9 @@ void Compositing::sprite_refresh(int m, int n)
       }
     }
   }
+#if __F32C__
   *videobase_reg = (uint32_t) &(scanlines[0]);
+#endif
 }
 
 void Compositing::sprite_refresh(int m)
@@ -371,39 +379,56 @@ void Compositing::sprite_refresh()
 void Compositing::summary(struct summary *sum)
 {
   int i;
-  uint32_t sum_pixels = 0, sum_pixels_in_line; // min_pixels = 999999999, max_pixels = 0;
+  uint32_t sum_pixels = 0, sum_pixels_in_line;
+  uint32_t sum_c2lines = 0, sum_c2lines_in_line;
   struct compositing_line *cl;
 
   sum->total_scanlines = 0;
-  sum->total_compositing_lines = 0; // compoisiting_line is small 1-line horizontal sprite
+  sum->total_c2lines = 0; // compoisiting_line is small 1-line horizontal sprite
   sum->total_pixels = 0;
-  sum->min_scanline = -1;
-  sum->min_scanline_pixels = 999999999;
-  sum->max_scanline = -1;
-  sum->max_scanline_pixels = 0;
-  
+  sum->min_scanline_pixels = -1;
+  sum->min_scanline_pixels_count = 999999999;
+  sum->max_scanline_pixels = -1;
+  sum->max_scanline_pixels_count = 0;
+  sum->min_scanline_c2lines = -1;
+  sum->min_scanline_c2lines_count = 999999999;
+  sum->max_scanline_c2lines = -1;
+  sum->max_scanline_c2lines_count = 0;
   
   for(i = 0; i < VGA_Y_MAX; i++)
     if(scanlines[i])
     {
       sum->total_scanlines++;
       sum_pixels_in_line = 0;
+      sum_c2lines_in_line = 0;
       for(cl = scanlines[i]; cl != NULL; cl = cl->next)
       {
-        sum->total_compositing_lines++;
+        sum_c2lines++;
+        sum_c2lines_in_line++;
         sum_pixels += cl->n + 1;
         sum_pixels_in_line += cl->n + 1;
       }
-      if(sum_pixels_in_line < sum->min_scanline_pixels)
+      if(sum_pixels_in_line < sum->min_scanline_pixels_count)
       {
-        sum->min_scanline_pixels = sum_pixels_in_line;
-        sum->min_scanline = i;
+        sum->min_scanline_pixels = i;
+        sum->min_scanline_pixels_count = sum_pixels_in_line;
       }
-      if(sum_pixels_in_line > sum->max_scanline_pixels)
+      if(sum_pixels_in_line > sum->max_scanline_pixels_count)
       {
-        sum->max_scanline_pixels = sum_pixels_in_line;
-        sum->max_scanline = i;
+        sum->max_scanline_pixels = i;
+        sum->max_scanline_pixels_count = sum_pixels_in_line;
+      }
+      if(sum_c2lines_in_line < sum->min_scanline_c2lines_count)
+      {
+        sum->min_scanline_c2lines = i;
+        sum->min_scanline_c2lines_count = sum_c2lines_in_line;
+      }
+      if(sum_c2lines_in_line > sum->max_scanline_c2lines_count)
+      {
+        sum->max_scanline_c2lines = i;
+        sum->max_scanline_c2lines_count = sum_c2lines_in_line;
       }
     }
   sum->total_pixels = sum_pixels;
+  sum->total_c2lines = sum_c2lines;
 }

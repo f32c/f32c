@@ -5,12 +5,16 @@
 struct summary
 {
   uint32_t total_scanlines,
-           total_compositing_lines,
+           total_c2lines,
            total_pixels,
-           min_scanline, // line with minimal number of pixels
-           min_scanline_pixels, // min pixel count in line
-           max_scanline, // line with maximal number of pixels
-           max_scanline_pixels; // max pixel count in line
+           min_scanline_c2lines, // line with minimal number of pixels
+           min_scanline_c2lines_count, // min pixel count in line
+           max_scanline_c2lines, // line with maximal number of pixels
+           max_scanline_c2lines_count, // max pixel count in line
+           min_scanline_pixels, // line with minimal number of pixels
+           min_scanline_pixels_count, // min pixel count in line
+           max_scanline_pixels, // line with maximal number of pixels
+           max_scanline_pixels_count; // max pixel count in line
 };
 
 #endif // SUMMARY_H
