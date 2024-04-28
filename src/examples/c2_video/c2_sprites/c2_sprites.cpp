@@ -68,9 +68,7 @@ void loop()
         Sprite_speed[i].y = (rand()%3)-1;
     }
     if(c2.Sprite[i]->x > VGA_X_MAX)
-    {
       Sprite_speed[i].x = -1;
-    }
 
     if(c2.Sprite[i]->y < -40)
     {

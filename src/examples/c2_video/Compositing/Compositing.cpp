@@ -21,6 +21,19 @@ void Compositing::init()
   for(i = 0; i < VGA_Y_MAX; i++)
     scanlines[i] = NULL;
 #ifdef __F32C__
+  // c2.init() disables video but it won't stop
+  // immediately. Wait 3 video blanks for video
+  // burst to completely stop before
+  // creating sprite linked list.
+  // Active video burst may disturb CPU and
+  // c2 linked list may be created wrong.
+  // Compile same source for f32c and linux.
+  // Both should print the same summary.
+  for(i = 0; i < 3; i++)
+  {
+    while((*vblank_reg & 0x80) == 0);
+    while((*vblank_reg & 0x80) != 0);
+  }
   *videobase_reg = (uint32_t)&(scanlines[0]);
 #endif
   n_sprites = 0;

@@ -1435,17 +1435,6 @@ void setup()
 {
   int i;
   c2.init();
-  // after c2.init() disables video burst
-  // wait 3 video blanks for video burst
-  // to completely stop before
-  // creating sprite linked list
-  // active video burst may disturb CPU
-  // c2 linked list may be created wrong
-  for(i = 0; i < 3; i++)
-  {
-    while((*c2.vblank_reg & 0x80) == 0);
-    while((*c2.vblank_reg & 0x80) != 0);
-  }
   c2.alloc_sprites(SPRITE_MAX);
   create_sine_table();
   create_atan_table();
