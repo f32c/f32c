@@ -367,3 +367,43 @@ void Compositing::sprite_refresh()
 {
   sprite_refresh(0, n_sprites);
 }
+
+void Compositing::summary(struct summary *sum)
+{
+  int i;
+  uint32_t sum_pixels = 0, sum_pixels_in_line; // min_pixels = 999999999, max_pixels = 0;
+  struct compositing_line *cl;
+
+  sum->total_scanlines = 0;
+  sum->total_compositing_lines = 0; // compoisiting_line is small 1-line horizontal sprite
+  sum->total_pixels = 0;
+  sum->min_scanline = -1;
+  sum->min_scanline_pixels = 999999999;
+  sum->max_scanline = -1;
+  sum->max_scanline_pixels = 0;
+  
+  
+  for(i = 0; i < VGA_Y_MAX; i++)
+    if(scanlines[i])
+    {
+      sum->total_scanlines++;
+      sum_pixels_in_line = 0;
+      for(cl = scanlines[i]; cl != NULL; cl = cl->next)
+      {
+        sum->total_compositing_lines++;
+        sum_pixels += cl->n + 1;
+        sum_pixels_in_line += cl->n + 1;
+      }
+      if(sum_pixels_in_line < sum->min_scanline_pixels)
+      {
+        sum->min_scanline_pixels = sum_pixels_in_line;
+        sum->min_scanline = i;
+      }
+      if(sum_pixels_in_line > sum->max_scanline_pixels)
+      {
+        sum->max_scanline_pixels = sum_pixels_in_line;
+        sum->max_scanline = i;
+      }
+    }
+  sum->total_pixels = sum_pixels;
+}

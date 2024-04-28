@@ -6,6 +6,7 @@ extern "C"
   #include "compositing_line.h"
   #include "sprite.h"
   #include "shape.h"
+  #include "summary.h"
 }
 
 #include <inttypes.h>
@@ -51,6 +52,7 @@ class Compositing
     int sprite_from_bitmap(int w, int h, pixel_t *bmp);
     void sprite_position(int sprite, int x, int y);
     void sprite_link_content(int original, int clone);
+    void summary(struct summary *sum); // debug c2: pixel count summary
 };
 
 #endif

@@ -2,7 +2,13 @@
 #include "font.h"
 #define USE_FONT 1 // 0:color tiles, 1:font.h
 
+extern "C"
+{
+#include <stdio.h> // printf
+}
+
 #define N_LETTERS ((int)(sizeof(Font)/sizeof(Font[0])))
+//#define N_LETTERS 2 // debug
 
 Compositing c2;
 
@@ -41,6 +47,15 @@ void main(void)
   #endif
 
   c2.sprite_refresh();
+
+  struct summary sum[1];
+  c2.summary(sum);
+  printf("total scanlines         : %10d\n", sum[0].total_scanlines);
+  printf("total compositing lines : %10d\n", sum[0].total_compositing_lines);
+  printf("total pixels            : %10d\n", sum[0].total_pixels);
+  printf("min pixels in line %4d : %10d\n", sum[0].min_scanline, sum[0].min_scanline_pixels);
+  printf("max pixels in line %4d : %10d\n", sum[0].max_scanline, sum[0].max_scanline_pixels);
+  printf("------------------------ -----------\n");
 
   // this is needed for vgatext
   // to disable textmode and enable bitmap
