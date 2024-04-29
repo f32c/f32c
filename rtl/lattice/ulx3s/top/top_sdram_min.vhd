@@ -57,7 +57,7 @@ entity top_sdram is
 
 	-- Digital Video (differential outputs)
 	gpdi_dp, gpdi_dn: out std_logic_vector(3 downto 0);
-  
+
 	-- i2c shared for digital video and RTC
 	gpdi_scl, gpdi_sda: inout std_logic;
 
