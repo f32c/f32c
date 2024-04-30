@@ -6,7 +6,7 @@ TARGET_ARCH="mips riscv32"
 # optional extras
 #TARGET_ARCH=${TARGET_ARCH}" microblaze nios2 arm"
 
-GNU_MIRROR=ftp://ftp.gnu.org/gnu
+GNU_MIRROR=https://ftp.gnu.org/gnu
 
 BINUTILS_URL=${GNU_MIRROR}/binutils/binutils-2.41.tar.xz
 GCC_URL=${GNU_MIRROR}/gcc/gcc-13.2.0/gcc-13.2.0.tar.xz
