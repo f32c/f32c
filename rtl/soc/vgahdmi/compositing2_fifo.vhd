@@ -203,6 +203,7 @@ architecture behavioral of compositing2_fifo is
     signal R_bram_in_addr: std_logic_vector(C_addr_width-1 downto 0);
     signal S_bram_write, S_data_write: std_logic;
     signal S_need_refill: std_logic;
+    signal S_need_refill_unclean: std_logic; -- this strobe doesn't conform to f32c bus protocol
     signal R_need_refill_cpu: std_logic := '0';
     signal S_compositing_erase: std_logic := '0';
     signal S_offset_visible: std_logic := '1';
@@ -225,6 +226,7 @@ architecture behavioral of compositing2_fifo is
     -- indicates which line in buffer (containing 2 lines) is written (compositing from RAM)
     -- and which line is read (by display output)
     signal R_line_rd, R_line_wr: std_logic := '0'; -- simple 1-bit index of line
+    signal R_addr_strobe: std_logic := '0';
 
     signal startsync: std_logic_vector(C_synclen-1 downto 0);
     -- clean start: '1' will reset fifo to its base address
@@ -387,28 +389,48 @@ begin
     -- R_need_refill_cpu will come with a delay,
     -- a possible problem is that un-needed data may be requested
     -- using address_strobe
+    -- R_need_refill_cpu can be used as strobe but doesn't
+    -- fully conform to f32c bus protocol
     process(clk) begin
       if rising_edge(clk) then
         if R_line_wr = R_line_rd
         then
-            R_need_refill_cpu <= '0';
+          R_need_refill_cpu <= '0';
         else
-            R_need_refill_cpu <= '1';
+          R_need_refill_cpu <= '1';
         end if;
       end if;
     end process;
 
+    process(clk) begin
+      if rising_edge(clk) then
+        if data_ready = '1'
+        then -- after data ready and burst has finished (not in state 4), strobe can turn off
+          if R_word_count = 0 or R_state /= 4
+          then
+            R_addr_strobe <= '0';
+          end if;
+        else -- data_ready = '0'
+          if R_line_wr /= R_line_rd
+          then
+            R_addr_strobe <= '1';
+          end if;
+        end if;
+      end if;
+    end process;
+    S_need_refill <= R_addr_strobe; -- should conform to f32c bus protocol
+
     permanent_strobe: if C_data_width = 32 generate
-    S_need_refill <= R_need_refill_cpu;
+    S_need_refill_unclean <= R_need_refill_cpu;
     end generate;
 
     intermittent_strobe: if C_data_width < 32 generate
       no_fast_ram: if C_fast_ram = false generate
-        S_need_refill <= R_need_refill_cpu;
+        S_need_refill_unclean <= R_need_refill_cpu;
       end generate; -- no_fast_ram
       yes_fast_ram: if C_fast_ram = true generate
-        -- warning this is workaround and can cause deadlock
-        S_need_refill <= '1' when R_need_refill_cpu='1' and
+        -- warning this is wokaround and can cause deadlock
+        S_need_refill_unclean <= '1' when R_need_refill_cpu='1' and
             (
               -- conservative request delay:
               -- effectively this does
@@ -475,7 +497,7 @@ begin
             -- so it fits to shift 8 bit per pixel output
             -- for lower than 8 we won't have time to shift
             -- in that case: FIXME :-)
-            -- currently it is fixed by masking out addr_stobe
+            -- currently it is fixed by masking out addr_strobe
             -- until shifting is finished
             R_data_in_shift <= data_in; -- store data in temporary shift register
             --R_data_in_shift <= x"aa5511ff";
