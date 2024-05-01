@@ -59,7 +59,7 @@ int main(void)
   printf("total pixels             : %10d\n", sum[0].total_pixels);
   printf("min pixels in line  %4d : %10d\n", sum[0].min_scanline_pixels, sum[0].min_scanline_pixels_count);
   printf("max pixels in line  %4d : %10d\n", sum[0].max_scanline_pixels, sum[0].max_scanline_pixels_count);
-  printf("------------------------ -----------\n");
+  printf("------------------------- -----------\n");
 
   // this is needed for vgatext
   // to disable textmode and enable bitmap
