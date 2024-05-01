@@ -267,6 +267,7 @@ begin
             R_sram_addr <= R_line_start;
             R_state <= 0;
             R_line_wr <= '0';
+            R_word_count <= (others => '0');
           else
             if data_ready = '1' and S_need_refill = '1'
             then -- BRAM must use this
@@ -327,6 +328,7 @@ begin
                             R_state <= 0;
                             R_line_wr <= not R_line_wr; -- + 1;
                             R_sram_addr <= R_line_start; -- jump to start of the next line
+                            R_word_count <= (others => '0');
                           else
                             R_state <= 1;
                             R_sram_addr <= R_seg_next; -- jump to next compositing segment
@@ -379,8 +381,9 @@ begin
 
     suggest_cache <= R_suggest_cache;
     G_yes_burst: if C_burst_max_bits > 0 generate
-      suggest_burst <= R_word_count(C_burst_max_bits-1 downto 0) when R_state=4 -- value 2 means 3 words to burst
+      suggest_burst <= R_word_count(C_burst_max_bits-1 downto 0) when R_state=4 or R_state=0 -- value 2 means 3 words to burst
                   else std_logic_vector(to_unsigned(0, C_burst_max_bits)); -- value 0 means 1 word, no burst
+                  -- else std_logic_vector(to_unsigned(3-R_state, C_burst_max_bits)); -- value 0 means 1 word, burst read struct
     end generate;
 
     -- R_need_refill_cpu signal must be CPU synchronous
@@ -411,7 +414,7 @@ begin
             R_addr_strobe <= '0';
           end if;
         else -- data_ready = '0'
-          if R_line_wr /= R_line_rd
+          if R_line_wr /= R_line_rd and read_ready = '1'
           then
             R_addr_strobe <= '1';
           end if;
