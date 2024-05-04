@@ -1,7 +1,7 @@
 
-PROG = pacmaze
+PROG = pacman
 
-CXXFILES = Compositing/Compositing.cpp
+CXXFILES = Compositing/Compositing.cpp c2_pacman.cpp
 CFILES = pacmaze.c
 
 CFLAGS += -D__F32C__

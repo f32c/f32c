@@ -1,13 +1,18 @@
 // source from https://gtoal.com/src/pacman-maze-generators/
 #include <stdio.h>
+#include <stdlib.h>
+#include "pacmaze.h"
 
-extern long int random(void);
+// extern long int random(void);
+
+#if 0
 #define EXIT_SUCCESS 0
 
 #define TARGET_HEIGHT 19
 #define TARGET_WIDTH 25
 #define TILE_DIMENSION 4
 #define MIDDLE ((TARGET_WIDTH+1)/2)
+
 
 #define WIDTH (TARGET_HEIGHT/2)
 #define HEIGHT (TARGET_WIDTH/4)
@@ -17,6 +22,7 @@ extern long int random(void);
 #ifndef FALSE
 #define FALSE (0!=0)
 #define TRUE (!FALSE)
+#endif
 #endif
 
 static int next_tile = 0, first_tile, last_tile, dead_block;
@@ -254,7 +260,6 @@ void trim_central_column(void) {
   }
 }
 
-// made in EMARD
 void trim_central_vertical_parallel(void) {
   int iterate, i;
   // Trim vertical central '#' that have parallel '#' to the left
@@ -401,34 +406,24 @@ void generate_maze(void)
 
   // Generating is cheap so we can afford to generate and reject
   for (;;) {
-
     play_tetris();
     debug();
     convert_to_maze();
     debug_maze();
     gen_text_maze();
     trim_junk();
-    trim_central_column();
-    trim_central_vertical_parallel(); // made in EMARD
+    #if 1
+    trim_central_column(); // todo open cul-de-sac
+    #endif
+    // trim_central_vertical_parallel();
 
     // Reject any completed mazes that have problems
+    #if 1
     if (too_narrow()) continue;
-    if (small_loops()) continue; // often rejects
     if (wide_path()) continue;
+    #endif
+    if (small_loops()) continue;
     if (bad_spawn_point()) continue;
-
     break;
-  }
-}
-
-void main(void)
-{
-  int i;
-  for(i = 0; i < 4; i++) // simple seed sets random to quickly make its first maze
-    random();
-  for(;;)
-  {
-    generate_maze();
-    draw_maze(); // print on stdout
   }
 }
