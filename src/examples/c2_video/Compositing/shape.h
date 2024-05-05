@@ -13,7 +13,7 @@ struct shape
 {
   const struct charcolors *colors; // array of colors
   const char **bmp; // the bitmap, NULL-terminated
-  const uint8_t w,h; // width x-size, height y-size
+  const int16_t xc, yc; // xy center (add to xy position) for easier animation
 };
 
 // extern struct shape Shape[];

@@ -56,6 +56,7 @@ int Compositing::shape_to_sprite(const struct shape *sh)
 {
   int i;
   int ix=VGA_X_MAX/2,iy=VGA_Y_MAX/2; // initial sprite position on screen
+  int xf=ix+sh->xc; // final x-position with centering
   int h; // width and height of the sprite
   int sprite_size, line_size; // how much to malloc
   pixel_t color_list[256];
@@ -102,12 +103,14 @@ int Compositing::shape_to_sprite(const struct shape *sh)
   new_sprite->lxo = (int16_t *) &(new_sprite->line[h]);
   new_sprite->x = ix;
   new_sprite->y = iy;
+  new_sprite->xc = sh->xc;
+  new_sprite->yc = sh->yc;
   new_sprite->h = h;
   new_sprite->ha = h; // allocated size
   for(i = 0; i < h; i++)
   {
     new_sprite->line[i].next = NULL;
-    new_sprite->line[i].x = ix;
+    new_sprite->line[i].x = xf;
     // new_sprite->lxo[i] = 0;
   }
   // 2nd pass read ascii-art data and write color pixel content
@@ -234,6 +237,8 @@ int Compositing::sprite_fill_rect(int w, int h, pixel_t color)
   spr = (struct sprite *)malloc(sprite_size);
   spr->x = 0;
   spr->y = 0;
+  spr->xc = 0;
+  spr->yc = 0;
   spr->h = h;
   spr->ha = h;
   spr->line = (struct compositing_line *)malloc(h * (sizeof(struct compositing_line) + sizeof(int16_t)) );
@@ -278,6 +283,8 @@ int Compositing::sprite_from_bitmap(int w, int h, pixel_t *bmp)
   spr = (struct sprite *)malloc(sprite_size);
   spr->x = 0;
   spr->y = 0;
+  spr->xc = 0;
+  spr->yc = 0;
   spr->h = h;
   spr->ha = h;
   spr->line = (struct compositing_line *)malloc(h * (sizeof(struct compositing_line) + sizeof(int16_t)) );
@@ -285,7 +292,7 @@ int Compositing::sprite_from_bitmap(int w, int h, pixel_t *bmp)
   for(i = 0; i < h; i++)
   {
     spr->line[i].next = NULL;
-    spr->line[i].x = spr->x;
+    spr->line[i].x = 0;
     spr->line[i].n = w-1;
     spr->line[i].bmp = bmp;
     spr->lxo[i] = 0;
@@ -314,6 +321,9 @@ void Compositing::sprite_link_content(int original, int clone)
   }
   struct compositing_line *src = Sprite[original]->line;
   struct compositing_line *dst = Sprite[clone]->line;
+  // original center should be copied together with content
+  Sprite[clone]->xc = Sprite[original]->xc;
+  Sprite[clone]->yc = Sprite[original]->yc;
   //int16_t *src_lxo = Sprite[original]->lxo, *dst_lxo = Sprite[clone]->lxo;
   Sprite[clone]->lxo = Sprite[original]->lxo; // faster: don't copy x-line-offset, just change the pointer
   for(i = 0; i < m; i++)
@@ -347,8 +357,8 @@ void Compositing::sprite_refresh(int m, int n)
   for(i = m; i < n; i++) // loop over all sprites
   {
     // cache x/y-offset of the sprite
-    int x = Sprite[i]->x;
-    int y = Sprite[i]->y;
+    int x = Sprite[i]->x + Sprite[i]->xc;
+    int y = Sprite[i]->y + Sprite[i]->yc;
     int h = Sprite[i]->h;
     // calculate clipping
     int j0 = 0;

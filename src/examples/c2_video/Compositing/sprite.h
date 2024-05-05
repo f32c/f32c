@@ -15,6 +15,7 @@
 struct sprite
 {
   int16_t x,y; // current position on the screen
+  int16_t xc,yc; // content centering (adds to x/y) for easier animation
   uint16_t h; // h: current height y-size (number of lines)
   uint16_t ha; // height allocated (absolute max of lines)
   struct compositing_line *line; // content: array of lines - NULL to terminate
