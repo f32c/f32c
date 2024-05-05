@@ -20,6 +20,8 @@ struct sprite_speed
 };
 struct sprite_speed *Sprite_speed;
 
+int sprite_snacker;
+
 #define XM 27
 #define YM 21
 
@@ -56,7 +58,9 @@ int line2shape(int i, int j)
   if(line[j][i] == '#')
     return SHAPE_GUMDROP;
   if(line[j][i] == '@')
-    return SHAPE_SNACKER_RIGHT_1;
+    return SHAPE_SNACKER_RIGHT_1 + (random() & 1);
+  if(line[j][i] == 'V')
+    return SHAPE_GUARD_VIOLET_LEFT + (random() & 3);
   if(line[j-1][i] == ' ' && line[j+1][i] == ' ' && line[j][i-1] == ' '  && line[j][i+1] == ' ')
     return SHAPE_WALL_CROSS;
   if(line[j-1][i] == ' ' && line[j+1][i] == ' ' && line[j][i-1] == '#'  && line[j][i+1] == ' ')
@@ -161,51 +165,23 @@ void setup()
   //*c2.cntrl_reg = 0b11100000; // enable video, yes bitmap, yes text mode, no cursor
 }
 
-void new_maze()
-{
-  random_maze();
-  while((*c2.vblank_reg & 0x80) == 0);
-  if(validate_maze())
-  {
-    refresh_c2_tiles();
-    c2.sprite_refresh();
-  }
-  while((*c2.vblank_reg & 0x80) != 0);
-}
-
 void loop()
 {
-  int i;
-
-  for(i = 0; i < c2.n_sprites; i++)
-  {
-    c2.Sprite[i]->x += Sprite_speed[i].x;
-    c2.Sprite[i]->y += Sprite_speed[i].y;
-    if(c2.Sprite[i]->x < -40)
-    {
-      Sprite_speed[i].x = 1;
-      if( (rand()&7) == 0 )
-        Sprite_speed[i].y = (rand()%3)-1;
-    }
-    if(c2.Sprite[i]->x > VGA_X_MAX)
-      Sprite_speed[i].x = -1;
-
-    if(c2.Sprite[i]->y < -40)
-    {
-      Sprite_speed[i].y = 1;
-      if( (rand()&7) == 0 )
-        Sprite_speed[i].x = (rand()%3)-1;
-    }
-    if(c2.Sprite[i]->y > VGA_Y_MAX+40)
-      Sprite_speed[i].y = -1;
-  }
+  static int x = 0; // x position of the snacker
+  random_maze();
+  int snacker = c2_tile[13][13].sprite;
+  x++; // move snacker
+  c2.Sprite[snacker]->x = 60 + ((x + 1) & 511); // set sprite x position
+  // animate snacker
+  c2.sprite_link_content(SHAPE_SNACKER_RIGHT_1 + ((x>>3)&1), snacker);
   while((*c2.vblank_reg & 0x80) == 0);
+  if(validate_maze())
+    refresh_c2_tiles();
   c2.sprite_refresh();
   while((*c2.vblank_reg & 0x80) != 0);
 }
 
-void
-main(void)
+void main(void)
 {
   for(int i = 0; i < 30; i++) // 4 is fast, 10 too
     random();
@@ -213,5 +189,5 @@ main(void)
   draw_maze(); // print to stdoup
   setup();
   while(1)
-    new_maze();
+    loop();
 }
