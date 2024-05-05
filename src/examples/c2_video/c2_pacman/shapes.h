@@ -140,19 +140,15 @@ NULL
 const char *shape_snacker_right_1[] =
 {/*
  0123456789012345678901 */
-"                      ",
-"                      ",
-"      GWWWWWWW        ",
-"     VWW  WWWWW       ",
-"    GWWW  WWWWWW      ",
-"  WWWWWWWW            ",
-"  WWWWWWWW            ",
-"  WWWWWWWWW           ",
-"    GWWWWWWWW         ",
-"     VWWWWWWWWWW      ",
-"      GWWWWWWWW       ",
-"                      ",
-"                      ",
+"    GWWWWWWW  ",
+"   VWW  WWWWW ",
+"  GWWW  WWWWWW",
+"WWWWWWWW      ",
+"WWWWWWWW      ",
+"WWWWWWWWW     ",
+"  GWWWWWWWW   ",
+"   VWWWWWWWWWW",
+"    GWWWWWWWW ",
 NULL
 };
 
@@ -160,21 +156,15 @@ NULL
 const char *shape_snacker_right_2[] =
 {/*
  0123456789012345678901 */
-"                      ",
-"                      ",
-"                      ",
-"  WW                  ",
-"  WW  GWWWWWWW        ",
-"  WW VWW  WWWWW       ",
-"  WWGWWW  WWWWWW      ",
-"  WWWWWWWW            ",
-"  WWWWWWWWWWWWWW      ",
-"  WWWWWWWWWWWWWW      ",
-"   GWWWWWWWWWWW       ",
-"    VWWWWWWWW         ",
-"                      ",
-"                      ",
-"                      ",
+"WW            ",
+"WW  GWWWWWWW  ",
+"WW VWW  WWWWW ",
+"WWGWWW  WWWWWW",
+"WWWWWWWW      ",
+"WWWWWWWWWWWWWW",
+"WWWWWWWWWWWWWW",
+" GWWWWWWWWWWW ",
+"  VWWWWWWWW   ",
 NULL
 };
 
@@ -465,10 +455,10 @@ const struct shape Shape[] =
  [SHAPE_GUARD_GREEN_DOWN] = { snack_colors, shape_guard_green_down, -10, -5 },
  [SHAPE_GUARD_BLUE_UP] = { snack_colors, shape_guard_blue_up, -10, -5 },
  [SHAPE_GUARD_ORANGE_RIGHT] = { snack_colors, shape_guard_orange_right, -10, -5 },
- [SHAPE_SNACKER_RIGHT_1] = { snack_colors, shape_snacker_right_1, -10, -5  },
- [SHAPE_SNACKER_RIGHT_2] = { snack_colors, shape_snacker_right_2, -10, -5  },
- [SHAPE_SNACKER_DOWN_1] = { snack_colors, shape_snacker_down_1, -10, -5 },
- [SHAPE_SNACKER_DOWN_2] = { snack_colors, shape_snacker_down_2, -10, -5 },
+ [SHAPE_SNACKER_RIGHT_1] = { snack_colors, shape_snacker_right_1, -6, -5 },
+ [SHAPE_SNACKER_RIGHT_2] = { snack_colors, shape_snacker_right_2, -6, -4 },
+ [SHAPE_SNACKER_DOWN_1] = { snack_colors, shape_snacker_down_1, -10, -7 },
+ [SHAPE_SNACKER_DOWN_2] = { snack_colors, shape_snacker_down_2, -10, -7 },
  [SHAPE_DESSERT] = { snack_colors, shape_dessert, -10, -10 },
  [SHAPE_GUMDROP] = { snack_colors, shape_gumdrop, -3, -2 },
  [SHAPE_WALL_T_RIGHT] = { snack_colors, shape_wall_t_right, 0, -10 },
