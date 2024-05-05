@@ -400,6 +400,28 @@ void draw_maze(void) {
   putchar('\n');
 }
 
+// generate random maze fast
+// run validate_maze() later
+void random_maze(void)
+{
+  play_tetris();
+  convert_to_maze();
+  gen_text_maze();
+  trim_junk();
+}
+
+int validate_maze(void)
+{
+  // Reject any completed mazes that have problems
+  #if 0
+  if (too_narrow()) return 0;
+  if (wide_path()) return 0;
+  #endif
+  if (small_loops()) return 0;
+  if (bad_spawn_point()) return 0;
+  return 1;
+}
+
 void generate_maze(void)
 {
   first_tile = 0; last_tile = sizeof(tile)/sizeof(tile[0])-1; dead_block = last_tile+1;

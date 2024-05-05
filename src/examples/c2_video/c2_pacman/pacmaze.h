@@ -28,4 +28,6 @@ extern char line[PACHEIGHT*2+1][PACWIDTH*6+1]; // slop is to allow for stretched
 
 void generate_maze(void);
 void draw_maze(void);
+void random_maze(void);
+int  validate_maze(void);
 #endif
