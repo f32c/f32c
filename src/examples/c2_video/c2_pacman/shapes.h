@@ -403,11 +403,64 @@ const char *shape_wall_l_right_up[] =
 NULL
 };
 
+#define SHAPE_WALL_CROSS 21
+const char *shape_wall_cross[] =
+{
+"          W",
+"          W",
+"          W",
+"          W",
+"          W",
+"          W",
+"          W",
+"          W",
+"          W",
+"          W",
+"WWWWWWWWWWWWWWWWWWWWW",
+"          W",
+"          W",
+"          W",
+"          W",
+"          W",
+"          W",
+"          W",
+"          W",
+"          W",
+"          W",
+NULL
+};
+
+#define SHAPE_WALL_LEFT_HORIZONTAL 22
+#define SHAPE_WALL_RIGHT_HORIZONTAL 23
+const char *shape_wall_short_horizontal[] =
+{
+"WWWWWWWWWW",
+NULL
+};
+
+#define SHAPE_WALL_UP_VERTICAL 24
+#define SHAPE_WALL_DOWN_VERTICAL 25
+const char *shape_wall_short_vertical[] =
+{
+"W",
+"W",
+"W",
+"W",
+"W",
+"W",
+"W",
+"W",
+"W",
+"W",
+"W",
+NULL
+};
+
 const struct shape Shape[] =
 {
  [SHAPE_SPACE] = { snack_colors, shape_space },
- [SHAPE_WALL_HORIZONTAL] = { snack_colors, shape_wall_horizontal },
- [SHAPE_WALL_VERTICAL] = { snack_colors, shape_wall_vertical },
+ [SHAPE_WALL_HORIZONTAL] = { snack_colors, shape_wall_horizontal, -10, 0 },
+ [SHAPE_WALL_VERTICAL] = { snack_colors, shape_wall_vertical, 0, -10 },
  [SHAPE_GUARD_VIOLET_LEFT] = { snack_colors, shape_guard_violet_left },
  [SHAPE_GUARD_GREEN_DOWN] = { snack_colors, shape_guard_green_down },
  [SHAPE_GUARD_BLUE_UP] = { snack_colors, shape_guard_blue_up },
@@ -417,15 +470,19 @@ const struct shape Shape[] =
  [SHAPE_SNACKER_DOWN_1] = { snack_colors, shape_snacker_down_1   },
  [SHAPE_SNACKER_DOWN_2] = { snack_colors, shape_snacker_down_2   },
  [SHAPE_DESSERT] = { snack_colors, shape_dessert          },
- [SHAPE_GUMDROP] = { snack_colors, shape_gumdrop          },
- [SHAPE_WALL_T_RIGHT] = { snack_colors, shape_wall_t_right },
- [SHAPE_WALL_T_LEFT] = { snack_colors, shape_wall_t_left },
- [SHAPE_WALL_T_DOWN] = { snack_colors, shape_wall_t_down },
- [SHAPE_WALL_T_UP] = { snack_colors, shape_wall_t_up },
- [SHAPE_WALL_L_LEFT_DOWN] = { snack_colors, shape_wall_l_left_down },
- [SHAPE_WALL_L_RIGHT_DOWN] = { snack_colors, shape_wall_l_right_down },
- [SHAPE_WALL_L_LEFT_UP] = { snack_colors, shape_wall_l_left_up },
- [SHAPE_WALL_L_RIGHT_UP] = { snack_colors, shape_wall_l_right_up },
+ [SHAPE_GUMDROP] = { snack_colors, shape_gumdrop, -3, -2 },
+ [SHAPE_WALL_T_RIGHT] = { snack_colors, shape_wall_t_right, 0, -10 },
+ [SHAPE_WALL_T_LEFT] = { snack_colors, shape_wall_t_left, -10, -10 },
+ [SHAPE_WALL_T_DOWN] = { snack_colors, shape_wall_t_down, -10, 0 },
+ [SHAPE_WALL_T_UP] = { snack_colors, shape_wall_t_up, -10, -10 },
+ [SHAPE_WALL_L_LEFT_DOWN] = { snack_colors, shape_wall_l_left_down, -10, 0 },
+ [SHAPE_WALL_L_RIGHT_DOWN] = { snack_colors, shape_wall_l_right_down, 0, 0 },
+ [SHAPE_WALL_L_LEFT_UP] = { snack_colors, shape_wall_l_left_up, -10, -10 },
+ [SHAPE_WALL_L_RIGHT_UP] = { snack_colors, shape_wall_l_right_up, 0, -10 },
+ [SHAPE_WALL_CROSS] = { snack_colors, shape_wall_cross, -10, -10 },
+ [SHAPE_WALL_LEFT_HORIZONTAL] = { snack_colors, shape_wall_short_horizontal, -10, 0 },
+ [SHAPE_WALL_RIGHT_HORIZONTAL] = { snack_colors, shape_wall_short_horizontal, 0, 0 },
+ [SHAPE_WALL_UP_VERTICAL] = { snack_colors, shape_wall_short_vertical, 0, -10 },
+ [SHAPE_WALL_DOWN_VERTICAL] = { snack_colors, shape_wall_short_vertical, 0, 0 },
 //  [5] = { NULL, NULL }
 };
-

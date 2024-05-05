@@ -33,7 +33,6 @@ struct c2_tile c2_tile[YM][XM];
 
 struct lin2shap
 {
-  int xo,yo; // placment offset
   int shape; // shape index from sprites
 };
 struct lin2shap lin2shap;
@@ -42,142 +41,97 @@ void line2shape(int i, int j, struct lin2shap *s)
 {
   if(i <= 0 || i >= XM-1)
   {
-    s->xo = 0;
-    s->yo = -10;
     s->shape = SHAPE_WALL_VERTICAL;
     if(i <= 0 && j <= 0)
-    {
-      s->xo = 0;
-      s->yo = 0;
       s->shape = SHAPE_WALL_L_RIGHT_DOWN;
-    }
     if(i <= 0 && j >= YM-1)
-    {
-      s->xo = 0;
-      s->yo = -10;
       s->shape = SHAPE_WALL_L_RIGHT_UP;
-    }
     if(i >= XM-1 && j <= 0)
-    {
-      s->xo = -10;
-      s->yo = 0;
       s->shape = SHAPE_WALL_L_LEFT_DOWN;
-    }
     if(i >= XM-1 && j >= YM-1)
-    {
-      s->xo = -10;
-      s->yo = -10;
       s->shape = SHAPE_WALL_L_LEFT_UP;
-    }
     return;
   }
   if(j <= 0 || j >= YM-1)
   {
-    s->xo = -10;
-    s->yo = 0;
     s->shape = SHAPE_WALL_HORIZONTAL;
+    return;
+  }
+  if(line[j-1][i] == ' ' && line[j+1][i] == ' ' && line[j][i-1] == ' '  && line[j][i+1] == ' ')
+  {
+    s->shape = SHAPE_WALL_CROSS;
     return;
   }
   if(line[j-1][i] == ' ' && line[j+1][i] == ' ' && line[j][i-1] == '#'  && line[j][i+1] == ' ')
   {
-    s->xo = 0;
-    s->yo = -10;
     s->shape = SHAPE_WALL_T_RIGHT;
     return;
   }
   if(line[j-1][i] == ' ' && line[j+1][i] == ' ' && line[j][i-1] == ' '  && line[j][i+1] == '#')
   {
-    s->xo = -10;
-    s->yo = -10;
     s->shape = SHAPE_WALL_T_LEFT;
     return;
   }
   if(line[j-1][i] == '#' && line[j+1][i] == ' ' && line[j][i-1] == ' '  && line[j][i+1] == ' ')
   {
-    s->xo = -10;
-    s->yo = 0;
     s->shape = SHAPE_WALL_T_DOWN;
     return;
   }
   if(line[j-1][i] == ' ' && line[j+1][i] == '#' && line[j][i-1] == ' '  && line[j][i+1] == ' ')
   {
-    s->xo = -10;
-    s->yo = -10;
     s->shape = SHAPE_WALL_T_UP;
     return;
   }
   if(line[j-1][i] == ' ' && line[j+1][i] == '#' && line[j][i-1] == ' '  && line[j][i+1] == '#')
   {
-    s->xo = -10;
-    s->yo = -10;
     s->shape = SHAPE_WALL_L_LEFT_UP;
     return;
   }
   if(line[j-1][i] == ' ' && line[j+1][i] == '#' && line[j][i-1] == '#'  && line[j][i+1] == ' ')
   {
-    s->xo = 0;
-    s->yo = -10;
     s->shape = SHAPE_WALL_L_RIGHT_UP;
     return;
   }
   if(line[j-1][i] == '#' && line[j+1][i] == ' ' && line[j][i-1] == '#'  && line[j][i+1] == ' ')
   {
-    s->xo = 0;
-    s->yo = 0;
     s->shape = SHAPE_WALL_L_RIGHT_DOWN;
     return;
   }
   if(line[j-1][i] == '#' && line[j+1][i] == ' ' && line[j][i-1] == ' '  && line[j][i+1] == '#')
   {
-    s->xo = -10;
-    s->yo = 0;
     s->shape = SHAPE_WALL_L_LEFT_DOWN;
     return;
   }
   if(line[j][i-1] == ' ' && line[j][i+1] == ' ')
   {
-    s->xo = -10;
-    s->yo = 0;
     s->shape = SHAPE_WALL_HORIZONTAL;
     return;
   }
   if(line[j][i-1] == '#' && line[j][i+1] == ' ')
   {
-    s->xo = 0; // overlap - shorten
-    s->yo = 0;
-    s->shape = SHAPE_WALL_HORIZONTAL;
+    s->shape = SHAPE_WALL_RIGHT_HORIZONTAL;
     return;
   }
   if(line[j][i-1] == ' ' && line[j][i+1] == '#')
   {
-    s->xo = -20; // overlap - shorten
-    s->yo = 0;
-    s->shape = SHAPE_WALL_HORIZONTAL;
+    s->shape = SHAPE_WALL_LEFT_HORIZONTAL;
     return;
   }
   if(line[j-1][i] == ' ' && line[j+1][i] == ' ')
   {
-    s->xo = 0;
-    s->yo = -10;
     s->shape = SHAPE_WALL_VERTICAL;
     return;
   }
   if(line[j-1][i] == ' ' && line[j+1][i] == '#')
   {
-    s->xo = 0;
-    s->yo = -20; // overlap - shorten
-    s->shape = SHAPE_WALL_VERTICAL;
+    s->shape = SHAPE_WALL_UP_VERTICAL;
     return;
   }
   if(line[j-1][i] == '#' && line[j+1][i] == ' ')
   {
-    s->xo = 0;
-    s->yo = 0; // overlap - shorten
-    s->shape = SHAPE_WALL_VERTICAL;
+    s->shape = SHAPE_WALL_DOWN_VERTICAL;
     return;
   }
-  s->xo = 0;
-  s->yo = 0;
   s->shape = SHAPE_SPACE;
   return;
 }
@@ -194,16 +148,10 @@ void place_c2_tiles()
       {
         line2shape(i,j,&lin2shap);
         c2_tile[j][i].shape = lin2shap.shape;
-        // centering
-        c2_tile[j][i].x += lin2shap.xo;
-        c2_tile[j][i].y += lin2shap.yo;
       }
       if(line[j][i] == '#')
       {
         c2_tile[j][i].shape = SHAPE_GUMDROP;
-        // centering
-        c2_tile[j][i].x -= 3;
-        c2_tile[j][i].y -= 2;
       }
       c2.sprite_clone(c2_tile[j][i].shape);
       c2_tile[j][i].sprite = c2.n_sprites;
@@ -224,7 +172,7 @@ void setup()
   // showcase sprites
   for(i = 0; i < c2.n_sprites; i++)
   {
-    c2.Sprite[i]->x = 100+i*20;
+    c2.Sprite[i]->x = 50+i*20;
     c2.Sprite[i]->y = 450;
   }
   place_c2_tiles();
@@ -290,7 +238,7 @@ void loop()
 void
 main(void)
 {
-  for(int i = 0; i < 4; i++)
+  for(int i = 0; i < 10; i++) // 4 is fast
     random();
   generate_maze();
   draw_maze(); // print to stdoup

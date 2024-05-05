@@ -412,13 +412,13 @@ void generate_maze(void)
     debug_maze();
     gen_text_maze();
     trim_junk();
-    #if 1
+    #if 0
     trim_central_column(); // todo open cul-de-sac
     #endif
     // trim_central_vertical_parallel();
 
     // Reject any completed mazes that have problems
-    #if 1
+    #if 0
     if (too_narrow()) continue;
     if (wide_path()) continue;
     #endif
