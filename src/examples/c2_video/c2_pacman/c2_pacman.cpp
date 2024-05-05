@@ -41,20 +41,40 @@ struct lin2shap lin2shap;
 
 int line2shape(int i, int j)
 {
-  if(i <= 0 || i >= XM-1)
+  // corners
+  if(i <= 0 && j <= 0)
+    return SHAPE_WALL_L_RIGHT_DOWN;
+  if(i <= 0 && j >= YM-1)
+    return SHAPE_WALL_L_RIGHT_UP;
+  if(i >= XM-1 && j <= 0)
+    return SHAPE_WALL_L_LEFT_DOWN;
+  if(i >= XM-1 && j >= YM-1)
+    return SHAPE_WALL_L_LEFT_UP;
+  // edges
+  if(i <= 0) // left edge
   {
-    if(i <= 0 && j <= 0)
-      return SHAPE_WALL_L_RIGHT_DOWN;
-    if(i <= 0 && j >= YM-1)
-      return SHAPE_WALL_L_RIGHT_UP;
-    if(i >= XM-1 && j <= 0)
-      return SHAPE_WALL_L_LEFT_DOWN;
-    if(i >= XM-1 && j >= YM-1)
-      return SHAPE_WALL_L_LEFT_UP;
+    if(line[j][1] == ' ')
+      return SHAPE_WALL_T_RIGHT;
     return SHAPE_WALL_VERTICAL;
   }
-  if(j <= 0 || j >= YM-1)
+  if(i >= XM-1) // right edge
+  {
+    if(line[j][XM-2] == ' ')
+      return SHAPE_WALL_T_LEFT;
+    return SHAPE_WALL_VERTICAL;
+  }
+  if(j <= 0) // top edge
+  {
+    if(line[1][i] == ' ')
+      return SHAPE_WALL_T_DOWN;
     return SHAPE_WALL_HORIZONTAL;
+  }
+  if(j >= YM-1) // bottom edge
+  {
+    if(line[YM-2][i] == ' ')
+      return SHAPE_WALL_T_UP;
+    return SHAPE_WALL_HORIZONTAL;
+  }
   if(line[j][i] == '#')
     return SHAPE_GUMDROP;
   if(line[j][i] == '@')
