@@ -39,6 +39,7 @@ entity sdram_mz_wrap is
     -- To internal bus / logic blocks
     data_out: out std_logic_vector(31 downto 0); -- XXX rename to bus_out!
     ready_out: out sram_ready_array; -- one bit per port
+    last_out: out sram_ready_array; -- one bit per port
     snoop_addr: out std_logic_vector(31 downto 2);
     snoop_cycle: out std_logic;
     -- Inbound multi-port bus connections
@@ -73,6 +74,7 @@ begin
       req(i).data_in <= bus_in(i).data_in;
       req(i).byte_sel <= bus_in(i).byte_sel;
       ready_out(i) <= resp(i).data_ready;
+      last_out(i) <= resp(i).last;
     end generate;
     
     sdram: entity work.sdram_controller -- sdram_mz.vhd
