@@ -136,6 +136,7 @@ architecture behavioral of sdram_controller is
     signal R_iob_data_next: std_logic_vector(15 downto 0) := (others => '0');
     signal R_from_sdram_prev, R_from_sdram: std_logic_vector(15 downto 0);
     signal R_ready_out: std_logic_vector(C_ports - 1 downto 0); -- one-hot
+    signal R_last_out: std_logic_vector(C_ports - 1 downto 0); -- one-hot
     attribute IOB of R_from_sdram: signal is "true";
 
     type fsm_state is (
@@ -187,7 +188,7 @@ architecture behavioral of sdram_controller is
     signal R_iob_dq_hiz: boolean := true;
 
     -- signals for when to read the data off of the bus
-    signal R_data_ready_delay:
+    signal R_data_ready_delay, R_data_last_delay:
       std_logic_vector(C_clock_range / 2 + C_cas downto 0);
     signal R_read_done: boolean;
 
@@ -223,11 +224,12 @@ begin
     burst_len <= req(R_next_port).burst_len;
 
     -- Outbound multiport demux
-    process(R_ready_out, R_from_sdram, R_from_sdram_prev)
+    process(R_ready_out, R_last_out, R_from_sdram, R_from_sdram_prev)
     begin
 	for i in 0 to (C_ports - 1) loop
-	    resp(i).data_ready <= R_ready_out(i);
 	    resp(i).data_out <= R_from_sdram & R_from_sdram_prev;
+	    resp(i).data_ready <= R_ready_out(i);
+	    resp(i).last <= R_last_out(i);
 	end loop;
     end process;
 
@@ -323,11 +325,13 @@ begin
 	    ----------------------------------------------------------------------------
 	    -- update shift registers used to choose when to present data to/from memory
 	    ----------------------------------------------------------------------------
-	    if R_data_ready_delay(2 downto 0) = "001" then
+	    if R_data_last_delay(2 downto 0) = "001" then
 		R_read_done <= unsigned(R_save_burst_len) = 0;
 	    end if;
 	    R_data_ready_delay <=
 	      '0' & R_data_ready_delay(R_data_ready_delay'high downto 1);
+	    R_data_last_delay <=
+	      '0' & R_data_last_delay(R_data_last_delay'high downto 1);
 	    R_iob_dqm <= R_dqm_sr(1 downto 0);
 	    R_dqm_sr <= "11" & R_dqm_sr(R_dqm_sr'high downto 2);
 
@@ -337,7 +341,9 @@ begin
 	    -- and if it can be back-to-backed with the last transaction
 	    -------------------------------------------------------------------
 	    R_ready_out <= (others => '0');
+	    R_last_out <= (others => '0');
 	    R_ready_out(R_cur_port) <= R_data_ready_delay(0);
+	    R_last_out(R_cur_port) <= R_data_last_delay(0);
 	    if accepting_new then
 		R_cur_port <= R_next_port;
 		R_can_back_to_back <=
@@ -348,10 +354,13 @@ begin
 		R_save_wr <= write;
 		R_save_data_in <= data_in;
 		R_save_byte_enable <= byte_sel;
-		R_save_burst_len <= burst_len;
+		if write = '0' then
+		    R_save_burst_len <= burst_len;
+		end if;
 		R_ready_for_new <= false;
 		if write = '1' then
 		    R_ready_out(R_next_port) <= '1';
+		    R_last_out(R_next_port) <= '1';
 		else
 		    R_read_done <= false;
 		end if;
@@ -485,6 +494,9 @@ begin
 
 		-- Schedule reading the data values off the bus
 		R_data_ready_delay(R_data_ready_delay'high) <= '1';
+		if unsigned(R_save_burst_len) = 0 then
+		    R_data_last_delay(R_data_last_delay'high) <= '1';
+		end if;
 
 		-- Set the data masks to read all bytes
 		R_iob_dqm <= (others => '0');
