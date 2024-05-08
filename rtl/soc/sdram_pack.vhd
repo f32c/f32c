@@ -48,6 +48,7 @@ type sdram_resp_type is
     record
 	data_out: std_logic_vector(31 downto 0);
 	data_ready: std_logic;
+	last: std_logic;
     end record;
 
 type sdram_req_array is array(0 to 15) of sdram_req_type;
