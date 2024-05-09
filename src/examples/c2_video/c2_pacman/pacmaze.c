@@ -272,6 +272,25 @@ void trim_central_vertical_parallel(void) {
   }
 }
 
+// clear central dead end streets if any
+void clear_cul_de_sac()
+{
+  int i;
+  // Trim vertical central '#' that have parallel '#' to the left
+  for (i = 1; i < PACHEIGHT*2-1; i++) {
+    if(i < TARGET_HEIGHT/2-1 || i > TARGET_HEIGHT/2+1) // avoid jail
+    {
+      if (line[i][MIDDLE] == ' ' && line[i+1][MIDDLE] == '#' && line[i+1][MIDDLE-1] == ' ' && line[i+1][MIDDLE+1] == ' ') {
+        line[i][MIDDLE] = '#';
+      }
+      if (line[i][MIDDLE] == ' ' && line[i+1][MIDDLE] == '#' && line[i-1][MIDDLE-1] == ' ' && line[i-1][MIDDLE+1] == ' ') {
+        line[i][MIDDLE] = '#';
+      }
+    }
+  }
+}
+
+
 int too_narrow(void) {
   // Reject any that don't have >= 3 #'s on any row or col
   int i, j, paths = 0;
@@ -408,6 +427,7 @@ void random_maze(void)
   convert_to_maze();
   gen_text_maze();
   trim_junk();
+  clear_cul_de_sac();
 }
 
 int validate_maze(void)
