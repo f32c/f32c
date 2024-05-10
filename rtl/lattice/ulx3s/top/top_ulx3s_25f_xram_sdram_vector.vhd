@@ -79,7 +79,7 @@ entity ulx3s_xram_sdram_vector is
 
     C_vector: boolean := true; -- vector processor unit
     C_vector_axi: boolean := false; -- true: use AXI I/O, false use f32c RAM port I/O
-    C_vector_burst_max_bits: integer := 0; -- 0 bits means burst disabled
+    C_vector_burst_max_bits: integer range 0 to 8 := 8; -- values >= 1 enable the burst
     C_vector_bram_pass_thru: boolean := false; -- false: default, true: c2_vector_fast won't work
     C_vector_registers: integer := 8; -- number of internal vector registers min 2, each takes 8K
     C_vector_vaddr_bits: integer := 11;
