@@ -3,6 +3,10 @@ PROG = dhry
 
 WARNS = 1
 
+# gcc-14 needs this
+CFLAGS += -Wno-error=implicit-function-declaration
+CFLAGS += -Wno-error=implicit-int
+
 # Override -Os, and turn on extra optimization efforts
 # 1.55 DMIPS/MHz with gcc-13.2
 CFLAGS += -Ofast -fselective-scheduling -funroll-all-loops
