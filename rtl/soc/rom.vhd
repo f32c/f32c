@@ -74,6 +74,7 @@ architecture x of rom is
 	else
 	    assert FALSE report "Unsuported architecture #"
 	      & integer'image(C_arch) severity failure;
+	    return ""; -- appease Lattice Diamond
 	end if;
     end F_srec_file;
 
