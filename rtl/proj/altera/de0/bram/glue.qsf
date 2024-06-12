@@ -1,0 +1,200 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 1991-2013 Altera Corporation
+# Your use of Altera Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Altera Program License 
+# Subscription Agreement, Altera MegaCore Function License 
+# Agreement, or other applicable license agreement, including, 
+# without limitation, that your use is for the sole purpose of 
+# programming logic devices manufactured by Altera and sold by 
+# Altera or its authorized distributors.  Please refer to the 
+# applicable agreement for further details.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus II 64-Bit
+# Version 13.0.0 Build 156 04/24/2013 SJ Web Edition
+# Date created = 12:35:30  May 15, 2014
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		glue_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus II software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "Cyclone III"
+set_global_assignment -name DEVICE EP3C16F484C6
+set_global_assignment -name TOP_LEVEL_ENTITY glue
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 13.0
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "12:35:30  MAY 15, 2014"
+set_global_assignment -name LAST_QUARTUS_VERSION 9.0
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 1.2V
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (VHDL)"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulation
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
+
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_50m
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_rxd
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_txd
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to btn_left
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to btn_right
+
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[0]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[1]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[2]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[3]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[4]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[5]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[6]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[7]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[8]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[9]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[10]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[11]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[12]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[13]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[14]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[15]
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[16]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[17]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[18]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[19]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[20]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[21]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[22]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[23]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[24]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[25]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[26]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[27]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[28]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[29]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[30]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[31]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[32]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to gpioa[33]
+
+#set_location_assignment PIN_D3 -to gpioa[0]
+#set_location_assignment PIN_C3 -to gpioa[1]
+#set_location_assignment PIN_A2 -to gpioa[2]
+#set_location_assignment PIN_A3 -to gpioa[3]
+#set_location_assignment PIN_B3 -to gpioa[4]
+#set_location_assignment PIN_B4 -to gpioa[5]
+#set_location_assignment PIN_A4 -to gpioa[6]
+#set_location_assignment PIN_B5 -to gpioa[7]
+#set_location_assignment PIN_A5 -to gpioa[8]
+#set_location_assignment PIN_D5 -to gpioa[9]
+#set_location_assignment PIN_B6 -to gpioa[10]
+#set_location_assignment PIN_A6 -to gpioa[11]
+#set_location_assignment PIN_B7 -to gpioa[12]
+#set_location_assignment PIN_D6 -to gpioa[13]
+#set_location_assignment PIN_A7 -to gpioa[14]
+#set_location_assignment PIN_C6 -to gpioa[15]
+
+set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_ASYNCHRONOUS_SIGNAL_PIPELINING ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON
+
+
+
+
+
+
+set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
+set_global_assignment -name TIMEQUEST_DO_CCPP_REMOVAL ON
+set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
+set_location_assignment PIN_G21 -to clk_50m
+set_location_assignment PIN_AB17 -to rs232_rxd
+set_location_assignment PIN_AA18 -to rs232_txd
+set_location_assignment PIN_J1 -to led[0]
+set_location_assignment PIN_J2 -to led[1]
+set_location_assignment PIN_J3 -to led[2]
+set_location_assignment PIN_H1 -to led[3]
+set_location_assignment PIN_F2 -to led[4]
+set_location_assignment PIN_E1 -to led[5]
+set_location_assignment PIN_C1 -to led[6]
+set_location_assignment PIN_C2 -to led[7]
+set_location_assignment PIN_F1 -to btn_left
+set_location_assignment PIN_G3 -to btn_right
+set_location_assignment PIN_G4 -to sw[3]
+set_location_assignment PIN_H6 -to sw[2]
+set_location_assignment PIN_H5 -to sw[1]
+set_location_assignment PIN_J6 -to sw[0]
+set_global_assignment -name MISC_FILE "\\\\Mac\\Google Drive\\Facultad\\DL2\\labs_g5\\proyecto\\f32c en DE0\\rtl\\proj\\altera\\de0\\bram\\glue.dpf"
+set_global_assignment -name VHDL_FILE ../../../../altera/de0/top_bram.vhd
+set_global_assignment -name VHDL_FILE ../../../../altera/de0/clock/pll_50m.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/spi.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/defs_bootblock.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/boot_sio_rv32el.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/boot_sio_mi32el.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/boot_sio_mi32eb.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bootloader/boot_rom_mi32el.vhd
+set_global_assignment -name VERILOG_FILE ../../../../soc/pid/simotor_v.v
+set_global_assignment -name VHDL_FILE ../../../../soc/pid/simotor.vhd
+set_global_assignment -name VERILOG_FILE ../../../../soc/pid/rotary_decoder_v.v
+set_global_assignment -name VHDL_FILE ../../../../soc/pid/rotary_decoder.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/pid/pid.vhd
+set_global_assignment -name VERILOG_FILE ../../../../soc/pid/ctrlpid_v.v
+set_global_assignment -name VHDL_FILE ../../../../soc/pid/ctrlpid.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bram_rv32.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/glue_bram.vhd
+set_global_assignment -name VHDL_FILE ../../../../altera/pll_50m.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/timer.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/idecode_rv32.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/idecode_mi32.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/defs_rv32.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/defs_mi32.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/defs_f32c.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/alu.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/shift.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/mul_iter.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/pipeline.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/loadalign.vhd
+set_global_assignment -name VHDL_FILE ../../../../cpu/debug.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/sio.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bram.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/reg1w2r.vhd
+set_global_assignment -name VHDL_FILE ../../../../generic/bptrace.vhd
+set_global_assignment -name VHDL_FILE ../../../../soc/gpio.vhd
+set_global_assignment -name QIP_FILE ../../../../altera/de0/clock/pll_50m.qip
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name LL_ROOT_REGION ON -section_id "Root Region"
+set_global_assignment -name LL_MEMBER_STATE LOCKED -section_id "Root Region"
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
