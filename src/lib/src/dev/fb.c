@@ -522,7 +522,7 @@ plot_internal_unbounded_16(int x, int y, int color, uint8_t *dp)
 void
 fb_rectangle(int x0, int y0, int x1, int y1, int color)
 {
-	int x;
+	int x, i, l;
 
 	if (fb_mode > 1)
 		return;
@@ -550,24 +550,43 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 		uint16_t *fb16 = (void *) fb_active;
 		color = (color << 16) | (color & 0xffff);
 		for (; y0 <= y1; y0++) {
-			for (x = x0; x <= x1 && (x & 1); x++)
-				fb16[y0 * _FB_WIDTH + x] = color;
-			for (; x < x1; x += 2)
-				*((int *) &fb16[y0 * _FB_WIDTH + x]) = color;
-			for (; x <= x1; x++)
-				fb16[y0 * _FB_WIDTH + x] = color;
+			i = y0 * _FB_WIDTH + x0;
+			l = x1 - x0 + 1;
+			if (i & 1) {
+				fb16[i++] = color;
+				l--;
+			}
+			for (; l >= 10; i += 10, l -= 10) {
+				*((int *) &fb16[i + 0]) = color;
+				*((int *) &fb16[i + 2]) = color;
+				*((int *) &fb16[i + 4]) = color;
+				*((int *) &fb16[i + 6]) = color;
+				*((int *) &fb16[i + 8]) = color;
+			}
+			for (; l >= 2; i += 2, l -= 2)
+				*((int *) &fb16[i]) = color;
+			if (l)
+				fb16[i++] = color;
 		}
 	} else {
 		uint8_t *fb8 = (void *) fb_active;
 		color = (color << 8) | (color & 0xff);
 		color = (color << 16) | (color & 0xffff);
 		for (; y0 <= y1; y0++) {
-			for (x = x0; x <= x1 && (x & 3); x++)
-				fb8[y0 * _FB_WIDTH + x] = color;
-			for (; x <= (x1 - 3); x += 4)
-				*((int *) &fb8[y0 * _FB_WIDTH + x]) = color;
-			for (; x <= x1; x++)
-				fb8[y0 * _FB_WIDTH + x] = color;
+			i = y0 * _FB_WIDTH + x0;
+			for (l = x1 - x0 + 1; (i & 3) != 0 && l > 0; l--)
+				fb8[i++] = color;
+			for (; l >= 20; i += 20, l -= 20) {
+				*((int *) &fb8[i + 0]) = color;
+				*((int *) &fb8[i + 4]) = color;
+				*((int *) &fb8[i + 8]) = color;
+				*((int *) &fb8[i + 12]) = color;
+				*((int *) &fb8[i + 16]) = color;
+			}
+			for (; l >= 4; i += 4, l -= 4)
+				*((int *) &fb8[i]) = color;
+			for (; l > 0; l--)
+				fb8[i++] = color;
 		}
 	}
 }
