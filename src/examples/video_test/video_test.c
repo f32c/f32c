@@ -40,10 +40,10 @@ struct fb_test {
 	uint32_t weight;
 	uint64_t time;
 } fb_test[] = {
-	{ .fn = fb_line, .desc = "lines", .weight = 12180 },
-	{ .fn = fb_rectangle, .desc = "rects", .weight = 1303 },
-	{ .fn = circle_test, .desc = "circles", .weight = 2188 },
-	{ .fn = text_test, .desc = "text", .weight = 1633 },
+	{ .fn = fb_line, .desc = "lines", .weight = 10950 },
+	{ .fn = fb_rectangle, .desc = "rects", .weight = 1995 },
+	{ .fn = circle_test, .desc = "circles", .weight = 2495 },
+	{ .fn = text_test, .desc = "text", .weight = 1475 },
 	{ /* terminate list */ }
 };
 
@@ -56,7 +56,7 @@ main(void)
 	uint32_t x0, y0, x1, y1;
 	uint64_t ips, score, overall = 0;
 
-	fb_set_mode(0);
+	fb_set_mode(1);
 
 	do {
 		OUTB(IO_LED, (iter << 2) + ti);
