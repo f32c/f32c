@@ -157,7 +157,7 @@ architecture behavioral of sdram_controller is
     -- dual purpose counter, it counts up during the startup phase, then is used to trigger refreshes.
     constant C_startup_refresh_max: unsigned(13 downto 0) := (others => '1');
     signal R_startup_refresh_count: unsigned(13 downto 0) :=
-      C_startup_refresh_max - to_unsigned(sdram_startup_cycles,14);
+      C_startup_refresh_max - to_unsigned(sdram_startup_cycles, 14);
 
     -- logic to decide when to refresh
     signal pending_refresh: boolean;
@@ -440,7 +440,7 @@ begin
 		    R_state <= S_idle_in_6;
 		    R_iob_command <= CMD_REFRESH;
 		    R_startup_refresh_count <=
-		      R_startup_refresh_count - cycles_per_refresh+1;
+		      R_startup_refresh_count - cycles_per_refresh + 1;
 		elsif accepting_new or not R_ready_for_new then
 		    --------------------------------
 		    -- Start the read or write cycle. 
