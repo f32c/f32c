@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------
 -- Copyright (c) 2013 Mike Field <hamster@snap.net.nz>
--- 
+--
 -- Permission is hereby granted, free of charge, to any person obtaining a copy
 -- of this software and associated documentation files (the "Software"), to deal
 -- in the Software without restriction, including without limitation the rights
@@ -19,10 +19,10 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 -- THE SOFTWARE.
 --
--- Module Name:	SDRAM_Controller - Behavioral 
+-- Module Name:	SDRAM_Controller - Behavioral
 -- Description:	Simple SDRAM controller for a Micron 48LC16M16A2-7E
 --		or Micron 48LC4M16A2-7E @ 100MHz
--- Revision: 
+-- Revision:
 -- Revision 0.1	- Initial version
 -- Revision 0.2	- Removed second clock signal that isn't needed.
 -- Revision 0.3	- Added back-to-back reads and writes.
@@ -34,12 +34,12 @@
 --		  both the Papilio Pro and Logi-Pi
 -- Revision 0.6	- Fixed bugs in back-to-back reads (thanks Scotty!)
 --
--- Worst case performance (single accesses to different rows or banks) is: 
+-- Worst case performance (single accesses to different rows or banks) is:
 -- Writes 16 cycles = 6,250,000 writes/sec = 25.0MB/s (excl. refresh overhead)
 -- Reads  17 cycles = 5,882,352 reads/sec  = 23.5MB/s (excl. refresh overhead)
 --
--- For 1:1 mixed reads and writes into the same row it is around 88MB/s 
--- For reads or writes to the same it can be as high as 184MB/s 
+-- For 1:1 mixed reads and writes into the same row it is around 88MB/s
+-- For reads or writes to the same it can be as high as 184MB/s
 ----------------------------------------------------------------------------------
 
 library ieee;
@@ -95,12 +95,12 @@ architecture behavioral of sdram_controller is
     -- WRITE                  L   H    L    L  L/H Bank/col Valid
     -- BURST TERMINATE        L   H    H    L   X     X     Active
     -- PRECHARGE              L   L    H    L   X   Code      X
-    -- AUTO REFRESH           L   L    L    H   X     X       X 
-    -- LOAD MODE REGISTER     L   L    L    L   X  Op-code    X 
+    -- AUTO REFRESH           L   L    L    H   X     X       X
+    -- LOAD MODE REGISTER     L   L    L    L   X  Op-code    X
     -- Write enable           X   X    X    X   L     X     Active
     -- Write inhibit          X   X    X    X   H     X     High-Z
 
-    -- Here are the commands mapped to constants   
+    -- Here are the commands mapped to constants
     constant CMD_UNSELECTED    : std_logic_vector(3 downto 0) := "1000";
     constant CMD_NOP           : std_logic_vector(3 downto 0) := "0111";
     constant CMD_ACTIVE        : std_logic_vector(3 downto 0) := "0011";
@@ -111,10 +111,10 @@ architecture behavioral of sdram_controller is
     constant CMD_REFRESH       : std_logic_vector(3 downto 0) := "0001";
     constant CMD_LOAD_MODE_REG : std_logic_vector(3 downto 0) := "0000";
 
-    constant MODE_REG_CAS_2    : std_logic_vector(12 downto 0) := 
+    constant MODE_REG_CAS_2    : std_logic_vector(12 downto 0) :=
     -- Reserved, wr burst, OpMode, CAS Latency (2), Burst Type, Burst Length (2)
       "000" &   "0"  &  "00"  &    "010"      &     "0"    &   "001";
-    constant MODE_REG_CAS_3    : std_logic_vector(12 downto 0) := 
+    constant MODE_REG_CAS_3    : std_logic_vector(12 downto 0) :=
     -- Reserved, wr burst, OpMode, CAS Latency (3), Burst Type, Burst Length (2)
       "000" &   "0"  &  "00"  &    "011"      &     "0"    &   "001";
 
@@ -124,7 +124,7 @@ architecture behavioral of sdram_controller is
     signal R_iob_dqm: std_logic_vector(1 downto 0) := (others => '0');
     signal R_iob_cke: std_logic := '0';
     signal R_iob_bank: std_logic_vector(1 downto 0) := (others => '0');
-   
+
     attribute IOB: string;
     attribute IOB of R_iob_command: signal is "true";
     attribute IOB of R_iob_address: signal is "true";
@@ -234,7 +234,7 @@ begin
     end process;
 
     -- Indicate the need to refresh when the counter is 2048,
-    -- Force a refresh when the counter is 4096 - (if a refresh is forced, 
+    -- Force a refresh when the counter is 4096 - (if a refresh is forced,
     -- multiple refresshes will be forced until the counter is below 2048
     pending_refresh <= R_startup_refresh_count(11) = '1';
     forcing_refresh <= R_startup_refresh_count(12) = '1';
@@ -250,8 +250,8 @@ begin
       <= addr(C_end_of_col downto 0) & '0';           -- 8:0  <=  7:0 & '0'
 
     -----------------------------------------------------------
-    -- Forward the SDRAM clock to the SDRAM chip - 180 degress 
-    -- out of phase with the control signals (ensuring setup and holdup 
+    -- Forward the SDRAM clock to the SDRAM chip - 180 degress
+    -- out of phase with the control signals (ensuring setup and holdup
     -----------------------------------------------------------
     sdram_clk <= not clk;
 
@@ -305,7 +305,7 @@ begin
     accepting_new <= R_ready_for_new and strobe = '1' and R_read_done
       and R_ready_out(R_next_port) = '0';
 
-    main_proc: process(clk) 
+    main_proc: process(clk)
     begin
 	if rising_edge(clk) then
 	    R_next_port <= next_port;
@@ -366,24 +366,24 @@ begin
 		end if;
 	    end if;
 
-	    case R_state is 
+	    case R_state is
 	    when S_startup =>
 		------------------------------------------------------------------------
 		-- This is the initial startup state, where we wait for at least 100us
 		-- before starting the start sequence
-		-- 
-		-- The initialisation is sequence is 
+		--
+		-- The initialisation is sequence is
 		--  * de-assert SDRAM_CKE
-		--  * 100us wait, 
+		--  * 100us wait,
 		--  * assert SDRAM_CKE
-		--  * wait at least one cycle, 
+		--  * wait at least one cycle,
 		--  * PRECHARGE
 		--  * wait 2 cycles
-		--  * REFRESH, 
+		--  * REFRESH,
 		--  * tREF wait
-		--  * REFRESH, 
-		--  * tREF wait 
-		--  * LOAD_MODE_REG 
+		--  * REFRESH,
+		--  * tREF wait
+		--  * LOAD_MODE_REG
 		--  * 2 cycles wait
 		------------------------------------------------------------------------
 		R_iob_CKE <= '1';
@@ -443,7 +443,7 @@ begin
 		      R_startup_refresh_count - cycles_per_refresh + 1;
 		elsif accepting_new or not R_ready_for_new then
 		    --------------------------------
-		    -- Start the read or write cycle. 
+		    -- Start the read or write cycle.
 		    -- First task is to open the row
 		    --------------------------------
 		    if C_ras = 2 then
@@ -531,7 +531,7 @@ begin
 		    R_dqm_sr(1 downto 0) <= (others => '0');
 		end if;
 
-	    when S_read_3 => 
+	    when S_read_3 =>
 		if forcing_refresh or (accepting_new and
 		  (R_save_bank /= addr_bank or R_save_row /= addr_row)) or
 		  not R_can_back_to_back then
@@ -568,7 +568,7 @@ begin
 		    end if;
 		end if;
 
-	    when S_read_4 => 
+	    when S_read_4 =>
 		R_state <= S_precharge;
 
 	    ------------------------------------------------------------------
@@ -596,7 +596,7 @@ begin
 			R_state	<= S_write_1;
 			R_ready_for_new <= true;
 		    end if;
-		    -- Although it looks right in simulation you can't go write-to-read 
+		    -- Although it looks right in simulation you can't go write-to-read
 		    -- here due to bus contention, as iob_dq_hiz takes a few ns.
 		end if;
 
@@ -637,7 +637,7 @@ begin
 	    -------------------------------------------------------------------
 	    -- We should never get here, but if we do then reset the memory
 	    -------------------------------------------------------------------
-	    when others => 
+	    when others =>
 		R_state <= S_startup;
 		R_ready_for_new <= false;
 		R_startup_refresh_count <=
