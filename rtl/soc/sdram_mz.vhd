@@ -290,17 +290,17 @@ begin
 	next_port <= t;
     end process;
 
-    capture_proc: process(clk) 
-    begin
-	if C_clock_range = 1 and falling_edge(clk) then
-	    R_from_sdram <= sdram_data;
-	    R_from_sdram_prev <= R_from_sdram;
-	end if;
-	if C_clock_range /= 1 and rising_edge(clk) then
-	    R_from_sdram <= sdram_data;
-	    R_from_sdram_prev <= R_from_sdram;
-	end if;
-    end process;
+    G_capture_falling:
+    if C_clock_range = 1 generate
+	R_from_sdram <= sdram_data when falling_edge(clk);
+	R_from_sdram_prev <= R_from_sdram when falling_edge(clk);
+    end generate;
+
+    G_capture_rising:
+    if C_clock_range /= 1 generate
+	R_from_sdram <= sdram_data when rising_edge(clk);
+	R_from_sdram_prev <= R_from_sdram when rising_edge(clk);
+    end generate;
 
     accepting_new <= R_ready_for_new and strobe = '1' and R_read_done
       and R_ready_out(R_next_port) = '0';
