@@ -43,7 +43,7 @@ get_cpu_freq() {
 	incr_ns = rtc_res_tbl[rtc_cfg & 0xf];
 	clk_freq += incr_ns / 2;
 	clk_freq <<= 28;
-	clk_freq /= (rtc_cfg >> 4) * incr_ns;
+	clk_freq = clk_freq / (rtc_cfg >> 4) / incr_ns;
 	return (clk_freq);
 }
 
