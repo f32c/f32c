@@ -70,10 +70,10 @@ entity glue_sdram_min is
 	C_debug: boolean := false;
 
 	-- SDRAM parameters
-	C_sdram_address_width : integer := 24;
-	C_sdram_column_bits : integer := 9;
-	C_sdram_startup_cycles : integer := 10100;
-	C_sdram_cycles_per_refresh : integer := 1524;
+	C_sdram_address_width: integer := 24;
+	C_sdram_column_bits: integer := 9;
+	C_sdram_startup_cycles: integer := 10100;
+	C_sdram_cycles_per_refresh: integer := 1524;
 
 	-- SoC configuration options
 	C_cpus: integer := 1;
@@ -393,10 +393,10 @@ begin
 	C_ports => 2 * C_cpus,
 	C_ras => C_ras, C_cas => C_cas, C_pre => C_pre,
 	C_clock_range => C_clock_range,
-	sdram_address_width => C_sdram_address_width,
-	sdram_column_bits => C_sdram_column_bits,
-	sdram_startup_cycles => C_sdram_startup_cycles,
-	cycles_per_refresh => C_sdram_cycles_per_refresh
+	C_address_width => C_sdram_address_width,
+	C_column_bits => C_sdram_column_bits,
+	C_startup_cycles => C_sdram_startup_cycles,
+	C_cycles_per_refresh => C_sdram_cycles_per_refresh
     )
     port map (
 	clk => clk, reset => res(0),
