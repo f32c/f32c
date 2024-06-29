@@ -31,10 +31,10 @@ entity top_sdram is
 	sdram_rasn: out std_logic;
 	sdram_casn: out std_logic;
 	sdram_wen: out std_logic;
-	sdram_a: out std_logic_vector (12 downto 0);
+	sdram_a: out std_logic_vector(12 downto 0);
 	sdram_ba: out std_logic_vector(1 downto 0);
 	sdram_dqm: out std_logic_vector(1 downto 0);
-	sdram_d: inout std_logic_vector (15 downto 0);
+	sdram_d: inout std_logic_vector(15 downto 0);
 
 	-- On-board simple IO
 	led: out std_logic_vector(7 downto 0);
