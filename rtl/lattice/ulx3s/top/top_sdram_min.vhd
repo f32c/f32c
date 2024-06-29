@@ -10,7 +10,7 @@ use ecp5u.components.all;
 entity top_sdram is
     generic (
 	C_arch: natural := ARCH_MI32;
-	C_clk_freq: natural := 84; -- 74, 84, 93, 112, 124, 135
+	C_clk_freq: natural := 84; -- 25, 74, 84, 93, 112, 124, 135
 	C_sio_init_baudrate: integer := 115200;
 	C_icache_size: natural := 8;
 	C_dcache_size: natural := 8;
@@ -181,6 +181,7 @@ begin
       else clk_92m8125 when C_clk_freq = 93
       else clk_84m375 when C_clk_freq = 84
       else clk_74m25 when C_clk_freq = 74
+      else clk_25m when C_clk_freq = 25
       else '0';
     reset <= not pll_lock or sio_break;
 end x;
