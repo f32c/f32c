@@ -86,10 +86,10 @@ begin
       C_cas => C_cas,
       C_pre => C_pre,
       C_clock_range => C_clock_range,
-      sdram_address_width => sdram_address_width,
-      sdram_column_bits => sdram_column_bits,
-      sdram_startup_cycles => sdram_startup_cycles,
-      cycles_per_refresh => cycles_per_refresh
+      C_address_width => sdram_address_width,
+      C_column_bits => sdram_column_bits,
+      C_startup_cycles => sdram_startup_cycles,
+      C_cycles_per_refresh => cycles_per_refresh
     )
     port map
     (

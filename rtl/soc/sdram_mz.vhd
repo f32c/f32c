@@ -57,10 +57,10 @@ entity sdram_controller is
 	C_cas: integer range 2 to 3 := 2;
 	C_pre: integer range 2 to 3 := 2;
 	C_clock_range: integer range 0 to 2 := 2;
-	sdram_address_width: natural;
-	sdram_column_bits: natural;
-	sdram_startup_cycles: natural;
-	cycles_per_refresh: natural
+	C_address_width: natural;
+	C_column_bits: natural;
+	C_startup_cycles: natural;
+	C_cycles_per_refresh: natural
     );
     port (
 	clk: in std_logic;
@@ -157,7 +157,7 @@ architecture behavioral of sdram_controller is
     -- dual purpose counter, it counts up during the startup phase, then is used to trigger refreshes.
     constant C_startup_refresh_max: unsigned(13 downto 0) := (others => '1');
     signal R_startup_refresh_count: unsigned(13 downto 0) :=
-      C_startup_refresh_max - to_unsigned(sdram_startup_cycles, 14);
+      C_startup_refresh_max - to_unsigned(C_startup_cycles, 14);
 
     -- logic to decide when to refresh
     signal pending_refresh: boolean;
@@ -193,11 +193,11 @@ architecture behavioral of sdram_controller is
     signal R_read_done: boolean;
 
     -- bit indexes used when splitting the address into row/colum/bank.
-    constant C_end_of_col: natural := sdram_column_bits - 2;
-    constant C_start_of_bank: natural := sdram_column_bits - 1;
-    constant C_end_of_bank: natural := sdram_column_bits;
-    constant C_start_of_row: natural := sdram_column_bits + 1;
-    constant C_end_of_row: natural := sdram_address_width - 2;
+    constant C_end_of_col: natural := C_column_bits - 2;
+    constant C_start_of_bank: natural := C_column_bits - 1;
+    constant C_end_of_bank: natural := C_column_bits;
+    constant C_start_of_row: natural := C_column_bits + 1;
+    constant C_end_of_row: natural := C_address_width - 2;
     constant C_prefresh_cmd: natural := 10;
 
     -- Bus interface signals (resolved from req record via R_cur_port)
@@ -246,7 +246,7 @@ begin
       addr(C_end_of_row downto C_start_of_row);       -- 12:0 <=  22:10
     addr_bank
       <= addr(C_end_of_bank downto C_start_of_bank);  -- 1:0  <=  9:8
-    addr_col(sdram_column_bits - 1 downto 0)
+    addr_col(C_column_bits - 1 downto 0)
       <= addr(C_end_of_col downto 0) & '0';           -- 8:0  <=  7:0 & '0'
 
     -----------------------------------------------------------
@@ -420,7 +420,7 @@ begin
 		    R_save_burst_len <= (others => '0');
 		    R_read_done <= true;
 		    R_startup_refresh_count <=
-		      to_unsigned(2048 - cycles_per_refresh + 1, 14);
+		      to_unsigned(2048 - C_cycles_per_refresh + 1, 14);
 		end if;
 
 	    when S_idle_in_6 => R_state <= S_idle_in_5;
@@ -440,7 +440,7 @@ begin
 		    R_state <= S_idle_in_6;
 		    R_iob_command <= CMD_REFRESH;
 		    R_startup_refresh_count <=
-		      R_startup_refresh_count - cycles_per_refresh + 1;
+		      R_startup_refresh_count - C_cycles_per_refresh + 1;
 		elsif accepting_new or not R_ready_for_new then
 		    --------------------------------
 		    -- Start the read or write cycle.
@@ -508,10 +508,10 @@ begin
 		    R_save_burst_len <=
 		      std_logic_vector(unsigned(R_save_burst_len) - 1);
 		    R_save_col <= std_logic_vector(unsigned(R_save_col) + 2);
-		    R_save_col(sdram_column_bits) <= '0';
+		    R_save_col(C_column_bits) <= '0';
 		    -- Check if we are crossing row / bank boundary?
-		    if std_logic_vector(to_signed(-1, sdram_column_bits - 1))
-		      = R_save_col(sdram_column_bits - 1 downto 1) then
+		    if std_logic_vector(to_signed(-1, C_column_bits - 1))
+		      = R_save_col(C_column_bits - 1 downto 1) then
 			R_state <= S_read_3;
 			R_can_back_to_back <= false;
 			R_save_bank <=
@@ -641,14 +641,14 @@ begin
 		R_state <= S_startup;
 		R_ready_for_new <= false;
 		R_startup_refresh_count <=
-		  C_startup_refresh_max - to_unsigned(sdram_startup_cycles, 14);
+		  C_startup_refresh_max - to_unsigned(C_startup_cycles, 14);
 	    end case;
 
 	    if reset = '1' then  -- Sync reset
 		R_state <= S_startup;
 		R_ready_for_new <= false;
 		R_startup_refresh_count <=
-		  C_startup_refresh_max - to_unsigned(sdram_startup_cycles, 14);
+		  C_startup_refresh_max - to_unsigned(C_startup_cycles, 14);
 	    end if;
 	end if;
     end process;
