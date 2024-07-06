@@ -193,8 +193,8 @@ begin
     assert (C_d_addr_bits < C_cached_addr_bits)
       report "C_dcache_size must be smaller than memory size" severity failure;
 
-    assert (C_store_buffer_slots >= 0 and C_store_buffer_slots <= 15)
-      report "C_store_buffer_slots must be between 0 and 15" severity failure;
+    assert (C_store_buffer_slots >= 0 and C_store_buffer_slots <= 31)
+      report "C_store_buffer_slots must be between 0 and 31" severity failure;
 
     debug_clk_ena <= clk_enable when C_debug else '1';
 
