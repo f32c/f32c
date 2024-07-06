@@ -48,13 +48,13 @@ again:
 
 	/* Attempt to guess memory size */
 	do {
-		mem_end = &mem_end[65536];
+		mem_end = &mem_end[4096];
 		*mem_end = 0xdeadbeef;
 		*mem_base = 0;
 	} while (*mem_end != 0 && mem_end < (int *) 0xb0000000);
-	mem_end = (int *) (((int) mem_end) & 0xfff80000);
+	mem_end = (int *) (((int) mem_end) & 0xffff8000);
 	/* Don't touch the top 4 KB, the stack lives there */
-	mem_end -= 0x1000;
+	mem_end -= 0x400;
 	size = (int) mem_end - (int) mem_base;
 	
 	printf("base %p end %p (size %d.%03d MB)\n", mem_base, mem_end,
