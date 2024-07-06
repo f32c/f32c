@@ -22,7 +22,7 @@ main(void)
 	volatile int *mem_end;
 	int i, len, speed, iter, tot_err;
 	int a = 0, b = 0, c, d;
-	int size, tmp, freq_khz, start, end, seed, val;
+	int size, tmp, freq_khz, start, end, seed, val, lval;
 	volatile uint8_t *p8;
 	volatile uint16_t *p16;
 	volatile uint32_t *p32;
@@ -103,32 +103,36 @@ again:
 	val = seed;
 
 	start = clock();
-	for (p32 = (uint32_t *) mem_base; p32 < (uint32_t *) mem_end;
-	    val += 0x137b5d51) {
-		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
-		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
-		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
-		*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
+	for (i = 0; i < (1 << 26) / size; i++) {
+		lval = val;
+		for (p32 = (uint32_t *) mem_base; p32 < (uint32_t *) mem_end;
+		    val += 0x137b5d51) {
+			*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
+			*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
+			*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
+			*p32++ = val; *p32++ = val; *p32++ = val; *p32++ = val;
+		}
 	}
 	end = clock();
 	len = (end - start) / 1000;
-	speed = size / len;
+	speed = size * i / len;
 	printf("32-bit write done in %d.%03d s (%d.%03d MB/s)\n",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	
 	start = clock();
-	for (p32 = (uint32_t *) mem_base; p32 < (uint32_t *) mem_end;) {
-		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
-		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
-		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
-		val = *p32++; val = *p32++; val = *p32++; val = *p32++;
-	}
+	for (i = 0; i < (1 << 26) / size; i++)
+		for (p32 = (uint32_t *) mem_base; p32 < (uint32_t *) mem_end;) {
+			val = *p32++; val = *p32++; val = *p32++; val = *p32++;
+			val = *p32++; val = *p32++; val = *p32++; val = *p32++;
+			val = *p32++; val = *p32++; val = *p32++; val = *p32++;
+			val = *p32++; val = *p32++; val = *p32++; val = *p32++;
+		}
 	end = clock();
 	len = (end - start) / 1000;
-	speed = size / len;
+	speed = size * i / len;
 	printf("32-bit read done in %d.%03d s (%d.%03d MB/s), ",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
-	val = seed;
+	val = lval;
 	tmp = 0;
 	for (p32 = (uint32_t *) mem_base; p32 < (uint32_t *) mem_end; 
 	    val += 0x137b5d51)
@@ -145,32 +149,40 @@ again:
 
 	val = seed;
 	start = clock();
-	for (p16 = (uint16_t *) mem_base; p16 < (uint16_t *) mem_end;
-	    val += 0x137b5d51) {
-		*p16++ = val; *p16++ = ~val; *p16++ = val; *p16++ = ~val;
-		*p16++ = val; *p16++ = ~val; *p16++ = val; *p16++ = ~val;
-		*p16++ = val; *p16++ = ~val; *p16++ = val; *p16++ = ~val;
-		*p16++ = val; *p16++ = ~val; *p16++ = val; *p16++ = ~val;
+	for (i = 0; i < (1 << 26) / size; i++) {
+		lval = val;
+		for (p16 = (uint16_t *) mem_base; p16 < (uint16_t *) mem_end;
+		    val += 0x137b5d51) {
+			*p16++ = val; *p16++ = ~val;
+			*p16++ = val; *p16++ = ~val;
+			*p16++ = val; *p16++ = ~val;
+			*p16++ = val; *p16++ = ~val;
+			*p16++ = val; *p16++ = ~val;
+			*p16++ = val; *p16++ = ~val;
+			*p16++ = val; *p16++ = ~val;
+			*p16++ = val; *p16++ = ~val;
+		}
 	}
 	end = clock();
 	len = (end - start) / 1000;
-	speed = size / len;
+	speed = size * i / len;
 	printf("16-bit write done in %d.%03d s (%d.%03d MB/s)\n",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	
 	start = clock();
-	for (p16 = (uint16_t *) mem_base; p16 < (uint16_t *) mem_end;) {
-		val = *p16++; val = *p16++; val = *p16++; val = *p16++;
-		val = *p16++; val = *p16++; val = *p16++; val = *p16++;
-		val = *p16++; val = *p16++; val = *p16++; val = *p16++;
-		val = *p16++; val = *p16++; val = *p16++; val = *p16++;
-	}
+	for (i = 0; i < (1 << 26) / size; i++)
+		for (p16 = (uint16_t *) mem_base; p16 < (uint16_t *) mem_end;) {
+			val = *p16++; val = *p16++; val = *p16++; val = *p16++;
+			val = *p16++; val = *p16++; val = *p16++; val = *p16++;
+			val = *p16++; val = *p16++; val = *p16++; val = *p16++;
+			val = *p16++; val = *p16++; val = *p16++; val = *p16++;
+		}
 	end = clock();
 	len = (end - start) / 1000;
-	speed = size / len;
+	speed = size * i / len;
 	printf("16-bit read done in %d.%03d s (%d.%03d MB/s), ",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
-	val = seed;
+	val = lval;
 	tmp = 0;
 	for (p16 = (uint16_t *) mem_base; p16 < (uint16_t *) mem_end; 
 	    val += 0x137b5d51) {
@@ -191,32 +203,36 @@ again:
 	
 	val = seed;
 	start = clock();
-	for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end;
-	    val += 0x137b5d51) {
-		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
-		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
-		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
-		*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
+	for (i = 0; i < (1 << 26) / size; i++) {
+		lval = val;
+		for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end;
+		    val += 0x137b5d51) {
+			*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
+			*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
+			*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
+			*p8++ = val; *p8++ = val; *p8++ = ~val; *p8++ = ~val;
+		}
 	}
 	end = clock();
 	len = (end - start) / 1000;
-	speed = size / len;
+	speed = size * i / len;
 	printf("8-bit write done in %d.%03d s (%d.%03d MB/s)\n",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	
 	start = clock();
-	for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end;) {
-		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
-		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
-		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
-		val = *p8++; val = *p8++; val = *p8++; val = *p8++;
-	}
+	for (i = 0; i < (1 << 26) / size; i++)
+		for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end;) {
+			val = *p8++; val = *p8++; val = *p8++; val = *p8++;
+			val = *p8++; val = *p8++; val = *p8++; val = *p8++;
+			val = *p8++; val = *p8++; val = *p8++; val = *p8++;
+			val = *p8++; val = *p8++; val = *p8++; val = *p8++;
+		}
 	end = clock();
 	len = (end - start) / 1000;
-	speed = size / len;
+	speed = size * i / len;
 	printf("8-bit read done in %d.%03d s (%d.%03d MB/s), ",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
-	val = seed;
+	val = lval;
 	tmp = 0;
 	for (p8 = (uint8_t *) mem_base; p8 < (uint8_t *) mem_end; 
 	    val += 0x137b5d51)
@@ -231,10 +247,11 @@ again:
 	printf("%d errors\n", tmp);
 	tot_err += tmp;
 	
-	size = 256 * 1024;
+	if (size > 65536)
+		size = 65536;
 	start = clock();
-	for (i = 0; i < 100; i++)
-		memcpy(buf + i * 4, buf + size - i * 16, size);
+	for (i = 0; i < 256; i++)
+		memcpy(buf, buf + size, size);
 	end = clock();
 	len = (end - start) / 1000;
 	speed = i * size / len;
@@ -242,11 +259,9 @@ again:
 	    i, size / 1024, len / 1000, len % 1000, speed / 1000,
 	    speed % 1000);
 
-	size = 256 * 1024;
 	start = clock();
-	for (i = 0; i < 100; i++)
-		memcpy(buf + i * 4 + 1 + (i & 2), buf + size - i * 16 - 1,
-		    size);
+	for (i = 0; i < 128; i++)
+		memcpy(buf + 1, buf + size + 3, size - 1);
 	end = clock();
 	len = (end - start) / 1000;
 	speed = i * size / len;
