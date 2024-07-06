@@ -4,13 +4,8 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <dev/io.h>
-
-#include <mips/asm.h>
-#include <mips/cpuregs.h>
 
 #if CLOCKS_PER_SEC != 1000000
 #error "CLOCKS_PER_SEC is not 1000000, aborting build"
