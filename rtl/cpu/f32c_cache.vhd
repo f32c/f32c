@@ -273,7 +273,7 @@ begin
 		end if;
 	    end if;
 	    sb_queued_new := R_sb_queued + 1;
-	    if R_sb_queued = C_store_buffer_slots then
+	    if R_sb_queued = C_store_buffer_slots - 1 then
 		R_sb_full <= true;
 	    end if;
 	else
