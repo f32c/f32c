@@ -166,12 +166,12 @@ architecture x of f32c_cache is
     signal cpu_d_wait: std_logic;
 
     -- store buffer
-    type T_sb_mem is array(0 to 15)
+    type T_sb_mem is array(0 to C_store_buffer_slots)
       of std_logic_vector(32 - 2 + 4 + 32 - 1 downto 0);
     signal M_sb: T_sb_mem;
-    signal R_sb_head: std_logic_vector(3 downto 0) := (others => '0');
-    signal R_sb_tail: std_logic_vector(3 downto 0) := (others => '0');
-    signal R_sb_queued: std_logic_vector(3 downto 0) := (others => '0');
+    signal R_sb_head: natural range 0 to C_store_buffer_slots;
+    signal R_sb_tail: natural range 0 to C_store_buffer_slots;
+    signal R_sb_queued: natural range 0 to C_store_buffer_slots;
     signal R_sb_empty: boolean := true;
     signal R_sb_full: boolean := false;
 
@@ -253,30 +253,40 @@ begin
     --
     -- store buffer
     --
-    process(clk)
-	variable sb_queued_new: std_logic_vector(3 downto 0);
+    G_sb: if C_store_buffer_slots > 0 generate
     begin
-    if rising_edge(clk) and C_store_buffer_slots > 0
-      and (not C_debug or clk_enable = '1') then
-	sb_queued_new := R_sb_queued;
+    process(clk)
+	variable sb_queued_new: natural range 0 to C_store_buffer_slots;
+    begin
+    if rising_edge(clk) and (not C_debug or clk_enable = '1') then
 	if not R_sb_full and cpu_d_strobe = '1' and cpu_d_write = '1' and
 	  not d_miss_cycle and (not R_sb_empty or dmem_data_ready = '0') then
-	    M_sb(conv_integer(R_sb_head))(65 downto 36) <= cpu_d_addr;
-	    M_sb(conv_integer(R_sb_head))(35 downto 32) <= cpu_d_byte_sel;
-	    M_sb(conv_integer(R_sb_head))(31 downto 0) <= cpu_d_data_out;
+	    M_sb(R_sb_head)(65 downto 36) <= cpu_d_addr;
+	    M_sb(R_sb_head)(35 downto 32) <= cpu_d_byte_sel;
+	    M_sb(R_sb_head)(31 downto 0) <= cpu_d_data_out;
 	    R_sb_empty <= false;
 	    if C_store_buffer_slots > 1 then
-		R_sb_head <= R_sb_head + 1;
+		if R_sb_head = C_store_buffer_slots then
+		    R_sb_head <= 0;
+		else
+		    R_sb_head <= R_sb_head + 1;
+		end if;
 	    end if;
-	    sb_queued_new := sb_queued_new + 1;
-	    if sb_queued_new = C_store_buffer_slots then
+	    sb_queued_new := R_sb_queued + 1;
+	    if R_sb_queued = C_store_buffer_slots then
 		R_sb_full <= true;
 	    end if;
+	else
+	    sb_queued_new := R_sb_queued;
 	end if;
 	if not R_sb_empty and dmem_data_ready = '1' then
 	    R_sb_full <= false;
 	    if C_store_buffer_slots > 1 then
-		R_sb_tail <= R_sb_tail + 1;
+		if R_sb_tail = C_store_buffer_slots then
+		    R_sb_tail <= 0;
+		else
+		    R_sb_tail <= R_sb_tail + 1;
+		end if;
 	    end if;
 	    sb_queued_new := sb_queued_new - 1;
 	    if sb_queued_new = 0 then
@@ -287,13 +297,15 @@ begin
 	if reset = '1' then
 	    R_sb_empty <= true;
 	    R_sb_full <= false;
-	    R_sb_tail <= R_sb_head;
-	    R_sb_queued <= (others => '0');
+	    R_sb_head <= 0;
+	    R_sb_tail <= 0;
+	    R_sb_queued <= 0;
 	end if;
     end if;
     end process;
+    end generate;
 
-    dmem_addr <= M_sb(conv_integer(R_sb_tail))(65 downto 36) when not R_sb_empty
+    dmem_addr <= M_sb(R_sb_tail)(65 downto 36) when not R_sb_empty
       else R_d_rd_addr when d_miss_cycle else cpu_d_addr;
     dmem_addr_strobe <= '1' when not R_sb_empty or d_miss_cycle
       else '0' when d_cacheable and cpu_d_write = '0'
@@ -302,9 +314,9 @@ begin
       else '0' when d_miss_cycle else cpu_d_write;
     dmem_burst_len <= (others => '0');
     dmem_byte_sel <= cpu_d_byte_sel when R_sb_empty
-      else M_sb(conv_integer(R_sb_tail))(35 downto 32);
+      else M_sb(R_sb_tail)(35 downto 32);
     dmem_data_out <= cpu_d_data_out when R_sb_empty
-      else M_sb(conv_integer(R_sb_tail))(31 downto 0);
+      else M_sb(R_sb_tail)(31 downto 0);
 
     cpu_d_data_in <= dmem_data_in when d_miss_cycle
       else d_from_bram(31 downto 0) when d_cacheable else dmem_data_in;
