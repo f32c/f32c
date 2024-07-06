@@ -123,7 +123,7 @@ begin
     port map (
 	clk => clk,
 	reset => reset,
-	sdram_clk => open,
+	sdram_clk => sdram_clk,
 	sdram_cke => sdram_cke,
 	sdram_cs => sdram_csn,
 	sdram_we => sdram_wen,
@@ -156,8 +156,11 @@ begin
 
     -- Emulated SDRAM
     I_sdram_emu: entity work.sdram_emu
+    generic map (
+	C_size_k => 128
+    )
     port map (
-	clk => clk,
+	clk => sdram_clk,
 	cke => sdram_cke,
 	csn => sdram_csn,
 	rasn => sdram_rasn,
