@@ -35,8 +35,8 @@ architecture x of sdram_emu is
 
     signal R_row: std_logic_vector(9 downto 0);
     signal R_bank: std_logic_vector(1 downto 0);
-    signal R_a: std_logic_vector(12 downto 0);
-    signal R_c1: std_logic;
+    signal R_a: std_logic_vector(C_column_bits - 1  downto 0);
+    signal R_c1: boolean;
     signal R_from_bram: std_logic_vector(15 downto 0);
     signal R_from_bram_2ws, R_from_bram_3ws: std_logic_vector(15 downto 0);
     signal R_read_cycle: std_logic_vector(C_cas - 1 downto 0);
@@ -47,22 +47,21 @@ architecture x of sdram_emu is
 
 begin
     cmd <= csn & rasn & casn & wen;
-    ea <= conv_integer(R_row & R_bank & a(C_column_bits - 1 downto 0) & '0')
-      when R_c1 = '0'
-      else conv_integer(R_row & R_bank & R_a(C_column_bits - 1 downto 0) & '1');
+    ea <= conv_integer(R_row & R_bank & R_a) when R_c1
+      else conv_integer(R_row & R_bank & a(C_column_bits - 1 downto 0));
 
     process(clk)
     begin
     if rising_edge(clk) then
 	R_write_cycle <= false;
 	R_read_cycle <= R_read_cycle(R_read_cycle'high - 1 downto 0) & '0';
-	if R_read_cycle(0) = '1' and R_c1 = '1' then
+	if R_read_cycle(0) = '1' and R_c1 then
 	    R_read_cycle(0) <= '1';
 	end if;
 	R_from_bram <= M_bram_hi(ea) & M_bram_lo(ea);
 	R_from_bram_2ws <= R_from_bram;
 	R_from_bram_3ws <= R_from_bram_2ws;
-	R_c1 <= '0';
+	R_c1 <= false;
 
 	if R_write_cycle or cmd = C_cmd_write then
 	    if dqm(0) = '0' then
@@ -78,13 +77,15 @@ begin
 	    R_row <= a(9 downto 0);
 	    R_bank <= ba;
 	when C_cmd_read =>
-	    R_a <= a;
-	    R_c1 <= '1';
+	    R_a(C_column_bits - 1 downto 1) <= a(C_column_bits - 1 downto 1);
+	    R_a(0) <= not a(0);
+	    R_c1 <= true;
 	    R_read_cycle(0) <= '1';
 	when C_cmd_write =>
-	    R_a <= a;
-	    R_c1 <= '1';
-	    R_write_cycle <= R_c1 = '0';
+	    R_a(C_column_bits - 1 downto 1) <= a(C_column_bits - 1 downto 1);
+	    R_a(0) <= not a(0);
+	    R_c1 <= true;
+	    R_write_cycle <= not R_c1;
 	when others =>
 	end case;
     end if;
