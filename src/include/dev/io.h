@@ -54,10 +54,15 @@
 #define	IO_SIO_STATUS		IO_ADDR(0x304)	/* byte, RW */
 #define	IO_SIO_BAUD		IO_ADDR(0x308)	/* half, RW */
 
-#define	IO_SPI_FLASH		IO_ADDR(0x340)	/* half, RW */
-#define	IO_SPI_SDCARD		IO_ADDR(0x350)	/* half, RW */
-#define	IO_SPI_ADC		IO_ADDR(0x360)	/* half, RW */
-#define	IO_SPI_EXT		IO_ADDR(0x370)	/* half, RW */
+#define	IO_SPI_0		IO_ADDR(0x340)	/* half, RW */
+#define	IO_SPI_1		IO_ADDR(0x350)	/* half, RW */
+#define	IO_SPI_2		IO_ADDR(0x360)	/* half, RW */
+#define	IO_SPI_3		IO_ADDR(0x370)	/* half, RW */
+
+#define	IO_SPI_FLASH		IO_SPI_0
+#define	IO_SPI_SDCARD		IO_SPI_1
+#define	IO_SPI_ADC		IO_SPI_2
+#define	IO_SPI_EXT		IO_SPI_3
 
 #define	IO_FB			IO_ADDR(0x380)	/* word, WR */
 #define	IO_TXTMODE_CTRL		IO_ADDR(0x381)	/* byte, WR */
