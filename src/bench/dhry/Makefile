@@ -7,16 +7,15 @@ WARNS = 1
 CFLAGS += -Wno-error=implicit-function-declaration
 CFLAGS += -Wno-error=implicit-int
 
-# Override -Os, and turn on extra optimization efforts
-# 1.55 DMIPS/MHz with gcc-13.2
-CFLAGS += -Ofast -fselective-scheduling -funroll-all-loops
-
-# Inlining functions is not permitted per Dhrystone rules!
-CFLAGS += -fno-inline-functions -fno-inline-small-functions
-CFLAGS += -finline-limit=0
-
 # use clock(3) for time measurement
 CFLAGS += -DMSC_CLOCK
+
+# Override -Os, and turn on extra optimization efforts
+# 1.39 DMIPS/MHz 84.375 MHz 16I$/16D$ SDRAM gcc-14.1
+CFLAGS += -O3 -funroll-all-loops -fselective-scheduling2
+
+# Inlining functions is not permitted per Dhrystone rules!
+CFLAGS += -fno-inline
 
 CFILES = dhry_1.c dhry_2.c
 
