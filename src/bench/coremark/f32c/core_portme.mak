@@ -73,7 +73,8 @@ MK_CFLAGS += ${MK_STDINC} ${MK_INCLUDES}
 MK_CFLAGS += -ffreestanding
 
 # Optimization options
-MK_CFLAGS += -Ofast -funroll-all-loops
+# CoreMark/MHz: 3.129 @ 84.375 MHz 16I$/16D$ SDRAM
+MK_CFLAGS += -Ofast -funroll-all-loops -finline-limit=192 -fipa-pta
 
 # Linker flags
 #MK_LDFLAHS += ${ENDIANFLAGS}
