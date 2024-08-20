@@ -9,7 +9,7 @@ TARGET_ARCH="mips riscv32"
 GNU_MIRROR=https://ftp.gnu.org/gnu
 
 BINUTILS_URL=${GNU_MIRROR}/binutils/binutils-2.42.tar.xz
-GCC_URL=${GNU_MIRROR}/gcc/gcc-14.2.0/gcc-14.2.0.tar.xz
+GCC_URL=${GNU_MIRROR}/gcc/gcc-13.3.0/gcc-13.3.0.tar.xz
 
 BINUTILS_SRC_DIR=~/github/gnu/binutils
 GCC_SRC_DIR=~/github/gnu/gcc
@@ -86,7 +86,7 @@ then
     rm *.tar*
     mv */* .
     ./contrib/download_prerequisites 
-    patch -p0 < ${F32C_SRC_DIR}/src/compiler/patches/gcc-14.2.0.diff
+    patch -p0 < ${F32C_SRC_DIR}/src/compiler/patches/gcc-13.2.0.diff
 fi
 
 
