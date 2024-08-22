@@ -159,11 +159,21 @@ clean: clean_lib_objs
 clean_lib_objs:
 	rm -fr ${OBJDIR}
 
-all_libs:
+risc-v:
 	${MAKE} ARCH=riscv libs
+	${MAKE} ARCH=riscv MIN=true libs
+
+mipsel:
 	${MAKE} ARCH=mips ENDIANFLAGS=-EL libs
 	${MAKE} ARCH=mips ENDIANFLAGS=-EL NOMUL=true libs
 	${MAKE} ARCH=mips ENDIANFLAGS=-EL MIN=true libs
+
+mipseb:
 	${MAKE} ARCH=mips ENDIANFLAGS=-EB libs
 	${MAKE} ARCH=mips ENDIANFLAGS=-EB NOMUL=true libs
 	${MAKE} ARCH=mips ENDIANFLAGS=-EB MIN=true libs
+
+all_libs:
+	${MAKE} risc-v
+	${MAKE} mipsel
+	${MAKE} mipseb
