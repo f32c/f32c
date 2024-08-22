@@ -27,11 +27,7 @@
 
 # Default load offset - bootloader is always at 0x00000000
 ifndef LOADADDR
- ifeq (${ARCH},riscv)
-  LOADADDR = 0x00000400
- else
-  LOADADDR = 0x80000000
- endif
+	LOADADDR = 0x80000000
 endif
 
 # -EB big-endian (mips-elf-gcc default); -EL little-endian
@@ -39,11 +35,18 @@ ifndef ENDIANFLAGS
 	ENDIANFLAGS = -EL
 endif
 
-ARCH_DIR = ${ARCH}
 TOOLPREFIX = ${ARCH}-elf
 
 ifeq (${ARCH},riscv)
 	TOOLPREFIX = ${ARCH}32-elf
+
+	ifdef MIN
+		MK_CFLAGS += -march=rv32i
+		ARCH_DIR = ${ARCH}_min
+	else
+		MK_CFLAGS += -march=rv32im
+		ARCH_DIR = ${ARCH}
+	endif
 else ifeq (${ARCH},mips)
 	ifeq ($(findstring -EB, ${ENDIANFLAGS}),)
 		_ARCH_BASE = ${ARCH}el
@@ -89,7 +92,6 @@ endif
 ifeq (${ARCH},riscv)
 	# RISCV-specific flags
 
-	MK_CFLAGS += -march=rv32i
 	MK_CFLAGS += -mabi=ilp32
 else ifeq (${ARCH},mips)
 	# MIPS-specific flags
