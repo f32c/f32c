@@ -13,6 +13,8 @@ ifeq (${ARCH},mips)
 
 	# No branch likely instructions in the loader
 	CFLAGS += -mno-branch-likely
+else
+	CFLAGS += -march=rv32imzifencei
 endif
 
 PROG = loader
