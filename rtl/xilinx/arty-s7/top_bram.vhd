@@ -80,11 +80,7 @@ begin
 	gpio(23 downto 16) => jc, gpio(31 downto 24) => jd,
 	gpio(127 downto 32) => open,
 	simple_out(3 downto 0) => led,
-	simple_out(4) => led0_r, simple_out(5) => led0_g,
-	simple_out(6) => led0_b,
-	simple_out(7) => led1_r, simple_out(8) => led1_g,
-	simple_out(9) => led1_b,
-	simple_out(31 downto 10) => open,
+	simple_out(31 downto 4) => open,
 	simple_in(3 downto 0) => btn, simple_in(15 downto 4) => x"000",
 	simple_in(19 downto 16) => sw, simple_in(31 downto 20) => x"000",
 	spi_ss(0) => qspi_cs,
@@ -101,14 +97,14 @@ begin
     )
     port map (
 	clk => clk100mhz,
-	gsr => rs232_break,
+	gsr => '0',
 	gts => '0',
 	keyclearb => '0',
 	pack => '1',
 	usrcclko => flash_clk,
 	usrcclkts => '0',
 	usrdoneo => '1',
-	usrdonets => '0'
+	usrdonets => '1'
     );
 
 end Behavioral;
