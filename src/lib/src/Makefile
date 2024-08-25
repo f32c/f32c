@@ -22,8 +22,9 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $Id$
-#
+
+.PHONY: riscv
+.PHONY: mips
 
 ifeq ($(MAKECMDGOALS),crt0)
  LIB = crt0
@@ -159,7 +160,7 @@ clean: clean_lib_objs
 clean_lib_objs:
 	rm -fr ${OBJDIR}
 
-risc-v:
+riscv:
 	${MAKE} ARCH=riscv libs
 	${MAKE} ARCH=riscv MIN=true libs
 
@@ -173,7 +174,10 @@ mipseb:
 	${MAKE} ARCH=mips ENDIANFLAGS=-EB NOMUL=true libs
 	${MAKE} ARCH=mips ENDIANFLAGS=-EB MIN=true libs
 
-all_libs:
-	${MAKE} risc-v
+mips:
 	${MAKE} mipsel
 	${MAKE} mipseb
+
+all_libs:
+	${MAKE} riscv
+	${MAKE} mips
