@@ -99,7 +99,7 @@ begin
     )
     port map (
 	clk => clk,
-	gsr => rs232_break,
+	gsr => '0',
 	gts => '0',
 	keyclearb => '0',
 	pack => '1',
