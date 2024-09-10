@@ -62,7 +62,7 @@ architecture Behavioral of spi is
     signal R_clk_acc: std_logic_vector(7 downto 0);
     signal R_spi_cen: std_logic := '1'; -- SPI disabled by default
     signal clk_acc_next: std_logic_vector(7 downto 0);
-    signal R_clk_prev: std_logic;
+
 begin
     bus_out(31 downto 9) <= (others => '-');
     bus_out(8) <= R_bit_cnt(3);
@@ -84,13 +84,6 @@ begin
     if not C_fixed_speed generate
 	clk_acc_next <= R_clk_acc + R_clk_div;
     end generate G_not_fixed_speed;
-
-    process(clk)
-    begin
-	if rising_edge(clk) then
-	    R_clk_prev <= R_clk_acc(7);
-	end if;
-    end process;
 
     process(clk)
     begin
