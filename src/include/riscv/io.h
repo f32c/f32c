@@ -118,13 +118,13 @@
 
 #define	DELAY(ticks) 						\
 	__asm __volatile__ (					\
-		"	li	$1, -4;"			\
-		"	and	$1, $1, %0;"			\
-		"	addi	$1, $1, 4;"			\
-		"1:	addi	$1, $1, -4;"			\
-		"	bnez	$1, 1b;"			\
+		"	li	x1, -2;"			\
+		"	and	x1, x1, %0;"			\
+		"1:	addi	x1, x1, -2;"			\
+		"	bnez	x1, 1b;"			\
 		:						\
 		: "r" (ticks)					\
+		: "x1"						\
 	)
 
 #endif /* __ASSEMBLER__ */
