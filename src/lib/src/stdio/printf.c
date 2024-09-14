@@ -31,16 +31,15 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 
-#include <dev/sio.h>
+#include <math.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <string.h>
 
+#include <dev/sio.h>
 
 #define	MAXNBUF	32
 
@@ -65,11 +64,11 @@ pn(char *nbuf, uintmax_t num, int base, int *lenp, int upper)
 		c = num % base;
 		num /= base;
 		if (c < 10)
-                	c += '0';
+			c += '0';
 		else if (upper)
-                	c += 'A' - 10;
+			c += 'A' - 10;
 		else
-                	c += 'a' - 10;
+			c += 'a' - 10;
 		*++p = c;
 	} while (num != 0);
 	if (lenp)
@@ -78,59 +77,64 @@ pn(char *nbuf, uintmax_t num, int base, int *lenp, int upper)
 }
 
 #ifndef NO_PRINTF_FLOAT
+/*
+ * Print a double float number.
+ */
 __attribute__((optimize("-Os"))) static int
-pd(void(*func)(int, void *), void *arg, double x)
+pd(void(*func)(int, void *), void *arg, double x, int width, int dwidth,
+    char padc, int upper)
 {
-	double tx, one = 1.0, integ = 0, lim = 0.00000000001;
-	char cb[128]; /* XXX hardcoded buffer size on stack - revisit!!! */
-	int first = 0, last = 0, retval = 0, i, t;
+	double tx, ten = 10.0;
+	int retval = 0, t = 0, d;
+	int neg = 0, minus = 0, npad = 2 - (dwidth == 0);
 
-	if (x == 0) {
-		PCHAR('0');
+	if (isnan(x)) {
+		PCHAR('n' - upper); PCHAR('a' - upper); PCHAR('n' - upper);
+		return(retval);
+	}
+
+	if (isinf(x)) {
+		if (x < 0)
+			PCHAR('-');
+		PCHAR('i' - upper); PCHAR('n' - upper); PCHAR('f' - upper);
 		return(retval);
 	}
 
 	if (x < 0) {
 		x = -x;
+		neg = 1;
+		npad++;
+		if (padc == '0') {
+			PCHAR('-');
+			minus = 1;
+		}
+	}
+
+	/* Find range */
+	for (tx = ten; x > tx; tx *= ten, t++) {}
+
+	/* Padding from the left */
+	if (width > dwidth)
+		for (d = width - dwidth - npad; d > t; d--)
+			PCHAR(padc);
+
+	if (neg && !minus)
 		PCHAR('-');
-	}
 
-	if (x < one) {
-		PCHAR('0');
-	} else {
-		for (tx = x; tx >= one; tx /= 10, lim *= 10) {
-			i = tx;
-			i %= 10;
-			cb[last++] = '0' + i;
+	do {
+		tx /= ten;
+		d = x / tx;
+		x -= tx * d;
+		if (d > 9) {
+			/* Overshoot */
+			d = 9;
+			x = tx;
 		}
-		if (last > first)
-			last--;
-		for (i = 0; i < (last - first + 1) / 2; i++) {
-			t = cb[first + i];
-			cb[first + i] = cb[last - i];
-			cb[last - i] = t;
-		}
-		for (i = first; i <= last; i++) {
-			PCHAR(cb[i]);
-			integ = integ * 10 + (cb[i] - '0');
-		}
-		x = x - integ;
-		if (x < lim)
-			return(retval);
-	}
+		PCHAR('0' + d);
+		if (dwidth && t == 0)
+			PCHAR('.');
+	} while (t-- > -dwidth);
 
-	tx = x;
-	PCHAR('.');
-	while (integ == 0 || x > lim) {
-		tx = tx * 10.0;
-		x = x / 10.0;
-		i = tx;
-		if (integ == 0 && i == 0)
-			lim /= 100;
-		else
-			integ = 1;
-		PCHAR('0' + (i % 10));
-	}
 	return(retval);
 }
 #endif /* NO_PRINTF_FLOAT */
@@ -377,8 +381,11 @@ number:
 
 			break;
 #ifndef NO_PRINTF_FLOAT
+		case 'F':
+			upper = 'a' - 'A';
 		case 'f':
-			retval += pd(func, arg, va_arg(ap, double));
+			retval += pd(func, arg, va_arg(ap, double),
+			    width, dwidth, padc, upper);
 			break;
 #endif /* NO_PRINTF_FLOAT */
 		default:
