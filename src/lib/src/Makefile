@@ -112,12 +112,13 @@ ifeq ($(LIB),c)
 	float/floatunsidf.c float/floatunsisf.c float/lshrdi3.c \
 	float/muldf3.c float/mulsf3.c float/negdf2.c float/negsf2.c \
 	float/subdf3.c float/subsf3.c float/truncdfsf2.c float/fixdfdi.c \
-	float/ashrdi3.c float/floatdidf.c
+	float/ashrdi3.c float/floatdidf.c \
+	math/isnan.c math/isinf.c math/isfinite.c
  endif
 endif
 
 ifeq ($(LIB),m)
- CFILES = math/scalbn.c math/pow.c math/isnan.c math/fabs.c math/floor.c \
+ CFILES = math/scalbn.c math/pow.c math/fabs.c math/floor.c \
 	math/log.c math/atan.c math/cos.c math/acos.c math/copysignf.c \
 	math/fmod.c math/sinhf.c math/sin.c math/sqrt.c math/asin.c \
 	math/exp.c math/cosf.c math/sinf.c math/acosf.c math/asinf.c \
@@ -125,8 +126,8 @@ ifeq ($(LIB),m)
 	math/logf.c math/powf.c math/sqrtf.c math/ceilf.c math/expm1.c \
 	math/coshf.c math/modff.c math/atan2f.c math/log10f.c math/tanhf.c \
 	math/log2f.c math/tanf.c math/erff.c math/atanhf.c math/acoshf.c \
-	math/asinhf.c math/expm1f.c math/log1pf.c math/frexpf.c math/isinf.c \
-	math/isfinite.c math/scalbnf.c math/log2.c math/log10.c math/cosh.c \
+	math/asinhf.c math/expm1f.c math/log1pf.c math/frexpf.c \
+	math/scalbnf.c math/log2.c math/log10.c math/cosh.c \
 	math/sinh.c math/modf.c math/ceil.c math/erf.c math/frexp.c \
 	math/atan2.c math/acosh.c math/log1p.c math/atanh.c math/asinh.c \
 	math/tanh.c math/tan.c math/signbit.c math/nearbyint.c math/rintf.c \
