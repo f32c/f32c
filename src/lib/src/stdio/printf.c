@@ -82,31 +82,35 @@ pn(char *nbuf, uintmax_t num, int base, int *lenp, int upper)
  */
 __attribute__((optimize("-Os"))) static int
 pd(void(*func)(int, void *), void *arg, double x, int width, int dwidth,
-    char padc, int upper)
+    char padc, char ch)
 {
 	double tx, ten = 10.0;
 	int retval = 0, t = 0, d;
-	int neg = 0, minus = 0, npad = 2 - (dwidth == 0);
+	int minus = (x < 0), npad = 2 - (dwidth == 0);
+	int lower = ch & 0x20;
 
 	if (isnan(x)) {
-		PCHAR('n' - upper); PCHAR('a' - upper); PCHAR('n' - upper);
+		for (width -= 3; width > 0; width--)
+			PCHAR(' ');
+		PCHAR('N' + lower); PCHAR('A' + lower); PCHAR('N' + lower);
 		return(retval);
 	}
 
 	if (isinf(x)) {
-		if (x < 0)
+		for (width -= 3 + minus; width > 0; width--)
+			PCHAR(' ');
+		if (minus)
 			PCHAR('-');
-		PCHAR('i' - upper); PCHAR('n' - upper); PCHAR('f' - upper);
+		PCHAR('I' + lower); PCHAR('N' + lower); PCHAR('F' + lower);
 		return(retval);
 	}
 
-	if (x < 0) {
+	if (minus) {
 		x = -x;
-		neg = 1;
 		npad++;
 		if (padc == '0') {
+			minus = 0;
 			PCHAR('-');
-			minus = 1;
 		}
 	}
 
@@ -118,7 +122,7 @@ pd(void(*func)(int, void *), void *arg, double x, int width, int dwidth,
 		for (d = width - dwidth - npad; d > t; d--)
 			PCHAR(padc);
 
-	if (neg && !minus)
+	if (minus)
 		PCHAR('-');
 
 	do {
@@ -168,7 +172,7 @@ _xvprintf(char const *fmt, void(*func)(int, void *), void *arg, va_list ap)
 		}
 		percent = fmt - 1;
 		qflag = 0; lflag = 0; ladjust = 0; sharpflag = 0; neg = 0;
-		sign = 0; dot = 0; dwidth = 0; upper = 0;
+		sign = 0; dot = 0; dwidth = 6; upper = 0;
 		cflag = 0; hflag = 0; jflag = 0; zflag = 0;
 reswitch:	switch (ch = (u_char)*fmt++) {
 		case '.':
@@ -382,10 +386,9 @@ number:
 			break;
 #ifndef NO_PRINTF_FLOAT
 		case 'F':
-			upper = 'a' - 'A';
 		case 'f':
 			retval += pd(func, arg, va_arg(ap, double),
-			    width, dwidth, padc, upper);
+			    width, dwidth, padc, ch);
 			break;
 #endif /* NO_PRINTF_FLOAT */
 		default:
