@@ -14,7 +14,9 @@ GCC_URL=${GNU_MIRROR}/gcc/gcc-13.3.0/gcc-13.3.0.tar.xz
 BINUTILS_SRC_DIR=~/github/gnu/binutils
 GCC_SRC_DIR=~/github/gnu/gcc
 
-F32C_SRC_DIR=~/github/f32c
+SCRIPT_PATH=`realpath $0`
+F32C_SRC_COMPILER_DIR=`dirname ${SCRIPT_PATH}`
+
 #F32C_TOOLCHAIN_DST_DIR=/usr/local
 F32C_TOOLCHAIN_DST_DIR=/tmp/f32c
 
@@ -74,7 +76,7 @@ then
     tar -xf *
     rm *.tar*
     mv */* .
-    patch -p0 < ${F32C_SRC_DIR}/src/compiler/patches/binutils-2.40.diff
+    patch -p0 < ${F32C_SRC_COMPILER_DIR}/patches/binutils-2.40.diff
 fi
 
 if [ ! -d ${GCC_SRC_DIR} ]
@@ -86,7 +88,7 @@ then
     rm *.tar*
     mv */* .
     ./contrib/download_prerequisites 
-    patch -p0 < ${F32C_SRC_DIR}/src/compiler/patches/gcc-13.2.0.diff
+    patch -p0 < ${F32C_SRC_COMPILER_DIR}/patches/gcc-13.2.0.diff
 fi
 
 
