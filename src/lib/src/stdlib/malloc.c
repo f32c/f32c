@@ -21,8 +21,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #include <stdio.h>
@@ -57,7 +55,7 @@ static int used_cnt = 0;
 static void
 malloc_init()
 {
-	int i;
+	int i, val, done = 0;
 	uint32_t off, ram_top;
 	volatile uint32_t *probe;
 
@@ -65,6 +63,13 @@ malloc_init()
 	probe = heap = (void *) &_end;
 	off = 1024;
 	for (i = -1; i < 2 && off < (1 << 28) / sizeof(*heap); i++) {
+		val = probe[off];
+		probe[off] = ~val;
+		if (probe[off] != ~val)
+			done = 1;
+		probe[off] = val;
+		if (done)
+			break;
 		*probe = i;
 		if (probe[off] != i) {
 			off <<= 1;
@@ -81,12 +86,7 @@ malloc_init()
 
 	if (ram_top > (uint32_t) heap) {
 		i = (ram_top - ((uint32_t) heap)) / sizeof(*heap) - 1;
-#if 0
 		heap[0] = SET_FREE(i);
-#else
-		// XXX workaround for the buggy gcc-7.0.1 optimizer !?!
-		((volatile uint32_t *) heap)[0] = SET_FREE(i);
-#endif
 	} else
 		i = 0;
 
