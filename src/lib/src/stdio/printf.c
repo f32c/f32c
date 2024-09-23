@@ -172,7 +172,7 @@ _xvprintf(char const *fmt, void(*func)(int, void *), void *arg, va_list ap)
 		}
 		percent = fmt - 1;
 		qflag = 0; lflag = 0; ladjust = 0; sharpflag = 0; neg = 0;
-		sign = 0; dot = 0; dwidth = 6; upper = 0;
+		sign = 0; dot = 0; dwidth = 0; upper = 0;
 		cflag = 0; hflag = 0; jflag = 0; zflag = 0;
 reswitch:	switch (ch = (u_char)*fmt++) {
 		case '.':
@@ -387,6 +387,8 @@ number:
 #ifndef NO_PRINTF_FLOAT
 		case 'F':
 		case 'f':
+			if (dwidth == 0)
+				dwidth = 6;
 			retval += pd(func, arg, va_arg(ap, double),
 			    width, dwidth, padc, ch);
 			break;
