@@ -86,7 +86,8 @@ malloc_init()
 
 	if (ram_top > (uint32_t) heap) {
 		i = (ram_top - ((uint32_t) heap)) / sizeof(*heap) - 1;
-		heap[0] = SET_FREE(i);
+		probe = heap;
+		probe[0] = SET_FREE(i);
 	} else
 		i = 0;
 
