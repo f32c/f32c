@@ -27,7 +27,7 @@ MK_CFLAGS = -ffunction-sections -fdata-sections
 
 # Default load offset - bootloader is at 0x00000000
 ifndef LOADADDR
- LOADADDR = 0x400
+ LOADADDR = 0x80000000
 endif
 
 ifeq ($(findstring 0x8, ${LOADADDR}),)
@@ -63,7 +63,7 @@ endif
 
 # MIPS-specific flags
 ifeq ($(ARCH),riscv)
- MK_CFLAGS += -march=rv32i -mabi=ilp32
+ MK_CFLAGS += -march=rv32im -mabi=ilp32
  OBJFLAGS += -R .riscv.attributes
 endif
 
