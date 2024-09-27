@@ -23,6 +23,7 @@ main(void)
 	int i, len, speed, iter, tot_err;
 	int a = 0, b = 0, c, d;
 	int size, tmp, freq_khz, start, end, seed, val, lval;
+	int score;
 	volatile uint8_t *p8;
 	volatile uint16_t *p16;
 	volatile uint32_t *p32;
@@ -32,6 +33,7 @@ main(void)
 	tot_err = 0;
 	iter = 1;
 again:
+	score = 0;
 
 	freq_khz = (get_cpu_freq() + 499) / 1000;
 	printf("Detected %d.%03d MHz CPU\n\n",
@@ -116,6 +118,7 @@ again:
 	end = clock();
 	len = (end - start) / 1000;
 	speed = size * i / len;
+	score += speed;
 	printf("32-bit write done in %d.%03d s (%d.%03d MB/s)\n",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	
@@ -130,6 +133,7 @@ again:
 	end = clock();
 	len = (end - start) / 1000;
 	speed = size * i / len;
+	score += speed;
 	printf("32-bit read done in %d.%03d s (%d.%03d MB/s), ",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	val = lval;
@@ -166,6 +170,7 @@ again:
 	end = clock();
 	len = (end - start) / 1000;
 	speed = size * i / len;
+	score += speed / 2;
 	printf("16-bit write done in %d.%03d s (%d.%03d MB/s)\n",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	
@@ -180,6 +185,7 @@ again:
 	end = clock();
 	len = (end - start) / 1000;
 	speed = size * i / len;
+	score += speed / 2;
 	printf("16-bit read done in %d.%03d s (%d.%03d MB/s), ",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	val = lval;
@@ -216,6 +222,7 @@ again:
 	end = clock();
 	len = (end - start) / 1000;
 	speed = size * i / len;
+	score += speed / 2;
 	printf("8-bit write done in %d.%03d s (%d.%03d MB/s)\n",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	
@@ -230,6 +237,7 @@ again:
 	end = clock();
 	len = (end - start) / 1000;
 	speed = size * i / len;
+	score += speed / 2;
 	printf("8-bit read done in %d.%03d s (%d.%03d MB/s), ",
 	    len / 1000, len % 1000, speed / 1000, speed % 1000);
 	val = lval;
@@ -271,6 +279,13 @@ again:
 
 	printf("Accumulated %d errors after %d iterations\n\n",
 	    tot_err, iter);
+
+	score /= 4;
+	printf("Weighted average throughput: %d.%03d MB/s\n", score / 1000,
+	    score % 1000);
+	score = score * 1000 / freq_khz;
+	printf("Weighted avg per clock freq: %d.%03d MB/s/MHz\n\n",
+	    score / 1000, score % 1000);
 
 	iter++;
 	if (sio_getchar(0) != 3)
