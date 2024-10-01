@@ -79,10 +79,10 @@ malloc_init()
 	ram_top = (uint32_t) &heap[off] - (((uint32_t) heap) & ~(1 <<31));
 
 	/* Reserve stack space depending on memory mapping */
-	if (ram_top & (1 << 31))
-		ram_top -= 0x8000; /* XRAM, 32 K */
+	if ((int) ram_top < 0)
+		ram_top -= 0x2000; /* 0x80000000 (XRAM), 8 K */
 	else
-		ram_top -= 0x1000; /* BRAM, 4 K */
+		ram_top -= 0x1000; /* 0x00000000 (BRAM), 4 K */
 
 	if (ram_top > (uint32_t) heap) {
 		i = (ram_top - ((uint32_t) heap)) / sizeof(*heap) - 1;
