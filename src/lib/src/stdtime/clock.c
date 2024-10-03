@@ -30,7 +30,7 @@
 
 
 /* Table of f32c:rtc specific clock increments, in ns */
-static const char rtc_res_tbl[8] = {1, 2, 5, 10, 20, 50, 100, 200};
+static const uint8_t rtc_res_tbl[8] = {1, 2, 5, 10, 20, 50, 100, 200};
 
 
 uint32_t
@@ -41,7 +41,7 @@ get_cpu_freq() {
 
 	INW(rtc_cfg, IO_RTC_CFG);
 	incr_ns = rtc_res_tbl[rtc_cfg & 0xf];
-	clk_freq += incr_ns / 2;
+	clk_freq += (incr_ns - 1) / 2;
 	clk_freq <<= 28;
 	clk_freq = clk_freq / (rtc_cfg >> 4) / incr_ns;
 	return (clk_freq);
