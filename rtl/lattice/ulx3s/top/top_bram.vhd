@@ -41,10 +41,10 @@ entity glue is
 	C_mul_reg: boolean := false;
 	C_debug: boolean := false;
 
-	C_clk_freq: integer := 84;
+	C_clk_freq_hz: integer := 100000000;
 
 	-- SoC configuration options
-	C_bram_size: integer := 32;
+	C_bram_size: integer := 128;
 	C_sio: integer := 1;
 	C_spi: integer := 3;
 	C_gpio: integer := 0;
@@ -94,7 +94,6 @@ end glue;
 
 architecture x of glue is
     signal clk, pll_lock: std_logic;
-    signal clk_112m5, clk_96m43, clk_84m34: std_logic;
     signal reset: std_logic;
     signal sio_break: std_logic;
     signal flash_sck: std_logic;
@@ -111,7 +110,7 @@ begin
 	C_big_endian => C_big_endian,
 	C_mult_enable => C_mult_enable,
 	C_mul_reg => C_mul_reg,
-	C_clk_freq => C_clk_freq,
+	C_clk_freq => C_clk_freq_hz / 1000000,
 	C_bram_size => C_bram_size,
 	C_debug => C_debug,
 	C_sio => C_sio,
@@ -152,20 +151,16 @@ begin
     );
     flash_cen <= flash_csn;
 
-    I_pll: entity work.pll_25m
+    I_pll: entity work.ecp5pll
+    generic map (
+	in_hz => 25000000,
+	out0_hz => C_clk_freq_hz
+    )
     port map (
-	clk_25m => clk_25m,
-	clk_168m75 => open,
-	clk_112m5 => clk_112m5,
-	clk_96m43 => clk_96m43,
-	clk_84m34 => clk_84m34,
-	lock => pll_lock
+	clk_i => clk_25m,
+	clk_o(0) => clk,
+	locked => pll_lock
     );
 
-    clk <= clk_112m5 when C_clk_freq = 112
-      else clk_96m43 when C_clk_freq = 96
-      else clk_84m34 when C_clk_freq = 84
-      else '0';
     reset <= not pll_lock or sio_break;
-
 end x;

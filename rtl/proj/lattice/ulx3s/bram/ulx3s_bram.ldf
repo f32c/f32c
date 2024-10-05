@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<BaliProject version="3.2" title="ulx3s_bram" device="LFE5U-12F-8BG381C" default_implementation="impl1">
+<BaliProject version="3.2" title="ulx3s_bram" device="LFE5U-45F-8BG381C" default_implementation="impl1">
     <Options/>
     <Implementation title="impl1" dir="impl1" description="impl1" synthesis="synplify" default_strategy="Timing">
-        <Options/>
+        <Options def_top="glue"/>
         <Source name="../../../../lattice/ulx3s/top/top_bram.vhd" type="VHDL" type_short="VHDL">
             <Options top_module="glue"/>
         </Source>
@@ -48,7 +48,7 @@
         <Source name="../../../../soc/timer.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
-        <Source name="../../../../lattice/ulx3s/clocks/pll_25_169_112_96_84.vhd" type="VHDL" type_short="VHDL">
+        <Source name="../../../../lattice/chip/ecp5u/ecp5pll.vhd" type="VHDL" type_short="VHDL">
             <Options/>
         </Source>
         <Source name="../../constraints/ulx3s_fer.lpf" type="Logic Preference" type_short="LPF">
