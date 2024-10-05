@@ -28,8 +28,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 
-use work.f32c_pack.all;
+library ecp5u;
+use ecp5u.components.all;
 
+use work.f32c_pack.all;
 
 entity glue is
     generic (
@@ -44,19 +46,49 @@ entity glue is
 	-- SoC configuration options
 	C_bram_size: integer := 32;
 	C_sio: integer := 1;
-	C_spi: integer := 0;
+	C_spi: integer := 3;
 	C_gpio: integer := 0;
 	C_simple_io: boolean := true;
 	C_timer: boolean := false
     );
     port (
 	clk_25m: in std_logic;
+
+	-- SIO0 (FTDI)
 	rs232_tx: out std_logic;
 	rs232_rx: in std_logic;
+
+	-- On-board simple IO
 	led: out std_logic_vector(7 downto 0);
 	btn_pwr, btn_f1, btn_f2: in std_logic;
 	btn_up, btn_down, btn_left, btn_right: in std_logic;
-	sw: in std_logic_vector(3 downto 0)
+	sw: in std_logic_vector(3 downto 0);
+
+	-- SPI flash (SPI #0)
+	flash_so: in std_logic;
+	flash_si: out std_logic;
+	flash_cen: out std_logic;
+	--flash_sck: out std_logic; -- accessed via special ECP5 primitive
+	flash_holdn, flash_wpn: out std_logic := '1';
+
+	-- SD card (SPI #1)
+	sd_cmd: inout std_logic;
+	sd_clk: out std_logic;
+	sd_d: inout std_logic_vector(3 downto 0);
+	sd_cdn: in std_logic;
+	sd_wp: in std_logic;
+
+	-- ADC MAX11123 (SPI #2)
+	adc_csn: out std_logic;
+	adc_sclk: out std_logic;
+	adc_mosi: out std_logic;
+	adc_miso: in std_logic;
+
+	-- PCB antenna
+	ant: out std_logic;
+
+	-- '1' = power off
+	shutdown: out std_logic := '0'
     );
 end glue;
 
@@ -65,10 +97,11 @@ architecture x of glue is
     signal clk_112m5, clk_96m43, clk_84m34: std_logic;
     signal reset: std_logic;
     signal sio_break: std_logic;
+    signal flash_sck: std_logic;
+    signal flash_csn: std_logic;
 
     signal R_simple_in: std_logic_vector(19 downto 0);
     signal open_out: std_logic_vector(31 downto 8);
-    signal S_spi_miso: std_logic_vector(C_spi-1 downto 0);
 
 begin
     -- generic BRAM glue
@@ -95,10 +128,29 @@ begin
 	simple_out(7 downto 0) => led,
 	simple_in(31 downto 20) => (others => '-'),
 	simple_in(19 downto 0) => R_simple_in,
-	spi_miso => S_spi_miso
+	spi_ss(0) => flash_csn,
+	spi_ss(1) => sd_d(3),
+	spi_ss(2) => adc_csn,
+	spi_sck(0) => flash_sck,
+	spi_sck(1) => sd_clk,
+	spi_sck(2) => adc_sclk,
+	spi_mosi(0) => flash_si,
+	spi_mosi(1) => sd_cmd,
+	spi_mosi(2) => adc_mosi,
+	spi_miso(0) => flash_so,
+	spi_miso(1) => sd_d(0),
+	spi_miso(2) => adc_miso
     );
     R_simple_in <= sw & x"00" & '0' & not btn_pwr & btn_f2 & btn_f1
       & btn_up & btn_down & btn_left & btn_right when rising_edge(clk);
+
+    -- SPI flash clock has to be routed through a ECP5-specific primitive
+    I_flash_mux: USRMCLK
+    port map (
+	USRMCLKTS => flash_csn,
+	USRMCLKI => flash_sck
+    );
+    flash_cen <= flash_csn;
 
     I_pll: entity work.pll_25m
     port map (
