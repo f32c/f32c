@@ -54,6 +54,9 @@
 
 #include <sys/limits.h>
 
+#define	NBBY	8		/* number of bits in a byte */
+#define	NBPW	sizeof(int)	/* number of bytes per word (integer) */
+
 /* Macros for min/max. */
 #define	MIN(a,b) (((a)<(b))?(a):(b))
 #define	MAX(a,b) (((a)>(b))?(a):(b))
