@@ -23,7 +23,8 @@ static const struct jedec_mfg {
 	char	*name;
 } jedec_mfg_tbl[] = {
 	{0x01, "Cypress / Infineon"},
-	{0x62, "SST / Microchip"},
+	{0x04, "Fujitsu"},
+	{0x62, "Onsemi"},
 	{0x85, "PUYA"},
 	{0x9d, "ISSI"},
 	{0xbf, "SST / Microchip"},
@@ -68,8 +69,11 @@ main(void)
 		printf("  vendor 0x%02x (%s)", mfgid, mfgid_to_str(mfgid));
 		dev = spi_byte(port, 0);
 		printf(" type 0x%02x", dev);
-		cap = spi_byte(port, 0);
-		printf(" capacity 0x%02x (%d Bytes)\n", cap,
-		    0x10000 << (cap & 0xf));
+		j = spi_byte(port, 0);
+		if (j & 0x40)
+			cap = 0x400 << (j & 0x3f);
+		else
+			cap = 1 << (j & 0x3f);
+		printf(" capacity 0x%02x (%d Bytes)\n", j, cap);
 	}
 }
