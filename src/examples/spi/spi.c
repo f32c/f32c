@@ -3,7 +3,6 @@
  */
 
 #include <stdio.h>
-//#include <string.h>
 
 #include <dev/io.h>
 #include <dev/spi.h>
