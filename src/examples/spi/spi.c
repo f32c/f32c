@@ -12,10 +12,19 @@
 #define	SPI_CMD_JEDEC_ID	0x9F	/* JEDEC standard */
 #define	SPI_CMD_RDID		0xab	/* Microchip */
 
-#define	SPI_PORTS	4
+#define	SPI_PORTS	2
 
 static const int spi_port[SPI_PORTS] = {
-	IO_SPI_0, IO_SPI_1, IO_SPI_2, IO_SPI_3,
+	IO_SPI_0,
+#if SPI_PORTS > 1
+	IO_SPI_1,
+#endif
+#if SPI_PORTS > 2
+	IO_SPI_2,
+#endif
+#if SPI_PORTS > 3
+	IO_SPI_3,
+#endif
 };
 
 #define	SPI_MFR_CYPRESS		0x01
