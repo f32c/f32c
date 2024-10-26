@@ -50,14 +50,14 @@ static const struct jedec_mfr {
 	{0, "Unknown"}
 };
 
-#define	SPI_QUIRK_CAPACITY_1R	(1 << 0) /* shift cap right 1 bit */
+#define	SPI_QUIRK_CAPACITY_1L	(1 << 0) /* shift cap left 1 bit */
 #define	SPI_QUIRK_CAPACITY_10L	(1 << 1) /* shift cap left 10 bits */
 #define	SPI_QUIRK_FLAT		(1 << 2) /* flat / sectorless addressing */
 
 static const uint8_t spi_quirks[] = {
 	SPI_MFR_CYPRESS,
 		0x02,	/* S25FL032P / S25FL064P */
-			SPI_QUIRK_CAPACITY_1R,
+			SPI_QUIRK_CAPACITY_1L,
 		0,	/* SPI_MFR_CYPRESS quirks end */
 	SPI_MFR_FUJITSU,
 		0x7f,	/* MB85RS4MTY */
@@ -113,8 +113,8 @@ main(void)
 				quirk_i = *qp;
 				if (mfr_i != mfrid || dev_i != devid)
 					continue;
-				if (quirk_i & SPI_QUIRK_CAPACITY_1R)
-					cap >>= 1;
+				if (quirk_i & SPI_QUIRK_CAPACITY_1L)
+					cap <<= 1;
 				if (quirk_i & SPI_QUIRK_CAPACITY_10L)
 					cap <<= 10;
 			}
