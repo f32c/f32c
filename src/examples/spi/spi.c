@@ -12,6 +12,7 @@
 #define	SPI_CMD_RDID		0xab	/* Microchip */
 
 #define	SPI_PORTS	2
+#define	SPI_SLAVES	2
 
 static const int spi_port[SPI_PORTS] = {
 	IO_SPI_0,
@@ -80,7 +81,7 @@ mfrid_to_str(int mfrid)
 void
 main(void)
 {
-	int i, j, port;
+	int port, i, j, slave;
 	int mfrid, devid, capid;
 	int mfr_i, dev_i, quirk_i;
 	const uint8_t *qp;
@@ -89,36 +90,39 @@ main(void)
 	for (i = 0; i < SPI_PORTS; i++) {
 		port = spi_port[i];
 		printf("Probing SPI port #%d @ 0x%08x:\n", i, port);
-		spi_start_transaction(port);
-		spi_byte(port, SPI_CMD_JEDEC_ID);
-		mfrid = spi_byte(port, 0);
-		if (mfrid == 0) {
-			spi_start_transaction(port);
-			spi_byte(port, SPI_CMD_REMS);
-			for (j = 0; j < 3; j++)
-				spi_byte(port, 0);
+		for (slave = 0; slave < SPI_SLAVES; slave++) {
+			spi_start_transaction(port, slave);
+			spi_byte(port, SPI_CMD_JEDEC_ID);
 			mfrid = spi_byte(port, 0);
-		}
-		if (mfrid == 0)
-			continue;
-		devid = spi_byte(port, 0);
-		capid = spi_byte(port, 0);
-		cap = 1 << (capid & 0x1f);
-		printf("  mfr 0x%02x (%s)", mfrid, mfrid_to_str(mfrid));
-		printf(" dev 0x%02x cap 0x%02x", devid, capid);
-
-		for (qp = spi_quirks; *qp != 0; qp++) {
-			mfr_i = *qp++;
-			for (dev_i = *qp++; *qp != 0; qp++) {
-				quirk_i = *qp;
-				if (mfr_i != mfrid || dev_i != devid)
-					continue;
-				if (quirk_i & SPI_QUIRK_CAPACITY_1L)
-					cap <<= 1;
-				if (quirk_i & SPI_QUIRK_CAPACITY_10L)
-					cap <<= 10;
+			if (mfrid == 0) {
+				spi_start_transaction(port, slave);
+				spi_byte(port, SPI_CMD_REMS);
+				for (j = 0; j < 3; j++)
+					spi_byte(port, 0);
+				mfrid = spi_byte(port, 0);
 			}
+			if (mfrid == 0)
+				continue;
+			devid = spi_byte(port, 0);
+			capid = spi_byte(port, 0);
+			cap = 1 << (capid & 0x1f);
+			printf("  slave #%d:", slave);
+			printf(" mfr 0x%02x (%s)", mfrid, mfrid_to_str(mfrid));
+			printf(" dev 0x%02x cap 0x%02x", devid, capid);
+
+			for (qp = spi_quirks; *qp != 0; qp++) {
+				mfr_i = *qp++;
+				for (dev_i = *qp++; *qp != 0; qp++) {
+					quirk_i = *qp;
+					if (mfr_i != mfrid || dev_i != devid)
+						continue;
+					if (quirk_i & SPI_QUIRK_CAPACITY_1L)
+						cap <<= 1;
+					if (quirk_i & SPI_QUIRK_CAPACITY_10L)
+						cap <<= 10;
+				}
+			}
+			printf(" (%d Bytes)\n", cap);
 		}
-		printf(" (%d Bytes)\n", cap);
 	}
 }
