@@ -49,7 +49,7 @@ sdcard_cmd(int cmd, uint32_t arg)
 	int i, res;
 
 	/* Init SPI */
-	spi_start_transaction(IO_SPI_SDCARD);
+	spi_start_transaction(IO_SPI_SDCARD, 0);
 
 	/* Preamble */
 	spi_byte(IO_SPI_SDCARD, 0xff);

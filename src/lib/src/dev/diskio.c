@@ -58,9 +58,9 @@
 #define	SPI_MFG_ISSI2	0x17
 #define	SPI_MFG_SST	0xBF
 
-#define USE_EWSR 1
+#define USE_EWSR 0
 #define USE_WREN_BEFORE_WRSR 0
-#define USE_WRSR 1
+#define USE_WRSR 0
 
 
 #ifndef DISKIO_RO
@@ -68,7 +68,7 @@ static void
 busy_wait()
 {
 	do {
-		spi_start_transaction(IO_SPI_FLASH);
+		spi_start_transaction(IO_SPI_FLASH, 0);
 		spi_byte(IO_SPI_FLASH, SPI_CMD_RDSR);
 	} while (spi_byte(IO_SPI_FLASH, SPI_CMD_RDSR) & 1);
 }
@@ -82,7 +82,7 @@ flash_erase_sectors(int start, int cnt)
 	addr = FLASH_FAT_OFFSET / 256 + start * (FLASH_BLOCKLEN / 256);
 	for (; cnt > 0; cnt--, addr += (FLASH_BLOCKLEN / 256)) {
 		/* Skip already blank sectors */
-		spi_start_transaction(IO_SPI_FLASH);
+		spi_start_transaction(IO_SPI_FLASH, 0);
 		spi_byte(IO_SPI_FLASH, SPI_CMD_FASTRD);
 		spi_byte(IO_SPI_FLASH, addr >> 8);
 		spi_byte(IO_SPI_FLASH, addr);
@@ -94,9 +94,9 @@ flash_erase_sectors(int start, int cnt)
 			continue;
 
 		/* Write enable */
-		spi_start_transaction(IO_SPI_FLASH);
+		spi_start_transaction(IO_SPI_FLASH, 0);
 		spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
-		spi_start_transaction(IO_SPI_FLASH);
+		spi_start_transaction(IO_SPI_FLASH, 0);
 		spi_byte(IO_SPI_FLASH, SPI_CMD_ERSEC);
 		spi_byte(IO_SPI_FLASH, addr >> 8);
 		spi_byte(IO_SPI_FLASH, addr);
@@ -113,33 +113,33 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 	int mfg_id, addr, i, j, in_aai = 0;
 
 	/* Get SPI chip ID */
-	spi_start_transaction(IO_SPI_FLASH);
+	spi_start_transaction(IO_SPI_FLASH, 0);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_RDID2);
 	spi_byte(IO_SPI_FLASH, 0);
 	spi_byte(IO_SPI_FLASH, 0);
 	spi_byte(IO_SPI_FLASH, 0);
 	mfg_id = spi_byte(IO_SPI_FLASH, 0);
 	if (mfg_id == 0xff) {
-		spi_start_transaction(IO_SPI_FLASH);
+		spi_start_transaction(IO_SPI_FLASH, 0);
 		spi_byte(IO_SPI_FLASH, SPI_CMD_RDID);
 		mfg_id = spi_byte(IO_SPI_FLASH, 0);
 	}
 
 	#if USE_EWSR
 	/* Enable Write Status Register */
-	spi_start_transaction(IO_SPI_FLASH);
+	spi_start_transaction(IO_SPI_FLASH, 0);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
 	#endif
 
 	#if USE_WREN_BEFORE_WRSR
 	/* Write enable */
-	spi_start_transaction(IO_SPI_FLASH);
+	spi_start_transaction(IO_SPI_FLASH, 0);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
 	#endif
 
 	#if USE_WRSR
 	/* Clear write-protect bits */
-	spi_start_transaction(IO_SPI_FLASH);
+	spi_start_transaction(IO_SPI_FLASH, 0);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
 	spi_byte(IO_SPI_FLASH, 0);
 	#endif
@@ -152,11 +152,11 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 		switch (mfg_id) {
 		case SPI_MFG_SST:
 			/* Write enable */
-			spi_start_transaction(IO_SPI_FLASH);
+			spi_start_transaction(IO_SPI_FLASH, 0);
 			spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
 
 			for (i = 0; i < FLASH_BLOCKLEN; i += 2) {
-				spi_start_transaction(IO_SPI_FLASH);
+				spi_start_transaction(IO_SPI_FLASH, 0);
 				spi_byte(IO_SPI_FLASH, SPI_CMD_AAIWR);
 				if (!in_aai) {
 					spi_byte(IO_SPI_FLASH, addr >> 8);
@@ -175,10 +175,10 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 		case SPI_MFG_SPANS:
 			for (i = 0; i < FLASH_BLOCKLEN; i += 256, addr++) {
 				/* Write enable */
-				spi_start_transaction(IO_SPI_FLASH);
+				spi_start_transaction(IO_SPI_FLASH, 0);
 				spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
 
-				spi_start_transaction(IO_SPI_FLASH);
+				spi_start_transaction(IO_SPI_FLASH, 0);
 				spi_byte(IO_SPI_FLASH, SPI_CMD_PAGEWR);
 				spi_byte(IO_SPI_FLASH, addr >> 8);
 				spi_byte(IO_SPI_FLASH, addr);
@@ -193,25 +193,25 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 		}
 
 	/* Write disable */
-	spi_start_transaction(IO_SPI_FLASH);
+	spi_start_transaction(IO_SPI_FLASH, 0);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_WRDI);
 	busy_wait();
 
 	#if USE_EWSR
 	/* Enable Write Status Register */
-	spi_start_transaction(IO_SPI_FLASH);
+	spi_start_transaction(IO_SPI_FLASH, 0);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
 	#endif
 
 	#if USE_WREN_BEFORE_WRSR
 	/* Write enable */
-	spi_start_transaction(IO_SPI_FLASH);
+	spi_start_transaction(IO_SPI_FLASH, 0);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
 	#endif
 
 	#if USE_WRSR
 	/* Set write-protect bits */
-	spi_start_transaction(IO_SPI_FLASH);
+	spi_start_transaction(IO_SPI_FLASH, 0);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
 	spi_byte(IO_SPI_FLASH, 0x1c);
 	#endif
@@ -227,7 +227,7 @@ flash_disk_read(uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount)
 	int addr = FLASH_FAT_OFFSET / 256 + SectorNumber * (FLASH_BLOCKLEN / 256);
 
 	for (; SectorCount > 0; SectorCount--) {
-		spi_start_transaction(IO_SPI_FLASH);
+		spi_start_transaction(IO_SPI_FLASH, 0);
 		spi_byte(IO_SPI_FLASH, SPI_CMD_FASTRD);
 		spi_byte(IO_SPI_FLASH, addr >> 8);
 		spi_byte(IO_SPI_FLASH, addr);
@@ -325,19 +325,19 @@ disk_ioctl(BYTE drive, BYTE cmd, void* buf)
 		if (drive == 0) {
 			#if USE_EWSR
 			/* Enable Write Status Register */
-			spi_start_transaction(IO_SPI_FLASH);
+			spi_start_transaction(IO_SPI_FLASH, 0);
 			spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
 			#endif
 
 			#if USE_WREN_BEFORE_WRSR
 			/* Write enable */
-			spi_start_transaction(IO_SPI_FLASH);
+			spi_start_transaction(IO_SPI_FLASH, 0);
 			spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
 			#endif
 
 			#if USE_WRSR
 			/* Clear write-protect bits */
-			spi_start_transaction(IO_SPI_FLASH);
+			spi_start_transaction(IO_SPI_FLASH, 0);
 			spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
 			spi_byte(IO_SPI_FLASH, 0);
 			#endif
@@ -346,19 +346,19 @@ disk_ioctl(BYTE drive, BYTE cmd, void* buf)
 
 			#if USE_EWSR
 			/* Enable Write Status Register */
-			spi_start_transaction(IO_SPI_FLASH);
+			spi_start_transaction(IO_SPI_FLASH, 0);
 			spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
 			#endif
 
 			#if USE_WREN_BEFORE_WRSR
 			/* Write enable */
-			spi_start_transaction(IO_SPI_FLASH);
+			spi_start_transaction(IO_SPI_FLASH, 0);
 			spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
 			#endif
 
 			#if USE_WRSR
 			/* Set write-protect bits */
-			spi_start_transaction(IO_SPI_FLASH);
+			spi_start_transaction(IO_SPI_FLASH, 0);
 			spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
 			spi_byte(IO_SPI_FLASH, 0x1c);
 			#endif
