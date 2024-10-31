@@ -37,7 +37,8 @@
 #endif
 
 #define	SPI_DATA	0
-#define	SPI_CONTROL	1
+#define	SPI_CTRL1	1
+#define	SPI_CTRL2	2
 
 
 void
@@ -94,11 +95,12 @@ spi_byte(int port, int out)
 
 
 void
-spi_start_transaction(int port)
+spi_start_transaction(int port, int unit)
 {
 	uint32_t in;
 
-	SB(0x80, SPI_CONTROL, port);
+	SB(0, SPI_CTRL1, port);
+	SB(unit, SPI_CTRL2, port);
 	do {
 		LW(in, SPI_DATA, port);
 	} while ((in & SPI_READY_MASK) == 0);
