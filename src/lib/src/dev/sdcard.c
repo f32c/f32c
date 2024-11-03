@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
+ * Copyright (c) 2013, 2014 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,8 +21,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #include <dev/io.h>
@@ -49,7 +47,7 @@ sdcard_cmd(int cmd, uint32_t arg)
 	int i, res;
 
 	/* Init SPI */
-	spi_start_transaction(IO_SPI_SDCARD, 0);
+	spi_start_transaction(IO_SPI_SDCARD);
 
 	/* Preamble */
 	spi_byte(IO_SPI_SDCARD, 0xff);

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec, University of Zagreb
+ * Copyright (c) 2013 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,16 +21,32 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #ifndef _SPI_H_
 #define	_SPI_H_
 
+#define	SPI_DATA	0
+#define	SPI_CTRL1	1
+#define	SPI_CTRL2	2
+
 int spi_byte(int, int);
 void spi_block_in(int, void *, int);
-void spi_start_transaction(int, int);
+
+
+void inline
+spi_slave_select(int port, int unit)
+{
+ 
+        SB(unit, SPI_CTRL2, port);
+}
+ 
+void inline
+spi_start_transaction(int port)
+{
+
+        SB(0, SPI_CTRL1, port);
+}
 
 #endif /* !_SPI_H_ */
 

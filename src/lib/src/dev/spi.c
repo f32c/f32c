@@ -36,10 +36,6 @@
 #define	SPI_READY_MASK (1 << 16)
 #endif
 
-#define	SPI_DATA	0
-#define	SPI_CTRL1	1
-#define	SPI_CTRL2	2
-
 
 void
 spi_block_in(int port, void *buf, int len)
@@ -91,17 +87,4 @@ spi_byte(int port, int out)
 #else
 	return (in >> 24);
 #endif
-}
-
-
-void
-spi_start_transaction(int port, int unit)
-{
-	uint32_t in;
-
-	SB(0, SPI_CTRL1, port);
-	SB(unit, SPI_CTRL2, port);
-	do {
-		LW(in, SPI_DATA, port);
-	} while ((in & SPI_READY_MASK) == 0);
 }
