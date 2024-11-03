@@ -100,7 +100,7 @@ begin
 		    R_spi_cen_next <= (others => '1');
 		    R_spi_cen_next(conv_integer(bus_in(17 downto 16))) <= '0';
 		end if;
-		if byte_sel(1) = '1' then
+		if byte_sel(2) = '1' or byte_sel(1) = '1' then
 		    R_clk_acc <= (others => '0');
 		    R_spi_cen <= (others => '1');
 		    R_miso_hiz <= true;
