@@ -62,10 +62,10 @@ entity top_sdram is
 	gpdi_scl, gpdi_sda: inout std_logic;
 
 	-- SPI flash (SPI #0)
-	flash_so: in std_logic;
-	flash_si: out std_logic;
+	--flash_sck: out std_logic; -- accessed via ECP5-specifc primitive
 	flash_cen: out std_logic;
-	--flash_sck: out std_logic; -- accessed via special ECP5 primitive
+	flash_so: inout std_logic;
+	flash_si: inout std_logic;
 	flash_holdn, flash_wpn: out std_logic := '1';
 
 	-- SD card (SPI #1)
@@ -78,8 +78,8 @@ entity top_sdram is
 	-- ADC MAX11123 (SPI #2)
 	adc_csn: out std_logic;
 	adc_sclk: out std_logic;
-	adc_mosi: out std_logic;
-	adc_miso: in std_logic;
+	adc_mosi: inout std_logic;
+	adc_miso: inout std_logic;
 
 	-- PCB antenna
 	ant: out std_logic;
