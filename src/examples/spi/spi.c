@@ -82,11 +82,11 @@ main(void)
 		port = spi_port[i];
 		printf("Probing SPI port #%d @ 0x%08x:\n", i, port);
 		for (slave = 0; slave < SPI_SLAVES; slave++) {
-			spi_start_transaction(port, slave);
+			spi_slave_select(port, slave);
 			spi_byte(port, SPI_CMD_JEDEC_ID);
 			mfrid = spi_byte(port, 0);
 			if (mfrid == 0 || mfrid == 0xff) {
-				spi_start_transaction(port, slave);
+				spi_start_transaction(port);
 				spi_byte(port, SPI_CMD_REMS);
 				for (j = 0; j < 3; j++)
 					spi_byte(port, 0);
