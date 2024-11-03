@@ -83,7 +83,6 @@ entity glue_sdram_min is
 	C_sio_fixed_baudrate: boolean := false;
 	C_sio_break_detect: boolean := true;
 	C_spi: integer := 0;
-	C_spi_turbo_mode: std_logic_vector := "0000";
 	C_spi_fixed_speed: std_logic_vector := "1111";
 	C_simple_in: natural := 32;
 	C_simple_out: natural := 32;
@@ -108,8 +107,8 @@ entity glue_sdram_min is
 	sdram_we, sdram_cs: out std_logic;
 	sio_rxd: in std_logic_vector(C_sio - 1 downto 0) := (others => '1');
 	sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
-	spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
-	spi_miso: in std_logic_vector(C_spi - 1 downto 0) := (others => '0');
+	spi_sck, spi_ss: out std_logic_vector(C_spi - 1 downto 0);
+	spi_mosi, spi_miso: inout std_logic_vector(C_spi - 1 downto 0);
 	simple_in: in std_logic_vector(C_simple_in - 1 downto 0) :=
 	  (others => '0');
 	simple_out: out std_logic_vector(C_simple_out - 1 downto 0)
@@ -532,14 +531,14 @@ begin
     G_spi: for i in 0 to C_spi - 1 generate
 	spi_instance: entity work.spi
 	generic map (
-	    C_turbo_mode => C_spi_turbo_mode(i) = '1',
 	    C_fixed_speed => C_spi_fixed_speed(i) = '1'
 	)
 	port map (
 	    clk => clk, ce => spi_ce(i),
 	    bus_write => io_write, byte_sel => io_byte_sel,
 	    bus_in => cpu_to_io, bus_out => from_spi(i),
-	    spi_sck => spi_sck(i), spi_cen => spi_ss(i),
+	    spi_sck => spi_sck(i), spi_cen(0) => spi_ss(i),
+	    spi_cen(3 downto 1) => open,
 	    spi_miso => spi_miso(i), spi_mosi => spi_mosi(i)
 	);
 	spi_ce(i) <= io_addr_strobe(R_cur_io_port) when spi_io_range and
