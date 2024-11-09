@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 - 2015 Marko Zec, University of Zagreb
+ * Copyright (c) 2013 - 2015 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,8 +21,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 /*
@@ -46,12 +44,8 @@ static char ff_mounted[FF_VOLUMES];
 static FIL *file_map[MAXFILES];
 
 
-int
-open(const char *path, int flags, ...)
-{
-	int d;
-	int ff_flags;
-	
+static void
+check_automount(void) {
 	if (ff_mounted[0] == 0) {
 		f_mount(&ff_mounts[0], "C:", 0);
 		ff_mounted[0] = 1;
@@ -68,6 +62,15 @@ open(const char *path, int flags, ...)
 		f_mount(&ff_mounts[3], "R:", 0);
 		ff_mounted[3] = 1;
 	}
+}
+
+int
+open(const char *path, int flags, ...)
+{
+	int d;
+	int ff_flags;
+
+	check_automount();
 
 	for (d = 0; d < MAXFILES; d++)
 		if (file_map[d] == NULL)
@@ -101,6 +104,8 @@ open(const char *path, int flags, ...)
 int
 creat(const char *path, mode_t mode __unused)
 {
+
+	check_automount();
 
 	return (open(path, O_CREAT | O_TRUNC | O_WRONLY));
 }
@@ -221,6 +226,8 @@ unlink(const char *path)
 #if !defined(_FS_READONLY) || (_FS_READONLY == 0)
 	FRESULT f_res;
 
+	check_automount();
+
 	f_res = f_unlink(path);
 	if (f_res != FR_OK)
 		return (-1);
@@ -244,6 +251,8 @@ fcntl(int fd __unused, int cmd __unused, ...)
 int
 stat(const char *path __unused, struct stat *sb __unused)
 {
+
+	check_automount();
 
 	return (-1);
 }
