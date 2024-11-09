@@ -40,8 +40,8 @@
 #define MAXFILES 8
 
 
-static FATFS ff_mounts[2];
-static char ff_mounted[2];
+static FATFS ff_mounts[FF_VOLUMES];
+static char ff_mounted[FF_VOLUMES];
 
 static FIL *file_map[MAXFILES];
 
@@ -59,6 +59,14 @@ open(const char *path, int flags, ...)
 	if (ff_mounted[1] == 0) {
 		f_mount(&ff_mounts[1], "D:", 0);
 		ff_mounted[1] = 1;
+	}
+	if (ff_mounted[2] == 0) {
+		f_mount(&ff_mounts[2], "F:", 0);
+		ff_mounted[2] = 1;
+	}
+	if (ff_mounted[3] == 0) {
+		f_mount(&ff_mounts[3], "R:", 0);
+		ff_mounted[3] = 1;
 	}
 
 	for (d = 0; d < MAXFILES; d++)

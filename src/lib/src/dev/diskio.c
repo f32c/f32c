@@ -23,6 +23,10 @@
  * SUCH DAMAGE.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <time.h>
 
 #include <dev/io.h>
@@ -32,13 +36,15 @@
 #include <fatfs/ff.h>
 #include <fatfs/diskio.h>
 
+#define	RAMDISK_SIZE (8 * 1024 * 1024)
+char *ramdisk;
 
 #if defined(_FS_READONLY) && _FS_READONLY == 1
 #define	DISKIO_RO
 #endif
 
 #define	FLASH_BLOCKLEN	4096
-#define FLASH_FAT_OFFSET 0x100000
+#define FLASH_FAT_OFFSET (1024 * 1024)
 
 #define	SPI_CMD_WRSR	0x01
 #define	SPI_CMD_PAGEWR	0x02
@@ -58,9 +64,17 @@
 #define	SPI_MFG_ISSI2	0x17
 #define	SPI_MFG_SST	0xBF
 
-#define USE_EWSR 0
+#define USE_EWSR 	0
 #define USE_WREN_BEFORE_WRSR 0
-#define USE_WRSR 0
+#define USE_WRSR 	0
+
+#define	FRAM_CMD_WRITE	0x02
+#define	FRAM_CMD_READ	0x03
+#define	FRAM_CMD_WRDI	0x04
+#define	FRAM_CMD_WREN	0x06
+#define	FRAM_CMD_FSTRD	0x0b
+
+#define	FRAM_BLOCKLEN	512
 
 
 #ifndef DISKIO_RO
@@ -114,15 +128,16 @@ flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 
 	/* Get SPI chip ID */
 	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_RDID2);
-	spi_byte(IO_SPI_FLASH, 0);
-	spi_byte(IO_SPI_FLASH, 0);
-	spi_byte(IO_SPI_FLASH, 0);
+	spi_byte(IO_SPI_FLASH, SPI_CMD_RDID);
 	mfg_id = spi_byte(IO_SPI_FLASH, 0);
 	if (mfg_id == 0xff) {
 		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_RDID);
+		spi_byte(IO_SPI_FLASH, SPI_CMD_RDID2);
+		spi_byte(IO_SPI_FLASH, 0);
+		spi_byte(IO_SPI_FLASH, 0);
+		spi_byte(IO_SPI_FLASH, 0);
 		mfg_id = spi_byte(IO_SPI_FLASH, 0);
+		spi_byte(IO_SPI_FLASH, 0);
 	}
 
 	#if USE_EWSR
@@ -239,15 +254,65 @@ flash_disk_read(uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount)
 }
 
 
+static int
+fram_disk_read(uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount)
+{
+	int addr = SectorNumber * (FRAM_BLOCKLEN / 256);
+
+	spi_start_transaction(IO_SPI_EXT);
+	spi_byte(IO_SPI_EXT, FRAM_CMD_FSTRD);
+	spi_byte(IO_SPI_EXT, addr >> 8);
+	spi_byte(IO_SPI_EXT, addr);
+	spi_byte(IO_SPI_EXT, 0);
+	spi_byte(IO_SPI_EXT, 0);
+	spi_block_in(IO_SPI_EXT, buf, SectorCount * FRAM_BLOCKLEN);
+	return (RES_OK);
+}
+
+
+#ifndef DISKIO_RO
+static int
+fram_disk_write(const uint8_t *buf, uint32_t SectorNumber,
+    uint32_t SectorCount)
+{
+	int addr = SectorNumber * (FRAM_BLOCKLEN / 256);
+
+	spi_start_transaction(IO_SPI_EXT);
+	spi_byte_out(IO_SPI_EXT, FRAM_CMD_WREN);
+	spi_start_transaction(IO_SPI_EXT);
+	spi_byte_out(IO_SPI_EXT, FRAM_CMD_WRITE);
+	spi_byte_out(IO_SPI_EXT, addr >> 8);
+	spi_byte_out(IO_SPI_EXT, addr);
+	spi_byte_out(IO_SPI_EXT, 0);
+
+	for (SectorCount *= FRAM_BLOCKLEN; SectorCount > 0; SectorCount--)
+		spi_byte_out(IO_SPI_EXT, *buf++);
+
+	spi_start_transaction(IO_SPI_EXT);
+	spi_byte_out(IO_SPI_EXT, FRAM_CMD_WRDI);
+	return (RES_OK);
+}
+#endif /* !DISKIO_RO */
+
+
 DSTATUS
 disk_initialize(BYTE drive)
 {
 
 	switch (drive) {
-	case 0:
+	case 0: /* C */
 		return (RES_OK);
-	case 1:
+	case 1: /* D */
 		return (sdcard_disk_initialize());
+	case 2: /* F */
+		return (RES_OK);
+	case 3: /* R */
+		if (ramdisk == NULL)
+			ramdisk = malloc(RAMDISK_SIZE);
+		if (ramdisk == NULL)
+			return(RES_ERROR);
+		else
+			return(RES_OK);
 	default:
 		return (RES_ERROR);
 	}
@@ -263,9 +328,33 @@ disk_status(BYTE drive)
 		return (RES_OK);
 	case 1:
 		return (sdcard_disk_status());
+	case 2: /* F */
+		return (RES_OK);
+	case 3: /* R */
+		if (ramdisk == NULL)
+			return(RES_ERROR);
+		else
+			return(RES_OK);
 	default:
 		return (RES_ERROR);
 	}
+}
+
+
+static void
+ram_cpy(void *dst, void *src, int seccnt)
+{
+	uint32_t *r = src;
+	uint32_t *w = dst;
+	int cnt = seccnt * 512 / 4 / 4;
+	uint32_t a, b, c, d;
+
+	do {
+		a = r[0]; b = r[1]; c = r[2]; d = r[3];
+		r = &r[4];
+		w[0] = a; w[1] = b; w[2] = c; w[3] = d;
+		w = &w[4];
+	} while (--cnt != 0);
 }
 
 
@@ -278,6 +367,11 @@ disk_read(BYTE pdrv, BYTE* buff, LBA_t sector, UINT count)
 		return (flash_disk_read(buff, sector, count));
 	case 1:
 		return (sdcard_disk_read(buff, sector, count));
+	case 2:
+		return (fram_disk_read(buff, sector, count));
+	case 3:
+		ram_cpy(buff, &ramdisk[sector * 512], count);
+		return (RES_OK);
 	default:
 		return (RES_ERROR);
 	}
@@ -295,6 +389,11 @@ disk_write(BYTE pdrv, const BYTE* buff, LBA_t sector, UINT count)
 		return (flash_disk_write(buf, sector, count));
 	case 1:
 		return (sdcard_disk_write(buf, sector, count));
+	case 2:
+		return (fram_disk_write(buf, sector, count));
+	case 3:
+		ram_cpy(&ramdisk[sector * 512], buf, count);
+		return (RES_OK);
 	default:
 		return (RES_ERROR);
 	}
@@ -317,11 +416,26 @@ disk_ioctl(BYTE drive, BYTE cmd, void* buf)
 #ifndef DISKIO_RO
 	case GET_SECTOR_COUNT:
 		if (drive == 0) {
-			*up = ((1 << 22) - FLASH_FAT_OFFSET) / FLASH_BLOCKLEN;
+			*up = (8 * 1024 * 1024 - FLASH_FAT_OFFSET)
+			    / FLASH_BLOCKLEN;
+			return (RES_OK);
+		}
+		if (drive == 2) {
+			*up = 512 * 1024 / 512;
+			return (RES_OK);
+		}
+		if (drive == 3) {
+			*up = RAMDISK_SIZE / 512;
 			return (RES_OK);
 		}
 		return (RES_ERROR);
-	case CTRL_TRIM:
+	case GET_BLOCK_SIZE:
+		if (drive < 2)
+			return (RES_ERROR);
+		*up = 1;
+		return (RES_OK);
+#if 0 /* XXX REVISIT TRIM */
+	case CTRL_ERASE_SECTOR:
 		if (drive == 0) {
 			#if USE_EWSR
 			/* Enable Write Status Register */
@@ -364,6 +478,7 @@ disk_ioctl(BYTE drive, BYTE cmd, void* buf)
 			#endif
 		}
 		return (RES_OK);
+#endif /* XXX revisit TRIM */
 #endif /* !DISKIO_RO */
 	case CTRL_SYNC:
 		return (RES_OK);
