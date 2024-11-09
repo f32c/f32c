@@ -265,3 +265,40 @@ fstat(int fd __unused, struct stat *sb __unused)
 	return (-1);
 }
 
+
+int
+chdir(const char *path) {
+
+	return f_chdir(path);
+}
+
+
+char *
+getcwd(char *buf, size_t size) {
+
+	if (buf != NULL)
+		f_getcwd(buf, size);
+	return buf;
+};
+
+
+int
+mkdir(const char *path, mode_t mode) {
+
+	return f_mkdir(path);
+};
+
+
+int
+rmdir(const char *path) {
+
+	return f_rmdir(path);
+};
+
+
+int
+rename(const char *from, const char *to) {
+
+	return f_rename(from, to);
+};
+
