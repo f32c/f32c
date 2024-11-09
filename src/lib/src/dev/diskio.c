@@ -278,18 +278,18 @@ fram_disk_write(const uint8_t *buf, uint32_t SectorNumber,
 	int addr = SectorNumber * (FRAM_BLOCKLEN / 256);
 
 	spi_start_transaction(IO_SPI_EXT);
-	spi_byte_out(IO_SPI_EXT, FRAM_CMD_WREN);
+	spi_byte(IO_SPI_EXT, FRAM_CMD_WREN);
 	spi_start_transaction(IO_SPI_EXT);
-	spi_byte_out(IO_SPI_EXT, FRAM_CMD_WRITE);
-	spi_byte_out(IO_SPI_EXT, addr >> 8);
-	spi_byte_out(IO_SPI_EXT, addr);
-	spi_byte_out(IO_SPI_EXT, 0);
+	spi_byte(IO_SPI_EXT, FRAM_CMD_WRITE);
+	spi_byte(IO_SPI_EXT, addr >> 8);
+	spi_byte(IO_SPI_EXT, addr);
+	spi_byte(IO_SPI_EXT, 0);
 
 	for (SectorCount *= FRAM_BLOCKLEN; SectorCount > 0; SectorCount--)
-		spi_byte_out(IO_SPI_EXT, *buf++);
+		spi_byte(IO_SPI_EXT, *buf++);
 
 	spi_start_transaction(IO_SPI_EXT);
-	spi_byte_out(IO_SPI_EXT, FRAM_CMD_WRDI);
+	spi_byte(IO_SPI_EXT, FRAM_CMD_WRDI);
 	return (RES_OK);
 }
 #endif /* !DISKIO_RO */
