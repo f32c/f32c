@@ -57,4 +57,6 @@ int	vsscanf(const char * __restrict, const char * __restrict, __va_list)
 
 int	gets(char *, int);
 
+int	rename(const char *, const char *);
+
 #endif /* !_STDIO_H_ */
