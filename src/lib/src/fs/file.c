@@ -39,30 +39,23 @@
 
 
 static FATFS ff_mounts[FF_VOLUMES];
-static char ff_mounted[FF_VOLUMES];
+static int ff_mounted;
 
 static FIL *file_map[MAXFILES];
 
 
 static void
 check_automount(void) {
-	if (ff_mounted[0] == 0) {
-		f_mount(&ff_mounts[0], "C:", 0);
-		ff_mounted[0] = 1;
-	}
-	if (ff_mounted[1] == 0) {
-		f_mount(&ff_mounts[1], "D:", 0);
-		ff_mounted[1] = 1;
-	}
-	if (ff_mounted[2] == 0) {
-		f_mount(&ff_mounts[2], "F:", 0);
-		ff_mounted[2] = 1;
-	}
-	if (ff_mounted[3] == 0) {
-		f_mount(&ff_mounts[3], "R:", 0);
-		ff_mounted[3] = 1;
-	}
+
+	if (ff_mounted)
+		return;
+	f_mount(&ff_mounts[0], "C:", 0);
+	f_mount(&ff_mounts[1], "D:", 0);
+	f_mount(&ff_mounts[2], "F:", 0);
+	f_mount(&ff_mounts[3], "R:", 0);
+	ff_mounted = 1;
 }
+
 
 int
 open(const char *path, int flags, ...)
@@ -106,7 +99,6 @@ creat(const char *path, mode_t mode __unused)
 {
 
 	check_automount();
-
 	return (open(path, O_CREAT | O_TRUNC | O_WRONLY));
 }
 
@@ -227,7 +219,6 @@ unlink(const char *path)
 	FRESULT f_res;
 
 	check_automount();
-
 	f_res = f_unlink(path);
 	if (f_res != FR_OK)
 		return (-1);
@@ -244,6 +235,7 @@ int
 fcntl(int fd __unused, int cmd __unused, ...)
 {
 
+	check_automount();
 	return (-1);
 }
 
@@ -253,7 +245,6 @@ stat(const char *path __unused, struct stat *sb __unused)
 {
 
 	check_automount();
-
 	return (-1);
 }
 
@@ -262,20 +253,28 @@ int
 fstat(int fd __unused, struct stat *sb __unused)
 {
 
+	check_automount();
 	return (-1);
 }
 
 
 int
 chdir(const char *path) {
+	int res;
 
-	return f_chdir(path);
+	check_automount();
+	if (path[1] == ':' && path[2] == 0)
+		res = f_chdrive(path);
+	else
+		res = f_chdir(path);
+	return res;
 }
 
 
 char *
 getcwd(char *buf, size_t size) {
 
+	check_automount();
 	if (buf != NULL)
 		f_getcwd(buf, size);
 	return buf;
@@ -285,6 +284,7 @@ getcwd(char *buf, size_t size) {
 int
 mkdir(const char *path, mode_t mode) {
 
+	check_automount();
 	return f_mkdir(path);
 };
 
@@ -292,6 +292,7 @@ mkdir(const char *path, mode_t mode) {
 int
 rmdir(const char *path) {
 
+	check_automount();
 	return f_rmdir(path);
 };
 
@@ -299,6 +300,6 @@ rmdir(const char *path) {
 int
 rename(const char *from, const char *to) {
 
+	check_automount();
 	return f_rename(from, to);
 };
-
