@@ -1,7 +1,5 @@
 /*
  * Play WAV files stored on a MicroSD card.
- *
- * $Id$
  */
 
 #include <fcntl.h>
@@ -26,7 +24,7 @@ scan_files(char* path)
 {
 	FRESULT res;
 	FILINFO fno;
-	DIR dir;
+	FF_DIR dir;
 	int i, t;
 
 	/* Open the directory */
