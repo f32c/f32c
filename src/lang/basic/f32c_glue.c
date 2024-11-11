@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
+ * Copyright (c) 2013, 2014 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,8 +21,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #include <fcntl.h>
@@ -205,7 +203,7 @@ do_ls(const char *path)
 	FRESULT fres;
 	FILINFO fno;
 	FATFS *fs;
-	DIR dir;
+	FF_DIR dir;
 	DWORD free_clust;
 	int c, filecnt = 0;
 	uint64_t totsize = 0;

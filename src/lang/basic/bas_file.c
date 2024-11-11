@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 - 2015 Marko Zec, University of Zagreb
+ * Copyright (c) 2013 - 2015 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,8 +21,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #include <fcntl.h>
@@ -49,7 +47,7 @@ file_cd()
 #ifdef f32c
 	int fres;
 	char buf[4];
-	DIR dir;
+	FF_DIR dir;
 #endif
 
 	st = stringeval();
@@ -90,7 +88,7 @@ bdirs()
 	STR st;
 	int len;
 #ifdef f32c
-	DIR dir;
+	FF_DIR dir;
 	FILINFO finfo;
 	int fres;
 #else
