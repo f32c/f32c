@@ -18,7 +18,7 @@ scan_files(char* path)
 {
 	FRESULT res;
 	FILINFO fno;
-	DIR dir;
+	FF_DIR dir;
 	int i;
 
 	/* Open the directory */
