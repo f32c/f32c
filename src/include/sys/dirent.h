@@ -37,6 +37,8 @@
 #include <sys/cdefs.h>
 #include <sys/_types.h>
 
+#include <fatfs/ff.h>
+
 #ifndef _INO_T_DECLARED
 typedef	__ino_t		ino_t;
 #define	_INO_T_DECLARED
@@ -48,45 +50,24 @@ typedef	__off_t		off_t;
 #endif
 
 /*
- * The dirent structure defines the format of directory entries returned by
- * the getdirentries(2) system call.
- *
  * A directory entry has a struct dirent at the front of it, containing its
- * inode number, the length of the entry, and the length of the name
- * contained in the entry.  These are followed by the name padded to an 8
- * byte boundary with null bytes.  All names are guaranteed null terminated.
- * The maximum length of a name in a directory is MAXNAMLEN.
- *
- * Explicit padding between the last member of the header (d_namlen) and
- * d_name avoids ABI padding at the end of dirent on LP64 architectures.
- * There is code depending on d_name being last.
+ * file number, the length of the entry, and the length of the name
+ * contained in the entry.
  */
 
 struct dirent {
-	ino_t      d_fileno;		/* file number of entry */
-	off_t      d_off;		/* directory offset of next entry */
-	__uint16_t d_reclen;		/* length of this record */
-	__uint8_t  d_type;		/* file type, see below */
-	__uint8_t  d_pad0;
-	__uint16_t d_namlen;		/* length of string in d_name */
-	__uint16_t d_pad1;
-#if __BSD_VISIBLE
-#define	MAXNAMLEN	255
-	char	d_name[MAXNAMLEN + 1];	/* name must be no longer than this */
-#else
-	char	d_name[255 + 1];	/* name must be no longer than this */
-#endif
-};
-
-#if defined(_WANT_FREEBSD11_DIRENT) || defined(_KERNEL)
-struct freebsd11_dirent {
 	__uint32_t d_fileno;		/* file number of entry */
 	__uint16_t d_reclen;		/* length of this record */
 	__uint8_t  d_type;		/* file type, see below */
 	__uint8_t  d_namlen;		/* length of string in d_name */
-	char	d_name[255 + 1];	/* name must be no longer than this */
+	char	  *d_name;		/* points to ff_info->fname */
 };
-#endif /* _WANT_FREEBSD11_DIRENT || _KERNEL */
+
+struct _dirdesc {
+	struct dirent	de;
+	FF_DIR		ff_dir;
+	FILINFO		ff_info;
+};
 
 #if __BSD_VISIBLE
 
@@ -130,16 +111,13 @@ struct freebsd11_dirent {
 #define	GENERIC_MINDIRSIZ	_GENERIC_MINDIRSIZ
 #define	GENERIC_MAXDIRSIZ	_GENERIC_MAXDIRSIZ
 /*
- * Ensure that padding bytes are zeroed and that the name is NUL-terminated.
+ * Ensure that the name is NUL-terminated.
  */
 static inline void
 dirent_terminate(struct dirent *dp)
 {
 
-	dp->d_pad0 = 0;
-	dp->d_pad1 = 0;
-	memset(dp->d_name + dp->d_namlen, 0,
-	    dp->d_reclen - (__offsetof(struct dirent, d_name) + dp->d_namlen));
+	dp->d_name[dp->d_namlen] = 0;
 }
 #endif
 
