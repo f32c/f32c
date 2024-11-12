@@ -38,7 +38,8 @@
 #define MAXFILES 8
 
 
-static FATFS ff_mounts[FF_VOLUMES];
+static FATFS *ff_mounts[FF_VOLUMES];
+static char *ff_volstr[FF_VOLUMES] = {FF_VOLUME_STRS};
 static int ff_mounted;
 
 static FIL *file_map[MAXFILES];
@@ -95,13 +96,19 @@ ffres2errno(int fferr)
 static void
 check_automount(void)
 {
+	int i;
 
 	if (ff_mounted)
 		return;
-	f_mount(&ff_mounts[0], "C:", 0);
-	f_mount(&ff_mounts[1], "D:", 0);
-	f_mount(&ff_mounts[2], "F:", 0);
-	f_mount(&ff_mounts[3], "R:", 0);
+
+	for (i = 0; i < FF_VOLUMES; i++) {
+		if (ff_mounts[i] != NULL)
+			continue;
+		ff_mounts[i] = malloc(sizeof *ff_mounts[0]);
+		if (ff_mounts[i] == NULL)
+			return;
+		f_mount(ff_mounts[i], ff_volstr[i], 0);
+	}
 	ff_mounted = 1;
 }
 
