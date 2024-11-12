@@ -1,3 +1,0 @@
-[submodule "src/lang/micropython"]
-	path = src/lang/micropython
-	url = https://github.com/micropython/micropython
