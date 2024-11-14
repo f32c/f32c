@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
+ * Copyright (c) 2013, 2014 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,467 +24,81 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <time.h>
-
-#include <dev/io.h>
-#include <dev/sdcard.h>
-#include <dev/spi.h>
 
 #include <fatfs/ff.h>
 #include <fatfs/diskio.h>
 
-#define	RAMDISK_SIZE (8 * 1024 * 1024)
-char *ramdisk;
 
-#if defined(_FS_READONLY) && _FS_READONLY == 1
-#define	DISKIO_RO
-#endif
-
-#define	FLASH_BLOCKLEN	4096
-#define FLASH_FAT_OFFSET (1024 * 1024)
-
-#define	SPI_CMD_WRSR	0x01
-#define	SPI_CMD_PAGEWR	0x02
-#define	SPI_CMD_WRDI	0x04
-#define	SPI_CMD_RDSR	0x05
-#define	SPI_CMD_WREN	0x06
-#define	SPI_CMD_FASTRD	0x0b
-#define	SPI_CMD_ERSEC	0x20
-#define	SPI_CMD_EWSR	0x50
-#define	SPI_CMD_RDID	0x9F
-#define	SPI_CMD_RDID2	0xAB
-#define	SPI_CMD_AAIWR	0xAD
-
-#define	SPI_MFG_CYPRESS	0x01
-#define	SPI_MFG_ISSI1	0x15
-#define	SPI_MFG_SPANS	0x16
-#define	SPI_MFG_ISSI2	0x17
-#define	SPI_MFG_SST	0xBF
-
-#define USE_EWSR 	0
-#define USE_WREN_BEFORE_WRSR 0
-#define USE_WRSR 	0
-
-#define	FRAM_CMD_WRITE	0x02
-#define	FRAM_CMD_READ	0x03
-#define	FRAM_CMD_WRDI	0x04
-#define	FRAM_CMD_WREN	0x06
-#define	FRAM_CMD_FSTRD	0x0b
-
-#define	FRAM_BLOCKLEN	512
+static struct diskio_inst *diskio[FF_VOLUMES];
 
 
-#ifndef DISKIO_RO
-static void
-busy_wait()
+void
+diskio_register(diskio_t di)
 {
-	do {
-		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_RDSR);
-	} while (spi_byte(IO_SPI_FLASH, SPI_CMD_RDSR) & 1);
-}
+	int i;
 
-
-static void
-flash_erase_sectors(int start, int cnt)
-{
-	int addr, sum, i;
-
-	addr = FLASH_FAT_OFFSET / 256 + start * (FLASH_BLOCKLEN / 256);
-	for (; cnt > 0; cnt--, addr += (FLASH_BLOCKLEN / 256)) {
-		/* Skip already blank sectors */
-		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_FASTRD);
-		spi_byte(IO_SPI_FLASH, addr >> 8);
-		spi_byte(IO_SPI_FLASH, addr);
-		spi_byte(IO_SPI_FLASH, 0);
-		spi_byte(IO_SPI_FLASH, 0); /* dummy byte, ignored */
-		for (i = 0, sum = 0xff; i < FLASH_BLOCKLEN; i++)
-			sum &= spi_byte(IO_SPI_FLASH, 0);
-		if (sum == 0xff)
+	for (i = 0; i < FF_VOLUMES; i++) {
+		if (diskio[i] != NULL)
 			continue;
-
-		/* Write enable */
-		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
-		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_ERSEC);
-		spi_byte(IO_SPI_FLASH, addr >> 8);
-		spi_byte(IO_SPI_FLASH, addr);
-		spi_byte(IO_SPI_FLASH, 0);
-		busy_wait();
+		diskio[i] = di;
+		return;
 	}
 }
-
-
-static int
-flash_disk_write(const uint8_t *buf, uint32_t SectorNumber,
-    uint32_t SectorCount)
-{
-	int mfg_id, addr, i, j, in_aai = 0;
-
-	/* Get SPI chip ID */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_RDID);
-	mfg_id = spi_byte(IO_SPI_FLASH, 0);
-	if (mfg_id == 0xff) {
-		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_RDID2);
-		spi_byte(IO_SPI_FLASH, 0);
-		spi_byte(IO_SPI_FLASH, 0);
-		spi_byte(IO_SPI_FLASH, 0);
-		mfg_id = spi_byte(IO_SPI_FLASH, 0);
-		spi_byte(IO_SPI_FLASH, 0);
-	}
-
-	#if USE_EWSR
-	/* Enable Write Status Register */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
-	#endif
-
-	#if USE_WREN_BEFORE_WRSR
-	/* Write enable */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
-	#endif
-
-	#if USE_WRSR
-	/* Clear write-protect bits */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
-	spi_byte(IO_SPI_FLASH, 0);
-	#endif
-
-	/* Erase sectors */
-	flash_erase_sectors(SectorNumber, SectorCount);
-
-	addr = FLASH_FAT_OFFSET / 256 + SectorNumber * (FLASH_BLOCKLEN / 256);
-	for (; SectorCount > 0; SectorCount--)
-		switch (mfg_id) {
-		case SPI_MFG_SST:
-			/* Write enable */
-			spi_start_transaction(IO_SPI_FLASH);
-			spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
-
-			for (i = 0; i < FLASH_BLOCKLEN; i += 2) {
-				spi_start_transaction(IO_SPI_FLASH);
-				spi_byte(IO_SPI_FLASH, SPI_CMD_AAIWR);
-				if (!in_aai) {
-					spi_byte(IO_SPI_FLASH, addr >> 8);
-					spi_byte(IO_SPI_FLASH, addr);
-					spi_byte(IO_SPI_FLASH, 0);
-				}
-				in_aai = 1;
-				spi_byte(IO_SPI_FLASH, *buf++);
-				spi_byte(IO_SPI_FLASH, *buf++);
-				busy_wait();
-			}
-			break;
-		case SPI_MFG_CYPRESS:
-		case SPI_MFG_ISSI1:
-		case SPI_MFG_ISSI2:
-		case SPI_MFG_SPANS:
-			for (i = 0; i < FLASH_BLOCKLEN; i += 256, addr++) {
-				/* Write enable */
-				spi_start_transaction(IO_SPI_FLASH);
-				spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
-
-				spi_start_transaction(IO_SPI_FLASH);
-				spi_byte(IO_SPI_FLASH, SPI_CMD_PAGEWR);
-				spi_byte(IO_SPI_FLASH, addr >> 8);
-				spi_byte(IO_SPI_FLASH, addr);
-				spi_byte(IO_SPI_FLASH, 0);
-				for (j = 0; j < 256; j++)
-					spi_byte(IO_SPI_FLASH, *buf++);
-				busy_wait();
-			}
-			break;
-		default:
-			return (RES_ERROR);
-		}
-
-	/* Write disable */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_WRDI);
-	busy_wait();
-
-	#if USE_EWSR
-	/* Enable Write Status Register */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
-	#endif
-
-	#if USE_WREN_BEFORE_WRSR
-	/* Write enable */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
-	#endif
-
-	#if USE_WRSR
-	/* Set write-protect bits */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
-	spi_byte(IO_SPI_FLASH, 0x1c);
-	#endif
-
-	return (RES_OK);
-}
-#endif /* !DISKIO_RO */
-
-
-static int
-flash_disk_read(uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount)
-{
-	int addr = FLASH_FAT_OFFSET / 256 + SectorNumber * (FLASH_BLOCKLEN / 256);
-
-	for (; SectorCount > 0; SectorCount--) {
-		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_FASTRD);
-		spi_byte(IO_SPI_FLASH, addr >> 8);
-		spi_byte(IO_SPI_FLASH, addr);
-		spi_byte(IO_SPI_FLASH, 0);
-		spi_byte(IO_SPI_FLASH, 0); /* dummy byte, ignored */
-		spi_block_in(IO_SPI_FLASH, buf, SectorCount * FLASH_BLOCKLEN);
-	}
-	return (RES_OK);
-}
-
-
-static int
-fram_disk_read(uint8_t *buf, uint32_t SectorNumber, uint32_t SectorCount)
-{
-	int addr = SectorNumber * (FRAM_BLOCKLEN / 256);
-
-	spi_start_transaction(IO_SPI_EXT);
-	spi_byte(IO_SPI_EXT, FRAM_CMD_FSTRD);
-	spi_byte(IO_SPI_EXT, addr >> 8);
-	spi_byte(IO_SPI_EXT, addr);
-	spi_byte(IO_SPI_EXT, 0);
-	spi_byte(IO_SPI_EXT, 0);
-	spi_block_in(IO_SPI_EXT, buf, SectorCount * FRAM_BLOCKLEN);
-	return (RES_OK);
-}
-
-
-#ifndef DISKIO_RO
-static int
-fram_disk_write(const uint8_t *buf, uint32_t SectorNumber,
-    uint32_t SectorCount)
-{
-	int addr = SectorNumber * (FRAM_BLOCKLEN / 256);
-
-	spi_start_transaction(IO_SPI_EXT);
-	spi_byte(IO_SPI_EXT, FRAM_CMD_WREN);
-	spi_start_transaction(IO_SPI_EXT);
-	spi_byte(IO_SPI_EXT, FRAM_CMD_WRITE);
-	spi_byte(IO_SPI_EXT, addr >> 8);
-	spi_byte(IO_SPI_EXT, addr);
-	spi_byte(IO_SPI_EXT, 0);
-
-	for (SectorCount *= FRAM_BLOCKLEN; SectorCount > 0; SectorCount--)
-		spi_byte(IO_SPI_EXT, *buf++);
-
-	spi_start_transaction(IO_SPI_EXT);
-	spi_byte(IO_SPI_EXT, FRAM_CMD_WRDI);
-	return (RES_OK);
-}
-#endif /* !DISKIO_RO */
 
 
 DSTATUS
 disk_initialize(BYTE drive)
 {
+	diskio_t di = diskio[drive];
 
-	switch (drive) {
-	case 0: /* C */
-		return (RES_OK);
-	case 1: /* D */
-		return (sdcard_disk_initialize());
-	case 2: /* F */
-		return (RES_OK);
-	case 3: /* R */
-		if (ramdisk == NULL)
-			ramdisk = malloc(RAMDISK_SIZE);
-		if (ramdisk == NULL)
-			return(RES_ERROR);
-		else
-			return(RES_OK);
-	default:
-		return (RES_ERROR);
-	}
+	if (di == NULL)
+		return STA_NOINIT;
+	return di->sw->init(di);
 }
 
 
 DSTATUS
 disk_status(BYTE drive)
 {
+	diskio_t di = diskio[drive];
 
-	switch (drive) {
-	case 0:
-		return (RES_OK);
-	case 1:
-		return (sdcard_disk_status());
-	case 2: /* F */
-		return (RES_OK);
-	case 3: /* R */
-		if (ramdisk == NULL)
-			return(RES_ERROR);
-		else
-			return(RES_OK);
-	default:
-		return (RES_ERROR);
-	}
-}
-
-
-static void
-ram_cpy(void *dst, void *src, int seccnt)
-{
-	uint32_t *r = src;
-	uint32_t *w = dst;
-	int cnt = seccnt * 512 / 4 / 4;
-	uint32_t a, b, c, d;
-
-	do {
-		a = r[0]; b = r[1]; c = r[2]; d = r[3];
-		r = &r[4];
-		w[0] = a; w[1] = b; w[2] = c; w[3] = d;
-		w = &w[4];
-	} while (--cnt != 0);
+	if (di == NULL)
+		return STA_NOINIT;
+	return di->sw->status(di);
 }
 
 
 DRESULT
-disk_read(BYTE pdrv, BYTE* buff, LBA_t sector, UINT count)
+disk_read(BYTE drive, BYTE* buf, LBA_t sector, UINT count)
 {
+	diskio_t di = diskio[drive];
 
-	switch (pdrv) {
-	case 0:
-		return (flash_disk_read(buff, sector, count));
-	case 1:
-		return (sdcard_disk_read(buff, sector, count));
-	case 2:
-		return (fram_disk_read(buff, sector, count));
-	case 3:
-		ram_cpy(buff, &ramdisk[sector * 512], count);
-		return (RES_OK);
-	default:
-		return (RES_ERROR);
-	}
+	if (di == NULL)
+		return STA_NOINIT;
+	return di->sw->read(di, buf, sector, count);
 }
 
 
-#ifndef DISKIO_RO
 DRESULT
-disk_write(BYTE pdrv, const BYTE* buff, LBA_t sector, UINT count)
+disk_write(BYTE drive, const BYTE* buf, LBA_t sector, UINT count)
 {
-	uint8_t *buf = (void *) buff;
+	diskio_t di = diskio[drive];
 
-	switch (pdrv) {
-	case 0:
-		return (flash_disk_write(buf, sector, count));
-	case 1:
-		return (sdcard_disk_write(buf, sector, count));
-	case 2:
-		return (fram_disk_write(buf, sector, count));
-	case 3:
-		ram_cpy(&ramdisk[sector * 512], buf, count);
-		return (RES_OK);
-	default:
-		return (RES_ERROR);
-	}
+	if (di == NULL)
+		return STA_NOINIT;
+	return di->sw->write(di, buf, sector, count);
 }
-#endif /* !DISKIO_RO */
 
 
 DRESULT
 disk_ioctl(BYTE drive, BYTE cmd, void* buf)
 {
-	WORD *up = buf;
+	diskio_t di = diskio[drive];
 
-	switch (cmd) {
-	case GET_SECTOR_SIZE:
-		if (drive == 0)
-			*up = FLASH_BLOCKLEN;
-		else
-			*up = 512;
-		return (RES_OK);
-#ifndef DISKIO_RO
-	case GET_SECTOR_COUNT:
-		if (drive == 0) {
-			*up = (8 * 1024 * 1024 - FLASH_FAT_OFFSET)
-			    / FLASH_BLOCKLEN;
-			return (RES_OK);
-		}
-		if (drive == 2) {
-			*up = 512 * 1024 / 512;
-			return (RES_OK);
-		}
-		if (drive == 3) {
-			*up = RAMDISK_SIZE / 512;
-			return (RES_OK);
-		}
-		return (RES_ERROR);
-	case GET_BLOCK_SIZE:
-		if (drive < 2)
-			return (RES_ERROR);
-		*up = 1;
-		return (RES_OK);
-#if 0 /* XXX REVISIT TRIM */
-	case CTRL_ERASE_SECTOR:
-		if (drive == 0) {
-			#if USE_EWSR
-			/* Enable Write Status Register */
-			spi_start_transaction(IO_SPI_FLASH);
-			spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
-			#endif
-
-			#if USE_WREN_BEFORE_WRSR
-			/* Write enable */
-			spi_start_transaction(IO_SPI_FLASH);
-			spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
-			#endif
-
-			#if USE_WRSR
-			/* Clear write-protect bits */
-			spi_start_transaction(IO_SPI_FLASH);
-			spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
-			spi_byte(IO_SPI_FLASH, 0);
-			#endif
-
-			flash_erase_sectors(up[0], up[1] - up[0] + 1);
-
-			#if USE_EWSR
-			/* Enable Write Status Register */
-			spi_start_transaction(IO_SPI_FLASH);
-			spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
-			#endif
-
-			#if USE_WREN_BEFORE_WRSR
-			/* Write enable */
-			spi_start_transaction(IO_SPI_FLASH);
-			spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
-			#endif
-
-			#if USE_WRSR
-			/* Set write-protect bits */
-			spi_start_transaction(IO_SPI_FLASH);
-			spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
-			spi_byte(IO_SPI_FLASH, 0x1c);
-			#endif
-		}
-		return (RES_OK);
-#endif /* XXX revisit TRIM */
-#endif /* !DISKIO_RO */
-	case CTRL_SYNC:
-		return (RES_OK);
-	default:
-		return (RES_ERROR);
-	}
+	if (di == NULL)
+		return STA_NOINIT;
+	return di->sw->ioctl(di, cmd, buf);
 }
 
 
