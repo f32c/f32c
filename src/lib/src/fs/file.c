@@ -34,12 +34,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <fatfs/diskio.h>
+
 
 #define MAXFILES 8
 
 
 static FATFS *ff_mounts[FF_VOLUMES];
-static char *ff_volstr[FF_VOLUMES] = {FF_VOLUME_STRS};
 static int ff_mounted;
 
 static FIL *file_map[MAXFILES];
@@ -93,11 +94,20 @@ ffres2errno(int fferr)
 }
 
 
+extern struct diskio_sw ramdisk_sw;
+
+struct diskio_inst ramdisk_i[FF_VOLUMES] = {
+	{ .sw = &ramdisk_sw, .prefix = "C:" },
+	{ .sw = &ramdisk_sw, .prefix = "D:" },
+	{ .sw = &ramdisk_sw, .prefix = "F:" },
+	{ .sw = &ramdisk_sw, .prefix = "R:" }
+};
+
+
 static void
 check_automount(void)
 {
 	int i;
-	char buf[FF_MAX_LFN + 1];
 
 	if (ff_mounted)
 		return;
@@ -105,11 +115,13 @@ check_automount(void)
 	for (i = 0; i < FF_VOLUMES; i++) {
 		if (ff_mounts[i] != NULL)
 			continue;
-		ff_mounts[i] = malloc(sizeof *ff_mounts[0]);
+		ff_mounts[i] = malloc(sizeof(FATFS));
 		if (ff_mounts[i] == NULL)
 			return;
-		snprintf(buf, sizeof(buf), "%s:", ff_volstr[i]);
-		f_mount(ff_mounts[i], buf, 0);
+		ramdisk_i[i].priv_data = 1024 * 1024;
+		ramdisk_i[i].priv_ptr = malloc(ramdisk_i[i].priv_data);
+		diskio_register(&ramdisk_i[i]);
+		f_mount(ff_mounts[i], ramdisk_i[i].prefix, 0);
 	}
 	ff_mounted = 1;
 }
