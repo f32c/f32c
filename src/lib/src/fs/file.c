@@ -97,6 +97,7 @@ static void
 check_automount(void)
 {
 	int i;
+	char buf[FF_MAX_LFN + 1];
 
 	if (ff_mounted)
 		return;
@@ -107,7 +108,8 @@ check_automount(void)
 		ff_mounts[i] = malloc(sizeof *ff_mounts[0]);
 		if (ff_mounts[i] == NULL)
 			return;
-		f_mount(ff_mounts[i], ff_volstr[i], 0);
+		snprintf(buf, sizeof(buf), "%s:", ff_volstr[i]);
+		f_mount(ff_mounts[i], buf, 0);
 	}
 	ff_mounted = 1;
 }
