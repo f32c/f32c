@@ -95,9 +95,10 @@ ffres2errno(int fferr)
 
 
 extern struct diskio_sw ramdisk_sw;
+extern struct diskio_sw flash_sw;
 
-struct diskio_inst ramdisk_i[FF_VOLUMES] = {
-	{ .sw = &ramdisk_sw, .prefix = "C:" },
+struct diskio_inst disk_i[FF_VOLUMES] = {
+	{ .sw = &flash_sw, .prefix = "C:" },
 	{ .sw = &ramdisk_sw, .prefix = "D:" },
 	{ .sw = &ramdisk_sw, .prefix = "F:" },
 	{ .sw = &ramdisk_sw, .prefix = "R:" }
@@ -118,10 +119,11 @@ check_automount(void)
 		ff_mounts[i] = malloc(sizeof(FATFS));
 		if (ff_mounts[i] == NULL)
 			return;
-		ramdisk_i[i].priv_data = 1024 * 1024;
-		ramdisk_i[i].priv_ptr = malloc(ramdisk_i[i].priv_data);
-		diskio_register(&ramdisk_i[i]);
-		f_mount(ff_mounts[i], ramdisk_i[i].prefix, 0);
+		disk_i[i].priv_data = 1024 * 1024;
+		if (i > 0)
+			disk_i[i].priv_ptr = malloc(disk_i[i].priv_data);
+		diskio_register(&disk_i[i]);
+		f_mount(ff_mounts[i], disk_i[i].prefix, 0);
 	}
 	ff_mounted = 1;
 }
