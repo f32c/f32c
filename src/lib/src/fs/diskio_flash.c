@@ -32,22 +32,29 @@
 #include <dev/spi.h>
 
 
-#define	FLASH_BLOCKLEN	4096
+#define	FLASH_SECLEN	4096
 
-#define	SPI_CMD_WRSR	0x01
-#define	SPI_CMD_PAGEWR	0x02	/* 256-byte block write */
-#define	SPI_CMD_WRDI	0x04
-#define	SPI_CMD_RDSR	0x05
-#define	SPI_CMD_WREN	0x06
-#define	SPI_CMD_FASTRD	0x0b
-#define	SPI_CMD_ERSEC	0x20	/* 4 Kbyte Sector erase */
-#define	SPI_CMD_EWSR	0x50
-#define	SPI_CMD_ERSEC1	0x52	/* 32 Kbyte Sector erase */
-#define	SPI_CMD_REMS	0x90	/* Macronix RDID version */
-#define	SPI_CMD_RDID	0x9F	/* JEDEC ID, standard */
+#define	SPI_CMD_WRSR	0x01	/* Write Status & Configuration Register */
+#define	SPI_CMD_PAGEWR	0x02	/* 256-byte "page" write */
+#define	SPI_CMD_READ	0x03	/* Slow read (no gap byte after address) */
+#define	SPI_CMD_WRDI	0x04	/* Write Disable */
+#define	SPI_CMD_RDSR	0x05	/* Read Status Register */
+#define	SPI_CMD_WREN	0x06	/* Write Enable */
+#define	SPI_CMD_FASTRD	0x0B	/* Fast read (dummy byte after address) */
+#define	SPI_CMD_ERSEC	0x20	/* 4 KB Sector erase */
+#define	SPI_CMD_DOR	0x3B	/* Dual output read */
+#define	SPI_CMD_ERSEC8	0x52	/* 8 KB Sector erase (not standard!)*/
+#define	SPI_CMD_EWSR	0x50	/* Enable Write to Status Register */
+#define	SPI_CMD_ERSEC32	0x52	/* 32 KB Sector erase (not standard!)*/
+#define	SPI_CMD_BE	0x60	/* Bulk (chip) erase */
+#define	SPI_CMD_QOR	0x6B	/* Quad output read */
+#define	SPI_CMD_REMS	0x90	/* Vendor-specific RDID version */
+#define	SPI_CMD_RDID	0x9F	/* Read JEDEC ID, standard */
 #define	SPI_CMD_RDID2	0xAB	/* SST / Microchip RDID version */
 #define	SPI_CMD_AAIWR	0xAD	/* Auto Address Increment Write */
-#define	SPI_CMD_ERSEC2	0xD8	/* 64 Kbyte Sector erase */
+#define	SPI_CMD_DORX	0xBB	/* Dual output read */
+#define	SPI_CMD_ERSSC64	0xD8	/* 64 KB Sector erase */
+#define	SPI_CMD_QORX	0xEB	/* Quad output read */
 
 #define	SPI_MFR_CYPRESS		0x01
 #define	SPI_MFR_FUJITSU		0x04
@@ -79,8 +86,8 @@ flash_erase_sectors(int start, int cnt)
 {
 	int addr, sum, i;
 
-	addr = start * FLASH_BLOCKLEN;
-	for (; cnt > 0; cnt--, addr += FLASH_BLOCKLEN) {
+	addr = start * FLASH_SECLEN;
+	for (; cnt > 0; cnt--, addr += FLASH_SECLEN) {
 		/* Skip already blank sectors */
 		spi_start_transaction(IO_SPI_FLASH);
 		spi_byte(IO_SPI_FLASH, SPI_CMD_FASTRD);
@@ -88,7 +95,7 @@ flash_erase_sectors(int start, int cnt)
 		spi_byte(IO_SPI_FLASH, addr >> 8);
 		spi_byte(IO_SPI_FLASH, 0);
 		spi_byte(IO_SPI_FLASH, 0); /* dummy byte, ignored */
-		for (i = 0, sum = 0xff; i < FLASH_BLOCKLEN; i++)
+		for (i = 0, sum = 0xff; i < FLASH_SECLEN; i++)
 			sum &= spi_byte(IO_SPI_FLASH, 0);
 		if (sum == 0xff)
 			continue;
@@ -159,7 +166,7 @@ flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 	/* Erase sectors */
 	flash_erase_sectors(sector, count);
 
-	addr = sector * FLASH_BLOCKLEN;
+	addr = sector * FLASH_SECLEN;
 	for (; count > 0; count--)
 		switch (mfg_id) {
 		case SPI_MFR_MICROCHIP:
@@ -167,7 +174,7 @@ flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 			spi_start_transaction(IO_SPI_FLASH);
 			spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
 
-			for (i = 0; i < FLASH_BLOCKLEN; i += 2) {
+			for (i = 0; i < FLASH_SECLEN; i += 2) {
 				spi_start_transaction(IO_SPI_FLASH);
 				spi_byte(IO_SPI_FLASH, SPI_CMD_AAIWR);
 				if (!in_aai) {
@@ -182,7 +189,7 @@ flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 			}
 			break;
 		default:
-			for (i = 0; i < FLASH_BLOCKLEN; i += 256, addr += 256) {
+			for (i = 0; i < FLASH_SECLEN; i += 256, addr += 256) {
 				/* Write enable */
 				spi_start_transaction(IO_SPI_FLASH);
 				spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
@@ -212,7 +219,7 @@ flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 DRESULT
 flash_read(diskio_t di,  BYTE* buf, LBA_t sector, UINT count)
 {
-	int addr = sector * FLASH_BLOCKLEN;
+	int addr = sector * FLASH_SECLEN;
 
 	spi_start_transaction(IO_SPI_FLASH);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_FASTRD);
@@ -220,7 +227,7 @@ flash_read(diskio_t di,  BYTE* buf, LBA_t sector, UINT count)
 	spi_byte(IO_SPI_FLASH, addr >> 8);
 	spi_byte(IO_SPI_FLASH, 0);
 	spi_byte(IO_SPI_FLASH, 0); /* dummy byte, ignored */
-	spi_block_in(IO_SPI_FLASH, buf, count * FLASH_BLOCKLEN);
+	spi_block_in(IO_SPI_FLASH, buf, count * FLASH_SECLEN);
 	return (RES_OK);
 }
 
@@ -232,12 +239,12 @@ flash_ioctl(diskio_t di, BYTE cmd, void* buf)
 
 	switch (cmd) {
 	case GET_SECTOR_SIZE:
-		*up = FLASH_BLOCKLEN;
+		*up = FLASH_SECLEN;
 		return (RES_OK);
 #ifndef DISKIO_RO
 	case GET_SECTOR_COUNT:
 		/* XXX autoguess media size, subtract offset */
-		*up = (4 * 1024 * 1024) / FLASH_BLOCKLEN;
+		*up = (4 * 1024 * 1024) / FLASH_SECLEN;
 		return (RES_OK);
 	case GET_BLOCK_SIZE:
 		/* XXX why? */
