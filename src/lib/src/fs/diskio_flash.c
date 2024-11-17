@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec
+ * Copyright (c) 2013-2024 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,6 +32,11 @@
 #include <dev/spi.h>
 
 
+#define	FLASH_OFFSET_BYTES(d)	(d)->priv_data[0]
+#define	FLASH_SIZE_BYTES(d)	(d)->priv_data[1]
+#define	FLASH_JED_ID(d)		(d)->priv_data[2]
+
+
 #define	FLASH_SECLEN	4096
 
 #define	SPI_CMD_WRSR	0x01	/* Write Status & Configuration Register */
@@ -50,7 +55,7 @@
 #define	SPI_CMD_QOR	0x6B	/* Quad output read */
 #define	SPI_CMD_REMS	0x90	/* Vendor-specific RDID version */
 #define	SPI_CMD_RDID	0x9F	/* Read JEDEC ID, standard */
-#define	SPI_CMD_RDID2	0xAB	/* SST / Microchip RDID version */
+#define	SPI_CMD_RDID2	0xAB	/* Vendor-specific RDID version */
 #define	SPI_CMD_AAIWR	0xAD	/* Auto Address Increment Write */
 #define	SPI_CMD_DORX	0xBB	/* Dual output read */
 #define	SPI_CMD_ERSSC64	0xD8	/* 64 KB Sector erase */
@@ -65,15 +70,16 @@
 #define	SPI_MFR_MACRONIX	0xc2
 #define	SPI_MFR_WINBOND		0xef
 
-#define	USE_EWSR 	1
-#define	USE_WREN_BEFORE_WRSR 1
-#define	USE_WRSR 	1
+#define	USE_EWSR 		1
+#define	USE_WREN_BEFORE_WRSR	1
+#define	USE_WRSR 		1
 
 
 #ifndef DISKIO_RO
 static void
 busy_wait()
 {
+
 	do {
 		spi_start_transaction(IO_SPI_FLASH);
 		spi_byte(IO_SPI_FLASH, SPI_CMD_RDSR);
@@ -95,7 +101,7 @@ flash_erase_sectors(int start, int cnt)
 		spi_byte(IO_SPI_FLASH, addr >> 8);
 		spi_byte(IO_SPI_FLASH, 0);
 		spi_byte(IO_SPI_FLASH, 0); /* dummy byte, ignored */
-		for (i = 0, sum = 0xff; i < FLASH_SECLEN; i++)
+		for (i = 0, sum = 0xff; i < FLASH_SECLEN && sum == 0xff; i++)
 			sum &= spi_byte(IO_SPI_FLASH, 0);
 		if (sum == 0xff)
 			continue;
@@ -117,8 +123,26 @@ flash_erase_sectors(int start, int cnt)
 DSTATUS
 flash_init_status(diskio_t di)
 {
+	uint32_t jed_id;
+	DSTATUS res = RES_OK;
 
-	return (RES_OK);
+	/* Get SPI chip ID */
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, SPI_CMD_RDID);
+	jed_id = spi_byte(IO_SPI_FLASH, 0);
+
+	if (jed_id == 0 || jed_id == 0xff)
+		return STA_NOINIT;
+
+	jed_id <<= 8;
+	jed_id += spi_byte(IO_SPI_FLASH, 0);
+	jed_id <<= 8;
+	jed_id += spi_byte(IO_SPI_FLASH, 0);
+
+	if (FLASH_JED_ID(di) != 0 && FLASH_JED_ID(di) != jed_id)
+		res = STA_NOINIT;
+	FLASH_JED_ID(di) = jed_id;
+	return res;
 }
 
 
@@ -129,20 +153,9 @@ flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 	int mfg_id, addr, i, j;
 	int in_aai = 0;
 
-	/* Get SPI chip ID */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_RDID);
-	mfg_id = spi_byte(IO_SPI_FLASH, 0);
-	if (mfg_id == 0 || mfg_id == 0xff) {
-		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_RDID2);
-		spi_byte(IO_SPI_FLASH, 0);
-		spi_byte(IO_SPI_FLASH, 0);
-		spi_byte(IO_SPI_FLASH, 0);
-		mfg_id = spi_byte(IO_SPI_FLASH, 0);
-	}
-	if (mfg_id == 0 || mfg_id == 0xff)
-		return STA_NODISK;
+	mfg_id = FLASH_JED_ID(di) >> 16;
+	if (mfg_id == 0)
+		return RES_NOTRDY;
 
 	#if USE_EWSR
 	/* Enable Write Status Register */
@@ -285,9 +298,10 @@ flash_ioctl(diskio_t di, BYTE cmd, void* buf)
 
 struct diskio_sw flash_sw = {
 	.read	= flash_read,
+#ifndef DISKIO_RO
 	.write	= flash_write,
+#endif
 	.ioctl	= flash_ioctl,
 	.status	= flash_init_status,
 	.init	= flash_init_status
 };
-
