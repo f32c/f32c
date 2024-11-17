@@ -36,7 +36,6 @@
 #define	FLASH_SIZE_BYTES(d)	(d)->priv_data[1]
 #define	FLASH_JED_ID(d)		(d)->priv_data[2]
 
-
 #define	FLASH_SECLEN	4096
 
 #define	SPI_CMD_WRSR	0x01	/* Write Status & Configuration Register */

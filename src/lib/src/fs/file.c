@@ -119,9 +119,14 @@ check_automount(void)
 		ff_mounts[i] = malloc(sizeof(FATFS));
 		if (ff_mounts[i] == NULL)
 			return;
-		disk_i[i].priv_data = 1024 * 1024;
-		if (i > 0)
-			disk_i[i].priv_ptr = malloc(disk_i[i].priv_data);
+		if (i == 0) {
+			disk_i[i].priv_data[0] = 1024 * 1024; /* offset */
+			disk_i[i].priv_data[1] = 3 * 1024 * 1024; /* size */
+		} else {
+			disk_i[i].priv_data[1] = i * 1024 * 1024; /* size */
+			disk_i[i].priv_data[0] =
+			    (uint32_t) malloc(disk_i[i].priv_data[1]);
+		}
 		diskio_register(&disk_i[i]);
 		f_mount(ff_mounts[i], disk_i[i].prefix, 0);
 	}

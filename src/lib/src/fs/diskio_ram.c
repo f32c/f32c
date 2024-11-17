@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec
+ * Copyright (c) 2013-2024 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,6 +30,9 @@
 #include <fatfs/diskio.h>
 
 
+#define	RAM_BASE(d)	((void *)(d)->priv_data[0])
+#define RAM_SIZE(d)	(d)->priv_data[1]
+
 #define	RAMDISK_SS	512
 
 
@@ -54,30 +57,32 @@ DSTATUS
 ramdisk_init_status(diskio_t di)
 {
 
-	if (di->priv_ptr == NULL || di->priv_data == 0)
-		return(STA_NOINIT);
-	return(0);
+	if (RAM_BASE(di) == NULL || RAM_SIZE(di) == 0)
+		return STA_NOINIT;
+	return 0;
 }
 
 
 DRESULT
 ramdisk_read(diskio_t di, BYTE *buf, LBA_t sector, UINT count)
 {
-	char *ramdisk = di->priv_ptr;
+	char *ramdisk = RAM_BASE(di);
 
 	ram_cpy(buf, &ramdisk[sector * RAMDISK_SS], count);
-	return (RES_OK);
+	return RES_OK;
 }
 
 
+#ifndef DISKIO_RO
 DRESULT
 ramdisk_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 {
-	char *ramdisk = di->priv_ptr;
+	char *ramdisk = RAM_BASE(di);
 
 	ram_cpy(&ramdisk[sector * RAMDISK_SS], buf, count);
-	return (RES_OK);
+	return RES_OK;
 }
+#endif /* !DISKIO_RO */
 
 
 DRESULT
@@ -91,7 +96,7 @@ ramdisk_ioctl(diskio_t di, BYTE cmd, void *buf)
 		return (RES_OK);
 #ifndef DISKIO_RO
 	case GET_SECTOR_COUNT:
-		*up = di->priv_data / RAMDISK_SS;
+		*up = RAM_SIZE(di) / RAMDISK_SS;
 		return (RES_OK);
 	case GET_BLOCK_SIZE:
 		*up = 1;
@@ -107,7 +112,9 @@ ramdisk_ioctl(diskio_t di, BYTE cmd, void *buf)
 
 struct diskio_sw ramdisk_sw = {
         .read	= ramdisk_read,
+#ifndef DISKIO_RO
         .write	= ramdisk_write,
+#endif /* !DISKIO_RO */
         .ioctl	= ramdisk_ioctl,
         .status	= ramdisk_init_status,
         .init	= ramdisk_init_status,
