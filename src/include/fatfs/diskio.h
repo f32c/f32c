@@ -92,11 +92,8 @@ struct diskio_sw {
 
 struct diskio_inst {
 	const struct diskio_sw *sw;	/* diskio methods */
-	uint16_t	unit_major;	/* device id, major */
-	uint16_t	unit_minor;	/* device id, minor */
 	char		*prefix;	/* voume id, such as "C:" */
-	uint32_t	priv_data;	/* opaque private data */
-	void		*priv_ptr;	/* opaque private data */
+	uint32_t	priv_data[4];	/* opaque private data */
 };
 
 void diskio_register(diskio_t);
