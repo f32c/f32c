@@ -91,6 +91,25 @@ flash_erase_sectors(int start, int cnt)
 {
 	int addr, sum, i;
 
+	#if USE_EWSR
+	/* Enable Write Status Register */
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
+	#endif
+
+	#if USE_WREN_BEFORE_WRSR
+	/* Write enable */
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
+	#endif
+
+	#if USE_WRSR
+	/* Clear write-protect bits */
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
+	spi_byte(IO_SPI_FLASH, 0);
+	#endif
+
 	addr = start * FLASH_SECLEN;
 	for (; cnt > 0; cnt--, addr += FLASH_SECLEN) {
 		/* Skip already blank sectors */
@@ -153,25 +172,6 @@ flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 	int in_aai = 0;
 
 	sector += FLASH_OFFSET_BYTES(di) / FLASH_SECLEN;
-
-	#if USE_EWSR
-	/* Enable Write Status Register */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
-	#endif
-
-	#if USE_WREN_BEFORE_WRSR
-	/* Write enable */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
-	#endif
-
-	#if USE_WRSR
-	/* Clear write-protect bits */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
-	spi_byte(IO_SPI_FLASH, 0);
-	#endif
 
 	/* Erase sectors */
 	flash_erase_sectors(sector, count);
