@@ -152,9 +152,7 @@ flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 	int mfg_id, addr, i, j;
 	int in_aai = 0;
 
-	mfg_id = FLASH_JED_ID(di) >> 16;
-	if (mfg_id == 0)
-		return RES_NOTRDY;
+	sector += FLASH_OFFSET_BYTES(di) / FLASH_SECLEN;
 
 	#if USE_EWSR
 	/* Enable Write Status Register */
@@ -178,6 +176,7 @@ flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 	/* Erase sectors */
 	flash_erase_sectors(sector, count);
 
+	mfg_id = FLASH_JED_ID(di) >> 16;
 	addr = sector * FLASH_SECLEN;
 	for (; count > 0; count--)
 		switch (mfg_id) {
@@ -231,7 +230,10 @@ flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 DRESULT
 flash_read(diskio_t di,  BYTE* buf, LBA_t sector, UINT count)
 {
-	int addr = sector * FLASH_SECLEN;
+	int addr;
+
+	sector += FLASH_OFFSET_BYTES(di) / FLASH_SECLEN;
+	addr = sector * FLASH_SECLEN;
 
 	spi_start_transaction(IO_SPI_FLASH);
 	spi_byte(IO_SPI_FLASH, SPI_CMD_FASTRD);
