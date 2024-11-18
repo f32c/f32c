@@ -172,6 +172,8 @@ flash_erase_sectors(int start, int cnt)
 	spi_byte(IO_SPI_FLASH, 0);
 	#endif
 
+	busy_wait();
+
 	addr = start * FLASH_SECLEN;
 	for (; cnt > 0; cnt--, addr += FLASH_SECLEN) {
 		/* Skip already blank sectors */
@@ -266,25 +268,25 @@ static DRESULT
 flash_ioctl(diskio_t di, BYTE cmd, void* buf)
 {
 	struct flash_priv *priv = DISKIO2PRIV(di);
-	WORD *up = buf;
+	LBA_t *sec = buf;
+	WORD *sz = buf;
 
 	switch (cmd) {
 	case GET_SECTOR_SIZE:
-		*up = FLASH_SECLEN;
+		*sz = FLASH_SECLEN;
 		return (RES_OK);
 #ifndef DISKIO_RO
 	case GET_SECTOR_COUNT:
-		*up = priv->size;
+		*sec = priv->size;
 		return (RES_OK);
 	case GET_BLOCK_SIZE:
-		/* XXX why? */
-		return (RES_ERROR);
-#if 0 /* XXX REVISIT TRIM */
-	case CTRL_ERASE_SECTOR:
-		/* XXX add offset to up[0], up[1] */
-		flash_erase_sectors(up[0], up[1] - up[0] + 1);
+		*sz = 1;
 		return (RES_OK);
-#endif /* XXX revisit TRIM */
+	case CTRL_TRIM:
+		sec[1] -= sec[0];
+		sec[0] += priv->offset;
+		flash_erase_sectors(sec[0], sec[1] + 1);
+		return (RES_OK);
 #endif /* !DISKIO_RO */
 	case CTRL_SYNC:
 		return (RES_OK);
