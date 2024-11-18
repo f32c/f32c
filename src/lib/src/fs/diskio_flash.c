@@ -50,7 +50,9 @@ struct flash_priv {
 	uint16_t	offset;
 	uint16_t	size;
 	uint8_t		io_slave;
+	uint8_t		unlock_done;
 	uint8_t		jed_id[3];
+	uint8_t		padding[3];
 };
 
 #define DISKIO2PRIV(d)  ((struct flash_priv *)((void *)(d)->priv_data))
@@ -64,11 +66,11 @@ struct flash_priv {
 #define	SPI_CMD_RDSR	0x05	/* Read Status Register */
 #define	SPI_CMD_WREN	0x06	/* Write Enable */
 #define	SPI_CMD_FASTRD	0x0B	/* Fast read (dummy byte after address) */
-#define	SPI_CMD_ERSEC	0x20	/* 4 KB Sector erase */
+#define	SPI_CMD_SER	0x20	/* 4 KB Sector erase */
 #define	SPI_CMD_DOR	0x3B	/* Dual output read */
-#define	SPI_CMD_ERSEC8	0x52	/* 8 KB Sector erase (not standard!)*/
+#define	SPI_CMD_BER8K	0x52	/* 8 KB block erase (not standard!)*/
 #define	SPI_CMD_EWSR	0x50	/* Enable Write to Status Register */
-#define	SPI_CMD_ERSEC32	0x52	/* 32 KB Sector erase (not standard!)*/
+#define	SPI_CMD_BER32K	0x52	/* 32 KB block erase (not standard!)*/
 #define	SPI_CMD_BE	0x60	/* Bulk (chip) erase */
 #define	SPI_CMD_QOR	0x6B	/* Quad output read */
 #define	SPI_CMD_REMS	0x90	/* Vendor-specific RDID version */
@@ -76,7 +78,7 @@ struct flash_priv {
 #define	SPI_CMD_RDID2	0xAB	/* Vendor-specific RDID version */
 #define	SPI_CMD_AAIWR	0xAD	/* Auto Address Increment Write */
 #define	SPI_CMD_DORX	0xBB	/* Dual output read */
-#define	SPI_CMD_ERSSC64	0xD8	/* 64 KB Sector erase */
+#define	SPI_CMD_BER64K	0xD8	/* 64 KB block erase (standard?) */
 #define	SPI_CMD_QORX	0xEB	/* Quad output read */
 
 #define	SPI_MFR_CYPRESS		0x01
@@ -112,6 +114,32 @@ flash_init_status(diskio_t di)
 	priv->jed_id[0] = byte;
 	priv->jed_id[1] = spi_byte(IO_SPI_FLASH, 0);
 	priv->jed_id[2] = spi_byte(IO_SPI_FLASH, 0);
+
+#ifndef DISKIO_RO
+	if (res || priv->unlock_done)
+		return res;
+
+	#if USE_EWSR
+	/* Enable Write Status Register */
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
+	#endif
+
+	#if USE_WREN_BEFORE_WRSR
+	/* Write enable */
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
+	#endif
+
+	#if USE_WRSR
+	/* Clear write-protect bits */
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
+	spi_byte(IO_SPI_FLASH, 0);
+	#endif
+
+	priv->unlock_done = 1;
+#endif
 	return res;
 }
 
@@ -153,27 +181,6 @@ flash_erase_sectors(int start, int cnt)
 {
 	int addr, sum, i;
 
-	#if USE_EWSR
-	/* Enable Write Status Register */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
-	#endif
-
-	#if USE_WREN_BEFORE_WRSR
-	/* Write enable */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
-	#endif
-
-	#if USE_WRSR
-	/* Clear write-protect bits */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
-	spi_byte(IO_SPI_FLASH, 0);
-	#endif
-
-	busy_wait();
-
 	addr = start * FLASH_SECLEN;
 	for (; cnt > 0; cnt--, addr += FLASH_SECLEN) {
 		/* Skip already blank sectors */
@@ -192,7 +199,7 @@ flash_erase_sectors(int start, int cnt)
 		spi_start_transaction(IO_SPI_FLASH);
 		spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
 		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_ERSEC);
+		spi_byte(IO_SPI_FLASH, SPI_CMD_SER);
 		spi_byte(IO_SPI_FLASH, addr >> 16);
 		spi_byte(IO_SPI_FLASH, addr >> 8);
 		spi_byte(IO_SPI_FLASH, 0);
@@ -283,9 +290,7 @@ flash_ioctl(diskio_t di, BYTE cmd, void* buf)
 		*sz = 1;
 		return (RES_OK);
 	case CTRL_TRIM:
-		sec[1] -= sec[0];
-		sec[0] += priv->offset;
-		flash_erase_sectors(sec[0], sec[1] + 1);
+		flash_erase_sectors(sec[0] + priv->offset, sec[1] - sec[0] + 1);
 		return (RES_OK);
 #endif /* !DISKIO_RO */
 	case CTRL_SYNC:
@@ -307,5 +312,6 @@ diskio_attach_flash(diskio_t di, uint32_t io_port, uint8_t io_slave,
 	priv->io_slave = io_slave;
 	priv->offset = offset / FLASH_SECLEN;
 	priv->size = size / FLASH_SECLEN;
+	priv->unlock_done = 0;
 	diskio_attach_generic(di);
 }
