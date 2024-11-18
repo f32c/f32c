@@ -96,7 +96,9 @@ struct diskio_inst {
 	uint32_t	priv_data[4];	/* opaque private data */
 };
 
-void diskio_register(diskio_t);
+void diskio_attach_generic(diskio_t);
+void diskio_attach_flash(diskio_t, uint32_t, uint8_t, uint32_t, uint32_t);
+void diskio_attach_ram(diskio_t, void *, uint32_t);
 
 #if defined(_FS_READONLY) && _FS_READONLY == 1
 #define	DISKIO_RO
