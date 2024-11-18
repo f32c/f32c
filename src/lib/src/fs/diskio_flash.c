@@ -176,30 +176,44 @@ busy_wait()
 }
 
 
+static int
+blank_check(int addr, int len)
+{
+
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, SPI_CMD_FASTRD);
+	spi_byte(IO_SPI_FLASH, addr >> 16);
+	spi_byte(IO_SPI_FLASH, addr >> 8);
+	spi_byte(IO_SPI_FLASH, 0);
+	spi_byte(IO_SPI_FLASH, 0); /* dummy byte, ignored */
+	for (; len != 0; len--)
+		if (spi_byte(IO_SPI_FLASH, 0) != 0xff)
+			return 0;
+	return 1;
+}
+
+
 static void
 flash_erase_sectors(int start, int cnt)
 {
-	int addr, sum, i;
+	int addr;
 
 	addr = start * FLASH_SECLEN;
 	for (; cnt > 0; cnt--, addr += FLASH_SECLEN) {
 		/* Skip already blank sectors */
-		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_FASTRD);
-		spi_byte(IO_SPI_FLASH, addr >> 16);
-		spi_byte(IO_SPI_FLASH, addr >> 8);
-		spi_byte(IO_SPI_FLASH, 0);
-		spi_byte(IO_SPI_FLASH, 0); /* dummy byte, ignored */
-		for (i = 0, sum = 0xff; i < FLASH_SECLEN && sum == 0xff; i++)
-			sum &= spi_byte(IO_SPI_FLASH, 0);
-		if (sum == 0xff)
+		if (blank_check(addr, FLASH_SECLEN))
 			continue;
 
 		/* Write enable */
 		spi_start_transaction(IO_SPI_FLASH);
 		spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
 		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_SER);
+		if ((addr & 0xffff) == 0 && cnt >= 16) {
+			spi_byte(IO_SPI_FLASH, SPI_CMD_BER64K);
+			addr += 15 * FLASH_SECLEN;
+			cnt -= 15;
+		} else
+			spi_byte(IO_SPI_FLASH, SPI_CMD_SER);
 		spi_byte(IO_SPI_FLASH, addr >> 16);
 		spi_byte(IO_SPI_FLASH, addr >> 8);
 		spi_byte(IO_SPI_FLASH, 0);
