@@ -30,8 +30,28 @@
 #include <fatfs/diskio.h>
 
 
-#define	RAM_BASE(d)	((void *)(d)->priv_data[0])
-#define RAM_SIZE(d)	(d)->priv_data[1]
+static DRESULT ramdisk_read(diskio_t, BYTE *, LBA_t, UINT);
+static DRESULT ramdisk_write(diskio_t, const BYTE *, LBA_t, UINT);
+static DRESULT ramdisk_ioctl(diskio_t, BYTE, void *);
+static DSTATUS ramdisk_init_status(diskio_t);
+
+static struct diskio_sw ramdisk_sw = {
+        .read	= ramdisk_read,
+        .write	= ramdisk_write,
+        .ioctl	= ramdisk_ioctl,
+        .status	= ramdisk_init_status,
+        .init	= ramdisk_init_status
+};
+
+struct ramdisk_priv {
+	void		*base;
+	uint32_t	size;
+};
+
+#define	DISKIO2PRIV(d)	((struct ramdisk_priv *)((void *)(d)->priv_data))
+
+#define	RAM_BASE(d)	DISKIO2PRIV(d)->base
+#define	RAM_SIZE(d)	DISKIO2PRIV(d)->size
 
 #define	RAMDISK_SS	512
 
@@ -53,7 +73,7 @@ ram_cpy(void *dst, const void *src, int seccnt)
 }
 
 
-DSTATUS
+static DSTATUS
 ramdisk_init_status(diskio_t di)
 {
 
@@ -63,7 +83,7 @@ ramdisk_init_status(diskio_t di)
 }
 
 
-DRESULT
+static DRESULT
 ramdisk_read(diskio_t di, BYTE *buf, LBA_t sector, UINT count)
 {
 	char *ramdisk = RAM_BASE(di);
@@ -73,8 +93,7 @@ ramdisk_read(diskio_t di, BYTE *buf, LBA_t sector, UINT count)
 }
 
 
-#ifndef DISKIO_RO
-DRESULT
+static DRESULT
 ramdisk_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 {
 	char *ramdisk = RAM_BASE(di);
@@ -82,10 +101,9 @@ ramdisk_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 	ram_cpy(&ramdisk[sector * RAMDISK_SS], buf, count);
 	return RES_OK;
 }
-#endif /* !DISKIO_RO */
 
 
-DRESULT
+static DRESULT
 ramdisk_ioctl(diskio_t di, BYTE cmd, void *buf)
 {
 	WORD *up = buf;
@@ -110,12 +128,13 @@ ramdisk_ioctl(diskio_t di, BYTE cmd, void *buf)
 }
 
 
-struct diskio_sw ramdisk_sw = {
-        .read	= ramdisk_read,
-#ifndef DISKIO_RO
-        .write	= ramdisk_write,
-#endif /* !DISKIO_RO */
-        .ioctl	= ramdisk_ioctl,
-        .status	= ramdisk_init_status,
-        .init	= ramdisk_init_status,
-};
+void
+diskio_attach_ram(diskio_t di, void *base, uint32_t size)
+{
+	struct ramdisk_priv *priv = DISKIO2PRIV(di);
+
+	di->sw = &ramdisk_sw;
+	priv->base = base;
+	priv->size = size;
+	diskio_attach_generic(di);
+}

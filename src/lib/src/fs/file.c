@@ -36,6 +36,8 @@
 
 #include <fatfs/diskio.h>
 
+#include <dev/io.h>
+
 
 #define MAXFILES 8
 
@@ -94,14 +96,11 @@ ffres2errno(int fferr)
 }
 
 
-extern struct diskio_sw ramdisk_sw;
-extern struct diskio_sw flash_sw;
-
-struct diskio_inst disk_i[FF_VOLUMES] = {
-	{ .sw = &flash_sw, .prefix = "C:" },
-	{ .sw = &ramdisk_sw, .prefix = "D:" },
-	{ .sw = &ramdisk_sw, .prefix = "F:" },
-	{ .sw = &ramdisk_sw, .prefix = "R:" }
+static struct diskio_inst disk_i[FF_VOLUMES] = {
+	{ .prefix = "C:" },
+	{ .prefix = "D:" },
+	{ .prefix = "F:" },
+	{ .prefix = "R:" }
 };
 
 
@@ -119,15 +118,16 @@ check_automount(void)
 		ff_mounts[i] = malloc(sizeof(FATFS));
 		if (ff_mounts[i] == NULL)
 			return;
-		if (i == 0) {
-			disk_i[i].priv_data[0] = 1024 * 1024; /* offset */
-			disk_i[i].priv_data[1] = 3 * 1024 * 1024; /* size */
-		} else {
-			disk_i[i].priv_data[1] = i * 1024 * 1024; /* size */
-			disk_i[i].priv_data[0] =
-			    (uint32_t) malloc(disk_i[i].priv_data[1]);
-		}
-		diskio_register(&disk_i[i]);
+		if (i == 0)
+			diskio_attach_flash(&disk_i[i],
+			    IO_SPI_FLASH, /* SPI port */
+			    0, /* SPI slave unit */
+			    1024 * 1024, /* offset from media start, bytes*/
+			    3 * 1024 * 1024 /* block size, bytes*/);
+		else
+			diskio_attach_ram(&disk_i[i],
+			    malloc(i * 1024 * 1024), /* base addr*/
+			    i * 1024 * 1024 /* size, bytes */);
 		f_mount(ff_mounts[i], disk_i[i].prefix, 0);
 	}
 	ff_mounted = 1;

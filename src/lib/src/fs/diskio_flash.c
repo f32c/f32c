@@ -32,9 +32,28 @@
 #include <dev/spi.h>
 
 
-#define	FLASH_OFFSET_BYTES(d)	(d)->priv_data[0]
-#define	FLASH_SIZE_BYTES(d)	(d)->priv_data[1]
-#define	FLASH_JED_ID(d)		(d)->priv_data[2]
+static DRESULT flash_read(diskio_t, BYTE *, LBA_t, UINT);
+static DRESULT flash_write(diskio_t, const BYTE *, LBA_t, UINT);
+static DRESULT flash_ioctl(diskio_t, BYTE, void *);
+static DSTATUS flash_init_status(diskio_t);
+
+static struct diskio_sw flash_sw = {
+	.read	= flash_read,
+	.write	= flash_write,
+	.ioctl	= flash_ioctl,
+	.status	= flash_init_status,
+	.init	= flash_init_status
+};
+
+struct flash_priv {
+	uint32_t	io_port;
+	uint16_t	offset;
+	uint16_t	size;
+	uint8_t		io_slave;
+	uint8_t		jed_id[3];
+};
+
+#define DISKIO2PRIV(d)  ((struct flash_priv *)((void *)(d)->priv_data))
 
 #define	FLASH_SECLEN	4096
 
@@ -72,6 +91,49 @@
 #define	USE_EWSR 		1
 #define	USE_WREN_BEFORE_WRSR	1
 #define	USE_WRSR 		1
+
+
+static DSTATUS
+flash_init_status(diskio_t di)
+{
+	struct flash_priv *priv = DISKIO2PRIV(di);
+	uint32_t byte;
+	DSTATUS res = 0;
+
+	/* Get SPI chip ID */
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, SPI_CMD_RDID);
+	byte = spi_byte(IO_SPI_FLASH, 0);
+
+	if (byte == 0 || byte == 0xff)
+		return STA_NOINIT;
+	if (priv->jed_id[0] != 0 && priv->jed_id[0] != byte)
+		res = STA_NOINIT;
+	priv->jed_id[0] = byte;
+	priv->jed_id[1] = spi_byte(IO_SPI_FLASH, 0);
+	priv->jed_id[2] = spi_byte(IO_SPI_FLASH, 0);
+	return res;
+}
+
+
+static DRESULT
+flash_read(diskio_t di,  BYTE* buf, LBA_t sector, UINT count)
+{
+	struct flash_priv *priv = DISKIO2PRIV(di);
+	int addr;
+
+	sector += priv->offset;
+	addr = sector * FLASH_SECLEN;
+
+	spi_start_transaction(IO_SPI_FLASH);
+	spi_byte(IO_SPI_FLASH, SPI_CMD_FASTRD);
+	spi_byte(IO_SPI_FLASH, addr >> 16);
+	spi_byte(IO_SPI_FLASH, addr >> 8);
+	spi_byte(IO_SPI_FLASH, 0);
+	spi_byte(IO_SPI_FLASH, 0); /* dummy byte, ignored */
+	spi_block_in(IO_SPI_FLASH, buf, count * FLASH_SECLEN);
+	return (RES_OK);
+}
 
 
 #ifndef DISKIO_RO
@@ -135,48 +197,21 @@ flash_erase_sectors(int start, int cnt)
 		busy_wait();
 	}
 }
-#endif
 
 
-DSTATUS
-flash_init_status(diskio_t di)
-{
-	uint32_t jed_id;
-	DSTATUS res = RES_OK;
-
-	/* Get SPI chip ID */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_RDID);
-	jed_id = spi_byte(IO_SPI_FLASH, 0);
-
-	if (jed_id == 0 || jed_id == 0xff)
-		return STA_NOINIT;
-
-	jed_id <<= 8;
-	jed_id += spi_byte(IO_SPI_FLASH, 0);
-	jed_id <<= 8;
-	jed_id += spi_byte(IO_SPI_FLASH, 0);
-
-	if (FLASH_JED_ID(di) != 0 && FLASH_JED_ID(di) != jed_id)
-		res = STA_NOINIT;
-	FLASH_JED_ID(di) = jed_id;
-	return res;
-}
-
-
-#ifndef DISKIO_RO
 static DRESULT
 flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 {
+	struct flash_priv *priv = DISKIO2PRIV(di);
 	int mfg_id, addr, i, j;
 	int in_aai = 0;
 
-	sector += FLASH_OFFSET_BYTES(di) / FLASH_SECLEN;
+	sector += priv->offset;
 
 	/* Erase sectors */
 	flash_erase_sectors(sector, count);
 
-	mfg_id = FLASH_JED_ID(di) >> 16;
+	mfg_id = priv->jed_id[0];
 	addr = sector * FLASH_SECLEN;
 	for (; count > 0; count--)
 		switch (mfg_id) {
@@ -227,28 +262,10 @@ flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 #endif /* !DISKIO_RO */
 
 
-DRESULT
-flash_read(diskio_t di,  BYTE* buf, LBA_t sector, UINT count)
-{
-	int addr;
-
-	sector += FLASH_OFFSET_BYTES(di) / FLASH_SECLEN;
-	addr = sector * FLASH_SECLEN;
-
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_FASTRD);
-	spi_byte(IO_SPI_FLASH, addr >> 16);
-	spi_byte(IO_SPI_FLASH, addr >> 8);
-	spi_byte(IO_SPI_FLASH, 0);
-	spi_byte(IO_SPI_FLASH, 0); /* dummy byte, ignored */
-	spi_block_in(IO_SPI_FLASH, buf, count * FLASH_SECLEN);
-	return (RES_OK);
-}
-
-
-DRESULT
+static DRESULT
 flash_ioctl(diskio_t di, BYTE cmd, void* buf)
 {
+	struct flash_priv *priv = DISKIO2PRIV(di);
 	WORD *up = buf;
 
 	switch (cmd) {
@@ -257,35 +274,15 @@ flash_ioctl(diskio_t di, BYTE cmd, void* buf)
 		return (RES_OK);
 #ifndef DISKIO_RO
 	case GET_SECTOR_COUNT:
-		/* XXX autoguess media size, subtract offset */
-		*up = (4 * 1024 * 1024) / FLASH_SECLEN;
+		*up = priv->size;
 		return (RES_OK);
 	case GET_BLOCK_SIZE:
 		/* XXX why? */
 		return (RES_ERROR);
 #if 0 /* XXX REVISIT TRIM */
 	case CTRL_ERASE_SECTOR:
-		#if USE_EWSR
-		/* Enable Write Status Register */
-		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
-		#endif
-
-		#if USE_WREN_BEFORE_WRSR
-		/* Write enable */
-		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
-		#endif
-
-		#if USE_WRSR
-		/* Clear write-protect bits */
-		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
-		spi_byte(IO_SPI_FLASH, 0);
-		#endif
-
+		/* XXX add offset to up[0], up[1] */
 		flash_erase_sectors(up[0], up[1] - up[0] + 1);
-
 		return (RES_OK);
 #endif /* XXX revisit TRIM */
 #endif /* !DISKIO_RO */
@@ -297,12 +294,16 @@ flash_ioctl(diskio_t di, BYTE cmd, void* buf)
 }
 
 
-struct diskio_sw flash_sw = {
-	.read	= flash_read,
-#ifndef DISKIO_RO
-	.write	= flash_write,
-#endif
-	.ioctl	= flash_ioctl,
-	.status	= flash_init_status,
-	.init	= flash_init_status
-};
+void
+diskio_attach_flash(diskio_t di, uint32_t io_port, uint8_t io_slave,
+    uint32_t offset, uint32_t size)
+{
+	struct flash_priv *priv = DISKIO2PRIV(di);
+
+	di->sw = &flash_sw;
+	priv->io_port = io_port;
+	priv->io_slave = io_slave;
+	priv->offset = offset / FLASH_SECLEN;
+	priv->size = size / FLASH_SECLEN;
+	diskio_attach_generic(di);
+}

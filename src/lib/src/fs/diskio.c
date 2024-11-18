@@ -34,7 +34,7 @@ static struct diskio_inst *diskio[FF_VOLUMES];
 
 
 void
-diskio_register(diskio_t di)
+diskio_attach_generic(diskio_t di)
 {
 	int i;
 
