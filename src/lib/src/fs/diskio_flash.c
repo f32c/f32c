@@ -108,17 +108,17 @@ flash_init_status(diskio_t di)
 	DSTATUS res = 0;
 
 	/* Get SPI chip ID */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_RDID);
-	byte = spi_byte(IO_SPI_FLASH, 0);
+	spi_start_transaction(priv->io_port);
+	spi_byte(priv->io_port, SPI_CMD_RDID);
+	byte = spi_byte(priv->io_port, 0);
 
 	if (byte == 0 || byte == 0xff)
 		return STA_NOINIT;
 	if (priv->jed_id[0] != 0 && priv->jed_id[0] != byte)
 		res = STA_NOINIT;
 	priv->jed_id[0] = byte;
-	priv->jed_id[1] = spi_byte(IO_SPI_FLASH, 0);
-	priv->jed_id[2] = spi_byte(IO_SPI_FLASH, 0);
+	priv->jed_id[1] = spi_byte(priv->io_port, 0);
+	priv->jed_id[2] = spi_byte(priv->io_port, 0);
 
 #ifndef DISKIO_RO
 	if (res || (priv->flags & F_UNLOCK_DONE))
@@ -126,21 +126,21 @@ flash_init_status(diskio_t di)
 
 	#if USE_EWSR
 	/* Enable Write Status Register */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_EWSR);
+	spi_start_transaction(priv->io_port);
+	spi_byte(priv->io_port, SPI_CMD_EWSR);
 	#endif
 
 	#if USE_WREN_BEFORE_WRSR
 	/* Write enable */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
+	spi_start_transaction(priv->io_port);
+	spi_byte(priv->io_port, SPI_CMD_WREN);
 	#endif
 
 	#if USE_WRSR
 	/* Clear write-protect bits */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_WRSR);
-	spi_byte(IO_SPI_FLASH, 0);
+	spi_start_transaction(priv->io_port);
+	spi_byte(priv->io_port, SPI_CMD_WRSR);
+	spi_byte(priv->io_port, 0);
 	#endif
 
 	priv->flags |= F_UNLOCK_DONE;
@@ -158,41 +158,41 @@ flash_read(diskio_t di,  BYTE* buf, LBA_t sector, UINT count)
 	sector += priv->offset;
 	addr = sector * FLASH_SECLEN;
 
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_FASTRD);
-	spi_byte(IO_SPI_FLASH, addr >> 16);
-	spi_byte(IO_SPI_FLASH, addr >> 8);
-	spi_byte(IO_SPI_FLASH, 0);
-	spi_byte(IO_SPI_FLASH, 0); /* dummy byte, ignored */
-	spi_block_in(IO_SPI_FLASH, buf, count * FLASH_SECLEN);
+	spi_start_transaction(priv->io_port);
+	spi_byte(priv->io_port, SPI_CMD_FASTRD);
+	spi_byte(priv->io_port, addr >> 16);
+	spi_byte(priv->io_port, addr >> 8);
+	spi_byte(priv->io_port, 0);
+	spi_byte(priv->io_port, 0); /* dummy byte, ignored */
+	spi_block_in(priv->io_port, buf, count * FLASH_SECLEN);
 	return (RES_OK);
 }
 
 
 #ifndef DISKIO_RO
 static void
-busy_wait()
+busy_wait(struct flash_priv *priv)
 {
 
 	do {
-		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_RDSR);
-	} while (spi_byte(IO_SPI_FLASH, SPI_CMD_RDSR) & 1);
+		spi_start_transaction(priv->io_port);
+		spi_byte(priv->io_port, SPI_CMD_RDSR);
+	} while (spi_byte(priv->io_port, SPI_CMD_RDSR) & 1);
 }
 
 
 static int
-blank_check(int addr, int len)
+blank_check(struct flash_priv *priv, int addr, int len)
 {
 
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_FASTRD);
-	spi_byte(IO_SPI_FLASH, addr >> 16);
-	spi_byte(IO_SPI_FLASH, addr >> 8);
-	spi_byte(IO_SPI_FLASH, 0);
-	spi_byte(IO_SPI_FLASH, 0); /* dummy byte, ignored */
+	spi_start_transaction(priv->io_port);
+	spi_byte(priv->io_port, SPI_CMD_FASTRD);
+	spi_byte(priv->io_port, addr >> 16);
+	spi_byte(priv->io_port, addr >> 8);
+	spi_byte(priv->io_port, 0);
+	spi_byte(priv->io_port, 0); /* dummy byte, ignored */
 	for (; len != 0; len--)
-		if (spi_byte(IO_SPI_FLASH, 0) != 0xff)
+		if (spi_byte(priv->io_port, 0) != 0xff)
 			return 0;
 	return 1;
 }
@@ -209,34 +209,34 @@ retry:
 		flags = 0;
 		step = 1;
 		/* Skip already blank sectors */
-		if (blank_check(addr, FLASH_SECLEN))
+		if (blank_check(priv, addr, FLASH_SECLEN))
 			continue;
 
 		/* Write enable */
-		spi_start_transaction(IO_SPI_FLASH);
-		spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
-		spi_start_transaction(IO_SPI_FLASH);
+		spi_start_transaction(priv->io_port);
+		spi_byte(priv->io_port, SPI_CMD_WREN);
+		spi_start_transaction(priv->io_port);
 		if (!(priv->flags & F_BER64K_BROKEN)
 		    && (addr & 0xffff) == 0 && cnt >= 16) {
-			spi_byte(IO_SPI_FLASH, SPI_CMD_BER64K);
+			spi_byte(priv->io_port, SPI_CMD_BER64K);
 			flags = F_BER64K;
 			step = 16;
 		} else if (!(priv->flags & F_BER32K_BROKEN)
 		    && (addr & 0x7fff) == 0 && cnt >= 8) {
-			spi_byte(IO_SPI_FLASH, SPI_CMD_BER32K);
+			spi_byte(priv->io_port, SPI_CMD_BER32K);
 			flags = F_BER32K;
 			step = 8;
 		} else
-			spi_byte(IO_SPI_FLASH, SPI_CMD_SER);
-		spi_byte(IO_SPI_FLASH, addr >> 16);
-		spi_byte(IO_SPI_FLASH, addr >> 8);
-		spi_byte(IO_SPI_FLASH, 0);
-		busy_wait();
+			spi_byte(priv->io_port, SPI_CMD_SER);
+		spi_byte(priv->io_port, addr >> 16);
+		spi_byte(priv->io_port, addr >> 8);
+		spi_byte(priv->io_port, 0);
+		busy_wait(priv);
 		if (flags == 0 || (flags & priv->flags) != 0)
 			continue;
 
 		/* Check whether the 32K / 64K block erase works */
-		if (blank_check(addr, step * FLASH_SECLEN)) {
+		if (blank_check(priv, addr, step * FLASH_SECLEN)) {
 			priv->flags |= flags;
 			continue;
 		}
@@ -266,45 +266,45 @@ flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 		switch (mfg_id) {
 		case SPI_MFR_MICROCHIP:
 			/* Write enable */
-			spi_start_transaction(IO_SPI_FLASH);
-			spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
+			spi_start_transaction(priv->io_port);
+			spi_byte(priv->io_port, SPI_CMD_WREN);
 
 			for (i = 0; i < FLASH_SECLEN; i += 2) {
-				spi_start_transaction(IO_SPI_FLASH);
-				spi_byte(IO_SPI_FLASH, SPI_CMD_AAIWR);
+				spi_start_transaction(priv->io_port);
+				spi_byte(priv->io_port, SPI_CMD_AAIWR);
 				if (!in_aai) {
-					spi_byte(IO_SPI_FLASH, addr >> 16);
-					spi_byte(IO_SPI_FLASH, addr >> 8);
-					spi_byte(IO_SPI_FLASH, 0);
+					spi_byte(priv->io_port, addr >> 16);
+					spi_byte(priv->io_port, addr >> 8);
+					spi_byte(priv->io_port, 0);
 				}
-				spi_byte(IO_SPI_FLASH, *buf++);
-				spi_byte(IO_SPI_FLASH, *buf++);
+				spi_byte(priv->io_port, *buf++);
+				spi_byte(priv->io_port, *buf++);
 				in_aai = 1;
-				busy_wait();
+				busy_wait(priv);
 			}
 			break;
 		default:
 			for (i = 0; i < FLASH_SECLEN; i += 256, addr += 256) {
 				/* Write enable */
-				spi_start_transaction(IO_SPI_FLASH);
-				spi_byte(IO_SPI_FLASH, SPI_CMD_WREN);
+				spi_start_transaction(priv->io_port);
+				spi_byte(priv->io_port, SPI_CMD_WREN);
 
-				spi_start_transaction(IO_SPI_FLASH);
-				spi_byte(IO_SPI_FLASH, SPI_CMD_PAGEWR);
-				spi_byte(IO_SPI_FLASH, addr >> 16);
-				spi_byte(IO_SPI_FLASH, addr >> 8);
-				spi_byte(IO_SPI_FLASH, 0);
+				spi_start_transaction(priv->io_port);
+				spi_byte(priv->io_port, SPI_CMD_PAGEWR);
+				spi_byte(priv->io_port, addr >> 16);
+				spi_byte(priv->io_port, addr >> 8);
+				spi_byte(priv->io_port, 0);
 				for (j = 0; j < 256; j++)
-					spi_byte(IO_SPI_FLASH, *buf++);
-				busy_wait();
+					spi_byte(priv->io_port, *buf++);
+				busy_wait(priv);
 			}
 			break;
 		}
 
 	/* Write disable */
-	spi_start_transaction(IO_SPI_FLASH);
-	spi_byte(IO_SPI_FLASH, SPI_CMD_WRDI);
-	busy_wait();
+	spi_start_transaction(priv->io_port);
+	spi_byte(priv->io_port, SPI_CMD_WRDI);
+	busy_wait(priv);
 
 	return (RES_OK);
 }
