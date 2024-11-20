@@ -82,8 +82,8 @@ ifeq ($(LIB),c)
 
  CFILES += dev/sdcard.c dev/sio_baud.c dev/sio_poll.c dev/spi.c
 
- CFILES += fs/fatfs.c fs/ffunicode.c fs/file.c
- CFILES += fs/diskio.c fs/diskio_ram.c fs/diskio_flash.c
+ CFILES += fs/fatfs.c fs/ffunicode.c fs/file.c fs/diskio.c
+ CFILES += fs/diskio_flash.c fs/diskio_fram.c fs/diskio_ram.c
 
  CFILES += stdio/gets.c stdio/printf.c stdio/sprintf.c
 
