@@ -124,6 +124,12 @@ check_automount(void)
 			    0, /* SPI slave unit */
 			    1024 * 1024, /* offset from media start, bytes*/
 			    3 * 1024 * 1024 /* block size, bytes*/);
+		else if (i == 2)
+			diskio_attach_fram(&disk_i[i],
+			    IO_SPI_FLASH, /* SPI port */
+			    1, /* SPI slave unit */
+			    0, /* offset from media start, bytes*/
+			    512 * 1024 /* block size, bytes*/);
 		else
 			diskio_attach_ram(&disk_i[i],
 			    malloc(i * 1024 * 1024), /* base addr*/
