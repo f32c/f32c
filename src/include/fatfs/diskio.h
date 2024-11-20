@@ -98,6 +98,7 @@ struct diskio_inst {
 
 void diskio_attach_generic(diskio_t);
 void diskio_attach_flash(diskio_t, uint32_t, uint8_t, uint32_t, uint32_t);
+void diskio_attach_fram(diskio_t, uint32_t, uint8_t, uint32_t, uint32_t);
 void diskio_attach_ram(diskio_t, void *, uint32_t);
 
 #if defined(_FS_READONLY) && _FS_READONLY == 1
