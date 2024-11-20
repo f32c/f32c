@@ -107,6 +107,9 @@ flash_init_status(diskio_t di)
 	uint32_t byte;
 	DSTATUS res = 0;
 
+	/* Slave select */
+	spi_slave_select(priv->io_port, priv->io_slave);
+
 	/* Get SPI chip ID */
 	spi_start_transaction(priv->io_port);
 	spi_byte(priv->io_port, SPI_CMD_RDID);
@@ -154,6 +157,9 @@ flash_read(diskio_t di,  BYTE* buf, LBA_t sector, UINT count)
 {
 	struct flash_priv *priv = DISKIO2PRIV(di);
 	int addr;
+
+	/* Slave select */
+	spi_slave_select(priv->io_port, priv->io_slave);
 
 	sector += priv->offset;
 	addr = sector * FLASH_SECLEN;
@@ -255,6 +261,9 @@ flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 	int mfg_id, addr, i, j;
 	int in_aai = 0;
 
+	/* Slave select */
+	spi_slave_select(priv->io_port, priv->io_slave);
+
 	sector += priv->offset;
 
 	/* Erase sectors */
@@ -330,6 +339,7 @@ flash_ioctl(diskio_t di, BYTE cmd, void* buf)
 		*sz = 1;
 		return (RES_OK);
 	case CTRL_TRIM:
+		spi_slave_select(priv->io_port, priv->io_slave);
 		flash_erase_sectors(priv, sec[0] + priv->offset,
 		    sec[1] - sec[0] + 1);
 		return (RES_OK);
