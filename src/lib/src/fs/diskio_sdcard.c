@@ -350,8 +350,7 @@ sdcard_ioctl(diskio_t di, BYTE cmd, void* buf)
 
 
 void
-diskio_attach_sdcard(diskio_t di, uint32_t io_port, uint8_t io_slave,
-    uint32_t offset, uint32_t size)
+diskio_attach_sdcard(diskio_t di, uint32_t io_port, uint8_t io_slave)
 {
 	struct sdcard_priv *priv = DISKIO2PRIV(di);
 
