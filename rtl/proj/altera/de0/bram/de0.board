@@ -1,0 +1,52 @@
+# -------------------------------------------------------------------------- #
+#set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
+set_global_assignment -name DEVICE_FILTER_PIN_COUNT 256
+set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 6
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 1
+set_global_assignment -name NOMINAL_CORE_SUPPLY_VOLTAGE 1.2V
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (VHDL)"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulation
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+set_location_assignment PIN_R8 -to clk_50m
+set_location_assignment PIN_M16 -to rs232_rxd
+set_location_assignment PIN_B16 -to rs232_txd
+set_location_assignment PIN_L3 -to led[7]
+set_location_assignment PIN_B1 -to led[6]
+set_location_assignment PIN_F3 -to led[5]
+set_location_assignment PIN_D1 -to led[4]
+set_location_assignment PIN_A11 -to led[3]
+set_location_assignment PIN_B13 -to led[2]
+set_location_assignment PIN_A13 -to led[1]
+set_location_assignment PIN_A15 -to led[0]
+set_location_assignment PIN_J15 -to btn_left
+set_location_assignment PIN_E1 -to btn_right
+set_location_assignment PIN_M1 -to sw[0]
+set_location_assignment PIN_T8 -to sw[1]
+set_location_assignment PIN_B9 -to sw[2]
+set_location_assignment PIN_M15 -to sw[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to clk_50m
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_rxd
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to rs232_txd
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to sw[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[4]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[5]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[6]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to led[7]
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to btn_left
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to btn_right
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
