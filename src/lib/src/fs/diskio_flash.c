@@ -39,7 +39,9 @@ static DSTATUS flash_init_status(diskio_t);
 
 static struct diskio_sw flash_sw = {
 	.read	= flash_read,
+#ifndef DISKIO_RO
 	.write	= flash_write,
+#endif
 	.ioctl	= flash_ioctl,
 	.status	= flash_init_status,
 	.init	= flash_init_status
