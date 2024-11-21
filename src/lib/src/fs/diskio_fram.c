@@ -61,7 +61,7 @@ struct fram_priv {
 #define	FRAM_CMD_WREN	0x06
 #define	FRAM_CMD_FSTRD	0x0b
 
-#define	F_WREN		1
+#define	F_WREN_DONE	1
 
 
 static DSTATUS
@@ -108,10 +108,10 @@ fram_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 	sector += priv->offset;
 	addr = sector * FRAM_SECLEN;
 
-	if ((priv->flags & F_WREN) == 0) {
+	if ((priv->flags & F_WREN_DONE) == 0) {
 		spi_start_transaction(priv->io_port);
 		spi_byte(priv->io_port, FRAM_CMD_WREN);
-		priv->flags |= F_WREN;
+		priv->flags |= F_WREN_DONE;
 	}
 	spi_start_transaction(priv->io_port);
 	spi_byte(priv->io_port, FRAM_CMD_WRITE);
