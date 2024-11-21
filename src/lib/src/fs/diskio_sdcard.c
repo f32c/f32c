@@ -103,7 +103,7 @@ sdcard_cmd(struct sdcard_priv *priv, int cmd, uint32_t arg)
 
 	/* Hack: CRC hidden in command bits 15..8 */
 	spi_byte(priv->io_port, cmd >> 8);
-	
+
 	/* Wait for a valid response byte, up to 8 cycles */
 	for (i = 0; i < 8; i++) {
 		res = spi_byte(priv->io_port, 0xff);
@@ -178,7 +178,7 @@ sdcard_init_x(struct sdcard_priv *priv)
 
 	/* Mark card as uninitialized */
 	priv->addr_shift = -1;
-	
+
 	/* Slave select */
 	spi_slave_select(priv->io_port, priv->io_slave);
 
