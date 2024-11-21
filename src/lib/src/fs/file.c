@@ -124,6 +124,10 @@ check_automount(void)
 			    0, /* SPI slave unit */
 			    1024 * 1024, /* offset from media start, bytes*/
 			    3 * 1024 * 1024 /* block size, bytes*/);
+		else if (i == 1)
+			diskio_attach_sdcard(&disk_i[i],
+			    IO_SPI_SDCARD, /* SPI port */
+			    0); /* SPI slave unit */
 		else if (i == 2)
 			diskio_attach_fram(&disk_i[i],
 			    IO_SPI_FLASH, /* SPI port */
