@@ -80,7 +80,7 @@ ifeq ($(LIB),c)
 
  CFILES += gen/assert.c gen/div.c gen/div64.c gen/mul.c gen/errno.c
 
- CFILES += dev/sdcard.c dev/sio_baud.c dev/sio_poll.c dev/spi.c
+ CFILES += dev/sio_baud.c dev/sio_poll.c dev/spi.c
 
  CFILES += fs/fatfs.c fs/ffunicode.c fs/file.c fs/diskio.c
  CFILES += fs/diskio_flash.c fs/diskio_fram.c fs/diskio_ram.c \
