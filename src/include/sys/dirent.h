@@ -60,7 +60,7 @@ struct dirent {
 	__uint16_t d_reclen;		/* length of this record */
 	__uint8_t  d_type;		/* file type, see below */
 	__uint8_t  d_namlen;		/* length of string in d_name */
-	char	  *d_name;		/* points to ff_info->fname */
+	char	   d_name[255 + 1];	/* name must be no longer than this */
 };
 
 struct _dirdesc {
