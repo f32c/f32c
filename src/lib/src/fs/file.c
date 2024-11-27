@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <fatfs/diskio.h>
 
@@ -413,9 +414,6 @@ opendir(const char *path)
 		return NULL;
 	}
 
-	dirp->de.d_name = dirp->ff_info.fname;
-	/* XXX TODO more ff_info to dirent translations */
-
 	return dirp;
 };
 
@@ -433,6 +431,16 @@ readdir(DIR *dirp)
 	res = f_readdir(&dirp->ff_dir, &dirp->ff_info);
 	if (ffres2errno(res) != 0 || dirp->ff_info.fname[0] == 0)
 		return NULL;
+
+	if (dirp->ff_info.fattrib & AM_DIR)
+		dirp->de.d_type = DT_DIR;
+	else
+		dirp->de.d_type = DT_REG;
+	dirp->de.d_namlen = strlen(dirp->ff_info.fname);
+	if (dirp->de.d_namlen > sizeof(dirp->de.d_name) - 1)
+		dirp->de.d_namlen = sizeof(dirp->de.d_name) - 1;
+	memcpy(dirp->de.d_name, dirp->ff_info.fname, dirp->de.d_namlen);
+	dirp->de.d_name[dirp->de.d_namlen] = 0;
 
 	return &dirp->de;
 };
