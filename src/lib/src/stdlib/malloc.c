@@ -180,7 +180,7 @@ realloc(void *oldptr, size_t size)
 	newptr = malloc(size);
 	if (oldptr != NULL && newptr != NULL) {
 		i = ((uint32_t *) oldptr) - heap - 1;
-		copysize = GET_LEN(heap[i]);
+		copysize = (GET_LEN(heap[i]) - 1) * sizeof(*heap);
 		if (size < copysize)
 			copysize = size;
 		memcpy(newptr, oldptr, copysize);
