@@ -80,7 +80,6 @@ main(void)
 
 	for (i = 0; i < SPI_PORTS; i++) {
 		port = spi_port[i];
-		printf("Probing SPI port #%d @ 0x%08x:\n", i, port);
 
 		/* Hack: check whether a SPI master device is available */
 		spi_slave_select(port, slave * 29 | 0x7);
@@ -88,6 +87,7 @@ main(void)
 		if (j != 3)
 			continue;
 
+		printf("Probing SPI port #%d @ 0x%08x:\n", i, port);
 		for (slave = 0; slave < SPI_SLAVES; slave++) {
 			spi_slave_select(port, slave);
 			spi_byte(port, SPI_CMD_JEDEC_ID);
