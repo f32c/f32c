@@ -94,7 +94,7 @@ ifeq ($(LIB),c)
 
  CFILES += string/memcmp.c string/memcpy.c string/memmove.c string/memset.c \
 	string/strcasecmp.c string/strcat.c string/strcmp.c string/strcpy.c \
-	string/strncpy.c string/strstr.c string/strtok.c
+	string/strncpy.c string/strncpy.c string/strstr.c string/strtok.c
 
  CFILES += stdtime/asctime.c stdtime/clock.c stdtime/time.c
 

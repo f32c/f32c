@@ -1,11 +1,8 @@
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
  *
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Chris Torek.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,36 +31,18 @@
 
 #include <string.h>
 
-#undef strncpy	/* FORTIFY_SOURCE */
-
-/*
- * Copy src to dst, truncating or null-padding to always copy n bytes.
- * Return dst.
- */
-#ifdef WEAK_STRNCPY
-__weak_reference(__strncpy, strncpy);
-#endif
-
-char *
-#ifdef WEAK_STRNCPY
-__strncpy
-#else
-strncpy
-#endif
-(char * __restrict dst, const char * __restrict src, size_t n)
+int
+strncmp(const char *s1, const char *s2, size_t n)
 {
-	if (n != 0) {
-		char *d = dst;
-		const char *s = src;
 
-		do {
-			if ((*d++ = *s++) == '\0') {
-				/* NUL pad the remaining n-1 bytes */
-				while (--n != 0)
-					*d++ = '\0';
-				break;
-			}
-		} while (--n != 0);
-	}
-	return (dst);
+	if (n == 0)
+		return (0);
+	do {
+		if (*s1 != *s2++)
+			return (*(const unsigned char *)s1 -
+				*(const unsigned char *)(s2 - 1));
+		if (*s1++ == '\0')
+			break;
+	} while (--n != 0);
+	return (0);
 }

@@ -30,6 +30,7 @@ char *strcat(char * __restrict, const char * __restrict);
 char *strstr(const char *, const char *) __pure;
 char *strtok(char * __restrict, const char * __restrict);
 char *strtok_r(char *, const char *, char **);
+int strncmp(const char *, const char *, size_t);
 
 void *memchr(const void *, int, size_t) __pure;
 void *memmove(void *, const void *, size_t);
@@ -103,23 +104,6 @@ strchr(const char *p, int ch)
 			return(NULL);
 	}
 	/* NOTREACHED */
-}
-
-
-static inline int
-strncmp(const char *s1, const char *s2, size_t n)
-{
- 
-	if (n == 0)
-		return (0);
-	do {
-		if (*s1 != *s2++)
-			return (*(const unsigned char *)s1 -
-				*(const unsigned char *)(s2 - 1));
-		if (*s1++ == 0)
-			break;
-	} while (--n != 0);
-	return (0);
 }
 
 #endif /* !_STRING_H_ */
