@@ -25,8 +25,6 @@
 
 #include <string.h>
 
-#define UNROLLED_STRCMP
-
 
 int
 strcmp(const char *s1, const char *s2)
@@ -47,10 +45,8 @@ strcmp(const char *s1, const char *s2)
 		/* Check whether words are equal */
 		c1 = *((int *)s1);
 		c2 = *((int *)s2);
-#ifndef UNROLLED_STRCMP
 		s1 += 4;
 		s2 += 4;
-#endif
 		v0 = ((uint32_t)c1) - 0x01010101;
 		if (c1 != c2)
 			break;
@@ -58,20 +54,6 @@ strcmp(const char *s1, const char *s2)
 		/* Check if the word contains any zero bytes */
 		if (v0 && __predict_false(v0 & ~((uint32_t)c1))) 
 			return(0);
-#ifdef UNROLLED_STRCMP
-		/* Check whether words are equal */
-		c1 = *((int *)s1 + 1);
-		c2 = *((int *)s2 + 1);
-		s1 += 8;
-		s2 += 8;
-		v0 = ((uint32_t)c1) - 0x01010101;
-		if (c1 != c2)
-			break;
-		v0 &= 0x80808080;
-		/* Check if the word contains any zero bytes */
-		if (v0 && __predict_false(v0 & ~((uint32_t)c1))) 
-			return(0);
-#endif
 	}
 
 #if _BYTE_ORDER == _LITTLE_ENDIAN
