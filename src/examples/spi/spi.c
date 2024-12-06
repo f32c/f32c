@@ -20,6 +20,7 @@ static const int spi_port[SPI_PORTS] = {
 
 #define	SPI_MFR_CYPRESS		0x01
 #define	SPI_MFR_FUJITSU		0x04
+#define	SPI_MFR_MICRON		0x20
 #define	SPI_MFR_ONSEMI		0x62
 #define	SPI_MFR_PUYA		0x85
 #define	SPI_MFR_ISSI		0x9d
@@ -33,6 +34,7 @@ static const struct jedec_mfr {
 } jedec_mfr_tbl[] = {
 	{SPI_MFR_CYPRESS,	"Cypress / Infineon"},
 	{SPI_MFR_FUJITSU,	"Fujitsu"},
+	{SPI_MFR_MICRON,	"Micron"},
 	{SPI_MFR_ONSEMI,	"Onsemi"},
 	{SPI_MFR_PUYA,		"PUYA"},
 	{SPI_MFR_ISSI,		"ISSI"},
