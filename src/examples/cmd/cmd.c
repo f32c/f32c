@@ -527,7 +527,7 @@ cp_h(char **argv, int argc)
 		return;
 	}
 
-	clock_gettime(CLOCK_REALTIME, &start);
+	clock_gettime(CLOCK_MONOTONIC, &start);
 	do {
 		got = read(from, buf, buflen);
 		if (got < 0) {
@@ -557,7 +557,7 @@ cp_h(char **argv, int argc)
 	close(from);
 	close(to);
 
-	clock_gettime(CLOCK_REALTIME, &end);
+	clock_gettime(CLOCK_MONOTONIC, &end);
 	tns = (end.tv_sec - start.tv_sec) * 1000000000
 	    + end.tv_nsec - start.tv_nsec;
 	free(buf);
