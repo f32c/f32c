@@ -57,32 +57,32 @@ LEAF(_exception_start)
 	 * Save register context. "S" registers will be saved by callees,
 	 * so don't waste time and space on saving them here.
 	 */
-	la	k1, _exception_regs
-	sw	ra, (0 * REGSIZE)(k1)
-	sw	AT, (1 * REGSIZE)(k1)
-	sw	v0, (2 * REGSIZE)(k1)
-	sw	v1, (3 * REGSIZE)(k1)
-	sw	a0, (4 * REGSIZE)(k1)
-	sw	a1, (5 * REGSIZE)(k1)
-	sw	a2, (6 * REGSIZE)(k1)
-	sw	a3, (7 * REGSIZE)(k1)
-	sw	t0, (8 * REGSIZE)(k1)
-	sw	t1, (9 * REGSIZE)(k1)
-	sw	t2, (10 * REGSIZE)(k1)
-	sw	t3, (11 * REGSIZE)(k1)
-	sw	t4, (12 * REGSIZE)(k1)
-	sw	t5, (13 * REGSIZE)(k1)
-	sw	t6, (14 * REGSIZE)(k1)
-	sw	t7, (15 * REGSIZE)(k1)
+	la	k0, _exception_regs
+	sw	ra, (0 * REGSIZE)(k0)
+	sw	AT, (1 * REGSIZE)(k0)
+	sw	v0, (2 * REGSIZE)(k0)
+	sw	v1, (3 * REGSIZE)(k0)
+	sw	a0, (4 * REGSIZE)(k0)
+	sw	a1, (5 * REGSIZE)(k0)
+	sw	a2, (6 * REGSIZE)(k0)
+	sw	a3, (7 * REGSIZE)(k0)
+	sw	t0, (8 * REGSIZE)(k0)
+	sw	t1, (9 * REGSIZE)(k0)
+	sw	t2, (10 * REGSIZE)(k0)
+	sw	t3, (11 * REGSIZE)(k0)
+	sw	t4, (12 * REGSIZE)(k0)
+	sw	t5, (13 * REGSIZE)(k0)
+	sw	t6, (14 * REGSIZE)(k0)
+	sw	t7, (15 * REGSIZE)(k0)
 	mfhi	v0
 	mflo	v1
-	sw	t8, (16 * REGSIZE)(k1)
-	sw	t9, (17 * REGSIZE)(k1)
-	sw	fp, (18 * REGSIZE)(k1)
-	sw	v0, (19 * REGSIZE)(k1)	/* hi */
-	sw	v1, (20 * REGSIZE)(k1)	/* lo */
+	sw	t8, (16 * REGSIZE)(k0)
+	sw	t9, (17 * REGSIZE)(k0)
+	sw	fp, (18 * REGSIZE)(k0)
+	sw	v0, (19 * REGSIZE)(k0)	/* hi */
+	sw	v1, (20 * REGSIZE)(k0)	/* lo */
 #if 0
-	sw	gp, (22 * REGSIZE)(k1)
+	sw	gp, (22 * REGSIZE)(k0)
 #endif
 
 	/* Mask IRQs */
@@ -93,40 +93,40 @@ LEAF(_exception_start)
 	andi	a0, a0, 0xff
 
 	/* Set up the exception stack */
-	sw	sp, (21 * REGSIZE)(k1)
-	move	sp, k1
+	sw	sp, (21 * REGSIZE)(k0)
+	move	sp, k0
 
 	/* isr_dispatch() does the rest */
 	jal	isr_dispatch
 
 	/* Restore register context */
-	lw	t0, (19 * REGSIZE)(k1)	/* hi */
-	lw	t1, (20 * REGSIZE)(k1)	/* lo */
-	lw	ra, (0 * REGSIZE)(k1)
+	lw	t0, (19 * REGSIZE)(k0)	/* hi */
+	lw	t1, (20 * REGSIZE)(k0)	/* lo */
+	lw	ra, (0 * REGSIZE)(k0)
 	mthi	t0
-	lw	AT, (1 * REGSIZE)(k1)
-	lw	v0, (2 * REGSIZE)(k1)
-	lw	v1, (3 * REGSIZE)(k1)
+	lw	AT, (1 * REGSIZE)(k0)
+	lw	v0, (2 * REGSIZE)(k0)
+	lw	v1, (3 * REGSIZE)(k0)
 	mflo	zero			/* clear multiplier pipeline hazards */
 	mtlo	t1
-	lw	a0, (4 * REGSIZE)(k1)
-	lw	a1, (5 * REGSIZE)(k1)
-	lw	a2, (6 * REGSIZE)(k1)
-	lw	a3, (7 * REGSIZE)(k1)
-	lw	t0, (8 * REGSIZE)(k1)
-	lw	t1, (9 * REGSIZE)(k1)
-	lw	t2, (10 * REGSIZE)(k1)
-	lw	t3, (11 * REGSIZE)(k1)
-	lw	t4, (12 * REGSIZE)(k1)
-	lw	t5, (13 * REGSIZE)(k1)
-	lw	t6, (14 * REGSIZE)(k1)
-	lw	t7, (15 * REGSIZE)(k1)
-	lw	t8, (16 * REGSIZE)(k1)
-	lw	t9, (17 * REGSIZE)(k1)
-	lw	fp, (18 * REGSIZE)(k1)
-	lw	sp, (21 * REGSIZE)(k1)
+	lw	a0, (4 * REGSIZE)(k0)
+	lw	a1, (5 * REGSIZE)(k0)
+	lw	a2, (6 * REGSIZE)(k0)
+	lw	a3, (7 * REGSIZE)(k0)
+	lw	t0, (8 * REGSIZE)(k0)
+	lw	t1, (9 * REGSIZE)(k0)
+	lw	t2, (10 * REGSIZE)(k0)
+	lw	t3, (11 * REGSIZE)(k0)
+	lw	t4, (12 * REGSIZE)(k0)
+	lw	t5, (13 * REGSIZE)(k0)
+	lw	t6, (14 * REGSIZE)(k0)
+	lw	t7, (15 * REGSIZE)(k0)
+	lw	t8, (16 * REGSIZE)(k0)
+	lw	t9, (17 * REGSIZE)(k0)
+	lw	fp, (18 * REGSIZE)(k0)
+	lw	sp, (21 * REGSIZE)(k0)
 #if 0
-	lw	gp, (22 * REGSIZE)(k1)
+	lw	gp, (22 * REGSIZE)(k0)
 #endif
 
 	mfc0	k0, $MIPS_COP_0_EXC_PC
