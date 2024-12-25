@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013-2015 Marko Zec, University of Zagreb
+ * Copyright (c) 2013-2024 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,8 +21,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #include <mips/asm.h>
@@ -32,7 +30,8 @@
 
 
 /*
- * Clear BSS, set small data index register and jump into main().
+ * Set small data index register, set curthread, clear BSS, and jump
+ * into main().
  *
  * Assumes that the loader has already properly:
  * 1) set stack pointer
@@ -49,6 +48,7 @@ _start:
 	la	s1, _end	/* End of BSS section, word aligned */
 	la	s0, __bss_start	/* Start of BSS section, NOT word aligned */
 	la	gp, _gp	
+	la	k1, thread0
 
 	/* The loader doesn't bzero the BSS, so we must do it here. */
 	.set noreorder
