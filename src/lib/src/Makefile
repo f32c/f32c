@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015 Marko Zec, University of Zagreb
+# Copyright (c) 2015-2024 Marko Zec
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -81,6 +81,8 @@ ifeq ($(LIB),c)
  CFILES += gen/assert.c gen/div.c gen/div64.c gen/mul.c gen/errno.c
 
  CFILES += dev/sio_baud.c dev/sio_poll.c dev/spi.c
+
+ CFILES += sys/task.c
 
  CFILES += fs/fatfs.c fs/ffunicode.c fs/file.c fs/diskio.c
  CFILES += fs/diskio_flash.c fs/diskio_fram.c fs/diskio_ram.c \
