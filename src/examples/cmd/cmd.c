@@ -31,8 +31,6 @@
 static char *histbuf[MAXHIST];
 static uint32_t	curhist;
 
-static int _errno;
-
 #ifndef F32C
 #define	gets(str, size) gets_s((str), (size))
 
@@ -53,12 +51,6 @@ set_term()
 	tcsetattr(0, TCSADRAIN, &nterm);
 }
 #endif /* !F32C */
-
-int *
-__error(void)
-{
-	return(&_errno);
-}
 
 int
 rl(const char *prompt, char *buf, int buflen)
