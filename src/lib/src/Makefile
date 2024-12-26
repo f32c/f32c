@@ -78,7 +78,7 @@ ifeq ($(LIB),c)
   ASFILES = ${ARCH}/setjmp.S ${ARCH}/exception.S
  endif
 
- CFILES += gen/assert.c gen/div.c gen/div64.c gen/mul.c gen/errno.c
+ CFILES += gen/assert.c gen/div.c gen/div64.c gen/mul.c
 
  CFILES += dev/sio_baud.c dev/sio_poll.c dev/spi.c
 
