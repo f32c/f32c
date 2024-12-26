@@ -23,6 +23,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _SYS_TASK_H_
+#define _SYS_TASK_H_
+
 #include <sys/queue.h>
 
 struct regspace;
@@ -46,7 +49,7 @@ struct thread {
 extern struct task task0;
 extern struct thread thread0;
 
-static inline void
+inline void
 curthread_set(struct thread *td)
 {
 #ifdef __mips__
@@ -56,7 +59,7 @@ curthread_set(struct thread *td)
 #endif
 }
 
-static inline struct thread *
+inline struct thread *
 curthread_get(void)
 {
 	struct thread *td;
@@ -71,3 +74,5 @@ curthread_get(void)
 }
 
 #define	curthread	curthread_get()
+
+#endif /* _SYS_TASK_H_ */
