@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
+ * Copyright (c) 2013 - 2024 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,30 +23,40 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/file.h>
+
 #include <dev/io.h>
 #include <dev/sio.h>
 
 #define	SIO_RXBUFSIZE	(1 << 5)
 #define	SIO_RXBUFMASK	(SIO_RXBUFSIZE - 1)
 
-static char sio_rxbuf[SIO_RXBUFSIZE];
-static uint32_t sio_rxbuf_head; /* Managed by sio_probe_rx() */
-static uint32_t sio_rxbuf_tail; /* Managed by sio_getchar() */
-static uint8_t sio_tx_xoff;
+#define	SIO_BYTE	0x0
+#define	SIO_STATUS	0x4
+#define	SIO_BAUD	0x8
 
-uint32_t sio_hw_rx_overruns;
-uint32_t sio_sw_rx_overruns;
+struct sio_state {
+	char		s_rxbuf[SIO_RXBUFSIZE];
+	uint32_t	s_io_port;
+	uint32_t	s_rxbuf_head; /* Managed by sio_probe_rx() */
+	uint32_t	s_rxbuf_tail; /* Managed by sio_getchar() */
+	uint32_t	s_hw_rx_overruns;
+	uint32_t	s_sw_rx_overruns;
+	uint8_t		s_tx_xoff;
+};
 
+static struct sio_state sio0_state;
 
-__attribute__((optimize("-Os"))) int
-sio_probe_rx(void)
+static int
+sio_probe_rx(struct file *sfd)
 {
-	uint32_t c, s, sio_rxbuf_head_next;
+	struct sio_state *sio = sfd->f_priv;
+	uint32_t c, s, rxbuf_head_next;
 
 	do {
 		INB(s, IO_SIO_STATUS);
 		if (s >> 4 != 0) {
-			sio_hw_rx_overruns += (s >> 4) & 0xf;
+			sio->s_hw_rx_overruns += (s >> 4) & 0xf;
 			OUTB(IO_SIO_STATUS, 0);
 		}
 
@@ -57,54 +67,85 @@ sio_probe_rx(void)
 		INB(c, IO_SIO_BYTE);
 		if (c == 0x13) {
 			/* XOFF */
-			sio_tx_xoff = 1;
+			sio->s_tx_xoff = 1;
 			return(s);
 		}
 		if (c == 0x11) {
 			/* XON */
-			sio_tx_xoff = 0;
+			sio->s_tx_xoff = 0;
 			return(s);
 		}
 
-		sio_rxbuf_head_next = (sio_rxbuf_head + 1) & SIO_RXBUFMASK;
-		if (sio_rxbuf_head_next == sio_rxbuf_tail) {
-			sio_sw_rx_overruns++;
+		rxbuf_head_next = (sio->s_rxbuf_head + 1) & SIO_RXBUFMASK;
+		if (rxbuf_head_next == sio->s_rxbuf_tail) {
+			sio->s_sw_rx_overruns++;
 			continue;
 		}
 
-		sio_rxbuf[sio_rxbuf_head] = c;
-		sio_rxbuf_head = sio_rxbuf_head_next;
+		sio->s_rxbuf[sio->s_rxbuf_head] = c;
+		sio->s_rxbuf_head = rxbuf_head_next;
 	} while (1);
 }
 
+static int
+sio_read(struct file *fp, char *buf, size_t nbytes)
+{
 
-__attribute__((weak, optimize("-Os"))) int
+	return 0;
+}
+
+static int
+sio_write(struct file *fp, char *buf, size_t nbytes)
+{
+
+	return 0;
+}
+
+static struct fileops sio_fileops = {
+	.fo_read = &sio_read,
+	.fo_write = &sio_write,
+};
+
+static struct file sio0_file = {
+	.f_ops = &sio_fileops,
+	.f_priv = &sio0_state,
+	.f_refc = 3
+};
+
+
+/* Legacy f32c functions, should go away */
+
+int
 sio_getchar(int blocking)
 {
+	struct file *sfd = &sio0_file; /* XXX fixme */
+	struct sio_state *sio = sfd->f_priv;
 	int c, busy;
 
 	/* Any new characters received from RS-232? */
 	do {
-		sio_probe_rx();
-		busy = (sio_rxbuf_head == sio_rxbuf_tail);
+		sio_probe_rx(sfd);
+		busy = (sio->s_rxbuf_head == sio->s_rxbuf_tail);
 	} while (blocking && busy);
 
 	if (busy)
 		return (-1);
-	c = sio_rxbuf[sio_rxbuf_tail++];
-	sio_rxbuf_tail &= SIO_RXBUFMASK;
+	c = sio->s_rxbuf[sio->s_rxbuf_tail++];
+	sio->s_rxbuf_tail &= SIO_RXBUFMASK;
 	return (c);
 }
 
 
-__attribute__((weak, optimize("-Os"))) int
+int
 sio_putchar(int c, int blocking)
 {
+	struct file *sfd = &sio0_file; /* XXX fixme */
+	struct sio_state *sio = sfd->f_priv;
 	int in, busy;
 
 	do {
-		in = sio_probe_rx();
-		busy = (in & SIO_TX_BUSY) || sio_tx_xoff;
+		in = sio_probe_rx(sfd);
+		busy = (in & SIO_TX_BUSY) || sio->s_tx_xoff;
 	} while (blocking && busy);
 
 	if (busy == 0)
