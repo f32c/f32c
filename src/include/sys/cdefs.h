@@ -1,4 +1,6 @@
 /*-
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -13,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -30,11 +32,33 @@
  * SUCH DAMAGE.
  *
  *	@(#)cdefs.h	8.8 (Berkeley) 1/9/95
- * $FreeBSD: stable/9/sys/sys/cdefs.h 242893 2012-11-11 12:21:51Z ed $
  */
 
 #ifndef	_SYS_CDEFS_H_
 #define	_SYS_CDEFS_H_
+
+#if defined(_KERNEL) && defined(_STANDALONE)
+#error "_KERNEL and _STANDALONE are mutually exclusive"
+#endif
+
+/*
+ * Testing against Clang-specific extensions.
+ */
+#ifndef	__has_attribute
+#define	__has_attribute(x)	0
+#endif
+#ifndef	__has_extension
+#define	__has_extension		__has_feature
+#endif
+#ifndef	__has_feature
+#define	__has_feature(x)	0
+#endif
+#ifndef	__has_include
+#define	__has_include(x)	0
+#endif
+#ifndef	__has_builtin
+#define	__has_builtin(x)	0
+#endif
 
 #if defined(__cplusplus)
 #define	__BEGIN_DECLS	extern "C" {
@@ -50,63 +74,57 @@
  * having a compiler-agnostic source tree.
  */
 
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
-
-#if __GNUC__ >= 3 || defined(__INTEL_COMPILER)
-#define __GNUCLIKE_ASM 3
-#define __GNUCLIKE_MATH_BUILTIN_CONSTANTS
-#else
-#define __GNUCLIKE_ASM 2
-#endif
-#define __GNUCLIKE___TYPEOF 1
-#define __GNUCLIKE___OFFSETOF 1
-#define __GNUCLIKE___SECTION 1
-
-#ifndef __INTEL_COMPILER
-# define __GNUCLIKE_CTOR_SECTION_HANDLING 1
-#endif
-
-#define __GNUCLIKE_BUILTIN_CONSTANT_P 1
-# if defined(__INTEL_COMPILER) && defined(__cplusplus) \
-    && __INTEL_COMPILER < 800
-#  undef __GNUCLIKE_BUILTIN_CONSTANT_P
-# endif
-
-#if (__GNUC_MINOR__ > 95 || __GNUC__ >= 3) && !defined(__INTEL_COMPILER)
-# define __GNUCLIKE_BUILTIN_VARARGS 1
-# define __GNUCLIKE_BUILTIN_STDARG 1
-# define __GNUCLIKE_BUILTIN_VAALIST 1
-#endif
-
 #if defined(__GNUC__)
-# define __GNUC_VA_LIST_COMPATIBILITY 1
+
+#if __GNUC__ >= 3
+#define	__GNUCLIKE_ASM 3
+#define	__GNUCLIKE_MATH_BUILTIN_CONSTANTS
+#else
+#define	__GNUCLIKE_ASM 2
+#endif
+#define	__GNUCLIKE___TYPEOF 1
+#define	__GNUCLIKE___SECTION 1
+
+#define	__GNUCLIKE_CTOR_SECTION_HANDLING 1
+
+#define	__GNUCLIKE_BUILTIN_CONSTANT_P 1
+
+#if (__GNUC_MINOR__ > 95 || __GNUC__ >= 3)
+#define	__GNUCLIKE_BUILTIN_VARARGS 1
+#define	__GNUCLIKE_BUILTIN_STDARG 1
+#define	__GNUCLIKE_BUILTIN_VAALIST 1
 #endif
 
-#ifndef __INTEL_COMPILER
-# define __GNUCLIKE_BUILTIN_NEXT_ARG 1
-# define __GNUCLIKE_MATH_BUILTIN_RELOPS
-#endif
+#define	__GNUC_VA_LIST_COMPATIBILITY 1
 
-#define __GNUCLIKE_BUILTIN_MEMCPY 1
+/*
+ * Compiler memory barriers, specific to gcc and clang.
+ */
+#define	__compiler_membar()	__asm __volatile(" " : : : "memory")
+
+#define	__GNUCLIKE_BUILTIN_NEXT_ARG 1
+#define	__GNUCLIKE_MATH_BUILTIN_RELOPS
+
+#define	__GNUCLIKE_BUILTIN_MEMCPY 1
 
 /* XXX: if __GNUC__ >= 2: not tested everywhere originally, where replaced */
-#define __CC_SUPPORTS_INLINE 1
-#define __CC_SUPPORTS___INLINE 1
-#define __CC_SUPPORTS___INLINE__ 1
+#define	__CC_SUPPORTS_INLINE 1
+#define	__CC_SUPPORTS___INLINE 1
+#define	__CC_SUPPORTS___INLINE__ 1
 
-#define __CC_SUPPORTS___FUNC__ 1
-#define __CC_SUPPORTS_WARNING 1
+#define	__CC_SUPPORTS___FUNC__ 1
+#define	__CC_SUPPORTS_WARNING 1
 
-#define __CC_SUPPORTS_VARADIC_XXX 1 /* see varargs.h */
+#define	__CC_SUPPORTS_VARADIC_XXX 1 /* see varargs.h */
 
-#define __CC_SUPPORTS_DYNAMIC_ARRAY_INIT 1
+#define	__CC_SUPPORTS_DYNAMIC_ARRAY_INIT 1
 
-#endif /* __GNUC__ || __INTEL_COMPILER */
+#endif /* __GNUC__ */
 
 /*
  * Macro to test if we're using a specific version of gcc or later.
  */
-#if defined(__GNUC__) && !defined(__INTEL_COMPILER)
+#if defined(__GNUC__)
 #define	__GNUC_PREREQ__(ma, mi)	\
 	(__GNUC__ > (ma) || __GNUC__ == (ma) && __GNUC_MINOR__ >= (mi))
 #else
@@ -179,20 +197,13 @@
  * for a given compiler, let the compile fail if it is told to use
  * a feature that we cannot live without.
  */
-#ifdef lint
-#define	__dead2
-#define	__pure2
-#define	__unused
-#define	__packed
-#define	__aligned(x)
-#define	__section(x)
-#else
-#if !__GNUC_PREREQ__(2, 5) && !defined(__INTEL_COMPILER)
+#define	__weak_symbol	__attribute__((__weak__))
+#if !__GNUC_PREREQ__(2, 5)
 #define	__dead2
 #define	__pure2
 #define	__unused
 #endif
-#if __GNUC__ == 2 && __GNUC_MINOR__ >= 5 && __GNUC_MINOR__ < 7 && !defined(__INTEL_COMPILER)
+#if __GNUC__ == 2 && __GNUC_MINOR__ >= 5 && __GNUC_MINOR__ < 7
 #define	__dead2		__attribute__((__noreturn__))
 #define	__pure2		__attribute__((__const__))
 #define	__unused
@@ -207,15 +218,18 @@
 #define	__aligned(x)	__attribute__((__aligned__(x)))
 #define	__section(x)	__attribute__((__section__(x)))
 #endif
-#if defined(__INTEL_COMPILER)
-#define __dead2		__attribute__((__noreturn__))
-#define __pure2		__attribute__((__const__))
-#define __unused	__attribute__((__unused__))
-#define __used		__attribute__((__used__))
-#define __packed	__attribute__((__packed__))
-#define __aligned(x)	__attribute__((__aligned__(x)))
-#define __section(x)	__attribute__((__section__(x)))
+#define	__writeonly	__unused
+#if __GNUC_PREREQ__(4, 3) || __has_attribute(__alloc_size__)
+#define	__alloc_size(x)	__attribute__((__alloc_size__(x)))
+#define	__alloc_size2(n, x)	__attribute__((__alloc_size__(n, x)))
+#else
+#define	__alloc_size(x)
+#define	__alloc_size2(n, x)
 #endif
+#if __GNUC_PREREQ__(4, 9) || __has_attribute(__alloc_align__)
+#define	__alloc_align(x)	__attribute__((__alloc_align__(x)))
+#else
+#define	__alloc_align(x)
 #endif
 
 #if !__GNUC_PREREQ__(2, 95)
@@ -225,29 +239,62 @@
 /*
  * Keywords added in C11.
  */
-#if defined(__cplusplus) && __cplusplus >= 201103L
-#define	_Alignas(e)		alignas(e)
-#define	_Alignof(e)		alignof(e)
-#define	_Noreturn		[[noreturn]]
-#define	_Static_assert(e, s)	static_assert(e, s)
-/* FIXME: change this to thread_local when clang in base supports it */
-#define	_Thread_local		__thread
-#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
-/* Do nothing.  They are language keywords. */
+
+#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 201112L
+
+#if !__has_extension(c_alignas)
+#if (defined(__cplusplus) && __cplusplus >= 201103L) || \
+    __has_extension(cxx_alignas)
+#define	_Alignas(x)		alignas(x)
 #else
-/* Not supported.  Implement them using our versions. */
+/* XXX: Only emulates _Alignas(constant-expression); not _Alignas(type-name). */
 #define	_Alignas(x)		__aligned(x)
-#define	_Alignof(x)		__alignof(x)
-#define	_Noreturn		__dead2
-#define	_Thread_local		__thread
-#ifdef __COUNTER__
-#define	_Static_assert(x, y)	__Static_assert(x, __COUNTER__)
-#define	__Static_assert(x, y)	___Static_assert(x, y)
-#define	___Static_assert(x, y)	typedef char __assert_ ## y[(x) ? 1 : -1]
+#endif
+#endif
+
+#if defined(__cplusplus) && __cplusplus >= 201103L
+#define	_Alignof(x)		alignof(x)
 #else
-#define	_Static_assert(x, y)	struct __hack
+#define	_Alignof(x)		__alignof(x)
+#endif
+
+#if !defined(__cplusplus) && !__has_extension(c_atomic) && \
+	!__has_extension(cxx_atomic) && !__GNUC_PREREQ__(4, 7)
+/*
+ * No native support for _Atomic(). Place object in structure to prevent
+ * most forms of direct non-atomic access.
+ */
+#define	_Atomic(T)		struct { T volatile __val; }
+#endif
+
+#if defined(__cplusplus) && __cplusplus >= 201103L
+#define	_Noreturn		[[noreturn]]
+#else
+#define	_Noreturn		__dead2
+#endif
+
+#if !__has_extension(c_static_assert)
+#if (defined(__cplusplus) && __cplusplus >= 201103L) || \
+    __has_extension(cxx_static_assert)
+#define	_Static_assert(x, y)	static_assert(x, y)
 #endif
 #endif
+
+#if !__has_extension(c_thread_local)
+/*
+ * XXX: Some compilers (Clang 3.3, GCC 4.7) falsely announce C++11 mode
+ * without actually supporting the thread_local keyword. Don't check for
+ * the presence of C++11 when defining _Thread_local.
+ */
+#if /* (defined(__cplusplus) && __cplusplus >= 201103L) || */ \
+    __has_extension(cxx_thread_local)
+#define	_Thread_local		thread_local
+#else
+#define	_Thread_local		__thread
+#endif
+#endif
+
+#endif /* __STDC_VERSION__ || __STDC_VERSION__ < 201112L */
 
 /*
  * Emulation of C11 _Generic().  Unlike the previously defined C11
@@ -256,15 +303,34 @@
  * __generic().  Unlike _Generic(), this macro can only distinguish
  * between a single type, so it requires nested invocations to
  * distinguish multiple cases.
+ *
+ * Note that the comma operator is used to force expr to decay in
+ * order to match _Generic().
  */
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || \
+    __has_extension(c_generic_selections)
 #define	__generic(expr, t, yes, no)					\
 	_Generic(expr, t: yes, default: no)
 #elif __GNUC_PREREQ__(3, 1) && !defined(__cplusplus)
 #define	__generic(expr, t, yes, no)					\
 	__builtin_choose_expr(						\
-	    __builtin_types_compatible_p(__typeof(expr), t), yes, no)
+	    __builtin_types_compatible_p(__typeof((0, (expr))), t), yes, no)
+#endif
+
+/*
+ * C99 Static array indices in function parameter declarations.  Syntax such as:
+ * void bar(int myArray[static 10]);
+ * is allowed in C99 but not in C++.  Define __min_size appropriately so
+ * headers using it can be compiled in either language.  Use like this:
+ * void bar(int myArray[__min_size(10)]);
+ */
+#if !defined(__cplusplus) && \
+    (defined(__clang__) || __GNUC_PREREQ__(4, 6)) && \
+    (!defined(__STDC_VERSION__) || (__STDC_VERSION__ >= 199901))
+#define __min_size(x)	static (x)
+#else
+#define __min_size(x)	(x)
 #endif
 
 #if __GNUC_PREREQ__(2, 96)
@@ -275,7 +341,7 @@
 #define	__pure
 #endif
 
-#if __GNUC_PREREQ__(3, 1) || (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 800)
+#if __GNUC_PREREQ__(3, 1)
 #define	__always_inline	__attribute__((__always_inline__))
 #else
 #define	__always_inline
@@ -287,16 +353,12 @@
 #define	__noinline
 #endif
 
-#if __GNUC_PREREQ__(3, 3)
-#define __nonnull(x)	__attribute__((__nonnull__(x)))
-#else
-#define __nonnull(x)
-#endif
-
 #if __GNUC_PREREQ__(3, 4)
 #define	__fastcall	__attribute__((__fastcall__))
+#define	__result_use_check	__attribute__((__warn_unused_result__))
 #else
 #define	__fastcall
+#define	__result_use_check
 #endif
 
 #if __GNUC_PREREQ__(4, 1)
@@ -305,12 +367,18 @@
 #define	__returns_twice
 #endif
 
+#if __GNUC_PREREQ__(4, 6) || __has_builtin(__builtin_unreachable)
+#define	__unreachable()	__builtin_unreachable()
+#else
+#define	__unreachable()	((void)0)
+#endif
+
 /* XXX: should use `#if __STDC_VERSION__ < 199901'. */
-#if !__GNUC_PREREQ__(2, 7) && !defined(__INTEL_COMPILER)
+#if !__GNUC_PREREQ__(2, 7)
 #define	__func__	NULL
 #endif
 
-#if (defined(__INTEL_COMPILER) || (defined(__GNUC__) && __GNUC__ >= 2)) && !defined(__STRICT_ANSI__) || __STDC_VERSION__ >= 199901
+#if (defined(__GNUC__) && __GNUC__ >= 2) && !defined(__STRICT_ANSI__) || __STDC_VERSION__ >= 199901
 #define	__LONG_LONG_SUPPORTED
 #endif
 
@@ -326,17 +394,15 @@
 #endif
 
 /*
- * GCC 2.95 provides `__restrict' as an extension to C90 to support the
- * C99-specific `restrict' type qualifier.  We happen to use `__restrict' as
- * a way to define the `restrict' type qualifier without disturbing older
- * software that is unaware of C99 keywords.
+ * We use `__restrict' as a way to define the `restrict' type qualifier
+ * without disturbing older software that is unaware of C99 keywords.
+ * GCC also provides `__restrict' as an extension to support C99-style
+ * restricted pointers in other language modes.
  */
-#if !(__GNUC__ == 2 && __GNUC_MINOR__ == 95)
-#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901 || defined(lint)
-#define	__restrict
-#else
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901
 #define	__restrict	restrict
-#endif
+#elif !__GNUC_PREREQ__(2, 95)
+#define	__restrict
 #endif
 
 /*
@@ -368,19 +434,21 @@
  *	  larger code.
  */
 #if __GNUC_PREREQ__(2, 96)
-#define __predict_true(exp)     __builtin_expect((exp), 1)
-#define __predict_false(exp)    __builtin_expect((exp), 0)
+#define	__predict_true(exp)     __builtin_expect((exp), 1)
+#define	__predict_false(exp)    __builtin_expect((exp), 0)
 #else
-#define __predict_true(exp)     (exp)
-#define __predict_false(exp)    (exp)
+#define	__predict_true(exp)     (exp)
+#define	__predict_false(exp)    (exp)
 #endif
 
-#if __GNUC_PREREQ__(4, 2)
-#define	__hidden	__attribute__((__visibility__("hidden")))
+#if __GNUC_PREREQ__(4, 0)
+#define	__null_sentinel	__attribute__((__sentinel__))
 #define	__exported	__attribute__((__visibility__("default")))
+#define	__hidden	__attribute__((__visibility__("hidden")))
 #else
-#define	__hidden
+#define	__null_sentinel
 #define	__exported
+#define	__hidden
 #endif
 
 /*
@@ -388,13 +456,13 @@
  * require it.
  */
 #if __GNUC_PREREQ__(4, 1)
-#define __offsetof(type, field)	 __builtin_offsetof(type, field)
+#define	__offsetof(type, field)	 __builtin_offsetof(type, field)
 #else
 #ifndef __cplusplus
 #define	__offsetof(type, field) \
 	((__size_t)(__uintptr_t)((const volatile void *)&((type *)0)->field))
 #else
-#define __offsetof(type, field)					\
+#define	__offsetof(type, field)					\
   (__offsetof__ (reinterpret_cast <__size_t>			\
                  (&reinterpret_cast <const volatile char &>	\
                   (static_cast<type *> (0)->field))))
@@ -425,7 +493,7 @@
  * that are known to support the features properly (old versions of gcc-2
  * didn't permit keeping the keywords out of the application namespace).
  */
-#if !__GNUC_PREREQ__(2, 7) && !defined(__INTEL_COMPILER)
+#if !__GNUC_PREREQ__(2, 7)
 #define	__printflike(fmtarg, firstvararg)
 #define	__scanflike(fmtarg, firstvararg)
 #define	__format_arg(fmtarg)
@@ -444,18 +512,17 @@
 #endif
 
 /* Compiler-dependent macros that rely on FreeBSD-specific extensions. */
-#if __FreeBSD_cc_version >= 300001 && defined(__GNUC__) && !defined(__INTEL_COMPILER)
+#if defined(__FreeBSD_cc_version) && __FreeBSD_cc_version >= 300001 && \
+    defined(__GNUC__)
 #define	__printf0like(fmtarg, firstvararg) \
 	    __attribute__((__format__ (__printf0__, fmtarg, firstvararg)))
 #else
 #define	__printf0like(fmtarg, firstvararg)
 #endif
 
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#ifndef __INTEL_COMPILER
+#if defined(__GNUC__)
 #define	__strong_reference(sym,aliassym)	\
 	extern __typeof (sym) aliassym __attribute__ ((__alias__ (#sym)))
-#endif
 #ifdef __STDC__
 #define	__weak_reference(sym,alias)	\
 	__asm__(".weak " #alias);	\
@@ -467,7 +534,7 @@
 #define	__sym_compat(sym,impl,verid)	\
 	__asm__(".symver " #impl ", " #sym "@" #verid)
 #define	__sym_default(sym,impl,verid)	\
-	__asm__(".symver " #impl ", " #sym "@@" #verid)
+	__asm__(".symver " #impl ", " #sym "@@@" #verid)
 #else
 #define	__weak_reference(sym,alias)	\
 	__asm__(".weak alias");		\
@@ -479,21 +546,21 @@
 #define	__sym_compat(sym,impl,verid)	\
 	__asm__(".symver impl, sym@verid")
 #define	__sym_default(impl,sym,verid)	\
-	__asm__(".symver impl, sym@@verid")
+	__asm__(".symver impl, sym@@@verid")
 #endif	/* __STDC__ */
-#endif	/* __GNUC__ || __INTEL_COMPILER */
+#endif	/* __GNUC__ */
 
-#define	__GLOBL1(sym)	__asm__(".globl " #sym)
-#define	__GLOBL(sym)	__GLOBL1(sym)
+#define	__GLOBL(sym)	__asm__(".globl " __XSTRING(sym))
+#define	__WEAK(sym)	__asm__(".weak " __XSTRING(sym))
 
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
+#if defined(__GNUC__)
 #define	__IDSTRING(name,string)	__asm__(".ident\t\"" string "\"")
 #else
 /*
  * The following definition might not work well if used in header files,
  * but it should be better than nothing.  If you want a "do nothing"
  * version, then it should generate some harmless declaration, such as:
- *    #define __IDSTRING(name,string)	struct __hack
+ *    #define	__IDSTRING(name,string)	struct __hack
  */
 #define	__IDSTRING(name,string)	static const char name[] __unused = string
 #endif
@@ -502,10 +569,9 @@
  * Embed the rcs id of a source file in the resulting library.  Note that in
  * more recent ELF binutils, we use .ident allowing the ID to be stripped.
  * Usage:
- *	__FBSDID("$FreeBSD: stable/9/sys/sys/cdefs.h 242893 2012-11-11 12:21:51Z ed $");
  */
 #ifndef	__FBSDID
-#if !defined(lint) && !defined(STRIP_FBSDID)
+#if !defined(STRIP_FBSDID)
 #define	__FBSDID(s)	__IDSTRING(__CONCAT(__rcsid_,__LINE__),s)
 #else
 #define	__FBSDID(s)	struct __hack
@@ -562,15 +628,23 @@
  * POSIX.1 requires that the macros we test be defined before any standard
  * header file is included.
  *
- * Here's a quick run-down of the versions:
+ * Here's a quick run-down of the versions (and some informal names)
  *  defined(_POSIX_SOURCE)		1003.1-1988
+ *					encoded as 198808 below
  *  _POSIX_C_SOURCE == 1		1003.1-1990
+ *					encoded as 199009 below
  *  _POSIX_C_SOURCE == 2		1003.2-1992 C Language Binding Option
+ *					encoded as 199209 below
  *  _POSIX_C_SOURCE == 199309		1003.1b-1993
+ *					(1003.1 Issue 4, Single Unix Spec v1, Unix 93)
  *  _POSIX_C_SOURCE == 199506		1003.1c-1995, 1003.1i-1995,
  *					and the omnibus ISO/IEC 9945-1: 1996
- *  _POSIX_C_SOURCE == 200112		1003.1-2001
- *  _POSIX_C_SOURCE == 200809		1003.1-2008
+ *					(1003.1 Issue 5, Single	Unix Spec v2, Unix 95)
+ *  _POSIX_C_SOURCE == 200112		1003.1-2001 (1003.1 Issue 6, Unix 03)
+ *  _POSIX_C_SOURCE == 200809		1003.1-2008 (1003.1 Issue 7)
+ *					IEEE Std 1003.1-2017 (Rev of 1003.1-2008) is
+ *					1003.1-2008 with two TCs applied with
+ *					_POSIX_C_SOURCE=200809 and _XOPEN_SOURCE=700
  *
  * In addition, the X/Open Portability Guide, which is now the Single UNIX
  * Specification, defines a feature-test macro which indicates the version of
@@ -638,6 +712,17 @@
 #define	__POSIX_VISIBLE		198808
 #define	__ISO_C_VISIBLE		0
 #endif /* _POSIX_C_SOURCE */
+/*
+ * Both glibc and OpenBSD enable c11 features when _ISOC11_SOURCE is defined, or
+ * when compiling with -stdc=c11. A strict reading of the standard would suggest
+ * doing it only for the former. However, a strict reading also requires C99
+ * mode only, so building with C11 is already undefined. Follow glibc's and
+ * OpenBSD's lead for this non-standard configuration for maximum compatibility.
+ */
+#if _ISOC11_SOURCE || (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L)
+#undef __ISO_C_VISIBLE
+#define __ISO_C_VISIBLE		2011
+#endif
 #else
 /*-
  * Deal with _ANSI_SOURCE:
@@ -656,31 +741,197 @@
 #define	__XSI_VISIBLE		0
 #define	__BSD_VISIBLE		0
 #define	__ISO_C_VISIBLE		1990
+#define	__EXT1_VISIBLE		0
 #elif defined(_C99_SOURCE)	/* Localism to specify strict C99 env. */
 #define	__POSIX_VISIBLE		0
 #define	__XSI_VISIBLE		0
 #define	__BSD_VISIBLE		0
 #define	__ISO_C_VISIBLE		1999
+#define	__EXT1_VISIBLE		0
+#elif defined(_C11_SOURCE)	/* Localism to specify strict C11 env. */
+#define	__POSIX_VISIBLE		0
+#define	__XSI_VISIBLE		0
+#define	__BSD_VISIBLE		0
+#define	__ISO_C_VISIBLE		2011
+#define	__EXT1_VISIBLE		0
 #else				/* Default environment: show everything. */
 #define	__POSIX_VISIBLE		200809
 #define	__XSI_VISIBLE		700
 #define	__BSD_VISIBLE		1
-#define	__ISO_C_VISIBLE		1999
+#define	__ISO_C_VISIBLE		2011
+#define	__EXT1_VISIBLE		1
 #endif
 #endif
 
-#ifndef	__has_feature
-#define	__has_feature(x) 0
+/* User override __EXT1_VISIBLE */
+#if defined(__STDC_WANT_LIB_EXT1__)
+#undef	__EXT1_VISIBLE
+#if __STDC_WANT_LIB_EXT1__
+#define	__EXT1_VISIBLE		1
+#else
+#define	__EXT1_VISIBLE		0
 #endif
-#ifndef	__has_include
-#define	__has_include(x) 0
-#endif
-#ifndef	__has_builtin
-#define	__has_builtin(x) 0
+#endif /* __STDC_WANT_LIB_EXT1__ */
+
+/*
+ * Old versions of GCC use non-standard ARM arch symbols; acle-compat.h
+ * translates them to __ARM_ARCH and the modern feature symbols defined by ARM.
+ */
+#if defined(__arm__) && !defined(__ARM_ARCH)
+#include <machine/acle-compat.h>
 #endif
 
-#if defined(__mips) || defined(__powerpc64__) || defined(__arm__)
-#define __NO_TLS 1
+/*
+ * Nullability qualifiers: currently only supported by Clang.
+ */
+#if !(defined(__clang__) && __has_feature(nullability))
+#define	_Nonnull
+#define	_Nullable
+#define	_Null_unspecified
+#define	__NULLABILITY_PRAGMA_PUSH
+#define	__NULLABILITY_PRAGMA_POP
+#else
+#define	__NULLABILITY_PRAGMA_PUSH _Pragma("clang diagnostic push")	\
+	_Pragma("clang diagnostic ignored \"-Wnullability-completeness\"")
+#define	__NULLABILITY_PRAGMA_POP _Pragma("clang diagnostic pop")
 #endif
+
+/*
+ * Type Safety Checking
+ *
+ * Clang provides additional attributes to enable checking type safety
+ * properties that cannot be enforced by the C type system. 
+ */
+
+#if __has_attribute(__argument_with_type_tag__) && \
+    __has_attribute(__type_tag_for_datatype__)
+#define	__arg_type_tag(arg_kind, arg_idx, type_tag_idx) \
+	    __attribute__((__argument_with_type_tag__(arg_kind, arg_idx, type_tag_idx)))
+#define	__datatype_type_tag(kind, type) \
+	    __attribute__((__type_tag_for_datatype__(kind, type)))
+#else
+#define	__arg_type_tag(arg_kind, arg_idx, type_tag_idx)
+#define	__datatype_type_tag(kind, type)
+#endif
+
+/*
+ * Lock annotations.
+ *
+ * Clang provides support for doing basic thread-safety tests at
+ * compile-time, by marking which locks will/should be held when
+ * entering/leaving a functions.
+ *
+ * Furthermore, it is also possible to annotate variables and structure
+ * members to enforce that they are only accessed when certain locks are
+ * held.
+ */
+
+#if __has_extension(c_thread_safety_attributes)
+#define	__lock_annotate(x)	__attribute__((x))
+#else
+#define	__lock_annotate(x)
+#endif
+
+/* Structure implements a lock. */
+#define	__lockable		__lock_annotate(lockable)
+
+/* Function acquires an exclusive or shared lock. */
+#define	__locks_exclusive(...) \
+	__lock_annotate(exclusive_lock_function(__VA_ARGS__))
+#define	__locks_shared(...) \
+	__lock_annotate(shared_lock_function(__VA_ARGS__))
+
+/* Function attempts to acquire an exclusive or shared lock. */
+#define	__trylocks_exclusive(...) \
+	__lock_annotate(exclusive_trylock_function(__VA_ARGS__))
+#define	__trylocks_shared(...) \
+	__lock_annotate(shared_trylock_function(__VA_ARGS__))
+
+/* Function releases a lock. */
+#define	__unlocks(...)		__lock_annotate(unlock_function(__VA_ARGS__))
+
+/* Function asserts that an exclusive or shared lock is held. */
+#define	__asserts_exclusive(...) \
+	__lock_annotate(assert_exclusive_lock(__VA_ARGS__))
+#define	__asserts_shared(...) \
+	__lock_annotate(assert_shared_lock(__VA_ARGS__))
+
+/* Function requires that an exclusive or shared lock is or is not held. */
+#define	__requires_exclusive(...) \
+	__lock_annotate(exclusive_locks_required(__VA_ARGS__))
+#define	__requires_shared(...) \
+	__lock_annotate(shared_locks_required(__VA_ARGS__))
+#define	__requires_unlocked(...) \
+	__lock_annotate(locks_excluded(__VA_ARGS__))
+
+/* Function should not be analyzed. */
+#define	__no_lock_analysis	__lock_annotate(no_thread_safety_analysis)
+
+/*
+ * Function or variable should not be sanitized, e.g., by AddressSanitizer.
+ * GCC has the nosanitize attribute, but as a function attribute only, and
+ * warns on use as a variable attribute.
+ */
+#if __has_feature(address_sanitizer) && defined(__clang__)
+#ifdef _KERNEL
+#define	__nosanitizeaddress	__attribute__((no_sanitize("kernel-address")))
+#else
+#define	__nosanitizeaddress	__attribute__((no_sanitize("address")))
+#endif
+#else
+#define	__nosanitizeaddress
+#endif
+#if __has_feature(coverage_sanitizer) && defined(__clang__)
+#define	__nosanitizecoverage	__attribute__((no_sanitize("coverage")))
+#else
+#define	__nosanitizecoverage
+#endif
+#if __has_feature(memory_sanitizer) && defined(__clang__)
+#ifdef _KERNEL
+#define	__nosanitizememory	__attribute__((no_sanitize("kernel-memory")))
+#else
+#define	__nosanitizememory	__attribute__((no_sanitize("memory")))
+#endif
+#else
+#define	__nosanitizememory
+#endif
+#if __has_feature(thread_sanitizer) && defined(__clang__)
+#define	__nosanitizethread	__attribute__((no_sanitize("thread")))
+#else
+#define	__nosanitizethread
+#endif
+
+/*
+ * Make it possible to opt out of stack smashing protection.
+ */
+#if __has_attribute(no_stack_protector)
+#define	__nostackprotector	__attribute__((no_stack_protector))
+#else
+#define	__nostackprotector	\
+	__attribute__((__optimize__("-fno-stack-protector")))
+#endif
+
+/* Guard variables and structure members by lock. */
+#define	__guarded_by(x)		__lock_annotate(guarded_by(x))
+#define	__pt_guarded_by(x)	__lock_annotate(pt_guarded_by(x))
+
+/* Alignment builtins for better type checking and improved code generation. */
+/* Provide fallback versions for other compilers (GCC/Clang < 10): */
+#if !__has_builtin(__builtin_is_aligned)
+#define __builtin_is_aligned(x, align)	\
+	(((__uintptr_t)(x) & ((align) - 1)) == 0)
+#endif
+#if !__has_builtin(__builtin_align_up)
+#define __builtin_align_up(x, align)	\
+	((__typeof__(x))(((__uintptr_t)(x)+((align)-1))&(~((align)-1))))
+#endif
+#if !__has_builtin(__builtin_align_down)
+#define __builtin_align_down(x, align)	\
+	((__typeof__(x))((x)&(~((align)-1))))
+#endif
+
+#define __align_up(x, y) __builtin_align_up(x, y)
+#define __align_down(x, y) __builtin_align_down(x, y)
+#define __is_aligned(x, y) __builtin_is_aligned(x, y)
 
 #endif /* !_SYS_CDEFS_H_ */
