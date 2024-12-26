@@ -257,8 +257,11 @@ write(int d, const void *buf, size_t nbytes)
 	/* XXX hack for stdin, stdout, stderr */
 	if (d >= 0 && d <= 2) {
 		char *cp = (char *) buf;
-		for (; nbytes != 0; nbytes--)
-			printf("%c", *cp++);
+		for (; nbytes != 0; nbytes--) {
+			if (*cp == '\n')
+				putchar('\r');
+			putchar(*cp++);
+		}
 		return (wrote);
 	}
 	d -= 3;
