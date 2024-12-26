@@ -40,13 +40,16 @@
 #ifndef _SYS_ERRNO_H_
 #define _SYS_ERRNO_H_
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
-__BEGIN_DECLS
-int *	__error(void);
-__END_DECLS
+
+inline int *
+__error(void)
+{
+
+        return (&curthread->td_errno);
+}
+
 #define	errno		(* __error())
-#endif
 
 #define	EPERM		1		/* Operation not permitted */
 #define	ENOENT		2		/* No such file or directory */
