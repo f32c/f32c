@@ -50,6 +50,12 @@
 
 #define	IO_TIMER		IO_ADDR(0x100)	/* 16-byte, WR */
 
+#define	IO_SIO_0		IO_ADDR(0x300)	/* 16-byte, RW */
+#define	IO_SIO_1		IO_ADDR(0x300)	/* 16-byte, RW */
+#define	IO_SIO_2		IO_ADDR(0x300)	/* 16-byte, RW */
+#define	IO_SIO_3		IO_ADDR(0x300)	/* 16-byte, RW */
+
+/* Deprecated */
 #define	IO_SIO_BYTE		IO_ADDR(0x300)	/* byte, RW */
 #define	IO_SIO_STATUS		IO_ADDR(0x304)	/* byte, RW */
 #define	IO_SIO_BAUD		IO_ADDR(0x308)	/* half, RW */
