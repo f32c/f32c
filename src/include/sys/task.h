@@ -59,15 +59,15 @@ curthread_set(struct thread *td)
 #endif
 }
 
-inline struct thread *
+inline __pure struct thread *
 curthread_get(void)
 {
 	struct thread *td;
 
 #ifdef __mips__
-	__asm __volatile("addu %0, $27, $0" : "=&r"(td));
+	__asm("addu %0, $27, $0" : "=&r"(td));
 #else /* __riscv__ */
-	__asm __volatile("mv %0, tp" : "=&r"(td));
+	__asm("mv %0, tp" : "=&r"(td));
 #endif
 
 	return (td);
