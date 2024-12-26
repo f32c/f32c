@@ -80,7 +80,7 @@ ifeq ($(LIB),c)
 
  CFILES += gen/assert.c gen/div.c gen/div64.c gen/mul.c
 
- CFILES += dev/sio_baud.c dev/sio_poll.c dev/spi.c
+ CFILES += dev/sio_baud.c dev/sio.c dev/spi.c
 
  CFILES += sys/task.c
 
@@ -101,7 +101,7 @@ ifeq ($(LIB),c)
  CFILES += stdtime/asctime.c stdtime/clock.c stdtime/time.c
 
  ifneq ($(ARCH),riscv)
-  CFILES += dev/sio.c gen/setjmperr.c gen/isr.c
+  CFILES += gen/setjmperr.c gen/isr.c
  endif
 
  ifeq ($(INT_LIBC),true)
