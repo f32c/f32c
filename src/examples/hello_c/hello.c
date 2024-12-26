@@ -1,7 +1,5 @@
 /*
  * Print a message on serial console and blink LEDs until a button is pressed.
- *
- * $Id$
  */
 
 #include <stdio.h>
