@@ -41,9 +41,12 @@
 #ifndef __ASSEMBLER__
 
 #include <sys/_null.h>
-#include <sys/types.h>
 #include <sys/cdefs.h>
-#include <sys/errno.h>
+#include <sys/limits.h>
+#include <sys/types.h>
+#include <sys/task.h>
+
+#include <errno.h>
 
 #ifndef FALSE
 #define	FALSE	0
@@ -51,8 +54,6 @@
 #ifndef TRUE
 #define	TRUE	1
 #endif
-
-#include <sys/limits.h>
 
 #define	NBBY	8		/* number of bits in a byte */
 #define	NBPW	sizeof(int)	/* number of bytes per word (integer) */
