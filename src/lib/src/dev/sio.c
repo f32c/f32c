@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014 Marko Zec, University of Zagreb
+ * Copyright (c) 2013, 2014 Marko Zec, University of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,29 +25,21 @@
 
 #include <dev/io.h>
 #include <dev/sio.h>
-#include <sys/isr.h>
 
 #define	SIO_RXBUFSIZE	(1 << 5)
 #define	SIO_RXBUFMASK	(SIO_RXBUFSIZE - 1)
 
-static int sio_rx_isr(void);
-
-struct isr_link sio_isr_link = {
-	.handler_fn = &sio_rx_isr
-};
-
 static char sio_rxbuf[SIO_RXBUFSIZE];
-static uint32_t sio_rxbuf_head;	/* Managed by sio_rx_isr() */
-static uint32_t sio_rxbuf_tail;	/* Managed by sio_getchar() */
+static uint32_t sio_rxbuf_head; /* Managed by sio_probe_rx() */
+static uint32_t sio_rxbuf_tail; /* Managed by sio_getchar() */
 static uint8_t sio_tx_xoff;
-static uint8_t sio_isr_registered;
 
 uint32_t sio_hw_rx_overruns;
 uint32_t sio_sw_rx_overruns;
 
 
-static __attribute__((optimize("-Os"))) int
-sio_rx_isr(void)
+__attribute__((optimize("-Os"))) int
+sio_probe_rx(void)
 {
 	uint32_t c, s, sio_rxbuf_head_next;
 
@@ -58,19 +50,20 @@ sio_rx_isr(void)
 			OUTB(IO_SIO_STATUS, 0);
 		}
 
+		s &= (SIO_TX_BUSY | SIO_RX_FULL);
 		if ((s & SIO_RX_FULL) == 0)
-			return (1);
+			return (s);
 
 		INB(c, IO_SIO_BYTE);
 		if (c == 0x13) {
 			/* XOFF */
 			sio_tx_xoff = 1;
-			continue;
+			return(s);
 		}
 		if (c == 0x11) {
 			/* XON */
 			sio_tx_xoff = 0;
-			continue;
+			return(s);
 		}
 
 		sio_rxbuf_head_next = (sio_rxbuf_head + 1) & SIO_RXBUFMASK;
@@ -85,34 +78,19 @@ sio_rx_isr(void)
 }
 
 
-static void
-sio_register_isr(void)
-{
-
-	sio_isr_registered = 1;
-	asm("di");
-	isr_register_handler(3, &sio_isr_link);
-	asm("ei");
-}
-
-
 __attribute__((weak, optimize("-Os"))) int
 sio_getchar(int blocking)
 {
 	int c, busy;
-	volatile uint32_t *head_ptr = &sio_rxbuf_head;
 
-	if (!sio_isr_registered)
-		sio_register_isr();
-
+	/* Any new characters received from RS-232? */
 	do {
-		busy = (*head_ptr == sio_rxbuf_tail);
-		if (!blocking && busy)
-			return (-1);
-		if (busy)
-			asm("wait");
-	} while (busy);
+		sio_probe_rx();
+		busy = (sio_rxbuf_head == sio_rxbuf_tail);
+	} while (blocking && busy);
 
+	if (busy)
+		return (-1);
 	c = sio_rxbuf[sio_rxbuf_tail++];
 	sio_rxbuf_tail &= SIO_RXBUFMASK;
 	return (c);
@@ -122,12 +100,11 @@ sio_getchar(int blocking)
 __attribute__((weak, optimize("-Os"))) int
 sio_putchar(int c, int blocking)
 {
-	int s, busy;
-	volatile uint8_t *xoff_ptr = &sio_tx_xoff;
+	int in, busy;
 
 	do {
-		INB(s, IO_SIO_STATUS);
-		busy = (s & SIO_TX_BUSY) || *xoff_ptr;
+		in = sio_probe_rx();
+		busy = (in & SIO_TX_BUSY) || sio_tx_xoff;
 	} while (blocking && busy);
 
 	if (busy == 0)
