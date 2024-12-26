@@ -941,6 +941,9 @@ main(void)
 
 #ifndef F32C
 	set_term();
+#else
+	/* XXX automount fatfs */
+	getcwd(line, 128);
 #endif
 
 	do {
