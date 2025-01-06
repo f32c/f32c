@@ -23,16 +23,20 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/queue.h>
-#include <sys/task.h>
+#include <stdio.h>
 
 #include <sys/file.h>
+#include <sys/queue.h>
 
 extern struct file __sio0_file;
 
 static struct file *stdfiles[3] = {
 	&__sio0_file, &__sio0_file, &__sio0_file
 };
+
+static FILE __stdin = { ._fd = 0 };
+static FILE __stdout = { ._fd = 1 };
+static FILE __stderr = { ._fd = 2 };
 
 /* List of all tasks */
 TAILQ_HEAD(, task) tasks = {
@@ -45,7 +49,10 @@ struct task task0 = {
 	.ts_tds.tqh_last = &thread0.td_list.tqe_next, /* Threads head init */
 	.ts_list.tqe_prev = &tasks.tqh_first,	/* Tasks list elem init */
 	.ts_files = stdfiles,
-	.ts_maxfiles = 3
+	.ts_maxfiles = 3,
+	.ts_stdin = &__stdin,
+	.ts_stdout = &__stdout,
+	.ts_stderr = &__stderr,
 };
 
 struct thread thread0 = {
