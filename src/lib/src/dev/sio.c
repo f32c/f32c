@@ -31,9 +31,14 @@
 #define	SIO_RXBUFSIZE	(1 << 5)
 #define	SIO_RXBUFMASK	(SIO_RXBUFSIZE - 1)
 
-#define	SIO_BYTE	0x0
-#define	SIO_STATUS	0x4
-#define	SIO_BAUD	0x8
+#define	SIO_REG_DATA	0x0
+#define	SIO_REG_STATUS	0x4
+#define	SIO_REG_BAUD	0x8
+
+static uint16_t sio_bauds[16] = {
+	3,	6,	12,	24,	48,	96,	192,	384,
+	576,	1152,	2304,	4608,	9216,	10000,	15000,	30000
+};
 
 struct sio_state {
 	char		s_rxbuf[SIO_RXBUFSIZE];
@@ -45,7 +50,9 @@ struct sio_state {
 	uint8_t		s_tx_xoff;
 };
 
-static struct sio_state sio0_state;
+static struct sio_state sio0_state = {
+	.s_io_port = IO_SIO_0
+};
 
 static int
 sio_probe_rx(struct file *sfd)
@@ -54,17 +61,17 @@ sio_probe_rx(struct file *sfd)
 	uint32_t c, s, rxbuf_head_next;
 
 	do {
-		INB(s, IO_SIO_STATUS);
+		LB(s, SIO_REG_STATUS, sio->s_io_port);
 		if (s >> 4 != 0) {
 			sio->s_hw_rx_overruns += (s >> 4) & 0xf;
-			OUTB(IO_SIO_STATUS, 0);
+			SB(0, SIO_REG_STATUS, sio->s_io_port);
 		}
 
 		s &= (SIO_TX_BUSY | SIO_RX_FULL);
 		if ((s & SIO_RX_FULL) == 0)
 			return (s);
 
-		INB(c, IO_SIO_BYTE);
+		LB(c, SIO_REG_DATA, sio->s_io_port);
 		if (c == 0x13) {
 			/* XOFF */
 			sio->s_tx_xoff = 1;
@@ -149,6 +156,34 @@ sio_putchar(int c, int blocking)
 	} while (blocking && busy);
 
 	if (busy == 0)
-		OUTB(IO_SIO_BYTE, c);
+		SB(c, SIO_REG_DATA, sio->s_io_port);
 	return (busy);
+}
+
+
+int
+sio_setbaud(int bauds)
+{
+	struct file *sfd = &sio0_file; /* XXX fixme */
+	struct sio_state *sio = sfd->f_priv;
+	int i;
+
+	for (i = 0, bauds /= 100; i < 16; i++)
+		if (sio_bauds[i] == bauds) {
+			SB(i, SIO_REG_BAUD, sio->s_io_port);
+			return (0);
+		}
+	return (-1);
+}
+
+
+int
+sio_getbaud(void)
+{
+	struct file *sfd = &sio0_file; /* XXX fixme */
+	struct sio_state *sio = sfd->f_priv;
+	int i;
+
+	LB(i, SIO_REG_BAUD, sio->s_io_port);
+	return (sio_bauds[i] * 100);
 }
