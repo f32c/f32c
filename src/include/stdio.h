@@ -27,10 +27,22 @@
 #define	_STDIO_H_
 
 #include <sys/stdint.h>
+#include <sys/task.h>
 
 #include <dev/sio.h>
 
+struct __sFILE {
+	int16_t _fd;		/* file descriptor, or -1 */
+	int16_t _flags;		/* flags */
+};
 
+typedef struct __sFILE FILE;
+
+#define	stdin	((FILE *) TD_TASK(curthread)->ts_stdin)
+#define	stdout	((FILE *) TD_TASK(curthread)->ts_stdout)
+#define	stderr	((FILE *) TD_TASK(curthread)->ts_stderr)
+
+/* XXX temporary sio hacks, revisit! */
 #define	getchar()	sio_getchar(1)
 #define	putchar(c)	sio_putchar(c)
 

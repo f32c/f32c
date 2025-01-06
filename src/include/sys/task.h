@@ -29,11 +29,13 @@
 #include <sys/queue.h>
 
 struct regspace;
-struct file;
 
 struct task {
 	struct file	**ts_files;	/* Array of file pointers */
 	int		ts_maxfiles;	/* Size of ts_files */
+	void		*ts_stdin;	/* stdin */
+	void		*ts_stdout;	/* stdout */
+	void		*ts_stderr;	/* stderr */
 	TAILQ_HEAD(, thread) ts_tds;	/* List of this task's threads */
 	TAILQ_ENTRY(task) ts_list;	/* All tasks linked list */
 	struct task	*ts_parent;	/* Parent task */
