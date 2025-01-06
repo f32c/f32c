@@ -49,16 +49,6 @@ struct thread {
 extern struct task task0;
 extern struct thread thread0;
 
-inline void
-curthread_set(struct thread *td)
-{
-#ifdef __mips__
-	__asm __volatile("addu $27, $0, %0" :: "r" (td));
-#else /* __riscv__ */
-	__asm __volatile("mv tp, %0" :: "r" (td));
-#endif
-}
-
 inline __pure struct thread *
 curthread_get(void)
 {
@@ -75,4 +65,5 @@ curthread_get(void)
 
 #define	curthread	curthread_get()
 
+#define	TD_TASK(td)	(td)->td_task
 #endif /* _SYS_TASK_H_ */
