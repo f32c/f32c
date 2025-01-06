@@ -26,6 +26,14 @@
 #include <sys/queue.h>
 #include <sys/task.h>
 
+#include <sys/file.h>
+
+extern struct file __sio0_file;
+
+static struct file *stdfiles[3] = {
+	&__sio0_file, &__sio0_file, &__sio0_file
+};
+
 /* List of all tasks */
 TAILQ_HEAD(, task) tasks = {
 	.tqh_first = &task0,			/* Tasks head init */
@@ -35,7 +43,9 @@ TAILQ_HEAD(, task) tasks = {
 struct task task0 = {
 	.ts_tds.tqh_first = &thread0,		/* Threads head init */
 	.ts_tds.tqh_last = &thread0.td_list.tqe_next, /* Threads head init */
-	.ts_list.tqe_prev = &tasks.tqh_first	/* Tasks list elem init */
+	.ts_list.tqe_prev = &tasks.tqh_first,	/* Tasks list elem init */
+	.ts_files = stdfiles,
+	.ts_maxfiles = 3
 };
 
 struct thread thread0 = {

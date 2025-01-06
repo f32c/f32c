@@ -98,12 +98,16 @@ static int
 sio_read(struct file *fp, char *buf, size_t nbytes)
 {
 
+	/* XXX implement me! */
+
 	return 0;
 }
 
 static int
 sio_write(struct file *fp, char *buf, size_t nbytes)
 {
+
+	/* XXX implement me! */
 
 	return 0;
 }
@@ -113,7 +117,7 @@ static struct fileops sio_fileops = {
 	.fo_write = &sio_write,
 };
 
-static struct file sio0_file = {
+struct file __sio0_file = {
 	.f_ops = &sio_fileops,
 	.f_priv = &sio0_state,
 	.f_refc = 3
@@ -125,7 +129,7 @@ static struct file sio0_file = {
 int
 sio_getchar(int blocking)
 {
-	struct file *sfd = &sio0_file; /* XXX fixme */
+	struct file *sfd = TD_TASK(curthread)->ts_files[0]; /* XXX */
 	struct sio_state *sio = sfd->f_priv;
 	int c, busy;
 
@@ -146,7 +150,7 @@ sio_getchar(int blocking)
 int
 sio_putchar(int c, int blocking)
 {
-	struct file *sfd = &sio0_file; /* XXX fixme */
+	struct file *sfd = TD_TASK(curthread)->ts_files[0]; /* XXX */
 	struct sio_state *sio = sfd->f_priv;
 	int in, busy;
 
@@ -164,7 +168,7 @@ sio_putchar(int c, int blocking)
 int
 sio_setbaud(int bauds)
 {
-	struct file *sfd = &sio0_file; /* XXX fixme */
+	struct file *sfd = TD_TASK(curthread)->ts_files[0]; /* XXX */
 	struct sio_state *sio = sfd->f_priv;
 	int i;
 
@@ -180,7 +184,7 @@ sio_setbaud(int bauds)
 int
 sio_getbaud(void)
 {
-	struct file *sfd = &sio0_file; /* XXX fixme */
+	struct file *sfd = TD_TASK(curthread)->ts_files[0]; /* XXX */
 	struct sio_state *sio = sfd->f_priv;
 	int i;
 
