@@ -106,10 +106,16 @@ sio_read(struct file *fp, char *buf, size_t nbytes)
 static int
 sio_write(struct file *fp, char *buf, size_t nbytes)
 {
+	struct sio_state *sio = fp->f_priv;
+	int i;
 
-	/* XXX implement me! */
+	for (i = 0; i < nbytes; i++) {
+		do {
+		} while ((sio_probe_rx(fp) & SIO_TX_BUSY) || sio->s_tx_xoff);
+		SB(buf[i], SIO_REG_DATA, sio->s_io_port);
+	}
 
-	return 0;
+	return nbytes;
 }
 
 static struct fileops sio_fileops = {
@@ -150,18 +156,12 @@ sio_getchar(int blocking)
 int
 sio_putchar(int c)
 {
-	struct file *sfd = TD_TASK(curthread)->ts_files[0]; /* XXX */
-	struct sio_state *sio = sfd->f_priv;
-	int in, busy;
+	struct file *fd = TD_TASK(curthread)->ts_files[1]; /* XXX */
+	char byte = c;
 
-	do {
-		in = sio_probe_rx(sfd);
-		busy = (in & SIO_TX_BUSY) || sio->s_tx_xoff;
-	} while (busy);
+	fd->f_ops->fo_write(fd, &byte, 1);
 
-	if (busy == 0)
-		SB(c, SIO_REG_DATA, sio->s_io_port);
-	return (busy);
+	return(0);
 }
 
 
