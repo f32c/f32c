@@ -95,13 +95,6 @@ memcpy(void *dst, const void *src, size_t len)
 }
 
 
-int *__error(void)
-{
-
-	return (&_errno);
-}
-
-
 char *
 getenv(const char *name)
 {

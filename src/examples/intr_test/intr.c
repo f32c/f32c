@@ -10,6 +10,8 @@
 #include <time.h>
 #include <dev/io.h>
 #include <sys/isr.h>
+#include <sys/task.h>
+
 #include <mips/asm.h>
 
 
@@ -29,6 +31,7 @@ tsc_update(void)
 	next_t += tick_incr;
 	mtc0_macro(next_t, MIPS_COP_0_COMPARE);
 	cnt0++;
+	curthread_set((void *) cnt0);
 
 	return (1);
 }
@@ -57,7 +60,8 @@ main(void)
 		INW(sec, IO_RTC_UPTIME_S);
 		if (sec != prev_sec) {
 			OUTB(IO_LED, sec);
-			printf("Freq %f MHz, ", get_cpu_freq() / 1000000.0);
+//			printf("Freq %f MHz, ", get_cpu_freq() / 1000000.0);
+			printf("td %p, ", curthread);
 			printf("up %d s, intr / s %d, loops / s %d, "
 			    "waits / s %d\n", sec, cnt0 - cnt1,
 			    loopc, waitc);

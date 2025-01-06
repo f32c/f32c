@@ -148,7 +148,7 @@ sio_getchar(int blocking)
 
 
 int
-sio_putchar(int c, int blocking)
+sio_putchar(int c)
 {
 	struct file *sfd = TD_TASK(curthread)->ts_files[0]; /* XXX */
 	struct sio_state *sio = sfd->f_priv;
@@ -157,7 +157,7 @@ sio_putchar(int c, int blocking)
 	do {
 		in = sio_probe_rx(sfd);
 		busy = (in & SIO_TX_BUSY) || sio->s_tx_xoff;
-	} while (blocking && busy);
+	} while (busy);
 
 	if (busy == 0)
 		SB(c, SIO_REG_DATA, sio->s_io_port);

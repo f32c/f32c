@@ -21,19 +21,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
-#ifndef _SIO_H_
-#define	_SIO_H_
-
-extern void (*sio_idle_fn)(void);
+#ifndef _DEV_SIO_H_
+#define	_DEV_SIO_H_
 
 int sio_getchar(int);
-int sio_putchar(int, int);
+int sio_putchar(int);
 int sio_setbaud(int);
 int sio_getbaud(void);
 
-#endif /* !_IO_H_ */
-
+#endif /* !_DEV_SIO_H_ */

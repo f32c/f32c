@@ -21,8 +21,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #ifndef _STDIO_H_
@@ -34,7 +32,7 @@
 
 
 #define	getchar()	sio_getchar(1)
-#define	putchar(c)	sio_putchar(c, 1)
+#define	putchar(c)	sio_putchar(c)
 
 int	printf(const char * __restrict, ...) \
 	    __attribute__((format (printf, 1, 2)));

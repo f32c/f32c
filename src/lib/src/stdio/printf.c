@@ -37,9 +37,8 @@
 #include <math.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
-
-#include <dev/sio.h>
 
 #define	MAXNBUF	32
 
@@ -415,8 +414,8 @@ sio_pchar(int c, void *arg __unused)
 
 	/* Translate CR -> CR + LF */
 	if (c == '\n')
-		sio_putchar('\r', 1);
-	sio_putchar(c, 1);
+		putchar('\r');
+	putchar(c);
 }
 
 
