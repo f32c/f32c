@@ -80,7 +80,7 @@ ifeq ($(LIB),c)
 
  CFILES += gen/assert.c gen/div.c gen/div64.c gen/mul.c
 
- CFILES += dev/sio_baud.c dev/sio.c dev/spi.c
+ CFILES += dev/sio.c dev/spi.c
 
  CFILES += sys/task.c
 
@@ -95,8 +95,9 @@ ifeq ($(LIB),c)
 	stdlib/strtoull.c
 
  CFILES += string/memcmp.c string/memcpy.c string/memmove.c string/memset.c \
-	string/strcasecmp.c string/strcat.c string/strcmp.c string/strcpy.c \
-	string/strncpy.c string/strncpy.c string/strstr.c string/strtok.c
+	string/strcasecmp.c string/strcat.c string/strcmp.c string/strncmp.c \
+	string/strcpy.c string/strncpy.c string/strncpy.c string/strstr.c \
+	string/strtok.c
 
  CFILES += stdtime/asctime.c stdtime/clock.c stdtime/time.c
 
