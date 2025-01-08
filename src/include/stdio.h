@@ -48,6 +48,8 @@ typedef struct __sFILE FILE;
 
 int	printf(const char * __restrict, ...) \
 	    __attribute__((format (printf, 1, 2)));
+int	fprintf(FILE *, const char * __restrict, ...) \
+	    __attribute__((format (printf, 2, 3)));
 int	sprintf(char * __restrict, const char * __restrict, ...) \
 	    __attribute__((format (printf, 2, 3)));
 int	snprintf(char * __restrict, size_t, const char * __restrict, ...) \
