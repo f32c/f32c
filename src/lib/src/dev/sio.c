@@ -107,12 +107,26 @@ static int
 sio_write(struct file *fp, char *buf, size_t nbytes)
 {
 	struct sio_state *sio = fp->f_priv;
-	int i;
+	int i, c;
 
 	for (i = 0; i < nbytes; i++) {
+		c = buf[i];
+
+		again:
 		do {
 		} while ((sio_probe_rx(fp) & SIO_TX_BUSY) || sio->s_tx_xoff);
-		SB(buf[i], SIO_REG_DATA, sio->s_io_port);
+		SB(c, SIO_REG_DATA, sio->s_io_port);
+
+		/*
+		 * Translate LF -> LF + CR.
+		 * Should be ONLCR, i.e. LF -> CR + LF.
+		 * Should be done in a separate, generalized TTY options
+		 * processor.  XXX revisit!
+		 */
+		if (c == '\n') {
+			c = '\r';
+			goto again;
+		}
 	}
 
 	return nbytes;

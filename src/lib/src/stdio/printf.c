@@ -40,6 +40,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <sys/file.h>
+
 #define	MAXNBUF	32
 
 #define	PCHAR(c) {(*func)(c, arg); retval++;}
@@ -408,26 +410,40 @@ number:
 }
 
 
-static __attribute__((optimize("-Os"))) void
-sio_pchar(int c, void *arg __unused)
+static void
+fpchar(int c, void *arg)
 {
+	FILE *fp = arg;
+	struct file *fd = TD_TASK(curthread)->ts_files[fp->_fd];
+	char byte = c;
 
-	/* Translate CR -> CR + LF */
-	if (c == '\n')
-		putchar('\r');
-	putchar(c);
+	fd->f_ops->fo_write(fd, &byte, 1);
 }
 
 
-__attribute__((optimize("-Os"))) int
+int
 printf(const char *fmt, ...)
 {
 	va_list ap;
 	int retval;
  
 	va_start(ap, fmt);
-	retval = _xvprintf(fmt, sio_pchar, NULL, ap);
+	retval = _xvprintf(fmt, fpchar, stdout, ap);
 	va_end(ap);
+
+	return (retval);
+}
+
+
+int
+fprintf(FILE *fp, const char *fmt, ...)
+{
+	va_list ap;
+	int retval;
  
+	va_start(ap, fmt);
+	retval = _xvprintf(fmt, fpchar, fp, ap);
+	va_end(ap);
+
 	return (retval);
 }
