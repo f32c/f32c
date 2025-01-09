@@ -30,23 +30,20 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <sys/file.h>
+#include <sys/stat.h>
 
 #include <fatfs/diskio.h>
 
 #include <dev/io.h>
 
 
-#define MAXFILES 8
-
-
 static FATFS *ff_mounts[FF_VOLUMES];
 static int ff_mounted;
-
-static FIL *file_map[MAXFILES];
 
 
 static int
@@ -146,20 +143,12 @@ check_automount(void)
 
 
 int
-open(const char *path, int flags, ...)
+ff_open(struct file *fp, const char *path, int flags, ...)
 {
-	int d, res;
-	int ff_flags;
+	FIL *ffp;
+	int res, ff_flags;
 
 	check_automount();
-
-	for (d = 0; d < MAXFILES; d++)
-		if (file_map[d] == NULL)
-			break;
-	if (d == MAXFILES) {
-		errno = ENFILE;
-		return (-1);
-	}
 
 	/* Map open() flags to f_open() flags */
 	ff_flags = ((flags & O_ACCMODE) + 1);
@@ -170,20 +159,15 @@ open(const char *path, int flags, ...)
 		ff_flags |= FA_OPEN_ALWAYS;
 #endif
 
-	file_map[d] = malloc(sizeof(FIL));
-	if (file_map[d] == NULL) {
+	ffp = malloc(sizeof(FIL));
+	if (ffp == NULL) {
 		errno = ENOMEM;
 		return (-1);
 	}
 
-	res = f_open(file_map[d], path, ff_flags);
-	if (res != FR_OK) {
-		free(file_map[d]);
-		file_map[d] = NULL;
-		return(ffres2errno(res));
-	}
-
-	return (d + 3);
+	fp->f_priv = ffp;
+	res = f_open(ffp, path, ff_flags);
+	return(ffres2errno(res));
 }
 
 
@@ -199,27 +183,38 @@ creat(const char *path, mode_t mode __unused)
 int
 close(int d)
 {
-	int res;
+	struct task *ts = TD_TASK(curthread);
+	struct file *fp;
+	FIL *ffp;
+	int f_res;
 
-	/* XXX hack for stdin, stdout, stderr */
-	if (d >= 0 && d <= 2)
-		return (0);
-	d -= 3;
-
-	if (d < 0 || d >= MAXFILES || file_map[d] == NULL) {
+	if (d < 0 || d >= ts->ts_maxfiles ||
+	    (fp = (struct file *) ts->ts_files[d]) == NULL) {
 		errno = EBADF;
 		return (-1);
 	}
-	res = f_close(file_map[d]);
-	free(file_map[d]);
-	file_map[d] = NULL;
-	return(ffres2errno(res));
+
+	ts->ts_files[d] = NULL;
+	if (--(fp->f_refc))
+		return (0);
+
+	/* XXX hack for stdin, stdout, stderr */
+	if ((fp->f_mflags & F_MF_FILE_MALLOCED) == 0)
+		return (0);
+
+	ffp = fp->f_priv;
+	f_res = f_close(ffp);
+	free(ffp);
+	free(fp);
+	return(ffres2errno(f_res));
 }
 
 
 ssize_t
 read(int d, void *buf, size_t nbytes)
 {
+	struct task *ts = TD_TASK(curthread);
+	FIL *ffp;
 	FRESULT f_res;
 	uint32_t got = 0;
 
@@ -232,14 +227,14 @@ read(int d, void *buf, size_t nbytes)
 		}
 		return (got);
 	}
-	d -= 3;
 
-	if (d < 0 || d >= MAXFILES || file_map[d] == NULL) {
+	if (d < 3 || d >= ts->ts_maxfiles || ts->ts_files[d] == NULL) {
 		errno = EBADF;
 		return (-1);
 	}
 
-	f_res = f_read(file_map[d], buf, nbytes, &got);
+	ffp = ts->ts_files[d]->f_priv;
+	f_res = f_read(ffp, buf, nbytes, &got);
 	if (f_res != FR_OK)
 		return(ffres2errno(f_res));
 	return (got);
@@ -249,7 +244,9 @@ read(int d, void *buf, size_t nbytes)
 ssize_t
 write(int d, const void *buf, size_t nbytes)
 {
+	struct task *ts = TD_TASK(curthread);
 #if !defined(_FS_READONLY) || (_FS_READONLY == 0)
+	FIL *ffp;
 	FRESULT f_res;
 #endif
 	uint32_t wrote = nbytes;
@@ -264,9 +261,8 @@ write(int d, const void *buf, size_t nbytes)
 		}
 		return (wrote);
 	}
-	d -= 3;
 
-	if (d < 0 || d >= MAXFILES || file_map[d] == NULL) {
+	if (d < 3 || d >= ts->ts_maxfiles || ts->ts_files[d] == NULL) {
 		errno = EBADF;
 		return (-1);
 	}
@@ -274,7 +270,8 @@ write(int d, const void *buf, size_t nbytes)
 #if defined(_FS_READONLY) && (_FS_READONLY == 1)
 	return (-1);
 #else
-	f_res = f_write(file_map[d], buf, nbytes, &wrote);
+	ffp = ts->ts_files[d]->f_priv;
+	f_res = f_write(ffp, buf, nbytes, &wrote);
 	if (f_res != FR_OK)
 		return(ffres2errno(f_res));
 	return (wrote);
@@ -285,36 +282,38 @@ write(int d, const void *buf, size_t nbytes)
 off_t
 lseek(int d, off_t offset, int whence)
 {
+	struct task *ts = TD_TASK(curthread);
+	FIL *ffp;
 	FRESULT f_res;
 
 	/* XXX hack for stdin, stdout, stderr */
 	if (d >= 0 && d <= 2)
 		return (-1);
-	d -= 3;
 
-	if (d < 0 || d >= MAXFILES || file_map[d] == NULL) {
+	if (d < 3 || d >= ts->ts_maxfiles || ts->ts_files[d] == NULL) {
 		errno = EBADF;
 		return (-1);
 	}
 
+	ffp = ts->ts_files[d]->f_priv;
 	switch (whence) {
 	case SEEK_SET:
 		break;
 	case SEEK_CUR:
-		offset = f_tell(file_map[d]) + offset;
+		offset = f_tell(ffp) + offset;
 		break;
 	case SEEK_END:
-		offset = f_size(file_map[d]) + offset; /* XXX revisit */
+		offset = f_size(ffp) + offset; /* XXX revisit */
 		break;
 	default:
 		errno = EINVAL;
 		return (-1);
 	}
 
-	f_res = f_lseek(file_map[d], offset);
+	f_res = f_lseek(ffp, offset);
 	if (f_res != FR_OK)
 		return(ffres2errno(f_res));
-	return ((int) f_tell(file_map[d]));
+	return ((int) f_tell(ffp));
 }
 
 
@@ -406,6 +405,7 @@ opendir(const char *path)
 	int res;
 	DIR *dirp = malloc(sizeof(DIR));
 
+	check_automount();
 	if (dirp == NULL) {
 		errno = EINVAL;
 		return dirp;

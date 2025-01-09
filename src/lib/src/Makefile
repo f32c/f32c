@@ -82,7 +82,7 @@ ifeq ($(LIB),c)
 
  CFILES += dev/sio.c dev/spi.c
 
- CFILES += sys/task.c
+ CFILES += sys/task.c sys/file.c
 
  CFILES += fs/fatfs.c fs/ffunicode.c fs/file.c fs/diskio.c
  CFILES += fs/diskio_flash.c fs/diskio_fram.c fs/diskio_ram.c \
