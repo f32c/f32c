@@ -26,6 +26,7 @@
 #ifndef _SYS_FILE_H_
 #define _SYS_FILE_H_
 
+/* fileops types */
 typedef int fo_rdwr_t(struct file *fp, char *buf, size_t nbytes);
 typedef int fo_lseek_t(struct file *fp, off_t offset, int whence);
 typedef int fo_fcntl_t(struct file *fp, int cmd, void *data);
@@ -46,8 +47,12 @@ struct fileops {
 struct file {
 	struct fileops	*f_ops;		/* file operations */
 	void		*f_priv;	/* file descriptor specific data */
-	volatile u_int	f_refc;		/* reference count */
-	volatile u_int	f_flags;	/* see fcntl.h */
+	uint16_t	f_mflags;	/* malloc flags */
+	volatile uint16_t f_refc;	/* reference count */
+	volatile uint16_t f_flags;	/* see fcntl.h */
 }; 
+
+#define	F_MF_FILE_MALLOCED	0x0001
+#define	F_MF_PRIV_MALLOCED	0x0002
 
 #endif /* _SYS_FILE_H_ */
