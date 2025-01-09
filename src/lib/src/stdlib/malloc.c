@@ -188,3 +188,16 @@ realloc(void *oldptr, size_t size)
 	free(oldptr);
 	return (newptr);
 }
+
+
+void *
+calloc(size_t number, size_t size)
+{
+	size_t len = number * size;
+	void *mem = malloc(len);
+
+	if (mem != NULL)
+		bzero(mem, len);
+
+	return (mem);
+}
