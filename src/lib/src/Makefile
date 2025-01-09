@@ -84,7 +84,7 @@ ifeq ($(LIB),c)
 
  CFILES += sys/task.c sys/file.c
 
- CFILES += fs/fatfs.c fs/ffunicode.c fs/file.c fs/diskio.c
+ CFILES += fs/fatfs.c fs/ffunicode.c fs/ff_glue.c fs/diskio.c
  CFILES += fs/diskio_flash.c fs/diskio_fram.c fs/diskio_ram.c \
 	fs/diskio_sdcard.c
 
