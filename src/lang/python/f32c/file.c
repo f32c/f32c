@@ -45,9 +45,6 @@
 
 /* XXX Marko fixme! */
 #define fsync(a) do {} while (0)
-int _errno;
-int * __error(void) { return (&_errno); };
-
 
 typedef struct _mp_obj_fdfile_t {
     mp_obj_base_t base;

@@ -60,7 +60,7 @@ all: $(PROG).bin
 $(PROG).bin: $(PROG).elf
 	$(ISA_CHECK) $(ARCH) $(PROG).elf
 	$(ARCH)-elf-objcopy ${OBJFLAGS} -O binary $(PROG).elf $(PROG).bin
-	$(ARCH)-elf-objcopy ${OBJFLAGS} -O srec $(PROG).elf $(PROG).hex
+	$(ARCH)-elf-objcopy ${OBJFLAGS} -O srec $(PROG).elf $(PROG).srec
 
 $(PROG).elf: $(OBJ)
 	$(ECHO) "LINK $@"

@@ -117,33 +117,17 @@ char *strcat(char *dest, const char *src) {
 
 extern int _xvprintf(char const *, void(*)(int, void *), void *, va_list);
 
-static __attribute__((optimize("-Os"))) void
-sio_pchar(int c, void *arg __unused)
+static void
+pchar(int c, void *arg __unused)
 {
 
-        /* Translate CR -> CR + LF */
-        if (c == '\n')
-                sio_putchar('\r', 1);
-        sio_putchar(c, 1);
+        putchar(c);
 }
 
 int vprintf(const char *format, va_list ap)
 {
         int retval;
         
-        retval = _xvprintf(format, sio_pchar, NULL, ap);
+        retval = _xvprintf(format, pchar, NULL, ap);
         return (retval);
-}
-
-#undef putchar
-int putchar(int c)
-{
-	sio_pchar(c, 0);
-	return 0;
-}
-
-int puts(const char *s)
-{
-	printf("%s", s);
-	return 0;
 }
