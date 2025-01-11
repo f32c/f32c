@@ -230,3 +230,25 @@ putchar(int c)
 
 	return (fputc(c, stdout));
 }
+
+
+int
+fputs(const char *str, FILE *f)
+{
+	int len = strlen(str);
+	int res;
+
+	res = write(f->_fd, str, len);
+	if (res != 1)
+		return (EOF);
+
+	return (len);
+}
+
+
+int
+puts(const char *str)
+{
+
+	return (fputs(str, stdout));
+}
