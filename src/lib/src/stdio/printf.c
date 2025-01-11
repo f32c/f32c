@@ -36,9 +36,9 @@
 
 #include <math.h>
 #include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <sys/file.h>
 
@@ -278,7 +278,7 @@ reswitch:	switch (ch = (u_char)*fmt++) {
 			if (p == NULL)
 				p = "(null)";
 			if (!dot)
-				n = strlen (p);
+				n = strlen(p);
 			else
 				for (n = 0; n < dwidth && p[n]; n++)
 					continue;
@@ -414,10 +414,9 @@ static void
 fpchar(int c, void *arg)
 {
 	FILE *fp = arg;
-	struct file *fd = TD_TASK(curthread)->ts_files[fp->_fd];
 	char byte = c;
 
-	fd->f_ops->fo_write(fd, &byte, 1);
+	write(fp->_fd, &byte, 1);
 }
 
 
