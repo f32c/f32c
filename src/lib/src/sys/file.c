@@ -211,12 +211,12 @@ fstat(int fd __unused, struct stat *sb __unused)
 
 
 int
-fputc(int c, FILE *f)
+fputc(int c, FILE *fp)
 {
 	char b = c;
 	int res;
 
-	res = write(f->_fd, &b, 1);
+	res = write(fp->_fd, &b, 1);
 	if (res != 1)
 		return (EOF);
 
@@ -233,13 +233,13 @@ putchar(int c)
 
 
 int
-fputs(const char *str, FILE *f)
+fputs(const char *str, FILE *fp)
 {
 	int len = strlen(str);
 	int res;
 
-	res = write(f->_fd, str, len);
-	if (res != 1)
+	res = write(fp->_fd, str, len);
+	if (res != len)
 		return (EOF);
 
 	return (len);
