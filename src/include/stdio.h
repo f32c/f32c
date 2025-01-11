@@ -31,6 +31,8 @@
 
 #include <dev/sio.h>
 
+#define	EOF	(-1)
+
 struct __sFILE {
 	int16_t _fd;		/* file descriptor, or -1 */
 	int16_t _flags;		/* flags */
@@ -44,7 +46,6 @@ typedef struct __sFILE FILE;
 
 /* XXX temporary sio hacks, revisit! */
 #define	getchar()	sio_getchar(1)
-#define	putchar(c)	sio_putchar(c)
 
 int	printf(const char * __restrict, ...) \
 	    __attribute__((format (printf, 1, 2)));

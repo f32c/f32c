@@ -27,7 +27,6 @@
 #define	_DEV_SIO_H_
 
 int sio_getchar(int);
-int sio_putchar(int);
 int sio_setbaud(int);
 int sio_getbaud(void);
 

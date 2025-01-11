@@ -95,7 +95,7 @@ sio_probe_rx(struct file *sfd)
 }
 
 static int
-sio_read(struct file *fp, char *buf, size_t nbytes)
+sio_read(struct file *fp, void *buf, size_t nbytes)
 {
 
 	/* XXX implement me! */
@@ -104,13 +104,14 @@ sio_read(struct file *fp, char *buf, size_t nbytes)
 }
 
 static int
-sio_write(struct file *fp, char *buf, size_t nbytes)
+sio_write(struct file *fp, const void *buf, size_t nbytes)
 {
 	struct sio_state *sio = fp->f_priv;
+	const char *cp = buf;
 	int i, c;
 
 	for (i = 0; i < nbytes; i++) {
-		c = buf[i];
+		c = *cp++;
 
 		again:
 		do {
@@ -164,18 +165,6 @@ sio_getchar(int blocking)
 	c = sio->s_rxbuf[sio->s_rxbuf_tail++];
 	sio->s_rxbuf_tail &= SIO_RXBUFMASK;
 	return (c);
-}
-
-
-int
-sio_putchar(int c)
-{
-	struct file *fd = TD_TASK(curthread)->ts_files[1]; /* XXX */
-	char byte = c;
-
-	fd->f_ops->fo_write(fd, &byte, 1);
-
-	return(0);
 }
 
 

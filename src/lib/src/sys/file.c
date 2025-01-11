@@ -208,3 +208,25 @@ fstat(int fd __unused, struct stat *sb __unused)
 
 	return (-1);
 }
+
+
+int
+fputc(int c, FILE *f)
+{
+	char b = c;
+	int res;
+
+	res = write(f->_fd, &b, 1);
+	if (res != 1)
+		return (EOF);
+
+	return (c);
+}
+
+
+int
+putchar(int c)
+{
+
+	return (fputc(c, stdout));
+}
