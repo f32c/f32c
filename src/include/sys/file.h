@@ -27,7 +27,8 @@
 #define _SYS_FILE_H_
 
 /* fileops types */
-typedef int fo_rdwr_t(struct file *fp, char *buf, size_t nbytes);
+typedef int fo_read_t(struct file *fp, void *buf, size_t nbytes);
+typedef int fo_write_t(struct file *fp, const void *buf, size_t nbytes);
 typedef int fo_lseek_t(struct file *fp, off_t offset, int whence);
 typedef int fo_fcntl_t(struct file *fp, int cmd, void *data);
 typedef int fo_ftruncate_t(struct file *fp, off_t length);
@@ -35,8 +36,8 @@ typedef int fo_fstat_t(struct file *fp, void *data);
 typedef int fo_close_t(struct file *fp);
 
 struct fileops {
-	fo_rdwr_t	*fo_read;
-	fo_rdwr_t	*fo_write;
+	fo_read_t	*fo_read;
+	fo_write_t	*fo_write;
 	fo_lseek_t	*fo_lseek;
 	fo_fcntl_t	*fo_fcntl;
 	fo_ftruncate_t	*fo_ftruncate;

@@ -30,12 +30,10 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <sys/file.h>
-#include <sys/stat.h>
 
 #include <fatfs/diskio.h>
 
@@ -143,139 +141,11 @@ check_automount(void)
 
 
 int
-ff_open(struct file *fp, const char *path, int flags, ...)
-{
-	FIL *ffp;
-	int res, ff_flags;
-
-	check_automount();
-
-	/* Map open() flags to f_open() flags */
-	ff_flags = ((flags & O_ACCMODE) + 1);
-#if !defined(_FS_READONLY) || (_FS_READONLY == 0)
-	if (flags & (O_CREAT | O_TRUNC))
-		ff_flags |= FA_CREATE_ALWAYS;
-	else if (flags & O_CREAT)
-		ff_flags |= FA_OPEN_ALWAYS;
-#endif
-
-	ffp = malloc(sizeof(FIL));
-	if (ffp == NULL) {
-		errno = ENOMEM;
-		return (-1);
-	}
-
-	fp->f_priv = ffp;
-	res = f_open(ffp, path, ff_flags);
-	return(ffres2errno(res));
-}
-
-
-int
 creat(const char *path, mode_t mode __unused)
 {
 
 	check_automount();
 	return (open(path, O_CREAT | O_TRUNC | O_WRONLY));
-}
-
-
-int
-close(int d)
-{
-	struct task *ts = TD_TASK(curthread);
-	struct file *fp;
-	FIL *ffp;
-	int f_res;
-
-	if (d < 0 || d >= ts->ts_maxfiles ||
-	    (fp = (struct file *) ts->ts_files[d]) == NULL) {
-		errno = EBADF;
-		return (-1);
-	}
-
-	ts->ts_files[d] = NULL;
-	if (--(fp->f_refc))
-		return (0);
-
-	/* XXX hack for stdin, stdout, stderr */
-	if ((fp->f_mflags & F_MF_FILE_MALLOCED) == 0)
-		return (0);
-
-	ffp = fp->f_priv;
-	f_res = f_close(ffp);
-	free(ffp);
-	free(fp);
-	return(ffres2errno(f_res));
-}
-
-
-ssize_t
-read(int d, void *buf, size_t nbytes)
-{
-	struct task *ts = TD_TASK(curthread);
-	FIL *ffp;
-	FRESULT f_res;
-	uint32_t got = 0;
-
-	/* XXX hack for stdin, stdout, stderr */
-	if (d >= 0 && d <= 2) {
-		char *cp = (char *) buf;
-		for (; nbytes != 0; nbytes--) {
-			*cp++ = getchar() & 0177;
-			got++;
-		}
-		return (got);
-	}
-
-	if (d < 3 || d >= ts->ts_maxfiles || ts->ts_files[d] == NULL) {
-		errno = EBADF;
-		return (-1);
-	}
-
-	ffp = ts->ts_files[d]->f_priv;
-	f_res = f_read(ffp, buf, nbytes, &got);
-	if (f_res != FR_OK)
-		return(ffres2errno(f_res));
-	return (got);
-}
-
-
-ssize_t
-write(int d, const void *buf, size_t nbytes)
-{
-	struct task *ts = TD_TASK(curthread);
-#if !defined(_FS_READONLY) || (_FS_READONLY == 0)
-	FIL *ffp;
-	FRESULT f_res;
-#endif
-	uint32_t wrote = nbytes;
-
-	/* XXX hack for stdin, stdout, stderr */
-	if (d >= 0 && d <= 2) {
-		char *cp = (char *) buf;
-		for (; nbytes != 0; nbytes--) {
-			if (*cp == '\n')
-				putchar('\r');
-			putchar(*cp++);
-		}
-		return (wrote);
-	}
-
-	if (d < 3 || d >= ts->ts_maxfiles || ts->ts_files[d] == NULL) {
-		errno = EBADF;
-		return (-1);
-	}
-
-#if defined(_FS_READONLY) && (_FS_READONLY == 1)
-	return (-1);
-#else
-	ffp = ts->ts_files[d]->f_priv;
-	f_res = f_write(ffp, buf, nbytes, &wrote);
-	if (f_res != FR_OK)
-		return(ffres2errno(f_res));
-	return (wrote);
-#endif
 }
 
 
@@ -460,30 +330,81 @@ closedir(DIR *dirp)
 };
 
 
-/* Entirely unimplemented, just empty placeholders */
-
 int
-fcntl(int fd __unused, int cmd __unused, ...)
+ff_close(struct file *fp)
 {
+	FIL *ffp = fp->f_priv;
+	FRESULT f_res;
 
-	check_automount();
-	return (-1);
+	f_res = f_close(ffp);
+	return(ffres2errno(f_res));
 }
 
 
-int
-stat(const char *path __unused, struct stat *sb __unused)
+ssize_t
+ff_read(struct file *fp, void *buf, size_t nbytes)
 {
+	FIL *ffp = fp->f_priv;
+	FRESULT f_res;
+	size_t got;
 
-	check_automount();
-	return (-1);
+	f_res = f_read(ffp, buf, nbytes, &got);
+	if (f_res == FR_OK)
+		return (got);
+	return(ffres2errno(f_res));
 }
 
 
-int
-fstat(int fd __unused, struct stat *sb __unused)
+ssize_t
+ff_write(struct file *fp, const void *buf, size_t nbytes)
 {
+	FIL *ffp = fp->f_priv;
+	FRESULT f_res;
+	size_t wrote = -1;
+
+#if !defined(_FS_READONLY) || (_FS_READONLY == 0)
+	f_res = f_write(ffp, buf, nbytes, &wrote);
+	if (f_res != FR_OK)
+		return(ffres2errno(f_res));
+#else
+	errno = EIO;
+#endif
+	return (wrote);
+}
+
+
+static struct fileops ff_fileops = {
+	.fo_close = &ff_close,
+	.fo_read = &ff_read,
+	.fo_write = &ff_write,
+};
+
+
+int
+ff_open(struct file *fp, const char *path, int flags, ...)
+{
+	FIL *ffp;
+	int res, ff_flags;
 
 	check_automount();
-	return (-1);
+
+	/* Map open() flags to f_open() flags */
+	ff_flags = ((flags & O_ACCMODE) + 1);
+#if !defined(_FS_READONLY) || (_FS_READONLY == 0)
+	if (flags & (O_CREAT | O_TRUNC))
+		ff_flags |= FA_CREATE_ALWAYS;
+	else if (flags & O_CREAT)
+		ff_flags |= FA_OPEN_ALWAYS;
+#endif
+
+	ffp = malloc(sizeof(FIL));
+	if (ffp == NULL) {
+		errno = ENOMEM;
+		return (-1);
+	}
+
+	fp->f_ops = &ff_fileops;
+	fp->f_priv = ffp;
+	res = f_open(ffp, path, ff_flags);
+	return(ffres2errno(res));
 }
