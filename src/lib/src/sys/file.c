@@ -236,19 +236,18 @@ int
 fputs(const char *str, FILE *fp)
 {
 	int len = strlen(str);
-	int res;
 
-	res = write(fp->_fd, str, len);
-	if (res != len)
-		return (EOF);
-
-	return (len);
+	return (write(fp->_fd, str, len));
 }
 
 
 int
 puts(const char *str)
 {
+	int res;
 
-	return (fputs(str, stdout));
+	res = fputs(str, stdout);
+	if (res >= 0)
+		res = fputc('\n', stdout);
+	return (res);
 }
