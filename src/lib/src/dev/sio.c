@@ -23,6 +23,8 @@
  * SUCH DAMAGE.
  */
 
+#include <termios.h>
+
 #include <sys/file.h>
 
 #include <dev/io.h>
@@ -35,9 +37,12 @@
 #define	SIO_REG_STATUS	0x4
 #define	SIO_REG_BAUD	0x8
 
-static uint16_t sio_bauds[16] = {
-	3,	6,	12,	24,	48,	96,	192,	384,
-	576,	1152,	2304,	4608,	9216,	10000,	15000,	30000
+static int sio_read(struct file *, void *, size_t);
+static int sio_write(struct file *, const void *, size_t);
+
+static struct fileops sio_fileops = {
+	.fo_read = &sio_read,
+	.fo_write = &sio_write,
 };
 
 struct sio_state {
@@ -47,17 +52,35 @@ struct sio_state {
 	uint32_t	s_rxbuf_tail; /* Managed by sio_getchar() */
 	uint32_t	s_hw_rx_overruns;
 	uint32_t	s_sw_rx_overruns;
-	uint8_t		s_tx_xoff;
 };
 
 static struct sio_state sio0_state = {
 	.s_io_port = IO_SIO_0
 };
 
+static struct termios sio0_termios = {
+	.c_iflags = ICRNL | IXON,
+	.c_oflags = OPOST | ONLCR,
+	.rows = 24,
+	.columns = 80
+};
+
+struct file __sio0_file = {
+	.f_ops = &sio_fileops,
+	.f_priv = &sio0_state,
+	.f_termios = &sio0_termios,
+	.f_refc = 3
+};
+
+static uint16_t sio_bauds[16] = {
+	3,	6,	12,	24,	48,	96,	192,	384,
+	576,	1152,	2304,	4608,	9216,	10000,	15000,	30000
+};
+
 static int
-sio_probe_rx(struct file *sfd)
+sio_probe_rx(struct file *fp)
 {
-	struct sio_state *sio = sfd->f_priv;
+	struct sio_state *sio = fp->f_priv;
 	uint32_t c, s, rxbuf_head_next;
 
 	do {
@@ -74,12 +97,12 @@ sio_probe_rx(struct file *sfd)
 		LB(c, SIO_REG_DATA, sio->s_io_port);
 		if (c == 0x13) {
 			/* XOFF */
-			sio->s_tx_xoff = 1;
+			fp->f_termios->lflags |= IXON;
 			return(s);
 		}
 		if (c == 0x11) {
 			/* XON */
-			sio->s_tx_xoff = 0;
+			fp->f_termios->lflags &= ~IXON;
 			return(s);
 		}
 
@@ -115,7 +138,8 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 
 		again:
 		do {
-		} while ((sio_probe_rx(fp) & SIO_TX_BUSY) || sio->s_tx_xoff);
+		} while ((sio_probe_rx(fp) & SIO_TX_BUSY)
+		    || (fp->f_termios->lflags & IXON));
 		SB(c, SIO_REG_DATA, sio->s_io_port);
 
 		/*
@@ -133,30 +157,19 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 	return nbytes;
 }
 
-static struct fileops sio_fileops = {
-	.fo_read = &sio_read,
-	.fo_write = &sio_write,
-};
-
-struct file __sio0_file = {
-	.f_ops = &sio_fileops,
-	.f_priv = &sio0_state,
-	.f_refc = 3
-};
-
 
 /* Legacy f32c functions, should go away */
 
 int
 sio_getchar(int blocking)
 {
-	struct file *sfd = TD_TASK(curthread)->ts_files[0]; /* XXX */
-	struct sio_state *sio = sfd->f_priv;
+	struct file *fp = TD_TASK(curthread)->ts_files[0]; /* XXX */
+	struct sio_state *sio = fp->f_priv;
 	int c, busy;
 
 	/* Any new characters received from RS-232? */
 	do {
-		sio_probe_rx(sfd);
+		sio_probe_rx(fp);
 		busy = (sio->s_rxbuf_head == sio->s_rxbuf_tail);
 	} while (blocking && busy);
 
@@ -171,8 +184,8 @@ sio_getchar(int blocking)
 int
 sio_setbaud(int bauds)
 {
-	struct file *sfd = TD_TASK(curthread)->ts_files[0]; /* XXX */
-	struct sio_state *sio = sfd->f_priv;
+	struct file *fp = TD_TASK(curthread)->ts_files[0]; /* XXX */
+	struct sio_state *sio = fp->f_priv;
 	int i;
 
 	for (i = 0, bauds /= 100; i < 16; i++)
@@ -187,8 +200,8 @@ sio_setbaud(int bauds)
 int
 sio_getbaud(void)
 {
-	struct file *sfd = TD_TASK(curthread)->ts_files[0]; /* XXX */
-	struct sio_state *sio = sfd->f_priv;
+	struct file *fp = TD_TASK(curthread)->ts_files[0]; /* XXX */
+	struct sio_state *sio = fp->f_priv;
 	int i;
 
 	LB(i, SIO_REG_BAUD, sio->s_io_port);
