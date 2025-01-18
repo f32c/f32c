@@ -46,16 +46,13 @@ static struct fileops sio_fileops = {
 };
 
 struct sio_state {
+	struct termios	*s_termios;
 	char		s_rxbuf[SIO_RXBUFSIZE];
 	uint32_t	s_io_port;
 	uint32_t	s_rxbuf_head; /* Managed by sio_probe_rx() */
 	uint32_t	s_rxbuf_tail; /* Managed by sio_getchar() */
 	uint32_t	s_hw_rx_overruns;
 	uint32_t	s_sw_rx_overruns;
-};
-
-static struct sio_state sio0_state = {
-	.s_io_port = IO_SIO_0
 };
 
 static struct termios sio0_termios = {
@@ -65,10 +62,14 @@ static struct termios sio0_termios = {
 	.columns = 80
 };
 
+static struct sio_state sio0_state = {
+	.s_termios = &sio0_termios,
+	.s_io_port = IO_SIO_0
+};
+
 struct file __sio0_file = {
 	.f_ops = &sio_fileops,
 	.f_priv = &sio0_state,
-	.f_termios = &sio0_termios,
 	.f_refc = 3
 };
 
@@ -97,12 +98,12 @@ sio_probe_rx(struct file *fp)
 		LB(c, SIO_REG_DATA, sio->s_io_port);
 		if (c == 0x13) {
 			/* XOFF */
-			fp->f_termios->lflags |= IXON;
+			sio->s_termios->lflags |= IXON;
 			return(s);
 		}
 		if (c == 0x11) {
 			/* XON */
-			fp->f_termios->lflags &= ~IXON;
+			sio->s_termios->lflags &= ~IXON;
 			return(s);
 		}
 
@@ -139,7 +140,7 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 		again:
 		do {
 		} while ((sio_probe_rx(fp) & SIO_TX_BUSY)
-		    || (fp->f_termios->lflags & IXON));
+		    || (sio->s_termios->lflags & IXON));
 		SB(c, SIO_REG_DATA, sio->s_io_port);
 
 		/*
