@@ -14,20 +14,20 @@
 #define	ONLCR	0x02
 #define	OCRNL	0x04
 
+/* Special control characters */
+
+#define	VEOF	0	/* CTRL-D */
+#define	VINTR	1	/* CTRL-C */
+#define	VERASE	2	/* CTRL-H */
+#define	VSUSP	3	/* CTRL-S */
+#define	NCCS	4
+
 struct termios {
-	uint8_t		c_iflags;	/* input processing config */
-	uint8_t		c_oflags;	/* output processing config */
-	uint8_t		c_lflags;	/* local processing config */
-	uint8_t		iflags;		/* input processing active flags */
-	uint8_t		oflags;		/* output processing active flags */
-	uint8_t		lflags;		/* local processing active flags */
-	uint8_t		rows;
-	uint8_t		columns;
+	uint8_t		c_iflags;	/* input config */
+	uint8_t		c_oflags;	/* output config */
+	uint8_t		c_cflags;	/* control config */
+	uint8_t		c_lflags;	/* local config */
+	uint8_t		c_cc[NCCS];	/* control chars */
 };
-
-#define	DO_TERMIOS(t, c) ((t) != NULL && ((uint) c) < 32)
-#define	TERMIOS_OBLOCK(t) ((t) != NULL && ((t)->lflags & IXON))
-
-int termios_oexpand(struct termios *, int, char *);
 
 #endif /* !_TERMIOS_H_ */

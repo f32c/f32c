@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 - 2025 Marko Zec
+ * Copyright (c) 2025 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,29 +23,24 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/tty.h>
+#ifndef _SYS_TTY_H_
+#define _SYS_TTY_H_
 
-/*
- * termios output processing:
- *
- * ONLCR	Map NL to CR-NL on output.
- */
+#include <termios.h>
 
-int
-tty_oexpand(struct tty *tty, int c, char *buf)
-{
-	int n = 1;
+#define	TTY_OSTOP	0x0001
 
-	switch(c) {
-	case '\n':
-		if (tty->t_termios.c_oflags & ONLCR) {
-			*buf++ = '\r';
-			n++;
-		}
-		/* fallthrough */
-	default:
-		*buf = c;
-	};
+#define TTY_OBLOCKED(t) ((t) != NULL && ((t)->t_rflags & TTY_OSTOP))
 
-	return (n);
-}
+#define TTY_DO_OPROC(t, c) ((t) != NULL && ((uint) c) < 32)
+
+struct tty {
+	struct termios	t_termios;
+	uint8_t		t_rows;
+	uint8_t		t_columns;
+	uint16_t	t_rflags;
+};
+
+int tty_oexpand(struct tty *, int, char *);
+
+#endif /* _SYS_TTY_H_ */

@@ -23,9 +23,8 @@
  * SUCH DAMAGE.
  */
 
-#include <termios.h>
-
 #include <sys/file.h>
+#include <sys/tty.h>
 
 #include <dev/io.h>
 #include <dev/sio.h>
@@ -46,24 +45,22 @@ static struct fileops sio_fileops = {
 };
 
 struct sio_state {
-	struct termios	*s_termios;
-	char		s_rxbuf[SIO_RXBUFSIZE];
 	uint32_t	s_io_port;
+	struct tty	*s_tty;
+	char		s_rxbuf[SIO_RXBUFSIZE];
 	uint32_t	s_rxbuf_head; /* Managed by sio_probe_rx() */
 	uint32_t	s_rxbuf_tail; /* Managed by sio_getchar() */
 	uint32_t	s_hw_rx_overruns;
 	uint32_t	s_sw_rx_overruns;
 };
 
-static struct termios sio0_termios = {
-	.c_iflags = ICRNL | IXON,
-	.c_oflags = OPOST | ONLCR,
-	.rows = 24,
-	.columns = 80
+static struct tty sio0_tty = {
+	.t_termios.c_iflags = ICRNL | IXON,
+	.t_termios.c_oflags = OPOST | ONLCR
 };
 
 static struct sio_state sio0_state = {
-	.s_termios = &sio0_termios,
+	.s_tty = &sio0_tty,
 	.s_io_port = IO_SIO_0
 };
 
@@ -98,12 +95,12 @@ sio_probe_rx(struct file *fp)
 		LB(c, SIO_REG_DATA, sio->s_io_port);
 		if (c == 0x13) {
 			/* XOFF */
-			sio->s_termios->lflags |= IXON;
+			sio->s_tty->t_rflags |= TTY_OSTOP;
 			return(s);
 		}
 		if (c == 0x11) {
 			/* XON */
-			sio->s_termios->lflags &= ~IXON;
+			sio->s_tty->t_rflags &= ~TTY_OSTOP;
 			return(s);
 		}
 
@@ -138,7 +135,7 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 
 	for (i = 0; i < nbytes || tios_i != tios_n;) {
 		for (; (sio_probe_rx(fp) & SIO_TX_BUSY) ||
-		    (TERMIOS_OBLOCK(sio->s_termios) && (tios_i == tios_n));) {
+		    (TTY_OBLOCKED(sio->s_tty) && (tios_i == tios_n));) {
 			/* Notify upstream we are blocked, do other work */
 		}
 
@@ -146,9 +143,9 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 			c = tios_obuf[tios_i++];
 		else {
 			c = cbuf[i++];
-			if (DO_TERMIOS(sio->s_termios, c)) {
+			if (TTY_DO_OPROC(sio->s_tty, c)) {
 				tios_i = 0;
-				tios_n = termios_oexpand(sio->s_termios, c,
+				tios_n = tty_oexpand(sio->s_tty, c,
 				    tios_obuf);
 				if (tios_n == 0)
 					continue;
