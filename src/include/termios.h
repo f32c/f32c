@@ -25,4 +25,9 @@ struct termios {
 	uint8_t		columns;
 };
 
+#define	DO_TERMIOS(t, c) ((t) != NULL && ((uint) c) < 32)
+#define	TERMIOS_OBLOCK(t) ((t) != NULL && ((t)->lflags & IXON))
+
+int termios_oexpand(struct termios *, int, char *);
+
 #endif /* !_TERMIOS_H_ */

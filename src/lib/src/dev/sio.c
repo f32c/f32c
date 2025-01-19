@@ -131,28 +131,32 @@ static int
 sio_write(struct file *fp, const void *buf, size_t nbytes)
 {
 	struct sio_state *sio = fp->f_priv;
-	const char *cp = buf;
-	int i, c;
+	const char *cbuf = buf;
+	char tios_obuf[4];
+	int tios_i = 0, tios_n = 0;
+	int c, i;
 
-	for (i = 0; i < nbytes; i++) {
-		c = *cp++;
-
-		again:
-		do {
-		} while ((sio_probe_rx(fp) & SIO_TX_BUSY)
-		    || (sio->s_termios->lflags & IXON));
-		SB(c, SIO_REG_DATA, sio->s_io_port);
-
-		/*
-		 * Translate LF -> LF + CR.
-		 * Should be ONLCR, i.e. LF -> CR + LF.
-		 * Should be done in a separate, generalized TTY options
-		 * processor.  XXX revisit!
-		 */
-		if (c == '\n') {
-			c = '\r';
-			goto again;
+	for (i = 0; i < nbytes || tios_i != tios_n;) {
+		for (; (sio_probe_rx(fp) & SIO_TX_BUSY) ||
+		    (TERMIOS_OBLOCK(sio->s_termios) && (tios_i == tios_n));) {
+			/* Notify upstream we are blocked, do other work */
 		}
+
+		if (tios_i != tios_n)
+			c = tios_obuf[tios_i++];
+		else {
+			c = cbuf[i++];
+			if (DO_TERMIOS(sio->s_termios, c)) {
+				tios_i = 0;
+				tios_n = termios_oexpand(sio->s_termios, c,
+				    tios_obuf);
+				if (tios_n == 0)
+					continue;
+				tios_i = 1;
+				c = tios_obuf[0];
+			}
+		}
+		SB(c, SIO_REG_DATA, sio->s_io_port);
 	}
 
 	return nbytes;
