@@ -12,14 +12,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <time.h>
 #include <unistd.h>
 
 #include <sys/stat.h>
-
-#ifndef F32C
-#include <termios.h>
-#endif
 
 #ifdef F32C
 #include <fatfs/ff.h>
