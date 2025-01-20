@@ -44,9 +44,6 @@ typedef struct __sFILE FILE;
 #define	stdout	((FILE *) TD_TASK(curthread)->ts_stdout)
 #define	stderr	((FILE *) TD_TASK(curthread)->ts_stderr)
 
-/* XXX temporary sio hacks, revisit! */
-#define	getchar()	sio_getchar(1)
-
 int	printf(const char * __restrict, ...) \
 	    __attribute__((format (printf, 1, 2)));
 int	fprintf(FILE *, const char * __restrict, ...) \
@@ -74,6 +71,9 @@ int	fputs(const char *, FILE *);
 int	puts(const char *);
 
 int	gets(char *, int);
+int	fgetc(FILE *);
+#define	getc(f) fgetc(f)
+#define	getchar() getc(stdin)
 
 int	rename(const char *, const char *);
 

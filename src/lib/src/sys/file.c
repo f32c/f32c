@@ -239,3 +239,15 @@ puts(const char *str)
 		res = fputc('\n', stdout);
 	return (res);
 }
+
+
+int fgetc(FILE *fp)
+{
+	char c;
+	int res;
+
+	res = read(fp->_fd, &c, 1);
+	if (res != 1)
+		return (-1);
+	return (c);
+}
