@@ -49,3 +49,30 @@ tty_oexpand(struct tty *tty, int c, char *buf)
 
 	return (n);
 }
+
+
+/*
+ * termios input processing
+ */
+
+int
+tty_iproc(struct tty *tty, int c)
+{
+
+	switch(c) {
+	case 0x13: /* XOFF */
+		if (tty->t_termios.c_iflags & IXON) {
+			tty->t_rflags |= TTY_OSTOP;
+			return (-1);
+		} else
+			return (c);
+	case 0x11: /* XON */
+		if (tty->t_termios.c_iflags & IXON) {
+			tty->t_rflags &= ~TTY_OSTOP;
+			return (-1);
+		} else
+			return (c);
+	default:
+		return (c);
+	}
+}

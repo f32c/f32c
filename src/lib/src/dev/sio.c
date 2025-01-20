@@ -83,28 +83,21 @@ sio_probe_rx(struct file *fp)
 	struct sio_state *sio = fp->f_priv;
 	uint32_t c, s, rxbuf_head_next;
 
-	do {
+	for (;;) {
 		LB(s, SIO_REG_STATUS, sio->s_io_port);
 		if (s >> 4 != 0) {
 			sio->s_hw_rx_overruns += (s >> 4) & 0xf;
 			SB(0, SIO_REG_STATUS, sio->s_io_port);
 		}
 
-		s &= (SIO_TX_BUSY | SIO_RX_FULL);
 		if ((s & SIO_RX_FULL) == 0)
-			return (s);
+			break;
 
 		LB(c, SIO_REG_DATA, sio->s_io_port);
-		if (c == 0x13) {
-			/* XOFF */
-			sio->s_tty->t_rflags |= TTY_OSTOP;
-			return(s);
-		}
-		if (c == 0x11) {
-			/* XON */
-			sio->s_tty->t_rflags &= ~TTY_OSTOP;
-			return(s);
-		}
+
+		if (TTY_DO_IPROC(sio->s_tty, c) &&
+		    (c = tty_iproc(sio->s_tty, c)) < 0)
+			continue;
 
 		rxbuf_head_next = (sio->s_rxbuf_head + 1) & SIO_RXBUFMASK;
 		if (rxbuf_head_next == sio->s_rxbuf_tail) {
@@ -114,7 +107,9 @@ sio_probe_rx(struct file *fp)
 
 		sio->s_rxbuf[sio->s_rxbuf_head] = c;
 		sio->s_rxbuf_head = rxbuf_head_next;
-	} while (1);
+	}
+
+	return (s & SIO_TX_BUSY);
 }
 
 static int
@@ -147,8 +142,7 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 			c = cbuf[i++];
 			if (TTY_DO_OPROC(sio->s_tty, c)) {
 				tios_i = 0;
-				tios_n = tty_oexpand(sio->s_tty, c,
-				    tios_obuf);
+				tios_n = tty_oexpand(sio->s_tty, c, tios_obuf);
 				if (tios_n == 0)
 					continue;
 				tios_i = 1;

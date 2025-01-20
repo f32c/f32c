@@ -32,6 +32,7 @@
 
 #define TTY_OBLOCKED(t) ((t) != NULL && ((t)->t_rflags & TTY_OSTOP))
 
+#define TTY_DO_IPROC(t, c) ((t) != NULL && ((c) < 32 || (c) > 126))
 #define TTY_DO_OPROC(t, c) ((t) != NULL && ((uint) c) < 32)
 
 struct tty {
@@ -41,6 +42,7 @@ struct tty {
 	uint16_t	t_rflags;
 };
 
+int tty_iproc(struct tty *, int);
 int tty_oexpand(struct tty *, int, char *);
 
 #endif /* _SYS_TTY_H_ */
