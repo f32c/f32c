@@ -23,6 +23,8 @@
  * SUCH DAMAGE.
  */
 
+#include <fcntl.h>
+
 #include <sys/file.h>
 #include <sys/tty.h>
 
@@ -115,10 +117,32 @@ sio_probe_rx(struct file *fp)
 static int
 sio_read(struct file *fp, void *buf, size_t nbytes)
 {
+	struct sio_state *sio = fp->f_priv;
+	char *cbuf = buf;
+	int i, empty;
 
-	/* XXX implement me! */
+	for (i = 0; i < nbytes;) {
+		for (;;) {
+			sio_probe_rx(fp);
+			empty = (sio->s_rxbuf_head == sio->s_rxbuf_tail);
+			if (!empty)
+				break;
+			if (fp->f_flags & O_NONBLOCK) {
+				if (i != 0)
+					return (i);
+				errno = EAGAIN;
+				return (-1);
+			}
+			/* XXX TODO: notify system we are blocked, yield() */
+		}
+		do {
+			cbuf[i++] = sio->s_rxbuf[sio->s_rxbuf_tail++];
+			sio->s_rxbuf_tail &= SIO_RXBUFMASK;
+			empty = (sio->s_rxbuf_head == sio->s_rxbuf_tail);
+		} while (!empty && i < nbytes);
+	}
 
-	return 0;
+	return (i);
 }
 
 static int
@@ -133,7 +157,13 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 	for (i = 0; i < nbytes || tios_i != tios_n;) {
 		for (; (sio_probe_rx(fp) & SIO_TX_BUSY) ||
 		    (TTY_OBLOCKED(sio->s_tty) && (tios_i == tios_n));) {
-			/* Notify upstream we are blocked, do other work */
+			if (fp->f_flags & O_NONBLOCK) {
+				if (i != 0)
+					return (i);
+				errno = EAGAIN;
+				return (-1);
+			}
+			/* XXX TODO: notify system we are blocked, yield() */
 		}
 
 		if (tios_i != tios_n)
@@ -158,23 +188,22 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 
 /* Legacy f32c functions, should go away */
 
+#include <unistd.h>
+
 int
 sio_getchar(int blocking)
 {
 	struct file *fp = TD_TASK(curthread)->ts_files[0]; /* XXX */
-	struct sio_state *sio = fp->f_priv;
-	int c, busy;
+	char c;
 
-	/* Any new characters received from RS-232? */
-	do {
-		sio_probe_rx(fp);
-		busy = (sio->s_rxbuf_head == sio->s_rxbuf_tail);
-	} while (blocking && busy);
+	if (!blocking)
+		fp->f_flags |= O_NONBLOCK;
 
-	if (busy)
-		return (-1);
-	c = sio->s_rxbuf[sio->s_rxbuf_tail++];
-	sio->s_rxbuf_tail &= SIO_RXBUFMASK;
+	read(0, &c, 1);
+
+	if (!blocking)
+		fp->f_flags &= ~O_NONBLOCK;
+
 	return (c);
 }
 

@@ -135,7 +135,7 @@ close(int fd)
 	if (--(fp->f_refc))
 		return (0);
 
-	/* XXX temporary hack for stdin, stdout, stderr */
+	/* XXX temporary hack for sio0 stdin, stdout, stderr */
 	if ((fp->f_mflags & F_MF_FILE_MALLOCED) == 0)
 		return (0);
 
@@ -150,22 +150,11 @@ ssize_t
 read(int fd, void *buf, size_t nbytes)
 {
 	struct file *fp = fd2fp(fd);
-	ssize_t got = 0;
+	ssize_t got = -1;
 
-	if (fp == NULL)
-		return (-1);
+	if (fp != NULL)
+		got = fp->f_ops->fo_read(fp, buf, nbytes);
 
-	/* XXX temporary hack for stdin, stdout, stderr */
-	if (fd >= 0 && fd <= 2) {
-		char *cp = (char *) buf;
-		for (; nbytes != 0; nbytes--) {
-			*cp++ = getchar() & 0177;
-			got++;
-		}
-		return (got);
-	}
-
-	got = fp->f_ops->fo_read(fp, buf, nbytes);
 	return (got);
 }
 
@@ -174,12 +163,11 @@ ssize_t
 write(int fd, const void *buf, size_t nbytes)
 {
 	struct file *fp = fd2fp(fd);
-	ssize_t wrote = nbytes;
+	ssize_t wrote = -1;
 
-	if (fp == NULL)
-		return (-1);
+	if (fp != NULL)
+		wrote = fp->f_ops->fo_write(fp, buf, nbytes);
 
-	wrote = fp->f_ops->fo_write(fp, buf, nbytes);
 	return (wrote);
 }
 
