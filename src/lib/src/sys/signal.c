@@ -28,7 +28,7 @@
 sig_t
 signal(int sig, sig_t func)
 {
-	struct task *task = curthread->td_task;
+	struct task *task = TD_TASK(curthread);
 	sig_t osigh = task->ts_sigh;
 
 	task->ts_sigh = func;

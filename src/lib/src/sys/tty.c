@@ -65,7 +65,7 @@ tty_iproc(struct tty *tty, int c)
 	switch(c) {
 	case 0x3: /* CTRL+C */
 		if (tty->t_termios.c_lflags & ISIG) {
-			sigh = curthread->td_task->ts_sigh;
+			sigh = TD_TASK(curthread)->ts_sigh;
 			if (sigh != NULL)
 				sigh(SIGINT);
 			return (-1);
