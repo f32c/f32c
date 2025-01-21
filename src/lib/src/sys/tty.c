@@ -60,11 +60,12 @@ tty_oexpand(struct tty *tty, int c, char *buf)
 int
 tty_iproc(struct tty *tty, int c)
 {
-	sig_t sigh = curthread->td_task->ts_sigh;
+	sig_t sigh;
 
 	switch(c) {
 	case 0x3: /* CTRL+C */
 		if (tty->t_termios.c_lflags & ISIG) {
+			sigh = curthread->td_task->ts_sigh;
 			if (sigh != NULL)
 				sigh(SIGINT);
 			return (-1);
