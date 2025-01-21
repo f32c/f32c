@@ -51,29 +51,34 @@ fd_findfree(int min)
 }
 
 
-static int
-fd_alloc(void)
+int
+fd_ref(struct file *fp)
 {
 	struct task *ts = TD_TASK(curthread);
 	struct file **new_ts_files;
 	int fd, nfds;
 
-	fd = fd_findfree(0);
-	if (fd >= 0)
-		return (fd);
-
-	/* Expand the file descriptor table */
-	fd = ts->ts_maxfiles;
-	nfds = 2 * fd;
-	new_ts_files = (struct file **) calloc(nfds, sizeof(struct file *));
-	if (new_ts_files == NULL)
+	if (fp == NULL)
 		return (-1);
-	memcpy(new_ts_files, ts->ts_files, fd * sizeof(struct file *));
-	if (fd > 3)
-		free(ts->ts_files);
-	ts->ts_files = new_ts_files;
-	ts->ts_maxfiles = nfds;
-	
+
+	fd = fd_findfree(0);
+	if (fd < 0) {
+		/* Expand the file descriptor table */
+		fd = ts->ts_maxfiles;
+		nfds = 2 * fd;
+		new_ts_files = (struct file **) calloc(nfds,
+		    sizeof(struct file *));
+		if (new_ts_files == NULL)
+			return (-1);
+		memcpy(new_ts_files, ts->ts_files, fd * sizeof(struct file *));
+		if (fd > 3)
+			free(ts->ts_files);
+		ts->ts_files = new_ts_files;
+		ts->ts_maxfiles = nfds;
+	}
+
+	ts->ts_files[fd] = fp;
+	fp->f_refc++;
 	return (fd);
 }
 
@@ -99,17 +104,15 @@ open(const char *path, int flags, ...)
 	struct file *fp;
 	int fd;
 
-	fd = fd_alloc();
 	fp = calloc(1, sizeof(struct file));
-	if (fd < 0 || fp == NULL) {
+	fd = fd_ref(fp);
+	if (fd < 0) {
 		free(fp);
 		errno = ENFILE;
 		return (fd);
 	}
 
-	ts->ts_files[fd] = fp;
 	fp->f_mflags = F_MF_FILE_MALLOCED | F_MF_PRIV_MALLOCED;
-	fp->f_refc = 1;
 
 	if (ff_open(fp, path, flags) == 0)
 		return (fd);
