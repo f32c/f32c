@@ -57,6 +57,7 @@ struct sio_state {
 };
 
 static struct tty sio0_tty = {
+	.t_termios.c_lflags = ISIG,
 	.t_termios.c_iflags = ICRNL | IXON,
 	.t_termios.c_oflags = OPOST | ONLCR,
 	.t_rows = 24,

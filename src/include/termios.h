@@ -9,6 +9,9 @@
 #define	IXON	0x10
 #define	IXOFF	0x20
 
+/* Local flags */
+#define	ISIG	0x01
+
 /* Output flags */
 #define	OPOST	0x01
 #define	ONLCR	0x02

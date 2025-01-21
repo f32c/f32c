@@ -26,9 +26,9 @@
 #ifndef _SYS_TASK_H_
 #define _SYS_TASK_H_
 
-#include <sys/queue.h>
+#include <signal.h>
 
-struct regspace;
+#include <sys/queue.h>
 
 struct task {
 	struct file	**ts_files;	/* Array of file pointers */
@@ -39,6 +39,7 @@ struct task {
 	TAILQ_HEAD(, thread) ts_tds;	/* List of this task's threads */
 	TAILQ_ENTRY(task) ts_list;	/* All tasks linked list */
 	struct task	*ts_parent;	/* Parent task */
+	sig_t		ts_sigh;	/* Signal handler */
 };
 
 struct thread {

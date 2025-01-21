@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 - 2025 Marko Zec
+ * Copyright (c) 2025 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,66 +23,24 @@
  * SUCH DAMAGE.
  */
 
-#include <signal.h>
+#include <sys/task.h>
 
-#include <sys/tty.h>
-
-/*
- * termios output processing:
- *
- * ONLCR	Map NL to CR-NL on output.
- */
-
-int
-tty_oexpand(struct tty *tty, int c, char *buf)
+sig_t
+signal(int sig, sig_t func)
 {
-	int n = 1;
+	struct task *task = curthread->td_task;
+	sig_t osigh = task->ts_sigh;
 
-	switch(c) {
-	case '\n':
-		if (tty->t_termios.c_oflags & ONLCR) {
-			*buf++ = '\r';
-			n++;
-		}
-		/* fallthrough */
-	default:
-		*buf = c;
-	};
+	task->ts_sigh = func;
 
-	return (n);
+	return (osigh);
 }
 
-
-/*
- * termios input processing
- */
-
 int
-tty_iproc(struct tty *tty, int c)
+siginterrupt(int sig, int flag)
 {
-	sig_t sigh = curthread->td_task->ts_sigh;
 
-	switch(c) {
-	case 0x3: /* CTRL+C */
-		if (tty->t_termios.c_lflags & ISIG) {
-			if (sigh != NULL)
-				sigh(SIGINT);
-			return (-1);
-		} else
-			return (c);
-	case 0x13: /* XOFF */
-		if (tty->t_termios.c_iflags & IXON) {
-			tty->t_rflags |= TTY_OSTOP;
-			return (-1);
-		} else
-			return (c);
-	case 0x11: /* XON */
-		if (tty->t_termios.c_iflags & IXON) {
-			tty->t_rflags &= ~TTY_OSTOP;
-			return (-1);
-		} else
-			return (c);
-	default:
-		return (c);
-	}
+	/* XXX implement me! */
+
+	return (0);
 }
