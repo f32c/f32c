@@ -9,6 +9,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,23 +28,21 @@
 
 static char *histbuf[MAXHIST];
 static uint32_t	curhist;
+static int interrupt;
 
 #ifndef F32C
 #define	gets(str, size) gets_s((str), (size))
 
-static struct termios oterm, nterm;
-
 static void
 set_term()
 {
-	tcgetattr(0, &oterm);
-	nterm = oterm;
+	struct termios nterm;
 
-	nterm.c_lflag &= ~(ECHO|ECHOK|ECHONL|ICANON|ISIG);
+	tcgetattr(0, &nterm);
+
+	nterm.c_lflag &= ~(ECHO|ECHOK|ECHONL|ICANON);
 	nterm.c_iflag &= ~(IGNCR|INLCR|ICRNL);
 	nterm.c_iflag |= ISTRIP;
-	nterm.c_cc[VMIN] = 1;
-	nterm.c_cc[VTIME] = 0;
 
 	tcsetattr(0, TCSADRAIN, &nterm);
 }
@@ -72,6 +71,11 @@ refresh:
 	endp = cp;
 	do {
 		c = getchar();
+		if (interrupt) {
+			printf("^C\n");
+			return (-1);
+		}
+
 		if (esc) {
 			switch (c) {
 			case '0': case '1': case '2': case '3': case '4':
@@ -134,9 +138,6 @@ refresh:
 				cp--;
 			}
 			continue;
-		case 3:	/* CTRL + C */
-			printf("\n");
-			return (-1);
 		case 4:	/* CTRL + D */
 			if (endp > cp) {
 				printf("%s ", &cp[1]);
@@ -611,6 +612,7 @@ cmp_h(char **argv, int argc)
 		if (i != lim || got_a != got_b)
 			break;
 #ifdef F32C
+		/* CTRL + C ? */
 		if (sio_getchar(0) == 3) {
 			printf("^C - interrupted!\n");
 			break;
@@ -669,7 +671,7 @@ create_h(char **argv, int argc)
 	for (flen = 0; flen < maxflen - CREAT_MAXLINCHAR; flen += llen) {
 		line = &buf[flen];
 		if (silent) {
-			for (llen = 0;;) {
+			for (llen = 0; interrupt == 0;) {
 				c = getchar() & 0177;
 				if (c == '\n' || c == '\r' || c == 3) {
 					line[llen] = '\n';
@@ -678,8 +680,10 @@ create_h(char **argv, int argc)
 				if (llen < CREAT_MAXLINCHAR)
 					line[llen++] = c;
 			}
-			if (c == 3)
+			if (interrupt) {
+				printf("^C\n");
 				break;
+			}
 		} else {
 			if (gets(line, CREAT_MAXLINCHAR) < 0)
 				break;
@@ -723,9 +727,12 @@ stopped:
 					printf("-- more --");
 					c = getchar();
 					printf("\r          \r");
-					switch(c) {
-					case 3:
+					if (interrupt) {
 						printf("^C\n");
+						close(fd);
+						return;
+					}
+					switch(c) {
 					case 4:
 					case 'q':
 						close(fd);
@@ -794,9 +801,12 @@ stopped:
 			printf("-- more --");
 			i = getchar();
 			printf("\r          \r");
-			switch(i) {
-			case 3:
+			if (interrupt) {
 				printf("^C\n");
+				close(fd);
+				return;
+			}
+			switch(i) {
 			case 4:
 			case 'q':
 				close(fd);
@@ -928,6 +938,15 @@ help_h(char **argv, int argc)
 }
 
 
+void
+sig_h(int sig)
+{
+
+	//printf("%s() %d: signal %d\n", __FUNCTION__, __LINE__, sig);
+	interrupt = 1;
+}
+
+
 int
 main(void)
 {
@@ -943,7 +962,11 @@ main(void)
 	getcwd(line, 128);
 #endif
 
+	signal(SIGINT, sig_h);
+	siginterrupt(SIGINT, 1);
+
 	do {
+		interrupt = 0;
 		if (rl("cmd>", line, sizeof(line)))
 			continue;
 
