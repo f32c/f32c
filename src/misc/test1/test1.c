@@ -25,11 +25,11 @@
  * $Id$
  */
 
-#include <io.h>
 #include <stdio.h>
 
 #include <sys/isr.h>
 
+#include <dev/io.h>
 
 int isr_cnt;
 
@@ -62,10 +62,10 @@ main(void)
 	isr_register_handler(2, &fb_isr_l);
 	__asm("ei");
 
-	while (c != 3) {
-		c = sio_getchar(1);
+	while (c != '.') {
+		c = getchar();
 		if (c > 0)
-			sio_putchar(c, 1);
+			putchar(c);
 	}
 	__asm("di");
 }
