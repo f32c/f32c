@@ -24,6 +24,7 @@
  */
 
 #include <fcntl.h>
+#include <stdlib.h>
 
 #include <sys/file.h>
 #include <sys/tty.h>
@@ -38,6 +39,10 @@
 #define	SIO_REG_STATUS	0x4
 #define	SIO_REG_BAUD	0x8
 
+#define	SIO_PORTS	4
+
+extern int fd_ref(struct file *); /* XXX fixinclude */
+
 static int sio_read(struct file *, void *, size_t);
 static int sio_write(struct file *, const void *, size_t);
 
@@ -51,7 +56,7 @@ struct sio_state {
 	struct tty	*s_tty;
 	char		s_rxbuf[SIO_RXBUFSIZE];
 	uint32_t	s_rxbuf_head; /* Managed by sio_probe_rx() */
-	uint32_t	s_rxbuf_tail; /* Managed by sio_getchar() */
+	uint32_t	s_rxbuf_tail; /* Managed by sio_read() */
 	uint32_t	s_hw_rx_overruns;
 	uint32_t	s_sw_rx_overruns;
 };
@@ -75,16 +80,62 @@ struct file __sio0_file = {
 	.f_refc = 3
 };
 
+static struct file *sio_files[SIO_PORTS] = {
+	&__sio0_file,
+};
+
 static uint16_t sio_bauds[16] = {
 	3,	6,	12,	24,	48,	96,	192,	384,
 	576,	1152,	2304,	4608,	9216,	10000,	15000,	30000
 };
 
 static int
+sio_close(struct file *fp)
+{
+	struct sio_state *sio = fp->f_priv;
+
+	sio_files[(sio->s_io_port - IO_SIO_0) / 16] = NULL;
+
+	return (0);
+}
+
+int
+sio_open(int unit)
+{
+	struct file *fp;
+	struct sio_state *sio;
+	int fd;
+
+	if (unit < 0 || unit >= SIO_PORTS || sio_files[unit] != NULL
+	    || (sio = calloc(1, sizeof(struct sio_state))) == NULL) {
+		errno = EINVAL;
+		return (-1);
+	}
+
+	fp = calloc(1, sizeof(struct file));
+	fd = fd_ref(fp);
+	if (fd < 0) {
+		free(fp);
+		free(sio);
+		errno = ENFILE;
+		return (fd);
+	}
+
+	sio_files[unit] = fp;
+	sio->s_io_port = IO_SIO_0 + 16 * unit;
+	fp->f_priv = sio;
+	fp->f_mflags = F_MF_FILE_MALLOCED | F_MF_PRIV_MALLOCED;
+	fp->f_ops = &sio_fileops;
+	sio_fileops.fo_close = &sio_close;
+
+	return (fd);
+}
+
+static int
 sio_probe_rx(struct file *fp)
 {
 	struct sio_state *sio = fp->f_priv;
-	uint32_t c, s, rxbuf_head_next;
+	int c, s, rxbuf_head_next;
 
 	for (;;) {
 		LB(s, SIO_REG_STATUS, sio->s_io_port);
@@ -195,16 +246,19 @@ int
 sio_getchar(int blocking)
 {
 	struct file *fp = TD_TASK(curthread)->ts_files[0]; /* XXX */
+	int res;
 	char c;
 
 	if (!blocking)
 		fp->f_flags |= O_NONBLOCK;
 
-	read(0, &c, 1);
+	res = read(0, &c, 1);
 
 	if (!blocking)
 		fp->f_flags &= ~O_NONBLOCK;
 
+	if (res < 0)
+		return (res);
 	return (c);
 }
 
