@@ -169,6 +169,7 @@ sio_probe_rx(struct file *fp)
 static int
 sio_read(struct file *fp, void *buf, size_t nbytes)
 {
+	struct task *task = TD_TASK(curthread);
 	struct sio_state *sio = fp->f_priv;
 	char *cbuf = buf;
 	int i, empty;
@@ -183,6 +184,11 @@ sio_read(struct file *fp, void *buf, size_t nbytes)
 				if (i != 0)
 					return (i);
 				errno = EAGAIN;
+				return (-1);
+			}
+			if (task->ts_sigf & 2) {
+				errno = EINTR;
+				task->ts_sigf &= ~2;
 				return (-1);
 			}
 			/* XXX TODO: notify system we are blocked, yield() */
@@ -200,6 +206,7 @@ sio_read(struct file *fp, void *buf, size_t nbytes)
 static int
 sio_write(struct file *fp, const void *buf, size_t nbytes)
 {
+	struct task *task = TD_TASK(curthread);
 	struct sio_state *sio = fp->f_priv;
 	const char *cbuf = buf;
 	char tios_obuf[4];
@@ -213,6 +220,11 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 				if (i != 0)
 					return (i);
 				errno = EAGAIN;
+				return (-1);
+			}
+			if (task->ts_sigf & 2) {
+				errno = EINTR;
+				task->ts_sigf &= ~2;
 				return (-1);
 			}
 			/* XXX TODO: notify system we are blocked, yield() */

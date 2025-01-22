@@ -39,8 +39,12 @@ signal(int sig, sig_t func)
 int
 siginterrupt(int sig, int flag)
 {
+	struct task *task = TD_TASK(curthread);
 
-	/* XXX implement me! */
+	if (flag)
+		task->ts_sigf |= 1;
+	else
+		task->ts_sigf &= ~1;
 
 	return (0);
 }

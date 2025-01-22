@@ -60,14 +60,19 @@ tty_oexpand(struct tty *tty, int c, char *buf)
 int
 tty_iproc(struct tty *tty, int c)
 {
+	struct task *task;
 	sig_t sigh;
 
 	switch(c) {
 	case 0x3: /* CTRL+C */
 		if (tty->t_termios.c_lflags & ISIG) {
-			sigh = TD_TASK(curthread)->ts_sigh;
-			if (sigh != NULL)
+			task = TD_TASK(curthread);
+			sigh = task->ts_sigh;
+			if (sigh != NULL) {
 				sigh(SIGINT);
+				/* Notify stalled read() / write() */
+				task->ts_sigf |= (task->ts_sigf & 1) << 1;
+			}
 			return (-1);
 		} else
 			return (c);

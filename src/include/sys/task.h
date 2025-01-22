@@ -40,6 +40,7 @@ struct task {
 	TAILQ_ENTRY(task) ts_list;	/* All tasks linked list */
 	struct task	*ts_parent;	/* Parent task */
 	sig_t		ts_sigh;	/* Signal handler */
+	uint32_t	ts_sigf;	/* Signal flags */
 };
 
 struct thread {
