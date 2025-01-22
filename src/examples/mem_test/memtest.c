@@ -3,7 +3,9 @@
  * performing a bit of correctness checking and throughput measurements.
  */
 
+#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -13,6 +15,15 @@
 
 extern int _end;
 char *buf;
+
+
+void
+sig_h(int sig)
+{
+
+	printf("^C\n");
+	exit(0);
+}
 
 
 int
@@ -27,6 +38,9 @@ main(void)
 	volatile uint8_t *p8;
 	volatile uint16_t *p16;
 	volatile uint32_t *p32;
+
+	signal(SIGINT, sig_h);
+	siginterrupt(SIGINT, 1);
 
 	buf = (void *) mem_base;
 
@@ -288,8 +302,5 @@ again:
 	    score / 1000, score % 1000);
 
 	iter++;
-	if (sio_getchar(0) != 3)
-		goto again;
-
-	return(0);
+	goto again;
 }
