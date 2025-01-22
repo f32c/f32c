@@ -502,7 +502,7 @@ begin
     -- RS232 SIO
     --
     G_sio: for i in 0 to C_sio - 1 generate
-	sio_instance: entity work.sio
+	I_sio: entity work.sio
 	generic map (
 	    C_clk_freq => C_clk_freq,
 	    C_init_baudrate => C_sio_init_baudrate,
@@ -518,6 +518,8 @@ begin
 	);
 	sio_ce(i) <= io_addr_strobe(R_cur_io_port) when sio_io_range and
 	  conv_integer(io_addr(5 downto 4)) = i else '0';
+	sio_txd(i) <= sio_tx(i) when not C_debug or i /= 0
+	  or debug_active = '0' else deb_tx;
     end generate;
     sio_io_range <= io_addr(11 downto 4) = C_io_sio0
       or io_addr(11 downto 4) = C_io_sio1
@@ -625,7 +627,4 @@ begin
     deb_sio_rx_done <= debug_bus_out(8); -- XXX fixme!
     sio_to_debug_data <= debug_bus_out(7 downto 0); -- XXX fixme!
     end generate;
-
-    sio_txd(0) <= sio_tx(0) when not C_debug or debug_active = '0' else deb_tx;
-
 end Behavioral;
