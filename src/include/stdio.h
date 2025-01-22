@@ -65,6 +65,7 @@ int	vsscanf(const char * __restrict, const char * __restrict, __va_list)
 	    __scanflike(2, 0);
 #endif
 
+FILE	*fdopen(int, const char *);
 int	fputc(int, FILE *);
 int	putchar(int);
 int	fputs(const char *, FILE *);

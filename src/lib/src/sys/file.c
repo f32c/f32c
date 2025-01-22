@@ -254,3 +254,20 @@ int fgetc(FILE *fp)
 		return (-1);
 	return (c);
 }
+
+
+FILE *
+fdopen(int fd, const char *mode)
+{
+	FILE *fp = calloc(1, sizeof(FILE));
+
+	if (fd2fp(fd) == NULL || fp == NULL) {
+		if (fp == NULL)
+			errno = ENOMEM;
+		free(fp);
+		return (NULL);
+	}
+
+	fp->_fd = fd;
+	return (fp);
+}
