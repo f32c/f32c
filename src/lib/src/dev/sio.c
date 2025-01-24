@@ -52,13 +52,13 @@ static struct fileops sio_fileops = {
 };
 
 struct sio_state {
-	uint32_t	s_io_port;
 	struct tty	*s_tty;
+	uint32_t	s_io_port;
+	uint16_t	s_rxbuf_head; /* Managed by sio_probe_rx() */
+	uint16_t	s_rxbuf_tail; /* Managed by sio_read() */
+	uint16_t	s_hw_rx_overruns;
+	uint16_t	s_sw_rx_overruns;
 	char		s_rxbuf[SIO_RXBUFSIZE];
-	uint32_t	s_rxbuf_head; /* Managed by sio_probe_rx() */
-	uint32_t	s_rxbuf_tail; /* Managed by sio_read() */
-	uint32_t	s_hw_rx_overruns;
-	uint32_t	s_sw_rx_overruns;
 };
 
 static struct tty sio0_tty = {
@@ -177,7 +177,7 @@ sio_read(struct file *fp, void *buf, size_t nbytes)
 	for (i = 0; i < nbytes;) {
 		for (;;) {
 			sio_probe_rx(fp);
-			empty = (sio->s_rxbuf_head == sio->s_rxbuf_tail);
+			empty = sio->s_rxbuf_head == sio->s_rxbuf_tail;
 			if (!empty)
 				break;
 			if (fp->f_flags & O_NONBLOCK) {
@@ -196,7 +196,7 @@ sio_read(struct file *fp, void *buf, size_t nbytes)
 		do {
 			cbuf[i++] = sio->s_rxbuf[sio->s_rxbuf_tail++];
 			sio->s_rxbuf_tail &= SIO_RXBUFMASK;
-			empty = (sio->s_rxbuf_head == sio->s_rxbuf_tail);
+			empty = sio->s_rxbuf_head == sio->s_rxbuf_tail;
 		} while (!empty && i < nbytes);
 	}
 
