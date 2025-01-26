@@ -30,7 +30,11 @@ static char *histbuf[MAXHIST];
 static uint32_t	curhist;
 static int interrupt;
 
+typedef	void	cmdhandler_t(int, char **);
+
 #ifndef F32C
+#include <sys/wait.h>
+
 #define	gets(str, size) gets_s((str), (size))
 
 static void
@@ -48,6 +52,95 @@ set_term()
 }
 #endif /* !F32C */
 
+static int
+task_create(cmdhandler_t *f, int argc, char **argv)
+{
+#ifndef F32C
+	int tid;
+
+	tid = fork();
+	if (tid)
+		return(tid);
+#endif
+
+	f(argc, argv);
+#ifndef F32C
+	exit (0);
+#endif
+	return (0);
+}
+
+#define	TOK_PIPE	0x1
+#define	TOK_INPUT	0x2
+#define	TOK_OUTPUT	0x3
+#define	TOK_APPEND	0x4
+#define	TOK_MAX		0x4
+
+static int
+tok(char *line, char **tokv)
+{
+	char *cp;
+	int tokc = 0;
+	int quote = 0;
+
+	for (tokv[0] = NULL, cp = line; *cp != 0; cp++) {
+		if (quote) {
+			if (*cp == '"') {
+				memmove(cp, &cp[1], strlen(cp));
+				quote = 0;
+			}
+			continue;
+		}
+		switch (*cp) {
+		case '\t':
+		case ' ':
+			*cp = 0;
+			if (tokv[tokc] != NULL)
+				tokv[++tokc] = NULL;
+			continue;
+		case '\\':
+			memmove(cp, &cp[1], strlen(cp));
+			if (tokv[tokc] == NULL)
+				tokv[tokc] = cp;
+			continue;
+		case '"':
+			memmove(cp, &cp[1], strlen(cp));
+			quote = 1;
+			continue;
+		case '|':
+		case '<':
+		case '>':
+			if (tokv[tokc] != NULL)
+				tokc++;
+			switch (*cp) {
+			case '|':
+				tokv[tokc] = (void *) TOK_PIPE;
+				break;
+			case '<':
+				tokv[tokc] = (void *) TOK_INPUT;
+				break;
+			case '>':
+				tokv[tokc] = (void *) TOK_OUTPUT;
+				if (cp[1] != '>')
+					break;
+				*cp++ = 0;
+				tokv[tokc] = (void *) TOK_APPEND;
+				break;
+			}
+			tokv[++tokc] = NULL;
+			*cp = 0;
+			continue;
+		default:
+			if (tokv[tokc] == NULL)
+				tokv[tokc] = cp;
+			break;
+		};
+	}
+
+	if (tokv[tokc] > (char *) TOK_MAX && tokv[tokc][0] != 0)
+		tokc++;
+	return (tokc);
+}
 int
 rl(const char *prompt, char *buf, int buflen)
 {
@@ -359,7 +452,7 @@ ls_walk(char *path, int flags)
 
 
 static void
-ls_h(char **argv, int argc)
+ls_h(int argc, char **argv)
 {
 	char buf[128];
 	int argi = 1;
@@ -403,7 +496,7 @@ ls_h(char **argv, int argc)
 
 
 static void
-cd_h(char **argv, int argc)
+cd_h(int argc, char **argv)
 {
 	int res;
 	char path[128];
@@ -417,7 +510,7 @@ cd_h(char **argv, int argc)
 
 
 static void
-pwd_h(char **argv, int argc)
+pwd_h(int argc, char **argv)
 {
 
 	getcwd(argv[0], 128);
@@ -426,7 +519,7 @@ pwd_h(char **argv, int argc)
 
 
 static void
-rm_h(char **argv, int argc)
+rm_h(int argc, char **argv)
 {
 	int res;
 
@@ -437,7 +530,7 @@ rm_h(char **argv, int argc)
 
 
 static void
-rmdir_h(char **argv, int argc)
+rmdir_h(int argc, char **argv)
 {
 	int res;
 
@@ -447,7 +540,7 @@ rmdir_h(char **argv, int argc)
 }
 
 static void
-mkdir_h(char **argv, int argc)
+mkdir_h(int argc, char **argv)
 {
 	int res;
 
@@ -459,7 +552,7 @@ mkdir_h(char **argv, int argc)
 
 #ifdef F32C
 static void
-mkfs_h(char **argv, int argc)
+mkfs_h(int argc, char **argv)
 {
 	char buf[FF_MAX_SS];
 	int res;
@@ -477,7 +570,7 @@ mkfs_h(char **argv, int argc)
 
 
 static void
-cp_h(char **argv, int argc)
+cp_h(int argc, char **argv)
 {
 	char *buf;
 	int buflen;
@@ -557,7 +650,7 @@ cp_h(char **argv, int argc)
 
 
 static void
-cmp_h(char **argv, int argc)
+cmp_h(int argc, char **argv)
 {
 	int a, b, got_a, got_b, pos, i, lim, buflen;
 	char *abuf, *bbuf;
@@ -633,7 +726,7 @@ cmp_h(char **argv, int argc)
 #define	CREAT_MAXLINCHAR 256
 
 static void
-create_h(char **argv, int argc)
+create_h(int argc, char **argv)
 {
 	char *buf, *line;
 	int fd, llen, flen, maxflen, c, silent = 0;
@@ -699,7 +792,7 @@ create_h(char **argv, int argc)
 
 
 static void
-more_h(char **argv, int argc)
+more_h(int argc, char **argv)
 {
 	char buf[128];
 	int fd, got, i, c, last, lno = 0;
@@ -757,7 +850,7 @@ stopped:
 
 
 static void
-hexdump_h(char **argv, int argc)
+hexdump_h(int argc, char **argv)
 {
 	uint8_t buf[16];
 	int fd, i, got, fpos = 0, lno = 0;
@@ -828,7 +921,7 @@ stopped:
 
 
 static void
-history_h(char **argv, int argc)
+history_h(int argc, char **argv)
 {
 	int i;
 
@@ -841,7 +934,7 @@ history_h(char **argv, int argc)
 
 
 static void
-cls_h(char **argv, int argc)
+cls_h(int argc, char **argv)
 {
 
 	printf("\n\033[2J\033[H");
@@ -849,7 +942,7 @@ cls_h(char **argv, int argc)
 
 
 static void
-date_h(char **argv, int argc)
+date_h(int argc, char **argv)
 {
 	struct timespec ts;
 	struct tm tm;
@@ -873,14 +966,13 @@ date_h(char **argv, int argc)
 
 
 static void
-exit_h(char **argv, int argc)
+exit_h(int argc, char **argv)
 {
 
 	exit(0);
 }
 
 
-typedef	void	cmdhandler_t(char **, int);
 static cmdhandler_t help_h;
 
 #define	CMDSW_ENTRY(t, h) { .tok = t, .handler = h}
@@ -921,7 +1013,7 @@ const struct cmdswitch {
 
 
 static void
-help_h(char **argv, int argc)
+help_h(int argc, char **argv)
 {
 	int i, j;
 	const char *tp;
@@ -953,7 +1045,7 @@ main(void)
 	char line[128];
 	int i, ll, argc;
 	char *argv[MAXARGS];
-	char *tok, *lcp;
+	char *lcp;
 
 #ifndef F32C
 	set_term();
@@ -962,7 +1054,7 @@ main(void)
 	getcwd(line, 128);
 #endif
 
-	signal(SIGINT, sig_h);
+	signal(SIGHUP, sig_h);
 	siginterrupt(SIGINT, 1);
 
 	do {
@@ -977,15 +1069,7 @@ retok:
 			memcpy(lcp, line, ll);
 
 		/* Tokenize */
-		for (argc = 0, tok = line; argc < MAXARGS; argc++) {
-			if (tok != NULL && *tok == '\"')
-				argv[argc] = strtok_r(&tok[1], "\"", &tok);
-			else
-				argv[argc] = strtok_r(tok, " 	", &tok);
-			if (argv[argc] == NULL)
-				break;
-		}
-
+		argc = tok(line, argv);
 		if (argc == 0) {
 			free(lcp);
 			continue;
@@ -1039,6 +1123,14 @@ retok:
 			printf("Unknown command\n");
 			continue;
 		}
-		cmdswitch[i].handler(argv, argc);
+
+		if (cmdswitch[i].handler == exit_h)
+			cmdswitch[i].handler(argc, argv);
+		else {
+			i = task_create(cmdswitch[i].handler, argc, argv);
+#ifndef F32C
+			waitpid(i, &i, 0);
+#endif
+		}
 	} while (1);
 }
