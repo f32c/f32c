@@ -40,7 +40,7 @@ tty_oexpand(struct tty *tty, int c, char *buf)
 
 	switch(c) {
 	case '\n':
-		if (tty->t_termios.c_oflags & ONLCR) {
+		if (tty->t_termios.c_oflag & ONLCR) {
 			*buf++ = '\r';
 			n++;
 		}
@@ -65,7 +65,7 @@ tty_iproc(struct tty *tty, int c)
 
 	switch(c) {
 	case 0x3: /* CTRL+C */
-		if (tty->t_termios.c_lflags & ISIG) {
+		if (tty->t_termios.c_lflag & ISIG) {
 			task = TD_TASK(curthread);
 			sigh = task->ts_sigh;
 			if (sigh != NULL) {
@@ -77,13 +77,13 @@ tty_iproc(struct tty *tty, int c)
 		} else
 			return (c);
 	case 0x13: /* XOFF */
-		if (tty->t_termios.c_iflags & IXON) {
+		if (tty->t_termios.c_iflag & IXON) {
 			tty->t_rflags |= TTY_OSTOP;
 			return (-1);
 		} else
 			return (c);
 	case 0x11: /* XON */
-		if (tty->t_termios.c_iflags & IXON) {
+		if (tty->t_termios.c_iflag & IXON) {
 			tty->t_rflags &= ~TTY_OSTOP;
 			return (-1);
 		} else
