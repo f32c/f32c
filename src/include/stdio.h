@@ -65,7 +65,12 @@ int	vsscanf(const char * __restrict, const char * __restrict, __va_list)
 	    __scanflike(2, 0);
 #endif
 
+char *strerror(int);
+void perror(const char *);
+
+FILE	*fopen(const char * restrict, const char * restrict);
 FILE	*fdopen(int, const char *);
+int	fclose(FILE *);
 int	fputc(int, FILE *);
 int	putchar(int);
 int	fputs(const char *, FILE *);
@@ -75,6 +80,8 @@ int	gets(char *, int);
 int	fgetc(FILE *);
 #define	getc(f) fgetc(f)
 #define	getchar() getc(stdin)
+ssize_t getdelim(char ** restrict, size_t * restrict, int,  FILE * restrict);
+ssize_t getline(char ** restrict, size_t * restrict, FILE * restrict);
 
 int	rename(const char *, const char *);
 

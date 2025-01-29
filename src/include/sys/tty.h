@@ -37,8 +37,7 @@
 
 struct tty {
 	struct termios	t_termios;
-	uint8_t		t_rows;
-	uint8_t		t_columns;
+	struct winsize	t_ws;
 	uint16_t	t_rflags;
 };
 
