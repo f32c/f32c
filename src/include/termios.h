@@ -84,6 +84,15 @@ struct winsize {
 #define	TCSANOW		0		/* make change immediate */
 #define	TCSADRAIN	1		/* drain output, then change */
 #define	TCSAFLUSH	2		/* drain output, flush input */
+#define	TCSASOFT	0x10		/* flag - don't alter h.w. state */
+
+#define	TCIFLUSH	1
+#define	TCOFLUSH	2
+#define	TCIOFLUSH	3
+#define	TCOOFF		1
+#define	TCOON		2
+#define	TCIOFF		3
+#define	TCION		4
 
 int	tcgetattr(int, struct termios *);
 int	tcsetattr(int, int, const struct termios *);

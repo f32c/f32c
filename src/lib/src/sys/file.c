@@ -179,7 +179,7 @@ write(int fd, const void *buf, size_t nbytes)
 /* Entirely unimplemented, just empty placeholders */
 
 int
-fcntl(int fd __unused, int cmd __unused, ...)
+fcntl(int fd, int cmd, ...)
 {
 
 	return (-1);
