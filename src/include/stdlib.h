@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Marko Zec, University of Zagreb
+ * Copyright (c) 2013 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,13 +21,10 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #ifndef _STDLIB_H_
 #define	_STDLIB_H_
-
 
 double strtod(const char * __restrict, char ** __restrict);
 long strtol(const char * __restrict, char ** __restrict, int);
@@ -52,6 +49,8 @@ void *realloc(void *ptr, size_t size);
 void free(void *ptr);
 
 #define	alloca(sz) __builtin_alloca(sz)
+
+int atexit(void (*)(void));
 
 #define	EXIT_FAILURE	1
 #define	EXIT_SUCCESS	0
