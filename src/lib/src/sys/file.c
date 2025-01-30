@@ -23,10 +23,12 @@
  * SUCH DAMAGE.
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/task.h>
@@ -181,8 +183,24 @@ write(int fd, const void *buf, size_t nbytes)
 int
 fcntl(int fd, int cmd, ...)
 {
+	struct file *fp = fd2fp(fd);
+	va_list ap;
+	long arg;
 
-	return (-1);
+	if (fp == NULL)
+		return (-1);
+
+	va_start(ap, cmd);
+	arg = va_arg(ap, long);
+	va_end(ap);
+
+	switch (cmd & IOCTL_MAJOR_MASK) {
+	case IOCTL_TERMIOS:
+		return (termios_ioctl(fp, cmd, arg));
+	default:
+		errno = EINVAL;
+		return (-1);
+	};
 }
 
 
@@ -201,6 +219,18 @@ fstat(int fd __unused, struct stat *sb __unused)
 	return (-1);
 }
 
+
+int
+ftruncate(int fd, off_t length)
+{
+
+	return (-1);
+}
+
+
+/*
+ * Stream-IO (FILE) support
+ */
 
 int
 fputc(int c, FILE *fp)

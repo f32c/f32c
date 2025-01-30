@@ -68,3 +68,10 @@ tcsetattr(int fd, int opt, const struct termios *t)
 		return (-1);
 	}
 }
+
+int
+termios_ioctl(struct file *fp, int cmd, long arg)
+{
+
+	return (-1);
+}
