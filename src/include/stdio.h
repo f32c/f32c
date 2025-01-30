@@ -66,6 +66,7 @@ int	vsscanf(const char * __restrict, const char * __restrict, __va_list)
 #endif
 
 char *strerror(int);
+int strerror_r(int, char *, size_t);
 void perror(const char *);
 
 FILE	*fopen(const char * restrict, const char * restrict);

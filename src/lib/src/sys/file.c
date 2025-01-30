@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/task.h>
 #include <sys/stat.h>
@@ -270,4 +271,52 @@ fdopen(int fd, const char *mode)
 
 	fp->_fd = fd;
 	return (fp);
+}
+
+
+FILE *
+fopen(const char *path, const char *mode)
+{
+	FILE *fp;
+	int flags, fd;
+
+	for (flags = 0; *mode != 0; mode++) {
+		switch (*mode) {
+		case 'r':
+			flags |= O_RDONLY;
+			continue;
+		case 'w':
+			flags |= O_WRONLY;
+			continue;
+		case 'a':
+			flags |= O_APPEND;
+			continue;
+		case '+':
+			flags |= O_CREAT;
+			continue;
+		default:
+			errno = EINVAL;
+			return (NULL);
+		}
+	}
+
+	fd = open(path, flags);
+	if (fd < 0)
+		return (NULL);
+
+	fp = calloc(1, sizeof(FILE));
+	fp->_fd = fd;
+
+	return (fp);
+}
+
+
+int
+fclose(FILE *fp)
+{
+	int res;
+
+	res = close(fp->_fd);
+	free(fp);
+	return (res);
 }

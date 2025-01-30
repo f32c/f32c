@@ -30,68 +30,15 @@
  */
 
 #include <limits.h>
-#include <errno.h>
-#include <string.h>
 #include <stdio.h>
 
-#include "../gen/errlst.c"
-
-/*
- * Define buffer big enough to contain delimiter (": ", 2 bytes),
- * 64-bit signed integer converted to ASCII decimal (19 bytes) with
- * optional leading sign (1 byte), and a trailing NUL.
- */
-#define	EBUFSIZE	(2 + 19 + 1 + 1)
-
-/*
- * Doing this by hand instead of linking with stdio(3) avoids bloat for
- * statically linked binaries.
- */
-static void
-errstr(int num, const char *uprefix, char *buf, size_t len)
+void
+perror(const char *s)
 {
-	char *t;
-	unsigned int uerr;
-	char tmp[EBUFSIZE];
+	char msgbuf[NL_TEXTMAX];
 
-	t = tmp + sizeof(tmp);
-	*--t = '\0';
-	uerr = (num >= 0) ? num : -num;
-	do {
-		*--t = "0123456789"[uerr % 10];
-	} while (uerr /= 10);
-	if (num < 0)
-		*--t = '-';
-	*--t = ' ';
-	*--t = ':';
-	strlcpy(buf, uprefix, len);
-	strlcat(buf, t, len);
-}
-
-int
-strerror_r(int errnum, char *strerrbuf, size_t buflen)
-{
-	int retval = 0;
-
-	if (errnum < 0 || errnum >= sys_nerr) {
-		errstr(errnum, __uprefix, strerrbuf, buflen);
-		retval = EINVAL;
-	} else {
-		if (strlcpy(strerrbuf,
-		    sys_errlist[errnum],
-		    buflen) >= buflen)
-			retval = ERANGE;
-	}
-
-	return (retval);
-}
-
-char *
-strerror(int num)
-{
-	static char ebuf[NL_TEXTMAX];
-
-	if (strerror_r(num, ebuf, sizeof(ebuf)) != 0)
-		errno = EINVAL;
-	return (ebuf);
+	if (s != NULL && *s != '\0')
+		printf("%s: ", s);
+	strerror_r(errno, msgbuf, sizeof(msgbuf));
+	printf("%s\n", msgbuf);
 }
