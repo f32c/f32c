@@ -52,7 +52,6 @@ static struct fileops sio_fileops = {
 };
 
 struct sio_state {
-	struct tty	*s_tty;
 	uint32_t	s_io_port;
 	uint16_t	s_rxbuf_head; /* Managed by sio_probe_rx() */
 	uint16_t	s_rxbuf_tail; /* Managed by sio_read() */
@@ -70,13 +69,13 @@ static struct tty sio0_tty = {
 };
 
 static struct sio_state sio0_state = {
-	.s_tty = &sio0_tty,
 	.s_io_port = IO_SIO_0
 };
 
 struct file __sio0_file = {
 	.f_ops = &sio_fileops,
 	.f_priv = &sio0_state,
+	.f_tty = &sio0_tty,
 	.f_refc = 3
 };
 
@@ -149,8 +148,8 @@ sio_probe_rx(struct file *fp)
 
 		LB(c, SIO_REG_DATA, sio->s_io_port);
 
-		if (TTY_DO_IPROC(sio->s_tty, c) &&
-		    (c = tty_iproc(sio->s_tty, c)) < 0)
+		if (TTY_DO_IPROC(fp->f_tty, c) &&
+		    (c = tty_iproc(fp->f_tty, c)) < 0)
 			continue;
 
 		rxbuf_head_next = (sio->s_rxbuf_head + 1) & SIO_RXBUFMASK;
@@ -215,7 +214,7 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 
 	for (i = 0; i < nbytes || tios_i != tios_n;) {
 		for (; (sio_probe_rx(fp) & SIO_TX_BUSY) ||
-		    (TTY_OBLOCKED(sio->s_tty) && (tios_i == tios_n));) {
+		    (TTY_OBLOCKED(fp->f_tty) && (tios_i == tios_n));) {
 			if (fp->f_flags & O_NONBLOCK) {
 				if (i != 0)
 					return (i);
@@ -234,9 +233,9 @@ sio_write(struct file *fp, const void *buf, size_t nbytes)
 			c = tios_obuf[tios_i++];
 		else {
 			c = cbuf[i++];
-			if (TTY_DO_OPROC(sio->s_tty, c)) {
+			if (TTY_DO_OPROC(fp->f_tty, c)) {
 				tios_i = 0;
-				tios_n = tty_oexpand(sio->s_tty, c, tios_obuf);
+				tios_n = tty_oexpand(fp->f_tty, c, tios_obuf);
 				if (tios_n == 0)
 					continue;
 				tios_i = 1;

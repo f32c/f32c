@@ -78,4 +78,14 @@ struct winsize {
 	uint8_t		ws_col;		/* columns, in characters */
 };
 
+/*
+ * Commands passed to tcsetattr() for setting the termios structure.
+ */
+#define	TCSANOW		0		/* make change immediate */
+#define	TCSADRAIN	1		/* drain output, then change */
+#define	TCSAFLUSH	2		/* drain output, flush input */
+
+int	tcgetattr(int, struct termios *);
+int	tcsetattr(int, int, const struct termios *);
+
 #endif /* !_TERMIOS_H_ */

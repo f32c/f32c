@@ -48,6 +48,7 @@ struct fileops {
 struct file {
 	struct fileops	*f_ops;		/* file operations */
 	void		*f_priv;	/* file descriptor specific data */
+	struct tty	*f_tty;		/* tty, optional */
 	uint16_t	f_mflags;	/* malloc flags */
 	volatile uint16_t f_refc;	/* reference count */
 	volatile uint16_t f_flags;	/* see fcntl.h */
