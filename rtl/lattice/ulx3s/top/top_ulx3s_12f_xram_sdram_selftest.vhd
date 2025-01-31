@@ -189,7 +189,8 @@ entity ulx3s_xram_sdram_vector is
   led: out std_logic_vector(7 downto 0);
   btn: in std_logic_vector(6 downto 0);
   sw: in std_logic_vector(3 downto 0);
-  oled_csn, oled_clk, oled_mosi, oled_dc, oled_resn: out std_logic;
+  oled_csn, oled_clk, oled_dc, oled_resn: out std_logic;
+  oled_mosi: inout std_logic;
 
   -- GPIO
   gp, gn: inout std_logic_vector(27 downto 0);
@@ -212,8 +213,8 @@ entity ulx3s_xram_sdram_vector is
   -- Flash ROM (SPI0)
   -- commented out because it can't be used as GPIO
   -- when bitstream is loaded from config flash
-  flash_miso   : in      std_logic;
-  flash_mosi   : out     std_logic;
+  flash_miso   : inout   std_logic;
+  flash_mosi   : inout   std_logic;
   --flash_clk    : out     std_logic;
   flash_csn    : out     std_logic;
   flash_holdn, flash_wpn: out std_logic := '1';
