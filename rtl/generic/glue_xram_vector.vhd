@@ -115,7 +115,6 @@ generic (
   C_sio_break_detect: boolean := true;
   C_usbsio: std_logic_vector := "0000"; -- 0-standard serial port, 1-usbserial port
   C_spi: integer := 0;
-  C_spi_turbo_mode: std_logic_vector := "0000";
   C_spi_fixed_speed: std_logic_vector := "1111";
   C_simple_in: integer range 0 to 128 := 32;
   C_simple_out: integer range 0 to 128 := 32;
@@ -287,8 +286,8 @@ port (
   sio_txd, sio_break: out std_logic_vector(C_sio - 1 downto 0);
   usbsio_diff_dp: inout std_logic_vector(C_sio - 1 downto 0); -- used as IN only, INOUT avoids error when unused
   usbsio_dp, usbsio_dn: inout std_logic_vector(C_sio - 1 downto 0);
-  spi_sck, spi_ss, spi_mosi: out std_logic_vector(C_spi - 1 downto 0);
-  spi_miso: in std_logic_vector(C_spi - 1 downto 0) := (others => '-');
+  spi_sck, spi_ss: out std_logic_vector(C_spi - 1 downto 0);
+  spi_miso, spi_mosi: inout std_logic_vector(C_spi - 1 downto 0);
   simple_in: in std_logic_vector(31 downto 0);
   simple_out: out std_logic_vector(31 downto 0);
   pid_encoder_a, pid_encoder_b: in  std_logic_vector(C_pids-1 downto 0) := (others => '-');
@@ -1004,14 +1003,13 @@ begin
     G_spi: for i in 0 to C_spi - 1 generate
         spi_instance: entity work.spi
         generic map (
-          C_turbo_mode => C_spi_turbo_mode(i) = '1',
           C_fixed_speed => C_spi_fixed_speed(i) = '1'
         )
         port map (
           clk => clk, ce => spi_ce(i),
           bus_write => dmem_write, byte_sel => dmem_byte_sel,
           bus_in => cpu_to_dmem, bus_out => from_spi(i),
-          spi_sck => spi_sck(i), spi_cen => spi_ss(i),
+          spi_sck => spi_sck(i), spi_cen(0) => spi_ss(i),
           spi_miso => spi_miso(i), spi_mosi => spi_mosi(i)
         );
         spi_ce(i) <= io_addr_strobe when io_addr(11 downto 6) = x"3" & "01" and
