@@ -273,7 +273,7 @@ again:
 		size = 65536;
 	start = clock();
 	for (i = 0; i < 256; i++)
-		memcpy(buf, buf + size, size);
+		memcpy(&buf[i & 0x1c], &buf[size - i * 16], size);
 	end = clock();
 	len = (end - start) / 1000;
 	speed = i * size / len;
@@ -283,7 +283,7 @@ again:
 
 	start = clock();
 	for (i = 0; i < 128; i++)
-		memcpy(buf + 1, buf + size + 3, size - 1);
+		memcpy(&buf[i + 1], &buf[size - i * 16 + i + 3], size - 1);
 	end = clock();
 	len = (end - start) / 1000;
 	speed = i * size / len;
