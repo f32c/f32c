@@ -3,6 +3,7 @@
  */
 
 #include <stdio.h>
+#include <time.h>
 
 #include <dev/io.h>
 #include <dev/spi.h>
@@ -78,7 +79,13 @@ main(void)
 	int mfrid, devid, capid;
 	int mfr_i, dev_i, quirk_i;
 	const uint8_t *qp;
-	int cap;
+	int cap, freq_khz;
+	uint64_t tns;
+	struct timespec start, end;
+
+	freq_khz = (get_cpu_freq() + 499) / 1000;
+	printf("Detected %d.%03d MHz CPU\n\n",
+	    freq_khz / 1000, freq_khz % 1000);
 
 	for (i = 0; i < SPI_PORTS; i++) {
 		port = spi_port[i];
@@ -124,5 +131,17 @@ main(void)
 			}
 			printf(" (%d Bytes)\n", cap);
 		}
+
+		cap = 1024 * 1024;
+		clock_gettime(CLOCK_MONOTONIC, &start);
+		for (j = 0; j < cap; j++)
+			spi_byte(port, 0);
+		clock_gettime(CLOCK_MONOTONIC, &end);
+		tns = (end.tv_sec - start.tv_sec) * 1000000000
+		    + end.tv_nsec - start.tv_nsec;
+		j = tns / 1000;
+		printf("  transfer speed: %d bytes in %d.%03d s "
+		    "(%d KB/s)\n", cap, j / 1000000, (j / 1000) % 1000,
+		    cap * 1000 / j);
 	}
 }
