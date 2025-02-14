@@ -82,6 +82,7 @@ main(void)
 	int cap, freq_khz;
 	uint64_t tns;
 	struct timespec start, end;
+	char buf[512];
 
 	freq_khz = (get_cpu_freq() + 499) / 1000;
 	printf("Detected %d.%03d MHz CPU\n\n",
@@ -134,8 +135,10 @@ main(void)
 
 		cap = 1024 * 1024;
 		clock_gettime(CLOCK_MONOTONIC, &start);
-		for (j = 0; j < cap; j++)
-			spi_byte(port, 0);
+		for (j = 0; j < cap; j += 2 * sizeof(buf)) {
+			spi_block_out(port, buf, sizeof(buf));
+			spi_block_in(port, buf, sizeof(buf));
+		}
 		clock_gettime(CLOCK_MONOTONIC, &end);
 		tns = (end.tv_sec - start.tv_sec) * 1000000000
 		    + end.tv_nsec - start.tv_nsec;
