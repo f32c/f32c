@@ -48,10 +48,10 @@ spi_block_in(int port, void *buf, int len)
 		return;
 
 	SB(0xff, SPI_DATA, port);
-	do {
-		LW(c, SPI_DATA, port);
-	} while ((c & SPI_READY_MASK) == 0);
 	for (len--; len != 0; len--) {
+		do {
+			LW(c, SPI_DATA, port);
+		} while ((c & SPI_READY_MASK) == 0);
 		SB(0xff, SPI_DATA, port);
 #if (_BYTE_ORDER == _LITTLE_ENDIAN)
 		w = (w >> 8) | (c << 24);
@@ -60,16 +60,34 @@ spi_block_in(int port, void *buf, int len)
 #endif
 		if ((len & 3) == 0)
 			*wp++ = w;
-		do {
-			LW(c, SPI_DATA, port);
-		} while ((c & SPI_READY_MASK) == 0);
 	}
+	do {
+		LW(c, SPI_DATA, port);
+	} while ((c & SPI_READY_MASK) == 0);
 #if (_BYTE_ORDER == _LITTLE_ENDIAN)
 	w = (w >> 8) | (c << 24);
 #else
 	w = (w << 8) | (c >> 24);
 #endif
 	*wp++ = w;
+}
+
+
+void
+spi_block_out(int port, const void *buf, int len)
+{
+	char *cp = (char *) buf;
+	uint32_t c;
+
+	for (len--; len != 0; len--) {
+		do {
+			LW(c, SPI_DATA, port);
+		} while ((c & SPI_READY_MASK) == 0);
+		SB(*cp++, SPI_DATA, port);
+	}
+	do {
+		LW(c, SPI_DATA, port);
+	} while ((c & SPI_READY_MASK) == 0);
 }
 
 

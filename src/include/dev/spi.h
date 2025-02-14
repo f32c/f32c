@@ -32,6 +32,7 @@
 
 int spi_byte(int, int);
 void spi_block_in(int, void *, int);
+void spi_block_out(int, const void *, int);
 
 
 void inline
