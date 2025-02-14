@@ -260,7 +260,7 @@ static DRESULT
 flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 {
 	struct flash_priv *priv = DISKIO2PRIV(di);
-	int mfg_id, addr, i, j;
+	int mfg_id, addr, i;
 	int in_aai = 0;
 
 	/* Slave select */
@@ -305,8 +305,7 @@ flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 				spi_byte(priv->io_port, addr >> 16);
 				spi_byte(priv->io_port, addr >> 8);
 				spi_byte(priv->io_port, 0);
-				for (j = 0; j < 256; j++)
-					spi_byte(priv->io_port, *buf++);
+				spi_block_out(priv->io_port, buf, 256);
 				busy_wait(priv);
 			}
 			break;

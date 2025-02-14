@@ -154,8 +154,7 @@ sdcard_write_block(struct sdcard_priv *priv, char *buf)
 	spi_byte(priv->io_port, 0xfc);
 
 	/* Send data block */
-	for (i = 0; i < SDCARD_SECLEN; i++)
-		spi_byte(priv->io_port, buf[i]);
+	spi_block_out(priv->io_port, buf, SDCARD_SECLEN);
 
 	/* Send two dummy CRC bytes */
 	spi_byte(priv->io_port, 0xff);

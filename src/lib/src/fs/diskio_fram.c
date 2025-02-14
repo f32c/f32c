@@ -118,9 +118,7 @@ fram_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 	spi_byte(priv->io_port, addr >> 16);
 	spi_byte(priv->io_port, addr >> 8);
 	spi_byte(priv->io_port, 0);
-
-	for (count *= FRAM_SECLEN; count > 0; count--)
-		spi_byte(priv->io_port, *buf++);
+	spi_block_out(priv->io_port, buf, count * FRAM_SECLEN);
 	return (RES_OK);
 }
 #endif
