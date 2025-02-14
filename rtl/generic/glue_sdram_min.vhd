@@ -572,7 +572,7 @@ begin
     -- Address decoder when CPU reads IO
     process(io_addr, from_sio, from_spi, from_rtc, R_simple_in, R_simple_out)
     begin
-	io_to_cpu <= (others => '-');
+	io_to_cpu <= (others => '0');
 	case io_addr(11 downto 4) is
 	when C_io_sio0 | C_io_sio1 | C_io_sio2 | C_io_sio3 =>
 	    for i in 0 to C_sio - 1 loop
@@ -603,7 +603,7 @@ begin
 	when C_io_rtc =>
 	    io_to_cpu <= from_rtc;
 	when others  =>
-	    io_to_cpu <= (others => '-');
+	    io_to_cpu <= (others => '0');
 	end case;
     end process;
 
