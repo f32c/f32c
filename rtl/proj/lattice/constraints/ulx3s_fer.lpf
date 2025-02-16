@@ -2,7 +2,7 @@
 # ULX3S board I/O constraints
 #
 # PCB versions 2.x and 3.x
-# Constraints file revision 0.1, 2018/10/21
+# Constraints file revision 0.2, 2025/02/16
 #
 
 COMMERCIAL;
@@ -43,7 +43,7 @@ LOCATE COMP "btn_f1" SITE "R1";		# IN
 LOCATE COMP "btn_f2" SITE "T1";		# IN
 LOCATE COMP "btn_pwr" SITE "D6";	# IN
 
-# Phone jack - 4-bit DAC resistor network on each contact
+# Phone jack: 4-bit DAC resistor network on each contact
 LOCATE COMP "p_tip[0]" SITE "E4";	# INOUT
 LOCATE COMP "p_tip[1]" SITE "D3";	# INOUT
 LOCATE COMP "p_tip[2]" SITE "C3";	# INOUT
@@ -127,28 +127,23 @@ LOCATE COMP "sdram_d[15]" SITE "J17";
 
 # GPDI differential interface (Video) "gpdi" sheet
 LOCATE COMP "gpdi_dp[0]" SITE "A16"; # Blue +
-LOCATE COMP "gpdi_dn[0]" SITE "B16"; # Blue -
+#LOCATE COMP "gpdi_dn[0]" SITE "B16"; # Blue -
 LOCATE COMP "gpdi_dp[1]" SITE "A14"; # Green +
-LOCATE COMP "gpdi_dn[1]" SITE "C14"; # Green -
+#LOCATE COMP "gpdi_dn[1]" SITE "C14"; # Green -
 LOCATE COMP "gpdi_dp[2]" SITE "A12"; # Red +
-LOCATE COMP "gpdi_dn[2]" SITE "A13"; # Red -
+#LOCATE COMP "gpdi_dn[2]" SITE "A13"; # Red -
 LOCATE COMP "gpdi_dp[3]" SITE "A17"; # Clock +
-LOCATE COMP "gpdi_dn[3]" SITE "B18"; # Clock -
+#LOCATE COMP "gpdi_dn[3]" SITE "B18"; # Clock -
 LOCATE COMP "gpdi_ethp" SITE "A19"; # Ethernet +
-LOCATE COMP "gpdi_ethn" SITE "B20"; # Ethernet -
+#LOCATE COMP "gpdi_ethn" SITE "B20"; # Ethernet -
 LOCATE COMP "gpdi_cec" SITE "A18";
 LOCATE COMP "gpdi_sda" SITE "B19"; # I2C shared with RTC
 LOCATE COMP "gpdi_scl" SITE "E12"; # I2C shared with RTC C12->E12
-IOBUF PORT "gpdi_cec" PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;
-IOBUF PORT "gpdi_sda" PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;
-IOBUF PORT "gpdi_scl" PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;
 
 # GPIO (default single-ended) "gpio", "ram", "gpdi" sheet
 # Pins enumerated gp[0-27], gn[0-27].
-# With differential mode enabled on Lattice,
-# gp[] (+) are used, gn[] (-) are ignored from design
-# as they handle inverted signal by default.
-# To enable differential, rename LVCMOS33->LVCMOS33D
+# To enable differential pair mode, set IOBUF gp[x] IO_TYPE=LVCMOS33D,
+# and reference only gp[] (+) in the design.
 LOCATE COMP "gp[0]"  SITE "B11"; # J1_5+  GP0
 LOCATE COMP "gn[0]"  SITE "C11"; # J1_5-  GN0
 LOCATE COMP "gp[1]"  SITE "A10"; # J1_7+  GP1
@@ -208,13 +203,11 @@ LOCATE COMP "gn[27]" SITE "E13"; # J2_35- GN27
 
 # PROGRAMN (reload bitstream from FLASH, exit from bootloader)
 LOCATE COMP "user_programn" SITE "M4";
-IOBUF  PORT "user_programn" PULLMODE=UP IO_TYPE=LVCMOS33 DRIVE=4;
 
 # SHUTDOWN "power", "ram" sheet (connected from PCB v1.7.5)
 LOCATE COMP "shutdown" SITE "G16"; # FPGA receives (XXX?)
-IOBUF  PORT "shutdown" PULLMODE=DOWN IO_TYPE=LVCMOS33 DRIVE=4;
 
-## SPI OLED DISPLAY SSD1331 (Color) or SSD1306 (B/W) "blinkey", "usb" sheet
+# SPI OLED DISPLAY SSD1331 (Color) or SSD1306 (B/W) "blinkey", "usb" sheet
 LOCATE COMP "oled_clk" SITE "P4";
 LOCATE COMP "oled_mosi" SITE "P3";
 LOCATE COMP "oled_dc" SITE "P1";
@@ -224,13 +217,25 @@ LOCATE COMP "oled_csn" SITE "N2";
 # Bitstream generation options
 SYSCONFIG CONFIG_IOVOLTAGE=3.3 COMPRESS_CONFIG=ON MCCLK_FREQ=62 SLAVE_SPI_PORT=DISABLE MASTER_SPI_PORT=DISABLE SLAVE_PARALLEL_PORT=DISABLE;
 
-#
-# Special I/O properties should be declared here
-#
-
 # All I/O ports are tied to 3.3 V, default to no pull up / down, weak drive
 IOBUF ALLPORTS IO_TYPE=LVCMOS33 PULLMODE=NONE DRIVE=4;
 
+# Overriding IOBUF defaults
+IOBUF PORT "gpdi_dp[0]" IO_TYPE=LVCMOS33D DRIVE=4;
+IOBUF PORT "gpdi_dn[0]" IO_TYPE=LVCMOS33D DRIVE=4;
+IOBUF PORT "gpdi_dp[1]" IO_TYPE=LVCMOS33D DRIVE=4;
+IOBUF PORT "gpdi_dn[1]" IO_TYPE=LVCMOS33D DRIVE=4;
+IOBUF PORT "gpdi_dp[2]" IO_TYPE=LVCMOS33D DRIVE=4;
+IOBUF PORT "gpdi_dn[2]" IO_TYPE=LVCMOS33D DRIVE=4;
+IOBUF PORT "gpdi_dp[3]" IO_TYPE=LVCMOS33D DRIVE=4;
+IOBUF PORT "gpdi_dn[3]" IO_TYPE=LVCMOS33D DRIVE=4;
+IOBUF PORT "gpdi_ethp" IO_TYPE=LVCMOS33D DRIVE=4;
+IOBUF PORT "gpdi_ethn" IO_TYPE=LVCMOS33D DRIVE=4;
+IOBUF PORT "gpdi_cec" PULLMODE=UP;
+IOBUF PORT "gpdi_sda" PULLMODE=UP;
+IOBUF PORT "gpdi_scl" PULLMODE=UP;
+IOBUF PORT "shutdown" PULLMODE=DOWN;
+IOBUF PORT "user_programn" PULLMODE=UP;
 IOBUF PORT "sw[0]" PULLMODE=DOWN;
 IOBUF PORT "sw[1]" PULLMODE=DOWN;
 IOBUF PORT "sw[2]" PULLMODE=DOWN;
@@ -246,14 +251,8 @@ IOBUF PORT "flash_csn" PULLMODE=UP;
 IOBUF PORT "flash_holdn" PULLMODE=UP;
 IOBUF PORT "flash_wpn" PULLMODE=UP;
 IOBUF PORT "p_ring2[3]" DRIVE=16;
-IOBUF PORT "p_ring2[2]" DRIVE=16;
-IOBUF PORT "p_ring2[1]" DRIVE=16;
-IOBUF PORT "p_ring2[0]" DRIVE=16;
+IOBUF PORT "p_ring2[2]" DRIVE=8;
 IOBUF PORT "p_ring[3]" DRIVE=16;
-IOBUF PORT "p_ring[2]" DRIVE=16;
-IOBUF PORT "p_ring[1]" DRIVE=16;
-IOBUF PORT "p_ring[0]" DRIVE=16;
+IOBUF PORT "p_ring[2]" DRIVE=8;
 IOBUF PORT "p_tip[3]" DRIVE=16;
-IOBUF PORT "p_tip[2]" DRIVE=16;
-IOBUF PORT "p_tip[1]" DRIVE=16;
-IOBUF PORT "p_tip[0]" DRIVE=16;
+IOBUF PORT "p_tip[2]" DRIVE=8;
