@@ -306,6 +306,7 @@ flash_write(diskio_t di, const BYTE *buf, LBA_t sector, UINT count)
 				spi_byte(priv->io_port, addr >> 8);
 				spi_byte(priv->io_port, 0);
 				spi_block_out(priv->io_port, buf, 256);
+				buf += 256;
 				busy_wait(priv);
 			}
 			break;
