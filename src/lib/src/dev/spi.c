@@ -76,10 +76,10 @@ spi_block_in(int port, void *buf, int len)
 void
 spi_block_out(int port, const void *buf, int len)
 {
-	char *cp = (char *) buf;
+	const char *cp = (const char *) buf;
 	uint32_t c;
 
-	for (len--; len >= 0; len--) {
+	for (; len > 0; len--) {
 		do {
 			LW(c, SPI_DATA, port);
 		} while ((c & SPI_READY_MASK) == 0);
