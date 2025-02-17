@@ -602,6 +602,7 @@ cp_h(int argc, char **argv)
 		return;
 	}
 
+	clock_gettime(CLOCK_MONOTONIC, &start);
 	to = open(argv[2], O_CREAT | O_RDWR, 0777);
 	if (to < 0) {
 		free(buf);
@@ -610,7 +611,6 @@ cp_h(int argc, char **argv)
 		return;
 	}
 
-	clock_gettime(CLOCK_MONOTONIC, &start);
 	do {
 		got = read(from, buf, buflen);
 		if (got < 0) {
