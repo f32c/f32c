@@ -77,13 +77,14 @@ void
 spi_block_out(int port, const void *buf, int len)
 {
 	const char *cp = (const char *) buf;
-	uint32_t c;
+	uint32_t c, outb;
 
 	for (; len > 0; len--) {
+		outb = *cp++;
 		do {
 			LW(c, SPI_DATA, port);
 		} while ((c & SPI_READY_MASK) == 0);
-		SB(*cp++, SPI_DATA, port);
+		SB(outb, SPI_DATA, port);
 	}
 	do {
 		LW(c, SPI_DATA, port);
