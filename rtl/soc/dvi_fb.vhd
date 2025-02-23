@@ -222,7 +222,7 @@ architecture x of dvi_fb is
     signal Rp_fifo_tail: std_logic_vector(8 downto 0);
     signal Rp_from_fifo: std_logic_vector(23 downto 0);
     signal Rp_r, Rp_g, Rp_b: std_logic_vector(7 downto 0);
-    signal Rp_hsync, Rp_vsync, Rp_blank: std_logic;
+    signal Rp_hsync_dly, Rp_vsync_dly, Rp_blank_dly: std_logic;
 
     -- pixclk domain, wires
     signal dv_vsync, dv_hsync, dv_active, dv_field, dv_frame_gap: std_logic;
@@ -431,9 +431,9 @@ begin
     begin
 	if rising_edge(pixclk) then
 	    -- from line buffer and dv_syncgen to vga2dvid
-	    Rp_blank <= not dv_active;
-	    Rp_hsync <= dv_hsync;
-	    Rp_vsync <= dv_vsync;
+	    Rp_blank_dly <= not dv_active;
+	    Rp_hsync_dly <= dv_hsync;
+	    Rp_vsync_dly <= dv_vsync;
 	    if dv_frame_gap = '1' then
 		Rp_fifo_tail <= (others => '0');
 	    elsif dv_active = '1' then
@@ -457,9 +457,9 @@ begin
 	in_red => Rp_r,
 	in_green => Rp_g,
 	in_blue => Rp_b,
-	in_hsync => Rp_hsync,
-	in_vsync => Rp_vsync,
-	in_blank => Rp_blank,
+	in_hsync => Rp_hsync_dly,
+	in_vsync => Rp_vsync_dly,
+	in_blank => Rp_blank_dly,
 	out_clock => dv_clk,
 	out_red => dv_r,
 	out_green => dv_g,
