@@ -40,7 +40,7 @@ entity dvi_fb is
 	bus_addr: in std_logic_vector(5 downto 2);
 	bus_in: in std_logic_vector(31 downto 0);
 	bus_out: out std_logic_vector(31 downto 0);
-	-- DMA master: todo
+	-- DMA master
 	dma_req: out sdram_req_type;
 	dma_resp: in sdram_resp_type;
 	-- Digital video
@@ -96,12 +96,12 @@ architecture x of dvi_fb is
     signal R_pixel_fifo_head: std_logic_vector(8 downto 0);
 
     -- main clk domain, framebuffer, registers
-    type T_dma_fifo is array (0 to 15) of std_logic_vector(31 downto 0);
+    type T_dma_fifo is array (0 to 511) of std_logic_vector(31 downto 0);
     signal M_dma_fifo: T_dma_fifo;
     signal R_dma_base: std_logic_vector(31 downto 2);
     signal R_dma_end: std_logic_vector(31 downto 2);
     signal R_dma_cur: std_logic_vector(31 downto 2);
-    signal R_dma_fifo_head, R_dma_fifo_tail: std_logic_vector(3 downto 0);
+    signal R_dma_fifo_head, R_dma_fifo_tail: std_logic_vector(8 downto 0);
     attribute syn_ramstyle of M_dma_fifo: signal is "no_rw_check";
     signal R_pixel_index: std_logic_vector(1 downto 0);
     signal R_hcnt: std_logic_vector(8 downto 0);
@@ -110,7 +110,7 @@ architecture x of dvi_fb is
     signal frame_gap: boolean;
     signal pixel_fifo_needs_more_pixels: boolean;
     signal dma_fifo_may_fetch, dma_fifo_has_data: boolean;
-    signal dma_fifo_head_next, dma_fifo_tail_next: std_logic_vector(3 downto 0);
+    signal dma_fifo_head_next, dma_fifo_tail_next: std_logic_vector(8 downto 0);
 
     -- main clk domain, (mostly) static linemode configuration data
     signal R_hdisp: std_logic_vector(11 downto 0);
@@ -126,16 +126,16 @@ architecture x of dvi_fb is
     signal R_interlace: std_logic;
 
 begin
-    frame_gap <= R_frame_gap_sync(0) = '1';
     pixel_fifo_needs_more_pixels <=
       R_pixel_fifo_tail_cdc /= R_pixel_fifo_head(8 downto 4) + 1;
-    dma_fifo_may_fetch <=
-      R_dma_fifo_head(3 downto 2) + 1 /= R_dma_fifo_tail(3 downto 2);
+    frame_gap <= R_frame_gap_sync(0) = '1';
+    dma_fifo_may_fetch <= not frame_gap and
+      R_dma_fifo_head(8 downto 4) + 1 /= R_dma_fifo_tail(8 downto 4);
     dma_fifo_has_data <= R_dma_fifo_head /= R_dma_fifo_tail;
 
     dma_req.addr <= R_dma_cur;
     dma_req.strobe <= '1' when dma_fifo_may_fetch else '0';
-    dma_req.burst_len <= x"03";
+    dma_req.burst_len <= x"0f";
     dma_req.write <= '0';
 
     process(clk)
