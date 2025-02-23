@@ -28,168 +28,6 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-entity dv_syncgen is
-    port (
-	pixclk: in std_logic;
-	-- inputs: video mode configuration
-	hdisp: in std_logic_vector(11 downto 0);
-	hsyncstart: in std_logic_vector(11 downto 0);
-	hsyncend: in std_logic_vector(11 downto 0);
-	htotal: in std_logic_vector(11 downto 0);
-	vdisp: in std_logic_vector(10 downto 0);
-	vsyncstart: in std_logic_vector(10 downto 0);
-	vsyncend: in std_logic_vector(10 downto 0);
-	vtotal: in std_logic_vector(10 downto 0);
-	hsyncn: in std_logic;
-	vsyncn: in std_logic;
-	interlace: in std_logic;
-	-- outputs: sync signals
-	hsync: out std_logic;
-	vsync: out std_logic;
-	active: out std_logic;
-	field: out std_logic;
-	frame_gap: out std_logic
-    );
-end dv_syncgen;
-
-architecture x of dv_syncgen is
-    -- configuration registers, synchronized to pixclk
-    signal Rp_hdisp: std_logic_vector(11 downto 0);
-    signal Rp_hsyncstart: std_logic_vector(11 downto 0);
-    signal Rp_hsyncend: std_logic_vector(11 downto 0);
-    signal Rp_htotal: std_logic_vector(11 downto 0);
-    signal Rp_vdisp: std_logic_vector(10 downto 0);
-    signal Rp_vsyncstart: std_logic_vector(10 downto 0);
-    signal Rp_vsyncend: std_logic_vector(10 downto 0);
-    signal Rp_vtotal: std_logic_vector(10 downto 0);
-    signal Rp_hsyncn: std_logic;
-    signal Rp_vsyncn: std_logic;
-    signal Rp_interlace: std_logic;
-
-    signal Rp_hstate: std_logic_vector(1 downto 0);
-    signal Rp_vstate: std_logic_vector(1 downto 0);
-    signal Rp_hpos: std_logic_vector(11 downto 0);
-    signal Rp_vpos: std_logic_vector(10 downto 0);
-    signal Rp_hbound: std_logic_vector(47 downto 0);
-    signal Rp_vbound: std_logic_vector(43 downto 0);
-    signal Rp_vsync_delay: std_logic_vector(11 downto 0);
-    signal Rp_skip_line: boolean;
-    signal Rp_hsync: std_logic;
-    signal Rp_vsync: std_logic;
-    signal Rp_active: std_logic;
-    signal Rp_field: std_logic;
-    signal Rp_frame_gap: std_logic;
-
-begin
-    process(pixclk)
-	variable hsync: boolean;
-    begin
-	if rising_edge(pixclk) then
-	    -- configuration registers, synchronizing to pixclk
-	    Rp_hdisp <= hdisp;
-	    Rp_hsyncstart <= hsyncstart;
-	    Rp_hsyncend <= hsyncend;
-	    Rp_htotal <= htotal;
-	    Rp_vdisp <= vdisp;
-	    Rp_vsyncstart <= vsyncstart;
-	    Rp_vsyncend <= vsyncend;
-	    Rp_vtotal <= vtotal;
-	    Rp_hsyncn <= hsyncn;
-	    Rp_vsyncn <= vsyncn;
-	    Rp_interlace <= interlace;
-
-	    Rp_hpos <= Rp_hpos + 1;
-	    hsync := false;
-	    if Rp_hpos = Rp_hbound(11 downto 0) then
-		Rp_hstate <= Rp_hstate + 1;
-		if Rp_hstate = "11" then
-		    Rp_hbound <= Rp_htotal & Rp_hsyncend
-		      & Rp_hsyncstart & Rp_hdisp;
-		    Rp_hpos <= conv_std_logic_vector(1, 12);
-		else
-		    Rp_hbound(35 downto 0) <= Rp_hbound(47 downto 12);
-		end if;
-		case Rp_hstate is
-		when "00" =>
-		    Rp_active <= '0';
-		when "01" =>
-		    Rp_hsync <= not Rp_hsyncn;
-		    hsync := true;
-		when "10" =>
-		    Rp_hsync <= Rp_hsyncn;
-		when others => -- "11"
-		    if Rp_vstate = "00" and not Rp_skip_line then
-			Rp_active <= '1';
-		    end if;
-		    Rp_skip_line <= false;
-		end case;
-	    end if;
-	    if hsync then
-		Rp_vpos <= Rp_vpos + 1;
-		if Rp_interlace = '1' then
-		    Rp_vpos <= Rp_vpos + 2;
-		end if;
-		if Rp_vpos(10 downto 1) = Rp_vbound(10 downto 1) and
-		  (Rp_interlace = '1' or (Rp_vpos(0) = Rp_vbound(0))) then
-		    Rp_vstate <= Rp_vstate + 1;
-		    Rp_vbound(32 downto 0) <= Rp_vbound(43 downto 11);
-		    case Rp_vstate is
-		    when "00" =>
-			Rp_field <= Rp_interlace and not Rp_field;
-			Rp_frame_gap <= not Rp_interlace or Rp_field;
-		    when "01" =>
-			if Rp_field = '0' then
-			    Rp_vsync <= not Rp_vsyncn;
-			else
-			    Rp_vsync_delay <= '0' & Rp_htotal(11 downto 1);
-			end if;
-		    when "10" =>
-			if Rp_field = '0' then
-			    Rp_vsync <= Rp_vsyncn;
-			else
-			    Rp_vsync_delay <= '0' & Rp_htotal(11 downto 1);
-			end if;
-		    when "11" =>
-			Rp_vbound <= Rp_vtotal & Rp_vsyncend
-			  & Rp_vsyncstart & Rp_vdisp;
-			Rp_vpos <= conv_std_logic_vector(1, 11);
-			if Rp_interlace = '1' then
-			    if Rp_field = '0' then
-				Rp_vpos <= conv_std_logic_vector(2, 11);
-			    elsif Rp_vtotal(0) = '1' then
-				Rp_skip_line <= true;
-			    end if;
-			end if;
-			if Rp_interlace = '0' or Rp_field = '0' then
-			    Rp_frame_gap <= '0';
-			end if;
-		    when others =>
-			-- nothing to do, appease the tools
-		    end case;
-		end if;
-	    end if;
-	    if Rp_vsync_delay(11) = '0' then
-		Rp_vsync_delay <= Rp_vsync_delay - 1;
-		if Rp_vsync_delay = 0 then
-		    Rp_vsync <= not Rp_vsync;
-		end if;
-	    end if;
-	end if;
-    end process;
-
-    hsync <= Rp_hsync;
-    vsync <= Rp_vsync;
-    active <= Rp_active;
-    field <= Rp_field;
-    frame_gap <= Rp_frame_gap;
-end x;
-
-
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
-use ieee.std_logic_unsigned.all;
-
 use work.sdram_pack.all;
 
 entity dvi_fb is
@@ -223,9 +61,31 @@ architecture x of dvi_fb is
     signal Rp_from_fifo: std_logic_vector(23 downto 0);
     signal Rp_r, Rp_g, Rp_b: std_logic_vector(7 downto 0);
     signal Rp_hsync_dly, Rp_vsync_dly, Rp_blank_dly: std_logic;
-
-    -- pixclk domain, wires
-    signal dv_vsync, dv_hsync, dv_active, dv_field, dv_frame_gap: std_logic;
+    signal Rp_hstate: std_logic_vector(1 downto 0);
+    signal Rp_vstate: std_logic_vector(1 downto 0);
+    signal Rp_hpos: std_logic_vector(11 downto 0);
+    signal Rp_vpos: std_logic_vector(10 downto 0);
+    signal Rp_hbound: std_logic_vector(47 downto 0);
+    signal Rp_vbound: std_logic_vector(43 downto 0);
+    signal Rp_vsync_delay: std_logic_vector(11 downto 0);
+    signal Rp_skip_line: boolean;
+    signal Rp_hsync: std_logic;
+    signal Rp_vsync: std_logic;
+    signal Rp_active: std_logic;
+    signal Rp_field: std_logic;
+    signal Rp_frame_gap: std_logic;
+    -- mode configuration registers, mainly static, synchronized from main clk
+    signal Rp_hdisp: std_logic_vector(11 downto 0);
+    signal Rp_hsyncstart: std_logic_vector(11 downto 0);
+    signal Rp_hsyncend: std_logic_vector(11 downto 0);
+    signal Rp_htotal: std_logic_vector(11 downto 0);
+    signal Rp_vdisp: std_logic_vector(10 downto 0);
+    signal Rp_vsyncstart: std_logic_vector(10 downto 0);
+    signal Rp_vsyncend: std_logic_vector(10 downto 0);
+    signal Rp_vtotal: std_logic_vector(10 downto 0);
+    signal Rp_hsyncn: std_logic;
+    signal Rp_vsyncn: std_logic;
+    signal Rp_interlace: std_logic;
 
     -- pixclk -> clk clock domain crossing synchronizers
     signal R_pixel_fifo_sync: std_logic_vector(2 downto 0);
@@ -342,7 +202,7 @@ begin
 	    -- pixclk -> clk clock-domain crossing synchronizers
 	    R_pixel_fifo_sync <=
 	      Rp_fifo_tail(4) & R_pixel_fifo_sync(2 downto 1);
-	    R_frame_gap_sync <= dv_frame_gap & R_frame_gap_sync(2 downto 1);
+	    R_frame_gap_sync <= Rp_frame_gap & R_frame_gap_sync(2 downto 1);
 	    if R_pixel_fifo_sync(1) /= R_pixel_fifo_sync(0)
 	      or R_frame_gap_sync(0) = '1' then
 		R_pixel_fifo_tail_cdc <= Rp_fifo_tail(8 downto 4);
@@ -404,39 +264,108 @@ begin
 	R_dma_cur & "00" when x"6",
 	(others => '0') when others;
 
-    I_syncgen: entity work.dv_syncgen
-    port map (
-	pixclk => pixclk,
-	-- mode config
-	hdisp => R_hdisp,
-	hsyncstart => R_hsyncstart,
-	hsyncend => R_hsyncend,
-	htotal => R_htotal,
-	vdisp => R_vdisp,
-	vsyncstart => R_vsyncstart,
-	vsyncend => R_vsyncend,
-	vtotal => R_vtotal,
-	hsyncn => R_hsyncn,
-	vsyncn => R_vsyncn,
-	interlace => R_interlace,
-	-- outputs
-	hsync => dv_hsync,
-	vsync => dv_vsync,
-	active => dv_active,
-	field => dv_field,
-	frame_gap => dv_frame_gap
-    );
-
     process(pixclk)
+	variable hsync: boolean;
     begin
 	if rising_edge(pixclk) then
-	    -- from line buffer and dv_syncgen to vga2dvid
-	    Rp_blank_dly <= not dv_active;
-	    Rp_hsync_dly <= dv_hsync;
-	    Rp_vsync_dly <= dv_vsync;
-	    if dv_frame_gap = '1' then
+	    -- configuration registers, synchronizing to pixclk
+	    Rp_hdisp <= R_hdisp;
+	    Rp_hsyncstart <= R_hsyncstart;
+	    Rp_hsyncend <= R_hsyncend;
+	    Rp_htotal <= R_htotal;
+	    Rp_vdisp <= R_vdisp;
+	    Rp_vsyncstart <= R_vsyncstart;
+	    Rp_vsyncend <= R_vsyncend;
+	    Rp_vtotal <= R_vtotal;
+	    Rp_hsyncn <= R_hsyncn;
+	    Rp_vsyncn <= R_vsyncn;
+	    Rp_interlace <= R_interlace;
+
+	    -- sync signal generator
+	    Rp_hpos <= Rp_hpos + 1;
+	    hsync := false;
+	    if Rp_hpos = Rp_hbound(11 downto 0) then
+		Rp_hstate <= Rp_hstate + 1;
+		if Rp_hstate = "11" then
+		    Rp_hbound <= Rp_htotal & Rp_hsyncend
+		      & Rp_hsyncstart & Rp_hdisp;
+		    Rp_hpos <= conv_std_logic_vector(1, 12);
+		else
+		    Rp_hbound(35 downto 0) <= Rp_hbound(47 downto 12);
+		end if;
+		case Rp_hstate is
+		when "00" =>
+		    Rp_active <= '0';
+		when "01" =>
+		    Rp_hsync <= not Rp_hsyncn;
+		    hsync := true;
+		when "10" =>
+		    Rp_hsync <= Rp_hsyncn;
+		when others => -- "11"
+		    if Rp_vstate = "00" and not Rp_skip_line then
+			Rp_active <= '1';
+		    end if;
+		    Rp_skip_line <= false;
+		end case;
+	    end if;
+	    if hsync then
+		Rp_vpos <= Rp_vpos + 1;
+		if Rp_interlace = '1' then
+		    Rp_vpos <= Rp_vpos + 2;
+		end if;
+		if Rp_vpos(10 downto 1) = Rp_vbound(10 downto 1) and
+		  (Rp_interlace = '1' or (Rp_vpos(0) = Rp_vbound(0))) then
+		    Rp_vstate <= Rp_vstate + 1;
+		    Rp_vbound(32 downto 0) <= Rp_vbound(43 downto 11);
+		    case Rp_vstate is
+		    when "00" =>
+			Rp_field <= Rp_interlace and not Rp_field;
+			Rp_frame_gap <= not Rp_interlace or Rp_field;
+		    when "01" =>
+			if Rp_field = '0' then
+			    Rp_vsync <= not Rp_vsyncn;
+			else
+			    Rp_vsync_delay <= '0' & Rp_htotal(11 downto 1);
+			end if;
+		    when "10" =>
+			if Rp_field = '0' then
+			    Rp_vsync <= Rp_vsyncn;
+			else
+			    Rp_vsync_delay <= '0' & Rp_htotal(11 downto 1);
+			end if;
+		    when "11" =>
+			Rp_vbound <= Rp_vtotal & Rp_vsyncend
+			  & Rp_vsyncstart & Rp_vdisp;
+			Rp_vpos <= conv_std_logic_vector(1, 11);
+			if Rp_interlace = '1' then
+			    if Rp_field = '0' then
+				Rp_vpos <= conv_std_logic_vector(2, 11);
+			    elsif Rp_vtotal(0) = '1' then
+				Rp_skip_line <= true;
+			    end if;
+			end if;
+			if Rp_interlace = '0' or Rp_field = '0' then
+			    Rp_frame_gap <= '0';
+			end if;
+		    when others =>
+			-- nothing to do, appease the tools
+		    end case;
+		end if;
+	    end if;
+	    if Rp_vsync_delay(11) = '0' then
+		Rp_vsync_delay <= Rp_vsync_delay - 1;
+		if Rp_vsync_delay = 0 then
+		    Rp_vsync <= not Rp_vsync;
+		end if;
+	    end if;
+
+	    -- from line buffer and syncgen to vga2dvid
+	    Rp_blank_dly <= not Rp_active;
+	    Rp_hsync_dly <= Rp_hsync;
+	    Rp_vsync_dly <= Rp_vsync;
+	    if Rp_frame_gap = '1' then
 		Rp_fifo_tail <= (others => '0');
-	    elsif dv_active = '1' then
+	    elsif Rp_active = '1' then
 		Rp_fifo_tail <= Rp_fifo_tail + 1;
 	    end if;
 	    Rp_from_fifo <= M_pixel_fifo(conv_integer(Rp_fifo_tail));
