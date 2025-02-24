@@ -103,6 +103,7 @@ architecture x of dvi_fb is
     signal R_dma_fifo_head, R_dma_fifo_tail: std_logic_vector(8 downto 0);
     attribute syn_ramstyle of M_dma_fifo: signal is "no_rw_check";
     signal R_dma_hcnt, R_dma_vcnt, R_dma_hlim: std_logic_vector(10 downto 0);
+    signal R_dma_field_cnt: std_logic_vector(1 downto 0);
     signal R_bpp: std_logic_vector(1 downto 0) := "10"; -- 8 bpp
     signal R_pixel_index: std_logic_vector(1 downto 0);
 
@@ -129,8 +130,8 @@ begin
     pixel_fifo_needs_more_pixels <=
       R_pixel_fifo_tail_cdc /= R_pixel_fifo_head(8 downto 4) + 1;
     frame_gap <= R_frame_gap_sync(0) = '1';
-    dma_fifo_may_fetch <= not frame_gap and
-      R_dma_fifo_head(8 downto 4) + 1 /= R_dma_fifo_tail(8 downto 4);
+    dma_fifo_may_fetch <= R_dma_field_cnt /= "00" and not frame_gap
+      and R_dma_fifo_head(8 downto 4) + 1 /= R_dma_fifo_tail(8 downto 4);
     dma_fifo_has_data <= R_dma_fifo_head /= R_dma_fifo_tail;
 
     dma_req.addr <= R_dma_cur;
@@ -149,6 +150,7 @@ begin
 
 	    if frame_gap then
 		-- Pixel output has stopped, prepare for a new frame
+		R_dma_field_cnt <= R_interlace & not R_interlace;
 		R_dma_fifo_head <= (others => '0');
 		R_dma_fifo_tail <= (others => '0');
 		R_dma_cur <= R_dma_base;
@@ -165,12 +167,19 @@ begin
 		    R_dma_hcnt <= R_dma_hcnt + 1;
 		    if R_dma_hcnt + 1 = R_dma_hlim then
 			R_dma_hcnt <= (others => '0');
-			R_dma_vcnt <= R_dma_vcnt + 1;
 			if R_interlace = '1' then
-			    R_dma_cur <= R_dma_cur + R_dma_hlim + 1;
+			    R_dma_cur <= R_dma_cur + 1 + R_dma_hlim;
 			    R_dma_vcnt <= R_dma_vcnt + 2;
 			    if R_dma_vcnt + 2 = R_vdisp then
 				R_dma_cur <= R_dma_base + R_dma_hlim;
+				R_dma_vcnt <= (others => '0');
+				R_dma_field_cnt <= R_dma_field_cnt - 1;
+			    end if;
+			else
+			    R_dma_vcnt <= R_dma_vcnt + 1;
+			    if R_dma_vcnt + 1 = R_vdisp then
+				R_dma_vcnt <= (others => '0');
+				R_dma_field_cnt <= R_dma_field_cnt - 1;
 			    end if;
 			end if;
 		    end if;
