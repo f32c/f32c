@@ -99,12 +99,12 @@ architecture x of dvi_fb is
     type T_dma_fifo is array (0 to 511) of std_logic_vector(31 downto 0);
     signal M_dma_fifo: T_dma_fifo;
     signal R_dma_base: std_logic_vector(31 downto 2);
-    signal R_dma_end: std_logic_vector(31 downto 2);
     signal R_dma_cur: std_logic_vector(31 downto 2);
     signal R_dma_fifo_head, R_dma_fifo_tail: std_logic_vector(8 downto 0);
     attribute syn_ramstyle of M_dma_fifo: signal is "no_rw_check";
+    signal R_dma_hcnt, R_dma_vcnt, R_dma_hlim: std_logic_vector(10 downto 0);
+    signal R_bpp: std_logic_vector(1 downto 0) := "10"; -- 8 bpp
     signal R_pixel_index: std_logic_vector(1 downto 0);
-    signal R_hcnt: std_logic_vector(8 downto 0);
 
     -- main clk domain, framebuffer, wires
     signal frame_gap: boolean;
@@ -149,26 +149,30 @@ begin
 
 	    if frame_gap then
 		-- Pixel output has stopped, prepare for a new frame
-		R_dma_cur <= R_dma_base;
-		R_pixel_fifo_head <= (others => '0');
 		R_dma_fifo_head <= (others => '0');
 		R_dma_fifo_tail <= (others => '0');
+		R_dma_cur <= R_dma_base;
+		R_dma_hcnt <= (others => '0');
+		R_dma_vcnt <= (others => '0');
 		R_pixel_index <= (others => '0');
-		R_hcnt <= (others => '0');
+		R_pixel_fifo_head <= (others => '0');
 	    else
 		if dma_resp.data_ready = '1' then
 		    M_dma_fifo(conv_integer(R_dma_fifo_head)) <=
 		      dma_resp.data_out;
-		    R_dma_cur <= R_dma_cur + 1;
 		    R_dma_fifo_head <= R_dma_fifo_head + 1;
-		    R_hcnt <= R_hcnt + 1;
-		    if R_interlace = '1'
-		      and  R_hcnt = R_hdisp(10 downto 2) - 1 then
-			R_hcnt <= (others => '0');
-			R_dma_cur <= R_dma_cur + R_hdisp(10 downto 2) + 1;
-		    end if;
-		    if R_dma_cur = R_dma_end then
-			R_dma_cur <= R_dma_base + R_hdisp(10 downto 2);
+		    R_dma_cur <= R_dma_cur + 1;
+		    R_dma_hcnt <= R_dma_hcnt + 1;
+		    if R_dma_hcnt + 1 = R_dma_hlim then
+			R_dma_hcnt <= (others => '0');
+			R_dma_vcnt <= R_dma_vcnt + 1;
+			if R_interlace = '1' then
+			    R_dma_cur <= R_dma_cur + R_dma_hlim + 1;
+			    R_dma_vcnt <= R_dma_vcnt + 2;
+			    if R_dma_vcnt + 2 = R_vdisp then
+				R_dma_cur <= R_dma_base + R_dma_hlim;
+			    end if;
+			end if;
 		    end if;
 		end if;
 
@@ -244,11 +248,20 @@ begin
 		    end if;
 		when x"4" =>
 		    R_dma_base <= bus_in(31 downto 2);
-		when x"5" =>
-		    R_dma_end <= bus_in(31 downto 2);
 		when others =>
 		end case;
 	    end if;
+
+	    case R_bpp is
+	    when "00" => -- 2 bpp, grayscale
+		R_dma_hlim <= "0000" & R_hdisp(10 downto 4);
+	    when "01" => -- 4 bpp, RGBI
+		R_dma_hlim <= "000" & R_hdisp(10 downto 3);
+	    when "10" => -- 8 bpp, RGB332
+		R_dma_hlim <= "00" & R_hdisp(10 downto 2);
+	    when others => -- "11", 16 bpp, RGB565
+		R_dma_hlim <= '0' & R_hdisp(10 downto 1);
+	    end case;
 	end if;
     end process;
 
@@ -260,7 +273,6 @@ begin
 	--R_interlace & R_vsyncn & R_hsyncn & "00"
 	--  & R_vtotal & x"0" & '0' & R_vsyncend when x"3",
 	R_dma_base & "00" when x"4",
-	R_dma_end & "00" when x"5",
 	R_dma_cur & "00" when x"6",
 	(others => '0') when others;
 
