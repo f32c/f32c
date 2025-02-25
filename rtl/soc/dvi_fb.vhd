@@ -31,6 +31,13 @@ use ieee.std_logic_unsigned.all;
 use work.sdram_pack.all;
 
 entity dvi_fb is
+    generic (
+	C_bpp16: boolean := true;
+	C_bpp8: boolean := true;
+	C_bpp4: boolean := false;
+	C_bpp2: boolean := false;
+	C_bpp1: boolean := false
+    );
     port (
 	clk: in std_logic;
 	-- I/O bus slave
@@ -263,21 +270,33 @@ begin
 		    end if;
 		when x"4" =>
 		    R_dma_base <= bus_in(31 downto 2);
+		when x"5" =>
+		    R_bpp <= bus_in(2 downto 0);
 		when others =>
 		end case;
 	    end if;
 
 	    case R_bpp is
 	    when "001" => -- 1 bpp, BW
-		R_dma_hlim <= "00000" & R_hdisp(10 downto 5);
+		if C_bpp1 then
+		    R_dma_hlim <= "00000" & R_hdisp(10 downto 5);
+		end if;
 	    when "010" => -- 2 bpp, grayscale
-		R_dma_hlim <= "0000" & R_hdisp(10 downto 4);
+		if C_bpp2 then
+		    R_dma_hlim <= "0000" & R_hdisp(10 downto 4);
+		end if;
 	    when "011" => -- 4 bpp, RGBI
-		R_dma_hlim <= "000" & R_hdisp(10 downto 3);
+		if C_bpp4 then
+		    R_dma_hlim <= "000" & R_hdisp(10 downto 3);
+		end if;
 	    when "100" => -- 8 bpp, RGB332
-		R_dma_hlim <= "00" & R_hdisp(10 downto 2);
+		if C_bpp8 then
+		    R_dma_hlim <= "00" & R_hdisp(10 downto 2);
+		end if;
 	    when "101" => -- 16 bpp, RGB565
-		R_dma_hlim <= '0' & R_hdisp(10 downto 1);
+		if C_bpp16 then
+		    R_dma_hlim <= '0' & R_hdisp(10 downto 1);
+		end if;
 	    when others =>
 	    end case;
 	end if;
@@ -291,7 +310,7 @@ begin
 	--R_interlace & R_vsyncn & R_hsyncn & "00"
 	--  & R_vtotal & x"0" & '0' & R_vsyncend when x"3",
 	R_dma_base & "00" when x"4",
-	R_dma_cur & "00" when x"6",
+	x"0000000" & '0' & R_bpp when x"5",
 	(others => '0') when others;
 
     process(pixclk)
