@@ -104,8 +104,8 @@ architecture x of dvi_fb is
     attribute syn_ramstyle of M_dma_fifo: signal is "no_rw_check";
     signal R_dma_hcnt, R_dma_vcnt, R_dma_hlim: std_logic_vector(10 downto 0);
     signal R_dma_field_cnt: std_logic_vector(1 downto 0);
-    signal R_bpp: std_logic_vector(1 downto 0) := "10"; -- 8 bpp
-    signal R_pixel_index: std_logic_vector(1 downto 0);
+    signal R_bpp: std_logic_vector(2 downto 0) := "100";
+    signal R_pixel_index: std_logic_vector(5 downto 0);
 
     -- main clk domain, framebuffer, wires
     signal frame_gap: boolean;
@@ -142,7 +142,8 @@ begin
     process(clk)
 	variable pixel_ready: boolean;
 	variable from_dma_fifo: std_logic_vector(31 downto 0);
-	variable pixel: std_logic_vector(7 downto 0);
+	variable pixel_index_next: std_logic_vector(5 downto 0);
+	variable pixel: std_logic_vector(15 downto 0);
 	variable r, g, b: std_logic_vector(7 downto 0);
     begin
 	if rising_edge(clk) then
@@ -187,21 +188,26 @@ begin
 
 		if pixel_fifo_needs_more_pixels and dma_fifo_has_data then
 		    from_dma_fifo := M_dma_fifo(conv_integer(R_dma_fifo_tail));
-		    case R_pixel_index is
-		    when "00" => pixel := from_dma_fifo(7 downto 0);
-		    when "01" => pixel := from_dma_fifo(15 downto 8);
-		    when "10" => pixel := from_dma_fifo(23 downto 16);
-		    when others => pixel := from_dma_fifo(31 downto 24);
+		    pixel_ready := true;
+		    case R_pixel_index(4 downto 3) is
+		    when "00" =>
+			pixel(7 downto 0) := from_dma_fifo(7 downto 0);
+		    when "01" =>
+			pixel(7 downto 0) := from_dma_fifo(15 downto 8);
+		    when "10" =>
+			pixel(7 downto 0) := from_dma_fifo(23 downto 16);
+		    when others =>
+			pixel(7 downto 0) := from_dma_fifo(31 downto 24);
 		    end case;
+		    pixel_index_next := R_pixel_index + 8;
 		    r :=  pixel(7 downto 5) & pixel(7 downto 5)
 		      & pixel(7 downto 6);
 		    g :=  pixel(4 downto 2) & pixel(4 downto 2)
 		      & pixel(4 downto 3);
 		    b := pixel(1 downto 0) & pixel(1 downto 0)
 		      & pixel(1 downto 0) & pixel(1 downto 0);
-		    pixel_ready := true;
-		    R_pixel_index <= R_pixel_index + 1;
-		    if R_pixel_index = "11" then
+		    R_pixel_index <= '0' & pixel_index_next(4 downto 0);
+		    if pixel_index_next(5) = '1' then
 			R_dma_fifo_tail <= R_dma_fifo_tail + 1;
 		    end if;
 		end if;
@@ -262,14 +268,17 @@ begin
 	    end if;
 
 	    case R_bpp is
-	    when "00" => -- 2 bpp, grayscale
+	    when "001" => -- 1 bpp, BW
+		R_dma_hlim <= "00000" & R_hdisp(10 downto 5);
+	    when "010" => -- 2 bpp, grayscale
 		R_dma_hlim <= "0000" & R_hdisp(10 downto 4);
-	    when "01" => -- 4 bpp, RGBI
+	    when "011" => -- 4 bpp, RGBI
 		R_dma_hlim <= "000" & R_hdisp(10 downto 3);
-	    when "10" => -- 8 bpp, RGB332
+	    when "100" => -- 8 bpp, RGB332
 		R_dma_hlim <= "00" & R_hdisp(10 downto 2);
-	    when others => -- "11", 16 bpp, RGB565
+	    when "101" => -- 16 bpp, RGB565
 		R_dma_hlim <= '0' & R_hdisp(10 downto 1);
+	    when others =>
 	    end case;
 	end if;
     end process;
