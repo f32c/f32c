@@ -156,7 +156,10 @@ begin
 	if rising_edge(clk) then
 	    pixel_ready := false;
 
-	    if frame_gap or R_bpp = "000" then
+	    if R_bpp = "000" then
+		-- Disable DMA
+		R_dma_field_cnt <= "00";
+	    elsif frame_gap then
 		-- Pixel output has stopped, prepare for a new frame
 		R_dma_field_cnt <= R_interlace & not R_interlace;
 		R_dma_fifo_head <= (others => '0');
