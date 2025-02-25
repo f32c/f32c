@@ -150,7 +150,7 @@ begin
 	variable pixel_ready: boolean;
 	variable from_dma_fifo: std_logic_vector(31 downto 0);
 	variable pixel_bitpos_next: std_logic_vector(5 downto 0);
-	variable pixel: std_logic_vector(15 downto 0);
+	variable pixel: std_logic_vector(31 downto 0);
 	variable r, g, b: std_logic_vector(7 downto 0);
     begin
 	if rising_edge(clk) then
@@ -196,28 +196,28 @@ begin
 		if pixel_fifo_needs_more_pixels and dma_fifo_has_data then
 		    from_dma_fifo := M_dma_fifo(conv_integer(R_dma_fifo_tail));
 		    pixel_ready := true;
-		    pixel := from_dma_fifo(15 downto 0);
-		    pixel_bitpos_next := (others => '0');
+		    pixel := shr(from_dma_fifo, R_pixel_bitpos(4 downto 0));
+		    pixel_bitpos_next := R_pixel_bitpos + 8;
 		    case R_bpp is
+		    when "001" => -- 1 bpp, black/white
+			if C_bpp1 then
+			    pixel_bitpos_next := R_pixel_bitpos + 1;
+			    r := (others => pixel(0));
+			    g := (others => pixel(0));
+			    b := (others => pixel(0));
+			end if;
+		    when "010" => -- 2 bpp, grayscale
+			if C_bpp2 then
+			    pixel_bitpos_next := R_pixel_bitpos + 2;
+			    r := pixel(1 downto 0) & pixel(1 downto 0)
+			      & pixel(1 downto 0) & pixel(1 downto 0);
+			    g := pixel(1 downto 0) & pixel(1 downto 0)
+			      & pixel(1 downto 0) & pixel(1 downto 0);
+			    b := pixel(1 downto 0) & pixel(1 downto 0)
+			      & pixel(1 downto 0) & pixel(1 downto 0);
+			end if;
 		    when "011" => -- 4 bpp, RGBI
 			if C_bpp4 then
-			    case R_pixel_bitpos(4 downto 2) is
-			    when "001" => pixel(3 downto 0) :=
-			      from_dma_fifo(7 downto 4);
-			    when "010" => pixel(3 downto 0) :=
-			      from_dma_fifo(11 downto 8);
-			    when "011" => pixel(3 downto 0) :=
-			      from_dma_fifo(15 downto 12);
-			    when "100" => pixel(3 downto 0) :=
-			      from_dma_fifo(19 downto 16);
-			    when "101" => pixel(3 downto 0) :=
-			      from_dma_fifo(23 downto 20);
-			    when "110" => pixel(3 downto 0) :=
-			      from_dma_fifo(27 downto 24);
-			    when "111" => pixel(3 downto 0) :=
-			      from_dma_fifo(31 downto 28);
-			    when others =>
-			    end case;
 			    pixel_bitpos_next := R_pixel_bitpos + 4;
 			    r := pixel(2) & pixel(3) & pixel(2) & pixel(3)
 			      & pixel(2) & pixel(3) & pixel(2) & pixel(3);
@@ -228,15 +228,6 @@ begin
 			end if;
 		    when "100" => -- 8 bpp RGB332
 			if C_bpp8 then
-			    case R_pixel_bitpos(4 downto 3) is
-			    when "01" => pixel(7 downto 0) :=
-			      from_dma_fifo(15 downto 8);
-			    when "10" => pixel(7 downto 0) :=
-			      from_dma_fifo(23 downto 16);
-			    when "11" => pixel(7 downto 0) :=
-			      from_dma_fifo(31 downto 24);
-			    when others =>
-			    end case;
 			    pixel_bitpos_next := R_pixel_bitpos + 8;
 			    r := pixel(7 downto 5) & pixel(7 downto 5)
 			      & pixel(7 downto 6);
@@ -247,9 +238,6 @@ begin
 			end if;
 		    when "101" => -- 16 bpp RGB565
 			if C_bpp16 then
-			    if R_pixel_bitpos(4) = '1' then
-				pixel := from_dma_fifo(31 downto 16);
-			    end if;
 			    pixel_bitpos_next := R_pixel_bitpos + 16;
 			    r := pixel(15 downto 11) & pixel(15 downto 13);
 			    g := pixel(10 downto 5) & pixel(10 downto 9);
