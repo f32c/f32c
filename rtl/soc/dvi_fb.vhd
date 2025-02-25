@@ -111,8 +111,8 @@ architecture x of dvi_fb is
     attribute syn_ramstyle of M_dma_fifo: signal is "no_rw_check";
     signal R_dma_hcnt, R_dma_vcnt, R_dma_hlim: std_logic_vector(10 downto 0);
     signal R_dma_field_cnt: std_logic_vector(1 downto 0);
-    signal R_bpp: std_logic_vector(2 downto 0) := "100";
-    signal R_pixel_index: std_logic_vector(5 downto 0);
+    signal R_bpp: std_logic_vector(2 downto 0);
+    signal R_pixel_bitpos: std_logic_vector(5 downto 0);
 
     -- main clk domain, framebuffer, wires
     signal frame_gap: boolean;
@@ -149,14 +149,14 @@ begin
     process(clk)
 	variable pixel_ready: boolean;
 	variable from_dma_fifo: std_logic_vector(31 downto 0);
-	variable pixel_index_next: std_logic_vector(5 downto 0);
+	variable pixel_bitpos_next: std_logic_vector(5 downto 0);
 	variable pixel: std_logic_vector(15 downto 0);
 	variable r, g, b: std_logic_vector(7 downto 0);
     begin
 	if rising_edge(clk) then
 	    pixel_ready := false;
 
-	    if frame_gap then
+	    if frame_gap or R_bpp = "000" then
 		-- Pixel output has stopped, prepare for a new frame
 		R_dma_field_cnt <= R_interlace & not R_interlace;
 		R_dma_fifo_head <= (others => '0');
@@ -164,7 +164,7 @@ begin
 		R_dma_cur <= R_dma_base;
 		R_dma_hcnt <= (others => '0');
 		R_dma_vcnt <= (others => '0');
-		R_pixel_index <= (others => '0');
+		R_pixel_bitpos <= (others => '0');
 		R_pixel_fifo_head <= (others => '0');
 	    else
 		if dma_resp.data_ready = '1' then
@@ -196,25 +196,69 @@ begin
 		if pixel_fifo_needs_more_pixels and dma_fifo_has_data then
 		    from_dma_fifo := M_dma_fifo(conv_integer(R_dma_fifo_tail));
 		    pixel_ready := true;
-		    case R_pixel_index(4 downto 3) is
-		    when "00" =>
-			pixel(7 downto 0) := from_dma_fifo(7 downto 0);
-		    when "01" =>
-			pixel(7 downto 0) := from_dma_fifo(15 downto 8);
-		    when "10" =>
-			pixel(7 downto 0) := from_dma_fifo(23 downto 16);
+		    pixel := from_dma_fifo(15 downto 0);
+		    pixel_bitpos_next := (others => '0');
+		    case R_bpp is
+		    when "011" => -- 4 bpp, RGBI
+			if C_bpp4 then
+			    case R_pixel_bitpos(4 downto 2) is
+			    when "001" => pixel(3 downto 0) :=
+			      from_dma_fifo(7 downto 4);
+			    when "010" => pixel(3 downto 0) :=
+			      from_dma_fifo(11 downto 8);
+			    when "011" => pixel(3 downto 0) :=
+			      from_dma_fifo(15 downto 12);
+			    when "100" => pixel(3 downto 0) :=
+			      from_dma_fifo(19 downto 16);
+			    when "101" => pixel(3 downto 0) :=
+			      from_dma_fifo(23 downto 20);
+			    when "110" => pixel(3 downto 0) :=
+			      from_dma_fifo(27 downto 24);
+			    when "111" => pixel(3 downto 0) :=
+			      from_dma_fifo(31 downto 28);
+			    when others =>
+			    end case;
+			    pixel_bitpos_next := R_pixel_bitpos + 4;
+			    r := pixel(2) & pixel(3) & pixel(2) & pixel(3)
+			      & pixel(2) & pixel(3) & pixel(2) & pixel(3);
+			    g := pixel(1) & pixel(3) & pixel(1) & pixel(3)
+			      & pixel(1) & pixel(3) & pixel(1) & pixel(3);
+			    b := pixel(0) & pixel(3) & pixel(0) & pixel(3)
+			      & pixel(0) & pixel(3) & pixel(0) & pixel(3);
+			end if;
+		    when "100" => -- 8 bpp RGB332
+			if C_bpp8 then
+			    case R_pixel_bitpos(4 downto 3) is
+			    when "01" => pixel(7 downto 0) :=
+			      from_dma_fifo(15 downto 8);
+			    when "10" => pixel(7 downto 0) :=
+			      from_dma_fifo(23 downto 16);
+			    when "11" => pixel(7 downto 0) :=
+			      from_dma_fifo(31 downto 24);
+			    when others =>
+			    end case;
+			    pixel_bitpos_next := R_pixel_bitpos + 8;
+			    r := pixel(7 downto 5) & pixel(7 downto 5)
+			      & pixel(7 downto 6);
+			    g := pixel(4 downto 2) & pixel(4 downto 2)
+			      & pixel(4 downto 3);
+			    b := pixel(1 downto 0) & pixel(1 downto 0)
+			      & pixel(1 downto 0) & pixel(1 downto 0);
+			end if;
+		    when "101" => -- 16 bpp RGB565
+			if C_bpp16 then
+			    if R_pixel_bitpos(4) = '1' then
+				pixel := from_dma_fifo(31 downto 16);
+			    end if;
+			    pixel_bitpos_next := R_pixel_bitpos + 16;
+			    r := pixel(15 downto 11) & pixel(15 downto 13);
+			    g := pixel(10 downto 5) & pixel(10 downto 9);
+			    b := pixel(4 downto 0) & pixel(4 downto 2);
+			end if;
 		    when others =>
-			pixel(7 downto 0) := from_dma_fifo(31 downto 24);
 		    end case;
-		    pixel_index_next := R_pixel_index + 8;
-		    r :=  pixel(7 downto 5) & pixel(7 downto 5)
-		      & pixel(7 downto 6);
-		    g :=  pixel(4 downto 2) & pixel(4 downto 2)
-		      & pixel(4 downto 3);
-		    b := pixel(1 downto 0) & pixel(1 downto 0)
-		      & pixel(1 downto 0) & pixel(1 downto 0);
-		    R_pixel_index <= '0' & pixel_index_next(4 downto 0);
-		    if pixel_index_next(5) = '1' then
+		    R_pixel_bitpos <= '0' & pixel_bitpos_next(4 downto 0);
+		    if pixel_bitpos_next(5) = '1' then
 			R_dma_fifo_tail <= R_dma_fifo_tail + 1;
 		    end if;
 		end if;
