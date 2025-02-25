@@ -138,12 +138,12 @@ begin
       R_pixel_fifo_tail_cdc /= R_pixel_fifo_head(8 downto 4) + 1;
     frame_gap <= R_frame_gap_sync(0) = '1';
     dma_fifo_may_fetch <= R_dma_field_cnt /= "00" and not frame_gap
-      and R_dma_fifo_head(8 downto 4) + 1 /= R_dma_fifo_tail(8 downto 4);
+      and R_dma_fifo_head(8 downto 5) + 1 /= R_dma_fifo_tail(8 downto 5);
     dma_fifo_has_data <= R_dma_fifo_head /= R_dma_fifo_tail;
 
     dma_req.addr <= R_dma_cur;
     dma_req.strobe <= '1' when dma_fifo_may_fetch else '0';
-    dma_req.burst_len <= x"0f";
+    dma_req.burst_len <= x"1f";
     dma_req.write <= '0';
 
     process(clk)
