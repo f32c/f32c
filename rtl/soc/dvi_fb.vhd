@@ -120,15 +120,23 @@ architecture x of dvi_fb is
     signal dma_fifo_may_fetch, dma_fifo_has_data: boolean;
     signal dma_fifo_head_next, dma_fifo_tail_next: std_logic_vector(8 downto 0);
 
-    -- main clk domain, (mostly) static linemode configuration data
-    signal R_hdisp: std_logic_vector(11 downto 0);
-    signal R_hsyncstart: std_logic_vector(11 downto 0);
-    signal R_hsyncend: std_logic_vector(11 downto 0);
-    signal R_htotal: std_logic_vector(11 downto 0);
-    signal R_vdisp: std_logic_vector(10 downto 0);
-    signal R_vsyncstart: std_logic_vector(10 downto 0);
-    signal R_vsyncend: std_logic_vector(10 downto 0);
-    signal R_vtotal: std_logic_vector(10 downto 0);
+    -- main clk domain, static linemode configuration data, default is 720p60
+    signal R_hdisp: std_logic_vector(11 downto 0) :=
+      conv_std_logic_vector(1280, 12);
+    signal R_hsyncstart: std_logic_vector(11 downto 0) :=
+      conv_std_logic_vector(1390, 12);
+    signal R_hsyncend: std_logic_vector(11 downto 0) :=
+      conv_std_logic_vector(1430, 12);
+    signal R_htotal: std_logic_vector(11 downto 0) :=
+      conv_std_logic_vector(1650, 12);
+    signal R_vdisp: std_logic_vector(10 downto 0) :=
+      conv_std_logic_vector(720, 11);
+    signal R_vsyncstart: std_logic_vector(10 downto 0) :=
+      conv_std_logic_vector(725, 11);
+    signal R_vsyncend: std_logic_vector(10 downto 0) :=
+      conv_std_logic_vector(730, 11);
+    signal R_vtotal: std_logic_vector(10 downto 0) :=
+      conv_std_logic_vector(750, 11);
     signal R_hsyncn: std_logic;
     signal R_vsyncn: std_logic;
     signal R_interlace: std_logic;
