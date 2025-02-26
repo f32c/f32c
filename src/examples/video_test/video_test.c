@@ -66,11 +66,11 @@ main(void)
 		for (i = 0; i < fb_test[ti].weight; i++) {
 			RDTSC(rnd);
 			rnd += random();
-			x0 = rnd % 640;
-			y0 = (rnd >> 10) % 480;
+			x0 = rnd % fb_hdisp;
+			y0 = (rnd >> 10) % fb_vdisp;
 			rnd += start.tv_nsec;
-			x1 = (rnd >> 8) % 640;
-			y1 = (rnd >> 18) % 480;
+			x1 = (rnd >> 8) % fb_hdisp;
+			y1 = (rnd >> 18) % fb_vdisp;
 			fb_test[ti].fn(x0, y0, x1, y1, rnd);
 		}
 		clock_gettime(CLOCK_MONOTONIC, &end);
