@@ -75,6 +75,18 @@
 #define	IO_PCM_FREQ		IO_ADDR(0x3A8)	/* word, WR */
 #define	IO_PCM_VOLUME		IO_ADDR(0x3AC)	/* half, WR */
 
+#define	IO_DV_HDISP		IO_ADDR(0x3C0)	/* half, WR */
+#define	IO_DV_HSYNCSTART	IO_ADDR(0x3C2)	/* half, WR */
+#define	IO_DV_HSYNCEND		IO_ADDR(0x3C4)	/* half, WR */
+#define	IO_DV_HTOTAL		IO_ADDR(0x3C6)	/* half, WR */
+#define	IO_DV_VDISP		IO_ADDR(0x3C8)	/* half, WR */
+#define	IO_DV_VSYNCSTART	IO_ADDR(0x3CA)	/* half, WR */
+#define	IO_DV_VSYNCEND		IO_ADDR(0x3CC)	/* half, WR */
+#define	IO_DV_VTOTAL		IO_ADDR(0x3CE)	/* half, WR */
+
+#define	IO_DV_DMA_BASE		IO_ADDR(0x3D0)	/* word, WR */
+#define	IO_DV_PIXCFG		IO_ADDR(0x3D4)	/* byte, WR */
+
 #define	IO_LEGO_DATA		IO_ADDR(0x520)	/* byte, WR */
 #define	IO_LEGO_CTL		IO_ADDR(0x521)	/* byte, WR */
 
