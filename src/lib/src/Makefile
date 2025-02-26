@@ -186,7 +186,7 @@ mipseb:
 
 mips:
 	${MAKE} mipsel
-	${MAKE} mipseb
+	# ${MAKE} mipseb
 
 all_libs:
 	${MAKE} riscv
