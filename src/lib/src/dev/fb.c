@@ -235,7 +235,7 @@ uint8_t fb_mode = 3;
 
 #define	ABS(a) (((a) < 0) ? -(a) : (a))
 
-#define COMPOSITING2
+//#define COMPOSITING2
 
 #ifdef COMPOSITING2
 #define	_FB_WIDTH	640
@@ -260,7 +260,6 @@ static struct compositing_line *sp[_FB_HEIGHT];
 void
 fb_set_mode(int mode)
 {
-	int i;
 
 	free(fb[1]);
 	fb[1] = NULL;
@@ -289,7 +288,7 @@ fb_set_mode(int mode)
 #ifdef COMPOSITING2
 		/* compisiting2 will be initialized as simple framebuffer */
 		/* Initialize compositing line descriptors */
-		for (i = 0; i < _FB_HEIGHT; i++) {
+		for (int i = 0; i < _FB_HEIGHT; i++) {
 			scanlines[i].next = NULL;
 			scanlines[i].x = 0;
 			scanlines[i].n = _FB_WIDTH - 1;
