@@ -32,6 +32,7 @@ use work.sdram_pack.all;
 
 entity dvi_fb is
     generic (
+	C_doublepix: boolean := true;
 	C_bpp16: boolean := true;
 	C_bpp8: boolean := true;
 	C_bpp4: boolean := false;
@@ -111,8 +112,9 @@ architecture x of dvi_fb is
     attribute syn_ramstyle of M_dma_fifo: signal is "no_rw_check";
     signal R_dma_hcnt, R_dma_vcnt, R_dma_hlim: std_logic_vector(10 downto 0);
     signal R_dma_field_cnt: std_logic_vector(1 downto 0);
-    signal R_bpp: std_logic_vector(2 downto 0);
     signal R_pixel_bitpos: std_logic_vector(5 downto 0);
+    signal R_pixel_bitpos_incr: std_logic_vector(4 downto 0);
+    signal R_skip_pixel, R_repeat_line: std_logic;
 
     -- main clk domain, framebuffer, wires
     signal frame_gap: boolean;
@@ -120,7 +122,7 @@ architecture x of dvi_fb is
     signal dma_fifo_may_fetch, dma_fifo_has_data: boolean;
     signal dma_fifo_head_next, dma_fifo_tail_next: std_logic_vector(8 downto 0);
 
-    -- main clk domain, static linemode configuration data, default is 720p60
+    -- main clk domain, linemode configuration data, default is 720p60
     signal R_hdisp: std_logic_vector(11 downto 0) :=
       conv_std_logic_vector(1280, 12);
     signal R_hsyncstart: std_logic_vector(11 downto 0) :=
@@ -140,6 +142,9 @@ architecture x of dvi_fb is
     signal R_hsyncn: std_logic;
     signal R_vsyncn: std_logic;
     signal R_interlace: std_logic;
+    -- main clk domain, pixel format configuration
+    signal R_bpp: std_logic_vector(2 downto 0);
+    signal R_doublepix: std_logic;
 
 begin
     pixel_fifo_needs_more_pixels <=
@@ -155,6 +160,7 @@ begin
     dma_req.write <= '0';
 
     process(clk)
+	variable dma_hlim: std_logic_vector(10 downto 0);
 	variable pixel_ready: boolean;
 	variable from_dma_fifo: std_logic_vector(31 downto 0);
 	variable pixel_bitpos_next: std_logic_vector(5 downto 0);
@@ -176,6 +182,10 @@ begin
 		R_dma_hcnt <= (others => '0');
 		R_dma_vcnt <= (others => '0');
 		R_pixel_bitpos <= (others => '0');
+		if C_doublepix then
+		    R_skip_pixel <= R_doublepix;
+		    R_repeat_line <= R_doublepix;
+		end if;
 		R_pixel_fifo_head <= (others => '0');
 	    else
 		if dma_resp.data_ready = '1' then
@@ -185,9 +195,12 @@ begin
 		    R_dma_cur <= R_dma_cur + 1;
 		    R_dma_hcnt <= R_dma_hcnt + 1;
 		    if R_dma_hcnt + 1 = R_dma_hlim then
+			R_repeat_line <= R_repeat_line xor R_doublepix;
 			R_dma_hcnt <= (others => '0');
 			if R_interlace = '1' then
-			    R_dma_cur <= R_dma_cur + 1 + R_dma_hlim;
+			    if not C_doublepix or R_doublepix = '0' then
+				R_dma_cur <= R_dma_cur + 1 + R_dma_hlim;
+			    end if;
 			    R_dma_vcnt <= R_dma_vcnt + 2;
 			    if R_dma_vcnt + 2 = R_vdisp then
 				R_dma_cur <= R_dma_base + R_dma_hlim;
@@ -195,6 +208,9 @@ begin
 				R_dma_field_cnt <= R_dma_field_cnt - 1;
 			    end if;
 			else
+			    if C_doublepix and R_repeat_line = '1' then
+				R_dma_cur <= R_dma_cur + 1 - R_dma_hlim;
+			    end if;
 			    R_dma_vcnt <= R_dma_vcnt + 1;
 			    if R_dma_vcnt + 1 = R_vdisp then
 				R_dma_vcnt <= (others => '0');
@@ -208,18 +224,20 @@ begin
 		    from_dma_fifo := M_dma_fifo(conv_integer(R_dma_fifo_tail));
 		    pixel_ready := true;
 		    pixel := shr(from_dma_fifo, R_pixel_bitpos(4 downto 0));
-		    pixel_bitpos_next := R_pixel_bitpos + 8;
+		    R_skip_pixel <= R_skip_pixel xor R_doublepix;
+		    pixel_bitpos_next := R_pixel_bitpos + R_pixel_bitpos_incr;
+		    if R_skip_pixel = '1' then
+			pixel_bitpos_next := R_pixel_bitpos;
+		    end if;
 		    case R_bpp is
 		    when "001" => -- 1 bpp, black/white
 			if C_bpp1 then
-			    pixel_bitpos_next := R_pixel_bitpos + 1;
 			    r := (others => pixel(0));
 			    g := (others => pixel(0));
 			    b := (others => pixel(0));
 			end if;
 		    when "010" => -- 2 bpp, grayscale
 			if C_bpp2 then
-			    pixel_bitpos_next := R_pixel_bitpos + 2;
 			    r := pixel(1 downto 0) & pixel(1 downto 0)
 			      & pixel(1 downto 0) & pixel(1 downto 0);
 			    g := pixel(1 downto 0) & pixel(1 downto 0)
@@ -229,7 +247,6 @@ begin
 			end if;
 		    when "011" => -- 4 bpp, RGBI
 			if C_bpp4 then
-			    pixel_bitpos_next := R_pixel_bitpos + 4;
 			    r := pixel(2) & pixel(3) & pixel(2) & pixel(3)
 			      & pixel(2) & pixel(3) & pixel(2) & pixel(3);
 			    g := pixel(1) & pixel(3) & pixel(1) & pixel(3)
@@ -239,7 +256,6 @@ begin
 			end if;
 		    when "100" => -- 8 bpp RGB332
 			if C_bpp8 then
-			    pixel_bitpos_next := R_pixel_bitpos + 8;
 			    r := pixel(7 downto 5) & pixel(7 downto 5)
 			      & pixel(7 downto 6);
 			    g := pixel(4 downto 2) & pixel(4 downto 2)
@@ -249,7 +265,6 @@ begin
 			end if;
 		    when "101" => -- 16 bpp RGB565
 			if C_bpp16 then
-			    pixel_bitpos_next := R_pixel_bitpos + 16;
 			    r := pixel(15 downto 11) & pixel(15 downto 13);
 			    g := pixel(10 downto 5) & pixel(10 downto 9);
 			    b := pixel(4 downto 0) & pixel(4 downto 2);
@@ -315,6 +330,9 @@ begin
 		    R_dma_base <= bus_in(31 downto 2);
 		when x"5" =>
 		    R_bpp <= bus_in(2 downto 0);
+		    if C_doublepix then
+			R_doublepix <= bus_in(4);
+		    end if;
 		when others =>
 		end case;
 	    end if;
@@ -322,26 +340,37 @@ begin
 	    case R_bpp is
 	    when "001" => -- 1 bpp, BW
 		if C_bpp1 then
-		    R_dma_hlim <= "00000" & R_hdisp(10 downto 5);
+		    dma_hlim := "00000" & R_hdisp(10 downto 5);
+		    R_pixel_bitpos_incr <= conv_std_logic_vector(1, 5);
 		end if;
 	    when "010" => -- 2 bpp, grayscale
 		if C_bpp2 then
-		    R_dma_hlim <= "0000" & R_hdisp(10 downto 4);
+		    dma_hlim := "0000" & R_hdisp(10 downto 4);
+		    R_pixel_bitpos_incr <= conv_std_logic_vector(2, 5);
 		end if;
 	    when "011" => -- 4 bpp, RGBI
 		if C_bpp4 then
-		    R_dma_hlim <= "000" & R_hdisp(10 downto 3);
+		    dma_hlim := "000" & R_hdisp(10 downto 3);
+		    R_pixel_bitpos_incr <= conv_std_logic_vector(4, 5);
 		end if;
 	    when "100" => -- 8 bpp, RGB332
 		if C_bpp8 then
-		    R_dma_hlim <= "00" & R_hdisp(10 downto 2);
+		    dma_hlim := "00" & R_hdisp(10 downto 2);
+		    R_pixel_bitpos_incr <= conv_std_logic_vector(8, 5);
 		end if;
 	    when "101" => -- 16 bpp, RGB565
 		if C_bpp16 then
-		    R_dma_hlim <= '0' & R_hdisp(10 downto 1);
+		    dma_hlim := '0' & R_hdisp(10 downto 1);
+		    R_pixel_bitpos_incr <= conv_std_logic_vector(16, 5);
 		end if;
 	    when others =>
+		dma_hlim := (others => '-');
+		R_pixel_bitpos_incr <= (others => '-');
 	    end case;
+	    R_dma_hlim <= dma_hlim;
+	    if R_doublepix = '1' then
+		R_dma_hlim <= '0' & dma_hlim(10 downto 1);
+	    end if;
 	end if;
     end process;
 
@@ -353,7 +382,7 @@ begin
 	--R_interlace & R_vsyncn & R_hsyncn & "00"
 	--  & R_vtotal & x"0" & '0' & R_vsyncend when x"3",
 	R_dma_base & "00" when x"4",
-	x"0000000" & '0' & R_bpp when x"5",
+	x"000000" & "000" & R_doublepix & '0' & R_bpp when x"5",
 	(others => '0') when others;
 
     process(pixclk)
