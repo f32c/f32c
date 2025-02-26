@@ -227,6 +227,28 @@ static uint8_t font_map[] = {
 };
 
 
+struct modeline {
+	uint32_t pixclk;
+	uint16_t hdisp;
+	uint16_t hsyncstart;
+	uint16_t hsyncend;
+	uint16_t htotal;
+	uint16_t vdisp;
+	uint16_t vsyncstart;
+	uint16_t vsyncend;
+	uint16_t vtotal: 13,
+		 hsyncn: 1,
+		 vsyncn: 1,
+		 interlace: 1;
+} const fb_modelines[2] = {
+    { /* 0: 1280x720p @ 60 Hz, 16:9 */
+        74250, 1280, 1390, 1430, 1650, 720, 725, 730, 750, 0, 0, 0
+    },
+    { /* 1: 1920x1080i @ 60 Hz, 16:9 */
+        74250, 1920, 2008, 2052, 2200, 1080, 1084, 1094, 1125, 0, 0, 1
+    }
+};
+
 uint8_t *fb[2];
 uint8_t *fb_active;
 uint8_t fb_visible;
@@ -240,7 +262,17 @@ uint8_t fb_mode = 3;
 #ifdef COMPOSITING2
 #define	_FB_WIDTH	640
 #define	_FB_HEIGHT	480
+uint16_t fb_hdisp = _FB_WIDTH;
+uint16_t fb_vdisp = _FB_HEIGHT;
+#else
+uint16_t fb_hdisp;
+uint16_t fb_vdisp;
+#define	_FB_WIDTH	fb_hdisp
+#define	_FB_HEIGHT	fb_vdisp
+#endif
 
+
+#ifdef COMPOSITING2
 /* NOTE from compositing_line.h START */
 struct compositing_line {
 	struct compositing_line *next;
@@ -253,13 +285,30 @@ struct compositing_line {
 static struct compositing_line scanlines[_FB_HEIGHT];
 static struct compositing_line *sp[_FB_HEIGHT];
 #else /* !COMPOSITING2 */
-#define	_FB_WIDTH	512
-#define	_FB_HEIGHT	288
 #endif /* !COMPOSITING2 */
+
+void
+fb_set_modeline(const struct modeline *ml)
+{
+
+	OUTH(IO_DV_HDISP, ml->hdisp);
+	OUTH(IO_DV_HSYNCSTART, ml->hsyncstart);
+	OUTH(IO_DV_HSYNCEND, ml->hsyncend);
+	OUTH(IO_DV_HTOTAL, ml->htotal);
+	OUTH(IO_DV_VDISP, ml->vdisp);
+	OUTH(IO_DV_VSYNCSTART, ml->vsyncstart);
+	OUTH(IO_DV_VSYNCEND, ml->vsyncend);
+	OUTH(IO_DV_VTOTAL, ml->vtotal | (ml->hsyncn << 13)
+	    | (ml->vsyncn << 14) | (ml->interlace << 15));
+}
+
 
 void
 fb_set_mode(int mode)
 {
+	int doublepix = 1;
+	int bpp_code = 0;
+	const struct modeline *ml = &fb_modelines[1];
 
 	free(fb[1]);
 	fb[1] = NULL;
@@ -267,12 +316,20 @@ fb_set_mode(int mode)
 	fb_visible = 0;
 
 	mode &= 3;
+	/* mode 0 .. 8 bpp; mode 1 .. 16 bpp; mode > 1 .. disable FB */
+
 	if (mode > 1) {
 		free(fb[0]);
 		free(fb[1]);
 		fb[0] = NULL;
 		fb[1] = NULL;
 	} else {
+#ifndef COMPOSITING2
+		fb_hdisp = ml->hdisp >> doublepix;
+		fb_vdisp = ml->vdisp >> doublepix;
+		bpp_code = mode + 4;
+#endif
+
 		if (fb_mode != mode) {
 			free(fb[0]);
 			free(fb[1]);
@@ -283,10 +340,12 @@ fb_set_mode(int mode)
 	}
 	fb_mode = mode;
 	fb_active = fb[0];
+
 	if (fb_mode <= 1) {
 		fb_rectangle(0, 0, _FB_WIDTH - 1, _FB_HEIGHT - 1, 0);
+
 #ifdef COMPOSITING2
-		/* compisiting2 will be initialized as simple framebuffer */
+		/* compositing2 will be initialized as simple framebuffer */
 		/* Initialize compositing line descriptors */
 		for (int i = 0; i < _FB_HEIGHT; i++) {
 			scanlines[i].next = NULL;
@@ -295,22 +354,17 @@ fb_set_mode(int mode)
 			scanlines[i].bmp = &fb_active[_FB_WIDTH * i << mode];
 			sp[i] = &scanlines[i];
 		}
-#endif
-	}
-
-#ifdef __mips__
-#ifdef COMPOSITING2
-	if (fb_mode <= 1)
-	{
 		OUTW(IO_C2VIDEO_BASE, sp);
 		OUTB(IO_TXTMODE_CTRL, 0b11000000); // enable video, yes bitmap, no text mode, no cursor
-	}
-	else
-		OUTW(IO_C2VIDEO_BASE, NULL);
 #else
-	OUTW(IO_FB, ((uint32_t) fb_active) | fb_mode);
+		fb_set_modeline(ml);
+		OUTW(IO_DV_DMA_BASE, fb_active);
+		OUTW(IO_DV_PIXCFG, bpp_code | (doublepix << 4));
 #endif
-#endif
+	} else {
+		OUTW(IO_C2VIDEO_BASE, NULL);
+		OUTW(IO_DV_PIXCFG, 0);
+	}
 }
 
 
