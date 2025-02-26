@@ -43,3 +43,5 @@ extern uint8_t *fb_active;
 extern uint8_t fb_mode;
 extern uint8_t fb_visible;
 extern uint8_t fb_drawable;
+extern uint16_t fb_hdisp;
+extern uint16_t fb_vdisp;
