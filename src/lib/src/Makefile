@@ -55,8 +55,8 @@ ifeq ($(MAKECMDGOALS),m)
  .DEFAULT_GOAL = lib
 endif
 
-ifeq ($(MAKECMDGOALS),ulx2s)
- LIB = ulx2s
+ifeq ($(MAKECMDGOALS),ulx3s)
+ LIB = ulx3s
  .DEFAULT_GOAL = lib
 endif
 
@@ -144,7 +144,7 @@ ifeq ($(LIB),m)
  endif
 endif
 
-ifeq ($(LIB),ulx2s)
+ifeq ($(LIB),ulx3s)
  CFILES = dev/fb.c dev/tjpgd.c dev/upng.c dev/sprite.c dev/lcd.c
 endif
 
@@ -162,7 +162,7 @@ libs:
 	rm -fr ${OBJDIR}
 	${MAKE} m
 	rm -fr ${OBJDIR}
-	${MAKE} ulx2s
+	${MAKE} ulx3s
 	rm -fr ${OBJDIR}
 
 clean: clean_lib_objs
