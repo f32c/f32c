@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 - 2015 Marko Zec, Univeristy of Zagreb
+ * Copyright (c) 2013 - 2025 Marko Zec, Univeristy of Zagreb
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -21,9 +21,22 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
+
+struct modeline {
+	uint32_t pixclk;
+	uint16_t hdisp;
+	uint16_t hsyncstart;
+	uint16_t hsyncend;
+	uint16_t htotal;
+	uint16_t vdisp;
+	uint16_t vsyncstart;
+	uint16_t vsyncend;
+	uint16_t vtotal: 13,
+		 hsyncn: 1,
+		 vsyncn: 1,
+		 interlace: 1;
+};
 
 void fb_set_mode(int);
 void fb_set_drawable(int);

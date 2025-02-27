@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 - 2024 Marko Zec
+ * Copyright (c) 2013 - 2025 Marko Zec
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -227,20 +227,7 @@ static uint8_t font_map[] = {
 };
 
 
-struct modeline {
-	uint32_t pixclk;
-	uint16_t hdisp;
-	uint16_t hsyncstart;
-	uint16_t hsyncend;
-	uint16_t htotal;
-	uint16_t vdisp;
-	uint16_t vsyncstart;
-	uint16_t vsyncend;
-	uint16_t vtotal: 13,
-		 hsyncn: 1,
-		 vsyncn: 1,
-		 interlace: 1;
-} const fb_modelines[2] = {
+const struct modeline fb_modelines[2] = {
     { /* 0: 1280x720p @ 60 Hz, 16:9 */
         74250, 1280, 1390, 1430, 1650, 720, 725, 730, 750, 0, 0, 0
     },
