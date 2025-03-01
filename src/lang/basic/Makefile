@@ -1,7 +1,7 @@
 
 PROG = basic
 
-LIBS = -lm -lulx2s
+LIBS = -lm -lulx3s
 
 # Original pbasic files from the 1980's
 CFILES = bas1.c bas2.c bas3.c bas4.c bas5.c \
