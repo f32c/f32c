@@ -33,7 +33,7 @@
 typedef void plotfn_t(int x, int y, int mode_color, uint8_t *dp);
 
 /* A fixed-width 6 x 10 bitmapped font, borrowed from X11 */
-static uint8_t font_map[] = {
+static const uint8_t font_map[] = {
 	/* space, 32 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	/* exclam, 33 */
@@ -227,12 +227,18 @@ static uint8_t font_map[] = {
 };
 
 
-const struct modeline fb_modelines[2] = {
+static const struct modeline fb_modelines[] = {
     { /* 0: 1280x720p @ 60 Hz, 16:9 */
-        74250, 1280, 1390, 1430, 1650, 720, 725, 730, 750, 0, 0, 0
+	74250, 1280, 1390, 1430, 1650, 720, 725, 730, 750, 0, 0, 0
     },
     { /* 1: 1920x1080i @ 60 Hz, 16:9 */
-        74250, 1920, 2008, 2052, 2200, 1080, 1084, 1094, 1125, 0, 0, 1
+	74250, 1920, 2008, 2052, 2200, 1080, 1084, 1094, 1125, 0, 0, 1
+    },
+    { /* 2: 1280x720p @ 50 Hz, 16:9 */
+	74250, 1280, 1720, 1760, 1980, 720, 725, 730, 750, 0, 0, 0
+    },
+    { /* 3: 1920x1080i @ 50 Hz, 16:9 */
+	74250, 1920, 2448, 2492, 2640, 1080, 1084, 1094, 1125, 0, 1, 1
     }
 };
 
@@ -240,7 +246,8 @@ uint8_t *fb[2];
 uint8_t *fb_active;
 uint8_t fb_visible;
 uint8_t fb_drawable;
-uint8_t fb_mode = 3;
+uint8_t	fb_bpp;
+struct modeline *fb_modeline;
 
 #define	ABS(a) (((a) < 0) ? -(a) : (a))
 
@@ -274,10 +281,60 @@ static struct compositing_line *sp[_FB_HEIGHT];
 #else /* !COMPOSITING2 */
 #endif /* !COMPOSITING2 */
 
-void
-fb_set_modeline(const struct modeline *ml)
-{
 
+void
+fb_set_mode(const struct modeline *ml, int flags)
+{
+	int bpp_code = flags & FB_BPP_MASK;
+	int doublepix = (flags & FB_DOUBLEPIX) != 0;
+
+	/* Special case: modelines 0 to 3 are predefined here */
+	if (((int) ml & 0x3) == (int) ml)
+		ml = &fb_modelines[(int) ml & 0x3];
+
+	fb_drawable = 0;
+	fb_visible = 0;
+	fb_bpp = 0;
+	free(fb[0]);
+	free(fb[1]);
+	fb[0] = NULL;
+	fb[1] = NULL;
+
+	/* So far only 8 bpp and 16 bpp are being supported */
+	if (bpp_code != FB_BPP_8 && bpp_code != FB_BPP_16) {
+		/* turn off the video */
+#ifdef COMPOSITING2
+		OUTW(IO_C2VIDEO_BASE, NULL);
+#else
+		OUTW(IO_DV_PIXCFG, 0);
+#endif
+		return;
+	}
+
+	fb_bpp = 1 << (bpp_code - 1);
+	fb_hdisp = ml->hdisp >> doublepix;
+	fb_vdisp = ml->vdisp >> doublepix;
+
+	fb[0] = malloc(_FB_WIDTH * _FB_HEIGHT * fb_bpp / 8);
+	fb_active = fb[0];
+
+	fb_rectangle(0, 0, _FB_WIDTH - 1, _FB_HEIGHT - 1, 0);
+
+#ifdef COMPOSITING2
+	/* compositing2 will be initialized as simple framebuffer */
+	/* Initialize compositing line descriptors */
+	for (int i = 0; i < _FB_HEIGHT; i++) {
+		scanlines[i].next = NULL;
+		scanlines[i].x = 0;
+		scanlines[i].n = _FB_WIDTH - 1;
+		scanlines[i].bmp = &fb_active[_FB_WIDTH * i << mode];
+		sp[i] = &scanlines[i];
+	}
+	OUTW(IO_C2VIDEO_BASE, sp);
+	OUTB(IO_TXTMODE_CTRL, 0b11000000); // enable video, yes bitmap, no text mode, no cursor
+#else
+
+	/* set modeline */
 	OUTH(IO_DV_HDISP, ml->hdisp);
 	OUTH(IO_DV_HSYNCSTART, ml->hsyncstart);
 	OUTH(IO_DV_HSYNCEND, ml->hsyncend);
@@ -287,71 +344,10 @@ fb_set_modeline(const struct modeline *ml)
 	OUTH(IO_DV_VSYNCEND, ml->vsyncend);
 	OUTH(IO_DV_VTOTAL, ml->vtotal | (ml->hsyncn << 13)
 	    | (ml->vsyncn << 14) | (ml->interlace << 15));
-}
 
-
-void
-fb_set_mode(int mode)
-{
-	int doublepix = 1;
-	int bpp_code = 0;
-	const struct modeline *ml = &fb_modelines[1];
-
-	free(fb[1]);
-	fb[1] = NULL;
-	fb_drawable = 0;
-	fb_visible = 0;
-
-	mode &= 3;
-	/* mode 0 .. 8 bpp; mode 1 .. 16 bpp; mode > 1 .. disable FB */
-
-	if (mode > 1) {
-		free(fb[0]);
-		free(fb[1]);
-		fb[0] = NULL;
-		fb[1] = NULL;
-	} else {
-#ifndef COMPOSITING2
-		fb_hdisp = ml->hdisp >> doublepix;
-		fb_vdisp = ml->vdisp >> doublepix;
-		bpp_code = mode + 4;
+	OUTW(IO_DV_DMA_BASE, fb_active);
+	OUTW(IO_DV_PIXCFG, bpp_code | (doublepix << 4));
 #endif
-
-		if (fb_mode != mode) {
-			free(fb[0]);
-			free(fb[1]);
-			fb[0] = malloc(_FB_WIDTH * _FB_HEIGHT << mode);
-		}
-		if (fb[0] == NULL)
-			mode = 3;
-	}
-	fb_mode = mode;
-	fb_active = fb[0];
-
-	if (fb_mode <= 1) {
-		fb_rectangle(0, 0, _FB_WIDTH - 1, _FB_HEIGHT - 1, 0);
-
-#ifdef COMPOSITING2
-		/* compositing2 will be initialized as simple framebuffer */
-		/* Initialize compositing line descriptors */
-		for (int i = 0; i < _FB_HEIGHT; i++) {
-			scanlines[i].next = NULL;
-			scanlines[i].x = 0;
-			scanlines[i].n = _FB_WIDTH - 1;
-			scanlines[i].bmp = &fb_active[_FB_WIDTH * i << mode];
-			sp[i] = &scanlines[i];
-		}
-		OUTW(IO_C2VIDEO_BASE, sp);
-		OUTB(IO_TXTMODE_CTRL, 0b11000000); // enable video, yes bitmap, no text mode, no cursor
-#else
-		fb_set_modeline(ml);
-		OUTW(IO_DV_DMA_BASE, fb_active);
-		OUTW(IO_DV_PIXCFG, bpp_code | (doublepix << 4));
-#endif
-	} else {
-		OUTW(IO_C2VIDEO_BASE, NULL);
-		OUTW(IO_DV_PIXCFG, 0);
-	}
 }
 
 
@@ -362,7 +358,7 @@ fb_set_drawable(int visual)
 	if (visual < 0 || visual > 1)
 		return;
 	if (fb[visual] == NULL)
-		fb[visual] = malloc(_FB_WIDTH * _FB_HEIGHT << fb_mode);
+		fb[visual] = malloc(_FB_WIDTH * _FB_HEIGHT * fb_bpp / 8);
 	if (fb[visual] == NULL)
 		return;
 	fb_drawable = visual;
@@ -377,146 +373,21 @@ fb_set_visible(int visual)
 	if (visual < 0 || visual > 1 || fb[visual] == NULL)
 		return;
 	fb_visible = visual;
-#ifdef __mips__
-	OUTW(IO_FB, ((uint32_t) fb[fb_visible]) | fb_mode);
-#endif
+	OUTW(IO_DV_DMA_BASE, fb[fb_visible]);
 }
 
 
-#define	FP_ONE (0x80)
-#define	FP_HALF (0x40)
-
-#define	NEG_X	0x01
-#define	NEG_Y	0x02
-#define	SWAP_XY	0x04
-
-static int
-atan_i(int y, int x)
-{
-	int flags = 0;
-	int tmp;
-	int atan;
-
-	/* fold input values into first 45 degree sector */
-	if (y < 0) {
-		flags |= NEG_Y;
-		y = -y;
-	}
-
-	if (x < 0) {
-		flags |= NEG_X;
-		x = -x;
-	}
-
-	if (y > x) {
-		flags |= SWAP_XY;
-		tmp = x;
-		x = y;
-		y = tmp;
-	}
-
-	/* compute ratio y/x in 0.7 format. */
-	if (x == 0)
-		return(0);
-	if (x == y)
-		atan = FP_HALF / 2;
-	else
-		atan = (y << 5) / x;
-
-	/* unfold result */
-	if (flags & SWAP_XY)
-		atan = FP_HALF - atan;
-
-	if (flags & NEG_X)
-		atan = FP_ONE - atan;
-
-	if (flags & NEG_Y)
-		atan = -atan;
-
-	return (atan);
-}
-
-
-#define	WR	77	/* 0.299 * 256 */
-#define	WB	29	/* 0.114 * 256 */
-#define	WG	150	/* 0.586 * 256 */
-#define	WU	126	/* 0.492 * 256 */
-#define	WV	224	/* 0.877 * 256 */
-
-int
-fb_rgb2pal(uint32_t rgb) {
-	int color, luma, chroma, saturation;
-	int u, v;
-	uint8_t r = rgb >> 16;
-	uint8_t g = rgb >> 8;
-	uint8_t b = rgb;
-	
-	/* Transform RGB into YUV */
-	luma = (WR * r + WB * b + WG * g) >> 8;
-	u = WU * (b - luma);
-	v = WV * (r - luma);
-
-	/* Transform {U, V} cartesian into polar {chroma, saturation} coords */
-	chroma = ((atan_i(v >> 8, u >> 8) >> 2) - 49) & 0x3f;
-	u = ABS(u);
-	v = ABS(v);
-	if (u > v)
-		saturation = u + v * 3 / 8 + (1 << 10);
-	else
-		saturation = v + u * 3 / 8 + (1 << 10);
-	saturation >>= 11;
-	if (__predict_false(saturation > 15))
-		saturation = 15;
-
-	if (__predict_true(fb_mode)) {
-		/* 16-bit encoding */
-		if (__predict_true(saturation < 4)) {
-			color = luma >> 1;
-			if (__predict_true(saturation != 0)) {
-				color |= (chroma & 0x3e) << 6;
-				color |= saturation << 12;
-			}
-		} else
-			color = (saturation << 12) |
-			    (chroma << 6) | (luma >> 2);
-	} else {
-		/* 8-bit encoding */
-		chroma >>= 2;
-		if (__predict_false(saturation > 8))
-			/* saturated color */
-			color = 192 + (luma / 64) * 16 + chroma;
-		else if (__predict_false(saturation > 4))
-			/* medium color */
-			color = 128 + (luma / 64) * 16 + chroma;
-		else if (__predict_true(saturation > 0)) {
-			/* dim color */
-			if (__predict_false(luma < 32))
-				color = 16 + chroma;
-			else
-				color = (luma / 32) * 16 + chroma;
-		} else
-			/* grayscale */
-			color = luma / 16;
-	}
-
-	return (color);
-}
-
-
-#ifdef __mips__
-__attribute__((optimize("-O3")))
-#endif
 void
 fb_plot(int x, int y, int color)
 {
 	int off = y * _FB_WIDTH + x;
 	uint8_t *dp = fb_active;
 
-	if (__predict_false(y < 0 || y >= _FB_HEIGHT || fb_mode > 1 ||
-	    x < 0 || x >= _FB_WIDTH))
+	if (__predict_false(y < 0 || y >= _FB_HEIGHT ||
+	    x < 0 || x >= _FB_WIDTH || fb_bpp == 0))
 		return;
 
-	if (fb_mode == 0)
+	if (fb_bpp == FB_BPP_8)
 		dp[off] = color;
 	else
 		*((uint16_t *) &dp[off << 1]) = color;
@@ -564,7 +435,7 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 {
 	int x, i, l;
 
-	if (fb_mode > 1)
+	if (fb_bpp == 0)
 		return;
 
 	if (x1 < x0) {
@@ -586,7 +457,7 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 	if (__predict_false(y1 >= _FB_HEIGHT))
 		y1 = _FB_HEIGHT - 1;
 
-	if (fb_mode) {
+	if (fb_bpp == 16) {
 		uint16_t *fb16 = (void *) fb_active;
 		color = (color << 16) | (color & 0xffff);
 		for (; y0 <= y1; y0++) {
@@ -632,9 +503,6 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 }
 
 
-#ifdef __mips__
-__attribute__((optimize("-O3")))
-#endif
 void
 fb_line(int x0, int y0, int x1, int y1, int color)
 {
@@ -646,19 +514,19 @@ fb_line(int x0, int y0, int x1, int y1, int color)
 	int err = dx + dy;
 	int e2;
  
+	if (fb_bpp == 0)
+		return;
+
 	if (x0 < 0 || x0 >= _FB_WIDTH || y0 < 0 || y0 >= _FB_HEIGHT ||
 	    x1 < 0 || x1 >= _FB_WIDTH || y1 < 0 || y1 >= _FB_HEIGHT) {
-		if (fb_mode)
+		if (fb_bpp == 16)
 			plotfn = plot_internal_16;
 		else
 			plotfn = plot_internal_8;
-	} else if (fb_mode)
+	} else if (fb_bpp == 16)
 		plotfn = plot_internal_unbounded_16;
 	else
 		plotfn = plot_internal_unbounded_8;
-
-	if (fb_mode > 1)
-		return;
 
 	plotfn(x0, y0, color, fb_active);
 	for (;;) {
@@ -688,19 +556,19 @@ fb_circle(int x0, int y0, int r, int color)
 	int y = r;
 	plotfn_t *plotfn;
  
+	if (fb_bpp == 0)
+		return;
+
 	if (x0 - r < 0 || x0 + r >= _FB_WIDTH
 	    || y0 - r < 0 || y0 + r >= _FB_HEIGHT) {
-		if (fb_mode)
+		if (fb_bpp == 16)
 			plotfn = plot_internal_16;
 		else
 			plotfn = plot_internal_8;
-	} else if (fb_mode)
+	} else if (fb_bpp == 16)
 		plotfn = plot_internal_unbounded_16;
 	else
 		plotfn = plot_internal_unbounded_8;
-
-	if (fb_mode > 1)
-		return;
 
 	plotfn(x0, y0 + r, color, fb_active);
 	plotfn(x0, y0 - r, color, fb_active);
@@ -876,28 +744,25 @@ void
 fb_fill(int x, int y, int color)
 {
 
-	if (__predict_false(fb_mode > 1))
+	if (fb_bpp == 0)
 		return;
 
 	if (__predict_false(x < 0 || y < 0 || x >= _FB_WIDTH
 	    || y >= _FB_HEIGHT))
 		return;
 
-	if (fb_mode)
+	if (fb_bpp == 16)
 		fb_fill_16(x, y, color);
 	else
 		fb_fill_8(x, y, color);
 }
 
 
-#ifdef __mips__
-__attribute__((optimize("-O3")))
-#endif
 void
 fb_text(int x0, int y0, const char *cp, int fgcolor, int bgcolor, int scale)
 {
 	int c, x, y, xs, ys, off, dot;
-	uint8_t *bp;
+	const uint8_t *bp;
 	int scale_y = scale & 0xff;
 	int scale_x = (scale >> 16) & 0xff;
 
@@ -938,7 +803,7 @@ next_char:
 				continue;
 			else
 				dot = bgcolor;
-			if (fb_mode)
+			if (fb_bpp == 16)
 				*((uint16_t *) &fb_active[off << 1]) = dot;
 			else
 				fb_active[off] = dot;

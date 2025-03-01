@@ -115,14 +115,14 @@ spr_grab(int id, int x0, int y0, int x1, int y1)
 	uint8_t *u8src, *u8dst;
 
 	if (x0 < 0 || x1 > 511 || x0 > x1 ||
-	    y0 < 0 || y1 > 287 || y0 > y1 || id < 0 || fb_mode > 1)
+	    y0 < 0 || y1 > 287 || y0 > y1 || id < 0 || fb_bpp == 0)
 		return (-1);
 
-	sp = spr_alloc(id, (x1 - x0 + 1) * (y1 - y0 + 1) * (fb_mode + 1));
+	sp = spr_alloc(id, (x1 - x0 + 1) * (y1 - y0 + 1) * fb_bpp / 8);
 	sp->spr_size_x = x1 - x0 + 1;
 	sp->spr_size_y = y1 - y0 + 1;
 
-	if (fb_mode == 0)
+	if (fb_bpp == 8)
 		for (u8dst = (void *) sp->spr_data, y = y0; y <= y1; y++) {
 			u8src = (uint8_t *) fb_active;
 			u8src += (y << 9) + x0;
@@ -198,7 +198,7 @@ spr_put(int id, int x0, int y0)
 	if (y1 > 288)
 		y1 = 288;
 
-	if (fb_mode == 0)
+	if (fb_bpp == 8)
 		for (y = y0_v; y < y1; y++) {
 			u8src = &((uint8_t *) sp->spr_data)[(y - y0)
 			    * sp->spr_size_x];
@@ -272,7 +272,7 @@ jpeg_dump_decoded(JDEC* jd, void* bitmap, JRECT* rect)
 	xlim = rect->right;
 	if (rect->right > sp->spr_size_x - 1)
 		xlim = sp->spr_size_x - 1;
-	if (fb_mode)
+	if (fb_bpp == 16)
 		for (y = rect->top; y <= ylim; y++) {
 			dst16 = (void *) sp->spr_data;
 			dst16 = &dst16[y * sp->spr_size_x + rect->left];
@@ -285,7 +285,10 @@ jpeg_dump_decoded(JDEC* jd, void* bitmap, JRECT* rect)
 #endif
 				if (rgb != prev_rgb) {
 					prev_rgb = rgb;
-					color = fb_rgb2pal(rgb);
+					color =
+					    ((rgb >> 8) & 0xf8) |
+					    (rgb & 0xfc00) >> 5 |
+					    (rgb & 0xff) >> 3;
 				}
 				*dst16++ = color;
 			}
@@ -309,7 +312,10 @@ jpeg_dump_decoded(JDEC* jd, void* bitmap, JRECT* rect)
 #endif
 				if (rgb != prev_rgb) {
 					prev_rgb = rgb;
-					color = fb_rgb2pal(rgb);
+					color =
+					    ((rgb >> 16) & 0xe) |
+					    (rgb & 0xe000) >> 11 |
+					    (rgb & 0xc0) >> 6;
 				}
 				*dst8++ = color;
 			}
@@ -338,7 +344,7 @@ spr_load(int id, char *name, int descale)
 	uint8_t *u8dst;
 	int i, sx, sy, r, g, b;
 
-	if (fb_mode > 1)
+	if (fb_bpp == 0)
 		return (-1);
 
 	/* Attempt JPEG decoding first */
@@ -349,7 +355,7 @@ spr_load(int id, char *name, int descale)
 	    sizeof(work_buf), &jh);
 	if (jr == JDR_OK) {
 		sp = spr_alloc(id,
-		   jdec.width * jdec.height * (fb_mode + 1) >> (descale * 2));
+		   jdec.width * jdec.height * fb_bpp / 8 >> (descale * 2));
 		if (sp == NULL) {
 			close(jh.fh);
 			return (ENOMEM);
@@ -376,14 +382,14 @@ spr_load(int id, char *name, int descale)
 	}
 	sx = upng_get_height(up);
 	sy = upng_get_width(up);
-	sp = spr_alloc(id, (sx * sy) << fb_mode);
+	sp = spr_alloc(id, (sx * sy) * fb_bpp / 8);
 	sp->spr_size_x = sx;
 	sp->spr_size_y = sy;
 	if (sp == NULL) {
 		upng_free(up);
 		return (ENOMEM);
 	}
-	if (fb_mode == 0) {
+	if (fb_bpp == 8) {
 		u8dst = (void *) sp->spr_data;
 		rgbsrc = (void *) upng_get_buffer(up);
 		for (i = upng_get_size(up) / 4; i > 0; i--) {
@@ -391,7 +397,8 @@ spr_load(int id, char *name, int descale)
 			g = *rgbsrc++;
 			b = *rgbsrc++;
 			rgbsrc++;
-			*u8dst++ = fb_rgb2pal((r << 16) + (g << 8) + b);
+			/* RGB332 */
+			*u8dst++ = (r & 0xe0) | (g & 0xe0) >> 3 | (b & 0x3);
 		}
 	} else {
 		u16dst = (void *) sp->spr_data;
@@ -401,7 +408,9 @@ spr_load(int id, char *name, int descale)
 			g = *rgbsrc++;
 			b = *rgbsrc++;
 			rgbsrc++;
-			*u16dst++ = fb_rgb2pal((r << 16) + (g << 8) + b);
+			/* RGB565 */
+			*u16dst++ =
+			    (r & 0xf8) << 8 | (g & 0xfc) << 3 | (b & 0x1f);
 		}
 	}
 	upng_free(up);
@@ -418,7 +427,7 @@ jpg_load(char *name, int descale)
 	jdecomp_handle jh;
 	struct sprite spr;
 
-	if (fb_mode > 1)
+	if (fb_bpp == 0)
 		return (-1);
 	jh.fh = open(name, O_RDONLY);
 	if (jh.fh < 0)

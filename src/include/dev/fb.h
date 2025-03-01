@@ -38,10 +38,26 @@ struct modeline {
 		 interlace: 1;
 };
 
-void fb_set_mode(int);
+#define	FB_MODE_720p60	((void *) 0x0)
+#define	FB_MODE_1080i60	((void *) 0x1)
+#define	FB_MODE_720p50	((void *) 0x2)
+#define	FB_MODE_1080i50	((void *) 0x3)
+
+#define	FB_BPP_MASK	0xf
+#define	FB_BPP_OFF	0x0
+#define	FB_BPP_1	0x1
+#define	FB_BPP_2	0x2
+#define	FB_BPP_4	0x3
+#define	FB_BPP_8	0x4
+#define	FB_BPP_16	0x5
+#define	FB_BPP_24	0x6
+
+#define	FB_DOUBLEPIX	0x10
+
+void fb_set_mode(const struct modeline *, int);
+void fb_get_mode(const struct modeline **, int *);
 void fb_set_drawable(int);
 void fb_set_visible(int);
-int fb_rgb2pal(uint32_t);
 
 void fb_plot(int, int, int);
 void fb_line(int, int, int, int, int);
@@ -53,8 +69,8 @@ void fb_text(int, int, const char *, int, int, int);
 
 extern uint8_t *fb[];
 extern uint8_t *fb_active;
-extern uint8_t fb_mode;
 extern uint8_t fb_visible;
+extern uint8_t fb_bpp;
 extern uint8_t fb_drawable;
 extern uint16_t fb_hdisp;
 extern uint16_t fb_vdisp;
