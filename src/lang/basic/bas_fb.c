@@ -21,8 +21,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #include <ctype.h>
@@ -191,7 +189,7 @@ setup_fb(void)
 #endif
 
 	/* Turn off video framebuffer */
-	fb_set_mode(3);
+	fb_set_mode(0, 0);
 }
 
 
@@ -324,9 +322,9 @@ vidmode(void)
 	check();
 
 	spr_flush();
-	fb_set_mode(mode);
-	fgcolor = fb_rgb2pal(0xffffff);
-	bgcolor = fb_rgb2pal(0);
+	fb_set_mode((void *) mode, FB_BPP_8 | FB_DOUBLEPIX);
+	fgcolor = 0xffff;
+	bgcolor = 0;
 	last_x = 0;
 	last_y = 0;
 #ifndef f32c
@@ -370,7 +368,6 @@ vidmode(void)
 		XFlush(dis);
 	}
 #endif
-	fb_mode = mode;
 	normret;
 }
 
@@ -450,7 +447,6 @@ parse_color(void)
 			} while (strcmp(buf, colormap[i].name) != 0);
 			color = colormap[i].value;
 		}
-		color = fb_rgb2pal(color);
 	} else
 		color = evalint();
 	return (color);
