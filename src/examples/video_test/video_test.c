@@ -3,11 +3,8 @@
  * a good speed test for combined read / write SDRAM throughput.
  *
  * Scores reported on the serial console are relative to the ULX3S board
- * with xram design @ 100 MHz, * using the standard sdram controller, with
- * the vidtest binary built using gcc-13.2.
- *
- * Allow circa 15 iterations (circa 1 minute) for the scores to start
- * converging.
+ * with sdram_dv design @ 90 MHz, * using the standard sdram controller,
+ * with the vidtest binary built using gcc-13.2.
  */
 
 #include <stdio.h>
@@ -23,7 +20,7 @@ static void
 circle_test(int x0, int y0, int x1, int y1, int ink)
 {
 
-	fb_filledcircle(x0, y0, x1 & 0x7f, ink);
+	fb_filledcircle(x0, y0, x1 & 0xff, ink);
 }
 
 static void
@@ -31,7 +28,7 @@ text_test(int x0, int y0, int x1, int y1, int ink)
 {
 
 	fb_text(x0, y0, "Hello, f32c world!", ink, ink >> 16,
-	    ((x0 & 3) << 16) + (y0 & 3));
+	    ((x0 & 0xf) << 16) + (y0 & 0xf));
 }
 
 struct fb_test {
@@ -40,10 +37,10 @@ struct fb_test {
 	uint32_t weight;
 	uint64_t time;
 } fb_test[] = {
-	{ .fn = fb_line, .desc = "lines", .weight = 10950 },
-	{ .fn = fb_rectangle, .desc = "rects", .weight = 1995 },
-	{ .fn = circle_test, .desc = "circles", .weight = 2495 },
-	{ .fn = text_test, .desc = "text", .weight = 1475 },
+	{ .fn = fb_line, .desc = "lines", .weight = 4222 },
+	{ .fn = fb_rectangle, .desc = "rects", .weight = 412 },
+	{ .fn = circle_test, .desc = "circles", .weight = 1040 },
+	{ .fn = text_test, .desc = "text", .weight = 65 },
 	{ /* terminate list */ }
 };
 
@@ -56,7 +53,12 @@ main(void)
 	uint32_t x0, y0, x1, y1;
 	uint64_t ips, score, overall = 0;
 
-	fb_set_mode(1);
+	fb_set_mode(FB_MODE_1080i60, FB_BPP_8);
+	printf("\nresults are relative to "
+	    "FB_MODE_1080i60, FB_BPP_8\n\n");
+
+	printf("Allow at least 15 iterations (cca 1 minute) "
+	    "for the scores to start converging\n\n");
 
 	do {
 		OUTB(IO_LED, (iter << 2) + ti);
