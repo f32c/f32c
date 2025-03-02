@@ -20,7 +20,7 @@ static void
 circle_test(int x0, int y0, int x1, int y1, int ink)
 {
 
-	fb_filledcircle(x0, y0, x1 & 0xff, ink);
+	fb_filledcircle(x0, y0, (x1 ^ y0) & 0x7f, ink);
 }
 
 static void
@@ -28,7 +28,7 @@ text_test(int x0, int y0, int x1, int y1, int ink)
 {
 
 	fb_text(x0, y0, "Hello, f32c world!", ink, ink >> 16,
-	    ((x0 & 0xf) << 16) + (y0 & 0xf));
+	    ((x0 & 0x7) << 16) + (y0 & 0x7));
 }
 
 struct fb_test {
@@ -37,10 +37,10 @@ struct fb_test {
 	uint32_t weight;
 	uint64_t time;
 } fb_test[] = {
-	{ .fn = fb_line, .desc = "lines", .weight = 4222 },
-	{ .fn = fb_rectangle, .desc = "rects", .weight = 412 },
-	{ .fn = circle_test, .desc = "circles", .weight = 1040 },
-	{ .fn = text_test, .desc = "text", .weight = 65 },
+	{ .fn = fb_line, .desc = "lines", .weight = 3133 },
+	{ .fn = fb_rectangle, .desc = "rects", .weight = 410 },
+	{ .fn = circle_test, .desc = "circles", .weight = 2500 },
+	{ .fn = text_test, .desc = "text", .weight = 205 },
 	{ /* terminate list */ }
 };
 
