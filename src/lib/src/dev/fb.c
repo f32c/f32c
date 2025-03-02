@@ -850,7 +850,7 @@ fb_rgb2pal(int rgb)
 	switch (fb_bpp) {
 	case 16:
 		/* RGB565 */
-		return ((r & 0xf8) << 8 | (g & 0xfc) << 5 | b >> 3);
+		return ((r & 0xf8) << 8 | (g & 0xfc) << 3 | b >> 3);
 	case 8:
 		/* RGB332 */
 		return ((r & 0xe0) | ((g >> 3) & 0x1c) | b >> 6);
