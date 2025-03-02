@@ -315,8 +315,8 @@ fb_set_mode(const struct modeline *ml, int flags)
 	fb_hdisp = ml->hdisp >> doublepix;
 	fb_vdisp = ml->vdisp >> doublepix;
 
-	fb[0] = malloc(_FB_WIDTH * _FB_HEIGHT * fb_bpp / 8);
-	memset(fb_active, 0, _FB_WIDTH * _FB_HEIGHT * fb_bpp / 8);
+	fb[0] = malloc(fb_hdisp * fb_vdisp * fb_bpp / 8);
+	memset(fb[0], 0, fb_hdisp * fb_vdisp * fb_bpp / 8);
 	fb_active = fb[0];
 
 #ifdef COMPOSITING2
@@ -357,10 +357,10 @@ fb_set_drawable(int visual)
 	if (visual < 0 || visual > 1)
 		return;
 	if (fb[visual] == NULL) {
-		fb[visual] = malloc(_FB_WIDTH * _FB_HEIGHT * fb_bpp / 8);
+		fb[visual] = malloc(fb_hdisp * fb_vdisp * fb_bpp / 8);
 		if (fb[visual] == NULL)
 			return;
-		memset(fb_active, 0, _FB_WIDTH * _FB_HEIGHT * fb_bpp / 8);
+		memset(fb[visual], 0, fb_hdisp * fb_vdisp * fb_bpp / 8);
 	}
 	fb_drawable = visual;
 	fb_active = fb[visual];
@@ -439,6 +439,9 @@ void
 fb_rectangle(int x0, int y0, int x1, int y1, int color)
 {
 	int x, i, l;
+	uint32_t shift, stride;
+	uint32_t *fb32 = (void *) fb_active;
+	uint32_t *fp32;
 
 	if (x1 < x0) {
 		x = x0;
@@ -470,12 +473,11 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 				fb16[i++] = color;
 				l--;
 			}
-			for (; l >= 10; i += 10, l -= 10) {
+			for (; l >= 8; i += 8, l -= 8) {
 				*((int *) &fb16[i + 0]) = color;
 				*((int *) &fb16[i + 2]) = color;
 				*((int *) &fb16[i + 4]) = color;
 				*((int *) &fb16[i + 6]) = color;
-				*((int *) &fb16[i + 8]) = color;
 			}
 			for (; l >= 2; i += 2, l -= 2)
 				*((int *) &fb16[i]) = color;
@@ -491,12 +493,11 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 			i = y0 * _FB_WIDTH + x0;
 			for (l = x1 - x0 + 1; (i & 3) != 0 && l > 0; l--)
 				fb8[i++] = color;
-			for (; l >= 20; i += 20, l -= 20) {
+			for (; l >= 16; i += 16, l -= 16) {
 				*((int *) &fb8[i + 0]) = color;
 				*((int *) &fb8[i + 4]) = color;
 				*((int *) &fb8[i + 8]) = color;
 				*((int *) &fb8[i + 12]) = color;
-				*((int *) &fb8[i + 16]) = color;
 			}
 			for (; l >= 4; i += 4, l -= 4)
 				*((int *) &fb8[i]) = color;
@@ -504,10 +505,36 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 				fb8[i++] = color;
 		}
 		return;
+	case 1:
+		color = (color << 1) | (color & 0x1);
+	case 2:
+		color = (color << 2) | (color & 0x3);
+	case 4:
+		color = (color << 4) | (color & 0xf);
+		color = (color << 8) | (color & 0xff);
+		color = (color << 16) | (color & 0xffff);
 	default:
-		for (; y0 <= y1; y0++)
-			for (x = x0; x <= x1; x++)
-				fb_plot(x, y0, color);
+	}
+
+	if (fb_bpp == 1) {
+		stride = 32;
+		shift = 5;
+	} else if (fb_bpp == 2) {
+		stride = 16;
+		shift = 4;
+	} else {
+		stride = 8;
+		shift = 3;
+	}
+
+	for (; y0 <= y1; y0++) {
+		for (x = x0; x <= x1 && (x & (stride - 1)) != 0; x++)
+			fb_plot(x, y0, color);
+		fp32 = &fb32[(y0 * _FB_WIDTH + x) >> shift];
+		for (; x + stride <= x1; x += stride)
+			*fp32++ = color;
+		for (; x <= x1; x++)
+			fb_plot(x, y0, color);
 	}
 }
 
