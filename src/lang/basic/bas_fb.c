@@ -449,7 +449,7 @@ parse_color(void)
 		}
 	} else
 		color = evalint();
-	return (color);
+	return (fb_rgb2pal(color));
 }
 
 
