@@ -836,3 +836,33 @@ next_char:
 	x0 += 6 * scale_x;
 	goto next_char;
 }
+
+
+int
+fb_rgb2pal(int rgb)
+{
+	uint32_t r = (rgb >> 16) & 0xff;
+	uint32_t g = (rgb >> 8) & 0xff;
+	uint32_t b = rgb & 0xff;
+	uint32_t luma = (r + g + b) / 3;
+
+	switch (fb_bpp) {
+	case 16:
+		/* RGB565 */
+		return ((r & 0xf8) << 8 | (g & 0xfc) << 5 | b >> 3);
+	case 8:
+		/* RGB332 */
+		return ((r & 0xe0) | ((g >> 3) & 0x1c) | b >> 6);
+	case 4:
+		/* RGBI */
+		return (((luma >> 4) & 0x8) | ((r >> 5) & 0x4)
+		    | ((g >> 6) & 0x2) | b >> 7);
+	case 2:
+		/* Grayscale */
+		return (luma >> 6);
+	case 1:
+	default:
+		/* B/W */
+		return (luma >> 7);
+	}
+}
