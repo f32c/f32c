@@ -54,8 +54,8 @@ main(void)
 	uint64_t ips, score, overall = 0;
 
 	fb_set_mode(FB_MODE_1080i60, FB_BPP_8);
-	printf("\nresults are relative to "
-	    "FB_MODE_1080i60, FB_BPP_8\n\n");
+	printf("\nresults are relative to FB_MODE_1080i60, FB_BPP_8"
+	    " at 90 MHz CPU clock\n\n");
 
 	printf("Allow at least 15 iterations (cca 1 minute) "
 	    "for the scores to start converging\n\n");
