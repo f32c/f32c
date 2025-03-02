@@ -383,24 +383,27 @@ plot_internal_unbounded(int x, int y, int color, uint8_t *dp8)
 {
 	uint16_t *dp16 = (void *) dp8;
 	uint32_t *dp32 = (void *) dp8;
-	uint32_t mask;
+	uint32_t mask, shift;
 	int off = y * _FB_WIDTH + x;
 
 	switch (fb_bpp) {
 	case 1:
 		dp32 = &dp32[off >> 5];
-		mask = 0x1 << (off & 0x1f);
-		*dp32 = (*dp32 & ~mask) | ((color & 0x1) << (off & 0x1f));
+		shift = off & 0x1f;
+		mask = 0x1 << shift;
+		*dp32 = (*dp32 & ~mask) | ((color & 0x1) << shift);
 		return;
 	case 2:
 		dp32 = &dp32[off >> 4];
-		mask = 0x3 << (off & 0xf);
-		*dp32 = (*dp32 & ~mask) | ((color & 0x3) << (off & 0xf));
+		shift = (off & 0xf) * 2;
+		mask = 0x3 << shift;
+		*dp32 = (*dp32 & ~mask) | ((color & 0x3) << shift);
 		return;
 	case 4:
 		dp32 = &dp32[off >> 3];
-		mask = 0xf << (off & 0x7);
-		*dp32 = (*dp32 & ~mask) | ((color & 0xf) << (off & 0x7));
+		shift = (off & 0x7) * 4;
+		mask = 0xf << shift;
+		*dp32 = (*dp32 & ~mask) | ((color & 0xf) << shift);
 		return;
 	case 8:
 		dp8[off] = color;
