@@ -248,6 +248,8 @@ uint8_t *fb_active;
 uint8_t fb_visible;
 uint8_t fb_drawable;
 uint8_t	fb_bpp;
+uint16_t fb_hdisp;
+uint16_t fb_vdisp;
 struct modeline *fb_modeline;
 
 #define	ABS(a) (((a) < 0) ? -(a) : (a))
@@ -257,15 +259,7 @@ struct modeline *fb_modeline;
 #ifdef COMPOSITING2
 #define	_FB_WIDTH	640
 #define	_FB_HEIGHT	480
-uint16_t fb_hdisp = _FB_WIDTH;
-uint16_t fb_vdisp = _FB_HEIGHT;
-#else
-uint16_t fb_hdisp;
-uint16_t fb_vdisp;
-#endif
 
-
-#ifdef COMPOSITING2
 /* NOTE from compositing_line.h START */
 struct compositing_line {
 	struct compositing_line *next;
@@ -277,7 +271,6 @@ struct compositing_line {
 
 static struct compositing_line scanlines[_FB_HEIGHT];
 static struct compositing_line *sp[_FB_HEIGHT];
-#else /* !COMPOSITING2 */
 #endif /* !COMPOSITING2 */
 
 
@@ -285,7 +278,9 @@ void
 fb_set_mode(const struct modeline *ml, int flags)
 {
 	int bpp_code = flags & FB_BPP_MASK;
+#ifndef COMPOSITING2
 	int doublepix = (flags & FB_DOUBLEPIX) != 0;
+#endif
 
 	/* Special case: modelines 0 to 3 are predefined here */
 	if (((int) ml & 0x3) == (int) ml)
@@ -309,9 +304,15 @@ fb_set_mode(const struct modeline *ml, int flags)
 		return;
 	}
 
-	fb_bpp = 1 << (bpp_code - 1);
+#ifdef COMPOSITING2
+	fb_hdisp = _FB_WIDTH;
+	fb_vdisp = _FB_HEIGHT;
+	fb_bpp = 16;
+#else
 	fb_hdisp = ml->hdisp >> doublepix;
 	fb_vdisp = ml->vdisp >> doublepix;
+	fb_bpp = 1 << (bpp_code - 1);
+#endif
 
 	fb[0] = malloc(fb_hdisp * fb_vdisp * fb_bpp / 8);
 	memset(fb[0], 0, fb_hdisp * fb_vdisp * fb_bpp / 8);
