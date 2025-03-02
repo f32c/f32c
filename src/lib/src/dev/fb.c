@@ -26,6 +26,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <dev/io.h>
 #include <dev/fb.h>
@@ -300,8 +301,7 @@ fb_set_mode(const struct modeline *ml, int flags)
 	fb[0] = NULL;
 	fb[1] = NULL;
 
-	/* So far only 8 bpp and 16 bpp are being supported */
-	if (bpp_code != FB_BPP_8 && bpp_code != FB_BPP_16) {
+	if (bpp_code == FB_BPP_OFF) {
 		/* turn off the video */
 #ifdef COMPOSITING2
 		OUTW(IO_C2VIDEO_BASE, NULL);
@@ -316,9 +316,8 @@ fb_set_mode(const struct modeline *ml, int flags)
 	fb_vdisp = ml->vdisp >> doublepix;
 
 	fb[0] = malloc(_FB_WIDTH * _FB_HEIGHT * fb_bpp / 8);
+	memset(fb_active, 0, _FB_WIDTH * _FB_HEIGHT * fb_bpp / 8);
 	fb_active = fb[0];
-
-	fb_rectangle(0, 0, _FB_WIDTH - 1, _FB_HEIGHT - 1, 0);
 
 #ifdef COMPOSITING2
 	/* compositing2 will be initialized as simple framebuffer */
@@ -357,10 +356,12 @@ fb_set_drawable(int visual)
 
 	if (visual < 0 || visual > 1)
 		return;
-	if (fb[visual] == NULL)
+	if (fb[visual] == NULL) {
 		fb[visual] = malloc(_FB_WIDTH * _FB_HEIGHT * fb_bpp / 8);
-	if (fb[visual] == NULL)
-		return;
+		if (fb[visual] == NULL)
+			return;
+		memset(fb_active, 0, _FB_WIDTH * _FB_HEIGHT * fb_bpp / 8);
+	}
 	fb_drawable = visual;
 	fb_active = fb[visual];
 }
@@ -377,56 +378,57 @@ fb_set_visible(int visual)
 }
 
 
+static void
+plot_internal_unbounded(int x, int y, int color, uint8_t *dp8)
+{
+	uint16_t *dp16 = (void *) dp8;
+	uint32_t *dp32 = (void *) dp8;
+	uint32_t mask;
+	int off = y * _FB_WIDTH + x;
+
+	switch (fb_bpp) {
+	case 1:
+		dp32 = &dp32[off >> 5];
+		mask = 0x1 << (off & 0x1f);
+		*dp32 = (*dp32 & ~mask) | ((color & 0x1) << (off & 0x1f));
+		return;
+	case 2:
+		dp32 = &dp32[off >> 4];
+		mask = 0x3 << (off & 0xf);
+		*dp32 = (*dp32 & ~mask) | ((color & 0x3) << (off & 0xf));
+		return;
+	case 4:
+		dp32 = &dp32[off >> 3];
+		mask = 0xf << (off & 0x7);
+		*dp32 = (*dp32 & ~mask) | ((color & 0xf) << (off & 0x7));
+		return;
+	case 8:
+		dp8[off] = color;
+		return;
+	case 16:
+		dp16[off] = color;
+		return;
+	default:
+	}
+}
+
+
+static void
+plot_internal(int x, int y, int color, uint8_t *dp)
+{
+
+	if (__predict_false(y < 0 || y >= _FB_HEIGHT ||
+	    x < 0 || x >= _FB_WIDTH))
+		return;
+
+	plot_internal_unbounded(x, y, color, dp);
+}
+
 void
 fb_plot(int x, int y, int color)
 {
-	int off = y * _FB_WIDTH + x;
-	uint8_t *dp = fb_active;
 
-	if (__predict_false(y < 0 || y >= _FB_HEIGHT ||
-	    x < 0 || x >= _FB_WIDTH || fb_bpp == 0))
-		return;
-
-	if (fb_bpp == FB_BPP_8)
-		dp[off] = color;
-	else
-		*((uint16_t *) &dp[off << 1]) = color;
-}
-
-
-static void
-plot_internal_8(int x, int y, int color, uint8_t *dp)
-{
-
-	if (!(y < 0 || y >= _FB_HEIGHT|| x < 0 || x >= _FB_WIDTH))
-		dp[y * _FB_WIDTH + x] = color;
-}
-
-
-static void
-plot_internal_16(int x, int y, int color, uint8_t *dp)
-{
-	uint16_t *dp16 = (void *)dp;
-
-	if (!(y < 0 || y >= _FB_HEIGHT || x < 0 || x >= _FB_WIDTH))
-		dp16[y * _FB_WIDTH + x] = color;
-}
-
-
-static void
-plot_internal_unbounded_8(int x, int y, int color, uint8_t *dp)
-{
-
-	dp[y * _FB_WIDTH + x] = color;
-}
-
-
-static void
-plot_internal_unbounded_16(int x, int y, int color, uint8_t *dp)
-{
-	uint16_t *dp16 = (void *)dp;
-
-	dp16[y * _FB_WIDTH + x] = color;
+	plot_internal(x, y, color, fb_active);
 }
 
 
@@ -434,9 +436,6 @@ void
 fb_rectangle(int x0, int y0, int x1, int y1, int color)
 {
 	int x, i, l;
-
-	if (fb_bpp == 0)
-		return;
 
 	if (x1 < x0) {
 		x = x0;
@@ -457,7 +456,8 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 	if (__predict_false(y1 >= _FB_HEIGHT))
 		y1 = _FB_HEIGHT - 1;
 
-	if (fb_bpp == 16) {
+	switch (fb_bpp) {
+	case 16:
 		uint16_t *fb16 = (void *) fb_active;
 		color = (color << 16) | (color & 0xffff);
 		for (; y0 <= y1; y0++) {
@@ -479,7 +479,8 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 			if (l)
 				fb16[i++] = color;
 		}
-	} else {
+		return;
+	case 8:
 		uint8_t *fb8 = (void *) fb_active;
 		color = (color << 8) | (color & 0xff);
 		color = (color << 16) | (color & 0xffff);
@@ -499,6 +500,11 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 			for (; l > 0; l--)
 				fb8[i++] = color;
 		}
+		return;
+	default:
+		for (; y0 <= y1; y0++)
+			for (x = x0; x <= x1; x++)
+				fb_plot(x, y0, color);
 	}
 }
 
@@ -518,15 +524,10 @@ fb_line(int x0, int y0, int x1, int y1, int color)
 		return;
 
 	if (x0 < 0 || x0 >= _FB_WIDTH || y0 < 0 || y0 >= _FB_HEIGHT ||
-	    x1 < 0 || x1 >= _FB_WIDTH || y1 < 0 || y1 >= _FB_HEIGHT) {
-		if (fb_bpp == 16)
-			plotfn = plot_internal_16;
-		else
-			plotfn = plot_internal_8;
-	} else if (fb_bpp == 16)
-		plotfn = plot_internal_unbounded_16;
+	    x1 < 0 || x1 >= _FB_WIDTH || y1 < 0 || y1 >= _FB_HEIGHT)
+		plotfn = plot_internal;
 	else
-		plotfn = plot_internal_unbounded_8;
+		plotfn = plot_internal_unbounded;
 
 	plotfn(x0, y0, color, fb_active);
 	for (;;) {
@@ -560,15 +561,10 @@ fb_circle(int x0, int y0, int r, int color)
 		return;
 
 	if (x0 - r < 0 || x0 + r >= _FB_WIDTH
-	    || y0 - r < 0 || y0 + r >= _FB_HEIGHT) {
-		if (fb_bpp == 16)
-			plotfn = plot_internal_16;
-		else
-			plotfn = plot_internal_8;
-	} else if (fb_bpp == 16)
-		plotfn = plot_internal_unbounded_16;
+	    || y0 - r < 0 || y0 + r >= _FB_HEIGHT)
+		plotfn = plot_internal;
 	else
-		plotfn = plot_internal_unbounded_8;
+		plotfn = plot_internal_unbounded;
 
 	plotfn(x0, y0 + r, color, fb_active);
 	plotfn(x0, y0 - r, color, fb_active);
@@ -761,7 +757,7 @@ fb_fill(int x, int y, int color)
 void
 fb_text(int x0, int y0, const char *cp, int fgcolor, int bgcolor, int scale)
 {
-	int c, x, y, xs, ys, off, dot;
+	int c, x, y, xs, ys, dot;
 	const uint8_t *bp;
 	int scale_y = scale & 0xff;
 	int scale_x = (scale >> 16) & 0xff;
@@ -796,17 +792,13 @@ next_char:
 			}
 			if (__predict_false(x < 0 || x >= _FB_WIDTH))
 				continue;
-			off = y * _FB_WIDTH + x;
 			if (__predict_false(c & 0x80))
 				dot = fgcolor;
 			else if (bgcolor < 0)
 				continue;
 			else
 				dot = bgcolor;
-			if (fb_bpp == 16)
-				*((uint16_t *) &fb_active[off << 1]) = dot;
-			else
-				fb_active[off] = dot;
+			plot_internal_unbounded(x, y, dot, fb_active);
 		}
 	}
 
