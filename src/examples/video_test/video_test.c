@@ -48,12 +48,41 @@ void
 main(void)
 {
 	int ti = 0, iter = 1;
-	int i, rnd;
+	int i, rnd, c;
 	struct timespec start, end;
 	uint32_t x0, y0, x1, y1;
 	uint64_t ips, score, overall = 0;
 
 	fb_set_mode(FB_MODE_1080i60, FB_BPP_8);
+
+	c = fb_rgb2pal(0x00ff00);
+	for (i = -2048; i <= 2048; i += 256) {
+		fb_line(0, i, 1919, 1919 + i, c);
+		fb_line(0, 1079 - i, 1919, 1079 - i - 1919, c);
+	}
+
+	c = fb_rgb2pal(0xff0000);
+	fb_line(0, 0, 1919, 0, c);
+	fb_line(0, 0, 0, 1079, c);
+	fb_line(0, 1079, 1919, 1079, c);
+	fb_line(1919, 0, 1919, 1079, c);
+	fb_text(1851, 1068, "1920 x 1080", c, 0, 0);
+
+	fb_line(1279, 0, 1279, 719, c);
+	fb_line(0, 719, 1279, 719, c);
+	fb_text(1217, 708, "1280 x 720", c, 0, 0);
+
+	fb_line(959, 0, 959, 539, c);
+	fb_line(0, 539, 959, 539, c);
+	fb_text(903, 528, "960 x 540", c, 0, 0);
+
+	fb_line(639, 0, 639, 359, c);
+	fb_line(0, 359, 639, 359, c);
+	fb_text(583, 348, "640 x 360", c, 0, 0);
+
+	do {
+	} while (sio_getchar(0) != '.');
+
 	printf("\nresults are relative to FB_MODE_1080i60, FB_BPP_8"
 	    " at 90 MHz CPU clock\n\n");
 
