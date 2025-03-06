@@ -35,9 +35,9 @@ entity dvi_fb is
 	C_doublepix: boolean := true;
 	C_bpp16: boolean := true;
 	C_bpp8: boolean := true;
-	C_bpp4: boolean := false;
-	C_bpp2: boolean := false;
-	C_bpp1: boolean := false
+	C_bpp4: boolean := true;
+	C_bpp2: boolean := true;
+	C_bpp1: boolean := true
     );
     port (
 	clk: in std_logic;
@@ -68,7 +68,8 @@ architecture x of dvi_fb is
     signal Rp_fifo_tail: std_logic_vector(8 downto 0);
     signal Rp_from_fifo: std_logic_vector(23 downto 0);
     signal Rp_r, Rp_g, Rp_b: std_logic_vector(7 downto 0);
-    signal Rp_hsync_dly, Rp_vsync_dly, Rp_blank_dly: std_logic;
+    signal Rp_hsync_dly, Rp_vsync_dly, Rp_blank_dly:
+      std_logic_vector(1 downto 0);
     signal Rp_hstate: std_logic_vector(1 downto 0);
     signal Rp_vstate: std_logic_vector(1 downto 0);
     signal Rp_hpos: std_logic_vector(11 downto 0);
@@ -481,9 +482,9 @@ begin
 	    end if;
 
 	    -- from line buffer and syncgen to vga2dvid
-	    Rp_blank_dly <= not Rp_active;
-	    Rp_hsync_dly <= Rp_hsync;
-	    Rp_vsync_dly <= Rp_vsync;
+	    Rp_blank_dly <= Rp_blank_dly(0) & not Rp_active;
+	    Rp_hsync_dly <= Rp_hsync_dly(0) & Rp_hsync;
+	    Rp_vsync_dly <= Rp_vsync_dly(0) & Rp_vsync;
 	    if Rp_frame_gap = '1' then
 		Rp_fifo_tail <= (others => '0');
 	    elsif Rp_active = '1' then
@@ -507,9 +508,9 @@ begin
 	in_red => Rp_r,
 	in_green => Rp_g,
 	in_blue => Rp_b,
-	in_hsync => Rp_hsync_dly,
-	in_vsync => Rp_vsync_dly,
-	in_blank => Rp_blank_dly,
+	in_hsync => Rp_hsync_dly(1),
+	in_vsync => Rp_vsync_dly(1),
+	in_blank => Rp_blank_dly(1),
 	out_clock => dv_clk,
 	out_red => dv_r,
 	out_green => dv_g,
