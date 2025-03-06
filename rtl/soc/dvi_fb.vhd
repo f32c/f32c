@@ -205,6 +205,9 @@ begin
 			    R_dma_vcnt <= R_dma_vcnt + 2;
 			    if R_dma_vcnt + 2 = R_vdisp then
 				R_dma_cur <= R_dma_base + R_dma_hlim;
+				if C_doublepix and R_doublepix = '1' then
+				    R_dma_cur <= R_dma_base;
+				end if;
 				R_dma_vcnt <= (others => '0');
 				R_dma_field_cnt <= R_dma_field_cnt - 1;
 			    end if;
