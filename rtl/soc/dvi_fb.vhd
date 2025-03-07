@@ -33,11 +33,12 @@ use work.sdram_pack.all;
 entity dvi_fb is
     generic (
 	C_doublepix: boolean := true;
-	C_bpp16: boolean := true;
-	C_bpp8: boolean := true;
-	C_bpp4: boolean := true;
+	C_bpp1: boolean := true;
 	C_bpp2: boolean := true;
-	C_bpp1: boolean := true
+	C_bpp4: boolean := true;
+	C_bpp8: boolean := true;
+	C_bpp16: boolean := true;
+	C_bpp24: boolean := false
     );
     port (
 	clk: in std_logic;
@@ -58,6 +59,14 @@ entity dvi_fb is
 end dvi_fb;
 
 architecture x of dvi_fb is
+    constant C_FB_BPP_OFF: std_logic_vector := "000";
+    constant C_FB_BPP_1: std_logic_vector := "001";
+    constant C_FB_BPP_2: std_logic_vector := "010";
+    constant C_FB_BPP_4: std_logic_vector := "011";
+    constant C_FB_BPP_8: std_logic_vector := "100";
+    constant C_FB_BPP_16: std_logic_vector := "101";
+    constant C_FB_BPP_24: std_logic_vector := "110";
+
     -- pixel fifo: fills in clk domain, drains in pixclk domain
     type T_pixel_fifo is array (0 to 511) of std_logic_vector(23 downto 0);
     signal M_pixel_fifo: T_pixel_fifo;
@@ -171,7 +180,7 @@ begin
 	if rising_edge(clk) then
 	    pixel_ready := false;
 
-	    if R_bpp = "000" then
+	    if R_bpp = C_FB_BPP_OFF then
 		-- Disable DMA
 		R_dma_field_cnt <= "00";
 	    elsif frame_gap then
@@ -233,48 +242,46 @@ begin
 		    if R_skip_pixel = '1' then
 			pixel_bitpos_next := R_pixel_bitpos;
 		    end if;
-		    case R_bpp is
-		    when "001" => -- 1 bpp, black/white
-			if C_bpp1 then
-			    r := (others => pixel(0));
-			    g := (others => pixel(0));
-			    b := (others => pixel(0));
-			end if;
-		    when "010" => -- 2 bpp, grayscale
-			if C_bpp2 then
-			    r := pixel(1 downto 0) & pixel(1 downto 0)
-			      & pixel(1 downto 0) & pixel(1 downto 0);
-			    g := pixel(1 downto 0) & pixel(1 downto 0)
-			      & pixel(1 downto 0) & pixel(1 downto 0);
-			    b := pixel(1 downto 0) & pixel(1 downto 0)
-			      & pixel(1 downto 0) & pixel(1 downto 0);
-			end if;
-		    when "011" => -- 4 bpp, RGBI
-			if C_bpp4 then
-			    r := pixel(2) & pixel(3) & pixel(2) & pixel(3)
-			      & pixel(2) & pixel(3) & pixel(2) & pixel(3);
-			    g := pixel(1) & pixel(3) & pixel(1) & pixel(3)
-			      & pixel(1) & pixel(3) & pixel(1) & pixel(3);
-			    b := pixel(0) & pixel(3) & pixel(0) & pixel(3)
-			      & pixel(0) & pixel(3) & pixel(0) & pixel(3);
-			end if;
-		    when "100" => -- 8 bpp RGB332
-			if C_bpp8 then
-			    r := pixel(7 downto 5) & pixel(7 downto 5)
-			      & pixel(7 downto 6);
-			    g := pixel(4 downto 2) & pixel(4 downto 2)
-			      & pixel(4 downto 3);
-			    b := pixel(1 downto 0) & pixel(1 downto 0)
-			      & pixel(1 downto 0) & pixel(1 downto 0);
-			end if;
-		    when "101" => -- 16 bpp RGB565
-			if C_bpp16 then
-			    r := pixel(15 downto 11) & pixel(15 downto 13);
-			    g := pixel(10 downto 5) & pixel(10 downto 9);
-			    b := pixel(4 downto 0) & pixel(4 downto 2);
-			end if;
-		    when others =>
-		    end case;
+		    if C_bpp1 and R_bpp = C_FB_BPP_1 then
+			-- black/white
+			r := (others => pixel(0));
+			g := (others => pixel(0));
+			b := (others => pixel(0));
+		    elsif C_bpp2 and R_bpp = C_FB_BPP_2 then
+			-- grayscale
+			r := pixel(1 downto 0) & pixel(1 downto 0)
+			  & pixel(1 downto 0) & pixel(1 downto 0);
+			g := pixel(1 downto 0) & pixel(1 downto 0)
+			  & pixel(1 downto 0) & pixel(1 downto 0);
+			b := pixel(1 downto 0) & pixel(1 downto 0)
+			  & pixel(1 downto 0) & pixel(1 downto 0);
+		    elsif C_bpp4 and R_bpp = C_FB_BPP_4 then
+			-- RGBI
+			r := pixel(2) & pixel(3) & pixel(2) & pixel(3)
+			  & pixel(2) & pixel(3) & pixel(2) & pixel(3);
+			g := pixel(1) & pixel(3) & pixel(1) & pixel(3)
+			  & pixel(1) & pixel(3) & pixel(1) & pixel(3);
+			b := pixel(0) & pixel(3) & pixel(0) & pixel(3)
+			  & pixel(0) & pixel(3) & pixel(0) & pixel(3);
+		    elsif C_bpp8  and R_bpp = C_FB_BPP_8 then
+			-- RGB332
+			r := pixel(7 downto 5) & pixel(7 downto 5)
+			  & pixel(7 downto 6);
+			g := pixel(4 downto 2) & pixel(4 downto 2)
+			  & pixel(4 downto 3);
+			b := pixel(1 downto 0) & pixel(1 downto 0)
+			  & pixel(1 downto 0) & pixel(1 downto 0);
+		    elsif C_bpp16 and R_bpp = C_FB_BPP_16 then
+			-- RGB565
+			r := pixel(15 downto 11) & pixel(15 downto 13);
+			g := pixel(10 downto 5) & pixel(10 downto 9);
+			b := pixel(4 downto 0) & pixel(4 downto 2);
+		    elsif C_bpp24 and R_bpp = C_FB_BPP_24 then
+			-- RGB888
+			r := pixel(23 downto 16);
+			g := pixel(15 downto 8);
+			b := pixel(7 downto 0);
+		    end if;
 		    R_pixel_bitpos <= '0' & pixel_bitpos_next(4 downto 0);
 		    if pixel_bitpos_next(5) = '1' then
 			R_dma_fifo_tail <= R_dma_fifo_tail + 1;
@@ -341,36 +348,25 @@ begin
 		end case;
 	    end if;
 
-	    case R_bpp is
-	    when "001" => -- 1 bpp, BW
-		if C_bpp1 then
-		    dma_hlim := "00000" & R_hdisp(10 downto 5);
-		    R_pixel_bitpos_incr <= conv_std_logic_vector(1, 5);
-		end if;
-	    when "010" => -- 2 bpp, grayscale
-		if C_bpp2 then
-		    dma_hlim := "0000" & R_hdisp(10 downto 4);
-		    R_pixel_bitpos_incr <= conv_std_logic_vector(2, 5);
-		end if;
-	    when "011" => -- 4 bpp, RGBI
-		if C_bpp4 then
-		    dma_hlim := "000" & R_hdisp(10 downto 3);
-		    R_pixel_bitpos_incr <= conv_std_logic_vector(4, 5);
-		end if;
-	    when "100" => -- 8 bpp, RGB332
-		if C_bpp8 then
-		    dma_hlim := "00" & R_hdisp(10 downto 2);
-		    R_pixel_bitpos_incr <= conv_std_logic_vector(8, 5);
-		end if;
-	    when "101" => -- 16 bpp, RGB565
-		if C_bpp16 then
-		    dma_hlim := '0' & R_hdisp(10 downto 1);
-		    R_pixel_bitpos_incr <= conv_std_logic_vector(16, 5);
-		end if;
-	    when others =>
-		dma_hlim := (others => '-');
-		R_pixel_bitpos_incr <= (others => '-');
-	    end case;
+	    if C_bpp1 and R_bpp = C_FB_BPP_1 then
+		dma_hlim := "00000" & R_hdisp(10 downto 5);
+		R_pixel_bitpos_incr <= conv_std_logic_vector(1, 5);
+	    elsif C_bpp2 and R_bpp = C_FB_BPP_2 then
+		dma_hlim := "0000" & R_hdisp(10 downto 4);
+		R_pixel_bitpos_incr <= conv_std_logic_vector(2, 5);
+	    elsif C_bpp4 and R_bpp = C_FB_BPP_4 then
+		dma_hlim := "000" & R_hdisp(10 downto 3);
+		R_pixel_bitpos_incr <= conv_std_logic_vector(4, 5);
+	    elsif C_bpp8 and R_bpp = C_FB_BPP_8 then
+		dma_hlim := "00" & R_hdisp(10 downto 2);
+		R_pixel_bitpos_incr <= conv_std_logic_vector(8, 5);
+	    elsif C_bpp16 and R_bpp = C_FB_BPP_16 then
+		dma_hlim := '0' & R_hdisp(10 downto 1);
+		R_pixel_bitpos_incr <= conv_std_logic_vector(16, 5);
+	    elsif C_bpp24 and R_bpp = C_FB_BPP_24 then
+		dma_hlim := R_hdisp(10 downto 0);
+		R_pixel_bitpos_incr <= conv_std_logic_vector(32, 5);
+	    end if;
 	    R_dma_hlim <= dma_hlim;
 	    if R_doublepix = '1' then
 		R_dma_hlim <= '0' & dma_hlim(10 downto 1);
