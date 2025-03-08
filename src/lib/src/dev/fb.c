@@ -413,6 +413,9 @@ plot_internal_unbounded(int x, int y, int color, uint8_t *dp8)
 	case 16:
 		dp16[off] = color;
 		return;
+	case 32:
+		dp32[off] = color;
+		return;
 	default:
 	}
 }
@@ -465,6 +468,20 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 		y1 = fb_vdisp - 1;
 
 	switch (fb_bpp) {
+	case 32:
+		for (; y0 <= y1; y0++) {
+			i = y0 * fb_hdisp + x0;
+			l = x1 - x0 + 1;
+			for (; l >= 4; i += 4, l -= 4) {
+				fb32[i + 0] = color;
+				fb32[i + 1] = color;
+				fb32[i + 2] = color;
+				fb32[i + 3] = color;
+			}
+			for (; l > 0; i++, l--)
+				fb32[i] = color;
+		}
+		return;
 	case 16:
 		uint16_t *fb16 = (void *) fb_active;
 		color = (color << 16) | (color & 0xffff);
@@ -848,6 +865,8 @@ fb_rgb2pal(int rgb)
 	uint32_t luma = (r + g + b) / 3;
 
 	switch (fb_bpp) {
+	case 32:
+		return (rgb);
 	case 16:
 		/* RGB565 */
 		return ((r & 0xf8) << 8 | (g & 0xfc) << 3 | b >> 3);
