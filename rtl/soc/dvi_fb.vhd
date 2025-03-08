@@ -38,7 +38,7 @@ entity dvi_fb is
 	C_bpp4: boolean := true;
 	C_bpp8: boolean := true;
 	C_bpp16: boolean := true;
-	C_bpp24: boolean := false
+	C_bpp24: boolean := true
     );
     port (
 	clk: in std_logic;
@@ -122,8 +122,7 @@ architecture x of dvi_fb is
     attribute syn_ramstyle of M_dma_fifo: signal is "no_rw_check";
     signal R_dma_hcnt, R_dma_vcnt, R_dma_hlim: std_logic_vector(10 downto 0);
     signal R_dma_field_cnt: std_logic_vector(1 downto 0);
-    signal R_pixel_bitpos: std_logic_vector(5 downto 0);
-    signal R_pixel_bitpos_incr: std_logic_vector(4 downto 0);
+    signal R_pixel_bitpos, R_pixel_bitpos_incr: std_logic_vector(5 downto 0);
     signal R_skip_pixel, R_repeat_line: std_logic;
 
     -- main clk domain, framebuffer, wires
@@ -350,22 +349,22 @@ begin
 
 	    if C_bpp1 and R_bpp = C_FB_BPP_1 then
 		dma_hlim := "00000" & R_hdisp(10 downto 5);
-		R_pixel_bitpos_incr <= conv_std_logic_vector(1, 5);
+		R_pixel_bitpos_incr <= conv_std_logic_vector(1, 6);
 	    elsif C_bpp2 and R_bpp = C_FB_BPP_2 then
 		dma_hlim := "0000" & R_hdisp(10 downto 4);
-		R_pixel_bitpos_incr <= conv_std_logic_vector(2, 5);
+		R_pixel_bitpos_incr <= conv_std_logic_vector(2, 6);
 	    elsif C_bpp4 and R_bpp = C_FB_BPP_4 then
 		dma_hlim := "000" & R_hdisp(10 downto 3);
-		R_pixel_bitpos_incr <= conv_std_logic_vector(4, 5);
+		R_pixel_bitpos_incr <= conv_std_logic_vector(4, 6);
 	    elsif C_bpp8 and R_bpp = C_FB_BPP_8 then
 		dma_hlim := "00" & R_hdisp(10 downto 2);
-		R_pixel_bitpos_incr <= conv_std_logic_vector(8, 5);
+		R_pixel_bitpos_incr <= conv_std_logic_vector(8, 6);
 	    elsif C_bpp16 and R_bpp = C_FB_BPP_16 then
 		dma_hlim := '0' & R_hdisp(10 downto 1);
-		R_pixel_bitpos_incr <= conv_std_logic_vector(16, 5);
+		R_pixel_bitpos_incr <= conv_std_logic_vector(16, 6);
 	    elsif C_bpp24 and R_bpp = C_FB_BPP_24 then
 		dma_hlim := R_hdisp(10 downto 0);
-		R_pixel_bitpos_incr <= conv_std_logic_vector(32, 5);
+		R_pixel_bitpos_incr <= conv_std_logic_vector(32, 6);
 	    end if;
 	    R_dma_hlim <= dma_hlim;
 	    if R_doublepix = '1' then
