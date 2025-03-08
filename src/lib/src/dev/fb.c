@@ -31,7 +31,7 @@
 #include <dev/io.h>
 #include <dev/fb.h>
 
-typedef void plotfn_t(int x, int y, int mode_color, uint8_t *dp);
+typedef void plotfn_t(int x, int y, int mode_color);
 
 /* A fixed-width 6 x 10 bitmapped font, borrowed from X11 */
 static const uint8_t font_map[] = {
@@ -244,13 +244,14 @@ static const struct modeline fb_modelines[] = {
 };
 
 uint8_t *fb[2];
-uint8_t *fb_active;
 uint8_t fb_visible;
 uint8_t fb_drawable;
-uint8_t	fb_bpp;
 uint16_t fb_hdisp;
 uint16_t fb_vdisp;
-struct modeline *fb_modeline;
+
+static uint8_t *fb_active;
+static uint8_t fb_bpp;
+static uint8_t fb_bpp_code;
 
 #define	ABS(a) (((a) < 0) ? -(a) : (a))
 
@@ -277,7 +278,7 @@ static struct compositing_line *sp[_FB_HEIGHT];
 void
 fb_set_mode(const struct modeline *ml, int flags)
 {
-	int bpp_code = flags & FB_BPP_MASK;
+
 #ifndef COMPOSITING2
 	int doublepix = (flags & FB_DOUBLEPIX) != 0;
 #endif
@@ -286,15 +287,16 @@ fb_set_mode(const struct modeline *ml, int flags)
 	if (((int) ml & 0x3) == (int) ml)
 		ml = &fb_modelines[(int) ml & 0x3];
 
-	fb_drawable = 0;
-	fb_visible = 0;
-	fb_bpp = 0;
 	free(fb[0]);
 	free(fb[1]);
 	fb[0] = NULL;
 	fb[1] = NULL;
+	fb_drawable = 0;
+	fb_visible = 0;
+	fb_bpp = 0;
+	fb_bpp_code = (flags & FB_BPP_MASK);
 
-	if (bpp_code == FB_BPP_OFF) {
+	if (fb_bpp_code == FB_BPP_OFF) {
 		/* turn off the video */
 #ifdef COMPOSITING2
 		OUTW(IO_C2VIDEO_BASE, NULL);
@@ -307,11 +309,12 @@ fb_set_mode(const struct modeline *ml, int flags)
 #ifdef COMPOSITING2
 	fb_hdisp = _FB_WIDTH;
 	fb_vdisp = _FB_HEIGHT;
+	fb_bpp_code = FB_BPP_16;
 	fb_bpp = 16;
 #else
 	fb_hdisp = ml->hdisp >> doublepix;
 	fb_vdisp = ml->vdisp >> doublepix;
-	fb_bpp = 1 << (bpp_code - 1);
+	fb_bpp = 1 << (fb_bpp_code - 1);
 #endif
 
 	fb[0] = malloc(fb_hdisp * fb_vdisp * fb_bpp / 8);
@@ -325,7 +328,7 @@ fb_set_mode(const struct modeline *ml, int flags)
 		scanlines[i].next = NULL;
 		scanlines[i].x = 0;
 		scanlines[i].n = fb_hdisp - 1;
-		if (fb_bpp == 8)
+		if (fb_bpp_code == FB_BPP_16)
 			scanlines[i].bmp = &fb_active[fb_hdisp * i];
 		else
 			scanlines[i].bmp = &fb_active[fb_hdisp * i << 1];
@@ -347,7 +350,7 @@ fb_set_mode(const struct modeline *ml, int flags)
 	    | (ml->vsyncn << 14) | (ml->interlace << 15));
 
 	OUTW(IO_DV_DMA_BASE, fb_active);
-	OUTW(IO_DV_PIXCFG, bpp_code | (doublepix << 4));
+	OUTW(IO_DV_PIXCFG, fb_bpp_code | (doublepix << 4));
 #endif
 }
 
@@ -381,39 +384,40 @@ fb_set_visible(int visual)
 
 
 static void
-plot_internal_unbounded(int x, int y, int color, uint8_t *dp8)
+plot_unbounded(int x, int y, int color)
 {
-	uint16_t *dp16 = (void *) dp8;
-	uint32_t *dp32 = (void *) dp8;
-	uint32_t mask, shift;
 	int off = y * fb_hdisp + x;
+	uint8_t *dp8 = (void *) fb_active;
+	uint16_t *dp16 = (void *) fb_active;
+	uint32_t *dp32 = (void *) fb_active;
+	uint32_t mask, shift;
 
-	switch (fb_bpp) {
-	case 1:
+	switch (fb_bpp_code) {
+	case FB_BPP_1:
 		dp32 = &dp32[off >> 5];
 		shift = off & 0x1f;
 		mask = 0x1 << shift;
 		*dp32 = (*dp32 & ~mask) | ((color & 0x1) << shift);
 		return;
-	case 2:
+	case FB_BPP_2:
 		dp32 = &dp32[off >> 4];
 		shift = (off & 0xf) * 2;
 		mask = 0x3 << shift;
 		*dp32 = (*dp32 & ~mask) | ((color & 0x3) << shift);
 		return;
-	case 4:
+	case FB_BPP_4:
 		dp32 = &dp32[off >> 3];
 		shift = (off & 0x7) * 4;
 		mask = 0xf << shift;
 		*dp32 = (*dp32 & ~mask) | ((color & 0xf) << shift);
 		return;
-	case 8:
+	case FB_BPP_8:
 		dp8[off] = color;
 		return;
-	case 16:
+	case FB_BPP_16:
 		dp16[off] = color;
 		return;
-	case 32:
+	case FB_BPP_24:
 		dp32[off] = color;
 		return;
 	default:
@@ -421,22 +425,15 @@ plot_internal_unbounded(int x, int y, int color, uint8_t *dp8)
 }
 
 
-static void
-plot_internal(int x, int y, int color, uint8_t *dp)
+void
+fb_plot(int x, int y, int color)
 {
 
 	if (__predict_false(y < 0 || y >= fb_vdisp ||
 	    x < 0 || x >= fb_hdisp))
 		return;
 
-	plot_internal_unbounded(x, y, color, dp);
-}
-
-void
-fb_plot(int x, int y, int color)
-{
-
-	plot_internal(x, y, color, fb_active);
+	plot_unbounded(x, y, color);
 }
 
 
@@ -467,8 +464,8 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 	if (__predict_false(y1 >= fb_vdisp))
 		y1 = fb_vdisp - 1;
 
-	switch (fb_bpp) {
-	case 32:
+	switch (fb_bpp_code) {
+	case FB_BPP_24:
 		for (; y0 <= y1; y0++) {
 			i = y0 * fb_hdisp + x0;
 			l = x1 - x0 + 1;
@@ -482,7 +479,7 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 				fb32[i] = color;
 		}
 		return;
-	case 16:
+	case FB_BPP_16:
 		uint16_t *fb16 = (void *) fb_active;
 		color = (color << 16) | (color & 0xffff);
 		for (; y0 <= y1; y0++) {
@@ -504,7 +501,7 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 				fb16[i++] = color;
 		}
 		return;
-	case 8:
+	case FB_BPP_8:
 		uint8_t *fb8 = (void *) fb_active;
 		color = (color << 8) | (color & 0xff);
 		color = (color << 16) | (color & 0xffff);
@@ -524,11 +521,11 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 				fb8[i++] = color;
 		}
 		return;
-	case 1:
+	case FB_BPP_1:
 		color = (color << 1) | (color & 0x1);
-	case 2:
+	case FB_BPP_2:
 		color = (color << 2) | (color & 0x3);
-	case 4:
+	case FB_BPP_4:
 		color = (color << 4) | (color & 0xf);
 		color = (color << 8) | (color & 0xff);
 		color = (color << 16) | (color & 0xffff);
@@ -574,11 +571,11 @@ fb_line(int x0, int y0, int x1, int y1, int color)
 
 	if (x0 < 0 || x0 >= fb_hdisp || y0 < 0 || y0 >= fb_vdisp ||
 	    x1 < 0 || x1 >= fb_hdisp || y1 < 0 || y1 >= fb_vdisp)
-		plotfn = plot_internal;
+		plotfn = fb_plot;
 	else
-		plotfn = plot_internal_unbounded;
+		plotfn = plot_unbounded;
 
-	plotfn(x0, y0, color, fb_active);
+	plotfn(x0, y0, color);
 	for (;;) {
 		if (x0 == x1 && y0 == y1)
 			break;
@@ -591,7 +588,7 @@ fb_line(int x0, int y0, int x1, int y1, int color)
 			err += dx;
 			y0 += sy;
 		}
-		plotfn(x0, y0, color, fb_active);
+		plotfn(x0, y0, color);
 	}
 }
 
@@ -611,14 +608,14 @@ fb_circle(int x0, int y0, int r, int color)
 
 	if (x0 - r < 0 || x0 + r >= fb_hdisp
 	    || y0 - r < 0 || y0 + r >= fb_vdisp)
-		plotfn = plot_internal;
+		plotfn = fb_plot;
 	else
-		plotfn = plot_internal_unbounded;
+		plotfn = plot_unbounded;
 
-	plotfn(x0, y0 + r, color, fb_active);
-	plotfn(x0, y0 - r, color, fb_active);
-	plotfn(x0 + r, y0, color, fb_active);
-	plotfn(x0 - r, y0, color, fb_active);
+	plotfn(x0, y0 + r, color);
+	plotfn(x0, y0 - r, color);
+	plotfn(x0 + r, y0, color);
+	plotfn(x0 - r, y0, color);
  
 	while(x < y) {
 		if (f >= 0) {
@@ -629,14 +626,14 @@ fb_circle(int x0, int y0, int r, int color)
 		x++;
 		ddF_x += 2;
 		f += ddF_x;    
-		plotfn(x0 + x, y0 + y, color, fb_active);
-		plotfn(x0 - x, y0 + y, color, fb_active);
-		plotfn(x0 + x, y0 - y, color, fb_active);
-		plotfn(x0 - x, y0 - y, color, fb_active);
-		plotfn(x0 + y, y0 + x, color, fb_active);
-		plotfn(x0 - y, y0 + x, color, fb_active);
-		plotfn(x0 + y, y0 - x, color, fb_active);
-		plotfn(x0 - y, y0 - x, color, fb_active);
+		plotfn(x0 + x, y0 + y, color);
+		plotfn(x0 - x, y0 + y, color);
+		plotfn(x0 + x, y0 - y, color);
+		plotfn(x0 - x, y0 - y, color);
+		plotfn(x0 + y, y0 + x, color);
+		plotfn(x0 - y, y0 + x, color);
+		plotfn(x0 + y, y0 - x, color);
+		plotfn(x0 - y, y0 - x, color);
 	}
 }
 
@@ -847,7 +844,7 @@ next_char:
 				continue;
 			else
 				dot = bgcolor;
-			plot_internal_unbounded(x, y, dot, fb_active);
+			plot_unbounded(x, y, dot);
 		}
 	}
 
