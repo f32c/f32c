@@ -217,10 +217,10 @@ begin
 	-- DDR: 2 bits per 1 clock period,
 	-- (one bit output on rising edge, other on falling edge of clk_shift)
 	G_serial: if C_serial generate
-          out_red   <= shift_red(1 downto 0);
-          out_green <= shift_green(1 downto 0);
-          out_blue  <= shift_blue(1 downto 0);
-          out_clock <= shift_clock(1 downto 0);
+          out_red   <= shift_red(1 downto 0) when rising_edge(clk_shift);
+          out_green <= shift_green(1 downto 0) when rising_edge(clk_shift);
+          out_blue  <= shift_blue(1 downto 0) when rising_edge(clk_shift);
+          out_clock <= shift_clock(1 downto 0) when rising_edge(clk_shift);
         end generate;
 
 end Behavioral;
