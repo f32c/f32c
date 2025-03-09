@@ -52,8 +52,8 @@ uint8_t fb_drawable;
 uint16_t fb_hdisp;
 uint16_t fb_vdisp;
 
-static uint8_t *fb_active;
-static uint8_t fb_bpp;
+uint8_t *fb_active;
+uint8_t fb_bpp;
 static uint8_t fb_bpp_code;
 
 typedef void plotfn_t(int, int, int);
@@ -321,18 +321,14 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 		y1 = fb_vdisp - 1;
 
 	switch (fb_bpp_code) {
-	case FB_BPP_24:
+	case FB_BPP_8:
+		uint8_t *fb8 = (void *) fb_active;
+		color = (color << 8) | (color & 0xff);
+		color = (color << 16) | (color & 0xffff);
+		l = x1 - x0 + 1;
 		for (; y0 <= y1; y0++) {
 			i = y0 * fb_hdisp + x0;
-			l = x1 - x0 + 1;
-			for (; l >= 4; i += 4, l -= 4) {
-				fb32[i + 0] = color;
-				fb32[i + 1] = color;
-				fb32[i + 2] = color;
-				fb32[i + 3] = color;
-			}
-			for (; l > 0; i++, l--)
-				fb32[i] = color;
+			memset(&fb8[i], color, l);
 		}
 		return;
 	case FB_BPP_16:
@@ -357,24 +353,18 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 				fb16[i++] = color;
 		}
 		return;
-	case FB_BPP_8:
-		uint8_t *fb8 = (void *) fb_active;
-		color = (color << 8) | (color & 0xff);
-		color = (color << 16) | (color & 0xffff);
+	case FB_BPP_24:
 		for (; y0 <= y1; y0++) {
 			i = y0 * fb_hdisp + x0;
-			for (l = x1 - x0 + 1; (i & 3) != 0 && l > 0; l--)
-				fb8[i++] = color;
-			for (; l >= 16; i += 16, l -= 16) {
-				*((int *) &fb8[i + 0]) = color;
-				*((int *) &fb8[i + 4]) = color;
-				*((int *) &fb8[i + 8]) = color;
-				*((int *) &fb8[i + 12]) = color;
+			l = x1 - x0 + 1;
+			for (; l >= 4; i += 4, l -= 4) {
+				fb32[i + 0] = color;
+				fb32[i + 1] = color;
+				fb32[i + 2] = color;
+				fb32[i + 3] = color;
 			}
-			for (; l >= 4; i += 4, l -= 4)
-				*((int *) &fb8[i]) = color;
-			for (; l > 0; l--)
-				fb8[i++] = color;
+			for (; l > 0; i++, l--)
+				fb32[i] = color;
 		}
 		return;
 	case FB_BPP_1:
