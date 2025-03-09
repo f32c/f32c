@@ -69,7 +69,9 @@ void fb_text(int, int, const char *, int, int, int);
 int fb_rgb2pal(int);
 
 extern uint8_t *fb[2];
+extern uint8_t *fb_active;
 extern uint8_t fb_visible;
 extern uint8_t fb_drawable;
+extern uint8_t fb_bpp;
 extern uint16_t fb_hdisp;
 extern uint16_t fb_vdisp;
