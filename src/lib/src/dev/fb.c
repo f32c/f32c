@@ -328,7 +328,7 @@ fb_set_mode(const struct modeline *ml, int flags)
 		scanlines[i].next = NULL;
 		scanlines[i].x = 0;
 		scanlines[i].n = fb_hdisp - 1;
-		if (fb_bpp_code == FB_BPP_16)
+		if (fb_bpp_code == FB_BPP_8)
 			scanlines[i].bmp = &fb_active[fb_hdisp * i];
 		else
 			scanlines[i].bmp = &fb_active[fb_hdisp * i << 1];
@@ -384,41 +384,85 @@ fb_set_visible(int visual)
 
 
 static void
+plot_bpp_1(uint32_t *dp32, int off, int color)
+{
+	uint32_t shift = off & 0x1f;
+	uint32_t mask = 0x1 << shift;
+
+	dp32 = &dp32[off >> 5];
+	*dp32 = (*dp32 & ~mask) | ((color & 0x1) << shift);
+}
+
+
+static void
+plot_bpp_2(uint32_t *dp32, int off, int color)
+{
+	uint32_t shift = (off & 0xf) * 2;
+	uint32_t mask = 0x3 << shift;
+
+	dp32 = &dp32[off >> 4];
+	*dp32 = (*dp32 & ~mask) | ((color & 0x3) << shift);
+}
+
+
+static void
+plot_bpp_4(uint32_t *dp32, int off, int color)
+{
+	uint32_t shift = (off & 0x7) * 4;
+	uint32_t mask = 0xf << shift;
+
+	dp32 = &dp32[off >> 3];
+	*dp32 = (*dp32 & ~mask) | ((color & 0xf) << shift);
+}
+
+
+static void
+plot_bpp_8(uint8_t *dp8, int off, int color)
+{
+
+	dp8[off] = color;
+}
+
+
+static void
+plot_bpp_16(uint16_t *dp16, int off, int color)
+{
+
+	dp16[off] = color;
+}
+
+
+static void
+plot_bpp_24(uint8_t *dp24, int off, int color)
+{
+
+	dp24[off] = color;
+}
+
+
+static void
 plot_unbounded(int x, int y, int color)
 {
 	int off = y * fb_hdisp + x;
-	uint8_t *dp8 = (void *) fb_active;
-	uint16_t *dp16 = (void *) fb_active;
-	uint32_t *dp32 = (void *) fb_active;
-	uint32_t mask, shift;
 
 	switch (fb_bpp_code) {
 	case FB_BPP_1:
-		dp32 = &dp32[off >> 5];
-		shift = off & 0x1f;
-		mask = 0x1 << shift;
-		*dp32 = (*dp32 & ~mask) | ((color & 0x1) << shift);
+		plot_bpp_1((void *) fb_active, off, color);
 		return;
 	case FB_BPP_2:
-		dp32 = &dp32[off >> 4];
-		shift = (off & 0xf) * 2;
-		mask = 0x3 << shift;
-		*dp32 = (*dp32 & ~mask) | ((color & 0x3) << shift);
+		plot_bpp_2((void *) fb_active, off, color);
 		return;
 	case FB_BPP_4:
-		dp32 = &dp32[off >> 3];
-		shift = (off & 0x7) * 4;
-		mask = 0xf << shift;
-		*dp32 = (*dp32 & ~mask) | ((color & 0xf) << shift);
+		plot_bpp_4((void *) fb_active, off, color);
 		return;
 	case FB_BPP_8:
-		dp8[off] = color;
+		plot_bpp_8((void *) fb_active, off, color);
 		return;
 	case FB_BPP_16:
-		dp16[off] = color;
+		plot_bpp_16((void *) fb_active, off, color);
 		return;
 	case FB_BPP_24:
-		dp32[off] = color;
+		plot_bpp_24((void *) fb_active, off, color);
 		return;
 	default:
 	}
