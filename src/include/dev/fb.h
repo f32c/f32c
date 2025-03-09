@@ -38,10 +38,13 @@ struct modeline {
 		 interlace: 1;
 };
 
+/* Predefined modelines in dev/fb.c */
 #define	FB_MODE_720p60	((void *) 0x0)
-#define	FB_MODE_1080i60	((void *) 0x1)
-#define	FB_MODE_720p50	((void *) 0x2)
+#define	FB_MODE_720p50	((void *) 0x1)
+#define	FB_MODE_1080i60	((void *) 0x2)
 #define	FB_MODE_1080i50	((void *) 0x3)
+#define	FB_MODE_1080p30	((void *) 0x4)
+#define	FB_MODE_1080p25	((void *) 0x5)
 
 #define	FB_BPP_MASK	0xf
 #define	FB_BPP_OFF	0x0
