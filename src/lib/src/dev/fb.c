@@ -31,10 +31,6 @@
 #include <dev/io.h>
 #include <dev/fb.h>
 
-typedef void plotfn_t(int x, int y, int mode_color);
-
-static const uint8_t font_map[];
-
 static const struct modeline fb_modelines[] = {
     { /* 0: 1280x720p @ 60 Hz, 16:9 */
 	74250, 1280, 1390, 1430, 1650, 720, 725, 730, 750, 0, 0, 0
@@ -60,6 +56,12 @@ static uint8_t *fb_active;
 static uint8_t fb_bpp;
 static uint8_t fb_bpp_code;
 
+typedef void plotfn_t(int, int, int);
+typedef void plotfn_off_t(void *, int, int);
+static plotfn_off_t *fb_plotfn_off;
+
+static const uint8_t font_map[];
+
 #define	ABS(a) (((a) < 0) ? -(a) : (a))
 
 //#define COMPOSITING2
@@ -80,6 +82,69 @@ struct compositing_line {
 static struct compositing_line scanlines[_FB_HEIGHT];
 static struct compositing_line *sp[_FB_HEIGHT];
 #endif /* !COMPOSITING2 */
+
+
+static void
+plot_bpp_1(void *p, int off, int color)
+{
+	uint32_t *dp32 = p;
+	uint32_t shift = off & 0x1f;
+	uint32_t mask = 0x1 << shift;
+
+	dp32 = &dp32[off >> 5];
+	*dp32 = (*dp32 & ~mask) | ((color & 0x1) << shift);
+}
+
+
+static void
+plot_bpp_2(void *p, int off, int color)
+{
+	uint32_t *dp32 = p;
+	uint32_t shift = (off & 0xf) * 2;
+	uint32_t mask = 0x3 << shift;
+
+	dp32 = &dp32[off >> 4];
+	*dp32 = (*dp32 & ~mask) | ((color & 0x3) << shift);
+}
+
+
+static void
+plot_bpp_4(void *p, int off, int color)
+{
+	uint32_t *dp32 = p;
+	uint32_t shift = (off & 0x7) * 4;
+	uint32_t mask = 0xf << shift;
+
+	dp32 = &dp32[off >> 3];
+	*dp32 = (*dp32 & ~mask) | ((color & 0xf) << shift);
+}
+
+
+static void
+plot_bpp_8(void *p, int off, int color)
+{
+	uint8_t *dp8 = p;
+
+	dp8[off] = color;
+}
+
+
+static void
+plot_bpp_16(void *p, int off, int color)
+{
+	uint16_t *dp16 = p;
+
+	dp16[off] = color;
+}
+
+
+static void
+plot_bpp_24(void *p, int off, int color)
+{
+	uint32_t *dp24 = p;
+
+	dp24[off] = color;
+}
 
 
 void
@@ -103,7 +168,26 @@ fb_set_mode(const struct modeline *ml, int flags)
 	fb_bpp = 0;
 	fb_bpp_code = (flags & FB_BPP_MASK);
 
-	if (fb_bpp_code == FB_BPP_OFF) {
+	switch (fb_bpp_code) {
+	case FB_BPP_1:
+		fb_plotfn_off = plot_bpp_1;
+		break;
+	case FB_BPP_2:
+		fb_plotfn_off = plot_bpp_2;
+		break;
+	case FB_BPP_4:
+		fb_plotfn_off = plot_bpp_4;
+		break;
+	case FB_BPP_8:
+		fb_plotfn_off = plot_bpp_8;
+		break;
+	case FB_BPP_16:
+		fb_plotfn_off = plot_bpp_16;
+		break;
+	case FB_BPP_24:
+		fb_plotfn_off = plot_bpp_24;
+		break;
+	default:
 		/* turn off the video */
 #ifdef COMPOSITING2
 		OUTW(IO_C2VIDEO_BASE, NULL);
@@ -116,13 +200,11 @@ fb_set_mode(const struct modeline *ml, int flags)
 #ifdef COMPOSITING2
 	fb_hdisp = _FB_WIDTH;
 	fb_vdisp = _FB_HEIGHT;
-	fb_bpp_code = FB_BPP_16;
-	fb_bpp = 16;
 #else
 	fb_hdisp = ml->hdisp >> doublepix;
 	fb_vdisp = ml->vdisp >> doublepix;
-	fb_bpp = 1 << (fb_bpp_code - 1);
 #endif
+	fb_bpp = 1 << (fb_bpp_code - 1);
 
 	fb[0] = malloc(fb_hdisp * fb_vdisp * fb_bpp / 8);
 	memset(fb[0], 0, fb_hdisp * fb_vdisp * fb_bpp / 8);
@@ -191,88 +273,11 @@ fb_set_visible(int visual)
 
 
 static void
-plot_bpp_1(uint32_t *dp32, int off, int color)
-{
-	uint32_t shift = off & 0x1f;
-	uint32_t mask = 0x1 << shift;
-
-	dp32 = &dp32[off >> 5];
-	*dp32 = (*dp32 & ~mask) | ((color & 0x1) << shift);
-}
-
-
-static void
-plot_bpp_2(uint32_t *dp32, int off, int color)
-{
-	uint32_t shift = (off & 0xf) * 2;
-	uint32_t mask = 0x3 << shift;
-
-	dp32 = &dp32[off >> 4];
-	*dp32 = (*dp32 & ~mask) | ((color & 0x3) << shift);
-}
-
-
-static void
-plot_bpp_4(uint32_t *dp32, int off, int color)
-{
-	uint32_t shift = (off & 0x7) * 4;
-	uint32_t mask = 0xf << shift;
-
-	dp32 = &dp32[off >> 3];
-	*dp32 = (*dp32 & ~mask) | ((color & 0xf) << shift);
-}
-
-
-static void
-plot_bpp_8(uint8_t *dp8, int off, int color)
-{
-
-	dp8[off] = color;
-}
-
-
-static void
-plot_bpp_16(uint16_t *dp16, int off, int color)
-{
-
-	dp16[off] = color;
-}
-
-
-static void
-plot_bpp_24(uint8_t *dp24, int off, int color)
-{
-
-	dp24[off] = color;
-}
-
-
-static void
 plot_unbounded(int x, int y, int color)
 {
 	int off = y * fb_hdisp + x;
 
-	switch (fb_bpp_code) {
-	case FB_BPP_1:
-		plot_bpp_1((void *) fb_active, off, color);
-		return;
-	case FB_BPP_2:
-		plot_bpp_2((void *) fb_active, off, color);
-		return;
-	case FB_BPP_4:
-		plot_bpp_4((void *) fb_active, off, color);
-		return;
-	case FB_BPP_8:
-		plot_bpp_8((void *) fb_active, off, color);
-		return;
-	case FB_BPP_16:
-		plot_bpp_16((void *) fb_active, off, color);
-		return;
-	case FB_BPP_24:
-		plot_bpp_24((void *) fb_active, off, color);
-		return;
-	default:
-	}
+	fb_plotfn_off(fb_active, off, color);
 }
 
 
