@@ -37,10 +37,10 @@ struct fb_test {
 	uint32_t weight;
 	uint64_t time;
 } fb_test[] = {
-	{ .fn = fb_line, .desc = "lines", .weight = 3133 },
-	{ .fn = fb_rectangle, .desc = "rects", .weight = 410 },
-	{ .fn = circle_test, .desc = "circles", .weight = 2500 },
-	{ .fn = text_test, .desc = "text", .weight = 205 },
+	{ .fn = fb_line, .desc = "lines", .weight = 3750 },
+	{ .fn = fb_rectangle, .desc = "rects", .weight = 393 },
+	{ .fn = circle_test, .desc = "circles", .weight = 1971 },
+	{ .fn = text_test, .desc = "text", .weight = 153 },
 	{ /* terminate list */ }
 };
 
@@ -95,8 +95,8 @@ main(void)
 			printf("iter #%d: ", iter);
 		clock_gettime(CLOCK_MONOTONIC, &start);
 		for (i = 0; i < fb_test[ti].weight; i++) {
-			RDTSC(rnd);
-			rnd += random();
+			rnd = start.tv_sec + (start.tv_nsec >> 8);
+			rnd ^= random();
 			x0 = rnd % fb_hdisp;
 			y0 = (rnd >> 10) % fb_vdisp;
 			rnd += start.tv_nsec;
