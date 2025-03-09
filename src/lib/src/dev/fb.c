@@ -659,7 +659,7 @@ fb_fill(int x, int y, int color)
 void
 fb_text(int x0, int y0, const char *cp, int fgcolor, int bgcolor, int scale)
 {
-	int c, x, y, xs, ys, dot;
+	int c, x, y, xs, ys, dot, off;
 	const uint8_t *bp;
 	int scale_y = scale & 0xff;
 	int scale_x = (scale >> 16) & 0xff;
@@ -684,23 +684,27 @@ next_char:
 			bp++;
 			ys = 0;
 		}
-		if (__predict_false(y < 0 || y >= fb_vdisp))
+		if (__predict_false(y < 0))
 			continue;
+		if (__predict_false(y >= fb_vdisp))
+			break;
 		c = *bp;
+		off = y * fb_hdisp;
 		for (x = x0, xs = 0; x < x0 + 6 * scale_x; x++, xs++) {
 			if (__predict_true(xs == scale_x)) {
 				c = c << 1;
 				xs = 0;
 			}
-			if (__predict_false(x < 0 || x >= fb_hdisp))
+			if (__predict_false(x < 0))
 				continue;
-			if (__predict_false(c & 0x80))
+			if (__predict_false(x >= fb_hdisp))
+				break;
+			dot = bgcolor;
+			if (c & 0x80)
 				dot = fgcolor;
 			else if (bgcolor < 0)
 				continue;
-			else
-				dot = bgcolor;
-			plot_unbounded(x, y, dot);
+			fb_plotfn_off(fb_active, off + x, dot);
 		}
 	}
 
