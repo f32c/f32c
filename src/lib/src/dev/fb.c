@@ -401,12 +401,12 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 
 	for (; y0 <= y1; y0++) {
 		for (x = x0; x <= x1 && (x & (stride - 1)) != 0; x++)
-			fb_plot(x, y0, color);
+			plot_unbounded(x, y0, color);
 		fp32 = &fb32[(y0 * fb_hdisp + x) >> shift];
 		for (; x + stride <= x1; x += stride)
 			*fp32++ = color;
 		for (; x <= x1; x++)
-			fb_plot(x, y0, color);
+			plot_unbounded(x, y0, color);
 	}
 }
 
