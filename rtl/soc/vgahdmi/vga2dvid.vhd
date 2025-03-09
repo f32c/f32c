@@ -186,16 +186,15 @@ begin
 	G_DDR: if C_serial and C_ddr generate
 	process(clk_shift)
 	begin
-		if rising_edge(clk_shift) then 
+	    if rising_edge(clk_shift) then
+		shift_red(7 downto 0) <= shift_red(9 downto 2);
+		shift_green(7 downto 0) <= shift_green(9 downto 2);
+		shift_blue(7 downto 0) <= shift_blue(9 downto 2);
 		--if shift_clock = "0000011111" then
 		if shift_clock(5 downto 4) = C_shift_clock_initial(5 downto 4) then -- same as above line but simplified
 			shift_red   <= latched_red;
 			shift_green <= latched_green;
 			shift_blue  <= latched_blue;
-		else
-			shift_red   <= "00" & shift_red	(9 downto 2);
-			shift_green <= "00" & shift_green(9 downto 2);
-			shift_blue  <= "00" & shift_blue (9 downto 2);
 		end if;
 		if R_shift_clock_synchronizer(R_shift_clock_synchronizer'high) = '0' then
 			shift_clock <= shift_clock(1 downto 0) & shift_clock(9 downto 2);
@@ -209,7 +208,7 @@ begin
 				R_sync_fail <= R_sync_fail + 1;
 			end if;
 		end if;
-		end if;
+	    end if;
 	end process;
 	end generate;
 
