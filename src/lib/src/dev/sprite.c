@@ -21,8 +21,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id$
  */
 
 #include <ctype.h>
@@ -114,8 +112,8 @@ spr_grab(int id, int x0, int y0, int x1, int y1)
 	uint16_t *u16src, *u16dst;
 	uint8_t *u8src, *u8dst;
 
-	if (x0 < 0 || x1 > 511 || x0 > x1 ||
-	    y0 < 0 || y1 > 287 || y0 > y1 || id < 0 || fb_bpp == 0)
+	if (x0 < 0 || x1 >= fb_hdisp || x0 > x1 ||
+	    y0 < 0 || y1 >= fb_vdisp || y0 > y1 || id < 0 || fb_bpp == 0)
 		return (-1);
 
 	sp = spr_alloc(id, (x1 - x0 + 1) * (y1 - y0 + 1) * fb_bpp / 8);
@@ -125,14 +123,14 @@ spr_grab(int id, int x0, int y0, int x1, int y1)
 	if (fb_bpp == 8)
 		for (u8dst = (void *) sp->spr_data, y = y0; y <= y1; y++) {
 			u8src = (uint8_t *) fb_active;
-			u8src += (y << 9) + x0;
+			u8src += y * fb_hdisp + x0;
 			for (x = x0; x <= x1; x++)
 				*u8dst++ = *u8src++;
 		}
 	else
 		for (u16dst = (void *) sp->spr_data, y = y0; y <= y1; y++) {
 			u16src = (uint16_t *) fb_active;
-			u16src += (y << 9) + x0;
+			u16src += y *fb_hdisp + x0;
 			for (x = x0; x <= x1; x++)
 				*u16dst++ = *u16src++;
 		}
@@ -193,10 +191,10 @@ spr_put(int id, int x0, int y0)
 	y0_v = y0;
 	if (y0 < 0)
 		y0_v = 0;
-	if (x1 > 512)
-		x1 = 512;
-	if (y1 > 288)
-		y1 = 288;
+	if (x1 > fb_hdisp)
+		x1 = fb_hdisp;
+	if (y1 > fb_vdisp)
+		y1 = fb_vdisp;
 
 	if (fb_bpp == 8)
 		for (y = y0_v; y < y1; y++) {
@@ -204,7 +202,7 @@ spr_put(int id, int x0, int y0)
 			    * sp->spr_size_x];
 			u8src += (x0_v - x0);
 			u8dst = (uint8_t *) fb_active;
-			u8dst += (y << 9) + x0_v;
+			u8dst += y * fb_hdisp + x0_v;
 			for (x = x0_v; x < x1; x++) {
 				c = *u8src++;
 				if (c != sp->spr_trans_color)
@@ -218,7 +216,7 @@ spr_put(int id, int x0, int y0)
 			    * sp->spr_size_x];
 			u16src += (x0_v - x0);
 			u16dst = (uint16_t *) fb_active;
-			u16dst += (y << 9) + x0_v;
+			u16dst += y * fb_hdisp + x0_v;
 			for (x = x0_v; x < x1; x++) {
 				c = *u16src++;
 				if (c != sp->spr_trans_color)
