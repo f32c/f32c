@@ -36,7 +36,6 @@ entity dvi_fb is
 	C_bpp1: boolean := true;
 	C_bpp2: boolean := true;
 	C_bpp4: boolean := true;
-	C_bpp8: boolean := true;
 	C_bpp16: boolean := true;
 	C_bpp24: boolean := true
     );
@@ -241,6 +240,13 @@ begin
 		    if R_skip_pixel = '1' then
 			pixel_bitpos_next := R_pixel_bitpos;
 		    end if;
+		    -- RGB332 / 8 BPP is the default
+		    r := pixel(7 downto 5) & pixel(7 downto 5)
+		      & pixel(7 downto 6);
+		    g := pixel(4 downto 2) & pixel(4 downto 2)
+		      & pixel(4 downto 3);
+		    b := pixel(1 downto 0) & pixel(1 downto 0)
+		      & pixel(1 downto 0) & pixel(1 downto 0);
 		    if C_bpp1 and R_bpp = C_FB_BPP_1 then
 			-- black/white
 			r := (others => pixel(0));
@@ -262,14 +268,6 @@ begin
 			  & pixel(1) & pixel(3) & pixel(1) & pixel(3);
 			b := pixel(0) & pixel(3) & pixel(0) & pixel(3)
 			  & pixel(0) & pixel(3) & pixel(0) & pixel(3);
-		    elsif C_bpp8  and R_bpp = C_FB_BPP_8 then
-			-- RGB332
-			r := pixel(7 downto 5) & pixel(7 downto 5)
-			  & pixel(7 downto 6);
-			g := pixel(4 downto 2) & pixel(4 downto 2)
-			  & pixel(4 downto 3);
-			b := pixel(1 downto 0) & pixel(1 downto 0)
-			  & pixel(1 downto 0) & pixel(1 downto 0);
 		    elsif C_bpp16 and R_bpp = C_FB_BPP_16 then
 			-- RGB565
 			r := pixel(15 downto 11) & pixel(15 downto 13);
@@ -347,6 +345,8 @@ begin
 		end case;
 	    end if;
 
+	    dma_hlim := "00" & R_hdisp(10 downto 2); -- 8 BPP, default
+	    R_pixel_bitpos_incr <= conv_std_logic_vector(8, 6); -- 8 BPP
 	    if C_bpp1 and R_bpp = C_FB_BPP_1 then
 		dma_hlim := "00000" & R_hdisp(10 downto 5);
 		R_pixel_bitpos_incr <= conv_std_logic_vector(1, 6);
@@ -356,9 +356,6 @@ begin
 	    elsif C_bpp4 and R_bpp = C_FB_BPP_4 then
 		dma_hlim := "000" & R_hdisp(10 downto 3);
 		R_pixel_bitpos_incr <= conv_std_logic_vector(4, 6);
-	    elsif C_bpp8 and R_bpp = C_FB_BPP_8 then
-		dma_hlim := "00" & R_hdisp(10 downto 2);
-		R_pixel_bitpos_incr <= conv_std_logic_vector(8, 6);
 	    elsif C_bpp16 and R_bpp = C_FB_BPP_16 then
 		dma_hlim := '0' & R_hdisp(10 downto 1);
 		R_pixel_bitpos_incr <= conv_std_logic_vector(16, 6);
