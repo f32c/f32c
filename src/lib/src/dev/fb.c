@@ -715,7 +715,7 @@ fb_rgb2pal(int rgb)
 	uint32_t r = (rgb >> 16) & 0xff;
 	uint32_t g = (rgb >> 8) & 0xff;
 	uint32_t b = rgb & 0xff;
-	uint32_t luma = (r + g + b) / 3;
+	int i = 0;
 
 	switch (fb_bpp) {
 	case 32:
@@ -728,15 +728,21 @@ fb_rgb2pal(int rgb)
 		return ((r & 0xe0) | ((g >> 3) & 0x1c) | b >> 6);
 	case 4:
 		/* RGBI */
-		return (((luma >> 4) & 0x8) | ((r >> 5) & 0x4)
-		    | ((g >> 6) & 0x2) | b >> 7);
+		if (r >= 0xc0 || g >= 0xc0 || b >= 0xc0)
+			i = 8;
+		return (i | ((r >> 5) & 0x4) | ((g >> 6) & 0x2) | b >> 7);
 	case 2:
 		/* Grayscale */
-		return (luma >> 6);
+		i = (r >> 7) + (g >> 7) + (b >> 7);
+		if (r >= 0xc0 || g >= 0xc0 || b >= 0xc0)
+			i++;
+		return (i);
 	case 1:
 	default:
 		/* B/W */
-		return (luma >> 7);
+		if (r >= 0xc0 || g >= 0xc0 || b >= 0xc0)
+			i = 1;
+		return (i);
 	}
 }
 
