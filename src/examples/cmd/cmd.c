@@ -354,6 +354,7 @@ ls_walk(char *path, int flags)
 	char *buf;
 	int buf_off;
 	struct stat sb;
+	struct tm tm;
 
 	/* Skip multiple leading '/' */
 	while (path[0] == '/' && path[1] == '/')
@@ -436,6 +437,12 @@ ls_walk(char *path, int flags)
 				sprintf(&buf[buf_off], "/%s", debuf[i].d_name);
 				stat(buf, &sb);
 				printf("%10d ", (uint32_t) sb.st_size);
+				gmtime_r(&sb.st_mtime, &tm);
+				asctime_r(&tm, &buf[buf_off]);
+				buf[buf_off + 16] = 0;
+				buf[buf_off + 24] = 0;
+				printf("%s%s ", &buf[buf_off + 4],
+				    &buf[buf_off + 19]);
 			}
 			printf("%s", debuf[i].d_name);
 			col++;
