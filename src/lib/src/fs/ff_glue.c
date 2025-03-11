@@ -416,7 +416,6 @@ static const char mdays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 int
 stat(const char *path, struct stat *sb)
 {
-
 	FILINFO fno;
 	int res;
 	int i, day, month, year, leap;
@@ -435,7 +434,7 @@ stat(const char *path, struct stat *sb)
 	hour = fno.ftime >> 11;
 	minute = (fno.ftime >> 5) & 0x3f;
 	second = (fno.ftime & 0x1f) * 2;
-	sb->st_mtim.tv_sec = year * 86400 * 365;
+	sb->st_mtime = year * 86400 * 365;
 	if (((year + 2) & 3) == 0)
 		leap = 1;
 	for (; --year > 0;)
@@ -446,10 +445,18 @@ stat(const char *path, struct stat *sb)
 		if (i == 2 && leap)
 			sb->st_mtim.tv_sec += 86400;
 	}
-	sb->st_mtim.tv_sec += 86400 * day;
-	sb->st_mtim.tv_sec += 3600 * hour;
-	sb->st_mtim.tv_sec += 60 * minute;
-	sb->st_mtim.tv_sec += second;
+	sb->st_mtime += 86400 * day;
+	sb->st_mtime += 3600 * hour;
+	sb->st_mtime += 60 * minute;
+	sb->st_mtime += second;
 
-	return(leap);
+	if (fno.fattrib & AM_DIR)
+		sb->st_mode |= S_IFDIR;
+	sb->st_mode |= S_IRUSR | S_IRGRP | S_IROTH;
+	if ((fno.fattrib & AM_RDO) == 0)
+		sb->st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
+	if (fno.fattrib & AM_SYS)
+		sb->st_mode |= S_IXUSR | S_IXGRP | S_IXOTH;
+
+	return(0);
 }
