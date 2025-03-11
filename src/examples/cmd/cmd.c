@@ -436,6 +436,16 @@ ls_walk(char *path, int flags)
 			if (flags & LS_WIDE) {
 				sprintf(&buf[buf_off], "/%s", debuf[i].d_name);
 				stat(buf, &sb);
+				sprintf(&buf[buf_off], "----");
+				if (S_ISDIR(sb.st_mode))
+					buf[buf_off] = 'd';
+				if (sb.st_mode & S_IRUSR)
+					buf[buf_off + 1] = 'r';
+				if (sb.st_mode & S_IWUSR)
+					buf[buf_off + 2] = 'w';
+				if (sb.st_mode & S_IXUSR)
+					buf[buf_off + 3] = 'x';
+				printf("%s ", &buf[buf_off]);
 				printf("%10d ", (uint32_t) sb.st_size);
 				gmtime_r(&sb.st_mtime, &tm);
 				asctime_r(&tm, &buf[buf_off]);
