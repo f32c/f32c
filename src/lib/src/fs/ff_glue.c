@@ -433,7 +433,7 @@ stat(const char *path, struct stat *sb)
 	month = (fno.fdate >> 5) & 0xf;
 	day = fno.fdate & 0x1f;
 	hour = fno.ftime >> 11;
-	minute = (fno.ftime >> 5) & 0x1f;
+	minute = (fno.ftime >> 5) & 0x3f;
 	second = (fno.ftime & 0x1f) * 2;
 	sb->st_mtim.tv_sec = year * 86400 * 365;
 	if (((year + 2) & 3) == 0)
