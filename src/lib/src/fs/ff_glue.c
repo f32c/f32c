@@ -34,6 +34,7 @@
 #include <string.h>
 
 #include <sys/file.h>
+#include <sys/stat.h>
 
 #include <fatfs/diskio.h>
 
@@ -407,4 +408,48 @@ ff_open(struct file *fp, const char *path, int flags, ...)
 	fp->f_priv = ffp;
 	res = f_open(ffp, path, ff_flags);
 	return(ffres2errno(res));
+}
+
+
+static const char mdays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+int
+stat(const char *path, struct stat *sb)
+{
+
+	FILINFO fno;
+	int res;
+	int i, day, month, year, leap;
+	int hour, minute, second;
+
+	res = f_stat(path, &fno);
+	if (res)
+		return (res);
+
+	bzero(sb, sizeof(*sb));
+	sb->st_size = fno.fsize;
+
+	year = (fno.fdate >> 9) + 10;
+	month = (fno.fdate >> 5) & 0xf;
+	day = fno.fdate & 0x1f;
+	hour = fno.ftime >> 11;
+	minute = (fno.ftime >> 5) & 0x1f;
+	second = (fno.ftime & 0x1f) * 2;
+	sb->st_mtim.tv_sec = year * 86400 * 365;
+	if (((year + 2) & 3) == 0)
+		leap = 1;
+	for (; --year > 0;)
+		if (((year + 2) & 3) == 0)
+			sb->st_mtim.tv_sec += 86400;
+	for (i = 0; ++i < month;) {
+		sb->st_mtim.tv_sec += 86400 * mdays[i];
+		if (i == 2 && leap)
+			sb->st_mtim.tv_sec += 86400;
+	}
+	sb->st_mtim.tv_sec += 86400 * day;
+	sb->st_mtim.tv_sec += 3600 * hour;
+	sb->st_mtim.tv_sec += 60 * minute;
+	sb->st_mtim.tv_sec += second;
+
+	return(leap);
 }

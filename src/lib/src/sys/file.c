@@ -178,8 +178,6 @@ write(int fd, const void *buf, size_t nbytes)
 }
 
 
-/* Entirely unimplemented, just empty placeholders */
-
 int
 fcntl(int fd, int cmd, ...)
 {
@@ -204,13 +202,7 @@ fcntl(int fd, int cmd, ...)
 }
 
 
-int
-stat(const char *path __unused, struct stat *sb __unused)
-{
-
-	return (-1);
-}
-
+/* Entirely unimplemented, just empty placeholders */
 
 int
 fstat(int fd __unused, struct stat *sb __unused)
