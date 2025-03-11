@@ -9,6 +9,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -350,6 +351,9 @@ ls_walk(char *path, int flags)
 	int items = 0;
 	int i, l;
 	int width, nrows, ncols, row, col;
+	char *buf;
+	int buf_off;
+	struct stat sb;
 
 	/* Skip multiple leading '/' */
 	while (path[0] == '/' && path[1] == '/')
@@ -416,9 +420,23 @@ ls_walk(char *path, int flags)
 	if (nrows * ncols < items)
 		nrows++;
 
+	buf_off = strlen(path);
+	buf = malloc(buf_off + _POSIX_PATH_MAX + 2);
+	if (buf == NULL) {
+		printf("malloc() failed, aborting\n");
+		free(debuf);
+		return;
+	}
+	sprintf(buf, "%s/", path);
+
 	for (row = 0; row < nrows; row++) {
 		i = row;
 		for (col = 0; col < ncols && i < items; i += nrows) {
+			if (flags & LS_WIDE) {
+				sprintf(&buf[buf_off], "/%s", debuf[i].d_name);
+				stat(buf, &sb);
+				printf("%10d ", (uint32_t) sb.st_size);
+			}
 			printf("%s", debuf[i].d_name);
 			col++;
 			l = debuf[i].d_namlen;
@@ -432,6 +450,7 @@ ls_walk(char *path, int flags)
 		}
 		printf("\n");
 	}
+	free(buf);
 
 	if (flags & LS_RECURSE) {
 		l = strlen(path);
