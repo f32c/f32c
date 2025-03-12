@@ -329,13 +329,10 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 	switch (fb_bpp_code) {
 	case FB_BPP_8:
 		uint8_t *fb8 = (void *) fb_active;
-		color = (color << 8) | (color & 0xff);
-		color = (color << 16) | (color & 0xffff);
 		l = x1 - x0 + 1;
-		for (; y0 <= y1; y0++) {
-			i = y0 * fb_hdisp + x0;
+		i = y0 * fb_hdisp + x0;
+		for (; y0 <= y1; y0++, i += fb_hdisp)
 			memset(&fb8[i], color, l);
-		}
 		return;
 	case FB_BPP_16:
 		uint16_t *fb16 = (void *) fb_active;
