@@ -307,12 +307,12 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 	uint32_t *fb32 = (void *) fb_active;
 	uint32_t *fp32;
 
-	if (x1 < x0) {
+	if (__predict_false(x1 < x0)) {
 		x = x0;
 		x0 = x1;
 		x1 = x;
 	}
-	if (y1 < y0) {
+	if (__predict_false(y1 < y0)) {
 		x = y0;
 		y0 = y1;
 		y1 = x;
