@@ -304,8 +304,6 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 {
 	int x, i, l;
 	uint32_t shift, stride;
-	uint32_t *fb32 = (void *) fb_active;
-	uint32_t *fp32;
 
 	if (__predict_false(x1 < x0)) {
 		x = x0;
@@ -357,6 +355,7 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 		}
 		return;
 	case FB_BPP_24:
+		uint32_t *fb32 = (void *) fb_active;
 		for (; y0 <= y1; y0++) {
 			i = y0 * fb_hdisp + x0;
 			l = x1 - x0 + 1;
@@ -376,29 +375,24 @@ fb_rectangle(int x0, int y0, int x1, int y1, int color)
 		color = (color << 2) | (color & 0x3);
 	case FB_BPP_4:
 		color = (color << 4) | (color & 0xf);
-		color = (color << 8) | (color & 0xff);
-		color = (color << 16) | (color & 0xffff);
 	default:
 	}
 
-	if (fb_bpp == 1) {
-		stride = 32;
-		shift = 5;
-	} else if (fb_bpp == 2) {
-		stride = 16;
-		shift = 4;
-	} else {
-		stride = 8;
+	if (fb_bpp == 1)
 		shift = 3;
-	}
+	else if (fb_bpp == 2)
+		shift = 2;
+	else
+		shift = 1;
+	stride = 1 << shift;
 
 	for (; y0 <= y1; y0++) {
 		for (x = x0; x <= x1 && (x & (stride - 1)) != 0; x++)
 			plot_unbounded(x, y0, color);
-		fp32 = &fb32[(y0 * fb_hdisp + x) >> shift];
-		for (; x + stride <= x1; x += stride)
-			*fp32++ = color;
-		for (; x <= x1; x++)
+		l = (x1 - x + 1) & ~(stride - 1);
+		i = (y0 * fb_hdisp + x) >> shift;
+		memset(&fb_active[i], color, l >> shift);
+		for (x += l; x <= x1; x++)
 			plot_unbounded(x, y0, color);
 	}
 }
