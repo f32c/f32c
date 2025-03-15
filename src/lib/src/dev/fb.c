@@ -118,11 +118,18 @@ static void
 plot_bpp_4(void *p, int off, int color)
 {
 	uint32_t *dp32 = p;
-	uint32_t shift = (off & 0x7) * 4;
-	uint32_t mask = 0xf << shift;
+	uint32_t shift, mask, val;
 
 	dp32 = &dp32[off >> 3];
-	*dp32 = (*dp32 & ~mask) | ((color & 0xf) << shift);
+	shift = (off << 2);
+	val = *dp32;
+	shift &= 0x1f;
+	color &= 0xf;
+	mask = 0xf << shift;
+	color <<= shift;
+	val &= ~mask;
+
+	*dp32 = color | val;
 }
 
 
