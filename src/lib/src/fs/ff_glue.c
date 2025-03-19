@@ -449,6 +449,8 @@ stat(const char *path, struct stat *sb)
 	sb->st_mtime += 3600 * hour;
 	sb->st_mtime += 60 * minute;
 	sb->st_mtime += second;
+	sb->st_atime = sb->st_mtime;
+	sb->st_ctime = sb->st_mtime;
 
 	if (fno.fattrib & AM_DIR)
 		sb->st_mode |= S_IFDIR;
