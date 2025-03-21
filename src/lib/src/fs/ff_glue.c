@@ -411,15 +411,12 @@ ff_open(struct file *fp, const char *path, int flags, ...)
 }
 
 
-static const char mdays[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
 int
 stat(const char *path, struct stat *sb)
 {
 	FILINFO fno;
 	int res;
-	int i, day, month, year, leap;
-	int hour, minute, second;
+	struct tm tm;
 
 	res = f_stat(path, &fno);
 	if (res)
@@ -428,27 +425,14 @@ stat(const char *path, struct stat *sb)
 	bzero(sb, sizeof(*sb));
 	sb->st_size = fno.fsize;
 
-	year = (fno.fdate >> 9) + 10;
-	month = (fno.fdate >> 5) & 0xf;
-	day = fno.fdate & 0x1f;
-	hour = fno.ftime >> 11;
-	minute = (fno.ftime >> 5) & 0x3f;
-	second = (fno.ftime & 0x1f) * 2;
-	sb->st_mtime = year * 86400 * 365;
-	if (((year + 2) & 3) == 0)
-		leap = 1;
-	for (; --year > 0;)
-		if (((year + 2) & 3) == 0)
-			sb->st_mtim.tv_sec += 86400;
-	for (i = 0; ++i < month;) {
-		sb->st_mtim.tv_sec += 86400 * mdays[i];
-		if (i == 2 && leap)
-			sb->st_mtim.tv_sec += 86400;
-	}
-	sb->st_mtime += 86400 * day;
-	sb->st_mtime += 3600 * hour;
-	sb->st_mtime += 60 * minute;
-	sb->st_mtime += second;
+	tm.tm_sec = (fno.ftime & 0x1f) * 2;
+	tm.tm_min = (fno.ftime >> 5) & 0x3f;
+	tm.tm_hour = fno.ftime >> 11;
+	tm.tm_mday = fno.fdate & 0x1f;
+	tm.tm_mon = ((fno.fdate >> 5) & 0xf) - 1;
+	tm.tm_year = (fno.fdate >> 9) + 80;
+
+	sb->st_mtime = timegm(&tm);
 	sb->st_atime = sb->st_mtime;
 	sb->st_ctime = sb->st_mtime;
 
