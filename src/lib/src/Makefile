@@ -100,7 +100,8 @@ ifeq ($(LIB),c)
 	string/strcpy.c string/strlcat.c string/strlcpy.c string/strncpy.c \
 	string/strerror.c string/strncpy.c string/strstr.c string/strtok.c
 
- CFILES += stdtime/asctime.c stdtime/clock.c stdtime/time.c
+ CFILES += stdtime/asctime.c stdtime/clock.c stdtime/gmtime.c stdtime/time.c \
+	stdtime/timegm.c
 
  ifneq ($(ARCH),riscv)
   CFILES += gen/setjmperr.c gen/isr.c
