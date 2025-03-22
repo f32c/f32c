@@ -37,6 +37,7 @@ typedef	void	cmdhandler_t(int, char **);
 #include <sys/wait.h>
 
 #define	gets(str, size) gets_s((str), (size))
+#endif /* !F32C */
 
 static void
 set_term()
@@ -51,7 +52,6 @@ set_term()
 
 	tcsetattr(0, TCSADRAIN, &nterm);
 }
-#endif /* !F32C */
 
 static int
 task_create(cmdhandler_t *f, int argc, char **argv)
@@ -142,6 +142,8 @@ tok(char *line, char **tokv)
 		tokc++;
 	return (tokc);
 }
+
+
 int
 rl(const char *prompt, char *buf, int buflen)
 {
@@ -1083,12 +1085,10 @@ main(void)
 	char *argv[MAXARGS];
 	char *lcp;
 
-#ifndef F32C
 	set_term();
-#else
+
 	/* XXX automount fatfs */
 	getcwd(line, 128);
-#endif
 
 	signal(SIGHUP, sig_h);
 	siginterrupt(SIGINT, 1);
