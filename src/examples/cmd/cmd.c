@@ -20,8 +20,9 @@
 
 #include <sys/stat.h>
 
-#ifdef F32C
-#include <fatfs/ff.h>
+#ifndef F32C
+#include <sys/wait.h>
+#define	gets(str, size) gets_s((str), (size))
 #endif
 
 #define MAXARGS	16
@@ -33,11 +34,6 @@ static int interrupt;
 
 typedef	void	cmdhandler_t(int, char **);
 
-#ifndef F32C
-#include <sys/wait.h>
-
-#define	gets(str, size) gets_s((str), (size))
-#endif /* !F32C */
 
 static void
 set_term()
