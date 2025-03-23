@@ -101,6 +101,7 @@ task_free(struct task *ts)
 	free(ts->ts_stdin);
 	free(ts->ts_stdout);
 	free(ts->ts_stderr);
+	TAILQ_REMOVE(&tasks, ts, ts_list);
 	free(ts);
 }
 
