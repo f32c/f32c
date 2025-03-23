@@ -37,8 +37,6 @@ static uint32_t *heap;
 #define	SET_FREE(len)	((len) | 0x80000000)
 
 
-//#define MALLOC_DEBUG
-
 #ifdef MALLOC_DEBUG
 static int free_cnt = 1;
 static int used_cnt = 0;
@@ -96,7 +94,11 @@ malloc_init()
 
 
 void
+#ifdef MALLOC_DEBUG
+_free(void *ptr, const struct malloc_debug_info *_mdi)
+#else
 free(void *ptr)
+#endif
 {
 	uint32_t i, len;
 
@@ -106,6 +108,9 @@ free(void *ptr)
 	i = ((uint32_t *) ptr) - heap - 1;
 	len = heap[i];
 	if (IS_FREE(len)) {
+#ifdef MALLOC_DEBUG
+		printf("[%s() %s:%d] ", _mdi->function, _mdi->file, _mdi->line);
+#endif
 		printf("free(%p): block already free!\n", ptr);
 		exit(1);
 	}
@@ -127,7 +132,11 @@ free(void *ptr)
 
 
 void *
+#ifdef MALLOC_DEBUG
+_malloc(size_t size, const struct malloc_debug_info *_mdi)
+#else
 malloc(size_t size)
+#endif
 {
 	uint32_t i;
 	int best_i, best_len;
@@ -172,7 +181,11 @@ malloc(size_t size)
 
 
 void *
+#ifdef MALLOC_DEBUG
+_realloc(void *oldptr, size_t size, const struct malloc_debug_info *_mdi)
+#else
 realloc(void *oldptr, size_t size)
+#endif
 {
 	uint32_t i, copysize;
 	void *newptr;
@@ -191,7 +204,11 @@ realloc(void *oldptr, size_t size)
 
 
 void *
+#ifdef MALLOC_DEBUG
+_calloc(size_t number, size_t size, const struct malloc_debug_info *_mdi)
+#else
 calloc(size_t number, size_t size)
+#endif
 {
 	size_t len = number * size;
 	void *mem = malloc(len);
