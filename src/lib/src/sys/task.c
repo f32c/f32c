@@ -62,6 +62,15 @@ struct thread thread0 = {
 };
 
 
+void
+thread_free(struct thread *td)
+{
+
+	free(td->td_stackb);
+	free(td);
+}
+
+
 struct thread *
 thread_alloc(struct task *ts, size_t stacksiz)
 {
@@ -84,6 +93,18 @@ thread_alloc(struct task *ts, size_t stacksiz)
 }
 
 
+void
+task_free(struct task *ts)
+{
+
+	free(ts->ts_files);
+	free(ts->ts_stdin);
+	free(ts->ts_stdout);
+	free(ts->ts_stderr);
+	free(ts);
+}
+
+
 struct task *
 task_alloc(void)
 {
@@ -101,11 +122,7 @@ task_alloc(void)
 
 	if (ts->ts_files == NULL || ts->ts_stdin == NULL
 	    || ts->ts_stdout == NULL || ts->ts_stderr == NULL) {
-		free(ts->ts_files);
-		free(ts->ts_stdin);
-		free(ts->ts_stdout);
-		free(ts->ts_stderr);
-		free(ts);
+		task_free(ts);
 		return(NULL);
 	}
 	TAILQ_INSERT_TAIL(&tasks, ts, ts_list);
