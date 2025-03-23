@@ -59,3 +59,59 @@ struct thread thread0 = {
 	.td_task = &task0,
 	.td_list.tqe_prev = &task0.ts_tds.tqh_first /* Thread list elem init */
 };
+
+
+struct thread *
+thread_alloc(struct task *ts, size_t stacksiz)
+{
+	struct thread *td;
+	char *stack;
+
+	td = calloc(1, sizeof(*td));
+	stack = malloc(stacksiz);
+	if (td == NULL || stack == NULL) {
+		free(td);
+		free(stack);
+		return (NULL);
+	}
+
+	TAILQ_INSERT_HEAD(&ts->ts_tds, td, td_list);
+	td->td_task = ts;
+	td->td_stackb = stack;
+
+	return (td);
+}
+
+
+struct task *
+task_alloc(void)
+{
+	struct task *ts;
+
+	ts = calloc(1, sizeof(*ts));
+	if (ts == NULL)
+		return(NULL);
+
+	ts->ts_maxfiles = 4;
+	ts->ts_files = calloc(ts->ts_maxfiles, sizeof(struct file));
+	ts->ts_stdin = calloc(1, sizeof(FILE));
+	ts->ts_stdout = calloc(1, sizeof(FILE));
+	ts->ts_stderr = calloc(1, sizeof(FILE));
+
+	if (ts->ts_files == NULL || ts->ts_stdin == NULL
+	    || ts->ts_stdout == NULL || ts->ts_stderr == NULL) {
+		free(ts->ts_files);
+		free(ts->ts_stdin);
+		free(ts->ts_stdout);
+		free(ts->ts_stderr);
+		free(ts);
+		return(NULL);
+	}
+	TAILQ_INSERT_TAIL(&tasks, ts, ts_list);
+	ts->ts_parent = TD_TASK(curthread);
+	((FILE *) ts->ts_stdin)->_fd = 0;
+	((FILE *) ts->ts_stdout)->_fd = 1;
+	((FILE *) ts->ts_stderr)->_fd = 2;
+
+	return(ts);
+}
