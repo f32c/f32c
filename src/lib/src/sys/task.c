@@ -120,13 +120,13 @@ task_alloc(void)
 	ts->ts_stdin = calloc(1, sizeof(FILE));
 	ts->ts_stdout = calloc(1, sizeof(FILE));
 	ts->ts_stderr = calloc(1, sizeof(FILE));
+	TAILQ_INSERT_TAIL(&tasks, ts, ts_list);
 
 	if (ts->ts_files == NULL || ts->ts_stdin == NULL
 	    || ts->ts_stdout == NULL || ts->ts_stderr == NULL) {
 		task_free(ts);
 		return(NULL);
 	}
-	TAILQ_INSERT_TAIL(&tasks, ts, ts_list);
 	ts->ts_parent = TD_TASK(curthread);
 	((FILE *) ts->ts_stdin)->_fd = 0;
 	((FILE *) ts->ts_stdout)->_fd = 1;
