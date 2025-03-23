@@ -43,10 +43,50 @@ int atoi(const char *);
 
 long labs(long) __pure2;
 
+//#define MALLOC_DEBUG
+
+#ifdef MALLOC_DEBUG
+struct malloc_debug_info {
+	const char *function;
+	const char *file;
+	const int line;
+};
+
+void *_malloc(size_t size, const struct malloc_debug_info *);
+void *_calloc(size_t number, size_t size, const struct malloc_debug_info *);
+void *_realloc(void *ptr, size_t size, const struct malloc_debug_info *);
+void _free(void *ptr, const struct malloc_debug_info *);
+
+#define malloc(s) _malloc((s), &(struct malloc_debug_info) {		\
+	.function = __FUNCTION__,					\
+	.file = __FILE__,						\
+	.line = __LINE__						\
+})
+
+#define calloc(n, s) _calloc((n), (s), &(struct malloc_debug_info) {	\
+	.function = __FUNCTION__,					\
+	.file = __FILE__,						\
+	.line = __LINE__						\
+})
+
+#define realloc(p, s) _realloc((p), (s), &(struct malloc_debug_info) {	\
+	.function = __FUNCTION__,					\
+	.file = __FILE__,						\
+	.line = __LINE__						\
+})
+
+#define free(p) _free((p), &(struct malloc_debug_info) {		\
+	.function = __FUNCTION__,					\
+	.file = __FILE__,						\
+	.line = __LINE__						\
+})
+
+#else /* !MALLOC_DEBUG */
 void *malloc(size_t size);
 void *calloc(size_t number, size_t size);
 void *realloc(void *ptr, size_t size);
 void free(void *ptr);
+#endif
 
 #define	alloca(sz) __builtin_alloca(sz)
 
