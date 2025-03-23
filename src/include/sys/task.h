@@ -48,6 +48,7 @@ struct thread {
 	struct task	*td_task;	/* Owner task */
 	int		td_errno;	/* Last error */
 	struct regspace	*td_regs;	/* Saved register state */
+	char		*td_stackb;	/* Bottom of the stack space */
 };
 
 extern struct task task0;
