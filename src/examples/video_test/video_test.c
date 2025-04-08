@@ -52,8 +52,34 @@ main(void)
 	struct timespec start, end;
 	uint32_t x0, y0, x1, y1;
 	uint64_t ips, score, overall = 0;
+	int mode = (int) FB_MODE_1080i60;
+	int bpp_code = FB_BPP_8;
+	int doublepix = 0;
 
-	fb_set_mode(FB_MODE_1080i60, FB_BPP_8);
+reset_mode:
+	fb_set_mode((void *) mode, bpp_code | doublepix);
+	printf("\n%dx%d@", fb_hdisp, fb_vdisp);
+	switch (mode) {
+	case 0:
+		printf("60p");
+		break;
+	case 1:
+		printf("50p");
+		break;
+	case 2:
+		printf("60i");
+		break;
+	case 3:
+		printf("50i");
+		break;
+	case 4:
+		printf("30p");
+		break;
+	case 5:
+		printf("25p");
+		break;
+	}
+	printf(", %d bpp\n\n", fb_bpp);
 
 	c = fb_rgb2pal(0x00ff00);
 	for (i = -2048; i <= 2048; i += 256) {
@@ -81,7 +107,31 @@ main(void)
 	fb_text(583, 348, "640 x 360", c, 0, 0);
 
 	do {
-	} while (sio_getchar(0) != '.');
+		printf("r .. change resolution\n");
+		printf("b .. change bpp\n");
+		printf("p .. change pixel size\n");
+		printf("t .. start tests\n\n");
+
+		c = getchar();
+		switch (c) {
+		case 'r':
+			mode++;
+			if (mode > 5)
+				mode = 0;
+			goto reset_mode;
+		case 'b':
+			bpp_code++;
+			if (bpp_code > 6)
+				bpp_code = 1;
+			goto reset_mode;
+		case 'p':
+			doublepix ^= FB_DOUBLEPIX;
+			goto reset_mode;
+		default:
+		}
+	} while (c != 't');
+
+	printf("starting tests, press any key to interrupt...\n");
 
 	printf("\nresults are relative to FB_MODE_1080i60, FB_BPP_8"
 	    " at 90 MHz CPU clock\n\n");
@@ -124,5 +174,14 @@ main(void)
 			overall = 0;
 			iter++;
 		}
-	} while (sio_getchar(0) != 3); /* CTRL+C */
+
+	} while (sio_getchar(0) < 0);
+
+	for (ti = 0; fb_test[ti].fn != NULL;ti++)
+		fb_test[ti].time = 0;
+	ti = 0;
+	overall = 0;
+	iter = 1;
+
+	goto reset_mode;
 }
