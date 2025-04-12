@@ -2,7 +2,7 @@
 # ULX3S board I/O constraints
 #
 # PCB versions 2.x and 3.x
-# Constraints file revision 0.2, 2025/02/16
+# Constraints file revision 0.2, 2025/04/12
 #
 
 COMMERCIAL;
@@ -17,6 +17,8 @@ FREQUENCY PORT "clk_25m" 25 MHZ;
 # USB UART receive and transmit data
 LOCATE COMP "rs232_rx" SITE "M1";	# IN
 LOCATE COMP "rs232_tx" SITE "L4";	# OUT
+LOCATE COMP "rs232_rts" SITE "M3";	# IN
+LOCATE COMP "rs232_dtr" SITE "N1";	# IN
 
 # LED indicators
 LOCATE COMP "led[0]" SITE "B2";		# OUT
@@ -214,6 +216,19 @@ LOCATE COMP "oled_dc" SITE "P1";
 LOCATE COMP "oled_resn" SITE "P2";
 LOCATE COMP "oled_csn" SITE "N2";
 
+# ESP-32 "wifi" (ulx3s PCB ver. >= 3.1.6)
+LOCATE COMP "esp32_rxd" SITE "K3";	# OUT
+LOCATE COMP "esp32_txd" SITE "K4";	# IN
+LOCATE COMP "esp32_en" SITE "J5";	# INOUT
+LOCATE COMP "esp32_gpio0" SITE "F1";	# INOUT
+LOCATE COMP "esp32_gpio19" SITE "N4";	# INOUT
+LOCATE COMP "esp32_gpio21" SITE "K5";	# INOUT
+LOCATE COMP "esp32_gpio22" SITE "L2";	# INOUT
+LOCATE COMP "esp32_gpio25" SITE "E9";	# INOUT
+LOCATE COMP "esp32_gpio26" SITE "L1";	# INOUT
+LOCATE COMP "esp32_gpio27" SITE "N3";	# INOUT
+LOCATE COMP "esp32_gpio35" SITE "E6";	# INOUT
+
 # Bitstream generation options
 SYSCONFIG CONFIG_IOVOLTAGE=3.3 COMPRESS_CONFIG=ON MCCLK_FREQ=62 SLAVE_SPI_PORT=DISABLE MASTER_SPI_PORT=DISABLE SLAVE_PARALLEL_PORT=DISABLE;
 
@@ -256,6 +271,8 @@ IOBUF PORT "p_ring[3]" DRIVE=16;
 IOBUF PORT "p_ring[2]" DRIVE=8;
 IOBUF PORT "p_tip[3]" DRIVE=16;
 IOBUF PORT "p_tip[2]" DRIVE=8;
+IOBUF PORT "esp32_en" PULLMODE=UP;
+IOBUF PORT "esp32_gpio0" PULLMODE=UP;
 
 # clock domain crossing from main clk to video pixclk
 BLOCK PATH FROM CLKNET "clk_90m" TO CLKNET "pixclk";
