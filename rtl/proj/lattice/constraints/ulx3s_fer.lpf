@@ -271,8 +271,6 @@ IOBUF PORT "p_ring[3]" DRIVE=16;
 IOBUF PORT "p_ring[2]" DRIVE=8;
 IOBUF PORT "p_tip[3]" DRIVE=16;
 IOBUF PORT "p_tip[2]" DRIVE=8;
-IOBUF PORT "esp32_en" PULLMODE=UP;
-IOBUF PORT "esp32_gpio0" PULLMODE=UP;
 
 # clock domain crossing from main clk to video pixclk
 BLOCK PATH FROM CLKNET "clk_90m" TO CLKNET "pixclk";
