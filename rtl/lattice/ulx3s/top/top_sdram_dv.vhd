@@ -54,6 +54,8 @@ entity top_sdram_dv is
 	-- SIO0 (FTDI)
 	rs232_tx: out std_logic;
 	rs232_rx: in std_logic;
+	rs232_rts: in std_logic;
+	rs232_dtr: in std_logic;
 
 	-- Digital Video (differential outputs)
 	gpdi_dp: out std_logic_vector(3 downto 0);
@@ -81,6 +83,19 @@ entity top_sdram_dv is
 	adc_mosi: inout std_logic;
 	adc_miso: inout std_logic;
 
+	-- ESP32
+	esp32_rxd: out std_logic;
+	esp32_txd: in std_logic;
+	esp32_en: inout std_logic := 'Z';
+	esp32_gpio0: inout std_logic := 'Z';
+	esp32_gpio19: inout std_logic := 'Z';
+	esp32_gpio21: inout std_logic := 'Z';
+	esp32_gpio22: inout std_logic := 'Z';
+	esp32_gpio25: inout std_logic := 'Z';
+	esp32_gpio26: inout std_logic := 'Z';
+	esp32_gpio27: inout std_logic := 'Z';
+	esp32_gpio35: inout std_logic := 'Z';
+
 	-- PCB antenna
 	ant: out std_logic;
 
@@ -95,7 +110,8 @@ architecture x of top_sdram_dv is
     signal clk_92m8125, clk_90m: std_logic;
     signal pixclk, pixclk_x5: std_logic;
     signal reset, pll_lock: std_logic;
-    signal sio_break: std_logic;
+    signal f32c_rxd, f32c_txd, sio_break: std_logic;
+    signal sio_sel: std_logic_vector(3 downto 0);
     signal flash_sck: std_logic;
     signal flash_csn: std_logic;
     signal dv_crgb: std_logic_vector(7 downto 0);
@@ -135,8 +151,8 @@ begin
 	sdram_cas => sdram_casn,
 	sdram_addr => sdram_a,
 	sdram_data => sdram_d,
-	sio_rxd(0) => rs232_rx,
-	sio_txd(0) => rs232_tx,
+	sio_rxd(0) => f32c_rxd,
+	sio_txd(0) => f32c_txd,
 	sio_break(0) => sio_break,
 	simple_in => R_simple_in,
 	simple_out => led,
@@ -198,4 +214,25 @@ begin
       else clk_25m when C_clk_freq = 25
       else '0';
     reset <= not pll_lock or sio_break;
+
+    -- ESP32
+    rs232_tx <= esp32_txd when sio_sel = x"1" else f32c_txd;
+    f32c_rxd <= rs232_rx when sio_sel = x"0" else '1';
+    esp32_rxd <= rs232_rx when sio_sel = x"1" else '1';
+
+    esp32_en <= 'Z' when rs232_dtr = '0'
+      else '0' when rs232_rts = '0' else 'Z';
+    esp32_gpio0 <= 'Z' when rs232_rts = '0'
+      else '0' when rs232_dtr = '0' else 'Z';
+
+    I_sbrk_cnt: entity work.sbrk_cnt
+    generic map (
+	C_clk_freq_hz => C_clk_freq * 1000000
+    )
+    port map (
+	clk => clk,
+	rxd => rs232_rx,
+	sel => sio_sel
+    );
+
 end x;
