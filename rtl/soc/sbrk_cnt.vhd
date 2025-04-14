@@ -40,7 +40,7 @@ entity sbrk_cnt is
     generic (
 	C_clk_freq_hz: natural;
 	C_pulse_len_min_ms: natural := 40;
-	C_pulse_len_max_ms: natural := 60
+	C_pulse_len_max_ms: natural := 80
     );
     port (
 	clk: in std_logic;
