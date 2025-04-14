@@ -118,6 +118,10 @@ architecture x of top_sdram_dv is
 
     signal R_simple_in: std_logic_vector(19 downto 0);
 
+    signal R_rts_in: std_logic_vector(2 downto 0);
+    signal R_rts_out: std_logic;
+    signal R_rts_cnt: natural range 0 to C_clk_freq * 1000000 / 100;
+
 begin
     -- f32c SoC
     I_top: entity work.glue_sdram_dv
@@ -215,16 +219,6 @@ begin
       else '0';
     reset <= not pll_lock or sio_break;
 
-    -- ESP32
-    rs232_tx <= esp32_txd when sio_sel = x"1" else f32c_txd;
-    f32c_rxd <= rs232_rx when sio_sel = x"0" else '1';
-    esp32_rxd <= rs232_rx when sio_sel = x"1" else '1';
-
-    esp32_en <= 'Z' when rs232_dtr = '0'
-      else '0' when rs232_rts = '0' else 'Z';
-    esp32_gpio0 <= 'Z' when rs232_rts = '0'
-      else '0' when rs232_dtr = '0' else 'Z';
-
     I_sbrk_cnt: entity work.sbrk_cnt
     generic map (
 	C_clk_freq_hz => C_clk_freq * 1000000
@@ -235,4 +229,33 @@ begin
 	sel => sio_sel
     );
 
+    -- SIO -> f32c
+    f32c_rxd <= rs232_rx when sio_sel = x"1" else '1';
+
+    -- SIO -> ESP32
+    esp32_en <= R_rts_out when sio_sel = x"0" else '1';
+    esp32_rxd <= rs232_rx when sio_sel = x"0" else '1';
+    esp32_gpio0 <= rs232_dtr when sio_sel = x"0" else '1';
+
+    -- ESP32, f32c > SIO
+    rs232_tx <= esp32_txd when sio_sel = x"0" else f32c_txd;
+
+    -- ESP32: delay rts / en for 10 ms
+    process(clk)
+    begin
+    if rising_edge(clk) then
+	R_rts_in <= R_rts_in(1 downto 0) & rs232_rts;
+
+	if R_rts_cnt /= 0 then
+	    R_rts_cnt <= R_rts_cnt - 1;
+	end if;
+
+	if R_rts_in(2) /= R_rts_in(1) then
+	    -- 10 ms delay
+	    R_rts_cnt <= C_clk_freq * 1000 * 10;
+	elsif R_rts_cnt = 0 then
+	    R_rts_out <= R_rts_in(2);
+	end if;
+    end if;
+    end process;
 end x;
