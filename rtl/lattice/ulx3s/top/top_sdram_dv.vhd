@@ -241,12 +241,13 @@ begin
     rs232_tx <= esp32_txd when sio_sel = x"0" else f32c_txd;
 
     --
-    -- ESP32 reset logic, assuming a capacitor to prolong EN rise:
-    -- DTR 1, RTS 0: pull down EN
+    -- ESP32 reset logic.  We emulate the following hardware circuit:
+    -- DTR 1, RTS 0: pull down EN, a small capacitor holds it low for a while
     -- DTR 0, RTS 1: pull down IO0
     --
     -- At powerup we MUST generate a reset pulse, otherwise ESP32 won't
-    -- boot reliably (occasionally gets stuck in bootloader)
+    -- boot reliably (occasionally gets stuck in bootloader), because
+    -- ULX3S doesn't have a built-in capacitor between EN pin and GND.
     --
     process(clk)
     begin
