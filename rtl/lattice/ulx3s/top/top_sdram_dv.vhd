@@ -118,9 +118,11 @@ architecture x of top_sdram_dv is
 
     signal R_simple_in: std_logic_vector(19 downto 0);
 
-    signal R_rts_in: std_logic_vector(2 downto 0);
-    signal R_rts_out: std_logic;
-    signal R_rts_cnt: natural range 0 to C_clk_freq * 1000000 / 100;
+    constant C_esp32_cnt_max: natural := C_clk_freq * 1000 * 10; -- 10 ms
+    signal R_esp32_cnt: natural range 0 to C_esp32_cnt_max := C_esp32_cnt_max;
+    signal R_rts, R_dtr: std_logic;
+    signal R_esp32_pwrup_wait: boolean := true;
+    signal R_esp32_en, R_esp32_gpio0: boolean;
 
 begin
     -- f32c SoC
@@ -233,29 +235,48 @@ begin
     f32c_rxd <= rs232_rx when sio_sel = x"1" else '1';
 
     -- SIO -> ESP32
-    esp32_en <= R_rts_out when sio_sel = x"0" else '1';
     esp32_rxd <= rs232_rx when sio_sel = x"0" else '1';
-    esp32_gpio0 <= rs232_dtr when sio_sel = x"0" else '1';
 
-    -- ESP32, f32c > SIO
+    -- ESP32, f32c -> SIO
     rs232_tx <= esp32_txd when sio_sel = x"0" else f32c_txd;
 
-    -- ESP32: delay rts / en for 10 ms
+    --
+    -- ESP32 reset logic, assuming a capacitor to prolong EN rise:
+    -- DTR 1, RTS 0: pull down EN
+    -- DTR 0, RTS 1: pull down IO0
+    --
+    -- At powerup we MUST generate a reset pulse, otherwise ESP32 won't
+    -- boot reliably (occasionally gets stuck in bootloader)
+    --
     process(clk)
     begin
     if rising_edge(clk) then
-	R_rts_in <= R_rts_in(1 downto 0) & rs232_rts;
-
-	if R_rts_cnt /= 0 then
-	    R_rts_cnt <= R_rts_cnt - 1;
-	end if;
-
-	if R_rts_in(2) /= R_rts_in(1) then
-	    -- 10 ms delay
-	    R_rts_cnt <= C_clk_freq * 1000 * 10;
-	elsif R_rts_cnt = 0 then
-	    R_rts_out <= R_rts_in(2);
+	R_rts <= rs232_rts;
+	R_dtr <= rs232_dtr;
+	if R_esp32_pwrup_wait then
+	    if R_esp32_cnt = 0 then
+		R_esp32_pwrup_wait <= false;
+		R_esp32_en <= false;
+	    else
+		R_esp32_cnt <= R_esp32_cnt - 1;
+		R_esp32_en <= true;
+	    end if;
+	elsif R_rts = '0' and R_dtr = '1' then
+	    R_esp32_en <= true;
+	    R_esp32_gpio0 <= true;
+	    R_esp32_cnt <= C_esp32_cnt_max;
+	elsif R_esp32_cnt = 0 then
+	    R_esp32_gpio0 <= false;
+	else
+	    R_esp32_cnt <= R_esp32_cnt - 1;
+	    if R_esp32_cnt = C_esp32_cnt_max / 2 then
+		R_esp32_en <= false;
+	    end if;
 	end if;
     end if;
     end process;
+
+    esp32_en <= '0' when R_esp32_en else 'Z';
+    esp32_gpio0 <= '1' when R_esp32_pwrup_wait
+      else rs232_dtr when R_esp32_gpio0 else 'Z';
 end x;
