@@ -123,6 +123,8 @@ architecture x of top_sdram_dv is
     signal R_rts, R_dtr: std_logic;
     signal R_esp32_pwrup_wait: boolean := true;
     signal R_esp32_en, R_esp32_gpio0: boolean;
+    signal cons_f32c: boolean;
+    signal cons_esp32: boolean;
 
 begin
     -- f32c SoC
@@ -230,15 +232,17 @@ begin
 	rxd => rs232_rx,
 	sel => sio_sel
     );
+    cons_esp32 <= sio_sel = x"0";
+    cons_f32c <= sio_sel = x"1";
 
     -- SIO -> f32c
-    f32c_rxd <= rs232_rx when sio_sel = x"1" else '1';
+    f32c_rxd <= rs232_rx when cons_f32c else '1';
 
     -- SIO -> ESP32
-    esp32_rxd <= rs232_rx when sio_sel = x"0" else '1';
+    esp32_rxd <= rs232_rx when cons_esp32 else '1';
 
     -- ESP32, f32c -> SIO
-    rs232_tx <= esp32_txd when sio_sel = x"0" else f32c_txd;
+    rs232_tx <= esp32_txd when cons_esp32 else f32c_txd when cons_f32c else '1';
 
     --
     -- ESP32 reset logic.  We emulate the following hardware circuit:
@@ -262,7 +266,7 @@ begin
 		R_esp32_cnt <= R_esp32_cnt - 1;
 		R_esp32_en <= true;
 	    end if;
-	elsif R_rts = '0' and R_dtr = '1' then
+	elsif cons_esp32 and R_rts = '0' and R_dtr = '1' then
 	    R_esp32_en <= true;
 	    R_esp32_gpio0 <= true;
 	    R_esp32_cnt <= C_esp32_cnt_max;
