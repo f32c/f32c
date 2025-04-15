@@ -214,12 +214,21 @@ begin
 			R_rx_des <= R_rxd & R_rx_des(7 downto 1);
 			R_rx_phase <= R_rx_phase + 1;
 			if R_rx_phase = x"9" then
-			    R_rx_phase <= x"0";
 			    M_rx_fifo(conv_integer(R_rx_wr_i)) <= R_rx_des;
-			    if R_rx_wr_i + 1 /= R_rx_rd_i then
-				R_rx_wr_i <= R_rx_wr_i + 1;
-			    elsif C_rx_overruns and R_rx_overruns /= x"f" then
-				R_rx_overruns <= R_rx_overruns + 1;
+			    if R_rxd = '1' then
+				R_rx_phase <= x"0";
+				if R_rx_wr_i + 1 /= R_rx_rd_i then
+				    R_rx_wr_i <= R_rx_wr_i + 1;
+				elsif C_rx_overruns
+				  and R_rx_overruns /= x"f" then
+				    R_rx_overruns <= R_rx_overruns + 1;
+				end if;
+			    end if;
+			elsif R_rx_phase = x"a" then
+			    -- wait here untila a stop bit finally appears
+			    R_rx_phase <= x"a";
+			    if R_rxd = '1' then
+				R_rx_phase <= x"0";
 			    end if;
 			end if;
 		    end if;
