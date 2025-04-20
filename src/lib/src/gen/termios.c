@@ -32,7 +32,9 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
+#include <sys/file.h>
 #include <sys/time.h>
+#include <sys/tty.h>
 
 #include <errno.h>
 #include <string.h>
@@ -72,6 +74,24 @@ tcsetattr(int fd, int opt, const struct termios *t)
 int
 termios_ioctl(struct file *fp, int cmd, long arg)
 {
+	struct termios *tp = (void *) arg;
 
-	return (-1);
+	if (fp->f_tty == NULL) {
+		errno = ENOTTY;
+		return (-1);
+	}
+
+	switch (cmd & ~TCSASOFT) {
+	case IOCTL_TERMIOS | TIOCGETA:
+		*tp = fp->f_tty->t_termios;
+		return (0);
+	case IOCTL_TERMIOS | TIOCSETA:
+	case IOCTL_TERMIOS | TIOCSETAW:
+	case IOCTL_TERMIOS | TIOCSETAF:
+		fp->f_tty->t_termios = *tp;
+		return (0);
+	default:
+		errno = EINVAL;
+		return (-1);
+	}
 }
