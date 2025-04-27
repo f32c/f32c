@@ -37,7 +37,9 @@ gets_s(char *cp, int size)
 	lp = cp;
 	end = cp + size - 1;
 	for (;;) {
-		c = getchar() & 0177;
+		c = getchar();
+		if (c < 0)
+			return (NULL);
 		switch (c) {
 		case 3:	/* CTRL + C */
 			return (NULL);
