@@ -130,7 +130,7 @@ main ()
 #if 0
     scanf ("%d", &n);
 #else
-    gets((char *) Arr_1_Glob, 50);
+    gets_s((char *) Arr_1_Glob, 50);
     n = atoi((char *) Arr_1_Glob);
 #endif
     Number_Of_Runs = n;
