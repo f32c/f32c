@@ -28,12 +28,11 @@
 #include <stdio.h>
 
 
-__attribute__((optimize("-Os"))) int
-gets(char *cp, int size)
+char *
+gets_s(char *cp, int size)
 {
 	char *lp, *end;
 	int c;
-	int error = 0;
 
 	lp = cp;
 	end = cp + size - 1;
@@ -41,12 +40,12 @@ gets(char *cp, int size)
 		c = getchar() & 0177;
 		switch (c) {
 		case 3:	/* CTRL + C */
-			error = -1;
+			return (NULL);
 		case '\n':
 		case '\r':
 			printf("\n");
 			*lp = '\0';
-			return (error);
+			return (cp);
 		case '\b':
 		case '\177':
 			if (lp > cp) {

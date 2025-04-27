@@ -77,7 +77,7 @@ int	putchar(int);
 int	fputs(const char *, FILE *);
 int	puts(const char *);
 
-int	gets(char *, int);
+char	*gets_s(char *, int size);
 int	fgetc(FILE *);
 #define	getc(f) fgetc(f)
 #define	getchar() getc(stdin)
