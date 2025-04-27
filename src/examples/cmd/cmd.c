@@ -22,7 +22,6 @@
 
 #ifndef F32C
 #include <sys/wait.h>
-#define	gets(str, size) gets_s((str), (size))
 #endif
 
 #define MAXARGS	16
@@ -55,15 +54,14 @@ task_create(cmdhandler_t *f, int argc, char **argv)
 #ifndef F32C
 	int tid;
 
+#if 0
 	tid = fork();
 	if (tid)
 		return(tid);
 #endif
+#endif
 
 	f(argc, argv);
-#ifndef F32C
-	exit (0);
-#endif
 	return (0);
 }
 
@@ -807,14 +805,14 @@ create_h(int argc, char **argv)
 				if (llen < CREAT_MAXLINCHAR)
 					line[llen++] = c;
 			}
-			if (interrupt) {
-				printf("^C\n");
-				break;
-			}
 		} else {
-			if (gets(line, CREAT_MAXLINCHAR) < 0)
+			if (gets_s(line, CREAT_MAXLINCHAR) < 0)
 				break;
 			llen = strlen(line);
+		}
+		if (interrupt) {
+			printf("^C\n");
+			break;
 		}
 		line[llen++] = '\n';
 	}
@@ -1087,6 +1085,7 @@ main(void)
 	getcwd(line, 128);
 
 	signal(SIGHUP, sig_h);
+	signal(SIGINT, sig_h);
 	siginterrupt(SIGINT, 1);
 
 	do {
@@ -1160,9 +1159,6 @@ retok:
 			cmdswitch[i].handler(argc, argv);
 		else {
 			i = task_create(cmdswitch[i].handler, argc, argv);
-#ifndef F32C
-			waitpid(i, &i, 0);
-#endif
 		}
 	} while (1);
 }
