@@ -806,7 +806,7 @@ create_h(int argc, char **argv)
 					line[llen++] = c;
 			}
 		} else {
-			if (gets_s(line, CREAT_MAXLINCHAR) < 0)
+			if (gets_s(line, CREAT_MAXLINCHAR) == NULL)
 				break;
 			llen = strlen(line);
 		}
@@ -1005,6 +1005,107 @@ exit_h(int argc, char **argv)
 }
 
 
+void
+srec_rx(void)
+{
+	char *buf = malloc(1024 * 1024);
+	int c, col, clim, csum;
+	int val, alim, type;
+	int line = 0;
+	int addr = 0;
+
+new_line:
+	csum = 0;
+	col = -1;
+	clim = -1;
+	val = 0;
+	alim = 0;
+
+new_char:
+	col++;
+	c = getchar();
+	if (c < 0) {
+		printf("^C\n");
+		goto abort2;
+	}
+	if (c == '\r') {
+		line++;
+		goto new_line;
+	}
+	if (col == 0) {
+		if (c != 'S')
+			goto abort;
+		goto new_char;
+	}
+	if (col == 1) {
+		type = c;
+		alim = 10;
+		if (type == '3' || type == '9')
+			alim = 12;
+		addr = 0;
+		goto new_char;
+	}
+	val = (val & 0xf) << 4;
+	if (c >= '0' && c <= '9')
+		val |= (c - '0');
+	else if (c >= 'A' && c <= 'F')
+		val |= (c - 'A' + 10);
+	else
+		goto abort;
+	if ((col & 1) == 0)
+		goto new_char;
+	csum += val;
+	if (col == 3) {
+		clim = (val << 1) + 3;
+		goto new_char;
+	}
+	if (col < alim) {
+		addr = (addr << 8) + val;
+		goto new_char;
+	}
+	if (col < clim) {
+		buf[addr & (sizeof(buf) - 1)] = val;
+		addr++;
+		goto new_char;
+	}
+	csum -= val;
+	csum &= 0xff;
+	csum ^= 0xff;
+	if (csum == val)
+		goto new_char;
+	printf("Invalid checksum");
+	goto abort1;
+
+abort:
+	printf("Invalid record");
+abort1:
+	printf(" at line %d\n", line);
+abort2:
+	free(buf);
+}
+
+
+static void
+srec_h(int argc, char **argv)
+{
+
+	if (argc < 2) {
+		printf("Invalid arguments\n");
+		return;
+	}
+
+	switch (argv[1][0]) {
+	case 'r':
+		srec_rx();
+		break;
+	case 't':
+		break;
+	default:
+		printf("Invalid arguments\n");
+	}
+}
+
+
 static cmdhandler_t help_h;
 
 #define	CMDSW_ENTRY(t, h) { .tok = t, .handler = h}
@@ -1037,6 +1138,7 @@ const struct cmdswitch {
 	CMDSW_ENTRY("more",	more_h),
 	CMDSW_ENTRY("pwd",	pwd_h),
 	CMDSW_ENTRY("quit",	exit_h),
+	CMDSW_ENTRY("srec",	srec_h),
 	CMDSW_ENTRY("rm",	rm_h),
 	CMDSW_ENTRY("rmdir",	rmdir_h),
 	CMDSW_ENTRY("?",	help_h),
