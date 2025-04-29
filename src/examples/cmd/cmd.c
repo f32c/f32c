@@ -1157,8 +1157,8 @@ const struct cmdswitch {
 	cmdhandler_t	*handler;
 } cmdswitch[] = {
 	CMDSW_ENTRY("cd",	cd_h),
-	CMDSW_ENTRY("cls",	cls_h),
 	CMDSW_ENTRY("clear",	cls_h),
+	CMDSW_ENTRY("cls",	cls_h),
 	CMDSW_ENTRY("cmp",	cmp_h),
 	CMDSW_ENTRY("copy",	cp_h),
 	CMDSW_ENTRY("cp",	cp_h),
@@ -1168,8 +1168,8 @@ const struct cmdswitch {
 	CMDSW_ENTRY("dir",	ls_h),
 	CMDSW_ENTRY("exit",	exit_h),
 	CMDSW_ENTRY("hd",	hexdump_h),
-	CMDSW_ENTRY("hexdump",	hexdump_h),
 	CMDSW_ENTRY("help",	help_h),
+	CMDSW_ENTRY("hexdump",	hexdump_h),
 	CMDSW_ENTRY("hi",	history_h),
 	CMDSW_ENTRY("history",	history_h),
 	CMDSW_ENTRY("ls",	ls_h),
