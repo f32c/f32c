@@ -1005,14 +1005,20 @@ exit_h(int argc, char **argv)
 }
 
 
+#define SREC_BUFSIZ	(1024 * 1024)
+
 void
 srec_rx(void)
 {
-	char *buf = malloc(1024 * 1024);
+	char *data = malloc(SREC_BUFSIZ);
+	char name[256];
+	char *buf = name;
 	int c, col, clim, csum;
-	int val, alim, type;
+	int val, alim;
+	int type = 0;
 	int line = 0;
 	int addr = 0;
+	int last_addr = 0;
 
 new_line:
 	csum = 0;
@@ -1026,11 +1032,25 @@ new_char:
 	c = getchar();
 	if (c < 0) {
 		printf("^C\n");
-		goto abort2;
+		goto done;
 	}
-	if (c == '\r') {
-		line++;
-		goto new_line;
+	if (c == '\r')
+		goto new_char;
+	if (c == '\n') {
+		if (type == '0') {
+			buf[addr] = 0;
+			printf("hdr: %s\n", buf);
+		}
+		if (type <= '3') {
+			printf("%d: %08x\r", line, addr);
+			last_addr = addr;
+			line++;
+			goto new_line;
+		}
+		printf("Writing %d bytes to file %s...\n",
+		    last_addr - addr, name);
+		printf("Done.\n");
+		goto done;
 	}
 	if (col == 0) {
 		if (c != 'S')
@@ -1039,10 +1059,15 @@ new_char:
 	}
 	if (col == 1) {
 		type = c;
-		alim = 10;
-		if (type == '3' || type == '9')
+		alim = 8;
+		if (type == '2' || type == '8')
+			alim = 10;
+		if (type == '3' || type == '7')
 			alim = 12;
 		addr = 0;
+		buf = data;
+		if (type == '0')
+			buf = name;
 		goto new_char;
 	}
 	val = (val & 0xf) << 4;
@@ -1064,7 +1089,7 @@ new_char:
 		goto new_char;
 	}
 	if (col < clim) {
-		buf[addr & (sizeof(buf) - 1)] = val;
+		buf[addr & (SREC_BUFSIZ - 1)] = val;
 		addr++;
 		goto new_char;
 	}
@@ -1080,8 +1105,8 @@ abort:
 	printf("Invalid record");
 abort1:
 	printf(" at line %d\n", line);
-abort2:
-	free(buf);
+done:
+	free(data);
 }
 
 
