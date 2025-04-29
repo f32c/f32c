@@ -1015,6 +1015,7 @@ srec_rx(void)
 	char *buf = name;
 	int c, col, clim, csum;
 	int val, alim;
+	int fd;
 	int type = 0;
 	int line = 0;
 	int addr = 0;
@@ -1047,8 +1048,24 @@ new_char:
 			line++;
 			goto new_line;
 		}
-		printf("Writing %d bytes to file %s...\n",
-		    last_addr - addr, name);
+		printf("Writing %d bytes to %s...\n", last_addr - addr, name);
+		fd = open(name, O_CREAT | O_RDWR, 0777);
+		if (fd < 0) {
+			printf("Can't open %s\n", name);
+			goto done;
+		}
+		for (; addr < last_addr; addr += clim) {
+			clim = last_addr - addr;
+			if (clim > 65536)
+				clim = 65536;
+			val = write(fd, &data[addr & (SREC_BUFSIZ - 1)], clim);
+			if (val != clim) {
+				printf("Write error\n");
+				break;
+			}
+			printf("%c\r", "|/-\\"[(clim >> 16) & 3]);
+		}
+		close(fd);
 		printf("Done.\n");
 		goto done;
 	}
